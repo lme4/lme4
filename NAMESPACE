@@ -1,0 +1,91 @@
+useDynLib(lme4, .registration=TRUE)
+
+import("Matrix")# including update()
+import("lattice")
+
+## Generics for which we define new methods:
+importFrom("graphics", plot)
+importFrom("stats",
+           anova,
+           coef,
+           confint,
+           deviance,
+           fitted,
+           formula,
+           logLik,
+           model.frame,
+           model.matrix,
+           predict,
+           residuals, resid, # 'resid' needed too, unfortunately..
+           simulate,
+           terms,
+           ## update, -- already from 'Matrix'
+           vcov
+           )
+## More imports: functions we use and don't want to be clobbered:
+importFrom("stats",
+           AIC)# ..., rnorm, pnorm, qnorm, ... ... where does it end?
+## but  import("stats") is not ok, because Matrix export "better" versions of
+## update(), xtabs() and cov2cor()
+
+
+export("glmer",
+       #"gsummary", "hatTrace",
+       "HPDinterval",
+       "lmList",
+       "lmer",
+       "lmer2",
+       "mcmcsamp",
+       "nlmer",
+       #"pooledSD",
+       "refit",
+       "VarCorr")
+
+exportClasses("lmList", "mer", "merMCMC", "summary.mer")
+
+exportMethods(
+              "BIC",
+              "HPDinterval",
+              "VarCorr",
+              "anova",
+              "as.matrix",
+              "as.data.frame",
+              "chol",
+              "coef",
+              "coerce",
+              "confint",
+              "densityplot",
+              "deviance",
+              "expand",
+              "fitted",
+              "fixef",
+              "formula",
+#              "gsummary",
+              "head",
+              "logLik",
+              "mcmcsamp",
+              "model.frame",
+              "model.matrix",
+              "plot",
+              "print",
+              "qqmath",
+              "ranef",
+              "refit",
+              "resid", "residuals",
+              "show",
+              "simulate",
+              "summary",
+              "tail",
+              "terms",
+              "update",
+              "vcov",
+              "with",
+              "xyplot"
+              )
+
+S3method(plot, coef.mer)
+S3method(print, coef.mer)
+S3method(plot, ranef.mer)
+S3method(print, ranef.mer)
+S3method(qqmath, ranef.mer)
+S3method(dotplot, ranef.mer)

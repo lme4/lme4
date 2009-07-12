@@ -1,0 +1,48 @@
+-----
+Should there be an extractor function for the mean square error?  If
+  so, what should it be called? (There is now a "sigma" extractor.)
+-----
+Determine why the names of the components of the values of
+the ranef and coef extractor methods are not printed. (Done by
+changing from S4 classes to S3 methods.)
+-----
+Collapse repeated grouping factors and correspondingly modify the
+ranef and coef methods.
+-----
+Add an element to the deviance slot to hold sigma or log(sigma).  The
+interpretation will be that an NA value means to use the conditional
+estimate of the scale parameter.  For a generalized linear mixed model
+without a scale parameter set sigma = 1 (or log(sigma) = 0) and put
+constraints on the parameter so that it is not estimated.
+
+Upon convergence replace that element with the conditional estimate in
+models where it has been profiled out.
+-----
+Currently lmer does not fill in the disc and bqd slots in the deviance
+slot.  Fix this.
+-----
+Remove unused symbols from src/Syms.h and src/init.c
+Add symbols to src/Syms.h for names currently accessed through install().
+Replace the glmer_create and nlmer_create C functions with R code.
+-----
+- Revive the "lmer" and "glmer" classes.  Slots like "family" should
+  be in "glmer" only.  Many methods for "lmer" can be simplified as,
+  for example, they will always use the scale factor.
+
+- Add a "pedigree" class and methods for it.  Allow a pedigree
+  argument in lmer.
+
+- change the status vector to an integer vector.  The steps are
+  cumulative so we only keep track of the stage.  Also REML and glmm
+  are stored here.
+
+- anova method for lmer objects.  Will entail saving the terms
+  attribute.
+
+- Move large data sets into a MEMSS or mlmRev package
+
+- Change Calloc/Free patterns in the calculation of bVar
+
+- Re-write the ccoef methods in C
+
+- Evaluate the likelihood of a fitted GLMM by the Laplacian approximation

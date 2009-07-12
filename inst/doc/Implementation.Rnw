@@ -1,0 +1,1449 @@
+\documentclass[12pt]{article}
+\usepackage{Sweave}
+\usepackage{amsmath}
+\usepackage{bm}
+\usepackage[authoryear,round]{natbib}
+\bibliographystyle{plainnat}
+\DefineVerbatimEnvironment{Sinput}{Verbatim}
+{formatcom={\vspace{-2.5ex}},fontshape=sl,
+  fontfamily=courier,fontseries=b, fontsize=\scriptsize}
+\DefineVerbatimEnvironment{Soutput}{Verbatim}
+{formatcom={\vspace{-2.5ex}},fontfamily=courier,fontseries=b,%
+  fontsize=\scriptsize}
+%%\VignetteIndexEntry{Implementation Details}
+%%\VignetteDepends{lme4, MEMSS, mlmRev}
+%%
+\newcommand{\trans}{\ensuremath{^\mathsf{T}}}
+\newcommand{\invtrans}{\ensuremath{^\mathsf{-T}}}
+\title{Linear mixed model implementation in lme4}
+\author{Douglas Bates\\Department of Statistics\\%
+  University of Wisconsin -- Madison}
+\begin{document}
+\SweaveOpts{engine=R,eps=FALSE,pdf=TRUE,strip.white=TRUE}
+\SweaveOpts{include=FALSE}
+\setkeys{Gin}{width=\textwidth}
+\newcommand{\code}[1]{\texttt{\small{#1}}}
+\newcommand{\package}[1]{\textsf{\small{#1}}}
+\maketitle
+\begin{abstract}
+  We describe the form of the linear mixed-effects and generalized
+  linear mixed-effects models fit by \code{lmer} and give details of
+  the representation and the computational techniques used to fit such
+  models.  These techniques are illustrated on several examples.
+\end{abstract}
+
+<<preliminaries,echo=FALSE,print=FALSE>>=
+options(width=80, show.signif.stars = FALSE,
+        lattice.theme = function() canonical.theme("pdf", color = FALSE))
+library(lattice)
+library(Matrix)
+library(lme4)
+data("Rail", package = "MEMSS")
+data("ScotsSec", package = "mlmRev")
+@
+
+\section{A simple example}
+\label{sec:example}
+
+The \code{Rail} data set from the \package{MEMSS} package is described
+in \citet{pinh:bate:2000} as consisting of three measurements of
+the travel time of a type of sound wave on each of six sample railroad
+rails. We can examine the structure of these data with the \code{str}
+function
+<<strRail>>=
+str(Rail)
+@
+
+Because there are only three observations on each of the rails a
+dotplot (Figure~\ref{fig:Raildotplot}) shows the structure of the data
+well.
+<<Raildotplot,fig=TRUE,include=FALSE,width=8,height=2>>=
+print(dotplot(reorder(Rail,travel)~travel,Rail,xlab="Travel time (ms)",ylab="Rail"))
+@
+\begin{figure}[tb]
+  \centering
+  \includegraphics{Implementation-Raildotplot}
+  \caption{Travel time of sound waves in a sample of six railroad
+    rails.  There were three measurements of the travel time on each
+    rail. The order of the rails is by increasing mean travel time.}
+  \label{fig:Raildotplot}
+\end{figure}
+
+In building a model for these data
+<<Raildata>>=
+Rail
+@
+we wish to characterize a typical travel time, say $\mu$, for the
+population of such railroad rails and the deviations, say
+$b_i,i=1,\dots,6$ of the individual rails from this population mean.
+Because these specific rails are not of interest by themselves as much
+as the variation in the population we model the $b_i$, which are
+called the ``random effects'' for the rails, as having a normal
+(also called ``Gaussian'') distribution of the form $\mathcal{N}(0,\sigma^2_b)$.  The
+$j$th measurement on the $i$th rail is expressed as
+\begin{equation}
+  \label{eq:1}
+  y_{ij}=\mu+b_i+\epsilon_{ij}\quad
+  b_i\sim\mathcal{N}(0,\sigma^2_b),\epsilon_{ij}\sim\mathcal{N}(0,\sigma^2)
+  \quad  i=1,\dots,6\;j=1,\dots,3
+\end{equation}
+
+The parameters of this model are $\mu$, $\sigma^2_b$ and $\sigma^2$.
+Technically the $b_i,i=1,\dots,6$ are not parameters but instead are
+considered to be unobserved random variables for which we form
+``predictions'' instead of ``estimates''.
+
+To express generalizations of models like (\ref{eq:1}) more
+conveniently we switch to a matrix/vector
+representation in which the 18 observations of the travel time form
+the response vector $\bm{y}$, the fixed-effect parameter $\mu$ forms a
+$1$-dimensional column vector $\bm{\beta}$ and the six random effects
+$b_i,i=1,\dots,6$ form the random effects vector $\bm{b}$.  The
+structure of the data and the values of any covariates (none are used
+in this model) are used to create model matrices $\bm{X}$ and
+$\bm{Z}$.
+
+Using these vectors and matrices and the $18$-dimensional vector
+$\bm{\epsilon}$ that represents the per-observation noise terms the
+model becomes
+\begin{equation}
+  \label{eq:lmm}
+  \bm{y} = \bm{X}\bm{\beta} + \bm{Z}\bm{b}+\bm{\epsilon},\quad
+  \bm{\epsilon}\sim\mathcal{N},\left(\bm{0},\sigma^2\bm{I}\right),\;
+  \bm{b}\sim\mathcal{N}\left(\bm{0},\sigma^2\bm{\Sigma}\right)\;\mathrm{and}\;
+  \bm{b}\perp\bm{\epsilon}
+\end{equation}
+
+In the general form we write $p$ for the dimension of $\bm{\beta}$,
+the fixed-effects parameter vector, and $q$ for the dimension of
+$\bm{b}$, the vector of random effects.  Thus the model matrix
+$\bm{X}$ has dimension $n\times p$, the model matrix $\bm{Z}$ has
+dimension $n\times q$ and the relative variance-covariance matrix,
+$\bm{\Sigma}$, for the random-effects has dimension $q\times q$.  The
+symbol $\perp$ indicates independence of random variables and
+$\mathcal{N}$ denotes the multivariate normal (Gaussian) distribution.
+
+We say that matrix $\bm{\Sigma}$ is the relative variance-covariance
+matrix of the random effects in the sense that it is the variance of
+$\bm{b}$ relative to $\sigma^2$, the scalar variance of the
+per-observation noise term $\bm{\epsilon}$.  Although it size, $q$,
+can be very large, $\bm{\Sigma}$ is highly structured.  It is
+symmetric, positive semi-definite and zero except for the diagonal
+elements and certain elements close to the diagonal.
+
+\subsection{Fitting the model and examining the results}
+\label{sec:fitt-model-exam}
+
+The maximum likelihood estimates for parameters in model (\ref{eq:1})
+fit to the \code{Rail} data are obtained as
+<<RailfitML>>=
+Rm1ML <- lmer(travel ~ 1 + (1|Rail), Rail, REML = FALSE, verbose = TRUE)
+@
+In this fit we have set \code{verbose = TRUE}
+indicating that information on the progress of the iterations should
+be printed after every iteration.  Each line gives the iteration
+number, the value of the deviance (negative twice the log-likelihood)
+and the value of the parameter $s$ which is the standard deviation of
+the random effects relative to the standard deviation of the
+residuals.
+
+The printed form of the model
+<<Railfitshow>>=
+Rm1ML
+@
+provides additional information about the parameter estimates and some
+of the measures of the fit such as the log-likelihood (-64.28), the
+deviance for the maximum likelihood criterion (128.6), the deviance
+for the REML criterion (122.2), Akaike's Information Criterion
+(AIC$=132.6$) and Schwartz's Bayesian Information Criterion
+(BIC$=134.3$).
+
+The transpose of the model matrix $\bm{Z}$ is stored as a sparse matrix in the \code{Zt}
+slot of the fitted model.  For this model $\bm{Z}$ is simply the matrix
+of indicators of the levels of the \code{Rail}.
+<<ZXytRail>>=
+Rm1ML@Zt
+as(Rail[["Rail"]], "sparseMatrix")
+@
+The elements represented as `.' in the output are known to be zero and
+are not stored explicitly.
+
+The \code{L} component of this fitted model is a Cholesky
+factorization of a matrix $\bm{A}^*(\bm{\theta})$ where $\bm{\theta}$ is a
+parameter vector determining $\bm{\Sigma}(\bm{\theta})$.  This matrix can be
+factored as $\bm{\Sigma}=\bm{T}\bm{S}\bm{S}\bm{T}\trans$, where
+$\bm{T}$ is a unit, lower triangular matrix (that is, all the elements
+above the diagonal are zero and all the elements on the diagonal are
+unity) and $\bm{S}$ is a diagonal matrix with non-negative elements on
+the diagonal.
+The matrix $\bm{A}^*(\bm{\theta})$ is
+\begin{equation}
+  \label{eq:Astar}
+  \begin{split}
+    \bm{A}^*(\bm{\theta})&=
+    \begin{bmatrix}
+      {\bm{Z}^*}\trans\bm{Z}^*+\bm{I} & {\bm{Z}^*}\trans\bm{X} &
+      -{\bm{Z}^*}\trans\bm{y}\\
+      {\bm{X}}\trans\bm{Z}^* & {\bm{X}}\trans\bm{X} &
+      -{\bm{X}}\trans\bm{y}\\
+      -{\bm{y}}\trans\bm{Z}^*&-{\bm{y}}\trans\bm{X}&{\bm{y}}\trans\bm{y}
+    \end{bmatrix} \\
+    &=
+    \begin{bmatrix}
+      \bm{T}\trans\bm{S} & \bm{0} & \bm{0} \\
+      \bm{0} & \bm{I} & \bm{0} \\
+      \bm{0} & \bm{0} & 1
+    \end{bmatrix}
+    \bm{A}
+    \begin{bmatrix}
+      \bm{S}\bm{T} & \bm{0} & \bm{0} \\
+      \bm{0} & \bm{I} & \bm{0} \\
+      \bm{0} & \bm{0} & 1
+    \end{bmatrix}+
+    \begin{bmatrix}
+      \bm{I} & \bm{0} & \bm{0} \\
+      \bm{0} & \bm{0} & \bm{0} \\
+      \bm{0} & \bm{0} & 0
+    \end{bmatrix} .
+  \end{split}
+\end{equation}
+
+For model (\ref{eq:1}) the matrices $\bm{T}$ and $\bm{S}$ are
+particularly simple, $\bm{T}=\bm{I}_6$, the $6\times 6$ identity matrix
+and $\bm{S}=s_{1,1}\bm{I}_6$ where $s_{1,1}=\sigma_b/\sigma$ is the
+standard deviation of the random effects relative to the standard
+deviation of the per-observation noise term $\bm{\bm{\epsilon}}$.
+
+<<fewdigits,echo=FALSE,results=hide>>=
+op <- options(digits=4)
+@
+The Cholesky decomposition of $\bm{A}^*$ is a lower triangular sparse
+matrix $\bm{L}$
+<<LRm1ML>>=
+as(Rm1ML@L, "sparseMatrix")
+@
+<<unfewdigits,echo=FALSE,results=hide>>=
+options(op)
+@
+
+As explained in later sections the matrix $\bm{L}$ provides all the
+information needed to evaluate the ML deviance or the REML deviance as
+a function of $\bm{\theta}$.  The components of the deviance are given
+in the \code{deviance} slot of the fitted model
+<<devRm1ML>>=
+Rm1ML@deviance
+@
+The element labelled \code{ldL2} is the logarithm of the square of
+the determinant of the upper left $6\times 6$ section of $\bm{L}$.
+This corresponds to
+$\log\left|{\bm{Z}^*}\trans\bm{Z}^*+\bm{I}_q\right|$ where
+$\bm{Z}^*=\bm{Z}\bm{T}\bm{S}$.  We can verify that the value
+$27.38292$ can indeed be calculated in this way.
+<<ldZRm1ML>>=
+L <- as(Rm1ML@L, "sparseMatrix")
+2 * sum(log(diag(L)))
+@
+
+The \code{lr2} element of the \code{deviance} slot is the logarithm of
+the penalized residual sum of squares.  It can be calculated as the
+logarithm of the square of the last diagonal element in $\bm{L}$.
+<<lr2Rm1ML>>=
+(RX <- Rm1ML@RX)
+@
+
+For completeness we mention that the \code{ldRX2} element of the
+\code{deviance} slot is the logarithm of the product of the squares of
+the diagonal elements of $\bm{L}$ corresponding to columns of $\bm{X}$.
+<<ldXRm1ML>>=
+2 * sum(log(diag(Rm1ML@RX)))
+@
+This element is used in the calculation of the REML criterion.
+
+Another slot in the fitted model object is \code{dims}, which
+contains information on the dimensions of the model and some of the
+characteristics of the fit.
+<<dimsRm1ML>>=
+(dd <- Rm1ML@dims)
+@
+We can reconstruct the ML estimate of the residual variance as the
+penalized residual sum of squares divided by the number of
+observations.
+%% FIXME: This is not calculated correctly in the current version of lmer
+<<s2Rm1ML>>=
+Rm1ML@deviance["pwrss"]/dd["n"]
+@
+
+The \emph{profiled deviance} function
+\begin{equation}
+  \label{eq:2}
+  \begin{aligned}
+  \tilde{\mathcal{D}}(\bm{\theta}) &= \log\left|{\bm{Z}^*}\trans\bm{Z}^*+\bm{I}_q\right| +
+  n \log \left(1+\frac{2\pi r^2}{n}\right) \\
+  &= n\left[1+\log\left(\frac{2\pi}{n}\right)\right] +
+    \log\left|{\bm{Z}^*}\trans\bm{Z}^*+\bm{I}_q\right| + n\log r^2
+  \end{aligned}
+\end{equation}
+is a function of $\bm{\theta}$ only.  In this case
+$\bm{\theta}=\sigma_1$, the relative standard deviation of the random
+effects, is one-dimensional. The maximum likelihood estimate (mle) of
+$\bm{\theta}$ minimizes the profiled deviance. The mle's of all the
+other parameters in the model can be derived from the estimate of this
+parameters.
+
+<<devcomp,echo=FALSE,fig=TRUE,width=8, height=6>>=
+mm <- Rm1ML
+sg <- seq(0, 20, len = 101)
+dev <- mm@deviance
+nc <- length(dev)
+nms <- names(dev)
+vals <- matrix(0, nrow = length(sg), ncol = nc, dimnames = list(NULL, nms))
+for (i in seq(along = sg)) {
+    .Call("mer_ST_setPars", mm, sg[i], PACKAGE = "lme4")
+    .Call("mer_update_L", mm, PACKAGE = "lme4")
+    res <- try(.Call("mer_update_RX", mm, PACKAGE = "lme4"), silent = TRUE)
+    if (inherits(res, "try-error")) {
+        vals[i,] <- NA
+    } else {
+        .Call("mer_update_ranef", mm, PACKAGE = "lme4")
+        vals[i,] <- mm@deviance
+    }
+}
+print(xyplot(ML + ldL2 + sigmaML + pwrss + disc + usqr ~ sg, as.data.frame(vals),
+             type = c("g", "l"), outer = TRUE, layout = c(1,6),
+             xlab = expression(sigma[b]/sigma), ylab = NULL,
+             scales = list(x = list(axs = 'i'),
+             y = list(relation = "free", rot = 0)),
+             strip = FALSE, strip.left = TRUE))
+@
+
+The term $n\left[1+\log\left(2\pi/n\right)\right]$ in (\ref{eq:2})
+does not depend on $\bm{\theta}$.  The other two terms,
+$\log\left|{\bm{Z}^*}\trans\bm{Z}^*+\bm{I}_q\right|$ and $n\log r^2$,
+measure the complexity of the model and the fidelity of the fitted
+values to the observed data, respectively.  We plot the value of each
+of the varying terms versus $\sigma_1$ in Figure~\ref{fig:devcomp}.
+\begin{figure}[tb]
+  \centering
+  \includegraphics{Implementation-devcomp}
+  \caption{The profiled deviance, and those components of the profiled
+    deviance that vary with $\bm{\theta}$, as a function of
+    $\bm{\theta}$ in model \code{Rm1ML} for the \code{Rail} data. In
+    this model the parameter $\bm{\theta}$ is the scalar $\sigma_1$,
+    the standard deviation of the random effects relative to the
+    standard deviation of the per-observation noise.}
+  \label{fig:devcomp}
+\end{figure}
+
+The component $\log\left|\bm{S}\bm{Z}\trans\bm{Z}\bm{S}+\bm{I}\right|$
+has the value $0$ at $\sigma_1=0$ and increases as $\sigma_1$
+increases.  It is unbounded as $\sigma_1\rightarrow\infty$.  The
+component $n\log\left(r^2\right)$ has a finite value at $\sigma_1=0$
+from which it decreases as $\sigma_1$ increases.  The value at
+$\sigma_1=0$ corresponds to the residual sum of squares for the
+regression of $\bm{y}$ on the columns of $\bm{X}$.
+<<leftlr2>>=
+18 * log(deviance(lm(travel ~ 1, Rail)))
+@
+As $\sigma_1\rightarrow\infty$, $n\log\left(r^2\right)$ approaches the
+value corresponding to the residual sum of squares for the regression
+of $\bm{y}$ on the columns of $\bm{X}$ and $\bm{Z}$.  For this model
+that is
+<<rightlr2>>=
+18 * log(deviance(lm(travel ~ Rail, Rail)))
+@
+
+<<devcomp2,echo=FALSE,fig=TRUE,height=4>>=
+mm <- Rm1ML
+sg <- seq(3.75, 8.25, len = 101)
+vals <- matrix(0, nrow = length(sg), ncol = length(dev),
+               dimnames = list(NULL, names(dev)))
+for (i in seq_along(sg)) {
+    .Call("mer_ST_setPars", mm, sg[i], PACKAGE = "lme4")
+    .Call("mer_update_L", mm, PACKAGE = "lme4")
+    res <- try(.Call("mer_update_RX", mm, PACKAGE = "lme4"), silent = TRUE)
+    if (inherits(res, "try-error")) {
+        vals[i,] <- NA
+    } else {
+        .Call("mer_update_ranef", mm, PACKAGE = "lme4")
+        vals[i,] <- mm@deviance
+    }
+}
+print(xyplot(ML + ldL2 + I(18 * log(pwrss)) ~ sg, as.data.frame(vals),
+             type = c("g", "l"), outer = TRUE, layout = c(1,3),
+             xlab = expression(sigma[b]/sigma), ylab = NULL,
+             scales = list(x = list(axs = 'i'),
+             y = list(relation = "free", rot = 0)),
+             strip = FALSE, strip.left = TRUE))
+## base <- 18 * log(deviance(lm(travel ~ Rail, Rail)))
+## print(xyplot(devC + ldL2 ~ sg,
+##              data.frame(ldL2 = vals[,"ldL2"], devC =
+##                         vals[, "ldL2"] + mm@dims['n'] * log(vals[, "pwrss"]) - base,
+##                         sg = sg), type = c("g", "l"),
+##              scales = list(x = list(axs = 'i')), aspect = 1.8,
+##              xlab = expression(sigma[1]), ylab = "Shifted deviance",
+##              auto.key = list(text = c("deviance", "log|SZ'ZS + I|"),
+##              space = "right", points = FALSE, lines = TRUE)))
+@
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=0.7\textwidth]{Implementation-devcomp2}
+  \caption{The part of the deviance that varies with $\sigma_1$ as a
+    function of $\sigma_1$ near the optimum.  The component
+    $\log\left|\bm{S}\bm{Z}\trans\bm{Z}\bm{S}+\bm{I}\right|$ is shown
+    at the bottom of the frame.  This is the component of the deviance
+    that increases with $\sigma_1$.  Added to this component is
+    $n\log\left[r^2(\sigma_1)\right] - n\log\left[r^2(\infty)\right]$,
+    the comonent of the deviance that decreases as $\sigma_1$
+    increases.  Their sum is minimized at $\widehat{\sigma}_1=5.626$.}
+  \label{fig:devcomp2}
+\end{figure}
+
+\section{Multiple random effects per level}
+\label{sec:multiple-re}
+
+<<sleepxyplot,fig=TRUE,echo=FALSE,height=7,width=7>>=
+print(xyplot(Reaction ~ Days | Subject, sleepstudy, aspect = "xy",
+             layout = c(6,3), type = c("g", "p", "r"),
+             index.cond = function(x,y) coef(lm(y ~ x))[1],
+             xlab = "Days of sleep deprivation",
+             ylab = "Average reaction time (ms)"))
+@
+
+The \code{sleepstudy} data are an example of longitudinal data.  That
+is, they are repeated measurements taken on the same experimental units
+over time.  A plot of reaction time versus days of sleep deprivation
+by subject (Figure~\ref{fig:sleepxyplot})
+\begin{figure}[tbp]
+  \centerline{\includegraphics[width=\textwidth]{Implementation-sleepxyplot}}
+  \caption{A lattice plot of the average reaction time versus number
+    of days of sleep deprivation by subject for the \code{sleepstudy}
+    data.  Each subject's data are shown in a separate panel, along
+    with a simple linear regression line fit to the data in that
+    panel.  The panels are ordered, from left to right along rows
+    starting at the bottom row, by increasing intercept of these
+    per-subject linear regression lines.  The subject number is given
+    in the strip above the panel.}
+  \label{fig:sleepxyplot}
+\end{figure}
+shows there is considerable variation between subjects in both the
+intercept and the slope of the linear trend.
+
+The model
+<<sm1>>=
+print(sm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
+@
+provides for fixed effects for the intercept (the typical reaction
+time in the population after zero days of sleep deprivation) and the
+slope with respect to \code{Days} (the typical change in reaction time
+per day of sleep deprivation).  In addition there are random effects
+per subject for both the intercept and the slope parameters.
+
+<<sm1struct,fig=TRUE,echo=FALSE,height=3,width=6>>=
+print(image(tcrossprod(sm1@A), colorkey = FALSE, sub = NULL),
+      split = c(1,1,2,1), more = TRUE)
+print(image(sm1@L, colorkey = FALSE, sub = NULL),
+      split = c(2,1,2,1))
+@
+
+With two random effects per subject the matrix $\bm{\Sigma}$ for this
+model is $36\times 36$ with $18$ $2\times 2$ diagonal blocks.  The
+matrix $\bm{A}$ is $39\times 39$ as is $\bm{L}$, the Cholesky factor
+of $\bm{A}^*$.  The structure of $\bm{A}$ and of $\bm{L}$ are shown in
+Figure~\ref{fig:ALstruct}.
+\begin{figure}[tbp]
+  \centerline{\includegraphics[width=\textwidth]{Implementation-sm1struct}}
+  \caption{Structure of the sparse matrices $\bm{A}$ (left panel) and
+    $\bm{L}$ (right panel) for the model \code{sm1}.  The non-zero
+    elements as depicted as gray squares with larger magnitudes shown as
+    darker gray.}
+    \label{fig:ALstruct}
+\end{figure}
+For this model (as for all models with a
+single random effects expression) the structure of $\bm{L}$ is
+identical to that of the lower triangle of $\bm{A}$.
+
+Like the \code{Rail} data, the \code{sleepstudy} data are balanced in
+that each subject's reaction time is measured the same number of times
+and at the same times.  One consequence of the balance is that the
+diagonal blocks in the first $36$ rows of $\bm{A}$ are identical as
+are those in the first $36$ rows of $\bm{L}$.
+<<A1212>>=
+as(sm1@L, "sparseMatrix")[1:2,1:2]
+sm1@RX
+@
+
+The determinant quantities in
+<<sm1deviance>>=
+sm1@deviance
+@
+are derived from the diagonal elements of $\bm{L}$.  \code{ldZ} is the
+logarithm of square of the product of the first $36$ elements of the
+diagonal, \code{ldX} is the logarithm of the square of the product of
+the $37$th and $38$th elements and \code{lr2} is the logarithm of the
+square of the $39$th element.
+<<sm1reconstruct>>=
+sm1@RX
+str(dL <- diag(as(sm1@L, "sparseMatrix")))
+c(ldL2 = sum(log(dL^2)), ldRX2 = sum(log(diag(sm1@RX)^2)), log(sm1@deviance["pwrss"]))
+@
+
+The $36\times 36$ matrices $\bm{S}$, $\bm{T}$ and
+$\bm{\Sigma}=\bm{T}\bm{S}\bm{S}\bm{T}\trans$ are block-diagonal
+consisting of $18$ identical $2\times 2$ diagonal blocks.  The
+template for the diagonal blocks of $\bm{S}$ and $\bm{T}$ is stored as
+a single matrix
+<<sm1ST>>=
+show(st <- sm1@ST[[1]])
+@ %$
+where the diagonal elements are those of $\bm{S}$ and the strict lower
+triangle is that of $\bm{T}$.
+
+The \code{VarCorr} generic function extracts the estimates of the
+variance-covariance matrices of the random effects. Because model
+\code{sm1} has a single random-effects expression there is only one
+estimated variance-covariance matrix
+<<sm1VarCorr>>=
+show(vc <- VarCorr(sm1))
+@
+The \code{"sc"} attribute of this matrix is the estimate of $\sigma$,
+the standard deviation of the per-observation noise term.
+
+We can reconstruct this variance-covariance estimate as
+<<sm1VarCorrRec>>=
+T <- st
+diag(T) <- 1
+S <- diag(diag(st))
+T
+S
+T %*% S %*% S %*% t(T) * attr(vc, "sc")^2
+@
+
+\section{A model with two nested grouping factors}
+\label{sec:nested}
+
+
+<<Oatsxy,fig=TRUE,echo=FALSE,height=4,width=6>>=
+data(Oats, package = 'MEMSS')
+print(xyplot(yield ~ nitro | Block, Oats, groups = Variety, type = c("g", "b"),
+             auto.key = list(lines = TRUE, space = 'top', columns = 3),
+             xlab = "Nitrogen concentration (cwt/acre)",
+             ylab = "Yield (bushels/acre)",
+             aspect = 'xy'))
+@
+The \code{Oats} data from the \code{nlme} package came from an
+experiment in which fields in $6$ different locations (the
+\code{Block} factor) were each divided into three plots and each of
+these $18$ plots was further subdivided into four subplots.  Three
+varieties of oats were assigned randomly to the three plots in each
+block and four concentrations of fertilizer (measured as nitrogen
+concentration) were randomly assigned to the subplots in each plot.
+The yield on each subplot is the response shown in
+Figure~\ref{fig:Oatsxy}.
+\begin{figure}[tbp]
+  \centerline{\includegraphics[width=\textwidth]{Implementation-Oatsxy}}
+  \caption{Yield of oats versus applied concentration of nitrogen
+    fertilizer for three different varieties of oats in 6 different
+    locations.}
+  \label{fig:Oatsxy}
+\end{figure}
+
+The fitted model \code{Om1}
+<<Om1>>=
+print(Om1 <- lmer(yield ~ nitro + Variety + (1|Block/Variety), Oats), corr = FALSE)
+@
+provides fixed effects for the nitrogen concentration and for the
+varieties (coded as differences relative to the reference variety
+``Golden Rain'') and random effects for each block and for each plot
+within the block.  In this case a plot can be indexed by the
+combination of variety and block, denoted
+\code{Variety:Block} in the output.  Notice that there are 18 levels of this
+grouping factor corresponding to the 18 unique combinations of variety
+and block.
+
+A given plot occurs in one and only one block.  We say that the plot
+grouping factor is \emph{nested within} the block grouping factor.
+The structure of the matrices $\bm{A}$ and $\bm{L}$ for this model
+(Figure~\ref{fig:Om1struct})
+<<Om1struct,fig=TRUE,echo=FALSE,height=3,width=6>>=
+print(image(tcrossprod(Om1@A), colorkey = FALSE, sub = NULL),
+       split = c(1,1,2,1), more = TRUE)
+print(image(Om1@L, colorkey = FALSE, sub = NULL), split = c(2,1,2,1))
+@
+\begin{figure}[tbp]
+  \centerline{\includegraphics[width=\textwidth]{Implementation-Om1struct}}
+  \caption{Structure of the sparse matrices $\bm{A}$ (left panel) and
+    $\bm{L}$ (right panel) for the model \code{Om1}.}
+    \label{fig:Om1struct}
+\end{figure}
+In the matrix $\bm{A}$ the first $18$ rows and columns correspond to
+the $18$ random effects ($1$ random effect for each of the $18$ levels
+of this grouping factor).  The next $6$ rows and columns correspond to
+the $6$ random effects for block ($6$ levels and $1$ random effect per
+level). The off-diagonal elements in rows $19$ to $24$ and columns $1$
+to $18$ indicate which plots and blocks are observed simultaneously.
+Because the plot grouping factor is nested within the block grouping
+factor there will be exactly one nonzero in the rows $19$ to $24$ for
+each of the columns $1$ to $18$.
+
+For this model the fixed-effects specification includes indicator
+vectors with systematic zeros.  These appear as systematic zeros in
+rows $27$ and $28$ of $\bm{A}$ and $\bm{L}$.  The statistical analysis
+of model \code{Om1} indicates that the systematic effect of the
+\code{Variety} factor is not significant and we could omit it from the
+model, leaving us with
+<<Om1a>>=
+print(Om1a <- lmer(yield ~ nitro + (1|Block/Variety), Oats), corr = FALSE)
+@
+with matrices $\bm{A}$ and $\bm{L}$ whose patterns are shown in
+Figure~\ref{fig:Om1astruct}.
+<<Om1astruct,fig=TRUE,echo=FALSE,height=3,width=6>>=
+print(image(tcrossprod(Om1a@A), colorkey = FALSE, sub = NULL),
+      split = c(1,1,2,1), more = TRUE)
+print(image(Om1a@L, colorkey = FALSE, sub = NULL), split = c(2,1,2,1))
+@
+\begin{figure}[tbp]
+  \centerline{\includegraphics[width=\textwidth]{Implementation-Om1astruct}}
+  \caption{Structure of the sparse matrices $\bm{A}$ (left panel) and
+    $\bm{L}$ (right panel) for the model \code{Om1a}.}
+    \label{fig:Om1astruct}
+\end{figure}
+
+In Figures~\ref{fig:Om1struct} and \ref{fig:Om1astruct} the pattern in
+$\bm{L}$ is different from that of the lower triangle of $\bm{A}$ but
+only because a permutation has been applied to the rows and columns of
+$\bm{A}^*$ before computing the Cholesky decomposition.  The effect of
+this permutation is to isolate connected blocks of rows and columns
+close to the diagonal.
+
+The isolation of connected blocks close to the diagonal is perhaps
+more obvious when the model multiple random-effects expressions based on
+the same grouping factor.  This construction is used to model
+independent random effects for each level of the grouping factor.
+
+For example, the random effect for the intercept and the random effect
+for the slope in the sleep-study data could reasonably be modeled as
+independent, as in the model
+<<sm2>>=
+print(sm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy), corr = FALSE)
+@
+
+The structures of the matrices $\bm{A}$ and $\bm{L}$ for this model are
+shown in Figure~\ref{fig:sm2struct}.
+<<sm2struct,fig=TRUE,echo=FALSE,height=3,width=6>>=
+print(image(tcrossprod(sm2@A), colorkey = FALSE, sub = NULL),
+      split = c(1,1,2,1), more = TRUE)
+print(image(sm2@L, colorkey = FALSE, sub = NULL), split = c(2,1,2,1))
+@
+\begin{figure}[tbp]
+  \centerline{\includegraphics[width=\textwidth]{Implementation-sm2struct}}
+  \caption{Structure of the sparse matrices $\bm{A}$ (left panel) and
+    $\bm{L}$ (right panel) for the model \code{sm2}.}
+    \label{fig:sm2struct}
+\end{figure}
+
+The first $18$ elements of $\bm{b}$ are the random effects for the
+intercept for each of the $18$ subjects followed by the random effects
+for the slopes for each of the $18$ subjects.  The (0-based)
+permutation vector applied to the rows and columns of $\bm{A}^*$
+before taking the decomposition is
+<<sm2perm>>=
+str(sm2@L@perm)
+@
+This means that, in the 1-based indexing system used in R, the
+permutation will pair up the first and $19$th rows and columns, the $2$nd and
+$20$th rows and columns, etc. resulting in the pattern for $\bm{L}$
+shown in Figure~\ref{fig:sm2struct}
+
+Figure~\ref{fig:Oatsxy} indicates that the slope of yield versus
+nitrogen concentration may depend on the block but not the plot within
+the block.  We can fit such a model as
+<<Om2>>=
+print(Om2 <- lmer(yield ~ nitro + (1|Variety:Block) + (nitro|Block), Oats), corr = FALSE)
+@
+The structures of the matrices $\bm{A}$ and $\bm{L}$ for this
+model are shown in Figure~\ref{fig:Om2struct}.
+<<Om2struct,fig=TRUE,echo=FALSE,height=3,width=6>>=
+print(image(tcrossprod(Om2@A), colorkey = FALSE, sub = NULL),
+      split = c(1,1,2,1), more = TRUE)
+print(image(Om2@L, colorkey = FALSE, sub = NULL),
+      split = c(2,1,2,1))
+@
+\begin{figure}[tbp]
+  \centerline{\includegraphics[width=\textwidth]{Implementation-Om2struct}}
+  \caption{Structure of the sparse matrices $\bm{A}$ (left panel) and
+    $\bm{L}$ (right panel) for the model \code{Om2}.}
+    \label{fig:Om2struct}
+\end{figure}
+
+We see that the only difference in the structure of the $\bm{A}$
+matrices from models \code{Om1a} and \code{Om2} is that rows and
+columns $19$ to $24$ from model \code{Om1a} have been replicated.
+Thus the $1\times 1$ blocks on the diagonal of $\bm{A}$ in positions
+$19$ to $24$ for model \code{Om1a} become $2\times 2$ blocks in
+model \code{Om2}.
+
+This replication of rows associated with levels of the \code{Block}
+factor carries over to the matrix $\bm{L}$.
+
+The property of being nested or not is often attributed to random
+effects.  In fact, nesting is a property of the grouping factors with
+whose levels the random effects are associated.  In both models
+\code{Om1a} and \code{Om2} the \code{Variety:Block} factor is nested
+within \code{Block}.  If the grouping factors in the random effects
+terms in a model form a nested sequence then the matrix $\bm{A}^*$ and
+its Cholesky decomposition $\bm{L}$ will have the property that the
+number of nonzeros in $\bm{L}$ is the same as the number of nonzeros
+in the lower triangle of $\bm{A}^*$.  That is, there will be no
+``fill-in'' generating new nonzero positions when forming the Cholesky
+decomposition.
+
+To check this we can examine the number of nonzero elements in
+$\bm{A}$ and $\bm{L}$ for these models.  Because the matrix $\bm{A}$
+is stored as a symmetric matrix with only the non-redundant elements
+being stored explicitly, the number of stored nonzeros in these two
+matrices are identical.
+<<Om2ALsize>>=
+length(tcrossprod(Om2@A)@x)
+length(Om2@L@x)
+@
+
+\section{Non-nested grouping factors}
+\label{sec:non-nested}
+
+When grouping factors are not nested they are said to be ``crossed''.
+Sometimes we will distinguish between \code{partially crossed}
+grouping factors and \code{completely crossed} grouping factors.  When
+two grouping factors are completely crossed, every level of the first
+factor occurs at least once with every level of the second factor -
+creating matrices $\bm{A}$ and $\bm{L}$ with dense off-diagonal blocks.
+
+In observational studies it is more common to encounter partially
+crossed grouping factors.  For example, the \code{ScotsSec} data in
+the \code{mlmRev} package provides the attainment scores of 3435
+students in Scottish secondary schools as well as some demographic
+information on the students and an indicator of which secondary school
+and which primary school the student attended.
+<<ScotsSec>>=
+str(ScotsSec)
+@
+
+If we use both \code{primary} and \code{second} as grouping factors
+for random effects in a model the only possibility for these factors
+to form a nested sequence is to have \code{primary} nested within
+\code{second} (because there are 148 levels of \code{primary} and 19 levels
+of \code{second}).  We could check if these are nested by doing a
+cross-tabulation of these factors but it is easier to fit an initial model
+<<Sm1>>=
+print(Sm1 <- lmer(attain ~ verbal * sex + (1|primary) + (1|second), ScotsSec), corr = FALSE)
+@
+and examine the \code{"nest"} element of the \code{dims} slot.
+<<Sm1dims>>=
+Sm1@dims
+@
+We see that these grouping factors are not nested.  That is, some of
+the elementary schools sent students to more than one secondary school.
+
+Now that we know the answer we can confirm it by checking the first
+few rows of the cross-tabulation
+<<Scotscrosstab>>=
+head(xtabs(~ primary + second, ScotsSec))
+@
+We see that primary schools 1, 4 and 6 each occurred with multiple secondary schools.
+
+For non-nested grouping factors like these, the structure of $\bm{A}$
+and $\bm{L}$, shown in Figure~\ref{fig:Sm1struct}
+<<Sm1struct,fig=TRUE,echo=FALSE,height=3,width=6>>=
+print(image(tcrossprod(Sm1@A), colorkey = FALSE, sub = NULL),
+      split = c(1,1,2,1), more = TRUE)
+print(image(Sm1@L, colorkey = FALSE, sub = NULL), split = c(2,1,2,1))
+@
+\begin{figure}[tbp]
+  \centerline{\includegraphics[width=\textwidth]{Implementation-Sm1struct}}
+  \caption{Structure of the sparse matrices $\bm{A}$ (left panel) and
+    $\bm{L}$ (right panel) for the model \code{Sm1}.}
+    \label{fig:Sm1struct}
+\end{figure}
+is more complex than for nested grouping factors.  The matrix $\bm{A}$
+has a $148\times 148$ diagonal block in the upper left, corresponding
+the the $148$ levels of the \code{primary} factor, followed on the
+diagonal by a $19\times 19$ diagonal block corresponding to the $19$
+levels of the \code{second} factor.  However, the off-diagonal block
+in rows $149$ to $167$ and columns $1$ to $148$ does not have a simple
+structure. There is an indication of three groups of primary and
+secondary schools but even those groups are not exclusive.
+
+With non-nested grouping factors such as these there can be fill-in.
+That is, the number of nonzeros in $\bm{L}$ is greater than the number
+of non-redundant nonzeros in $\bm{A}$.
+<<Sm1fill>>=
+c(A = length(tcrossprod(Sm1@A)@x), L = length(Sm1@L@x))
+@
+The permutation applied to the rows and columns of $\bm{A}$ is a
+``fill-reducing'' permutation chosen to reduce the amount of fill-in
+during the Cholesky decomposition.  The approximate minimal degree
+(AMD) algorithm \citep{davis06:csparse_book} is used to select this
+permutation when non-nested grouping factors are detected.  It is
+followed by a ``post-ordering'' permutation that isolates connected
+blocks on the diagonal.
+
+
+\section{Structure of $\bm{\Sigma}$ and $\bm{Z}$}
+\label{sec:role-group-fact}
+
+The columns of $\bm{Z}$ and the rows and columns of $\bm{\Sigma}$ are
+associated with the levels of one or more grouping factors in the
+data.  For example, a common application of linear mixed models is the
+analysis of students' scores on the annual state-wide performance
+tests mandated by the No Child Left Behind Act.  A given score is
+associated with a student, a teacher, a school and a school district.
+These could all be grouping factors in a model.
+
+We write the grouping factors as $\bm{f}_i,i=1,\dots k$.  The number
+of levels of the $i$th factor, $\bm{f}_i$, is $n_i$ and the number of
+random effects associated with each level is $q_i$.  For example, if
+$\bm{f}_1$ is ``student'' then $n_1$ is the number of students in the
+study.  If we have a simple additive random effect for each student
+then $q_1=1$.  If we have a random effect for both the intercept and
+the slope with respect to time for each student then $q_1=2$.  The
+$q_i,i=1,\dots,k$ are typically very small whereas the
+$n_i,i=1,\dots,k$ can be very large.
+
+In the statistical model we assume that random effects associated with
+different grouping factors are independent, which implies that
+$\bm{\Sigma}$ is block diagonal with $k$ diagonal blocks of sizes $n_i
+q_i\times n_i q_i, i = 1,\dots,k$.  That is
+\begin{equation}
+  \label{eq:blockDiag}
+  \bm{\Sigma}=
+  \begin{bmatrix}
+    \bm{\Sigma}_1 & \bm{0} & \hdots & \bm{0}\\
+    \bm{0} & \bm{\Sigma}_2 & \hdots & \bm{0}\\
+    \vdots & \vdots        & \ddots & \vdots \\
+    \bm{0} & \bm{0}        & \hdots & \bm{\Sigma}_k
+  \end{bmatrix}
+\end{equation}
+Furthermore, random effects associated
+with different levels of the same grouping factor are assumed to be
+independent and identically distributed, which implies that
+$\bm{\Sigma}_i$ is itself block diagonal in $n_i$ blocks and that each
+of these blocks is a copy of a $q_i\times q_i$ matrix
+$\tilde{\bm{\Sigma}}_i$.  That is
+\begin{equation}
+  \label{eq:blockblock}
+  \bm{\Sigma}_i=
+    \begin{bmatrix}
+    \tilde{\bm{\Sigma}}_i & \bm{0}     & \hdots & \bm{0}\\
+    \bm{0}     & \tilde{\bm{\Sigma}}_i  & \hdots & \bm{0}\\
+    \vdots    & \vdots    & \ddots & \vdots\\
+    \bm{0}     & \bm{0}     & \hdots & \tilde{\bm{\Sigma}}_i
+  \end{bmatrix}=
+  \bm{I}_{n_i}\otimes\tilde{\bm{\Sigma}}_i\quad i=1,\dots,k
+\end{equation}
+where $\otimes$ denotes the Kronecker product.
+
+The condition that $\bm{\Sigma}$ is positive semi-definite holds if
+and only if the $\tilde{\bm{\Sigma}}_i,i=1,\dots,k$  are positive
+semi-definite.  To ensure that the $\tilde{\bm{\Sigma}}_i$ are
+positive semi-definite, we express them as
+\begin{equation}
+  \label{eq:STinner}
+  \tilde{\bm{\Sigma}}_i=
+  \tilde{\bm{T}}_i\tilde{\bm{S}}_i\tilde{\bm{S}}_i\tilde{\bm{T}}_i\trans,\quad
+  i=1,\dots,k
+\end{equation}
+where $\tilde{\bm{T}}_i$ is a $q_i\times q_i$ unit lower-triangular
+matrix (i.e. all the elements above the diagonal are zero and all the
+diagonal elements are unity) and $\tilde{\bm{S}}_i$ is a $q_i\times
+q_i$ diagonal matrix with non-negative elements on the diagonal.
+
+This is the ``LDL'' form of the Cholesky decomposition of positive
+semi-definite matrices except that we express the diagonal matrix
+$\bm{D}$, which is on the variance scale, as the square of the
+diagonal matrix $\bm{S}$, which is on the standard deviation scale.
+The profiled deviance behaves more like a quadratic on the standard
+deviation scale than it does on the variance scale so the use of the
+standard deviation scale enhances convergence.
+
+The $n_i q_i\times n_i q_i$ matrices $\bm{S}_i,\bm{T}_i,\,i=1,\dots,k$
+and the $q\times q$ matrices $\bm{S}$ and $\bm{T}$ are defined
+analogously to (\ref{eq:blockblock}) and (\ref{eq:blockDiag}).  In
+particular,
+\begin{align}
+  \bm{S}_i&=\bm{I}_{n_i}\otimes\tilde{\bm{S}}_i,\quad i=1,\dots,k \\
+  \bm{T}_i&=\bm{I}_{n_i}\otimes\tilde{\bm{T}}_i,\quad i=1,\dots,k
+\end{align}
+
+Note that when $q_i=1$, $\tilde{\bm{T}}_i=\bm{I}$ and hence
+$\bm{T}_i=\bm{I}$.  Furthermore, $\bm{S}_i$ is a multiple of the
+identity matrix in this case.
+
+The parameter vector $\bm{\theta}_i,i=1,\dots,k$ consists of the $q_i$
+diagonal elements of $\tilde{\bm{S}}_i$, which are constrained to be
+non-negative, followed by the $q_i(q_i-1)/2$ elements in the strict
+lower triangle of $\tilde{\bm{T}}_i$ (in column-major ordering).
+These last $q_i(q_i-1)/2$ elements are unconstrained.  The
+$\bm{\theta}_i$ are combined as
+\begin{displaymath}
+  \bm{\theta}=
+  \begin{bmatrix}
+    \bm{\theta}_1 \\ \bm{\theta}_2 \\ \vdots \\ \bm{\theta}_k
+  \end{bmatrix} .
+\end{displaymath}
+Each of the $q\times q$ matrices $\bm{S}$, $\bm{T}$ and $\bm{\Sigma}$
+in the decomposition $\bm{\Sigma}=\bm{T}\bm{S}\bm{S}\bm{T}\trans$ is a
+function of $\bm{\theta}$.
+
+As a unit triangular matrix $\bm{T}$ is non-singular.  That is,
+$\bm{T}^{-1}$ exists and is easily calculated from the
+$\tilde{\bm{T}}_i^{-1},i=1,\dots,k$.  When $\bm{\theta}$ is not on the
+boundary defined by the constraints, $\bm{S}$ is a
+diagonal matrix with strictly positive elements on the diagonal,
+which implies that $\bm{S}^{-1}$ exists and that
+$\bm{\Sigma}$ is non-singular with
+$\bm{\Sigma}^{-1}=\bm{T}\invtrans\bm{S}^{-1}\bm{S}^{-1}\bm{T}^{-1}$.
+
+When $\bm{\theta}$ is on the boundary the matrices $\bm{S}$
+and $\bm{\Sigma}$ exist but are not invertible.  We say that
+$\bm{\Sigma}$ is a \emph{degenerate} variance-covariance matrix in the
+sense that one or more linear combinations of the vector $\bm{b}$ are
+defined to have zero variance.  That is, the distribution of these
+linear combinations is a point mass at 0.
+
+The maximum likelihood estimates of $\bm{\theta}$ (or the restricted
+maximum likelihood estimates, defined below) can be located on the
+boundary.  That is, they can correspond to a degenerate
+variance-covariance matrix and we must be careful to allow for this
+case.  However, to begin we consider the non-degenerate case.
+
+\section{Methods for non-singular $\bm{\Sigma}$}
+\label{sec:non-singular}
+
+When $\bm{\theta}$ is not on the boundary we can define a
+standardized random effects vector
+\begin{equation}
+  \label{eq:bstar}
+  \bm{b}^*=\bm{S}^{-1}\bm{T}^{-1}\bm{b}
+\end{equation}
+with the properties
+\begin{align}
+  \mathsf{E}[\bm{b}^*]&=\bm{S}^{-1}\bm{T}^{-1}\mathsf{E}[\bm{b}]\\
+  \mathsf{Var}[\bm{b}^*]=\bm{0}&
+  \begin{aligned}[t]
+    &=\mathsf{E}[\bm{b}^*{\bm{b}^*}\trans]\\
+    &=\bm{S}^{-1}\bm{T}^{-1}\mathsf{Var}[\bm{b}]\bm{T}\invtrans\bm{S}^{-1}\\
+    &=\sigma^2\bm{S}^{-1}\bm{T}^{-1}\bm{\Sigma}\bm{T}\invtrans\bm{S}^{-1}\\
+    &=\sigma^2\bm{S}^{-1}\bm{T}^{-1}\bm{T}\bm{S}\bm{S}\bm{T}\trans\bm{T}\invtrans\bm{S}^{-1}\\
+    &=\sigma^2\bm{I}.
+  \end{aligned}
+\end{align}
+Thus, the unconditional distribution of the $q$ elements of
+$\bm{b}^*$ is
+$\bm{b}^*\sim\mathcal{N}\left(\bm{0},\sigma^2\bm{I}\right)$, like that
+of the $n$ elements of $\bm{\epsilon}$.
+
+Obviously the transformation from $\bm{b}^*$ to $\bm{b}$ is
+\begin{equation}
+  \label{eq:bstarb}
+  \bm{b}=\bm{T}\bm{S}\bm{b}^*
+\end{equation}
+and the $n\times q$ model matrix for $\bm{b}^*$ is
+\begin{equation}
+  \label{eq:Zstar}
+  \bm{Z}^*=\bm{Z}\bm{T}\bm{S}
+\end{equation}
+so that
+\begin{equation}
+  \label{eq:Zb}
+  \bm{Z}^*\bm{b}^*=\bm{Z}\bm{T}\bm{S}\bm{S}^{-1}\bm{T}^{-1}\bm{b}=\bm{Z}\bm{b} .
+\end{equation}
+
+Notice that $\bm{Z}^*$ can be evaluated even when
+$\bm{\theta}$ is on the boundary.  Also, if we have a value of
+$\bm{b}^*$ in such a case, we can evaluated $\bm{b}$ from $\bm{b}^*$.
+
+Given the data $\bm{y}$ and values of $\bm{\theta}$ and $\bm{\beta}$,
+the mode of the conditional distribution of $\bm{b}^*$ is the solution
+to a penalized least squares problem
+\begin{equation}
+  \label{eq:bstarmode}
+  \begin{split}
+    \tilde{\bm{b}}^*(\bm{\theta},\bm{\beta}|\bm{y})&=
+    \arg\min_{\bm{b}^*} \left[
+    \left\|\bm{y}-\bm{X}\bm{\beta}-\bm{Z}^*\bm{b}^*\right\|^2
+    +{\bm{b}^*}\trans\bm{b}^*\right]\\
+    &=
+    \arg\min_{\bm{b}^*}
+    \left\|
+      \begin{bmatrix}
+        \bm{y}\\
+        \bm{0}
+      \end{bmatrix} -
+      \begin{bmatrix}
+        \bm{Z}^* & \bm{X}\\
+        \bm{I}   & \bm{0}
+      \end{bmatrix}
+      \begin{bmatrix}
+        \bm{b}^*\\
+        \bm{\beta}
+      \end{bmatrix}
+      \right\|^2 .
+  \end{split}
+\end{equation}
+In fact, if we optimize the penalized least squares expression in
+(\ref{eq:bstarmode}) with respect to both $\bm{b}$ and $\bm{\beta}$ we
+obtain the conditional estimates
+$\widehat{\bm{\beta}}(\bm{\theta}|\bm{y})$ and the conditional modes
+$\tilde{\bm{b}}^*(\bm{\theta},\widehat{\bm{\beta}}(\bm{\theta})|\bm{y}))$
+which we write as $\widehat{\bm{b}}^*(\bm{\theta})$.  That is,
+\begin{equation}
+  \label{eq:bstarbeta}
+  \begin{split}
+    \begin{bmatrix}
+      \widehat{\bm{b}^*}(\bm{\theta})\\
+      \widehat{\bm{\beta}}(\bm{\theta})
+    \end{bmatrix} & =
+    \arg\min_{\bm{b}^*,\bm{\beta}}
+    \left\|
+      \begin{bmatrix}
+        \bm{Z}^* & \bm{X} & -\bm{y}\\
+        \bm{I}   & \bm{0} &  \bm{0}
+      \end{bmatrix}
+      \begin{bmatrix}
+        \bm{b}^*\\
+        \bm{\beta}\\
+        1
+      \end{bmatrix}
+    \right\|^2\\
+     & =
+    \arg\min_{\bm{b}^*,\bm{\beta}}
+    \begin{bmatrix}
+      \bm{b}^*\\
+      \bm{\beta}\\
+      1
+    \end{bmatrix}\trans
+    \bm{A}^*(\bm{\theta})
+    \begin{bmatrix}
+      \bm{b}^*\\
+      \bm{\beta}\\
+      1
+    \end{bmatrix}
+  \end{split}
+\end{equation}
+where the matrix $\bm{A}^*(\bm{\theta})$ is as shown in (\ref{eq:Astar})
+and
+\begin{equation}
+  \label{eq:Amatrix}
+  \bm{A}=
+  \begin{bmatrix}
+    \bm{Z}\trans\bm{Z} & \bm{Z}\trans\bm{X} & -\bm{Z}\trans\bm{y} \\
+    \bm{X}\trans\bm{Z} & \bm{X}\trans\bm{X} & -\bm{X}\trans\bm{y} \\
+    -\bm{y}\trans\bm{Z} & -\bm{y}\trans\bm{X} & \bm{y}\trans\bm{y} \\
+  \end{bmatrix} .
+\end{equation}
+Note that $\bm{A}$ does not depend upon $\bm{\theta}$.  Furthermore,
+the nature of the model matrices $\bm{Z}$ and $\bm{X}$ ensures that
+the pattern of nonzeros in $\bm{A}^*(\bm{\theta})$ is the same as that
+in $\bm{A}$.
+
+Let the $q\times q$ permutation matrix $\bm{P}_Z$ represent a
+fill-reducing permutation for $\bm{Z}\trans\bm{Z}$ and $\bm{P}_X$, of
+size $p\times p$, represent a fill-reducing permutation for
+$\bm{X}\trans\bm{X}$.  These could be determined, for example, using
+the \emph{approximate minimal degree} (AMD) algorithm described in
+\citet{davis06:csparse_book} and \citet{Davis:1996} and implemented in
+both the \texttt{\small Csparse} \citep{Csparse} and the
+\texttt{\small CHOLMOD} \citep{Cholmod} libraries of C functions.  (In
+many cases $\bm{X}\trans\bm{X}$ is dense, but of small dimension
+compared to $\bm{Z}\trans\bm{Z}$, and $\bm{Z}\trans\bm{X}$ is nearly
+dense so $\bm{P}_X$ can be $\bm{I}_p$, the $p\times p$ identity
+matrix.)
+
+Let the permutation matrix $\bm{P}$ be
+\begin{equation}
+  \label{eq:fillPerm}
+  \bm{P}=
+  \begin{bmatrix}
+    \bm{P}_Z & \bm{0} & \bm{0} \\
+    \bm{0} & \bm{P}_X & \bm{0} \\
+    \bm{0} & \bm{0} & 1
+  \end{bmatrix}
+\end{equation}
+and $\bm{L}(\bm{\theta})$ be the sparse Cholesky decomposition of
+$\bm{A}^*(\bm{\theta})$ relative to this permutation.  That
+is, $\bm{L}(\bm{\theta})$ is a sparse lower triangular matrix with the
+property that
+\begin{equation}
+  \label{eq:Lmat}
+  \bm{L}(\bm{\theta})\bm{L}(\bm{\theta})\trans=
+  \bm{P}\bm{A}^*(\bm{\theta})\bm{P}\trans
+\end{equation}
+
+For $\bm{L}(\bm{\theta})$ to exist we must ensure that
+$\bm{A}^*(\bm{\theta})$ is positive definite.  Examination of
+(\ref{eq:bstarbeta}) shows that
+this will be true if
+$\bm{X}$ is of full column rank and $\bm{y}$ does not lie in the
+column span of $\bm{X}$ (or, in statistical terms, if we can't fit
+$\bm{y}$ perfectly using only the fixed effects).
+
+Let $r>0$ be the last element on the diagonal of $\bm{L}$.  Then the
+minumum penalized residual sum of squares in (\ref{eq:bstarbeta}) is
+$r^2$ and it occurs at $\widehat{\bm{b}^*}(\bm{\theta})$ and
+$\hat{\beta}(\bm{\theta})$, the solutions to the sparse triangular system
+\begin{equation}
+  \label{eq:soln}
+  \bm{L}(\bm{\theta})\trans\bm{P}
+  \begin{bmatrix}
+    \widehat{\bm{b}^*}(\bm{\theta})\\
+    \widehat{\bm{\beta}}(\bm{\theta})\\
+    1
+  \end{bmatrix}=
+  \begin{bmatrix}
+    \bm{0}\\
+    \bm{0}\\
+    r
+  \end{bmatrix}
+\end{equation}
+(Technically we should not write the $1$ in the solution; it should be
+an unknown.  However, for $\bm{L}$ lower triangular with $r$ as the last
+element on the diagonal and $\bm{P}$ a permutation that does not move
+the last row, the solution for this ``unknown'' will always be $1$.)
+Furthermore, $\log|{\bm{Z}^*}\trans\bm{Z}+\bm{I}|$ can be evaluated as
+the sum of the logarithms of the first $q$ diagonal elements of
+$\bm{L}(\bm{\theta})$.
+
+The \emph{profiled deviance function},
+$\tilde{\mathcal{D}}(\bm{\theta})$, which is negative twice the
+log-likelihood of model (\ref{eq:lmm}) evaluated at
+$\bm{\Sigma}(\bm{\theta})$, $\widehat{\bm{\beta}}(\bm{\theta})$ and
+$\hat{\sigma}^2(\bm{\theta})$, can be expressed as
+\begin{equation}
+  \label{eq:dtheta}
+  \tilde{\mathcal{D}}(\bm{\theta})=
+  \log\left|{\bm{Z}^*}\trans\bm{Z}^*+\bm{I}\right|+
+  n\left(1+\log\frac{2\pi r^2}{n}\right) .
+\end{equation}
+
+Notice that it is not necessary to solve for
+$\widehat{\bm{\beta}}(\bm{\theta})$ or $\widehat{\bm{b}}^*(\bm{\theta})$
+or $\widehat{\bm{b}}(\bm{\theta})$ to be able to evaluate
+$d(\bm{\theta})$.  All that is needed is to update $\bm{A}$ to form
+$\bm{A}^*$ from which the sparse Cholesky decomposition
+$\bm{L}(\bm{\theta})$ can be calculated and
+$\tilde{\mathcal{D}}(\bm{\theta})$ evaluated.
+
+Once $\hat{\bm{\theta}}$ is determined we can solve for
+$\widehat{\bm{\beta}}(\hat{\bm{\theta}})$
+and $\widehat{\bm{b}}^*(\bm{\theta})$ using (\ref{eq:soln}) and for
+\begin{equation}
+  \label{eq:3}
+  \widehat{\sigma}^2(\hat{\bm{\theta}})=\frac{r^2(\hat{\bm{\theta}})}{n} .
+\end{equation}
+Furthermore,
+$\widehat{\bm{b}}(\hat{\bm{\theta}})=
+\bm{S}\bm{T}\widehat{\bm{b}}^*(\hat{\bm{\theta}})$.
+
+\section{Methods for singular $\bm{\Sigma}$}
+\label{sec:singular}
+
+When $\bm{\theta}$ is on the boundary, corresponding to a singular
+$\bm{\Sigma}$, some of the columns of $\bm{Z}^*$ are zero.  However,
+the matrix $\bm{A}^*$ is non-singular and elements of $\bm{b}^*$
+corresponding to the zeroed columns in $\bm{Z}^*$ approach zero
+smoothly as $\bm{\theta}$ approaches the boundary.  Thus
+$r(\bm{\theta})$ and $\left|{\bm{Z}^*}\trans\bm{Z}+\bm{I}\right|$ are
+well-defined, as are $\tilde{\mathcal{D}}(\bm{\theta})$ and the
+conditional modes $\widehat{\bm{b}}(\bm{\theta})$.
+
+In other words, (\ref{eq:Astar}) and (\ref{eq:Lmat}) can be used to
+define $\tilde{\mathcal{D}}(\bm{\theta})$ whether or not $\bm{\theta}$
+is on the boundary.
+
+\section{REML estimates}
+\label{sec:reml-estimates}
+
+It is common to estimate the per-observation noise variance $\sigma^2$
+in a fixed-effects linear model as $\hat{\sigma}^2=r^2/(n-p)$ where
+$r^2$ is the (unpenalized) residual sum-of-squares, $n$ is the number
+of observations and $p$ is the number of fixed-effects parameters.
+This is not the maximum likelihood estimate of $\sigma^2$, which is
+$r^2/n$.  It is the ``restricted'' or ``residual'' maximum likelihood
+(REML) estimate, which takes into account that the residual vector
+$\bm{y}-\hat{\bm{y}}$ is constrained to a linear subspace of dimension
+$n-p$ in the response space.  Thus its squared length,
+$\left\|\bm{y}-\hat{\bm{y}}\right\|^2=r^2$, has only $n-p$
+\emph{degrees of freedom} associated with it.
+
+The profiled REML deviance for a linear mixed model can be expressed as
+\begin{equation}
+  \label{eq:REMLdev}
+  \tilde{\mathcal{D}}_R(\bm{\theta})=
+  \log\left|{\bm{Z}^*}\trans\bm{Z}^*+\bm{I}\right|+
+  \log\left|\bm{L}_{\bm{X}}\right|^2+
+  (n-p)\left(1+\log\frac{2\pi r^2}{n-p}\right) .
+\end{equation}
+
+\section{Generalized linear mixed models}
+\label{sec:GLMMs}
+
+\subsection{Generalized linear models}
+\label{sec:gener-line-models}
+
+As described in \citet{mccullagh89:_gener_linear_model}, a generalized
+linear model is a statistical model in which the \emph{linear
+  predictor} for the $i$th response, $\eta_i=\bm{x}_i\bm{\beta}$ where
+$\bm{x}_i$ is the $i$th row of the $n\times p$ model matrix $\bm{X}$ derived
+from the form of the model and the values of any covariates, is
+related to the \emph{expected value of the response}, $\mu_i$, through
+an invertible \emph{link function}, $g$.  That is
+\begin{equation}
+  \label{eq:glmlink}
+  \bm{x}_i\bm{\beta}=\eta_i=g(\mu_i)\quad i=1,\dots,n
+\end{equation}
+and
+\begin{equation}
+  \label{eq:glmlinkinv}
+  \mu_i=g^{-1}(\eta_i)=g^{-1}(\bm{x}_i\bm{\beta})\quad i=1,\dots,n
+\end{equation}
+
+When the distribution of $y_i$ given $\mu_i$ is from the exponential
+family there exist a \emph{natural} link function for the family
+\citep{mccullagh89:_gener_linear_model}. For a
+binomial response the natural link is the \emph{logit} link defined as
+\begin{equation}
+  \label{eq:logit}
+  \eta_i = g(\mu_i) = \log\left(\frac{\mu_i}{1-\mu_i}\right)\quad i=1,\dots,n
+\end{equation}
+with inverse link
+\begin{equation}
+  \label{eq:logitInv}
+  \mu_i=g^{-1}(\eta_i)=\frac{1}{1+\exp(-\eta_i)}\quad i=1,\dots,n
+\end{equation}
+Because $\mu_i$ is the probability of the $i$th observation being a
+``success'', $\eta_i$ is the log of the odds ratio.
+
+The parameters $\bm{\beta}$ in a generalized linear model are generally
+estimated by \emph{iteratively reweighted least squares} (IRLS).  At
+each iteration in this algorithm the current parameter estimates are
+replaced by the parameter estimates of a weighted least squares fit
+with model matrix $\bm{X}$ to an adjusted dependent variable.  The weights
+and the adjusted dependent variable are calculated from the link function and
+the current parameter values.
+
+\subsection{Generalized linear mixed models}
+\label{sec:gener-line-mixed}
+
+In a generalized linear mixed model (GLMM) the $n$-dimensional vector
+of linear predictors, $\bm{\eta}$, incorporates both fixed effects,
+$\bm{\beta}$, and random effects, $\bm{b}$, as
+\begin{equation}
+  \label{eq:glmmLP}
+  \bm{\eta} = \bm{X}\bm{\beta}+\bm{Z}\bm{b}
+\end{equation}
+where $\bm{X}$ is an $n\times p$ model matrix and $\bm{Z}$ is an $n\times q$
+model matrix.
+
+As for linear mixed models,
+we model the distribution of the random effects as a multivariate
+normal (Gaussian) distribution with mean $\bm{0}$ and $q\times q$
+variance-covariance matrix $\bm{\Sigma}$.  That is,
+\begin{equation}
+  \label{eq:random-effects-dist}
+  \bm{b}\sim\mathcal{N}\left(\bm{0},\bm{\Sigma}(\bm{\theta})\right) .
+\end{equation}
+
+The maximum likelihood estimates $\hat{\bm{\beta}}$ and $\hat{\bm{\theta}}$
+maximize the likelihood of the parameters, $\bm{\beta}$ and $\bm{\theta}$, given
+the observed data, $\bm{y}$.  This likelihood is numerically equivalent to
+the marginal density of $\bm{y}$ given $\bm{\beta}$ and $\bm{\theta}$, which is
+\begin{equation}
+  \label{eq:marginalDens}
+  f(\bm{y}|\bm{\beta},\bm{\theta}) =
+  \int_{\bm{b}}p(\bm{y}|\bm{\beta},\bm{b})f(\bm{b}|\bm{\Sigma}(\bm{\theta}))\,d\bm{b}
+\end{equation}
+where $p(\bm{y}|\bm{\beta},\bm{b})$ is the probability mass function of $\bm{y}$,
+given $\bm{\beta}$ and $\bm{b}$, and $f(\bm{b}|\bm{\Sigma})$ is the (Gaussian)
+probability density at $\bm{b}$.
+
+Unfortunately the integral in (\ref{eq:marginalDens}) does not have a
+closed-form solution when $p(\bm{y}|\bm{\beta},\bm{b})$ is binomial.  However,
+we can approximate this integral quite accurately using a \emph{Laplace}
+approximation.  For given values of $\bm{\beta}$ and $\bm{\theta}$ we
+determine the \emph{conditional modes} of the random effects
+\begin{equation}
+  \label{eq:conditionalmodes}
+  \tilde{\bm{b}}(\bm{\beta},\bm{\theta})=
+  \arg\max_{\bm{b}}p(\bm{y}|\bm{\beta},\bm{b})f(\bm{b}|\bm{\Sigma}(\bm{\theta})) ,
+\end{equation}
+which are the values of the random effects that maximize the
+conditional density of the random effects given the data and the model
+parameters.  The conditional modes can be determined by a penalized
+iteratively reweighted least squares algorithm (PIRLS, see
+\S\ref{sec:deta-pirls-algor}) where the contribution of the fixed
+effects parameters, $\bm{\beta}$, is incorporated as an offset,
+$\bm{X}\bm{\beta}$, and the contribution of the variance components,
+$\bm{\theta}$, is incorporated as a penalty term in the weighted least
+squares fit.
+
+At the conditional modes, $\tilde{\bm{b}}$, we evaluate the second order
+Taylor series approximation to the log of the integrand (i.e.{} the log
+of the conditional density of $\bm{b}$) and use its integral as an
+approximation to the likelihood.
+
+It is the Laplace approximation to the likelihood that is optimized to
+obtain approximate values of the mle's for the parameters and the
+corresponding conditional modes of the random effects vector $\bm{b}$.
+
+\subsection{Details of the PIRLS algorithm}
+\label{sec:deta-pirls-algor}
+
+Recall from (\ref{eq:conditionalmodes}) that the conditional modes of
+the random effects $\tilde{\bm{b}}(\bm{\beta},\bm{\theta},\bm{y})$ maximize the
+conditional density of $\bm{b}$ given the data and values of the
+parameters $\bm{\beta}$ and $\bm{\theta}$.  The penalized iteratively
+reweighted least squares (PIRLS) algorithm for determining these
+conditional modes combines characteristic of the iteratively
+reweighted least squares (IRLS) algorithm for generalized linear
+models~\citep[\S2.5]{mccullagh89:_gener_linear_model} and the
+penalized least squares representation of a linear mixed
+model~\citep{bates04:_linear}.
+
+At the $r$th iteration of the IRLS algorithm the current value of the
+vector of random effects. $\bm{b}^{(r)}$ (we use parenthesized
+superscripts to denote the iteration) produces a linear predictor
+\begin{equation}
+  \label{eq:rthLinPred}
+  \bm{\eta}^{(r)}=\bm{X}\bm{\beta}+\bm{Z}\bm{b}^{(r)}
+\end{equation}
+with corresponding mean vector $\bm{\mu}^{(r)}=\bm{g}^{-1}\bm{\eta}^{(r)}$.
+(The vector-valued link and inverse link functions, $\bm{g}$ and
+$\bm{g}^{-1}$, apply the scalar link and inverse link, $g$ and
+$g^{-1}$, componentwise.)
+A vector of weights and a vector of derivatives of the form
+$d\eta/d\mu$ are also evaluated.  For convenience of notation we
+express these as diagonal matrices, $\bm{W}^{(r)}$ and $\bm{G}^{(r)}$,
+although calculations involving these quantities are performed
+component-wise and not as matrices.
+
+The adjusted dependent variate at iteration $r$ is
+\begin{equation}
+  \label{eq:adjdep}
+  \bm{z}^{(r)}=\bm{\eta}^{(r)}+\bm{G}^{(r)}\left(\bm{y}-\bm{\mu}^{(r)}\right)
+\end{equation}
+from which the updated parameter, $\bm{b}^{(r+1)}$, is determined as the
+solution to
+\begin{equation}
+  \label{eq:IRLSupdate}
+  \bm{Z}\trans\bm{W}^{(r)}\bm{Z}\bm{b}^{(r+1)}=\bm{Z}\trans\bm{W}^{(r)}\bm{z}^{(r)} .
+\end{equation}
+
+\citet[\S2.5]{mccullagh89:_gener_linear_model} show that the IRLS
+algorithm is equivalent to the Fisher scoring algorithm for any link
+function and also equivalent to the Newton-Raphson algorithm when the
+link function is the natural link for a probability distribution in
+the exponential family.  That is, IRLS will minimize $-\log
+p(\bm{y}|\bm{\beta},\bm{b})$ for fixed $\bm{\beta}$.  However, we wish to determine
+\begin{equation}
+  \label{eq:conditionalmin}
+  \begin{aligned}
+    \tilde{\bm{b}}(\bm{\beta},\bm{\theta})
+    &= \arg\max_{\bm{b}}p(\bm{y}|\bm{\beta},\bm{b})f(\bm{b}|\bm{\Sigma}(\bm{\theta}))\\
+    &= \arg\min_{\bm{b}}\left[-\log p(\bm{y}|\bm{\beta},\bm{b})
+      +\frac{\bm{b}\trans\bm{\Sigma}^{-1}(\bm{\theta})\bm{b}}{2}\right] .
+  \end{aligned}
+\end{equation}
+As shown in \citet{bate:debr:2004} we can incorporate the
+contribution of the Gaussian distribution by adding $q$
+``pseudo-observations'' with constant unit weights, observed values of
+$0$ and predicted values of $\bm{\Delta}(\bm{\theta})\bm{b}$ where
+$\bm{\Delta}$ is any $q\times q$ matrix such that
+$\bm{\Delta}\trans\bm{\Delta}=\bm{\Sigma}^{-1}(\bm{\theta})$.
+
+Thus the update in the penalized iteratively reweighted least squares
+(PIRLS) algorithm for determining the conditional modes,
+$\tilde{\bm{b}}(\bm{\beta},\bm{\theta},\bm{y})$, expresses $\bm{b}^{(r+1)}$ as the
+solution to the penalized weighted least squares problem
+\begin{equation}
+  \label{eq:PIRLSupdate}
+  \left(\bm{Z}\trans\bm{W}^{(r)}\bm{Z}+\bm{\Sigma}^{-1}\right)\bm{b}^{(r+1)}=
+  \bm{Z}\trans\bm{W}^{(r)}\bm{z}^{(r)} .
+\end{equation}
+or the equivalent problem
+\begin{equation}
+  \label{eq:PIRLSbstarupdate}
+  \left({\bm{Z}^*}\trans\bm{W}^{(r)}\bm{Z}^*+\bm{I}\right){\bm{b}^*}^{(r+1)}=
+  {\bm{Z}^*}\trans\bm{W}^{(r)}\bm{z}^{(r)} .
+\end{equation}
+The sequence of iterates ${\bm{b}^*}^{(0)}, {\bm{b}^*}^{(1)},\dots$ is considered to
+have converged to the conditional modes
+$\tilde{\bm{b}}^*(\bm{\beta},\bm{\theta},\bm{y})$ when the relative change in the
+linear predictors $\|\bm{\eta}^{(r+1)}-\bm{\eta}^{(r)}\|/\|\bm{\eta}^{(r)}\|$
+falls below a threshold. The variance-covariance matrix of $\bm{b}^*$,
+conditional on $\bm{\beta}$ and $\bm{\theta}$, is approximated as
+\begin{equation}
+  \label{eq:varcov}
+  \mathrm{Var}\left(\bm{b}|\bm{\beta},\bm{\theta},\bm{y}\right)\approx\bm{D}\equiv
+  \left({\bm{Z}^*}\trans\bm{W}^{(r)}\bm{Z}^*+\bm{I}\right)^{-1} .
+\end{equation}
+This approximation is analogous to using the inverse of Fisher's
+information matrix as the approximate variance-covariance matrix for
+maximum likelihood estimates.
+
+\subsection{Details of the Laplace approximation}
+\label{sec:deta-lapl-appr}
+
+The Laplace approximation to the likelihood $L(\bm{\beta},\bm{\theta}|\bm{y})$ is
+obtained by replacing the logarithm of the integrand in
+(\ref{eq:marginalDens}) by its second-order Taylor series at the
+conditional maximum, $\tilde{\bm{b}}(\bm{\beta},\bm{\theta})$.  On the scale of
+the deviance (negative twice the log-likelihood) the approximation is
+\begin{equation}
+  \label{eq:LaplaceApprox}
+  \begin{aligned}
+    -2\ell(\bm{\beta},\bm{\theta}|\bm{y})
+    &=-2\log\left\{\int_{\bm{b}}p(\bm{y}|\bm{\beta},\bm{b})f(\bm{b}|\bm{\Sigma}(\bm{\theta}))
+      \,d\bm{b}\right\}\\
+    &\approx 2\log\left\{\int_{\bm{b}}\exp\left\{-\frac{1}{2}
+        \left[d(\bm{\beta},\tilde{\bm{b}},\bm{y})+
+          {\tilde{\bm{b}}}\trans\tilde{\bm{b}}^*+
+          +\bm{b}\trans\bm{D}^{-1}\bm{b}\right]\right\}\,d\bm{b}\right\}\\
+    &=d(\bm{\beta},\tilde{\bm{b}},\bm{y})+{\tilde{\bm{b}}^*}{}\trans\tilde{\bm{b}}^*
+    +\log|\bm{D}|
+  \end{aligned}
+\end{equation}
+where $d(\bm{\beta},\bm{b},\bm{y})$ is the deviance function from the linear
+predictor only.  That is, $d(\bm{\beta},\bm{b},\bm{y})=-2\log p(\bm{y}|\bm{\beta},\bm{b})$.
+This quantity can be evaluated as the sum of the deviance
+residuals~\citep[\S2.4.3]{mccullagh89:_gener_linear_model}.
+
+
+\bibliography{lme4}
+\appendix
+
+\section{Notation}
+\label{app:notation}
+
+\subsection{Random variables}
+\label{sec:randomVariables}
+
+\begin{itemize}
+\item $\emph{Y}$- the $n$-dimensional random variable of
+  responses.  The observed responses are the $n$-vector $\bm y$.
+\item $\emph{B}$ - The $q$-dimensional vector of random effects.  This
+  vector is not observed directly.  It has the properties
+  $\mathsf{E}[\emph{B}]=\bm 0$ and
+  $\mathsf{Var}([\emph{B}])=\sigma^2\bm\Sigma(\bm\theta)$, where the
+  scalar $\sigma$ is the common scale factor (if used in the model)
+  and $\bm\Sigma$ is a $q\times q$ symmetric, positive semi-definite
+  \emph{relative variance-covariance matrix} determined by the
+  variance parameter vector $\bm\theta$.
+\item $\emph{U}$ - a $q$-dimensional \emph{unit} vector of random
+  effects with distribution $\emph{U}\sim\mathcal{N}(\bm
+  0,\sigma^2\bm I_q)$.
+\end{itemize}
+
+\subsection{Dimensions}
+\label{sec:dimensions}
+
+
+\end{document}
