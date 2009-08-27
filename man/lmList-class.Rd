@@ -11,8 +11,8 @@
 \title{Class "lmList"}
 \description{A list of objects of class \code{lm} with a common model.}
 \section{Objects from the Class}{
-  Objects can be created by calls of the form \code{new("lmList", ...)
-    or, more commonly, by a call to \code{\link{lmList}}}.
+  Objects can be created by calls of the form \code{new("lmList", ...)}
+  or, more commonly, by a call to \code{\link{lmList}}.
 }
 \section{Slots}{
   \describe{
