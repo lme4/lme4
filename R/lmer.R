@@ -264,7 +264,7 @@ devNames <- c("ML", "REML", "ldL2", "ldRX2", "sigmaML",
 ##' the formula and the model frame.
 ##'
 ##' @param formula model formula
-##' @param mf model frame
+##' @param fr: list with '$mf': model frame; '$X': .. matrix
 ##' @param rmInt logical scalar - should the `(Intercept)` column
 ##'        be removed before creating Zt
 ##' @param drop logical scalar indicating if elements with numeric
@@ -631,12 +631,17 @@ lmer <-
 
     fr <- lmerFrames(mc, formula, contrasts) # model frame, X, etc.
     FL <- lmerFactorList(formula, fr, 0L, 0L) # flist, Zt, dims
-    if (!is.null(method <- list(...)$method)) {
+    largs <- list(...)
+    if (!is.null(method <- largs$method)) {
         warning(paste("Argument", sQuote("method"),
                       "is deprecated.  Use", sQuote("REML"),
                       "instead"))
         REML <- match.arg(method, c("REML", "ML")) == "REML"
+        largs <- largs[names(largs) != "method"]
     }
+    if(length(largs))
+	warning("the following '...' arguments have  *not* been used: ",
+		sub("^list", "", deparse(largs, control=NULL)))
     ans <- list(fr = fr, FL = FL, start = start, REML = REML, verbose = verbose)
     if (doFit) {
         ans <- do.call(lmer_finalize, ans)
