@@ -855,6 +855,8 @@ coef.mer <- function(object, ...)
 }
 
 setMethod("coef", signature(object = "mer"), coef.mer)
+setMethod("coef", signature(object = "summary.mer"),
+          function(object, ...) object@coefs)
 ## questionable whether this should be added
 #setMethod("coefficients", signature(object = "mer"), coef.mer)
 
