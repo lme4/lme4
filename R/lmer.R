@@ -642,6 +642,10 @@ lmer <-
     if(length(largs))
 	warning("the following '...' arguments have  *not* been used: ",
 		sub("^list", "", deparse(largs, control=NULL)))
+### FIXME: issue a warning if the control argument has an msVerbose component
+    cv <- do.call(lmerControl, control)
+    if (missing(verbose)) verbose <- cv$msVerbose
+### FIXME: this still ignores the other control arguments
     ans <- list(fr = fr, FL = FL, start = start, REML = REML, verbose = verbose)
     if (doFit) {
         ans <- do.call(lmer_finalize, ans)
