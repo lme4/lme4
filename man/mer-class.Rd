@@ -9,6 +9,7 @@
 % Methods
 \alias{anova,mer-method}
 \alias{coef,mer-method}
+\alias{coef,summary.mer-method}
 \alias{coerce,mer,dtCMatrix-method}
 %\alias{confint,mer-method}
 \alias{deviance,mer-method}
