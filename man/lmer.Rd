@@ -86,11 +86,11 @@ nlmer(formula, data, start = NULL, verbose = FALSE, nAGQ = 1,
   If \code{lmer} is called with a non-default \code{family} argument the
   call is replaced by a call to \code{glmer} with the current arguments.
   If \code{glmer} is called with the default \code{family}, namely the
-  \code{\link[stats]{gaussian}} family with the identity link, then the call is
-  replaced by a call to \code{lmer} with the current arguments.  (They
-  are described as \dQuote{nearly} interchangeable because the
-  \code{REML} argument only applies to calls to \code{lmer} and the
-  \code{nAGQ} argument only applies to calls to \code{glmer}.)
+  \code{\link[stats:family]{gaussian}} family with the identity link,
+  then the call is replaced by a call to \code{lmer} with the current
+  arguments.  (They are described as \dQuote{nearly} interchangeable
+  because the \code{REML} argument only applies to calls to \code{lmer}
+  and the \code{nAGQ} argument only applies to calls to \code{glmer}.)
 
   Additional standard arguments to model-fitting functions can be passed
   to \code{lmer} or \code{glmer} or \code{nlmer}:

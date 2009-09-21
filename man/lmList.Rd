@@ -48,7 +48,7 @@ lmList(formula, data, family, subset, weights,
   defined by the grouping factor.
 }
 \seealso{
-\code{\link[base:lm]{lm}}
+\code{\link[stats]{lm}}
 }
 \examples{
 (fm1 <- lmList(Reaction ~ Days | Subject, sleepstudy))

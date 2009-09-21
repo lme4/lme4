@@ -62,7 +62,7 @@ ranef(object, \dots)
 }
 \note{
   To produce a \dQuote{caterpillar plot} of the random effects apply
-  \code{\link[lattice]{dotplot}} to the result of a call to \code{ranef}
+  \code{\link[lattice:xyplot]{dotplot}} to the result of a call to \code{ranef}
   with \code{postVar = TRUE}.
 }
 \examples{

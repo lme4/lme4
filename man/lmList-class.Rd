@@ -37,9 +37,9 @@ Class \code{"vector"}, by class "list".
       used when creating the lmList object.}
     \item{confint}{\code{signature(object = "lmList")}: confidence
       intervals for the fitted linear models.}
-    \item{\link[methods:show]{show}}{\code{signature(object =
+    \item{\link[methods]{show}}{\code{signature(object =
 	"lmList")}: show the object.}
-    \item{\link[base:update]{update}}{\code{signature(object =
+    \item{\link[stats]{update}}{\code{signature(object =
 	"lmList")}: update the fit.}
     
   }

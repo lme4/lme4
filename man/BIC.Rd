@@ -19,8 +19,8 @@ BIC(object, \dots)
 }
 \arguments{
   \item{object}{An object of a suitable class for the BIC to be
-    calculated - usually a \code{\link[base]{logLik}} object
-    created by a call to the \code{\link[base]{logLik}} generic.
+    calculated - usually a \code{\link[stats]{logLik}} object
+    created by a call to the \code{\link[stats]{logLik}} generic.
   }
   \item{\dots}{Some methods for this generic function may take
     additional, optional arguments.  At present none do.}
@@ -37,5 +37,5 @@ BIC(object, \dots)
   Estimating the Dimension of a Model,
   \emph{Annals of Statistics} \bold{6}, 461--464.
 }
-\seealso{\code{\link[base]{logLik}}, \code{\link[stats]{AIC}}}
+\seealso{\code{\link[stats]{logLik}}, \code{\link[stats]{AIC}}}
 \keyword{models}
