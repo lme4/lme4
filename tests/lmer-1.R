@@ -1,9 +1,9 @@
 library(lme4)
 options(show.signif.stars = FALSE)
 
-(fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
+(fm1 <-  lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 (fm1a <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, REML = FALSE))
-(fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
+(fm2 <-  lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
 
 ## transformed vars should work[even if non-sensical as here;failed in 0.995-1]
 fm2l <- lmer(log(Reaction) ~ log(Days+1) + (log(Days+1)|Subject),
@@ -64,11 +64,10 @@ dat <- data.frame(y = round(10*rnorm(100)), lagoon = factor(rep(1:4,each = 25)),
                   habitat = factor(rep(1:20, each = 5)))
 r1  <- lmer(y ~ habitat + (1|habitat:lagoon), data = dat) # ok
 
-if (FALSE) {   # back to segfaulting again  ----- FIXME !!!!
-    try(
-        reg <- lmer(y ~ habitat + (1|habitat*lagoon), data = dat) # did seg.fault
-        ) # now gives error                 ^- should be ":"
-}
+try(
+    reg <- lmer(y ~ habitat + (1|habitat*lagoon), data = dat) # did seg.fault
+    ) # now gives error                 ^- should be ":"
+
 
 ## Failure to specify a random effects term - used to give an obscure message
 try(
@@ -80,7 +79,6 @@ m2 <- lmer(incidence / size ~ period, weights = size,
 ## From: Andrew Gelman <gelman@stat.columbia.edu>
 ## Date: Wed, 18 Jan 2006 22:00:53 -0500
 
-if (FALSE) {  # mcmcsamp still needs work
     has.coda <- require(coda)
     if(!has.coda)
         cat("'coda' package not available; some outputs will look suboptimal\n")
@@ -89,6 +87,7 @@ if (FALSE) {  # mcmcsamp still needs work
     y <- 1:10
     group <- gl(2,5)
     (M1 <- lmer (y ~ 1 + (1 | group))) # works fine
+    set.seed(25)
     (r1 <- mcmcsamp (M1))              # dito
     r2 <- mcmcsamp (M1, saveb = TRUE)  # gave error in 0.99-* and 0.995-[12]
     (r10 <- mcmcsamp (M1, n = 10, saveb = TRUE))
@@ -100,12 +99,19 @@ if (FALSE) {  # mcmcsamp still needs work
     M1 <- lmer (y ~ 1 | group)
     mcmcsamp (M1, n = 2, saveb=TRUE) # fine
 
-    M2 <- lmer (y ~ 1 + x + (1 + x | group)) # false convergence
-    ## should be identical (and is)
-    M2 <- lmer (y ~ x + ( x | group))#  false convergence -> simulation doesn't work:
-    if(FALSE) ## try(..) fails here (in R CMD check) [[why ??]]
-        mcmcsamp (M2, saveb=TRUE)
-    ## Error: inconsistent degrees of freedom and dimension ...
+    M2. <- lmer (y ~ 1 + x + (1 + x | group)) # had false convergence
+    ## convergence now ok (but ranef corr. = -1; fixef = -.996 :
+    summary(M2.)
+    ## should be identical (and is) :
+
+    M2 <- lmer (y ~ x + ( x | group))
+    stopifnot(identical(fixef(M2), fixef(M2.)),
+	      identical(ranef(M2), ranef(M2.)),
+	      identical(resid(M2), resid(M2.)))
+
+    mcmcsamp (M2, saveb=TRUE)
+
+if (FALSE) {  # mcmcsamp for  glmer  not yet available
 
     ## mcmc for glmer:
     rG1k <- mcmcsamp(m1, n = 1000)
