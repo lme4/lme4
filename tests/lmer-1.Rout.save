@@ -1,5 +1,5 @@
 
-R version 2.9.0 alpha (2009-03-24 r48209)
+R version 2.9.2 Patched (2009-09-20 r49791)
 Copyright (C) 2009 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
@@ -18,12 +18,18 @@ Type 'q()' to quit R.
 > library(lme4)
 Loading required package: Matrix
 Loading required package: lattice
+Matrix_NS: <environment: namespace:Matrix>
 
 Attaching package: 'Matrix'
 
 
 	The following object(s) are masked from package:stats :
 
+	 contr.helmert,
+	 contr.poly,
+	 contr.SAS,
+	 contr.sum,
+	 contr.treatment,
 	 xtabs 
 
 
@@ -33,7 +39,7 @@ Attaching package: 'Matrix'
 
 > options(show.signif.stars = FALSE)
 > 
-> (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
+> (fm1 <-  lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 Linear mixed model fit by REML 
 Formula: Reaction ~ Days + (Days | Subject) 
    Data: sleepstudy 
@@ -41,7 +47,7 @@ Formula: Reaction ~ Days + (Days | Subject)
  1756 1775 -871.8     1752    1744
 Random effects:
  Groups   Name        Variance Std.Dev. Corr  
- Subject  (Intercept) 612.090  24.7405        
+ Subject  (Intercept) 612.092  24.7405        
           Days         35.072   5.9221  0.066 
  Residual             654.941  25.5918        
 Number of obs: 180, groups: Subject, 18
@@ -75,7 +81,7 @@ Days          10.467      1.502    6.97
 Correlation of Fixed Effects:
      (Intr)
 Days -0.138
-> (fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
+> (fm2 <-  lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
 Linear mixed model fit by REML 
 Formula: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject) 
    Data: sleepstudy 
@@ -155,9 +161,9 @@ $group.id
 5    1.4381076
 6   -1.7594785
 7   -0.2546842
-8    0.6977649
+8    0.6977648
 9    1.2121675
-10   4.9434829
+10   4.9434830
 
 > (sf1 <- summary(fit.1)) # show() is as without summary()
 Linear mixed model fit by REML 
@@ -252,11 +258,14 @@ wk2TRUE     -0.794  0.063 -0.056
 +                   habitat = factor(rep(1:20, each = 5)))
 > r1  <- lmer(y ~ habitat + (1|habitat:lagoon), data = dat) # ok
 > 
-> if (FALSE) {   # back to segfaulting again  ----- FIXME !!!!
-+     try(
-+         reg <- lmer(y ~ habitat + (1|habitat*lagoon), data = dat) # did seg.fault
-+         ) # now gives error                 ^- should be ":"
-+ }
+> try(
++     reg <- lmer(y ~ habitat + (1|habitat*lagoon), data = dat) # did seg.fault
++     ) # now gives error                 ^- should be ":"
+Error in mer_finalize(ans) : 
+  Cholmod error 'invalid xtype' at file:../Cholesky/cholmod_solve.c, line 971
+In addition: Warning message:
+In Ops.factor(habitat, lagoon) : * not meaningful for factors
+> 
 > 
 > ## Failure to specify a random effects term - used to give an obscure message
 > try(
@@ -270,32 +279,239 @@ Error in lmerFactorList(formula, fr, 0L, 0L) :
 > ## From: Andrew Gelman <gelman@stat.columbia.edu>
 > ## Date: Wed, 18 Jan 2006 22:00:53 -0500
 > 
-> if (FALSE) {  # mcmcsamp still needs work
-+     has.coda <- require(coda)
-+     if(!has.coda)
+>     has.coda <- require(coda)
+Loading required package: coda
+
+Attaching package: 'coda'
+
+
+	The following object(s) are masked from package:lme4 :
+
+	 HPDinterval 
+
+>     if(!has.coda)
 +         cat("'coda' package not available; some outputs will look suboptimal\n")
-+ 
-+     ## Very simple example
-+     y <- 1:10
-+     group <- gl(2,5)
-+     (M1 <- lmer (y ~ 1 + (1 | group))) # works fine
-+     (r1 <- mcmcsamp (M1))              # dito
-+     r2 <- mcmcsamp (M1, saveb = TRUE)  # gave error in 0.99-* and 0.995-[12]
-+     (r10 <- mcmcsamp (M1, n = 10, saveb = TRUE))
-+ 
-+     ## another one, still simple
-+     y <- (1:20)*pi
-+     x <- (1:20)^2
-+     group <- gl(2,10)
-+     M1 <- lmer (y ~ 1 | group)
-+     mcmcsamp (M1, n = 2, saveb=TRUE) # fine
-+ 
-+     M2 <- lmer (y ~ 1 + x + (1 + x | group)) # false convergence
-+     ## should be identical (and is)
-+     M2 <- lmer (y ~ x + ( x | group))#  false convergence -> simulation doesn't work:
-+     if(FALSE) ## try(..) fails here (in R CMD check) [[why ??]]
-+         mcmcsamp (M2, saveb=TRUE)
-+     ## Error: inconsistent degrees of freedom and dimension ...
+> 
+>     ## Very simple example
+>     y <- 1:10
+>     group <- gl(2,5)
+>     (M1 <- lmer (y ~ 1 + (1 | group))) # works fine
+Linear mixed model fit by REML 
+Formula: y ~ 1 + (1 | group) 
+   AIC   BIC logLik deviance REMLdev
+ 45.31 46.22 -19.65    42.93   39.31
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ group    (Intercept) 12.0     3.4641  
+ Residual              2.5     1.5811  
+Number of obs: 10, groups: group, 2
+
+Fixed effects:
+            Estimate Std. Error t value
+(Intercept)      5.5        2.5     2.2
+>     set.seed(25)
+>     (r1 <- mcmcsamp (M1))              # dito
+An object of class "merMCMC"
+Slot "Gp":
+[1] 0 2
+
+Slot "ST":
+         [,1]
+[1,] 2.190890
+
+Slot "call":
+lmer(formula = y ~ 1 + (1 | group))
+
+Slot "deviance":
+[1] 42.9257
+
+Slot "dims":
+   nt     n     p     q     s    np   LMM  REML  fTyp  lTyp  vTyp  nest useSc 
+    1    10     1     2     1     1     0     1     2     5     1     1     1 
+ nAGQ  verb  mxit  mxfn   cvg 
+    1     0   300   900     4 
+
+Slot "fixef":
+            [,1]
+(Intercept)  5.5
+
+Slot "nc":
+[1] 1
+
+Slot "ranef":
+
+[1,]
+[2,]
+
+Slot "sigma":
+         [,1]
+[1,] 1.581139
+
+>     r2 <- mcmcsamp (M1, saveb = TRUE)  # gave error in 0.99-* and 0.995-[12]
+>     (r10 <- mcmcsamp (M1, n = 10, saveb = TRUE))
+An object of class "merMCMC"
+Slot "Gp":
+[1] 0 2
+
+Slot "ST":
+         [,1]     [,2]   [,3]     [,4]     [,5]      [,6]     [,7]      [,8]
+[1,] 2.190890 2.357347 1.2607 1.310223 1.068853 0.9335019 1.010767 0.4688515
+          [,9]    [,10]
+[1,] 0.3225182 1.151649
+
+Slot "call":
+lmer(formula = y ~ 1 + (1 | group))
+
+Slot "deviance":
+ [1] 42.92570 42.92582 43.06062 42.68860 42.65261 42.94053 43.26243 43.06123
+ [9] 45.91098 47.31819
+
+Slot "dims":
+   nt     n     p     q     s    np   LMM  REML  fTyp  lTyp  vTyp  nest useSc 
+    1    10     1     2     1     1     0     1     2     5     1     1     1 
+ nAGQ  verb  mxit  mxfn   cvg 
+    1     0   300   900     4 
+
+Slot "fixef":
+            [,1]     [,2]    [,3]     [,4]     [,5]    [,6]     [,7]     [,8]
+(Intercept)  5.5 8.500135 7.22099 4.496626 8.953627 9.33549 3.471580 5.391293
+                [,9]    [,10]
+(Intercept) 6.517353 5.294367
+
+Slot "nc":
+[1] 1
+
+Slot "ranef":
+          [,1]       [,2]       [,3]      [,4]       [,5]      [,6]      [,7]
+[1,] -2.400157 -3.8538414 -3.9874944 -1.128572 -6.3076943 -6.685036 -1.259950
+[2,]  2.400157 -0.7552534  0.7014855  2.503138 -0.3157271 -2.036684  2.517739
+          [,8]       [,9]      [,10]
+[1,] -1.687885 -2.4715626 -0.7075876
+[2,]  3.140762  0.4975877  0.5186987
+
+Slot "sigma":
+         [,1]     [,2]   [,3]     [,4]     [,5]     [,6]     [,7]     [,8]
+[1,] 1.581139 1.497841 1.9839 2.026303 2.282117 1.977191 2.410987 2.049153
+         [,9]   [,10]
+[1,] 2.160824 2.01181
+
+> 
+>     ## another one, still simple
+>     y <- (1:20)*pi
+>     x <- (1:20)^2
+>     group <- gl(2,10)
+>     M1 <- lmer (y ~ 1 | group)
+>     mcmcsamp (M1, n = 2, saveb=TRUE) # fine
+An object of class "merMCMC"
+Slot "Gp":
+[1] 0 2
+
+Slot "ST":
+         [,1]     [,2]
+[1,] 2.313989 1.730152
+
+Slot "call":
+lmer(formula = y ~ 1 | group)
+
+Slot "deviance":
+[1] 153.8302 153.8304
+
+Slot "dims":
+   nt     n     p     q     s    np   LMM  REML  fTyp  lTyp  vTyp  nest useSc 
+    1    20     1     2     1     1     0     1     2     5     1     1     1 
+ nAGQ  verb  mxit  mxfn   cvg 
+    1     0   300   900     4 
+
+Slot "fixef":
+                [,1]     [,2]
+(Intercept) 32.98672 21.50216
+
+Slot "nc":
+[1] 1
+
+Slot "ranef":
+          [,1]     [,2]
+[1,] -15.42191 -3.69386
+[2,]  15.42191 28.07411
+
+Slot "sigma":
+         [,1]    [,2]
+[1,] 9.511644 9.43961
+
+> 
+>     M2. <- lmer (y ~ 1 + x + (1 + x | group)) # had false convergence
+>     ## convergence now ok (but ranef corr. = -1; fixef = -.996 :
+>     summary(M2.)
+Linear mixed model fit by REML 
+Formula: y ~ 1 + x + (1 + x | group) 
+   AIC   BIC logLik deviance REMLdev
+ 101.5 107.5 -44.77    87.59   89.54
+Random effects:
+ Groups   Name        Variance   Std.Dev. Corr   
+ group    (Intercept) 140.641640 11.85924        
+          x             0.014427  0.12011 -1.000 
+ Residual               2.722977  1.65014        
+Number of obs: 20, groups: group, 2
+
+Fixed effects:
+            Estimate Std. Error t value
+(Intercept) 15.23545    8.40776   1.812
+x            0.18559    0.08508   2.181
+
+Correlation of Fixed Effects:
+  (Intr)
+x -0.996
+>     ## should be identical (and is) :
+> 
+>     M2 <- lmer (y ~ x + ( x | group))
+>     stopifnot(identical(fixef(M2), fixef(M2.)),
++ 	      identical(ranef(M2), ranef(M2.)),
++ 	      identical(resid(M2), resid(M2.)))
+> 
+>     mcmcsamp (M2, saveb=TRUE)
+An object of class "merMCMC"
+Slot "Gp":
+[1] 0 4
+
+Slot "ST":
+            [,1]
+[1,]  7.18679006
+[2,]  0.00000000
+[3,] -0.01012811
+
+Slot "call":
+lmer(formula = y ~ x + (x | group))
+
+Slot "deviance":
+[1] 87.58735
+
+Slot "dims":
+   nt     n     p     q     s    np   LMM  REML  fTyp  lTyp  vTyp  nest useSc 
+    1    20     2     4     1     3     0     1     2     5     1     1     1 
+ nAGQ  verb  mxit  mxfn   cvg 
+    1     0   300   900     4 
+
+Slot "fixef":
+                  [,1]
+(Intercept) 15.2354526
+x            0.1855864
+
+Slot "nc":
+[1] 2
+
+Slot "ranef":
+            [,1]
+[1,] -8.35043630
+[2,]  8.35043630
+[3,]  0.08457412
+[4,] -0.08457412
+
+Slot "sigma":
+         [,1]
+[1,] 1.650145
+
+> 
+> if (FALSE) {  # mcmcsamp for  glmer  not yet available
 + 
 +     ## mcmc for glmer:
 +     rG1k <- mcmcsamp(m1, n = 1000)
@@ -310,7 +526,9 @@ Error in lmerFactorList(formula, fr, 0L, 0L) :
 [1] 2.5
 > ## Now throws an error
 > try(f.oops <- lmer(y ~ 1 + (1|group), data = tstDF))
-Error : length(levels(dm$flist[[1]])) < length(Y) is not TRUE
+Error in function (fr, FL, start, REML, verbose)  : 
+  Number of levels of a grouping factor for the random effects
+must be less than the number of observations
 > ##  summary(f.oops) ## or print(Matrix:::formatVC(VarCorr(f.oops)), quote = FALSE)
 > ## ...
 > ##   Groups   Name        Variance Std.Dev.
@@ -337,7 +555,6 @@ Error : length(levels(dm$flist[[1]])) < length(Y) is not TRUE
 +           identical(ranef(m2), ranef(m3)),
 +           inherits(tryCatch(lmer(y ~ x2|ff + x1, data = D), error = function(e)e),
 +                    "error"))
-CHOLMOD error: 
 Warning message:
 In Ops.factor(ff, x1) : + not meaningful for factors
 > 
@@ -351,5 +568,5 @@ In Ops.factor(ff, x1) : + not meaningful for factors
 +     stop("offset does not change the fixed effects")
 > 
 > cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
-Time elapsed:  13.696 0.144 13.951 0 0 
+Time elapsed:  21.842 0.358 22.489 0 0 
 > 
