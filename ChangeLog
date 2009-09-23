@@ -1,5 +1,7 @@
 2009-09-23  Martin Maechler  <maechler@stat.math.ethz.ch>
 
+	* DESCRIPTION (Version, Depends): 0.999375-32; needs latest version of Matrix
+
 	* src/init.c (lme4_R_cholmod_error): now using own CHOLMOD error
 	handler, which does reset the 'Common' "as to start".
 
