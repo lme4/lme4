@@ -30,4 +30,4 @@ Determine what a "coef" function should do for multiple, possibly
 - add nicer (more realistic?) pedigree examples and tests
 
 - document print(<mer>) including an example  print(<lmer>, corr = FALSE)
-
+  and one with many fixed effects (*) and     print(<lmer>, symbolic.cor = TRUE)
