@@ -1,5 +1,5 @@
 
-R version 2.9.2 Patched (2009-09-20 r49791)
+R version 2.10.0 RC (2009-10-25 r50206)
 Copyright (C) 2009 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
@@ -18,25 +18,6 @@ Type 'q()' to quit R.
 > library(lme4)
 Loading required package: Matrix
 Loading required package: lattice
-Matrix_NS: <environment: namespace:Matrix>
-
-Attaching package: 'Matrix'
-
-
-	The following object(s) are masked from package:stats :
-
-	 contr.helmert,
-	 contr.poly,
-	 contr.SAS,
-	 contr.sum,
-	 contr.treatment,
-	 xtabs 
-
-
-	The following object(s) are masked from package:base :
-
-	 rcond 
-
 > options(show.signif.stars = FALSE)
 > 
 > (fm1 <-  lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
