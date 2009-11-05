@@ -377,6 +377,7 @@ lme4_devResid(const double* mu, const double* pWt, const double* y,
     return ans;
 }
 
+
 /**
  * Evaluate the derivative d mu/d eta for the GLM link function of
  * type lTyp
@@ -419,7 +420,8 @@ lme4_muEta(double* mu, double* muEta, const double* eta, int n, int lTyp)
 	    tmp = (etai < MLTHRESH) ? DOUBLE_EPS : ((etai > LTHRESH) ?
 						    INVEPS : exp(etai));
 	    t2 = -expm1(-tmp);
-	    mu[i] = (t2 < DOUBLE_EPS) ? DOUBLE_EPS : t2;
+	    mu[i] = (t2 < DOUBLE_EPS) ? DOUBLE_EPS :
+		(t2 > 1 - DOUBLE_EPS ? 1 - DOUBLE_EPS : t2);
 	    muEta[i] = tmp * exp(-tmp);
 	    break;
 	case 5:		/* identity */
