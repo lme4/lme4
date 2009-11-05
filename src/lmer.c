@@ -463,22 +463,22 @@ lme4_varFunc(double* var, const double* mu, int n, int vTyp)
 	case 2:			/* mu(1-mu) variance */
 	    if (mui <= 0 || mui >= 1)
 		error(_("mu[i] must be in the range (0,1): mu = %g, i = %d"),
-		      mu, i);
+		      mui, i);
 	    var[i] = mui * (1 - mui);
 	    break;
 	case 3:			/* mu variance */
 	    if (mui <= 0)
-		error(_("mu[i] must be positive: mu = %g, i = %d"), mu, i);
+		error(_("mu[i] must be positive: mu = %g, i = %d"), mui, i);
 	    var[i] = mui;
 	    break;
 	case 4:			/* mu^2 variance */
 	    if (mui <= 0)
-		error(_("mu[i] must be positive: mu = %g, i = %d"), mu, i);
+		error(_("mu[i] must be positive: mu = %g, i = %d"), mui, i);
 	    var[i] = mui * mui;
 	    break;
 	case 5:			/* mu^3 variance */
 	    if (mui <= 0)
-		error(_("mu[i] must be positive: mu = %g, i = %d"), mu, i);
+		error(_("mu[i] must be positive: mu = %g, i = %d"), mui, i);
 	    var[i] = mui * mui * mui;
 	    break;
 	default:
