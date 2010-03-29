@@ -365,6 +365,7 @@ lmerControl <- function(msVerbose = getOption("verbose"),
                         maxIter = 300L, maxFN = 900L)
 ### Control parameters for lmer, glmer and nlmer
 {
+    stopifnot(maxIter >= 0, maxFN >= 0)
     list(
          maxIter = as.integer(maxIter),
          maxFN = as.integer(maxFN),
@@ -424,7 +425,7 @@ mkZt <- function(FL, start, s = 1L)
 famNms <- c("binomial", "gaussian", "Gamma", "inverse.gaussian",
             "poisson", "quasibinomial", "quasipoisson", "quasi")
 linkNms <- c("logit", "probit", "cauchit", "cloglog", "identity",
-             "log", "sqrt", "1/mu^2", "inverse")
+	     "log", "sqrt", "1/mu^2", "inverse")
 varNms <- c("constant", "mu(1-mu)", "mu", "mu^2", "mu^3")
 
 famType <- function(family)
@@ -645,7 +646,8 @@ lmer <-
 ### FIXME: issue a warning if the control argument has an msVerbose component
     cv <- do.call(lmerControl, control)
     if (missing(verbose)) verbose <- cv$msVerbose
-### FIXME: this still ignores the other control arguments
+    FL$dims["mxit"] <- cv$maxIter
+    FL$dims["mxfn"] <- cv$maxFN
     ans <- list(fr = fr, FL = FL, start = start, REML = REML, verbose = verbose)
     if (doFit) {
         ans <- do.call(lmer_finalize, ans)
@@ -711,7 +713,8 @@ function(formula, data, family = gaussian, start = NULL,
     cv <- do.call(lmerControl, control)
     if (missing(verbose)) verbose <- cv$msVerbose
 ### FIXME: issue a warning if the model argument is FALSE.  It is ignored.
-
+    FL$dims["mxit"] <- cv$maxIter
+    FL$dims["mxfn"] <- cv$maxFN
     ans <- list(fr = fr, FL = FL, glmFit = glmFit, start = start,
                 nAGQ = nAGQ, verbose = verbose)
     if (doFit) {

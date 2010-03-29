@@ -1,6 +1,6 @@
 
-R version 2.10.0 RC (2009-10-19 r50171)
-Copyright (C) 2009 The R Foundation for Statistical Computing
+R version 2.11.0 alpha (2010-03-27 r51444)
+Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -15,9 +15,8 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+> suppressPackageStartupMessages(library(Matrix))# as we have an *.Rout.save
 > library(lme4)
-Loading required package: Matrix
-Loading required package: lattice
 > 
 > showProc.time <- function() { ## CPU elapsed __since last called__
 +     .ot <- .pc
@@ -58,7 +57,7 @@ Correlation of Fixed Effects:
 lKa -0.264       
 lCl  0.671 -0.141
 > showProc.time() # ~ 5.7s {dual-opteron 2814, on 64b, no optim.}
-Time elapsed:  10.903 0.056 10.999 
+Time elapsed:  20.157 0.152 22.291 
 > 
 > (nm3 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
 +               (lKe|Subject) + (lKa|Subject) + (lCl|Subject),
@@ -87,7 +86,7 @@ Correlation of Fixed Effects:
 lKa -0.264       
 lCl  0.671 -0.133
 > showProc.time() # ~ 3.2s
-Time elapsed:  6.687 0.001 6.689 
+Time elapsed:  12.717 0.04 14.471 
 > 
 > ## dropping   lKe  from random effects:
 > (nm4 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
@@ -116,7 +115,7 @@ Correlation of Fixed Effects:
 lKa -0.264       
 lCl  0.671 -0.141
 > showProc.time()
-Time elapsed:  4.637 0 4.652 
+Time elapsed:  8.328 0.016 9.513 
 > 
 > (nm5 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
 +               (lKa|Subject) + (lCl|Subject),
@@ -144,7 +143,7 @@ Correlation of Fixed Effects:
 lKa -0.264       
 lCl  0.671 -0.133
 > showProc.time()
-Time elapsed:  4.043 0 4.044 
+Time elapsed:  7.717 0.1 8.385 
 > 
 > e3 <- expand(nm3)
 > stopifnot(identical(sapply(e3, class),
@@ -170,7 +169,7 @@ Time elapsed:  4.043 0 4.044
 +           )
 > 
 > showProc.time()
-Time elapsed:  0.06 0.001 0.061 
+Time elapsed:  0.116 0 0.123 
 > 
 > 
 > 

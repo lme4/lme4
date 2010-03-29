@@ -1,3 +1,4 @@
+suppressPackageStartupMessages(library(Matrix))# as we have an *.Rout.save
 library(lme4)
 options(show.signif.stars = FALSE)
 

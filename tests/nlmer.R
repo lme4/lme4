@@ -1,3 +1,4 @@
+suppressPackageStartupMessages(library(Matrix))# as we have an *.Rout.save
 library(lme4)
 
 showProc.time <- function() { ## CPU elapsed __since last called__
