@@ -11,7 +11,7 @@ setGeneric("gsummary",
            standardGeneric("gsummary"))
 }
 
-setGeneric("fixef", function(object, ...) standardGeneric("fixef"))
+#setGeneric("fixef", function(object, ...) standardGeneric("fixef"))
 
 fixed.effects <- function(object, ...) {
     ## fixed.effects was an alternative name for fixef
@@ -21,7 +21,7 @@ fixed.effects <- function(object, ...) {
     eval(mCall, parent.frame())
 }
 
-setGeneric("ranef", function(object, ...) standardGeneric("ranef"))
+#setGeneric("ranef", function(object, ...) standardGeneric("ranef"))
 
 random.effects <- function(object, ...) {
     ## random.effects was an alternative name for ranef
@@ -31,12 +31,14 @@ random.effects <- function(object, ...) {
     eval(mCall, parent.frame())
 }
 
+if (FALSE) {
 setGeneric("BIC", function(object, ...) standardGeneric("BIC"))
 
 setMethod("BIC", "logLik",
           function(object, ...)
           -2 * (c(object) - attr(object, "df") * log(attr(object, "nobs"))/2)
           )
+}
 
 setGeneric("HPDinterval",
            function(object, prob = 0.95, ...) standardGeneric("HPDinterval"))

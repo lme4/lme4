@@ -1,11 +1,13 @@
 useDynLib(lme4, .registration=TRUE)
 
-import("Matrix")# including update()
-import("lattice")
+import(Matrix)# including update()
+import(lattice)
 
 ## Generics for which we define new methods:
+importFrom("nlme", fixef, ranef, BIC)
 importFrom("graphics", plot)
 importFrom("stats",
+           AIC,
            anova,
            coef,
            confint,
@@ -22,9 +24,6 @@ importFrom("stats",
            ## update, -- already from 'Matrix'
            vcov
            )
-## More imports: functions we use and don't want to be clobbered:
-importFrom("stats",
-           AIC)# ..., rnorm, pnorm, qnorm, ... ... where does it end?
 ## but  import("stats") is not ok, because Matrix export "better" versions of
 ## update(), xtabs() and cov2cor()
 
@@ -44,7 +43,6 @@ export("glmer",
 exportClasses("lmList", "mer", "merMCMC", "summary.mer")
 
 exportMethods(
-              "BIC",
               "HPDinterval",
               "VarCorr",
               "anova",
