@@ -1,5 +1,5 @@
 
-R version 2.11.0 alpha (2010-03-27 r51444)
+R version 2.11.0 Patched (2010-05-17 r52025)
 Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
@@ -17,6 +17,13 @@ Type 'q()' to quit R.
 
 > suppressPackageStartupMessages(library(Matrix))# as we have an *.Rout.save
 > library(lme4)
+
+Attaching package: 'lme4'
+
+The following object(s) are masked from 'package:stats':
+
+    AIC
+
 > options(show.signif.stars = FALSE)
 > 
 > (fm1 <-  lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -89,6 +96,21 @@ Days -0.184
 > xfm2 <- expand(fm2l)
 > stopifnot(is(fm1, "mer"), is(fm2l, "mer"),
 +           is(xfm2$P, "sparseMatrix"))
+> 
+> AIC(fm1); AIC(fm2)
+    REML 
+1755.628 
+    REML 
+1753.669 
+> BIC(fm1); BIC(fm2)
+    REML 
+1774.786 
+    REML 
+1769.634 
+> ## not yet: if(getRversion() > "2.11.0") {
+> ##  AIC(fm1, fm2)
+> ##  BIC(fm1, fm2)
+> ## }
 > 
 > ## generalized linear mixed model
 > (m1 <- lmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
@@ -547,5 +569,5 @@ In Ops.factor(ff, x1) : + not meaningful for factors
 +     stop("offset does not change the fixed effects")
 > 
 > cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
-Time elapsed:  12.232 0.304 13.625 0 0 
+Time elapsed:  7.014 0.153 7.377 0 0 
 > 

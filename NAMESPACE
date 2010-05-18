@@ -4,9 +4,9 @@ import(Matrix)# including update()
 import(lattice)
 
 ## Generics for which we define new methods:
-importFrom("nlme", fixef, ranef, BIC)
+importFrom("nlme", fixef, ranef)
 importFrom("graphics", plot)
-importFrom("stats4", AIC)# so S4 methods for AIC are used!
+importFrom("stats4", AIC, BIC)# so S4 methods for AIC are used!
 importFrom("stats",
            anova,
            coef,
@@ -28,12 +28,12 @@ importFrom("stats",
 ## update(), xtabs() and cov2cor()
 
 
-export("glmer",
-       #"gsummary", "hatTrace",
+export("AIC", "BIC",
        "HPDinterval",
+       "glmer",
+       #"gsummary", "hatTrace",
        "lmList",
-       "lmer",
-       "lmer2",
+       "lmer", "lmer2",
        "mcmcsamp",
        "nlmer",
        #"pooledSD",
@@ -82,8 +82,8 @@ exportMethods(
               )
 
 S3method(plot, coef.mer)
-S3method(print, coef.mer)
 S3method(plot, ranef.mer)
+S3method(print, coef.mer)
 S3method(print, ranef.mer)
 S3method(qqmath, ranef.mer)
 S3method(dotplot, ranef.mer)

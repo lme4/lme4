@@ -186,7 +186,7 @@
   The \code{"summary.mer"} class \emph{contains} the \code{"mer"},
   class and has additional slots,
   \describe{
-    
+
     \item{\code{methTitle}:}{character string specifying a method title}
     \item{\code{logLik}:}{the same as \code{\link{logLik}(object)}.}
     \item{\code{ngrps}:}{the number of levels per grouping factor in the
@@ -277,7 +277,7 @@
 
       returns the estimates of the fixed-effects parameters.  See
       \code{\link{fixef}}.
-    
+
     }
     \item{formula}{\code{signature(x = "mer")}:
 
@@ -291,6 +291,8 @@
       optional \code{REML} argument (see the arguments section above),
       of the fitted model.  See also \code{\link{logLik}}.
 
+      Note that \code{\link[stats]{AIC}} and \code{\link[stats4]{BIC}}
+      methods automatically work (via \code{logLik()}).
     }
     \item{mcmcsamp}{\code{signature(object = "mer")}:
 
@@ -303,7 +305,7 @@
       model frame (the \code{frame} slot).}
     \item{model.matrix}{\code{signature(object = "mer")}: returns the
       model matrix for the fixed-effects parameters (the \code{X}
-      slot).} 
+      slot).}
     \item{print}{\code{signature(x = "mer")}: print information about
       the fitted model.  See the arguments section above for a description
       of optional arguments.}
@@ -325,7 +327,7 @@
       distribution corresponding to the fitted model.  The \code{refit}
       method is particularly useful in combination with this method.
       See also \code{\link{simulate}}.}
-    \item{terms}{\code{signature(x = "mer")}: Extract the 
+    \item{terms}{\code{signature(x = "mer")}: Extract the
       \code{\link{terms}} object for the fixed-effects terms in the
       model formula.}
     \item{update}{\code{signature(object = "mer")}: see

@@ -13,6 +13,13 @@ xfm2 <- expand(fm2l)
 stopifnot(is(fm1, "mer"), is(fm2l, "mer"),
           is(xfm2$P, "sparseMatrix"))
 
+AIC(fm1); AIC(fm2)
+BIC(fm1); BIC(fm2)
+## not yet: if(getRversion() > "2.11.0") {
+##  AIC(fm1, fm2)
+##  BIC(fm1, fm2)
+## }
+
 ## generalized linear mixed model
 (m1 <- lmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
             family = binomial, data = cbpp))
