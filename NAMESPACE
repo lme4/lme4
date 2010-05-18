@@ -6,8 +6,8 @@ import(lattice)
 ## Generics for which we define new methods:
 importFrom("nlme", fixef, ranef, BIC)
 importFrom("graphics", plot)
+importFrom("stats4", AIC)# so S4 methods for AIC are used!
 importFrom("stats",
-           AIC,
            anova,
            coef,
            confint,
@@ -24,7 +24,7 @@ importFrom("stats",
            ## update, -- already from 'Matrix'
            vcov
            )
-## but  import("stats") is not ok, because Matrix export "better" versions of
+## but  import("stats") is not ok, because Matrix exports "better" versions of
 ## update(), xtabs() and cov2cor()
 
 
