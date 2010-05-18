@@ -4,10 +4,9 @@
 \alias{coef,lmList-method}
 \alias{formula,lmList-method}
 \alias{confint,lmList-method}
-\alias{plot,lmList-method}
 \alias{show,lmList-method}
 \alias{update,lmList-method}
-\alias{plot,lmList.confint-method}
+\alias{plot,lmList.confint,ANY-method}
 \title{Class "lmList"}
 \description{A list of objects of class \code{lm} with a common model.}
 \section{Objects from the Class}{
@@ -41,7 +40,8 @@ Class \code{"vector"}, by class "list".
 	"lmList")}: show the object.}
     \item{\link[stats]{update}}{\code{signature(object =
 	"lmList")}: update the fit.}
-    
+    \item{\link[graphics]{plot}}{\code{signature(object =
+	"lmList.confint")}: plot the confidence intervals for each parameter.}
   }
 }
 \keyword{classes}
