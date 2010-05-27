@@ -1,5 +1,5 @@
-suppressPackageStartupMessages(library(Matrix))# as we have an *.Rout.save
-library(lme4)
+suppressPackageStartupMessages(require(Matrix))# as we have an *.Rout.save
+stopifnot(require(lme4))
 
 showProc.time <- function() { ## CPU elapsed __since last called__
     .ot <- .pc

@@ -1,5 +1,5 @@
 
-R version 2.11.0 Patched (2010-05-17 r52025)
+R version 2.11.1 RC (2010-05-23 r52087)
 Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
@@ -98,15 +98,11 @@ Days -0.184
 +           is(xfm2$P, "sparseMatrix"))
 > 
 > AIC(fm1); AIC(fm2)
-    REML 
-1755.628 
-    REML 
-1753.669 
+[1] 1755.628
+[1] 1753.669
 > BIC(fm1); BIC(fm2)
-    REML 
-1774.786 
-    REML 
-1769.634 
+[1] 1774.786
+[1] 1769.634
 > ## not yet: if(getRversion() > "2.11.0") {
 > ##  AIC(fm1, fm2)
 > ##  BIC(fm1, fm2)
@@ -161,7 +157,7 @@ $group.id
 3    3.1860179
 4    3.1121968
 5    1.4381076
-6   -1.7594785
+6   -1.7594786
 7   -0.2546842
 8    0.6977648
 9    1.2121675
@@ -449,14 +445,14 @@ Formula: y ~ 1 + x + (1 + x | group)
  101.5 107.5 -44.77    87.59   89.54
 Random effects:
  Groups   Name        Variance   Std.Dev. Corr   
- group    (Intercept) 140.641640 11.85924        
+ group    (Intercept) 140.641531 11.85924        
           x             0.014427  0.12011 -1.000 
  Residual               2.722977  1.65014        
 Number of obs: 20, groups: group, 2
 
 Fixed effects:
             Estimate Std. Error t value
-(Intercept) 15.23545    8.40776   1.812
+(Intercept) 15.23552    8.40776   1.812
 x            0.18559    0.08508   2.181
 
 Correlation of Fixed Effects:
@@ -476,7 +472,7 @@ Slot "Gp":
 
 Slot "ST":
             [,1]
-[1,]  7.18679006
+[1,]  7.18678711
 [2,]  0.00000000
 [3,] -0.01012811
 
@@ -484,28 +480,28 @@ Slot "call":
 lmer(formula = y ~ x + (x | group))
 
 Slot "deviance":
-[1] 87.58735
+[1] 87.58733
 
 Slot "dims":
    nt     n     p     q     s    np   LMM  REML  fTyp  lTyp  vTyp  nest useSc 
     1    20     2     4     1     3     0     1     2     5     1     1     1 
  nAGQ  verb  mxit  mxfn   cvg 
-    1     0   300   900     4 
+    1     0   300   900     5 
 
 Slot "fixef":
                   [,1]
-(Intercept) 15.2354526
-x            0.1855864
+(Intercept) 15.2355231
+x            0.1855856
 
 Slot "nc":
 [1] 2
 
 Slot "ranef":
             [,1]
-[1,] -8.35043630
-[2,]  8.35043630
-[3,]  0.08457412
-[4,] -0.08457412
+[1,] -8.35048135
+[2,]  8.35048135
+[3,]  0.08457456
+[4,] -0.08457456
 
 Slot "sigma":
          [,1]
@@ -569,5 +565,5 @@ In Ops.factor(ff, x1) : + not meaningful for factors
 +     stop("offset does not change the fixed effects")
 > 
 > cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
-Time elapsed:  7.014 0.153 7.377 0 0 
+Time elapsed:  5.6 0.04 5.636 0 0 
 > 
