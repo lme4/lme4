@@ -4,9 +4,9 @@ import(Matrix)# including update()
 import(lattice)
 
 ## Generics for which we define new methods:
-importFrom("nlme", fixef, ranef)
+importFrom("nlme", fixef, ranef, VarCorr)
 importFrom("graphics", plot)
-importFrom("stats4", AIC, BIC)# so S4 methods for AIC are used!
+importFrom("stats4", AIC, BIC, logLik)# so S4 methods are used!
 importFrom("stats",
            anova,
            coef,
@@ -14,7 +14,6 @@ importFrom("stats",
            deviance,
            fitted,
            formula,
-           logLik,
            model.frame,
            model.matrix,
            predict,
@@ -28,8 +27,10 @@ importFrom("stats",
 ## update(), xtabs() and cov2cor()
 
 
-export("AIC", "BIC",
-       "HPDinterval",
+## re-export imported S4 generics
+export(AIC, BIC, logLik)
+## and the rest (S3 generics; regular functions):
+export("HPDinterval",
        "glmer",
        #"gsummary", "hatTrace",
        "lmList",
