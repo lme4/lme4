@@ -1,3 +1,11 @@
+2010-06-03  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Date, Version): 0.999375-34
+
+	* R/lmer.R (glmer_finalize): for a glmer(), allow q == n
+
+	* tests/lmer-1.R (rPoisGLMMi): test example, originating from Ben Bolker
+
 2009-09-23  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* DESCRIPTION (Version, Depends): 0.999375-32; needs latest version of Matrix

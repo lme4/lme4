@@ -504,9 +504,6 @@ lmer_finalize <- function(fr, FL, start, REML, verbose)
     dm$dd["REML"] <- as.logical(REML)
     dm$dd["verb"] <- as.integer(verbose)
     swts <- sqrt(unname(fr$wts))
-    Cx <- numeric(0)
-    if (length(swts))
-        Cx <- (dm$A)@x
     p <- dm$dd[["p"]]
     n <- length(Y)
 
@@ -529,7 +526,7 @@ lmer_finalize <- function(fr, FL, start, REML, verbose)
                ST = dm$ST,
                A = dm$A,
                Cm = dm$Cm,
-               Cx = Cx,
+	       Cx = if (length(swts)) (dm$A)@x else numeric(0),
                L = dm$L,
                deviance = dm$dev,
                fixef = fr$fixef,
@@ -556,16 +553,23 @@ glmer_finalize <- function(fr, FL, glmFit, start, nAGQ, verbose)
         start <- list(ST = start)
     if (is.numeric(start)) start <- list(STpars = start)
     dm <- mkZt(FL, start[["ST"]])
-### This checks that the number of levels in a grouping factor < n
-### Only need to check the first factor because it is the one with
-### the most levels.
-    if (!(length(levels(dm$flist[[1]])) < ncol(dm$Zt)))
-        stop(paste("Number of levels of a grouping factor for the random effects",
-                   "must be less than the number of observations", sep = "\n"))
     ft <- famType(glmFit$family)
     dm$dd[names(ft)] <- ft
-    dm$dd[["useSc"]] <- as.integer(!(famNms[dm$dd[["fTyp"]] ] %in%
-				   c("binomial", "poisson")))
+    useSc <- as.integer(!(famNms[dm$dd[["fTyp"]] ] %in%
+			  c("binomial", "poisson")))
+    dm$dd[["useSc"]] <- useSc
+    ## Only need to check the first factor because it is the one with
+    ## the most levels.
+    M1 <- length(levels(dm$flist[[1]]))
+    n <- ncol(dm$Zt)
+    if (M1 >= n) {
+	msg1 <- "Number of levels of a grouping factor for the random effects\n"
+	msg3 <- "n, the number of observations"
+	if (useSc)
+	    stop(msg1, "must be less than ", msg3)
+	else if (M1 == n)
+	    message(msg1, "is *equal* to ", msg3)
+    }
     if ((nAGQ <- as.integer(nAGQ)) < 1) nAGQ <- 1L
     if (nAGQ %% 2 == 0) nAGQ <- nAGQ + 1L # reset nAGQ to be an odd number
     dm$dd["nAGQ"] <- as.integer(nAGQ)

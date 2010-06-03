@@ -1,5 +1,5 @@
 
-R version 2.11.1 RC (2010-05-23 r52087)
+R version 2.11.1 Patched (2010-05-31 r52171)
 Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
@@ -15,15 +15,9 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-> suppressPackageStartupMessages(library(Matrix))# as we have an *.Rout.save
-> library(lme4)
-
-Attaching package: 'lme4'
-
-The following object(s) are masked from 'package:stats':
-
-    AIC
-
+> ### suppressPackageStartupMessages(...)  as we have an *.Rout.save to Rdiff against
+> stopifnot(suppressPackageStartupMessages(require(lme4)))
+Matrix_NS: <environment: namespace:Matrix>
 > options(show.signif.stars = FALSE)
 > 
 > (fm1 <-  lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -157,7 +151,7 @@ $group.id
 3    3.1860179
 4    3.1121968
 5    1.4381076
-6   -1.7594786
+6   -1.7594785
 7   -0.2546842
 8    0.6977648
 9    1.2121675
@@ -445,14 +439,14 @@ Formula: y ~ 1 + x + (1 + x | group)
  101.5 107.5 -44.77    87.59   89.54
 Random effects:
  Groups   Name        Variance   Std.Dev. Corr   
- group    (Intercept) 140.641531 11.85924        
+ group    (Intercept) 140.641521 11.85924        
           x             0.014427  0.12011 -1.000 
  Residual               2.722977  1.65014        
 Number of obs: 20, groups: group, 2
 
 Fixed effects:
             Estimate Std. Error t value
-(Intercept) 15.23552    8.40776   1.812
+(Intercept) 15.23544    8.40776   1.812
 x            0.18559    0.08508   2.181
 
 Correlation of Fixed Effects:
@@ -472,7 +466,7 @@ Slot "Gp":
 
 Slot "ST":
             [,1]
-[1,]  7.18678711
+[1,]  7.18678678
 [2,]  0.00000000
 [3,] -0.01012811
 
@@ -480,28 +474,28 @@ Slot "call":
 lmer(formula = y ~ x + (x | group))
 
 Slot "deviance":
-[1] 87.58733
+[1] 87.58735
 
 Slot "dims":
    nt     n     p     q     s    np   LMM  REML  fTyp  lTyp  vTyp  nest useSc 
     1    20     2     4     1     3     0     1     2     5     1     1     1 
  nAGQ  verb  mxit  mxfn   cvg 
-    1     0   300   900     5 
+    1     0   300   900     4 
 
 Slot "fixef":
                   [,1]
-(Intercept) 15.2355231
-x            0.1855856
+(Intercept) 15.2354383
+x            0.1855865
 
 Slot "nc":
 [1] 2
 
 Slot "ranef":
-            [,1]
-[1,] -8.35048135
-[2,]  8.35048135
-[3,]  0.08457456
-[4,] -0.08457456
+          [,1]
+[1,] -8.350427
+[2,]  8.350427
+[3,]  0.084574
+[4,] -0.084574
 
 Slot "sigma":
          [,1]
@@ -564,6 +558,74 @@ In Ops.factor(ff, x1) : + not meaningful for factors
 > if (identical(TRUE, all.equal(fixef(m2), fixef(om2))))
 +     stop("offset does not change the fixed effects")
 > 
+> ## glmer - Modeling overdispersion as "mixture" aka
+> ## ----- - *ONE* random effect *PER OBSERVATION" -- example inspired by Ben Bolker:
+> 
+> ##' <description>
+> ##'
+> ##' <details>
+> ##' @title
+> ##' @param ng number of groups
+> ##' @param nr number of "runs", i.e., observations per groups
+> ##' @param sd standard deviations of group and "Individual" random effects,
+> ##'    (\sigma_f, \sigma_I)
+> ##' @param b  true beta (fixed effects)
+> ##' @return a data frame (to be used in glmer()) with columns
+> ##'    (x, f, obs, eta0, eta, mu, y), where y ~ Pois(lambda(x)),
+> ##'                                   log(lambda(x_i)) = b_1 + b_2 * x + G_{f(i)} + I_i
+> ##'    and G_k ~ N(0, \sigma_f);  I_i ~ N(0, \sigma_I)
+> ##' @author Ben Bolker and Martin Maechler
+> rPoisGLMMi <- function(ng, nr, sd=c(f = 1, ind = 0.5), b=c(1,2))
++ {
++   stopifnot(nr >= 1, ng >= 1,
++             is.numeric(sd), names(sd) %in% c("f","ind"), sd >= 0)
++   ntot <- nr*ng
++   b.reff <- rnorm(ng,  sd= sd[["f"]])
++   b.rind <- rnorm(ntot,sd= sd[["ind"]])
++   x <- runif(ntot)
++   within(data.frame(x,
++                     f = factor(rep(LETTERS[1:ng], each=nr)),
++                     obs = 1:ntot,
++                     eta0 = cbind(1, x) %*% b),
++      {
++          eta <- eta0 + b.reff[f] + b.rind[obs]
++          mu <- exp(eta)
++          y <- rpois(ntot, lambda=mu)
++      })
++ }
+> dd <- rPoisGLMMi(12, 20)
+> m0  <- glmer(y~x + (1|f),           family="poisson", data=dd)
+> (m1 <- glmer(y~x + (1|f) + (1|obs), family="poisson", data=dd))
+Number of levels of a grouping factor for the random effects
+is *equal* to n, the number of observations
+Generalized linear mixed model fit by the Laplace approximation 
+Formula: y ~ x + (1 | f) + (1 | obs) 
+   Data: dd 
+   AIC   BIC logLik deviance
+ 585.5 599.4 -288.7    577.5
+Random effects:
+ Groups Name        Variance Std.Dev.
+ obs    (Intercept) 0.25259  0.50259 
+ f      (Intercept) 0.58065  0.76200 
+Number of obs: 240, groups: obs, 240; f, 12
+
+Fixed effects:
+            Estimate Std. Error z value Pr(>|z|)
+(Intercept)   0.8204     0.2393   3.429 0.000606
+x             2.1767     0.1429  15.228  < 2e-16
+
+Correlation of Fixed Effects:
+  (Intr)
+x -0.351
+> anova(m0, m1)
+Data: dd
+Models:
+m0: y ~ x + (1 | f)
+m1: y ~ x + (1 | f) + (1 | obs)
+   Df     AIC     BIC  logLik  Chisq Chi Df Pr(>Chisq)
+m0  3 1034.17 1044.61 -514.08                         
+m1  4  585.49  599.41 -288.75 450.67      1  < 2.2e-16
+> 
 > cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
-Time elapsed:  5.6 0.04 5.636 0 0 
+Time elapsed:  9.696 0.172 10.156 0.02 0.056 
 > 

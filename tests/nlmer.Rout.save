@@ -1,5 +1,5 @@
 
-R version 2.11.0 alpha (2010-03-27 r51444)
+R version 2.11.1 Patched (2010-05-31 r52171)
 Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
@@ -15,8 +15,8 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-> suppressPackageStartupMessages(library(Matrix))# as we have an *.Rout.save
-> library(lme4)
+> ### suppressPackageStartupMessages(...)  as we have an *.Rout.save to Rdiff against
+> stopifnot(suppressPackageStartupMessages(require(lme4)))
 > 
 > showProc.time <- function() { ## CPU elapsed __since last called__
 +     .ot <- .pc
@@ -41,23 +41,23 @@ Formula: conc ~ SSfol(Dose, Time, lKe, lKa, lCl) ~ (lKe + lKa + lCl |      Subje
 Random effects:
  Groups   Name Variance Std.Dev. Corr          
  Subject  lKe  0.000000 0.00000                
-          lKa  0.227361 0.47682     NaN        
+          lKa  0.227357 0.47682     NaN        
           lCl  0.015722 0.12539     NaN -0.012 
- Residual      0.591715 0.76923                
+ Residual      0.591717 0.76923                
 Number of obs: 132, groups: Subject, 12
 
 Fixed effects:
     Estimate Std. Error t value
 lKe -2.47518    0.05641  -43.88
 lKa  0.47414    0.15288    3.10
-lCl -3.23552    0.05235  -61.80
+lCl -3.23551    0.05235  -61.80
 
 Correlation of Fixed Effects:
     lKe    lKa   
 lKa -0.264       
 lCl  0.671 -0.141
 > showProc.time() # ~ 5.7s {dual-opteron 2814, on 64b, no optim.}
-Time elapsed:  20.157 0.152 22.291 
+Time elapsed:  12.928 0.004 13.038 
 > 
 > (nm3 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
 +               (lKe|Subject) + (lKa|Subject) + (lCl|Subject),
@@ -70,7 +70,7 @@ Formula: conc ~ SSfol(Dose, Time, lKe, lKa, lCl) ~ (lKe | Subject) + (lKa |     
 Random effects:
  Groups   Name Variance Std.Dev.
  Subject  lKe  0.000000 0.00000 
- Subject  lKa  0.227495 0.47696 
+ Subject  lKa  0.227494 0.47696 
  Subject  lCl  0.015738 0.12545 
  Residual      0.591690 0.76921 
 Number of obs: 132, groups: Subject, 12
@@ -78,7 +78,7 @@ Number of obs: 132, groups: Subject, 12
 Fixed effects:
     Estimate Std. Error t value
 lKe -2.47500    0.05641  -43.88
-lKa  0.47409    0.15291    3.10
+lKa  0.47408    0.15291    3.10
 lCl -3.23538    0.05236  -61.79
 
 Correlation of Fixed Effects:
@@ -86,7 +86,7 @@ Correlation of Fixed Effects:
 lKa -0.264       
 lCl  0.671 -0.133
 > showProc.time() # ~ 3.2s
-Time elapsed:  12.717 0.04 14.471 
+Time elapsed:  10.369 0 10.452 
 > 
 > ## dropping   lKe  from random effects:
 > (nm4 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
@@ -115,7 +115,7 @@ Correlation of Fixed Effects:
 lKa -0.264       
 lCl  0.671 -0.141
 > showProc.time()
-Time elapsed:  8.328 0.016 9.513 
+Time elapsed:  6.077 0 6.12 
 > 
 > (nm5 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
 +               (lKa|Subject) + (lCl|Subject),
@@ -143,7 +143,7 @@ Correlation of Fixed Effects:
 lKa -0.264       
 lCl  0.671 -0.133
 > showProc.time()
-Time elapsed:  7.717 0.1 8.385 
+Time elapsed:  5.54 0 5.541 
 > 
 > e3 <- expand(nm3)
 > stopifnot(identical(sapply(e3, class),
@@ -169,7 +169,7 @@ Time elapsed:  7.717 0.1 8.385
 +           )
 > 
 > showProc.time()
-Time elapsed:  0.116 0 0.123 
+Time elapsed:  0.08 0 0.081 
 > 
 > 
 > 

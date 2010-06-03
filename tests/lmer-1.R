@@ -1,5 +1,5 @@
-suppressPackageStartupMessages(library(Matrix))# as we have an *.Rout.save
-library(lme4)
+### suppressPackageStartupMessages(...)  as we have an *.Rout.save to Rdiff against
+stopifnot(suppressPackageStartupMessages(require(lme4)))
 options(show.signif.stars = FALSE)
 
 (fm1 <-  lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -168,5 +168,45 @@ stopifnot(identical(ranef(om2), ranef(om3)),
           identical(deviance(om2), deviance(om3)))
 if (identical(TRUE, all.equal(fixef(m2), fixef(om2))))
     stop("offset does not change the fixed effects")
+
+## glmer - Modeling overdispersion as "mixture" aka
+## ----- - *ONE* random effect *PER OBSERVATION" -- example inspired by Ben Bolker:
+
+##' <description>
+##'
+##' <details>
+##' @title
+##' @param ng number of groups
+##' @param nr number of "runs", i.e., observations per groups
+##' @param sd standard deviations of group and "Individual" random effects,
+##'    (\sigma_f, \sigma_I)
+##' @param b  true beta (fixed effects)
+##' @return a data frame (to be used in glmer()) with columns
+##'    (x, f, obs, eta0, eta, mu, y), where y ~ Pois(lambda(x)),
+##'                                   log(lambda(x_i)) = b_1 + b_2 * x + G_{f(i)} + I_i
+##'    and G_k ~ N(0, \sigma_f);  I_i ~ N(0, \sigma_I)
+##' @author Ben Bolker and Martin Maechler
+rPoisGLMMi <- function(ng, nr, sd=c(f = 1, ind = 0.5), b=c(1,2))
+{
+  stopifnot(nr >= 1, ng >= 1,
+            is.numeric(sd), names(sd) %in% c("f","ind"), sd >= 0)
+  ntot <- nr*ng
+  b.reff <- rnorm(ng,  sd= sd[["f"]])
+  b.rind <- rnorm(ntot,sd= sd[["ind"]])
+  x <- runif(ntot)
+  within(data.frame(x,
+                    f = factor(rep(LETTERS[1:ng], each=nr)),
+                    obs = 1:ntot,
+                    eta0 = cbind(1, x) %*% b),
+     {
+         eta <- eta0 + b.reff[f] + b.rind[obs]
+         mu <- exp(eta)
+         y <- rpois(ntot, lambda=mu)
+     })
+}
+dd <- rPoisGLMMi(12, 20)
+m0  <- glmer(y~x + (1|f),           family="poisson", data=dd)
+(m1 <- glmer(y~x + (1|f) + (1|obs), family="poisson", data=dd))
+anova(m0, m1)
 
 cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''

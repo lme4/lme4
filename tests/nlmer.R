@@ -1,14 +1,14 @@
-suppressPackageStartupMessages(require(Matrix))# as we have an *.Rout.save
-stopifnot(require(lme4))
+### suppressPackageStartupMessages(...)  as we have an *.Rout.save to Rdiff against
+stopifnot(suppressPackageStartupMessages(require(lme4)))
 
 showProc.time <- function() { ## CPU elapsed __since last called__
     .ot <- .pc
     .pc <<- proc.time()
     cat('Time elapsed: ', (.pc - .ot)[1:3],'\n')
 }
+.pc <- proc.time()
 allEQ <- function(x,y, tolerance = 4e-4, ...)
     all.equal.numeric(x,y, tolerance=tolerance, ...)
-.pc <- proc.time()
 
 ## 'Theoph' Data modeling
 
@@ -58,5 +58,3 @@ stopifnot(identical(sapply(e2, class),
           )
 
 showProc.time()
-
-
