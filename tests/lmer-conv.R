@@ -3,6 +3,9 @@
 ### The output of tests here are *not* 'diff'ed  (<==> no *.Rout.save file)
 library(lme4)
 sessionInfo()# { do *NOT* diff the output in this case! }
+## and for even more details:
+c(Matrix = packageDescription("Matrix")$Built,
+  lme4   = packageDescription("lme4")$Built)
 
 ## convergence on boundary warnings
 load(system.file("external/test3comp.rda", package = "Matrix"))

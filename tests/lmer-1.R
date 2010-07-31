@@ -83,6 +83,10 @@ m2 <- lmer(incidence / size ~ period, weights = size,
             family = binomial, data = cbpp)
 )
 
+## needed as MacOSX (i386) gave differing results in some cases,
+## (even on *repeating* the *same* computations!) :
+if(Sys.info()[["sysname"]] == "Darwin") identical <- all.equal ## the horror..!
+
 ### mcmcsamp() :
 ## From: Andrew Gelman <gelman@stat.columbia.edu>
 ## Date: Wed, 18 Jan 2006 22:00:53 -0500
@@ -112,7 +116,6 @@ m2 <- lmer(incidence / size ~ period, weights = size,
     summary(M2.)
     M2  <- lmer (y ~ x + ( x | group))
     ## should be identical (and is .. well, not on all versions on Mac OSX):
-  if(Sys.info()[["sysname"]] != "Darwin")
     stopifnot(identical(fixef(M2), fixef(M2.)),
 	      identical(ranef(M2), ranef(M2.)),
 	      identical(resid(M2), resid(M2.)))
@@ -157,9 +160,9 @@ m2 <- lmer(y ~ x1 + (x2|ff), data = D)
 m3 <- lmer(y ~ (x2|ff) + x1, data = D)
 if(Sys.info()[["sysname"]] != "Darwin")# << needed for unknown reasons
 stopifnot(identical(ranef(m0), ranef(m1)),
-          identical(ranef(m2), ranef(m3))
+	  identical(ranef(m2), ranef(m3)))
 stopifnot(inherits(tryCatch(lmer(y ~ x2|ff + x1, data = D), error = function(e)e),
-                   "error"))
+		   "error"))
 
 ## Check the use of offset
 om2 <- lmer(y ~ x1 + (x2|ff), data = D, offset = x3)
@@ -209,5 +212,8 @@ dd <- rPoisGLMMi(12, 20)
 m0  <- glmer(y~x + (1|f),           family="poisson", data=dd)
 (m1 <- glmer(y~x + (1|f) + (1|obs), family="poisson", data=dd))
 anova(m0, m1)
+
+## in case Mac useRs source() this file:
+if(Sys.info()[["sysname"]] == "Darwin") rm(identical)
 
 cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''

@@ -1,5 +1,5 @@
 
-R version 2.11.1 Patched (2010-05-31 r52171)
+R version 2.11.1 Patched (2010-07-29 r52657)
 Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
@@ -17,7 +17,6 @@ Type 'q()' to quit R.
 
 > ### suppressPackageStartupMessages(...)  as we have an *.Rout.save to Rdiff against
 > stopifnot(suppressPackageStartupMessages(require(lme4)))
-Matrix_NS: <environment: namespace:Matrix>
 > options(show.signif.stars = FALSE)
 > 
 > (fm1 <-  lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -267,6 +266,10 @@ In Ops.factor(habitat, lagoon) : * not meaningful for factors
 Error in lmerFactorList(formula, fr, 0L, 0L) : 
   No random effects terms specified in formula
 > 
+> ## needed as MacOSX (i386) gave differing results in some cases,
+> ## (even on *repeating* the *same* computations!) :
+> if(Sys.info()[["sysname"]] == "Darwin") identical <- all.equal ## the horror..!
+> 
 > ### mcmcsamp() :
 > ## From: Andrew Gelman <gelman@stat.columbia.edu>
 > ## Date: Wed, 18 Jan 2006 22:00:53 -0500
@@ -439,22 +442,21 @@ Formula: y ~ 1 + x + (1 + x | group)
  101.5 107.5 -44.77    87.59   89.54
 Random effects:
  Groups   Name        Variance   Std.Dev. Corr   
- group    (Intercept) 140.641521 11.85924        
+ group    (Intercept) 140.641640 11.85924        
           x             0.014427  0.12011 -1.000 
  Residual               2.722977  1.65014        
 Number of obs: 20, groups: group, 2
 
 Fixed effects:
             Estimate Std. Error t value
-(Intercept) 15.23544    8.40776   1.812
+(Intercept) 15.23545    8.40776   1.812
 x            0.18559    0.08508   2.181
 
 Correlation of Fixed Effects:
   (Intr)
 x -0.996
->     ## should be identical (and is) :
-> 
->     M2 <- lmer (y ~ x + ( x | group))
+>     M2  <- lmer (y ~ x + ( x | group))
+>     ## should be identical (and is .. well, not on all versions on Mac OSX):
 >     stopifnot(identical(fixef(M2), fixef(M2.)),
 + 	      identical(ranef(M2), ranef(M2.)),
 + 	      identical(resid(M2), resid(M2.)))
@@ -466,7 +468,7 @@ Slot "Gp":
 
 Slot "ST":
             [,1]
-[1,]  7.18678678
+[1,]  7.18679006
 [2,]  0.00000000
 [3,] -0.01012811
 
@@ -484,18 +486,18 @@ Slot "dims":
 
 Slot "fixef":
                   [,1]
-(Intercept) 15.2354383
-x            0.1855865
+(Intercept) 15.2354526
+x            0.1855864
 
 Slot "nc":
 [1] 2
 
 Slot "ranef":
-          [,1]
-[1,] -8.350427
-[2,]  8.350427
-[3,]  0.084574
-[4,] -0.084574
+            [,1]
+[1,] -8.35043630
+[2,]  8.35043630
+[3,]  0.08457412
+[4,] -0.08457412
 
 Slot "sigma":
          [,1]
@@ -543,9 +545,9 @@ must be less than the number of observations
 > m2 <- lmer(y ~ x1 + (x2|ff), data = D)
 > m3 <- lmer(y ~ (x2|ff) + x1, data = D)
 > stopifnot(identical(ranef(m0), ranef(m1)),
-+           identical(ranef(m2), ranef(m3)),
-+           inherits(tryCatch(lmer(y ~ x2|ff + x1, data = D), error = function(e)e),
-+                    "error"))
++ 	  identical(ranef(m2), ranef(m3)))
+> stopifnot(inherits(tryCatch(lmer(y ~ x2|ff + x1, data = D), error = function(e)e),
++ 		   "error"))
 Warning message:
 In Ops.factor(ff, x1) : + not meaningful for factors
 > 
@@ -626,6 +628,9 @@ m1: y ~ x + (1 | f) + (1 | obs)
 m0  3 1034.17 1044.61 -514.08                         
 m1  4  585.49  599.41 -288.75 450.67      1  < 2.2e-16
 > 
+> ## in case Mac useRs source() this file:
+> if(Sys.info()[["sysname"]] == "Darwin") rm(identical)
+> 
 > cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
-Time elapsed:  9.696 0.172 10.156 0.02 0.056 
+Time elapsed:  7.91 0.161 8.485 0 0 
 > 

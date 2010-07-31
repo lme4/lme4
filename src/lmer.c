@@ -2010,9 +2010,11 @@ SEXP mer_update_projection(SEXP x)
 
     SET_VECTOR_ELT(ans, 0, allocVector(REALSXP, dims[q_POS]));
     SET_VECTOR_ELT(ans, 1, allocVector(REALSXP, dims[p_POS]));
-    lmm_update_projection(x, REAL(VECTOR_ELT(ans, 0)),
+    lmm_update_projection(x,
+			  /* pb = */
+			  REAL(VECTOR_ELT(ans, 0)),
+			  /* pbeta = */
 			  REAL(VECTOR_ELT(ans, 1)));
-
     UNPROTECT(1);
     return ans;
 }
