@@ -158,7 +158,6 @@ m0 <- lmer(y ~ (x1 + x2)|ff, data = D)
 m1 <- lmer(y ~ x1 + x2|ff  , data = D)
 m2 <- lmer(y ~ x1 + (x2|ff), data = D)
 m3 <- lmer(y ~ (x2|ff) + x1, data = D)
-if(Sys.info()[["sysname"]] != "Darwin")# << needed for unknown reasons
 stopifnot(identical(ranef(m0), ranef(m1)),
 	  identical(ranef(m2), ranef(m3)))
 stopifnot(inherits(tryCatch(lmer(y ~ x2|ff + x1, data = D), error = function(e)e),
