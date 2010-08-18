@@ -1045,6 +1045,7 @@ setMethod("anova", signature(object = "mer"),
             ss <- (.Call(mer_update_projection, object)[[2]])^2
             names(ss) <- names(object@fixef)
             asgn <- attr(object@X, "assign")
+
             terms <- terms(object)
             nmeffects <- attr(terms, "term.labels")
             if ("(Intercept)" %in% names(ss))
@@ -1057,10 +1058,10 @@ setMethod("anova", signature(object = "mer"),
             ## P <- pf(f, df, dfr, lower.tail = FALSE)
             ## table <- data.frame(df, ss, ms, dfr, f, P)
             table <- data.frame(df, ss, ms, f)
-            dimnames(table) <-
-              list(nmeffects,
-                                        #			c("Df", "Sum Sq", "Mean Sq", "Denom", "F value", "Pr(>F)"))
-                   c("Df", "Sum Sq", "Mean Sq", "F value"))
+	    dimnames(table) <-
+	      list(nmeffects,
+		   ## c("Df", "Sum Sq", "Mean Sq", "Denom", "F value", "Pr(>F)"))
+		   c("Df", "Sum Sq", "Mean Sq", "F value"))
             if ("(Intercept)" %in% nmeffects)
               table <- table[-match("(Intercept)", nmeffects), ]
             attr(table, "heading") <- "Analysis of Variance Table"
@@ -2253,3 +2254,7 @@ whichreind <- function(fm, fnm = names(fm@flist))
     lapply(whichterms(fm, fnm),
            function (ind) unlist(reinds(fm@Gp)[ind]))
 
+
+## For Matrix API change (Oct.2009) - silence the warning:
+## don't -- we do not call it in this version of lme4:
+## assign("det_CHMfactor.warn", FALSE, envir = Matrix:::.MatrixEnv)

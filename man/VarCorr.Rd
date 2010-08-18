@@ -1,5 +1,4 @@
 \name{VarCorr}
-\docType{genericFunction}
 % Generic
 \alias{VarCorr}
 % Methods

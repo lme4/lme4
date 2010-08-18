@@ -1,5 +1,4 @@
 \name{fixef}
-\docType{genericFunction}
 \alias{fixef}
 \alias{fixed.effects}
 \alias{fixef,ANY-method}

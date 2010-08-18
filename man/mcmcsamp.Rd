@@ -1,5 +1,4 @@
 \name{mcmcsamp}
-\docType{genericFunction}
 \alias{mcmcsamp}
 \alias{mcmcsamp,mer-method}
 \title{Generate an MCMC sample}

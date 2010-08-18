@@ -1,5 +1,4 @@
 \name{ranef}
-\docType{genericFunction}
 \docType{methods}
 \alias{ranef}
 \alias{ranef-methods}

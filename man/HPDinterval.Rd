@@ -1,6 +1,5 @@
 \name{HPDinterval}
 \alias{HPDinterval}
-\docType{genericFunction}
 \alias{HPDinterval,merMCMC-method}
 \alias{HPDinterval,matrix-method}
 \title{Highest Posterior Density intervals}
