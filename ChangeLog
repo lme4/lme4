@@ -1,3 +1,8 @@
+2010-10-21  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* tests/lmer-1.R (.unsafe.BLAS): allow to set  identical <- all.equal
+	for some tests {mainly for Mac OSX i386}
+
 2010-06-03  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* DESCRIPTION (Date, Version): 0.999375-34

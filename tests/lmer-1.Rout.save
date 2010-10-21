@@ -1,7 +1,8 @@
 
-R version 2.11.1 Patched (2010-07-29 r52657)
+R version 2.12.0 Patched (2010-10-19 r53372)
 Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
+Platform: i686-pc-linux-gnu (32-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -266,9 +267,12 @@ In Ops.factor(habitat, lagoon) : * not meaningful for factors
 Error in lmerFactorList(formula, fr, 0L, 0L) : 
   No random effects terms specified in formula
 > 
+> ## useRs can set LME4_UNSAFE_BLAS for less strict checking:
+> (.unsafe.BLAS <- nzchar(Sys.getenv("LME4_UNSAFE_BLAS")))
+[1] FALSE
 > ## needed as MacOSX (i386) gave differing results in some cases,
 > ## (even on *repeating* the *same* computations!) :
-> if(Sys.info()[["sysname"]] == "Darwin") identical <- all.equal ## the horror..!
+> if(.unsafe.BLAS) identical <- all.equal ## "the horror" ..
 > 
 > ### mcmcsamp() :
 > ## From: Andrew Gelman <gelman@stat.columbia.edu>
@@ -442,14 +446,14 @@ Formula: y ~ 1 + x + (1 + x | group)
  101.5 107.5 -44.77    87.59   89.54
 Random effects:
  Groups   Name        Variance   Std.Dev. Corr   
- group    (Intercept) 140.641640 11.85924        
+ group    (Intercept) 140.641521 11.85924        
           x             0.014427  0.12011 -1.000 
  Residual               2.722977  1.65014        
 Number of obs: 20, groups: group, 2
 
 Fixed effects:
             Estimate Std. Error t value
-(Intercept) 15.23545    8.40776   1.812
+(Intercept) 15.23544    8.40776   1.812
 x            0.18559    0.08508   2.181
 
 Correlation of Fixed Effects:
@@ -468,7 +472,7 @@ Slot "Gp":
 
 Slot "ST":
             [,1]
-[1,]  7.18679006
+[1,]  7.18678678
 [2,]  0.00000000
 [3,] -0.01012811
 
@@ -486,18 +490,18 @@ Slot "dims":
 
 Slot "fixef":
                   [,1]
-(Intercept) 15.2354526
-x            0.1855864
+(Intercept) 15.2354383
+x            0.1855865
 
 Slot "nc":
 [1] 2
 
 Slot "ranef":
-            [,1]
-[1,] -8.35043630
-[2,]  8.35043630
-[3,]  0.08457412
-[4,] -0.08457412
+          [,1]
+[1,] -8.350427
+[2,]  8.350427
+[3,]  0.084574
+[4,] -0.084574
 
 Slot "sigma":
          [,1]
@@ -557,7 +561,7 @@ In Ops.factor(ff, x1) : + not meaningful for factors
 > 
 > stopifnot(identical(ranef(om2), ranef(om3)),
 +           identical(deviance(om2), deviance(om3)))
-> if (identical(TRUE, all.equal(fixef(m2), fixef(om2))))
+> if (isTRUE(all.equal(fixef(m2), fixef(om2))))
 +     stop("offset does not change the fixed effects")
 > 
 > ## glmer - Modeling overdispersion as "mixture" aka
@@ -628,9 +632,8 @@ m1: y ~ x + (1 | f) + (1 | obs)
 m0  3 1034.17 1044.61 -514.08                         
 m1  4  585.49  599.41 -288.75 450.67      1  < 2.2e-16
 > 
-> ## in case Mac useRs source() this file:
-> if(Sys.info()[["sysname"]] == "Darwin") rm(identical)
+> if(.unsafe.BLAS) rm(identical)
 > 
 > cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
-Time elapsed:  7.91 0.161 8.485 0 0 
+Time elapsed:  6.609 0.185 7.371 0 0 
 > 

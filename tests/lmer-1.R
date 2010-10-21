@@ -83,9 +83,11 @@ m2 <- lmer(incidence / size ~ period, weights = size,
             family = binomial, data = cbpp)
 )
 
+## useRs can set LME4_UNSAFE_BLAS for less strict checking:
+(.unsafe.BLAS <- nzchar(Sys.getenv("LME4_UNSAFE_BLAS")))
 ## needed as MacOSX (i386) gave differing results in some cases,
 ## (even on *repeating* the *same* computations!) :
-if(Sys.info()[["sysname"]] == "Darwin") identical <- all.equal ## the horror..!
+if(.unsafe.BLAS) identical <- all.equal ## "the horror" ..
 
 ### mcmcsamp() :
 ## From: Andrew Gelman <gelman@stat.columbia.edu>
@@ -169,7 +171,7 @@ om3 <- lmer(y ~ x1 + (x2|ff) + offset(x3), data = D)
 
 stopifnot(identical(ranef(om2), ranef(om3)),
           identical(deviance(om2), deviance(om3)))
-if (identical(TRUE, all.equal(fixef(m2), fixef(om2))))
+if (isTRUE(all.equal(fixef(m2), fixef(om2))))
     stop("offset does not change the fixed effects")
 
 ## glmer - Modeling overdispersion as "mixture" aka
@@ -212,7 +214,6 @@ m0  <- glmer(y~x + (1|f),           family="poisson", data=dd)
 (m1 <- glmer(y~x + (1|f) + (1|obs), family="poisson", data=dd))
 anova(m0, m1)
 
-## in case Mac useRs source() this file:
-if(Sys.info()[["sysname"]] == "Darwin") rm(identical)
+if(.unsafe.BLAS) rm(identical)
 
 cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
