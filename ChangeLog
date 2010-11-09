@@ -1,3 +1,7 @@
+2010-11-09  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/lmer.R (glmer): Forbid the use of "quasi" families in glmer.
+
 2010-10-21  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* tests/lmer-1.R (.unsafe.BLAS): allow to set  identical <- all.equal

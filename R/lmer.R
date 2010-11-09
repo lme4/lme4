@@ -423,7 +423,7 @@ mkZt <- function(FL, start, s = 1L)
 }
 
 famNms <- c("binomial", "gaussian", "Gamma", "inverse.gaussian",
-            "poisson", "quasibinomial", "quasipoisson", "quasi")
+            "poisson")
 linkNms <- c("logit", "probit", "cauchit", "cloglog", "identity",
 	     "log", "sqrt", "1/mu^2", "inverse")
 varNms <- c("constant", "mu(1-mu)", "mu", "mu^2", "mu^3")
@@ -441,10 +441,7 @@ famType <- function(family)
                    "constant",          # gaussian
                    "mu^2",              # Gamma
                    "mu^3",              # inverse.gaussian
-                   "mu",                # poisson
-                   "mu(1-mu)",          # quasibinomial
-                   "mu",                # quasipoisson
-                   family$varfun)       # quasi
+                   "mu")                # poisson
     if (!(vTyp <- match(vNam, varNms, nomatch = 0)))
         stop(gettextf("unknown GLM family: %s",
                       sQuote(family$family), domain = "R-lme4"))
@@ -693,6 +690,8 @@ function(formula, data, family = gaussian, start = NULL,
         mc$family <- NULL
         return(eval.parent(mc))
     }
+    if (family$family %in% c("quasibinomial", "quasipoisson", "quasi"))
+        stop('"quasi" families cannot be used in glmer')
     stopifnot(length(formula <- as.formula(formula)) == 3)
 
     ## Check for method argument which is no longer used
