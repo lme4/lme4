@@ -222,6 +222,10 @@ try(gm1 <- lmer(incidence ~ period + (1|herd),
 try(gm1 <- lmer(incidence ~ period + (1|herd),
                 data = cbpp, family = quasi))
 
+# check bug from Kevin Buhner
+X <- data.frame(y=runif(10), x=rnorm(10), z=sample(c("A","B"), 10, TRUE))
+lmer(log(y) ~ x | z, data=X)
+
 if(.unsafe.BLAS) rm(identical)
 
 cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''

@@ -153,8 +153,9 @@ lmerFrames <- function(mc, formula, contrasts, vnms = character(0))
 
     ## The model formula for the fixed-effects terms only.
     fixed.form <- nobars(formula)       # remove any terms with `|'
-    if (inherits(fixed.form, "name"))   # RHS is empty - use `y ~ 1'
-        fixed.form <- substitute(foo ~ 1, list(foo = fixed.form))
+    if (!inherits(fixed.form, "formula"))
+      ## RHS is empty - use `y ~ 1'
+      fixed.form <- as.formula(substitute(foo ~ 1, list(foo = fixed.form)))
 
     ## attach the correct environment
     environment(fixed.form) <- environment(frame.form) <- environment(formula)
