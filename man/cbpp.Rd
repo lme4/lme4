@@ -48,5 +48,12 @@ m2 <- glmer(incidence / size ~ period + (1 | herd), weights = size,
 ## Confirm that these are equivalent:
 stopifnot(all.equal(coef(m1), coef(m2)),
           all.equal(ranef(m1), ranef(m2)))
+
+## GLMM with individual-level variability (accounting for overdispersion)
+cbpp$obs <- 1:nrow(cbpp)
+(m3 <- glmer(cbind(incidence, size - incidence) ~ period +
+    (1 | herd) +  (1|obs),
+              family = binomial, data = cbpp))
+
 }
 \keyword{datasets}

@@ -143,6 +143,12 @@ anova(fm1, fm2)
 ## generalized linear mixed model
 (gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
               family = binomial, data = cbpp))
+## GLMM with individual-level variability (accounting for overdispersion)
+cbpp$obs <- 1:nrow(cbpp)
+(gm2 <- glmer(cbind(incidence, size - incidence) ~ period +
+    (1 | herd) +  (1|obs),
+              family = binomial, data = cbpp))
+anova(gm1,gm2)
 ## nonlinear mixed models
 (nm1 <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~ Asym|Tree,
               Orange, start = c(Asym = 200, xmid = 725, scal = 350)))
