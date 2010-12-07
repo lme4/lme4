@@ -214,18 +214,6 @@ m0  <- glmer(y~x + (1|f),           family="poisson", data=dd)
 (m1 <- glmer(y~x + (1|f) + (1|obs), family="poisson", data=dd))
 anova(m0, m1)
 
-## Check that quasi families throw an error
-try(gm1 <- lmer(cbind(incidence, size - incidence) ~ period + (1|herd),
-                data = cbpp, family = quasibinomial))
-try(gm1 <- lmer(incidence ~ period + (1|herd),
-                data = cbpp, family = quasipoisson))
-try(gm1 <- lmer(incidence ~ period + (1|herd),
-                data = cbpp, family = quasi))
-
-# check bug from Kevin Buhner
-X <- data.frame(y=runif(10), x=rnorm(10), z=sample(c("A","B"), 10, TRUE))
-lmer(log(y) ~ x | z, data=X)
-
 if(.unsafe.BLAS) rm(identical)
 
 cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
