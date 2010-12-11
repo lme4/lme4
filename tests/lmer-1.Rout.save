@@ -1,8 +1,8 @@
 
-R version 2.12.0 (2010-10-15)
+R version 2.12.1 RC (2010-12-10 r53825)
 Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
-Platform: x86_64-pc-linux-gnu (64-bit)
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -28,7 +28,7 @@ Formula: Reaction ~ Days + (Days | Subject)
  1756 1775 -871.8     1752    1744
 Random effects:
  Groups   Name        Variance Std.Dev. Corr  
- Subject  (Intercept) 612.090  24.7405        
+ Subject  (Intercept) 612.092  24.7405        
           Days         35.072   5.9221  0.066 
  Residual             654.941  25.5918        
 Number of obs: 180, groups: Subject, 18
@@ -151,11 +151,11 @@ $group.id
 3    3.1860179
 4    3.1121968
 5    1.4381076
-6   -1.7594785
+6   -1.7594786
 7   -0.2546842
-8    0.6977649
+8    0.6977648
 9    1.2121675
-10   4.9434829
+10   4.9434830
 
 > (sf1 <- summary(fit.1)) # show() is as without summary()
 Linear mixed model fit by REML 
@@ -446,14 +446,14 @@ Formula: y ~ 1 + x + (1 + x | group)
  101.5 107.5 -44.77    87.59   89.54
 Random effects:
  Groups   Name        Variance   Std.Dev. Corr   
- group    (Intercept) 140.646168 11.85943        
+ group    (Intercept) 140.641531 11.85924        
           x             0.014427  0.12011 -1.000 
- Residual               2.722972  1.65014        
+ Residual               2.722977  1.65014        
 Number of obs: 20, groups: group, 2
 
 Fixed effects:
             Estimate Std. Error t value
-(Intercept) 15.23553    8.40752   1.812
+(Intercept) 15.23552    8.40776   1.812
 x            0.18559    0.08508   2.181
 
 Correlation of Fixed Effects:
@@ -471,41 +471,41 @@ Slot "Gp":
 [1] 0 4
 
 Slot "ST":
-              [,1]
-[1,]  7.186912e+00
-[2,]  5.962606e-08
-[3,] -1.012811e-02
+            [,1]
+[1,]  7.18678711
+[2,]  0.00000000
+[3,] -0.01012811
 
 Slot "call":
 lmer(formula = y ~ x + (x | group))
 
 Slot "deviance":
-[1] 87.58728
+[1] 87.58733
 
 Slot "dims":
    nt     n     p     q     s    np   LMM  REML  fTyp  lTyp  vTyp  nest useSc 
     1    20     2     4     1     3     0     1     2     5     1     1     1 
  nAGQ  verb  mxit  mxfn   cvg 
-    1     0   300   900     4 
+    1     0   300   900     5 
 
 Slot "fixef":
                   [,1]
-(Intercept) 15.2355284
-x            0.1855855
+(Intercept) 15.2355231
+x            0.1855856
 
 Slot "nc":
 [1] 2
 
 Slot "ranef":
             [,1]
-[1,] -8.35085457
-[2,]  8.35085457
-[3,]  0.08457838
-[4,] -0.08457838
+[1,] -8.35048135
+[2,]  8.35048135
+[3,]  0.08457456
+[4,] -0.08457456
 
 Slot "sigma":
          [,1]
-[1,] 1.650143
+[1,] 1.650145
 
 > 
 > if (FALSE) {  # mcmcsamp for  glmer  not yet available
@@ -632,22 +632,8 @@ m1: y ~ x + (1 | f) + (1 | obs)
 m0  3 1034.17 1044.61 -514.08                         
 m1  4  585.49  599.41 -288.75 450.67      1  < 2.2e-16
 > 
-> ## Check that quasi families throw an error
-> try(gm1 <- lmer(cbind(incidence, size - incidence) ~ period + (1|herd),
-+                 data = cbpp, family = quasibinomial))
-Error in glmer(formula = cbind(incidence, size - incidence) ~ period +  : 
-  "quasi" families cannot be used in glmer
-> try(gm1 <- lmer(incidence ~ period + (1|herd),
-+                 data = cbpp, family = quasipoisson))
-Error in glmer(formula = incidence ~ period + (1 | herd), data = cbpp,  : 
-  "quasi" families cannot be used in glmer
-> try(gm1 <- lmer(incidence ~ period + (1|herd),
-+                 data = cbpp, family = quasi))
-Error in glmer(formula = incidence ~ period + (1 | herd), data = cbpp,  : 
-  "quasi" families cannot be used in glmer
-> 
 > if(.unsafe.BLAS) rm(identical)
 > 
 > cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
-Time elapsed:  9.55 0.08 9.636 0 0 
+Time elapsed:  5.64 0.07 5.721 0 0 
 > 
