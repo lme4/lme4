@@ -7,8 +7,8 @@
 ##' Given a data frame and the names of variables, idvar and timevar,
 ##' create a wide data frame from idvar and timevar and any variables
 ##' named in the factors argument.  Create lagged variables of each of
-##' the of the variables named in the factors argument and return them
-##' as a list of lists of dgTMatrix objects.
+##' the variables named in the factors argument and return as a list
+##' of lists of dgTMatrix objects.
 ##'
 ##' @param fr - the original data frame
 ##' @param idvar - character scalar, the name of the id variable
@@ -24,8 +24,8 @@ lagged_factor <- function(fr, idvar = "id", timevar = "Time", factors = "inst")
               length(factors <- sapply(factors, as.character)) > 0,
               all(c(idvar, timevar, factors) %in% names(fr)),
               all(unlist(lapply(fr[factors], is.factor))))
-    ## ensure timevar is a factor
-    fr[[timevar]] <- as.factor(fr[[timevar]])
+    ## ensure timevar is a factor (and drop unused levels)
+    fr[[timevar]] <- factor(fr[[timevar]])
     ## create the wide data frame
     v.names <- setdiff(fnms, c(idvar, timevar))
     wide <- reshape(fr, direction = "wide", idvar = idvar,
@@ -38,8 +38,8 @@ lagged_factor <- function(fr, idvar = "id", timevar = "Time", factors = "inst")
         vnms <- paste(nm, tlevs, sep = ".")
         ff <- cbind(wide[, vnms],
                     data.frame(NAs = factor(rep(NA, nrow(wide)),
-                               levels = levs))[, rep.int(1L, nt - 1)])
-        arr <- array(unlist(ff), c(nrow(wide), nt + 1L, nt))[, nts, nts]
+                               levels = levs))[, rep.int(1L, nt - 1L)])
+        arr <- array(unlist(ff), c(nrow(wide), nt, nt + 1L))[, nts, nts]
         for (face in nts[-1]) {
             nms <- paste(nm, face, ".", tlevs, sep = '')
             for (j in nts) wide[[nms[j]]] <- factor(arr[,j,face], levels = levs)
