@@ -1,3 +1,12 @@
+2011-02-08  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/carryOver.R (lagged_factor): Correct undiscovered error in
+	lagging of the variables (this file contains private functions
+	that were used by Harold Doran and me).
+
+	* DESCRIPTION: Add Ben to the list of authors and change the
+	maintainer address.  Bump version number and date.
+
 2010-11-09  Douglas Bates  <bates@stat.wisc.edu>
 
 	* R/lmer.R (glmer): Forbid the use of "quasi" families in glmer.
