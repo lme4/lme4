@@ -24,7 +24,6 @@
 \alias{resid,mer-method}
 \alias{residuals,mer-method}
 \alias{show,mer-method}
-\alias{simulate,mer-method}
 \alias{summary,mer-method}
 \alias{terms,mer-method}
 \alias{update,mer-method}
@@ -311,9 +310,6 @@
       of optional arguments.}
     \item{ranef}{\code{signature(object = "mer")}: returns the
       conditional modes of the random effects.  See \code{\link{ranef}}.}
-    \item{refit}{\code{signature(object = "mer", newresp = "numeric")}:
-      Update the response vector only and refit the model. See
-      \code{\link{refit}}.}
     \item{resid}{\code{signature(object = "mer")}: returns the (raw)
       residuals.  This method calls \code{\link{napredict}}.  See the
       above description of the \code{fitted} method for details.  See
@@ -322,11 +318,6 @@
       for the \code{resid} method.}
     \item{show}{\code{signature(object = "mer")}: Same as the
       \code{print} method without the optional arguments.}
-    \item{simulate}{\code{signature(object = "mer")}: simulate
-      \code{nsim} (defaults to 1) responses from the theoretical
-      distribution corresponding to the fitted model.  The \code{refit}
-      method is particularly useful in combination with this method.
-      See also \code{\link{simulate}}.}
     \item{terms}{\code{signature(x = "mer")}: Extract the
       \code{\link{terms}} object for the fixed-effects terms in the
       model formula.}
@@ -345,6 +336,9 @@
   \cr
   \code{\link{VarCorr}} for extracting the variance and
   correlation components of the \emph{random}-effects terms.
+  \cr
+  \code{\link{mcmcsamp}} for posterior MCMC sampling of a \code{mer} fit;
+    \code{\link{simulate-mer}} for simulation and parametric bootstrapping
 }
 \examples{
 (fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject),
@@ -363,11 +357,6 @@ ee <- expand(fm2)
 op <- options(digits = 3)
 tcrossprod(ee$sigma * ee$P \%*\% ee$T \%*\% ee$S)
 options(op)
-
-\dontrun{
-## Simulate 'Reaction' according to the fitted model:
-dim(ss <- simulate(fm2, nsim = 200, seed = 101)) ## -> 180 x 200
-}
 
 }
 \keyword{classes}

@@ -1297,17 +1297,68 @@ setMethod("simulate", "mer",
 	  if(!exists(".Random.seed", envir = .GlobalEnv))
 	      runif(1)		     # initialize the RNG if necessary
           RNGstate <- .Random.seed
+          ## FIXME: implement offset, should be fairly easy (?)
           dims <- object@dims
-          etasim <- as.vector(object@X %*% fixef(object)) +  # fixed-effect contribution
-              sigma(object) * (as(t(object@A) %*%    # random-effects contribution
-                               matrix(rnorm(nsim * dims[["q"]]), nc = nsim),
-                                  "matrix")
-                               ## residual contribution
-                               + matrix(rnorm(nsim * dims[["n"]]), nc = nsim))
-          if (length(object@V) == 0 && length(object@muEta) == 0)
-              return(etasim)
-          stop("simulate method for GLMMs and NLMMs not yet implemented")
-          })
+          sigma <- sigma(object)
+          etasim.fix <- as.vector(object@X %*% fixef(object))   # fixed-effect contribution
+          if (length(offset <- object@offset)>0) {
+            etasim.fix <- etasim.fix+offset
+          } 
+          etasim.reff <- as(t(object@A) %*%    # UNSCALED random-effects contribution
+                            matrix(rnorm(nsim * dims[["q"]]), nc = nsim),
+                            "matrix")
+          if (length(object@V) == 0 && length(object@muEta) == 0) {
+            etasim.resid <- matrix(rnorm(nsim * dims["n"]), nc = nsim) ## UNSCALED residual
+            etasim <- etasim.fix + sigma*(etasim.reff+etasim.resid)
+            return(drop(etasim))
+          }
+          if (length(object@muEta)>0) {
+      ## GLMM
+      ## n.b. DON'T scale random-effects
+      ## if sigma!=1, it applies to the "quasi"- part of the model
+      etasim <- etasim.fix+etasim.reff 
+      family <- object@call$family
+      if(is.symbol(family)) family <- as.character(family)
+      if(is.character(family))
+        family <- get(family, mode = "function", envir = parent.frame(2))
+      if(is.function(family)) family <- family()
+      if(is.null(family$family)) stop("'family' not recognized")
+      musim <- family$linkinv(etasim)
+      n <- length(musim) ## FIXME: or could be dims["n"]?
+      vsim <- switch(family$family,
+                     poisson=rpois(n,lambda=musim),
+                     binomial={
+                       resp <- model.response(object@frame)
+                       bernoulli <- !is.matrix(resp)
+                       if (bernoulli) {
+                         rbinom(n,prob=musim,size=1)
+                       } else {
+                         nresp <- nrow(resp)
+                         ## FIXME: should "N-size" (column 2) be named?
+                         ## copying structures from stats/R/family.R
+                         sizes <- rowSums(resp)
+                         Y <- rbinom(n, size = sizes, prob = musim)
+                         YY <- cbind(Y, sizes - Y)
+                         yy <- lapply(split(YY,gl(nsim,nresp,2*nsim*nresp)),
+                                matrix,ncol=2,dimnames=list(NULL,colnames(resp)))
+                         ## colnames() <- colnames(resp)
+                         ## yy <- split(as.data.frame(YY),
+                         ## rep(1:nsim,each=length(sizes)))
+                         names(yy) <- paste("sim",seq_along(yy),sep="_")
+                         yy
+                         ## yy <- as.data.frame(yy)
+                       }
+                     },
+                     stop("simulation not implemented for family",
+                          family$family))
+                       
+    }
+    if (!(family$family=="binomial" && !bernoulli)) {
+      vsim <- matrix(vsim,nc=nsim)
+      return(drop(vsim))
+    } else if (nsim==1) return(vsim[[1]]) else return(vsim)
+    stop("simulate method for NLMMs not yet implemented")
+})
 
 setMethod("summary", signature(object = "mer"),
 	  function(object, ...)
