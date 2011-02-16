@@ -1,3 +1,13 @@
+2011-02-13  Ben Bolker <bbolker@gmail.com>
+
+	* tests/simulate.R: New tests for simulate()
+
+	* R/lmer.R, data/PB.rda, man/cbpp_PB.Rd, man/mer-class.Rd,
+	  man/simulate.Rd, man/sleepstudy_PB.Rd: added simulate method for GLMMs
+	  split refit() and simulate() docs out to a separate file
+	  for testing/example convenience, add parametric bootstrap results as
+	  data
+
 2011-02-08  Douglas Bates  <bates@stat.wisc.edu>
 
 	* R/carryOver.R (lagged_factor): Correct undiscovered error in
