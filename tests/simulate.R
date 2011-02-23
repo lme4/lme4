@@ -1,23 +1,31 @@
-library(lme4)
+require(lme4)
+source(system.file("test-tools.R", package = "Matrix"))# identical3(),
+
 set.seed(54321)
 
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy)
 
+## MM: FIXME? -- why not be more compatible to simulate.lm()
+##              which returns a data frame both for nsim=1 and nsim > 1 ??
 s1 <- simulate(fm1)
-stopifnot(is.numeric(s1) && is.null(dim(s1)))  ## returns vector
+stopifnot(is.numeric(s1), is.null(dim(s1)))  ## returns vector
+showProc.time()
 s2 <- simulate(fm1,10)
-stopifnot(is.numeric(s2) && ncol(s2==10))      ## returns matrix
+stopifnot(is.numeric(s2), ncol(s2)==10)      ## returns matrix
+showProc.time()
 
 ## binomial (non-Bernoulli)
 gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-              family = binomial, data = cbpp)
+	     family = binomial, data = cbpp)
 gm0 <- update(gm1, . ~. -period)
 
 s1 <- simulate(gm1)
-stopifnot(is.numeric(s1) && ncol(s1)==2)
+stopifnot(is.numeric(s1), ncol(s1)==2)
 s2 <- simulate(gm1,10)
-stopifnot(is.list(s2) && all(sapply(s2,ncol)==2) && all(sapply(s2,nrow)==nrow(cbpp)))
+stopifnot(is.list(s2), sapply(s2,ncol)==2,
+	  sapply(s2,nrow) == nrow(cbpp))
+showProc.time()
 
 pboot <- function(m0,m1) {
   s <- simulate(m0)
@@ -26,13 +34,13 @@ pboot <- function(m0,m1) {
   2*(L1-L0)
 }
 
-t0 <- system.time(r0 <- replicate(10,pboot(fm2,fm1)))
-t0
+r0 <- replicate(10,pboot(fm2,fm1))
 summary(r0)
+showProc.time()
 
-t1 <- system.time(r1 <- replicate(10,pboot(gm0,gm1)))
-t1
+r1 <- replicate(10,pboot(gm0,gm1))
 summary(r1)
+showProc.time()
 
 ## FIXME: want real Poisson example, but will have to simulate one instead for now
 nobs <- 50
@@ -41,7 +49,7 @@ x <- runif(nobs,max=4)
 u <- rnorm(5,sd=4)
 beta <- c(1,2)
 d <- data.frame(f,x)
-eta <- model.matrix(~x,data=d)%*%beta+u[f]
+eta <- model.matrix(~x,data=d) %*% beta + u[f]
 mu <- exp(eta)
 set.seed(2002)
 d$y <- rpois(nobs,lambda=mu)
@@ -53,9 +61,11 @@ d$y <- rpois(nobs,lambda=mu)
 
 gm3 <- glmer(y~x+(1|f),data=d,family=poisson)
 s3 <- simulate(gm3,seed=1001)
-stopifnot(is.numeric(s3) && length(s3)==nrow(d))
+showProc.time()
+stopifnot(is.numeric(s3), length(s3)==nrow(d))
 s4 <- simulate(gm3,10)
-stopifnot(is.numeric(s4) && nrow(s4)==nrow(d) && ncol(s4)==10)
+showProc.time()
+stopifnot(is.numeric(s4), nrow(s4)==nrow(d), ncol(s4)==10)
 
 invisible(refit(gm3,s4[,1]))
 
@@ -68,4 +78,5 @@ d$y <- rpois(nobs,lambda=mu)
 
 gm4 <- glmer(y~x+(1|f),offset=offset,data=d,family=poisson)
 s5 <- simulate(gm4,seed=1001)
-stopifnot(is.numeric(s5) && length(s5)==nrow(d))
+stopifnot(is.numeric(s5), length(s5)==nrow(d))
+showProc.time()
