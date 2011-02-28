@@ -9,10 +9,10 @@ fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy)
 ## MM: FIXME? -- why not be more compatible to simulate.lm()
 ##              which returns a data frame both for nsim=1 and nsim > 1 ??
 s1 <- simulate(fm1)
-stopifnot(is.numeric(s1), is.null(dim(s1)))  ## returns vector
+stopifnot(is.data.frame(s1), ncol(s1)==1, nrow(s1)==length(fitted(fm1)))  ## returns 1-column data frame
 showProc.time()
 s2 <- simulate(fm1,10)
-stopifnot(is.numeric(s2), ncol(s2)==10)      ## returns matrix
+stopifnot(is.data.frame(s2), ncol(s2)==10, nrow(s2)==length(fitted(fm1)))      ## returns 10-column data frame
 showProc.time()
 
 ## binomial (non-Bernoulli)
@@ -20,11 +20,11 @@ gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
 	     family = binomial, data = cbpp)
 gm0 <- update(gm1, . ~. -period)
 
-s1 <- simulate(gm1)
-stopifnot(is.numeric(s1), ncol(s1)==2)
-s2 <- simulate(gm1,10)
-stopifnot(is.list(s2), sapply(s2,ncol)==2,
-	  sapply(s2,nrow) == nrow(cbpp))
+s3 <- simulate(gm1)
+stopifnot(is.data.frame(s3), ncol(s3[[1]])==2, nrow(s3)==length(fitted(gm1)))
+s4 <- simulate(gm1,10)
+stopifnot(is.list(s4), sapply(s4,ncol)==2,
+	  sapply(s4,nrow) == nrow(cbpp))
 showProc.time()
 
 pboot <- function(m0,m1) {
@@ -60,14 +60,14 @@ d$y <- rpois(nobs,lambda=mu)
 ##  ggplot(d,aes(x=x,y=y,colour=f))+stat_sum(aes(size=..n..))
 
 gm3 <- glmer(y~x+(1|f),data=d,family=poisson)
-s3 <- simulate(gm3,seed=1001)
+s5 <- simulate(gm3,seed=1001)
 showProc.time()
-stopifnot(is.numeric(s3), length(s3)==nrow(d))
-s4 <- simulate(gm3,10)
+stopifnot(is.data.frame(s5), ncol(s5)==1, nrow(s5)==nrow(d))
+s6 <- simulate(gm3,10)
 showProc.time()
-stopifnot(is.numeric(s4), nrow(s4)==nrow(d), ncol(s4)==10)
+stopifnot(is.data.frame(s6), nrow(s6)==nrow(d), ncol(s6)==10)
 
-invisible(refit(gm3,s4[,1]))
+invisible(refit(gm3,s6[,1]))
 
 ## simulate with offset
 d$offset <- rep(1,nobs)
@@ -77,6 +77,6 @@ set.seed(2002)
 d$y <- rpois(nobs,lambda=mu)
 
 gm4 <- glmer(y~x+(1|f),offset=offset,data=d,family=poisson)
-s5 <- simulate(gm4,seed=1001)
-stopifnot(is.numeric(s5), length(s5)==nrow(d))
+s7 <- simulate(gm4,seed=1001)
+stopifnot(is.data.frame(s7), nrow(s7)==nrow(d),ncol(s7)==1)
 showProc.time()

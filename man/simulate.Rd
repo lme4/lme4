@@ -2,12 +2,14 @@
 \alias{simulate-mer}
 \alias{simulate,mer-method}
 \alias{refit,mer-method}
+\alias{refit,mer,data.frame-method}
 \title{Simulate based on mer fits}
 \description{
   These generic functions (1) generate simulations based on the
   estimated fitted models (conditional on the estimated values of both
   the random and fixed effects) and (2) efficiently refit a
-  specified model based on a new vector (or matrix) of responses
+  specified model based on a new vector, data frame, or (for
+  binomial models) matrix of responses
 }
 \usage{
 \S4method{simulate}{mer}(object, nsim = 1 , seed = NULL, \dots)
@@ -39,25 +41,25 @@
     attribute of the returned value.  The default, 'NULL', will
     not change the random generator state, and return
     '.Random.seed' as the 'seed' attribute}
-  \item{newresp}{(numeric) a vector (for most models) or matrix (for
+  \item{newresp}{a numeric vector or single-column data frame (for most
+    models) or a matrix or two-column data frame (for
   binomial models where the response was specified as a matrix)
   containing new values for the response variable}
   \item{\dots}{Some methods may take additional, optional arguments.}
 }
 \value{
-  Numeric vector, matrix, or list representing one or more
+  Data frame representing one or more
   simulations from the fitted model, conditional on both
-  the fixed and random effect estimates.
+  the fixed and random effect estimates. In cases of univariate
+  responses (i.e. all cases except binomial models where the response
+  is specified as a two-column matrix), each column of the data frame
+  represents an independent simulation.
   
   For binomial models where the response is specified as
-  a two-column matrix, either a two-column numeric matrix
-  with the same number of rows as the original data set
-  (if \code{nsim==1}) or a list of such matrices (if \code{nsim>1}).
-
-  For all other models, either a numeric vector matching the
-  length of the original response vector (if \code{nsim==1}) or
-  a matrix with \code{nsim} columns and the appropriate number
-  of rows.
+  a two-column matrix, the value is a non-standard data frame
+  where each column of the data frame (as accessed via \code{x[,i]}
+  or \code{x[[i]]}) is actually a two-column \emph{matrix} of
+  responses (successes and failures).
 }
 \examples{
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)

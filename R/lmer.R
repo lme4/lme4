@@ -1299,18 +1299,21 @@ setMethod("simulate", "mer",
           RNGstate <- .Random.seed
           ## FIXME: implement offset, should be fairly easy (?)
           dims <- object@dims
+          n <- dims["n"]
+          nm <- names(fitted(object))
+          if (is.null(nm)) nm <- as.character(1:n)
           sigma <- sigma(object)
           etasim.fix <- as.vector(object@X %*% fixef(object))   # fixed-effect contribution
           if (length(offset <- object@offset)>0) {
             etasim.fix <- etasim.fix+offset
           } 
           etasim.reff <- as(t(object@A) %*%    # UNSCALED random-effects contribution
-                            matrix(rnorm(nsim * dims[["q"]]), nc = nsim),
+                            matrix(rnorm(nsim * dims["q"]), nc = nsim),
                             "matrix")
           if (length(object@V) == 0 && length(object@muEta) == 0) {
-            etasim.resid <- matrix(rnorm(nsim * dims["n"]), nc = nsim) ## UNSCALED residual
+            etasim.resid <- matrix(rnorm(nsim * n), nc = nsim) ## UNSCALED residual
             etasim <- etasim.fix + sigma*(etasim.reff+etasim.resid)
-            return(drop(etasim))
+            val <- etasim
           }
           if (length(object@muEta)>0) {
       ## GLMM
@@ -1324,20 +1327,20 @@ setMethod("simulate", "mer",
       if(is.function(family)) family <- family()
       if(is.null(family$family)) stop("'family' not recognized")
       musim <- family$linkinv(etasim)
-      n <- length(musim) ## FIXME: or could be dims["n"]?
-      vsim <- switch(family$family,
-                     poisson=rpois(n,lambda=musim),
+      ntot <- length(musim) ## FIXME: or could be dims["n"]?
+      val <- switch(family$family,
+                     poisson=rpois(ntot,lambda=musim),
                      binomial={
                        resp <- model.response(object@frame)
                        bernoulli <- !is.matrix(resp)
                        if (bernoulli) {
-                         rbinom(n,prob=musim,size=1)
+                         rbinom(ntot,prob=musim,size=1)
                        } else {
                          nresp <- nrow(resp)
                          ## FIXME: should "N-size" (column 2) be named?
                          ## copying structures from stats/R/family.R
                          sizes <- rowSums(resp)
-                         Y <- rbinom(n, size = sizes, prob = musim)
+                         Y <- rbinom(ntot, size = sizes, prob = musim)
                          YY <- cbind(Y, sizes - Y)
                          yy <- lapply(split(YY,gl(nsim,nresp,2*nsim*nresp)),
                                 matrix,ncol=2,dimnames=list(NULL,colnames(resp)))
@@ -1346,18 +1349,24 @@ setMethod("simulate", "mer",
                          ## rep(1:nsim,each=length(sizes)))
                          names(yy) <- paste("sim",seq_along(yy),sep="_")
                          yy
-                         ## yy <- as.data.frame(yy)
                        }
                      },
                      stop("simulation not implemented for family",
                           family$family))
                        
-    }
-    if (!(family$family=="binomial" && !bernoulli)) {
-      vsim <- matrix(vsim,nc=nsim)
-      return(drop(vsim))
-    } else if (nsim==1) return(vsim[[1]]) else return(vsim)
-    stop("simulate method for NLMMs not yet implemented")
+    } else if (length(object@V))
+      stop("simulate method for NLMMs not yet implemented")
+          
+     ## from src/library/stats/R/lm.R
+    if(!is.list(val)) {
+        dim(val) <- c(n, nsim)
+        val <- as.data.frame(val)
+    } else
+        class(val) <- "data.frame"
+       names(val) <- paste("sim", seq_len(nsim), sep="_")
+       row.names(val) <- nm
+    attr(val, "seed") <- RNGstate
+    val
 })
 
 setMethod("summary", signature(object = "mer"),
@@ -1615,10 +1624,20 @@ setMethod("refit", signature(object = "mer", newresp = "matrix"),
       {
           stopifnot(ncol(newresp) == 2,
                     all(!is.na(wts <- rowSums(newresp))),
-                    length(wts) == object@dims[["n"]])
+                    length(wts) == object@dims["n"])
           object@y <- newresp[,1]/wts
           object@pWt <- wts
           mer_finalize(object)
+      })
+
+setMethod("refit", signature(object = "mer", newresp = "data.frame"),
+          function(object, newresp, ...)
+      {
+          if (ncol(newresp)==1) {
+            refit(object,newresp[,1])
+          } else if (ncol(newresp==2) && famNms[object@dims[["fTyp"]]]=="binomial") {
+            refit(object,as.matrix(newresp))
+          } else stop("refit not implemented for multi-column data frames: consider 'apply(object,2,refit)'")
       })
 
 
