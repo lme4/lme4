@@ -6,13 +6,11 @@ set.seed(54321)
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy)
 
-## MM: FIXME? -- why not be more compatible to simulate.lm()
-##              which returns a data frame both for nsim=1 and nsim > 1 ??
 s1 <- simulate(fm1)
-stopifnot(is.data.frame(s1), ncol(s1)==1, nrow(s1)==length(fitted(fm1)))  ## returns 1-column data frame
+stopifnot(is.data.frame(s1), ncol(s1)==1, nrow(s1)==length(fitted(fm1)))  ##  1-column data frame
 showProc.time()
 s2 <- simulate(fm1,10)
-stopifnot(is.data.frame(s2), ncol(s2)==10, nrow(s2)==length(fitted(fm1)))      ## returns 10-column data frame
+stopifnot(is.data.frame(s2), ncol(s2)==10, nrow(s2)==length(fitted(fm1))) ## 10-column data frame
 showProc.time()
 
 ## binomial (non-Bernoulli)

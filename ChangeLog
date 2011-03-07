@@ -1,3 +1,8 @@
+2011-02-28  Ben Bolker <bbolker@gmail.com>
+
+	* R/lmer.R: simulate(): return data.frame even for nsim=1 - compatibly
+	with other simulate() methods.
+
 2011-02-13  Ben Bolker <bbolker@gmail.com>
 
 	* tests/simulate.R: New tests for simulate()

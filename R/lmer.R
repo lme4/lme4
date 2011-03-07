@@ -1291,83 +1291,85 @@ setMethod("resid", signature(object = "mer"),
           napredict(attr(object@frame, "na.action"), object@resid))
 
 setMethod("simulate", "mer",
-          function(object, nsim = 1, seed = NULL, ...)
+	  function(object, nsim = 1, seed = NULL, ...)
       {
 	  if(!is.null(seed)) set.seed(seed)
 	  if(!exists(".Random.seed", envir = .GlobalEnv))
 	      runif(1)		     # initialize the RNG if necessary
-          RNGstate <- .Random.seed
-          ## FIXME: implement offset, should be fairly easy (?)
-          dims <- object@dims
-          n <- dims["n"]
-          nm <- names(fitted(object))
-          if (is.null(nm)) nm <- as.character(1:n)
-          sigma <- sigma(object)
-          etasim.fix <- as.vector(object@X %*% fixef(object))   # fixed-effect contribution
-          if (length(offset <- object@offset)>0) {
-            etasim.fix <- etasim.fix+offset
-          } 
-          etasim.reff <- as(t(object@A) %*%    # UNSCALED random-effects contribution
-                            matrix(rnorm(nsim * dims["q"]), nc = nsim),
-                            "matrix")
-          if (length(object@V) == 0 && length(object@muEta) == 0) {
-            etasim.resid <- matrix(rnorm(nsim * n), nc = nsim) ## UNSCALED residual
-            etasim <- etasim.fix + sigma*(etasim.reff+etasim.resid)
-            val <- etasim
-          }
-          if (length(object@muEta)>0) {
-      ## GLMM
-      ## n.b. DON'T scale random-effects
-      ## if sigma!=1, it applies to the "quasi"- part of the model
-      etasim <- etasim.fix+etasim.reff 
-      family <- object@call$family
-      if(is.symbol(family)) family <- as.character(family)
-      if(is.character(family))
-        family <- get(family, mode = "function", envir = parent.frame(2))
-      if(is.function(family)) family <- family()
-      if(is.null(family$family)) stop("'family' not recognized")
-      musim <- family$linkinv(etasim)
-      ntot <- length(musim) ## FIXME: or could be dims["n"]?
-      val <- switch(family$family,
-                     poisson=rpois(ntot,lambda=musim),
-                     binomial={
-                       resp <- model.response(object@frame)
-                       bernoulli <- !is.matrix(resp)
-                       if (bernoulli) {
-                         rbinom(ntot,prob=musim,size=1)
-                       } else {
-                         nresp <- nrow(resp)
-                         ## FIXME: should "N-size" (column 2) be named?
-                         ## copying structures from stats/R/family.R
-                         sizes <- rowSums(resp)
-                         Y <- rbinom(ntot, size = sizes, prob = musim)
-                         YY <- cbind(Y, sizes - Y)
-                         yy <- lapply(split(YY,gl(nsim,nresp,2*nsim*nresp)),
-                                matrix,ncol=2,dimnames=list(NULL,colnames(resp)))
-                         ## colnames() <- colnames(resp)
-                         ## yy <- split(as.data.frame(YY),
-                         ## rep(1:nsim,each=length(sizes)))
-                         names(yy) <- paste("sim",seq_along(yy),sep="_")
-                         yy
-                       }
-                     },
-                     stop("simulation not implemented for family",
-                          family$family))
-                       
-    } else if (length(object@V))
-      stop("simulate method for NLMMs not yet implemented")
-          
-     ## from src/library/stats/R/lm.R
-    if(!is.list(val)) {
-        dim(val) <- c(n, nsim)
-        val <- as.data.frame(val)
-    } else
-        class(val) <- "data.frame"
-       names(val) <- paste("sim", seq_len(nsim), sep="_")
-       row.names(val) <- nm
-    attr(val, "seed") <- RNGstate
-    val
-})
+	  RNGstate <- .Random.seed
+	  dims <- object@dims
+	  n <- dims["n"]
+	  nm <- names(fitted(object))
+	  if (is.null(nm)) nm <- as.character(1:n)
+	  sigma <- sigma(object)
+	  etasim.fix <- as.vector(object@X %*% fixef(object)) # fixed-effect contribution
+	  ## offset : -- unfinished (?) {had comment "FIXME" previously}
+	  if (length(offset <- object@offset)>0) {
+	      etasim.fix <- etasim.fix+offset
+	  }
+	  etasim.reff <- as(t(object@A) %*% # UNSCALED random-effects contribution
+			    matrix(rnorm(nsim * dims["q"]), nc = nsim),
+			    "matrix")
+	  if (length(object@V) == 0 && length(object@muEta) == 0) {
+	      etasim.resid <- matrix(rnorm(nsim * n), nc = nsim) ## UNSCALED residual
+	      etasim <- etasim.fix + sigma*(etasim.reff+etasim.resid)
+	      val <- etasim
+	  }
+	  if (length(object@muEta)>0) {
+	      ## GLMM
+	      ## n.b. DON'T scale random-effects
+	      ## if sigma!=1, it applies to the "quasi"- part of the model
+	      etasim <- etasim.fix+etasim.reff
+	      family <- object@call$family
+	      if(is.symbol(family)) family <- as.character(family)
+	      if(is.character(family))
+		  family <- get(family, mode = "function", envir = parent.frame(2))
+	      if(is.function(family)) family <- family()
+	      if(is.null(family$family)) stop("'family' not recognized")
+	      musim <- family$linkinv(etasim)
+	      ntot <- length(musim) ## FIXME: or could be dims["n"]?
+	      val <- switch(family$family,
+			    poisson=rpois(ntot,lambda=musim),
+			    binomial={
+				resp <- model.response(object@frame)
+				bernoulli <- !is.matrix(resp)
+				if (bernoulli) {
+				    rbinom(ntot,prob=musim,size=1)
+				} else {
+				    nresp <- nrow(resp)
+				    ## FIXME: should "N-size" (column 2) be named?
+				    ## copying structures from stats/R/family.R
+				    sizes <- rowSums(resp)
+				    Y <- rbinom(ntot, size = sizes, prob = musim)
+				    YY <- cbind(Y, sizes - Y)
+				    yy <- lapply(split(YY,gl(nsim,nresp,2*nsim*nresp)),
+						 matrix, ncol=2,
+						 dimnames=list(NULL,colnames(resp)))
+				    ## colnames() <- colnames(resp)
+				    ## yy <- split(as.data.frame(YY),
+				    ## rep(1:nsim,each=length(sizes)))
+				    names(yy) <- paste("sim",seq_along(yy),sep="_")
+				    yy
+				}
+			    },
+			    stop("simulation not implemented for family",
+				 family$family))
+
+	  } else if (length(object@V))
+	      stop("simulate method for NLMMs not yet implemented")
+
+	  ## from src/library/stats/R/lm.R
+	  if(!is.list(val)) {
+	      dim(val) <- c(n, nsim)
+	      val <- as.data.frame(val)
+	  }
+	  else
+	      class(val) <- "data.frame"
+	  names(val) <- paste("sim", seq_len(nsim), sep="_")
+	  row.names(val) <- nm
+	  attr(val, "seed") <- RNGstate
+	  val
+      })
 
 setMethod("summary", signature(object = "mer"),
 	  function(object, ...)

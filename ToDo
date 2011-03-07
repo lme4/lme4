@@ -31,3 +31,5 @@ Determine what a "coef" function should do for multiple, possibly
 
 - document print(<mer>) including an example  print(<lmer>, corr = FALSE)
   and one with many fixed effects (*) and     print(<lmer>, symbolic.cor = TRUE)
+
+--> Use  nobs() methods -- ASAP .. (require R >= 2.13.0 though)

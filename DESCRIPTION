@@ -1,13 +1,13 @@
 Package: lme4
-Version: 0.999375-38
-Date: 2011-02-08
+Version: 0.999375-39
+Date: 2011-03-07
 Title: Linear mixed-effects models using S4 classes
 Author: Douglas Bates <bates@stat.wisc.edu>,
         Martin Maechler <maechler@R-project.org> and
 	Ben Bolker <bbolker@gmail.com>
 Maintainer: <lme4-authors@R-forge.wu-wien.ac.at>
 Description: Fit linear and generalized linear mixed-effects models.
-Depends: methods, R(>= 2.9.2), Matrix(>= 0.999375-31), lattice
+Depends: methods, R(>= 2.10.1), Matrix, lattice
 LinkingTo: Matrix, stats
 Imports: graphics, nlme, stats4, stats
 Suggests: mlmRev, MEMSS, coda, MASS

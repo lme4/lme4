@@ -290,7 +290,7 @@
       optional \code{REML} argument (see the arguments section above),
       of the fitted model.  See also \code{\link{logLik}}.
 
-      Note that \code{\link[stats]{AIC}} and \code{\link[stats4]{BIC}}
+      Note that \code{\link[stats]{AIC}} and \code{BIC}
       methods automatically work (via \code{logLik()}).
     }
     \item{mcmcsamp}{\code{signature(object = "mer")}:
