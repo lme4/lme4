@@ -17,54 +17,47 @@
 ##' @return a list of lists of dgTMatrix objects
 lagged_factor <- function(fr, idvar = "id", timevar = "Time", factors = "inst")
 {
-    ## extract names and check arguments for consistency
-    fnms <- names(fr)
+                                        # check arguments
     stopifnot(length(idvar <- as.character(idvar)) == 1,
               length(timevar <- as.character(timevar)) == 1,
               length(factors <- sapply(factors, as.character)) > 0,
               all(c(idvar, timevar, factors) %in% names(fr)),
+              length(factors) == 1L,    # later may remove this condition
               all(unlist(lapply(fr[factors], is.factor))))
-    ## ensure timevar is a factor (and drop unused levels)
+    fr <- fr[,c(factors, idvar, timevar)]
+                                        # ensure timevar is a factor
     fr[[timevar]] <- factor(fr[[timevar]])
-    ## create the wide data frame
-    v.names <- setdiff(fnms, c(idvar, timevar))
+                                        # create the wide data frame
     wide <- reshape(fr, direction = "wide", idvar = idvar,
-                    timevar = timevar, sep = ".", v.names = v.names)
-    nts <- seq_len(nt <- length(tlevs <- levels(fr[[timevar]])))
-    varying <- attr(wide, "reshapeWide")$varying
-    ## lag the variables named as factors
+                    timevar = timevar, sep = ".", v.names = factors)
+    stopifnot(1L < (nt <- length(tlevs <- levels(fr[[timevar]]))))
+    nts <- seq_len(nt)
+                                        # lag the variables named as factors
     for (nm in factors) {
         levs <- levels(fr[[nm]])
         vnms <- paste(nm, tlevs, sep = ".")
-        ff <- cbind(wide[, vnms],
-                    data.frame(NAs = factor(rep(NA, nrow(wide)),
-                               levels = levs))[, rep.int(1L, nt - 1L)])
-        arr <- array(unlist(ff), c(nrow(wide), nt, nt + 1L))[, nts, nts]
-        for (face in nts[-1]) {
-            nms <- paste(nm, face, ".", tlevs, sep = '')
-            for (j in nts) wide[[nms[j]]] <- factor(arr[,j,face], levels = levs)
-            varying <- rbind(varying, nms)
+        ff <- cbind(data.frame(NAs = factor(rep(NA, nrow(wide)),
+                               levels = levs))[, rep.int(1L, nt - 1L)],
+                    wide[, vnms])
+        frms <- lapply(rev(nts - 1L), function(k) ff[,k + nts])
+        names(frms) <- nts - 1L
+        pat <- is.na(frms[[1]])
+        for (k in nts) {
+            frm <- frms[[k]]
+            names(frm) <- vnms
+            frm[pat] <- NA
+            frm[[idvar]] <- wide[[idvar]]
+            attr(frm, "reshapeWide") <- attr(wide, "reshapeWide")
+            frms[[k]] <- reshape(frm)
         }
     }
-    gennms <- outer(factors, nts[-1], paste, sep = ".")
-    ## switch to the long data format
-    attr(wide, "reshapeWide")$varying <- varying
-    attr(wide, "reshapeWide")$v.names <- c(v.names, as.vector(gennms))
-    lagged <- reshape(wide)
-    ## match to the original order
-    lagged <- lagged[match(interaction(fr[[idvar]], fr[[timevar]], drop = TRUE),
-                           interaction(lagged[[idvar]], lagged[[timevar]],
-                                       drop = TRUE)), ]
-    nms <- cbind(factors, gennms)
-    aans <- lapply(seq_along(factors), function(i) {
-        ans <- lapply(lagged[nms[i,,drop = TRUE]],
-                      function(fac) as(Matrix:::fac2sparse(fac, drop = FALSE),
-                                       "dgTMatrix"))
-        names(ans) <- tlevs
-        ans
-    })
-    names(aans) <- factors
-    aans
+    ord <- match(interaction(fr[[idvar]], fr[[timevar]], drop = TRUE),
+                 interaction(frms[[1]][[idvar]], frms[[1]][[timevar]], drop = TRUE))
+    frms <- lapply(frms, function(fr) {ans <- fr[ord,]; rownames(ans) <- NULL; ans})
+    ans <- list(foo = lapply(frms, function(fr)
+                as(Matrix:::fac2sparse(fr[[factors[1]]], drop=FALSE), "dgTMatrix")))
+    names(ans) <- factors
+    ans
 }
 
 ##' Accumulate a list of dgTMatrix objects
