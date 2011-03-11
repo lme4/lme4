@@ -26,6 +26,7 @@ importFrom("stats",
 ## but  import("stats") is not ok, because Matrix exports "better" versions of
 ## update(), xtabs() and cov2cor()
 
+#exportPattern("^[^\\.]")
 
 ## re-export imported S4 generics
 export(AIC, BIC, logLik)
