@@ -40,7 +40,9 @@ export("HPDinterval",
        "nlmer",
        #"pooledSD",
        "refit",
-       "VarCorr")
+       "VarCorr",
+       "extractAIC.default",
+       "drop1.mer")
 
 exportClasses("lmList", "mer", "merMCMC", "summary.mer")
 
@@ -82,7 +84,9 @@ exportMethods(
               "with",
               "xyplot"
               )
-
+## BMB: difference between export() above and S3method() here?
+S3method(terms, mer)
+S3method(extractAIC, default)
 S3method(plot, coef.mer)
 S3method(plot, ranef.mer)
 S3method(print, coef.mer)
