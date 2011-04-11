@@ -1,11 +1,11 @@
 terms.mer<-function(x,...){
-  attr(x@frame,"terms")
+    attr(x@frame,"terms")
 }
 
-extractAIC.default<-function(fit,scale=0,k=2,...){
-  L<-logLik(fit)
-  edf<-attr(L,"df")
-  c(edf,-2*L+2*edf)
+extractAIC.mer <- function(fit,scale=0,k=2,...){
+    L<-logLik(fit)
+    edf<-attr(L,"df")
+    c(edf,-2*L + k*edf)
 }
 
 ## doesn't install properly in current form
