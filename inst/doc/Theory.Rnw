@@ -14,7 +14,7 @@
 \author{Douglas Bates\\Department of Statistics\\%
   University of Wisconsin -- Madison}
 \begin{document}
-\SweaveOpts{engine=R,eps=FALSE,pdf=TRUE,strip.white=TRUE}
+\SweaveOpts{engine=R,eps=FALSE,pdf=TRUE,strip.white="true",keep.source=TRUE}
 \SweaveOpts{include=FALSE}
 \setkeys{Gin}{width=\textwidth}
 \newcommand{\code}[1]{\texttt{\small{#1}}}
@@ -94,7 +94,7 @@ functions \citep{Cholmod}.
 % models, can be evaluated exactly.
 
 In the next section we describe the general form of the mixed models
-that can be represented in the \package{lme4} package and the 
+that can be represented in the \package{lme4} package and the
 computational approach embodied in the package.  In the following
 section we describe a particular form of mixed model,
 called a linear mixed model, and the computational details for those
@@ -339,7 +339,7 @@ consider their densities.  On the deviance scale these are
   \begin{aligned}
     -2\log(f_{\bc U}(\bm u))&=q\log(2\pi\sigma^2)+\frac{\|\bm u\|^2}{\sigma^2}\\
     -2\log(f_{\bc Y|\bc U}(\bm y|\bm u))&=n\log(2\pi\sigma^2)+
-    \frac{\|\bm y-\bm Z\bm\Lambda(\bm\theta)\bm u-\bm X\bm\beta\|^2}{\sigma^2}\\    
+    \frac{\|\bm y-\bm Z\bm\Lambda(\bm\theta)\bm u-\bm X\bm\beta\|^2}{\sigma^2}\\
     -2\log(h(\bm u|\bm y,\bm\theta,\bm\beta,\sigma))
     &= (n+q)\log(2\pi\sigma^2)+
     \frac{\|\bm y-\bm\gamma(\bm u,\bm\theta,\bm\beta)\|^2+\|\bm
@@ -349,10 +349,10 @@ consider their densities.  On the deviance scale these are
   \end{aligned}
 \end{equation}
 
-In (\ref{eq:7}) the \emph{discrepancy} function, 
+In (\ref{eq:7}) the \emph{discrepancy} function,
 \begin{equation}
   \label{eq:9}
-    d(\bm u|\bm y,\bm\theta,\bm\beta) = 
+    d(\bm u|\bm y,\bm\theta,\bm\beta) =
     \|\bm y-\bm\gamma(\bm u,\bm\theta,\bm\beta)\|^2+\|\bm u\|^2
 \end{equation}
 has the form of a penalized residual sum of squares in that the first
@@ -360,7 +360,7 @@ term, $\|\bm y-\bm\gamma(\bm u,\bm\theta,\bm\beta)\|^2$ is
 the residual sum of squares for $\bm y$, $\bm u$, $\bm\theta$ and
 $\bm\beta$ and the second term, $\|\bm u\|^2$, is a penalty on the
 size of $\bm u$.  Notice that the discrepancy does not depend on the
-common scale parameter, $\sigma$.  
+common scale parameter, $\sigma$.
 
 \subsection{The canonical form of the discrepancy}
 \label{sec:conditional-mode-bm}
@@ -426,7 +426,7 @@ The fill-reducing permutation represented by the permutation matrix
 $\bm P$, which is determined from the pattern of nonzeros in $\bm A$
 but does not depend on particular values of those nonzeros, can have a
 profound impact on the number of nonzeros in $\bm L$ and hence on the
-speed with which $\bm L$ can be calculated from $\bm A$.  
+speed with which $\bm L$ can be calculated from $\bm A$.
 
 In most applications of linear mixed models the matrix $\bm
 Z\bm\Lambda(\bm\theta)$ is sparse while $\bm X$ is dense or close to
@@ -512,7 +512,7 @@ $\ell(\bm\theta,\bm\beta,\sigma|\bm y)$, as
 \begin{multline}
   \label{eq:lmmdev}
   -2\ell(\bm\theta,\bm\beta,\sigma|\bm y)\\
-  =-2\log\left(L(\bm\theta,\bm\beta,\sigma|\bm y)\right)\\ 
+  =-2\log\left(L(\bm\theta,\bm\beta,\sigma|\bm y)\right)\\
   =n\log(2\pi\sigma^2)+\log(|\bm L_{\bm Z}|^2)+\frac{\tilde{d}(\bm y,\bm\theta) +
   \left\|\bm L_{\bm X}\trans\bm P_{\bm X}(\bm\beta-\tilde{\bm\beta})\right\|^2}{\sigma^2},
 \end{multline}
@@ -667,7 +667,7 @@ solutions to the sparse, positive-definite linear system
   \end{bmatrix} =
   \begin{bmatrix}
     \bm\Lambda\trans(\bm\theta)\bm Z\trans\bm y\\
-    \bm X\trans\bm y 
+    \bm X\trans\bm y
   \end{bmatrix} .
 \end{displaymath}
 In the process of solving this system we create the sparse left
@@ -802,7 +802,7 @@ discrepancy,
 \end{equation}
 becomes a weighted, nonlinear least squares problem except that the
 weights, $\bm W$, can depend on $\bm\mu$ and, hence, on $\bm u$ and
-$\bm\beta$.  
+$\bm\beta$.
 
 In describing an algorithm for linear mixed models we called
 $\tilde{\bm\beta}(\bm\theta)$ the \emph{conditional estimate}.  That
@@ -875,7 +875,7 @@ $\bm\delta_{\bm\beta}^{(i)}$, are the solutions to
     {\bm U^{(i)}}\trans\bm W^{1/2}(\bm y-\bm\mu^{(i)})
   \end{bmatrix}
 \end{equation}
-providing the updated parameter values 
+providing the updated parameter values
 \begin{equation}
   \label{eq:33}
   \begin{bmatrix}\bm u^{(i+1)}\\\bm\beta^{(i+1)}\end{bmatrix}=
@@ -941,7 +941,7 @@ estimate, $\tilde{\bm\beta}(\bm\theta)$, are the solutions to
   \end{bmatrix} =
   \begin{bmatrix}
     \bm\Lambda\trans(\bm\theta)\bm Z\trans\bm W\bm y\\
-    \bm X\trans\bm W\bm y 
+    \bm X\trans\bm W\bm y
   \end{bmatrix} ,
 \end{equation}
 which can be solved directly, and the Cholesky factor, $\bm L_{\bm Z}(\bm\theta)$, satisfies
@@ -968,7 +968,7 @@ the MLEs, $\widehat{\bm\phi}_L$ and $\widehat{\bm\theta}_L$
 simultaneously.  In these cases we must include the term involving
 $|\bm W(\bm\phi)|$ when evaluating the profiled log-likelihood.
 
-Note that we must define the parameterization of $\bm W(\bm\phi)$ 
+Note that we must define the parameterization of $\bm W(\bm\phi)$
 such that $\sigma^2$ and $\bm\phi$ are not a redundant
 parameterization of $\sigma^2\bm W(\bm\phi)$.  For example, we could
 require that the first diagonal element of $\bm W$ be unity.
@@ -981,7 +981,7 @@ Gaussian, the link, $g$, is the identity and the weights matrix, $\bm
 W=\bm I_n$.  That is,
 \begin{equation}
   \label{eq:conddistNLMM}
-  (\bc Y|\bc U=\bm u)\sim\mathcal{N}(\bm m(\bm\gamma),\sigma^2\bm I_n) 
+  (\bc Y|\bc U=\bm u)\sim\mathcal{N}(\bm m(\bm\gamma),\sigma^2\bm I_n)
 \end{equation}
 with discrepancy function
 \begin{equation}
@@ -1000,7 +1000,7 @@ solution to the penalized nonlinear least squares problem
   \end{bmatrix} = \arg\min_{\bm u,\bm\theta}d(\bm u|\bm y,\bm\theta,\bm\beta)
 \end{equation}
 and we write the minimum discrepancy, given $\bm y$ and $\bm\theta$,
-as 
+as
 \begin{equation}
   \label{eq:25}
   \tilde{d}(\bm y,\bm\theta)=d(\tilde{\bm u}(\bm\theta)|\bm
@@ -1128,7 +1128,7 @@ inverse link function has the appropriate range.  For families such as
 the Bernoulli and Poisson families, which are in the exponential class
 of probability distributions, there is one particular scalar link
 function, called the \emph{canonical link function}, that arisesfrom the
-definition of the distribution itself.  
+definition of the distribution itself.
 
 To determine the canonical link function we consider the logarithm of
 the density function or the probability mass function.  In the case of
@@ -1168,7 +1168,7 @@ The crucial step in implementing algorithms for determining ML or REML
 estimates of the parameters in a linear mixed model is evaluating the
 factorization (\ref{eq:16}) for any $\bm\theta$ satisfying
 $\bm\theta_L\le\bm\theta\le\bm\theta_U$.  We will assume that $\bm Z$
-is sparse as is $\bm Z\bm\Lambda(\bm\theta)$.  
+is sparse as is $\bm Z\bm\Lambda(\bm\theta)$.
 
 When $\bm X$ is not sparse we will use the factorization (\ref{eq:16})
 setting $\bm P_{\bm X}=\bm I_p$ and storing $\bm L_{\bm X\bm Z}$ and
@@ -1195,7 +1195,7 @@ $\bm\Lambda\trans(\bm\theta)\bm Z\trans\bm Z\bm\Lambda(\theta)$.  The
 choice in implementation is whether to store $\bm Z\trans$ and update
 it to $\bm\Lambda\trans(\bm\theta)\bm Z$ or to store $\bm Z\trans\bm
 Z$ and use it to form $\bm\Lambda\trans(\bm\theta)\bm Z\trans\bm
-Z\bm\Lambda(\theta)$ at each evaluation.  
+Z\bm\Lambda(\theta)$ at each evaluation.
 
 In the \package{lme4} package we store $\bm Z\trans$ and use it to
 form $\bm\Lambda\trans(\bm\theta)\bm Z\trans$ from which $\bm L_{\bm
@@ -1319,7 +1319,7 @@ and the profiled REML criterion as
   (dimension $m$).
 \item[$\sigma$] the common scale parameter - not used in some
   generalized linear mixed models and generalized nonlinear mixed
-  models. 
+  models.
 \end{description}
 
 \subsection{Dimensions}
@@ -1360,6 +1360,6 @@ observed data as
 which is often alarmingly described as ``an intractable integral''.
 In point of fact, this integral can be evaluated exactly in the case
 of a linear mixed model and can be approximated quite accurately for
-other forms of mixed models.  
+other forms of mixed models.
 
 \end{document}

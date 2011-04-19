@@ -19,7 +19,7 @@
 \author{Douglas Bates\\Department of Statistics\\%
   University of Wisconsin -- Madison}
 \begin{document}
-\SweaveOpts{engine=R,eps=FALSE,pdf=TRUE,strip.white=TRUE}
+\SweaveOpts{engine=R,eps=FALSE,pdf=TRUE,strip.white="true",keep.source=TRUE}
 \SweaveOpts{include=FALSE}
 \setkeys{Gin}{width=\textwidth}
 \newcommand{\code}[1]{\texttt{\small{#1}}}

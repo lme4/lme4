@@ -16,7 +16,7 @@
 \author{Douglas Bates\\Department of Statistics\\%
   University of Wisconsin -- Madison}
 \begin{document}
-\SweaveOpts{engine=R,eps=FALSE,pdf=TRUE,strip.white=TRUE}
+\SweaveOpts{engine=R,eps=FALSE,pdf=TRUE,strip.white="true",keep.source=TRUE}
 \SweaveOpts{include=FALSE}
 \setkeys{Gin}{width=\textwidth}
 \newcommand{\code}[1]{\texttt{\small{#1}}}
@@ -105,7 +105,7 @@ x\in\mathbb{R}^q, \bm x\ne\bm 0$) and, hence, we cannot assume that $\bm\Sigma^{
 exists.
 
 A positive semidefinite matrix such as $\bm\Sigma$ has a Cholesky
-decomposition of the so-called ``LDL$\trans$'' form.  We use a 
+decomposition of the so-called ``LDL$\trans$'' form.  We use a
 slight modification of this form,
 \begin{equation}
   \label{eq:TSdef}
@@ -183,7 +183,7 @@ L(\bm\theta)$, a sparse lower triangular matrix that satisfies
   \bm L(\bm\theta)\bm L(\bm\theta)\trans=
   \bm P\left(\bm A(\bm\theta)\bm A(\bm\theta)\trans+\bm I_q\right)\bm P\trans ,
 \end{equation}
-directly from $\bm A(\bm\theta)$.  
+directly from $\bm A(\bm\theta)$.
 
 In (\ref{eq:SparseChol}) the $q\times q$ matrix $\bm P$ is a
 ``fill-reducing'' permutation matrix determined from the pattern of
@@ -413,7 +413,7 @@ For example, the variance-covariance of the estimator $\widehat{\bm
 \section{Trace of the ``hat'' matrix}
 \label{sec:hatTrace}
 
-Another calculation that is of interest to some is the 
+Another calculation that is of interest to some is the
 the trace of the ``hat'' matrix, which can be written as
 \begin{multline}
   \label{eq:hatTrace}
