@@ -83,10 +83,10 @@ exportMethods(
               "with",
               "xyplot"
               )
-## BMB: difference between export() above and S3method() here?
+
+S3method(terms, mer)# even though we have it S4 method as well
 S3method(drop1, mer)
 S3method(extractAIC, mer)
-S3method(terms, mer)
 
 S3method(plot, coef.mer)
 S3method(plot, ranef.mer)

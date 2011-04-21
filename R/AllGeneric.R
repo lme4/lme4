@@ -6,7 +6,7 @@ setGeneric("lmList",
 if (FALSE) {
 setGeneric("gsummary",
            function (object, FUN, form, level, groups,
-                     omitGroupingFactor = FALSE, 
+                     omitGroupingFactor = FALSE,
                      invariantsOnly = FALSE, ...)
            standardGeneric("gsummary"))
 }
@@ -29,15 +29,6 @@ random.effects <- function(object, ...) {
     mCall = match.call()
     mCall[[1]] = as.name("ranef")
     eval(mCall, parent.frame())
-}
-
-if (FALSE) {
-setGeneric("BIC", function(object, ...) standardGeneric("BIC"))
-
-setMethod("BIC", "logLik",
-          function(object, ...)
-          -2 * (c(object) - attr(object, "df") * log(attr(object, "nobs"))/2)
-          )
 }
 
 setGeneric("HPDinterval",

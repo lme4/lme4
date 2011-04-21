@@ -1,8 +1,8 @@
 
-R version 2.12.0 Patched (2010-10-19 r53372)
-Copyright (C) 2010 The R Foundation for Statistical Computing
+R version 2.13.0 Patched (2011-04-20 r55568)
+Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
-Platform: i686-pc-linux-gnu (32-bit)
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -37,14 +37,14 @@ Type 'q()' to quit R.
 Nonlinear mixed model fit by the Laplace approximation 
 Formula: conc ~ SSfol(Dose, Time, lKe, lKa, lCl) ~ (lKe + lKa + lCl |      Subject) 
    Data: Theoph 
-   AIC   BIC logLik deviance
- 152.1 181.0 -66.07    132.1
+   AIC BIC logLik deviance
+ 152.1 181 -66.07    132.1
 Random effects:
  Groups   Name Variance Std.Dev. Corr          
  Subject  lKe  0.000000 0.00000                
           lKa  0.227357 0.47682     NaN        
           lCl  0.015722 0.12539     NaN -0.012 
- Residual      0.591717 0.76923                
+ Residual      0.591716 0.76923                
 Number of obs: 132, groups: Subject, 12
 
 Fixed effects:
@@ -58,7 +58,7 @@ Correlation of Fixed Effects:
 lKa -0.264       
 lCl  0.671 -0.141
 > showProc.time() # ~ 5.7s {dual-opteron 2814, on 64b, no optim.}
-Time elapsed:  10.832 0.011 10.859 
+Time elapsed:  9.708 0.028 9.849 
 > 
 > (nm3 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
 +               (lKe|Subject) + (lKa|Subject) + (lCl|Subject),
@@ -71,23 +71,23 @@ Formula: conc ~ SSfol(Dose, Time, lKe, lKa, lCl) ~ (lKe | Subject) + (lKa |     
 Random effects:
  Groups   Name Variance Std.Dev.
  Subject  lKe  0.000000 0.00000 
- Subject  lKa  0.227494 0.47696 
+ Subject  lKa  0.227493 0.47696 
  Subject  lCl  0.015738 0.12545 
- Residual      0.591690 0.76921 
+ Residual      0.591689 0.76921 
 Number of obs: 132, groups: Subject, 12
 
 Fixed effects:
     Estimate Std. Error t value
 lKe -2.47500    0.05641  -43.88
 lKa  0.47408    0.15291    3.10
-lCl -3.23538    0.05236  -61.79
+lCl -3.23539    0.05236  -61.79
 
 Correlation of Fixed Effects:
     lKe    lKa   
 lKa -0.264       
 lCl  0.671 -0.133
 > showProc.time() # ~ 3.2s
-Time elapsed:  8.858 0.008 8.922 
+Time elapsed:  7.003 0.015 7.054 
 > 
 > ## dropping   lKe  from random effects:
 > (nm4 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
@@ -116,7 +116,7 @@ Correlation of Fixed Effects:
 lKa -0.264       
 lCl  0.671 -0.141
 > showProc.time()
-Time elapsed:  5.133 0.005 5.152 
+Time elapsed:  3.735 0.001 3.75 
 > 
 > (nm5 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
 +               (lKa|Subject) + (lCl|Subject),
@@ -144,7 +144,7 @@ Correlation of Fixed Effects:
 lKa -0.264       
 lCl  0.671 -0.133
 > showProc.time()
-Time elapsed:  4.563 0.002 4.578 
+Time elapsed:  3.225 0.007 3.251 
 > 
 > e3 <- expand(nm3)
 > stopifnot(identical(sapply(e3, class),
@@ -170,5 +170,5 @@ Time elapsed:  4.563 0.002 4.578
 +           )
 > 
 > showProc.time()
-Time elapsed:  0.054 0 0.054 
+Time elapsed:  0.04 0 0.04 
 > 
