@@ -1,3 +1,45 @@
+2011-07-22  Douglas Bates <bates@stat.wisc.edu>
+
+	* DESCRIPTION: Long overdue release (apologies, Dieter)
+
+2011-04-21  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION, NAMESPACE, R/AllGeneric.R, R/drop1-etc.R, R/newmethods.R,
+	  tests/drop.R, tests/lmer-1.Rout.save, tests/nlmer.Rout.save: drop1()
+	  etc lme4 & lme4a - cosmetics; renamed file
+
+2011-04-19  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* inst/doc/Implementation.Rnw, inst/doc/PLSvGLS.Rnw,
+	  inst/doc/Theory.Rnw: aargh.. strip.white=true -- R 2.14 compatibly
+	* inst/doc/Implementation.Rnw, inst/doc/PLSvGLS.Rnw,
+	  inst/doc/Theory.Rnw: Sweave strip.white="true" -- R 2.14 compatibly
+	  correct
+
+2011-04-11  Douglas Bates <bates@stat.wisc.edu>
+
+	* NAMESPACE, R/newmethods.R: Minor changes to names for S3 methods and
+	  to exports
+
+2011-04-09  Ben Bolker <bbolker@gmail.com>
+
+	* NAMESPACE: changes for new methods
+	* R/newmethods.R, tests/drop.R: first attempt at methods (terms,
+	  extractAIC, drop1)
+
+2011-03-11  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/carryOver.R: Changes to the lagged_factor function, which I forgot
+	  to commit.
+	* NAMESPACE: Allow for exportPattern, currently commented out, in
+	  debugging applications
+
+2011-03-07  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* ChangeLog, DESCRIPTION, R/lmer.R, ToDo, man/mer-class.Rd,
+	  tests/simulate.R: cosmetic - including Version++ --> 0.999375-39,
+	  preparing for a release with changed simulate() behavior
+
 2011-02-28  Ben Bolker <bbolker@gmail.com>
 
 	* R/lmer.R: simulate(): return data.frame even for nsim=1 - compatibly
