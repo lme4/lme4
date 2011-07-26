@@ -1,0 +1,220 @@
+useDynLib(lme4Eigen, .registration=TRUE)
+
+## Import non-base functions we need explicitly,
+## notably for which we define methods:
+
+
+## FIXME -- really need all these three ??
+import("grid")
+import("lattice")
+import("splines")
+import("Rcpp")
+
+importFrom("graphics", plot)
+importFrom("nlme", fixef, ranef, VarCorr)
+#importFrom("stats4", AIC, BIC, logLik)# so S4 methods are used!
+importFrom("stats"
+           , AIC
+           , BIC
+           , anova
+           , coef
+           , coefficients
+           , confint
+           , deviance
+           , fitted
+           , fitted.values
+           , formula
+           , logLik
+           , model.frame
+           , model.matrix
+           , predict
+           , profile
+           , residuals
+           , resid
+           , simulate
+           , terms
+           , update
+           , vcov
+           )
+
+importFrom("minqa", bobyqa)
+
+importClassesFrom("Matrix",
+                  CHMfactor,
+                  CHMsimpl,
+                  CHMsuper,
+                  Cholesky,
+                  Matrix,
+                  corMatrix,
+                  dCHMsimpl,
+                  dCHMsuper,
+                  dMatrix,
+                  ddiMatrix,
+                  dgCMatrix,
+                  dgeMatrix,
+                  dpoMatrix,
+                  dsCMatrix,
+                  nCHMsimpl,
+                  nCHMsuper,
+                  symmetricMatrix)
+
+importFrom("MatrixModels"
+           , getCall
+#           , mkRespMod
+#           , reweightPred
+#           , update
+#           , updateMu
+#           , updateWts
+           )
+
+importClassesFrom("MatrixModels",
+                  modelMatrix,
+                  denseModelMatrix,  ddenseModelMatrix,
+                  sparseModelMatrix, dsparseModelMatrix
+#                  , predModule,
+#                  dPredModule,
+#                  sPredModule,
+#                  respModule,
+#                  glmRespMod,
+#                  nlsRespMod
+                  )
+
+## from MatrixModels, methods too {not just generics from 'stats'}:
+## importMethodsFrom("MatrixModels",
+##                   coef, coefficients, fitted, fitted.values,
+##                   formula, residuals, resid,
+##                   update)
+
+importMethodsFrom("Matrix"
+                  , "%*%"
+                  , Cholesky
+                  , as.vector
+                  , chol
+                  , chol2inv
+                  , coerce
+                  , crossprod
+                  , determinant
+                  , diag
+		  , rcond
+                  , solve
+#                  , summary
+                  , t
+                  , tcrossprod
+                  , update
+                  )
+
+#exportPattern("^[^\\.]")
+
+# re-export imported S4 generics
+#export(AIC, BIC, logLik)
+
+# and the rest (S3 generics; regular functions):
+export(
+#       GHQ,
+       VarCorr,
+       bootMer,
+#       devcomp,
+       findbars,
+       fixef,
+       getL,
+#       glmFamily,
+       glmer,
+#       glmer2,
+#       glmerResp,
+       isNested,
+       lmList,
+       lmer,
+#       lmer2,
+       lmerResp,
+#       mkdevfun,
+       nlmer,
+#       nlmerResp,
+       nobars,
+       merPredD,
+       ranef,
+       refitML,
+       sigma,
+       subbars
+       )
+
+exportClasses(#deFeMod,
+              lmerMod,
+              lmList,
+              merMod
+              #, reModule, reTrms, spFeMod
+              )
+
+exportMethods(
+#              VarCorr ,
+#              anova,
+              coef
+              , coerce
+#              , confint
+#              , deviance
+#              , devcomp
+#              , fitted
+#              , fixef
+              ,  formula
+              , getL
+#              , logLik
+#              , model.frame
+#              , model.matrix
+#              , terms
+#              , plot
+#              , print
+#              , profile
+#              , ranef
+              , rcond
+              , show
+#              , simulate
+              , sigma
+#              , summary
+              , update
+#              , vcov
+              )
+
+## S3 for now..
+S3method(confint, lmList)
+
+S3method(plot, lmList.confint)
+
+S3method(VarCorr, merMod)
+S3method(anova, merMod)
+S3method(coef, merMod)
+S3method(deviance, merMod)
+S3method(drop1, merMod)
+S3method(extractAIC, merMod)
+S3method(fixef, merMod)
+S3method(fitted, merMod)
+S3method(formula, merMod)
+S3method(logLik, merMod)
+S3method(model.frame, merMod)
+S3method(model.matrix, merMod)
+S3method(print, merMod)
+S3method(profile, merMod)
+S3method(ranef, merMod)
+S3method(residuals, merMod)
+S3method(simulate, merMod)
+S3method(summary, merMod)
+S3method(terms, merMod)
+S3method(vcov, merMod)
+S3method(update, merMod)
+S3method(refitML, merMod)
+
+S3method(print, summary.mer)
+S3method(summary, summary.mer)
+S3method(vcov, summary.mer)
+
+S3method(plot, coef.mer)
+S3method(dotplot, coef.mer)
+
+S3method(plot, ranef.mer)
+S3method(qqmath, ranef.mer)
+S3method(dotplot, ranef.mer)
+
+## profile() related:
+S3method(xyplot, thpr)
+S3method(densityplot, thpr)
+S3method(confint, thpr)
+S3method(splom, thpr)
+S3method(log, thpr)

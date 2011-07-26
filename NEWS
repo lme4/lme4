@@ -1,0 +1,61 @@
+			Dear Emacs, please make this -*-Text-*- mode!
+	**************************************************
+	*						 *
+	*	   Version 0.999375-16 NEWS		 *
+	*						 *
+	**************************************************
+
+
+		 CHANGES IN lme4 VERSION 0.999375-16
+
+This midsummer release has many, many changes, relative to earlier
+versions.  Be careful.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o   The underlying algorithms and representations for all the
+        mixed-effects models fit by this package have changed - for
+        the better, we hope.  The class "mer" is a common
+        mixed-effects model representation for linear, generalized
+        linear, nonlinear and generalized nonlinear mixed-effects
+        models.
+
+    o   ECME iterations are no longer used at all, nor are analytic
+        gradients.  Components named 'niterEM', 'EMverbose', or
+        'gradient' can be included in the 'control' argument to
+        lmer(), glmer() or nlmer() but have no effect.
+
+    o   PQL iterations are no longer used in glmer() and nlmer().
+        Only the Laplace approximation is currently available.  AGQ,
+        for certain classes of GLMMs or NLMMs, is being added.
+
+    o   The 'method' argument to lmer(), glmer() or nlmer() is
+        deprecated.  Use the 'REML = FALSE' in lmer() to obtain ML
+        estimates.  Selection of AGQ in glmer() and nlmer() will be
+        controlled by the argument 'nAGQ', when completed.
+
+NEW FEATURES
+
+    o   The representation of mixed-effects models has been
+        dramatically changed to allow for smooth evaluation of the
+        objective as the variance-covariance matrices for the random
+        effects approach singularity.  Beta testers found this
+        representation to be more robust and usually faster than
+        previous versions of lme4.
+
+    o   The mcmcsamp function uses a new sampling method for the
+        variance-covariance parameters the allows recovery from
+        singularity.  The update is not based on a sample from the
+        Wishart distribution.  It uses a redundant parameter
+        representation and a linear least squares update.
+
+	CAUTION: Currently the results from mcmcsamp look peculiar and
+	are probably incorrect.  I hope it is just a matter of my
+	omitting a scaling factor but I have seen patterns such as
+	the parameter estimate for some variance-covariance parameters
+	being the maximum value in the chain, which is highly
+	unlikely.
+
+    o   The 'verbose' argument to lmer(), glmer() and nlmer() can be
+        used instead of 'control = list(msVerbose = TRUE)'.
+

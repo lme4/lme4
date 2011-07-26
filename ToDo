@@ -1,0 +1,52 @@
+serialization of reference classes:  Ensure that the external pointer
+is reinitialized when the object is unserialized.
+
+Use the additional arguments in creating the external pointers in the
+C++ code so that the lifetime of the object is linked to an R object,
+preferably y for a response object and X or Z for a predictor.
+
+Old ToDo follows:
+-----
+Do not profile out a common scale factor for any of the glm families.
+This will remove the need for the useSc setting.
+-----
+Allow for the reModule class to inherit from predModule.  This will
+involve changing the representation of the reModule classes to contain
+Z rather than Zt, which may be a better idea anyway.
+-----
+Consider the steps in reimplementing AGQ.  First you need to find the
+conditional modes, then evaluate the conditional variances, then step
+out according to the conditional variance, evaluate the integrand
+relative to the step.
+
+The paper by Sophia Rabe-Hesketh et al describes a spherical form
+of the Gauss-Hermite quadrature formula.  Look that up and use it.
+
+Because the Gauss-Hermite quadrature is formed as a sum, it is
+necessary to divide the contributions to the deviance according to
+the levels of the random effects.  This means that it is only
+practical to use AGQ when the response vector can be split into
+sections that are conditionally independent. As far as I can see
+this will mean a single grouping factor only.
+-----
+Allow for a matrix of responses in lmer so multiple fits can be
+performed without needing to regenerate the model matrices.
+-----
+Determine what a "coef" function should do for multiple, possibly
+  non-nested, grouping  factors.
+-----
+- add nicer (more realistic?) pedigree examples and tests
+
+- document print(<mer>) including an example  print(<lmer>, corr = FALSE)
+  and one with many fixed effects (*) and     print(<lmer>, symbolic.cor = TRUE)
+
+----------------
+Provide methods for lmer2() aka the "[gln]merMod" classes based one the
+"mer" / "merenv" ones
+
+ o Now done for  anova, coef, isREML, update, model.matrix, model.frame, terms
+
+FIXME: *one*-argument version of anova() still does not work
+
+--> Use  nobs() methods -- ASAP .. (require R >= 2.13.0 though)
+

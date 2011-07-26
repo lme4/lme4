@@ -1,0 +1,703 @@
+
+R version 2.14.0 Under development (unstable) (2011-05-31 r56025)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-unknown-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> ### suppressPackageStartupMessages(...)  as we have an *.Rout.save to Rdiff against
+> stopifnot(suppressPackageStartupMessages(require(lme4a)))
+> options(show.signif.stars = FALSE)
+> 
+> source(system.file("test-tools.R", package = "Matrix"))# identical3() etc
+> all.EQ <- function(u,v, ...) all.equal.X(u, v, except = c("call", "frame"), ...)
+> S4_2list <- function(obj) {   # no longer used
++    sn <- slotNames(obj)
++    structure(lapply(sn, slot, object = obj), .Names = sn)
++ }
+> ## Is now (2010-09-03) in Matrix' test-tools.R above
+> showProc.time <- local({
++     pct <- proc.time()
++     function() { ## CPU elapsed __since last called__
++ 	ot <- pct ; pct <<- proc.time()
++ 	cat('Time elapsed: ', (pct - ot)[1:3],'\n')
++     }
++ })
+> 
+> (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
+Linear mixed model fit by REML ['merMod']
+Formula: Reaction ~ Days + (Days | Subject) 
+   Data: sleepstudy 
+REML criterion at convergence: 1743.628 
+
+Random effects:
+ Groups   Name        Variance Std.Dev. Corr 
+ Subject  (Intercept) 612.09   24.740        
+          Days         35.07    5.922   0.066
+ Residual             654.94   25.592        
+Number of obs: 180, groups: Subject, 18
+
+Fixed effects:
+            Estimate Std. Error t value
+(Intercept)  251.405      6.825   36.84
+Days          10.467      1.546    6.77
+
+Correlation of Fixed Effects:
+     (Intr)
+Days -0.138
+> (fm1a <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, REML = FALSE))
+Linear mixed model fit by maximum likelihood ['merMod']
+Formula: Reaction ~ Days + (Days | Subject) 
+   Data: sleepstudy 
+      AIC       BIC    logLik  deviance 
+1763.9393 1783.0971 -875.9697 1751.9393 
+
+Random effects:
+ Groups   Name        Variance Std.Dev. Corr 
+ Subject  (Intercept) 565.52   23.781        
+          Days         32.68    5.717   0.081
+ Residual             654.94   25.592        
+Number of obs: 180, groups: Subject, 18
+
+Fixed effects:
+            Estimate Std. Error t value
+(Intercept)  251.405      6.632   37.91
+Days          10.467      1.502    6.97
+
+Correlation of Fixed Effects:
+     (Intr)
+Days -0.138
+> (fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
+Linear mixed model fit by REML ['merMod']
+Formula: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject) 
+   Data: sleepstudy 
+REML criterion at convergence: 1743.669 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ Subject  (Intercept) 627.57   25.051  
+ Subject  Days         35.86    5.988  
+ Residual             653.58   25.565  
+Number of obs: 180, groups: Subject, 18
+
+Fixed effects:
+            Estimate Std. Error t value
+(Intercept)  251.405      6.885   36.51
+Days          10.467      1.560    6.71
+
+Correlation of Fixed Effects:
+     (Intr)
+Days -0.184
+> anova(fm1, fm2)
+Data: sleepstudy
+Models:
+fm2: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject)
+fm1: Reaction ~ Days + (Days | Subject)
+    Df    AIC    BIC  logLik deviance  Chisq Chi Df Pr(>Chisq)
+fm2  5 1762.0 1778.0 -876.00   1752.0                         
+fm1  6 1763.9 1783.1 -875.97   1751.9 0.0639      1     0.8004
+> 
+> ## Now works for glmer
+> fm1. <- glmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+> ## default family=gaussian -> automatically calls  lmer()
+> stopifnot(all.equal(fm1, fm1.))
+> ## Test against previous version in lmer1 (using bobyqa for consistency)
+> #(fm1. <- lmer1(Reaction ~ Days + (Days|Subject), sleepstudy, opt = "bobyqa"))
+> #stopifnot(all.equal(fm1@devcomp$cmp['REML'], fm1.@devcomp$cmp['REML']),
+> #          all.equal(fixef(fm1), fixef(fm1.)),
+> #          all.equal(fm1@re@theta, fm1.@theta, tol = 1.e-7),
+> #          all.equal(ranef(fm1), ranef(fm1.)))
+> 
+> ## Test 'compDev = FALSE' (vs TRUE)
+> fm1. <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy,
++              compDev = FALSE)#--> use R code (not C++) for deviance computation
+> stopifnot(all.equal(fm1@devcomp$cmp['REML'], fm1.@devcomp$cmp['REML']),
++           all.equal(fixef(fm1), fixef(fm1.)),
++           all.equal(fm1@re@theta, fm1.@re@theta, tol = 1.e-7),
++           all.equal(ranef(fm1), ranef(fm1.), tol = 1.e-7))
+> 
+> 
+> stopifnot(all.equal(fixef(fm1), fixef(fm2), tol = 1.e-13),
++           all.equal(unname(fixef(fm1)),
++                     c(251.405104848485, 10.467285959595), tol = 1e-13),
++ 	  all.equal(cov2cor(vcov(fm1))["(Intercept)", "Days"],
++ 		    -0.13755, tol=1e-4))
+> 
+> fm1ML <- lme4a:::refitML(fm1)
+> fm2ML <- lme4a:::refitML(fm2)
+> if(getRversion() > "2.11.0") {
++     print(AIC(fm1ML, fm2ML))
++     print(BIC(fm1ML, fm2ML))
++ } else {
++     print(AIC(fm1ML)); print(AIC(fm2ML))
++     print(BIC(fm1ML)); print(BIC(fm2ML))
++ }
+      df      AIC
+fm1ML  6 1763.939
+fm2ML  5 1762.003
+      df      BIC
+fm1ML  6 1783.097
+fm2ML  5 1777.968
+> 
+> (fm3 <- lmer(Yield ~ 1|Batch, Dyestuff2))
+Linear mixed model fit by REML ['merMod']
+Formula: Yield ~ 1 | Batch 
+   Data: Dyestuff2 
+REML criterion at convergence: 161.8283 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ Batch    (Intercept)  0.00    0.000   
+ Residual             13.81    3.716   
+Number of obs: 30, groups: Batch, 6
+
+Fixed effects:
+            Estimate Std. Error t value
+(Intercept)   5.6656     0.6784   8.352
+> stopifnot(all.equal(coef(summary(fm3)),
++ 		    array(c(5.6656, 0.67838803150, 8.3515624346),
++ 			  c(1,3), dimnames = list("(Intercept)",
++ 				  c("Estimate", "Std. Error", "t value")))))
+> showProc.time() #
+Time elapsed:  10.22 0.01 10.824 
+> 
+> ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
+> (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
+Linear mixed model fit by REML ['merMod']
+Formula: Reaction ~ Days + (Days | Subject) 
+   Data: sleepstudy 
+REML criterion at convergence: 1743.628 
+
+Random effects:
+ Groups   Name        Variance Std.Dev. Corr 
+ Subject  (Intercept) 612.09   24.740        
+          Days         35.07    5.922   0.066
+ Residual             654.94   25.592        
+Number of obs: 180, groups: Subject, 18
+
+Fixed effects:
+            Estimate Std. Error t value
+(Intercept)  251.405      6.825   36.84
+Days          10.467      1.546    6.77
+
+Correlation of Fixed Effects:
+     (Intr)
+Days -0.138
+> (fm.1 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
+Linear mixed model fit by REML ['merMod']
+Formula: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject) 
+   Data: sleepstudy 
+REML criterion at convergence: 1743.669 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ Subject  (Intercept) 627.57   25.051  
+ Subject  Days         35.86    5.988  
+ Residual             653.58   25.565  
+Number of obs: 180, groups: Subject, 18
+
+Fixed effects:
+            Estimate Std. Error t value
+(Intercept)  251.405      6.885   36.51
+Days          10.467      1.560    6.71
+
+Correlation of Fixed Effects:
+     (Intr)
+Days -0.184
+> 
+> (fmX2 <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy))
+Linear mixed model fit by REML ['merMod']
+Formula: Reaction ~ Days + (Days | Subject) 
+   Data: sleepstudy 
+REML criterion at convergence: 1743.628 
+
+Random effects:
+ Groups   Name        Variance Std.Dev. Corr 
+ Subject  (Intercept) 612.09   24.740        
+          Days         35.07    5.922   0.066
+ Residual             654.94   25.592        
+Number of obs: 180, groups: Subject, 18
+
+Fixed effects:
+            Estimate Std. Error t value
+(Intercept)  251.405      6.825   36.84
+Days          10.467      1.546    6.77
+
+Correlation of Fixed Effects:
+     (Intr)
+Days -0.138
+> (fm.2 <- lmer2(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
+Linear mixed model fit by REML ['merMod']
+Formula: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject) 
+   Data: sleepstudy 
+REML criterion at convergence: 1743.669 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ Subject  (Intercept) 627.57   25.051  
+ Subject  Days         35.86    5.988  
+ Residual             653.58   25.565  
+Number of obs: 180, groups: Subject, 18
+
+Fixed effects:
+            Estimate Std. Error t value
+(Intercept)  251.405      6.885   36.51
+Days          10.467      1.560    6.71
+
+Correlation of Fixed Effects:
+     (Intr)
+Days -0.184
+> ## check update(<mer>, <formula>):
+> fm.3 <- update(fmX1, . ~ Days + (1|Subject) + (0+Days|Subject))
+> stopifnot(all.equal(fm.1, fm.3))
+> 
+> fmX1s <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
+> #fmX2s <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
+> 
+> showProc.time() #
+Time elapsed:  2.95 0.01 3.203 
+> 
+> for(nm in c("coef", "fixef", "ranef", "sigma",
++ 	     "model.matrix", "model.frame" , "terms")) {
++     cat(sprintf("%15s : ", nm))
++     FUN <- get(nm)
++     F.fmX1s <- FUN(fmX1s)
++ #    F.fmX2s <- FUN(fmX2s)
++     if(nm == "model.matrix") {
++         F.fmX1s <- as(F.fmX1s, "denseMatrix")
++ #        F.fmX2s <- as(F.fmX2s, "denseMatrix")
++ 	FF <- function(.) {r <- FUN(.); row.names(r) <- NULL
++ 			   as(r, "generalMatrix") }
++     } else FF <- FUN
++     stopifnot(
++ 	      all.equal( FF(fmX1), F.fmX1s, tol =  1e-6)
++ #	      ,
++ #	      all.equal( FF(fmX2), F.fmX2s, tol = 1e-5)
++ #              ,
++ #	      all.equal( FF(fm.1), F.fmX2s, tol = 9e-6) ## these are different models
++ #              ,
++ #              all.equal(F.fmX2s,   F.fmX1s, tol = 6e-6)
++               ,
++               all.equal(FUN(fm.1), FUN(fm.2), tol = 6e-6)
++               ,
++               TRUE)
++     cat("[Ok]\n")
++ }
+           coef : [Ok]
+          fixef : [Ok]
+          ranef : [Ok]
+          sigma : [Ok]
+   model.matrix : [Ok]
+    model.frame : [Ok]
+          terms : [Ok]
+> 
+> 
+> ## transformed vars should work[even if non-sensical as here;failed in 0.995-1]
+> fm2l <- lmer(log(Reaction) ~ log(Days+1) + (log(Days+1)|Subject),
++              data = sleepstudy, REML = FALSE)
+> ## no need for an expand method now : xfm2 <- expand(fm2)
+> 
+> stopifnot(dim(ranef(fm2l)[[1]]) == c(18, 2),
++           is((c3 <- coef(fm3)), "coef.mer"),
++           all(fixef(fm3) == c3$Batch),## <-- IFF  \hat{\sigma^2} == 0
++           TRUE)
+> 
+> ## generalized linear mixed model
+> ## TODO: (1) move these to ./glmer-ex.R
+> ## ----  (2) "rationalize" with ../man/cbpp.Rd
+> #m1e <- glmer1(cbind(incidence, size - incidence) ~ period + (1 | herd),
+> #              family = binomial, data = cbpp, doFit = FALSE)
+> ## now
+> #bobyqa(m1e, control = list(iprint = 2L))
+> m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
++             family = binomial, data = cbpp, verbose = 1)
+At return
+ 18:     100.15189: 0.641815
+At return
+ 72:     100.09586: 0.642261 -1.39853 -0.992333 -1.12867 -1.58031
+> stopifnot(is((cm1 <- coef(m1)), "coef.mer"),
++ 	  dim(cm1$herd) == c(15,4),
++ 	  all.equal(fixef(m1), ##  these values are those of "old-lme4":
++ 		    c(-1.39853504914, -0.992334711,
++ 		      -1.12867541477, -1.58037390498),
++ 		    tol = 1.e-3,
++                     check.attr=FALSE)
++ 	  )
+> ## Deviance for the new algorithm is lower, eventually we should change the previous test
+> #stopifnot(deviance(m1) <= deviance(m1e))
+> ## Simple example by Andrew Gelman (2006-01-10) ----
+> n.groups <- 10 ; n.reps <- 2
+> n <- length(group.id <- gl(n.groups, n.reps))
+> ## simulate the varying parameters and the data:
+> set.seed(0)
+> a.group <- rnorm(n.groups, 1, 2)
+> y <- rnorm (n, a.group[group.id], 1)
+> ## fit and summarize the model
+> fit.1 <- lmer (y ~ 1 + (1 | group.id))
+> coef (fit.1)
+$group.id
+   (Intercept)
+1    3.3760015
+2   -0.2384548
+3    3.1859576
+4    3.1121393
+5    1.4381126
+6   -1.7593543
+7   -0.2546161
+8    0.6977974
+9    1.2121809
+10   4.9433572
+
+attr(,"class")
+[1] "coef.mer"
+> ## check show( <"summary.mer"> ):
+> (sf1 <- summary(fit.1)) # --> now looks as for fit.1
+Linear mixed model fit by REML ['summary.mer']
+Formula: y ~ 1 + (1 | group.id) 
+REML criterion at convergence: 73.4034 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ group.id (Intercept) 4.5579   2.1349  
+ Residual             0.6678   0.8172  
+Number of obs: 20, groups: group.id, 10
+
+Fixed effects:
+            Estimate Std. Error t value
+(Intercept)   1.5713     0.6994   2.247
+> 
+> stopifnot(all.equal(fixef(fit.1), c("(Intercept)" = 1.571312129)),
++ 	  all.equal(ranef(fit.1)[["group.id"]][,"(Intercept)"],
++ 		   c(1.80469, -1.80977, 1.61465, 1.54083, -0.1332,
++ 		     -3.33067, -1.82593, -0.873515, -0.359131, 3.37204),
++ 		    tol = 1e-4)
++ 	  )
+> 
+> 
+> ## ranef and coef
+> rr <- ranef(fm1)
+> stopifnot(is.list(rr), length(rr) == 1, class(rr[[1]]) == "data.frame")
+> print(plot(rr))
+$Subject
+
+> stopifnot(is(cc <- coef(fm1), "coef.mer"),
++ 	  is.list(cc), length(cc) == 1, class(cc[[1]]) == "data.frame")
+> print(plot(cc))
+$Subject
+
+> rr <- ranef(fm2)
+> stopifnot(is.list(rr), length(rr) == 1, class(rr[[1]]) == "data.frame")
+> print(plot(rr))
+$Subject
+
+> stopifnot(is(cc <- coef(fm2), "coef.mer"),
++ 	  is.list(cc), length(cc) == 1, class(cc[[1]]) == "data.frame")
+> print(plot(cc))
+$Subject
+
+> 
+> showProc.time() #
+Time elapsed:  2.54 0.02 2.644 
+> 
+> if (require('MASS', quietly = TRUE)) {
++     bacteria$wk2 <- bacteria$week > 2
++     contrasts(bacteria$trt) <-
++         structure(contr.sdif(3),
++                   dimnames = list(NULL, c("diag", "encourage")))
++     print(fm5 <- glmer(y ~ trt + wk2 + (1|ID), bacteria, binomial))
++     ## used to fail with nlminb() : stuck at theta=1
++ 
++     showProc.time() #
++ 
++     stopifnot(
++ 	      all.equal(logLik(fm5),
++ 			## was	  -96.127838
++ 			structure(-96.13069, nobs = 220L, nall = 220L,
++ 				  df = 5L, REML = FALSE,
++                                   class = "logLik"),
++                         tol = 1e-5, check.attributes = FALSE)
++ 	      ,
++ 	      all.equal(fixef(fm5),
++ 			## was		 2.834218798		 -1.367099481
++ 			c("(Intercept)"= 2.831609490, "trtdiag"= -1.366722631,
++ 			  ## now	 0.5842291915,		 -1.599148773
++ 			  "trtencourage"=0.5840147802, "wk2TRUE"=-1.598591346), tol = 1e-4)
++ 	      )
++ }
+Generalized linear mixed model fit by maximum likelihood ['merMod']
+ Family: binomial 
+Formula: y ~ trt + wk2 + (1 | ID) 
+   Data: bacteria 
+     AIC      BIC   logLik deviance 
+202.2614 219.2295 -96.1307 192.2614 
+
+Random effects:
+ Groups Name        Variance Std.Dev.
+ ID     (Intercept) 1.544    1.242   
+Number of obs: 220, groups: ID, 50
+
+Fixed effects:
+             Estimate Std. Error z value
+(Intercept)    2.8316     0.4466   6.341
+trtdiag       -1.3667     0.6566  -2.082
+trtencourage   0.5840     0.6734   0.867
+wk2TRUE       -1.5985     0.4612  -3.466
+
+Correlation of Fixed Effects:
+            (Intr) trtdig trtncr
+trtdiag     -0.044              
+trtencourag  0.064 -0.495       
+wk2TRUE     -0.794  0.063 -0.056
+Time elapsed:  2.32 0.03 2.461 
+> 
+> ## Invalid factor specification -- used to seg.fault:
+> set.seed(1)
+> dat <- within(data.frame(lagoon = factor(rep(1:4,each = 25)),
++                          habitat = factor(rep(1:20, each = 5))),
++           {
++               y <- round(10*rnorm(100, m = 10*as.numeric(lagoon)))
++           })
+> 
+> try(reg <- lmer(y ~ habitat + (1|habitat*lagoon), data = dat) # did seg.fault
++     ) # now gives error                 ^- should be ":"
+Error in FUN(X[[1L]], ...) : 
+  Invalid grouping factor specification, habitat * lagoon
+In addition: Warning message:
+In Ops.factor(habitat, lagoon) : * not meaningful for factors
+> r1  <- lmer(y ~ 0+habitat + (1|habitat:lagoon), data = dat) # ok, but senseless
+> r1b <- lmer(y ~ 0+habitat + (1|habitat), data = dat) # same model, clearly indeterminable
+> ## "TODO" :  summary(r1)  should ideally warn the user
+> stopifnot(all.equal(fixef(r1), fixef(r1b), tol= 1e-15),
++           all.equal(ranef(r1), ranef(r1b), tol= 1e-15, check.attributes=FALSE))
+> 
+> ## Use a more sensible model:
+> r2.0 <- lmer(y ~ 0+lagoon + (1|habitat:lagoon), data = dat) # ok
+> r2   <- lmer(y ~ 0+lagoon + (1|habitat), data = dat) # ok, and more clear
+> stopifnot(all.equal(fixef(r2), fixef(r2.0), tol= 1e-15),
++           all.equal(ranef(r2), ranef(r2.0), tol= 1e-15, check.attributes=FALSE))
+> V2 <- vcov(r2)
+> assert.EQ.mat(V2, diag(x = 9.9833/3, nr = 4))
+> stopifnot(all.equal(unname(fixef(r2)) - (1:4)*100,
++ 		    c(1.72, 0.28, 1.76, 0.8), tol = 1e-13))
+> 
+> ## sparseX version should give same numbers:
+> r2.  <- lmer(y ~ 0+lagoon + (1|habitat), data = dat,
++              sparseX = TRUE, verbose = TRUE)
+At return
+ 15:     709.74472:  0.00000
+> 
+> ## the summary() components we do want to compare 'dense X' vs 'sparse X':
+> nmsSumm <- c("methTitle", "devcomp", "logLik", "ngrps", "coefficients",
++              "sigma", "REmat", "AICtab")
+> sr2  <- summary(r2)
+> sr2. <- summary(r2.)
+> sr2.$devcomp$dims['spFe'] <- 0L       # to allow for comparisons below
+> stopifnot(all.equal(sr2[nmsSumm], sr2.[nmsSumm], tol= 1e-14),
++           all.equal(ranef(r2), ranef(r2.), tol= 1e-14),
++           Matrix:::isDiagonal(vcov(r2.)),# ok
++           all.equal(diag(vcov(r2.)), rep.int(V2[1,1], 4), tol= 1e-13)
++           ,
++ 	  all(vcov(r2.)@factors$correlation == diag(4))
++       )
+> r2.
+Linear mixed model fit by REML ['merMod']
+Formula: y ~ 0 + lagoon + (1 | habitat) 
+   Data: dat 
+REML criterion at convergence: 709.7447 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ habitat  (Intercept)  0.00    0.000   
+ Residual             83.19    9.121   
+Number of obs: 100, groups: habitat, 20
+
+Fixed effects:
+        Estimate Std. Error t value
+lagoon1  101.720      1.824   55.76
+lagoon2  200.280      1.824  109.79
+lagoon3  301.760      1.824  165.42
+lagoon4  400.800      1.824  219.71
+
+Correlation of Fixed Effects:
+        lagon1 lagon2 lagon3
+lagoon2 0.000               
+lagoon3 0.000  0.000        
+lagoon4 0.000  0.000  0.000 
+> 
+> ## Failure to specify a random effects term - used to give an obscure message
+> ## Ensure *NON*-translated message; works on Linux,... :
+> if(.Platform$OS.type == "unix") {
++ Sys.setlocale("LC_MESSAGES", "C")
++ tc <- tryCatch(
++ 	       m2 <- glmer(incidence / size ~ period, weights = size,
++ 			   family = binomial, data = cbpp)
++ 	       , error = function(.) .)
++ stopifnot(inherits(tc, "error"),
++ 	  identical(tc$message,
++ 		    "No random effects terms specified in formula"))
++ }
+> 
+> ### mcmcsamp() :
+> ## From: Andrew Gelman <gelman@stat.columbia.edu>
+> ## Date: Wed, 18 Jan 2006 22:00:53 -0500
+> 
+> if (FALSE) {  # mcmcsamp still needs work
++     ## NB: Need to restore coda to the Suggests: field of DESCRIPTION
++     ## file if this code block is reinstated.
++     ## has.coda <- require(coda)
++     ## if(!has.coda)
++     ##     cat("'coda' package not available; some outputs will look suboptimal\n")
++ 
++     ## Very simple example
++     y <- 1:10
++     group <- gl(2,5)
++     (M1 <- lmer (y ~ 1 + (1 | group))) # works fine
++     (r1 <- mcmcsamp (M1))              # dito
++     r2 <- mcmcsamp (M1, saveb = TRUE)  # gave error in 0.99-* and 0.995-[12]
++     (r10 <- mcmcsamp (M1, n = 10, saveb = TRUE))
++ 
++     ## another one, still simple
++     y <- (1:20)*pi
++     x <- (1:20)^2
++     group <- gl(2,10)
++     M1 <- lmer (y ~ 1 | group)
++     mcmcsamp (M1, n = 2, saveb=TRUE) # fine
++ 
++     M2 <- lmer (y ~ 1 + x + (1 + x | group)) # false convergence
++     ## should be identical (and is)
++     M2 <- lmer (y ~ x + ( x | group))#  false convergence -> simulation doesn't work:
++     if(FALSE) ## try(..) fails here (in R CMD check) [[why ??]]
++         mcmcsamp (M2, saveb=TRUE)
++     ## Error: inconsistent degrees of freedom and dimension ...
++ 
++     ## mcmc for glmer:
++     rG1k <- mcmcsamp(m1, n = 1000)
++     summary(rG1k)
++     rG2 <- mcmcsamp(m1, n = 3, verbose = TRUE)
++ }
+> 
+> ## Spencer Graves' example (from a post to S-news, 2006-08-03) ----------------
+> ## it should give an error, rather than silent non-sense:
+> tstDF <- data.frame(group = letters[1:5], y = 1:5)
+> assertError(## Now throws an error, as desired :
++             lmer(y ~ 1 + (1|group), data = tstDF)
++             )
+> 
+> showProc.time() #
+Time elapsed:  1.86 0.02 1.943 
+> 
+> ## Wrong formula gave a seg.fault at times:
+> set.seed(2)# !
+> D <-  data.frame(y= rnorm(12,10), ff = gl(3,2,12),
++                  x1=round(rnorm(12,3),1), x2=round(rnorm(12,7),1))
+> ## NB: The first two are the same, having a length-3 R.E. with 3 x 3 vcov-matrix:
+> ## --> do need CPU
+> m0 <- lmer(y ~ (x1 + x2)|ff, data = D)
+> m1 <- lmer(y ~ x1 + x2|ff  , data = D)
+> m2 <- lmer(y ~ x1 + (x2|ff), data = D)
+> m3 <- lmer(y ~ (x2|ff) + x1, data = D)
+> stopifnot(identical(ranef(m0), ranef(m1)),
++           identical(ranef(m2), ranef(m3)),
++           inherits(tryCatch(lmer(y ~ x2|ff + x1, data = D), error = function(e)e),
++                    "error"))
+Warning message:
+In Ops.factor(ff, x1) : + not meaningful for factors
+> 
+> showProc.time() #
+Time elapsed:  7.93 0.01 8.181 
+> 
+> ## Reordering of grouping factors should not change the internal structure
+> #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
+> #Pm2  <- lmer1(strength ~ (1|sample) + (1|batch), Pastes, doFit = FALSE)
+> P2.1 <- lmer (strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
+> P2.2 <- lmer (strength ~ (1|sample) + (1|batch), Pastes, doFit = FALSE)
+> 
+> ## The environments of Pm1 and Pm2 should be identical except for
+> ## "call" and "frame":
+> stopifnot(## all.EQ(env(Pm1), env(Pm2)),
++ 	  all.EQ(S4_2list(P2.1),
++ 		 S4_2list(P2.2)))
+> 
+> ## glmer - Modeling overdispersion as "mixture" aka
+> ## ----- - *ONE* random effect *PER OBSERVATION" -- example inspired by Ben Bolker:
+> 
+> ##' <description>
+> ##'
+> ##' <details>
+> ##' @title
+> ##' @param ng number of groups
+> ##' @param nr number of "runs", i.e., observations per groups
+> ##' @param sd standard deviations of group and "Individual" random effects,
+> ##'    (\sigma_f, \sigma_I)
+> ##' @param b  true beta (fixed effects)
+> ##' @return a data frame (to be used in glmer()) with columns
+> ##'    (x, f, obs, eta0, eta, mu, y), where y ~ Pois(lambda(x)),
+> ##'                                   log(lambda(x_i)) = b_1 + b_2 * x + G_{f(i)} + I_i
+> ##'    and G_k ~ N(0, \sigma_f);  I_i ~ N(0, \sigma_I)
+> ##' @author Ben Bolker and Martin Maechler
+> set.seed(1)
+> rPoisGLMMi <- function(ng, nr, sd=c(f = 1, ind = 0.5), b=c(1,2))
++ {
++   stopifnot(nr >= 1, ng >= 1,
++             is.numeric(sd), names(sd) %in% c("f","ind"), sd >= 0)
++   ntot <- nr*ng
++   b.reff <- rnorm(ng,  sd= sd[["f"]])
++   b.rind <- rnorm(ntot,sd= sd[["ind"]])
++   x <- runif(ntot)
++   within(data.frame(x,
++                     f = factor(rep(LETTERS[1:ng], each=nr)),
++                     obs = 1:ntot,
++                     eta0 = cbind(1, x) %*% b),
++      {
++          eta <- eta0 + b.reff[f] + b.rind[obs]
++          mu <- exp(eta)
++          y <- rpois(ntot, lambda=mu)
++      })
++ }
+> dd <- rPoisGLMMi(12, 20)
+> m0  <- glmer(y~x + (1|f),           family="poisson", data=dd)
+> (m1 <- glmer(y~x + (1|f) + (1|obs), family="poisson", data=dd))
+Generalized linear mixed model fit by maximum likelihood ['merMod']
+ Family: poisson 
+Formula: y ~ x + (1 | f) + (1 | obs) 
+   Data: dd 
+      AIC       BIC    logLik  deviance 
+ 624.7607  638.6833 -308.3804  616.7607 
+
+Random effects:
+ Groups Name        Variance Std.Dev.
+ obs    (Intercept) 0.2469   0.4969  
+ f      (Intercept) 0.5133   0.7165  
+Number of obs: 240, groups: obs, 240; f, 12
+
+Fixed effects:
+            Estimate Std. Error z value
+(Intercept)   1.2700     0.2255   5.632
+x             1.9964     0.1432  13.945
+
+Correlation of Fixed Effects:
+  (Intr)
+x -0.358
+> anova(m0, m1)
+Data: dd
+Models:
+m0: y ~ x + (1 | f)
+m1: y ~ x + (1 | f) + (1 | obs)
+   Df     AIC     BIC  logLik deviance  Chisq Chi Df Pr(>Chisq)
+m0  3 1177.09 1187.54 -585.55  1171.09                         
+m1  4  624.76  638.68 -308.38   616.76 554.33      1  < 2.2e-16
+> 
+> showProc.time()
+Time elapsed:  2.15 0 2.209 
+> 
