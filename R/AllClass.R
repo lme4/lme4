@@ -42,14 +42,19 @@ merPredD <-                 # Do we need the generator object? Probably - at lea
                          if (!is.null(dots$beta0)) .Call(merPredDsetBeta0, ptr, dots$beta0)
                          if (!is.null(dots$u0)) .Call(merPredDsetBeta0, ptr, dots$u0)
                      },
-                     getLambda = function() .Call(merPredDLambda, ptr),
+
+                     I = function() .Call(merPredDI, ptr),
+                     L = function() .Call(merPredDL, ptr),
+                     P = function() .Call(merPredDPvec, ptr),
                      RX = function() .Call(merPredDRX, ptr),
+                     RXdiag = function() .Call(merPredDRXdiag, ptr),
                      RZX = function() .Call(merPredDRZX, ptr),
+                     VtV = function() .Call(merPredDVtV, ptr),
                      delb = function() .Call(merPredDdelb, ptr),
                      delu = function() .Call(merPredDdelu, ptr),
+                     getLambda = function() .Call(merPredDLambda, ptr),
                      ldL2 = function() .Call(merPredDldL2, ptr),
                      ldRX2 = function() .Call(merPredDldRX2, ptr),
-                     getPvec = function() .Call(merPredDPvec, ptr),
                      unsc = function() .Call(merPredDunsc, ptr),
 
                      linPred = function(fac) .Call(merPredDlinPred, ptr, as.numeric(fac)),

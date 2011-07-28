@@ -260,5 +260,4 @@ setMethod("update", signature(object = "lmList"),
           else call
       })
 
-setMethod("formula", signature(x = "lmList"),
-          function(x, ...) x@call[["formula"]])
+formula.lmList <- function(x, ...) x@call[["formula"]]

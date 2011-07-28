@@ -936,7 +936,7 @@ refitML.merMod <- function (x) {
         lower=x@lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=resp)
 }
 
-setMethod("getCall", "merMod",	function(x) x@call)
+getCall.merMod <- function(x, ...) x@call
 
 
 ##' <description>
