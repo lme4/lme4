@@ -136,10 +136,10 @@ namespace lme4Eigen {
 	Index                 d_n, d_p, d_q;
 	dgCMatrix             d_Lambda;
 	Scalar                d_ldL2, d_ldRX2;
-	MatrixXd              d_RZX, d_V;
+	MatrixXd              d_RZX, d_V, d_VtV;
 	VectorType            d_Vtr, d_Utr, d_delb, d_delu, d_beta0, d_u0;
 	SpMatrixXd            d_U, d_I;
-	SpLDLt                d_L;
+	SpLLt                 d_L;
 	LLTType               d_RX;
     public:
 	merPredD(Rcpp::S4, Rcpp::S4, Rcpp::S4,
@@ -148,8 +148,11 @@ namespace lme4Eigen {
 
 	MatrixXd                      RX() const {MatrixXd ans = d_RX.matrixU(); return ans;}
 	MatrixXd                     RXi() const {return d_RX.matrixU().solve(MatrixXd::Identity(d_p,d_p));}
+	MatrixXd                     VtV() const {return d_VtV;}
 	MatrixXd                    unsc() const {MatrixXd rxi(RXi()); return rxi * rxi.adjoint();}
-	VectorType               Dvector() const {return d_L.vectorD();}
+	SpMatrixXd                     L() const {return d_L.matrixLDL();}
+	VectorType                RXdiag() const {return d_RX.matrixLLT().diagonal();}
+//	VectorType               Dvector() const {return d_L.vectorD();}
 	VectorType               linPred(const double& fac) const {
 	    return d_X * (d_beta0 + fac * d_delb) + d_Z * (d_Lambda * (d_u0 + fac * d_delu));
 	}
@@ -164,6 +167,7 @@ namespace lme4Eigen {
 	const MatrixXd&              RZX() const {return d_RZX;}
 	const Rcpp::NumericVector& theta() const {return d_theta;}
 	const PermutationType&         P() const {return d_L.permutationP();}
+	const SpMatrixXd&              I() const {return d_I;}
 	const SpMatrixXd&         Lambda() const {return d_Lambda;}
 	const MSpMatrixXd&             Z() const {return d_Z;}
 	const VectorXi&             Pvec() const {return d_L.permutationP().indices();}
@@ -189,24 +193,30 @@ namespace lme4Eigen {
 	}
 	void                       solve();
 	void                      solveU() {d_delu = d_L.solve(d_Utr);}
+	void                updateDecomp();
 	void                     updateL(const SpMatrixXd&);
-	void                   updateRes(const VectorType&,
-					 const VectorType&)          throw (std::invalid_argument);
+	void                   updateRes(const VectorType&)          throw (std::invalid_argument);
+	void                  updateXwts(const VectorType&)          throw (std::invalid_argument);
+
     };
 
 }
 
 extern "C" {
-    SEXP merPredDCreate(SEXP, SEXP, SEXP, SEXP, SEXP);
+    SEXP merPredDCreate(SEXP, SEXP, SEXP, SEXP, SEXP); // constructor (returns external pointer)
     
-    SEXP merPredDsetTheta(SEXP, SEXP);
+    SEXP merPredDsetTheta(SEXP, SEXP); // setters
     SEXP merPredDsetBeta0(SEXP, SEXP);
     SEXP merPredDsetU0(SEXP, SEXP);
 
+    SEXP merPredDI(SEXP);	// getters
     SEXP merPredDLambda(SEXP);
+    SEXP merPredDL(SEXP);
     SEXP merPredDPvec(SEXP);
     SEXP merPredDRX(SEXP);
+    SEXP merPredDRXdiag(SEXP);
     SEXP merPredDRZX(SEXP);
+    SEXP merPredDVtV(SEXP);
     SEXP merPredDZ(SEXP);
     SEXP merPredDbeta0(SEXP);
     SEXP merPredDdelb(SEXP);
@@ -217,7 +227,7 @@ extern "C" {
     SEXP merPredDu0(SEXP);
     SEXP merPredDunsc(SEXP);
 
-    SEXP merPredDlinPred(SEXP, SEXP);
+    SEXP merPredDlinPred(SEXP, SEXP); // methods
     SEXP merPredDinstallPars(SEXP, SEXP);
     SEXP merPredDsqrL(SEXP,SEXP);
 }

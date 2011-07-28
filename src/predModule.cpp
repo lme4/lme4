@@ -24,6 +24,7 @@ namespace lme4Eigen {
 	  d_Lambda(Lambda),
 	  d_RZX(d_q, d_p),
 	  d_V(d_X),
+	  d_VtV(d_p,d_p),
 	  d_Vtr(d_p),
 	  d_Utr(d_q),
 	  d_delb(d_p),
@@ -36,12 +37,6 @@ namespace lme4Eigen {
     {				// Check consistency of dimensions
 	if (d_n != d_Z.rows())
 	    throw invalid_argument("Z dimension mismatch");
-	// cout << "dimensions: n = " << d_n
-	//      << ", p = " << d_p
-	//      << ", q = " << d_q
-	//      << ", length(theta) = " << d_theta.size()
-	//      << endl;
-	    
 	if (d_Lind.size() != d_Lambda.nonZeros())
 	    throw invalid_argument("size of Lind does not match nonzeros in Lambda");
 	// check the range of Lind (now done in R code for reference class)
@@ -55,27 +50,37 @@ namespace lme4Eigen {
 	//     used[ind - 1] = 1; // 0-based index
 	// }
 	// if (!used.all()) throw invalid_argument("Some indices of theta do not occur in Lind");
-				// initialize beta0 and u0
+
+				// initialize beta0, u0 and VtV
 	d_beta0.setZero(); d_u0.setZero();
-				// set d_I to be the d_q by d_q sparse Identity matrix
-	d_I.reserve(d_q);
-	for (Index j = 0; j < d_q; ++j) {
-	    d_I.startVec(j);
-	    d_I.insertBack(j, j) = 1.;
-	}
-	d_I.finalize();
-				// finish with steps that are followed for each theta change
+	d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
+				// starting values into Lambda
 	setTheta(d_theta);
+	SpMatrixXd   ULam(d_U * d_Lambda);
+				// form d_I as the identity but with
+				// the nonzero pattern of Lambda'Z'Z Lambda + I
+	d_I.selfadjointView<Eigen::Lower>().rankUpdate(ULam.adjoint());
+	for (int j = 0; j < d_q; ++j) {
+	    SpMatrixXd::InnerIterator it(d_I, j);
+	    for (; it; ++it) it.valueRef() = (it.index() == j) ? 1. : 0.;
+	}
+	updateL(ULam);
     }
 
     void merPredD::updateL(const SpMatrixXd& ULam) {
-	// Create Lambda'U'U Lambda + I
+				// Create Lambda'U'U Lambda + I
 	SpMatrixXd   UtU(d_I);
 	UtU.selfadjointView<Eigen::Lower>().rankUpdate(ULam.adjoint());
 
 	if (d_L.isInitialized()) d_L.factorize(UtU); else d_L.compute(UtU);
 	if (d_L.info() != Eigen::Success) throw runtime_error("factorization failure");
-	d_ldL2            = d_L.vectorD().array().log().sum();
+	const SpMatrixXd&   LLT(d_L.matrixLDL());  // avoid the copy (I think)
+	d_ldL2 = 0.;
+	for (int j = 0; j < LLT.outerSize(); ++j) {
+	    SpMatrixXd::InnerIterator it(LLT, j);
+	    assert(it.index() == j);
+	    d_ldL2 += 2. * log(abs(it.value()));
+	}
     }
 
     void merPredD::setTheta(const NumericVector& theta) throw (invalid_argument,
@@ -90,20 +95,24 @@ namespace lme4Eigen {
 	for (int i = 0; i < d_Lind.size(); ++i) {
 	    LamX[i] = thpt[lipt[i] - 1];
 	}
-	updateL(d_U * d_Lambda);
     }
 
     void merPredD::solve() {
-        DiagType  sqrtDi(d_L.vectorD().array().sqrt().inverse().matrix());
+//        DiagType  sqrtDi(d_L.vectorD().array().sqrt().inverse().matrix());
 	d_delu           = d_L.permutationPinv() * d_Utr;
-	d_L.matrixLDL().triangularView<Eigen::UnitLower>().solveInPlace(d_delu);
-	d_delu           = sqrtDi * d_delu;
+//	d_L.matrixLDL().triangularView<Eigen::UnitLower>().solveInPlace(d_delu);
+	d_L.matrixLDL().triangularView<Eigen::Lower>().solveInPlace(d_delu);
+//	d_delu           = sqrtDi * d_delu;
 				// d_delu now contains cu
 	d_delb           = d_RX.solve(d_Vtr - d_RZX.adjoint() * d_delu);
-	d_delu           = sqrtDi * (d_delu - d_RZX * d_delb);
-	d_L.matrixLDL().adjoint().triangularView<Eigen::UnitUpper>().solveInPlace(d_delu);
+//	d_delu           = sqrtDi * (d_delu - d_RZX * d_delb);
+	d_delu          -=  d_RZX * d_delb;
+//	d_L.matrixLDL().adjoint().triangularView<Eigen::UnitUpper>().solveInPlace(d_delu);
+	d_L.matrixLDL().adjoint().triangularView<Eigen::Upper>().solveInPlace(d_delu);
 	d_delu           = d_L.permutationP() * d_delu;
     }
+#if 0
+// debugging code that can probably be removed
 static bool nonFinite(const double& x) {
     return !::R_finite(x);
 }
@@ -124,36 +133,53 @@ static bool chkFinite(const MatrixXd& x) {
 static bool chkFinite(const SpMatrixXd& x) {
     return allFinite(x._valuePtr(), x._valuePtr() + x.nonZeros());
 }
-
-    void merPredD::updateRes(const VectorType& wtres,
-			     const VectorType& sqrtXwt) throw (invalid_argument) {
-	if (!chkFinite(wtres)) throw invalid_argument("updateRes: nonfinite residual");
-	if (!chkFinite(sqrtXwt)) throw invalid_argument("updateRes: nonfinite weights");
-	if (d_V.rows() != wtres.size() || d_X.rows() != sqrtXwt.size())
-	    throw invalid_argument("updateRes: dimension mismatch");
+#endif
+    void merPredD::updateXwts(const VectorType& sqrtXwt) throw (invalid_argument) {
+//	if (!chkFinite(sqrtXwt)) throw invalid_argument("updateRes: nonfinite weights");
+	if (d_X.rows() != sqrtXwt.size())
+	    throw invalid_argument("updateXwts: dimension mismatch");
 	if (d_V.rows() == d_X.rows()) {  //FIXME: Generalize this for nlmer
 	    DiagType  W(sqrtXwt.asDiagonal());
 	    d_V         = W * d_X;
 	    d_U         = W * d_Z;
 	} else throw invalid_argument("updateRes: no provision for nlmer yet");
-	if (!chkFinite(d_V)) ::Rf_error("nonfinite d_V");
-	if (!chkFinite(d_U)) ::Rf_error("nonfinite d_U");
-	d_Vtr           = d_V.adjoint() * wtres;
-//cout << "Vtr: " << d_Vtr.adjoint() << endl;
+//	if (!chkFinite(d_V)) ::Rf_error("nonfinite d_V");
+//	if (!chkFinite(d_U)) ::Rf_error("nonfinite d_U");
+	d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
+    }
+
+    void merPredD::updateDecomp() {
 	SpMatrixXd ULam(d_U * d_Lambda);
-	d_Utr           = ULam.adjoint() * wtres;
-//cout << "Utr: " << d_Utr.adjoint() << endl;
+//	if (!chkFinite(ULam)) ::Rf_error("nonfinite ULam");
 				// update L, RZX and RX
 	updateL(ULam);
+//cout << "V'ULam:\n" << d_V.adjoint() * ULam << endl;
+//cout << "Pinv:" << d_L.permutationPinv().indices().adjoint() << endl;
 	d_RZX           = d_L.permutationPinv() * (ULam.adjoint() * d_V);
+//cout << "P'Lam'U'V:\n" << d_RZX.adjoint() << endl;
 	d_L.matrixL().solveInPlace(d_RZX);
-	d_RZX           = d_L.vectorD().array().sqrt().inverse().matrix().asDiagonal() * d_RZX;
+//cout << "L^{-1}P'Lam'U'V:\n" << d_RZX.adjoint() << endl;
+//cout << "vectorD:" << d_L.vectorD().adjoint() << endl;
+//	d_RZX           = d_L.vectorD().array().sqrt().inverse().matrix().asDiagonal() * d_RZX;
+//cout << "D^{-1/2}L^{-1}P'Lam'U'V:\n" << d_RZX.adjoint() << endl;
 
-	MatrixXd     VtV(d_p, d_p);
-	d_RX.compute(VtV.setZero().selfadjointView<Eigen::Upper>().
-		     rankUpdate(d_V.adjoint()).
-		     rankUpdate(d_RZX.adjoint(), -1));
-	d_ldRX2         = 2. * d_RX.matrixLLT().diagonal().array().log().sum();
+	MatrixXd      VtVdown(d_VtV);
+//cout << "V'V\n" << d_VtV << endl;
+	d_RX.compute(VtVdown.selfadjointView<Eigen::Upper>().rankUpdate(d_RZX.adjoint(), -1));
+	if (d_RX.info() != Eigen::Success)
+	    ::Rf_error("Downdated VtV is not positive definite");
+	d_ldRX2         = 2. * d_RX.matrixLLT().diagonal().array().abs().log().sum();
+    }
+
+    void merPredD::updateRes(const VectorType& wtres)    throw (invalid_argument) {
+//	if (!chkFinite(wtres)) throw invalid_argument("updateRes: nonfinite residual");
+	if (d_V.rows() != wtres.size())
+	    throw invalid_argument("updateRes: dimension mismatch");
+	d_Vtr           = d_V.adjoint() * wtres;
+//	if (!chkFinite(d_Vtr)) ::Rf_error("nonfinite d_Vtr");
+
+	d_Utr           = d_Lambda.adjoint() * (d_U.adjoint() * wtres);
+//	if (!chkFinite(d_Utr)) ::Rf_error("nonfinite d_Utr");
     }
 
 }
@@ -187,9 +213,21 @@ extern "C" {
 	END_RCPP;
     }
     
+    SEXP merPredDI(SEXP ptr) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->I());
+	END_RCPP;
+    }
+    
     SEXP merPredDLambda(SEXP ptr) {
 	BEGIN_RCPP;
 	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->Lambda());
+	END_RCPP;
+    }
+    
+    SEXP merPredDL(SEXP ptr) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->L());
 	END_RCPP;
     }
     
@@ -205,6 +243,12 @@ extern "C" {
 	END_RCPP;
     }
     
+    SEXP merPredDRXdiag(SEXP ptr) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->RXdiag());
+	END_RCPP;
+    }
+    
     SEXP merPredDRZX(SEXP ptr) {
 	BEGIN_RCPP;
 	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->RZX());
@@ -214,6 +258,12 @@ extern "C" {
     SEXP merPredDZ(SEXP ptr) {
 	BEGIN_RCPP;
 	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->Z());
+	END_RCPP;
+    }
+    
+    SEXP merPredDVtV(SEXP ptr) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->VtV());
 	END_RCPP;
     }
     
