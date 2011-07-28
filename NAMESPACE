@@ -24,6 +24,7 @@ importFrom("stats"
            , fitted
            , fitted.values
            , formula
+#           , getCall
            , logLik
            , model.frame
            , model.matrix
@@ -59,6 +60,7 @@ importClassesFrom("Matrix",
                   symmetricMatrix)
 
 importFrom("MatrixModels"
+           , model.Matrix
            , getCall
 #           , mkRespMod
 #           , reweightPred
@@ -154,7 +156,7 @@ exportMethods(
 #              , devcomp
 #              , fitted
 #              , fixef
-              ,  formula
+#              ,  formula
               , getL
 #              , logLik
 #              , model.frame
@@ -187,6 +189,7 @@ S3method(extractAIC, merMod)
 S3method(fixef, merMod)
 S3method(fitted, merMod)
 S3method(formula, merMod)
+S3method(getCall, merMod)
 S3method(logLik, merMod)
 S3method(model.frame, merMod)
 S3method(model.matrix, merMod)
