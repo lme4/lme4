@@ -32,7 +32,7 @@ namespace lme4Eigen {
 	  d_beta0(d_p),
 	  d_u0(d_q),
 	  d_U(d_Z),
-	  d_I(d_q, d_q),
+//	  d_I(d_q, d_q),
 	  d_RX(d_p)
     {				// Check consistency of dimensions
 	if (d_n != d_Z.rows())
@@ -56,31 +56,26 @@ namespace lme4Eigen {
 	d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
 				// starting values into Lambda
 	setTheta(d_theta);
-	SpMatrixXd   ULam(d_U * d_Lambda);
-				// form d_I as the identity but with
-				// the nonzero pattern of Lambda'Z'Z Lambda + I
-	d_I.selfadjointView<Eigen::Lower>().rankUpdate(ULam.adjoint());
-	for (int j = 0; j < d_q; ++j) {
-	    SpMatrixXd::InnerIterator it(d_I, j);
-	    for (; it; ++it) it.valueRef() = (it.index() == j) ? 1. : 0.;
-	}
-	updateL(ULam);
+	SpMatrixXd   LamtUt((d_U * d_Lambda).adjoint());
+	d_nnz = LamtUt.nonZeros();
+	d_L.analyzePattern(LamtUt);
+	// 			// form d_I as the identity but with
+	// 			// the nonzero pattern of Lambda'Z'Z Lambda + I
+	// d_I.selfadjointView<Eigen::Lower>().rankUpdate(ULam.adjoint());
+	// for (int j = 0; j < d_q; ++j) {
+	//     SpMatrixXd::InnerIterator it(d_I, j);
+	//     for (; it; ++it) it.valueRef() = (it.index() == j) ? 1. : 0.;
+	// }
+//	updateL(ULam);
     }
 
-    void merPredD::updateL(const SpMatrixXd& ULam) {
-				// Create Lambda'U'U Lambda + I
-	SpMatrixXd   UtU(d_I);
-	UtU.selfadjointView<Eigen::Lower>().rankUpdate(ULam.adjoint());
-
-	if (d_L.isInitialized()) d_L.factorize(UtU); else d_L.compute(UtU);
+    void merPredD::updateL(const SpMatrixXd& LamtUt) throw (runtime_error) {
+	if (LamtUt.nonZeros() != d_nnz)
+	    throw runtime_error("Number of nonzeros in LamtUt has changed");
+	d_L.factorize_p(LamtUt, ArrayXi(), 1.);
 	if (d_L.info() != Eigen::Success) throw runtime_error("factorization failure");
-	const SpMatrixXd&   LLT(d_L.matrixLDL());  // avoid the copy (I think)
-	d_ldL2 = 0.;
-	for (int j = 0; j < LLT.outerSize(); ++j) {
-	    SpMatrixXd::InnerIterator it(LLT, j);
-	    assert(it.index() == j);
-	    d_ldL2 += 2. * log(abs(it.value()));
-	}
+	
+	d_ldL2 = M_chm_factor_ldetL2(d_L.factor());
     }
 
     void merPredD::setTheta(const NumericVector& theta) throw (invalid_argument,
@@ -99,17 +94,24 @@ namespace lme4Eigen {
 
     void merPredD::solve() {
 //        DiagType  sqrtDi(d_L.vectorD().array().sqrt().inverse().matrix());
-	d_delu           = d_L.permutationPinv() * d_Utr;
+	d_L.setSolveType(CHOLMOD_P);
+	d_delu           = d_L.solve(d_Utr);
+	d_L.setSolveType(CHOLMOD_L);
+	d_delu           = d_L.solve(d_delu);
 //	d_L.matrixLDL().triangularView<Eigen::UnitLower>().solveInPlace(d_delu);
-	d_L.matrixLDL().triangularView<Eigen::Lower>().solveInPlace(d_delu);
+//	d_L.matrixLDL().triangularView<Eigen::Lower>().solveInPlace(d_delu);
 //	d_delu           = sqrtDi * d_delu;
 				// d_delu now contains cu
 	d_delb           = d_RX.solve(d_Vtr - d_RZX.adjoint() * d_delu);
 //	d_delu           = sqrtDi * (d_delu - d_RZX * d_delb);
 	d_delu          -=  d_RZX * d_delb;
 //	d_L.matrixLDL().adjoint().triangularView<Eigen::UnitUpper>().solveInPlace(d_delu);
-	d_L.matrixLDL().adjoint().triangularView<Eigen::Upper>().solveInPlace(d_delu);
-	d_delu           = d_L.permutationP() * d_delu;
+	d_L.setSolveType(CHOLMOD_Lt);
+	d_delu           = d_L.solve(d_delu);
+//	d_L.matrixLDL().adjoint().triangularView<Eigen::Upper>().solveInPlace(d_delu);
+	d_L.setSolveType(CHOLMOD_Pt);
+	d_delu           = d_L.solve(d_delu);
+//	d_delu           = d_L.permutationP() * d_delu;
     }
 #if 0
 // debugging code that can probably be removed
@@ -152,12 +154,14 @@ static bool chkFinite(const SpMatrixXd& x) {
 	SpMatrixXd ULam(d_U * d_Lambda);
 //	if (!chkFinite(ULam)) ::Rf_error("nonfinite ULam");
 				// update L, RZX and RX
-	updateL(ULam);
+	updateL(ULam.adjoint());
 //cout << "V'ULam:\n" << d_V.adjoint() * ULam << endl;
 //cout << "Pinv:" << d_L.permutationPinv().indices().adjoint() << endl;
-	d_RZX           = d_L.permutationPinv() * (ULam.adjoint() * d_V);
+	d_L.setSolveType(CHOLMOD_P);
+	d_RZX           = d_L.solve(ULam.adjoint() * d_V);
 //cout << "P'Lam'U'V:\n" << d_RZX.adjoint() << endl;
-	d_L.matrixL().solveInPlace(d_RZX);
+	d_L.setSolveType(CHOLMOD_L);
+	d_RZX           = d_L.solve(ULam.adjoint() * d_V);
 //cout << "L^{-1}P'Lam'U'V:\n" << d_RZX.adjoint() << endl;
 //cout << "vectorD:" << d_L.vectorD().adjoint() << endl;
 //	d_RZX           = d_L.vectorD().array().sqrt().inverse().matrix().asDiagonal() * d_RZX;
@@ -182,6 +186,11 @@ static bool chkFinite(const SpMatrixXd& x) {
 //	if (!chkFinite(d_Utr)) ::Rf_error("nonfinite d_Utr");
     }
 
+    IntegerVector merPredD::Pvec() const {
+	const cholmod_factor* cf = d_L.factor();
+	int*                 ppt = (int*)cf->Perm;
+	return IntegerVector(ppt, ppt + cf->n);
+    }
 }
 
 extern "C" {
@@ -213,11 +222,11 @@ extern "C" {
 	END_RCPP;
     }
     
-    SEXP merPredDI(SEXP ptr) {
-	BEGIN_RCPP;
-	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->I());
-	END_RCPP;
-    }
+    // SEXP merPredDI(SEXP ptr) {
+    // 	BEGIN_RCPP;
+    // 	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->I());
+    // 	END_RCPP;
+    // }
     
     SEXP merPredDLambda(SEXP ptr) {
 	BEGIN_RCPP;
@@ -225,11 +234,11 @@ extern "C" {
 	END_RCPP;
     }
     
-    SEXP merPredDL(SEXP ptr) {
-	BEGIN_RCPP;
-	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->L());
-	END_RCPP;
-    }
+    // SEXP merPredDL(SEXP ptr) {
+    // 	BEGIN_RCPP;
+    // 	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->L());
+    // 	END_RCPP;
+    // }
     
     SEXP merPredDPvec(SEXP ptr) {
 	BEGIN_RCPP;

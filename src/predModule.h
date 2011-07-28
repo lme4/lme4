@@ -123,23 +123,25 @@ namespace lme4Eigen {
 
     class merPredD {
     public:
-	typedef ddenseModelMatrix                                               XType;
-	typedef typename XType::Scalar                                          Scalar;
-	typedef typename XType::Index                                           Index;
-	typedef typename Eigen::Matrix<Scalar, XType::ColsAtCompileTime, 1>     VectorType;
-	typedef typename Eigen::Array<Scalar, XType::ColsAtCompileTime, 1>      Array1DType;
+	typedef ddenseModelMatrix                                                  XType;
+	typedef typename XType::Scalar                                             Scalar;
+	typedef typename XType::Index                                              Index;
+	typedef typename Eigen::Matrix<Scalar, XType::ColsAtCompileTime, 1>        VectorType;
+	typedef typename Eigen::Array<Scalar, XType::ColsAtCompileTime, 1>         Array1DType;
+	typedef typename Eigen::CholmodDecomposition<Eigen::SparseMatrix<double> > ChmDecomp;
     protected:
 	XType                 d_X;
 	MdgCMatrix            d_Z;
 	Rcpp::NumericVector   d_theta;
 	Rcpp::IntegerVector   d_Lind;
-	Index                 d_n, d_p, d_q;
+	Index                 d_n, d_p, d_q, d_nnz;
 	dgCMatrix             d_Lambda;
 	Scalar                d_ldL2, d_ldRX2;
 	MatrixXd              d_RZX, d_V, d_VtV;
 	VectorType            d_Vtr, d_Utr, d_delb, d_delu, d_beta0, d_u0;
-	SpMatrixXd            d_U, d_I;
-	SpLLt                 d_L;
+	SpMatrixXd            d_U;//, d_I;
+	ChmDecomp             d_L;
+//	SpLLt                 d_L;
 	LLTType               d_RX;
     public:
 	merPredD(Rcpp::S4, Rcpp::S4, Rcpp::S4,
@@ -150,7 +152,7 @@ namespace lme4Eigen {
 	MatrixXd                     RXi() const {return d_RX.matrixU().solve(MatrixXd::Identity(d_p,d_p));}
 	MatrixXd                     VtV() const {return d_VtV;}
 	MatrixXd                    unsc() const {MatrixXd rxi(RXi()); return rxi * rxi.adjoint();}
-	SpMatrixXd                     L() const {return d_L.matrixLDL();}
+//	SpMatrixXd                     L() const {return d_L.matrixLDL();}
 	VectorType                RXdiag() const {return d_RX.matrixLLT().diagonal();}
 //	VectorType               Dvector() const {return d_L.vectorD();}
 	VectorType               linPred(const double& fac) const {
@@ -166,11 +168,11 @@ namespace lme4Eigen {
 	int                         info() const {return d_L.info();}
 	const MatrixXd&              RZX() const {return d_RZX;}
 	const Rcpp::NumericVector& theta() const {return d_theta;}
-	const PermutationType&         P() const {return d_L.permutationP();}
-	const SpMatrixXd&              I() const {return d_I;}
+//	const PermutationType&         P() const {return d_L.permutationP();}
+//	const SpMatrixXd&              I() const {return d_I;}
 	const SpMatrixXd&         Lambda() const {return d_Lambda;}
 	const MSpMatrixXd&             Z() const {return d_Z;}
-	const VectorXi&             Pvec() const {return d_L.permutationP().indices();}
+	Rcpp::IntegerVector         Pvec() const ;
 	const VectorType&           delb() const {return d_delb;}
 	const VectorType&           delu() const {return d_delu;}
 	const VectorType&          beta0() const {return d_beta0;}
@@ -194,7 +196,7 @@ namespace lme4Eigen {
 	void                       solve();
 	void                      solveU() {d_delu = d_L.solve(d_Utr);}
 	void                updateDecomp();
-	void                     updateL(const SpMatrixXd&);
+	void                     updateL(const SpMatrixXd&)          throw (std::runtime_error);
 	void                   updateRes(const VectorType&)          throw (std::invalid_argument);
 	void                  updateXwts(const VectorType&)          throw (std::invalid_argument);
 
@@ -209,8 +211,8 @@ extern "C" {
     SEXP merPredDsetBeta0(SEXP, SEXP);
     SEXP merPredDsetU0(SEXP, SEXP);
 
-    SEXP merPredDI(SEXP);	// getters
-    SEXP merPredDLambda(SEXP);
+//    SEXP merPredDI(SEXP);	
+    SEXP merPredDLambda(SEXP);	// getters
     SEXP merPredDL(SEXP);
     SEXP merPredDPvec(SEXP);
     SEXP merPredDRX(SEXP);
