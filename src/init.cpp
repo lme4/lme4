@@ -28,14 +28,14 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(merPredDsetU0, 2),
 
 //    CALLDEF(merPredDI, 1),	
-    CALLDEF(merPredDLambda, 1),	//getters
+    CALLDEF(merPredDLambdat, 1), //getters
 //    CALLDEF(merPredDL, 1),
     CALLDEF(merPredDPvec, 1),
     CALLDEF(merPredDRX, 1),
     CALLDEF(merPredDRXdiag, 1),
     CALLDEF(merPredDRZX, 1),
     CALLDEF(merPredDVtV, 1),
-    CALLDEF(merPredDZ, 1),
+    CALLDEF(merPredDZt, 1),
     CALLDEF(merPredDbeta0, 1),
     CALLDEF(merPredDdelb, 1),
     CALLDEF(merPredDdelu, 1),

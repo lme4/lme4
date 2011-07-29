@@ -11,17 +11,17 @@ using namespace Rcpp;
 using namespace std;
 
 namespace lme4Eigen {
-    merPredD::merPredD(S4 X, S4 Z, S4 Lambda, IntegerVector Lind,
+    merPredD::merPredD(S4 X, S4 Zt, S4 Lambdat, IntegerVector Lind,
 		       NumericVector theta)             throw (invalid_argument,
 							       runtime_error)
 	: d_X(X),
-          d_Z(Z),
+          d_Zt(Zt),
 	  d_theta(clone(theta)),
 	  d_Lind(Lind),
 	  d_n(d_X.rows()),
 	  d_p(d_X.cols()),
-	  d_q(d_Z.cols()),
-	  d_Lambda(Lambda),
+	  d_q(d_Zt.rows()),
+	  d_Lambdat(Lambdat),
 	  d_RZX(d_q, d_p),
 	  d_V(d_X),
 	  d_VtV(d_p,d_p),
@@ -31,70 +31,72 @@ namespace lme4Eigen {
 	  d_delu(d_q),
 	  d_beta0(d_p),
 	  d_u0(d_q),
-	  d_U(d_Z),
-//	  d_I(d_q, d_q),
+	  d_Ut(d_Zt),
+	  d_isDiagLam(false),
 	  d_RX(d_p)
     {				// Check consistency of dimensions
-	if (d_n != d_Z.rows())
+	if (d_n != d_Zt.cols())
 	    throw invalid_argument("Z dimension mismatch");
-	if (d_Lind.size() != d_Lambda.nonZeros())
+	if (d_Lind.size() != d_Lambdat.nonZeros())
 	    throw invalid_argument("size of Lind does not match nonzeros in Lambda");
-	// check the range of Lind (now done in R code for reference class)
-	// int thsz = d_theta.size(), *Li = Lind.begin();
-	// ArrayXi  used(thsz);
-	// used.setZero();
-	// for (int i = 0; i < Lind.size(); ++i) {
-	//     int ind = Li[i];
-	//     if (ind < 1 || ind > thsz)
-	// 	throw invalid_argument("Lind size mismatch or range mismatch for theta");
-	//     used[ind - 1] = 1; // 0-based index
-	// }
-	// if (!used.all()) throw invalid_argument("Some indices of theta do not occur in Lind");
+	// checking of the range of Lind is now done in R code for reference class
 
 				// initialize beta0, u0 and VtV
 	d_beta0.setZero(); d_u0.setZero();
 	d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
+				// check for diagonal Lambdat
+	if (d_Lambdat.nonZeros() == d_q) {
+	    d_isDiagLam = true;
+	    for (int j = 0; j < d_Lambdat.outerSize(); ++j) {
+		SpMatrixXd::InnerIterator   it(d_Lambdat, j);
+		if (it.index() != j)
+		    throw invalid_argument("Lambdat is missing a diagonal element?");
+	    }
+	}
+	if (d_isDiagLam) cout << "Diagonal Lambda detected" << endl;
 				// starting values into Lambda
 	setTheta(d_theta);
-	SpMatrixXd   LamtUt((d_U * d_Lambda).adjoint());
+				// perform symbolic analysis
+	SpMatrixXd   LamtUt(d_Lambdat * d_Ut);
 	d_nnz = LamtUt.nonZeros();
 cout << "LamtUt nonzeros = " << d_nnz << endl;
-        d_L.setMode(Eigen::CholmodSimplicialLLt);      
-//        cholmod_common&   c = d_L.cholmod();
-//	c.final_ll = true;
-
-
+        d_L.setMode(Eigen::CholmodAutoLLt);      
 	d_L.analyzePattern(LamtUt);
         if (d_L.info() != Eigen::Success)
 	    throw runtime_error("CholeskyDecomposition.analyzePattern failed");
-	const cholmod_factor* ff(d_L.factor());
 cout << "size of factor = " <<	d_L.rows()
-     << ", is_ll = " << ff->is_ll
-     << ", is_super = " << ff->is_super
-     << ", ordering = " << ff->ordering
-     << ", nzmax = " << ff->nzmax
+     << ", is_ll = " << d_L.is_ll()
+     << ", is_super = " << d_L.is_super()
+     << ", ordering = " << d_L.ordering()
+     << ", nzmax = " << d_L.nonZeros()
      << endl;
+
+	const cholmod_factor* ff(d_L.factor());
         MVectorXi        Perm((int*)(ff->Perm), ff->n);
 	MVectorXi    ColCount((int*)(ff->ColCount), ff->n);
 cout << "Permutation: " << Perm.adjoint() << endl;
 cout << "Column Counts: " << ColCount.adjoint() << endl;
-	// 			// form d_I as the identity but with
-	// 			// the nonzero pattern of Lambda'Z'Z Lambda + I
-	// d_I.selfadjointView<Eigen::Lower>().rankUpdate(ULam.adjoint());
-	// for (int j = 0; j < d_q; ++j) {
-	//     SpMatrixXd::InnerIterator it(d_I, j);
-	//     for (; it; ++it) it.valueRef() = (it.index() == j) ? 1. : 0.;
-	// }
-//	updateL(ULam);
     }
 
-    void merPredD::updateL(const SpMatrixXd& LamtUt) throw (runtime_error) {
-	if (LamtUt.nonZeros() != d_nnz)
-	    throw runtime_error("Number of nonzeros in LamtUt has changed");
-	d_L.factorize_p(LamtUt, ArrayXi(), 1.);
-	if (d_L.info() != Eigen::Success) throw runtime_error("factorization failure");
-	
-	d_ldL2 = M_chm_factor_ldetL2(d_L.factor());
+    void merPredD::updateL()                           throw (runtime_error) {
+	if (d_isDiagLam) {
+	    SpMatrixXd       LamtUt(d_Ut);
+	    const Scalar*      dptr(d_Lambdat._valuePtr());
+	    for (int j = 0; j < LamtUt.outerSize(); ++j) {
+		for (SpMatrixXd::InnerIterator it(LamtUt, j); it; ++it)
+		    it.valueRef() *= dptr[it.index()];
+	    }
+	    d_L.factorize_p(LamtUt, ArrayXi(), 1.);
+	} else {		// do a lot of dancing around to avoid pruning zeros
+	    const cholmod_sparse Lamt=viewAsCholmod(d_Lambdat), Ut=viewAsCholmod(d_Ut);
+	    cholmod_common c = d_L.cholmod();
+	    CHM_SP LamtUt = ::M_cholmod_ssmult(&Lamt, &Ut, 0/*stype*/, 1/*values*/, 0/*sorted*/, &c);
+	    if (::M_cholmod_nnz(LamtUt, &c) != d_nnz)
+		throw runtime_error("Number of nonzeros in LamtUt has changed");
+	    d_L.factorize_p(LamtUt, ArrayXi(), 1.);
+	    ::M_cholmod_free_sparse(&LamtUt, &c);
+	}
+	d_ldL2 = ::M_chm_factor_ldetL2(d_L.factor());
     }
 
     void merPredD::setTheta(const NumericVector& theta) throw (invalid_argument,
@@ -103,91 +105,48 @@ cout << "Column Counts: " << ColCount.adjoint() << endl;
 	    throw invalid_argument("theta size mismatch");
 				// update theta
 	copy(theta.begin(), theta.end(), d_theta.begin());
-				// update Lambda and L
+				// update Lambdat
 	int    *lipt = d_Lind.begin();
-	double *LamX = d_Lambda._valuePtr(), *thpt = d_theta.begin();
+	double *LamX = d_Lambdat._valuePtr(), *thpt = d_theta.begin();
 	for (int i = 0; i < d_Lind.size(); ++i) {
 	    LamX[i] = thpt[lipt[i] - 1];
 	}
     }
 
     void merPredD::solve() {
-//        DiagType  sqrtDi(d_L.vectorD().array().sqrt().inverse().matrix());
 	d_L.setSolveType(CHOLMOD_P);
 	d_delu           = d_L.solve(d_Utr);
 	d_L.setSolveType(CHOLMOD_L);
 	d_delu           = d_L.solve(d_delu);
-//	d_L.matrixLDL().triangularView<Eigen::UnitLower>().solveInPlace(d_delu);
-//	d_L.matrixLDL().triangularView<Eigen::Lower>().solveInPlace(d_delu);
-//	d_delu           = sqrtDi * d_delu;
 				// d_delu now contains cu
 	d_delb           = d_RX.solve(d_Vtr - d_RZX.adjoint() * d_delu);
-//	d_delu           = sqrtDi * (d_delu - d_RZX * d_delb);
-	d_delu          -=  d_RZX * d_delb;
-//	d_L.matrixLDL().adjoint().triangularView<Eigen::UnitUpper>().solveInPlace(d_delu);
+	d_delu          -= d_RZX * d_delb;
 	d_L.setSolveType(CHOLMOD_Lt);
 	d_delu           = d_L.solve(d_delu);
-//	d_L.matrixLDL().adjoint().triangularView<Eigen::Upper>().solveInPlace(d_delu);
 	d_L.setSolveType(CHOLMOD_Pt);
 	d_delu           = d_L.solve(d_delu);
-//	d_delu           = d_L.permutationP() * d_delu;
     }
-#if 0
-// debugging code that can probably be removed
-static bool nonFinite(const double& x) {
-    return !::R_finite(x);
-}
 
-static bool allFinite(const double* bb, const double* ee) {
-    if (find_if(bb, ee, &nonFinite) < ee) return false;
-    return true;
-}
-
-static bool chkFinite(const VectorXd& x) {
-    return allFinite(x.data(), x.data() + x.size());
-}
-
-static bool chkFinite(const MatrixXd& x) {
-    return allFinite(x.data(), x.data() + x.size());
-}
-
-static bool chkFinite(const SpMatrixXd& x) {
-    return allFinite(x._valuePtr(), x._valuePtr() + x.nonZeros());
-}
-#endif
     void merPredD::updateXwts(const VectorType& sqrtXwt) throw (invalid_argument) {
-//	if (!chkFinite(sqrtXwt)) throw invalid_argument("updateRes: nonfinite weights");
 	if (d_X.rows() != sqrtXwt.size())
 	    throw invalid_argument("updateXwts: dimension mismatch");
 	if (d_V.rows() == d_X.rows()) {  //FIXME: Generalize this for nlmer
 	    DiagType  W(sqrtXwt.asDiagonal());
 	    d_V         = W * d_X;
-	    d_U         = W * d_Z;
+	    d_Ut        = d_Zt * W;
 	} else throw invalid_argument("updateRes: no provision for nlmer yet");
-//	if (!chkFinite(d_V)) ::Rf_error("nonfinite d_V");
-//	if (!chkFinite(d_U)) ::Rf_error("nonfinite d_U");
 	d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
     }
 
     void merPredD::updateDecomp() {
-	SpMatrixXd ULam(d_U * d_Lambda);
-//	if (!chkFinite(ULam)) ::Rf_error("nonfinite ULam");
 				// update L, RZX and RX
-	updateL(ULam.adjoint());
-//cout << "V'ULam:\n" << d_V.adjoint() * ULam << endl;
-//cout << "Pinv:" << d_L.permutationPinv().indices().adjoint() << endl;
+	updateL();
 	d_L.setSolveType(CHOLMOD_P);
-	d_RZX           = d_L.solve(ULam.adjoint() * d_V);
-//cout << "P'Lam'U'V:\n" << d_RZX.adjoint() << endl;
+	d_RZX           = d_L.solve(d_Lambdat * (d_Ut * d_V));
 	d_L.setSolveType(CHOLMOD_L);
 	d_RZX           = d_L.solve(d_RZX);
-//cout << "L^{-1}P'Lam'U'V:\n" << d_RZX.adjoint() << endl;
-//cout << "vectorD:" << d_L.vectorD().adjoint() << endl;
-//	d_RZX           = d_L.vectorD().array().sqrt().inverse().matrix().asDiagonal() * d_RZX;
-//cout << "D^{-1/2}L^{-1}P'Lam'U'V:\n" << d_RZX.adjoint() << endl;
 
 	MatrixXd      VtVdown(d_VtV);
-//cout << "V'V\n" << d_VtV << endl;
 	d_RX.compute(VtVdown.selfadjointView<Eigen::Upper>().rankUpdate(d_RZX.adjoint(), -1));
 	if (d_RX.info() != Eigen::Success)
 	    ::Rf_error("Downdated VtV is not positive definite");
@@ -195,14 +154,20 @@ static bool chkFinite(const SpMatrixXd& x) {
     }
 
     void merPredD::updateRes(const VectorType& wtres)    throw (invalid_argument) {
-//	if (!chkFinite(wtres)) throw invalid_argument("updateRes: nonfinite residual");
 	if (d_V.rows() != wtres.size())
 	    throw invalid_argument("updateRes: dimension mismatch");
 	d_Vtr           = d_V.adjoint() * wtres;
-//	if (!chkFinite(d_Vtr)) ::Rf_error("nonfinite d_Vtr");
+	d_Utr           = d_Lambdat * (d_Ut * wtres);
+    }
 
-	d_Utr           = d_Lambda.adjoint() * (d_U.adjoint() * wtres);
-//	if (!chkFinite(d_Utr)) ::Rf_error("nonfinite d_Utr");
+    void merPredD::setBeta0(const VectorType& nBeta)     throw (invalid_argument) {
+	if (nBeta.size() != d_p) throw invalid_argument("setBeta0: dimension mismatch");
+	copy(nBeta.data(), nBeta.data() + d_p, d_beta0.data());
+    }
+
+    void merPredD::setU0(const VectorType& newU0)        throw (invalid_argument) {
+	if (newU0.size() != d_q) throw invalid_argument("setU0: dimension mismatch");
+	copy(newU0.data(), newU0.data() + d_q, d_u0.data());
     }
 
     IntegerVector merPredD::Pvec() const {
@@ -213,12 +178,12 @@ static bool chkFinite(const SpMatrixXd& x) {
 }
 
 extern "C" {
-    SEXP merPredDCreate(SEXP Xs, SEXP Zs, SEXP Lambdas, SEXP Linds, SEXP thetas) {
+    SEXP merPredDCreate(SEXP Xs, SEXP Zts, SEXP Lambdats, SEXP Linds, SEXP thetas) {
 	BEGIN_RCPP;
-	S4 X(Xs), Z(Zs), Lambda(Lambdas);
+	S4 X(Xs), Zt(Zts), Lambdat(Lambdats);
 	IntegerVector Lind(Linds);
 	NumericVector theta(thetas);
-	lme4Eigen::merPredD *ans = new lme4Eigen::merPredD(X, Z, Lambda, Lind, theta);
+	lme4Eigen::merPredD *ans = new lme4Eigen::merPredD(X, Zt, Lambdat, Lind, theta);
 	return wrap(XPtr<lme4Eigen::merPredD>(ans, true));
 	END_RCPP;
     }
@@ -247,9 +212,9 @@ extern "C" {
     // 	END_RCPP;
     // }
     
-    SEXP merPredDLambda(SEXP ptr) {
+    SEXP merPredDLambdat(SEXP ptr) {
 	BEGIN_RCPP;
-	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->Lambda());
+	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->Lambdat());
 	END_RCPP;
     }
     
@@ -283,9 +248,9 @@ extern "C" {
 	END_RCPP;
     }
     
-    SEXP merPredDZ(SEXP ptr) {
+    SEXP merPredDZt(SEXP ptr) {
 	BEGIN_RCPP;
-	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->Z());
+	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->Zt());
 	END_RCPP;
     }
     

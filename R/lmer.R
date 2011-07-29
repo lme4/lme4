@@ -38,14 +38,14 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
     fr <- eval(mf, parent.frame())
                                         # random effects and terms modules
     reTrms <- mkReTrms(findbars(formula[[3]]), fr)
-    if (any(unlist(lapply(reTrms$flist, nlevels)) >= nrow(reTrms$Z)))
+    if (any(unlist(lapply(reTrms$flist, nlevels)) >= nrow(fr)))
         stop("number of levels of each grouping factor must be less than number of obs")
     ## fixed-effects model matrix X - remove random parts from formula:
     form <- formula
     form[[3]] <- if(is.null(nb <- nobars(form[[3]]))) 1 else nb
     X <- model.Matrix(form, fr, contrasts, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     p <- ncol(X)
-    pp <- new("merPredD", X=X, Z=reTrms$Z, Lambda=reTrms$Lambda, Lind=reTrms$Lind,
+    pp <- new("merPredD", X=X, Zt=reTrms$Zt, Lambdat=reTrms$Lambdat, Lind=reTrms$Lind,
               theta=reTrms$theta + 1e-06) # ensure all entries of
                                         # theta are nonzero because
                                         # Eigen tends to prune sparse matrices
@@ -61,16 +61,16 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
         if (verbose) control$iprint <- as.integer(verbose)
         opt <- bobyqa(reTrms$theta, devfun, reTrms$lower, control = control)
     }
-    LL <- pp$Lambda
+    LL <- pp$Lambdat
     LL@x <- pp$theta[pp$Lind]
     stopifnot(validObject(LL))
-    pp$Lambda <- LL
+    pp$Lambdat <- LL
     sqrLenU <- pp$sqrL(1.) 
     wrss <- resp$wrss()
     pwrss <- wrss + sqrLenU
     n <- nrow(fr)
 
-    dims <- c(N=n, n=n, nmp=n-p, nth=length(pp$theta), p=p, q=ncol(reTrms$Z),
+    dims <- c(N=n, n=n, nmp=n-p, nth=length(pp$theta), p=p, q=nrow(reTrms$Zt),
               nAGQ=NA_integer_, useSc=1L, reTrms=length(reTrms$cnms),
               spFe=0L, REML=resp$REML, GLMM=0L, NLMM=0L)
     cmp <- c(ldL2=pp$ldL2(), ldRX2=pp$ldRX2(), wrss=wrss,
@@ -142,7 +142,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     form <- formula
     form[[3]] <- if(is.null(nb <- nobars(form[[3]]))) 1 else nb
     X <- model.Matrix(form, fr, contrasts, sparse = FALSE, row.names = FALSE) ## sparseX not yet
-    pp <- merPredD$new(X=X, Z=reTrms$Z, Lambda=reTrms$Lambda, Lind=reTrms$Lind, theta=reTrms$theta)
+    pp <- merPredD$new(X=X, Zt=reTrms$Zt, Lambdat=reTrms$Lambdat, Lind=reTrms$Lind, theta=reTrms$theta)
                                         # response module
     resp <- mkRespMod2(fr, family=family)
                                         # initial step from working response
@@ -236,7 +236,7 @@ mkRespMod2 <- function(fr, family = NULL, nlenv = NULL, nlmod = NULL) {
 ##' @param fr a model frame in which to evaluate these terms
 ##' @param s Number of parameters in the nonlinear mean function (nlmer only)
 ##'
-##' @return a list of Z, Lambda, Lind, theta, lower, flist and cnms
+##' @return a list of Zt, Lambdat, Lind, theta, lower, flist and cnms
 mkReTrms <- function(bars, fr, s = 1L) {
     if (!length(bars))
         stop("No random effects terms specified in formula")
@@ -279,7 +279,7 @@ mkReTrms <- function(bars, fr, s = 1L) {
     Zt <- do.call(rBind, lapply(blist, "[[", "sm"))
     q <- nrow(Zt)
 
-    ## Create and install Lambda, Lind, etc.  This must be done after
+    ## Create and install Lambdat, Lind, etc.  This must be done after
     ## any potential reordering of the terms.
     cnms <- lapply(blist, "[[", "cnms")
     nc <- sapply(cnms, length)          # no. of columns per term
@@ -288,32 +288,35 @@ mkReTrms <- function(bars, fr, s = 1L) {
     stopifnot(sum(nb) == q)
     boff <- cumsum(c(0L, nb))           # offsets into b
     thoff <- cumsum(c(0L, nth))         # offsets into theta
-    Lambda <-
-        do.call(sparseMatrix,
-                do.call(rBind,
-                        lapply(seq_along(blist), function(i)
-                           {
-                               mm <- matrix(seq_len(nb[i]), nc = nc[i],
-                                            byrow = TRUE)
-                               dd <- diag(nc[i])
-                               ltri <- lower.tri(dd, diag = TRUE)
-                               ii <- row(dd)[ltri]
-                               jj <- col(dd)[ltri]
-                               dd[cbind(ii, jj)] <- seq_along(ii)
-                               data.frame(i = as.vector(mm[, ii]) + boff[i],
-                                          j = as.vector(mm[, jj]) + boff[i],
-                                          x = as.double(rep.int(seq_along(ii),
-                                          rep.int(nl[i], length(ii))) +
-                                          thoff[i]))
-                           })))
+### FIXME: should this be done with cBind and avoid the transpose
+### operator?  In other words should Lambdat be generated directly
+### instead of generating Lambda first then transposing?
+    Lambdat <-
+        t(do.call(sparseMatrix,
+                  do.call(rBind,
+                          lapply(seq_along(blist), function(i)
+                             {
+                                 mm <- matrix(seq_len(nb[i]), nc = nc[i],
+                                              byrow = TRUE)
+                                 dd <- diag(nc[i])
+                                 ltri <- lower.tri(dd, diag = TRUE)
+                                 ii <- row(dd)[ltri]
+                                 jj <- col(dd)[ltri]
+                                 dd[cbind(ii, jj)] <- seq_along(ii)
+                                 data.frame(i = as.vector(mm[, ii]) + boff[i],
+                                            j = as.vector(mm[, jj]) + boff[i],
+                                            x = as.double(rep.int(seq_along(ii),
+                                            rep.int(nl[i], length(ii))) +
+                                            thoff[i]))
+                             }))))
     thet <- numeric(sum(nth))
-    ll <- list(Z = t(Zt), theta = thet, Lind = as.integer(Lambda@x))
+    ll <- list(Zt = Zt, theta = thet, Lind = as.integer(Lambdat@x))
     ## lower bounds on theta elements are 0 if on diagonal, else -Inf
     ll$lower <- -Inf * (thet + 1)
-    ll$lower[unique(diag(Lambda))] <- 0
-    ll$theta[] <- is.finite(ll$lower)   # initial values of theta are 0 off-diagonal, 1 on
-    Lambda@x[] <- ll$theta[ll$Lind]     # initialize elements of Lambda
-    ll$Lambda <- Lambda
+    ll$lower[unique(diag(Lambdat))] <- 0
+    ll$theta[] <- is.finite(ll$lower) # initial values of theta are 0 off-diagonal, 1 on
+    Lambdat@x[] <- ll$theta[ll$Lind]  # initialize elements of Lambdat
+    ll$Lambdat <- Lambdat
                                         # massage the factor list
     fl <- lapply(blist, "[[", "ff")
                                         # check for repeated factors
@@ -914,12 +917,12 @@ refitML.merMod <- function (x) {
     resp$weights <- rr$weights
     resp$REML <- 0L
     xpp <- x@pp
-    pp <- new(class(xpp), X=xpp$X, Z=xpp$Z, Lambda=xpp$Lambda,
+    pp <- new(class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat,
               Lind=xpp$Lind, theta=xpp$theta)
     opt <- bobyqa(x@theta, mkdevfun(pp, resp), x@lower)
     n <- length(rr$y)
     p <- ncol(pp$X)
-    dims <- c(N=n, n=n, nmp=n-p, nth=length(pp$theta), p=p, q=ncol(pp$Z),
+    dims <- c(N=n, n=n, nmp=n-p, nth=length(pp$theta), p=p, q=nrow(pp$Zt),
               nAGQ=NA_integer_, useSc=1L, reTrms=length(x@cnms),
               spFe=0L, REML=0L, GLMM=0L, NLMM=0L)
     wrss <- resp$wrss()

@@ -11,12 +11,18 @@
 
 #include "eigen.h"
 
+using Rcpp::IntegerVector;
+using Rcpp::NumericVector;
+using Rcpp::S4;
+using std::invalid_argument;
+using std::runtime_error;
+
 namespace lme4Eigen {
 
     class ddiMatrix : public DiagType {
     public:
 	typedef typename DiagType::DiagonalVectorType  VType;
-	ddiMatrix(const Rcpp::S4& xp)
+	ddiMatrix(const S4& xp)
 	    : DiagType(Rcpp::as<VectorXd>(xp.slot("x"))) {}
 	
 	VType               diag()       {return diagonal();}
@@ -26,9 +32,9 @@ namespace lme4Eigen {
     
     class MdgCMatrix : public MSpMatrixXd { // mapped sparse Matrix, uses R's storage
     protected:
-	Rcpp::S4    d_xp;
+	S4    d_xp;
     public:
-	MdgCMatrix(const Rcpp::S4& xp)
+	MdgCMatrix(const S4& xp)
 	    : MSpMatrixXd(Rcpp::as<MSpMatrixXd>(xp)), d_xp(xp) {}
 
 //	const double*    xPt() const {return _valuePtr();}
@@ -37,7 +43,7 @@ namespace lme4Eigen {
 
     class dgCMatrix : public SpMatrixXd { // sparse Matrix, copies contents of R object
     public:
-	dgCMatrix(const Rcpp::S4& xp)
+	dgCMatrix(const S4& xp)
 	    : SpMatrixXd(Rcpp::as<SpMatrixXd>(xp)) {}
 
 	double*          xPt()       {return _valuePtr();}
@@ -46,7 +52,7 @@ namespace lme4Eigen {
 	    for (int j = 0; j < outerSize(); ++j) {
 		SpMatrixXd::InnerIterator it(*this, j);
 		if (it.index() != j)  // because *this is ColMajor and Lower
-		    throw std::runtime_error("first element of column in lower is not a diagonal");
+		    throw runtime_error("first element of column in lower is not a diagonal");
 		ans[j] = it.value();
 	    }
 	    return ans;
@@ -55,35 +61,35 @@ namespace lme4Eigen {
 
     class modelMatrix {
     protected:
-	const Rcpp::IntegerVector                d_assign;
+	const IntegerVector                d_assign;
 	const Rcpp::List            d_contrasts;
     public:
-	modelMatrix(const Rcpp::S4& xp)
+	modelMatrix(const S4& xp)
 	    : d_assign(   xp.slot("assign")),
 	      d_contrasts(xp.slot("contrasts")) {}
 
-	const Rcpp::IntegerVector         &assign() const {return d_assign;}
+	const IntegerVector         &assign() const {return d_assign;}
 	const Rcpp::List  &contrasts() const {return d_contrasts;}
     };
 
     class ddenseModelMatrix : public MMatrixXd, public modelMatrix {
     protected:
-	Rcpp::S4             d_xp;
+	S4             d_xp;
     public:
 	typedef MatrixXd           MatrixType;
-	ddenseModelMatrix(const Rcpp::S4& xp)
-	    : MMatrixXd(Rcpp::NumericVector(xp.slot("x")).begin(),
+	ddenseModelMatrix(const S4& xp)
+	    : MMatrixXd(NumericVector(xp.slot("x")).begin(),
 			::Rf_asInteger(xp.slot("Dim")),
-			Rcpp::IntegerVector(xp.slot("Dim"))[1]),
+			IntegerVector(xp.slot("Dim"))[1]),
 	      modelMatrix(xp), d_xp(xp) {}
     };
 
     class dsparseModelMatrix : public MdgCMatrix, public modelMatrix {
     protected:
-	Rcpp::S4             d_xp;
+	S4             d_xp;
     public:
 	typedef SpMatrixXd         MatrixType;
-	dsparseModelMatrix(const Rcpp::S4& xp)
+	dsparseModelMatrix(const S4& xp)
 	    : MdgCMatrix(xp), modelMatrix(xp), d_xp(xp) {}
     };
 
@@ -127,78 +133,59 @@ namespace lme4Eigen {
 	typedef typename XType::Scalar                                             Scalar;
 	typedef typename XType::Index                                              Index;
 	typedef typename Eigen::Matrix<Scalar, XType::ColsAtCompileTime, 1>        VectorType;
-	typedef typename Eigen::Array<Scalar, XType::ColsAtCompileTime, 1>         Array1DType;
 	typedef typename Eigen::CholmodDecomposition<Eigen::SparseMatrix<double> > ChmDecomp;
     protected:
 	XType                 d_X;
-	MdgCMatrix            d_Z;
-	Rcpp::NumericVector   d_theta;
-	Rcpp::IntegerVector   d_Lind;
+	MdgCMatrix            d_Zt;
+	NumericVector   d_theta;
+	IntegerVector   d_Lind;
 	Index                 d_n, d_p, d_q, d_nnz;
-	dgCMatrix             d_Lambda;
+	dgCMatrix             d_Lambdat;
 	Scalar                d_ldL2, d_ldRX2;
 	MatrixXd              d_RZX, d_V, d_VtV;
 	VectorType            d_Vtr, d_Utr, d_delb, d_delu, d_beta0, d_u0;
-	SpMatrixXd            d_U;//, d_I;
+	SpMatrixXd            d_Ut;//, d_I;
 	ChmDecomp             d_L;
-//	SpLLt                 d_L;
+	bool                  d_isDiagLam;
 	LLTType               d_RX;
     public:
-	merPredD(Rcpp::S4, Rcpp::S4, Rcpp::S4,
-		   Rcpp::IntegerVector, Rcpp::NumericVector)         throw (std::invalid_argument,
-									    std::runtime_error);
-
-	MatrixXd                      RX() const {MatrixXd ans = d_RX.matrixU(); return ans;}
-	MatrixXd                     RXi() const {return d_RX.matrixU().solve(MatrixXd::Identity(d_p,d_p));}
-	MatrixXd                     VtV() const {return d_VtV;}
-	MatrixXd                    unsc() const {MatrixXd rxi(RXi()); return rxi * rxi.adjoint();}
-//	SpMatrixXd                     L() const {return d_L.matrixLDL();}
-	VectorType                RXdiag() const {return d_RX.matrixLLT().diagonal();}
-//	VectorType               Dvector() const {return d_L.vectorD();}
-	VectorType               linPred(const double& fac) const {
-	    return d_X * (d_beta0 + fac * d_delb) + d_Z * (d_Lambda * (d_u0 + fac * d_delu));
-	}
-	VectorType                     b(const Scalar& fac) const {
-	    return d_Lambda * (d_u0 + fac * d_delu);}
-	double                      ldL2() const {return d_ldL2;}
-	double                     ldRX2() const {return d_ldRX2;}
-	double                      sqrL(const double& fac) const {
-	    return (d_u0 + fac * d_delu).squaredNorm();
-	}
-	int                         info() const {return d_L.info();}
-	const MatrixXd&              RZX() const {return d_RZX;}
-	const Rcpp::NumericVector& theta() const {return d_theta;}
-//	const PermutationType&         P() const {return d_L.permutationP();}
-//	const SpMatrixXd&              I() const {return d_I;}
-	const SpMatrixXd&         Lambda() const {return d_Lambda;}
-	const MSpMatrixXd&             Z() const {return d_Z;}
-	Rcpp::IntegerVector         Pvec() const ;
-	const VectorType&           delb() const {return d_delb;}
-	const VectorType&           delu() const {return d_delu;}
-	const VectorType&          beta0() const {return d_beta0;}
-	const VectorType&             u0() const {return d_u0;}
-	void                 installPars(const double& fac) {
-	    d_u0    = d_u0 + fac * d_delu;
-	    d_beta0 = d_beta0 + fac * d_delb;
-	}
-	void                    setBeta0(const VectorType& nBeta)    throw (std::invalid_argument) {
-	    if (d_beta0.size() != nBeta.size())
-		throw std::invalid_argument("setBeta0: dimension mismatch");
-	    d_beta0 = nBeta;	// does this cause a copy?
-	}
-	void                    setTheta(const Rcpp::NumericVector&) throw (std::invalid_argument,
-									    std::runtime_error);
-	void                       setU0(const VectorType& newU0)    throw (std::invalid_argument) {
-	    if (d_u0.size() != newU0.size())
-		throw std::invalid_argument("setU0: dimension mismatch");
-	    d_u0 = newU0;
-	}
-	void                       solve();
-	void                      solveU() {d_delu = d_L.solve(d_Utr);}
-	void                updateDecomp();
-	void                     updateL(const SpMatrixXd&)          throw (std::runtime_error);
-	void                   updateRes(const VectorType&)          throw (std::invalid_argument);
-	void                  updateXwts(const VectorType&)          throw (std::invalid_argument);
+	merPredD(S4, S4, S4, IntegerVector, NumericVector)        throw (invalid_argument,
+								         runtime_error);
+	IntegerVector          Pvec() const ;
+	MatrixXd                 RX() const {MatrixXd ans = d_RX.matrixU(); return ans;}
+	MatrixXd                RXi() const {return d_RX.matrixU().solve(MatrixXd::Identity(d_p,d_p));}
+	MatrixXd                VtV() const {return d_VtV;}
+	MatrixXd               unsc() const {MatrixXd rxi(RXi()); return rxi * rxi.adjoint();}
+	SpMatrixXd        LambdatUt() const; 
+	VectorType           RXdiag() const {return d_RX.matrixLLT().diagonal();}
+	VectorType                b(const Scalar& fac) const {return d_Lambdat.adjoint()*u(fac);}
+	VectorType             beta(const Scalar& fac) const {return d_beta0 + fac * d_delb;}
+	VectorType          linPred(const Scalar& fac) const {
+	    return d_X * beta(fac) + d_Zt.adjoint() * b(fac);}
+	VectorType                u(const Scalar& fac) const {return d_u0 + fac * d_delu;}
+	Scalar                 ldL2() const {return d_ldL2;}
+	Scalar                ldRX2() const {return d_ldRX2;}
+	Scalar                 sqrL(const Scalar& fac) const {return u(fac).squaredNorm();}
+	int                    info() const {return d_L.info();}
+	const MatrixXd&         RZX() const {return d_RZX;}
+	const NumericVector&  theta() const {return d_theta;}
+	const SpMatrixXd&   Lambdat() const {return d_Lambdat;}
+	const MSpMatrixXd&       Zt() const {return d_Zt;}
+	const VectorType&      delb() const {return d_delb;}
+	const VectorType&      delu() const {return d_delu;}
+	const VectorType&     beta0() const {return d_beta0;}
+	const VectorType&        u0() const {return d_u0;}
+	void            installPars(const Scalar& fac) {d_u0 = u(fac); d_beta0 = beta(fac);}
+	void               setBeta0(const VectorType&)            throw (invalid_argument);
+	void               setTheta(const NumericVector&)         throw (invalid_argument,
+							                 runtime_error);
+	void                  setU0(const VectorType& newU0)      throw (invalid_argument);
+	void                  solve();
+	void                 solveU() {d_delu = d_L.solve(d_Utr);}
+	void           updateDecomp();
+	void                updateL()                             throw (runtime_error);
+	void              updateRes(const VectorType&)            throw (invalid_argument);
+	void             updateXwts(const VectorType&)            throw (invalid_argument);
 
     };
 
@@ -211,15 +198,14 @@ extern "C" {
     SEXP merPredDsetBeta0(SEXP, SEXP);
     SEXP merPredDsetU0(SEXP, SEXP);
 
-//    SEXP merPredDI(SEXP);	
-    SEXP merPredDLambda(SEXP);	// getters
+    SEXP merPredDLambdat(SEXP);	// getters
     SEXP merPredDL(SEXP);
     SEXP merPredDPvec(SEXP);
     SEXP merPredDRX(SEXP);
     SEXP merPredDRXdiag(SEXP);
     SEXP merPredDRZX(SEXP);
     SEXP merPredDVtV(SEXP);
-    SEXP merPredDZ(SEXP);
+    SEXP merPredDZt(SEXP);
     SEXP merPredDbeta0(SEXP);
     SEXP merPredDdelb(SEXP);
     SEXP merPredDdelu(SEXP);

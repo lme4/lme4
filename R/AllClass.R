@@ -13,8 +13,8 @@ merPredD <-                 # Do we need the generator object? Probably - at lea
                 fields =
                 list(
                      X = "ddenseModelMatrix",
-                     Z = "dgCMatrix",
-                     Lambda = "dgCMatrix",
+                     Zt = "dgCMatrix",
+                     Lambdat = "dgCMatrix",
                      Lind = "integer",
                      ptr = "externalptr",
                      beta0 = function(value)
@@ -29,22 +29,20 @@ merPredD <-                 # Do we need the generator object? Probably - at lea
                      initialize = function(...) {
                          dots <- list(...)
                          stopifnot(is(dots$X, "ddenseModelMatrix"),
-                                   is(dots$Z, "dgCMatrix"),
+                                   is(dots$Zt, "dgCMatrix"),
                                    is(dots$Lambda, "CsparseMatrix"),
                                    !is.null(dots$Lind),
                                    !is.null(dots$theta))
                          X <<- dots$X
-                         Z <<- dots$Z
-                         Lambda <<- dots$Lambda
+                         Zt <<- dots$Zt
+                         Lambdat <<- dots$Lambdat
                          Lind <<- as.integer(dots$Lind)
                          stopifnot(all(sort(unique(Lind)) == seq_along(dots$theta)))
-                         ptr <<- .Call(merPredDCreate, X, Z, Lambda, Lind, dots$theta)
+                         ptr <<- .Call(merPredDCreate, X, Zt, Lambdat, Lind, dots$theta)
                          if (!is.null(dots$beta0)) .Call(merPredDsetBeta0, ptr, dots$beta0)
                          if (!is.null(dots$u0)) .Call(merPredDsetBeta0, ptr, dots$u0)
                      },
 
-                     I = function() .Call(merPredDI, ptr),
-                     L = function() .Call(merPredDL, ptr),
                      P = function() .Call(merPredDPvec, ptr),
                      RX = function() .Call(merPredDRX, ptr),
                      RXdiag = function() .Call(merPredDRXdiag, ptr),
@@ -62,7 +60,7 @@ merPredD <-                 # Do we need the generator object? Probably - at lea
                      sqrL = function(fac) .Call(merPredDsqrL, ptr, as.numeric(fac))
                      )
                 )
-merPredD$lock("X", "Z", "Lind")
+merPredD$lock("X", "Zt", "Lind")
 
 lmerResp <-
     setRefClass("lmerResp",
