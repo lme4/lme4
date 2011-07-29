@@ -21,7 +21,7 @@ namespace lme4Eigen {
 
     class ddiMatrix : public DiagType {
     public:
-	typedef typename DiagType::DiagonalVectorType  VType;
+	typedef DiagType::DiagonalVectorType  VType;
 	ddiMatrix(const S4& xp)
 	    : DiagType(Rcpp::as<VectorXd>(xp.slot("x"))) {}
 	
@@ -129,11 +129,11 @@ namespace lme4Eigen {
 
     class merPredD {
     public:
-	typedef ddenseModelMatrix                                                  XType;
-	typedef typename XType::Scalar                                             Scalar;
-	typedef typename XType::Index                                              Index;
-	typedef typename Eigen::Matrix<Scalar, XType::ColsAtCompileTime, 1>        VectorType;
-	typedef typename Eigen::CholmodDecomposition<Eigen::SparseMatrix<double> > ChmDecomp;
+	typedef ddenseModelMatrix                                         XType;
+	typedef XType::Scalar                                             Scalar;
+	typedef XType::Index                                              Index;
+	typedef Eigen::Matrix<Scalar, XType::ColsAtCompileTime, 1>        VectorType;
+	typedef Eigen::CholmodDecomposition<Eigen::SparseMatrix<double> > ChmDecomp;
     protected:
 	XType                 d_X;
 	MdgCMatrix            d_Zt;
