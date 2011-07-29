@@ -58,7 +58,26 @@ namespace lme4Eigen {
 	setTheta(d_theta);
 	SpMatrixXd   LamtUt((d_U * d_Lambda).adjoint());
 	d_nnz = LamtUt.nonZeros();
+cout << "LamtUt nonzeros = " << d_nnz << endl;
+        d_L.setMode(Eigen::CholmodSimplicialLLt);      
+//        cholmod_common&   c = d_L.cholmod();
+//	c.final_ll = true;
+
+
 	d_L.analyzePattern(LamtUt);
+        if (d_L.info() != Eigen::Success)
+	    throw runtime_error("CholeskyDecomposition.analyzePattern failed");
+	const cholmod_factor* ff(d_L.factor());
+cout << "size of factor = " <<	d_L.rows()
+     << ", is_ll = " << ff->is_ll
+     << ", is_super = " << ff->is_super
+     << ", ordering = " << ff->ordering
+     << ", nzmax = " << ff->nzmax
+     << endl;
+        MVectorXi        Perm((int*)(ff->Perm), ff->n);
+	MVectorXi    ColCount((int*)(ff->ColCount), ff->n);
+cout << "Permutation: " << Perm.adjoint() << endl;
+cout << "Column Counts: " << ColCount.adjoint() << endl;
 	// 			// form d_I as the identity but with
 	// 			// the nonzero pattern of Lambda'Z'Z Lambda + I
 	// d_I.selfadjointView<Eigen::Lower>().rankUpdate(ULam.adjoint());
@@ -161,7 +180,7 @@ static bool chkFinite(const SpMatrixXd& x) {
 	d_RZX           = d_L.solve(ULam.adjoint() * d_V);
 //cout << "P'Lam'U'V:\n" << d_RZX.adjoint() << endl;
 	d_L.setSolveType(CHOLMOD_L);
-	d_RZX           = d_L.solve(ULam.adjoint() * d_V);
+	d_RZX           = d_L.solve(d_RZX);
 //cout << "L^{-1}P'Lam'U'V:\n" << d_RZX.adjoint() << endl;
 //cout << "vectorD:" << d_L.vectorD().adjoint() << endl;
 //	d_RZX           = d_L.vectorD().array().sqrt().inverse().matrix().asDiagonal() * d_RZX;
