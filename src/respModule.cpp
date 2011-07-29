@@ -5,34 +5,13 @@
 // This file is part of lme4.
 
 #include "respModule.h"
-
+#include <cmath>
 using namespace Rcpp;
 using namespace std;
 
 namespace lme4Eigen {
 
-#if 0				// no longer needed
-    modResp::modResp(S4 xp)                                       throw (invalid_argument)
-	: d_yR(xp.slot("y")),
-	  d_y(d_yR.begin(), d_yR.size()),
-	  d_weights(d_y.size()),
-	  d_offset( NumericVector(xp.slot("offset")).size()),
-	  d_mu(     d_y.size()),
-	  d_sqrtXwt(d_offset.size()),
-	  d_sqrtrwt(d_y.size()),
-	  d_wtres(  d_y.size()) {
-	NumericVector weights(xp.slot("weights")), offset(xp.slot("offset"));
-	int n = d_y.size(), os = d_offset.size();
-	if (weights.size() != n) throw invalid_argument("size mismatch of y and weights");
-	copy(weights.begin(), weights.end(), d_weights.begin());
-	if (os < 1 || os % n)
-	    throw invalid_argument("length(offset) must be a positive multiple of length(y)");
-	copy(offset.begin(), offset.end(), d_offset.begin());
-	init();
-    }
-#endif
-
-    modResp::modResp(NumericVector y)                             throw (invalid_argument)
+    modResp::modResp(NumericVector y)                     throw (invalid_argument)
 	: d_yR(y),
 	  d_y(d_yR.begin(), d_yR.size()),
 	  d_weights(VectorXd::Constant(y.size(), 1.0)),
@@ -49,52 +28,6 @@ namespace lme4Eigen {
 	updateWrss();
     }
 
-#if 0    			// no longer needed
-    modResp::modResp(NumericVector y, 
-		     NumericVector weights)                       throw (invalid_argument)
-	: d_yR(y),
-	  d_y(d_yR.begin(), d_yR.size()),
-	  d_weights(y.size()),
-	  d_offset( VectorXd::Zero(y.size())),
-	  d_mu(     y.size()),
-	  d_sqrtXwt(y.size()),
-	  d_sqrtrwt(y.size()),
-	  d_wtres(  y.size()) {
-	if (weights.size() != y.size())
-	    throw invalid_argument("lengths of y and wts must agree");
-	copy(weights.begin(), weights.end(), d_weights.begin());
-	init();
-    }
-
-    modResp::modResp(NumericVector y,
-		     NumericVector weights,
-		     NumericVector offset)                        throw (invalid_argument)
-	: d_yR(y),
-	  d_y(d_yR.begin(), d_yR.size()),
-	  d_weights(y.size()),
-	  d_offset( offset.size()),
-	  d_mu(     y.size()),
-	  d_sqrtXwt(offset.size()),
-	  d_sqrtrwt(y.size()),
-	  d_wtres(  y.size()) {
-	int n = y.size(), os = offset.size();
-	if (weights.size() != n) throw invalid_argument("lengths of y and wts must agree");
-	copy(weights.begin(), weights.end(), d_weights.begin());
-	if (os < 1 || os % n)
-	    throw invalid_argument("length(offset) must be a positive multiple of length(y)");
-	copy(offset.begin(), offset.end(), d_offset.begin());
-	init();
-    }
-
-    void modResp::init() {
-	d_sqrtrwt = d_weights.cwiseSqrt();
-	if (d_mu.size() == d_offset.size()) {	
-	    d_mu = d_offset;
-	    copy(d_sqrtrwt.begin(), d_sqrtrwt.end(), d_sqrtXwt.begin());
-	}
-	updateWrss();
-    }
-#endif
     /** 
      * Update the wtres vector and return its sum of squares
      *   wtres <- sqrtrwt * (y - mu)
@@ -108,60 +41,31 @@ namespace lme4Eigen {
 	return d_wrss;
     }
 
-    void modResp::setOffset(const NumericVector& oo)              throw (invalid_argument) {
+    void modResp::setOffset(const NumericVector& oo)      throw (invalid_argument) {
 	if (oo.size() != d_offset.size())
 	    throw invalid_argument("setOffset: Size mismatch");
 	copy(oo.begin(), oo.end(), d_offset.data());
     }
 
-    void modResp::setWeights(const NumericVector& ww)             throw (invalid_argument) {
+    void modResp::setWeights(const NumericVector& ww)     throw (invalid_argument) {
 	if (ww.size() != d_weights.size())
 	    throw invalid_argument("setWeights: Size mismatch");
 	copy(ww.begin(), ww.end(), d_weights.data());
     }
-#if 0 				// no longer needed
-    lmerResp::lmerResp(S4 xp)                                     throw (invalid_argument)
-	: modResp(xp),
-	  d_reml( ::Rf_asInteger(xp.slot("REML"))) {
-    }
-#endif    
+
     lmerResp::lmerResp(NumericVector y)                   throw (invalid_argument)
 	: modResp(y),
 	  d_reml(0) {
     }
-#if 0    			// no longer needed
-    lmerResp::lmerResp(int rr, NumericVector y, 
-		       NumericVector weights)                     throw (invalid_argument)
-	: modResp(y, weights),
-	  d_reml(rr) {
+
+    double lmerResp::Laplace(double ldL2, double ldRX2, double sqrL) const {
+	double lnum = std::log(2.* M_PI * (d_wrss + sqrL));
+	cout << "d_wrss = " << d_wrss << ", sqrL = " << sqrL << ", lnum = " << lnum << endl;
+	if (d_reml == 0) return ldL2 + d_y.size() * (1. + lnum - std::log(d_y.size()));
+	double nmp = d_y.size() - d_reml;
+	return ldL2 + ldRX2 + nmp * (1. + lnum - std::log(nmp));
     }
 
-    lmerResp::lmerResp(int rr, NumericVector y,
-		       NumericVector weights,
-		       NumericVector offset)               throw (invalid_argument)
-	: modResp(y, weights, offset),
-	  d_reml(rr) {
-    }
-#endif    
-    double lmerResp::Laplace(double ldL2, double ldRX2, double sqrL) const {
-	double lnum = 2.* PI * (d_wrss + sqrL), n = d_y.size();
-	if (d_reml == 0) return ldL2 + n * (1. + log(lnum / n));
-	double nmp = n - d_reml;
-	return ldL2 + ldRX2 + nmp * (1. + log(lnum / nmp));
-    }
-#if 0    
-    void lmerResp::setWeights(const VectorXd& ww)                 throw (invalid_argument) {
-	if (ww.size() != d_weights.size())
-	    throw invalid_argument("setWeights: Size mismatch");
-	copy(ww.begin(), ww.end(), d_weights.begin());
-    }
-    
-    void lmerResp::setOffset(const VectorXd& oo)                  throw (invalid_argument) {
-	if (oo.size() != d_offset.size())
-	    throw invalid_argument("setOffset: Size mismatch");
-	copy(oo.begin(), oo.end(), d_offset.begin());
-    }
-#endif    
     void lmerResp::setReml(int rr)                                throw (invalid_argument) {
 	if (rr < 0) throw invalid_argument("setReml: negative rr");
 	d_reml = rr;
@@ -171,72 +75,14 @@ namespace lme4Eigen {
 	d_mu = d_offset + gamma;
 	return updateWrss();
     }
-#if 0    
-    glmerResp::glmerResp(S4 xp)                                   throw (invalid_argument)
-	: modResp(xp),
-	  d_fam(  SEXP(xp.slot("family"))),
-	  d_eta(  d_y.size()),
-	  d_n(    d_y.size()) {
-	int n = d_y.size();
-	NumericVector nn(xp.slot("n")), eta(xp.slot("eta"));
-	if (nn.size() != n || eta.size() != n)
-	    throw invalid_argument("y, n and eta must all be the same length");
-	updateWts();
-    }
-#endif
+
     glmerResp::glmerResp(List fam, NumericVector y)               throw (invalid_argument)
 	: modResp(y),
 	  d_fam(fam),
 	  d_eta(y.size()),
 	  d_n(VectorXd::Constant(y.size(), 1.)) {
     }
-#if 0
-    glmerResp::glmerResp(List fam, NumericVector y,
-			 NumericVector weights)                   throw (invalid_argument)
-	: modResp(y, weights),
-	  d_fam(fam),
-	  d_eta(y.size()),
-	  d_n(VectorXd::Constant(y.size(), 1.)) {
-    }
-    
-    glmerResp::glmerResp(List fam, NumericVector y,
-			 NumericVector weights,
-			 NumericVector offset)                    throw (invalid_argument) 
-	: modResp(y, weights, offset),
-	  d_fam(  fam),
-	  d_eta(  y.size()),
-	  d_n(    VectorXd::Constant(y.size(), 1.)) {
-    }
 
-    glmerResp::glmerResp(List fam, NumericVector y,
-			 NumericVector weights,
-			 NumericVector offset,
-			 NumericVector n)                         throw (invalid_argument)
- 	: modResp(y, weights, offset), 
-	  d_fam(  fam),
-	  d_eta(  y.size()),
-    	  d_n(    y.size()) {
-	if (n.size() != y.size())
-	    throw invalid_argument("lengths of y and n must agree");
-	copy(n.begin(), n.end(), d_n.begin());
-    }
-
-    glmerResp::glmerResp(List fam, NumericVector y,
-			 NumericVector weights,
-			 NumericVector offset,
-			 NumericVector n, 
-			 NumericVector eta)                       throw (invalid_argument) 
-	: modResp(y, weights, offset),
-	  d_fam(  fam),
-	  d_eta(  y.size()),
-	  d_n(    y.size()) {
-	int nn = y.size();
-	if (n.size() != nn || eta.size() != nn )
-	    throw invalid_argument("lengths of y, n and eta must agree");
-	copy(n.begin(), n.end(), d_n.begin());
-	copy(eta.begin(), eta.end(), d_eta.begin());
-    }
-#endif 
     double glmerResp::updateWts() {
 	d_sqrtrwt = d_weights.cwiseQuotient(variance()).cwiseSqrt();
 	d_sqrtXwt = muEta() * d_sqrtrwt;
@@ -257,26 +103,6 @@ namespace lme4Eigen {
 	d_mu  = d_fam.linkInv(d_eta);
 	return updateWrss();
     }
-#if 0
-    void glmerResp::setWeights(const VectorXd& ww)                throw (invalid_argument) {
-	if (ww.size() != d_weights.size())
-	    throw invalid_argument("setWeights: Size mismatch");
-	copy(ww.begin(), ww.end(), d_weights.begin());
-    }
-    
-    void glmerResp::setOffset(const VectorXd& oo)                 throw (invalid_argument) {
-	if (oo.size() != d_offset.size())
-	    throw invalid_argument("setOffset: Size mismatch");
-	copy(oo.begin(), oo.end(), d_offset.begin());
-    }
-
-    nlmerResp::nlmerResp(S4 xp)                                   throw (invalid_argument)
-	: modResp(xp),
-	  d_nlenv(SEXP(xp.slot("nlenv"))),
-	  d_nlmod(SEXP(xp.slot("nlmod"))),
-	  d_pnames(SEXP(xp.slot("pnames"))) {
-    }
-#endif    
 
     double nlmerResp::Laplace(double ldL2, double ldRX2, double sqrL) const {
 	double lnum = 2.* PI * (d_wrss + sqrL), n = d_y.size();
