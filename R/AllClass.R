@@ -41,6 +41,7 @@ merPredD <-                 # Do we need the generator object? Probably - at lea
                          ptr <<- .Call(merPredDCreate, X, Zt, Lambdat, Lind, dots$theta)
                          if (!is.null(dots$beta0)) .Call(merPredDsetBeta0, ptr, dots$beta0)
                          if (!is.null(dots$u0)) .Call(merPredDsetBeta0, ptr, dots$u0)
+                         .self
                      },
 
                      P = function() .Call(merPredDPvec, ptr),
@@ -85,6 +86,7 @@ lmerResp <-
                          if (!is.null(dots$REML)) REML(as.integer(dots$REML)[1])
                          if (length(dots$offset)) offset(as.numeric(dots$offset))
                          if (length(dots$weights)) weights(as.numeric(dots$weights))
+                         .self
                      },
                      wrss = function() {
                          'returns the weighted residual sum of squares'
