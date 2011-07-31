@@ -78,6 +78,11 @@ cout << "Permutation: " << Perm.adjoint() << endl;
 cout << "Column Counts: " << ColCount.adjoint() << endl;
     }
 
+    Scalar merPredD::sqrL(const Scalar& f) const {
+	VectorType uu = d_u0 + f * d_delu;
+	return std::inner_product(uu.data(), uu.data() + d_q, uu.data(), Scalar());
+    }
+
     void merPredD::updateL()                           throw (runtime_error) {
 	if (d_isDiagLam) {
 	    SpMatrixXd       LamtUt(d_Ut);
@@ -115,16 +120,16 @@ cout << "Column Counts: " << ColCount.adjoint() << endl;
 
     void merPredD::solve() {
 	d_L.setSolveType(CHOLMOD_P);
-	d_delu           = d_L.solve(d_Utr);
+	d_delu          = d_L.solve(d_Utr);
 	d_L.setSolveType(CHOLMOD_L);
-	d_delu           = d_L.solve(d_delu);
+	d_delu          = d_L.solve(d_delu);
 				// d_delu now contains cu
-	d_delb           = d_RX.solve(d_Vtr - d_RZX.adjoint() * d_delu);
-	d_delu          -= d_RZX * d_delb;
+	d_delb          = d_RX.solve(d_Vtr - d_RZX.adjoint() * d_delu);
+	d_delu         -= d_RZX * d_delb;
 	d_L.setSolveType(CHOLMOD_Lt);
-	d_delu           = d_L.solve(d_delu);
+	d_delu          = d_L.solve(d_delu);
 	d_L.setSolveType(CHOLMOD_Pt);
-	d_delu           = d_L.solve(d_delu);
+	d_delu          = d_L.solve(d_delu);
     }
 
     void merPredD::updateXwts(const VectorType& sqrtXwt) throw (invalid_argument) {
