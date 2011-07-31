@@ -26,24 +26,15 @@ merPredD <-                 # Do we need the generator object? Probably - at lea
                      ),
                 methods =
                 list(
-                     initialize = function(...) {
-                         dots <- list(...)
-                         stopifnot(is(dots$X, "ddenseModelMatrix"),
-                                   is(dots$Zt, "dgCMatrix"),
-                                   is(dots$Lambda, "CsparseMatrix"),
-                                   !is.null(dots$Lind),
-                                   !is.null(dots$theta))
-                         X <<- dots$X
-                         Zt <<- dots$Zt
-                         Lambdat <<- dots$Lambdat
-                         Lind <<- as.integer(dots$Lind)
-                         stopifnot(all(sort(unique(Lind)) == seq_along(dots$theta)))
-                         ptr <<- .Call(merPredDCreate, X, Zt, Lambdat, Lind, dots$theta)
-                         if (!is.null(dots$beta0)) .Call(merPredDsetBeta0, ptr, dots$beta0)
-                         if (!is.null(dots$u0)) .Call(merPredDsetBeta0, ptr, dots$u0)
-                         .self
+                     initialize = function(X, Zt, Lambdat, Lind, theta, ...) {
+                         X <<- as(X, "ddenseModelMatrix")
+                         Zt <<- as(Zt, "dgCMatrix")
+                         Lambdat <<- as(Lambdat, "dgCMatrix")
+                         Lind <<- as.integer(Lind)
+                         stopifnot(all(sort(unique(Lind)) == seq_along(theta)))
+                         ptr <<- .Call(merPredDCreate, X, Zt, Lambdat, Lind, theta)
+                         callSuper(...)
                      },
-
                      P = function() .Call(merPredDPvec, ptr),
                      RX = function() .Call(merPredDRX, ptr),
                      RXdiag = function() .Call(merPredDRXdiag, ptr),
@@ -78,15 +69,11 @@ lmerResp <-
                      ),
                 methods =
                 list(
-                     initialize = function(...) {
-                         dots <- list(...)
-                         if (is.null(dots$y)) stop("response vector y must be specified")
-                         y <<- as.numeric(dots$y)
+                     initialize = function(y, ...) {
+                         if (missing(y)) stop("response vector y must be specified")
+                         y <<- as.numeric(y)
                          ptr <<- .Call(lmerRespCreate, y)
-                         if (!is.null(dots$REML)) REML(as.integer(dots$REML)[1])
-                         if (length(dots$offset)) offset(as.numeric(dots$offset))
-                         if (length(dots$weights)) weights(as.numeric(dots$weights))
-                         .self
+                         callSuper(...)
                      },
                      wrss = function() {
                          'returns the weighted residual sum of squares'
