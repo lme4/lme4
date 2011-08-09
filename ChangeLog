@@ -1,3 +1,8 @@
+2011-08-09  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 0.999375-41
+	(Depends): Matrix(>= 0.9996875-1)
+
 2011-07-22  Douglas Bates <bates@stat.wisc.edu>
 
 	* DESCRIPTION: Long overdue release (apologies, Dieter)
