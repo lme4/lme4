@@ -119,17 +119,22 @@ cout << "Column Counts: " << ColCount.adjoint() << endl;
     }
 
     void merPredD::solve() {
-	d_L.setSolveType(CHOLMOD_P);
-	d_delu          = d_L.solve(d_Utr);
-	d_L.setSolveType(CHOLMOD_L);
-	d_delu          = d_L.solve(d_delu);
+//	d_L.setSolveType(CHOLMOD_P);
+	d_delu          = d_Utr;
+	d_L.solveInPlace(d_delu, CHOLMOD_P);
+	d_L.solveInPlace(d_delu, CHOLMOD_L);	
+//	d_delu          = d_L.solve(d_Utr);
+//	d_L.setSolveType(CHOLMOD_L);
+//	d_delu          = d_L.solve(d_delu);
 				// d_delu now contains cu
 	d_delb          = d_RX.solve(d_Vtr - d_RZX.adjoint() * d_delu);
 	d_delu         -= d_RZX * d_delb;
-	d_L.setSolveType(CHOLMOD_Lt);
-	d_delu          = d_L.solve(d_delu);
-	d_L.setSolveType(CHOLMOD_Pt);
-	d_delu          = d_L.solve(d_delu);
+	d_L.solveInPlace(d_delu, CHOLMOD_Lt);
+	d_L.solveInPlace(d_delu, CHOLMOD_Pt);
+//	d_L.setSolveType(CHOLMOD_Lt);
+//	d_delu          = d_L.solve(d_delu);
+//	d_L.setSolveType(CHOLMOD_Pt);
+//	d_delu          = d_L.solve(d_delu);
     }
 
     void merPredD::updateXwts(const VectorType& sqrtXwt) throw (invalid_argument) {
@@ -146,10 +151,14 @@ cout << "Column Counts: " << ColCount.adjoint() << endl;
     void merPredD::updateDecomp() {
 				// update L, RZX and RX
 	updateL();
-	d_L.setSolveType(CHOLMOD_P);
-	d_RZX           = d_L.solve(d_Lambdat * (d_Ut * d_V));
-	d_L.setSolveType(CHOLMOD_L);
-	d_RZX           = d_L.solve(d_RZX);
+	d_RZX           = d_Lambdat * (d_Ut * d_V);
+	d_L.solveInPlace(d_RZX, CHOLMOD_P);
+	d_L.solveInPlace(d_RZX, CHOLMOD_L);
+	
+	// d_L.setSolveType(CHOLMOD_P);
+	// d_RZX           = d_L.solve(d_Lambdat * (d_Ut * d_V));
+	// d_L.setSolveType(CHOLMOD_L);
+	// d_RZX           = d_L.solve(d_RZX);
 
 	MatrixXd      VtVdown(d_VtV);
 	d_RX.compute(VtVdown.selfadjointView<Eigen::Upper>().rankUpdate(d_RZX.adjoint(), -1));
