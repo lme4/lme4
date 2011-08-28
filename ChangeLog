@@ -1,0 +1,53 @@
+2011-08-28  Douglas Bates <bates@stat.wisc.edu>
+
+	* NAMESPACE, src/eigen.h, src/glmFamily.cpp, src/glmFamily.h,
+	  src/lmer.cpp, src/predModule.cpp, src/predModule.h,
+	  src/respModule.cpp, src/respModule.h: Initialize d_delb and d_delu in
+	  predModule to zero (not doing so was causing hard-to-debug errors).
+	  Remove exception declarations as suggested for Rcpp. Make declaration
+	  of short names for Eigen classes and constants namespace-specific.
+
+2011-08-11  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/predModule.cpp: Using solveInPlace to try to avoid memory
+	  problems.
+
+2011-07-31  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/lmer.cpp, src/predModule.cpp, src/predModule.h: Trying to track
+	  dowm memory problem in the evaluation of delu. It looks like it is in
+	  the CholmodSupport.h file in Eigen but my intended fix apparently
+	  didn't succeed.
+	* R/AllClass.R: Modified according to John Chambers' suggestions.
+
+2011-07-29  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/respModule.cpp, src/respModule.h: Flailing around trying to find
+	  the source of the memory problems. valgrind claims there is an
+	  uninitialized value being used in a log call within the Laplace method
+	  but I can't find it.
+	* src/predModule.h: Remove unneeded template keywords (caught by an old
+	  compiler).
+	* R/AllClass.R: Realized that the initialize method should return an
+	  object.
+	* R/AllClass.R, R/lmer.R, src/init.cpp, src/predModule.cpp,
+	  src/predModule.h: Switch to Lambdat and Zt and the CHOLMOD
+	  factorization. Special code for diagonal Lambda.
+	* src/predModule.cpp: One more attempt. Still failing on the boundary
+	  when the number of nonzeros changes.
+
+2011-07-28  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/init.cpp, src/predModule.cpp, src/predModule.h: First shot at a
+	  version with the Eigen/Matrix/CHOLMOD links. Compiles and loads but
+	  not yet tested. Checking in so I can access it from home.
+	* src/init.cpp, src/lmer.cpp, src/predModule.cpp, src/predModule.h: More
+	  getter methods defined in C++ code and reference class. Remove some
+	  debugging code.
+	* R/AllClass.R, R/AllGeneric.R, R/lmList.R, R/lmer.R: More changes to
+	  use S3 methods when dispatching on the first argument only.
+	* DESCRIPTION, NAMESPACE: Change dependencies and imports.
+
+2011-07-26  Douglas Bates <bates@stat.wisc.edu>
+
+	* * initialize this archive.
