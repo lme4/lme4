@@ -23,7 +23,7 @@ namespace lme4Eigen {
 	const Map<VectorXd>        d_y;
 	VectorXd                   d_weights, d_offset, d_mu, d_sqrtXwt, d_sqrtrwt, d_wtres;
     public:
-	modResp(NumericVector)                             throw (std::invalid_argument);
+	modResp(NumericVector);//                             throw (std::invalid_argument);
 
 	const VectorXd&           mu() const {return d_mu;}
 	const VectorXd&       offset() const {return d_offset;}
@@ -35,20 +35,20 @@ namespace lme4Eigen {
 	double                  wrss() const {return d_wrss;}
 	double             updateWts()       {return updateWrss();}
 	double            updateWrss();
-	void               setOffset(const NumericVector&) throw (std::invalid_argument);
-	void              setWeights(const NumericVector&) throw (std::invalid_argument);
+	void               setOffset(const NumericVector&);// throw (std::invalid_argument);
+	void              setWeights(const NumericVector&);// throw (std::invalid_argument);
     };
 
     class lmerResp : public modResp {
     private:
 	int d_reml;
     public:
-	lmerResp(NumericVector)                            throw (std::invalid_argument);
+	lmerResp(NumericVector);//                            throw (std::invalid_argument);
 
 	double               Laplace(double,double,double)const;
 	double              updateMu(const VectorXd&);
 	int                     REML() const {return d_reml;}
-	void                 setReml(int)                  throw (std::invalid_argument);
+	void                 setReml(int);//                  throw (std::invalid_argument);
     };
 	
     class glmerResp : public modResp {
@@ -57,7 +57,7 @@ namespace lme4Eigen {
 	VectorXd       d_eta, d_n;
 	double         d_pwrss;
     public:
-	glmerResp(Rcpp::List, NumericVector)               throw (std::invalid_argument);
+	glmerResp(Rcpp::List, NumericVector);//               throw (std::invalid_argument);
 
 	VectorXd            devResid() const {return d_fam.devResid(d_mu, d_weights, d_y);}
 	VectorXd               muEta() const {return d_fam.muEta(d_eta);}
@@ -82,7 +82,7 @@ namespace lme4Eigen {
 	Rcpp::Language        d_nlmod;
 	Rcpp::CharacterVector d_pnames;
     public:
-	nlmerResp(Rcpp::S4)                               throw (std::invalid_argument);
+	nlmerResp(Rcpp::S4);//                               throw (std::invalid_argument);
 
 	const VectorXd&        mu() const {return d_mu;}
 	const VectorXd&    offset() const {return d_offset;}
@@ -92,7 +92,7 @@ namespace lme4Eigen {
 	const VectorXd&     wtres() const {return d_wtres;}
 	const Map<VectorXd>&    y() const {return d_y;}
 	double            Laplace(double, double, double) const;
-	double           updateMu(const VectorXd&) throw(std::invalid_argument);
+	double           updateMu(const VectorXd&);// throw(std::invalid_argument);
     };
 }
 

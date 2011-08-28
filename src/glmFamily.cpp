@@ -61,7 +61,7 @@ namespace glm {
 	    varFuncs["poisson"]          = &identf; // x
     }
     
-    glmFamily::glmFamily(List ll) throw (std::runtime_error)
+    glmFamily::glmFamily(List ll) // throw (std::runtime_error)
 	: lst(ll),
 	  //d_family(as<std::string>(CharacterVector(ll["family"]))),
 	  //d_link(  as<std::string>(CharacterVector(ll["link"]))),

@@ -2,10 +2,12 @@
 #ifndef LME4_GLMFAMILY_H
 #define LME4_GLMFAMILY_H
 
-#include "eigen.h"
 #include <Rmath.h>
+#include <RcppEigen.h>
 
 namespace glm {
+    using Eigen::VectorXd;
+
     /** associative arrays of functions returning double from a double */
     typedef std::map<std::string, double(*)(const double&)> fmap;
     typedef std::map<std::string, double(*)(const double&,const double&,const double&)> drmap;
@@ -18,7 +20,7 @@ namespace glm {
 	Rcpp::Function d_devRes, d_linkfun, d_linkinv, d_muEta, d_variance;
 				//@}
     public:
-	glmFamily(Rcpp::List) throw (std::runtime_error);
+	glmFamily(Rcpp::List);// throw (std::runtime_error);
 
 	const std::string& fam() const {return d_family;}
 	const std::string& lnk() const {return d_link;}

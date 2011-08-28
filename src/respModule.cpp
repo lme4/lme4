@@ -11,7 +11,7 @@ using namespace std;
 
 namespace lme4Eigen {
 
-    modResp::modResp(NumericVector y)                     throw (invalid_argument)
+    modResp::modResp(NumericVector y)//                     throw (invalid_argument)
 	: d_yR(y),
 	  d_y(d_yR.begin(), d_yR.size()),
 	  d_weights(VectorXd::Constant(y.size(), 1.0)),
@@ -41,32 +41,31 @@ namespace lme4Eigen {
 	return d_wrss;
     }
 
-    void modResp::setOffset(const NumericVector& oo)      throw (invalid_argument) {
+    void modResp::setOffset(const NumericVector& oo) {//      throw (invalid_argument) {
 	if (oo.size() != d_offset.size())
 	    throw invalid_argument("setOffset: Size mismatch");
 	copy(oo.begin(), oo.end(), d_offset.data());
     }
 
-    void modResp::setWeights(const NumericVector& ww)     throw (invalid_argument) {
+    void modResp::setWeights(const NumericVector& ww) {//     throw (invalid_argument) {
 	if (ww.size() != d_weights.size())
 	    throw invalid_argument("setWeights: Size mismatch");
 	copy(ww.begin(), ww.end(), d_weights.data());
     }
 
-    lmerResp::lmerResp(NumericVector y)                   throw (invalid_argument)
+    lmerResp::lmerResp(NumericVector y) //                  throw (invalid_argument)
 	: modResp(y),
 	  d_reml(0) {
     }
 
     double lmerResp::Laplace(double ldL2, double ldRX2, double sqrL) const {
 	double lnum = std::log(2.* M_PI * (d_wrss + sqrL));
-	cout << "d_wrss = " << d_wrss << ", sqrL = " << sqrL << ", lnum = " << lnum << endl;
 	if (d_reml == 0) return ldL2 + d_y.size() * (1. + lnum - std::log(d_y.size()));
 	double nmp = d_y.size() - d_reml;
 	return ldL2 + ldRX2 + nmp * (1. + lnum - std::log(nmp));
     }
 
-    void lmerResp::setReml(int rr)                                throw (invalid_argument) {
+    void lmerResp::setReml(int rr) {//                               throw (invalid_argument) {
 	if (rr < 0) throw invalid_argument("setReml: negative rr");
 	d_reml = rr;
     }
@@ -76,7 +75,7 @@ namespace lme4Eigen {
 	return updateWrss();
     }
 
-    glmerResp::glmerResp(List fam, NumericVector y)               throw (invalid_argument)
+    glmerResp::glmerResp(List fam, NumericVector y) //               throw (invalid_argument)
 	: modResp(y),
 	  d_fam(fam),
 	  d_eta(y.size()),
@@ -109,7 +108,7 @@ namespace lme4Eigen {
 	return ldL2 + n * (1 + log(lnum / n));
     }
 
-    double nlmerResp::updateMu(VectorXd const &gamma)             throw (invalid_argument) {
+    double nlmerResp::updateMu(VectorXd const &gamma) {//            throw (invalid_argument) {
 	int             n = d_y.size();
 	VectorXd      gam = gamma + d_offset;
 	const double  *gg = gam.begin();
@@ -160,7 +159,7 @@ extern "C" {
 
     SEXP lmerRespupdateMu(SEXP ptr_, SEXP gamma) {
 	BEGIN_RCPP;
-	return ::Rf_ScalarReal(XPtr<lme4Eigen::lmerResp>(ptr_)->updateMu(as<VectorXd>(gamma)));
+	return ::Rf_ScalarReal(XPtr<lme4Eigen::lmerResp>(ptr_)->updateMu(as<Eigen::VectorXd>(gamma)));
 	END_RCPP;
     }
 

@@ -24,7 +24,6 @@ importFrom("stats"
            , fitted
            , fitted.values
            , formula
-#           , getCall
            , logLik
            , model.frame
            , model.matrix
@@ -59,33 +58,21 @@ importClassesFrom("Matrix",
                   nCHMsuper,
                   symmetricMatrix)
 
-importFrom("MatrixModels"
-           , model.Matrix
-           , getCall
-#           , mkRespMod
-#           , reweightPred
-#           , update
-#           , updateMu
-#           , updateWts
-           )
+importFrom("MatrixModels" , model.Matrix)
+
+
+if(getRversion() < "2.14") {
+    importFrom("MatrixModels", getCall)
+} else {
+    importFrom("stats", getCall)
+}
 
 importClassesFrom("MatrixModels",
                   modelMatrix,
                   denseModelMatrix,  ddenseModelMatrix,
                   sparseModelMatrix, dsparseModelMatrix
-#                  , predModule,
-#                  dPredModule,
-#                  sPredModule,
-#                  respModule,
-#                  glmRespMod,
-#                  nlsRespMod
                   )
 
-## from MatrixModels, methods too {not just generics from 'stats'}:
-## importMethodsFrom("MatrixModels",
-##                   coef, coefficients, fitted, fitted.values,
-##                   formula, residuals, resid,
-##                   update)
 
 importMethodsFrom("Matrix"
                   , "%*%"
@@ -99,16 +86,12 @@ importMethodsFrom("Matrix"
                   , diag
 		  , rcond
                   , solve
-#                  , summary
                   , t
                   , tcrossprod
                   , update
                   )
 
 #exportPattern("^[^\\.]")
-
-# re-export imported S4 generics
-#export(AIC, BIC, logLik)
 
 # and the rest (S3 generics; regular functions):
 export(
@@ -119,18 +102,13 @@ export(
        findbars,
        fixef,
        getL,
-#       glmFamily,
        glmer,
-#       glmer2,
-#       glmerResp,
        isNested,
        lmList,
        lmer,
-#       lmer2,
        lmerResp,
 #       mkdevfun,
        nlmer,
-#       nlmerResp,
        nobars,
        merPredD,
        ranef,
@@ -139,43 +117,24 @@ export(
        subbars
        )
 
-exportClasses(#deFeMod,
+exportClasses(
               lmerMod,
               lmList,
               merMod
-              #, reModule, reTrms, spFeMod
               )
 
 exportMethods(
-#              VarCorr ,
-#              anova,
               coef
               , coerce
-#              , confint
-#              , deviance
-#              , devcomp
-#              , fitted
-#              , fixef
-#              ,  formula
               , getL
-#              , logLik
-#              , model.frame
-#              , model.matrix
-#              , terms
-#              , plot
-#              , print
-#              , profile
-#              , ranef
               , rcond
               , show
-#              , simulate
               , sigma
-#              , summary
               , update
-#              , vcov
               )
 
-## S3 for now..
+## S3 methods - S4 methods are not created when dispatch is on the first argument only
+
 S3method(confint, lmList)
 
 S3method(plot, lmList.confint)
