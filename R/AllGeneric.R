@@ -3,10 +3,6 @@ setGeneric("lmList",
                     na.action, offset, pool, ...)
            standardGeneric("lmList"))
 
-## if (getRversion() < '2.14.0') {
-##     getCall <- function(x, ...) UseMethod("getCall")
-## }
-
 ## utilities, these *exported*:
 setGeneric("getL", function(x) standardGeneric("getL"))
 

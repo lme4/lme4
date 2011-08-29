@@ -3,12 +3,9 @@
 #include "lmer.h"
 #include <R_ext/Rdynload.h>
 
-//extern "C" SEXP _rcpp_module_boot_lme4();
-
 #define CALLDEF(name, n)  {#name, (DL_FUNC) &name, n}
 
 static R_CallMethodDef CallEntries[] = {
-//    CALLDEF(_rcpp_module_boot_lme4, 0),
 
     CALLDEF(lmerDeviance, 3),
 
@@ -27,9 +24,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(merPredDsetBeta0, 2),
     CALLDEF(merPredDsetU0, 2),
 
-//    CALLDEF(merPredDI, 1),	
     CALLDEF(merPredDLambdat, 1), //getters
-//    CALLDEF(merPredDL, 1),
     CALLDEF(merPredDPvec, 1),
     CALLDEF(merPredDRX, 1),
     CALLDEF(merPredDRXdiag, 1),

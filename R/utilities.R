@@ -3,7 +3,7 @@
 ##' From the right hand side of a formula for a mixed-effects model,
 ##' determine the pairs of expressions that are separated by the
 ##' vertical bar operator.
-
+##'
 ##' @title Determine random-effects expressions from a formula
 ##' @param term a mixed-model formula
 ##' @return pairs of expressions that were separated by vertical bars

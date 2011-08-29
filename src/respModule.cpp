@@ -6,12 +6,15 @@
 
 #include "respModule.h"
 #include <cmath>
-using namespace Rcpp;
-using namespace std;
 
 namespace lme4Eigen {
+    using Rcpp::List;
+    using Rcpp::NumericMatrix;
+    using std::copy;
+    using std::string;
+    using std::invalid_argument;
 
-    modResp::modResp(NumericVector y)//                     throw (invalid_argument)
+    modResp::modResp(NumericVector y)
 	: d_yR(y),
 	  d_y(d_yR.begin(), d_yR.size()),
 	  d_weights(VectorXd::Constant(y.size(), 1.0)),
@@ -41,19 +44,19 @@ namespace lme4Eigen {
 	return d_wrss;
     }
 
-    void modResp::setOffset(const NumericVector& oo) {//      throw (invalid_argument) {
+    void modResp::setOffset(const NumericVector& oo) {
 	if (oo.size() != d_offset.size())
 	    throw invalid_argument("setOffset: Size mismatch");
 	copy(oo.begin(), oo.end(), d_offset.data());
     }
 
-    void modResp::setWeights(const NumericVector& ww) {//     throw (invalid_argument) {
+    void modResp::setWeights(const NumericVector& ww) {
 	if (ww.size() != d_weights.size())
 	    throw invalid_argument("setWeights: Size mismatch");
 	copy(ww.begin(), ww.end(), d_weights.data());
     }
 
-    lmerResp::lmerResp(NumericVector y) //                  throw (invalid_argument)
+    lmerResp::lmerResp(NumericVector y)
 	: modResp(y),
 	  d_reml(0) {
     }
@@ -65,8 +68,8 @@ namespace lme4Eigen {
 	return ldL2 + ldRX2 + nmp * (1. + lnum - std::log(nmp));
     }
 
-    void lmerResp::setReml(int rr) {//                               throw (invalid_argument) {
-	if (rr < 0) throw invalid_argument("setReml: negative rr");
+    void lmerResp::setReml(int rr) {
+	if (rr < 0) throw invalid_argument("setReml: negative value for REML not meaningful");
 	d_reml = rr;
     }
     
@@ -75,7 +78,7 @@ namespace lme4Eigen {
 	return updateWrss();
     }
 
-    glmerResp::glmerResp(List fam, NumericVector y) //               throw (invalid_argument)
+    glmerResp::glmerResp(List fam, NumericVector y)
 	: modResp(y),
 	  d_fam(fam),
 	  d_eta(y.size()),
@@ -108,7 +111,7 @@ namespace lme4Eigen {
 	return ldL2 + n * (1 + log(lnum / n));
     }
 
-    double nlmerResp::updateMu(VectorXd const &gamma) {//            throw (invalid_argument) {
+    double nlmerResp::updateMu(VectorXd const &gamma) {
 	int             n = d_y.size();
 	VectorXd      gam = gamma + d_offset;
 	const double  *gg = gam.begin();
@@ -130,6 +133,11 @@ namespace lme4Eigen {
 }
 
 extern "C" {
+    using Rcpp::NumericVector;
+    using Rcpp::XPtr;
+    using Rcpp::as;
+    using Rcpp::wrap;
+
     SEXP lmerRespCreate(SEXP ys) {
 	BEGIN_RCPP;
 	lme4Eigen::lmerResp *ans = new lme4Eigen::lmerResp(NumericVector(ys));

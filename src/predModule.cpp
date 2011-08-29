@@ -7,10 +7,11 @@
 
 #include "predModule.h"
 
-using namespace Rcpp;
-using namespace std;
-
 namespace lme4Eigen {
+    using std::cout;
+    using std::endl;
+    using std::copy;
+
     merPredD::merPredD(S4 X, S4 Zt, S4 Lambdat, IntegerVector Lind,
 		       NumericVector theta)
 	: d_X(X),
@@ -177,6 +178,13 @@ cout << "size of factor = " <<	d_L.rows()
 }
 
 extern "C" {
+    using Rcpp::IntegerVector;
+    using Rcpp::NumericVector;
+    using Rcpp::S4;
+    using Rcpp::XPtr;
+    using Rcpp::as;
+    using Rcpp::wrap;
+
     SEXP merPredDCreate(SEXP Xs, SEXP Zts, SEXP Lambdats, SEXP Linds, SEXP thetas) {
 	BEGIN_RCPP;
 	S4 X(Xs), Zt(Zts), Lambdat(Lambdats);
