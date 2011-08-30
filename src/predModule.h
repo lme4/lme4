@@ -187,6 +187,8 @@ namespace lme4Eigen {
 	Scalar                ldRX2() const {return d_ldRX2;}
 	Scalar                 sqrL(const Scalar& f) const;
 
+	SpMatrixd          mkLamtUt();
+
 	const MatrixXd&         RZX() const {return d_RZX;}
 	const NumericVector&  theta() const {return d_theta;}
 	const SpMatrixd&    Lambdat() const {return d_Lambdat;}
