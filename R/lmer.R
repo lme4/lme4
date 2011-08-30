@@ -679,7 +679,7 @@ formula.merMod <- function(x, ...) formula(x@call, ...)
 ranef.merMod <- function(object, postVar = FALSE, drop = FALSE,
                          whichel = names(ans), ...)
 {
-    ans <- as.vector(object@pp$Lambda %*% object@u)
+    ans <- as.vector(crossprod(object@pp$Lambdat, object@u))
     if (!is.null(object@flist)) {
         ## evaluate the list of matrices
         levs <- lapply(fl <- object@flist, levels)
@@ -856,7 +856,6 @@ printMerenv <- function(x, digits = max(3, getOption("digits") - 3),
 print.merMod <- printMerenv
 setMethod("show",  "merMod", function(object) printMerenv(object))
 fitted.merMod <- function(object, ...) {object <- object@resp; NextMethod()}
-#setMethod("fitted", "merMod", function(object,...) object@resp@mu)
 residuals.merMod <- function(object, type = c("deviance", "pearson",
                                      "working", "response", "partial"), ...)
 {
