@@ -189,6 +189,7 @@ namespace lme4Eigen {
 
 	SpMatrixd          mkLamtUt();
 
+	bool          diagonalLambda() const {return d_isDiagLam;}
 	const MatrixXd&         RZX() const {return d_RZX;}
 	const NumericVector&  theta() const {return d_theta;}
 	const SpMatrixd&    Lambdat() const {return d_Lambdat;}
@@ -231,6 +232,7 @@ extern "C" {
     SEXP merPredDbeta0(SEXP);
     SEXP merPredDdelb(SEXP);
     SEXP merPredDdelu(SEXP);
+    SEXP merPredDdiagonalLambda(SEXP);
     SEXP merPredDldL2(SEXP);
     SEXP merPredDldRX2(SEXP);
     SEXP merPredDtheta(SEXP);

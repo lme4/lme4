@@ -80,12 +80,9 @@ namespace lme4Eigen {
 		    throw invalid_argument("Lambdat is missing a diagonal element?");
 	    }
 	}
-	if (d_isDiagLam) cout << "Diagonal Lambda detected" << endl;
-				// starting values into Lambda
-	setTheta(d_theta);
-				// perform symbolic analysis
-        d_L.setMode(Eigen::CholmodAutoLLt);      
-	d_L.analyzePattern(mkLamtUt());
+	setTheta(d_theta);		// starting values into Lambda
+        d_L.cholmod().final_ll = 1;	// force an LL' decomposition
+	d_L.analyzePattern(mkLamtUt()); // perform symbolic analysis
         if (d_L.info() != Eigen::Success)
 	    throw runtime_error("CholeskyDecomposition.analyzePattern failed");
     }
@@ -102,14 +99,24 @@ namespace lme4Eigen {
 	}
 	SpMatrixd    LamtUt(d_Lambdat * d_Ut);
 	int          nnz(LamtUt.nonZeros());
-	if (d_nnz < 0) d_nnz = nnz;	// first time through
+	if (d_nnz < 0) d_nnz = nnz;
 	if (nnz != d_nnz) { // do a lot of dancing around to avoid pruning zeros
 	    const cholmod_sparse Lamt=viewAsCholmod(d_Lambdat), Ut=viewAsCholmod(d_Ut);
 	    cholmod_common c = d_L.cholmod();
 	    CHM_SP cLamtUt = ::M_cholmod_ssmult(&Lamt, &Ut, 0/*stype*/, 1/*values*/, 0/*sorted*/, &c);
 	    if (::M_cholmod_nnz(cLamtUt, &c) != d_nnz)
 		throw runtime_error("Number of nonzeros in LamtUt has changed");
-	    LamtUt = Eigen::viewAsEigen<Scalar, 0, Index>(*cLamtUt);
+	    // strangely these didn't work as reinterpret_cast<Scalar*>, etc
+	    double      *xp = (double*)(cLamtUt->x);
+	    int         *ip = (int*)(cLamtUt->i);
+	    int         *pp = (int*)(cLamtUt->p);
+	    LamtUt.setZero();
+	    LamtUt.reserve(d_nnz);
+	    for (int j = 0; j < LamtUt.outerSize(); ++j) {
+		LamtUt.startVec(j);
+		for (int k = pp[j]; k < pp[j + 1]; ++k) LamtUt.insertBack(ip[k], j) = xp[k];
+	    }
+	    LamtUt.finalize();
 	    ::M_cholmod_free_sparse(&cLamtUt, &c);
 	}
 	return LamtUt;
@@ -133,6 +140,9 @@ namespace lme4Eigen {
     }
 
     void merPredD::setTheta(const NumericVector& theta) {
+	// cout << theta[0];
+	// for (int i = 1; i < theta.size(); ++i) cout << ", " << theta[i];
+	// cout << endl;
 	if (theta.size() != d_theta.size())
 	    throw invalid_argument("theta size mismatch");
 				// update theta
@@ -297,6 +307,12 @@ extern "C" {
     SEXP merPredDdelu(SEXP ptr) {
 	BEGIN_RCPP;
 	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->delu());
+	END_RCPP;
+    }
+
+    SEXP merPredDdiagonalLambda(SEXP ptr) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->diagonalLambda());
 	END_RCPP;
     }
     
