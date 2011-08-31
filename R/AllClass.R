@@ -75,13 +75,9 @@ lmerResp <-
                          ptr <<- .Call(lmerRespCreate, y)
                          callSuper(...)
                      },
-                     wrss = function() {
-                         'returns the weighted residual sum of squares'
-                         .Call(modRespwrss, ptr)
-                     },
-                     wtres = function() {
-                         'returns the vector of weighted residuals'
-                         .Call(modRespwtres, ptr)
+                     fitted = function() {
+                         'returns the value of the linear predictor'
+                         .Call(modRespmu, ptr)
                      },
                      Laplace = function(ldL2, ldRX2, sqrL) {
                          'returns the profiled deviance or REML criterion'
@@ -90,8 +86,17 @@ lmerResp <-
                      updateMu = function(gamma) {
                          'from the linear predictor, gamma, update the\nconditional mean response, mu, residuals and weights'
                          .Call(lmerRespupdateMu, ptr, as.numeric(gamma))
+                     },
+                     wrss = function() {
+                         'returns the weighted residual sum of squares'
+                         .Call(modRespwrss, ptr)
+                     },
+                     wtres = function() {
+                         'returns the vector of weighted residuals'
+                         .Call(modRespwtres, ptr)
                      })
                 )
+
 lmerResp$lock("y")
 
 
