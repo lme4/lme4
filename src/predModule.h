@@ -163,9 +163,8 @@ namespace lme4Eigen {
 	Scalar         d_ldL2, d_ldRX2;
 	MatrixXd       d_RZX, d_V, d_VtV;
 	VectorXd       d_Vtr, d_Utr, d_delb, d_delu, d_beta0, d_u0;
-	SpMatrixd      d_Ut;
+	SpMatrixd      d_Ut, d_LamtUt;
 	ChmDecomp      d_L;
-	bool           d_isDiagLam;
 	LLT<MatrixXd>  d_RX;
     public:
 	merPredD(S4, S4, S4, IntegerVector, NumericVector);
@@ -187,12 +186,10 @@ namespace lme4Eigen {
 	Scalar                ldRX2() const {return d_ldRX2;}
 	Scalar                 sqrL(const Scalar& f) const;
 
-	SpMatrixd          mkLamtUt();
-
-	bool          diagonalLambda() const {return d_isDiagLam;}
 	const MatrixXd&         RZX() const {return d_RZX;}
 	const NumericVector&  theta() const {return d_theta;}
 	const SpMatrixd&    Lambdat() const {return d_Lambdat;}
+	const SpMatrixd&     LamtUt() const {return d_LamtUt;}
 	const MSpMatrixd&        Zt() const {return d_Zt;}
 	const VectorXd&        delb() const {return d_delb;}
 	const VectorXd&        delu() const {return d_delu;}
@@ -209,6 +206,7 @@ namespace lme4Eigen {
 	void                 solveU() {d_delu = d_L.solve(d_Utr);}
 	void           updateDecomp();
 	void                updateL();
+	void           updateLamtUt();
 	void              updateRes(const VectorXd&);
 	void             updateXwts(const VectorXd&);
     };
@@ -221,8 +219,9 @@ extern "C" {
     SEXP merPredDsetBeta0(SEXP, SEXP);
     SEXP merPredDsetU0(SEXP, SEXP);
 
-    SEXP merPredDLambdat(SEXP);	// getters
-    SEXP merPredDL(SEXP);
+    SEXP merPredDL(SEXP);	// getters
+    SEXP merPredDLambdat(SEXP);
+    SEXP merPredDLamtUt(SEXP);
     SEXP merPredDPvec(SEXP);
     SEXP merPredDRX(SEXP);
     SEXP merPredDRXdiag(SEXP);
@@ -232,7 +231,6 @@ extern "C" {
     SEXP merPredDbeta0(SEXP);
     SEXP merPredDdelb(SEXP);
     SEXP merPredDdelu(SEXP);
-    SEXP merPredDdiagonalLambda(SEXP);
     SEXP merPredDldL2(SEXP);
     SEXP merPredDldRX2(SEXP);
     SEXP merPredDtheta(SEXP);

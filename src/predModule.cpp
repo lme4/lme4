@@ -8,10 +8,12 @@
 #include "predModule.h"
 
 namespace lme4Eigen {
+    using std::copy;
     using std::cout;
     using std::endl;
-    using std::copy;
+    using std::fill;
 
+#if 0
     void cholmod_dump_common(cholmod_common& c) {
 	cout << "Cholmod common structure" << endl;
 	cout << "status = " << c.status
@@ -38,6 +40,7 @@ namespace lme4Eigen {
 	for (int i = 1; i < c.nmethods; ++i) cout << ", " << c.method[i].ordering;
 	cout << endl;
     }
+#endif
 
     merPredD::merPredD(S4 X, S4 Zt, S4 Lambdat, IntegerVector Lind,
 		       NumericVector theta)
@@ -60,7 +63,6 @@ namespace lme4Eigen {
 	  d_beta0(d_p),
 	  d_u0(d_q),
 	  d_Ut(d_Zt),
-	  d_isDiagLam(false),
 	  d_RX(d_p)
     {				// Check consistency of dimensions
 	if (d_n != d_Zt.cols())
@@ -68,60 +70,35 @@ namespace lme4Eigen {
 	if (d_Lind.size() != d_Lambdat.nonZeros())
 	    throw invalid_argument("size of Lind does not match nonzeros in Lambda");
 	// checking of the range of Lind is now done in R code for reference class
-				// initialize beta0, u0 and VtV
+				// initialize beta0, u0, delb, delu and VtV
 	d_beta0.setZero(); d_u0.setZero(); d_delu.setZero(); d_delb.setZero();
 	d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
-				// check for diagonal Lambdat
-	if (d_Lambdat.nonZeros() == d_q) {
-	    d_isDiagLam = true;
-	    for (int j = 0; j < d_Lambdat.outerSize(); ++j) {
-		SpMatrixd::InnerIterator it(d_Lambdat, j);
-		if (it.index() != j)
-		    throw invalid_argument("Lambdat is missing a diagonal element?");
-	    }
-	}
+
 	setTheta(d_theta);		// starting values into Lambda
         d_L.cholmod().final_ll = 1;	// force an LL' decomposition
-	d_L.analyzePattern(mkLamtUt()); // perform symbolic analysis
+// FIXME: updating d_Ut should be done in a method to accomodate the nlmer case
+	d_LamtUt = d_Lambdat * d_Ut;
+	d_L.analyzePattern(d_LamtUt); // perform symbolic analysis
         if (d_L.info() != Eigen::Success)
 	    throw runtime_error("CholeskyDecomposition.analyzePattern failed");
     }
 
-    merPredD::SpMatrixd merPredD::mkLamtUt() {
-	if (d_isDiagLam) {
-	    SpMatrixd     LamtUt(d_Ut);
-	    const Scalar* dptr(d_Lambdat._valuePtr());
-	    for (int j = 0; j < LamtUt.outerSize(); ++j) {
-		for (SpMatrixd::InnerIterator it(LamtUt, j); it; ++it)
-		    it.valueRef() *= dptr[it.index()];
+    void merPredD::updateLamtUt() {
+	fill(d_LamtUt._valuePtr(), d_LamtUt._valuePtr() + d_LamtUt.nonZeros(), Scalar());
+	for (Index j = 0; j < d_Ut.cols(); ++j) {
+	    for (SpMatrixd::InnerIterator rhsIt(d_Ut, j); rhsIt; ++rhsIt) {
+		SpMatrixd::InnerIterator prdIt(d_LamtUt, j);
+		Scalar                       y = rhsIt.value();
+		for (SpMatrixd::InnerIterator lhsIt(d_Lambdat, rhsIt.index()); lhsIt; ++lhsIt) {
+		    Index      i = lhsIt.index();
+		    while (prdIt.index() != i && prdIt) ++prdIt;
+		    if (!prdIt) throw runtime_error("logic error in updateLamtUt");
+		    prdIt.valueRef() += lhsIt.value() * y;
+		}
 	    }
-	    return LamtUt;
 	}
-	SpMatrixd    LamtUt(d_Lambdat * d_Ut);
-	int          nnz(LamtUt.nonZeros());
-	if (d_nnz < 0) d_nnz = nnz;
-	if (nnz != d_nnz) { // do a lot of dancing around to avoid pruning zeros
-	    const cholmod_sparse Lamt=viewAsCholmod(d_Lambdat), Ut=viewAsCholmod(d_Ut);
-	    cholmod_common c = d_L.cholmod();
-	    CHM_SP cLamtUt = ::M_cholmod_ssmult(&Lamt, &Ut, 0/*stype*/, 1/*values*/, 0/*sorted*/, &c);
-	    if (::M_cholmod_nnz(cLamtUt, &c) != d_nnz)
-		throw runtime_error("Number of nonzeros in LamtUt has changed");
-	    // strangely these didn't work as reinterpret_cast<Scalar*>, etc
-	    double      *xp = (double*)(cLamtUt->x);
-	    int         *ip = (int*)(cLamtUt->i);
-	    int         *pp = (int*)(cLamtUt->p);
-	    LamtUt.setZero();
-	    LamtUt.reserve(d_nnz);
-	    for (int j = 0; j < LamtUt.outerSize(); ++j) {
-		LamtUt.startVec(j);
-		for (int k = pp[j]; k < pp[j + 1]; ++k) LamtUt.insertBack(ip[k], j) = xp[k];
-	    }
-	    LamtUt.finalize();
-	    ::M_cholmod_free_sparse(&cLamtUt, &c);
-	}
-	return LamtUt;
     }
-	
+
     VectorXd merPredD::b(const double& f) const {return d_Lambdat.adjoint() * u(f);}
 
     VectorXd merPredD::beta(const double& f) const {return d_beta0 + f * d_delb;}
@@ -135,7 +112,8 @@ namespace lme4Eigen {
     merPredD::Scalar merPredD::sqrL(const double& f) const {return u(f).squaredNorm();}
 
     void merPredD::updateL() {
-	d_L.factorize_p(mkLamtUt(), ArrayXi(), 1.);
+	updateLamtUt();
+	d_L.factorize_p(d_LamtUt, ArrayXi(), 1.);
 	d_ldL2 = ::M_chm_factor_ldetL2(d_L.factor());
     }
 
@@ -256,6 +234,12 @@ extern "C" {
 	END_RCPP;
     }
     
+    SEXP merPredDLamtUt(SEXP ptr) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->LamtUt());
+	END_RCPP;
+    }
+    
     SEXP merPredDPvec(SEXP ptr) {
 	BEGIN_RCPP;
 	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->Pvec());
@@ -310,12 +294,6 @@ extern "C" {
 	END_RCPP;
     }
 
-    SEXP merPredDdiagonalLambda(SEXP ptr) {
-	BEGIN_RCPP;
-	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->diagonalLambda());
-	END_RCPP;
-    }
-    
     SEXP merPredDu0(SEXP ptr) {
 	BEGIN_RCPP;
 	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->u0());
