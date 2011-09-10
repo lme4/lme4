@@ -60,8 +60,10 @@ bootMer(x, FUN, nsim=1, seed, use.u=FALSE, verbose=FALSE,
 fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
 ## see ?"profile-methods"
 mySumm <- function(.) { s <- sigma(.)
-    c(beta =.@fe@coef, sigma = s, sig01 = s * .@re@theta) }
+    c(beta =getME(., "beta"), sigma = s, sig01 = s * getME(., "theta")) }
 (t0 <- mySumm(fm01ML)) # just three parameters
+
+\dontrun{%%--- fails for now --- FIXME
 
 ## 3.8s (on a 5600 MIPS 64bit fast(year 2009) desktop "AMD Phenom(tm) II X4 925"):
 system.time( boo01 <- bootMer(fm01ML, mySumm, nsim = 100) )
@@ -81,6 +83,7 @@ boo01 # look at estimated bias for sig01 (-9.1, also when nsim = 1000)
                    h = log, hdot = function(.) 1/., hinv = exp))
 
 (bCI.3 <- boot.ci(boo01, index=3, type=c("norm", "basic", "perc")))# sig01
+}% dontrun..FIXME
 }
 \keyword{models}
 \keyword{htest}

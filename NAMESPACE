@@ -3,8 +3,7 @@ useDynLib(lme4Eigen, .registration=TRUE)
 ## Import non-base functions we need explicitly,
 ## notably for which we define methods:
 
-
-## FIXME -- really need all these three ??
+## FIXME -- really need all these -- fully imported -- ???
 import("grid")
 import("lattice")
 import("splines")
@@ -24,6 +23,7 @@ importFrom("stats"
            , fitted
            , fitted.values
            , formula
+           , getCall
            , logLik
            , model.frame
            , model.matrix
@@ -61,18 +61,11 @@ importClassesFrom("Matrix",
 importFrom("MatrixModels" , model.Matrix)
 
 
-if(getRversion() < "2.14") {
-    importFrom("MatrixModels", getCall)
-} else {
-    importFrom("stats", getCall)
-}
-
 importClassesFrom("MatrixModels",
                   modelMatrix,
                   denseModelMatrix,  ddenseModelMatrix,
                   sparseModelMatrix, dsparseModelMatrix
                   )
-
 
 importMethodsFrom("Matrix"
                   , "%*%"
@@ -88,7 +81,7 @@ importMethodsFrom("Matrix"
                   , solve
                   , t
                   , tcrossprod
-                  , update
+                  ## , update
                   )
 
 #exportPattern("^[^\\.]")
@@ -101,7 +94,7 @@ export(
 #       devcomp,
        findbars,
        fixef,
-       getL,
+       getL, getME,
        glmer,
        isNested,
        lmList,
@@ -130,7 +123,7 @@ exportMethods(
               , rcond
               , show
               , sigma
-              , update
+              ## , update
               )
 
 ## S3 methods - S4 methods are not created when dispatch is on the first argument only
@@ -148,7 +141,6 @@ S3method(extractAIC, merMod)
 S3method(fixef, merMod)
 S3method(fitted, merMod)
 S3method(formula, merMod)
-S3method(getCall, merMod)
 S3method(logLik, merMod)
 S3method(model.frame, merMod)
 S3method(model.matrix, merMod)
@@ -160,7 +152,6 @@ S3method(simulate, merMod)
 S3method(summary, merMod)
 S3method(terms, merMod)
 S3method(vcov, merMod)
-S3method(update, merMod)
 S3method(refitML, merMod)
 
 S3method(print, summary.mer)

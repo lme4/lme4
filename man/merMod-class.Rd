@@ -73,7 +73,7 @@
     \item{deviance}{\code{signature(object = "merMod")}: ... }
     \item{fixef}{\code{signature(object = "merMod")}: ... }
     \item{formula}{\code{signature(x = "merMod")}: ... }
-    \item{getL}{\code{signature(x = "merMod")}: ... }
+    \item{getME}{\code{signature(x = "merMod")}: ... }
     \item{logLik}{\code{signature(object = "merMod")}: ... }
     \item{model.frame}{\code{signature(formula = "merMod")}: ... }
     \item{model.matrix}{\code{signature(object = "merMod")}: ... }

@@ -49,7 +49,7 @@ dotplot(reorder(plate, diameter) ~ diameter, Penicillin, groups = sample,
         title = "Penicillin sample"))
 (fm1 <- lmer(diameter ~ (1|plate) + (1|sample), Penicillin))
 
-image(getL(fm1),
-      sub = "Structure of random effects interaction in penicillin model")
+if(is(L <- try(getME(fm1, "L")), "Matrix")) # needed for now
+image(L, sub = "Structure of rand.eff. interaction in penicillin model")
 }
 \keyword{datasets}
