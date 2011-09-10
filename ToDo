@@ -33,3 +33,5 @@ Determine what a "coef" function should do for multiple, possibly
   and one with many fixed effects (*) and     print(<lmer>, symbolic.cor = TRUE)
 
 --> Use  nobs() methods -- ASAP .. (require R >= 2.13.0 though)
+
+--> define  getME(<object>, <slot>) as a "generic Mixed-Effects" extractor.

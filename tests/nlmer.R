@@ -1,6 +1,7 @@
 ### suppressPackageStartupMessages(...)  as we have an *.Rout.save to Rdiff against
 stopifnot(suppressPackageStartupMessages(require(lme4)))
 
+## TODO: nicer version of this is in  system.file("test-tools.R", package = "Matrix")
 showProc.time <- function() { ## CPU elapsed __since last called__
     .ot <- .pc
     .pc <<- proc.time()

@@ -1,6 +1,18 @@
 require(lme4)
 source(system.file("test-tools.R", package = "Matrix"))# identical3(),
 
+##' Simple Parametric bootstrap Deviance between two models
+##' @title parametric bootstrapped deviance
+##' @param m0 two (nested) models fitted to the same data
+##' @param m1
+##' @param nsim: number of replications
+##' @return 2 * logLik( fit(m1), fit(m0) )
+##' @author Ben Bolker, Feb.2011;  Martin Maechler, Aug.2011
+pboot <- function(m0,m1, nsim = 1, seed=NULL) {
+  smat <- simulate(m0, nsim=nsim, seed=seed)
+  2 * apply(smat, 2, function(s) logLik(refit(m1,s)) - logLik(refit(m0,s)))
+}
+
 set.seed(54321)
 
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
@@ -12,6 +24,10 @@ showProc.time()
 s2 <- simulate(fm1,10)
 stopifnot(is.data.frame(s2), ncol(s2)==10, nrow(s2)==length(fitted(fm1))) ## 10-column data frame
 showProc.time()
+
+r0 <- pboot(fm2,fm1, 10)
+showProc.time()
+summary(r0)
 
 ## binomial (non-Bernoulli)
 gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
@@ -25,20 +41,10 @@ stopifnot(is.list(s4), sapply(s4,ncol)==2,
 	  sapply(s4,nrow) == nrow(cbpp))
 showProc.time()
 
-pboot <- function(m0,m1) {
-  s <- simulate(m0)
-  L0 <- logLik(refit(m0,s))
-  L1 <- logLik(refit(m1,s))
-  2*(L1-L0)
-}
-
-r0 <- replicate(10,pboot(fm2,fm1))
-summary(r0)
+r1 <- pboot(gm0,gm1, 10)
 showProc.time()
-
-r1 <- replicate(10,pboot(gm0,gm1))
 summary(r1)
-showProc.time()
+
 
 ## FIXME: want real Poisson example, but will have to simulate one instead for now
 nobs <- 50

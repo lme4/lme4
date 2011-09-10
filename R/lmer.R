@@ -400,7 +400,7 @@ mkZt <- function(FL, start, s = 1L)
     Ztl <- lapply(trms, `[[`, "Zt")
     Zt <- do.call(rBind, Ztl)
     Zt@Dimnames <- vector("list", 2)
-    Gp <- unname(c(0L, cumsum(sapply(Ztl, nrow))))
+    Gp <- c(0L, cumsum(vapply(Ztl, nrow, 1L, USE.NAMES=FALSE)))
     .Call(mer_ST_initialize, ST, Gp, Zt)
     A <- do.call(rBind, lapply(trms, `[[`, "A"))
     rm(Ztl, FL)                         # because they could be large
@@ -804,6 +804,7 @@ nlmer <- function(formula, data, start = NULL, verbose = FALSE,
     dm$dd["nAGQ"] <- nAGQ
     AGQlist = .Call(lme4_ghq, nAGQ)
 
+    rtW <- sqrt(unname(fr$wts))
     ans <- new(Class = "mer",
                env = env,
                nlmodel = nlmod,
@@ -812,7 +813,7 @@ nlmer <- function(formula, data, start = NULL, verbose = FALSE,
                flist = dm$flist,
                X = X,
                Zt = dm$Zt,
-               pWt = unname(sqrt(fr$wts)),
+               pWt = rtW,
                offset = unname(fr$off),
                y = unname(as.double(fr$Y)),
                Gp = unname(dm$Gp),
@@ -831,7 +832,7 @@ nlmer <- function(formula, data, start = NULL, verbose = FALSE,
                mu = numeric(n),
                resid = numeric(n),
                sqrtXWt = matrix(0, n, s, dimnames = list(NULL, pnames)),
-               sqrtrWt = unname(sqrt(fr$wts)),
+               sqrtrWt = rtW,
                RZX = matrix(0, dm$dd[["q"]], p),
                RX = matrix(0, p, p),
 	       ghx = AGQlist[[1]],
@@ -1684,7 +1685,7 @@ setMethod("expand", signature(x = "mer"),
           nlev <- diff(x@Gp) %/% nc
 
           Sblock <- function(i) rep(diag(ST[[i]]), each = nlev[i])
-          Smat <- Diagonal(x = unname(unlist(lapply(ind, Sblock))))
+          Smat <- Diagonal(x = unlist(unname(lapply(ind, Sblock))))
           if (max(nc) == 1) {
               Tmat <- Matrix:::.diag2tT(Diagonal(ncol(Smat)), uplo="L")
           } else {
@@ -1858,7 +1859,7 @@ setMethod("mcmcsamp", signature(object = "mer"),
                      ST = matrix(.Call(mer_ST_getPars, object), dd[["np"]], n),
                      call = object@call,
                      dims = object@dims,
-                     deviance = rep(unname(object@deviance[["ML"]]), n),
+                     deviance = rep.int(unname(object@deviance[["ML"]]), n),
                      fixef = fixef,
                      nc = sapply(object@ST, nrow),
                      ranef = ranef,
@@ -2327,6 +2328,65 @@ whichreind <- function(fm, fnm = names(fm@flist))
            function (ind) unlist(reinds(fm@Gp)[ind]))
 
 
-## For Matrix API change (Oct.2009) - silence the warning:
-## don't -- we do not call it in this version of lme4:
-## assign("det_CHMfactor.warn", FALSE, envir = Matrix:::.MatrixEnv)
+## From: Soren.Hojsgaard@agrsci.dk
+## To: "maechler@stat.math.ethz.ch" <maechler@stat.math.ethz.ch>
+## CC: "bates@stat.wisc.edu" <bates@stat.wisc.edu>, Ulrich Halekoh
+## 	<Ulrich.Halekoh@agrsci.dk> <Soren.Hojsgaard@agrsci.dk>
+## Date: Thu, 18 Aug 2011 15:22:05 +0200
+## Subject: Slots that we extract to do Kenward-Roger approximation
+
+## Dear Martin,
+
+## It seems that what we extract is:
+
+##  @X
+##  @Gp
+##  @Zt
+##  @dims['REML']
+##  @dims['nt']
+
+
+##' "Generalized Extractor" -- the version for classical lme4
+##' @param object [ng]lmer() fit
+##' @param name character string
+##' @return the corresponding "part" of the [gn]?lmer()-Fit
+##' @note The implementation for "classical lme4" is typically trivial,
+##'   just using the slots, but for future lme4 (i.e. current 'lme4a', 'lme4Eigen'...)
+##'   the implementation will differ.
+getME <- function(object,
+                  name = c("X", "Z","Zt", "u",
+                  "Gp",
+                  "L", "Lambda", "Lambdat",
+                  "RX", "RZX",
+                  "beta", "theta",
+		  "REML", "n_rtrms", "is_REML"))
+{
+    if(missing(name)) stop("'name' must not be missing")
+    stopifnot(length(name <- as.character(name)) == 1,
+	      is(object, "mer"))
+    name <- match.arg(name)
+    switch(name,
+	   "X" = object@X, ## ok ? - check -- use model.matrix() method instead?
+	   "Z" = t(object@Zt),
+	   "Zt"= object@Zt,
+	   "Gp" = object@Gp,
+	   "L" = object@L,
+	   "Lambda"= ....,
+	   "Lambdat"= ....,
+	   "RX" = object@RX,
+	   "RZX" = object@RZX,
+           "beta" = ....,
+           "theta"= ....,
+
+	   "n_rtrms" = object@dims[["nt"]], ##  = #{random-effect terms in the formula}
+	   "is_REML" = as.logical(object@dims[["REML"]]),
+
+           "..foo.." =# placeholder!
+           stop(gettextf("'%s' is not implemented yet",
+                         sprintf("getME(*, \"%s\")", name))),
+
+	   ## otherwise
+	   stop(sprintf("Mixed-Effects extraction of '%s' is not available for class \"%s\"",
+			name, class(object))))
+
+}
