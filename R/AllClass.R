@@ -35,8 +35,18 @@ merPredD <-                 # Do we need the generator object? Probably - at lea
                          ptr <<- .Call(merPredDCreate, X, Zt, Lambdat, Lind, theta)
                          callSuper(...)
                      },
-                     P = function() .Call(merPredDPvec, ptr),
-                     RX = function() .Call(merPredDRX, ptr),
+                     L = function() {
+                         'returns the current value of the sparse Cholesky factor'
+                         .Call(merPredDL, ptr)
+                     },
+                     P = function() {
+                         'returns the permutation vector for the sparse Cholesky factor'
+                         .Call(merPredDPvec, ptr)
+                     },
+                     RX = function() {
+                         'returns the dense downdated Cholesky factor for the fixed-effects parameters'
+                         .Call(merPredDRX, ptr)
+                     },
                      RXdiag = function() .Call(merPredDRXdiag, ptr),
                      RZX = function() .Call(merPredDRZX, ptr),
                      VtV = function() .Call(merPredDVtV, ptr),

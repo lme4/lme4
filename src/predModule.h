@@ -169,7 +169,10 @@ namespace lme4Eigen {
     public:
 	merPredD(S4, S4, S4, IntegerVector, NumericVector);
 
-	IntegerVector          Pvec() const ;
+	ChmDecomp                 L()       {return d_L;}
+	const ChmDecomp           L() const {return d_L;}
+
+	IntegerVector          Pvec() const;
 
 	MatrixXd                 RX() const {MatrixXd ans = d_RX.matrixU(); return ans;}
 	MatrixXd                RXi() const {return d_RX.matrixU().solve(MatrixXd::Identity(d_p,d_p));}

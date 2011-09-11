@@ -9,22 +9,23 @@ static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(lmerDeviance, 3),
 
-    CALLDEF(lmerRespCreate, 1),	 // generate external pointer
+    CALLDEF(lmerRespCreate, 1),	  // generate external pointer
 
-    CALLDEF(lmerRespsetREML, 2), // setters
+    CALLDEF(lmerRespsetREML, 2),  // setters
 
-    CALLDEF(lmerRespREML, 1),	 // getters
+    CALLDEF(lmerRespREML, 1),	  // getters
 
-    CALLDEF(lmerRespLaplace, 4), // methods
+    CALLDEF(lmerRespLaplace, 4),  // methods
     CALLDEF(lmerRespupdateMu, 2),
 
     CALLDEF(merPredDCreate, 5),	  // generate external pointer
 
-    CALLDEF(merPredDsetTheta, 2), //setters
+    CALLDEF(merPredDsetTheta, 2), // setters
     CALLDEF(merPredDsetBeta0, 2),
     CALLDEF(merPredDsetU0, 2),
 
-    CALLDEF(merPredDLambdat, 1), //getters
+    CALLDEF(merPredDL, 1),	  // getters 
+    CALLDEF(merPredDLambdat, 1), 
     CALLDEF(merPredDLamtUt, 1),
     CALLDEF(merPredDPvec, 1),
     CALLDEF(merPredDRX, 1),

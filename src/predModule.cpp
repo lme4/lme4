@@ -227,6 +227,12 @@ extern "C" {
 	XPtr<lme4Eigen::merPredD>(ptr)->setU0(as<Eigen::VectorXd>(u0));
 	END_RCPP;
     }
+
+    SEXP merPredDL(SEXP ptr) {
+	BEGIN_RCPP;
+	return ::M_chm_factor_to_SEXP(XPtr<lme4Eigen::merPredD>(ptr)->L().factor(), 0);
+	END_RCPP;
+    }
     
     SEXP merPredDLambdat(SEXP ptr) {
 	BEGIN_RCPP;
