@@ -1,3 +1,45 @@
+2011-09-11  Douglas Bates <bates@stat.wisc.edu>
+
+	* tests/vcov-etc.R, tests/lmer-conv.R: Test using this package
+	* R/AllClass.R, src/init.cpp, src/predModule.cpp, src/predModule.h: Add
+	  capability of extracting L from a merPredD object
+
+2011-09-10  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION, NAMESPACE, R/lmer.R, man/Pastes.Rd, man/Penicillin.Rd,
+	  man/bootMer.Rd, man/getL.Rd, man/getME.Rd, man/merMod-class.Rd:
+	  getME() for all three(!) versions of lme4 -- deprecate getL() where it
+	  exists
+
+2011-09-02  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/init.cpp, src/predModule.cpp, src/predModule.h: Drop the check for
+	  diagonal Lambda. Cache the value of LamtUt and update it in place with
+	  new method updateLamtUt.
+
+2011-08-31  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/init.cpp, src/predModule.cpp, src/predModule.h: Finally got a
+	  work-around for the "pruning of sparse product" problem. Also added a
+	  diagonalLambda method.
+	* R/AllClass.R: Add a "fitted" method to the lmerResp reference class.
+	  Re-arrange code.
+
+2011-08-30  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/predModule.cpp, src/predModule.h: Drop some debugging code.
+	  Isolate the calculation of LamtUt to try to find out what goes wrong
+	  in there.
+	* R/lmer.R: Update the ranef method for merPredD storing Lambdat, not
+	  Lambda
+
+2011-08-29  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/AllGeneric.R, R/utilities.R, src/init.cpp, src/predModule.cpp,
+	  src/respModule.cpp, src/respModule.h: Code cleanup - remove exception
+	  declarations, use specific 'using' statements within blocks instead of
+	  'using namespace' statements.
+
 2011-08-28  Douglas Bates <bates@stat.wisc.edu>
 
 	* NAMESPACE, src/eigen.h, src/glmFamily.cpp, src/glmFamily.h,
