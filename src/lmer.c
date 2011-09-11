@@ -1844,12 +1844,12 @@ SEXP mer_postVar(SEXP x, SEXP which)
 SEXP mer_ST_chol(SEXP x)
 {
     SEXP ans = PROTECT(duplicate(GET_SLOT(x, lme4_STSym)));
-    int ncmax, nt = DIMS_SLOT(x)[nt_POS];
+    int nt = DIMS_SLOT(x)[nt_POS];
     int *nc = Alloca(nt, int), *nlev = Alloca(nt, int);
     double **st = Alloca(nt, double*);
     R_CheckStack();
 
-    ncmax = ST_nc_nlev(ans, Gp_SLOT(x), st, nc, nlev);
+    ST_nc_nlev(ans, Gp_SLOT(x), st, nc, nlev);
     for (int k = 0; k < nt; k++) {
 	if (nc[k] > 1) {	/* nothing to do for nc[k] == 1 */
 	    int nck = nc[k], nckp1 = nc[k] + 1;
@@ -2057,7 +2057,7 @@ SEXP merMCMC_VarCorr(SEXP x, SEXP typP)
     double *sig = SLOT_REAL_NULL(x, lme4_sigmaSym);
     SEXP ans = PROTECT(allocMatrix(REALSXP, nsamp, np + (sig ? 1 : 0)));
     double *av = REAL(ans), *STx = REAL(ST);
-    double *as = av + nsamp * np, *t1, *t2, var;
+    double *as = av + nsamp * np; /*, *t1, *t2; */
     int *nlev = Alloca(nt, int);
     R_CheckStack();
 
@@ -2065,15 +2065,17 @@ SEXP merMCMC_VarCorr(SEXP x, SEXP typP)
 	nlev[j] = (Gp[j + 1] - Gp[j])/nc[j];
 	if (maxnc < nc[j]) maxnc = nc[j];
     }
+#if 0
     if (maxnc > 1) {
 	t1 = Alloca(maxnc * maxnc, double);
 	t2 = Alloca(maxnc * maxnc, double);
 	R_CheckStack();
     }
-
+#endif
     for (int i = 0; i < nsamp; i++) {
-	var = 1; pos = 0;
-	if (sig) var = as[i] = sig[i] * sig[i];
+	/* var = 1; */
+	pos = 0;
+	if (sig) as[i] = sig[i] * sig[i];
 	for (int k = 0; k < nt; k++) {
 	    if (nc[k] < 2) {
 		double sd = STx[pos + i * np] * sig[i];
@@ -2105,7 +2107,7 @@ SEXP mer_validate(SEXP x)
     const int n = dd[n_POS], nAGQ = dd[nAGQ_POS],
 	nt = dd[nt_POS], nfl = LENGTH(flistP),
 	p = dd[p_POS], q = dd[q_POS], s = dd[s_POS];
-    int nq, nv = n * s;
+    int nv = n * s;
     CHM_SP Zt = Zt_SLOT(x), A =  A_SLOT(x);
     CHM_FR L = L_SLOT(x);
     char *buf = Alloca(BUF_SIZE + 1, char);
@@ -2159,12 +2161,10 @@ SEXP mer_validate(SEXP x)
     if (chkDims(buf, BUF_SIZE, x, lme4_RZXSym, q, p)) return(mkString(buf));
     if (chkDims(buf, BUF_SIZE, x, lme4_RXSym, p, p)) return(mkString(buf));
 
-    nq = 0;
     for (int i = 0; i < LENGTH(flistP); i++) {
 	SEXP fli = VECTOR_ELT(flistP, i);
 	if (!isFactor(fli))
 	    return mkString(_("flist must be a list of factors"));
-/* 	nq += dm[0] * LENGTH(getAttrib(fli, R_LevelsSymbol)); */
     }
     for (int i = 0; i < nt; i++) {
 	SEXP STi = VECTOR_ELT(ST, i);
@@ -2175,11 +2175,6 @@ SEXP mer_validate(SEXP x)
 	if (Gp[i] > Gp[i + 1])
 	    return mkString(_("Gp must be non-decreasing"));
     }
-#if 0
-/* FIXME: Need to incorporate the assign attribute in the calculation of nq */
-    if (q != nq)
-	return mkString(_("q is not sum of columns by levels"));
-#endif
     return ScalarLogical(1);
 }
 
