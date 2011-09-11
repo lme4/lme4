@@ -1,5 +1,7 @@
 2011-09-11  Douglas Bates <bates@stat.wisc.edu>
 
+	* src/predModule.[h,cpp]: Wrote native C++ L() method. Somehow calling
+	  ::M_chm_factor_as_SEXP was messing up memory.
 	* tests/vcov-etc.R, tests/lmer-conv.R: Test using this package
 	* R/AllClass.R, src/init.cpp, src/predModule.cpp, src/predModule.h: Add
 	  capability of extracting L from a merPredD object
