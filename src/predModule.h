@@ -169,9 +169,6 @@ namespace lme4Eigen {
     public:
 	merPredD(S4, S4, S4, IntegerVector, NumericVector);
 
-	ChmDecomp                 L()       {return d_L;}
-	const ChmDecomp           L() const {return d_L;}
-
 	IntegerVector          Pvec() const;
 
 	MatrixXd                 RX() const {MatrixXd ans = d_RX.matrixU(); return ans;}
@@ -184,6 +181,8 @@ namespace lme4Eigen {
 	VectorXd               beta(const Scalar& f) const;
 	VectorXd            linPred(const Scalar& f) const;
 	VectorXd                  u(const Scalar& f) const;
+
+	S4                        L() const;
 
 	Scalar                 ldL2() const {return d_ldL2;}
 	Scalar                ldRX2() const {return d_ldRX2;}
