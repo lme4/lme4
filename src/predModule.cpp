@@ -190,6 +190,37 @@ namespace lme4Eigen {
 	int*                 ppt = (int*)cf->Perm;
 	return IntegerVector(ppt, ppt + cf->n);
     }
+
+    S4 merPredD::L() const {
+	const cholmod_factor* f = d_L.factor();
+	if (f->minor < f->n)
+	    throw runtime_error("CHOLMOD factorization was unsuccessful");
+
+	S4 ans(std::string(f->is_super ? "dCHMsuper" : "dCHMsimpl"));
+	ans.slot("Dim") = Rcpp::Dimension(f->n, f->n);
+	ans.slot("perm") = Pvec();
+	ans.slot("colcount") = IntegerVector((int*)f->ColCount, (int*)f->ColCount + f->n);
+	IntegerVector tt(f->is_super ? 6 : 4);
+	tt[0] = f->ordering; tt[1] = f->is_ll;
+	tt[2] = f->is_super; tt[3] = f->is_monotonic;
+	ans.slot("type") = tt;
+	if (f->is_super) {
+	    tt[4] = f->maxcsize; tt[5] = f->maxesize;
+	    ans.slot("super") = IntegerVector((int*)f->super, ((int*)f->super) + f->nsuper + 1);
+	    ans.slot("pi")    = IntegerVector((int*)f->pi, ((int*)f->pi) + f->nsuper + 1);
+	    ans.slot("px")    = IntegerVector((int*)f->px, ((int*)f->px) + f->nsuper + 1);
+	    ans.slot("s")     = IntegerVector((int*)f->s, ((int*)f->s) + f->ssize);
+	    ans.slot("x")     = NumericVector((double*)f->x, ((double*)f->x) + f->xsize);
+	} else {
+	    ans.slot("i")     = IntegerVector((int*)f->i, ((int*)f->i) + f->nzmax);
+	    ans.slot("p")     = IntegerVector((int*)f->p, ((int*)f->p) + f->n + 1);
+	    ans.slot("x")     = NumericVector((double*)f->x, ((double*)f->x) + f->nzmax);
+	    ans.slot("nz")    = IntegerVector((int*)f->nz, ((int*)f->nz) + f->n);
+	    ans.slot("nxt")   = IntegerVector((int*)f->next, ((int*)f->next) + f->n + 2);
+	    ans.slot("prv")   = IntegerVector((int*)f->prev, ((int*)f->prev) + f->n + 2);
+	}
+	return ans;
+    }
 }
 
 extern "C" {
@@ -199,6 +230,7 @@ extern "C" {
     using Rcpp::XPtr;
     using Rcpp::as;
     using Rcpp::wrap;
+
 
     SEXP merPredDCreate(SEXP Xs, SEXP Zts, SEXP Lambdats, SEXP Linds, SEXP thetas) {
 	BEGIN_RCPP;
@@ -230,7 +262,7 @@ extern "C" {
 
     SEXP merPredDL(SEXP ptr) {
 	BEGIN_RCPP;
-	return ::M_chm_factor_to_SEXP(XPtr<lme4Eigen::merPredD>(ptr)->L().factor(), 0);
+	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->L());
 	END_RCPP;
     }
     
