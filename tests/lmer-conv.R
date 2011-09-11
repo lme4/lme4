@@ -1,7 +1,7 @@
 ### lmer() convergence testing / monitoring / ...
 ##  ------------------
 ### The output of tests here are *not* 'diff'ed  (<==> no *.Rout.save file)
-library(lme4a)
+library(lme4Eigen)
 
 ## convergence on boundary warnings
 load(system.file("external/test3comp.rda", package = "Matrix"))
