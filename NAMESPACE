@@ -96,6 +96,7 @@ export(
        fixef,
        getL, getME,
        glmer,
+       glmerResp,
        isNested,
        lmList,
        lmer,

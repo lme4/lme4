@@ -68,7 +68,7 @@ namespace lme4Eigen {
 	const VectorXd&          eta() const {return d_eta;}
 	const std::string&    family() const {return d_fam.fam();}
 	const std::string&      link() const {return d_fam.lnk();}
-	double               Laplace(double,double,double)const;
+	double               Laplace(double,double,double) const;
 	double                 pwrss() const {return d_pwrss;}
 	double                resDev() const {return devResid().sum();}
 	double              updateMu(const VectorXd&);
@@ -97,6 +97,21 @@ namespace lme4Eigen {
 }
 
 extern "C" {
+    SEXP glmerRespCreate(SEXP,SEXP);
+
+    SEXP glmerRespLaplace(SEXP, SEXP, SEXP, SEXP);
+    SEXP glmerRespdevResid(SEXP);
+    SEXP glmerRespeta(SEXP);
+    SEXP glmerRespfamily(SEXP);
+    SEXP glmerResplink(SEXP);
+    SEXP glmerRespresDev(SEXP);
+    SEXP glmerRespsqrtWrkWt(SEXP);
+    SEXP glmerRespupdateMu(SEXP,SEXP);
+    SEXP glmerRespupdateWts(SEXP);
+    SEXP glmerRespvariance(SEXP);
+    SEXP glmerRespwrkResids(SEXP);
+    SEXP glmerRespwrkResp(SEXP);
+
     SEXP lmerRespCreate(SEXP);
 
     SEXP lmerRespsetREML(SEXP, SEXP);

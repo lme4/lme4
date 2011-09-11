@@ -133,10 +133,92 @@ namespace lme4Eigen {
 }
 
 extern "C" {
+    using Rcpp::List;
     using Rcpp::NumericVector;
     using Rcpp::XPtr;
     using Rcpp::as;
     using Rcpp::wrap;
+
+    SEXP glmerRespCreate(SEXP fams, SEXP ys) {
+	BEGIN_RCPP;
+	lme4Eigen::glmerResp *ans = new lme4Eigen::glmerResp(List(fams), NumericVector(ys));
+	return wrap(XPtr<lme4Eigen::glmerResp>(ans, true));
+	END_RCPP;
+    }
+    
+    SEXP glmerRespLaplace(SEXP ptr_, SEXP ldL2, SEXP ldRX2, SEXP sqrL) {
+	BEGIN_RCPP;
+	return ::Rf_ScalarReal(XPtr<lme4Eigen::glmerResp>(ptr_)->Laplace(::Rf_asReal(ldL2),
+									 ::Rf_asReal(ldRX2),
+									 ::Rf_asReal(sqrL)));
+	END_RCPP;
+    }
+
+    SEXP glmerRespupdateMu(SEXP ptr_, SEXP gamma) {
+	BEGIN_RCPP;
+	return ::Rf_ScalarReal(XPtr<lme4Eigen::glmerResp>(ptr_)->updateMu(as<Eigen::VectorXd>(gamma)));
+	END_RCPP;
+    }
+
+    SEXP glmerRespdevResid(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::glmerResp>(ptr_)->devResid());
+	END_RCPP;
+    }
+
+    SEXP glmerRespeta(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::glmerResp>(ptr_)->eta());
+	END_RCPP;
+    }
+
+    SEXP glmerRespfamily(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::glmerResp>(ptr_)->family());
+	END_RCPP;
+    }
+
+    SEXP glmerResplink(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::glmerResp>(ptr_)->link());
+	END_RCPP;
+    }
+
+    SEXP glmerRespresDev(SEXP ptr_) {
+	BEGIN_RCPP;
+	return ::Rf_ScalarReal(XPtr<lme4Eigen::glmerResp>(ptr_)->resDev());
+	END_RCPP;
+    }
+
+    SEXP glmerRespsqrtWrkWt(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::glmerResp>(ptr_)->sqrtWrkWt());
+	END_RCPP;
+    }
+
+    SEXP glmerRespupdateWts(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::glmerResp>(ptr_)->updateWts());
+	END_RCPP;
+    }
+
+    SEXP glmerRespvariance(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::glmerResp>(ptr_)->variance());
+	END_RCPP;
+    }
+
+    SEXP glmerRespwrkResids(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::glmerResp>(ptr_)->wrkResids());
+	END_RCPP;
+    }
+
+    SEXP glmerRespwrkResp(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::glmerResp>(ptr_)->wrkResp());
+	END_RCPP;
+    }
 
     SEXP lmerRespCreate(SEXP ys) {
 	BEGIN_RCPP;

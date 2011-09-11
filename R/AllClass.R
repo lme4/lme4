@@ -64,6 +64,79 @@ merPredD <-                 # Do we need the generator object? Probably - at lea
                 )
 merPredD$lock("X", "Zt", "Lind")
 
+setOldClass("family")
+
+glmerResp <-
+    setRefClass("glmerResp",
+                fields =
+                list(
+                     family = "family",
+                     y = "numeric",
+                     ptr = "externalptr",
+                     offset = function(value)
+                     if (missing(value)) .Call(modRespoffset, ptr) else .Call(modRespsetOffset, ptr, as.numeric(value)),
+                     weights = function(value)
+                     if (missing(value)) .Call(modRespweights, ptr) else .Call(modRespsetWeights, ptr, as.numeric(value))
+                     ),
+                methods =
+                list(
+                     initialize = function(fam, y, ...) {
+                         if (missing(y)) stop("response vector y must be specified")
+                         y <<- as.numeric(y)
+                         if (missing(fam) || !inherits(fam, "family"))
+                             stop("glm family must be specified")
+                         family <<- fam
+                         ptr <<- .Call(glmerRespCreate, family, y)
+                         callSuper(...)
+                     },
+                     devResid = function() {
+                         'returns the vector of deviance residuals'
+                         .Call(glmerRespdevResid, ptr)
+                     },
+                     eta = function() {
+                         'returns the linear predictor vector before any offset is added'
+                         .Call(glmerRespeta, ptr)
+                     },
+                     fam = function() {
+                         'returns the name of the glm family'
+                         .Call(glmerRespfamily, ptr)
+                     },
+                     fitted = function() {
+                         'returns the value of the linear predictor'
+                         .Call(modRespmu, ptr)
+                     },
+                     Laplace = function(ldL2, ldRX2, sqrL) {
+                         'returns the profiled deviance or REML criterion'
+                         .Call(glmerRespLaplace, ptr, ldL2, ldRX2, sqrL)
+                     },
+                     link = function() {
+                         'returns the name of the glm link'
+                         .Call(glmerResplink, ptr)
+                     },
+                     updateMu = function(gamma) {
+                         'from the linear predictor, gamma, update the\nconditional mean response, mu, residuals and weights'
+                         .Call(glmerRespupdateMu, ptr, as.numeric(gamma))
+                     },
+                     wrkResid = function() {
+                         'returns the vector of working residuals'
+                         .Call(modRespwrkResid, ptr)
+                     },
+                     wrkResp = function() {
+                         'returns the vector of working residuals'
+                         .Call(modRespwrkResp, ptr)
+                     },
+                     wrss = function() {
+                         'returns the weighted residual sum of squares'
+                         .Call(modRespwrss, ptr)
+                     },
+                     wtres = function() {
+                         'returns the vector of weighted residuals'
+                         .Call(modRespwtres, ptr)
+                     })
+                )
+
+glmerResp$lock("family", "y")
+
 lmerResp <-
     setRefClass("lmerResp",
                 fields =

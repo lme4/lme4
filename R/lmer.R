@@ -151,7 +151,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     resp$updateWts()
     pp$installPars(1)
 
-    pwrssUpdate(rem, fem, resp, verbose)
+    pwrssUpdate(rem, resp, verbose)
     u0 <- rem$u0
     coef0 <- fem$coef0
     if (doFit) {
@@ -220,12 +220,15 @@ mkRespMod2 <- function(fr, family = NULL, nlenv = NULL, nlmod = NULL) {
     rho$etastart <- model.extract(fr, "etastart")
     rho$mustart <- model.extract(fr, "mustart")
     rho$weights <- ans$weights
+    rho$offset <- ans$offset
     rho$nobs <- n
     if (is.null(rho$y)) rho$y <- ans$y
     eval(family$initialize, rho)
     family$initialize <- NULL	    # remove clutter from str output
 
-    ans <- new(glmerResp, family, rho$y, rho$weights, ans$offset, rho$n)
+    ans <- new("glmerResp", family, rho$y)
+    ans$weights <- rho$weights
+    ans$offset <- rho$offset
     ans$updateMu(family$linkfun(unname(rho$mustart)))
     ans
 }
@@ -931,7 +934,7 @@ getME <- function(object,
 	   "Zt"= PR$Zt,
            "u" = PR$ u0 + PR$ delu(),
            ## "Gp"
-	   "L"= re@L,
+	   "L"= PR$ L(),
 	   "Lambda"= t(PR$ Lambdat),
 	   "Lambdat"= PR$ Lambdat,
 	   "RX" = PR $ RX,
