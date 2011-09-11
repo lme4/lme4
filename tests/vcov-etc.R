@@ -1,4 +1,4 @@
-stopifnot(require(lme4a))
+stopifnot(require(lme4Eigen))
 ## "MEMSS" is just 'Suggest' -- must still work, when it's missing:
 if(data(ergoStool, package="MEMSS") != "ergoStool") {
     cat("'ergoStool' data from package 'MEMSS' is not available --> skipping test\n")
