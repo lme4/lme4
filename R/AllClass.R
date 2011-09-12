@@ -63,7 +63,11 @@ setRefClass("merPredD", # Predictor class for mixed-effects models with dense X
 
                  linPred = function(fac) .Call(merPredDlinPred, ptr, as.numeric(fac)),
                  installPars = function(fac) .Call(merPredDinstallPars, ptr, as.numeric(fac)),
-                 sqrL = function(fac) .Call(merPredDsqrL, ptr, as.numeric(fac))
+                 solve = function() .Call(merPredDsolve, ptr),
+                 sqrL = function(fac) .Call(merPredDsqrL, ptr, as.numeric(fac)),
+                 updateDecomp = function() .Call(merPredDupdateDecomp, ptr),
+                 updateRes = function(wtres) .Call(merPredDupdateRes, ptr, as.numeric(wtres)),
+                 updateXwts = function(wts) .Call(merPredDupdateXwts, ptr, as.numeric(wts))
                  )
             )
 merPredD$lock("X", "Zt", "Lind")
@@ -118,17 +122,25 @@ glmerResp <-
                          'returns the name of the glm link'
                          .Call(glmerResplink, ptr)
                      },
+                     sqrtWrkWt = function() {
+                         'returns the square root of the working X weights'
+                         .Call(glmerRespsqrtWrkWt, ptr)
+                     },
                      updateMu = function(gamma) {
                          'from the linear predictor, gamma, update the\nconditional mean response, mu, residuals and weights'
                          .Call(glmerRespupdateMu, ptr, as.numeric(gamma))
                      },
-                     wrkResid = function() {
+                     updateWts = function() {
+                         'update the residual and X weights from the current value of eta'
+                         .Call(glmerRespupdateWts, ptr)
+                     },
+                     wrkResids = function() {
                          'returns the vector of working residuals'
-                         .Call(modRespwrkResid, ptr)
+                         .Call(glmerRespwrkResids, ptr)
                      },
                      wrkResp = function() {
                          'returns the vector of working residuals'
-                         .Call(modRespwrkResp, ptr)
+                         .Call(glmerRespwrkResp, ptr)
                      },
                      wrss = function() {
                          'returns the weighted residual sum of squares'

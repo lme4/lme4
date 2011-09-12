@@ -19,6 +19,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(glmerResplink, 1),
     CALLDEF(glmerRespresDev, 1),
     CALLDEF(glmerRespsqrtWrkWt, 1),
+    CALLDEF(glmerRespsqrtXwt, 1),
     CALLDEF(glmerRespvariance, 1),
     CALLDEF(glmerRespwrkResids, 1),
     CALLDEF(glmerRespwrkResp, 1),
@@ -27,7 +28,7 @@ static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(glmerRespLaplace, 4),  // methods
     CALLDEF(glmerRespupdateMu, 2),
-    CALLDEF(glmerRespupdateWts, 2),
+    CALLDEF(glmerRespupdateWts, 1),
 
     CALLDEF(lmerRespCreate, 1),	   // generate external pointer
 
@@ -64,7 +65,11 @@ static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(merPredDlinPred, 2),  // methods
     CALLDEF(merPredDinstallPars, 2),
-    CALLDEF(merPredDsqrL, 2),	 
+    CALLDEF(merPredDsolve, 1),
+    CALLDEF(merPredDsqrL, 2),
+    CALLDEF(merPredDupdateDecomp, 1),
+    CALLDEF(merPredDupdateXwts, 2),
+    CALLDEF(merPredDupdateRes, 2),
 
     CALLDEF(modRespsetOffset, 2),
     CALLDEF(modRespsetWeights, 2),

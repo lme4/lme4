@@ -151,7 +151,7 @@ namespace lme4Eigen {
 	    DiagonalMatrix<double, Dynamic> W(sqrtXwt.asDiagonal());
 	    d_V         = W * d_X;
 	    d_Ut        = d_Zt * W;
-	} else throw invalid_argument("updateRes: no provision for nlmer yet");
+	} else throw invalid_argument("updateXwts: no provision for nlmer yet");
 	d_VtV.setZero().selfadjointView<Upper>().rankUpdate(d_V.adjoint());
     }
 
@@ -224,6 +224,8 @@ namespace lme4Eigen {
 }
 
 extern "C" {
+    using Eigen::VectorXd;
+
     using Rcpp::IntegerVector;
     using Rcpp::NumericVector;
     using Rcpp::S4;
@@ -356,12 +358,6 @@ extern "C" {
 	END_RCPP;
     }
     
-    SEXP merPredDsqrL(SEXP ptr, SEXP fac) {
-	BEGIN_RCPP;
-	return ::Rf_ScalarReal(XPtr<lme4Eigen::merPredD>(ptr)->sqrL(::Rf_asReal(fac)));
-	END_RCPP;
-    }
-    
     SEXP merPredDtheta(SEXP ptr) {
 	BEGIN_RCPP;
 	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->theta());
@@ -380,4 +376,39 @@ extern "C" {
 	END_RCPP;
     }
 	    
+    SEXP merPredDsolve(SEXP ptr) {
+	BEGIN_RCPP;
+	XPtr<lme4Eigen::merPredD>(ptr)->solve();
+	return ::R_NilValue;
+	END_RCPP;
+    }
+
+    SEXP merPredDsqrL(SEXP ptr, SEXP fac) {
+	BEGIN_RCPP;
+	return ::Rf_ScalarReal(XPtr<lme4Eigen::merPredD>(ptr)->sqrL(::Rf_asReal(fac)));
+	END_RCPP;
+    }
+    
+    SEXP merPredDupdateDecomp(SEXP ptr) {
+	BEGIN_RCPP;
+	XPtr<lme4Eigen::merPredD>(ptr)->updateDecomp();
+	return ::R_NilValue;
+	END_RCPP;
+    }
+
+    SEXP merPredDupdateRes(SEXP ptr, SEXP wtres) {
+	BEGIN_RCPP;
+	XPtr<lme4Eigen::merPredD>(ptr)->updateRes(as<VectorXd>(wtres));
+	return ::R_NilValue;
+	END_RCPP;
+    }
+	    
+    SEXP merPredDupdateXwts(SEXP ptr, SEXP wts) {
+	BEGIN_RCPP;
+	XPtr<lme4Eigen::merPredD>(ptr)->updateXwts(as<VectorXd>(wts));
+	return ::R_NilValue;
+	END_RCPP;
+    }
+	    
+    
 }

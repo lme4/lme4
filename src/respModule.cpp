@@ -196,6 +196,12 @@ extern "C" {
 	END_RCPP;
     }
 
+    SEXP glmerRespsqrtXwt(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::glmerResp>(ptr_)->sqrtXwt());
+	END_RCPP;
+    }
+
     SEXP glmerRespupdateWts(SEXP ptr_) {
 	BEGIN_RCPP;
 	return wrap(XPtr<lme4Eigen::glmerResp>(ptr_)->updateWts());

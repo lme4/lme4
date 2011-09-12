@@ -241,6 +241,10 @@ extern "C" {
 
     SEXP merPredDlinPred(SEXP, SEXP); // methods
     SEXP merPredDinstallPars(SEXP, SEXP);
+    SEXP merPredDsolve(SEXP);
     SEXP merPredDsqrL(SEXP,SEXP);
+    SEXP merPredDupdateDecomp(SEXP);
+    SEXP merPredDupdateRes(SEXP,SEXP);
+    SEXP merPredDupdateXwts(SEXP,SEXP);
 }
 #endif // LME4_EIGEN_H

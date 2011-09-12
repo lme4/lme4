@@ -106,6 +106,7 @@ extern "C" {
     SEXP glmerResplink(SEXP);
     SEXP glmerRespresDev(SEXP);
     SEXP glmerRespsqrtWrkWt(SEXP);
+    SEXP glmerRespsqrtXwt(SEXP);
     SEXP glmerRespupdateMu(SEXP,SEXP);
     SEXP glmerRespupdateWts(SEXP);
     SEXP glmerRespvariance(SEXP);
