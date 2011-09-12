@@ -1,4 +1,6 @@
 ## -*- mode: makefile; -*-
 
 PKG_LIBS = `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"`
+## Uncomment the following line to suppress package check warnings about __assert
+#PKG_CXXFLAGS = -DNDEBUG  
 
