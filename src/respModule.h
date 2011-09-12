@@ -63,7 +63,8 @@ namespace lme4Eigen {
 	VectorXd               muEta() const {return d_fam.muEta(d_eta);}
         VectorXd           sqrtWrkWt() const;
 	VectorXd            variance() const {return d_fam.variance(d_mu);}
-        VectorXd           wrkResids() const {return ((d_y - d_mu).array()/muEta().array()).matrix();}
+//        VectorXd           wrkResids() const {return ((d_y - d_mu).array()/muEta().array()).matrix();}
+        VectorXd           wrkResids() const {return (d_y - d_mu).cwiseQuotient(muEta());}
         VectorXd             wrkResp() const {return (d_eta - d_offset) + wrkResids();}
 	const VectorXd&          eta() const {return d_eta;}
 	const std::string&    family() const {return d_fam.fam();}
