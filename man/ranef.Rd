@@ -1,8 +1,6 @@
 \name{ranef}
-\docType{methods}
 \alias{ranef}
-\alias{ranef-methods}
-\alias{ranef,merMod-method}
+\alias{ranef.merMod}% \alias{ranef,merMod-method}
 \title{Extract the modes of the random effects}
 \description{
   A generic function to extract the conditional modes of the random

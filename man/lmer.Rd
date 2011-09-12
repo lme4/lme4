@@ -1,8 +1,7 @@
 \name{lmer}
 \alias{lmer}
-\alias{lmer2}
+% \alias{lmer2}
 \alias{glmer}
-\alias{glmer2}
 \alias{nlmer}
 \concept{LMM}% << so it's found; ditto for these:
 \concept{GLMM}
@@ -15,14 +14,17 @@
 \usage{
 lmer(formula, data, REML = TRUE, sparseX = FALSE,
      control = list(), start = NULL, verbose = 0L,
-     doFit = TRUE, compDev = TRUE, subset, weights,
-     na.action, offset, contrasts = NULL, \dots)
+     doFit = TRUE, %compDev = TRUE, _support too - FIXME? _
+     subset, weights,
+     na.action, offset, contrasts = NULL,
+     devFunOnly=FALSE,
+     \dots)
 
-lmer2(formula, data, REML = TRUE, sparseX = FALSE,
-      control = list(), start = NULL, verbose = 0,
-      doFit = TRUE, subset, weights,
-      na.action, offset, contrasts = NULL,
-      devFunOnly = FALSE, \dots)
+% lmer2(formula, data, REML = TRUE, sparseX = FALSE,
+%       control = list(), start = NULL, verbose = 0,
+%       doFit = TRUE, subset, weights,
+%       na.action, offset, contrasts = NULL,
+%       devFunOnly = FALSE, \dots)
 
 glmer(formula, data, family = gaussian, sparseX = FALSE,
       control = list(), start = NULL, verbose = 0, nAGQ = 1,
@@ -70,14 +72,14 @@ nlmer(formula, data, family = gaussian, start = NULL,
     \code{start} argument of the appropriate length is used as the
     starting value of \code{theta}.  In \code{nlmer} a numeric
       \code{start} argument is used as the starting values of the
-      \code{fixef} slot.} 
+      \code{fixef} slot.}
   \item{doFit}{logical scalar. When \code{doFit = FALSE} the model is
     not fit but instead a structure with the model matrices for the
     random-effects terms is returned, so they can be modified for
     special model forms. When \code{doFit = TRUE}, the default, the
     model is fit immediately.}
-  \item{compDev}{logical - should compiled code be used for the deviance
-    evaluation during the optimization of the parameters estimates?}
+  % \item{compDev}{logical - should compiled code be used for the deviance
+  %   evaluation during the optimization of the parameters estimates?}
   \item{subset, weights, na.action, offset, contrasts}{further model
     specification arguments as in \code{\link[stats]{lm}}; see there for
     details.}
@@ -105,8 +107,8 @@ nlmer(formula, data, family = gaussian, start = NULL,
   \code{REML} argument only applies to calls to \code{lmer} and the
   \code{nAGQ} argument only applies to calls to \code{glmer}.)
 
-  The \code{lmer2} function has the same purpose as \code{lmer} but uses
-  objects from reference classes defined in an Rcpp Module.
+  % The \code{lmer2} function has the same purpose as \code{lmer} but uses
+  % objects from reference classes defined in an Rcpp Module.
 
   Additional standard arguments to model-fitting functions can be passed
   to \code{lmer} or \code{glmer} or \code{nlmer}:

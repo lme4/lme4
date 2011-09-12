@@ -53,6 +53,18 @@
 %\references{}
 \examples{
 \dontshow{ # useful for the lme4-authors --- development, debugging, etc:
+ commandArgs()[-1]
+ if(FALSE) ## R environment variables:
+ local({ ne <- names(e <- Sys.getenv())
+         list(R    = e[grep("^R", ne)],
+              "_R" = e[grep("^_R",ne)]) })
+ Sys.getenv("R_ENVIRON")
+ Sys.getenv("R_PROFILE")
+ cat("R_LIBS:\n"); (RL <- strsplit(Sys.getenv("R_LIBS"), ":")[[1]])
+ nRL <- normalizePath(RL)
+ cat("and extra .libPaths():\n")
+ .libPaths()[is.na(match(.libPaths(), nRL))]
+
  sessionInfo()
  pkgI <- function(pkgname) {
    pd <- packageDescription(pkgname)
@@ -64,7 +76,7 @@
  pkgI("Rcpp")
  pkgI("minqa")
  pkgI("MatrixModels")
- pkgI("lme4a")
+ pkgI("lme4Eigen")
 }
 str(Dyestuff)
 dotplot(reorder(Batch, Yield) ~ Yield, Dyestuff,

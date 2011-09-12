@@ -3,6 +3,7 @@
 \Rdversion{1.1}
 \docType{class}
 \alias{merMod-class}
+%% FIXME --- currently only sigma() and show() ...
 \alias{anova,merMod-method}
 \alias{coef,merMod-method}
 %\alias{devcomp,merMod-method}
@@ -10,7 +11,6 @@
 \alias{fitted,merMod-method}
 %\alias{fixef,merMod-method}
 \alias{formula,merMod-method}
-%\alias{getL,merMod-method}
 \alias{logLik,merMod-method}
 \alias{model.frame,merMod-method}
 \alias{model.matrix,merMod-method}
@@ -18,7 +18,7 @@
 %\alias{profile,merMod-method}
 %\alias{ranef,merMod-method}
 \alias{show,merMod-method}
-%\alias{sigma,merMod-method}
+%\alias{sigma,merMod-method}-> ./sigma.Rd
 \alias{simulate,merMod-method}
 \alias{summary,merMod-method}
 \alias{terms,merMod-method}
@@ -38,35 +38,44 @@
   for the response.
 }
 \section{Objects from the Class}{
-  Objects can be created by calls of the form \code{new("merMod", ...)}.
-  More commonly the objects are created by calls to \code{\link{lmer}},
+  Objects are created by calls to \code{\link{lmer}},
   \code{\link{glmer}} or \code{\link{nlmer}}.
 }
 \section{Slots}{
   \describe{
     \item{\code{call}:}{The matched call to the function that generated
       the object.}
-    \item{\code{devcomp}:}{A list with two components:
-      \dQuote{\code{cmp}}, a numeric vector of components used to
-      evaluate the deviance, and \dQuote{\code{dims}}, an integer vector
-      of dimensions and flags.}
     \item{\code{frame}:}{The model frame used to evaluate the model matrices.}
-    \item{\code{re}:}{An \code{\linkS4class{reModule}} object
-      representing the random effects values and various matrices
-      associated with them.}
-    \item{\code{fe}:}{An \code{\linkS4class{feModule}} object
-      representing the fixed-effects parameters and various matrices
-      associated with them.}
-    \item{\code{resp}:}{An \code{\linkS4class{respModule}} object containing
-	information on the response, the fitted values, the residuals
-	and various forms of weights.  According to the class of this
-	object the model is a linear mixed model (\code{\link{lmer}}), a
-	generalized linear mixed model (\code{\link{glmer}}) or a
-	nonlinear mixed model (\code{\link{nlmer}}).}
+    \item{\code{flist}:}{Object of class \code{"list"} ~~ }
+    \item{\code{cnms}:}{Object of class \code{"list"} ~~ }
+    \item{\code{lower}:}{Object of class \code{"numeric"} ~~ }
+    \item{\code{theta}:}{Object of class \code{"numeric"} ~~ }
+    \item{\code{beta}:}{Object of class \code{"numeric"} ~~ }
+    \item{\code{u}:}{Object of class \code{"numeric"} ~~ }
+    \item{\code{devcomp}:}{Object of class \code{"list"} ~~ }
+    \item{\code{pp}:}{A prediction module object of class
+      \code{"\linkS4class{merPredD}"}.}
+    % \item{\code{devcomp}:}{A list with two components:
+    %   \dQuote{\code{cmp}}, a numeric vector of components used to
+    %   evaluate the deviance, and \dQuote{\code{dims}}, an integer vector
+    %   of dimensions and flags.}
+    % \item{\code{re}:}{An \code{\linkS4class{reModule}} object
+    %   representing the random effects values and various matrices
+    %   associated with them.}
+    % \item{\code{fe}:}{An \code{\linkS4class{feModule}} object
+    %   representing the fixed-effects parameters and various matrices
+    %   associated with them.}
+    % \item{\code{resp}:}{An \code{\linkS4class{respModule}} object containing
+    % 	information on the response, the fitted values, the residuals
+    % 	and various forms of weights.  According to the class of this
+    % 	object the model is a linear mixed model (\code{\link{lmer}}), a
+    % 	generalized linear mixed model (\code{\link{glmer}}) or a
+    % 	nonlinear mixed model (\code{\link{nlmer}}).}
   }
 }
 \section{Methods}{
   \describe{
+%% FIXME: all these are *not* there as S4 methods, apart from  show() and sigma()
     \item{anova}{\code{signature(object = "merMod")}: ... }
     \item{coef}{\code{signature(object = "merMod")}: ... }
     \item{devcomp}{\code{signature(x = "merMod")}: ... }
@@ -94,8 +103,9 @@
 %%\author{}
 
 \seealso{\code{\link{lmer}}, \code{\link{glmer}}, \code{\link{nlmer}},
-  \code{\linkS4class{reModule}}, \code{\linkS4class{feModule}},
-  \code{\linkS4class{respModule}}
+  % \code{\linkS4class{reModule}}, \code{\linkS4class{feModule}},
+  % \code{\linkS4class{respModule}}
+  \code{\linkS4class{merPredD}}
 }
 \examples{
 showClass("merMod")

@@ -1,13 +1,16 @@
 \name{getME}
-\alias{getME}
 \title{Extract or Get Generalize Components from a Fitted Mixed Effects Model}
+\alias{getME}
+%% these are deprecated:
+\alias{getL}
+\alias{getL,merMod-method}
 \description{
   Extract (or \dQuote{get}) \dQuote{components} -- in a generalized
-  sense -- from a fitted mixed    effects model, i.e. (in this version
-  of the package) from an \R object of class \code{"\linkS4class{mer}"}.
+  sense -- from a fitted mixed-effects model, i.e. (in this version
+  of the package) from an \R object of class \code{"\linkS4class{merMod}"}.
 
   The goal is to provide \dQuote{everything a user may want} from a
-  fitted \code{"mer"} object \emph{as far} as it is not available by
+  fitted \code{"merMod"} object \emph{as far} as it is not available by
   methods, such as \code{\link{fixef}}, \code{\link{ranef}},
   \code{\link{vcov}}, etc.
 }
@@ -16,7 +19,7 @@ getME(object, name)
 }
 \arguments{
   \item{object}{a fitted mixed-effects model of class
-    \code{"\linkS4class{mer}"}, i.e. typically the result of
+    \code{"\linkS4class{merMod}"}, i.e. typically the result of
     \code{\link{lmer}()}, \code{\link{glmer}()} or \code{\link{nlmer}()}.
   }
   \item{name}{a character string specifying the name of the
@@ -38,7 +41,7 @@ getME(object, name)
 }
 \examples{
 ## shows many methds you should consider *before* getME():
-showMethods(class = "mer")
+showMethods(class = "merMod")
 
 (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 Z <- getME(fm1, "Z")

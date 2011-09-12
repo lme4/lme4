@@ -45,8 +45,6 @@
 }
 \section{Methods}{
   \describe{
-    \item{getL}{\code{signature(x = "reModule")}: extract \eqn{L}
-      matrix, see \code{\link{getL}}.}
     \item{rcond}{\code{signature(x = "reTrms", norm = "character")}:
       Compute the reciprocal condition numbers (see \code{\link{rcond}})
       for each unique lower triangular block of \eqn{\Lambda}.  If one
@@ -54,9 +52,8 @@
       matrix of the corresponding random effect is close to singular.}
   }
 }
-%\references{
-%}
-\seealso{\code{\link{getL}}}
+\seealso{\code{\link{getME}}
+}
 \examples{
 showClass("reModule")
 showClass("reTrms")
