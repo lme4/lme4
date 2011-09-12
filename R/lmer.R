@@ -946,7 +946,6 @@ getME <- function(object,
 	   "REML" = rsp $ REML,
 	   "is_REML" = as.logical(rsp $ REML),# correct ??
 
-	   "L"= , # FIXME have 'Lind' and PR$sqrL(1) and ??
 	   "n_rtrms" =, ## FIXME length(PR$flist), ##  = #{random-effect terms in the formula}
 	   "Gp"= ,  # FIXME
 	   "..foo.." =# placeholder!

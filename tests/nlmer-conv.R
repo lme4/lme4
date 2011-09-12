@@ -1,7 +1,7 @@
 ### nlmer() convergence testing / monitoring / ...
 ##  -------------------
 ### The output of tests here are *not* 'diff'ed  (<==> no *.Rout.save file)
-library(lme4a)
+library(lme4Eigen)
 
 ## 'Theoph' Data modeling
 

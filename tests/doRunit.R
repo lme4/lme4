@@ -7,7 +7,7 @@
 
 
 if(require("RUnit", quietly = TRUE)) {
-    pkg <- "lme4a"
+    pkg <- "lme4Eigen"
 
     require( pkg, character.only=TRUE)
 

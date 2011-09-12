@@ -1,4 +1,4 @@
-library(lme4a)
+library(lme4Eigen)
 set.seed(101)
 d <- expand.grid(block=LETTERS[1:26],rep=1:100)
 d$x <- runif(nrow(d))

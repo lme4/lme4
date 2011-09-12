@@ -10,7 +10,7 @@ Description: Fit linear and generalized linear mixed-effects models.
  The models and their components are represented using S4 classes and
  methods.  The core computational algorithms are implemented using the
  Eigen C++ library for numerical linear algebra and RcppEigen "glue".
-Depends: methods, R(>= 2.14.0), Matrix(>= 0.9996875-0), lattice, stats, minqa(>= 1.1.15), Rcpp(>= 0.9.5), RcppEigen(>= 0.1.2)
+Depends: methods, R(>= 2.14.0), Matrix(>= 0.9996875-1), lattice, stats, minqa(>= 1.1.15), Rcpp(>= 0.9.5), RcppEigen(>= 0.1.2)
 LinkingTo: Rcpp, RcppEigen
 Imports: graphics, grid, nlme, splines, MatrixModels(>= 0.2.0)
 Suggests: mlmRev, MEMSS, boot, MASS, RUnit

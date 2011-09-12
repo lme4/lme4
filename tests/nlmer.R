@@ -1,4 +1,4 @@
-library(lme4a)
+library(lme4Eigen)
 
 allEQ <- function(x,y, tolerance = 4e-4, ...)
     all.equal.numeric(x,y, tolerance=tolerance, ...)

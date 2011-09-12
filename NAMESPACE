@@ -91,7 +91,7 @@ export(
 #       GHQ,
        VarCorr,
        bootMer,
-#       devcomp,
+       devcomp,
        findbars,
        fixef,
        getL, getME,
@@ -101,7 +101,7 @@ export(
        lmList,
        lmer,
        lmerResp,
-#       mkdevfun,
+       mkdevfun,
        nlmer,
        nobars,
        merPredD,
@@ -147,7 +147,7 @@ S3method(model.frame, merMod)
 S3method(model.matrix, merMod)
 S3method(print, merMod)
 S3method(profile, merMod)
-S3method(ranef, merMod)
+#S3method(ranef, merMod)-- do *not* hide (has extra args)
 S3method(residuals, merMod)
 S3method(simulate, merMod)
 S3method(summary, merMod)

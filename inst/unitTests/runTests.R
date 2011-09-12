@@ -1,4 +1,4 @@
-pkg <- "lme4a"
+pkg <- "lme4Eigen"
 
 if(require("RUnit", quietly = TRUE)) {
 

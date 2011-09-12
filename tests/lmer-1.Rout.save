@@ -17,7 +17,7 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > ### suppressPackageStartupMessages(...)  as we have an *.Rout.save to Rdiff against
-> stopifnot(suppressPackageStartupMessages(require(lme4a)))
+> stopifnot(suppressPackageStartupMessages(require(lme4Eigen)))
 > options(show.signif.stars = FALSE)
 > 
 > source(system.file("test-tools.R", package = "Matrix"))# identical3() etc
@@ -134,8 +134,8 @@ fm1  6 1763.9 1783.1 -875.97   1751.9 0.0639      1     0.8004
 + 	  all.equal(cov2cor(vcov(fm1))["(Intercept)", "Days"],
 + 		    -0.13755, tol=1e-4))
 > 
-> fm1ML <- lme4a:::refitML(fm1)
-> fm2ML <- lme4a:::refitML(fm2)
+> fm1ML <- lme4Eigen:::refitML(fm1)
+> fm2ML <- lme4Eigen:::refitML(fm2)
 > if(getRversion() > "2.11.0") {
 +     print(AIC(fm1ML, fm2ML))
 +     print(BIC(fm1ML, fm2ML))

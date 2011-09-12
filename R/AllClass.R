@@ -8,64 +8,69 @@ setClass("lmList",
 ## TODO: export
 setClass("lmList.confint", contains = "array")
 
-merPredD <-                 # Do we need the generator object? Probably - at least while debugging
-    setRefClass("merPredD", # Predictor class for mixed-effects models with dense X
-                fields =
-                list(
-                     X = "ddenseModelMatrix",
-                     Zt = "dgCMatrix",
-                     Lambdat = "dgCMatrix",
-                     Lind = "integer",
-                     ptr = "externalptr",
-                     beta0 = function(value)
-                     if (missing(value)) .Call(merPredDbeta0, ptr) else .Call(merPredDsetBeta0, ptr, value),
-                     theta = function(value)
-                     if (missing(value)) .Call(merPredDtheta, ptr) else .Call(merPredDsetTheta, ptr, value),
-                     u0 = function(value)
-                     if (missing(value)) .Call(merPredDu0, ptr) else .Call(merPredDsetU0, ptr, value)
-                     ),
-                methods =
-                list(
-                     initialize = function(X, Zt, Lambdat, Lind, theta, ...) {
-                         X <<- as(X, "ddenseModelMatrix")
-                         Zt <<- as(Zt, "dgCMatrix")
-                         Lambdat <<- as(Lambdat, "dgCMatrix")
-                         Lind <<- as.integer(Lind)
-                         stopifnot(all(sort(unique(Lind)) == seq_along(theta)))
-                         ptr <<- .Call(merPredDCreate, X, Zt, Lambdat, Lind, theta)
-                         callSuper(...)
-                     },
-                     L = function() {
-                         'returns the current value of the sparse Cholesky factor'
-                         .Call(merPredDL, ptr)
-                     },
-                     P = function() {
-                         'returns the permutation vector for the sparse Cholesky factor'
-                         .Call(merPredDPvec, ptr)
-                     },
-                     RX = function() {
-                         'returns the dense downdated Cholesky factor for the fixed-effects parameters'
-                         .Call(merPredDRX, ptr)
-                     },
-                     RXdiag = function() .Call(merPredDRXdiag, ptr),
-                     RZX = function() .Call(merPredDRZX, ptr),
-                     VtV = function() .Call(merPredDVtV, ptr),
-                     delb = function() .Call(merPredDdelb, ptr),
-                     delu = function() .Call(merPredDdelu, ptr),
-                     getLambda = function() .Call(merPredDLambda, ptr),
-                     ldL2 = function() .Call(merPredDldL2, ptr),
-                     ldRX2 = function() .Call(merPredDldRX2, ptr),
-                     unsc = function() .Call(merPredDunsc, ptr),
+### FIXME
+## shouldn't we have "merPred"  with two *sub* classes "merPredD" and "merPredS"
+## for the dense and sparse X cases ?
 
-                     linPred = function(fac) .Call(merPredDlinPred, ptr, as.numeric(fac)),
-                     installPars = function(fac) .Call(merPredDinstallPars, ptr, as.numeric(fac)),
-                     sqrL = function(fac) .Call(merPredDsqrL, ptr, as.numeric(fac))
-                     )
-                )
+merPredD <-                 # Do we need the generator object? Probably - at least while debugging
+setRefClass("merPredD", # Predictor class for mixed-effects models with dense X
+            fields =
+            list(
+                 X = "ddenseModelMatrix",
+                 Zt = "dgCMatrix",
+                 Lambdat = "dgCMatrix",
+                 Lind = "integer",
+                 ptr = "externalptr",
+                 beta0 = function(value)
+                 if (missing(value)) .Call(merPredDbeta0, ptr) else .Call(merPredDsetBeta0, ptr, value),
+                 theta = function(value)
+                 if (missing(value)) .Call(merPredDtheta, ptr) else .Call(merPredDsetTheta, ptr, value),
+                 u0 = function(value)
+                 if (missing(value)) .Call(merPredDu0, ptr) else .Call(merPredDsetU0, ptr, value)
+                 ),
+            methods =
+            list(
+                 initialize = function(X, Zt, Lambdat, Lind, theta, ...) {
+                     X <<- as(X, "ddenseModelMatrix")
+                     Zt <<- as(Zt, "dgCMatrix")
+                     Lambdat <<- as(Lambdat, "dgCMatrix")
+                     Lind <<- as.integer(Lind)
+                     stopifnot(all(sort(unique(Lind)) == seq_along(theta)))
+                     ptr <<- .Call(merPredDCreate, X, Zt, Lambdat, Lind, theta)
+                     callSuper(...)
+                 },
+                 L = function() {
+                     'returns the current value of the sparse Cholesky factor'
+                     .Call(merPredDL, ptr)
+                 },
+                 P = function() {
+                     'returns the permutation vector for the sparse Cholesky factor'
+                     .Call(merPredDPvec, ptr)
+                 },
+                 RX = function() {
+                     'returns the dense downdated Cholesky factor for the fixed-effects parameters'
+                     .Call(merPredDRX, ptr)
+                 },
+                 RXdiag = function() .Call(merPredDRXdiag, ptr),
+                 RZX = function() .Call(merPredDRZX, ptr),
+                 VtV = function() .Call(merPredDVtV, ptr),
+                 delb = function() .Call(merPredDdelb, ptr),
+                 delu = function() .Call(merPredDdelu, ptr),
+                 getLambda = function() .Call(merPredDLambda, ptr),
+                 ldL2 = function() .Call(merPredDldL2, ptr),
+                 ldRX2 = function() .Call(merPredDldRX2, ptr),
+                 unsc = function() .Call(merPredDunsc, ptr),
+
+                 linPred = function(fac) .Call(merPredDlinPred, ptr, as.numeric(fac)),
+                 installPars = function(fac) .Call(merPredDinstallPars, ptr, as.numeric(fac)),
+                 sqrL = function(fac) .Call(merPredDsqrL, ptr, as.numeric(fac))
+                 )
+            )
 merPredD$lock("X", "Zt", "Lind")
 
 setOldClass("family")
 
+## FIXME --- glmerResp  &  lmerResp  should both extend a common (virtual) class
 glmerResp <-
     setRefClass("glmerResp",
                 fields =

@@ -1,4 +1,4 @@
-## library(lme4a)
+## library(lme4Eigen)
 ## This example takes too long
 ## if (isTRUE(try(data(star, package = 'mlmRev')) == 'star')) {
 ##     fm1 <- lme4:::carryOver(math ~ gr+sx*eth+cltype+(yrs|id)+(1|tch)+(yrs|sch),
