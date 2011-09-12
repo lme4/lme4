@@ -146,7 +146,10 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 					# response module
     resp <- mkRespMod2(fr, family=family)
 					# initial step from working response
-    pp$solve(resp$wrkResp, resp$sqrtWrkWt)
+    pp$updateXwts(resp$sqrtWrkWt())
+    pp$updateDecomp()
+    pp$updateRes(resp$wrkResp())
+    pp$solve()
     resp$updateMu(pp$linPred(1))	# full increment
     resp$updateWts()
     pp$installPars(1)
