@@ -16,6 +16,5 @@ Imports: graphics, grid, nlme, splines, MatrixModels(>= 0.2.0)
 Suggests: mlmRev, MEMSS, boot, MASS, RUnit
 LazyLoad: yes
 LazyData: yes
-RcppModules: lme4
 License: GPL (>=2)
 URL: http://lme4.r-forge.r-project.org/
