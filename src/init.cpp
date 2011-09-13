@@ -45,13 +45,16 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(merPredDsetBeta0, 2),
     CALLDEF(merPredDsetU0, 2),
 
-    CALLDEF(merPredDL, 1),	   // getters 
+    CALLDEF(merPredDCcNumer, 1),   // getters
+    CALLDEF(merPredDL, 1),
     CALLDEF(merPredDLambdat, 1), 
     CALLDEF(merPredDLamtUt, 1),
     CALLDEF(merPredDPvec, 1),
     CALLDEF(merPredDRX, 1),
     CALLDEF(merPredDRXdiag, 1),
     CALLDEF(merPredDRZX, 1),
+    CALLDEF(merPredDUt, 1),
+    CALLDEF(merPredDV, 1),
     CALLDEF(merPredDVtV, 1),
     CALLDEF(merPredDZt, 1),
     CALLDEF(merPredDbeta0, 1),
@@ -63,18 +66,19 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(merPredDu0, 1),
     CALLDEF(merPredDunsc, 1),
 
-    CALLDEF(merPredDlinPred, 2),  // methods
+    CALLDEF(merPredDlinPred, 2),   // methods
     CALLDEF(merPredDinstallPars, 2),
     CALLDEF(merPredDsolve, 1),
+    CALLDEF(merPredDsolveU, 1),
     CALLDEF(merPredDsqrL, 2),
     CALLDEF(merPredDupdateDecomp, 1),
-    CALLDEF(merPredDupdateXwts, 2),
     CALLDEF(merPredDupdateRes, 2),
+    CALLDEF(merPredDupdateXwts, 2),
 
-    CALLDEF(modRespsetOffset, 2),
+    CALLDEF(modRespsetOffset, 2), // setters
     CALLDEF(modRespsetWeights, 2),
 
-    CALLDEF(modRespmu, 1),
+    CALLDEF(modRespmu, 1),        // getters
     CALLDEF(modRespoffset, 1),
     CALLDEF(modRespweights, 1),
     CALLDEF(modRespwrss, 1),

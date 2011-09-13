@@ -87,7 +87,7 @@ namespace lme4Eigen {
 
     double glmerResp::updateWts() {
 	d_sqrtrwt = d_weights.cwiseQuotient(variance()).cwiseSqrt();
-	d_sqrtXwt = muEta() * d_sqrtrwt;
+	d_sqrtXwt = muEta().cwiseProduct(d_sqrtrwt);
 	return updateWrss();
     }
 
@@ -204,7 +204,7 @@ extern "C" {
 
     SEXP glmerRespupdateWts(SEXP ptr_) {
 	BEGIN_RCPP;
-	return wrap(XPtr<lme4Eigen::glmerResp>(ptr_)->updateWts());
+	return ::Rf_ScalarReal(XPtr<lme4Eigen::glmerResp>(ptr_)->updateWts());
 	END_RCPP;
     }
 

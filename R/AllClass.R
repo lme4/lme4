@@ -39,9 +39,18 @@ setRefClass("merPredD", # Predictor class for mixed-effects models with dense X
                      ptr <<- .Call(merPredDCreate, X, Zt, Lambdat, Lind, theta)
                      callSuper(...)
                  },
+
+                 CcNumer = function() {
+                     'returns the numerator of the orthogonality convergence criterion'
+                     .Call(merPredDCcNumer, ptr)
+                 },
                  L = function() {
                      'returns the current value of the sparse Cholesky factor'
                      .Call(merPredDL, ptr)
+                 },
+                 LamtUt = function() {
+                     'returns the current value of the product Lambdat %*% Ut'
+                     .Call(merPredDLamtUt, ptr)
                  },
                  P = function() {
                      'returns the permutation vector for the sparse Cholesky factor'
@@ -51,23 +60,95 @@ setRefClass("merPredD", # Predictor class for mixed-effects models with dense X
                      'returns the dense downdated Cholesky factor for the fixed-effects parameters'
                      .Call(merPredDRX, ptr)
                  },
-                 RXdiag = function() .Call(merPredDRXdiag, ptr),
-                 RZX = function() .Call(merPredDRZX, ptr),
-                 VtV = function() .Call(merPredDVtV, ptr),
-                 delb = function() .Call(merPredDdelb, ptr),
-                 delu = function() .Call(merPredDdelu, ptr),
-                 getLambda = function() .Call(merPredDLambda, ptr),
-                 ldL2 = function() .Call(merPredDldL2, ptr),
-                 ldRX2 = function() .Call(merPredDldRX2, ptr),
-                 unsc = function() .Call(merPredDunsc, ptr),
+                 RXdiag = function() {
+                     'returns the diagonal of the dense downdated Cholesky factor'
+                     .Call(merPredDRXdiag, ptr)
+                 },
+                 RZX = function() {
+                     'returns the cross term in Cholesky decomposition for all coefficients'
+                     .Call(merPredDRZX, ptr)
+                 },
+                 Ut = function() {
+                     'returns the transposed weighted random-effects model matrix'
+                     .Call(merPredUt, ptr)
+                 },
+                 V = function() {
+                     'returns the weighted fixed-effects model matrix'
+                     .Call(merPredDV, ptr)
+                 },
+                 VtV = function() {
+                     'returns the weighted cross-product of the fixed-effects model matrix'
+                     .Call(merPredDVtV, ptr)
+                 },
+                 b = function(fac) {
+                     'random effects on original scale for step factor fac'
+                     .Call(merPredDb, ptr, as.numeric(fac))
+                 },
+                 beta = function(fac) {
+                     'fixed-effects coefficients for step factor fac'
+                     .Call(merPredDbeta, ptr, as.numeric(fac))
+                 },
+                 delb = function() {
+                     'increment for the fixed-effects coefficients'
+                     .Call(merPredDdelb, ptr)
+                 },
+                 delu = function() {
+                     'increment for the orthogonal random-effects coefficients'
+                     .Call(merPredDdelu, ptr)
+                 },
+                 getLambdat = function() {
+                     'returns the current value of the relative covariance factor'
+                     .Call(merPredDLambdat, ptr)
+                 },
+                 ldL2 = function() {
+                     'twice the log determinant of the sparse Cholesky factor'
+                     .Call(merPredDldL2, ptr)
+                 },
+                 ldRX2 = function() {
+                     'twice the log determinant of the downdated dense Cholesky factor'
+                     .Call(merPredDldRX2, ptr)
+                 },
+                 unsc = function() {
+                     'the unscaled variance-covariance matrix of the fixed-effects parameters'
+                     .Call(merPredDunsc, ptr)
+                 },
 
-                 linPred = function(fac) .Call(merPredDlinPred, ptr, as.numeric(fac)),
-                 installPars = function(fac) .Call(merPredDinstallPars, ptr, as.numeric(fac)),
-                 solve = function() .Call(merPredDsolve, ptr),
-                 sqrL = function(fac) .Call(merPredDsqrL, ptr, as.numeric(fac)),
-                 updateDecomp = function() .Call(merPredDupdateDecomp, ptr),
-                 updateRes = function(wtres) .Call(merPredDupdateRes, ptr, as.numeric(wtres)),
-                 updateXwts = function(wts) .Call(merPredDupdateXwts, ptr, as.numeric(wts))
+                 linPred = function(fac) {
+                     'evaluate the linear predictor for step factor fac'
+                     .Call(merPredDlinPred, ptr, as.numeric(fac))
+                 },
+                 installPars = function(fac) {
+                     'update u0 and beta0 to the values for step factor fac'
+                     .Call(merPredDinstallPars, ptr, as.numeric(fac))
+                 },
+                 solve = function() {
+                     'solve for the coefficient increments delu and delb'
+                     .Call(merPredDsolve, ptr)
+                 },
+                 solveU = function() {
+                     'solve for the coefficient increment delu only (beta is fixed)'
+                     .Call(merPredDsolveU, ptr)
+                 },
+                 sqrL = function(fac) {
+                     'squared length of u0 + fac * delu'
+                     .Call(merPredDsqrL, ptr, as.numeric(fac))
+                 },
+                 u = function(fac) {
+                     'orthogonal random effects for step factor fac'
+                     .Call(merPredDu, ptr, as.numeric(fac))
+                 },
+                 updateDecomp = function() {
+                     'update L, RZX and RX from Ut, Vt and VtV'
+                     .Call(merPredDupdateDecomp, ptr)
+                 },
+                 updateRes = function(wtres) {
+                     'update Vtr and Utr using the vector of weighted residuals'
+                     .Call(merPredDupdateRes, ptr, as.numeric(wtres))
+                 },
+                 updateXwts = function(wts) {
+                     'update Ut and V from Zt and X using X weights'
+                     .Call(merPredDupdateXwts, ptr, as.numeric(wts))
+                 }
                  )
             )
 merPredD$lock("X", "Zt", "Lind")
@@ -122,9 +203,17 @@ glmerResp <-
                          'returns the name of the glm link'
                          .Call(glmerResplink, ptr)
                      },
+                     mu = function() {
+                         'returns the current mean response'
+                         .Call(modRespmu, ptr)
+                     },
                      sqrtWrkWt = function() {
                          'returns the square root of the working X weights'
                          .Call(glmerRespsqrtWrkWt, ptr)
+                     },
+                     sqrtXwt = function() {
+                         'returns the square root of the X weights'
+                         .Call(glmerRespsqrtXwt, ptr)
                      },
                      updateMu = function(gamma) {
                          'from the linear predictor, gamma, update the\nconditional mean response, mu, residuals and weights'

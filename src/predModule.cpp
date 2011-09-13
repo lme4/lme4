@@ -118,9 +118,6 @@ namespace lme4Eigen {
     }
 
     void merPredD::setTheta(const NumericVector& theta) {
-	// cout << theta[0];
-	// for (int i = 1; i < theta.size(); ++i) cout << ", " << theta[i];
-	// cout << endl;
 	if (theta.size() != d_theta.size())
 	    throw invalid_argument("theta size mismatch");
 				// update theta
@@ -136,10 +133,24 @@ namespace lme4Eigen {
     void merPredD::solve() {
 	d_delu          = d_Utr;
 	d_L.solveInPlace(d_delu, CHOLMOD_P);
-	d_L.solveInPlace(d_delu, CHOLMOD_L);	
-				// d_delu now contains cu
-	d_delb          = d_RX.solve(d_Vtr - d_RZX.adjoint() * d_delu);
+	d_L.solveInPlace(d_delu, CHOLMOD_L);    // d_delu now contains cu
+	d_CcNumer       = d_delu.squaredNorm(); // numerator of convergence criterion
+
+	d_delb          = d_RX.matrixL().solve(d_Vtr - d_RZX.adjoint() * d_delu);
+	d_CcNumer      += d_delb.squaredNorm(); // increment CcNumer
+	d_RX.matrixU().solveInPlace(d_delb);
+
 	d_delu         -= d_RZX * d_delb;
+	d_L.solveInPlace(d_delu, CHOLMOD_Lt);
+	d_L.solveInPlace(d_delu, CHOLMOD_Pt);
+    }
+
+    void merPredD::solveU() {
+	d_delb.setZero(); // in calculation of linPred delb should be zero after solveU
+	d_delu          = d_Utr;
+	d_L.solveInPlace(d_delu, CHOLMOD_P);
+	d_L.solveInPlace(d_delu, CHOLMOD_L);    // d_delu now contains cu
+	d_CcNumer       = d_delu.squaredNorm(); // numerator of convergence criterion
 	d_L.solveInPlace(d_delu, CHOLMOD_Lt);
 	d_L.solveInPlace(d_delu, CHOLMOD_Pt);
     }
@@ -244,6 +255,8 @@ extern "C" {
 	END_RCPP;
     }
 
+    // setters
+
     SEXP merPredDsetBeta0(SEXP ptr, SEXP beta0) {
 	BEGIN_RCPP;
 	XPtr<lme4Eigen::merPredD>(ptr)->setBeta0(as<Eigen::VectorXd>(beta0));
@@ -259,6 +272,14 @@ extern "C" {
     SEXP merPredDsetU0(SEXP ptr, SEXP u0) {
 	BEGIN_RCPP;
 	XPtr<lme4Eigen::merPredD>(ptr)->setU0(as<Eigen::VectorXd>(u0));
+	END_RCPP;
+    }
+
+    // getters
+
+    SEXP merPredDCcNumer(SEXP ptr) {
+	BEGIN_RCPP;
+	return ::Rf_ScalarReal(XPtr<lme4Eigen::merPredD>(ptr)->CcNumer());
 	END_RCPP;
     }
 
@@ -292,6 +313,12 @@ extern "C" {
 	END_RCPP;
     }
     
+    SEXP merPredDRXi(SEXP ptr) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->RXi());
+	END_RCPP;
+    }
+    
     SEXP merPredDRXdiag(SEXP ptr) {
 	BEGIN_RCPP;
 	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->RXdiag());
@@ -304,15 +331,27 @@ extern "C" {
 	END_RCPP;
     }
     
-    SEXP merPredDZt(SEXP ptr) {
+    SEXP merPredDUt(SEXP ptr) {
 	BEGIN_RCPP;
-	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->Zt());
+	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->Ut());
+	END_RCPP;
+    }
+    
+    SEXP merPredDV(SEXP ptr) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->V());
 	END_RCPP;
     }
     
     SEXP merPredDVtV(SEXP ptr) {
 	BEGIN_RCPP;
 	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->VtV());
+	END_RCPP;
+    }
+    
+    SEXP merPredDZt(SEXP ptr) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->Zt());
 	END_RCPP;
     }
     
@@ -333,18 +372,6 @@ extern "C" {
 	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->delu());
 	END_RCPP;
     }
-
-    SEXP merPredDu0(SEXP ptr) {
-	BEGIN_RCPP;
-	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->u0());
-	END_RCPP;
-    }
-    
-    SEXP merPredDunsc(SEXP ptr) {
-	BEGIN_RCPP;
-	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->unsc());
-	END_RCPP;
-    }
     
     SEXP merPredDldL2(SEXP ptr) {
 	BEGIN_RCPP;
@@ -357,10 +384,36 @@ extern "C" {
 	return ::Rf_ScalarReal(XPtr<lme4Eigen::merPredD>(ptr)->ldRX2());
 	END_RCPP;
     }
-    
+
     SEXP merPredDtheta(SEXP ptr) {
 	BEGIN_RCPP;
 	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->theta());
+	END_RCPP;
+    }
+    
+    SEXP merPredDu0(SEXP ptr) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->u0());
+	END_RCPP;
+    }
+    
+    SEXP merPredDunsc(SEXP ptr) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->unsc());
+	END_RCPP;
+    }
+
+    // methods
+
+    SEXP merPredDb(SEXP ptr, SEXP fac) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->b(::Rf_asReal(fac)));
+	END_RCPP;
+    }
+    
+    SEXP merPredDbeta(SEXP ptr, SEXP fac) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->beta(::Rf_asReal(fac)));
 	END_RCPP;
     }
     
@@ -379,7 +432,12 @@ extern "C" {
     SEXP merPredDsolve(SEXP ptr) {
 	BEGIN_RCPP;
 	XPtr<lme4Eigen::merPredD>(ptr)->solve();
-	return ::R_NilValue;
+	END_RCPP;
+    }
+
+    SEXP merPredDsolveU(SEXP ptr) {
+	BEGIN_RCPP;
+	XPtr<lme4Eigen::merPredD>(ptr)->solveU();
 	END_RCPP;
     }
 
@@ -389,26 +447,28 @@ extern "C" {
 	END_RCPP;
     }
     
+    SEXP merPredDu(SEXP ptr, SEXP fac) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->u(::Rf_asReal(fac)));
+	END_RCPP;
+    }
+    
     SEXP merPredDupdateDecomp(SEXP ptr) {
 	BEGIN_RCPP;
 	XPtr<lme4Eigen::merPredD>(ptr)->updateDecomp();
-	return ::R_NilValue;
 	END_RCPP;
     }
 
     SEXP merPredDupdateRes(SEXP ptr, SEXP wtres) {
 	BEGIN_RCPP;
 	XPtr<lme4Eigen::merPredD>(ptr)->updateRes(as<VectorXd>(wtres));
-	return ::R_NilValue;
 	END_RCPP;
     }
 	    
     SEXP merPredDupdateXwts(SEXP ptr, SEXP wts) {
 	BEGIN_RCPP;
 	XPtr<lme4Eigen::merPredD>(ptr)->updateXwts(as<VectorXd>(wts));
-	return ::R_NilValue;
 	END_RCPP;
     }
-	    
     
 }

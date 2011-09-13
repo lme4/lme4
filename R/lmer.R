@@ -154,16 +154,16 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     resp$updateWts()
     pp$installPars(1)
 
-    pwrssUpdate(rem, resp, verbose)
-    u0 <- rem$u0
-    coef0 <- fem$coef0
+    pwrssUpdate(pp, resp, verbose)
+    u0 <- pp$u0
+    beta0 <- pp$beta0
     if (doFit) {
 	devfun <- function(theta) {
 	    rem$u0 <- u0
-	    fem$coef0 <- coef0
+	    fem$beta0 <- beta0
 	    rem$theta <- theta
-	    pwrssUpdate(rem, fem, resp, verbose)
-	    resp$Laplace(rem$ldL2, fem$ldRX2, rem$sqrLenU)
+	    pwrssUpdate(pp, resp, verbose)
+	    resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL())
 	}
 	control$iprint <- min(verbose, 3L)
 	opt <- bobyqa(rem$theta, devfun, lower=rem$lower, control=control)
@@ -343,17 +343,18 @@ mkReTrms <- function(bars, fr, s = 1L) {
 ##'
 ##' The penalized, weighted residual sum of squares (pwrss) is the sum
 ##' of the weighted residual sum of squares from the resp module and
-##' the squared length of u from the rem module.  Both the rem and the
-##' fem contain a base and an increment for the coefficients.
+##' the squared length of u from the predictor module.  The predictor module
+##' contains a base value and an increment for the coefficients.
 ##' @title Determine a step factor
-##' @param rem random-effects module
-##' @param fem fixed-effects module
+##' @param pp predictor module
 ##' @param resp response module
-stepFac <- function(pp, resp, verbose=FALSE) {
-    pwrss0 <- resp$wrss + pp$sqrL(0)
+##' @param verbose logical value determining verbose output
+##' @return NULL if successful
+stepFac <- function(pp, resp, verbose) {
+    pwrss0 <- resp$wrss() + pp$sqrL(0)
     for (fac in 2^(-(0:10))) {
 	wrss <- resp$updateMu(pp$linPred(fac))
-	pwrss1 <- wrss + rem$sqrL(fac)
+	pwrss1 <- wrss + pp$sqrL(fac)
 	if (verbose > 3L)
 	    cat(sprintf("pwrss0=%10g, diff=%10g, fac=%6.4f\n",
 			pwrss0, pwrss0 - pwrss1, fac))
@@ -365,20 +366,23 @@ stepFac <- function(pp, resp, verbose=FALSE) {
     stop("step factor reduced below 0.001 without reducing pwrss")
 }
 
-pwrssUpdate <- function(pp, resp, verbose) {
+pwrssUpdate <- function(pp, resp, verbose, uOnly=FALSE) {
     repeat {
-	resp$updateMu(pp$linPred1(0))
+	resp$updateMu(pp$linPred(0))
 	resp$updateWts()
-	pp$solve(resp$wtres, resp$sqrtXwt)
-	if ((pp$CcNumer)/(resp$wrss + rem$sqrL(0)) < 0.000001)
+        pp$updateXwts(resp$sqrtXwt())
+        pp$updateDecomp()
+        pp$updateRes(resp$wtres())
+        if (uOnly) pp$solveU() else pp$solve()
+	if ((pp$CcNumer())/(resp$wrss() + pp$sqrL(0)) < 0.000001)
 	    break
 	stepFac(pp, resp, verbose)
     }
 }
 
-pwrssUpdate2 <- function(rem, fem, resp, verbose) {
+pwrssUpdate2 <- function(pp, resp, verbose) {
     repeat {
-	resp$updateMu(rem$linPred1(0)+fem$linPred1(0))
+	resp$updateMu(pp$linPred(0))
 	resp$updateWts()
 	rem$reweight(resp$sqrtXwt, resp$wtres)
 	if ((ccrit <-rem$solveIncr()/(resp$wrss + rem$sqrLenU)) < 0.000001) break

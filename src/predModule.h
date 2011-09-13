@@ -160,7 +160,7 @@ namespace lme4Eigen {
 	IntegerVector  d_Lind;
 	Index          d_n, d_p, d_q, d_nnz;
 	dgCMatrix      d_Lambdat;
-	Scalar         d_ldL2, d_ldRX2;
+	Scalar         d_CcNumer, d_ldL2, d_ldRX2;
 	MatrixXd       d_RZX, d_V, d_VtV;
 	VectorXd       d_Vtr, d_Utr, d_delb, d_delu, d_beta0, d_u0;
 	SpMatrixd      d_Ut, d_LamtUt;
@@ -173,7 +173,6 @@ namespace lme4Eigen {
 
 	MatrixXd                 RX() const {MatrixXd ans = d_RX.matrixU(); return ans;}
 	MatrixXd                RXi() const {return d_RX.matrixU().solve(MatrixXd::Identity(d_p,d_p));}
-	MatrixXd                VtV() const {return d_VtV;}
 	MatrixXd               unsc() const {MatrixXd rxi(RXi()); return rxi * rxi.adjoint();}
 
 	VectorXd             RXdiag() const {return d_RX.matrixLLT().diagonal();}
@@ -184,14 +183,18 @@ namespace lme4Eigen {
 
 	S4                        L() const;
 
+	Scalar              CcNumer() const {return d_CcNumer;}
 	Scalar                 ldL2() const {return d_ldL2;}
 	Scalar                ldRX2() const {return d_ldRX2;}
 	Scalar                 sqrL(const Scalar& f) const;
 
+	const MatrixXd&           V() const {return d_V;}
+	const MatrixXd&         VtV() const {return d_VtV;}
 	const MatrixXd&         RZX() const {return d_RZX;}
 	const NumericVector&  theta() const {return d_theta;}
 	const SpMatrixd&    Lambdat() const {return d_Lambdat;}
 	const SpMatrixd&     LamtUt() const {return d_LamtUt;}
+	const SpMatrixd&         Ut() const {return d_Ut;}
 	const MSpMatrixd&        Zt() const {return d_Zt;}
 	const VectorXd&        delb() const {return d_delb;}
 	const VectorXd&        delu() const {return d_delu;}
@@ -200,12 +203,13 @@ namespace lme4Eigen {
 
 	int                    info() const {return d_L.info();}
 
+// FIXME: installPars should probably zero out d_delu and d_delb.  Move def'n to .cpp file
 	void            installPars(const Scalar& f) {d_u0 = u(f); d_beta0 = beta(f);}
 	void               setBeta0(const VectorXd&);
 	void               setTheta(const NumericVector&);
 	void                  setU0(const VectorXd&);
 	void                  solve();
-	void                 solveU() {d_delu = d_L.solve(d_Utr);}
+	void                 solveU();
 	void           updateDecomp();
 	void                updateL();
 	void           updateLamtUt();
@@ -221,13 +225,17 @@ extern "C" {
     SEXP merPredDsetBeta0(SEXP, SEXP);
     SEXP merPredDsetU0(SEXP, SEXP);
 
-    SEXP merPredDL(SEXP);	// getters
+    SEXP merPredDCcNumer(SEXP);	       // getters
+    SEXP merPredDL(SEXP);	
     SEXP merPredDLambdat(SEXP);
     SEXP merPredDLamtUt(SEXP);
     SEXP merPredDPvec(SEXP);
     SEXP merPredDRX(SEXP);
     SEXP merPredDRXdiag(SEXP);
+    SEXP merPredDRXi(SEXP);
     SEXP merPredDRZX(SEXP);
+    SEXP merPredDUt(SEXP);
+    SEXP merPredDV(SEXP);
     SEXP merPredDVtV(SEXP);
     SEXP merPredDZt(SEXP);
     SEXP merPredDbeta0(SEXP);
@@ -239,10 +247,14 @@ extern "C" {
     SEXP merPredDu0(SEXP);
     SEXP merPredDunsc(SEXP);
 
-    SEXP merPredDlinPred(SEXP, SEXP); // methods
+    SEXP merPredDb(SEXP, SEXP);	       // methods
+    SEXP merPredDbeta(SEXP, SEXP);
+    SEXP merPredDlinPred(SEXP, SEXP);
     SEXP merPredDinstallPars(SEXP, SEXP);
     SEXP merPredDsolve(SEXP);
+    SEXP merPredDsolveU(SEXP);
     SEXP merPredDsqrL(SEXP,SEXP);
+    SEXP merPredDu(SEXP, SEXP);
     SEXP merPredDupdateDecomp(SEXP);
     SEXP merPredDupdateRes(SEXP,SEXP);
     SEXP merPredDupdateXwts(SEXP,SEXP);
