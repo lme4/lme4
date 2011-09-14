@@ -164,11 +164,12 @@ namespace lme4Eigen {
 	    d_Ut        = d_Zt * W;
 	} else throw invalid_argument("updateXwts: no provision for nlmer yet");
 	d_VtV.setZero().selfadjointView<Upper>().rankUpdate(d_V.adjoint());
+	updateL();
     }
 
     void merPredD::updateDecomp() { // update L, RZX and RX
 	updateL();
-	d_RZX           = d_Lambdat * (d_Ut * d_V);
+	d_RZX           = d_LamtUt * d_V;
 	d_L.solveInPlace(d_RZX, CHOLMOD_P);
 	d_L.solveInPlace(d_RZX, CHOLMOD_L);
 
@@ -183,7 +184,7 @@ namespace lme4Eigen {
 	if (d_V.rows() != wtres.size())
 	    throw invalid_argument("updateRes: dimension mismatch");
 	d_Vtr           = d_V.adjoint() * wtres;
-	d_Utr           = d_Lambdat * (d_Ut * wtres);
+	d_Utr           = d_LamtUt * wtres;
     }
 
     void merPredD::setBeta0(const VectorXd& nBeta) {
