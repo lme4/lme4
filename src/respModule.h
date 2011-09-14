@@ -12,18 +12,24 @@
 #include "glmFamily.h"
 
 namespace lme4Eigen {
-    using Eigen::VectorXd;
     using Eigen::Map;
+    using Eigen::VectorXd;
+
+    using Rcpp::CharacterVector;
+    using Rcpp::Environment;
+    using Rcpp::Language;
     using Rcpp::NumericVector;
 
-    class modResp {
+    using glm::glmFamily;
+
+    class lmResp {
     protected:
 	double                     d_wrss;
 	const NumericVector        d_yR;
 	const Map<VectorXd>        d_y;
 	VectorXd                   d_weights, d_offset, d_mu, d_sqrtXwt, d_sqrtrwt, d_wtres;
     public:
-	modResp(NumericVector);
+	lmResp(NumericVector);
 
 	const VectorXd&           mu() const {return d_mu;}
 	const VectorXd&       offset() const {return d_offset;}
@@ -33,103 +39,122 @@ namespace lme4Eigen {
 	const VectorXd&        wtres() const {return d_wtres;}
 	const Map<VectorXd>&       y() const {return d_y;}
 	double                  wrss() const {return d_wrss;}
+	double              updateMu(const VectorXd&);
 	double             updateWts()       {return updateWrss();}
 	double            updateWrss();
-	void               setOffset(const NumericVector&);
-	void              setWeights(const NumericVector&);
+	void               setOffset(const VectorXd&);
+	void              setWeights(const VectorXd&);
     };
 
-    class lmerResp : public modResp {
+    class lmerResp : public lmResp {
     private:
 	int d_reml;
     public:
 	lmerResp(NumericVector);
 
 	double               Laplace(double,double,double)const;
-	double              updateMu(const VectorXd&);
 	int                     REML() const {return d_reml;}
 	void                 setReml(int);
     };
 	
-    class glmerResp : public modResp {
+    class glmResp : public lmResp {
     protected:
-	glm::glmFamily d_fam;
-	VectorXd       d_eta, d_n;
-	double         d_pwrss;
+	glmFamily       d_fam;
+	VectorXd        d_eta, d_n;
     public:
-	glmerResp(Rcpp::List, NumericVector);
+	glmResp(Rcpp::List, NumericVector);
 
-	VectorXd            devResid() const {return d_fam.devResid(d_mu, d_weights, d_y);}
-	VectorXd               muEta() const {return d_fam.muEta(d_eta);}
+	VectorXd            devResid() const;
+	VectorXd               muEta() const;
         VectorXd           sqrtWrkWt() const;
-	VectorXd            variance() const {return d_fam.variance(d_mu);}
-        VectorXd           wrkResids() const {return (d_y - d_mu).cwiseQuotient(muEta());}
-        VectorXd             wrkResp() const {return (d_eta - d_offset) + wrkResids();}
+	VectorXd            variance() const;
+	VectorXd           wrkResids() const;
+	VectorXd             wrkResp() const;
+
 	const VectorXd&          eta() const {return d_eta;}
+	const VectorXd&            n() const {return d_n;}
+
 	const std::string&    family() const {return d_fam.fam();}
 	const std::string&      link() const {return d_fam.lnk();}
+
 	double               Laplace(double,double,double) const;
-	double                 pwrss() const {return d_pwrss;}
-	double                resDev() const {return devResid().sum();}
+	double                resDev() const;
 	double              updateMu(const VectorXd&);
 	double             updateWts();
-	void                setPwrss(double val) {d_pwrss = val;}
+
+	void                    setN(const VectorXd&);
     };
 
-    class nlmerResp : public modResp {
+    class nlmerResp : public lmResp {
     protected:
-	Rcpp::Environment     d_nlenv;
-	Rcpp::Language        d_nlmod;
-	Rcpp::CharacterVector d_pnames;
+	Environment     d_nlenv;
+	Language        d_nlmod;
+	CharacterVector d_pnames;
     public:
-	nlmerResp(Rcpp::S4);
+	nlmerResp(NumericVector,Language,Environment,CharacterVector);
 
-	const VectorXd&        mu() const {return d_mu;}
-	const VectorXd&    offset() const {return d_offset;}
-	const VectorXd&   sqrtXwt() const {return d_sqrtXwt;}
-	const VectorXd&   sqrtrwt() const {return d_sqrtrwt;}
-	const VectorXd&   weights() const {return d_weights;}
-	const VectorXd&     wtres() const {return d_wtres;}
-	const Map<VectorXd>&    y() const {return d_y;}
 	double            Laplace(double, double, double) const;
 	double           updateMu(const VectorXd&);
     };
 }
 
 extern "C" {
-    SEXP glmerRespCreate(SEXP,SEXP);
+    // generalized linear model (and generalized linear mixed model) response
 
-    SEXP glmerRespLaplace(SEXP, SEXP, SEXP, SEXP);
-    SEXP glmerRespdevResid(SEXP);
-    SEXP glmerRespeta(SEXP);
-    SEXP glmerRespfamily(SEXP);
-    SEXP glmerResplink(SEXP);
-    SEXP glmerRespresDev(SEXP);
-    SEXP glmerRespsqrtWrkWt(SEXP);
-    SEXP glmerRespsqrtXwt(SEXP);
-    SEXP glmerRespupdateMu(SEXP,SEXP);
-    SEXP glmerRespupdateWts(SEXP);
-    SEXP glmerRespvariance(SEXP);
-    SEXP glmerRespwrkResids(SEXP);
-    SEXP glmerRespwrkResp(SEXP);
+    SEXP glm_Create(SEXP,SEXP);	// constructor
 
-    SEXP lmerRespCreate(SEXP);
+    SEXP glm_setN(SEXP,SEXP);	// setter
 
-    SEXP lmerRespsetREML(SEXP, SEXP);
-    SEXP lmerRespREML(SEXP);
+    SEXP glm_devResid(SEXP);	// getters
+    SEXP glm_eta(SEXP);
+    SEXP glm_family(SEXP);
+    SEXP glm_link(SEXP);
+    SEXP glm_muEta(SEXP);
+    SEXP glm_n(SEXP);		
+    SEXP glm_resDev(SEXP);
+    SEXP glm_sqrtWrkWt(SEXP);
+    SEXP glm_updateWts(SEXP);
+    SEXP glm_variance(SEXP);
+    SEXP glm_wrkResids(SEXP);
+    SEXP glm_wrkResp(SEXP);
 
-    SEXP lmerRespLaplace(SEXP, SEXP, SEXP, SEXP);
-    SEXP lmerRespupdateMu(SEXP, SEXP);
+    SEXP glm_Laplace(SEXP,SEXP,SEXP,SEXP); // methods
+    SEXP glm_updateMu(SEXP,SEXP);
 
-    SEXP modRespsetOffset(SEXP, SEXP);
-    SEXP modRespsetWeights(SEXP, SEXP);
+    // linear model response (also the base class for other response classes)
 
-    SEXP modRespmu(SEXP);
-    SEXP modRespoffset(SEXP);
-    SEXP modRespweights(SEXP);
-    SEXP modRespwrss(SEXP);
-    SEXP modRespwtres(SEXP);
-    SEXP modRespy(SEXP);
+    SEXP lm_Create(SEXP);	   // constructor
+
+    SEXP lm_setOffset(SEXP,SEXP);  // setters
+    SEXP lm_setWeights(SEXP,SEXP);
+
+    SEXP lm_mu(SEXP);		   // getters
+    SEXP lm_offset(SEXP);
+    SEXP lm_sqrtXwt(SEXP);
+    SEXP lm_sqrtrwt(SEXP);
+    SEXP lm_weights(SEXP);
+    SEXP lm_wrss(SEXP);
+    SEXP lm_wtres(SEXP);
+    SEXP lm_y(SEXP);
+
+    SEXP lm_updateMu(SEXP,SEXP);   // methods
+
+    // linear mixed model response
+
+    SEXP lmer_Create(SEXP);	   // constructor
+
+    SEXP lmer_setREML(SEXP, SEXP); // setter
+
+    SEXP lmer_REML(SEXP);	   // getter
+
+    SEXP lmer_Laplace(SEXP,SEXP,SEXP,SEXP); // method
+
+    // nonlinear model (and nonlinear mixed model) class
+
+    SEXP nlm_Create(SEXP,SEXP,SEXP,SEXP); // constructor
+
+    SEXP nlm_Laplace(SEXP,SEXP,SEXP,SEXP); // methods
+    SEXP nlm_updateMu(SEXP,SEXP);
 }
 
 #endif

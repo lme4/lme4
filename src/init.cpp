@@ -9,43 +9,55 @@ static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(lmerDeviance, 3),
 
-    CALLDEF(glmerRespCreate, 2),   // generate external pointer
+    CALLDEF(glm_Create, 2),	// generate external pointer
 
-//    CALLDEF(glmerRespsetPwrss, 2), // setters
+    CALLDEF(glm_setN, 2),	// setters
 
-    CALLDEF(glmerRespdevResid, 1), // getters
-    CALLDEF(glmerRespeta, 1),
-    CALLDEF(glmerRespfamily, 1),
-    CALLDEF(glmerResplink, 1),
-    CALLDEF(glmerRespresDev, 1),
-    CALLDEF(glmerRespsqrtWrkWt, 1),
-    CALLDEF(glmerRespsqrtXwt, 1),
-    CALLDEF(glmerRespvariance, 1),
-    CALLDEF(glmerRespwrkResids, 1),
-    CALLDEF(glmerRespwrkResp, 1),
-//    CALLDEF(glmerResppwrss, 1),
+    CALLDEF(glm_devResid, 1),	// getters
+    CALLDEF(glm_eta, 1),
+    CALLDEF(glm_family, 1),
+    CALLDEF(glm_link, 1),
+    CALLDEF(glm_muEta, 1),
+    CALLDEF(glm_n, 1),
+    CALLDEF(glm_resDev, 1),
+    CALLDEF(glm_sqrtWrkWt, 1),
+    CALLDEF(glm_variance, 1),
+    CALLDEF(glm_wrkResids, 1),
+    CALLDEF(glm_wrkResp, 1),
 
+    CALLDEF(glm_Laplace, 4),	// methods
+    CALLDEF(glm_updateMu, 2),
+    CALLDEF(glm_updateWts, 1),
 
-    CALLDEF(glmerRespLaplace, 4),  // methods
-    CALLDEF(glmerRespupdateMu, 2),
-    CALLDEF(glmerRespupdateWts, 1),
+    CALLDEF(lm_setOffset, 2),	// setters
+    CALLDEF(lm_setWeights, 2),
 
-    CALLDEF(lmerRespCreate, 1),	   // generate external pointer
+    CALLDEF(lm_mu, 1),		// getters
+    CALLDEF(lm_offset, 1),
+    CALLDEF(lm_sqrtXwt, 1),
+    CALLDEF(lm_sqrtrwt, 1),
+    CALLDEF(lm_weights, 1),
+    CALLDEF(lm_wrss, 1),
+    CALLDEF(lm_wtres, 1),
+    CALLDEF(lm_y, 1),
 
-    CALLDEF(lmerRespsetREML, 2),   // setters
+    CALLDEF(lm_updateMu, 2),	// method
 
-    CALLDEF(lmerRespREML, 1),	   // getters
+    CALLDEF(lmer_Create, 1),	// generate external pointer
 
-    CALLDEF(lmerRespLaplace, 4),   // methods
-    CALLDEF(lmerRespupdateMu, 2),
+    CALLDEF(lmer_setREML, 2),   // setter
 
-    CALLDEF(merPredDCreate, 5),	   // generate external pointer
+    CALLDEF(lmer_REML, 1),	// getter
 
-    CALLDEF(merPredDsetTheta, 2),  // setters
+    CALLDEF(lmer_Laplace, 4),   // method
+
+    CALLDEF(merPredDCreate, 5),	// generate external pointer
+
+    CALLDEF(merPredDsetTheta, 2), // setters
     CALLDEF(merPredDsetBeta0, 2),
     CALLDEF(merPredDsetU0, 2),
 
-    CALLDEF(merPredDCcNumer, 1),   // getters
+    CALLDEF(merPredDCcNumer, 1), // getters
     CALLDEF(merPredDL, 1),
     CALLDEF(merPredDLambdat, 1), 
     CALLDEF(merPredDLamtUt, 1),
@@ -66,24 +78,17 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(merPredDu0, 1),
     CALLDEF(merPredDunsc, 1),
 
-    CALLDEF(merPredDlinPred, 2),   // methods
+    CALLDEF(merPredDb, 2),	// methods
+    CALLDEF(merPredDbeta, 2),
+    CALLDEF(merPredDlinPred, 2),
     CALLDEF(merPredDinstallPars, 2),
     CALLDEF(merPredDsolve, 1),
     CALLDEF(merPredDsolveU, 1),
     CALLDEF(merPredDsqrL, 2),
+    CALLDEF(merPredDu, 2),
     CALLDEF(merPredDupdateDecomp, 1),
     CALLDEF(merPredDupdateRes, 2),
     CALLDEF(merPredDupdateXwts, 2),
-
-    CALLDEF(modRespsetOffset, 2), // setters
-    CALLDEF(modRespsetWeights, 2),
-
-    CALLDEF(modRespmu, 1),        // getters
-    CALLDEF(modRespoffset, 1),
-    CALLDEF(modRespweights, 1),
-    CALLDEF(modRespwrss, 1),
-    CALLDEF(modRespwtres, 1),
-    CALLDEF(modRespy, 1),
     {NULL, NULL, 0}
 };
 

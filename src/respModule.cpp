@@ -14,7 +14,7 @@ namespace lme4Eigen {
     using std::string;
     using std::invalid_argument;
 
-    modResp::modResp(NumericVector y)
+    lmResp::lmResp(NumericVector y)
 	: d_yR(y),
 	  d_y(d_yR.begin(), d_yR.size()),
 	  d_weights(VectorXd::Constant(y.size(), 1.0)),
@@ -31,6 +31,13 @@ namespace lme4Eigen {
 	updateWrss();
     }
 
+    double lmResp::updateMu(const VectorXd& gamma) {
+	if (gamma.size() != d_offset.size())
+	    throw invalid_argument("updateMu: Size mismatch");
+	d_mu = d_offset + gamma;
+	return updateWrss();
+    }
+
     /** 
      * Update the wtres vector and return its sum of squares
      *   wtres <- sqrtrwt * (y - mu)
@@ -38,26 +45,26 @@ namespace lme4Eigen {
      *
      * @return Updated weighted residual sum of squares
      */
-    double modResp::updateWrss() {
+    double lmResp::updateWrss() {
 	d_wtres = d_sqrtrwt.cwiseProduct(d_y - d_mu);
 	d_wrss  = d_wtres.squaredNorm();
 	return d_wrss;
     }
 
-    void modResp::setOffset(const NumericVector& oo) {
+    void lmResp::setOffset(const VectorXd& oo) {
 	if (oo.size() != d_offset.size())
 	    throw invalid_argument("setOffset: Size mismatch");
-	copy(oo.begin(), oo.end(), d_offset.data());
+	d_offset = oo;
     }
 
-    void modResp::setWeights(const NumericVector& ww) {
+    void lmResp::setWeights(const VectorXd& ww) {
 	if (ww.size() != d_weights.size())
 	    throw invalid_argument("setWeights: Size mismatch");
-	copy(ww.begin(), ww.end(), d_weights.data());
+	d_weights = ww;
     }
 
     lmerResp::lmerResp(NumericVector y)
-	: modResp(y),
+	: lmResp(y),
 	  d_reml(0) {
     }
 
@@ -73,37 +80,66 @@ namespace lme4Eigen {
 	d_reml = rr;
     }
     
-    double lmerResp::updateMu(const VectorXd& gamma) {
-	d_mu = d_offset + gamma;
-	return updateWrss();
-    }
-
-    glmerResp::glmerResp(List fam, NumericVector y)
-	: modResp(y),
+    glmResp::glmResp(List fam, NumericVector y)
+	: lmResp(y),
 	  d_fam(fam),
 	  d_eta(y.size()),
 	  d_n(VectorXd::Constant(y.size(), 1.)) {
     }
 
-    double glmerResp::updateWts() {
+    VectorXd glmResp::devResid() const {
+	return d_fam.devResid(d_mu, d_weights, d_y);
+    }
+
+    VectorXd glmResp::muEta() const {
+	return d_fam.muEta(d_eta);
+    }
+
+    VectorXd glmResp::variance() const {
+	return d_fam.variance(d_mu);
+    }
+
+    VectorXd glmResp::wrkResids() const {
+	return (d_y - d_mu).cwiseQuotient(muEta());
+    }
+
+    VectorXd glmResp::wrkResp() const {
+	return (d_eta - d_offset) + wrkResids();
+    }
+
+    VectorXd glmResp::sqrtWrkWt() const {
+	VectorXd me = muEta();
+	return d_weights.cwiseProduct(me).cwiseProduct(me).cwiseQuotient(variance()).cwiseSqrt();
+    }
+
+    double glmResp::Laplace(double ldL2, double ldRX2, double sqrL) const {
+	return ldL2 + sqrL + resDev();
+    }
+
+    double glmResp::resDev() const {
+	return devResid().sum();
+    }
+
+    double glmResp::updateMu(const VectorXd& gamma) {
+	d_eta = d_offset + gamma; // lengths are checked here
+	d_mu  = d_fam.linkInv(d_eta);
+	return updateWrss();
+    }
+
+    double glmResp::updateWts() {
 	d_sqrtrwt = d_weights.cwiseQuotient(variance()).cwiseSqrt();
 	d_sqrtXwt = muEta().cwiseProduct(d_sqrtrwt);
 	return updateWrss();
     }
 
-    VectorXd glmerResp::sqrtWrkWt() const {
-	VectorXd me = muEta();
-	return d_weights.cwiseProduct(me).cwiseProduct(me).cwiseQuotient(variance()).cwiseSqrt();
+    void glmResp::setN(const VectorXd& n) {
+	if (n.size() != d_n.size())
+	    throw invalid_argument("n size mismatch");
+	d_n = n;
     }
 
-    double glmerResp::Laplace(double ldL2, double ldRX2, double sqrL) const {
-	return ldL2 + sqrL + resDev();
-    }
-
-    double glmerResp::updateMu(const VectorXd& gamma) {
-	d_eta = d_offset + gamma; // lengths are checked here
-	d_mu  = d_fam.linkInv(d_eta);
-	return updateWrss();
+    nlmerResp::nlmerResp(NumericVector ys, Language mm, Environment ee, CharacterVector pp)
+	: lmResp(ys), d_nlenv(ee), d_nlmod(mm), d_pnames(pp) {
     }
 
     double nlmerResp::Laplace(double ldL2, double ldRX2, double sqrL) const {
@@ -133,177 +169,214 @@ namespace lme4Eigen {
 }
 
 extern "C" {
+    using Eigen::VectorXd;
+
     using Rcpp::List;
     using Rcpp::NumericVector;
     using Rcpp::XPtr;
     using Rcpp::as;
     using Rcpp::wrap;
 
-    SEXP glmerRespCreate(SEXP fams, SEXP ys) {
+    // generalized linear model (and generalized linear mixed model) response
+
+    SEXP glm_Create(SEXP fams, SEXP ys) {
 	BEGIN_RCPP;
-	lme4Eigen::glmerResp *ans = new lme4Eigen::glmerResp(List(fams), NumericVector(ys));
-	return wrap(XPtr<lme4Eigen::glmerResp>(ans, true));
+	lme4Eigen::glmResp *ans = new lme4Eigen::glmResp(List(fams), NumericVector(ys));
+	return wrap(XPtr<lme4Eigen::glmResp>(ans, true));
 	END_RCPP;
     }
     
-    SEXP glmerRespLaplace(SEXP ptr_, SEXP ldL2, SEXP ldRX2, SEXP sqrL) {
+    SEXP glm_setN(SEXP ptr_, SEXP n) {
 	BEGIN_RCPP;
-	return ::Rf_ScalarReal(XPtr<lme4Eigen::glmerResp>(ptr_)->Laplace(::Rf_asReal(ldL2),
+	XPtr<lme4Eigen::glmResp>(ptr_)->setN(as<VectorXd>(n));
+	END_RCPP;
+    }
+
+    SEXP glm_devResid(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::glmResp>(ptr_)->devResid());
+	END_RCPP;
+    }
+
+    SEXP glm_eta(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::glmResp>(ptr_)->eta());
+	END_RCPP;
+    }
+
+    SEXP glm_family(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::glmResp>(ptr_)->family());
+	END_RCPP;
+    }
+
+    SEXP glm_link(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::glmResp>(ptr_)->link());
+	END_RCPP;
+    }
+
+    SEXP glm_muEta(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::glmResp>(ptr_)->muEta());
+	END_RCPP;
+    }
+
+    SEXP glm_n(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::glmResp>(ptr_)->n());
+	END_RCPP;
+    }
+
+    SEXP glm_resDev(SEXP ptr_) {
+	BEGIN_RCPP;
+	return ::Rf_ScalarReal(XPtr<lme4Eigen::glmResp>(ptr_)->resDev());
+	END_RCPP;
+    }
+
+    SEXP glm_sqrtWrkWt(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::glmResp>(ptr_)->sqrtWrkWt());
+	END_RCPP;
+    }
+
+    SEXP glm_updateWts(SEXP ptr_) {
+	BEGIN_RCPP;
+	return ::Rf_ScalarReal(XPtr<lme4Eigen::glmResp>(ptr_)->updateWts());
+	END_RCPP;
+    }
+
+    SEXP glm_variance(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::glmResp>(ptr_)->variance());
+	END_RCPP;
+    }
+
+    SEXP glm_wrkResids(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::glmResp>(ptr_)->wrkResids());
+	END_RCPP;
+    }
+
+    SEXP glm_wrkResp(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::glmResp>(ptr_)->wrkResp());
+	END_RCPP;
+    }
+
+    SEXP glm_Laplace(SEXP ptr_, SEXP ldL2, SEXP ldRX2, SEXP sqrL) {
+	BEGIN_RCPP;
+	return ::Rf_ScalarReal(XPtr<lme4Eigen::glmResp>(ptr_)->Laplace(::Rf_asReal(ldL2),
 									 ::Rf_asReal(ldRX2),
 									 ::Rf_asReal(sqrL)));
 	END_RCPP;
     }
 
-    SEXP glmerRespupdateMu(SEXP ptr_, SEXP gamma) {
+    SEXP glm_updateMu(SEXP ptr_, SEXP gamma) {
 	BEGIN_RCPP;
-	return ::Rf_ScalarReal(XPtr<lme4Eigen::glmerResp>(ptr_)->updateMu(as<Eigen::VectorXd>(gamma)));
+	return ::Rf_ScalarReal(XPtr<lme4Eigen::glmResp>(ptr_)->updateMu(as<VectorXd>(gamma)));
 	END_RCPP;
     }
 
-    SEXP glmerRespdevResid(SEXP ptr_) {
+    // linear model response (also the base class for other response classes)
+
+    SEXP lm_Create(SEXP ys) {
 	BEGIN_RCPP;
-	return wrap(XPtr<lme4Eigen::glmerResp>(ptr_)->devResid());
+	lme4Eigen::lmResp *ans = new lme4Eigen::lmResp(NumericVector(ys));
+	return wrap(XPtr<lme4Eigen::lmResp>(ans, true));
+	END_RCPP;
+    }
+    
+    SEXP lm_setOffset(SEXP ptr_, SEXP offset) {
+	BEGIN_RCPP;
+	XPtr<lme4Eigen::lmResp>(ptr_)->setOffset(as<VectorXd>(offset));
+	END_RCPP;
+    }
+    
+    SEXP lm_setWeights(SEXP ptr_, SEXP weights) {
+	BEGIN_RCPP;
+	XPtr<lme4Eigen::lmResp>(ptr_)->setWeights(as<VectorXd>(weights));
+	END_RCPP;
+    }
+    
+    SEXP lm_mu(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::lmResp>(ptr_)->mu());
+	END_RCPP;
+    }
+    
+    SEXP lm_offset(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::lmResp>(ptr_)->offset());
 	END_RCPP;
     }
 
-    SEXP glmerRespeta(SEXP ptr_) {
+    SEXP lm_sqrtXwt(SEXP ptr_) {
 	BEGIN_RCPP;
-	return wrap(XPtr<lme4Eigen::glmerResp>(ptr_)->eta());
+	return wrap(XPtr<lme4Eigen::lmResp>(ptr_)->sqrtXwt());
 	END_RCPP;
     }
 
-    SEXP glmerRespfamily(SEXP ptr_) {
+    SEXP lm_sqrtrwt(SEXP ptr_) {
 	BEGIN_RCPP;
-	return wrap(XPtr<lme4Eigen::glmerResp>(ptr_)->family());
+	return wrap(XPtr<lme4Eigen::lmResp>(ptr_)->sqrtrwt());
 	END_RCPP;
     }
 
-    SEXP glmerResplink(SEXP ptr_) {
+    SEXP lm_weights(SEXP ptr_) {
 	BEGIN_RCPP;
-	return wrap(XPtr<lme4Eigen::glmerResp>(ptr_)->link());
+	return wrap(XPtr<lme4Eigen::lmResp>(ptr_)->weights());
 	END_RCPP;
     }
 
-    SEXP glmerRespresDev(SEXP ptr_) {
+    SEXP lm_wrss(SEXP ptr_) {
 	BEGIN_RCPP;
-	return ::Rf_ScalarReal(XPtr<lme4Eigen::glmerResp>(ptr_)->resDev());
+	return ::Rf_ScalarReal(XPtr<lme4Eigen::lmResp>(ptr_)->wrss());
 	END_RCPP;
     }
 
-    SEXP glmerRespsqrtWrkWt(SEXP ptr_) {
+    SEXP lm_wtres(SEXP ptr_) {
 	BEGIN_RCPP;
-	return wrap(XPtr<lme4Eigen::glmerResp>(ptr_)->sqrtWrkWt());
+	return wrap(XPtr<lme4Eigen::lmResp>(ptr_)->wtres());
+	END_RCPP;
+    }
+    
+    SEXP lm_y(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::lmResp>(ptr_)->y());
 	END_RCPP;
     }
 
-    SEXP glmerRespsqrtXwt(SEXP ptr_) {
+    SEXP lm_updateMu(SEXP ptr_, SEXP gamma) {
 	BEGIN_RCPP;
-	return wrap(XPtr<lme4Eigen::glmerResp>(ptr_)->sqrtXwt());
+	return ::Rf_ScalarReal(XPtr<lme4Eigen::lmerResp>(ptr_)->updateMu(as<VectorXd>(gamma)));
 	END_RCPP;
     }
-
-    SEXP glmerRespupdateWts(SEXP ptr_) {
-	BEGIN_RCPP;
-	return ::Rf_ScalarReal(XPtr<lme4Eigen::glmerResp>(ptr_)->updateWts());
-	END_RCPP;
-    }
-
-    SEXP glmerRespvariance(SEXP ptr_) {
-	BEGIN_RCPP;
-	return wrap(XPtr<lme4Eigen::glmerResp>(ptr_)->variance());
-	END_RCPP;
-    }
-
-    SEXP glmerRespwrkResids(SEXP ptr_) {
-	BEGIN_RCPP;
-	return wrap(XPtr<lme4Eigen::glmerResp>(ptr_)->wrkResids());
-	END_RCPP;
-    }
-
-    SEXP glmerRespwrkResp(SEXP ptr_) {
-	BEGIN_RCPP;
-	return wrap(XPtr<lme4Eigen::glmerResp>(ptr_)->wrkResp());
-	END_RCPP;
-    }
-
-    SEXP lmerRespCreate(SEXP ys) {
+    
+    SEXP lmer_Create(SEXP ys) {
 	BEGIN_RCPP;
 	lme4Eigen::lmerResp *ans = new lme4Eigen::lmerResp(NumericVector(ys));
 	return wrap(XPtr<lme4Eigen::lmerResp>(ans, true));
 	END_RCPP;
     }
     
-    SEXP lmerRespLaplace(SEXP ptr_, SEXP ldL2, SEXP ldRX2, SEXP sqrL) {
-	BEGIN_RCPP;
-	return ::Rf_ScalarReal(XPtr<lme4Eigen::lmerResp>(ptr_)->Laplace(::Rf_asReal(ldL2),
-									::Rf_asReal(ldRX2),
-									::Rf_asReal(sqrL)));
-	END_RCPP;
-    }
-
-    SEXP lmerRespsetREML(SEXP ptr_, SEXP REML) {
+    SEXP lmer_setREML(SEXP ptr_, SEXP REML) {
 	BEGIN_RCPP;
 	XPtr<lme4Eigen::lmerResp>(ptr_)->setReml(::Rf_asInteger(REML));
 	END_RCPP;
     }
 
-    SEXP lmerRespREML(SEXP ptr_) {
+    SEXP lmer_REML(SEXP ptr_) {
 	BEGIN_RCPP;
 	return ::Rf_ScalarInteger(XPtr<lme4Eigen::lmerResp>(ptr_)->REML());
 	END_RCPP;
     }
-
-    SEXP lmerRespupdateMu(SEXP ptr_, SEXP gamma) {
-	BEGIN_RCPP;
-	return ::Rf_ScalarReal(XPtr<lme4Eigen::lmerResp>(ptr_)->updateMu(as<Eigen::VectorXd>(gamma)));
-	END_RCPP;
-    }
-
-    SEXP modRespwrss(SEXP ptr_) {
-	BEGIN_RCPP;
-	return ::Rf_ScalarReal(XPtr<lme4Eigen::modResp>(ptr_)->wrss());
-	END_RCPP;
-    }
     
-    SEXP modRespwtres(SEXP ptr_) {
+    SEXP lmer_Laplace(SEXP ptr_, SEXP ldL2, SEXP ldRX2, SEXP sqrL) {
 	BEGIN_RCPP;
-	return wrap(XPtr<lme4Eigen::modResp>(ptr_)->wtres());
-	END_RCPP;
-    }
-    
-    SEXP modRespsetOffset(SEXP ptr_, SEXP offset) {
-	BEGIN_RCPP;
-	XPtr<lme4Eigen::modResp>(ptr_)->setOffset(NumericVector(offset));
-	END_RCPP;
-    }
-    
-    SEXP modRespsetWeights(SEXP ptr_, SEXP weights) {
-	BEGIN_RCPP;
-	XPtr<lme4Eigen::modResp>(ptr_)->setWeights(NumericVector(weights));
-	END_RCPP;
-    }
-    
-    SEXP modRespy(SEXP ptr_) {
-	BEGIN_RCPP;
-	return wrap(XPtr<lme4Eigen::modResp>(ptr_)->y());
-	END_RCPP;
-    }
-    
-    SEXP modRespmu(SEXP ptr_) {
-	BEGIN_RCPP;
-	return wrap(XPtr<lme4Eigen::modResp>(ptr_)->mu());
-	END_RCPP;
-    }
-    
-    SEXP modRespoffset(SEXP ptr_) {
-	BEGIN_RCPP;
-	return wrap(XPtr<lme4Eigen::modResp>(ptr_)->offset());
-	END_RCPP;
-    }
-
-    SEXP modRespweights(SEXP ptr_) {
-	BEGIN_RCPP;
-	return wrap(XPtr<lme4Eigen::modResp>(ptr_)->weights());
+	return ::Rf_ScalarReal(XPtr<lme4Eigen::lmerResp>(ptr_)->Laplace(::Rf_asReal(ldL2),
+									::Rf_asReal(ldRX2),
+									::Rf_asReal(sqrL)));
 	END_RCPP;
     }
 

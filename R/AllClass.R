@@ -163,10 +163,12 @@ glmerResp <-
                      family = "family",
                      y = "numeric",
                      ptr = "externalptr",
+                     n = function(value) # only used in deviance residuals for binomial
+                     if (missing(value)) .Call(glm_n, ptr) else .Call(glm_setN, ptr, as.numeric(value)),
                      offset = function(value)
-                     if (missing(value)) .Call(modRespoffset, ptr) else .Call(modRespsetOffset, ptr, as.numeric(value)),
+                     if (missing(value)) .Call(lm_offset, ptr) else .Call(lm_setOffset, ptr, as.numeric(value)),
                      weights = function(value)
-                     if (missing(value)) .Call(modRespweights, ptr) else .Call(modRespsetWeights, ptr, as.numeric(value))
+                     if (missing(value)) .Call(lm_weights, ptr) else .Call(lm_setWeights, ptr, as.numeric(value))
                      ),
                 methods =
                 list(
@@ -176,68 +178,84 @@ glmerResp <-
                          if (missing(fam) || !inherits(fam, "family"))
                              stop("glm family must be specified")
                          family <<- fam
-                         ptr <<- .Call(glmerRespCreate, family, y)
+                         ptr <<- .Call(glm_Create, family, y)
                          callSuper(...)
                      },
                      devResid = function() {
                          'returns the vector of deviance residuals'
-                         .Call(glmerRespdevResid, ptr)
+                         .Call(glm_devResid, ptr)
                      },
                      eta = function() {
                          'returns the linear predictor vector before any offset is added'
-                         .Call(glmerRespeta, ptr)
+                         .Call(glm_eta, ptr)
                      },
                      fam = function() {
                          'returns the name of the glm family'
-                         .Call(glmerRespfamily, ptr)
+                         .Call(glm_family, ptr)
                      },
                      fitted = function() {
                          'returns the value of the linear predictor'
-                         .Call(modRespmu, ptr)
+                         .Call(lm_mu, ptr)
                      },
                      Laplace = function(ldL2, ldRX2, sqrL) {
                          'returns the profiled deviance or REML criterion'
-                         .Call(glmerRespLaplace, ptr, ldL2, ldRX2, sqrL)
+                         .Call(glm_Laplace, ptr, ldL2, ldRX2, sqrL)
                      },
                      link = function() {
                          'returns the name of the glm link'
-                         .Call(glmerResplink, ptr)
+                         .Call(glm_link, ptr)
                      },
                      mu = function() {
                          'returns the current mean response'
-                         .Call(modRespmu, ptr)
+                         .Call(lm_mu, ptr)
                      },
-                     sqrtWrkWt = function() {
-                         'returns the square root of the working X weights'
-                         .Call(glmerRespsqrtWrkWt, ptr)
+                     muEta = function() {
+                         'returns the diagonal of the Jacobian matrix, d mu/d eta'
+                         .Call(glm_muEta, ptr)
+                     },
+                     resDev = function() {
+                         'returns the sum of the deviance residuals'
+                         .Call(glm_resDev, ptr)
                      },
                      sqrtXwt = function() {
                          'returns the square root of the X weights'
-                         .Call(glmerRespsqrtXwt, ptr)
+                         .Call(lm_sqrtXwt, ptr)
+                     },
+                     sqrtrwt = function() {
+                         'returns the square root of the residual weights'
+                         .Call(lm_sqrtrwt, ptr)
+                     },
+                     sqrtWrkWt = function() {
+                         'returns the square root of the working X weights'
+                         .Call(glm_sqrtWrkWt, ptr)
                      },
                      updateMu = function(gamma) {
                          'from the linear predictor, gamma, update the\nconditional mean response, mu, residuals and weights'
-                         .Call(glmerRespupdateMu, ptr, as.numeric(gamma))
+                         .Call(glm_updateMu, ptr, as.numeric(gamma))
                      },
                      updateWts = function() {
                          'update the residual and X weights from the current value of eta'
-                         .Call(glmerRespupdateWts, ptr)
+                         .Call(glm_updateWts, ptr)
+                     },
+                     variance = function() {
+                         'returns the vector of variances'
+                         .Call(glm_variance, ptr)
                      },
                      wrkResids = function() {
                          'returns the vector of working residuals'
-                         .Call(glmerRespwrkResids, ptr)
+                         .Call(glm_wrkResids, ptr)
                      },
                      wrkResp = function() {
                          'returns the vector of working residuals'
-                         .Call(glmerRespwrkResp, ptr)
+                         .Call(glm_wrkResp, ptr)
                      },
                      wrss = function() {
                          'returns the weighted residual sum of squares'
-                         .Call(modRespwrss, ptr)
+                         .Call(lm_wrss, ptr)
                      },
                      wtres = function() {
                          'returns the vector of weighted residuals'
-                         .Call(modRespwtres, ptr)
+                         .Call(lm_wtres, ptr)
                      })
                 )
 
@@ -250,44 +268,43 @@ lmerResp <-
                      y = "numeric",
                      ptr = "externalptr",
                      offset = function(value)
-                     if (missing(value)) .Call(modRespoffset, ptr) else .Call(modRespsetOffset, ptr, as.numeric(value)),
+                     if (missing(value)) .Call(lm_offset, ptr) else .Call(lm_setOffset, ptr, as.numeric(value)),
                      weights = function(value)
-                     if (missing(value)) .Call(modRespweights, ptr) else .Call(modRespsetWeights, ptr, as.numeric(value)),
+                     if (missing(value)) .Call(lm_weights, ptr) else .Call(lm_setWeights, ptr, as.numeric(value)),
                      REML = function(value)
-                     if (missing(value)) .Call(lmerRespREML, ptr) else .Call(lmerRespsetREML, ptr, value)
+                     if (missing(value)) .Call(lmer_REML, ptr) else .Call(lmer_setREML, ptr, value)
                      ),
                 methods =
                 list(
                      initialize = function(y, ...) {
                          if (missing(y)) stop("response vector y must be specified")
                          y <<- as.numeric(y)
-                         ptr <<- .Call(lmerRespCreate, y)
+                         ptr <<- .Call(lmer_Create, y)
                          callSuper(...)
                      },
                      fitted = function() {
                          'returns the value of the linear predictor'
-                         .Call(modRespmu, ptr)
+                         .Call(lm_mu, ptr)
                      },
                      Laplace = function(ldL2, ldRX2, sqrL) {
                          'returns the profiled deviance or REML criterion'
-                         .Call(lmerRespLaplace, ptr, ldL2, ldRX2, sqrL)
+                         .Call(lmer_Laplace, ptr, ldL2, ldRX2, sqrL)
                      },
                      updateMu = function(gamma) {
                          'from the linear predictor, gamma, update the\nconditional mean response, mu, residuals and weights'
-                         .Call(lmerRespupdateMu, ptr, as.numeric(gamma))
+                         .Call(lm_updateMu, ptr, as.numeric(gamma))
                      },
                      wrss = function() {
                          'returns the weighted residual sum of squares'
-                         .Call(modRespwrss, ptr)
+                         .Call(lm_wrss, ptr)
                      },
                      wtres = function() {
                          'returns the vector of weighted residuals'
-                         .Call(modRespwtres, ptr)
+                         .Call(lm_wtres, ptr)
                      })
                 )
 
 lmerResp$lock("y")
-
 
 setClass("merMod",
          representation(call    = "call",
@@ -302,3 +319,5 @@ setClass("merMod",
                         pp      = "merPredD"))
 
 setClass("lmerMod", representation(resp = "lmerResp"), contains = "merMod")
+
+setClass("glmerMod", representation(resp = "glmerResp"), contains = "merMod")
