@@ -49,6 +49,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 	      theta=reTrms$theta + 1e-06) # ensure all entries of
 					# theta are nonzero because
 					# Eigen tends to prune sparse matrices
+                                        # (Probably not needed any more).
     resp <- mkRespMod2(fr)
     if (REML) resp$REML <- p
 
@@ -142,6 +143,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     form <- formula
     form[[3]] <- if(is.null(nb <- nobars(form[[3]]))) 1 else nb
     X <- model.Matrix(form, fr, contrasts, sparse = FALSE, row.names = FALSE) ## sparseX not yet
+    p <- ncol(X)
     pp <- merPredD$new(X=X, Zt=reTrms$Zt, Lambdat=reTrms$Lambdat, Lind=reTrms$Lind, theta=reTrms$theta)
 					# response module
     resp <- mkRespMod2(fr, family=family)
@@ -153,39 +155,56 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     resp$updateMu(pp$linPred(1))	# full increment
     resp$updateWts()
     pp$installPars(1)
-
-    pwrssUpdate(pp, resp, verbose)
+    opt <- list(fval=resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL(0.)))
+    
     u0 <- pp$u0
     beta0 <- pp$beta0
-    if (doFit) {
+    if (doFit) {			# optimize estimates
 	devfun <- function(theta) {
-	    rem$u0 <- u0
-	    fem$beta0 <- beta0
-	    rem$theta <- theta
+	    pp$u0 <- u0
+	    pp$beta0 <- beta0
+	    pp$theta <- theta
 	    pwrssUpdate(pp, resp, verbose)
 	    resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL())
 	}
 	control$iprint <- min(verbose, 3L)
-	opt <- bobyqa(rem$theta, devfun, lower=rem$lower, control=control)
-	if (nAGQ == 0)
-	    return(list(rem=rem, fem=fem, resp=resp, opt=opt))
-	u0 <- rem$u0
-	dpars <- seq_along(rem$theta)
-	fem$incr <- 0 * fem$incr	# zero the increment
-	devfunb <- function(pars) {
-	    rem$u0 <- u0
-	    rem$theta <- pars[dpars]
-	    fem$coef0 <- pars[-dpars]
-	    pwrssUpdate2(rem, fem, resp, verbose)
-	    resp$Laplace(rem$ldL2, fem$ldRX2, rem$sqrLenU)
-	}
-	control$rhobeg <- 0.0002
-	control$rhoend <- 2e-7
-	opt <- bobyqa(c(rem$theta, fem$coef), devfunb,
-		      lower=c(rem$lower, rep.int(-Inf, length(fem$coef))), control=control)
-	return(list(rem=rem, fem=fem, resp=resp, opt=opt))
+	opt <- bobyqa(pp$theta, devfun, lower=reTrms$lower, control=control)
+	if (nAGQ == 1L) {
+            u0 <- pp$u0
+            dpars <- seq_along(pp$theta)
+            devfunb <- function(pars) {
+                pp$u0 <- u0
+                pp$theta <- pars[dpars]
+                pp$beta0 <- pars[-dpars]
+                pwrssUpdate(pp, resp, verbose, TRUE)
+                resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL())
+            }
+            control$rhobeg <- 0.0002
+            control$rhoend <- 2e-7
+            opt <- bobyqa(c(pp$theta, pp$beta0), devfunb,
+                          lower=c(reTrms$lower, rep.int(-Inf, length(pp$beta0))), control=control)
+        }
     }
-    list(rem=rem, fem=fem, resp=resp)
+    LL <- pp$Lambdat
+    LL@x <- pp$theta[pp$Lind]
+    stopifnot(validObject(LL))
+    pp$Lambdat <- LL
+    sqrLenU <- pp$sqrL(0.)
+    wrss <- resp$wrss()
+    pwrss <- wrss + sqrLenU
+    n <- nrow(fr)
+    
+    dims <- c(N=n, n=n, nmp=n-p, nth=length(pp$theta), p=p, q=nrow(reTrms$Zt),
+	      nAGQ=nAGQ, useSc=1L, reTrms=length(reTrms$cnms),
+	      spFe=0L, REML=0L, GLMM=1L, NLMM=0L)
+    cmp <- c(ldL2=pp$ldL2(), ldRX2=pp$ldRX2(), wrss=wrss,
+             ussq=sqrLenU, pwrss=pwrss,
+	     drsum=resp$resDev(), dev=opt$fval, REML=NA,
+	     sigmaML=sqrt(pwrss/n), sigmaREML=NA)
+    
+    new("glmerMod", call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
+	theta=pp$theta, beta=pp$beta0, u=pp$u0, lower=reTrms$lower,
+	devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=resp)
 }## {glmer}
 
 ##' Create an lmerResp, glmerResp or (later) nlmerResp instance
@@ -380,30 +399,29 @@ pwrssUpdate <- function(pp, resp, verbose, uOnly=FALSE) {
     }
 }
 
-pwrssUpdate2 <- function(pp, resp, verbose) {
-    repeat {
-	resp$updateMu(pp$linPred(0))
-	resp$updateWts()
-	rem$reweight(resp$sqrtXwt, resp$wtres)
-	if ((ccrit <-rem$solveIncr()/(resp$wrss + rem$sqrLenU)) < 0.000001) break
-	stepFac(rem, fem, resp, verbose)
-    }
-}
-if (FALSE) {
-setMethod("show", signature("lmerResp"), function(object)
-      {
-	  with(object,
-	       print(head(cbind(weights, offset, mu, y, sqrtrwt, wtres, sqrtXwt))))
-      })
+## pwrssUpdate2 <- function(pp, resp, verbose) {
+##     repeat {
+##         resp$updateMu(pp$linPred(0))
+##         resp$updateWts()
+##         rem$reweight(resp$sqrtXwt, resp$wtres)
+##         if ((ccrit <-rem$solveIncr()/(resp$wrss + rem$sqrLenU)) < 0.000001) break
+##         stepFac(rem, fem, resp, verbose)
+##     }
+## }
+## setMethod("show", signature("lmerResp"), function(object)
+##       {
+##           with(object,
+##                print(head(cbind(weights, offset, mu, y, sqrtrwt, wtres, sqrtXwt))))
+##       })
 
-setMethod("show", signature("glmerResp"), function(object)
-      {
-	  with(object,
-	       print(head(cbind(weights, offset, eta, mu, y, muEta,
-				variance, sqrtrwt, wtres, sqrtXwt,
-				sqrtWrkWt, wrkResids, wrkResp))))
-      })
-}
+## setMethod("show", signature("glmerResp"), function(object)
+##       {
+##           with(object,
+##                print(head(cbind(weights, offset, eta, mu, y, muEta,
+##                                 variance, sqrtrwt, wtres, sqrtXwt,
+##                                 sqrtWrkWt, wrkResids, wrkResp))))
+##       })
+
 ## setMethod("show", signature("Rcpp_reModule"), function(object)
 ##	 {
 ##	     with(object, print(head(cbind(u0, incr, u))))
@@ -416,27 +434,27 @@ setMethod("show", signature("glmerResp"), function(object)
 ##	 })
 
 ## create a deviance evaluation function that uses the sigma parameters
-df2 <- function(dd) {
-    stopifnot(is.function(dd),
-	      length(formals(dd)) == 1L,
-	      is((rem <- (rho <- environment(dd))$rem), "Rcpp_reModule"),
-	      is((fem <- rho$fem), "Rcpp_deFeMod"),
-	      is((resp <- rho$resp), "Rcpp_lmerResp"),
-	      all((lower <- rem$lower) == 0))
-    Lind <- rem$Lind
-    n <- length(resp$y)
-    function(pars) {
-	sigma <- pars[1]
-	sigsq <- sigma * sigma
-	sigmas <- pars[-1]
-	theta <- sigmas/sigma
-	rem$theta <- theta
-	resp$updateMu(numeric(n))
-	solveBetaU(rem, fem, resp$sqrtXwt, resp$wtres)
-	resp$updateMu(rem$linPred1(1) + fem$linPred1(1))
-	n * log(2*pi*sigsq) + (resp$wrss + rem$sqrLenU)/sigsq + rem$ldL2
-    }
-}
+## df2 <- function(dd) {
+##     stopifnot(is.function(dd),
+## 	      length(formals(dd)) == 1L,
+## 	      is((rem <- (rho <- environment(dd))$rem), "Rcpp_reModule"),
+## 	      is((fem <- rho$fem), "Rcpp_deFeMod"),
+## 	      is((resp <- rho$resp), "Rcpp_lmerResp"),
+## 	      all((lower <- rem$lower) == 0))
+##     Lind <- rem$Lind
+##     n <- length(resp$y)
+##     function(pars) {
+## 	sigma <- pars[1]
+## 	sigsq <- sigma * sigma
+## 	sigmas <- pars[-1]
+## 	theta <- sigmas/sigma
+## 	rem$theta <- theta
+## 	resp$updateMu(numeric(n))
+## 	solveBetaU(rem, fem, resp$sqrtXwt, resp$wtres)
+## 	resp$updateMu(rem$linPred1(1) + fem$linPred1(1))
+## 	n * log(2*pi*sigsq) + (resp$wrss + rem$sqrLenU)/sigsq + rem$ldL2
+##     }
+## }
 
 simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE, ...)
 {
@@ -908,7 +926,7 @@ coef.merMod <- coefMer
 ## FIXME: Do we really need a separate devcomp extractor?  I suppose it can't hurt.
 devcomp <- function(x, ...) UseMethod("devcomp")
 devcomp.merMod <- function(x, ...) x@devcomp
-#setMethod("devcomp", "merMod", function(x, ...) x@devcomp)
+##setMethod("devcomp", "merMod", function(x, ...) x@devcomp)
 
 setMethod("getL", "merMod", function(x) {
     .Deprecated("getME(., \"L\")")
@@ -946,13 +964,13 @@ getME <- function(object,
 	   "Lambdat"= PR$ Lambdat,
 	   "RX" = PR $ RX,
 	   "RZX" = PR $ RZX,
-
+           
            "beta" = object@beta,
            "theta"= object@theta, ## *OR*  PR $ theta  --- which one ??
-
+           
 	   "REML" = rsp $ REML,
 	   "is_REML" = as.logical(rsp $ REML),# correct ??
-
+           
 	   "n_rtrms" =, ## FIXME length(PR$flist), ##  = #{random-effect terms in the formula}
 	   "Gp"= ,  # FIXME
 	   "..foo.." =# placeholder!
@@ -991,7 +1009,7 @@ refitML.merMod <- function (x) {
     cmp <- c(ldL2=pp$ldL2(), ldRX2=pp$ldRX2(), wrss=wrss, ussq=ussq,
 	     pwrss=pwrss, drsum=NA, dev=opt$fval, REML=NA,
 	     sigmaML=sqrt(pwrss/n), sigmaREML=sqrt(pwrss/(n-p)))
-
+    
 ### FIXME: Should modify the call slot to set REML=FALSE.  It is
 ### tricky to do so without causing the call to be evaluated
     new("lmerMod", call=x@call, frame=x@frame, flist=x@flist,
