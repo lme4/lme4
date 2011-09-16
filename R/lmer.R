@@ -94,7 +94,7 @@ mkdevfun <- function(pp, resp) {
 glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 		   control = list(), start = NULL, verbose = 0L, nAGQ = 1L,
 		   doFit = TRUE, subset, weights, na.action, offset,
-		   contrasts = NULL, mustart, etastart, ...)
+		   contrasts = NULL, mustart, etastart, devFunOnly=FALSE, ...)
 {
     verbose <- as.integer(verbose)
     mf <- mc <- match.call()
@@ -165,8 +165,9 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 	    pp$beta0 <- beta0
 	    pp$theta <- theta
 	    pwrssUpdate(pp, resp, verbose)
-	    resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL())
+	    resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL(0))
 	}
+        if (devFunOnly) return(devFun)
 	control$iprint <- min(verbose, 3L)
 	opt <- bobyqa(pp$theta, devfun, lower=reTrms$lower, control=control)
 	if (nAGQ == 1L) {
