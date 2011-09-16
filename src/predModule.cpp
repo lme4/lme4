@@ -131,7 +131,7 @@ namespace lme4Eigen {
     }
 
     void merPredD::solve() {
-	d_delu          = d_Utr;
+	d_delu          = d_Utr - d_u0;
 	d_L.solveInPlace(d_delu, CHOLMOD_P);
 	d_L.solveInPlace(d_delu, CHOLMOD_L);    // d_delu now contains cu
 	d_CcNumer       = d_delu.squaredNorm(); // numerator of convergence criterion
