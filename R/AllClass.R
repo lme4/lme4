@@ -72,6 +72,10 @@ setRefClass("merPredD", # Predictor class for mixed-effects models with dense X
                      'returns the transposed weighted random-effects model matrix'
                      .Call(merPredUt, ptr)
                  },
+                 Utr = function() {
+                     'returns the cross-product of the weighted random-effects model matrix\nand the weighted residuals'
+                     .Call(merPredUtr, ptr)
+                 },
                  V = function() {
                      'returns the weighted fixed-effects model matrix'
                      .Call(merPredDV, ptr)
@@ -79,6 +83,10 @@ setRefClass("merPredD", # Predictor class for mixed-effects models with dense X
                  VtV = function() {
                      'returns the weighted cross-product of the fixed-effects model matrix'
                      .Call(merPredDVtV, ptr)
+                 },
+                 Vtr = function() {
+                     'returns the weighted cross-product of the fixed-effects model matrix\nand the residuals'
+                     .Call(merPredVtr, ptr)
                  },
                  b = function(fac) {
                      'random effects on original scale for step factor fac'
@@ -180,6 +188,14 @@ glmerResp <-
                          family <<- fam
                          ptr <<- .Call(glm_Create, family, y)
                          callSuper(...)
+                     },
+                     allInfo = function() {
+                         'return all the information available on the object'
+                         data.frame(y=y, n=n, offset=offset, weights=weights,
+                                    eta=eta(), mu=mu(), muEta=muEta(), variance=variance(),
+                                    sqrtrwt=sqrtrwt(), wtres=wtres(), sqrtXwt=sqrtXwt(),
+                                    sqrtWrkWt=sqrtWrkWt(), wrkResids=wrkResids(),
+                                    wrkResp=wrkResp())
                      },
                      devResid = function() {
                          'returns the vector of deviance residuals'

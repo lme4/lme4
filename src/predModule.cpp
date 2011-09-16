@@ -338,6 +338,12 @@ extern "C" {
 	END_RCPP;
     }
     
+    SEXP merPredDUtr(SEXP ptr) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->Utr());
+	END_RCPP;
+    }
+    
     SEXP merPredDV(SEXP ptr) {
 	BEGIN_RCPP;
 	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->V());
@@ -347,6 +353,12 @@ extern "C" {
     SEXP merPredDVtV(SEXP ptr) {
 	BEGIN_RCPP;
 	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->VtV());
+	END_RCPP;
+    }
+    
+    SEXP merPredDVtr(SEXP ptr) {
+	BEGIN_RCPP;
+	return wrap(XPtr<lme4Eigen::merPredD>(ptr)->Vtr());
 	END_RCPP;
     }
     

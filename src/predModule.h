@@ -191,11 +191,17 @@ namespace lme4Eigen {
 	const MatrixXd&           V() const {return d_V;}
 	const MatrixXd&         VtV() const {return d_VtV;}
 	const MatrixXd&         RZX() const {return d_RZX;}
+
 	const NumericVector&  theta() const {return d_theta;}
+
 	const SpMatrixd&    Lambdat() const {return d_Lambdat;}
 	const SpMatrixd&     LamtUt() const {return d_LamtUt;}
 	const SpMatrixd&         Ut() const {return d_Ut;}
+
 	const MSpMatrixd&        Zt() const {return d_Zt;}
+
+	const VectorXd&         Utr() const {return d_Utr;}
+	const VectorXd&         Vtr() const {return d_Vtr;}
 	const VectorXd&        delb() const {return d_delb;}
 	const VectorXd&        delu() const {return d_delu;}
 	const VectorXd&       beta0() const {return d_beta0;}
@@ -235,8 +241,10 @@ extern "C" {
     SEXP merPredDRXi(SEXP);
     SEXP merPredDRZX(SEXP);
     SEXP merPredDUt(SEXP);
+    SEXP merPredDUtr(SEXP);
     SEXP merPredDV(SEXP);
     SEXP merPredDVtV(SEXP);
+    SEXP merPredDVtr(SEXP);
     SEXP merPredDZt(SEXP);
     SEXP merPredDbeta0(SEXP);
     SEXP merPredDdelb(SEXP);
