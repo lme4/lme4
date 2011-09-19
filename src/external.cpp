@@ -18,10 +18,14 @@ extern "C" {
     using Rcpp::as;
     using Rcpp::wrap;
 
+    using glm::glmFamily;
+
     using lme4Eigen::glmResp;
     using lme4Eigen::lmResp;
     using lme4Eigen::lmerResp;
     using lme4Eigen::merPredD;
+
+    using std::runtime_error;
 
     // generalized linear model (and generalized linear mixed model) response
 
@@ -124,6 +128,127 @@ extern "C" {
 	END_RCPP;
     }
 
+    // glm family objects
+
+    SEXP glmFamily_Create(SEXP fam_) {
+	BEGIN_RCPP;
+	glmFamily *ans = new glmFamily(List(fam_));
+	return wrap(XPtr<glmFamily>(ans, true));
+	END_RCPP;
+    }
+
+    SEXP glmFamily_link(SEXP ptr, SEXP mu) {
+	BEGIN_RCPP;
+	return wrap(XPtr<glmFamily>(ptr)->linkFun(as<VectorXd>(mu)));
+	END_RCPP;
+    }
+
+    SEXP glmFamily_linkInv(SEXP ptr, SEXP eta) {
+	BEGIN_RCPP;
+	return wrap(XPtr<glmFamily>(ptr)->linkInv(as<VectorXd>(eta)));
+	END_RCPP;
+    }
+
+    SEXP glmFamily_devResid(SEXP ptr, SEXP mu, SEXP weights, SEXP y) {
+	BEGIN_RCPP;
+	return wrap(XPtr<glmFamily>(ptr)->devResid(as<VectorXd>(mu),
+						   as<VectorXd>(weights),
+						   as<VectorXd>(y)));
+	END_RCPP;
+    }
+
+    SEXP glmFamily_muEta(SEXP ptr, SEXP eta) {
+	BEGIN_RCPP;
+	return wrap(XPtr<glmFamily>(ptr)->muEta(as<VectorXd>(eta)));
+	END_RCPP;
+    }
+
+    SEXP glmFamily_variance(SEXP ptr, SEXP mu) {
+	BEGIN_RCPP;
+	return wrap(XPtr<glmFamily>(ptr)->variance(as<VectorXd>(mu)));
+	END_RCPP;
+    }
+
+    void stepFac(glmResp *rp, merPredD *pp, int verb) {
+	double pwrss0 = rp->wrss() + pp->u0().squaredNorm();
+
+	for (double fac = 1.; fac > 0.001; fac /= 2.) {
+	    double pwrss1 = rp->updateMu(pp->linPred(fac)) + pp->sqrL(fac);
+	    if (verb > 3)
+		::Rprintf("pwrss0=%10g, diff=%10g, fac=%6.4f\n",
+			  pwrss0, pwrss1 - pwrss0, fac);
+	    if (pwrss1 < pwrss0) {
+		pp->installPars(fac);
+		return;
+	    }
+	}
+	throw runtime_error("step factor reduced below 0.001 without reducing pwrss");
+    }
+
+    void pwrssUpdate(glmResp *rp, merPredD *pp, int verb, bool uOnly) {
+	do {
+	    rp->updateMu(pp->linPred(0.));
+	    rp->updateWts();
+	    pp->updateXwts(rp->sqrtXwt());
+	    pp->updateDecomp();
+	    pp->updateRes(rp->wtres());
+	    if (uOnly) pp->solveU();
+	    else pp->solve();
+	    if (pp->CcNumer()/(rp->wrss() + pp->sqrL(0.)) < 0.000001) break;
+	    stepFac(rp, pp, verb);
+	} while (true);
+    }
+	    
+    SEXP glmerPwrssUpdate(SEXP pp_, SEXP rp_, SEXP verb_, SEXP uOnly_) {
+	BEGIN_RCPP;
+	pwrssUpdate(XPtr<glmResp>(rp_), XPtr<merPredD>(pp_),
+		    ::Rf_asInteger(verb_), ::Rf_asLogical(uOnly_));
+	END_RCPP;
+    }
+
+    SEXP glmerWrkIter(SEXP pp_, SEXP rp_) {
+	BEGIN_RCPP;
+
+	XPtr<glmResp>    rp(rp_);
+	XPtr<merPredD>   pp(pp_);
+	std::cout << "extracted pointers" << std::endl;
+	const VectorXd   wt(rp->sqrtWrkWt());
+	std::cout << "got sqrtWrkWt" << std::endl;
+	pp->updateXwts(wt);
+	std::cout << "updated Xwts" << std::endl;
+	pp->updateDecomp();
+	std::cout << "updated decomp" << std::endl;
+	pp->updateRes(rp->wrkResp());
+	std::cout << "updated residuals" << std::endl;
+	pp->solve();
+	std::cout << "done solve" << std::endl;
+	rp->updateMu(pp->linPred(1.));
+	std::cout << "updated mu" << std::endl;
+	pp->installPars(1.);
+	std::cout << "installed new coefficients" << std::endl;
+
+	return ::Rf_ScalarReal(rp->updateWts());
+
+	END_RCPP;
+    }
+	
+    SEXP glmerLaplace(SEXP pp_, SEXP rp_, SEXP theta_, SEXP u0_, SEXP beta0_,
+		      SEXP verbose_, SEXP uOnly_) {
+	// Assume that ppt->updateWts(rpt->sqrtXwt()) has been called once
+	BEGIN_RCPP;
+
+	XPtr<glmResp>     rp(rp_);
+	XPtr<merPredD>    pp(pp_);
+	int             verb(::Rf_asInteger(verbose_));
+	bool           uOnly(::Rf_asLogical(uOnly_));
+	pp->setTheta(NumericVector(theta_));
+// Fill in details here
+	return ::Rf_ScalarReal(rp->Laplace(pp->ldL2(), pp->ldRX2(), pp->sqrL(1.)));
+
+	END_RCPP;
+    }
+	
+
     // linear model response (also the base class for other response classes)
 
     SEXP lm_Create(SEXP ys) {
@@ -199,6 +324,8 @@ extern "C" {
 	END_RCPP;
     }
     
+    // linear mixed-effects model response 
+
     SEXP lmer_Create(SEXP ys) {
 	BEGIN_RCPP;
 	lmerResp *ans = new lmerResp(NumericVector(ys));
@@ -242,6 +369,8 @@ extern "C" {
 
 	END_RCPP;
     }
+
+    // dense predictor module for mixed-effects models
 
     SEXP merPredDCreate(SEXP Xs, SEXP Zts, SEXP Lambdats, SEXP Linds, SEXP thetas) {
 	BEGIN_RCPP;
@@ -490,11 +619,11 @@ static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(lmerDeviance, 3),
 
-    CALLDEF(glm_Create, 2),	// generate external pointer
+    CALLDEF(glm_Create, 2),	  // generate external pointer
 
-    CALLDEF(glm_setN, 2),	// setters
+    CALLDEF(glm_setN, 2),	  // setters
 
-    CALLDEF(glm_devResid, 1),	// getters
+    CALLDEF(glm_devResid, 1),	  // getters
     CALLDEF(glm_eta, 1),
     CALLDEF(glm_family, 1),
     CALLDEF(glm_link, 1),
@@ -506,14 +635,26 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(glm_wrkResids, 1),
     CALLDEF(glm_wrkResp, 1),
 
-    CALLDEF(glm_Laplace, 4),	// methods
+    CALLDEF(glm_Laplace, 4),	  // methods
     CALLDEF(glm_updateMu, 2),
     CALLDEF(glm_updateWts, 1),
 
-    CALLDEF(lm_setOffset, 2),	// setters
+    CALLDEF(glmFamily_Create, 1), // generate external pointer
+
+    CALLDEF(glmFamily_link, 1),   // methods
+    CALLDEF(glmFamily_linkInv, 1),
+    CALLDEF(glmFamily_devResid, 3),
+    CALLDEF(glmFamily_muEta, 1),
+    CALLDEF(glmFamily_variance, 1),
+
+    CALLDEF(glmerPwrssUpdate, 4),
+    CALLDEF(glmerWrkIter, 2),
+    CALLDEF(glmerLaplace, 7),
+
+    CALLDEF(lm_setOffset, 2),	  // setters
     CALLDEF(lm_setWeights, 2),
 
-    CALLDEF(lm_mu, 1),		// getters
+    CALLDEF(lm_mu, 1),		  // getters
     CALLDEF(lm_offset, 1),
     CALLDEF(lm_sqrtXwt, 1),
     CALLDEF(lm_sqrtrwt, 1),
@@ -522,23 +663,23 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(lm_wtres, 1),
     CALLDEF(lm_y, 1),
 
-    CALLDEF(lm_updateMu, 2),	// method
+    CALLDEF(lm_updateMu, 2),	  // method
 
-    CALLDEF(lmer_Create, 1),	// generate external pointer
+    CALLDEF(lmer_Create, 1),	  // generate external pointer
 
-    CALLDEF(lmer_setREML, 2),   // setter
+    CALLDEF(lmer_setREML, 2),     // setter
 
-    CALLDEF(lmer_REML, 1),	// getter
+    CALLDEF(lmer_REML, 1),	  // getter
 
-    CALLDEF(lmer_Laplace, 4),   // method
+    CALLDEF(lmer_Laplace, 4),     // method
 
-    CALLDEF(merPredDCreate, 5),	// generate external pointer
+    CALLDEF(merPredDCreate, 5),	  // generate external pointer
 
     CALLDEF(merPredDsetTheta, 2), // setters
     CALLDEF(merPredDsetBeta0, 2),
     CALLDEF(merPredDsetU0, 2),
 
-    CALLDEF(merPredDCcNumer, 1), // getters
+    CALLDEF(merPredDCcNumer, 1),  // getters
     CALLDEF(merPredDL, 1),
     CALLDEF(merPredDLambdat, 1), 
     CALLDEF(merPredDLamtUt, 1),

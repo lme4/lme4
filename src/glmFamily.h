@@ -20,7 +20,7 @@ namespace glm {
 	Rcpp::Function d_devRes, d_linkfun, d_linkinv, d_muEta, d_variance;
 				//@}
     public:
-	glmFamily(Rcpp::List);// throw (std::runtime_error);
+	glmFamily(Rcpp::List);
 
 	const std::string& fam() const {return d_family;}
 	const std::string& lnk() const {return d_link;}

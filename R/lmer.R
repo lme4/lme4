@@ -93,7 +93,7 @@ mkdevfun <- function(pp, resp) {
 
 glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 		   control = list(), start = NULL, verbose = 0L, nAGQ = 1L,
-		   doFit = TRUE, subset, weights, na.action, offset,
+		   doFit = TRUE, compDev=TRUE, subset, weights, na.action, offset,
 		   contrasts = NULL, mustart, etastart, devFunOnly=FALSE, ...)
 {
     verbose <- as.integer(verbose)
@@ -148,14 +148,21 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 					# response module
     resp <- mkRespMod2(fr, family=family)
 					# initial step from working response
-    pp$updateXwts(resp$sqrtWrkWt())
-    pp$updateDecomp()
-    pp$updateRes(resp$wrkResp())
-    pp$solve()
-    resp$updateMu(pp$linPred(1))	# full increment
-    resp$updateWts()
-    pp$installPars(1)
-    pwrssUpdate(pp, resp, verbose)
+    print(str(resp))
+    if (compDev) {
+        .Call(glmerWrkIter, pp, resp)
+        .Call(glmerPwrssUpdate, pp, resp, verbose, FALSE)
+    } else {
+        pp$updateXwts(resp$sqrtWrkWt())
+        pp$updateDecomp()
+        pp$updateRes(resp$wrkResp())
+        pp$solve()
+        resp$updateMu(pp$linPred(1))	# full increment
+        resp$updateWts()
+        pp$installPars(1)
+        pwrssUpdate(pp, resp, verbose)
+    }
+    
     u0 <- pp$u0
     beta0 <- pp$beta0
     

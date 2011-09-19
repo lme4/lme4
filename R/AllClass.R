@@ -277,6 +277,50 @@ glmerResp <-
 
 glmerResp$lock("family", "y")
 
+glmFamily <-
+    setRefClass("glmFamily",
+                fields =
+                list(
+                     family = "family",
+                     ptr    = "externalptr"
+                     ),
+                methods =
+                list(
+                     initialize = function(fam, ...) {
+                         stopifnot(inherits(fam, "family"))
+                         family <<- fam
+                         ptr <<- .Call(glmFamily_Create, fam)
+                         callSuper(...)
+                     },
+                     link = function(mu) {
+                         'applies the (forward) link function to mu'
+                         .Call(glmFamily_link, ptr, as.numeric(mu))
+                     },
+                     linkInv = function(eta) {
+                         'applies the inverse link function to eta'
+                         .Call(glmFamily_linkInv, ptr, as.numeric(eta))
+                     },
+                     muEta = function(eta) {
+                         'applies the muEta function to eta'
+                         .Call(glmFamily_muEta, ptr, as.numeric(eta))
+                     },
+                     variance = function(mu) {
+                         'applies the variance function to mu'
+                         .Call(glmFamily_variance, ptr, as.numeric(mu))
+                     },
+                     devResid = function(mu, weights, y) {
+                         'applies the devResid function to mu, weights and y'
+                         mu <- as.numeric(mu)
+                         weights <- as.numeric(weights)
+                         y <- as.numeric(y)
+                         stopifnot(length(mu) == length(weights),
+                                   length(mu) == length(y),
+                                   all(weights >= 0))
+                         .Call(glmFamily_devResid, ptr, mu, weights, y)
+                     }
+                 )
+                )
+
 lmerResp <-
     setRefClass("lmerResp",
                 fields =
