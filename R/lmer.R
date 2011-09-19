@@ -206,12 +206,12 @@ if (FALSE) {
     n <- nrow(fr)
     
     dims <- c(N=n, n=n, nmp=n-p, nth=length(pp$theta), p=p, q=nrow(reTrms$Zt),
-	      nAGQ=nAGQ, useSc=1L, reTrms=length(reTrms$cnms),
+	      nAGQ=nAGQ, useSc=0L, reTrms=length(reTrms$cnms),
 	      spFe=0L, REML=0L, GLMM=1L, NLMM=0L)
     cmp <- c(ldL2=pp$ldL2(), ldRX2=pp$ldRX2(), wrss=wrss,
              ussq=sqrLenU, pwrss=pwrss,
 	     drsum=resp$resDev(), dev=opt$fval, REML=NA,
-	     sigmaML=sqrt(pwrss/n), sigmaREML=NA)
+	     sigmaML=NA, sigmaREML=NA)
     
     new("glmerMod", call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
 	theta=pp$theta, beta=pp$beta0, u=pp$u0, lower=reTrms$lower,
@@ -826,15 +826,18 @@ printMerenv <- function(x, digits = max(3, getOption("digits") - 3),
 {
     so <- summary(x)
     cat(sprintf("%s ['%s']\n",so$methTitle, class(x)))
-    if (!is.null(f <- so$family))
-	cat(" Family:", f$family,"\n")
+    if (!is.null(f <- so$family)) {
+	cat(" Family:", f)
+        if (!(is.null(ll <- so$link))) cat(" (", ll, ")")
+        cat("\n")
+    }
     if (!is.null(cc <- so$call$formula))
 	cat("Formula:", deparse(cc),"\n")
     if (!is.null(cc <- so$call$data))
-	cat("	Data:", deparse(cc), "\n")
+	cat("   Data:", deparse(cc), "\n")
     if (!is.null(cc <- so$call$subset))
 	cat(" Subset:", deparse(asOneSidedFormula(cc)[[2]]),"\n")
-    ## MM would like:	 cat("\n")
+    cat("\n")
     tab <- so$AICtab
     if (length(tab) == 1 && names(tab) == "REML")
 	cat("REML criterion at convergence:", round(tab, 4), "\n")
@@ -1180,8 +1183,11 @@ summary.merMod <- function(object, ...)
     sig <- sigma(object)
     REML <- isREML(object)
 
-    fam <- NULL
-    if(is(resp, "glmerResp")) fam <- resp@family
+    link <- fam <- NULL
+    if(is(resp, "glmerResp")) {
+        fam <- resp$fam()
+        link <- resp$link()
+    }
     coefs <- cbind("Estimate" = fixef(object),
 		   "Std. Error" = sig * sqrt(diag(object@pp$unsc())))
     if (nrow(coefs) > 0) {
@@ -1205,16 +1211,14 @@ summary.merMod <- function(object, ...)
     ##	      nor compute VarCorr() unless is(re, "reTrms"):
     varcor <- VarCorr(object)
 					# use S3 class for now
-    structure(list(methTitle = mName,
-		   devcomp = devC, isLmer = is(resp, "lmerResp"), useScale = useSc,
-		   logLik = llik, family = fam,
-		   ngrps = sapply(object@flist, function(x) length(levels(x))),
-		   coefficients = coefs,
-		   sigma = sig,
-		   vcov = vcov(object, correlation=TRUE, sigm=sig),
-		   varcor = varcor, # and use formatVC(.) for printing.
-		   AICtab= AICstats,
-		   call = object@call
+    structure(list(methTitle=mName, devcomp=devC,
+                   isLmer=is(resp, "lmerResp"), useScale=useSc,
+		   logLik=llik, family=fam, link=link,
+		   ngrps=sapply(object@flist, function(x) length(levels(x))),
+		   coefficients=coefs, sigma=sig,
+		   vcov=vcov(object, correlation=TRUE, sigm=sig),
+		   varcor=varcor, # and use formatVC(.) for printing.
+		   AICtab=AICstats, call=object@call
 		   ), class = "summary.mer")
 }
 
