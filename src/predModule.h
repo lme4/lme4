@@ -224,47 +224,4 @@ namespace lme4Eigen {
     };
 }
 
-extern "C" {
-    SEXP merPredDCreate(SEXP, SEXP, SEXP, SEXP, SEXP); // constructor (returns external pointer)
-    
-    SEXP merPredDsetTheta(SEXP, SEXP); // setters
-    SEXP merPredDsetBeta0(SEXP, SEXP);
-    SEXP merPredDsetU0(SEXP, SEXP);
-
-    SEXP merPredDCcNumer(SEXP);	       // getters
-    SEXP merPredDL(SEXP);	
-    SEXP merPredDLambdat(SEXP);
-    SEXP merPredDLamtUt(SEXP);
-    SEXP merPredDPvec(SEXP);
-    SEXP merPredDRX(SEXP);
-    SEXP merPredDRXdiag(SEXP);
-    SEXP merPredDRXi(SEXP);
-    SEXP merPredDRZX(SEXP);
-    SEXP merPredDUt(SEXP);
-    SEXP merPredDUtr(SEXP);
-    SEXP merPredDV(SEXP);
-    SEXP merPredDVtV(SEXP);
-    SEXP merPredDVtr(SEXP);
-    SEXP merPredDZt(SEXP);
-    SEXP merPredDbeta0(SEXP);
-    SEXP merPredDdelb(SEXP);
-    SEXP merPredDdelu(SEXP);
-    SEXP merPredDldL2(SEXP);
-    SEXP merPredDldRX2(SEXP);
-    SEXP merPredDtheta(SEXP);
-    SEXP merPredDu0(SEXP);
-    SEXP merPredDunsc(SEXP);
-
-    SEXP merPredDb(SEXP, SEXP);	       // methods
-    SEXP merPredDbeta(SEXP, SEXP);
-    SEXP merPredDlinPred(SEXP, SEXP);
-    SEXP merPredDinstallPars(SEXP, SEXP);
-    SEXP merPredDsolve(SEXP);
-    SEXP merPredDsolveU(SEXP);
-    SEXP merPredDsqrL(SEXP,SEXP);
-    SEXP merPredDu(SEXP, SEXP);
-    SEXP merPredDupdateDecomp(SEXP);
-    SEXP merPredDupdateRes(SEXP,SEXP);
-    SEXP merPredDupdateXwts(SEXP,SEXP);
-}
 #endif // LME4_EIGEN_H
