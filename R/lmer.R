@@ -155,11 +155,20 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     resp$updateMu(pp$linPred(1))	# full increment
     resp$updateWts()
     pp$installPars(1)
-    opt <- list(fval=resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL(0.)))
-    
+    pwrssUpdate(pp, resp, verbose)
     u0 <- pp$u0
     beta0 <- pp$beta0
+    
+    opt <- list(fval=resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL(0.)))
+
     if (doFit) {			# optimize estimates
+if (FALSE) {
+        rho <- new.env(parent=parent.frame())
+        rho$u0 <- pp$u0
+        rho$beta0 <- pp$beta0
+        rho$pp <- pp
+        rho$resp <- resp
+}
 	devfun <- function(theta) {
 	    pp$u0 <- u0
 	    pp$beta0 <- beta0
@@ -167,6 +176,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 	    pwrssUpdate(pp, resp, verbose)
 	    resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL(0))
 	}
+#        environment(devfun) <- rho
         if (devFunOnly) return(devFun)
 	control$iprint <- min(verbose, 3L)
 	opt <- bobyqa(pp$theta, devfun, lower=reTrms$lower, control=control)
