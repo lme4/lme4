@@ -1,8 +1,77 @@
+2011-09-19  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/lmer.R: Clean up printMer and summary.merMod
+	* src/external.cpp, src/external.h, src/lmer.cpp, src/lmer.h: rename
+	  lmer.[h,cpp] to external.[h,cpp]
+	* R/lmer.R: Initial iterations in glmer (the nAGQ=0L part) now working.
+	  Later iterations still need work.
+
+2011-09-16  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/lmer.R: Use fac argument in call to sqrL() method. glmer now
+	  iterates but does not yet converge.
+	* src/predModule.cpp: Add the - u_i on the rhs of the equation in the
+	  solve method.
+	* R/AllClass.R, src/init.cpp, src/predModule.cpp, src/predModule.h: New
+	  'allInfo' method for glmerResp reference class. Added .Call'able
+	  extractors for Utr and Vtr to merPredD class.
+
+2011-09-14  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/lmer.R: Modified glmer to return a meaningful object when
+	  doFit=FALSE.
+	* R/AllClass.R, src/init.cpp, src/respModule.cpp, src/respModule.h:
+	  Added methods and new classes for response modules. Modified names of
+	  .Call'able functions to make them easier to understand.
+	* src/predModule.cpp: Use d_LamtUt instead of recomputing d_Lambdat *
+	  d_Ut
+	* inst/unitTests/runit.link.R: Modified link/muEta/variance unit tests
+	  to use a glmerResp object.
+
+2011-09-13  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/Makevars: Add more explanation about the -DNDEBUG compiler flag
+	  and when to use it.
+	* R/AllClass.R, R/lmer.R, src/init.cpp, src/predModule.cpp,
+	  src/predModule.h, src/respModule.cpp, src/respModule.h: Many more
+	  methods added to the reference class definitions, as well as
+	  documentation. glmer is now working in the sense that it doesn't
+	  segfault, however it is not yet performing the calculations correctly.
+	* DESCRIPTION: Remove RcppModule specification.
+2011-09-12  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/respModule.h: Clean up calculation of working residuals.
+	* R/lmer.R: Still working on glmer, not there yet.
+	* R/AllClass.R, src/init.cpp, src/predModule.cpp, src/predModule.h,
+	  src/respModule.cpp, src/respModule.h: Added many more R-callable entry
+	  points in respModule and predModule, incorporating them as methods in
+	  the reference class definitions.
+	* src/Makevars: Allow for suppression of assert statements with -DNDEBUG
+	  (R CMD check complains)
+
+2011-09-12  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION, NAMESPACE, R/AllClass.R, R/lmer.R,
+	  inst/unitTests/runTests.R, tests/doRunit.R, tests/drop.R,
+	  tests/extras.R, tests/lmer-1.Rout.save, tests/lmer.R,
+	  tests/lmer2_ex.R, tests/nlmer-conv.R, tests/nlmer.R, tests/throw.R:
+	  more updates
+	* man/Dyestuff.Rd, man/VarCorr.Rd, man/cbpp.Rd, man/getME.Rd,
+	  man/lmer.Rd, man/lmerMod-class.Rd, man/merMod-class.Rd,
+	  man/mkdevfun.Rd, man/ranef.Rd, man/reModule-class.Rd: considerably
+	  more documentation
+
+2011-09-11  Douglas Bates <bates@stat.wisc.edu>
+
+	* NAMESPACE, R/AllClass.R, R/lmer.R, src/init.cpp, src/respModule.cpp,
+	  src/respModule.h: Added glmerResp class and began glmer function.
+	  Still needs work.
+
 2011-09-11  Douglas Bates <bates@stat.wisc.edu>
 
 	* src/predModule.[h,cpp]: Wrote native C++ L() method. Somehow calling
 	  ::M_chm_factor_as_SEXP was messing up memory.
-	* tests/vcov-etc.R, tests/lmer-conv.R: Test using this package
+	* tests/vcov-etc.R, tests/lmer-conv.R: Test using this package not lme4a
 	* R/AllClass.R, src/init.cpp, src/predModule.cpp, src/predModule.h: Add
 	  capability of extracting L from a merPredD object
 
