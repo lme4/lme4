@@ -148,11 +148,10 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 					# response module
     resp <- mkRespMod2(fr, family=family)
 					# initial step from working response
-    print(str(resp))
     if (compDev) {
 	.Call(glmerWrkIter, pp$ptr, resp$ptr)
 	if(!is.numeric(control$tol)) control$tol <- 0.000001
-	.Call(glmerPwrssUpdate, pp$ptr, resp$ptr, verbose, FALSE, control$tol)
+	lapply(1:3, function(n).Call(glmerPwrssUpdate, pp$ptr, resp$ptr, verbose, FALSE, control$tol))
     } else {
         pp$updateXwts(resp$sqrtWrkWt())
         pp$updateDecomp()
@@ -162,6 +161,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
         resp$updateWts()
         pp$installPars(1)
         pwrssUpdate(pp, resp, verbose)
+        pwrssUpdate(pp, resp, verbose)
     }
 
     u0 <- pp$u0
@@ -169,37 +169,47 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 
     opt <- list(fval=resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL(0.)))
 
-    if (doFit) {			# optimize estimates
-if (FALSE) {
-        rho <- new.env(parent=parent.frame())
-        rho$u0 <- pp$u0
-        rho$beta0 <- pp$beta0
-        rho$pp <- pp
-        rho$resp <- resp
-}
-	devfun <- function(theta) {
-	    pp$u0 <- u0
-	    pp$beta0 <- beta0
-	    pp$theta <- theta
-	    pwrssUpdate(pp, resp, verbose)
-	    resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL(0))
-	}
-#        environment(devfun) <- rho
-        if (devFunOnly) return(devFun)
+    if (doFit || devFunOnly) {			# optimize estimates
+        rho <- as.environment(list(u0=pp$u0, beta0=pp$beta0, pp=pp, resp=resp,
+                                   verbose=verbose, control=control))
+        parent.env(rho) <- parent.frame()
+        devfun <- if (compDev) {
+            function(theta)
+                .Call(lme4Eigen:::glmerLaplace, pp$ptr, resp$ptr,
+                      theta, u0, beta0, verbose, FALSE, control$tol)
+        } else {
+            function(theta) {
+                pp$u0 <- u0
+                pp$beta0 <- beta0
+                pp$theta <- theta
+                lme4Eigen:::pwrssUpdate(pp, resp, verbose)
+                resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL(0))
+            }
+        }
+        environment(devfun) <- rho
+        if (devFunOnly) return(devfun)
 	control$iprint <- min(verbose, 3L)
 	opt <- bobyqa(pp$theta, devfun, lower=reTrms$lower, control=control)
 	if (nAGQ == 1L) {
-            u0 <- pp$u0
-            dpars <- seq_along(pp$theta)
-            devfunb <- function(pars) {
-                pp$u0 <- u0
-                pp$theta <- pars[dpars]
-                pp$beta0 <- pars[-dpars]
-                pwrssUpdate(pp, resp, verbose, TRUE)
-                resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL())
-            }
+            rho$u0 <- pp$u0
+            rho$dpars <- seq_along(pp$theta)
 	    if(!is.numeric(control$rhobeg)) control$rhobeg <- 0.0002
 	    if(!is.numeric(control$rhoend)) control$rhoend <- 2e-7
+            rho$control <- control
+            devfunb <- if (compDev) {
+                function(pars)
+                    .Call(lme4Eigen:::glmerLaplace, pp$ptr, resp$ptr, pars[dpars],
+                          u0, pars[-dpars], verbose, TRUE, control$tol)
+            } else {
+                function(pars) {
+                    pp$u0 <- u0
+                    pp$theta <- pars[dpars]
+                    pp$beta0 <- pars[-dpars]
+                    lme4Eigen:::pwrssUpdate(pp, resp, verbose, TRUE)
+                    resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL(0))
+                }
+            }
+            environment(devfunb) <- rho
             opt <- bobyqa(c(pp$theta, pp$beta0), devfunb,
                           lower=c(reTrms$lower, rep.int(-Inf, length(pp$beta0))),
                           control=control)
@@ -419,15 +429,6 @@ pwrssUpdate <- function(pp, resp, verbose, uOnly=FALSE) {
     }
 }
 
-## pwrssUpdate2 <- function(pp, resp, verbose) {
-##     repeat {
-##         resp$updateMu(pp$linPred(0))
-##         resp$updateWts()
-##         rem$reweight(resp$sqrtXwt, resp$wtres)
-##         if ((ccrit <-rem$solveIncr()/(resp$wrss + rem$sqrLenU)) < 0.000001) break
-##         stepFac(rem, fem, resp, verbose)
-##     }
-## }
 ## setMethod("show", signature("lmerResp"), function(object)
 ##       {
 ##           with(object,
