@@ -13,6 +13,8 @@ namespace lme4Eigen {
     using std::copy;
     using std::string;
     using std::invalid_argument;
+//    using std::cout;
+//    using std::endl;
 
     lmResp::lmResp(NumericVector y)
 	: d_yR(y),
@@ -92,8 +94,6 @@ namespace lme4Eigen {
     }
 
     VectorXd glmResp::muEta() const {
-	std::cout << "in muEta method" << std::endl;
-	std::cout << "family = " << family() << ", link = " << link() << std::endl;
 	return d_fam.muEta(d_eta);
     }
 
@@ -110,12 +110,8 @@ namespace lme4Eigen {
     }
 
     VectorXd glmResp::sqrtWrkWt() const {
-	std::cout << "in sqrtWrkWt method" << std::endl;
-	VectorXd me = muEta();
-	std::cout << "applied muEta" << std::endl;
-	VectorXd vv = variance();
-	std::cout << "applied variance" << std::endl;
-	return d_weights.cwiseProduct(me).cwiseProduct(me).cwiseQuotient(vv).cwiseSqrt();
+	const VectorXd me(muEta());
+	return d_weights.cwiseProduct(me).cwiseProduct(me).cwiseQuotient(variance()).cwiseSqrt();
     }
 
     double glmResp::Laplace(double ldL2, double ldRX2, double sqrL) const {
