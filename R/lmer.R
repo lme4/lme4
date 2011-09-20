@@ -160,8 +160,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
         resp$updateMu(pp$linPred(1))	# full increment
         resp$updateWts()
         pp$installPars(1)
-        pwrssUpdate(pp, resp, verbose)
-        pwrssUpdate(pp, resp, verbose)
+        lapply(1:3, function(n) pwrssUpdate(pp, resp, verbose))
     }
 
     u0 <- pp$u0
