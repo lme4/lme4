@@ -94,7 +94,7 @@ mkdevfun <- function(pp, resp) {
 glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 		   control = list(), start = NULL, verbose = 0L, nAGQ = 1L,
 		   doFit = TRUE, compDev=TRUE, subset, weights, na.action, offset,
-		   contrasts = NULL, mustart, etastart, devFunOnly=FALSE, ...)
+		   contrasts = NULL, mustart, etastart, devFunOnly = FALSE, ...)
 {
     verbose <- as.integer(verbose)
     mf <- mc <- match.call()
@@ -150,8 +150,9 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 					# initial step from working response
     print(str(resp))
     if (compDev) {
-        .Call(glmerWrkIter, pp, resp)
-        .Call(glmerPwrssUpdate, pp, resp, verbose, FALSE)
+	.Call(glmerWrkIter, pp, resp)
+	if(!is.numeric(control$tol)) control$tol <- 0.000001
+	.Call(glmerPwrssUpdate, pp, resp, verbose, FALSE, control$tol)
     } else {
         pp$updateXwts(resp$sqrtWrkWt())
         pp$updateDecomp()
@@ -162,10 +163,10 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
         pp$installPars(1)
         pwrssUpdate(pp, resp, verbose)
     }
-    
+
     u0 <- pp$u0
     beta0 <- pp$beta0
-    
+
     opt <- list(fval=resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL(0.)))
 
     if (doFit) {			# optimize estimates
@@ -197,10 +198,11 @@ if (FALSE) {
                 pwrssUpdate(pp, resp, verbose, TRUE)
                 resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL())
             }
-            control$rhobeg <- 0.0002
-            control$rhoend <- 2e-7
+	    if(!is.numeric(control$rhobeg)) control$rhobeg <- 0.0002
+	    if(!is.numeric(control$rhoend)) control$rhoend <- 2e-7
             opt <- bobyqa(c(pp$theta, pp$beta0), devfunb,
-                          lower=c(reTrms$lower, rep.int(-Inf, length(pp$beta0))), control=control)
+                          lower=c(reTrms$lower, rep.int(-Inf, length(pp$beta0))),
+                          control=control)
         }
     }
     LL <- pp$Lambdat
@@ -211,7 +213,7 @@ if (FALSE) {
     wrss <- resp$wrss()
     pwrss <- wrss + sqrLenU
     n <- nrow(fr)
-    
+
     dims <- c(N=n, n=n, nmp=n-p, nth=length(pp$theta), p=p, q=nrow(reTrms$Zt),
 	      nAGQ=nAGQ, useSc=0L, reTrms=length(reTrms$cnms),
 	      spFe=0L, REML=0L, GLMM=1L, NLMM=0L)
@@ -219,7 +221,7 @@ if (FALSE) {
              ussq=sqrLenU, pwrss=pwrss,
 	     drsum=resp$resDev(), dev=opt$fval, REML=NA,
 	     sigmaML=NA, sigmaREML=NA)
-    
+
     new("glmerMod", call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
 	theta=pp$theta, beta=pp$beta0, u=pp$u0, lower=reTrms$lower,
 	devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=resp)
@@ -985,13 +987,13 @@ getME <- function(object,
 	   "Lambdat"= PR$ Lambdat,
 	   "RX" = PR $ RX,
 	   "RZX" = PR $ RZX,
-           
+
            "beta" = object@beta,
            "theta"= object@theta, ## *OR*  PR $ theta  --- which one ??
-           
+
 	   "REML" = rsp $ REML,
 	   "is_REML" = as.logical(rsp $ REML),# correct ??
-           
+
 	   "n_rtrms" =, ## FIXME length(PR$flist), ##  = #{random-effect terms in the formula}
 	   "Gp"= ,  # FIXME
 	   "..foo.." =# placeholder!
@@ -1030,7 +1032,7 @@ refitML.merMod <- function (x) {
     cmp <- c(ldL2=pp$ldL2(), ldRX2=pp$ldRX2(), wrss=wrss, ussq=ussq,
 	     pwrss=pwrss, drsum=NA, dev=opt$fval, REML=NA,
 	     sigmaML=sqrt(pwrss/n), sigmaREML=sqrt(pwrss/(n-p)))
-    
+
 ### FIXME: Should modify the call slot to set REML=FALSE.  It is
 ### tricky to do so without causing the call to be evaluated
     new("lmerMod", call=x@call, frame=x@frame, flist=x@flist,

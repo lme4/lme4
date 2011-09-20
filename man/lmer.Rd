@@ -28,8 +28,8 @@ lmer(formula, data, REML = TRUE, sparseX = FALSE,
 
 glmer(formula, data, family = gaussian, sparseX = FALSE,
       control = list(), start = NULL, verbose = 0, nAGQ = 1,
-      doFit = TRUE, subset, weights, na.action, offset,
-      contrasts = NULL, mustart, etastart, \dots)
+      doFit = TRUE, compDev = TRUE, subset, weights, na.action, offset,
+      contrasts = NULL, mustart, etastart, devFunOnly = FALSE, \dots)
 
 nlmer(formula, data, family = gaussian, start = NULL,
       verbose = 0L, nAGQ = 1L, doFit = TRUE, subset, weights,
@@ -78,8 +78,8 @@ nlmer(formula, data, family = gaussian, start = NULL,
     random-effects terms is returned, so they can be modified for
     special model forms. When \code{doFit = TRUE}, the default, the
     model is fit immediately.}
-  % \item{compDev}{logical - should compiled code be used for the deviance
-  %   evaluation during the optimization of the parameters estimates?}
+  \item{compDev}{logical - should compiled code be used for the deviance
+    evaluation during the optimization of the parameters estimates?}
   \item{subset, weights, na.action, offset, contrasts}{further model
     specification arguments as in \code{\link[stats]{lm}}; see there for
     details.}
@@ -91,7 +91,7 @@ nlmer(formula, data, family = gaussian, start = NULL,
     \code{> 1} verbose output is generated during the individual PIRLS
     steps.}
   \item{devFunOnly}{logical - return only the deviance evaluation
-      function - only useful for debugging.}
+    function - useful mainly for debugging.}% but MM thinks we want to keep.
   \item{\dots}{other potential arguments.  A \code{method} argument was
     used in earlier versions of the package. Its functionality has been
     replaced by the \code{REML} and \code{nAGQ} arguments.}
@@ -136,6 +136,9 @@ nlmer(formula, data, family = gaussian, start = NULL,
 	\item{\code{maxFN}:}{a positive integer specifying the
 	  maximum number of evaluations of the deviance function allowed
 	  during the optimization. Default is \code{900}}.
+	\item{\code{tol}:}{a positive number specifying the
+	  convergence tolerance, currently only for the PWRSS iterations
+	  in \code{glmer()}.  Default is \code{0.000001}}.
       }
     }
     \item{model, x}{logicals.  If \code{TRUE} the corresponding
