@@ -169,14 +169,18 @@ extern "C" {
 	END_RCPP;
     }
 
+    inline double pwrss(lmResp *rp, merPredD *pp, double fac) {
+	return rp->wrss() + (fac ? pp->sqrL(fac) : pp->u0().squaredNorm());
+    }
+
     void stepFac(glmResp *rp, merPredD *pp, int verb) {
-	double pwrss0 = rp->wrss() + pp->u0().squaredNorm();
+	double pwrss0(pwrss(rp, pp, 0.));
 
 	for (double fac = 1.; fac > 0.001; fac /= 2.) {
 	    double pwrss1 = rp->updateMu(pp->linPred(fac)) + pp->sqrL(fac);
 	    if (verb > 3)
 		::Rprintf("pwrss0=%10g, diff=%10g, fac=%6.4f\n",
-			  pwrss0, pwrss1 - pwrss0, fac);
+			  pwrss0, pwrss0 - pwrss1, fac);
 	    if (pwrss1 < pwrss0) {
 		pp->installPars(fac);
 		return;
@@ -186,15 +190,14 @@ extern "C" {
     }
 
     void pwrssUpdate(glmResp *rp, merPredD *pp, int verb, bool uOnly, double tol) {
+				// FIXME: limit the number of iterations?
 	do {
 	    rp->updateMu(pp->linPred(0.));
 	    rp->updateWts();
 	    pp->updateXwts(rp->sqrtXwt());
 	    pp->updateDecomp();
 	    pp->updateRes(rp->wtres());
-	    if (uOnly) pp->solveU();
-	    else pp->solve();
-	    if (pp->CcNumer()/(rp->wrss() + pp->sqrL(0.)) < tol) break;
+	    if ((uOnly ? pp->solveU() : pp->solve())/pwrss(rp, pp, 0.) < tol) break;
 	    stepFac(rp, pp, verb);
 	} while (true);
     }
@@ -211,21 +214,13 @@ extern "C" {
 
 	XPtr<glmResp>    rp(rp_);
 	XPtr<merPredD>   pp(pp_);
-	std::cout << "extracted pointers" << std::endl;
 	const VectorXd   wt(rp->sqrtWrkWt());
-	std::cout << "got sqrtWrkWt" << std::endl;
 	pp->updateXwts(wt);
-	std::cout << "updated Xwts" << std::endl;
 	pp->updateDecomp();
-	std::cout << "updated decomp" << std::endl;
 	pp->updateRes(rp->wrkResp());
-	std::cout << "updated residuals" << std::endl;
 	pp->solve();
-	std::cout << "done solve" << std::endl;
 	rp->updateMu(pp->linPred(1.));
-	std::cout << "updated mu" << std::endl;
 	pp->installPars(1.);
-	std::cout << "installed new coefficients" << std::endl;
 
 	return ::Rf_ScalarReal(rp->updateWts());
 
@@ -233,16 +228,17 @@ extern "C" {
     }
 
     SEXP glmerLaplace(SEXP pp_, SEXP rp_, SEXP theta_, SEXP u0_, SEXP beta0_,
-		      SEXP verbose_, SEXP uOnly_) {
-	// Assume that ppt->updateWts(rpt->sqrtXwt()) has been called once
+		      SEXP verbose_, SEXP uOnly_, SEXP tol_) {
 	BEGIN_RCPP;
 
 	XPtr<glmResp>     rp(rp_);
 	XPtr<merPredD>    pp(pp_);
-	int             verb(::Rf_asInteger(verbose_));
-	bool           uOnly(::Rf_asLogical(uOnly_));
+
 	pp->setTheta(NumericVector(theta_));
-// Fill in details here
+	pp->setU0(as<VectorXd>(u0_));
+	pp->setBeta0(as<VectorXd>(beta0_));
+	pwrssUpdate(rp, pp, ::Rf_asInteger(verbose_), ::Rf_asLogical(uOnly_),
+		    ::Rf_asReal(tol_));
 	return ::Rf_ScalarReal(rp->Laplace(pp->ldL2(), pp->ldRX2(), pp->sqrL(1.)));
 
 	END_RCPP;
@@ -568,13 +564,13 @@ extern "C" {
 
     SEXP merPredDsolve(SEXP ptr) {
 	BEGIN_RCPP;
-	XPtr<merPredD>(ptr)->solve();
+	return ::Rf_ScalarReal(XPtr<merPredD>(ptr)->solve());
 	END_RCPP;
     }
 
     SEXP merPredDsolveU(SEXP ptr) {
 	BEGIN_RCPP;
-	XPtr<merPredD>(ptr)->solveU();
+	return ::Rf_ScalarReal(XPtr<merPredD>(ptr)->solveU());
 	END_RCPP;
     }
 
@@ -649,7 +645,7 @@ static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(glmerPwrssUpdate, 5),
     CALLDEF(glmerWrkIter, 2),
-    CALLDEF(glmerLaplace, 7),
+    CALLDEF(glmerLaplace, 8),
 
     CALLDEF(lm_setOffset, 2),	  // setters
     CALLDEF(lm_setWeights, 2),

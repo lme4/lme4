@@ -130,7 +130,7 @@ namespace lme4Eigen {
 	}
     }
 
-    void merPredD::solve() {
+    merPredD::Scalar merPredD::solve() {
 	d_delu          = d_Utr - d_u0;
 	d_L.solveInPlace(d_delu, CHOLMOD_P);
 	d_L.solveInPlace(d_delu, CHOLMOD_L);    // d_delu now contains cu
@@ -143,16 +143,18 @@ namespace lme4Eigen {
 	d_delu         -= d_RZX * d_delb;
 	d_L.solveInPlace(d_delu, CHOLMOD_Lt);
 	d_L.solveInPlace(d_delu, CHOLMOD_Pt);
+	return d_CcNumer;
     }
 
-    void merPredD::solveU() {
+    merPredD::Scalar merPredD::solveU() {
 	d_delb.setZero(); // in calculation of linPred delb should be zero after solveU
-	d_delu          = d_Utr;
+	d_delu          = d_Utr - d_u0;
 	d_L.solveInPlace(d_delu, CHOLMOD_P);
 	d_L.solveInPlace(d_delu, CHOLMOD_L);    // d_delu now contains cu
 	d_CcNumer       = d_delu.squaredNorm(); // numerator of convergence criterion
 	d_L.solveInPlace(d_delu, CHOLMOD_Lt);
 	d_L.solveInPlace(d_delu, CHOLMOD_Pt);
+	return d_CcNumer;
     }
 
     void merPredD::updateXwts(const VectorXd& sqrtXwt) {
@@ -185,6 +187,13 @@ namespace lme4Eigen {
 	    throw invalid_argument("updateRes: dimension mismatch");
 	d_Vtr           = d_V.adjoint() * wtres;
 	d_Utr           = d_LamtUt * wtres;
+    }
+
+    void merPredD::installPars(const Scalar& f) {
+	d_u0 = u(f);
+	d_beta0 = beta(f);
+	d_delb.setZero();
+	d_delu.setZero();
     }
 
     void merPredD::setBeta0(const VectorXd& nBeta) {

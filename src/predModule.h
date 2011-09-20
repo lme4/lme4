@@ -186,6 +186,8 @@ namespace lme4Eigen {
 	Scalar              CcNumer() const {return d_CcNumer;}
 	Scalar                 ldL2() const {return d_ldL2;}
 	Scalar                ldRX2() const {return d_ldRX2;}
+	Scalar                solve();
+	Scalar               solveU();
 	Scalar                 sqrL(const Scalar& f) const;
 
 	const MatrixXd&           V() const {return d_V;}
@@ -209,13 +211,10 @@ namespace lme4Eigen {
 
 	int                    info() const {return d_L.info();}
 
-// FIXME: installPars should probably zero out d_delu and d_delb.  Move def'n to .cpp file
-	void            installPars(const Scalar& f) {d_u0 = u(f); d_beta0 = beta(f);}
+	void            installPars(const Scalar& f);
 	void               setBeta0(const VectorXd&);
 	void               setTheta(const NumericVector&);
 	void                  setU0(const VectorXd&);
-	void                  solve();
-	void                 solveU();
 	void           updateDecomp();
 	void                updateL();
 	void           updateLamtUt();
