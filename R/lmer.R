@@ -150,9 +150,9 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 					# initial step from working response
     print(str(resp))
     if (compDev) {
-	.Call(glmerWrkIter, pp, resp)
+	.Call(glmerWrkIter, pp$ptr, resp$ptr)
 	if(!is.numeric(control$tol)) control$tol <- 0.000001
-	.Call(glmerPwrssUpdate, pp, resp, verbose, FALSE, control$tol)
+	.Call(glmerPwrssUpdate, pp$ptr, resp$ptr, verbose, FALSE, control$tol)
     } else {
         pp$updateXwts(resp$sqrtWrkWt())
         pp$updateDecomp()
