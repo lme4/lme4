@@ -27,6 +27,12 @@ extern "C" {
 
     using std::runtime_error;
 
+    SEXP Eigen_SSE() {
+	BEGIN_RCPP;
+	return wrap(Eigen::SimdInstructionSetsInUse());
+	END_RCPP;
+    }
+
     // generalized linear model (and generalized linear mixed model) response
 
     SEXP glm_Create(SEXP fams, SEXP ys) {
@@ -614,6 +620,8 @@ extern "C" {
 static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(lmerDeviance, 3),
+
+    CALLDEF(Eigen_SSE, 0),
 
     CALLDEF(glm_Create, 2),	  // generate external pointer
 
