@@ -1,3 +1,31 @@
+2011-09-20  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/lmer.R: Do the same number of pwrssUpdate calls with compDev=TRUE or
+	  FALSE
+	* src/external.cpp, src/predModule.cpp, src/predModule.h: Remove
+	  debugging code. solve and solveU methods for merPredD class now return
+	  the numerator of the convergence criterion.
+	* R/lmer.R: Need to pass the pointer, not the reference class object.
+	  Modifications to glmer, pwrssUpdate, etc. to get glmer working.
+
+2011-09-20  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/lmer.R, man/lmer.Rd, src/external.cpp: non-hardcorded PWRSS
+	  tolerance
+
+2011-09-19  Douglas Bates <bates@stat.wisc.edu>
+
+	* NAMESPACE, R/AllClass.R, R/lmer.R, src/external.cpp, src/glmFamily.h,
+	  src/respModule.cpp: created a glmFamily reference class and allowed
+	  for compiled version of glmer update using working residuals and
+	  weights (not currently working properly, use compDev=FALSE argument to
+	  glmer)
+	* DESCRIPTION: new version and date
+	* src/external.cpp, src/predModule.cpp, src/predModule.h,
+	  src/respModule.cpp, src/respModule.h: Moved all externally .Call'able
+	  function definitions to external.cpp. external.h and init.cpp are no
+	  longer needed.
+
 2011-09-19  Douglas Bates <bates@stat.wisc.edu>
 
 	* R/lmer.R: Clean up printMer and summary.merMod
