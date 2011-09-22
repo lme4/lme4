@@ -92,9 +92,10 @@ mkdevfun <- function(pp, resp) {
 
 
 glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
-		   control = list(), start = NULL, verbose = 0L, nAGQ = 1L,
-		   doFit = TRUE, compDev=TRUE, subset, weights, na.action, offset,
-		   contrasts = NULL, mustart, etastart, devFunOnly = FALSE, ...)
+                  control = list(), start = NULL, verbose = 0L, nAGQ = 1L,
+                  doFit = TRUE, compDev=TRUE, subset, weights, na.action, offset,
+                  contrasts = NULL, mustart, etastart, devFunOnly = FALSE,
+                  tolPwrss = 0.000001, ...)
 {
     verbose <- as.integer(verbose)
     mf <- mc <- match.call()
@@ -150,8 +151,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 					# initial step from working response
     if (compDev) {
 	.Call(glmerWrkIter, pp$ptr, resp$ptr)
-	if(!is.numeric(control$tol)) control$tol <- 0.000001
-	lapply(1:3, function(n).Call(glmerPwrssUpdate, pp$ptr, resp$ptr, verbose, FALSE, control$tol))
+	lapply(1:3, function(n).Call(glmerPwrssUpdate, pp$ptr, resp$ptr, verbose, FALSE, tolPwrss))
     } else {
         pp$updateXwts(resp$sqrtWrkWt())
         pp$updateDecomp()
@@ -160,7 +160,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
         resp$updateMu(pp$linPred(1))	# full increment
         resp$updateWts()
         pp$installPars(1)
-        lapply(1:3, function(n) pwrssUpdate(pp, resp, verbose))
+        lapply(1:3, function(n) pwrssUpdate(pp, resp, verbose, tol=tolPwrss))
     }
 
     u0 <- pp$u0
@@ -170,18 +170,18 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 
     if (doFit || devFunOnly) {			# optimize estimates
         rho <- as.environment(list(u0=pp$u0, beta0=pp$beta0, pp=pp, resp=resp,
-                                   verbose=verbose, control=control))
+                                   verbose=verbose, control=control, tolPwrss=tolPwrss))
         parent.env(rho) <- parent.frame()
         devfun <- if (compDev) {
             function(theta)
-                .Call(lme4Eigen:::glmerLaplace, pp$ptr, resp$ptr,
-                      theta, u0, beta0, verbose, FALSE, control$tol)
+                .Call(glmerLaplace, pp$ptr, resp$ptr,
+                      theta, u0, beta0, verbose, FALSE, tolPwrss)
         } else {
             function(theta) {
                 pp$u0 <- u0
                 pp$beta0 <- beta0
                 pp$theta <- theta
-                lme4Eigen:::pwrssUpdate(pp, resp, verbose)
+                pwrssUpdate(pp, resp, verbose, tol=tolPwrss)
                 resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL(0))
             }
         }
@@ -197,14 +197,14 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
             rho$control <- control
             devfunb <- if (compDev) {
                 function(pars)
-                    .Call(lme4Eigen:::glmerLaplace, pp$ptr, resp$ptr, pars[dpars],
-                          u0, pars[-dpars], verbose, TRUE, control$tol)
+                    .Call(glmerLaplace, pp$ptr, resp$ptr, pars[dpars],
+                          u0, pars[-dpars], verbose, TRUE, tolPwrss)
             } else {
                 function(pars) {
                     pp$u0 <- u0
                     pp$theta <- pars[dpars]
                     pp$beta0 <- pars[-dpars]
-                    lme4Eigen:::pwrssUpdate(pp, resp, verbose, TRUE)
+                    pwrssUpdate(pp, resp, verbose, uOnly=TRUE, tol=tolPwrss)
                     resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL(0))
                 }
             }
@@ -398,9 +398,10 @@ mkReTrms <- function(bars, fr, s = 1L) {
 ##' @param resp response module
 ##' @param verbose logical value determining verbose output
 ##' @return NULL if successful
-stepFac <- function(pp, resp, verbose) {
+stepFac <- function(pp, resp, verbose, maxSteps = 10) {
+    stopifnot(is.numeric(maxSteps), maxSteps >= 2)
     pwrss0 <- resp$wrss() + pp$sqrL(0)
-    for (fac in 2^(-(0:10))) {
+    for (fac in 2^(-(0:maxSteps))) {
 	wrss <- resp$updateMu(pp$linPred(fac))
 	pwrss1 <- wrss + pp$sqrL(fac)
 	if (verbose > 3L)
@@ -414,7 +415,8 @@ stepFac <- function(pp, resp, verbose) {
     stop("step factor reduced below 0.001 without reducing pwrss")
 }
 
-pwrssUpdate <- function(pp, resp, verbose, uOnly=FALSE) {
+pwrssUpdate <- function(pp, resp, verbose, uOnly=FALSE, tol, maxSteps = 10) {
+    stopifnot(is.numeric(tol), tol > 0)
     repeat {
 	resp$updateMu(pp$linPred(0))
 	resp$updateWts()
@@ -422,9 +424,9 @@ pwrssUpdate <- function(pp, resp, verbose, uOnly=FALSE) {
         pp$updateDecomp()
         pp$updateRes(resp$wtres())
         if (uOnly) pp$solveU() else pp$solve()
-	if ((pp$CcNumer())/(resp$wrss() + pp$sqrL(0)) < 0.000001)
+	if ((pp$CcNumer())/(resp$wrss() + pp$sqrL(0)) < tol)
 	    break
-	stepFac(pp, resp, verbose)
+	stepFac(pp, resp, verbose, maxSteps=maxSteps)
     }
 }
 

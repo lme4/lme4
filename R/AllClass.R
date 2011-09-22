@@ -277,6 +277,7 @@ glmerResp <-
 
 glmerResp$lock("family", "y")
 
+## seems currently *unused* -FIXME-
 glmFamily <-
     setRefClass("glmFamily",
                 fields =
