@@ -64,7 +64,7 @@ head(ranef(fm1)[[1]])
 ## This model is different and NOT appropriate for these data
 (fm5 <- lmer(strength ~ (1|batch) + (1|cask), Pastes))
 
-if(is(L <- try(getME(fm1, "L")), "Matrix")) # needed for now
+L <- getME(fm1, "L")
 image(L, sub = "Structure of random effects interaction in pastes model")
 }
 \keyword{datasets}
