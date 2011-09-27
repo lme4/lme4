@@ -977,26 +977,28 @@ getME <- function(object,
     name <- match.arg(name)
     rsp <- object@resp
     PR <- object@pp
+    cmp <- object@devcomp $ cmp
+    dims <- object@devcomp $ dims
     switch(name,
 	   "X" = PR$X, ## ok ? - check -- use model.matrix() method instead?
 	   "Z" = t(PR$Zt),
 	   "Zt"= PR$Zt,
-           "u" = PR$ u0 + PR$ delu(),
-           ## "Gp"
+           "u" = object@u,
 	   "L"= PR$ L(),
 	   "Lambda"= t(PR$ Lambdat),
 	   "Lambdat"= PR$ Lambdat,
-	   "RX" = PR $ RX,
-	   "RZX" = PR $ RZX,
+	   "RX" = PR $ RX(),   ## FIXME - add the column names and row names, either in the C++ or the R method
+	   "RZX" = PR $ RZX(), ## FIXME - add column names
 
-           "beta" = object@beta,
+           "Gp" = object@Gp,
+           "flist" = object@flist,
+           "beta" = object@beta, ## FIXME - add names
            "theta"= object@theta, ## *OR*  PR $ theta  --- which one ??
 
-	   "REML" = rsp $ REML,
-	   "is_REML" = as.logical(rsp $ REML),# correct ??
+	   "REML" = dims["REML"],
+	   "is_REML" = isREML(object),
 
-	   "n_rtrms" =, ## FIXME length(PR$flist), ##  = #{random-effect terms in the formula}
-	   "Gp"= ,  # FIXME
+	   "n_rtrms" = length(object@flist),  ## should this be length(object@cnms) instead?
 	   "..foo.." =# placeholder!
 	   stop(gettextf("'%s' is not implemented yet",
 			 sprintf("getME(*, \"%s\")", name))),
