@@ -12,7 +12,7 @@ setClass("lmList.confint", contains = "array")
 ## shouldn't we have "merPred"  with two *sub* classes "merPredD" and "merPredS"
 ## for the dense and sparse X cases ?
 
-merPredD <-                 # Do we need the generator object? Probably - at least while debugging
+merPredD <-
 setRefClass("merPredD", # Predictor class for mixed-effects models with dense X
             fields =
             list(
@@ -373,6 +373,7 @@ setClass("merMod",
                         flist   = "list",
                         cnms    = "list",
                         lower   = "numeric",
+                        Gp      = "integer",
                         theta   = "numeric",
                         beta    = "numeric",
                         u       = "numeric",

@@ -46,10 +46,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
     X <- model.Matrix(form, fr, contrasts, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     p <- ncol(X)
     pp <- new("merPredD", X=X, Zt=reTrms$Zt, Lambdat=reTrms$Lambdat, Lind=reTrms$Lind,
-	      theta=reTrms$theta + 1e-06) # ensure all entries of
-					# theta are nonzero because
-					# Eigen tends to prune sparse matrices
-                                        # (Probably not needed any more).
+	      theta=reTrms$theta)
     resp <- mkRespMod2(fr)
     if (REML) resp$REML <- p
 
@@ -80,7 +77,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 	     sigmaML=sqrt(pwrss/n), sigmaREML=sqrt(pwrss/(n-p)))
 
     new("lmerMod", call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
-	theta=pp$theta, beta=pp$delb(), u=pp$delu(), lower=reTrms$lower,
+	theta=pp$theta, beta=pp$delb(), u=pp$delu(), lower=reTrms$lower, Gp=reTrms$Gp,
 	devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=resp)
 }## { lmer }
 
@@ -232,8 +229,8 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 	     sigmaML=NA, sigmaREML=NA)
 
     new("glmerMod", call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
-	theta=pp$theta, beta=pp$beta0, u=pp$u0, lower=reTrms$lower,
-	devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=resp)
+        Gp=reTrms$Gp, 	theta=pp$theta, beta=pp$beta0, u=pp$u0,
+        lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=resp)
 }## {glmer}
 
 ##' Create an lmerResp, glmerResp or (later) nlmerResp instance
@@ -364,7 +361,8 @@ mkReTrms <- function(bars, fr, s = 1L) {
 					    thoff[i]))
 			     }))))
     thet <- numeric(sum(nth))
-    ll <- list(Zt = Zt, theta = thet, Lind = as.integer(Lambdat@x))
+    ll <- list(Zt=Zt, theta=thet, Lind=as.integer(Lambdat@x),
+               Gp=unname(c(0L, cumsum(nb))))
     ## lower bounds on theta elements are 0 if on diagonal, else -Inf
     ll$lower <- -Inf * (thet + 1)
     ll$lower[unique(diag(Lambdat))] <- 0
