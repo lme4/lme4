@@ -83,7 +83,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 
 mkdevfun <- function(pp, resp) {
     if (is(resp, "lmerResp"))
-	return (function(theta) .Call(lmerDeviance, pp$ptr, resp$ptr, theta))
+	return (function(theta) .Call(lmer_Deviance, pp$ptr, resp$ptr, theta))
     stop("unknown response type: ", class(resp))
 }
 
@@ -250,34 +250,49 @@ mkRespMod2 <- function(fr, family = NULL, nlenv = NULL, nlmod = NULL) {
 	dim(y) <- NULL
 	if(!is.null(nm)) names(y) <- nm
     }
-    yy <- y
-    if (is.factor(yy)) yy <- as.numeric(yy != levels(yy)[1])
-    if (is.matrix(yy) && ncol(yy) == 2L) yy <- yy[,1]/(yy[,1] + yy[,2])
-    ans <- new("lmerResp", y = yy)
+    if (is.null(nlmod)) {
+        if (is.null(family)) {
+            ans <- new("lmerResp", y)
+        } else {
+            stopifnot(inherits(family, "family"))
+            rho <- new.env()
+            rho$etastart <- model.extract(fr, "etastart")
+            rho$mustart <- model.extract(fr, "mustart")
+            rho$nobs <- n
+            rho$y <- y
+            eval(family$initialize, rho)
+            family$initialize <- NULL	    # remove clutter from str output
+            ans <- new("glmerResp", family, rho$y)
+            ans$updateMu(family$linkfun(unname(rho$mustart)))
+        }
+        if (!is.null(offset <- model.offset(fr))) {
+            if (length(offset) == 1L) offset <- rep.int(offset, n)
+            stopifnot(length(offset) == n)
+            ans$offset <- unname(offset)
+        }
+        if (!is.null(weights <- model.weights(fr))) {
+            stopifnot(length(weights) == n, all(weights >= 0))
+            ans$weights <- unname(weights)
+        }
+        return(ans)
+    }
+    stopifnot(is.language(nlmod), is.environment(nlenv))
+    val <- eval(nlmod, env=nlenv)
+    stopifnot(is.numeric(val),
+              length(val) == length(y),
+              is.matrix(gr <- attr(val, "gradient")),
+              mode(gr) == "numeric",
+              nrow(gr) == length(y))
+    ans <- new("nlsResp", nlenv, nlmod, colnames(gr), y)
     if (!is.null(offset <- model.offset(fr))) {
-	if (length(offset) == 1L) offset <- rep.int(offset, n)
-	stopifnot(length(offset) == n)
-	ans$offset <- unname(offset)
+        if (length(offset) == 1L) offset <- rep.int(offset, length(gr))
+        stopifnot(length(offset) == length(gr))
+        ans$offset <- unname(offset)
     }
     if (!is.null(weights <- model.weights(fr))) {
-	stopifnot(length(weights) == n, all(weights >= 0))
-	ans$weights <- unname(weights)
+        stopifnot(length(weights) == n, all(weights >= 0))
+        ans$weights <- unname(weights)
     }
-    if (is.null(family)) return(ans)
-    rho <- new.env()
-    rho$etastart <- model.extract(fr, "etastart")
-    rho$mustart <- model.extract(fr, "mustart")
-    rho$weights <- ans$weights
-    rho$offset <- ans$offset
-    rho$nobs <- n
-    if (is.null(rho$y)) rho$y <- ans$y
-    eval(family$initialize, rho)
-    family$initialize <- NULL	    # remove clutter from str output
-
-    ans <- new("glmerResp", family, rho$y)
-    ans$weights <- rho$weights
-    ans$offset <- rho$offset
-    ans$updateMu(family$linkfun(unname(rho$mustart)))
     ans
 }
 
