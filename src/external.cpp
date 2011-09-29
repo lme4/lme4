@@ -250,6 +250,11 @@ extern "C" {
 	END_RCPP;
     }
 
+    SEXP isNullExtPtr(SEXP Ptr) {
+	BEGIN_RCPP;
+	return ::Rf_ScalarLogical(XPtr<lmResp>(Ptr) == (lmResp*)NULL);
+	END_RCPP;
+    }
 
     // linear model response (also the base class for other response classes)
 
@@ -355,7 +360,7 @@ extern "C" {
 	END_RCPP;
     }
 
-    SEXP lmerDeviance(SEXP pptr_, SEXP rptr_, SEXP theta_) {
+    SEXP lmer_Deviance(SEXP pptr_, SEXP rptr_, SEXP theta_) {
 	// Assume that ppt->updateWts(rpt->sqrtXwt()) has been called once
 	BEGIN_RCPP;
 
@@ -619,8 +624,6 @@ extern "C" {
 
 static R_CallMethodDef CallEntries[] = {
 
-    CALLDEF(lmerDeviance, 3),
-
     CALLDEF(Eigen_SSE, 0),
 
     CALLDEF(glm_Create, 2),	  // generate external pointer
@@ -655,6 +658,10 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(glmerWrkIter, 2),
     CALLDEF(glmerLaplace, 8),
 
+    CALLDEF(isNullExtPtr, 1),
+
+    CALLDEF(lm_Create, 1),	  // generate external pointer
+
     CALLDEF(lm_setOffset, 2),	  // setters
     CALLDEF(lm_setWeights, 2),
 
@@ -675,7 +682,8 @@ static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(lmer_REML, 1),	  // getter
 
-    CALLDEF(lmer_Laplace, 4),     // method
+    CALLDEF(lmer_Deviance, 3),    // method
+    CALLDEF(lmer_Laplace, 4),
 
     CALLDEF(merPredDCreate, 5),	  // generate external pointer
 
