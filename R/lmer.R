@@ -242,7 +242,6 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 ##' @param nlmod the nonlinear model function (nlsRespMod only)
 ##' @return a lmerResp (or glmerResp) instance
 mkRespMod2 <- function(fr, family = NULL, nlenv = NULL, nlmod = NULL) {
-    n <- nrow(fr)
     y <- model.response(fr)
     if(length(dim(y)) == 1) {
 	## avoid problems with 1D arrays, but keep names
@@ -250,50 +249,47 @@ mkRespMod2 <- function(fr, family = NULL, nlenv = NULL, nlmod = NULL) {
 	dim(y) <- NULL
 	if(!is.null(nm)) names(y) <- nm
     }
-    if (is.null(nlmod)) {
-        if (is.null(family)) {
-            ans <- new("lmerResp", y)
-        } else {
-            stopifnot(inherits(family, "family"))
-            rho <- new.env()
-            rho$etastart <- model.extract(fr, "etastart")
-            rho$mustart <- model.extract(fr, "mustart")
-            rho$nobs <- n
-            rho$y <- y
-            eval(family$initialize, rho)
-            family$initialize <- NULL	    # remove clutter from str output
-            ans <- new("glmerResp", family, rho$y)
-            ans$updateMu(family$linkfun(unname(rho$mustart)))
-        }
-        if (!is.null(offset <- model.offset(fr))) {
-            if (length(offset) == 1L) offset <- rep.int(offset, n)
-            stopifnot(length(offset) == n)
-            ans$offset <- unname(offset)
-        }
-        if (!is.null(weights <- model.weights(fr))) {
-            stopifnot(length(weights) == n, all(weights >= 0))
-            ans$weights <- unname(weights)
-        }
-        return(ans)
+    rho <- new.env()
+    rho$y <- y
+    n <- N <- nrow(fr)
+    if (!is.null(nlenv)) {
+        stopifnot(is.numeric(val <- eval(nlmod, nlenv)),
+                  length(val) == N,
+                  is.matrix(gr <- attr(val, "gradient")),
+                  mode(gr) == "numeric",
+                  nrow(gr) == N,
+                  !is.null(pnames <- colnames(gr)))
+        N <- length(gr)
     }
-    stopifnot(is.language(nlmod), is.environment(nlenv))
-    val <- eval(nlmod, env=nlenv)
-    stopifnot(is.numeric(val),
-              length(val) == length(y),
-              is.matrix(gr <- attr(val, "gradient")),
-              mode(gr) == "numeric",
-              nrow(gr) == length(y))
-    ans <- new("nlsResp", nlenv, nlmod, colnames(gr), y)
     if (!is.null(offset <- model.offset(fr))) {
-        if (length(offset) == 1L) offset <- rep.int(offset, length(gr))
-        stopifnot(length(offset) == length(gr))
-        ans$offset <- unname(offset)
+        if (length(offset) == 1L) offset <- rep.int(offset, N)
+        stopifnot(length(offset) == N)
+        rho$offset <- unname(offset)
     }
     if (!is.null(weights <- model.weights(fr))) {
         stopifnot(length(weights) == n, all(weights >= 0))
-        ans$weights <- unname(weights)
+        rho$weights <- unname(weights)
     }
-    ans
+    if (is.null(family) && is.null(nlenv))
+        return(do.call(new, c(list(Class="lmerResp"), as.list(rho))))
+    if (!is.null(family)) {
+        stopifnot(inherits(family, "family"))
+                                        # need weights for initialize evaluation
+        if (!exists("weights", rho)) rho$weights <- rep.int(1, n)
+        rho$nobs <- n
+        eval(family$initialize, rho)
+        family$initialize <- NULL     # remove clutter from str output
+        ll <- as.list(rho)
+        ans <- do.call(new, c(list(Class="glmResp", family=family),
+                              ll[setdiff(names(ll),
+                                         c("m", "nobs", "mustart"))]))
+        ans$updateMu(if (!is.null(es <- model.extract(fr, "etastart"))) es else
+                     family$linkfun(get("mustart", rho)))
+        return(ans)
+    }
+    stopifnot(is.language(nlmod), is.environment(nlenv))
+    do.call(new, c(list(Class="nlsResp", nlenv=nlenv, nlmod=nlmod,
+                        pnames=pnames), as.list(rho)))
 }
 
 ###' Create Z, Lambda, Lind, etc.

@@ -1,4 +1,4 @@
-## Class definitions for the package
+### Class definitions for the package
 
 setClass("lmList",
          representation(call = "call",
@@ -9,8 +9,8 @@ setClass("lmList",
 setClass("lmList.confint", contains = "array")
 
 ### FIXME
-## shouldn't we have "merPred"  with two *sub* classes "merPredD" and "merPredS"
-## for the dense and sparse X cases ?
+### shouldn't we have "merPred"  with two *sub* classes "merPredD" and "merPredS"
+### for the dense and sparse X cases ?
 
 merPredD <- 
     setRefClass("merPredD", # Predictor class for mixed-effects models with dense X
@@ -165,21 +165,34 @@ lmResp <-                               # base class for response modules
                 fields =
                 list(y = "numeric",
                      Ptr = "externalptr",
-                     ptr = function (value) {
+                     ptr = function (value) { # generates external pointer if necessary
                          if (!missing(value)) stop("ptr field cannot be assigned")
-                         if (.Call(isNullExtPtr, Ptr)) {
-                             if (!length(y)) stop("field y must have positive length")
-                             Ptr <<- .Call(lm_Create, y)
-                         }
+                         try(
+                         {
+                             if (.Call(isNullExtPtr, Ptr)) {
+                                 Ptr <<- .Call(lm_Create, y)
+                                 if (length(Offset)) .Call(lm_setOffset, Ptr, Offset)
+                                 if (length(Weights)) .Call(lm_setWeights, Ptr, Weights)
+                             }
+                         }, silent=TRUE)
                          Ptr
                      },
-                     offset = function(value)
-                     if (missing(value)) .Call(lm_offset, ptr) else
-                     .Call(lm_setOffset, ptr, as.numeric(value)),
-                     
-                     weights = function(value)
-                     if (missing(value)) .Call(lm_weights, ptr) else
-                     .Call(lm_setWeights, ptr, as.numeric(value))),
+                     Offset = "numeric",
+                     offset = function(value) {
+                         if (missing(value))
+                             return(tryCatch(.Call(lm_offset, ptr), error=function(e)Offset))
+                         ## lm_setOffset checks value's length, etc.
+                         .Call(lm_setOffset, ptr, value <- as.numeric(value))
+                         Offset <<- value
+                     },
+                     Weights = "numeric",
+                     weights = function(value) {
+                         if (missing(value))
+                             return(tryCatch(.Call(lm_weights, ptr), error=function(e)Weights))
+                         ## lm_setWeights checks value's length, non-negativity, etc.
+                         .Call(lm_setWeights, ptr, value <- as.numeric(value))
+                         Weights <<- value
+                     }),
                 methods =
                 list(
                      fitted = function() {
@@ -195,7 +208,7 @@ lmResp <-                               # base class for response modules
                          .Call(lm_sqrtrwt, ptr)
                      },
                      updateMu = function(gamma) {
-                         'from the linear predictor, gamma, update the\nconditional mean response, mu, residuals and weights'
+                         'update mu, wtres and wrss from the linear predictor'
                          .Call(lm_updateMu, ptr, as.numeric(gamma))
                      },
                      wrss = function() {
@@ -213,20 +226,35 @@ lmResp$lock("y")
 lmerResp <-
     setRefClass("lmerResp",
                 fields=
-                list(REML=function(value)
-                     if (missing(value)) .Call(lmer_REML, ptr) else .Call(lmer_setREML, ptr, value),
+                list(
                      ptr = function (value) {
                          if (!missing(value)) stop("ptr field cannot be assigned")
-                         if (.Call(isNullExtPtr, Ptr)) {
-                             if (!length(y)) stop("field y must have positive length")
-                             Ptr <<- .Call(lmer_Create, y)
-                         }
+                         try(
+                             if (.Call(isNullExtPtr, Ptr)) {
+                                 if (!length(y)) stop("field y must have positive length")
+                                 Ptr <<- .Call(lmer_Create, y)
+                                 if (length(Offset)) .Call(lm_setOffset, Ptr, Offset)
+                                 if (length(Weights)) .Call(lm_setWeights, Ptr, Weights)
+                             }, silent=TRUE)
                          Ptr
-                     }
-                     ),
+                     },
+                     REML="integer",
+                     reml=function(value) {
+                         if (missing(value))
+                             return(tryCatch(.Call(lmer_REML, ptr), error=function(e)0L))
+                         stopifnot(length(value <- as.integer(value)) > 0L,
+                                   (value <- value[1]) >= 0L)
+### FIXME: Change the cls_set<whatever> C functions to return the
+### value that was set so these can be collapsed to one-liners like
+###  REML <<- .Call(lmer_setREML, ptr, value) ?                         
+                         .Call(lmer_setREML, ptr, value)
+                         REML <<- value
+                     }),
                 contains="lmResp",
                 methods=
                 list(
+### FIXME: Should this method be called "deviance" or "objective" or ...?
+###        The name Laplace only makes sense for glmer or nlmer.
                      Laplace = function(ldL2, ldRX2, sqrL) {
                          'returns the profiled deviance or REML criterion'
                          .Call(lmer_Laplace, ptr, ldL2, ldRX2, sqrL)
@@ -235,25 +263,32 @@ lmerResp <-
 
 setOldClass("family")
 
-
 glmResp <-
     setRefClass("glmResp",
                 fields=
-                list(family="family",
+                list(
+                     family="family",
                      ptr = function (value) {
                          if (!missing(value)) stop("ptr field cannot be assigned")
-                         if (.Call(isNullExtPtr, Ptr)) {
-                             if (!length(y)) stop("field y must have positive length")
-                             if (!length(family$family)) stop("field family must be initialized")
-                             Ptr <<- .Call(glm_Create, family, y)
-                         }
+                         try (
+                              if (.Call(isNullExtPtr, Ptr)) {
+                                  if (!length(y))
+                                      stop("field y must have positive length")
+                                  if (!length(family$family))
+                                      stop("field family must be initialized")
+                                  Ptr <<- .Call(glm_Create, family, y)
+                                  if (length(Offset)) .Call(lm_setOffset, Ptr, Offset)
+                                  if (length(Weights)) .Call(lm_setWeights, Ptr, Weights)
+                              }, silent=TRUE)
                          Ptr
-                     }
-                     ##,
-                     ## n=function(value)  # only used in aic function for binomial family
-                     ## if (missing(value)) .Call(glm_n, ptr) else
-                     ##     .Call(glm_setN, ptr, as.numeric(value))
-                     ),
+                     },
+                     N="integer",
+                     n=function(value) {  # only used in aic function for binomial family
+                         if (missing(value))
+                             return(tryCatch(.Call(glm_n, ptr),
+                                             error=function(e)rep.int(1, length(y))))
+                         .Call(glm_setN, ptr, as.numeric(value))
+                     }),
                 contains="lmResp",
                 methods=
                 list(
@@ -298,7 +333,7 @@ glmResp <-
                          .Call(glm_sqrtWrkWt, ptr)
                      },
                      updateMu = function(gamma) {
-                         'from the linear predictor, gamma, update the\nconditional mean response, mu, residuals and weights'
+                         'update mu, residuals, weights, etc. from the linear predictor'
                          .Call(glm_updateMu, ptr, as.numeric(gamma))
                      },
                      updateWts = function() {
@@ -331,10 +366,9 @@ nlsResp <-
                      pnames="character",
                      ptr = function (value) {
                          if (!missing(value)) stop("ptr field cannot be assigned")
-                         if (.Call(isNullExtPtr, Ptr)) {
-                             if (!length(y)) stop("field y must have positive length")
-                             Ptr <<- .Call(nls_Create, nlmod, nlenv, y)
-                         }
+                         try (if (.Call(isNullExtPtr, Ptr))
+                              Ptr <<- .Call(nls_Create, nlmod, nlenv, y), 
+                              silent=TRUE)
                          Ptr
                      }),
                 contains="lmResp",
@@ -345,7 +379,7 @@ nlsResp <-
                          .Call(nls_Laplace, ptr, ldL2, ldRX2, sqrL)
                      },
                      updateMu=function(gamma) {
-                         'from the linear predictor, gamma, update the\nconditional mean response, mu, residuals and weights'
+                         'update mu, residuals, gradient, etc. given the linear predictor matrix'
                          .Call(nls_updateMu, ptr, as.numeric(gamma))
                      })
                 )
@@ -358,10 +392,11 @@ glmFamily <-                            # used in tests of family definitions
                      family="family",
                      ptr=function(value) {
                          if (!missing(value)) stop("ptr field cannot be assigned")
-                         if (.Call(isNullExtPtr, Ptr)) {
-                             if (!length(family$family)) stop("field family must be initialized")
-                             Ptr <<- .Call(glmFamily_Create, family)
-                         }
+                         try(
+                             if (.Call(isNullExtPtr, Ptr)) {
+                                 if (!length(family$family)) stop("field family must be initialized")
+                                 Ptr <<- .Call(glmFamily_Create, family)
+                             }, silent=TRUE)
                          Ptr
                      }),
                 methods=
@@ -395,7 +430,8 @@ glmFamily <-                            # used in tests of family definitions
                 )
 
 setClass("merMod",
-         representation(call    = "call",
+         representation(Gp      = "integer",
+                        call    = "call",
 			frame   = "data.frame", # "model.frame" is not S4-ized yet
                         flist   = "list",
                         cnms    = "list",
