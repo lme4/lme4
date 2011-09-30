@@ -58,8 +58,7 @@ importClassesFrom("Matrix",
                   nCHMsuper,
                   symmetricMatrix)
 
-importFrom("MatrixModels" , model.Matrix)
-
+importFrom("MatrixModels", model.Matrix)
 
 importClassesFrom("MatrixModels",
                   modelMatrix,
@@ -115,11 +114,12 @@ export(
        )
 
 exportClasses(
-	      lmerMod,
-	      lmList,
-	      merPredD,
-	      merMod
-	      )
+              glmerMod,
+ 	      lmerMod,
+ 	      lmList,
+ 	      merPredD,
+ 	      merMod
+ 	      )
 
 exportMethods(
               coef
