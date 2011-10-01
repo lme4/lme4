@@ -43,6 +43,18 @@ showMethods(class = "mer")
 (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 Z <- getME(fm1, "Z")
 stopifnot(is(Z, "CsparseMatrix"),
-          c(180,36) == dim(Z))
+          c(180,36) == dim(Z),
+	  all.equal(fixef(fm1), getME(fm1, "beta"),
+		    check.attr=FALSE, tol = 0))
+
+## All that can be accessed [potentially ..]:
+(nmME <- eval(formals(getME)$name))
+
+\dontshow{
+## internal consistency check ensuring that all work:
+## "try(.)" because some are not yet implemented:
+str(parts <- sapply(nmME, function(nm) try(getME(fm1, nm)),
+                    simplify=FALSE))
+}% dont..
 }
 \keyword{utilities}

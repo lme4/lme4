@@ -2371,16 +2371,15 @@ getME <- function(object,
 	   "Zt"= object@Zt,
 	   "Gp" = object@Gp,
 	   "L" = object@L,
-	   "Lambda"= ....,
-	   "Lambdat"= ....,
 	   "RX" = object@RX,
 	   "RZX" = object@RZX,
-           "beta" = ....,
-           "theta"= ....,
-
+           "beta" = unname(object@fixef),
 	   "n_rtrms" = object@dims[["nt"]], ##  = #{random-effect terms in the formula}
 	   "is_REML" = as.logical(object@dims[["REML"]]),
 
+	   "Lambda"=, ## from object@L  ??
+	   "Lambdat"=,
+           "theta"=,
            "..foo.." =# placeholder!
            stop(gettextf("'%s' is not implemented yet",
                          sprintf("getME(*, \"%s\")", name))),
