@@ -275,7 +275,8 @@ mkRespMod2 <- function(fr, family = NULL, nlenv = NULL, nlmod = NULL) {
     if (!is.null(family)) {
         stopifnot(inherits(family, "family"))
                                         # need weights for initialize evaluation
-        if (!exists("weights", rho)) rho$weights <- rep.int(1, n)
+        if (!exists("weights", rho, inherits=FALSE))
+            rho$weights <- rep.int(1, n)
         rho$nobs <- n
         eval(family$initialize, rho)
         family$initialize <- NULL     # remove clutter from str output
