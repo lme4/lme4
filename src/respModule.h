@@ -14,7 +14,9 @@
 namespace lme4Eigen {
     using Eigen::Map;
     using Eigen::VectorXd;
+    using Eigen::MatrixXd;
 
+    using Rcpp::as;
     using Rcpp::CharacterVector;
     using Rcpp::Environment;
     using Rcpp::Language;
@@ -27,13 +29,14 @@ namespace lme4Eigen {
 	double                     d_wrss;
 	const NumericVector        d_yR;
 	const Map<VectorXd>        d_y;
-	VectorXd                   d_weights, d_offset, d_mu, d_sqrtXwt, d_sqrtrwt, d_wtres;
+	VectorXd                   d_weights, d_offset, d_mu, d_sqrtrwt, d_wtres;
+	MatrixXd                   d_sqrtXwt;
     public:
 	lmResp(NumericVector);
 
+	const MatrixXd&      sqrtXwt() const {return d_sqrtXwt;}
 	const VectorXd&           mu() const {return d_mu;}
 	const VectorXd&       offset() const {return d_offset;}
-	const VectorXd&      sqrtXwt() const {return d_sqrtXwt;}
 	const VectorXd&      sqrtrwt() const {return d_sqrtrwt;}
 	const VectorXd&      weights() const {return d_weights;}
 	const VectorXd&        wtres() const {return d_wtres;}
@@ -85,13 +88,14 @@ namespace lme4Eigen {
 	void                    setN(const VectorXd&);
     };
 
-    class nlmerResp : public lmResp {
+    class nlsResp : public lmResp {
     protected:
 	Environment     d_nlenv;
 	Language        d_nlmod;
 	CharacterVector d_pnames;
+	int             d_N;
     public:
-	nlmerResp(NumericVector,Language,Environment,CharacterVector);
+	nlsResp(NumericVector,Language,Environment,CharacterVector,int);
 
 	double            Laplace(double, double, double) const;
 	double           updateMu(const VectorXd&);

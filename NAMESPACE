@@ -7,11 +7,10 @@ useDynLib(lme4Eigen, .registration=TRUE)
 import("grid")
 import("lattice")
 import("splines")
-import("Rcpp")
+#import("Rcpp")
 
 importFrom("graphics", plot)
 importFrom("nlme", fixef, ranef, VarCorr)
-#importFrom("stats4", AIC, BIC, logLik)# so S4 methods are used!
 importFrom("stats"
            , AIC
            , BIC
@@ -83,7 +82,7 @@ importMethodsFrom("Matrix"
                   ## , update
                   )
 
-#exportPattern("^[^\\.]")
+# exportPattern("^[^\\.]")
 
 # and the rest (S3 generics; regular functions):
 export(

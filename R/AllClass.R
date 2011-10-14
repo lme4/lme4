@@ -154,7 +154,7 @@ merPredD <-
                      },
                      updateXwts = function(wts) {
                          'update Ut and V from Zt and X using X weights'
-                         .Call(merPredDupdateXwts, ptr, as.numeric(wts))
+                         .Call(merPredDupdateXwts, ptr, wts)
                      }
                      )
                 )
@@ -167,8 +167,7 @@ lmResp <-                               # base class for response modules
                      Ptr = "externalptr",
                      ptr = function (value) { # generates external pointer if necessary
                          if (!missing(value)) stop("ptr field cannot be assigned")
-                         try(
-                         {
+                         try({
                              if (.Call(isNullExtPtr, Ptr)) {
                                  Ptr <<- .Call(lm_Create, y)
                                  if (length(Offset)) .Call(lm_setOffset, Ptr, Offset)
@@ -182,16 +181,14 @@ lmResp <-                               # base class for response modules
                          if (missing(value))
                              return(tryCatch(.Call(lm_offset, ptr), error=function(e)Offset))
                          ## lm_setOffset checks value's length, etc.
-                         .Call(lm_setOffset, ptr, value <- as.numeric(value))
-                         Offset <<- value
+                         Offset <<- .Call(lm_setOffset, ptr, value <- as.numeric(value))
                      },
                      Weights = "numeric",
                      weights = function(value) {
                          if (missing(value))
                              return(tryCatch(.Call(lm_weights, ptr), error=function(e)Weights))
                          ## lm_setWeights checks value's length, non-negativity, etc.
-                         .Call(lm_setWeights, ptr, value <- as.numeric(value))
-                         Weights <<- value
+                         Weights <<- .Call(lm_setWeights, ptr, value <- as.numeric(value))
                      }),
                 methods =
                 list(
@@ -227,28 +224,25 @@ lmerResp <-
     setRefClass("lmerResp",
                 fields=
                 list(
-                     ptr = function (value) {
+                     ptr=function (value) {
                          if (!missing(value)) stop("ptr field cannot be assigned")
-                         try(
+                         try({
                              if (.Call(isNullExtPtr, Ptr)) {
                                  if (!length(y)) stop("field y must have positive length")
                                  Ptr <<- .Call(lmer_Create, y)
                                  if (length(Offset)) .Call(lm_setOffset, Ptr, Offset)
                                  if (length(Weights)) .Call(lm_setWeights, Ptr, Weights)
-                             }, silent=TRUE)
+                             }
+                         }, silent=TRUE)
                          Ptr
                      },
                      REML="integer",
                      reml=function(value) {
                          if (missing(value))
-                             return(tryCatch(.Call(lmer_REML, ptr), error=function(e)0L))
+                             return(tryCatch(.Call(lmer_REML, ptr), error=function(e)REML))
                          stopifnot(length(value <- as.integer(value)) > 0L,
                                    (value <- value[1]) >= 0L)
-### FIXME: Change the cls_set<whatever> C functions to return the
-### value that was set so these can be collapsed to one-liners like
-###  REML <<- .Call(lmer_setREML, ptr, value) ?                         
-                         .Call(lmer_setREML, ptr, value)
-                         REML <<- value
+                         REML <<- .Call(lmer_setREML, ptr, value)
                      }),
                 contains="lmResp",
                 methods=
@@ -270,16 +264,17 @@ glmResp <-
                      family="family",
                      ptr = function (value) {
                          if (!missing(value)) stop("ptr field cannot be assigned")
-                         try (
-                              if (.Call(isNullExtPtr, Ptr)) {
-                                  if (!length(y))
-                                      stop("field y must have positive length")
-                                  if (!length(family$family))
-                                      stop("field family must be initialized")
-                                  Ptr <<- .Call(glm_Create, family, y)
-                                  if (length(Offset)) .Call(lm_setOffset, Ptr, Offset)
-                                  if (length(Weights)) .Call(lm_setWeights, Ptr, Weights)
-                              }, silent=TRUE)
+                         try({
+                             if (.Call(isNullExtPtr, Ptr)) {
+                                 if (!length(y))
+                                     stop("field y must have positive length")
+                                 if (!length(family$family))
+                                     stop("field family must be initialized")
+                                 Ptr <<- .Call(glm_Create, family, y)
+                                 if (length(Offset)) .Call(lm_setOffset, Ptr, Offset)
+                                 if (length(Weights)) .Call(lm_setWeights, Ptr, Weights)
+                             }
+                         }, silent=TRUE)
                          Ptr
                      },
                      N="integer",
@@ -361,13 +356,14 @@ glmResp$lock("family")
 nlsResp <-
     setRefClass("nlsResp",
                 fields=
-                list(nlmod="language",
+                list(N="integer",
+                     nlmod="formula",
                      nlenv="environment",
                      pnames="character",
                      ptr = function (value) {
                          if (!missing(value)) stop("ptr field cannot be assigned")
                          try (if (.Call(isNullExtPtr, Ptr))
-                              Ptr <<- .Call(nls_Create, nlmod, nlenv, y), 
+                              Ptr <<- .Call(nls_Create, y, nlmod[[2]], nlenv, pnames, N),
                               silent=TRUE)
                          Ptr
                      }),
@@ -383,6 +379,8 @@ nlsResp <-
                          .Call(nls_updateMu, ptr, as.numeric(gamma))
                      })
                 )
+
+nlsResp$lock("nlmod", "nlenv", "pnames")
 
 glmFamily <-                            # used in tests of family definitions
     setRefClass("glmFamily",

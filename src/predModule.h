@@ -158,7 +158,7 @@ namespace lme4Eigen {
 	MdgCMatrix     d_Zt;
 	NumericVector  d_theta;
 	IntegerVector  d_Lind;
-	Index          d_n, d_p, d_q, d_nnz;
+	Index          d_n, d_nnz, d_p, d_q;
 	dgCMatrix      d_Lambdat;
 	Scalar         d_CcNumer, d_ldL2, d_ldRX2;
 	MatrixXd       d_RZX, d_V, d_VtV;
@@ -166,6 +166,7 @@ namespace lme4Eigen {
 	SpMatrixd      d_Ut, d_LamtUt;
 	ChmDecomp      d_L;
 	LLT<MatrixXd>  d_RX;
+	bool           d_LamtUtRestructure;
     public:
 	merPredD(S4, S4, S4, IntegerVector, NumericVector);
 
@@ -213,13 +214,14 @@ namespace lme4Eigen {
 
 	void            installPars(const Scalar& f);
 	void               setBeta0(const VectorXd&);
+	void                   setS(int);
 	void               setTheta(const NumericVector&);
 	void                  setU0(const VectorXd&);
 	void           updateDecomp();
 	void                updateL();
 	void           updateLamtUt();
 	void              updateRes(const VectorXd&);
-	void             updateXwts(const VectorXd&);
+	void             updateXwts(const MatrixXd&);
     };
 }
 

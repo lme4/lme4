@@ -8,9 +8,14 @@
 #include "respModule.h"
 
 extern "C" {
+    using Eigen::Map;
+    using Eigen::MatrixXd;
     using Eigen::VectorXd;
 
+    using Rcpp::CharacterVector;
+    using Rcpp::Environment;
     using Rcpp::IntegerVector;
+    using Rcpp::Language;
     using Rcpp::List;
     using Rcpp::NumericVector;
     using Rcpp::S4;
@@ -24,6 +29,7 @@ extern "C" {
     using lme4Eigen::lmResp;
     using lme4Eigen::lmerResp;
     using lme4Eigen::merPredD;
+    using lme4Eigen::nlsResp;
 
     using std::runtime_error;
 
@@ -130,7 +136,7 @@ extern "C" {
 
     SEXP glm_updateMu(SEXP ptr_, SEXP gamma) {
 	BEGIN_RCPP;
-	return ::Rf_ScalarReal(XPtr<glmResp>(ptr_)->updateMu(as<VectorXd>(gamma)));
+	return ::Rf_ScalarReal(XPtr<glmResp>(ptr_)->updateMu(as<Map<VectorXd> >(gamma)));
 	END_RCPP;
     }
 
@@ -145,27 +151,27 @@ extern "C" {
 
     SEXP glmFamily_link(SEXP ptr, SEXP mu) {
 	BEGIN_RCPP;
-	return wrap(XPtr<glmFamily>(ptr)->linkFun(as<VectorXd>(mu)));
+	return wrap(XPtr<glmFamily>(ptr)->linkFun(as<Map<VectorXd> >(mu)));
 	END_RCPP;
     }
 
     SEXP glmFamily_linkInv(SEXP ptr, SEXP eta) {
 	BEGIN_RCPP;
-	return wrap(XPtr<glmFamily>(ptr)->linkInv(as<VectorXd>(eta)));
+	return wrap(XPtr<glmFamily>(ptr)->linkInv(as<Map<VectorXd> >(eta)));
 	END_RCPP;
     }
 
     SEXP glmFamily_devResid(SEXP ptr, SEXP mu, SEXP weights, SEXP y) {
 	BEGIN_RCPP;
-	return wrap(XPtr<glmFamily>(ptr)->devResid(as<VectorXd>(mu),
-						   as<VectorXd>(weights),
-						   as<VectorXd>(y)));
+	return wrap(XPtr<glmFamily>(ptr)->devResid(as<Map<VectorXd> >(mu),
+						   as<Map<VectorXd> >(weights),
+						   as<Map<VectorXd> >(y)));
 	END_RCPP;
     }
 
     SEXP glmFamily_muEta(SEXP ptr, SEXP eta) {
 	BEGIN_RCPP;
-	return wrap(XPtr<glmFamily>(ptr)->muEta(as<VectorXd>(eta)));
+	return wrap(XPtr<glmFamily>(ptr)->muEta(as<Map<VectorXd> >(eta)));
 	END_RCPP;
     }
 
@@ -268,12 +274,14 @@ extern "C" {
     SEXP lm_setOffset(SEXP ptr_, SEXP offset) {
 	BEGIN_RCPP;
 	XPtr<lmResp>(ptr_)->setOffset(as<VectorXd>(offset));
+	return offset;
 	END_RCPP;
     }
 
     SEXP lm_setWeights(SEXP ptr_, SEXP weights) {
 	BEGIN_RCPP;
 	XPtr<lmResp>(ptr_)->setWeights(as<VectorXd>(weights));
+	return weights;
 	END_RCPP;
     }
 
@@ -327,7 +335,7 @@ extern "C" {
 
     SEXP lm_updateMu(SEXP ptr_, SEXP gamma) {
 	BEGIN_RCPP;
-	return ::Rf_ScalarReal(XPtr<lmerResp>(ptr_)->updateMu(as<VectorXd>(gamma)));
+	return ::Rf_ScalarReal(XPtr<lmerResp>(ptr_)->updateMu(as<Map<VectorXd> >(gamma)));
 	END_RCPP;
     }
 
@@ -342,7 +350,9 @@ extern "C" {
 
     SEXP lmer_setREML(SEXP ptr_, SEXP REML) {
 	BEGIN_RCPP;
-	XPtr<lmerResp>(ptr_)->setReml(::Rf_asInteger(REML));
+	int reml = ::Rf_asInteger(REML);
+	XPtr<lmerResp>(ptr_)->setReml(reml);
+	return ::Rf_ScalarInteger(reml);
 	END_RCPP;
     }
 
@@ -392,7 +402,7 @@ extern "C" {
 				// setters
     SEXP merPredDsetBeta0(SEXP ptr, SEXP beta0) {
 	BEGIN_RCPP;
-	XPtr<merPredD>(ptr)->setBeta0(as<Eigen::VectorXd>(beta0));
+	XPtr<merPredD>(ptr)->setBeta0(as<Map<VectorXd> >(beta0));
 	END_RCPP;
     }
 
@@ -404,7 +414,7 @@ extern "C" {
 
     SEXP merPredDsetU0(SEXP ptr, SEXP u0) {
 	BEGIN_RCPP;
-	XPtr<merPredD>(ptr)->setU0(as<Eigen::VectorXd>(u0));
+	XPtr<merPredD>(ptr)->setU0(as<Map<VectorXd> >(u0));
 	END_RCPP;
     }
 
@@ -606,15 +616,41 @@ extern "C" {
 
     SEXP merPredDupdateRes(SEXP ptr, SEXP wtres) {
 	BEGIN_RCPP;
-	XPtr<merPredD>(ptr)->updateRes(as<VectorXd>(wtres));
+	XPtr<merPredD>(ptr)->updateRes(as<Map<VectorXd> >(wtres));
 	END_RCPP;
     }
 
     SEXP merPredDupdateXwts(SEXP ptr, SEXP wts) {
 	BEGIN_RCPP;
-	XPtr<merPredD>(ptr)->updateXwts(as<VectorXd>(wts));
+	XPtr<merPredD>(ptr)->updateXwts(as<Map<MatrixXd> >(wts));
 	END_RCPP;
     }
+
+    SEXP nls_Create(SEXP ys, SEXP mods, SEXP envs, SEXP pnms, SEXP Ns) {
+	BEGIN_RCPP;
+	nlsResp *ans =
+	    new nlsResp(NumericVector(ys), Language(mods),
+			Environment(envs), CharacterVector(pnms),
+			::Rf_asInteger(Ns));
+	return wrap(XPtr<nlsResp>(ans, true));
+	END_RCPP;
+    }
+
+    SEXP nls_Laplace(SEXP ptr_, SEXP ldL2, SEXP ldRX2, SEXP sqrL) {
+	BEGIN_RCPP;
+	return ::Rf_ScalarReal(XPtr<nlsResp>(ptr_)->
+			       Laplace(::Rf_asReal(ldL2),
+				       ::Rf_asReal(ldRX2),
+				       ::Rf_asReal(sqrL)));
+	END_RCPP;
+    }
+
+    SEXP nls_updateMu(SEXP ptr_, SEXP gamma) {
+	BEGIN_RCPP;
+	return ::Rf_ScalarReal(XPtr<nlsResp>(ptr_)->updateMu(as<Map<VectorXd> >(gamma)));
+	END_RCPP;
+    }
+
 
 }
 
@@ -725,6 +761,11 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(merPredDupdateDecomp, 1),
     CALLDEF(merPredDupdateRes, 2),
     CALLDEF(merPredDupdateXwts, 2),
+
+    CALLDEF(nls_Create, 5),	  // generate external pointer
+
+    CALLDEF(nls_Laplace, 4),	  // methods
+    CALLDEF(nls_updateMu, 2),
     {NULL, NULL, 0}
 };
 

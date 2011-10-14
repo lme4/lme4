@@ -9,7 +9,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
     if(length(l... <- list(...))) {
 	if (!is.null(l...$family)) {  # call glmer if family specified
 	    mc[[1]] <- as.name("glmer")
-	    return( eval(mc, parent.frame()) )
+	    return(eval(mc, parent.frame()) )
 	}
 	## Check for method argument which is no longer used
 	if (!is.null(method <- l...$method)) {
@@ -45,8 +45,9 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
     form[[3]] <- if(is.null(nb <- nobars(form[[3]]))) 1 else nb
     X <- model.Matrix(form, fr, contrasts, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     p <- ncol(X)
-    pp <- new("merPredD", X=X, Zt=reTrms$Zt, Lambdat=reTrms$Lambdat, Lind=reTrms$Lind,
-	      theta=reTrms$theta)
+    if ((qrX <- qr(X))$rank < p)
+	stop(gettextf("rank of X = %d < ncol(X) = %d", qrX$rank, p))
+    pp <- do.call(merPredD$new, c(list(X=X), reTrms[c("Zt","theta","Lambdat","Lind")]))
     resp <- mkRespMod2(fr)
     if (REML) resp$REML <- p
 
@@ -83,7 +84,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 
 mkdevfun <- function(pp, resp) {
     if (is(resp, "lmerResp"))
-	return (function(theta) .Call(lmer_Deviance, pp$ptr, resp$ptr, theta))
+	return(function(theta) .Call(lmer_Deviance, pp$ptr, resp$ptr, theta))
     stop("unknown response type: ", class(resp))
 }
 
@@ -142,7 +143,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     form[[3]] <- if(is.null(nb <- nobars(form[[3]]))) 1 else nb
     X <- model.Matrix(form, fr, contrasts, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     p <- ncol(X)
-    pp <- merPredD$new(X=X, Zt=reTrms$Zt, Lambdat=reTrms$Lambdat, Lind=reTrms$Lind, theta=reTrms$theta)
+    pp <- do.call(merPredD$new, c(list(X=X), reTrms[c("Zt","theta","Lambdat","Lind")]))
 					# response module
     resp <- mkRespMod2(fr, family=family)
 					# initial step from working response
@@ -233,14 +234,14 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
         lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=resp)
 }## {glmer}
 
-##' Create an lmerResp, glmerResp or (later) nlmerResp instance
+##' Create an lmerResp, glmResp or nlsResp instance
 ##'
-##' @title Create a [ng]lmerResp instance
+##' @title Create an lmerResp, glmResp or nlsResp instance
 ##' @param fr a model frame
-##' @param family the optional glm family (glmRespMod only)
-##' @param nlenv the nonlinear model evaluation environment (nlsRespMod only)
-##' @param nlmod the nonlinear model function (nlsRespMod only)
-##' @return a lmerResp (or glmerResp) instance
+##' @param family the optional glm family (glmResp only)
+##' @param nlenv the nonlinear model evaluation environment (nlsResp only)
+##' @param nlmod the nonlinear model function (nlsResp only)
+##' @return an lmerResp or glmResp or nlsResp instance
 mkRespMod2 <- function(fr, family = NULL, nlenv = NULL, nlmod = NULL) {
     y <- model.response(fr)
     if(length(dim(y)) == 1) {
@@ -251,15 +252,16 @@ mkRespMod2 <- function(fr, family = NULL, nlenv = NULL, nlmod = NULL) {
     }
     rho <- new.env()
     rho$y <- y
-    n <- N <- nrow(fr)
+    n <- nrow(fr)
     if (!is.null(nlenv)) {
-        stopifnot(is.numeric(val <- eval(nlmod, nlenv)),
-                  length(val) == N,
+        stopifnot(is.language(nlmod),
+                  is.environment(nlenv),
+                  is.numeric(val <- eval(nlmod, nlenv)),
+                  length(val) == n,
                   is.matrix(gr <- attr(val, "gradient")),
                   mode(gr) == "numeric",
-                  nrow(gr) == N,
+                  nrow(gr) == n,
                   !is.null(pnames <- colnames(gr)))
-        N <- length(gr)
     }
     if (!is.null(offset <- model.offset(fr))) {
         if (length(offset) == 1L) offset <- rep.int(offset, N)
@@ -270,28 +272,29 @@ mkRespMod2 <- function(fr, family = NULL, nlenv = NULL, nlmod = NULL) {
         stopifnot(length(weights) == n, all(weights >= 0))
         rho$weights <- unname(weights)
     }
-    if (is.null(family) && is.null(nlenv))
-        return(do.call(new, c(list(Class="lmerResp"), as.list(rho))))
-    if (!is.null(family)) {
-        stopifnot(inherits(family, "family"))
-                                        # need weights for initialize evaluation
-        if (!exists("weights", rho, inherits=FALSE))
-            rho$weights <- rep.int(1, n)
-        rho$nobs <- n
-        eval(family$initialize, rho)
-        family$initialize <- NULL     # remove clutter from str output
-        ll <- as.list(rho)
-        ans <- do.call(new, c(list(Class="glmResp", family=family),
-                              ll[setdiff(names(ll),
-                                         c("m", "nobs", "mustart"))]))
-        ans$updateMu(if (!is.null(es <- model.extract(fr, "etastart"))) es else
-                     family$linkfun(get("mustart", rho)))
-        return(ans)
+    if (is.null(family)) {
+        if (is.null(nlenv)) return(do.call(lmerResp$new, as.list(rho)))
+        return(do.call(nlsResp$new,
+                       c(list(nlenv=nlenv,
+                              nlmod=substitute(~foo, list(foo=nlmod)),
+                              pnames=pnames, N=length(gr)), as.list(rho))))
     }
-    stopifnot(is.language(nlmod), is.environment(nlenv))
-    do.call(new, c(list(Class="nlsResp", nlenv=nlenv, nlmod=nlmod,
-                        pnames=pnames), as.list(rho)))
+    stopifnot(inherits(family, "family"))
+                                        # need weights for initialize evaluation
+    if (!exists("weights", rho, inherits=FALSE))
+        rho$weights <- rep.int(1, n)
+    rho$nobs <- n
+    eval(family$initialize, rho)
+    family$initialize <- NULL     # remove clutter from str output
+    ll <- as.list(rho)
+    ans <- do.call(new, c(list(Class="glmResp", family=family),
+                          ll[setdiff(names(ll),
+                                     c("m", "nobs", "mustart"))]))
+    ans$updateMu(if (!is.null(es <- model.extract(fr, "etastart"))) es else
+                 family$linkfun(get("mustart", rho)))
+    ans
 }
+
 
 ###' Create Z, Lambda, Lind, etc.
 ##'
@@ -395,7 +398,7 @@ mkReTrms <- function(bars, fr, s = 1L) {
     ll$flist <- fl
     ll$cnms <- cnms
     ll
-} ## {mkReTrms2}
+} ## {mkReTrms}
 
 ##' Determine a step factor that will reduce the pwrss
 ##'
@@ -652,8 +655,8 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
 ##' @return an object of S4 class "merMod"
 nlmer <- function(formula, data, family = gaussian, start = NULL,
 		  verbose = 0L, nAGQ = 1L, doFit = TRUE,
-		  subset, weights, na.action, mustart, etastart,
-		  sparseX = FALSE, contrasts = NULL, control = list(), ...)
+		  subset, weights, na.action, offset,
+		  contrasts = NULL, devFunOnly=FALSE, ...)
 {
     if (!missing(family)) stop("code not yet written")
     mf <- mc <- match.call()
@@ -690,6 +693,7 @@ nlmer <- function(formula, data, family = gaussian, start = NULL,
     nlenv <- new.env()	# inherit from this environment (or environment(formula)?)
     lapply(all.vars(nlmod),
 	   function(nm) assign(nm, fr[[nm]], envir = nlenv))
+    rr <- mkRespMod2(fr, nlenv=nlenv, nlmod=nlmod)
 
     ## Second, extend the frame and convert the nlpar columns to indicators
     n <- nrow(fr)
@@ -698,24 +702,19 @@ nlmer <- function(formula, data, family = gaussian, start = NULL,
 	frE[[nm]] <- as.numeric(rep(nm == pnames, each = n))
 					# random-effects module
     reTrms <- mkReTrms(findbars(formula[[3]]), frE, s = s)
-    dcmp <- updateDcmp(reTrms, .dcmp())
-    dcmp$dims["nAGQ"] <- as.integer(nAGQ)[1]
 
     fe.form <- nlform
     fe.form[[3]] <- formula[[3]]
-    feMod <- mkFeModule(fe.form, frE, contrasts, reTrms, sparseX = sparseX)
-					# should this check be in mkFeModule?
-    p <- length(feMod@coef)
-    if ((qrX <- qr(feMod@X))$rank < p)
+    X <- model.Matrix(nobars(fe.form), frE, contrasts,
+                      sparse = FALSE, row.names = FALSE) ## sparseX not yet
+    p <- ncol(X)
+    if ((qrX <- qr(X))$rank < p)
 	stop(gettextf("rank of X = %d < ncol(X) = %d", qrX$rank, p))
-    feMod@coef <- qr.coef(qrX, unlist(lapply(pnames, get, envir = nlenv)))
-    respMod <- mkRespMod2(fr, nlenv = nlenv, nlmod = nlmod)
-    ans <- new("merMod",
-	       call = mc,
-	       devcomp = updateDcmp(respMod, updateDcmp(feMod, dcmp)),
-	       frame = fr, re = reTrms, fe = feMod, resp = respMod)
-    if (!doFit) return(ans)
-    PIRLSest(ans, verbose, control, nAGQ)
+    pp <- do.call(merPredD$new, c(reTrms[c("Zt","theta","Lambdat","Lind")],
+                                  list(X=X,
+                                       beta0=qr.coef(qrX, unlist(lapply(pnames, get, envir = nlenv))))
+                                  ))
+    return(list(pp=pp, resp=rr))
 }
 
 

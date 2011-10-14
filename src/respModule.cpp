@@ -22,13 +22,13 @@ namespace lme4Eigen {
 	  d_weights(VectorXd::Constant(y.size(), 1.0)),
 	  d_offset( VectorXd::Zero(y.size())),
 	  d_mu(     y.size()),
-	  d_sqrtXwt(y.size()),
 	  d_sqrtrwt(y.size()),
-	  d_wtres(  y.size()) {
+	  d_wtres(  y.size()),
+	  d_sqrtXwt(y.size(), 1) {
 	d_sqrtrwt = d_weights.cwiseSqrt();
 	if (d_mu.size() == d_offset.size()) {	
 	    d_mu = d_offset;
-	    copy(d_sqrtrwt.begin(), d_sqrtrwt.end(), d_sqrtXwt.begin());
+	    copy(d_sqrtrwt.data(), d_sqrtrwt.data() + y.size(), d_sqrtXwt.data());
 	}
 	updateWrss();
     }
@@ -140,19 +140,23 @@ namespace lme4Eigen {
 	d_n = n;
     }
 
-    nlmerResp::nlmerResp(NumericVector ys, Language mm, Environment ee, CharacterVector pp)
-	: lmResp(ys), d_nlenv(ee), d_nlmod(mm), d_pnames(pp) {
+    nlsResp::nlsResp(NumericVector ys, Language mm, Environment ee, CharacterVector pp, int N)
+	: lmResp(ys), d_nlenv(ee), d_nlmod(mm), d_pnames(pp), d_N(N) {
+	if (d_N <= 0 || d_N % d_y.size())
+	    throw invalid_argument("N must be a positive multiple of y.size()");
+	d_offset          = VectorXd::Zero(N);
+	d_sqrtXwt         = MatrixXd::Zero(d_y.size(), N / d_y.size());
     }
 
-    double nlmerResp::Laplace(double ldL2, double ldRX2, double sqrL) const {
+    double nlsResp::Laplace(double ldL2, double ldRX2, double sqrL) const {
 	double lnum = 2.* PI * (d_wrss + sqrL), n = d_y.size();
 	return ldL2 + n * (1 + log(lnum / n));
     }
 
-    double nlmerResp::updateMu(VectorXd const &gamma) {
+    double nlsResp::updateMu(VectorXd const &gamma) {
 	int             n = d_y.size();
 	VectorXd      gam = gamma + d_offset;
-	const double  *gg = gam.begin();
+	const double  *gg = gam.data();
 
 	for (int p = 0; p < d_pnames.size(); p++) {
 	    string pn(d_pnames[p]);
@@ -162,9 +166,10 @@ namespace lme4Eigen {
 	NumericVector  rr = d_nlmod.eval(SEXP(d_nlenv));
 	if (rr.size() != n)
 	    throw invalid_argument("dimension mismatch");
-	copy(rr.begin(), rr.end(), d_mu.begin());
-	NumericMatrix rrg = rr.attr("gradient");
-	copy(rrg.begin(), rrg.end(), d_sqrtXwt.begin());
+	copy(rr.begin(), rr.end(), d_mu.data());
+	NumericMatrix  gr = rr.attr("gradient");
+	d_sqrtXwt.resize(gr.rows(), gr.cols());
+	copy(gr.begin(), gr.end(), d_sqrtXwt.data());
 	return updateWrss();
     }
 
