@@ -109,7 +109,7 @@ namespace lme4Eigen {
 	return (d_eta - d_offset) + wrkResids();
     }
 
-    VectorXd glmResp::sqrtWrkWt() const {
+    MatrixXd glmResp::sqrtWrkWt() const {
 	const VectorXd me(muEta());
 	return d_weights.cwiseProduct(me).cwiseProduct(me).cwiseQuotient(variance()).cwiseSqrt();
     }

@@ -69,7 +69,7 @@ namespace lme4Eigen {
 
 	VectorXd            devResid() const;
 	VectorXd               muEta() const;
-        VectorXd           sqrtWrkWt() const;
+        MatrixXd           sqrtWrkWt() const;
 	VectorXd            variance() const;
 	VectorXd           wrkResids() const;
 	VectorXd             wrkResp() const;
