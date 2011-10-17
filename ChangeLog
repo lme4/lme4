@@ -1,3 +1,65 @@
+2011-10-17  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/respModule.cpp, src/respModule.h: Change working weights to be a
+	  matrix.
+	* src/predModule.cpp: Thinko regarding 0-based indices.
+
+2011-10-14  Douglas Bates <bates@stat.wisc.edu>
+
+	* DESCRIPTION, NAMESPACE, R/AllClass.R, R/lmer.R, src/external.cpp,
+	  src/predModule.cpp, src/predModule.h, src/respModule.cpp,
+	  src/respModule.h: nlmer added. Increment calculation for PWRSS works
+	  but not yet incorporated in R code.
+
+2011-10-03  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/lmer.R: Small but important change in checking for object weights in
+	  environment rho in mkRespMod2
+
+2011-09-30  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/AllClass.R, R/lmer.R: Use inheritance on reference classes, being
+	  careful about package installation. Create a cleaner version of
+	  mkRespMod2.
+	* NAMESPACE: export more classes
+	* DESCRIPTION: new version and date
+
+2011-09-29  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/lmer.R: Modify mkRespMod for nlmer response.
+	* src/external.cpp: Add isNullExtPtr .Call'able function for Ptr/ptr
+	  formulation.
+	* NAMESPACE, R/AllClass.R: new organization of response classes. Use
+	  Ptr/ptr formulation to generate external pointers.
+
+2011-09-27  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/lmer.R: More components/slots/etc. available in getME()
+	* R/AllClass.R, R/lmer.R: Reinstitute the Gp slot in merMod objects
+
+2011-09-23  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/lmer.R, man/ranef.Rd: *must* use lme4Eigen::: inside devFun()
+	  [evaluated from C++]
+	* man/refitML.Rd: add doc. + example
+	* man/Pastes.Rd, man/Penicillin.Rd: reactivate the image(L) plots
+
+2011-09-22  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* NAMESPACE, R/AllClass.R, R/lmer.R: tolPwrss - for now
+
+2011-09-22  Douglas Bates <bates@stat.wisc.edu>
+
+	* data/VerbAgg.rda: Correct labels on Gender, use camelCase consistently
+	  on item labels.
+	* data/sleepstudy.rda: switch to bzip2 compression for smaller file
+	  size.
+
+2011-09-21  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/external.cpp: Added a function to check on the SIMD instruction
+	  sets in use by Eigen.
+
 2011-09-20  Douglas Bates <bates@stat.wisc.edu>
 
 	* R/lmer.R: Do the same number of pwrssUpdate calls with compDev=TRUE or
