@@ -13,35 +13,6 @@ namespace lme4Eigen {
     using std::endl;
     using std::fill;
 
-#if 0
-    void cholmod_dump_common(cholmod_common& c) {
-	cout << "Cholmod common structure" << endl;
-	cout << "status = " << c.status
-	     << ", dbound = " << c.dbound
-	     << ", grow0 = " << c.grow0
-	     << ", grow1 = " << c.grow1
-	     << ", grow2 = " << c.grow2
-	     << ", maxrank = " << c.maxrank << endl;
-	cout << "supernodal_switch = " << c.supernodal_switch
-	     << ", final_asis = " << c.final_asis
-	     << ", final_super = " << c.final_super
-	     << ", final_ll = " << c.final_ll
-	     << ", final_pack = " << c.final_pack
-	     << ", final_monotonic = " << c.final_monotonic
-	     << ", final_resymbol = " << c.final_resymbol << endl;
-	cout << "prefer_upper = " << c.prefer_upper
-	     << ", print = " << c.print
-	     << ", precise = " << c.precise << endl;
-	cout << "nmethods = " << c.nmethods
-	     << ", current = " << c.current
-	     << ", selected = " << c.selected
-	     << ", postorder = " << c.postorder << endl;
-	cout << "method numbers: " << c.method[0].ordering;
-	for (int i = 1; i < c.nmethods; ++i) cout << ", " << c.method[i].ordering;
-	cout << endl;
-    }
-#endif
-
     merPredD::merPredD(S4 X, S4 Zt, S4 Lambdat, IntegerVector Lind,
 		       NumericVector theta)
 	: d_X(X),
@@ -168,7 +139,7 @@ namespace lme4Eigen {
 	if (d_X.rows() != sqrtXwt.size())
 	    throw invalid_argument("updateXwts: dimension mismatch");
 	if (sqrtXwt.cols() == 1) {
-	    DiagonalMatrix<double, Dynamic> W(sqrtXwt.col(1).asDiagonal());
+	    DiagonalMatrix<double, Dynamic> W(sqrtXwt.col(0).asDiagonal());
 	    d_V              = W * d_X;
 	    d_Ut             = d_Zt * W;
 	} else {
