@@ -43,6 +43,8 @@
 }
 \section{Slots}{
   \describe{
+    \item{\code{Gp}:}{The group pointers - an increasing vector of
+      non-negative integers that must start with 0.}
     \item{\code{call}:}{The matched call to the function that generated
       the object.}
     \item{\code{frame}:}{The model frame used to evaluate the model matrices.}

@@ -1,6 +1,5 @@
 \name{lmer}
 \alias{lmer}
-% \alias{lmer2}
 \alias{glmer}
 \alias{nlmer}
 \concept{LMM}% << so it's found; ditto for these:
@@ -20,21 +19,15 @@ lmer(formula, data, REML = TRUE, sparseX = FALSE,
      devFunOnly=FALSE,
      \dots)
 
-% lmer2(formula, data, REML = TRUE, sparseX = FALSE,
-%       control = list(), start = NULL, verbose = 0,
-%       doFit = TRUE, subset, weights,
-%       na.action, offset, contrasts = NULL,
-%       devFunOnly = FALSE, \dots)
-
 glmer(formula, data, family = gaussian, sparseX = FALSE,
       control = list(), start = NULL, verbose = 0, nAGQ = 1,
       doFit = TRUE, compDev = TRUE, subset, weights, na.action, offset,
-      contrasts = NULL, mustart, etastart, devFunOnly = FALSE, \dots)
+      contrasts = NULL, mustart, etastart, devFunOnly = FALSE,
+      tolPwrss = 1e-06, \dots)
 
 nlmer(formula, data, family = gaussian, start = NULL,
       verbose = 0L, nAGQ = 1L, doFit = TRUE, subset, weights,
-      na.action, mustart, etastart, sparseX = FALSE,
-      contrasts = NULL, control = list(), \dots)
+      na.action, offset, contrasts = NULL, devFunOnly = FALSE, \dots)
 }
 \arguments{
   \item{formula}{a two-sided linear formula object describing the
@@ -92,6 +85,9 @@ nlmer(formula, data, family = gaussian, start = NULL,
     steps.}
   \item{devFunOnly}{logical - return only the deviance evaluation
     function - useful mainly for debugging.}% but MM thinks we want to keep.
+  \item{tolPwrss}{numeric scalar - the tolerance for declaring
+      convergence in the penalized weighted residual sum-of-squares
+      step.  Defaults to 1e-06.}
   \item{\dots}{other potential arguments.  A \code{method} argument was
     used in earlier versions of the package. Its functionality has been
     replaced by the \code{REML} and \code{nAGQ} arguments.}
