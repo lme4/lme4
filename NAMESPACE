@@ -7,7 +7,6 @@ useDynLib(lme4Eigen, .registration=TRUE)
 import("grid")
 import("lattice")
 import("splines")
-#import("Rcpp")
 
 importFrom("graphics", plot)
 importFrom("nlme", fixef, ranef, VarCorr)
