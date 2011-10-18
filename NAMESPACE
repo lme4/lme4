@@ -113,10 +113,14 @@ export(
 
 exportClasses(
               glmerMod,
+              glmResp,
  	      lmerMod,
+              lmerResp,
  	      lmList,
+              lmResp,
  	      merPredD,
- 	      merMod
+ 	      merMod,
+              nlsResp
  	      )
 
 exportMethods(
@@ -139,6 +143,7 @@ S3method(VarCorr, merMod)
 S3method(anova, merMod)
 S3method(coef, merMod)
 S3method(deviance, merMod)
+S3method(devcomp, merMod)
 S3method(drop1, merMod)
 S3method(extractAIC, merMod)
 S3method(fixef, merMod)
