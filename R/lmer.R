@@ -49,7 +49,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 	stop(gettextf("rank of X = %d < ncol(X) = %d", qrX$rank, p))
     pp <- do.call(merPredD$new, c(list(X=X), reTrms[c("Zt","theta","Lambdat","Lind")]))
     resp <- mkRespMod2(fr)
-    if (REML) resp$REML <- p
+    if (REML) resp$reml <- p
 
     devfun <- mkdevfun(pp, resp)
     if (devFunOnly) return(devfun)
@@ -71,7 +71,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 
     dims <- c(N=n, n=n, nmp=n-p, nth=length(pp$theta), p=p, q=nrow(reTrms$Zt),
 	      nAGQ=NA_integer_, useSc=1L, reTrms=length(reTrms$cnms),
-	      spFe=0L, REML=resp$REML, GLMM=0L, NLMM=0L)
+	      spFe=0L, REML=resp$reml, GLMM=0L, NLMM=0L)
     cmp <- c(ldL2=pp$ldL2(), ldRX2=pp$ldRX2(), wrss=wrss,
 	      ussq=sqrLenU, pwrss=pwrss,
 	     drsum=NA, dev=if(REML)NA else opt$fval, REML=if(REML)opt$fval else NA,
