@@ -51,7 +51,7 @@ stopifnot(all.equal(fixef(m1), fixef(m1p), tol = 1e-11),
 
 for(m in c(m1, m1p)) {
     cat("-------\n\nCall: ",
-        paste(format(lme4Eigen:::getCall(m)), collapse="\n"), "\n")
+        paste(format(getCall(m)), collapse="\n"), "\n")
     print(logLik(m)); cat("AIC:", AIC(m), "\n") ; cat("BIC:", BIC(m),"\n")
 }
 stopifnot(all.equal(logLik(m1), logLik(m1p), tol = 1e-11),
