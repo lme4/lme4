@@ -113,6 +113,7 @@ export(
 
 exportClasses(
               glmerMod,
+              glmFamily,
               glmResp,
  	      lmerMod,
               lmerResp,
