@@ -1,29 +1,12 @@
 \name{merPredD-class}
 \alias{merPredD-class}
-\alias{merPredD}
 \title{Class \code{"merPredD"} -  a dense predictor reference class}
-\usage{
-  merPredD$new(X=X, Zt=Zt, Lambdat=Lambdat, Lind=Lind, theta=theta)
-}
-\arguments{
-  \item{X}{dense model matrix for the fixed-effects parameters, to be
-    stored in the \code{X} field.}
-  \item{Zt}{transpose of the sparse model matrix for the random
-    effects.  It is stored in the \code{Zt} field.}
-  \item{Lambdat}{transpose of the sparse lower triangular relative
-    variance factor (stored in the \code{Lambdat} field).}
-  \item{Lind}{integer vector of the same length as the \code{"x"} slot
-    in the \code{Lambdat} field.  Its elements should be in the range 1
-    to the length of the \code{theta} field.}
-  \item{theta}{numeric vector of variance component parameters (stored
-    in the \code{theta} field).}
-}
 \description{
   A reference class for a mixed-effects model predictor module with a
   dense model matrix for the fixed-effects parameters.  The reference
   class is associated with a C++ class of the same name.  As is
-  customary, the generator object for the class has the same name as the
-  class.
+  customary, the generator object, \code{\link{merPredD}}, for the class
+  has the same name as the class.
 }
 \section{Extends}{
   All reference classes extend and inherit methods from
@@ -45,7 +28,8 @@
   % function, not directly as the R object field.
 }
 \seealso{
-  \code{\link{lmer}}, \code{\link{glmer}}, \code{\link{nlmer}}, \code{\linkS4class{merMod}}.
+  \code{\link{lmer}}, \code{\link{glmer}}, \code{\link{nlmer}},
+  \code{\link{merPredD}}, \code{\linkS4class{merMod}}.
 }
 \examples{
 showClass("merPredD")
