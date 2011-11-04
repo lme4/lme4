@@ -1,35 +1,45 @@
 set.seed(1)
 
-
-test.lmerResp.twoarg <- function() {
+test.lmerResp <- function() {
     n <- nrow(Dyestuff)
     YY <- Dyestuff$Yield
     mYY <- mean(YY)
     mres <- YY - mYY
-    rr <- lmerResp$new(1L, YY)
+    rr <- lmerResp$new(y=YY)
     checkEquals(rr$weights, rep.int(1, n))
-    checkEquals(rr$sqrtrwt, rep.int(1, n))
-    checkEquals(rr$sqrtXwt, rep.int(1, n))
-    checkEquals(rr$offset,  rep.int(0, n))
-    checkEquals(rr$mu,      rep.int(0, n))
-    checkEquals(rr$wtres,   YY)
+    checkEquals(rr$sqrtrwt(), rep.int(1, n))
+    checkEquals(rr$sqrtXwt(), array(rep.int(1, n), c(n, 1L)))
+    checkEquals(rr$offset, rep.int(0, n))
+    checkEquals(rr$fitted(), rep.int(0, n))
+    checkEquals(rr$wtres(), YY)
+    checkEquals(rr$wrss(), sum(YY * YY))
     checkEquals(rr$updateMu(rep.int(mYY, n)), sum(mres^2))
+    checkEquals(rr$reml, 0L)
+    rr$reml <- 1L
+    checkEquals(rr$reml, 1L)
 }
 
-test.lmerResp.threearg <- function() {
+test.glmResp <- function() {
     n <- nrow(Dyestuff)
     YY <- Dyestuff$Yield
-    WW <- rep(1, n)
-    ZZ <- rep(0, n)
-    sqrtWW <- sqrt(WW)
-    mYY <- mean(YY)
-    mres <- YY - mYY
-    rr <- lmerResp$new(1L, YY, WW)
-    checkEquals(rr$weights, WW)
-    checkEquals(rr$sqrtrwt, WW)
-    checkEquals(rr$sqrtXwt, WW)
-    checkEquals(rr$offset,  ZZ)
-    checkEquals(rr$mu,      ZZ)
-    checkEquals(rr$wtres,   YY)
-    checkEquals(rr$updateMu(rep.int(mYY, n)), sum(mres^2))
+    mlYY <- mean(log(YY))
+    gmeanYY <- exp(mlYY)                # geometric mean
+    mres <- YY - gmeanYY
+    rr <- glmResp$new(family=poisson(), y=YY)
+
+    checkEquals(rr$weights, rep.int(1, n))
+    checkEquals(rr$sqrtrwt(), rep.int(1, n))
+    checkEquals(rr$sqrtXwt(), array(rep.int(1, n), c(n, 1L)))
+    checkEquals(rr$offset, rep.int(0, n))
+    checkEquals(rr$fitted(), rep.int(0, n))
+    checkEquals(rr$wtres(), YY)
+    checkEquals(rr$wrss(), sum(YY^2))
+    checkEquals(rr$n, rep.int(1, n))
+    checkEquals(rr$updateMu(rep.int(mlYY, n)), sum(mres^2))
+    checkEquals(rr$fitted(), rep.int(gmeanYY, n))
+    checkEquals(rr$muEta(), rep.int(gmeanYY, n))
+    checkEquals(rr$variance(), rep.int(gmeanYY, n))
+    rr$updateWts()
+    checkEquals(1/sqrt(rr$variance()), rr$sqrtrwt())
+    checkEquals(as.vector(rr$sqrtXwt()), rr$sqrtrwt() * rr$muEta())
 }
