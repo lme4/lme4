@@ -38,7 +38,7 @@ xyplot(Reaction ~ Days | Subject, sleepstudy, type = c("g","p","r"),
        xlab = "Days of sleep deprivation",
        ylab = "Average reaction time (ms)", aspect = "xy")
 (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
-rcond(fm1@re) # 0.235 -- no problem at all
+#rcond(fm1@re) # 0.235 -- no problem at all
 (fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
 }
 \keyword{datasets}
