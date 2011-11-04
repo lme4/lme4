@@ -172,14 +172,14 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
         parent.env(rho) <- parent.frame()
         devfun <- if (compDev) {
             function(theta)
-                .Call(glmerLaplace, pp$ptr, resp$ptr,
+                .Call(lme4Eigen:::glmerLaplace, pp$ptr, resp$ptr,
                       theta, u0, beta0, verbose, FALSE, tolPwrss)
         } else {
             function(theta) {
                 pp$u0 <- u0
                 pp$beta0 <- beta0
                 pp$theta <- theta
-                pwrssUpdate(pp, resp, verbose, tol=tolPwrss)
+                lme4Eigen:::pwrssUpdate(pp, resp, verbose, tol=tolPwrss)
                 resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL(0))
             }
         }
@@ -195,14 +195,14 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
             rho$control <- control
             devfunb <- if (compDev) {
                 function(pars)
-                    .Call(glmerLaplace, pp$ptr, resp$ptr, pars[dpars],
+                    .Call(lme4Eigen:::glmerLaplace, pp$ptr, resp$ptr, pars[dpars],
                           u0, pars[-dpars], verbose, TRUE, tolPwrss)
             } else {
                 function(pars) {
                     pp$u0 <- u0
                     pp$theta <- pars[dpars]
                     pp$beta0 <- pars[-dpars]
-                    pwrssUpdate(pp, resp, verbose, uOnly=TRUE, tol=tolPwrss)
+                    lme4Eigen:::pwrssUpdate(pp, resp, verbose, uOnly=TRUE, tol=tolPwrss)
                     resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL(0))
                 }
             }
@@ -1118,7 +1118,7 @@ VarCorr.merMod <- function(x, sigma, rdig)# <- 3 args from nlme
     if (is.null(cnms <- x@cnms))
 	stop("VarCorr methods require reTrms, not just reModule")
     if(missing(sigma)) # "bug": fails via default 'sigma=sigma(x)'
-	sigma <- sigma(x)
+	sigma <- lme4Eigen::sigma(x)
     nc <- sapply(cnms, length)	  # no. of columns per term
     mkVarCorr(sigma, cnms=cnms, nc=nc, theta = x@theta,
 	      nms = {fl <- x@flist; names(fl)[attr(fl, "assign")]})
