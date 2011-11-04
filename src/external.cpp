@@ -684,11 +684,11 @@ static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(glmFamily_Create, 1), // generate external pointer
 
-    CALLDEF(glmFamily_link, 1),   // methods
-    CALLDEF(glmFamily_linkInv, 1),
-    CALLDEF(glmFamily_devResid, 3),
-    CALLDEF(glmFamily_muEta, 1),
-    CALLDEF(glmFamily_variance, 1),
+    CALLDEF(glmFamily_link, 2),   // methods
+    CALLDEF(glmFamily_linkInv, 2),
+    CALLDEF(glmFamily_devResid, 4),
+    CALLDEF(glmFamily_muEta, 2),
+    CALLDEF(glmFamily_variance, 2),
 
     CALLDEF(glmerPwrssUpdate, 5),
     CALLDEF(glmerWrkIter, 2),
