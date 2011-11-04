@@ -38,6 +38,7 @@
   \code{\link{bootMer}}.
 }
 \examples{
+\dontrun{
 %% Do keep at least *one* such example! -- this is (also) a regression test
 fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
 
@@ -48,5 +49,6 @@ system.time( tpr <- profile(fm01ML) )
 print(xyplot(tpr))
 stopifnot(dim(CIpr) == c(3,2),
           all.equal(unname(CIpr[2,]),c(3.64362, 4.21446), tol=1e-6))
+}
 }
 \keyword{methods}
