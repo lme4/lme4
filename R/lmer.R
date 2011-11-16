@@ -4,6 +4,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 		  subset, weights, na.action, offset,
 		  contrasts = NULL, devFunOnly=FALSE, ...)
 {
+    if (sparseX) warning("sparseX = TRUE has no effect at present")
     mf <- mc <- match.call()
     ## '...' handling up front, safe-guarding against typos ("familiy") :
     if(length(l... <- list(...))) {
