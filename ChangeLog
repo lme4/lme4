@@ -1,3 +1,49 @@
+2011-11-04  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/external.cpp: Correct the argument counts for externally visible
+	  glmFamily accessors
+	* man/sleepstudy.Rd: disable a test - need to check what rcond(fm@re)
+	  did in lme4a
+	* man/reTrms.Rd: No longer used
+	* man/profile-methods.Rd: Don't run examples until the code has been
+	  fixed
+	* man/merPredD-class.Rd, man/merPredD.Rd: Try to document reference
+	  class generator object this way
+	* inst/unitTests/runit.compDev.R, inst/unitTests/runit.link.R,
+	  inst/unitTests/runit.lmerResp.R: update tests (compDev is inert at
+	  present but could be activated for glmer tests)
+
+2011-11-02  Douglas Bates <bates@stat.wisc.edu>
+
+	* DESCRIPTION: Bump the version number.
+	* NAMESPACE, man/glmFamily-class.Rd: Export and document the glmFamily
+	  reference class and generator object
+	* src/Makevars, src/Makevars.win: Add a Makevars.win file. Make the
+	  factory-fresh setting of CPPFLAGS suppress warnings.
+	* man/lmerMod-class.Rd, man/merMod-class.Rd, man/merPredD-class.Rd:
+	  incorporate documentation for [gn]lmerMod-class in the merMod-class
+	  docs; document merPredD-class
+	* inst/doc/PLSvGLS.Rnw, inst/doc/PLSvGLS.pdf, inst/doc/Theory.Rnw,
+	  inst/doc/Theory.pdf, inst/doc/lme4.bib, vignettes,
+	  vignettes/PLSvGLS.Rnw, vignettes/PLSvGLS.pdf, vignettes/Theory.Rnw,
+	  vignettes/Theory.pdf, vignettes/lme4.bib: Move vignette sources to a
+	  vignettes directory per recommendations for R-2.14.0
+
+2011-10-18  Douglas Bates <bates@stat.wisc.edu>
+
+	* man/mkdevfun.Rd: Cleanup.
+	* NAMESPACE: Export S3 method for devcomp.
+	* man/lmResp-class.Rd: Document response reference classes and
+	  constructor objects
+	* man/chmSp.Rd, man/deFeMod.Rd, man/feModule-class.Rd, man/glmFamily.Rd,
+	  man/glmerResp.Rd, man/lmerResp-class.Rd, man/lmerResp.Rd,
+	  man/reModule-class.Rd, man/reModule.Rd: Remove documentation of
+	  no-longer-used classes from Rcpp modules
+	* man/cbpp.Rd: From R-2.14.0 on getCall is imported from the stats
+	  package.
+	* R/lmer.R: Getter and setter for REML field in lmerResp should be reml,
+	  not REML.
+
 2011-10-17  Douglas Bates <bates@stat.wisc.edu>
 
 	* src/respModule.cpp, src/respModule.h: Change working weights to be a
