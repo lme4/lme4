@@ -253,7 +253,7 @@ mkRespMod2 <- function(fr, family = NULL, nlenv = NULL, nlmod = NULL) {
     }
     rho <- new.env()
     rho$y <- y
-    n <- nrow(fr)
+    N <- n <- nrow(fr)
     if (!is.null(nlenv)) {
         stopifnot(is.language(nlmod),
                   is.environment(nlenv),
@@ -263,6 +263,7 @@ mkRespMod2 <- function(fr, family = NULL, nlenv = NULL, nlmod = NULL) {
                   mode(gr) == "numeric",
                   nrow(gr) == n,
                   !is.null(pnames <- colnames(gr)))
+        N <- length(gr)
     }
     if (!is.null(offset <- model.offset(fr))) {
         if (length(offset) == 1L) offset <- rep.int(offset, N)
@@ -768,9 +769,9 @@ ranef.merMod <- function(object, postVar = FALSE, drop = FALSE,
 
 	if (postVar) {
             .NotYetUsed("postVar=TRUE")## FIXME
-	    vv <- .Call(reTrmsCondVar, re, sigma(object))
-	    for (i in seq_along(ans))
-		attr(ans[[i]], "postVar") <- vv[[i]]
+	    ## vv <- .Call(reTrmsCondVar, re, sigma(object))
+	    ## for (i in seq_along(ans))
+	    ##     attr(ans[[i]], "postVar") <- vv[[i]]
 	}
 	if (drop)
 	    ans <- lapply(ans, function(el)
@@ -795,7 +796,7 @@ setMethod("sigma", "merMod", function(object, ...)
 	      dc$cmp[[ifelse(dd[["REML"]], "sigmaREML", "sigmaML")]] else 1.
       })
 
-model.matrix.merMod <- function(object, ...) object@X
+model.matrix.merMod <- function(object, ...) object@pp$X
 
 terms.merMod <- function(x, ...) attr(x@frame, "terms")
 
@@ -1082,13 +1083,13 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object), ...)
 
 vcov.summary.mer <- function(object, correlation = TRUE, ...)
 {
-    if(!is.null(object$vcov))
-	vcov
-    else if(!is.null(PP <- object$pp))
-	mkVcov(object$sigma, RX = , nmsX = colnames(FE@X),
-	       correlation=correlation, ...)
-    else stop("Both 'vcov' and 'fe' components are missing.  You need\n",
-	      "at least one TRUE in summary(..,	 varcov = *, keep.X = *)")
+    if(is.null(object$vcov)) stop("logic error in summary of merMod object")
+    return(object$vcov)
+    ## if(!is.null(PP <- object$pp))
+    ##     mkVcov(object$sigma, RX = , nmsX = colnames(FE@X),
+    ##            correlation=correlation, ...)
+    ## else stop("Both 'vcov' and 'fe' components are missing.  You need\n",
+    ##           "at least one TRUE in summary(..,	 varcov = *, keep.X = *)")
 }
 
 mkVarCorr <- function(sc, cnms, nc, theta, nms) {
