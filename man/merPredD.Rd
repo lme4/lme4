@@ -20,6 +20,9 @@
   \item{theta}{numeric vector of variance component parameters (stored
     in the \code{theta} field).}
 }
+\description{The generator object for the \code{\linkS4class{merPredD}}
+  reference class. Such an object is primarily used through its
+  \code{new} method.}
 \seealso{
   \code{\linkS4class{merPredD}}
 }
