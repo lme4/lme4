@@ -3,14 +3,7 @@
 \alias{glmResp-class}
 \alias{lmerResp-class}
 \alias{nlsResp-class}
-\alias{lmResp}
-\alias{glmResp}
-\alias{nlsResp}
-\alias{lmerResp}
 \title{Classes \code{"lmResp"}, \code{"glmResp"}, \code{"nlsResp"} and \code{"lmerResp"}}
-\usage{
-  lmResp$new(y=y)
-}
 \description{
   Reference classes for response modules, including linear models,
   \code{"lmResp"}, generalized linear models, \code{"glmResp"},

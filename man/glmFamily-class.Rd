@@ -2,7 +2,6 @@
 \Rdversion{1.1}
 \docType{class}
 \alias{glmFamily-class}
-\alias{glmFamily}
 \title{Class \code{"glmFamily"} - a reference class for \code{\link{family}}}
 \description{
   This class is a wrapper class for \code{\link{family}} objects
@@ -27,10 +26,8 @@
   external pointer.  If the \code{Ptr} field is a null pointer, the
   external pointer is regenerated for the stored \code{family} field.
 }
-
-%% ~Make other sections like Warning with \section{Warning }{....} ~
 \seealso{
-  \code{link{family}}
+  \code{\link{family}}, \code{\link{glmFamily}}
 }
 \examples{
 str(glmFamily$new(family=poisson()))
