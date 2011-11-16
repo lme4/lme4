@@ -85,9 +85,10 @@ for(nm in c("coef", "fixef", "ranef", "sigma",
     if(nm == "model.matrix") {
         F.fmX1s <- as(F.fmX1s, "denseMatrix")
 #        F.fmX2s <- as(F.fmX2s, "denseMatrix")
-	FF <- function(.) {r <- FUN(.); row.names(r) <- NULL
-			   as(r, "generalMatrix") }
-    } else FF <- FUN
+#	FF <- function(.) {r <- FUN(.); row.names(r) <- NULL
+#			   as(r, "generalMatrix") }
+    } # else
+    FF <- FUN
     stopifnot(
 	      all.equal( FF(fmX1), F.fmX1s, tol =  1e-6)
 #	      ,
@@ -96,7 +97,7 @@ for(nm in c("coef", "fixef", "ranef", "sigma",
 #	      all.equal( FF(fm.1), F.fmX2s, tol = 9e-6) ## these are different models
 #              ,
 #              all.equal(F.fmX2s,   F.fmX1s, tol = 6e-6)
-              ,
+#              ,
 #              all.equal(FUN(fm.1), FUN(fm.2), tol = 6e-6)
               ,
               TRUE)
@@ -122,7 +123,7 @@ stopifnot(dim(ranef(fm2l)[[1]]) == c(18, 2),
 ## now
 #bobyqa(m1e, control = list(iprint = 2L))
 m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-            family = binomial, data = cbpp, verbose = 1)
+            family = binomial, data = cbpp, verbose = 2L)
 stopifnot(is((cm1 <- coef(m1)), "coef.mer"),
 	  dim(cm1$herd) == c(15,4),
 	  all.equal(fixef(m1), ##  these values are those of "old-lme4":
