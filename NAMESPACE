@@ -165,7 +165,7 @@ S3method(refitML, merMod)
 
 S3method(print, summary.mer)
 S3method(summary, summary.mer)
-S3method(vcov, summary.mer)
+#S3method(vcov, summary.mer)
 
 S3method(plot, coef.mer)
 S3method(dotplot, coef.mer)
