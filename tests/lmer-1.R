@@ -33,13 +33,14 @@ stopifnot(all.equal(fm1, fm1.))
 #          all.equal(fm1@re@theta, fm1.@theta, tol = 1.e-7),
 #          all.equal(ranef(fm1), ranef(fm1.)))
 
+## compDev = FALSE no longer applies to lmer
 ## Test 'compDev = FALSE' (vs TRUE)
-fm1. <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy,
-             compDev = FALSE)#--> use R code (not C++) for deviance computation
-stopifnot(all.equal(fm1@devcomp$cmp['REML'], fm1.@devcomp$cmp['REML']),
-          all.equal(fixef(fm1), fixef(fm1.)),
-          all.equal(fm1@re@theta, fm1.@re@theta, tol = 1.e-7),
-          all.equal(ranef(fm1), ranef(fm1.), tol = 1.e-7))
+## fm1. <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy,
+##              compDev = FALSE)#--> use R code (not C++) for deviance computation
+## stopifnot(all.equal(fm1@devcomp$cmp['REML'], fm1.@devcomp$cmp['REML']),
+##           all.equal(fixef(fm1), fixef(fm1.)),
+##           all.equal(fm1@re@theta, fm1.@re@theta, tol = 1.e-7),
+##           all.equal(ranef(fm1), ranef(fm1.), tol = 1.e-7))
 
 
 stopifnot(all.equal(fixef(fm1), fixef(fm2), tol = 1.e-13),
@@ -50,13 +51,8 @@ stopifnot(all.equal(fixef(fm1), fixef(fm2), tol = 1.e-13),
 
 fm1ML <- lme4Eigen:::refitML(fm1)
 fm2ML <- lme4Eigen:::refitML(fm2)
-if(getRversion() > "2.11.0") {
-    print(AIC(fm1ML, fm2ML))
-    print(BIC(fm1ML, fm2ML))
-} else {
-    print(AIC(fm1ML)); print(AIC(fm2ML))
-    print(BIC(fm1ML)); print(BIC(fm2ML))
-}
+print(AIC(fm1ML)); print(AIC(fm2ML))
+print(BIC(fm1ML)); print(BIC(fm2ML))
 
 (fm3 <- lmer(Yield ~ 1|Batch, Dyestuff2))
 stopifnot(all.equal(coef(summary(fm3)),
@@ -69,8 +65,8 @@ showProc.time() #
 (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 (fm.1 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
 
-(fmX2 <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy))
-(fm.2 <- lmer2(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
+#(fmX2 <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy))
+#(fm.2 <- lmer2(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
 ## check update(<mer>, <formula>):
 fm.3 <- update(fmX1, . ~ Days + (1|Subject) + (0+Days|Subject))
 stopifnot(all.equal(fm.1, fm.3))
@@ -101,7 +97,7 @@ for(nm in c("coef", "fixef", "ranef", "sigma",
 #              ,
 #              all.equal(F.fmX2s,   F.fmX1s, tol = 6e-6)
               ,
-              all.equal(FUN(fm.1), FUN(fm.2), tol = 6e-6)
+#              all.equal(FUN(fm.1), FUN(fm.2), tol = 6e-6)
               ,
               TRUE)
     cat("[Ok]\n")
