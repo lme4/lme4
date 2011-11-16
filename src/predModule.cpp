@@ -203,7 +203,7 @@ namespace lme4Eigen {
 	int*                 ppt = (int*)cf->Perm;
 	return IntegerVector(ppt, ppt + cf->n);
     }
-
+#if 0
     S4 merPredD::L() const {
 	const cholmod_factor* f = d_L.factor();
 	if (f->minor < f->n)
@@ -234,4 +234,5 @@ namespace lme4Eigen {
 	}
 	return ans;
     }
+#endif
 }

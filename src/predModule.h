@@ -182,14 +182,14 @@ namespace lme4Eigen {
 	VectorXd            linPred(const Scalar& f) const;
 	VectorXd                  u(const Scalar& f) const;
 
-	S4                        L() const;
-
 	Scalar              CcNumer() const {return d_CcNumer;}
 	Scalar                 ldL2() const {return d_ldL2;}
 	Scalar                ldRX2() const {return d_ldRX2;}
 	Scalar                solve();
 	Scalar               solveU();
 	Scalar                 sqrL(const Scalar& f) const;
+
+	const ChmDecomp&          L() const {return d_L;}
 
 	const MatrixXd&           V() const {return d_V;}
 	const MatrixXd&         VtV() const {return d_VtV;}
