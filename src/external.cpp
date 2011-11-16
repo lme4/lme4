@@ -6,6 +6,7 @@
 
 #include "predModule.h"
 #include "respModule.h"
+#include "Gauss_Hermite.h"
 
 extern "C" {
     using Eigen::Map;
@@ -17,6 +18,7 @@ extern "C" {
     using Rcpp::IntegerVector;
     using Rcpp::Language;
     using Rcpp::List;
+    using Rcpp::Named;
     using Rcpp::NumericVector;
     using Rcpp::S4;
     using Rcpp::XPtr;
@@ -25,6 +27,7 @@ extern "C" {
 
     using glm::glmFamily;
 
+    using lme4Eigen::GHQ;
     using lme4Eigen::glmResp;
     using lme4Eigen::lmResp;
     using lme4Eigen::lmerResp;
@@ -36,6 +39,14 @@ extern "C" {
     SEXP Eigen_SSE() {
 	BEGIN_RCPP;
 	return wrap(Eigen::SimdInstructionSetsInUse());
+	END_RCPP;
+    }
+
+    SEXP GHQ_get(SEXP ns) {
+	BEGIN_RCPP;
+	GHQ ghq(::Rf_asInteger(ns));
+	return List::create(Named("knots") = ghq.xvals(),
+			    Named("weights") = ghq.wts());
 	END_RCPP;
     }
 
@@ -651,7 +662,6 @@ extern "C" {
 	END_RCPP;
     }
 
-
 }
 
 #include <R_ext/Rdynload.h>
@@ -661,6 +671,8 @@ extern "C" {
 static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(Eigen_SSE, 0),
+
+    CALLDEF(GHQ_get, 1),
 
     CALLDEF(glm_Create, 2),	  // generate external pointer
 
