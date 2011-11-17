@@ -290,10 +290,10 @@ glmResp <-
                      allInfo = function() {
                          'return all the information available on the object'
                          data.frame(y=y, n=n, offset=offset, weights=weights,
-                                    eta=eta(), mu=mu(), muEta=muEta(), variance=variance(),
+                                    eta=eta(), mu=fitted(), muEta=muEta(), variance=variance(),
                                     sqrtrwt=sqrtrwt(), wtres=wtres(), sqrtXwt=sqrtXwt(),
                                     sqrtWrkWt=sqrtWrkWt(), wrkResids=wrkResids(),
-                                    wrkResp=wrkResp())
+                                    wrkResp=wrkResp(), devRes=devResid())
                      },
                      devResid = function() {
                          'returns the vector of deviance residuals'
