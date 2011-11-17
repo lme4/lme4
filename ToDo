@@ -1,3 +1,6 @@
+create a copy method for the reference classes that no only copies the
+contents but also creates a new C++ object and pointer.
+
 serialization of reference classes:  Ensure that the external pointer
 is reinitialized when the object is unserialized.
 
