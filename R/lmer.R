@@ -53,7 +53,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
     resp <- mkRespMod2(fr)
     if (REML) resp$reml <- p
 
-    devfun <- mkdevfun(pp, resp, emptyenv)
+    devfun <- mkdevfun(pp, resp, emptyenv())
     if (devFunOnly) return(devfun)
 					# one evaluation to ensure all values are set
     opt <- list(fval=devfun(reTrms$theta))
@@ -85,6 +85,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 }## { lmer }
 
 mkdevfun <- function(pp, resp, rho, nAGQ=1L) {
+    stopifnot(is.environment(rho), is(resp, "lmResp"))
     if (is(resp, "lmerResp"))
 	return(function(theta) .Call(lmer_Deviance, pp$ptr, resp$ptr, theta))
     if (is(resp, "glmResp")) {
@@ -1045,9 +1046,9 @@ getME <- function(object,
 isREML <- function(x) UseMethod("isREML")
 isREML.merMod <- function(x) as.logical(x@devcomp$dims["REML"])
 
-refitML <- function(x) UseMethod("refitML")
+refitML <- function(x, ...) UseMethod("refitML")
 ## Can't change x in the call to this function.
-refitML.merMod <- function (x) {
+refitML.merMod <- function (x, ...) {
     if (!isREML(x)) return(x)
     stopifnot(is(rr <- x@resp, "lmerResp"))
     resp <- new(class(rr), y=rr$y)
