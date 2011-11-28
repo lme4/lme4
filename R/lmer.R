@@ -2,7 +2,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 		  control = list(), start = NULL,
 		  verbose = 0L, doFit = TRUE,
 		  subset, weights, na.action, offset,
-		  contrasts = NULL, devFunOnly=FALSE, ...)
+		  contrasts = NULL, devFunOnly=0L, ...)
 {
     if (sparseX) warning("sparseX = TRUE has no effect at present")
     mf <- mc <- match.call()
@@ -49,10 +49,11 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
     if ((qrX <- qr(X))$rank < p)
 	stop(gettextf("rank of X = %d < ncol(X) = %d", qrX$rank, p))
     pp <- do.call(merPredD$new, c(list(X=X), reTrms[c("Zt","theta","Lambdat","Lind")]))
+#    pp <- do.call(merPredD$new, c(list(X=X, Theta=reTrms$theta), reTrms[c("Zt","Lambdat","Lind")]))
     resp <- mkRespMod2(fr)
     if (REML) resp$reml <- p
 
-    devfun <- mkdevfun(pp, resp)
+    devfun <- mkdevfun(pp, resp, emptyenv)
     if (devFunOnly) return(devfun)
 					# one evaluation to ensure all values are set
     opt <- list(fval=devfun(reTrms$theta))
@@ -83,17 +84,33 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 	devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=resp)
 }## { lmer }
 
-mkdevfun <- function(pp, resp) {
+mkdevfun <- function(pp, resp, rho, nAGQ=1L) {
     if (is(resp, "lmerResp"))
 	return(function(theta) .Call(lmer_Deviance, pp$ptr, resp$ptr, theta))
+    if (is(resp, "glmResp")) {
+        if (nAGQ == 0L) {
+            ff <- function(theta)
+                .Call(lme4Eigen:::glmerLaplace, pp$ptr, resp$ptr,
+                      theta, u0, beta0, verbose, FALSE, tolPwrss)
+            environment(ff) <- rho
+            return(ff)
+        }
+        if (nAGQ == 1L) {
+            ff <- function(pars)
+                .Call(lme4Eigen:::glmerLaplace, pp$ptr, resp$ptr, pars[dpars],
+                      u0, pars[-dpars], verbose, TRUE, tolPwrss)
+            environment(ff) <- rho
+            return(ff)
+        }
+        stop("code not yet written")
+    }
     stop("unknown response type: ", class(resp))
 }
-
 
 glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
                   control = list(), start = NULL, verbose = 0L, nAGQ = 1L,
                   doFit = TRUE, compDev=TRUE, subset, weights, na.action, offset,
-                  contrasts = NULL, mustart, etastart, devFunOnly = FALSE,
+                  contrasts = NULL, mustart, etastart, devFunOnly = 0L,
                   tolPwrss = 0.000001, ...)
 {
     verbose <- as.integer(verbose)
@@ -171,21 +188,23 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
         rho <- as.environment(list(u0=pp$u0, beta0=pp$beta0, pp=pp, resp=resp,
                                    verbose=verbose, control=control, tolPwrss=tolPwrss))
         parent.env(rho) <- parent.frame()
-        devfun <- if (compDev) {
-            function(theta)
-                .Call(lme4Eigen:::glmerLaplace, pp$ptr, resp$ptr,
-                      theta, u0, beta0, verbose, FALSE, tolPwrss)
-        } else {
-            function(theta) {
-                pp$u0 <- u0
-                pp$beta0 <- beta0
-                pp$theta <- theta
-                lme4Eigen:::pwrssUpdate(pp, resp, verbose, tol=tolPwrss)
-                resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL(0))
-            }
-        }
-        environment(devfun) <- rho
-        if (devFunOnly) return(devfun)
+        devfun <- mkdevfun(pp, resp, rho, 0L)
+                           
+        ## devfun <- if (compDev) {
+        ##     function(theta)
+        ##         .Call(lme4Eigen:::glmerLaplace, pp$ptr, resp$ptr,
+        ##               theta, u0, beta0, verbose, FALSE, tolPwrss)
+        ## } else {
+        ##     function(theta) {
+        ##         pp$u0 <- u0
+        ##         pp$beta0 <- beta0
+        ##         pp$theta <- theta
+        ##         lme4Eigen:::pwrssUpdate(pp, resp, verbose, tol=tolPwrss)
+        ##         resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL(0))
+        ##     }
+        ## }
+        ## environment(devfun) <- rho
+        if (devFunOnly && !nAGQ) return(devfun)
 	control$iprint <- min(verbose, 3L)
 	opt <- bobyqa(pp$theta, devfun, lower=reTrms$lower, control=control)
 	if (nAGQ == 1L) {
@@ -194,20 +213,22 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 	    if(!is.numeric(control$rhobeg)) control$rhobeg <- 0.0002
 	    if(!is.numeric(control$rhoend)) control$rhoend <- 2e-7
             rho$control <- control
-            devfunb <- if (compDev) {
-                function(pars)
-                    .Call(lme4Eigen:::glmerLaplace, pp$ptr, resp$ptr, pars[dpars],
-                          u0, pars[-dpars], verbose, TRUE, tolPwrss)
-            } else {
-                function(pars) {
-                    pp$u0 <- u0
-                    pp$theta <- pars[dpars]
-                    pp$beta0 <- pars[-dpars]
-                    lme4Eigen:::pwrssUpdate(pp, resp, verbose, uOnly=TRUE, tol=tolPwrss)
-                    resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL(0))
-                }
-            }
-            environment(devfunb) <- rho
+            devfunb <- mkdevfun(pp, resp, rho, 1L)
+            ## devfunb <- if (compDev) {
+            ##     function(pars)
+            ##         .Call(lme4Eigen:::glmerLaplace, pp$ptr, resp$ptr, pars[dpars],
+            ##               u0, pars[-dpars], verbose, TRUE, tolPwrss)
+            ## } else {
+            ##     function(pars) {
+            ##         pp$u0 <- u0
+            ##         pp$theta <- pars[dpars]
+            ##         pp$beta0 <- pars[-dpars]
+            ##         lme4Eigen:::pwrssUpdate(pp, resp, verbose, uOnly=TRUE, tol=tolPwrss)
+            ##         resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL(0))
+            ##     }
+            ## }
+###            environment(devfunb) <- rho
+            if (devFunOnly) return(devfunb)
             opt <- bobyqa(c(pp$theta, pp$beta0), devfunb,
                           lower=c(reTrms$lower, rep.int(-Inf, length(pp$beta0))),
                           control=control)
