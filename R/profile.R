@@ -1,9 +1,6 @@
-setGeneric("dropX",
-           function(x, which, fw) standardGeneric("dropX"))
 ## This is a hack.  The preferred approach is to write a
 ## subset method for the ddenseModelMatrix and dsparseModelMatrix
 ## classes
-
 .modelMatrixDrop <- function(mm, w) {
     ll <- list(Class = class(mm),
                assign = mm@assign[-w],
@@ -15,40 +12,16 @@ setGeneric("dropX",
 }
 
 ##' Drop the which'th column from the fixed-effects model matrix in
-##' fe, the deFeMod slot.  Add fw times the dropped column to
-##' resp@offset and store values to implement
-##' profiling of the fixed-effects parameters.
-##'
+##' the predictor module.
 ##' @title Drop the which'th column from X in an merMod object
 ##'
-##' @param obj
-##' @param which the column to drop.  Must have 1 <= which <= ncol(obj@X)
+##' @param x an merMod object
+##' @param which the column to drop.  Must have 1 <= which <= ncol(x@pp$X)
 ##' @param fw the value of the which'th fixed effect which will
 ##'     be held constant.
-##' @return a revised merMod object
-setMethod("dropX", "merMod",
-          function(x, which, fw)
-      {
-          w <- as.integer(which)[1]
-          fw <- as.numeric(fw)[1]
-          resp <- x@resp
-          p <- length(x@beta)
-          pp <- x@pp
-          stopifnot(0 < w, w <= p)
-          X <- x@pp$X
-          Xw <-X[, w, drop=TRUE]
-          X <- X[, -w, drop=FALSE]
-          pp <- do.call(new, list(Class = class(pp),
-                                  X = .modelMatrixDrop(X, w),
-                                  Z = x@Z,
-                                  Lambda = x@Lambda,
-                                  Lind = x@Lind,
-                                  theta = x@theta)
-                        )
-          ## offset calculated from fixed parameter value
-          resp$offset <- X[, w, drop = TRUE] * fw + resp@offset
-          mkdevfun(pp, resp)
-      })
+##' @return a deviance function (of theta)
+dropX <- function(x, which, fw) {
+}
 
 
 ##' extract only the y component from a prediction
@@ -411,37 +384,37 @@ varpr <- function (x)
 ##'     fixed-effects but not with respect to sigma.
 devfun2 <- function(fm)
 {
-    stopifnot(is(fm, "merMod"), is(fm@resp, "Rcpp_lmerResp"))
-    fm1 <- refitML(fm)
-    th <- fm1@theta
-    lth <- length(th)
-    rm(fm)
-    basedev <- unname(deviance(fm1))
-    sig <- sigma(fm1)
-    lsig <- log(sig)
-    np <- lth + 1L
-    n <- length(fm1@y)
-    pp <- new(Class=class(fm1@pp), X=fm1@X, Z=fm1@Z, Lambda=fm1@Lambda, Lind=fm1@Lind, theta=fm1@theta)
-    resp <- new(Class=class(fm1@resp), REML=0L, y=fm1@y,  weights=fm1@weights, offset=fm1@offset)
+    stopifnot(is(fm, "lmerMod"))
+    fm <- refitML(fm)
+    basedev <- deviance(fm)
+    sig <- sigma(fm)
+    stdErr <- unname(coef(summary(fm))[,2])
+    xpp <- fm@pp
+    th <- xpp$theta
+    pp <- new(Class=class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat, Lind=xpp$Lind, theta=th)
+    opt <- c(sig * th, sig)
+    names(opt) <- c(sprintf(".sig%02d", seq_along(pp$theta)), "sigma")
+    opt <- c(opt, fixef(fm))
+    rr <- fm@resp
+    resp <- new(Class=class(rr), y=rr$y)
+    resp$offset <- rr$offset
+    resp$weights <- rr$weights
+    rm(rr, xpp, fm)
+    np <- length(pp$theta) + 1L
+    n <- nrow(pp$V())                   # use V(), not X so it works with nlmer
     ans <- function(pars)
     {
         stopifnot(is.numeric(pars), length(pars) == np)
         ## Assumption:  all parameters, including the residual SD on SD-scale
         sigma <- pars[np]
+        .Call(lme4Eigen:::lmer_Deviance, pp$ptr, resp$ptr, pars[-np]/sigma)
         sigsq <- sigma^2
-        pp$theta <- pars[-np]/sigma
-        resp$updateMu(pp$linPred(0))
-        pp$updateRes(resp$wtres, resp$sqrtXwt)
-        pp$solve()
-        resp$updateMu(pp$linPred(1))
-        pp$ldL2 + (resp$wrss + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
+        pp$ldL2() + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
     }
-    opt <- c(sig * th, lsig)
-    names(opt) <- c(sprintf(".sig%02d", seq_len(lth)), ".lsig")
-    attr(ans, "optimum") <- c(opt, fixef(fm1)) # w/ names()
+    attr(ans, "optimum") <- opt         # w/ names()
     attr(ans, "basedev") <- basedev
     attr(ans, "thopt") <- th
-    attr(ans, "stderr") <- sig * sqrt(diag(fm1@pp$unsc()))
+    attr(ans, "stderr") <- stdErr
     class(ans) <- "devfun"
     ans
 }
@@ -454,10 +427,10 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
     base <- attr(dd, "basedev")
     thopt <- attr(dd, "thopt")
     stderr <- attr(dd, "stderr")
-    fm1 <- environment(dd)$fm1
-    X.orig <- fm1@X
-    n <- length(fm1@y)
-    p <- length(fm1@beta)
+    pp <- environment(dd)$pp
+    X.orig <- pp$X
+    n <- nrow(pp$V())                   # use V() not X for the sake of nlmer
+    p <- length(pp$beta0)
     
     ans <- lapply(opt <- attr(dd, "optimum"), function(el) NULL)
     bakspl <- forspl <- ans
@@ -487,7 +460,7 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
     }
     
     ## mkpar generates the parameter vector of theta and
-    ## log(sigma) from the values being profiled in position w
+    ## sigma from the values being profiled in position w
     mkpar <- function(np, w, pw, pmw) {
         par <- numeric(np)
         par[w] <- pw
@@ -510,7 +483,7 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
         mat
     }
     
-    lower <- c(fm1@lower, rep.int(-Inf, p + 1L ))
+    lower <- c(fitted@lower, 0, rep.int(-Inf, p))
     seqnvp <- seq_len(nvp)
     lowvp <- lower[seqnvp]
     form <- .zeta ~ foo           # pattern for interpSpline formula
@@ -525,7 +498,7 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
                            function(x) dd(mkpar(nvp, w, xx, x)),
                            lower = lowvp[-w])
             zz <- sign(xx - pw) * sqrt(ores$fval - base)
-            c(zz, mkpar(nvp, w, xx, ores$par), attr(ores$fval, "beta"))
+            c(zz, mkpar(nvp, w, xx, ores$par), pp$beta(1))
         }
         
 ### FIXME: The starting values for the conditional optimization should
@@ -549,34 +522,44 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
         
         bakspl[[w]] <- backSpline(forspl[[w]] <- interpSpline(form, bres))
     }
-    
-    offset <- fm1@resp@offset
-    X <- fm1@X
+### FIXME: something weird here in classroom example - the conditional estimates of the intercept turn negative
+## 12 -1.0957  9.616  8.518 26.39      -282.2  -0.4705    -8.356 5.354 sigma
+## 11 -0.5472  9.362  8.517 26.73      -282.2  -0.4703    -8.321 5.357 sigma
+## 1   0.0000  9.096  8.515 27.07       282.3  -0.4702    -8.285 5.361 sigma
+## 2   0.4206  8.883  8.514 27.34      -282.4  -0.4700    -8.256 5.363 sigma
+    offset.orig <- fitted@resp$offset
     
     for (j in seq_len(p)) {
         pres <-            # intermediate results for pos. incr.
             nres <- res    # and negative increments
         est <- opt[nvp + j]
         std <- stderr[j]
-        Xw <- X[ , j, drop = TRUE]
-        fmm1 <- dropX(fm1, j, est)
+        Xw <-X.orig[, j, drop=TRUE]
+        pp1 <- do.call(new, list(Class = class(pp),
+                                X = .modelMatrixDrop(X.orig, j),
+                                Zt = pp$Zt,
+                                Lambdat = pp$Lambdat,
+                                Lind = pp$Lind,
+                                theta = pp$theta)
+                      )
+        rr <- new(Class=class(fitted@resp), y=fitted@resp$y)
+        rr$weights <- fitted@resp$weights
         fe.zeta <- function(fw) {
-            fmm1@resp@offset <- Xw * fw + offset
-            ores <- bobyqa(thopt, mkdevfun(fmm1),
-                           lower = fmm1@lower)
+            rr$offset <- Xw * fw + offset.orig
+            ores <- bobyqa(thopt, mkdevfun(pp1, rr, emptyenv()), lower = fitted@lower)
             fv <- ores$fval
-            sig <- sqrt((attr(fv, "wrss") + attr(fv, "ussq"))/length(Xw))
-            c(sign(fw - est) * sqrt(ores$fval - base),
-              ores$par * sig, log(sig), mkpar(p, j, fw, attr(fv, "beta")))
+            sig <- sqrt((rr$wrss() + pp1$sqrL(1))/n)
+            c(sign(fw - est) * sqrt(fv - base),
+              ores$par * sig, sig, mkpar(p, j, fw, pp1$beta(1)))
         }
         nres[1, ] <- pres[2, ] <- fe.zeta(est + delta * std)
-        pp <- nvp + 1L + j
+        poff <- nvp + 1L + j
         bres <-
-            as.data.frame(unique(rbind2(fillmat(pres,-Inf, fe.zeta, pp),
-                                        fillmat(nres,-Inf, fe.zeta, pp))))
+            as.data.frame(unique(rbind2(fillmat(pres,-Inf, fe.zeta, poff),
+                                        fillmat(nres,-Inf, fe.zeta, poff))))
         thisnm <- names(fe.orig)[j]
         bres$.par <- thisnm
-        ans[[thisnm]] <- bres[order(bres[, pp]), ]
+        ans[[thisnm]] <- bres[order(bres[, poff]), ]
         form[[3]] <- as.name(thisnm)
         bakspl[[thisnm]] <-
             backSpline(forspl[[thisnm]] <- interpSpline(form, bres))
