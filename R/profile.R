@@ -31,7 +31,7 @@ devfun2 <- function(fm)
     th <- xpp$theta
     pp <- new(Class=class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat, Lind=xpp$Lind, theta=th)
     opt <- c(sig * th, sig)
-    names(opt) <- c(sprintf(".sig%02d", seq_along(pp$theta)), "sigma")
+    names(opt) <- c(sprintf(".sig%02d", seq_along(pp$theta)), ".sigma")
     opt <- c(opt, fixef(fm))
     rr <- fm@resp
     resp <- new(Class=class(rr), y=rr$y)
@@ -212,11 +212,11 @@ predy <- function(sp, vv) predict(sp, vv)$y
 
 stripExpr <- function(ll, nms) {
     stopifnot(inherits(ll, "list"), is.character(nms))
-    lsigNm <- which(nms == ".lsig")
-    sigNms <- grep("^.sig", nms)
+    sigNm <- which(nms == ".sigma")
+    sigNms <- grep("^.sig[0-9]+", nms)
     sigsub <- as.integer(substring(nms[sigNms], 5))
     fLevs <- as.expression(nms)
-    fLevs[lsigNm] <- expression(log(sigma))
+    fLevs[sigNm] <- expression(sigma)
     fLevs[sigNms] <- parse(text=paste("sigma[", sigsub, "]"))
     levsExpr <- substitute(strip.custom(factor.levels=foo), list(foo=fLevs))
     llNms <- names(ll)
@@ -511,7 +511,7 @@ splom.thpr <-
 log.thpr <- function (x, base = exp(1))
 {
     cn <- colnames(x)
-    sigs <- grep("^\\.sig[0-9][0-9]", cn)
+    sigs <- grep("^\\.sig", cn)
     if (length(sigs)) {
         colnames(x) <- sub("^\\.sig", ".lsig", cn)
         levels(x$.par) <- sub("^\\.sig", ".lsig", levels(x$.par))
