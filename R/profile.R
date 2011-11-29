@@ -310,6 +310,8 @@ confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
 ##' Convert the x-cosine and the y-cosine to an average and difference
 ##' ensuring that the difference is positive by flipping signs if
 ##' necessary
+##' @param xc x-cosine
+##' @param yc y-cosine
 ad <- function(xc, yc)
 {
     a <- (xc + yc)/2
@@ -318,11 +320,23 @@ ad <- function(xc, yc)
 }
 
 ##' convert d versus a (as an xyVector) and level to a matrix of taui and tauj
+##' @param xy an xyVector
+##' @param lev the level of the contour
 tauij <- function(xy, lev) lev * cos(xy$x + outer(xy$y/2, c(-1, 1)))
 
-## safe arc-cosine
+##' @title safe arc-cosine
+##' @param x numeric vector argument
+##' @return acos(x) being careful of boundary conditions
 sacos <- function(x) acos(pmax.int(-0.999, pmin.int(0.999, x)))
 
+##' generate a contour
+##'
+##' @title generate a contour
+##' @param sij the arc-cosines of i on j
+##' @param sji the arc-cosines of j on i
+##' @param levels numeric vector of levels at which to interpolate
+##' @param nseg number of segments in the interpolated contour
+##' @return 
 cont <- function(sij, sji, levels, nseg = 101)
 {
     ada <- array(0, c(length(levels), 2, 4))
@@ -338,8 +352,13 @@ cont <- function(sij, sji, levels, nseg = 101)
     list(tki = predict(sij, levs), tkj = predict(sji, levs), pts = pts)
 }
 
-## Contours are for the marginal two-dimensional regions (i.e. using
-## df = 2)
+
+##' Profile pairs plot
+##'
+##' Contours are for the marginal two-dimensional regions (i.e. using
+##'  df = 2)
+##' @title Profile pairs plot
+##' @return a lattice object
 splom.thpr <-
     function (x, data, ## unused - only for compatibility with generic
               levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 2)),
@@ -508,8 +527,7 @@ splom.thpr <-
 ##' @return an lmer profile like x with all the .sigNN parameters
 ##'      replaced by .lsigNN.  The forward and backward splines for
 ##'      these parameters are recalculated.
-log.thpr <- function (x, base = exp(1))
-{
+log.thpr <- function (x, base = exp(1)) {
     cn <- colnames(x)
     sigs <- grep("^\\.sig", cn)
     if (length(sigs)) {
@@ -531,11 +549,14 @@ log.thpr <- function (x, base = exp(1))
     x
 }
 
-## FIXME - change this so it uses .sigsq too
-varpr <- function (x)
-{
+##' Transform a profile from the standard deviation parameters to the variance
+##'
+##' @title Transform to variance component scale
+##' @param x a profile object from a mixed-effects model
+##' @return a modified profile object
+varpr <- function (x) {
     cn <- colnames(x)
-    sigs <- grep("^\\.sig[0-9][0-9]", cn)
+    sigs <- grep("^\\.sig", cn)
     if (length(sigs)) {
         colnames(x) <- sub("^\\.sig", ".sigsq", cn)
         levels(x$.par) <- sub("^\\.sig", ".sigsq", levels(x$.par))
@@ -555,7 +576,15 @@ varpr <- function (x)
     x
 }
 
+##' Create an approximating density from a profile object
+##'
+##' @title Approximate densities from profiles
+##' @param pr a profile object
+##' @param npts number of points at which to evaluate the density
+##' @param upper upper bound on cumulative for a cutoff
+##' @return a data frame
 dens <- function(pr, npts=201, upper=0.999) {
+    stopifnot(inherits(pr, "thpr"))
     npts <- as.integer(npts)
     stopifnot(inherits(pr, "thpr"), npts > 0,
               is.numeric(upper), 0.5 < upper, upper < 1)
@@ -579,6 +608,13 @@ dens <- function(pr, npts=201, upper=0.999) {
     fr
 }
 
+##' Densityplot method for a mixed-effects model profile
+##'
+##' @title densityplot from a mixed-effects profile
+##' @param x a mixed-effects profile
+##' @param data not used - for compatibility with generic
+##' @param ... optional arguments to densityplot
+##' @return a density plot
 densityplot.thpr <- function(x, data, ...) {
     ll <- c(list(...),
             list(x=density ~ pval|pnm,
@@ -589,11 +625,16 @@ densityplot.thpr <- function(x, data, ...) {
     do.call(xyplot, stripExpr(ll, names(attr(x, "forward"))))
 }
 
+##' Transform a mixed-effects profile to the variance scale
+##'
+##' @title Transform to the variance scale
+##' @param pr a mixed-effects model profile
+##' @return a transformed mixed-effects model profile
 varianceProf <- function(pr) {
     stopifnot(inherits(pr, "thpr"))
     spl <- attr(pr, "forward")
     onms <- names(spl)                  # names of original variables
-    vc <- onms[grep("^.[l]*sig", onms)]  # variance components
+    vc <- onms[grep("^.sig", onms)]     # variance components
     ans <- subset(pr, .par %in% vc, select=c(".zeta", vc, ".par"))
     ans$.par <- factor(ans$.par)        # drop unused levels
     if (".lsig" %in% vc) ans$.lsig <- exp(ans$.lsig)
