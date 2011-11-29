@@ -1,3 +1,44 @@
+2011-11-29  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/profile.R: Profiling now works for lmer models with variance
+	  components only, including the case of a single fixed-effects
+	  parameter. Labeling of some plots needs to be corrected.
+	* src/predModule.cpp, src/predModule.h: Modifications for the 0-column X
+	  matrix case used in profiling.
+	* src/Gauss_Hermite.cpp, src/Gauss_Hermite.h, src/external.cpp: Move
+	  Gaussian quadrature knot/weight calculations to the Gqr package.
+
+2011-11-28  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/profile.R: Got profile working for cases where the number of
+	  fixed-effects is greater than 1. Need a "do nothing gracefully" clause
+	  for p == 1.
+	* R/lmer.R: Use the value of emptyenv(), not the funtion itself. Add ...
+	  to refitML generic and method
+	* R/lmer.R: Use separate mkdevfun in glmer. Switch devFunOnly to an
+	  integer value where 1 and 2 refer to different stages.
+
+2011-11-17  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/AllClass.R: Correct and extend the allInfo method for the glmResp
+	  class.
+	* ToDo: Need to come up with a crafty way of creating a copy of the
+	  reference class object with the external pointer. It may work to just
+	  copy it then set the PTR to be a NULL pointer.
+
+2011-11-16  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/Gauss_Hermite.cpp, src/Gauss_Hermite.h, src/external.cpp: Add
+	  another method of creating Gaussian quadrature rules. Export the GHQ
+	  class.
+	* tests/lmer-1.R: Comment out enough tests to make R CMD check succeed.
+	* R/lmer.R: Clean up some functions and methods that were causing
+	  problems with the tests.
+	* man/glmFamily-class.Rd, man/glmFamily.Rd, man/lmResp-class.Rd,
+	  man/lmResp.Rd: Document the class generator object and the reference
+	  class (for now).
+	* NAMESPACE: Remove redundant S3 method vcov.summary.mer
+
 2011-11-04  Douglas Bates <bates@stat.wisc.edu>
 
 	* src/external.cpp: Correct the argument counts for externally visible
