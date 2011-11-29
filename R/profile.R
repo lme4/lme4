@@ -11,18 +11,201 @@
     do.call("new", ll)
 }
 
-##' Drop the which'th column from the fixed-effects model matrix in
-##' the predictor module.
-##' @title Drop the which'th column from X in an merMod object
+##' The deviance is profiled with respect to the fixed-effects
+##' parameters but not with respect to sigma. The other parameters
+##' are on the standard deviation scale, not the theta scale.
 ##'
-##' @param x an merMod object
-##' @param which the column to drop.  Must have 1 <= which <= ncol(x@pp$X)
-##' @param fw the value of the which'th fixed effect which will
-##'     be held constant.
-##' @return a deviance function (of theta)
-dropX <- function(x, which, fw) {
+##' @title Return a function for evaluation of the deviance.
+##' @param fm a fitted model of class merMod
+##' @return a function for evaluating the deviance in the extended
+##'     parameterization.  This is profiled with respect to the
+##'     variance-covariance parameters (fixed-effects done separately).
+devfun2 <- function(fm)
+{
+    stopifnot(is(fm, "lmerMod"))
+    fm <- refitML(fm)
+    basedev <- deviance(fm)
+    sig <- sigma(fm)
+    stdErr <- unname(coef(summary(fm))[,2])
+    xpp <- fm@pp
+    th <- xpp$theta
+    pp <- new(Class=class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat, Lind=xpp$Lind, theta=th)
+    opt <- c(sig * th, sig)
+    names(opt) <- c(sprintf(".sig%02d", seq_along(pp$theta)), "sigma")
+    opt <- c(opt, fixef(fm))
+    rr <- fm@resp
+    resp <- new(Class=class(rr), y=rr$y)
+    resp$offset <- rr$offset
+    resp$weights <- rr$weights
+    rm(rr, xpp, fm)
+    np <- length(pp$theta) + 1L
+    n <- nrow(pp$V())                   # use V(), not X so it works with nlmer
+    ans <- function(pars)
+    {
+        stopifnot(is.numeric(pars), length(pars) == np)
+        ## Assumption:  all parameters, including the residual SD on SD-scale
+        sigma <- pars[np]
+        .Call(lme4Eigen:::lmer_Deviance, pp$ptr, resp$ptr, pars[-np]/sigma)
+        sigsq <- sigma^2
+        pp$ldL2() + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
+    }
+    attr(ans, "optimum") <- opt         # w/ names()
+    attr(ans, "basedev") <- basedev
+    attr(ans, "thopt") <- th
+    attr(ans, "stderr") <- stdErr
+    class(ans) <- "devfun"
+    ans
 }
 
+profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff/8,
+                           tr = 0, ...)
+{
+    dd <- devfun2(fitted)
+    
+    base <- attr(dd, "basedev")
+    thopt <- attr(dd, "thopt")
+    stderr <- attr(dd, "stderr")
+    pp <- environment(dd)$pp
+    X.orig <- pp$X
+    n <- environment(dd)$n
+    p <- length(pp$beta0)
+    
+    ans <- lapply(opt <- attr(dd, "optimum"), function(el) NULL)
+    bakspl <- forspl <- ans
+    
+    nptot <- length(opt)
+    nvp <- nptot - p    # number of variance-covariance pars
+    fe.orig <- opt[-seq_len(nvp)]
+    res <- c(.zeta = 0, opt)
+    res <- matrix(res, nr = maxpts, nc = length(res),
+                  dimnames = list(NULL, names(res)), byrow = TRUE)
+    cutoff <- sqrt(qchisq(1 - alphamax, nptot))
+    
+    ## helper functions
+    
+    ## nextpar calculates the next value of the parameter being
+    ## profiled based on the desired step in the profile zeta
+    ## (absstep) and the values of zeta and column cc for rows
+    ## r-1 and r.  The parameter may not be below lower
+    nextpar <- function(mat, cc, r, absstep, lower = -Inf) {
+        rows <- r - (1:0)         # previous two row numbers
+        pvals <- mat[rows, cc]
+        zeta <- mat[rows, ".zeta"]
+        if (!(denom <- diff(zeta)))
+            stop("Last two rows have identical .zeta values")
+        num <- diff(pvals)
+        max(lower, pvals[2] + sign(num) * absstep * num / denom)
+    }
+    
+    ## mkpar generates the parameter vector of theta and
+    ## sigma from the values being profiled in position w
+    mkpar <- function(np, w, pw, pmw) {
+        par <- numeric(np)
+        par[w] <- pw
+        par[-w] <- pmw
+        par
+    }
+    
+    ## fillmat fills the third and subsequent rows of the matrix
+    ## using nextpar and zeta
+### FIXME:  add code to evaluate more rows near the minimum if that
+###        constraint was active.
+    fillmat <- function(mat, lowcut, zetafun, cc) {
+        nr <- nrow(mat)
+        i <- 2L
+        while (i < nr && abs(mat[i, ".zeta"]) <= cutoff &&
+               mat[i, cc] > lowcut) {
+            mat[i + 1L, ] <- zetafun(nextpar(mat, cc, i, delta, lowcut))
+            i <- i + 1L
+        }
+        mat
+    }
+    
+    lower <- c(fitted@lower, 0, rep.int(-Inf, p))
+    seqnvp <- seq_len(nvp)
+    lowvp <- lower[seqnvp]
+    form <- .zeta ~ foo           # pattern for interpSpline formula
+    
+    for (w in seqnvp) {
+        wp1 <- w + 1L
+        start <- opt[seqnvp][-w]
+        pw <- opt[w]
+        lowcut <- lower[w]
+        zeta <- function(xx) {
+            ores <- bobyqa(start,
+                           function(x) dd(mkpar(nvp, w, xx, x)),
+                           lower = lowvp[-w])
+            zz <- sign(xx - pw) * sqrt(ores$fval - base)
+            c(zz, mkpar(nvp, w, xx, ores$par), pp$beta(1))
+        }
+        
+### FIXME: The starting values for the conditional optimization should
+### be determined from recent starting values, not always the global
+### optimum values.
+        
+### Can do this by taking the change in the other parameter values at
+### the two last points and extrapolating.
+        
+        ## intermediate storage for pos. and neg. increments
+        pres <- nres <- res
+        ## assign one row, determined by inc. sign, from a small shift
+        nres[1, ] <- pres[2, ] <- zeta(pw * 1.01)
+        ## fill in the rest of the arrays and collapse them
+        bres <-
+            as.data.frame(unique(rbind2(fillmat(pres,lowcut, zeta, wp1),
+                                        fillmat(nres,lowcut, zeta, wp1))))
+        bres$.par <- names(opt)[w]
+        ans[[w]] <- bres[order(bres[, wp1]), ]
+        form[[3]] <- as.name(names(opt)[w])
+        
+        bakspl[[w]] <- backSpline(forspl[[w]] <- interpSpline(form, bres))
+    }
+
+    offset.orig <- fitted@resp$offset
+    for (j in seq_len(p)) {
+        pres <-            # intermediate results for pos. incr.
+            nres <- res    # and negative increments
+        est <- opt[nvp + j]
+        std <- stderr[j]
+        Xw <-X.orig[, j, drop=TRUE]
+        pp1 <- do.call(new, list(Class = class(pp),
+                                X = .modelMatrixDrop(X.orig, j),
+                                Zt = pp$Zt,
+                                Lambdat = pp$Lambdat,
+                                Lind = pp$Lind,
+                                theta = pp$theta)
+                      )
+        rr <- new(Class=class(fitted@resp), y=fitted@resp$y)
+        rr$weights <- fitted@resp$weights
+        fe.zeta <- function(fw) {
+            rr$offset <- Xw * fw + offset.orig
+            ores <- bobyqa(thopt, mkdevfun(pp1, rr, emptyenv()), lower = fitted@lower)
+            fv <- ores$fval
+            sig <- sqrt((rr$wrss() + pp1$sqrL(1))/n)
+            c(sign(fw - est) * sqrt(fv - base),
+              ores$par * sig, sig, mkpar(p, j, fw, pp1$beta(1)))
+        }
+        nres[1, ] <- pres[2, ] <- fe.zeta(est + delta * std)
+        poff <- nvp + 1L + j
+        bres <-
+            as.data.frame(unique(rbind2(fillmat(pres,-Inf, fe.zeta, poff),
+                                        fillmat(nres,-Inf, fe.zeta, poff))))
+        thisnm <- names(fe.orig)[j]
+        bres$.par <- thisnm
+        ans[[thisnm]] <- bres[order(bres[, poff]), ]
+        form[[3]] <- as.name(thisnm)
+        bakspl[[thisnm]] <-
+            backSpline(forspl[[thisnm]] <- interpSpline(form, bres))
+    }
+    
+    ans <- do.call(rbind, ans)
+    ans$.par <- factor(ans$.par)
+    attr(ans, "forward") <- forspl
+    attr(ans, "backward") <- bakspl
+    row.names(ans) <- NULL
+    class(ans) <- c("thpr", "data.frame")
+    ans
+}
 
 ##' extract only the y component from a prediction
 predy <- function(sp, vv) predict(sp, vv)$y
@@ -370,208 +553,6 @@ varpr <- function (x)
         x <- x[apply(is.finite(as.matrix(x[, sigs])), 1, all),]
     }
     x
-}
-
-##' The deviance is profiled with respect to the fixed-effects
-##' parameters but not with respect to sigma, which is expressed
-##' on the logarithmic scale, lsigma. The other parameters are on
-##' the standard deviation scale, not the theta scale.
-##'
-##' @title Return a function for evaluation of the deviance.
-##' @param fm a fitted model of class merMod
-##' @return a function for evaluating the deviance in the extended
-##'     parameterization.  This is profiled with respect to the
-##'     fixed-effects but not with respect to sigma.
-devfun2 <- function(fm)
-{
-    stopifnot(is(fm, "lmerMod"))
-    fm <- refitML(fm)
-    basedev <- deviance(fm)
-    sig <- sigma(fm)
-    stdErr <- unname(coef(summary(fm))[,2])
-    xpp <- fm@pp
-    th <- xpp$theta
-    pp <- new(Class=class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat, Lind=xpp$Lind, theta=th)
-    opt <- c(sig * th, sig)
-    names(opt) <- c(sprintf(".sig%02d", seq_along(pp$theta)), "sigma")
-    opt <- c(opt, fixef(fm))
-    rr <- fm@resp
-    resp <- new(Class=class(rr), y=rr$y)
-    resp$offset <- rr$offset
-    resp$weights <- rr$weights
-    rm(rr, xpp, fm)
-    np <- length(pp$theta) + 1L
-    n <- nrow(pp$V())                   # use V(), not X so it works with nlmer
-    ans <- function(pars)
-    {
-        stopifnot(is.numeric(pars), length(pars) == np)
-        ## Assumption:  all parameters, including the residual SD on SD-scale
-        sigma <- pars[np]
-        .Call(lme4Eigen:::lmer_Deviance, pp$ptr, resp$ptr, pars[-np]/sigma)
-        sigsq <- sigma^2
-        pp$ldL2() + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
-    }
-    attr(ans, "optimum") <- opt         # w/ names()
-    attr(ans, "basedev") <- basedev
-    attr(ans, "thopt") <- th
-    attr(ans, "stderr") <- stdErr
-    class(ans) <- "devfun"
-    ans
-}
-
-profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff/8,
-                           tr = 0, ...)
-{
-    dd <- devfun2(fitted)
-    
-    base <- attr(dd, "basedev")
-    thopt <- attr(dd, "thopt")
-    stderr <- attr(dd, "stderr")
-    pp <- environment(dd)$pp
-    X.orig <- pp$X
-    n <- nrow(pp$V())                   # use V() not X for the sake of nlmer
-    p <- length(pp$beta0)
-    
-    ans <- lapply(opt <- attr(dd, "optimum"), function(el) NULL)
-    bakspl <- forspl <- ans
-    
-    nptot <- length(opt)
-    nvp <- nptot - p    # number of variance-covariance pars
-    fe.orig <- opt[-seq_len(nvp)]
-    res <- c(.zeta = 0, opt)
-    res <- matrix(res, nr = maxpts, nc = length(res),
-                  dimnames = list(NULL, names(res)), byrow = TRUE)
-    cutoff <- sqrt(qchisq(1 - alphamax, nptot))
-    
-    ## helper functions
-    
-    ## nextpar calculates the next value of the parameter being
-    ## profiled based on the desired step in the profile zeta
-    ## (absstep) and the values of zeta and column cc for rows
-    ## r-1 and r.  The parameter may not be below lower
-    nextpar <- function(mat, cc, r, absstep, lower = -Inf) {
-        rows <- r - (1:0)         # previous two row numbers
-        pvals <- mat[rows, cc]
-        zeta <- mat[rows, ".zeta"]
-        if (!(denom <- diff(zeta)))
-            stop("Last two rows have identical .zeta values")
-        num <- diff(pvals)
-        max(lower, pvals[2] + sign(num) * absstep * num / denom)
-    }
-    
-    ## mkpar generates the parameter vector of theta and
-    ## sigma from the values being profiled in position w
-    mkpar <- function(np, w, pw, pmw) {
-        par <- numeric(np)
-        par[w] <- pw
-        par[-w] <- pmw
-        par
-    }
-    
-    ## fillmat fills the third and subsequent rows of the matrix
-    ## using nextpar and zeta
-### FIXME:  add code to evaluate more rows near the minimum if that
-###        constraint was active.
-    fillmat <- function(mat, lowcut, zetafun, cc) {
-        nr <- nrow(mat)
-        i <- 2L
-        while (i < nr && abs(mat[i, ".zeta"]) <= cutoff &&
-               mat[i, cc] > lowcut) {
-            mat[i + 1L, ] <- zetafun(nextpar(mat, cc, i, delta, lowcut))
-            i <- i + 1L
-        }
-        mat
-    }
-    
-    lower <- c(fitted@lower, 0, rep.int(-Inf, p))
-    seqnvp <- seq_len(nvp)
-    lowvp <- lower[seqnvp]
-    form <- .zeta ~ foo           # pattern for interpSpline formula
-    
-    for (w in seqnvp) {
-        wp1 <- w + 1L
-        start <- opt[seqnvp][-w]
-        pw <- opt[w]
-        lowcut <- lower[w]
-        zeta <- function(xx) {
-            ores <- bobyqa(start,
-                           function(x) dd(mkpar(nvp, w, xx, x)),
-                           lower = lowvp[-w])
-            zz <- sign(xx - pw) * sqrt(ores$fval - base)
-            c(zz, mkpar(nvp, w, xx, ores$par), pp$beta(1))
-        }
-        
-### FIXME: The starting values for the conditional optimization should
-### be determined from recent starting values, not always the global
-### optimum values.
-        
-### Can do this by taking the change in the other parameter values at
-### the two last points and extrapolating.
-        
-        ## intermediate storage for pos. and neg. increments
-        pres <- nres <- res
-        ## assign one row, determined by inc. sign, from a small shift
-        nres[1, ] <- pres[2, ] <- zeta(pw * 1.01)
-        ## fill in the rest of the arrays and collapse them
-        bres <-
-            as.data.frame(unique(rbind2(fillmat(pres,lowcut, zeta, wp1),
-                                        fillmat(nres,lowcut, zeta, wp1))))
-        bres$.par <- names(opt)[w]
-        ans[[w]] <- bres[order(bres[, wp1]), ]
-        form[[3]] <- as.name(names(opt)[w])
-        
-        bakspl[[w]] <- backSpline(forspl[[w]] <- interpSpline(form, bres))
-    }
-### FIXME: something weird here in classroom example - the conditional estimates of the intercept turn negative
-## 12 -1.0957  9.616  8.518 26.39      -282.2  -0.4705    -8.356 5.354 sigma
-## 11 -0.5472  9.362  8.517 26.73      -282.2  -0.4703    -8.321 5.357 sigma
-## 1   0.0000  9.096  8.515 27.07       282.3  -0.4702    -8.285 5.361 sigma
-## 2   0.4206  8.883  8.514 27.34      -282.4  -0.4700    -8.256 5.363 sigma
-    offset.orig <- fitted@resp$offset
-    
-    for (j in seq_len(p)) {
-        pres <-            # intermediate results for pos. incr.
-            nres <- res    # and negative increments
-        est <- opt[nvp + j]
-        std <- stderr[j]
-        Xw <-X.orig[, j, drop=TRUE]
-        pp1 <- do.call(new, list(Class = class(pp),
-                                X = .modelMatrixDrop(X.orig, j),
-                                Zt = pp$Zt,
-                                Lambdat = pp$Lambdat,
-                                Lind = pp$Lind,
-                                theta = pp$theta)
-                      )
-        rr <- new(Class=class(fitted@resp), y=fitted@resp$y)
-        rr$weights <- fitted@resp$weights
-        fe.zeta <- function(fw) {
-            rr$offset <- Xw * fw + offset.orig
-            ores <- bobyqa(thopt, mkdevfun(pp1, rr, emptyenv()), lower = fitted@lower)
-            fv <- ores$fval
-            sig <- sqrt((rr$wrss() + pp1$sqrL(1))/n)
-            c(sign(fw - est) * sqrt(fv - base),
-              ores$par * sig, sig, mkpar(p, j, fw, pp1$beta(1)))
-        }
-        nres[1, ] <- pres[2, ] <- fe.zeta(est + delta * std)
-        poff <- nvp + 1L + j
-        bres <-
-            as.data.frame(unique(rbind2(fillmat(pres,-Inf, fe.zeta, poff),
-                                        fillmat(nres,-Inf, fe.zeta, poff))))
-        thisnm <- names(fe.orig)[j]
-        bres$.par <- thisnm
-        ans[[thisnm]] <- bres[order(bres[, poff]), ]
-        form[[3]] <- as.name(thisnm)
-        bakspl[[thisnm]] <-
-            backSpline(forspl[[thisnm]] <- interpSpline(form, bres))
-    }
-    
-    ans <- do.call(rbind, ans)
-    ans$.par <- factor(ans$.par)
-    attr(ans, "forward") <- forspl
-    attr(ans, "backward") <- bakspl
-    row.names(ans) <- NULL
-    class(ans) <- c("thpr", "data.frame")
-    ans
 }
 
 dens <- function(pr, npts=201, upper=0.999) {
