@@ -8,11 +8,6 @@
 #include "predModule.h"
 
 namespace lme4Eigen {
-    using std::copy;
-    using std::cout;
-    using std::endl;
-    using std::fill;
-
     merPredD::merPredD(S4 X, S4 Zt, S4 Lambdat, IntegerVector Lind,
 		       NumericVector theta)
 	: d_X(X),
@@ -45,6 +40,7 @@ namespace lme4Eigen {
 				// initialize beta0, u0, delb, delu and VtV
 	d_beta0.setZero(); d_u0.setZero(); d_delu.setZero(); d_delb.setZero();
 	d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
+	d_RX.compute(d_VtV);	// ensure d_RX is initialized even in the 0-column X case
 
 	setTheta(d_theta);		// starting values into Lambda
         d_L.cholmod().final_ll = 1;	// force an LL' decomposition
@@ -62,7 +58,7 @@ namespace lme4Eigen {
 	// This complicated code bypasses problems caused by Eigen's
 	// sparse/sparse matrix multiplication pruning zeros.  The
 	// Cholesky decomposition croaks if the structure of d_LamtUt changes.
-	fill(d_LamtUt._valuePtr(), d_LamtUt._valuePtr() + d_LamtUt.nonZeros(), Scalar());
+	std::fill(d_LamtUt._valuePtr(), d_LamtUt._valuePtr() + d_LamtUt.nonZeros(), Scalar());
 	for (Index j = 0; j < d_Ut.cols(); ++j) {
 	    for(SpMatrixd::InnerIterator rhsIt(d_Ut, j); rhsIt; ++rhsIt) {
 		SpMatrixd::InnerIterator prdIt(d_LamtUt, j);
@@ -99,7 +95,7 @@ namespace lme4Eigen {
 	if (theta.size() != d_theta.size())
 	    throw invalid_argument("theta size mismatch");
 				// update theta
-	copy(theta.begin(), theta.end(), d_theta.begin());
+	std::copy(theta.begin(), theta.end(), d_theta.begin());
 				// update Lambdat
 	int    *lipt = d_Lind.begin();
 	double *LamX = d_Lambdat._valuePtr(), *thpt = d_theta.begin();
@@ -164,14 +160,16 @@ namespace lme4Eigen {
     void merPredD::updateDecomp() { // update L, RZX and RX
 	updateL();
 	d_RZX           = d_LamtUt * d_V;
-	d_L.solveInPlace(d_RZX, CHOLMOD_P);
-	d_L.solveInPlace(d_RZX, CHOLMOD_L);
+	if (d_p > 0) {
+	    d_L.solveInPlace(d_RZX, CHOLMOD_P);
+	    d_L.solveInPlace(d_RZX, CHOLMOD_L);
 
-	MatrixXd      VtVdown(d_VtV);
-	d_RX.compute(VtVdown.selfadjointView<Eigen::Upper>().rankUpdate(d_RZX.adjoint(), -1));
-	if (d_RX.info() != Eigen::Success)
-	    ::Rf_error("Downdated VtV is not positive definite");
-	d_ldRX2         = 2. * d_RX.matrixLLT().diagonal().array().abs().log().sum();
+	    MatrixXd      VtVdown(d_VtV);
+	    d_RX.compute(VtVdown.selfadjointView<Eigen::Upper>().rankUpdate(d_RZX.adjoint(), -1));
+	    if (d_RX.info() != Eigen::Success)
+		::Rf_error("Downdated VtV is not positive definite");
+	    d_ldRX2         = 2. * d_RX.matrixLLT().diagonal().array().abs().log().sum();
+	}
     }
 
     void merPredD::updateRes(const VectorXd& wtres) {
@@ -190,12 +188,12 @@ namespace lme4Eigen {
 
     void merPredD::setBeta0(const VectorXd& nBeta) {
 	if (nBeta.size() != d_p) throw invalid_argument("setBeta0: dimension mismatch");
-	copy(nBeta.data(), nBeta.data() + d_p, d_beta0.data());
+	std::copy(nBeta.data(), nBeta.data() + d_p, d_beta0.data());
     }
 
     void merPredD::setU0(const VectorXd& newU0) {
 	if (newU0.size() != d_q) throw invalid_argument("setU0: dimension mismatch");
-	copy(newU0.data(), newU0.data() + d_q, d_u0.data());
+	std::copy(newU0.data(), newU0.data() + d_q, d_u0.data());
     }
 
     IntegerVector merPredD::Pvec() const {
@@ -203,36 +201,21 @@ namespace lme4Eigen {
 	int*                 ppt = (int*)cf->Perm;
 	return IntegerVector(ppt, ppt + cf->n);
     }
-#if 0
-    S4 merPredD::L() const {
-	const cholmod_factor* f = d_L.factor();
-	if (f->minor < f->n)
-	    throw runtime_error("CHOLMOD factorization was unsuccessful");
 
-	S4 ans(std::string(f->is_super ? "dCHMsuper" : "dCHMsimpl"));
-	ans.slot("Dim") = Rcpp::Dimension(f->n, f->n);
-	ans.slot("perm") = Pvec();
-	ans.slot("colcount") = IntegerVector((int*)f->ColCount, (int*)f->ColCount + f->n);
-	IntegerVector tt(f->is_super ? 6 : 4);
-	tt[0] = f->ordering; tt[1] = f->is_ll;
-	tt[2] = f->is_super; tt[3] = f->is_monotonic;
-	ans.slot("type") = tt;
-	if (f->is_super) {
-	    tt[4] = f->maxcsize; tt[5] = f->maxesize;
-	    ans.slot("super") = IntegerVector((int*)f->super, ((int*)f->super) + f->nsuper + 1);
-	    ans.slot("pi")    = IntegerVector((int*)f->pi, ((int*)f->pi) + f->nsuper + 1);
-	    ans.slot("px")    = IntegerVector((int*)f->px, ((int*)f->px) + f->nsuper + 1);
-	    ans.slot("s")     = IntegerVector((int*)f->s, ((int*)f->s) + f->ssize);
-	    ans.slot("x")     = NumericVector((double*)f->x, ((double*)f->x) + f->xsize);
-	} else {
-	    ans.slot("i")     = IntegerVector((int*)f->i, ((int*)f->i) + f->nzmax);
-	    ans.slot("p")     = IntegerVector((int*)f->p, ((int*)f->p) + f->n + 1);
-	    ans.slot("x")     = NumericVector((double*)f->x, ((double*)f->x) + f->nzmax);
-	    ans.slot("nz")    = IntegerVector((int*)f->nz, ((int*)f->nz) + f->n);
-	    ans.slot("nxt")   = IntegerVector((int*)f->next, ((int*)f->next) + f->n + 2);
-	    ans.slot("prv")   = IntegerVector((int*)f->prev, ((int*)f->prev) + f->n + 2);
-	}
-	return ans;
+    MatrixXd merPredD::RX() const {
+	return d_RX.matrixU();
     }
-#endif
+
+    MatrixXd merPredD::RXi() const {
+	return d_RX.matrixU().solve(MatrixXd::Identity(d_p,d_p));
+    }
+
+    MatrixXd merPredD::unsc() const {
+	return MatrixXd(MatrixXd(d_p, d_p).setZero().
+			selfadjointView<Lower>().rankUpdate(RXi().adjoint()));
+    }
+
+    VectorXd merPredD::RXdiag() const {
+	return d_RX.matrixLLT().diagonal();
+    }
 }

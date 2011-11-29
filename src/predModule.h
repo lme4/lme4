@@ -172,11 +172,11 @@ namespace lme4Eigen {
 
 	IntegerVector          Pvec() const;
 
-	MatrixXd                 RX() const {MatrixXd ans = d_RX.matrixU(); return ans;}
-	MatrixXd                RXi() const {return d_RX.matrixU().solve(MatrixXd::Identity(d_p,d_p));}
-	MatrixXd               unsc() const {MatrixXd rxi(RXi()); return rxi * rxi.adjoint();}
+	MatrixXd                 RX() const;
+	MatrixXd                RXi() const;
+	MatrixXd               unsc() const;
 
-	VectorXd             RXdiag() const {return d_RX.matrixLLT().diagonal();}
+	VectorXd             RXdiag() const;
 	VectorXd                  b(const Scalar& f) const;
 	VectorXd               beta(const Scalar& f) const;
 	VectorXd            linPred(const Scalar& f) const;
