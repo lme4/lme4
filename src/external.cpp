@@ -6,7 +6,6 @@
 
 #include "predModule.h"
 #include "respModule.h"
-#include "Gauss_Hermite.h"
 
 extern "C" {
     using Eigen::Map;
@@ -27,7 +26,6 @@ extern "C" {
 
     using glm::glmFamily;
 
-    using lme4Eigen::GHQ;
     using lme4Eigen::glmResp;
     using lme4Eigen::lmResp;
     using lme4Eigen::lmerResp;
@@ -39,14 +37,6 @@ extern "C" {
     SEXP Eigen_SSE() {
 	BEGIN_RCPP;
 	return wrap(Eigen::SimdInstructionSetsInUse());
-	END_RCPP;
-    }
-
-    SEXP GHQ_get(SEXP ns) {
-	BEGIN_RCPP;
-	GHQ ghq(::Rf_asInteger(ns));
-	return List::create(Named("knots") = ghq.xvals(),
-			    Named("weights") = ghq.wts());
 	END_RCPP;
     }
 
@@ -414,18 +404,21 @@ extern "C" {
     SEXP merPredDsetBeta0(SEXP ptr, SEXP beta0) {
 	BEGIN_RCPP;
 	XPtr<merPredD>(ptr)->setBeta0(as<Map<VectorXd> >(beta0));
+	return beta0;
 	END_RCPP;
     }
 
     SEXP merPredDsetTheta(SEXP ptr, SEXP theta) {
 	BEGIN_RCPP;
 	XPtr<merPredD>(ptr)->setTheta(NumericVector(theta));
+	return theta;
 	END_RCPP;
     }
 
     SEXP merPredDsetU0(SEXP ptr, SEXP u0) {
 	BEGIN_RCPP;
 	XPtr<merPredD>(ptr)->setU0(as<Map<VectorXd> >(u0));
+	return u0;
 	END_RCPP;
     }
 
@@ -672,8 +665,6 @@ static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(Eigen_SSE, 0),
 
-    CALLDEF(GHQ_get, 1),
-
     CALLDEF(glm_Create, 2),	  // generate external pointer
 
     CALLDEF(glm_setN, 2),	  // setters
@@ -778,6 +769,7 @@ static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(nls_Laplace, 4),	  // methods
     CALLDEF(nls_updateMu, 2),
+
     {NULL, NULL, 0}
 };
 
