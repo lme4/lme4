@@ -212,7 +212,7 @@ namespace lme4Eigen {
 
     MatrixXd merPredD::unsc() const {
 	return MatrixXd(MatrixXd(d_p, d_p).setZero().
-			selfadjointView<Lower>().rankUpdate(RXi().adjoint()));
+			selfadjointView<Lower>().rankUpdate(RXi()));
     }
 
     VectorXd merPredD::RXdiag() const {
