@@ -50,8 +50,8 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 	stop(gettextf("rank of X = %d < ncol(X) = %d", qrX$rank, p))
     pp <- do.call(merPredD$new, c(list(X=X), reTrms[c("Zt","theta","Lambdat","Lind")]))
 #    pp <- do.call(merPredD$new, c(list(X=X, Theta=reTrms$theta), reTrms[c("Zt","Lambdat","Lind")]))
-    resp <- mkRespMod2(fr)
-    if (REML) resp$reml <- p
+    resp <- mkRespMod2(fr, if(REML) p else 0L)
+#    if (REML) resp$reml <- p
 
     devfun <- mkdevfun(pp, resp, emptyenv())
     if (devFunOnly) return(devfun)
@@ -62,10 +62,10 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 	if (verbose) control$iprint <- as.integer(verbose)
 	opt <- bobyqa(reTrms$theta, devfun, reTrms$lower, control = control)
     }
-    LL <- pp$Lambdat
-    LL@x <- pp$theta[pp$Lind]
-    stopifnot(validObject(LL))
-    pp$Lambdat <- LL
+#    LL <- pp$Lambdat
+#    LL@x <- pp$theta[pp$Lind]
+#    stopifnot(validObject(LL))
+#    pp$Lambdat <- LL
     sqrLenU <- pp$sqrL(1.)
     wrss <- resp$wrss()
     pwrss <- wrss + sqrLenU
@@ -73,7 +73,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 
     dims <- c(N=n, n=n, nmp=n-p, nth=length(pp$theta), p=p, q=nrow(reTrms$Zt),
 	      nAGQ=NA_integer_, useSc=1L, reTrms=length(reTrms$cnms),
-	      spFe=0L, REML=resp$reml, GLMM=0L, NLMM=0L)
+	      spFe=0L, REML=resp$REML, GLMM=0L, NLMM=0L)
     cmp <- c(ldL2=pp$ldL2(), ldRX2=pp$ldRX2(), wrss=wrss,
 	      ussq=sqrLenU, pwrss=pwrss,
 	     drsum=NA, dev=if(REML)NA else opt$fval, REML=if(REML)opt$fval else NA,
@@ -87,19 +87,19 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 mkdevfun <- function(pp, resp, rho, nAGQ=1L) {
     stopifnot(is.environment(rho), is(resp, "lmResp"))
     if (is(resp, "lmerResp"))
-	return(function(theta) .Call(lmer_Deviance, pp$ptr, resp$ptr, theta))
+	return(function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(), theta))
     if (is(resp, "glmResp")) {
         if (nAGQ == 0L) {
             ff <- function(theta)
-                .Call(lme4Eigen:::glmerLaplace, pp$ptr, resp$ptr,
-                      theta, u0, beta0, verbose, FALSE, tolPwrss)
-            environment(ff) <- rho
+                .Call(lme4Eigen:::glmerLaplace, pp$ptr(), resp$ptr(), theta,
+                      u0, beta0, verbose, FALSE, tolPwrss)
+            environment(ff) <- rho      # hence need qualified name of glmerLaplace
             return(ff)
         }
         if (nAGQ == 1L) {
             ff <- function(pars)
-                .Call(lme4Eigen:::glmerLaplace, pp$ptr, resp$ptr, pars[dpars],
-                      u0, pars[-dpars], verbose, TRUE, tolPwrss)
+                .Call(lme4Eigen:::glmerLaplace, pp$ptr(), resp$ptr(), pars[dpars], u0,
+                      pars[-dpars], verbose, TRUE, tolPwrss)
             environment(ff) <- rho
             return(ff)
         }
@@ -167,8 +167,8 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     resp <- mkRespMod2(fr, family=family)
 					# initial step from working response
     if (compDev) {
-	.Call(glmerWrkIter, pp$ptr, resp$ptr)
-	lapply(1:3, function(n).Call(glmerPwrssUpdate, pp$ptr, resp$ptr, verbose, FALSE, tolPwrss))
+	.Call(glmerWrkIter, pp$ptr(), resp$ptr())
+	lapply(1:3, function(n).Call(glmerPwrssUpdate, pp$ptr(), resp$ptr(), verbose, FALSE, tolPwrss))
     } else {
         pp$updateXwts(resp$sqrtWrkWt())
         pp$updateDecomp()
@@ -190,21 +190,6 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
                                    verbose=verbose, control=control, tolPwrss=tolPwrss))
         parent.env(rho) <- parent.frame()
         devfun <- mkdevfun(pp, resp, rho, 0L)
-                           
-        ## devfun <- if (compDev) {
-        ##     function(theta)
-        ##         .Call(lme4Eigen:::glmerLaplace, pp$ptr, resp$ptr,
-        ##               theta, u0, beta0, verbose, FALSE, tolPwrss)
-        ## } else {
-        ##     function(theta) {
-        ##         pp$u0 <- u0
-        ##         pp$beta0 <- beta0
-        ##         pp$theta <- theta
-        ##         lme4Eigen:::pwrssUpdate(pp, resp, verbose, tol=tolPwrss)
-        ##         resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL(0))
-        ##     }
-        ## }
-        ## environment(devfun) <- rho
         if (devFunOnly && !nAGQ) return(devfun)
 	control$iprint <- min(verbose, 3L)
 	opt <- bobyqa(pp$theta, devfun, lower=reTrms$lower, control=control)
@@ -215,30 +200,16 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 	    if(!is.numeric(control$rhoend)) control$rhoend <- 2e-7
             rho$control <- control
             devfunb <- mkdevfun(pp, resp, rho, 1L)
-            ## devfunb <- if (compDev) {
-            ##     function(pars)
-            ##         .Call(lme4Eigen:::glmerLaplace, pp$ptr, resp$ptr, pars[dpars],
-            ##               u0, pars[-dpars], verbose, TRUE, tolPwrss)
-            ## } else {
-            ##     function(pars) {
-            ##         pp$u0 <- u0
-            ##         pp$theta <- pars[dpars]
-            ##         pp$beta0 <- pars[-dpars]
-            ##         lme4Eigen:::pwrssUpdate(pp, resp, verbose, uOnly=TRUE, tol=tolPwrss)
-            ##         resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL(0))
-            ##     }
-            ## }
-###            environment(devfunb) <- rho
             if (devFunOnly) return(devfunb)
             opt <- bobyqa(c(pp$theta, pp$beta0), devfunb,
                           lower=c(reTrms$lower, rep.int(-Inf, length(pp$beta0))),
                           control=control)
         }
     }
-    LL <- pp$Lambdat
-    LL@x <- pp$theta[pp$Lind]
-    stopifnot(validObject(LL))
-    pp$Lambdat <- LL
+#    LL <- pp$Lambdat
+#    LL@x <- pp$theta[pp$Lind]
+#    stopifnot(validObject(LL))
+#    pp$Lambdat <- LL
     sqrLenU <- pp$sqrL(0.)
     wrss <- resp$wrss()
     pwrss <- wrss + sqrLenU
@@ -265,7 +236,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 ##' @param nlenv the nonlinear model evaluation environment (nlsResp only)
 ##' @param nlmod the nonlinear model function (nlsResp only)
 ##' @return an lmerResp or glmResp or nlsResp instance
-mkRespMod2 <- function(fr, family = NULL, nlenv = NULL, nlmod = NULL) {
+mkRespMod2 <- function(fr, REML=NA_integer_, family = NULL, nlenv = NULL, nlmod = NULL) {
     y <- model.response(fr)
     if(length(dim(y)) == 1) {
 	## avoid problems with 1D arrays, but keep names
@@ -275,6 +246,7 @@ mkRespMod2 <- function(fr, family = NULL, nlenv = NULL, nlmod = NULL) {
     }
     rho <- new.env()
     rho$y <- y
+    if (!is.na(REML)) rho$REML <- REML
     N <- n <- nrow(fr)
     if (!is.null(nlenv)) {
         stopifnot(is.language(nlmod),
@@ -312,8 +284,7 @@ mkRespMod2 <- function(fr, family = NULL, nlenv = NULL, nlmod = NULL) {
     family$initialize <- NULL     # remove clutter from str output
     ll <- as.list(rho)
     ans <- do.call(new, c(list(Class="glmResp", family=family),
-                          ll[setdiff(names(ll),
-                                     c("m", "nobs", "mustart"))]))
+                          ll[setdiff(names(ll), c("m", "nobs", "mustart"))]))
     ans$updateMu(if (!is.null(es <- model.extract(fr, "etastart"))) es else
                  family$linkfun(get("mustart", rho)))
     ans
@@ -680,7 +651,7 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
 nlmer <- function(formula, data, family = gaussian, start = NULL,
 		  verbose = 0L, nAGQ = 1L, doFit = TRUE,
 		  subset, weights, na.action, offset,
-		  contrasts = NULL, devFunOnly=FALSE, ...)
+		  contrasts = NULL, devFunOnly=0L, ...)
 {
     if (!missing(family)) stop("code not yet written")
     mf <- mc <- match.call()
@@ -1051,14 +1022,14 @@ refitML <- function(x, ...) UseMethod("refitML")
 refitML.merMod <- function (x, ...) {
     if (!isREML(x)) return(x)
     stopifnot(is(rr <- x@resp, "lmerResp"))
-    resp <- new(class(rr), y=rr$y)
-    resp$offset <- rr$offset
-    resp$weights <- rr$weights
-    resp$REML <- 0L
+    resp <- new(class(rr), y=rr$y, offset=rr$offset, weights=rr$weights, REML=0L)
+#    resp$offset <- rr$offset
+#    resp$weights <- rr$weights
+#    resp$REML <- 0L
     xpp <- x@pp
     pp <- new(class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat,
 	      Lind=xpp$Lind, theta=xpp$theta)
-    opt <- bobyqa(x@theta, mkdevfun(pp, resp), x@lower)
+    opt <- bobyqa(x@theta, mkdevfun(pp, resp, emptyenv()), x@lower)
     n <- length(rr$y)
     p <- ncol(pp$X)
     dims <- c(N=n, n=n, nmp=n-p, nth=length(pp$theta), p=p, q=nrow(pp$Zt),

@@ -8,28 +8,33 @@
 #include "predModule.h"
 
 namespace lme4Eigen {
-    merPredD::merPredD(S4 X, S4 Zt, S4 Lambdat, IntegerVector Lind,
-		       NumericVector theta)
-	: d_X(X),
-          d_Zt(Zt),
-	  d_theta(clone(theta)),
-	  d_Lind(Lind),
-	  d_n(d_X.rows()),
-	  d_nnz(-1),
-	  d_p(d_X.cols()),
-	  d_q(d_Zt.rows()),
-	  d_Lambdat(Lambdat),
-	  d_RZX(d_q, d_p),
-	  d_V(d_X),
-	  d_VtV(d_p,d_p),
-	  d_Vtr(d_p),
-	  d_Utr(d_q),
-	  d_delb(d_p),
-	  d_delu(d_q),
-	  d_beta0(d_p),
-	  d_u0(d_q),
-	  d_Ut(d_Zt),
-	  d_RX(d_p),
+    using std::invalid_argument;
+
+    typedef   Map<VectorXd>    MVec;
+    typedef   Map<VectorXi>    MiVec;
+
+    merPredD::merPredD(S4 X, SEXP Zt, SEXP Lambdat, SEXP Lind,
+		       SEXP theta, SEXP u0, SEXP beta0)
+	: d_X(       X),
+          d_Zt(      as<MSpMatrixd>(Zt)),
+	  d_theta(   as<MVec>(theta)),
+	  d_Lind(    as<MiVec>(Lind)),
+	  d_n(       d_X.rows()),
+	  d_nnz(     -1),
+	  d_p(       d_X.cols()),
+	  d_q(       d_Zt.rows()),
+	  d_Lambdat( as<MSpMatrixd>(Lambdat)),
+	  d_RZX(     d_q, d_p),
+	  d_V(       d_X.rows(), d_X.cols()),
+	  d_VtV(     d_p,d_p),
+	  d_Vtr(     d_p),
+	  d_Utr(     d_q),
+	  d_delb(    d_p),
+	  d_delu(    d_q),
+	  d_beta0(   as<MVec>(beta0)),
+	  d_u0(      as<MVec>(u0)),
+	  d_Ut(      d_Zt),
+	  d_RX(      d_p),
 	  d_LamtUtRestructure(false)
     {				// Check consistency of dimensions
 	if (d_n != d_Zt.cols())
@@ -39,11 +44,12 @@ namespace lme4Eigen {
 	// checking of the range of Lind is now done in R code for reference class
 				// initialize beta0, u0, delb, delu and VtV
 	d_beta0.setZero(); d_u0.setZero(); d_delu.setZero(); d_delb.setZero();
+	d_V       = d_X;
 	d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
 	d_RX.compute(d_VtV);	// ensure d_RX is initialized even in the 0-column X case
 
-	setTheta(d_theta);		// starting values into Lambda
-        d_L.cholmod().final_ll = 1;	// force an LL' decomposition
+	setTheta(d_theta);	    // starting values into Lambda
+        d_L.cholmod().final_ll = 1; // force an LL' decomposition
 	d_LamtUt = d_Lambdat * d_Ut;
 	d_L.analyzePattern(d_LamtUt); // perform symbolic analysis
         if (d_L.info() != Eigen::Success)
@@ -55,17 +61,33 @@ namespace lme4Eigen {
 	    d_LamtUt                           = d_Lambdat * d_Ut;
 	    return;
 	}
+	// This code fails if Lambdat is a MappedSparseMatrix<double>,
+	// which is why it is stored as a SparseMatrix<double>.
 	// This complicated code bypasses problems caused by Eigen's
 	// sparse/sparse matrix multiplication pruning zeros.  The
 	// Cholesky decomposition croaks if the structure of d_LamtUt changes.
 	std::fill(d_LamtUt._valuePtr(), d_LamtUt._valuePtr() + d_LamtUt.nonZeros(), Scalar());
+//	Rcpp::Rcout << "Lambdat[" << d_Lambdat.rows() << ", " << d_Lambdat.cols() << "]: "
+//		    << "innerSize() = " << d_Lambdat.innerSize() 
+//		    << ", outerSize() = " << d_Lambdat.outerSize() << std::endl;
 	for (Index j = 0; j < d_Ut.cols(); ++j) {
+//	    Rcpp::Rcout << "d_Ut column index: " << j << std::endl;
 	    for(SpMatrixd::InnerIterator rhsIt(d_Ut, j); rhsIt; ++rhsIt) {
+		Scalar                       y(rhsIt.value());
+		Index                        k(rhsIt.index());
+//		Rcpp::Rcout << "d_Ut row k = " << k << ", v = " << y;
+//		Rcpp::Rcout << ", Lambdat: col has " << d_Lambdat.innerNonZeros(k)
+//			    << " nonzeros" << std::endl;
 		SpMatrixd::InnerIterator prdIt(d_LamtUt, j);
-		Scalar                       y = rhsIt.value();
-		for (SpMatrixd::InnerIterator lhsIt(d_Lambdat, rhsIt.index()); lhsIt; ++lhsIt) {
+		for (MSpMatrixd::InnerIterator lhsIt(d_Lambdat, k); lhsIt; ++lhsIt) {
 		    Index                    i = lhsIt.index();
-		    while (prdIt.index() != i && prdIt) ++prdIt;
+//		    Rcpp::Rcout << "lhsIt: i = " << i << ", v = " << lhsIt.value() << std::endl;
+//		    Rcpp::Rcout << "prdIt: i=" << prdIt.index() << std::endl;
+		    while (prdIt && prdIt.index() != i) {
+			++prdIt;
+//			if (!prdIt) Rcpp::Rcout << "End of product column" << std::endl;
+//			else Rcpp::Rcout << "i=" << prdIt.index() << std::endl;
+		    }
 		    if (!prdIt) throw runtime_error("logic error in updateLamtUt");
 		    prdIt.valueRef()          += lhsIt.value() * y;
 		}
@@ -91,14 +113,14 @@ namespace lme4Eigen {
 	d_ldL2 = ::M_chm_factor_ldetL2(d_L.factor());
     }
 
-    void merPredD::setTheta(const NumericVector& theta) {
+    void merPredD::setTheta(const VectorXd& theta) {
 	if (theta.size() != d_theta.size())
 	    throw invalid_argument("theta size mismatch");
 				// update theta
-	std::copy(theta.begin(), theta.end(), d_theta.begin());
+	std::copy(theta.data(), theta.data() + theta.size(), d_theta.data());
 				// update Lambdat
-	int    *lipt = d_Lind.begin();
-	double *LamX = d_Lambdat._valuePtr(), *thpt = d_theta.begin();
+	int    *lipt = d_Lind.data();
+	double *LamX = d_Lambdat._valuePtr(), *thpt = d_theta.data();
 	for (int i = 0; i < d_Lind.size(); ++i) {
 	    LamX[i] = thpt[lipt[i] - 1];
 	}
@@ -131,15 +153,18 @@ namespace lme4Eigen {
 	return d_CcNumer;
     }
 
-    void merPredD::updateXwts(const MatrixXd& sqrtXwt) {
+    void merPredD::updateXwts(const VectorXd& sqrtXwt) {
+//	Rcpp::Rcout << "X[" << d_X.rows() << ", " << d_X.cols() << "]"
+//		    << "V[" << d_V.rows() << ", " << d_V.cols() << "]"
+//		    << ", sqrtXwt.size() = " << sqrtXwt.size() << std::endl;
+
 	if (d_X.rows() != sqrtXwt.size())
 	    throw invalid_argument("updateXwts: dimension mismatch");
-	if (sqrtXwt.cols() == 1) {
-	    DiagonalMatrix<double, Dynamic> W(sqrtXwt.col(0).asDiagonal());
-	    d_V              = W * d_X;
-	    d_Ut             = d_Zt * W;
+	if (sqrtXwt.size() == d_V.rows()) {
+	    d_V              = sqrtXwt.asDiagonal() * d_X;
+	    d_Ut             = d_Zt * sqrtXwt.asDiagonal();
 	} else {
-	    int n            = sqrtXwt.rows();
+	    int n            = d_X.rows()/d_V.rows();
 	    SpMatrixd      W(n, sqrtXwt.size());
 	    const double *pt = sqrtXwt.data();
 	    W.reserve(sqrtXwt.size());

@@ -15,241 +15,241 @@ setClass("lmList.confint", contains = "array")
 merPredD <- 
     setRefClass("merPredD", # Predictor class for mixed-effects models with dense X
                 fields =
-                list(
-                     X = "ddenseModelMatrix",
-                     Zt = "dgCMatrix",
+                list(Ptr     = "externalptr",
+                     X       = "ddenseModelMatrix",
+                     Zt      = "dgCMatrix",
                      Lambdat = "dgCMatrix",
-                     Lind = "integer",
-                     ptr = "externalptr",
-                     beta0 = function(value)
-                     if (missing(value)) .Call(merPredDbeta0, ptr) else .Call(merPredDsetBeta0, ptr, value),
-                     theta = function(value)
-                     if (missing(value)) .Call(merPredDtheta, ptr) else .Call(merPredDsetTheta, ptr, value),
-                     u0 = function(value)
-                     if (missing(value)) .Call(merPredDu0, ptr) else .Call(merPredDsetU0, ptr, value)
-                     ),
+                     Lind    = "integer",
+                     beta0   = "numeric",
+                     u0      = "numeric",
+                     theta   = "numeric"),
                 methods =
                 list(
                      initialize = function(X, Zt, Lambdat, Lind, theta, ...) {
+                         if (!nargs()) return
                          X <<- as(X, "ddenseModelMatrix")
                          Zt <<- as(Zt, "dgCMatrix")
                          Lambdat <<- as(Lambdat, "dgCMatrix")
                          Lind <<- as.integer(Lind)
-                         stopifnot(all(sort(unique(Lind)) == seq_along(theta)))
-                         ptr <<- .Call(merPredDCreate, X, Zt, Lambdat, Lind, theta)
-                         callSuper(...)
+                         theta <<- as.numeric(theta) # force a copy
+                         stopifnot(length(theta) > 0L, length(Lind) > 0L, 
+                                   all(sort(unique(Lind)) == seq_along(theta)))
+                         if (!length(u0))    u0 <<- numeric(nrow(Zt))
+                         if (!length(beta0)) beta0 <<- numeric(ncol(X))
                      },
-                     
-                     CcNumer = function() {
+                     CcNumer      = function() {
                          'returns the numerator of the orthogonality convergence criterion'
-                         .Call(merPredDCcNumer, ptr)
+                         .Call(merPredDCcNumer, ptr())
                      },
-                     L = function() {
+                     L            = function() {
                          'returns the current value of the sparse Cholesky factor'
-                         .Call(merPredDL, ptr)
+                         .Call(merPredDL, ptr())
                      },
-                     LamtUt = function() {
+                     LamtUt       = function() {
                          'returns the current value of the product Lambdat %*% Ut'
-                         .Call(merPredDLamtUt, ptr)
+                         .Call(merPredDLamtUt, ptr())
                      },
-                     P = function() {
+                     P            = function() {
                          'returns the permutation vector for the sparse Cholesky factor'
-                         .Call(merPredDPvec, ptr)
+                         .Call(merPredDPvec, ptr())
                      },
-                     RX = function() {
+                     RX           = function() {
                          'returns the dense downdated Cholesky factor for the fixed-effects parameters'
-                         .Call(merPredDRX, ptr)
+                         .Call(merPredDRX, ptr())
                      },
-                     RXdiag = function() {
+                     RXdiag       = function() {
                          'returns the diagonal of the dense downdated Cholesky factor'
-                         .Call(merPredDRXdiag, ptr)
+                         .Call(merPredDRXdiag, ptr())
                      },
-                     RZX = function() {
+                     RZX          = function() {
                          'returns the cross term in Cholesky decomposition for all coefficients'
-                         .Call(merPredDRZX, ptr)
+                         .Call(merPredDRZX, ptr())
                      },
-                     Ut = function() {
+                     Ut           = function() {
                          'returns the transposed weighted random-effects model matrix'
-                         .Call(merPredUt, ptr)
+                         .Call(merPredDUt, ptr())
                      },
-                     Utr = function() {
+                     Utr          = function() {
                          'returns the cross-product of the weighted random-effects model matrix\nand the weighted residuals'
-                         .Call(merPredUtr, ptr)
+                         .Call(merPredUtr, ptr())
                      },
-                     V = function() {
+                     V            = function() {
                          'returns the weighted fixed-effects model matrix'
-                         .Call(merPredDV, ptr)
+                         .Call(merPredDV, ptr())
                      },
-                     VtV = function() {
+                     VtV          = function() {
                          'returns the weighted cross-product of the fixed-effects model matrix'
-                         .Call(merPredDVtV, ptr)
+                         .Call(merPredDVtV, ptr())
                      },
-                     Vtr = function() {
+                     Vtr          = function() {
                          'returns the weighted cross-product of the fixed-effects model matrix\nand the residuals'
-                         .Call(merPredVtr, ptr)
+                         .Call(merPredVtr, ptr())
                      },
-                     b = function(fac) {
+                     b            = function(fac) {
                          'random effects on original scale for step factor fac'
-                         .Call(merPredDb, ptr, as.numeric(fac))
+                         .Call(merPredDb, ptr(), as.numeric(fac))
                      },
-                     beta = function(fac) {
+                     beta         = function(fac) {
                          'fixed-effects coefficients for step factor fac'
-                         .Call(merPredDbeta, ptr, as.numeric(fac))
+                         .Call(merPredDbeta, ptr(), as.numeric(fac))
                      },
-                     delb = function() {
+                     delb         = function() {
                          'increment for the fixed-effects coefficients'
-                         .Call(merPredDdelb, ptr)
+                         .Call(merPredDdelb, ptr())
                      },
-                     delu = function() {
+                     delu         = function() {
                          'increment for the orthogonal random-effects coefficients'
-                         .Call(merPredDdelu, ptr)
+                         .Call(merPredDdelu, ptr())
                      },
-                     getLambdat = function() {
-                         'returns the current value of the relative covariance factor'
-                         .Call(merPredDLambdat, ptr)
-                     },
-                     ldL2 = function() {
+                     ldL2         = function() {
                          'twice the log determinant of the sparse Cholesky factor'
-                         .Call(merPredDldL2, ptr)
+                         .Call(merPredDldL2, ptr())
                      },
-                     ldRX2 = function() {
+                     ldRX2        = function() {
                          'twice the log determinant of the downdated dense Cholesky factor'
-                         .Call(merPredDldRX2, ptr)
+                         .Call(merPredDldRX2, ptr())
                      },
-                     unsc = function() {
+                     unsc         = function() {
                          'the unscaled variance-covariance matrix of the fixed-effects parameters'
-                         .Call(merPredDunsc, ptr)
+                         .Call(merPredDunsc, ptr())
                      },
-                     linPred = function(fac) {
+                     linPred      = function(fac) {
                          'evaluate the linear predictor for step factor fac'
-                         .Call(merPredDlinPred, ptr, as.numeric(fac))
+                         .Call(merPredDlinPred, ptr(), as.numeric(fac))
                      },
-                     installPars = function(fac) {
+                     installPars  = function(fac) {
                          'update u0 and beta0 to the values for step factor fac'
-                         .Call(merPredDinstallPars, ptr, as.numeric(fac))
+                         .Call(merPredDinstallPars, ptr(), as.numeric(fac))
                      },
-                     solve = function() {
+                     ptr          = function() {
+                         'returns the external pointer, regenerating if necessary'
+                         if (length(theta)) {
+                             if (.Call(isNullExtPtr, Ptr))
+                                 Ptr <<- .Call(merPredDCreate, X, Zt, Lambdat, Lind, theta, u0, beta0)
+                         }
+                         Ptr
+                     },
+                     setTheta     = function(theta) {
+                         'install a new value of theta'
+                         .Call(merPredDsetTheta, ptr(), as.numeric(theta))
+                     },
+                     solve        = function() {
                          'solve for the coefficient increments delu and delb'
-                         .Call(merPredDsolve, ptr)
+                         .Call(merPredDsolve, ptr())
                      },
-                     solveU = function() {
+                     solveU       = function() {
                          'solve for the coefficient increment delu only (beta is fixed)'
-                         .Call(merPredDsolveU, ptr)
+                         .Call(merPredDsolveU, ptr())
                      },
-                     sqrL = function(fac) {
+                     sqrL         = function(fac) {
                          'squared length of u0 + fac * delu'
-                         .Call(merPredDsqrL, ptr, as.numeric(fac))
+                         .Call(merPredDsqrL, ptr(), as.numeric(fac))
                      },
-                     u = function(fac) {
+                     u            = function(fac) {
                          'orthogonal random effects for step factor fac'
-                         .Call(merPredDu, ptr, as.numeric(fac))
+                         .Call(merPredDu, ptr(), as.numeric(fac))
                      },
                      updateDecomp = function() {
                          'update L, RZX and RX from Ut, Vt and VtV'
-                         .Call(merPredDupdateDecomp, ptr)
+                         .Call(merPredDupdateDecomp, ptr())
                      },
-                     updateRes = function(wtres) {
+                     updateL = function() {
+                         'update LamtUt and L'
+                         .Call(merPredDupdateL, ptr())
+                     },
+                     updateLamtUt = function() {
+                         'update LamtUt and L'
+                         .Call(merPredDupdateLamtUt, ptr())
+                     },
+                     updateRes    = function(wtres) {
                          'update Vtr and Utr using the vector of weighted residuals'
-                         .Call(merPredDupdateRes, ptr, as.numeric(wtres))
+                         .Call(merPredDupdateRes, ptr(), as.numeric(wtres))
                      },
-                     updateXwts = function(wts) {
+                     updateXwts   = function(wts) {
                          'update Ut and V from Zt and X using X weights'
-                         .Call(merPredDupdateXwts, ptr, wts)
+                         .Call(merPredDupdateXwts, ptr(), wts)
                      }
                      )
                 )
-merPredD$lock("X", "Zt", "Lind")
+merPredD$lock("X", "Zt", "Lind", "Lambdat", "u0", "beta0", "theta")
 
 lmResp <-                               # base class for response modules
     setRefClass("lmResp",
                 fields =
-                list(y = "numeric",
-                     Ptr = "externalptr",
-                     ptr = function (value) { # generates external pointer if necessary
-                         if (!missing(value)) stop("ptr field cannot be assigned")
-                         try({
-                             if (.Call(isNullExtPtr, Ptr)) {
-                                 Ptr <<- .Call(lm_Create, y)
-                                 if (length(Offset)) .Call(lm_setOffset, Ptr, Offset)
-                                 if (length(Weights)) .Call(lm_setWeights, Ptr, Weights)
-                             }
-                         }, silent=TRUE)
-                         Ptr
-                     },
-                     Offset = "numeric",
-                     offset = function(value) {
-                         if (missing(value))
-                             return(tryCatch(.Call(lm_offset, ptr), error=function(e)Offset))
-                         ## lm_setOffset checks value's length, etc.
-                         Offset <<- .Call(lm_setOffset, ptr, value <- as.numeric(value))
-                     },
-                     Weights = "numeric",
-                     weights = function(value) {
-                         if (missing(value))
-                             return(tryCatch(.Call(lm_weights, ptr), error=function(e)Weights))
-                         ## lm_setWeights checks value's length, non-negativity, etc.
-                         Weights <<- .Call(lm_setWeights, ptr, value <- as.numeric(value))
-                     }),
+                list(Ptr     = "externalptr",
+                     mu      = "numeric",
+                     offset  = "numeric",
+                     sqrtXwt = "numeric",
+                     sqrtrwt = "numeric",
+                     weights = "numeric",
+                     wtres   = "numeric",
+                     y       = "numeric"),
                 methods =
                 list(
-                     fitted = function() {
-                         'returns the current value of mu'
-                         .Call(lm_mu, ptr)
+                     initialize = function(...) {
+                         if (!nargs()) return()
+                         ll <- list(...)
+                         if (is.null(ll$y)) stop("y must be specified")
+                         y <<- as.numeric(ll$y)
+                         n <- length(y)
+                         mu <<- if (!is.null(ll$mu)) as.numeric(ll$mu) else numeric(n)
+                         offset <<- if (!is.null(ll$offset)) as.numeric(ll$offset) else numeric(n)
+                         weights <<- if (!is.null(ll$weights)) as.numeric(ll$weights) else rep.int(1,n)
+                         sqrtXwt <<- sqrt(weights)
+                         sqrtrwt <<- sqrt(weights)
+                         wtres   <<- sqrtrwt * (y - mu)
                      },
-                     sqrtXwt = function() {
-                         'returns the square root of the X weights'
-                         .Call(lm_sqrtXwt, ptr)
+                     ptr       = function() {
+                         'returns the external pointer, regenerating if necessary'
+                         if (length(y)) {
+                             if (.Call(isNullExtPtr, Ptr)) {
+                                 Ptr <<- .Call(lm_Create, y, weights, offset, mu, sqrtXwt,
+                                               sqrtrwt, wtres)
+                                 .Call(lm_updateMu, Ptr, mu)
+                             }
+                         }
+                         Ptr
                      },
-                     sqrtrwt = function() {
-                         'returns the square root of the residual weights'
-                         .Call(lm_sqrtrwt, ptr)
+                     setOffset = function(oo) {
+                         'change the offset in the model (used in profiling)'
+                         .Call(lm_setOffset, ptr(), as.numeric(oo))
                      },
-                     updateMu = function(gamma) {
+                     updateMu  = function(gamma) {
                          'update mu, wtres and wrss from the linear predictor'
-                         .Call(lm_updateMu, ptr, as.numeric(gamma))
+                         .Call(lm_updateMu, ptr(), as.numeric(gamma))
                      },
-                     wrss = function() {
+                     wrss      = function() {
                          'returns the weighted residual sum of squares'
-                         .Call(lm_wrss, ptr)
-                     },
-                     wtres = function() {
-                         'returns the vector of weighted residuals'
-                         .Call(lm_wtres, ptr)
+                         .Call(lm_wrss, ptr())
                      })
                 )
-
-lmResp$lock("y")
+                
+lmResp$lock("mu", "offset", "sqrtXwt", "sqrtrwt", "weights", "wtres", "y")
 
 lmerResp <-
     setRefClass("lmerResp",
                 fields=
-                list(
-                     ptr=function (value) {
-                         if (!missing(value)) stop("ptr field cannot be assigned")
-                         try({
-                             if (.Call(isNullExtPtr, Ptr)) {
-                                 if (!length(y)) stop("field y must have positive length")
-                                 Ptr <<- .Call(lmer_Create, y)
-                                 if (length(Offset)) .Call(lm_setOffset, Ptr, Offset)
-                                 if (length(Weights)) .Call(lm_setWeights, Ptr, Weights)
-                             }
-                         }, silent=TRUE)
-                         Ptr
-                     },
-                     REML="integer",
-                     reml=function(value) {
-                         if (missing(value))
-                             return(tryCatch(.Call(lmer_REML, ptr), error=function(e)REML))
-                         stopifnot(length(value <- as.integer(value)) > 0L,
-                                   (value <- value[1]) >= 0L)
-                         REML <<- .Call(lmer_setREML, ptr, value)
-                     }),
+                list(REML="integer"),
                 contains="lmResp",
                 methods=
-                list(
-### FIXME: Should this method be called "deviance" or "objective" or ...?
-###        The name Laplace only makes sense for glmer or nlmer.
-                     Laplace = function(ldL2, ldRX2, sqrL) {
+                list(initialize = function(...) {
+                         REML <<- as.integer(list(...)$REML)
+                         if (length(REML) != 1L) REML <<- 0L
+                         callSuper(...)
+                     },
+                     ptr        = function() {
+                         'returns the external pointer, regenerating if necessary'
+                         if (length(y)) {
+                             if (.Call(isNullExtPtr, Ptr)) {
+                                 Ptr <<- .Call(lmer_Create, y, weights, offset, mu, sqrtXwt,
+                                               sqrtrwt, wtres)
+                                 .Call(lm_updateMu, Ptr, mu - offset)
+                                 .Call(lmer_setREML, Ptr, REML)
+                             }
+                         }
+                         Ptr
+                     },
+                     objective  = function(ldL2, ldRX2, sqrL) {
                          'returns the profiled deviance or REML criterion'
                          .Call(lmer_Laplace, ptr, ldL2, ldRX2, sqrL)
                      })
@@ -260,98 +260,89 @@ setOldClass("family")
 glmResp <-
     setRefClass("glmResp",
                 fields=
-                list(
-                     family="family",
-                     ptr = function (value) {
-                         if (!missing(value)) stop("ptr field cannot be assigned")
-                         try({
-                             if (.Call(isNullExtPtr, Ptr)) {
-                                 if (!length(y))
-                                     stop("field y must have positive length")
-                                 if (!length(family$family))
-                                     stop("field family must be initialized")
-                                 Ptr <<- .Call(glm_Create, family, y)
-                                 if (length(Offset)) .Call(lm_setOffset, Ptr, Offset)
-                                 if (length(Weights)) .Call(lm_setWeights, Ptr, Weights)
-                             }
-                         }, silent=TRUE)
-                         Ptr
-                     },
-                     N="integer",
-                     n=function(value) {  # only used in aic function for binomial family
-                         if (missing(value))
-                             return(tryCatch(.Call(glm_n, ptr),
-                                             error=function(e)rep.int(1, length(y))))
-                         .Call(glm_setN, ptr, as.numeric(value))
-                     }),
+                list(eta="numeric", family="family", n="integer"),
                 contains="lmResp",
                 methods=
-                list(
+                list(initialize = function(...) {
+                         callSuper(...)
+                         ll <- list(...)
+                         if (is.null(ll$family)) stop("family must be specified")
+                         family <<- ll$family
+                         n <<- if (!is.null(ll$n)) as.numeric(ll$n) else rep.int(1,length(y))
+                         eta <<- numeric(length(y))
+                     },
                      allInfo = function() {
                          'return all the information available on the object'
                          data.frame(y=y, n=n, offset=offset, weights=weights,
-                                    eta=eta(), mu=fitted(), muEta=muEta(), variance=variance(),
-                                    sqrtrwt=sqrtrwt(), wtres=wtres(), sqrtXwt=sqrtXwt(),
+                                    eta=eta, mu=mu, muEta=muEta(), variance=variance(),
+                                    sqrtrwt=sqrtrwt, wtres=wtres, sqrtXwt=sqrtXwt,
                                     sqrtWrkWt=sqrtWrkWt(), wrkResids=wrkResids(),
                                     wrkResp=wrkResp(), devRes=devResid())
                      },
-                     devResid = function() {
+                     devResid  = function() {
                          'returns the vector of deviance residuals'
-                         .Call(glm_devResid, ptr)
+                         .Call(glm_devResid, ptr())
                      },
-                     eta = function() {
-                         'returns the linear predictor vector before any offset is added'
-                         .Call(glm_eta, ptr)
-                     },
-                     fam = function() {
+                     fam       = function() {
                          'returns the name of the glm family'
-                         .Call(glm_family, ptr)
+                         .Call(glm_family, ptr())
                      },
-                     Laplace = function(ldL2, ldRX2, sqrL) {
+                     Laplace   = function(ldL2, ldRX2, sqrL) {
                          'returns the Laplace approximation to the profiled deviance'
-                         .Call(glm_Laplace, ptr, ldL2, ldRX2, sqrL)
+                         .Call(glm_Laplace, ptr(), ldL2, ldRX2, sqrL)
                      },
-                     link = function() {
+                     link      = function() {
                          'returns the name of the glm link'
-                         .Call(glm_link, ptr)
+                         .Call(glm_link, ptr())
                      },
-                     muEta = function() {
+                     muEta     = function() {
                          'returns the diagonal of the Jacobian matrix, d mu/d eta'
-                         .Call(glm_muEta, ptr)
+                         .Call(glm_muEta, ptr())
+                     },
+                     ptr       = function() {
+                         'returns the external pointer, regenerating if necessary'
+                         if (length(y)) {
+                             if (.Call(isNullExtPtr, Ptr)) {
+                                 Ptr <<- .Call(glm_Create, family, y, weights, offset, mu, sqrtXwt,
+                                               sqrtrwt, wtres, eta, n)
+                                 .Call(glm_updateMu, Ptr, eta - offset)
+                             }
+                         }
+                         Ptr
                      },
                      resDev = function() {
                          'returns the sum of the deviance residuals'
-                         .Call(glm_resDev, ptr)
+                         .Call(glm_resDev, ptr())
                      },
                      sqrtWrkWt = function() {
                          'returns the square root of the working X weights'
-                         .Call(glm_sqrtWrkWt, ptr)
+                         .Call(glm_sqrtWrkWt, ptr())
                      },
                      updateMu = function(gamma) {
                          'update mu, residuals, weights, etc. from the linear predictor'
-                         .Call(glm_updateMu, ptr, as.numeric(gamma))
+                         .Call(glm_updateMu, ptr(), as.numeric(gamma))
                      },
                      updateWts = function() {
                          'update the residual and X weights from the current value of eta'
-                         .Call(glm_updateWts, ptr)
+                         .Call(glm_updateWts, ptr())
                      },
                      variance = function() {
                          'returns the vector of variances'
-                         .Call(glm_variance, ptr)
+                         .Call(glm_variance, ptr())
                      },
                      wrkResids = function() {
                          'returns the vector of working residuals'
-                         .Call(glm_wrkResids, ptr)
+                         .Call(glm_wrkResids, ptr())
                      },
                      wrkResp = function() {
                          'returns the vector of working residuals'
-                         .Call(glm_wrkResp, ptr)
+                         .Call(glm_wrkResp, ptr())
                      }
                      )
                 )
 
 
-glmResp$lock("family")
+glmResp$lock("family", "n", "eta")
 
 nlsResp <-
     setRefClass("nlsResp",
@@ -372,11 +363,11 @@ nlsResp <-
                 list(
                      Laplace=function(ldL2, ldRX2, sqrL) {
                          'returns the profiled deviance or REML criterion'
-                         .Call(nls_Laplace, ptr, ldL2, ldRX2, sqrL)
+                         .Call(nls_Laplace, ptr(), ldL2, ldRX2, sqrL)
                      },
                      updateMu=function(gamma) {
                          'update mu, residuals, gradient, etc. given the linear predictor matrix'
-                         .Call(nls_updateMu, ptr, as.numeric(gamma))
+                         .Call(nls_updateMu, ptr(), as.numeric(gamma))
                      })
                 )
 
@@ -384,37 +375,9 @@ nlsResp$lock("nlmod", "nlenv", "pnames")
 
 glmFamily <-                            # used in tests of family definitions
     setRefClass("glmFamily",
-                fields=
-                list(
-                     Ptr="externalptr",
-                     family="family",
-                     ptr=function(value) {
-                         if (!missing(value)) stop("ptr field cannot be assigned")
-                         try(
-                             if (.Call(isNullExtPtr, Ptr)) {
-                                 if (!length(family$family)) stop("field family must be initialized")
-                                 Ptr <<- .Call(glmFamily_Create, family)
-                             }, silent=TRUE)
-                         Ptr
-                     }),
+                fields=list(Ptr="externalptr", family="family"),
                 methods=
                 list(
-                     link = function(mu) {
-                         'applies the (forward) link function to mu'
-                         .Call(glmFamily_link, ptr, as.numeric(mu))
-                     },
-                     linkInv = function(eta) {
-                         'applies the inverse link function to eta'
-                         .Call(glmFamily_linkInv, ptr, as.numeric(eta))
-                     },
-                     muEta = function(eta) {
-                         'applies the muEta function to eta'
-                         .Call(glmFamily_muEta, ptr, as.numeric(eta))
-                     },
-                     variance = function(mu) {
-                         'applies the variance function to mu'
-                         .Call(glmFamily_variance, ptr, as.numeric(mu))
-                     },
                      devResid = function(mu, weights, y) {
                          'applies the devResid function to mu, weights and y'
                          mu <- as.numeric(mu)
@@ -423,7 +386,29 @@ glmFamily <-                            # used in tests of family definitions
                          stopifnot(length(mu) == length(weights),
                                    length(mu) == length(y),
                                    all(weights >= 0))
-                         .Call(glmFamily_devResid, ptr, mu, weights, y)
+                         .Call(glmFamily_devResid, ptr(), mu, weights, y)
+                     },
+                     link = function(mu) {
+                         'applies the (forward) link function to mu'
+                         .Call(glmFamily_link, ptr(), as.numeric(mu))
+                     },
+                     linkInv = function(eta) {
+                         'applies the inverse link function to eta'
+                         .Call(glmFamily_linkInv, ptr(), as.numeric(eta))
+                     },
+                     muEta = function(eta) {
+                         'applies the muEta function to eta'
+                         .Call(glmFamily_muEta, ptr(), as.numeric(eta))
+                     },
+                     ptr   = function() {
+                         if (length(family))
+                             if (.Call(isNullExtPtr, Ptr))
+                                 Ptr <<- .Call(glmFamily_Create, family)
+                         Ptr
+                     },
+                     variance = function(mu) {
+                         'applies the variance function to mu'
+                         .Call(glmFamily_variance, ptr(), as.numeric(mu))
                      })
                 )
 

@@ -14,12 +14,10 @@
 namespace lme4Eigen {
     using Eigen::ArrayXi;
     using Eigen::CholmodDecomposition;
-    using Eigen::DiagonalMatrix;
     using Eigen::Dynamic;
     using Eigen::LLT;
     using Eigen::Lower;
     using Eigen::Map;
-    using Eigen::MappedSparseMatrix;
     using Eigen::Matrix;
     using Eigen::MatrixXd;
     using Eigen::SelfAdjointView;
@@ -34,31 +32,8 @@ namespace lme4Eigen {
     using Rcpp::S4;
     using Rcpp::as;
 
-    using std::invalid_argument;
     using std::runtime_error;
-
-#if 0
-    class ddiMatrix : public DiagType {
-    public:
-	typedef DiagType::DiagonalVectorType  VType;
-	ddiMatrix(const S4& xp)
-	    : DiagType(as<VectorXd>(xp.slot("x"))) {}
-	
-	VType               diag()       {return diagonal();}
-	double*              xPt()       {return diag().begin();}
-	int                  nnz() const {return cols();}
-    };
-#endif
     
-    class MdgCMatrix : public MappedSparseMatrix<double> { // mapped sparse Matrix, uses R's storage
-    protected:
-	S4    d_xp;
-    public:
-	MdgCMatrix(const S4& xp)
-	    : MappedSparseMatrix<double>(as<MappedSparseMatrix<double> >(xp)), d_xp(xp) {}
-
-   };
-
     class dgCMatrix : public SparseMatrix<double> { // sparse Matrix, copies contents of R object
     public:
 	dgCMatrix(const S4& xp)
@@ -102,16 +77,17 @@ namespace lme4Eigen {
 	      modelMatrix(xp), d_xp(xp) {}
     };
 
-    class dsparseModelMatrix : public MdgCMatrix, public modelMatrix {
+#if 0
+    class dsparseModelMatrix : public MappedSparseMatrix<double>, public modelMatrix {
     protected:
 	S4             d_xp;
     public:
 	typedef SparseMatrix<double> MatrixType;
 	dsparseModelMatrix(const S4& xp)
-	    : MdgCMatrix(xp), modelMatrix(xp), d_xp(xp) {}
+	    : MappedSparseMatrix<double>(as<MappedSparseMatrix<double> >(xp)),
+	      modelMatrix(xp), d_xp(xp) {}
     };
 
-#if 0
     namespace traits {
 	template<typename Xtype> struct merPred_XTraits;
 	template<> struct merPred_XTraits<ddenseModelMatrix> {
@@ -152,23 +128,24 @@ namespace lme4Eigen {
 	typedef XType::Index                                 Index;
 	typedef CholmodDecomposition<SparseMatrix<double> >  ChmDecomp;
 	typedef SparseMatrix<double>                         SpMatrixd;
-	typedef MappedSparseMatrix<double>                   MSpMatrixd;
+	typedef Eigen::MappedSparseMatrix<double>            MSpMatrixd;
     protected:
 	XType          d_X;
-	MdgCMatrix     d_Zt;
-	NumericVector  d_theta;
-	IntegerVector  d_Lind;
+	MSpMatrixd     d_Zt;
+	Map<VectorXd>  d_theta;
+	Map<VectorXi>  d_Lind;
 	Index          d_n, d_nnz, d_p, d_q;
-	dgCMatrix      d_Lambdat;
+	MSpMatrixd     d_Lambdat;
 	Scalar         d_CcNumer, d_ldL2, d_ldRX2;
 	MatrixXd       d_RZX, d_V, d_VtV;
-	VectorXd       d_Vtr, d_Utr, d_delb, d_delu, d_beta0, d_u0;
+	VectorXd       d_Vtr, d_Utr, d_delb, d_delu;
+	Map<VectorXd>  d_beta0, d_u0;
 	SpMatrixd      d_Ut, d_LamtUt;
 	ChmDecomp      d_L;
 	LLT<MatrixXd>  d_RX;
 	bool           d_LamtUtRestructure;
     public:
-	merPredD(S4, S4, S4, IntegerVector, NumericVector);
+	merPredD(S4, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 	IntegerVector          Pvec() const;
 
@@ -195,9 +172,9 @@ namespace lme4Eigen {
 	const MatrixXd&         VtV() const {return d_VtV;}
 	const MatrixXd&         RZX() const {return d_RZX;}
 
-	const NumericVector&  theta() const {return d_theta;}
+	const Map<VectorXd>&  theta() const {return d_theta;}
 
-	const SpMatrixd&    Lambdat() const {return d_Lambdat;}
+	const MSpMatrixd&   Lambdat() const {return d_Lambdat;}
 	const SpMatrixd&     LamtUt() const {return d_LamtUt;}
 	const SpMatrixd&         Ut() const {return d_Ut;}
 
@@ -207,22 +184,22 @@ namespace lme4Eigen {
 	const VectorXd&         Vtr() const {return d_Vtr;}
 	const VectorXd&        delb() const {return d_delb;}
 	const VectorXd&        delu() const {return d_delu;}
-	const VectorXd&       beta0() const {return d_beta0;}
-	const VectorXd&          u0() const {return d_u0;}
+	const Map<VectorXd>&  beta0() const {return d_beta0;}
+	const Map<VectorXd>&     u0() const {return d_u0;}
 
 	int                    info() const {return d_L.info();}
 
 	void            installPars(const Scalar& f);
 	void               setBeta0(const VectorXd&);
 	void                   setS(int);
-	void               setTheta(const NumericVector&);
+	void               setTheta(const VectorXd&);
 	void                  setU0(const VectorXd&);
 	void           updateDecomp();
 	void                updateL();
 	void           updateLamtUt();
 	void              updateRes(const VectorXd&);
-	void             updateXwts(const MatrixXd&);
+	void             updateXwts(const VectorXd&);
     };
 }
 
-#endif // LME4_EIGEN_H
+#endif // LME4_PREDMODULE_H

@@ -7,10 +7,11 @@
   typically a \emph{linear} ME model which was fit by REML.
 }
 \usage{
-refitML(x)
+refitML(x, \dots)
 }
 \arguments{
   \item{x}{an object of class \code{\linkS4class{merMod}}.}
+  \item{\dots}{optional additional arguments (none used at present)}
 }
 \value{
   an \R object, typically of class  \code{\linkS4class{lmerMod}},

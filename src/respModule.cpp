@@ -10,26 +10,23 @@
 namespace lme4Eigen {
     using Rcpp::List;
     using Rcpp::NumericMatrix;
+    using Rcpp::as;
+
     using std::copy;
     using std::string;
     using std::invalid_argument;
-//    using std::cout;
-//    using std::endl;
 
-    lmResp::lmResp(NumericVector y)
-	: d_yR(y),
-	  d_y(d_yR.begin(), d_yR.size()),
-	  d_weights(VectorXd::Constant(y.size(), 1.0)),
-	  d_offset( VectorXd::Zero(y.size())),
-	  d_mu(     y.size()),
-	  d_sqrtrwt(y.size()),
-	  d_wtres(  y.size()),
-	  d_sqrtXwt(y.size(), 1) {
-	d_sqrtrwt = d_weights.cwiseSqrt();
-	if (d_mu.size() == d_offset.size()) {	
-	    d_mu = d_offset;
-	    copy(d_sqrtrwt.data(), d_sqrtrwt.data() + y.size(), d_sqrtXwt.data());
-	}
+    typedef Map<VectorXd>  MVec;
+
+    lmResp::lmResp(SEXP y, SEXP weights, SEXP offset, SEXP mu, SEXP sqrtXwt,
+		   SEXP sqrtrwt, SEXP wtres)
+	: d_y(      as<MVec>(y)),
+	  d_weights(as<MVec>(weights)),
+	  d_offset( as<MVec>(offset)),
+	  d_mu(     as<MVec>(mu)),
+	  d_sqrtXwt(as<MVec>(sqrtXwt)),
+	  d_sqrtrwt(as<MVec>(sqrtrwt)),
+	  d_wtres(  as<MVec>(wtres)) {
 	updateWrss();
     }
 
@@ -65,8 +62,9 @@ namespace lme4Eigen {
 	d_weights = ww;
     }
 
-    lmerResp::lmerResp(NumericVector y)
-	: lmResp(y),
+    lmerResp::lmerResp(SEXP y, SEXP weights, SEXP offset, SEXP mu,
+		       SEXP sqrtXwt, SEXP sqrtrwt, SEXP wtres)
+	: lmResp(y, weights, offset, mu, sqrtXwt, sqrtrwt, wtres),
 	  d_reml(0) {
     }
 
@@ -82,11 +80,12 @@ namespace lme4Eigen {
 	d_reml = rr;
     }
     
-    glmResp::glmResp(List fam, NumericVector y)
-	: lmResp(y),
+    glmResp::glmResp(List fam, SEXP y, SEXP weights, SEXP offset,
+		     SEXP mu, SEXP sqrtXwt, SEXP sqrtrwt, SEXP wtres, SEXP eta, SEXP n)
+	: lmResp(y, weights, offset, mu, sqrtXwt, sqrtrwt, wtres),
 	  d_fam(fam),
-	  d_eta(y.size()),
-	  d_n(VectorXd::Constant(y.size(), 1.)) {
+	  d_eta(as<MVec>(eta)),
+	  d_n(as<MVec>(n)) {
     }
 
     VectorXd glmResp::devResid() const {
@@ -109,7 +108,7 @@ namespace lme4Eigen {
 	return (d_eta - d_offset) + wrkResids();
     }
 
-    MatrixXd glmResp::sqrtWrkWt() const {
+    VectorXd glmResp::sqrtWrkWt() const {
 	const VectorXd me(muEta());
 	return d_weights.cwiseProduct(me).cwiseProduct(me).cwiseQuotient(variance()).cwiseSqrt();
     }
@@ -140,12 +139,11 @@ namespace lme4Eigen {
 	d_n = n;
     }
 
-    nlsResp::nlsResp(NumericVector ys, Language mm, Environment ee, CharacterVector pp, int N)
-	: lmResp(ys), d_nlenv(ee), d_nlmod(mm), d_pnames(pp), d_N(N) {
-	if (d_N <= 0 || d_N % d_y.size())
-	    throw invalid_argument("N must be a positive multiple of y.size()");
-	d_offset          = VectorXd::Zero(N);
-	d_sqrtXwt         = MatrixXd::Zero(d_y.size(), N / d_y.size());
+    nlsResp::nlsResp(SEXP y, SEXP weights, SEXP offset, SEXP mu, SEXP sqrtXwt,
+		     SEXP sqrtrwt, SEXP wtres, Language mm, Environment ee,
+		     CharacterVector pp)
+	: lmResp(y, weights, offset, mu, sqrtXwt, sqrtrwt, wtres),
+	  d_nlenv(ee), d_nlmod(mm), d_pnames(pp) {
     }
 
     double nlsResp::Laplace(double ldL2, double ldRX2, double sqrL) const {
@@ -168,7 +166,6 @@ namespace lme4Eigen {
 	    throw invalid_argument("dimension mismatch");
 	copy(rr.begin(), rr.end(), d_mu.data());
 	NumericMatrix  gr = rr.attr("gradient");
-	d_sqrtXwt.resize(gr.rows(), gr.cols());
 	copy(gr.begin(), gr.end(), d_sqrtXwt.data());
 	return updateWrss();
     }

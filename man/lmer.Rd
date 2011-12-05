@@ -16,18 +16,18 @@ lmer(formula, data, REML = TRUE, sparseX = FALSE,
      doFit = TRUE, %compDev = TRUE, _support too - FIXME? _
      subset, weights,
      na.action, offset, contrasts = NULL,
-     devFunOnly=FALSE,
+     devFunOnly=0L,
      \dots)
 
 glmer(formula, data, family = gaussian, sparseX = FALSE,
       control = list(), start = NULL, verbose = 0, nAGQ = 1,
       doFit = TRUE, compDev = TRUE, subset, weights, na.action, offset,
-      contrasts = NULL, mustart, etastart, devFunOnly = FALSE,
+      contrasts = NULL, mustart, etastart, devFunOnly = 0L,
       tolPwrss = 1e-06, \dots)
 
 nlmer(formula, data, family = gaussian, start = NULL,
       verbose = 0L, nAGQ = 1L, doFit = TRUE, subset, weights,
-      na.action, offset, contrasts = NULL, devFunOnly = FALSE, \dots)
+      na.action, offset, contrasts = NULL, devFunOnly = 0L, \dots)
 }
 \arguments{
   \item{formula}{a two-sided linear formula object describing the

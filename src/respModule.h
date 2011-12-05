@@ -14,9 +14,7 @@
 namespace lme4Eigen {
     using Eigen::Map;
     using Eigen::VectorXd;
-    using Eigen::MatrixXd;
 
-    using Rcpp::as;
     using Rcpp::CharacterVector;
     using Rcpp::Environment;
     using Rcpp::Language;
@@ -27,19 +25,17 @@ namespace lme4Eigen {
     class lmResp {
     protected:
 	double                     d_wrss;
-	const NumericVector        d_yR;
 	const Map<VectorXd>        d_y;
-	VectorXd                   d_weights, d_offset, d_mu, d_sqrtrwt, d_wtres;
-	MatrixXd                   d_sqrtXwt;
+	Map<VectorXd>              d_weights, d_offset, d_mu, d_sqrtXwt, d_sqrtrwt, d_wtres;
     public:
-	lmResp(NumericVector);
+	lmResp(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
 
-	const MatrixXd&      sqrtXwt() const {return d_sqrtXwt;}
-	const VectorXd&           mu() const {return d_mu;}
-	const VectorXd&       offset() const {return d_offset;}
-	const VectorXd&      sqrtrwt() const {return d_sqrtrwt;}
-	const VectorXd&      weights() const {return d_weights;}
-	const VectorXd&        wtres() const {return d_wtres;}
+	const Map<VectorXd>& sqrtXwt() const {return d_sqrtXwt;}
+	const Map<VectorXd>&      mu() const {return d_mu;}
+	const Map<VectorXd>&  offset() const {return d_offset;}
+	const Map<VectorXd>& sqrtrwt() const {return d_sqrtrwt;}
+	const Map<VectorXd>& weights() const {return d_weights;}
+	const Map<VectorXd>&   wtres() const {return d_wtres;}
 	const Map<VectorXd>&       y() const {return d_y;}
 	double                  wrss() const {return d_wrss;}
 	double              updateMu(const VectorXd&);
@@ -53,7 +49,7 @@ namespace lme4Eigen {
     private:
 	int d_reml;
     public:
-	lmerResp(NumericVector);
+	lmerResp(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
 
 	double               Laplace(double,double,double)const;
 	int                     REML() const {return d_reml;}
@@ -63,19 +59,19 @@ namespace lme4Eigen {
     class glmResp : public lmResp {
     protected:
 	glmFamily       d_fam;
-	VectorXd        d_eta, d_n;
+	Map<VectorXd>   d_eta, d_n;
     public:
-	glmResp(Rcpp::List, NumericVector);
+	glmResp(Rcpp::List,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
 
 	VectorXd            devResid() const;
 	VectorXd               muEta() const;
-        MatrixXd           sqrtWrkWt() const;
+        VectorXd           sqrtWrkWt() const;
 	VectorXd            variance() const;
 	VectorXd           wrkResids() const;
 	VectorXd             wrkResp() const;
 
-	const VectorXd&          eta() const {return d_eta;}
-	const VectorXd&            n() const {return d_n;}
+	const Map<VectorXd>&     eta() const {return d_eta;}
+	const Map<VectorXd>&       n() const {return d_n;}
 
 	const std::string&    family() const {return d_fam.fam();}
 	const std::string&      link() const {return d_fam.lnk();}
@@ -93,9 +89,8 @@ namespace lme4Eigen {
 	Environment     d_nlenv;
 	Language        d_nlmod;
 	CharacterVector d_pnames;
-	int             d_N;
     public:
-	nlsResp(NumericVector,Language,Environment,CharacterVector,int);
+	nlsResp(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,Language,Environment,CharacterVector);
 
 	double            Laplace(double, double, double) const;
 	double           updateMu(const VectorXd&);

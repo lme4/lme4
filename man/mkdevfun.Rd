@@ -9,7 +9,7 @@
   deviance.
 }
 \usage{
-mkdevfun(pp, resp)
+mkdevfun(pp, resp, rho, nAGQ=1L)
 }
 \arguments{
   \item{pp}{a prediction module, typically of class
@@ -17,6 +17,12 @@ mkdevfun(pp, resp)
   }
   \item{resp}{a response module, e.g., of class
     \code{\linkS4class{lmerResp}}.}
+  \item{rho}{an environment containing auxillary information for the
+    function evaluation}
+  \item{nAGQ}{scalar integer - the number of adaptive Gauss-Hermite
+    quadrature points.  A value of 0 indicates that both the
+    fixed-effects parameters and the random effects are optimized by the
+    iteratively reweighted least squares algorithm.}
 }
 \details{
   The function returned by \code{mkdevfun} evaluates the deviance of the
