@@ -12,17 +12,13 @@
 #include <RcppEigen.h>
 
 namespace lme4Eigen {
-    using Eigen::ArrayXi;
     using Eigen::CholmodDecomposition;
-    using Eigen::Dynamic;
     using Eigen::LLT;
     using Eigen::Lower;
     using Eigen::Map;
-    using Eigen::Matrix;
     using Eigen::MatrixXd;
     using Eigen::SelfAdjointView;
     using Eigen::SparseMatrix;
-    using Eigen::Upper;
     using Eigen::VectorXd;
     using Eigen::VectorXi;
 
@@ -137,15 +133,15 @@ namespace lme4Eigen {
 	Index          d_n, d_nnz, d_p, d_q;
 	MSpMatrixd     d_Lambdat;
 	Scalar         d_CcNumer, d_ldL2, d_ldRX2;
-	MatrixXd       d_RZX, d_V, d_VtV;
-	VectorXd       d_Vtr, d_Utr, d_delb, d_delu;
-	Map<VectorXd>  d_beta0, d_u0;
-	SpMatrixd      d_Ut, d_LamtUt;
+	Map<MatrixXd>  d_RZX, d_V, d_VtV;
+	Map<VectorXd>  d_Vtr, d_Utr, d_beta0, d_delb, d_delu, d_u0;
+	MSpMatrixd     d_Ut, d_LamtUt;
 	ChmDecomp      d_L;
 	LLT<MatrixXd>  d_RX;
-	bool           d_LamtUtRestructure;
+//	bool           d_LamtUtRestructure;
     public:
-	merPredD(S4, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+	merPredD(S4, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, 
+		 SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 	IntegerVector          Pvec() const;
 
@@ -168,22 +164,22 @@ namespace lme4Eigen {
 
 	const ChmDecomp&          L() const {return d_L;}
 
-	const MatrixXd&           V() const {return d_V;}
-	const MatrixXd&         VtV() const {return d_VtV;}
-	const MatrixXd&         RZX() const {return d_RZX;}
+	const Map<MatrixXd>&      V() const {return d_V;}
+	const Map<MatrixXd>&    VtV() const {return d_VtV;}
+	const Map<MatrixXd>&    RZX() const {return d_RZX;}
 
 	const Map<VectorXd>&  theta() const {return d_theta;}
 
 	const MSpMatrixd&   Lambdat() const {return d_Lambdat;}
-	const SpMatrixd&     LamtUt() const {return d_LamtUt;}
-	const SpMatrixd&         Ut() const {return d_Ut;}
+	const MSpMatrixd&    LamtUt() const {return d_LamtUt;}
+	const MSpMatrixd&        Ut() const {return d_Ut;}
 
 	const MSpMatrixd&        Zt() const {return d_Zt;}
 
-	const VectorXd&         Utr() const {return d_Utr;}
-	const VectorXd&         Vtr() const {return d_Vtr;}
-	const VectorXd&        delb() const {return d_delb;}
-	const VectorXd&        delu() const {return d_delu;}
+	const Map<VectorXd>&    Utr() const {return d_Utr;}
+	const Map<VectorXd>&    Vtr() const {return d_Vtr;}
+	const Map<VectorXd>&   delb() const {return d_delb;}
+	const Map<VectorXd>&   delu() const {return d_delu;}
 	const Map<VectorXd>&  beta0() const {return d_beta0;}
 	const Map<VectorXd>&     u0() const {return d_u0;}
 

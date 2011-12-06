@@ -398,11 +398,14 @@ extern "C" {
 
     // dense predictor module for mixed-effects models
 
-    SEXP merPredDCreate(SEXP Xs, SEXP Zt, SEXP Lambdat, SEXP Lind, SEXP theta,
-			SEXP u0, SEXP beta0) {
+    SEXP merPredDCreate(SEXP Xs, SEXP Lambdat, SEXP LamtUt, SEXP Lind,
+			SEXP RZX, SEXP Ut, SEXP Utr, SEXP V, SEXP VtV,
+			SEXP Vtr, SEXP Zt, SEXP beta0, SEXP delb, SEXP delu,
+			SEXP theta, SEXP u0) {
 	BEGIN_RCPP;
 	S4 X(Xs);
-	merPredD *ans = new merPredD(X, Zt, Lambdat, Lind, theta, u0, beta0);
+	merPredD *ans = new merPredD(X, Lambdat, LamtUt, Lind, RZX, Ut, Utr,
+				     V, VtV, Vtr, Zt, beta0, delb, delu, theta, u0);
 	return wrap(XPtr<merPredD>(ans, true));
 	END_RCPP;
     }
@@ -741,7 +744,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(lmer_Deviance, 3),    // method
     CALLDEF(lmer_Laplace, 4),
 
-    CALLDEF(merPredDCreate, 7),	  // generate external pointer
+    CALLDEF(merPredDCreate, 16), // generate external pointer
 
     CALLDEF(merPredDsetTheta, 2), // setters
     CALLDEF(merPredDsetBeta0, 2),

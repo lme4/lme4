@@ -15,27 +15,57 @@ setClass("lmList.confint", contains = "array")
 merPredD <- 
     setRefClass("merPredD", # Predictor class for mixed-effects models with dense X
                 fields =
-                list(Ptr     = "externalptr",
+                list(Lambdat = "dgCMatrix",
+                     LamtUt  = "dgCMatrix",
+                     Lind    = "integer",
+                     Ptr     = "externalptr",
+                     RZX     = "matrix",
+                     Ut      = "dgCMatrix",
+                     Utr     = "numeric",
+                     V       = "matrix",
+                     VtV     = "matrix",
+                     Vtr     = "numeric",
                      X       = "ddenseModelMatrix",
                      Zt      = "dgCMatrix",
-                     Lambdat = "dgCMatrix",
-                     Lind    = "integer",
                      beta0   = "numeric",
-                     u0      = "numeric",
-                     theta   = "numeric"),
+                     delb    = "numeric",
+                     delu    = "numeric",                     
+                     theta   = "numeric",
+                     u0      = "numeric"),
                 methods =
                 list(
-                     initialize = function(X, Zt, Lambdat, Lind, theta, ...) {
+                     initialize = function(X, Zt, Lambdat, Lind, theta, S, ...) {
                          if (!nargs()) return
                          X <<- as(X, "ddenseModelMatrix")
                          Zt <<- as(Zt, "dgCMatrix")
                          Lambdat <<- as(Lambdat, "dgCMatrix")
                          Lind <<- as.integer(Lind)
-                         theta <<- as.numeric(theta) # force a copy
-                         stopifnot(length(theta) > 0L, length(Lind) > 0L, 
-                                   all(sort(unique(Lind)) == seq_along(theta)))
-                         if (!length(u0))    u0 <<- numeric(nrow(Zt))
-                         if (!length(beta0)) beta0 <<- numeric(ncol(X))
+                         theta <<- as.numeric(theta)
+                         N <- nrow(X)
+                         S <- as.integer(S)[1]
+                         n <- N %/% S
+                         p <- ncol(X)
+                         q <- nrow(Zt)
+                         stopifnot(length(theta) > 0L,
+                                   length(Lind) > 0L, 
+                                   all(sort(unique(Lind)) == seq_along(theta)),
+                                   S > 0L,
+                                   n * S == N)
+                         if (!length(RZX))     RZX <<- array(0, c(q, p))
+                         if (!length(Utr))     Utr <<- numeric(q)
+                         if (!length(V))         V <<- array(0, c(n, p))
+                         if (!length(VtV))     VtV <<- array(0, c(p, p))
+                         if (!length(Vtr))     Vtr <<- numeric(p)
+                         if (!length(beta0)) beta0 <<- numeric(p)
+                         if (!length(delb))   delb <<- numeric(p)
+                         if (!length(delu))   delu <<- numeric(q)
+                         if (!length(u0))       u0 <<- numeric(q)
+                         if (!length(Ut@x)) {
+                             Ut <<- if (S == 1) Zt + 0 else
+                             Zt %*% sparseMatrix(i=seq_len(N), j=as.integer(gl(n, 1, N)), x=rep.int(1,N))
+                         }
+                         if (!length(LamtUt@x)) LamtUt <<- Lambdat %*% Ut   
+                         updateXwts(rep.int(1, N))
                      },
                      CcNumer      = function() {
                          'returns the numerator of the orthogonality convergence criterion'
@@ -45,10 +75,10 @@ merPredD <-
                          'returns the current value of the sparse Cholesky factor'
                          .Call(merPredDL, ptr())
                      },
-                     LamtUt       = function() {
-                         'returns the current value of the product Lambdat %*% Ut'
-                         .Call(merPredDLamtUt, ptr())
-                     },
+                     ## LamtUt       = function() {
+                     ##     'returns the current value of the product Lambdat %*% Ut'
+                     ##     .Call(merPredDLamtUt, ptr())
+                     ## },
                      P            = function() {
                          'returns the permutation vector for the sparse Cholesky factor'
                          .Call(merPredDPvec, ptr())
@@ -61,30 +91,30 @@ merPredD <-
                          'returns the diagonal of the dense downdated Cholesky factor'
                          .Call(merPredDRXdiag, ptr())
                      },
-                     RZX          = function() {
-                         'returns the cross term in Cholesky decomposition for all coefficients'
-                         .Call(merPredDRZX, ptr())
-                     },
-                     Ut           = function() {
-                         'returns the transposed weighted random-effects model matrix'
-                         .Call(merPredDUt, ptr())
-                     },
-                     Utr          = function() {
-                         'returns the cross-product of the weighted random-effects model matrix\nand the weighted residuals'
-                         .Call(merPredUtr, ptr())
-                     },
-                     V            = function() {
-                         'returns the weighted fixed-effects model matrix'
-                         .Call(merPredDV, ptr())
-                     },
-                     VtV          = function() {
-                         'returns the weighted cross-product of the fixed-effects model matrix'
-                         .Call(merPredDVtV, ptr())
-                     },
-                     Vtr          = function() {
-                         'returns the weighted cross-product of the fixed-effects model matrix\nand the residuals'
-                         .Call(merPredVtr, ptr())
-                     },
+                     ## RZX          = function() {
+                     ##     'returns the cross term in Cholesky decomposition for all coefficients'
+                     ##     .Call(merPredDRZX, ptr())
+                     ## },
+                     ## Ut           = function() {
+                     ##     'returns the transposed weighted random-effects model matrix'
+                     ##     .Call(merPredDUt, ptr())
+                     ## },
+                     ## Utr          = function() {
+                     ##     'returns the cross-product of the weighted random-effects model matrix\nand the weighted residuals'
+                     ##     .Call(merPredUtr, ptr())
+                     ## },
+                     ## V            = function() {
+                     ##     'returns the weighted fixed-effects model matrix'
+                     ##     .Call(merPredDV, ptr())
+                     ## },
+                     ## VtV          = function() {
+                     ##     'returns the weighted cross-product of the fixed-effects model matrix'
+                     ##     .Call(merPredDVtV, ptr())
+                     ## },
+                     ## Vtr          = function() {
+                     ##     'returns the weighted cross-product of the fixed-effects model matrix\nand the residuals'
+                     ##     .Call(merPredVtr, ptr())
+                     ## },
                      b            = function(fac) {
                          'random effects on original scale for step factor fac'
                          .Call(merPredDb, ptr(), as.numeric(fac))
@@ -93,14 +123,14 @@ merPredD <-
                          'fixed-effects coefficients for step factor fac'
                          .Call(merPredDbeta, ptr(), as.numeric(fac))
                      },
-                     delb         = function() {
-                         'increment for the fixed-effects coefficients'
-                         .Call(merPredDdelb, ptr())
-                     },
-                     delu         = function() {
-                         'increment for the orthogonal random-effects coefficients'
-                         .Call(merPredDdelu, ptr())
-                     },
+                     ## delb         = function() {
+                     ##     'increment for the fixed-effects coefficients'
+                     ##     .Call(merPredDdelb, ptr())
+                     ## },
+                     ## delu         = function() {
+                     ##     'increment for the orthogonal random-effects coefficients'
+                     ##     .Call(merPredDdelu, ptr())
+                     ## },
                      ldL2         = function() {
                          'twice the log determinant of the sparse Cholesky factor'
                          .Call(merPredDldL2, ptr())
@@ -125,7 +155,9 @@ merPredD <-
                          'returns the external pointer, regenerating if necessary'
                          if (length(theta)) {
                              if (.Call(isNullExtPtr, Ptr))
-                                 Ptr <<- .Call(merPredDCreate, X, Zt, Lambdat, Lind, theta, u0, beta0)
+                                 Ptr <<- .Call(merPredDCreate, X, Lambdat, LamtUt, Lind,
+                                               RZX, Ut, Utr, V, VtV, Vtr, Zt,
+                                               beta0, delb, delu, theta, u0)
                          }
                          Ptr
                      },
@@ -171,7 +203,8 @@ merPredD <-
                      }
                      )
                 )
-merPredD$lock("X", "Zt", "Lind", "Lambdat", "u0", "beta0", "theta")
+merPredD$lock("Lambdat", "LamtUt", "Lind", "Ptr", "RZX", "Ut", "Utr", "V", "VtV",
+              "Vtr", "X", "Zt", "beta0", "delb", "delu", "theta", "u0")
 
 lmResp <-                               # base class for response modules
     setRefClass("lmResp",

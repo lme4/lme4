@@ -10,11 +10,14 @@
 namespace lme4Eigen {
     using std::invalid_argument;
 
+    typedef   Map<MatrixXd>    MMat;
     typedef   Map<VectorXd>    MVec;
     typedef   Map<VectorXi>    MiVec;
 
-    merPredD::merPredD(S4 X, SEXP Zt, SEXP Lambdat, SEXP Lind,
-		       SEXP theta, SEXP u0, SEXP beta0)
+    merPredD::merPredD(S4 X, SEXP Lambdat, SEXP LamtUt, SEXP Lind,
+		       SEXP RZX, SEXP Ut, SEXP Utr, SEXP V, SEXP VtV,
+		       SEXP Vtr, SEXP Zt, SEXP beta0, SEXP delb, SEXP delu,
+		       SEXP theta, SEXP u0)
 	: d_X(       X),
           d_Zt(      as<MSpMatrixd>(Zt)),
 	  d_theta(   as<MVec>(theta)),
@@ -24,18 +27,19 @@ namespace lme4Eigen {
 	  d_p(       d_X.cols()),
 	  d_q(       d_Zt.rows()),
 	  d_Lambdat( as<MSpMatrixd>(Lambdat)),
-	  d_RZX(     d_q, d_p),
-	  d_V(       d_X.rows(), d_X.cols()),
-	  d_VtV(     d_p,d_p),
-	  d_Vtr(     d_p),
-	  d_Utr(     d_q),
-	  d_delb(    d_p),
-	  d_delu(    d_q),
+	  d_RZX(     as<MMat>(RZX)),
+	  d_V(       as<MMat>(V)),
+	  d_VtV(     as<MMat>(VtV)),
+	  d_Vtr(     as<MVec>(Vtr)),
+	  d_Utr(     as<MVec>(Utr)),
 	  d_beta0(   as<MVec>(beta0)),
+	  d_delb(    as<MVec>(delb)),
+	  d_delu(    as<MVec>(delu)),
 	  d_u0(      as<MVec>(u0)),
-	  d_Ut(      d_Zt),
-	  d_RX(      d_p),
-	  d_LamtUtRestructure(false)
+	  d_Ut(      as<MSpMatrixd>(Ut)),
+	  d_LamtUt(  as<MSpMatrixd>(LamtUt)),
+	  d_RX(      d_p)
+	  //	  d_LamtUtRestructure(false)
     {				// Check consistency of dimensions
 	if (d_n != d_Zt.cols())
 	    throw invalid_argument("Z dimension mismatch");
@@ -43,42 +47,32 @@ namespace lme4Eigen {
 	    throw invalid_argument("size of Lind does not match nonzeros in Lambda");
 	// checking of the range of Lind is now done in R code for reference class
 				// initialize beta0, u0, delb, delu and VtV
-	d_beta0.setZero(); d_u0.setZero(); d_delu.setZero(); d_delb.setZero();
-	d_V       = d_X;
+//	d_beta0.setZero(); d_u0.setZero(); d_delu.setZero(); d_delb.setZero();
+//	d_V       = d_X;
 	d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
 	d_RX.compute(d_VtV);	// ensure d_RX is initialized even in the 0-column X case
 
 	setTheta(d_theta);	    // starting values into Lambda
         d_L.cholmod().final_ll = 1; // force an LL' decomposition
-	d_LamtUt = d_Lambdat * d_Ut;
+	updateLamtUt();
 	d_L.analyzePattern(d_LamtUt); // perform symbolic analysis
         if (d_L.info() != Eigen::Success)
 	    throw runtime_error("CholeskyDecomposition.analyzePattern failed");
     }
 
     void merPredD::updateLamtUt() {
-	if (d_LamtUtRestructure) {
-	    d_LamtUt                           = d_Lambdat * d_Ut;
-	    return;
-	}
-	// This code fails if Lambdat is a MappedSparseMatrix<double>,
-	// which is why it is stored as a SparseMatrix<double>.
 	// This complicated code bypasses problems caused by Eigen's
 	// sparse/sparse matrix multiplication pruning zeros.  The
 	// Cholesky decomposition croaks if the structure of d_LamtUt changes.
 	std::fill(d_LamtUt._valuePtr(), d_LamtUt._valuePtr() + d_LamtUt.nonZeros(), Scalar());
-//	Rcpp::Rcout << "Lambdat[" << d_Lambdat.rows() << ", " << d_Lambdat.cols() << "]: "
-//		    << "innerSize() = " << d_Lambdat.innerSize() 
-//		    << ", outerSize() = " << d_Lambdat.outerSize() << std::endl;
 	for (Index j = 0; j < d_Ut.cols(); ++j) {
-//	    Rcpp::Rcout << "d_Ut column index: " << j << std::endl;
-	    for(SpMatrixd::InnerIterator rhsIt(d_Ut, j); rhsIt; ++rhsIt) {
+	    for(MSpMatrixd::InnerIterator rhsIt(d_Ut, j); rhsIt; ++rhsIt) {
 		Scalar                       y(rhsIt.value());
 		Index                        k(rhsIt.index());
 //		Rcpp::Rcout << "d_Ut row k = " << k << ", v = " << y;
 //		Rcpp::Rcout << ", Lambdat: col has " << d_Lambdat.innerNonZeros(k)
 //			    << " nonzeros" << std::endl;
-		SpMatrixd::InnerIterator prdIt(d_LamtUt, j);
+		MSpMatrixd::InnerIterator prdIt(d_LamtUt, j);
 		for (MSpMatrixd::InnerIterator lhsIt(d_Lambdat, k); lhsIt; ++lhsIt) {
 		    Index                    i = lhsIt.index();
 //		    Rcpp::Rcout << "lhsIt: i = " << i << ", v = " << lhsIt.value() << std::endl;
@@ -109,7 +103,7 @@ namespace lme4Eigen {
 
     void merPredD::updateL() {
 	updateLamtUt();
-	d_L.factorize_p(d_LamtUt, ArrayXi(), 1.);
+	d_L.factorize_p(d_LamtUt, Eigen::ArrayXi(), 1.);
 	d_ldL2 = ::M_chm_factor_ldetL2(d_L.factor());
     }
 
@@ -162,7 +156,10 @@ namespace lme4Eigen {
 	    throw invalid_argument("updateXwts: dimension mismatch");
 	if (sqrtXwt.size() == d_V.rows()) {
 	    d_V              = sqrtXwt.asDiagonal() * d_X;
-	    d_Ut             = d_Zt * sqrtXwt.asDiagonal();
+	    for (int j = 0; j < d_n; ++j)
+		for (MSpMatrixd::InnerIterator Uit(d_Ut, j), Zit(d_Zt, j);
+		     Uit && Zit; ++Uit, ++Zit)
+		    Uit.valueRef() = Zit.value() * sqrtXwt.data()[j];
 	} else {
 	    int n            = d_X.rows()/d_V.rows();
 	    SpMatrixd      W(n, sqrtXwt.size());
@@ -174,11 +171,12 @@ namespace lme4Eigen {
 	    }
 	    W.finalize();
 	    d_V              = W * d_X;
-	    d_Ut             = d_Zt * W.adjoint();
+//FIXME: work out the corresponding code for Ut and Zt
+//	    d_Ut             = d_Zt * W.adjoint();
 	}
-	if (d_LamtUt.rows() != d_Ut.rows() || 
-	    d_LamtUt.cols() != d_Ut.cols()) d_LamtUtRestructure = true;
-	d_VtV.setZero().selfadjointView<Upper>().rankUpdate(d_V.adjoint());
+//	if (d_LamtUt.rows() != d_Ut.rows() || 
+//	    d_LamtUt.cols() != d_Ut.cols()) d_LamtUtRestructure = true;
+	d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
 	updateL();
     }
 

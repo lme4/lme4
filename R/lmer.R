@@ -41,17 +41,15 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
     reTrms <- mkReTrms(findbars(formula[[3]]), fr)
     if (any(unlist(lapply(reTrms$flist, nlevels)) >= nrow(fr)))
 	stop("number of levels of each grouping factor must be less than number of obs")
-    ## fixed-effects model matrix X - remove random parts from formula:
+    ## fixed-effects model matrix X - remove random effects from formula:
     form <- formula
     form[[3]] <- if(is.null(nb <- nobars(form[[3]]))) 1 else nb
     X <- model.Matrix(form, fr, contrasts, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     p <- ncol(X)
     if ((qrX <- qr(X))$rank < p)
 	stop(gettextf("rank of X = %d < ncol(X) = %d", qrX$rank, p))
-    pp <- do.call(merPredD$new, c(list(X=X), reTrms[c("Zt","theta","Lambdat","Lind")]))
-#    pp <- do.call(merPredD$new, c(list(X=X, Theta=reTrms$theta), reTrms[c("Zt","Lambdat","Lind")]))
+    pp <- do.call(merPredD$new, c(list(X=X, S=1L), reTrms[c("Zt","theta","Lambdat","Lind")]))
     resp <- mkRespMod2(fr, if(REML) p else 0L)
-#    if (REML) resp$reml <- p
 
     devfun <- mkdevfun(pp, resp, emptyenv())
     if (devFunOnly) return(devfun)
@@ -80,7 +78,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 	     sigmaML=sqrt(pwrss/n), sigmaREML=sqrt(pwrss/(n-p)))
 
     new("lmerMod", call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
-	theta=pp$theta, beta=pp$delb(), u=pp$delu(), lower=reTrms$lower, Gp=reTrms$Gp,
+	theta=pp$theta, beta=pp$delb, u=pp$delu, lower=reTrms$lower, Gp=reTrms$Gp,
 	devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=resp)
 }## { lmer }
 
@@ -112,7 +110,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
                   control = list(), start = NULL, verbose = 0L, nAGQ = 1L,
                   doFit = TRUE, compDev=TRUE, subset, weights, na.action, offset,
                   contrasts = NULL, mustart, etastart, devFunOnly = 0L,
-                  tolPwrss = 0.000001, ...)
+                  tolPwrss = 1e-10, ...)
 {
     verbose <- as.integer(verbose)
     mf <- mc <- match.call()
@@ -1045,7 +1043,7 @@ refitML.merMod <- function (x, ...) {
 ### FIXME: Should modify the call slot to set REML=FALSE.  It is
 ### tricky to do so without causing the call to be evaluated
     new("lmerMod", call=x@call, frame=x@frame, flist=x@flist,
-	cnms=x@cnms, theta=pp$theta, beta=pp$delb(), u=pp$delu(),
+	cnms=x@cnms, theta=pp$theta, beta=pp$delb, u=pp$delu,
 	lower=x@lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=resp)
 }
 
