@@ -12,24 +12,7 @@
 #include <RcppEigen.h>
 
 namespace lme4Eigen {
-    using Eigen::CholmodDecomposition;
-    using Eigen::LLT;
-    using Eigen::Lower;
-    using Eigen::Map;
-    using Eigen::MatrixXd;
-    using Eigen::SelfAdjointView;
-    using Eigen::SparseMatrix;
-    using Eigen::VectorXd;
-    using Eigen::VectorXi;
-
-    using Rcpp::IntegerVector;
-    using Rcpp::List;
-    using Rcpp::NumericVector;
-    using Rcpp::S4;
-    using Rcpp::as;
-
-    using std::runtime_error;
-    
+#if 0    
     class dgCMatrix : public SparseMatrix<double> { // sparse Matrix, copies contents of R object
     public:
 	dgCMatrix(const S4& xp)
@@ -73,7 +56,6 @@ namespace lme4Eigen {
 	      modelMatrix(xp), d_xp(xp) {}
     };
 
-#if 0
     class dsparseModelMatrix : public MappedSparseMatrix<double>, public modelMatrix {
     protected:
 	S4             d_xp;
@@ -117,84 +99,83 @@ namespace lme4Eigen {
     }
 #endif
 
+    using Eigen::LLT;
+    using Eigen::MatrixXd;
+    using Eigen::VectorXd;
+    using Eigen::VectorXi;
+
     class merPredD {
     public:
-	typedef ddenseModelMatrix                            XType;
-	typedef XType::Scalar                                Scalar;
-	typedef XType::Index                                 Index;
-	typedef CholmodDecomposition<SparseMatrix<double> >  ChmDecomp;
-	typedef SparseMatrix<double>                         SpMatrixd;
-	typedef Eigen::MappedSparseMatrix<double>            MSpMatrixd;
+	typedef Eigen::Map<MatrixXd>                      MMap;
+	typedef Eigen::Map<VectorXd>                      MVec;
+	typedef Eigen::Map<VectorXi>                      MiVec;
+	typedef MatrixXd::Scalar                          Scalar;
+	typedef MatrixXd::Index                           Index;
+	typedef Eigen::SparseMatrix<double>               SpMatrixd;
+	typedef Eigen::CholmodDecomposition<SpMatrixd>    ChmDecomp;
+	typedef Eigen::MappedSparseMatrix<double>         MSpMatrixd;
     protected:
-	XType          d_X;
-	MSpMatrixd     d_Zt;
-	Map<VectorXd>  d_theta;
-	Map<VectorXi>  d_Lind;
-	Index          d_n, d_nnz, d_p, d_q;
-	MSpMatrixd     d_Lambdat;
-	Scalar         d_CcNumer, d_ldL2, d_ldRX2;
-	Map<MatrixXd>  d_RZX, d_V, d_VtV;
-	Map<VectorXd>  d_Vtr, d_Utr, d_beta0, d_delb, d_delu, d_u0;
-	MSpMatrixd     d_Ut, d_LamtUt;
-	ChmDecomp      d_L;
-	LLT<MatrixXd>  d_RX;
-//	bool           d_LamtUtRestructure;
+	MMap          d_X, d_RZX, d_V, d_VtV;
+	MSpMatrixd    d_Zt, d_Ut, d_LamtUt, d_Lambdat;
+	MVec          d_theta, d_Vtr, d_Utr, d_Xwts, d_beta0, d_delb, d_delu, d_u0;
+	MiVec         d_Lind;
+	Index         d_N, d_p, d_q;
+	Scalar        d_CcNumer, d_ldL2, d_ldRX2;
+	ChmDecomp     d_L;
+	LLT<MatrixXd> d_RX;
     public:
-	merPredD(S4, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, 
-		 SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+	merPredD(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, 
+		 SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
-	IntegerVector          Pvec() const;
+	VectorXi             Pvec() const;
 
-	MatrixXd                 RX() const;
-	MatrixXd                RXi() const;
-	MatrixXd               unsc() const;
+	MatrixXd               RX() const;
+	MatrixXd              RXi() const;
+	MatrixXd             unsc() const;
 
-	VectorXd             RXdiag() const;
-	VectorXd                  b(const Scalar& f) const;
-	VectorXd               beta(const Scalar& f) const;
-	VectorXd            linPred(const Scalar& f) const;
-	VectorXd                  u(const Scalar& f) const;
+	VectorXd           RXdiag() const;
+	VectorXd                b(const Scalar& f) const;
+	VectorXd             beta(const Scalar& f) const;
+	VectorXd          linPred(const Scalar& f) const;
+	VectorXd                u(const Scalar& f) const;
 
-	Scalar              CcNumer() const {return d_CcNumer;}
-	Scalar                 ldL2() const {return d_ldL2;}
-	Scalar                ldRX2() const {return d_ldRX2;}
-	Scalar                solve();
-	Scalar               solveU();
-	Scalar                 sqrL(const Scalar& f) const;
+	Scalar            CcNumer() const {return d_CcNumer;}
+	Scalar               ldL2() const {return d_ldL2;}
+	Scalar              ldRX2() const {return d_ldRX2;}
+	Scalar              solve();
+	Scalar             solveU();
+	Scalar               sqrL(const Scalar& f) const;
 
-	const ChmDecomp&          L() const {return d_L;}
+	const ChmDecomp&        L() const {return d_L;}
 
-	const Map<MatrixXd>&      V() const {return d_V;}
-	const Map<MatrixXd>&    VtV() const {return d_VtV;}
-	const Map<MatrixXd>&    RZX() const {return d_RZX;}
+	const MMap&             V() const {return d_V;}
+	const MMap&           VtV() const {return d_VtV;}
+	const MMap&           RZX() const {return d_RZX;}
 
-	const Map<VectorXd>&  theta() const {return d_theta;}
+	const MSpMatrixd& Lambdat() const {return d_Lambdat;}
+	const MSpMatrixd&  LamtUt() const {return d_LamtUt;}
+	const MSpMatrixd&      Ut() const {return d_Ut;}
+	const MSpMatrixd&      Zt() const {return d_Zt;}
 
-	const MSpMatrixd&   Lambdat() const {return d_Lambdat;}
-	const MSpMatrixd&    LamtUt() const {return d_LamtUt;}
-	const MSpMatrixd&        Ut() const {return d_Ut;}
+	const MVec&           Utr() const {return d_Utr;}
+	const MVec&           Vtr() const {return d_Vtr;}
+	const MVec&          delb() const {return d_delb;}
+	const MVec&          delu() const {return d_delu;}
+	const MVec&         beta0() const {return d_beta0;}
+	const MVec&         theta() const {return d_theta;}
+	const MVec&            u0() const {return d_u0;}
 
-	const MSpMatrixd&        Zt() const {return d_Zt;}
+	int                  info() const {return d_L.info();}
 
-	const Map<VectorXd>&    Utr() const {return d_Utr;}
-	const Map<VectorXd>&    Vtr() const {return d_Vtr;}
-	const Map<VectorXd>&   delb() const {return d_delb;}
-	const Map<VectorXd>&   delu() const {return d_delu;}
-	const Map<VectorXd>&  beta0() const {return d_beta0;}
-	const Map<VectorXd>&     u0() const {return d_u0;}
-
-	int                    info() const {return d_L.info();}
-
-	void            installPars(const Scalar& f);
-	void               setBeta0(const VectorXd&);
-	void                   setS(int);
-	void               setTheta(const VectorXd&);
-	void                  setU0(const VectorXd&);
-	void           updateDecomp();
-	void                updateL();
-	void           updateLamtUt();
-	void              updateRes(const VectorXd&);
-	void             updateXwts(const VectorXd&);
+	void          installPars(const Scalar& f);
+	void             setBeta0(const VectorXd&);
+	void             setTheta(const VectorXd&);
+	void                setU0(const VectorXd&);
+	void         updateDecomp();
+	void              updateL();
+	void         updateLamtUt();
+	void            updateRes(const VectorXd&);
+	void           updateXwts(const VectorXd&);
     };
 }
 

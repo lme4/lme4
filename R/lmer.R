@@ -44,7 +44,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
     ## fixed-effects model matrix X - remove random effects from formula:
     form <- formula
     form[[3]] <- if(is.null(nb <- nobars(form[[3]]))) 1 else nb
-    X <- model.Matrix(form, fr, contrasts, sparse = FALSE, row.names = FALSE) ## sparseX not yet
+    X <- model.matrix(form, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     p <- ncol(X)
     if ((qrX <- qr(X))$rank < p)
 	stop(gettextf("rank of X = %d < ncol(X) = %d", qrX$rank, p))

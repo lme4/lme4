@@ -8,29 +8,30 @@
 #include "respModule.h"
 
 extern "C" {
-    using Eigen::Map;
-    using Eigen::MatrixXd;
-    using Eigen::VectorXd;
+    using     Eigen::MatrixXd;
+    using     Eigen::VectorXd;
+    typedef   Eigen::Map<VectorXd>    MVec;
 
-    using Rcpp::CharacterVector;
-    using Rcpp::Environment;
-    using Rcpp::IntegerVector;
-    using Rcpp::Language;
-    using Rcpp::List;
-    using Rcpp::Named;
-    using Rcpp::NumericVector;
-    using Rcpp::S4;
-    using Rcpp::XPtr;
-    using Rcpp::as;
-    using Rcpp::wrap;
+    using      Rcpp::CharacterVector;
+    using      Rcpp::Environment;
+    using      Rcpp::IntegerVector;
+    using      Rcpp::Language;
+    using      Rcpp::List;
+    using      Rcpp::Named;
+    using      Rcpp::NumericVector;
+    using      Rcpp::XPtr;
+    using      Rcpp::as;
+    using      Rcpp::wrap;
 
-    using glm::glmFamily;
+    using       glm::glmFamily;
 
     using lme4Eigen::glmResp;
     using lme4Eigen::lmResp;
     using lme4Eigen::lmerResp;
     using lme4Eigen::merPredD;
     using lme4Eigen::nlsResp;
+
+    using      std::runtime_error;
 
     SEXP Eigen_SSE() {
 	BEGIN_RCPP;
@@ -61,12 +62,6 @@ extern "C" {
 	END_RCPP;
     }
 
-    SEXP glm_eta(SEXP ptr_) {
-	BEGIN_RCPP;
-	return wrap(XPtr<glmResp>(ptr_)->eta());
-	END_RCPP;
-    }
-
     SEXP glm_family(SEXP ptr_) {
 	BEGIN_RCPP;
 	return wrap(XPtr<glmResp>(ptr_)->family());
@@ -82,12 +77,6 @@ extern "C" {
     SEXP glm_muEta(SEXP ptr_) {
 	BEGIN_RCPP;
 	return wrap(XPtr<glmResp>(ptr_)->muEta());
-	END_RCPP;
-    }
-
-    SEXP glm_n(SEXP ptr_) {
-	BEGIN_RCPP;
-	return wrap(XPtr<glmResp>(ptr_)->n());
 	END_RCPP;
     }
 
@@ -137,7 +126,7 @@ extern "C" {
 
     SEXP glm_updateMu(SEXP ptr_, SEXP gamma) {
 	BEGIN_RCPP;
-	return ::Rf_ScalarReal(XPtr<glmResp>(ptr_)->updateMu(as<Map<VectorXd> >(gamma)));
+	return ::Rf_ScalarReal(XPtr<glmResp>(ptr_)->updateMu(as<MVec>(gamma)));
 	END_RCPP;
     }
 
@@ -152,27 +141,27 @@ extern "C" {
 
     SEXP glmFamily_link(SEXP ptr, SEXP mu) {
 	BEGIN_RCPP;
-	return wrap(XPtr<glmFamily>(ptr)->linkFun(as<Map<VectorXd> >(mu)));
+	return wrap(XPtr<glmFamily>(ptr)->linkFun(as<MVec>(mu)));
 	END_RCPP;
     }
 
     SEXP glmFamily_linkInv(SEXP ptr, SEXP eta) {
 	BEGIN_RCPP;
-	return wrap(XPtr<glmFamily>(ptr)->linkInv(as<Map<VectorXd> >(eta)));
+	return wrap(XPtr<glmFamily>(ptr)->linkInv(as<MVec>(eta)));
 	END_RCPP;
     }
 
     SEXP glmFamily_devResid(SEXP ptr, SEXP mu, SEXP weights, SEXP y) {
 	BEGIN_RCPP;
-	return wrap(XPtr<glmFamily>(ptr)->devResid(as<Map<VectorXd> >(mu),
-						   as<Map<VectorXd> >(weights),
-						   as<Map<VectorXd> >(y)));
+	return wrap(XPtr<glmFamily>(ptr)->devResid(as<MVec>(mu),
+						   as<MVec>(weights),
+						   as<MVec>(y)));
 	END_RCPP;
     }
 
     SEXP glmFamily_muEta(SEXP ptr, SEXP eta) {
 	BEGIN_RCPP;
-	return wrap(XPtr<glmFamily>(ptr)->muEta(as<Map<VectorXd> >(eta)));
+	return wrap(XPtr<glmFamily>(ptr)->muEta(as<MVec>(eta)));
 	END_RCPP;
     }
 
@@ -199,20 +188,25 @@ extern "C" {
 		return;
 	    }
 	}
-	throw std::runtime_error("step factor reduced below 0.001 without reducing pwrss");
+	throw runtime_error("step factor reduced below 0.001 without reducing pwrss");
     }
 
+#define MAXITER 30
     void pwrssUpdate(glmResp *rp, merPredD *pp, int verb, bool uOnly, double tol) {
-				// FIXME: limit the number of iterations?
-	do {
+	bool cvgd(false);
+	for (int it=0; it < MAXITER; ++it) {
 	    rp->updateMu(pp->linPred(0.));
 	    rp->updateWts();
 	    pp->updateXwts(rp->sqrtXwt());
 	    pp->updateDecomp();
 	    pp->updateRes(rp->wtres());
-	    if ((uOnly ? pp->solveU() : pp->solve())/pwrss(rp, pp, 0.) < tol) break;
+	    if ((uOnly ? pp->solveU() : pp->solve())/pwrss(rp, pp, 0.) < tol) {
+		cvgd = true;
+		break;
+	    }
 	    stepFac(rp, pp, verb);
-	} while (true);
+	}
+	if (!cvgd) throw runtime_error("pwrss failed to converge in 30 iterations");
     }
 
     SEXP glmerPwrssUpdate(SEXP pp_, SEXP rp_, SEXP verb_, SEXP uOnly_, SEXP tol) {
@@ -247,7 +241,7 @@ extern "C" {
 	XPtr<glmResp>     rp(rp_);
 	XPtr<merPredD>    pp(pp_);
 
-	pp->setTheta(as<Map<VectorXd> >(theta_));
+	pp->setTheta(as<MVec>(theta_));
 	pp->setU0(as<VectorXd>(u0_));
 	pp->setBeta0(as<VectorXd>(beta0_));
 	pwrssUpdate(rp, pp, ::Rf_asInteger(verbose_), ::Rf_asLogical(uOnly_),
@@ -276,44 +270,12 @@ extern "C" {
     SEXP lm_setOffset(SEXP ptr_, SEXP offset) {
 	BEGIN_RCPP;
 	XPtr<lmResp>(ptr_)->setOffset(as<VectorXd>(offset));
-	return offset;
 	END_RCPP;
     }
 
     SEXP lm_setWeights(SEXP ptr_, SEXP weights) {
 	BEGIN_RCPP;
 	XPtr<lmResp>(ptr_)->setWeights(as<VectorXd>(weights));
-	return weights;
-	END_RCPP;
-    }
-
-    SEXP lm_mu(SEXP ptr_) {
-	BEGIN_RCPP;
-	return wrap(XPtr<lmResp>(ptr_)->mu());
-	END_RCPP;
-    }
-
-    SEXP lm_offset(SEXP ptr_) {
-	BEGIN_RCPP;
-	return wrap(XPtr<lmResp>(ptr_)->offset());
-	END_RCPP;
-    }
-
-    SEXP lm_sqrtXwt(SEXP ptr_) {
-	BEGIN_RCPP;
-	return wrap(XPtr<lmResp>(ptr_)->sqrtXwt());
-	END_RCPP;
-    }
-
-    SEXP lm_sqrtrwt(SEXP ptr_) {
-	BEGIN_RCPP;
-	return wrap(XPtr<lmResp>(ptr_)->sqrtrwt());
-	END_RCPP;
-    }
-
-    SEXP lm_weights(SEXP ptr_) {
-	BEGIN_RCPP;
-	return wrap(XPtr<lmResp>(ptr_)->weights());
 	END_RCPP;
     }
 
@@ -323,21 +285,9 @@ extern "C" {
 	END_RCPP;
     }
 
-    SEXP lm_wtres(SEXP ptr_) {
-	BEGIN_RCPP;
-	return wrap(XPtr<lmResp>(ptr_)->wtres());
-	END_RCPP;
-    }
-
-    SEXP lm_y(SEXP ptr_) {
-	BEGIN_RCPP;
-	return wrap(XPtr<lmResp>(ptr_)->y());
-	END_RCPP;
-    }
-
     SEXP lm_updateMu(SEXP ptr_, SEXP gamma) {
 	BEGIN_RCPP;
-	return ::Rf_ScalarReal(XPtr<lmerResp>(ptr_)->updateMu(as<Map<VectorXd> >(gamma)));
+	return ::Rf_ScalarReal(XPtr<lmerResp>(ptr_)->updateMu(as<MVec>(gamma)));
 	END_RCPP;
     }
 
@@ -359,12 +309,6 @@ extern "C" {
 	END_RCPP;
     }
 
-    SEXP lmer_REML(SEXP ptr_) {
-	BEGIN_RCPP;
-	return ::Rf_ScalarInteger(XPtr<lmerResp>(ptr_)->REML());
-	END_RCPP;
-    }
-
     SEXP lmer_Laplace(SEXP ptr_, SEXP ldL2, SEXP ldRX2, SEXP sqrL) {
 	BEGIN_RCPP;
 	return ::Rf_ScalarReal(XPtr<lmerResp>(ptr_)->Laplace(::Rf_asReal(ldL2),
@@ -377,22 +321,13 @@ extern "C" {
 	BEGIN_RCPP;
 	XPtr<lmerResp>   rpt(rptr_);
 	XPtr<merPredD>   ppt(pptr_);
-//Rcpp::Rcout << "Extracted pointers" << std::endl;
-	ppt->setTheta(as<Map<VectorXd> >(theta_));
-//Rcpp::Rcout << "Set theta" << std::endl;
+	ppt->setTheta(as<MVec>(theta_));
 	ppt->updateDecomp();
-//Rcpp::Rcout << "Updated decomp" << std::endl;
         rpt->updateMu(ppt->linPred(0.));
-//Rcpp::Rcout << "Updated mu for fac 0" << std::endl;
         ppt->updateRes(rpt->wtres());
-//Rcpp::Rcout << "Updated residual" << std::endl;
 	ppt->solve();
-//Rcpp::Rcout << "Solve" << std::endl;
         rpt->updateMu(ppt->linPred(1.));
-//Rcpp::Rcout << "Updated mu for fac 1" << std::endl;
-	double ans(rpt->Laplace(ppt->ldL2(), ppt->ldRX2(), ppt->sqrL(1.)));
-//Rcpp::Rcout << "ans = " << ans << std::endl;	
-	return ::Rf_ScalarReal(ans);
+	return ::Rf_ScalarReal(rpt->Laplace(ppt->ldL2(), ppt->ldRX2(), ppt->sqrL(1.)));
 	END_RCPP;
     }
 
@@ -400,38 +335,22 @@ extern "C" {
 
     SEXP merPredDCreate(SEXP Xs, SEXP Lambdat, SEXP LamtUt, SEXP Lind,
 			SEXP RZX, SEXP Ut, SEXP Utr, SEXP V, SEXP VtV,
-			SEXP Vtr, SEXP Zt, SEXP beta0, SEXP delb, SEXP delu,
-			SEXP theta, SEXP u0) {
+			SEXP Vtr, SEXP Xwts, SEXP Zt, SEXP beta0,
+			SEXP delb, SEXP delu, SEXP theta, SEXP u0) {
 	BEGIN_RCPP;
-	S4 X(Xs);
-	merPredD *ans = new merPredD(X, Lambdat, LamtUt, Lind, RZX, Ut, Utr,
-				     V, VtV, Vtr, Zt, beta0, delb, delu, theta, u0);
+	merPredD *ans = new merPredD(Xs, Lambdat, LamtUt, Lind, RZX, Ut, Utr, V, VtV,
+				     Vtr, Xwts, Zt, beta0, delb, delu, theta, u0);
 	return wrap(XPtr<merPredD>(ans, true));
 	END_RCPP;
     }
 
 				// setters
-    SEXP merPredDsetBeta0(SEXP ptr, SEXP beta0) {
-	BEGIN_RCPP;
-	XPtr<merPredD>(ptr)->setBeta0(as<Map<VectorXd> >(beta0));
-	return beta0;
-	END_RCPP;
-    }
-
     SEXP merPredDsetTheta(SEXP ptr, SEXP theta) {
 	BEGIN_RCPP;
-	XPtr<merPredD>(ptr)->setTheta(as<Map<VectorXd> >(theta));
+	XPtr<merPredD>(ptr)->setTheta(as<MVec>(theta));
 	return theta;
 	END_RCPP;
     }
-
-    SEXP merPredDsetU0(SEXP ptr, SEXP u0) {
-	BEGIN_RCPP;
-	XPtr<merPredD>(ptr)->setU0(as<Map<VectorXd> >(u0));
-	return u0;
-	END_RCPP;
-    }
-
 				// getters
     SEXP merPredDCcNumer(SEXP ptr) {
 	BEGIN_RCPP;
@@ -442,12 +361,6 @@ extern "C" {
     SEXP merPredDL(SEXP ptr) {
 	BEGIN_RCPP;
 	return wrap(XPtr<merPredD>(ptr)->L());
-	END_RCPP;
-    }
-
-    SEXP merPredDLamtUt(SEXP ptr) {
-	BEGIN_RCPP;
-	return wrap(XPtr<merPredD>(ptr)->LamtUt());
 	END_RCPP;
     }
 
@@ -475,67 +388,6 @@ extern "C" {
 	END_RCPP;
     }
 
-    SEXP merPredDRZX(SEXP ptr) {
-	BEGIN_RCPP;
-	return wrap(XPtr<merPredD>(ptr)->RZX());
-	END_RCPP;
-    }
-
-    SEXP merPredDUt(SEXP ptr) {
-	BEGIN_RCPP;
-	return wrap(XPtr<merPredD>(ptr)->Ut());
-	END_RCPP;
-    }
-
-    SEXP merPredDUtr(SEXP ptr) {
-	BEGIN_RCPP;
-	return wrap(XPtr<merPredD>(ptr)->Utr());
-	END_RCPP;
-    }
-
-    SEXP merPredDV(SEXP ptr) {
-	BEGIN_RCPP;
-	return wrap(XPtr<merPredD>(ptr)->V());
-	END_RCPP;
-    }
-
-    SEXP merPredDVtV(SEXP ptr) {
-	BEGIN_RCPP;
-	return wrap(XPtr<merPredD>(ptr)->VtV());
-	END_RCPP;
-    }
-
-    SEXP merPredDVtr(SEXP ptr) {
-	BEGIN_RCPP;
-	return wrap(XPtr<merPredD>(ptr)->Vtr());
-	END_RCPP;
-    }
-
-#if 0
-    SEXP merPredDZt(SEXP ptr) {
-	BEGIN_RCPP;
-	return wrap(XPtr<merPredD>(ptr)->Zt());
-	END_RCPP;
-    }
-
-    SEXP merPredDbeta0(SEXP ptr) {
-	BEGIN_RCPP;
-	return wrap(XPtr<merPredD>(ptr)->beta0());
-	END_RCPP;
-    }
-#endif
-    SEXP merPredDdelb(SEXP ptr) {
-	BEGIN_RCPP;
-	return wrap(XPtr<merPredD>(ptr)->delb());
-	END_RCPP;
-    }
-
-    SEXP merPredDdelu(SEXP ptr) {
-	BEGIN_RCPP;
-	return wrap(XPtr<merPredD>(ptr)->delu());
-	END_RCPP;
-    }
-
     SEXP merPredDldL2(SEXP ptr) {
 	BEGIN_RCPP;
 	return ::Rf_ScalarReal(XPtr<merPredD>(ptr)->ldL2());
@@ -548,19 +400,6 @@ extern "C" {
 	END_RCPP;
     }
 
-#if 0
-    SEXP merPredDtheta(SEXP ptr) {
-	BEGIN_RCPP;
-	return wrap(XPtr<merPredD>(ptr)->theta());
-	END_RCPP;
-    }
-
-    SEXP merPredDu0(SEXP ptr) {
-	BEGIN_RCPP;
-	return wrap(XPtr<merPredD>(ptr)->u0());
-	END_RCPP;
-    }
-#endif
     SEXP merPredDunsc(SEXP ptr) {
 	BEGIN_RCPP;
 	return wrap(XPtr<merPredD>(ptr)->unsc());
@@ -617,7 +456,6 @@ extern "C" {
 	END_RCPP;
     }
 
-				// methods
     SEXP merPredDupdateDecomp(SEXP ptr) {
 	BEGIN_RCPP;
 	XPtr<merPredD>(ptr)->updateDecomp();
@@ -630,7 +468,6 @@ extern "C" {
 	END_RCPP;
     }
 
-
     SEXP merPredDupdateLamtUt(SEXP ptr) {
 	BEGIN_RCPP;
 	XPtr<merPredD>(ptr)->updateLamtUt();
@@ -639,15 +476,17 @@ extern "C" {
 
     SEXP merPredDupdateRes(SEXP ptr, SEXP wtres) {
 	BEGIN_RCPP;
-	XPtr<merPredD>(ptr)->updateRes(as<Map<VectorXd> >(wtres));
+	XPtr<merPredD>(ptr)->updateRes(as<MVec>(wtres));
 	END_RCPP;
     }
 
     SEXP merPredDupdateXwts(SEXP ptr, SEXP wts) {
 	BEGIN_RCPP;
-	XPtr<merPredD>(ptr)->updateXwts(as<Map<VectorXd> >(wts));
+	XPtr<merPredD>(ptr)->updateXwts(as<MVec>(wts));
 	END_RCPP;
     }
+
+    // nonlinear model response (also the base class for other response classes)
 
     SEXP nls_Create(SEXP y, SEXP weights, SEXP offset, SEXP mu, SEXP sqrtXwt,
 		    SEXP sqrtrwt, SEXP wtres, SEXP mods, SEXP envs, SEXP pnms) {
@@ -671,7 +510,7 @@ extern "C" {
 
     SEXP nls_updateMu(SEXP ptr_, SEXP gamma) {
 	BEGIN_RCPP;
-	return ::Rf_ScalarReal(XPtr<nlsResp>(ptr_)->updateMu(as<Map<VectorXd> >(gamma)));
+	return ::Rf_ScalarReal(XPtr<nlsResp>(ptr_)->updateMu(as<MVec>(gamma)));
 	END_RCPP;
     }
 
@@ -685,29 +524,27 @@ static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(Eigen_SSE, 0),
 
-    CALLDEF(glm_Create, 10),	  // generate external pointer
+    CALLDEF(glm_Create, 10),	// generate external pointer
 
-    CALLDEF(glm_setN, 2),	  // setters
+    CALLDEF(glm_setN, 2),	// setters
 
-    CALLDEF(glm_devResid, 1),	  // getters
-    CALLDEF(glm_eta, 1),
+    CALLDEF(glm_devResid, 1),	// getters
     CALLDEF(glm_family, 1),
     CALLDEF(glm_link, 1),
     CALLDEF(glm_muEta, 1),
-    CALLDEF(glm_n, 1),
     CALLDEF(glm_resDev, 1),
     CALLDEF(glm_sqrtWrkWt, 1),
     CALLDEF(glm_variance, 1),
     CALLDEF(glm_wrkResids, 1),
     CALLDEF(glm_wrkResp, 1),
 
-    CALLDEF(glm_Laplace, 4),	  // methods
+    CALLDEF(glm_Laplace, 4),	// methods
     CALLDEF(glm_updateMu, 2),
     CALLDEF(glm_updateWts, 1),
 
     CALLDEF(glmFamily_Create, 1), // generate external pointer
 
-    CALLDEF(glmFamily_link, 2),   // methods
+    CALLDEF(glmFamily_link, 2),	// methods
     CALLDEF(glmFamily_linkInv, 2),
     CALLDEF(glmFamily_devResid, 4),
     CALLDEF(glmFamily_muEta, 2),
@@ -719,51 +556,32 @@ static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(isNullExtPtr, 1),
 
-    CALLDEF(lm_Create, 7),	  // generate external pointer
+    CALLDEF(lm_Create, 7),	// generate external pointer
 
-    CALLDEF(lm_setOffset, 2),	  // setters
+    CALLDEF(lm_setOffset, 2),	// setters
     CALLDEF(lm_setWeights, 2),
 
-    CALLDEF(lm_mu, 1),		  // getters
-    CALLDEF(lm_offset, 1),
-    CALLDEF(lm_sqrtXwt, 1),
-    CALLDEF(lm_sqrtrwt, 1),
-    CALLDEF(lm_weights, 1),
-    CALLDEF(lm_wrss, 1),
-    CALLDEF(lm_wtres, 1),
-    CALLDEF(lm_y, 1),
+    CALLDEF(lm_wrss, 1),	// getter
 
-    CALLDEF(lm_updateMu, 2),	  // method
+    CALLDEF(lm_updateMu, 2),	// method
 
-    CALLDEF(lmer_Create, 7),	  // generate external pointer
+    CALLDEF(lmer_Create, 7),	// generate external pointer
 
-    CALLDEF(lmer_setREML, 2),     // setter
+    CALLDEF(lmer_setREML, 2),	// setter
 
-    CALLDEF(lmer_REML, 1),	  // getter
-
-    CALLDEF(lmer_Deviance, 3),    // method
+    CALLDEF(lmer_Deviance, 3),	// methods
     CALLDEF(lmer_Laplace, 4),
 
-    CALLDEF(merPredDCreate, 16), // generate external pointer
+    CALLDEF(merPredDCreate, 17), // generate external pointer
 
     CALLDEF(merPredDsetTheta, 2), // setters
-    CALLDEF(merPredDsetBeta0, 2),
-    CALLDEF(merPredDsetU0, 2),
 
-    CALLDEF(merPredDCcNumer, 1),  // getters
+    CALLDEF(merPredDCcNumer, 1), // getters
     CALLDEF(merPredDL, 1),
-    CALLDEF(merPredDLamtUt, 1),
     CALLDEF(merPredDPvec, 1),
     CALLDEF(merPredDRX, 1),
+    CALLDEF(merPredDRXi, 1),
     CALLDEF(merPredDRXdiag, 1),
-    CALLDEF(merPredDRZX, 1),
-    CALLDEF(merPredDUt, 1),
-    CALLDEF(merPredDUtr, 1),
-    CALLDEF(merPredDV, 1),
-    CALLDEF(merPredDVtV, 1),
-    CALLDEF(merPredDVtr, 1),
-    CALLDEF(merPredDdelb, 1),
-    CALLDEF(merPredDdelu, 1),
     CALLDEF(merPredDldL2, 1),
     CALLDEF(merPredDldRX2, 1),
     CALLDEF(merPredDunsc, 1),
@@ -782,9 +600,9 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(merPredDupdateRes, 2),
     CALLDEF(merPredDupdateXwts, 2),
 
-    CALLDEF(nls_Create, 10),	  // generate external pointer
+    CALLDEF(nls_Create, 10),	// generate external pointer
 
-    CALLDEF(nls_Laplace, 4),	  // methods
+    CALLDEF(nls_Laplace, 4),	// methods
     CALLDEF(nls_updateMu, 2),
 
     {NULL, NULL, 0}

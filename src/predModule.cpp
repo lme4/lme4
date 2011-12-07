@@ -8,47 +8,48 @@
 #include "predModule.h"
 
 namespace lme4Eigen {
-    using std::invalid_argument;
+    using    Rcpp::as;
 
-    typedef   Map<MatrixXd>    MMat;
-    typedef   Map<VectorXd>    MVec;
-    typedef   Map<VectorXi>    MiVec;
+    using     std::invalid_argument;
+    using     std::runtime_error;
 
-    merPredD::merPredD(S4 X, SEXP Lambdat, SEXP LamtUt, SEXP Lind,
+    typedef Eigen::Map<MatrixXd>  MMat;
+    typedef Eigen::Map<VectorXd>  MVec;
+    typedef Eigen::Map<VectorXi>  MiVec;
+
+    merPredD::merPredD(SEXP X, SEXP Lambdat, SEXP LamtUt, SEXP Lind,
 		       SEXP RZX, SEXP Ut, SEXP Utr, SEXP V, SEXP VtV,
-		       SEXP Vtr, SEXP Zt, SEXP beta0, SEXP delb, SEXP delu,
-		       SEXP theta, SEXP u0)
-	: d_X(       X),
-          d_Zt(      as<MSpMatrixd>(Zt)),
-	  d_theta(   as<MVec>(theta)),
-	  d_Lind(    as<MiVec>(Lind)),
-	  d_n(       d_X.rows()),
-	  d_nnz(     -1),
-	  d_p(       d_X.cols()),
-	  d_q(       d_Zt.rows()),
-	  d_Lambdat( as<MSpMatrixd>(Lambdat)),
+		       SEXP Vtr, SEXP Xwts, SEXP Zt, SEXP beta0,
+		       SEXP delb, SEXP delu, SEXP theta, SEXP u0)
+	: d_X(       as<MMat>(X)),
 	  d_RZX(     as<MMat>(RZX)),
 	  d_V(       as<MMat>(V)),
 	  d_VtV(     as<MMat>(VtV)),
+          d_Zt(      as<MSpMatrixd>(Zt)),
+	  d_Ut(      as<MSpMatrixd>(Ut)),
+	  d_LamtUt(  as<MSpMatrixd>(LamtUt)),
+	  d_Lambdat( as<MSpMatrixd>(Lambdat)),
+	  d_theta(   as<MVec>(theta)),
 	  d_Vtr(     as<MVec>(Vtr)),
 	  d_Utr(     as<MVec>(Utr)),
+	  d_Xwts(    as<MVec>(Xwts)),
 	  d_beta0(   as<MVec>(beta0)),
 	  d_delb(    as<MVec>(delb)),
 	  d_delu(    as<MVec>(delu)),
 	  d_u0(      as<MVec>(u0)),
-	  d_Ut(      as<MSpMatrixd>(Ut)),
-	  d_LamtUt(  as<MSpMatrixd>(LamtUt)),
+	  d_Lind(    as<MiVec>(Lind)),
+	  d_N(       d_X.rows()),
+	  d_p(       d_X.cols()),
+	  d_q(       d_Zt.rows()),
 	  d_RX(      d_p)
 	  //	  d_LamtUtRestructure(false)
     {				// Check consistency of dimensions
-	if (d_n != d_Zt.cols())
+	if (d_N != d_Zt.cols())
 	    throw invalid_argument("Z dimension mismatch");
 	if (d_Lind.size() != d_Lambdat.nonZeros())
 	    throw invalid_argument("size of Lind does not match nonzeros in Lambda");
 	// checking of the range of Lind is now done in R code for reference class
 				// initialize beta0, u0, delb, delu and VtV
-//	d_beta0.setZero(); d_u0.setZero(); d_delu.setZero(); d_delb.setZero();
-//	d_V       = d_X;
 	d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
 	d_RX.compute(d_VtV);	// ensure d_RX is initialized even in the 0-column X case
 
@@ -148,15 +149,12 @@ namespace lme4Eigen {
     }
 
     void merPredD::updateXwts(const VectorXd& sqrtXwt) {
-//	Rcpp::Rcout << "X[" << d_X.rows() << ", " << d_X.cols() << "]"
-//		    << "V[" << d_V.rows() << ", " << d_V.cols() << "]"
-//		    << ", sqrtXwt.size() = " << sqrtXwt.size() << std::endl;
-
-	if (d_X.rows() != sqrtXwt.size())
+	if (d_Xwts.size() != sqrtXwt.size())
 	    throw invalid_argument("updateXwts: dimension mismatch");
+	std::copy(sqrtXwt.data(), sqrtXwt.data() + sqrtXwt.size(), d_Xwts.data());
 	if (sqrtXwt.size() == d_V.rows()) {
 	    d_V              = sqrtXwt.asDiagonal() * d_X;
-	    for (int j = 0; j < d_n; ++j)
+	    for (int j = 0; j < d_N; ++j)
 		for (MSpMatrixd::InnerIterator Uit(d_Ut, j), Zit(d_Zt, j);
 		     Uit && Zit; ++Uit, ++Zit)
 		    Uit.valueRef() = Zit.value() * sqrtXwt.data()[j];
@@ -219,10 +217,11 @@ namespace lme4Eigen {
 	std::copy(newU0.data(), newU0.data() + d_q, d_u0.data());
     }
 
-    IntegerVector merPredD::Pvec() const {
-	const cholmod_factor* cf = d_L.factor();
-	int*                 ppt = (int*)cf->Perm;
-	return IntegerVector(ppt, ppt + cf->n);
+    VectorXi merPredD::Pvec() const {
+	int*                 ppt((int*)d_L.factor()->Perm);
+	VectorXi             ans(d_q);
+	std::copy(ppt, ppt + d_q, ans.data());
+	return ans;
     }
 
     MatrixXd merPredD::RX() const {
@@ -235,7 +234,8 @@ namespace lme4Eigen {
 
     MatrixXd merPredD::unsc() const {
 	return MatrixXd(MatrixXd(d_p, d_p).setZero().
-			selfadjointView<Lower>().rankUpdate(RXi()));
+			selfadjointView<Eigen::Lower>().
+			rankUpdate(RXi()));
     }
 
     VectorXd merPredD::RXdiag() const {
