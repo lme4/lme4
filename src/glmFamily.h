@@ -88,6 +88,7 @@ namespace glm {
 	    qq = -std::exp(qq);
 	    return lower_tail ? -expm1(qq) : std::exp(qq);
 	}
+
 	static inline double cloglogLinkInv(const double& x) {
 	    return pgumbel2(x, 0., 1., 1);
 	}
