@@ -6,6 +6,7 @@
 
 #include "predModule.h"
 #include "respModule.h"
+#include "optimizer.h"
 
 extern "C" {
     using     Eigen::MatrixXd;
@@ -317,17 +318,36 @@ extern "C" {
 	END_RCPP;
     }
 
-    SEXP lmer_Deviance(SEXP pptr_, SEXP rptr_, SEXP theta_) {
-	BEGIN_RCPP;
-	XPtr<lmerResp>   rpt(rptr_);
-	XPtr<merPredD>   ppt(pptr_);
-	ppt->setTheta(as<MVec>(theta_));
+    static double lmer_dev(XPtr<merPredD> ppt, XPtr<lmerResp> rpt, const VectorXd& theta) {
+	ppt->setTheta(theta);
 	ppt->updateDecomp();
         rpt->updateMu(ppt->linPred(0.));
         ppt->updateRes(rpt->wtres());
 	ppt->solve();
         rpt->updateMu(ppt->linPred(1.));
-	return ::Rf_ScalarReal(rpt->Laplace(ppt->ldL2(), ppt->ldRX2(), ppt->sqrL(1.)));
+	return rpt->Laplace(ppt->ldL2(), ppt->ldRX2(), ppt->sqrL(1.));
+    }
+
+    SEXP lmer_Deviance(SEXP pptr_, SEXP rptr_, SEXP theta_) {
+	BEGIN_RCPP;
+	XPtr<lmerResp>   rpt(rptr_);
+	XPtr<merPredD>   ppt(pptr_);
+	return ::Rf_ScalarReal(lmer_dev(ppt, rpt, as<MVec>(theta_)));
+	END_RCPP;
+    }
+
+    SEXP lmer_opt1(SEXP pptr_, SEXP rptr_, SEXP lower_, SEXP upper_) {
+	BEGIN_RCPP;
+	XPtr<lmerResp>     rpt(rptr_);
+	XPtr<merPredD>     ppt(pptr_);
+	VectorXd            th(1);
+	optimizer::Golden gold(::Rf_asReal(lower_), ::Rf_asReal(upper_));
+	for (int i = 0; i < 30; ++i) {
+	    th[0] = gold.xeval();
+	    gold.newf(lmer_dev(ppt, rpt, th));
+	}
+	return List::create(Named("theta") = ::Rf_ScalarReal(gold.xpos()),
+			    Named("objective") = ::Rf_ScalarReal(gold.value()));
 	END_RCPP;
     }
 
@@ -514,6 +534,28 @@ extern "C" {
 	END_RCPP;
     }
 
+    static double quad(const VectorXd& x) {
+	return (x - VectorXd::Constant(x.size(), 0.5)).squaredNorm();
+    }
+
+    SEXP test_NMopt() {
+	BEGIN_RCPP;
+	VectorXd     x(VectorXd::Constant(3,1));
+	VectorXd    ub(VectorXd::Constant(3, std::numeric_limits<double>::infinity()));
+	VectorXd    lb(-ub);
+	VectorXd xstep(VectorXd::Constant(3, 0.05));
+	Rcpp::Rcout << "x: " << x.adjoint() << std::endl;
+	Rcpp::Rcout << "lb: " << lb.adjoint() << std::endl;
+	Rcpp::Rcout << "ub: " << ub.adjoint() << std::endl;
+	Rcpp::Rcout << "xstep: " << xstep.adjoint() << std::endl;
+
+	optimizer::Nelder_Mead opt(lb, ub, xstep, x, 
+				   optimizer::nl_stop(VectorXd::Constant(3, 1e-8)));
+	optimizer::nm_status stat;
+	while ((stat = opt.newf(quad(opt.xeval()))) == optimizer::nm_active) {};
+	Rcpp::Rcout << "values: " << opt.vals().adjoint() << std::endl;
+	END_RCPP;
+    }
 }
 
 #include <R_ext/Rdynload.h>
@@ -571,6 +613,7 @@ static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(lmer_Deviance, 3),	// methods
     CALLDEF(lmer_Laplace, 4),
+    CALLDEF(lmer_opt1, 4),
 
     CALLDEF(merPredDCreate, 17), // generate external pointer
 
@@ -605,6 +648,8 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(nls_Laplace, 4),	// methods
     CALLDEF(nls_updateMu, 2),
 
+    CALLDEF(test_NMopt, 0),
+    
     {NULL, NULL, 0}
 };
 
