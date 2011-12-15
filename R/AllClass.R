@@ -421,6 +421,42 @@ glmFamily <-                            # used in tests of family definitions
                      })
                 )
 
+golden <-
+    setRefClass("golden", # Reverse communication implementation of Golden Search
+                fields =
+                list(
+                     Ptr     = "externalptr",
+                     lowerbd = "numeric",
+                     upperbd = "numeric"
+                     ),
+                methods =
+                list(
+                     initialize = function(lower, upper, ...) {
+                         stopifnot(length(lower <- as.numeric(lower)) == 1L,
+                                   length(upper <- as.numeric(upper)) == 1L,
+                                   lower > -Inf,
+                                   upper < Inf,
+                                   lower < upper)
+                         lowerbd <<- lower
+                         upperbd <<- upper
+                         Ptr <<- .Call(golden_Create, lower, upper)
+                     },
+                     ptr        =  function() {
+                         if (length(lowerbd)) 
+                             if (.Call(isNullExtPtr, Ptr))
+                                 Ptr <<- .Call(golden_Create, lowerbd, upperbd)
+                         Ptr
+                     },
+                     newf       = function(value) {
+                         stopifnot(length(value <- as.numeric(value)) == 1L)
+                         .Call(golden_newf, ptr(), value)
+                     },
+                     value      = function() .Call(golden_value, ptr()),
+                     xeval      = function() .Call(golden_xeval, ptr()),
+                     xpos       = function() .Call(golden_xpos, ptr())
+                     )
+            )
+
 setClass("merMod",
          representation(Gp      = "integer",
                         call    = "call",

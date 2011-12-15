@@ -111,14 +111,14 @@ namespace optimizer {
 	const VectorXd&    lb() const {return d_lb;}
 	const VectorXd&    ub() const {return d_ub;}
 	const VectorXd&  vals() const {return d_vals;}
-	const VectorXd&     x() const {return d_x;}
 	const VectorXd& xstep() const {return d_xstep;}
 	const VectorXd& xeval() const {return d_xeval;}
+	const VectorXd&  xpos() const {return d_x;}
 	Index              ih() const {return d_ih;}
 	Index              il() const {return d_il;}
 	Index           evals() const {return d_stop.ev();}
 
-	Scalar           minf() const {return d_minf;}
+	Scalar          value() const {return d_minf;}
 	nm_status        newf(const Scalar&);
     };
 
