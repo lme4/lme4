@@ -12,8 +12,7 @@
 #include "glmFamily.h"
 
 namespace lme4Eigen {
-    using Eigen::Map;
-    using Eigen::VectorXd;
+    typedef Eigen::Map<Eigen::VectorXd> MVec;
 
     using Rcpp::CharacterVector;
     using Rcpp::Environment;
@@ -24,25 +23,25 @@ namespace lme4Eigen {
 
     class lmResp {
     protected:
-	double                     d_wrss;
-	const Map<VectorXd>        d_y;
-	Map<VectorXd>              d_weights, d_offset, d_mu, d_sqrtXwt, d_sqrtrwt, d_wtres;
+	double            d_wrss;
+	const MVec        d_y;
+	MVec              d_weights, d_offset, d_mu, d_sqrtXwt, d_sqrtrwt, d_wtres;
     public:
 	lmResp(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
 
-	const Map<VectorXd>& sqrtXwt() const {return d_sqrtXwt;}
-	const Map<VectorXd>&      mu() const {return d_mu;}
-	const Map<VectorXd>&  offset() const {return d_offset;}
-	const Map<VectorXd>& sqrtrwt() const {return d_sqrtrwt;}
-	const Map<VectorXd>& weights() const {return d_weights;}
-	const Map<VectorXd>&   wtres() const {return d_wtres;}
-	const Map<VectorXd>&       y() const {return d_y;}
-	double                  wrss() const {return d_wrss;}
-	double              updateMu(const VectorXd&);
-	double             updateWts()       {return updateWrss();}
-	double            updateWrss();
-	void               setOffset(const VectorXd&);
-	void              setWeights(const VectorXd&);
+	const MVec&    sqrtXwt() const {return d_sqrtXwt;}
+	const MVec&         mu() const {return d_mu;}
+	const MVec&     offset() const {return d_offset;}
+	const MVec&    sqrtrwt() const {return d_sqrtrwt;}
+	const MVec&    weights() const {return d_weights;}
+	const MVec&      wtres() const {return d_wtres;}
+	const MVec&          y() const {return d_y;}
+	double            wrss() const {return d_wrss;}
+	double        updateMu(const Eigen::VectorXd&);
+	double       updateWts()       {return updateWrss();}
+	double      updateWrss();
+	void         setOffset(const Eigen::VectorXd&);
+	void        setWeights(const Eigen::VectorXd&);
     };
 
     class lmerResp : public lmResp {
@@ -51,37 +50,37 @@ namespace lme4Eigen {
     public:
 	lmerResp(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
 
-	double               Laplace(double,double,double)const;
-	int                     REML() const {return d_reml;}
-	void                 setReml(int);
+	double         Laplace(double,double,double)const;
+	int               REML() const {return d_reml;}
+	void           setReml(int);
     };
 	
     class glmResp : public lmResp {
     protected:
-	glmFamily       d_fam;
-	Map<VectorXd>   d_eta, d_n;
+	glmFamily  d_fam;
+	MVec       d_eta, d_n;
     public:
 	glmResp(Rcpp::List,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
 
-	VectorXd            devResid() const;
-	VectorXd               muEta() const;
-        VectorXd           sqrtWrkWt() const;
-	VectorXd            variance() const;
-	VectorXd           wrkResids() const;
-	VectorXd             wrkResp() const;
+	Eigen::VectorXd  devResid() const;
+	Eigen::VectorXd     muEta() const;
+        Eigen::VectorXd sqrtWrkWt() const;
+	Eigen::VectorXd  variance() const;
+	Eigen::VectorXd wrkResids() const;
+	Eigen::VectorXd   wrkResp() const;
 
-	const Map<VectorXd>&     eta() const {return d_eta;}
-	const Map<VectorXd>&       n() const {return d_n;}
+	const MVec&           eta() const {return d_eta;}
+	const MVec&             n() const {return d_n;}
 
-	const std::string&    family() const {return d_fam.fam();}
-	const std::string&      link() const {return d_fam.lnk();}
+	const std::string& family() const {return d_fam.fam();}
+	const std::string&   link() const {return d_fam.lnk();}
 
-	double               Laplace(double,double,double) const;
-	double                resDev() const;
-	double              updateMu(const VectorXd&);
-	double             updateWts();
+	double            Laplace(double,double,double) const;
+	double             resDev() const;
+	double           updateMu(const Eigen::VectorXd&);
+	double          updateWts();
 
-	void                    setN(const VectorXd&);
+	void                 setN(const Eigen::VectorXd&);
     };
 
     class nlsResp : public lmResp {
@@ -93,7 +92,7 @@ namespace lme4Eigen {
 	nlsResp(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,Language,Environment,CharacterVector);
 
 	double            Laplace(double, double, double) const;
-	double           updateMu(const VectorXd&);
+	double           updateMu(const Eigen::VectorXd&);
     };
 }
 

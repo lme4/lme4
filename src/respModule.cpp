@@ -8,6 +8,8 @@
 #include <cmath>
 
 namespace lme4Eigen {
+    using Eigen::VectorXd;
+
     using Rcpp::List;
     using Rcpp::NumericMatrix;
     using Rcpp::as;
@@ -16,7 +18,7 @@ namespace lme4Eigen {
     using std::string;
     using std::invalid_argument;
 
-    typedef Map<VectorXd>  MVec;
+    typedef Eigen::Map<VectorXd>  MVec;
 
     lmResp::lmResp(SEXP y, SEXP weights, SEXP offset, SEXP mu, SEXP sqrtXwt,
 		   SEXP sqrtrwt, SEXP wtres)
