@@ -70,19 +70,10 @@ namespace lme4Eigen {
 	    for(MSpMatrixd::InnerIterator rhsIt(d_Ut, j); rhsIt; ++rhsIt) {
 		Scalar                       y(rhsIt.value());
 		Index                        k(rhsIt.index());
-//		Rcpp::Rcout << "d_Ut row k = " << k << ", v = " << y;
-//		Rcpp::Rcout << ", Lambdat: col has " << d_Lambdat.innerNonZeros(k)
-//			    << " nonzeros" << std::endl;
 		MSpMatrixd::InnerIterator prdIt(d_LamtUt, j);
 		for (MSpMatrixd::InnerIterator lhsIt(d_Lambdat, k); lhsIt; ++lhsIt) {
 		    Index                    i = lhsIt.index();
-//		    Rcpp::Rcout << "lhsIt: i = " << i << ", v = " << lhsIt.value() << std::endl;
-//		    Rcpp::Rcout << "prdIt: i=" << prdIt.index() << std::endl;
-		    while (prdIt && prdIt.index() != i) {
-			++prdIt;
-//			if (!prdIt) Rcpp::Rcout << "End of product column" << std::endl;
-//			else Rcpp::Rcout << "i=" << prdIt.index() << std::endl;
-		    }
+		    while (prdIt && prdIt.index() != i) ++prdIt;
 		    if (!prdIt) throw runtime_error("logic error in updateLamtUt");
 		    prdIt.valueRef()          += lhsIt.value() * y;
 		}
