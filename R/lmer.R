@@ -1,3 +1,4 @@
+### FIXME: Should there be both a doFit and a devFunOnly argument?
 lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 		  control = list(), start = NULL,
 		  verbose = 0L, doFit = TRUE,
@@ -48,10 +49,11 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
     p <- ncol(X)
     if ((qrX <- qr(X))$rank < p)
 	stop(gettextf("rank of X = %d < ncol(X) = %d", qrX$rank, p))
-    pp <- do.call(merPredD$new, c(list(X=X, S=1L), reTrms[c("Zt","theta","Lambdat","Lind")]))
-    resp <- mkRespMod2(fr, if(REML) p else 0L)
+    rho <- new.env(parent=parent.env(environment()))
+    rho$pp <- do.call(merPredD$new, c(list(X=X, S=1L), reTrms[c("Zt","theta","Lambdat","Lind")]))
+    rho$resp <- mkRespMod2(fr, if(REML) p else 0L)
 
-    devfun <- mkdevfun(pp, resp, emptyenv())
+    devfun <- mkdevfun(rho, 0L)
     if (devFunOnly) return(devfun)
 					# one evaluation to ensure all values are set
     opt <- list(fval=devfun(reTrms$theta))
@@ -60,50 +62,42 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 	if (verbose) control$iprint <- as.integer(verbose)
 	opt <- bobyqa(reTrms$theta, devfun, reTrms$lower, control = control)
     }
-#    LL <- pp$Lambdat
-#    LL@x <- pp$theta[pp$Lind]
-#    stopifnot(validObject(LL))
-#    pp$Lambdat <- LL
-    sqrLenU <- pp$sqrL(1.)
-    wrss <- resp$wrss()
+    sqrLenU <- rho$pp$sqrL(1.)
+    wrss <- rho$resp$wrss()
     pwrss <- wrss + sqrLenU
     n <- nrow(fr)
-
-    dims <- c(N=n, n=n, nmp=n-p, nth=length(pp$theta), p=p, q=nrow(reTrms$Zt),
-	      nAGQ=NA_integer_, useSc=1L, reTrms=length(reTrms$cnms),
-	      spFe=0L, REML=resp$REML, GLMM=0L, NLMM=0L)
-    cmp <- c(ldL2=pp$ldL2(), ldRX2=pp$ldRX2(), wrss=wrss,
-	      ussq=sqrLenU, pwrss=pwrss,
-	     drsum=NA, dev=if(REML)NA else opt$fval, REML=if(REML)opt$fval else NA,
-	     sigmaML=sqrt(pwrss/n), sigmaREML=sqrt(pwrss/(n-p)))
-
+             
+    dims <- c(N=n, n=n, nmp=n-p, nth=length(rho$pp$theta), p=p, q=nrow(reTrms$Zt),
+              nAGQ=NA_integer_, useSc=1L, reTrms=length(reTrms$cnms),
+              spFe=0L, REML=rho$resp$REML, GLMM=0L, NLMM=0L)
+    cmp <- c(ldL2=rho$pp$ldL2(), ldRX2=rho$pp$ldRX2(), wrss=wrss,
+             ussq=sqrLenU, pwrss=pwrss,
+             drsum=NA, dev=if(REML)NA else opt$fval, REML=if(REML)opt$fval else NA,
+             sigmaML=sqrt(pwrss/n), sigmaREML=sqrt(pwrss/(n-p)))
+    
     new("lmerMod", call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
-	theta=pp$theta, beta=pp$delb, u=pp$delu, lower=reTrms$lower, Gp=reTrms$Gp,
-	devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=resp)
+        theta=rho$pp$theta, beta=rho$pp$delb, u=rho$pp$delu, lower=reTrms$lower,
+        Gp=reTrms$Gp, devcomp=list(cmp=cmp, dims=dims), pp=rho$pp, resp=rho$resp)
 }## { lmer }
 
-mkdevfun <- function(pp, resp, rho, nAGQ=1L) {
-    stopifnot(is.environment(rho), is(resp, "lmResp"))
-    if (is(resp, "lmerResp"))
-	return(function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(), theta))
-    if (is(resp, "glmResp")) {
-        if (nAGQ == 0L) {
-            ff <- function(theta)
-                .Call(lme4Eigen:::glmerLaplace, pp$ptr(), resp$ptr(), theta,
-                      u0, beta0, verbose, FALSE, tolPwrss)
-            environment(ff) <- rho      # hence need qualified name of glmerLaplace
-            return(ff)
-        }
-        if (nAGQ == 1L) {
-            ff <- function(pars)
-                .Call(lme4Eigen:::glmerLaplace, pp$ptr(), resp$ptr(), pars[dpars], u0,
-                      pars[-dpars], verbose, TRUE, tolPwrss)
-            environment(ff) <- rho
-            return(ff)
-        }
-        stop("code not yet written")
+mkdevfun <- function(rho, nAGQ=1L) {
+    stopifnot(is.environment(rho), is(rho$resp, "lmResp"))
+    ff <- NULL
+    if (is(rho$resp, "lmerResp"))
+	ff <- function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(), theta)
+    else if (is(rho$resp, "glmResp")) {
+        rho$glmerLaplace <- glmerLaplace
+        ff <- switch(nAGQ + 1L,
+                     function(theta)
+                     .Call(glmerLaplace, pp$ptr(), resp$ptr(), theta,
+                           u0, beta0, verbose, FALSE, tolPwrss),
+                     function(pars)
+                     .Call(glmerLaplace, pp$ptr(), resp$ptr(), pars[dpars], u0,
+                           pars[-dpars], verbose, TRUE, tolPwrss))
     }
-    stop("unknown response type: ", class(resp))
+    if (is.null(ff)) stop("code not yet written")
+    environment(ff) <- rho
+    ff
 }
 
 glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
@@ -160,70 +154,66 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     form[[3]] <- if(is.null(nb <- nobars(form[[3]]))) 1 else nb
     X <- model.matrix(form, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     p <- ncol(X)
-    pp <- do.call(merPredD$new, c(list(X=X, S=1L), reTrms[c("Zt","theta","Lambdat","Lind")]))
+    rho <- as.environment(list(verbose=verbose, tolPwrss=tolPwrss))
+    parent.env(rho) <- parent.frame()
+    rho$pp <- do.call(merPredD$new, c(list(X=X, S=1L), reTrms[c("Zt","theta","Lambdat","Lind")]))
 					# response module
-    resp <- mkRespMod2(fr, family=family)
+    rho$resp <- mkRespMod2(fr, family=family)
 					# initial step from working response
     if (compDev) {
-	.Call(glmerWrkIter, pp$ptr(), resp$ptr())
-	lapply(1:3, function(n).Call(glmerPwrssUpdate, pp$ptr(), resp$ptr(), verbose, FALSE, tolPwrss))
+	.Call(glmerWrkIter, rho$pp$ptr(), rho$resp$ptr())
+	lapply(1:3, function(n).Call(glmerPwrssUpdate, rho$pp$ptr(), rho$resp$ptr(), verbose, FALSE, tolPwrss))
     } else {
-        pp$updateXwts(resp$sqrtWrkWt())
-        pp$updateDecomp()
-        pp$updateRes(resp$wrkResp())
-        pp$solve()
-        resp$updateMu(pp$linPred(1))	# full increment
-        resp$updateWts()
-        pp$installPars(1)
-        lapply(1:3, function(n) pwrssUpdate(pp, resp, verbose, tol=tolPwrss))
+        rho$pp$updateXwts(rho$resp$sqrtWrkWt())
+        rho$pp$updateDecomp()
+        rho$pp$updateRes(rho$resp$wrkResp())
+        rho$pp$solve()
+        rho$resp$updateMu(rho$pp$linPred(1))	# full increment
+        rho$resp$updateWts()
+        rho$pp$installPars(1)
+        lapply(1:3, function(n) pwrssUpdate(rho$pp, rho$resp, verbose, tol=tolPwrss))
     }
 
-    u0 <- pp$u0
-    beta0 <- pp$beta0
+    rho$u0 <- rho$pp$u0
+    rho$beta0 <- rho$pp$beta0
 
-    opt <- list(fval=resp$Laplace(pp$ldL2(), pp$ldRX2(), pp$sqrL(0.)))
+    opt <- list(fval=rho$resp$Laplace(rho$pp$ldL2(), rho$pp$ldRX2(), rho$pp$sqrL(0.)))
 
-    if (doFit || devFunOnly) {			# optimize estimates
-        rho <- as.environment(list(u0=pp$u0, beta0=pp$beta0, pp=pp, resp=resp,
-                                   verbose=verbose, control=control, tolPwrss=tolPwrss))
+    if (doFit || devFunOnly) {			# create the deviance function
         parent.env(rho) <- parent.frame()
-        devfun <- mkdevfun(pp, resp, rho, 0L)
+        devfun <- mkdevfun(rho, 0L) # deviance as a function of theta only
         if (devFunOnly && !nAGQ) return(devfun)
 	control$iprint <- min(verbose, 3L)
-	opt <- bobyqa(pp$theta, devfun, lower=reTrms$lower, control=control)
-	if (nAGQ == 1L) {
-            rho$u0 <- pp$u0
-            rho$dpars <- seq_along(pp$theta)
+	opt <- bobyqa(rho$pp$theta, devfun, lower=reTrms$lower, control=control)
+        if (nAGQ > 0L) {
+            rho$u0 <- rho$pp$u0
+            rho$dpars <- seq_along(rho$pp$theta)
 	    if(!is.numeric(control$rhobeg)) control$rhobeg <- 0.0002
 	    if(!is.numeric(control$rhoend)) control$rhoend <- 2e-7
             rho$control <- control
-            devfunb <- mkdevfun(pp, resp, rho, 1L)
-            if (devFunOnly) return(devfunb)
-            opt <- bobyqa(c(pp$theta, pp$beta0), devfunb,
-                          lower=c(reTrms$lower, rep.int(-Inf, length(pp$beta0))),
+            devfun <- mkdevfun(rho, nAGQ)
+            if (devFunOnly) return(devfun)
+            opt <- bobyqa(c(rho$pp$theta, rho$pp$beta0), devfun,
+                          lower=c(reTrms$lower, rep.int(-Inf, length(rho$pp$beta0))),
                           control=control)
         }
     }
-#    LL <- pp$Lambdat
-#    LL@x <- pp$theta[pp$Lind]
-#    stopifnot(validObject(LL))
-#    pp$Lambdat <- LL
-    sqrLenU <- pp$sqrL(0.)
-    wrss <- resp$wrss()
+    sqrLenU <- rho$pp$sqrL(0.)
+    wrss <- rho$resp$wrss()
     pwrss <- wrss + sqrLenU
     n <- nrow(fr)
 
-    dims <- c(N=n, n=n, nmp=n-p, nth=length(pp$theta), p=p, q=nrow(reTrms$Zt),
+    dims <- c(N=n, n=n, nmp=n-p, nth=length(rho$pp$theta), p=p, q=nrow(reTrms$Zt),
 	      nAGQ=nAGQ, useSc=0L, reTrms=length(reTrms$cnms),
 	      spFe=0L, REML=0L, GLMM=1L, NLMM=0L)
-    cmp <- c(ldL2=pp$ldL2(), ldRX2=pp$ldRX2(), wrss=wrss,
+    cmp <- c(ldL2=rho$pp$ldL2(), ldRX2=rho$pp$ldRX2(), wrss=wrss,
              ussq=sqrLenU, pwrss=pwrss,
-	     drsum=resp$resDev(), dev=opt$fval, REML=NA,
+	     drsum=rho$resp$resDev(), dev=opt$fval, REML=NA,
 	     sigmaML=NA, sigmaREML=NA)
 
     new("glmerMod", call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
-        Gp=reTrms$Gp, 	theta=pp$theta, beta=pp$beta0, u=pp$u0,
-        lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=resp)
+        Gp=reTrms$Gp, 	theta=rho$pp$theta, beta=rho$pp$beta0, u=rho$pp$u0,
+        lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims), pp=rho$pp, resp=rho$resp)
 }## {glmer}
 
 ##' Create an lmerResp, glmResp or nlsResp instance
@@ -287,7 +277,6 @@ mkRespMod2 <- function(fr, REML=NA_integer_, family = NULL, nlenv = NULL, nlmod 
                  family$linkfun(get("mustart", rho)))
     ans
 }
-
 
 ###' Create Z, Lambda, Lind, etc.
 ##'
