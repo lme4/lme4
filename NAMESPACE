@@ -84,8 +84,7 @@ importMethodsFrom("Matrix"
 # exportPattern("^[^\\.]")
 
 # and the rest (S3 generics; regular functions):
-export(
-#       GHQ,
+export(GHrule,
        VarCorr,
        bootMer,
        devcomp,
@@ -95,6 +94,7 @@ export(
        glmFamily,
        glmResp,
        glmer,
+       golden,
        isNested,
        lmList,
        lmResp,       
@@ -115,6 +115,7 @@ exportClasses(
               glmerMod,
               glmFamily,
               glmResp,
+              golden,
  	      lmerMod,
               lmerResp,
  	      lmList,
