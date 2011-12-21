@@ -9,9 +9,10 @@
 #include "optimizer.h"
 
 extern "C" {
-    using     Eigen::MatrixXd;
-    using     Eigen::VectorXd;
-    typedef   Eigen::Map<VectorXd>    MVec;
+    using     Eigen::ArrayXd;
+    typedef   Eigen::Map<Eigen::MatrixXd>     MMat;
+    typedef   Eigen::Map<Eigen::VectorXd>     MVec;
+    typedef   Eigen::Map<Eigen::VectorXi>    MiVec;
 
     using      Rcpp::CharacterVector;
     using      Rcpp::Environment;
@@ -31,6 +32,9 @@ extern "C" {
     using lme4Eigen::lmerResp;
     using lme4Eigen::merPredD;
     using lme4Eigen::nlsResp;
+
+    using optimizer::Golden;
+    using optimizer::Nelder_Mead;
 
     using      std::runtime_error;
 
@@ -53,7 +57,7 @@ extern "C" {
 
     SEXP glm_setN(SEXP ptr_, SEXP n) {
 	BEGIN_RCPP;
-	XPtr<glmResp>(ptr_)->setN(as<VectorXd>(n));
+	XPtr<glmResp>(ptr_)->setN(as<MVec>(n));
 	END_RCPP;
     }
 
@@ -168,11 +172,11 @@ extern "C" {
 
     SEXP glmFamily_variance(SEXP ptr, SEXP mu) {
 	BEGIN_RCPP;
-	return wrap(XPtr<glmFamily>(ptr)->variance(as<VectorXd>(mu)));
+	return wrap(XPtr<glmFamily>(ptr)->variance(as<MVec>(mu)));
 	END_RCPP;
     }
 
-    inline double pwrss(lmResp *rp, merPredD *pp, double fac) {
+    static inline double pwrss(lmResp *rp, merPredD *pp, double fac) {
 	return rp->wrss() + (fac ? pp->sqrL(fac) : pp->u0().squaredNorm());
     }
 
@@ -193,7 +197,7 @@ extern "C" {
     }
 
 #define MAXITER 30
-    void pwrssUpdate(glmResp *rp, merPredD *pp, int verb, bool uOnly, double tol) {
+    static void pwrssUpdate(glmResp *rp, merPredD *pp, int verb, bool uOnly, double tol) {
 	bool cvgd(false);
 	for (int it=0; it < MAXITER; ++it) {
 	    rp->updateMu(pp->linPred(0.));
@@ -210,10 +214,58 @@ extern "C" {
 	if (!cvgd) throw runtime_error("pwrss failed to converge in 30 iterations");
     }
 
+    static ArrayXd devcCol(const MiVec& fac, const ArrayXd& u, const ArrayXd& devRes) {
+	ArrayXd  ans(u * u);
+	for (int i = 0; i < devRes.size(); ++i) ans[fac[i] - 1] += devRes[i];
+	return ans;
+    }
+
+    static double sqrt2pi = std::sqrt(2. * PI);
+
+    SEXP glmerAGQ(SEXP pp_, SEXP rp_, SEXP fac_, SEXP GQmat_, SEXP tol_) {
+	BEGIN_RCPP;
+	
+	XPtr<glmResp>     rp(rp_);
+	XPtr<merPredD>    pp(pp_);
+	const MiVec      fac(as<MiVec>(fac_));
+	if (fac.size() != rp->mu().size())
+	    throw std::invalid_argument("size of fac must match dimension of response vector");
+
+	pwrssUpdate(rp, pp, 0, true, ::Rf_asReal(tol_)); // should be a no-op
+	const ArrayXd     u0(pp->u0());
+	const ArrayXd  devc0(devcCol(fac, u0, rp->devResid()));
+
+	const unsigned int q(u0.size());
+	if (pp->L().factor()->nzmax !=  q)
+	    throw std::invalid_argument("AGQ only defined for a single scalar random-effects term");
+	const ArrayXd     sd(Eigen::Map<ArrayXd>((double*)pp->L().factor()->x, q).inverse());
+
+	const MMat     GQmat(as<MMat>(GQmat_));
+	ArrayXd         mult(q);
+
+	mult.setZero();
+	for (int i = 0; i < GQmat.rows(); ++i) {
+	    double            zknot(GQmat(i, 0));
+	    if (zknot == 0)    mult += ArrayXd::Constant(q, GQmat(i, 1));
+	    else {
+		const ArrayXd   u0i(u0 + zknot * sd);
+		pp->setU0(u0i);
+		rp->updateMu(pp->linPred(0.));
+		mult += (-0.5 * (devcCol(fac, u0i, rp->devResid()) - devc0) - GQmat(i, 2)).exp() *
+		    GQmat(i, 1)/sqrt2pi;
+	    }
+	}
+	pp->setU0(u0);		// restore settings from pwrssUpdate;
+	rp->updateMu(pp->linPred(0.));
+	return ::Rf_ScalarReal(devc0.sum() + pp->ldL2() - 2 * std::log(mult.prod()));
+	END_RCPP;
+    }
+
     SEXP glmerPwrssUpdate(SEXP pp_, SEXP rp_, SEXP verb_, SEXP uOnly_, SEXP tol) {
 	BEGIN_RCPP;
-	pwrssUpdate(XPtr<glmResp>(rp_), XPtr<merPredD>(pp_),
-		    ::Rf_asInteger(verb_), ::Rf_asLogical(uOnly_), ::Rf_asReal(tol));
+	XPtr<glmResp> rp(rp_);
+	XPtr<merPredD> pp(pp_);
+	pwrssUpdate(rp, pp, ::Rf_asInteger(verb_), ::Rf_asLogical(uOnly_), ::Rf_asReal(tol));
 	END_RCPP;
     }
 
@@ -222,7 +274,7 @@ extern "C" {
 
 	XPtr<glmResp>    rp(rp_);
 	XPtr<merPredD>   pp(pp_);
-	const VectorXd   wt(rp->sqrtWrkWt());
+	const Eigen::VectorXd   wt(rp->sqrtWrkWt());
 	pp->updateXwts(wt);
 	pp->updateDecomp();
 	pp->updateRes(rp->wrkResp());
@@ -243,8 +295,8 @@ extern "C" {
 	XPtr<merPredD>    pp(pp_);
 
 	pp->setTheta(as<MVec>(theta_));
-	pp->setU0(as<VectorXd>(u0_));
-	pp->setBeta0(as<VectorXd>(beta0_));
+	pp->setU0(as<MVec>(u0_));
+	pp->setBeta0(as<MVec>(beta0_));
 	pwrssUpdate(rp, pp, ::Rf_asInteger(verbose_), ::Rf_asLogical(uOnly_),
 		    ::Rf_asReal(tol_));
 	return ::Rf_ScalarReal(rp->Laplace(pp->ldL2(), pp->ldRX2(), pp->sqrL(1.)));
@@ -252,6 +304,37 @@ extern "C" {
 	END_RCPP;
     }
 
+    SEXP golden_Create(SEXP lower_, SEXP upper_) {
+	BEGIN_RCPP;
+	Golden *ans = new Golden(::Rf_asReal(lower_), ::Rf_asReal(upper_));
+	return wrap(XPtr<Golden>(ans, true));
+	END_RCPP;
+    }
+
+    SEXP golden_newf(SEXP ptr_, SEXP f_) {
+	BEGIN_RCPP;
+	XPtr<Golden>(ptr_)->newf(::Rf_asReal(f_));
+	END_RCPP;
+    }
+	
+    SEXP golden_xeval(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<Golden>(ptr_)->xeval());
+	END_RCPP;
+    }
+
+    SEXP golden_value(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<Golden>(ptr_)->value());
+	END_RCPP;
+    }
+
+    SEXP golden_xpos(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<Golden>(ptr_)->xpos());
+	END_RCPP;
+    }
+	
     SEXP isNullExtPtr(SEXP Ptr) {
 	BEGIN_RCPP;
 	return ::Rf_ScalarLogical(XPtr<lmResp>(Ptr) == (lmResp*)NULL);
@@ -270,13 +353,13 @@ extern "C" {
 
     SEXP lm_setOffset(SEXP ptr_, SEXP offset) {
 	BEGIN_RCPP;
-	XPtr<lmResp>(ptr_)->setOffset(as<VectorXd>(offset));
+	XPtr<lmResp>(ptr_)->setOffset(as<MVec>(offset));
 	END_RCPP;
     }
 
     SEXP lm_setWeights(SEXP ptr_, SEXP weights) {
 	BEGIN_RCPP;
-	XPtr<lmResp>(ptr_)->setWeights(as<VectorXd>(weights));
+	XPtr<lmResp>(ptr_)->setWeights(as<MVec>(weights));
 	END_RCPP;
     }
 
@@ -318,7 +401,7 @@ extern "C" {
 	END_RCPP;
     }
 
-    static double lmer_dev(XPtr<merPredD> ppt, XPtr<lmerResp> rpt, const VectorXd& theta) {
+    static double lmer_dev(XPtr<merPredD> ppt, XPtr<lmerResp> rpt, const Eigen::VectorXd& theta) {
 	ppt->setTheta(theta);
 	ppt->updateDecomp();
         rpt->updateMu(ppt->linPred(0.));
@@ -340,7 +423,7 @@ extern "C" {
 	BEGIN_RCPP;
 	XPtr<lmerResp>     rpt(rptr_);
 	XPtr<merPredD>     ppt(pptr_);
-	VectorXd            th(1);
+	Eigen::VectorXd     th(1);
 	optimizer::Golden gold(::Rf_asReal(lower_), ::Rf_asReal(upper_));
 	for (int i = 0; i < 30; ++i) {
 	    th[0] = gold.xeval();
@@ -506,6 +589,44 @@ extern "C" {
 	END_RCPP;
     }
 
+    SEXP NelderMead_Create(SEXP lb_, SEXP ub_, SEXP xstep0_, SEXP x_, SEXP xtol_) {
+	BEGIN_RCPP;
+	MVec  lb(as<MVec>(lb_)), ub(as<MVec>(ub_)), xstep0(as<MVec>(xstep0_)), x(as<MVec>(x_)), xtol(as<MVec>(xtol_));
+	Rcpp::Rcout << "lb: "     << lb.adjoint()     << std::endl;
+	Rcpp::Rcout << "ub: "     << ub.adjoint()     << std::endl;
+	Rcpp::Rcout << "xstep0: " << xstep0.adjoint() << std::endl;
+	Rcpp::Rcout << "x: "      << x.adjoint()      << std::endl;
+	Rcpp::Rcout << "xtol: "   << xtol.adjoint()   << std::endl;
+	Nelder_Mead *ans =
+	    new Nelder_Mead(lb, ub, xstep0, x, optimizer::nl_stop(as<MVec>(xtol_)));
+	return wrap(XPtr<Nelder_Mead>(ans, true));
+	END_RCPP;
+    }
+
+    SEXP NelderMead_newf(SEXP ptr_, SEXP f_) {
+	BEGIN_RCPP;
+	XPtr<Nelder_Mead>(ptr_)->newf(::Rf_asReal(f_));
+	END_RCPP;
+    }
+	
+    SEXP NelderMead_xeval(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<Nelder_Mead>(ptr_)->xeval());
+	END_RCPP;
+    }
+
+    SEXP NelderMead_value(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<Nelder_Mead>(ptr_)->value());
+	END_RCPP;
+    }
+
+    SEXP NelderMead_xpos(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<Nelder_Mead>(ptr_)->xpos());
+	END_RCPP;
+    }
+
     // nonlinear model response (also the base class for other response classes)
 
     SEXP nls_Create(SEXP y, SEXP weights, SEXP offset, SEXP mu, SEXP sqrtXwt,
@@ -531,29 +652,6 @@ extern "C" {
     SEXP nls_updateMu(SEXP ptr_, SEXP gamma) {
 	BEGIN_RCPP;
 	return ::Rf_ScalarReal(XPtr<nlsResp>(ptr_)->updateMu(as<MVec>(gamma)));
-	END_RCPP;
-    }
-
-    static double quad(const VectorXd& x) {
-	return (x - VectorXd::Constant(x.size(), 0.5)).squaredNorm();
-    }
-
-    SEXP test_NMopt() {
-	BEGIN_RCPP;
-	VectorXd     x(VectorXd::Constant(3,1));
-	VectorXd    ub(VectorXd::Constant(3, std::numeric_limits<double>::infinity()));
-	VectorXd    lb(-ub);
-	VectorXd xstep(VectorXd::Constant(3, 0.05));
-	Rcpp::Rcout << "x: " << x.adjoint() << std::endl;
-	Rcpp::Rcout << "lb: " << lb.adjoint() << std::endl;
-	Rcpp::Rcout << "ub: " << ub.adjoint() << std::endl;
-	Rcpp::Rcout << "xstep: " << xstep.adjoint() << std::endl;
-
-	optimizer::Nelder_Mead opt(lb, ub, xstep, x, 
-				   optimizer::nl_stop(VectorXd::Constant(3, 1e-8)));
-	optimizer::nm_status stat;
-	while ((stat = opt.newf(quad(opt.xeval()))) == optimizer::nm_active) {};
-	Rcpp::Rcout << "values: " << opt.vals().adjoint() << std::endl;
 	END_RCPP;
     }
 }
@@ -592,9 +690,16 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(glmFamily_muEta, 2),
     CALLDEF(glmFamily_variance, 2),
 
+    CALLDEF(glmerAGQ, 5),
     CALLDEF(glmerPwrssUpdate, 5),
     CALLDEF(glmerWrkIter, 2),
     CALLDEF(glmerLaplace, 8),
+
+    CALLDEF(golden_Create, 2),
+    CALLDEF(golden_newf, 2),
+    CALLDEF(golden_value, 1),
+    CALLDEF(golden_xeval, 1),
+    CALLDEF(golden_xpos, 1),
 
     CALLDEF(isNullExtPtr, 1),
 
@@ -643,12 +748,18 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(merPredDupdateRes, 2),
     CALLDEF(merPredDupdateXwts, 2),
 
+    CALLDEF(NelderMead_Create, 5),
+    CALLDEF(NelderMead_newf, 2),
+    CALLDEF(NelderMead_value, 1),
+    CALLDEF(NelderMead_xeval, 1),
+    CALLDEF(NelderMead_xpos, 1),
+
     CALLDEF(nls_Create, 10),	// generate external pointer
 
     CALLDEF(nls_Laplace, 4),	// methods
     CALLDEF(nls_updateMu, 2),
 
-    CALLDEF(test_NMopt, 0),
+//    CALLDEF(test_NMopt, 0),
     
     {NULL, NULL, 0}
 };
