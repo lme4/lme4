@@ -222,7 +222,8 @@ extern "C" {
 
     static double sqrt2pi = std::sqrt(2. * PI);
 
-    SEXP glmerAGQ(SEXP pp_, SEXP rp_, SEXP fac_, SEXP GQmat_, SEXP tol_) {
+    SEXP glmerAGQ(SEXP pp_, SEXP rp_, SEXP fac_, SEXP GQmat_, SEXP theta_,
+		  SEXP u0_, SEXP beta0_, SEXP tol_) {
 	BEGIN_RCPP;
 	
 	XPtr<glmResp>     rp(rp_);
@@ -231,6 +232,9 @@ extern "C" {
 	if (fac.size() != rp->mu().size())
 	    throw std::invalid_argument("size of fac must match dimension of response vector");
 
+	pp->setTheta(as<MVec>(theta_));
+	pp->setU0(as<MVec>(u0_));
+	pp->setBeta0(as<MVec>(beta0_));
 	pwrssUpdate(rp, pp, 0, true, ::Rf_asReal(tol_)); // should be a no-op
 	const ArrayXd     u0(pp->u0());
 	const ArrayXd  devc0(devcCol(fac, u0, rp->devResid()));
@@ -690,7 +694,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(glmFamily_muEta, 2),
     CALLDEF(glmFamily_variance, 2),
 
-    CALLDEF(glmerAGQ, 5),
+    CALLDEF(glmerAGQ, 8),
     CALLDEF(glmerPwrssUpdate, 5),
     CALLDEF(glmerWrkIter, 2),
     CALLDEF(glmerLaplace, 8),

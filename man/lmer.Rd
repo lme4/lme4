@@ -13,16 +13,15 @@
 \usage{
 lmer(formula, data, REML = TRUE, sparseX = FALSE,
      control = list(), start = NULL, verbose = 0L,
-     doFit = TRUE, %compDev = TRUE, _support too - FIXME? _
-     subset, weights,
-     na.action, offset, contrasts = NULL,
-     devFunOnly=0L,
+     %doFit = TRUE, %compDev = TRUE, _support too - FIXME? _
+     subset, weights, na.action, offset, contrasts = NULL,
+     devFunOnly = FALSE,
      \dots)
 
 glmer(formula, data, family = gaussian, sparseX = FALSE,
       control = list(), start = NULL, verbose = 0, nAGQ = 1,
-      doFit = TRUE, compDev = TRUE, subset, weights, na.action, offset,
-      contrasts = NULL, mustart, etastart, devFunOnly = 0L,
+      compDev = TRUE, subset, weights, na.action, offset,
+      contrasts = NULL, mustart, etastart, devFunOnly = FALSE,
       tolPwrss = 1e-06, \dots)
 
 nlmer(formula, data, family = gaussian, start = NULL,
@@ -66,11 +65,6 @@ nlmer(formula, data, family = gaussian, start = NULL,
     starting value of \code{theta}.  In \code{nlmer} a numeric
       \code{start} argument is used as the starting values of the
       \code{fixef} slot.}
-  \item{doFit}{logical scalar. When \code{doFit = FALSE} the model is
-    not fit but instead a structure with the model matrices for the
-    random-effects terms is returned, so they can be modified for
-    special model forms. When \code{doFit = TRUE}, the default, the
-    model is fit immediately.}
   \item{compDev}{logical - should compiled code be used for the deviance
     evaluation during the optimization of the parameters estimates?}
   \item{subset, weights, na.action, offset, contrasts}{further model
@@ -84,7 +78,7 @@ nlmer(formula, data, family = gaussian, start = NULL,
     \code{> 1} verbose output is generated during the individual PIRLS
     steps.}
   \item{devFunOnly}{logical - return only the deviance evaluation
-    function - useful mainly for debugging.}% but MM thinks we want to keep.
+    function - useful mainly for debugging.}% but MM thinks we want to keep; DB agrees
   \item{tolPwrss}{numeric scalar - the tolerance for declaring
       convergence in the penalized weighted residual sum-of-squares
       step.  Defaults to 1e-06.}

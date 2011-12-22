@@ -1,9 +1,8 @@
 ### FIXME: Should there be both a doFit and a devFunOnly argument?
 lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 		  control = list(), start = NULL,
-		  verbose = 0L, doFit = TRUE,
-		  subset, weights, na.action, offset,
-		  contrasts = NULL, devFunOnly=0L, ...)
+		  verbose = 0L, subset, weights, na.action, offset,
+		  contrasts = NULL, devFunOnly=FALSE, ...)
 {
     if (sparseX) warning("sparseX = TRUE has no effect at present")
     mf <- mc <- match.call()
@@ -54,14 +53,11 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
     rho$resp <- mkRespMod2(fr, if(REML) p else 0L)
 
     devfun <- mkdevfun(rho, 0L)
-    if (devFunOnly) return(devfun)
-					# one evaluation to ensure all values are set
-    opt <- list(fval=devfun(reTrms$theta))
+    devfun(reTrms$theta) # one evaluation to ensure all values are set
 
-    if (doFit) {			# optimize estimates
-	if (verbose) control$iprint <- as.integer(verbose)
-	opt <- bobyqa(reTrms$theta, devfun, reTrms$lower, control = control)
-    }
+    if (devFunOnly) return(devfun)
+    if (verbose) control$iprint <- as.integer(verbose)
+    opt <- bobyqa(reTrms$theta, devfun, reTrms$lower, control = control)
     sqrLenU <- rho$pp$sqrL(1.)
     wrss <- rho$resp$wrss()
     pwrss <- wrss + sqrLenU
@@ -86,14 +82,22 @@ mkdevfun <- function(rho, nAGQ=1L) {
     if (is(rho$resp, "lmerResp"))
 	ff <- function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(), theta)
     else if (is(rho$resp, "glmResp")) {
-        rho$glmerLaplace <- glmerLaplace
-        ff <- switch(nAGQ + 1L,
-                     function(theta)
-                     .Call(glmerLaplace, pp$ptr(), resp$ptr(), theta,
-                           u0, beta0, verbose, FALSE, tolPwrss),
-                     function(pars)
-                     .Call(glmerLaplace, pp$ptr(), resp$ptr(), pars[dpars], u0,
-                           pars[-dpars], verbose, TRUE, tolPwrss))
+        if (nAGQ < 2L) {
+            rho$glmerLaplace <- glmerLaplace
+            ff <- switch(nAGQ + 1L,
+                         function(theta)
+                         .Call(glmerLaplace, pp$ptr(), resp$ptr(), theta,
+                               u0, beta0, verbose, FALSE, tolPwrss),
+                         function(pars)
+                         .Call(glmerLaplace, pp$ptr(), resp$ptr(), pars[dpars], u0,
+                               pars[-dpars], verbose, TRUE, tolPwrss))
+        } else {
+            rho$glmerAGQ <- glmerAGQ
+            rho$GQmat <- GHrule(nAGQ)
+            ff <- function(pars)
+                .Call(glmerAGQ, pp$ptr(), resp$ptr(), fac, GQmat, pars[dpars],
+                      u0, pars[-dpars], tolPwrss)
+        }
     }
     if (is.null(ff)) stop("code not yet written")
     environment(ff) <- rho
@@ -102,8 +106,8 @@ mkdevfun <- function(rho, nAGQ=1L) {
 
 glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
                   control = list(), start = NULL, verbose = 0L, nAGQ = 1L,
-                  doFit = TRUE, compDev=TRUE, subset, weights, na.action, offset,
-                  contrasts = NULL, mustart, etastart, devFunOnly = 0L,
+                  compDev=TRUE, subset, weights, na.action, offset,
+                  contrasts = NULL, mustart, etastart, devFunOnly = FALSE,
                   tolPwrss = 1e-10, ...)
 {
     verbose <- as.integer(verbose)
@@ -133,9 +137,12 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     if(is.function(family)) family <- family()
     if (family$family %in% c("quasibinomial", "quasipoisson", "quasi"))
 	stop('"quasi" families cannot be used in glmer')
-    nAGQ <- as.integer(nAGQ)[1]
-    if (nAGQ > 1L) warning("nAGQ > 1 has not been implemented, using Laplace")
-    stopifnot(length(formula <- as.formula(formula)) == 3)
+    
+    if (nAGQ < 0L || nAGQ > 25L) warning("nAGQ must be in the range [0, 25]")
+    stopifnot(length(nAGQ <- as.integer(nAGQ)) == 1L,
+              nAGQ >= 0L,
+              nAGQ <= 25L,
+              length(formula <- as.formula(formula)) == 3)
     if (missing(data)) data <- environment(formula)
 					# evaluate and install the model frame :
     m <- match(c("data", "subset", "weights", "na.action", "offset",
@@ -176,27 +183,29 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 
     rho$u0 <- rho$pp$u0
     rho$beta0 <- rho$pp$beta0
+    rho$lower <- reTrms$lower
 
-    opt <- list(fval=rho$resp$Laplace(rho$pp$ldL2(), rho$pp$ldRX2(), rho$pp$sqrL(0.)))
-
-    if (doFit || devFunOnly) {			# create the deviance function
-        parent.env(rho) <- parent.frame()
-        devfun <- mkdevfun(rho, 0L) # deviance as a function of theta only
-        if (devFunOnly && !nAGQ) return(devfun)
-	control$iprint <- min(verbose, 3L)
-	opt <- bobyqa(rho$pp$theta, devfun, lower=reTrms$lower, control=control)
-        if (nAGQ > 0L) {
-            rho$u0 <- rho$pp$u0
-            rho$dpars <- seq_along(rho$pp$theta)
-	    if(!is.numeric(control$rhobeg)) control$rhobeg <- 0.0002
-	    if(!is.numeric(control$rhoend)) control$rhoend <- 2e-7
-            rho$control <- control
-            devfun <- mkdevfun(rho, nAGQ)
-            if (devFunOnly) return(devfun)
-            opt <- bobyqa(c(rho$pp$theta, rho$pp$beta0), devfun,
-                          lower=c(reTrms$lower, rep.int(-Inf, length(rho$pp$beta0))),
-                          control=control)
+    parent.env(rho) <- parent.frame()
+    devfun <- mkdevfun(rho, 0L) # deviance as a function of theta only
+    if (devFunOnly && !nAGQ) return(devfun)
+    control$iprint <- min(verbose, 3L)
+    opt <- bobyqa(rho$pp$theta, devfun, rho$lower, control=control)
+    if (nAGQ > 0L) {
+        rho$lower <- c(rho$lower, rep.int(-Inf, length(rho$beta0)))
+        rho$u0    <- rho$pp$u0
+        rho$beta0 <- rho$pp$beta0
+        rho$dpars <- seq_along(rho$pp$theta)
+        if (nAGQ > 1L) {
+            if (length(reTrms$flist) != 1L || length(reTrms$cnms[[1]]) != 1L)
+                stop("nAGQ > 1 is only available for models with a single, scalar random-effects term")
+            rho$fac <- reTrms$flist[[1]]
         }
+        if(!is.numeric(control$rhobeg)) control$rhobeg <- 0.0002
+        if(!is.numeric(control$rhoend)) control$rhoend <- 2e-7
+        rho$control <- control
+        devfun <- mkdevfun(rho, nAGQ)
+        if (devFunOnly) return(devfun)
+        opt <- bobyqa(c(rho$pp$theta, rho$beta0), devfun, rho$lower, control=control)
     }
     sqrLenU <- rho$pp$sqrL(0.)
     wrss <- rho$resp$wrss()
