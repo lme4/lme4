@@ -85,6 +85,7 @@ importMethodsFrom("Matrix"
 
 # and the rest (S3 generics; regular functions):
 export(GHrule,
+       NelderMead,
        VarCorr,
        bootMer,
        devcomp,
@@ -111,7 +112,7 @@ export(GHrule,
        subbars
        )
 
-exportClasses(
+exportClasses(NelderMead,
               glmerMod,
               glmFamily,
               glmResp,

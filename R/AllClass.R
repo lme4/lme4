@@ -457,6 +457,52 @@ golden <-
                      )
             )
 
+NelderMead <-
+    setRefClass("NelderMead", # Reverse communication implementation of Nelder-Mead simplex optimizer
+                fields =
+                list(
+                     Ptr     = "externalptr",
+                     lowerbd = "numeric",
+                     upperbd = "numeric",
+                     xstep   = "numeric",
+                     xtol    = "numeric"
+                     ),
+                methods =
+                list(
+                     initialize = function(lower, upper, xst, x0, xt, ...) {
+                         stopifnot((n <- length(lower <- as.numeric(lower))) > 0L,
+                                   length(upper <- as.numeric(upper)) == n,
+                                   all(lower < upper),
+                                   length(xst <- as.numeric(xst)) == n,
+                                   all(xst != 0),
+                                   length(x0 <- as.numeric(x0)) == n,
+                                   all(x0 >= lower),
+                                   all(x0 <= upper),
+                                   all(is.finite(x0)),
+                                   length(xt <- as.numeric(xt)) == n,
+                                   all(xt > 0))
+                         lowerbd <<- lower
+                         upperbd <<- upper
+                         xstep   <<- xst
+                         xtol    <<- xt
+                         Ptr <<- .Call(NelderMead_Create, lowerbd, upperbd, xstep, x0, xtol)
+                     },
+                     ptr        =  function() {
+                         if (length(lowerbd)) 
+                             if (.Call(isNullExtPtr, Ptr))
+                                 Ptr <<- .Call(NelderMead_Create, lowerbd, upperbd, xstep, x0, xtol)
+                         Ptr
+                     },
+                     newf       = function(value) {
+                         stopifnot(length(value <- as.numeric(value)) == 1L)
+                         .Call(NelderMead_newf, ptr(), value)
+                     },
+                     value      = function() .Call(NelderMead_value, ptr()),
+                     xeval      = function() .Call(NelderMead_xeval, ptr()),
+                     xpos       = function() .Call(NelderMead_xpos, ptr())
+                     )
+            )
+
 setClass("merMod",
          representation(Gp      = "integer",
                         call    = "call",

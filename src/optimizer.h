@@ -102,6 +102,7 @@ namespace optimizer {
 	nm_status        d_stat;
 	nm_stage        d_stage;
 	nl_stop          d_stop;
+	Index            d_verb; /**< verbosity, if > 0 results are displayed every d_verb evaluations */
     public:
 	Nelder_Mead(const VectorXd&, const VectorXd&, const VectorXd&, const VectorXd&,
 		    const nl_stop&);

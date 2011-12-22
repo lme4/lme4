@@ -55,7 +55,8 @@ namespace optimizer {
 	  d_xeval( x),
 	  d_minf(  std::numeric_limits<Scalar>::infinity()),
 	  d_stage( nm_restart),
-	  d_stop(  stp)
+	  d_stop(  stp),
+	  d_verb(  10)
     {
 	if (!d_n || d_lb.size() != d_n ||
 	    d_ub.size() != d_n || d_xstep.size() != d_n)
@@ -95,9 +96,9 @@ namespace optimizer {
  * @return status
  */
     nm_status Nelder_Mead::newf(const Scalar& f) {
-	Rcpp::Rcout << "f = " << f
-		    << " at " << d_xeval.adjoint() << std::endl;
 	d_stop.incrEvals();
+	if (d_verb > 0 && (d_stop.ev() % d_verb) == 0)
+	    Rcpp::Rcout << "f = " << value() << " at " << d_x.adjoint() << std::endl;
 	if (d_stop.forced()) return nm_forced;
 	if (f < d_minf) {
 	    d_minf = f;
@@ -142,44 +143,45 @@ namespace optimizer {
     nm_status Nelder_Mead::restart(const Scalar& f) {
 	d_fl = d_vals.minCoeff(&d_il);
 	d_fh = d_vals.maxCoeff(&d_ih);
-	Rcpp::Rcout << "restart: neval = " << d_stop.ev()
-		    << ", d_fl = " << d_fl
-		    << ", d_fh = " << d_fh
-		    << ", d_il = " << d_il
-		    << ", d_ih = " << d_ih << std::endl;
+	// Rcpp::Rcout << "restart: neval = " << d_stop.ev()
+	// 	    << ", d_fl = " << d_fl
+	// 	    << ", d_fh = " << d_fh
+	// 	    << ", d_il = " << d_il
+	// 	    << ", d_ih = " << d_ih << std::endl;
 	d_c = (d_pts.rowwise().sum() - d_pts.col(d_ih)) / d_n; // compute centroid
-	Rcpp::Rcout << "d_c: " << d_c.adjoint() << std::endl;
+	// Rcpp::Rcout << "centroid: " << d_c.adjoint() << std::endl;
 	
 	// Check if the simplex has gotten to be too small.  First
         // calculate the coefficient-wise maximum abs deviation for
 	// the centroid.
 	d_xcur = (d_pts.colwise() - d_c).array().abs().rowwise().maxCoeff();
-	if (d_stop.x(VectorXd::Zero(d_n), d_xcur)) return nm_xcvg;
+	// Rcpp::Rcout << "Radius: " << d_xcur.adjoint() << std::endl;
+	if (d_stop.x(VectorXd::Constant(d_n, 0.), d_xcur)) return nm_xcvg;
 
 	if (!reflectpt(d_xcur, d_c, alpha, d_pts.col(d_ih))) return nm_xcvg;
-	Rcpp::Rcout << "d_xcur (after reflectpt): " << d_xcur.adjoint() << std::endl;
+	// Rcpp::Rcout << "d_xcur (after reflectpt): " << d_xcur.adjoint() << std::endl;
 	d_xeval = d_xcur;
 	d_stage = nm_postreflect;
 	return nm_active;
     }
 
     nm_status Nelder_Mead::postreflect(const Scalar& f) {
-	Rcpp::Rcout << "postreflect: ";
+	// Rcpp::Rcout << "postreflect: ";
 	if (f < d_fl) {	// new best point, try to expand
 	    if (!reflectpt(d_xeval, d_c, gamm, d_pts.col(d_ih))) return nm_xcvg;
-	    Rcpp::Rcout << "New best point" << std::endl;
+	    // Rcpp::Rcout << "New best point" << std::endl;
 	    d_stage = nm_postexpand;
 	    f_old = f;
 	    return nm_active;
 	}
 	if (f < d_fh) {		// accept new point
-	    Rcpp::Rcout << "Accept new point" << std::endl;
+	    // Rcpp::Rcout << "Accept new point" << std::endl;
 	    d_vals[d_ih] = f;
 	    d_pts.col(d_ih) = d_xeval;
 	    return restart(f);
 	}
 				// new worst point, contract
-	Rcpp::Rcout << "New worst point" << std::endl;
+	// Rcpp::Rcout << "New worst point" << std::endl;
 	if (!reflectpt(d_xcur, d_c, d_fh <= f ? -beta : beta, d_pts.col(d_ih))) return nm_xcvg;
 	f_old = f;
 	d_xeval = d_xcur;
@@ -189,11 +191,11 @@ namespace optimizer {
 
     nm_status Nelder_Mead::postexpand(const Scalar& f) {
 	if (f < d_vals[d_ih]) { // expanding improved
-	    Rcpp::Rcout << "successful expand" << std::endl;
+	    // Rcpp::Rcout << "successful expand" << std::endl;
 	    d_pts.col(d_ih) = d_xeval;
 	    d_vals[d_ih]    = f;
 	} else {
-	    Rcpp::Rcout << "unsuccessful expand" << std::endl;
+	    // Rcpp::Rcout << "unsuccessful expand" << std::endl;
 	    d_pts.col(d_ih) = d_xcur;
 	    d_vals[d_ih]    = f_old;
 	}
@@ -202,12 +204,12 @@ namespace optimizer {
 
     nm_status Nelder_Mead::postcontract(const Scalar& f) {
 	if (f < f_old && f < d_fh) {
-	    Rcpp::Rcout << "successful contraction:" << std::endl;
+	    // Rcpp::Rcout << "successful contraction:" << std::endl;
 	    d_pts.col(d_ih) = d_xeval;
 	    d_vals[d_ih] = f;
 	    return restart(f);
 	}
-	Rcpp::Rcout << "unsuccessful contraction, shrink simplex" << std::endl;
+	// Rcpp::Rcout << "unsuccessful contraction, shrink simplex" << std::endl;
 	for (Index i = 0; i <= d_n; ++i) {
 	    if (i != d_il) {
 		if (!reflectpt(d_xeval, d_pts.col(d_il), -delta, d_pts.col(i))) return nm_xcvg;

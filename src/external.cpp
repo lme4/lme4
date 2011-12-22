@@ -596,11 +596,11 @@ extern "C" {
     SEXP NelderMead_Create(SEXP lb_, SEXP ub_, SEXP xstep0_, SEXP x_, SEXP xtol_) {
 	BEGIN_RCPP;
 	MVec  lb(as<MVec>(lb_)), ub(as<MVec>(ub_)), xstep0(as<MVec>(xstep0_)), x(as<MVec>(x_)), xtol(as<MVec>(xtol_));
-	Rcpp::Rcout << "lb: "     << lb.adjoint()     << std::endl;
-	Rcpp::Rcout << "ub: "     << ub.adjoint()     << std::endl;
-	Rcpp::Rcout << "xstep0: " << xstep0.adjoint() << std::endl;
-	Rcpp::Rcout << "x: "      << x.adjoint()      << std::endl;
-	Rcpp::Rcout << "xtol: "   << xtol.adjoint()   << std::endl;
+	// Rcpp::Rcout << "lb: "     << lb.adjoint()     << std::endl;
+	// Rcpp::Rcout << "ub: "     << ub.adjoint()     << std::endl;
+	// Rcpp::Rcout << "xstep0: " << xstep0.adjoint() << std::endl;
+	// Rcpp::Rcout << "x: "      << x.adjoint()      << std::endl;
+	// Rcpp::Rcout << "xtol: "   << xtol.adjoint()   << std::endl;
 	Nelder_Mead *ans =
 	    new Nelder_Mead(lb, ub, xstep0, x, optimizer::nl_stop(as<MVec>(xtol_)));
 	return wrap(XPtr<Nelder_Mead>(ans, true));
