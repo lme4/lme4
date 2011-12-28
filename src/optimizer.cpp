@@ -143,23 +143,15 @@ namespace optimizer {
     nm_status Nelder_Mead::restart(const Scalar& f) {
 	d_fl = d_vals.minCoeff(&d_il);
 	d_fh = d_vals.maxCoeff(&d_ih);
-	// Rcpp::Rcout << "restart: neval = " << d_stop.ev()
-	// 	    << ", d_fl = " << d_fl
-	// 	    << ", d_fh = " << d_fh
-	// 	    << ", d_il = " << d_il
-	// 	    << ", d_ih = " << d_ih << std::endl;
 	d_c = (d_pts.rowwise().sum() - d_pts.col(d_ih)) / d_n; // compute centroid
-	// Rcpp::Rcout << "centroid: " << d_c.adjoint() << std::endl;
-	
-	// Check if the simplex has gotten to be too small.  First
-        // calculate the coefficient-wise maximum abs deviation for
-	// the centroid.
-	d_xcur = (d_pts.colwise() - d_c).array().abs().rowwise().maxCoeff();
-	// Rcpp::Rcout << "Radius: " << d_xcur.adjoint() << std::endl;
-	if (d_stop.x(VectorXd::Constant(d_n, 0.), d_xcur)) return nm_xcvg;
+
+	// check for x convergence by calculating the maximum absolute
+	// deviation from the centroid for each coordinate in the simplex
+	if (d_stop.x(VectorXd::Constant(d_n, 0.),
+		     (d_pts.colwise() - d_c).array().abs().rowwise().maxCoeff()))
+	    return nm_xcvg;
 
 	if (!reflectpt(d_xcur, d_c, alpha, d_pts.col(d_ih))) return nm_xcvg;
-	// Rcpp::Rcout << "d_xcur (after reflectpt): " << d_xcur.adjoint() << std::endl;
 	d_xeval = d_xcur;
 	d_stage = nm_postreflect;
 	return nm_active;

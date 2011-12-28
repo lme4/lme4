@@ -1,6 +1,6 @@
 // external.cpp: externally .Call'able functions in lme4Eigen
 //
-// Copyright (C)       2011 Douglas Bates, Martin Maechler and Ben Bolker
+// Copyright (C)       2011-2012 Douglas Bates, Martin Maechler and Ben Bolker
 //
 // This file is part of lme4.
 
@@ -35,6 +35,7 @@ extern "C" {
 
     using optimizer::Golden;
     using optimizer::Nelder_Mead;
+    using optimizer::nm_status;
 
     using      std::runtime_error;
 
@@ -596,11 +597,6 @@ extern "C" {
     SEXP NelderMead_Create(SEXP lb_, SEXP ub_, SEXP xstep0_, SEXP x_, SEXP xtol_) {
 	BEGIN_RCPP;
 	MVec  lb(as<MVec>(lb_)), ub(as<MVec>(ub_)), xstep0(as<MVec>(xstep0_)), x(as<MVec>(x_)), xtol(as<MVec>(xtol_));
-	// Rcpp::Rcout << "lb: "     << lb.adjoint()     << std::endl;
-	// Rcpp::Rcout << "ub: "     << ub.adjoint()     << std::endl;
-	// Rcpp::Rcout << "xstep0: " << xstep0.adjoint() << std::endl;
-	// Rcpp::Rcout << "x: "      << x.adjoint()      << std::endl;
-	// Rcpp::Rcout << "xtol: "   << xtol.adjoint()   << std::endl;
 	Nelder_Mead *ans =
 	    new Nelder_Mead(lb, ub, xstep0, x, optimizer::nl_stop(as<MVec>(xtol_)));
 	return wrap(XPtr<Nelder_Mead>(ans, true));
@@ -609,7 +605,46 @@ extern "C" {
 
     SEXP NelderMead_newf(SEXP ptr_, SEXP f_) {
 	BEGIN_RCPP;
-	XPtr<Nelder_Mead>(ptr_)->newf(::Rf_asReal(f_));
+	switch (XPtr<Nelder_Mead>(ptr_)->newf(::Rf_asReal(f_))) {
+	case optimizer::nm_evals:         return ::Rf_ScalarInteger(-4);
+	case optimizer::nm_forced:        return ::Rf_ScalarInteger(-3);
+	case optimizer::nm_nofeasible:    return ::Rf_ScalarInteger(-2);
+	case optimizer::nm_x0notfeasible: return ::Rf_ScalarInteger(-1);
+	case optimizer::nm_active:        return ::Rf_ScalarInteger(0);
+	case optimizer::nm_minf_max:      return ::Rf_ScalarInteger(1);
+	case optimizer::nm_fcvg:          return ::Rf_ScalarInteger(2);
+	case optimizer::nm_xcvg:          return ::Rf_ScalarInteger(3);
+	}
+	END_RCPP;
+    }
+
+    SEXP NelderMead_setForce_stop(SEXP ptr_, SEXP stp_) {
+	BEGIN_RCPP;
+	XPtr<Nelder_Mead>(ptr_)->setForce_stop(::Rf_asLogical(stp_));
+	END_RCPP;
+    }
+
+    SEXP NelderMead_setFtol_abs(SEXP ptr_, SEXP fta_) {
+	BEGIN_RCPP;
+	XPtr<Nelder_Mead>(ptr_)->setFtol_rel(::Rf_asReal(fta_));
+	END_RCPP;
+    }
+
+    SEXP NelderMead_setFtol_rel(SEXP ptr_, SEXP ftr_) {
+	BEGIN_RCPP;
+	XPtr<Nelder_Mead>(ptr_)->setFtol_rel(::Rf_asReal(ftr_));
+	END_RCPP;
+    }
+
+    SEXP NelderMead_setMaxeval(SEXP ptr_, SEXP mm_) {
+	BEGIN_RCPP;
+	XPtr<Nelder_Mead>(ptr_)->set_Maxeval(::Rf_asInteger(mm_));
+	END_RCPP;
+    }
+	
+    SEXP NelderMead_setMinf_max(SEXP ptr_, SEXP mm_) {
+	BEGIN_RCPP;
+	XPtr<Nelder_Mead>(ptr_)->setMinf_max(::Rf_asReal(mm_));
 	END_RCPP;
     }
 	
@@ -631,6 +666,13 @@ extern "C" {
 	END_RCPP;
     }
 
+				// return the number of function evaluations performed
+    SEXP NelderMead_evals(SEXP ptr_) { 
+	BEGIN_RCPP;
+	return wrap(XPtr<Nelder_Mead>(ptr_)->evals());
+	END_RCPP;
+    }
+	
     // nonlinear model response (also the base class for other response classes)
 
     SEXP nls_Create(SEXP y, SEXP weights, SEXP offset, SEXP mu, SEXP sqrtXwt,
@@ -754,6 +796,11 @@ static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(NelderMead_Create, 5),
     CALLDEF(NelderMead_newf, 2),
+    CALLDEF(NelderMead_setForce_stop, 2),
+    CALLDEF(NelderMead_setFtol_abs, 2),
+    CALLDEF(NelderMead_setFtol_rel, 2),
+    CALLDEF(NelderMead_setMaxeval, 2),
+    CALLDEF(NelderMead_setMinf_max, 2),
     CALLDEF(NelderMead_value, 1),
     CALLDEF(NelderMead_xeval, 1),
     CALLDEF(NelderMead_xpos, 1),
@@ -763,8 +810,6 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(nls_Laplace, 4),	// methods
     CALLDEF(nls_updateMu, 2),
 
-//    CALLDEF(test_NMopt, 0),
-    
     {NULL, NULL, 0}
 };
 

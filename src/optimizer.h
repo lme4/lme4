@@ -34,12 +34,13 @@ namespace optimizer {
     public:
 	nl_stop(const VectorXd&); // constructor
 
-	void      resetEvals() {nevals = 0;}	// setters
 	void       incrEvals() {nevals++;}
-	void     setMinf_max(const Scalar& mm) {minf_max = mm;}
+	void      resetEvals() {nevals = 0;}	// setters
 	void     setFtol_rel(const Scalar& ftr) {ftol_rel = ftr;}
 	void     setFtol_abs(const Scalar& fta) {ftol_abs = fta;}
 	void   setForce_stop(const bool& stp) {force_stop = stp;}
+	void     setMinf_max(const Scalar& mm) {minf_max = mm;}
+	void     set_Maxeval(const unsigned int& mm) {maxeval = mm;}
 
 	bool     f(const Scalar& f, const Scalar& oldf) const { // convergence checking
 	    return (f <= minf_max || ftol(f, oldf));
@@ -121,6 +122,12 @@ namespace optimizer {
 
 	Scalar          value() const {return d_minf;}
 	nm_status        newf(const Scalar&);
+
+	void    setForce_stop(const bool& stp)        {d_stop.setForce_stop(stp);}
+	void      setFtol_abs(const Scalar& fta)      {d_stop.setFtol_abs(fta);}
+	void      setFtol_rel(const Scalar& ftr)      {d_stop.setFtol_rel(ftr);}
+	void      set_Maxeval(const unsigned int& mm) {d_stop.set_Maxeval(mm);}
+	void      setMinf_max(const Scalar& mm)       {d_stop.setMinf_max(mm);}
     };
 
     class Golden {
