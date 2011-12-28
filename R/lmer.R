@@ -1,8 +1,7 @@
-### FIXME: Should there be both a doFit and a devFunOnly argument?
 lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
-		  control = list(), start = NULL,
-		  verbose = 0L, subset, weights, na.action, offset,
-		  contrasts = NULL, devFunOnly=FALSE, ...)
+                 control = list(), start = NULL,
+                 verbose = 0L, subset, weights, na.action, offset,
+                 contrasts = NULL, devFunOnly=FALSE, ...)
 {
     if (sparseX) warning("sparseX = TRUE has no effect at present")
     mf <- mc <- match.call()
@@ -108,7 +107,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
                   control = list(), start = NULL, verbose = 0L, nAGQ = 1L,
                   compDev=TRUE, subset, weights, na.action, offset,
                   contrasts = NULL, mustart, etastart, devFunOnly = FALSE,
-                  tolPwrss = 1e-10, ...)
+                  tolPwrss = 1e-10, optimizer=c("bobyqa","NelderMead"), ...)
 {
     verbose <- as.integer(verbose)
     mf <- mc <- match.call()
@@ -200,12 +199,27 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
                 stop("nAGQ > 1 is only available for models with a single, scalar random-effects term")
             rho$fac <- reTrms$flist[[1]]
         }
-        if(!is.numeric(control$rhobeg)) control$rhobeg <- 0.0002
-        if(!is.numeric(control$rhoend)) control$rhoend <- 2e-7
-        rho$control <- control
         devfun <- mkdevfun(rho, nAGQ)
         if (devFunOnly) return(devfun)
-        opt <- bobyqa(c(rho$pp$theta, rho$beta0), devfun, rho$lower, control=control)
+        opt <- switch(match.arg(optimizer),
+                      bobyqa = {
+                          if(!is.numeric(control$rhobeg)) control$rhobeg <- 0.0002
+                          if(!is.numeric(control$rhoend)) control$rhoend <- 2e-7
+                          rho$control <- control
+                          bobyqa(c(rho$pp$theta, rho$beta0), devfun, rho$lower, control=control)
+                      },
+                      NelderMead = {
+                          xst <- c(rep.int(0.1, length(rho$dpars)), sqrt(diag(environment(devfun)$pp$unsc())))
+                          nM <- NelderMead$new(lower=rho$lower, upper=rep.int(Inf, length(rho$lower)), xst=0.2*xst,
+                                               x0=with(environment(devfun), c(pp$theta, pp$beta0)),
+                                               xt=xst*0.0001)
+                          nM$setMaxeval(1000L)
+                          nM$setFtolAbs(1e-5)
+                          while ((nMres <- nM$newf(devfun(nM$xeval()))) == 0L) {}
+                          if (nMres < 0L)
+                              stop("convergence failure, code ", nMres, " in NelderMead")
+                          list(fval=nM$value(), pars=nM$xpos(), code=nMres)
+                      })
     }
     sqrLenU <- rho$pp$sqrL(0.)
     wrss <- rho$resp$wrss()
