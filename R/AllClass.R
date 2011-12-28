@@ -487,19 +487,24 @@ NelderMead <-
                          xtol    <<- xt
                          Ptr <<- .Call(NelderMead_Create, lowerbd, upperbd, xstep, x0, xtol)
                      },
-                     ptr        =  function() {
+                     ptr          = function() {
                          if (length(lowerbd)) 
                              if (.Call(isNullExtPtr, Ptr))
                                  Ptr <<- .Call(NelderMead_Create, lowerbd, upperbd, xstep, x0, xtol)
                          Ptr
                      },
-                     newf       = function(value) {
+                     newf         = function(value) {
                          stopifnot(length(value <- as.numeric(value)) == 1L)
                          .Call(NelderMead_newf, ptr(), value)
                      },
-                     value      = function() .Call(NelderMead_value, ptr()),
-                     xeval      = function() .Call(NelderMead_xeval, ptr()),
-                     xpos       = function() .Call(NelderMead_xpos, ptr())
+                     setForceStop = function(stp=TRUE) .Call(NelderMead_setForce_stop, ptr(), stp),
+                     setFtolAbs   = function(fta)      .Call(NelderMead_setFtol_abs, ptr(), fta),
+                     setFtolRel   = function(ftr)      .Call(NelderMead_setFtol_rel, ptr(), ftr),
+                     setMaxeval   = function(mxev)     .Call(NelderMead_setMaxeval, ptr(), mxev),
+                     setMinfMax   = function(minf)     .Call(NelderMead_setMinf_max, ptr(), minf),                     
+                     value        = function()         .Call(NelderMead_value, ptr()),
+                     xeval        = function()         .Call(NelderMead_xeval, ptr()),
+                     xpos         = function()         .Call(NelderMead_xpos, ptr())
                      )
             )
 
