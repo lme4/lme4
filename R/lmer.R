@@ -216,8 +216,12 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
                           nM$setMaxeval(1000L)
                           nM$setFtolAbs(1e-5)
                           while ((nMres <- nM$newf(devfun(nM$xeval()))) == 0L) {}
-                          if (nMres < 0L)
-                              stop("convergence failure, code ", nMres, " in NelderMead")
+                          if (nMres < 0L) {
+                              if (nMres > -4L)
+                                  stop("convergence failure, code ", nMres, " in NelderMead")
+                              else
+                                  warning("failure to converge in 1000 evaluations")
+                          }
                           list(fval=nM$value(), pars=nM$xpos(), code=nMres)
                       })
     }
