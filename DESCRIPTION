@@ -1,6 +1,6 @@
 Package: lme4Eigen
-Version: 0.9996875-6
-Date: 2011-12-05
+Version: 0.9996875-7
+Date: 2011-12-28
 Title: Linear mixed-effects models using Eigen and S4
 Author: Douglas Bates <bates@stat.wisc.edu>,
         Martin Maechler <maechler@R-project.org> and
