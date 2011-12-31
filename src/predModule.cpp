@@ -1,7 +1,7 @@
 //
 // predModule.cpp: implementation of predictor module using Eigen
 //
-// Copyright (C)       2011 Douglas Bates, Martin Maechler and Ben Bolker
+// Copyright (C) 2011-2012 Douglas Bates, Martin Maechler and Ben Bolker
 //
 // This file is part of lme4Eigen.
 
@@ -42,7 +42,6 @@ namespace lme4Eigen {
 	  d_p(       d_X.cols()),
 	  d_q(       d_Zt.rows()),
 	  d_RX(      d_p)
-	  //	  d_LamtUtRestructure(false)
     {				// Check consistency of dimensions
 	if (d_N != d_Zt.cols())
 	    throw invalid_argument("Z dimension mismatch");
@@ -95,7 +94,18 @@ namespace lme4Eigen {
 
     void merPredD::updateL() {
 	updateLamtUt();
-	d_L.factorize_p(d_LamtUt, Eigen::ArrayXi(), 1.);
+	SpMatrixd  m(d_LamtUt.rows(), d_LamtUt.cols());
+	m.resizeNonZeros(d_LamtUt.nonZeros());
+	std::copy(d_LamtUt._valuePtr(),
+		  d_LamtUt._valuePtr() + d_LamtUt.nonZeros(),
+		  m._valuePtr()); 
+	std::copy(d_LamtUt._innerIndexPtr(),
+		  d_LamtUt._innerIndexPtr() + d_LamtUt.nonZeros(),
+		  m._innerIndexPtr()); 
+	std::copy(d_LamtUt._outerIndexPtr(),
+		  d_LamtUt._outerIndexPtr() + d_LamtUt.cols() + 1,
+		  m._outerIndexPtr()); 
+	d_L.factorize_p(m, Eigen::ArrayXi(), 1.);
 	d_ldL2 = ::M_chm_factor_ldetL2(d_L.factor());
     }
 
