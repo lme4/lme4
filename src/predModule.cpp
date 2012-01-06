@@ -170,8 +170,11 @@ namespace lme4Eigen {
 	    }
 	    W.finalize();
 	    d_V              = W * d_X;
-//FIXME: work out the corresponding code for Ut and Zt
-//	    d_Ut             = d_Zt * W.adjoint();
+// FIXME: Need to work out the equivalent code here for d_Ut = d_Zt * W.adjoint()
+	    // for (int j = 0; j < d_N; ++j)
+	    // 	for (MSpMatrixd::InnerIterator Uit(d_Ut, j), Zit(d_Zt, j);
+	    // 	     Uit && Zit; ++Uit, ++Zit)
+	    // 	    Uit.valueRef() = Zit.value() * sqrtXwt.data()[j];
 	}
 //	if (d_LamtUt.rows() != d_Ut.rows() || 
 //	    d_LamtUt.cols() != d_Ut.cols()) d_LamtUtRestructure = true;

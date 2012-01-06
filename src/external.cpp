@@ -676,12 +676,10 @@ extern "C" {
     // nonlinear model response (also the base class for other response classes)
 
     SEXP nls_Create(SEXP y, SEXP weights, SEXP offset, SEXP mu, SEXP sqrtXwt,
-		    SEXP sqrtrwt, SEXP wtres, SEXP mods, SEXP envs, SEXP pnms) {
+		    SEXP sqrtrwt, SEXP wtres, SEXP gamma, SEXP mod, SEXP env, SEXP pnms) {
 	BEGIN_RCPP;
 	nlsResp *ans =
-	    new nlsResp(y, weights, offset, mu, sqrtXwt, sqrtrwt, wtres,
-			Language(mods), Environment(envs),
-			CharacterVector(pnms));
+	    new nlsResp(y, weights, offset, mu, sqrtXwt, sqrtrwt, wtres, gamma, mod, env, pnms);
 	return wrap(XPtr<nlsResp>(ans, true));
 	END_RCPP;
     }
@@ -805,7 +803,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(NelderMead_xeval, 1),
     CALLDEF(NelderMead_xpos, 1),
 
-    CALLDEF(nls_Create, 10),	// generate external pointer
+    CALLDEF(nls_Create, 11),	// generate external pointer
 
     CALLDEF(nls_Laplace, 4),	// methods
     CALLDEF(nls_updateMu, 2),

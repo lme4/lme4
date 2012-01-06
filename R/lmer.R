@@ -273,27 +273,30 @@ mkRespMod2 <- function(fr, REML=NA_integer_, family = NULL, nlenv = NULL, nlmod 
                   nrow(gr) == n,
                   !is.null(pnames <- colnames(gr)))
         N <- length(gr)
+        rho$mu <- as.vector(val)
+        rho$sqrtXwt <- as.vector(gr)
+        rho$gam <-
+            unname(unlist(lapply(pnames,
+                                 function(nm) get(nm, envir=nlenv))))
     }
     if (!is.null(offset <- model.offset(fr))) {
         if (length(offset) == 1L) offset <- rep.int(offset, N)
         stopifnot(length(offset) == N)
         rho$offset <- unname(offset)
-    }
+    } else rho$offset <- rep.int(0, N)
     if (!is.null(weights <- model.weights(fr))) {
         stopifnot(length(weights) == n, all(weights >= 0))
         rho$weights <- unname(weights)
-    }
+    } else rho$weights <- rep.int(1, n)
     if (is.null(family)) {
         if (is.null(nlenv)) return(do.call(lmerResp$new, as.list(rho)))
         return(do.call(nlsResp$new,
                        c(list(nlenv=nlenv,
                               nlmod=substitute(~foo, list(foo=nlmod)),
-                              pnames=pnames, N=length(gr)), as.list(rho))))
+                              pnames=pnames), as.list(rho))))
     }
     stopifnot(inherits(family, "family"))
-                                        # need weights for initialize evaluation
-    if (!exists("weights", rho, inherits=FALSE))
-        rho$weights <- rep.int(1, n)
+                              # need weights for initialize evaluation
     rho$nobs <- n
     eval(family$initialize, rho)
     family$initialize <- NULL     # remove clutter from str output
@@ -332,7 +335,7 @@ mkReTrms <- function(bars, fr, s = 1L) {
 	nseq <- seq_len(nc)
 	sm <- as(ff, "sparseMatrix")
 	if (nc	> 1)
-	    sm <- do.call(rBind, lapply(nseq, function(i) sm))
+	    sm <- do.call(Matrix::rBind, lapply(nseq, function(i) sm))
 	sm@x[] <- t(mm[])
 	## When nc > 1 switch the order of the rows of sm
 	## so the random effects for the same level of the
@@ -351,7 +354,7 @@ mkReTrms <- function(bars, fr, s = 1L) {
 	blist <- blist[ord]
 	nl <- nl[ord]
     }
-    Zt <- do.call(rBind, lapply(blist, "[[", "sm"))
+    Zt <- do.call(Matrix::rBind, lapply(blist, "[[", "sm"))
     q <- nrow(Zt)
 
     ## Create and install Lambdat, Lind, etc.  This must be done after
@@ -368,7 +371,7 @@ mkReTrms <- function(bars, fr, s = 1L) {
 ### instead of generating Lambda first then transposing?
     Lambdat <-
 	t(do.call(sparseMatrix,
-		  do.call(rBind,
+		  do.call(Matrix::rBind,
 			  lapply(seq_along(blist), function(i)
 			     {
 				 mm <- matrix(seq_len(nb[i]), nc = nc[i],
@@ -703,7 +706,8 @@ nlmer <- function(formula, data, family = gaussian, start = NULL,
     lapply(all.vars(nlmod),
 	   function(nm) assign(nm, fr[[nm]], envir = nlenv))
     rr <- mkRespMod2(fr, nlenv=nlenv, nlmod=nlmod)
-
+    stopifnot(all(pnames %in% rr$pnames), all(rr$pnames %in% pnames))
+    
     ## Second, extend the frame and convert the nlpar columns to indicators
     n <- nrow(fr)
     frE <- do.call(rbind, lapply(1:s, function(i) fr)) # rbind s copies of the frame
@@ -714,13 +718,14 @@ nlmer <- function(formula, data, family = gaussian, start = NULL,
 
     fe.form <- nlform
     fe.form[[3]] <- formula[[3]]
-    X <- model.Matrix(nobars(fe.form), frE, contrasts,
-                      sparse = FALSE, row.names = FALSE) ## sparseX not yet
+    X <- model.matrix(nobars(fe.form), frE, contrasts)
+##                      sparse = FALSE, row.names = FALSE) ## sparseX not yet
+    rownames(X) <- NULL
     p <- ncol(X)
     if ((qrX <- qr(X))$rank < p)
 	stop(gettextf("rank of X = %d < ncol(X) = %d", qrX$rank, p))
     pp <- do.call(merPredD$new, c(reTrms[c("Zt","theta","Lambdat","Lind")],
-                                  list(X=X,
+                                  list(X=X, S=s, Xwts = rr$sqrtXwt,
                                        beta0=qr.coef(qrX, unlist(lapply(pnames, get, envir = nlenv))))
                                   ))
     return(list(pp=pp, resp=rr))

@@ -57,7 +57,6 @@ merPredD <-
                          V <<- array(0, c(n, p))
                          VtV <<- array(0, c(p, p))
                          Vtr <<- numeric(p)
-                         Xwts <<- rep.int(1, N)
                          beta0 <<- numeric(p)
                          delb <<- numeric(p)
                          delu <<- numeric(q)
@@ -65,6 +64,8 @@ merPredD <-
                          Ut <<- if (S == 1) Zt + 0 else
                              Zt %*% sparseMatrix(i=seq_len(N), j=as.integer(gl(n, 1, N)), x=rep.int(1,N))
                          LamtUt <<- Lambdat %*% Ut   
+                         Xw <- list(...)$Xwts
+                         Xwts <<- if (is.null(Xw)) rep.int(1, N) else as.numeric(Xw)
                          updateXwts(Xwts)
                      },
                      CcNumer      = function() {
@@ -202,11 +203,16 @@ lmResp <-                               # base class for response modules
                          if (is.null(ll$y)) stop("y must be specified")
                          y <<- as.numeric(ll$y)
                          n <- length(y)
-                         mu <<- if (!is.null(ll$mu)) as.numeric(ll$mu) else numeric(n)
-                         offset <<- if (!is.null(ll$offset)) as.numeric(ll$offset) else numeric(n)
-                         weights <<- if (!is.null(ll$weights)) as.numeric(ll$weights) else rep.int(1,n)
-                         sqrtXwt <<- sqrt(weights)
-                         sqrtrwt <<- sqrt(weights)
+                         mu <<- if (!is.null(ll$mu))
+                             as.numeric(ll$mu) else numeric(n)
+                         offset <<- if (!is.null(ll$offset))
+                             as.numeric(ll$offset) else numeric(n)
+                         weights <<- if (!is.null(ll$weights))
+                             as.numeric(ll$weights) else rep.int(1,n)
+                         sqrtXwt <<- if (!is.null(ll$sqrtXwt))
+                             as.numeric(ll$sqrtXwt) else sqrt(weights)
+                         sqrtrwt <<- if (!is.null(ll$sqrtrwt))
+                             as.numeric(ll$sqrtrwt) else sqrt(weights)
                          wtres   <<- sqrtrwt * (y - mu)
                      },
                      ptr       = function() {
@@ -356,23 +362,40 @@ glmResp$lock("family", "n", "eta")
 nlsResp <-
     setRefClass("nlsResp",
                 fields=
-                list(N="integer",
+                list(gam="numeric",
                      nlmod="formula",
                      nlenv="environment",
-                     pnames="character",
-                     ptr = function (value) {
-                         if (!missing(value)) stop("ptr field cannot be assigned")
-                         try (if (.Call(isNullExtPtr, Ptr))
-                              Ptr <<- .Call(nls_Create, y, nlmod[[2]], nlenv, pnames, N),
-                              silent=TRUE)
-                         Ptr
-                     }),
+                     pnames="character"
+                     ),
                 contains="lmResp",
                 methods=
-                list(
-                     Laplace=function(ldL2, ldRX2, sqrL) {
+                list(initialize = function(...) {
+                         callSuper(...)
+                         ll <- list(...)
+                         if (is.null(ll$nlmod)) stop("nlmod must be specified")
+                         nlmod <<- ll$nlmod
+                         if (is.null(ll$nlenv)) stop("nlenv must be specified")
+                         nlenv <<- ll$nlenv
+                         if (is.null(ll$pnames)) stop("pnames must be specified")
+                         pnames <<- ll$pnames
+                         if (is.null(ll$gam)) stop("gam must be specified")
+                         stopifnot(length(ll$gam) == length(offset))
+                         gam <<- ll$gam
+                     },
+                     Laplace =function(ldL2, ldRX2, sqrL) {
                          'returns the profiled deviance or REML criterion'
                          .Call(nls_Laplace, ptr(), ldL2, ldRX2, sqrL)
+                     },
+                     ptr     = function() {
+                         'returns the external pointer, regenerating if necessary'
+                         if (length(y)) {
+                             if (.Call(isNullExtPtr, Ptr)) {
+                                 Ptr <<- .Call(nls_Create, y, weights, offset, mu, sqrtXwt,
+                                               sqrtrwt, wtres, gam, nlmod[[2]], nlenv, pnames)
+                                 .Call(nls_updateMu, Ptr, gam)
+                             }
+                         }
+                         Ptr
                      },
                      updateMu=function(gamma) {
                          'update mu, residuals, gradient, etc. given the linear predictor matrix'

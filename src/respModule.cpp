@@ -1,6 +1,6 @@
 // respModule.cpp: response modules using Eigen
 //
-// Copyright (C)       2011 Douglas Bates, Martin Maechler and Ben Bolker
+// Copyright (C) 2011-2012 Douglas Bates, Martin Maechler and Ben Bolker
 //
 // This file is part of lme4.
 
@@ -142,10 +142,13 @@ namespace lme4Eigen {
     }
 
     nlsResp::nlsResp(SEXP y, SEXP weights, SEXP offset, SEXP mu, SEXP sqrtXwt,
-		     SEXP sqrtrwt, SEXP wtres, Language mm, Environment ee,
-		     CharacterVector pp)
+		     SEXP sqrtrwt, SEXP wtres, SEXP gamma, SEXP mm, SEXP ee,
+		     SEXP pp)
 	: lmResp(y, weights, offset, mu, sqrtXwt, sqrtrwt, wtres),
-	  d_nlenv(ee), d_nlmod(mm), d_pnames(pp) {
+	  d_gamma(as<MVec>(gamma)),
+	  d_nlenv(as<Environment>(ee)),
+	  d_nlmod(as<Language>(mm)),
+	  d_pnames(as<CharacterVector>(pp)) {
     }
 
     double nlsResp::Laplace(double ldL2, double ldRX2, double sqrL) const {
@@ -153,12 +156,15 @@ namespace lme4Eigen {
 	return ldL2 + n * (1 + log(lnum / n));
     }
 
-    double nlsResp::updateMu(VectorXd const &gamma) {
+    double nlsResp::updateMu(const VectorXd& gamma) {
 	int             n = d_y.size();
-	VectorXd      gam = gamma + d_offset;
-	const double  *gg = gam.data();
+	if (gamma.size() != d_gamma.size())
+	    throw invalid_argument("size mismatch in updateMu");
+	std::copy(gamma.data(), gamma.data() + gamma.size(), d_gamma.data());
+	const VectorXd lp(d_gamma + d_offset); // linear predictor
+	const double  *gg = lp.data();
 
-	for (int p = 0; p < d_pnames.size(); p++) {
+	for (int p = 0; p < d_pnames.size(); ++p) {
 	    string pn(d_pnames[p]);
 	    NumericVector pp = d_nlenv.get(pn);
 	    copy(gg + n * p, gg + n * (p + 1), pp.begin());
