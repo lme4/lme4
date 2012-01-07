@@ -179,7 +179,9 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
         rr$weights <- fitted@resp$weights
         fe.zeta <- function(fw) {
             rr$offset <- Xw * fw + offset.orig
-            ores <- bobyqa(thopt, mkdevfun(pp1, rr, emptyenv()), lower = fitted@lower)
+            rho <- as.environment(list(pp=pp1, resp=rr))
+            parent.env(rho) <- parent.frame()
+            ores <- bobyqa(thopt, mkdevfun(rho, 0L), lower = fitted@lower)
             fv <- ores$fval
             sig <- sqrt((rr$wrss() + pp1$sqrL(1))/n)
             c(sign(fw - est) * sqrt(fv - base),

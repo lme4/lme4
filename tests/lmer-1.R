@@ -82,12 +82,12 @@ for(nm in c("coef", "fixef", "ranef", "sigma",
     FUN <- get(nm)
     F.fmX1s <- FUN(fmX1s)
 #    F.fmX2s <- FUN(fmX2s)
-    if(nm == "model.matrix") {
-        F.fmX1s <- as(F.fmX1s, "denseMatrix")
+#    if(nm == "model.matrix") {
+#        F.fmX1s <- as(F.fmX1s, "denseMatrix")
 #        F.fmX2s <- as(F.fmX2s, "denseMatrix")
 #	FF <- function(.) {r <- FUN(.); row.names(r) <- NULL
 #			   as(r, "generalMatrix") }
-    } # else
+#    } # else
     FF <- FUN
     stopifnot(
 	      all.equal( FF(fmX1), F.fmX1s, tol =  1e-6)
@@ -122,18 +122,17 @@ stopifnot(dim(ranef(fm2l)[[1]]) == c(18, 2),
 #              family = binomial, data = cbpp, doFit = FALSE)
 ## now
 #bobyqa(m1e, control = list(iprint = 2L))
-m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-            family = binomial, data = cbpp, verbose = 2L)
+m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd), cbpp, binomial, nAGQ=25L)
 stopifnot(is((cm1 <- coef(m1)), "coef.mer"),
 	  dim(cm1$herd) == c(15,4),
-	  all.equal(fixef(m1), ##  these values are those of "old-lme4":
-		    c(-1.39853504914, -0.992334711,
-		      -1.12867541477, -1.58037390498),
-		    tol = 1.e-3,
-                    check.attr=FALSE)
+	  all.equal(fixef(m1), ##  these values are from an Ubuntu 11.10 amd64 system
+                    c(-1.39922135307046, -0.991415396352428,
+                      -1.12781521322006, -1.57947198508598),
+		    tol = 1.e-7,
+                    check.attr=FALSE),
+          all.equal(deviance(m1), 100.010030539916, tol=1e-7)
 	  )
-## Deviance for the new algorithm is lower, eventually we should change the previous test
-#stopifnot(deviance(m1) <= deviance(m1e))
+
 ## Simple example by Andrew Gelman (2006-01-10) ----
 n.groups <- 10 ; n.reps <- 2
 n <- length(group.id <- gl(n.groups, n.reps))
@@ -151,7 +150,7 @@ stopifnot(all.equal(fixef(fit.1), c("(Intercept)" = 1.571312129)),
 	  all.equal(ranef(fit.1)[["group.id"]][,"(Intercept)"],
 		   c(1.80469, -1.80977, 1.61465, 1.54083, -0.1332,
 		     -3.33067, -1.82593, -0.873515, -0.359131, 3.37204),
-		    tol = 1e-4)
+		    tol = 1e-5)
 	  )
 
 
@@ -176,7 +175,7 @@ if (require('MASS', quietly = TRUE)) {
     contrasts(bacteria$trt) <-
         structure(contr.sdif(3),
                   dimnames = list(NULL, c("diag", "encourage")))
-    print(fm5 <- glmer(y ~ trt + wk2 + (1|ID), bacteria, binomial))
+    print(fm5 <- glmer(y ~ trt + wk2 + (1|ID), bacteria, binomial, nAGQ=25L))
     ## used to fail with nlminb() : stuck at theta=1
 
     showProc.time() #
@@ -184,16 +183,15 @@ if (require('MASS', quietly = TRUE)) {
     stopifnot(
 	      all.equal(logLik(fm5),
 			## was	  -96.127838
-			structure(-96.13069, nobs = 220L, nall = 220L,
+			structure(-95.89706, nobs = 220L, nall = 220L,
 				  df = 5L, REML = FALSE,
                                   class = "logLik"),
                         tol = 1e-5, check.attributes = FALSE)
 	      ,
 	      all.equal(fixef(fm5),
-			## was		 2.834218798		 -1.367099481
-			c("(Intercept)"= 2.831609490, "trtdiag"= -1.366722631,
-			  ## now	 0.5842291915,		 -1.599148773
-			  "trtencourage"=0.5840147802, "wk2TRUE"=-1.598591346), tol = 1e-4)
+                        c("(Intercept)"= 2.85970407988865, "trtdiag"= -1.36896064623335,
+                          "trtencourage"=0.579864265134738, "wk2TRUE"=-1.62687300090901),
+                        tol = 1e-6)
 	      )
 }
 

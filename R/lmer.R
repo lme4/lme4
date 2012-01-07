@@ -1,3 +1,31 @@
+##' Fit a linear mixed model or a generalized linear mixed model or a nonlinear mixed model.
+##' 
+##'
+##' 
+##' @title Fit a linear mixed-effects model
+##' @param formula a two-sided linear formula object describing the
+##'  fixed-effects part of the model, with the response on the left of a
+##'  \code{~} operator and the terms, separated by \code{+} operators, on
+##'  the right.  The vertical bar character \code{"|"} separates an
+##'  expression for a model matrix and a grouping factor.
+##' @param data an optional data frame containing the variables named in
+##'  \code{formula}.  By default the variables are taken from the
+##'  environment from which \code{lmer} is called.
+##' @param REML logical - Should the estimates be chosen to optimize the
+##'  REML criterion (as opposed to the log-likelihood)?  Defaults to \code{TRUE}.
+##' @param sparseX logical - should a sparse model matrix be used for the
+##'  fixed-effects terms?  Defaults to \code{FALSE}.
+##' @param control 
+##' @param start 
+##' @param verbose 
+##' @param subset 
+##' @param weights 
+##' @param na.action 
+##' @param offset 
+##' @param contrasts 
+##' @param devFunOnly 
+##' @param ... 
+##' @return 
 lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
                  control = list(), start = NULL,
                  verbose = 0L, subset, weights, na.action, offset,
@@ -154,7 +182,6 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     if (family$family %in% c("quasibinomial", "quasipoisson", "quasi"))
 	stop('"quasi" families cannot be used in glmer')
     
-    if (nAGQ < 0L || nAGQ > 25L) warning("nAGQ must be in the range [0, 25]")
     stopifnot(length(nAGQ <- as.integer(nAGQ)) == 1L,
               nAGQ >= 0L,
               nAGQ <= 25L,
@@ -482,31 +509,6 @@ pwrssUpdate <- function(pp, resp, verbose, uOnly=FALSE, tol, maxSteps = 10) {
     }
 }
 
-## setMethod("show", signature("lmerResp"), function(object)
-##       {
-##           with(object,
-##                print(head(cbind(weights, offset, mu, y, sqrtrwt, wtres, sqrtXwt))))
-##       })
-
-## setMethod("show", signature("glmerResp"), function(object)
-##       {
-##           with(object,
-##                print(head(cbind(weights, offset, eta, mu, y, muEta,
-##                                 variance, sqrtrwt, wtres, sqrtXwt,
-##                                 sqrtWrkWt, wrkResids, wrkResp))))
-##       })
-
-## setMethod("show", signature("Rcpp_reModule"), function(object)
-##	 {
-##	     with(object, print(head(cbind(u0, incr, u))))
-##	 })
-
-
-## setMethod("show", signature("Rcpp_deFeMod"), function(object)
-##	 {
-##	     with(object, print(cbind(coef0, incr, coef, Vtr)))
-##	 })
-
 ## create a deviance evaluation function that uses the sigma parameters
 ## df2 <- function(dd) {
 ##     stopifnot(is.function(dd),
@@ -667,38 +669,31 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
 ##' @param data an optional data frame containing the variables named in
 ##'    \code{formula}.	By default the variables are taken from the
 ##'    environment from which \code{nlmer} is called.
-##' @param family
 ##' @param start starting estimates for the nonlinear model
 ##'    parameters, as a named numeric vector
 ##' @param verbose integer scalar passed to nlminb.  If negative then
 ##'    diagnostic output from the PIRLS (penalized iteratively
 ##'    reweighted least squares) step is also provided.
 ##' @param nAGQ number of adaptive Gauss-Hermite quadrature points to use
-##' @param doFit logical scalar.  If FALSE the optimization
-##'    environment is returned. Otherwise the parameters are estimated
-##'    and an object of S4 class "mer" is returned.
 ##' @param subset further model specifications as in
 ##'    \code{\link[stats]{lm}}; see there for details.
-##' @param weights  further model specifications as in
+##' @param weights further model specifications as in
 ##'    \code{\link[stats]{lm}}; see there for details.
-##' @param na.action  further model specifications as in
+##' @param na.action further model specifications as in
 ##'    \code{\link[stats]{lm}}; see there for details.
-##' @param mustart
-##' @param etastart
-##' @param sparseX
-##' @param contrasts  further model specifications as in
+##' @param offset 
+##' @param contrasts further model specifications as in
 ##'    \code{\link[stats]{lm}}; see there for details.
-##' @param control a list of control parameters passed to bobyqa.
-##' @param ...
-
-##' @return an object of S4 class "merMod"
-nlmer <- function(formula, data, family = gaussian, start = NULL,
-		  verbose = 0L, nAGQ = 1L, doFit = TRUE,
-		  subset, weights, na.action, offset,
-		  contrasts = NULL, devFunOnly=0L,
-                  tolPwrss = 1e-10, optimizer=c("bobyqa","NelderMead"), ...)
+##' @param devFunOnly 
+##' @param tolPwrss 
+##' @param optimizer 
+##' @param ... 
+##' @param control a list of control parameters passed to the optimizer.
+nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
+                  nAGQ = 1L, subset, weights, na.action, offset,
+                  contrasts = NULL, devFunOnly = 0L, tolPwrss = 1e-10,
+                  optimizer=c("NelderMead","bobyqa"), ...)
 {
-    if (!missing(family)) stop("code not yet written")
     mf <- mc <- match.call()
     m <- match(c("data", "subset", "weights", "na.action",
 		 "offset", "etastart", "mustart"),
@@ -763,8 +758,72 @@ nlmer <- function(formula, data, family = gaussian, start = NULL,
     rho$beta0 <- rho$pp$beta0
     rho$lower <- reTrms$lower
     devfun <- mkdevfun(rho, 0L) # deviance as a function of theta only
-    devfun
-}
+    if (devFunOnly && !nAGQ) return(devfun)
+    control$iprint <- min(verbose, 3L)
+    opt <- bobyqa(rho$pp$theta, devfun, rho$lower, control=control)
+    if (nAGQ > 0L) {
+        rho$lower <- c(rho$lower, rep.int(-Inf, length(rho$beta0)))
+        rho$u0    <- rho$pp$u0
+        rho$beta0 <- rho$pp$beta0
+        rho$dpars <- seq_along(rho$pp$theta)
+        if (nAGQ > 1L) {
+            if (length(reTrms$flist) != 1L || length(reTrms$cnms[[1]]) != 1L)
+                stop("nAGQ > 1 is only available for models with a single, scalar random-effects term")
+            rho$fac <- reTrms$flist[[1]]
+        }
+        devfun <- mkdevfun(rho, nAGQ)
+        if (devFunOnly) return(devfun)
+        opt <- switch(match.arg(optimizer),
+                      bobyqa = {
+                          if(!is.numeric(control$rhobeg)) control$rhobeg <- 0.0002
+                          if(!is.numeric(control$rhoend)) control$rhoend <- 2e-7
+                          rho$control <- control
+                          bobyqa(c(rho$pp$theta, rho$beta0), devfun, rho$lower, control=control)
+                      },
+                      NelderMead = {
+                          xst <- c(rep.int(0.1, length(rho$dpars)), sqrt(diag(environment(devfun)$pp$unsc())))
+                          nM <- NelderMead$new(lower=rho$lower, upper=rep.int(Inf, length(rho$lower)), xst=0.2*xst,
+                                               x0=with(environment(devfun), c(pp$theta, pp$beta0)),
+                                               xt=xst*0.0001)
+                          cc <- do.call(function(iprint=0L, maxfun=10000L, FtolAbs=1e-5,
+                                                 FtolRel=1e-15, XtolRel=1e-7,
+                                                 MinfMax=.Machine$double.xmin) {
+                              if (length(list(...))>0) warning("unused control arguments ignored")
+                              list(iprint=iprint, maxfun=maxfun, FtolAbs=FtolAbs, FtolRel=FtolRel,
+                                   XtolRel=XtolRel, MinfMax=MinfMax)
+                          }, control)
+                          nM$setMaxeval(cc$maxfun)
+                          nM$setFtolAbs(cc$FtolAbs)
+                          nM$setFtolRel(cc$FtolRel) 
+                          nM$setMinfMax(cc$MinfMax)
+                          nM$setIprint(cc$iprint)                          
+                          while ((nMres <- nM$newf(devfun(nM$xeval()))) == 0L) {}
+                          if (nMres < 0L) {
+                              if (nMres > -4L)
+                                  stop("convergence failure, code ", nMres, " in NelderMead")
+                              else
+                                  warning("failure to converge in 1000 evaluations")
+                          }
+                          list(fval=nM$value(), pars=nM$xpos(), code=nMres)
+                      })
+    }
+    sqrLenU <- rho$pp$sqrL(0.)
+    wrss <- rho$resp$wrss()
+    pwrss <- wrss + sqrLenU
+    n <- nrow(fr)
+
+    dims <- c(N=n, n=n, nmp=n-p, nth=length(rho$pp$theta), p=p, q=nrow(reTrms$Zt),
+	      nAGQ=nAGQ, useSc=1L, reTrms=length(reTrms$cnms),
+	      spFe=0L, REML=0L, GLMM=0L, NLMM=1L)
+    cmp <- c(ldL2=rho$pp$ldL2(), ldRX2=rho$pp$ldRX2(), wrss=wrss,
+             ussq=sqrLenU, pwrss=pwrss, drsum=NA,
+	     drsum=wrss, dev=opt$fval, REML=NA,
+	     sigmaML=sqrt(pwrss/n), sigmaREML=NA)
+
+    new("nlmerMod", call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
+        Gp=reTrms$Gp, 	theta=rho$pp$theta, beta=rho$pp$beta0, u=rho$pp$u0,
+        lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims), pp=rho$pp, resp=rho$resp)
+}## {nlmer}
 
 
 ## Methods for the merMod class
@@ -1076,20 +1135,20 @@ refitML <- function(x, ...) UseMethod("refitML")
 refitML.merMod <- function (x, ...) {
     if (!isREML(x)) return(x)
     stopifnot(is(rr <- x@resp, "lmerResp"))
-    resp <- new(class(rr), y=rr$y, offset=rr$offset, weights=rr$weights, REML=0L)
-#    resp$offset <- rr$offset
-#    resp$weights <- rr$weights
-#    resp$REML <- 0L
+    rho <- new.env(parent=parent.env(environment()))
+    rho$resp <- new(class(rr), y=rr$y, offset=rr$offset, weights=rr$weights, REML=0L)
     xpp <- x@pp
-    pp <- new(class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat,
-	      Lind=xpp$Lind, theta=xpp$theta)
-    opt <- bobyqa(x@theta, mkdevfun(pp, resp, emptyenv()), x@lower)
+    rho$pp <- new(class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat,
+                  Lind=xpp$Lind, theta=xpp$theta, S=1L)
+    devfun <- mkdevfun(rho, 0L)
+    opt <- bobyqa(x@theta, devfun, x@lower)
     n <- length(rr$y)
+    pp <- rho$pp
     p <- ncol(pp$X)
     dims <- c(N=n, n=n, nmp=n-p, nth=length(pp$theta), p=p, q=nrow(pp$Zt),
 	      nAGQ=NA_integer_, useSc=1L, reTrms=length(x@cnms),
 	      spFe=0L, REML=0L, GLMM=0L, NLMM=0L)
-    wrss <- resp$wrss()
+    wrss <- rho$resp$wrss()
     ussq <- pp$sqrL(1)
     pwrss <- wrss + ussq
     cmp <- c(ldL2=pp$ldL2(), ldRX2=pp$ldRX2(), wrss=wrss, ussq=ussq,
@@ -1100,7 +1159,7 @@ refitML.merMod <- function (x, ...) {
 ### tricky to do so without causing the call to be evaluated
     new("lmerMod", call=x@call, frame=x@frame, flist=x@flist,
 	cnms=x@cnms, theta=pp$theta, beta=pp$delb, u=pp$delu,
-	lower=x@lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=resp)
+	lower=x@lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=rho$resp)
 }
 
 getCall.merMod <- function(x, ...) x@call
