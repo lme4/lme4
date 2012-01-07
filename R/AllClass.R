@@ -35,9 +35,10 @@ merPredD <-
                      u0      = "numeric"),
                 methods =
                 list(
+### FIXME: probably don't need S as Xwts is required for nlmer 
                      initialize = function(X, Zt, Lambdat, Lind, theta, S, ...) {
                          if (!nargs()) return
-                         X <<- X
+                         X <<- as(X, "matrix")
                          Zt <<- as(Zt, "dgCMatrix")
                          Lambdat <<- as(Lambdat, "dgCMatrix")
                          Lind <<- as.integer(Lind)
@@ -57,10 +58,12 @@ merPredD <-
                          V <<- array(0, c(n, p))
                          VtV <<- array(0, c(p, p))
                          Vtr <<- numeric(p)
-                         beta0 <<- numeric(p)
+                         b0 <- list(...)$beta0
+                         beta0 <<- if (is.null(b0)) numeric(p) else b0
                          delb <<- numeric(p)
                          delu <<- numeric(q)
-                         u0 <<- numeric(q)
+                         uu <- list(...)$u0
+                         u0 <<- if (is.null(uu)) numeric(q) else uu
                          Ut <<- if (S == 1) Zt + 0 else
                              Zt %*% sparseMatrix(i=seq_len(N), j=as.integer(gl(n, 1, N)), x=rep.int(1,N))
                          LamtUt <<- Lambdat %*% Ut   

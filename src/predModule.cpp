@@ -52,8 +52,10 @@ namespace lme4Eigen {
 	d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
 	d_RX.compute(d_VtV);	// ensure d_RX is initialized even in the 0-column X case
 
+//	Rcpp::Rcout << "before setTheta" << std::endl;
 	setTheta(d_theta);	    // starting values into Lambda
         d_L.cholmod().final_ll = 1; // force an LL' decomposition
+//	Rcpp::Rcout << "before updateLamtUt" << std::endl;
 	updateLamtUt();
 	d_L.analyzePattern(d_LamtUt); // perform symbolic analysis
         if (d_L.info() != Eigen::Success)
@@ -64,20 +66,21 @@ namespace lme4Eigen {
 	// This complicated code bypasses problems caused by Eigen's
 	// sparse/sparse matrix multiplication pruning zeros.  The
 	// Cholesky decomposition croaks if the structure of d_LamtUt changes.
-	std::fill(d_LamtUt._valuePtr(), d_LamtUt._valuePtr() + d_LamtUt.nonZeros(), Scalar());
+	MVec(d_LamtUt._valuePtr(), d_LamtUt.nonZeros()).setZero();
 	for (Index j = 0; j < d_Ut.cols(); ++j) {
 	    for(MSpMatrixd::InnerIterator rhsIt(d_Ut, j); rhsIt; ++rhsIt) {
-		Scalar                       y(rhsIt.value());
-		Index                        k(rhsIt.index());
+		Scalar                        y(rhsIt.value());
+		Index                         k(rhsIt.index());
 		MSpMatrixd::InnerIterator prdIt(d_LamtUt, j);
 		for (MSpMatrixd::InnerIterator lhsIt(d_Lambdat, k); lhsIt; ++lhsIt) {
-		    Index                    i = lhsIt.index();
+		    Index                     i = lhsIt.index();
 		    while (prdIt && prdIt.index() != i) ++prdIt;
 		    if (!prdIt) throw runtime_error("logic error in updateLamtUt");
-		    prdIt.valueRef()          += lhsIt.value() * y;
+		    prdIt.valueRef()           += lhsIt.value() * y;
 		}
 	    }
 	}
+//	Rcpp::Rcout << "end of updateLamtUt" << std::endl;
     }
 
     VectorXd merPredD::b(const double& f) const {return d_Lambdat.adjoint() * u(f);}
@@ -94,6 +97,9 @@ namespace lme4Eigen {
 
     void merPredD::updateL() {
 	updateLamtUt();
+	// More complicated code to handle the case of zeros in
+	// potentially nonzero positions.  The factorize_p method is
+	// for a SparseMatrix<double>, not a MappedSparseMatrix<double>.
 	SpMatrixd  m(d_LamtUt.rows(), d_LamtUt.cols());
 	m.resizeNonZeros(d_LamtUt.nonZeros());
 	std::copy(d_LamtUt._valuePtr(),
@@ -150,9 +156,11 @@ namespace lme4Eigen {
     }
 
     void merPredD::updateXwts(const VectorXd& sqrtXwt) {
+//	Rcpp::Rcout << "in updateXwts" << std::endl;
 	if (d_Xwts.size() != sqrtXwt.size())
 	    throw invalid_argument("updateXwts: dimension mismatch");
 	std::copy(sqrtXwt.data(), sqrtXwt.data() + sqrtXwt.size(), d_Xwts.data());
+//	Rcpp::Rcout << "after copy, d_Xwts = " << d_Xwts.adjoint() << std::endl;
 	if (sqrtXwt.size() == d_V.rows()) {
 	    d_V              = sqrtXwt.asDiagonal() * d_X;
 	    for (int j = 0; j < d_N; ++j)
@@ -160,24 +168,45 @@ namespace lme4Eigen {
 		     Uit && Zit; ++Uit, ++Zit)
 		    Uit.valueRef() = Zit.value() * sqrtXwt.data()[j];
 	} else {
-	    int n            = d_X.rows()/d_V.rows();
-	    SpMatrixd      W(n, sqrtXwt.size());
+	    SpMatrixd      W(d_V.rows(), sqrtXwt.size());
 	    const double *pt = sqrtXwt.data();
 	    W.reserve(sqrtXwt.size());
 	    for (Index j = 0; j < W.cols(); ++j, ++pt) {
 		W.startVec(j);
-		W.insertBack(j % n, j) = *pt;
+		W.insertBack(j % d_V.rows(), j) = *pt;
 	    }
 	    W.finalize();
+	    // Rcpp::Rcout << "in nlmer block: W(" << W.rows() << "," << W.cols()
+	    // 		<< "), outer: " << MiVec(W._outerIndexPtr(), W.outerSize()).adjoint() 
+	    // 		<< std::endl;
+	    // Rcpp::Rcout << "inner: " << MiVec(W._innerIndexPtr(), W.nonZeros()).adjoint() 
+	    // 		<< std::endl;
+	    // Rcpp::Rcout << "values: " << MVec(W._valuePtr(), W.nonZeros()).adjoint() 
+	    // 		<< std::endl;
 	    d_V              = W * d_X;
-// FIXME: Need to work out the equivalent code here for d_Ut = d_Zt * W.adjoint()
-	    // for (int j = 0; j < d_N; ++j)
-	    // 	for (MSpMatrixd::InnerIterator Uit(d_Ut, j), Zit(d_Zt, j);
-	    // 	     Uit && Zit; ++Uit, ++Zit)
-	    // 	    Uit.valueRef() = Zit.value() * sqrtXwt.data()[j];
+	    SpMatrixd      Ut(d_Zt * W.adjoint());
+	    // Rcpp::Rcout << "Ut(" << Ut.rows() << "," << Ut.cols()
+	    // 		<< "), outer: " << MiVec(Ut._outerIndexPtr(), Ut.outerSize()).adjoint() 
+	    // 		<< std::endl;
+	    // Rcpp::Rcout << "inner: " << MiVec(Ut._innerIndexPtr(), Ut.nonZeros()).adjoint() 
+	    // 		<< std::endl;
+	    // Rcpp::Rcout << "values: " << MVec(Ut._valuePtr(), Ut.nonZeros()).adjoint() 
+	    // 		<< std::endl;
+	    if (Ut.cols() != d_Ut.cols())
+		throw std::runtime_error("Size mismatch in updateXwts");
+
+	    // More complex code to handle the pruning of zeros
+	    MVec(d_Ut._valuePtr(), d_Ut.nonZeros()).setZero();
+	    for (int j = 0; j < d_Ut.cols(); ++j) {
+		MSpMatrixd::InnerIterator lhsIt(d_Ut, j);
+		SpMatrixd::InnerIterator  rhsIt(Ut, j);
+		Index                         k(rhsIt.index());
+		while (lhsIt && lhsIt.index() != k) ++lhsIt;
+		if (lhsIt.index() != k)
+		    throw std::runtime_error("Pattern mismatch in updateXwts");
+		lhsIt.valueRef() = rhsIt.value();
+	    }
 	}
-//	if (d_LamtUt.rows() != d_Ut.rows() || 
-//	    d_LamtUt.cols() != d_Ut.cols()) d_LamtUtRestructure = true;
 	d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
 	updateL();
     }

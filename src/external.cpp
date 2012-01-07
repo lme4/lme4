@@ -309,6 +309,60 @@ extern "C" {
 	END_RCPP;
     }
 
+    static inline double prss(lmResp *rp, merPredD *pp, double fac) {
+	return rp->wrss() + (fac ? pp->sqrL(fac) : pp->u0().squaredNorm());
+    }
+
+    void nstepFac(nlsResp *rp, merPredD *pp, int verb) {
+	double prss0(prss(rp, pp, 0.));
+
+	for (double fac = 1.; fac > 0.001; fac /= 2.) {
+	    double prss1 = rp->updateMu(pp->linPred(fac)) + pp->sqrL(fac);
+	    if (verb > 3)
+		::Rprintf("pwrss0=%10g, diff=%10g, fac=%6.4f\n",
+			  prss0, prss0 - prss1, fac);
+	    if (prss1 < prss0) {
+		pp->installPars(fac);
+		return;
+	    }
+	}
+	throw runtime_error("step factor reduced below 0.001 without reducing pwrss");
+    }
+
+#define MAXITER 30
+    static void prssUpdate(nlsResp *rp, merPredD *pp, int verb, bool uOnly, double tol) {
+	bool cvgd(false);
+	for (int it=0; it < MAXITER; ++it) {
+	    rp->updateMu(pp->linPred(0.));
+	    pp->updateXwts(rp->sqrtXwt());
+	    pp->updateDecomp();
+	    pp->updateRes(rp->wtres());
+	    if ((uOnly ? pp->solveU() : pp->solve())/pwrss(rp, pp, 0.) < tol) {
+		cvgd = true;
+		break;
+	    }
+	    nstepFac(rp, pp, verb);
+	}
+	if (!cvgd) throw runtime_error("pwrss failed to converge in 30 iterations");
+    }
+
+    SEXP nlmerLaplace(SEXP pp_, SEXP rp_, SEXP theta_, SEXP u0_, SEXP beta0_,
+		      SEXP verbose_, SEXP uOnly_, SEXP tol_) {
+	BEGIN_RCPP;
+
+	XPtr<nlsResp>     rp(rp_);
+	XPtr<merPredD>    pp(pp_);
+
+	pp->setTheta(as<MVec>(theta_));
+	pp->setU0(as<MVec>(u0_));
+	pp->setBeta0(as<MVec>(beta0_));
+	prssUpdate(rp, pp, ::Rf_asInteger(verbose_), ::Rf_asLogical(uOnly_),
+		    ::Rf_asReal(tol_));
+	return ::Rf_ScalarReal(rp->Laplace(pp->ldL2(), pp->ldRX2(), pp->sqrL(1.)));
+
+	END_RCPP;
+    }
+
     SEXP golden_Create(SEXP lower_, SEXP upper_) {
 	BEGIN_RCPP;
 	Golden *ans = new Golden(::Rf_asReal(lower_), ::Rf_asReal(upper_));
@@ -802,6 +856,8 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(NelderMead_value, 1),
     CALLDEF(NelderMead_xeval, 1),
     CALLDEF(NelderMead_xpos, 1),
+
+    CALLDEF(nlmerLaplace, 8),
 
     CALLDEF(nls_Create, 11),	// generate external pointer
 

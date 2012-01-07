@@ -97,6 +97,23 @@ mkdevfun <- function(rho, nAGQ=1L) {
                 .Call(glmerAGQ, pp$ptr(), resp$ptr(), fac, GQmat, pars[dpars],
                       u0, pars[-dpars], tolPwrss)
         }
+    } else if (is(rho$resp, "nlsResp")) {
+        if (nAGQ < 2L) {
+            rho$nlmerLaplace <- nlmerLaplace
+            ff <- switch(nAGQ + 1L,
+                         function(theta)
+                         .Call(nlmerLaplace, pp$ptr(), resp$ptr(), theta,
+                               u0, beta0, verbose, FALSE, tolPwrss),
+                         function(pars)
+                         .Call(nlmerLaplace, pp$ptr(), resp$ptr(), pars[dpars], u0,
+                               pars[-dpars], verbose, TRUE, tolPwrss))
+        } else {
+            rho$nlmerAGQ <- nlmerAGQ
+            rho$GQmat <- GHrule(nAGQ)
+            ff <- function(pars)
+                .Call(nlmerAGQ, pp$ptr(), resp$ptr(), fac, GQmat, pars[dpars],
+                      u0, pars[-dpars], tolPwrss)
+        }
     }
     if (is.null(ff)) stop("code not yet written")
     environment(ff) <- rho
@@ -668,7 +685,8 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
 nlmer <- function(formula, data, family = gaussian, start = NULL,
 		  verbose = 0L, nAGQ = 1L, doFit = TRUE,
 		  subset, weights, na.action, offset,
-		  contrasts = NULL, devFunOnly=0L, ...)
+		  contrasts = NULL, devFunOnly=0L,
+                  tolPwrss = 1e-10, optimizer=c("bobyqa","NelderMead"), ...)
 {
     if (!missing(family)) stop("code not yet written")
     mf <- mc <- match.call()
@@ -724,11 +742,18 @@ nlmer <- function(formula, data, family = gaussian, start = NULL,
     p <- ncol(X)
     if ((qrX <- qr(X))$rank < p)
 	stop(gettextf("rank of X = %d < ncol(X) = %d", qrX$rank, p))
-    pp <- do.call(merPredD$new, c(reTrms[c("Zt","theta","Lambdat","Lind")],
-                                  list(X=X, S=s, Xwts = rr$sqrtXwt,
-                                       beta0=qr.coef(qrX, unlist(lapply(pnames, get, envir = nlenv))))
-                                  ))
-    return(list(pp=pp, resp=rr))
+    rho <- as.environment(list(verbose=verbose, tolPwrss=tolPwrss))
+    parent.env(rho) <- parent.frame()
+    rho$pp <- do.call(merPredD$new, c(reTrms[c("Zt","theta","Lambdat","Lind")],
+                                      list(X=X, S=s, Xwts = rr$sqrtXwt,
+                                           beta0=qr.coef(qrX, unlist(lapply(pnames, get, envir = nlenv))))
+                                      ))
+    rho$resp <- rr
+    rho$u0 <- rho$pp$u0
+    rho$beta0 <- rho$pp$beta0
+    rho$lower <- reTrms$lower
+    devfun <- mkdevfun(rho, 0L) # deviance as a function of theta only
+    devfun
 }
 
 
