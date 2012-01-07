@@ -13,20 +13,17 @@
 \usage{
 lmer(formula, data, REML = TRUE, sparseX = FALSE,
      control = list(), start = NULL, verbose = 0L,
-     %doFit = TRUE, %compDev = TRUE, _support too - FIXME? _
      subset, weights, na.action, offset, contrasts = NULL,
-     devFunOnly = FALSE,
-     \dots)
-
+     devFunOnly = FALSE, \dots)
 glmer(formula, data, family = gaussian, sparseX = FALSE,
       control = list(), start = NULL, verbose = 0, nAGQ = 1,
       compDev = TRUE, subset, weights, na.action, offset,
       contrasts = NULL, mustart, etastart, devFunOnly = FALSE,
-      tolPwrss = 1e-06, \dots)
-
-nlmer(formula, data, family = gaussian, start = NULL,
-      verbose = 0L, nAGQ = 1L, doFit = TRUE, subset, weights,
-      na.action, offset, contrasts = NULL, devFunOnly = 0L, \dots)
+      tolPwrss = 1e-10, optimizer = c("NelderMead", "bobyqa"), \dots)
+nlmer(formula, data, control=list(), start = NULL, verbose = 0L,
+      nAGQ = 1L, subset, weights, na.action, offset,
+      contrasts = NULL, devFunOnly = 0L, tolPwrss = 1e-10,
+      optimizer = c("NelderMead", "bobyqa"), \dots)
 }
 \arguments{
   \item{formula}{a two-sided linear formula object describing the
@@ -82,6 +79,11 @@ nlmer(formula, data, family = gaussian, start = NULL,
   \item{tolPwrss}{numeric scalar - the tolerance for declaring
       convergence in the penalized weighted residual sum-of-squares
       step.  Defaults to 1e-06.}
+  \item{optimizer}{which optimizer to use in the second phase of
+    optimization.  The default is \code{\link{NelderMead}} and the
+    alternative is \code{\link{bobyqa}}.  For difficult model fits we
+    have found \code{\link{NelderMead}} to be more reliable but
+    occasionally slower than \code{\link{bobyqa}}.}
   \item{\dots}{other potential arguments.  A \code{method} argument was
     used in earlier versions of the package. Its functionality has been
     replaced by the \code{REML} and \code{nAGQ} arguments.}
@@ -165,6 +167,12 @@ stopifnot(all.equal( coef(fm3.d), coef(fm3.s), tol = 1e-14),
 ## using nAGQ=0L only gets close to the optimum
 (gm1a <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                cbpp, binomial, nAGQ = 0L))
+## using nAGQ=9L provides a better evaluation of the deviance
+(gm1b <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+               cbpp, binomial, nAGQ = 9L))
+## check with nAGQ=25L
+(gm1c <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+               cbpp, binomial, nAGQ = 25L))
 
 ## GLMM with individual-level variability (accounting for overdispersion)
 cbpp$obs <- 1:nrow(cbpp)

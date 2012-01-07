@@ -9,16 +9,14 @@
   deviance.
 }
 \usage{
-mkdevfun(pp, resp, rho, nAGQ=1L)
+mkdevfun(rho, nAGQ=1L)
 }
 \arguments{
-  \item{pp}{a prediction module, typically of class
-    \code{\linkS4class{merPredD}}.%% FIXME merPred --> *D and *S ??
-  }
-  \item{resp}{a response module, e.g., of class
+  \item{rho}{an environment containing \code{pp},
+    a prediction module, typically of class
+    \code{\linkS4class{merPredD}},%% FIXME merPred --> *D and *S ??
+    and \code{resp}, a response module, e.g., of class
     \code{\linkS4class{lmerResp}}.}
-  \item{rho}{an environment containing auxillary information for the
-    function evaluation}
   \item{nAGQ}{scalar integer - the number of adaptive Gauss-Hermite
     quadrature points.  A value of 0 indicates that both the
     fixed-effects parameters and the random effects are optimized by the
