@@ -690,6 +690,12 @@ extern "C" {
 	END_RCPP;
     }
 
+    SEXP NelderMead_setIprint(SEXP ptr_, SEXP ip_) {
+	BEGIN_RCPP;
+	XPtr<Nelder_Mead>(ptr_)->set_Iprint(::Rf_asInteger(ip_));
+	END_RCPP;
+    }
+	
     SEXP NelderMead_setMaxeval(SEXP ptr_, SEXP mm_) {
 	BEGIN_RCPP;
 	XPtr<Nelder_Mead>(ptr_)->set_Maxeval(::Rf_asInteger(mm_));
@@ -851,6 +857,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(NelderMead_setForce_stop, 2),
     CALLDEF(NelderMead_setFtol_abs, 2),
     CALLDEF(NelderMead_setFtol_rel, 2),
+    CALLDEF(NelderMead_setIprint, 2),
     CALLDEF(NelderMead_setMaxeval, 2),
     CALLDEF(NelderMead_setMinf_max, 2),
     CALLDEF(NelderMead_value, 1),

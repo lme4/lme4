@@ -127,6 +127,7 @@ namespace optimizer {
 	void      setFtol_abs(const Scalar& fta)      {d_stop.setFtol_abs(fta);}
 	void      setFtol_rel(const Scalar& ftr)      {d_stop.setFtol_rel(ftr);}
 	void      set_Maxeval(const unsigned int& mm) {d_stop.set_Maxeval(mm);}
+	void      set_Iprint(const int& ip)           {d_verb = ip;}
 	void      setMinf_max(const Scalar& mm)       {d_stop.setMinf_max(mm);}
     };
 

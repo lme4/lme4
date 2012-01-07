@@ -124,7 +124,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
                   control = list(), start = NULL, verbose = 0L, nAGQ = 1L,
                   compDev=TRUE, subset, weights, na.action, offset,
                   contrasts = NULL, mustart, etastart, devFunOnly = FALSE,
-                  tolPwrss = 1e-10, optimizer=c("bobyqa","NelderMead"), ...)
+                  tolPwrss = 1e-10, optimizer=c("NelderMead","bobyqa"), ...)
 {
     verbose <- as.integer(verbose)
     mf <- mc <- match.call()
@@ -230,8 +230,18 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
                           nM <- NelderMead$new(lower=rho$lower, upper=rep.int(Inf, length(rho$lower)), xst=0.2*xst,
                                                x0=with(environment(devfun), c(pp$theta, pp$beta0)),
                                                xt=xst*0.0001)
-                          nM$setMaxeval(1000L)
-                          nM$setFtolAbs(1e-5)
+                          cc <- do.call(function(iprint=0L, maxfun=10000L, FtolAbs=1e-5,
+                                                 FtolRel=1e-15, XtolRel=1e-7,
+                                                 MinfMax=.Machine$double.xmin) {
+                              if (length(list(...))>0) warning("unused control arguments ignored")
+                              list(iprint=iprint, maxfun=maxfun, FtolAbs=FtolAbs, FtolRel=FtolRel,
+                                   XtolRel=XtolRel, MinfMax=MinfMax)
+                          }, control)
+                          nM$setMaxeval(cc$maxfun)
+                          nM$setFtolAbs(cc$FtolAbs)
+                          nM$setFtolRel(cc$FtolRel) 
+                          nM$setMinfMax(cc$MinfMax)
+                          nM$setIprint(cc$iprint)                          
                           while ((nMres <- nM$newf(devfun(nM$xeval()))) == 0L) {}
                           if (nMres < 0L) {
                               if (nMres > -4L)

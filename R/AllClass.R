@@ -527,7 +527,8 @@ NelderMead <-
                      setFtolAbs   = function(fta)      .Call(NelderMead_setFtol_abs, ptr(), fta),
                      setFtolRel   = function(ftr)      .Call(NelderMead_setFtol_rel, ptr(), ftr),
                      setMaxeval   = function(mxev)     .Call(NelderMead_setMaxeval, ptr(), mxev),
-                     setMinfMax   = function(minf)     .Call(NelderMead_setMinf_max, ptr(), minf),                     
+                     setMinfMax   = function(minf)     .Call(NelderMead_setMinf_max, ptr(), minf),
+                     setIprint    = function(iprint)   .Call(NelderMead_setIprint, ptr(), iprint),
                      value        = function()         .Call(NelderMead_value, ptr()),
                      xeval        = function()         .Call(NelderMead_xeval, ptr()),
                      xpos         = function()         .Call(NelderMead_xpos, ptr())
