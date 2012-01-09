@@ -1,3 +1,94 @@
+2012-01-07  Douglas Bates <bates@stat.wisc.edu>
+
+	* man/GHrule.Rd, man/NelderMead-class.Rd, man/NelderMead.Rd,
+	  man/golden-class.Rd, man/golden.Rd, man/lmer.Rd, man/mkdevfun.Rd:
+	  Documentation updates.
+	* R/lmer.R, R/profile.R, tests/lmer-1.R: Nlmer now working (for nAGQ=1).
+	  Updated tests and got profile working again.
+	* R/AllClass.R, R/lmer.R, src/external.cpp, src/optimizer.h: Allowed
+	  setting options in the NelderMead optimizer. Switched so that this is
+	  the default in glmer.
+	* R/AllClass.R, R/lmer.R, src/external.cpp, src/predModule.cpp: More
+	  work on nlmer.
+
+2011-12-31  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/predModule.cpp: Add an explicit copy of the mapped sparse matrix
+	  to a sparse matrix in updateL
+
+2011-12-28  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/lmer.R: Change maximum iterations error to a warning.
+	* DESCRIPTION: New version number.
+	* R/lmer.R: Allowed choice of optimizer in glmer at least.
+	* R/AllClass.R: Extended and exported the NelderMead class
+	* src/external.cpp, src/optimizer.cpp, src/optimizer.h: Removed
+	  debugging code, added methods to NelderMead to set convergence
+	  characteristics and exported same.
+
+2011-12-22  Douglas Bates <bates@stat.wisc.edu>
+
+	* NAMESPACE, R/AllClass.R, src/external.cpp, src/optimizer.cpp,
+	  src/optimizer.h: Tuned the Nelder-Mead optimizer a bit and got rid of
+	  some of the noise.
+	* R/lmer.R, man/lmer.Rd, src/external.cpp: Incorporated aGQ code in the
+	  glmer function itself. Eliminated the doFit argument which is
+	  redundant when devFunOnly is also used.
+
+2011-12-21  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/external.cpp: Added the glmerAGQ function and did some cleanup.
+	* src/predModule.cpp: Delete some debugging code.
+	* R/lmer.R: Updates in glmer, aGQ not yet added but soon will be.
+	* R/GHrule.R: Rename the knots on the z scale as 'z', not 'k'
+	* NAMESPACE: Export the golden class and class generator object
+
+2011-12-16  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/respModule.cpp, src/respModule.h: Clean up declarations by
+	  declaring a typedef for Eigen::Map<Eigen::VectorXd>
+
+2011-12-15  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/lmer.R: Adopt new version of the merPredD$new function that uses S.
+	* R/GHrule.R: Added an R function, based on SparseGrid:::GQN to evaluate
+	  a matrix of nodes, weights and log-density for Gauss-Hermite
+	  quadrature against a Gaussian density.
+	* R/AllClass.R, src/optimizer.h: Added a reverse-communication golden
+	  search algorithm class
+
+2011-12-12  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/external.cpp: Fat-finger error. I meant to commit this file and
+	  not glmFamily.h
+	* src/glmFamily.h, src/optimizer.cpp, src/optimizer.h: Added simple
+	  optimizers (Golden search for bounded 1-dimensional and Nelder-Mead
+	  for multidimensional).
+
+2011-12-07  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/AllClass.R, R/lmer.R, src/external.cpp, src/predModule.cpp,
+	  src/predModule.h: Allow regeneration of pointers in merPredD objects.
+
+2011-12-06  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/AllClass.R, R/lmer.R, src/external.cpp, src/predModule.cpp,
+	  src/predModule.h: Add many more fields to the merPredD class and allow
+	  for serialize/unserialize. Lower the default tolPwrss as per testing
+	  by Ben.
+
+2011-12-05  Douglas Bates <bates@stat.wisc.edu>
+
+	* DESCRIPTION, R/AllClass.R, R/lmer.R, man/lmer.Rd, man/mkdevfun.Rd,
+	  man/refitML.Rd, src/external.cpp, src/predModule.cpp,
+	  src/predModule.h, src/respModule.cpp, src/respModule.h: Use mapped
+	  objects in C++ structures so that serialize/unserialize will work.
+
+2011-11-29  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/profile.R: More fixing of labels. Fix up strip names to
+	  reflect sigma, not log(sigma).
+
 2011-11-29  Douglas Bates <bates@stat.wisc.edu>
 
 	* R/profile.R: Profiling now works for lmer models with variance
