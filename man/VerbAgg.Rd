@@ -53,10 +53,13 @@ if (require(lattice)) {
 }
 
 \dontrun{## takes about 15 sec
-fmVA <- glmer(r2 ~ (Anger + Gender + btype + situ)^2 +
-                   (1|id) + (1|item),
-              family = binomial, data = VerbAgg)
-fmVA
+print(fmVA <- glmer(r2 ~ (Anger + Gender + btype + situ)^2 +
+                   (1|id) + (1|item), family = binomial, data =
+                   VerbAgg), corr=FALSE)
 }
+                       ## much faster but less accurate
+print(fmVA0 <- glmer(r2 ~ (Anger + Gender + btype + situ)^2 +
+                    (1|id) + (1|item), family = binomial, data =
+                    VerbAgg, nAGQ=0L), corr=FALSE)
 }
 \keyword{datasets}

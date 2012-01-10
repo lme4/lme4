@@ -46,6 +46,11 @@ GHrule(ord)
 %\note{}
 %\seealso{}
 \examples{
-GHrule(5)
+(rr <- as.data.frame(GHrule(5)))
+sum(rr$w * (rr$z)^2)		# second moment of standard Gaussian
+sum(rr$w * (rr$z)^4)		# fourth moment of standard Gaussian
+sum(rr$w * (rr$z)^6)		# sixth moment of standard Gaussian (approx)
+sum(rr$w * (rr$z)^8)		# eighth moment of standard Gaussian (approx)
+sum(rr$w * (rr$z)^10)		# tenth moment of standard Gaussian (approx)
 }
 \keyword{math}

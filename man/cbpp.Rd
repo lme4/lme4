@@ -40,10 +40,10 @@
 \examples{
 ## response as a matrix
 (m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-             cbpp, binomial, verbose = 1))
+             cbpp, binomial, nAGQ=9L))
 ## response as a vector of probabilities and usage of argument "weights"
 m1p <- glmer(incidence / size ~ period + (1 | herd), weights = size,
-             cbpp, binomial, verbose = 1)
+             cbpp, binomial, nAGQ=9L)
 ## Confirm that these are equivalent:
 stopifnot(all.equal(fixef(m1), fixef(m1p), tol = 1e-11),
           all.equal(ranef(m1), ranef(m1p), tol = 1e-11),

@@ -184,16 +184,13 @@ anova(gm1,gm2)
 
 ## nonlinear mixed models --- 3-part formulas ---
 
-nm1 <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~
+(nm1 <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~
              0 + Asym + xmid + scal + (0 + Asym|Tree),
-             Orange, start = c(Asym = 200, xmid = 725, scal = 350),
-             verbose = 1)
-nm1
-nm1a <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~
+             Orange, start = c(Asym = 200, xmid = 725, scal = 350)))
+(nm1a <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~
               0 + Asym + xmid + scal + (0 + Asym|Tree),
               Orange, start = c(Asym = 200, xmid = 725, scal = 350),
-              verbose = 1, nAGQ = 0L)
-nm1a
+              nAGQ = 0L))
 }
 \keyword{models}
 \keyword{methods}
