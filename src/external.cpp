@@ -309,17 +309,13 @@ extern "C" {
 	END_RCPP;
     }
 
-    static inline double prss(lmResp *rp, merPredD *pp, double fac) {
-	return rp->wrss() + (fac ? pp->sqrL(fac) : pp->u0().squaredNorm());
-    }
-
     void nstepFac(nlsResp *rp, merPredD *pp, int verb) {
-	double prss0(prss(rp, pp, 0.));
+	double prss0(pwrss(rp, pp, 0.));
 
 	for (double fac = 1.; fac > 0.001; fac /= 2.) {
 	    double prss1 = rp->updateMu(pp->linPred(fac)) + pp->sqrL(fac);
 	    if (verb > 3)
-		::Rprintf("pwrss0=%10g, diff=%10g, fac=%6.4f\n",
+		::Rprintf("prss0=%10g, diff=%10g, fac=%6.4f\n",
 			  prss0, prss0 - prss1, fac);
 	    if (prss1 < prss0) {
 		pp->installPars(fac);
@@ -329,7 +325,6 @@ extern "C" {
 	throw runtime_error("step factor reduced below 0.001 without reducing pwrss");
     }
 
-#define MAXITER 30
     static void prssUpdate(nlsResp *rp, merPredD *pp, int verb, bool uOnly, double tol) {
 	bool cvgd(false);
 	for (int it=0; it < MAXITER; ++it) {
@@ -337,13 +332,16 @@ extern "C" {
 	    pp->updateXwts(rp->sqrtXwt());
 	    pp->updateDecomp();
 	    pp->updateRes(rp->wtres());
-	    if ((uOnly ? pp->solveU() : pp->solve())/pwrss(rp, pp, 0.) < tol) {
+	    double ccrit((uOnly ? pp->solveU() : pp->solve())/pwrss(rp, pp, 0.));
+	    if (verb > 3) 
+		::Rprintf("ccrit=%10g, tol=%10g\n", ccrit, tol);
+	    if (ccrit < tol) {
 		cvgd = true;
 		break;
 	    }
 	    nstepFac(rp, pp, verb);
 	}
-	if (!cvgd) throw runtime_error("pwrss failed to converge in 30 iterations");
+	if (!cvgd) throw runtime_error("prss failed to converge in 30 iterations");
     }
 
     SEXP nlmerLaplace(SEXP pp_, SEXP rp_, SEXP theta_, SEXP u0_, SEXP beta0_,
@@ -352,7 +350,7 @@ extern "C" {
 
 	XPtr<nlsResp>     rp(rp_);
 	XPtr<merPredD>    pp(pp_);
-
+//	int             verb(::Rf_asInteger(verbose_));
 	pp->setTheta(as<MVec>(theta_));
 	pp->setU0(as<MVec>(u0_));
 	pp->setBeta0(as<MVec>(beta0_));

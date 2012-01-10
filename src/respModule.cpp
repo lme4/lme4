@@ -15,7 +15,6 @@ namespace lme4Eigen {
     using Rcpp::as;
 
     using std::copy;
-    using std::string;
     using std::invalid_argument;
 
     typedef Eigen::Map<VectorXd>  MVec;
@@ -153,7 +152,7 @@ namespace lme4Eigen {
 
     double nlsResp::Laplace(double ldL2, double ldRX2, double sqrL) const {
 	double lnum = 2.* PI * (d_wrss + sqrL), n = d_y.size();
-	return ldL2 + n * (1 + log(lnum / n));
+	return ldL2 + n * (1 + std::log(lnum / n));
     }
 
     double nlsResp::updateMu(const VectorXd& gamma) {
@@ -165,16 +164,16 @@ namespace lme4Eigen {
 	const double  *gg = lp.data();
 
 	for (int p = 0; p < d_pnames.size(); ++p) {
-	    string pn(d_pnames[p]);
+	    std::string pn(d_pnames[p]);
 	    NumericVector pp = d_nlenv.get(pn);
-	    copy(gg + n * p, gg + n * (p + 1), pp.begin());
+	    std::copy(gg + n * p, gg + n * (p + 1), pp.begin());
 	}
 	NumericVector  rr = d_nlmod.eval(SEXP(d_nlenv));
 	if (rr.size() != n)
 	    throw invalid_argument("dimension mismatch");
-	copy(rr.begin(), rr.end(), d_mu.data());
+	std::copy(rr.begin(), rr.end(), d_mu.data());
 	NumericMatrix  gr = rr.attr("gradient");
-	copy(gr.begin(), gr.end(), d_sqrtXwt.data());
+	std::copy(gr.begin(), gr.end(), d_sqrtXwt.data());
 	return updateWrss();
     }
 

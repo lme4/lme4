@@ -1,6 +1,4 @@
-##' Fit a linear mixed model or a generalized linear mixed model or a nonlinear mixed model.
-##' 
-##'
+##' Fit a linear mixed-effects model
 ##' 
 ##' @title Fit a linear mixed-effects model
 ##' @param formula a two-sided linear formula object describing the
@@ -84,7 +82,32 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 
     if (devFunOnly) return(devfun)
     if (verbose) control$iprint <- as.integer(verbose)
-    opt <- bobyqa(reTrms$theta, devfun, reTrms$lower, control = control)
+
+    lower <- reTrms$lower
+    xst <- rep.int(0.1, length(lower))
+    nM <- NelderMead$new(lower=lower, upper=rep.int(Inf, length(lower)), xst=0.2*xst,
+                         x0=rho$pp$theta, xt=xst*0.0001)
+    cc <- do.call(function(iprint=0L, maxfun=10000L, FtolAbs=1e-5,
+                           FtolRel=1e-15, XtolRel=1e-7,
+                           MinfMax=.Machine$double.xmin) {
+        if (length(list(...))>0) warning("unused control arguments ignored")
+        list(iprint=iprint, maxfun=maxfun, FtolAbs=FtolAbs, FtolRel=FtolRel,
+             XtolRel=XtolRel, MinfMax=MinfMax)
+    }, control)
+    nM$setMaxeval(cc$maxfun)
+    nM$setFtolAbs(cc$FtolAbs)
+    nM$setFtolRel(cc$FtolRel) 
+    nM$setMinfMax(cc$MinfMax)
+    nM$setIprint(cc$iprint)                          
+    while ((nMres <- nM$newf(devfun(nM$xeval()))) == 0L) {}
+    if (nMres < 0L) {
+        if (nMres > -4L)
+            stop("convergence failure, code ", nMres, " in NelderMead")
+        else
+            warning("failure to converge in 1000 evaluations")
+    }
+    opt <- list(fval=nM$value(), pars=nM$xpos(), code=nMres)
+#    opt <- bobyqa(reTrms$theta, devfun, reTrms$lower, control = control)
     sqrLenU <- rho$pp$sqrL(1.)
     wrss <- rho$resp$wrss()
     pwrss <- wrss + sqrLenU
@@ -369,7 +392,7 @@ mkRespMod2 <- function(fr, REML=NA_integer_, family = NULL, nlenv = NULL, nlmod 
 ##' @param s Number of parameters in the nonlinear mean function (nlmer only)
 ##'
 ##' @return a list of Zt, Lambdat, Lind, theta, lower, flist and cnms
-mkReTrms <- function(bars, fr, s = 1L) {
+mkReTrms <- function(bars, fr) {
     if (!length(bars))
 	stop("No random effects terms specified in formula")
     stopifnot(is.list(bars), all(sapply(bars, is.language)),
@@ -442,7 +465,7 @@ mkReTrms <- function(bars, fr, s = 1L) {
 					    thoff[i]))
 			     }))))
     thet <- numeric(sum(nth))
-    ll <- list(Zt=Zt, theta=thet, Lind=as.integer(Lambdat@x),
+    ll <- list(Zt=Matrix::drop0(Zt), theta=thet, Lind=as.integer(Lambdat@x),
                Gp=unname(c(0L, cumsum(nb))))
     ## lower bounds on theta elements are 0 if on diagonal, else -Inf
     ll$lower <- -Inf * (thet + 1)
@@ -691,7 +714,7 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
 ##' @param control a list of control parameters passed to the optimizer.
 nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
                   nAGQ = 1L, subset, weights, na.action, offset,
-                  contrasts = NULL, devFunOnly = 0L, tolPwrss = 1e-10,
+                  contrasts = NULL, devFunOnly = 0L, tolPwrss = 1e-5,
                   optimizer=c("NelderMead","bobyqa"), ...)
 {
     mf <- mc <- match.call()
@@ -737,7 +760,7 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
     for (nm in pnames) # convert these variables in fr to indicators
 	frE[[nm]] <- as.numeric(rep(nm == pnames, each = n))
 					# random-effects module
-    reTrms <- mkReTrms(findbars(formula[[3]]), frE, s = s)
+    reTrms <- mkReTrms(findbars(formula[[3]]), frE)
 
     fe.form <- nlform
     fe.form[[3]] <- formula[[3]]
@@ -747,7 +770,7 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
     p <- ncol(X)
     if ((qrX <- qr(X))$rank < p)
 	stop(gettextf("rank of X = %d < ncol(X) = %d", qrX$rank, p))
-    rho <- as.environment(list(verbose=verbose, tolPwrss=tolPwrss))
+    rho <- as.environment(list(verbose=verbose, tolPwrss=0.001))
     parent.env(rho) <- parent.frame()
     rho$pp <- do.call(merPredD$new, c(reTrms[c("Zt","theta","Lambdat","Lind")],
                                       list(X=X, S=s, Xwts = rr$sqrtXwt,
@@ -759,8 +782,40 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
     rho$lower <- reTrms$lower
     devfun <- mkdevfun(rho, 0L) # deviance as a function of theta only
     if (devFunOnly && !nAGQ) return(devfun)
+## FIXME: change this to something sensible for NelderMead
+    
+    devfun(rho$pp$theta)                # initial coarse evaluation to get u0 and beta0
+    rho$u0 <- rho$pp$u0
+    rho$beta0 <- rho$pp$beta0
+    rho$tolPwrss <- tolPwrss
     control$iprint <- min(verbose, 3L)
-    opt <- bobyqa(rho$pp$theta, devfun, rho$lower, control=control)
+    lower <- reTrms$lower
+    xst <- rep.int(0.1, length(lower))
+    nM <- NelderMead$new(lower=lower, upper=rep.int(Inf, length(lower)), xst=rep.int(-0.1, length(lower)),
+                         x0=rho$pp$theta, xt=rep.int(0.00001, length(lower)))
+    cc <- do.call(function(iprint=0L, maxfun=10000L, FtolAbs=1e-5,
+                           FtolRel=1e-15, XtolRel=1e-7,
+                           MinfMax=.Machine$double.xmin) {
+        if (length(list(...))>0) warning("unused control arguments ignored")
+        list(iprint=iprint, maxfun=maxfun, FtolAbs=FtolAbs, FtolRel=FtolRel,
+             XtolRel=XtolRel, MinfMax=MinfMax)
+    }, control)
+    nM$setMaxeval(cc$maxfun)
+    nM$setFtolAbs(cc$FtolAbs)
+    nM$setFtolRel(cc$FtolRel) 
+    nM$setMinfMax(cc$MinfMax)
+    nM$setIprint(cc$iprint)                          
+    while ((nMres <- nM$newf(devfun(nM$xeval()))) == 0L) {}
+    if (nMres < 0L) {
+        if (nMres > -4L)
+            stop("convergence failure, code ", nMres, " in NelderMead")
+        else
+            warning("failure to converge in ", cc$maxfun, " evaluations")
+    }
+    opt <- list(fval=nM$value(), pars=nM$xpos(), code=nMres)
+    cat(sprintf("After first opt: deviance = %g\n", nM$value()))
+    cat("theta: ", opt$pars, "\n")
+    cat("beta: ", rho$pp$beta0, "\n")    
     if (nAGQ > 0L) {
         rho$lower <- c(rho$lower, rep.int(-Inf, length(rho$beta0)))
         rho$u0    <- rho$pp$u0
@@ -802,7 +857,7 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
                               if (nMres > -4L)
                                   stop("convergence failure, code ", nMres, " in NelderMead")
                               else
-                                  warning("failure to converge in 1000 evaluations")
+                                  warning("failure to converge in ", cc$maxfun, " evaluations")
                           }
                           list(fval=nM$value(), pars=nM$xpos(), code=nMres)
                       })

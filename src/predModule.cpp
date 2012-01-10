@@ -52,10 +52,8 @@ namespace lme4Eigen {
 	d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
 	d_RX.compute(d_VtV);	// ensure d_RX is initialized even in the 0-column X case
 
-//	Rcpp::Rcout << "before setTheta" << std::endl;
 	setTheta(d_theta);	    // starting values into Lambda
         d_L.cholmod().final_ll = 1; // force an LL' decomposition
-//	Rcpp::Rcout << "before updateLamtUt" << std::endl;
 	updateLamtUt();
 	d_L.analyzePattern(d_LamtUt); // perform symbolic analysis
         if (d_L.info() != Eigen::Success)
@@ -67,7 +65,7 @@ namespace lme4Eigen {
 	// sparse/sparse matrix multiplication pruning zeros.  The
 	// Cholesky decomposition croaks if the structure of d_LamtUt changes.
 	MVec(d_LamtUt._valuePtr(), d_LamtUt.nonZeros()).setZero();
-	for (Index j = 0; j < d_Ut.cols(); ++j) {
+	for (Index j = 0; j < d_Ut.outerSize(); ++j) {
 	    for(MSpMatrixd::InnerIterator rhsIt(d_Ut, j); rhsIt; ++rhsIt) {
 		Scalar                        y(rhsIt.value());
 		Index                         k(rhsIt.index());
@@ -80,7 +78,6 @@ namespace lme4Eigen {
 		}
 	    }
 	}
-//	Rcpp::Rcout << "end of updateLamtUt" << std::endl;
     }
 
     VectorXd merPredD::b(const double& f) const {return d_Lambdat.adjoint() * u(f);}
@@ -156,17 +153,15 @@ namespace lme4Eigen {
     }
 
     void merPredD::updateXwts(const VectorXd& sqrtXwt) {
-//	Rcpp::Rcout << "in updateXwts" << std::endl;
 	if (d_Xwts.size() != sqrtXwt.size())
 	    throw invalid_argument("updateXwts: dimension mismatch");
 	std::copy(sqrtXwt.data(), sqrtXwt.data() + sqrtXwt.size(), d_Xwts.data());
-//	Rcpp::Rcout << "after copy, d_Xwts = " << d_Xwts.adjoint() << std::endl;
-	if (sqrtXwt.size() == d_V.rows()) {
+	if (sqrtXwt.size() == d_V.rows()) { // W is diagonal
 	    d_V              = sqrtXwt.asDiagonal() * d_X;
 	    for (int j = 0; j < d_N; ++j)
-		for (MSpMatrixd::InnerIterator Uit(d_Ut, j), Zit(d_Zt, j);
-		     Uit && Zit; ++Uit, ++Zit)
-		    Uit.valueRef() = Zit.value() * sqrtXwt.data()[j];
+		for (MSpMatrixd::InnerIterator Utj(d_Ut, j), Ztj(d_Zt, j);
+		     Utj && Ztj; ++Utj, ++Ztj)
+		    Utj.valueRef() = Ztj.value() * sqrtXwt.data()[j];
 	} else {
 	    SpMatrixd      W(d_V.rows(), sqrtXwt.size());
 	    const double *pt = sqrtXwt.data();
@@ -176,35 +171,22 @@ namespace lme4Eigen {
 		W.insertBack(j % d_V.rows(), j) = *pt;
 	    }
 	    W.finalize();
-	    // Rcpp::Rcout << "in nlmer block: W(" << W.rows() << "," << W.cols()
-	    // 		<< "), outer: " << MiVec(W._outerIndexPtr(), W.outerSize()).adjoint() 
-	    // 		<< std::endl;
-	    // Rcpp::Rcout << "inner: " << MiVec(W._innerIndexPtr(), W.nonZeros()).adjoint() 
-	    // 		<< std::endl;
-	    // Rcpp::Rcout << "values: " << MVec(W._valuePtr(), W.nonZeros()).adjoint() 
-	    // 		<< std::endl;
 	    d_V              = W * d_X;
 	    SpMatrixd      Ut(d_Zt * W.adjoint());
-	    // Rcpp::Rcout << "Ut(" << Ut.rows() << "," << Ut.cols()
-	    // 		<< "), outer: " << MiVec(Ut._outerIndexPtr(), Ut.outerSize()).adjoint() 
-	    // 		<< std::endl;
-	    // Rcpp::Rcout << "inner: " << MiVec(Ut._innerIndexPtr(), Ut.nonZeros()).adjoint() 
-	    // 		<< std::endl;
-	    // Rcpp::Rcout << "values: " << MVec(Ut._valuePtr(), Ut.nonZeros()).adjoint() 
-	    // 		<< std::endl;
 	    if (Ut.cols() != d_Ut.cols())
 		throw std::runtime_error("Size mismatch in updateXwts");
 
 	    // More complex code to handle the pruning of zeros
 	    MVec(d_Ut._valuePtr(), d_Ut.nonZeros()).setZero();
-	    for (int j = 0; j < d_Ut.cols(); ++j) {
+	    for (int j = 0; j < d_Ut.outerSize(); ++j) {
 		MSpMatrixd::InnerIterator lhsIt(d_Ut, j);
-		SpMatrixd::InnerIterator  rhsIt(Ut, j);
-		Index                         k(rhsIt.index());
-		while (lhsIt && lhsIt.index() != k) ++lhsIt;
-		if (lhsIt.index() != k)
-		    throw std::runtime_error("Pattern mismatch in updateXwts");
-		lhsIt.valueRef() = rhsIt.value();
+		for (SpMatrixd::InnerIterator  rhsIt(Ut, j); rhsIt; ++rhsIt, ++lhsIt) {
+		    Index                         k(rhsIt.index());
+		    while (lhsIt && lhsIt.index() != k) ++lhsIt;
+		    if (lhsIt.index() != k)
+			throw std::runtime_error("Pattern mismatch in updateXwts");
+		    lhsIt.valueRef() = rhsIt.value();
+		}
 	    }
 	}
 	d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
