@@ -714,7 +714,7 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
 ##' @param control a list of control parameters passed to the optimizer.
 nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
                   nAGQ = 1L, subset, weights, na.action, offset,
-                  contrasts = NULL, devFunOnly = 0L, tolPwrss = 1e-5,
+                  contrasts = NULL, devFunOnly = 0L, tolPwrss = 1e-10,
                   optimizer=c("NelderMead","bobyqa"), ...)
 {
     mf <- mc <- match.call()
