@@ -325,9 +325,10 @@ extern "C" {
 	throw runtime_error("step factor reduced below 0.001 without reducing pwrss");
     }
 
+#define NMAXITER 300
     static void prssUpdate(nlsResp *rp, merPredD *pp, int verb, bool uOnly, double tol) {
 	bool cvgd(false);
-	for (int it=0; it < MAXITER; ++it) {
+	for (int it=0; it < NMAXITER; ++it) {
 	    rp->updateMu(pp->linPred(0.));
 	    pp->updateXwts(rp->sqrtXwt());
 	    pp->updateDecomp();
@@ -341,7 +342,7 @@ extern "C" {
 	    }
 	    nstepFac(rp, pp, verb);
 	}
-	if (!cvgd) throw runtime_error("prss failed to converge in 30 iterations");
+	if (!cvgd) throw runtime_error("prss failed to converge in 300 iterations");
     }
 
     SEXP nlmerLaplace(SEXP pp_, SEXP rp_, SEXP theta_, SEXP u0_, SEXP beta0_,
@@ -350,7 +351,6 @@ extern "C" {
 
 	XPtr<nlsResp>     rp(rp_);
 	XPtr<merPredD>    pp(pp_);
-//	int             verb(::Rf_asInteger(verbose_));
 	pp->setTheta(as<MVec>(theta_));
 	pp->setU0(as<MVec>(u0_));
 	pp->setBeta0(as<MVec>(beta0_));
