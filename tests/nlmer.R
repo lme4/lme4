@@ -12,62 +12,39 @@ fixef(nm1)
 ## 'Theoph' Data modeling
 Th.start <- c(lKe = -2.5, lKa = 0.5, lCl = -3)
 
-system.time(nm3 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
-                          0 + lKe + lKa + lCl + (0 + lKe|Subject) +
-                          (0 + lKa|Subject) + (0 + lCl|Subject),
-                          Theoph, start = Th.start,
-                          verbose = 4L)) # ~ 3.2s
-fixef(nm3)
-
 system.time(nm2 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
                          0 + lKe + lKa + lCl + 
-                         (0 + lKe+lKa+lCl|Subject), verb = 4L, tolPwrss = 1e-3,
-                         Theoph, start = Th.start))  # ~ 5.7s {dual-opteron 2814, on 64b, no optim.}
-fixef(nm2)
+                         (0 + lKe+lKa+lCl|Subject), 
+                         Theoph, start = Th.start, tolPwrss=1e-8))
+print(nm2, corr=FALSE)
 
 system.time(nm3 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
                           0 + lKe + lKa + lCl + (0 + lKe|Subject) +
                           (0 + lKa|Subject) + (0 + lCl|Subject),
-                          Theoph, start = Th.start,
-                          verbose = 4L)) # ~ 3.2s
-fixef(nm3)
+                          Theoph, start = Th.start))
+print(nm3, corr=FALSE)
 
 ## dropping   lKe  from random effects:
 system.time(nm4 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
                          0 + lKe + lKa + lCl + (0+lKa+lCl|Subject),
-                         Theoph, start = Th.start, verbose = 4L))
-fixef(nm4)
-sigma(nm4)
+                         Theoph, start = Th.start, tolPwrss=1e-8))
+print(nm4, corr=FALSE)
 
 system.time(nm5 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
                          0 +lKe + lKa + lCl + (0 + lKa|Subject) +
-                         (0 + lCl|Subject), verbose = 4L,
-                         Theoph, start = Th.start))
-fixef(nm5)
+                         (0 + lCl|Subject), Theoph,
+                         start = Th.start))
+print(nm5, corr=FALSE)
 
-#e3 <- expand(nm3)
-#stopifnot(identical(sapply(e3, class),
-#                    c(sigma = "numeric", P = "pMatrix",
-#                      T = "dtCMatrix", S = "ddiMatrix"))
-#          , allEQ(e3$sigma, c(sigmaML = 0.70777))
-#          , all(e3$P@perm == outer(12*(0:2), 1:12, "+"))
-#          , identical(as(e3$T, "diagonalMatrix"), Diagonal(3*12))
-#          , allEQ(e3$S@x, rep(c(0, 0.92746, 0.23667), each=12))
-#          )
+if (require("PKPDmodels")) {
+    oral1cptSdlkalVlCl <-
+        PKmod("oral", "sd", list(ka ~ exp(lka), k ~ exp(lCl)/V, V ~ exp(lV)))
+    system.time(nm2a <- nlmer(conc ~ oral1cptSdlkalVlCl(Dose, Time, lV, lka, lCl) ~
+                         0 + lV + lka + lCl + (0 + lV+lka+lCl|Subject), 
+                         Theoph, start = c(lV=-1, lka=-0.5, lCl=-3), tolPwrss=1e-8))
+    print(nm2a, corr=FALSE)
+}
 
-## e2 <- expand(nm2) # -> gave error!
-## stopifnot(identical(sapply(e2, class),
-##                     c(sigma = "numeric", P = "pMatrix",
-##                       T = "dtCMatrix", S = "ddiMatrix"))
-## #          , allEQ(e2$sigma, c(sigmaML = 0.70777))
-##           , all(e2$P@perm == outer(12*(0:2), 1:12, "+"))
-##           , all(diag(e2$T == 1))
-##           , nnzero(e2$T) == 36 + 24 + 12
-## #          , allEQ(unique(e2$T@x),
-## #                  c(1, 0.0310, 0.0909, -0.00187), tol = .009)
-## #          , allEQ(e2$S@x, rep(c(0.0000000, 0.9274296, 0.2366269), each=12))
-##           )
-
-#showProc.time()
+showProc.time()
 
 
