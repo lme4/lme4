@@ -85,6 +85,7 @@ importMethodsFrom("Matrix"
 
 # and the rest (S3 generics; regular functions):
 export(GHrule,
+       GQdk,
        NelderMead,
        VarCorr,
        bootMer,

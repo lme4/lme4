@@ -10,9 +10,10 @@
 
 extern "C" {
     using     Eigen::ArrayXd;
-    typedef   Eigen::Map<Eigen::MatrixXd>     MMat;
-    typedef   Eigen::Map<Eigen::VectorXd>     MVec;
-    typedef   Eigen::Map<Eigen::VectorXi>    MiVec;
+    typedef   Eigen::VectorXi               iVec;
+    typedef   Eigen::Map<Eigen::MatrixXd>   MMat;
+    typedef   Eigen::Map<Eigen::VectorXd>   MVec;
+    typedef   Eigen::Map<iVec>             MiVec;
 
     using      Rcpp::CharacterVector;
     using      Rcpp::Environment;
@@ -39,11 +40,32 @@ extern "C" {
 
     using      std::runtime_error;
 
+    // utilities
+
+    SEXP allPerm_int(SEXP v_) {
+	BEGIN_RCPP;
+	iVec     v(as<iVec>(v_));   // forces a copy
+	int     sz(v.size());
+	std::vector<iVec> vec;
+	
+	std::sort(v.data(), v.data() + sz);
+	do {
+	    vec.push_back(iVec(v));
+	} while (std::next_permutation(v.data(), v.data() + sz));
+	
+	int  nperm(vec.size());
+	List allPerm(nperm);
+	for (int j = 0; j < nperm; ++j) allPerm[j] = wrap(vec[j]);
+	return allPerm;
+	END_RCPP;
+    }
+
     SEXP Eigen_SSE() {
 	BEGIN_RCPP;
 	return wrap(Eigen::SimdInstructionSetsInUse());
 	END_RCPP;
     }
+
 
     // generalized linear model (and generalized linear mixed model) response
 
@@ -765,6 +787,8 @@ extern "C" {
 static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(Eigen_SSE, 0),
+
+    CALLDEF(allPerm_int, 1),
 
     CALLDEF(glm_Create, 10),	// generate external pointer
 
