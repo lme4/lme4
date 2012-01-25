@@ -89,7 +89,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
                          x0=rho$pp$theta, xt=xst*0.0001)
     cc <- do.call(function(iprint=0L, maxfun=10000L, FtolAbs=1e-5,
                            FtolRel=1e-15, XtolRel=1e-7,
-                           MinfMax=.Machine$double.xmin) {
+                           MinfMax=.Machine$double.xmin, ...) {
         if (length(list(...))>0) warning("unused control arguments ignored")
         list(iprint=iprint, maxfun=maxfun, FtolAbs=FtolAbs, FtolRel=FtolRel,
              XtolRel=XtolRel, MinfMax=MinfMax)
@@ -103,9 +103,10 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
     if (nMres < 0L) {
         if (nMres > -4L)
             stop("convergence failure, code ", nMres, " in NelderMead")
-        else
-            warning("failure to converge in 1000 evaluations")
-    }
+        else {
+          warning("failure to converge in ",cc$maxfun," evaluations")
+        }
+     }
     opt <- list(fval=nM$value(), pars=nM$xpos(), code=nMres)
 #    opt <- bobyqa(reTrms$theta, devfun, reTrms$lower, control = control)
     sqrLenU <- rho$pp$sqrL(1.)
@@ -282,7 +283,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
                                                xt=xst*0.0001)
                           cc <- do.call(function(iprint=0L, maxfun=10000L, FtolAbs=1e-5,
                                                  FtolRel=1e-15, XtolRel=1e-7,
-                                                 MinfMax=.Machine$double.xmin) {
+                                                 MinfMax=.Machine$double.xmin,...) {
                               if (length(list(...))>0) warning("unused control arguments ignored")
                               list(iprint=iprint, maxfun=maxfun, FtolAbs=FtolAbs, FtolRel=FtolRel,
                                    XtolRel=XtolRel, MinfMax=MinfMax)
@@ -297,7 +298,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
                               if (nMres > -4L)
                                   stop("convergence failure, code ", nMres, " in NelderMead")
                               else
-                                  warning("failure to converge in 1000 evaluations")
+                                  warning("failure to converge in ",cc$maxfun," evaluations")
                           }
                           list(fval=nM$value(), pars=nM$xpos(), code=nMres)
                       })
