@@ -233,6 +233,11 @@ lmResp <-                               # base class for response modules
                          'change the offset in the model (used in profiling)'
                          .Call(lm_setOffset, ptr(), as.numeric(oo))
                      },
+                     setWeights = function(oo) {
+                         'change the weights in the model (used in profiling)'
+                         .Call(lm_setWeights, ptr(), as.numeric(oo))
+                     },
+
                      updateMu  = function(gamma) {
                          'update mu, wtres and wrss from the linear predictor'
                          .Call(lm_updateMu, ptr(), as.numeric(gamma))

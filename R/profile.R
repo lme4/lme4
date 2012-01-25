@@ -29,17 +29,19 @@ devfun2 <- function(fm)
     stdErr <- unname(coef(summary(fm))[,2])
     xpp <- fm@pp
     th <- xpp$theta
-    pp <- new(Class=class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat, Lind=xpp$Lind, theta=th)
+    pp <- new(Class=class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat, Lind=xpp$Lind, theta=th,
+              S=1L)
     opt <- c(sig * th, sig)
     names(opt) <- c(sprintf(".sig%02d", seq_along(pp$theta)), ".sigma")
     opt <- c(opt, fixef(fm))
     rr <- fm@resp
     resp <- new(Class=class(rr), y=rr$y)
-    resp$offset <- rr$offset
-    resp$weights <- rr$weights
+    resp$setOffset(rr$offset)
+    resp$setWeights(rr$weights)
     rm(rr, xpp, fm)
     np <- length(pp$theta) + 1L
-    n <- nrow(pp$V())                   # use V(), not X so it works with nlmer
+    ## n <- nrow(pp$V())                   # use V(), not X so it works with nlmer
+    n <- nrow(pp$V)                   # FIXME: ???
     ans <- function(pars)
     {
         stopifnot(is.numeric(pars), length(pars) == np)
@@ -541,6 +543,8 @@ log.thpr <- function (x, base = exp(1)) {
         for (nm in colnames(x)[sigs]) {
             x[[nm]] <- log(x[[nm]], base = base)
             fr <- subset(x, .par == nm & is.finite(x[[nm]]))
+            ## FIXME: avoid subset for global-variable false positive
+            ## fr <- x[x$.par == nm & is.finite(x[[nm]]),]
             form <- eval(substitute(.zeta ~ nm, list(nm = as.name(nm))))
             attr(x, "forward")[[nm]] <- interpSpline(form, fr)
             attr(x, "backward")[[nm]] <- backSpline(attr(x, "forward")[[nm]])
