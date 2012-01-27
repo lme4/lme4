@@ -749,7 +749,7 @@ extern "C" {
 				// return the number of function evaluations performed
     SEXP NelderMead_evals(SEXP ptr_) { 
 	BEGIN_RCPP;
-	return wrap(XPtr<Nelder_Mead>(ptr_)->evals());
+	return wrap(int(XPtr<Nelder_Mead>(ptr_)->evals()));
 	END_RCPP;
     }
 	
