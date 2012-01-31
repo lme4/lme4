@@ -390,7 +390,6 @@ mkRespMod2 <- function(fr, REML=NA_integer_, family = NULL, nlenv = NULL, nlmod 
 ##'
 ##' @param bars a list of parsed random-effects terms
 ##' @param fr a model frame in which to evaluate these terms
-##' @param s Number of parameters in the nonlinear mean function (nlmer only)
 ##'
 ##' @return a list of Zt, Lambdat, Lind, theta, lower, flist and cnms
 mkReTrms <- function(bars, fr) {
