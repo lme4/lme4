@@ -31,6 +31,12 @@ namespace lme4Eigen {
 	updateWrss();
     }
 
+    /** 
+     * Update the (conditional) mean response and weighted residuals
+     * 
+     * @param gamma New value of the linear predictor
+     * @return updated sum of squared, weighted residuals
+     */
     double lmResp::updateMu(const VectorXd& gamma) {
 	if (gamma.size() != d_offset.size())
 	    throw invalid_argument("updateMu: Size mismatch");
@@ -51,10 +57,22 @@ namespace lme4Eigen {
 	return d_wrss;
     }
 
+/** 
+ * Set a new value of the offset.
+ *
+ * The values are copied into the d_offset member because it is mapped. 
+ * @param oo New value of the offset
+ */
     void lmResp::setOffset(const VectorXd& oo) {
 	if (oo.size() != d_offset.size())
 	    throw invalid_argument("setOffset: Size mismatch");
-	d_offset = oo;
+	d_offset = oo;		// this copies the values
+    }
+
+    void lmResp::setResp(const VectorXd& yy) {
+	if (yy.size() != d_y.size())
+	    throw invalid_argument("setResp: Size mismatch");
+	d_y = yy;
     }
 
     void lmResp::setWeights(const VectorXd& ww) {

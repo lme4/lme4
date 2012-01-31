@@ -23,30 +23,57 @@ namespace lme4Eigen {
 
     class lmResp {
     protected:
-	double            d_wrss;
-	const MVec        d_y;
-	MVec              d_weights, d_offset, d_mu, d_sqrtXwt, d_sqrtrwt, d_wtres;
+	double d_wrss; /**< current weighted sum of squared residuals */
+	MVec d_y,      /**< response vector */
+	    d_weights, /**< prior weights - always present even if unity */
+	    d_offset,  /**< offset in the model */
+	    d_mu,      /**< mean response from current linear predictor */
+	    d_sqrtXwt, /**< Square roots of the "X weights".  For
+			* lmResp and lmerResp these are the same as
+			* the sqrtrwt.  For glmResp and nlsResp they
+			* incorporate the gradient of the eta to mu
+			* mapping.*/
+	    d_sqrtrwt,		/**< Square roots of the residual weights */
+	    d_wtres;		/**< Current weighted residuals */
     public:
 	lmResp(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
 
 	const MVec&    sqrtXwt() const {return d_sqrtXwt;}
-	const MVec&         mu() const {return d_mu;}
+				/**< return a const reference to d_sqrtXwt */
+	const MVec&         mu() const {return d_mu;} 
+				/**< return a const reference to d_mu */
 	const MVec&     offset() const {return d_offset;}
+				/**< return a const reference to d_offset */
 	const MVec&    sqrtrwt() const {return d_sqrtrwt;}
+				/**< return a const reference to d_sqrtrwt */
 	const MVec&    weights() const {return d_weights;}
+				/**< return a const reference to d_weights */
 	const MVec&      wtres() const {return d_wtres;}
+				/**< return a const reference to d_wtres */
 	const MVec&          y() const {return d_y;}
+				/**< return a const reference to d_y */
 	double            wrss() const {return d_wrss;}
+				/**< return the weighted sum of squared residuals */
 	double        updateMu(const Eigen::VectorXd&);
 	double       updateWts()       {return updateWrss();}
-	double      updateWrss();
+				/**< update the weights.  For a
+				 * glmResp this done separately from
+				 * updating the mean, because of the
+				 * iterative reweighting. */
+	double      updateWrss(); /**< update the weighted residuals and d_wrss */
 	void         setOffset(const Eigen::VectorXd&);
+				/**< set a new value of the offset */
+	void           setResp(const Eigen::VectorXd&);
+				/**< set a new value of the response, y */
 	void        setWeights(const Eigen::VectorXd&);
+				/**< set a new value of the prior weights */
+
     };
 
     class lmerResp : public lmResp {
     private:
-	int d_reml;
+	int d_reml;		/**< 0 for evaluating the deviance, p
+				 * for evaluating the REML criterion. */
     public:
 	lmerResp(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
 

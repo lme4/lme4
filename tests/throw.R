@@ -10,4 +10,4 @@ d$eta <- d$eta0+reff_f[d$block]
 d$mu <- 1/d$eta
 d$y <- rgamma(nrow(d),scale=d$mu/2,shape=2)
 
-try(gm1 <- glmer(y ~ 1 + (1|block), d, Gamma, verbose=TRUE)) # should throw an error but not segfault
+try({gm1 <- glmer(y ~ 1|block, d, Gamma, nAGQ=25L); print(gm1)})

@@ -23,16 +23,17 @@ stopifnot(
 	  all.equal(V.d <- vcov(fm1),
 		    V.s <- vcov(fm1.s)#, tol = 1e-9
 	  ),
-	  all.equal(diag(V.d), unname(se1.d)^2, tol= 1e-12)
+	  all.equal(Matrix::diag(V.d), unname(se1.d)^2, tol= 1e-12)
 	  ,
 	  all.equal(unname(se1.d),
-                    c(0.576012259837672, rep.int(0.518683836068417,3)),
+                    c(0.576011960125099, rep.int(0.518683987372292,3L)),
                     tol = 1.e-8)
           )
 
 ### -------------------------- a "large" example -------------------------
 str(InstEval)
 
+if (FALSE) {                            # sparse X is not currently implemented
 ## this works
 system.time(
 fm7 <- lmer(y ~ d + service + studage + lectage + (1|s),
@@ -64,5 +65,6 @@ fm9
 rr <- ranef(fm9, postVar = TRUE)
 qqmath(rr,strip=FALSE)$d
 dotplot(rr,strip=FALSE)$`dept:service`
+}
 }
 cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
