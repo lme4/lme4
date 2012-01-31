@@ -1,5 +1,19 @@
 ### Class definitions for the package
+##' @useDynLib lme4Eigen .registration=TRUE
+NULL
 
+##' Class "lmList" of 'lm' Objects on Common Model
+##' 
+##' Class \code{"lmList"} is an S4 class with basically a list of objects of
+##' class \code{\link{lm}} with a common model.
+##' @name lmList-class
+##' @aliases lmList-class show,lmList-method
+##' @docType class
+##' @section Objects from the Class: Objects can be created by calls of the form
+##' \code{new("lmList", ...)} or, more commonly, by a call to
+##' \code{\link{lmList}}.
+##' @keywords classes
+##' @export
 setClass("lmList",
          representation(call = "call",
                         pool = "logical"),
@@ -12,6 +26,30 @@ setClass("lmList.confint", contains = "array")
 ### shouldn't we have "merPred"  with two *sub* classes "merPredD" and "merPredS"
 ### for the dense and sparse X cases ?
 
+##' Generator object for the \code{\linkS4class{merPredD}} class
+##' 
+##' The generator object for the \code{\linkS4class{merPredD}} reference class.
+##' Such an object is primarily used through its \code{new} method.
+##' 
+##' 
+##' @param X dense model matrix for the fixed-effects parameters, to be stored
+##' in the \code{X} field.
+##' @param Zt transpose of the sparse model matrix for the random effects.  It
+##' is stored in the \code{Zt} field.
+##' @param Lambdat transpose of the sparse lower triangular relative variance
+##' factor (stored in the \code{Lambdat} field).
+##' @param Lind integer vector of the same length as the \code{"x"} slot in the
+##' \code{Lambdat} field.  Its elements should be in the range 1 to the length
+##' of the \code{theta} field.
+##' @param theta numeric vector of variance component parameters (stored in the
+##' \code{theta} field).
+##' @section Methods:
+##' \describe{
+##'   \item{new(X, Zt, Lambdat, Lind, theta):}{Create a new \code{\linkS4class{merPredD}} object}
+##' }
+##' @seealso \code{\linkS4class{merPredD}}
+##' @keywords classes
+##' @export
 merPredD <- 
     setRefClass("merPredD", # Predictor class for mixed-effects models with dense X
                 fields =
@@ -36,7 +74,7 @@ merPredD <-
                 methods =
                 list(
 ### FIXME: probably don't need S as Xwts is required for nlmer 
-                     initialize = function(X, Zt, Lambdat, Lind, theta, S, ...) {
+                     initialize = function(X, Zt, Lambdat, Lind, theta, n, ...) {
                          if (!nargs()) return
                          X <<- as(X, "matrix")
                          Zt <<- as(Zt, "dgCMatrix")
@@ -44,15 +82,11 @@ merPredD <-
                          Lind <<- as.integer(Lind)
                          theta <<- as.numeric(theta)
                          N <- nrow(X)
-                         S <- as.integer(S)[1]
-                         n <- N %/% S
                          p <- ncol(X)
                          q <- nrow(Zt)
                          stopifnot(length(theta) > 0L,
                                    length(Lind) > 0L, 
-                                   all(sort(unique(Lind)) == seq_along(theta)),
-                                   S > 0L,
-                                   n * S == N)
+                                   all(sort(unique(Lind)) == seq_along(theta)))
                          RZX <<- array(0, c(q, p))
                          Utr <<- numeric(q)
                          V <<- array(0, c(n, p))
@@ -64,7 +98,7 @@ merPredD <-
                          delu <<- numeric(q)
                          uu <- list(...)$u0
                          u0 <<- if (is.null(uu)) numeric(q) else uu
-                         Ut <<- if (S == 1) Zt + 0 else
+                         Ut <<- if (n == N) Zt + 0 else
                              Zt %*% sparseMatrix(i=seq_len(N), j=as.integer(gl(n, 1, N)), x=rep.int(1,N))
                          LamtUt <<- Lambdat %*% Ut   
                          Xw <- list(...)$Xwts
@@ -102,6 +136,22 @@ merPredD <-
                      beta         = function(fac) {
                          'fixed-effects coefficients for step factor fac'
                          .Call(merPredDbeta, ptr(), as.numeric(fac))
+                     },
+                     copy         = function(shallow = FALSE) {
+                         def <- .refClassDef
+                         selfEnv <- as.environment(.self)
+                         vEnv    <- new.env(parent=emptyenv())
+                         for (field in setdiff(names(def@fieldClasses), "Ptr")) {
+                             if (shallow) 
+                                 assign(field, get(field, envir = selfEnv), envir = vEnv)
+                             else {
+                                 current <- get(field, envir = selfEnv)
+                                 if (is(current, "envRefClass")) 
+                                     current <- current$copy(FALSE)
+                                 assign(field, current, envir = vEnv)
+                             }
+                         }
+                         do.call(new, c(as.list(vEnv), n=nrow(vEnv$V), Class=def))
                      },
                      ldL2         = function() {
                          'twice the log determinant of the sparse Cholesky factor'
@@ -182,6 +232,66 @@ merPredD <-
 merPredD$lock("Lambdat", "LamtUt", "Lind", "RZX", "Ut", "Utr", "V", "VtV", "Vtr",
               "X", "Xwts", "Zt", "beta0", "delb", "delu", "theta", "u0")
 
+##' Class \code{"merPredD"} - a dense predictor reference class
+##' 
+##' A reference class for a mixed-effects model predictor module with a dense
+##' model matrix for the fixed-effects parameters.  The reference class is
+##' associated with a C++ class of the same name.  As is customary, the
+##' generator object, \code{\link{merPredD}}, for the class has the same name as
+##' the class.
+##' @name merPredD-class
+##' @note Objects from this reference class correspond to objects in a C++
+##'     class.  Methods are invoked on the C++ class object using the external
+##'     pointer in the \code{Ptr} field.  When saving such an object the external
+##'     pointer is converted to a null pointer, which is why there are redundant
+##'     fields containing enough information as R objects to be able to regenerate
+##'     the C++ object.  The convention is that a field whose name begins with an
+##'     upper-case letter is an R object and the corresponding field, whose name
+##'     begins with the lower-case letter is a method.  References to the
+##'     external pointer should be through the method, not directly through the
+##'     \code{Ptr} field.
+##' @section Extends: All reference classes extend and inherit methods from
+##'     \code{"\linkS4class{envRefClass}"}.
+##' @seealso \code{\link{lmer}}, \code{\link{glmer}}, \code{\link{nlmer}},
+##'     \code{\link{merPredD}}, \code{\linkS4class{merMod}}.
+##' @keywords classes
+##' @examples
+##' 
+##' showClass("merPredD")
+##' str(slot(lmer(Yield ~ 1|Batch, Dyestuff), "pp"))
+##' 
+NULL
+
+##' Generator objects for the response classes
+##' 
+##' The generator objects for the \code{\linkS4class{lmResp}},
+##' \code{\linkS4class{lmerResp}}, \code{\linkS4class{glmResp}} and
+##' \code{\linkS4class{nlsResp}} reference classes. Such objects are
+##' primarily used through their \code{new} methods.
+##' 
+##' @aliases lmResp lmerResp glmResp nlsResp
+##' @param y the numeric response vector
+##' @param family a \code{\link{family}} object
+##' @param nlmod the nonlinear model function
+##' @param nlenv an environment holding data objects for evaluation of
+##'     \code{nlmod}
+##' @param pnames a character vector of parameter names
+##' @param gam a numeric vector - the initial linear predictor
+##' @note Arguments to the \code{new} methods must be named arguments.
+##' @section Methods:
+##' \describe{
+##'     \item{\code{new(y=y)}:}{Create a new
+##'          \code{\linkS4class{lmResp}} or \code{\linkS4class{lmerResp}} object.}
+##'     \item{\code{new(family=family, y=y)}:}{Create a new
+##'          \code{\linkS4class{glmResp}} object.}
+##'     \item{\code{new(y=y, nlmod=nlmod, nlenv=nlenv, pnames=pnames,
+##'                     gam=gam)}:}{Create a new
+##'           \code{\linkS4class{nlsResp}} object.}
+##' }
+##' @seealso \code{\linkS4class{lmResp}}, \code{\linkS4class{lmerResp}},
+##' \code{\linkS4class{glmResp}}, \code{\linkS4class{nlsResp}}
+##' @keywords classes
+##' @export
 lmResp <-                               # base class for response modules
     setRefClass("lmResp",
                 fields =
@@ -218,6 +328,22 @@ lmResp <-                               # base class for response modules
                              as.numeric(ll$sqrtrwt) else sqrt(weights)
                          wtres   <<- sqrtrwt * (y - mu)
                      },
+                     copy         = function(shallow = FALSE) {
+                         def <- .refClassDef
+                         selfEnv <- as.environment(.self)
+                         vEnv    <- new.env(parent=emptyenv())
+                         for (field in setdiff(names(def@fieldClasses), "Ptr")) {
+                             if (shallow) 
+                                 assign(field, get(field, envir = selfEnv), envir = vEnv)
+                             else {
+                                 current <- get(field, envir = selfEnv)
+                                 if (is(current, "envRefClass")) 
+                                     current <- current$copy(FALSE)
+                                 assign(field, current, envir = vEnv)
+                             }
+                         }
+                         do.call(new, c(as.list(vEnv), Class=def))
+                     },
                      ptr       = function() {
                          'returns the external pointer, regenerating if necessary'
                          if (length(y)) {
@@ -229,15 +355,18 @@ lmResp <-                               # base class for response modules
                          }
                          Ptr
                      },
-                     setOffset = function(oo) {
+                     setOffset  = function(oo) {
                          'change the offset in the model (used in profiling)'
                          .Call(lm_setOffset, ptr(), as.numeric(oo))
                      },
-                     setWeights = function(oo) {
-                         'change the weights in the model (used in profiling)'
-                         .Call(lm_setWeights, ptr(), as.numeric(oo))
+                     setResp    = function(rr) {
+                         'change the response in the model, usually after a deep copy'
+                         .Call(lm_setResp, ptr(), as.numeric(rr))
                      },
-
+                     setWeights = function(ww) {
+                         'change the prior weights in the model'
+                         .Call(lm_setWeights, ptr(), as.numeric(ww))
+                     },
                      updateMu  = function(gamma) {
                          'update mu, wtres and wrss from the linear predictor'
                          .Call(lm_updateMu, ptr(), as.numeric(gamma))
@@ -250,6 +379,44 @@ lmResp <-                               # base class for response modules
                 
 lmResp$lock("mu", "offset", "sqrtXwt", "sqrtrwt", "weights", "wtres", "y")
 
+##' Classes \code{"lmResp"}, \code{"glmResp"}, \code{"nlsResp"} and
+##' \code{"lmerResp"}
+##' 
+##' Reference classes for response modules, including linear models,
+##' \code{"lmResp"}, generalized linear models, \code{"glmResp"}, nonlinear
+##' models, \code{"nlsResp"} and linear mixed-effects models, \code{"lmerResp"}.
+##' Each reference class is associated with a C++ class of the same name.  As is
+##' customary, the generator object for each class has the same name as the
+##' class.
+##' @name lmResp-class
+##' @aliases lmResp-class glmResp-class lmerResp-class nlsResp-class
+##' @note Objects from these reference classes correspond to objects in C++
+##'     classes.  Methods are invoked on the C++ classes using the external pointer
+##'     in the \code{ptr} field.  When saving such an object the external pointer is
+##'     converted to a null pointer, which is why there are redundant fields
+##'     containing enough information as R objects to be able to regenerate the C++
+##'     object.  The convention is that a field whose name begins with an upper-case
+##'     letter is an R object and the corresponding field whose name begins with the
+##'     lower-case letter is a method.  Access to the external pointer should be
+##'     through the method, not through the field.
+##' @section Extends: All reference classes extend and inherit methods from
+##'     \code{"\linkS4class{envRefClass}"}.  Furthermore, \code{"glmResp"},
+##'     \code{"nlsResp"} and \code{"lmerResp"} all extend the \code{"lmResp"} class.
+##' @seealso \code{\link{lmer}}, \code{\link{glmer}}, \code{\link{nlmer}},
+##'     \code{\linkS4class{merMod}}.
+##' @examples
+##' 
+##' showClass("lmResp")
+##' str(lmResp$new(y=1:4))
+##' showClass("glmResp")
+##' str(glmResp$new(family=poisson(), y=1:4))
+##' showClass("nlsResp")
+##' showClass("lmerResp")
+##' str(lmerResp$new(y=1:4))
+##' @keywords classes
+NULL
+
+##' @export
 lmerResp <-
     setRefClass("lmerResp",
                 fields=
@@ -281,6 +448,7 @@ lmerResp <-
 
 setOldClass("family")
 
+##' @export
 glmResp <-
     setRefClass("glmResp",
                 fields=
@@ -367,6 +535,7 @@ glmResp <-
 
 glmResp$lock("family", "n", "eta")
 
+##' @export
 nlsResp <-
     setRefClass("nlsResp",
                 fields=
@@ -413,6 +582,21 @@ nlsResp <-
 
 nlsResp$lock("nlmod", "nlenv", "pnames")
 
+##' Generator object for the \code{\linkS4class{glmFamily}} class
+##' 
+##' The generator object for the \code{\linkS4class{glmFamily}} reference class.
+##' Such an object is primarily used through its \code{new} method.
+##' 
+##' 
+##' @param family a \code{\link{family}} object
+##' @note Arguments to the \code{new} method must be named arguments.
+##' @section Methods: \describe{
+##'     \item{\code{new(family=family)}}{Create a new
+##'        \code{\linkS4class{glmFamily}} object}
+##' }
+##' @seealso \code{\linkS4class{glmFamily}}
+##' @keywords classes
+##' @export
 glmFamily <-                            # used in tests of family definitions
     setRefClass("glmFamily",
                 fields=list(Ptr="externalptr", family="family"),
@@ -451,7 +635,53 @@ glmFamily <-                            # used in tests of family definitions
                          .Call(glmFamily_variance, ptr(), as.numeric(mu))
                      })
                 )
+##' Class \code{"glmFamily"} - a reference class for \code{\link{family}}
+##' 
+##' This class is a wrapper class for \code{\link{family}} objects specifying a
+##' distibution family and link function for a generalized linear model
+##' (\code{\link{glm}}).  The reference class contains an external pointer to a
+##' C++ object representing the class.  For common families and link functions
+##' the functions in the family are implemented in compiled code so they can be
+##' accessed from other compiled code and for a speed boost.
+##' 
+##' 
+##' @name glmFamily-class
+##' @docType class
+##' @note Objects from this reference class correspond to objects in a C++
+##' class.  Methods are invoked on the C++ class using the external pointer in
+##' the \code{Ptr} field.  When saving such an object the external pointer is
+##' converted to a null pointer, which is why there is a redundant field
+##' \code{ptr} that is an active-binding function returning the external
+##' pointer.  If the \code{Ptr} field is a null pointer, the external pointer is
+##' regenerated for the stored \code{family} field.
+##' @section Extends: All reference classes extend and inherit methods from
+##' \code{"\linkS4class{envRefClass}"}.
+##' @seealso \code{\link{family}}, \code{\link{glmFamily}}
+##' @keywords classes
+##' @examples
+##' 
+##' str(glmFamily$new(family=poisson()))
+NULL
 
+##' Generator object for the golden search optimizer class.
+##' 
+##' The generator objects for the \code{\linkS4class{golden}} class of a scalar
+##' optimizer for a parameter within an interval.  The optimizer uses reverse
+##' communications.
+##' 
+##' 
+##' @param lower lower bound for the scalar parameter - must be finite.
+##' @param upper upper bound for the scalar parameter - must be finite.
+##' @param \dots additional, optional arguments.  None are used at present.
+##' @note Arguments to the \code{new} methods must be named arguments.
+##' @section Methods:
+##' \describe{
+##'      \item{\code{new(lower=lower, upper=upper)}}{Create a new
+##'         \code{\linkS4class{golden}} object.}
+##' }
+##' @seealso \code{\linkS4class{golden}}
+##' @keywords classes
+##' @export
 golden <-
     setRefClass("golden", # Reverse communication implementation of Golden Search
                 fields =
@@ -487,7 +717,43 @@ golden <-
                      xpos       = function() .Call(golden_xpos, ptr())
                      )
             )
+##' Class \code{"golden"}
+##' 
+##' A reference class for a golden search scalar optimizer using reverse
+##' communication.
+##' 
+##' 
+##' @name golden-class
+##' @docType class
+##' @section Extends: All reference classes extend and inherit methods from
+##'    \code{"\linkS4class{envRefClass}"}.
+##' @keywords classes
+##' @examples
+##' 
+##' showClass("golden")
+##' 
+NULL
 
+##' Generator object for the Nelder-Mead optimizer class.
+##' 
+##' The generator objects for the \code{\linkS4class{NelderMead}} class of
+##' optimizers subject to box constraints and using reverse communications.
+##' 
+##' 
+##' @param lower numeric vector of lower bounds - elements may be \code{-Inf}.
+##' @param upper numeric vector of upper bounds - elements may be \code{Inf}.
+##' @param xst numeric vector of initial step sizes to establish the simplex -
+##'     all elements must be non-zero.
+##' @param x0 numeric vector of starting values for the parameters.
+##' @param xt numeric vector of tolerances on the parameters.
+##' @param \dots additional, optional arguments.  None are used at present.
+##' @note Arguments to the \code{new} methods must be named arguments.
+##' @section Methods:
+##'     \describe{\code{new(lower, upper, xst, x0, xt)}}{Create a new
+##'          \code{\linkS4class{NelderMead}} object}
+##' @seealso \code{\linkS4class{NelderMead}}
+##' @keywords classes
+##' @export
 NelderMead <-
     setRefClass("NelderMead", # Reverse communication implementation of Nelder-Mead simplex optimizer
                 fields =
@@ -539,7 +805,57 @@ NelderMead <-
                      xpos         = function()         .Call(NelderMead_xpos, ptr())
                      )
             )
+##' Class \code{"NelderMead"}
+##' 
+##' A reference class for a Nelder-Mead simplex optimizer allowing box
+##' constraints on the parameters and using reverse communication.
+##' 
+##' 
+##' @name NelderMead-class
+##' @docType class
+##' @note This is the default optimizer for the second stage of
+##' \code{\link{glmer}} and \code{\link{nlmer}} fits.  We found that it was more
+##' reliable and often faster than more sophisticated optimizers.
+##' @section Extends: All reference classes extend and inherit methods from
+##' \code{"\linkS4class{envRefClass}"}.
+##' @seealso \code{\link{glmer}}, \code{\link{nlmer}}
+##' @references Based on code in the NLopt collection.
+##' @keywords classes
+##' @examples
+##' 
+##' showClass("NelderMead")
+NULL
 
+##' Class "merMod" of Fitted Mixed-Effect Models
+##' 
+##' A mixed-effects model represented as a \code{\linkS4class{merPredD}} object
+##' and a response module of a class that inherits from class
+##' \code{\linkS4class{lmResp}}.  A model with a \code{\linkS4class{lmerResp}}
+##' response has class \code{lmerMod}; a \code{\linkS4class{glmResp}} response
+##' has class \code{glmerMod}; and a \code{\linkS4class{nlsResp}} response has
+##' class \code{nlmerMod}.
+##' 
+##' @name merMod-class
+##' @aliases merMod-class lmerMod-class glmerMod-class nlmerMod-class
+##' anova,merMod-method coef,merMod-method deviance,merMod-method
+##' fitted,merMod-method formula,merMod-method logLik,merMod-method
+##' model.frame,merMod-method model.matrix,merMod-method print,merMod-method
+##' show,merMod-method simulate,merMod-method summary,merMod-method
+##' terms,merMod-method update,merMod-method VarCorr,merMod-method
+##' vcov,merMod-method print,summary.mer-method show,summary.mer-method
+##' summary,summary.mer-method vcov,summary.mer-method
+##' @docType class
+##' @section Objects from the Class: Objects are created by calls to
+##' \code{\link{lmer}}, \code{\link{glmer}} or \code{\link{nlmer}}.
+##' @seealso \code{\link{lmer}}, \code{\link{glmer}}, \code{\link{nlmer}},
+##' \code{\linkS4class{merPredD}}, \code{\linkS4class{lmerResp}},
+##' \code{\linkS4class{glmResp}}, \code{\linkS4class{nlsResp}}
+##' @keywords classes
+##' @examples
+##' 
+##' showClass("merMod")
+##' 
+##' @export
 setClass("merMod",
          representation(Gp      = "integer",
                         call    = "call",
@@ -553,8 +869,11 @@ setClass("merMod",
                         devcomp = "list",
                         pp      = "merPredD"))
 
+##' @export
 setClass("lmerMod", representation(resp="lmerResp"), contains="merMod")
 
+##' @export
 setClass("glmerMod", representation(resp="glmResp"), contains="merMod")
 
+##' @export
 setClass("nlmerMod", representation(resp="nlsResp"), contains="merMod")

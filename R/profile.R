@@ -1,67 +1,47 @@
-## This is a hack.  The preferred approach is to write a
-## subset method for the ddenseModelMatrix and dsparseModelMatrix
-## classes
-.modelMatrixDrop <- function(mm, w) {
-    ll <- list(Class = class(mm),
-               assign = mm@assign[-w],
-               contrasts = mm@contrasts)
-    X <- mm[, -w, drop = FALSE]
-    ll <- c(ll, lapply(structure(slotNames(X), .Names=slotNames(X)),
-                       function(nm) slot(X, nm)))
-    do.call("new", ll)
-}
-
-##' The deviance is profiled with respect to the fixed-effects
-##' parameters but not with respect to sigma. The other parameters
-##' are on the standard deviation scale, not the theta scale.
-##'
-##' @title Return a function for evaluation of the deviance.
-##' @param fm a fitted model of class merMod
-##' @return a function for evaluating the deviance in the extended
-##'     parameterization.  This is profiled with respect to the
-##'     variance-covariance parameters (fixed-effects done separately).
-devfun2 <- function(fm)
-{
-    stopifnot(is(fm, "lmerMod"))
-    fm <- refitML(fm)
-    basedev <- deviance(fm)
-    sig <- sigma(fm)
-    stdErr <- unname(coef(summary(fm))[,2])
-    xpp <- fm@pp
-    th <- xpp$theta
-    pp <- new(Class=class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat, Lind=xpp$Lind, theta=th,
-              S=1L)
-    opt <- c(sig * th, sig)
-    names(opt) <- c(sprintf(".sig%02d", seq_along(pp$theta)), ".sigma")
-    opt <- c(opt, fixef(fm))
-    rr <- fm@resp
-    resp <- new(Class=class(rr), y=rr$y)
-    resp$setOffset(rr$offset)
-    resp$setWeights(rr$weights)
-    rm(rr, xpp, fm)
-    np <- length(pp$theta) + 1L
-    ## n <- nrow(pp$V())                   # use V(), not X so it works with nlmer
-    n <- nrow(pp$V)                   # FIXME: ???
-    ans <- function(pars)
-    {
-        stopifnot(is.numeric(pars), length(pars) == np)
-        ## Assumption:  all parameters, including the residual SD on SD-scale
-        sigma <- pars[np]
-        .Call(lme4Eigen:::lmer_Deviance, pp$ptr, resp$ptr, pars[-np]/sigma)
-        sigsq <- sigma^2
-        pp$ldL2() + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
-    }
-    attr(ans, "optimum") <- opt         # w/ names()
-    attr(ans, "basedev") <- basedev
-    attr(ans, "thopt") <- th
-    attr(ans, "stderr") <- stdErr
-    class(ans) <- "devfun"
-    ans
-}
-
+##' Methods for profile() of [ng]lmer fitted models
+##' 
+##' Methods for function \code{\link{profile}} (package \pkg{stats}), here for
+##' profiling (fitted) mixed effect models.
+##' 
+##' 
+##' @name profile-methods
+##' @aliases profile-methods profile.merMod
+##' @docType methods
+##' @param fitted a fitted model, e.g., the result of \code{\link{lmer}(..)}.
+##' @param alphamax used when \code{delta} is unspecified, as probability ... to
+##' compute \code{delta} ...
+##' @param maxpts ...
+##' @param delta ...
+##' @param tr ...
+##' @param \dots potential further arguments for \code{profile} methods.
+##' @section Methods: FIXME: These (signatures) will change soon --- document
+##' \bold{after} change!
+##' \describe{
+##'     \item{signature(fitted = \"merMod\")}{ ...  } }
+##' @seealso For (more expensive) alternative confidence intervals:
+##' \code{\link{bootMer}}.
+##' @keywords methods
+##' @examples
+##' 
+##' \dontrun{
+##' %% Do keep at least *one* such example! -- this is (also) a regression test
+##' fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
+##' 
+##' ## 0.8s (on a 5600 MIPS 64bit fast(year 2009) desktop "AMD Phenom(tm) II X4 925"):
+##' system.time( tpr <- profile(fm01ML) )
+##' 
+##' (confint(tpr) -> CIpr)
+##' print(xyplot(tpr))
+##' stopifnot(dim(CIpr) == c(3,2),
+##'           all.equal(unname(CIpr[2,]),c(3.64362, 4.21446), tol=1e-6))
+##' }
+##' 
+##' @importFrom splines backSpline interpSpline
+##' @importFrom stats profile
+##' @method profile merMod
+##' @export
 profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff/8,
-                           tr = 0, ...)
-{
+                           tr = 0, ...) {
     dd <- devfun2(fitted)
     
     base <- attr(dd, "basedev")
@@ -177,10 +157,11 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
                                 Lind = pp$Lind,
                                 theta = pp$theta)
                       )
+        ### FIXME Change this to use the deep copy and setWeights, setOffset, etc.
         rr <- new(Class=class(fitted@resp), y=fitted@resp$y)
-        rr$weights <- fitted@resp$weights
+        rr$setWeights(fitted@resp$weights)
         fe.zeta <- function(fw) {
-            rr$offset <- Xw * fw + offset.orig
+            rr$setOffset(Xw * fw + offset.orig)
             rho <- as.environment(list(pp=pp1, resp=rr))
             parent.env(rho) <- parent.frame()
             ores <- bobyqa(thopt, mkdevfun(rho, 0L), lower = fitted@lower)
@@ -211,7 +192,67 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
     ans
 }
 
-##' extract only the y component from a prediction
+## This is a hack.  The preferred approach is to write a
+## subset method for the ddenseModelMatrix and dsparseModelMatrix
+## classes
+.modelMatrixDrop <- function(mm, w) {
+    ll <- list(Class = class(mm),
+               assign = mm@assign[-w],
+               contrasts = mm@contrasts)
+    X <- mm[, -w, drop = FALSE]
+    ll <- c(ll, lapply(structure(slotNames(X), .Names=slotNames(X)),
+                       function(nm) slot(X, nm)))
+    do.call("new", ll)
+}
+
+## The deviance is profiled with respect to the fixed-effects
+## parameters but not with respect to sigma. The other parameters
+## are on the standard deviation scale, not the theta scale.
+##
+## @title Return a function for evaluation of the deviance.
+## @param fm a fitted model of class merMod
+## @return a function for evaluating the deviance in the extended
+##     parameterization.  This is profiled with respect to the
+##     variance-covariance parameters (fixed-effects done separately).
+devfun2 <- function(fm)
+{
+    stopifnot(is(fm, "lmerMod"))
+    fm <- refitML(fm)
+    basedev <- deviance(fm)
+    sig <- sigma(fm)
+    stdErr <- unname(coef(summary(fm))[,2])
+    xpp <- fm@pp
+    th <- xpp$theta
+    pp <- new(Class=class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat, Lind=xpp$Lind, theta=th)
+    opt <- c(sig * th, sig)
+    names(opt) <- c(sprintf(".sig%02d", seq_along(pp$theta)), ".sigma")
+    opt <- c(opt, fixef(fm))
+    rr <- fm@resp
+### FIXME Change this to use a deep copy instead
+    resp <- new(Class=class(rr), y=rr$y)
+    resp$setOffset(rr$offset)
+    resp$setWeights(rr$weights)
+    rm(rr, xpp, fm)
+    np <- length(pp$theta) + 1L
+    n <- nrow(pp$V())                   # use V(), not X so it works with nlmer
+    ans <- function(pars)
+    {
+        stopifnot(is.numeric(pars), length(pars) == np)
+        ## Assumption:  all parameters, including the residual SD on SD-scale
+        sigma <- pars[np]
+        .Call(lme4Eigen:::lmer_Deviance, pp$ptr, resp$ptr, pars[-np]/sigma)
+        sigsq <- sigma^2
+        pp$ldL2() + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
+    }
+    attr(ans, "optimum") <- opt         # w/ names()
+    attr(ans, "basedev") <- basedev
+    attr(ans, "thopt") <- th
+    attr(ans, "stderr") <- stdErr
+    class(ans) <- "devfun"
+    ans
+}
+
+## extract only the y component from a prediction
 predy <- function(sp, vv) predict(sp, vv)$y
 
 stripExpr <- function(ll, nms) {
@@ -239,6 +280,8 @@ stripExpr <- function(ll, nms) {
 }
 
 ## A lattice-based plot method for profile objects
+##' @importFrom lattice xyplot
+##' @S3method xyplot thpr
 xyplot.thpr <-
     function (x, data = NULL,
               levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 1)),
@@ -290,6 +333,8 @@ xyplot.thpr <-
     do.call(xyplot, stripExpr(ll, names(spl)))
 }
 
+##' @importFrom stats confint
+##' @S3method confint thpr
 confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
 {
     bak <- attr(object, "backward")
@@ -309,13 +354,13 @@ confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
     ci
 }
 
-##' Convert x-cosine and y-cosine to average and difference.
+## Convert x-cosine and y-cosine to average and difference.
 
-##' Convert the x-cosine and the y-cosine to an average and difference
-##' ensuring that the difference is positive by flipping signs if
-##' necessary
-##' @param xc x-cosine
-##' @param yc y-cosine
+## Convert the x-cosine and the y-cosine to an average and difference
+## ensuring that the difference is positive by flipping signs if
+## necessary
+## @param xc x-cosine
+## @param yc y-cosine
 ad <- function(xc, yc)
 {
     a <- (xc + yc)/2
@@ -323,24 +368,27 @@ ad <- function(xc, yc)
     cbind(ifelse(d > 0, a, -a), abs(d))
 }
 
-##' convert d versus a (as an xyVector) and level to a matrix of taui and tauj
-##' @param xy an xyVector
-##' @param lev the level of the contour
+## convert d versus a (as an xyVector) and level to a matrix of taui and tauj
+## @param xy an xyVector
+## @param lev the level of the contour
 tauij <- function(xy, lev) lev * cos(xy$x + outer(xy$y/2, c(-1, 1)))
 
-##' @title safe arc-cosine
-##' @param x numeric vector argument
-##' @return acos(x) being careful of boundary conditions
+## @title safe arc-cosine
+## @param x numeric vector argument
+## @return acos(x) being careful of boundary conditions
 sacos <- function(x) acos(pmax.int(-0.999, pmin.int(0.999, x)))
 
-##' generate a contour
-##'
-##' @title generate a contour
-##' @param sij the arc-cosines of i on j
-##' @param sji the arc-cosines of j on i
-##' @param levels numeric vector of levels at which to interpolate
-##' @param nseg number of segments in the interpolated contour
-##' @return 
+## Generate a contour
+##
+## @title Generate a contour
+## @param sij the arc-cosines of i on j
+## @param sji the arc-cosines of j on i
+## @param levels numeric vector of levels at which to interpolate
+## @param nseg number of segments in the interpolated contour
+## @return a list with components
+## \item{tki}{the tau-scale predictions of i on j at the contour levels}
+## \item{tkj}{the tau-scale predictions of j on i at the contour levels}
+## \item{pts}{an array of dimension (length(levels), nseg, 2) containing the points on the contours}
 cont <- function(sij, sji, levels, nseg = 101)
 {
     ada <- array(0, c(length(levels), 2, 4))
@@ -357,12 +405,12 @@ cont <- function(sij, sji, levels, nseg = 101)
 }
 
 
-##' Profile pairs plot
-##'
-##' Contours are for the marginal two-dimensional regions (i.e. using
-##'  df = 2)
-##' @title Profile pairs plot
-##' @return a lattice object
+## Profile pairs plot
+## Contours are for the marginal two-dimensional regions (i.e. using
+##  df = 2)
+##' @importFrom grid gpar viewport
+##' @importFrom lattice splom
+##' @S3method splom thpr
 splom.thpr <-
     function (x, data, ## unused - only for compatibility with generic
               levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 2)),
@@ -521,16 +569,17 @@ splom.thpr <-
     splom(~ pfr, lower.panel = lp, upper.panel = up, diag.panel = dp, ...)
 }
 
-##' Transform an lmer profile to the scale of the logarithm of the
-##' standard deviation of the random effects.
-##' @title Transform an lmer profile to the logarithm scale
-##' @param x an object that inherits from class "thpr"
-##' @param base the base of the logarithm.  Defaults to natural
-##'        logarithms
-##'
-##' @return an lmer profile like x with all the .sigNN parameters
-##'      replaced by .lsigNN.  The forward and backward splines for
-##'      these parameters are recalculated.
+## Transform an lmer profile to the scale of the logarithm of the
+## standard deviation of the random effects.
+## @title Transform an lmer profile to the logarithm scale
+## @param x an object that inherits from class "thpr"
+## @param base the base of the logarithm.  Defaults to natural
+##        logarithms
+##
+## @return an lmer profile like x with all the .sigNN parameters
+##      replaced by .lsigNN.  The forward and backward splines for
+##      these parameters are recalculated.
+##' @S3method log thpr
 log.thpr <- function (x, base = exp(1)) {
     cn <- colnames(x)
     sigs <- grep("^\\.sig", cn)
@@ -555,11 +604,11 @@ log.thpr <- function (x, base = exp(1)) {
     x
 }
 
-##' Transform a profile from the standard deviation parameters to the variance
-##'
-##' @title Transform to variance component scale
-##' @param x a profile object from a mixed-effects model
-##' @return a modified profile object
+## Transform a profile from the standard deviation parameters to the variance
+##
+## @title Transform to variance component scale
+## @param x a profile object from a mixed-effects model
+## @return a modified profile object
 varpr <- function (x) {
     cn <- colnames(x)
     sigs <- grep("^\\.sig", cn)
@@ -582,13 +631,13 @@ varpr <- function (x) {
     x
 }
 
-##' Create an approximating density from a profile object
-##'
-##' @title Approximate densities from profiles
-##' @param pr a profile object
-##' @param npts number of points at which to evaluate the density
-##' @param upper upper bound on cumulative for a cutoff
-##' @return a data frame
+## Create an approximating density from a profile object
+##
+## @title Approximate densities from profiles
+## @param pr a profile object
+## @param npts number of points at which to evaluate the density
+## @param upper upper bound on cumulative for a cutoff
+## @return a data frame
 dens <- function(pr, npts=201, upper=0.999) {
     stopifnot(inherits(pr, "thpr"))
     npts <- as.integer(npts)
@@ -614,13 +663,15 @@ dens <- function(pr, npts=201, upper=0.999) {
     fr
 }
 
-##' Densityplot method for a mixed-effects model profile
-##'
-##' @title densityplot from a mixed-effects profile
-##' @param x a mixed-effects profile
-##' @param data not used - for compatibility with generic
-##' @param ... optional arguments to densityplot
-##' @return a density plot
+## Densityplot method for a mixed-effects model profile
+##
+## @title densityplot from a mixed-effects profile
+## @param x a mixed-effects profile
+## @param data not used - for compatibility with generic
+## @param ... optional arguments to densityplot
+## @return a density plot
+##' @importFrom lattice densityplot
+##' @S3method densityplot thpr
 densityplot.thpr <- function(x, data, ...) {
     ll <- c(list(...),
             list(x=density ~ pval|pnm,

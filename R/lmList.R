@@ -12,104 +12,114 @@ modelFormula <- function(form)
     list(model = form, groups = rhs[[3]])
 }
 
-setMethod("lmList", signature(formula = "formula", data = "data.frame"),
-          function(formula, data, family, subset, weights,
-                   na.action, offset, pool, ...)
-      {
-          mCall <- mf <- match.call()           
-          m <- match(c("family", "data", "subset", "weights",
-                       "na.action", "offset"), names(mf), 0)
-          mf <- mf[c(1, m)]
-          ## substitute `+' for `|' in the formula
+##' @title List of lm Objects with a Common Model
+##' @param formula a linear formula object of the form
+##'     \code{y ~ x1+...+xn | g}. In the formula object, \code{y} represents
+##'     the response, \code{x1,...,xn} the covariates, and \code{g} the
+##'     grouping factor specifying the partitioning of the data according to
+##'     which different \code{lm} fits should be performed.
+##' @inheritParams lmer
+##' @param family an optional family specification for a generalized
+##'     linear model.
+##' @param pool logical scalar, should the variance estimate pool the
+##'     residual sums of squares 
+##' @param ... additional, optional arguments to be passed to the
+##'     model function or family evaluation. 
+##' @export
+lmList <- function(formula, data, family, subset, weights,
+                   na.action, offset, pool, ...) {
+    stopifnot(is(formula, "formula"))
+    mCall <- mf <- match.call()           
+    m <- match(c("family", "data", "subset", "weights",
+                 "na.action", "offset"), names(mf), 0)
+    mf <- mf[c(1, m)]
+    ## substitute `+' for `|' in the formula
 ### FIXME: Figure out what to do here instead of subbars
-#          mf$formula <- subbars(formula) 
-          mf$x <- mf$model <- mf$y <- mf$family <- NULL
-          mf$drop.unused.levels <- TRUE
-          mf[[1]] <- as.name("model.frame")
-          frm <- eval(mf, parent.frame())
-          mform <- modelFormula(formula)
-          if (missing(family)) {
-              val <- lapply(split(frm, eval(mform$groups, frm)),
-                            function(dat, formula)
-                        {
-                            ans <- try({
-                                data <- as.data.frame(dat)
-                                lm(formula, data)
-                            })
-                            if (inherits(ans, "try-error"))
-                                NULL
-                            else ans
-                        }, formula = mform$model)
-          } else {
-              val <- lapply(split(frm, eval(mform$groups, frm)),
-                            function(dat, formula, family)
-                        {
-                            ans <- try({
-                                data <- as.data.frame(dat)
-                                glm(formula, family, data)
-                            })
-                            if (inherits(ans, "try-error"))
-                                NULL
-                            else ans
-                        }, formula = mform$model, family = family)
-          }
-          if (missing(pool)) pool <- TRUE
-          new("lmList", val, call = mCall, pool = pool)
-      })
+                                        #          mf$formula <- subbars(formula) 
+    mf$x <- mf$model <- mf$y <- mf$family <- NULL
+    mf$drop.unused.levels <- TRUE
+    mf[[1]] <- as.name("model.frame")
+    frm <- eval(mf, parent.frame())
+    mform <- modelFormula(formula)
+    if (missing(family)) {
+        val <- lapply(split(frm, eval(mform$groups, frm)),
+                      function(dat, formula)
+                  {
+                      ans <- try({
+                          data <- as.data.frame(dat)
+                          lm(formula, data)
+                      })
+                      if (inherits(ans, "try-error"))
+                          NULL
+                      else ans
+                  }, formula = mform$model)
+    } else {
+        val <- lapply(split(frm, eval(mform$groups, frm)),
+                      function(dat, formula, family)
+                  {
+                      ans <- try({
+                          data <- as.data.frame(dat)
+                          glm(formula, family, data)
+                      })
+                      if (inherits(ans, "try-error"))
+                          NULL
+                      else ans
+                  }, formula = mform$model, family = family)
+    }
+    if (missing(pool)) pool <- TRUE
+    new("lmList", val, call = mCall, pool = pool)
+}
 
-
-setMethod("coef", signature(object = "lmList"),
+##' @importFrom stats coef
+##' @S3method coef lmList
           ## Extract the coefficients and form a  data.frame if possible
-          function(object, augFrame = FALSE, data = NULL,
-                   which = NULL, FUN = mean, omitGroupingFactor = TRUE, ...)
-      {
-          coefs <- lapply(object, coef)
-          non.null <- !unlist(lapply(coefs, is.null))
-          if (sum(non.null) > 0) {
-              template <- coefs[non.null][[1]]
-              if (is.numeric(template)) {
-                  co <- matrix(template,
-                               ncol = length(template),
-                               nrow = length(coefs),
-                               byrow = TRUE,
-                               dimnames = list(names(object), names(template)))
-                  for (i in names(object)) {
-                      co[i,] <- if (is.null(coefs[[i]])) { NA } else coefs[[i]]
-                  }
-                  coefs <- as.data.frame(co)
-                  effectNames <- names(coefs)
-                  if(augFrame) {
-                      if (is.null(data)) {
-                          data <- getData(object)
-                      }
-                      data <- as.data.frame(data)
-                      if (is.null(which)) {
-                          which <- 1:ncol(data)
-                      }
-                      data <- data[, which, drop = FALSE]
-                      ## eliminating columns with same names as effects
-                      data <- data[, is.na(match(names(data), effectNames)), drop = FALSE]
-                      data <- gsummary(data, FUN = FUN, groups = getGroups(object))
-                      if (omitGroupingFactor) {
-                          data <- data[, is.na(match(names(data),
-                                                     names(getGroupsFormula(object,
-                                                                            asList = TRUE)))),
-                                       drop = FALSE]
-                      }
-                      if (length(data) > 0) {
-                          coefs <- cbind(coefs, data[row.names(coefs),,drop = FALSE])
-                      }
-                  }
-                  attr(coefs, "level") <- attr(object, "level")
-                  attr(coefs, "label") <- "Coefficients"
-                  attr(coefs, "effectNames") <- effectNames
-                  attr(coefs, "standardized") <- FALSE
-                  #attr(coefs, "grpNames") <- deparse(getGroupsFormula(object)[[2]])
-                  #class(coefs) <- c("coef.lmList", "ranef.lmList", class(coefs))
-              }
-          }
-          coefs
-      })
+coef.lmList <- function(object, augFrame = FALSE, data = NULL,
+                        which = NULL, FUN = mean, omitGroupingFactor = TRUE, ...) {
+    coefs <- lapply(object, coef)
+    non.null <- !unlist(lapply(coefs, is.null))
+    if (sum(non.null) > 0) {
+        template <- coefs[non.null][[1]]
+        if (is.numeric(template)) {
+            co <- matrix(template,
+                         ncol = length(template),
+                         nrow = length(coefs),
+                         byrow = TRUE,
+                         dimnames = list(names(object), names(template)))
+            for (i in names(object)) {
+                co[i,] <- if (is.null(coefs[[i]])) { NA } else coefs[[i]]
+            }
+            coefs <- as.data.frame(co)
+            effectNames <- names(coefs)
+            if(augFrame) {
+                if (is.null(data)) {
+                    data <- getData(object)
+                }
+                data <- as.data.frame(data)
+                if (is.null(which)) {
+                    which <- 1:ncol(data)
+                }
+                data <- data[, which, drop = FALSE]
+                ## eliminating columns with same names as effects
+                data <- data[, is.na(match(names(data), effectNames)), drop = FALSE]
+                data <- gsummary(data, FUN = FUN, groups = getGroups(object))
+                if (omitGroupingFactor) {
+                    data <- data[, is.na(match(names(data),
+                                               names(getGroupsFormula(object,
+                                                                      asList = TRUE)))),
+                                 drop = FALSE]
+                }
+                if (length(data) > 0) {
+                    coefs <- cbind(coefs, data[row.names(coefs),,drop = FALSE])
+                }
+            }
+            attr(coefs, "level") <- attr(object, "level")
+            attr(coefs, "label") <- "Coefficients"
+            attr(coefs, "effectNames") <- effectNames
+            attr(coefs, "standardized") <- FALSE
+        }
+    }
+    coefs
+}
 
 pooledSD <- function(x, ...)
 {
@@ -131,6 +141,8 @@ pooledSD <- function(x, ...)
     val
 }
 
+##' @importFrom methods show
+##' @exportMethod show
 setMethod("show", signature(object = "lmList"),
           function(object)
       {
@@ -150,6 +162,7 @@ setMethod("show", signature(object = "lmList"),
           }
       })
 
+##' @S3method confint lmList
 confint.lmList <- function(object, parm, level = 0.95, ...)
 {
     mCall <- match.call()
@@ -181,9 +194,11 @@ confint.lmList <- function(object, parm, level = 0.95, ...)
     new("lmList.confint", aperm(val, c(3, 2, 1)))
 }
 
+##' @importFrom graphics plot
+##' @S3method plot lmList.confint
 plot.lmList.confint <- function(x, y, ...)
 {
-    stopifnot(require("lattice"))
+##    stopifnot(require("lattice"))
     arr <- as(x, "array")
     dd <- dim(arr)
     dn <- dimnames(arr)
@@ -238,26 +253,28 @@ plot.lmList.confint <- function(x, y, ...)
         }, ...)
 }
 
-setMethod("update", signature(object = "lmList"),
-          function(object, formula., ..., evaluate = TRUE)
-      {
-          call <- object@call
-          if (is.null(call))
-              stop("need an object with call slot")
-          extras <- match.call(expand.dots = FALSE)$...
-          if (!missing(formula.))
-              call$formula <- update.formula(formula(object), formula.)
-          if (length(extras) > 0) {
-              existing <- !is.na(match(names(extras), names(call)))
-              for (a in names(extras)[existing]) call[[a]] <- extras[[a]]
-              if (any(!existing)) {
-                  call <- c(as.list(call), extras[!existing])
-                  call <- as.call(call)
-              }
-          }
-          if (evaluate)
-              eval(call, parent.frame())
-          else call
-      })
+##' @importFrom stats update
+##' @S3method update lmList
+update.lmList <- function(object, formula., ..., evaluate = TRUE) {
+    call <- object@call
+    if (is.null(call))
+        stop("need an object with call slot")
+    extras <- match.call(expand.dots = FALSE)$...
+    if (!missing(formula.))
+        call$formula <- update.formula(formula(object), formula.)
+    if (length(extras) > 0) {
+        existing <- !is.na(match(names(extras), names(call)))
+        for (a in names(extras)[existing]) call[[a]] <- extras[[a]]
+        if (any(!existing)) {
+            call <- c(as.list(call), extras[!existing])
+            call <- as.call(call)
+        }
+    }
+    if (evaluate)
+        eval(call, parent.frame())
+    else call
+}
 
+##' @importFrom stats formula
+##' @S3method formula lmList
 formula.lmList <- function(x, ...) x@call[["formula"]]

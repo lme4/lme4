@@ -1,4 +1,27 @@
-GHrule <- function (ord) {
+##' Create a univariate Gauss-Hermite quadrature rule
+##'
+##' This version of Gauss-Hermite quadrature provides the node
+##' positions and weights for a scalar integral of a function
+##' multiplied by the standard normal density.
+##' @title Univariate Gauss-Hermite quadrature rule
+##' @param ord scalar integer between 1 and 25 - the order, or number of
+##'    nodes and weights, in the rule.  When the function being
+##'    multiplied by the standard normal density is a polynomial of
+##'    order 2k-1 the rule of order k integrates the product exactly.
+##' @param asMatrix logical scalar - should the result be returned as
+##'    a matrix.  If \code{FALSE} a data frame is returned.  Defaults
+##'    to \code{TRUE}.
+##' @return a matrix with \code{ord} rows and three columns which are
+##'    \code{z} the node positions, \code{w} the weights and
+##'    \code{ldnorm}, the logarithm of the normal density evaluated at
+##'    the nodes.
+##' @examples
+##' (r5 <- GHrule(5, asMatrix=FALSE))
+##' ## second, fourth, sixth, eighth and tenth central moments of the
+##' ## standard Gaussian density
+##' with(r5, sapply(seq(2, 10, 2), function(p) sum(w * z^p)))
+##' @export
+GHrule <- function (ord, asMatrix=TRUE) {
     stopifnot(length(ord) == 1,
               (ord <- as.integer(ord)) > 0L,
               ord < 26L)
@@ -134,5 +157,7 @@ GHrule <- function (ord) {
     } else fr <- rbind(fr[rev(seq_len(nr)),], fr)
     if (ord > 1L) fr[seq_len(ord %/% 2L), "z"] <- -fr[seq_len(ord %/% 2L), "z"]
     rownames(fr) <- NULL
-    as.matrix(within(fr, ldnorm <- dnorm(z, log=TRUE)))
+    fr <- within(fr, ldnorm <- dnorm(z, log=TRUE))
+    if (asMatrix) return(as.matrix(fr))
+    fr
 }
