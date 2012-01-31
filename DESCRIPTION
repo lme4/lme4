@@ -46,3 +46,4 @@ Collate:
     'profile.R'
     'sparsegrid.R'
     'utilities.R'
+    'optimizer.R'
