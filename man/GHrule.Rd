@@ -1,56 +1,38 @@
 \name{GHrule}
 \alias{GHrule}
-\title{
-  Nodes and weights for Gauss-Hermite quadrature
-}
-\description{
-  Returns the nodes, weights and the logarithm of the standard Gaussian
-  density for a Gauss-Hermite quadrature rule, with the standard
-  Gaussian density as the kernel, of order \code{ord}.
-}
+\title{Univariate Gauss-Hermite quadrature rule}
 \usage{
-GHrule(ord)
+  GHrule(ord, asMatrix = TRUE)
 }
 \arguments{
-  \item{ord}{
-    positive integer not exceeding 25 - the order of the rule.
-  }
-}
-\details{
-  Univariate Gauss-Hermite quadrature evaluates the integral of a
-  function that is multiplied by a \dQuote{kernel} where the kernel is a
-  multiple of \eqn{e^{-z^2}}{exp(-z^2)} or
-  \eqn{e^{-z^2/2}}{exp(-z^2/2)}.  For statisticians the natural
-  candidate is the standard normal density,
-  \eqn{\phi(z)=e^{-z^2/2}/\sqrt(2\pi)}{exp(-z^2/2)/sqrt(2*pi)}.
-  A \eqn{k}{k}th-order Gauss-Hermite formula provides knots,
-  \eqn{z_i,i=1,...,k}{z[i]}, and weights, \eqn{w_i,i=1,\dots,k}{w[i]}, such that
-  \deqn{\int_{\mathbb{R}}t(z)\phi(z)\,dz\approx\sum_{i=1}^kw_it(z_i)}{int[-Inf]^Inf t(z) phi(z) dz ~ sum[i=1]^k w[i] t(z[i])}
-}
-\note{
-  The choice of the value of \eqn{k} depends on the behavior of the function
-  \eqn{t(z)}.  If \eqn{t(z)} is a polynomial of degree \eqn{k-1} then the
-  Gauss-Hermite formula for order \eqn{k} or greater provides the exact
-  value of the integral.  The fact that we want \eqn{t(z)} to behave
-  like a low-order polynomial is often neglected in the formulation of
-  a Gauss-Hermite approximation to an integral.
+  \item{ord}{scalar integer between 1 and 25 - the order,
+  or number of nodes and weights, in the rule.  When the
+  function being multiplied by the standard normal density
+  is a polynomial of order 2k-1 the rule of order k
+  integrates the product exactly.}
+
+  \item{asMatrix}{logical scalar - should the result be
+  returned as a matrix.  If \code{FALSE} a data frame is
+  returned.  Defaults to \code{TRUE}.}
 }
 \value{
-  a numeric matrix with \code{ord} rows and three columns named
-  \dQuote{z}, \dQuote{w} and \dQuote{ldnorm}.
+  a matrix with \code{ord} rows and three columns which are
+  \code{z} the node positions, \code{w} the weights and
+  \code{ldnorm}, the logarithm of the normal density
+  evaluated at the nodes.
 }
-\references{
-  Based on code in the \dQuote{SparseGrid} package.
+\description{
+  Create a univariate Gauss-Hermite quadrature rule
 }
-%\author{}
-%\note{}
-%\seealso{}
+\details{
+  This version of Gauss-Hermite quadrature provides the
+  node positions and weights for a scalar integral of a
+  function multiplied by the standard normal density.
+}
 \examples{
-(rr <- as.data.frame(GHrule(5)))
-sum(rr$w * (rr$z)^2)		# second moment of standard Gaussian
-sum(rr$w * (rr$z)^4)		# fourth moment of standard Gaussian
-sum(rr$w * (rr$z)^6)		# sixth moment of standard Gaussian (approx)
-sum(rr$w * (rr$z)^8)		# eighth moment of standard Gaussian (approx)
-sum(rr$w * (rr$z)^10)		# tenth moment of standard Gaussian (approx)
+(r5 <- GHrule(5, asMatrix=FALSE))
+## second, fourth, sixth, eighth and tenth central moments of the
+## standard Gaussian density
+with(r5, sapply(seq(2, 10, 2), function(p) sum(w * z^p)))
 }
-\keyword{math}
+

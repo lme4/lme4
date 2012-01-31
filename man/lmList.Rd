@@ -1,58 +1,58 @@
-% $Id: lmList.Rd,v 1.4 2003/11/01 04:13:18 deepayan Exp $
 \name{lmList}
 \alias{lmList}
-\alias{lmList,formula,data.frame-method}
 \title{List of lm Objects with a Common Model}
 \usage{
-lmList(formula, data, family, subset, weights,
-       na.action, offset, pool, \dots)
+  lmList(formula, data, family, subset, weights, na.action,
+    offset, pool, ...)
 }
 \arguments{
   \item{formula}{a linear formula object of the form
-    \code{y ~ x1+...+xn | g}. In the formula object, \code{y} represents
-    the response, \code{x1,...,xn} the covariates, and \code{g} the
-    grouping factor specifying the partitioning of the data according to
-    which different \code{lm} fits should be performed.}
-  \item{data}{a data frame in which to interpret the variables named in
-    \code{object}.}
-  \item{family}{an optional family specification for a generalized
-    linear model.}
-  \item{weights}{an optional vector of weights to be used
-    in the fitting process.}
-  \item{subset}{an optional vector specifying a subset of observations
-    to be used in the fitting process.}
-  \item{na.action}{a function which indicates what should happen
-    when the data contain \code{NA}s.  The default is set by
-    the \code{na.action} setting of \code{\link{options}}, and is
-    \code{\link{na.fail}} if that is unset.  The \dQuote{factory-fresh}
-    default is \code{\link{na.omit}}.}
-  \item{offset}{this can be used to specify an \emph{a priori}
-    known component to be included in the linear predictor
-    during fitting.}
- \item{pool}{an optional logical value that is preserved as an attribute
-   of the returned value.  This will be used as the default for
-   \code{pool} in calculations of standard deviations or standard errors
-   for summaries.}
- \item{\dots}{optional arguments to be passed to the model-fitting
-   function.}
+  \code{y ~ x1+...+xn | g}. In the formula object, \code{y}
+  represents the response, \code{x1,...,xn} the covariates,
+  and \code{g} the grouping factor specifying the
+  partitioning of the data according to which different
+  \code{lm} fits should be performed.}
+
+  \item{family}{an optional family specification for a
+  generalized linear model.}
+
+  \item{pool}{logical scalar, should the variance estimate
+  pool the residual sums of squares}
+
+  \item{...}{additional, optional arguments to be passed to
+  the model function or family evaluation.}
+
+  \item{data}{an optional data frame containing the
+  variables named in \code{formula}.  By default the
+  variables are taken from the environment from which
+  \code{lmer} is called.}
+
+  \item{subset}{an optional expression indicating the
+  subset of the rows of \code{data} that should be used in
+  the fit. This can be a logical vector, or a numeric
+  vector indicating which observation numbers are to be
+  included, or a character vector of the row names to be
+  included.  All observations are included by default.}
+
+  \item{weights}{an optional vector of \sQuote{prior
+  weights} to be used in the fitting process.  Should be
+  \code{NULL} or a numeric vector.}
+
+  \item{na.action}{a function that indicates what should
+  happen when the data contain \code{NA}s.  The default
+  action (\code{na.fail}) prints an error message and
+  terminates if there are any incomplete observations.}
+
+  \item{offset}{this can be used to specify an \emph{a
+  priori} known component to be included in the linear
+  predictor during fitting. This should be \code{NULL} or a
+  numeric vector of length equal to the number of cases.
+  One or more \code{\link{offset}} terms can be included in
+  the formula instead or as well, and if more than one is
+  specified their sum is used.  See
+  \code{\link{model.offset}}.}
 }
 \description{
-  The \code{data} argument is split according to the levels of the grouping
-  factor \code{g} and individual \code{lm} or \code{glm} fits are
-  obtained for each \code{data} partition, using the model defined in
-  \code{object}.
+  List of lm Objects with a Common Model
 }
-\value{
-  an object of class \code{"\linkS4class{lmList}"}, which is a list of
-  \code{lm} objects with as many components as the number of groups
-  defined by the grouping factor.
-}
-\seealso{
-  \code{\link{lm}}; documentation of the resulting class
-  \code{"\linkS4class{lmList}"}.
-}
-\examples{
-(fm1 <- lmList(Reaction ~ Days | Subject, sleepstudy))
-}
-\keyword{models}
 

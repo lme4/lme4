@@ -1,29 +1,26 @@
 \name{refitML}
-\title{Refit a Mixed-Effect Model by Maximum Likelihood (ML)}
 \alias{refitML}
-\alias{refitML.merMod}
-\description{
-  Refits a fitted mixed-effecs model by maximum likelihood,
-  typically a \emph{linear} ME model which was fit by REML.
-}
+\title{Refit a model by maximum likelihood criterion}
 \usage{
-refitML(x, \dots)
+  refitML(x, ...)
 }
 \arguments{
-  \item{x}{an object of class \code{\linkS4class{merMod}}.}
-  \item{\dots}{optional additional arguments (none used at present)}
+  \item{x}{a fitted model, usually of class
+  \code{"\linkS4class{lmerMod}"}, to be refit according to
+  the maximum likelihood criterion}
+
+  \item{...}{optional additional parameters.  None are used
+  at present.}
 }
 \value{
-  an \R object, typically of class  \code{\linkS4class{lmerMod}},
-  similar to \code{x}, but refit by ML (if needed).
+  an object like \code{x} but fit by maximum likelihood
 }
-\seealso{
-  \code{\link{lmer}()}; class \code{\linkS4class{lmerMod}}.
+\description{
+  Refit a model using the maximum likelihood criterion
 }
-\examples{
-(fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
-(fm1M <- refitML(fm1))
-## The random effects, differ, but the fixed effects are the same:
-stopifnot(all.equal(fixef(fm1), fixef(fm1M)))
+\details{
+  This function is primarily used to get a maximum
+  likelihood fit of a linear mixed-effects model for an
+  \code{\link{anova}} comparison.
 }
-\keyword{models}
+

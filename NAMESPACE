@@ -1,185 +1,127 @@
-useDynLib(lme4Eigen, .registration=TRUE)
-
-## Import non-base functions we need explicitly,
-## notably for which we define methods:
-
-## FIXME -- really need all these -- fully imported -- ???
-import("grid")
-import("lattice")
-import("splines")
-
-importFrom("graphics", plot)
-importFrom("nlme", fixef, ranef, VarCorr)
-importFrom("stats"
-           , AIC
-           , BIC
-           , anova
-           , coef
-           , coefficients
-           , confint
-           , deviance
-           , fitted
-           , fitted.values
-           , formula
-           , getCall
-           , logLik
-           , model.frame
-           , model.matrix
-           , predict
-           , profile
-           , residuals
-           , resid
-           , simulate
-           , terms
-           , update
-           , vcov
-           )
-
-importFrom("minqa", bobyqa)
-
-importClassesFrom("Matrix",
-                  CHMfactor,
-                  CHMsimpl,
-                  CHMsuper,
-                  Cholesky,
-                  Matrix,
-                  corMatrix,
-                  dCHMsimpl,
-                  dCHMsuper,
-                  dMatrix,
-                  ddiMatrix,
-                  dgCMatrix,
-                  dgeMatrix,
-                  dpoMatrix,
-                  dsCMatrix,
-                  nCHMsimpl,
-                  nCHMsuper,
-                  symmetricMatrix)
-
-importFrom("MatrixModels", model.Matrix)
-
-importClassesFrom("MatrixModels",
-                  modelMatrix,
-                  denseModelMatrix,  ddenseModelMatrix,
-                  sparseModelMatrix, dsparseModelMatrix
-                  )
-
-importMethodsFrom("Matrix"
-                  , "%*%"
-                  , Cholesky
-                  , as.vector
-                  , chol
-                  , chol2inv
-                  , coerce
-                  , crossprod
-                  , determinant
-                  , diag
-		  , rcond
-                  , solve
-                  , t
-                  , tcrossprod
-                  ## , update
-                  )
-
-# exportPattern("^[^\\.]")
-
-# and the rest (S3 generics; regular functions):
-export(GHrule,
-       GQdk,
-       NelderMead,
-       VarCorr,
-       bootMer,
-       devcomp,
-       findbars,
-       fixef,
-       getL, getME,
-       glmFamily,
-       glmResp,
-       glmer,
-       golden,
-       isNested,
-       lmList,
-       lmResp,       
-       lmer,
-       lmerResp,
-       mkdevfun,
-       nlsResp,
-       nlmer,
-       nobars,
-       merPredD,
-       ranef,
-       refitML,
-       sigma,
-       subbars
-       )
-
-exportClasses(NelderMead,
-              glmerMod,
-              glmFamily,
-              glmResp,
-              golden,
- 	      lmerMod,
-              lmerResp,
- 	      lmList,
-              lmResp,
- 	      merPredD,
- 	      merMod,
-              nlsResp
- 	      )
-
-exportMethods(
-              coef
-              , coerce
-              , getL
-              , rcond
-              , show
-              , sigma
-              ## , update
-              )
-
-## S3 methods - S4 methods are not created when dispatch is on the first argument only
-
-S3method(confint, lmList)
-
-S3method(plot, lmList.confint)
-
-S3method(VarCorr, merMod)
-S3method(anova, merMod)
-S3method(coef, merMod)
-S3method(deviance, merMod)
-S3method(devcomp, merMod)
-S3method(drop1, merMod)
-S3method(extractAIC, merMod)
-S3method(fixef, merMod)
-S3method(fitted, merMod)
-S3method(formula, merMod)
-S3method(logLik, merMod)
-S3method(model.frame, merMod)
-S3method(model.matrix, merMod)
-S3method(print, merMod)
-S3method(profile, merMod)
-S3method(ranef, merMod)# <- hide inspite of extra args..
-S3method(residuals, merMod)
-S3method(simulate, merMod)
-S3method(summary, merMod)
-S3method(terms, merMod)
-S3method(vcov, merMod)
-S3method(refitML, merMod)
-
-S3method(print, summary.mer)
-S3method(summary, summary.mer)
-#S3method(vcov, summary.mer)
-
-S3method(plot, coef.mer)
-S3method(dotplot, coef.mer)
-
-S3method(plot, ranef.mer)
-S3method(qqmath, ranef.mer)
-S3method(dotplot, ranef.mer)
-
-## profile() related:
-S3method(xyplot, thpr)
-S3method(densityplot, thpr)
-S3method(confint, thpr)
-S3method(splom, thpr)
-S3method(log, thpr)
+export(bootMer)
+exportClasses(glmerMod)
+exportClasses(lmerMod)
+exportClasses(lmList)
+exportClasses(merMod)
+exportClasses(nlmerMod)
+export(devcomp)
+export(findbars)
+export(fixef)
+export(getL)
+export(getME)
+export(GHrule)
+export(glmer)
+export(glmFamily)
+export(glmResp)
+export(golden)
+export(GQdk)
+export(isNested)
+export(isREML)
+export(lmer)
+export(lmerResp)
+export(lmList)
+export(lmResp)
+export(merPredD)
+exportMethods(getL)
+exportMethods(show)
+export(mkRespMod)
+export(mkReTrms)
+export(NelderMead)
+export(nlformula)
+export(nlmer)
+export(nlsResp)
+export(nobars)
+export(ranef)
+export(refit)
+export(refitML)
+export(sigma)
+export(subbars)
+export(VarCorr)
+importClassesFrom(Matrix,corMatrix)
+importClassesFrom(Matrix,dgCMatrix)
+importClassesFrom(Matrix,dpoMatrix)
+importFrom(graphics,plot)
+importFrom(grid,gpar)
+importFrom(grid,viewport)
+importFrom(lattice,densityplot)
+importFrom(lattice,dotplot)
+importFrom(lattice,qqmath)
+importFrom(lattice,splom)
+importFrom(lattice,xyplot)
+importFrom(Matrix,drop0)
+importFrom(Matrix,rBind)
+importFrom(Matrix,sparseMatrix)
+importFrom(methods,show)
+importFrom(minqa,bobyqa)
+importFrom(nlme,fixef)
+importFrom(nlme,ranef)
+importFrom(nlme,VarCorr)
+importFrom(splines,backSpline)
+importFrom(splines,interpSpline)
+importFrom(stats,anova)
+importFrom(stats,coef)
+importFrom(stats,confint)
+importFrom(stats,deviance)
+importFrom(stats,drop1)
+importFrom(stats,extractAIC)
+importFrom(stats,fitted)
+importFrom(stats,formula)
+importFrom(stats,logLik)
+importFrom(stats,model.matrix)
+importFrom(stats,nobs)
+importFrom(stats,profile)
+importFrom(stats,residuals)
+importFrom(stats,simulate)
+importFrom(stats,terms)
+importFrom(stats,update)
+importFrom(stats,vcov)
+importMethodsFrom(Matrix,"%*%")
+importMethodsFrom(Matrix,coerce)
+importMethodsFrom(Matrix,crossprod)
+importMethodsFrom(Matrix,diag)
+importMethodsFrom(Matrix,t)
+importMethodsFrom(Matrix,tcrossprod)
+S3method(anova,merMod)
+S3method(coef,lmList)
+S3method(coef,merMod)
+S3method(confint,lmList)
+S3method(confint,thpr)
+S3method(densityplot,thpr)
+S3method(deviance,merMod)
+S3method(dotplot,coef.mer)
+S3method(dotplot,ranef.mer)
+S3method(drop1,merMod)
+S3method(extractAIC,merMod)
+S3method(fitted,merMod)
+S3method(fixef,merMod)
+S3method(formula,lmList)
+S3method(isREML,merMod)
+S3method(logLik,merMod)
+S3method(log,thpr)
+S3method(model.frame,merMod)
+S3method(model.matrix,merMod)
+S3method(nobs,merMod)
+S3method(plot,coef.mer)
+S3method(plot,lmList.confint)
+S3method(plot,ranef.mer)
+S3method(print,merMod)
+S3method(print,summary.mer)
+S3method(profile,merMod)
+S3method(qqmath,ranef.mer)
+S3method(ranef,merMod)
+S3method(refit,merMod)
+S3method(refitML,merMod)
+S3method(residuals,merMod)
+S3method(sigma,merMod)
+S3method(simulate,merMod)
+S3method(splom,thpr)
+S3method(summary,merMod)
+S3method(summary,summary.mer)
+S3method(terms,merMod)
+S3method(update,lmList)
+S3method(update,merMod)
+S3method(VarCorr,merMod)
+S3method(vcov,merMod)
+S3method(vcov,summary.mer)
+S3method(xyplot,thpr)
+useDynLib(lme4Eigen,.registration=TRUE)

@@ -1,16 +1,8 @@
+\docType{data}
 \name{VerbAgg}
 \alias{VerbAgg}
-\docType{data}
 \title{Verbal Aggression item responses}
-\description{
-  These are the item responses to a questionaire on verbal aggression.
-  These data are used throughout De Boeck and Wilson,
-  \emph{Explanatory Item Response Models} (Springer, 2004) to illustrate
-  various forms of item response models.
-}
-%\usage{data(VerbAgg)}
-\format{
-  A data frame with 7584 observations on the following 13 variables.
+\format{A data frame with 7584 observations on the following 13 variables.
   \describe{
     \item{\code{Anger}}{the subject's Trait Anger score as measured on
       the State-Trait Anger Expression Inventory (STAXI)}
@@ -28,14 +20,16 @@
       and \code{do}}
     \item{\code{r2}}{dichotomous version of the response - a factor with
       levels \code{N} and \code{Y}}
-  }
-}
-%\details{}
+  }}
 \source{
   \url{http://bear.soe.berkeley.edu/EIRM/}
 }
-\references{
-  De Boeck and Wilson (2004), \emph{Explanatory Item Response Models}, Springer.
+\description{
+  These are the item responses to a questionaire on verbal
+  aggression.  These data are used throughout De Boeck and
+  Wilson, \emph{Explanatory Item Response Models}
+  (Springer, 2004) to illustrate various forms of item
+  response models.
 }
 \examples{
 str(VerbAgg)
@@ -47,7 +41,7 @@ xtabs(~ item + resp, VerbAgg)
 xtabs(~ btype + resp, VerbAgg)
 round(100 * ftable(prop.table(xtabs(~ situ + mode + resp, VerbAgg), 1:2), 1))
 person <- unique(subset(VerbAgg, select = c(id, Gender, Anger)))
-if (require(lattice)) {
+if (require(lattice)) {   # is this necessary when the package depends on lattice?
     densityplot(~ Anger, person, groups = Gender, auto.key = list(columns = 2),
                 xlab = "Trait Anger score (STAXI)")
 }
@@ -62,4 +56,9 @@ print(fmVA0 <- glmer(r2 ~ (Anger + Gender + btype + situ)^2 +
                     (1|id) + (1|item), family = binomial, data =
                     VerbAgg, nAGQ=0L), corr=FALSE)
 }
+\references{
+  De Boeck and Wilson (2004), \emph{Explanatory Item
+  Response Models}, Springer.
+}
 \keyword{datasets}
+

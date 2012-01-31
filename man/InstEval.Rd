@@ -1,17 +1,8 @@
+\docType{data}
 \name{InstEval}
 \alias{InstEval}
-\docType{data}
-\title{
-  University Lecture/Instructor Evaluations by Students at ETH
-}
-\description{
-  University lecture evaluations by students at ETH Zurich, anonymized
-  for privacy protection.  This is an interesting \dQuote{medium} sized
-  example of a \emph{partially} nested mixed effect model.
-}
-\usage{data(InstEval)}
-\format{
-  A data frame with 73421 observations on the following 7 variables.
+\title{University Lecture/Instructor Evaluations by Students at ETH}
+\format{A data frame with 73421 observations on the following 7 variables.
   \describe{
     \item{\code{s}}{a factor with levels \code{1:2972} denoting
       individual students.}
@@ -33,20 +24,23 @@
       the students, using the discrete scale \code{1:5}, with meanings
       of \sQuote{poor} to \sQuote{very good}.}
   }
-  One specific observation is one student rating for a specific lecture
-  (of one lecturer, during one semester in the past).
+  Each observation is one student's rating for a specific lecture
+  (of one lecturer, during one semester in the past).}
+\description{
+  University lecture evaluations by students at ETH Zurich,
+  anonymized for privacy protection.  This is an
+  interesting \dQuote{medium} sized example of a
+  \emph{partially} nested mixed effect model.
 }
 \details{
-  The main goal of the survey is to find \dQuote{the best liked prof},
-  according to the lectures given.  Statistical analysis of such data
-  has been the basis for a (student) jury selecting the final winners.
+  The main goal of the survey is to find \dQuote{the best
+  liked prof}, according to the lectures given.
+  Statistical analysis of such data has been the basis for
+  a (student) jury selecting the final winners.
 
-  The present data set has been anonymized and slightly simplified on
-  purpose.
+  The present data set has been anonymized and slightly
+  simplified on purpose.
 }
-% \source{
-%  not public; anonymized on purpose
-% }
 \examples{
 str(InstEval)
 
@@ -54,3 +48,4 @@ head(InstEval, 16)
 xtabs(~ service + dept, InstEval)
 }
 \keyword{datasets}
+

@@ -1,20 +1,48 @@
 Package: lme4Eigen
-Version: 0.9996875-7
-Date: 2011-12-28
+Version: 0.9996875-8
+Date: $Date: 2012-01-26 15:43:49 -0600 (Thu, 26 Jan 2012) $
 Title: Linear mixed-effects models using Eigen and S4
 Author: Douglas Bates <bates@stat.wisc.edu>,
-        Martin Maechler <maechler@R-project.org> and
-	Ben Bolker <bbolker@gmail.com>
+    Martin Maechler <maechler@R-project.org> and
+    Ben Bolker <bbolker@gmail.com>
 Maintainer: <lme4-authors@R-forge.wu-wien.ac.at>
 Description: Fit linear and generalized linear mixed-effects models.
- The models and their components are represented using S4 classes and
- methods.  The core computational algorithms are implemented using the
- Eigen C++ library for numerical linear algebra and RcppEigen "glue".
-Depends: methods, R(>= 2.14.0), Matrix(>= 1.0), lattice, stats, minqa(>= 1.1.15)
+    The models and their components are represented using S4 classes and
+    methods.  The core computational algorithms are implemented using the
+    Eigen C++ library for numerical linear algebra and RcppEigen "glue".
+Depends:
+    lattice,
+    methods,
+    R(>= 2.14.0),
+    stats
 LinkingTo: Rcpp, RcppEigen
-Imports: graphics, grid, nlme, splines, MatrixModels(>= 0.2.0)
-Suggests: mlmRev, MEMSS, boot, MASS, RUnit
+Imports:
+    Matrix(>= 1.0),
+    graphics,
+    grid,
+    minqa(>= 1.1.15),
+    nlme,
+    splines
+Suggests:
+    PKPDmodels,
+    MASS,
+    MEMSS,
+    RUnit,
+    boot,
+    mlmRev
 LazyLoad: yes
 LazyData: yes
 License: GPL (>=2)
 URL: http://lme4.r-forge.r-project.org/
+Collate:
+    'AllClass.R'
+    'AllGeneric.R'
+    'GHrule.R'
+    'jml.R'
+    'lme4Eigen-package.R'
+    'lmer.R'
+    'lmList.R'
+    'mlirt.R'
+    'profile.R'
+    'sparsegrid.R'
+    'utilities.R'
