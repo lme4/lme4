@@ -8,6 +8,6 @@ PKG_CXXFLAGS = -DEIGEN_DONT_VECTORIZE
 ## the debugging checks even though they cause R to terminate, which
 ## is bad form.  Better to learn of bugs in an impolite way than not
 ## to learn of them.
-#PKG_CXXFLAGS = -DNDEBUG -DEIGEN_DONT_VECTORIZE
+PKG_CXXFLAGS = -DNDEBUG -DEIGEN_DONT_VECTORIZE
 
 
