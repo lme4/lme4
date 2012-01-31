@@ -436,6 +436,12 @@ extern "C" {
 	END_RCPP;
     }
 
+    SEXP lm_setResp(SEXP ptr_, SEXP resp) {
+	BEGIN_RCPP;
+	XPtr<lmResp>(ptr_)->setResp(as<MVec>(resp));
+	END_RCPP;
+    }
+
     SEXP lm_setWeights(SEXP ptr_, SEXP weights) {
 	BEGIN_RCPP;
 	XPtr<lmResp>(ptr_)->setWeights(as<MVec>(weights));
@@ -832,6 +838,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(lm_Create, 7),	// generate external pointer
 
     CALLDEF(lm_setOffset, 2),	// setters
+    CALLDEF(lm_setResp, 2),
     CALLDEF(lm_setWeights, 2),
 
     CALLDEF(lm_wrss, 1),	// getter
