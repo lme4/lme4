@@ -73,7 +73,6 @@ merPredD <-
                      u0      = "numeric"),
                 methods =
                 list(
-### FIXME: probably don't need S as Xwts is required for nlmer 
                      initialize = function(X, Zt, Lambdat, Lind, theta, n, ...) {
                          if (!nargs()) return
                          X <<- as(X, "matrix")

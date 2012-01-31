@@ -72,8 +72,8 @@
  }
  pkgI("Matrix")
  pkgI("Rcpp")
+ pkgI("RcppEigen")
  pkgI("minqa")
- pkgI("MatrixModels")
  pkgI("lme4Eigen")
 }
 str(Dyestuff)

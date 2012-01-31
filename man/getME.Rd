@@ -14,8 +14,27 @@
   \code{\link{nlmer}()}.}
 
   \item{name}{a character string specifying the name of the
-  \dQuote{component}.  Note this may not be the name of
-  \code{\link{slot}} of \code{object}.}
+  \dQuote{component}.  Possible values are:\cr \describe{
+  \item{X}{fixed-effects model matrix}
+  \item{Z}{random-effects model matrix} \item{Zt}{transpose
+  of random-effects model matrix} \item{u}{conditional mode
+  of the \dQuote{spherical} random effects variable}
+  \item{Gp}{groups pointer vector.  A pointer to the
+  beginning of each group of random effects corresponding
+  to the random-effects terms.} \item{L}{sparse Cholesky
+  factor of the penalized random-effects model.}
+  \item{Lambda}{relative covariance factor of the random
+  effects.} \item{Lambdat}{transpose of the relative
+  covariance factor of the random effects.}
+  \item{RX}{Cholesky factor for the fixed-effects
+  parameters} \item{RZX}{cross-term in the full Cholesky
+  factor} \item{beta}{fixed-effects parameter estimates
+  (same as the result of \code{\link{fixef}})}
+  \item{n_rtrms}{number of random-effects terms}
+  \item{is_REML}{same as the result of
+  \code{\link{isREML}}} \item{devcomp}{a list consisting of
+  a named numeric vector, \dQuote{cmp}, and a named integer
+  vector, \dQuote{dims}, describing the fitted model} }}
 }
 \value{
   Unspecified, as very much depending on the
@@ -56,14 +75,9 @@ str(parts <- sapply(nmME, function(nm) try(getME(fm1, nm)),
 }\% dont..
 }
 \seealso{
-  % \code{\link{getCall}()} (in \R >= 2.14.0; otherwise in
-  \pkg{MatrixModels}). % no \link{} -> no warning ...
-  \code{getCall()} (in >= 2.14.0; otherwise in
-  \pkg{MatrixModels}).
-
-  More standard methods for mer objects, such as
-  \code{\link{ranef}}, \code{\link{fixef}},
-  \code{\link{vcov}}, etc.
+  \code{\link{getCall}()}, More standard methods for mer
+  objects, such as \code{\link{ranef}},
+  \code{\link{fixef}}, \code{\link{vcov}}, etc.
 }
 \keyword{utilities}
 
