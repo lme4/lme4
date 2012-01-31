@@ -144,36 +144,21 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 
     lower <- reTrms$lower
     xst <- rep.int(0.1, length(lower))
-    nM <- NelderMead$new(lower=lower, upper=rep.int(Inf, length(lower)), xst=0.2*xst,
-                         x0=rho$pp$theta, xt=xst*0.0001)
-    cc <- do.call(function(iprint=0L, maxfun=10000L, FtolAbs=1e-5,
-                           FtolRel=1e-15, XtolRel=1e-7,
-                           MinfMax=.Machine$double.xmin) {
-        if (length(list(...))>0) warning("unused control arguments ignored")
-        list(iprint=iprint, maxfun=maxfun, FtolAbs=FtolAbs, FtolRel=FtolRel,
-             XtolRel=XtolRel, MinfMax=MinfMax)
-    }, control)
-    nM$setMaxeval(cc$maxfun)
-    nM$setFtolAbs(cc$FtolAbs)
-    nM$setFtolRel(cc$FtolRel) 
-    nM$setMinfMax(cc$MinfMax)
-    nM$setIprint(cc$iprint)                          
-    while ((nMres <- nM$newf(devfun(nM$xeval()))) == 0L) {}
-    if (nMres < 0L) {
-        if (nMres > -4L)
+    opt <- Nelder_Mead(devfun, x0=rho$pp$theta, xst=0.2*xst, xt=xst*0.0001,
+                       lower=lower, control=control)
+    if (opt$code < 0L) {
+        if (opt$code > -4L)
             stop("convergence failure, code ", nMres, " in NelderMead")
         else
-            warning("failure to converge in 1000 evaluations")
+            warning("failure to converge in", opt$control$maxfun, "evaluations")
     }
-    opt <- list(fval=nM$value(), pars=nM$xpos(), code=nMres)
-#    opt <- bobyqa(reTrms$theta, devfun, reTrms$lower, control = control)
     sqrLenU <- rho$pp$sqrL(1.)
     wrss <- rho$resp$wrss()
     pwrss <- wrss + sqrLenU
     n <- nrow(fr)
              
     dims <- c(N=n, n=n, nmp=n-p, nth=length(rho$pp$theta), p=p, q=nrow(reTrms$Zt),
-              nAGQ=NA_integer_, useSc=1L, reTrms=length(reTrms$cnms),
+              nAGQ=0L, useSc=1L, reTrms=length(reTrms$cnms),
               spFe=0L, REML=rho$resp$REML, GLMM=0L, NLMM=0L)
     cmp <- c(ldL2=rho$pp$ldL2(), ldRX2=rho$pp$ldRX2(), wrss=wrss,
              ussq=sqrLenU, pwrss=pwrss,
@@ -381,30 +366,10 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
                           bobyqa(c(rho$pp$theta, rho$beta0), devfun, rho$lower, control=control)
                       },
                       NelderMead = {
-                          xst <- c(rep.int(0.1, length(rho$dpars)), sqrt(diag(environment(devfun)$pp$unsc())))
-                          nM <- NelderMead$new(lower=rho$lower, upper=rep.int(Inf, length(rho$lower)), xst=0.2*xst,
-                                               x0=with(environment(devfun), c(pp$theta, pp$beta0)),
-                                               xt=xst*0.0001)
-                          cc <- do.call(function(iprint=0L, maxfun=10000L, FtolAbs=1e-5,
-                                                 FtolRel=1e-15, XtolRel=1e-7,
-                                                 MinfMax=.Machine$double.xmin) {
-                              if (length(list(...))>0) warning("unused control arguments ignored")
-                              list(iprint=iprint, maxfun=maxfun, FtolAbs=FtolAbs, FtolRel=FtolRel,
-                                   XtolRel=XtolRel, MinfMax=MinfMax)
-                          }, control)
-                          nM$setMaxeval(cc$maxfun)
-                          nM$setFtolAbs(cc$FtolAbs)
-                          nM$setFtolRel(cc$FtolRel) 
-                          nM$setMinfMax(cc$MinfMax)
-                          nM$setIprint(cc$iprint)                          
-                          while ((nMres <- nM$newf(devfun(nM$xeval()))) == 0L) {}
-                          if (nMres < 0L) {
-                              if (nMres > -4L)
-                                  stop("convergence failure, code ", nMres, " in NelderMead")
-                              else
-                                  warning("failure to converge in 1000 evaluations")
-                          }
-                          list(fval=nM$value(), pars=nM$xpos(), code=nMres)
+                          xst <- c(rep.int(0.1, length(rho$dpars)),
+                                   sqrt(diag(environment(devfun)$pp$unsc())))
+                          Nelder_Mead(devfun, x0=with(environment(devfun), c(pp$theta, pp$beta0)),
+                                       xst=0.2*xst, xt= xst*0.0001, lower=rho$lower, control=control)
                       })
     }
     sqrLenU <- rho$pp$sqrL(0.)
@@ -533,30 +498,10 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
                           bobyqa(c(rho$pp$theta, rho$beta0), devfun, rho$lower, control=control)
                       },
                       NelderMead = {
-                          xst <- c(rep.int(0.1, length(rho$dpars)), sqrt(diag(environment(devfun)$pp$unsc())))
-                          nM <- NelderMead$new(lower=rho$lower, upper=rep.int(Inf, length(rho$lower)), xst=0.2*xst,
-                                               x0=with(environment(devfun), c(pp$theta, pp$beta0)),
-                                               xt=xst*0.0001)
-                          cc <- do.call(function(iprint=0L, maxfun=10000L, FtolAbs=1e-5,
-                                                 FtolRel=1e-15, XtolRel=1e-7,
-                                                 MinfMax=.Machine$double.xmin) {
-                              if (length(list(...))>0) warning("unused control arguments ignored")
-                              list(iprint=iprint, maxfun=maxfun, FtolAbs=FtolAbs, FtolRel=FtolRel,
-                                   XtolRel=XtolRel, MinfMax=MinfMax)
-                          }, control)
-                          nM$setMaxeval(cc$maxfun)
-                          nM$setFtolAbs(cc$FtolAbs)
-                          nM$setFtolRel(cc$FtolRel) 
-                          nM$setMinfMax(cc$MinfMax)
-                          nM$setIprint(cc$iprint)                          
-                          while ((nMres <- nM$newf(devfun(nM$xeval()))) == 0L) {}
-                          if (nMres < 0L) {
-                              if (nMres > -4L)
-                                  stop("convergence failure, code ", nMres, " in NelderMead")
-                              else
-                                  warning("failure to converge in ", cc$maxfun, " evaluations")
-                          }
-                          list(fval=nM$value(), pars=nM$xpos(), code=nMres)
+                          xst <- c(rep.int(0.1, length(rho$dpars)),
+                                   sqrt(diag(environment(devfun)$pp$unsc())))
+                          Nelder_Mead(devfun, x0=with(environment(devfun), c(pp$theta, pp$beta0)),
+                                       xst=0.2*xst, xt= xst*0.0001, lower=rho$lower, control=control)
                       })
     }
     sqrLenU <- rho$pp$sqrL(0.)
@@ -1390,19 +1335,32 @@ setMethod("getL", "merMod", function(x) {
 ##' \code{"merMod"} object \emph{as far} as it is not available by methods, such
 ##' as \code{\link{fixef}}, \code{\link{ranef}}, \code{\link{vcov}}, etc.
 ##' 
-##' 
 ##' @aliases getME getL getL,merMod-method
 ##' @param object a fitted mixed-effects model of class
 ##' \code{"\linkS4class{merMod}"}, i.e. typically the result of
 ##' \code{\link{lmer}()}, \code{\link{glmer}()} or \code{\link{nlmer}()}.
 ##' @param name a character string specifying the name of the
-##' \dQuote{component}.  Note this may not be the name of \code{\link{slot}} of
-##' \code{object}.
+##' \dQuote{component}.  Possible values are:\cr
+##' \describe{
+##'     \item{X}{fixed-effects model matrix}
+##'     \item{Z}{random-effects model matrix}
+##'     \item{Zt}{transpose of random-effects model matrix}
+##'     \item{u}{conditional mode of the \dQuote{spherical} random effects variable}
+##'     \item{Gp}{groups pointer vector.  A pointer to the beginning of each group
+##'               of random effects corresponding to the random-effects terms.}
+##'     \item{L}{sparse Cholesky factor of the penalized random-effects model.}
+##'     \item{Lambda}{relative covariance factor of the random effects.}
+##'     \item{Lambdat}{transpose of the relative covariance factor of the random effects.}
+##'     \item{RX}{Cholesky factor for the fixed-effects parameters}
+##'     \item{RZX}{cross-term in the full Cholesky factor}
+##'     \item{beta}{fixed-effects parameter estimates (same as the result of \code{\link{fixef}})}
+##'     \item{n_rtrms}{number of random-effects terms}
+##'     \item{is_REML}{same as the result of \code{\link{isREML}}}
+##'     \item{devcomp}{a list consisting of a named numeric vector, \dQuote{cmp}, and
+##'                    a named integer vector, \dQuote{dims}, describing the fitted model}
+##' }
 ##' @return Unspecified, as very much depending on the \code{\link{name}}.
-##' @seealso % \code{\link{getCall}()} (in \R >= 2.14.0; otherwise in
-##' \pkg{MatrixModels}). % no \link{} -> no warning ...  \code{getCall()} (in >=
-##' 2.14.0; otherwise in \pkg{MatrixModels}).
-##' 
+##' @seealso \code{\link{getCall}()},
 ##' More standard methods for mer objects, such as \code{\link{ranef}},
 ##' \code{\link{fixef}}, \code{\link{vcov}}, etc.
 ##' @keywords utilities
@@ -1905,25 +1863,31 @@ anova.merMod <- anovaLmer
 
 ##' @S3method refit merMod
 refit.merMod <- function(object, newresp, ...) {
-    rr       <- object@resp$copy()
+    rr        <- object@resp$copy()
     stopifnot(length(newresp <- as.numeric(as.vector(newresp))) == length(rr$y))
     rr$setResp(newresp)
-    pp       <- object@pp$copy()
-    lower    <- object@lower
-    tolPwrss <- object@devcomp$cmp["tolPwrss"]
-    ff <- mkdevfun(list2env(pp=pp, resp=rr, u0=pp$u0, beta0=pp$beta0, verbose=0L,
-                            tolPwrss=tolPwrss, dpars=seq_along(lower)),
-                   nAGQ=object@devcomp$dims["nAGQ"])
-    xst <- c(rep.int(0.1, length(rho$dpars)), sqrt(diag(pp$unsc())))
-    nM <- NelderMead$new(lower=lower, upper=rep.int(Inf, length(lower)), xst=0.2*xst,
-                         x0=c(pp$theta, pp$beta0), xt=xst*0.0001)
+    pp        <- object@pp$copy()
+    dc        <- object@devcomp
+    nAGQ      <- dc$dims["nAGQ"]
+    nth       <- dc$dims["nth"]
+    ff <- mkdevfun(list2env(list(pp=pp, resp=rr, u0=pp$u0, beta0=pp$beta0, verbose=0L,
+                                 tolPwrss=dc$cmp["tolPwrss"], dpars=seq_len(nth))),
+                        nAGQ=nAGQ)
+    xst       <- rep.int(0.1, nth)
+    x0        <- pp$theta
+    if (!is.na(nAGQ) && nAGQ > 0L) {
+        xst   <- c(xst, sqrt(diag(pp$unsc())))
+        x0    <- c(x0, pp$beta0)
+    }
+    nM <- NelderMead$new(lower=object@lower, upper=rep.int(Inf, length(x0)), xst=0.2*xst,
+                         x0=x0, xt=xst*0.0001)
 ### FIXME: Probably should save the control settings in the merMod object
     nM$setMaxeval(10000L)
     nM$setFtolAbs(1e-5)
     nM$setFtolRel(1e-15)
     nM$setMinfMax(.Machine$double.xmin)
     nM$setIprint(0L)
-    while ((nMres <- nM$newf(devfun(nM$xeval()))) == 0L) {}
+    while ((nMres <- nM$newf(ff(nM$xeval()))) == 0L) {}
     if (nMres < 0L) {
         if (nMres > -4L)
             stop("convergence failure, code ", nMres, " in NelderMead")
@@ -1932,18 +1896,15 @@ refit.merMod <- function(object, newresp, ...) {
     }
     opt <- list(fval=nM$value(), pars=nM$xpos(), code=nMres)
 ### FIXME: Abstract these operations into another function
-    devcomp <- object@devcomp
-    cmp.old <- devcomp$cmp
+    rho <- environment(ff)
     sqrLenU <- rho$pp$sqrL(0.)
     wrss <- rho$resp$wrss()
     pwrss <- wrss + sqrLenU
-    cmp   <- c(ldL2=rho$pp$ldL2(), ldRX2=rho$pp$ldRX2(), wrss=wrss, ussq=sqrLenU, pwrss=pwrss,
+    dc$cmp   <- c(ldL2=rho$pp$ldL2(), ldRX2=rho$pp$ldRX2(), wrss=wrss, ussq=sqrLenU, pwrss=pwrss,
                dev=opt$fval, REML=NA, sigmaML=NA, sigmaREML=NA, drsum=opt$fval-sqrLenU,
-               tolPwrss=tolPwrss)
-    
+               tolPwrss=dc$cmp["tolPwrss"])
     new(class(object), call=object@call, frame=object@frame, flist=object@flist, cnms=object@cnms,
-        Gp=reTrms$Gp, theta=rho$pp$theta, beta=rho$pp$beta0, u=rho$pp$u0,
-        lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims), pp=rho$pp,
-        resp=rho$resp)
+        Gp=object@Gp, theta=rho$pp$theta, beta=rho$pp$beta(1.), u=rho$pp$u(1.),
+        lower=object@lower, devcomp=dc, pp=rho$pp, resp=rho$resp)
 }    
     
