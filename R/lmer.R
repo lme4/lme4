@@ -29,10 +29,10 @@
 ##'	that function).  Default is \code{300}.}
 ##'	\item{\code{maxFN}:}{a positive integer specifying the
 ##'	 maximum number of evaluations of the deviance function allowed
-##'	 during the optimization. Default is \code{900}}.
+##'	 during the optimization. Default is \code{900}.}
 ##'	\item{\code{tol}:}{a positive number specifying the
 ##'	 convergence tolerance, currently only for the PWRSS iterations
-##'	 in \code{glmer()}.  Default is \code{0.000001}}.
+##'	 in \code{glmer()}.  Default is \code{0.000001}.}
 ##'   }
 ##' @param start a named list of starting values for the parameters in the
 ##'    model.  For \code{lmer} this can be a numeric vector or a list with one
@@ -457,7 +457,7 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
                          xt=rep.int(0.00001, length(lower)))
     cc <- do.call(function(iprint=0L, maxfun=10000L, FtolAbs=1e-5,
                            FtolRel=1e-15, XtolRel=1e-7,
-                           MinfMax=.Machine$double.xmin) {
+                           MinfMax=.Machine$double.xmin,...) {
         if (length(list(...))>0) warning("unused control arguments ignored")
         list(iprint=iprint, maxfun=maxfun, FtolAbs=FtolAbs, FtolRel=FtolRel,
              XtolRel=XtolRel, MinfMax=MinfMax)
@@ -626,7 +626,7 @@ stepFac <- function(pp, resp, verbose, maxSteps = 10) {
 	    return(NULL)
 	}
     }
-    stop("step factor reduced below 0.001 without reducing pwrss")
+    stop("step factor reduced below ",signif(2^(-maxSteps),2)," without reducing pwrss")
 }
 
 pwrssUpdate <- function(pp, resp, verbose, uOnly=FALSE, tol, maxSteps = 10) {
@@ -634,9 +634,9 @@ pwrssUpdate <- function(pp, resp, verbose, uOnly=FALSE, tol, maxSteps = 10) {
     repeat {
 	resp$updateMu(pp$linPred(0))
 	resp$updateWts()
-        pp$updateXwts(resp$sqrtXwt())
+        pp$updateXwts(resp$sqrtXwt)
         pp$updateDecomp()
-        pp$updateRes(resp$wtres())
+        pp$updateRes(resp$wtres)
         if (uOnly) pp$solveU() else pp$solve()
 	if ((pp$CcNumer())/(resp$wrss() + pp$sqrL(0)) < tol)
 	    break
@@ -1892,7 +1892,7 @@ refit.merMod <- function(object, newresp, ...) {
         if (nMres > -4L)
             stop("convergence failure, code ", nMres, " in NelderMead")
         else
-            warning("failure to converge in 1000 evaluations")
+            warning("failure to converge in ",nM$getMaxeval()," evaluations")
     }
     opt <- list(fval=nM$value(), pars=nM$xpos(), code=nMres)
 ### FIXME: Abstract these operations into another function

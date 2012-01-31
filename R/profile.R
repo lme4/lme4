@@ -150,12 +150,14 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
         est <- opt[nvp + j]
         std <- stderr[j]
         Xw <-X.orig[, j, drop=TRUE]
+        Xdrop <- .modelMatrixDrop(X.orig, j)
         pp1 <- do.call(new, list(Class = class(pp),
-                                X = .modelMatrixDrop(X.orig, j),
+                                X = Xdrop,
                                 Zt = pp$Zt,
                                 Lambdat = pp$Lambdat,
                                 Lind = pp$Lind,
-                                theta = pp$theta)
+                                theta = pp$theta,
+                                 n = nrow(Xdrop))
                       )
         ### FIXME Change this to use the deep copy and setWeights, setOffset, etc.
         rr <- new(Class=class(fitted@resp), y=fitted@resp$y)
@@ -197,8 +199,10 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
 ## classes
 .modelMatrixDrop <- function(mm, w) {
     ll <- list(Class = class(mm),
-               assign = mm@assign[-w],
-               contrasts = mm@contrasts)
+               assign = attr(mm,"assign")[-w],
+               contrasts = NULL)
+    ## FIXME: where did the contrasts information go??
+    ## mm@contrasts)
     X <- mm[, -w, drop = FALSE]
     ll <- c(ll, lapply(structure(slotNames(X), .Names=slotNames(X)),
                        function(nm) slot(X, nm)))
@@ -223,7 +227,8 @@ devfun2 <- function(fm)
     stdErr <- unname(coef(summary(fm))[,2])
     xpp <- fm@pp
     th <- xpp$theta
-    pp <- new(Class=class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat, Lind=xpp$Lind, theta=th)
+    pp <- new(Class=class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat, Lind=xpp$Lind, theta=th,
+              n=nrow(xpp$X))
     opt <- c(sig * th, sig)
     names(opt) <- c(sprintf(".sig%02d", seq_along(pp$theta)), ".sigma")
     opt <- c(opt, fixef(fm))
@@ -234,13 +239,13 @@ devfun2 <- function(fm)
     resp$setWeights(rr$weights)
     rm(rr, xpp, fm)
     np <- length(pp$theta) + 1L
-    n <- nrow(pp$V())                   # use V(), not X so it works with nlmer
+    n <- nrow(pp$V)                   # use V, not X so it works with nlmer
     ans <- function(pars)
     {
         stopifnot(is.numeric(pars), length(pars) == np)
         ## Assumption:  all parameters, including the residual SD on SD-scale
         sigma <- pars[np]
-        .Call(lme4Eigen:::lmer_Deviance, pp$ptr, resp$ptr, pars[-np]/sigma)
+        .Call(lme4Eigen:::lmer_Deviance, pp$Ptr, resp$Ptr, pars[-np]/sigma)
         sigsq <- sigma^2
         pp$ldL2() + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
     }

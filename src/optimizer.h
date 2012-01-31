@@ -41,6 +41,7 @@ namespace optimizer {
 	void   setForce_stop(const bool& stp) {force_stop = stp;}
 	void     setMinf_max(const Scalar& mm) {minf_max = mm;}
 	void     set_Maxeval(const unsigned int& mm) {maxeval = mm;}
+	int      get_Maxeval() const {return maxeval;}
 
 	bool     f(const Scalar& f, const Scalar& oldf) const { // convergence checking
 	    return (f <= minf_max || ftol(f, oldf));
