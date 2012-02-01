@@ -22,21 +22,12 @@
 ##' \code{\link{bootMer}}.
 ##' @keywords methods
 ##' @examples
-##' 
-##' \dontrun{
-##' %% Do keep at least *one* such example! -- this is (also) a regression test
 ##' fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
-##' 
 ##' ## 0.8s (on a 5600 MIPS 64bit fast(year 2009) desktop "AMD Phenom(tm) II X4 925"):
 ##' system.time( tpr <- profile(fm01ML) )
-##' 
 ##' (confint(tpr) -> CIpr)
 ##' print(xyplot(tpr))
-##' stopifnot(dim(CIpr) == c(3,2),
-##'           all.equal(unname(CIpr[2,]),c(3.64362, 4.21446), tol=1e-6))
-##' }
-##' 
-##' @importFrom splines backSpline interpSpline
+##' @importFrom splines backSpline interpSpline periodicSpline
 ##' @importFrom stats profile
 ##' @method profile merMod
 ##' @export
@@ -198,15 +189,20 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
 ## subset method for the ddenseModelMatrix and dsparseModelMatrix
 ## classes
 .modelMatrixDrop <- function(mm, w) {
-    ll <- list(Class = class(mm),
-               assign = attr(mm,"assign")[-w],
-               contrasts = NULL)
-    ## FIXME: where did the contrasts information go??
-    ## mm@contrasts)
-    X <- mm[, -w, drop = FALSE]
-    ll <- c(ll, lapply(structure(slotNames(X), .Names=slotNames(X)),
-                       function(nm) slot(X, nm)))
-    do.call("new", ll)
+    if (isS4(mm)) {
+        ll <- list(Class = class(mm),
+                   assign = attr(mm,"assign")[-w],
+                   contrasts = NULL)
+        ## FIXME: where did the contrasts information go??
+        ## mm@contrasts)
+        X <- mm[, -w, drop = FALSE]
+        ll <- c(ll, lapply(structure(slotNames(X), .Names=slotNames(X)),
+                           function(nm) slot(X, nm)))
+        return(do.call("new", ll))
+    }
+    ans <- mm[, -w, drop=FALSE]
+    attr(ans, "assign") <- attr(mm, "assign")[-w]
+    ans
 }
 
 ## The deviance is profiled with respect to the fixed-effects
@@ -225,19 +221,11 @@ devfun2 <- function(fm)
     basedev <- deviance(fm)
     sig <- sigma(fm)
     stdErr <- unname(coef(summary(fm))[,2])
-    xpp <- fm@pp
-    th <- xpp$theta
-    pp <- new(Class=class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat, Lind=xpp$Lind, theta=th,
-              n=nrow(xpp$X))
-    opt <- c(sig * th, sig)
+    pp <- fm@pp$copy()
+    opt <- c(sig * pp$theta, sig)
     names(opt) <- c(sprintf(".sig%02d", seq_along(pp$theta)), ".sigma")
     opt <- c(opt, fixef(fm))
-    rr <- fm@resp
-### FIXME Change this to use a deep copy instead
-    resp <- new(Class=class(rr), y=rr$y)
-    resp$setOffset(rr$offset)
-    resp$setWeights(rr$weights)
-    rm(rr, xpp, fm)
+    resp <- fm@resp$copy()
     np <- length(pp$theta) + 1L
     n <- nrow(pp$V)                   # use V, not X so it works with nlmer
     ans <- function(pars)
@@ -245,13 +233,13 @@ devfun2 <- function(fm)
         stopifnot(is.numeric(pars), length(pars) == np)
         ## Assumption:  all parameters, including the residual SD on SD-scale
         sigma <- pars[np]
-        .Call(lme4Eigen:::lmer_Deviance, pp$Ptr, resp$Ptr, pars[-np]/sigma)
+        .Call(lme4Eigen:::lmer_Deviance, pp$ptr(), resp$ptr(), pars[-np]/sigma)
         sigsq <- sigma^2
         pp$ldL2() + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
     }
     attr(ans, "optimum") <- opt         # w/ names()
     attr(ans, "basedev") <- basedev
-    attr(ans, "thopt") <- th
+    attr(ans, "thopt") <- pp$theta
     attr(ans, "stderr") <- stdErr
     class(ans) <- "devfun"
     ans

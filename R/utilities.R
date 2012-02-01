@@ -468,3 +468,54 @@ nlformula <- function(mc) {
                               }), frE)
     list(respMod=respMod, frame=fr, X=X, reTrms=reTrms, pnames=pnames)
 }
+
+## Create an object in a subclass of \code{\linkS4class{merMod}}
+## from the environment of the objective function and the value
+## returned by the optimizer.
+##
+## @title Create a merMod object
+## @param rho the environment of the objective function
+## @param opt the value returned by the optimizer
+## @param reTrms reTrms list from the calling function
+## @param fr model frame
+## @param mc matched call from the calling function
+## @return an object from a class that inherits from \code{\linkS4class{merMod}}
+mkMerMod <- function(rho, opt, reTrms, fr, mc) {
+    stopifnot(is.environment(rho),
+              is(pp <- rho$pp, "merPredD"),
+              is(resp <- rho$resp, "lmResp"),
+              is.list(opt),
+              all(c("fval", "pars", "code") %in% names(opt)),
+              is.list(reTrms),
+              all(c("flist", "cnms", "Gp", "lower") %in%
+                  names(reTrms)))
+    rcl  <- class(resp)
+    n    <- nrow(pp$V)
+    p    <- ncol(pp$V)
+    dims <- c(N=nrow(pp$X), n=n, p=p, nmp=n-p,
+              nth=length(pp$theta), q=nrow(pp$Zt),
+              nAGQ=rho$nAGQ,
+              useSc=(rcl != "glmResp"),
+              reTrms=length(reTrms$cnms),
+              spFe=0L,
+              REML=if (rcl=="lmerResp") resp$REML else 0L,
+              GLMM=(rcl=="glmResp"),
+              NLMM=(rcl=="nlsResp"))
+    storage.mode(dims) <- "integer"
+    fac     <- as.numeric(rcl == "lmerResp")
+    sqrLenU <- pp$sqrL(fac)
+    wrss    <- resp$wrss()
+    pwrss   <- wrss + sqrLenU
+    cmp <- c(ldL2=pp$ldL2(), ldRX2=pp$ldRX2(), wrss=wrss,
+             ussq=sqrLenU, pwrss=pwrss,
+             drsum=if (rcl=="glmResp") resp$resDev() else NA,
+             REML=if (rcl=="lmerResp" && resp$REML != 0L) opt$fval else NA,
+             dev=if (rcl=="lmerResp" && resp$REML != 0L) NA else opt$fval,
+             sigmaML=sqrt(unname(if (rcl=="glmResp") NA else pwrss/dims['n'])),
+             sigmaREML=sqrt(unname(if (rcl!="lmerResp") NA else pwrss/dims['nmp'])),
+             tolPwrss=rho$tolPwrss)
+    new(switch(rcl, lmerResp="lmerMod", glmResp="glmerMod", nlsResp="nlmerMod"),
+        call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
+        Gp=reTrms$Gp, theta=pp$theta, beta=pp$beta(fac), u=pp$u(fac),
+        lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=resp)
+}

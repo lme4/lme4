@@ -41,11 +41,11 @@
   documentation on that function).  Default is \code{300}.}
   \item{\code{maxFN}:}{a positive integer specifying the
   maximum number of evaluations of the deviance function
-  allowed during the optimization. Default is \code{900}}.
+  allowed during the optimization. Default is \code{900}.}
   \item{\code{tol}:}{a positive number specifying the
   convergence tolerance, currently only for the PWRSS
   iterations in \code{glmer()}.  Default is
-  \code{0.000001}}.  }}
+  \code{0.000001}.} }}
 
   \item{start}{a named list of starting values for the
   parameters in the model.  For \code{lmer} this can be a
