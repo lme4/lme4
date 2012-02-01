@@ -25,7 +25,7 @@ m2 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
 ## loosened tolerance on parameters
 stopifnot(is((cm1 <- coef(m2)), "coef.mer"),
 	  dim(cm1$herd) == c(15,4),
-	  all.equal(fixef(m1), ##  these values are from an Ubuntu 11.10 amd64 system
+	  all.equal(fixef(m2), ##  these values are from an Ubuntu 11.10 amd64 system
                     c(-1.39922533406847, -0.991407294757321,
                       -1.12782184600404, -1.57946627431248),
 		    tol = 5.e-4,
