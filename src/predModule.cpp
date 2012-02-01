@@ -88,6 +88,58 @@ namespace lme4Eigen {
 	return d_X * beta(f) + d_Zt.adjoint() * b(f);
     }
 
+    Rcpp::List merPredD::condVar(const double& scale, const reTrms& trm) const {
+	if (scale < 0 || !R_finite(scale))
+	    throw runtime_error("scale must be non-negative and finite");
+	Eigen::VectorXi nc = trm.ncols(), nl = trm.nlevs(), nct = trm.nctot(),
+	    off = trm.offsets();
+	const Rcpp::List ll(trm.flist());
+	int nf(ll.size());
+
+	Rcpp::List ans(nf);
+	Rcpp::CharacterVector nms = ll.names();
+	ans.names() = clone(nms);
+
+#if 0	
+	for (int i = 0; i < nf; i++) {
+	    int ncti      = nct[i], nli = nl[i];
+	    VectorXi trms(trm.terms(i));
+	    int *cset = new int[ncti], nct2 = ncti * ncti;
+	    
+	    NumericVector ansi(Dimension(ncti, ncti, nli));
+	    ans[i] = ansi;
+	    double *ai = ansi.begin();
+	    
+	    for (int j = 0; j < nli; j++) {
+		int kk = 0;
+		for (int jj = 0; jj < trms.size(); jj++) {
+		    int tjj = trms[jj];
+		    for (int k = 0; k < nc[tjj]; k++)
+			cset[kk++] = off[tjj] + j * nc[tjj] + k;
+		}
+		CHM_SP cols =
+		    M_cholmod_submatrix(&d_Lambda, (int*)NULL, -1, cset, ncti,
+					1/*values*/, 1/*sorted*/, &c);
+		CHM_SP sol = d_L.spsolve(CHOLMOD_A, cols);
+		CHM_SP tcols = M_cholmod_transpose(cols, 1/*values*/, &c);
+		M_cholmod_free_sparse(&cols, &c);
+		CHM_SP var = M_cholmod_ssmult(tcols, sol, 0/*stype*/,
+					      1/*values*/, 1/*sorted*/, &c);
+		M_cholmod_free_sparse(&sol, &c);
+		M_cholmod_free_sparse(&tcols, &c);
+		CHM_DN dvar = M_cholmod_sparse_to_dense(var, &c);
+		M_cholmod_free_sparse(&var, &c);
+		Memcpy(ai + j * nct2, (double*)dvar->x, nct2);
+		M_cholmod_free_dense(&dvar, &c);
+	    }
+	    delete[] cset;
+	    transform(ansi.begin(), ansi.end(), ansi.begin(),
+		      bind2nd(multiplies<double>(), scale * scale));
+	}
+#endif
+	return ans;
+    }
+	
     VectorXd merPredD::u(const double& f) const {return d_u0 + f * d_delu;}
 
     merPredD::Scalar merPredD::sqrL(const double& f) const {return u(f).squaredNorm();}

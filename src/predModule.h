@@ -10,6 +10,7 @@
 #define LME4_PREDMODULE_H
 
 #include <RcppEigen.h>
+#include "reTrms.h"
 
 namespace lme4Eigen {
 #if 0    
@@ -138,6 +139,8 @@ namespace lme4Eigen {
 	VectorXd             beta(const Scalar& f) const;
 	VectorXd          linPred(const Scalar& f) const;
 	VectorXd                u(const Scalar& f) const;
+
+	Rcpp::List        condVar(const Scalar&, const reTrms&) const;
 
 	Scalar            CcNumer() const {return d_CcNumer;}
 	Scalar               ldL2() const {return d_ldL2;}
