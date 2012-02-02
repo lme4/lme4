@@ -680,6 +680,7 @@ densityplot.thpr <- function(x, data, ...) {
 ##' @title Transform to the variance scale
 ##' @param pr a mixed-effects model profile
 ##' @return a transformed mixed-effects model profile
+##' @export
 varianceProf <- function(pr) {
     stopifnot(inherits(pr, "thpr"))
     spl <- attr(pr, "forward")

@@ -33,16 +33,16 @@ setClass("lmList.confint", contains = "array")
 ##' 
 ##' 
 ##' @param X dense model matrix for the fixed-effects parameters, to be stored
-##' in the \code{X} field.
+##'     in the \code{X} field.
 ##' @param Zt transpose of the sparse model matrix for the random effects.  It
-##' is stored in the \code{Zt} field.
+##'     is stored in the \code{Zt} field.
 ##' @param Lambdat transpose of the sparse lower triangular relative variance
-##' factor (stored in the \code{Lambdat} field).
+##'     factor (stored in the \code{Lambdat} field).
 ##' @param Lind integer vector of the same length as the \code{"x"} slot in the
-##' \code{Lambdat} field.  Its elements should be in the range 1 to the length
-##' of the \code{theta} field.
+##'     \code{Lambdat} field.  Its elements should be in the range 1 to the length
+##'     of the \code{theta} field.
 ##' @param theta numeric vector of variance component parameters (stored in the
-##' \code{theta} field).
+##'     \code{theta} field).
 ##' @section Methods:
 ##' \describe{
 ##'   \item{new(X, Zt, Lambdat, Lind, theta):}{Create a new \code{\linkS4class{merPredD}} object}
@@ -876,3 +876,63 @@ setClass("glmerMod", representation(resp="glmResp"), contains="merMod")
 
 ##' @export
 setClass("nlmerMod", representation(resp="nlsResp"), contains="merMod")
+
+##' Generator object for the rePos (random-effects positions) class
+##' 
+##' The generator object for the \code{\linkS4class{rePos}} class used
+##' to determine the positions and orders of random effects associated
+##' with particular random-effects terms in the model.
+##' @param mer an object of class \code{"\linkS4class{merMod}"}
+##' @note Arguments to the \code{new} methods must be named arguments.
+##' @section Methods:
+##' \describe{
+##'      \item{\code{new(mer=mer)}}{Create a new
+##'         \code{\linkS4class{rePos}} object.}
+##' }
+##' @seealso \code{\linkS4class{rePos}}
+##' @keywords classes
+##' @export
+rePos <-
+    setRefClass("rePos",
+                fields =
+                list(
+                     cnms    = "list",
+                     flist   = "list",
+                     ncols   = "integer",
+                     nctot   = "integer",
+                     nlevs   = "integer",
+                     offsets = "integer",
+                     terms   = "list"
+                     ),
+                methods =
+                list(
+                     initialize = function(mer, ...) {
+                         stopifnot((ntrms <- length(Cnms <- mer@cnms)) > 0L,
+                                   (length(Flist <- mer@flist)) > 0L,
+                                   length(asgn  <- as.integer(attr(Flist, "assign"))) == ntrms) 
+                         cnms    <<- Cnms
+                         flist   <<- Flist
+                         ncols   <<- unname(vapply(cnms, length, 0L))
+                         nctot   <<- unname(as.vector(tapply(ncols, asgn, sum)))
+                         nlevs   <<- unname(vapply(flist, function(el) length(levels(el)), 0L))
+                         offsets <<- c(0L, cumsum(sapply(seq_along(asgn),
+                                                         function(i) ncols[i] * nlevs[asgn[i]])))
+                         terms   <<- lapply(seq_along(flist), function(i) which(asgn == i))
+                     }
+                     )
+            )
+##' Class \code{"rePos"}
+##' 
+##' A reference class for determining the positions in the random-effects vector
+##' that correspond to particular random-effects terms in the model formula
+##' 
+##' @name rePos-class
+##' @docType class
+##' @section Extends: All reference classes extend and inherit methods from
+##'    \code{"\linkS4class{envRefClass}"}.
+##' @keywords classes
+##' @examples
+##' 
+##' showClass("rePos")
+##' 
+rePos$lock("cnms", "flist", "ncols", "nctot", "nlevs", "terms")

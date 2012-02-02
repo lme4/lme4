@@ -1157,9 +1157,10 @@ ranef.merMod <- function(object, postVar = FALSE, drop = FALSE,
 	ans <- ans[whchL]
 
 	if (postVar) {
-	    vv <- .Call(merPredDcondVar, object@pp$ptr(), sigma(object), object@flist)
+            sigsqr <- sigma(object)^2
+	    vv <- .Call(merPredDcondVar, object@pp$ptr(), as.environment(rePos$new(object)))
 	    for (i in seq_along(ans))
-                attr(ans[[i]], "postVar") <- vv[[i]]
+                attr(ans[[i]], "postVar") <- vv[[i]] * sigsqr
 	}
 	if (drop)
 	    ans <- lapply(ans, function(el)

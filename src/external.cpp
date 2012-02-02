@@ -33,7 +33,6 @@ extern "C" {
     using lme4Eigen::lmerResp;
     using lme4Eigen::merPredD;
     using lme4Eigen::nlsResp;
-    using lme4Eigen::reTrms;
 
     using optimizer::Golden;
     using optimizer::Nelder_Mead;
@@ -577,10 +576,9 @@ extern "C" {
 	END_RCPP;
     }
 
-    SEXP merPredDcondVar(SEXP ptr, SEXP sigma, SEXP cnms, SEXP flist) {
+    SEXP merPredDcondVar(SEXP ptr, SEXP rho) {
 	BEGIN_RCPP;
-	reTrms trms(cnms, flist);
-	return wrap(XPtr<merPredD>(ptr)->condVar(::Rf_asReal(sigma), trms));
+	return wrap(XPtr<merPredD>(ptr)->condVar(Rcpp::Environment(rho)));
 	END_RCPP;
     }
 
@@ -792,37 +790,6 @@ extern "C" {
 	return ::Rf_ScalarReal(XPtr<nlsResp>(ptr_)->updateMu(as<MVec>(gamma)));
 	END_RCPP;
     }
-    
-    SEXP reTrms_Create(SEXP cnms, SEXP flist) {
-	BEGIN_RCPP;
-	reTrms *ans = new reTrms(cnms, flist);
-	return wrap(XPtr<reTrms>(ans, true));
-	END_RCPP;
-    }
-
-    SEXP reTrms_ncols(SEXP ptr_) {
-	BEGIN_RCPP;
-	return wrap(XPtr<reTrms>(ptr_)->ncols());
-	END_RCPP;
-    }
-
-    SEXP reTrms_nctot(SEXP ptr_) {
-	BEGIN_RCPP;
-	return wrap(XPtr<reTrms>(ptr_)->nctot());
-	END_RCPP;
-    }
-
-    SEXP reTrms_nlevs(SEXP ptr_) {
-	BEGIN_RCPP;
-	return wrap(XPtr<reTrms>(ptr_)->nlevs());
-	END_RCPP;
-    }
-	
-    SEXP reTrms_offsets(SEXP ptr_) {
-	BEGIN_RCPP;
-	return wrap(XPtr<reTrms>(ptr_)->offsets());
-	END_RCPP;
-    }
 }
 
 #include <R_ext/Rdynload.h>
@@ -908,7 +875,7 @@ static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(merPredDb, 2),	// methods
     CALLDEF(merPredDbeta, 2),
-    CALLDEF(merPredDcondVar, 4),
+    CALLDEF(merPredDcondVar, 2),
     CALLDEF(merPredDlinPred, 2),
     CALLDEF(merPredDinstallPars, 2),
     CALLDEF(merPredDsolve, 1),
@@ -940,11 +907,6 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(nls_Laplace, 4),	// methods
     CALLDEF(nls_updateMu, 2),
 
-    CALLDEF(reTrms_Create, 2),
-    CALLDEF(reTrms_ncols, 1),
-    CALLDEF(reTrms_nctot, 1),
-    CALLDEF(reTrms_nlevs, 1),
-    CALLDEF(reTrms_offsets, 1),
     {NULL, NULL, 0}
 };
 
