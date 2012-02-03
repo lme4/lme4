@@ -1,4 +1,29 @@
+create a copy method for the reference classes that not only copies the
+contents but also creates a new C++ object and pointer.
+
+serialization of reference classes:  Ensure that the external pointer
+is reinitialized when the object is unserialized.
+
+Use the additional arguments in creating the external pointers in the
+C++ code so that the lifetime of the object is linked to an R object,
+preferably y for a response object and X or Z for a predictor.
+
+FIXME: *one*-argument version of anova() still does not work
+
+--> Use  nobs() methods -- ASAP .. (require R >= 2.13.0 though)
 -----
+Do not profile out a common scale factor for any of the glm families.
+This will remove the need for the useSc setting.
+-----
+Allow for the reModule class to inherit from predModule.  This will
+involve changing the representation of the reModule classes to contain
+Z rather than Zt, which may be a better idea anyway.
+-----
+Consider the steps in reimplementing AGQ.  First you need to find the
+conditional modes, then evaluate the conditional variances, then step
+out according to the conditional variance, evaluate the integrand
+relative to the step.
+----
 Switch the deFeMod and spFeMod classes to inherit from the
 corresponding predModule classes.  The coefficient vector is now
 called "coef" instead of "beta".

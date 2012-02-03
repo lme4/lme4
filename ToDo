@@ -1,27 +1,12 @@
-create a copy method for the reference classes that no only copies the
-contents but also creates a new C++ object and pointer.
-
-serialization of reference classes:  Ensure that the external pointer
-is reinitialized when the object is unserialized.
-
-Use the additional arguments in creating the external pointers in the
-C++ code so that the lifetime of the object is linked to an R object,
-preferably y for a response object and X or Z for a predictor.
-
-Old ToDo follows:
 -----
-Do not profile out a common scale factor for any of the glm families.
-This will remove the need for the useSc setting.
+Change the terms object to be the terms for the fixed-effects only so
+that the drop1 method doesn't try to drop the grouping factors for the
+random effects.
 -----
-Allow for the reModule class to inherit from predModule.  This will
-involve changing the representation of the reModule classes to contain
-Z rather than Zt, which may be a better idea anyway.
+Modify the effect of the verbose setting in the Nelder-Mead optimizer.
+In particular, it should count evaluations but define an "iteration"
+as a change in the best value encountered so far.
 -----
-Consider the steps in reimplementing AGQ.  First you need to find the
-conditional modes, then evaluate the conditional variances, then step
-out according to the conditional variance, evaluate the integrand
-relative to the step.
-
 The paper by Sophia Rabe-Hesketh et al describes a spherical form
 of the Gauss-Hermite quadrature formula.  Look that up and use it.
 
@@ -42,14 +27,4 @@ Determine what a "coef" function should do for multiple, possibly
 
 - document print(<mer>) including an example  print(<lmer>, corr = FALSE)
   and one with many fixed effects (*) and     print(<lmer>, symbolic.cor = TRUE)
-
-----------------
-Provide methods for lmer2() aka the "[gln]merMod" classes based one the
-"mer" / "merenv" ones
-
- o Now done for  anova, coef, isREML, update, model.matrix, model.frame, terms
-
-FIXME: *one*-argument version of anova() still does not work
-
---> Use  nobs() methods -- ASAP .. (require R >= 2.13.0 though)
 
