@@ -5,7 +5,7 @@
 \title{Extract or Get Generalize Components from a Fitted Mixed Effects Model}
 \usage{
   getME(object,
-    name = c("X", "Z", "Zt", "u", "Gp", "L", "Lambda", "Lambdat", "RX", "RZX", "beta", "theta", "REML", "n_rtrms", "is_REML", "devcomp"))
+    name = c("X", "Z", "Zt", "u", "Gp", "L", "Lambda", "Lambdat", "Lind", "RX", "RZX", "beta", "theta", "REML", "n_rtrms", "is_REML", "devcomp"))
 }
 \arguments{
   \item{object}{a fitted mixed-effects model of class
@@ -26,10 +26,12 @@
   \item{Lambda}{relative covariance factor of the random
   effects.} \item{Lambdat}{transpose of the relative
   covariance factor of the random effects.}
-  \item{RX}{Cholesky factor for the fixed-effects
-  parameters} \item{RZX}{cross-term in the full Cholesky
-  factor} \item{beta}{fixed-effects parameter estimates
-  (same as the result of \code{\link{fixef}})}
+  \item{Lind}{index vector for inserting elements of
+  \eqn{\theta}{theta} into the nonzeros of
+  \eqn{\Lambda}{Lambda}} \item{RX}{Cholesky factor for the
+  fixed-effects parameters} \item{RZX}{cross-term in the
+  full Cholesky factor} \item{beta}{fixed-effects parameter
+  estimates (same as the result of \code{\link{fixef}})}
   \item{n_rtrms}{number of random-effects terms}
   \item{is_REML}{same as the result of
   \code{\link{isREML}}} \item{devcomp}{a list consisting of

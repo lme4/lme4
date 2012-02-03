@@ -105,15 +105,6 @@
 (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 (fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
 anova(fm1, fm2)
-
-## dense vs sparse X  --------------------------
-## use more sensible example !!
-fm3.d <- lmer(Yield ~ 1|Batch, Dyestuff2)
-fm3.s <- lmer(Yield ~ 1|Batch, Dyestuff2, sparseX=TRUE)#-> warning
-## check "equality"
-stopifnot(all.equal( coef(fm3.d), coef(fm3.s), tol = 1e-14),
-          all.equal(sigma(fm3.d),sigma(fm3.s), tol = 1e-14),
-          TRUE)
 }
 \seealso{
   The \code{\linkS4class{merMod}} class,

@@ -485,7 +485,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc) {
               is(pp <- rho$pp, "merPredD"),
               is(resp <- rho$resp, "lmResp"),
               is.list(opt),
-              all(c("fval", "pars", "code") %in% names(opt)),
+              all(c("fval", "par", "ierr") %in% names(opt)),
               is.list(reTrms),
               all(c("flist", "cnms", "Gp", "lower") %in%
                   names(reTrms)))

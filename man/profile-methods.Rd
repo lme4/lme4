@@ -34,18 +34,11 @@
   \"merMod\")}{ ...  } }
 }
 \examples{
-\dontrun{
-\%\% Do keep at least *one* such example! -- this is (also) a regression test
 fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
-
 ## 0.8s (on a 5600 MIPS 64bit fast(year 2009) desktop "AMD Phenom(tm) II X4 925"):
 system.time( tpr <- profile(fm01ML) )
-
 (confint(tpr) -> CIpr)
 print(xyplot(tpr))
-stopifnot(dim(CIpr) == c(3,2),
-          all.equal(unname(CIpr[2,]),c(3.64362, 4.21446), tol=1e-6))
-}
 }
 \seealso{
   For (more expensive) alternative confidence intervals:

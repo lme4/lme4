@@ -137,8 +137,8 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
     xst <- rep.int(0.1, length(lower))
     opt <- Nelder_Mead(devfun, x0=rho$pp$theta, xst=0.2*xst, xt=xst*0.0001,
                        lower=lower, control=control)
-    if (opt$code < 0L) {
-        if (opt$code > -4L)
+    if (opt$ierr < 0L) {
+        if (opt$ierr > -4L)
             stop("convergence failure, code ", nMres, " in NelderMead")
         else
             warning("failure to converge in", opt$control$maxfun, "evaluations")
@@ -349,23 +349,6 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
                       })
     }
     mkMerMod(environment(devfun), opt, reTrms, fr, mc)
-    ## sqrLenU <- rho$pp$sqrL(0.)
-    ## wrss <- rho$resp$wrss()
-    ## pwrss <- wrss + sqrLenU
-    ## n <- nrow(fr)
-
-    ## dims <- c(N=n, n=n, nmp=n-p, nth=length(rho$pp$theta), p=p, q=nrow(reTrms$Zt),
-    ##           nAGQ=nAGQ, useSc=0L, reTrms=length(reTrms$cnms),
-    ##           spFe=0L, REML=0L, GLMM=1L, NLMM=0L)
-    ## cmp <- c(ldL2=rho$pp$ldL2(), ldRX2=rho$pp$ldRX2(), wrss=wrss,
-    ##          ussq=sqrLenU, pwrss=pwrss,
-    ##          drsum=rho$resp$resDev(), dev=opt$fval, REML=NA,
-    ##          sigmaML=NA, sigmaREML=NA, tolPwrss=tolPwrss)
-
-    ## new("glmerMod", call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
-    ##     Gp=reTrms$Gp, theta=rho$pp$theta, beta=rho$pp$beta0, u=rho$pp$u0,
-    ##     lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims), pp=rho$pp,
-    ##     resp=rho$resp)
 }## {glmer}
 
 ##' Fit a nonlinear mixed-effects model
@@ -429,8 +412,8 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
     xst <- rep.int(0.1, length(lower))
     opt <- Nelder_Mead(devfun, x0=rho$pp$theta, xst=0.2*xst, xt=xst*0.0001,
                        lower=lower, control=control)
-    if (opt$code < 0L) {
-        if (opt$code > -4L)
+    if (opt$ierr < 0L) {
+        if (opt$ierr > -4L)
             stop("convergence failure, code ", nMres, " in NelderMead")
         else
             warning("failure to converge in ", cc$maxfun, " evaluations")
@@ -462,22 +445,6 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
                       })
     }
     mkMerMod(environment(devfun), opt, vals$reTrms, vals$frame, mc)
-    ## sqrLenU <- rho$pp$sqrL(0.)
-    ## wrss <- rho$resp$wrss()
-    ## pwrss <- wrss + sqrLenU
-    ## n <- nrow(vals$fr)
-
-    ## dims <- c(N=n, n=n, nmp=n-p, nth=length(rho$pp$theta), p=p, q=nrow(vals$reTrms$Zt),
-    ##           nAGQ=nAGQ, useSc=1L, reTrms=length(vals$reTrms$cnms),
-    ##           spFe=0L, REML=0L, GLMM=0L, NLMM=1L)
-    ## cmp <- c(ldL2=rho$pp$ldL2(), ldRX2=rho$pp$ldRX2(), wrss=wrss,
-    ##          ussq=sqrLenU, pwrss=pwrss, drsum=NA,
-    ##          drsum=wrss, dev=opt$fval, REML=NA,
-    ##          sigmaML=sqrt(pwrss/n), sigmaREML=NA, tolPwrss=tolPwrss)
-
-    ## new("nlmerMod", call=mc, frame=vals$fr, flist=vals$reTrms$flist, cnms=vals$reTrms$cnms,
-    ##     Gp=vals$reTrms$Gp, 	theta=rho$pp$theta, beta=rho$pp$beta0, u=rho$pp$u0,
-    ##     lower=vals$reTrms$lower, devcomp=list(cmp=cmp, dims=dims), pp=rho$pp, resp=rho$resp)
 }## {nlmer}
 
 ##' Create a deviance evaluation function from a predictor and a response module
@@ -514,9 +481,10 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
 mkdevfun <- function(rho, nAGQ=1L) {
     stopifnot(is.environment(rho), is(rho$resp, "lmResp"))
     ff <- NULL
-    if (is(rho$resp, "lmerResp"))
+    if (is(rho$resp, "lmerResp")) {
+        rho$lmer_Deviance <- lmer_Deviance
 	ff <- function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(), theta)
-    else if (is(rho$resp, "glmResp")) {
+    } else if (is(rho$resp, "glmResp")) {
         if (nAGQ < 2L) {
             rho$glmerLaplace <- glmerLaplace
             ff <- switch(nAGQ + 1L,
@@ -882,6 +850,15 @@ anovaLmer <- function(object, ...) {
 ##' @importFrom stats anova
 ##' @S3method anova merMod
 anova.merMod <- anovaLmer
+
+##' @S3method as.function merMod
+as.function.merMod <- function(x, ...) {
+    rho <- list2env(list(resp=x@resp$copy(),
+                           pp=x@pp$copy(),
+                           beta0=x@beta,
+                           u0=x@u), parent=as.environment("package:lme4Eigen"))
+    mkdevfun(rho, getME(x, "devcomp")$dims["nAGQ"])
+}
 
 ## coef() method for all kinds of "mer", "*merMod", ... objects
 ## ------  should work with fixef() + ranef()  alone
@@ -1469,6 +1446,8 @@ setMethod("getL", "merMod", function(x) {
 ##'     \item{L}{sparse Cholesky factor of the penalized random-effects model.}
 ##'     \item{Lambda}{relative covariance factor of the random effects.}
 ##'     \item{Lambdat}{transpose of the relative covariance factor of the random effects.}
+##'     \item{Lind}{index vector for inserting elements of \eqn{\theta}{theta} into the
+##'                 nonzeros of \eqn{\Lambda}{Lambda}}
 ##'     \item{RX}{Cholesky factor for the fixed-effects parameters}
 ##'     \item{RZX}{cross-term in the full Cholesky factor}
 ##'     \item{beta}{fixed-effects parameter estimates (same as the result of \code{\link{fixef}})}
@@ -1507,7 +1486,7 @@ setMethod("getL", "merMod", function(x) {
 getME <- function(object,
 		  name = c("X", "Z","Zt", "u",
 		  "Gp",
-		  "L", "Lambda", "Lambdat",
+		  "L", "Lambda", "Lambdat", "Lind",
 		  "RX", "RZX",
                   "beta", "theta",
 		  "REML", "n_rtrms", "is_REML", "devcomp"))
@@ -1529,6 +1508,7 @@ getME <- function(object,
 	   "L"= PR$ L(),
 	   "Lambda"= t(PR$ Lambdat),
 	   "Lambdat"= PR$ Lambdat,
+           "Lind" = PR$ Lind,
 	   "RX" = PR $ RX(),   ## FIXME - add the column names and row names, either in the C++ or the R method
 	   "RZX" = PR $ RZX(), ## FIXME - add column names
 

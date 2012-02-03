@@ -20,8 +20,8 @@
 ##' }
 ##' @return a list with 4 components
 ##' \item{fval}{numeric scalar - the minimum function value achieved}
-##' \item{pars}{numeric vector - the value of \code{x} providing the minimum}
-##' \item{code}{integer scalar - convergence code}
+##' \item{par}{numeric vector - the value of \code{x} providing the minimum}
+##' \item{ierr}{integer scalar - error code}
 ##' \item{control}{list - the list of control settings after substituting for defaults}
 ##' @export
 Nelder_Mead <- function(ff, x0, xst, xt, lower=rep.int(-Inf, n),
@@ -47,5 +47,5 @@ Nelder_Mead <- function(ff, x0, xst, xt, lower=rep.int(-Inf, n),
     nM$setMaxeval(cc$maxfun)
     nM$setMinfMax(cc$MinfMax)
     while ((nMres <- nM$newf(ff(nM$xeval()))) == 0L) {}
-    list(fval=nM$value(), pars=nM$xpos(), code=nMres, control=cc)
+    list(fval=nM$value(), par=nM$xpos(), ierr=nMres, control=cc)
 }
