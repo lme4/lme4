@@ -348,6 +348,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
                                        xst=0.2*xst, xt= xst*0.0001, lower=rho$lower, control=control)
                       })
     }
+
     mkMerMod(environment(devfun), opt, reTrms, fr, mc)
 }## {glmer}
 
@@ -410,6 +411,7 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
     control$iprint <- min(verbose, 3L)
     lower <- rho$lower
     xst <- rep.int(0.1, length(lower))
+
     opt <- Nelder_Mead(devfun, x0=rho$pp$theta, xst=0.2*xst, xt=xst*0.0001,
                        lower=lower, control=control)
     if (opt$ierr < 0L) {
@@ -1606,14 +1608,12 @@ mkVarCorr <- function(sc, cnms, nc, theta, nms) {
 ##' deviations.  Default is \code{1}.
 ##' @param rdig an optional integer value specifying the number of digits used
 ##' to represent correlation estimates.  Default is \code{3}.
-##' @return a matrix with the estimated variances, standard deviations, and
-##' correlations for the random effects.  The first two columns, named
-##' \code{Variance} and \code{StdDev}, give, respectively, the variance and the
-##' standard deviations.  If there are correlation components in the random
-##' effects model, the third column, named \code{Corr}, and the remaining
-##' unnamed columns give the estimated correlations among random effects within
-##' the same level of grouping.  The within-group error variance and standard
-##' deviation are included as the last row in the matrix.
+##' @return a list of matrices, one for each random effects grouping term.
+##' For each grouping term, the standard deviations and correlation matrices for each grouping term
+##' are stored as attributes \code{"stddev"} and \code{"correlation"}, respectively, of the
+##' variance-covariance matrix, and 
+##' the residual standard deviation is stored as attribute \code{"sc"}
+##' (for \code{glmer} fits, this attribute stores the scale parameter of the model).
 ##' @author This is modeled after \code{\link[nlme]{VarCorr}} from package
 ##' \pkg{nlme}, by Jose Pinheiro and Douglas Bates.
 ##' @seealso \code{\link{lmer}}, \code{\link{nlmer}}
@@ -1628,21 +1628,30 @@ mkVarCorr <- function(sc, cnms, nc, theta, nms) {
 ##' @export
 VarCorr.merMod <- function(x, sigma, rdig)# <- 3 args from nlme
 {
+  ## FIXME:: add type=c("varcov","sdcorr","logs" ?)
     if (is.null(cnms <- x@cnms))
 	stop("VarCorr methods require reTrms, not just reModule")
     if(missing(sigma)) # "bug": fails via default 'sigma=sigma(x)'
-	sigma <- lme4Eigen::sigma(x)
+	sigma <- lme4Eigen::sigma(x)  ## FIXME: do we need lme4Eigen:: ?
     nc <- sapply(cnms, length)	  # no. of columns per term
-    mkVarCorr(sigma, cnms=cnms, nc=nc, theta = x@theta,
+    m <- mkVarCorr(sigma, cnms=cnms, nc=nc, theta = x@theta,
 	      nms = {fl <- x@flist; names(fl)[attr(fl, "assign")]})
+    attr(m,"useSc") <- as.logical(x@devcomp$dims["useSc"])
+    class(m) <- "VarCorr.merMod"
+    m
 }
 
-## Compute standard errors of fixed effects from an merMod object
-##
-## @title Standard errors of fixed effects
-## @param object "merMod" object,
-## @param ... additional, optional arguments.  None are used at present.
-## @return numeric vector of length length(fixef(.))
+## FIXME: should ... go to formatVC or to print ... ?
+print.VarCorr.merMod <- function(x,digits = max(3, getOption("digits") - 2), ...) {
+  print(formatVC(x, digits = digits, useScale = attr(x,"useSc"),  ...),quote=FALSE)
+}
+
+##' Compute standard errors of fixed effects from an merMod object
+##'
+##' @title Standard errors of fixed effects
+##' @param object "merMod" object,
+##' @param ... additional, optional arguments.  None are used at present.
+##' @return numeric vector of length length(fixef(.))
 unscaledVar <- function(object, ...) {
     stopifnot(is(object, "merMod"))
     sigma(object) * diag(object@pp$unsc())
