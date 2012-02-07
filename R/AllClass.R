@@ -609,7 +609,7 @@ glmFamily <-                            # used in tests of family definitions
                                    length(wt <- as.numeric(wt)) == nn,
                                    all(wt >= 0),
                                    length(dev <- as.numeric(dev)) == 1L)
-                         .Call(glmFamily_aic, ptr(), y, n, wt, mu, dev)
+                         .Call(glmFamily_aic, ptr(), y, n, mu, wt, dev)
                      },
                      devResid = function(mu, weights, y) {
                          'applies the devResid function to mu, weights and y'
