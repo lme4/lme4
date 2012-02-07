@@ -187,6 +187,16 @@ extern "C" {
 	END_RCPP;
     }
 
+    SEXP glmFamily_aic(SEXP ptr, SEXP y, SEXP n, SEXP mu, SEXP wt, SEXP dev) {
+	BEGIN_RCPP;
+	return ::Rf_ScalarReal(XPtr<glmFamily>(ptr)->aic(as<MVec>(y),
+							 as<MVec>(n),
+							 as<MVec>(mu),
+							 as<MVec>(wt),
+							 ::Rf_asReal(dev)));
+	END_RCPP;
+    }
+
     SEXP glmFamily_muEta(SEXP ptr, SEXP eta) {
 	BEGIN_RCPP;
 	return wrap(XPtr<glmFamily>(ptr)->muEta(as<MVec>(eta)));
@@ -816,22 +826,23 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(glm_wrkResids, 1),
     CALLDEF(glm_wrkResp, 1),
 
-    CALLDEF(glm_Laplace, 4),	// methods
-    CALLDEF(glm_updateMu, 2),
-    CALLDEF(glm_updateWts, 1),
+    CALLDEF(glm_Laplace,        4), // methods
+    CALLDEF(glm_updateMu,       2),
+    CALLDEF(glm_updateWts,      1),
 
-    CALLDEF(glmFamily_Create, 1), // generate external pointer
+    CALLDEF(glmFamily_Create,   1), // generate external pointer
 
-    CALLDEF(glmFamily_link, 2),	// methods
-    CALLDEF(glmFamily_linkInv, 2),
+    CALLDEF(glmFamily_aic,      6), // methods
+    CALLDEF(glmFamily_link,     2),
+    CALLDEF(glmFamily_linkInv,  2),
     CALLDEF(glmFamily_devResid, 4),
-    CALLDEF(glmFamily_muEta, 2),
+    CALLDEF(glmFamily_muEta,    2),
     CALLDEF(glmFamily_variance, 2),
 
-    CALLDEF(glmerAGQ, 8),
-    CALLDEF(glmerPwrssUpdate, 5),
-    CALLDEF(glmerWrkIter, 2),
-    CALLDEF(glmerLaplace, 8),
+    CALLDEF(glmerAGQ,           8),
+    CALLDEF(glmerPwrssUpdate,   5),
+    CALLDEF(glmerWrkIter,       2),
+    CALLDEF(glmerLaplace,       8),
 
     CALLDEF(golden_Create, 2),
     CALLDEF(golden_newf, 2),

@@ -601,6 +601,16 @@ glmFamily <-                            # used in tests of family definitions
                 fields=list(Ptr="externalptr", family="family"),
                 methods=
                 list(
+                     aic = function(y, n, mu, wt, dev) {
+                         'returns the value from the aic member function, which is actually the deviance'
+                         nn <- length(y <- as.numeric(y))
+                         stopifnot(length(n <- as.numeric(n)) == nn,
+                                   length(mu <- as.numeric(mu)) == nn,
+                                   length(wt <- as.numeric(wt)) == nn,
+                                   all(wt >= 0),
+                                   length(dev <- as.numeric(dev)) == 1L)
+                         .Call(glmFamily_aic, ptr(), y, n, wt, mu, dev)
+                     },
                      devResid = function(mu, weights, y) {
                          'applies the devResid function to mu, weights and y'
                          mu <- as.numeric(mu)

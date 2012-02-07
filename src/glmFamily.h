@@ -4,6 +4,7 @@
 
 #include <Rmath.h>
 #include <RcppEigen.h>
+#include <cmath>
 
 namespace glm {
     using Eigen::VectorXd;
@@ -11,13 +12,15 @@ namespace glm {
     /** associative arrays of functions returning double from a double */
     typedef std::map<std::string, double(*)(const double&)> fmap;
     typedef std::map<std::string, double(*)(const double&,const double&,const double&)> drmap;
+    typedef std::map<std::string, double(*)(const VectorXd&,const VectorXd&,const VectorXd&,
+					    const VectorXd&,double)> aicmap;
 
     class glmFamily {
     protected:
 	Rcpp::List     lst;		 /**< original list from R */
 	std::string    d_family, d_link; /**< as in the R glm family */
 				//@{ R functions from the family, as a fall-back
-	Rcpp::Function d_devRes, d_linkfun, d_linkinv, d_muEta, d_variance;
+	Rcpp::Function d_devRes, d_linkfun, d_linkinv, d_muEta, d_variance, d_aic;
 				//@}
     public:
 	glmFamily(Rcpp::List);
@@ -35,6 +38,10 @@ namespace glm {
 	VectorXd devResid(const VectorXd&, const VectorXd&, const VectorXd&) const;
 	VectorXd    muEta(const VectorXd&) const;
 	VectorXd variance(const VectorXd&) const;
+	double        aic(const VectorXd&, const VectorXd&, const VectorXd&,
+			  const VectorXd&, double) const;
+	/**< in keeping with the botched up nomenclature in the R glm function, 
+	 *   the value of aic is the deviance */
     private:
 	// Class members that are maps storing the scalar functions
 	static fmap
@@ -42,7 +49,8 @@ namespace glm {
 	    linvs,		/**< scalar linkinv functions */
 	    muEtas,		/**< scalar muEta functions */
 	    varFuncs;		/**< scalar variance functions */
-	static drmap devRes;	/**< scalardeviance residuals functions */
+	static drmap devRes;	/**< scalar deviance residuals functions */
+	static aicmap aics;	/**< scalar aic functions */
 	
 	static double epsilon;	/**< Threshold for some comparisons */
 
@@ -124,6 +132,30 @@ namespace glm {
 	static inline double
 	PoissonDevRes (const double& y, const double& mu, const double& wt) {
 	    return 2 * wt * (y_log_y(y, mu) - (y - mu));
+	}
+	//@}
+        //@{  AIC functions (which actually return the deviance, go figure)
+	struct CwiseRound {
+	    const double operator()(const double& x) const {return nearbyint(x);}
+	};
+	
+	static inline double
+	BinomialAIC   (const VectorXd& y, const VectorXd& n, const VectorXd& mu,
+		       const VectorXd& wt, double dev) {
+	    Eigen::ArrayXd m((n.array() > 1).any() ? n : wt);
+	    Eigen::ArrayXd yy((m * y.array()).unaryExpr(CwiseRound()));
+	    m = m.unaryExpr(CwiseRound());
+	    double ans(0.);
+	    for (int i=0; i < mu.size(); ++i)
+                ans += (m[i] <= 0. ? 0. : (wt[i]/m[i]) * ::Rf_dbinom(yy[i], m[i], mu[i], true));
+	    return (-2. * ans);
+	}
+	static inline double
+	PoissonAIC    (const VectorXd& y, const VectorXd& n, const VectorXd& mu,
+		       const VectorXd& wt, double dev) {
+	    double ans(0.);
+	    for (int i=0; i < mu.size(); ++i) ans += ::Rf_dpois(y[i], mu[i], true) * wt[i];
+	    return (-2. * ans);
 	}
 	//@}
     //@}

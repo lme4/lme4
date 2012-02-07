@@ -9,12 +9,13 @@ namespace glm {
     double glmFamily::epsilon = numeric_limits<double>::epsilon();
     
     // initialize the function maps (i.e. associative arrays of functions)
-    drmap glmFamily::devRes = drmap();
+    drmap  glmFamily::devRes = drmap();
+    aicmap glmFamily::aics = aicmap();
 
-    fmap glmFamily::linvs = fmap();
-    fmap glmFamily::lnks = fmap();
-    fmap glmFamily::muEtas = fmap();
-    fmap glmFamily::varFuncs = fmap();
+    fmap   glmFamily::linvs = fmap();
+    fmap   glmFamily::lnks = fmap();
+    fmap   glmFamily::muEtas = fmap();
+    fmap   glmFamily::varFuncs = fmap();
     
     void glmFamily::initMaps() {
 	// initialize the static maps.  The identity link is
@@ -69,7 +70,7 @@ namespace glm {
 // Functions from list components.  This is a placeholder until I can
 // do so.
 	  d_devRes("c"), d_linkfun("c"), d_linkinv("c"),
-	  d_muEta("c"), d_variance("c") {
+	  d_muEta("c"), d_variance("c"), d_aic("c") {
 	  // d_devRes(wrap(ll["dev.resids"])),
 	  // d_linkfun(wrap(ll["linkfun"])),
 	  // d_linkinv(wrap(ll["linkinv"])),
@@ -78,14 +79,14 @@ namespace glm {
 	if (!lst.inherits("family"))
 	    throw std::runtime_error("glmFamily requires a list of (S3) class \"family\"");
  	CharacterVector ff = lst["family"], lnk = lst["link"];
- 	d_family = as<std::string>(ff);
- 	d_link = as<std::string>(lnk);
- 	d_linkinv = ll["linkinv"];
- 	d_linkfun = ll["linkfun"];
- 	d_muEta = ll["mu.eta"];
+ 	d_family   = as<std::string>(ff);
+ 	d_link     = as<std::string>(lnk);
+ 	d_linkinv  = ll["linkinv"];
+ 	d_linkfun  = ll["linkfun"];
+ 	d_muEta    = ll["mu.eta"];
  	d_variance = ll["variance"];
- 	d_devRes = ll["dev.resids"];
-
+ 	d_devRes   = ll["dev.resids"];
+	d_aic      = ll["aic"];
 	if (!lnks.count("identity")) initMaps();
     }
 
@@ -149,5 +150,17 @@ namespace glm {
 	    std::copy(ans_R.begin(), ans_R.end(), ans.data());
 	}
 	return ans;
+    }
+
+    double glmFamily::aic(const VectorXd& y, const VectorXd& n, const VectorXd& mu,
+			  const VectorXd& wt, double dev) const {
+	int nn = mu.size();
+	if (aics.count(d_family)) return aics[d_family](y, n, mu, wt, dev);
+	SEXP ans = d_aic(NumericVector(y.data(), y.data() + nn),
+			 NumericVector(n.data(), n.data() + nn),
+			 NumericVector(mu.data(), mu.data() + nn),
+			 NumericVector(wt.data(), wt.data() + nn),
+			 ::Rf_ScalarReal(dev));
+	return Rcpp::as<double>(ans);
     }
 }
