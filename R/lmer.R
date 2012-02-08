@@ -1262,29 +1262,102 @@ sigma.merMod <- function(object, ...) {
 
 ##' @importFrom stats simulate
 ##' @S3method simulate merMod
+##' @aliases simulate.merMod
+##' @param use.u (logical) generate new random-effects values (FALSE) or generate a simulation condition on the current random-effects estimates (TRUE)?
+##' @examples
+##' ## test whether fitted models are consistent with the
+##' ##  observed number of zeros in CBPP data set:
+##' gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+##'              data = cbpp, family = binomial)
+##' gg <- simulate(gm1,1000)
+##' zeros <- sapply(gg,function(x) sum(x[,"incidence"]==0))
+##' plot(table(zeros))
+##' abline(v=sum(cbpp$incidence==0),col=2)
+
 simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE, ...) {
     stopifnot((nsim <- as.integer(nsim[1])) > 0,
-	      is(object, "merMod"),
+	      is(object, "merMod"))
 	      ## i.e. not yet for glmer etc:
-	      is(object@resp, "lmerResp"))
+    ## is(object@resp, "lmerResp"))
     if(!is.null(seed)) set.seed(seed)
     if(!exists(".Random.seed", envir = .GlobalEnv))
 	runif(1) # initialize the RNG if necessary
+    RNGstate <- .Random.seed
 
+    sigma <- sigma(object)
     n <- nrow(X <- getME(object, "X"))
-    ## result will be matrix  n x nsim :
-    as.vector(X %*% getME(object, "beta")) +  # fixed-effect contribution
-	sigma(object) * (## random-effects contribution:
-			 if(use.u) {
-			     getME(object, "u")
-			 } else {
-			     U <- getME(object, "Z") %*% getME(object, "Lambda")
-			     q <- ncol(U)
-			     as(U %*% matrix(rnorm(q * nsim), nc = nsim), "matrix")
-			 }
-			 ## residual contribution:
-			 + matrix(rnorm(n * nsim), nc = nsim))
-}
+    if (is.null(nm <- names(fitted(object)))) nm <- seq(n)
+    # fixed-effect contribution
+    etasim.fix <- as.vector(X %*% getME(object, "beta"))
+    if (length(offset <- getME(object,"offset"))>0) {
+      etasim.fix <- etasim.fix+offset
+    }
+    etasim.reff <- ## UNSCALED random-effects contribution:
+      if(use.u) {
+        getME(object, "u")
+      } else {
+        U <- getME(object, "Z") %*% getME(object, "Lambda")
+        q <- ncol(U)
+        as(U %*% matrix(rnorm(q * nsim), nc = nsim), "matrix")
+      }
+    if (is(object@resp,"lmerResp")) {
+      ## result will be matrix  n x nsim :
+      val <- etasim.fix + sigma * (etasim.reff +
+        ## residual contribution:
+        matrix(rnorm(n * nsim), nc = nsim))
+    } else if (is(object@resp,"glmResp")) {
+      ## GLMM
+      ## n.b. DON'T scale random-effects (???)
+      	      etasim <- etasim.fix+etasim.reff
+	      family <- object@call$family
+	      if(is.symbol(family)) family <- as.character(family)
+	      if(is.character(family))
+		  family <- get(family, mode = "function", envir = parent.frame(2))
+	      if(is.function(family)) family <- family()
+	      if(is.null(family$family)) stop("'family' not recognized")
+	      musim <- family$linkinv(etasim)
+	      ntot <- length(musim) ## FIXME: or could be dims["n"]?
+              val <- switch(family$family,
+			    poisson=rpois(ntot,lambda=musim),
+			    binomial={
+				resp <- model.response(object@frame)
+				bernoulli <- !is.matrix(resp)
+				if (bernoulli) {
+				    rbinom(ntot,prob=musim,size=1)
+				} else {
+                                  nresp <- nrow(resp)
+                                  ## FIXME: should "N-size" (column 2) be named?
+                                  ## copying structures from stats/R/family.R
+                                  sizes <- rowSums(resp)
+                                  Y <- rbinom(ntot, size = sizes, prob = musim)
+                                  YY <- cbind(Y, sizes - Y)
+                                  yy <- lapply(split(YY,gl(nsim,nresp,2*nsim*nresp)),
+                                               matrix, ncol=2,
+                                               dimnames=list(NULL,colnames(resp)))
+                                  ## colnames() <- colnames(resp)
+                                  ## yy <- split(as.data.frame(YY),
+                                  ## rep(1:nsim,each=length(sizes)))
+                                  names(yy) <- paste("sim",seq_along(yy),sep="_")
+                                  yy
+				}
+                              },
+			    stop("simulation not implemented for family",
+				 family$family))
+            } else {
+              stop("simulate method for NLMMs not yet implemented")
+            }
+    ## from src/library/stats/R/lm.R
+    if(!is.list(val)) {
+      dim(val) <- c(n, nsim)
+      val <- as.data.frame(val)
+    }
+    else
+      class(val) <- "data.frame"
+    names(val) <- paste("sim", seq_len(nsim), sep="_")
+    row.names(val) <- nm
+    attr(val, "seed") <- RNGstate
+    val
+  }
 
 ##' @importFrom stats terms
 ##' @S3method terms merMod
@@ -1457,6 +1530,7 @@ setMethod("getL", "merMod", function(x) {
 ##'     \item{is_REML}{same as the result of \code{\link{isREML}}}
 ##'     \item{devcomp}{a list consisting of a named numeric vector, \dQuote{cmp}, and
 ##'                    a named integer vector, \dQuote{dims}, describing the fitted model}
+##'     \item{offset}{model offset}
 ##' }
 ##' @return Unspecified, as very much depending on the \code{\link{name}}.
 ##' @seealso \code{\link{getCall}()},
@@ -1491,7 +1565,8 @@ getME <- function(object,
 		  "L", "Lambda", "Lambdat", "Lind",
 		  "RX", "RZX",
                   "beta", "theta",
-		  "REML", "n_rtrms", "is_REML", "devcomp"))
+		  "REML", "n_rtrms", "is_REML", "devcomp",
+                    "offset"))
 {
     if(missing(name)) stop("'name' must not be missing")
     stopifnot(length(name <- as.character(name)) == 1,
@@ -1524,6 +1599,7 @@ getME <- function(object,
 
 	   "n_rtrms" = length(object@flist),  ## should this be length(object@cnms) instead?
            "devcomp" = dc,
+           "offset" = rsp$offset,
 	   "..foo.." =# placeholder!
 	   stop(gettextf("'%s' is not implemented yet",
 			 sprintf("getME(*, \"%s\")", name))),
