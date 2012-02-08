@@ -2,10 +2,8 @@
 #ifndef LME4_GLMFAMILY_H
 #define LME4_GLMFAMILY_H
 
-#include <Rmath.h>
 #include <RcppEigen.h>
-#include <cmath>
-
+#include <limits>
 namespace glm {
     using Eigen::VectorXd;
 
@@ -16,6 +14,12 @@ namespace glm {
 					    const VectorXd&,double)> aicmap;
 
     class glmFamily {
+    public:
+
+    typedef std::map<std::string, double(*)(const double&)> fmap; /**< associative array of functions returning double from a double */
+    typedef std::map<std::string, double(*)(const double&,const double&,const double&)> drmap; /**< associative array of deviance residual functions */
+    typedef std::map<std::string, double(*)(const VectorXd&,const VectorXd&,const VectorXd&,
+					    const VectorXd&,double)> aicmap;
     protected:
 	Rcpp::List     lst;		 /**< original list from R */
 	std::string    d_family, d_link; /**< as in the R glm family */
@@ -52,114 +56,10 @@ namespace glm {
 	static drmap devRes;	/**< scalar deviance residuals functions */
 	static aicmap aics;	/**< scalar aic functions */
 	
-	static double epsilon;	/**< Threshold for some comparisons */
-
-	/** 
-	 * Utility to evaluate y * log(y/mu) with correct limit at y = 0
-	 * 
-	 * @param y numerator of log argument, if non-zero
-	 * @param mu denominator of log argument
-	 * 
-	 * @return y * log(y/mu) with correct limit at at y = 0
-	 */
-	static inline double y_log_y(const double& y, const double& mu) {
-	    return y ? y * std::log(y/mu) : 0;
-	}
-
-
-        //@{  Scalar functions for components
-	static inline double         cubef(const double& x) {return x * x * x;}
-	static inline double          expf(const double& x) {return std::exp(x);}
-	static inline double        identf(const double& x) {return x;}
-	static inline double     invderivf(const double& x) {return -1./(x * x);}
-	static inline double      inversef(const double& x) {return 1./x;}
-	static inline double          logf(const double& x) {return std::log(x);}
-	static inline double          onef(const double& x) {return 1.;}
-	static inline double          sqrf(const double& x) {return x * x;}
-	static inline double         sqrtf(const double& x) {return std::sqrt(x);}
-	static inline double         twoxf(const double& x) {return 2. * x;}
-	static inline double         x1mxf(const double& x) {return std::max(epsilon, x*(1 - x));}
-	static inline double  logitLinkInv(const double& x) {return ::Rf_plogis(x, 0., 1., 1, 0);}
-	static inline double     logitLink(const double& x) {return ::Rf_qlogis(x, 0., 1., 1, 0);}
-	static inline double    logitMuEta(const double& x) {return ::Rf_dlogis(x, 0., 1., 0);}
-	static inline double probitLinkInv(const double& x) {return ::Rf_pnorm5(x, 0., 1., 1, 0);}
-	static inline double    probitLink(const double& x) {return ::Rf_qnorm5(x, 0., 1., 1, 0);}
-	static inline double   probitMuEta(const double& x) {return ::Rf_dnorm4(x, 0., 1., 0);}
-
-	/** cumulative probability function of the complement of the Gumbel distribution
-	  * 
-          * (i.e. pgumbel(x,0.,1.,0) == 1-pgumbel2(-x,0.,1.,0))
-          */
-	static inline double	
-	pgumbel2(const double& q, const double& loc, const double& scale, int lower_tail) {
-	    double qq = (q - loc) / scale;
-	    qq = -std::exp(qq);
-	    return lower_tail ? -expm1(qq) : std::exp(qq);
-	}
-
-	static inline double cloglogLinkInv(const double& x) {
-	    return pgumbel2(x, 0., 1., 1);
-	}
-
-	//density of the complement of the Gumbel distribution
-	static inline double
-	dgumbel2(const double& x, const double& loc, const double& scale, int give_log) {
-	    double xx = (x - loc) / scale;
-	    xx = xx - std::exp(xx) - std::log(scale);
-	    return give_log ? xx : std::exp(xx);
-	}
-	static inline double   cloglogMuEta(const double& x) {
-	    return dgumbel2(x, 0., 1., 0);
-	}
-	
-        //@{ deviance residuals functions
-	static inline double
-	BinomialDevRes(const double& y, const double& mu, const double& wt) {
-	    return 2 * wt * (y_log_y(y, mu) + y_log_y(1 - y, 1 - mu));
-	}
-	static inline double logYMu(const double& y, const double& mu) {
-	    return y ? std::log(y/mu) : 0;
-	}
-	static inline double
-	GammaDevRes   (const double& y, const double& mu, const double& wt) {
-	    return -2 * wt * (logYMu(y, mu) - (y - mu)/mu);
-	}
-	static inline double
-	GaussianDevRes(const double& y, const double& mu, const double& wt) {
-	    double res = y - mu;
-	    return wt * res * res;
-	}
-	static inline double
-	PoissonDevRes (const double& y, const double& mu, const double& wt) {
-	    return 2 * wt * (y_log_y(y, mu) - (y - mu));
-	}
-	//@}
-        //@{  AIC functions (which actually return the deviance, go figure)
-	struct CwiseRound {
-	    const double operator()(const double& x) const {return nearbyint(x);}
-	};
-	
-	static inline double
-	BinomialAIC   (const VectorXd& y, const VectorXd& n, const VectorXd& mu,
-		       const VectorXd& wt, double dev) {
-	    Eigen::ArrayXd m((n.array() > 1).any() ? n : wt);
-	    Eigen::ArrayXd yy((m * y.array()).unaryExpr(CwiseRound()));
-	    m = m.unaryExpr(CwiseRound());
-	    double ans(0.);
-	    for (int i=0; i < mu.size(); ++i)
-                ans += (m[i] <= 0. ? 0. : (wt[i]/m[i]) * ::Rf_dbinom(yy[i], m[i], mu[i], true));
-	    return (-2. * ans);
-	}
-	static inline double
-	PoissonAIC    (const VectorXd& y, const VectorXd& n, const VectorXd& mu,
-		       const VectorXd& wt, double dev) {
-	    double ans(0.);
-	    for (int i=0; i < mu.size(); ++i) ans += ::Rf_dpois(y[i], mu[i], true) * wt[i];
-	    return (-2. * ans);
-	}
-	//@}
-    //@}
     };
+
+    static double epsilon(std::numeric_limits<double>::epsilon());
+	/**< Threshold for some comparisons */
 }
     
 #endif /* LME4_GLMFAMILY_H */

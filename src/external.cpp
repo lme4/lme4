@@ -78,6 +78,12 @@ extern "C" {
 	END_RCPP;
     }
 
+    SEXP glm_aic(SEXP ptr_) {
+	BEGIN_RCPP;
+	return ::Rf_ScalarReal(XPtr<glmResp>(ptr_)->aic());
+	END_RCPP;
+    }
+
     SEXP glm_setN(SEXP ptr_, SEXP n) {
 	BEGIN_RCPP;
 	XPtr<glmResp>(ptr_)->setN(as<MVec>(n));
@@ -340,6 +346,7 @@ extern "C" {
 
 	END_RCPP;
     }
+
 
     void nstepFac(nlsResp *rp, merPredD *pp, int verb) {
 	double prss0(pwrss(rp, pp, 0.));
@@ -816,15 +823,16 @@ static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(glm_setN, 2),	// setters
 
-    CALLDEF(glm_devResid, 1),	// getters
-    CALLDEF(glm_family, 1),
-    CALLDEF(glm_link, 1),
-    CALLDEF(glm_muEta, 1),
-    CALLDEF(glm_resDev, 1),
-    CALLDEF(glm_sqrtWrkWt, 1),
-    CALLDEF(glm_variance, 1),
-    CALLDEF(glm_wrkResids, 1),
-    CALLDEF(glm_wrkResp, 1),
+    CALLDEF(glm_aic,            1), // getters
+    CALLDEF(glm_devResid,       1),	
+    CALLDEF(glm_family,         1),
+    CALLDEF(glm_link,           1),
+    CALLDEF(glm_muEta,          1),
+    CALLDEF(glm_resDev,         1),
+    CALLDEF(glm_sqrtWrkWt,      1),
+    CALLDEF(glm_variance,       1),
+    CALLDEF(glm_wrkResids,      1),
+    CALLDEF(glm_wrkResp,        1),
 
     CALLDEF(glm_Laplace,        4), // methods
     CALLDEF(glm_updateMu,       2),

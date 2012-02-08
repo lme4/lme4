@@ -57,12 +57,12 @@ namespace lme4Eigen {
 	return d_wrss;
     }
 
-/** 
- * Set a new value of the offset.
- *
- * The values are copied into the d_offset member because it is mapped. 
- * @param oo New value of the offset
- */
+    /** 
+     * Set a new value of the offset.
+     *
+     * The values are copied into the d_offset member because that member is mapped. 
+     * @param oo New value of the offset
+     */
     void lmResp::setOffset(const VectorXd& oo) {
 	if (oo.size() != d_offset.size())
 	    throw invalid_argument("setOffset: Size mismatch");
@@ -105,6 +105,10 @@ namespace lme4Eigen {
 	  d_fam(fam),
 	  d_eta(as<MVec>(eta)),
 	  d_n(as<MVec>(n)) {
+    }
+
+    double  glmResp::aic() const {
+	return d_fam.aic(d_y, d_n, d_mu, d_weights, resDev());
     }
 
     VectorXd glmResp::devResid() const {

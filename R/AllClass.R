@@ -462,6 +462,9 @@ glmResp <-
                          n <<- if (!is.null(ll$n)) as.numeric(ll$n) else rep.int(1,length(y))
                          eta <<- numeric(length(y))
                      },
+                     aic          = function() {
+                         .Call(glm_aic, ptr())
+                     },
                      allInfo = function() {
                          'return all the information available on the object'
                          cbind(callSuper(), 

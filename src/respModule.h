@@ -102,6 +102,7 @@ namespace lme4Eigen {
 	const std::string& family() const {return d_fam.fam();}
 	const std::string&   link() const {return d_fam.lnk();}
 
+	double                aic() const;
 	double            Laplace(double,double,double) const;
 	double             resDev() const;
 	double           updateMu(const Eigen::VectorXd&);
