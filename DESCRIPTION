@@ -27,7 +27,7 @@ Suggests:
     PKPDmodels,
     MASS,
     MEMSS,
-    RUnit,
+    testthat,
     boot,
     mlmRev
 LazyLoad: yes
