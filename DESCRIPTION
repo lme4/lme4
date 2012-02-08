@@ -47,3 +47,4 @@ Collate:
     'sparsegrid.R'
     'utilities.R'
     'optimizer.R'
+    'predict.R'
