@@ -1730,12 +1730,12 @@ print.VarCorr.merMod <- function(x,digits = max(3, getOption("digits") - 2), ...
   print(formatVC(x, digits = digits, useScale = attr(x,"useSc"),  ...),quote=FALSE)
 }
 
-##' Compute standard errors of fixed effects from an merMod object
-##'
-##' @title Standard errors of fixed effects
-##' @param object "merMod" object,
-##' @param ... additional, optional arguments.  None are used at present.
-##' @return numeric vector of length length(fixef(.))
+## Compute standard errors of fixed effects from an merMod object
+##
+## @title Standard errors of fixed effects
+## @param object "merMod" object,
+## @param ... additional, optional arguments.  None are used at present.
+## @return numeric vector of length length(fixef(.))
 unscaledVar <- function(object, ...) {
     stopifnot(is(object, "merMod"))
     sigma(object) * diag(object@pp$unsc())
