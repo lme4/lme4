@@ -1593,13 +1593,13 @@ getME <- function(object,
 	   "Lambda"= t(PR$ Lambdat),
 	   "Lambdat"= PR$ Lambdat,
            "Lind" = PR$ Lind,
-	   "RX" = PR $ RX(),   ## FIXME - add the column names and row names, either in the C++ or the R method
-	   "RZX" = PR $ RZX(), ## FIXME - add column names
+	   "RX" = PR $ RX(), ## FIXME - add the column names and row names, either in the C++ or the R method
+	   "RZX" = PR $ RZX, ## FIXME - add column names
 
            "Gp" = object@Gp,
            "flist" = object@flist,
            "beta" = object@beta, ## FIXME - add names
-           "theta"= object@theta, ## *OR*  PR $ theta  --- which one ??
+           "theta"= object@theta, ## *OR*  PR $ theta  --- which one ??  Should be the same.
 
 	   "REML" = dims["REML"],
 	   "is_REML" = isREML(object),
