@@ -16,7 +16,7 @@ VarCorr(gm2)
 
 if (FALSE) {
   ## testing lme4/lme4Eigen incompatibility
-  library(lme4)
+##  library(lme4)
   VarCorr(fm1)
   lme4Eigen:::VarCorr.merMod(fm1) ## OK
 }
