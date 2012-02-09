@@ -18,17 +18,14 @@
   Default is \code{3}.}
 }
 \value{
-  a matrix with the estimated variances, standard
-  deviations, and correlations for the random effects.  The
-  first two columns, named \code{Variance} and
-  \code{StdDev}, give, respectively, the variance and the
-  standard deviations.  If there are correlation components
-  in the random effects model, the third column, named
-  \code{Corr}, and the remaining unnamed columns give the
-  estimated correlations among random effects within the
-  same level of grouping.  The within-group error variance
-  and standard deviation are included as the last row in
-  the matrix.
+  a list of matrices, one for each random effects grouping
+  term. For each grouping term, the standard deviations and
+  correlation matrices for each grouping term are stored as
+  attributes \code{"stddev"} and \code{"correlation"},
+  respectively, of the variance-covariance matrix, and the
+  residual standard deviation is stored as attribute
+  \code{"sc"} (for \code{glmer} fits, this attribute stores
+  the scale parameter of the model).
 }
 \description{
   This function calculates the estimated variances,

@@ -624,31 +624,30 @@ pwrssUpdate <- function(pp, resp, verbose, uOnly=FALSE, tol, maxSteps = 10) {
 ##' \code{x}.
 ##' 
 ##' @param x fitted \code{*lmer()} model, see \code{\link{lmer}},
-##' \code{\link{glmer}}, etc.
+##'     \code{\link{glmer}}, etc.
 ##' @param FUN a \code{\link{function}(x)}, computating the \emph{statistic} of
-##' interest, which must be a numeric vector, possibly named.
+##'     interest, which must be a numeric vector, possibly named.
 ##' @param nsim number of simulations, positive integer; the bootstrap \eqn{B}
-##' (or \eqn{R}).
+##'     (or \eqn{R}).
 ##' @param seed optional argument to \code{\link{set.seed}}.
 ##' @param use.u logical, indicating, if the spherized random effects should be
-##' simulated / bootstrapped as well.  If \code{FALSE}, they are not changed,
-##' and all inference is conditional on these.
+##'     simulated / bootstrapped as well.  If \code{FALSE}, they are not changed,
+##'     and all inference is conditional on these.
 ##' @param verbose logical indicating if progress should print output
 ##' @param control an optional \code{\link{list}}, to be passed to the minimizer
-##' (of the log-likelihood, or RE likelihood), which is currently set to
-##' \code{\link[minqa]{bobyqa}} in package \pkg{minqa}.
+##'     (of the log-likelihood, or RE likelihood), which is currently set to
+##'     \code{\link[minqa]{bobyqa}} in package \pkg{minqa}.
 ##' @return an object of S3 \code{\link{class}} \code{"boot"}, compatible with
-##' \pkg{boot} package's \code{boot()} result.
+##'     \pkg{boot} package's \code{boot()} result.
 ##' @seealso For inference, including confidence intervals,
-##' \code{\link{profile-methods}}.
+##'     \code{\link{profile-methods}}.
 ##' 
-##' \code{\link[boot]{boot}()}, and then \code{\link[boot]{boot.ci}} from
-##' package \pkg{boot}.
+##'     \code{\link[boot]{boot}()}, and then \code{\link[boot]{boot.ci}} from
+##'     package \pkg{boot}.
 ##' @references Davison, A.C. and Hinkley, D.V. (1997) \emph{Bootstrap Methods
-##' and Their Application}.  Cambridge University Press.
+##'     and Their Application}.  Cambridge University Press.
 ##' @keywords models htest
 ##' @examples
-##' 
 ##' fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
 ##' ## see ?"profile-methods"
 ##' mySumm <- function(.) { s <- sigma(.)
@@ -678,8 +677,7 @@ pwrssUpdate <- function(pp, resp, verbose, uOnly=FALSE, tol, maxSteps = 10) {
 ##' }
 ##' @export
 bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
-		    verbose = FALSE, control = list())
-{
+		    verbose = FALSE, control = list()) {
     stopifnot((nsim <- as.integer(nsim[1])) > 0,
 	      is(x, "merMod"), is(x@resp, "lmerResp"))
     FUN <- match.fun(FUN)
@@ -708,9 +706,9 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
     sigm.x <- sigma(x)
 
     ## Here, and below ("optimize"/"bobyqa") using the "logic" of lmer() itself:
-## lmer..Update <- if(is(x, "lmerSp")) lmerSpUpdate else lmerDeUpdate
-#    devfun <- mkdevfun(x)
-##    oneD <- length(x@re@theta) < 2
+    ## lmer..Update <- if(is(x, "lmerSp")) lmerSpUpdate else lmerDeUpdate
+    ##    devfun <- mkdevfun(x)
+    ##    oneD <- length(x@re@theta) < 2
     theta0 <- getME(x,"theta")
     ## just for the "boot" result -- TODOmaybe drop
     mle <- list(beta = beta, theta = theta0, sigma = sigm.x)
@@ -734,16 +732,16 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
 	##	   devfun(0) # -> theta	 := 0  and update the rest
 	## } else {
 	opt <- bobyqa(theta0, mkdevfun(resp, x@pp), x@lower, control = control)
-##	  xx <- updateMod(x, opt$par, opt$fval)
-	    ## FIXME: also here, prefer \hat\sigma^2 == 0 (exactly)
-##	  }
+        ##	  xx <- updateMod(x, opt$par, opt$fval)
+        ## FIXME: also here, prefer \hat\sigma^2 == 0 (exactly)
+        ##	  }
 	foo <- tryCatch(FUN(xx), error = function(e)e)
 	if(verbose) { cat(sprintf("%5d :",i)); str(foo) }
 	t.star[,i] <- if (inherits(foo, "error")) NA else foo
     }
     rownames(t.star) <- names(t0)
 
-## boot() ends with the equivalent of
+    ## boot() ends with the equivalent of
     ## structure(list(t0 = t0, t = t.star, R = R, data = data, seed = seed,
     ##		      statistic = statistic, sim = sim, call = call,
     ##		      ran.gen = ran.gen, mle = mle),
@@ -1261,9 +1259,17 @@ sigma.merMod <- function(object, ...) {
 }
 
 ##' @importFrom stats simulate
-##' @S3method simulate merMod
-##' @aliases simulate.merMod
-##' @param use.u (logical) generate new random-effects values (FALSE) or generate a simulation condition on the current random-effects estimates (TRUE)?
+NULL
+##' Simulate responses from the model represented by a fitted model object
+##'
+##' @title Simulate responses from a \code{\linkS4class{merMod}} object
+##' @param object a fitted model object
+##' @param nsim positive integer scalar - the number of responses to simulate
+##' @param seed an optional seed to be used in \code{set.seed} immediately
+##'     before the simulation so as to to generate a reproducible sample.
+##' @param use.u (logical) generate new random-effects values (FALSE) or
+##'     generate a simulation condition on the current random-effects estimates (TRUE)?
+##' @param ... optional additional arguments, none are used at present
 ##' @examples
 ##' ## test whether fitted models are consistent with the
 ##' ##  observed number of zeros in CBPP data set:
@@ -1273,7 +1279,8 @@ sigma.merMod <- function(object, ...) {
 ##' zeros <- sapply(gg,function(x) sum(x[,"incidence"]==0))
 ##' plot(table(zeros))
 ##' abline(v=sum(cbpp$incidence==0),col=2)
-
+##' @method simulate merMod
+##' @export
 simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE, ...) {
     stopifnot((nsim <- as.integer(nsim[1])) > 0,
 	      is(object, "merMod"))
@@ -1718,6 +1725,7 @@ VarCorr.merMod <- function(x, sigma, rdig)# <- 3 args from nlme
 }
 
 ## FIXME: should ... go to formatVC or to print ... ?
+##' @S3method print VarCorr.merMod
 print.VarCorr.merMod <- function(x,digits = max(3, getOption("digits") - 2), ...) {
   print(formatVC(x, digits = digits, useScale = attr(x,"useSc"),  ...),quote=FALSE)
 }

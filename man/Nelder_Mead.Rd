@@ -39,9 +39,9 @@
 }
 \value{
   a list with 4 components \item{fval}{numeric scalar - the
-  minimum function value achieved} \item{pars}{numeric
+  minimum function value achieved} \item{par}{numeric
   vector - the value of \code{x} providing the minimum}
-  \item{code}{integer scalar - convergence code}
+  \item{ierr}{integer scalar - error code}
   \item{control}{list - the list of control settings after
   substituting for defaults}
 }

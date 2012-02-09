@@ -5,7 +5,7 @@
 \title{Extract or Get Generalize Components from a Fitted Mixed Effects Model}
 \usage{
   getME(object,
-    name = c("X", "Z", "Zt", "u", "Gp", "L", "Lambda", "Lambdat", "Lind", "RX", "RZX", "beta", "theta", "REML", "n_rtrms", "is_REML", "devcomp"))
+    name = c("X", "Z", "Zt", "u", "Gp", "L", "Lambda", "Lambdat", "Lind", "RX", "RZX", "beta", "theta", "REML", "n_rtrms", "is_REML", "devcomp", "offset"))
 }
 \arguments{
   \item{object}{a fitted mixed-effects model of class
@@ -36,7 +36,8 @@
   \item{is_REML}{same as the result of
   \code{\link{isREML}}} \item{devcomp}{a list consisting of
   a named numeric vector, \dQuote{cmp}, and a named integer
-  vector, \dQuote{dims}, describing the fitted model} }}
+  vector, \dQuote{dims}, describing the fitted model}
+  \item{offset}{model offset} }}
 }
 \value{
   Unspecified, as very much depending on the

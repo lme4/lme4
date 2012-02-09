@@ -189,7 +189,8 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL) 
 
 ##' From the right hand side of a formula for a mixed-effects model,
 ##' determine the pairs of expressions that are separated by the
-##' vertical bar operator.
+##' vertical bar operator.  Also expand the slash operator in grouping
+##' factor expressions.
 ##'
 ##' @title Determine random-effects expressions from a formula
 ##' @seealso \code{\link{formula}}, \code{\link{model.frame}}, \code{\link{model.matrix}}.
@@ -203,6 +204,8 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL) 
 ##' ## => list( Days | Subject )
 ##' findbars(y ~ Days + (1|Subject) + (0+Days|Subject))
 ##' ## => list of length 2:  list ( 1 | Subject ,  0+Days|Subject)
+##' findbars(~ 1 + (1|batch/cask))
+##' ## => list of length 2:  list ( 1 | cask:batch ,  1 | batch)
 ##' \dontshow{
 ##' stopifnot(identical(findbars(f1),
 ##'                     list(expression(Days | Subject)[[1]])))
