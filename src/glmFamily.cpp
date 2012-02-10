@@ -185,31 +185,18 @@ namespace glm {
 	    varFuncs["poisson"]          = &identf; // x
     }
     
-    glmFamily::glmFamily(List ll) // throw (std::runtime_error)
-	: lst(ll),
-	  //d_family(as<std::string>(CharacterVector(ll["family"]))),
-	  //d_link(  as<std::string>(CharacterVector(ll["link"]))),
-// I haven't been able to work out an expression to initialize the
-// Functions from list components.  This is a placeholder until I can
-// do so.
-	  d_devRes("c"), d_linkfun("c"), d_linkinv("c"),
-	  d_muEta("c"), d_variance("c"), d_aic("c") {
-	  // d_devRes(wrap(ll["dev.resids"])),
-	  // d_linkfun(wrap(ll["linkfun"])),
-	  // d_linkinv(wrap(ll["linkinv"])),
-	  // d_muEta(wrap(ll["mu.eta"])),
-	  // d_variance(wrap(ll["variance"])) {
-	if (!lst.inherits("family"))
+    glmFamily::glmFamily(List ll)
+	: d_family(  as<std::string>(as<SEXP>(ll["family"]))),
+	  d_link(    as<std::string>(as<SEXP>(ll["link"]))),
+	  d_devRes(  as<SEXP>(ll["dev.resids"])),
+	  d_linkfun( as<SEXP>(ll["linkfun"])),
+	  d_linkinv( as<SEXP>(ll["linkinv"])),
+	  d_muEta(   as<SEXP>(ll["mu.eta"])),
+	  d_variance(as<SEXP>(ll["variance"])),
+	  d_aic(     as<SEXP>(ll["aic"])),
+	  d_rho(     d_devRes.environment()) {
+	if (!ll.inherits("family"))
 	    throw std::runtime_error("glmFamily requires a list of (S3) class \"family\"");
- 	CharacterVector ff = lst["family"], lnk = lst["link"];
- 	d_family   = as<std::string>(ff);
- 	d_link     = as<std::string>(lnk);
- 	d_linkinv  = ll["linkinv"];
- 	d_linkfun  = ll["linkfun"];
- 	d_muEta    = ll["mu.eta"];
- 	d_variance = ll["variance"];
- 	d_devRes   = ll["dev.resids"];
-	d_aic      = ll["aic"];
 	if (!lnks.count("identity")) initMaps();
     }
 

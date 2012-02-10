@@ -21,11 +21,11 @@ namespace glm {
     typedef std::map<std::string, double(*)(const VectorXd&,const VectorXd&,const VectorXd&,
 					    const VectorXd&,double)> aicmap;
     protected:
-	Rcpp::List     lst;		 /**< original list from R */
 	std::string    d_family, d_link; /**< as in the R glm family */
 				//@{ R functions from the family, as a fall-back
 	Rcpp::Function d_devRes, d_linkfun, d_linkinv, d_muEta, d_variance, d_aic;
 				//@}
+	Rcpp::Environment d_rho;
     public:
 	glmFamily(Rcpp::List);
 

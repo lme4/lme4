@@ -137,7 +137,7 @@ namespace lme4Eigen {
     }
 
     double glmResp::Laplace(double ldL2, double ldRX2, double sqrL) const {
-	return ldL2 + sqrL + resDev();
+	return ldL2 + sqrL + aic();
     }
 
     double glmResp::resDev() const {
