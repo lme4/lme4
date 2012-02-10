@@ -21,8 +21,16 @@
 ##' @return a list with 4 components
 ##' \item{fval}{numeric scalar - the minimum function value achieved}
 ##' \item{par}{numeric vector - the value of \code{x} providing the minimum}
-##' \item{ierr}{integer scalar - error code}
+##' \item{ierr}{integer scalar - error code (see below)}
 ##' \item{control}{list - the list of control settings after substituting for defaults}
+##' @note
+##' Return codes:
+##' \describe{
+##' \item{-4}{\code{nm_evals}: maximum evaluations reached}
+##' \item{-3}{\code{nm_forced}: ?}
+##' \item{-2}{\code{nm_nofeasible}: cannot generate a feasible simplex}
+##' \item{-1}{\code{nm_x0notfeasible}: initial x is not feasible (?)}
+##' }
 ##' @export
 Nelder_Mead <- function(ff, x0, xst, xt, lower=rep.int(-Inf, n),
                         upper=rep.int(Inf, n), control=list()) {

@@ -112,7 +112,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
     environment(fr.form) <- environment(formula)
     mf$formula <- fr.form
     fr <- eval(mf, parent.frame())
-					# random effects and terms modules
+    					# random effects and terms modules
     reTrms <- mkReTrms(findbars(formula[[3]]), fr)
     if (any(unlist(lapply(reTrms$flist, nlevels)) >= nrow(fr)))
 	stop("number of levels of each grouping factor must be less than number of obs")
@@ -139,7 +139,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
                        lower=lower, control=control)
     if (opt$ierr < 0L) {
         if (opt$ierr > -4L)
-            stop("convergence failure, code ", nMres, " in NelderMead")
+            stop("convergence failure, code ", opt$ierr, " in NelderMead")
         else
             warning("failure to converge in", opt$control$maxfun, "evaluations")
     }
@@ -416,7 +416,7 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
                        lower=lower, control=control)
     if (opt$ierr < 0L) {
         if (opt$ierr > -4L)
-            stop("convergence failure, code ", nMres, " in NelderMead")
+            stop("convergence failure, code ", opt$ierr, " in NelderMead")
         else
             warning("failure to converge in ", cc$maxfun, " evaluations")
     }
@@ -484,8 +484,8 @@ mkdevfun <- function(rho, nAGQ=1L) {
     stopifnot(is.environment(rho), is(rho$resp, "lmResp"))
     ff <- NULL
     if (is(rho$resp, "lmerResp")) {
-        rho$lmer_Deviance <- lmer_Deviance
-	ff <- function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(), theta)
+      rho$lmer_Deviance <- lmer_Deviance
+      ff <- function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(), theta)
     } else if (is(rho$resp, "glmResp")) {
         if (nAGQ < 2L) {
             rho$glmerLaplace <- glmerLaplace
@@ -714,7 +714,7 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
     mle <- list(beta = beta, theta = theta0, sigma = sigm.x)
 
     t.star <- matrix(t0, nr = length(t0), nc = nsim)
-    resp <- x@resp
+    ## resp <- x@resp
     for(i in 1:nsim) {
 	y <- {
 	    X.beta + sigm.x *
@@ -722,6 +722,10 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
 	    ##	    random effects  contribution	    +	  Error
 	}
 	x @ resp <- new(Class=class(resp), REML=resp$REML, y=y, offset=resp$offset, weights=resp$weights)
+
+        rho <- new.env(parent=parent.env(environment()))
+        rho$pp <- x@pp
+        rho$resp <- x @ resp ## FIXME: ???
 
 	## if (oneD) { # use optimize
 	##     d0 <- devfun(0)
@@ -731,8 +735,10 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
 	##     if (d0 <= opt$objective) ## prefer theta == 0 when close
 	##	   devfun(0) # -> theta	 := 0  and update the rest
 	## } else {
-	opt <- bobyqa(theta0, mkdevfun(resp, x@pp), x@lower, control = control)
-        ##	  xx <- updateMod(x, opt$par, opt$fval)
+        devfun <- mkdevfun(rho, 0L)
+	opt <- bobyqa(theta0, devfun, x@lower, control = control)
+        xx <- mkMerMod(environment(devfun), opt, vals$reTrms, x@frame, mc)
+        ## xx <- updateMod(x, opt$par, opt$fval)
         ## FIXME: also here, prefer \hat\sigma^2 == 0 (exactly)
         ##	  }
 	foo <- tryCatch(FUN(xx), error = function(e)e)
