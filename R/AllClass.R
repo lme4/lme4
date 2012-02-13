@@ -849,13 +849,13 @@ NULL
 ##' 
 ##' @name merMod-class
 ##' @aliases merMod-class lmerMod-class glmerMod-class nlmerMod-class
-##' anova,merMod-method coef,merMod-method deviance,merMod-method
-##' fitted,merMod-method formula,merMod-method logLik,merMod-method
-##' model.frame,merMod-method model.matrix,merMod-method print,merMod-method
-##' show,merMod-method simulate,merMod-method summary,merMod-method
-##' terms,merMod-method update,merMod-method VarCorr,merMod-method
-##' vcov,merMod-method print,summary.mer-method show,summary.mer-method
-##' summary,summary.mer-method vcov,summary.mer-method
+##' anova.merMod coef.merMod deviance.merMod
+##' fitted.merMod formula.merMod logLik.merMod
+##' model.frame.merMod model.matrix.merMod print.merMod
+##' show.merMod simulate.merMod summary.merMod
+##' terms.merMod update.merMod VarCorr.merMod
+##' vcov.merMod print.summary.mer show.summary.mer
+##' summary.summary.mer vcov.summary.mer
 ##' @docType class
 ##' @section Objects from the Class: Objects are created by calls to
 ##' \code{\link{lmer}}, \code{\link{glmer}} or \code{\link{nlmer}}.

@@ -40,7 +40,6 @@ Collate:
     'AllGeneric.R'
     'GHrule.R'
     'jml.R'
-    'lme4Eigen-package.R'
     'lmer.R'
     'lmList.R'
     'mlirt.R'
