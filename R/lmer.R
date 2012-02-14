@@ -322,6 +322,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     if (devFunOnly && !nAGQ) return(devfun)
     control$iprint <- min(verbose, 3L)
     opt <- bobyqa(rho$pp$theta, devfun, rho$lower, control=control)
+    rho$nAGQ <- nAGQ
     if (nAGQ > 0L) {
         rho$lower <- c(rho$lower, rep.int(-Inf, length(rho$beta0)))
         rho$u0    <- rho$pp$u0
@@ -1163,6 +1164,8 @@ ranef.merMod <- function(object, postVar = FALSE, drop = FALSE,
 ##' @S3method refit merMod
 refit.merMod <- function(object, newresp, ...) {
     rr        <- object@resp$copy()
+    ## FIXME: want this to work for binomial (two-column) data?
+    ##  or tell people they have to work with prop/weights formulation?
     stopifnot(length(newresp <- as.numeric(as.vector(newresp))) == length(rr$y))
     rr$setResp(newresp)
     pp        <- object@pp$copy()
@@ -1174,16 +1177,18 @@ refit.merMod <- function(object, newresp, ...) {
                         nAGQ=nAGQ)
     xst       <- rep.int(0.1, nth)
     x0        <- pp$theta
+    lower     <- object@lower
     if (!is.na(nAGQ) && nAGQ > 0L) {
         xst   <- c(xst, sqrt(diag(pp$unsc())))
         x0    <- c(x0, pp$beta0)
+        lower <- c(lower, rep(-Inf,length(pp$beta0)))
     }
     control <- list(...)$control
     if (is.null(control)) control <- list()
 ### FIXME: Probably should save the control settings and the optimizer name in the merMod object
-    opt <- Nelder_Mead(ff, x0, xst=0.2*xst, xt=xst*0.0001, lower=object@lower, control=control)
+    opt <- Nelder_Mead(ff, x0, xst=0.2*xst, xt=xst*0.0001, lower=lower, control=control)
     mkMerMod(environment(ff), opt, list(flist=object@flist, cnms=object@cnms, Gp=object@Gp,
-                                        lower=object@lower), object@frame, getCall(object))
+                                        lower=lower), object@frame, getCall(object))
 }    
 
 ##' @S3method refitML merMod
