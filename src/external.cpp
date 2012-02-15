@@ -314,16 +314,25 @@ extern "C" {
 
     SEXP glmerWrkIter(SEXP pp_, SEXP rp_) {
 	BEGIN_RCPP;
-
+//	Rcpp::Rcout << "Begin glmerWrkIter" << std::endl;
 	XPtr<glmResp>    rp(rp_);
-	XPtr<merPredD>   pp(pp_);
+//	Rcpp::Rcout << "Extracted response pointer" << std::endl;
 	const Eigen::VectorXd   wt(rp->sqrtWrkWt());
+//	Rcpp::Rcout << "Working weights: " << wt.head(7).adjoint() << std::endl;
+	XPtr<merPredD>   pp(pp_);
+//	Rcpp::Rcout << "Extracted predictor pointer" << std::endl;
 	pp->updateXwts(wt);
+//	Rcpp::Rcout << "Updated predictor Xwts" << std::endl;
 	pp->updateDecomp();
+//	Rcpp::Rcout << "Updated predictor decomp" << std::endl;
 	pp->updateRes(rp->wrkResp());
+//	Rcpp::Rcout << "Updated predictor residuals" << std::endl;
 	pp->solve();
+//	Rcpp::Rcout << "Predictor solve" << std::endl;
 	rp->updateMu(pp->linPred(1.));
+//	Rcpp::Rcout << "Update mu" << std::endl;
 	pp->installPars(1.);
+//	Rcpp::Rcout << "Install pars" << std::endl;
 
 	return ::Rf_ScalarReal(rp->updateWts());
 
