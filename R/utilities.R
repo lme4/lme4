@@ -49,7 +49,7 @@ mkReTrms <- function(bars, fr) {
 	## grouping factor are adjacent.
 	if (nc > 1)
 	    sm <- sm[as.vector(matrix(seq_len(nc * nl),
-				      nc = nl, byrow = TRUE)),]
+				      ncol = nl, byrow = TRUE)),]
 	list(ff = ff, sm = sm, nl = nl, cnms = colnames(mm))
     }
     blist <- lapply(bars, mkBlist)
@@ -81,7 +81,7 @@ mkReTrms <- function(bars, fr) {
 		  do.call(rBind,
 			  lapply(seq_along(blist), function(i)
 			     {
-				 mm <- matrix(seq_len(nb[i]), nc = nc[i],
+				 mm <- matrix(seq_len(nb[i]), ncol = nc[i],
 					      byrow = TRUE)
 				 dd <- diag(nc[i])
 				 ltri <- lower.tri(dd, diag = TRUE)

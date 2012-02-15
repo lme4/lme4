@@ -849,11 +849,12 @@ NULL
 ##' 
 ##' @name merMod-class
 ##' @aliases merMod-class lmerMod-class glmerMod-class nlmerMod-class
+##' show,merMod-method
 ##' anova.merMod coef.merMod deviance.merMod
 ##' fitted.merMod formula.merMod logLik.merMod
 ##' model.frame.merMod model.matrix.merMod print.merMod
-##' show.merMod simulate.merMod summary.merMod
-##' terms.merMod update.merMod VarCorr.merMod
+##' show.merMod summary.merMod
+##' terms.merMod update.merMod 
 ##' vcov.merMod print.summary.mer show.summary.mer
 ##' summary.summary.mer vcov.summary.mer
 ##' @docType class

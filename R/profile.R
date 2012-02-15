@@ -50,7 +50,7 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
     nvp <- nptot - p    # number of variance-covariance pars
     fe.orig <- opt[-seq_len(nvp)]
     res <- c(.zeta = 0, opt)
-    res <- matrix(res, nr = maxpts, nc = length(res),
+    res <- matrix(res, nrow = maxpts, ncol = length(res),
                   dimnames = list(NULL, names(res)), byrow = TRUE)
     cutoff <- sqrt(qchisq(1 - alphamax, nptot))
     
@@ -518,7 +518,7 @@ splom.thpr <-
                 panel.axis(side = side,
                            at = at,
                            labels = format(at, trim = TRUE),
-                           tick = TRUE,
+                           ticks = TRUE,
                            check.overlap = TRUE,
                            half = side == "top" && j > 1,
 
@@ -541,7 +541,7 @@ splom.thpr <-
             which.half <- ifelse(j == 1, "lower", "upper")
             at <- pretty(lims)
             panel.axis(side = side, at = at, labels = format(at, trim = TRUE),
-                       tick = TRUE, half = TRUE, which.half = which.half,
+                       ticks = TRUE, half = TRUE, which.half = which.half,
                        tck = 1, rot = 0,
 
                        text.col = axis.text.col,

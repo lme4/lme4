@@ -212,8 +212,8 @@ plot.lmList.confint <- function(x, y, ...)
                      ordered(rep(dn[[1]], dd[2] * dd[3]),
                              levels = levs),
                      intervals = as.vector(arr),
-                     what = gl(dd[3], dd[1] * dd[2], len = ll, lab = dn[[3]]),
-                     end = gl(dd[2], dd[1], len = ll))
+                     what = gl(dd[3], dd[1] * dd[2], length = ll, labels = dn[[3]]),
+                     end = gl(dd[2], dd[1], length = ll))
     strip <- dots[["strip"]]
     if (is.null(strip)) {
         strip <- function(...) strip.default(..., style = 1)

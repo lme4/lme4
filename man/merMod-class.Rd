@@ -15,13 +15,12 @@
 \alias{print.merMod}
 \alias{print.summary.mer}
 \alias{show.merMod}
+\alias{show,merMod-method}
 \alias{show.summary.mer}
-\alias{simulate.merMod}
 \alias{summary.merMod}
 \alias{summary.summary.mer}
 \alias{terms.merMod}
 \alias{update.merMod}
-\alias{VarCorr.merMod}
 \alias{vcov.merMod}
 \alias{vcov.summary.mer}
 \title{Class "merMod" of Fitted Mixed-Effect Models}

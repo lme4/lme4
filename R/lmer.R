@@ -32,7 +32,7 @@
 ##'	 during the optimization. Default is \code{900}.}
 ##'	\item{\code{tol}:}{a positive number specifying the
 ##'	 convergence tolerance, currently only for the PWRSS iterations
-##'	 in \code{glmer()}.  Default is \code{0.000001}.}
+##'	 in \code{\link{glmer}}.  Default is \code{0.000001}.}
 ##'   }
 ##' @param start a named list of starting values for the parameters in the
 ##'    model.  For \code{lmer} this can be a numeric vector or a list with one
@@ -714,7 +714,7 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
     ## just for the "boot" result -- TODOmaybe drop
     mle <- list(beta = beta, theta = theta0, sigma = sigm.x)
 
-    t.star <- matrix(t0, nr = length(t0), nc = nsim)
+    t.star <- matrix(t0, nrow = length(t0), ncol = nsim)
     ## resp <- x@resp
     for(i in 1:nsim) {
 	y <- {
@@ -765,8 +765,8 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
 
 ## Anova for merMod objects
 ##
-## @title anova() for both  "lmerenv" and "lmer" fitted models
-## @param object an "lmerenv", "lmer" or "lmerMod" - fitted model
+## @title anova() for merMod objects
+## @param a merMod object
 ## @param ...	further such objects
 ## @return an "anova" data frame; the traditional (S3) result of anova()
 anovaLmer <- function(object, ...) {
@@ -810,7 +810,7 @@ anovaLmer <- function(object, ...) {
 			  deviance = -2*llk,
 			  Chisq = chisq,
 			  "Chi Df" = dfChisq,
-			  "Pr(>Chisq)" = pchisq(chisq, dfChisq, lower = FALSE),
+			  "Pr(>Chisq)" = pchisq(chisq, dfChisq, lower.tail = FALSE),
 			  row.names = names(mods), check.names = FALSE)
 	class(val) <- c("anova", class(val))
 	attr(val, "heading") <-
@@ -1126,7 +1126,7 @@ ranef.merMod <- function(object, postVar = FALSE, drop = FALSE,
 	nbseq <- rep.int(seq_along(nb), nb)
 	ml <- split(ans, nbseq)
 	for (i in seq_along(ml))
-	    ml[[i]] <- matrix(ml[[i]], nc = nc[i], byrow = TRUE,
+	    ml[[i]] <- matrix(ml[[i]], ncol = nc[i], byrow = TRUE,
 			      dimnames = list(NULL, cnms[[i]]))
 	## create a list of data frames corresponding to factors
 	ans <- lapply(seq_along(fl),
@@ -1277,7 +1277,7 @@ NULL
 ##' @param object a fitted model object
 ##' @param nsim positive integer scalar - the number of responses to simulate
 ##' @param seed an optional seed to be used in \code{set.seed} immediately
-##'     before the simulation so as to to generate a reproducible sample.
+##'     before the simulation so as to generate a reproducible sample.
 ##' @param use.u (logical) generate new random-effects values (FALSE) or
 ##'     generate a simulation condition on the current random-effects estimates (TRUE)?
 ##' @param ... optional additional arguments, none are used at present
@@ -1316,13 +1316,13 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE, ...) {
       } else {
         U <- getME(object, "Z") %*% getME(object, "Lambda")
         q <- ncol(U)
-        as(U %*% matrix(rnorm(q * nsim), nc = nsim), "matrix")
+        as(U %*% matrix(rnorm(q * nsim), ncol = nsim), "matrix")
       }
     if (is(object@resp,"lmerResp")) {
       ## result will be matrix  n x nsim :
       val <- etasim.fix + sigma * (etasim.reff +
         ## residual contribution:
-        matrix(rnorm(n * nsim), nc = nsim))
+        matrix(rnorm(n * nsim), ncol = nsim))
     } else if (is(object@resp,"glmResp")) {
       ## GLMM
       ## n.b. DON'T scale random-effects (???)
@@ -1459,7 +1459,7 @@ printMerenv <- function(x, digits = max(3, getOption("digits") - 3),
 		p <- ncol(corF)
 		if (p > 1) {
 		    rn <- rownames(so$coefficients)
-		    rns <- abbreviate(rn, minlen=11)
+		    rns <- abbreviate(rn, minlength=11)
 		    cat("\nCorrelation of Fixed Effects:\n")
 		    if (is.logical(symbolic.cor) && symbolic.cor) {
 			corf <- as(corF, "matrix")
@@ -1469,8 +1469,8 @@ printMerenv <- function(x, digits = max(3, getOption("digits") - 3),
 		    }
 		    else {
 			corf <- matrix(format(round(corF@x, 3), nsmall = 3),
-				       nc = p,
-				       dimnames = list(rns, abbreviate(rn, minlen=6)))
+				       ncol = p,
+				       dimnames = list(rns, abbreviate(rn, minlength=6)))
 			corf[!lower.tri(corf)] <- ""
 			print(corf[-1, -p, drop=FALSE], quote = FALSE)
 		    }
@@ -1781,7 +1781,7 @@ formatVC <- function(varc, digits = max(3, getOption("digits") - 2),
 			       cbind(cc, matrix("", nr, maxlen-nr))
 			   }))[, -maxlen, drop = FALSE]
 	if (nrow(corr) < nrow(reMat))
-	    corr <- rbind(corr, matrix("", nr = nrow(reMat) - nrow(corr), nc = ncol(corr)))
+	    corr <- rbind(corr, matrix("", nrow = nrow(reMat) - nrow(corr), ncol = ncol(corr)))
 	colnames(corr) <- rep.int("", ncol(corr))
 	colnames(corr)[1] <- "Corr"
 	cbind(reMat, corr)

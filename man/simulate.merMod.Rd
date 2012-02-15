@@ -13,7 +13,7 @@
 
   \item{seed}{an optional seed to be used in
   \code{set.seed} immediately before the simulation so as
-  to to generate a reproducible sample.}
+  to generate a reproducible sample.}
 
   \item{use.u}{(logical) generate new random-effects values
   (FALSE) or generate a simulation condition on the current

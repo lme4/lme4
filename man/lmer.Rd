@@ -44,7 +44,7 @@
   allowed during the optimization. Default is \code{900}.}
   \item{\code{tol}:}{a positive number specifying the
   convergence tolerance, currently only for the PWRSS
-  iterations in \code{glmer()}.  Default is
+  iterations in \code{\link{glmer}}.  Default is
   \code{0.000001}.} }}
 
   \item{start}{a named list of starting values for the
