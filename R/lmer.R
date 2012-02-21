@@ -132,7 +132,12 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
     devfun(reTrms$theta) # one evaluation to ensure all values are set
 
     if (devFunOnly) return(devfun)
-    if (verbose) control$iprint <- as.integer(verbose)
+
+    ## FIXME: this code is replicated in lmer/glmer/nlmer ...
+    ## it seems good to have it in R rather than C++ code but maybe it should go within Nelder_Mead() ??
+    
+    control$iprint <- switch(as.character(min(verbose,3L)),
+                             "0"=0, "1"=20,"2"=10,"3"=1)
 
     lower <- reTrms$lower
     xst <- rep.int(0.1, length(lower))
@@ -322,7 +327,11 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     parent.env(rho) <- parent.frame()
     devfun <- mkdevfun(rho, 0L) # deviance as a function of theta only
     if (devFunOnly && !nAGQ) return(devfun)
+
+
+    ## FIXME: why is bobyqa always used for preliminary fit?  document??
     control$iprint <- min(verbose, 3L)
+
     opt <- bobyqa(rho$pp$theta, devfun, rho$lower, control=control)
     rho$nAGQ <- nAGQ
     if (nAGQ > 0L) {
@@ -345,6 +354,8 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
                           bobyqa(c(rho$pp$theta, rho$beta0), devfun, rho$lower, control=control)
                       },
                       NelderMead = {
+                          control$iprint <- switch(as.character(min(verbose,3L)),
+                                                  "0"=0,"1"=20,"2"=10,"3"=1)
                           xst <- c(rep.int(0.1, length(rho$dpars)),
                                    sqrt(diag(environment(devfun)$pp$unsc())))
                           Nelder_Mead(devfun, x0=with(environment(devfun), c(pp$theta, pp$beta0)),
@@ -409,9 +420,9 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
     rho$u0 <- rho$pp$u0
     rho$beta0 <- rho$pp$beta0
     rho$tolPwrss <- tolPwrss # Resetting this is intentional. The initial optimization is coarse.
-
-## FIXME: change this to something sensible for NelderMead
-    control$iprint <- min(verbose, 3L)
+    
+    control$iprint <- switch(as.character(min(verbose,3L)),
+                             "0"=0,"1"=20,"2"=10,"3"=1)
     lower <- rho$lower
     xst <- rep.int(0.1, length(lower))
 

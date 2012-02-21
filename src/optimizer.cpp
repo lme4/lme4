@@ -98,7 +98,7 @@ namespace optimizer {
     nm_status Nelder_Mead::newf(const Scalar& f) {
 	d_stop.incrEvals();
 	if (d_verb > 0 && (d_stop.ev() % d_verb) == 0)
-	    Rcpp::Rcout << "f = " << value() << " at " << d_x.adjoint() << std::endl;
+	    Rcpp::Rcout << "(NM) " << d_stop.ev() << ": " << "f = " << value() << " at " << d_x.adjoint() << std::endl;
 	if (d_stop.forced()) return nm_forced;
 	if (f < d_minf) {
 	    d_minf = f;
