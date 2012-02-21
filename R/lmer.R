@@ -96,8 +96,9 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 	    } else stop(msg)
 	}
 	if(length(l...))
-	    warning("extra arguments ", paste(names(l...), sep=", "),
-		    " are disregarded")
+	    warning("extra argument(s) ",
+                    paste(sQuote(names(l...)), collapse=", "),
+		    " disregarded")
     }
 
     stopifnot(length(formula <- as.formula(formula)) == 3)
@@ -262,8 +263,9 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 	    } else stop(msg)
 	}
 	if(length(l...))
-	    warning("extra arguments ", paste(names(l...), sep=", "),
-		    " are disregarded")
+          warning("extra argument(s) ",
+                  paste(sQuote(names(l...)), collapse=", "),
+                  " disregarded")
     }
     if(is.character(family))
 	family <- get(family, mode = "function", envir = parent.frame(2))
