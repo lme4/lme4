@@ -1,5 +1,6 @@
 #include "glmFamily.h"
 #include <Rmath.h>
+#include <limits>
 #include <cmath>
 
 using namespace Rcpp;
@@ -7,7 +8,7 @@ using namespace std;
 
 namespace glm {
     /** 
-     * Utility to evaluate y * log(y/mu) with correct limit at y = 0
+     * Evaluate y * log(y/mu) with correct limit at y = 0
      * 
      * @param y numerator of log argument, if non-zero
      * @param mu denominator of log argument
@@ -18,6 +19,17 @@ namespace glm {
 	return y ? y * std::log(y/mu) : 0;
     }
 
+    /** 
+     * Evaluate log(y/mu) returning 0 when y = 0
+     * 
+     * @param y numerator of log argument, if non-zero
+     * @param mu denominator of log argument
+     * 
+     * @return log(y/mu) returning 0 when y = 0
+     */
+    static inline double logYMu(const double& y, const double& mu) {
+	return y ? std::log(y/mu) : 0;
+    }
     /** Cumulative probability function of the complement of the Gumbel distribution
      * 
      * (i.e. pgumbel(q,0.,1.,0) == 1-pgumbel2(-q,0.,1.,0))
@@ -53,41 +65,102 @@ namespace glm {
 	return give_log ? xx : std::exp(xx);
     }
 
-    template<typename Scalar>
-    struct Round {
-	const Scalar operator()(const Scalar& x) const {return nearbyint(x);}
+    //@{ Templated scalar functors used in links, inverse links, etc.
+    template<typename T>
+    struct Round : public std::unary_function<T, T> {
+	const T operator()(const T& x) const {return nearbyint(x);}
     };
 
-    //@{  Scalar functions for components
-    static inline double          cubef(const double& x) {return x * x * x;}
-    static inline double           expf(const double& x) {return std::exp(x);}
-    static inline double         identf(const double& x) {return x;}
-    static inline double      invderivf(const double& x) {return -1./(x * x);}
-    static inline double       inversef(const double& x) {return 1./x;}
-    static inline double           logf(const double& x) {return std::log(x);}
-    static inline double           onef(const double& x) {return 1.;}
-    static inline double           sqrf(const double& x) {return x * x;}
-    static inline double          sqrtf(const double& x) {return std::sqrt(x);}
-    static inline double          twoxf(const double& x) {return 2. * x;}
-    static inline double          x1mxf(const double& x) {return std::max(epsilon, x*(1 - x));}
-    static inline double   logitLinkInv(const double& x) {return ::Rf_plogis(x, 0., 1., 1, 0);}
-    static inline double      logitLink(const double& x) {return ::Rf_qlogis(x, 0., 1., 1, 0);}
-    static inline double     logitMuEta(const double& x) {return ::Rf_dlogis(x, 0., 1., 0);}
-    static inline double  probitLinkInv(const double& x) {return ::Rf_pnorm5(x, 0., 1., 1, 0);}
-    static inline double     probitLink(const double& x) {return ::Rf_qnorm5(x, 0., 1., 1, 0);}
-    static inline double    probitMuEta(const double& x) {return ::Rf_dnorm4(x, 0., 1., 0);}
-    static inline double cloglogLinkInv(const double& x) {return pgumbel2(x, 0., 1., 1);}
+    template<typename T>
+    struct x1mx : public std::unary_function<T, T> {
+	const T operator() (const T& x) const {
+	    return T(std::max(std::numeric_limits<T>::epsilon(), x * (1 - x)));
+	}
+    };
+
+    template<typename T>
+    struct logitinv : public std::unary_function<T, T> {
+	const T operator() (const T& x) const {
+	    return T(::Rf_plogis(double(x), 0., 1., 1, 0));
+	}
+    };
+
+    template<typename T>
+    struct logit : public std::unary_function<T, T> {
+	const T operator() (const T& x) const {
+	    return T(::Rf_qlogis(double(x), 0., 1., 1, 0));
+	}
+    };
+
+    template<typename T>
+    struct logitmueta : public std::unary_function<T, T> {
+	const T operator() (const T& x) const {
+	    return T(::Rf_dlogis(double(x), 0., 1., 0));
+	}
+    };
+
+    template<typename T>
+    struct probitinv : public std::unary_function<T, T> {
+	const T operator() (const T& x) const {
+	    return T(::Rf_pnorm5(double(x), 0., 1., 1, 0));
+	}
+    };
+
+    template<typename T>
+    struct probit : public std::unary_function<T, T> {
+	const T operator() (const T& x) const {
+	    return T(::Rf_qnorm5(double(x), 0., 1., 1, 0));
+	}
+    };
+
+    template<typename T>
+    struct probitmueta : public std::unary_function<T, T> {
+	const T operator() (const T& x) const {
+	    return T(::Rf_dnorm4(double(x), 0., 1., 0));
+	}
+    };
+
+    template<typename T>
+    struct clogloginv : public std::unary_function<T, T> {
+	const T operator() (const T& x) const {
+	    return T(pgumbel2(double(x), 0., 1., 1));
+	}
+    };
+
+    template<typename T>
+    struct cloglogmueta : public std::unary_function<T, T> {
+	const T operator() (const T& x) const {
+	    return T(dgumbel2(double(x), 0., 1., 0));
+	}
+    };
     //@}
-    
-    static inline double   cloglogMuEta(const double& x) {return dgumbel2(x, 0., 1., 0);}
+
+    //@{  Vector functions for links, inverse links, derivatives and variances
+    static VectorXd cubef(     const VectorXd& x) {return x.array().cube();}
+    static VectorXd expf(      const VectorXd& x) {return x.array().exp();}
+    static VectorXd identf(    const VectorXd& x) {return x;}
+    static VectorXd invderivf( const VectorXd& x) {return -(x.array().inverse().square());}
+    static VectorXd inversef(  const VectorXd& x) {return x.array().inverse();}
+    static VectorXd logf(      const VectorXd& x) {return x.array().log();}
+    static VectorXd onef(      const VectorXd& x) {return VectorXd::Ones(x.size());}
+    static VectorXd sqrf(      const VectorXd& x) {return x.array().square();}
+    static VectorXd sqrtf(     const VectorXd& x) {return x.array().sqrt();}
+    static VectorXd twoxf(     const VectorXd& x) {return x * 2.;}
+    static VectorXd x1mxf(     const VectorXd& x) {return x.array().unaryExpr(x1mx<double>());}
+    static VectorXd logitf(    const VectorXd& x) {return x.array().unaryExpr(logit<double>());}
+    static VectorXd logitinvf( const VectorXd& x) {return x.array().unaryExpr(logitinv<double>());}
+    static VectorXd logitmuf(  const VectorXd& x) {return x.array().unaryExpr(logitmueta<double>());}
+    static VectorXd probitf(   const VectorXd& x) {return x.array().unaryExpr(probit<double>());}
+    static VectorXd probitinvf(const VectorXd& x) {return x.array().unaryExpr(probitinv<double>());}
+    static VectorXd probitmuf( const VectorXd& x) {return x.array().unaryExpr(probitmueta<double>());}
+    static VectorXd clogloginf(const VectorXd& x) {return x.array().unaryExpr(clogloginv<double>());}
+    static VectorXd cloglogmuf(const VectorXd& x) {return x.array().unaryExpr(cloglogmueta<double>());}
+    //@}
     
     //@{ deviance residuals functions
     static inline double
     BinomialDevRes(const double& y, const double& mu, const double& wt) {
 	return 2 * wt * (y_log_y(y, mu) + y_log_y(1 - y, 1 - mu));
-    }
-    static inline double logYMu(const double& y, const double& mu) {
-	return y ? std::log(y/mu) : 0;
     }
     static inline double
     GammaDevRes   (const double& y, const double& mu, const double& wt) {
@@ -103,6 +176,7 @@ namespace glm {
 	return 2 * wt * (y_log_y(y, mu) - (y - mu));
     }
     //@}
+
     //@{  AIC functions (which actually return the deviance, go figure)
     static inline double
     BinomialAIC   (const VectorXd& y, const VectorXd& n, const VectorXd& mu,
@@ -141,48 +215,48 @@ namespace glm {
      * 
      */
     void glmFamily::initMaps() {
-	    lnks["log"]                  = &logf;
-	    muEtas["log"] = linvs["log"] = &expf;
+	lnks    ["log"]              = &logf;
+	linvs   ["log"]              = &expf;
+	muEtas  ["log"]              = &expf;
 	    
-	    lnks["sqrt"]                 = &sqrtf;
-	    linvs["sqrt"]                = &sqrf;
-	    muEtas["sqrt"]               = &twoxf;
+	lnks    ["sqrt"]             = &sqrtf;
+	linvs   ["sqrt"]             = &sqrf;
+	muEtas  ["sqrt"]             = &twoxf;
 	    
-	    lnks["identity"]             = &identf;
-	    linvs["identity"]            = &identf;
-	    muEtas["identity"]           = &onef;
+	lnks    ["identity"]         = &identf;
+	linvs   ["identity"]         = &identf;
+	muEtas  ["identity"]         = &onef;
 	    
-	    lnks["inverse"]              = &inversef;
-	    linvs["inverse"]             = &inversef;
-	    muEtas["inverse"]            = &invderivf;
+	lnks    ["inverse"]          = &inversef;
+	linvs   ["inverse"]          = &inversef;
+	muEtas  ["inverse"]          = &invderivf;
 	    
-	    lnks["logit"]                = &logitLink;
-	    linvs["logit"]               = &logitLinkInv;
-	    muEtas["logit"]              = &logitMuEta;
+	lnks    ["logit"]            = &logitf;
+	linvs   ["logit"]            = &logitinvf;
+	muEtas  ["logit"]            = &logitmuf;
 	    
-	    lnks["probit"]               = &probitLink;
-	    linvs["probit"]              = &probitLinkInv;
-	    muEtas["probit"]             = &probitMuEta;
+	lnks    ["probit"]           = &probitf;
+	linvs   ["probit"]           = &probitinvf;
+	muEtas  ["probit"]           = &probitmuf;
 	    
-//	    lnks["cloglog"]              = &cloglogLink;
-	    linvs["cloglog"]             = &cloglogLinkInv;
-	    muEtas["cloglog"]            = &cloglogMuEta;
+	linvs   ["cloglog"]          = &clogloginf;
+	muEtas  ["cloglog"]          = &cloglogmuf;
 	    
-	    devRes["Gamma"]              = &GammaDevRes;
-	    varFuncs["Gamma"]            = &sqrf;   // x^2
+	devRes  ["Gamma"]            = &GammaDevRes;
+	varFuncs["Gamma"]            = &sqrf; // x^2
 
-	    aics["binomial"]             = &BinomialAIC;
-	    devRes["binomial"]           = &BinomialDevRes;
-	    varFuncs["binomial"]         = &x1mxf;  // x * (1 - x)
+	aics    ["binomial"]         = &BinomialAIC;
+	devRes  ["binomial"]         = &BinomialDevRes;
+	varFuncs["binomial"]         = &x1mxf; // x * (1 - x)
 
-	    devRes["gaussian"]           = &GaussianDevRes;
-	    varFuncs["gaussian"]         = &onef;   // 1
+	devRes  ["gaussian"]         = &GaussianDevRes;
+	varFuncs["gaussian"]         = &onef; // 1
 
-	    varFuncs["inverse.gaussian"] = &cubef;  // x^3
+	varFuncs["inverse.gaussian"] = &cubef;  // x^3
 
-	    aics["poisson"]              = &PoissonAIC;
-	    devRes["poisson"]            = &PoissonDevRes;
-	    varFuncs["poisson"]          = &identf; // x
+	aics    ["poisson"]          = &PoissonAIC;
+	devRes  ["poisson"]          = &PoissonDevRes;
+	varFuncs["poisson"]          = &identf; // x
     }
     
     glmFamily::glmFamily(List ll)
@@ -200,50 +274,27 @@ namespace glm {
 	if (!lnks.count("identity")) initMaps();
     }
 
-    VectorXd glmFamily::linkFun(const VectorXd &mu) const {
-	VectorXd ans(mu.size());
-	if (lnks.count(d_link)) {
-	    std::transform(mu.data(), mu.data() + mu.size(), ans.data(), lnks[d_link]);
-	} else {
-	    NumericVector ans_R = d_linkfun(NumericVector(mu.data(), mu.data() + mu.size()));
-	    std::copy(ans_R.begin(), ans_R.end(), ans.data());
-	}
-	return ans;
+    VectorXd glmFamily::linkFun(const VectorXd& mu) const {
+	if (lnks.count(d_link)) return lnks[d_link](mu);
+	return as<VectorXd>(d_linkfun(NumericVector(mu.data(), mu.data() + mu.size())));
     }
-    
-    VectorXd glmFamily::linkInv(const VectorXd &eta) const {
-	VectorXd ans(eta.size());
-	if (linvs.count(d_link)) {
-	    std::transform(eta.data(), eta.data() + eta.size(), ans.data(), linvs[d_link]);
-	} else {
-	    NumericVector ans_R = d_linkinv(NumericVector(eta.data(), eta.data() + eta.size()));
-	    std::copy(ans_R.begin(), ans_R.end(), ans.data());
-	}
-	return ans;
+
+    VectorXd glmFamily::linkInv(const VectorXd& eta) const {
+	if (linvs.count(d_link)) return linvs[d_link](eta);
+	return as<VectorXd>(d_linkinv(NumericVector(eta.data(), eta.data() + eta.size())));
     }
 
     VectorXd glmFamily::muEta(const VectorXd &eta) const {
-	VectorXd ans(eta.size());
-	if (muEtas.count(d_link)) {
-	    std::transform(eta.data(), eta.data() + eta.size(), ans.data(), muEtas[d_link]);
-	} else {
-	    NumericVector ans_R = d_muEta(NumericVector(eta.data(), eta.data() + eta.size()));
-	    std::copy(ans_R.begin(), ans_R.end(), ans.data());
-	}
-	return ans;
+	if (muEtas.count(d_link)) return muEtas[d_link](eta);
+	return as<VectorXd>(as<SEXP>(d_muEta(NumericVector(eta.data(), eta.data() + eta.size()))));
     }
     
     VectorXd glmFamily::variance(const VectorXd &mu) const {
-	VectorXd ans(mu.size());
-	if (varFuncs.count(d_link)) {
-	    std::transform(mu.data(), mu.data() + mu.size(), ans.data(), varFuncs[d_link]);
-	} else {
-	    NumericVector ans_R = d_variance(NumericVector(mu.data(), mu.data() + mu.size()));
-	    std::copy(ans_R.begin(), ans_R.end(), ans.data());
-	}
-	return ans;
+	if (varFuncs.count(d_family)) return varFuncs[d_family](mu);
+	return as<VectorXd>(as<SEXP>(d_variance(NumericVector(mu.data(), mu.data() + mu.size()))));
     }
     
+/// FIXME: change this so the looping is done in the devResid[d_family] function
     VectorXd
     glmFamily::devResid(const VectorXd &mu, const VectorXd &weights, const VectorXd &y) const {
 	int n = mu.size();

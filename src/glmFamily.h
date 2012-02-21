@@ -3,23 +3,16 @@
 #define LME4_GLMFAMILY_H
 
 #include <RcppEigen.h>
-#include <limits>
 namespace glm {
     using Eigen::VectorXd;
 
-    /** associative arrays of functions returning double from a double */
-    typedef std::map<std::string, double(*)(const double&)> fmap;
+    /** associative arrays of vector-valued functions */
+    typedef std::map<std::string, VectorXd(*)(const VectorXd&)> fmap;
     typedef std::map<std::string, double(*)(const double&,const double&,const double&)> drmap;
     typedef std::map<std::string, double(*)(const VectorXd&,const VectorXd&,const VectorXd&,
 					    const VectorXd&,double)> aicmap;
 
     class glmFamily {
-    public:
-
-    typedef std::map<std::string, double(*)(const double&)> fmap; /**< associative array of functions returning double from a double */
-    typedef std::map<std::string, double(*)(const double&,const double&,const double&)> drmap; /**< associative array of deviance residual functions */
-    typedef std::map<std::string, double(*)(const VectorXd&,const VectorXd&,const VectorXd&,
-					    const VectorXd&,double)> aicmap;
     protected:
 	std::string    d_family, d_link; /**< as in the R glm family */
 				//@{ R functions from the family, as a fall-back
@@ -35,8 +28,7 @@ namespace glm {
 	// initialize the associative arrays of scalar functions
 	void initMaps();
 	
-	// Application of functions from the family
-	// The scalar transformations use compiled code when available 
+	//@{ Application of functions from the family using compiled code when available
 	VectorXd  linkFun(const VectorXd&) const;
 	VectorXd  linkInv(const VectorXd&) const;
 	VectorXd devResid(const VectorXd&, const VectorXd&, const VectorXd&) const;
@@ -46,6 +38,7 @@ namespace glm {
 			  const VectorXd&, double) const;
 	/**< in keeping with the botched up nomenclature in the R glm function, 
 	 *   the value of aic is the deviance */
+	//@}
     private:
 	// Class members that are maps storing the scalar functions
 	static fmap
@@ -57,9 +50,6 @@ namespace glm {
 	static aicmap aics;	/**< scalar aic functions */
 	
     };
-
-    static double epsilon(std::numeric_limits<double>::epsilon());
-	/**< Threshold for some comparisons */
 }
     
 #endif /* LME4_GLMFAMILY_H */

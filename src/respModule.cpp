@@ -132,8 +132,8 @@ namespace lme4Eigen {
     }
 
     VectorXd glmResp::sqrtWrkWt() const {
-	const VectorXd me(muEta());
-	return d_weights.cwiseProduct(me).cwiseProduct(me).cwiseQuotient(variance()).cwiseSqrt();
+	const Eigen::ArrayXd me(muEta());
+	return (d_weights.array() * muEta().array().square() /(variance().array())).sqrt();
     }
 
     double glmResp::Laplace(double ldL2, double ldRX2, double sqrL) const {
