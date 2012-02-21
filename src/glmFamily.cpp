@@ -32,7 +32,7 @@ namespace glm {
     }
     /** Cumulative probability function of the complement of the Gumbel distribution
      * 
-     * (i.e. pgumbel(q,0.,1.,0) == 1-pgumbel2(-q,0.,1.,0))
+     * (i.e. pgumbel(q,0.,1.,0) == 1 - pgumbel2(-q,0.,1.,0))
      * 
      * @param q the quantile at which to evaluate the cumulative probability
      * @param loc location parameter
@@ -69,6 +69,11 @@ namespace glm {
     template<typename T>
     struct Round : public std::unary_function<T, T> {
 	const T operator()(const T& x) const {return nearbyint(x);}
+    };
+
+    template <typename T>
+    struct logN0 {
+	const T operator()(const T& x) const {return x ? std::log(x) : T();}
     };
 
     template<typename T>
@@ -158,22 +163,25 @@ namespace glm {
     //@}
     
     //@{ deviance residuals functions
-    static inline double
-    BinomialDevRes(const double& y, const double& mu, const double& wt) {
-	return 2 * wt * (y_log_y(y, mu) + y_log_y(1 - y, 1 - mu));
+    static inline Eigen::ArrayXd Y_log_Y(const Eigen::ArrayXd& y, const Eigen::ArrayXd& mu) {
+	return y * (y/mu).unaryExpr(logN0<double>());
     }
-    static inline double
-    GammaDevRes   (const double& y, const double& mu, const double& wt) {
-	return -2 * wt * (logYMu(y, mu) - (y - mu)/mu);
+
+    static inline VectorXd
+    BinomialDevRes(const Eigen::ArrayXd& y, const Eigen::ArrayXd& mu, const Eigen::ArrayXd& wt) {
+	return 2. * wt * (Y_log_Y(y, mu) + Y_log_Y(1. - y, 1. - mu));
     }
-    static inline double
-    GaussianDevRes(const double& y, const double& mu, const double& wt) {
-	double res = y - mu;
-	return wt * res * res;
+    static inline VectorXd
+    GammaDevRes   (const Eigen::ArrayXd& y, const Eigen::ArrayXd& mu, const Eigen::ArrayXd& wt) {
+	return -2. * wt * ((y/mu).unaryExpr(logN0<double>()) - (y - mu)/mu);
     }
-    static inline double
-    PoissonDevRes (const double& y, const double& mu, const double& wt) {
-	return 2 * wt * (y_log_y(y, mu) - (y - mu));
+    static inline VectorXd
+    GaussianDevRes(const Eigen::ArrayXd& y, const Eigen::ArrayXd& mu, const Eigen::ArrayXd& wt) {
+	return wt * (y - mu).square();
+    }
+    static inline VectorXd
+    PoissonDevRes (const Eigen::ArrayXd& y, const Eigen::ArrayXd& mu, const Eigen::ArrayXd& wt) {
+	return 2. * wt * (y * (y/mu).unaryExpr(logN0<double>()) - (y - mu));
     }
     //@}
 
@@ -297,20 +305,11 @@ namespace glm {
 /// FIXME: change this so the looping is done in the devResid[d_family] function
     VectorXd
     glmFamily::devResid(const VectorXd &mu, const VectorXd &weights, const VectorXd &y) const {
+	if (devRes.count(d_family)) return devRes[d_family](y, mu, weights);
 	int n = mu.size();
-	VectorXd ans(n);
-	if (devRes.count(d_family)) {
-	    double (*f)(const double&, const double&, const double&) = devRes[d_family];
-	    const double *mm = mu.data(), *ww = weights.data(), *yy = y.data();
-	    double *aa = ans.data();
-	    for (int i = 0; i < n; ++i) aa[i] = f(yy[i], mm[i], ww[i]);
-	} else {
-	    NumericVector ans_R = d_devRes(NumericVector(y.data(), y.data() + n),
-					   NumericVector(mu.data(), mu.data() + n),
-					   NumericVector(weights.data(), weights.data() + n));
-	    std::copy(ans_R.begin(), ans_R.end(), ans.data());
-	}
-	return ans;
+	return as<VectorXd>(as<SEXP>(d_devRes(NumericVector(y.data(), y.data() + n),
+					      NumericVector(mu.data(), mu.data() + n),
+					      NumericVector(weights.data(), weights.data() + n))));
     }
 
     double glmFamily::aic(const VectorXd& y, const VectorXd& n, const VectorXd& mu,
