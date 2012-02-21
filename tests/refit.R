@@ -60,6 +60,18 @@ getinfo(gm3)
 getinfo(gm3R)
 getinfo(gm3S)
 
+data(Mmmec,package="mlmRev")
+gm4 <- lmer(deaths ~ uvb + (1|region), data=Mmmec,
+            family=poisson,
+            offset = log(expected))
+gm4R <- refit(gm4,Mmmec$deaths)
+gm4S <- refit(gm4,simulate(gm4)[[1]])
+getinfo(gm4)
+getinfo(gm4R)
+getinfo(gm4S)
+
+stopifnot(all.equal(gm4,gm4R,tol=5e-5))
+
 checkcomp <- function(x,y) {
   for (i in slotNames(x)) {
     cat(i,"\n")

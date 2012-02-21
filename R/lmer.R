@@ -1165,14 +1165,19 @@ ranef.merMod <- function(object, postVar = FALSE, drop = FALSE,
 ##' @S3method refit merMod
 refit.merMod <- function(object, newresp, ...) {
     rr        <- object@resp$copy()
-    ## FIXME: want this to work for binomial (two-column) data?
-    ##  or tell people they have to work with prop/weights formulation?
-    if (is.matrix(newresp) && ncol(newresp)==2 && rr$family$family=="binomial") {
-      ntot <- rowSums(newresp)
-      ## FIXME: maybe unnecessary?
-      if (any(ntot==0)) stop("totals must be >0 ")
-      newresp <- newresp[,1]/ntot
-      rr$setWeights(ntot)
+
+    if (isGLMM(object) && rr$family$family=="binomial") {
+      if (is.matrix(newresp) && ncol(newresp)==2) {
+        ntot <- rowSums(newresp)
+        ## FIXME: test what happens for (0,0) columns
+        newresp <- newresp[,1]/ntot
+        rr$setWeights(ntot)
+      }
+      if (is.factor(newresp)) {
+        ## FIXME: would be better to do this consistently with
+        ## whatever machinery is used in glm/glm.fit/glmer ... ??
+        newresp <- as.numeric(newresp)-1
+      }
     }
     stopifnot(length(newresp <- as.numeric(as.vector(newresp))) == length(rr$y))
     rr$setResp(newresp)
@@ -1180,10 +1185,13 @@ refit.merMod <- function(object, newresp, ...) {
     dc        <- object@devcomp
     nAGQ      <- dc$dims["nAGQ"]
     nth       <- dc$dims["nth"]
-    ff <- mkdevfun(list2env(list(pp=pp, resp=rr, u0=pp$u0, beta0=pp$beta0, verbose=0L,
-                                 tolPwrss=dc$cmp["tolPwrss"], dpars=seq_len(nth),
-                                 nAGQ=unname(nAGQ))),
-                        nAGQ=nAGQ)
+    devlist <- list(pp=pp, resp=rr, u0=pp$u0, beta0=pp$beta0, verbose=0L,
+                    dpars=seq_len(nth))
+    if (isGLMM(object)) {
+      devlist <- c(devlist,tolPwrss=unname(dc$cmp["tolPwrss"]),
+                   nAGQ=unname(nAGQ))
+    }
+    ff <- mkdevfun(list2env(devlist),nAGQ=nAGQ)
     xst       <- rep.int(0.1, nth)
     x0        <- pp$theta
     lower     <- object@lower
@@ -1197,7 +1205,7 @@ refit.merMod <- function(object, newresp, ...) {
 ### FIXME: Probably should save the control settings and the optimizer name in the merMod object
     opt <- Nelder_Mead(ff, x0, xst=0.2*xst, xt=xst*0.0001, lower=lower, control=control)
     mkMerMod(environment(ff), opt, list(flist=object@flist, cnms=object@cnms, Gp=object@Gp,
-                                        lower=lower), object@frame, getCall(object))
+                                        lower=object@lower), object@frame, getCall(object))
 }    
 
 ##' @S3method refitML merMod
@@ -1981,3 +1989,8 @@ dotplot.coef.mer <- function(x, data, ...) {
 weights.merMod <- function(object, ...) {
   object@resp$weights
 }
+
+isGLMM <- function(object) {
+  as.logical(object@devcomp$dims["GLMM"])
+}
+             
