@@ -1,10 +1,46 @@
 library(lme4Eigen)
-## debug(simulate.merMod)
+
+## binomial (2-column and prob/weights)
 gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
               data = cbpp, family = binomial)
+gm2 <- glmer(incidence/size ~ period + (1 | herd), weights=size,
+              data = cbpp, family = binomial)
+
+s1 <- simulate(gm1,seed=101)[[1]]
+s2 <- simulate(gm2,seed=101)[[1]]
+stopifnot(all.equal(s1[,1]/rowSums(s1),s2))
+
+## Bernoulli
+## works, but too slow
+if (FALSE) {
+  data(guImmun,package="mlmRev")
+  g1 <- glmer(immun~kid2p+mom25p+ord+ethn+momEd+husEd+momWork+rural+pcInd81+
+              (1|comm/mom),family="binomial",data=guImmun)
+  s2 <- simulate(g1)
+}
+
+d <- data.frame(f=rep(LETTERS[1:10],each=10))
+d$x <- runif(nrow(d))
+u <- rnorm(10)
+d$eta <- with(d,1+2*x+u[f])
+d$y <- rbinom(nrow(d),plogis(d$eta),size=1)
+
+g1 <- glmer(y~x+(1|f),data=d,family="binomial")
+s1 <- simulate(g1,seed=102)[[1]]
+
+d$y <- factor(c("N","Y")[d$y+1])
+g1B <- glmer(y~x+(1|f),data=d,family="binomial")
+s1B <- simulate(g1B,seed=102)[[1]]
+stopifnot(all.equal(s1,as.numeric(s1B)-1))
+
+## another Bernoulli
+data(Contraception,package="mlmRev")
+fm1 <- glmer(use ~ urban+age+livch+(1|district), Contraception, binomial)
+s3 <- simulate(fm1)
+
+d$y <- rpois(nrow(d),exp(d$eta))
+g2 <- glmer(y~x+(1|f),data=d,family="poisson")
+s4 <- simulate(g2)
+
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
-
-simulate(gm1)
-simulate(fm1)
-
-## FIXME: would like better tests ...
+s5 <- simulate(fm1)

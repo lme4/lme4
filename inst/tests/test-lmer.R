@@ -21,6 +21,7 @@ test_that("lmer", {
     expect_that(extractAIC(fm1ML),                      equals(c(3, 333.327059881135)))
     expect_that(vcov(fm1)[1,1],                         equals(375.720278729861))
     expect_that(vcov(fm1ML)[1,1],                       equals(313.097224695739))
+    ## FIXME: recent version gets 313.09721874266512032 instead?
     expect_that(fm2 <- refit(fm1, Dyestuff2$Yield),     is_a("lmerMod"))
     expect_that(fixef(fm2),                             is_equivalent_to(5.6656))
     expect_that(VarCorr(fm2)[[1]][1,1],                 equals(0))

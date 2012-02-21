@@ -482,6 +482,7 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
 ##' minqa::bobyqa(1, dd, 0)
 ##' 
 mkdevfun <- function(rho, nAGQ=1L) {
+  ## FIXME: should nAGQ be automatically embedded in rho?
     stopifnot(is.environment(rho), is(rho$resp, "lmResp"))
     ff <- NULL
     if (is(rho$resp, "lmerResp")) {
@@ -1166,6 +1167,13 @@ refit.merMod <- function(object, newresp, ...) {
     rr        <- object@resp$copy()
     ## FIXME: want this to work for binomial (two-column) data?
     ##  or tell people they have to work with prop/weights formulation?
+    if (is.matrix(newresp) && ncol(newresp)==2 && rr$family$family=="binomial") {
+      ntot <- rowSums(newresp)
+      ## FIXME: maybe unnecessary?
+      if (any(ntot==0)) stop("totals must be >0 ")
+      newresp <- newresp[,1]/ntot
+      rr$setWeights(ntot)
+    }
     stopifnot(length(newresp <- as.numeric(as.vector(newresp))) == length(rr$y))
     rr$setResp(newresp)
     pp        <- object@pp$copy()
@@ -1173,7 +1181,8 @@ refit.merMod <- function(object, newresp, ...) {
     nAGQ      <- dc$dims["nAGQ"]
     nth       <- dc$dims["nth"]
     ff <- mkdevfun(list2env(list(pp=pp, resp=rr, u0=pp$u0, beta0=pp$beta0, verbose=0L,
-                                 tolPwrss=dc$cmp["tolPwrss"], dpars=seq_len(nth))),
+                                 tolPwrss=dc$cmp["tolPwrss"], dpars=seq_len(nth),
+                                 nAGQ=unname(nAGQ))),
                         nAGQ=nAGQ)
     xst       <- rep.int(0.1, nth)
     x0        <- pp$theta
@@ -1181,7 +1190,7 @@ refit.merMod <- function(object, newresp, ...) {
     if (!is.na(nAGQ) && nAGQ > 0L) {
         xst   <- c(xst, sqrt(diag(pp$unsc())))
         x0    <- c(x0, pp$beta0)
-        lower <- c(lower, rep(-Inf,length(pp$beta0)))
+        lower <- c(lower, rep(-Inf,length(x0)-length(lower)))
     }
     control <- list(...)$control
     if (is.null(control)) control <- list()
@@ -1338,27 +1347,28 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE, ...) {
               val <- switch(family$family,
 			    poisson=rpois(ntot,lambda=musim),
 			    binomial={
-				resp <- model.response(object@frame)
-				bernoulli <- !is.matrix(resp)
-				if (bernoulli) {
-				    rbinom(ntot,prob=musim,size=1)
-				} else {
-                                  nresp <- nrow(resp)
-                                  ## FIXME: should "N-size" (column 2) be named?
-                                  ## copying structures from stats/R/family.R
-                                  sizes <- rowSums(resp)
-                                  Y <- rbinom(ntot, size = sizes, prob = musim)
-                                  YY <- cbind(Y, sizes - Y)
-                                  yy <- lapply(split(YY,gl(nsim,nresp,2*nsim*nresp)),
-                                               matrix, ncol=2,
-                                               dimnames=list(NULL,colnames(resp)))
-                                  ## colnames() <- colnames(resp)
-                                  ## yy <- split(as.data.frame(YY),
-                                  ## rep(1:nsim,each=length(sizes)))
-                                  names(yy) <- paste("sim",seq_along(yy),sep="_")
-                                  yy
-				}
-                              },
+                              w <- weights(object)
+                              Y <- rbinom(ntot,prob=musim,size=w)
+                              resp <- model.response(object@frame)
+                              if (!is.matrix(resp)) {  ## bernoulli, or weights specified
+                                if (is.factor(resp)) {
+                                  if (any(weights(object)!=1)) stop("non-uniform weights with factor response??")
+                                  factor(levels(resp)[Y+1],levels=levels(resp))
+                                } else {
+                                  Y/w
+                                }
+                              } else {
+                                ## FIXME: should "N-size" (column 2) be named?
+                                ## copying structures from stats/R/family.R
+                                nresp <- nrow(resp)
+                                YY <- cbind(Y, w - Y)
+                                yy <- lapply(split(YY,gl(nsim,nresp,2*nsim*nresp)),
+                                             matrix, ncol=2,
+                                             dimnames=list(NULL,colnames(resp)))
+                                names(yy) <- paste("sim",seq_along(yy),sep="_")
+                                yy
+                              }
+                            },
 			    stop("simulation not implemented for family",
 				 family$family))
             } else {
@@ -1557,7 +1567,7 @@ setMethod("getL", "merMod", function(x) {
 ##' @keywords utilities
 ##' @examples
 ##' 
-##' ## shows many methds you should consider *before* getME():
+##' ## shows many methods you should consider *before* getME():
 ##' methods(class = "merMod")
 ##' 
 ##' (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -1965,4 +1975,9 @@ dotplot.coef.mer <- function(x, data, ...) {
     mc <- match.call()
     mc[[1]] <- as.name("dotplot.ranef.mer")
     eval(mc)
+}
+
+##' @S3method weights merMod
+weights.merMod <- function(object, ...) {
+  object@resp$weights
 }
