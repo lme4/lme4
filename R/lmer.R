@@ -2005,5 +2005,16 @@ weights.merMod <- function(object, ...) {
 
 isGLMM <- function(object) {
   as.logical(object@devcomp$dims["GLMM"])
+  ## or: is(object@resp,"glmResp")
 }
-             
+
+isNLMM <- function(object) {
+  as.logical(object@devcomp$dims["NLMM"])
+  ## or: is(object@resp,"nlsResp")
+}
+
+isLMM <- function(object) {
+  !isGLMM(object) && !isNLMM(object)
+  ## **not** is(object@resp,"lmerResp") ?
+}
+

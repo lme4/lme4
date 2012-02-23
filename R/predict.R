@@ -37,7 +37,7 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
     ## FIXME/WARNING: how do we do this in an eval-safe way???
     form_orig <- eval(object@call$formula,parent.frame())
     if (is.null(newdata) && is.null(REform)) {
-        if (is(object@resp,"lmerResp")) return(fitted(object))
+        if (isLMM(object) || isNLMM(object)) return(fitted(object))
         return(switch(type,response=object@resp$mu, ## fitted(object),
                       link=object@resp$eta))  ## fixme: getME() ?
     } else {
