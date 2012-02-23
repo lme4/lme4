@@ -1,4 +1,6 @@
-require(MASS)
+##' @importFrom MASS negative.binomial
+##' @importFrom MASS theta.ml
+##require(MASS)
 
 ## should be getME(object,"NBdisp") ?
 getNBdisp <- function(object) { 
@@ -23,6 +25,7 @@ refitNB <- function(object,theta) {
   object <- setNBdisp(object,theta)  ## new/copied object
   refit(object,newresp=model.response(model.frame(object)))
   ## FIXME: should refit() take this response as a default??
+  ## Yes, I think that is a good idea.  DB 2012-02-23
 }
 
 optTheta <- function(object,
@@ -33,6 +36,8 @@ optTheta <- function(object,
   evalcnt <- 0
   optval <- optimize(function(t) {
     ## FIXME: kluge to retain last value and evaluation count
+      ## Perhaps use a reference class object to keep track of this
+      ## auxilliary information?  DB
     L <- -logLik(lastfit <<- refitNB(lastfit,theta=exp(t)))
     evalcnt <<- evalcnt+1
     if (debug) {
@@ -70,4 +75,4 @@ glmer.nb <- function(...,
 ## do we want to facilitate profiling on theta??
 ## save evaluations used in optimize() fit?
 ## ('memoise'?)
-
+## Again, I think that a reference class object would be a better approach.
