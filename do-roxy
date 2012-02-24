@@ -3,6 +3,7 @@
 pkg <- "lme4Eigen"
 pDIR <- switch((U <- Sys.getenv("USER")),
                "maechler" = "~/R/Pkgs",
+               "bates"    = "~/sloc",
                ## default:
            {  p <- "/tmp"
               warning("unknown USER ", U,". -- using pDIR=",p,
@@ -12,7 +13,7 @@ pDIR <- switch((U <- Sys.getenv("USER")),
 pkgPATH <- file.path(pDIR, pkg)
 #
 library(roxygen2)
-if(TRUE) {
+if(FALSE) {
   roxygenize(pkgPATH, roclets = c("collate", "namespace"))## *NOT* using "rd"
 } else {
   roxygenize(pkgPATH)## <-- also recreates *.Rd files

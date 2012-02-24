@@ -18,6 +18,7 @@ Depends:
     stats
 LinkingTo: Rcpp, RcppEigen
 Imports:
+    MASS,
     Matrix(>= 1.0),
     graphics,
     grid,
@@ -25,12 +26,15 @@ Imports:
     nlme,
     splines
 Suggests:
-    PKPDmodels,
-    MASS,
     MEMSS,
-    testthat,
+    PKPDmodels,
     boot,
-    mlmRev
+    ggplot2,
+    glmmADMB,
+    mlmRev,
+    plyr,
+    reshape,
+    testthat
 LazyLoad: yes
 LazyData: yes
 License: GPL (>=2)

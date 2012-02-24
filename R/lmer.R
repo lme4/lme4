@@ -1998,6 +1998,7 @@ dotplot.coef.mer <- function(x, data, ...) {
     eval(mc)
 }
 
+##' @importFrom stats weights
 ##' @S3method weights merMod
 weights.merMod <- function(object, ...) {
   object@resp$weights

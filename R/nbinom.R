@@ -1,6 +1,5 @@
 ##' @importFrom MASS negative.binomial
 ##' @importFrom MASS theta.ml
-##require(MASS)
 
 ## should be getME(object,"NBdisp") ?
 getNBdisp <- function(object) { 
@@ -62,6 +61,7 @@ est_theta <- function(object) {
 }
 
 ## wrapper for glmer stuff
+##' @export
 glmer.nb <- function(...,
                      interval=NULL,
                      debug=FALSE) {

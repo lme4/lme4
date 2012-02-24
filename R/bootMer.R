@@ -40,9 +40,15 @@
 ##' @param use.u logical, indicating, if the spherized random effects should be
 ##'     simulated / bootstrapped as well.  If \code{FALSE}, they are not changed,
 ##'     and all inference is conditional on these.
+##' @param type character string specifying the type of bootstrap,
+##'    \code{"parametric"} or \code{"semiparametric"}.  Default is
+##'    \code{"parametric"}.  Partial matching is allowed.
 ##' @param verbose logical indicating if progress should print output
 ##' @param control an optional \code{\link{list}}, to be passed to the minimizer
 ##'     (of the log-likelihood, or RE likelihood).
+##' @param .progress character string - type of progress bar to
+##'     display.  Default is \code{"none"}.
+##' @param PBargs a list of additional arguments to the progress bar function.
 ##' @return an object of S3 \code{\link{class}} \code{"boot"}, compatible with
 ##'     \pkg{boot} package's \code{boot()} result.
 ##' @seealso For inference, including confidence intervals,
