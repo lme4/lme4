@@ -1,61 +1,75 @@
-tickdata <- read.table("Elston2001_tickdata.txt",header=TRUE,
-  colClasses=c("factor","numeric","factor","numeric","factor","factor"))
+## original code for reading/aggregating:
 
-tickdata <- transform(tickdata,cHEIGHT=scale(HEIGHT,scale=FALSE))
+## tickdata <- read.table("Elston2001_tickdata.txt",header=TRUE,
+##   colClasses=c("factor","numeric","factor","numeric","factor","factor"))
 
-form <- TICKS~YEAR+HEIGHT+(1|BROOD)+(1|INDEX)+(1|LOCATION)
-## fit with lme4
-library(lme4)
-t1 <- system.time(full_mod1  <- glmer(form, family="poisson",data=tickdata))
-c1 <- c(fixef(full_mod1),unlist(VarCorr(full_mod1)), logLik=logLik(full_mod1),time=t1["elapsed"])
-allcoefs1 <- c(unlist(full_mod1@ST),fixef(full_mod1))
-detach("package:lme4")
+## tickdata <- transform(tickdata,cHEIGHT=scale(HEIGHT,scale=FALSE))
+## for (i in names(tickdata)) {
+##   if (is.factor(tickdata[[i]])) {
+##     tickdata[[i]] <- factor(tickdata[[i]],levels=sort(as.numeric(levels(tickdata[[i]]))))
+##   }
+## }
+## summary(tickdata)
+## grouseticks <- tickdata
 
-## fit with lme4Eigen
+## library(reshape)
+## meantick <- rename(aggregate(TICKS~BROOD,data=tickdata,FUN=mean),
+##                    c(TICKS="meanTICKS"))
+## vartick <- rename(aggregate(TICKS~BROOD,data=tickdata,FUN=var),
+##                    c(TICKS="varTICKS"))
+## uniqtick <- unique(subset(tickdata,select=-c(INDEX,TICKS)))
+## grouseticks_agg <- Reduce(merge,list(meantick,vartick,uniqtick))
+
+## save("grouseticks","grouseticks_agg",file="grouseticks.rda")
+
 library(lme4Eigen)
-t2 <- system.time(full_mod2  <- glmer(form, family="poisson",data=tickdata))
-c2 <- c(fixef(full_mod2),unlist(VarCorr(full_mod2)), logLik=logLik(full_mod2),time=t2["elapsed"])
+data(grouseticks)
+do.plots <- FALSE
+form <- TICKS~YEAR+HEIGHT+(1|BROOD)+(1|INDEX)+(1|LOCATION)
+
+## fit with lme4
+## library(lme4)
+## t1 <- system.time(full_mod1  <- glmer(form, family="poisson",data=grouseticks))
+## c1 <- c(fixef(full_mod1),unlist(VarCorr(full_mod1)), logLik=logLik(full_mod1),time=t1["elapsed"])
+## allcoefs1 <- c(unlist(full_mod1@ST),fixef(full_mod1))
+## detach("package:lme4")
+
+## lme4 summary results:
+t1 <- structure(c(1.288, 0.048, 1.36, 0, 0), class = "proc_time",
+                .Names = c("user.self", 
+                  "sys.self", "elapsed", "user.child", "sys.child"))
+
+c1 <- structure(c(11.3559080756861, 1.1804105508475, -0.978704335712111, 
+                  -0.0237607330254979, 0.293232458048324, 0.562551624933584,
+                  0.279548178949372, 
+                  -424.771990224991, 1.36),
+                .Names = c("(Intercept)", "YEAR96", 
+                  "YEAR97", "HEIGHT", "INDEX", "BROOD", "LOCATION",
+                  "logLik", "time.elapsed"
+                  ))
+allcoefs1 <- structure(c(0.541509425632023, 0.750034415832756,
+                         0.528723159081737, 
+                         11.3559080756861, 1.1804105508475,
+                         -0.978704335712111, -0.0237607330254979
+                         ),
+                       .Names = c("", "", "", "(Intercept)",
+                         "YEAR96", "YEAR97",  "HEIGHT"))
+
+t2 <- system.time(full_mod2  <- glmer(form, family="poisson",data=grouseticks))
+c2 <- c(fixef(full_mod2),unlist(VarCorr(full_mod2)),
+        logLik=logLik(full_mod2),time=t2["elapsed"])
 
 allcoefs <- function(x) c(getME(x,"theta"),getME(x,"beta"))
 
 ## deviance function
-mm <- glmer(form, family="poisson",data=tickdata,devFunOnly=TRUE,tolPwrss=1e-12,verbose=4,
-            compDev=FALSE)
-mm(allcoefs1)
-## works with compDev=FALSE, fails with compDev=TRUE
+mm <- glmer(form, family="poisson",data=grouseticks,devFunOnly=TRUE)
+## ,compDev=FALSE)
+mm2 <- glmer(form, family="poisson",data=grouseticks,
+             devFunOnly=TRUE,compDev=TRUE)
+stopifnot(all.equal(mm(allcoefs1),mm2(allcoefs1)))
 
 ## refit
-full_mod3 <- refit(full_mod2,tickdata$TICKS)
+full_mod3 <- refit(full_mod2,grouseticks$TICKS)
 
-fn <- "elston_fits.RData"
-## FIXME::: some possibility of differing results? 1780.
-## what changed ???
-if (!file.exists(fn)) {
-  tvec <- seq(-13,-7,by=0.1)
-  dmat <- matrix(nrow=length(tvec),ncol=9,  
-                 dimnames=list(NULL,c("deviance","time_elapsed",
-                   paste("theta",1:3,sep=""),paste("beta",1:4,sep=""))))
-  for (i in seq_along(tvec)) {
-    tt <- system.time(gg <- glmer(form,family="poisson",data=tickdata,tolPwrss=10^tvec[i]))["elapsed"]
-    cat(i,tvec[i],deviance(gg),"\n")
-    dmat[i,] <- c(deviance(gg),tt,allcoefs(gg))
-  }
-  dmat <- data.frame(logtol=tvec,dmat)
-  save("dmat",file=fn)
-} else load(fn)
-
-newdev <- apply(dmat[,-(1:3)],1,mm)
-library(ggplot2)
-library(reshape)
-qplot(logtol,value,data=melt(dmat,id.var="logtol"),geom=c("line"))+
-  facet_wrap(~variable,scale="free")+
-  geom_line(data=data.frame(logtol=dmat$logtol,value=newdev,variable="deviance"),
-            colour="blue")+
-  geom_hline(data=data.frame(variable="deviance",val=mm(allcoefs1)),
-             aes(yintercept=val),colour="red")+theme_bw()+
-  geom_vline(data=data.frame(variable="deviance",val=-10),
-             aes(xintercept=val),colour="gray")
-
-detach("package:lme4Eigen")
 cbind(c1,c2)
 

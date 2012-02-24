@@ -23,15 +23,14 @@ g1B <- lme4Eigen:::refitNB(g1,theta=lme4Eigen:::getNBdisp(g1))
 deviance(g1)-deviance(g1B)
 (fixef(g1)-fixef(g1B))/fixef(g1)
 
-if (FALSE) {
-  library(glmmADMB)
-  t2 <- system.time(g2 <- glmmadmb(z~x+(1|f),
-                                   data=d1,family="nbinom"))
-  glmmADMB_vals <- list(fixef=fixef(g2),
-                        NLL=-logLik(g2),
-                        theta=g2$alpha)
-  ## 0.4487
-}
+## library(glmmADMB)
+## t2 <- system.time(g2 <- glmmadmb(z~x+(1|f),
+##                                  data=d1,family="nbinom"))
+## glmmADMB_vals <- list(fixef=fixef(g2),
+##                       NLL=-logLik(g2),
+##                       theta=g2$alpha)
+## 0.4487
+
 
 glmmADMB_vals <- structure(list(fixef = 
     structure(c(0.92871, 2.0507), .Names = c("(Intercept)", 
@@ -41,51 +40,50 @@ glmmADMB_vals <- structure(list(fixef =
 stopifnot(all.equal(glmmADMB_vals$theta,lme4Eigen:::getNBdisp(g1),
                      tol=0.0016))
 
-if (FALSE) {
-  ## simulation study
-  simsumfun <- function(...) {
-    d <- simfun(...)
-    t1 <- system.time(g1 <- glmer.nb(z~x+(1|f),data=d))
-    t2 <- system.time(g2 <- glmmadmb(z~x+(1|f),
-                                     data=d,family="nbinom"))
-    c(t.glmer=unname(t1["elapsed"]),nevals.glmer=g1$nevals,
-      theta.glmer=exp(g1$minimum),
-      t.glmmadmb=unname(t2["elapsed"]),theta.glmmadmb=g2$alpha)
-  }
+## simulation study
+##   simsumfun <- function(...) {
+##     d <- simfun(...)
+##     t1 <- system.time(g1 <- glmer.nb(z~x+(1|f),data=d))
+##     t2 <- system.time(g2 <- glmmadmb(z~x+(1|f),
+##                                      data=d,family="nbinom"))
+##     c(t.glmer=unname(t1["elapsed"]),nevals.glmer=g1$nevals,
+##       theta.glmer=exp(g1$minimum),
+##       t.glmmadmb=unname(t2["elapsed"]),theta.glmmadmb=g2$alpha)
+##   }
 
-  library(plyr)
-  sim50 <- raply(50,simsumfun(),.progress="text")
-  save("sim50",file="nbinomsim1.RData")
-  library(reshape)
-  m1 <- melt(data.frame(run=seq(nrow(sim50)),sim50),id.var="run")
-  m1 <- data.frame(m1,colsplit(m1$variable,"\\.",c("v","method")))
-  m2 <- cast(subset(m1,v=="theta",select=c(run,value,method)),
-             run~method)
+##   library(plyr)
+##   sim50 <- raply(50,simsumfun(),.progress="text")
+##   save("sim50",file="nbinomsim1.RData")
+##   library(reshape)
+##   m1 <- melt(data.frame(run=seq(nrow(sim50)),sim50),id.var="run")
+##   m1 <- data.frame(m1,colsplit(m1$variable,"\\.",c("v","method")))
+##   m2 <- cast(subset(m1,v=="theta",select=c(run,value,method)),
+##              run~method)
 
-  library(ggplot2)
-  ggplot(subset(m1,v=="theta"),aes(x=method,y=value))+
-    geom_boxplot()+geom_point()+geom_hline(yintercept=0.5,colour="red")
+##   library(ggplot2)
+##   ggplot(subset(m1,v=="theta"),aes(x=method,y=value))+
+##     geom_boxplot()+geom_point()+geom_hline(yintercept=0.5,colour="red")
 
-  ggplot(subset(m1,v=="theta"),aes(x=method,y=value))+
-    stat_summary(fun.data=mean_cl_normal)+
-      geom_hline(yintercept=0.5,colour="red")
+##   ggplot(subset(m1,v=="theta"),aes(x=method,y=value))+
+##     stat_summary(fun.data=mean_cl_normal)+
+##       geom_hline(yintercept=0.5,colour="red")
   
-  ggplot(m2,aes(x=glmer-glmmadmb))+geom_histogram()
-  ## glmer is slightly more biased (but maybe the MLE itself is biased???)
-}
+##   ggplot(m2,aes(x=glmer-glmmadmb))+geom_histogram()
+##   ## glmer is slightly more biased (but maybe the MLE itself is biased???)
 
 
 ### epilepsy example:
-data(epil2,package="glmmADMB")
-epil2$subject <- factor(epil2$subject)
+data(epil,package="MASS")
+epil2 <- transform(epil,Visit=(period-2.5)/5,
+                   Base=log(base/4),Age=log(age),
+                   subject=factor(subject))
 
-if (FALSE) {
-  t3 <- system.time(g3  <- glmmadmb(y~Base*trt+Age+Visit+(Visit|subject),
-                                    data=epil2, family="nbinom"))
-  glmmADMB_epil_vals <- list(fixef=fixef(g3),
-                             NLL=-logLik(g3),
-                             theta=g3$alpha)
-}
+## t3 <- system.time(g3  <- glmmadmb(y~Base*trt+Age+Visit+(Visit|subject),
+##                                   data=epil2, family="nbinom"))
+## glmmADMB_epil_vals <- list(fixef=fixef(g3),
+##                            NLL=-logLik(g3),
+##                            theta=g3$alpha)
+
 glmmADMB_epil_vals <-
   structure(list(fixef = structure(c(-1.33, 0.88392, -0.92997, 
                    0.47514, -0.27016, 0.33724), .Names = c("(Intercept)", "Base", 
