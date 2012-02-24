@@ -84,6 +84,13 @@ namespace glm {
     };
 
     template<typename T>
+    struct Lgamma : public std::unary_function<T, T> {
+	const T operator() (const T& x) const {
+	    return lgamma(x);
+	}
+    };
+
+    template<typename T>
     struct logitinv : public std::unary_function<T, T> {
 	const T operator() (const T& x) const {
 	    return T(::Rf_plogis(double(x), 0., 1., 1, 0));
@@ -140,26 +147,53 @@ namespace glm {
     };
     //@}
 
+#if 0
+    const ArrayXd      logLink::linkFun(const ArrayXd&  mu) const {return  mu.log();}
+    const ArrayXd      logLink::linkInv(const ArrayXd& eta) const {return eta.exp();}
+    const ArrayXd      logLink::muEta(  const ArrayXd& eta) const {return eta.exp();}
+
+    const ArrayXd    logitLink::linkFun(const ArrayXd&  mu) const {return  mu.unaryExpr(logit<double>());}
+    const ArrayXd    logitLink::linkInv(const ArrayXd& eta) const {return eta.unaryExpr(logitinv<double>());}
+    const ArrayXd    logitLink::muEta(  const ArrayXd& eta) const {return eta.unaryExpr(logitmueta<double>());}
+
+    const ArrayXd   probitLink::linkFun(const ArrayXd&  mu) const {return  mu.unaryExpr(probit<double>());}
+    const ArrayXd   probitLink::linkInv(const ArrayXd& eta) const {return eta.unaryExpr(probitinv<double>());}
+    const ArrayXd   probitLink::muEta(  const ArrayXd& eta) const {return eta.unaryExpr(probitmueta<double>());}
+
+    const ArrayXd identityLink::linkFun(const ArrayXd&  mu) const {return  mu;}
+    const ArrayXd identityLink::linkInv(const ArrayXd& eta) const {return eta;}
+    const ArrayXd identityLink::muEta(  const ArrayXd& eta) const {return ArrayXd::Ones(eta.size());}
+
+    const ArrayXd  inverseLink::linkFun(const ArrayXd&  mu) const {return  mu.inverse();}
+    const ArrayXd  inverseLink::linkInv(const ArrayXd& eta) const {return eta.inverse();}
+    const ArrayXd  inverseLink::muEta(  const ArrayXd& eta) const {return -(eta.inverse().square());}
+
+//    const ArrayXd  cloglogLink::linkFun(const ArrayXd&  mu) const {return  mu.unaryExpr(cloglog<double>());}
+    const ArrayXd  cloglogLink::linkFun(const ArrayXd&  mu) const {return  mu;}
+    const ArrayXd  cloglogLink::linkInv(const ArrayXd& eta) const {return eta.unaryExpr(clogloginv<double>());}
+    const ArrayXd  cloglogLink::muEta(  const ArrayXd& eta) const {return eta.unaryExpr(cloglogmueta<double>());}
+
+#endif
     //@{  Vector functions for links, inverse links, derivatives and variances
-    static VectorXd cubef(     const VectorXd& x) {return x.array().cube();}
-    static VectorXd expf(      const VectorXd& x) {return x.array().exp();}
-    static VectorXd identf(    const VectorXd& x) {return x;}
-    static VectorXd invderivf( const VectorXd& x) {return -(x.array().inverse().square());}
-    static VectorXd inversef(  const VectorXd& x) {return x.array().inverse();}
-    static VectorXd logf(      const VectorXd& x) {return x.array().log();}
-    static VectorXd onef(      const VectorXd& x) {return VectorXd::Ones(x.size());}
-    static VectorXd sqrf(      const VectorXd& x) {return x.array().square();}
-    static VectorXd sqrtf(     const VectorXd& x) {return x.array().sqrt();}
-    static VectorXd twoxf(     const VectorXd& x) {return x * 2.;}
-    static VectorXd x1mxf(     const VectorXd& x) {return x.array().unaryExpr(x1mx<double>());}
-    static VectorXd logitf(    const VectorXd& x) {return x.array().unaryExpr(logit<double>());}
-    static VectorXd logitinvf( const VectorXd& x) {return x.array().unaryExpr(logitinv<double>());}
-    static VectorXd logitmuf(  const VectorXd& x) {return x.array().unaryExpr(logitmueta<double>());}
-    static VectorXd probitf(   const VectorXd& x) {return x.array().unaryExpr(probit<double>());}
-    static VectorXd probitinvf(const VectorXd& x) {return x.array().unaryExpr(probitinv<double>());}
-    static VectorXd probitmuf( const VectorXd& x) {return x.array().unaryExpr(probitmueta<double>());}
-    static VectorXd clogloginf(const VectorXd& x) {return x.array().unaryExpr(clogloginv<double>());}
-    static VectorXd cloglogmuf(const VectorXd& x) {return x.array().unaryExpr(cloglogmueta<double>());}
+    static ArrayXd cubef(     const ArrayXd& x) {return x.cube();}
+    static ArrayXd expf(      const ArrayXd& x) {return x.exp();}
+    static ArrayXd identf(    const ArrayXd& x) {return x;}
+    static ArrayXd invderivf( const ArrayXd& x) {return -(x.inverse().square());}
+    static ArrayXd inversef(  const ArrayXd& x) {return x.inverse();}
+    static ArrayXd logf(      const ArrayXd& x) {return x.log();}
+    static ArrayXd onef(      const ArrayXd& x) {return ArrayXd::Ones(x.size());}
+    static ArrayXd sqrf(      const ArrayXd& x) {return x.square();}
+    static ArrayXd sqrtf(     const ArrayXd& x) {return x.sqrt();}
+    static ArrayXd twoxf(     const ArrayXd& x) {return x * 2.;}
+    static ArrayXd x1mxf(     const ArrayXd& x) {return x.unaryExpr(x1mx<double>());}
+    static ArrayXd logitf(    const ArrayXd& x) {return x.unaryExpr(logit<double>());}
+    static ArrayXd logitinvf( const ArrayXd& x) {return x.unaryExpr(logitinv<double>());}
+    static ArrayXd logitmuf(  const ArrayXd& x) {return x.unaryExpr(logitmueta<double>());}
+    static ArrayXd probitf(   const ArrayXd& x) {return x.unaryExpr(probit<double>());}
+    static ArrayXd probitinvf(const ArrayXd& x) {return x.unaryExpr(probitinv<double>());}
+    static ArrayXd probitmuf( const ArrayXd& x) {return x.unaryExpr(probitmueta<double>());}
+    static ArrayXd clogloginf(const ArrayXd& x) {return x.unaryExpr(clogloginv<double>());}
+    static ArrayXd cloglogmuf(const ArrayXd& x) {return x.unaryExpr(cloglogmueta<double>());}
     //@}
     
     //@{ deviance residuals functions
@@ -167,19 +201,19 @@ namespace glm {
 	return y * (y/mu).unaryExpr(logN0<double>());
     }
 
-    static inline VectorXd
+    static inline ArrayXd
     BinomialDevRes(const Eigen::ArrayXd& y, const Eigen::ArrayXd& mu, const Eigen::ArrayXd& wt) {
 	return 2. * wt * (Y_log_Y(y, mu) + Y_log_Y(1. - y, 1. - mu));
     }
-    static inline VectorXd
+    static inline ArrayXd
     GammaDevRes   (const Eigen::ArrayXd& y, const Eigen::ArrayXd& mu, const Eigen::ArrayXd& wt) {
 	return -2. * wt * ((y/mu).unaryExpr(logN0<double>()) - (y - mu)/mu);
     }
-    static inline VectorXd
+    static inline ArrayXd
     GaussianDevRes(const Eigen::ArrayXd& y, const Eigen::ArrayXd& mu, const Eigen::ArrayXd& wt) {
 	return wt * (y - mu).square();
     }
-    static inline VectorXd
+    static inline ArrayXd
     PoissonDevRes (const Eigen::ArrayXd& y, const Eigen::ArrayXd& mu, const Eigen::ArrayXd& wt) {
 	return 2. * wt * (y * (y/mu).unaryExpr(logN0<double>()) - (y - mu));
     }
@@ -187,10 +221,10 @@ namespace glm {
 
     //@{  AIC functions (which actually return the deviance, go figure)
     static inline double
-    BinomialAIC   (const VectorXd& y, const VectorXd& n, const VectorXd& mu,
-		   const VectorXd& wt, double dev) {
-	Eigen::ArrayXd m((n.array() > 1).any() ? n : wt);
-	Eigen::ArrayXd yy((m * y.array()).unaryExpr(Round<double>()));
+    BinomialAIC   (const ArrayXd& y, const ArrayXd& n, const ArrayXd& mu,
+		   const ArrayXd& wt, double dev) {
+	Eigen::ArrayXd m((n > 1).any() ? n : wt);
+	Eigen::ArrayXd yy((m * y).unaryExpr(Round<double>()));
 	m = m.unaryExpr(Round<double>());
 	double ans(0.);
 	for (int i=0; i < mu.size(); ++i)
@@ -199,8 +233,8 @@ namespace glm {
     }
 
     static inline double
-    PoissonAIC    (const VectorXd& y, const VectorXd& n, const VectorXd& mu,
-		   const VectorXd& wt, double dev) {
+    PoissonAIC    (const ArrayXd& y, const ArrayXd& n, const ArrayXd& mu,
+		   const ArrayXd& wt, double dev) {
 	double ans(0.);
 	for (int i=0; i < mu.size(); ++i) ans += ::Rf_dpois(y[i], mu[i], true) * wt[i];
 	return (-2. * ans);
@@ -282,38 +316,38 @@ namespace glm {
 	if (!lnks.count("identity")) initMaps();
     }
 
-    VectorXd glmFamily::linkFun(const VectorXd& mu) const {
+    ArrayXd glmFamily::linkFun(const ArrayXd& mu) const {
 	if (lnks.count(d_link)) return lnks[d_link](mu);
-	return as<VectorXd>(d_linkfun(NumericVector(mu.data(), mu.data() + mu.size())));
+	return as<ArrayXd>(d_linkfun(NumericVector(mu.data(), mu.data() + mu.size())));
     }
 
-    VectorXd glmFamily::linkInv(const VectorXd& eta) const {
+    ArrayXd glmFamily::linkInv(const ArrayXd& eta) const {
 	if (linvs.count(d_link)) return linvs[d_link](eta);
-	return as<VectorXd>(d_linkinv(NumericVector(eta.data(), eta.data() + eta.size())));
+	return as<ArrayXd>(d_linkinv(NumericVector(eta.data(), eta.data() + eta.size())));
     }
 
-    VectorXd glmFamily::muEta(const VectorXd &eta) const {
+    ArrayXd glmFamily::muEta(const ArrayXd &eta) const {
 	if (muEtas.count(d_link)) return muEtas[d_link](eta);
-	return as<VectorXd>(as<SEXP>(d_muEta(NumericVector(eta.data(), eta.data() + eta.size()))));
+	return as<ArrayXd>(as<SEXP>(d_muEta(NumericVector(eta.data(), eta.data() + eta.size()))));
     }
     
-    VectorXd glmFamily::variance(const VectorXd &mu) const {
+    ArrayXd glmFamily::variance(const ArrayXd &mu) const {
 	if (varFuncs.count(d_family)) return varFuncs[d_family](mu);
-	return as<VectorXd>(as<SEXP>(d_variance(NumericVector(mu.data(), mu.data() + mu.size()))));
+	return as<ArrayXd>(as<SEXP>(d_variance(NumericVector(mu.data(), mu.data() + mu.size()))));
     }
     
 /// FIXME: change this so the looping is done in the devResid[d_family] function
-    VectorXd
-    glmFamily::devResid(const VectorXd &mu, const VectorXd &weights, const VectorXd &y) const {
+    ArrayXd
+    glmFamily::devResid(const ArrayXd &mu, const ArrayXd &weights, const ArrayXd &y) const {
 	if (devRes.count(d_family)) return devRes[d_family](y, mu, weights);
 	int n = mu.size();
-	return as<VectorXd>(as<SEXP>(d_devRes(NumericVector(y.data(), y.data() + n),
+	return as<ArrayXd>(as<SEXP>(d_devRes(NumericVector(y.data(), y.data() + n),
 					      NumericVector(mu.data(), mu.data() + n),
 					      NumericVector(weights.data(), weights.data() + n))));
     }
 
-    double glmFamily::aic(const VectorXd& y, const VectorXd& n, const VectorXd& mu,
-			  const VectorXd& wt, double dev) const {
+    double glmFamily::aic(const ArrayXd& y, const ArrayXd& n, const ArrayXd& mu,
+			  const ArrayXd& wt, double dev) const {
 	int nn = mu.size();
 	if (aics.count(d_family)) return aics[d_family](y, n, mu, wt, dev);
 	SEXP ans = d_aic(NumericVector(y.data(), y.data() + nn),
@@ -322,5 +356,28 @@ namespace glm {
 			 NumericVector(wt.data(), wt.data() + nn),
 			 ::Rf_ScalarReal(dev));
 	return Rcpp::as<double>(ans);
+    }
+    
+    negativeBinomial::negativeBinomial(Rcpp::List ll)
+	: glmFamily(ll),
+	  d_theta(::Rf_asReal(as<SEXP>(d_rho[".Theta"]))) {}
+
+    ArrayXd negativeBinomial::variance(const ArrayXd &mu) const {
+	Rcpp::Rcout << "in negativeBinomial::variance with theta = " << d_theta << std::endl;
+	return mu + mu.square()/d_theta;
+    }
+
+    ArrayXd negativeBinomial::devResid(const ArrayXd &mu, const ArrayXd &weights,
+					const ArrayXd &y) const {
+	return 2. * weights * (Y_log_Y(y, mu) - (y + d_theta) *
+			       ((y + d_theta)/(mu + d_theta)).log());
+    }
+
+    double negativeBinomial::aic(const ArrayXd& y, const ArrayXd& n, const ArrayXd& mu,
+				 const ArrayXd& wt, double dev) const {
+	return 2. * (wt * (y + d_theta) * (mu + d_theta).log() -
+		     y * mu.log() + (y + 1).unaryExpr(Lgamma<double>()) -
+		     d_theta * std::log(d_theta) + lgamma(d_theta) -
+		     (d_theta + y).unaryExpr(Lgamma<double>())).sum();
     }
 }
