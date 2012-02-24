@@ -48,3 +48,5 @@ Collate:
     'utilities.R'
     'optimizer.R'
     'predict.R'
+    'bootMer.R'
+    'nbinom.R'

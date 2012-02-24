@@ -135,7 +135,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 
     ## FIXME: this code is replicated in lmer/glmer/nlmer ...
     ## it seems good to have it in R rather than C++ code but maybe it should go within Nelder_Mead() ??
-    
+
     control$iprint <- switch(as.character(min(verbose,3L)),
                              "0"=0, "1"=20,"2"=10,"3"=1)
 
@@ -169,7 +169,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 ##' \code{nAGQ} argument controls the number of nodes in the
 ##' quadrature formula.  A model with a single, scalar random-effects
 ##' term could reasonably use up to 25 quadrature points per scalar
-##' integral. 
+##' integral.
 ##'
 ##' With vector-valued random effects the complexity of the
 ##' Gauss-Hermite quadrature formulas increases dramatically with the
@@ -178,7 +178,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 ##' evaluation of the approximate GLMM deviance.  For 20-dimensional
 ##  vector-valued random effects, \code{nAGQ=2} requires 41
 ##' evaluations of the GLM deviance per evaluation of the approximate
-##' GLMM deviance. 
+##' GLMM deviance.
 ##'
 ##' The default approximation is the Laplace approximation,
 ##' corresponding to \code{nAGQ=1}.
@@ -235,7 +235,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 ##' ## check with nAGQ=25L
 ##' (gm1c <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
 ##'                cbpp, binomial, nAGQ = 25L))
-##' 
+##'
 ##' ## GLMM with individual-level variability (accounting for overdispersion)
 ##' cbpp$obs <- 1:nrow(cbpp)
 ##' (gm2 <- glmer(cbind(incidence, size - incidence) ~ period +
@@ -277,7 +277,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     if(is.function(family)) family <- family()
     if (family$family %in% c("quasibinomial", "quasipoisson", "quasi"))
 	stop('"quasi" families cannot be used in glmer')
-    
+
     stopifnot(length(nAGQ <- as.integer(nAGQ)) == 1L,
               nAGQ >= 0L,
               nAGQ <= 25L,
@@ -387,7 +387,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 ##' @keywords models
 ##' @examples
 ##' ## nonlinear mixed models --- 3-part formulas ---
-##' 
+##'
 ##' (nm1 <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~ Asym|Tree,
 ##'              Orange, start = c(Asym = 200, xmid = 725, scal = 350)))
 ##' (nm1a <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~ Asym|Tree,
@@ -420,7 +420,7 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
     rho$u0 <- rho$pp$u0
     rho$beta0 <- rho$pp$beta0
     rho$tolPwrss <- tolPwrss # Resetting this is intentional. The initial optimization is coarse.
-    
+
     control$iprint <- switch(as.character(min(verbose,3L)),
                              "0"=0,"1"=20,"2"=10,"3"=1)
     lower <- rho$lower
@@ -464,20 +464,20 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
 }## {nlmer}
 
 ##' Create a deviance evaluation function from a predictor and a response module
-##' 
+##'
 ##' From an merMod object create an R function that takes a single argument,
 ##' which is the new parameter value, and returns the deviance.
-##' 
+##'
 ##' The function returned by \code{mkdevfun} evaluates the deviance of the model
 ##' represented by the predictor module, \code{pp}, and the response module,
 ##' \code{resp}.
-##' 
+##'
 ##' For \code{\link{lmer}} model objects the argument of the resulting function
 ##' is the variance component parameter, \code{theta}, with lower bound.  For
 ##' \code{glmer} or \code{nlmer} model objects with \code{nAGQ = 0} the argument
 ##' is also \code{theta}.  However, when nAGQ > 0 the argument is \code{c(theta,
 ##' beta)}.
-##' 
+##'
 ##' @param rho an environment containing \code{pp}, a prediction module,
 ##'     typically of class \code{\linkS4class{merPredD}} and \code{resp}, a response
 ##'     module, e.g., of class \code{\linkS4class{lmerResp}}.
@@ -489,11 +489,11 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
 ##' @seealso \code{\link{lmer}}, \code{\link{glmer}} and \code{\link{nlmer}}
 ##' @keywords models
 ##' @examples
-##' 
+##'
 ##' (dd <- lmer(Yield ~ 1|Batch, Dyestuff, devFunOnly=TRUE))
 ##' dd(0.8)
 ##' minqa::bobyqa(1, dd, 0)
-##' 
+##'
 mkdevfun <- function(rho, nAGQ=1L) {
   ## FIXME: should nAGQ be automatically embedded in rho?
     stopifnot(is.environment(rho), is(rho$resp, "lmResp"))
@@ -621,23 +621,23 @@ pwrssUpdate <- function(pp, resp, verbose, uOnly=FALSE, tol, maxSteps = 10) {
 ##    instead of using	rnorm()
 
 ##' Model-based (Semi-)Parametric Bootstrap for Mixed Models
-##' 
+##'
 ##' Perform model-based (Semi-)parametric bootstrap for mixed models.
-##' 
+##'
 ##' Currently, the semi-parametric variant is not yet implemented, and we only
 ##' provide a method for \code{\linkS4class{merMod}} classes, i.e.,
 ##' \code{\link{lmer}} results.
-##' 
+##'
 ##' The working name for bootMer() was \dQuote{simulestimate()}, as it is an
 ##' extension of \code{\link{simulate}}, but we rather want to emphasize its
 ##' potential for valid inference.
-##' 
+##'
 ##' In each of the \code{nsim} simulations --- that is what the
 ##' \emph{parametric} bootstrap does, both \dQuote{\emph{spherized}} random
 ##' effects \eqn{u} and the i.i.d errors \eqn{\epsilon} are generated, using
 ##' \code{\link{rnorm}()} with parameters corresponding to the fitted model
 ##' \code{x}.
-##' 
+##'
 ##' @param x fitted \code{*lmer()} model, see \code{\link{lmer}},
 ##'     \code{\link{glmer}}, etc.
 ##' @param FUN a \code{\link{function}(x)}, computating the \emph{statistic} of
@@ -656,7 +656,7 @@ pwrssUpdate <- function(pp, resp, verbose, uOnly=FALSE, tol, maxSteps = 10) {
 ##'     \pkg{boot} package's \code{boot()} result.
 ##' @seealso For inference, including confidence intervals,
 ##'     \code{\link{profile-methods}}.
-##' 
+##'
 ##'     \code{\link[boot]{boot}()}, and then \code{\link[boot]{boot.ci}} from
 ##'     package \pkg{boot}.
 ##' @references Davison, A.C. and Hinkley, D.V. (1997) \emph{Bootstrap Methods
@@ -668,26 +668,26 @@ pwrssUpdate <- function(pp, resp, verbose, uOnly=FALSE, tol, maxSteps = 10) {
 ##' mySumm <- function(.) { s <- sigma(.)
 ##'     c(beta =getME(., "beta"), sigma = s, sig01 = s * getME(., "theta")) }
 ##' (t0 <- mySumm(fm01ML)) # just three parameters
-##' 
+##'
 ##' \dontrun{%%--- fails for now --- FIXME
-##' 
+##'
 ##' ## 3.8s (on a 5600 MIPS 64bit fast(year 2009) desktop "AMD Phenom(tm) II X4 925"):
 ##' system.time( boo01 <- bootMer(fm01ML, mySumm, nsim = 100) )
-##' 
+##'
 ##' ## to "look" at it
 ##' if(need.boot <- is.na(match("package:boot", search())))
 ##'   require("boot")## is a recommended package, i.e. *must* be there
 ##' boo01 # look at estimated bias for sig01 (-9.1, also when nsim = 1000)
-##' 
+##'
 ##' ## ------ Bootstrap-based confidence intervals ------------
-##' 
+##'
 ##' (bCI.1 <- boot.ci(boo01, index=1, type=c("norm", "basic", "perc")))# beta
-##' 
+##'
 ##' ## Sigma - original scale, and interval calculation on log-scale:
 ##' (bCI.2  <- boot.ci(boo01, index=2, type=c("norm", "basic", "perc")))
 ##' (bCI.2l <- boot.ci(boo01, index=2, type=c("norm", "basic", "perc"),
 ##'                    h = log, hdot = function(.) 1/., hinv = exp))
-##' 
+##'
 ##' (bCI.3 <- boot.ci(boo01, index=3, type=c("norm", "basic", "perc")))# sig01
 ##' }
 ##' @export
@@ -1005,7 +1005,7 @@ family.glmResp <- function(object, ...) object$family
 fitted.merMod <- function(object, ...) object@resp$mu
 
 ##' Extract the fixed-effects estimates
-##' 
+##'
 ##' Extract the estimates of the fixed-effects parameters from a fitted model.
 ##' @name fixef
 ##' @title Extract fixed-effects estimates
@@ -1063,11 +1063,11 @@ nobs.merMod <- function(object, ...) nrow(object@frame)
 NULL
 
 ##' Extract the modes of the random effects
-##' 
+##'
 ##' A generic function to extract the conditional modes of the random effects
 ##' from a fitted model object.  For linear mixed models the conditional modes
 ##' of the random effects are also the conditional means.
-##' 
+##'
 ##' If grouping factor i has k levels and j random effects per level the ith
 ##' component of the list returned by \code{ranef} is a data frame with k rows
 ##' and j columns.  If \code{postVar} is \code{TRUE} the \code{"postVar"}
@@ -1100,11 +1100,11 @@ NULL
 ##' effects.  The number of rows in the data frame is the number of levels of
 ##' the grouping factor.  The number of columns is the dimension of the random
 ##' effect associated with each level of the factor.
-##' 
+##'
 ##' If \code{postVar} is \code{TRUE} each of the data frames has an attribute
 ##' called \code{"postVar"} which is a three-dimensional array with symmetric
 ##' faces.
-##' 
+##'
 ##' When \code{drop} is \code{TRUE} any components that would be data frames of
 ##' a single column are converted to named numeric vectors.
 ##' @note To produce a \dQuote{caterpillar plot} of the random effects apply
@@ -1219,7 +1219,7 @@ refit.merMod <- function(object, newresp, ...) {
     opt <- Nelder_Mead(ff, x0, xst=0.2*xst, xt=xst*0.0001, lower=lower, control=control)
     mkMerMod(environment(ff), opt, list(flist=object@flist, cnms=object@cnms, Gp=object@Gp,
                                         lower=object@lower), object@frame, getCall(object))
-}    
+}
 
 ##' @S3method refitML merMod
 refitML.merMod <- function (x, ...) {
@@ -1263,7 +1263,7 @@ residuals.merMod <-
 residuals.lmResp <- function(object, type = c("deviance", "pearson",
                                      "working", "response", "partial"),
                              ...) {
-### FIXME: This should be extended with na.resid but need to store na.action    
+### FIXME: This should be extended with na.resid but need to store na.action
     switch(match.arg(type),
            working =,
            response = object$y - object$mu,
@@ -1290,7 +1290,7 @@ residuals.glmResp <- function(object, type = c("deviance", "pearson",
            response = y - mu,
            partial = .NotYetImplemented())
 }
-    
+
 ##' @S3method sigma merMod
 sigma.merMod <- function(object, ...) {
     dc <- object@devcomp
@@ -1545,15 +1545,15 @@ setMethod("getL", "merMod", function(x) {
 })
 
 ##' Extract or Get Generalize Components from a Fitted Mixed Effects Model
-##' 
+##'
 ##' Extract (or \dQuote{get}) \dQuote{components} -- in a generalized sense --
 ##' from a fitted mixed-effects model, i.e. (in this version of the package)
 ##' from an object of class \code{"\linkS4class{merMod}"}.
-##' 
+##'
 ##' The goal is to provide \dQuote{everything a user may want} from a fitted
 ##' \code{"merMod"} object \emph{as far} as it is not available by methods, such
 ##' as \code{\link{fixef}}, \code{\link{ranef}}, \code{\link{vcov}}, etc.
-##' 
+##'
 ##' @aliases getME getL getL,merMod-method
 ##' @param object a fitted mixed-effects model of class
 ##' \code{"\linkS4class{merMod}"}, i.e. typically the result of
@@ -1587,20 +1587,20 @@ setMethod("getL", "merMod", function(x) {
 ##' \code{\link{fixef}}, \code{\link{vcov}}, etc.
 ##' @keywords utilities
 ##' @examples
-##' 
+##'
 ##' ## shows many methods you should consider *before* getME():
 ##' methods(class = "merMod")
-##' 
+##'
 ##' (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 ##' Z <- getME(fm1, "Z")
 ##' stopifnot(is(Z, "CsparseMatrix"),
 ##'           c(180,36) == dim(Z),
 ##' 	  all.equal(fixef(fm1), getME(fm1, "beta"),
 ##' 		    check.attr=FALSE, tol = 0))
-##' 
+##'
 ##' ## All that can be accessed [potentially ..]:
 ##' (nmME <- eval(formals(getME)$name))
-##' 
+##'
 ##' \dontshow{
 ##' ## internal consistency check ensuring that all work:
 ##' ## "try(.)" because some are not yet implemented:
@@ -1719,12 +1719,12 @@ mkVarCorr <- function(sc, cnms, nc, theta, nms) {
 }
 
 ##' Extract variance and correlation components
-##' 
+##'
 ##' This function calculates the estimated variances, standard deviations, and
 ##' correlations between the random-effects terms in a mixed-effects model, of
 ##' class \code{\linkS4class{merMod}} (linear, generalized or nonlinear).  The
 ##' within-group error variance and standard deviation are also calculated.
-##' 
+##'
 ##' @name VarCorr
 ##' @aliases VarCorr VarCorr.merMod
 ##' @param x a fitted model object, usually an object inheriting from class
@@ -1736,7 +1736,7 @@ mkVarCorr <- function(sc, cnms, nc, theta, nms) {
 ##' @return a list of matrices, one for each random effects grouping term.
 ##' For each grouping term, the standard deviations and correlation matrices for each grouping term
 ##' are stored as attributes \code{"stddev"} and \code{"correlation"}, respectively, of the
-##' variance-covariance matrix, and 
+##' variance-covariance matrix, and
 ##' the residual standard deviation is stored as attribute \code{"sc"}
 ##' (for \code{glmer} fits, this attribute stores the scale parameter of the model).
 ##' @author This is modeled after \code{\link[nlme]{VarCorr}} from package

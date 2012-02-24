@@ -57,7 +57,7 @@
   \code{\link{vcov}}, etc.
 }
 \examples{
-## shows many methds you should consider *before* getME():
+## shows many methods you should consider *before* getME():
 methods(class = "merMod")
 
 (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))

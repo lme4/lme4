@@ -1,0 +1,25 @@
+#! /usr/bin/env Rscript
+#
+pkg <- "lme4Eigen"
+pDIR <- switch((U <- Sys.getenv("USER")),
+               "maechler" = "~/R/Pkgs",
+               ## default:
+           {  p <- "/tmp"
+              warning("unknown USER ", U,". -- using pDIR=",p,
+                      "\n but probably need to add yourself to 'do-roxy' script")
+              p
+          })
+pkgPATH <- file.path(pDIR, pkg)
+#
+library(roxygen2)
+if(TRUE) {
+  roxygenize(pkgPATH, roclets = c("collate", "namespace"))## *NOT* using "rd"
+} else {
+  roxygenize(pkgPATH)## <-- also recreates *.Rd files
+}
+owd <- setwd(pkgPATH)
+## FIX  NAMESPACE entry : useDynLib(lme4Eigen,".registration=TRUE")
+ll <- readLines("NAMESPACE")
+i <- grep("useDynLib", ll)
+ll[i] <- gsub('"', '', ll[i])#"
+writeLines(ll, "NAMESPACE")
