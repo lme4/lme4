@@ -12,30 +12,30 @@ Description: Fit linear and generalized linear mixed-effects models.
     methods.  The core computational algorithms are implemented using the
     Eigen C++ library for numerical linear algebra and RcppEigen "glue".
 Depends:
+    R(>= 2.14.0),
     lattice,
     methods,
-    R(>= 2.14.0),
     stats
 LinkingTo: Rcpp, RcppEigen
 Imports:
-    MASS,
-    Matrix(>= 1.0),
     graphics,
     grid,
-    minqa(>= 1.1.15),
+    splines,
+    Matrix(>= 1.0),
+    MASS,
     nlme,
-    splines
+    minqa(>= 1.1.15)
 Suggests:
-    MEMSS,
-    PKPDmodels,
     boot,
+    PKPDmodels,
+    MEMSS,
+    testthat,
     ggplot2,
     glmmADMB,
     mlmRev,
     plyr,
     reshape,
     testthat
-LazyLoad: yes
 LazyData: yes
 License: GPL (>=2)
 URL: http://lme4.r-forge.r-project.org/
