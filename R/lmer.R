@@ -140,6 +140,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
                              "0"=0, "1"=20,"2"=10,"3"=1)
 
     lower <- reTrms$lower
+    ## FIXME: allow user control of xst, xt ?
     xst <- rep.int(0.1, length(lower))
     opt <- Nelder_Mead(devfun, x0=rho$pp$theta, xst=0.2*xst, xt=xst*0.0001,
                        lower=lower, control=control)
@@ -909,10 +910,20 @@ coefMer <- function(object, ...)
 ##' @S3method coef merMod
 coef.merMod <- coefMer
 
+REMLdev <- function(object) {
+  n <- object@devcomp$dims["N"]  ## FIXME: N or n ??
+  cmp <- object@devcomp$cmp
+  cmp["ldL2"]+cmp["ldRX2"]+n*(1+log(2*pi*cmp["pwrss"]/n))
+  ## from lme4:
+  ## d[REML_POS] = d[ldL2_POS] + d[ldRX2_POS] +
+  ##    dnmp * (1. + log(d[pwrss_POS]) + log(2. * PI / dnmp));
+}
+
 ##' @importFrom stats deviance
 ##' @S3method deviance merMod
 deviance.merMod <- function(object, REML = NULL, ...) {
     if (!missing(REML)) stop("REML argument not supported")
+    ##
     object@devcomp$cmp[["dev"]]
 }
 
@@ -1575,6 +1586,7 @@ setMethod("getL", "merMod", function(x) {
 ##'     \item{RX}{Cholesky factor for the fixed-effects parameters}
 ##'     \item{RZX}{cross-term in the full Cholesky factor}
 ##'     \item{beta}{fixed-effects parameter estimates (same as the result of \code{\link{fixef}})}
+##'     \item{theta}{random-effects parameter estimates: these are parameterized as the relative Cholesky factors of each random effect term}
 ##'     \item{n_rtrms}{number of random-effects terms}
 ##'     \item{is_REML}{same as the result of \code{\link{isREML}}}
 ##'     \item{devcomp}{a list consisting of a named numeric vector, \dQuote{cmp}, and
@@ -1584,7 +1596,8 @@ setMethod("getL", "merMod", function(x) {
 ##' @return Unspecified, as very much depending on the \code{\link{name}}.
 ##' @seealso \code{\link{getCall}()},
 ##' More standard methods for mer objects, such as \code{\link{ranef}},
-##' \code{\link{fixef}}, \code{\link{vcov}}, etc.
+##' \code{\link{fixef}}, \code{\link{vcov}}, etc.:
+##' see \code{methods(class="merMod")}
 ##' @keywords utilities
 ##' @examples
 ##'
@@ -1640,8 +1653,19 @@ getME <- function(object,
 
            "Gp" = object@Gp,
            "flist" = object@flist,
-           "beta" = object@beta, ## FIXME - add names
-           "theta"= object@theta, ## *OR*  PR $ theta  --- which one ??  Should be the same.
+           "beta" = structure(object@beta, names = dimnames(PR$X)[[2]]),
+           "theta"= {
+             tt <- object@theta
+             nc <- c(unlist(mapply(function(g,e) {
+               mm <- outer(e,e,paste,sep=".")
+               diag(mm) <- e
+               mm <- mm[lower.tri(mm,diag=TRUE)]
+               paste(g,mm,sep=".")
+             },
+                          names(object@cnms),object@cnms)))
+             names(tt) <- nc
+             tt
+           }, ## *OR*  PR $ theta  --- which one ??  Should be the same.
 
 	   "REML" = dims["REML"],
 	   "is_REML" = isREML(object),
