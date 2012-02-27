@@ -1655,22 +1655,27 @@ getME <- function(object,
            "flist" = object@flist,
            "beta" = structure(object@beta, names = dimnames(PR$X)[[2]]),
            "theta"= {
-             tt <- object@theta
-             nc <- c(unlist(mapply(function(g,e) {
-               mm <- outer(e,e,paste,sep=".")
-               diag(mm) <- e
-               mm <- mm[lower.tri(mm,diag=TRUE)]
-               paste(g,mm,sep=".")
-             },
-                          names(object@cnms),object@cnms)))
-             names(tt) <- nc
-             tt
+               tt <- object@theta
+               nc <- c(unlist(mapply(function(g,e) {
+                   mm <- outer(e,e,paste,sep=".")
+                   diag(mm) <- e
+                   mm <- mm[lower.tri(mm,diag=TRUE)]
+                   paste(g,mm,sep=".")
+               },
+                                     names(object@cnms),object@cnms)))
+               names(tt) <- nc
+               tt
            }, ## *OR*  PR $ theta  --- which one ??  Should be the same.
 
 	   "REML" = dims["REML"],
 	   "is_REML" = isREML(object),
 
 	   "n_rtrms" = length(object@flist),  ## should this be length(object@cnms) instead?
+
+           ## Yes, assuming that you want the number of random-effects
+           ## terms in the formula.  Multiple terms with the same
+           ## grouping factors are allowed.
+           
            "devcomp" = dc,
            "offset" = rsp$offset,
 	   "..foo.." =# placeholder!
@@ -1680,6 +1685,7 @@ getME <- function(object,
 	   stop(sprintf("Mixed-Effects extraction of '%s' is not available for class \"%s\"",
 			name, class(object))))
 }## {getME}
+
 ##' @importMethodsFrom Matrix t %*% crossprod diag tcrossprod
 ##' @importClassesFrom Matrix dgCMatrix dpoMatrix corMatrix
 NULL

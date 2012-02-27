@@ -1,5 +1,5 @@
 Package: lme4Eigen
-Version: 0.9996875-10
+Version: 0.9996875-11
 Date: $Date$
 Revision: $Revision$
 Title: Linear mixed-effects models using Eigen and S4
@@ -31,7 +31,6 @@ Suggests:
     MEMSS,
     testthat,
     ggplot2,
-    glmmADMB,
     mlmRev,
     plyr,
     reshape,

@@ -28,7 +28,6 @@ extern "C" {
     using      Rcpp::wrap;
 
     using       glm::glmFamily;
-    using       glm::negativeBinomial;
 
     using lme4Eigen::glmResp;
     using lme4Eigen::lmResp;
@@ -177,46 +176,47 @@ extern "C" {
 
     SEXP glmFamily_link(SEXP ptr, SEXP mu) {
 	BEGIN_RCPP;
-	return wrap(XPtr<glmFamily>(ptr)->linkFun(as<MAr1>(mu)));
+	return wrap(XPtr<glmFamily>(ptr)->linkFun(as<MVec>(mu)));
 	END_RCPP;
     }
 
     SEXP glmFamily_linkInv(SEXP ptr, SEXP eta) {
 	BEGIN_RCPP;
-	return wrap(XPtr<glmFamily>(ptr)->linkInv(as<MAr1>(eta)));
+	return wrap(XPtr<glmFamily>(ptr)->linkInv(as<MVec>(eta)));
 	END_RCPP;
     }
 
-    SEXP glmFamily_devResid(SEXP ptr, SEXP mu, SEXP weights, SEXP y) {
+    SEXP glmFamily_devResid(SEXP ptr, SEXP y, SEXP mu, SEXP wt) {
 	BEGIN_RCPP;
-	return wrap(XPtr<glmFamily>(ptr)->devResid(as<MAr1>(mu),
-						   as<MAr1>(weights),
-						   as<MAr1>(y)));
+	return wrap(XPtr<glmFamily>(ptr)->devResid(as<MVec>(y),
+						   as<MVec>(mu),
+						   as<MVec>(wt)));
 	END_RCPP;
     }
 
     SEXP glmFamily_aic(SEXP ptr, SEXP y, SEXP n, SEXP mu, SEXP wt, SEXP dev) {
 	BEGIN_RCPP;
-	return ::Rf_ScalarReal(XPtr<glmFamily>(ptr)->aic(as<MAr1>(y),
-							 as<MAr1>(n),
-							 as<MAr1>(mu),
-							 as<MAr1>(wt),
+	return ::Rf_ScalarReal(XPtr<glmFamily>(ptr)->aic(as<MVec>(y),
+							 as<MVec>(n),
+							 as<MVec>(mu),
+							 as<MVec>(wt),
 							 ::Rf_asReal(dev)));
 	END_RCPP;
     }
 
     SEXP glmFamily_muEta(SEXP ptr, SEXP eta) {
 	BEGIN_RCPP;
-	return wrap(XPtr<glmFamily>(ptr)->muEta(as<MAr1>(eta)));
+	return wrap(XPtr<glmFamily>(ptr)->muEta(as<MVec>(eta)));
 	END_RCPP;
     }
 
     SEXP glmFamily_variance(SEXP ptr, SEXP mu) {
 	BEGIN_RCPP;
-	return wrap(XPtr<glmFamily>(ptr)->variance(as<MAr1>(mu)));
+	return wrap(XPtr<glmFamily>(ptr)->variance(as<MVec>(mu)));
 	END_RCPP;
     }
 
+#if 0
     SEXP negativeBinomial_Create(SEXP fam_) {
 	BEGIN_RCPP;
 	negativeBinomial *ans = new negativeBinomial(List(fam_));
@@ -235,6 +235,7 @@ extern "C" {
 	XPtr<negativeBinomial>(ptr)->setTheta(::Rf_asReal(newtheta));
 	END_RCPP;
     }
+#endif
 
     static inline double pwrss(lmResp *rp, merPredD *pp, double fac) {
 	return rp->wrss() + (fac ? pp->sqrL(fac) : pp->u0().squaredNorm());
@@ -937,9 +938,11 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(merPredDupdateRes, 2),
     CALLDEF(merPredDupdateXwts, 2),
 
+#if 0
     CALLDEF(negativeBinomial_Create,   1), // generate external pointer
     CALLDEF(negativeBinomial_theta,    1),
     CALLDEF(negativeBinomial_setTheta, 2),
+#endif
 
     CALLDEF(NelderMead_Create, 5),
     CALLDEF(NelderMead_newf, 2),

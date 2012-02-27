@@ -1,5 +1,4 @@
 library("testthat")
-context("Response modules")
 
 n     <- nrow(Dyestuff)
 ones  <- rep.int(1, n)
@@ -7,6 +6,7 @@ zeros <- rep.int(0, n)
 YY    <- Dyestuff$Yield
 mYY   <- mean(YY)
 
+context("lmerResp objects")
 test_that("lmerResp", {
     mres  <- YY - mYY
     rr    <- lmerResp$new(y=YY)
@@ -28,6 +28,7 @@ test_that("lmerResp", {
 mlYY <- mean(log(YY))
 gmeanYY <- exp(mlYY)                    # geometric mean
 
+context("glmResp objects")
 test_that("glmResp", {
     mres  <- YY - gmeanYY
     gmean <- rep.int(gmeanYY, n)

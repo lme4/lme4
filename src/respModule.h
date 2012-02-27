@@ -33,8 +33,8 @@ namespace lme4Eigen {
 			* the sqrtrwt.  For glmResp and nlsResp they
 			* incorporate the gradient of the eta to mu
 			* mapping.*/
-	    d_sqrtrwt,		/**< Square roots of the residual weights */
-	    d_wtres;		/**< Current weighted residuals */
+	    d_sqrtrwt,	  /**< Square roots of the residual weights */
+	    d_wtres;	  /**< Current weighted residuals */
     public:
 	lmResp(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
 
@@ -67,7 +67,6 @@ namespace lme4Eigen {
 				/**< set a new value of the response, y */
 	void        setWeights(const Eigen::VectorXd&);
 				/**< set a new value of the prior weights */
-
     };
 
     class lmerResp : public lmResp {
@@ -89,10 +88,10 @@ namespace lme4Eigen {
     public:
 	glmResp(Rcpp::List,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
 
-	Eigen::VectorXd  devResid() const;
-	Eigen::VectorXd     muEta() const;
+	Eigen::ArrayXd   devResid() const;
+	Eigen::ArrayXd      muEta() const;
         Eigen::VectorXd sqrtWrkWt() const;
-	Eigen::VectorXd  variance() const;
+	Eigen::ArrayXd   variance() const;
 	Eigen::VectorXd wrkResids() const;
 	Eigen::VectorXd   wrkResp() const;
 

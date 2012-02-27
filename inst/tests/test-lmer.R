@@ -1,6 +1,6 @@
 library("testthat")
-context("fitting mixed-effects models")
 
+context("fitting lmer models")
 test_that("lmer", {
     expect_that(fm1 <- lmer(Yield ~ 1|Batch, Dyestuff), is_a("lmerMod"))
     expect_that(fm1@resp,                               is_a("lmerResp"))
@@ -24,14 +24,14 @@ test_that("lmer", {
     ## FIXME: recent version gets 313.09721874266512032 instead?
     expect_that(fm2 <- refit(fm1, Dyestuff2$Yield),     is_a("lmerMod"))
     expect_that(fixef(fm2),                             is_equivalent_to(5.6656))
-    expect_that(VarCorr(fm2)[[1]][1,1],                 equals(0))
-    expect_that(getME(fm2, "theta"),                    equals(0))
+    expect_that(VarCorr(fm2)[[1]][1,1],                 is_equivalent_to(0))
+    expect_that(getME(fm2, "theta"),                    is_equivalent_to(0))
     expect_that(X  <- getME(fm1, "X"),                  is_equivalent_to(array(1, c(1, 30))))
     expect_that(Zt <- getME(fm1, "Zt"),                 is_a("dgCMatrix"))
     expect_that(dim(Zt),                                equals(c(6L, 30L)))
     expect_that(length(Zt@x),                           equals(30L))
     expect_that(Zt@x,                                   equals(rep.int(1, 30L)))
-    expect_that(theta <- getME(fm1, "theta"),           equals(0.848330078125))
+    expect_that(theta <- getME(fm1, "theta"),           is_equivalent_to(0.848330078125))
     expect_that(Lambdat <- getME(fm1, "Lambdat"),       is_a("dgCMatrix"))
     expect_that(as(Lambdat, "matrix"),                  is_equivalent_to(diag(theta, 6L, 6L)))
 })

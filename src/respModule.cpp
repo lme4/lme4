@@ -8,6 +8,7 @@
 #include <cmath>
 
 namespace lme4Eigen {
+    using Eigen::ArrayXd;
     using Eigen::VectorXd;
 
     using Rcpp::List;
@@ -111,20 +112,20 @@ namespace lme4Eigen {
 	return d_fam.aic(d_y, d_n, d_mu, d_weights, resDev());
     }
 
-    VectorXd glmResp::devResid() const {
-	return d_fam.devResid(d_mu, d_weights, d_y);
+    ArrayXd glmResp::devResid() const {
+	return d_fam.devResid(d_y, d_mu, d_weights);
     }
 
-    VectorXd glmResp::muEta() const {
+    ArrayXd glmResp::muEta() const {
 	return d_fam.muEta(d_eta);
     }
 
-    VectorXd glmResp::variance() const {
+    ArrayXd glmResp::variance() const {
 	return d_fam.variance(d_mu);
     }
 
     VectorXd glmResp::wrkResids() const {
-	return (d_y - d_mu).cwiseQuotient(muEta());
+	return (d_y - d_mu).array() / muEta();
     }
 
     VectorXd glmResp::wrkResp() const {
@@ -132,8 +133,7 @@ namespace lme4Eigen {
     }
 
     VectorXd glmResp::sqrtWrkWt() const {
-	const Eigen::ArrayXd me(muEta());
-	return (d_weights.array() * muEta().array().square() /(variance().array())).sqrt();
+	return d_weights.array() * muEta().square() / variance().sqrt();
     }
 
     double glmResp::Laplace(double ldL2, double ldRX2, double sqrL) const {
@@ -151,8 +151,8 @@ namespace lme4Eigen {
     }
 
     double glmResp::updateWts() {
-	d_sqrtrwt = d_weights.cwiseQuotient(variance()).cwiseSqrt();
-	d_sqrtXwt = muEta().cwiseProduct(d_sqrtrwt);
+	d_sqrtrwt = d_weights.array() / variance().sqrt();
+	d_sqrtXwt = muEta() * d_sqrtrwt.array();
 	return updateWrss();
     }
 

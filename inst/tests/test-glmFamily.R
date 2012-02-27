@@ -1,5 +1,4 @@
 library("testthat")
-context("glmFamily")
 eps <- .Machine$double.eps
 oneMeps <- 1 - eps
 set.seed(1)
@@ -22,6 +21,7 @@ mubinom <- list(runif(100, 0, 1),
                 pmin(pmax(eps, rbeta(100, 0.1, 3)), oneMeps),
                 pmin(pmax(eps, rbeta(100, 3, 0.1)), oneMeps))
 
+context("glmFamily linkInv and muEta")
 test_that("inverse link and muEta functions", {
     tst.lnki <- function(fam, frm) {
         ff <- glmFamily$new(family=fam)
@@ -51,6 +51,7 @@ test_that("inverse link and muEta functions", {
     tst.muEta(inverse.gaussian(),  etapos)    
 })
 
+context("glmFamily linkFun and variance")
 test_that("link and variance functions", {
     tst.link <- function(fam, frm) {
         ff <- glmFamily$new(family=fam)
@@ -62,19 +63,43 @@ test_that("link and variance functions", {
         sapply(frm, function(x) expect_that(fam$variance(x), equals(ff$variance(x))))
     }
 
-    tst.link(    binomial(),          mubinom)
-    tst.variance(binomial(),          mubinom)
-    tst.link(    binomial("probit"),  mubinom)
-    tst.variance(binomial("probit"),  mubinom)
-    tst.link(    binomial("cauchit"), mubinom)
-    tst.variance(binomial("cauchit"), mubinom)
-    tst.link(    gaussian(),          etas)
-    tst.variance(gaussian(),          etas)
-    tst.link(    Gamma(),             etapos)
-    tst.variance(Gamma(),             etapos)
-    tst.link(    inverse.gaussian(),  etapos)
-    tst.variance(inverse.gaussian(),  etapos)    
+    tst.link(    binomial(),                   mubinom)
+    tst.variance(binomial(),                   mubinom)
+    tst.link(    binomial("probit"),           mubinom)
+    tst.link(    binomial("cauchit"),          mubinom)
+    tst.link(    gaussian(),                   etas)
+    tst.variance(gaussian(),                   etas)
+    tst.link(    Gamma(),                      etapos)
+    tst.variance(Gamma(),                      etapos)
+    tst.link(    inverse.gaussian(),           etapos)
+    tst.variance(inverse.gaussian(),           etapos)
+    tst.variance(MASS::negative.binomial(1),   etapos)
+    tst.variance(MASS::negative.binomial(0.5), etapos)    
+    tst.link(    poisson(),                    etapos)
+    tst.variance(poisson(),                    etapos)
 })
 
+context("glmFamily devResid and aic")
+test_that("devResid and aic", {
+    tst.devres <- function(fam, frm) {
+        ff <- glmFamily$new(family=fam)
+        sapply(frm, function(x) {
+            nn <- length(x)
+            wt <- rep.int(1, nn)
+            n  <- wt
+            y  <- switch(fam$family,
+                         binomial = rbinom(nn, 1L, x),
+                         gaussian =  rnorm(nn, x),
+                         poisson  =  rpois(nn, x),
+                         error("Unknown family"))
+            dev <- ff$devResid(y, x, wt)
+            expect_that(fam$dev.resids(y, x, wt), equals(dev))
+            dd  <- sum(dev)
+            expect_that(fam$aic(y, n, x, wt, dd), equals(ff$aic(y, n, x, wt, dd)))
+        })
+    }
 
-
+    tst.devres(binomial(), mubinom)
+    tst.devres(gaussian(), etas)
+    tst.devres(poisson(),  etapos)
+})

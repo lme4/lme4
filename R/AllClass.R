@@ -528,7 +528,7 @@ glmResp <-
                          .Call(glm_wrkResids, ptr())
                      },
                      wrkResp = function() {
-                         'returns the vector of working residuals'
+                         'returns the vector of working responses'
                          .Call(glm_wrkResp, ptr())
                      }
                      )
@@ -614,15 +614,15 @@ glmFamily <-                            # used in tests of family definitions
                                    length(dev <- as.numeric(dev)) == 1L)
                          .Call(glmFamily_aic, ptr(), y, n, mu, wt, dev)
                      },
-                     devResid = function(mu, weights, y) {
-                         'applies the devResid function to mu, weights and y'
+                     devResid = function(y, mu, wt) {
+                         'applies the devResid function to y, mu and wt'
                          mu <- as.numeric(mu)
-                         weights <- as.numeric(weights)
-                         y <- as.numeric(y)
-                         stopifnot(length(mu) == length(weights),
+                         wt <- as.numeric(wt)
+                         y  <- as.numeric(y)
+                         stopifnot(length(mu) == length(wt),
                                    length(mu) == length(y),
-                                   all(weights >= 0))
-                         .Call(glmFamily_devResid, ptr(), mu, weights, y)
+                                   all(wt >= 0))
+                         .Call(glmFamily_devResid, ptr(), y, mu, wt)
                      },
                      link = function(mu) {
                          'applies the (forward) link function to mu'
