@@ -1614,12 +1614,6 @@ setMethod("getL", "merMod", function(x) {
 ##' ## All that can be accessed [potentially ..]:
 ##' (nmME <- eval(formals(getME)$name))
 ##'
-##' \dontshow{
-##' ## internal consistency check ensuring that all work:
-##' ## "try(.)" because some are not yet implemented:
-##' str(parts <- sapply(nmME, function(nm) try(getME(fm1, nm)),
-##'                     simplify=FALSE))
-##' }% dont..
 ##' @export
 getME <- function(object,
 		  name = c("X", "Z","Zt", "u",
@@ -1653,7 +1647,7 @@ getME <- function(object,
 
            "Gp" = object@Gp,
            "flist" = object@flist,
-           "beta" = structure(object@beta, names = dimnames(PR$X)[[2]]),
+	   "beta" = structure(object@beta, names = dimnames(PR$X)[[2]]),
            "theta"= {
                tt <- object@theta
                nc <- c(unlist(mapply(function(g,e) {
@@ -1675,7 +1669,7 @@ getME <- function(object,
            ## Yes, assuming that you want the number of random-effects
            ## terms in the formula.  Multiple terms with the same
            ## grouping factors are allowed.
-           
+
            "devcomp" = dc,
            "offset" = rsp$offset,
 	   "..foo.." =# placeholder!

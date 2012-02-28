@@ -2,7 +2,7 @@
 ##' @importFrom MASS theta.ml
 
 ## should be getME(object,"NBdisp") ?
-getNBdisp <- function(object) { 
+getNBdisp <- function(object) {
   get(".Theta",envir=environment(object@resp$family$aic))
 }
 
@@ -57,7 +57,7 @@ est_theta <- function(object) {
   w <- object@resp$weights
   control <- list(maxit=20,trace=0)
   th <- theta.ml(Y, mu, sum(w), w, limit = control$maxit,
-                     trace = control$trace > 2)
+                 trace = control$trace > 2)
 }
 
 ## wrapper for glmer stuff
