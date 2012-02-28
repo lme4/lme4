@@ -276,7 +276,7 @@ extern "C" {
     }
 
     static ArrayXd devcCol(const MiVec& fac, const ArrayXd& u, const ArrayXd& devRes) {
-	ArrayXd  ans(u * u);
+	ArrayXd  ans(u.square());
 	for (int i = 0; i < devRes.size(); ++i) ans[fac[i] - 1] += devRes[i];
 	return ans;
     }
@@ -294,7 +294,7 @@ extern "C" {
 	    throw std::invalid_argument("size of fac must match dimension of response vector");
 
 	pp->setTheta(as<MVec>(theta_));
-	pp->setU0(as<MVec>(u0_));
+	pp->setU0(   as<MVec>(u0_));
 	pp->setBeta0(as<MVec>(beta0_));
 	pwrssUpdate(rp, pp, 0, true, ::Rf_asReal(tol_)); // should be a no-op
 	const ArrayXd     u0(pp->u0());

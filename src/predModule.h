@@ -170,6 +170,7 @@ namespace lme4Eigen {
 	int                  info() const {return d_L.info();}
 
 	void          installPars(const Scalar& f);
+	void          MCMC_beta_u(const Scalar& sigma);
 	void             setBeta0(const VectorXd&);
 	void             setTheta(const VectorXd&);
 	void                setU0(const VectorXd&);

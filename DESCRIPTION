@@ -53,3 +53,4 @@ Collate:
     'predict.R'
     'bootMer.R'
     'nbinom.R'
+    'mcmcsamp.R'

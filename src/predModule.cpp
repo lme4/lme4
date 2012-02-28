@@ -13,6 +13,8 @@ namespace lme4Eigen {
     using     std::invalid_argument;
     using     std::runtime_error;
 
+    using   Eigen::ArrayXd;
+
     typedef Eigen::Map<MatrixXd>  MMat;
     typedef Eigen::Map<VectorXd>  MVec;
     typedef Eigen::Map<VectorXi>  MiVec;
@@ -261,6 +263,23 @@ namespace lme4Eigen {
     void merPredD::setU0(const VectorXd& newU0) {
 	if (newU0.size() != d_q) throw invalid_argument("setU0: dimension mismatch");
 	std::copy(newU0.data(), newU0.data() + d_q, d_u0.data());
+    }
+
+    template <typename T>
+    struct Norm_Rand : std::unary_function<T, T> {
+	const T operator()(const T& x) const {return ::norm_rand();}
+    };
+
+    inline static VectorXd Random_Normal(int size, double sigma) {
+	return ArrayXd(size).unaryExpr(Norm_Rand<double>()) * sigma;
+    }
+
+    void merPredD::MCMC_beta_u(const Scalar& sigma) {
+	VectorXd del2(d_RX.matrixU().solve(Random_Normal(d_p, sigma)));
+	d_delb += del2;
+	VectorXd del1(Random_Normal(d_q, sigma) - d_RZX * del2);
+	d_L.solveInPlace(del1, CHOLMOD_Lt);
+	d_delu += del1;
     }
 
     VectorXi merPredD::Pvec() const {

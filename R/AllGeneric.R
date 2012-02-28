@@ -18,6 +18,19 @@ random.effects <- function(object, ...) {
     eval(mCall, parent.frame())
 }
 
+##' Create a Markov chain Monte Carlo sample from the posterior
+##' distribution of the parameters
+##'
+##' 
+##' @title Create an McMC sample
+##' @param object a fitted model object
+##' @param n number of samples to generate.  Defaults to 1 but that
+##'     value doesn't make sense.
+##' @param verbose should verbose output be given?
+##' @param ... 
+##' @return a Markov chain Monte Carlo sample as a matrix
+mcmcsamp <- function(object, n = 1L, verbose = FALSE, ...) UseMethod("mcmcsamp")
+
 ##' Extract the residual standard error from a fitted model.
 ##'
 ##' This is a generic function.  At present the only methods are for mixed-effects
