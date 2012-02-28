@@ -56,6 +56,11 @@
   \code{\link{fixef}}, \code{\link{ranef}},
   \code{\link{vcov}}, etc.
 }
+\seealso{
+  \code{\link{getCall}()}, More standard methods for mer
+  objects, such as \code{\link{ranef}},
+  \code{\link{fixef}}, \code{\link{vcov}}, etc.
+}
 \examples{
 ## shows many methods you should consider *before* getME():
 methods(class = "merMod")
@@ -69,11 +74,6 @@ stopifnot(is(Z, "CsparseMatrix"),
 
 ## All that can be accessed [potentially ..]:
 (nmME <- eval(formals(getME)$name))
-
-\seealso{
-  \code{\link{getCall}()}, More standard methods for mer
-  objects, such as \code{\link{ranef}},
-  \code{\link{fixef}}, \code{\link{vcov}}, etc.
 }
 \keyword{utilities}
 
