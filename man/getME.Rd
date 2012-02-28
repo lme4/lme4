@@ -4,8 +4,10 @@
 \alias{getME}
 \title{Extract or Get Generalize Components from a Fitted Mixed Effects Model}
 \usage{
-  getME(object,
-    name = c("X", "Z", "Zt", "u", "Gp", "L", "Lambda", "Lambdat", "Lind", "RX", "RZX", "beta", "theta", "REML", "n_rtrms", "is_REML", "devcomp", "offset"))
+getME(object,
+      name = c("X", "Z", "Zt", "u", "Gp", "L", "Lambda", "Lambdat",
+               "Lind", "RX", "RZX", "beta", "theta", "REML", "n_rtrms",
+               "is_REML", "devcomp", "offset"))
 }
 \arguments{
   \item{object}{a fitted mixed-effects model of class
