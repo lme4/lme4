@@ -1,5 +1,8 @@
 library(lme4Eigen)
 
+getNBdisp <- lme4Eigen:::getNBdisp
+refitNB   <- lme4Eigen:::refitNB
+
 simfun <- function(sd.u=1,NBtheta=0.5,
                     nblock=25,
                     fform=~x,
@@ -15,13 +18,18 @@ simfun <- function(sd.u=1,NBtheta=0.5,
 }
 
 set.seed(102)
-d1 <- simfun()
-t1 <- system.time(g1 <- glmer.nb(z~x+(1|f),data=d1,debug=TRUE))
+d.1 <- simfun()
+t1 <- system.time(g1 <- glmer.nb(z ~ x + (1|f), data=d.1, verbose=TRUE))
+g1
+## ^^ FIXME: the formula ..
 
-lme4Eigen:::getNBdisp(g1)
-g1B <- lme4Eigen:::refitNB(g1,theta=lme4Eigen:::getNBdisp(g1))
-deviance(g1)-deviance(g1B)
-(fixef(g1)-fixef(g1B))/fixef(g1)
+d1 <- getNBdisp(g1)
+(g1B <- refitNB(g1,theta=getNBdisp(g1)))
+(ddev <- deviance(g1)-deviance(g1B))
+(rel.d <- (fixef(g1)-fixef(g1B))/fixef(g1))
+stopifnot(all.equal(d1, 0.448, tol = 1e-3),
+          all.equal(ddev, 0.0007, tol=.0005),
+          abs(rel.d) < 0.0004)
 
 ## library(glmmADMB)
 ## t2 <- system.time(g2 <- glmmadmb(z~x+(1|f),
@@ -30,47 +38,63 @@ deviance(g1)-deviance(g1B)
 ##                       NLL=-logLik(g2),
 ##                       theta=g2$alpha)
 ## 0.4487
+glmmADMB_vals <-
+    list(fixef = c("(Intercept)"=0.92871, x=2.0507),
+         NLL = structure(2944.62, class = "logLik", df= 4, nobs= 1000L),
+         theta = 0.4487)
 
+##' simplified logLik() so we can compare with "glmmADMB" (and other) results
+logLik.m <- function(x) {
+    L <- logLik(x)
+    attributes(L) <- attributes(L)[c("class","df","nobs")]
+    L
+}
 
-glmmADMB_vals <- structure(list(fixef = 
-    structure(c(0.92871, 2.0507), .Names = c("(Intercept)", 
-"x")), structure(2944.62, class = "logLik", df = 4, nobs = 1000L), 
-    0.4487), .Names = c("fixef", "NLL", "theta"))
+stopifnot(
+          all.equal(   d1,          glmmADMB_vals$ theta, tol=0.0016)
+          ,
+          all.equal(fixef(g1B),     glmmADMB_vals$ fixef, tol=0.01)# not so close
+          ,
+          if(FALSE) { ## df = 3  vs  df = 4 --- fails! --- FIXME ??
+              all.equal(logLik.m(g1B), -glmmADMB_vals$ NLL, tol=0.001)
+          } else
+          all.equal(as.numeric(logLik.m(g1B)), as.numeric(-glmmADMB_vals$ NLL), tol= 4e-5)
+          )
 
-stopifnot(all.equal(glmmADMB_vals$theta,lme4Eigen:::getNBdisp(g1),
-                     tol=0.0016))
+if(FALSE) { ## simulation study --------------------
 
-## simulation study
-##   simsumfun <- function(...) {
-##     d <- simfun(...)
-##     t1 <- system.time(g1 <- glmer.nb(z~x+(1|f),data=d))
-##     t2 <- system.time(g2 <- glmmadmb(z~x+(1|f),
-##                                      data=d,family="nbinom"))
-##     c(t.glmer=unname(t1["elapsed"]),nevals.glmer=g1$nevals,
-##       theta.glmer=exp(g1$minimum),
-##       t.glmmadmb=unname(t2["elapsed"]),theta.glmmadmb=g2$alpha)
-##   }
+    library(glmmADMB)
+    simsumfun <- function(...) {
+        d <- simfun(...)
+        t1 <- system.time(g1 <- glmer.nb(z~x+(1|f),data=d))
+        t2 <- system.time(g2 <- glmmadmb(z~x+(1|f),
+                                         data=d,family="nbinom"))
+        c(t.glmer=unname(t1["elapsed"]),nevals.glmer=g1$nevals,
+          theta.glmer=exp(g1$minimum),
+          t.glmmadmb=unname(t2["elapsed"]),theta.glmmadmb=g2$alpha)
+    }
 
-##   library(plyr)
-##   sim50 <- raply(50,simsumfun(),.progress="text")
-##   save("sim50",file="nbinomsim1.RData")
-##   library(reshape)
-##   m1 <- melt(data.frame(run=seq(nrow(sim50)),sim50),id.var="run")
-##   m1 <- data.frame(m1,colsplit(m1$variable,"\\.",c("v","method")))
-##   m2 <- cast(subset(m1,v=="theta",select=c(run,value,method)),
-##              run~method)
+    library(plyr)
+    sim50 <- raply(50,simsumfun(),.progress="text")
+    save("sim50",file="nbinomsim1.RData")
+    library(reshape)
+    m1 <- melt(data.frame(run=seq(nrow(sim50)),sim50),id.var="run")
+    m1 <- data.frame(m1,colsplit(m1$variable,"\\.",c("v","method")))
+    m2 <- cast(subset(m1,v=="theta",select=c(run,value,method)),
+               run~method)
 
-##   library(ggplot2)
-##   ggplot(subset(m1,v=="theta"),aes(x=method,y=value))+
-##     geom_boxplot()+geom_point()+geom_hline(yintercept=0.5,colour="red")
+    library(ggplot2)
+    ggplot(subset(m1,v=="theta"),aes(x=method,y=value))+
+        geom_boxplot()+geom_point()+geom_hline(yintercept=0.5,colour="red")
 
-##   ggplot(subset(m1,v=="theta"),aes(x=method,y=value))+
-##     stat_summary(fun.data=mean_cl_normal)+
-##       geom_hline(yintercept=0.5,colour="red")
-  
-##   ggplot(m2,aes(x=glmer-glmmadmb))+geom_histogram()
-##   ## glmer is slightly more biased (but maybe the MLE itself is biased???)
+    ggplot(subset(m1,v=="theta"),aes(x=method,y=value))+
+        stat_summary(fun.data=mean_cl_normal)+
+            geom_hline(yintercept=0.5,colour="red")
 
+    ggplot(m2,aes(x=glmer-glmmadmb))+geom_histogram()
+    ## glmer is slightly more biased (but maybe the MLE itself is biased???)
+
+}## end{simulation study}-------------------------
 
 ### epilepsy example:
 data(epil,package="MASS")
@@ -85,19 +109,28 @@ epil2 <- transform(epil,Visit=(period-2.5)/5,
 ##                            theta=g3$alpha)
 
 glmmADMB_epil_vals <-
-  structure(list(fixef = structure(c(-1.33, 0.88392, -0.92997, 
-                   0.47514, -0.27016, 0.33724), .Names = c("(Intercept)", "Base", 
-                                                  "trtprogabide", "Age", "Visit", "Base:trtprogabide")),
-                 NLL = structure(624.551, class = "logLik", df = 9, nobs = 236L), 
-                 theta = 7.4702), .Names = c("fixef", "NLL", "theta"))
+  list(fixef =
+       c("(Intercept)"= -1.33, "Base"=0.88392, "trtprogabide"=-0.92997,
+         "Age"=0.47514, "Visit"=-0.27016, "Base:trtprogabide"=0.33724),
+       NLL = structure(624.551, class = "logLik", df = 9, nobs = 236L),
+       theta = 7.4702)
 
-if (FALSE) {
-  ## 49 seconds: too slow for regular testing!
-  t4 <- system.time(g4  <- glmer.nb(y~Base*trt+Age+Visit+(Visit|subject),
-                                    data=epil2, debug=TRUE))
-  stopifnot(all.equal(glmmADMB_epil_vals$theta,lme4Eigen:::getNBdisp(g4),
-                      tol=0.0016))
-}
+if(!(Sys.getenv("USER") %in% c("maechler")))
+    q("no")
+## "too slow" for regular testing -- 49 (MM@lynne: 33) seconds
+
+(t4 <- system.time(g4 <- glmer.nb(y~ Base*trt + Age + Visit + (Visit|subject),
+                                  data=epil2, verbose=TRUE)))
+g4
+(Lg4 <- logLik(g4))
+attributes(Lg4) <- attributes(Lg4)[c("class","df","nobs")]
+stopifnot(
+          all.equal(getNBdisp(g4),   glmmADMB_epil_vals$ theta, tol = 0.002)
+          ,
+          all.equal(fixef    (g4),   glmmADMB_epil_vals$ fixef, tol = 0.004)
+          ,
+          all.equal(logLik.m (g4), - glmmADMB_epil_vals$ NLL,   tol = 0.0002)
+          )
 
 
-
+cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''

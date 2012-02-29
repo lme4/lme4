@@ -2,6 +2,7 @@
 ##' @importFrom MASS theta.ml
 
 ## should be getME(object,"NBdisp") ?
+## MM: should the *user* use it?  if yes, consider method sigma() or AIC() ?
 getNBdisp <- function(object) {
   get(".Theta",envir=environment(object@resp$family$aic))
 }
@@ -13,39 +14,33 @@ setNBdisp <- function(object,theta) {
   ff <- setdiff(names(getRefClass("glmResp")$fields()),c("Ptr","family"))
   arg1 <- lapply(ff,object@resp$field)
   names(arg1) <- ff
-  newresp <- do.call(glmResp$new,c(arg1,
-                                   list(family=negative.binomial(theta=theta))))
+  newresp <- do.call(glmResp$new,
+                     c(arg1, list(family=negative.binomial(theta=theta))))
   object@resp <- newresp
   object
 }
 
 refitNB <- function(object,theta) {
-  orig_theta <- getNBdisp(object)
-  object <- setNBdisp(object,theta)  ## new/copied object
-  refit(object,newresp=model.response(model.frame(object)))
-  ## FIXME: should refit() take this response as a default??
-  ## Yes, I think that is a good idea.  DB 2012-02-23
+  refit(setNBdisp(object,theta))
 }
 
 optTheta <- function(object,
                      interval=c(-5,5),
                      maxit=20,
-                     debug=FALSE) {
+                     verbose=FALSE) {
   lastfit <- object
   evalcnt <- 0
   optval <- optimize(function(t) {
-    ## FIXME: kluge to retain last value and evaluation count
+      ## FIXME: kluge to retain last value and evaluation count
       ## Perhaps use a reference class object to keep track of this
       ## auxilliary information?  DB
-    L <- -logLik(lastfit <<- refitNB(lastfit,theta=exp(t)))
-    evalcnt <<- evalcnt+1
-    if (debug) {
-         cat(evalcnt,exp(t),L,"\n")
-      }
+      L <- -logLik(lastfit <<- refitNB(lastfit,theta=exp(t)))
+      evalcnt <<- evalcnt+1
+      if (verbose) cat(evalcnt,exp(t),L,"\n")
       L
-  },interval=interval)
+  }, interval=interval)
   stopifnot(all.equal(optval$minimum,log(getNBdisp(lastfit))))
-  ## FIXME: return eval count info somewhere else?
+  ## FIXME: return eval count info somewhere else? MM: new slot there, why not?
   attr(lastfit,"nevals") <- evalcnt
   lastfit
 }
@@ -60,16 +55,22 @@ est_theta <- function(object) {
                  trace = control$trace > 2)
 }
 
-## wrapper for glmer stuff
+## FIXME: really should document glmer.nb() on the same help page as glmer()
+## I (MM) don't know how to use roxygen for that..
+
+##' glmer() for Negative Binomial
+##' @param ... formula, data, etc: the arguments for \code{\link{glmer}(..)} (apart from \code{family}!).
+##' @param interval interval in which to start the optimization
+##' @param verbose logical indicating how much progress information should be printed.
 ##' @export
-glmer.nb <- function(...,
-                     interval=NULL,
-                     debug=FALSE) {
-  g0 <- glmer(...,family=poisson)
+glmer.nb <- function(..., interval = log(th)+c(-3,3), verbose=FALSE)
+{
+  g0 <- glmer(..., family=poisson)
   th <- est_theta(g0)
-  g1 <- update(g0,family=negative.binomial(theta=th))
-  if (is.null(interval)) interval <- log(th)+c(-3,3)
-  optTheta(g1,interval=interval,debug=debug)
+  if(verbose) cat("th := est_theta(glmer(..)) =", format(th),"\n")
+  g1 <- update(g0, family = negative.binomial(theta=th))
+  ## if (is.null(interval)) interval <- log(th)+c(-3,3)
+  optTheta(g1, interval=interval, verbose=verbose)
 }
 
 ## do we want to facilitate profiling on theta??

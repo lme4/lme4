@@ -17,7 +17,7 @@ chkIMod <- function(fm) {## check "intercept only" model
 }
 
 fm1 <- lmer(diameter ~ (1|plate) + (1|sample), Penicillin)
-chkMod(fm1)
+chkIMod(fm1)
 
 fm2 <- lmer(angle ~ recipe * temperature + (1|recipe:replicate), cake)
 stopifnot(fixef(fm2) == getME(fm2,"beta"))

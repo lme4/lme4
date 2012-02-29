@@ -110,7 +110,7 @@ bootMer2 <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
 	stop("bootMer currently only handles functions that return numeric vectors")
 
     mle <- list(beta = getME(x,"beta"), theta = getME(x,"theta"))
-    if (lme4Eigen:::isLMM(x)) mle <- c(mle,list(sigma = sigma(x)))
+    if (isLMM(x)) mle <- c(mle,list(sigma = sigma(x)))
     ## FIXME: what about GLMMs with scale parameters??
     ## FIXME: remove prefix when incorporated in package
 

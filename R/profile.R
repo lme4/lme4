@@ -233,7 +233,7 @@ devfun2 <- function(fm)
         stopifnot(is.numeric(pars), length(pars) == np)
         ## Assumption:  all parameters, including the residual SD on SD-scale
         sigma <- pars[np]
-        .Call(lme4Eigen:::lmer_Deviance, pp$ptr(), resp$ptr(), pars[-np]/sigma)
+        .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pars[-np]/sigma)
         sigsq <- sigma^2
         pp$ldL2() + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
     }

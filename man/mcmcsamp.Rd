@@ -12,7 +12,7 @@
 
   \item{verbose}{should verbose output be given?}
 
-  \item{...}{}
+  \item{...}{unused currently}
 }
 \value{
   a Markov chain Monte Carlo sample as a matrix
