@@ -14,22 +14,22 @@
 ##    instead of using	rnorm()
 
 ##' Model-based (Semi-)Parametric Bootstrap for Mixed Models
-##' 
+##'
 ##' Perform model-based (Semi-)parametric bootstrap for mixed models.
-##' 
+##'
 ##' The semi-parametric variant is not yet implemented, and we only
 ##' provide a method for \code{\link{lmer}}  and \code{\link{glmer}} results.
-##' 
+##'
 ##' The working name for bootMer() was \dQuote{simulestimate()}, as it is an
 ##' extension of \code{\link{simulate}}, but we rather want to emphasize its
 ##' potential for valid inference.
-##' 
+##'
 ##' In each of the \code{nsim} simulations --- that is what the
 ##' \emph{parametric} bootstrap does, both \dQuote{\emph{spherized}} random
 ##' effects \eqn{u} and the i.i.d errors \eqn{\epsilon} are generated, using
 ##' \code{\link{rnorm}()} with parameters corresponding to the fitted model
 ##' \code{x}.
-##' 
+##'
 ##' @param x fitted \code{*lmer()} model, see \code{\link{lmer}},
 ##'     \code{\link{glmer}}, etc.
 ##' @param FUN a \code{\link{function}(x)}, computating the \emph{statistic} of
@@ -53,7 +53,7 @@
 ##'     \pkg{boot} package's \code{boot()} result.
 ##' @seealso For inference, including confidence intervals,
 ##'     \code{\link{profile-methods}}.
-##' 
+##'
 ##'     \code{\link[boot]{boot}()}, and then \code{\link[boot]{boot.ci}} from
 ##'     package \pkg{boot}.
 ##' @references Davison, A.C. and Hinkley, D.V. (1997) \emph{Bootstrap Methods
@@ -65,39 +65,38 @@
 ##' mySumm <- function(.) { s <- sigma(.)
 ##'     c(beta =getME(., "beta"), sigma = s, sig01 = s * getME(., "theta")) }
 ##' (t0 <- mySumm(fm01ML)) # just three parameters
-##' 
-##' \dontrun{%%--- fails for now --- FIXME
-##' 
+##'
 ##' ## 3.8s (on a 5600 MIPS 64bit fast(year 2009) desktop "AMD Phenom(tm) II X4 925"):
 ##' system.time( boo01 <- bootMer(fm01ML, mySumm, nsim = 100) )
-##' 
+##'
 ##' ## to "look" at it
 ##' if(need.boot <- is.na(match("package:boot", search())))
 ##'   require("boot")## is a recommended package, i.e. *must* be there
 ##' boo01 # look at estimated bias for sig01 (-9.1, also when nsim = 1000)
-##' 
+##'
 ##' ## ------ Bootstrap-based confidence intervals ------------
-##' 
+##'
 ##' (bCI.1 <- boot.ci(boo01, index=1, type=c("norm", "basic", "perc")))# beta
-##' 
+##'
 ##' ## Sigma - original scale, and interval calculation on log-scale:
 ##' (bCI.2  <- boot.ci(boo01, index=2, type=c("norm", "basic", "perc")))
 ##' (bCI.2l <- boot.ci(boo01, index=2, type=c("norm", "basic", "perc"),
 ##'                    h = log, hdot = function(.) 1/., hinv = exp))
-##' 
+##'
 ##' (bCI.3 <- boot.ci(boo01, index=3, type=c("norm", "basic", "perc")))# sig01
-##' }
+##'
 ##' @export
-bootMer2 <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
+bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
                     type=c("parametric","semiparametric"),
 		    verbose = FALSE, control = list(),
-                    .progress="none", PBargs=list()) {
-  stopifnot((nsim <- as.integer(nsim[1])) > 0)
-  if (.progress!="none") {  ## progress bar
-    pbfun <- get(paste(.progress,"ProgressBar",sep=""))
-    setpbfun <- get(paste("set",.simpleCap(.progress),"ProgressBar",sep=""))
-    pb <- do.call(pbfun,PBargs)
-  }
+                    .progress="none", PBargs=list())
+{
+    stopifnot((nsim <- as.integer(nsim[1])) > 0)
+    if (.progress!="none") { ## progress bar
+        pbfun <- get(paste(.progress,"ProgressBar",sep=""))
+        setpbfun <- get(paste("set",.simpleCap(.progress),"ProgressBar",sep=""))
+        pb <- do.call(pbfun,PBargs)
+    }
     FUN <- match.fun(FUN)
     type <- match.arg(type)
     if(!is.null(seed)) set.seed(seed)
@@ -115,24 +114,24 @@ bootMer2 <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
     ## FIXME: remove prefix when incorporated in package
 
     if (type=="parametric") {
-      ss <- simulate(x, nsim=nsim, use.u=use.u)
+        ss <- simulate(x, nsim=nsim, use.u=use.u)
     } else {
-      if (use.u) {
-        ## FIXME: does this work for GLMMs???
-        ss <- replicate(nsim,fitted(x)+sample(residuals(x,"response")),
-                        simplify=FALSE)
-      } else {
-        stop("not implemented")
-      }
+        if (use.u) {
+            ## FIXME: does this work for GLMMs???
+            ss <- replicate(nsim,fitted(x)+sample(residuals(x,"response")),
+                            simplify=FALSE)
+        } else {
+            stop("not implemented")
+        }
     }
     t.star <- matrix(t0, nrow = length(t0), ncol = nsim)
     for(i in 1:nsim) {
-      if (.progress!="none") { setpbfun(pb,i/nsim) }
-      foo <- try(FUN(refit(x,ss[[i]])))
-      if(verbose) { cat(sprintf("%5d :",i)); str(foo) }
-      t.star[,i] <- if (inherits(foo, "error")) NA else foo
+        if (.progress!="none") { setpbfun(pb,i/nsim) }
+        foo <- try(FUN(refit(x,ss[[i]])))
+        if(verbose) { cat(sprintf("%5d :",i)); str(foo) }
+        t.star[,i] <- if (inherits(foo, "error")) NA else foo
     }
-  if (.progress!="none") { close(pb) }
+    if (.progress!="none") { close(pb) }
     rownames(t.star) <- names(t0)
 
     ## boot() ends with the equivalent of
@@ -146,4 +145,4 @@ bootMer2 <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
 		   ## these two are dummies
 		   ran.gen = "simulate(<lmerMod>, 1, *)", mle = mle),
 	      class = "boot")
-}## {bootMer}
+} ## {bootMer}

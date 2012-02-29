@@ -3,7 +3,9 @@
 \title{Model-based (Semi-)Parametric Bootstrap for Mixed Models}
 \usage{
   bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
-    verbose = FALSE, control = list())
+    type = c("parametric", "semiparametric"),
+    verbose = FALSE, control = list(), .progress = "none",
+    PBargs = list())
 }
 \arguments{
   \item{x}{fitted \code{*lmer()} model, see
@@ -23,13 +25,23 @@
   \code{FALSE}, they are not changed, and all inference is
   conditional on these.}
 
+  \item{type}{character string specifying the type of
+  bootstrap, \code{"parametric"} or
+  \code{"semiparametric"}.  Default is \code{"parametric"}.
+  Partial matching is allowed.}
+
   \item{verbose}{logical indicating if progress should
   print output}
 
   \item{control}{an optional \code{\link{list}}, to be
   passed to the minimizer (of the log-likelihood, or RE
-  likelihood), which is currently set to
-  \code{\link[minqa]{bobyqa}} in package \pkg{minqa}.}
+  likelihood).}
+
+  \item{.progress}{character string - type of progress bar
+  to display.  Default is \code{"none"}.}
+
+  \item{PBargs}{a list of additional arguments to the
+  progress bar function.}
 }
 \value{
   an object of S3 \code{\link{class}} \code{"boot"},
@@ -41,10 +53,9 @@
   models.
 }
 \details{
-  Currently, the semi-parametric variant is not yet
-  implemented, and we only provide a method for
-  \code{\linkS4class{merMod}} classes, i.e.,
-  \code{\link{lmer}} results.
+  The semi-parametric variant is not yet implemented, and
+  we only provide a method for \code{\link{lmer}} and
+  \code{\link{glmer}} results.
 
   The working name for bootMer() was
   \dQuote{simulestimate()}, as it is an extension of
@@ -65,8 +76,6 @@ mySumm <- function(.) { s <- sigma(.)
     c(beta =getME(., "beta"), sigma = s, sig01 = s * getME(., "theta")) }
 (t0 <- mySumm(fm01ML)) # just three parameters
 
-\dontrun{\%\%--- fails for now --- FIXME
-
 ## 3.8s (on a 5600 MIPS 64bit fast(year 2009) desktop "AMD Phenom(tm) II X4 925"):
 system.time( boo01 <- bootMer(fm01ML, mySumm, nsim = 100) )
 
@@ -85,7 +94,7 @@ boo01 # look at estimated bias for sig01 (-9.1, also when nsim = 1000)
                    h = log, hdot = function(.) 1/., hinv = exp))
 
 (bCI.3 <- boot.ci(boo01, index=3, type=c("norm", "basic", "perc")))# sig01
-}
+
 }
 \references{
   Davison, A.C. and Hinkley, D.V. (1997) \emph{Bootstrap
@@ -101,4 +110,3 @@ boo01 # look at estimated bias for sig01 (-9.1, also when nsim = 1000)
 }
 \keyword{htest}
 \keyword{models}
-

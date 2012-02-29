@@ -1,5 +1,4 @@
 export(bootMer)
-export(bootMer2)
 exportClasses(glmerMod)
 exportClasses(lmerMod)
 exportClasses(lmList)
