@@ -1,8 +1,8 @@
 
-R version 2.14.1 (2011-12-22)
-Copyright (C) 2011 The R Foundation for Statistical Computing
+R version 2.14.2 RC (2012-02-28 r58516)
+Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
-Platform: x86_64-pc-linux-gnu (64-bit)
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -168,7 +168,7 @@ Fixed effects:
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  1.008 0.016 1.025 
+Time elapsed:  0.812 0.012 0.825 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -229,7 +229,7 @@ In lmer(Reaction ~ Days + (Days | Subject), sleepstudy, sparseX = TRUE) :
 > #fmX2s <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
 > 
 > showProc.time() #
-Time elapsed:  0.348 0.004 0.352 
+Time elapsed:  0.332 0 0.333 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -277,28 +277,7 @@ Time elapsed:  0.348 0.004 0.352
 +           all(fixef(fm3) == c3$Batch),## <-- IFF  \hat{\sigma^2} == 0
 +           TRUE)
 > 
-> ## generalized linear mixed model
-> ## TODO: (1) move these to ./glmer-ex.R
-> ## ----  (2) "rationalize" with ../man/cbpp.Rd
-> #m1e <- glmer1(cbind(incidence, size - incidence) ~ period + (1 | herd),
-> #              family = binomial, data = cbpp, doFit = FALSE)
-> ## now
-> #bobyqa(m1e, control = list(iprint = 2L))
-> m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd), cbpp, binomial, nAGQ=25L)
-> dput(unname(fixef(m1)))
-c(-1.39922533406847, -0.991407294757321, -1.12782184600404, -1.57946627431248
-)
-> dput(deviance(m1))
-100.010030538022
-> stopifnot(is((cm1 <- coef(m1)), "coef.mer"),
-+ 	  dim(cm1$herd) == c(15,4),
-+ 	  all.equal(fixef(m1), ##  these values are from an Ubuntu 11.10 amd64 system
-+                     c(-1.39922533406847, -0.991407294757321,
-+                       -1.12782184600404, -1.57946627431248),
-+ 		    tol = 1.e-5,
-+                     check.attr=FALSE),
-+           all.equal(deviance(m1), 100.010030538022, tol=1e-9)
-+ 	  )
+> 
 > 
 > ## Simple example by Andrew Gelman (2006-01-10) ----
 > n.groups <- 10 ; n.reps <- 2
@@ -373,57 +352,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.812 0 0.815 
-> 
-> if (require('MASS', quietly = TRUE)) {
-+     bacteria$wk2 <- bacteria$week > 2
-+     contrasts(bacteria$trt) <-
-+         structure(contr.sdif(3),
-+                   dimnames = list(NULL, c("diag", "encourage")))
-+     print(fm5 <- glmer(y ~ trt + wk2 + (1|ID), bacteria, binomial, nAGQ=25L))
-+     ## used to fail with nlminb() : stuck at theta=1
-+ 
-+     showProc.time() #
-+ 
-+     stopifnot(
-+ 	      all.equal(logLik(fm5),
-+ 			## was	  -96.127838
-+ 			structure(-95.89706, nobs = 220L, nall = 220L,
-+ 				  df = 5L, REML = FALSE,
-+                                   class = "logLik"),
-+                         tol = 1e-5, check.attributes = FALSE)
-+ 	      ,
-+ 	      all.equal(fixef(fm5),
-+                         c("(Intercept)"= 2.85970407987798, "trtdiag"= -1.36896064622876,
-+                           "trtencourage"=0.579864265133904, "wk2TRUE"=-1.62687300090319),
-+                         tol = 1e-6)
-+ 	      )
-+ }
-Generalized linear mixed model fit by maximum likelihood ['glmerMod']
-Formula: y ~ trt + wk2 + (1 | ID) 
-   Data: bacteria 
-
-     AIC      BIC   logLik deviance 
-201.7941 218.7623 -95.8971 191.7941 
-
-Random effects:
- Groups Name        Variance Std.Dev.
- ID     (Intercept) 1.701    1.304   
-Number of obs: 220, groups: ID, 50
-
-Fixed effects:
-             Estimate Std. Error z value
-(Intercept)    2.8597     0.4525   6.319
-trtdiag       -1.3690     0.6741  -2.031
-trtencourage   0.5799     0.6924   0.838
-wk2TRUE       -1.6269     0.4634  -3.511
-
-Correlation of Fixed Effects:
-            (Intr) trtdig trtncr
-trtdiag     -0.039              
-trtencourag  0.061 -0.498       
-wk2TRUE     -0.788  0.061 -0.055
-Time elapsed:  0.676 0 0.677 
+Time elapsed:  0.552 0 0.555 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -458,18 +387,6 @@ In Ops.factor(habitat, lagoon) : * not meaningful for factors
 > ## sparseX version should give same numbers:
 > r2.  <- lmer(y ~ 0+lagoon + (1|habitat), data = dat,
 +              sparseX = TRUE, verbose = TRUE)
-f = inf at 1
-f = 727.742 at 1
-f = 727.742 at 1
-f = 727.282 at 0.98
-f = 726.819 at 0.96
-f = 725.881 at 0.92
-f = 724.931 at 0.88
-f = 722.998 at 0.8
-f = 721.035 at 0.72
-f = 717.134 at 0.56
-f = 713.606 at 0.4
-f = 709.872 at 0.08
 Warning message:
 In lmer(y ~ 0 + lagoon + (1 | habitat), data = dat, sparseX = TRUE,  :
   sparseX = TRUE has no effect at present
@@ -512,18 +429,6 @@ lagoon2 0.000
 lagoon3 0.000  0.000        
 lagoon4 0.000  0.000  0.000 
 > 
-> ## Failure to specify a random effects term - used to give an obscure message
-> ## Ensure *NON*-translated message; works on Linux,... :
-> if(.Platform$OS.type == "unix") {
-+ Sys.setlocale("LC_MESSAGES", "C")
-+ tc <- tryCatch(
-+ 	       m2 <- glmer(incidence / size ~ period, weights = size,
-+ 			   family = binomial, data = cbpp)
-+ 	       , error = function(.) .)
-+ stopifnot(inherits(tc, "error"),
-+ 	  identical(tc$message,
-+ 		    "No random effects terms specified in formula"))
-+ }
 > 
 > ### mcmcsamp() :
 > ## From: Andrew Gelman <gelman@stat.columbia.edu>
@@ -572,7 +477,7 @@ lagoon4 0.000  0.000  0.000
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.292 0 0.296 
+Time elapsed:  0.26 0 0.261 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -592,7 +497,7 @@ Warning message:
 In Ops.factor(ff, x1) : + not meaningful for factors
 > 
 > showProc.time() #
-Time elapsed:  1.332 0 1.333 
+Time elapsed:  1.244 0 1.249 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -606,75 +511,4 @@ Time elapsed:  1.332 0 1.333
 > #	  all.EQ(S4_2list(P2.1),
 > #		 S4_2list(P2.2)))
 > 
-> ## glmer - Modeling overdispersion as "mixture" aka
-> ## ----- - *ONE* random effect *PER OBSERVATION" -- example inspired by Ben Bolker:
-> 
-> ##' <description>
-> ##'
-> ##' <details>
-> ##' @title
-> ##' @param ng number of groups
-> ##' @param nr number of "runs", i.e., observations per groups
-> ##' @param sd standard deviations of group and "Individual" random effects,
-> ##'    (\sigma_f, \sigma_I)
-> ##' @param b  true beta (fixed effects)
-> ##' @return a data frame (to be used in glmer()) with columns
-> ##'    (x, f, obs, eta0, eta, mu, y), where y ~ Pois(lambda(x)),
-> ##'                                   log(lambda(x_i)) = b_1 + b_2 * x + G_{f(i)} + I_i
-> ##'    and G_k ~ N(0, \sigma_f);  I_i ~ N(0, \sigma_I)
-> ##' @author Ben Bolker and Martin Maechler
-> set.seed(1)
-> rPoisGLMMi <- function(ng, nr, sd=c(f = 1, ind = 0.5), b=c(1,2))
-+ {
-+   stopifnot(nr >= 1, ng >= 1,
-+             is.numeric(sd), names(sd) %in% c("f","ind"), sd >= 0)
-+   ntot <- nr*ng
-+   b.reff <- rnorm(ng,  sd= sd[["f"]])
-+   b.rind <- rnorm(ntot,sd= sd[["ind"]])
-+   x <- runif(ntot)
-+   within(data.frame(x,
-+                     f = factor(rep(LETTERS[1:ng], each=nr)),
-+                     obs = 1:ntot,
-+                     eta0 = cbind(1, x) %*% b),
-+      {
-+          eta <- eta0 + b.reff[f] + b.rind[obs]
-+          mu <- exp(eta)
-+          y <- rpois(ntot, lambda=mu)
-+      })
-+ }
-> dd <- rPoisGLMMi(12, 20)
-> m0  <- glmer(y~x + (1|f),           family="poisson", data=dd)
-> (m1 <- glmer(y~x + (1|f) + (1|obs), family="poisson", data=dd))# must use Laplace
-Generalized linear mixed model fit by maximum likelihood ['glmerMod']
-Formula: y ~ x + (1 | f) + (1 | obs) 
-   Data: dd 
-
-      AIC       BIC    logLik  deviance 
- 624.7607  638.6832 -308.3803  616.7607 
-
-Random effects:
- Groups Name        Variance Std.Dev.
- obs    (Intercept) 0.2469   0.4969  
- f      (Intercept) 0.5134   0.7165  
-Number of obs: 240, groups: obs, 240; f, 12
-
-Fixed effects:
-            Estimate Std. Error z value
-(Intercept)   1.2700     0.2255   5.632
-x             1.9965     0.1432  13.945
-
-Correlation of Fixed Effects:
-  (Intr)
-x -0.358
-> anova(m0, m1)
-Data: dd
-Models:
-m0: y ~ x + (1 | f)
-m1: y ~ x + (1 | f) + (1 | obs)
-   Df     AIC     BIC  logLik deviance  Chisq Chi Df Pr(>Chisq)
-m0  3 1177.09 1187.54 -585.55  1171.09                         
-m1  4  624.76  638.68 -308.38   616.76 554.33      1  < 2.2e-16
-> 
-> showProc.time()
-Time elapsed:  0.4 0 0.399 
 > 

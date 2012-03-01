@@ -1,8 +1,8 @@
 
-R version 2.14.1 (2011-12-22)
-Copyright (C) 2011 The R Foundation for Statistical Computing
+R version 2.14.2 RC (2012-02-28 r58516)
+Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
-Platform: x86_64-pc-linux-gnu (64-bit)
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -24,9 +24,6 @@ Loading required package: lattice
 > 
 > (nm1 <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~ (Asym|Tree),
 +               Orange, start = c(Asym = 200, xmid = 725, scal = 350)))
-After first opt: deviance = 263.169
-theta:  4.034912 
-beta:  191.0591 722.6106 344.2015 
 Nonlinear mixed model fit by maximum likelihood ['nlmerMod']
 Formula: circumference ~ SSlogis(age, Asym, xmid, scal) ~ (Asym | Tree) 
    Data: Orange 
@@ -52,7 +49,7 @@ xmid 0.384
 scal 0.362 0.762
 > fixef(nm1)
     Asym     xmid     scal 
-192.0533 727.9074 348.0741 
+192.0533 727.9074 348.0737 
 > 
 > ## 'Theoph' Data modeling
 > Th.start <- c(lKe = -2.5, lKa = 0.5, lCl = -3)
@@ -60,121 +57,109 @@ scal 0.362 0.762
 > system.time(nm2 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
 +                          (lKe+lKa+lCl|Subject), 
 +                          Theoph, start = Th.start, tolPwrss=1e-8))
-After first opt: deviance = 346.76
-theta:  0.191371 0.1640241 0.3623236 0.9559013 -0.06176308 0.02628915 
-beta:  -2.434918 0.4551845 -3.215018 
    user  system elapsed 
-  4.288   0.008   4.301 
+  6.136   0.004   6.166 
 > print(nm2, corr=FALSE)
 Nonlinear mixed model fit by maximum likelihood ['nlmerMod']
 Formula: conc ~ SSfol(Dose, Time, lKe, lKa, lCl) ~ (lKe + lKa + lCl |      Subject) 
    Data: Theoph 
 
       AIC       BIC    logLik  deviance 
- 366.5358  395.3638 -173.2679  346.5358 
+ 366.5270  395.3550 -173.2635  346.5270 
 
 Random effects:
  Groups   Name Variance Std.Dev. Corr         
- Subject  lKe  0.01726  0.1314                
-          lKa  0.45989  0.6781    0.055       
-          lCl  0.06343  0.2519    0.993 -0.061
- Residual      0.45919  0.6776                
+ Subject  lKe  0.01748  0.1322                
+          lKa  0.40625  0.6374    0.020       
+          lCl  0.06544  0.2558    0.992 -0.096
+ Residual      0.46311  0.6805                
 Number of obs: 132, groups: Subject, 12
 
 Fixed effects:
     Estimate Std. Error t value
-lKe -2.44554    0.06224  -39.29
-lKa  0.47845    0.20524    2.33
-lCl -3.21688    0.07989  -40.27
+lKe -2.44546    0.06257  -39.08
+lKa  0.47635    0.19395    2.46
+lCl -3.21454    0.08100  -39.68
 > 
 > system.time(nm3 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
 +                          (lKe|Subject) + (lKa|Subject) + (lCl|Subject),
 +                          Theoph, start = Th.start))
-After first opt: deviance = 354.036
-theta:  0.0005499634 0.9275911 0.2369416 
-beta:  -2.454632 0.4663312 -3.22715 
    user  system elapsed 
-  2.596   0.000   2.600 
+   3.16    0.00    3.17 
 > print(nm3, corr=FALSE)
 Nonlinear mixed model fit by maximum likelihood ['nlmerMod']
 Formula: conc ~ SSfol(Dose, Time, lKe, lKa, lCl) ~ (lKe | Subject) + (lKa |      Subject) + (lCl | Subject) 
    Data: Theoph 
 
       AIC       BIC    logLik  deviance 
- 367.9839  388.1635 -176.9920  353.9839 
+ 367.9835  388.1631 -176.9918  353.9835 
 
 Random effects:
- Groups   Name Variance  Std.Dev. 
- Subject  lKe  2.167e-07 0.0004655
- Subject  lKa  4.328e-01 0.6578935
- Subject  lCl  2.813e-02 0.1677314
- Residual      5.006e-01 0.7075217
+ Groups   Name Variance  Std.Dev.
+ Subject  lKe  2.460e-07 0.000496
+ Subject  lKa  4.316e-01 0.656941
+ Subject  lCl  2.809e-02 0.167588
+ Residual      5.008e-01 0.707683
 Number of obs: 132, groups: Subject, 12
 
 Fixed effects:
     Estimate Std. Error t value
-lKe -2.46549    0.05185  -47.55
-lKa  0.48507    0.20026    2.42
-lCl -3.23068    0.05957  -54.23
+lKe -2.46572    0.05187  -47.54
+lKa  0.48088    0.20000    2.40
+lCl -3.23074    0.05955  -54.26
 > 
 > ## dropping   lKe  from random effects:
 > system.time(nm4 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~ (lKa+lCl|Subject),
 +                          Theoph, start = Th.start, tolPwrss=1e-8))
-After first opt: deviance = 354.033
-theta:  0.9278971 -0.001873178 0.2366882 
-beta:  -2.454703 0.4663831 -3.2272 
    user  system elapsed 
-  1.896   0.000   1.901 
+  1.848   0.000   1.856 
 > print(nm4, corr=FALSE)
 Nonlinear mixed model fit by maximum likelihood ['nlmerMod']
 Formula: conc ~ SSfol(Dose, Time, lKe, lKa, lCl) ~ (lKa + lCl | Subject) 
    Data: Theoph 
 
       AIC       BIC    logLik  deviance 
- 367.9830  388.1626 -176.9915  353.9830 
+ 367.9818  388.1614 -176.9909  353.9818 
 
 Random effects:
  Groups   Name Variance Std.Dev. Corr  
- Subject  lKa  0.43760  0.6615         
-          lCl  0.02818  0.1679   -0.008
- Residual      0.49993  0.7071         
+ Subject  lKa  0.43176  0.6571         
+          lCl  0.02806  0.1675   -0.005
+ Residual      0.50087  0.7077         
 Number of obs: 132, groups: Subject, 12
 
 Fixed effects:
     Estimate Std. Error t value
-lKe -2.46520    0.05182  -47.58
-lKa  0.48465    0.20125    2.41
-lCl -3.23135    0.05959  -54.23
+lKe -2.46592    0.05188  -47.53
+lKa  0.48282    0.20004    2.41
+lCl -3.22897    0.05953  -54.24
 > 
 > system.time(nm5 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
 +                          (lKa|Subject) + (lCl|Subject),
 +                          Theoph,
 +                          start = Th.start, tolPwrss=1e-8))
-After first opt: deviance = 354.035
-theta:  0.9259404 0.2353412 
-beta:  -2.454629 0.4660639 -3.227184 
    user  system elapsed 
-  1.080   0.000   1.081 
+  1.189   0.004   1.197 
 > print(nm5, corr=FALSE)
 Nonlinear mixed model fit by maximum likelihood ['nlmerMod']
 Formula: conc ~ SSfol(Dose, Time, lKe, lKa, lCl) ~ (lKa | Subject) + (lCl |      Subject) 
    Data: Theoph 
 
       AIC       BIC    logLik  deviance 
- 365.9820  383.2788 -176.9910  353.9820 
+ 365.9817  383.2785 -176.9908  353.9817 
 
 Random effects:
  Groups   Name Variance Std.Dev.
- Subject  lKa  0.43333  0.6583  
- Subject  lCl  0.02795  0.1672  
- Residual      0.50089  0.7077  
+ Subject  lKa  0.43465  0.6593  
+ Subject  lCl  0.02813  0.1677  
+ Residual      0.50039  0.7074  
 Number of obs: 132, groups: Subject, 12
 
 Fixed effects:
     Estimate Std. Error t value
-lKe -2.46628    0.05188  -47.54
-lKa  0.48013    0.20037    2.40
-lCl -3.23118    0.05946  -54.35
+lKe -2.46579    0.05185  -47.56
+lKa  0.48262    0.20064    2.41
+lCl -3.23053    0.05957  -54.23
 > 
 > if (require("PKPDmodels")) {
 +     oral1cptSdlkalVlCl <-
@@ -185,27 +170,24 @@ lCl -3.23118    0.05946  -54.35
 +     print(nm2a, corr=FALSE)
 + }
 Loading required package: PKPDmodels
-After first opt: deviance = 346.638
-theta:  0.1796618 -0.1992441 0.3644769 0.9466212 0.04732267 0.01359923 
-beta:  -0.7813252 0.4531756 -3.214618 
 Nonlinear mixed model fit by maximum likelihood ['nlmerMod']
 Formula: conc ~ oral1cptSdlkalVlCl(Dose, Time, lV, lka, lCl) ~ (lV + lka +      lCl | Subject) 
    Data: Theoph 
 
       AIC       BIC    logLik  deviance 
- 366.4888  395.3168 -173.2444  346.4888 
+ 366.4875  395.3155 -173.2438  346.4875 
 
 Random effects:
  Groups   Name Variance Std.Dev. Corr         
- Subject  lV   0.01483  0.1218                
-          lka  0.43081  0.6564   -0.201       
-          lCl  0.06304  0.2511    0.993 -0.087
- Residual      0.46272  0.6802                
+ Subject  lV   0.01517  0.1232                
+          lka  0.42806  0.6543   -0.202       
+          lCl  0.06343  0.2519    0.993 -0.087
+ Residual      0.46237  0.6800                
 Number of obs: 132, groups: Subject, 12
 
 Fixed effects:
     Estimate Std. Error t value
-lV  -0.77250    0.04174  -18.51
-lka  0.47271    0.19924    2.37
-lCl -3.22051    0.07975  -40.38
+lV  -0.77187    0.04208  -18.34
+lka  0.47106    0.19864    2.37
+lCl -3.21992    0.07995  -40.28
 > 
