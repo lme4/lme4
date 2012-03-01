@@ -11,7 +11,7 @@
   \item{x}{fitted \code{*lmer()} model, see
   \code{\link{lmer}}, \code{\link{glmer}}, etc.}
 
-  \item{FUN}{a \code{\link{function}(x)}, computating the
+  \item{FUN}{a \code{\link{function}(x)}, computing the
   \emph{statistic} of interest, which must be a numeric
   vector, possibly named.}
 
