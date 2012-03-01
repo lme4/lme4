@@ -1487,7 +1487,7 @@ getME <- function(object,
 
            "Gp" = object@Gp,
            "flist" = object@flist,
-	   "beta" = structure(object@beta, names = dimnames(PR$X)[[2]]),
+	   "beta" = object@beta,
            "theta"= {
                tt <- object@theta
                nc <- c(unlist(mapply(function(g,e) {
