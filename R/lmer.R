@@ -1022,11 +1022,22 @@ ranef.merMod <- function(object, postVar = FALSE, drop = FALSE,
 }
 
 ##' @S3method refit merMod
-refit.merMod <- function(object, newresp= model.response(model.frame(object)),
-			 ...)
+refit.merMod <- function(object, newresp=NULL, ...)
 {
+
     rr <- object@resp$copy()
 
+    if (!is.null(newresp)) {
+    
+      if (!is.null(na.act <- attr(object@frame,"na.action"))) {
+        ## will only get here if na.action is 'na.omit' or 'na.exclude'
+        if (is.matrix(newresp)) {
+          newresp <- newresp[-na.act,]
+        } else newresp <- newresp[-na.act]
+      }
+
+
+    
     if (isGLMM(object) && rr$family$family=="binomial") {
         if (is.matrix(newresp) && ncol(newresp)==2) {
             ntot <- rowSums(newresp)
@@ -1040,8 +1051,12 @@ refit.merMod <- function(object, newresp= model.response(model.frame(object)),
             newresp <- as.numeric(newresp)-1
         }
     }
+
     stopifnot(length(newresp <- as.numeric(as.vector(newresp))) == length(rr$y))
     rr$setResp(newresp)
+
+    }
+    
     pp        <- object@pp$copy()
     dc        <- object@devcomp
     nAGQ      <- dc$dims["nAGQ"]
