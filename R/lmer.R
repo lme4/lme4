@@ -683,6 +683,7 @@ anovaLmer <- function(object, ...) {
 	ss <- as.vector(object@pp$RX() %*% object@beta)^2
 	names(ss) <- colnames(X)
 	terms <- terms(object)
+        ## FIXME: this setdiff() should be obsolete since terms now keeps only fixed effects by default
 	nmeffects <- setdiff(attr(terms, "term.labels"), names(object@flist))
 	if ("(Intercept)" %in% names(ss))
 	    nmeffects <- c("(Intercept)", nmeffects)
@@ -782,9 +783,7 @@ drop1.merMod <- function(object, scope, scale = 0, test = c("none", "Chisq"),
     ans <- matrix(nrow = ns + 1L, ncol = 2L,
                   dimnames =  list(c("<none>", scope), c("df", "AIC")))
     ans[1, ] <- extractAIC(object, scale, k = k, ...)
-    ## BMB: avoid nobs, to avoid dependence on 2.13
-    ## n0 <- nobs(object, use.fallback = TRUE)
-    n0 <- nrow(object@frame)
+    n0 <- nobs(object, use.fallback = TRUE)
     env <- environment(formula(object))
     for(i in seq(ns)) {
 	tt <- scope[i]
@@ -796,9 +795,7 @@ drop1.merMod <- function(object, scope, scale = 0, test = c("none", "Chisq"),
                        evaluate = FALSE)
 	nfit <- eval(nfit, envir = env) # was  eval.parent(nfit)
 	ans[i+1, ] <- extractAIC(nfit, scale, k = k, ...)
-        ## BMB: avoid nobs, to avoid dependence on 2.13
-        ## nnew <- nobs(nfit, use.fallback = TRUE)
-        nnew <- nrow(nfit@frame)
+        nnew <- nobs(nfit, use.fallback = TRUE)
         if(all(is.finite(c(n0, nnew))) && nnew != n0)
             stop("number of rows in use has changed: remove missing values?")
     }
@@ -1261,7 +1258,12 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE, ...) {
 
 ##' @importFrom stats terms
 ##' @S3method terms merMod
-terms.merMod <- function(x, ...) attr(x@frame, "terms")
+terms.merMod <- function(x, fixed.only=TRUE, ...) {
+  tt <- attr(x@frame, "terms")
+  if (fixed.only) {
+    drop.terms(tt,match(names(x@flist),attr(tt,"term.labels")))
+  } else tt
+}
 
 ##' @importFrom stats update
 ##' @S3method update merMod
