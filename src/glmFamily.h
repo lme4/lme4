@@ -21,6 +21,7 @@ namespace glm {
 	Rcpp::Environment d_rho;
     public:
 	glmDist(Rcpp::List&);
+	virtual ~glmDist() {}
 
 	virtual const ArrayXd variance(const ArrayXd&) const;
 	virtual const ArrayXd devResid(const ArrayXd&, const ArrayXd&, const ArrayXd&) const;
@@ -96,6 +97,7 @@ namespace glm {
 	Rcpp::Environment d_rho;
     public:
 	glmLink(Rcpp::List&);
+	virtual ~glmLink() {}
 
 	virtual const ArrayXd linkFun(const ArrayXd&) const;
 	virtual const ArrayXd linkInv(const ArrayXd&) const;
