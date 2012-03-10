@@ -66,7 +66,7 @@ namespace lme4Eigen {
 	// This complicated code bypasses problems caused by Eigen's
 	// sparse/sparse matrix multiplication pruning zeros.  The
 	// Cholesky decomposition croaks if the structure of d_LamtUt changes.
-	MVec(d_LamtUt._valuePtr(), d_LamtUt.nonZeros()).setZero();
+	MVec(d_LamtUt.valuePtr(), d_LamtUt.nonZeros()).setZero();
 	for (Index j = 0; j < d_Ut.outerSize(); ++j) {
 	    for(MSpMatrixd::InnerIterator rhsIt(d_Ut, j); rhsIt; ++rhsIt) {
 		Scalar                        y(rhsIt.value());
@@ -132,15 +132,15 @@ namespace lme4Eigen {
 	// for a SparseMatrix<double>, not a MappedSparseMatrix<double>.
 	SpMatrixd  m(d_LamtUt.rows(), d_LamtUt.cols());
 	m.resizeNonZeros(d_LamtUt.nonZeros());
-	std::copy(d_LamtUt._valuePtr(),
-		  d_LamtUt._valuePtr() + d_LamtUt.nonZeros(),
-		  m._valuePtr()); 
-	std::copy(d_LamtUt._innerIndexPtr(),
-		  d_LamtUt._innerIndexPtr() + d_LamtUt.nonZeros(),
-		  m._innerIndexPtr()); 
-	std::copy(d_LamtUt._outerIndexPtr(),
-		  d_LamtUt._outerIndexPtr() + d_LamtUt.cols() + 1,
-		  m._outerIndexPtr()); 
+	std::copy(d_LamtUt.valuePtr(),
+		  d_LamtUt.valuePtr() + d_LamtUt.nonZeros(),
+		  m.valuePtr()); 
+	std::copy(d_LamtUt.innerIndexPtr(),
+		  d_LamtUt.innerIndexPtr() + d_LamtUt.nonZeros(),
+		  m.innerIndexPtr()); 
+	std::copy(d_LamtUt.outerIndexPtr(),
+		  d_LamtUt.outerIndexPtr() + d_LamtUt.cols() + 1,
+		  m.outerIndexPtr()); 
 	d_L.factorize_p(m, Eigen::ArrayXi(), 1.);
 	d_ldL2 = ::M_chm_factor_ldetL2(d_L.factor());
     }
@@ -152,7 +152,7 @@ namespace lme4Eigen {
 	std::copy(theta.data(), theta.data() + theta.size(), d_theta.data());
 				// update Lambdat
 	int    *lipt = d_Lind.data();
-	double *LamX = d_Lambdat._valuePtr(), *thpt = d_theta.data();
+	double *LamX = d_Lambdat.valuePtr(), *thpt = d_theta.data();
 	for (int i = 0; i < d_Lind.size(); ++i) {
 	    LamX[i] = thpt[lipt[i] - 1];
 	}
@@ -210,7 +210,7 @@ namespace lme4Eigen {
 		throw std::runtime_error("Size mismatch in updateXwts");
 
 	    // More complex code to handle the pruning of zeros
-	    MVec(d_Ut._valuePtr(), d_Ut.nonZeros()).setZero();
+	    MVec(d_Ut.valuePtr(), d_Ut.nonZeros()).setZero();
 	    for (int j = 0; j < d_Ut.outerSize(); ++j) {
 		MSpMatrixd::InnerIterator lhsIt(d_Ut, j);
 		for (SpMatrixd::InnerIterator  rhsIt(Ut, j); rhsIt; ++rhsIt, ++lhsIt) {
@@ -228,7 +228,7 @@ namespace lme4Eigen {
 
     void merPredD::updateDecomp() { // update L, RZX and RX
 	updateL();
-	d_RZX           = d_LamtUt * d_V;
+	d_RZX         = d_LamtUt * d_V;
 	if (d_p > 0) {
 	    d_L.solveInPlace(d_RZX, CHOLMOD_P);
 	    d_L.solveInPlace(d_RZX, CHOLMOD_L);
