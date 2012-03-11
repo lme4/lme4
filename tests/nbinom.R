@@ -63,7 +63,7 @@ stopifnot(
 
 if(FALSE) { ## simulation study --------------------
 
-    library(glmmADMB)
+  ## library(glmmADMB) ## avoid R CMD check warning
     simsumfun <- function(...) {
         d <- simfun(...)
         t1 <- system.time(g1 <- glmer.nb(z~x+(1|f),data=d))

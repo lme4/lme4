@@ -60,6 +60,7 @@
 ##' @param contrasts an optional list. See the \code{contrasts.arg} of
 ##'     \code{model.matrix.default}.
 ##' @param devFunOnly logical - return only the deviance evaluation function.
+##' @param optimizer character - name of optimizing function
 ##' @param \dots other potential arguments.  A \code{method} argument was used
 ##'    in earlier versions of the package. Its functionality has been replaced by
 ##'    the \code{REML} argument.
@@ -77,7 +78,8 @@
 lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
                  control = list(), start = NULL,
                  verbose = 0L, subset, weights, na.action, offset,
-                 contrasts = NULL, devFunOnly=FALSE, ...)
+                 contrasts = NULL, devFunOnly=FALSE,
+                 optimizer="Nelder_Mead", ...)
 {
     if (sparseX) warning("sparseX = TRUE has no effect at present")
     mf <- mc <- match.call()
@@ -133,25 +135,12 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 
     if (devFunOnly) return(devfun)
 
-    ## FIXME: this code is replicated in lmer/glmer/nlmer ...
-    ## it seems good to have it in R rather than C++ code but maybe it should go within Nelder_Mead() ??
+    opt <- optwrap(optimizer,
+                   devfun, rho$pp$theta, lower=reTrms$lower, control=control, rho, adj=FALSE)
 
-    control$iprint <- switch(as.character(min(verbose,3L)),
-                             "0"=0, "1"=20,"2"=10,"3"=1)
-
-    lower <- reTrms$lower
-    ## FIXME: allow user control of xst, xt ?
-    xst <- rep.int(0.1, length(lower))
-    opt <- Nelder_Mead(devfun, x0=rho$pp$theta, xst=0.2*xst, xt=xst*0.0001,
-                       lower=lower, control=control)
-    if (opt$ierr < 0L) {
-        if (opt$ierr > -4L)
-            stop("convergence failure, code ", opt$ierr, " in NelderMead")
-        else
-            warning("failure to converge in", opt$control$maxfun, "evaluations")
-    }
     mkMerMod(environment(devfun), opt, reTrms, fr, mc)
 }## { lmer }
+
 
 ##' Fit a generalized linear mixed model (GLMM)
 ##'
@@ -203,11 +192,35 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 ##'    \code{theta}, these are used as the starting values for those slots.
 ##'    A numeric \code{start} argument of the appropriate length is used as the
 ##'    starting value of \code{theta}.
-##' @param optimizer which optimizer to use in the second phase of optimization.
-##'    The default is \code{\link{NelderMead}} and the alternative is
-##'    \code{\link{bobyqa}}.  For difficult model fits we have found
-##'    \code{\link{NelderMead}} to be more reliable but occasionally slower than
-##'    \code{\link{bobyqa}}.
+##' @param optimizer which optimizer(s) to use for each phase of optimization.
+##'    A character vector or list of functions.
+##'    If \code{length(optimizer)==2}, the first element will be used
+##'    for the preliminary (random effects parameters only) optimization, while
+##'    the second will be used for the final (random effects plus
+##'    fixed effect parameters) phase. The built-in optimizers are
+##'    \code{\link{Nelder_Mead}} and \code{\link{bobyqa}} (from
+##'    the \code{minqa} package; the default
+##'    is to use \code{\link{bobyqa}} for the first and
+##'    \code{\link{Nelder_Mead}} for the final phase.
+##'    (FIXME: simplify if possible!). For difficult model fits we have found
+##'    \code{\link{Nelder_Mead}} to be more reliable but occasionally slower than
+##'    \code{\link{bobyqa}}. Any minimizing function that allows
+##'    box constraints can be used
+##'    provided that it (1) takes input parameters \code{fn} (function
+##'    to be optimized), \code{par} (starting parameter values),
+##'    \code{lower} (lower bounds) and \code{control} (control parameters,
+##'    passed through from the \code{control} argument) and (2)
+##'    returns a list with (at least) elements \code{par} (best-fit
+##'    parameters), \code{fval} (best-fit function value), \code{conv}
+##'    (convergence code) and (optionally) \code{message} (informational
+##'    message, or explanation of convergence failure).
+##'    Special provisions are made for \code{\link{bobyqa}},
+##'    \code{\link{Nelder_Mead}}, and optimizers wrapped in
+##'    the \code{optimx} package; to use \code{optimx} optimizers
+##'    (including \code{L-BFGS-B} from base \code{optim} and
+##'    \code{nlminb}), pass the \code{method} argument to \code{optim}
+##'    in the \code{control} argument.
+##'    
 ##' @param mustart optional starting values on the scale of the conditional mean,
 ##'    as in \code{\link[stats]{glm}}; see there for details.
 ##' @param etastart optional starting values on the scale of the unbounded
@@ -225,6 +238,8 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 ##' @keywords models
 ##' @examples
 ##' ## generalized linear mixed model
+##' library(lattice)
+##' xyplot(incidence/size ~ period, group=herd, type="a", data=cbpp)
 ##' (gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
 ##'               data = cbpp, family = binomial))
 ##' ## using nAGQ=0L only gets close to the optimum
@@ -248,7 +263,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
                   control = list(), start = NULL, verbose = 0L, nAGQ = 1L,
                   compDev = TRUE, subset, weights, na.action, offset,
                   contrasts = NULL, mustart, etastart, devFunOnly = FALSE,
-                  tolPwrss = 1e-10, optimizer=c("NelderMead","bobyqa"), ...)
+                  tolPwrss = 1e-10, optimizer=c("bobyqa","Nelder_Mead"), ...)
 {
     verbose <- as.integer(verbose)
     mf <- mc <- match.call()
@@ -329,11 +344,12 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     devfun <- mkdevfun(rho, 0L) # deviance as a function of theta only
     if (devFunOnly && !nAGQ) return(devfun)
 
-
-    ## FIXME: why is bobyqa always used for preliminary fit?  document??
-    control$iprint <- min(verbose, 3L)
-
-    opt <- bobyqa(rho$pp$theta, devfun, rho$lower, control=control)
+    if (length(optimizer)==1) {
+       optimizer <- replicate(2,optimizer)
+     }
+    opt <- optwrap(optimizer[[1]],devfun,rho$pp$theta, rho$lower, control, rho,
+                   adj=FALSE, verbose=verbose)
+    
     rho$nAGQ <- nAGQ
     if (nAGQ > 0L) {
         rho$lower <- c(rho$lower, rep.int(-Inf, length(rho$beta0)))
@@ -347,22 +363,10 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
         }
         devfun <- mkdevfun(rho, nAGQ)
         if (devFunOnly) return(devfun)
-        opt <- switch(match.arg(optimizer),
-                      bobyqa = {
-                          if(!is.numeric(control$rhobeg)) control$rhobeg <- 0.0002
-                          if(!is.numeric(control$rhoend)) control$rhoend <- 2e-7
-                          rho$control <- control
-                          bobyqa(c(rho$pp$theta, rho$beta0), devfun, rho$lower, control=control)
-                      },
-                      NelderMead = {
-                          control$iprint <- switch(as.character(min(verbose,3L)),
-                                                  "0"=0,"1"=20,"2"=10,"3"=1)
-                          xst <- c(rep.int(0.1, length(rho$dpars)),
-                                   sqrt(diag(environment(devfun)$pp$unsc())))
-                          Nelder_Mead(devfun, x0=with(environment(devfun), c(pp$theta, pp$beta0)),
-                                       xst=0.2*xst, xt= xst*0.0001, lower=rho$lower, control=control)
-                      })
-    }
+
+        opt <- optwrap(optimizer[[2]],devfun,c(rho$pp$theta, rho$beta0), rho$lower, control, rho,
+                       adj=TRUE, verbose=verbose)
+      }
 
     mkMerMod(environment(devfun), opt, reTrms, fr, mc)
 }## {glmer}
@@ -398,7 +402,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
                   nAGQ = 1L, subset, weights, na.action, offset,
                   contrasts = NULL, devFunOnly = 0L, tolPwrss = 1e-10,
-                  optimizer=c("NelderMead","bobyqa"), ...)
+                  optimizer="Nelder_Mead", ...)
 {
     vals <- nlformula(mc <- match.call())
     if ((qrX <- qr(X <- vals$X))$rank < (p <- ncol(X)))
@@ -422,19 +426,12 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
     rho$beta0 <- rho$pp$beta0
     rho$tolPwrss <- tolPwrss # Resetting this is intentional. The initial optimization is coarse.
 
-    control$iprint <- switch(as.character(min(verbose,3L)),
-                             "0"=0,"1"=20,"2"=10,"3"=1)
-    lower <- rho$lower
-    xst <- rep.int(0.1, length(lower))
-
-    opt <- Nelder_Mead(devfun, x0=rho$pp$theta, xst=0.2*xst, xt=xst*0.0001,
-                       lower=lower, control=control)
-    if (opt$ierr < 0L) {
-        if (opt$ierr > -4L)
-            stop("convergence failure, code ", opt$ierr, " in NelderMead")
-        else
-            warning("failure to converge in ", cc$maxfun, " evaluations")
+    if (length(optimizer)==1) {
+      optimizer <- replicate(2,optimizer)
     }
+
+    opt <- optwrap(optimizer[[1]],devfun, rho$pp$theta, rho$lower, control, rho, adj=FALSE)
+
     if (nAGQ > 0L) {
         rho$lower <- c(rho$lower, rep.int(-Inf, length(rho$beta0)))
         rho$u0    <- rho$pp$u0
@@ -447,20 +444,12 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
         }
         devfun <- mkdevfun(rho, nAGQ)
         if (devFunOnly) return(devfun)
-        opt <- switch(match.arg(optimizer),
-                      bobyqa = {
-                          if(!is.numeric(control$rhobeg)) control$rhobeg <- 0.0002
-                          if(!is.numeric(control$rhoend)) control$rhoend <- 2e-7
-                          rho$control <- control
-                          bobyqa(c(rho$pp$theta, rho$beta0), devfun, rho$lower, control=control)
-                      },
-                      NelderMead = {
-                          xst <- c(rep.int(0.1, length(rho$dpars)),
-                                   sqrt(diag(environment(devfun)$pp$unsc())))
-                          Nelder_Mead(devfun, x0=with(environment(devfun), c(pp$theta, pp$beta0)),
-                                       xst=0.2*xst, xt= xst*0.0001, lower=rho$lower, control=control)
-                      })
-    }
+
+        opt <- optwrap(optimizer[[2]],devfun, par=c(rho$pp$theta, rho$beta0), lower=rho$lower, control=control, rho,
+                       adj=TRUE, verbose=verbose)
+        
+        
+      }
     mkMerMod(environment(devfun), opt, vals$reTrms, vals$frame, mc)
 }## {nlmer}
 
@@ -961,9 +950,9 @@ NULL
 ##' fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy)
 ##' fm3 <- lmer(diameter ~ (1|plate) + (1|sample), Penicillin)
 ##' ranef(fm1)
-##' if(FALSE) { ##-- postVar=TRUE is not yet implemented -- FIXME
-##' str(rr1 <- ranef(fm1, postVar = TRUE))
+##' ##' str(rr1 <- ranef(fm1, postVar = TRUE))
 ##' dotplot(rr1,scales = list(x = list(relation = 'free')))[["Subject"]]
+##' if(FALSE) { ##-- postVar=TRUE is not yet implemented for multiple terms -- FIXME
 ##' str(ranef(fm2, postVar = TRUE))
 ##' }
 ##' op <- options(digits = 4)
@@ -1078,8 +1067,10 @@ refit.merMod <- function(object, newresp=NULL, ...)
     }
     control <- list(...)$control
     if (is.null(control)) control <- list()
+    control <- c(control,list(xst=0.2*xst, xt=xst*0.0001))
+    ## FIXME: generic optimizer stuff
 ### FIXME: Probably should save the control settings and the optimizer name in the merMod object
-    opt <- Nelder_Mead(ff, x0, xst=0.2*xst, xt=xst*0.0001, lower=lower, control=control)
+    opt <- Nelder_Mead(ff, x0, lower=lower, control=control)
     mkMerMod(environment(ff), opt, list(flist=object@flist, cnms=object@cnms, Gp=object@Gp,
                                         lower=object@lower), object@frame, getCall(object))
 }
@@ -1449,6 +1440,7 @@ setMethod("getL", "merMod", function(x) {
 ##'     \item{devcomp}{a list consisting of a named numeric vector, \dQuote{cmp}, and
 ##'                    a named integer vector, \dQuote{dims}, describing the fitted model}
 ##'     \item{offset}{model offset}
+##'     \item{lower}{lower bounds on model parameters} ## FIXME: theta only?
 ##' }
 ##' @return Unspecified, as very much depending on the \code{\link{name}}.
 ##' @seealso \code{\link{getCall}()},
@@ -1479,7 +1471,7 @@ getME <- function(object,
 		  "RX", "RZX",
                   "beta", "theta",
 		  "REML", "n_rtrms", "is_REML", "devcomp",
-                    "offset"))
+                    "offset", "lower"))
 {
     if(missing(name)) stop("'name' must not be missing")
     stopifnot(length(name <- as.character(name)) == 1,
@@ -1529,6 +1521,7 @@ getME <- function(object,
 
            "devcomp" = dc,
            "offset" = rsp$offset,
+           "lower" = object@lower,  ## FIXME: should this include -Inf values for beta?
 	   "..foo.." =# placeholder!
 	   stop(gettextf("'%s' is not implemented yet",
 			 sprintf("getME(*, \"%s\")", name))),
@@ -1721,6 +1714,10 @@ summary.merMod <- function(object, ...)
     if (nrow(coefs) > 0) {
 	coefs <- cbind(coefs, coefs[,1]/coefs[,2], deparse.level=0)
 	colnames(coefs)[3] <- paste(if(useSc) "t" else "z", "value")
+        if (isGLMM(object)) {
+          coefs <- cbind(coefs,2*pnorm(abs(coefs[,3]),lower.tail=FALSE))
+          colnames(coefs)[4] <- c("Pr(>|z|)")
+        }
     }
     mName <- paste(switch(1L + dd["GLMM"] * 2L + dd["NLMM"],
 			  "Linear", "Nonlinear",
@@ -1898,5 +1895,73 @@ isNLMM <- function(object) {
 isLMM <- function(object) {
   !isGLMM(object) && !isNLMM(object)
   ## **not** is(object@resp,"lmerResp") ?
+}
+
+getOptfun <- function(optimizer) {
+  if (is.character(optimizer)) {
+    optfun <- try(get(optimizer),silent=TRUE)
+  } else optfun <- optimizer
+  if (inherits(optfun,"try-error")) stop("couldn't find optimizer function ",optimizer)
+  if (!is(optfun,"function")) stop("non-function specified as optimizer")
+  if (any(is.na(match(c("fn","par","lower","control"),names(formals(optfun))))))
+    stop("optimizer function must use (at least) formal parameters 'fn', 'par', 'lower', 'control'")
+  optfun
+}
+
+optwrap <- function(optimizer,fn,par,lower,control,rho,adj, verbose=0L) {
+  optfun <- getOptfun(optimizer)
+  ## special-purpose control parameter tweaks: only for second round in nlmer, glmer
+  if (adj && is.character(optimizer))
+    switch(optimizer,
+           bobyqa = {
+             if(!is.numeric(control$rhobeg)) control$rhobeg <- 0.0002
+             if(!is.numeric(control$rhoend)) control$rhoend <- 2e-7
+             rho$control <- control
+           },
+           Nelder_Mead = {
+             if (is.null(control$xst))
+               xst <- c(rep.int(0.1, length(rho$dpars)),
+                        sqrt(diag(environment(fn)$pp$unsc())))
+             control$xst <- 0.2*xst
+             control$verbose <- verbose
+             if (is.null(control$xt)) control$xt <- control$xst*5e-4
+             rho$control <- control
+           })
+  arglist <- list(fn=fn, par=par, lower=lower, control=control)
+  ## optimx: must pass method in control (?) because 'method' was previously
+  ## used in lme4 to specify REML vs ML
+  ## FIXME: test -- does deparse(substitute(...)) clause work?
+  if (optimizer=="optimx" || deparse(substitute(optimizer))=="optimx") {
+    if (is.null(method <- control$method)) stop("must specify 'method' explicitly for optimx")
+    arglist$control$method <- NULL
+    arglist <- c(arglist,list(method=method))
+  }
+  ## FIXME: test!  effects of multiple warnings??
+  ## may not need to catch warnings after all??
+  curWarning <- NULL
+  opt <- withCallingHandlers(do.call(optfun,arglist),
+                             warning = function(w) {
+                               ## browser()
+                               cat("caught warning:",w$message,"\n")
+                               assign("curWarning",w$message,parent.frame())
+                               invokeRestart("muffleWarning")
+                             })
+  ## if (!is.null(curWarning)) browser()
+  ## FIXME: set code to warn on convergence !=0
+  ## post-fit tweaking
+  if (optimizer=="bobyqa") {
+    opt$convergence <- opt$ierr
+  }
+  if (optimizer=="optimx") {
+    optr <- lapply(opt,"[[",1)[c("par","fvalues","conv")]
+    optr$message <- attr(opt,"details")[[1]]$message
+    opt <- optr
+  }
+  if (opt$conv!=0) {
+      wmsg <- paste("convergence code",opt$conv,"from",optimizer)
+      if (!is.null(opt$msg)) wmsg <- paste(wmsg,": ",opt$msg,sep="")
+      warning(wmsg)
+    }
+  opt
 }
 

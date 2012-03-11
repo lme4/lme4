@@ -6,7 +6,7 @@
     verbose = 0L, nAGQ = 1L, subset, weights, na.action,
     offset, contrasts = NULL, devFunOnly = 0L,
     tolPwrss = 1e-10,
-    optimizer = c("NelderMead", "bobyqa"), ...)
+    optimizer = "Nelder_Mead", ...)
 }
 \arguments{
   \item{formula}{a nonlinear mixed model formula (see

@@ -7,7 +7,7 @@
 getME(object,
       name = c("X", "Z", "Zt", "u", "Gp", "L", "Lambda", "Lambdat",
                "Lind", "RX", "RZX", "beta", "theta", "REML", "n_rtrms",
-               "is_REML", "devcomp", "offset"))
+               "is_REML", "devcomp", "offset", "lower"))
 }
 \arguments{
   \item{object}{a fitted mixed-effects model of class
@@ -39,7 +39,9 @@ getME(object,
   \code{\link{isREML}}} \item{devcomp}{a list consisting of
   a named numeric vector, \dQuote{cmp}, and a named integer
   vector, \dQuote{dims}, describing the fitted model}
-  \item{offset}{model offset} }}
+\item{offset}{model offset}
+\item{lower}{lower bounds on model parameters}
+}}
 }
 \value{
   Unspecified, as very much depending on the

@@ -488,7 +488,8 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc) {
               is(pp <- rho$pp, "merPredD"),
               is(resp <- rho$resp, "lmResp"),
               is.list(opt),
-              all(c("fval", "par", "ierr") %in% names(opt)),
+              "par" %in% names(opt),
+              all(c("conv","fval") %in% substr(names(opt),1,4)), ## "conv[ergence]", "fval[ues]"
               is.list(reTrms),
               all(c("flist", "cnms", "Gp", "lower") %in%
                   names(reTrms)))
@@ -513,6 +514,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc) {
              ussq=sqrLenU, pwrss=pwrss,
              drsum=if (rcl=="glmResp") resp$resDev() else NA,
              REML=if (rcl=="lmerResp" && resp$REML != 0L) opt$fval else NA,
+             ## FIXME: construct 'REML deviance' here?
              dev=if (rcl=="lmerResp" && resp$REML != 0L) NA else opt$fval,
              sigmaML=sqrt(unname(if (rcl=="glmResp") NA else pwrss/dims['n'])),
              sigmaREML=sqrt(unname(if (rcl!="lmerResp") NA else pwrss/dims['nmp'])),

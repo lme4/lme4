@@ -1,5 +1,5 @@
 Package: lme4Eigen
-Version: 0.9996875-11
+Version: 0.9996875-13
 Date: $Date$
 Revision: $Revision$
 Title: Linear mixed-effects models using Eigen and S4
@@ -34,7 +34,8 @@ Suggests:
     mlmRev,
     plyr,
     reshape,
-    testthat
+    testthat,
+    optimx
 LazyData: yes
 License: GPL (>=2)
 URL: http://lme4.r-forge.r-project.org/
@@ -54,3 +55,5 @@ Collate:
     'bootMer.R'
     'nbinom.R'
     'mcmcsamp.R'
+    'plot.R'
+BuildVignettes: no

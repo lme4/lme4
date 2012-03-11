@@ -4,6 +4,7 @@ pkg <- "lme4Eigen"
 pDIR <- switch((U <- Sys.getenv("USER")),
                "maechler" = "~/R/Pkgs",
                "bates"    = "~/sloc",
+               "bolker"   = "~/R/pkgs/lme4/pkg",
                ## default:
            {  p <- "/tmp"
               warning("unknown USER ", U,". -- using pDIR=",p,

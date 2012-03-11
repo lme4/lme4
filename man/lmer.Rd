@@ -5,7 +5,7 @@
   lmer(formula, data, REML = TRUE, sparseX = FALSE,
     control = list(), start = NULL, verbose = 0L, subset,
     weights, na.action, offset, contrasts = NULL,
-    devFunOnly = FALSE, ...)
+    devFunOnly = FALSE, optimizer="Nelder_Mead", ...)
 }
 \arguments{
   \item{formula}{a two-sided linear formula object
@@ -86,7 +86,8 @@
   \code{contrasts.arg} of \code{model.matrix.default}.}
 
   \item{devFunOnly}{logical - return only the deviance
-  evaluation function.}
+    evaluation function.}
+  \item{optimizer}{optimizer to use}
 
   \item{\dots}{other potential arguments.  A \code{method}
   argument was used in earlier versions of the package. Its

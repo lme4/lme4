@@ -7,7 +7,7 @@
     nAGQ = 1L, compDev = TRUE, subset, weights, na.action,
     offset, contrasts = NULL, mustart, etastart,
     devFunOnly = FALSE, tolPwrss = 1e-10,
-    optimizer = c("NelderMead", "bobyqa"), ...)
+    optimizer = c("bobyqa","Nelder_Mead"), ...)
 }
 \arguments{
   \item{family}{a GLM family, see \code{\link[stats]{glm}}
