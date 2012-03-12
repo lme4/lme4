@@ -162,7 +162,7 @@ merPredD <-
                      },
                      unsc         = function() {
                          'the unscaled variance-covariance matrix of the fixed-effects parameters'
-                         .Call(merPredDunsc, ptr())
+                         tcrossprod(RXi())
                      },
                      linPred      = function(fac) {
                          'evaluate the linear predictor for step factor fac'
