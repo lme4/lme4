@@ -5,8 +5,7 @@
   nlmer(formula, data, control = list(), start = NULL,
     verbose = 0L, nAGQ = 1L, subset, weights, na.action,
     offset, contrasts = NULL, devFunOnly = 0L,
-    tolPwrss = 1e-10,
-    optimizer = "Nelder_Mead", ...)
+    tolPwrss = 1e-10, optimizer = "Nelder_Mead", ...)
 }
 \arguments{
   \item{formula}{a nonlinear mixed model formula (see
@@ -101,12 +100,37 @@
   weighted residual sum-of-squares step.  Defaults to
   1e-10.}
 
-  \item{optimizer}{which optimizer to use in the second
-  phase of optimization.  The default is
-  \code{\link{NelderMead}} and the alternative is
-  \code{\link{bobyqa}}.  For difficult model fits we have
-  found \code{\link{NelderMead}} to be more reliable but
-  occasionally slower than \code{\link{bobyqa}}.}
+  \item{optimizer}{which optimizer(s) to use for each phase
+  of optimization.  A character vector or list of
+  functions.  If \code{length(optimizer)==2}, the first
+  element will be used for the preliminary (random effects
+  parameters only) optimization, while the second will be
+  used for the final (random effects plus fixed effect
+  parameters) phase. The built-in optimizers are
+  \code{\link{Nelder_Mead}} and \code{\link{bobyqa}} (from
+  the \code{minqa} package; the default is to use
+  \code{\link{bobyqa}} for the first and
+  \code{\link{Nelder_Mead}} for the final phase.  (FIXME:
+  simplify if possible!). For difficult model fits we have
+  found \code{\link{Nelder_Mead}} to be more reliable but
+  occasionally slower than \code{\link{bobyqa}}. Any
+  minimizing function that allows box constraints can be
+  used provided that it (1) takes input parameters
+  \code{fn} (function to be optimized), \code{par}
+  (starting parameter values), \code{lower} (lower bounds)
+  and \code{control} (control parameters, passed through
+  from the \code{control} argument) and (2) returns a list
+  with (at least) elements \code{par} (best-fit
+  parameters), \code{fval} (best-fit function value),
+  \code{conv} (convergence code) and (optionally)
+  \code{message} (informational message, or explanation of
+  convergence failure).  Special provisions are made for
+  \code{\link{bobyqa}}, \code{\link{Nelder_Mead}}, and
+  optimizers wrapped in the \code{optimx} package; to use
+  \code{optimx} optimizers (including \code{L-BFGS-B} from
+  base \code{optim} and \code{nlminb}), pass the
+  \code{method} argument to \code{optim} in the
+  \code{control} argument.}
 }
 \description{
   Fit a nonlinear mixed-effects model

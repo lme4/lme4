@@ -11,7 +11,7 @@
   \item{x}{fitted \code{*lmer()} model, see
   \code{\link{lmer}}, \code{\link{glmer}}, etc.}
 
-  \item{FUN}{a \code{\link{function}(x)}, computing the
+  \item{FUN}{a \code{\link{function}(x)}, computating the
   \emph{statistic} of interest, which must be a numeric
   vector, possibly named.}
 
@@ -73,7 +73,7 @@
 fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
 ## see ?"profile-methods"
 mySumm <- function(.) { s <- sigma(.)
-    c(beta =getME(., "beta"), sigma = s, sig01 = s * getME(., "theta")) }
+    c(beta =getME(., "beta"), sigma = s, sig01 = unname(s * getME(., "theta"))) }
 (t0 <- mySumm(fm01ML)) # just three parameters
 
 ## 3.8s (on a 5600 MIPS 64bit fast(year 2009) desktop "AMD Phenom(tm) II X4 925"):
@@ -94,7 +94,6 @@ boo01 # look at estimated bias for sig01 (-9.1, also when nsim = 1000)
                    h = log, hdot = function(.) 1/., hinv = exp))
 
 (bCI.3 <- boot.ci(boo01, index=3, type=c("norm", "basic", "perc")))# sig01
-
 }
 \references{
   Davison, A.C. and Hinkley, D.V. (1997) \emph{Bootstrap
@@ -110,3 +109,4 @@ boo01 # look at estimated bias for sig01 (-9.1, also when nsim = 1000)
 }
 \keyword{htest}
 \keyword{models}
+

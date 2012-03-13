@@ -35,8 +35,6 @@
   \code{nlmer} model objects with \code{nAGQ = 0} the
   argument is also \code{theta}.  However, when nAGQ > 0
   the argument is \code{c(theta, beta)}.
-
-  FIXME: out of date!  See example.
 }
 \examples{
 (dd <- lmer(Yield ~ 1|Batch, Dyestuff, devFunOnly=TRUE))

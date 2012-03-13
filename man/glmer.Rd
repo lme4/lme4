@@ -7,7 +7,7 @@
     nAGQ = 1L, compDev = TRUE, subset, weights, na.action,
     offset, contrasts = NULL, mustart, etastart,
     devFunOnly = FALSE, tolPwrss = 1e-10,
-    optimizer = c("bobyqa","Nelder_Mead"), ...)
+    optimizer = c("bobyqa", "Nelder_Mead"), ...)
 }
 \arguments{
   \item{family}{a GLM family, see \code{\link[stats]{glm}}
@@ -36,12 +36,37 @@
   \code{start} argument of the appropriate length is used
   as the starting value of \code{theta}.}
 
-  \item{optimizer}{which optimizer to use in the second
-  phase of optimization.  The default is
-  \code{\link{NelderMead}} and the alternative is
-  \code{\link{bobyqa}}.  For difficult model fits we have
-  found \code{\link{NelderMead}} to be more reliable but
-  occasionally slower than \code{\link{bobyqa}}.}
+  \item{optimizer}{which optimizer(s) to use for each phase
+  of optimization.  A character vector or list of
+  functions.  If \code{length(optimizer)==2}, the first
+  element will be used for the preliminary (random effects
+  parameters only) optimization, while the second will be
+  used for the final (random effects plus fixed effect
+  parameters) phase. The built-in optimizers are
+  \code{\link{Nelder_Mead}} and \code{\link{bobyqa}} (from
+  the \code{minqa} package; the default is to use
+  \code{\link{bobyqa}} for the first and
+  \code{\link{Nelder_Mead}} for the final phase.  (FIXME:
+  simplify if possible!). For difficult model fits we have
+  found \code{\link{Nelder_Mead}} to be more reliable but
+  occasionally slower than \code{\link{bobyqa}}. Any
+  minimizing function that allows box constraints can be
+  used provided that it (1) takes input parameters
+  \code{fn} (function to be optimized), \code{par}
+  (starting parameter values), \code{lower} (lower bounds)
+  and \code{control} (control parameters, passed through
+  from the \code{control} argument) and (2) returns a list
+  with (at least) elements \code{par} (best-fit
+  parameters), \code{fval} (best-fit function value),
+  \code{conv} (convergence code) and (optionally)
+  \code{message} (informational message, or explanation of
+  convergence failure).  Special provisions are made for
+  \code{\link{bobyqa}}, \code{\link{Nelder_Mead}}, and
+  optimizers wrapped in the \code{optimx} package; to use
+  \code{optimx} optimizers (including \code{L-BFGS-B} from
+  base \code{optim} and \code{nlminb}), pass the
+  \code{method} argument to \code{optim} in the
+  \code{control} argument.}
 
   \item{mustart}{optional starting values on the scale of
   the conditional mean, as in \code{\link[stats]{glm}}; see
@@ -173,6 +198,8 @@
 }
 \examples{
 ## generalized linear mixed model
+library(lattice)
+xyplot(incidence/size ~ period, group=herd, type="a", data=cbpp)
 (gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
               data = cbpp, family = binomial))
 ## using nAGQ=0L only gets close to the optimum
