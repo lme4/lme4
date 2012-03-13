@@ -5,22 +5,21 @@
 \title{Methods for profile() of [ng]lmer fitted models}
 \usage{
   \method{profile}{merMod} (fitted, alphamax = 0.01,
-    maxpts = 100, delta = cutoff/8, tr = 0, ...)
+    maxpts = 100, delta = cutoff/8, verbose=0, devtol=1e-9,
+startval="prev", ...)
 }
+%% FIXME: update from Roxygen!
 \arguments{
   \item{fitted}{a fitted model, e.g., the result of
   \code{\link{lmer}(..)}.}
-
   \item{alphamax}{used when \code{delta} is unspecified, as
   probability ... to compute \code{delta} ...}
-
   \item{maxpts}{...}
-
   \item{delta}{...}
-
-  \item{tr}{...}
-
-  \item{\dots}{potential further arguments for
+  \item{verbose}{...}
+  \item{devtol}{...}
+  \item{startval}{...}
+   \item{\dots}{potential further arguments for
   \code{profile} methods.}
 }
 \description{

@@ -1,5 +1,5 @@
 Package: lme4Eigen
-Version: 0.9996875-13
+Version: 0.9996875-14
 Date: $Date$
 Revision: $Revision$
 Title: Linear mixed-effects models using Eigen and S4
@@ -56,4 +56,5 @@ Collate:
     'nbinom.R'
     'mcmcsamp.R'
     'plot.R'
+    'vcconv.R'
 BuildVignettes: no
