@@ -9,12 +9,16 @@
 #include "optimizer.h"
 
 extern "C" {
-    using     Eigen::ArrayXd;
-    typedef   Eigen::VectorXi               iVec;
-    typedef   Eigen::Map<Eigen::MatrixXd>   MMat;
-    typedef   Eigen::Map<Eigen::VectorXd>   MVec;
-    typedef   Eigen::Map<ArrayXd>           MAr1;
-    typedef   Eigen::Map<iVec>             MiVec;
+    typedef   Eigen::VectorXi        iVec;
+    typedef   Eigen::Map<iVec>      MiVec;
+    typedef   Eigen::MatrixXd         Mat;
+    typedef   Eigen::Map<Mat>        MMat;
+    typedef   Eigen::VectorXd         Vec;
+    typedef   Eigen::Map<Vec>        MVec;
+    typedef   Eigen::ArrayXd          Ar1;
+    typedef   Eigen::Map<Ar1>        MAr1;
+    typedef   Eigen::ArrayXXd         Ar2;
+    typedef   Eigen::Map<Ar2>        MAr2;
 
     using      Rcpp::CharacterVector;
     using      Rcpp::Environment;
@@ -275,8 +279,8 @@ extern "C" {
 	if (!cvgd) throw runtime_error("pwrss failed to converge in 30 iterations");
     }
 
-    static ArrayXd devcCol(const MiVec& fac, const ArrayXd& u, const ArrayXd& devRes) {
-	ArrayXd  ans(u.square());
+    static Ar1 devcCol(const MiVec& fac, const Ar1& u, const Ar1& devRes) {
+	Ar1  ans(u.square());
 	for (int i = 0; i < devRes.size(); ++i) ans[fac[i] - 1] += devRes[i];
 	return ans;
     }
@@ -297,23 +301,23 @@ extern "C" {
 	pp->setU0(   as<MVec>(u0_));
 	pp->setBeta0(as<MVec>(beta0_));
 	pwrssUpdate(rp, pp, 0, true, ::Rf_asReal(tol_)); // should be a no-op
-	const ArrayXd     u0(pp->u0());
-	const ArrayXd  devc0(devcCol(fac, u0, rp->devResid()));
+	const Ar1     u0(pp->u0());
+	const Ar1  devc0(devcCol(fac, u0, rp->devResid()));
 
 	const unsigned int q(u0.size());
 	if (pp->L().factor()->nzmax !=  q)
 	    throw std::invalid_argument("AGQ only defined for a single scalar random-effects term");
-	const ArrayXd     sd(Eigen::Map<ArrayXd>((double*)pp->L().factor()->x, q).inverse());
+	const Ar1     sd(MAr1((double*)pp->L().factor()->x, q).inverse());
 
 	const MMat     GQmat(as<MMat>(GQmat_));
-	ArrayXd         mult(q);
+	Ar1         mult(q);
 
 	mult.setZero();
 	for (int i = 0; i < GQmat.rows(); ++i) {
 	    double            zknot(GQmat(i, 0));
-	    if (zknot == 0)    mult += ArrayXd::Constant(q, GQmat(i, 1));
+	    if (zknot == 0)    mult += Ar1::Constant(q, GQmat(i, 1));
 	    else {
-		const ArrayXd   u0i(u0 + zknot * sd);
+		const Ar1   u0i(u0 + zknot * sd);
 		pp->setU0(u0i);
 		rp->updateMu(pp->linPred(0.));
 		mult += (-0.5 * (devcCol(fac, u0i, rp->devResid()) - devc0) - GQmat(i, 2)).exp() *
@@ -336,25 +340,15 @@ extern "C" {
 
     SEXP glmerWrkIter(SEXP pp_, SEXP rp_) {
 	BEGIN_RCPP;
-//	Rcpp::Rcout << "Begin glmerWrkIter" << std::endl;
 	XPtr<glmResp>    rp(rp_);
-//	Rcpp::Rcout << "Extracted response pointer" << std::endl;
 	const Eigen::VectorXd   wt(rp->sqrtWrkWt());
-//	Rcpp::Rcout << "Working weights: " << wt.head(7).adjoint() << std::endl;
 	XPtr<merPredD>   pp(pp_);
-//	Rcpp::Rcout << "Extracted predictor pointer" << std::endl;
 	pp->updateXwts(wt);
-//	Rcpp::Rcout << "Updated predictor Xwts" << std::endl;
 	pp->updateDecomp();
-//	Rcpp::Rcout << "Updated predictor decomp" << std::endl;
 	pp->updateRes(rp->wrkResp());
-//	Rcpp::Rcout << "Updated predictor residuals" << std::endl;
 	pp->solve();
-//	Rcpp::Rcout << "Predictor solve" << std::endl;
 	rp->updateMu(pp->linPred(1.));
-//	Rcpp::Rcout << "Update mu" << std::endl;
 	pp->installPars(1.);
-//	Rcpp::Rcout << "Install pars" << std::endl;
 
 	return ::Rf_ScalarReal(rp->updateWts());
 
@@ -605,7 +599,7 @@ extern "C" {
 	return wrap(XPtr<merPredD>(ptr)->Pvec());
 	END_RCPP;
     }
-
+	
     SEXP merPredDRX(SEXP ptr) {
 	BEGIN_RCPP;
 	return wrap(XPtr<merPredD>(ptr)->RX());
