@@ -490,17 +490,17 @@ mkdevfun <- function(rho, nAGQ=1L) {
     ff <- NULL
     if (is(rho$resp, "lmerResp")) {
       rho$lmer_Deviance <- lmer_Deviance
-      ff <- function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(), theta)
+      ff <- function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))
     } else if (is(rho$resp, "glmResp")) {
         if (nAGQ < 2L) {
             rho$glmerLaplace <- glmerLaplace
             ff <- switch(nAGQ + 1L,
                          function(theta)
-                         .Call(glmerLaplace, pp$ptr(), resp$ptr(), theta,
-                               u0, beta0, verbose, FALSE, tolPwrss),
+                         .Call(glmerLaplace, pp$ptr(), resp$ptr(), as.double(theta),
+                               as.double(u0), as.double(beta0), verbose, FALSE, tolPwrss),
                          function(pars)
-                         .Call(glmerLaplace, pp$ptr(), resp$ptr(), pars[dpars], u0,
-                               pars[-dpars], verbose, TRUE, tolPwrss))
+                         .Call(glmerLaplace, pp$ptr(), resp$ptr(), as.double(pars[dpars]),
+                               as.double(u0), as.double(pars[-dpars]), verbose, TRUE, tolPwrss))
         } else {
             rho$glmerAGQ <- glmerAGQ
             rho$GQmat <- GHrule(nAGQ)
@@ -513,8 +513,8 @@ mkdevfun <- function(rho, nAGQ=1L) {
             rho$nlmerLaplace <- nlmerLaplace
             ff <- switch(nAGQ + 1L,
                          function(theta)
-                         .Call(nlmerLaplace, pp$ptr(), resp$ptr(), theta,
-                               u0, beta0, verbose, FALSE, tolPwrss),
+                         .Call(nlmerLaplace, pp$ptr(), resp$ptr(), as.double(theta),
+                               as.double(u0), beta0, verbose, FALSE, tolPwrss),
                          function(pars)
                          .Call(nlmerLaplace, pp$ptr(), resp$ptr(), pars[dpars], u0,
                                pars[-dpars], verbose, TRUE, tolPwrss))
