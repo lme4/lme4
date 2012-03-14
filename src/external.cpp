@@ -125,9 +125,21 @@ extern "C" {
 	END_RCPP;
     }
 
+    SEXP glm_setTheta(SEXP ptr, SEXP newtheta) {
+	BEGIN_RCPP;
+	XPtr<glmResp>(ptr)->setTheta(::Rf_asReal(newtheta));
+	END_RCPP;
+    }
+
     SEXP glm_sqrtWrkWt(SEXP ptr_) {
 	BEGIN_RCPP;
 	return wrap(XPtr<glmResp>(ptr_)->sqrtWrkWt());
+	END_RCPP;
+    }
+
+    SEXP glm_theta(SEXP ptr) {
+	BEGIN_RCPP;
+	return ::Rf_ScalarReal(XPtr<glmResp>(ptr)->theta());
 	END_RCPP;
     }
 
@@ -214,32 +226,23 @@ extern "C" {
 	END_RCPP;
     }
 
+    SEXP glmFamily_setTheta(SEXP ptr, SEXP ntheta) {
+	BEGIN_RCPP;
+	XPtr<glmFamily>(ptr)->setTheta(::Rf_asReal(ntheta));
+	END_RCPP;
+    }
+
+    SEXP glmFamily_theta(SEXP ptr) {
+	BEGIN_RCPP;
+	return ::Rf_ScalarReal(XPtr<glmFamily>(ptr)->theta());
+	END_RCPP;
+    }
+
     SEXP glmFamily_variance(SEXP ptr, SEXP mu) {
 	BEGIN_RCPP;
 	return wrap(XPtr<glmFamily>(ptr)->variance(as<MVec>(mu)));
 	END_RCPP;
     }
-
-#if 0
-    SEXP negativeBinomial_Create(SEXP fam_) {
-	BEGIN_RCPP;
-	negativeBinomial *ans = new negativeBinomial(List(fam_));
-	return wrap(XPtr<negativeBinomial>(ans, true));
-	END_RCPP;
-    }
-
-    SEXP negativeBinomial_theta(SEXP ptr) {
-	BEGIN_RCPP;
-	return ::Rf_ScalarReal(XPtr<negativeBinomial>(ptr)->theta());
-	END_RCPP;
-    }
-
-    SEXP negativeBinomial_setTheta(SEXP ptr, SEXP newtheta) {
-	BEGIN_RCPP;
-	XPtr<negativeBinomial>(ptr)->setTheta(::Rf_asReal(newtheta));
-	END_RCPP;
-    }
-#endif
 
     static inline double pwrss(lmResp *rp, merPredD *pp, double fac) {
 	return rp->wrss() + (fac ? pp->sqrL(fac) : pp->u0().squaredNorm());
@@ -854,7 +857,9 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(glm_link,           1),
     CALLDEF(glm_muEta,          1),
     CALLDEF(glm_resDev,         1),
+    CALLDEF(glm_setTheta,       2),
     CALLDEF(glm_sqrtWrkWt,      1),
+    CALLDEF(glm_theta,          1),
     CALLDEF(glm_variance,       1),
     CALLDEF(glm_wrkResids,      1),
     CALLDEF(glm_wrkResp,        1),
@@ -870,6 +875,8 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(glmFamily_linkInv,  2),
     CALLDEF(glmFamily_devResid, 4),
     CALLDEF(glmFamily_muEta,    2),
+    CALLDEF(glmFamily_setTheta, 2),
+    CALLDEF(glmFamily_theta,    1),
     CALLDEF(glmFamily_variance, 2),
 
     CALLDEF(glmerAGQ,           8),
@@ -931,12 +938,6 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(merPredDupdateLamtUt, 1),
     CALLDEF(merPredDupdateRes, 2),
     CALLDEF(merPredDupdateXwts, 2),
-
-#if 0
-    CALLDEF(negativeBinomial_Create,   1), // generate external pointer
-    CALLDEF(negativeBinomial_theta,    1),
-    CALLDEF(negativeBinomial_setTheta, 2),
-#endif
 
     CALLDEF(NelderMead_Create, 5),
     CALLDEF(NelderMead_newf, 2),

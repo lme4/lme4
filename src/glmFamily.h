@@ -29,6 +29,8 @@ namespace glm {
 				       const ArrayXd&, double) const;
 	/**< in keeping with the botched up nomenclature in the R glm function, 
 	 *   the value of aic is the deviance */
+	virtual double           theta() const;
+	virtual void          setTheta(const double&);
     };
 
     class binomialDist : public glmDist {
@@ -186,6 +188,8 @@ namespace glm {
 	const ArrayXd variance(const ArrayXd&  mu) const {return d_dist->variance(mu);}
 	double             aic(const ArrayXd&, const ArrayXd&, const ArrayXd&,
 			       const ArrayXd&, double) const;
+	double           theta() const {return d_dist->theta();}
+	void          setTheta(const double& theta) {d_dist->setTheta(theta);}
 	//@}
     };
 

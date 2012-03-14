@@ -103,3 +103,25 @@ test_that("devResid and aic", {
     tst.devres(gaussian(), etas)
     tst.devres(poisson(),  etapos)
 })
+
+context("negative binomial")
+test_that("variance", {
+    tst.variance <- function(fam, frm) {
+        ff <- glmFamily$new(family=fam)
+        sapply(frm, function(x) expect_that(fam$variance(x), equals(ff$variance(x))))
+    }
+    tst.variance(MASS::negative.binomial(1.),   etapos)
+    nb1       <- MASS::negative.binomial(1.)
+    cppnb1    <- glmFamily$new(family=nb1)
+    expect_that(cppnb1$theta(),        equals(1))
+    nb2       <- MASS::negative.binomial(2.)
+    cppnb1$setTheta(2)
+    sapply(etapos, function(x) expect_that(cppnb1$variance(x), equals(nb2$variance(x))))
+    bfam      <- glmFamily$new(family=binomial())
+    expect_that(bfam$theta(), throws_error("theta accessor applies only to negative binomial"))
+    expect_that(bfam$setTheta(2), throws_error("setTheta applies only to negative binomial"))    
+})
+
+
+    
+

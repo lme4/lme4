@@ -162,7 +162,7 @@ merPredD <-
                      },
                      unsc         = function() {
                          'the unscaled variance-covariance matrix of the fixed-effects parameters'
-                         tcrossprod(RXi())
+                         .Call(merPredDunsc, ptr())
                      },
                      linPred      = function(fac) {
                          'evaluate the linear predictor for step factor fac'
@@ -507,9 +507,17 @@ glmResp <-
                          'returns the sum of the deviance residuals'
                          .Call(glm_resDev, ptr())
                      },
+                     setTheta = function(theta) {
+                         'sets a new value of theta, for negative binomial distribution only'
+                         .Call(glm_setTheta, ptr(), as.numeric(theta))
+                     },
                      sqrtWrkWt = function() {
                          'returns the square root of the working X weights'
                          .Call(glm_sqrtWrkWt, ptr())
+                     },
+                     theta = function() {
+                         'query the value of theta, for negative binomial distribution only'
+                         .Call(glm_theta, ptr())
                      },
                      updateMu = function(gamma) {
                          'update mu, residuals, weights, etc. from the linear predictor'
@@ -641,6 +649,14 @@ glmFamily <-                            # used in tests of family definitions
                              if (.Call(isNullExtPtr, Ptr))
                                  Ptr <<- .Call(glmFamily_Create, family)
                          Ptr
+                     },
+                     setTheta = function(theta) {
+                         'sets a new value of theta, for negative binomial distribution only'
+                         .Call(glmFamily_setTheta, ptr(), as.numeric(theta))
+                     },
+                     theta = function() {
+                         'query the value of theta, for negative binomial distribution only'
+                         .Call(glmFamily_theta, ptr())
                      },
                      variance = function(mu) {
                          'applies the variance function to mu'
@@ -950,3 +966,45 @@ rePos <-
 ##' showClass("rePos")
 ##' 
 rePos$lock("cnms", "flist", "ncols", "nctot", "nlevs", "terms")
+
+vcRep <-
+    setRefClass("vcRep",
+                fields =
+                list(
+                     theta     = "numeric",
+                     Lambdat   = "dgCMatrix",
+                     Lind      = "integer",
+                     Gp        = "integer",
+                     flist     = "list",
+                     cnms      = "list",
+                     ncols     = "integer",
+                     nctot     = "integer",
+                     nlevs     = "integer",
+                     offsets   = "integer",
+                     terms     = "integer"
+                     ),
+                methods =
+                list(
+                     initialize = function(mer, ...) {
+                         stopifnot((ntrms <- length(Cnms <- mer@cnms)) > 0L,
+                                   (length(Flist <- mer@flist)) > 0L,
+                                   length(asgn  <- as.integer(attr(Flist, "assign"))) == ntrms)
+                         theta   <<- mer@pp$theta
+                         Lambdat <<- mer@pp$dgCMatrix
+                         Lind    <<- mer@pp$Lind
+                         Gp      <<- mer@Gp
+                         cnms    <<- Cnms
+                         flist   <<- Flist
+                         ncols   <<- unname(vapply(cnms, length, 0L))
+                         nctot   <<- unname(as.vector(tapply(ncols, asgn, sum)))
+                         nlevs   <<- unname(vapply(flist, function(el) length(levels(el)), 0L))
+                         offsets <<- c(0L, cumsum(sapply(seq_along(asgn),
+                                                         function(i) ncols[i] * nlevs[asgn[i]])))
+                         terms   <<- lapply(seq_along(flist), function(i) which(asgn == i))
+                     },
+                     asCovar    = function() {}
+                     )
+                )
+
+                     
+                     

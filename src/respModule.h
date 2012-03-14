@@ -104,10 +104,14 @@ namespace lme4Eigen {
 	double                aic() const;
 	double            Laplace(double,double,double) const;
 	double             resDev() const;
+	double              theta() const {return d_fam.theta();}
+				//< negative binomial distribution only
 	double           updateMu(const Eigen::VectorXd&);
 	double          updateWts();
 
 	void                 setN(const Eigen::VectorXd&);
+	void             setTheta(const double& ntheta) {d_fam.setTheta(ntheta);}
+				// negative binomial distribution only
     };
 
     class nlsResp : public lmResp {

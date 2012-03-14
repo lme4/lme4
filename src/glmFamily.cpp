@@ -11,7 +11,6 @@
 #include <cmath>
 
 using namespace Rcpp;
-using namespace std;
 
 namespace glm {
     /** Cumulative probability function of the complement of the Gumbel distribution
@@ -61,7 +60,7 @@ namespace glm {
 
     template<typename T>
     struct Round : public std::unary_function<T, T> {
-	const T operator()(const T& x) const {return nearbyint(x);}
+	const T operator()(const T& x) const {return std::nearbyint(x);}
     };
 
     template<typename T>
@@ -225,7 +224,6 @@ namespace glm {
 	return 2. * wt * (Y_log_Y(y, mu) - (y + d_theta) * ((y + d_theta)/(mu + d_theta)).log());
     }
     const ArrayXd negativeBinomialDist::variance(const ArrayXd &mu) const {
-	Rcpp::Rcout << "in negativeBinomial::variance with theta = " << d_theta << std::endl;
 	return mu + mu.square()/d_theta;
     }
     //@}
@@ -319,8 +317,8 @@ namespace glm {
 	if (d_family  == "gamma")            {delete d_dist; d_dist = new gammaDist(ll);}
 	if (d_family  == "gaussian")         {delete d_dist; d_dist = new GaussianDist(ll);}
 	if (d_family  == "inverse.gaussian") {delete d_dist; d_dist = new inverseGaussianDist(ll);}
-	if (d_family.substr(0, 17) ==
-	    "negative binomial")             {delete d_dist; d_dist = new negativeBinomialDist(ll);}
+	if (d_family.substr(0, 18) ==
+	    "Negative Binomial(")             {delete d_dist; d_dist = new negativeBinomialDist(ll);}
 	if (d_family  == "poisson")          {delete d_dist; d_dist = new PoissonDist(ll);}
     }
 
@@ -339,46 +337,64 @@ namespace glm {
     }
 
     const ArrayXd glmLink::linkFun(const ArrayXd& mu) const {
-	return as<Eigen::VectorXd>(d_linkFun(NumericVector(mu.data(), mu.data() + mu.size())));
-//	return as<ArrayXd>(d_linkfun(NumericVector(mu.data(), mu.data() + mu.size())));
+	return as<ArrayXd>(::Rf_eval(::Rf_lang2(as<SEXP>(d_linkFun),
+						as<SEXP>(Rcpp::NumericVector(mu.data(),
+									     mu.data() + mu.size()))
+					 ), d_rho));
     }
 
     const ArrayXd glmLink::linkInv(const ArrayXd& eta) const {
-	return as<Eigen::VectorXd>(d_linkInv(NumericVector(eta.data(), eta.data() + eta.size())));
-//	return as<ArrayXd>(d_linkinv(NumericVector(eta.data(), eta.data() + eta.size())));
+	return as<ArrayXd>(::Rf_eval(::Rf_lang2(as<SEXP>(d_linkInv),
+						as<SEXP>(Rcpp::NumericVector(eta.data(),
+									     eta.data() + eta.size()))
+					 ), d_rho));
     }
 
     const ArrayXd glmLink::muEta(const ArrayXd &eta) const {
-	return as<Eigen::VectorXd>(as<SEXP>(d_muEta(NumericVector(eta.data(), eta.data() + eta.size()))));
-//	return as<ArrayXd>(as<SEXP>(d_muEta(NumericVector(eta.data(), eta.data() + eta.size()))));
+	return as<ArrayXd>(::Rf_eval(::Rf_lang2(as<SEXP>(d_muEta),
+						as<SEXP>(Rcpp::NumericVector(eta.data(),
+									     eta.data() + eta.size()))
+					 ), d_rho));
     }
     
     const ArrayXd glmDist::variance(const ArrayXd &mu) const {
-	return as<Eigen::VectorXd>(as<SEXP>(d_variance(NumericVector(mu.data(), mu.data() + mu.size()))));
-//	return as<ArrayXd>(as<SEXP>(d_variance(NumericVector(mu.data(), mu.data() + mu.size()))));
+	return as<ArrayXd>(::Rf_eval(::Rf_lang2(as<SEXP>(d_variance),
+						as<SEXP>(Rcpp::NumericVector(mu.data(),
+									     mu.data() + mu.size()))
+					 ), d_rho));
     }
     
     const ArrayXd glmDist::devResid(const ArrayXd &y, const ArrayXd &mu, const ArrayXd &wt) const {
 	int n = mu.size();
-//	return as<ArrayXd>(as<SEXP>(d_devRes(NumericVector(y.data(), y.data() + n),
-	return as<Eigen::VectorXd>(as<SEXP>(d_devRes(NumericVector(y.data(), y.data() + n),
-						     NumericVector(mu.data(), mu.data() + n),
-						     NumericVector(wt.data(), wt.data() + n))));
+	return as<ArrayXd>(::Rf_eval(::Rf_lang4(as<SEXP>(d_devRes),
+						as<SEXP>(NumericVector(y.data(), y.data() + n)),
+						as<SEXP>(NumericVector(mu.data(), mu.data() + n)),
+						as<SEXP>(NumericVector(wt.data(), wt.data() + n))
+					 ), d_rho));
     }
 
     double glmDist::aic(const ArrayXd& y, const ArrayXd& n, const ArrayXd& mu,
 			const ArrayXd& wt, double dev) const {
 	int nn = mu.size();
-	SEXP ans = d_aic(NumericVector(y.data(), y.data() + nn),
-			 NumericVector(n.data(), n.data() + nn),
-			 NumericVector(mu.data(), mu.data() + nn),
-			 NumericVector(wt.data(), wt.data() + nn),
-			 ::Rf_ScalarReal(dev));
-	return ::Rf_asReal(ans);
+	return ::Rf_asReal(::Rf_eval(::Rf_lang6(as<SEXP>(d_aic),
+						as<SEXP>(NumericVector(y.data(), y.data() + nn)),
+						as<SEXP>(NumericVector(n.data(), n.data() + nn)),
+						as<SEXP>(NumericVector(mu.data(), mu.data() + nn)),
+						as<SEXP>(NumericVector(wt.data(), wt.data() + nn)),
+						::Rf_ScalarReal(dev)
+					 ), d_rho));
     }
     
     negativeBinomialDist::negativeBinomialDist(Rcpp::List& ll)
 	: glmDist(ll),
 	  d_theta(::Rf_asReal(as<SEXP>(d_rho[".Theta"]))) {}
 
+
+    double glmDist::theta() const {
+	throw std::invalid_argument("theta accessor applies only to negative binomial");
+    }
+
+    void   glmDist::setTheta(const double& theta) {
+	throw std::invalid_argument("setTheta applies only to negative binomial");
+    }
 }

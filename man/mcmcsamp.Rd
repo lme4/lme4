@@ -12,7 +12,7 @@
 
   \item{verbose}{should verbose output be given?}
 
-  \item{...}{additional arguments}
+  \item{...}{}
 }
 \value{
   a Markov chain Monte Carlo sample as a matrix
