@@ -34,15 +34,18 @@
 profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff/8,
                            ##  tr = 0,  ## FIXME:  remove if not doing anything ...
                            verbose=0, devtol=1e-9,
-                           startval = "prev", ...) {
+                           startval = "prev",
+                           optimizer="bobyqa", ...) {
 
-  ## FIXME: allow choice of optimizer? choice of nextstep/nextstart algorithm?
+  ## FIXME: allow choice of nextstep/nextstart algorithm?
+  ## FIXME: by default, get optimizer from within fitted object
   ## FIXME: allow selection of individual variables to profile (by location and?? name)
   ## FIXME: allow for failure of bounds (non-pos-definite correlation matrices) when >1 cor parameter
   ## FIXME: generalize to GLMMs
   ## (use different devfun;
   ##  be careful with scale parameter;
   ##  profile all parameters at once rather than RE first and then fixed)
+
   
     dd <- devfun2(fitted)
     base <- attr(dd, "basedev")
@@ -141,15 +144,10 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
         lowcut <- lower[w]
         upcut <- upper[w]
         zeta <- function(xx,start) {
-          ## FIXME: use Nelder_Mead, or (for GLMMs) optimizer choice??
-            ores <- bobyqa(start,
-                           function(x) dd(mkpar(nvp, w, xx, x)),
-                           lower = lowvp[-w],
-                           upper = upvp[-w])
-            ores2 <- Nelder_Mead(par=start,
-                                fn=function(x) dd(mkpar(nvp, w, xx, x)),
-                                lower = lowvp[-w],
-                                upper = upvp[-w])
+          ores <- optwrap(optimizer, par=start,
+                          fn=function(x) dd(mkpar(nvp, w, xx, x)),
+                          lower = lowvp[-w],
+                          upper = upvp[-w])
 
             devdiff <- ores$fval-base
             if (is.na(ores$fval)) {
@@ -216,8 +214,10 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
             rr$setOffset(Xw * fw + offset.orig)
             rho <- as.environment(list(pp=pp1, resp=rr))
             parent.env(rho) <- parent.frame()
-            ores <- bobyqa(thopt, mkdevfun(rho, 0L), lower = pmax(fitted@lower, -1.0),
-                           upper =  ifelse(fitted@lower==0,Inf,1.0))
+            ores <- optwrap(optimizer,
+                            par=thopt, fn=mkdevfun(rho, 0L),
+                            lower = pmax(fitted@lower, -1.0),
+                            upper =  ifelse(fitted@lower==0,Inf,1.0))
             fv <- ores$fval
             sig <- sqrt((rr$wrss() + pp1$sqrL(1))/n)
             c(sign(fw - est) * sqrt(fv - base),

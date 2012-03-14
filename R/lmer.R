@@ -136,7 +136,8 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
     if (devFunOnly) return(devfun)
 
     opt <- optwrap(optimizer,
-                   devfun, rho$pp$theta, lower=reTrms$lower, control=control, rho, adj=FALSE)
+                   devfun, rho$pp$theta, lower=reTrms$lower, control=control,
+                   rho=rho, adj=FALSE)
 
     mkMerMod(environment(devfun), opt, reTrms, fr, mc)
 }## { lmer }
@@ -347,7 +348,8 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     if (length(optimizer)==1) {
        optimizer <- replicate(2,optimizer)
      }
-    opt <- optwrap(optimizer[[1]],devfun,rho$pp$theta, rho$lower, control, rho,
+    opt <- optwrap(optimizer[[1]],devfun,rho$pp$theta, rho$lower,
+                   control=control, rho=rho,
                    adj=FALSE, verbose=verbose)
     
     rho$nAGQ <- nAGQ
@@ -364,7 +366,8 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
         devfun <- mkdevfun(rho, nAGQ)
         if (devFunOnly) return(devfun)
 
-        opt <- optwrap(optimizer[[2]],devfun,c(rho$pp$theta, rho$beta0), rho$lower, control, rho,
+        opt <- optwrap(optimizer[[2]],devfun,c(rho$pp$theta, rho$beta0),
+                       rho$lower, control=control, rho=rho,
                        adj=TRUE, verbose=verbose)
       }
 
@@ -430,7 +433,8 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
       optimizer <- replicate(2,optimizer)
     }
 
-    opt <- optwrap(optimizer[[1]],devfun, rho$pp$theta, rho$lower, control, rho, adj=FALSE)
+    opt <- optwrap(optimizer[[1]],devfun, rho$pp$theta, rho$lower,
+                   control=control, rho=rho, adj=FALSE)
 
     if (nAGQ > 0L) {
         rho$lower <- c(rho$lower, rep.int(-Inf, length(rho$beta0)))
@@ -445,7 +449,8 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
         devfun <- mkdevfun(rho, nAGQ)
         if (devFunOnly) return(devfun)
 
-        opt <- optwrap(optimizer[[2]],devfun, par=c(rho$pp$theta, rho$beta0), lower=rho$lower, control=control, rho,
+        opt <- optwrap(optimizer[[2]],devfun, par=c(rho$pp$theta, rho$beta0),
+                       lower=rho$lower, control=control, rho=rho,
                        adj=TRUE, verbose=verbose)
         
         
@@ -1908,9 +1913,16 @@ getOptfun <- function(optimizer) {
   optfun
 }
 
-optwrap <- function(optimizer,fn,par,lower,control,rho,adj, verbose=0L) {
+optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
+                    control=list(), rho, adj=FALSE, verbose=0L) {
+  ## control and rho must be specified if adj==TRUE;
+  ##  otherwise this is a fairly simple wrapper
   optfun <- getOptfun(optimizer)
   ## special-purpose control parameter tweaks: only for second round in nlmer, glmer
+
+  lower <- rep(lower, length.out=length(par))
+  upper <- rep(upper, length.out=length(par))
+  
   if (adj && is.character(optimizer))
     switch(optimizer,
            bobyqa = {
@@ -1927,12 +1939,13 @@ optwrap <- function(optimizer,fn,par,lower,control,rho,adj, verbose=0L) {
              if (is.null(control$xt)) control$xt <- control$xst*5e-4
              rho$control <- control
            })
-  arglist <- list(fn=fn, par=par, lower=lower, control=control)
+  arglist <- list(fn=fn, par=par, lower=lower, upper=upper, control=control)
   ## optimx: must pass method in control (?) because 'method' was previously
   ## used in lme4 to specify REML vs ML
   ## FIXME: test -- does deparse(substitute(...)) clause work?
   if (optimizer=="optimx" || deparse(substitute(optimizer))=="optimx") {
-    if (is.null(method <- control$method)) stop("must specify 'method' explicitly for optimx")
+    if (is.null(method <- control$method))
+      stop("must specify 'method' explicitly for optimx")
     arglist$control$method <- NULL
     arglist <- c(arglist,list(method=method))
   }
