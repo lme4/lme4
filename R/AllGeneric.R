@@ -22,12 +22,11 @@ random.effects <- function(object, ...) {
 ##' distribution of the parameters
 ##'
 ##' 
-##' @title Create an McMC sample
+##' @title Create an MCMC sample
 ##' @param object a fitted model object
-##' @param n number of samples to generate.  Defaults to 1 but that
-##'     value doesn't make sense.
+##' @param n number of samples to generate.  Defaults to 1; for real use values of 200-1000 are more typical
 ##' @param verbose should verbose output be given?
-##' @param ... 
+##' @param ... additional, optional arguments (not used)
 ##' @return a Markov chain Monte Carlo sample as a matrix
 mcmcsamp <- function(object, n = 1L, verbose = FALSE, ...) UseMethod("mcmcsamp")
 
