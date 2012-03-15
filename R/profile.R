@@ -314,6 +314,7 @@ devfun2 <- function(fm)
           pp$ldL2() + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
         }
     } else {
+      stop("GLMM/NLMM profiling under development")
       d0 <- mkdev(fm)
       ans <- function(pars)
         {
@@ -325,11 +326,11 @@ devfun2 <- function(fm)
           ## .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pars[-np]/sigma)
           ## convert from sdcor vector back to 'unscaled theta' 
           thpars <- Sv_to_Cv(pars,n=sapply(fm@cnms,length))
-          d0(thpars,
+          stop("STUB!")
           sigsq <- sigma^2
           pp$ldL2() + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
         }
-      
+     } 
     attr(ans, "optimum") <- opt         # w/ names()
     attr(ans, "basedev") <- basedev
     attr(ans, "thopt") <- pp$theta
