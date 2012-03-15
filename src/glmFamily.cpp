@@ -60,7 +60,7 @@ namespace glm {
 
     template<typename T>
     struct Round : public std::unary_function<T, T> {
-	const T operator()(const T& x) const {return std::nearbyint(x);}
+	const T operator()(const T& x) const {return nearbyint(x);}
     };
 
     template<typename T>
