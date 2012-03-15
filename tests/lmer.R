@@ -9,7 +9,7 @@ assertError(lmer(incidence ~ period + (1|herd),
 assertError(lmer(incidence ~ period + (1|herd),
 		 data = cbpp, family = quasi))
 
-## check bug found by Kevin Buhner
+## check bug found by Kevin Buhr
 set.seed(7)
 n <- 10
 X <- data.frame(y=runif(n), x=rnorm(n), z=sample(c("A","B"), n, TRUE))

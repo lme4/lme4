@@ -36,27 +36,29 @@ sparseRasch <- function(dat, verbose = -1L)
                 as(gl(q, m), "sparseMatrix")[-1, ])
     MM@Dimnames <- vector("list", 2)
     p <- nrow(MM)
-    dd <- VecFromNames(dimsNames, "integer")
-    dd["n"] <- n
-    dd["p"] <- p
-    dd["q"] <- q
-    dd["lTyp"] <- 1L
-    dd["vTyp"] <- 2L
+    dd <- NULL
+##     dd <- VecFromNames(dimsNames, "integer")
+##     dd["n"] <- n
+##     dd["p"] <- p
+##     dd["q"] <- q
+##     dd["lTyp"] <- 1L
+##     dd["vTyp"] <- 2L
     ans <- new("sparseRasch",
                dims = dd,
                Zt = MM,
                y = as.double(y),
-               deviance = VecFromNames(devNames, "numeric"),
+               deviance = NULL,
+#               deviance = VecFromNames(devNames, "numeric"),
                offset = numeric(0),
-               L = .Call(mer_create_L, MM),
-               fixef = numeric(p),
+#               L = .Call(mer_create_L, MM),
+               beta = numeric(p), ## <-- was 'fixef'
                mu = numeric(n),
                muEta = numeric(n),
                pWt = numeric(0),
                resid = numeric(n),
                sqrtrWt = numeric(n),
                var = numeric(n))
-    .Call(spR_optimize, ans, -1L)
+#    .Call(spR_optimize, ans, -1L)
     ans
 ##     for (i in c(0, seq_len(maxirls))) { # IRLS iterations
 ##         eta <- crossprod(MM, beta)@x

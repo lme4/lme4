@@ -1,13 +1,8 @@
+\docType{data}
 \name{Pastes}
 \alias{Pastes}
-\docType{data}
 \title{Paste strength by batch and cask}
-\description{
-  Paste str
-}
-\usage{data(Pastes)}
-\format{
-  A data frame with 60 observations on the following 4 variables.
+\format{A data frame with 60 observations on the following 4 variables.
   \describe{
     \item{\code{strength}}{paste strength.}
     \item{\code{batch}}{delivery batch from which the sample was
@@ -18,24 +13,28 @@
     \item{\code{sample}}{the sample of paste whose strength was assayed,
       two assays per sample. A factor with 30 levels: \sQuote{A:a} to
       \sQuote{J:c}.}
-  }
+  }}
+\source{
+  O.L. Davies and P.L. Goldsmith (eds), \emph{Statistical
+  Methods in Research and Production, 4th ed.}, Oliver and
+  Boyd, (1972), section 6.5
+}
+\description{
+  Strength of a chemical paste product; its quality
+  depending on the delivery batch, and the cask within the
+  delivery.
 }
 \details{
-  The data are described in Davies and Goldsmith (1972) as coming from
-  \dQuote{
-    deliveries of a chemical paste product contained in casks where, in
-    addition to sampling and testing errors, there are variations in
-    quality between deliveries \dots As a routine, three casks selected at
-    random from each delivery were sampled and the samples were kept for
-    reference. \dots Ten of the delivery batches were sampled at random and
-    two analytical tests carried out on each of the 30 samples}.
+  The data are described in Davies and Goldsmith (1972) as
+  coming from \dQuote{ deliveries of a chemical paste
+  product contained in casks where, in addition to sampling
+  and testing errors, there are variations in quality
+  between deliveries \dots{} As a routine, three casks
+  selected at random from each delivery were sampled and
+  the samples were kept for reference. \dots{} Ten of the
+  delivery batches were sampled at random and two
+  analytical tests carried out on each of the 30 samples}.
 }
-\source{
- O.L. Davies and P.L. Goldsmith (eds), \emph{Statistical Methods in
-   Research and Production, 4th ed.}, Oliver and Boyd, (1972), section
-   6.5
-}
-%\references{}
 \examples{
 str(Pastes)
 dotplot(cask ~ strength | reorder(batch, strength), Pastes,
@@ -62,6 +61,9 @@ head(ranef(fm4)[[1]])
 head(ranef(fm1)[[1]])
 ## This model is different and NOT appropriate for these data
 (fm5 <- lmer(strength ~ (1|batch) + (1|cask), Pastes))
-image(fm1@L, sub = "Structure of random effects interaction in pastes model")
+
+L <- getME(fm1, "L")
+Matrix::image(L, sub = "Structure of random effects interaction in pastes model")
 }
 \keyword{datasets}
+

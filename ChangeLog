@@ -1,927 +1,434 @@
-2011-08-09  Martin Maechler  <maechler@stat.math.ethz.ch>
+2012-01-07  Douglas Bates <bates@stat.wisc.edu>
 
-	* DESCRIPTION (Version): 0.999375-41
-	(Depends): Matrix(>= 0.9996875-1)
+	* man/GHrule.Rd, man/NelderMead-class.Rd, man/NelderMead.Rd,
+	  man/golden-class.Rd, man/golden.Rd, man/lmer.Rd, man/mkdevfun.Rd:
+	  Documentation updates.
+	* R/lmer.R, R/profile.R, tests/lmer-1.R: Nlmer now working (for nAGQ=1).
+	  Updated tests and got profile working again.
+	* R/AllClass.R, R/lmer.R, src/external.cpp, src/optimizer.h: Allowed
+	  setting options in the NelderMead optimizer. Switched so that this is
+	  the default in glmer.
+	* R/AllClass.R, R/lmer.R, src/external.cpp, src/predModule.cpp: More
+	  work on nlmer.
 
-2011-07-22  Douglas Bates <bates@stat.wisc.edu>
+2011-12-31  Douglas Bates <bates@stat.wisc.edu>
 
-	* DESCRIPTION: Long overdue release (apologies, Dieter)
+	* src/predModule.cpp: Add an explicit copy of the mapped sparse matrix
+	  to a sparse matrix in updateL
+
+2011-12-28  Douglas Bates <bates@stat.wisc.edu>
 
-2011-04-21  Martin Maechler  <maechler@stat.math.ethz.ch>
-
-	* DESCRIPTION, NAMESPACE, R/AllGeneric.R, R/drop1-etc.R, R/newmethods.R,
-	  tests/drop.R, tests/lmer-1.Rout.save, tests/nlmer.Rout.save: drop1()
-	  etc lme4 & lme4a - cosmetics; renamed file
-
-2011-04-19  Martin Maechler  <maechler@stat.math.ethz.ch>
-
-	* inst/doc/Implementation.Rnw, inst/doc/PLSvGLS.Rnw,
-	  inst/doc/Theory.Rnw: aargh.. strip.white=true -- R 2.14 compatibly
-	* inst/doc/Implementation.Rnw, inst/doc/PLSvGLS.Rnw,
-	  inst/doc/Theory.Rnw: Sweave strip.white="true" -- R 2.14 compatibly
-	  correct
-
-2011-04-11  Douglas Bates <bates@stat.wisc.edu>
-
-	* NAMESPACE, R/newmethods.R: Minor changes to names for S3 methods and
-	  to exports
-
-2011-04-09  Ben Bolker <bbolker@gmail.com>
-
-	* NAMESPACE: changes for new methods
-	* R/newmethods.R, tests/drop.R: first attempt at methods (terms,
-	  extractAIC, drop1)
-
-2011-03-11  Douglas Bates <bates@stat.wisc.edu>
-
-	* R/carryOver.R: Changes to the lagged_factor function, which I forgot
-	  to commit.
-	* NAMESPACE: Allow for exportPattern, currently commented out, in
-	  debugging applications
-
-2011-03-07  Martin Maechler  <maechler@stat.math.ethz.ch>
-
-	* ChangeLog, DESCRIPTION, R/lmer.R, ToDo, man/mer-class.Rd,
-	  tests/simulate.R: cosmetic - including Version++ --> 0.999375-39,
-	  preparing for a release with changed simulate() behavior
-
-2011-02-28  Ben Bolker <bbolker@gmail.com>
-
-	* R/lmer.R: simulate(): return data.frame even for nsim=1 - compatibly
-	with other simulate() methods.
-
-2011-02-13  Ben Bolker <bbolker@gmail.com>
-
-	* tests/simulate.R: New tests for simulate()
-
-	* R/lmer.R, data/PB.rda, man/cbpp_PB.Rd, man/mer-class.Rd,
-	  man/simulate.Rd, man/sleepstudy_PB.Rd: added simulate method for GLMMs
-	  split refit() and simulate() docs out to a separate file
-	  for testing/example convenience, add parametric bootstrap results as
-	  data
-
-2011-02-08  Douglas Bates  <bates@stat.wisc.edu>
-
-	* R/carryOver.R (lagged_factor): Correct undiscovered error in
-	lagging of the variables (this file contains private functions
-	that were used by Harold Doran and me).
-
-	* DESCRIPTION: Add Ben to the list of authors and change the
-	maintainer address.  Bump version number and date.
-
-2010-11-09  Douglas Bates  <bates@stat.wisc.edu>
-
-	* R/lmer.R (glmer): Forbid the use of "quasi" families in glmer.
-
-2010-10-21  Martin Maechler  <maechler@stat.math.ethz.ch>
-
-	* tests/lmer-1.R (.unsafe.BLAS): allow to set  identical <- all.equal
-	for some tests {mainly for Mac OSX i386}
-
-2010-06-03  Martin Maechler  <maechler@stat.math.ethz.ch>
-
-	* DESCRIPTION (Date, Version): 0.999375-34
-
-	* R/lmer.R (glmer_finalize): for a glmer(), allow q == n
-
-	* tests/lmer-1.R (rPoisGLMMi): test example, originating from Ben Bolker
-
-2009-09-23  Martin Maechler  <maechler@stat.math.ethz.ch>
-
-	* DESCRIPTION (Version, Depends): 0.999375-32; needs latest version of Matrix
-
-	* src/init.c (lme4_R_cholmod_error): now using own CHOLMOD error
-	handler, which does reset the 'Common' "as to start".
-
-	* tests/lmer-1.R: re-activate first part of mcmcsamp() examples.
-
-2009-06-02  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r318] R/lmer.R: Duh! Forgot the meaning of "stopifnot" and did not
-	  reverse the condition.  Now fixed.
-	* [r316] DESCRIPTION: New release
-	* [r315] R/lmer.R: More informative error message for lmer_finalize.
-	  Also check this condition in glmer_finalize.
-	* [r314] src/lmer.c: Suppress check on q > n in update_u.
-
-2009-05-20  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r312] DESCRIPTION: New release; allow earlier version of Matrix
-	  released with R-2.9.0
-	* [r311] R/lmer.R: Force copy of fitted model passed to mcmcsamp
-	* [r310] man/refit.Rd: Add alias for mer,matrix method
-
-2009-05-12  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r309] tests/nlmer.Rout.save: Slight difference in calculated results
-	* [r307] DESCRIPTION, src/lmer.c: Avoid alloca for arrays of size q (C
-	  stack overflows); New release
-
-2009-04-28  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r305] R/lmer.R: Refit method for matrix response, contributed
- 	  by Ben Bolker
-
-2009-03-24  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r302] DESCRIPTION, man/Penicillin.Rd, src/lmer.c, tests/lmer-1.R,
-	  tests/lmer-1.Rout.save: Handle previously ignored offset specification
-	  in LMMs; add tests; new version
-	* [r301] inst/doc/Theory.Rnw, inst/doc/Theory.pdf: Updates
-	* [r300] R/lmer.R: Remove .Internal call and redundant check
-
-2009-01-05  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r275] R/carryOver.R: evaluate the random effects on the AR1 and
-	  general models.  (The carryOver function is not exported.)
-
-2008-12-13  Martin Maechler  <maechler@stat.math.ethz.ch>
-
-	* man/ranef.Rd: add 'whichel' argument to help page
-
-	* DESCRIPTION (Date, Version): 0.999375-28 to be released,
-	mainly for re-installation against new Matrix.
-
-2008-10-19  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r241] man/lmer.Rd: update
-
-2008-09-26  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r239] DESCRIPTION: New release
-	* [r238] R/carryOver.R: Carryover model revisions (unexported)
-	* [r237] R/lmer.R, src/lmer.c: Handle weights correctly for LMMs, fix
-	  some of the problems reported by Terry Therneau
-	* [r236] man/lmer.Rd: Cosmetic
-	* [r235] NAMESPACE: Allow for currently unexported predict method
-	* [r234] tests/lmer-1.Rout.save, tests/nlmer.R, tests/nlmer.Rout.save:
-	  remove some unstable tests which should be more stable in refactored
-	  code
-	* [r233] inst/doc/Doxyfile, inst/doc/Implementation.pdf,
-	  inst/doc/PLSvGLS.pdf, inst/doc/Theory.Rnw, inst/doc/Theory.pdf: Revise
-	  Theory.Rnw for the allcoef version
-
-2008-09-15  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r231] R/carryOver.R: Re-write of carryOver with utility functions
-	* [r230] src/lmer.c: Changes in update_dev from Bin Dai
-	* [r229] R/lmer.R: Added a preliminary, unexported predict method
-
-2008-09-09  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r227] R/lmer.R, src/lmer.c: Add new positions in the deviance slot
-	* [r226] inst/doc/Theory.Rnw, inst/doc/Theory.pdf: Revising the
-	  computational methods document in new notation
-	* [r225] man/mer-class.Rd, man/ranef.Rd: Allow which argument in
-	  mer_postVar
-	* [r224] R/AllClass.R, R/carryOver.R, R/lmer.R, src/init.c, src/lmer.c,
-	  src/lmer.h: Global change of nf (number of factors) to nt (number of
-	  terms); Allow which argument in mer_postVar
-
-2008-09-02  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r223] inst/doc/Theory.Rnw: Yet another rewrite of the theory
-
-2008-08-25  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r222] DESCRIPTION, R/AllClass.R, R/lmer.R,
-	  inst/doc/Implementation.pdf, inst/doc/PLSvGLS.pdf,
-	  inst/doc/Theory.pdf, src/Syms.h, src/init.c, src/lmer.c, src/lmer.h:
-	  Incorporate AGQ code from Bin Dai; Fold verbose indicator into dims;
-	  add mxit and mxfn to dims
-2008-08-20  Martin Maechler  <maechler@stat.math.ethz.ch>
-
-	* NAMESPACE: importFrom(stats, AIC) + comments on import(stats)
-
-2008-08-13  Douglas Bates <bates@stat.wisc.edu>
-
-        * [r212] pkg/R/lmer.R: Don't call LMM code on GLMMs or NLMMs in the
-          anova method (Antje Nuthmann)
-
-2008-08-08  Martin Maechler  <maechler@stat.math.ethz.ch>
-
-	* R/lmer.R (lmerFactorList): check matrix validity: error out
-	instead of later segfault.
-	(printMer): improve abbreviation for row/col names of correlation
-	matrix.
-
-	* tests/lmer-1.R: regression test against seg.fault
-
-2008-08-06  Douglas Bates <bates@stat.wisc.edu>
-
-        * [r210] pkg/DESCRIPTION, pkg/man/ranef.Rd: Change qqmath examples to
-          dotplot, new release
-
-2008-08-03  Douglas Bates <bates@stat.wisc.edu>
-
-        * [r209] pkg/NAMESPACE, pkg/R/lmer.R: Add dotplot method for the (S3)
-          ranef.mer class
-
-2008-07-31  Douglas Bates <bates@stat.wisc.edu>
-
-        * [r206] pkg/src/init.c, pkg/src/lmer.c, pkg/src/lmer.h: Added lme4_ghq
-          function based on Fortran sources.
-
-2008-07-27  Douglas Bates <bates@stat.wisc.edu>
-
-        * [r204] pkg/data/VerbAgg.rda, pkg/man/VerbAgg.Rd: Reduce back to a data
-          set with factors only
-
-2008-07-25  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r202] DESCRIPTION, src/lmer.c: Implement cloglog inverse link
-	  function, new release
-	* [r201] DESCRIPTION, R/jml.R, data/VerbAgg.rda, man/VerbAgg.Rd: Add
-	  VerbAgg data set and documentation. Prepare for release
-
-2008-07-17  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r197] R/lmer.R: Use dummy call in new("mer", ...) not huge call that
-	  is later overwritten
-	* [r196] src/init.c: Switch to CALLDEF macro
-
-2008-07-12  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r193] inst/doc/Implementation.pdf, inst/doc/PLSvGLS.pdf,
-	  inst/doc/Theory.pdf: Updates of vignettes
-
-2008-07-11  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r192] DESCRIPTION, R/lmer.R: Remove mc from list with doFit = FALSE
-	  and in arguments to lmer_finalize and glmer_finalize. New version
-
-2008-07-10  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r190] inst/doc/Implementation.pdf, inst/doc/PLSvGLS.Rnw,
-	  inst/doc/PLSvGLS.pdf, inst/doc/Theory.pdf: Add a section on the
-	  hatMatrix to PLSvGLS. Update PDFs
-	* [r189] DESCRIPTION, R/lmer.R, man/lmer.Rd: incorporate doFit argument
-	  in lmer and friends. Create glmer_finalize function. New release
-	* [r188] tests/nlmer.R, tests/nlmer.Rout.save: nlmer tests and results
-	  updated to new methods
-	* [r187] src/lmer.c: Correction, from Bin Dai, to calculation of
-	  deviance for NLMMs
-
-2008-06-28  Martin Maechler  <maechler@stat.math.ethz.ch>
-
-	* [r183] DESCRIPTION: aargh! forgot to commit the Matrix(>= 0.999375-10)
-	  dependency
-
-2008-06-26  Martin Maechler  <maechler@stat.math.ethz.ch>
-
-	* [r182] ChangeLog, DESCRIPTION, tests/nlmer.R, tests/nlmer.Rout.save:
-	  higher tolerance in nlmer tests; Version .999375-20
-
-	* DESCRIPTION (Version): 0.999375-20 ready for CRAN
-
-	* tests/nlmer.R (allEQ): test with high tolerance.
-
-2008-06-25  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r180] DESCRIPTION, R/lmer.R, src/init.c, src/lmer.c,
-	  src/lmer.h: Fix single-argument anova method; new version
-
-2008-06-25  Martin Maechler  <maechler@stat.math.ethz.ch>
-
-	* [r179] R/lmer.R: expand(<mer>, .) fix {in Tblock()}; using
-	  Matrix:::.diag2tT() for now
-	* [r178] tests/nlmer-conv.R, tests/nlmer.R,
-	  tests/nlmer.Rout.save: split convergence monitoring from "normal"
-	  nlmer tests
-
-2008-06-24  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r177] man/mer-class.Rd, man/merMCMC-class.Rd,
-	  man/refit.Rd: Updates and corrections
-
-2008-06-24  Martin Maechler  <maechler@stat.math.ethz.ch>
-
-	* [r176] tests/lmer-1.R, tests/lmer-1.Rout.save,
-	  tests/lmer.R, tests/lmer.Rout.save: rename tests/lmer.R
-	  (easier to distinguish from R/lmer.R)
-
-2008-06-24  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r174] DESCRIPTION: New version
-	* [r173] inst/doc/Implementation.pdf, inst/doc/PLSvGLS.Rnw,
-	  inst/doc/PLSvGLS.pdf, inst/doc/Theory.pdf: Updates, add PDF files to
-	  SVN archive.
-	* [r172] inst/doc/Implementation.Rnw, inst/doc/Notes.Rnw,
-	  inst/doc/PLSvGLS.Rnw: Use a less vague name
-	* [r171] inst/doc/Notes.Rnw: Clean up text
-
-2008-06-23  Martin Maechler  <maechler@stat.math.ethz.ch>
-
-	* [r170] NAMESPACE: comments (about "resid") only
-	* [r169] tests/lmer.Rout.save: update (oops)
-	* [r168] tests/lmer-conv.R, tests/lmer.R, tests/lmer.Rout.save: lmer
-	  tests: move convergence part to new separate lmer-conv.R
-
-2008-06-22  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r166] DESCRIPTION: New release
-	* [r165] R/lmer.R, man/mer-class.Rd: Added sparse expand method for mer
-	  and an example of its use
-
-2008-06-21  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r161] NAMESPACE, R/lmer.R, man/fixef.Rd, man/hatTrace.Rd,
-	  man/lmList-class.Rd, man/lmList.Rd, man/lmer.Rd, man/mcmcsamp.Rd,
-	  man/mer-class.Rd, man/merMCMC-class.Rd, man/ranef.Rd: Removed
-	  visibility of hatTrace and the confint method for mer objects. Major
-	  documentation cleanup.
-	* [r160] NEWS: Added a NEWS file
-	* [r157] tests/lmer.R, tests/lmer.Rout.save: Get rid of calls to
-	  system.time in tests - results are not reproducible
-	* [r156] NAMESPACE, R/AllGeneric.R, R/gsummary.R, R/lmList.R, R/lmer.R,
-	  man/cbpp.Rd, man/gsummary.Rd, man/pooledSD.Rd, man/ranef.Rd: Remove
-	  gsummary; fold pooledSD into lmList; add drop argument to ranef;
-	  shorten long title in cbpp docs
-
-2008-06-20  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r155] data/Pastes.rda, data/Penicillin.rda, man/Dyestuff.Rd,
-	  man/Pastes.Rd, man/Penicillin.Rd: Added Dyestuff2, Pastes and
-	  Penicillin data sets. Updated documentation
-
-2008-06-19  Martin Maechler  <maechler@stat.math.ethz.ch>
-
-	* [r153] R/lmer.R: more cleanup in 'method' back compatibility ; typo in
-	  message
-	* [r152] R/lmer.R: method: s/Laplacian/Laplace/ for back compatibility
-
-2008-06-19  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r151] src/Syms.h, src/init.c, src/lmer.c: Insert hooks for AGQ code
-	* [r150] tests/lmer.Rout.save, tests/nlmer.Rout.save: Add saved test
-	  output files for comparisons
-	* [r149] tests/lmer.R: Replace method argument by REML
-	* [r148] R/AllClass.R, R/lmer.R, man/cake.Rd, man/lmer.Rd: Replace
-	  method argument by REML or nAGQ, as appropriate
-	* [r147] DESCRIPTION: Add Martin and Bin as authors; new version
-
-2008-06-18  Bin Dai <dai@stat.wisc.edu>
-
-	* [r146] R/AllClass.R, R/lmer.R, src/lmer.c: Get ready for AGQ
-
-2008-06-16  Bin Dai <dai@stat.wisc.edu>
-
-	* [r145] R/lmer.R, src/lmer.c: Basic methods lines added
-	* [r144] R/AllClass.R, src/Syms.h, src/init.c, src/lmer.c: test of svn
-
-2008-06-01  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r143] inst/doc/Doxyfile: Update project number
-	* [r142] NAMESPACE, man/merMCMC-class.Rd: Document and export as.matrix
-	  method for merMCMC
-
-2008-05-30  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r139] src/init.c, src/lmer.c, src/lmer.h: Remove Wishart sampling and
-	  replace with least-squares based S sampling; Reorganize code in lmer.c
-	* [r138] R/lmer.R: Added methods for merMCMC class
-
-2008-05-25  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r137] inst/doc/Implementation.Rnw: Minor cleanup - still many
-	  mistakes
-
-2008-05-14  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r130] DESCRIPTION, man/refit.Rd, tests/nlmer.R: Moved nlmer tests to
-	  the tests directory, added help page for refit, new release
-	* [r129] R/lmer.R: Incorporated patch from Henric Nilsson to fix bug in
-	  model names in multiple model anova output
-
-2008-05-13  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r126] R/lmer.R: Allow ranef( , postVar = TRUE) for cases where each
-	  r.e. term has a separate factor
-2008-04-25  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r124] DESCRIPTION: New release
-	* [r123] tests/nlmer.R: Moved extended nlmer tests to tests directory
-	* [r122] NAMESPACE, R/AllGeneric.R, R/lmer.R, man/VarCorr.Rd,
-	  man/lmer.Rd, man/mer-class.Rd, man/refit.Rd, src/init.c, src/lmer.c,
-	  src/lmer.h: Added refit generic and methods and implemented the
-	  simulate method. Fixed a problem with family = gaussian reported by
-	  Henrik Parn. Reimplemented VarCorr method to avoid problems with
-	  indefinite solutions.
-
-2008-04-14  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r121] data/Dyestuff.rda, man/Dyestuff.Rd: Added the Dyestuff data
-
-2008-04-08  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r120] DESCRIPTION, R/lmer.R, src/lmer.h: Restore names to the
-	  components of a VarCorr object; allow for more options in the hidden
-	  devmat function; Add the Dyestuff example; New release
-
-2008-04-02  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r119] inst/doc/Notes.Rnw: Minor revision - principally grammar and
-	  sentence structure
-	* [r118] Done, ToDo: Change some of the ToDo tasks to Done
-	* [r117] DESCRIPTION, R/lmer.R: Added the hidden function devmat; New
-	  release.
-
-2008-03-31  Douglas Bates <bates@stat.wisc.edu>
-
-        * [r115] DESCRIPTION: New release
-        * [r114] tests/lmer.R: Clean up tests for new form of the flist slot
-        * [r113] R/carryOver.R, R/mlirt.R: Remove defunct constructions to pass
-          codeTools checks
-        * [r112] NAMESPACE, R/AllClass.R, R/lmer.R, man/mer-class.Rd,
-          src/lmer.c: Change form of flist slot to allow for duplicates; Change
-          ranef.mer and coef.mer to S3-classed objects
-        * [r111] inst/doc/Implementation.Rnw: Update for recent changes in
-          package
-        * [r110] inst/doc/Notes.Rnw: New vignette based on notes for Andrew
-          Robinson
-
-2008-03-29  Martin Maechler  <maechler@stat.math.ethz.ch>
-
-        * [r109] man/mer-class.Rd: get rid of codoc() warning
-
-2008-03-26  Douglas Bates <bates@stat.wisc.edu>
-
-        * [r108] DESCRIPTION: New version
-        * [r106] NAMESPACE, R/AllClass.R, R/lmer.R, R/mlirt.R, man/VarCorr.Rd,
-          man/merMCMC-class.Rd, src/init.c, src/lmer.c, src/lmer.h: Add
-          graphical diagnostics for merMCMC class; Remove cnames slot; Initial
-          VarCorr for merMCMC
-
-2008-03-17  Douglas Bates <bates@stat.wisc.edu>
-
-        * [r105] DESCRIPTION: New version; update dependencies
-        * [r104] src/lmer.c: Move ldetL2 calculations to Matrix package and call
-          the exported function from update_L
-        * [r103] R/lmer.R: Encapsulate post-model-matrix operations for lmer in
-          lmer_finalize.
-
-2008-03-17  Douglas Bates <bates@stat.wisc.edu>
-
-        * [r101] R/AllClass.R: Add classes merExt and lmerStratVar
-
-2008-03-14  Douglas Bates <bates@stat.wisc.edu>
-
-        * [r100] R/lmer.R: Fix from Henric Nilsson for fitted and resid methods
-          under na.action = na.exclude
-        * [r99] R/AllClass.R, R/AllGeneric.R, man/mer-class.Rd,
-          man/merMCMC-class.Rd: Cleanup in code; documentation update
-        * [r98] R/lmer.R: Coercion of merMCMC to matrix
-
-2008-03-12  Douglas Bates <bates@stat.wisc.edu>
-
-        * [r97] DESCRIPTION, R/AllClass.R, R/lmer.R, man/HPDinterval.Rd: Fix
-          HPDinterval methods (Robert Kushler <kushler@oakland.edu>) and
-          documentation; New release
-
-2008-03-11  Douglas Bates <bates@stat.wisc.edu>
-
-        * [r94] DESCRIPTION, NAMESPACE, R/pedigree.R, man/HPDinterval.Rd,
-          man/merMCMC-class.Rd, man/pooledSD.Rd: Update NAMESPACE and
-          documentation; move pedigree functions to pedigreemm package; New
-          release
-        * [r93] R/AllClass.R, R/pedigree.R, man/pedigree-class.Rd,
-          man/pedigree.Rd, src/init.c, src/lmer.c, src/lmer.h: Move pedigree
-          class and methods for the class to the pedigreemm package
-
-2008-03-10  Douglas Bates <bates@stat.wisc.edu>
-
-        * [r90] DESCRIPTION: New alpha release
-        * [r89] NAMESPACE, R/AllGeneric.R, R/lmList.R, R/lmer.R, src/init.c,
-          src/lmer.c, src/lmer.h: More macros; use sigmaML and sigmaREML
-          components in deviance slot; fix MCMC_ST for order and mer_MCMCsamp
-          for df in sigma sample
-
-2008-03-03  Douglas Bates <bates@stat.wisc.edu>
-
-        * [r88] src/lmer.c: Weighted LMM without segfault. Use for(int i=...)
-          throughout.
-
-2008-03-01  Douglas Bates <bates@stat.wisc.edu>
-
-        * [r87] src/lmer.c: Added macros
-        * [r86] inst/doc/Doxyfile: Update version
-        * [r85] man/merMCMC-class.Rd: Update.
-
-2008-02-29  Douglas Bates <bates@stat.wisc.edu>
-
-        * [r82] man/merMCMC-class.Rd: documentation for merMCMC class
-        * [r81] src/lmer.c: update doxygen documentation
-        * [r80] DESCRIPTION: New release so others can try mcmcsamp
-        * [r79] NAMESPACE, R/AllClass.R, R/lmer.R, src/Syms.h, src/init.c,
-          src/lmer.c, src/lmer.h: Create and incorporate merMCMC class. mcmcsamp
-          is running again but the results look wrong.
-
-2008-02-14  Douglas Bates <bates@stat.wisc.edu>
-
-        * [r77] DESCRIPTION: new release
-        * [r76] R/lmer.R: disable mcmcsamp until fixed
-        * [r75] inst/doc/Implementation.Rnw: update for new slot names
-        * [r74] src/lmer.c: more macros
-        * [r73] man/mer-class.Rd: add model.matrix and model.frame to examples
-
-2008-02-11  Douglas Bates <bates@stat.wisc.edu>
-
-        * [r71] R/AllClass.R, R/lmer.R, src/Syms.h, src/init.c, src/lmer.c:
-          Change slot names RCXy and RXy to RZX and RX
-        * [r70] NAMESPACE, R/lmer.R: Add methods for model.matrix and
-          model.frame
-        * [r69] R/jml.R: Change parameterization to remove the intercept term
-
-2008-02-05  Douglas Bates <bates@stat.wisc.edu>
-
-        * [r67] R/AllClass.R, R/jml.R, src/Syms.h, src/init.c, src/lmer.c,
-          src/lmer.h: Added sparseRasch function and some auxillaries
-        * [r66] R/lmer.R: Moved names of elements of dims and deviance slots to
-          separate variables. Changed initialization in VecFromNames
-
-2008-02-03  Douglas Bates <bates@stat.wisc.edu>
-
-        * [r65] R/lmer.R: Omit famName slot value in calls to new("mer",...)
-
-2008-02-01  Douglas Bates <bates@stat.wisc.edu>
-
-        * [r64] DESCRIPTION: Version 0.999375-3
-        * [r63] man/cbpp.Rd: Remove unmatched brace from previous \dontrun
-          specification
-        * [r62] R/AllClass.R: Remove defunct famName slot
-
-2008-01-31  Douglas Bates <bates@stat.wisc.edu>
-
-        * [r61] src/Syms.h, src/init.c: delete references to defunct pnames
-          symbol
-        * [r60] R/lmer.R: Coerce offset and weights to double, use correct
-          offset in call to glm.fit in glmer - reported by
-          David.Duffy@qimr.edu.au
-        * [r59] ChangeLog:
-
-2008-01-30  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r56] DESCRIPTION, inst/doc/Doxyfile: New release
-	* [r57] R/AllClass.R, R/lmer.R, src/Syms.h, src/init.c, src/lmer.c,
-	  src/lmer.h: Orthogonalize link and var. Create A in R code. Change
-	  slot priorWt to pWt.
-
-2008-01-25  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r50] ToDo: Remove items that are now done
-	* [r51] man/cbpp.Rd: Run both examples again
-	* [r52] R/jml.R: Split off the creation of the binary response matrix
-	* [r53] R/lmer.R: Bug #90 (fix due to Steven McKinney
-	  <smckinney@bccrc.ca>), modify slots; V instead of v and pnames
-	* [r54] R/AllClass.R: Modify slots; V instead of v and pnames
-	* [r55] src/Syms.h, src/init.c, src/lmer.c: Modify slots; V instead of v
-	  and pnames. Zero the accumulator in update_L so that nlmer works
-	  again.
-
-2008-01-21  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r44] R/jml.R: A pure R version of joint maximum likelihood estimation
-	  of the parameters in the Rasch model
-	* [r45] R/mlirt.R: Spelling correction
-	* [r46] inst/doc/Doxyfile: Do not save dot files
-	* [r47] inst/doc/Implementation.Rnw: Update to class definitions in
-	  0.999375-1
-	* [r48] DESCRIPTION: Alpha release of version 1.0
-	* [r49] R/AllClass.R, R/lmer.R, src/Syms.h, src/init.c, src/lmer.c,
-	  src/lmer.h: Clean up mer class. Some of the items on the feature
-	  request and bug lists.
-
-2008-01-07  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r40] inst/doc/Implementation.Rnw: Update to current slot names
-	* [r41] man/lmer.Rd: Add links thanks to <gregor.gorjanc@bfro.uni-lj.si>
-
-2008-01-06  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r36] src/Syms.h, src/init.c, src/lmer.c: Add macros, fix bug in
-	  update_RX, correct declarations with R_INLINE
-	* [r37] R/AllClass.R, R/lmer.R: Change name RVXy to RCXy
-
-2008-01-03  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r29] NAMESPACE, R/AllClass.R, R/lmer.R, man/VarCorr.Rd, man/lmer.Rd,
-	  man/mcmcsamp.Rd, src/Syms.h, src/init.c, src/lmer.c, src/lmer.h:
-	  Remove lmer, nlmer and glmer classes. All necessary slots are now in
-	  mer.
-	* [r31] R/lmer.R, src/init.c, src/lmer.c, src/lmer.h: Remove isREML
-	  macro, clean up code in mer_postVar now that useSc is saved.
-	* [r32] src/Syms.h, src/init.c, src/lmer.c: change TSPp_*_mult to
-	  update_ranef with a single argument
-
-2008-01-02  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r25] man/lmer-class.Rd: Update documentation for new class
-	  definitions
-	* [r26] man/mer-class.Rd: Move to name given in the file
-	* [r27] man/lmer-class.Rd:
-
-2007-12-27  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r20] inst/doc/Doxyfile, www/doxygen, many others: Update doxygen
-	  configuration, add doxygen html directory
-	* [r21] R/lmer.R, src/Syms.h, src/init.c, src/lmer.c, src/lmer.h:
-	  Consolidation of functions, doxygen-style documentation
-	* [r22] R/lmer.R, src/init.c, src/lmer.c, src/lmer.h: Move
-	  nlmer_create_A to R code
-
-2007-12-24  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r18] inst/doc/Doxyfile: Add the tree view on the left of the html
-	  pages
-	* [r19] src/Syms.h, src/init.c, src/lmer.c, src/lmer.h: Removing entry
-	  points that are not called
-
-2007-12-21  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r17] inst/doc/Doxyfile, src/Syms.h, src/init.c: Doxygen
-	  reconfiguration, code cleanup based on calling tree
-
-2007-12-19  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r16] src/lmer.c: More changes in the logic of cond_mode. Looks like
-	  this version works properly!
-
-2007-12-17  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r15] src/init.c, src/lmer.c, src/lmer.h: Factor C code; add more
-	  externally callable entry points; still not converging.
-
-2007-12-16  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r11] R/lmer.R, src/lmer.c, src/lmer.h: Code cleanup and name change,
-	  continued. Last checkin was premature.
-	* [r12] inst/doc/Implementation.Rnw: Change .Call names for consistency
-	  with the current names
-	* [r13] NAMESPACE: Avoid importing the entire namespace from the stats
-	  package
-	* [r14] R/lmer.R, src/init.c, src/lmer.c, src/lmer.h: Externally
-	  callable lmer_profiled_deviance and allowing negative verbose values
-
-2007-12-15  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r10] R/lmer.R, src/init.c, src/lmer.c: Code cleanup; change name of
-	  derivative matrix Mt for NLMMs to A
-
-2007-12-06  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r8] R/AllGeneric.R: Remove isNested as a generic
-	* [r9] R/lmer.R, src/lmer.c: Remove the mtyp element in the dims slot of
-	  mer objects
-
-2007-12-03  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r7] README, R/AllClass.R, R/lmer.R, src/Syms.h, src/init.c,
-	  src/lmer.c, src/lmer.h: Modifications to classes and methods for lmer
-	  and glmer. Lmer now working but glmer still gives incorrect
-	  conditional modes and hence incorrect optima.
-
-2007-11-09  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r2] ChangeLog, DESCRIPTION, Done, NAMESPACE, R/AllClass.R,
-	  R/AllGeneric.R, R/carryOver.R, R/gsummary.R, R/lmList.R, R/lmer.R,
-	  R/mlirt.R, R/pedigree.R, ToDo, inst, inst/doc, inst/doc/Doxyfile,
-	  inst/doc/Implementation.Rnw, inst/doc/Theory.Rnw, inst/doc/lme4.bib,
-	  man/BIC.Rd, man/VarCorr-class.Rd, man/VarCorr.Rd, man/cake.Rd,
-	  man/cbpp.Rd, man/fixef.Rd, man/gsummary.Rd, man/hatTrace.Rd,
-	  man/lmList-class.Rd, man/lmList.Rd, man/lmer-class.Rd, man/lmer.Rd,
-	  man/mcmcsamp.Rd, man/pedigree-class.Rd, man/pedigree.Rd,
-	  man/pooledSD.Rd, man/ranef.Rd, man/sleepstudy.Rd, src, src/Makevars,
-	  src/Syms.h, src/init.c, src/lmer.c, src/lmer.h, src/local_stubs.c,
-	  tests, tests/extras.R, tests/lmer.R: Initialize R-forge package to
-	  what was the gappy-lmer branch
-	* [r3] DESCRIPTION: Update Data:, add MEMSS to Suggests:
-	* [r4] data, data/cake.rda, data/cbpp.rda, data/sleepstudy.rda: Add the
-	  overlooked data directory
-	* [r5] man/lmer.Rd: Add an alias for lmer2 in the documentation
-	* [r6] R/lmList.R: Applied patch from Nathaniel Smithh <njs@pobox.com>
-	  for generalized linear models
-
-2007-11-09 18:33  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4845] R/AllGeneric.R,lmer.R, NAMESPACE: new functions lmer2, for
-	  back-compatibility, and devvals
-	* [r4847] DESCRIPTION: standardized LICENSE information
-	* [r4848] src/lmer.c: Minor clean-up
-	* [r4849] inst/doc/Implementation.Rnw: Switch location of datasets to
-	  MEMSS package
-
-2007-10-06 18:06  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4816] DESCRIPTION, R/lmer.R: Update fitted and resid methods; new
-	  version of R
-
-2007-10-04 20:33  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4809] src/lmer.c: remove alloc3DArray (part of R from 2.6.0)
-
-2007-09-26 17:32  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4787] R/lmer.R: Reinstitute the names of variance components from
-	  formatVC
-
-2007-09-25 15:08  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4782] src/lmer.h: Provide definition of alloca for Solaris 10
-
-2007-09-11 22:17  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4767] src/init.c, src/lmer.c, src/lmer.h: Cleanup, add new functions
-	  for .Call
-
-2007-08-31 10:50  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4750] man/lmer-class.Rd, man/ranef.Rd: Update documentation
-	* [r4751] Done, ToDo: Update
-	* [r4752] R/AllClass.R: Incorporate mu and resid slots in mer class
-	* [r4753] R/lmer.R: Incorporate mu and resid slots in mer class
-
-2007-08-14 13:07  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4731] src/lmer.h: declare alloca
-	* [r4732] src/lmer.c: unused variable
-
-2007-08-12 13:21  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4728] R/AllClass.R, R/lmer.R, src/Syms.h, src/init.c, src/lmer.c:
-	  changes for glmer (not yet complete), code cleanup
-
-2007-08-04 23:44  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4709] R/AllClass.R, R/lmer.R, man/lmer.Rd, src/Syms.h, src/init.c,
-	  src/lmer.c, src/lmer.h: Got nlmer working
-
-2007-08-03 19:19  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4705] NAMESPACE, R/AllClass.R, man/lmer-class.Rd, man/ranef.Rd:
-	  Change name of ranef.mer class
-	* [r4706] R/lmList.R, R/lmer.R, R/pedigree.R: Use seq_along
-	* [r4707] DESCRIPTION, src/init.c, src/lme4_utils.h, src/lmer.c,
-	  src/lmer.h, src/pedigree.c, src/pedigree.h: Update Matrix API,
-	  amalgamate source files, include R.h before other R headers
-
-2007-08-01 16:29  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4688] src/lme4_utils.h: Preparing to remove this file
-	* [r4689] src/pedigree.h: Preparing to remove this file
-
-2007-07-26 14:28  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4664] R/lmer.R, inst/doc/Implementation.Rnw, inst/doc/Theory.Rnw,
-	  man/cbpp.Rd, man/lmer-class.Rd, man/lmer.Rd, src/init.c, src/lmer.c,
-	  src/lmer.h: work on glmer, nlmer, and lmer_postVar
-	* [r4678] src/lmer.c: Conditional compilation of alloc3DArray
-
-2007-07-23 13:26  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4658] R/lmer.R, src/init.c, src/lmer.c, src/lmer.h: More work on
-	  nlmer
-
-2007-07-20 20:41  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4654] R/lmer.R, src/init.c, src/lmer.c, src/lmer.h: Got nlmer
-	  running for simple models but still problems with multiple random
-	  effects per level
-
-2007-07-19 21:28  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4640] R/AllGeneric.R, R/lmer.R, src/init.c, src/lmer.c, src/lmer.h:
-	  More work on nlmer and glmer
-	* [r4645] Done, ToDo: Tracking
-	* [r4646] R/AllClass.R, R/lmer.R, man/lmer.Rd, src/init.c, src/lmer.c,
-	  src/lmer.h: More work on nlmer. Consistency of classes.
-
-2007-07-17 22:12  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4715] R/AllClass.R, R/lmer.R, ToDo, inst/doc/Implementation.Rnw,
-	  man/lmer-class.Rd, src/init.c, src/lmer.c, src/lmer.h: Update nlmer
-	  and clean up
-	* [r4717] src/lmer.c: Work on glmer
-	* [r4635] R/lmer.R, man/cbpp.Rd, src/init.c, src/lmer.c, src/lmer.h:
-	  Working on glmer_condDev
-
-2007-07-16 23:02  Douglas Bates <bates@stat.wisc.edu>
-	* [r4620] R/AllClass.R, R/AllGeneric.R, R/lmer.R, man/lmer.Rd,
-	  src/init.c, src/lmer.c, src/lmer.h: Preparing for a beta release
-	* [r4621] man/lmer-class.Rd, man/mcmcsamp.Rd, man/ranef.Rd,
-	  tests/lmer.R: Adjust tests and examples for unimplemented or broken
-	  functions and methods
-	* [r4622] src/lmer.c: documentation infelicity
-	* [r4623] R/AllClass.R, R/lmer.R: Rationalize summary class structure
-	* [r4624] R/mlirt.R: Remove references to defunct C functions
-	* [r4627] src/lmer.c: New version of calculation of update in glmer
-	  conditional modes
-
-2007-07-13 21:34  Douglas Bates <bates@stat.wisc.edu>
-	* [r4613] inst/doc/Theory.Rnw: Use Poisson mixed model as example of
-	  GLMM
-	* [r4614] man/lmer.Rd: Incorporate glmer example
-	* [r4615] R/lmer.R: Add mkdims utility for lmer and glmer
-
-2007-07-12 20:11  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4607] R/lmer.R, man/cbpp.Rd: glmer skeleton and test
-
-2007-07-11 20:30  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4602] src/lmer.c: Part of the extension of lmer to correlated random
-	  effects
-	* [r4603] inst/doc/Theory.Rnw: Minor cleanup
-	* [r4604] src/init.c, src/lmer.c, src/lmer.h: Correct ordering of
-	  operations in PSTp_dense_mult; allow external access to mer_update_VtL
-
-2007-07-10 16:36  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4591] inst/doc/Theory.Rnw, inst/doc/lme4.bib: Move definitive
-	  version of vignette sources to this branch
-	* [r4592] R/lmer.R, src/init.c, src/lmer.c, src/lmer.h: Clean up the
-	  code.
-
-2007-07-09 23:08  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4576] R/lmer.R, src/init.c, src/lmer.c, src/lmer.h: Change name
-	  famType to ftyp and Nested to nest in the dims vector (output form is
-	  easier to read)
-	* [r4577] inst/doc/Implementation.Rnw, inst/doc/Theory.Rnw: updates of
-	  vignettes
-	* [r4584] src/lmer.c: Use Alloca macro, call update_VtL from
-	  within lmer_update_dev and not in update_deviance
-
-2007-07-06 16:34  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4562] man/lmer-class.Rd: Move nlmer class documentation to
-	  lmer-class.Rd
-	* [r4563] R/lmer.R, src/lmer.c, src/pedigree.c: Got new lmer running on
-	  models with independent r.e.'s
-
-2007-07-05 23:05  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4557] NAMESPACE, R/AllClass.R, R/carryOver.R, R/lmer.R, R/mlirt.R,
-	  man/VarCorr.Rd, man/fixef.Rd, man/hatTrace.Rd, man/lmer-class.Rd,
-	  man/lmer.Rd, man/mcmcsamp.Rd, man/nlmer-class.Rd, man/nlmer.Rd,
-	  man/ranef.Rd, src/init.c, src/lmer.c, src/lmer.h: First cut at the
-	  docs and some methods including printing
-
-2007-07-04 18:38  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4546] R/AllClass.R, R/lmer.R, src/init.c, src/lmer.c, src/lmer.h:
-	  Replaced the C functions glmer_create and nlmer_create by R code
-
-2007-07-03 14:43  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4539] inst/doc/Doxyfile: Added Doxyfile (not yet working to my
-	  satisfaction).
-	* [r4540] inst/doc/Doxyfile: Change version number (should take this
-	  from the DESCRIPTION file).
-	* [r4541] src/lmer.c: Use a macro to obtain the L slot as a CHM_FR
-	  object
-
-2007-07-02 22:38  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4537] R/AllClass.R, R/lmer.R, ToDo, src/Syms.h, src/init.c,
-	  src/lmer.c, src/lmer.h: Got a version that runs a simple model fit!
-	  Hooray!
-
-2007-06-29 03:41  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4516] src/Syms.h, src/init.c, src/lmer2.c: rationalizing the symbols
-	* [r4517] src/Syms.h, src/lme4_utils.h, src/lmer.c, src/lmer.h,
-	  src/lmer2.c, src/lmer2.h: re-arranging file names
-
-2007-06-28 21:00  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4514] ChangeLog, DESCRIPTION, NAMESPACE, R/AllClass.R, R/lmer.R,
-	  inst/doc/Theory.Rnw, man/gsummary.Rd, man/lmList.Rd, src/Syms.h,
-	  src/Wishart.c, src/Wishart.h, src/glmer.c, src/glmer.h, src/init.c,
-	  src/lme4_utils.c, src/lme4_utils.h, src/lmer.c, src/lmer.h,
-	  src/lmer2.c, src/lmer2.h, src/pedigree.h: Switch lmer2 to lmer, glmer
-	  and nlmer
-	* [r4515] src/unused: incorporated useful parts into lmer.c
-
-2007-06-20 14:08  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4490] R/lmer.R: Do not throw an error when nlev[i] == nobs for the
-	  Poisson family
-	* [r4491] inst/doc/Theory.Rnw: Tighten up the description of GLMMs
-	* [r4492] DESCRIPTION: Version 0.99875-2
-
-2007-06-11 19:02  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4449] DESCRIPTION, inst/doc/Theory.Rnw, inst/doc/lme4.bib: Added
-	  Theory vignette, release 0.99875-1
-
-2007-06-07 21:15  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4446] DESCRIPTION, NAMESPACE, R/AllClass.R, R/lmer.R,
-	  man/VarCorr.Rd, man/nlmer-class.Rd, man/nlmer.Rd, src/init.c,
-	  src/lmer2.c, src/lmer2.h: A working nlmer - hooray!
-
-2007-06-03 19:16  Douglas Bates <bates@stat.wisc.edu>
-
-	* [r4414] R/AllClass.R, R/lmer.R, src/init.c, src/lmer2.c, src/lmer2.h:
-	  More modifications to nlmer
-
+	* R/lmer.R: Change maximum iterations error to a warning.
+	* DESCRIPTION: New version number.
+	* R/lmer.R: Allowed choice of optimizer in glmer at least.
+	* R/AllClass.R: Extended and exported the NelderMead class
+	* src/external.cpp, src/optimizer.cpp, src/optimizer.h: Removed
+	  debugging code, added methods to NelderMead to set convergence
+	  characteristics and exported same.
+
+2011-12-22  Douglas Bates <bates@stat.wisc.edu>
+
+	* NAMESPACE, R/AllClass.R, src/external.cpp, src/optimizer.cpp,
+	  src/optimizer.h: Tuned the Nelder-Mead optimizer a bit and got rid of
+	  some of the noise.
+	* R/lmer.R, man/lmer.Rd, src/external.cpp: Incorporated aGQ code in the
+	  glmer function itself. Eliminated the doFit argument which is
+	  redundant when devFunOnly is also used.
+
+2011-12-21  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/external.cpp: Added the glmerAGQ function and did some cleanup.
+	* src/predModule.cpp: Delete some debugging code.
+	* R/lmer.R: Updates in glmer, aGQ not yet added but soon will be.
+	* R/GHrule.R: Rename the knots on the z scale as 'z', not 'k'
+	* NAMESPACE: Export the golden class and class generator object
+
+2011-12-16  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/respModule.cpp, src/respModule.h: Clean up declarations by
+	  declaring a typedef for Eigen::Map<Eigen::VectorXd>
+
+2011-12-15  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/lmer.R: Adopt new version of the merPredD$new function that uses S.
+	* R/GHrule.R: Added an R function, based on SparseGrid:::GQN to evaluate
+	  a matrix of nodes, weights and log-density for Gauss-Hermite
+	  quadrature against a Gaussian density.
+	* R/AllClass.R, src/optimizer.h: Added a reverse-communication golden
+	  search algorithm class
+
+2011-12-12  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/external.cpp: Fat-finger error. I meant to commit this file and
+	  not glmFamily.h
+	* src/glmFamily.h, src/optimizer.cpp, src/optimizer.h: Added simple
+	  optimizers (Golden search for bounded 1-dimensional and Nelder-Mead
+	  for multidimensional).
+
+2011-12-07  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/AllClass.R, R/lmer.R, src/external.cpp, src/predModule.cpp,
+	  src/predModule.h: Allow regeneration of pointers in merPredD objects.
+
+2011-12-06  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/AllClass.R, R/lmer.R, src/external.cpp, src/predModule.cpp,
+	  src/predModule.h: Add many more fields to the merPredD class and allow
+	  for serialize/unserialize. Lower the default tolPwrss as per testing
+	  by Ben.
+
+2011-12-05  Douglas Bates <bates@stat.wisc.edu>
+
+	* DESCRIPTION, R/AllClass.R, R/lmer.R, man/lmer.Rd, man/mkdevfun.Rd,
+	  man/refitML.Rd, src/external.cpp, src/predModule.cpp,
+	  src/predModule.h, src/respModule.cpp, src/respModule.h: Use mapped
+	  objects in C++ structures so that serialize/unserialize will work.
+
+2011-11-29  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/profile.R: More fixing of labels. Fix up strip names to
+	  reflect sigma, not log(sigma).
+
+2011-11-29  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/profile.R: Profiling now works for lmer models with variance
+	  components only, including the case of a single fixed-effects
+	  parameter. Labeling of some plots needs to be corrected.
+	* src/predModule.cpp, src/predModule.h: Modifications for the 0-column X
+	  matrix case used in profiling.
+	* src/Gauss_Hermite.cpp, src/Gauss_Hermite.h, src/external.cpp: Move
+	  Gaussian quadrature knot/weight calculations to the Gqr package.
+
+2011-11-28  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/profile.R: Got profile working for cases where the number of
+	  fixed-effects is greater than 1. Need a "do nothing gracefully" clause
+	  for p == 1.
+	* R/lmer.R: Use the value of emptyenv(), not the funtion itself. Add ...
+	  to refitML generic and method
+	* R/lmer.R: Use separate mkdevfun in glmer. Switch devFunOnly to an
+	  integer value where 1 and 2 refer to different stages.
+
+2011-11-17  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/AllClass.R: Correct and extend the allInfo method for the glmResp
+	  class.
+	* ToDo: Need to come up with a crafty way of creating a copy of the
+	  reference class object with the external pointer. It may work to just
+	  copy it then set the PTR to be a NULL pointer.
+
+2011-11-16  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/Gauss_Hermite.cpp, src/Gauss_Hermite.h, src/external.cpp: Add
+	  another method of creating Gaussian quadrature rules. Export the GHQ
+	  class.
+	* tests/lmer-1.R: Comment out enough tests to make R CMD check succeed.
+	* R/lmer.R: Clean up some functions and methods that were causing
+	  problems with the tests.
+	* man/glmFamily-class.Rd, man/glmFamily.Rd, man/lmResp-class.Rd,
+	  man/lmResp.Rd: Document the class generator object and the reference
+	  class (for now).
+	* NAMESPACE: Remove redundant S3 method vcov.summary.mer
+
+2011-11-04  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/external.cpp: Correct the argument counts for externally visible
+	  glmFamily accessors
+	* man/sleepstudy.Rd: disable a test - need to check what rcond(fm@re)
+	  did in lme4a
+	* man/reTrms.Rd: No longer used
+	* man/profile-methods.Rd: Don't run examples until the code has been
+	  fixed
+	* man/merPredD-class.Rd, man/merPredD.Rd: Try to document reference
+	  class generator object this way
+	* inst/unitTests/runit.compDev.R, inst/unitTests/runit.link.R,
+	  inst/unitTests/runit.lmerResp.R: update tests (compDev is inert at
+	  present but could be activated for glmer tests)
+
+2011-11-02  Douglas Bates <bates@stat.wisc.edu>
+
+	* DESCRIPTION: Bump the version number.
+	* NAMESPACE, man/glmFamily-class.Rd: Export and document the glmFamily
+	  reference class and generator object
+	* src/Makevars, src/Makevars.win: Add a Makevars.win file. Make the
+	  factory-fresh setting of CPPFLAGS suppress warnings.
+	* man/lmerMod-class.Rd, man/merMod-class.Rd, man/merPredD-class.Rd:
+	  incorporate documentation for [gn]lmerMod-class in the merMod-class
+	  docs; document merPredD-class
+	* inst/doc/PLSvGLS.Rnw, inst/doc/PLSvGLS.pdf, inst/doc/Theory.Rnw,
+	  inst/doc/Theory.pdf, inst/doc/lme4.bib, vignettes,
+	  vignettes/PLSvGLS.Rnw, vignettes/PLSvGLS.pdf, vignettes/Theory.Rnw,
+	  vignettes/Theory.pdf, vignettes/lme4.bib: Move vignette sources to a
+	  vignettes directory per recommendations for R-2.14.0
+
+2011-10-18  Douglas Bates <bates@stat.wisc.edu>
+
+	* man/mkdevfun.Rd: Cleanup.
+	* NAMESPACE: Export S3 method for devcomp.
+	* man/lmResp-class.Rd: Document response reference classes and
+	  constructor objects
+	* man/chmSp.Rd, man/deFeMod.Rd, man/feModule-class.Rd, man/glmFamily.Rd,
+	  man/glmerResp.Rd, man/lmerResp-class.Rd, man/lmerResp.Rd,
+	  man/reModule-class.Rd, man/reModule.Rd: Remove documentation of
+	  no-longer-used classes from Rcpp modules
+	* man/cbpp.Rd: From R-2.14.0 on getCall is imported from the stats
+	  package.
+	* R/lmer.R: Getter and setter for REML field in lmerResp should be reml,
+	  not REML.
+
+2011-10-17  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/respModule.cpp, src/respModule.h: Change working weights to be a
+	  matrix.
+	* src/predModule.cpp: Thinko regarding 0-based indices.
+
+2011-10-14  Douglas Bates <bates@stat.wisc.edu>
+
+	* DESCRIPTION, NAMESPACE, R/AllClass.R, R/lmer.R, src/external.cpp,
+	  src/predModule.cpp, src/predModule.h, src/respModule.cpp,
+	  src/respModule.h: nlmer added. Increment calculation for PWRSS works
+	  but not yet incorporated in R code.
+
+2011-10-03  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/lmer.R: Small but important change in checking for object weights in
+	  environment rho in mkRespMod2
+
+2011-09-30  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/AllClass.R, R/lmer.R: Use inheritance on reference classes, being
+	  careful about package installation. Create a cleaner version of
+	  mkRespMod2.
+	* NAMESPACE: export more classes
+	* DESCRIPTION: new version and date
+
+2011-09-29  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/lmer.R: Modify mkRespMod for nlmer response.
+	* src/external.cpp: Add isNullExtPtr .Call'able function for Ptr/ptr
+	  formulation.
+	* NAMESPACE, R/AllClass.R: new organization of response classes. Use
+	  Ptr/ptr formulation to generate external pointers.
+
+2011-09-27  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/lmer.R: More components/slots/etc. available in getME()
+	* R/AllClass.R, R/lmer.R: Reinstitute the Gp slot in merMod objects
+
+2011-09-23  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/lmer.R, man/ranef.Rd: *must* use lme4Eigen::: inside devFun()
+	  [evaluated from C++]
+	* man/refitML.Rd: add doc. + example
+	* man/Pastes.Rd, man/Penicillin.Rd: reactivate the image(L) plots
+
+2011-09-22  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* NAMESPACE, R/AllClass.R, R/lmer.R: tolPwrss - for now
+
+2011-09-22  Douglas Bates <bates@stat.wisc.edu>
+
+	* data/VerbAgg.rda: Correct labels on Gender, use camelCase consistently
+	  on item labels.
+	* data/sleepstudy.rda: switch to bzip2 compression for smaller file
+	  size.
+
+2011-09-21  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/external.cpp: Added a function to check on the SIMD instruction
+	  sets in use by Eigen.
+
+2011-09-20  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/lmer.R: Do the same number of pwrssUpdate calls with compDev=TRUE or
+	  FALSE
+	* src/external.cpp, src/predModule.cpp, src/predModule.h: Remove
+	  debugging code. solve and solveU methods for merPredD class now return
+	  the numerator of the convergence criterion.
+	* R/lmer.R: Need to pass the pointer, not the reference class object.
+	  Modifications to glmer, pwrssUpdate, etc. to get glmer working.
+
+2011-09-20  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/lmer.R, man/lmer.Rd, src/external.cpp: non-hardcorded PWRSS
+	  tolerance
+
+2011-09-19  Douglas Bates <bates@stat.wisc.edu>
+
+	* NAMESPACE, R/AllClass.R, R/lmer.R, src/external.cpp, src/glmFamily.h,
+	  src/respModule.cpp: created a glmFamily reference class and allowed
+	  for compiled version of glmer update using working residuals and
+	  weights (not currently working properly, use compDev=FALSE argument to
+	  glmer)
+	* DESCRIPTION: new version and date
+	* src/external.cpp, src/predModule.cpp, src/predModule.h,
+	  src/respModule.cpp, src/respModule.h: Moved all externally .Call'able
+	  function definitions to external.cpp. external.h and init.cpp are no
+	  longer needed.
+
+2011-09-19  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/lmer.R: Clean up printMer and summary.merMod
+	* src/external.cpp, src/external.h, src/lmer.cpp, src/lmer.h: rename
+	  lmer.[h,cpp] to external.[h,cpp]
+	* R/lmer.R: Initial iterations in glmer (the nAGQ=0L part) now working.
+	  Later iterations still need work.
+
+2011-09-16  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/lmer.R: Use fac argument in call to sqrL() method. glmer now
+	  iterates but does not yet converge.
+	* src/predModule.cpp: Add the - u_i on the rhs of the equation in the
+	  solve method.
+	* R/AllClass.R, src/init.cpp, src/predModule.cpp, src/predModule.h: New
+	  'allInfo' method for glmerResp reference class. Added .Call'able
+	  extractors for Utr and Vtr to merPredD class.
+
+2011-09-14  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/lmer.R: Modified glmer to return a meaningful object when
+	  doFit=FALSE.
+	* R/AllClass.R, src/init.cpp, src/respModule.cpp, src/respModule.h:
+	  Added methods and new classes for response modules. Modified names of
+	  .Call'able functions to make them easier to understand.
+	* src/predModule.cpp: Use d_LamtUt instead of recomputing d_Lambdat *
+	  d_Ut
+	* inst/unitTests/runit.link.R: Modified link/muEta/variance unit tests
+	  to use a glmerResp object.
+
+2011-09-13  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/Makevars: Add more explanation about the -DNDEBUG compiler flag
+	  and when to use it.
+	* R/AllClass.R, R/lmer.R, src/init.cpp, src/predModule.cpp,
+	  src/predModule.h, src/respModule.cpp, src/respModule.h: Many more
+	  methods added to the reference class definitions, as well as
+	  documentation. glmer is now working in the sense that it doesn't
+	  segfault, however it is not yet performing the calculations correctly.
+	* DESCRIPTION: Remove RcppModule specification.
+2011-09-12  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/respModule.h: Clean up calculation of working residuals.
+	* R/lmer.R: Still working on glmer, not there yet.
+	* R/AllClass.R, src/init.cpp, src/predModule.cpp, src/predModule.h,
+	  src/respModule.cpp, src/respModule.h: Added many more R-callable entry
+	  points in respModule and predModule, incorporating them as methods in
+	  the reference class definitions.
+	* src/Makevars: Allow for suppression of assert statements with -DNDEBUG
+	  (R CMD check complains)
+
+2011-09-12  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION, NAMESPACE, R/AllClass.R, R/lmer.R,
+	  inst/unitTests/runTests.R, tests/doRunit.R, tests/drop.R,
+	  tests/extras.R, tests/lmer-1.Rout.save, tests/lmer.R,
+	  tests/lmer2_ex.R, tests/nlmer-conv.R, tests/nlmer.R, tests/throw.R:
+	  more updates
+	* man/Dyestuff.Rd, man/VarCorr.Rd, man/cbpp.Rd, man/getME.Rd,
+	  man/lmer.Rd, man/lmerMod-class.Rd, man/merMod-class.Rd,
+	  man/mkdevfun.Rd, man/ranef.Rd, man/reModule-class.Rd: considerably
+	  more documentation
+
+2011-09-11  Douglas Bates <bates@stat.wisc.edu>
+
+	* NAMESPACE, R/AllClass.R, R/lmer.R, src/init.cpp, src/respModule.cpp,
+	  src/respModule.h: Added glmerResp class and began glmer function.
+	  Still needs work.
+
+2011-09-11  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/predModule.[h,cpp]: Wrote native C++ L() method. Somehow calling
+	  ::M_chm_factor_as_SEXP was messing up memory.
+	* tests/vcov-etc.R, tests/lmer-conv.R: Test using this package not lme4a
+	* R/AllClass.R, src/init.cpp, src/predModule.cpp, src/predModule.h: Add
+	  capability of extracting L from a merPredD object
+
+2011-09-10  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION, NAMESPACE, R/lmer.R, man/Pastes.Rd, man/Penicillin.Rd,
+	  man/bootMer.Rd, man/getL.Rd, man/getME.Rd, man/merMod-class.Rd:
+	  getME() for all three(!) versions of lme4 -- deprecate getL() where it
+	  exists
+
+2011-09-02  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/init.cpp, src/predModule.cpp, src/predModule.h: Drop the check for
+	  diagonal Lambda. Cache the value of LamtUt and update it in place with
+	  new method updateLamtUt.
+
+2011-08-31  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/init.cpp, src/predModule.cpp, src/predModule.h: Finally got a
+	  work-around for the "pruning of sparse product" problem. Also added a
+	  diagonalLambda method.
+	* R/AllClass.R: Add a "fitted" method to the lmerResp reference class.
+	  Re-arrange code.
+
+2011-08-30  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/predModule.cpp, src/predModule.h: Drop some debugging code.
+	  Isolate the calculation of LamtUt to try to find out what goes wrong
+	  in there.
+	* R/lmer.R: Update the ranef method for merPredD storing Lambdat, not
+	  Lambda
+
+2011-08-29  Douglas Bates <bates@stat.wisc.edu>
+
+	* R/AllGeneric.R, R/utilities.R, src/init.cpp, src/predModule.cpp,
+	  src/respModule.cpp, src/respModule.h: Code cleanup - remove exception
+	  declarations, use specific 'using' statements within blocks instead of
+	  'using namespace' statements.
+
+2011-08-28  Douglas Bates <bates@stat.wisc.edu>
+
+	* NAMESPACE, src/eigen.h, src/glmFamily.cpp, src/glmFamily.h,
+	  src/lmer.cpp, src/predModule.cpp, src/predModule.h,
+	  src/respModule.cpp, src/respModule.h: Initialize d_delb and d_delu in
+	  predModule to zero (not doing so was causing hard-to-debug errors).
+	  Remove exception declarations as suggested for Rcpp. Make declaration
+	  of short names for Eigen classes and constants namespace-specific.
+
+2011-08-11  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/predModule.cpp: Using solveInPlace to try to avoid memory
+	  problems.
+
+2011-07-31  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/lmer.cpp, src/predModule.cpp, src/predModule.h: Trying to track
+	  dowm memory problem in the evaluation of delu. It looks like it is in
+	  the CholmodSupport.h file in Eigen but my intended fix apparently
+	  didn't succeed.
+	* R/AllClass.R: Modified according to John Chambers' suggestions.
+
+2011-07-29  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/respModule.cpp, src/respModule.h: Flailing around trying to find
+	  the source of the memory problems. valgrind claims there is an
+	  uninitialized value being used in a log call within the Laplace method
+	  but I can't find it.
+	* src/predModule.h: Remove unneeded template keywords (caught by an old
+	  compiler).
+	* R/AllClass.R: Realized that the initialize method should return an
+	  object.
+	* R/AllClass.R, R/lmer.R, src/init.cpp, src/predModule.cpp,
+	  src/predModule.h: Switch to Lambdat and Zt and the CHOLMOD
+	  factorization. Special code for diagonal Lambda.
+	* src/predModule.cpp: One more attempt. Still failing on the boundary
+	  when the number of nonzeros changes.
+
+2011-07-28  Douglas Bates <bates@stat.wisc.edu>
+
+	* src/init.cpp, src/predModule.cpp, src/predModule.h: First shot at a
+	  version with the Eigen/Matrix/CHOLMOD links. Compiles and loads but
+	  not yet tested. Checking in so I can access it from home.
+	* src/init.cpp, src/lmer.cpp, src/predModule.cpp, src/predModule.h: More
+	  getter methods defined in C++ code and reference class. Remove some
+	  debugging code.
+	* R/AllClass.R, R/AllGeneric.R, R/lmList.R, R/lmer.R: More changes to
+	  use S3 methods when dispatching on the first argument only.
+	* DESCRIPTION, NAMESPACE: Change dependencies and imports.
+
+2011-07-26  Douglas Bates <bates@stat.wisc.edu>
+
+	* * initialize this archive.

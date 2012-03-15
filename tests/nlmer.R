@@ -1,61 +1,41 @@
-### suppressPackageStartupMessages(...)  as we have an *.Rout.save to Rdiff against
-stopifnot(suppressPackageStartupMessages(require(lme4)))
+library(lme4)
 
-## TODO: nicer version of this is in  system.file("test-tools.R", package = "Matrix")
-showProc.time <- function() { ## CPU elapsed __since last called__
-    .ot <- .pc
-    .pc <<- proc.time()
-    cat('Time elapsed: ', (.pc - .ot)[1:3],'\n')
-}
-.pc <- proc.time()
 allEQ <- function(x,y, tolerance = 4e-4, ...)
     all.equal.numeric(x,y, tolerance=tolerance, ...)
 
+(nm1 <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~ (Asym|Tree),
+              Orange, start = c(Asym = 200, xmid = 725, scal = 350)))
+fixef(nm1)
+
 ## 'Theoph' Data modeling
-
 Th.start <- c(lKe = -2.5, lKa = 0.5, lCl = -3)
-(nm2 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
-              (lKe+lKa+lCl|Subject),
-              Theoph, start = Th.start))
-showProc.time() # ~ 5.7s {dual-opteron 2814, on 64b, no optim.}
 
-(nm3 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
-              (lKe|Subject) + (lKa|Subject) + (lCl|Subject),
-              Theoph, start = Th.start))
-showProc.time() # ~ 3.2s
+system.time(nm2 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
+                         (lKe+lKa+lCl|Subject), 
+                         Theoph, start = Th.start, tolPwrss=1e-8))
+print(nm2, corr=FALSE)
+
+system.time(nm3 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
+                         (lKe|Subject) + (lKa|Subject) + (lCl|Subject),
+                         Theoph, start = Th.start))
+print(nm3, corr=FALSE)
 
 ## dropping   lKe  from random effects:
-(nm4 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
-              (lKa+lCl|Subject),
-              Theoph, start = Th.start))
-showProc.time()
+system.time(nm4 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~ (lKa+lCl|Subject),
+                         Theoph, start = Th.start, tolPwrss=1e-8))
+print(nm4, corr=FALSE)
 
-(nm5 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
-              (lKa|Subject) + (lCl|Subject),
-              Theoph, start = Th.start))
-showProc.time()
+system.time(nm5 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
+                         (lKa|Subject) + (lCl|Subject),
+                         Theoph,
+                         start = Th.start, tolPwrss=1e-8))
+print(nm5, corr=FALSE)
 
-e3 <- expand(nm3)
-stopifnot(identical(sapply(e3, class),
-                    c(sigma = "numeric", P = "pMatrix",
-                      T = "dtCMatrix", S = "ddiMatrix"))
-#          , allEQ(e3$sigma, c(sigmaML = 0.70777))
-          , all(e3$P@perm == outer(12*(0:2), 1:12, "+"))
-          , identical(as(e3$T, "diagonalMatrix"), Diagonal(3*12))
-#          , allEQ(e3$S@x, rep(c(0, 0.92746, 0.23667), each=12))
-          )
-
-e2 <- expand(nm2) # -> gave error!
-stopifnot(identical(sapply(e2, class),
-                    c(sigma = "numeric", P = "pMatrix",
-                      T = "dtCMatrix", S = "ddiMatrix"))
-#          , allEQ(e2$sigma, c(sigmaML = 0.70777))
-          , all(e2$P@perm == outer(12*(0:2), 1:12, "+"))
-          , all(diag(e2$T == 1))
-          , nnzero(e2$T) == 36 + 24 + 12
-#          , allEQ(unique(e2$T@x),
-#                  c(1, 0.0310, 0.0909, -0.00187), tol = .009)
-#          , allEQ(e2$S@x, rep(c(0.0000000, 0.9274296, 0.2366269), each=12))
-          )
-
-showProc.time()
+if (require("PKPDmodels")) {
+    oral1cptSdlkalVlCl <-
+        PKmod("oral", "sd", list(ka ~ exp(lka), k ~ exp(lCl)/V, V ~ exp(lV)))
+    system.time(nm2a <- nlmer(conc ~ oral1cptSdlkalVlCl(Dose, Time, lV, lka, lCl) ~
+                              (lV+lka+lCl|Subject), 
+                              Theoph, start = c(lV=-1, lka=-0.5, lCl=-3), tolPwrss=1e-8))
+    print(nm2a, corr=FALSE)
+}

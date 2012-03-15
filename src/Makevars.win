@@ -1,0 +1,16 @@
+## -*- mode: makefile; -*-
+
+## This assumes that we can call Rscript to ask Rcpp about its locations
+## Use the R_HOME indirection to support installations of multiple R version
+
+PKG_LIBS = $(shell "${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe" -e "Rcpp:::LdFlags()")
+
+PKG_CPPFLAGS = -I. -DNDEBUG -DEIGEN_DONT_VECTORIZE
+
+## For development define the package CPPFLAGS as
+#PKG_CPPFLAGS= -I. -DEIGEN_DONT_VECTORIZE
+## to activate assertions in Eigen.  For the purposes of R CMD check the
+## assertions should be suppressed.
+
+
+

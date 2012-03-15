@@ -1,12 +1,12 @@
 -----
-Find out why there is a .p at the end of the model names in the
-printed value of anova with multiple arguments.
+Change the terms object to be the terms for the fixed-effects only so
+that the drop1 method doesn't try to drop the grouping factors for the
+random effects.
 -----
-Consider the steps in reimplementing AGQ.  First you need to find the
-conditional modes, then evaluate the conditional variances, then step
-out according to the conditional variance, evaluate the integrand
-relative to the step.
-
+Modify the effect of the verbose setting in the Nelder-Mead optimizer.
+In particular, it should count evaluations but define an "iteration"
+as a change in the best value encountered so far.
+-----
 The paper by Sophia Rabe-Hesketh et al describes a spherical form
 of the Gauss-Hermite quadrature formula.  Look that up and use it.
 
@@ -20,10 +20,6 @@ this will mean a single grouping factor only.
 Allow for a matrix of responses in lmer so multiple fits can be
 performed without needing to regenerate the model matrices.
 -----
-Modify the one-argument form of the anova method for lmer objects (yet
-  again) to calculate the F ratios.  It is the df, not the ratio that
-  is controversial.
------
 Determine what a "coef" function should do for multiple, possibly
   non-nested, grouping  factors.
 -----
@@ -32,6 +28,3 @@ Determine what a "coef" function should do for multiple, possibly
 - document print(<mer>) including an example  print(<lmer>, corr = FALSE)
   and one with many fixed effects (*) and     print(<lmer>, symbolic.cor = TRUE)
 
---> Use  nobs() methods -- ASAP .. (require R >= 2.13.0 though)
-
---> define  getME(<object>, <slot>) as a "generic Mixed-Effects" extractor.

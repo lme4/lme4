@@ -1,5 +1,5 @@
 ## Multilevel Item Response Theory model
-
+if (FALSE) {                            # must be modified for new formulation
 mlirt <-
     function(formula, data, family = NULL, method = c("REML", "ML"),
              control = list(), start = NULL, verbose = FALSE,
@@ -14,7 +14,8 @@ mlirt <-
     stopifnot(length(formula <- as.formula(formula)) == 3,
               all.equal(family$family, "binomial"))
 
-    fr <- lmerFrames(mc, formula, contrasts) # model frame, X, etc.
+#    fr <- lmerFrames(mc, formula, contrasts) # model frame, X, etc.
+    fr <- NULL
     cv <- do.call("lmerControl", control)
 
     ## Should difficulties be modeled as random effects?
@@ -37,7 +38,7 @@ mlirt <-
     mf$.subj <- gl(nr, 1, nr*nc)
     form <- substitute(Y ~ base + (1|.subj), list(base = formula[[3]]))
     ## establish factor list and Ztl
-    FL <- lmerFactorList(form, mf, 0L, 0L)
+    FL <- lmerFactorList(form, mf)
     fl <- FL$fl
     ## initial fit of a glm to the fixed-effects only.
     glmFit <- glm.fit(X, Y, weights = fl$weights[ind],
@@ -84,4 +85,6 @@ mlirt <-
 ##             terms = fr$mt, call = match.call()),
 ##         weights = weights,
 ##         family=family)
+}
+
 }
