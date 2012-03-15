@@ -3,7 +3,7 @@
 //
 // Copyright (C) 2011-2012 Douglas Bates, Martin Maechler and Ben Bolker
 //
-// This file is part of lme4Eigen.
+// This file is part of lme4.
 
 #include "glmFamily.h"
 #include <Rmath.h>

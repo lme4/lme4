@@ -1,5 +1,5 @@
 
-R version 2.14.2 RC (2012-02-28 r58516)
+R version 2.15.0 alpha (2012-03-15 r58752)
 Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-unknown-linux-gnu (64-bit)
@@ -17,7 +17,7 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > ### suppressPackageStartupMessages(...)  as we have an *.Rout.save to Rdiff against
-> stopifnot(suppressPackageStartupMessages(require(lme4Eigen)))
+> stopifnot(suppressPackageStartupMessages(require(lme4)))
 > options(show.signif.stars = FALSE)
 > 
 > source(system.file("test-tools.R", package = "Matrix"))# identical3() etc
@@ -168,7 +168,7 @@ Fixed effects:
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.812 0.012 0.825 
+Time elapsed:  0.804 0.008 0.811 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -229,7 +229,7 @@ In lmer(Reaction ~ Days + (Days | Subject), sleepstudy, sparseX = TRUE) :
 > #fmX2s <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
 > 
 > showProc.time() #
-Time elapsed:  0.332 0 0.333 
+Time elapsed:  0.352 0 0.352 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -352,7 +352,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.552 0 0.555 
+Time elapsed:  0.484 0.004 0.49 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -477,7 +477,7 @@ lagoon4 0.000  0.000  0.000
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.26 0 0.261 
+Time elapsed:  0.296 0 0.297 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -497,7 +497,7 @@ Warning message:
 In Ops.factor(ff, x1) : + not meaningful for factors
 > 
 > showProc.time() #
-Time elapsed:  1.244 0 1.249 
+Time elapsed:  1.396 0 1.399 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -512,3 +512,6 @@ Time elapsed:  1.244 0 1.249
 > #		 S4_2list(P2.2)))
 > 
 > 
+> proc.time()
+   user  system elapsed 
+  6.520   0.068   6.551 

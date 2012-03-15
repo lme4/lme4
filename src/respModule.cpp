@@ -7,7 +7,7 @@
 #include "respModule.h"
 #include <cmath>
 
-namespace lme4Eigen {
+namespace lme4 {
     using Eigen::ArrayXd;
     using Eigen::VectorXd;
 

@@ -11,7 +11,7 @@
 
 #include "glmFamily.h"
 
-namespace lme4Eigen {
+namespace lme4 {
     typedef Eigen::Map<Eigen::VectorXd> MVec;
 
     using Rcpp::CharacterVector;

@@ -3,11 +3,11 @@
 //
 // Copyright (C) 2011-2012 Douglas Bates, Martin Maechler and Ben Bolker
 //
-// This file is part of lme4Eigen.
+// This file is part of lme4.
 
 #include "predModule.h"
 
-namespace lme4Eigen {
+namespace lme4 {
     using    Rcpp::as;
 
     using     std::invalid_argument;

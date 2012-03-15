@@ -10,7 +10,7 @@
 {formatcom={\vspace{-1ex}},fontfamily=courier,fontseries=b,%
   fontsize=\footnotesize}
 %%\VignetteIndexEntry{PLS vs GLS for LMMs}
-%%\VignetteDepends{lme4Eigen}
+%%\VignetteDepends{lme4}
 \title{Penalized least squares versus generalized least squares
   representations of linear mixed models}
 \author{Douglas Bates\\Department of Statistics\\%

@@ -11,7 +11,7 @@
 
 #include <RcppEigen.h>
 
-namespace lme4Eigen {
+namespace lme4 {
 
     using Eigen::LLT;
     using Eigen::MatrixXd;

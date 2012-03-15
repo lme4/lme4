@@ -1,4 +1,4 @@
-library(lme4Eigen)
+library(lme4)
 data(Orthodont, package="nlme")
 fm1 <- lmer(distance ~ age + (age|Subject), data = Orthodont)
 VarCorr(fm1)
@@ -15,8 +15,8 @@ gm2 <- update(gm1,.~.+(1|obs))
 VarCorr(gm2)
 
 if (FALSE) {
-  ## testing lme4/lme4Eigen incompatibility
+  ## testing lme4/lme4 incompatibility
 ##  library(lme4)
   VarCorr(fm1)
-  lme4Eigen:::VarCorr.merMod(fm1) ## OK
+  lme4:::VarCorr.merMod(fm1) ## OK
 }

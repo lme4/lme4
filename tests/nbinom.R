@@ -1,7 +1,7 @@
-library(lme4Eigen)
+library(lme4)
 
-getNBdisp <- lme4Eigen:::getNBdisp
-refitNB   <- lme4Eigen:::refitNB
+getNBdisp <- lme4:::getNBdisp
+refitNB   <- lme4:::refitNB
 
 simfun <- function(sd.u=1,NBtheta=0.5,
                     nblock=25,

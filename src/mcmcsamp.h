@@ -23,15 +23,15 @@ namespace lme4 {
 	typedef Eigen::MatrixXd  Mat;
 	typedef Eigen::Map<Mat> MMat;
     protected:
-	// lme4Eigen::merPredD *d_pred;
-	// lme4Eigen::lmResp   *d_resp;
+	// lme4::merPredD *d_pred;
+	// lme4::lmResp   *d_resp;
 	MVec                    d_dev;
 	MMat                    d_fixef;
 	MVec                    d_sigma;
         MMat                    d_ranef;
     public:
 				// all the work is done in the constructor
-	mcmcsamp(lme4Eigen::merPredD *pred, lme4Eigen::lmResp *resp,
+	mcmcsamp(lme4::merPredD *pred, lme4::lmResp *resp,
 		 SEXP dev, SEXP fixef, SEXP sigma, SEXP ranef);
     };
 }

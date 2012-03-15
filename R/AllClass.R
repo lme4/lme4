@@ -1,5 +1,5 @@
 ### Class definitions for the package
-##' @useDynLib lme4Eigen .registration=TRUE
+##' @useDynLib lme4 .registration=TRUE
 NULL
 
 ##' Class "lmList" of 'lm' Objects on Common Model

@@ -711,7 +711,7 @@ as.function.merMod <- function(x, ...) {
     rho <- list2env(list(resp=x@resp$copy(),
                            pp=x@pp$copy(),
                            beta0=x@beta,
-                           u0=x@u), parent=as.environment("package:lme4Eigen"))
+                           u0=x@u), parent=as.environment("package:lme4"))
     mkdevfun(rho, getME(x, "devcomp")$dims["nAGQ"])
 }
 
@@ -1636,7 +1636,7 @@ VarCorr.merMod <- function(x, sigma, rdig)# <- 3 args from nlme
     if (is.null(cnms <- x@cnms))
 	stop("VarCorr methods require reTrms, not just reModule")
     if(missing(sigma)) # "bug": fails via default 'sigma=sigma(x)'
-	sigma <- lme4Eigen::sigma(x)  ## FIXME: do we need lme4Eigen:: ?
+	sigma <- lme4::sigma(x)  ## FIXME: do we need lme4:: ?
     nc <- sapply(cnms, length)	  # no. of columns per term
     m <- mkVarCorr(sigma, cnms=cnms, nc=nc, theta = x@theta,
 	      nms = {fl <- x@flist; names(fl)[attr(fl, "assign")]})

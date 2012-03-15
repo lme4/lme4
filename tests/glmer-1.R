@@ -1,5 +1,5 @@
 ## generalized linear mixed model
-stopifnot(suppressPackageStartupMessages(require(lme4Eigen)))
+stopifnot(suppressPackageStartupMessages(require(lme4)))
 options(show.signif.stars = FALSE)
 source(system.file("test-tools.R", package = "Matrix"))# identical3(), showProc.time, etc
 
@@ -44,7 +44,7 @@ stopifnot(is((cm1 <- coef(m1)), "coef.mer"),
                     ##  these values are those of "old-lme4":
 		    ## c(-1.39853504914, -0.992334711,
 		    ##   -1.12867541477, -1.58037390498),
-                    ## lme4Eigen[r 1636], 64-bit ubuntu 11.10:
+                    ## lme4[r 1636], 64-bit ubuntu 11.10:
                     c(-1.3788385, -1.0589543,
                       -1.1936382, -1.6306271),
 		    tol = 1.e-3,
@@ -64,7 +64,7 @@ if (FALSE && require('MASS', quietly = TRUE)) {
         structure(contr.sdif(3),
                   dimnames = list(NULL, c("diag", "encourage")))
     print(fm5 <- glmer(y ~ trt + wk2 + (1|ID), bacteria, binomial))
-    ## again *fails* (lme4Eigen[r 1636], 64-bit ubuntu 11.10)
+    ## again *fails* (lme4[r 1636], 64-bit ubuntu 11.10)
     ## used to fail with nlminb() : stuck at theta=1
 
     showProc.time() #

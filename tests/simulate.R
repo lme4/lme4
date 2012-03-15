@@ -1,4 +1,4 @@
-library(lme4Eigen)
+library(lme4)
 
 ## binomial (2-column and prob/weights)
 gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),

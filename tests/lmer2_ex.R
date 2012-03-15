@@ -1,4 +1,4 @@
-stopifnot(suppressPackageStartupMessages(require(lme4Eigen)))
+stopifnot(suppressPackageStartupMessages(require(lme4)))
 
 ## Using simple generated data -- fully balanced here, unbalanced later
 set.seed(1)

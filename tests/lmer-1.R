@@ -1,5 +1,5 @@
 ### suppressPackageStartupMessages(...)  as we have an *.Rout.save to Rdiff against
-stopifnot(suppressPackageStartupMessages(require(lme4Eigen)))
+stopifnot(suppressPackageStartupMessages(require(lme4)))
 options(show.signif.stars = FALSE)
 
 source(system.file("test-tools.R", package = "Matrix"))# identical3() etc

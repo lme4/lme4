@@ -1,4 +1,4 @@
-library(lme4Eigen)
+library(lme4)
 d <- data.frame(x=runif(100),f=factor(rep(1:10,10)))
 set.seed(101)
 u <- rnorm(10)

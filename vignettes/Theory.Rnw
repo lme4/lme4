@@ -9,7 +9,7 @@
 {formatcom={\vspace{-1ex}},fontfamily=courier,fontseries=b,%
   fontsize=\footnotesize}
 %%\VignetteIndexEntry{Computational Methods}
-%%\VignetteDepends{lme4Eigen}
+%%\VignetteDepends{lme4}
 \title{Computational methods for mixed models}
 \author{Douglas Bates\\Department of Statistics\\%
   University of Wisconsin -- Madison}

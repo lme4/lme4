@@ -1,4 +1,4 @@
-// external.cpp: externally .Call'able functions in lme4Eigen
+// external.cpp: externally .Call'able functions in lme4
 //
 // Copyright (C)       2011-2012 Douglas Bates, Martin Maechler and Ben Bolker
 //
@@ -33,11 +33,11 @@ extern "C" {
 
     using       glm::glmFamily;
 
-    using lme4Eigen::glmResp;
-    using lme4Eigen::lmResp;
-    using lme4Eigen::lmerResp;
-    using lme4Eigen::merPredD;
-    using lme4Eigen::nlsResp;
+    using lme4::glmResp;
+    using lme4::lmResp;
+    using lme4::lmerResp;
+    using lme4::merPredD;
+    using lme4::nlsResp;
 
     using optimizer::Golden;
     using optimizer::Nelder_Mead;
@@ -961,14 +961,14 @@ static R_CallMethodDef CallEntries[] = {
     {NULL, NULL, 0}
 };
 
-/** Initializer for lme4Eigen, called upon loading the package.
+/** Initializer for lme4, called upon loading the package.
  *
  *  Register routines that can be called directly from R.
  *  Initialize CHOLMOD and require the LL' form of the factorization.
  *  Install the symbols to be used by functions in the package.
  */
 extern "C"
-void R_init_lme4Eigen(DllInfo *dll)
+void R_init_lme4(DllInfo *dll)
 {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, (Rboolean)FALSE);

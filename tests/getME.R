@@ -1,4 +1,4 @@
-library(lme4Eigen)
+library(lme4)
 #### tests of getME()
 
 ###  are names correct? --------------

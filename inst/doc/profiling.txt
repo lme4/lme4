@@ -40,7 +40,7 @@ directly of interest to most users.  I can switch to theta and sigma
 at the risk of some redundancy (once you have done the work needed to
 calculate the profiled deviance for theta and sigma you could just as
 easily profile out sigma).  The (unexported) R function devfun in
-lme4Eigen takes a fitted model and returns a function with attributes that
+lme4 takes a fitted model and returns a function with attributes that
 evaluates the profiled deviance for the composite parameter (theta,
 log(sigma)).  However, I don't think even that is enough because it
 does not give profiles of the variances and covariances of the random

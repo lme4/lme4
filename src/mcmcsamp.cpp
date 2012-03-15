@@ -3,22 +3,22 @@
 //
 // Copyright (C) 2011-2012 Douglas Bates, Martin Maechler and Ben Bolker
 //
-// This file is part of lme4Eigen.
+// This file is part of lme4.
 
 #include "mcmcsamp.h"
 
 namespace lme4 {
     using Rcpp::as;
 
-    static inline double pwrss(lme4Eigen::merPredD *pred, lme4Eigen::lmResp *resp) {
+    static inline double pwrss(lme4::merPredD *pred, lme4::lmResp *resp) {
 	return pred->sqrL(1.) + resp->wrss();
     }
 
-    static inline double sigmaML(lme4Eigen::merPredD *pred, lme4Eigen::lmResp *resp) {
+    static inline double sigmaML(lme4::merPredD *pred, lme4::lmResp *resp) {
 	return std::sqrt(pwrss(pred, resp)/double(resp->y().size()));
     }
 
-    mcmcsamp::mcmcsamp(lme4Eigen::merPredD *pred, lme4Eigen::lmResp *resp,
+    mcmcsamp::mcmcsamp(lme4::merPredD *pred, lme4::lmResp *resp,
 		       SEXP dev, SEXP fixef, SEXP sigma, SEXP ranef)
 	: d_dev(  as<MVec>(dev)),
 	  d_fixef(as<MMat>(fixef)),

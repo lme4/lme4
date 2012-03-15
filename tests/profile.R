@@ -1,4 +1,4 @@
-library(lme4Eigen)
+library(lme4)
 
 fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
 
@@ -8,7 +8,7 @@ system.time( tpr <- profile(fm01ML) )
 
 (confint(tpr) -> CIpr)
 print(xyplot(tpr))
-##  comparing against lme4a reference values -- but lme4Eigen returns sigma
+##  comparing against lme4a reference values -- but lme4 returns sigma
 ## rather than log(sigma)
 stopifnot(dim(CIpr) == c(3,2),
           all.equal(unname(CIpr[".sigma",]),exp(c(3.64362, 4.21446)), tol=1e-6),

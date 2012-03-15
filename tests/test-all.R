@@ -1,5 +1,5 @@
 if(require("testthat", quietly = TRUE)) {
-    pkg   <- "lme4Eigen"
+    pkg   <- "lme4"
     require(pkg, character.only=TRUE, quietly=TRUE)
     test_package(pkg)
 } else {

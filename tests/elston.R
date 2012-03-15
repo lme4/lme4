@@ -22,7 +22,7 @@
 
 ## save("grouseticks","grouseticks_agg",file="grouseticks.rda")
 
-library(lme4Eigen)
+library(lme4)
 data(grouseticks)
 do.plots <- FALSE
 form <- TICKS~YEAR+HEIGHT+(1|BROOD)+(1|INDEX)+(1|LOCATION)

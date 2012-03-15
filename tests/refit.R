@@ -1,4 +1,4 @@
-library(lme4Eigen)
+library(lme4)
 
 ## testing refit
 ## for each type of model, should be able to

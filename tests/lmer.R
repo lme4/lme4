@@ -1,4 +1,4 @@
-require(lme4Eigen)
+require(lme4)
 source(system.file("test-tools.R", package = "Matrix"))# identical3() etc
 
 ## Check that quasi families throw an error

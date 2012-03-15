@@ -1,6 +1,6 @@
 #! /usr/bin/env Rscript
 #
-pkg <- "lme4Eigen"
+pkg <- "lme4"
 pDIR <- switch((U <- Sys.getenv("USER")),
                "maechler" = "~/R/Pkgs",
                "bates"    = "~/sloc",
@@ -20,7 +20,7 @@ if(FALSE) {
   roxygenize(pkgPATH)## <-- also recreates *.Rd files
 }
 owd <- setwd(pkgPATH)
-## FIX  NAMESPACE entry : useDynLib(lme4Eigen,".registration=TRUE")
+## FIX  NAMESPACE entry : useDynLib(lme4,".registration=TRUE")
 ll <- readLines("NAMESPACE")
 i <- grep("useDynLib", ll)
 ll[i] <- gsub('"', '', ll[i])#"

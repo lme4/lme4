@@ -1,4 +1,4 @@
-library(lme4Eigen)
+library(lme4)
 ## should be able to run any example with any bounds-constrained optimizer ...
 
 ## these are the only ones we know of

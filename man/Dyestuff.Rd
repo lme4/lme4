@@ -74,7 +74,7 @@
  pkgI("Rcpp")
  pkgI("RcppEigen")
  pkgI("minqa")
- pkgI("lme4Eigen")
+ pkgI("lme4")
 }
 str(Dyestuff)
 dotplot(reorder(Batch, Yield) ~ Yield, Dyestuff,
