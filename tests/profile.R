@@ -16,7 +16,7 @@ stopifnot(dim(CIpr) == c(3,2),
 
 ## 2D profiles
 fm2ML <- lmer(diameter ~ 1 + (1|plate) + (1|sample), Penicillin, REML=0)
-pr2 <- profile(fm2ML)
+system.time(pr2 <- profile(fm2ML))
 (confint(pr2) -> CIpr2)
 
 lme4a_CIpr2 <-
@@ -31,9 +31,11 @@ stopifnot(all.equal(unname(CIpr2),unname(lme4a_CIpr2)))
 print(xyplot(pr2, absVal=0, aspect=1.3, layout=c(4,1)))
 print(splom(pr2))
 
-## NOT RUN: takes ~ 30 seconds on my machine ...
+## NOT RUN:  ~ 23 seconds
 fm3ML <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, REML=FALSE)
-## system.time(pr3 <- profile(fm3ML))
-## xyplot(pr3)
-## print(splom(pr3))
+if (FALSE) {
+  system.time(pr3 <- profile(fm3ML))
+  xyplot(pr3)
+  print(splom(pr3))
+}
 
