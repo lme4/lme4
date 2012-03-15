@@ -286,25 +286,50 @@ devfun2 <- function(fm)
     stdErr <- unname(coef(summary(fm))[,2])
     pp <- fm@pp$copy()
     ## opt <- c(pp$theta*sig, sig)
-    opt <- Cv_to_Sv(pp$theta, n=sapply(fm@cnms,length), s=sig)
-    ## FIXME: alternatively use/allow names as in getME(.,"theta") ?
-    names(opt) <- c(sprintf(".sig%02d", seq_along(pp$theta)), ".sigma")
+    if (!isGLMM(fm)) {
+      opt <- Cv_to_Sv(pp$theta, n=sapply(fm@cnms,length), s=sig)
+      ## FIXME: alternatively use/allow names as in getME(.,"theta") ?
+      names(opt) <- c(sprintf(".sig%02d", seq_along(pp$theta)), ".sigma")
+    } else {
+      opt <- Cv_to_Sv(pp$theta, n=sapply(fm@cnms,length))
+      ## FIXME: alternatively use/allow names as in getME(.,"theta") ?
+      names(opt) <- sprintf(".sig%02d", seq_along(pp$theta))
+    }
     opt <- c(opt, fixef(fm))
     resp <- fm@resp$copy()
-    np <- length(pp$theta) + 1L
+    np <- length(pp$theta)
+    if (!isGLMM(fm)) np <- np + 1L
     n <- nrow(pp$V)                   # use V, not X so it works with nlmer
-    ans <- function(pars)
-    {
-        stopifnot(is.numeric(pars), length(pars) == np)
-        ## Assumption:  all parameters, including the residual SD on SD-scale
-        sigma <- pars[np]
-        ## .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pars[-np]/sigma)
-        ## convert from sdcor vector back to 'unscaled theta' 
-        thpars <- Sv_to_Cv(pars,n=sapply(fm@cnms,length),s=sigma)
-        .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)
-        sigsq <- sigma^2
-        pp$ldL2() + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
-      }
+    if (isLMM(fm)) {
+      ans <- function(pars)
+        {
+          stopifnot(is.numeric(pars), length(pars) == np)
+          ## Assumption:  all parameters, including the residual SD on SD-scale
+          sigma <- pars[np]
+          ## .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pars[-np]/sigma)
+          ## convert from sdcor vector back to 'unscaled theta' 
+          thpars <- Sv_to_Cv(pars,n=sapply(fm@cnms,length),s=sigma)
+          .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)
+          sigsq <- sigma^2
+          pp$ldL2() + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
+        }
+    } else {
+      d0 <- mkdev(fm)
+      ans <- function(pars)
+        {
+          stopifnot(is.numeric(pars), length(pars) == np)
+          thpars <- pars[seq(np)]
+          
+          ## FIXME: allow useSc (i.e. NLMMs)
+          sigma <- pars[np]
+          ## .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pars[-np]/sigma)
+          ## convert from sdcor vector back to 'unscaled theta' 
+          thpars <- Sv_to_Cv(pars,n=sapply(fm@cnms,length))
+          d0(thpars,
+          sigsq <- sigma^2
+          pp$ldL2() + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
+        }
+      
     attr(ans, "optimum") <- opt         # w/ names()
     attr(ans, "basedev") <- basedev
     attr(ans, "thopt") <- pp$theta
