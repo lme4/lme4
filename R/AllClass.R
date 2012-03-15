@@ -972,6 +972,7 @@ vcRep <-
                 fields =
                 list(
                      theta     = "numeric",
+                     lower     = "numeric",
                      Lambdat   = "dgCMatrix",
                      Lind      = "integer",
                      Gp        = "integer",
@@ -981,7 +982,11 @@ vcRep <-
                      nctot     = "integer",
                      nlevs     = "integer",
                      offsets   = "integer",
-                     terms     = "integer"
+                     terms     = "list",
+                     sig       = "numeric",
+                     nms       = "character",
+                     covar     = "list",
+                     useSc     = "logical"
                      ),
                 methods =
                 list(
@@ -989,10 +994,11 @@ vcRep <-
                          stopifnot((ntrms <- length(Cnms <- mer@cnms)) > 0L,
                                    (length(Flist <- mer@flist)) > 0L,
                                    length(asgn  <- as.integer(attr(Flist, "assign"))) == ntrms)
-                         theta   <<- mer@pp$theta
-                         Lambdat <<- mer@pp$dgCMatrix
-                         Lind    <<- mer@pp$Lind
-                         Gp      <<- mer@Gp
+                         lower   <<- getME(mer, "lower")
+                         theta   <<- getME(mer, "theta")
+                         Lambdat <<- getME(mer, "Lambdat")
+                         Lind    <<- getME(mer, "Lind")
+                         Gp      <<- getME(mer, "Gp")
                          cnms    <<- Cnms
                          flist   <<- Flist
                          ncols   <<- unname(vapply(cnms, length, 0L))
@@ -1000,11 +1006,57 @@ vcRep <-
                          nlevs   <<- unname(vapply(flist, function(el) length(levels(el)), 0L))
                          offsets <<- c(0L, cumsum(sapply(seq_along(asgn),
                                                          function(i) ncols[i] * nlevs[asgn[i]])))
-                         terms   <<- lapply(seq_along(flist), function(i) which(asgn == i))
+                         terms   <<- lapply(seq_along(Flist), function(i) which(asgn == i))
+                         sig     <<- sigma(mer)
+                         nms     <<- names(Flist)[asgn]
+                         covar   <<- mkVarCorr(sig, cnms, ncols, theta, nms)
+                         useSc   <<- as.logical(getME(mer, "devcomp")$dims['useSc'])
                      },
-                     asCovar    = function() {}
-                     )
+                     asCovar     = function() {
+                         ans <- lapply(covar,
+                                       function(x) {
+                                           attr(x, "correlation") <- attr(x, "stddev") <- NULL
+                                           x
+                                       })
+                         attr(ans, "residVar") <- attr(covar, "sc")^2
+                         ans
+                     },
+                     asCorr      = function() {
+                         ans <- lapply(covar, function(x) 
+                                       list(correlation=attr(x, "correlation"),
+                                            stddev=attr(x, "stddev")))
+                         attr(ans, "residSD") <- attr(covar, "sc")
+                         ans
+                     },
+                     setTheta    = function(ntheta) {
+                         stopifnot(length(ntheta <- as.numeric(ntheta)) == length(lower),
+                                   all(ntheta >= lower))
+                         theta   <<- ntheta
+                         covar   <<- mkVarCorr(sig, cnms, ncols, theta, nms)
+                     },
+                     setSc       = function(nSc) {
+                         stopifnot(useSc,
+                                   length(nSc <- as.numeric(nSc)) == 1L)
+                         sig     <<- nSc
+                         covar   <<- mkVarCorr(sig, cnms, ncols, theta, nms)
+                     },
+                     setResidVar = function(nVar) setSc(sqrt(as.numeric(nVar))),
+                     setRECovar  = function(CV) {
+                         if (is.matrix(CV) && length(covar) == 1L) {
+                             CV <- list(CV)
+                             names(CV) <- names(covar)
+                         }
+                         covsiz <- sapply(covar, ncol)
+                         stopifnot(is.list(CV),
+                                   all(names(CV) == names(covar)),
+                                   all(sapply(CV, isSymmetric)),
+                                   all(sapply(CV, ncol) == covsiz))
+                         if (!all(sapply(cnms, length) == covsiz))
+                             error("setRECovar currently requires distinct grouping factors")
+                         theta <<- sapply(CV, function(mm)
+                                      {
+                                          ff <- t(chol(mm))/sig
+                                          ff[upper.tri(ff, diag=TRUE)]
+                                      })
+                     })
                 )
-
-                     
-                     
