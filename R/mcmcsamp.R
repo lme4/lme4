@@ -1,4 +1,4 @@
-#' @S3method mcmcsamp merMod
+# @S3method mcmcsamp merMod
 mcmcsamp.merMod <- function(object, n=1L, verbose=FALSE, saveb=FALSE, ...) {
     n <- max(1L, as.integer(n)[1])
     dd <- getME(object, "devcomp")$dims
@@ -12,7 +12,7 @@ mcmcsamp.merMod <- function(object, n=1L, verbose=FALSE, saveb=FALSE, ...) {
     ## FIXME create a copy of the resp and pred modules
     ans <- new("merMCMC",
                Gp = object@Gp,
-               ST = matrix(.Call(mer_ST_getPars, object), dd[["np"]], n),
+ #              ST = matrix(.Call(mer_ST_getPars, object), dd[["np"]], n),
                call = object@call,
                dims = object@dims,
                deviance = rep.int(unname(object@deviance[["ML"]]), n),

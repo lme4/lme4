@@ -18,16 +18,16 @@ random.effects <- function(object, ...) {
     eval(mCall, parent.frame())
 }
 
-##' Create a Markov chain Monte Carlo sample from the posterior
-##' distribution of the parameters
-##'
-##' 
-##' @title Create an MCMC sample
-##' @param object a fitted model object
-##' @param n number of samples to generate.  Defaults to 1; for real use values of 200-1000 are more typical
-##' @param verbose should verbose output be given?
-##' @param ... additional, optional arguments (not used)
-##' @return a Markov chain Monte Carlo sample as a matrix
+## Create a Markov chain Monte Carlo sample from the posterior
+## distribution of the parameters
+##
+## 
+## @title Create an MCMC sample
+## @param object a fitted model object
+## @param n number of samples to generate.  Defaults to 1; for real use values of 200-1000 are more typical
+## @param verbose should verbose output be given?
+## @param ... additional, optional arguments (not used)
+## @return a Markov chain Monte Carlo sample as a matrix
 mcmcsamp <- function(object, n = 1L, verbose = FALSE, ...) UseMethod("mcmcsamp")
 
 ##' Extract the residual standard error from a fitted model.
@@ -83,10 +83,4 @@ refit <- function(object, newresp, ...) UseMethod("refit")
 if (FALSE) {
 setGeneric("HPDinterval",
            function(object, prob = 0.95, ...) standardGeneric("HPDinterval"))
-}
-
-if (FALSE) {
-setGeneric("mcmcsamp",
-           function(object, n = 1, verbose = FALSE, ...)
-           standardGeneric("mcmcsamp"))
 }
