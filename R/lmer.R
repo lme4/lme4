@@ -1131,6 +1131,7 @@ residuals.lmResp <- function(object, type = c("deviance", "pearson",
            partial = .NotYetImplemented())
 }
 
+## FIXME: document somewhere that residuals(glmerfit) returns deviance residuals by default
 ##' @S3method residuals glmResp
 residuals.glmResp <- function(object, type = c("deviance", "pearson",
                                       "working", "response", "partial"),
@@ -1144,7 +1145,7 @@ residuals.glmResp <- function(object, type = c("deviance", "pearson",
                d.res <- sqrt(object$devResid())
                ifelse(y > mu, d.res, -d.res)
            },
-           pearson = object$wtres(),
+           pearson = object$wtres,
            working = object$wrkResids(),
            response = y - mu,
            partial = .NotYetImplemented())

@@ -30,6 +30,12 @@
   \item{devtol}{tolerance for fitted deviances less than
   baseline (supposedly minimum) deviance}
 
+  \item{startval}{method for picking starting conditions
+  for optimization (STUB)}
+
+  \item{optimizer}{(character or function) optimizer to use
+  (see \code{\link{lmer}} for details)}
+
   \item{\dots}{potential further arguments for
   \code{profile} methods.}
 }

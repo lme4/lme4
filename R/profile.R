@@ -13,6 +13,8 @@
 ##' @param delta stepping scale for deciding on next point to profile
 ##' @param verbose level of output from internal calculations
 ##' @param devtol tolerance for fitted deviances less than baseline (supposedly minimum) deviance
+##' @param startval method for picking starting conditions for optimization (STUB)
+##' @param optimizer (character or function) optimizer to use (see \code{\link{lmer}} for details)
 ##' @param \dots potential further arguments for \code{profile} methods.
 ##' @section Methods: FIXME: These (signatures) will change soon --- document
 ##' \bold{after} change!
