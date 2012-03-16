@@ -1,9 +1,12 @@
+if(getRversion() < "2.15")
+    paste0 <- function(...) paste(..., sep = '')
+
 ### Utilities for parsing and manipulating mixed-model formulas
 
 ##' From the result of \code{\link{findbars}} applied to a model formula and
 ##' and the evaluation frame, create the model matrix, etc. associated with
 ##' random-effects terms.  See the description of the returned value for a
-##' detailed list. 
+##' detailed list.
 ##'
 ##' @title Create Z, Lambda, Lind, etc.
 ##' @param bars a list of parsed random-effects terms
@@ -388,7 +391,7 @@ subnms <- function(form, nms) {
 ## @return NULL.  The function is executed for its side effect.
 chck1 <- function(expr) {
     if ((le <- length(expr)) == 1) {
-        if (is.numeric(expr) && expr == 1) 
+        if (is.numeric(expr) && expr == 1)
             stop("1 is not meaningful in a nonlinear model formula")
         return()
     } else
@@ -405,7 +408,7 @@ chck1 <- function(expr) {
 ##' parameter matrix.  If the formula is to be used for optimizing
 ##' designs, the \code{"resp"} part can be omitted.
 ##'
-##' 
+##'
 ##' @title Manipulate a nonlinear model formula.
 ##' @param mc matched call from the calling function.  Should have arguments named
 ##' \describe{
@@ -454,7 +457,7 @@ nlformula <- function(mc) {
     nlenv <- list2env(fr, parent=parent.frame(2L))
     lapply(pnames, function(nm) nlenv[[nm]] <- rep.int(nlpars[[nm]], n))
     respMod <- mkRespMod(fr, nlenv=nlenv, nlmod=nlmod)
-    
+
     chck1(meform <- form[[3L]])
     pnameexpr <- parse(text=paste(pnames, collapse='+'))[[1]]
     nb <- nobars(meform)
@@ -465,7 +468,7 @@ nlformula <- function(mc) {
 	frE[[nm]] <- as.numeric(rep(nm == pnames, each = n))
     X <- model.matrix(fe, frE)
     rownames(X) <- NULL
-    
+
     reTrms <- mkReTrms(lapply(findbars(meform),
                               function(expr) {
                                   expr[[2]] <- substitute(0+foo, list(foo=expr[[2]]))

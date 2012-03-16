@@ -1,9 +1,9 @@
 ##' Methods for profile() of [ng]lmer fitted models
-##' 
+##'
 ##' Methods for function \code{\link{profile}} (package \pkg{stats}), here for
 ##' profiling (fitted) mixed effect models.
-##' 
-##' 
+##'
+##'
 ##' @name profile-methods
 ##' @aliases profile-methods profile.merMod
 ##' @docType methods
@@ -48,7 +48,7 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
   ##  be careful with scale parameter;
   ##  profile all parameters at once rather than RE first and then fixed)
 
-  
+
     dd <- devfun2(fitted)
     base <- attr(dd, "basedev")
     thopt <- attr(dd, "thopt")
@@ -57,10 +57,10 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
     X.orig <- pp$X
     n <- environment(dd)$n
     p <- length(pp$beta0)
-    
+
     ans <- lapply(opt <- attr(dd, "optimum"), function(el) NULL)
     bakspl <- forspl <- ans
-    
+
     nptot <- length(opt)
     nvp <- nptot - p    # number of variance-covariance pars
     fe.orig <- opt[-seq_len(nvp)]
@@ -69,11 +69,11 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
                   dimnames = list(NULL, names(res)), byrow = TRUE)
     ## FIXME: why is cutoff based on nptot (i.e. boundary of simultaneous LRT conf region for nptot values)
     ##  when we are computing (at most) 2-parameter profiles here?
-    
+
     cutoff <- sqrt(qchisq(1 - alphamax, nptot))
-    
+
     ## helper functions
-    
+
     ## nextpar calculates the next value of the parameter being
     ## profiled based on the desired step in the profile zeta
     ## (absstep) and the values of zeta and column cc for rows
@@ -100,7 +100,7 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
              prev=mat[r,1+seqnvp][-pind],
              extrap=stop("stub")) ## do something with mat[r-(1:0),1+seqnvp])[-pind] ...
     }
-       
+
     ## mkpar generates the parameter vector of theta and
     ## sigma from the values being profiled in position w
     mkpar <- function(np, w, pw, pmw) {
@@ -109,7 +109,7 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
         par[-w] <- pmw
         par
     }
-    
+
     ## fillmat fills the third and subsequent rows of the matrix
     ## using nextpar and zeta
 ### FIXME:  add code to evaluate more rows near the minimum if that
@@ -129,14 +129,14 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
         }
         mat
     }
-    
+
     lower <- c(pmax(fitted@lower,-1.0), 0, rep.int(-Inf, p))
     upper <- c(ifelse(fitted@lower==0,Inf,1.0), Inf, rep.int(Inf, p))
     seqnvp <- seq_len(nvp)
     lowvp <- lower[seqnvp]
     upvp <- upper[seqnvp]
     form <- .zeta ~ foo           # pattern for interpSpline formula
-    
+
     for (w in seqnvp) {
        if (verbose) cat("var-cov parameter ",w,":\n",sep="")
 
@@ -156,13 +156,14 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
               ## NA/NaN detected
               warning("NAs detected in profiling")
             } else if (devdiff < (-devtol))
-              stop("profiling detected new, lower deviance")
-            if (devdiff<0) warning(paste("slightly lower deviances (diff=",devdiff,") detected",sep=""))
+                stop("profiling detected new, lower deviance")
+            if(devdiff<0)
+                warning("slightly lower deviances (diff=",devdiff,") detected")
             devdiff <- max(0,devdiff)
             zz <- sign(xx - pw) * sqrt(devdiff)
             c(zz, mkpar(nvp, w, xx, ores$par), pp$beta(1))
         }
-        
+
 ### FIXME: The starting values for the conditional optimization should
 ### be determined from recent starting values, not always the global
 ### optimum values.
@@ -170,7 +171,7 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
 ### Can do this most easily by taking the most recent by taking the change in the other parameter values at
 ### the two last points and extrapolating.
 
-        
+
         ## intermediate storage for pos. and neg. increments
         pres <- nres <- res
         ## assign one row, determined by inc. sign, from a small shift
@@ -182,14 +183,14 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
         bres$.par <- names(opt)[w]
         ans[[w]] <- bres[order(bres[, wp1]), ]
         form[[3]] <- as.name(names(opt)[w])
-       
+
        ## FIXME: test for nearly-vertical slopes here ...
         bakspl[[w]] <- try(backSpline(forspl[[w]] <- interpSpline(form, bres)),silent=TRUE)
        if (inherits(bakspl[[w]],"try-error")) {
          warning("non-monotonic profile")
        }
 
-    }
+    } ## for(w in ..)
 
     offset.orig <- fitted@resp$offset
     for (j in seq_len(p)) {
@@ -238,9 +239,9 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
         form[[3]] <- as.name(thisnm)
         bakspl[[thisnm]] <-
             try(backSpline(forspl[[thisnm]] <- interpSpline(form, bres)),silent=TRUE)
-      if (inherits(bakspl[[thisnm]],"try-error")) warning("non-monotonic profile")
-    }
-    
+        if (inherits(bakspl[[thisnm]],"try-error")) warning("non-monotonic profile")
+    } ## for(j in 1..p)
+
     ans <- do.call(rbind, ans)
     ans$.par <- factor(ans$.par)
     attr(ans, "forward") <- forspl
@@ -309,7 +310,7 @@ devfun2 <- function(fm)
           ## Assumption:  all parameters, including the residual SD on SD-scale
           sigma <- pars[np]
           ## .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pars[-np]/sigma)
-          ## convert from sdcor vector back to 'unscaled theta' 
+          ## convert from sdcor vector back to 'unscaled theta'
           thpars <- Sv_to_Cv(pars,n=sapply(fm@cnms,length),s=sigma)
           .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)
           sigsq <- sigma^2
@@ -322,17 +323,17 @@ devfun2 <- function(fm)
         {
           stopifnot(is.numeric(pars), length(pars) == np)
           thpars <- pars[seq(np)]
-          
+
           ## FIXME: allow useSc (i.e. NLMMs)
           sigma <- pars[np]
           ## .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pars[-np]/sigma)
-          ## convert from sdcor vector back to 'unscaled theta' 
+          ## convert from sdcor vector back to 'unscaled theta'
           thpars <- Sv_to_Cv(pars,n=sapply(fm@cnms,length))
           stop("STUB!")
           sigsq <- sigma^2
           pp$ldL2() + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
         }
-     } 
+     }
     attr(ans, "optimum") <- opt         # w/ names()
     attr(ans, "basedev") <- basedev
     attr(ans, "thopt") <- pp$theta
@@ -411,7 +412,7 @@ xyplot.thpr <-
                  lsegments(x, y, x, 0, ...)
                  lims <- current.panel.limits()$xlim
                  myspl <- spl[[panel.number()]]
-                 if (inherits(myspl,"try-error")) browser()
+                 if (inherits(myspl,"try-error")) browser() ## << FIXME
                  krange <- range(myspl$knots)
                  pr <- predict(myspl,
                                seq(max(lims[1], krange[1]),
@@ -594,7 +595,7 @@ splom.thpr <-
                    axis.line.alpha = axis.line$alpha,
                    axis.line.lty = axis.line$lty,
                    axis.line.lwd = axis.line$lwd,
-                   i, j, 
+                   i, j,
                    ...)
     {
         n.var <- eval.parent(expression(n.var))

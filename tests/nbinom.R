@@ -3,7 +3,7 @@ library(lme4)
 getNBdisp <- lme4:::getNBdisp
 refitNB   <- lme4:::refitNB
 
-simfun <- function(sd.u=1,NBtheta=0.5,
+simfun <- function(sd.u=1, NBtheta=0.5,
                     nblock=25,
                     fform=~x,
                     beta=c(1,2),
@@ -117,20 +117,19 @@ glmmADMB_epil_vals <-
 
 if(!(Sys.getenv("USER") %in% c("maechler")))
     q("no")
-## "too slow" for regular testing -- 49 (MM@lynne: 33) seconds
-
+## "too slow" for regular testing -- 49 (MM@lynne: 33, then 26) seconds:
 (t4 <- system.time(g4 <- glmer.nb(y~ Base*trt + Age + Visit + (Visit|subject),
                                   data=epil2, verbose=TRUE)))
 g4
 (Lg4 <- logLik(g4))
 attributes(Lg4) <- attributes(Lg4)[c("class","df","nobs")]
 stopifnot(
-          all.equal(getNBdisp(g4),   glmmADMB_epil_vals$ theta, tol = 0.002)
-          ,
-          all.equal(fixef    (g4),   glmmADMB_epil_vals$ fixef, tol = 0.004)
-          ,
-          all.equal(logLik.m (g4), - glmmADMB_epil_vals$ NLL,   tol = 0.0002)
-          )
+	  all.equal(getNBdisp(g4),   glmmADMB_epil_vals$ theta, tol= 0.0022)# was 0.002
+	  ,
+	  all.equal(fixef    (g4),   glmmADMB_epil_vals$ fixef, tol= 0.004)
+	  ,
+	  all.equal(logLik.m (g4), - glmmADMB_epil_vals$ NLL,	tol= 0.0002)
+	  )
 
 
 cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''

@@ -221,7 +221,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 ##'    (including \code{L-BFGS-B} from base \code{optim} and
 ##'    \code{nlminb}), pass the \code{method} argument to \code{optim}
 ##'    in the \code{control} argument.
-##'    
+##'
 ##' @param mustart optional starting values on the scale of the conditional mean,
 ##'    as in \code{\link[stats]{glm}}; see there for details.
 ##' @param etastart optional starting values on the scale of the unbounded
@@ -351,7 +351,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     opt <- optwrap(optimizer[[1]],devfun,rho$pp$theta, rho$lower,
                    control=control, rho=rho,
                    adj=FALSE, verbose=verbose)
-    
+
     rho$nAGQ <- nAGQ
     if (nAGQ > 0L) {
         rho$lower <- c(rho$lower, rep.int(-Inf, length(rho$beta0)))
@@ -452,8 +452,8 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
         opt <- optwrap(optimizer[[2]],devfun, par=c(rho$pp$theta, rho$beta0),
                        lower=rho$lower, control=control, rho=rho,
                        adj=TRUE, verbose=verbose)
-        
-        
+
+
       }
     mkMerMod(environment(devfun), opt, vals$reTrms, vals$frame, mc)
 }## {nlmer}
@@ -720,9 +720,8 @@ as.function.merMod <- function(x, ...) {
 coefMer <- function(object, ...)
 {
     if (length(list(...)))
-	warning(paste('arguments named "',
-		      paste(names(list(...)), collapse = ", "),
-		      '" ignored', sep = ''))
+	warning('arguments named "', paste(names(list(...)), collapse = ", "),
+                '" ignored')
     fef <- data.frame(rbind(fixef(object)), check.names = FALSE)
     ref <- ranef(object)
     val <- lapply(ref, function(x)
@@ -1022,7 +1021,7 @@ refit.merMod <- function(object, newresp=NULL, ...)
     rr <- object@resp$copy()
 
     if (!is.null(newresp)) {
-    
+
       if (!is.null(na.act <- attr(object@frame,"na.action"))) {
         ## will only get here if na.action is 'na.omit' or 'na.exclude'
         if (is.matrix(newresp)) {
@@ -1031,7 +1030,7 @@ refit.merMod <- function(object, newresp=NULL, ...)
       }
 
 
-    
+
     if (isGLMM(object) && rr$family$family=="binomial") {
         if (is.matrix(newresp) && ncol(newresp)==2) {
             ntot <- rowSums(newresp)
@@ -1050,7 +1049,7 @@ refit.merMod <- function(object, newresp=NULL, ...)
     rr$setResp(newresp)
 
     }
-    
+
     pp        <- object@pp$copy()
     dc        <- object@devcomp
     nAGQ      <- dc$dims["nAGQ"]
@@ -1923,7 +1922,7 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
 
   lower <- rep(lower, length.out=length(par))
   upper <- rep(upper, length.out=length(par))
-  
+
   if (adj && is.character(optimizer))
     switch(optimizer,
            bobyqa = {
@@ -1973,7 +1972,7 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
   }
   if (opt$conv!=0) {
       wmsg <- paste("convergence code",opt$conv,"from",optimizer)
-      if (!is.null(opt$msg)) wmsg <- paste(wmsg,": ",opt$msg,sep="")
+      if (!is.null(opt$msg)) wmsg <- paste0(wmsg,": ",opt$msg)
       warning(wmsg)
     }
   opt

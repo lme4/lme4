@@ -60,10 +60,11 @@
  Sys.getenv("R_PROFILE")
  cat("R_LIBS:\\n"); (RL <- strsplit(Sys.getenv("R_LIBS"), ":")[[1]])
  nRL <- normalizePath(RL)
- cat("and extra .libPaths():\\n")
+ cat("and extra(:= not in R_LIBS) .libPaths():\\n")
  .libPaths()[is.na(match(.libPaths(), nRL))]
 
  sessionInfo()
+ searchpaths()
  pkgI <- function(pkgname) {
    pd <- packageDescription(pkgname)
    cat(sprintf("\%s -- built: \%s\\n\%*s -- dir  : \%s\\n",
@@ -72,6 +73,7 @@
  }
  pkgI("Matrix")
  pkgI("Rcpp")
+ ## 2012-03-12{MM}: fails with --as-cran
  pkgI("RcppEigen")
  pkgI("minqa")
  pkgI("lme4")

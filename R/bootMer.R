@@ -1,6 +1,5 @@
 .simpleCap <- function(x) {
-  paste(toupper(substring(x, 1,1)), substring(x, 2),
-        sep="", collapse=" ")
+  paste0(toupper(substr(x, 1,1)), substr(x, 2, 1000000L), collapse=" ")
 }
 
 ### bootMer() --- <==>	(TODO: semi-*)parametric bootstrap
@@ -93,8 +92,8 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
 {
     stopifnot((nsim <- as.integer(nsim[1])) > 0)
     if (.progress!="none") { ## progress bar
-        pbfun <- get(paste(.progress,"ProgressBar",sep=""))
-        setpbfun <- get(paste("set",.simpleCap(.progress),"ProgressBar",sep=""))
+        pbfun <- get(paste0(.progress,"ProgressBar"))
+        setpbfun <- get(paste0("set",.simpleCap(.progress),"ProgressBar"))
         pb <- do.call(pbfun,PBargs)
     }
     FUN <- match.fun(FUN)
@@ -150,4 +149,4 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
 as.data.frame.boot <- function(x,...) {
   as.data.frame(x$t)
 }
-  
+
