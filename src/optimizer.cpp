@@ -65,6 +65,7 @@ namespace optimizer {
 	    throw std::invalid_argument("initial x is not a feasible point");
 	d_stop.resetEvals();
 	init_pos = 0;
+	for (int i = 0; i <= d_n; ++i) d_vals[i] = std::numeric_limits<double>::min();
 	d_pts = d_x.replicate(1, d_n + 1);
 	for (Index i = 0; i < d_n; ++i) { // generate and check the initial positions
 	    Index j(i + 1);
