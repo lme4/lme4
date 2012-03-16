@@ -13,9 +13,8 @@ splitFormula <-
   list(asOneSidedFormula(form))
 }
 
-allVarsRec <-
-  ## Recursive version of all.vars
-  function(object)
+## Recursive version of all.vars
+allVarsRec <- function(object)
 {
   if (is.list(object)) {
     unlist(lapply(object, allVarsRec))
@@ -52,18 +51,22 @@ asOneFormula <-
   ## list of formulas, except for the names in omit
   function(..., omit = c(".", "pi"))
 {
-  names <- unique(allVarsRec((list(...))))
-  names <- names[is.na(match(names, omit))]
-  if (length(names)) {
-    eval(parse(text = paste("~", paste(names, collapse = "+")))[[1]])
-  } else NULL
+    names <- unique(allVarsRec(list(...)))
+    names <- names[is.na(match(names, omit))]
+    if (length(names))
+        as.formula(paste("~", paste(names, collapse = "+"))) # else NULL
 }
 
-getGroupsFormula <-
-  ## Return the formula(s) for the groups associated with object.
-  ## The result is a one-sided formula unless asList is TRUE in which case
-  ## it is a list of formulas, one for each level.
-  function(object, asList = FALSE, sep = "+")
+## Return the formula(s) for the groups associated with object.
+## The result is a one-sided formula unless asList is TRUE in which case
+## it is a list of formulas, one for each level.
+##
+## @title
+## @param object
+## @param asList
+## @param sep
+## @return
+getGroupsFormula <- function(object, asList = FALSE, sep = "+")
     UseMethod("getGroupsFormula")
 
 
@@ -94,8 +97,7 @@ getGroupsFormula.default <-
 #    }
 #  }
   if (asList) as.list(val)
-  else as.formula(eval(parse(text = paste("~",  paste(names(val),
-                               collapse = sep)))))
+  else as.formula(paste("~", paste(names(val), collapse = sep)))
 }
 
 getGroupsFormula.merMod <- function(object,asList=FALSE, sep="+") {
@@ -106,7 +108,7 @@ getGroupsFormula.merMod <- function(object,asList=FALSE, sep="+") {
    }
  }
 
-getCovariateFormula <- function (object) 
+getCovariateFormula <- function (object)
 {
     form <- formula(object)
     if (!(inherits(form, "formula"))) {
@@ -127,7 +129,7 @@ getResponseFormula <-
   if (!(inherits(form, "formula") && (length(form) == 3))) {
     stop("\"Form\" must be a two sided formula")
   }
-  eval(parse(text = paste("~", deparse(form[[2]]))))
+  as.formula(paste("~", deparse(form[[2]])))
 }
 
 ##--- needs Trellis/Lattice :
@@ -153,22 +155,18 @@ plot.merMod <-
        alist <- c(list(as.name("data.frame")), alist)
        mode(alist) <- "call"
        data <- eval(alist, sys.parent(1))
-     } else {
-       if (any(naV <- is.na(match(allV, names(data))))) {
-         stop(paste(allV[naV], "not found in data"))
-       }
-     }
+   } else if (any(naV <- is.na(match(allV, names(data)))))
+         stop(allV[naV], " not found in data")
    } else data <- NULL
 
   ## this won't do because there may well be variables we want
   ##  that were not in the model call
-  
+
   ## data <- object@frame
-  
+
   ## argument list
   dots <- list(...)
-  if (length(dots) > 0) args <- dots
-  else args <- list()
+  args <- if (length(dots) > 0) dots else list()
   ## appending object to data
   data <- as.list(c(as.list(data), . = list(object)))
   ## covariate - must always be present
@@ -179,39 +177,41 @@ plot.merMod <-
   }
   argForm <- ~ .x
   argData <- data.frame(.x = .x, check.names = FALSE)
-  if (is.null(xlab <- attr(.x, "label"))) {
-    xlab <- deparse(covF[[2]])
+  if (is.null(args$xlab)) {
+      if (is.null(xlab <- attr(.x, "label")))
+	  xlab <- deparse(covF[[2]])
+      args$xlab <- xlab
   }
-  if (is.null(args$xlab)) args$xlab <- xlab
 
   ## response - need not be present
   respF <- getResponseFormula(form)
   if (!is.null(respF)) {
     .y <- eval(respF[[2]], data)
-    if (is.null(ylab <- attr(.y, "label"))) {
-      ylab <- deparse(respF[[2]])
+    if (is.null(args$ylab)) {
+	if (is.null(ylab <- attr(.y, "label")))
+	    ylab <- deparse(respF[[2]])
+	args$ylab <- ylab
     }
     argForm <- .y ~ .x
     argData[, ".y"] <- .y
-    if (is.null(args$ylab)) args$ylab <- ylab
   }
 
   ## groups - need not be present
   grpsF <- getGroupsFormula(form)
   if (!is.null(grpsF)) {
-    ## ?? FIXME ???
-    gr <- splitFormula(grpsF, sep = "*")
-    for(i in 1:length(gr)) {
-      auxGr <- all.vars(gr[[i]])
-      for(j in auxGr) {
-        argData[[j]] <- eval(as.name(j), data)
+      ## ?? FIXME ???
+      gr <- splitFormula(grpsF, sep = "*")
+      for(i in seq_along(gr)) {
+          auxGr <- all.vars(gr[[i]])
+          for(j in auxGr)
+              argData[[j]] <- eval(as.name(j), data)
       }
-    }
-     if (length(argForm) == 2)
-       argForm <- eval(parse(text = paste("~ .x |", deparse(grpsF[[2]]))))
-     else argForm <- eval(parse(text = paste(".y ~ .x |", deparse(grpsF[[2]]))))
-   }
-   ## adding to args list
+      argForm <-
+	  as.formula(paste(if (length(argForm) == 2)
+			   "~ .x |" else ".y ~ .x |",
+			   deparse(grpsF[[2]])))
+  }
+  ## adding to args list
    args <- c(list(argForm, data = argData), args)
    if (is.null(args$strip)) {
       args$strip <- function(...) strip.default(..., style = 1)
@@ -224,11 +224,9 @@ plot.merMod <-
     id <-
       switch(mode(id),
 	     numeric = {
-	       if ((id <= 0) || (id >= 1)) {
-		 stop("Id must be between 0 and 1")
-	       }
-	       as.logical(abs(resid(object, type = idResType)) >
-                          -qnorm(id / 2))
+	       if (id <= 0 || id >= 1)
+                   stop("Id must be between 0 and 1")
+	       as.logical(abs(resid(object, type = idResType)) > -qnorm(id / 2))
 	     },
 	     call = eval(asOneSidedFormula(id)[[2]], data),
 	     stop("\"Id\" can only be a formula or numeric.")
@@ -254,11 +252,8 @@ plot.merMod <-
 
   ## defining abline, if needed
   if (missing(abline)) {
-    if (missing(form)) {		# r ~ f
-      abline <- c(0, 0)
-    } else {
-      abline <- NULL
-    }
+      abline <- if (missing(form)) # r ~ f
+          c(0, 0) else NULL
   }
 
   #assign("id", id , where = 1)
@@ -319,8 +314,7 @@ plot.merMod <-
 
   ## defining grid
   if (missing(grid)) {
-    if (plotFun == "xyplot") grid <- TRUE
-    else grid <- FALSE
+    grid <- (plotFun == "xyplot")
   }
   # assign("grid", grid, where = 1)
   do.call(plotFun, as.list(args))
@@ -344,9 +338,9 @@ fortify.merMod <- function(model, data=getData(model), ...) {
 ##  horizontal, vertical? other options???
 ##  scale?
 plot.summary.mer <- function(object, type="fixef", ...) {
-  if (any(!type %in% c("fixef","vcov"))) stop()
-  
-  
+  if(any(!type %in% c("fixef","vcov")))
+      stop("'type' not yet implemented: ", type)
+  stop("FIXME -- not yet implemented")
 
 }
 
