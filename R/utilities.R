@@ -141,6 +141,8 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL) 
     rho <- new.env()
     rho$y <- if (is.null(y)) numeric(0) else y
     if (!is.null(REML)) rho$REML <- REML
+    rho$etastart <- fr$etastart
+    rho$mustart <- fr$mustart
     N <- n <- nrow(fr)
     if (!is.null(nlenv)) {
         stopifnot(is.language(nlmod),
