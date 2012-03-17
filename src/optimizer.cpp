@@ -58,6 +58,7 @@ namespace optimizer {
 	  d_stop(  stp),
 	  d_verb(  10)
     {
+	d_stop.setForce_stop( 0); // BMB: this was undefined, bad news on Win64
 	if (!d_n || d_lb.size() != d_n ||
 	    d_ub.size() != d_n || d_xstep.size() != d_n)
 	    throw invalid_argument("dimension mismatch");
