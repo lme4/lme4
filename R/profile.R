@@ -8,12 +8,13 @@
 ##' @aliases profile-methods profile.merMod
 ##' @docType methods
 ##' @param fitted a fitted model, e.g., the result of \code{\link{lmer}(..)}.
+##' @param which which parameters to profile (UNDER CONSTRUCTION): default is all parameters
 ##' @param alphamax maximum alpha value for likelihood ratio confidence regions; used to establish the range of values to be profiled
 ##' @param maxpts maximum number of points (in each direction, for each parameter) to evaluate in attempting to construct the profile
 ##' @param delta stepping scale for deciding on next point to profile
 ##' @param verbose level of output from internal calculations
 ##' @param devtol tolerance for fitted deviances less than baseline (supposedly minimum) deviance
-##' @param startval method for picking starting conditions for optimization (STUB)
+##' @param startmethod method for picking starting conditions for optimization (STUB)
 ##' @param optimizer (character or function) optimizer to use (see \code{\link{lmer}} for details)
 ##' @param \dots potential further arguments for \code{profile} methods.
 ##' @section Methods: FIXME: These (signatures) will change soon --- document
@@ -33,10 +34,10 @@
 ##' @importFrom stats profile
 ##' @method profile merMod
 ##' @export
-profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff/8,
+profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100, delta = cutoff/8,
                            ##  tr = 0,  ## FIXME:  remove if not doing anything ...
                            verbose=0, devtol=1e-9,
-                           startval = "prev",
+                           startmethod = "prev",
                            optimizer="bobyqa", ...) {
 
   ## FIXME: allow choice of nextstep/nextstart algorithm?
@@ -49,7 +50,11 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
   ##  profile all parameters at once rather than RE first and then fixed)
 
 
-    dd <- devfun2(fitted)
+    useSc <- isLMM(fitted) || isNLMM(fitted)
+    dd <- devfun2(fitted,useSc)
+    ## FIXME: figure out to what do here ...
+    if (isGLMM(fitted) && sigma(fitted)!=1)
+        stop("can't (yet) profile GLMMs with non-fixed scale parameters")
     base <- attr(dd, "basedev")
     thopt <- attr(dd, "thopt")
     stderr <- attr(dd, "stderr")
@@ -78,17 +83,25 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
     ## profiled based on the desired step in the profile zeta
     ## (absstep) and the values of zeta and column cc for rows
     ## r-1 and r.  The parameter may not be below lower (or above upper)
-    nextpar <- function(mat, cc, r, absstep, lower = -Inf, upper = Inf, minstep=1e-6) {
+    nextpar <- function(mat, cc, r, absstep,
+                        lower = -Inf, upper = Inf, minstep=1e-6, maxmult=10.0) {
         rows <- r - (1:0)         # previous two row numbers
         pvals <- mat[rows, cc]
         zeta <- mat[rows, ".zeta"]
         num <- diff(pvals)
         if (is.na(denom <- diff(zeta)) || denom==0) {
-          ## this may happen due to numerical fuzz ...
-          warning("Last two rows have identical or NA .zeta values: using minstep")
-          step <- minstep
+            warning("Last two rows have identical or NA .zeta values: using minstep")
+            step <- minstep
         } else {
-          step <- absstep*num/denom
+            step <- absstep*num/denom
+        }
+        if (r>1) {
+            if (abs(step) > (maxstep <- abs(maxmult*num))) {
+                maxstep <- sign(step)*maxstep
+                if (verbose) cat(sprintf("capped step at %1.2f (multiplier=%1.2f > %1.2f)\n",
+                                         maxstep,abs(step/num),maxmult))
+                step <- maxstep
+            }
         }
         min(upper, max(lower, pvals[2] + sign(num) * step))
       }
@@ -119,50 +132,69 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
         i <- 2L
         while (i < nr && mat[i, cc] > lowcut && mat[i,cc] < upcut &&
                (is.na(curzeta <- abs(mat[i, ".zeta"])) || curzeta <= cutoff)) {
-             np <- nextpar(mat, cc, i, delta, lowcut, upcut)
-             ns <- nextstart(mat, cc-1, i, startval)
-             mat[i + 1L, ] <- zetafun(np,ns)
+            np <- nextpar(mat, cc, i, delta, lowcut, upcut, step)
+            ns <- nextstart(mat, cc-1, i, startmethod)
+            mat[i + 1L, ] <- zetafun(np,ns)
             if (verbose>0) {
-              cat(i,cc,np,mat[i+1L,],"\n")
+                cat(i,cc,np,mat[i+1L,],"\n")
             }
             i <- i + 1L
         }
+        if (mat[i-1,cc]==lowcut) {
+            ## fill in more values near the minimum
+        }
+        if (mat[i-1,cc]==upcut) {
+            ## fill in more values near the maximum
+        }
+
         mat
     }
 
-    lower <- c(pmax(fitted@lower,-1.0), 0, rep.int(-Inf, p))
-    upper <- c(ifelse(fitted@lower==0,Inf,1.0), Inf, rep.int(Inf, p))
-    seqnvp <- seq_len(nvp)
+    ## bounds on Cholesky: [0,Inf) for diag, (-Inf,Inf) for diag
+    ## bounds on sd-corr:  [0,Inf) for diag, (-1.0,1.0) for diag
+    lower <- pmax(fitted@lower,-1.0)
+    upper <- ifelse(fitted@lower==0,Inf,1.0)
+    if (useSc) {
+        lower <- c(lower,0)
+        upper <- c(upper,Inf)
+    }
+    ## bounds on fixed parameters (could allow user-specified bounds for esp. NLMMs?)
+    lower <- c(lower,rep.int(-Inf, p))
+    upper <- c(upper, rep.int(Inf, p))
+    npar1 <- if (isLMM(fitted)) nvp else nptot
+
+    stopifnot(all.equal(unname(dd(opt[seq(npar1)])),base,tol=1e-5))
+
+    seqnvp <- intersect(seq_len(npar1),which)
     lowvp <- lower[seqnvp]
     upvp <- upper[seqnvp]
     form <- .zeta ~ foo           # pattern for interpSpline formula
 
     for (w in seqnvp) {
-       if (verbose) cat("var-cov parameter ",w,":\n",sep="")
-
-        wp1 <- w + 1L
-        start <- opt[seqnvp][-w]
-        pw <- opt[w]
-        lowcut <- lower[w]
-        upcut <- upper[w]
-        zeta <- function(xx,start) {
-          ores <- optwrap(optimizer, par=start,
-                          fn=function(x) dd(mkpar(nvp, w, xx, x)),
-                          lower = lowvp[-w],
-                          upper = upvp[-w])
-
-            devdiff <- ores$fval-base
-            if (is.na(ores$fval)) {
-              ## NA/NaN detected
-              warning("NAs detected in profiling")
-            } else if (devdiff < (-devtol))
-                stop("profiling detected new, lower deviance")
-            if(devdiff<0)
-                warning("slightly lower deviances (diff=",devdiff,") detected")
-            devdiff <- max(0,devdiff)
-            zz <- sign(xx - pw) * sqrt(devdiff)
-            c(zz, mkpar(nvp, w, xx, ores$par), pp$beta(1))
-        }
+       if (verbose) cat(if (isLMM(fitted)) "var-cov " else "", "parameter ",w,":\n",sep="")
+       wp1 <- w + 1L
+       start <- opt[seqnvp][-w]
+       pw <- opt[w]
+       lowcut <- lower[w]
+       upcut <- upper[w]
+       zeta <- function(xx,start) {
+           ores <- optwrap(optimizer, par=start,
+                           fn=function(x) dd(mkpar(npar1, w, xx, x)),
+                           lower = lowvp[-w],
+                           upper = upvp[-w])
+           devdiff <- ores$fval-base
+           if (is.na(ores$fval)) {
+               warning("NAs detected in profiling")
+           } else if (devdiff < (-devtol))
+               stop("profiling detected new, lower deviance")
+           if(devdiff<0)
+               warning("slightly lower deviances (diff=",devdiff,") detected")
+           devdiff <- max(0,devdiff)
+           zz <- sign(xx - pw) * sqrt(devdiff)
+           r <- c(zz, mkpar(npar1, w, xx, ores$par))
+           if (isLMM(fitted)) r <- c(r,pp$beta(1))
+           r
+       }
 
 ### FIXME: The starting values for the conditional optimization should
 ### be determined from recent starting values, not always the global
@@ -172,75 +204,80 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
 ### the two last points and extrapolating.
 
 
-        ## intermediate storage for pos. and neg. increments
-        pres <- nres <- res
-        ## assign one row, determined by inc. sign, from a small shift
-        nres[1, ] <- pres[2, ] <- zeta(pw * 1.01, start=opt[seqnvp][-w])
-        ## fill in the rest of the arrays and collapse them
-        bres <-
-            as.data.frame(unique(rbind2(fillmat(pres,lowcut, upcut, zeta, wp1),
-                                        fillmat(nres,lowcut, upcut, zeta, wp1))))
-        bres$.par <- names(opt)[w]
-        ans[[w]] <- bres[order(bres[, wp1]), ]
-        form[[3]] <- as.name(names(opt)[w])
+       ## intermediate storage for pos. and neg. increments
+       pres <- nres <- res
+       ## assign one row, determined by inc. sign, from a small shift
+       ## FIXME:: do something if pw==0 ???
+       nres[1, ] <- pres[2, ] <- zeta(pw * 1.01, start=opt[seqnvp][-w])
+       ## fill in the rest of the arrays and collapse them
+       bres <-
+           as.data.frame(unique(rbind2(fillmat(pres,lowcut, upcut, zeta, wp1),
+                                       fillmat(nres,lowcut, upcut, zeta, wp1))))
+       bres$.par <- names(opt)[w]
+       ans[[w]] <- bres[order(bres[, wp1]), ]
+       form[[3]] <- as.name(names(opt)[w])
 
-       ## FIXME: test for nearly-vertical slopes here ...
-        bakspl[[w]] <- try(backSpline(forspl[[w]] <- interpSpline(form, bres)),silent=TRUE)
+       ## FIXME: test for bad things here??
+       bakspl[[w]] <- try(backSpline(forspl[[w]] <- interpSpline(form, bres)),silent=TRUE)
        if (inherits(bakspl[[w]],"try-error")) {
-         warning("non-monotonic profile")
-       }
+           warning("non-monotonic profile")
+     }
 
     } ## for(w in ..)
 
-    offset.orig <- fitted@resp$offset
-    for (j in seq_len(p)) {
-      if (verbose) cat("fixed-effect parameter ",j,":\n",sep="")
-        pres <-            # intermediate results for pos. incr.
-            nres <- res    # and negative increments
-        est <- opt[nvp + j]
-        std <- stderr[j]
-        Xw <-X.orig[, j, drop=TRUE]
-        Xdrop <- .modelMatrixDrop(X.orig, j)
-        pp1 <- do.call(new, list(Class = class(pp),
-                                X = Xdrop,
-                                Zt = pp$Zt,
-                                Lambdat = pp$Lambdat,
-                                Lind = pp$Lind,
-                                theta = pp$theta,
-                                 n = nrow(Xdrop))
-                      )
-        ### FIXME Change this to use the deep copy and setWeights, setOffset, etc.
-        rr <- new(Class=class(fitted@resp), y=fitted@resp$y)
-        rr$setWeights(fitted@resp$weights)
-        fe.zeta <- function(fw, start) {
-          ## (start parameter ignored)
-            rr$setOffset(Xw * fw + offset.orig)
-            rho <- as.environment(list(pp=pp1, resp=rr))
-            parent.env(rho) <- parent.frame()
-            ores <- optwrap(optimizer,
-                            par=thopt, fn=mkdevfun(rho, 0L),
-                            lower = pmax(fitted@lower, -1.0),
-                            upper =  ifelse(fitted@lower==0,Inf,1.0))
-            fv <- ores$fval
-            sig <- sqrt((rr$wrss() + pp1$sqrL(1))/n)
-            c(sign(fw - est) * sqrt(fv - base),
-              Cv_to_Sv(ores$par, sapply(fitted@cnms,length),s=sig),
-              ## ores$par * sig, sig,
-              mkpar(p, j, fw, pp1$beta(1)))
-        }
-        nres[1, ] <- pres[2, ] <- fe.zeta(est + delta * std)
-        poff <- nvp + 1L + j
-        bres <-
-            as.data.frame(unique(rbind2(fillmat(pres,-Inf, Inf, fe.zeta, poff),
-                                        fillmat(nres,-Inf, Inf, fe.zeta, poff))))
-        thisnm <- names(fe.orig)[j]
-        bres$.par <- thisnm
-        ans[[thisnm]] <- bres[order(bres[, poff]), ]
-        form[[3]] <- as.name(thisnm)
-        bakspl[[thisnm]] <-
-            try(backSpline(forspl[[thisnm]] <- interpSpline(form, bres)),silent=TRUE)
-        if (inherits(bakspl[[thisnm]],"try-error")) warning("non-monotonic profile")
-    } ## for(j in 1..p)
+    ## profile fixed effects separately (for LMMs)
+    if (isLMM(fitted)) {
+        offset.orig <- fitted@resp$offset
+        fp <- seq_len(p)
+        for (j in fp) {
+            if (verbose) cat("fixed-effect parameter ",j,":\n",sep="")
+            pres <-            # intermediate results for pos. incr.
+                nres <- res    # and negative increments
+            est <- opt[nvp + j]
+            std <- stderr[j]
+            Xw <-X.orig[, j, drop=TRUE]
+            Xdrop <- .modelMatrixDrop(X.orig, j)
+            pp1 <- do.call(new, list(Class = class(pp),
+                                     X = Xdrop,
+                                     Zt = pp$Zt,
+                                     Lambdat = pp$Lambdat,
+                                     Lind = pp$Lind,
+                                     theta = pp$theta,
+                                     n = nrow(Xdrop))
+                           )
+### FIXME Change this to use the deep copy and setWeights, setOffset, etc.
+            rr <- new(Class=class(fitted@resp), y=fitted@resp$y)
+            rr$setWeights(fitted@resp$weights)
+            fe.zeta <- function(fw, start) {
+                ## (start parameter ignored)
+                rr$setOffset(Xw * fw + offset.orig)
+                rho <- as.environment(list(pp=pp1, resp=rr))
+                parent.env(rho) <- parent.frame()
+                ores <- optwrap(optimizer,
+                                par=thopt, fn=mkdevfun(rho, 0L),
+                                lower = pmax(fitted@lower, -1.0),
+                                upper =  ifelse(fitted@lower==0,Inf,1.0))
+                fv <- ores$fval
+                sig <- sqrt((rr$wrss() + pp1$sqrL(1))/n)
+                c(sign(fw - est) * sqrt(fv - base),
+                  Cv_to_Sv(ores$par, sapply(fitted@cnms,length),s=sig),
+                  ## ores$par * sig, sig,
+                  mkpar(p, j, fw, pp1$beta(1)))
+            }
+            nres[1, ] <- pres[2, ] <- fe.zeta(est + delta * std)
+            poff <- nvp + 1L + j
+            bres <-
+                as.data.frame(unique(rbind2(fillmat(pres,-Inf, Inf, fe.zeta, poff),
+                                            fillmat(nres,-Inf, Inf, fe.zeta, poff))))
+            thisnm <- names(fe.orig)[j]
+            bres$.par <- thisnm
+            ans[[thisnm]] <- bres[order(bres[, poff]), ]
+            form[[3]] <- as.name(thisnm)
+            bakspl[[thisnm]] <-
+                try(backSpline(forspl[[thisnm]] <- interpSpline(form, bres)),silent=TRUE)
+            if (inherits(bakspl[[thisnm]],"try-error")) warning("non-monotonic profile")
+        } ## for(j in 1..p)
+    } ## if isLMM
 
     ans <- do.call(rbind, ans)
     ans$.par <- factor(ans$.par)
@@ -280,60 +317,63 @@ profile.merMod <- function(fitted, alphamax = 0.01, maxpts = 100, delta = cutoff
 ## @return a function for evaluating the deviance in the extended
 ##     parameterization.  This is profiled with respect to the
 ##     variance-covariance parameters (fixed-effects done separately).
-devfun2 <- function(fm)
+devfun2 <- function(fm,useSc=TRUE)
 {
-    stopifnot(is(fm, "lmerMod"))
+    stopifnot(is(fm, "merMod"))
     fm <- refitML(fm)
     basedev <- deviance(fm)
-    sig <- sigma(fm)
+    vlist <- sapply(fm@cnms,length)
+    sig <- sigma(fm)  ## only if useSc=TRUE?
     stdErr <- unname(coef(summary(fm))[,2])
     pp <- fm@pp$copy()
     ## opt <- c(pp$theta*sig, sig)
     if (!isGLMM(fm)) {
-      opt <- Cv_to_Sv(pp$theta, n=sapply(fm@cnms,length), s=sig)
-      ## FIXME: alternatively use/allow names as in getME(.,"theta") ?
-      names(opt) <- c(sprintf(".sig%02d", seq_along(pp$theta)), ".sigma")
+        opt <- Cv_to_Sv(pp$theta, n=vlist, s=sig)
+        ## FIXME: alternatively use/allow names as in getME(.,"theta") ?
+        names(opt) <- c(sprintf(".sig%02d", seq(length(opt)-1)), ".sigma")
     } else {
-      opt <- Cv_to_Sv(pp$theta, n=sapply(fm@cnms,length))
-      ## FIXME: alternatively use/allow names as in getME(.,"theta") ?
-      names(opt) <- sprintf(".sig%02d", seq_along(pp$theta))
+        opt <- Cv_to_Sv(pp$theta, n=vlist)
+        ## FIXME: alternatively use/allow names as in getME(.,"theta") ?
+        names(opt) <- sprintf(".sig%02d", seq_along(opt))
     }
     opt <- c(opt, fixef(fm))
     resp <- fm@resp$copy()
     np <- length(pp$theta)
+    nf <- length(fixef(fm))
     if (!isGLMM(fm)) np <- np + 1L
     n <- nrow(pp$V)                   # use V, not X so it works with nlmer
     if (isLMM(fm)) {
-      ans <- function(pars)
+        ans <- function(pars)
         {
-          stopifnot(is.numeric(pars), length(pars) == np)
-          ## Assumption:  all parameters, including the residual SD on SD-scale
-          sigma <- pars[np]
-          ## .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pars[-np]/sigma)
-          ## convert from sdcor vector back to 'unscaled theta'
-          thpars <- Sv_to_Cv(pars,n=sapply(fm@cnms,length),s=sigma)
-          .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)
-          sigsq <- sigma^2
-          pp$ldL2() + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
+            stopifnot(is.numeric(pars), length(pars) == np)
+            ## Assumption:  all parameters, including the residual SD on SD-scale
+            sigma <- pars[np]
+            ## .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pars[-np]/sigma)
+            ## convert from sdcor vector back to 'unscaled theta'
+            thpars <- Sv_to_Cv(pars,n=vlist,s=sigma)
+            .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)
+            sigsq <- sigma^2
+            pp$ldL2() + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
         }
     } else {
-      stop("GLMM/NLMM profiling under development")
-      d0 <- mkdev(fm)
-      ans <- function(pars)
+        d0 <- update(fm,devFunOnly=TRUE)
+        ## from glmer:
+        ## rho <- new.env(parent=parent.env(environment()))
+        ## rho$pp <- do.call(merPredD$new, c(reTrms[c("Zt","theta","Lambdat","Lind")], n=nrow(X), list(X=X)))
+        ## rho$resp <- mkRespMod(fr, if(REML) p else 0L)
+        ans <- function(pars)
         {
-          stopifnot(is.numeric(pars), length(pars) == np)
-          thpars <- pars[seq(np)]
-
-          ## FIXME: allow useSc (i.e. NLMMs)
-          sigma <- pars[np]
-          ## .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pars[-np]/sigma)
-          ## convert from sdcor vector back to 'unscaled theta'
-          thpars <- Sv_to_Cv(pars,n=sapply(fm@cnms,length))
-          stop("STUB!")
-          sigsq <- sigma^2
-          pp$ldL2() + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
+            stopifnot(is.numeric(pars), length(pars) == np+nf)
+            ## FIXME: allow useSc (i.e. NLMMs)
+            if (!useSc) {
+                thpars <- Sv_to_Cv(pars[seq(np)],n=vlist)
+            } else {
+                thpars <- Sv_to_Cv(pars[seq(np)],n=vlist,s=pars[np])
+            }
+            fixpars <- pars[-seq(np)]
+            d0(c(thpars,fixpars))
         }
-     }
+    }
     attr(ans, "optimum") <- opt         # w/ names()
     attr(ans, "basedev") <- basedev
     attr(ans, "thopt") <- pp$theta
@@ -801,5 +841,21 @@ varianceProf <- function(pr) {
         attr(ans, "backward")[[nm]] <- backSpline(attr(ans, "forward")[[nm]])
     }
     ans
+}
+
+## convert profile to data frame, adding a .focal parameter to simplify lattice/ggplot plotting
+as.data.frame.thpr <- function(x,...) {
+    class(x) <- "data.frame"
+    m <- as.matrix(x[,seq(ncol(x))-1]) ## omit .par
+    x[[".focal"]] <- m[cbind(seq(nrow(x)),match(x$.par,names(x)))]
+    x[[".par"]] <- factor(x[[".par"]],levels=unique(as.character(x[[".par"]]))) ## restore order
+    x
+}
+
+if (FALSE) {
+    source("~/R/misc/slice.R")
+    dd <- lme4:::devfun2(nm1,useSc=TRUE)
+    s1 <- slice(attr(dd,"optimum"),dd,dim=2)
+    splom(s1)
 }
 
