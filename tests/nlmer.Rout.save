@@ -1,5 +1,5 @@
 
-R version 2.15.0 alpha (2012-03-15 r58752)
+R version 2.15.0 beta (2012-03-17 r58782)
 Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-unknown-linux-gnu (64-bit)
@@ -16,7 +16,7 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-> library(lme4Eigen)
+> library(lme4)
 Loading required package: lattice
 > 
 > allEQ <- function(x,y, tolerance = 4e-4, ...)
@@ -58,7 +58,7 @@ scal 0.362 0.762
 +                          (lKe+lKa+lCl|Subject), 
 +                          Theoph, start = Th.start, tolPwrss=1e-8))
    user  system elapsed 
-  7.248   0.004   7.260 
+  5.664   0.000   5.682 
 > print(nm2, corr=FALSE)
 Nonlinear mixed model fit by maximum likelihood ['nlmerMod']
 Formula: conc ~ SSfol(Dose, Time, lKe, lKa, lCl) ~ (lKe + lKa + lCl |      Subject) 
@@ -85,7 +85,7 @@ lCl -3.21454    0.08100  -39.68
 +                          (lKe|Subject) + (lKa|Subject) + (lCl|Subject),
 +                          Theoph, start = Th.start))
    user  system elapsed 
-  3.536   0.000   3.543 
+  2.644   0.000   2.655 
 > print(nm3, corr=FALSE)
 Nonlinear mixed model fit by maximum likelihood ['nlmerMod']
 Formula: conc ~ SSfol(Dose, Time, lKe, lKa, lCl) ~ (lKe | Subject) + (lKa |      Subject) + (lCl | Subject) 
@@ -112,7 +112,7 @@ lCl -3.23074    0.05955  -54.26
 > system.time(nm4 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~ (lKa+lCl|Subject),
 +                          Theoph, start = Th.start, tolPwrss=1e-8))
    user  system elapsed 
-  1.981   0.008   1.991 
+  1.640   0.000   1.646 
 > print(nm4, corr=FALSE)
 Nonlinear mixed model fit by maximum likelihood ['nlmerMod']
 Formula: conc ~ SSfol(Dose, Time, lKe, lKa, lCl) ~ (lKa + lCl | Subject) 
@@ -139,7 +139,7 @@ lCl -3.22897    0.05953  -54.24
 +                          Theoph,
 +                          start = Th.start, tolPwrss=1e-8))
    user  system elapsed 
-  1.144   0.004   1.150 
+  0.876   0.000   0.880 
 > print(nm5, corr=FALSE)
 Nonlinear mixed model fit by maximum likelihood ['nlmerMod']
 Formula: conc ~ SSfol(Dose, Time, lKe, lKa, lCl) ~ (lKa | Subject) + (lCl |      Subject) 
@@ -193,4 +193,4 @@ lCl -3.21992    0.07995  -40.28
 > 
 > proc.time()
    user  system elapsed 
- 24.349   0.104  24.436 
+ 20.041   0.092  20.238 
