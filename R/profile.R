@@ -8,7 +8,7 @@
 ##' @aliases profile-methods profile.merMod
 ##' @docType methods
 ##' @param fitted a fitted model, e.g., the result of \code{\link{lmer}(..)}.
-##' @param which which parameters to profile (UNDER CONSTRUCTION): default is all parameters
+##' @param which (integer) which parameters to profile: default is all parameters. The parameters are ordered as follows: (1) random effects (theta) parameters; (2) residual standard deviation (or scale parameter for GLMMs where appropriate); (3) fixed effect parameters.  Random effects parameters are ordered as in \code{getME(.,"theta")}, i.e. as the lower triangle of a matrix with standard deviations on the diagonal and correlations off the diagonal.
 ##' @param alphamax maximum alpha value for likelihood ratio confidence regions; used to establish the range of values to be profiled
 ##' @param maxpts maximum number of points (in each direction, for each parameter) to evaluate in attempting to construct the profile
 ##' @param delta stepping scale for deciding on next point to profile
@@ -18,7 +18,7 @@
 ##' @param optimizer (character or function) optimizer to use (see \code{\link{lmer}} for details)
 ##' @param \dots potential further arguments for \code{profile} methods.
 ##' @section Methods: FIXME: These (signatures) will change soon --- document
-##' \bold{after} change!
+##'  \bold{after} change!
 ##' \describe{
 ##'     \item{signature(fitted = \"merMod\")}{ ...  } }
 ##' @seealso For (more expensive) alternative confidence intervals:
@@ -30,6 +30,15 @@
 ##' system.time( tpr <- profile(fm01ML) )
 ##' (confint(tpr) -> CIpr)
 ##' print(xyplot(tpr))
+##' tpr2 <- profile(fm01ML, which=1:2) ## Batch and residual variance only
+##' ## GLMM example (running time ~8 seconds on a modern machine)
+##' \dontrun{
+##' gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+##'             data = cbpp, family = binomial)
+##' system.time(pr4 <- profile(gm1))  ## ~ 7 seconds
+##' xyplot(pr4,layout=c(5,1),as.table=TRUE)
+##' splom(pr4)
+##' }
 ##' @importFrom splines backSpline interpSpline periodicSpline
 ##' @importFrom stats profile
 ##' @method profile merMod
@@ -42,7 +51,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
 
   ## FIXME: allow choice of nextstep/nextstart algorithm?
   ## FIXME: by default, get optimizer from within fitted object
-  ## FIXME: allow selection of individual variables to profile (by location and?? name)
+  ## FIXME: allow selection of individual variables to profile by name?
   ## FIXME: allow for failure of bounds (non-pos-definite correlation matrices) when >1 cor parameter
   ## FIXME: generalize to GLMMs
   ## (use different devfun;
@@ -63,10 +72,13 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
     n <- environment(dd)$n
     p <- length(pp$beta0)
 
-    ans <- lapply(opt <- attr(dd, "optimum"), function(el) NULL)
+    opt <- attr(dd, "optimum")
+    nptot <- length(opt)
+
+    ans <- lapply(opt[which], function(el) NULL)
     bakspl <- forspl <- ans
 
-    nptot <- length(opt)
+
     nvp <- nptot - p    # number of variance-covariance pars
     fe.orig <- opt[-seq_len(nvp)]
     res <- c(.zeta = 0, opt)
@@ -109,8 +121,8 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
     nextstart <- function(mat, pind, r, method="global") {
       ## FIXME: indexing may need to be checked (e.g. for fixed-effect parameters)
       switch(method,
-             global=opt[seqnvp][-pind],  ## address opt, no zeta column
-             prev=mat[r,1+seqnvp][-pind],
+             global=opt[seqpar1][-pind],  ## address opt, no zeta column
+             prev=mat[r,1+seqpar1][-pind],
              extrap=stop("stub")) ## do something with mat[r-(1:0),1+seqnvp])[-pind] ...
     }
 
@@ -166,14 +178,15 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
     stopifnot(all.equal(unname(dd(opt[seq(npar1)])),base,tol=1e-5))
 
     seqnvp <- intersect(seq_len(npar1),which)
-    lowvp <- lower[seqnvp]
-    upvp <- upper[seqnvp]
+    seqpar1 <- seq_len(npar1)
+    lowvp <- lower[seqpar1]
+    upvp <- upper[seqpar1]
     form <- .zeta ~ foo           # pattern for interpSpline formula
 
     for (w in seqnvp) {
        if (verbose) cat(if (isLMM(fitted)) "var-cov " else "", "parameter ",w,":\n",sep="")
        wp1 <- w + 1L
-       start <- opt[seqnvp][-w]
+       start <- opt[seqpar1][-w]
        pw <- opt[w]
        lowcut <- lower[w]
        upcut <- upper[w]
@@ -208,18 +221,19 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
        pres <- nres <- res
        ## assign one row, determined by inc. sign, from a small shift
        ## FIXME:: do something if pw==0 ???
-       nres[1, ] <- pres[2, ] <- zeta(pw * 1.01, start=opt[seqnvp][-w])
+       nres[1, ] <- pres[2, ] <- zeta(pw * 1.01, start=opt[seqpar1][-w])
        ## fill in the rest of the arrays and collapse them
        bres <-
            as.data.frame(unique(rbind2(fillmat(pres,lowcut, upcut, zeta, wp1),
                                        fillmat(nres,lowcut, upcut, zeta, wp1))))
-       bres$.par <- names(opt)[w]
-       ans[[w]] <- bres[order(bres[, wp1]), ]
-       form[[3]] <- as.name(names(opt)[w])
+       pname <- names(opt)[w]
+       bres$.par <- pname
+       ans[[pname]] <- bres[order(bres[, wp1]), ]
+       form[[3]] <- as.name(pname)
 
        ## FIXME: test for bad things here??
-       bakspl[[w]] <- try(backSpline(forspl[[w]] <- interpSpline(form, bres)),silent=TRUE)
-       if (inherits(bakspl[[w]],"try-error")) {
+       bakspl[[pname]] <- try(backSpline(forspl[[pname]] <- interpSpline(form, bres)),silent=TRUE)
+       if (inherits(bakspl[[pname]],"try-error")) {
            warning("non-monotonic profile")
      }
 
@@ -229,6 +243,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
     if (isLMM(fitted)) {
         offset.orig <- fitted@resp$offset
         fp <- seq_len(p)
+        fp <- fp[(fp+nvp) %in% which]
         for (j in fp) {
             if (verbose) cat("fixed-effect parameter ",j,":\n",sep="")
             pres <-            # intermediate results for pos. incr.

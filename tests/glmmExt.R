@@ -61,9 +61,12 @@ gP2 <- glmer(y ~ x + (1|block), data=dP, family=poisson, verbose=TRUE)
 gG1 <- glmer(y ~ 1 + (1|block), data=dG, family=gaussian(link="log"), verbose=TRUE)
 gG2 <- glmer(y ~ x + (1|block), data=dG, family=gaussian(link="log"), verbose=TRUE)
 
+
+## FIXME: get these working
 ## Gaussian with inverse link ... FIXME: not working yet
 try(gGi1 <- glmer(y ~ 1 + (1|block), data=dGi, family=gaussian(link="inverse"), verbose=TRUE))
 try(gGi2 <- glmer(y ~ x + (1|block), data=dGi, family=gaussian(link="inverse"), verbose=TRUE))
 
 ## sets variance to zero, converges back to GLM solution
 
+## FIXME: cloglog link

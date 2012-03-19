@@ -4,14 +4,24 @@
 \alias{profile-methods}
 \title{Methods for profile() of [ng]lmer fitted models}
 \usage{
-  \method{profile}{merMod} (fitted, alphamax = 0.01,
-    maxpts = 100, delta = cutoff/8, verbose = 0,
-    devtol = 1e-09, startval = "prev",
+  \method{profile}{merMod} (fitted, which = 1:nptot,
+    alphamax = 0.01, maxpts = 100, delta = cutoff/8,
+    verbose = 0, devtol = 1e-09, startmethod = "prev",
     optimizer = "bobyqa", ...)
 }
 \arguments{
   \item{fitted}{a fitted model, e.g., the result of
   \code{\link{lmer}(..)}.}
+
+  \item{which}{(integer) which parameters to profile:
+  default is all parameters. The parameters are ordered as
+  follows: (1) random effects (theta) parameters; (2)
+  residual standard deviation (or scale parameter for GLMMs
+  where appropriate); (3) fixed effect parameters.  Random
+  effects parameters are ordered as in
+  \code{getME(.,"theta")}, i.e. as the lower triangle of a
+  matrix with standard deviations on the diagonal and
+  correlations off the diagonal.}
 
   \item{alphamax}{maximum alpha value for likelihood ratio
   confidence regions; used to establish the range of values
@@ -30,7 +40,7 @@
   \item{devtol}{tolerance for fitted deviances less than
   baseline (supposedly minimum) deviance}
 
-  \item{startval}{method for picking starting conditions
+  \item{startmethod}{method for picking starting conditions
   for optimization (STUB)}
 
   \item{optimizer}{(character or function) optimizer to use
@@ -55,6 +65,15 @@ fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
 system.time( tpr <- profile(fm01ML) )
 (confint(tpr) -> CIpr)
 print(xyplot(tpr))
+tpr2 <- profile(fm01ML, which=1:2) ## Batch and residual variance only
+## GLMM example (running time ~8 seconds on a modern machine)
+\dontrun{
+gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+            data = cbpp, family = binomial)
+system.time(pr4 <- profile(gm1))  ## ~ 7 seconds
+xyplot(pr4,layout=c(5,1),as.table=TRUE)
+splom(pr4)
+}
 }
 \seealso{
   For (more expensive) alternative confidence intervals:

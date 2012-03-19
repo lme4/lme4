@@ -6,6 +6,15 @@ fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
 ##
 system.time( tpr <- profile(fm01ML) )
 
+## test all combinations of 'which'
+wlist <- list(1:3,1:2,1,2:3,2,3,c(1,3))
+invisible(lapply(wlist,function(w) xyplot(profile(fm01ML,which=w))))
+tpr2 <- profile(fm01ML,which=1:3)
+tpr3 <- profile(fm01ML,which=2:3)  ## can't plot
+tpr4 <- profile(fm01ML,which=3)
+tpr5 <- profile(fm01ML,which=2)  ## can't plot
+tpr6 <- profile(fm01ML,which=1)
+
 (confint(tpr) -> CIpr)
 print(xyplot(tpr))
 ##  comparing against lme4a reference values -- but lme4 returns sigma

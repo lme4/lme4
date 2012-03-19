@@ -872,6 +872,24 @@ formula.merMod <- function(x, ...) formula(getCall(x), ...)
 ##' @S3method isREML merMod
 isREML.merMod <- function(x, ...) as.logical(x@devcomp$dims["REML"])
 
+##' @S3method isGLMM merMod
+isGLMM.merMod <- function(x,...) {
+  as.logical(x@devcomp$dims["GLMM"])
+  ## or: is(x@resp,"glmResp")
+}
+
+##' @S3method isNLMM merMod
+isNLMM.merMod <- function(x,...) {
+  as.logical(x@devcomp$dims["NLMM"])
+  ## or: is(x@resp,"nlsResp")
+}
+
+##' @S3method isLMM merMod
+isLMM.merMod <- function(x,...) {
+  !isGLMM(x) && !isNLMM(x)
+  ## or: is(x@resp,"lmerResp") ?
+}
+
 ##' @importFrom stats logLik
 ##' @S3method logLik merMod
 logLik.merMod <- function(object, REML = NULL, ...) {
@@ -1312,6 +1330,11 @@ printMerenv <- function(x, digits = max(3, getOption("digits") - 3),
     }
     if (!is.null(cc <- so$call$formula))
 	cat("Formula:", deparse(cc),"\n")
+    if (!is.null(so$family)) {
+        cat("Family: ",so$family,
+            " (link=",so$link,")\n",
+            sep="")
+    }
     if (!is.null(cc <- so$call$data))
 	cat("   Data:", deparse(cc), "\n")
     if (!is.null(cc <- so$call$subset))
@@ -1711,8 +1734,8 @@ summary.merMod <- function(object, ...)
 
     link <- fam <- NULL
     if(is(resp, "glmerResp")) {
-        fam <- resp$fam()
-        link <- resp$link()
+        fam <- resp$family$family
+        link <- resp$family$link
     }
     coefs <- cbind("Estimate" = fixef(object),
 		   "Std. Error" = sig * sqrt(diag(object@pp$unsc())))
@@ -1887,20 +1910,6 @@ weights.merMod <- function(object, ...) {
   object@resp$weights
 }
 
-isGLMM <- function(object) {
-  as.logical(object@devcomp$dims["GLMM"])
-  ## or: is(object@resp,"glmResp")
-}
-
-isNLMM <- function(object) {
-  as.logical(object@devcomp$dims["NLMM"])
-  ## or: is(object@resp,"nlsResp")
-}
-
-isLMM <- function(object) {
-  !isGLMM(object) && !isNLMM(object)
-  ## **not** is(object@resp,"lmerResp") ?
-}
 
 getOptfun <- function(optimizer) {
   if (is.character(optimizer)) {
