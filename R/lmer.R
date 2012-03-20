@@ -677,8 +677,6 @@ anovaLmer <- function(object, ...) {
 	ss <- as.vector(object@pp$RX() %*% object@beta)^2
 	names(ss) <- colnames(X)
 	terms <- terms(object)
-        ## FIXME: this setdiff() should be obsolete since terms now keeps only fixed effects by default
-	## nmeffects <- setdiff(attr(terms, "term.labels"), names(object@flist))
         nmeffects <- attr(terms, "term.labels")
 	if ("(Intercept)" %in% names(ss))
 	    nmeffects <- c("(Intercept)", nmeffects)
@@ -743,28 +741,34 @@ coefMer <- function(object, ...)
 ##' @S3method coef merMod
 coef.merMod <- coefMer
 
-## FIXME: should this be computed and stored?
-REMLdev <- function(object) {
-  n <- object@devcomp$dims["N"]  ## FIXME: N or n ??
-  nmp <- n-length(object@beta)
-  cmp <- object@devcomp$cmp
-  cmp["ldL2"]+cmp["ldRX2"]+nmp*(1+log(2*pi*cmp["pwrss"]/nmp))
-  ## from lme4 (old):
-  ## d[REML_POS] = d[ldL2_POS] + d[ldRX2_POS] +
-  ##    dnmp * (1. + log(d[pwrss_POS]) + log(2. * PI / dnmp));
-}
-
+## FIXME: should these values (i.e. ML criterion for REML models
+##  and vice versa) be computed and stored in the object in the first place?
 ##' @importFrom stats deviance
 ##' @S3method deviance merMod
 deviance.merMod <- function(object, REML = NULL, ...) {
-    if (isTRUE(REML) && !isLMM(object)) stop("can't compute REML deviance for a non-LMM")
+    ## cf. (1) lmerResp::Laplace in respModule.cpp
+    ##     (2) section 5.6 of lMMwR, listing lines 34-42
+    if (isTRUE(REML) && !isLMM(object))
+        stop("can't compute REML deviance for a non-LMM")
+    cmp <- object@devcomp$cmp
     if (is.null(REML) || is.na(REML[1]))
         REML <- isREML(object)
-    if (REML) REMLdev(object) else {
-        if (!isREML(object)) {
-            object@devcomp$cmp[["dev"]]
+    if (REML) {
+        if (isREML(object)) {
+            cmp["REML"]
         } else {
-            ## need to compute ML deviance from scratch here ...
+            lnum <- log(2*pi*(cmp["pwrss"]))
+            n <- object@devcomp$dims["n"]
+            nmp <- n-length(object@beta)
+            unname(cmp["ldL2"]+cmp["ldRX2"]+nmp*(1.+lnum-log(nmp)))
+        }
+    } else {
+        if (!isREML(object)) {
+            cmp[["dev"]]
+        } else {
+            n <- object@devcomp$dims["n"]
+            lnum <- log(2*pi*(cmp["pwrss"]))
+            unname(cmp["ldL2"]+n*(1+lnum-log(n)))
         }
     }
 }
@@ -1062,8 +1066,6 @@ refit.merMod <- function(object, newresp=NULL, ...)
         } else newresp <- newresp[-na.act]
       }
 
-
-
     if (isGLMM(object) && rr$family$family=="binomial") {
         if (is.matrix(newresp) && ncol(newresp)==2) {
             ntot <- rowSums(newresp)
@@ -1257,6 +1259,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE, ...) {
 	      if(is.null(family$family)) stop("'family' not recognized")
 	      musim <- family$linkinv(etasim)
 	      ntot <- length(musim) ## FIXME: or could be dims["n"]?
+              ## FIXME: is it possible to leverage family$simulate ... ???
               val <- switch(family$family,
 			    poisson=rpois(ntot,lambda=musim),
 			    binomial={
@@ -1303,12 +1306,12 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE, ...) {
 ##' @importFrom stats terms
 ##' @S3method terms merMod
 terms.merMod <- function(x, fixed.only=TRUE, ...) {
-  tt <- attr(x@frame, "terms")
   if (fixed.only) {
       ## do need to drop LHS (e.g. binomial example)
-      mm <- model.frame(formula(x,fixed.only=TRUE)[-2],data=model.frame(x))
-      terms(mm)
-  } else tt
+      ## mm <- model.frame(formula(x,fixed.only=TRUE)[-2],data=model.frame(x))
+      ## terms(mm)
+      terms.formula(formula(x,fixed.only=TRUE))
+  } else attr(x@frame,"terms")
 }
 
 ##' @importFrom stats update
@@ -1485,7 +1488,7 @@ setMethod("getL", "merMod", function(x) {
 ##'     \item{devcomp}{a list consisting of a named numeric vector, \dQuote{cmp}, and
 ##'                    a named integer vector, \dQuote{dims}, describing the fitted model}
 ##'     \item{offset}{model offset}
-##'     \item{lower}{lower bounds on model parameters} ## FIXME: theta only?
+##'     \item{lower}{lower bounds on model parameters (random effects parameters only)}
 ##' }
 ##' @return Unspecified, as very much depending on the \code{\link{name}}.
 ##' @seealso \code{\link{getCall}()},
@@ -1566,7 +1569,8 @@ getME <- function(object,
 
            "devcomp" = dc,
            "offset" = rsp$offset,
-           "lower" = object@lower,  ## FIXME: should this include -Inf values for beta?
+           "lower" = object@lower,
+            ## FIXME: current version gives lower bounds for theta parameters only -- these must be extended for [GN]LMMs -- give extended value including -Inf values for beta values?
 	   "..foo.." =# placeholder!
 	   stop(gettextf("'%s' is not implemented yet",
 			 sprintf("getME(*, \"%s\")", name))),
@@ -1676,7 +1680,7 @@ VarCorr.merMod <- function(x, sigma, rdig)# <- 3 args from nlme
     if (is.null(cnms <- x@cnms))
 	stop("VarCorr methods require reTrms, not just reModule")
     if(missing(sigma)) # "bug": fails via default 'sigma=sigma(x)'
-	sigma <- lme4::sigma(x)  ## FIXME: do we need lme4:: ?
+	sigma <- lme4::sigma(x)  ## FIXME: do we still need lme4:: ?
     nc <- sapply(cnms, length)	  # no. of columns per term
     m <- mkVarCorr(sigma, cnms=cnms, nc=nc, theta = x@theta,
 	      nms = {fl <- x@flist; names(fl)[attr(fl, "assign")]})
