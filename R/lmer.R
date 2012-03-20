@@ -774,6 +774,7 @@ deviance.merMod <- function(object, REML = NULL, ...) {
 drop1.merMod <- function(object, scope, scale = 0, test = c("none", "Chisq"),
                          k = 2, trace = FALSE, ...) {
 ### FIXME: this is a hacked version of stats:::drop1.default and should be changed
+    ## FIXME: incorporate na.predict() stuff?
     tl <- attr(terms(object), "term.labels")
     if(missing(scope)) scope <- drop.scope(object)
     else {
@@ -877,7 +878,10 @@ fixef.merMod <- function(object, ...)
 
 ##' @importFrom stats formula
 ##' @S3method fixef merMod
-formula.merMod <- function(x, ...) formula(getCall(x), ...)
+formula.merMod <- function(x, fixed.only=FALSE, ...) {
+    f <- formula(getCall(x),...)
+    if (fixed.only) as.formula(nobars(f)) else f
+}
 
 ##' @S3method isREML merMod
 isREML.merMod <- function(x, ...) as.logical(x@devcomp$dims["REML"])
@@ -1301,10 +1305,8 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE, ...) {
 terms.merMod <- function(x, fixed.only=TRUE, ...) {
   tt <- attr(x@frame, "terms")
   if (fixed.only) {
-      ## FIXME: e.g. ~ Inoc * Cult + (1|Block) + (1|Cult)
-      ## need to use nobars() to get the right answer
-      ## drop.terms(tt,match(names(x@flist),attr(tt,"term.labels")))
-      mm <- model.frame(as.formula(nobars(formula(x)[-2])),data=model.frame(x))
+      ## do need to drop LHS (e.g. binomial example)
+      mm <- model.frame(formula(x,fixed.only=TRUE)[-2],data=model.frame(x))
       terms(mm)
   } else tt
 }
@@ -2002,7 +2004,4 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
   opt
 }
 
-formula.merMod <- function(x,...) {
-    x@call$formula
-}
 
