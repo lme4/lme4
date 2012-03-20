@@ -13,7 +13,7 @@ test_that("lmer", {
     expect_that(REMLfun(0),                             equals(326.023232155879))
     expect_that(family(fm1),                            equals(gaussian()))
     expect_that(isREML(fm1ML <- refitML(fm1)),          equals(FALSE))
-    expect_that(is.na(deviance(fm1)),                   equals(TRUE))
+    ## expect_that(is.na(deviance(fm1)),                   equals(TRUE))
     expect_that(deviance(fm1ML),                        equals(327.327059881135))
     expect_that(sigma(fm1),                             equals(49.5100503990048))
     expect_that(sigma(fm1ML),                           equals(49.5100999308089))

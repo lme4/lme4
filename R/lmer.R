@@ -653,7 +653,7 @@ anovaLmer <- function(object, ...) {
 	val <- data.frame(Df = Df,
 			  AIC = .sapply(llks, AIC),
 			  BIC = .sapply(llks, BIC),
-			  logLik = llk,
+                          logLik = llk,
 			  deviance = -2*llk,
 			  Chisq = chisq,
 			  "Chi Df" = dfChisq,
@@ -678,7 +678,8 @@ anovaLmer <- function(object, ...) {
 	names(ss) <- colnames(X)
 	terms <- terms(object)
         ## FIXME: this setdiff() should be obsolete since terms now keeps only fixed effects by default
-	nmeffects <- setdiff(attr(terms, "term.labels"), names(object@flist))
+	## nmeffects <- setdiff(attr(terms, "term.labels"), names(object@flist))
+        nmeffects <- attr(terms, "term.labels")
 	if ("(Intercept)" %in% names(ss))
 	    nmeffects <- c("(Intercept)", nmeffects)
 	ss <- unlist(lapply(split(ss, asgn), sum))
@@ -742,11 +743,13 @@ coefMer <- function(object, ...)
 ##' @S3method coef merMod
 coef.merMod <- coefMer
 
+## FIXME: should this be computed and stored?
 REMLdev <- function(object) {
   n <- object@devcomp$dims["N"]  ## FIXME: N or n ??
+  nmp <- n-length(object@beta)
   cmp <- object@devcomp$cmp
-  cmp["ldL2"]+cmp["ldRX2"]+n*(1+log(2*pi*cmp["pwrss"]/n))
-  ## from lme4:
+  cmp["ldL2"]+cmp["ldRX2"]+nmp*(1+log(2*pi*cmp["pwrss"]/nmp))
+  ## from lme4 (old):
   ## d[REML_POS] = d[ldL2_POS] + d[ldRX2_POS] +
   ##    dnmp * (1. + log(d[pwrss_POS]) + log(2. * PI / dnmp));
 }
@@ -754,9 +757,16 @@ REMLdev <- function(object) {
 ##' @importFrom stats deviance
 ##' @S3method deviance merMod
 deviance.merMod <- function(object, REML = NULL, ...) {
-    if (!missing(REML)) stop("REML argument not supported")
-    ##
-    object@devcomp$cmp[["dev"]]
+    if (isTRUE(REML) && !isLMM(object)) stop("can't compute REML deviance for a non-LMM")
+    if (is.null(REML) || is.na(REML[1]))
+        REML <- isREML(object)
+    if (REML) REMLdev(object) else {
+        if (!isREML(object)) {
+            object@devcomp$cmp[["dev"]]
+        } else {
+            ## need to compute ML deviance from scratch here ...
+        }
+    }
 }
 
 ##' @importFrom stats drop1
@@ -778,7 +788,7 @@ drop1.merMod <- function(object, scope, scale = 0, test = c("none", "Chisq"),
     ans[1, ] <- extractAIC(object, scale, k = k, ...)
     n0 <- nobs(object, use.fallback = TRUE)
     env <- environment(formula(object))
-    for(i in seq(ns)) {
+    for(i in seq_along(scope)) {  ## was seq(ns), failed on empty scope
 	tt <- scope[i]
 	if(trace > 1) {
 	    cat("trying -", tt, "\n", sep='')
@@ -893,11 +903,12 @@ isLMM.merMod <- function(x,...) {
 ##' @importFrom stats logLik
 ##' @S3method logLik merMod
 logLik.merMod <- function(object, REML = NULL, ...) {
-    if (!missing(REML)) stop("REML argument not supported")
+    if (is.null(REML) || is.na(REML[1]))
+        REML <- isREML(object)
+    val <- -deviance(object, REML = REML)/2
     dc <- object@devcomp
     dims <- dc$dims
-    val <- - dc$cmp[["dev"]]/2
-    attr(val, "nall") <- attr(val, "nobs") <- nrow(object@frame)
+    attr(val, "nall") <- attr(val, "nobs") <- nrow(object@frame) ## FIXME use nobs() ?
     attr(val, "df") <- length(object@beta) + length(object@theta) + dims[["useSc"]]
     class(val) <- "logLik"
     val
@@ -1290,7 +1301,11 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE, ...) {
 terms.merMod <- function(x, fixed.only=TRUE, ...) {
   tt <- attr(x@frame, "terms")
   if (fixed.only) {
-    drop.terms(tt,match(names(x@flist),attr(tt,"term.labels")))
+      ## FIXME: e.g. ~ Inoc * Cult + (1|Block) + (1|Cult)
+      ## need to use nobars() to get the right answer
+      ## drop.terms(tt,match(names(x@flist),attr(tt,"term.labels")))
+      mm <- model.frame(as.formula(nobars(formula(x)[-2])),data=model.frame(x))
+      terms(mm)
   } else tt
 }
 
@@ -1985,5 +2000,9 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
       warning(wmsg)
     }
   opt
+}
+
+formula.merMod <- function(x,...) {
+    x@call$formula
 }
 
