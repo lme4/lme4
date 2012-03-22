@@ -321,7 +321,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     parent.env(rho) <- parent.frame()
     rho$pp <- do.call(merPredD$new, c(reTrms[c("Zt","theta","Lambdat","Lind")], n=nrow(X), list(X=X)))
 					# response module
-    rho$resp <- mkRespMod(fr, family=family)
+    rho$resp <- mkRespMod(fr, family=family) ## , X=X)
 					# initial step from working response
     if (compDev) {
 	.Call(glmerWrkIter, rho$pp$ptr(), rho$resp$ptr())
@@ -1977,6 +1977,7 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
              if (is.null(control$xt)) control$xt <- control$xst*5e-4
              if (!is.null(rho)) rho$control <- control
          })
+    if (optimizer=="bobyqa" && all(par==0)) par[] <- 0.001  ## minor kluge
     arglist <- list(fn=fn, par=par, lower=lower, upper=upper, control=control)
   ## optimx: must pass method in control (?) because 'method' was previously
   ## used in lme4 to specify REML vs ML
