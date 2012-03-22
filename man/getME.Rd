@@ -5,7 +5,7 @@
 \title{Extract or Get Generalize Components from a Fitted Mixed Effects Model}
 \usage{
   getME(object,
-    name = c("X", "Z", "Zt", "u", "Gp", "L", "Lambda", "Lambdat", "Lind", "RX", "RZX", "beta", "theta", "REML", "n_rtrms", "is_REML", "devcomp", "offset", "lower"))
+    name = c("X", "Z", "Zt", "u", "Gp", "L", "Lambda", "Lambdat", "Lind", "A", "RX", "RZX", "flist", "beta", "theta", "REML", "n_rtrms", "is_REML", "devcomp", "offset", "lower"))
 }
 \arguments{
   \item{object}{a fitted mixed-effects model of class
@@ -28,10 +28,17 @@
   covariance factor of the random effects.}
   \item{Lind}{index vector for inserting elements of
   \eqn{\theta}{theta} into the nonzeros of
-  \eqn{\Lambda}{Lambda}} \item{RX}{Cholesky factor for the
-  fixed-effects parameters} \item{RZX}{cross-term in the
-  full Cholesky factor} \item{beta}{fixed-effects parameter
-  estimates (same as the result of \code{\link{fixef}})}
+  \eqn{\Lambda}{Lambda}} \item{A}{Scaled sparse model
+  matrix (class
+  \code{"\link[Matrix:dgCMatrix-class]{dgCMatrix}"}) for
+  the unit, orthogonal random effects, \eqn{U}, equal to
+  \code{getME(.,"Zt") \%*\% getME(.,"Lambdat")}}
+  \item{RX}{Cholesky factor for the fixed-effects
+  parameters} \item{RZX}{cross-term in the full Cholesky
+  factor} \item{flist}{a list of the grouping variables
+  (factors) involved in the random effect terms}
+  \item{beta}{fixed-effects parameter estimates (identical
+  to the result of \code{\link{fixef}}, but without names)}
   \item{theta}{random-effects parameter estimates: these
   are parameterized as the relative Cholesky factors of
   each random effect term} \item{n_rtrms}{number of
@@ -40,7 +47,8 @@
   of a named numeric vector, \dQuote{cmp}, and a named
   integer vector, \dQuote{dims}, describing the fitted
   model} \item{offset}{model offset} \item{lower}{lower
-  bounds on model parameters} ## FIXME: theta only? }}
+  bounds on model parameters (random effects parameters
+  only)} }}
 }
 \value{
   Unspecified, as very much depending on the

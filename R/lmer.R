@@ -1307,9 +1307,6 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE, ...) {
 ##' @S3method terms merMod
 terms.merMod <- function(x, fixed.only=TRUE, ...) {
   if (fixed.only) {
-      ## do need to drop LHS (e.g. binomial example)
-      ## mm <- model.frame(formula(x,fixed.only=TRUE)[-2],data=model.frame(x))
-      ## terms(mm)
       terms.formula(formula(x,fixed.only=TRUE))
   } else attr(x@frame,"terms")
 }
@@ -1479,9 +1476,14 @@ setMethod("getL", "merMod", function(x) {
 ##'     \item{Lambdat}{transpose of the relative covariance factor of the random effects.}
 ##'     \item{Lind}{index vector for inserting elements of \eqn{\theta}{theta} into the
 ##'                 nonzeros of \eqn{\Lambda}{Lambda}}
+##'     \item{A}{Scaled sparse model matrix (class
+##'      \code{"\link[Matrix:dgCMatrix-class]{dgCMatrix}"}) for
+##'      the unit, orthogonal random effects, \eqn{U},
+##'       equal to \code{getME(.,"Zt") \%*\% getME(.,"Lambdat")}}
 ##'     \item{RX}{Cholesky factor for the fixed-effects parameters}
 ##'     \item{RZX}{cross-term in the full Cholesky factor}
-##'     \item{beta}{fixed-effects parameter estimates (same as the result of \code{\link{fixef}})}
+##'     \item{flist}{a list of the grouping variables (factors) involved in the random effect terms}
+##'     \item{beta}{fixed-effects parameter estimates (identical to the result of \code{\link{fixef}}, but without names)}
 ##'     \item{theta}{random-effects parameter estimates: these are parameterized as the relative Cholesky factors of each random effect term}
 ##'     \item{n_rtrms}{number of random-effects terms}
 ##'     \item{is_REML}{same as the result of \code{\link{isREML}}}
@@ -1515,8 +1517,9 @@ setMethod("getL", "merMod", function(x) {
 getME <- function(object,
 		  name = c("X", "Z","Zt", "u",
 		  "Gp",
-		  "L", "Lambda", "Lambdat", "Lind",
+		  "L", "Lambda", "Lambdat", "Lind", "A",
 		  "RX", "RZX",
+                  "flist",
                   "beta", "theta",
 		  "REML", "n_rtrms", "is_REML", "devcomp",
                     "offset", "lower"))
@@ -1538,6 +1541,7 @@ getME <- function(object,
 	   "L"= PR$ L(),
 	   "Lambda"= t(PR$ Lambdat),
 	   "Lambdat"= PR$ Lambdat,
+           "A" = PR$Lambdat %*% PR$Zt,
            "Lind" = PR$ Lind,
 	   "RX" = PR $ RX(), ## FIXME - add the column names and row names, either in the C++ or the R method
 	   "RZX" = PR $ RZX, ## FIXME - add column names
