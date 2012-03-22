@@ -46,6 +46,7 @@
 profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100, delta = cutoff/8,
                            ##  tr = 0,  ## FIXME:  remove if not doing anything ...
                            verbose=0, devtol=1e-9,
+                           maxmult = 10,
                            startmethod = "prev",
                            optimizer="bobyqa", ...) {
 
@@ -96,7 +97,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
     ## (absstep) and the values of zeta and column cc for rows
     ## r-1 and r.  The parameter may not be below lower (or above upper)
     nextpar <- function(mat, cc, r, absstep,
-                        lower = -Inf, upper = Inf, minstep=1e-6, maxmult=10.0) {
+                        lower = -Inf, upper = Inf, minstep=1e-6) {
         rows <- r - (1:0)         # previous two row numbers
         pvals <- mat[rows, cc]
         zeta <- mat[rows, ".zeta"]

@@ -1115,7 +1115,9 @@ refit.merMod <- function(object, newresp=NULL, ...)
 }
 
 ##' @S3method refitML merMod
-refitML.merMod <- function (x, ...) {
+refitML.merMod <- function (x, optimizer="bobyqa", ...) {
+    ## FIXME: optimizer is set to 'bobyqa' for back-compatibility, but that's not
+    ##  consistent with lmer (default NM).  Should be based on internally stored 'optimizer' value
     if (!isREML(x)) return(x)
     stopifnot(is(rr <- x@resp, "lmerResp"))
     rho <- new.env(parent=parent.env(environment()))
@@ -1124,7 +1126,8 @@ refitML.merMod <- function (x, ...) {
     rho$pp <- new(class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat,
                   Lind=xpp$Lind, theta=xpp$theta, n=nrow(xpp$X))
     devfun <- mkdevfun(rho, 0L)
-    opt <- bobyqa(x@theta, devfun, x@lower)
+    opt <- optwrap(optimizer, devfun, x@theta, lower=x@lower)
+    ##  opt <- bobyqa(x@theta, devfun, x@lower)
     n <- length(rr$y)
     pp <- rho$pp
     p <- ncol(pp$X)
@@ -1948,11 +1951,12 @@ getOptfun <- function(optimizer) {
 }
 
 optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
-                    control=list(), rho, adj=FALSE, verbose=0L) {
-  ## control and rho must be specified if adj==TRUE;
-  ##  otherwise this is a fairly simple wrapper
-  optfun <- getOptfun(optimizer)
-  ## special-purpose control parameter tweaks: only for second round in nlmer, glmer
+                    control=list(), rho=NULL, adj=FALSE, verbose=0L) {
+    ## control and rho must be specified if adj==TRUE;
+    ##  otherwise this is a fairly simple wrapper
+    ## FIXME: would like to remove rho-dependence (used to pass back modified control settings) ?
+    optfun <- getOptfun(optimizer)
+    ## special-purpose control parameter tweaks: only for second round in nlmer, glmer
 
   lower <- rep(lower, length.out=length(par))
   upper <- rep(upper, length.out=length(par))
@@ -1962,18 +1966,18 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
            bobyqa = {
              if(!is.numeric(control$rhobeg)) control$rhobeg <- 0.0002
              if(!is.numeric(control$rhoend)) control$rhoend <- 2e-7
-             rho$control <- control
+             if (!is.null(rho)) rho$control <- control
            },
            Nelder_Mead = {
              if (is.null(control$xst))
-               xst <- c(rep.int(0.1, length(rho$dpars)),
-                        sqrt(diag(environment(fn)$pp$unsc())))
+                 xst <- c(rep.int(0.1, length(environment(fn)$pp$theta)),  ## theta parameters
+                          sqrt(diag(environment(fn)$pp$unsc())))
              control$xst <- 0.2*xst
              control$verbose <- verbose
              if (is.null(control$xt)) control$xt <- control$xst*5e-4
-             rho$control <- control
-           })
-  arglist <- list(fn=fn, par=par, lower=lower, upper=upper, control=control)
+             if (!is.null(rho)) rho$control <- control
+         })
+    arglist <- list(fn=fn, par=par, lower=lower, upper=upper, control=control)
   ## optimx: must pass method in control (?) because 'method' was previously
   ## used in lme4 to specify REML vs ML
   ## FIXME: test -- does deparse(substitute(...)) clause work?

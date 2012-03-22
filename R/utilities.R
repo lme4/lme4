@@ -134,6 +134,7 @@ mkReTrms <- function(bars, fr) {
 ##' @family utilities
 ##' @export
 mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL) {
+    ## FIXME: may need to add X, or pass it somehow, if we want to use glm.fit
     y <- model.response(fr)
     if(length(dim(y)) == 1) {
 	## avoid problems with 1D arrays, but keep names
@@ -181,6 +182,9 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL) 
     }
     stopifnot(inherits(family, "family"))
                               # need weights for initialize evaluation
+    ## FIXME: family$initialize may not be good enough, need
+    ##        glm.fit?
+    ## do.call(glm.fit,c(as.list(rho),list(x=X,family=family)))
     rho$nobs <- n
     eval(family$initialize, rho)
     family$initialize <- NULL     # remove clutter from str output
