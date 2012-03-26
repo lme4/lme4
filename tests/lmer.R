@@ -17,5 +17,27 @@ fm <- lmer(log(y) ~ x | z, data=X)
 ## gave error inside  model.frame()
 stopifnot(all.equal(unname(fixef(fm)), -0.8345, tol=.01))
 
+## check working of Matrix methods on  vcov(.) etc ----------------------
+fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+V  <- vcov(fm)
+V1 <- vcov(fm1)
+TOL <- 0 # to show the differences below
+TOL <- 1e-5 # for the check
+stopifnot(
+	  all.equal(diag(V), 0.176078, tol = TOL) # 64b: 2.4e-8
+	  ,
+	  all.equal(as.numeric(chol(V)), 0.4196165, tol = TOL)	# 64b: 3.2e-8
+	  ,
+	  all.equal(diag(V1), c(46.574978, 2.389469), tol = TOL)# 64b: 9.8e-9
+	  , dim(C1 <- chol(V1)) == c(2,2) ,
+	  all.equal(as.numeric(C1),
+		    c(6.82458627, 0, -0.2126260, 1.5310973), tol=TOL)# 64b: 1.6e-9
+          ,
+          dim(chol(crossprod(getME(fm1, "Z")))) == 36
+	  , TRUE)
+## printing
+signif(chol(crossprod(getME(fm,"Z"))), 4)# -> simple 4 x 4 sparse
+
+
 
 cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''

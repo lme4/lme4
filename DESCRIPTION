@@ -14,6 +14,7 @@ Description: Fit linear and generalized linear mixed-effects models.
 Depends:
     R(>= 2.14.0),
     lattice,
+    Matrix(>= 1.0),
     methods,
     stats
 LinkingTo: Rcpp, RcppEigen

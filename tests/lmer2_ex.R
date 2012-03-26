@@ -11,6 +11,7 @@ dat <- within(data.frame(lagoon = factor(rep(1:4, each = 25)),
               y2 <- y + RE
           })
 
+## FIXME:   want  lmer(* , sparseX = TRUE )  {as in lme4a}
 if (FALSE) {                            # need to adapt to new structure
 
 ##' <description>

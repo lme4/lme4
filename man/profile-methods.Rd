@@ -6,8 +6,8 @@
 \usage{
   \method{profile}{merMod} (fitted, which = 1:nptot,
     alphamax = 0.01, maxpts = 100, delta = cutoff/8,
-    verbose = 0, devtol = 1e-09, startmethod = "prev",
-    optimizer = "bobyqa", ...)
+    verbose = 0, devtol = 1e-09, maxmult = 10,
+    startmethod = "prev", optimizer = "bobyqa", ...)
 }
 \arguments{
   \item{fitted}{a fitted model, e.g., the result of
