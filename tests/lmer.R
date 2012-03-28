@@ -17,6 +17,15 @@ fm <- lmer(log(y) ~ x | z, data=X)
 ## gave error inside  model.frame()
 stopifnot(all.equal(unname(fixef(fm)), -0.8345, tol=.01))
 
+sstudy9 <- subset(sleepstudy, Days == 1 | Days == 9)
+try({## This "did work" in lme4.0 and nlme -- FIXME ??
+ m1 <- lmer(Reaction ~ 1 + Days + (1 + Days | Subject), data = sstudy9)
+ ## -> Error in ptr() : Downdated VtV is not positive definite
+ ## FIXME?(2): More helpful error message
+ print(sm1 <- summary(m1))
+ fm1 <- fitted(m1)
+})
+
 ## check working of Matrix methods on  vcov(.) etc ----------------------
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 V  <- vcov(fm)
