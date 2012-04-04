@@ -35,7 +35,7 @@ stopifnot(is((cm1 <- coef(m2)), "coef.mer"),
                     check.attr=FALSE),
 ##        all.equal(deviance(m2), 100.010030538022, tol=1e-9)
           ## with bobyqa first (AGQ=0), then 
-          all.equal(deviance(m2), 101.11977669, tol=1e-9)
+          all.equal(deviance(m2), 101.119749563, tol=1e-9)
 )
 
 stopifnot(is((cm1 <- coef(m1)), "coef.mer"),
@@ -58,7 +58,7 @@ stopifnot(is((cm1 <- coef(m1)), "coef.mer"),
 showProc.time() #
 
 ## FIXME -- non-convegence!!
-if (FALSE && require('MASS', quietly = TRUE)) {
+if (require('MASS', quietly = TRUE)) {
     bacteria$wk2 <- bacteria$week > 2
     contrasts(bacteria$trt) <-
         structure(contr.sdif(3),
