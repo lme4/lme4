@@ -314,7 +314,7 @@ namespace glm {
 	if (d_linknam == "probit")   {delete d_link; d_link = new probitLink(ll);}
 
 	if (d_family  == "binomial")         {delete d_dist; d_dist = new binomialDist(ll);}
-	if (d_family  == "gamma")            {delete d_dist; d_dist = new gammaDist(ll);}
+	if (d_family  == "Gamma")            {delete d_dist; d_dist = new gammaDist(ll);}
 	if (d_family  == "gaussian")         {delete d_dist; d_dist = new GaussianDist(ll);}
 	if (d_family  == "inverse.gaussian") {delete d_dist; d_dist = new inverseGaussianDist(ll);}
 	if (d_family.substr(0, 18) ==
@@ -376,13 +376,15 @@ namespace glm {
     double glmDist::aic(const ArrayXd& y, const ArrayXd& n, const ArrayXd& mu,
 			const ArrayXd& wt, double dev) const {
 	int nn = mu.size();
-	return ::Rf_asReal(::Rf_eval(::Rf_lang6(as<SEXP>(d_aic),
-						as<SEXP>(NumericVector(y.data(), y.data() + nn)),
-						as<SEXP>(NumericVector(n.data(), n.data() + nn)),
-						as<SEXP>(NumericVector(mu.data(), mu.data() + nn)),
-						as<SEXP>(NumericVector(wt.data(), wt.data() + nn)),
-						::Rf_ScalarReal(dev)
-					 ), d_rho));
+	double ans =
+	    ::Rf_asReal(::Rf_eval(::Rf_lang6(as<SEXP>(d_aic),
+					     as<SEXP>(NumericVector(y.data(), y.data() + nn)),
+					     as<SEXP>(NumericVector(n.data(), n.data() + nn)),
+					     as<SEXP>(NumericVector(mu.data(), mu.data() + nn)),
+					     as<SEXP>(NumericVector(wt.data(), wt.data() + nn)),
+					     PROTECT(::Rf_ScalarReal(dev))), d_rho));
+	UNPROTECT(1);
+	return ans;
     }
     
     negativeBinomialDist::negativeBinomialDist(Rcpp::List& ll)
