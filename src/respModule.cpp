@@ -133,7 +133,7 @@ namespace lme4 {
     }
 
     VectorXd glmResp::sqrtWrkWt() const {
-	return d_weights.array() * muEta().square() / variance().sqrt();
+	return muEta().array() * (d_weights.array() / variance().array()).sqrt();
     }
 
     double glmResp::Laplace(double ldL2, double ldRX2, double sqrL) const {
