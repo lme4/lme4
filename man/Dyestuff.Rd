@@ -66,10 +66,15 @@
  sessionInfo()
  searchpaths()
  pkgI <- function(pkgname) {
-   pd <- packageDescription(pkgname)
-   cat(sprintf("\%s -- built: \%s\\n\%*s -- dir  : \%s\\n",
-               pkgname, pd$Built, nchar(pkgname), "",
-               dirname(dirname(attr(pd, "file")))))
+   pd <- tryCatch(packageDescription(pkgname),
+                  error=function(e)e, warning=function(w)w)
+   if(inherits(pd, "error") || inherits(pd, "warning"))
+     cat(sprintf("packageDescription(\\"\%s\\") \%s: \%s\\n",
+                 pkgname, class(pd)[2], pd$message))
+   else
+     cat(sprintf("\%s -- built: \%s\\n\%*s -- dir  : \%s\\n",
+                 pkgname, pd$Built, nchar(pkgname), "",
+                 dirname(dirname(attr(pd, "file")))))
  }
  pkgI("Matrix")
  pkgI("Rcpp")
