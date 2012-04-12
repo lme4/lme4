@@ -1,7 +1,33 @@
 ## generalized linear mixed model
 stopifnot(suppressPackageStartupMessages(require(lme4)))
 options(show.signif.stars = FALSE)
-source(system.file("test-tools.R", package = "Matrix"))# identical3(), showProc.time, etc
+
+source(system.file("test-tools-1.R", package = "Matrix"), keep.source = FALSE)
+##
+##' Check that coefficient +- "2" * SD  contains true value
+##'
+##' @title Check that confidence interval for coefficients contains true value
+##' @param fm fitted model, e.g., from  lm(), lmer(), glmer(), ..
+##' @param true.coef numeric vector of true (fixed effect) coefficients
+##' @param conf.level confidence level for confidence interval
+##' @param sd.factor the "2", i.e. default 1.96 factor for the confidence interval
+##' @return TRUE or a string of "error"
+##' @author Martin Maechler
+chkFixed <- function(fm, true.coef, conf.level = 0.95,
+                     sd.factor = qnorm((1+conf.level)/2))
+{
+    stopifnot(is.matrix(cf <- coefficients(summary(fm))), ncol(cf) >= 2)
+    cc <- cf[,1]
+    sd <- cf[,2]
+    if(any(out1 <- true.coef < cc - sd.factor*sd))
+	return(sprintf("true coefficient[j], j=%s, is smaller than lower confidence limit",
+		     paste(which(out1), collapse=", ")))
+    if(any(out2 <- true.coef > cc + sd.factor*sd))
+	return(sprintf("true coefficient[j], j=%s, is larger than upper confidence limit",
+		     paste(which(out2), collapse=", ")))
+    ## else, return
+    TRUE
+}
 
 
 ## TODO: (1) move these to ./glmer-ex.R [DONE]
@@ -34,7 +60,7 @@ stopifnot(is((cm1 <- coef(m2)), "coef.mer"),
 		    tol = 5.e-4,
                     check.attr=FALSE),
 ##        all.equal(deviance(m2), 100.010030538022, tol=1e-9)
-          ## with bobyqa first (AGQ=0), then 
+          ## with bobyqa first (AGQ=0), then
           all.equal(deviance(m2), 101.119749563, tol=1e-9)
 )
 
@@ -63,7 +89,8 @@ if (require('MASS', quietly = TRUE)) {
     contrasts(bacteria$trt) <-
         structure(contr.sdif(3),
                   dimnames = list(NULL, c("diag", "encourage")))
-    print(fm5 <- glmer(y ~ trt + wk2 + (1|ID), bacteria, binomial))
+    print(fm5 <- glmer(y ~ trt + wk2 + (1|ID),
+                       data=bacteria, family=binomial))
     ## again *fails* (lme4[r 1636], 64-bit ubuntu 11.10)
     ## used to fail with nlminb() : stuck at theta=1
 
@@ -134,16 +161,51 @@ rPoisGLMMi <- function(ng, nr, sd=c(f = 1, ind = 0.5), b=c(1,2))
          y <- rpois(ntot, lambda=mu)
      })
 }
+
 set.seed(1)
 dd <- rPoisGLMMi(12, 20)
 m0  <- glmer(y~x + (1|f),           family="poisson", data=dd)
 (m1 <- glmer(y~x + (1|f) + (1|obs), family="poisson", data=dd))
+stopifnot(isTRUE(chkFixed(m0, true.coef = c(1,2))),
+          isTRUE(chkFixed(m1, true.coef = c(1,2))))
 (a01 <- anova(m0, m1))
 
 stopifnot(all.equal(a01$Chisq[2], 554.334056, tol=1e-6),
 	  all.equal(a01$logLik, c(-1073.77193, -796.604902), tol=1e-6),
           a01$ Df == 3:4,
 	  a01$`Chi Df`[2] == 1)
+
+set.seed(2)
+system.time(
+simR <- lapply(1:100,  function(i) {
+    cat(i,"", if(i %% 20 == 0)"\n")
+    dd <- rPoisGLMMi(10 + rpois(1, lambda=3),
+                     16 + rpois(1, lambda=5))
+    m0 <- glmer(y~x + (1|f),           family="poisson", data=dd)
+    m1 <- glmer(y~x + (1|f) + (1|obs), family="poisson", data=dd)
+    a01 <- anova(m0, m1)
+    stopifnot(a01$ Df == 3:4,
+              a01$`Chi Df`[2] == 1)
+    list(chk0 = chkFixed(m0, true.coef = c(1,2)),
+         chk1 = chkFixed(m1, true.coef = c(1,2)),
+         chisq= a01$Chisq[2],
+         lLik = a01$logLik)
+}))
+##  36.575   0.004  36.910  {for 100 sim}
+
+## m0 is the wrong model, so we don't expect much here:
+table(unlist(lapply(simR, `[[`, "chk0")))
+
+## If the fixed effect estimates where unbiased and the standard errors correct,
+## and N(0,sigma^2) instead of t_{nu} good enough for the fixed effects,
+## the confidence interval should contain the true coef in ~95 out of 100:
+table(unlist(lapply(simR, `[[`, "chk1")))
+
+## The tests are all highly significantly in favor of  m1 :
+summary(chi2s <- sapply(simR, `[[`, "chisq"))
+##  Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+## 158.9   439.0   611.4   698.2   864.3  2268.0
+stopifnot(chi2s > qchisq(0.9999, df = 1))
 
 
 showProc.time()
