@@ -783,13 +783,13 @@ varpr <- function (x) {
     x
 }
 
-## Create an approximating density from a profile object
-##
-## @title Approximate densities from profiles
-## @param pr a profile object
-## @param npts number of points at which to evaluate the density
-## @param upper upper bound on cumulative for a cutoff
-## @return a data frame
+##' Create an approximating density from a profile object
+##'
+##' @title Approximate densities from profiles
+##' @param pr a profile object
+##' @param npts number of points at which to evaluate the density
+##' @param upper upper bound on cumulative for a cutoff
+##' @return a data frame
 dens <- function(pr, npts=201, upper=0.999) {
     stopifnot(inherits(pr, "thpr"))
     npts <- as.integer(npts)

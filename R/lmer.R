@@ -85,29 +85,29 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
     mf <- mc <- match.call()
     ## '...' handling up front, safe-guarding against typos ("familiy") :
     if(length(l... <- list(...))) {
-	if (!is.null(l...$family)) {  # call glmer if family specified
-	    mc[[1]] <- as.name("glmer")
-	    return(eval(mc, parent.frame()) )
-	}
-	## Check for method argument which is no longer used
-	if (!is.null(method <- l...$method)) {
-	    msg <- paste("Argument", sQuote("method"), "is deprecated.")
-	    if (match.arg(method, c("Laplace", "AGQ")) == "Laplace") {
-		warning(msg)
-		l... <- l...[names(l...) != "method"]
-	    } else stop(msg)
-	}
-	if(length(l...))
-	    warning("extra argument(s) ",
+        if (!is.null(l...$family)) {  # call glmer if family specified
+            mc[[1]] <- as.name("glmer")
+            return(eval(mc, parent.frame()) )
+        }
+        ## Check for method argument which is no longer used
+        if (!is.null(method <- l...$method)) {
+            msg <- paste("Argument", sQuote("method"), "is deprecated.")
+            if (match.arg(method, c("Laplace", "AGQ")) == "Laplace") {
+                warning(msg)
+                l... <- l...[names(l...) != "method"]
+            } else stop(msg)
+        }
+        if(length(l...))
+            warning("extra argument(s) ",
                     paste(sQuote(names(l...)), collapse=", "),
-		    " disregarded")
+                    " disregarded")
     }
 
     stopifnot(length(formula <- as.formula(formula)) == 3)
     if (missing(data)) data <- environment(formula)
-					# evaluate and install the model frame :
+                                        # evaluate and install the model frame :
     m <- match(c("data", "subset", "weights", "na.action", "offset"),
-	       names(mf), 0)
+               names(mf), 0)
     mf <- mf[c(1, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1]] <- as.name("model.frame")
@@ -115,17 +115,17 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
     environment(fr.form) <- environment(formula)
     mf$formula <- fr.form
     fr <- eval(mf, parent.frame())
-    					# random effects and terms modules
+                                        # random effects and terms modules
     reTrms <- mkReTrms(findbars(formula[[3]]), fr)
     if (any(unlist(lapply(reTrms$flist, nlevels)) >= nrow(fr)))
-	stop("number of levels of each grouping factor must be less than number of obs")
+        stop("number of levels of each grouping factor must be less than number of obs")
     ## fixed-effects model matrix X - remove random effects from formula:
     form <- formula
     form[[3]] <- if(is.null(nb <- nobars(form[[3]]))) 1 else nb
     X <- model.matrix(form, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     p <- ncol(X)
     if ((qrX <- qr(X))$rank < p)
-	stop(gettextf("rank of X = %d < ncol(X) = %d", qrX$rank, p))
+        stop(gettextf("rank of X = %d < ncol(X) = %d", qrX$rank, p))
     rho <- new.env(parent=parent.env(environment()))
     rho$pp <- do.call(merPredD$new, c(reTrms[c("Zt","theta","Lambdat","Lind")], n=nrow(X), list(X=X)))
     rho$resp <- mkRespMod(fr, if(REML) p else 0L)
@@ -264,45 +264,45 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
                   control = list(), start = NULL, verbose = 0L, nAGQ = 1L,
                   compDev = TRUE, subset, weights, na.action, offset,
                   contrasts = NULL, mustart, etastart, devFunOnly = FALSE,
-                  tolPwrss = 1e-10, optimizer=c("bobyqa","Nelder_Mead"), ...)
+                  tolPwrss = 1e-7, optimizer=c("bobyqa","Nelder_Mead"), ...)
 {
     verbose <- as.integer(verbose)
     mf <- mc <- match.call()
     if (missing(family)) { ## divert using lmer()
-	mc[[1]] <- as.name("lmer")
-	return(eval(mc, parent.frame()))
+        mc[[1]] <- as.name("lmer")
+        return(eval(mc, parent.frame()))
     }
 ### '...' handling up front, safe-guarding against typos ("familiy") :
     if(length(l... <- list(...))) {
-	## Check for invalid specifications
-	if (!is.null(method <- list(...)$method)) {
-	    msg <- paste("Argument", sQuote("method"),
-			 "is deprecated.\nUse", sQuote("nAGQ"),
-			 "to choose AGQ.  PQL is not available.")
-	    if (match.arg(method, c("Laplace", "AGQ")) == "Laplace") {
-		warning(msg)
-		l... <- l...[names(l...) != "method"]
-	    } else stop(msg)
-	}
-	if(length(l...))
-          warning("extra argument(s) ",
-                  paste(sQuote(names(l...)), collapse=", "),
-                  " disregarded")
+        ## Check for invalid specifications
+        if (!is.null(method <- list(...)$method)) {
+            msg <- paste("Argument", sQuote("method"),
+                         "is deprecated.\nUse", sQuote("nAGQ"),
+                         "to choose AGQ.  PQL is not available.")
+            if (match.arg(method, c("Laplace", "AGQ")) == "Laplace") {
+                warning(msg)
+                l... <- l...[names(l...) != "method"]
+            } else stop(msg)
+        }
+        if(length(l...))
+            warning("extra argument(s) ",
+                    paste(sQuote(names(l...)), collapse=", "),
+                    " disregarded")
     }
     if(is.character(family))
-	family <- get(family, mode = "function", envir = parent.frame(2))
+        family <- get(family, mode = "function", envir = parent.frame(2))
     if(is.function(family)) family <- family()
     if (family$family %in% c("quasibinomial", "quasipoisson", "quasi"))
-	stop('"quasi" families cannot be used in glmer')
+        stop('"quasi" families cannot be used in glmer')
 
     stopifnot(length(nAGQ <- as.integer(nAGQ)) == 1L,
               nAGQ >= 0L,
               nAGQ <= 25L,
               length(formula <- as.formula(formula)) == 3)
     if (missing(data)) data <- environment(formula)
-					# evaluate and install the model frame :
+                                        # evaluate and install the model frame :
     m <- match(c("data", "subset", "weights", "na.action", "offset",
-		 "mustart", "etastart"), names(mf), 0)
+                 "mustart", "etastart"), names(mf), 0)
     mf <- mf[c(1, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1]] <- as.name("model.frame")
@@ -310,7 +310,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     environment(fr.form) <- environment(formula)
     mf$formula <- fr.form
     fr <- eval(mf, parent.frame())
-					# random-effects module
+                                        # random-effects module
     reTrms <- mkReTrms(findbars(formula[[3]]), fr)
     ## fixed-effects model matrix X - remove random parts from formula:
     form <- formula
@@ -320,56 +320,57 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     rho <- as.environment(list(verbose=verbose, tolPwrss=tolPwrss))
     parent.env(rho) <- parent.frame()
     rho$pp <- do.call(merPredD$new, c(reTrms[c("Zt","theta","Lambdat","Lind")], n=nrow(X), list(X=X)))
-					# response module
+                                        # response module
     rho$resp <- mkRespMod(fr, family=family) ## , X=X)
-					# initial step from working response
-    if (compDev) {
-	.Call(glmerWrkIter, rho$pp$ptr(), rho$resp$ptr())
-	lapply(1:3, function(n).Call(glmerPwrssUpdate, rho$pp$ptr(), rho$resp$ptr(), verbose, FALSE, tolPwrss))
-    } else {
-        rho$pp$updateXwts(rho$resp$sqrtWrkWt())
-        rho$pp$updateDecomp()
-        rho$pp$updateRes(rho$resp$wrkResp())
-        rho$pp$solve()
-        rho$resp$updateMu(rho$pp$linPred(1))	# full increment
-        rho$resp$updateWts()
-        rho$pp$installPars(1)
-        lapply(1:3, function(n) pwrssUpdate(rho$pp, rho$resp, verbose, tol=tolPwrss))
-    }
+                                        # initial step from working response
+    pwrssUpdate(rho$pp, rho$resp, tol=tolPwrss)
 
-    rho$u0 <- rho$pp$u0
-    rho$beta0 <- rho$pp$beta0
+    rho$lp0 <- rho$pp$linPred(1)
+    rho$pwrssUpdate <- pwrssUpdate
     rho$lower <- reTrms$lower
-
     parent.env(rho) <- parent.frame()
-    devfun <- mkdevfun(rho, 0L) # deviance as a function of theta only
+    devfun <- function(theta) {
+        pp$setTheta(theta)
+        ## for consistency start from known mu and weights
+        resp$updateMu(lp0)              
+        pwrssUpdate(pp, resp, tol=1e-7)
+    }
+    environment(devfun) <- rho
     if (devFunOnly && !nAGQ) return(devfun)
 
     if (length(optimizer)==1) {
-       optimizer <- replicate(2,optimizer)
-     }
+        optimizer <- replicate(2,optimizer)
+    }
     opt <- optwrap(optimizer[[1]],devfun,rho$pp$theta, rho$lower,
                    control=control, rho=rho,
                    adj=FALSE, verbose=verbose)
-
     rho$nAGQ <- nAGQ
     if (nAGQ > 0L) {
-        rho$lower <- c(rho$lower, rep.int(-Inf, length(rho$beta0)))
-        rho$u0    <- rho$pp$u0
-        rho$beta0 <- rho$pp$beta0
+        rho$lower <- c(rho$lower, rep.int(-Inf, length(rho$pp$beta0)))
+        rho$lp0 <- rho$pp$linPred(1)
         rho$dpars <- seq_along(rho$pp$theta)
+        rho$baseOffset <- rho$resp$offset + 0 # forcing a copy (!)
         if (nAGQ > 1L) {
             if (length(reTrms$flist) != 1L || length(reTrms$cnms[[1]]) != 1L)
                 stop("nAGQ > 1 is only available for models with a single, scalar random-effects term")
             rho$fac <- reTrms$flist[[1]]
+            stop("nAGQ > 1 not yet written")
         }
-        devfun <- mkdevfun(rho, nAGQ)
+        devfun <- function(pars) {
+            resp$updateMu(lp0)
+            pp$setTheta(as.double(pars[dpars])) # initial pars are theta
+            beta0 <- as.numeric(pars[-dpars]) # trailing pars are beta
+            pp$setBeta0(beta0)
+            resp$setOffset(baseOffset + pp$X %*% beta0)
+            pwrssUpdate(pp, resp, tol=tolPwrss, uOnly=TRUE)
+        }
+        environment(devfun) <- rho
         if (devFunOnly) return(devfun)
 
-        opt <- optwrap(optimizer[[2]],devfun,c(rho$pp$theta, rho$beta0),
+        opt <- optwrap(optimizer[[2]],devfun,c(rho$pp$theta, rho$pp$delb),
                        rho$lower, control=control, rho=rho,
                        adj=TRUE, verbose=verbose)
-      }
+    }
 
     mkMerMod(environment(devfun), opt, reTrms, fr, mc)
 }## {glmer}
@@ -409,7 +410,7 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
 {
     vals <- nlformula(mc <- match.call())
     if ((qrX <- qr(X <- vals$X))$rank < (p <- ncol(X)))
-	stop(gettextf("rank of X = %d < ncol(X) = %d", qrX$rank, p))
+        stop(gettextf("rank of X = %d < ncol(X) = %d", qrX$rank, p))
     rho <- list2env(list(verbose=verbose,
                          tolPwrss=0.001, # this is reset to the tolPwrss argument's value later
                          resp=vals$resp,
@@ -430,7 +431,7 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
     rho$tolPwrss <- tolPwrss # Resetting this is intentional. The initial optimization is coarse.
 
     if (length(optimizer)==1) {
-      optimizer <- replicate(2,optimizer)
+        optimizer <- replicate(2,optimizer)
     }
 
     opt <- optwrap(optimizer[[1]],devfun, rho$pp$theta, rho$lower,
@@ -454,7 +455,7 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
                        adj=TRUE, verbose=verbose)
 
 
-      }
+    }
     mkMerMod(environment(devfun), opt, vals$reTrms, vals$frame, mc)
 }## {nlmer}
 
@@ -490,15 +491,14 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
 ##' minqa::bobyqa(1, dd, 0)
 ##'
 mkdevfun <- function(rho, nAGQ=1L) {
-  ## FIXME: should nAGQ be automatically embedded in rho?
+    ## FIXME: should nAGQ be automatically embedded in rho?
     stopifnot(is.environment(rho), is(rho$resp, "lmResp"))
     ff <- NULL
     if (is(rho$resp, "lmerResp")) {
-      rho$lmer_Deviance <- lmer_Deviance
-      ff <- function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))
+        rho$lmer_Deviance <- lmer_Deviance
+        ff <- function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))
     } else if (is(rho$resp, "glmResp")) {
         if (nAGQ < 2L) {
-            rho$glmerLaplace <- glmerLaplace
             ff <- switch(nAGQ + 1L,
                          function(theta)
                          .Call(glmerLaplace, pp$ptr(), resp$ptr(), as.double(theta),
@@ -567,19 +567,34 @@ stepFac <- function(pp, resp, verbose, maxSteps = 10) {
     stop("step factor reduced below ",signif(2^(-maxSteps),2)," without reducing pwrss")
 }
 
-pwrssUpdate <- function(pp, resp, verbose, uOnly=FALSE, tol, maxSteps = 10) {
-    stopifnot(is.numeric(tol), tol > 0)
+RglmerWrkIter <- function(pp, resp, uOnly=FALSE) {
+    pp$updateXwts(resp$sqrtWrkWt())
+    pp$updateDecomp()
+    pp$updateRes(resp$wtWrkResp())
+    if (uOnly) pp$solveU() else pp$solve()
+    resp$updateMu(pp$linPred(1))	# full increment
+    resp$resDev() + pp$sqrL(1)
+}
+
+pwrssUpdate <- function(pp, resp, tol, uOnly=FALSE) {
+    oldpdev <- .Machine$double.xmax
     repeat {
-	resp$updateMu(pp$linPred(0))
-	resp$updateWts()
-        pp$updateXwts(resp$sqrtXwt)
-        pp$updateDecomp()
-        pp$updateRes(resp$wtres)
-        if (uOnly) pp$solveU() else pp$solve()
-	if ((pp$CcNumer())/(resp$wrss() + pp$sqrL(0)) < tol)
-	    break
-	stepFac(pp, resp, verbose, maxSteps=maxSteps)
+        pdev <- RglmerWrkIter(pp, resp, uOnly)
+        cat(sprintf("uOnly: %d, theta = %g, oldpdev = %g, pdev = %g\n",
+                    uOnly, pp$theta[1], oldpdev, pdev))
+        ## check convergence first so small increases don't trigger errors
+        if (abs((oldpdev - pdev) / pdev) < tol)
+            break
+### FIXME: Replace the stop by step-halving
+        if (pdev > oldpdev) {
+            stop("PIRLS step failed")
+        }
+        oldpdev <- pdev
     }
+    value <- resp$Laplace(pp$ldL2(), 0., pp$sqrL(1))
+    cat(sprintf("Laplace approximation (using GLM deviance, not drsum) = %g\n",
+                value))
+    value
 }
 
 ## create a deviance evaluation function that uses the sigma parameters

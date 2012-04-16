@@ -90,10 +90,11 @@ namespace lme4 {
 
 	Eigen::ArrayXd   devResid() const;
 	Eigen::ArrayXd      muEta() const;
-        Eigen::VectorXd sqrtWrkWt() const;
+        Eigen::ArrayXd  sqrtWrkWt() const;
 	Eigen::ArrayXd   variance() const;
-	Eigen::VectorXd wrkResids() const;
-	Eigen::VectorXd   wrkResp() const;
+	Eigen::ArrayXd  wrkResids() const;
+	Eigen::ArrayXd    wrkResp() const;
+	Eigen::ArrayXd  wtWrkResp() const;
 
 	const MVec&           eta() const {return d_eta;}
 	const MVec&             n() const {return d_n;}

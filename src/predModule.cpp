@@ -185,16 +185,16 @@ namespace lme4 {
 	return d_CcNumer;
     }
 
-    void merPredD::updateXwts(const VectorXd& sqrtXwt) {
+    void merPredD::updateXwts(const ArrayXd& sqrtXwt) {
 	if (d_Xwts.size() != sqrtXwt.size())
 	    throw invalid_argument("updateXwts: dimension mismatch");
 	std::copy(sqrtXwt.data(), sqrtXwt.data() + sqrtXwt.size(), d_Xwts.data());
 	if (sqrtXwt.size() == d_V.rows()) { // W is diagonal
-	    d_V              = sqrtXwt.asDiagonal() * d_X;
+	    d_V              = d_Xwts.asDiagonal() * d_X;
 	    for (int j = 0; j < d_N; ++j)
 		for (MSpMatrixd::InnerIterator Utj(d_Ut, j), Ztj(d_Zt, j);
 		     Utj && Ztj; ++Utj, ++Ztj)
-		    Utj.valueRef() = Ztj.value() * sqrtXwt.data()[j];
+		    Utj.valueRef() = Ztj.value() * d_Xwts.data()[j];
 	} else {
 	    SpMatrixd      W(d_V.rows(), sqrtXwt.size());
 	    const double *pt = sqrtXwt.data();

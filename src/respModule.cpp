@@ -124,16 +124,20 @@ namespace lme4 {
 	return d_fam.variance(d_mu);
     }
 
-    VectorXd glmResp::wrkResids() const {
+    ArrayXd glmResp::wrkResids() const {
 	return (d_y - d_mu).array() / muEta();
     }
 
-    VectorXd glmResp::wrkResp() const {
-	return (d_eta - d_offset) + wrkResids();
+    ArrayXd glmResp::wrkResp() const {
+	return (d_eta - d_offset).array() + wrkResids();
     }
 
-    VectorXd glmResp::sqrtWrkWt() const {
-	return muEta().array() * (d_weights.array() / variance().array()).sqrt();
+    ArrayXd glmResp::wtWrkResp() const {
+	return wrkResp() * sqrtWrkWt();
+    }
+
+    ArrayXd glmResp::sqrtWrkWt() const {
+	return muEta() * (d_weights.array() / variance()).sqrt();
     }
 
     double glmResp::Laplace(double ldL2, double ldRX2, double sqrL) const {

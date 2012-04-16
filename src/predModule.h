@@ -13,6 +13,7 @@
 
 namespace lme4 {
 
+    using Eigen::ArrayXd;
     using Eigen::LLT;
     using Eigen::MatrixXd;
     using Eigen::VectorXd;
@@ -92,7 +93,7 @@ namespace lme4 {
 	void              updateL();
 	void         updateLamtUt();
 	void            updateRes(const VectorXd&);
-	void           updateXwts(const VectorXd&);
+	void           updateXwts(const  ArrayXd&);
     };
 }
 

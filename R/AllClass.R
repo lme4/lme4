@@ -186,6 +186,10 @@ merPredD <-
                          }
                          Ptr
                      },
+                     setBeta0     = function(beta0) {
+                         'install a new value of theta'
+                         .Call(merPredDsetBeta0, ptr(), as.numeric(beta0))
+                     },
                      setTheta     = function(theta) {
                          'install a new value of theta'
                          .Call(merPredDsetTheta, ptr(), as.numeric(theta))
@@ -530,6 +534,10 @@ glmResp <-
                      variance = function() {
                          'returns the vector of variances'
                          .Call(glm_variance, ptr())
+                     },
+                     wtWrkResp = function() {
+                         'returns the vector of weighted working responses'
+                         .Call(glm_wtWrkResp, ptr())
                      },
                      wrkResids = function() {
                          'returns the vector of working residuals'

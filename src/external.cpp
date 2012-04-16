@@ -167,6 +167,12 @@ extern "C" {
 	END_RCPP;
     }
 
+    SEXP glm_wtWrkResp(SEXP ptr_) {
+	BEGIN_RCPP;
+	return wrap(XPtr<glmResp>(ptr_)->wtWrkResp());
+	END_RCPP;
+    }
+
     SEXP glm_Laplace(SEXP ptr_, SEXP ldL2, SEXP ldRX2, SEXP sqrL) {
 	BEGIN_RCPP;
 	return ::Rf_ScalarReal(XPtr<glmResp>(ptr_)->Laplace(::Rf_asReal(ldL2),
@@ -344,16 +350,14 @@ extern "C" {
     SEXP glmerWrkIter(SEXP pp_, SEXP rp_) {
 	BEGIN_RCPP;
 	XPtr<glmResp>    rp(rp_);
-	const Eigen::VectorXd   wt(rp->sqrtWrkWt());
 	XPtr<merPredD>   pp(pp_);
-	pp->updateXwts(wt);
+	pp->updateXwts(rp->sqrtWrkWt());
 	pp->updateDecomp();
-	pp->updateRes(rp->wrkResp());
+	pp->updateRes(rp->wtWrkResp());
 	pp->solve();
 	rp->updateMu(pp->linPred(1.));
-	pp->installPars(1.);
 
-	return ::Rf_ScalarReal(rp->updateWts());
+	return ::Rf_ScalarReal(rp->resDev() + pp->sqrL(1.));
 
 	END_RCPP;
     }
@@ -582,6 +586,12 @@ extern "C" {
 	BEGIN_RCPP;
 	XPtr<merPredD>(ptr)->setTheta(as<MVec>(theta));
 	return theta;
+	END_RCPP;
+    }
+
+    SEXP merPredDsetBeta0(SEXP ptr, SEXP beta0) {
+	BEGIN_RCPP;
+	XPtr<merPredD>(ptr)->setBeta0(as<MVec>(beta0));
 	END_RCPP;
     }
 				// getters
@@ -861,6 +871,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(glm_sqrtWrkWt,      1),
     CALLDEF(glm_theta,          1),
     CALLDEF(glm_variance,       1),
+    CALLDEF(glm_wtWrkResp,      1),
     CALLDEF(glm_wrkResids,      1),
     CALLDEF(glm_wrkResp,        1),
 
@@ -913,6 +924,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(merPredDCreate, 17), // generate external pointer
 
     CALLDEF(merPredDsetTheta, 2), // setters
+    CALLDEF(merPredDsetBeta0, 2), 
 
     CALLDEF(merPredDCcNumer, 1), // getters
     CALLDEF(merPredDL, 1),
