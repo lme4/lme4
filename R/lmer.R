@@ -359,9 +359,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
         devfun <- function(pars) {
             resp$updateMu(lp0)
             pp$setTheta(as.double(pars[dpars])) # initial pars are theta
-            beta0 <- as.numeric(pars[-dpars]) # trailing pars are beta
-            pp$setBeta0(beta0)
-            resp$setOffset(baseOffset + pp$X %*% beta0)
+            resp$setOffset(baseOffset + pp$X %*% as.numeric(pars[-dpars]))
             pwrssUpdate(pp, resp, tol=tolPwrss, uOnly=TRUE)
         }
         environment(devfun) <- rho
@@ -371,7 +369,6 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
                        rho$lower, control=control, rho=rho,
                        adj=TRUE, verbose=verbose)
     }
-
     mkMerMod(environment(devfun), opt, reTrms, fr, mc)
 }## {glmer}
 
@@ -580,8 +577,6 @@ pwrssUpdate <- function(pp, resp, tol, uOnly=FALSE) {
     oldpdev <- .Machine$double.xmax
     repeat {
         pdev <- RglmerWrkIter(pp, resp, uOnly)
-        cat(sprintf("uOnly: %d, theta = %g, oldpdev = %g, pdev = %g\n",
-                    uOnly, pp$theta[1], oldpdev, pdev))
         ## check convergence first so small increases don't trigger errors
         if (abs((oldpdev - pdev) / pdev) < tol)
             break
@@ -591,10 +586,7 @@ pwrssUpdate <- function(pp, resp, tol, uOnly=FALSE) {
         }
         oldpdev <- pdev
     }
-    value <- resp$Laplace(pp$ldL2(), 0., pp$sqrL(1))
-    cat(sprintf("Laplace approximation (using GLM deviance, not drsum) = %g\n",
-                value))
-    value
+    resp$Laplace(pp$ldL2(), 0., pp$sqrL(1))
 }
 
 ## create a deviance evaluation function that uses the sigma parameters

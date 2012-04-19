@@ -519,6 +519,11 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc) {
     sqrLenU <- pp$sqrL(fac)
     wrss    <- resp$wrss()
     pwrss   <- wrss + sqrLenU
+    beta    <- pp$beta(fac)
+    if (rcl != "lmerResp") {
+        pars <- opt$par
+        if (length(pars) > length(pp$theta)) beta <- pars[-(seq_along(pp$theta))]
+    }
     cmp <- c(ldL2=pp$ldL2(), ldRX2=pp$ldRX2(), wrss=wrss,
              ussq=sqrLenU, pwrss=pwrss,
              drsum=if (rcl=="glmResp") resp$resDev() else NA,
@@ -530,6 +535,6 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc) {
              tolPwrss=rho$tolPwrss)
     new(switch(rcl, lmerResp="lmerMod", glmResp="glmerMod", nlsResp="nlmerMod"),
         call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
-        Gp=reTrms$Gp, theta=pp$theta, beta=pp$beta(fac), u=pp$u(fac),
+        Gp=reTrms$Gp, theta=pp$theta, beta=beta, u=pp$u(fac),
         lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=resp)
 }
