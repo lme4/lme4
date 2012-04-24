@@ -37,20 +37,43 @@ chkFixed <- function(fm, true.coef, conf.level = 0.95,
 ## now
 #bobyqa(m1e, control = list(iprint = 2L))
 
-m0 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-            family = binomial, data = cbpp, verbose = 2L)
+(m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+             family = binomial, data = cbpp, verbose = 2L)
+## response as a vector of probabilities and usage of argument "weights"
+m1p <- glmer(incidence / size ~ period + (1 | herd), weights = size,
+             family = binomial, data = cbpp, verbose = 2L)
+## Confirm that these are equivalent:
+stopifnot(all.equal(fixef(m1), fixef(m1p), tol = 1e-5),
+          all.equal(ranef(m1), ranef(m1p), tol = 1e-5),
+          TRUE)
+for(m in c(m1, m1p)) {
+    cat("-------\\n\\nCall: ",
+        paste(format(getCall(m)), collapse="\\n"), "\\n")
+    print(logLik(m)); cat("AIC:", AIC(m), "\\n") ; cat("BIC:", BIC(m),"\\n")
+}
+stopifnot(all.equal(logLik(m1), logLik(m1p), tol = 1e-5),
+          all.equal(AIC(m1),    AIC(m1p),    tol = 1e-5),
+          all.equal(BIC(m1),    BIC(m1p),    tol = 1e-5))
 
-m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-            optimizer="bobyqa",
-            family = binomial, data = cbpp, verbose = 2L,
-            control = list(rhobeg=0.2, rhoend=2e-7), tolPwrss=1e-8)
 
+m1b <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+             optimizer="bobyqa",
+             family = binomial, data = cbpp, verbose = 2L,
+             control = list(rhobeg=0.2, rhoend=2e-7), tolPwrss=1e-8)
+
+if(FALSE) { ##_____________ FIXME _____________ not yet nAGQ > 1 ______________
+
+## using nAGQ=9L provides a better evaluation of the deviance
+m.9 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+             family = binomial, data = cbpp, nAGQ = 9)
+
+## check with nAGQ = 25
 m2 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-            family = binomial, data = cbpp, nAGQ=25L)
+            family = binomial, data = cbpp, nAGQ = 25)
 
 ## loosened tolerance on parameters
-stopifnot(is((cm1 <- coef(m2)), "coef.mer"),
-	  dim(cm1$herd) == c(15,4),
+stopifnot(is((cm2 <- coef(m2)), "coef.mer"),
+	  dim(cm2$herd) == c(15,4),
 	  all.equal(fixef(m2),
 ### lme4a [from an Ubuntu 11.10 amd64 system]
                     ### c(-1.39922533406847, -0.991407294757321,
@@ -63,19 +86,22 @@ stopifnot(is((cm1 <- coef(m2)), "coef.mer"),
           ## with bobyqa first (AGQ=0), then
           all.equal(deviance(m2), 101.119749563, tol=1e-9)
 )
+}##_____________ end{FIXME} _____________ not yet nAGQ > 1 ______________
 
-stopifnot(is((cm1 <- coef(m1)), "coef.mer"),
+
+stopifnot(is((cm1 <- coef(m1b)), "coef.mer"),
 	  dim(cm1$herd) == c(15,4),
-	  all.equal(fixef(m1),
+	  all.equal(fixef(m1b),
                     ##  these values are those of "old-lme4":
 		    ## c(-1.39853504914, -0.992334711,
 		    ##   -1.12867541477, -1.58037390498),
                     ## lme4[r 1636], 64-bit ubuntu 11.10:
                     c(-1.3788385, -1.0589543,
                       -1.1936382, -1.6306271),
-		    tol = 1.e-3,
+		    tol = 1e-3,
                     check.attr=FALSE)
 	  )
+## FIXME --- compare m1b  with m1 and m0 ---
 
 
 ## Deviance for the new algorithm is lower, eventually we should change the previous test

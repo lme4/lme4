@@ -49,7 +49,7 @@
 ##'     display.  Default is \code{"none"}.
 ##' @param PBargs a list of additional arguments to the progress bar function.
 ##' @return an object of S3 \code{\link{class}} \code{"boot"}, compatible with
-##'     \pkg{boot} package's \code{boot()} result.
+##'     \pkg{boot} package's \code{\link[boot]{boot}()} result.
 ##' @seealso For inference, including confidence intervals,
 ##'     \code{\link{profile-methods}}.
 ##'

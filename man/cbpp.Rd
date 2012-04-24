@@ -39,28 +39,18 @@
 \examples{
 ## response as a matrix
 (m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-             cbpp, binomial, nAGQ=25L))
+             family = binomial, data = cbpp))
 ## response as a vector of probabilities and usage of argument "weights"
 m1p <- glmer(incidence / size ~ period + (1 | herd), weights = size,
-             cbpp, binomial, nAGQ=25L)
+             family = binomial, data = cbpp)
 ## Confirm that these are equivalent:
 stopifnot(all.equal(fixef(m1), fixef(m1p), tol = 1e-5),
-          all.equal(ranef(m1), ranef(m1p), tol = 1e-5),
-          TRUE)
-## Can this section be moved to a test file?  I don't think it belongs in an example. DB
-for(m in c(m1, m1p)) {
-    cat("-------\\n\\nCall: ",
-        paste(format(getCall(m)), collapse="\\n"), "\\n")
-    print(logLik(m)); cat("AIC:", AIC(m), "\\n") ; cat("BIC:", BIC(m),"\\n")
-}
-stopifnot(all.equal(logLik(m1), logLik(m1p), tol = 1e-5),
-          all.equal(AIC(m1),    AIC(m1p),    tol = 1e-5),
-          all.equal(BIC(m1),    BIC(m1p),    tol = 1e-5))
+          all.equal(ranef(m1), ranef(m1p), tol = 1e-5))
+%% more extensive variations of the above --> ../tests/glmer-1.R
 
 ## GLMM with individual-level variability (accounting for overdispersion)
 cbpp$obs <- 1:nrow(cbpp)
-(m2 <- glmer(cbind(incidence, size - incidence) ~ period +
-    (1 | herd) +  (1|obs),
+(m2 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd) +  (1|obs),
               family = binomial, data = cbpp))
 }
 \keyword{datasets}

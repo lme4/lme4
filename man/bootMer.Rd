@@ -45,8 +45,8 @@
 }
 \value{
   an object of S3 \code{\link{class}} \code{"boot"},
-  compatible with \pkg{boot} package's \code{boot()}
-  result.
+  compatible with \pkg{boot} package's
+  \code{\link[boot]{boot}()} result.
 }
 \description{
   Perform model-based (Semi-)parametric bootstrap for mixed

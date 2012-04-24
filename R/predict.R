@@ -30,7 +30,7 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
                            terms=NULL, type=c("link","response"),
                            allow.new.levels=FALSE, ...) {
     ## FIXME: appropriate names for result vector?
-    if (any(getME(object,"offset")!=0)) stop("offsets not handled yet")  ## FIXME
+    if (any(getME(object,"offset")!=0)) stop("offsets not handled yet")  ## FIXME for glmer()
     type <- match.arg(type)
     if (!is.null(terms)) stop("terms functionality for predict not yet implemented")
     X_orig <- getME(object, "X")
@@ -57,7 +57,7 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
         ##  what's the appropriate test?
         if (is.language(REform)) {
             re <- ranef(object)
-            ## 
+            ##
             ReTrms <- mkReTrms(findbars(REform[[2]]),newdata)
             new_levels <- lapply(newdata[unique(sort(names(ReTrms$cnms)))],levels)
             re_x <- mapply(function(x,n) {
@@ -93,5 +93,5 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
     }
     return(pred)
 }
-  
-    
+
+

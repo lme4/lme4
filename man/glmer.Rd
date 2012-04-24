@@ -6,7 +6,7 @@
     control = list(), start = NULL, verbose = 0L,
     nAGQ = 1L, compDev = TRUE, subset, weights, na.action,
     offset, contrasts = NULL, mustart, etastart,
-    devFunOnly = FALSE, tolPwrss = 1e-10,
+    devFunOnly = FALSE, tolPwrss = 1e-07,
     optimizer = c("bobyqa", "Nelder_Mead"), ...)
 }
 \arguments{
@@ -43,9 +43,9 @@
   parameters only) optimization, while the second will be
   used for the final (random effects plus fixed effect
   parameters) phase. The built-in optimizers are
-  \code{\link{Nelder_Mead}} and \code{\link{bobyqa}} (from
-  the \code{minqa} package; the default is to use
-  \code{\link{bobyqa}} for the first and
+  \code{\link{Nelder_Mead}} and \code{\link[minqa]{bobyqa}}
+  (from the \pkg{minqa} package; the default is to use
+  \code{\link[minqa]{bobyqa}} for the first and
   \code{\link{Nelder_Mead}} for the final phase.  (FIXME:
   simplify if possible!). For difficult model fits we have
   found \code{\link{Nelder_Mead}} to be more reliable but
@@ -62,10 +62,10 @@
   \code{message} (informational message, or explanation of
   convergence failure).  Special provisions are made for
   \code{\link{bobyqa}}, \code{\link{Nelder_Mead}}, and
-  optimizers wrapped in the \code{optimx} package; to use
-  \code{optimx} optimizers (including \code{L-BFGS-B} from
-  base \code{optim} and \code{nlminb}), pass the
-  \code{method} argument to \code{optim} in the
+  optimizers wrapped in the \pkg{optimx} package; to use
+  \pkg{optimx} optimizers (including \code{L-BFGS-B} from
+  base \code{\link{optim}} and \code{\link{nlminb}}), pass
+  the \code{method} argument to \code{optim} in the
   \code{control} argument.}
 
   \item{mustart}{optional starting values on the scale of
@@ -202,15 +202,14 @@ library(lattice)
 xyplot(incidence/size ~ period, group=herd, type="a", data=cbpp)
 (gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
               data = cbpp, family = binomial))
-## using nAGQ=0L only gets close to the optimum
+## using nAGQ=0 only gets close to the optimum
 (gm1a <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-               cbpp, binomial, nAGQ = 0L))
-## using nAGQ=9L provides a better evaluation of the deviance
-(gm1b <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-               cbpp, binomial, nAGQ = 9L))
-## check with nAGQ=25L
-(gm1c <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-               cbpp, binomial, nAGQ = 25L))
+               cbpp, binomial, nAGQ = 0))
+if(FALSE) { ##________ FIXME _______
+## using  nAGQ = 9  provides a better evaluation of the deviance
+(gm1a <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+               cbpp, binomial, nAGQ = 9))
+}#__ end{FIXME} __
 
 ## GLMM with individual-level variability (accounting for overdispersion)
 cbpp$obs <- 1:nrow(cbpp)

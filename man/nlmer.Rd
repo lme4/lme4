@@ -107,9 +107,9 @@
   parameters only) optimization, while the second will be
   used for the final (random effects plus fixed effect
   parameters) phase. The built-in optimizers are
-  \code{\link{Nelder_Mead}} and \code{\link{bobyqa}} (from
-  the \code{minqa} package; the default is to use
-  \code{\link{bobyqa}} for the first and
+  \code{\link{Nelder_Mead}} and \code{\link[minqa]{bobyqa}}
+  (from the \pkg{minqa} package; the default is to use
+  \code{\link[minqa]{bobyqa}} for the first and
   \code{\link{Nelder_Mead}} for the final phase.  (FIXME:
   simplify if possible!). For difficult model fits we have
   found \code{\link{Nelder_Mead}} to be more reliable but
@@ -126,10 +126,10 @@
   \code{message} (informational message, or explanation of
   convergence failure).  Special provisions are made for
   \code{\link{bobyqa}}, \code{\link{Nelder_Mead}}, and
-  optimizers wrapped in the \code{optimx} package; to use
-  \code{optimx} optimizers (including \code{L-BFGS-B} from
-  base \code{optim} and \code{nlminb}), pass the
-  \code{method} argument to \code{optim} in the
+  optimizers wrapped in the \pkg{optimx} package; to use
+  \pkg{optimx} optimizers (including \code{L-BFGS-B} from
+  base \code{\link{optim}} and \code{\link{nlminb}}), pass
+  the \code{method} argument to \code{optim} in the
   \code{control} argument.}
 }
 \description{
