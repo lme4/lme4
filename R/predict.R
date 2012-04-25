@@ -30,7 +30,6 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
                            terms=NULL, type=c("link","response"),
                            allow.new.levels=FALSE, ...) {
     ## FIXME: appropriate names for result vector?
-    if (any(getME(object,"offset")!=0)) stop("offsets not handled yet")  ## FIXME for glmer()
     type <- match.arg(type)
     if (!is.null(terms)) stop("terms functionality for predict not yet implemented")
     X_orig <- getME(object, "X")
@@ -50,6 +49,17 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
             X <- model.matrix(RHS, newdata, contrasts.arg=attr(X_orig,"contrasts"))
         }
         pred <- drop(X %*% fixef(object))
+        ## modified from predict.glm ...
+        offset <- rep(0, nrow(X))
+        tt <- terms(object)
+        ## FIXME:: need to unname()  ?
+        if (!is.null(off.num <- attr(tt, "offset"))) {
+            ## browser()
+            for (i in off.num) offset <- offset + eval(attr(tt,"variables")[[i + 1]], newdata)
+        }
+        if (!is.null(getCall(object)$offset)) 
+            offset <- offset + eval(object$call$offset, newdata)
+        pred <- pred+offset
         if (is.null(REform)) {
             REform <- form_orig[-2]
         }

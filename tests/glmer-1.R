@@ -37,7 +37,7 @@ chkFixed <- function(fm, true.coef, conf.level = 0.95,
 ## now
 #bobyqa(m1e, control = list(iprint = 2L))
 
-(m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
              family = binomial, data = cbpp, verbose = 2L)
 ## response as a vector of probabilities and usage of argument "weights"
 m1p <- glmer(incidence / size ~ period + (1 | herd), weights = size,
