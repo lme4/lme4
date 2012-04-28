@@ -89,19 +89,41 @@ stopifnot(is((cm2 <- coef(m2)), "coef.mer"),
 }##_____________ end{FIXME} _____________ not yet nAGQ > 1 ______________
 
 
+## 32-bit Ubuntu 10.04:
+coef_m1_lme4.0 <- structure(c(-1.39853505102576,
+                         -0.992334712470269, -1.12867541092127, 
+                         -1.58037389566025),
+                       .Names = c("(Intercept)", "period2", "period3", 
+                       "period4"))
+
+## library(glmmADMB)
+## mg <- glmmadmb(cbind(incidence, size - incidence) ~ period + (1 | herd),
+##                family = "binomial", data = cbpp)
+coef_m1_glmmadmb <- structure(c(-1.39853810064827, -0.99233330126975, -1.12867317840779, 
+-1.58031150854503), .Names = c("(Intercept)", "period2", "period3", 
+"period4"))
+
+## library(glmmML)
+## mm <- glmmML(cbind(incidence, size - incidence) ~ period,
+##              cluster=herd,
+##             family = "binomial", data = cbpp)
+coef_m1_glmmML <- structure(c(-1.39853234657711, -0.992336901732793, -1.12867036466201, 
+-1.58030977686564), .Names = c("(Intercept)", "period2", "period3", 
+"period4"))
+
+## lme4[r 1636], 64-bit ubuntu 11.10:
+## c(-1.3788385, -1.0589543,
+##                      -1.1936382, -1.6306271),
+
 stopifnot(is((cm1 <- coef(m1b)), "coef.mer"),
 	  dim(cm1$herd) == c(15,4),
-	  all.equal(fixef(m1b),
-                    ##  these values are those of "old-lme4":
-		    ## c(-1.39853504914, -0.992334711,
-		    ##   -1.12867541477, -1.58037390498),
-                    ## lme4[r 1636], 64-bit ubuntu 11.10:
-                    c(-1.3788385, -1.0589543,
-                      -1.1936382, -1.6306271),
-		    tol = 1e-3,
-                    check.attr=FALSE)
+          all.equal(fixef(m1b),fixef(m1),tol=4e-5),
+	  is.all.equal4(fixef(m1b),
+                        coef_m1_glmmadmb,
+                        coef_m1_lme4.0,
+                        coef_m1_glmmML,
+		    tol = 4e-5)
 	  )
-## FIXME --- compare m1b  with m1 and m0 ---
 
 
 ## Deviance for the new algorithm is lower, eventually we should change the previous test
@@ -109,7 +131,6 @@ stopifnot(is((cm1 <- coef(m1b)), "coef.mer"),
 
 showProc.time() #
 
-## FIXME -- non-convegence!!
 if (require('MASS', quietly = TRUE)) {
     bacteria$wk2 <- bacteria$week > 2
     contrasts(bacteria$trt) <-
@@ -117,9 +138,6 @@ if (require('MASS', quietly = TRUE)) {
                   dimnames = list(NULL, c("diag", "encourage")))
     print(fm5 <- glmer(y ~ trt + wk2 + (1|ID),
                        data=bacteria, family=binomial))
-    ## again *fails* (lme4[r 1636], 64-bit ubuntu 11.10)
-    ## used to fail with nlminb() : stuck at theta=1
-
     showProc.time() #
 
     stopifnot(
@@ -196,11 +214,12 @@ stopifnot(isTRUE(chkFixed(m0, true.coef = c(1,2))),
           isTRUE(chkFixed(m1, true.coef = c(1,2))))
 (a01 <- anova(m0, m1))
 
-stopifnot(all.equal(a01$Chisq[2], 554.334056, tol=1e-6),
+stopifnot(all.equal(a01$Chisq[2], 554.334056, tol=1e-5),
 	  all.equal(a01$logLik, c(-1073.77193, -796.604902), tol=1e-6),
           a01$ Df == 3:4,
 	  a01$`Chi Df`[2] == 1)
 
+## FIXME: why do we need to run this sim 100 times??
 set.seed(2)
 system.time(
 simR <- lapply(1:100,  function(i) {
