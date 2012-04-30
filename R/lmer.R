@@ -316,23 +316,28 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     form[[3]] <- if(is.null(nb <- nobars(form[[3]]))) 1 else nb
     X <- model.matrix(form, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     p <- ncol(X)
-    rho <- as.environment(list(verbose=verbose, tolPwrss=tolPwrss))
+    
+    ## Environment for deviance function.  For the optimizers the
+    ## deviance function must be a simple function of a numeric
+    ## parameter.  We put all the other information in the
+    ## environment rho which is assigned as the environment of the
+    ## deviance function. 
+    rho             <- as.environment(list(verbose=verbose, tolPwrss=tolPwrss))
     parent.env(rho) <- parent.frame()
-    rho$pp <- do.call(merPredD$new, c(reTrms[c("Zt","theta","Lambdat","Lind")], n=nrow(X), list(X=X)))
-                                        # response module
-    rho$resp <- mkRespMod(fr, family=family) ## , X=X)
-                                        # initial step from working response
-    pwrssUpdate(rho$pp, rho$resp, tol=tolPwrss)
-
-    rho$lp0 <- rho$pp$linPred(1)
-    rho$pwrssUpdate <- pwrssUpdate
-    rho$lower <- reTrms$lower
-    parent.env(rho) <- parent.frame()
+    rho$pp          <- do.call(merPredD$new,
+                               c(reTrms[c("Zt","theta","Lambdat","Lind")],
+                                 n=nrow(X), list(X=X)))
+    rho$resp        <- mkRespMod(fr, family=family)
+                                        # initialize (from mustart)
+    glmerPwrssUpdate(rho$pp, rho$resp, tolPwrss, GHrule(0L), compDev)
+    rho$lp0         <- rho$pp$linPred(1) # each pwrss opt begins at this eta
+    rho$pwrssUpdate <- glmerPwrssUpdate
+    rho$compDev     <- compDev
+    rho$lower       <- reTrms$lower     # not needed in rho?
     devfun <- function(theta) {
-        pp$setTheta(theta)
-        ## for consistency start from known mu and weights
         resp$updateMu(lp0)
-        pwrssUpdate(pp, resp, tol=1e-7)
+        pp$setTheta(theta)
+        pwrssUpdate(pp, resp, 1e-7, GHrule(0L), compDev)
     }
     environment(devfun) <- rho
     if (devFunOnly && !nAGQ) return(devfun)
@@ -343,23 +348,22 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     opt <- optwrap(optimizer[[1]],devfun,rho$pp$theta, rho$lower,
                    control=control, rho=rho,
                    adj=FALSE, verbose=verbose)
-    rho$nAGQ <- nAGQ
     if (nAGQ > 0L) {
-        rho$lower <- c(rho$lower, rep.int(-Inf, length(rho$pp$beta0)))
-        rho$lp0 <- rho$pp$linPred(1)
-        rho$dpars <- seq_along(rho$pp$theta)
+        rho$lower      <- c(rho$lower, rep.int(-Inf, length(rho$pp$beta0)))
+        rho$lp0        <- rho$pp$linPred(1)
+        rho$dpars      <- seq_along(rho$pp$theta)
         rho$baseOffset <- rho$resp$offset + 0 # forcing a copy (!)
+        rho$GQmat      <- GHrule(nAGQ)
+        rho$fac        <- reTrms$flist[[1]]
         if (nAGQ > 1L) {
             if (length(reTrms$flist) != 1L || length(reTrms$cnms[[1]]) != 1L)
                 stop("nAGQ > 1 is only available for models with a single, scalar random-effects term")
-            rho$fac <- reTrms$flist[[1]]
-            stop("nAGQ > 1 not yet written")
         }
         devfun <- function(pars) {
             resp$updateMu(lp0)
-            pp$setTheta(as.double(pars[dpars])) # initial pars are theta
+            pp$setTheta(as.double(pars[dpars])) # theta is first part of pars
             resp$setOffset(baseOffset + pp$X %*% as.numeric(pars[-dpars]))
-            pwrssUpdate(pp, resp, tol=tolPwrss, uOnly=TRUE)
+            pwrssUpdate(pp, resp, tolPwrss, GQmat, compDev, fac)
         }
         environment(devfun) <- rho
         if (devFunOnly) return(devfun)
@@ -504,7 +508,7 @@ mkdevfun <- function(rho, nAGQ=1L) {
                                as.double(u0), as.double(pars[-dpars]), verbose, TRUE, tolPwrss))
         } else {
             rho$glmerAGQ <- glmerAGQ
-            rho$GQmat <- GHrule(nAGQ)
+            rho$GQmat    <- GHrule(nAGQ)
             ff <- function(pars)
                 .Call(glmerAGQ, pp$ptr(), resp$ptr(), fac, GQmat, pars[dpars],
                       u0, pars[-dpars], tolPwrss)
@@ -521,7 +525,7 @@ mkdevfun <- function(rho, nAGQ=1L) {
                                pars[-dpars], verbose, TRUE, tolPwrss))
         } else {
             rho$nlmerAGQ <- nlmerAGQ
-            rho$GQmat <- GHrule(nAGQ)
+            rho$GQmat    <- GHrule(nAGQ)
             ff <- function(pars)
                 .Call(nlmerAGQ, pp$ptr(), resp$ptr(), fac, GQmat, pars[dpars],
                       u0, pars[-dpars], tolPwrss)
@@ -546,22 +550,22 @@ mkdevfun <- function(rho, nAGQ=1L) {
 ## @note Typically all this is done in the C++ code.
 ##     The R code is for debugging and comparisons of
 ##     results.
-stepFac <- function(pp, resp, verbose, maxSteps = 10) {
-    stopifnot(is.numeric(maxSteps), maxSteps >= 2)
-    pwrss0 <- resp$wrss() + pp$sqrL(0)
-    for (fac in 2^(-(0:maxSteps))) {
-	wrss <- resp$updateMu(pp$linPred(fac))
-	pwrss1 <- wrss + pp$sqrL(fac)
-	if (verbose > 3L)
-	    cat(sprintf("pwrss0=%10g, diff=%10g, fac=%6.4f\n",
-			pwrss0, pwrss0 - pwrss1, fac))
-	if (pwrss1 <= pwrss0) {
-	    pp$installPars(fac)
-	    return(NULL)
-	}
-    }
-    stop("step factor reduced below ",signif(2^(-maxSteps),2)," without reducing pwrss")
-}
+## stepFac <- function(pp, resp, verbose, maxSteps = 10) {
+##     stopifnot(is.numeric(maxSteps), maxSteps >= 2)
+##     pwrss0 <- resp$wrss() + pp$sqrL(0)
+##     for (fac in 2^(-(0:maxSteps))) {
+## 	wrss <- resp$updateMu(pp$linPred(fac))
+## 	pwrss1 <- wrss + pp$sqrL(fac)
+## 	if (verbose > 3L)
+## 	    cat(sprintf("pwrss0=%10g, diff=%10g, fac=%6.4f\n",
+## 			pwrss0, pwrss0 - pwrss1, fac))
+## 	if (pwrss1 <= pwrss0) {
+## 	    pp$installPars(fac)
+## 	    return(NULL)
+## 	}
+##     }
+##     stop("step factor reduced below ",signif(2^(-maxSteps),2)," without reducing pwrss")
+## }
 
 RglmerWrkIter <- function(pp, resp, uOnly=FALSE) {
     pp$updateXwts(resp$sqrtWrkWt())
@@ -572,7 +576,13 @@ RglmerWrkIter <- function(pp, resp, uOnly=FALSE) {
     resp$resDev() + pp$sqrL(1)
 }
 
-pwrssUpdate <- function(pp, resp, tol, uOnly=FALSE) {
+glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, fac) {
+    nAGQ <- nrow(GQmat)
+    if (compDev) {
+        if (nAGQ < 2L)
+            return(.Call(glmerLaplace, pp$ptr(), resp$ptr(), nAGQ, tol))
+        return(.Call(glmerAGQ, pp$ptr(), resp$ptr(), tol, GQmat, fac))
+    }
     oldpdev <- .Machine$double.xmax
     repeat {
         pdev <- RglmerWrkIter(pp, resp, uOnly)
