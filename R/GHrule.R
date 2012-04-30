@@ -23,8 +23,12 @@
 ##' @export
 GHrule <- function (ord, asMatrix=TRUE) {
     stopifnot(length(ord) == 1,
-              (ord <- as.integer(ord)) > 0L,
+              (ord <- as.integer(ord)) >= 0L,
               ord < 26L)
+    if (ord == 0L) {
+        if (asMatrix) return(matrix(0, nrow=0L, ncol=3L))
+        stop ("combination of ord==0 and asMatrix==TRUE not implemented")
+    }
     fr <- as.data.frame(switch(ord,
            list(z = 0, w = 1),
            list(z = 1, w = 0.5),

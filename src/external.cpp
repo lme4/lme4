@@ -33,11 +33,11 @@ extern "C" {
 
     using       glm::glmFamily;
 
-    using lme4::glmResp;
-    using lme4::lmResp;
-    using lme4::lmerResp;
-    using lme4::merPredD;
-    using lme4::nlsResp;
+    using      lme4::glmResp;
+    using      lme4::lmResp;
+    using      lme4::lmerResp;
+    using      lme4::merPredD;
+    using      lme4::nlsResp;
 
     using optimizer::Golden;
     using optimizer::Nelder_Mead;
@@ -70,7 +70,6 @@ extern "C" {
 	return wrap(Eigen::SimdInstructionSetsInUse());
 	END_RCPP;
     }
-
 
     // generalized linear model (and generalized linear mixed model) response
 
@@ -254,38 +253,34 @@ extern "C" {
 	return rp->wrss() + (fac ? pp->sqrL(fac) : pp->u0().squaredNorm());
     }
 
-    void stepFac(glmResp *rp, merPredD *pp, int verb) {
-	double pwrss0(pwrss(rp, pp, 0.));
-
-	for (double fac = 1.; fac > 0.001; fac /= 2.) {
-	    double pwrss1 = rp->updateMu(pp->linPred(fac)) + pp->sqrL(fac);
-	    if (verb > 3)
-		::Rprintf("pwrss0=%10g, diff=%10g, fac=%6.4f\n",
-			  pwrss0, pwrss0 - pwrss1, fac);
-	    if (pwrss1 < pwrss0) {
-		pp->installPars(fac);
-		return;
-	    }
-	}
-	throw runtime_error("step factor reduced below 0.001 without reducing pwrss");
+    static double internal_glmerWrkIter(merPredD *pp, glmResp *rp, bool uOnly) {
+	pp->updateXwts(rp->sqrtWrkWt());
+	pp->updateDecomp();
+	pp->updateRes(rp->wtWrkResp());
+	if (uOnly) pp->solveU();
+	else pp->solve();
+	rp->updateMu(pp->linPred(1.));
+	return rp->resDev() + pp->sqrL(1.);
     }
 
-#define MAXITER 30
-    static void pwrssUpdate(glmResp *rp, merPredD *pp, int verb, bool uOnly, double tol) {
-	bool cvgd(false);
-	for (int it=0; it < MAXITER; ++it) {
-	    rp->updateMu(pp->linPred(0.));
-	    rp->updateWts();
-	    pp->updateXwts(rp->sqrtXwt());
-	    pp->updateDecomp();
-	    pp->updateRes(rp->wtres());
-	    if ((uOnly ? pp->solveU() : pp->solve())/pwrss(rp, pp, 0.) < tol) {
-		cvgd = true;
-		break;
-	    }
-	    stepFac(rp, pp, verb);
+    static void pwrssUpdate(glmResp *rp, merPredD *pp, bool uOnly, double tol) {
+	double oldpdev=std::numeric_limits<double>::max();
+	while (true) {
+	    double pdev=internal_glmerWrkIter(pp, rp, uOnly);
+	    if (std::abs((oldpdev - pdev) / pdev) < tol) break;
+	    // FIXME: Replace the throwing of an error by step-halving
+	    if (pdev > oldpdev) throw std::invalid_argument("PIRLS step failed");
+	    oldpdev = pdev;
 	}
-	if (!cvgd) throw runtime_error("pwrss failed to converge in 30 iterations");
+    }
+
+    SEXP glmerLaplace(SEXP pp_, SEXP rp_, SEXP nAGQ_, SEXP tol_) {
+	BEGIN_RCPP;
+	XPtr<glmResp>  rp(rp_);
+	XPtr<merPredD> pp(pp_);
+	pwrssUpdate(rp, pp, ::Rf_asInteger(nAGQ_), ::Rf_asReal(tol_));
+	return ::Rf_ScalarReal(rp->Laplace(pp->ldL2(), pp->ldRX2(), pp->sqrL(1.)));
+	END_RCPP;
     }
 
     static Ar1 devcCol(const MiVec& fac, const Ar1& u, const Ar1& devRes) {
@@ -296,89 +291,58 @@ extern "C" {
 
     static double sqrt2pi = std::sqrt(2. * PI);
 
-    SEXP glmerAGQ(SEXP pp_, SEXP rp_, SEXP fac_, SEXP GQmat_, SEXP theta_,
-		  SEXP u0_, SEXP beta0_, SEXP tol_) {
+    SEXP glmerAGQ(SEXP pp_, SEXP rp_, SEXP tol_, SEXP GQmat_, SEXP fac_) {
 	BEGIN_RCPP;
 	
 	XPtr<glmResp>     rp(rp_);
 	XPtr<merPredD>    pp(pp_);
 	const MiVec      fac(as<MiVec>(fac_));
+	double           tol(::Rf_asReal(tol_));
 	if (fac.size() != rp->mu().size())
 	    throw std::invalid_argument("size of fac must match dimension of response vector");
 
-	pp->setTheta(as<MVec>(theta_));
-	pp->setU0(   as<MVec>(u0_));
-	pp->setBeta0(as<MVec>(beta0_));
-	pwrssUpdate(rp, pp, 0, true, ::Rf_asReal(tol_)); // should be a no-op
-	const Ar1     u0(pp->u0());
-	const Ar1  devc0(devcCol(fac, u0, rp->devResid()));
+	pwrssUpdate(rp, pp, true, tol); // should be a no-op
+	const Ar1      devc0(devcCol(fac, pp->u(1.), rp->devResid()));
 
-	const unsigned int q(u0.size());
+	const unsigned int q(pp->u0().size());
 	if (pp->L().factor()->nzmax !=  q)
 	    throw std::invalid_argument("AGQ only defined for a single scalar random-effects term");
-	const Ar1     sd(MAr1((double*)pp->L().factor()->x, q).inverse());
+	const Ar1         sd(MAr1((double*)pp->L().factor()->x, q).inverse());
 
 	const MMat     GQmat(as<MMat>(GQmat_));
-	Ar1         mult(q);
+	Ar1             mult(q);
 
 	mult.setZero();
 	for (int i = 0; i < GQmat.rows(); ++i) {
-	    double            zknot(GQmat(i, 0));
-	    if (zknot == 0)    mult += Ar1::Constant(q, GQmat(i, 1));
+	    double     zknot(GQmat(i, 0));
+	    if (zknot == 0)
+		mult += Ar1::Constant(q, GQmat(i, 1));
 	    else {
-		const Ar1   u0i(u0 + zknot * sd);
-		pp->setU0(u0i);
-		rp->updateMu(pp->linPred(0.));
-		mult += (-0.5 * (devcCol(fac, u0i, rp->devResid()) - devc0) - GQmat(i, 2)).exp() *
-		    GQmat(i, 1)/sqrt2pi;
+		pp->setU0(zknot * sd); // to be added to current delu 
+		rp->updateMu(pp->linPred(1.));
+		mult += (-0.5 * (devcCol(fac, pp->u(1.), rp->devResid()) - devc0) -
+			 GQmat(i, 2)).exp() * GQmat(i, 1)/sqrt2pi;
 	    }
 	}
-	pp->setU0(u0);		// restore settings from pwrssUpdate;
-	rp->updateMu(pp->linPred(0.));
+	pp->setU0(Vec::Zero(q)); // restore settings from pwrssUpdate;
+	rp->updateMu(pp->linPred(1.));
 	return ::Rf_ScalarReal(devc0.sum() + pp->ldL2() - 2 * std::log(mult.prod()));
 	END_RCPP;
     }
 
-    SEXP glmerPwrssUpdate(SEXP pp_, SEXP rp_, SEXP verb_, SEXP uOnly_, SEXP tol) {
-	BEGIN_RCPP;
-	XPtr<glmResp> rp(rp_);
-	XPtr<merPredD> pp(pp_);
-	pwrssUpdate(rp, pp, ::Rf_asInteger(verb_), ::Rf_asLogical(uOnly_), ::Rf_asReal(tol));
-	END_RCPP;
-    }
+    // SEXP glmerLaplace(SEXP pp_, SEXP rp_, SEXP theta_, SEXP lp0_, SEXP uOnly_, SEXP tol_) {
+    // 	BEGIN_RCPP;
 
-    SEXP glmerWrkIter(SEXP pp_, SEXP rp_) {
-	BEGIN_RCPP;
-	XPtr<glmResp>    rp(rp_);
-	XPtr<merPredD>   pp(pp_);
-	pp->updateXwts(rp->sqrtWrkWt());
-	pp->updateDecomp();
-	pp->updateRes(rp->wtWrkResp());
-	pp->solve();
-	rp->updateMu(pp->linPred(1.));
+    // 	XPtr<glmResp>     rp(rp_);
+    // 	XPtr<merPredD>    pp(pp_);
 
-	return ::Rf_ScalarReal(rp->resDev() + pp->sqrL(1.));
+    // 	pp->setTheta(as<MVec>(theta_));
+    // 	rp->updateMu(as<MVec>(lp0_));
+    // 	pwrssUpdate(rp, pp, ::Rf_asLogical(uOnly_), ::Rf_asReal(tol_));
+    // 	return ::Rf_ScalarReal(rp->Laplace(pp->ldL2(), pp->ldRX2(), pp->sqrL(1.)));
 
-	END_RCPP;
-    }
-
-    SEXP glmerLaplace(SEXP pp_, SEXP rp_, SEXP theta_, SEXP u0_, SEXP beta0_,
-		      SEXP verbose_, SEXP uOnly_, SEXP tol_) {
-	BEGIN_RCPP;
-
-	XPtr<glmResp>     rp(rp_);
-	XPtr<merPredD>    pp(pp_);
-
-	pp->setTheta(as<MVec>(theta_));
-	pp->setU0(as<MVec>(u0_));
-	pp->setBeta0(as<MVec>(beta0_));
-	pwrssUpdate(rp, pp, ::Rf_asInteger(verbose_), ::Rf_asLogical(uOnly_),
-		    ::Rf_asReal(tol_));
-	return ::Rf_ScalarReal(rp->Laplace(pp->ldL2(), pp->ldRX2(), pp->sqrL(1.)));
-
-	END_RCPP;
-    }
-
+    // 	END_RCPP;
+    // }
 
     void nstepFac(nlsResp *rp, merPredD *pp, int verb) {
 	double prss0(pwrss(rp, pp, 0.));
@@ -890,85 +854,83 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(glmFamily_theta,    1),
     CALLDEF(glmFamily_variance, 2),
 
-    CALLDEF(glmerAGQ,           8),
-    CALLDEF(glmerPwrssUpdate,   5),
-    CALLDEF(glmerWrkIter,       2),
-    CALLDEF(glmerLaplace,       8),
+    CALLDEF(glmerAGQ,           5),
+    CALLDEF(glmerLaplace,       4),
 
-    CALLDEF(golden_Create, 2),
-    CALLDEF(golden_newf, 2),
-    CALLDEF(golden_value, 1),
-    CALLDEF(golden_xeval, 1),
-    CALLDEF(golden_xpos, 1),
+    CALLDEF(golden_Create,      2),
+    CALLDEF(golden_newf,        2),
+    CALLDEF(golden_value,       1),
+    CALLDEF(golden_xeval,       1),
+    CALLDEF(golden_xpos,        1),
 
     CALLDEF(isNullExtPtr, 1),
 
-    CALLDEF(lm_Create, 7),	// generate external pointer
+    CALLDEF(lm_Create,          7), // generate external pointer
 
-    CALLDEF(lm_setOffset, 2),	// setters
-    CALLDEF(lm_setResp, 2),
-    CALLDEF(lm_setWeights, 2),
+    CALLDEF(lm_setOffset,       2), // setters
+    CALLDEF(lm_setResp,         2),
+    CALLDEF(lm_setWeights,      2),
 
-    CALLDEF(lm_wrss, 1),	// getter
+    CALLDEF(lm_wrss,            1), // getter
 
-    CALLDEF(lm_updateMu, 2),	// method
+    CALLDEF(lm_updateMu,        2), // method
 
-    CALLDEF(lmer_Create, 7),	// generate external pointer
+    CALLDEF(lmer_Create,        7), // generate external pointer
 
-    CALLDEF(lmer_setREML, 2),	// setter
+    CALLDEF(lmer_setREML,       2), // setter
 
-    CALLDEF(lmer_Deviance, 3),	// methods
-    CALLDEF(lmer_Laplace, 4),
-    CALLDEF(lmer_opt1, 4),
+    CALLDEF(lmer_Deviance,      3), // methods
+    CALLDEF(lmer_Laplace,       4),
+    CALLDEF(lmer_opt1,          4),
 
-    CALLDEF(merPredDCreate, 17), // generate external pointer
+    CALLDEF(merPredDCreate,    17), // generate external pointer
 
-    CALLDEF(merPredDsetTheta, 2), // setters
-    CALLDEF(merPredDsetBeta0, 2), 
+    CALLDEF(merPredDsetTheta,   2), // setters
+    CALLDEF(merPredDsetBeta0,   2), 
 
-    CALLDEF(merPredDCcNumer, 1), // getters
-    CALLDEF(merPredDL, 1),
-    CALLDEF(merPredDPvec, 1),
-    CALLDEF(merPredDRX, 1),
-    CALLDEF(merPredDRXdiag, 1),
-    CALLDEF(merPredDRXi, 1),
-    CALLDEF(merPredDldL2, 1),
-    CALLDEF(merPredDldRX2, 1),
-    CALLDEF(merPredDunsc, 1),
+    CALLDEF(merPredDCcNumer,    1), // getters
+    CALLDEF(merPredDL,          1),
+    CALLDEF(merPredDPvec,       1),
+    CALLDEF(merPredDRX,         1),
+    CALLDEF(merPredDRXdiag,     1),
+    CALLDEF(merPredDRXi,        1),
+    CALLDEF(merPredDldL2,       1),
+    CALLDEF(merPredDldRX2,      1),
+    CALLDEF(merPredDunsc,       1),
 
-    CALLDEF(merPredDb, 2),	// methods
-    CALLDEF(merPredDbeta, 2),
-    CALLDEF(merPredDcondVar, 2),
-    CALLDEF(merPredDlinPred, 2),
-    CALLDEF(merPredDinstallPars, 2),
-    CALLDEF(merPredDsolve, 1),
-    CALLDEF(merPredDsolveU, 1),
-    CALLDEF(merPredDsqrL, 2),
-    CALLDEF(merPredDu, 2),
-    CALLDEF(merPredDupdateDecomp, 1),
-    CALLDEF(merPredDupdateL, 1),
-    CALLDEF(merPredDupdateLamtUt, 1),
-    CALLDEF(merPredDupdateRes, 2),
+    CALLDEF(merPredDb,          2), // methods
+    CALLDEF(merPredDbeta,       2),
+    CALLDEF(merPredDcondVar,    2),
+    CALLDEF(merPredDlinPred,    2),
+    CALLDEF(merPredDinstallPars,2),
+    CALLDEF(merPredDsolve,      1),
+    CALLDEF(merPredDsolveU,     1),
+    CALLDEF(merPredDsqrL,       2),
+    CALLDEF(merPredDu,          2),
+    CALLDEF(merPredDupdateDecomp,1),
+    CALLDEF(merPredDupdateL,    1),
+    CALLDEF(merPredDupdateLamtUt,1),
+    CALLDEF(merPredDupdateRes,  2),
     CALLDEF(merPredDupdateXwts, 2),
 
-    CALLDEF(NelderMead_Create, 5),
-    CALLDEF(NelderMead_newf, 2),
+    CALLDEF(NelderMead_Create,  5),
+    CALLDEF(NelderMead_newf,    2),
     CALLDEF(NelderMead_setForce_stop, 2),
     CALLDEF(NelderMead_setFtol_abs, 2),
     CALLDEF(NelderMead_setFtol_rel, 2),
     CALLDEF(NelderMead_setIprint, 2),
     CALLDEF(NelderMead_setMaxeval, 2),
     CALLDEF(NelderMead_setMinf_max, 2),
-    CALLDEF(NelderMead_value, 1),
-    CALLDEF(NelderMead_xeval, 1),
-    CALLDEF(NelderMead_xpos, 1),
+    CALLDEF(NelderMead_value,   1),
+    CALLDEF(NelderMead_xeval,   1),
+    CALLDEF(NelderMead_xpos,    1),
 
-    CALLDEF(nlmerLaplace, 8),
+    CALLDEF(nlmerLaplace,       8),
 
-    CALLDEF(nls_Create, 11),	// generate external pointer
+    CALLDEF(nls_Create,        11), // generate external pointer
 
-    CALLDEF(nls_Laplace, 4),	// methods
-    CALLDEF(nls_updateMu, 2),
+    CALLDEF(nls_Laplace,        4), // methods
+    CALLDEF(nls_updateMu,       2),
 
     {NULL, NULL, 0}
 };
