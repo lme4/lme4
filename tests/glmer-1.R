@@ -43,25 +43,23 @@ m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
 m1p <- glmer(incidence / size ~ period + (1 | herd), weights = size,
              family = binomial, data = cbpp, verbose = 2L)
 ## Confirm that these are equivalent:
-stopifnot(all.equal(fixef(m1), fixef(m1p), tol = 1e-5),
-          all.equal(ranef(m1), ranef(m1p), tol = 1e-5),
+stopifnot(all.equal(fixef(m1), fixef(m1p)),
+          all.equal(ranef(m1), ranef(m1p)),
           TRUE)
 for(m in c(m1, m1p)) {
     cat("-------\\n\\nCall: ",
         paste(format(getCall(m)), collapse="\\n"), "\\n")
     print(logLik(m)); cat("AIC:", AIC(m), "\\n") ; cat("BIC:", BIC(m),"\\n")
 }
-stopifnot(all.equal(logLik(m1), logLik(m1p), tol = 1e-5),
-          all.equal(AIC(m1),    AIC(m1p),    tol = 1e-5),
-          all.equal(BIC(m1),    BIC(m1p),    tol = 1e-5))
+stopifnot(all.equal(logLik(m1), logLik(m1p)),
+          all.equal(AIC(m1),    AIC(m1p)),
+          all.equal(BIC(m1),    BIC(m1p)))
 
 
 m1b <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
              optimizer="bobyqa",
              family = binomial, data = cbpp, verbose = 2L,
              control = list(rhobeg=0.2, rhoend=2e-7), tolPwrss=1e-8)
-
-if(FALSE) { ##_____________ FIXME _____________ not yet nAGQ > 1 ______________
 
 ## using nAGQ=9L provides a better evaluation of the deviance
 m.9 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
@@ -76,18 +74,16 @@ stopifnot(is((cm2 <- coef(m2)), "coef.mer"),
 	  dim(cm2$herd) == c(15,4),
 	  all.equal(fixef(m2),
 ### lme4a [from an Ubuntu 11.10 amd64 system]
-                    ### c(-1.39922533406847, -0.991407294757321,
-                    ###   -1.12782184600404, -1.57946627431248),
-                    c(-1.3766013, -1.0058773,
-                      -1.1430128, -1.5922817),
+                    c(-1.39922533406847, -0.991407294757321,
+                      -1.12782184600404, -1.57946627431248),
+                    ##c(-1.3766013, -1.0058773,
+                    ##  -1.1430128, -1.5922817),
 		    tol = 5.e-4,
                     check.attr=FALSE),
-##        all.equal(deviance(m2), 100.010030538022, tol=1e-9)
+          all.equal(deviance(m2), 100.010030538022, tol=1e-9)
           ## with bobyqa first (AGQ=0), then
-          all.equal(deviance(m2), 101.119749563, tol=1e-9)
-)
-}##_____________ end{FIXME} _____________ not yet nAGQ > 1 ______________
-
+          ##all.equal(deviance(m2), 101.119749563, tol=1e-9)
+          )
 
 ## 32-bit Ubuntu 10.04:
 coef_m1_lme4.0 <- structure(c(-1.39853505102576,
