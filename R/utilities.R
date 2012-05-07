@@ -516,7 +516,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc) {
               GLMM=(rcl=="glmResp"),
               NLMM=(rcl=="nlsResp"))
     storage.mode(dims) <- "integer"
-    fac     <- as.numeric(rcl == "lmerResp")
+    fac     <- as.numeric(rcl != "nlsResp")
     sqrLenU <- pp$sqrL(fac)
     wrss    <- resp$wrss()
     pwrss   <- wrss + sqrLenU
