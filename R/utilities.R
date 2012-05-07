@@ -508,6 +508,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc) {
     dims <- c(N=nrow(pp$X), n=n, p=p, nmp=n-p,
               nth=length(pp$theta), q=nrow(pp$Zt),
               nAGQ=rho$nAGQ,
+              compDev=rho$compDev,
               useSc=(rcl != "glmResp"),
               reTrms=length(reTrms$cnms),
               spFe=0L,

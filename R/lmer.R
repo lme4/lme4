@@ -334,14 +334,8 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     rho$pwrssUpdate <- glmerPwrssUpdate
     rho$compDev     <- compDev
     rho$lower       <- reTrms$lower     # not needed in rho?
-    devfun <- function(theta) {
-        resp$updateMu(lp0)
-        pp$setTheta(theta)
-        pwrssUpdate(pp, resp, 1e-7, GHrule(0L), compDev)
-    }
-    environment(devfun) <- rho
+    devfun <- mkdevfun(rho, 0L)
     if (devFunOnly && !nAGQ) return(devfun)
-
     if (length(optimizer)==1) {
         optimizer <- replicate(2,optimizer)
     }
@@ -349,6 +343,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
                    control=control, rho=rho,
                    adj=FALSE, verbose=verbose)
     if (nAGQ > 0L) {
+        rho$nAGQ       <- nAGQ
         rho$lower      <- c(rho$lower, rep.int(-Inf, length(rho$pp$beta0)))
         rho$lp0        <- rho$pp$linPred(1)
         rho$dpars      <- seq_along(rho$pp$theta)
@@ -359,18 +354,13 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
             if (length(reTrms$flist) != 1L || length(reTrms$cnms[[1]]) != 1L)
                 stop("nAGQ > 1 is only available for models with a single, scalar random-effects term")
         }
-        devfun <- function(pars) {
-            resp$updateMu(lp0)
-            pp$setTheta(as.double(pars[dpars])) # theta is first part of pars
-            resp$setOffset(baseOffset + pp$X %*% as.numeric(pars[-dpars]))
-            pwrssUpdate(pp, resp, tolPwrss, GQmat, compDev, fac)
-        }
-        environment(devfun) <- rho
+        devfun <- mkdevfun(rho, nAGQ)
         if (devFunOnly) return(devfun)
 
         opt <- optwrap(optimizer[[2]],devfun,c(rho$pp$theta, rho$pp$delb),
                        rho$lower, control=control, rho=rho,
                        adj=TRUE, verbose=verbose)
+        rho$resp$setOffset(rho$baseOffset)
     }
     mkMerMod(environment(devfun), opt, reTrms, fr, mc)
 }## {glmer}
@@ -498,21 +488,19 @@ mkdevfun <- function(rho, nAGQ=1L) {
         rho$lmer_Deviance <- lmer_Deviance
         ff <- function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))
     } else if (is(rho$resp, "glmResp")) {
-        if (nAGQ < 2L) {
-            ff <- switch(nAGQ + 1L,
-                         function(theta)
-                         .Call(glmerLaplace, pp$ptr(), resp$ptr(), as.double(theta),
-                               as.double(u0), as.double(beta0), verbose, FALSE, tolPwrss),
-                         function(pars)
-                         .Call(glmerLaplace, pp$ptr(), resp$ptr(), as.double(pars[dpars]),
-                               as.double(u0), as.double(pars[-dpars]), verbose, TRUE, tolPwrss))
-        } else {
-            rho$glmerAGQ <- glmerAGQ
-            rho$GQmat    <- GHrule(nAGQ)
-            ff <- function(pars)
-                .Call(glmerAGQ, pp$ptr(), resp$ptr(), fac, GQmat, pars[dpars],
-                      u0, pars[-dpars], tolPwrss)
-        }
+        ff <- if (nAGQ == 0L)
+            function(theta) {
+                resp$updateMu(lp0)
+                pp$setTheta(theta)
+                pwrssUpdate(pp, resp, 1e-7, GHrule(0L), compDev)
+            }
+        else 
+            function(pars) {
+                resp$updateMu(lp0)
+                pp$setTheta(as.double(pars[dpars])) # theta is first part of pars
+                resp$setOffset(baseOffset + pp$X %*% as.numeric(pars[-dpars]))
+                pwrssUpdate(pp, resp, tolPwrss, GQmat, compDev, fac)
+            }
     } else if (is(rho$resp, "nlsResp")) {
         if (nAGQ < 2L) {
             rho$nlmerLaplace <- nlmerLaplace
@@ -1075,29 +1063,29 @@ refit.merMod <- function(object, newresp=NULL, ...)
 
     if (!is.null(newresp)) {
 
-      if (!is.null(na.act <- attr(object@frame,"na.action"))) {
-        ## will only get here if na.action is 'na.omit' or 'na.exclude'
-        if (is.matrix(newresp)) {
-          newresp <- newresp[-na.act,]
-        } else newresp <- newresp[-na.act]
-      }
-
-    if (isGLMM(object) && rr$family$family=="binomial") {
-        if (is.matrix(newresp) && ncol(newresp)==2) {
-            ntot <- rowSums(newresp)
-            ## FIXME: test what happens for (0,0) columns
-            newresp <- newresp[,1]/ntot
-            rr$setWeights(ntot)
+        if (!is.null(na.act <- attr(object@frame,"na.action"))) {
+            ## will only get here if na.action is 'na.omit' or 'na.exclude'
+            if (is.matrix(newresp)) {
+                newresp <- newresp[-na.act,]
+            } else newresp <- newresp[-na.act]
         }
-        if (is.factor(newresp)) {
-            ## FIXME: would be better to do this consistently with
-            ## whatever machinery is used in glm/glm.fit/glmer ... ??
-            newresp <- as.numeric(newresp)-1
-        }
-    }
 
-    stopifnot(length(newresp <- as.numeric(as.vector(newresp))) == length(rr$y))
-    rr$setResp(newresp)
+        if (isGLMM(object) && rr$family$family=="binomial") {
+            if (is.matrix(newresp) && ncol(newresp)==2) {
+                ntot <- rowSums(newresp)
+                ## FIXME: test what happens for (0,0) columns
+                newresp <- newresp[,1]/ntot
+                rr$setWeights(ntot)
+            }
+            if (is.factor(newresp)) {
+                ## FIXME: would be better to do this consistently with
+                ## whatever machinery is used in glm/glm.fit/glmer ... ??
+                newresp <- as.numeric(newresp)-1
+            }
+        }
+
+        stopifnot(length(newresp <- as.numeric(as.vector(newresp))) == length(rr$y))
+        rr$setResp(newresp)
 
     }
 
@@ -1105,11 +1093,19 @@ refit.merMod <- function(object, newresp=NULL, ...)
     dc        <- object@devcomp
     nAGQ      <- dc$dims["nAGQ"]
     nth       <- dc$dims["nth"]
-    devlist <- list(pp=pp, resp=rr, u0=pp$u0, beta0=pp$beta0, verbose=0L,
-                    dpars=seq_len(nth))
+    verbose   <- list(...)$verbose
+    if (is.null(verbose)) verbose <- 0L
+    devlist <- list(pp=pp, resp=rr, u0=pp$u0, verbose=verbose, dpars=seq_len(nth))
     if (isGLMM(object)) {
-        devlist <- c(devlist,tolPwrss=unname(dc$cmp["tolPwrss"]),
-                     nAGQ=unname(nAGQ))
+        baseOffset <- object@resp$offset
+        devlist <- c(list(tolPwrss=unname(dc$cmp["tolPwrss"]),
+                          compDev=unname(dc$dims["compDev"]),
+                          nAGQ=unname(nAGQ),
+                          lp0=object@resp$eta - baseOffset,
+                          baseOffset=baseOffset,
+                          pwrssUpdate=glmerPwrssUpdate,
+                          ## save GQmat in the object and use that instead of nAGQ
+                          GQmat=GHrule(nAGQ)), devlist)
     }
     ff <- mkdevfun(list2env(devlist),nAGQ=nAGQ)
     xst       <- rep.int(0.1, nth)
@@ -1117,7 +1113,7 @@ refit.merMod <- function(object, newresp=NULL, ...)
     lower     <- object@lower
     if (!is.na(nAGQ) && nAGQ > 0L) {
         xst   <- c(xst, sqrt(diag(pp$unsc())))
-        x0    <- c(x0, pp$beta0)
+        x0    <- c(x0, unname(fixef(object)))
         lower <- c(lower, rep(-Inf,length(x0)-length(lower)))
     }
     control <- list(...)$control
