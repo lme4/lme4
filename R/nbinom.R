@@ -34,10 +34,10 @@ optTheta <- function(object,
       ## FIXME: kluge to retain last value and evaluation count
       ## Perhaps use a reference class object to keep track of this
       ## auxilliary information?  DB
-      L <- -logLik(lastfit <<- refitNB(lastfit,theta=exp(t)))
+      dev <- deviance(lastfit <<- refitNB(lastfit,theta=exp(t)))
       evalcnt <<- evalcnt+1
-      if (verbose) cat(evalcnt,exp(t),L,"\n")
-      L
+      if (verbose) cat(evalcnt,exp(t),dev,"\n")
+      dev
   }, interval=interval)
   stopifnot(all.equal(optval$minimum,log(getNBdisp(lastfit))))
   ## FIXME: return eval count info somewhere else? MM: new slot there, why not?

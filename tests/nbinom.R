@@ -18,8 +18,6 @@ simfun <- function(sd.u=1, NBtheta=0.5,
                  mu=exp(X %*% beta +u_f[f]),size=NBtheta))
 }
 
-if (FALSE) {
-    #### FIXME: just plain broken, 28 April 2012
 set.seed(102)
 d.1 <- simfun()
 t1 <- system.time(g1 <- glmer.nb(z ~ x + (1|f), data=d.1, verbose=TRUE))
@@ -30,8 +28,7 @@ d1 <- getNBdisp(g1)
 (g1B <- refitNB(g1,theta=getNBdisp(g1)))
 (ddev <- deviance(g1)-deviance(g1B))
 (rel.d <- (fixef(g1)-fixef(g1B))/fixef(g1))
-stopifnot(all.equal(d1, 0.448, tol = 1e-3),
-          all.equal(ddev, 0.0007, tol=.0005),
+stopifnot(abs(ddev) < 1e-6,
           abs(rel.d) < 0.0004)
 
 ## library(glmmADMB)
@@ -63,7 +60,6 @@ stopifnot(
           } else
           all.equal(as.numeric(logLik.m(g1B)), as.numeric(-glmmADMB_vals$ NLL), tol= 4e-5)
           )
-}
 
 if(FALSE) { ## simulation study --------------------
 

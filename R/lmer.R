@@ -1122,8 +1122,9 @@ refit.merMod <- function(object, newresp=NULL, ...)
     ## FIXME: generic optimizer stuff
 ### FIXME: Probably should save the control settings and the optimizer name in the merMod object
     opt <- Nelder_Mead(ff, x0, lower=lower, control=control)
-    mkMerMod(environment(ff), opt, list(flist=object@flist, cnms=object@cnms, Gp=object@Gp,
-                                        lower=object@lower),
+    if (isGLMM(object)) rr$setOffset(baseOffset)
+    mkMerMod(environment(ff), opt,
+             list(flist=object@flist, cnms=object@cnms, Gp=object@Gp, lower=object@lower),
              object@frame, getCall(object))
 }
 
