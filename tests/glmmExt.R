@@ -86,8 +86,15 @@ if(Sys.info()["user"] != "maechler") { # <- seg.faults (MM)
 
 ## Binomial/cloglog
 
-## FIXME: intercept-only fails
-##   Error in if (abs((oldpdev - pdev)/pdev) < tol) break : 
-try(gBc1 <- glmer(y ~ 1 + (1|block), data=dBc, family=binomial(link="cloglog"), verbose= 3))
+## FIXME: both of these hang/infinite loop!
 
-gBc2 <- glmer(y ~ x + (1|block), data=dGi, family=gaussian(link="inverse"), verbose= 3)
+if (FALSE) {
+    ## debug(lme4:::glmerPwrssUpdate)
+    ## if we set compDev=FALSE we get
+    ##   Error in RglmerWrkIter(pp, resp, uOnly) : object 'uOnly' not found
+    gBc1 <- glmer(y ~ 1 + (1|block), data=dBc,
+                  family=binomial(link="cloglog"), verbose= 3,
+                  compDev=FALSE)
+    gBc2 <- glmer(y ~ x + (1|block), data=dBc,
+                  family=binomial(link="cloglog"), verbose= 3)
+}

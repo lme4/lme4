@@ -215,10 +215,11 @@ stopifnot(all.equal(a01$Chisq[2], 554.334056, tol=1e-5),
           a01$ Df == 3:4,
 	  a01$`Chi Df`[2] == 1)
 
-## FIXME: why do we need to run this sim 100 times??
+## FIXME: did we really need to run this sim 100 times??
+nsim <- 10
 set.seed(2)
 system.time(
-simR <- lapply(1:100,  function(i) {
+simR <- lapply(1:nsim,  function(i) {
     cat(i,"", if(i %% 20 == 0)"\n")
     dd <- rPoisGLMMi(10 + rpois(1, lambda=3),
                      16 + rpois(1, lambda=5))

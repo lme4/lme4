@@ -21,7 +21,7 @@ sstudy9 <- subset(sleepstudy, Days == 1 | Days == 9)
 try({## This "did work" in lme4.0 and nlme -- FIXME ??
  m1 <- lmer(Reaction ~ 1 + Days + (1 + Days | Subject), data = sstudy9)
  ## -> Error in ptr() : Downdated VtV is not positive definite
- ## FIXME?(2): More helpful error message
+ ## FIXME?(2): More helpful error message, or rank-checking diagnostics?
  print(sm1 <- summary(m1))
  fm1 <- fitted(m1)
 })

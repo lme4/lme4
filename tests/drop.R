@@ -16,11 +16,8 @@ extractAIC(fm1)
 drop1(fm1)
 drop1(fm1, test="Chisq")
 
-
-## FIXME: restore when nAGQ>1 fixed
-if (FALSE) {
 gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
              family = binomial, data = cbpp, nAGQ=25L)
 
 drop1(gm1, test="Chisq")
-}
+
