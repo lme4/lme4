@@ -860,6 +860,8 @@ varianceProf <- function(pr) {
 }
 
 ## convert profile to data frame, adding a .focal parameter to simplify lattice/ggplot plotting
+##' @method as.data.frame thpr
+##' @export
 as.data.frame.thpr <- function(x,...) {
     class(x) <- "data.frame"
     m <- as.matrix(x[,seq(ncol(x))-1]) ## omit .par

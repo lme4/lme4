@@ -92,6 +92,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
         ## Check for method argument which is no longer used
         if (!is.null(method <- l...$method)) {
             msg <- paste("Argument", sQuote("method"), "is deprecated.")
+            ## FIXME: this will fail if method *not* in ("Laplace","AGQ") ...
             if (match.arg(method, c("Laplace", "AGQ")) == "Laplace") {
                 warning(msg)
                 l... <- l...[names(l...) != "method"]
@@ -137,7 +138,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 
     opt <- optwrap(optimizer,
                    devfun, rho$pp$theta, lower=reTrms$lower, control=control,
-                   rho=rho, adj=FALSE)
+                   adj=FALSE)
 
     mkMerMod(environment(devfun), opt, reTrms, fr, mc)
 }## { lmer }
@@ -340,8 +341,11 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
         optimizer <- replicate(2,optimizer)
     }
     opt <- optwrap(optimizer[[1]],devfun,rho$pp$theta, rho$lower,
-                   control=control, rho=rho,
+                   control=control,
                    adj=FALSE, verbose=verbose)
+    rho$control <- attr(opt,"control")
+    
+    rho$nAGQ <- nAGQ
     if (nAGQ > 0L) {
         rho$nAGQ       <- nAGQ
         rho$lower      <- c(rho$lower, rep.int(-Inf, length(rho$pp$beta0)))
@@ -358,7 +362,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
         if (devFunOnly) return(devfun)
 
         opt <- optwrap(optimizer[[2]],devfun,c(rho$pp$theta, rho$pp$delb),
-                       rho$lower, control=control, rho=rho,
+                       rho$lower, control=control,
                        adj=TRUE, verbose=verbose)
         rho$resp$setOffset(rho$baseOffset)
     }
@@ -424,8 +428,9 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
         optimizer <- replicate(2,optimizer)
     }
 
-    opt <- optwrap(optimizer[[1]],devfun, rho$pp$theta, rho$lower,
-                   control=control, rho=rho, adj=FALSE)
+    opt <- optwrap(optimizer[[1]], devfun, rho$pp$theta, rho$lower,
+                   control=control, adj=FALSE)
+    rho$control <- attr(opt,"control")
 
     if (nAGQ > 0L) {
         rho$lower <- c(rho$lower, rep.int(-Inf, length(rho$beta0)))
@@ -440,8 +445,8 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
         devfun <- mkdevfun(rho, nAGQ)
         if (devFunOnly) return(devfun)
 
-        opt <- optwrap(optimizer[[2]],devfun, par=c(rho$pp$theta, rho$beta0),
-                       lower=rho$lower, control=control, rho=rho,
+        opt <- optwrap(optimizer[[2]], devfun, par=c(rho$pp$theta, rho$beta0),
+                       lower=rho$lower, control=control,
                        adj=TRUE, verbose=verbose)
 
 
@@ -573,7 +578,8 @@ glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, fac) {
     }
     oldpdev <- .Machine$double.xmax
     repeat {
-        pdev <- RglmerWrkIter(pp, resp, uOnly)
+        ## FIXME:: how should uOnly be set here?
+        pdev <- RglmerWrkIter(pp, resp, uOnly=FALSE)
         ## check convergence first so small increases don't trigger errors
         if (abs((oldpdev - pdev) / pdev) < tol)
             break
@@ -781,13 +787,14 @@ deviance.merMod <- function(object, REML = NULL, ...) {
 ##' @S3method drop1 merMod
 drop1.merMod <- function(object, scope, scale = 0, test = c("none", "Chisq"),
                          k = 2, trace = FALSE, ...) {
-### FIXME: this is a hacked version of stats:::drop1.default and should be changed
     ## FIXME: incorporate na.predict() stuff?
     tl <- attr(terms(object), "term.labels")
     if(missing(scope)) scope <- drop.scope(object)
     else {
-	if(!is.character(scope))
-	    scope <- attr(terms(update.formula(object, scope)), "term.labels")
+	if(!is.character(scope)) {
+	    scope <- attr(terms(getFixedFormula(update.formula(object, scope))),
+                                "term.labels")
+        }
 	if(!all(match(scope, tl, 0L) > 0L))
 	    stop("scope is not a subset of term labels")
     }
@@ -884,11 +891,20 @@ fitted.merMod <- function(object, ...) object@resp$mu
 fixef.merMod <- function(object, ...)
     structure(object@beta, names = dimnames(object@pp$X)[[2]])
 
+getFixedFormula <- function(form) {
+    form[[3]] <- if (is.null(nb <- nobars(form[[3]]))) 1 else nb
+    form
+}
+
 ##' @importFrom stats formula
 ##' @S3method fixef merMod
+##' @export
 formula.merMod <- function(x, fixed.only=FALSE, ...) {
-    f <- formula(getCall(x),...)
-    if (fixed.only) as.formula(nobars(f)) else f
+    form <- formula(getCall(x),...)
+    if (fixed.only) {
+        form <- getFixedFormula(form)
+    }
+    form
 }
 
 ##' @S3method isREML merMod
@@ -1965,70 +1981,68 @@ getOptfun <- function(optimizer) {
 }
 
 optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
-                    control=list(), rho=NULL, adj=FALSE, verbose=0L) {
-    ## control and rho must be specified if adj==TRUE;
+                    control=list(), adj=FALSE, verbose=0L) {
+    ## control must be specified if adj==TRUE;
     ##  otherwise this is a fairly simple wrapper
-    ## FIXME: would like to remove rho-dependence (used to pass back modified control settings) ?
     optfun <- getOptfun(optimizer)
-    ## special-purpose control parameter tweaks: only for second round in nlmer, glmer
 
-  lower <- rep(lower, length.out=length(par))
-  upper <- rep(upper, length.out=length(par))
+    lower <- rep(lower, length.out=length(par))
+    upper <- rep(upper, length.out=length(par))
 
-  if (adj && is.character(optimizer))
-    switch(optimizer,
-           bobyqa = {
-             if(!is.numeric(control$rhobeg)) control$rhobeg <- 0.0002
-             if(!is.numeric(control$rhoend)) control$rhoend <- 2e-7
-             if (!is.null(rho)) rho$control <- control
-           },
-           Nelder_Mead = {
-             if (is.null(control$xst))
-                 xst <- c(rep.int(0.1, length(environment(fn)$pp$theta)),  ## theta parameters
-                          sqrt(diag(environment(fn)$pp$unsc())))
-             control$xst <- 0.2*xst
-             control$verbose <- verbose
-             if (is.null(control$xt)) control$xt <- control$xst*5e-4
-             if (!is.null(rho)) rho$control <- control
-         })
+    if (adj && is.character(optimizer))
+        ## control parameter tweaks: only for second round in nlmer, glmer
+        switch(optimizer,
+               bobyqa = {
+                   if(!is.numeric(control$rhobeg)) control$rhobeg <- 0.0002
+                   if(!is.numeric(control$rhoend)) control$rhoend <- 2e-7
+               },
+               Nelder_Mead = {
+                   if (is.null(control$xst))
+                       xst <- c(rep.int(0.1, length(environment(fn)$pp$theta)),  ## theta parameters
+                                sqrt(diag(environment(fn)$pp$unsc())))
+                   control$xst <- 0.2*xst
+                   control$verbose <- verbose
+                   if (is.null(control$xt)) control$xt <- control$xst*5e-4
+               })
     if (optimizer=="bobyqa" && all(par==0)) par[] <- 0.001  ## minor kluge
     arglist <- list(fn=fn, par=par, lower=lower, upper=upper, control=control)
-  ## optimx: must pass method in control (?) because 'method' was previously
-  ## used in lme4 to specify REML vs ML
-  ## FIXME: test -- does deparse(substitute(...)) clause work?
-  if (optimizer=="optimx" || deparse(substitute(optimizer))=="optimx") {
-    if (is.null(method <- control$method))
-      stop("must specify 'method' explicitly for optimx")
-    arglist$control$method <- NULL
-    arglist <- c(arglist,list(method=method))
-  }
-  ## FIXME: test!  effects of multiple warnings??
-  ## may not need to catch warnings after all??
-  curWarning <- NULL
-  opt <- withCallingHandlers(do.call(optfun,arglist),
-                             warning = function(w) {
-                               ## browser()
-                               cat("caught warning:",w$message,"\n")
-                               assign("curWarning",w$message,parent.frame())
-                               invokeRestart("muffleWarning")
-                             })
-  ## if (!is.null(curWarning)) browser()
-  ## FIXME: set code to warn on convergence !=0
-  ## post-fit tweaking
-  if (optimizer=="bobyqa") {
-    opt$convergence <- opt$ierr
-  }
-  if (optimizer=="optimx") {
-    optr <- lapply(opt,"[[",1)[c("par","fvalues","conv")]
-    optr$message <- attr(opt,"details")[[1]]$message
-    opt <- optr
-  }
-  if (opt$conv!=0) {
-      wmsg <- paste("convergence code",opt$conv,"from",optimizer)
-      if (!is.null(opt$msg)) wmsg <- paste0(wmsg,": ",opt$msg)
-      warning(wmsg)
+    ## optimx: must pass method in control (?) because 'method' was previously
+    ## used in lme4 to specify REML vs ML
+    ## FIXME: test -- does deparse(substitute(...)) clause work?
+    if (optimizer=="optimx" || deparse(substitute(optimizer))=="optimx") {
+        if (is.null(method <- control$method))
+            stop("must specify 'method' explicitly for optimx")
+        arglist$control$method <- NULL
+        arglist <- c(arglist,list(method=method))
     }
-  opt
+    ## FIXME: test!  effects of multiple warnings??
+    ## may not need to catch warnings after all??
+    curWarning <- NULL
+    opt <- withCallingHandlers(do.call(optfun,arglist),
+                               warning = function(w) {
+                                   ## browser()
+                                   cat("caught warning:",w$message,"\n")
+                                   assign("curWarning",w$message,parent.frame())
+                                   invokeRestart("muffleWarning")
+                               })
+    ## if (!is.null(curWarning)) browser()
+    ## FIXME: set code to warn on convergence !=0
+    ## post-fit tweaking
+    if (optimizer=="bobyqa") {
+        opt$convergence <- opt$ierr
+    }
+    if (optimizer=="optimx") {
+        optr <- lapply(opt,"[[",1)[c("par","fvalues","conv")]
+        optr$message <- attr(opt,"details")[[1]]$message
+        opt <- optr
+    }
+    if (opt$conv!=0) {
+        wmsg <- paste("convergence code",opt$conv,"from",optimizer)
+        if (!is.null(opt$msg)) wmsg <- paste0(wmsg,": ",opt$msg)
+        warning(wmsg)
+    }
+    attr(opt,"control") <- control
+    opt
 }
 
 
