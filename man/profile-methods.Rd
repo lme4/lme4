@@ -2,6 +2,7 @@
 \name{profile-methods}
 \alias{profile.merMod}
 \alias{profile-methods}
+\alias{as.data.frame.thpr}
 \title{Methods for profile() of [ng]lmer fitted models}
 \usage{
   \method{profile}{merMod} (fitted, which = 1:nptot,
