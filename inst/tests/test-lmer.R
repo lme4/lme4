@@ -1,4 +1,5 @@
 library("testthat")
+library("lme4")
 
 context("fitting lmer models")
 test_that("lmer", {

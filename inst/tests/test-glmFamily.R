@@ -1,4 +1,6 @@
 library("testthat")
+library("lme4")
+
 eps <- .Machine$double.eps
 oneMeps <- 1 - eps
 set.seed(1)
@@ -121,7 +123,3 @@ test_that("variance", {
     expect_that(bfam$theta(), throws_error("theta accessor applies only to negative binomial"))
     expect_that(bfam$setTheta(2), throws_error("setTheta applies only to negative binomial"))    
 })
-
-
-    
-

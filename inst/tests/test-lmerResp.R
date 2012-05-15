@@ -1,5 +1,6 @@
 library("testthat")
 
+data(Dyestuff, package="lme4")
 n     <- nrow(Dyestuff)
 ones  <- rep.int(1, n)
 zeros <- rep.int(0, n)
