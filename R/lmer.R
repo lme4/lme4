@@ -334,7 +334,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
         stop("Response is constant - cannot fit the model")
     rho$verbose     <- as.integer(verbose)
                                         # initialize (from mustart)
-    .Call(glmerLaplace, pp$ptr(), resp$ptr(), 0L, tolPwrss, verbose)
+    .Call(glmerLaplace, rho$pp$ptr(), rho$resp$ptr(), 0L, tolPwrss, verbose)
     rho$lp0         <- rho$pp$linPred(1) # each pwrss opt begins at this eta
     rho$pwrssUpdate <- glmerPwrssUpdate
     rho$compDev     <- compDev
@@ -488,7 +488,20 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
 ##' (dd <- lmer(Yield ~ 1|Batch, Dyestuff, devFunOnly=TRUE))
 ##' dd(0.8)
 ##' minqa::bobyqa(1, dd, 0)
-##'
+
+## global variables defs to make codetools/R CMD check happier.
+## FIXME: does putting globalVariables() stuff here interfere with Roxygen?
+## ?globalVariables says that fields and methods in reference classes are
+## "handled automatically by ‘setRefClass()’ and friends, using the
+##  supplied field and method names" -- perhaps there's a better way to do this?
+if (getRversion()<="2.15.0")  {
+    ## dummy
+    globalVariables <- function(...) {}
+}
+globalVariables(c("pp","resp","lp0","pwrssUpdate","compDev",
+                   "baseOffset","GQmat","fac","nlmerAGQ","tolPwrss",
+                   "dpars","verbose"),
+                 package="lme4")
 mkdevfun <- function(rho, nAGQ=1L) {
     ## FIXME: should nAGQ be automatically embedded in rho?
     stopifnot(is.environment(rho), is(rho$resp, "lmResp"))
@@ -574,6 +587,7 @@ RglmerWrkIter <- function(pp, resp, uOnly=FALSE) {
 }
 
 glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL) {
+    verbose <- TRUE ## hack
     nAGQ <- nrow(GQmat)
     if (compDev) {
         if (nAGQ < 2L)

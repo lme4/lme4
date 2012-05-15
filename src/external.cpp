@@ -853,8 +853,8 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(glmFamily_theta,    1),
     CALLDEF(glmFamily_variance, 2),
 
-    CALLDEF(glmerAGQ,           5),
-    CALLDEF(glmerLaplace,       6),
+    CALLDEF(glmerAGQ,           6),
+    CALLDEF(glmerLaplace,       5),
 
     CALLDEF(golden_Create,      2),
     CALLDEF(golden_newf,        2),
