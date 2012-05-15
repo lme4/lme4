@@ -329,8 +329,11 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
                                c(reTrms[c("Zt","theta","Lambdat","Lind")],
                                  n=nrow(X), list(X=X)))
     rho$resp        <- mkRespMod(fr, family=family)
+    if (length(unique(rho$resp$y)) < 2L)
+        stop("Response is constant - cannot fit the model")
+    rho$verbose     <- as.integer(verbose)
                                         # initialize (from mustart)
-    glmerPwrssUpdate(rho$pp, rho$resp, tolPwrss, GHrule(0L), compDev)
+    .Call(glmerLaplace, pp$ptr(), resp$ptr(), 0L, tolPwrss, verbose)
     rho$lp0         <- rho$pp$linPred(1) # each pwrss opt begins at this eta
     rho$pwrssUpdate <- glmerPwrssUpdate
     rho$compDev     <- compDev
@@ -569,23 +572,24 @@ RglmerWrkIter <- function(pp, resp, uOnly=FALSE) {
     resp$resDev() + pp$sqrL(1)
 }
 
-glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, fac) {
+glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL) {
     nAGQ <- nrow(GQmat)
     if (compDev) {
         if (nAGQ < 2L)
-            return(.Call(glmerLaplace, pp$ptr(), resp$ptr(), nAGQ, tol))
-        return(.Call(glmerAGQ, pp$ptr(), resp$ptr(), tol, GQmat, fac))
+            return(.Call(glmerLaplace, pp$ptr(), resp$ptr(), nAGQ, tol, verbose))
+        return(.Call(glmerAGQ, pp$ptr(), resp$ptr(), tol, GQmat, grpFac, verbose))
     }
     oldpdev <- .Machine$double.xmax
+    uOnly   <- nAGQ == 0L
     repeat {
-        ## FIXME:: how should uOnly be set here?
-        pdev <- RglmerWrkIter(pp, resp, uOnly=FALSE)
+        oldu <- pp$delu
+        if (uOnly) oldbeta <- pp$delb
+        pdev <- RglmerWrkIter(pp, resp, uOnly=uOnly)
         ## check convergence first so small increases don't trigger errors
         if (abs((oldpdev - pdev) / pdev) < tol)
             break
-### FIXME: Replace the stop by step-halving
         if (pdev > oldpdev) {
-            stop("PIRLS step failed")
+            stop("PIRLS update failed")
         }
         oldpdev <- pdev
     }

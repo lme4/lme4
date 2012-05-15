@@ -263,22 +263,34 @@ extern "C" {
 	return rp->resDev() + pp->sqrL(1.);
     }
 
-    static void pwrssUpdate(glmResp *rp, merPredD *pp, bool uOnly, double tol) {
+    static void pwrssUpdate(glmResp *rp, merPredD *pp, bool uOnly, double tol, int verbose) {
 	double oldpdev=std::numeric_limits<double>::max();
 	while (true) {
+	    Vec   olddelu(pp->delu()), olddelb(pp->delb());
 	    double pdev=internal_glmerWrkIter(pp, rp, uOnly);
 	    if (std::abs((oldpdev - pdev) / pdev) < tol) break;
-	    // FIXME: Replace the throwing of an error by step-halving
-	    if (pdev > oldpdev) throw std::invalid_argument("PIRLS step failed");
+	    if (pdev > oldpdev) { // try step halving
+		if (verbose > 2)
+		    Rcpp::Rcout << "Trying step halving: oldpdev = " << oldpdev
+				<< ", pdev = " << pdev << std::endl;
+		for (int k=0; k < 10 && pdev > oldpdev; k++) {
+		    pp->setDelu((olddelu + pp->delu())/2.);
+		    if (!uOnly) pp->setDelb((olddelb + pp->delb())/2.);
+		    pdev = internal_glmerWrkIter(pp, rp, uOnly);
+		    if (verbose > 2)
+			Rcpp::Rcout << "k = " << k << ", pdev = " << pdev << std::endl;
+		}
+		if (pdev > oldpdev) throw runtime_error("PIRLS step failed");
+	    }
 	    oldpdev = pdev;
 	}
     }
 
-    SEXP glmerLaplace(SEXP pp_, SEXP rp_, SEXP nAGQ_, SEXP tol_) {
+    SEXP glmerLaplace(SEXP pp_, SEXP rp_, SEXP nAGQ_, SEXP tol_, SEXP verbose_) {
 	BEGIN_RCPP;
 	XPtr<glmResp>  rp(rp_);
 	XPtr<merPredD> pp(pp_);
-	pwrssUpdate(rp, pp, ::Rf_asInteger(nAGQ_), ::Rf_asReal(tol_));
+	pwrssUpdate(rp, pp, ::Rf_asInteger(nAGQ_), ::Rf_asReal(tol_), ::Rf_asInteger(verbose_));
 	return ::Rf_ScalarReal(rp->Laplace(pp->ldL2(), pp->ldRX2(), pp->sqrL(1.)));
 	END_RCPP;
     }
@@ -291,17 +303,18 @@ extern "C" {
 
     static double sqrt2pi = std::sqrt(2. * PI);
 
-    SEXP glmerAGQ(SEXP pp_, SEXP rp_, SEXP tol_, SEXP GQmat_, SEXP fac_) {
+    SEXP glmerAGQ(SEXP pp_, SEXP rp_, SEXP tol_, SEXP GQmat_, SEXP fac_, SEXP verbose_) {
 	BEGIN_RCPP;
 	
 	XPtr<glmResp>     rp(rp_);
 	XPtr<merPredD>    pp(pp_);
 	const MiVec      fac(as<MiVec>(fac_));
 	double           tol(::Rf_asReal(tol_));
+	double          verb(::Rf_asReal(verbose_));
 	if (fac.size() != rp->mu().size())
 	    throw std::invalid_argument("size of fac must match dimension of response vector");
 
-	pwrssUpdate(rp, pp, true, tol); // should be a no-op
+	pwrssUpdate(rp, pp, true, tol, verb); // should be a no-op
 	const Ar1      devc0(devcCol(fac, pp->u(1.), rp->devResid()));
 
 	const unsigned int q(pp->u0().size());
@@ -329,20 +342,6 @@ extern "C" {
 	return ::Rf_ScalarReal(devc0.sum() + pp->ldL2() - 2 * std::log(mult.prod()));
 	END_RCPP;
     }
-
-    // SEXP glmerLaplace(SEXP pp_, SEXP rp_, SEXP theta_, SEXP lp0_, SEXP uOnly_, SEXP tol_) {
-    // 	BEGIN_RCPP;
-
-    // 	XPtr<glmResp>     rp(rp_);
-    // 	XPtr<merPredD>    pp(pp_);
-
-    // 	pp->setTheta(as<MVec>(theta_));
-    // 	rp->updateMu(as<MVec>(lp0_));
-    // 	pwrssUpdate(rp, pp, ::Rf_asLogical(uOnly_), ::Rf_asReal(tol_));
-    // 	return ::Rf_ScalarReal(rp->Laplace(pp->ldL2(), pp->ldRX2(), pp->sqrL(1.)));
-
-    // 	END_RCPP;
-    // }
 
     void nstepFac(nlsResp *rp, merPredD *pp, int verb) {
 	double prss0(pwrss(rp, pp, 0.));
@@ -855,7 +854,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(glmFamily_variance, 2),
 
     CALLDEF(glmerAGQ,           5),
-    CALLDEF(glmerLaplace,       4),
+    CALLDEF(glmerLaplace,       6),
 
     CALLDEF(golden_Create,      2),
     CALLDEF(golden_newf,        2),

@@ -260,6 +260,18 @@ namespace lme4 {
 	std::copy(nBeta.data(), nBeta.data() + d_p, d_beta0.data());
     }
 
+    void merPredD::setDelb(const VectorXd& newDelb) {
+	if (newDelb.size() != d_p)
+	    throw invalid_argument("setDelb: dimension mismatch");
+	std::copy(newDelb.data(), newDelb.data() + d_p, d_delb.data());
+    }
+
+    void merPredD::setDelu(const VectorXd& newDelu) {
+	if (newDelu.size() != d_q)
+	    throw invalid_argument("setDelu: dimension mismatch");
+	std::copy(newDelu.data(), newDelu.data() + d_q, d_delu.data());
+    }
+
     void merPredD::setU0(const VectorXd& newU0) {
 	if (newU0.size() != d_q) throw invalid_argument("setU0: dimension mismatch");
 	std::copy(newU0.data(), newU0.data() + d_q, d_u0.data());

@@ -87,6 +87,8 @@ namespace lme4 {
 	void          installPars(const Scalar& f);
 	void          MCMC_beta_u(const Scalar& sigma);
 	void             setBeta0(const VectorXd&);
+	void              setDelb(const VectorXd&);
+	void              setDelu(const VectorXd&);
 	void             setTheta(const VectorXd&);
 	void                setU0(const VectorXd&);
 	void         updateDecomp();
