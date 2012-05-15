@@ -86,6 +86,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
     ## '...' handling up front, safe-guarding against typos ("familiy") :
     if(length(l... <- list(...))) {
         if (!is.null(l...$family)) {  # call glmer if family specified
+            warning("calling lmer with family() is deprecated: please use glmer() instead")
             mc[[1]] <- as.name("glmer")
             return(eval(mc, parent.frame()) )
         }
@@ -835,6 +836,7 @@ drop1.merMod <- function(object, scope, scale = 0, test = c("none", "Chisq"),
         P[nas] <- stats:::safe_pchisq(dev[nas], dfs[nas], lower.tail = FALSE)
         aod[, c("LRT", "Pr(Chi)")] <- list(dev, P)
     } else if (test == "F") {
+        ## FIXME: allow this if denominator df are specified externally?
         stop("F test STUB -- unfinished maybe forever")
         dev <- ans[, 2L] - k*ans[, 1L]
         dev <- dev - dev[1L] ; dev[1L] <- NA
@@ -1795,7 +1797,7 @@ summary.merMod <- function(object, ...)
     REML <- isREML(object)
 
     link <- fam <- NULL
-    if(is(resp, "glmerResp")) {
+    if(is(resp, "glmerResp")) {  ## FIXME: ?? should be "glmResp", or?? isGLMM(object) ??
         fam <- resp$family$family
         link <- resp$family$link
     }
