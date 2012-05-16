@@ -265,25 +265,29 @@ extern "C" {
 
     static void pwrssUpdate(glmResp *rp, merPredD *pp, bool uOnly, double tol, int verbose) {
 	double oldpdev=std::numeric_limits<double>::max();
-	while (true) {
+	bool   cvgd = false, verb = verbose > 2;
+	for (int i = 0; i < 30; i++) {
 	    Vec   olddelu(pp->delu()), olddelb(pp->delb());
 	    double pdev=internal_glmerWrkIter(pp, rp, uOnly);
-	    if (std::abs((oldpdev - pdev) / pdev) < tol) break;
+	    if (verb) Rcpp::Rcout << i << ": " << pdev << std::endl;
+	    if (std::abs((oldpdev - pdev) / pdev) < tol) {cvgd = true; break;}
 	    if (pdev > oldpdev) { // try step halving
-		if (verbose > 2)
-		    Rcpp::Rcout << "Trying step halving: oldpdev = " << oldpdev
-				<< ", pdev = " << pdev << std::endl;
-		for (int k=0; k < 10 && pdev > oldpdev; k++) {
+		if (verb) Rcpp::Rcout << "Step halving: oldpdev = "
+				      << oldpdev << ", pdev = " << pdev
+				      << std::endl;
+		for (int k = 0; k < 10 && pdev > oldpdev; k++) {
 		    pp->setDelu((olddelu + pp->delu())/2.);
 		    if (!uOnly) pp->setDelb((olddelb + pp->delb())/2.);
 		    pdev = internal_glmerWrkIter(pp, rp, uOnly);
-		    if (verbose > 2)
-			Rcpp::Rcout << "k = " << k << ", pdev = " << pdev << std::endl;
+		    if (verb) Rcpp::Rcout << "k = " << k << ", pdev = "
+					  << pdev << std::endl;
 		}
 		if (pdev > oldpdev) throw runtime_error("PIRLS step failed");
 	    }
 	    oldpdev = pdev;
 	}
+	if (!cvgd)
+	    throw runtime_error("pwrssUpdate did not converge in 30 iterations");
     }
 
     SEXP glmerLaplace(SEXP pp_, SEXP rp_, SEXP nAGQ_, SEXP tol_, SEXP verbose_) {
