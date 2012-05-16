@@ -15,7 +15,6 @@ dfun <- glmer(damage ~ species - 1 + (1 | lattice / plot),
               data = trees513, family = binomial, devFunOnly = TRUE)
 ls.str(environment(dfun))# and you can investigate ...
 
-## FIXME: try() to pass checks
-mmod <- try(glmer(damage ~ species - 1 + (1 | lattice / plot),
-              data = trees513, family = binomial()))
+mmod <- glmer(damage ~ species - 1 + (1 | lattice / plot),
+              data = trees513, family = binomial())
 

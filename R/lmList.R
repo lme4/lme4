@@ -72,9 +72,12 @@ lmList <- function(formula, data, family, subset, weights,
 
 ##' @importFrom stats coef
 ##' @S3method coef lmList
-          ## Extract the coefficients and form a  data.frame if possible
-coef.lmList <- function(object, augFrame = FALSE, data = NULL,
-                        which = NULL, FUN = mean, omitGroupingFactor = TRUE, ...) {
+## Extract the coefficients and form a  data.frame if possible
+## FIXME: commented out nlme stuff (augFrame etc.).  Restore, or delete for good
+coef.lmList <- function(object,
+                        ## augFrame = FALSE, data = NULL,
+                        ##which = NULL, FUN = mean, omitGroupingFactor = TRUE,
+                        ...) {
     coefs <- lapply(object, coef)
     non.null <- !unlist(lapply(coefs, is.null))
     if (sum(non.null) > 0) {
@@ -90,28 +93,28 @@ coef.lmList <- function(object, augFrame = FALSE, data = NULL,
             }
             coefs <- as.data.frame(co)
             effectNames <- names(coefs)
-            if(augFrame) {
-                if (is.null(data)) {
-                    data <- getData(object)
-                }
-                data <- as.data.frame(data)
-                if (is.null(which)) {
-                    which <- 1:ncol(data)
-                }
-                data <- data[, which, drop = FALSE]
-                ## eliminating columns with same names as effects
-                data <- data[, is.na(match(names(data), effectNames)), drop = FALSE]
-                data <- gsummary(data, FUN = FUN, groups = getGroups(object))
-                if (omitGroupingFactor) {
-                    data <- data[, is.na(match(names(data),
-                                               names(getGroupsFormula(object,
-                                                                      asList = TRUE)))),
-                                 drop = FALSE]
-                }
-                if (length(data) > 0) {
-                    coefs <- cbind(coefs, data[row.names(coefs),,drop = FALSE])
-                }
-            }
+            ## if(augFrame) {
+            ##     if (is.null(data)) {
+            ##         data <- getData(object)
+            ##     }
+            ##     data <- as.data.frame(data)
+            ##     if (is.null(which)) {
+            ##         which <- 1:ncol(data)
+            ##     }
+            ##     data <- data[, which, drop = FALSE]
+            ##     ## eliminating columns with same names as effects
+            ##     data <- data[, is.na(match(names(data), effectNames)), drop = FALSE]
+            ##     data <- gsummary(data, FUN = FUN, groups = getGroups(object))
+            ##     if (omitGroupingFactor) {
+            ##         data <- data[, is.na(match(names(data),
+            ##                                    names(getGroupsFormula(object,
+            ##                                                           asList = TRUE)))),
+            ##                      drop = FALSE]
+            ##     }
+            ##     if (length(data) > 0) {
+            ##         coefs <- cbind(coefs, data[row.names(coefs),,drop = FALSE])
+            ##     }
+            ## }
             attr(coefs, "level") <- attr(object, "level")
             attr(coefs, "label") <- "Coefficients"
             attr(coefs, "effectNames") <- effectNames
@@ -169,6 +172,9 @@ confint.lmList <- function(object, parm, level = 0.95, ...)
     if (length(object) < 1)
         return(new("lmList.confint", array(numeric(0), c(0,0,0))))
     mCall$object <- object[[1]]
+    ## the old recursive strategy doesn't work with S3 objects --
+    ##  calls "confint.lmList" again instead of calling "confint"
+    mCall[[1]] <- quote(confint)
     template <- eval(mCall)
     val <- array(template, c(dim(template), length(object)),
                  c(dimnames(template), list(names(object))))
