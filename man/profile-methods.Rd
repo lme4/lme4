@@ -2,7 +2,6 @@
 \name{profile-methods}
 \alias{profile.merMod}
 \alias{profile-methods}
-\alias{as.data.frame.thpr}
 \title{Methods for profile() of [ng]lmer fitted models}
 \usage{
   \method{profile}{merMod} (fitted, which = 1:nptot,
@@ -63,10 +62,12 @@
 \examples{
 fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
 ## 0.8s (on a 5600 MIPS 64bit fast(year 2009) desktop "AMD Phenom(tm) II X4 925"):
-system.time( tpr <- profile(fm01ML) )
+## This is slower because of the Nelder-Mead optimizer but using bobyqa, the default,
+## produces a warning.
+system.time( tpr <- profile(fm01ML, optimizer="Nelder_Mead") )
 (confint(tpr) -> CIpr)
 print(xyplot(tpr))
-tpr2 <- profile(fm01ML, which=1:2) ## Batch and residual variance only
+tpr2 <- profile(fm01ML, which=1:2, optimizer="Nelder_Mead") ## Batch and residual variance only
 ## GLMM example (running time ~8 seconds on a modern machine)
 \dontrun{
 gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),

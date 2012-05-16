@@ -199,19 +199,22 @@
 \examples{
 ## generalized linear mixed model
 library(lattice)
-xyplot(incidence/size ~ period, group=herd, type="a", data=cbpp)
+xyplot(incidence/size ~ period|herd, cbpp, type=c('g','p','l'),
+       layout=c(3,5), index.cond = function(x,y)max(y))
 (gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
               data = cbpp, family = binomial))
 ## using nAGQ=0 only gets close to the optimum
 (gm1a <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                cbpp, binomial, nAGQ = 0))
-if(FALSE) { ##________ FIXME _______
 ## using  nAGQ = 9  provides a better evaluation of the deviance
+## Currently the internal calculations use the sum of deviance residuals,
+## which is not directly comparable with the nAGQ=0 or nAGQ=1 result.
 (gm1a <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                cbpp, binomial, nAGQ = 9))
-}#__ end{FIXME} __
 
 ## GLMM with individual-level variability (accounting for overdispersion)
+## For this data set the model is the same as one allowing for a period:herd
+## interaction, which the plot indicates could be needed.
 cbpp$obs <- 1:nrow(cbpp)
 (gm2 <- glmer(cbind(incidence, size - incidence) ~ period +
     (1 | herd) +  (1|obs),
