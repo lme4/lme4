@@ -40,8 +40,8 @@ dGi$y <- rnorm(nrow(d),dGi$mu,sd=0.01)
 ## binomial with cloglog link
 dBc <- d
 cc <- binomial(link="cloglog")
-dBc$mu <- cc$linkinv(d$eta)
-dBc$y <- rbinom(nrow(d),dBc$mu,size=1)
+dBc$mu <- cc$linkinv(d$eta - 5)         # -5, otherwise y will be constant
+dBc$y <- factor(rbinom(nrow(d),dBc$mu,size=1))
 
 ############
 ## Gamma/inverse
@@ -85,16 +85,8 @@ if(Sys.info()["user"] != "maechler") { # <- seg.faults (MM)
 
 
 ## Binomial/cloglog
-
-## FIXME: both of these hang/infinite loop!
-
-if (FALSE) {
-    ## debug(lme4:::glmerPwrssUpdate)
-    ## if we set compDev=FALSE we get
-    ##   Error in RglmerWrkIter(pp, resp, uOnly) : object 'uOnly' not found
-    gBc1 <- glmer(y ~ 1 + (1|block), data=dBc,
-                  family=binomial(link="cloglog"), verbose= 3,
-                  compDev=FALSE)
+gBc1 <- glmer(y ~ 1 + (1|block), data=dBc,
+              family=binomial(link="cloglog"), verbose= 3)
+if (FALSE)                              # still having problems with this one
     gBc2 <- glmer(y ~ x + (1|block), data=dBc,
                   family=binomial(link="cloglog"), verbose= 3)
-}
