@@ -2,12 +2,18 @@ library(lme4)
 library(testthat)
 m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
             family = binomial, data = cbpp)
-expect_that(m2 <- lmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+expect_that(lmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
             family = binomial, data = cbpp),
-            gives_warning())
+            gives_warning("calling lmer with family\\(\\) is deprecated.*"))
 
 ## FIXME: should glmer(..., [no family]) give a warning as well?
 stopifnot(all.equal(m1,m2))
+
+expect_that(glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+                  family = binomial, data = cbpp,
+                  REML=TRUE),
+            gives_warning("extra argument.*REML.*disregarded"))
+
 
 m3 <- glmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 m4 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
