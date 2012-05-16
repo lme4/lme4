@@ -12,10 +12,13 @@ getNBdisp <- function(object) {
 setNBdisp <- function(object,theta) {
   ## assign(".Theta",theta,envir=environment(object@resp$family$aic))
   ff <- setdiff(names(getRefClass("glmResp")$fields()),c("Ptr","family"))
-  arg1 <- lapply(ff,object@resp$field)
+  rr <- object@resp
+  arg1 <- lapply(ff,rr$field)
   names(arg1) <- ff
   newresp <- do.call(glmResp$new,
                      c(arg1, list(family=negative.binomial(theta=theta))))
+  newresp$setOffset(rr$offset)
+  newresp$updateMu(rr$eta - rr$offset)
   object@resp <- newresp
   object
 }
