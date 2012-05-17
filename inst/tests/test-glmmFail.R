@@ -13,10 +13,29 @@ cc <- binomial(link="cloglog")
 dBc$mu <- cc$linkinv(d$eta)
 dBc$y <- rbinom(nrow(d),dBc$mu,size=1)
 
-context("glmer failure because of a constant response")
-test_that("constant response", {
-    expect_that(glmer(y ~ 1 + (1|block), data=dBc,
-                      family=binomial(link="cloglog")),
-                throws_error())
+m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+            family = binomial, data = cbpp)
+context("Errors and warnings from glmer")
+test_that("glmer", {
+    expect_error(glmer(y ~ 1 + (1|block), data=dBc, family=binomial(link="cloglog")))
+    expect_warning(m2 <-lmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+                             family = binomial, data = cbpp),
+                   "calling lmer with family\\(\\) is deprecated.*")
+    expect_equal(m1,m2)
+    expect_warning(glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+                         family = binomial, data = cbpp, REML=TRUE),
+                   "extra argument.*REML.*disregarded")
+    m3 <- glmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+    m4 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+    m5 <- glmer(Reaction ~ Days + (Days|Subject), sleepstudy, family=gaussian)
+    expect_equal(fixef(m3),fixef(m5))
+    expect_equal(m3,m4)
+    isTRUE(all.equal(m3,m5))
+
+    ## would like m3==m5 != m4 ??
+    VarCorr(m4)
+    VarCorr(m5)  ## wrong??? is this the report or the
+    getME(m4,"theta")
+    getME(m5,"theta")
 })
 

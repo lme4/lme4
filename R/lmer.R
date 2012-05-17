@@ -272,10 +272,18 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 {
     verbose <- as.integer(verbose)
     mf <- mc <- match.call()
-    if (missing(family)) { ## divert using lmer()
+                                        # extract family, call lmer for gaussian
+    if (is.character(family))
+        family <- get(family, mode = "function", envir = parent.frame(2))
+    if( is.function(family)) family <- family()
+    if (isTRUE(all.equal(family, gaussian()))) {
         mc[[1]] <- as.name("lmer")
+        mc["family"] <- NULL            # to avoid an infinite loop
         return(eval(mc, parent.frame()))
     }
+
+    if (family$family %in% c("quasibinomial", "quasipoisson", "quasi"))
+        stop('"quasi" families cannot be used in glmer')
 ### '...' handling up front, safe-guarding against typos ("familiy") :
     if(length(l... <- list(...))) {
         ## Check for invalid specifications
@@ -293,11 +301,6 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
                     paste(sQuote(names(l...)), collapse=", "),
                     " disregarded")
     }
-    if(is.character(family))
-        family <- get(family, mode = "function", envir = parent.frame(2))
-    if(is.function(family)) family <- family()
-    if (family$family %in% c("quasibinomial", "quasipoisson", "quasi"))
-        stop('"quasi" families cannot be used in glmer')
 
     stopifnot(length(nAGQ <- as.integer(nAGQ)) == 1L,
               nAGQ >= 0L,
