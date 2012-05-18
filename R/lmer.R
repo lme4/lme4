@@ -885,11 +885,14 @@ extractAIC.merMod <- function(fit, scale = 0, k = 2, ...) {
 ##' @S3method family merMod
 family.merMod <- function(object, ...) family(object@resp, ...)
 
+##' @S3method family glmResp
+family.glmResp <- function(object, ...) object$family
+
 ##' @S3method family lmResp
 family.lmResp <- function(object, ...) gaussian()
 
-##' @S3method family glmResp
-family.glmResp <- function(object, ...) object$family
+##' @S3method family nlsResp
+family.nlsResp <- function(object, ...) gaussian()
 
 ##' @importFrom stats fitted
 ##' @S3method fitted merMod
@@ -1816,7 +1819,7 @@ summary.merMod <- function(object, ...)
     REML <- isREML(object)
 
     link <- fam <- NULL
-    if(is(resp, "glmerResp")) {  ## FIXME: ?? should be "glmResp", or?? isGLMM(object) ??
+    if(is(resp, "glmResp")) {
         fam <- resp$family$family
         link <- resp$family$link
     }
