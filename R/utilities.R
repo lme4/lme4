@@ -182,9 +182,6 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL) 
     }
     stopifnot(inherits(family, "family"))
                               # need weights for initialize evaluation
-    ## FIXME: family$initialize may not be good enough, need
-    ##        glm.fit?
-    ## do.call(glm.fit,c(as.list(rho),list(x=X,family=family)))
     rho$nobs <- n
     eval(family$initialize, rho)
     family$initialize <- NULL     # remove clutter from str output
