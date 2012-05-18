@@ -40,6 +40,9 @@
   \item{devtol}{tolerance for fitted deviances less than
   baseline (supposedly minimum) deviance}
 
+  \item{maxmult}{maximum multiplier of the original step
+  size allowed, defaults to 10.}
+
   \item{startmethod}{method for picking starting conditions
   for optimization (STUB)}
 

@@ -14,6 +14,7 @@
 ##' @param delta stepping scale for deciding on next point to profile
 ##' @param verbose level of output from internal calculations
 ##' @param devtol tolerance for fitted deviances less than baseline (supposedly minimum) deviance
+##' @param maxmult maximum multiplier of the original step size allowed, defaults to 10.
 ##' @param startmethod method for picking starting conditions for optimization (STUB)
 ##' @param optimizer (character or function) optimizer to use (see \code{\link{lmer}} for details)
 ##' @param \dots potential further arguments for \code{profile} methods.
@@ -151,7 +152,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
             ns <- nextstart(mat, cc-1, i, startmethod)
             mat[i + 1L, ] <- zetafun(np,ns)
             if (verbose>0) {
-                cat(i,cc,np,mat[i+1L,],"\n")
+                cat(i,cc,mat[i+1L,],"\n")
             }
             i <- i + 1L
         }
@@ -216,7 +217,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
 ### be determined from recent starting values, not always the global
 ### optimum values.
 
-### Can do this most easily by taking the most recent by taking the change in the other parameter values at
+### Can do this most easily by taking the change in the other parameter values at
 ### the two last points and extrapolating.
 
 
