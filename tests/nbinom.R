@@ -22,7 +22,7 @@ set.seed(102)
 d.1 <- simfun()
 t1 <- system.time(g1 <- glmer.nb(z ~ x + (1|f), data=d.1, verbose=TRUE))
 g1
-## ^^ FIXME: the formula ..
+## ^^ FIXME: the formula and data results show up as ..1, ..2 ; eval.parent() etc.?
 
 d1 <- getNBdisp(g1)
 (g1B <- refitNB(g1,theta=getNBdisp(g1)))

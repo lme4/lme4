@@ -25,11 +25,10 @@ getinfo(refitML(fm1))
 gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
             cbpp, binomial)
 gm1R <- refit(gm1,with(cbpp,cbind(incidence,size-incidence)))
-## FIXME: PIRLS fail
-## gm1S <- refit(gm1,simulate(gm1)[[1]])
+gm1S <- refit(gm1,simulate(gm1)[[1]])
 
 ## FIXME: testing all-zero responses
-## this gives "step factor reduced below 0.001 without reducing pwrss"
+## this gives "pwrssUpdate did not converge in 30 iterations"
 ## not sure if it's pathological or not
 if (FALSE) {
  sim1Z <- simulate(gm1)[[1]]
@@ -40,19 +39,16 @@ if (FALSE) {
 stopifnot(all.equal(gm1,gm1R,tol=4e-5))
 getinfo(gm1)
 getinfo(gm1R)
-## FIXME:: fallout from PIRLS fail
-## getinfo(gm1S) 
+getinfo(gm1S) 
 
 ## binomial GLMM (prob/weights)
 gm2 <- glmer(incidence/size ~ period + (1 | herd), cbpp, binomial, weights=size)
 gm2R <- refit(gm2,with(cbpp,incidence/size))
-## FIXME: PIRLS failure
-## gm2S <- refit(gm2,simulate(gm2)[[1]])
+gm2S <- refit(gm2,simulate(gm2)[[1]])
 stopifnot(all.equal(gm2,gm2R,tol=4e-5))
 getinfo(gm2)
 getinfo(gm2R)
-## FIXME:: fallout from PIRLS fail
-## getinfo(gm2S)
+getinfo(gm2S)
 
 ## Bernoulli GLMM (specified as factor)
 data(Contraception,package="mlmRev")

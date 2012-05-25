@@ -22,6 +22,7 @@ library(lme4)
 if (packageVersion("lme4")>"0.999375-42") {
     ## using development lme4 ...
     try(glmer1 <- glmer(fr2,weights=initial.snail.density,family ="binomial", data=randdata))
+    ## pwrssUpdate did not converge
     try(glmer1B <- glmer(fr,family ="binomial", data=randdata))
     if (require("lme4.0")) {
         detach("package:lme4")
@@ -29,6 +30,12 @@ if (packageVersion("lme4")>"0.999375-42") {
         glmer1 <- glmer(fr2,weights=initial.snail.density,family ="binomial", data=randdata)
         ## alive/dead formulation
         glmer1B <- glmer(fr,family ="binomial", data=randdata)
+        coef(glmer1B)
+        detach("package:lme4.0")
+    }
+    if (require("glmmADMB")) {
+        ## prop/weights formulation
+        glmer1B <- glmmadmb(fr,family ="binomial", data=randdata)
     }
 } else {
     ## CRAN version of lme4
