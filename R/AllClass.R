@@ -202,6 +202,14 @@ merPredD <-
                          'solve for the coefficient increment delu only (beta is fixed)'
                          .Call(merPredDsolveU, ptr())
                      },
+                     setDelu      = function(val) {
+                         'set the coefficient increment delu'
+                         .Call(merPredDsetDelu , ptr(), as.numeric(val))
+                     },
+                     setDelb      = function(val) {
+                         'set the coefficient increment delb'
+                         .Call(merPredDsetDelb , ptr(), as.numeric(val))
+                     },
                      sqrL         = function(fac) {
                          'squared length of u0 + fac * delu'
                          .Call(merPredDsqrL, ptr(), as.numeric(fac))
