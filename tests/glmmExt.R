@@ -66,6 +66,11 @@ stopifnot(all.equal(fixef  (gm3),fixef  (gm3B)),
 ggl1 <- glmer(y ~ 1 + (1|block), data=dgl, family=Gamma(link="log"), verbose= 2)
 ggl2 <- glmer(y ~ x + (1|block), data=dgl, family=Gamma(link="log"), verbose= 2)
 
+##
+## library(lme4.0)
+## ggl1 <- glmer(y ~ 1 + (1|block), data=dgl, family=Gamma(link="log"), verbose= 2)
+## fails
+
 ## Poisson/log
 gP1 <- glmer(y ~ 1 + (1|block), data=dP, family=poisson, verbose= 2)
 gP2 <- glmer(y ~ x + (1|block), data=dP, family=poisson, verbose= 2)
@@ -74,6 +79,14 @@ gP2 <- glmer(y ~ x + (1|block), data=dP, family=poisson, verbose= 2)
 gG1 <- glmer(y ~ 1 + (1|block), data=dG, family=gaussian(link="log"), verbose=TRUE)
 gG2 <- glmer(y ~ x + (1|block), data=dG, family=gaussian(link="log"), verbose=TRUE)
 
+## works with lme4.0 but AIC/BIC/logLik are crazy, and scale
+## parameter is not reported
+## glmmML etc. doesn't allow models with scale parameters
+## gG1B <- glmmadmb(y ~ 1 + (1|block), data=dG,
+##                  family="gaussian",link="log",verbose=TRUE)
+## what is the best guess at the estimate of the scale parameter?
+## is it the same as sigma?
+## gG1B$alpha
 
 if(Sys.info()["user"] != "maechler") { # <- seg.faults (MM)
 

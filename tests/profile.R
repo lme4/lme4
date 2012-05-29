@@ -38,13 +38,20 @@ print(splom(pr2))
 gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
              data = cbpp, family = binomial)
 
-### FIXME: PIRLS step fails here
-if (FALSE) {
-    system.time(pr4 <- profile(gm1))  ## ~ 7 seconds
+### FIXME: works, but with warnings/slower
+system.time(pr4 <- profile(gm1))  ## ~ 10 seconds
 
-    xyplot(pr4,layout=c(5,1),as.table=TRUE)
-    splom(pr4)
+
+## FIXME: compDev=FALSE fails
+if (FALSE) {
+    gm1B <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+                  data = cbpp, family = binomial,
+                  compDev=FALSE,verbose=3)
 }
+
+profile(gm1,which=3)
+xyplot(pr4,layout=c(5,1),as.table=TRUE)
+splom(pr4)
 
 nm1 <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~ Asym|Tree,
              Orange, start = c(Asym = 200, xmid = 725, scal = 350))
