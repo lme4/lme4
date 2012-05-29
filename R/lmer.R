@@ -500,6 +500,7 @@ globalVariables(c("pp","resp","lp0","pwrssUpdate","compDev",
 ##'     points.  A value of 0 indicates that both the fixed-effects parameters
 ##'     and the random effects are optimized by the iteratively reweighted least
 ##'     squares algorithm.
+##' @param verbose Logical: print verbose output?
 ##' @return A function of one numeric argument.
 ##' @seealso \code{\link{lmer}}, \code{\link{glmer}} and \code{\link{nlmer}}
 ##' @keywords models
@@ -508,7 +509,7 @@ globalVariables(c("pp","resp","lp0","pwrssUpdate","compDev",
 ##' (dd <- lmer(Yield ~ 1|Batch, Dyestuff, devFunOnly=TRUE))
 ##' dd(0.8)
 ##' minqa::bobyqa(1, dd, 0)
-mkdevfun <- function(rho, nAGQ=1L) {
+mkdevfun <- function(rho, nAGQ=1L, verbose=0) {
     ## FIXME: should nAGQ be automatically embedded in rho?
     stopifnot(is.environment(rho), is(rho$resp, "lmResp"))
     ff <- NULL
@@ -520,14 +521,14 @@ mkdevfun <- function(rho, nAGQ=1L) {
             function(theta) {
                 resp$updateMu(lp0)
                 pp$setTheta(theta)
-                pwrssUpdate(pp, resp, 1e-7, GHrule(0L), compDev)
+                pwrssUpdate(pp, resp, 1e-7, GHrule(0L), compDev, verbose)
             }
         else 
             function(pars) {
                 resp$updateMu(lp0)
                 pp$setTheta(as.double(pars[dpars])) # theta is first part of pars
                 resp$setOffset(baseOffset + pp$X %*% as.numeric(pars[-dpars]))
-                pwrssUpdate(pp, resp, tolPwrss, GQmat, compDev, fac)
+                pwrssUpdate(pp, resp, tolPwrss, GQmat, compDev, fac, verbose)
             }
     } else if (is(rho$resp, "nlsResp")) {
         if (nAGQ < 2L) {
@@ -592,8 +593,7 @@ RglmerWrkIter <- function(pp, resp, uOnly=FALSE) {
     resp$resDev() + pp$sqrL(1)
 }
 
-glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL) {
-    verbose <- TRUE ## hack
+glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, verbose=0) {
     nAGQ <- nrow(GQmat)
     if (compDev) {
         if (nAGQ < 2L)
@@ -602,19 +602,31 @@ glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL) {
     }
     oldpdev <- .Machine$double.xmax
     uOnly   <- nAGQ == 0L
+    i <- 0
     repeat {
-        oldu <- pp$delu
-        if (uOnly) oldbeta <- pp$delb
+        ## oldu <- pp$delu
+        ## olddelb <- pp$delb
         pdev <- RglmerWrkIter(pp, resp, uOnly=uOnly)
+        if (verbose>2) cat(i,": ",pdev,"\n",sep="")
         ## check convergence first so small increases don't trigger errors
         if (abs((oldpdev - pdev) / pdev) < tol)
             break
-        if (pdev > oldpdev) {
-            stop("PIRLS update failed")
-        }
+        ## if (pdev > oldpdev) {
+        ##     ## try step-halving
+        ##     ## browser()
+        ##     k <- 0
+        ##     while (k < 10 && pdev > oldpdev) {
+        ##         pp$setDelu((oldu + pp$delu)/2.)
+        ##         if (!uOnly) pp$setDelb((olddelb + pp$delb)/2.)
+        ##         pdev <- RglmerWrkIter(pp, resp, uOnly=uOnly)
+        ##         k <- k+1
+        ##     }
+        ## }
+        if (pdev>oldpdev) stop("PIRLS update failed")
         oldpdev <- pdev
+        i <- i+1
     }
-    resp$Laplace(pp$ldL2(), 0., pp$sqrL(1))
+    resp$Laplace(pp$ldL2(), 0., pp$sqrL(1))  ## FIXME: should 0. be pp$ldRX2 ?
 }
 
 ## create a deviance evaluation function that uses the sigma parameters

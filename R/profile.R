@@ -110,13 +110,13 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
             step <- minstep
         } else {
             step <- absstep*num/denom
-        }
-        if (r>1) {
-            if (abs(step) > (maxstep <- abs(maxmult*num))) {
-                maxstep <- sign(step)*maxstep
-                if (verbose) cat(sprintf("capped step at %1.2f (multiplier=%1.2f > %1.2f)\n",
-                                         maxstep,abs(step/num),maxmult))
-                step <- maxstep
+            if (r>1) {
+                if (abs(step) > (maxstep <- abs(maxmult*num))) {
+                    maxstep <- sign(step)*maxstep
+                    if (verbose) cat(sprintf("capped step at %1.2f (multiplier=%1.2f > %1.2f)\n",
+                                             maxstep,abs(step/num),maxmult))
+                    step <- maxstep
+                }
             }
         }
         min(upper, max(lower, pvals[2] + sign(num) * step))
@@ -148,7 +148,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
         i <- 2L
         while (i < nr && mat[i, cc] > lowcut && mat[i,cc] < upcut &&
                (is.na(curzeta <- abs(mat[i, ".zeta"])) || curzeta <= cutoff)) {
-            np <- nextpar(mat, cc, i, delta, lowcut, upcut, step)
+            np <- nextpar(mat, cc, i, delta, lowcut, upcut)
             ns <- nextstart(mat, cc-1, i, startmethod)
             mat[i + 1L, ] <- zetafun(np,ns)
             if (verbose>0) {
@@ -195,20 +195,29 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
        lowcut <- lower[w]
        upcut <- upper[w]
        zeta <- function(xx,start) {
-           ores <- optwrap(optimizer, par=start,
-                           fn=function(x) dd(mkpar(npar1, w, xx, x)),
-                           lower = lowvp[-w],
-                           upper = upvp[-w])
-           devdiff <- ores$fval-base
-           if (is.na(ores$fval)) {
+           ores <- try(optwrap(optimizer, par=start,
+                               fn=function(x) dd(mkpar(npar1, w, xx, x)),
+                               lower = lowvp[-w],
+                               upper = upvp[-w]),silent=TRUE)
+           if (inherits(ores,"try-error"))
+               {
+                   devdiff <- NA
+                   pars <- NA
+               } else {
+                   devdiff <- ores$fval-base
+                   pars <- ores$par
+               }
+           if (is.na(devdiff)) {
                warning("NAs detected in profiling")
-           } else if (devdiff < (-devtol))
-               stop("profiling detected new, lower deviance")
-           if(devdiff<0)
-               warning("slightly lower deviances (diff=",devdiff,") detected")
+           } else {
+               if (devdiff < (-devtol))
+                   stop("profiling detected new, lower deviance")
+               if(devdiff<0)
+                   warning("slightly lower deviances (diff=",devdiff,") detected")
+           }
            devdiff <- max(0,devdiff)
            zz <- sign(xx - pw) * sqrt(devdiff)
-           r <- c(zz, mkpar(npar1, w, xx, ores$par))
+           r <- c(zz, mkpar(npar1, w, xx, pars))
            if (isLMM(fitted)) r <- c(r,pp$beta(1))
            r
        }
@@ -227,16 +236,16 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
        ## FIXME:: do something if pw==0 ???
        nres[1, ] <- pres[2, ] <- zeta(pw * 1.01, start=opt[seqpar1][-w])
        ## fill in the rest of the arrays and collapse them
-       bres <-
-           as.data.frame(unique(rbind2(fillmat(pres,lowcut, upcut, zeta, wp1),
-                                       fillmat(nres,lowcut, upcut, zeta, wp1))))
+       upperf <- fillmat(pres,lowcut, upcut, zeta, wp1)
+       lowerf <- fillmat(nres,lowcut, upcut, zeta, wp1)
+       bres <- as.data.frame(unique(rbind2(upperf,lowerf)))
        pname <- names(opt)[w]
        bres$.par <- pname
        ans[[pname]] <- bres[order(bres[, wp1]), ]
        form[[3]] <- as.name(pname)
 
        ## FIXME: test for bad things here??
-       bakspl[[pname]] <- try(backSpline(forspl[[pname]] <- interpSpline(form, bres)),silent=TRUE)
+       bakspl[[pname]] <- try(backSpline(forspl[[pname]] <- interpSpline(form, bres,na.action=na.omit)),silent=TRUE)
        if (inherits(bakspl[[pname]],"try-error")) {
            warning("non-monotonic profile")
      }
@@ -509,6 +518,29 @@ confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
     ci
 }
 
+##' @importFrom stats confint
+##' @S3method confint merMod
+confint.merMod <- function(object, parm, method=c("profile","quadratic","bootMer"), level = 0.95, zeta, nsim=500, boot.type="perc", ...)
+{
+    method <- match.arg(method)
+    if (method=="profile") {
+        if (missing(parm)) {
+            pp <- profile(object,which=parm)
+        } else {
+            pp <- profile(object)
+        }
+        return(confint(pp,parm=parm,level=level,zeta=zeta,...))
+    } else if (method=="quadratic") {
+        stop("stub")
+        ## only give confidence intervals on fixed effects?
+        ## or warn??
+    } else if (method=="bootMer") {
+        message("Computing bootstrap confidence intervals ...")
+        bb <- bootMer(object, fixef, nsim=nsum)
+        boot::boot.ci(bb,type=boot.type,conf=level)
+    }
+}
+
 ## Convert x-cosine and y-cosine to average and difference.
 
 ## Convert the x-cosine and the y-cosine to an average and difference
@@ -582,7 +614,7 @@ splom.thpr <-
     nms <- names(spl)
     ## Create data frame fr of par. vals in zeta coordinates
     fr <- x[, -1]
-    for (nm in nms) fr[[nm]] <- predy(spl[[nm]], fr[[nm]])
+    for (nm in nms) fr[[nm]] <- predy(spl[[nm]], na.omit(fr[[nm]]))
     fr1 <- fr[1, nms]
     ## create a list of lists with the names of the parameters
     traces <- lapply(fr1, function(el) lapply(fr1, function(el1) list()))
