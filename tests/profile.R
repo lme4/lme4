@@ -51,7 +51,10 @@ if (FALSE) {
 
 profile(gm1,which=3)
 xyplot(pr4,layout=c(5,1),as.table=TRUE)
-splom(pr4)
+if (FALSE) {
+    ## FIXME! fails because of NAs
+    splom(pr4)
+}
 
 nm1 <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~ Asym|Tree,
              Orange, start = c(Asym = 200, xmid = 725, scal = 350))
@@ -71,3 +74,12 @@ if (FALSE) {
   print(splom(pr3))
 }
 
+
+## NOT RUN
+if (FALSE) {
+    data("Contraception",package="mlmRev")
+    fm2 <- glmer(use ~ urban+age+livch+(urban|district), Contraception, binomial)
+    load("pr5.RData")
+    pr5 <- profile(fm2,verbose=10)
+    xyplot(pr5)
+}

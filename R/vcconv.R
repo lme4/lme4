@@ -1,7 +1,12 @@
 ## convert matrix list to concatenated vector of lower triangles
 mlist2vec <- function(L) {
     n <- sapply(L,nrow)
-    r <- unlist(lapply(L,function(x) x[lower.tri(x,diag=TRUE)]))
+    ## allow for EITHER upper- or lower-triangular input
+    ff <- function(x) {
+        if (all(x[upper.tri(x)]==0)) t(x[lower.tri(x,diag=TRUE)])
+        else x[upper.tri(x,diag=TRUE)]
+    }
+    r <- unlist(lapply(L,ff))
     attr(r,"clen") <- n
     r
 }
@@ -56,12 +61,15 @@ safe_chol <- function(m) {
     if (all(dmult(m,0)==0)) {  ## diagonal
         return(diag(sqrt(diag(m))))
     }
+    ## attempt regular Chol. decomp
+    if (!inherits(try(cc <- chol(m),silent=TRUE),"try-error"))
+        return(cc)
+    ## ... pivot if necessary ...
     cc <- suppressWarnings(chol(m,pivot=TRUE))
-    cc[,order(attr(cc,"pivot"))]
-    ## FIXME: pivot is here to deal with semidefinite cases: do we have
-    ##   to be more careful?  test!
-    ## does pivoting carry a performance cost?
-    ## FIXME: we 
+    oo <- order(attr(cc,"pivot"))
+    cc[,oo]
+    ## FIXME: pivot is here to deal with semidefinite cases,
+    ## but results might be returned in a strange format: TEST
 }
 
 Vv_to_Cv <- function(v,n=NULL,s=1) {
@@ -73,6 +81,7 @@ Vv_to_Cv <- function(v,n=NULL,s=1) {
     attr(r,"clen") <- get_clen(v,n)
     r
 }
+
 Sv_to_Cv <- function(v,n=NULL,s=1) {
     if (!missing(s)) {
         v <- v[-length(v)]

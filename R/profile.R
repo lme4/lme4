@@ -411,7 +411,10 @@ devfun2 <- function(fm,useSc=TRUE)
 }
 
 ## extract only the y component from a prediction
-predy <- function(sp, vv) predict(sp, vv)$y
+predy <- function(sp, vv) {
+    if (inherits(sp,"try-error")) rep(NA,length(vv))
+    else predict(sp, vv)$y
+}
 
 stripExpr <- function(ll, nms) {
     stopifnot(inherits(ll, "list"), is.character(nms))
@@ -456,14 +459,15 @@ xyplot.thpr <-
     bspl <- attr(x, "backward")
     zeta <- c(-rev(levels), 0, levels)
     fr <- data.frame(zeta = rep.int(zeta, length(spl)),
-                     pval = unlist(lapply(bspl, predy, zeta)),
+                     pval = unlist(lapply(bspl,predy,zeta)),
                      pnm = gl(length(spl), length(zeta), labels = names(spl)))
     if (length(ind <- which(is.na(fr$pval)))) {
         fr[ind, "zeta"] <- 0
         for (i in ind)
 ### FIXME: Should check which bound has been violated, although it
 ### will almost always be the minimum.
-            fr[i, "pval"] <- min(spl[[fr[i, "pnm"] ]]$knots)
+            if (!is.null(curspl <-  spl[[fr[i, "pnm"] ]]))
+                fr[i, "pval"] <- min(curspl$knots)
     }
     ylab <- expression(zeta)
     if (absVal) {
@@ -477,22 +481,26 @@ xyplot.thpr <-
                  panel = function(x, y, ...)
              {
                  panel.grid(h = -1, v = -1)
-                 lsegments(x, y, x, 0, ...)
-                 lims <- current.panel.limits()$xlim
                  myspl <- spl[[panel.number()]]
-                 if (inherits(myspl,"try-error")) browser() ## << FIXME
-                 krange <- range(myspl$knots)
-                 pr <- predict(myspl,
-                               seq(max(lims[1], krange[1]),
-                                   min(lims[2], krange[2]), len = 101))
-                 if (absVal) {
-                     pr$y <- abs(pr$y)
-                     y[y == 0] <- NA
-                     lsegments(x, y, rev(x), y)
+                 if (inherits(myspl,"try-error") ||
+                     is.null(myspl)) {
+                     warning(sprintf("bad profile for variable %d: skipped",panel.number()))
                  } else {
-                     panel.abline(h = 0, ...)
+                     lsegments(x, y, x, 0, ...)
+                     lims <- current.panel.limits()$xlim
+                     krange <- range(myspl$knots)
+                     pr <- predict(myspl,
+                                   seq(max(lims[1], krange[1]),
+                                       min(lims[2], krange[2]), len = 101))
+                     if (absVal) {
+                         pr$y <- abs(pr$y)
+                         y[y == 0] <- NA
+                         lsegments(x, y, rev(x), y)
+                     } else {
+                         panel.abline(h = 0, ...)
+                     }
+                     panel.lines(pr$x, pr$y)
                  }
-                 panel.lines(pr$x, pr$y)
              }))
     do.call(xyplot, stripExpr(ll, names(spl)))
 }
@@ -518,25 +526,27 @@ confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
     ci
 }
 
+## FIXME: make bootMer more robust; make profiling more robust;
+## more warnings; documentation ...
 ##' @importFrom stats confint
 ##' @S3method confint merMod
 confint.merMod <- function(object, parm, method=c("profile","quadratic","bootMer"), level = 0.95, zeta, nsim=500, boot.type="perc", ...)
 {
     method <- match.arg(method)
     if (method=="profile") {
-        if (missing(parm)) {
+        if (!missing(parm)) {
             pp <- profile(object,which=parm)
         } else {
             pp <- profile(object)
         }
-        return(confint(pp,parm=parm,level=level,zeta=zeta,...))
+        return(confint(pp,level=level,zeta=zeta,...))
     } else if (method=="quadratic") {
         stop("stub")
         ## only give confidence intervals on fixed effects?
         ## or warn??
     } else if (method=="bootMer") {
         message("Computing bootstrap confidence intervals ...")
-        bb <- bootMer(object, fixef, nsim=nsum)
+        bb <- bootMer(object, fixef, nsim=nsim)
         boot::boot.ci(bb,type=boot.type,conf=level)
     }
 }
