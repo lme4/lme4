@@ -10,6 +10,10 @@ s1 <- simulate(gm1,seed=101)[[1]]
 s2 <- simulate(gm2,seed=101)[[1]]
 stopifnot(all.equal(s1[,1]/rowSums(s1),s2))
 
+gm3 <- glmer(cbind(incidence, size - incidence) ~ period +
+             (1 | herd), data = cbpp, family = binomial(link="logit"))
+s3 <- simulate(gm3,seed=101)[[1]]
+stopifnot(all.equal(s3,s1))
 ## Bernoulli
 ## works, but too slow
 if (FALSE) {

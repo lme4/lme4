@@ -1329,6 +1329,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE, ...) {
 	      if(is.character(family))
 		  family <- get(family, mode = "function", envir = parent.frame(2))
 	      if(is.function(family)) family <- family()
+              if(is.language(family)) family <- eval(family)
 	      if(is.null(family$family)) stop("'family' not recognized")
 	      musim <- family$linkinv(etasim)
 	      ntot <- length(musim) ## FIXME: or could be dims["n"]?
