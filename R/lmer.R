@@ -1421,11 +1421,11 @@ printMerenv <- function(x, digits = max(3, getOption("digits") - 3),
     }
     if (!is.null(cc <- so$call$formula))
 	cat("Formula:", deparse(cc),"\n")
-    if (!is.null(so$family)) {
-        cat("Family: ",so$family,
-            " (link=",so$link,")\n",
-            sep="")
-    }
+    ## if (!is.null(so$family)) {
+    ##     cat("Family: ",so$family,
+    ##         " (link=",so$link,")\n",
+    ##         sep="")
+    ## }
     if (!is.null(cc <- so$call$data))
 	cat("   Data:", deparse(cc), "\n")
     if (!is.null(cc <- so$call$subset))
