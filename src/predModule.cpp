@@ -102,7 +102,8 @@ namespace lme4 {
 	const SpMatrixd d_Lambda(d_Lambdat.adjoint());
 	for (int i = 0; i < nf; i++) {
 	    int         ncti(nct[i]), nli(nl[i]);
-	    Rcpp::NumericVector ansi(Rcpp::Dimension(ncti, ncti, nli));
+	    Rcpp::NumericVector ansi(ncti * ncti * nli);
+	    ansi.attr("dim") = Rcpp::IntegerVector::create(ncti, ncti, nli);
 	    ans[i] = ansi;
 	    const MiVec trms(as<MiVec>(trmlst(i)));
 	    if (trms.size() == 1) { // simple case
