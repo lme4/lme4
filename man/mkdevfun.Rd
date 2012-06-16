@@ -2,7 +2,7 @@
 \alias{mkdevfun}
 \title{Create a deviance evaluation function from a predictor and a response module}
 \usage{
-  mkdevfun(rho, nAGQ = 1L)
+  mkdevfun(rho, nAGQ = 1L, verbose = 0)
 }
 \arguments{
   \item{rho}{an environment containing \code{pp}, a
@@ -15,6 +15,8 @@
   that both the fixed-effects parameters and the random
   effects are optimized by the iteratively reweighted least
   squares algorithm.}
+
+  \item{verbose}{Logical: print verbose output?}
 }
 \value{
   A function of one numeric argument.

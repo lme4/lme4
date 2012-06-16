@@ -30,19 +30,25 @@
 ##' ## 0.8s (on a 5600 MIPS 64bit fast(year 2009) desktop "AMD Phenom(tm) II X4 925"):
 ##' ## This is slower because of the Nelder-Mead optimizer but using bobyqa, the default,
 ##' ## produces a warning.
-##' system.time( tpr <- profile(fm01ML, optimizer="Nelder_Mead") )
+##' system.time( tpr  <- profile(fm01ML, optimizer="Nelder_Mead") )
+##' system.time( tpr2 <- profile(fm01ML, optimizer="bobyqa") )
 ##' (confint(tpr) -> CIpr)
-##' print(xyplot(tpr))
+##' stopifnot(all.equal(CIpr, confint(tpr2), tol= 1e-11))
+##' xyplot(tpr)
+##' densityplot(tpr, main="densityplot( profile(lmer(..)) )")
+##' splom(tpr)
+##'
 ##' tpr2 <- profile(fm01ML, which=1:2, optimizer="Nelder_Mead") ## Batch and residual variance only
+##'
 ##' ## GLMM example (running time ~8 seconds on a modern machine)
 ##' \dontrun{
 ##' gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
 ##'             data = cbpp, family = binomial)
 ##' system.time(pr4 <- profile(gm1))  ## ~ 7 seconds
 ##' xyplot(pr4,layout=c(5,1),as.table=TRUE)
-##' splom(pr4)
+##' splom(pr4)% FIXME! currently fails!
 ##' }
-##' @importFrom splines backSpline interpSpline periodicSpline
+##' ##' @importFrom splines backSpline interpSpline periodicSpline
 ##' @importFrom stats profile
 ##' @method profile merMod
 ##' @export
@@ -308,10 +314,10 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
     } ## if isLMM
 
     ans <- do.call(rbind, ans)
+    row.names(ans) <- NULL
     ans$.par <- factor(ans$.par)
     attr(ans, "forward") <- forspl
     attr(ans, "backward") <- bakspl
-    row.names(ans) <- NULL
     class(ans) <- c("thpr", "data.frame")
     ans
 }
@@ -528,27 +534,33 @@ confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
 
 ## FIXME: make bootMer more robust; make profiling more robust;
 ## more warnings; documentation ...
+## --> then @export  (we have "surprising arguments")
+
 ##' @importFrom stats confint
 ##' @S3method confint merMod
-confint.merMod <- function(object, parm, method=c("profile","quadratic","bootMer"), level = 0.95, zeta, nsim=500, boot.type="perc", ...)
+confint.merMod <- function(object, parm, level = 0.95,
+			   method=c("profile","quadratic","bootMer"),
+			   zeta, nsim=500, boot.type="perc", ...)
 {
     method <- match.arg(method)
-    if (method=="profile") {
-        if (!missing(parm)) {
-            pp <- profile(object,which=parm)
-        } else {
-            pp <- profile(object)
-        }
-        return(confint(pp,level=level,zeta=zeta,...))
-    } else if (method=="quadratic") {
-        stop("stub")
-        ## only give confidence intervals on fixed effects?
-        ## or warn??
-    } else if (method=="bootMer") {
-        message("Computing bootstrap confidence intervals ...")
-        bb <- bootMer(object, fixef, nsim=nsim)
-        boot::boot.ci(bb,type=boot.type,conf=level)
-    }
+    switch(method,
+	   "profile" =
+       {
+	   pp <- if(missing(parm)) profile(object) else profile(object, which=parm)
+	   confint(pp,level=level,zeta=zeta,...)
+       },
+	   "quadratic" =
+       {
+	   stop("stub")
+	   ## only give confidence intervals on fixed effects?
+	   ## or warn??
+       },
+	   "bootMer" =
+       {
+	   message("Computing bootstrap confidence intervals ...")
+	   bb <- bootMer(object, fixef, nsim=nsim)
+	   boot::boot.ci(bb,type=boot.type,conf=level)
+       })
 }
 
 ## Convert x-cosine and y-cosine to average and difference.
@@ -562,7 +574,7 @@ ad <- function(xc, yc)
 {
     a <- (xc + yc)/2
     d <- (xc - yc)
-    cbind(ifelse(d > 0, a, -a), abs(d))
+    cbind(sign(d)* a, abs(d))
 }
 
 ## convert d versus a (as an xyVector) and level to a matrix of taui and tauj
@@ -602,14 +614,20 @@ cont <- function(sij, sji, levels, nseg = 101)
 }
 
 
-## Profile pairs plot
-## Contours are for the marginal two-dimensional regions (i.e. using
-##  df = 2)
+##' Draws profile pairs plots.  Contours are for the marginal
+##' two-dimensional regions (i.e. using df = 2).
+##'
+##' @title Profile pairs plot
+##' @param x the result of \code{\link{profile}} (or very similar structure)
+##' @param data unused - only for compatibility with generic
+##' @param levels the contour levels to be shown; usually derived from \code{conf}
+##' @param conf numeric vector of confidence levels to be shown as contours
+##' @param ... further arguments passed to \code{\link{splom}}
 ##' @importFrom grid gpar viewport
 ##' @importFrom lattice splom
-##' @S3method splom thpr
-splom.thpr <-
-    function (x, data, ## unused - only for compatibility with generic
+##' @method splom thpr
+##' @export
+splom.thpr <- function (x, data,
               levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 2)),
               conf = c(50, 80, 90, 95, 99)/100, ...)
 {
@@ -801,6 +819,7 @@ log.thpr <- function (x, base = exp(1)) {
     x
 }
 
+### FIXME: Not exported and nowhere used
 ## Transform a profile from the standard deviation parameters to the variance
 ##
 ## @title Transform to variance component scale
@@ -861,15 +880,18 @@ dens <- function(pr, npts=201, upper=0.999) {
     fr
 }
 
-## Densityplot method for a mixed-effects model profile
+##' Densityplot method for a mixed-effects model profile
 ##
-## @title densityplot from a mixed-effects profile
-## @param x a mixed-effects profile
-## @param data not used - for compatibility with generic
-## @param ... optional arguments to densityplot
-## @return a density plot
+##' @title densityplot from a mixed-effects profile
+##' @param x a mixed-effects profile
+##' @param data not used - for compatibility with generic
+##' @param ... optional arguments to \code{\link[lattice]{densityplot}()}
+##' from package \pkg{lattice}.
+##' @return a density plot
+##' @examples ## see   example("profile.merMod")
 ##' @importFrom lattice densityplot
-##' @S3method densityplot thpr
+##' @method densityplot thpr
+##' @export
 densityplot.thpr <- function(x, data, ...) {
     ll <- c(list(...),
             list(x=density ~ pval|pnm,
@@ -907,16 +929,19 @@ varianceProf <- function(pr) {
 
 ## convert profile to data frame, adding a .focal parameter to simplify lattice/ggplot plotting
 ##' @method as.data.frame thpr
+##' @param x the result of \code{\link{profile}} (or very similar structure)
 ##' @export
+##' @rdname profile-methods
 as.data.frame.thpr <- function(x,...) {
     class(x) <- "data.frame"
     m <- as.matrix(x[,seq(ncol(x))-1]) ## omit .par
-    x[[".focal"]] <- m[cbind(seq(nrow(x)),match(x$.par,names(x)))]
-    x[[".par"]] <- factor(x[[".par"]],levels=unique(as.character(x[[".par"]]))) ## restore order
+    x.p <- x[[".par"]]
+    x[[".focal"]] <- m[cbind(seq(nrow(x)),match(x.p,names(x)))]
+    x[[".par"]] <- factor(x.p, levels=unique(as.character(x.p))) ## restore order
     x
 }
 
-if (FALSE) {
+if (FALSE) { ## FIXME Ben , e.g. mv to ../testsx/ ?
     source("~/R/misc/slice.R")
     dd <- lme4:::devfun2(nm1,useSc=TRUE)
     s1 <- slice(attr(dd,"optimum"),dd,dim=2)

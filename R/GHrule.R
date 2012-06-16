@@ -160,7 +160,7 @@ GHrule <- function (ord, asMatrix=TRUE) {
         }
     } else fr <- rbind(fr[rev(seq_len(nr)),], fr)
     if (ord > 1L) fr[seq_len(ord %/% 2L), "z"] <- -fr[seq_len(ord %/% 2L), "z"]
-    rownames(fr) <- NULL
+    rownames(fr) <- z <- NULL
     fr <- within(fr, ldnorm <- dnorm(z, log=TRUE))
     if (asMatrix) return(as.matrix(fr))
     fr

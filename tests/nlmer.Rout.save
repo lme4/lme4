@@ -1,5 +1,5 @@
 
-R version 2.15.0 beta (2012-03-17 r58782)
+R version 2.15.1 beta (2012-06-14 r59562) -- "Roasted Marshmallows"
 Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-unknown-linux-gnu (64-bit)
@@ -18,6 +18,7 @@ Type 'q()' to quit R.
 
 > library(lme4)
 Loading required package: lattice
+Loading required package: Matrix
 > 
 > allEQ <- function(x,y, tolerance = 4e-4, ...)
 +     all.equal.numeric(x,y, tolerance=tolerance, ...)
@@ -49,7 +50,7 @@ xmid 0.384
 scal 0.362 0.762
 > fixef(nm1)
     Asym     xmid     scal 
-192.0533 727.9074 348.0737 
+192.0534 727.9074 348.0738 
 > 
 > ## 'Theoph' Data modeling
 > Th.start <- c(lKe = -2.5, lKa = 0.5, lCl = -3)
@@ -58,7 +59,7 @@ scal 0.362 0.762
 +                          (lKe+lKa+lCl|Subject), 
 +                          Theoph, start = Th.start, tolPwrss=1e-8))
    user  system elapsed 
-  5.664   0.000   5.682 
+  5.480   0.000   5.497 
 > print(nm2, corr=FALSE)
 Nonlinear mixed model fit by maximum likelihood ['nlmerMod']
 Formula: conc ~ SSfol(Dose, Time, lKe, lKa, lCl) ~ (lKe + lKa + lCl |      Subject) 
@@ -77,15 +78,15 @@ Number of obs: 132, groups: Subject, 12
 
 Fixed effects:
     Estimate Std. Error t value
-lKe -2.44546    0.06257  -39.08
-lKa  0.47635    0.19395    2.46
-lCl -3.21454    0.08100  -39.68
+lKe -2.44551    0.06257  -39.08
+lKa  0.47646    0.19395    2.46
+lCl -3.21462    0.08100  -39.69
 > 
 > system.time(nm3 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
 +                          (lKe|Subject) + (lKa|Subject) + (lCl|Subject),
 +                          Theoph, start = Th.start))
    user  system elapsed 
-  2.644   0.000   2.655 
+  2.728   0.004   2.739 
 > print(nm3, corr=FALSE)
 Nonlinear mixed model fit by maximum likelihood ['nlmerMod']
 Formula: conc ~ SSfol(Dose, Time, lKe, lKa, lCl) ~ (lKe | Subject) + (lKa |      Subject) + (lCl | Subject) 
@@ -104,15 +105,15 @@ Number of obs: 132, groups: Subject, 12
 
 Fixed effects:
     Estimate Std. Error t value
-lKe -2.46572    0.05187  -47.54
-lKa  0.48088    0.20000    2.40
-lCl -3.23074    0.05955  -54.26
+lKe -2.46537    0.05187  -47.53
+lKa  0.48103    0.20000    2.41
+lCl -3.23045    0.05955  -54.25
 > 
 > ## dropping   lKe  from random effects:
 > system.time(nm4 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~ (lKa+lCl|Subject),
 +                          Theoph, start = Th.start, tolPwrss=1e-8))
    user  system elapsed 
-  1.640   0.000   1.646 
+  1.624   0.000   1.630 
 > print(nm4, corr=FALSE)
 Nonlinear mixed model fit by maximum likelihood ['nlmerMod']
 Formula: conc ~ SSfol(Dose, Time, lKe, lKa, lCl) ~ (lKa + lCl | Subject) 
@@ -131,7 +132,7 @@ Number of obs: 132, groups: Subject, 12
 Fixed effects:
     Estimate Std. Error t value
 lKe -2.46592    0.05188  -47.53
-lKa  0.48282    0.20004    2.41
+lKa  0.48283    0.20004    2.41
 lCl -3.22897    0.05953  -54.24
 > 
 > system.time(nm5 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
@@ -139,7 +140,7 @@ lCl -3.22897    0.05953  -54.24
 +                          Theoph,
 +                          start = Th.start, tolPwrss=1e-8))
    user  system elapsed 
-  0.876   0.000   0.880 
+  0.872   0.000   0.874 
 > print(nm5, corr=FALSE)
 Nonlinear mixed model fit by maximum likelihood ['nlmerMod']
 Formula: conc ~ SSfol(Dose, Time, lKe, lKa, lCl) ~ (lKa | Subject) + (lCl |      Subject) 
@@ -157,9 +158,9 @@ Number of obs: 132, groups: Subject, 12
 
 Fixed effects:
     Estimate Std. Error t value
-lKe -2.46579    0.05185  -47.56
-lKa  0.48262    0.20064    2.41
-lCl -3.23053    0.05957  -54.23
+lKe -2.46584    0.05185  -47.56
+lKa  0.48229    0.20064    2.40
+lCl -3.23055    0.05957  -54.23
 > 
 > if (require("PKPDmodels")) {
 +     oral1cptSdlkalVlCl <-
@@ -187,10 +188,10 @@ Number of obs: 132, groups: Subject, 12
 
 Fixed effects:
     Estimate Std. Error t value
-lV  -0.77187    0.04208  -18.34
-lka  0.47106    0.19864    2.37
-lCl -3.21992    0.07995  -40.28
+lV  -0.77190    0.04208  -18.35
+lka  0.47101    0.19864    2.37
+lCl -3.21971    0.07995  -40.27
 > 
 > proc.time()
    user  system elapsed 
- 20.041   0.092  20.238 
+ 19.785   0.080  19.919 

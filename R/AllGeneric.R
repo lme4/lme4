@@ -45,13 +45,26 @@ sigma <- function(object, ...) UseMethod("sigma")
 ##' nonlinear (NLMM) mixed model, and whether a linear mixed model has been fitted by REML or not (\code{isREML(x)}
 ##' is always \code{FALSE} for GLMMs and NLMMs).
 ##'
-##' This is a generic function.  At present the only methods are for mixed-effects
+##' These are generic functions.  At present the only methods are for mixed-effects
 ##' models of class \code{\linkS4class{merMod}}.
 ##' @title Check characteristics of models
 ##' @param x a fitted model.
 ##' @param ... additional, optional arguments.  (None are used in the merMod methods)
 ##' @return a logical value
 ##' @seealso getME
+##' @examples
+##' fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+##' gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+##'               data = cbpp, family = binomial)
+##' nm1 <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~ Asym|Tree,
+##'              Orange, start = c(Asym = 200, xmid = 725, scal = 350))
+##'
+##' isLMM(fm1)
+##' isGLMM(gm1)
+##' ## check all :
+##' is.MM <- function(x) c(LMM = isLMM(x), GLMM= isGLMM(x), NLMM= isNLMM(x))
+##' stopifnot(cbind(is.MM(fm1), is.MM(gm1), is.MM(nm1))
+##' 	  == diag(rep(TRUE,3)))
 ##' @export
 isREML <- function(x, ...) UseMethod("isREML")
 
@@ -93,6 +106,15 @@ refitML <- function(x, ...) UseMethod("refitML")
 ##'     of the same length as the original response.
 ##' @param ... optional additional parameters.  None are used at present.
 ##' @return an object like \code{x} but fit by maximum likelihood
+##' @examples
+##' ## using refit() to fit each column in a matrix of responses
+##' set.seed(101)
+##' Y <- matrix(rnorm(1000),ncol=10)
+##' res <- list()
+##' d <- data.frame(y=Y[,1],x=rnorm(100),f=rep(1:10,10))
+##' fit1 <- lmer(y~x+(1|f),data=d)
+##' res <- c(fit1,lapply(as.data.frame(Y[,-1]),
+##'         refit,object=fit1))
 ##' @export
 refit <- function(object, newresp, ...) UseMethod("refit")
 

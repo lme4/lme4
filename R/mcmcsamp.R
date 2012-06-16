@@ -1,3 +1,4 @@
+if(FALSE) ## C++ code in ../src/mcmcsamp.cpp -- is also  #ifdef 0
 # @S3method mcmcsamp merMod
 mcmcsamp.merMod <- function(object, n=1L, verbose=FALSE, saveb=FALSE, ...) {
     n <- max(1L, as.integer(n)[1])

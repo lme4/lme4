@@ -1,5 +1,6 @@
 \docType{methods}
 \name{profile-methods}
+\alias{as.data.frame.thpr}
 \alias{profile.merMod}
 \alias{profile-methods}
 \title{Methods for profile() of [ng]lmer fitted models}
@@ -8,6 +9,8 @@
     alphamax = 0.01, maxpts = 100, delta = cutoff/8,
     verbose = 0, devtol = 1e-09, maxmult = 10,
     startmethod = "prev", optimizer = "bobyqa", ...)
+
+  \method{as.data.frame}{thpr} (x, ...)
 }
 \arguments{
   \item{fitted}{a fitted model, e.g., the result of
@@ -51,6 +54,9 @@
 
   \item{\dots}{potential further arguments for
   \code{profile} methods.}
+
+  \item{x}{the result of \code{\link{profile}} (or very
+  similar structure)}
 }
 \description{
   Methods for function \code{\link{profile}} (package
@@ -67,18 +73,25 @@ fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
 ## 0.8s (on a 5600 MIPS 64bit fast(year 2009) desktop "AMD Phenom(tm) II X4 925"):
 ## This is slower because of the Nelder-Mead optimizer but using bobyqa, the default,
 ## produces a warning.
-system.time( tpr <- profile(fm01ML, optimizer="Nelder_Mead") )
+system.time( tpr  <- profile(fm01ML, optimizer="Nelder_Mead") )
+system.time( tpr2 <- profile(fm01ML, optimizer="bobyqa") )
 (confint(tpr) -> CIpr)
-print(xyplot(tpr))
+stopifnot(all.equal(CIpr, confint(tpr2), tol= 1e-11))
+xyplot(tpr)
+densityplot(tpr, main="densityplot( profile(lmer(..)) )")
+splom(tpr)
+
 tpr2 <- profile(fm01ML, which=1:2, optimizer="Nelder_Mead") ## Batch and residual variance only
+
 ## GLMM example (running time ~8 seconds on a modern machine)
 \dontrun{
 gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
             data = cbpp, family = binomial)
 system.time(pr4 <- profile(gm1))  ## ~ 7 seconds
 xyplot(pr4,layout=c(5,1),as.table=TRUE)
-splom(pr4)
+splom(pr4)\% FIXME! currently fails!
 }
+##'
 }
 \seealso{
   For (more expensive) alternative confidence intervals:

@@ -140,9 +140,8 @@ plot.merMod <-
   ## Diagnostic plots based on residuals and/or fitted values
 {
   object <- x
-  if (!inherits(form, "formula")) {
-    stop("\"Form\" must be a formula")
-  }
+  if (!inherits(form, "formula"))
+    stop("\"form\" must be a formula")
   ## constructing data
   ## can I get away with using object@frame???
   allV <- all.vars(asOneFormula(form, id, idLabels))
@@ -232,7 +231,9 @@ plot.merMod <-
 	     stop("\"Id\" can only be a formula or numeric.")
 	     )
     if (is.null(idLabels)) {
-      idLabels <- getGroups(object)
+      ## FIXME: Have no example yet, where this is triggered...
+      message("**** getGroups() case in plot.merMod() ****")
+      idLabels <- getGroupsFormula(object)
       if (length(idLabels) == 0) idLabels <- 1:object$dims$N
       idLabels <- as.character(idLabels)
     } else {

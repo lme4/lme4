@@ -68,7 +68,7 @@
   \code{\link{vcov}}, etc.
 }
 \examples{
-## shows many methods you should consider *before* getME():
+## shows many methods you should consider *before* using getME():
 methods(class = "merMod")
 
 (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -80,6 +80,12 @@ stopifnot(is(Z, "CsparseMatrix"),
 
 ## All that can be accessed [potentially ..]:
 (nmME <- eval(formals(getME)$name))
+\dontshow{
+## internal consistency check ensuring that all work:
+## "try(.)" because some are not yet implemented:
+str(parts <- sapply(nmME, function(nm) try(getME(fm1, nm)),
+                    simplify=FALSE))
+}\% dont..
 }
 \seealso{
   \code{\link{getCall}()}, More standard methods for mer

@@ -1,8 +1,11 @@
 \name{refitML}
 \alias{refitML}
+\alias{refitML.merMod}
 \title{Refit a model by maximum likelihood criterion}
 \usage{
   refitML(x, ...)
+
+  \method{refitML}{merMod} (x, optimizer = "bobyqa", ...)
 }
 \arguments{
   \item{x}{a fitted model, usually of class
@@ -11,6 +14,9 @@
 
   \item{...}{optional additional parameters.  None are used
   at present.}
+
+  \item{optimizer}{a string indicating the optimizer to be
+  used.}
 }
 \value{
   an object like \code{x} but fit by maximum likelihood

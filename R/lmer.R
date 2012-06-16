@@ -254,7 +254,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 ##' ## which is not directly comparable with the nAGQ=0 or nAGQ=1 result.
 ##' (gm1a <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
 ##'                cbpp, binomial, nAGQ = 9))
-##' 
+##'
 ##' ## GLMM with individual-level variability (accounting for overdispersion)
 ##' ## For this data set the model is the same as one allowing for a period:herd
 ##' ## interaction, which the plot indicates could be needed.
@@ -324,12 +324,12 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     form[[3]] <- if(is.null(nb <- nobars(form[[3]]))) 1 else nb
     X <- model.matrix(form, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     p <- ncol(X)
-    
+
     ## Environment for deviance function.  For the optimizers the
     ## deviance function must be a simple function of a numeric
     ## parameter.  We put all the other information in the
     ## environment rho which is assigned as the environment of the
-    ## deviance function. 
+    ## deviance function.
     rho             <- as.environment(list(verbose=verbose, tolPwrss=tolPwrss))
     parent.env(rho) <- parent.frame()
     rho$pp          <- do.call(merPredD$new,
@@ -354,7 +354,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
                    control=control,
                    adj=FALSE, verbose=verbose)
     rho$control <- attr(opt,"control")
-    
+
     rho$nAGQ <- nAGQ
     if (nAGQ > 0L) {
         rho$nAGQ       <- nAGQ
@@ -473,6 +473,7 @@ if (getRversion()<="2.15.0")  {
     ## dummy
     globalVariables <- function(...) {}
 }
+if(FALSE)## not ok for roxygen2
 globalVariables(c("pp","resp","lp0","pwrssUpdate","compDev",
                   "baseOffset","GQmat","fac","nlmerAGQ","tolPwrss",
                   "dpars","verbose"),
@@ -512,43 +513,51 @@ globalVariables(c("pp","resp","lp0","pwrssUpdate","compDev",
 mkdevfun <- function(rho, nAGQ=1L, verbose=0) {
     ## FIXME: should nAGQ be automatically embedded in rho?
     stopifnot(is.environment(rho), is(rho$resp, "lmResp"))
-    ff <- NULL
+
+    ## R CMD check  "no visible binding for global variable" ...
+    ## MM *preferred* to globalVariables()
+    fac <- pp <- resp <- lp0 <- compDev <- dpars <- baseOffset <- tolPwrss <-
+	pwrssUpdate <- ## <-- even though it's a function below
+	GQmat <- nlmerAGQ <- NULL
+
+    ## The deviance function (to be returned):
+    ff <-
     if (is(rho$resp, "lmerResp")) {
-        rho$lmer_Deviance <- lmer_Deviance
-        ff <- function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))
+	rho$lmer_Deviance <- lmer_Deviance
+	function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))
     } else if (is(rho$resp, "glmResp")) {
-        ff <- if (nAGQ == 0L)
-            function(theta) {
-                resp$updateMu(lp0)
-                pp$setTheta(theta)
-                pwrssUpdate(pp, resp, 1e-7, GHrule(0L), compDev, verbose)
-            }
-        else 
-            function(pars) {
-                resp$updateMu(lp0)
-                pp$setTheta(as.double(pars[dpars])) # theta is first part of pars
-                resp$setOffset(baseOffset + pp$X %*% as.numeric(pars[-dpars]))
-                pwrssUpdate(pp, resp, tolPwrss, GQmat, compDev, fac, verbose)
-            }
+	if (nAGQ == 0L)
+	    function(theta) {
+		resp$updateMu(lp0)
+		pp$setTheta(theta)
+		pwrssUpdate(pp, resp, 1e-7, GHrule(0L), compDev, verbose)
+	    }
+	else
+	    function(pars) {
+		resp$updateMu(lp0)
+		pp$setTheta(as.double(pars[dpars])) # theta is first part of pars
+		resp$setOffset(baseOffset + pp$X %*% as.numeric(pars[-dpars]))
+		pwrssUpdate(pp, resp, tolPwrss, GQmat, compDev, fac, verbose)
+	    }
     } else if (is(rho$resp, "nlsResp")) {
-        if (nAGQ < 2L) {
-            rho$nlmerLaplace <- nlmerLaplace
-            ff <- switch(nAGQ + 1L,
-                         function(theta)
-                         .Call(nlmerLaplace, pp$ptr(), resp$ptr(), as.double(theta),
-                               as.double(u0), beta0, verbose, FALSE, tolPwrss),
-                         function(pars)
-                         .Call(nlmerLaplace, pp$ptr(), resp$ptr(), pars[dpars], u0,
-                               pars[-dpars], verbose, TRUE, tolPwrss))
-        } else {
-            rho$nlmerAGQ <- nlmerAGQ
-            rho$GQmat    <- GHrule(nAGQ)
-            ff <- function(pars)
-                .Call(nlmerAGQ, pp$ptr(), resp$ptr(), fac, GQmat, pars[dpars],
-                      u0, pars[-dpars], tolPwrss)
-        }
+	if (nAGQ < 2L) {
+	    rho$nlmerLaplace <- nlmerLaplace
+	    switch(nAGQ + 1L,
+			 function(theta)
+			 .Call(nlmerLaplace, pp$ptr(), resp$ptr(), as.double(theta),
+			       as.double(u0), beta0, verbose, FALSE, tolPwrss),
+			 function(pars)
+			 .Call(nlmerLaplace, pp$ptr(), resp$ptr(), pars[dpars], u0,
+			       pars[-dpars], verbose, TRUE, tolPwrss))
+	} else {
+	    rho$nlmerAGQ <- nlmerAGQ
+	    rho$GQmat	 <- GHrule(nAGQ)
+	    function(pars)
+		.Call(nlmerAGQ, pp$ptr(), resp$ptr(), fac, GQmat, pars[dpars],
+		      u0, pars[-dpars], tolPwrss)
+	}
     }
-    if (is.null(ff)) stop("code not yet written")
+    else stop("code not yet written")
     environment(ff) <- rho
     ff
 }
@@ -1109,12 +1118,14 @@ ranef.merMod <- function(object, postVar = FALSE, drop = FALSE,
 	class(ans) <- "ranef.mer"
     }
     ans
-}
+}## ranef.merMod
 
-##' @S3method refit merMod
+
+##' @method refit merMod
+##' @rdname refit
+##' @export
 refit.merMod <- function(object, newresp=NULL, ...)
 {
-
     rr <- object@resp$copy()
 
     if (!is.null(newresp)) {
@@ -1139,10 +1150,8 @@ refit.merMod <- function(object, newresp=NULL, ...)
                 newresp <- as.numeric(newresp)-1
             }
         }
-
         stopifnot(length(newresp <- as.numeric(as.vector(newresp))) == length(rr$y))
         rr$setResp(newresp)
-
     }
 
     pp        <- object@pp$copy()
@@ -1184,7 +1193,13 @@ refit.merMod <- function(object, newresp=NULL, ...)
              object@frame, getCall(object))
 }
 
-##' @S3method refitML merMod
+##-- BUG in roxygen2: If we use  @S3method instead of @method,
+##-- the \usage{ ... } will have
+##-- refitML.merMod(..) instead of \method{refitML}{mermod}(..)
+##' @param optimizer a string indicating the optimizer to be used.
+##' @method refitML merMod
+##' @rdname refitML
+##' @export
 refitML.merMod <- function (x, optimizer="bobyqa", ...) {
     ## FIXME: optimizer is set to 'bobyqa' for back-compatibility, but that's not
     ##  consistent with lmer (default NM).  Should be based on internally stored 'optimizer' value
@@ -1574,7 +1589,7 @@ setMethod("getL", "merMod", function(x) {
 ##' @keywords utilities
 ##' @examples
 ##'
-##' ## shows many methods you should consider *before* getME():
+##' ## shows many methods you should consider *before* using getME():
 ##' methods(class = "merMod")
 ##'
 ##' (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -1586,6 +1601,12 @@ setMethod("getL", "merMod", function(x) {
 ##'
 ##' ## All that can be accessed [potentially ..]:
 ##' (nmME <- eval(formals(getME)$name))
+##' \dontshow{
+##' ## internal consistency check ensuring that all work:
+##' ## "try(.)" because some are not yet implemented:
+##' str(parts <- sapply(nmME, function(nm) try(getME(fm1, nm)),
+##'                     simplify=FALSE))
+##' }% dont..
 ##'
 ##' @export
 getME <- function(object,
