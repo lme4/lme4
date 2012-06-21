@@ -119,8 +119,19 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
     fr <- eval(mf, parent.frame())
                                         # random effects and terms modules
     reTrms <- mkReTrms(findbars(formula[[3]]), fr)
+    if (FALSE) {
+        ## BMB: I clearly don't know what's going on here yet.
+        ## test: lmer(angle ~ temp + recipe + (1 | replicate), data = cake)
+        ## test: sstudy9 <- subset(sleepstudy, Days == 1 | Days == 9)
+        ## m1 <- lmer(Reaction ~ 1 + Days + (1 + Days | Subject), data = sstudy9)
+        rankZ1 <- rankMatrix(bdiag(reTrms$Zt,Diagonal(ncol(reTrms$Zt))))
+        pZ1 <- nrow(reTrms$Zt)+ncol(reTrms$Zt)
+        if (rankZ1<pZ1)
+            stop(gettextf("rank of cBind(Z,1) = %d < ncol(Z)+1 = %d", rankZ1, pZ1+1))
+    }
     if (any(unlist(lapply(reTrms$flist, nlevels)) >= nrow(fr)))
-        stop("number of levels of each grouping factor must be less than number of obs")
+        stop("number of levels of each grouping factor must be ",
+             "less than number of obs")
     ## fixed-effects model matrix X - remove random effects from formula:
     form <- formula
     form[[3]] <- if(is.null(nb <- nobars(form[[3]]))) 1 else nb
@@ -319,6 +330,15 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     fr <- eval(mf, parent.frame())
                                         # random-effects module
     reTrms <- mkReTrms(findbars(formula[[3]]), fr)
+    if ((maxlevels <- max(unlist(lapply(reTrms$flist, nlevels)))) > nrow(fr))
+        stop("number of levels of each grouping factor must be",
+             "greater than or equal to number of obs")
+    ## FIXME: adjust test for families with estimated scale;
+    ##   useSc is not defined yet/not defined properly?
+    ##  if (useSc && maxlevels == nrow(fr))
+    ##          stop("number of levels of each grouping factor must be",
+    ##                "greater than number of obs")
+
     ## fixed-effects model matrix X - remove random parts from formula:
     form <- formula
     form[[3]] <- if(is.null(nb <- nobars(form[[3]]))) 1 else nb
@@ -1102,7 +1122,7 @@ ranef.merMod <- function(object, postVar = FALSE, drop = FALSE,
 	if (postVar) {
             sigsqr <- sigma(object)^2
 	    vv <- .Call(merPredDcondVar, object@pp$ptr(), as.environment(rePos$new(object)))
-	    for (i in seq_along(ans))
+	    for (i in names(ans)) ## seq_along(ans))
                 attr(ans[[i]], "postVar") <- vv[[i]] * sigsqr
 	}
 	if (drop)

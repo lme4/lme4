@@ -77,5 +77,22 @@ tmpf(sleepstudy,REform=NA)
 tmpf(sleepstudy,REform=~(0+Days|Subject))
 tmpf(sleepstudy,REform=~(1|Subject))
 
+## from 'Colonel Triq'
+m <- lmer(angle ~ temp + recipe + (1 | replicate), data=cake)
+summary(m)
+
+# replicate 1 only appears in rows 1:18.
+rownames(cake[cake$replicate==1,])
+
+## Prediction using "new" data frame
+## that includes no replicate 1 examples will fail upon prediction.
+## Including at least one row with replicate=1 will allow predictions.
+## REform parameter is based on syntax found in example(predict.merMod)
+
+predict(m, newdata=cake[-1:-17,], REform=~ (1 | replicate)) # works
+predict(m, newdata=cake[-1:-18,], REform=NA) # works
+predict(m, newdata=cake[-1:-18,], REform=~ (1 | replicate)) # doesn't work
+predict(m, newdata=cake[-1:-18,], REform=~ (1 | replicate), allow.new.levels=TRUE) # doesn't work
+
 
 

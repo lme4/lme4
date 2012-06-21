@@ -69,8 +69,10 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
             re <- ranef(object)
             ##
             ReTrms <- mkReTrms(findbars(REform[[2]]),newdata)
-            new_levels <- lapply(newdata[unique(sort(names(ReTrms$cnms)))],levels)
+            new_levels <- lapply(newdata[unique(sort(names(ReTrms$cnms)))],
+                                 function(x) levels(droplevels(x)))
             re_x <- mapply(function(x,n) {
+                ## find and deal with new levels
                 if (any(!new_levels[[n]] %in% rownames(x))) {
                     if (!allow.new.levels) stop("new levels detected in newdata")
                     ## create an all-zero data frame corresponding to the new set of levels ...
@@ -79,6 +81,10 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
                     ## then paste in the matching RE values from the original fit/set of levels
                     newx[rownames(x),] <- x
                     x <- newx
+                }
+                ## find and deal with missing old levels
+                if (any(!rownames(x) %in% new_levels[[n]])) {
+                    x <- x[rownames(x) %in% new_levels[[n]],,drop=FALSE]
                 }
                 x
             },

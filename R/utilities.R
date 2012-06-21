@@ -506,6 +506,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc) {
               nth=length(pp$theta), q=nrow(pp$Zt),
               nAGQ=rho$nAGQ,
               compDev=rho$compDev,
+              ## FIXME: need to consider GLM families with estimated scale parameter!
               useSc=(rcl != "glmResp"),
               reTrms=length(reTrms$cnms),
               spFe=0L,
