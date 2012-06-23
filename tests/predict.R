@@ -62,11 +62,35 @@ p1 <- predict(fm2,REform=NA)
 ## linear model, so results should be identical patterns but smaller --
 ##   not including intermediate days
 newdata <- with(sleepstudy,expand.grid(Days=range(Days),Subject=unique(Subject)))
-p2 <- predict(fm2,newdata)
-p3 <- predict(fm2,newdata,REform=NA)
-p3 <- predict(fm2,newdata,REform=~(0+Days|Subject))
-p4 <- predict(fm2,newdata,REform=~(1|Subject))
-par(mfrow=c(2,2))
+newdata$p2 <- predict(fm2,newdata)
+newdata$p3 <- predict(fm2,newdata,REform=NA)
+newdata$p4 <- predict(fm2,newdata,REform=~(0+Days|Subject))
+newdata$p5 <- predict(fm2,newdata,REform=~(1|Subject))
+
+## reference values from an apparently-working run
+refval <- structure(list(Days = c(0, 9, 0, 9, 0, 9), Subject = structure(c(1L, 
+1L, 2L, 2L, 3L, 3L), .Label = c("308", "309", "310", "330", "331", 
+"332", "333", "334", "335", "337", "349", "350", "351", "352", 
+"369", "370", "371", "372"), class = "factor"), p2 = c(253.663652396798, 
+430.66001930835, 211.006415533628, 227.634788908917, 212.444742696829, 
+257.61053840953), p3 = c(251.405104848485, 345.610678484848, 
+251.405104848485, 345.610678484848, 251.405104848485, 345.610678484848
+), p4 = c(251.405104848485, 428.401471760037, 251.405104848485, 
+268.033478223774, 251.405104848485, 296.570900561186), p5 = c(253.663652396798, 
+347.869226033161, 211.006415533628, 305.211989169991, 212.444742696829, 
+306.650316333193)), .Names = c("Days", "Subject", "p2", "p3", 
+"p4", "p5"), out.attrs = structure(list(dim = structure(c(2L, 
+18L), .Names = c("Days", "Subject")), dimnames = structure(list(
+    Days = c("Days=0", "Days=9"), Subject = c("Subject=308", 
+    "Subject=309", "Subject=310", "Subject=330", "Subject=331", 
+    "Subject=332", "Subject=333", "Subject=334", "Subject=335", 
+    "Subject=337", "Subject=349", "Subject=350", "Subject=351", 
+    "Subject=352", "Subject=369", "Subject=370", "Subject=371", 
+    "Subject=372")), .Names = c("Days", "Subject"))), .Names = c("dim", 
+"dimnames")), row.names = c(NA, 6L), class = "data.frame")
+
+stopifnot(all.equal(head(newdata),refval))
+
 library(lattice)
 tmpf <- function(data,...) {
   data$Reaction <- predict(fm2,data,...)
@@ -77,22 +101,17 @@ tmpf(sleepstudy,REform=NA)
 tmpf(sleepstudy,REform=~(0+Days|Subject))
 tmpf(sleepstudy,REform=~(1|Subject))
 
-## from 'Colonel Triq'
+## from 'Colonel Triq': examples using *fewer* random effect levels
+##  than in original data set
 m <- lmer(angle ~ temp + recipe + (1 | replicate), data=cake)
 summary(m)
 
 # replicate 1 only appears in rows 1:18.
 rownames(cake[cake$replicate==1,])
 
-## Prediction using "new" data frame
-## that includes no replicate 1 examples will fail upon prediction.
-## Including at least one row with replicate=1 will allow predictions.
-## REform parameter is based on syntax found in example(predict.merMod)
-
-predict(m, newdata=cake[-1:-17,], REform=~ (1 | replicate)) # works
-predict(m, newdata=cake[-1:-18,], REform=NA) # works
-predict(m, newdata=cake[-1:-18,], REform=~ (1 | replicate)) # doesn't work
-predict(m, newdata=cake[-1:-18,], REform=~ (1 | replicate), allow.new.levels=TRUE) # doesn't work
-
+predict(m, newdata=cake[-1:-17,], REform=~ (1 | replicate))
+predict(m, newdata=cake[-1:-18,], REform=NA)
+predict(m, newdata=cake[-1:-18,], REform=~ (1 | replicate)) 
+predict(m, newdata=cake[-1:-18,], REform=~ (1 | replicate), allow.new.levels=TRUE)
 
 

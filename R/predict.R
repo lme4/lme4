@@ -70,8 +70,10 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
             ##
             ReTrms <- mkReTrms(findbars(REform[[2]]),newdata)
             new_levels <- lapply(newdata[unique(sort(names(ReTrms$cnms)))],
-                                 function(x) levels(droplevels(x)))
-            re_x <- mapply(function(x,n) {
+                                 function(x) levels(droplevels(factor(x))))
+            ## FIXME: should this be unique(as.character(x)) instead?
+            ##   (i.e., what is the proper way to protect against non-factors?)
+            levelfun <-function(x,n) {
                 ## find and deal with new levels
                 if (any(!new_levels[[n]] %in% rownames(x))) {
                     if (!allow.new.levels) stop("new levels detected in newdata")
@@ -87,24 +89,30 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
                     x <- x[rownames(x) %in% new_levels[[n]],,drop=FALSE]
                 }
                 x
-            },
-                           re,names(re),SIMPLIFY=FALSE)
+            }
+            ## fill in/delete levels as appropriate
+            re_x <- mapply(levelfun,re,names(re),SIMPLIFY=FALSE)
             ## separate random effects from orig model into individual columns
-            re_List <- do.call(c,lapply(re_x,as.list))
-            re_names <- names(re_List)
-            z_names <- mapply(paste,names(ReTrms$cnms),ReTrms$cnms,MoreArgs=list(sep="."))
+            ## re_List <- do.call(c,lapply(re_x,as.list))
+            ## re_names <- names(re_List)
+            ## names corresponding to random effects specified in 'predict' call
+            ## z_names <- mapply(paste,names(ReTrms$cnms),ReTrms$cnms,MoreArgs=list(sep="."))
+            re_new <- list()
+            if (any(!names(ReTrms$cnms) %in% names(re)))
+                stop("grouping factors specified in REform that were not present in original model")
             ## pick out random effects values that correspond to
             ##  random effects incorporated in REform ...
-            ## FIXME: more tests for possible things going wrong here?
-            m <- match(z_names,re_names)
-            if (any(is.na(m)))
-                stop("random effects specified in REform that were not present in original model")
-            re_new <- unlist(re_List[m])
-            pred <- pred + drop(as.matrix(re_new %*% ReTrms$Zt))
+            for (i in seq_along(ReTrms$cnms)) {
+                rname <- names(ReTrms$cnms)[i]
+                if (any(!ReTrms$cnms[[rname]] %in% names(re[[rname]])))
+                    stop("random effects specified in REform that were not present in original model")
+                re_new[[i]] <- re_x[[rname]][,ReTrms$cnms[[rname]]]
+            }
+            re_newvec <- unlist(lapply(re_new,t))  ## must TRANSPOSE RE matrices before unlisting
+            pred <- pred + drop(as.matrix(re_newvec %*% ReTrms$Zt))
         } ## REform provided
     } ## predictions with new data or new REform
-    ## FIXME: would like to have an isGLMM() accessor for merMod objects?
-    if (is(object@resp,"glmResp") && type=="response") {
+    if (isGLMM(object) && type=="response") {
         pred <- object@resp$family$linkinv(pred)
     }
     return(pred)

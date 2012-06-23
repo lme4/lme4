@@ -3,6 +3,10 @@
 ##' Methods for function \code{\link{profile}} (package \pkg{stats}), here for
 ##' profiling (fitted) mixed effect models.
 ##'
+
+globalVariables(".par",package="lme4")
+
+##' 
 ##'
 ##' @name profile-methods
 ##' @aliases profile-methods profile.merMod
@@ -800,7 +804,7 @@ log.thpr <- function (x, base = exp(1)) {
     sigs <- grep("^\\.sig", cn)
     if (length(sigs)) {
         colnames(x) <- sub("^\\.sig", ".lsig", cn)
-        levels(x$.par) <- sub("^\\.sig", ".lsig", levels(x$.par))
+        levels(x[[".par"]]) <- sub("^\\.sig", ".lsig", levels(x[[".par"]]))
         names(attr(x, "backward")) <-
             names(attr(x, "forward")) <-
                 sub("^\\.sig", ".lsig", names(attr(x, "forward")))
@@ -830,7 +834,7 @@ varpr <- function (x) {
     sigs <- grep("^\\.sig", cn)
     if (length(sigs)) {
         colnames(x) <- sub("^\\.sig", ".sigsq", cn)
-        levels(x$.par) <- sub("^\\.sig", ".sigsq", levels(x$.par))
+        levels(x[[".par"]]) <- sub("^\\.sig", ".sigsq", levels(x[[".par"]]))
         names(attr(x, "backward")) <-
             names(attr(x, "forward")) <-
                 sub("^\\.sig", ".sigsq", names(attr(x, "forward")))
@@ -914,7 +918,7 @@ varianceProf <- function(pr) {
     onms <- names(spl)                  # names of original variables
     vc <- onms[grep("^.sig", onms)]     # variance components
     ans <- subset(pr, .par %in% vc, select=c(".zeta", vc, ".par"))
-    ans$.par <- factor(ans$.par)        # drop unused levels
+    ans[[".par"]] <- factor(ans[[".par"]])        # drop unused levels
     if (".lsig" %in% vc) ans$.lsig <- exp(ans$.lsig)
     attr(ans, "forward") <- attr(ans, "backward") <- list()
     for (nm in vc) {
