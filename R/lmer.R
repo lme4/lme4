@@ -1310,8 +1310,9 @@ NULL
 ##' @param nsim positive integer scalar - the number of responses to simulate
 ##' @param seed an optional seed to be used in \code{set.seed} immediately
 ##'     before the simulation so as to generate a reproducible sample.
-##' @param use.u (logical) generate new random-effects values (FALSE) or
-##'     generate a simulation condition on the current random-effects estimates (TRUE)?
+##' @param use.u (logical) generate a simulation conditional on the current
+##' random-effects estimates (TRUE) or generate new random-effects values (FALSE) [FIXME!?]
+
 ##' @param ... optional additional arguments, none are used at present
 ##' @examples
 ##' ## test whether fitted models are consistent with the
@@ -1342,14 +1343,14 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE, ...) {
     if (length(offset <- getME(object,"offset"))>0) {
       etasim.fix <- etasim.fix+offset
     }
+    U <- getME(object, "Z") %*% getME(object, "Lambda")
+    u <- if (use.u) {
+        rep(getME(object, "u"), nsim)
+    } else {
+        rnorm(ncol(U)*nsim)
+    }
     etasim.reff <- ## UNSCALED random-effects contribution:
-      if(use.u) {
-        getME(object, "u")
-      } else {
-        U <- getME(object, "Z") %*% getME(object, "Lambda")
-        q <- ncol(U)
-        as(U %*% matrix(rnorm(q * nsim), ncol = nsim), "matrix")
-      }
+        as(U %*% matrix(u, ncol = nsim), "matrix")
     if (is(object@resp,"lmerResp")) {
       ## result will be matrix  n x nsim :
       val <- etasim.fix + sigma * (etasim.reff +

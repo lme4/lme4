@@ -120,7 +120,7 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
             ss <- replicate(nsim,fitted(x)+sample(residuals(x,"response")),
                             simplify=FALSE)
         } else {
-            stop("not implemented")
+            stop("semiparametric bootstrapping with use.u=FALSE not yet implemented")
         }
     }
     t.star <- matrix(t0, nrow = length(t0), ncol = nsim)

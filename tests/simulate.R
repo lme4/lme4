@@ -1,5 +1,9 @@
 library(lme4)
 
+fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+s1 <- simulate(fm1,seed=101)[[1]]
+s2 <- simulate(fm1,seed=101,use.u=TRUE)
+
 ## binomial (2-column and prob/weights)
 gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
               data = cbpp, family = binomial)
@@ -9,11 +13,21 @@ gm2 <- glmer(incidence/size ~ period + (1 | herd), weights=size,
 s1 <- simulate(gm1,seed=101)[[1]]
 s2 <- simulate(gm2,seed=101)[[1]]
 stopifnot(all.equal(s1[,1]/rowSums(s1),s2))
+s3 <- simulate(gm1,seed=101,use.u=TRUE)
 
+## test explicitly stated link function
 gm3 <- glmer(cbind(incidence, size - incidence) ~ period +
              (1 | herd), data = cbpp, family = binomial(link="logit"))
-s3 <- simulate(gm3,seed=101)[[1]]
-stopifnot(all.equal(s3,s1))
+s4 <- simulate(gm3,seed=101)[[1]]
+stopifnot(all.equal(s1,s4))
+
+cbpp$obs <- factor(seq(nrow(cbpp)))
+gm4 <- glmer(cbind(incidence, size - incidence) ~ period +
+             (1 | herd) + (1|obs), data = cbpp, family = binomial)
+
+s5 <- simulate(gm4,seed=101)[[1]]
+s6 <- simulate(gm4,seed=101,use.u=TRUE)[[1]]
+
 ## Bernoulli
 ## works, but too slow
 if (FALSE) {
