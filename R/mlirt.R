@@ -74,7 +74,7 @@ mlirt <-
 ##     cat(paste("relative tolerance set to", rel.tol, "\n"))
 
 ##     optimRes <- nlminb(PQLpars, devLaplace,
-##                        lower = ifelse(const, 5e-10, -Inf),
+##                        lower = if(const) 5e-10 else -Inf,
 ##                        control = list(trace = cv$msVerbose,
 ##                        iter.max = cv$msMaxIter,
 ##                        rel.tol = rel.tol))

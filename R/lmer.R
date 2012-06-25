@@ -981,13 +981,13 @@ isREML.merMod <- function(x, ...) as.logical(x@devcomp$dims["REML"])
 
 ##' @S3method isGLMM merMod
 isGLMM.merMod <- function(x,...) {
-  as.logical(x@devcomp$dims["GLMM"])
+  as.logical(x@devcomp$dims[["GLMM"]])
   ## or: is(x@resp,"glmResp")
 }
 
 ##' @S3method isNLMM merMod
 isNLMM.merMod <- function(x,...) {
-  as.logical(x@devcomp$dims["NLMM"])
+  as.logical(x@devcomp$dims[["NLMM"]])
   ## or: is(x@resp,"nlsResp")
 }
 
@@ -1298,7 +1298,7 @@ sigma.merMod <- function(object, ...) {
     dc <- object@devcomp
     dd <- dc$dims
     if(dd[["useSc"]])
-        dc$cmp[[ifelse(dd[["REML"]], "sigmaREML", "sigmaML")]] else 1.
+        dc$cmp[[if(dd[["REML"]]) "sigmaREML" else "sigmaML"]] else 1.
 }
 
 ##' @importFrom stats simulate
@@ -1721,7 +1721,8 @@ mkVcov <- function(sigma, unsc, nmsX, correlation = TRUE, ...) {
 	stop("Computed variance-covariance matrix is not positive definite")
     dimnames(rr) <- list(nmsX, nmsX)
     if(correlation)
-	rr@factors$correlation <- as(rr, "corMatrix")
+	rr@factors$correlation <-
+	    if(is.na(sigma)) as(rr, "corMatrix") else rr # (is NA anyway)
     rr
 }
 
@@ -1888,11 +1889,11 @@ summary.merMod <- function(object, ...)
           colnames(coefs)[4] <- c("Pr(>|z|)")
         }
     }
-    mName <- paste(switch(1L + dd["GLMM"] * 2L + dd["NLMM"],
+    mName <- paste(switch(1L + dd[["GLMM"]] * 2L + dd[["NLMM"]],
 			  "Linear", "Nonlinear",
 			  "Generalized linear", "Generalized nonlinear"),
 		   "mixed model fit by",
-		   ifelse(REML, "REML", "maximum likelihood"))
+		   if(REML) "REML" else "maximum likelihood")
     llik <- logLik(object)   # returns NA for a REML fit - maybe change?
     AICstats <- {
 	if (REML) cmp["REML"] # do *not* show likelihood stats here

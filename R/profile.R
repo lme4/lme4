@@ -6,7 +6,7 @@
 
 globalVariables(".par",package="lme4")
 
-##' 
+##'
 ##'
 ##' @name profile-methods
 ##' @aliases profile-methods profile.merMod
@@ -179,7 +179,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
     ## bounds on Cholesky: [0,Inf) for diag, (-Inf,Inf) for diag
     ## bounds on sd-corr:  [0,Inf) for diag, (-1.0,1.0) for diag
     lower <- pmax(fitted@lower,-1.0)
-    upper <- ifelse(fitted@lower==0,Inf,1.0)
+    upper <- 1/(fitted@lower != 0)## = ifelse(fitted@lower==0, Inf, 1.0)
     if (useSc) {
         lower <- c(lower,0)
         upper <- c(upper,Inf)
@@ -294,7 +294,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
                 ores <- optwrap(optimizer,
                                 par=thopt, fn=mkdevfun(rho, 0L),
                                 lower = pmax(fitted@lower, -1.0),
-                                upper =  ifelse(fitted@lower==0,Inf,1.0))
+				upper = 1/(fitted@lower != 0))## = ifelse(fitted@lower==0, Inf, 1.0)
                 fv <- ores$fval
                 sig <- sqrt((rr$wrss() + pp1$sqrL(1))/n)
                 c(sign(fw - est) * sqrt(fv - base),
@@ -763,8 +763,8 @@ splom.thpr <- function (x, data,
                            line.lwd = axis.line.lwd)
             lims <- c(-1.07, 1.07) * mlev
             grid::pushViewport(viewport(xscale = lims, yscale = lims))
-            side <- ifelse(j == 1, "right", "bottom")
-            which.half <- ifelse(j == 1, "lower", "upper")
+	    side <- if(j == 1) "right" else "bottom"
+	    which.half <- if(j == 1) "lower" else "upper"
             at <- pretty(lims)
             panel.axis(side = side, at = at, labels = format(at, trim = TRUE),
                        ticks = TRUE, half = TRUE, which.half = which.half,
