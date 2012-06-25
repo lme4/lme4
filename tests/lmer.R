@@ -29,10 +29,11 @@ try({## This "did work" in lme4.0 and nlme -- FIXME ??
  ## -> Error in ptr() : Downdated VtV is not positive definite
  ## FIXME?(2): More helpful error message, or rank-checking diagnostics?
  ## how would we check the rank here?
- 
+
  print(sm1 <- summary(m1))
  fm1 <- fitted(m1)
 })
+showProc.time()
 
 ## check working of Matrix methods on  vcov(.) etc ----------------------
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
@@ -55,6 +56,42 @@ stopifnot(
 ## printing
 signif(chol(crossprod(getME(fm,"Z"))), 4)# -> simple 4 x 4 sparse
 
+showProc.time() #
 
+## From: Stephane Laurent
+## To:   r-sig-mixed-models@..
+## "crash with the latest update of lme4"
+##
+## .. example for which lmer() crashes with the last update of lme4 ...{R-forge},
+## .. but not with version CRAN version (0.999999-0)
+lsDat <- data.frame(
+                  Operator = as.factor(rep(1:5, c(3,4,8,8,8))),
+                  Part = as.factor(
+                  c(2L, 3L, 5L,
+                    1L, 1L, 2L, 3L,
+                    1L, 1L, 2L, 2L, 3L, 3L, 4L, 5L,
+                    1L, 2L, 3L, 3L, 4L, 4L, 5L, 5L,
+                    1L, 2L, 2L, 3L, 3L, 4L, 5L, 5L)),
+                  y =
+                  c(0.34, -1.23, -2.46,
+                    -0.84, -1.57,-0.31, -0.18,
+                    -0.94, -0.81, 0.77, 0.4, -2.37, -2.78, 1.29, -0.95,
+                    -1.58, -2.06, -3.11,-3.2, -0.1, -0.49,-2.02, -0.75,
+                    1.71,  -0.85, -1.19, 0.13, 1.35, 1.92, 1.04,  1.08))
+xtabs( ~ Operator + Part, data=lsDat) # --> 4 empty cells, quite a few with only one obs.:
+##         Part
+## Operator 1 2 3 4 5
+##        1 0 1 1 0 1
+##        2 2 1 1 0 0
+##        3 2 2 2 1 1
+##        4 1 1 2 2 2
+##        5 1 2 2 1 2
+
+fm3 <- lmer(y ~ (1|Part) + (1|Operator) + (1|Part:Operator),
+            data = lsDat)
+## --> *many* warnings   Cholmod warning 'not positive definite' ..
+fm3 # gave an error {no longer does}
+## currently (2012-06-25) full of  NA/NaN  -- old lme4 does
+showProc.time()
 
 cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
