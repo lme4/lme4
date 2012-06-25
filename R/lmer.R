@@ -1722,7 +1722,7 @@ mkVcov <- function(sigma, unsc, nmsX, correlation = TRUE, ...) {
     dimnames(rr) <- list(nmsX, nmsX)
     if(correlation)
 	rr@factors$correlation <-
-	    if(is.na(sigma)) as(rr, "corMatrix") else rr # (is NA anyway)
+	    if(!is.na(sigma)) as(rr, "corMatrix") else rr # (is NA anyway)
     rr
 }
 
