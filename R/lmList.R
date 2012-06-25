@@ -175,7 +175,8 @@ confint.lmList <- function(object, parm, level = 0.95, ...)
     ## the old recursive strategy doesn't work with S3 objects --
     ##  calls "confint.lmList" again instead of calling "confint"
     mCall[[1]] <- quote(confint)
-    template <- eval(mCall)
+    ## confint.glm() returns a data frame -- must cast to matrix!
+    template <- as.matrix(eval(mCall))
     val <- array(template, c(dim(template), length(object)),
                  c(dimnames(template), list(names(object))))
     pool <- list(...)$pool
