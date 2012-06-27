@@ -139,9 +139,13 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
         stop("number of levels of each grouping factor must be ",
              "less than number of obs")
     ## fixed-effects model matrix X - remove random effects from formula:
-    form <- formula
-    form[[3]] <- if(is.null(nb <- nobars(form[[3]]))) 1 else nb
-    X <- model.matrix(form, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
+    fixedform <- formula
+    fixedform[[3]] <- if(is.null(nb <- nobars(fixedform[[3]]))) 1 else nb
+    mf$formula <- fixedform
+    ## re-evaluate model frame to extract predvars component
+    fixedfr <- eval(mf, parent.frame())
+    attr(attr(fr,"terms"),"predvars.fixed") <- attr(attr(fixedfr,"terms"),"predvars")
+    X <- model.matrix(fixedform, fixedfr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     p <- ncol(X)
     if ((qrX <- qr(X))$rank < p)
         stop(gettextf("rank of X = %d < ncol(X) = %d", qrX$rank, p))
@@ -1444,8 +1448,11 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE, ...) {
 ##' @S3method terms merMod
 terms.merMod <- function(x, fixed.only=TRUE, ...) {
   if (fixed.only) {
-      terms.formula(formula(x,fixed.only=TRUE))
-  } else attr(x@frame,"terms")
+      tt <- terms.formula(formula(x,fixed.only=TRUE))
+      attr(tt,"predvars") <- attr(attr(x@frame,"terms"),"predvars.fixed")
+      tt
+  }
+  else attr(x@frame,"terms")
 }
 
 ##' @importFrom stats update

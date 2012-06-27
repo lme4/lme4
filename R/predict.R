@@ -15,7 +15,6 @@
 ##' @param ... optional additional parameters.  None are used at present.
 ##' @return a numeric vector of predicted values
 ##' @note explain why there is no option for computing standard errors of predictions!
-##' @note offsets not yet handled
 ##' @examples
 ##' (gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 |herd), cbpp, binomial))
 ##' str(p0 <- predict(gm1))            # fitted values
@@ -43,10 +42,10 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
         if (is.null(newdata)) {
             X <- X_orig
         } else {
-            form <- form_orig
-            form[[3]] <- if(is.null(nb <- nobars(form[[3]]))) 1 else nb
-            RHS <- form[-2]
-            X <- model.matrix(RHS, newdata, contrasts.arg=attr(X_orig,"contrasts"))
+            RHS <- formula(object,fixed.only=TRUE)[-2]
+            Terms <- terms(object,fixed.only=TRUE)
+            X <- model.matrix(RHS, model.frame(delete.response(Terms), newdata),
+                              contrasts.arg=attr(X_orig,"contrasts"))
         }
         pred <- drop(X %*% fixef(object))
         ## modified from predict.glm ...
