@@ -81,6 +81,12 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
                  contrasts = NULL, devFunOnly=FALSE,
                  optimizer="Nelder_Mead", ...)
 {
+    verbose <- as.integer(verbose)
+    restart <- TRUE
+    if (!is.null(control$restart)) {
+        restart <- control$restart
+        control$restart <- NULL
+    }
     if (sparseX) warning("sparseX = TRUE has no effect at present")
     mf <- mc <- match.call()
     ## '...' handling up front, safe-guarding against typos ("familiy") :
@@ -144,14 +150,27 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
     rho$resp <- mkRespMod(fr, if(REML) p else 0L)
 
     devfun <- mkdevfun(rho, 0L)
-    devfun(reTrms$theta) # one evaluation to ensure all values are set
+
+    ## FIXME: should we apply start elsewhere? what about reTrms$theta?
+    if (!is.null(start)) {
+        rho$pp$setTheta(unlist(start))
+    }
+
+    devfun(rho$pp$theta) # one evaluation to ensure all values are set
 
     if (devFunOnly) return(devfun)
 
     opt <- optwrap(optimizer,
                    devfun, rho$pp$theta, lower=reTrms$lower, control=control,
-                   adj=FALSE)
+                   adj=FALSE, verbose=verbose)
 
+    if (restart && any(rho$pp$theta==0)) {
+        if (verbose) message("some theta parameters on the boundary, restarting")
+        opt <- optwrap(optimizer,
+                       devfun, rho$pp$theta, lower=reTrms$lower, control=control,
+                       adj=FALSE, verbose=verbose)
+    }
+        
     mkMerMod(environment(devfun), opt, reTrms, fr, mc)
 }## { lmer }
 
@@ -281,6 +300,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
                   contrasts = NULL, mustart, etastart, devFunOnly = FALSE,
                   tolPwrss = 1e-7, optimizer=c("bobyqa","Nelder_Mead"), ...)
 {
+    ## FIXME: does start= do anything? test & fix
     verbose <- as.integer(verbose)
     mf <- mc <- match.call()
                                         # extract family, call lmer for gaussian
@@ -2092,9 +2112,9 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
                        xst <- c(rep.int(0.1, length(environment(fn)$pp$theta)),  ## theta parameters
                                 sqrt(diag(environment(fn)$pp$unsc())))
                    control$xst <- 0.2*xst
-                   control$verbose <- verbose
                    if (is.null(control$xt)) control$xt <- control$xst*5e-4
                })
+    if (optimizer=="Nelder_Mead") control$verbose <- verbose
     if (optimizer=="bobyqa" && all(par==0)) par[] <- 0.001  ## minor kluge
     arglist <- list(fn=fn, par=par, lower=lower, upper=upper, control=control)
     ## optimx: must pass method in control (?) because 'method' was previously

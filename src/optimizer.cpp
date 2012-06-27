@@ -101,14 +101,35 @@ namespace optimizer {
 	d_stop.incrEvals();
 	if (d_verb > 0 && (d_stop.ev() % d_verb) == 0)
 	    Rcpp::Rcout << "(NM) " << d_stop.ev() << ": " << "f = " << value() << " at " << d_x.adjoint() << std::endl;
-	if (d_stop.forced()) return nm_forced;
+	if (d_stop.forced()) {
+	    if (d_verb==1) {
+		Rcpp::Rcout << "(NM) stop_forced" << std::endl;
+	    }
+	    return nm_forced;
+	}
 	if (f < d_minf) {
 	    d_minf = f;
 	    d_x = d_xeval;	// save the value generating current minimum
-	    if (d_minf < d_stop.minfMax()) return nm_minf_max;
+	    if (d_minf < d_stop.minfMax()) {
+		if (d_verb==1) {
+		    Rcpp::Rcout << "(NM) nm_minf_max: " << d_minf << ", " 
+				<< d_stop.minfMax() << ", " << d_x << std::endl;
+		}
+		return nm_minf_max;
+	    }
 	}
-	if (d_stop.evals()) return nm_evals;
-	if (init_pos <= d_n) return init(f);
+	if (d_stop.evals()) {
+	    if (d_verb==1) {
+		Rcpp::Rcout << "(NM) nm_evals" << std::endl;
+	    }
+	    return nm_evals;
+	}
+	if (init_pos <= d_n) {
+	    if (d_verb==1) {
+		Rcpp::Rcout << "(NM) init_pos <= d_n" << std::endl;
+	    }
+	    return init(f);
+	}
 	switch (d_stage) {
 	case nm_restart:      return restart(f);
 	case nm_postreflect:  return postreflect(f);
