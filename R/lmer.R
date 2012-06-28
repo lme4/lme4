@@ -82,7 +82,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
                  optimizer="Nelder_Mead", ...)
 {
     verbose <- as.integer(verbose)
-    restart <- TRUE
+    restart <- FALSE
     if (!is.null(control$restart)) {
         restart <- control$restart
         control$restart <- NULL
@@ -580,7 +580,9 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0) {
 	    function(pars) {
 		resp$updateMu(lp0)
 		pp$setTheta(as.double(pars[dpars])) # theta is first part of pars
-		resp$setOffset(baseOffset + pp$X %*% as.numeric(pars[-dpars]))
+                spars <- as.numeric(pars[-dpars])
+                offset <- if (length(spars)==0) baseOffset else baseOffset + pp$X %*% spars
+		resp$setOffset(offset)
 		pwrssUpdate(pp, resp, tolPwrss, GQmat, compDev, fac, verbose)
 	    }
     } else if (is(rho$resp, "nlsResp")) {
@@ -662,6 +664,7 @@ glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, ve
         pdev <- RglmerWrkIter(pp, resp, uOnly=uOnly)
         if (verbose>2) cat(i,": ",pdev,"\n",sep="")
         ## check convergence first so small increases don't trigger errors
+        if (is.na(pdev)) stop("encountered NA in PWRSS update")
         if (abs((oldpdev - pdev) / pdev) < tol)
             break
         ## if (pdev > oldpdev) {
