@@ -82,7 +82,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
                  optimizer="Nelder_Mead", ...)
 {
     verbose <- as.integer(verbose)
-    restart <- FALSE
+    restart <- TRUE ## FIXME; set default elsewhere?
     if (!is.null(control$restart)) {
         restart <- control$restart
         control$restart <- NULL
@@ -168,11 +168,35 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
                    devfun, rho$pp$theta, lower=reTrms$lower, control=control,
                    adj=FALSE, verbose=verbose)
 
-    if (restart && any(rho$pp$theta==0)) {
-        if (verbose) message("some theta parameters on the boundary, restarting")
-        opt <- optwrap(optimizer,
-                       devfun, rho$pp$theta, lower=reTrms$lower, control=control,
-                       adj=FALSE, verbose=verbose)
+    if (restart) {
+        ## FIXME: should we be looking at rho$pp$theta or opt$par
+        ##  at this point???  in koller example (for getData(13)) we have
+        ##   rho$pp$theta=0, opt$par=0.08
+        if (length(bvals <- which(rho$pp$theta==reTrms$lower))>0) {
+            ## *don't* use numDeriv -- cruder but fewer dependencies, no worries
+            ##  about keeping to the interior of the allowed space
+            theta0 <- new("numeric",rho$pp$theta) ## 'deep' copy ...
+            d0 <- devfun(theta0)
+            btol <- 1e-5  ## FIXME: make user-settable?
+            ## FIXME: opt$fval is wrong
+            bgrad <- sapply(bvals,
+                            function(i) {
+                                bndval <- reTrms$lower[i]
+                                theta <- theta0
+                                theta[i] <- bndval+btol
+                                (devfun(theta)-d0)/btol
+                            })
+            ## what do I need to do to reset rho$pp$theta to original value???
+            devfun(theta0) ## reset rho$pp$theta after tests
+            ## FIXME: allow user to specify ALWAYS restart if on boundary?
+            if (any(bgrad<0)) {
+                if (verbose) message("some theta parameters on the boundary, restarting")
+                opt <- optwrap(optimizer,
+                               devfun, opt$par,
+                               lower=reTrms$lower, control=control,
+                               adj=FALSE, verbose=verbose)
+            }
+        }
     }
         
     mkMerMod(environment(devfun), opt, reTrms, fr, mc)

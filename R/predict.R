@@ -12,6 +12,7 @@
 ##'    detected in \code{newdata} will trigger an error; if TRUE, then
 ##'    the prediction will use the unconditional (population-level)
 ##'    values for data with previously unobserved levels
+##' @param na.action function determining what should be done with missing values in \code{newdata}.  Currently a stub: the default will be to predict ‘NA’. See \code{\link{na.pass}}.
 ##' @param ... optional additional parameters.  None are used at present.
 ##' @return a numeric vector of predicted values
 ##' @note explain why there is no option for computing standard errors of predictions!
@@ -27,8 +28,14 @@
 ##' @export
 predict.merMod <- function(object, newdata=NULL, REform=NULL,
                            terms=NULL, type=c("link","response"),
-                           allow.new.levels=FALSE, ...) {
+                           allow.new.levels=FALSE, na.action=na.pass, ...) {
     ## FIXME: appropriate names for result vector?
+
+    if (length(list(...)>0)) warning("unused arguments ignored")
+    if (!missing(na.action)) {
+        ## FIXME
+        stop("na.action is not yet implemented.")
+    }
     type <- match.arg(type)
     if (!is.null(terms)) stop("terms functionality for predict not yet implemented")
     X_orig <- getME(object, "X")
@@ -45,7 +52,8 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
             RHS <- formula(object,fixed.only=TRUE)[-2]
             Terms <- terms(object,fixed.only=TRUE)
             X <- model.matrix(RHS, model.frame(delete.response(Terms), newdata),
-                              contrasts.arg=attr(X_orig,"contrasts"))
+                              contrasts.arg=attr(X_orig,"contrasts"),
+                              na.action=attr(object@frame,"na.action"))
         }
         pred <- drop(X %*% fixef(object))
         ## modified from predict.glm ...
