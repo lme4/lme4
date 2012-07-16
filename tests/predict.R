@@ -1,12 +1,16 @@
 library(lme4)
+library(testthat)
 gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
              data = cbpp, family = binomial)
 
 ## fitted values
 p0 <- predict(gm1)
+p0B <- predict(gm1,newdata=cbpp)
+expect_true(all.equal(p0,unname(p0B),tol=1e-5)) ## FIXME: why not closer?
 ## fitted values, unconditional (level-0)
 p1 <- predict(gm1,REform=NA)
-stopifnot(length(unique(p1))==length(unique(cbpp$period)))
+expect_true(length(unique(p1))==length(unique(cbpp$period)))
+
 
 matplot(cbind(p0,p1),col=1:2,type="b")
 newdata <- with(cbpp,expand.grid(period=unique(period),herd=unique(herd)))
@@ -16,22 +20,22 @@ p2 <- predict(gm1,newdata)
 p3 <- predict(gm1,newdata,REform=NA)
 ## explicitly specify RE
 p4 <- predict(gm1,newdata,REform=~(1|herd))
-stopifnot(all.equal(p2,p4))
+expect_true(all.equal(p2,p4))
 
 
 p5 <- predict(gm1,type="response")
-stopifnot(all.equal(p5,plogis(p0)))
+expect_true(all.equal(p5,plogis(p0)))
 
 matplot(cbind(p2,p3),col=1:2,type="b")
 
 ## effects of new RE levels
 newdata2 <- rbind(newdata,
                   data.frame(period=as.character(1:4),herd=rep("new",4)))
-stopifnot(is(try(predict(gm1,newdata2),silent=TRUE),"try-error"))
+expect_true(is(try(predict(gm1,newdata2),silent=TRUE),"try-error"))
 p6 <- predict(gm1,newdata2,allow.new.levels=TRUE)
-stopifnot(all.equal(p2,p6[1:length(p2)]))  ## original values should match
+expect_true(all.equal(p2,p6[1:length(p2)]))  ## original values should match
 ## last 4 values should match unconditional values
-stopifnot(all(tail(p6,4)==predict(gm1,newdata=data.frame(period=factor(1:4)),REform=NA)))
+expect_true(all(tail(p6,4)==predict(gm1,newdata=data.frame(period=factor(1:4)),REform=NA)))
 
 ## multi-group model
 fm1 <- lmer(diameter ~ (1|plate) + (1|sample), Penicillin)
@@ -49,7 +53,7 @@ p3 <- predict(fm1,newdata,REform=NA)
 ## explicitly specify RE
 p4 <- predict(fm1,newdata,REform=~(1|plate)+(~1|sample))
 p4B <- predict(fm1,newdata,REform=~(1|sample)+(~1|plate))
-stopifnot(all.equal(p2,p4,p4B))
+expect_true(all.equal(p2,p4,p4B))
 
 p5 <- predict(fm1,newdata,REform=~(1|sample))
 p6 <- predict(fm1,newdata,REform=~(1|plate))
@@ -89,7 +93,7 @@ refval <- structure(list(Days = c(0, 9, 0, 9, 0, 9), Subject = structure(c(1L,
     "Subject=372")), .Names = c("Days", "Subject"))), .Names = c("dim", 
 "dimnames")), row.names = c(NA, 6L), class = "data.frame")
 
-stopifnot(all.equal(head(newdata),refval))
+expect_true(all.equal(head(newdata),refval))
 
 library(lattice)
 tmpf <- function(data,...) {

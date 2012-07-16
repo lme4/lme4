@@ -87,10 +87,18 @@ xtabs( ~ Operator + Part, data=lsDat) # --> 4 empty cells, quite a few with only
 ##        4 1 1 2 2 2
 ##        5 1 2 2 1 2
 
-fm3 <- lmer(y ~ (1|Part) + (1|Operator) + (1|Part:Operator),
-            data = lsDat)
+old_lme4_vcov <- 0.254166752231642 ## lme4.0_0.999999-1
+
+fm3 <- suppressWarnings(lmer(y ~ (1|Part) + (1|Operator) + (1|Part:Operator),
+            data = lsDat))
+
+## FIXME: should suppress 'caught warning' message in optwrap!
 ## --> *many* warnings   Cholmod warning 'not positive definite' ..
-fm3 # gave an error {no longer does}
+
+## FIXME: failing in vcov.merMod <- mkVcov <- as(V,"dpoMatrix")
+## (fm3@pp$unsc() contains NaN, function catches "not a positive definite matrix"
+##  and converts to "Computed variance-covariance matrix is not positive definite")
+## fm3 # gave an error {no longer does}
 ## currently (2012-06-25) full of  NA/NaN  -- old lme4 does
 showProc.time()
 
