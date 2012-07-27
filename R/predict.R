@@ -7,15 +7,15 @@
 ##'    include all random effects; if NA, include no random effects
 ##' @param terms a \code{\link{terms}} object - not used at present
 ##' @param type character string - either \code{"link"}, the default,
-##'    or \code{"response"} indicating the type of prediction object returned.
-##' @param allow.new.levels (logical) if FALSE, then any new levels
-##'    detected in \code{newdata} will trigger an error; if TRUE, then
+##'    or \code{"response"} indicating the type of prediction object returned
+##' @param allow.new.levels (logical) if FALSE (default), then any new levels
+##'    (or NA values) detected in \code{newdata} will trigger an error; if TRUE, then
 ##'    the prediction will use the unconditional (population-level)
-##'    values for data with previously unobserved levels
-##' @param na.action function determining what should be done with missing values in \code{newdata}.  Currently a stub: the default will be to predict ‘NA’. See \code{\link{na.pass}}.
+##'    values for data with previously unobserved levels (or NAs)
+##' @param na.action function determining what should be done with missing values for fixed effects in \code{newdata}. The default is to predict \code{NA}: see \code{\link{na.pass}}.
 ##' @param ... optional additional parameters.  None are used at present.
 ##' @return a numeric vector of predicted values
-##' @note explain why there is no option for computing standard errors of predictions!
+##' @note There is no option for computing standard errors of predictions because it is difficult to define an efficient method that incorporates uncertainty in the variance parameters; we recommend \code{\link{bootMer}} for this task.
 ##' @examples
 ##' (gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 |herd), cbpp, binomial))
 ##' str(p0 <- predict(gm1))            # fitted values
@@ -30,30 +30,38 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
                            terms=NULL, type=c("link","response"),
                            allow.new.levels=FALSE, na.action=na.pass, ...) {
     ## FIXME: appropriate names for result vector?
+    ## FIXME: make sure behaviour is entirely well-defined for NA in grouping factors
 
     if (length(list(...)>0)) warning("unused arguments ignored")
-    if (!missing(na.action)) {
-        ## FIXME
-        stop("na.action is not yet implemented.")
-    }
+    if (isLMM(object) && !missing(type)) warning("type argument ignored for linear mixed models")
+    fit.na.action <- attr(object@frame,"na.action")
     type <- match.arg(type)
     if (!is.null(terms)) stop("terms functionality for predict not yet implemented")
-    X_orig <- getME(object, "X")
-    ## FIXME/WARNING: how do we do this in an eval-safe way???
+    ## FIXME/WARNING: how do we/can we do this in an eval-safe way???
     form_orig <- eval(object@call$formula,parent.frame())
     if (is.null(newdata) && is.null(REform)) {
-        if (isLMM(object) || isNLMM(object)) return(fitted(object))
-        return(switch(type,response=object@resp$mu, ## fitted(object),
-                      link=object@resp$eta))  ## fixme: getME() ?
-    } else {
+        ## raw predict() call, just return fitted values (inverse-link if appropriate)
+        if (isLMM(object) || isNLMM(object)) {
+            pred <- fitted(object)
+        } else { ## inverse-link
+            pred <-  switch(type,response=object@resp$mu, ## fitted(object),
+                            link=object@resp$eta)  ## fixme: getME() ?
+        }
+        if (!is.null(fit.na.action)) {
+            pred <- napredict(fit.na.action,pred)
+        }
+        return(pred)
+    } else { ## newdata and/or REform specified
+        X_orig <- getME(object, "X")
         if (is.null(newdata)) {
             X <- X_orig
         } else {
+            ## evaluate new fixed effect
             RHS <- formula(object,fixed.only=TRUE)[-2]
             Terms <- terms(object,fixed.only=TRUE)
-            X <- model.matrix(RHS, model.frame(delete.response(Terms), newdata),
-                              contrasts.arg=attr(X_orig,"contrasts"),
-                              na.action=attr(object@frame,"na.action"))
+            X <- model.matrix(RHS, mfnew <- model.frame(delete.response(Terms),
+                                                        newdata, na.action=na.action),
+                              contrasts.arg=attr(X_orig,"contrasts"))
         }
         pred <- drop(X %*% fixef(object))
         ## modified from predict.glm ...
@@ -61,10 +69,10 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
         tt <- terms(object)
         ## FIXME:: need to unname()  ?
         if (!is.null(off.num <- attr(tt, "offset"))) {
-            ## browser()
             for (i in off.num) offset <- offset + eval(attr(tt,"variables")[[i + 1]], newdata)
         }
-        if (!is.null(getCall(object)$offset)) 
+        if (!is.null(getCall(object)$offset))
+            ## FIXME: can we assign and re-use getCall(object)$offset ?
             offset <- offset + eval(object$call$offset, newdata)
         pred <- pred+offset
         if (is.null(REform)) {
@@ -73,14 +81,24 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
         ## FIXME: ??? can't apply is.na() to a 'language' object?
         ##  what's the appropriate test?
         if (is.language(REform)) {
+            na.action.name <- deparse(match.call()$na.action) ## ugh
+            if (!is.null(newdata) && na.action.name %in% c("na.exclude","na.omit")) {
+                ## strip NAs from data for random-effects matrix construction
+                if (length(nadrop <- attr(mfnew,"na.action"))>0) {
+                    newdata <- newdata[-nadrop,]
+                }
+            }
             re <- ranef(object)
             ##
             ReTrms <- mkReTrms(findbars(REform[[2]]),newdata)
-            new_levels <- lapply(newdata[unique(sort(names(ReTrms$cnms)))],
+            if (!allow.new.levels && any(sapply(ReTrms$flist,function(x) any(is.na(x)))))
+                stop("NAs are not allowed in prediction data for grouping variables unless allow.new.levels is TRUE")
+            unames <- unique(sort(names(ReTrms$cnms)))  ## FIXME: same as names(ReTrms$flist) ?
+            new_levels <- lapply(newdata[unames],
                                  function(x) levels(droplevels(factor(x))))
             ## FIXME: should this be unique(as.character(x)) instead?
             ##   (i.e., what is the proper way to protect against non-factors?)
-            levelfun <-function(x,n) {
+            levelfun <- function(x,n) {
                 ## find and deal with new levels
                 if (any(!new_levels[[n]] %in% rownames(x))) {
                     if (!allow.new.levels) stop("new levels detected in newdata")
@@ -99,11 +117,6 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
             }
             ## fill in/delete levels as appropriate
             re_x <- mapply(levelfun,re,names(re),SIMPLIFY=FALSE)
-            ## separate random effects from orig model into individual columns
-            ## re_List <- do.call(c,lapply(re_x,as.list))
-            ## re_names <- names(re_List)
-            ## names corresponding to random effects specified in 'predict' call
-            ## z_names <- mapply(paste,names(ReTrms$cnms),ReTrms$cnms,MoreArgs=list(sep="."))
             re_new <- list()
             if (any(!names(ReTrms$cnms) %in% names(re)))
                 stop("grouping factors specified in REform that were not present in original model")
@@ -117,12 +130,18 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
             }
             re_newvec <- unlist(lapply(re_new,t))  ## must TRANSPOSE RE matrices before unlisting
             pred <- pred + drop(as.matrix(re_newvec %*% ReTrms$Zt))
-        } ## REform provided
-    } ## predictions with new data or new REform
-    if (isGLMM(object) && type=="response") {
-        pred <- object@resp$family$linkinv(pred)
+        } ## predictions with REform!=NA
+        if (isGLMM(object) && type=="response") {
+            pred <- object@resp$family$linkinv(pred)
+        }
+        ## fill in NAs as appropriate
+        if (is.null(newdata) && !is.null(fit.na.action)) {
+            pred <- napredict(fit.na.action,pred)
+        } else {
+            pred <- napredict(na.action,pred)
+        }
+        return(pred)
     }
-    return(pred)
-}
+}    
 
 

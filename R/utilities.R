@@ -46,7 +46,8 @@ mkReTrms <- function(bars, fr) {
 	sm <- as(ff, "sparseMatrix")
 	if (nc	> 1)
 	    sm <- do.call(rBind, lapply(nseq, function(i) sm))
-	sm@x[] <- t(mm[])
+        ## hack for NA values contained in factor (FIXME: test elsewhere for consistency?)
+	sm@x[] <- t(mm[!is.na(ff),])
 	## When nc > 1 switch the order of the rows of sm
 	## so the random effects for the same level of the
 	## grouping factor are adjacent.

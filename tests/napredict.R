@@ -14,6 +14,8 @@ expect_true(all.equal(ranef(fm0),ranef(fm1)))
 fm1_pass <- update(fm1,na.action=na.pass)
 expect_true(all(is.na(fitted(fm1_pass))))
 fm1_exclude <- update(fm1,na.action=na.exclude)
+
+## FIXME:  fails on Windows (not on Linux!)
 expect_true(is.na(tail(predict(fm1_exclude),1)))
 
 ## test predict.lm
