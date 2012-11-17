@@ -3,14 +3,24 @@
 ##' @title Fit Linear Mixed-Effects Models
 ##' @concept LMM
 ##' @aliases lmer
-##' @param formula a two-sided linear formula object describing the
+##' @param formula a two-sided linear formula object (or an object
+##'    that can be coerced to that class, such as a single-element
+##'    character vector) describing both the fixed-effects and
 ##'    fixed-effects part of the model, with the response on the left of a
 ##'    \code{~} operator and the terms, separated by \code{+} operators, on
-##'    the right.  The vertical bar character \code{"|"} separates an
-##'    expression for a model matrix and a grouping factor.
+##'    the right.  Random-effects terms are distinguished by vertical bars
+##'    (\code{"|"}) separating expressions for design matrices from
+##'    grouping factors.
 ##' @param data an optional data frame containing the variables named in
 ##'    \code{formula}.  By default the variables are taken from the environment
-##'    from which \code{lmer} is called.
+##'    from which \code{lmer} is called. While \code{data} is optional,
+##'    the package authors \emph{strongly} recommend its use,
+##'    especially when later applying methods such as
+##'    \code{update} and \code{drop1} to the fitted model
+##' (\emph{such methods are not guaranteed to work properly if \code{data} is omitted}).
+##' If \code{data} is omitted, variables will be taken from the environment
+##' of \code{formula} (if specified as a formula) or from the parent frame
+##' (if specified as a character vector).
 ##' @param REML logical scalar - Should the estimates be chosen to optimize
 ##'    the REML criterion (as opposed to the log-likelihood)?  Defaults to
 ##'    \code{TRUE}.
@@ -68,6 +78,17 @@
 ##'    methods are available.  See there for details.
 ##' @seealso The \code{\linkS4class{merMod}} class, \code{\link[stats]{lm}}
 ##' @keywords models
+##' @details
+##' \itemize{
+##' \item{Unlike some simpler modeling frameworks such as \code{\link{lm}}
+##' and \code{\link{glm}} which automatically detect perfectly collinear
+##' predictor variables, \code{[gn]lmer} cannot handle design matrices of
+##' less than full rank.  For example, in cases of models with interactions
+##' that have unobserved combinations of levels, it is up to the user to
+##' define a new variable (for example creating
+##' \code{ab} within the data from the results of \code{droplevels(interaction(a,b))}).
+##' }
+##' }
 ##' @examples
 ##' ## linear mixed models - reference values from older code
 ##' (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -111,9 +132,17 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
                     " disregarded")
     }
 
-    stopifnot(length(formula <- as.formula(formula)) == 3)
-    if (missing(data)) data <- environment(formula)
-                                        # evaluate and install the model frame :
+    ee <- environment(formula)
+    if (is.null(ee)) {
+        ee <- parent.frame()
+        ## FIXME: issue a warning?
+    }
+
+    if (missing(data)) data <- ee
+
+    stopifnot(length(formula <- as.formula(formula,env=ee)) == 3)
+    mc$formula <- formula ## substitute evaluated call
+
     m <- match(c("data", "subset", "weights", "na.action", "offset"),
                names(mf), 0)
     mf <- mf[c(1, m)]
@@ -363,10 +392,19 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 
     stopifnot(length(nAGQ <- as.integer(nAGQ)) == 1L,
               nAGQ >= 0L,
-              nAGQ <= 25L,
-              length(formula <- as.formula(formula)) == 3)
-    if (missing(data)) data <- environment(formula)
-                                        # evaluate and install the model frame :
+              nAGQ <= 25L)
+
+    ee <- environment(formula)
+    if (is.null(ee)) {
+            ee <- parent.frame()
+            ## FIXME: issue a warning?
+        }
+
+    if (missing(data)) data <- ee
+
+    stopifnot( length(formula <- as.formula(formula,env=ee)) == 3)
+    mc$formula <- formula    ## substitute evaluated version
+
     m <- match(c("data", "subset", "weights", "na.action", "offset",
                  "mustart", "etastart"), names(mf), 0)
     mf <- mf[c(1, m)]
@@ -1027,7 +1065,7 @@ getFixedFormula <- function(form) {
 ##' @importFrom stats formula
 ##' @S3method formula merMod
 formula.merMod <- function(x, fixed.only=FALSE, ...) {
-    form <- formula(getCall(x),...)
+    form <- as.formula(formula(getCall(x),...))
     if (fixed.only) {
         form <- getFixedFormula(form)
     }
