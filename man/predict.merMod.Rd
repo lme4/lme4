@@ -5,7 +5,7 @@
   \method{predict}{merMod} (object, newdata = NULL,
     REform = NULL, terms = NULL,
     type = c("link", "response"), allow.new.levels = FALSE,
-    ...)
+    na.action = na.pass, ...)
 }
 \arguments{
   \item{object}{a fitted model object}
@@ -22,13 +22,19 @@
 
   \item{type}{character string - either \code{"link"}, the
   default, or \code{"response"} indicating the type of
-  prediction object returned.}
+  prediction object returned}
 
-  \item{allow.new.levels}{(logical) if FALSE, then any new
-  levels detected in \code{newdata} will trigger an error;
-  if TRUE, then the prediction will use the unconditional
-  (population-level) values for data with previously
-  unobserved levels}
+  \item{allow.new.levels}{(logical) if FALSE (default),
+  then any new levels (or NA values) detected in
+  \code{newdata} will trigger an error; if TRUE, then the
+  prediction will use the unconditional (population-level)
+  values for data with previously unobserved levels (or
+  NAs)}
+
+  \item{na.action}{function determining what should be done
+  with missing values for fixed effects in \code{newdata}.
+  The default is to predict \code{NA}: see
+  \code{\link{na.pass}}.}
 
   \item{...}{optional additional parameters.  None are used
   at present.}
@@ -41,10 +47,11 @@
   \code{\linkS4class{merMod}} objects
 }
 \note{
-  explain why there is no option for computing standard
-  errors of predictions!
-
-  offsets not yet handled
+  There is no option for computing standard errors of
+  predictions because it is difficult to define an
+  efficient method that incorporates uncertainty in the
+  variance parameters; we recommend \code{\link{bootMer}}
+  for this task.
 }
 \examples{
 (gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 |herd), cbpp, binomial))

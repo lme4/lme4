@@ -570,20 +570,6 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
     mkMerMod(environment(devfun), opt, vals$reTrms, vals$frame, mc)
 }## {nlmer}
 
-## global variables defs to make codetools/R CMD check happier.
-## FIXME: does putting globalVariables() stuff here interfere with Roxygen?
-## ?globalVariables says that fields and methods in reference classes are
-## "handled automatically by ‘setRefClass()’ and friends, using the
-##  supplied field and method names" -- perhaps there's a better way to do this?
-if (getRversion()<="2.15.0")  {
-    ## dummy
-    globalVariables <- function(...) {}
-}
-if(FALSE)## not ok for roxygen2
-globalVariables(c("pp","resp","lp0","pwrssUpdate","compDev",
-                  "baseOffset","GQmat","fac","nlmerAGQ","tolPwrss",
-                  "dpars","verbose"),
-                package="lme4")
 
 ##' Create a deviance evaluation function from a predictor and a response module
 ##'
@@ -620,7 +606,7 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0) {
     ## FIXME: should nAGQ be automatically embedded in rho?
     stopifnot(is.environment(rho), is(rho$resp, "lmResp"))
 
-    ## R CMD check  "no visible binding for global variable" ...
+    ## silence R CMD check warnings
     ## MM *preferred* to globalVariables()
     fac <- pp <- resp <- lp0 <- compDev <- dpars <- baseOffset <- tolPwrss <-
 	pwrssUpdate <- ## <-- even though it's a function below

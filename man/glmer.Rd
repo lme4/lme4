@@ -86,17 +86,28 @@
   functionality has been replaced by the \code{nAGQ}
   argument.}
 
-  \item{formula}{a two-sided linear formula object
-  describing the fixed-effects part of the model, with the
-  response on the left of a \code{~} operator and the
+  \item{formula}{a two-sided linear formula object (or an
+  object that can be coerced to that class, such as a
+  single-element character vector) describing both the
+  fixed-effects and fixed-effects part of the model, with
+  the response on the left of a \code{~} operator and the
   terms, separated by \code{+} operators, on the right.
-  The vertical bar character \code{"|"} separates an
-  expression for a model matrix and a grouping factor.}
+  Random-effects terms are distinguished by vertical bars
+  (\code{"|"}) separating expressions for design matrices
+  from grouping factors.}
 
   \item{data}{an optional data frame containing the
   variables named in \code{formula}.  By default the
   variables are taken from the environment from which
-  \code{lmer} is called.}
+  \code{lmer} is called. While \code{data} is optional, the
+  package authors \emph{strongly} recommend its use,
+  especially when later applying methods such as
+  \code{update} and \code{drop1} to the fitted model
+  (\emph{such methods are not guaranteed to work properly
+  if \code{data} is omitted}). If \code{data} is omitted,
+  variables will be taken from the environment of
+  \code{formula} (if specified as a formula) or from the
+  parent frame (if specified as a character vector).}
 
   \item{sparseX}{logical - should a sparse model matrix be
   used for the fixed-effects terms?  Defaults to

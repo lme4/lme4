@@ -3,9 +3,6 @@
 ##' Methods for function \code{\link{profile}} (package \pkg{stats}), here for
 ##' profiling (fitted) mixed effect models.
 ##'
-
-globalVariables(".par",package="lme4")
-
 ##'
 ##'
 ##' @name profile-methods
@@ -63,6 +60,8 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
                            startmethod = "prev",
                            optimizer="bobyqa", ...) {
 
+    .par <- NULL  ## suppress R CMD check warning
+    
   ## FIXME: allow choice of nextstep/nextstart algorithm?
   ## FIXME: by default, get optimizer from within fitted object
   ## FIXME: allow selection of individual variables to profile by name?
