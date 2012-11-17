@@ -126,7 +126,7 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
     t.star <- matrix(t0, nrow = length(t0), ncol = nsim)
     for(i in 1:nsim) {
         if (.progress!="none") { setpbfun(pb,i/nsim) }
-        foo <- try(FUN(refit(x,ss[[i]])))
+        foo <- try(FUN(refit(x,ss[[i]])),silent=TRUE)
         if(verbose) { cat(sprintf("%5d :",i)); str(foo) }
         t.star[,i] <- if (inherits(foo, "error")) NA else foo
     }
