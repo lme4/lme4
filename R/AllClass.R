@@ -912,7 +912,8 @@ setClass("merMod",
                         beta    = "numeric",
                         u       = "numeric",
                         devcomp = "list",
-                        pp      = "merPredD"))
+                        pp      = "merPredD",
+                        optinfo = "list"))
 
 ##' @export
 setClass("lmerMod", representation(resp="lmerResp"), contains="merMod")

@@ -2190,15 +2190,12 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
     }
     ## FIXME: test!  effects of multiple warnings??
     ## may not need to catch warnings after all??
-    curWarning <- NULL
+    curWarnings <- list()
     opt <- withCallingHandlers(do.call(optfun,arglist),
                                warning = function(w) {
-                                   ## browser()
-                                   cat("caught warning:",w$message,"\n")
-                                   assign("curWarning",w$message,parent.frame())
-                                   invokeRestart("muffleWarning")
+                                   curWarnings <<- append(curWarnings,list(w$message))
                                })
-    ## if (!is.null(curWarning)) browser()
+    ## cat("***",unlist(tail(curWarnings,1)),"\n")
     ## FIXME: set code to warn on convergence !=0
     ## post-fit tweaking
     if (optimizer=="bobyqa") {
@@ -2213,8 +2210,10 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
         wmsg <- paste("convergence code",opt$conv,"from",optimizer)
         if (!is.null(opt$msg)) wmsg <- paste0(wmsg,": ",opt$msg)
         warning(wmsg)
+        curWarnings <<- append(curWarnings,list(wmsg))
     }
     attr(opt,"control") <- control
+    attr(opt,"warnings") <- curWarnings
     opt
 }
 

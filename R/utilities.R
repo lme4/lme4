@@ -536,5 +536,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc) {
     new(switch(rcl, lmerResp="lmerMod", glmResp="glmerMod", nlsResp="nlmerMod"),
         call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
         Gp=reTrms$Gp, theta=pp$theta, beta=beta, u=pp$u(fac),
-        lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=resp)
+        lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=resp,
+        optinfo=list()  ## FIXME: placeholder: optimizer, control, conv, message ... ?
+        )
 }
