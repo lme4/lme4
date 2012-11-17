@@ -63,7 +63,7 @@ stopifnot(
 
 if(FALSE) { ## simulation study --------------------
 
-  ## library(glmmADMB) ## avoid R CMD check warning
+    ## library(glmmADMB) ## avoid R CMD check warning
     simsumfun <- function(...) {
         d <- simfun(...)
         t1 <- system.time(g1 <- glmer.nb(z~x+(1|f),data=d))
@@ -109,27 +109,26 @@ epil2 <- transform(epil,Visit=(period-2.5)/5,
 ##                            theta=g3$alpha)
 
 glmmADMB_epil_vals <-
-  list(fixef =
-       c("(Intercept)"= -1.33, "Base"=0.88392, "trtprogabide"=-0.92997,
-         "Age"=0.47514, "Visit"=-0.27016, "Base:trtprogabide"=0.33724),
-       NLL = structure(624.551, class = "logLik", df = 9, nobs = 236L),
-       theta = 7.4702)
+    list(fixef =
+         c("(Intercept)"= -1.33, "Base"=0.88392, "trtprogabide"=-0.92997,
+           "Age"=0.47514, "Visit"=-0.27016, "Base:trtprogabide"=0.33724),
+         NLL = structure(624.551, class = "logLik", df = 9, nobs = 236L),
+         theta = 7.4702)
 
-if(!(Sys.getenv("USER") %in% c("maechler")))
-    q("no")
-## "too slow" for regular testing -- 49 (MM@lynne: 33, then 26) seconds:
-(t4 <- system.time(g4 <- glmer.nb(y~ Base*trt + Age + Visit + (Visit|subject),
-                                  data=epil2, verbose=TRUE)))
+if (Sys.getenv("USER") %in% c("maechler")) {
+    ## "too slow" for regular testing -- 49 (MM@lynne: 33, then 26) seconds:
+    (t4 <- system.time(g4 <- glmer.nb(y~ Base*trt + Age + Visit + (Visit|subject),
+                                      data=epil2, verbose=TRUE)))
 g4
-(Lg4 <- logLik(g4))
-attributes(Lg4) <- attributes(Lg4)[c("class","df","nobs")]
-stopifnot(
-	  all.equal(getNBdisp(g4),   glmmADMB_epil_vals$ theta, tol= 0.0022)# was 0.002
-	  ,
-	  all.equal(fixef    (g4),   glmmADMB_epil_vals$ fixef, tol= 0.004)
-	  ,
-	  all.equal(logLik.m (g4), - glmmADMB_epil_vals$ NLL,	tol= 0.0002)
-	  )
-
+    (Lg4 <- logLik(g4))
+    attributes(Lg4) <- attributes(Lg4)[c("class","df","nobs")]
+    stopifnot(
+              all.equal(getNBdisp(g4),   glmmADMB_epil_vals$ theta, tol= 0.0022)# was 0.002
+              ,
+              all.equal(fixef    (g4),   glmmADMB_epil_vals$ fixef, tol= 0.004)
+              ,
+              all.equal(logLik.m (g4), - glmmADMB_epil_vals$ NLL,	tol= 0.0002)
+              )
+}
 
 cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''

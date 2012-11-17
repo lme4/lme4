@@ -176,8 +176,8 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
     attr(attr(fr,"terms"),"predvars.fixed") <- attr(attr(fixedfr,"terms"),"predvars")
     X <- model.matrix(fixedform, fixedfr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     p <- ncol(X)
-    if ((qrX <- qr(X))$rank < p)
-        stop(gettextf("rank of X = %d < ncol(X) = %d", qrX$rank, p))
+    if ((rankX <- rankMatrix(X)) < p)
+        stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
     rho <- new.env(parent=parent.env(environment()))
     rho$pp <- do.call(merPredD$new, c(reTrms[c("Zt","theta","Lambdat","Lind")], n=nrow(X), list(X=X)))
     rho$resp <- mkRespMod(fr, if(REML) p else 0L)
@@ -431,6 +431,9 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
     X <- model.matrix(form, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     p <- ncol(X)
 
+    if ((rankX <- rankMatrix(X)) < p)
+        stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
+
     ## Environment for deviance function.  For the optimizers the
     ## deviance function must be a simple function of a numeric
     ## parameter.  We put all the other information in the
@@ -519,8 +522,9 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
                   optimizer="Nelder_Mead", ...)
 {
     vals <- nlformula(mc <- match.call())
-    if ((qrX <- qr(X <- vals$X))$rank < (p <- ncol(X)))
-        stop(gettextf("rank of X = %d < ncol(X) = %d", qrX$rank, p))
+    if ((rankX <- rankMatrix(X <- vals$X)) < (p <- ncol(X)))
+        stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
+
     rho <- list2env(list(verbose=verbose,
                          tolPwrss=0.001, # this is reset to the tolPwrss argument's value later
                          resp=vals$resp,
@@ -529,7 +533,7 @@ nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
     rho$pp <- do.call(merPredD$new,
                       c(vals$reTrms[c("Zt","theta","Lambdat","Lind")],
                         list(X=X, n=length(vals$respMod$mu), Xwts=vals$respMod$sqrtXwt,
-                             beta0=qr.coef(qrX, unlist(lapply(vals$pnames, get,
+                             beta0=qr.coef(qr(X), unlist(lapply(vals$pnames, get,
                              envir = rho$resp$nlenv))))))
     rho$u0 <- rho$pp$u0
     rho$beta0 <- rho$pp$beta0

@@ -3,7 +3,7 @@
 ## drop1(fecpoiss_lm3,test="Chisq",scope=.~.)
 
 library(lme4)
-options(contrasts=c("contr.sum","contr.poly"))
+oldopts <- options(contrasts=c("contr.sum","contr.poly"))
 fm1 <- lmer(Reaction~Days+(Days|Subject),data=sleepstudy)
 drop1(fm1,test="Chisq")
 ## debug(lme4:::drop1.merMod)
@@ -11,3 +11,4 @@ drop1(fm1,test="Chisq",scope=.~.)
 
 fm0 <- lm(Reaction~Days+Subject,data=sleepstudy)
 drop1(fm0,test="Chisq",scope=.~.)
+options(oldopts)  ## restore original contrasts

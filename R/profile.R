@@ -4,6 +4,10 @@
 ##' profiling (fitted) mixed effect models.
 ##'
 ##'
+
+.par <- NULL  ## suppress R CMD check warning  
+
+##' 
 ##'
 ##' @name profile-methods
 ##' @aliases profile-methods profile.merMod
@@ -60,8 +64,6 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
                            startmethod = "prev",
                            optimizer="bobyqa", ...) {
 
-    .par <- NULL  ## suppress R CMD check warning
-    
   ## FIXME: allow choice of nextstep/nextstart algorithm?
   ## FIXME: by default, get optimizer from within fitted object
   ## FIXME: allow selection of individual variables to profile by name?
