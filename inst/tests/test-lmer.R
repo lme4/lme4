@@ -3,6 +3,9 @@ library("lme4")
 
 context("fitting lmer models")
 test_that("lmer", {
+    expect_warning(lmer(z~ 1|f, method="abc"),"Use the REML argument")
+    expect_warning(lmer(z~ 1|f, method="Laplace"),"Use the REML argument")
+    expect_warning(lmer(z~ 1|f, sparseX=TRUE),"has no effect at present")
     expect_that(fm1 <- lmer(Yield ~ 1|Batch, Dyestuff), is_a("lmerMod"))
     expect_that(fm1@resp,                               is_a("lmerResp"))
     expect_that(fm1@pp,                                 is_a("merPredD"))

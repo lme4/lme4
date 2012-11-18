@@ -70,7 +70,24 @@
 ##' @param contrasts an optional list. See the \code{contrasts.arg} of
 ##'     \code{model.matrix.default}.
 ##' @param devFunOnly logical - return only the deviance evaluation function.
-##' @param optimizer character - name of optimizing function
+##' @param optimizer character - name of optimizing function. The built-in optimizers are
+##'    \code{\link{Nelder_Mead}} and \code{\link[minqa]{bobyqa}} (from
+##'    the \pkg{minqa} package. Any minimizing function that allows
+##'    box constraints can be used
+##'    provided that it (1) takes input parameters \code{fn} (function
+##'    to be optimized), \code{par} (starting parameter values),
+##'    \code{lower} (lower bounds) and \code{control} (control parameters,
+##'    passed through from the \code{control} argument) and (2)
+##'    returns a list with (at least) elements \code{par} (best-fit
+##'    parameters), \code{fval} (best-fit function value), \code{conv}
+##'    (convergence code) and (optionally) \code{message} (informational
+##'    message, or explanation of convergence failure).
+##'    Special provisions are made for \code{\link{bobyqa}},
+##'    \code{\link{Nelder_Mead}}, and optimizers wrapped in
+##'    the \pkg{optimx} package; to use \pkg{optimx} optimizers
+##'    (including \code{L-BFGS-B} from base \code{\link{optim}} and
+##'    \code{\link{nlminb}}), pass the \code{method} argument to \code{optim}
+##'    in the \code{control} argument.
 ##' @param \dots other potential arguments.  A \code{method} argument was used
 ##'    in earlier versions of the package. Its functionality has been replaced by
 ##'    the \code{REML} argument.
@@ -108,41 +125,17 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
         restart <- control$restart
         control$restart <- NULL
     }
-    if (sparseX) warning("sparseX = TRUE has no effect at present")
+
     mf <- mc <- match.call()
-    ## '...' handling up front, safe-guarding against typos ("familiy") :
-    if(length(l... <- list(...))) {
-        if (!is.null(l...$family)) {  # call glmer if family specified
-            warning("calling lmer with family() is deprecated: please use glmer() instead")
-            mc[[1]] <- as.name("glmer")
-            return(eval(mc, parent.frame()) )
-        }
-        ## Check for method argument which is no longer used
-        if (!is.null(method <- l...$method)) {
-            msg <- paste("Argument", sQuote("method"), "is deprecated.")
-            ## FIXME: this will fail if method *not* in ("Laplace","AGQ") ...
-            if (match.arg(method, c("Laplace", "AGQ")) == "Laplace") {
-                warning(msg)
-                l... <- l...[names(l...) != "method"]
-            } else stop(msg)
-        }
-        if(length(l...))
-            warning("extra argument(s) ",
-                    paste(sQuote(names(l...)), collapse=", "),
-                    " disregarded")
+    checkArgs("lmer",sparseX,...)
+    if (!is.null(list(...)[["family"]])) {
+        ## lmer(...,family=...); warning issued within checkArgs
+        mc[[1]] <- as.name("glmer")
+        return(eval(mc, parent.frame()) )
     }
 
-    ee <- environment(formula)
-    if (is.null(ee)) {
-        ee <- parent.frame()
-        ## FIXME: issue a warning?
-    }
-
-    if (missing(data)) data <- ee
-
-    stopifnot(length(formula <- as.formula(formula,env=ee)) == 3)
-    mc$formula <- formula ## substitute evaluated call
-
+    denv <- checkFormulaData(formula,data)
+    mc$formula <- formula <- as.formula(formula,env=denv) ## substitute evaluated call
     m <- match(c("data", "subset", "weights", "na.action", "offset"),
                names(mf), 0)
     mf <- mf[c(1, m)]
@@ -154,16 +147,6 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
     fr <- eval(mf, parent.frame())
                                         # random effects and terms modules
     reTrms <- mkReTrms(findbars(formula[[3]]), fr)
-    if (FALSE) {
-        ## BMB: I clearly don't know what's going on here yet.
-        ## test: lmer(angle ~ temp + recipe + (1 | replicate), data = cake)
-        ## test: sstudy9 <- subset(sleepstudy, Days == 1 | Days == 9)
-        ## m1 <- lmer(Reaction ~ 1 + Days + (1 + Days | Subject), data = sstudy9)
-        rankZ1 <- rankMatrix(bdiag(reTrms$Zt,Diagonal(ncol(reTrms$Zt))))
-        pZ1 <- nrow(reTrms$Zt)+ncol(reTrms$Zt)
-        if (rankZ1<pZ1)
-            stop(gettextf("rank of cBind(Z,1) = %d < ncol(Z)+1 = %d", rankZ1, pZ1+1))
-    }
     if (any(unlist(lapply(reTrms$flist, nlevels)) >= nrow(fr)))
         stop("number of levels of each grouping factor must be ",
              "less than number of obs")
@@ -369,41 +352,17 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
         mc["family"] <- NULL            # to avoid an infinite loop
         return(eval(mc, parent.frame()))
     }
-
     if (family$family %in% c("quasibinomial", "quasipoisson", "quasi"))
         stop('"quasi" families cannot be used in glmer')
-### '...' handling up front, safe-guarding against typos ("familiy") :
-    if(length(l... <- list(...))) {
-        ## Check for invalid specifications
-        if (!is.null(method <- list(...)$method)) {
-            msg <- paste("Argument", sQuote("method"),
-                         "is deprecated.\nUse", sQuote("nAGQ"),
-                         "to choose AGQ.  PQL is not available.")
-            if (match.arg(method, c("Laplace", "AGQ")) == "Laplace") {
-                warning(msg)
-                l... <- l...[names(l...) != "method"]
-            } else stop(msg)
-        }
-        if(length(l...))
-            warning("extra argument(s) ",
-                    paste(sQuote(names(l...)), collapse=", "),
-                    " disregarded")
-    }
+
+    checkArgs("glmer",sparseX,...)
 
     stopifnot(length(nAGQ <- as.integer(nAGQ)) == 1L,
               nAGQ >= 0L,
               nAGQ <= 25L)
 
-    ee <- environment(formula)
-    if (is.null(ee)) {
-            ee <- parent.frame()
-            ## FIXME: issue a warning?
-        }
-
-    if (missing(data)) data <- ee
-
-    stopifnot( length(formula <- as.formula(formula,env=ee)) == 3)
-    mc$formula <- formula    ## substitute evaluated version
+    denv <- checkFormulaData(formula,data)
+    mc$formula <- formula <- as.formula(formula,env=denv)    ## substitute evaluated version
 
     m <- match(c("data", "subset", "weights", "na.action", "offset",
                  "mustart", "etastart"), names(mf), 0)
