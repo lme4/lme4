@@ -34,7 +34,12 @@ mkReTrms <- function(bars, fr) {
 
     ## auxiliary {named, for easier inspection}:
     mkBlist <- function(x) {
-	ff <- eval(substitute(factor(fac), list(fac = x[[3]])), fr)
+        frloc <- fr
+        ## convert grouping variables to factors as necessary
+        for (i in all.vars(x[[3]])) {
+            frloc[[i]] <- factor(frloc[[i]])
+        }
+	ff <- eval(substitute(factor(fac), list(fac = x[[3]])), frloc)
 	if (all(is.na(ff)))
 	    stop("Invalid grouping factor specification, ",
 		 deparse(x[[3]]))
