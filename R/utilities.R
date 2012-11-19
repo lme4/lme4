@@ -586,14 +586,17 @@ checkArgs <- function(type,sparseX,...) {
 ## this may fail ...
 
 checkFormulaData <- function(formula,data) {
-    ee <- environment(formula)
-    if (is.null(ee)) {  ## e.g. because formula is a character vector
-        ee <- parent.frame(2)  ## want to look up to calling frame of [gn]lmer() ...
-    }
-    if (missing(data)) {
-       denv <- ee
+    if (is.null(data)) {
+        if (!is.null(ee <- environment(formula))) {
+            ## use environment of formula
+            denv <- ee 
+        } else {
+            ## e.g. no environment, e.g. because formula is a character vector
+            denv <- parent.frame(2)
+        }
     } else {
-       denv <- list2env(data)
+        ## data specified
+        denv <- list2env(data)
     }
     stopifnot(length(as.formula(formula,env=denv)) == 3)  ## check for two-sided formula
     return(denv)

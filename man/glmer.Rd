@@ -2,11 +2,11 @@
 \alias{glmer}
 \title{Fit Generalized Linear Mixed-Effects Models}
 \usage{
-  glmer(formula, data, family = gaussian, sparseX = FALSE,
-    control = list(), start = NULL, verbose = 0L,
-    nAGQ = 1L, compDev = TRUE, subset, weights, na.action,
-    offset, contrasts = NULL, mustart, etastart,
-    devFunOnly = FALSE, tolPwrss = 1e-07,
+  glmer(formula, data = NULL, family = gaussian,
+    sparseX = FALSE, control = list(), start = NULL,
+    verbose = 0L, nAGQ = 1L, compDev = TRUE, subset,
+    weights, na.action, offset, contrasts = NULL, mustart,
+    etastart, devFunOnly = FALSE, tolPwrss = 1e-07,
     optimizer = c("bobyqa", "Nelder_Mead"), ...)
 }
 \arguments{
@@ -86,15 +86,13 @@
   functionality has been replaced by the \code{nAGQ}
   argument.}
 
-  \item{formula}{a two-sided linear formula object (or an
-  object that can be coerced to that class, such as a
-  single-element character vector) describing both the
-  fixed-effects and fixed-effects part of the model, with
-  the response on the left of a \code{~} operator and the
-  terms, separated by \code{+} operators, on the right.
-  Random-effects terms are distinguished by vertical bars
-  (\code{"|"}) separating expressions for design matrices
-  from grouping factors.}
+  \item{formula}{a two-sided linear formula object
+  describing both the fixed-effects and fixed-effects part
+  of the model, with the response on the left of a \code{~}
+  operator and the terms, separated by \code{+} operators,
+  on the right.  Random-effects terms are distinguished by
+  vertical bars (\code{"|"}) separating expressions for
+  design matrices from grouping factors.}
 
   \item{data}{an optional data frame containing the
   variables named in \code{formula}.  By default the

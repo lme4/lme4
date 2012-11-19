@@ -3,9 +3,7 @@
 ##' @title Fit Linear Mixed-Effects Models
 ##' @concept LMM
 ##' @aliases lmer
-##' @param formula a two-sided linear formula object (or an object
-##'    that can be coerced to that class, such as a single-element
-##'    character vector) describing both the fixed-effects and
+##' @param formula a two-sided linear formula object describing both the fixed-effects and
 ##'    fixed-effects part of the model, with the response on the left of a
 ##'    \code{~} operator and the terms, separated by \code{+} operators, on
 ##'    the right.  Random-effects terms are distinguished by vertical bars
@@ -97,6 +95,12 @@
 ##' @keywords models
 ##' @details
 ##' \itemize{
+##' \item{If the \code{formula} argument is specified as a character vector,
+##' the function will attempt to coerce it to a formula. However, this is
+##' not recommended (users who want to construct formulas by pasting together
+##' components are advised to use \code{\link{as.formula}}); model fits will
+##' work but subsequent methods such as \code{\link{drop1}}, \code{\link{update}}
+##' may fail.}
 ##' \item{Unlike some simpler modeling frameworks such as \code{\link{lm}}
 ##' and \code{\link{glm}} which automatically detect perfectly collinear
 ##' predictor variables, \code{[gn]lmer} cannot handle design matrices of
@@ -113,7 +117,7 @@
 ##' anova(fm1, fm2)
 ##' @export
 ##' @importFrom minqa bobyqa
-lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
+lmer <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
                  control = list(), start = NULL,
                  verbose = 0L, subset, weights, na.action, offset,
                  contrasts = NULL, devFunOnly=FALSE,
@@ -334,7 +338,7 @@ lmer <- function(formula, data, REML = TRUE, sparseX = FALSE,
 ##'               family = binomial, data = cbpp))
 ##' anova(gm1,gm2)
 ##' @export
-glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
+glmer <- function(formula, data=NULL, family = gaussian, sparseX = FALSE,
                   control = list(), start = NULL, verbose = 0L, nAGQ = 1L,
                   compDev = TRUE, subset, weights, na.action, offset,
                   contrasts = NULL, mustart, etastart, devFunOnly = FALSE,
@@ -475,7 +479,7 @@ glmer <- function(formula, data, family = gaussian, sparseX = FALSE,
 ##'               Orange, start = c(Asym = 200, xmid = 725, scal = 350),
 ##'               nAGQ = 0L))
 ##' @export
-nlmer <- function(formula, data, control = list(), start = NULL, verbose = 0L,
+nlmer <- function(formula, data=NULL, control = list(), start = NULL, verbose = 0L,
                   nAGQ = 1L, subset, weights, na.action, offset,
                   contrasts = NULL, devFunOnly = 0L, tolPwrss = 1e-10,
                   optimizer="Nelder_Mead", ...)
@@ -897,7 +901,7 @@ deviance.merMod <- function(object, REML = NULL, ...) {
 ##' @importFrom stats drop1
 ##' @S3method drop1 merMod
 drop1.merMod <- function(object, scope, scale = 0, test = c("none", "Chisq"),
-                         k = 2, trace = FALSE, ...) {
+                         k = 2, trace = FALSE, evalhack="formulaenv", ...) {
     ## FIXME: incorporate na.predict() stuff?
     tl <- attr(terms(object), "term.labels")
     if(missing(scope)) scope <- drop.scope(object)
@@ -921,9 +925,30 @@ drop1.merMod <- function(object, scope, scale = 0, test = c("none", "Chisq"),
 	    cat("trying -", tt, "\n", sep='')
 	    utils::flush.console()
         }
-        nfit <- update(object, as.formula(paste("~ . -", tt)),
-                       evaluate = FALSE)
-	nfit <- eval(nfit, envir = env) # was  eval.parent(nfit)
+        ## FIXME: make this more robust, somehow?
+        ## three choices explored so far:
+        ##  (1) evaluate nfit in parent frame: tests in inst/tests/test-formulaEval.R
+        ##      will fail on lapply(m_data_List,drop1)
+        ##      (formula environment contains r,x,y,z but not d)
+        ##  (2) evaluate nfit in frame of formula: tests will fail when data specified and formula is character
+        ##  (3) update with data=NULL: fails when ...
+        ##
+        if (evalhack %in% c("parent","formulaenv")) {
+            nfit <- update(object,
+                           as.formula(paste("~ . -", tt)),
+                           evaluate = FALSE)
+            ## nfit <- eval(nfit, envir = env) # was  eval.parent(nfit)
+            if (evalhack=="parent") {
+                nfit <- eval.parent(nfit)
+            } else if (evalhack=="formulaenv") {
+                nfit <- eval(nfit,envir=env)
+            }
+        } else {
+            nfit <- update(object,
+                           as.formula(paste("~ . -", tt)),data=NULL,
+                           evaluate = FALSE)
+            nfit <- eval(nfit,envir=env)
+        }
 	ans[i+1, ] <- extractAIC(nfit, scale, k = k, ...)
         nnew <- nobs(nfit, use.fallback = TRUE)
         if(all(is.finite(c(n0, nnew))) && nnew != n0)
