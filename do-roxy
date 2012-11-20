@@ -3,7 +3,7 @@
 pkg <- "lme4"
 pDIR <- switch((U <- Sys.getenv("USER")),
                "maechler" = "~/R/Pkgs",
-               "bates"    = "~/sloc",
+               "bates"    = "~/gitR",
                "bolker"   = "~/R/pkgs/lme4/pkg",
                ## default:
            {  p <- "/tmp"

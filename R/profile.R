@@ -10,6 +10,7 @@
 ##' 
 ##'
 ##' @name profile-methods
+##' @title Profile method for merMod objects
 ##' @aliases profile-methods profile.merMod
 ##' @docType methods
 ##' @param fitted a fitted model, e.g., the result of \code{\link{lmer}(..)}.

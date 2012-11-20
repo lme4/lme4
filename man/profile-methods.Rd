@@ -3,7 +3,7 @@
 \alias{as.data.frame.thpr}
 \alias{profile.merMod}
 \alias{profile-methods}
-\title{Methods for profile() of [ng]lmer fitted models}
+\title{Profile method for merMod objects}
 \usage{
   \method{profile}{merMod} (fitted, which = 1:nptot,
     alphamax = 0.01, maxpts = 100, delta = cutoff/8,
@@ -59,9 +59,7 @@
   similar structure)}
 }
 \description{
-  Methods for function \code{\link{profile}} (package
-  \pkg{stats}), here for profiling (fitted) mixed effect
-  models.
+  Profile method for merMod objects
 }
 \section{Methods}{
   FIXME: These (signatures) will change soon --- document
