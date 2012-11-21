@@ -12,3 +12,10 @@ drop1(fm1,test="Chisq",scope=.~.)
 fm0 <- lm(Reaction~Days+Subject,data=sleepstudy)
 drop1(fm0,test="Chisq",scope=.~.)
 options(oldopts)  ## restore original contrasts
+
+ff <- function() {
+    lmer(Reaction~Days+(Days|Subject),data=sleepstudy)
+}
+drop1(ff())  ## OK because sleepstudy is accessible!
+
+

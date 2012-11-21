@@ -545,3 +545,71 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc) {
         optinfo=list()  ## FIXME: placeholder: optimizer, control, conv, message ... ?
         )
 }
+
+## generic argument checking
+## 'type': name of calling function ("glmer", "lmer", "nlmer")
+## 
+checkArgs <- function(type,sparseX,...) {
+    if (isTRUE(sparseX)) warning("sparseX = TRUE has no effect at present")
+    ## '...' handling up front, safe-guarding against typos ("familiy") :
+    if(length(l... <- list(...))) {
+        if (!is.null(l...[["family"]])) {  # call glmer if family specified
+            ## we will only get here if 'family' is *not* in the arg list
+            warning("calling lmer with family() is deprecated: please use glmer() instead")
+            type <- "glmer"
+        }
+        ## Check for method argument which is no longer used
+        ## (different meanings/hints depending on glmer vs lmer)
+        if (!is.null(method <- l...[["method"]])) {
+            msg <- paste("Argument", sQuote("method"), "is deprecated.")
+            if (type=="lmer") msg <- paste(msg,"Use the REML argument to specify ML or REML estimation.")
+            if (type=="glmer") msg <- paste(msg,"Use the nAGQ argument to specify Laplace (nAGQ=1) or adaptive",
+                "Gauss-Hermite quadrature (nAGQ>1).  PQL is no longer available.")
+            warning(msg)
+            l... <- l...[names(l...) != "method"]
+        }
+        if(length(l...)) {
+            warning("extra argument(s) ",
+                    paste(sQuote(names(l...)), collapse=", "),
+                    " disregarded")
+        }
+    }
+}
+
+## check formula and data: return an environment suitable for evaluating
+##  the formula.
+## (1) if data is specified, return it
+## (2) otherwise, if formula has an environment, use it
+## (3) otherwise [e.g. if formula was passed as a string], try to use parent.frame(2)
+
+## if #3 is true *and* the user is doing something tricky with nested functions,
+## this may fail ...
+
+checkFormulaData <- function(formula,data) {
+    if (is.null(data)) {
+        if (!is.null(ee <- environment(formula))) {
+            ## use environment of formula
+            denv <- ee 
+        } else {
+            ## e.g. no environment, e.g. because formula is a character vector
+            denv <- parent.frame(2)
+        }
+    } else {
+        ## data specified
+        denv <- list2env(data)
+    }
+    stopifnot(length(as.formula(formula,env=denv)) == 3)  ## check for two-sided formula
+    return(denv)
+}
+
+## checkFormulaData <- function(formula,data) {
+##     ee <- environment(formula)
+##     if (is.null(ee)) {
+##         ee <- parent.frame(2)
+##     }
+##     if (missing(data)) data <- ee
+##     stopifnot(length(as.formula(formula,env=as.environment(data))) == 3)
+##     return(data)
+## }
+
+ 

@@ -2,21 +2,19 @@
 \alias{lmer}
 \title{Fit Linear Mixed-Effects Models}
 \usage{
-  lmer(formula, data, REML = TRUE, sparseX = FALSE,
+  lmer(formula, data = NULL, REML = TRUE, sparseX = FALSE,
     control = list(), start = NULL, verbose = 0L, subset,
     weights, na.action, offset, contrasts = NULL,
     devFunOnly = FALSE, optimizer = "Nelder_Mead", ...)
 }
 \arguments{
-  \item{formula}{a two-sided linear formula object (or an
-  object that can be coerced to that class, such as a
-  single-element character vector) describing both the
-  fixed-effects and fixed-effects part of the model, with
-  the response on the left of a \code{~} operator and the
-  terms, separated by \code{+} operators, on the right.
-  Random-effects terms are distinguished by vertical bars
-  (\code{"|"}) separating expressions for design matrices
-  from grouping factors.}
+  \item{formula}{a two-sided linear formula object
+  describing both the fixed-effects and fixed-effects part
+  of the model, with the response on the left of a \code{~}
+  operator and the terms, separated by \code{+} operators,
+  on the right.  Random-effects terms are distinguished by
+  vertical bars (\code{"|"}) separating expressions for
+  design matrices from grouping factors.}
 
   \item{data}{an optional data frame containing the
   variables named in \code{formula}.  By default the
@@ -99,7 +97,26 @@
   \item{devFunOnly}{logical - return only the deviance
   evaluation function.}
 
-  \item{optimizer}{character - name of optimizing function}
+  \item{optimizer}{character - name of optimizing function.
+  The built-in optimizers are \code{\link{Nelder_Mead}} and
+  \code{\link[minqa]{bobyqa}} (from the \pkg{minqa}
+  package. Any minimizing function that allows box
+  constraints can be used provided that it (1) takes input
+  parameters \code{fn} (function to be optimized),
+  \code{par} (starting parameter values), \code{lower}
+  (lower bounds) and \code{control} (control parameters,
+  passed through from the \code{control} argument) and (2)
+  returns a list with (at least) elements \code{par}
+  (best-fit parameters), \code{fval} (best-fit function
+  value), \code{conv} (convergence code) and (optionally)
+  \code{message} (informational message, or explanation of
+  convergence failure).  Special provisions are made for
+  \code{\link{bobyqa}}, \code{\link{Nelder_Mead}}, and
+  optimizers wrapped in the \pkg{optimx} package; to use
+  \pkg{optimx} optimizers (including \code{L-BFGS-B} from
+  base \code{\link{optim}} and \code{\link{nlminb}}), pass
+  the \code{method} argument to \code{optim} in the
+  \code{control} argument.}
 
   \item{\dots}{other potential arguments.  A \code{method}
   argument was used in earlier versions of the package. Its
@@ -114,15 +131,23 @@
   Fit a linear mixed model (LMM)
 }
 \details{
-  \itemize{ \item{Unlike some simpler modeling frameworks
-  such as \code{\link{lm}} and \code{\link{glm}} which
-  automatically detect perfectly collinear predictor
-  variables, \code{[gn]lmer} cannot handle design matrices
-  of less than full rank.  For example, in cases of models
-  with interactions that have unobserved combinations of
-  levels, it is up to the user to define a new variable
-  (for example creating \code{ab} within the data from the
-  results of \code{droplevels(interaction(a,b))}). } }
+  \itemize{ \item{If the \code{formula} argument is
+  specified as a character vector, the function will
+  attempt to coerce it to a formula. However, this is not
+  recommended (users who want to construct formulas by
+  pasting together components are advised to use
+  \code{\link{as.formula}}); model fits will work but
+  subsequent methods such as \code{\link{drop1}},
+  \code{\link{update}} may fail.} \item{Unlike some simpler
+  modeling frameworks such as \code{\link{lm}} and
+  \code{\link{glm}} which automatically detect perfectly
+  collinear predictor variables, \code{[gn]lmer} cannot
+  handle design matrices of less than full rank.  For
+  example, in cases of models with interactions that have
+  unobserved combinations of levels, it is up to the user
+  to define a new variable (for example creating \code{ab}
+  within the data from the results of
+  \code{droplevels(interaction(a,b))}). } }
 }
 \examples{
 ## linear mixed models - reference values from older code

@@ -2,9 +2,9 @@
 \alias{nlmer}
 \title{Fit Nonlinear Mixed-Effects Models}
 \usage{
-  nlmer(formula, data, control = list(), start = NULL,
-    verbose = 0L, nAGQ = 1L, subset, weights, na.action,
-    offset, contrasts = NULL, devFunOnly = 0L,
+  nlmer(formula, data = NULL, control = list(),
+    start = NULL, verbose = 0L, nAGQ = 1L, subset, weights,
+    na.action, offset, contrasts = NULL, devFunOnly = 0L,
     tolPwrss = 1e-10, optimizer = "Nelder_Mead", ...)
 }
 \arguments{
