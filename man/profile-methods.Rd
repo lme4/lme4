@@ -59,7 +59,12 @@
   similar structure)}
 }
 \description{
-  Profile method for merMod objects
+  Methods for profile() of [ng]lmer fitted models
+}
+\details{
+  Methods for function \code{\link{profile}} (package
+  \pkg{stats}), here for profiling (fitted) mixed effect
+  models.
 }
 \section{Methods}{
   FIXME: These (signatures) will change soon --- document

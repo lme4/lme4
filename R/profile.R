@@ -4,9 +4,6 @@
 ##' profiling (fitted) mixed effect models.
 ##'
 ##'
-
-.par <- NULL  ## suppress R CMD check warning  
-
 ##' 
 ##'
 ##' @name profile-methods
@@ -654,6 +651,7 @@ splom.thpr <- function (x, data,
     traces <- lapply(fr1, function(el) lapply(fr1, function(el1) list()))
     for (j in seq_along(nms)[-1]) {
         for (i in seq_len(j - 1)) {
+            .par <- NULL  ## suppress R CMD check warning  
             fri <- subset(fr, .par == nms[i])
             sij <- interpSpline(fri[ , i], fri[ , j])
             frj <- subset(fr, .par == nms[j])
@@ -812,6 +810,7 @@ log.thpr <- function (x, base = exp(1)) {
                 sub("^\\.sig", ".lsig", names(attr(x, "forward")))
         for (nm in colnames(x)[sigs]) {
             x[[nm]] <- log(x[[nm]], base = base)
+            .par <- NULL  ## suppress R CMD check warning  
             fr <- subset(x, .par == nm & is.finite(x[[nm]]))
             ## FIXME: avoid subset for global-variable false positive
             ## fr <- x[x$.par == nm & is.finite(x[[nm]]),]
@@ -832,6 +831,7 @@ log.thpr <- function (x, base = exp(1)) {
 ## @param x a profile object from a mixed-effects model
 ## @return a modified profile object
 varpr <- function (x) {
+    .par <- NULL  ## suppress R CMD check warning  
     cn <- colnames(x)
     sigs <- grep("^\\.sig", cn)
     if (length(sigs)) {
@@ -915,6 +915,7 @@ densityplot.thpr <- function(x, data, ...) {
 ##' @return a transformed mixed-effects model profile
 ##' @export
 varianceProf <- function(pr) {
+    .par <- NULL  ## suppress R CMD check warning  
     stopifnot(inherits(pr, "thpr"))
     spl <- attr(pr, "forward")
     onms <- names(spl)                  # names of original variables
