@@ -1,4 +1,5 @@
 library(lme4)
+testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
 
 ## testing refit
 ## for each type of model, should be able to
@@ -58,33 +59,27 @@ getinfo(gm2R)
 ## gm2S <- refit(gm2,simulate(gm2)[[1]])
 ## getinfo(gm2S)
 
-## Bernoulli GLMM (specified as factor)
-data(Contraception,package="mlmRev")
-gm3 <- glmer(use ~ urban+age+livch+(1|district), Contraception, binomial)
-gm3R <- refit(gm3,Contraception$use)
-gm3S <- refit(gm3,simulate(gm3)[[1]])
-stopifnot(all.equal(gm3,gm3R,tol=3e-4))
-getinfo(gm3)
-getinfo(gm3R)
-getinfo(gm3S)
+if (testLevel>1) {
+    ## Bernoulli GLMM (specified as factor)
+    data(Contraception,package="mlmRev")
+    gm3 <- glmer(use ~ urban+age+livch+(1|district), Contraception, binomial)
+    gm3R <- refit(gm3,Contraception$use)
+    gm3S <- refit(gm3,simulate(gm3)[[1]])
+    stopifnot(all.equal(gm3,gm3R,tol=3e-4))
+    getinfo(gm3)
+    getinfo(gm3R)
+    getinfo(gm3S)
 
-data(Mmmec,package="mlmRev")
-gm4 <- lmer(deaths ~ uvb + (1|region), data=Mmmec,
-            family=poisson,
-            offset = log(expected))
-gm4R <- refit(gm4,Mmmec$deaths)
-gm4S <- refit(gm4,simulate(gm4)[[1]])
-getinfo(gm4)
-getinfo(gm4R)
-getinfo(gm4S)
+    data(Mmmec,package="mlmRev")
+    gm4 <- glmer(deaths ~ uvb + (1|region), data=Mmmec,
+                 family=poisson,
+                 offset = log(expected))
+    gm4R <- refit(gm4,Mmmec$deaths)
+    gm4S <- refit(gm4,simulate(gm4)[[1]])
+    getinfo(gm4)
+    getinfo(gm4R)
+    getinfo(gm4S)
 
-stopifnot(all.equal(gm4,gm4R,tol=5e-5))
-
-checkcomp <- function(x,y) {
-  for (i in slotNames(x)) {
-    cat(i,"\n")
-    print(all.equal(slot(x,i),slot(y,i)))
-  }
+    stopifnot(all.equal(gm4,gm4R,tol=5e-5))
 }
-
 
