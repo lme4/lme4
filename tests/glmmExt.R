@@ -56,7 +56,7 @@ sd(coef(gm1)) # 1.007539
 ## the bogus MinfMax=0 setting!
 
 gm2 <- glmer(y ~ 1 + (1|block), d, Gamma, verbose = 4,
-control=list(MinfMax=0))
+             control=list(MinfMax=0))
 ## dfm2 <- glmer(y ~ 1 + (1|block), d, Gamma, verbose = 4, devFunOnly=TRUE,
 ##               control=list(MinfMax=0))
 ## tvec <- seq(0,2,length=201)

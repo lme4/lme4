@@ -1,12 +1,16 @@
-if (FALSE) {
+library(lme4)
+testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
+
+fn <- "polytomous_test.RData"
+if (!file.exists(fn)) {
+    ## setup
     ## library(polytomous)
     data(think)
     think.polytomous.lmer1 <-  polytomous(Lexeme ~ Agent + Patient + (1|Register),
                                           data=think, heuristic="poisson.reformulation")
     save("formula.poisson","data.poisson",file="polytomous_test.RData")
-}
-load("polytomous_test.RData")
-library(lme4)
+} else load(fn)
+
 if (FALSE) {
     ## infinite loop
     glmer(formula.poisson,data=data.poisson,family=poisson,verbose=10)
@@ -21,10 +25,13 @@ if (FALSE) {
     ## runs for 2880 steps until:
     ## Error in pp$updateDecomp() : Downdated VtV is not positive definite
 }
-glmer(formula.poisson,data=data.poisson,family=poisson,
-      compDev=FALSE,verbose=1,optimizer="bobyqa")
-## caught warning: maxfun < 10 * length(par)^2 is not recommended.
-## but runs to completion
+
+if (testLevel>2) {
+    glmer(formula.poisson,data=data.poisson,family=poisson,
+          compDev=FALSE,verbose=1,optimizer="bobyqa")
+    ## caught warning: maxfun < 10 * length(par)^2 is not recommended.
+    ## but runs to completion
+}
 
 
 

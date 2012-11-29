@@ -1,3 +1,6 @@
+library("lme4")
+testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
+
 ## example from HSAUR2 package
  if(FALSE) {
      ## (commented out to avoid R CMD check warning about undeclared dependency
@@ -9,12 +12,14 @@
      save("trees513", file="trees513.RData")
  }
 
-library("lme4")
+
 load("trees513.RData")
 dfun <- glmer(damage ~ species - 1 + (1 | lattice / plot),
               data = trees513, family = binomial, devFunOnly = TRUE)
 ls.str(environment(dfun))# and you can investigate ...
 
-mmod <- glmer(damage ~ species - 1 + (1 | lattice / plot),
-              data = trees513, family = binomial())
+if (testLevel>2) {
+    mmod <- glmer(damage ~ species - 1 + (1 | lattice / plot),
+                  data = trees513, family = binomial())
+}
 

@@ -1,4 +1,5 @@
 library(lme4)
+testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
 
 ## for now, use hidden functions
 getNBdisp <- lme4:::getNBdisp
@@ -18,18 +19,20 @@ simfun <- function(sd.u=1, NBtheta=0.5,
                  mu=exp(X %*% beta +u_f[f]),size=NBtheta))
 }
 
-set.seed(102)
-d.1 <- simfun()
-t1 <- system.time(g1 <- glmer.nb(z ~ x + (1|f), data=d.1, verbose=TRUE))
-g1
-## ^^ FIXME: the formula and data results show up as ..1, ..2 ; eval.parent() etc.?
+if (testLevel>1) {
+    set.seed(102)
+    d.1 <- simfun()
+    t1 <- system.time(g1 <- glmer.nb(z ~ x + (1|f), data=d.1, verbose=TRUE))
+    g1
+    ## ^^ FIXME: the data results show up as ..2 ; eval.parent() etc.?
 
-d1 <- getNBdisp(g1)
-(g1B <- refitNB(g1,theta=getNBdisp(g1)))
-(ddev <- deviance(g1)-deviance(g1B))
-(rel.d <- (fixef(g1)-fixef(g1B))/fixef(g1))
-stopifnot(abs(ddev) < 1e-6,
-          abs(rel.d) < 0.0004)
+    d1 <- getNBdisp(g1)
+    (g1B <- refitNB(g1,theta=getNBdisp(g1)))
+    (ddev <- deviance(g1)-deviance(g1B))
+    (rel.d <- (fixef(g1)-fixef(g1B))/fixef(g1))
+    stopifnot(abs(ddev) < 1e-6,
+              abs(rel.d) < 0.0004)
+
 
 ## library(glmmADMB)
 ## t2 <- system.time(g2 <- glmmadmb(z~x+(1|f),
@@ -60,6 +63,7 @@ stopifnot(
           } else
           all.equal(as.numeric(logLik.m(g1B)), as.numeric(-glmmADMB_vals$ NLL), tol= 4e-5)
           )
+}
 
 if(FALSE) { ## simulation study --------------------
 
@@ -115,11 +119,10 @@ glmmADMB_epil_vals <-
          NLL = structure(624.551, class = "logLik", df = 9, nobs = 236L),
          theta = 7.4702)
 
-if (Sys.getenv("USER") %in% c("maechler")) {
+if (testLevel>3) {
     ## "too slow" for regular testing -- 49 (MM@lynne: 33, then 26) seconds:
     (t4 <- system.time(g4 <- glmer.nb(y~ Base*trt + Age + Visit + (Visit|subject),
                                       data=epil2, verbose=TRUE)))
-g4
     (Lg4 <- logLik(g4))
     attributes(Lg4) <- attributes(Lg4)[c("class","df","nobs")]
     stopifnot(

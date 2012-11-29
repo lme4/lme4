@@ -23,6 +23,7 @@
 ## save("grouseticks","grouseticks_agg",file="grouseticks.rda")
 
 library(lme4)
+testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
 data(grouseticks)
 do.plots <- FALSE
 form <- TICKS~YEAR+HEIGHT+(1|BROOD)+(1|INDEX)+(1|LOCATION)
@@ -55,10 +56,15 @@ allcoefs1 <- structure(c(0.541509425632023, 0.750034415832756,
                        .Names = c("", "", "", "(Intercept)",
                          "YEAR96", "YEAR97",  "HEIGHT"))
 
-t2 <- system.time(full_mod2  <- glmer(form, family="poisson",data=grouseticks))
-c2 <- c(fixef(full_mod2),unlist(VarCorr(full_mod2)),
-        logLik=logLik(full_mod2),time=t2["elapsed"])
+if (testLevel>1) {
+    t2 <- system.time(full_mod2  <- glmer(form, family="poisson",data=grouseticks))
+    c2 <- c(fixef(full_mod2),unlist(VarCorr(full_mod2)),
+            logLik=logLik(full_mod2),time=t2["elapsed"])
+    ## refit
+    full_mod3 <- refit(full_mod2,grouseticks$TICKS)
+    ## all.equal(full_mod2,full_mod3,) ## FIXME: uncomment after optinfo stuff fixed
 
+}
 allcoefs <- function(x) c(getME(x,"theta"),getME(x,"beta"))
 
 ## deviance function
@@ -68,8 +74,6 @@ mm2 <- glmer(form, family="poisson",data=grouseticks,
              devFunOnly=TRUE,compDev=TRUE)
 stopifnot(all.equal(mm(allcoefs1),mm2(allcoefs1)))
 
-## refit
-full_mod3 <- refit(full_mod2,grouseticks$TICKS)
 
-cbind(c1,c2)
+
 

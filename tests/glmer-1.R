@@ -1,6 +1,7 @@
 ## generalized linear mixed model
 stopifnot(suppressPackageStartupMessages(require(lme4)))
 options(show.signif.stars = FALSE)
+testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
 
 source(system.file("test-tools-1.R", package = "Matrix"), keep.source = FALSE)
 ##
@@ -38,19 +39,19 @@ chkFixed <- function(fm, true.coef, conf.level = 0.95,
 #bobyqa(m1e, control = list(iprint = 2L))
 
 m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-             family = binomial, data = cbpp, verbose = 2L)
+             family = binomial, data = cbpp)
 ## response as a vector of probabilities and usage of argument "weights"
 m1p <- glmer(incidence / size ~ period + (1 | herd), weights = size,
-             family = binomial, data = cbpp, verbose = 2L)
+             family = binomial, data = cbpp)
 ## Confirm that these are equivalent:
 stopifnot(all.equal(fixef(m1), fixef(m1p)),
           all.equal(ranef(m1), ranef(m1p)),
           TRUE)
-for(m in c(m1, m1p)) {
-    cat("-------\\n\\nCall: ",
-        paste(format(getCall(m)), collapse="\\n"), "\\n")
-    print(logLik(m)); cat("AIC:", AIC(m), "\\n") ; cat("BIC:", BIC(m),"\\n")
-}
+## for(m in c(m1, m1p)) {
+##     cat("-------\\n\\nCall: ",
+##         paste(format(getCall(m)), collapse="\\n"), "\\n")
+##     print(logLik(m)); cat("AIC:", AIC(m), "\\n") ; cat("BIC:", BIC(m),"\\n")
+## }
 stopifnot(all.equal(logLik(m1), logLik(m1p)),
           all.equal(AIC(m1),    AIC(m1p)),
           all.equal(BIC(m1),    BIC(m1p)))
@@ -205,7 +206,7 @@ rPoisGLMMi <- function(ng, nr, sd=c(f = 1, ind = 0.5), b=c(1,2))
 set.seed(1)
 dd <- rPoisGLMMi(12, 20)
 m0  <- glmer(y~x + (1|f),           family="poisson", data=dd)
-(m1 <- glmer(y~x + (1|f) + (1|obs), family="poisson", data=dd))
+m1 <- glmer(y~x + (1|f) + (1|obs), family="poisson", data=dd)
 stopifnot(isTRUE(chkFixed(m0, true.coef = c(1,2))),
           isTRUE(chkFixed(m1, true.coef = c(1,2))))
 (a01 <- anova(m0, m1))
@@ -215,39 +216,39 @@ stopifnot(all.equal(a01$Chisq[2], 554.334056, tol=1e-5),
           a01$ Df == 3:4,
 	  a01$`Chi Df`[2] == 1)
 
-## FIXME: did we really need to run this sim 100 times??
-nsim <- 10
-set.seed(2)
-system.time(
-simR <- lapply(1:nsim,  function(i) {
-    cat(i,"", if(i %% 20 == 0)"\n")
-    dd <- rPoisGLMMi(10 + rpois(1, lambda=3),
-                     16 + rpois(1, lambda=5))
-    m0 <- glmer(y~x + (1|f),           family="poisson", data=dd)
-    m1 <- glmer(y~x + (1|f) + (1|obs), family="poisson", data=dd)
-    a01 <- anova(m0, m1)
-    stopifnot(a01$ Df == 3:4,
-              a01$`Chi Df`[2] == 1)
-    list(chk0 = chkFixed(m0, true.coef = c(1,2)),
-         chk1 = chkFixed(m1, true.coef = c(1,2)),
-         chisq= a01$Chisq[2],
-         lLik = a01$logLik)
-}))
-##  36.575   0.004  36.910  {for 100 sim}
+if (testLevel>1) {
+    nsim <- 10
+    set.seed(2)
+    system.time(
+                simR <- lapply(1:nsim,  function(i) {
+                    cat(i,"", if(i %% 20 == 0)"\n")
+                    dd <- rPoisGLMMi(10 + rpois(1, lambda=3),
+                                     16 + rpois(1, lambda=5))
+                    m0 <- glmer(y~x + (1|f),           family="poisson", data=dd)
+                    m1 <- glmer(y~x + (1|f) + (1|obs), family="poisson", data=dd)
+                    a01 <- anova(m0, m1)
+                    stopifnot(a01$ Df == 3:4,
+                              a01$`Chi Df`[2] == 1)
+                    list(chk0 = chkFixed(m0, true.coef = c(1,2)),
+                         chk1 = chkFixed(m1, true.coef = c(1,2)),
+                         chisq= a01$Chisq[2],
+                         lLik = a01$logLik)
+                }))
 
-## m0 is the wrong model, so we don't expect much here:
-table(unlist(lapply(simR, `[[`, "chk0")))
+    ## m0 is the wrong model, so we don't expect much here:
+    table(unlist(lapply(simR, `[[`, "chk0")))
 
-## If the fixed effect estimates where unbiased and the standard errors correct,
-## and N(0,sigma^2) instead of t_{nu} good enough for the fixed effects,
-## the confidence interval should contain the true coef in ~95 out of 100:
-table(unlist(lapply(simR, `[[`, "chk1")))
 
-## The tests are all highly significantly in favor of  m1 :
-summary(chi2s <- sapply(simR, `[[`, "chisq"))
-##  Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
-## 158.9   439.0   611.4   698.2   864.3  2268.0
-stopifnot(chi2s > qchisq(0.9999, df = 1))
+    ## If the fixed effect estimates were unbiased and the standard errors correct,
+    ## and N(0,sigma^2) instead of t_{nu} good enough for the fixed effects,
+    ## the confidence interval should contain the true coef in ~95 out of 100:
+    table(unlist(lapply(simR, `[[`, "chk1")))
 
+    ## The tests are all highly significantly in favor of  m1 :
+    summary(chi2s <- sapply(simR, `[[`, "chisq"))
+    ##  Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+    ## 158.9   439.0   611.4   698.2   864.3  2268.0
+    stopifnot(chi2s > qchisq(0.9999, df = 1))
+}
 
 showProc.time()

@@ -19,6 +19,11 @@ getinfo(fm1)
 getinfo(fm1R)
 getinfo(fm1S)
 stopifnot(all.equal(fm1,fm1R,tol=1.5e-5))
+## sapply(slotNames(fm1),
+##        function(x) isTRUE(all.equal(slot(fm1,x),slot(fm1R,x),tol=1.5e-5)))
+## fm1@optinfo
+## fm1R@optinfo
+
 getinfo(refitML(fm1))
 
 ## binomial GLMM (two-column)
