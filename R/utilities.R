@@ -542,7 +542,10 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc) {
         call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
         Gp=reTrms$Gp, theta=pp$theta, beta=beta, u=pp$u(fac),
         lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=resp,
-        optinfo=list()  ## FIXME: placeholder: optimizer, control, conv, message ... ?
+        optinfo=list(optimizer=attr(opt,"optimizer"),
+                     control=attr(opt,"control"),
+                     conv=opt$conv,
+                     warnings=attr(opt,"warnings"))
         )
 }
 

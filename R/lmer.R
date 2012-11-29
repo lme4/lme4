@@ -1271,12 +1271,21 @@ refit.merMod <- function(object, newresp=NULL, ...)
         x0    <- c(x0, unname(fixef(object)))
         lower <- c(lower, rep(-Inf,length(x0)-length(lower)))
     }
-    control <- list(...)$control
-    if (is.null(control)) control <- list()
-    control <- c(control,list(xst=0.2*xst, xt=xst*0.0001))
+    control <- object@optinfo$control
+    newControl <- list(...)$control
+    if (!is.null(newControl)) {
+        for (i in names(newControl)) {
+            control[[i]] <- newControl[[i]]
+        }
+    }
+    ## control <- c(control,list(xst=0.2*xst, xt=xst*0.0001))
     ## FIXME: generic optimizer stuff
 ### FIXME: Probably should save the control settings and the optimizer name in the merMod object
-    opt <- Nelder_Mead(ff, x0, lower=lower, control=control)
+    ## FIXME: use optwrap; pull @optinfo from saved values
+
+    opt <- optwrap(object@optinfo$optimizer,
+                   ff, x0, lower=lower, control=control)
+    ## opt <- Nelder_Mead(ff, x0, lower=lower, control=control)
     if (isGLMM(object)) rr$setOffset(baseOffset)
     mkMerMod(environment(ff), opt,
              list(flist=object@flist, cnms=object@cnms, Gp=object@Gp, lower=object@lower),
@@ -2196,6 +2205,8 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
         warning(wmsg)
         curWarnings <<- append(curWarnings,list(wmsg))
     }
+    ## store all auxiliary information
+    attr(opt,"optimizer") <- optimizer
     attr(opt,"control") <- control
     attr(opt,"warnings") <- curWarnings
     opt
