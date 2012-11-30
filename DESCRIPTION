@@ -16,7 +16,9 @@ Depends:
     lattice,
     Matrix(>= 1.0),
     methods,
-    stats
+    stats,
+    Rcpp (>= 0.10.1), 
+    RcppEigen (>= 0.3.1.2)
 LinkingTo: Rcpp, RcppEigen
 Imports:
     graphics,
