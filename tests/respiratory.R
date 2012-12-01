@@ -2,7 +2,7 @@
 ## and transformed (center, id -> factor, idctr created, levels labeled)
 library(lme4)
 
-load("respiratory.RData")
+load(system.file("testdata","respiratory.RData",package="lme4"))
 m_glmer_4.L <- glmer(outcome~center+treat+sex+age+baseline+(1|idctr),
                      family=binomial,data=respiratory)
 ## FIXME: works for nAGQ={2,3,5}, fails otherwise

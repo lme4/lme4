@@ -1,6 +1,6 @@
 ## data set and formula extracted from ?prLogisticDelta example
 ##   (Thailand, clustered-data) in prLogistic package
-load("prLogistic.RData")
+load(system.file("testdata","prLogistic.RData",package="lme4"))
 library(lme4)
 ## FIXME: un-try() after PIRLS failure addressed
 try(glmer(rgi~  sex + pped + (1|schoolid), 

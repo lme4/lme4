@@ -1,0 +1,168 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\newcommand{\code}[1]{{\tt #1}}
+\title{Test timings for the \code{lme4} package}
+\date{\today}
+
+\begin{document}
+\maketitle
+\section{Preliminaries}
+%% knitr-specific
+<<prelims,message=FALSE>>=
+library(lme4)
+library(XML)
+library(ggplot2)
+library(RColorBrewer)
+library(reshape2)
+theme_set(theme_bw())
+library(grid)
+zmargin <- theme(panel.margin=unit(0,"lines"))
+@ 
+
+This document is intended to be run in \code{knitr}, from
+the \code{misc} directory of the \code{lme4} package.
+It uses \code{knitr}'s caching options to avoid re-running
+lengthy tests: if you want to force these to re-run, delete
+the \code{cache} directory (or files within the \code{cache}
+directory corresponding to specific chunks).
+
+\section{Information gathering}
+\subsection{local version of \code{lme4}}
+
+Gather the names of test files:
+<<testdir>>=
+testfiles <- list.files("../tests",pattern="*\\.[Rr]$")
+@ 
+
+Run individual test files, record elapsed times:
+<<tmpf>>=
+tmpf <- function(x,testdir="../tests/") {
+    ## cat("*** ",x,"\n") ## for debugging
+    system.time(local(source(paste0(testdir,x),echo=FALSE)))["elapsed"]
+}
+@ 
+
+
+<<timetests,cache=TRUE,results="hide",fig.keep="none",warning=FALSE,message=FALSE>>=
+time1 <- proc.time()
+indiv_test_times <- sapply(testfiles,tmpf)
+time2 <- proc.time()
+## total time: could also use sum(times) ...
+time_tot <- time2-time1  
+@ 
+
+
+Time the full check process and the install process:
+<<buildpkg,cache=TRUE>>=
+system("cd ../..; R CMD build lme4")
+@ 
+
+FIXME: don't hard code version number.
+
+\code{R CMD CHECK}:
+<<timecheck,cache=TRUE>>=
+pkg_check_time  <- system.time(system("cd ../..; R CMD check lme4_0.99999911-0.tar.gz"))
+@ 
+
+\code{R CMD INSTALL} (in temp directory):
+<<timeinstall,cache=TRUE>>=
+pkg_install_time  <- system.time(system("cd ../..; R CMD INSTALL -l /tmp lme4_0.99999911-0.tar.gz"))    
+@ 
+
+\subsection{CRAN information}
+
+Get list of CRAN timings:
+
+<<CRANtimesprelim>>=
+## FIXME: use options("repos") instead if possible ...
+timeurl <- "http://probability.ca/cran/web/checks/check_timings_r-release-linux-ix86.html"
+
+@ 
+
+Use functionality from the \code{XML} package:
+<<getCRANtimes,cache=TRUE>>=
+timetab <- readHTMLTable(timeurl)[[1]]
+@ 
+
+Fix up the results a bit:
+<<procCRANtimes>>=
+names(timetab) <- gsub(" *T*","",names(timetab))
+timetab[,2:4] <- sapply(timetab[,2:4],
+                        function(x) as.numeric(as.character(x)))
+levels(timetab$Status) <- gsub("^ *$","No check",levels(timetab$Status))
+## find --no-tests Flags?
+timetab$Status <- factor(timetab$Status,
+                         levels=c("OK","WARN","NOTE","ERROR","No check"))
+@ 
+
+Calibrate CRAN building times to local building times by finding the median-time
+package, downloading and checking it: (FIXME: don't hardcode so much)
+<<findmedpkg>>=
+medpos <- which.min(abs(timetab$total-median(timetab$total)))
+(medpkg <- as.character(timetab[medpos,"Package"]))
+@ 
+
+<<getmedpkg,cache=TRUE>>=
+download.file("http://probability.ca/cran/src/contrib/GPArotation_2012.3-1.tar.gz",
+              destfile="GPArotation.tar.gz")
+@ 
+
+<<medpkgtime,cache=TRUE>>=
+medpkgtime  <- system.time(s1 <- system("R CMD check GPArotation.tar.gz",intern=TRUE))
+@ 
+<<timecal>>=
+timecal <- timetab$total[medpos]/medpkgtime["elapsed"]
+@ 
+
+Clean up:
+<<cal_cleanup>>=
+unlink("GPArotation.tar.gz")
+unlink("GPArotation.Rcheck")
+@ 
+
+\section{Results}
+
+Running the median package takes \Sexpr{round(medpkgtime["elapsed"])} sec on
+the current system vs. \Sexpr{round(timetab$total[medpos])} on the CRAN
+check machine --- i.e. my machine is \Sexpr{round(1/timecal,1)} times slower.
+<<propcalc,echo=FALSE>>=
+pkg_tot_timeC <- pkg_check_time["elapsed"]*timecal  ## total
+pkg_install_timeC <- pkg_install_time["elapsed"]*timecal  ## install only
+pkg_check_timeC <- pkg_tot_timeC-pkg_install_timeC   ## check only
+slowerpkgs <- sum(pkg_tot_timeC<timetab$total)
+totpkg <- nrow(timetab)
+slowerpkgsprop <- slowerpkgs/totpkg
+@ 
+With this calibration (\code{timecal}=\Sexpr{round(timecal,2)}) taken into
+account, there are \Sexpr{slowerpkgs} packages on CRAN that are
+slower to check (\Sexpr{round(slowerpkgsprop*100)}\% of 
+the total) and \Sexpr{totpkg-slowerpkgs} faster packages
+(\Sexpr{round(100*(1-slowerpkgsprop))}\%).
+
+<<lme4dat,echo=FALSE>>=
+CRANmelt <- melt(timetab[,1:5],id.var=c("Package","Status"))
+lme4dat <- data.frame(variable=c("total","check","install"),
+                      value=c(pkg_tot_timeC,pkg_check_timeC,pkg_install_timeC))
+@ 
+<<hist2,fig.width=10,out.width="1.2\\textwidth",echo=FALSE>>=
+ggplot(CRANmelt,
+       aes(x=log10(value),fill=Status))+
+    geom_histogram(binwidth=0.1,position="stack")+
+    facet_wrap(~variable,scale="free_x")+zmargin+
+    scale_fill_brewer(palette="Paired")+
+    geom_vline(data=lme4dat,aes(xintercept=log10(value)))
+@ 
+% It's too bad that it's not very easy to invert the scale order ...
+
+<<indivtimeplot,fig.height=8,echo=FALSE>>=
+indivdat <- data.frame(test=gsub("\\.R\\.elapsed","",names(indiv_test_times)),
+                       time=indiv_test_times)
+indivdat$test <- with(indivdat,reorder(test,time))
+ggplot(indivdat,aes(x=time,y=test))+geom_point()
+@ 
+
+\section{Session info}
+<<sessinfo>>=
+sessionInfo()
+@ 
+\end{document}

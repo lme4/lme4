@@ -13,7 +13,7 @@ testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 
  }
 
 
-load("trees513.RData")
+load(system.file("testdata","trees513.RData",package="lme4"))
 dfun <- glmer(damage ~ species - 1 + (1 | lattice / plot),
               data = trees513, family = binomial, devFunOnly = TRUE)
 ls.str(environment(dfun))# and you can investigate ...

@@ -1,5 +1,5 @@
 ## Stephane Laurent:
-dat <- read.csv("dat20101314.csv")
+dat <- read.csv(system.file("testdata","dat20101314.csv",package="lme4"))
 library(lme4)
 fit <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat)
 fit_b <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat,
@@ -15,7 +15,7 @@ if (FALSE) {
 
 
 ## Manuel Koller
-source("koller-data.R")
+source(system.file("testdata","koller-data.R",package="lme4"))
 
 ldata <- getData(13)
 fm4 <- lmer(y ~ (1|Var2), ldata)

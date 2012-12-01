@@ -1,15 +1,14 @@
 library(lme4)
 testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
 
-fn <- "polytomous_test.RData"
-if (!file.exists(fn)) {
-    ## setup
-    ## library(polytomous)
-    data(think)
-    think.polytomous.lmer1 <-  polytomous(Lexeme ~ Agent + Patient + (1|Register),
-                                          data=think, heuristic="poisson.reformulation")
-    save("formula.poisson","data.poisson",file="polytomous_test.RData")
-} else load(fn)
+ ## setup
+ ## library(polytomous)
+ ##   data(think)
+ ##   think.polytomous.lmer1 <-  polytomous(Lexeme ~ Agent + Patient + (1|Register),
+ ##                                         data=think, heuristic="poisson.reformulation")
+ ##   save("formula.poisson","data.poisson",file="polytomous_test.RData")
+
+load(system.file("testdata","polytomous_test.RData",package="lme4"))
 
 if (FALSE) {
     ## infinite loop
