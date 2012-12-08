@@ -826,6 +826,9 @@ extern "C" {
 	return ::Rf_ScalarReal(XPtr<nlsResp>(ptr_)->updateMu(as<MVec>(gamma)));
 	END_RCPP;
     }
+
+// From RcppExports.cpp
+    extern SEXP lme4_RSCupdate(SEXP rvSEXP, SEXP xvSEXP, SEXP thetaSEXP, SEXP mSEXP);
 }
 
 #include <R_ext/Rdynload.h>
@@ -891,6 +894,8 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(lm_wrss,            1), // getter
 
     CALLDEF(lm_updateMu,        2), // method
+
+    CALLDEF(lme4_RSCupdate,     4),
 
     CALLDEF(lmer_Create,        7), // generate external pointer
 
