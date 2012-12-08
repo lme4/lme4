@@ -9,14 +9,14 @@
 using namespace Rcpp;
 
 // RSCupdate
-void RSCupdate(const MiMat rv, const MMat xv, const MVec theta, MSpMat m);
+void RSCupdate(const IntegerMatrix rv, const NumericMatrix xv, const NumericVector theta, S4 m);
 RcppExport SEXP lme4_RSCupdate(SEXP rvSEXP, SEXP xvSEXP, SEXP thetaSEXP, SEXP mSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope __rngScope;
-    MiMat rv = Rcpp::as<MiMat >(rvSEXP);
-    MMat xv = Rcpp::as<MMat >(xvSEXP);
-    MVec theta = Rcpp::as<MVec >(thetaSEXP);
-    MSpMat m = Rcpp::as<MSpMat >(mSEXP);
+    IntegerMatrix rv = Rcpp::as<IntegerMatrix >(rvSEXP);
+    NumericMatrix xv = Rcpp::as<NumericMatrix >(xvSEXP);
+    NumericVector theta = Rcpp::as<NumericVector >(thetaSEXP);
+    S4 m = Rcpp::as<S4 >(mSEXP);
     RSCupdate(rv, xv, theta, m);
     return R_NilValue;
 END_RCPP
