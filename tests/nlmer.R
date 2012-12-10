@@ -35,7 +35,7 @@ print(nm5, corr=FALSE)
 
 if (require("PKPDmodels")) {
     oral1cptSdlkalVlCl <-
-        PKmod("oral", "sd", list(ka ~ exp(lka), k ~ exp(lCl)/V, V ~ exp(lV)))
+        PKmod("oral", "sd", list(ka ~ exp(lka), Cl ~ exp(lCl), V ~ exp(lV)))
     system.time(nm2a <- nlmer(conc ~ oral1cptSdlkalVlCl(Dose, Time, lV, lka, lCl) ~
                               (lV+lka+lCl|Subject), 
                               Theoph, start = c(lV=-1, lka=-0.5, lCl=-3), tolPwrss=1e-8))
