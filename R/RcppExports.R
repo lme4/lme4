@@ -5,18 +5,31 @@
 #' 
 #' @param rv the matrix of row indices for the regular sparse column representation of ZtXt
 #' @param xv the non-zero values in ZtXt
-#' @param vc list of relative variance-covariace factor matrices
+#' @param theta the covariace parameter vector
+#' @param lower lower bounds on the covariace parameter vector
+#' @param resid current residual
 #' @param m the sparse matrix to be updated.  Must have the correct pattern.
+#' @param ZtXty the product of the updated LambdatZt and Xt with resid.
 #' @examples
-#' rv <- rbind(as.integer(Dyestuff$Batch) - 1L, 6L)
+#' fm1 <- lmer(Yield ~ 1|Batch, Dyestuff, REML=FALSE)
+#' rv <- with(Dyestuff, rbind(as.integer(Batch) - 1L, 6L))
 #' xv <- matrix(1, nrow=nrow(rv), ncol=ncol(rv))
-#' A <- sparseMatrix(i=as.integer(c(1,1,2,2,3,3,4,4,5,5,6,6,7)),
-#'                   j=as.integer(c(1,7,2,7,3,7,4,7,5,7,6,7,7)),
-#'                   x=rep.int(1.,13L), symmetric=TRUE,check=FALSE)
-#' RSCupdate(rv, xv, list(matrix(0.831,1L,1L)), A)
-#' A
+#' A  <- tcrossprod(sparseMatrix(i = as.vector(rv),
+#'                               j = as.vector(col(rv) - 1L),
+#'                               x = as.vector(xv), index1=FALSE))
+#' ZtXty <- numeric(ncol(A))
+#' with(Dyestuff, RSCupdate(rv, xv, getME(fm1,"theta"), 0., Yield, A, ZtXty))
+#' L <- Cholesky(A, perm=FALSE, LDL=FALSE)
+#' vv <- solve(L, ZtXty, system="A")
+#' all.equal(vv[1:6], getME(fm1, "u"))
+#' all.equal(vv[7], getME(fm1, "beta"))
+#' LL <- as(L, "Matrix")
+#' ## the transpose below is because a diagonal dtCMatrix is declared upper triangular
+#' all.equal(t(LL[1:6,1:6]), as(getME(fm1, "L"), "Matrix"))
+#' all.equal(LL[7,7], as.vector(getME(fm1, "RX")))
+#' all.equal(LL[7,1:6], as.vector(getME(fm1, "RZX")))
 #' @export
-RSCupdate <- function(rv, xv, vc, m) {
-    invisible(.Call('lme4_RSCupdate', PACKAGE = 'lme4', rv, xv, vc, m))
+RSCupdate <- function(rv, xv, theta, lower, resid, m, ZtXty) {
+    invisible(.Call('lme4_RSCupdate', PACKAGE = 'lme4', rv, xv, theta, lower, resid, m, ZtXty))
 }
 

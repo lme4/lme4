@@ -9,15 +9,18 @@
 using namespace Rcpp;
 
 // RSCupdate
-void RSCupdate(const IntegerMatrix rv, const NumericMatrix xv, const List vc, S4 m);
-RcppExport SEXP lme4_RSCupdate(SEXP rvSEXP, SEXP xvSEXP, SEXP vcSEXP, SEXP mSEXP) {
+void RSCupdate(const IntegerMatrix rv, const NumericMatrix xv, const NumericVector theta, const NumericVector lower, const NumericVector resid, S4 m, NumericVector ZtXty);
+RcppExport SEXP lme4_RSCupdate(SEXP rvSEXP, SEXP xvSEXP, SEXP thetaSEXP, SEXP lowerSEXP, SEXP residSEXP, SEXP mSEXP, SEXP ZtXtySEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope __rngScope;
     IntegerMatrix rv = Rcpp::as<IntegerMatrix >(rvSEXP);
     NumericMatrix xv = Rcpp::as<NumericMatrix >(xvSEXP);
-    List vc = Rcpp::as<List >(vcSEXP);
+    NumericVector theta = Rcpp::as<NumericVector >(thetaSEXP);
+    NumericVector lower = Rcpp::as<NumericVector >(lowerSEXP);
+    NumericVector resid = Rcpp::as<NumericVector >(residSEXP);
     S4 m = Rcpp::as<S4 >(mSEXP);
-    RSCupdate(rv, xv, vc, m);
+    NumericVector ZtXty = Rcpp::as<NumericVector >(ZtXtySEXP);
+    RSCupdate(rv, xv, theta, lower, resid, m, ZtXty);
     return R_NilValue;
 END_RCPP
 }

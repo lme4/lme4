@@ -828,7 +828,7 @@ extern "C" {
     }
 
 // From RcppExports.cpp
-    extern SEXP lme4_RSCupdate(SEXP rvSEXP, SEXP xvSEXP, SEXP thetaSEXP, SEXP mSEXP);
+    extern SEXP lme4_RSCupdate(SEXP rv, SEXP xv, SEXP theta, SEXP lower, SEXP resid, SEXP m, SEXP ZtXty);
 }
 
 #include <R_ext/Rdynload.h>
@@ -895,7 +895,7 @@ static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(lm_updateMu,        2), // method
 
-    CALLDEF(lme4_RSCupdate,     4),
+    CALLDEF(lme4_RSCupdate,     7),
 
     CALLDEF(lmer_Create,        7), // generate external pointer
 
