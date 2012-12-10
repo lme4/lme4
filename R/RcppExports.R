@@ -5,7 +5,7 @@
 #' 
 #' @param rv the matrix of row indices for the regular sparse column representation of ZtXt
 #' @param xv the non-zero values in ZtXt
-#' @param theta vector of relative standard deviations
+#' @param vc list of relative variance-covariace factor matrices
 #' @param m the sparse matrix to be updated.  Must have the correct pattern.
 #' @examples
 #' rv <- rbind(as.integer(Dyestuff$Batch) - 1L, 6L)
@@ -13,10 +13,10 @@
 #' A <- sparseMatrix(i=as.integer(c(1,1,2,2,3,3,4,4,5,5,6,6,7)),
 #'                   j=as.integer(c(1,7,2,7,3,7,4,7,5,7,6,7,7)),
 #'                   x=rep.int(1.,13L), symmetric=TRUE,check=FALSE)
-#' RSCupdate(rv, xv, 0.831, A)
+#' RSCupdate(rv, xv, list(matrix(0.831,1L,1L)), A)
 #' A
 #' @export
-RSCupdate <- function(rv, xv, theta, m) {
-    invisible(.Call('lme4_RSCupdate', PACKAGE = 'lme4', rv, xv, theta, m))
+RSCupdate <- function(rv, xv, vc, m) {
+    invisible(.Call('lme4_RSCupdate', PACKAGE = 'lme4', rv, xv, vc, m))
 }
 
