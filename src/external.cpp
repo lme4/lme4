@@ -828,7 +828,7 @@ extern "C" {
     }
 
 // From RcppExports.cpp
-    extern SEXP lme4_RSCupdate(SEXP rv, SEXP xv, SEXP theta, SEXP lower, SEXP resid, SEXP m, SEXP ZtXty);
+    extern SEXP lme4_RSCupdate(SEXP rv, SEXP xv, SEXP theta, SEXP lower, SEXP resid, SEXP A, SEXP ubeta);
 }
 
 #include <R_ext/Rdynload.h>
