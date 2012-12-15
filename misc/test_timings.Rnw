@@ -161,6 +161,12 @@ indivdat$test <- with(indivdat,reorder(test,time))
 ggplot(indivdat,aes(x=time,y=test))+geom_point()
 @ 
 
+Additional information from a recent win-builder run:
+\begin{verbatim}
+Installation time in seconds: 157
+Check time in seconds: 1112
+\end{verbatim}
+
 \section{Session info}
 <<sessinfo>>=
 sessionInfo()
