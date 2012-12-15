@@ -1,31 +1,45 @@
 #include <Rcpp.h>
-#include <cholmod.h>
+#include <Matrix.h>
 
 using namespace Rcpp;		// probably should remove this - it's bad form
 class dsCMatrix {
 protected:
     const IntegerVector d_Dim;
-    const std::string d_uplo;
-    const IntegerVector d_colptr;
-    const IntegerVector d_rowval;
+    const bool d_upper;
+    IntegerVector d_colptr;
+    IntegerVector d_rowval;
     const List d_factors;
     NumericVector d_nzval;
 public:
     dsCMatrix(S4&);
 				// extractor methods
-    const std::string&      uplo() const {return d_uplo;}
     const IntegerVector&     Dim() const {return d_Dim;}
     int                     nrow() const {return d_Dim[0];}
     int                     ncol() const {return d_Dim[1];}
+    int                      nnz() const {return d_rowval.size();}
+    bool                   upper() const {return d_upper;}
     const IntegerVector&  colptr() const {return d_colptr;}
+    IntegerVector&        colptr()       {return d_colptr;}
     const IntegerVector&  rowval() const {return d_rowval;}
+    IntegerVector&        rowval()       {return d_rowval;}
     const NumericVector&   nzval() const {return d_nzval;}
     NumericVector&         nzval()       {return d_nzval;}
     int                n_factors() const {return d_factors.size();}
 				// return cholmod struct pointers
-    CHM_SP             as_CHM_SP();
-    const CHM_SP as_const_CHM_SP() const;
     void          update_factors() {};
+};
+
+class CHM_SP_wrap {
+protected:
+    CHM_SP   d_sp;
+    CHM_CM   d_cm;
+    bool   d_mine;
+public:
+    CHM_SP_wrap(dsCMatrix&);
+    CHM_SP_wrap(CHM_SP, CHM_CM);
+    ~CHM_SP_wrap();
+    CHM_SP       as_CHM_SP()       {return d_sp;}
+    const CHM_SP as_CHM_SP() const {return d_sp;}
 };
 
 class CHMfactor {
@@ -34,7 +48,7 @@ protected:
     const IntegerVector d_perm;
     const IntegerVector d_type;
 public:
-    CHMfactor(S4 &L);
+    CHMfactor(S4&);
     const IntegerVector &colcount() const {return d_colcount;}
     const IntegerVector     &perm() const {return d_perm;}
     const IntegerVector     &type() const {return d_type;}

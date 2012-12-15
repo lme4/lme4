@@ -1,14 +1,84 @@
 #include "RSC.h"
 
+extern "C" {
+
+    void R_cholmod_error(int status, const char *file, int line,
+			 const char *message) {
+	if(status < 0) {
+	    Rcout << message << " at file " << file
+		  << ", line " << line << std::endl;
+	    stop("Cholmod error");
+	}
+	else Rf_warning("Cholmod warning '%s' at file '%s', line %d",
+			message, file, line);
+    }
+
+    int cholmod_start(CHM_CM Common) {
+	int val;
+	static int(*fun)(CHM_CM) = NULL;
+	if (fun == NULL)
+	    fun = (int(*)(CHM_CM))
+		R_GetCCallable("Matrix", "cholmod_start");
+	val = fun(Common);
+	Common->print_function = NULL;
+	Common->error_handler = R_cholmod_error;
+	return val;
+    }
+
+    int cholmod_free_sparse(CHM_SP *A, CHM_CM Common) {
+	static int(*fun)(CHM_SP*,CHM_CM) = NULL;
+	if (fun == NULL)
+	    fun = (int(*)(CHM_SP*,CHM_CM))
+		R_GetCCallable("Matrix", "cholmod_free_sparse");
+	return fun(A, Common);
+    }
+
+}
+
 dsCMatrix::dsCMatrix(S4 &A)
     : d_Dim(A.slot("Dim")),
-      d_uplo(CharacterVector(A.slot("Dim"))[0]),
+      d_upper(CharacterVector(A.slot("Dim"))[0] == "U"),
       d_colptr(A.slot("p")),
       d_rowval(A.slot("i")),
       d_factors(A.slot("factors")),
       d_nzval(A.slot("x")) {}
-// need to implement dsCMatrix::as_CHM_SP, dsCMatrix::as_const_CHM_SP(), dsCMatrix::update_factors;
+// still need to implement dsCMatrix::update_factors;
 
+CHM_SP_wrap::CHM_SP_wrap(dsCMatrix& A)
+    : d_sp(new cholmod_sparse),
+      d_cm(new cholmod_common),
+      d_mine(true) {
+    d_sp = new cholmod_sparse;
+    d_sp->nrow = A.nrow();
+    d_sp->ncol = A.ncol();
+    d_sp->nzmax = A.nnz();
+    d_sp->p = (void*)&A.colptr()[0];
+    d_sp->i = (void*)&A.rowval()[0];
+    d_sp->nz = NULL;
+    d_sp->x = (void*)&A.nzval()[0];
+    d_sp->z = NULL;
+    d_sp->stype = A.upper() ? 1 : -1;
+    d_sp->itype = CHOLMOD_INT;
+    d_sp->xtype = CHOLMOD_REAL;
+    d_sp->dtype = CHOLMOD_DOUBLE;
+    d_sp->sorted = 1;
+    d_sp->packed = 1;
+    if (!cholmod_start(d_cm)) stop("failure in cholmod_start");
+}
+
+CHM_SP_wrap::CHM_SP_wrap(CHM_SP A, CHM_CM c)
+    : d_sp(A),
+      d_cm(c),
+      d_mine(false) {}
+
+CHM_SP_wrap::~CHM_SP_wrap() {
+    if (d_mine) {
+	delete d_sp;
+	delete d_cm;
+    } else cholmod_free_sparse(&d_sp, d_cm);
+}
+
+	
 CHMfactor::CHMfactor(S4 &L)
     : d_colcount(L.slot("colcount")),
       d_perm(L.slot("perm")),
