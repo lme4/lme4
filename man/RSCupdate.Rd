@@ -28,13 +28,13 @@
 }
 \examples{
 fm1 <- lmer(Yield ~ 1|Batch, Dyestuff, REML=FALSE)
-rv  <- rbind(with(Dyestuff, as.integer(Batch) - 1L), 6L)
-xv  <- matrix(1, nrow=nrow(rv), ncol=ncol(rv))
-A   <- tcrossprod(sparseMatrix(i = as.vector(rv),
+rv <- with(Dyestuff, rbind(as.integer(Batch) - 1L, 6L))
+xv <- matrix(1, nrow=nrow(rv), ncol=ncol(rv))
+A  <- tcrossprod(sparseMatrix(i = as.vector(rv),
                               j = as.vector(col(rv) - 1L),
                               x = as.vector(xv), index1=FALSE))
-ubeta <- numeric(ncol(A))
-with(Dyestuff, RSCupdate(rv[-nrow(rv),,drop=FALSE], xv, getME(fm1,"theta"), 0., Yield, A, ubeta))
+ZtXty <- numeric(ncol(A))
+with(Dyestuff, RSCupdate(rv, xv, getME(fm1,"theta"), 0., Yield, A, ZtXty))
 L <- Cholesky(A, perm=FALSE, LDL=FALSE)
 vv <- solve(L, ZtXty, system="A")
 all.equal(vv[1:6], getME(fm1, "u"))

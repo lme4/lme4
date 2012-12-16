@@ -1,12 +1,13 @@
 // external.cpp: externally .Call'able functions in lme4
 //
-// Copyright (C)       2011-2012 Douglas Bates, Martin Maechler and Ben Bolker
+// Copyright (C) 2011-2013 Douglas Bates, Martin Maechler and Ben Bolker
 //
 // This file is part of lme4.
 
 #include "predModule.h"
 #include "respModule.h"
 #include "optimizer.h"
+#include "RSC.h"
 
 extern "C" {
     typedef   Eigen::VectorXi        iVec;
@@ -27,6 +28,7 @@ extern "C" {
     using      Rcpp::List;
     using      Rcpp::Named;
     using      Rcpp::NumericVector;
+    using      Rcpp::S4;
     using      Rcpp::XPtr;
     using      Rcpp::as;
     using      Rcpp::wrap;
@@ -38,6 +40,7 @@ extern "C" {
     using      lme4::lmerResp;
     using      lme4::merPredD;
     using      lme4::nlsResp;
+    using      lme4::RSC;
 
     using optimizer::Golden;
     using optimizer::Nelder_Mead;
@@ -827,8 +830,16 @@ extern "C" {
 	END_RCPP;
     }
 
-// From RcppExports.cpp
-    extern SEXP lme4_RSCupdate(SEXP rv, SEXP xv, SEXP theta, SEXP lower, SEXP resid, SEXP A, SEXP ubeta);
+    SEXP lme4_RSCupdate(SEXP rv, SEXP xv, SEXP theta, SEXP lower, SEXP resid,
+			SEXP A, SEXP ubeta) {
+	BEGIN_RCPP;
+	S4 AA(A);
+	NumericVector ub(ubeta);
+	RSC(rv, xv, lower).update_A(Rcpp::NumericVector(theta),
+				    Rcpp::NumericVector(resid), AA, ub);
+	END_RCPP;
+    }
+
 }
 
 #include <R_ext/Rdynload.h>
