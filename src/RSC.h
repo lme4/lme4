@@ -14,22 +14,23 @@
 namespace lme4 {    
     class RSC { /**< const parts of mixed-effects predictor in regular sparse column format */
     protected:
-	const Rcpp::IntegerMatrix rv; /**< rowvals matrix for Zt */
-	const Rcpp::NumericMatrix xv; /**< xvals matrix for ZtXt */
-	const Rcpp::NumericVector lower; /**< lower bounds for theta components */
-	const int k;  /**< number of random effects per observation */
-	const int kpp;    /**< number of rows in xv = k + p */
-	const int n;      /**< number of observations */
-	const int p;      /**< number of fixed-effects coefficients */
-	const int q;      /**< total number of random effects */
+	const Rcpp::IntegerMatrix d_rv; /**< rowvals matrix for ZtXt */
+	const Rcpp::NumericMatrix d_xv; /**< xvals matrix for ZtXt */
+	const Rcpp::NumericVector d_theta; /**< variance component parameter vector */
+	const Rcpp::NumericVector d_lower; /**< lower bounds for theta components */
+	Rcpp::S4            d_A4;
+	Rcpp::NumericVector d_ubeta; /**< coefficient vector */
+	const int d_k; /**< number of random effects per observation */
+	const int d_kpp;  /**< number of rows in xv = k + p */
+	const int d_n;	  /**< number of observations */
+	const int d_p;	  /**< number of fixed-effects coefficients */
+	const int d_q;	  /**< total number of random effects */
     public:
-	RSC(const SEXP, const SEXP, const SEXP);
-	Rcpp::NumericVector &apply_lambda(const Rcpp::NumericVector&,
-					  Rcpp:: NumericVector&) const;
-	void update_A(const Rcpp::NumericVector&,
-		      const Rcpp::NumericVector&,
-		      Rcpp::S4 &AA,
-		      Rcpp::NumericVector&) const;
+	RSC(const Rcpp::IntegerMatrix&, const Rcpp::NumericMatrix&,
+	    const Rcpp::NumericVector&, const Rcpp::NumericVector&,
+	    Rcpp::S4&, Rcpp::NumericVector&);
+	Rcpp::NumericVector &apply_lambda(Rcpp::NumericVector&) const;
+	void update_A(const Rcpp::NumericVector&);
     };
 }
 

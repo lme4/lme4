@@ -30,8 +30,6 @@ setClass("lmList.confint", contains = "array")
 ##' 
 ##' The generator object for the \code{\linkS4class{merPredD}} reference class.
 ##' Such an object is primarily used through its \code{new} method.
-##' 
-##' 
 ##' @param X dense model matrix for the fixed-effects parameters, to be stored
 ##'     in the \code{X} field.
 ##' @param Zt transpose of the sparse model matrix for the random effects.  It
@@ -923,6 +921,48 @@ setClass("glmerMod", representation(resp="glmResp"), contains="merMod")
 
 ##' @export
 setClass("nlmerMod", representation(resp="nlsResp"), contains="merMod")
+
+##' Class "RSC" - regular sparse column representation
+##'
+##' In the regular sparse column representation of a mixed-effects
+##' model predictor the Z and X matrices are represented by two dense
+##' matrices - a k by n integer matrix, where k is the number of
+##' non-zeros in each row of Z and n is the total number of
+##' observations, and a (k+p) by n numeric matrix where the first k
+##' rows are the non-zeros in Zt and the last p rows are Xt.  Also
+##' stored are variance-component parameter vector, theta, and the
+##' vector of lower bounds on these parameters, lower, a dsCMatrix of
+##' size (q+p) and the (q+p) numeric coefficient vector, ubeta.
+##' @export
+setClass("RSC",
+         representation(rv    = "matrix",
+                        xv    = "matrix",
+                        theta = "numeric",
+                        lower = "numeric",
+                        A     = "dsCMatrix",
+                        ubeta = "numeric")
+         ## skip validity for now as the generator checks all this
+         ## ,validity =   
+         ## function(object) {
+         ##     rv <- object@rv
+         ##     xv <- object@xv
+         ##     if (!all(dim(rv) == dim(xv)))
+         ##         return("dimensions of rv and xv must match")
+         ##     if (!is.integer(rv)) return("rv must be integer")
+         ##     if (!is.double(xv)) return("xv must be numeric (i.e. double)")
+         ##     if (min(rv) != 0L) return("min(rv) != 0")
+         ##     if (length(object@theta) != length(object@lower))
+         ##         return("length(theta) != length(lower)")
+         ##     k <- sum(is.finite(object@lower))
+         ##     q <- max(rv) + 1L
+         ##     p <- nrow(xv) - k
+         ##     qpp <- q + p
+         ##     if (nrow(object@A) != qpp) return("nrow(A) != q + p")
+         ##     if (length(object@ubeta) != qpp)
+         ##         return("ncol(A) != length(ubeta)")
+         ##     TRUE
+         ## }
+         )
 
 ##' Generator object for the rePos (random-effects positions) class
 ##' 

@@ -2,47 +2,24 @@
 \alias{RSCupdate}
 \title{Update for the penalized least squares problem}
 \usage{
-  RSCupdate(rv, xv, theta, lower, resid, m, ZtXty)
+  RSCupdate(pred, resid)
 }
 \arguments{
-  \item{rv}{the matrix of row indices for the regular
-  sparse column representation of ZtXt}
-
-  \item{xv}{the non-zero values in ZtXt}
-
-  \item{theta}{the covariace parameter vector}
-
-  \item{lower}{lower bounds on the covariace parameter
-  vector}
+  \item{pred}{an RSC object}
 
   \item{resid}{current residual}
-
-  \item{m}{the sparse matrix to be updated.  Must have the
-  correct pattern.}
-
-  \item{ZtXty}{the product of the updated LambdatZt and Xt
-  with resid.}
+}
+\value{
+  the 'ldL2' value for the updated A
 }
 \description{
   Update for the penalized least squares problem
 }
 \examples{
-fm1 <- lmer(Yield ~ 1|Batch, Dyestuff, REML=FALSE)
-rv <- with(Dyestuff, rbind(as.integer(Batch) - 1L, 6L))
-xv <- matrix(1, nrow=nrow(rv), ncol=ncol(rv))
-A  <- tcrossprod(sparseMatrix(i = as.vector(rv),
-                              j = as.vector(col(rv) - 1L),
-                              x = as.vector(xv), index1=FALSE))
-ZtXty <- numeric(ncol(A))
-with(Dyestuff, RSCupdate(rv, xv, getME(fm1,"theta"), 0., Yield, A, ZtXty))
-L <- Cholesky(A, perm=FALSE, LDL=FALSE)
-vv <- solve(L, ZtXty, system="A")
-all.equal(vv[1:6], getME(fm1, "u"))
-all.equal(vv[7], getME(fm1, "beta"))
-LL <- as(L, "Matrix")
-## the transpose below is because a diagonal dtCMatrix is declared upper triangular
-all.equal(t(LL[1:6,1:6]), as(getME(fm1, "L"), "Matrix"))
-all.equal(LL[7,7], as.vector(getME(fm1, "RX")))
-all.equal(LL[7,1:6], as.vector(getME(fm1, "RZX")))
+pred <- createRSC(rv=as.integer(Dyestuff$Batch),
+                  xv=matrix(1, nrow=2L, ncol=nrow(Dyestuff)))
+str(pred)
+with(Dyestuff, RSCupdate(pred, Yield))
+str(pred)
 }
 

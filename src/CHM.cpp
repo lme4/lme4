@@ -44,57 +44,59 @@ extern "C" {
 
 }
 
-dsCMatrix::dsCMatrix(S4& A)
-    : d_Dim(A.slot("Dim")),
-      d_upper(CharacterVector(A.slot("Dim"))[0] == "U"),
-      d_colptr(A.slot("p")),
-      d_rowval(A.slot("i")),
-      d_factors(A.slot("factors")),
-      d_nzval(A.slot("x")),
-      d_sp(new cholmod_sparse) {
-    d_sp->nrow = d_Dim[0];
-    d_sp->ncol = d_Dim[1];
-    d_sp->nzmax = nnz();
-    d_sp->p = (void*)&d_colptr[0];
-    d_sp->i = (void*)&d_rowval[0];
-    d_sp->nz = NULL;
-    d_sp->x = (void*)&d_nzval[0];
-    d_sp->z = NULL;
-    d_sp->stype = d_upper ? 1 : -1;
-    d_sp->itype = CHOLMOD_INT;
-    d_sp->xtype = CHOLMOD_REAL;
-    d_sp->dtype = CHOLMOD_DOUBLE;
-    d_sp->sorted = 1;
-    d_sp->packed = 1;
-}
-
-dsCMatrix::~dsCMatrix() {delete d_sp;}
-
+namespace CHM {
+    dsCMatrix::dsCMatrix(S4& A)
+	: d_Dim(A.slot("Dim")),
+	  d_upper(CharacterVector(A.slot("Dim"))[0] == "U"),
+	  d_colptr(A.slot("p")),
+	  d_rowval(A.slot("i")),
+	  d_factors(A.slot("factors")),
+	  d_nzval(A.slot("x")),
+	  d_sp(new cholmod_sparse) {
+	d_sp->nrow = d_Dim[0];
+	d_sp->ncol = d_Dim[1];
+	d_sp->nzmax = nnz();
+	d_sp->p = (void*)&d_colptr[0];
+	d_sp->i = (void*)&d_rowval[0];
+	d_sp->nz = NULL;
+	d_sp->x = (void*)&d_nzval[0];
+	d_sp->z = NULL;
+	d_sp->stype = d_upper ? 1 : -1;
+	d_sp->itype = CHOLMOD_INT;
+	d_sp->xtype = CHOLMOD_REAL;
+	d_sp->dtype = CHOLMOD_DOUBLE;
+	d_sp->sorted = 1;
+	d_sp->packed = 1;
+    }
+    
+    dsCMatrix::~dsCMatrix() {delete d_sp;}
+    
 // still need to implement dsCMatrix::update_factors;
-	
-CHMfactor::CHMfactor(S4& L)
-    : d_colcount(L.slot("colcount")),
-      d_perm(L.slot("perm")),
-      d_type(L.slot("type")),
-      d_fr(new cholmod_factor) {}
-
-CHMfactor::~CHMfactor() {delete d_fr;}
-
-CHMsimpl::CHMsimpl(S4& L)
-    : CHMfactor(L),
-      d_p(L.slot("p")),
-      d_i(L.slot("i")),
-      d_nz(L.slot("nz")),
-      d_nxt(L.slot("nxt")),
-      d_prv(L.slot("prv")) {}
-
-dCHMsimpl::dCHMsimpl(S4 &L) : CHMsimpl(L), d_x(L.slot("x")) {}
-
-CHMsuper::CHMsuper(S4 &L)
-    : CHMfactor(L),
-      d_super(L.slot("super")),
-      d_pi(L.slot("pi")),
-      d_px(L.slot("px")),
-      d_s(L.slot("s")) {}
-
-dCHMsuper::dCHMsuper(S4 &L) : CHMsuper(L), d_x(L.slot("x")) {}
+    
+    CHMfactor::CHMfactor(S4& L)
+	: d_colcount(L.slot("colcount")),
+	  d_perm(L.slot("perm")),
+	  d_type(L.slot("type")),
+	  d_fr(new cholmod_factor) {}
+    
+    CHMfactor::~CHMfactor() {delete d_fr;}
+    
+    CHMsimpl::CHMsimpl(S4& L)
+	: CHMfactor(L),
+	  d_p(L.slot("p")),
+	  d_i(L.slot("i")),
+	  d_nz(L.slot("nz")),
+	  d_nxt(L.slot("nxt")),
+	  d_prv(L.slot("prv")) {}
+    
+    dCHMsimpl::dCHMsimpl(S4 &L) : CHMsimpl(L), d_x(L.slot("x")) {}
+    
+    CHMsuper::CHMsuper(S4 &L)
+	: CHMfactor(L),
+	  d_super(L.slot("super")),
+	  d_pi(L.slot("pi")),
+	  d_px(L.slot("px")),
+	  d_s(L.slot("s")) {}
+    
+    dCHMsuper::dCHMsuper(S4 &L) : CHMsuper(L), d_x(L.slot("x")) {}
+}

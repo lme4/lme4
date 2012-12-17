@@ -31,6 +31,7 @@ extern "C" {
     using      Rcpp::S4;
     using      Rcpp::XPtr;
     using      Rcpp::as;
+    using      Rcpp::stop;
     using      Rcpp::wrap;
 
     using       glm::glmFamily;
@@ -830,13 +831,17 @@ extern "C" {
 	END_RCPP;
     }
 
-    SEXP lme4_RSCupdate(SEXP rv, SEXP xv, SEXP theta, SEXP lower, SEXP resid,
-			SEXP A, SEXP ubeta) {
+    SEXP lme4_RSCupdate(SEXP obj, SEXP resid) {
 	BEGIN_RCPP;
-	S4 AA(A);
-	NumericVector ub(ubeta);
-	RSC(rv, xv, lower).update_A(Rcpp::NumericVector(theta),
-				    Rcpp::NumericVector(resid), AA, ub);
+	S4 rsc(obj);
+	if (!rsc.is("RSC")) stop("argument must be of (S4) class \"RSC\"");
+	S4 A(rsc.slot("A"));
+	if (!A.is("dsCMatrix")) stop("A slot must be a dsCMatrix");
+	List factors(A.slot("factors"));
+	if (!factors.size()) stop("A must have at least one Cholesky factor defined");
+	NumericVector ubeta(rsc.slot("ubeta"));
+	RSC(rsc.slot("rv"), rsc.slot("xv"), rsc.slot("theta"), rsc.slot("lower"),
+	    A, ubeta).update_A(NumericVector(resid));
 	END_RCPP;
     }
 
@@ -906,7 +911,7 @@ static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(lm_updateMu,        2), // method
 
-    CALLDEF(lme4_RSCupdate,     7),
+    CALLDEF(lme4_RSCupdate,     2),
 
     CALLDEF(lmer_Create,        7), // generate external pointer
 
