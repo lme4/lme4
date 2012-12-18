@@ -901,6 +901,13 @@ typedef const cholmod_triplet* const_CHM_TR;
 #define CHOLMOD_P    7		/* permute x=Px */
 #define CHOLMOD_Pt   8		/* permute x=P'x */
 
+// from ../../src/CHOLMOD/Include/cholmod_matrixops.h - line 107 :
+/* scaling modes, selected by the scale input parameter: */
+#define CHOLMOD_SCALAR 0	/* A = s*A */
+#define CHOLMOD_ROW 1		/* A = diag(s)*A */
+#define CHOLMOD_COL 2		/* A = A*diag(s) */
+#define CHOLMOD_SYM 3		/* A = diag(s)*A*diag(s) */
+
 #ifdef	__cplusplus
 }
 #endif

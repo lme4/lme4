@@ -1,6 +1,6 @@
 #' Create an RSC object from the rv and xv components
 #' 
-#' @param rv the matrix of row indices for the regular sparse column representation of Zt
+#' @param fl the matrix of row indices for the regular sparse column representation of Zt
 #' @param xv the non-zero values in ZtXt
 #' @param theta an optional variance-component parameter vector
 #' @param lower optional lower bounds on the variance-component parameter vector
@@ -9,6 +9,7 @@
 #' pred <- createRSC(rv=as.integer(Dyestuff$Batch),
 #'                   xv=matrix(1, nrow=2L, ncol=nrow(Dyestuff)))
 #' str(pred)
+#' @export
 createRSC <- function(fl, xv, theta=rep.int(1, k), lower=numeric(k)) {
     stopifnot(is.matrix(xv), is.double(xv))
     ## fl can be specified as 0-based or 1-based indices
@@ -27,15 +28,16 @@ createRSC <- function(fl, xv, theta=rep.int(1, k), lower=numeric(k)) {
     lower <- as.numeric(lower)
     stopifnot(length(theta) == length(lower),
               sum(is.finite(lower)) == k)
-    rv <- do.call(rbind, c(list(fl), as.list(q:(qpp - 1L))))
-    A <- tcrossprod(sparseMatrix(i=as.vector(rv),
+    i <- do.call(rbind, c(list(fl), as.list(q:(qpp - 1L))))
+    A <- tcrossprod(sparseMatrix(i=as.vector(i),
                                  j=rep(0:(n-1), each=nrow(xv)),
                                  x=as.vector(xv), index1=FALSE)) +
                                      Diagonal(x=rep.int(c(1,0), c(q,p)))
-    ## Cholesky results are not saved here but are cached as part of the A object
-    Cholesky(A, perm=FALSE) # need to work out the permutation keeping Z and X parts distinct
+    ## Cholesky results are not saved in this function but are cached as part of the A object
+    # need to work out the permutation keeping Z and X parts distinct. For now set perm=FALSE
+    Cholesky(A, perm=FALSE, LDL=FALSE) 
     ubeta <- numeric(qpp)
-    new("RSC", xv=xv, rv=rv, theta=theta, lower=lower, A=A, ubeta=numeric(qpp))
+    new("RSC", x=xv, i=i, theta=theta, lower=lower, A=A, ubeta=numeric(qpp))
 }
 
 #' Update for the penalized least squares problem

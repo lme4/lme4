@@ -935,33 +935,13 @@ setClass("nlmerMod", representation(resp="nlsResp"), contains="merMod")
 ##' size (q+p) and the (q+p) numeric coefficient vector, ubeta.
 ##' @export
 setClass("RSC",
-         representation(rv    = "matrix",
-                        xv    = "matrix",
+         representation(i     = "matrix",
+                        x     = "matrix",
                         theta = "numeric",
                         lower = "numeric",
                         A     = "dsCMatrix",
                         ubeta = "numeric")
-         ## skip validity for now as the generator checks all this
-         ## ,validity =   
-         ## function(object) {
-         ##     rv <- object@rv
-         ##     xv <- object@xv
-         ##     if (!all(dim(rv) == dim(xv)))
-         ##         return("dimensions of rv and xv must match")
-         ##     if (!is.integer(rv)) return("rv must be integer")
-         ##     if (!is.double(xv)) return("xv must be numeric (i.e. double)")
-         ##     if (min(rv) != 0L) return("min(rv) != 0")
-         ##     if (length(object@theta) != length(object@lower))
-         ##         return("length(theta) != length(lower)")
-         ##     k <- sum(is.finite(object@lower))
-         ##     q <- max(rv) + 1L
-         ##     p <- nrow(xv) - k
-         ##     qpp <- q + p
-         ##     if (nrow(object@A) != qpp) return("nrow(A) != q + p")
-         ##     if (length(object@ubeta) != qpp)
-         ##         return("ncol(A) != length(ubeta)")
-         ##     TRUE
-         ## }
+         ## skip validity for now as the generator already performs those checks
          )
 
 ##' Generator object for the rePos (random-effects positions) class

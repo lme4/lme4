@@ -2,11 +2,11 @@
 \alias{createRSC}
 \title{Create an RSC object from the rv and xv components}
 \usage{
-  createRSC(rv, xv, theta = rep.int(1, k),
+  createRSC(fl, xv, theta = rep.int(1, k),
     lower = numeric(k))
 }
 \arguments{
-  \item{rv}{the matrix of row indices for the regular
+  \item{fl}{the matrix of row indices for the regular
   sparse column representation of Zt}
 
   \item{xv}{the non-zero values in ZtXt}

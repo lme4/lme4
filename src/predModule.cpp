@@ -93,8 +93,8 @@ namespace lme4 {
     Rcpp::List merPredD::condVar(const Rcpp::Environment& rho) const {
 	const Rcpp::List ll(as<Rcpp::List>(rho["flist"])), trmlst(as<Rcpp::List>(rho["terms"]));
 	const int nf(ll.size());
-	const MiVec nc(as<MiVec>(rho["ncols"])), nl(as<MiVec>(rho["nlevs"])),
-	    nct(as<MiVec>(rho["nctot"])), off(as<MiVec>(rho["offsets"]));
+	const MiVec nl(as<MiVec>(rho["nlevs"])), nct(as<MiVec>(rho["nctot"])),
+	    off(as<MiVec>(rho["offsets"]));
 
 	Rcpp::List ans(nf);
 	ans.names() = clone(as<Rcpp::CharacterVector>(ll.names()));

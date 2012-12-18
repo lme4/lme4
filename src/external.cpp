@@ -840,7 +840,7 @@ extern "C" {
 	List factors(A.slot("factors"));
 	if (!factors.size()) stop("A must have at least one Cholesky factor defined");
 	NumericVector ubeta(rsc.slot("ubeta"));
-	RSC(rsc.slot("rv"), rsc.slot("xv"), rsc.slot("theta"), rsc.slot("lower"),
+	RSC(rsc.slot("i"), rsc.slot("x"), rsc.slot("theta"), rsc.slot("lower"),
 	    A, ubeta).update_A(NumericVector(resid));
 	END_RCPP;
     }
