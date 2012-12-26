@@ -18,8 +18,8 @@ extern "C" {
 			<< ", line " << line << std::endl;
 	    Rcpp::stop("Cholmod error");
 	}
-	else Rf_warning("Cholmod warning '%s' at file '%s', line %d",
-			message, file, line);
+	else ::Rf_warning("Cholmod warning '%s' at file '%s', line %d",
+			  message, file, line);
     }
 
     int cholmod_start(CHM_CM Common) {
@@ -388,7 +388,7 @@ extern "C" {
 namespace CHM {
     dsCMatrix::dsCMatrix(S4& A)
 	: d_Dim(A.slot("Dim")),
-	  d_upper(CharacterVector(A.slot("Dim"))[0] == "U"),
+	  d_upper(CharacterVector(A.slot("uplo"))[0] == "U"),
 	  d_colptr(A.slot("p")),
 	  d_rowval(A.slot("i")),
 	  d_factors(A.slot("factors")),
@@ -412,8 +412,56 @@ namespace CHM {
     
     dsCMatrix::~dsCMatrix() {delete d_sp;}
     
-// still need to implement dsCMatrix::update_factors;
-    
+    void dsCMatrix::update_factors() {
+	cholmod_common* cm = new cholmod_common;
+	if (!cholmod_start(cm)) stop("call to cholmod_start failed");
+	cm->final_asis = 0; 
+	cm->final_monotonic = 1; cm->final_pack = 1;
+	for (int i = 0; i < d_factors.size(); ++i) {
+	    S4 faci = d_factors[i];
+	    if (!faci.is("CHMfactor")) continue;
+	    if (faci.is("dCHMsimpl")) {
+		CHM::dCHMsimpl ff(faci);
+		cm->final_ll = ff.is_ll();
+		if (!cholmod_factorize(spp(), ff.frp(), cm))
+		    stop("failure in cholmod_factorize");
+	    } else if (faci.is("dCHMsuper")) {
+		CHM::dCHMsuper ff(faci);
+		if (!cholmod_factorize(spp(), ff.frp(), cm))
+		    stop("failure in cholmod_factorize");
+	    } else Rf_warning("A@factors contains a CHMfactor that is neither \"dCHMsimpl\" nor \"dCHMsuper\"");
+	}
+	delete cm;
+    }
+   
+    NumericMatrix dsCMatrix::solve(const NumericMatrix& b, int which) const {
+	if (!n_factors()) stop("dsCMatrix::solve requires n_factors() > 0");
+	S4 f0(d_factors[0]);
+	if (!f0.is("CHMfactor")) stop("dsCMatrix::solve for CHMfactor only");
+// Should use virtual methods here
+	if (f0.is("dCHMsimpl")) {
+	    const CHM::dCHMsimpl  ff(f0);
+	    return ff.solve(b, which);
+	}
+	// if (f0.is("dCHMsuper")) {
+	//     const CHM::dCHMsuper ff(f0);
+	//     return ff.solve(b, which);
+	// }
+	stop("Unrecognized numeric Cholesky factorization");
+	return NumericMatrix(1,1); // -Wall
+    }
+
+    NumericVector dsCMatrix::Ldiag() { // can't make this const unless S4.is is const
+	for (int i = 0; i < n_factors(); ++i) {
+	    S4 faci = d_factors[i];
+	    if (!faci.is("CHMfactor")) continue;
+	    if (faci.is("dCHMsimpl")) return CHM::dCHMsimpl(faci).Ldiag();
+	    if (faci.is("dCHMsuper")) return CHM::dCHMsuper(faci).Ldiag();
+	}
+	stop("At least one CHMfactor must be defined for Ldiag");
+	return NumericVector(0); // -Wall
+    }
+	
     CHMfactor::CHMfactor(S4& L)
 	: d_colcount(L.slot("colcount")),
 	  d_perm(L.slot("perm")),
@@ -456,6 +504,29 @@ namespace CHM {
 	d_fr->x = (void*)&d_x[0];
     }
     
+    NumericMatrix dCHMsimpl::solve(const Rcpp::NumericMatrix& b, int which) const {
+	cholmod_common* cm = new cholmod_common;
+	if (!cholmod_start(cm)) stop("call to cholmod_start failed");
+	cholmod_dense* dn = new cholmod_dense;
+	dn->nrow = b.nrow(); dn->ncol = b.ncol(); dn->nzmax = b.nrow() * b.ncol();
+	dn->d = b.nrow(); dn->x = (void*)&b[0]; dn->xtype = CHOLMOD_REAL;
+	dn->dtype = CHOLMOD_DOUBLE;
+	cholmod_dense* xp = cholmod_solve(which, d_fr, dn, cm);
+	double* dp = (double*) xp->x;
+	NumericMatrix x = clone<NumericMatrix>(b);
+	std::copy(dp, dp + b.nrow() * b.ncol(), x.begin());
+	if (!cholmod_free_dense(&xp, cm)) stop("failure in cholmod_free_dense");
+	delete cm;
+	return x;
+    }
+
+    NumericVector dCHMsimpl::Ldiag() const {
+	NumericVector ans(ncol());
+	for (int i = 0; i < ncol(); ++i) ans[i] = d_x[d_p[i]];
+	if (!d_fr->is_ll) return sqrt(ans);
+	return ans;
+    }
+
     CHMsuper::CHMsuper(S4 &L)
 	: CHMfactor(L),
 	  d_super(L.slot("super")),
@@ -480,4 +551,30 @@ namespace CHM {
 	d_fr->xtype = CHOLMOD_REAL;
 	d_fr->x = (void*)&d_x[0];
     }
+
+    NumericMatrix dCHMsuper::solve(const Rcpp::NumericMatrix& b, int which) const {
+	cholmod_common* cm = new cholmod_common;
+	if (!cholmod_start(cm)) stop("call to cholmod_start failed");
+	cholmod_dense* dn = new cholmod_dense;
+	dn->nrow = b.nrow(); dn->ncol = b.ncol(); dn->nzmax = b.nrow() * b.ncol();
+	dn->d = b.nrow(); dn->x = (void*)&b[0]; dn->xtype = CHOLMOD_REAL;
+	dn->dtype = CHOLMOD_DOUBLE;
+	cholmod_dense* xp = cholmod_solve(which, d_fr, dn, cm);
+	double* dp = (double*) xp->x;
+	NumericMatrix x = clone<NumericMatrix>(b);
+	std::copy(dp, dp + b.nrow() * b.ncol(), x.begin());
+	if (!cholmod_free_dense(&xp, cm)) stop("failure in cholmod_free_dense");
+	delete cm;
+	return x;
+    }
+
+    NumericVector dCHMsuper::Ldiag() const {
+	stop("Ldiag not yet written for dCHMsuper");
+	NumericVector ans(ncol());
+	// for (int i = 0; i < ncol(); ++i) ans[i] = d_x[d_p[i]];
+	// if (!d_fr->is_ll)
+	//     std::transform(ans.begin(), ans.end(), ans.begin(), std::sqrt);
+	return ans;
+    }
+
 }

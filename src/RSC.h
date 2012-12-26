@@ -12,16 +12,16 @@
 #include <Rcpp.h>
 
 namespace lme4 {    
-    class RSC { /**< const parts of mixed-effects predictor in regular sparse column format */
+    class RSC { /**< mixed-effects predictor in regular sparse column format */
     protected:
 	const Rcpp::IntegerMatrix d_i; /**< rowvals indices for ZtXt */
 	const Rcpp::NumericMatrix d_x; /**< matrix of non-zeros in ZtXt */
 	const Rcpp::NumericVector d_theta; /**< variance component parameter vector */
 	const Rcpp::NumericVector d_lower; /**< lower bounds for theta components */
-	Rcpp::S4            d_A4;
-	Rcpp::NumericVector d_ubeta; /**< coefficient vector */
+	Rcpp::S4            d_A4;	   /**< dsCMatrix system matrix for PLS */
+	const Rcpp::NumericVector d_ubeta; /**< coefficient vector */
 	const int d_k; /**< number of random effects per observation */
-	const int d_kpp;  /**< number of rows (k + p) in xv and rv  */
+	const int d_kpp;  /**< number of rows (k + p) in d_x and d_i  */
 	const int d_n;	  /**< number of observations */
 	const int d_p;	  /**< number of fixed-effects coefficients */
 	const int d_qpp;  /**< size of A and length of ubeta (q + p) */
@@ -29,9 +29,12 @@ namespace lme4 {
     public:
 	RSC(const Rcpp::IntegerMatrix&, const Rcpp::NumericMatrix&,
 	    const Rcpp::NumericVector&, const Rcpp::NumericVector&,
-	    Rcpp::S4&, Rcpp::NumericVector&);
+	    Rcpp::S4&, const Rcpp::NumericVector&);
 	Rcpp::NumericVector &apply_lambda(Rcpp::NumericVector&) const;
-	void update_A(const Rcpp::NumericVector&);
+	Rcpp::List               update_A(const Rcpp::NumericVector&);
+	Rcpp::NumericVector         Ldiag();
+	Rcpp::NumericVector        fitted() const;
+	Rcpp::NumericVector        fitted(const Rcpp::NumericVector&) const;
     };
 }
 

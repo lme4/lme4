@@ -14,7 +14,7 @@ using namespace Rcpp;
 namespace lme4 {
     RSC::RSC(const IntegerMatrix& i, const NumericMatrix& x,
 	     const NumericVector& theta, const NumericVector& lower,
-	     S4& A4, NumericVector& ubeta)
+	     S4& A4, const NumericVector& ubeta)
 	: d_i(i),
 	  d_x(x),
 	  d_theta(theta),
@@ -27,8 +27,6 @@ namespace lme4 {
 	  d_p(d_kpp - d_k),
 	  d_qpp(d_ubeta.size()),
 	  d_q(d_qpp - d_p) {
-	Rcout << "k = " << d_k << ", kpp = " << d_kpp << ", n = " << d_n
-	      << ", p = " << d_p << ", q = " << d_q << std::endl;
 	if (d_i.ncol() != d_n || d_p < 0) stop("dimension mismatch of i and x");
 	const IntegerVector  dd(d_A4.slot("Dim"));
 	if (dd[0] != d_qpp) stop("size of A must be q + p");
@@ -47,11 +45,12 @@ namespace lme4 {
 	return dest;
     }
 
-    void RSC::update_A(const NumericVector &resid) {
+    List RSC::update_A(const NumericVector &resid) {
 	if (resid.size() != d_n) stop("Dimension of resid should be n");
 	const IntegerVector &rowval(d_A4.slot("i")), &colptr(d_A4.slot("p"));
 	NumericVector nzval(d_A4.slot("x"));
 	NumericVector w(d_kpp);
+	NumericMatrix ZtXtr(d_qpp, 1);
 	// initializations
 	std::fill(nzval.begin(), nzval.end(), double(0)); // zero the contents of A
 	std::fill(d_ubeta.begin(), d_ubeta.end(), double(0)); // and ubeta
@@ -63,11 +62,10 @@ namespace lme4 {
 	}
 	for (int j = 0; j < d_n; ++j)	{ // iterate over columns of ZtXt
 	    double rj(resid[j]);
-	    std::copy(&(d_x(0,j)), &(d_x(0,j)) + d_kpp, w.begin()); // copy j'th column
+	    std::copy(&d_x(0,j), &d_x(0,j) + d_kpp, w.begin());
 	    apply_lambda(w);
-	    for (int i = 0; i < d_kpp; ++i) d_ubeta[d_i(i,j)] += rj * w[i];
-	    // scan up the j'th column of ZtXt, which makes
-	    // it easier to evaluate the upper triangle of A
+	    for (int i = 0; i < d_kpp; ++i) ZtXtr(d_i(i,j),0) += rj * w[i];
+	    // scan up the j'th column of ZtXt, easier to evaluate A's upper triangle
 	    for (int i = d_kpp - 1; i >= 0; --i) {
 		int ii(d_i(i, j));	// row of ZtXt (column of m) 
 		int cpi(colptr[ii]), ll(colptr[ii + 1] - 1); // ll should be location of diagonal
@@ -81,23 +79,40 @@ namespace lme4 {
 		}
 	    }
 	}
-	const CHM::dsCMatrix A(d_A4);
-	cholmod_common* cm = new cholmod_common;
-	if (!cholmod_start(cm)) stop("call to cholmod_start failed");
-	List factors(d_A4.slot("factors"));
-	// already checked but just in case something weird happens
-	if (!factors.size()) stop("A@factors must have at least one factorization");
-	for (int i = 0; i < factors.size(); ++i) {
-	    S4 faci = factors[i];
-	    if (!faci.is("CHMfactor")) stop("A@factors should consist of CHMfactor objects");
-	    if (faci.is("dCHMsimpl")) {
-		CHM::dCHMsimpl ff(faci);
-		if (!cholmod_factorize(A.spp(), ff.frp(), cm)) stop("failure in cholmod_factorize");
-	    } else if (faci.is("dCHMsuper")) {
-		CHM::dCHMsuper ff(faci);
-		if (!cholmod_factorize(A.spp(), ff.frp(), cm)) stop("failure in cholmod_factorize");
-	    }
+	CHM::dsCMatrix A(d_A4);
+	A.update_factors();
+	NumericVector ld(Ldiag());
+	double ldL2(0.), ldRX2(0.);
+	for (int i = 0; i < d_q; ++i) ldL2 += std::log(ld[i] * ld[i]);
+	for (int i = d_p; i < d_qpp; ++i) ldRX2 += std::log(ld[i] * ld[i]);
+	NumericVector sol(A.solve(ZtXtr, CHOLMOD_A));
+	return List::create(Named("ldL2", ldL2),
+			    Named("ldRX2", ldRX2),
+			    Named("sol", sol),
+			    Named("fitted", fitted(sol)));
+    }
+
+    NumericVector RSC::Ldiag() {
+	return  CHM::dsCMatrix(d_A4).Ldiag();
+    }
+    
+    NumericVector RSC::fitted() const {
+	NumericVector ans(d_n);
+	for (int j = 0; j < d_n; ++j) {
+	    double *pt(&ans[j]);
+	    *pt = double();
+	    for (int i = 0; i < d_kpp; ++i) *pt += d_x(i,j) * d_ubeta[d_i(i,j)];
 	}
-	delete cm;
+	return ans;
+    }
+
+    NumericVector RSC::fitted(const NumericVector& ub) const {
+	NumericVector ans(d_n);
+	for (int j = 0; j < d_n; ++j) {
+	    double *pt(&ans[j]);
+	    *pt = double();
+	    for (int i = 0; i < d_kpp; ++i) *pt += d_x(i,j) * ub[d_i(i,j)];
+	}
+	return ans;
     }
 }

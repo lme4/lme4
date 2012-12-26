@@ -98,13 +98,17 @@ namespace CHM {
 	Rcpp::IntegerVector&       rowval()       {return d_rowval;}
 	const Rcpp::NumericVector&  nzval() const {return d_nzval;}
 	Rcpp::NumericVector&        nzval()       {return d_nzval;}
+	const Rcpp::List&         factors() const {return d_factors;}
 	const cholmod_sparse*         spp() const {return d_sp;}
 	cholmod_sparse*               spp()       {return d_sp;}
 	int                     n_factors() const {return d_factors.size();}
+	Rcpp::NumericVector         Ldiag();
 
-	void               update_factors() {};
+	void               update_factors();
+
+	Rcpp::NumericMatrix solve(const Rcpp::NumericMatrix&, int) const;
     };
-    
+
     class CHMfactor {
     protected:
 	const Rcpp::IntegerVector d_colcount;
@@ -150,6 +154,9 @@ namespace CHM {
 	dCHMsimpl(Rcpp::S4&);
 	const Rcpp::NumericVector& x() const {return d_x;}
 	Rcpp::NumericVector&       x()       {return d_x;}
+	Rcpp::NumericVector    Ldiag() const;
+
+	Rcpp::NumericMatrix solve(const Rcpp::NumericMatrix&, int) const;
     };
     
     class CHMsuper : public CHMfactor {
@@ -173,6 +180,9 @@ namespace CHM {
 	dCHMsuper(Rcpp::S4&);
 	const Rcpp::NumericVector& x() const {return d_x;}
 	Rcpp::NumericVector&       x()       {return d_x;}
+	Rcpp::NumericVector    Ldiag() const;
+
+	Rcpp::NumericMatrix solve(const Rcpp::NumericMatrix&, int) const;
     };
     
 }

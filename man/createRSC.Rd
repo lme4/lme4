@@ -24,8 +24,7 @@
   Create an RSC object from the rv and xv components
 }
 \examples{
-pred <- createRSC(rv=as.integer(Dyestuff$Batch),
-                  xv=matrix(1, nrow=2L, ncol=nrow(Dyestuff)))
+pred <- createRSC(fl=Dyestuff$Batch, x=matrix(1, nrow=2L, ncol=nrow(Dyestuff)))
 str(pred)
 }
 
