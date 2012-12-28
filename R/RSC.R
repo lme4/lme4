@@ -1,43 +1,109 @@
-#' Create an RSC object from the rv and xv components
+##' @export
+lmer1 <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
+                 control = list(), start = NULL,
+                 verbose = 0L, subset, weights, na.action, offset,
+                 contrasts = NULL, devFunOnly=FALSE,
+                 optimizer="Nelder_Mead", ...)
+{
+    verbose <- as.integer(verbose)
+    restart <- TRUE ## FIXME; set default elsewhere?
+    if (!is.null(control$restart)) {
+        restart <- control$restart
+        control$restart <- NULL
+    }
+
+    mf <- mc <- match.call()
+    checkArgs("lmer",sparseX,...)
+    if (!is.null(list(...)[["family"]])) {
+        ## lmer(...,family=...); warning issued within checkArgs
+        mc[[1]] <- as.name("glmer")
+        return(eval(mc, parent.frame()) )
+    }
+
+    denv <- checkFormulaData(formula,data)
+    mc$formula <- formula <- as.formula(formula,env=denv) ## substitute evaluated call
+    m <- match(c("data", "subset", "weights", "na.action", "offset"),
+               names(mf), 0)
+    mf <- mf[c(1, m)]
+    mf$drop.unused.levels <- TRUE
+    mf[[1]] <- as.name("model.frame")
+    fr.form <- subbars(formula) # substituted "|" by "+" -
+    environment(fr.form) <- environment(formula)
+    mf$formula <- fr.form
+    fr <- eval(mf, parent.frame())
+    ## fixed-effects model matrix X - remove random effects from formula:
+    fixedform <- formula
+    fixedform[[3]] <- if(is.null(nb <- nobars(fixedform[[3]]))) 1 else nb
+    mf$formula <- fixedform
+    ## re-evaluate model frame to extract predvars component
+    fixedfr <- eval(mf, parent.frame())
+    attr(attr(fr,"terms"),"predvars.fixed") <- attr(attr(fixedfr,"terms"),"predvars")
+    X <- model.matrix(fixedform, fixedfr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
+    p <- ncol(X)
+    if ((rankX <- rankMatrix(X)) < p)
+        stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
+    if (!length(bb <- findbars(formula[[3]])))
+        stop("No random effects terms specified in formula")
+    createRSC(bb, X, fr)
+}
+
+#' Create an RSC object from the formula and the model.frame
 #' 
-#' @param fl the matrix of row indices for the regular sparse column representation of Zt
-#' @param xv the non-zero values in ZtXt
-#' @param theta an optional variance-component parameter vector
-#' @param lower optional lower bounds on the variance-component parameter vector
+#' @param bb list of random-effects terms (ie. result of findbars)
+#' @param X the fixed-effects model matrix
+#' @param fr the model frame for the mixed-effects model
 #' @return an RSC object
 #' @examples
-#' pred <- createRSC(fl=Dyestuff$Batch, x=matrix(1, nrow=2L, ncol=nrow(Dyestuff)))
-#' str(pred)
+#' fm1 <- lmer1(diameter ~ (1|plate) + (1|sample), Penicillin)
+#' str(fm1)
+#' with(Penicillin, RSCupdate(fm1, diameter))
+#' fm1@A
+#' opt <- options(digits = 3)
+#' as(fm1@A@factors[[1]], "sparseMatrix")
+#' options(opt)
 #' @export
-createRSC <- function(fl, xv, theta=rep.int(1, k), lower=numeric(k)) {
-    stopifnot(is.matrix(xv), is.double(xv))
-    ## fl can be specified as 0-based or 1-based indices
-    stopifnot((minfl <- min(fl <- as.integer(fl))) %in% 0:1)
-    if (minfl == 1L) fl <- fl - 1L
-    n <- ncol(xv)
-    ## regenerating fl as a matrix allows passing a vector in simple cases
-    fl <-matrix(fl, ncol=n) 
-    q <- max(fl) + 1L
-    k <- nrow(fl)
-    kpp <- nrow(xv)
-    p <- kpp - k
-    qpp <- q + p
-    stopifnot(p > 0L) # perhaps >= ? Would p == 0 ever make sense?
-    theta <- as.numeric(theta)
-    lower <- as.numeric(lower)
-    stopifnot(length(theta) == length(lower),
-              sum(is.finite(lower)) == k)
-    i <- do.call(rbind, c(list(fl), as.list(q:(qpp - 1L))))
-    colnames(i) <- 1:n
-    if (is.null(colnames(xv))) colnames(xv) <- 1:n
-    A <- tcrossprod(sparseMatrix(i=as.vector(i),
-                                 j=rep(0:(n-1), each=nrow(xv)),
-                                 x=as.vector(xv), index1=FALSE)) +
+createRSC <- function(bb, X, fr) {
+    stopifnot(is.list(bb), all(sapply(bb, is.language)),
+              is.matrix(X), (p <- ncol(X)) > 0L,
+              is.data.frame(fr))
+    n <- nrow(X)
+    names(bb) <- unlist(lapply(bb, function(x) deparse(x[[3]])))
+    rhs <- lapply(bb, function(x) factor(eval(x[[3]], fr))) # factors
+    nl  <- sapply(rhs, function(x) length(levels(x)))       # number of levels
+    if (any(diff(nl) > 0)) {            # order terms by decreasing nl
+        ord <- rev(order(nl))
+        bb  <- bb[ord]
+        rhs <- rhs[ord]
+        nl  <- nl[ord]
+    }
+    lhs <- lapply(bb, function(x)       # model matrices for r.e. terms
+                  model.matrix(eval(substitute(~foo, list(foo=x[[2]]))), fr))
+    x <- do.call(rbind, lapply(c(lhs, list(X)), t))
+    dimnames(x) <- NULL
+    nc  <- sapply(lhs, ncol)
+    k   <- sum(nc)                      # number of non-zeros per row of Z
+    q   <- sum(nc * nl)                 # total number of random effects
+    if (any(dd <- duplicated(names(rhs)))) { # repeated grouping factors
+        stop("Code not yet written")
+    }
+    ## FIXME: adjust for any(nc > 1L) or change lapply(rhs, as.integer)
+    uboff <- cumsum(c(0L, nl, rep.int(1L, p))) # offsets into ubeta for rows of x
+    ii <- do.call(rbind,c(lapply(rhs, as.integer),
+                          list(matrix(1L,nrow=p,ncol=n)))) +
+                              (uboff[seq_len(k+p)] - 1L)
+    theta <- rep.int(1, k)
+    lower <- numeric(k)
+    A <- tcrossprod(sparseMatrix(i=as.vector(ii),
+                                 j=rep(0:(nrow(X)-1L), each=nrow(x)),
+                                 x=as.vector(x),
+                                 index1=FALSE)) +
                                      Diagonal(x=rep.int(c(1,0), c(q,p)))
-    ## Cholesky results are not saved in this function but are cached as part of the A object
-    # need to work out the permutation keeping Z and X parts distinct. For now set perm=FALSE
+    ## Cholesky results are not saved in this function but are cached in A
+    ## FIXME: need to work out the permutation keeping Z and X parts distinct.
+    ## For now set perm=FALSE
     Cholesky(A, perm=FALSE, LDL=FALSE) 
-    new("RSC", x=xv, i=i, theta=theta, lower=lower, A=A, ubeta=numeric(qpp))
+    new("RSC", x=x, i=ii[1:k,,drop=FALSE], theta=theta, lower=lower, A=A,
+        ubeta=numeric(q+p), uboff=uboff)
 }
 
 #' Update for the penalized least squares problem
@@ -52,19 +118,20 @@ createRSC <- function(fl, xv, theta=rep.int(1, k), lower=numeric(k)) {
 #' factors in an updated object 
 #' @param pred an RSC object
 #' @param resid current residual
-#' @return the solution of the PLS problem as matrix of 1 column
+#' @return a list with components \code{"ldL2"}, \code{"ldRX2"},
+#'   \code{"sol"} and \code{"fitted"} (which perhaps should be called
+#'   \code{"linpred"}) 
 #' @examples
-#' pred <- createRSC(fl=Dyestuff$Batch, x=matrix(1, nrow=2L, ncol=nrow(Dyestuff)))
-#' str(pred)
-#' pred@@theta[] <- 0.782
-#' with(Dyestuff, RSCupdate(pred, Yield))
-#' str(pred)
-#' pred@@A
-#' as(pred@@A@@factors[[1]], "sparseMatrix")
+#' fm0 <- lmer1(Yield ~ 1|Batch, Dyestuff)
+#' with(Dyestuff, RSCupdate(fm0, Yield))
+#' fm0@@theta[] <- 0.782
+#' with(Dyestuff, RSCupdate(fm0, Yield))
+#' str(fm0)
+#' fm0@A
+#' as(fm0@A@factors[[1]], "sparseMatrix")
 #' @export
 RSCupdate <- function(pred, resid) .Call(lme4_RSCupdate, pred, resid)
 
+##' @importFrom stats fitted
 ##' @S3method fitted RSC
-##' @export
 fitted.RSC <- function(pred) .Call(lme4_RSCfitted, pred)
-

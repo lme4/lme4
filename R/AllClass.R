@@ -902,7 +902,7 @@ NULL
 setClass("merMod",
          representation(Gp      = "integer",
                         call    = "call",
-			frame   = "data.frame", # "model.frame" is not S4-ized yet
+                        frame   = "data.frame", # "model.frame" is not S4-ized yet
                         flist   = "list",
                         cnms    = "list",
                         lower   = "numeric",
@@ -940,7 +940,8 @@ setClass("RSC",
                         theta = "numeric",
                         lower = "numeric",
                         A     = "dsCMatrix",
-                        ubeta = "numeric")
+                        ubeta = "numeric",
+                        uboff = "integer")
          ## skip validity for now as the generator already performs those checks
          )
 

@@ -1,27 +1,22 @@
 \name{createRSC}
 \alias{createRSC}
-\title{Create an RSC object from the rv and xv components}
+\title{Create an RSC object from the formula and the model.frame}
 \usage{
-  createRSC(fl, xv, theta = rep.int(1, k),
-    lower = numeric(k))
+  createRSC(bb, X, fr)
 }
 \arguments{
-  \item{fl}{the matrix of row indices for the regular
-  sparse column representation of Zt}
+  \item{bb}{list of random-effects terms (ie. result of
+  findbars)}
 
-  \item{xv}{the non-zero values in ZtXt}
+  \item{X}{the fixed-effects model matrix}
 
-  \item{theta}{an optional variance-component parameter
-  vector}
-
-  \item{lower}{optional lower bounds on the
-  variance-component parameter vector}
+  \item{fr}{the model frame for the mixed-effects model}
 }
 \value{
   an RSC object
 }
 \description{
-  Create an RSC object from the rv and xv components
+  Create an RSC object from the formula and the model.frame
 }
 \examples{
 pred <- createRSC(fl=Dyestuff$Batch, x=matrix(1, nrow=2L, ncol=nrow(Dyestuff)))
