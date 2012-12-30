@@ -1,0 +1,55 @@
+Fitting linear mixed-effects models using an RSC representation
+========================================================
+The development version of the `lme4` package on our [github repository](https://github.com/lme4/lme4) contains code for a new representation of mixed-effects models in which the random effects model matrix and the fixed-effects model matrix are represented as a dense integer matrix of size `k` by `n`, where `n` is the number of observations and `k` is the number of random effects per observation, and a dense numeric matrix of size `k+p` by `n`.  The property that makes the representation work is that `k` is constant.
+
+We also store the system matrix, `A`, for the normal equations in the penalized least squares (PLS) problem as a `"dsCMatrix"` object stored in the upper triangle and with at least one Cholesky factorization in its `factors` slot.
+
+The covariance parameter vector, `theta`, and, `lower`, the vector of lower bounds on the elements of `theta` are also stored in the object.
+
+As an example
+```{r}
+library(lme4)
+fm0 <- lmer1(Yield ~ 1|Batch, Dyestuff)
+str(fm0)
+fm0@A   # the system matrix
+as(fm0@A@factors[[1]], "sparseMatrix") # and a Cholesky factor
+```
+The matrix `i` is the 0-based indices of the `Batch` factor, stored as a matrix of one row
+```{r}
+opt <- options(width=120); ii <- fm0@i; colnames(ii) <- 1:ncol(ii); print(ii); options(opt)
+```
+and the matrix `x` is a 2 by 30 matrix in which the first row is the transpose of the model matrix for the random effects term and the second row is the transpose of the fixed-effects model matrix.  In this case, both model matrices are matrices of 1's.
+```{r}
+opt <- options(width=120); xx <- fm0@x; colnames(xx) <- 1:ncol(xx); print(xx); options(opt)
+```
+
+To evaluate the profiled deviance or REML criterion, which is a function of `theta` only, we insert a new value of `theta` and call `RSCupdate`.  The first argument to `RSCupdate` is the RSC object itself and the second is the current residual.  In the case of a linear mixed-effects model where the solution to the penalized least squares problem does not require iteration, this "residual" is, in fact, the response vector.  (John Tukey once stated that you could regard the data as the "0'th residuals", i.e. the residuals from the null model in which all fitted values are zero.)
+
+For an appropriate value of `theta` we fit the model using the existing `lmer`
+```{r}
+fm1 <- lmer(Yield ~ 1|Batch, Dyestuff, REML=FALSE)
+fm0@theta[] <- getME(fm1, "theta")  # I think this avoids copying the object fm0
+str(rr <- RSCupdate(fm0, Dyestuff$Yield))
+```
+
+The update operation has updated `A` and its factor in place (which violates the functional language semantics of R because this function modifies an argument).
+```{r}
+fm0@A
+as(fm0@A@factors[[1]], "sparseMatrix")
+```
+
+We can compare parts of this Cholesky factor to various components of the model `fm1`
+```{r}
+as(getME(fm1, "L"), "sparseMatrix")
+getME(fm1, "RX")
+t(getME(fm1, "RZX"))
+```
+
+Furthermore, the pieces needed to evaluate the profiled deviance or profiled REML criterion are available
+```{r}
+getME(fm1, "devcomp")
+unlist(rr[c("ldL2","ldRX2")])
+sum((Dyestuff$Yield - rr$linpred)^2)  # wrss
+sum((rr$del_ubeta[1:6])^2)  # ussq
+```
+

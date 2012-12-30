@@ -840,8 +840,7 @@ extern "C" {
 
     SEXP lme4_RSCfitted(SEXP obj, SEXP ubeta) {
         BEGIN_RCPP;
-        NumericVector ub(ubeta);
-        return (ub.size()) ? RSC(S4(obj)).fitted(ub) : RSC(S4(obj)).fitted();
+        return RSC(S4(obj)).fitted(NumericVector(ubeta));
         END_RCPP;
     }
 }

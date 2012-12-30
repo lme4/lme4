@@ -49,7 +49,6 @@ namespace lme4 {
         Rcpp::NumericVector &apply_lambda(Rcpp::NumericVector&) const;
         Rcpp::List               update_A(const Rcpp::NumericVector&);
         Rcpp::NumericVector         Ldiag();
-        Rcpp::NumericVector        fitted() const;
         Rcpp::NumericVector        fitted(const Rcpp::NumericVector&) const;
 
         int rv(int i, int j) const {return (i < d_k) ? d_i(i,j) : d_uboff[i];}

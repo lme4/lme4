@@ -14,19 +14,22 @@ using namespace Rcpp;
 namespace lme4 {
     RSC::RSC(S4 obj)
         : d_obj(obj),
-          d_i(as<SEXP>(obj.slot("i"))),
-          d_x(as<SEXP>(obj.slot("x"))),
-          d_theta(obj.slot("theta")),
-          d_lower(obj.slot("lower")),
-          d_A4(S4(as<SEXP>(obj.slot("A")))),
-          d_ubeta(obj.slot("ubeta")),
-          d_uboff(obj.slot("uboff")),
+          d_i(as<SEXP>(d_obj.slot("i"))),
+          d_x(as<SEXP>(d_obj.slot("x"))),
+          d_theta(d_obj.slot("theta")),
+          d_lower(d_obj.slot("lower")),
+          d_A4(S4(as<SEXP>(d_obj.slot("A")))),
+          d_ubeta(d_obj.slot("ubeta")),
+          d_uboff(d_obj.slot("uboff")),
           d_k(d_i.nrow()),
           d_kpp(d_x.nrow()),
           d_n(d_x.ncol()),
           d_p(d_kpp - d_k),
           d_qpp(d_ubeta.size()),
           d_q(d_qpp - d_p) {
+	Rcout << "k = " << d_k << ", kpp = " << d_kpp << ", n = " << d_n
+	      << ", p = " << d_p << ", qpp = " << d_qpp << ", p = " << d_p
+	      << std::endl;
         if (d_k != std::count_if(d_lower.begin(), d_lower.end(), ::R_finite))
             stop("number of finite elements in lower does not match nrow(i)");
         const IntegerVector dd(d_A4.slot("Dim"));
@@ -61,10 +64,9 @@ namespace lme4 {
             nzval[ll] = 1.;
         }
         for (int j = 0; j < d_n; ++j)   { // iterate over columns of ZtXt
-            double rj(resid[j]);
             std::copy(&d_x(0,j), &d_x(0,j) + d_kpp, w.begin());
             apply_lambda(w);
-            for (int i = 0; i < d_kpp; ++i) ZtXtr(rv(i,j),0) += rj * w[i];
+            for (int i = 0; i < d_kpp; ++i) ZtXtr(rv(i,j),0) += resid[j] * w[i];
             // scan up j'th column of ZtXt (easier to evaluate A's upper triangle)
             for (int i = d_kpp - 1; i >= 0; --i) {
                 int ii(rv(i, j));      // row of ZtXt (column of m) 
@@ -95,23 +97,16 @@ namespace lme4 {
         CHM::dsCMatrix A(d_A4);
         return A.Ldiag();
     }
-    
-    NumericVector RSC::fitted() const {
-        NumericVector ans(d_n);
-        for (int j = 0; j < d_n; ++j) {
-            double *pt(&ans[j]);
-            *pt = double();
-            for (int i = 0; i < d_kpp; ++i) *pt += d_x(i,j) * d_ubeta[rv(i,j)];
-        }
-        return ans;
-    }
 
     NumericVector RSC::fitted(const NumericVector& ub) const {
+        NumericVector w(d_kpp);
         NumericVector ans(d_n);
         for (int j = 0; j < d_n; ++j) {
             double *pt(&ans[j]);
-            *pt = double();
-            for (int i = 0; i < d_kpp; ++i) *pt += d_x(i,j) * ub[rv(i,j)];
+            *pt = 0.;		// not sure this is necessary
+            std::copy(&d_x(0,j), &d_x(0,j) + d_kpp, w.begin());
+            apply_lambda(w);
+            for (int i = 0; i < d_kpp; ++i) *pt += w[i] * ub[rv(i,j)];
         }
         return ans;
     }
