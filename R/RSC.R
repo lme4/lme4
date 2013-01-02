@@ -31,14 +31,14 @@ lmer1 <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
     environment(fr.form) <- environment(formula)
     mf$formula <- fr.form
     fr <- eval(mf, parent.frame())
-    ## fixed-effects model matrix X - remove random effects from formula:
+                                        # fixed-effects model matrix X
     fixedform <- formula
     fixedform[[3]] <- if(is.null(nb <- nobars(fixedform[[3]]))) 1 else nb
     mf$formula <- fixedform
-    ## re-evaluate model frame to extract predvars component
+                                        # re-evaluate model frame to extract predvars component
     fixedfr <- eval(mf, parent.frame())
     attr(attr(fr,"terms"),"predvars.fixed") <- attr(attr(fixedfr,"terms"),"predvars")
-    X <- model.matrix(fixedform, fixedfr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
+    X <- model.matrix(fixedform, fixedfr, contrasts)
     p <- ncol(X)
     if ((rankX <- rankMatrix(X)) < p)
         stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
@@ -57,10 +57,6 @@ lmer1 <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
 #' fm1 <- lmer1(diameter ~ (1|plate) + (1|sample), Penicillin)
 #' str(fm1)
 #' with(Penicillin, RSCupdate(fm1, diameter))
-#' fm1@A
-#' opt <- options(digits = 3)
-#' as(fm1@A@factors[[1]], "sparseMatrix")
-#' options(opt)
 #' @export
 createRSC <- function(bb, X, fr) {
     stopifnot(is.list(bb), all(sapply(bb, is.language)),
@@ -106,32 +102,34 @@ createRSC <- function(bb, X, fr) {
         ubeta=numeric(q+p), uboff=uboff)
 }
 
-#' Update for the penalized least squares problem
-#'
-#' @details This function has a side-effect of updating both the
-#' sparse symmetric system matrix in the \code{A} slot and its Cholesky
-#' factors in its \code{factors} slot.  Note that it updates in place,
-#' thus violating the functional language requirement of not changing
-#' arguments.  This is to conserve memory.  Usually the sparse Cholesky
-#' factor is the largest object in the model representation and it
-#' doesn't make sense to keep an out-of-date \code{A} slot and its
-#' factors in an updated object 
-#' @param pred an RSC object
-#' @param resid current residual
-#' @return a list with components \code{"ldL2"}, \code{"ldRX2"},
-#'   \code{"sol"} and \code{"fitted"} (which perhaps should be called
-#'   \code{"linpred"}) 
-#' @examples
-#' fm0 <- lmer1(Yield ~ 1|Batch, Dyestuff)
-#' with(Dyestuff, RSCupdate(fm0, Yield))
-#' fm0@@theta[] <- 0.782
-#' with(Dyestuff, RSCupdate(fm0, Yield))
-#' str(fm0)
-#' fm0@A
-#' as(fm0@A@factors[[1]], "sparseMatrix")
-#' @export
-RSCupdate <- function(pred, resid) .Call(lme4_RSCupdate, pred, resid)
+# Update for the penalized least squares problem
+#' @importFrom stats update
+#' @S3method update RSC
+update.RSC <- function(object, ...) {
+    dots <- list(...)
+    weights <- dots$weights
+    resid <- dots$resid
+    if (is.null(resid)) stop("resid must be specified in RSC update")
+    resid <- as.vector(as.numeric(resid))
+    if (is.null(weights)) weights <- rep.int(1, length(resid))
+    .Call(lme4_RSCupdate, object, resid, weights)
+}
 
 ##' @importFrom stats fitted
 ##' @S3method fitted RSC
 fitted.RSC <- function(pred) .Call(lme4_RSCfitted, pred)
+
+#' @export
+RSCdevfun <- function(object, resp) {
+    function(theta) {
+        object@theta[] <- theta
+        rr <- update(object, resid = resp)
+        wrss <- sum((rr$linpred - resp)^2)
+        ubeta <- rr$del_ubeta           # increment is coefficient vector for LMMs
+        qpp <- length(ubeta)
+        n <- length(resp)
+        p <- nrow(object@x) - nrow(object@i)
+        ussq <- sum(ubeta[seq_len(length(ubeta) - p)]^2)
+        rr[["ldL2"]] + n * (1 + log(2 * pi * (wrss + ussq)/n))
+    }
+}

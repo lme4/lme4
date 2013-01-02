@@ -832,9 +832,9 @@ extern "C" {
         END_RCPP;
     }
 
-    SEXP lme4_RSCupdate(SEXP obj, SEXP resid) {
+    SEXP lme4_RSCupdate(SEXP obj, SEXP resid, SEXP weights) {
         BEGIN_RCPP;
-        return RSC(S4(obj)).update_A(NumericVector(resid));
+        return RSC(S4(obj)).update_A(NumericVector(resid), NumericVector(weights));
         END_RCPP;
     }
 
@@ -909,7 +909,7 @@ static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(lm_updateMu,        2), // method
 
-    CALLDEF(lme4_RSCupdate,     2),
+    CALLDEF(lme4_RSCupdate,     3),
 
     CALLDEF(lme4_RSCfitted,     1),
 
