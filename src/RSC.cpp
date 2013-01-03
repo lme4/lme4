@@ -36,7 +36,7 @@ namespace lme4 {
         if (dd[0] != d_qpp) stop("size of A must be q + p");
     }
 
-    NumericVector& RSC::apply_lambda(NumericVector &dest) const {
+    NumericVector& RSC::apply_lambda(NumericVector& dest, double wt) const {
         int dpos(-1);
         double *rr(0);          // initialize to NULL pointer
         for (int k = 0; k < d_kpp; ++k) {
@@ -46,11 +46,13 @@ namespace lme4 {
             }
             else dest[dpos] += d_theta[k] * *++rr;
         }
+	if (wt != 1.0) for (int k = 0; k < dest.size(); ++k) dest[k] *= wt;
         return dest;
     }
     
-    List RSC::update_A(const NumericVector &resid) {
+    List RSC::update_A(const NumericVector& resid, const NumericVector& weights) {
         if (resid.size() != d_n) stop("Dimension of resid should be n");
+        if (weights.size() != d_n) stop("Dimension of weights should be n");
         const IntegerVector &rowval(d_A4.slot("i")), &colptr(d_A4.slot("p"));
         NumericVector nzval(d_A4.slot("x"));
         NumericVector w(d_kpp);
@@ -65,7 +67,7 @@ namespace lme4 {
         }
         for (int j = 0; j < d_n; ++j)   { // iterate over columns of ZtXt
             std::copy(&d_x(0,j), &d_x(0,j) + d_kpp, w.begin());
-            apply_lambda(w);
+            apply_lambda(w, weights[j]);
             for (int i = 0; i < d_kpp; ++i) ZtXtr(rv(i,j),0) += resid[j] * w[i];
             // scan up j'th column of ZtXt (easier to evaluate A's upper triangle)
             for (int i = d_kpp - 1; i >= 0; --i) {
@@ -105,7 +107,7 @@ namespace lme4 {
             double *pt(&ans[j]);
             *pt = 0.;		// not sure this is necessary
             std::copy(&d_x(0,j), &d_x(0,j) + d_kpp, w.begin());
-            apply_lambda(w);
+            apply_lambda(w, 1.);
             for (int i = 0; i < d_kpp; ++i) *pt += w[i] * ub[rv(i,j)];
         }
         return ans;

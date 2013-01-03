@@ -19,7 +19,8 @@
   Create an RSC object from the formula and the model.frame
 }
 \examples{
-pred <- createRSC(fl=Dyestuff$Batch, x=matrix(1, nrow=2L, ncol=nrow(Dyestuff)))
-str(pred)
+fm1 <- lmer1(diameter ~ (1|plate) + (1|sample), Penicillin)
+str(fm1)
+with(Penicillin, RSCupdate(fm1, diameter))
 }
 
