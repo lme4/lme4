@@ -3,24 +3,24 @@ Fitting linear mixed-effects models using an RSC representation
 The development version of the `lme4` package on our [github repository](https://github.com/lme4/lme4) contains code for a new representation of mixed-effects models in which the random effects model matrix and the fixed-effects model matrix are represented as a dense integer matrix of size `k` by `n`, where `n` is the number of observations and `k` is the number of random effects per observation, and a dense numeric matrix of size `k+p` by `n`.  The property that makes the representation work is that `k` is constant.
 
 We also store the system matrix, `A`, for the normal equations in the penalized least squares (PLS) problem as a `"dsCMatrix"` object stored in the upper triangle and with at least one Cholesky factorization in its `factors` slot.
-
+```{r,echo=FALSE,results='hide'}
+suppressPackageStartupMessages(library(lme4))
+```
 The covariance parameter vector, `theta`, and, `lower`, the vector of lower bounds on the elements of `theta` are also stored in the object.
 
 As an example
-```{r}
-library(lme4)
-fm0 <- lmer1(Yield ~ 1|Batch, Dyestuff)
-str(fm0)
+```{r,cache=TRUE}
+str(fm0 <- lmer1(Yield ~ 1|Batch, Dyestuff))
 fm0@A   # the system matrix
 as(fm0@A@factors[[1]], "sparseMatrix") # and a Cholesky factor
 ```
 The matrix `i` is the 0-based indices of the `Batch` factor, stored as a matrix of one row
-```{r}
-opt <- options(width=120); ii <- fm0@i; colnames(ii) <- 1:ncol(ii); print(ii); options(opt)
+```{r,echo=FALSE,cache=TRUE}
+opt <- options(width=120); ii <- fm0@i; colnames(ii) <- 1:ncol(ii); print(ii); rm(ii)
 ```
 and the matrix `x` is a 2 by 30 matrix in which the first row is the transpose of the model matrix for the random effects term and the second row is the transpose of the fixed-effects model matrix.  In this case, both model matrices are matrices of 1's.
-```{r}
-opt <- options(width=120); xx <- fm0@x; colnames(xx) <- 1:ncol(xx); print(xx); options(opt)
+```{r,echo=FALSE,cache=TRUE}
+xx <- fm0@x; colnames(xx) <- 1:ncol(xx); print(xx); rm(xx)
 ```
 
 To evaluate the profiled deviance or REML criterion, which is a function of `theta` only, we insert a new value of `theta` and call `RSCupdate`.  The first argument to `RSCupdate` is the RSC object itself and the second is the current residual.  In the case of a linear mixed-effects model where the solution to the penalized least squares problem does not require iteration, this "residual" is, in fact, the response vector.  (John Tukey once stated that you could regard the data as the "0'th residuals", i.e. the residuals from the null model in which all fitted values are zero.)
@@ -31,7 +31,6 @@ fm1 <- lmer(Yield ~ 1|Batch, Dyestuff, REML=FALSE)
 fm0@theta[] <- getME(fm1, "theta")  # I think this avoids copying the object fm0
 str(rr <- RSCupdate(fm0, Dyestuff$Yield))
 ```
-
 The update operation has updated `A` and its factor in place (which violates the functional language semantics of R because this function modifies an argument).
 ```{r}
 fm0@A
@@ -52,4 +51,39 @@ unlist(rr[c("ldL2","ldRX2")])
 sum((Dyestuff$Yield - rr$linpred)^2)  # wrss
 sum((rr$del_ubeta[1:6])^2)  # ussq
 ```
+
+Models with two or more simple, scalar random-effects terms, which are terms of the form `(1|Fac)`, create an `x` array with rows or 1's for each term, corresponding to the left hand side of the r.e. term expression.  The `i` array is the 0-based indices for each of the grouping factors, the second being offset by the number of levels of the first, the third being offset by the number of levels of the first and second combined, etc.
+```{r}
+fm2 <- lmer1(diameter ~ (1|plate) + (1|sample), Penicillin)
+```
+
+The first 25 columns of the `i` and `x` slots for the RSC object `fm2` are:
+```{r,echo=FALSE,cache=TRUE}
+ii <- fm2@i[,1:25]; colnames(ii) <- seq_len(ncol(ii)); print(ii); rm(ii)
+xx <- fm2@x[,1:25]; colnames(xx) <- seq_len(ncol(xx)); print(xx); rm(xx)
+```
+```{r,cache=TRUE}
+fm3 <- lmer(diameter ~ (1|plate) + (1|sample), Penicillin, REML=FALSE)
+fm2@theta[] <- getME(fm3,"theta")
+rr <- RSCupdate(fm2, Penicillin$diameter)
+cbind(rr$del_ubeta[1:30], getME(fm3,"u"))
+c(fm2=rr$del_ubeta[31,1], fm3=getME(fm3,"beta"))
+all.equal(rr$linpred, as.vector(fitted(fm3)))
+```
+
+At present the order of the `u` form of the random-effects in models with nested grouping factors is different in the RSC representation and in the merMod representation.  This will change once I work out how to use post-ordering on the Cholesky factor.
+```{r,cache=TRUE}
+fm4 <- lmer1(strength ~ (1|sample) + (1|batch), Pastes)
+```
+```{r,echo=FALSE,cache=TRUE}
+ii <- fm4@i[,1:20]; colnames(ii) <- seq_len(ncol(ii)); print(ii); rm(ii)
+xx <- fm4@x[,1:25]; colnames(xx) <- seq_len(ncol(xx)); print(xx); rm(xx)
+```
+```{r,cache=TRUE}
+fm5 <- lmer(strength ~ (1|sample) + (1|batch), Pastes, REML=FALSE)
+fm4@theta[] <- getME(fm5,"theta")
+rr <- RSCupdate(fm4, Pastes$strength)
+all.equal(rr$linpred, as.vector(fitted(fm5)))
+```
+
 

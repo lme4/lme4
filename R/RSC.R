@@ -86,13 +86,17 @@ createRSC <- function(bb, X, fr) {
     if (any(dd <- duplicated(names(rhs)))) { # repeated grouping factors
         stop("Code not yet written")
     }
-    ## FIXME: adjust for any(nc > 1L) or change lapply(rhs, as.integer)
-    uboff <- cumsum(c(0L, nl, rep.int(1L, p))) # offsets into ubeta for rows of x
+    theta <- unlist(lapply(nc, function(n) {
+        if (n == 1L) return(1)
+        id <- diag(nrow=n)
+        id[lower.tri(id,diag=TRUE)]
+    }))
+    names(theta) <- NULL
+    lower <- ifelse(theta == 0, -Inf, 0)
+    uboff <- cumsum(c(0L, nl*nc, rep.int(1L, p))) # offsets into ubeta for rows of x
     ii <- do.call(rbind,c(lapply(rhs, as.integer),
                           list(matrix(1L,nrow=p,ncol=n)))) +
                               (uboff[seq_len(k+p)] - 1L)
-    theta <- rep.int(1, k)
-    lower <- numeric(k)
     A <- tcrossprod(sparseMatrix(i=as.vector(ii),
                                  j=rep(0:(nrow(X)-1L), each=nrow(x)),
                                  x=as.vector(x),
