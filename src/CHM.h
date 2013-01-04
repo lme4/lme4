@@ -73,7 +73,7 @@ extern "C" {
 
 
 namespace CHM {
-// add classes CsparseMatrix, gCMatrix, sCMatrix, tCMatrix, dgCMatrix, dsCMatrix, dtCMatrix
+// add classes CsparseMatrix, gCMatrix, sCMatrix, tCMatrix, dgCMatrix, dtCMatrix to dsCMatrix
     class dsCMatrix {
     protected:
         const Rcpp::IntegerVector d_Dim;
@@ -105,6 +105,8 @@ namespace CHM {
         Rcpp::NumericVector         Ldiag();
 
         void               update_factors();
+	void         scale_update_factors(const Rcpp::IntegerVector&,
+					  const Rcpp::NumericVector&);
 
         Rcpp::NumericMatrix solve(const Rcpp::NumericMatrix&, int) const;
     };

@@ -47,7 +47,11 @@ namespace lme4 {
         const Rcpp::IntegerVector&  uboff() const {return d_uboff;}
 
         Rcpp::NumericVector &apply_lambda(Rcpp::NumericVector&, double) const;
-        Rcpp::List               update_A(const Rcpp::NumericVector&, const Rcpp::NumericVector&);
+        Rcpp::List               update_A(const Rcpp::NumericVector&,
+					  const Rcpp::NumericVector&,
+					  const Rcpp::NumericVector&);
+        Rcpp::List         scale_update_A(const Rcpp::NumericVector&,
+					  const Rcpp::NumericMatrix&);
         Rcpp::NumericVector         Ldiag();
         Rcpp::NumericVector        fitted(const Rcpp::NumericVector&) const;
 

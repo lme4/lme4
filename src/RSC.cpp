@@ -50,7 +50,14 @@ namespace lme4 {
         return dest;
     }
     
-    List RSC::update_A(const NumericVector& resid, const NumericVector& weights) {
+    // This version reevaluates d_A from d_i, d_x and weights
+    List RSC::update_A(const NumericVector& theta,
+		       const NumericVector& resid,
+		       const NumericVector& weights) {
+	if (theta.size() != d_theta.size()) stop("Incorrect size of theta");
+	for (int i = 0; i < theta.size(); ++i)
+	    if (theta[i] < d_lower[i]) stop("theta violates lower bounds");
+	std::copy(theta.begin(), theta.end(), d_theta.begin());
         if (resid.size() != d_n) stop("Dimension of resid should be n");
         if (weights.size() != d_n) stop("Dimension of weights should be n");
         const IntegerVector &rowval(d_A4.slot("i")), &colptr(d_A4.slot("p"));
@@ -59,7 +66,6 @@ namespace lme4 {
         NumericMatrix ZtXtr(d_qpp, 1);
         // initializations
         std::fill(nzval.begin(), nzval.end(), double(0)); // zero the contents of A
-        std::fill(d_ubeta.begin(), d_ubeta.end(), double(0)); // and ubeta
         for (int i = 0; i < d_q; ++i) {  // initialize Z part of A to the identity
             int ll(colptr[i + 1] - 1); // index of last element in column i
             if (rowval[ll] != i) stop("A is not stored as the upper triangle");
@@ -88,6 +94,31 @@ namespace lme4 {
         double ldL2(0.), ldRX2(0.);
         for (int i = 0; i < d_q; ++i) ldL2 += std::log(ld[i] * ld[i]);
         for (int i = d_q; i < d_qpp; ++i) ldRX2 += std::log(ld[i] * ld[i]);
+        NumericVector sol(A.solve(ZtXtr, CHOLMOD_A));
+        return List::create(Named("ldL2", ldL2),
+                            Named("ldRX2", ldRX2),
+                            Named("del_ubeta", sol),
+                            Named("linpred", fitted(sol)));
+    }
+
+    // This version does not incorporate weights and updates the
+    // Cholesky factor by scaling a copy of d_A.
+    List RSC::scale_update_A(const NumericVector& theta,
+			     const NumericMatrix& ZtXtr) {
+	if (theta.size() != d_theta.size()) stop("Incorrect size of theta");
+	for (int i = 0; i < theta.size(); ++i) {
+	    if (d_lower[i] >= 0.) stop("Vector-valued random effects not allowed");
+	    if (theta[i] < 0.) stop("theta violates lower bounds");
+	}
+	std::copy(theta.begin(), theta.end(), d_theta.begin());
+	if (ZtXtr.nrow() != d_qpp) stop("Incorrect size for ZtXtr");
+        CHM::dsCMatrix A(d_A4);
+        A.scale_update_factors(d_uboff, theta);
+        NumericVector ld(A.Ldiag());
+        double ldL2(0.), ldRX2(0.);
+        for (int i = 0; i < d_q; ++i) ldL2 += std::log(ld[i] * ld[i]);
+        for (int i = d_q; i < d_qpp; ++i) ldRX2 += std::log(ld[i] * ld[i]);
+				// need to add scaling of ZtXtr here.
         NumericVector sol(A.solve(ZtXtr, CHOLMOD_A));
         return List::create(Named("ldL2", ldL2),
                             Named("ldRX2", ldRX2),

@@ -44,7 +44,9 @@ lmer1 <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
         stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
     if (!length(bb <- findbars(formula[[3]])))
         stop("No random effects terms specified in formula")
-    createRSC(bb, X, fr)
+    ff <- RSCdevfun(createRSC(bb, X, fr), model.response(fr))
+    if (devFunOnly) return(ff)
+    minqa:::bobyqa(get("object", env=environment(ff))@theta, ff, get("object", env=environment(ff))@lower)
 }
 
 #' Create an RSC object from the formula and the model.frame
@@ -109,14 +111,15 @@ createRSC <- function(bb, X, fr) {
 # Update for the penalized least squares problem
 #' @importFrom stats update
 #' @S3method update RSC
-update.RSC <- function(object, ...) {
-    dots <- list(...)
-    weights <- dots$weights
-    resid <- dots$resid
-    if (is.null(resid)) stop("resid must be specified in RSC update")
+update.RSC <- function(object, theta, resid, ...) {
+    theta <- as.vector(as.numeric(theta))
+    stopifnot(length(theta) == length(object@theta),
+              all(theta >= object@lower))
     resid <- as.vector(as.numeric(resid))
+    weights <- list(...)$weights
     if (is.null(weights)) weights <- rep.int(1, length(resid))
-    .Call(lme4_RSCupdate, object, resid, weights)
+    stopifnot(length(weights <- as.vector(as.numeric(weights))) == length(resid))
+    .Call(lme4_RSCupdate, object, theta, resid, weights)
 }
 
 ##' @importFrom stats fitted
@@ -126,10 +129,9 @@ fitted.RSC <- function(pred) .Call(lme4_RSCfitted, pred)
 #' @export
 RSCdevfun <- function(object, resp) {
     function(theta) {
-        object@theta[] <- theta
-        rr <- update(object, resid = resp)
+        rr <- update(object, theta, resp)
         wrss <- sum((rr$linpred - resp)^2)
-        ubeta <- rr$del_ubeta           # increment is coefficient vector for LMMs
+        ubeta <- rr$del_ubeta # del_ubeta is the actual coefficient vector for LMMs
         qpp <- length(ubeta)
         n <- length(resp)
         p <- nrow(object@x) - nrow(object@i)

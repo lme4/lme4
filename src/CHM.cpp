@@ -434,6 +434,46 @@ namespace CHM {
         delete cm;
     }
    
+    void dsCMatrix::scale_update_factors(const IntegerVector& uboff, const NumericVector& th) {
+        cholmod_common* cm = new cholmod_common;
+        if (!cholmod_start(cm)) stop("call to cholmod_start failed");
+        cm->final_asis = 0; 
+        cm->final_monotonic = 1; cm->final_pack = 1;
+	CHM_DN scale = cholmod_allocate_dense(nrow(), 1, nrow(), CHOLMOD_REAL, cm);
+	double *sc = (double*)scale->x;
+	for (int j = 0; j < th.size(); ++j)
+	    for (int  i = uboff[j]; i < uboff[j + 1]; ++i) sc[i] = th[j];
+	for (int i = uboff[th.size()]; i < uboff[uboff.size()]; ++i) sc[i] = 1.;
+	CHM_SP Acp = cholmod_copy_sparse(d_sp, cm);
+	if (!cholmod_scale(scale, CHOLMOD_SYM, Acp, cm)) stop("call to cholmod_scale failed");
+        if (!cholmod_free_dense(&scale, cm)) stop("failure in cholmod_free_dense");
+
+	int *colptr = (int*)Acp->p;
+	int *rowval = (int*)Acp->i;
+	double *nzval = (double*)Acp->x;
+        for (int i = 0; i < uboff[th.size()]; ++i) { // inflate the Z part of the diagonal of Acp
+            int ll(colptr[i + 1] - 1); // index of last element in column i
+            if (rowval[ll] != i) stop("A is not stored as the upper triangle");
+            nzval[ll]++;
+        }
+        for (int i = 0; i < d_factors.size(); ++i) {
+            S4 faci = d_factors[i];
+            if (!faci.is("CHMfactor")) continue;
+            if (faci.is("dCHMsimpl")) {
+                CHM::dCHMsimpl ff(faci);
+                cm->final_ll = ff.is_ll();
+                if (!cholmod_factorize(Acp, ff.frp(), cm))
+                    stop("failure in cholmod_factorize");
+            } else if (faci.is("dCHMsuper")) {
+                CHM::dCHMsuper ff(faci);
+                if (!cholmod_factorize(Acp, ff.frp(), cm))
+                    stop("failure in cholmod_factorize");
+            } else Rf_warning("A@factors contains a CHMfactor that is neither \"dCHMsimpl\" nor \"dCHMsuper\"");
+        }
+        if (!cholmod_free_sparse(&Acp, cm)) stop("failure in cholmod_free_sparse");
+        delete cm;
+    }
+   
     NumericMatrix dsCMatrix::solve(const NumericMatrix& b, int which) const {
         if (!n_factors()) stop("dsCMatrix::solve requires n_factors() > 0");
         S4 f0(d_factors[0]);
