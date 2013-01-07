@@ -27,9 +27,9 @@ namespace lme4 {
           d_p(d_kpp - d_k),
           d_qpp(d_ubeta.size()),
           d_q(d_qpp - d_p) {
-	Rcout << "k = " << d_k << ", kpp = " << d_kpp << ", n = " << d_n
-	      << ", p = " << d_p << ", qpp = " << d_qpp << ", p = " << d_p
-	      << std::endl;
+//	Rcout << "k = " << d_k << ", kpp = " << d_kpp << ", n = " << d_n
+//	      << ", p = " << d_p << ", qpp = " << d_qpp << ", p = " << d_p
+//	      << std::endl;
         if (d_k != std::count_if(d_lower.begin(), d_lower.end(), ::R_finite))
             stop("number of finite elements in lower does not match nrow(i)");
         const IntegerVector dd(d_A4.slot("Dim"));

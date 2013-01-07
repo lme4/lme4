@@ -46,7 +46,11 @@ lmer1 <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
         stop("No random effects terms specified in formula")
     ff <- RSCdevfun(createRSC(bb, X, fr), model.response(fr))
     if (devFunOnly) return(ff)
-    minqa:::bobyqa(get("object", env=environment(ff))@theta, ff, get("object", env=environment(ff))@lower)
+    opt <- minqa:::bobyqa(get("object", env=environment(ff))@theta, ff, get("object", env=environment(ff))@lower)
+    obj <- get("object", environment(ff))
+    rr <- .Call(lme4_RSCupdate, obj, opt$par, get("resp", environment(ff)), rep.int(1, nrow(X)))
+    obj@ubeta[] <- rr$del_ubeta
+    obj
 }
 
 #' Create an RSC object from the formula and the model.frame
@@ -126,7 +130,6 @@ update.RSC <- function(object, theta, resid, ...) {
 ##' @S3method fitted RSC
 fitted.RSC <- function(pred) .Call(lme4_RSCfitted, pred)
 
-#' @export
 RSCdevfun <- function(object, resp) {
     function(theta) {
         rr <- update(object, theta, resp)

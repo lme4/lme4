@@ -28,8 +28,7 @@ To evaluate the profiled deviance or REML criterion, which is a function of `the
 For an appropriate value of `theta` we fit the model using the existing `lmer`
 ```{r}
 fm1 <- lmer(Yield ~ 1|Batch, Dyestuff, REML=FALSE)
-fm0@theta[] <- getME(fm1, "theta")  # I think this avoids copying the object fm0
-str(rr <- RSCupdate(fm0, Dyestuff$Yield))
+str(rr <- update(fm0, getME(fm1, "theta"), Dyestuff$Yield))
 ```
 The update operation has updated `A` and its factor in place (which violates the functional language semantics of R because this function modifies an argument).
 ```{r}
@@ -64,8 +63,7 @@ xx <- fm2@x[,1:25]; colnames(xx) <- seq_len(ncol(xx)); print(xx); rm(xx)
 ```
 ```{r,cache=TRUE}
 fm3 <- lmer(diameter ~ (1|plate) + (1|sample), Penicillin, REML=FALSE)
-fm2@theta[] <- getME(fm3,"theta")
-rr <- RSCupdate(fm2, Penicillin$diameter)
+rr <- update(fm2, getME(fm3,"theta"), Penicillin$diameter)
 cbind(rr$del_ubeta[1:30], getME(fm3,"u"))
 c(fm2=rr$del_ubeta[31,1], fm3=getME(fm3,"beta"))
 all.equal(rr$linpred, as.vector(fitted(fm3)))
@@ -81,8 +79,7 @@ xx <- fm4@x[,1:25]; colnames(xx) <- seq_len(ncol(xx)); print(xx); rm(xx)
 ```
 ```{r,cache=TRUE}
 fm5 <- lmer(strength ~ (1|sample) + (1|batch), Pastes, REML=FALSE)
-fm4@theta[] <- getME(fm5,"theta")
-rr <- RSCupdate(fm4, Pastes$strength)
+rr <- update(fm4, getME(fm5,"theta"), Pastes$strength)
 all.equal(rr$linpred, as.vector(fitted(fm5)))
 ```
 
