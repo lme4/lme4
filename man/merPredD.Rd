@@ -1,9 +1,6 @@
 \name{merPredD}
 \alias{merPredD}
 \title{Generator object for the \code{\linkS4class{merPredD}} class}
-\usage{
-  merPredD(...)
-}
 \arguments{
   \item{X}{dense model matrix for the fixed-effects
   parameters, to be stored in the \code{X} field.}

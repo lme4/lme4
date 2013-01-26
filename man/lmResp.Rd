@@ -4,9 +4,6 @@
 \alias{lmResp}
 \alias{nlsResp}
 \title{Generator objects for the response classes}
-\usage{
-  lmResp(...)
-}
 \arguments{
   \item{y}{the numeric response vector}
 

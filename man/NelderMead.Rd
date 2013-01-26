@@ -1,9 +1,6 @@
 \name{NelderMead}
 \alias{NelderMead}
 \title{Generator object for the Nelder-Mead optimizer class.}
-\usage{
-  NelderMead(...)
-}
 \arguments{
   \item{lower}{numeric vector of lower bounds - elements
   may be \code{-Inf}.}
