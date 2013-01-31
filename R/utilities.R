@@ -484,18 +484,20 @@ nlformula <- function(mc) {
     list(respMod=respMod, frame=fr, X=X, reTrms=reTrms, pnames=pnames)
 }
 
-## Create an object in a subclass of \code{\linkS4class{merMod}}
-## from the environment of the objective function and the value
-## returned by the optimizer.
-##
-## @title Create a merMod object
-## @param rho the environment of the objective function
-## @param opt the value returned by the optimizer
-## @param reTrms reTrms list from the calling function
-## @param fr model frame
-## @param mc matched call from the calling function
-## @return an object from a class that inherits from \code{\linkS4class{merMod}}
+##' Create an object in a subclass of \code{\linkS4class{merMod}}
+##' from the environment of the objective function and the value
+##' returned by the optimizer.
+##'
+##' @title Create a merMod object
+##' @param rho the environment of the objective function
+##' @param opt the value returned by the optimizer
+##' @param reTrms reTrms list from the calling function
+##' @param fr model frame
+##' @param mc matched call from the calling function
+##' @return an object from a class that inherits from \code{\linkS4class{merMod}}
+##' @export
 mkMerMod <- function(rho, opt, reTrms, fr, mc) {
+    if(missing(mc)) mc <- match.call()
     stopifnot(is.environment(rho),
               is(pp <- rho$pp, "merPredD"),
               is(resp <- rho$resp, "lmResp"),

@@ -59,4 +59,5 @@ Collate:
     'mcmcsamp.R'
     'plot.R'
     'vcconv.R'
+    'modular.R'
 BuildVignettes: no
