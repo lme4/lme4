@@ -5,6 +5,7 @@ pDIR <- switch((U <- Sys.getenv("USER")),
                "maechler" = "~/R/Pkgs",
                "bates"    = "~/gitR",
                "bolker"   = "~/R/pkgs/lme4git",
+               "stevenwalker" = "~/Development/lme4git",
                ## default:
            {  p <- "/tmp"
               warning("unknown USER ", U,". -- using pDIR=",p,

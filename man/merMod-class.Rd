@@ -13,16 +13,16 @@
 \alias{model.matrix.merMod}
 \alias{nlmerMod-class}
 \alias{print.merMod}
-\alias{print.summary.mer}
-\alias{show.merMod}
+\alias{print.summary.merMod}
 \alias{show,merMod-method}
-\alias{show.summary.mer}
+\alias{show.merMod}
+\alias{show.summary.merMod}
 \alias{summary.merMod}
-\alias{summary.summary.mer}
+\alias{summary.summary.merMod}
 \alias{terms.merMod}
 \alias{update.merMod}
 \alias{vcov.merMod}
-\alias{vcov.summary.mer}
+\alias{vcov.summary.merMod}
 \title{Class "merMod" of Fitted Mixed-Effect Models}
 \description{
   A mixed-effects model represented as a

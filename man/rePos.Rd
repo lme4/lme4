@@ -1,9 +1,6 @@
 \name{rePos}
 \alias{rePos}
 \title{Generator object for the rePos (random-effects positions) class}
-\usage{
-  rePos(...)
-}
 \arguments{
   \item{mer}{an object of class
   \code{"\linkS4class{merMod}"}}

@@ -1,9 +1,6 @@
 \name{golden}
 \alias{golden}
 \title{Generator object for the golden search optimizer class.}
-\usage{
-  golden(...)
-}
 \arguments{
   \item{lower}{lower bound for the scalar parameter - must
   be finite.}
