@@ -27,5 +27,11 @@ test_that("glmer", {
     expect_that(Zt@x,                                   equals(rep.int(1, 56L)))
     expect_that(Lambdat <- getME(gm1, "Lambdat"),       is_a("dgCMatrix"))
     expect_that(as(Lambdat, "matrix"),                  is_equivalent_to(diag(theta, 15L, 15L)))
+    expect_error(gm2 <- glmer2(cbind(incidence, size - incidence) ~ period + (1 | herd),
+                             data = subset(cbpp, herd==levels(herd)[1]), family = binomial),
+                 "must have at least 1")
+    expect_warning(gm2 <- glmer2(cbind(incidence, size - incidence) ~ period + (1 | herd),
+                             data = subset(cbpp, herd %in% levels(herd)[1:4]), family = binomial),
+                   "fewer than 5")
 })
 
