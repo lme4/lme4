@@ -35,7 +35,7 @@ lmList <- function(formula, data, family, subset, weights,
     mf <- mf[c(1, m)]
     ## substitute `+' for `|' in the formula
 ### FIXME: Figure out what to do here instead of subbars
-                                        #          mf$formula <- subbars(formula) 
+    ##          mf$formula <- subbars(formula) 
     mf$x <- mf$model <- mf$y <- mf$family <- NULL
     mf$drop.unused.levels <- TRUE
     mf[[1]] <- as.name("model.frame")
@@ -48,7 +48,10 @@ lmList <- function(formula, data, family, subset, weights,
                       ans <- try({
                           data <- as.data.frame(dat)
                           lm(formula, data)
-                      })
+                      },silent=TRUE)
+                      ## FIXME: catch errors and pass them on as warnings?
+                      ## (simply passing them along with silent=FALSE
+                      ##  gives confusing output)
                       if (inherits(ans, "try-error"))
                           NULL
                       else ans
@@ -74,6 +77,8 @@ lmList <- function(formula, data, family, subset, weights,
 ##' @S3method coef lmList
 ## Extract the coefficients and form a  data.frame if possible
 ## FIXME: commented out nlme stuff (augFrame etc.).  Restore, or delete for good
+## FIXME: modified so that non-estimated values will be NA rather than set to
+##        coefs of first non-null estimate.  Is that OK??
 coef.lmList <- function(object,
                         ## augFrame = FALSE, data = NULL,
                         ##which = NULL, FUN = mean, omitGroupingFactor = TRUE,
@@ -82,14 +87,15 @@ coef.lmList <- function(object,
     non.null <- !unlist(lapply(coefs, is.null))
     if (sum(non.null) > 0) {
         template <- coefs[non.null][[1]]
+        ## different parameter sets may be estimated for different subsets of data ...
+        allnames <- Reduce(union,lapply(coefs[non.null],names))
         if (is.numeric(template)) {
-            co <- matrix(template,
-                         ncol = length(template),
+            co <- matrix(NA,
+                         ncol = length(allnames),
                          nrow = length(coefs),
-                         byrow = TRUE,
-                         dimnames = list(names(object), names(template)))
+                         dimnames = list(names(object), allnames))
             for (i in names(object)) {
-                co[i,] <- if (is.null(coefs[[i]])) { NA } else coefs[[i]]
+                co[i,names(coefs[[i]])] <- coefs[[i]]
             }
             coefs <- as.data.frame(co)
             effectNames <- names(coefs)
@@ -119,8 +125,8 @@ coef.lmList <- function(object,
             attr(coefs, "label") <- "Coefficients"
             attr(coefs, "effectNames") <- effectNames
             attr(coefs, "standardized") <- FALSE
-        }
-    }
+        } ## is.numeric(template)
+    } ## sum(non.null)>0
     coefs
 }
 

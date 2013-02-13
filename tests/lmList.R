@@ -22,6 +22,32 @@ confint(fm1)
 fm2 <- lmList(y2 ~ 1 | g, data=d, family=binomial)
 confint(fm2)
 
-## FIXME: methods(class="lmList") shows a bunch of methods inherited from nlme
-##    that will probably fail ... is there a way to hide these/not import them?
 
+fm3 <- lmList(cbind(incidence, size - incidence) ~ period|herd,
+             family=binomial, data=cbpp)
+coef(fm3)
+
+## this is a slightly odd example because the residual df from
+##  these fits are in fact zero ...  so pooled.SD fails, as it should
+
+## FIXME: methods(class="lmList") shows lots of methods inherited from nlme
+##    that will probably fail ...
+##  hide/fix these?
+
+## library(reshape2)
+## library(ggplot2)
+## ggplot(melt(as.matrix(coef(fm3))),
+##       aes(value,Var2,colour=factor(Var1)))+
+##    geom_point()+
+##       geom_path(aes(group=factor(Var1)))
+       
+
+if (FALSE) {
+    for (i in c(unclass(methods(class="lmList")))) {
+        method <- gsub("\\.lmList","",i)
+        cat(method,"\n")
+        ## do.call(,fm3)
+        ## argh; do.call("coef",fm3) and coef(fm3) behave differently
+        try(eval(parse(text=paste0(method,"(fm3)"))))
+    }
+}    
