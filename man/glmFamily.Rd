@@ -1,8 +1,11 @@
 \name{glmFamily}
 \alias{glmFamily}
 \title{Generator object for the \code{\linkS4class{glmFamily}} class}
+\usage{
+  glmFamily(...)
+}
 \arguments{
-  \item{family}{a \code{\link{family}} object}
+  \item{...}{Named argument (see Note below)}
 }
 \description{
   The generator object for the

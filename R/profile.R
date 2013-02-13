@@ -559,6 +559,7 @@ confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
 ##' according to \code{boot.type} (see \code{\link{boot.ci}})
 ##' @importFrom stats confint
 ##' @S3method confint merMod
+##' @method confint merMod
 confint.merMod <- function(object, parm, level = 0.95,
 			   method=c("profile","Wald","boot"),
 			   zeta, nsim=500, boot.type="perc",

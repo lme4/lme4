@@ -2,7 +2,7 @@
 \alias{confint.merMod}
 \title{Compute confidence intervals on the parameters of an lme4 fit}
 \usage{
-  confint.merMod(object, parm, level = 0.95,
+  \method{confint}{merMod} (object, parm, level = 0.95,
     method = c("profile", "Wald", "boot"), zeta,
     nsim = 500, boot.type = "perc", quiet = FALSE, ...)
 }

@@ -1,9 +1,11 @@
 \name{rePos}
 \alias{rePos}
 \title{Generator object for the rePos (random-effects positions) class}
+\usage{
+  rePos(...)
+}
 \arguments{
-  \item{mer}{an object of class
-  \code{"\linkS4class{merMod}"}}
+  \item{\dots}{Argument list (see Note).}
 }
 \description{
   The generator object for the \code{\linkS4class{rePos}}
@@ -13,7 +15,9 @@
 }
 \note{
   Arguments to the \code{new} methods must be named
-  arguments.
+  arguments. \code{mer}, an object of class
+  \code{"\linkS4class{merMod}"}, is the only
+  required/expected argument.
 }
 \section{Methods}{
   \describe{ \item{\code{new(mer=mer)}}{Create a new

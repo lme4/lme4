@@ -1,8 +1,14 @@
 \name{lmer}
 \alias{lmer}
+\alias{lmer2}
 \title{Fit Linear Mixed-Effects Models}
 \usage{
   lmer(formula, data = NULL, REML = TRUE, sparseX = FALSE,
+    control = list(), start = NULL, verbose = 0L, subset,
+    weights, na.action, offset, contrasts = NULL,
+    devFunOnly = FALSE, optimizer = "Nelder_Mead", ...)
+
+  lmer2(formula, data = NULL, REML = TRUE, sparseX = FALSE,
     control = list(), start = NULL, verbose = 0L, subset,
     weights, na.action, offset, contrasts = NULL,
     devFunOnly = FALSE, optimizer = "Nelder_Mead", ...)
