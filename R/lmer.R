@@ -1614,8 +1614,8 @@ print.merMod <- printMerenv
 ##' @exportMethod show
 setMethod("show",  "merMod", function(object) printMerenv(object))
 
-##' @S3method print summary.mer
-print.summary.mer <- printMerenv
+##' @S3method print summary.merMod
+print.summary.merMod <- printMerenv
 
 ##' Return the deviance component list
 ##'
@@ -1815,8 +1815,8 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object), ...)
 	   correlation=correlation, ...)
 
 ##' @importFrom stats vcov
-##' @S3method vcov summary.mer
-vcov.summary.mer <- function(object, correlation = TRUE, ...) {
+##' @S3method vcov summary.merMod
+vcov.summary.merMod <- function(object, correlation = TRUE, ...) {
     if(is.null(object$vcov)) stop("logic error in summary of merMod object")
     object$vcov
 }
@@ -1879,6 +1879,7 @@ mkVarCorr <- function(sc, cnms, nc, theta, nms) {
 ##' @export
 VarCorr.merMod <- function(x, sigma, rdig)# <- 3 args from nlme
 {
+  ## FIXME:: would like to fix nlme to add ...
   ## FIXME:: add type=c("varcov","sdcorr","logs" ?)
     if (is.null(cnms <- x@cnms))
 	stop("VarCorr methods require reTrms, not just reModule")
@@ -1996,11 +1997,11 @@ summary.merMod <- function(object, ...)
 		   vcov=vcov(object, correlation=TRUE, sigm=sig),
 		   varcor=varcor, # and use formatVC(.) for printing.
 		   AICtab=AICstats, call=object@call
-		   ), class = "summary.mer")
+		   ), class = "summary.merMod")
 }
 
-##' @S3method summary summary.mer
-summary.summary.mer <- function(object, varcov = FALSE, ...) {
+##' @S3method summary summary.merMod
+summary.summary.merMod <- function(object, varcov = FALSE, ...) {
     if(varcov && is.null(object$vcov))
 	object$vcov <- vcov(object, correlation=TRUE, sigm = object$sigma)
     object

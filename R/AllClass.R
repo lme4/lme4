@@ -887,8 +887,8 @@ NULL
 ##' model.frame.merMod model.matrix.merMod print.merMod
 ##' show.merMod summary.merMod
 ##' terms.merMod update.merMod 
-##' vcov.merMod print.summary.mer show.summary.mer
-##' summary.summary.mer vcov.summary.mer
+##' vcov.merMod print.summary.merMod show.summary.merMod
+##' summary.summary.merMod vcov.summary.merMod
 ##' @docType class
 ##' @section Objects from the Class: Objects are created by calls to
 ##' \code{\link{lmer}}, \code{\link{glmer}} or \code{\link{nlmer}}.
