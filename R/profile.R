@@ -4,14 +4,12 @@
 ##' profiling (fitted) mixed effect models.
 ##'
 ##'
-##' 
-##'
 ##' @name profile-methods
 ##' @title Profile method for merMod objects
 ##' @aliases profile-methods profile.merMod
 ##' @docType methods
 ##' @param fitted a fitted model, e.g., the result of \code{\link{lmer}(..)}.
-##' @param which (integer) which parameters to profile: default is all parameters. The parameters are ordered as follows: (1) random effects (theta) parameters; (2) residual standard deviation (or scale parameter for GLMMs where appropriate); (3) fixed effect parameters.  Random effects parameters are ordered as in \code{getME(.,"theta")}, i.e. as the lower triangle of a matrix with standard deviations on the diagonal and correlations off the diagonal.
+##' @param which (integer) which parameters to profile: default is all parameters. The parameters are ordered as follows: (1) random effects (theta) parameters; (2) residual standard deviation (or scale parameter for GLMMs where appropriate); (3) fixed effect parameters.  Random effects parameters are ordered as in \code{getME(.,"theta")}, i.e. as the lower triangle of a matrix with standard deviations on the diagonal and correlations off the diagonal. FIXME: allow parameter names.
 ##' @param alphamax maximum alpha value for likelihood ratio confidence regions; used to establish the range of values to be profiled
 ##' @param maxpts maximum number of points (in each direction, for each parameter) to evaluate in attempting to construct the profile
 ##' @param delta stepping scale for deciding on next point to profile
@@ -537,33 +535,91 @@ confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
 
 ## FIXME: make bootMer more robust; make profiling more robust;
 ## more warnings; documentation ...
-## --> then @export  (we have "surprising arguments")
 
+##' Compute confidence intervals on the parameters of an lme4 fit
+##' @param object a fitted [ng]lmer model
+##' @param parm parameters (specified by integer position)
+##' @param level confidence level
+##' @param method for computing confidence intervals
+##' @param zeta likelihood cutoff 
+##' (if not specified, computed from \code{level}: "profile" only)
+##' @param nsim number of simulations for parametric bootstrap intervals
+##' @param boot.type bootstrap confidence interval type
+##' @param quiet (logical) suppress messages about computationally intensive profiling?
+##' @param \dots additional parameters to be passed to  \code{\link{profile.merMod}}
+##' @return a numeric table of confidence intervals
+
+##' @details Depending on the method specified, this function will
+##' compute confidence intervals by ("profile") computing a likelihood profile
+##' and finding the appropriate cutoffs based on the likelihood ratio test;
+##' ("Wald") approximate the confidence intervals (of fixed-effect parameters
+##' only) based on the estimated local curvature of the likelihood surface;
+##' ("boot") perform parametric bootstrapping
+##' with confidence intervals computed from the bootstrap distribution
+##' according to \code{boot.type} (see \code{\link{boot.ci}})
 ##' @importFrom stats confint
 ##' @S3method confint merMod
 confint.merMod <- function(object, parm, level = 0.95,
-			   method=c("profile","quadratic","bootMer"),
-			   zeta, nsim=500, boot.type="perc", ...)
+			   method=c("profile","Wald","boot"),
+			   zeta, nsim=500, boot.type="perc",
+                           quiet=FALSE, ...)
 {
     method <- match.arg(method)
     switch(method,
 	   "profile" =
        {
-	   pp <- if(missing(parm)) profile(object) else profile(object, which=parm)
-	   confint(pp,level=level,zeta=zeta,...)
+           if (!missing(parm) && !is.numeric(parm))
+               stop("for method='profile', 'parm' must be specified as an integer")
+           message("Computing profile confidence intervals ...")
+           utils::flush.console()
+	   pp <- if(missing(parm)) profile(object, ...) else profile(object, which=parm, ...)
+	   confint(pp,level=level,zeta=zeta)
        },
-	   "quadratic" =
+	   "Wald" =
        {
-	   stop("stub")
-	   ## only give confidence intervals on fixed effects?
-	   ## or warn??
-       },
-	   "bootMer" =
+        ## copied with small changes from confint.default
+        cf <- fixef(object)   ## coef() -> fixef()
+        pnames <- names(cf)
+        if (missing(parm)) 
+          parm <- pnames
+        else if (is.numeric(parm)) 
+          parm <- pnames[parm]
+        ## n.b. can't use sqrt(...)[parm] (diag() loses names)
+        a <- (1 - level)/2
+        a <- c(a, 1 - a)
+        pct <- stats:::format.perc(a, 3)
+        fac <- qnorm(a)
+        ci <- array(NA, dim = c(length(parm), 2L), dimnames = list(parm, 
+                                                                    pct))
+        sdiag <- function(x) if (length(x)==1) c(x) else diag(x)
+        ses <- sqrt(sdiag(vcov(object)[parm,parm]))
+        ci[] <- cf[parm] + ses %o% fac
+        ci
+        ## only gives confidence intervals on fixed effects ...
+    },
+	   "boot" =
        {
 	   message("Computing bootstrap confidence intervals ...")
-	   bb <- bootMer(object, fixef, nsim=nsim)
-	   boot::boot.ci(bb,type=boot.type,conf=level)
-       })
+           utils::flush.console()
+           ## FIXME: implement parameters (sigma, resid std err, fixef)
+           ## generally clean up this hack!
+	   bb <- bootMer(object, function(x) c(getME(x,"theta"),fixef(x)), nsim=nsim)
+           bci <- lapply(seq_along(bb$t0),
+                         boot.out=bb,
+                         boot::boot.ci,type=boot.type,conf=level)
+           citab <- t(sapply(bci,function(x) x[["percent"]][4:5]))
+           a <- (1 - level)/2
+           a <- c(a, 1 - a)
+           pct <- stats:::format.perc(a, 3)
+           dimnames(citab) <- list(names(bb[["t0"]]),pct)
+           pnames <- rownames(citab)
+           if (missing(parm)) 
+               parm <- pnames
+           else if (is.numeric(parm)) 
+               parm <- pnames[parm]
+           citab[parm,]
+       },
+           stop("unknown confidence interval method"))
 }
 
 ## Convert x-cosine and y-cosine to average and difference.
