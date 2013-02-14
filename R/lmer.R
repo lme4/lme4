@@ -1660,6 +1660,7 @@ setMethod("getL", "merMod", function(x) {
 ##'     \item{X}{fixed-effects model matrix}
 ##'     \item{Z}{random-effects model matrix}
 ##'     \item{Zt}{transpose of random-effects model matrix}
+##'     \item{y}{response vector}
 ##'     \item{u}{conditional mode of the \dQuote{spherical} random effects variable}
 ##'     \item{Gp}{groups pointer vector.  A pointer to the beginning of each group
 ##'               of random effects corresponding to the random-effects terms.}
@@ -1713,7 +1714,7 @@ setMethod("getL", "merMod", function(x) {
 ##'
 ##' @export
 getME <- function(object,
-		  name = c("X", "Z","Zt", "u",
+		  name = c("X", "Z","Zt", "y", "u",
 		  "Gp",
 		  "L", "Lambda", "Lambdat", "Lind", "A",
 		  "RX", "RZX",
@@ -1735,14 +1736,15 @@ getME <- function(object,
 	   "X" = PR$X, ## ok ? - check -- use model.matrix() method instead?
 	   "Z" = t(PR$Zt),
 	   "Zt"= PR$Zt,
+     "y" = rsp$y,
            "u" = object@u,
 	   "L"= PR$ L(),
 	   "Lambda"= t(PR$ Lambdat),
 	   "Lambdat"= PR$ Lambdat,
            "A" = PR$Lambdat %*% PR$Zt,
            "Lind" = PR$ Lind,
-	   "RX" = PR $ RX(), ## FIXME - add the column names and row names, either in the C++ or the R method
-	   "RZX" = PR $ RZX, ## FIXME - add column names
+	   "RX" = structure(PR$RX(), dimnames = list(colnames(PR$X), colnames(PR$X))), ## FIXME - add the column names and row names, either in the C++ or the R method
+	   "RZX" = structure(PR$RZX, dimnames = list(NULL, colnames(PR$X))), ## FIXME - add column names
 
            "Gp" = object@Gp,
            "flist" = object@flist,
