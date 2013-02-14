@@ -4,20 +4,11 @@
 \alias{lmResp}
 \alias{nlsResp}
 \title{Generator objects for the response classes}
+\usage{
+  lmResp(...)
+}
 \arguments{
-  \item{y}{the numeric response vector}
-
-  \item{family}{a \code{\link{family}} object}
-
-  \item{nlmod}{the nonlinear model function}
-
-  \item{nlenv}{an environment holding data objects for
-  evaluation of \code{nlmod}}
-
-  \item{pnames}{a character vector of parameter names}
-
-  \item{gam}{a numeric vector - the initial linear
-  predictor}
+  \item{...}{List of arguments (see Note).}
 }
 \description{
   The generator objects for the
@@ -30,7 +21,13 @@
 }
 \note{
   Arguments to the \code{new} methods must be named
-  arguments.
+  arguments. \itemize{ \item{y}{ the numeric response
+  vector} \item{family}{ a \code{\link{family}} object}
+  \item{nlmod}{ the nonlinear model function} \item{nlenv}{
+  an environment holding data objects for evaluation of
+  \code{nlmod}} \item{pnames}{ a character vector of
+  parameter names} \item{gam}{ a numeric vector - the
+  initial linear predictor} }
 }
 \section{Methods}{
   \describe{ \item{\code{new(y=y)}:}{Create a new

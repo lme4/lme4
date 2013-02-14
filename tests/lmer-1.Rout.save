@@ -1,12 +1,14 @@
 
-R version 2.15.0 alpha (2012-03-15 r58752)
+R Under development (unstable) (2012-12-14 r61321) -- "Unsuffered Consequences"
 Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
-Platform: x86_64-unknown-linux-gnu (64-bit)
+Platform: i686-pc-linux-gnu (32-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -168,7 +170,7 @@ Fixed effects:
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.804 0.008 0.811 
+Time elapsed:  1 0.212 1.253 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -224,12 +226,12 @@ Days -0.184
 > 
 > fmX1s <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
 Warning message:
-In lmer(Reaction ~ Days + (Days | Subject), sleepstudy, sparseX = TRUE) :
+In checkArgs("lmer", sparseX, ...) :
   sparseX = TRUE has no effect at present
 > #fmX2s <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
 > 
 > showProc.time() #
-Time elapsed:  0.352 0 0.352 
+Time elapsed:  0.396 0.024 0.424 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -306,7 +308,7 @@ attr(,"class")
 [1] "coef.mer"
 > ## check show( <"summary.mer"> ):
 > (sf1 <- summary(fit.1)) # --> now looks as for fit.1
-Linear mixed model fit by REML ['summary.mer']
+Linear mixed model fit by REML ['summary.merMod']
 Formula: y ~ 1 + (1 | group.id) 
 
 REML criterion at convergence: 73.4034 
@@ -352,7 +354,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.484 0.004 0.49 
+Time elapsed:  0.532 0.072 0.617 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -388,7 +390,7 @@ In Ops.factor(habitat, lagoon) : * not meaningful for factors
 > r2.  <- lmer(y ~ 0+lagoon + (1|habitat), data = dat,
 +              sparseX = TRUE, verbose = TRUE)
 Warning message:
-In lmer(y ~ 0 + lagoon + (1 | habitat), data = dat, sparseX = TRUE,  :
+In checkArgs("lmer", sparseX, ...) :
   sparseX = TRUE has no effect at present
 > 
 > ## the summary() components we do want to compare 'dense X' vs 'sparse X':
@@ -477,7 +479,7 @@ lagoon4 0.000  0.000  0.000
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.296 0 0.297 
+Time elapsed:  0.308 0.084 0.392 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -497,7 +499,7 @@ Warning message:
 In Ops.factor(ff, x1) : + not meaningful for factors
 > 
 > showProc.time() #
-Time elapsed:  1.396 0 1.399 
+Time elapsed:  1.352 0.172 1.537 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -514,4 +516,4 @@ Time elapsed:  1.396 0 1.399
 > 
 > proc.time()
    user  system elapsed 
-  6.520   0.068   6.551 
+  7.260   3.924  11.185 

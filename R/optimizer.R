@@ -1,11 +1,10 @@
-##' Nelder-Mead optimization of parameters that may be subject to box constraints
-##'
-##' @title Nelder-Mead optimization
-##' @param fn a function of one numeric vector argument returning a numeric scalar
+##' @rdname NelderMead
+##' @title Nelder-Mead optimization of parameters, possibly with box constraints
+##' @param fn a function of a single numeric vector argument returning a numeric scalar
 ##' @param par numeric vector of starting values for the parameters.
-##' @param lower numeric vector of lower bounds - elements may be \code{-Inf}.
-##' @param upper numeric vector of upper bounds - elements may be \code{Inf}.
 ##' @param control a named list of control settings.  Possible settings are
+##' @param lower numeric vector of lower bounds (elements may be \code{-Inf}).
+##' @param upper numeric vector of upper bounds (elements may be \code{Inf}).
 ##' \describe{
 ##'     \item{iprint}{numeric scalar - frequency of printing evaluation information.
 ##'                   Defaults to 0 indicating no printing.}

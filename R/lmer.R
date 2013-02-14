@@ -109,8 +109,18 @@
 ##' define a new variable (for example creating
 ##' \code{ab} within the data from the results of \code{droplevels(interaction(a,b))}).
 ##' }
+##' \item{the deviance function returned when \code{devFunOnly} is \code{TRUE}
+##' takes a single numeric vector argument, representing the \code{theta} vector.
+##' This vector defines the variance-covariance function of the random effects,
+##' in the Cholesky parameterization.  For a single random effect, this is
+##' a single value equal to the standard deviation of the random effect. For more
+##' complex or multiple random effect, running \code{getME(.,"theta")} to
+##' retrieve the \code{theta} vector for a fitted model and examining the
+##' names of the vector is probably the easiest way to determine the correspondence
+##' between the elements of the \code{theta} vector and elements of the lower
+##' triangles of the Cholesky factors of the random effects.}
 ##' }
-##' @examples
+##' ##' @examples
 ##' ## linear mixed models - reference values from older code
 ##' (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 ##' (fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))

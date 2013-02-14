@@ -30,22 +30,25 @@ setClass("lmList.confint", contains = "array")
 ##' 
 ##' The generator object for the \code{\linkS4class{merPredD}} reference class.
 ##' Such an object is primarily used through its \code{new} method.
-##' 
-##' 
-##' @param X dense model matrix for the fixed-effects parameters, to be stored
-##'     in the \code{X} field.
-##' @param Zt transpose of the sparse model matrix for the random effects.  It
-##'     is stored in the \code{Zt} field.
-##' @param Lambdat transpose of the sparse lower triangular relative variance
-##'     factor (stored in the \code{Lambdat} field).
-##' @param Lind integer vector of the same length as the \code{"x"} slot in the
-##'     \code{Lambdat} field.  Its elements should be in the range 1 to the length
-##'     of the \code{theta} field.
-##' @param theta numeric vector of variance component parameters (stored in the
-##'     \code{theta} field).
+##'
+##' @param ... List of arguments (see Note).
 ##' @section Methods:
 ##' \describe{
 ##'   \item{new(X, Zt, Lambdat, Lind, theta):}{Create a new \code{\linkS4class{merPredD}} object}
+##' }
+##' @note Arguments to the \code{new} methods must be named arguments:
+##' \itemize{
+##' \item{X}{ dense model matrix for the fixed-effects parameters, to be stored
+##'     in the \code{X} field.}
+##' \item{Zt}{transpose of the sparse model matrix for the random effects.  It
+##'     is stored in the \code{Zt} field.}
+##' \item{Lambdat}{transpose of the sparse lower triangular relative variance
+##'     factor (stored in the \code{Lambdat} field).}
+##' \item{Lind}{integer vector of the same length as the \code{"x"} slot in the
+##'     \code{Lambdat} field.  Its elements should be in the range 1 to the length
+##'     of the \code{theta} field.}
+##' \item{theta}{numeric vector of variance component parameters (stored in the
+##'     \code{theta} field).}
 ##' }
 ##' @seealso \code{\linkS4class{merPredD}}
 ##' @keywords classes
@@ -281,14 +284,16 @@ NULL
 ##' primarily used through their \code{new} methods.
 ##' 
 ##' @aliases lmResp lmerResp glmResp nlsResp
-##' @param y the numeric response vector
-##' @param family a \code{\link{family}} object
-##' @param nlmod the nonlinear model function
-##' @param nlenv an environment holding data objects for evaluation of
-##'     \code{nlmod}
-##' @param pnames a character vector of parameter names
-##' @param gam a numeric vector - the initial linear predictor
+##' @param ... List of arguments (see Note).
 ##' @note Arguments to the \code{new} methods must be named arguments.
+##' \itemize{
+##' \item{y}{ the numeric response vector}
+##' \item{family}{ a \code{\link{family}} object}
+##' \item{nlmod}{ the nonlinear model function}
+##' \item{nlenv}{ an environment holding data objects for evaluation of \code{nlmod}}
+##' \item{pnames}{ a character vector of parameter names}
+##' \item{gam}{ a numeric vector - the initial linear predictor}
+##'}
 ##' @section Methods:
 ##' \describe{
 ##'     \item{\code{new(y=y)}:}{Create a new
@@ -614,7 +619,7 @@ nlsResp$lock("nlmod", "nlenv", "pnames")
 ##' Such an object is primarily used through its \code{new} method.
 ##' 
 ##' 
-##' @param family a \code{\link{family}} object
+##' @param ... Named argument (see Note below)
 ##' @note Arguments to the \code{new} method must be named arguments.
 ##' @section Methods: \describe{
 ##'     \item{\code{new(family=family)}}{Create a new
@@ -713,11 +718,9 @@ NULL
 ##' optimizer for a parameter within an interval.  The optimizer uses reverse
 ##' communications.
 ##' 
-##' 
-##' @param lower lower bound for the scalar parameter - must be finite.
-##' @param upper upper bound for the scalar parameter - must be finite.
 ##' @param \dots additional, optional arguments.  None are used at present.
 ##' @note Arguments to the \code{new} methods must be named arguments.
+##' \code{lower} and \code{upper} are the bounds for the scalar parameter; they must be finite.
 ##' @section Methods:
 ##' \describe{
 ##'      \item{\code{new(lower=lower, upper=upper)}}{Create a new
@@ -783,19 +786,23 @@ NULL
 ##' The generator objects for the \code{\linkS4class{NelderMead}} class of
 ##' optimizers subject to box constraints and using reverse communications.
 ##' 
-##' 
-##' @param lower numeric vector of lower bounds - elements may be \code{-Inf}.
-##' @param upper numeric vector of upper bounds - elements may be \code{Inf}.
-##' @param xst numeric vector of initial step sizes to establish the simplex -
-##'     all elements must be non-zero.
-##' @param x0 numeric vector of starting values for the parameters.
-##' @param xt numeric vector of tolerances on the parameters.
-##' @param \dots additional, optional arguments.  None are used at present.
+##' @rdname NelderMead
+##' @param \dots Argument list (see Note below).
 ##' @note Arguments to the \code{new} methods must be named arguments.
 ##' @section Methods:
 ##'     \describe{\code{new(lower, upper, xst, x0, xt)}}{Create a new
 ##'          \code{\linkS4class{NelderMead}} object}
 ##' @seealso \code{\linkS4class{NelderMead}}
+##' @note Arguments to the \code{new} methods must be named arguments:
+##' \itemize{
+##' \item{lower}{numeric vector of lower bounds - elements may be \code{-Inf}.}
+##' \item{upper}{numeric vector of upper bounds - elements may be \code{Inf}.}
+##' \item{xst}{numeric vector of initial step sizes to establish the simplex -
+##'     all elements must be non-zero.}
+##' \item{x0}{numeric vector of starting values for the parameters.}
+##' \item{xt}{numeric vector of tolerances on the parameters.}
+##' }
+
 ##' @keywords classes
 ##' @export
 NelderMead <-
@@ -853,10 +860,9 @@ NelderMead <-
 ##' 
 ##' A reference class for a Nelder-Mead simplex optimizer allowing box
 ##' constraints on the parameters and using reverse communication.
-##' 
-##' 
-##' @name NelderMead-class
+##'
 ##' @docType class
+##' @name NelderMead-class
 ##' @note This is the default optimizer for the second stage of
 ##' \code{\link{glmer}} and \code{\link{nlmer}} fits.  We found that it was more
 ##' reliable and often faster than more sophisticated optimizers.
@@ -929,8 +935,10 @@ setClass("nlmerMod", representation(resp="nlsResp"), contains="merMod")
 ##' The generator object for the \code{\linkS4class{rePos}} class used
 ##' to determine the positions and orders of random effects associated
 ##' with particular random-effects terms in the model.
-##' @param mer an object of class \code{"\linkS4class{merMod}"}
+##' @param \dots Argument list (see Note).
 ##' @note Arguments to the \code{new} methods must be named arguments.
+##' \code{mer}, an object of class \code{"\linkS4class{merMod}"}, is
+##' the only required/expected argument.
 ##' @section Methods:
 ##' \describe{
 ##'      \item{\code{new(mer=mer)}}{Create a new

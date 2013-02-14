@@ -1,8 +1,8 @@
 \docType{methods}
 \name{profile-methods}
 \alias{as.data.frame.thpr}
-\alias{profile-methods}
 \alias{profile.merMod}
+\alias{profile-methods}
 \title{Profile method for merMod objects}
 \usage{
   \method{profile}{merMod} (fitted, which = 1:nptot,
@@ -24,7 +24,8 @@
   effects parameters are ordered as in
   \code{getME(.,"theta")}, i.e. as the lower triangle of a
   matrix with standard deviations on the diagonal and
-  correlations off the diagonal.}
+  correlations off the diagonal. FIXME: allow parameter
+  names.}
 
   \item{alphamax}{maximum alpha value for likelihood ratio
   confidence regions; used to establish the range of values
