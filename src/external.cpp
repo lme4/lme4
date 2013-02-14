@@ -254,36 +254,69 @@ extern "C" {
     }
 
     static double internal_glmerWrkIter(merPredD *pp, glmResp *rp, bool uOnly) {
-	pp->updateXwts(rp->sqrtWrkWt());
-	pp->updateDecomp();
-	pp->updateRes(rp->wtWrkResp());
-	if (uOnly) pp->solveU();
+	//Rcpp::Rcout << "\nresDev before updateXwts:" << rp->resDev() << std::endl;
+  //Rcpp::Rcout << "\nsqrL:" << pp->sqrL(1.) << std::endl;
+  //Rcpp::Rcout << "\ndelb 1: " << pp->delb() << std::endl;
+  
+  //Rcpp::Rcout << "\nbefore:\n" << rp->muEta() << std::endl;
+  pp->updateXwts(rp->sqrtWrkWt());
+  //Rcpp::Rcout << "\nafter:\n" << rp->muEta() << std::endl;
+  
+  //Rcpp::Rcout << "\nresDev after updateXwts:" << rp->resDev() << std::endl;
+  //Rcpp::Rcout << "\nsqrL:" << pp->sqrL(1.) << std::endl;
+	//Rcpp::Rcout << "\ndelb 2: " << pp->delb() << std::endl;
+  pp->updateDecomp();
+	//Rcpp::Rcout << "\nresDev after updateDecomp:" << rp->resDev() << std::endl;
+  //Rcpp::Rcout << "\nsqrL:" << pp->sqrL(1.) << std::endl;
+  //Rcpp::Rcout << "\ndelb 3: " << pp->delb() << std::endl;
+  pp->updateRes(rp->wtWrkResp());
+	//Rcpp::Rcout << "\nresDev after updateRes:" << rp->resDev() << std::endl;
+  //Rcpp::Rcout << "\nsqrL:" << pp->sqrL(1.) << std::endl;
+  //Rcpp::Rcout << "\ndelb 4: " << pp->delb() << std::endl;
+  if (uOnly) pp->solveU();
 	else pp->solve();
-	rp->updateMu(pp->linPred(1.));
-	return rp->resDev() + pp->sqrL(1.);
+  //Rcpp::Rcout << "\nresDev after solve:" << rp->resDev() << std::endl;
+	//Rcpp::Rcout << "\nsqrL:" << pp->sqrL(1.) << std::endl;
+  //Rcpp::Rcout << "\ndelb 5: " << pp->delb() << std::endl;
+  rp->updateMu(pp->linPred(1.));
+  //Rcpp::Rcout << "\nresDev after updateMu:" << rp->resDev() << std::endl;
+	//Rcpp::Rcout << "\nsqrL:" << pp->sqrL(1.) << std::endl;
+  //Rcpp::Rcout << "\ndelb 6: " << pp->delb() << std::endl;
+  Rcpp::Rcout << "\nresDev before end:\n" << rp->resDev() << std::endl;
+  return rp->resDev() + pp->sqrL(1.);
     }
 
     static void pwrssUpdate(glmResp *rp, merPredD *pp, bool uOnly, double tol, int verbose) {
-	double oldpdev=std::numeric_limits<double>::max();
+	//Rcpp::Rcout << "\nFirst pwrssUpdate resDev:  " << rp->resDev() << std::endl;
+  double oldpdev=std::numeric_limits<double>::max();
 	bool   cvgd = false, verb = verbose > 2;
 	for (int i = 0; i < 30; i++) {
-	    Vec   olddelu(pp->delu()), olddelb(pp->delb());
-	    double pdev=internal_glmerWrkIter(pp, rp, uOnly);
-	    if (verb) Rcpp::Rcout << i << ": " << pdev << std::endl;
+	    //Rcpp::Rcout << "\nresDev before dels, iter:  " << i << ",  " << rp->resDev() << std::endl;
+      //Rcpp::Rcout << "\ndelb 1: " << pp->delb() << std::endl;
+      Vec   olddelu(pp->delu()), olddelb(pp->delb());
+      //Rcpp::Rcout << "\ndelb 2: " << pp->delb() << std::endl;
+      //Rcpp::Rcout << "\nresDev before internal_glmerWrkIter, iter:  " << i << ",  " << rp->resDev() << std::endl;
+      double pdev=internal_glmerWrkIter(pp, rp, uOnly);
+	    //Rcpp::Rcout << "\ndelb 3: " << pp->delb() << std::endl;
+      //Rcpp::Rcout << "\nresDev after internal_glmerWrkIter, iter:  " << i << ",  " << rp->resDev() << std::endl;
+      //Rcpp::Rcout << i << ": " << pdev << std::endl; // if (verb) 
 	    if (std::abs((oldpdev - pdev) / pdev) < tol) {cvgd = true; break;}
-	    if (pdev > oldpdev) { // try step halving
-		if (verb) Rcpp::Rcout << "Step halving: oldpdev = "
-				      << oldpdev << ", pdev = " << pdev
-				      << std::endl;
+	    //Rcpp::Rcout << "\ndelb 4: " << pp->delb() << std::endl; 
+      if (pdev > oldpdev) { // try step halving
+		//Rcpp::Rcout << "Step halving: oldpdev = " // if (verb) 
+		//		      << oldpdev << ", pdev = " << pdev
+		//		      << std::endl;
 		for (int k = 0; k < 10 && pdev > oldpdev; k++) {
+        //Rcpp::Rcout << "\nStep halving time!" << std::endl;
 		    pp->setDelu((olddelu + pp->delu())/2.);
 		    if (!uOnly) pp->setDelb((olddelb + pp->delb())/2.);
 		    pdev = internal_glmerWrkIter(pp, rp, uOnly);
-		    if (verb) Rcpp::Rcout << "k = " << k << ", pdev = "
-					  << pdev << std::endl;
+		    //Rcpp::Rcout << "k = " << k << ", pdev = " // if (verb) 
+				//	  << pdev << std::endl;
 		}
 		if (pdev > oldpdev) throw runtime_error("PIRLS step failed");
 	    }
+      //Rcpp::Rcout << "\ndelb 5: " << pp->delb() << std::endl;
 	    oldpdev = pdev;
 	}
 	if (!cvgd)
@@ -294,7 +327,13 @@ extern "C" {
 	BEGIN_RCPP;
 	XPtr<glmResp>  rp(rp_);
 	XPtr<merPredD> pp(pp_);
-	pwrssUpdate(rp, pp, ::Rf_asInteger(nAGQ_), ::Rf_asReal(tol_), ::Rf_asInteger(verbose_));
+	//Rcpp::Rcout << "\nglmerLaplace resDev:  " << rp->resDev() << std::endl;
+  //Rcpp::Rcout << "\ndelb 1:  " << pp->delb() << std::endl;
+  pwrssUpdate(rp, pp, ::Rf_asInteger(nAGQ_), ::Rf_asReal(tol_), ::Rf_asInteger(verbose_));
+  //Rcpp::Rcout << "\ndelb 2:  " << pp->delb() << std::endl;
+  //Rcpp::Rcout << "\nldL2:  " << pp->ldL2() << std::endl;
+  //Rcpp::Rcout << "\nldRX2:  " << pp->ldRX2() << std::endl;
+  //Rcpp::Rcout << "\nsqrL:  " << pp->sqrL(1.) << std::endl;
 	return ::Rf_ScalarReal(rp->Laplace(pp->ldL2(), pp->ldRX2(), pp->sqrL(1.)));
 	END_RCPP;
     }

@@ -53,8 +53,15 @@ namespace lme4 {
      * @return Updated weighted residual sum of squares
      */
     double lmResp::updateWrss() {
+  //Rcpp::Rcout << "\nwrss 1:\n" << d_wrss << std::endl;
+  //double testwrss(0);
+  //for (int p = 0; p < d_y.size(); ++p) testwrss =+ pow(d_sqrtrwt[p] * (d_y[p] - d_mu[p]), 2);
+  //Rcpp::Rcout << "\ntestwrss: " << testwrss << std::endl;
 	d_wtres = d_sqrtrwt.cwiseProduct(d_y - d_mu);
-	d_wrss  = d_wtres.squaredNorm();
+	//Rcpp::Rcout << "\nwrss 2:\n" << d_wrss << std::endl;
+  d_wrss  = d_wtres.squaredNorm();
+  //Rcpp::Rcout << "\nwrss: " << d_wrss << std::endl;
+  //Rcpp::Rcout << "\nwrss 3:\n" << d_wrss << std::endl;
 	return d_wrss;
     }
 
@@ -113,6 +120,7 @@ namespace lme4 {
     }
 
     ArrayXd glmResp::devResid() const {
+  //Rcpp::Rcout << "\nd_mu" << d_mu << std::endl;
 	return d_fam.devResid(d_y, d_mu, d_weights);
     }
 
@@ -149,8 +157,32 @@ namespace lme4 {
     }
 
     double glmResp::updateMu(const VectorXd& gamma) {
-	d_eta = d_offset + gamma; // lengths are checked here
-	d_mu  = d_fam.linkInv(d_eta);
+  //Rcpp::Rcout << "\nminimum mu 1:\n" << d_mu.minCoeff() << std::endl;
+  //Rcpp::Rcout << "\nmaximum mu 1:\n" << d_mu.maxCoeff() << std::endl;
+	//Rcpp::Rcout << "\nminimum gamma 1:\n" << gamma.minCoeff() << std::endl;
+  //Rcpp::Rcout << "\nmaximum gamma 1:\n" << gamma.maxCoeff() << std::endl;
+  //Rcpp::Rcout << "\nminimum offset 1:\n" << d_offset.minCoeff() << std::endl;
+  //Rcpp::Rcout << "\nmaximum offset 1:\n" << d_offset.maxCoeff() << std::endl;
+  //Rcpp::Rcout << "\nminimum eta 1:\n" << d_eta.minCoeff() << std::endl;
+  //Rcpp::Rcout << "\nmaximum eta 1:\n" << d_eta.maxCoeff() << std::endl;
+  d_eta = d_offset + gamma; // lengths are checked here
+	//Rcpp::Rcout << "\nminimum mu 2:\n" << d_mu.minCoeff() << std::endl;
+  //Rcpp::Rcout << "\nmaximum mu 2:\n" << d_mu.maxCoeff() << std::endl;
+  //Rcpp::Rcout << "\nminimum gamma 2:\n" << gamma.minCoeff() << std::endl;
+  //Rcpp::Rcout << "\nmaximum gamma 2:\n" << gamma.maxCoeff() << std::endl;
+  //Rcpp::Rcout << "\nminimum offset 2:\n" << d_offset.minCoeff() << std::endl;
+  //Rcpp::Rcout << "\nmaximum offset 2:\n" << d_offset.maxCoeff() << std::endl;
+  //Rcpp::Rcout << "\nminimum eta 2:\n" << d_eta.minCoeff() << std::endl;
+  //Rcpp::Rcout << "\nmaximum eta 2:\n" << d_eta.maxCoeff() << std::endl;
+  d_mu  = d_fam.linkInv(d_eta);
+  //Rcpp::Rcout << "\nminimum mu 3:\n" << d_mu.minCoeff() << std::endl;
+  //Rcpp::Rcout << "\nmaximum mu 3:\n" << d_mu.maxCoeff() << std::endl;
+  //Rcpp::Rcout << "\nminimum gamma 3:\n" << gamma.minCoeff() << std::endl;
+  //Rcpp::Rcout << "\nmaximum gamma 3:\n" << gamma.maxCoeff() << std::endl;
+  //Rcpp::Rcout << "\nminimum offset 3:\n" << d_offset.minCoeff() << std::endl;
+  //Rcpp::Rcout << "\nmaximum offset 3:\n" << d_offset.maxCoeff() << std::endl;
+  //Rcpp::Rcout << "\nminimum eta 3:\n" << d_eta.minCoeff() << std::endl;
+  //Rcpp::Rcout << "\nmaximum eta 3:\n" << d_eta.maxCoeff() << std::endl;
 	return updateWrss();
     }
 

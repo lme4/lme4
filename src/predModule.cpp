@@ -87,6 +87,8 @@ namespace lme4 {
     VectorXd merPredD::beta(const double& f) const {return d_beta0 + f * d_delb;}
 
     VectorXd merPredD::linPred(const double& f) const {
+  //Rcpp::Rcout << "\nmin u:\n" << u(f).minCoeff() << std::endl;
+  //Rcpp::Rcout << "\nmax u:\n" << u(f).maxCoeff() << std::endl;
 	return d_X * beta(f) + d_Zt.adjoint() * b(f);
     }
 
@@ -176,14 +178,20 @@ namespace lme4 {
     }
 
     merPredD::Scalar merPredD::solveU() {
+  //Rcpp::Rcout << "\nd_u0:\n" << d_u0 << std::endl;
 	d_delb.setZero(); // in calculation of linPred delb should be zero after solveU
 	d_delu          = d_Utr - d_u0;
+  //d_delu            = d_Utr - d_delu; // experiment!!  SCW
+  //Rcpp::Rcout << "\nd_delu before:\n" << d_delu << std::endl;
+  //Rcpp::Rcout << "\nd_LamtUt:\n" << d_LamtUt << std::endl;
+  //Rcpp::Rcout << "\nd_Utr:\n" << d_Utr << std::endl;
 	d_L.solveInPlace(d_delu, CHOLMOD_P);
 	d_L.solveInPlace(d_delu, CHOLMOD_L);    // d_delu now contains cu
 	d_CcNumer       = d_delu.squaredNorm(); // numerator of convergence criterion
 	d_L.solveInPlace(d_delu, CHOLMOD_Lt);
 	d_L.solveInPlace(d_delu, CHOLMOD_Pt);
-	return d_CcNumer;
+	//Rcpp::Rcout << "\nd_delu after:\n" << d_delu << std::endl;
+  return d_CcNumer;
     }
 
     void merPredD::updateXwts(const ArrayXd& sqrtXwt) {

@@ -214,7 +214,8 @@ mkglmerdevfun <- function(fr, X, reTrms, family,
   rho$pwrssUpdate <- glmerPwrssUpdate
   rho$compDev     <- compDev
   rho$lower       <- reTrms$lower     # not needed in rho?
-  devfun <- mkdevfun(rho, 0L)
+  #rho$GQmat       <- GHrule(nAGQ) # experimental!! SCW
+  devfun <- mkdevfun(rho, 0L) # changing 0L to 1L is also experimental!! SCW
   #if (devFunOnly && !nAGQ) return(devfun)
   return(devfun) # this should pass the rho environment implicitly
 }
