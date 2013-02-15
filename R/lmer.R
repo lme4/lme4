@@ -139,6 +139,7 @@ lmer <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
     
     mc <- mcout <- match.call()           ## parse data and formula
     mc[[1]] <- as.name("lFormula")
+    ## BMB: should this be parent.frame(1L)???
     lmod <- eval(mc, parent.frame(2L))    ## create deviance function for covariance parameters (theta)
     devfun <- do.call(mkLmerDevfun, lmod) ## optimize deviance function over covariance parameters
     if (devFunOnly) return(devfun)

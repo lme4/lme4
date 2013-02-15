@@ -32,14 +32,14 @@ test_that("glmerRank", {
     n <- 100
     x <- y <- rnorm(n)
     z <- rbinom(n,size=1,prob=0.5)
-    r <- sample(1:3, size=n, replace=TRUE)
+    r <- sample(1:5, size=n, replace=TRUE)
     d <- data.frame(x,y,z,r)
     ## d$y2 <- d$y + c(0.001,rep(0,n-1))  ## too small: get convergence failures
     ## FIXME: figure out how small a difference will still fail?
     d$y2 <- rnorm(n)
 
-    suppressWarnings(expect_error(glmer( z ~ x + y + (1|r), data=d, family=binomial)))
-    expect_warning(glmer( z ~ x + y2 + (1|r), data=d, family=binomial),"fewer than 5 sampled levels")
+    expect_error(glmer( z ~ x + y + (1|r), data=d, family=binomial), "rank of X")
+    expect_that(glmer( z ~ x + y2 + (1|r), data=d, family=binomial),is_a("glmerMod"))
 })
 
 test_that("nlmerRank", {

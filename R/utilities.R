@@ -597,7 +597,10 @@ checkFormulaData <- function(formula,data) {
             denv <- ee 
         } else {
             ## e.g. no environment, e.g. because formula is a character vector
-            denv <- parent.frame(2)
+            ## denv <- parent.frame(2)
+            ## FIXME: how fragile is this ??
+            ## we expect to be called from 
+            denv <- parent.frame(3)
         }
     } else {
         ## data specified
