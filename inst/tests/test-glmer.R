@@ -14,7 +14,7 @@ test_that("glmer", {
                                                                            -1.12867532780426, -1.58030423764517)))
     expect_equal(c(VarCorr(gm1)[[1]]),                  0.41245527438386)
 ### expect_that(family(gm1),                            equals(binomial()))
-### ?? binomial() has an 'initialize' component ...
+### ?? binomial() has an 'initialize' component ... and the order is different
     expect_that(deviance(gm1),                          equals(184.052674598026))
     expect_that(sigma(gm1),                             equals(1))
     expect_that(extractAIC(gm1),                        equals(c(5, 194.052674598026)))
@@ -27,11 +27,13 @@ test_that("glmer", {
     expect_that(Zt@x,                                   equals(rep.int(1, 56L)))
     expect_that(Lambdat <- getME(gm1, "Lambdat"),       is_a("dgCMatrix"))
     expect_that(as(Lambdat, "matrix"),                  is_equivalent_to(diag(theta, 15L, 15L)))
-    expect_error(gm2 <- glmer2(cbind(incidence, size - incidence) ~ period + (1 | herd),
+    expect_error(gm2 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                              data = subset(cbpp, herd==levels(herd)[1]), family = binomial),
                  "must have at least 1")
-    expect_warning(gm2 <- glmer2(cbind(incidence, size - incidence) ~ period + (1 | herd),
+    expect_warning(gm2 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                              data = subset(cbpp, herd %in% levels(herd)[1:4]), family = binomial),
                    "fewer than 5")
+    expect_warning(fm1. <- glmer(Reaction ~ Days + (Days|Subject), sleepstudy),
+                   "as a shortcut to lmer() is deprecated")
 })
 

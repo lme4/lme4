@@ -1,14 +1,8 @@
 \name{lmer}
 \alias{lmer}
-\alias{lmer2}
 \title{Fit Linear Mixed-Effects Models}
 \usage{
   lmer(formula, data = NULL, REML = TRUE, sparseX = FALSE,
-    control = list(), start = NULL, verbose = 0L, subset,
-    weights, na.action, offset, contrasts = NULL,
-    devFunOnly = FALSE, optimizer = "Nelder_Mead", ...)
-
-  lmer2(formula, data = NULL, REML = TRUE, sparseX = FALSE,
     control = list(), start = NULL, verbose = 0L, subset,
     weights, na.action, offset, contrasts = NULL,
     devFunOnly = FALSE, optimizer = "Nelder_Mead", ...)
@@ -157,21 +151,22 @@
   deviance function returned when \code{devFunOnly} is
   \code{TRUE} takes a single numeric vector argument,
   representing the \code{theta} vector. This vector defines
-  the variance-covariance function of the random effects,
-  in the Cholesky parameterization.  For a single random
-  effect, this is a single value equal to the standard
-  deviation of the random effect. For more complex or
-  multiple random effect, running \code{getME(.,"theta")}
-  to retrieve the \code{theta} vector for a fitted model
-  and examining the names of the vector is probably the
-  easiest way to determine the correspondence between the
-  elements of the \code{theta} vector and elements of the
-  lower triangles of the Cholesky factors of the random
-  effects.} } ##'
+  the scaled variance-covariance matrices of the random
+  effects, in the Cholesky parameterization.  For models
+  with only simple (intercept-only) random effects,
+  \code{theta} is a vector of the standard deviations of
+  the random effects. For more complex or multiple random
+  effects, running \code{getME(.,"theta")} to retrieve the
+  \code{theta} vector for a fitted model and examining the
+  names of the vector is probably the easiest way to
+  determine the correspondence between the elements of the
+  \code{theta} vector and elements of the lower triangles
+  of the Cholesky factors of the random effects.} } ##'
 }
 \examples{
 ## linear mixed models - reference values from older code
 (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
+fm1_ML <- update(fm1,REML=FALSE)
 (fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
 anova(fm1, fm2)
 }

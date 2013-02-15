@@ -142,22 +142,6 @@ optimizeLmer <- function(devfun, reTrms,
     }
 }
 
-##' @rdname lmer
-##' @export
-lmer2 <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
-                  control = list(), start = NULL,
-                  verbose = 0L, subset, weights, na.action, offset,
-                  contrasts = NULL, devFunOnly=FALSE,
-                  optimizer="Nelder_Mead", ...){
-    mc <- mcout <- match.call()           ## parse data and formula
-    mc[[1]] <- as.name("lFormula")
-    lmod <- eval(mc, parent.frame(2L))    ## create deviance function for covariance parameters (theta)
-    devfun <- do.call(mkLmerDevfun, lmod) ## optimize deviance function over covariance parameters
-    opt <- optimizeLmer(devfun, lmod$reTrms, ...)
-                                        ## prepare output
-    mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr, mcout)
-}
-
 ## TODO:  remove any arguments that aren't actually used by glFormula (same for lFormula)
 ##' process
 ##' @rdname modular
@@ -303,50 +287,3 @@ reoptimizeGlmer <- function(devfun, optimizer="Nelder_Mead",
     return(opt)
 }
 
-##' @rdname glmer
-##' @export
-glmer2 <- function(formula, data=NULL, family = gaussian, sparseX = FALSE,
-                   control = list(), start = NULL, verbose = 0L, nAGQ = 1L,
-                   compDev = TRUE, subset, weights, na.action, offset,
-                   contrasts = NULL, mustart, etastart, devFunOnly = FALSE,
-                   tolPwrss = 1e-7, optimizer=c("bobyqa","Nelder_Mead"), ...){
-    mc <- mcout <- match.call()
-
-    ## family-checking code duplicated here and in glFormula (for now) since
-    ## we really need to redirect at this point; eventually deprecate formally
-    ## and clean up
-    
-    if (is.character(family))
-        family <- get(family, mode = "function", envir = parent.frame(2))
-    if( is.function(family)) family <- family()
-    if (isTRUE(all.equal(family, gaussian()))) {
-        warning("calling glmer() with family=gaussian (identity link) as a shortcut to lmer() is deprecated; please call lmer() directly")
-        mc[[1]] <- as.name("lmer2")
-        mc["family"] <- NULL            # to avoid an infinite loop
-        return(eval(mc, parent.frame()))
-    }
-                                        # parse the formula and data
-    mc[[1]] <- as.name("glFormula")
-    glmod <- eval(mc, parent.frame(2L))
-
-    if (length(optimizer)==1) {
-        optimizer <- replicate(2,optimizer)
-    }
-    
-                                        # create deviance function for covariance parameters (theta)
-    devfun <- do.call(mkGlmerDevfun, c(glmod, list(compDev = compDev)))
-    
-                                        # optimize deviance function over covariance parameters
-    opt <- optimizeGlmer(devfun, optimizer = optimizer[[1]], ...)
-    
-    if(nAGQ > 0L){
-                                        # update deviance function to include fixed effects as inputs
-        devfun <- updateGlmerDevfun(devfun, glmod$reTrms, nAGQ = nAGQ)
-                                        # reoptimize deviance function over covariance parameters and fixed effects
-        opt <- reoptimizeGlmer(devfun, optimizer = optimizer[[2]], 
-                               verbose = verbose, control = control)
-    }
-    
-                                        # prepare output
-    mkMerMod(environment(devfun), opt, glmod$reTrms, fr = glmod$fr, mcout)
-}
