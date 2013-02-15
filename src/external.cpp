@@ -282,7 +282,7 @@ extern "C" {
   //Rcpp::Rcout << "\nresDev after updateMu:" << rp->resDev() << std::endl;
 	//Rcpp::Rcout << "\nsqrL:" << pp->sqrL(1.) << std::endl;
   //Rcpp::Rcout << "\ndelb 6: " << pp->delb() << std::endl;
-  Rcpp::Rcout << "\nresDev before end:\n" << rp->resDev() << std::endl;
+  //Rcpp::Rcout << "\nresDev before end:\n" << rp->resDev() << std::endl;
   return rp->resDev() + pp->sqrL(1.);
     }
 

@@ -6,10 +6,11 @@ context("data= argument and formula evaluation")
 test_that("glmerForm", {
     set.seed(101)
 
-    x <- rbinom(10, 1, 1/2)
-    y <- rnorm(10)
-    z <- rnorm(10)
-    r <- sample(1:3, size=10, replace=TRUE)
+    n <- 20
+    x <- rbinom(n, 1, 1/2)
+    y <- rnorm(n)
+    z <- rnorm(n)
+    r <- sample(1:5, size=n, replace=TRUE)
     d <- data.frame(x,y,z,r)
 
     F <- "z"
@@ -21,18 +22,18 @@ test_that("glmerForm", {
     
     ## data argument not specified:
     ## should** work, but documentation warns against it
-    m_nodata.0 <- glmer( x ~ y + z + (1|r) , family="binomial")
-    m_nodata.1 <- glmer( as.formula(modStr) , family="binomial")
-    m_nodata.2 <- glmer( modForm , family="binomial")
-    m_nodata.3 <- glmer( modStr , family="binomial")
-    m_nodata.4 <- glmer( "x ~ y + z + (1|r)" , family="binomial")
+    expect_that(m_nodata.0 <- glmer( x ~ y + z + (1|r) , family="binomial"), is_a("glmerMod"))
+    expect_that(m_nodata.1 <- glmer( as.formula(modStr) , family="binomial"), is_a("glmerMod"))
+    expect_that(m_nodata.2 <- glmer( modForm , family="binomial"), is_a("glmerMod"))
+    expect_that(m_nodata.3 <- glmer( modStr , family="binomial"), is_a("glmerMod"))
+    expect_that(m_nodata.4 <- glmer( "x ~ y + z + (1|r)" , family="binomial"), is_a("glmerMod"))
 
     ## data argument specified
-    m_data.0 <- glmer( x ~ y + z + (1|r) , data=d, family="binomial")
-    m_data.1 <- glmer( as.formula(modStr) , data=d, family="binomial")
-    m_data.2 <- glmer( modForm , data=d, family="binomial")
-    m_data.3 <- glmer( modStr , data=d, family="binomial")
-    m_data.4 <- glmer( "x ~ y + z + (1|r)" , data=d, family="binomial")
+    expect_that(m_data.0 <- glmer( x ~ y + z + (1|r) , data=d, family="binomial"), is_a("glmerMod"))
+    expect_that(m_data.1 <- glmer( as.formula(modStr) , data=d, family="binomial"), is_a("glmerMod"))
+    expect_that(m_data.2 <- glmer( modForm , data=d, family="binomial"), is_a("glmerMod"))
+    expect_that(m_data.3 <- glmer( modStr , data=d, family="binomial"), is_a("glmerMod"))
+    expect_that(m_data.4 <- glmer( "x ~ y + z + (1|r)" , data=d, family="binomial"), is_a("glmerMod"))
 
     ff <- function() {
         d2 <- data.frame(x,y,z,r)

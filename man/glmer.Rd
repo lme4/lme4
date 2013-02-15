@@ -1,16 +1,8 @@
 \name{glmer}
 \alias{glmer}
-\alias{glmer2}
 \title{Fit Generalized Linear Mixed-Effects Models}
 \usage{
   glmer(formula, data = NULL, family = gaussian,
-    sparseX = FALSE, control = list(), start = NULL,
-    verbose = 0L, nAGQ = 1L, compDev = TRUE, subset,
-    weights, na.action, offset, contrasts = NULL, mustart,
-    etastart, devFunOnly = FALSE, tolPwrss = 1e-07,
-    optimizer = c("bobyqa", "Nelder_Mead"), ...)
-
-  glmer2(formula, data = NULL, family = gaussian,
     sparseX = FALSE, control = list(), start = NULL,
     verbose = 0L, nAGQ = 1L, compDev = TRUE, subset,
     weights, na.action, offset, contrasts = NULL, mustart,

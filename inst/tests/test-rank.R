@@ -5,16 +5,16 @@ context("testing fixed-effect design matrices for full rank")
 
 test_that("lmerRank", {
     set.seed(101)
-    n <- 16
+    n <- 20
     x <- y <- rnorm(n)
     z <- rnorm(n)
-    r <- sample(1:3, size=n, replace=TRUE)
+    r <- sample(1:5, size=n, replace=TRUE)
     d <- data.frame(x,y,z,r)
     d$y2 <- d$y + c(0.001,rep(0,n-1))
 
     expect_error(lmer( z ~ x + y + (1|r), data=d),"rank of X")
     ## should work:
-    lmer( z ~ x + y2 + (1|r), data=d)
+    expect_that(lmer( z ~ x + y2 + (1|r), data=d), is_a("lmerMod"))
 
     d2 <- expand.grid(a=factor(1:4),b=factor(1:4),rep=1:10)
     n <- nrow(d2)
@@ -24,7 +24,7 @@ test_that("lmerRank", {
     expect_error(lmer( z ~ a*b + (1|r), data=d2),"rank of X")
     d2 <- transform(d2, ab=droplevels(interaction(a,b)))
     ## should work:
-    lmer( z ~ ab + (1|r), data=d2)
+    expect_that(lmer( z ~ ab + (1|r), data=d2), is_a("lmerMod"))
 })
 
 test_that("glmerRank", {
@@ -32,16 +32,14 @@ test_that("glmerRank", {
     n <- 100
     x <- y <- rnorm(n)
     z <- rbinom(n,size=1,prob=0.5)
-    r <- sample(1:3, size=n, replace=TRUE)
+    r <- sample(1:5, size=n, replace=TRUE)
     d <- data.frame(x,y,z,r)
     ## d$y2 <- d$y + c(0.001,rep(0,n-1))  ## too small: get convergence failures
     ## FIXME: figure out how small a difference will still fail?
     d$y2 <- rnorm(n)
 
-    expect_error(glmer( z ~ x + y + (1|r), data=d, family=binomial))
-    ## FIXME: wrong error, should be "rank of X")
-    ## should be OK
-    glmer( z ~ x + y2 + (1|r), data=d, family=binomial)
+    expect_error(glmer( z ~ x + y + (1|r), data=d, family=binomial), "rank of X")
+    expect_that(glmer( z ~ x + y2 + (1|r), data=d, family=binomial),is_a("glmerMod"))
 })
 
 test_that("nlmerRank", {
