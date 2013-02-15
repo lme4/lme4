@@ -303,16 +303,25 @@ extern "C" {
 	    if (std::abs((oldpdev - pdev) / pdev) < tol) {cvgd = true; break;}
 	    //Rcpp::Rcout << "\ndelb 4: " << pp->delb() << std::endl; 
       if (pdev > oldpdev) { // try step halving
+      //Rcpp::Rcout << "\nStep halving time!" << std::endl;
+      //Vec   saved_delu(pp->delu());
+      //for (int m = 0; m < 100; m++) {
+      //  double ustep = m/100.0;
+      //  pp->setDelu(olddelu+saved_delu*ustep);
+      //  Rcpp::Rcout << "\npdev test, iter: " << m << " " << internal_glmerWrkIter(pp, rp, uOnly) << std::endl;
+      //}
+      //pp->setDelu(saved_delu);
 		//Rcpp::Rcout << "Step halving: oldpdev = " // if (verb) 
 		//		      << oldpdev << ", pdev = " << pdev
 		//		      << std::endl;
 		for (int k = 0; k < 10 && pdev > oldpdev; k++) {
+        //Rcpp::Rcout << "\nben's test: " << pp->delu()[0] << std::endl;
+        //Rcpp::Rcout << "\nben's test: " << olddelu[0] << std::endl;
         //Rcpp::Rcout << "\nStep halving time!" << std::endl;
 		    pp->setDelu((olddelu + pp->delu())/2.);
 		    if (!uOnly) pp->setDelb((olddelb + pp->delb())/2.);
 		    pdev = internal_glmerWrkIter(pp, rp, uOnly);
-		    //Rcpp::Rcout << "k = " << k << ", pdev = " // if (verb) 
-				//	  << pdev << std::endl;
+		    //Rcpp::Rcout << "k = " << k << ", pdev = " << pdev << std::endl; // if (verb) 
 		}
 		if (pdev > oldpdev) throw runtime_error("PIRLS step failed");
 	    }

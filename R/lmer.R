@@ -784,7 +784,7 @@ drop1.merMod <- function(object, scope, scale = 0, test = c("none", "Chisq"),
                   dimnames =  list(c("<none>", scope), c("df", "AIC")))
     ans[1, ] <- extractAIC(object, scale, k = k, ...)
     n0 <- nobs(object, use.fallback = TRUE)
-    env <- environment(formula(object))
+    env <- environment(formula(object)) # perhaps here is where trouble begins??
     for(i in seq_along(scope)) {  ## was seq(ns), failed on empty scope
 	tt <- scope[i]
 	if(trace > 1) {
