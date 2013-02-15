@@ -51,7 +51,8 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
             pred <- napredict(fit.na.action,pred)
         }
         return(pred)
-    } else { ## newdata and/or REform specified
+   
+      } else { ## newdata and/or REform specified
         X_orig <- getME(object, "X")
         if (is.null(newdata)) {
             X <- X_orig
@@ -89,8 +90,9 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
                 }
             }
             re <- ranef(object)
-            ##
-            ReTrms <- mkReTrms(findbars(REform[[2]]),newdata)
+            ## ok? -- newdata used even though it was just tested for null
+            if(is.null(newdata)) rfd <- object@frame else rfd <- newdata # get data for REform
+            ReTrms <- mkReTrms(findbars(REform[[2]]), rfd)
             if (!allow.new.levels && any(sapply(ReTrms$flist,function(x) any(is.na(x)))))
                 stop("NAs are not allowed in prediction data for grouping variables unless allow.new.levels is TRUE")
             unames <- unique(sort(names(ReTrms$cnms)))  ## FIXME: same as names(ReTrms$flist) ?
@@ -129,7 +131,7 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
                 re_new[[i]] <- re_x[[rname]][,ReTrms$cnms[[rname]]]
             }
             re_newvec <- unlist(lapply(re_new,t))  ## must TRANSPOSE RE matrices before unlisting
-            pred <- pred + drop(as.matrix(re_newvec %*% ReTrms$Zt))
+            if(!is.null(newdata)) pred <- pred + drop(as.matrix(re_newvec %*% ReTrms$Zt))
         } ## predictions with REform!=NA
         if (isGLMM(object) && type=="response") {
             pred <- object@resp$family$linkinv(pred)

@@ -1,10 +1,8 @@
 \name{NelderMead}
-\alias{NelderMead}
 \alias{Nelder_Mead}
+\alias{NelderMead}
 \title{Generator object for the Nelder-Mead optimizer class.}
 \usage{
-  NelderMead(...)
-
   Nelder_Mead(fn, par, lower = rep.int(-Inf, n),
     upper = rep.int(Inf, n), control = list())
 }

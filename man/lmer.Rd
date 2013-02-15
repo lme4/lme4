@@ -167,7 +167,7 @@
   easiest way to determine the correspondence between the
   elements of the \code{theta} vector and elements of the
   lower triangles of the Cholesky factors of the random
-  effects.} } ##'
+  effects.} }
 }
 \examples{
 ## linear mixed models - reference values from older code

@@ -5,7 +5,7 @@
 \title{Extract or Get Generalize Components from a Fitted Mixed Effects Model}
 \usage{
   getME(object,
-    name = c("X", "Z", "Zt", "u", "Gp", "L", "Lambda", "Lambdat", "Lind", "A", "RX", "RZX", "flist", "beta", "theta", "REML", "n_rtrms", "is_REML", "devcomp", "offset", "lower"))
+    name = c("X", "Z", "Zt", "y", "mu", "u", "b", "Gp", "L", "Lambda", "Lambdat", "Lind", "A", "RX", "RZX", "flist", "beta", "theta", "REML", "n_rtrms", "is_REML", "devcomp", "offset", "lower"))
 }
 \arguments{
   \item{object}{a fitted mixed-effects model of class
@@ -17,15 +17,17 @@
   \dQuote{component}.  Possible values are:\cr \describe{
   \item{X}{fixed-effects model matrix}
   \item{Z}{random-effects model matrix} \item{Zt}{transpose
-  of random-effects model matrix} \item{u}{conditional mode
-  of the \dQuote{spherical} random effects variable}
-  \item{Gp}{groups pointer vector.  A pointer to the
-  beginning of each group of random effects corresponding
-  to the random-effects terms.} \item{L}{sparse Cholesky
-  factor of the penalized random-effects model.}
-  \item{Lambda}{relative covariance factor of the random
-  effects.} \item{Lambdat}{transpose of the relative
-  covariance factor of the random effects.}
+  of random-effects model matrix} \item{y}{response vector}
+  \item{mu}{conditional mean of the response}
+  \item{u}{conditional mode of the \dQuote{spherical}
+  random effects variable} \item{b}{conditional mode of the
+  random effects variable} \item{Gp}{groups pointer vector.
+  A pointer to the beginning of each group of random
+  effects corresponding to the random-effects terms.}
+  \item{L}{sparse Cholesky factor of the penalized
+  random-effects model.} \item{Lambda}{relative covariance
+  factor of the random effects.} \item{Lambdat}{transpose
+  of the relative covariance factor of the random effects.}
   \item{Lind}{index vector for inserting elements of
   \eqn{\theta}{theta} into the nonzeros of
   \eqn{\Lambda}{Lambda}} \item{A}{Scaled sparse model

@@ -188,10 +188,8 @@
   flag: use restricted maximum likelihood? (Copy of
   argument.)} \item{start}{starting value information.
   (Copy of argument.)}
-
   a function to calculate deviance (or restricted deviance)
   as a function of the theta (random-effect) parameters
-
   results of an optimization
 }
 \description{

@@ -120,7 +120,7 @@
 ##' between the elements of the \code{theta} vector and elements of the lower
 ##' triangles of the Cholesky factors of the random effects.}
 ##' }
-##' ##' @examples
+##' @examples
 ##' ## linear mixed models - reference values from older code
 ##' (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 ##' (fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
@@ -1670,7 +1670,10 @@ setMethod("getL", "merMod", function(x) {
 ##'     \item{X}{fixed-effects model matrix}
 ##'     \item{Z}{random-effects model matrix}
 ##'     \item{Zt}{transpose of random-effects model matrix}
+##'     \item{y}{response vector}
+##'     \item{mu}{conditional mean of the response}
 ##'     \item{u}{conditional mode of the \dQuote{spherical} random effects variable}
+##'     \item{b}{conditional mode of the random effects variable}
 ##'     \item{Gp}{groups pointer vector.  A pointer to the beginning of each group
 ##'               of random effects corresponding to the random-effects terms.}
 ##'     \item{L}{sparse Cholesky factor of the penalized random-effects model.}
@@ -1723,7 +1726,7 @@ setMethod("getL", "merMod", function(x) {
 ##'
 ##' @export
 getME <- function(object,
-		  name = c("X", "Z","Zt", "u",
+		  name = c("X", "Z","Zt", "y", "mu", "u", "b",
 		  "Gp",
 		  "L", "Lambda", "Lambdat", "Lind", "A",
 		  "RX", "RZX",
@@ -1745,14 +1748,17 @@ getME <- function(object,
 	   "X" = PR$X, ## ok ? - check -- use model.matrix() method instead?
 	   "Z" = t(PR$Zt),
 	   "Zt"= PR$Zt,
-           "u" = object@u,
+     "y" = rsp$y,
+     "mu"=rsp$mu,
+     "u" = object@u,
+     "b" = t(PR$Lambdat) %*% object@u,
 	   "L"= PR$ L(),
 	   "Lambda"= t(PR$ Lambdat),
 	   "Lambdat"= PR$ Lambdat,
            "A" = PR$Lambdat %*% PR$Zt,
            "Lind" = PR$ Lind,
-	   "RX" = PR $ RX(), ## FIXME - add the column names and row names, either in the C++ or the R method
-	   "RZX" = PR $ RZX, ## FIXME - add column names
+	   "RX" = structure(PR$RX(), dimnames = list(colnames(PR$X), colnames(PR$X))), ## maybe add names elsewhere?
+	   "RZX" = structure(PR$RZX, dimnames = list(NULL, colnames(PR$X))), ## maybe add names elsewhere?
 
            "Gp" = object@Gp,
            "flist" = object@flist,

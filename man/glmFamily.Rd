@@ -1,9 +1,6 @@
 \name{glmFamily}
 \alias{glmFamily}
 \title{Generator object for the \code{\linkS4class{glmFamily}} class}
-\usage{
-  glmFamily(...)
-}
 \arguments{
   \item{...}{Named argument (see Note below)}
 }
