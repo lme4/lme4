@@ -136,11 +136,11 @@ lmer <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
 {
 
     ## see functions in modular.R for the body ...
-    
     mc <- mcout <- match.call()           ## parse data and formula
     mc[[1]] <- as.name("lFormula")
-    ## BMB: should this be parent.frame(1L)???  SCW:  yes.  you are correct, it has been changed. see similar change to glmer 
     lmod <- eval(mc, parent.frame(1L))    ## create deviance function for covariance parameters (theta)
+    mcout$formula <- lmod$formula
+    lmod$formula <- NULL
     devfun <- do.call(mkLmerDevfun, lmod) ## optimize deviance function over covariance parameters
     if (devFunOnly) return(devfun)
     opt <- optimizeLmer(devfun, lmod$reTrms, ...)
@@ -292,7 +292,9 @@ glmer <- function(formula, data=NULL, family = gaussian, sparseX = FALSE,
                                         # parse the formula and data
     mc[[1]] <- as.name("glFormula")
     glmod <- eval(mc, parent.frame(1L)) # SCW:  changed from 2L to 1L
-
+    mcout$formula <- glmod$formula
+    glmod$formula <- NULL
+    
     if (length(optimizer)==1) {
         optimizer <- replicate(2,optimizer)
     }

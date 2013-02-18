@@ -37,8 +37,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
     fr.form <- subbars(formula) # substituted "|" by "+" -
     environment(fr.form) <- environment(formula)
     mf$formula <- fr.form
-    fr <- eval(mf, parent.frame())
-                                        # random effects and terms modules
+    fr <- eval(mf, environment(formula)) ## parent.frame())  ## BMB:why not environment(formula) ???
+    ## random effects and terms modules
     reTrms <- mkReTrms(findbars(formula[[3]]), fr)
     nlevelVec <- unlist(lapply(reTrms$flist, function(x) nlevels(droplevels(x)) ))
     if (any(nlevelVec==1)) stop("grouping factors must have at least 1 sampled level")
@@ -52,12 +52,13 @@ lFormula <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
     mf$formula <- fixedform
     ## re-evaluate model frame to extract predvars component
     fixedfr <- eval(mf, parent.frame())
+    fr <- eval(mf, environment(formula)) ## parent.frame())  ## BMB:why not environment(formula) ???
     attr(attr(fr,"terms"),"predvars.fixed") <- attr(attr(fixedfr,"terms"),"predvars")
     X <- model.matrix(fixedform, fixedfr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     p <- ncol(X)
     if ((rankX <- rankMatrix(X)) < p)
         stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
-    return(list(fr = fr, X = X, reTrms = reTrms, REML = REML, start = start))
+    return(list(fr = fr, X = X, reTrms = reTrms, REML = REML, start = start, formula = formula))
 }
 
 ##' @rdname modular
@@ -210,7 +211,7 @@ glFormula <- function(formula, data=NULL, family = gaussian, sparseX = FALSE,
     if ((rankX <- rankMatrix(X)) < p)
         stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
     
-    return(list(fr = fr, X = X, reTrms = reTrms, family = family))
+    return(list(fr = fr, X = X, reTrms = reTrms, family = family, formula = formula))
 }
 
 ##' @rdname modular

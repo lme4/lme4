@@ -23,8 +23,8 @@ S4_2list <- function(obj) {   # no longer used
 anova(fm1, fm2)
 
 ## Now works for glmer
-fm1. <- glmer(Reaction ~ Days + (Days|Subject), sleepstudy)
-## default family=gaussian -> automatically calls  lmer()
+fm1. <- suppressWarnings(glmer(Reaction ~ Days + (Days|Subject), sleepstudy))
+## default family=gaussian/identity link -> automatically calls  lmer()  (but with a warning)
 stopifnot(all.equal(fm1, fm1.))
 ## Test against previous version in lmer1 (using bobyqa for consistency)
 #(fm1. <- lmer1(Reaction ~ Days + (Days|Subject), sleepstudy, opt = "bobyqa"))
