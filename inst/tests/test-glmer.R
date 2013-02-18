@@ -34,6 +34,6 @@ test_that("glmer", {
                              data = subset(cbpp, herd %in% levels(herd)[1:4]), family = binomial),
                    "fewer than 5")
     expect_warning(fm1. <- glmer(Reaction ~ Days + (Days|Subject), sleepstudy),
-                   "as a shortcut to lmer() is deprecated")
+                   regexp="calling .* with family=gaussian .* as a shortcut")
 })
 

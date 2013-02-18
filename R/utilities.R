@@ -560,7 +560,7 @@ checkArgs <- function(type,sparseX,...) {
     if(length(l... <- list(...))) {
         if (!is.null(l...[["family"]])) {  # call glmer if family specified
             ## we will only get here if 'family' is *not* in the arg list
-            warning("calling lmer with family() is deprecated: please use glmer() instead")
+            stop("calling lmer with family() is deprecated: please use glmer() instead")
             type <- "glmer"
         }
         ## Check for method argument which is no longer used
@@ -591,21 +591,61 @@ checkArgs <- function(type,sparseX,...) {
 ## this may fail ...
 
 checkFormulaData <- function(formula,data) {
-    if (is.null(data)) {
-        if (!is.null(ee <- environment(formula))) {
-            ## use environment of formula
-            denv <- ee 
-        } else {
-            ## e.g. no environment, e.g. because formula is a character vector
-            ## denv <- parent.frame(2)
-            ## FIXME: how fragile is this ??
-            ## we expect to be called from 
-            denv <- parent.frame(3)
-        }
+    dataName <- deparse(substitute(data))
+    missingData <- inherits(try(eval(data),silent=TRUE),"try-error")
+    ## data not found (this *should* only happen with garbage input,
+    ## OR when strings used as formulae -> drop1/update/etc.)
+    ##
+    ## alternate attempt (fails)
+    ## 
+    ## ff <- sys.frames()
+    ## ex <- substitute(data)
+    ## ii <- rev(seq_along(ff))
+    ## for(i in ii) {
+    ##     ex <- eval(substitute(substitute(x, env=sys.frames()[[n]]),
+    ##                           env = list(x = ex, n=i)))
+    ## }
+    ## origName <- deparse(ex)
+    ## missingData <- !exists(origName)
+    ## (!dataName=="NULL" && !exists(dataName))
+    if (missingData) {
+        varex <- function(v,env) exists(v,envir=env,inherits=FALSE)
+        allvars <- all.vars(as.formula(formula))
+        allvarex <- function(vvec=allvars,...) { all(sapply(vvec,varex,...)) }
+        if (allvarex(env=(ee <- environment(formula)))) {
+            stop("'data' not found, but variables found in environment of formula: ",
+                    "try specifying 'formula' as a formula rather ",
+                    "than a string in the original model")
+        } else stop("'data' not found, and some variables missing from formula environment")
     } else {
-        ## data specified
-        denv <- list2env(data)
+        if (is.null(data)) {
+            if (!is.null(ee <- environment(formula))) {
+                ## use environment of formula
+                denv <- ee 
+            } else {
+                ## e.g. no environment, e.g. because formula is a character vector
+                denv <- parent.frame(2L)
+            }
+        } else {
+            ## data specified
+            denv <- list2env(data)
+        }
     }
+    ## FIXME: set enclosing environment of denv to environment(formula), or parent.frame(2L) ?
+    ## cat("Debugging parent frames in checkFormulaData:\n")
+    ## glEnv <- 1
+    ## while (!identical(parent.frame(glEnv),.GlobalEnv)) {
+    ##     glEnv <- glEnv+1
+    ## }
+    ## where are vars?
+    ## for (i in 1:glEnv) {
+    ##     OK <- allvarex(env=parent.frame(i))
+    ##     cat("vars exist in parent frame ",i)
+    ##     if (i==glEnv) cat(" (global)")
+    ##     cat(" ",OK,"\n")
+    ## }
+    ## cat("vars exist in env of formula ",allvarex(env=denv),"\n")
+    
     stopifnot(length(as.formula(formula,env=denv)) == 3)  ## check for two-sided formula
     return(denv)
 }

@@ -37,7 +37,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
     fr.form <- subbars(formula) # substituted "|" by "+" -
     environment(fr.form) <- environment(formula)
     mf$formula <- fr.form
-    fr <- eval(mf, environment(formula)) ## parent.frame())  ## BMB:why not environment(formula) ???
+    fr <- eval(mf, parent.frame())
     ## random effects and terms modules
     reTrms <- mkReTrms(findbars(formula[[3]]), fr)
     nlevelVec <- unlist(lapply(reTrms$flist, function(x) nlevels(droplevels(x)) ))
@@ -52,7 +52,6 @@ lFormula <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
     mf$formula <- fixedform
     ## re-evaluate model frame to extract predvars component
     fixedfr <- eval(mf, parent.frame())
-    fr <- eval(mf, environment(formula)) ## parent.frame())  ## BMB:why not environment(formula) ???
     attr(attr(fr,"terms"),"predvars.fixed") <- attr(attr(fixedfr,"terms"),"predvars")
     X <- model.matrix(fixedform, fixedfr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     p <- ncol(X)

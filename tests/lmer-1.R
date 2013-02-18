@@ -253,10 +253,11 @@ D <-  data.frame(y= rnorm(12,10), ff = gl(3,2,12),
                  x1=round(rnorm(12,3),1), x2=round(rnorm(12,7),1))
 ## NB: The first two are the same, having a length-3 R.E. with 3 x 3 vcov-matrix:
 ## --> do need CPU
-m0 <- lmer(y ~ (x1 + x2)|ff, data = D)
-m1 <- lmer(y ~ x1 + x2|ff  , data = D)
-m2 <- lmer(y ~ x1 + (x2|ff), data = D)
-m3 <- lmer(y ~ (x2|ff) + x1, data = D)
+## suppressWarnings() for warning about too-few random effects levels
+m0 <- suppressWarnings(lmer(y ~ (x1 + x2)|ff, data = D))
+m1 <- suppressWarnings(lmer(y ~ x1 + x2|ff  , data = D))
+m2 <- suppressWarnings(lmer(y ~ x1 + (x2|ff), data = D))
+m3 <- suppressWarnings(lmer(y ~ (x2|ff) + x1, data = D))
 stopifnot(all.equal(ranef(m0), ranef(m1)),
           all.equal(ranef(m2), ranef(m3)),
           inherits(tryCatch(lmer(y ~ x2|ff + x1, data = D), error = function(e)e),

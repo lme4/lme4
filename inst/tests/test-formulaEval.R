@@ -3,6 +3,28 @@ library("lme4")
 
 context("data= argument and formula evaluation")
 
+## test_that("glmerFormX", {
+##     set.seed(101)
+
+##     n <- 50
+##     x <- rbinom(n, 1, 1/2)
+##     y <- rnorm(n)
+##     z <- rnorm(n)
+##     r <- sample(1:5, size=n, replace=TRUE)
+##     d <- data.frame(x,y,z,r)
+
+##     F <- "z"
+##     rF <- "(1|r)"
+##     modStr <- (paste("x ~", "y +", F, "+", rF))
+##     modForm <- as.formula(modStr)
+##     ff <- function() {
+##         d2 <- data.frame(x,y,z,r)
+##         glmer( x ~ y + z + (1|r), data=d2, family="binomial")
+##     }
+##     m_data.5 <- ff()
+##     drop1(m_data.5)
+## })
+
 test_that("glmerForm", {
     set.seed(101)
 
@@ -44,9 +66,13 @@ test_that("glmerForm", {
     ## apply drop1 to all of these ...
     m_nodata_List <- list(m_nodata.0,m_nodata.1,m_nodata.2,m_nodata.3,m_nodata.4)
     d_nodata_List <- lapply(m_nodata_List,drop1)
-    
+
     m_data_List <- list(m_data.0,m_data.1,m_data.2,m_data.3,m_data.4,m_data.5)
-    d_data_List <- lapply(m_data_List,drop1)
+    badNums <- 4:5
+    d_data_List <- lapply(m_data_List[-badNums],drop1)
+
+    expect_error(drop1(m_data.3),"'data' not found")
+    expect_error(drop1(m_data.4),"'data' not found")
     
     ## expect_error(lapply(m_data_List[4],drop1))
     ## expect_error(lapply(m_data_List[5],drop1))
@@ -65,11 +91,15 @@ test_that("glmerForm", {
 
     expect_equivalent(m_nodata_List[[1]],m_data_List[[1]])
     expect_equivalent(d_nodata_List[[1]],d_data_List[[1]])
-    
+
     for (i in 1:(length(m_data_List)-1)) {
         expect_equivalent(m_data_List[[i]],m_data_List[[i+1]])
+    }
+    ## allow for dropped 'bad' vals
+    for (i in 1:(length(d_data_List)-1)) {
         expect_equivalent(d_data_List[[i]],d_data_List[[i+1]])
     }
+
 })
 
 
@@ -105,4 +135,3 @@ test_that("lmerForm", {
     fun()
     expect_equal(anova(fm1),fun())
 })
-
