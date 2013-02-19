@@ -114,8 +114,8 @@ fm2  5 1762.0 1778.0 -876.00   1752.0
 fm1  6 1763.9 1783.1 -875.97   1751.9 0.0639      1     0.8004
 > 
 > ## Now works for glmer
-> fm1. <- glmer(Reaction ~ Days + (Days|Subject), sleepstudy)
-> ## default family=gaussian -> automatically calls  lmer()
+> fm1. <- suppressWarnings(glmer(Reaction ~ Days + (Days|Subject), sleepstudy))
+> ## default family=gaussian/identity link -> automatically calls  lmer()  (but with a warning)
 > stopifnot(all.equal(fm1, fm1.))
 > ## Test against previous version in lmer1 (using bobyqa for consistency)
 > #(fm1. <- lmer1(Reaction ~ Days + (Days|Subject), sleepstudy, opt = "bobyqa"))
@@ -170,7 +170,7 @@ Fixed effects:
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  1 0.212 1.253 
+Time elapsed:  0.992 0.192 1.204 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -231,7 +231,7 @@ In checkArgs("lmer", sparseX, ...) :
 > #fmX2s <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
 > 
 > showProc.time() #
-Time elapsed:  0.396 0.024 0.424 
+Time elapsed:  0.36 0.056 0.43 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -354,7 +354,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.532 0.072 0.617 
+Time elapsed:  0.588 0.032 0.637 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -479,7 +479,7 @@ lagoon4 0.000  0.000  0.000
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.308 0.084 0.392 
+Time elapsed:  0.4 0.012 0.409 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -487,10 +487,11 @@ Time elapsed:  0.308 0.084 0.392
 +                  x1=round(rnorm(12,3),1), x2=round(rnorm(12,7),1))
 > ## NB: The first two are the same, having a length-3 R.E. with 3 x 3 vcov-matrix:
 > ## --> do need CPU
-> m0 <- lmer(y ~ (x1 + x2)|ff, data = D)
-> m1 <- lmer(y ~ x1 + x2|ff  , data = D)
-> m2 <- lmer(y ~ x1 + (x2|ff), data = D)
-> m3 <- lmer(y ~ (x2|ff) + x1, data = D)
+> ## suppressWarnings() for warning about too-few random effects levels
+> m0 <- suppressWarnings(lmer(y ~ (x1 + x2)|ff, data = D))
+> m1 <- suppressWarnings(lmer(y ~ x1 + x2|ff  , data = D))
+> m2 <- suppressWarnings(lmer(y ~ x1 + (x2|ff), data = D))
+> m3 <- suppressWarnings(lmer(y ~ (x2|ff) + x1, data = D))
 > stopifnot(all.equal(ranef(m0), ranef(m1)),
 +           all.equal(ranef(m2), ranef(m3)),
 +           inherits(tryCatch(lmer(y ~ x2|ff + x1, data = D), error = function(e)e),
@@ -499,7 +500,7 @@ Warning message:
 In Ops.factor(ff, x1) : + not meaningful for factors
 > 
 > showProc.time() #
-Time elapsed:  1.352 0.172 1.537 
+Time elapsed:  1.556 0 1.624 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -516,4 +517,4 @@ Time elapsed:  1.352 0.172 1.537
 > 
 > proc.time()
    user  system elapsed 
-  7.260   3.924  11.185 
+  7.504   3.816  11.409 
