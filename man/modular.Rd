@@ -3,6 +3,7 @@
 \alias{lFormula}
 \alias{mkGlmerDevfun}
 \alias{mkLmerDevfun}
+\alias{modular}
 \alias{optimizeGlmer}
 \alias{optimizeLmer}
 \alias{reoptimizeGlmer}
@@ -181,26 +182,43 @@
   1e-10.}
 }
 \value{
-  a list containing components: \item{fr}{model frame}
-  \item{X}{fixed-effect design matrix} \item{reTrms}{list
-  containing information on random effects structure:
-  result of \code{\link{mkMerMod}}} \item{REML}{logical
-  flag: use restricted maximum likelihood? (Copy of
+  (lFormula, glFormula) a list containing components:
+  \item{fr}{model frame} \item{X}{fixed-effect design
+  matrix} \item{reTrms}{list containing information on
+  random effects structure: result of
+  \code{\link{mkMerMod}}} \item{REML}{(lFormula only):
+  logical flag: use restricted maximum likelihood? (Copy of
   argument.)} \item{start}{starting value information.
   (Copy of argument.)}
-  a function to calculate deviance (or restricted deviance)
-  as a function of the theta (random-effect) parameters
-  results of an optimization
+
+  (mkLmerDevfun, mkGlmerDevfun) a function to calculate
+  deviance (or restricted deviance) as a function of the
+  theta (random-effect) parameters (for GlmerDevfun, of
+  beta (fixed-effect) parameters as well)
+
+  (optimizeLmer) results of an optimization
 }
 \description{
   Modular functions for mixed model fits
-
-  process
 }
 \details{
-  Takes all the end-user-level components required for
-  fitting a linear mixed model and produces a list of terms
-  required for the next internal stage in fitting
-  (\code{\link{mkLmerDevfun}})
+  These functions make up the internal components of a(n)
+  [gn]lmer fit. \itemize{ \item \code{[g]lFormula} takes
+  the arguments that would normally be passed to
+  \code{[g]lmer}, checking for errors and processing the
+  formula and data input to create \item
+  \code{mk(Gl|L)merDevfun} takes the output of the previous
+  step (minus the \code{formula} component) and creates a
+  deviance function \item \code{optimize(Gl|L)mer} takes a
+  deviance function and optimizes over \code{theta} \item
+  \code{updateGlmerDevfun} takes the first stage of a GLMM
+  optimization (with \code{nAGQ=0}, optimizing over
+  \code{theta} only) and produces a second-stage deviance
+  function \item \code{reoptimizeGlmer} optimizes the
+  second-stage deviance function \item
+  \code{\link{mkMerMod}} takes the \emph{environment} of a
+  deviance function, the results of an optimization, a list
+  of random-effect terms, a model frame, and a model all
+  and produces a \code{[g]lmerMod} object }
 }
 

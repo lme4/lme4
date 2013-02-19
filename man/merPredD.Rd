@@ -1,6 +1,9 @@
 \name{merPredD}
 \alias{merPredD}
 \title{Generator object for the \code{\linkS4class{merPredD}} class}
+\usage{
+  merPredD(...)
+}
 \arguments{
   \item{...}{List of arguments (see Note).}
 }
