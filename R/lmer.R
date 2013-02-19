@@ -311,8 +311,8 @@ glmer <- function(formula, data=NULL, family = gaussian, sparseX = FALSE,
         devfun <- updateGlmerDevfun(devfun, glmod$reTrms, nAGQ = nAGQ)
                                         # reoptimize deviance function over covariance parameters and fixed effects
         if (devFunOnly) return(devfun)
-        opt <- reoptimizeGlmer(devfun, optimizer = optimizer[[2]], 
-                               verbose = verbose, control = control)
+        opt <- optimizeGlmer(devfun, optimizer = optimizer[[2]], 
+                             verbose = verbose, control = control, stage=2)
     }
     
                                         # prepare output

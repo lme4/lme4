@@ -6,7 +6,6 @@
 \alias{modular}
 \alias{optimizeGlmer}
 \alias{optimizeLmer}
-\alias{reoptimizeGlmer}
 \alias{updateGlmerDevfun}
 \title{Modular functions for mixed model fits}
 \usage{
@@ -33,12 +32,9 @@
     verbose = 0L, tolPwrss = 1e-07, compDev = TRUE)
 
   optimizeGlmer(devfun, optimizer = "bobyqa", nAGQ = 1L,
-    verbose = 0L, control = list())
+    verbose = 0L, control = list(), stage = 1)
 
   updateGlmerDevfun(devfun, reTrms, nAGQ = 1L)
-
-  reoptimizeGlmer(devfun, optimizer = "Nelder_Mead",
-    verbose = 0L, control = list())
 }
 \arguments{
   \item{\dots}{other potential arguments.}
@@ -59,6 +55,8 @@
   \code{\link{mkLmerDevfun}}}
 
   \item{nAGQ}{number of Gauss-Hermite quadrature points}
+
+  \item{stage}{optimization stage}
 
   \item{formula}{a two-sided linear formula object
   describing both the fixed-effects and fixed-effects part
@@ -210,15 +208,16 @@
   \code{mk(Gl|L)merDevfun} takes the output of the previous
   step (minus the \code{formula} component) and creates a
   deviance function \item \code{optimize(Gl|L)mer} takes a
-  deviance function and optimizes over \code{theta} \item
+  deviance function and optimizes over \code{theta} (or
+  over \code{theta} and \code{beta}, if \code{stage} is set
+  to 2 for \code{optimizeGlmer} \item
   \code{updateGlmerDevfun} takes the first stage of a GLMM
   optimization (with \code{nAGQ=0}, optimizing over
   \code{theta} only) and produces a second-stage deviance
-  function \item \code{reoptimizeGlmer} optimizes the
-  second-stage deviance function \item
-  \code{\link{mkMerMod}} takes the \emph{environment} of a
-  deviance function, the results of an optimization, a list
-  of random-effect terms, a model frame, and a model all
-  and produces a \code{[g]lmerMod} object }
+  function \item \code{\link{mkMerMod}} takes the
+  \emph{environment} of a deviance function, the results of
+  an optimization, a list of random-effect terms, a model
+  frame, and a model all and produces a \code{[g]lmerMod}
+  object }
 }
 
