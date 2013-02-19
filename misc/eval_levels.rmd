@@ -1,0 +1,73 @@
+Evaluation of data and formulae in `lme4`
+=============
+
+Trying to decipher/debug evaluation problems in `lme4`.
+
+There are many possible ways to specify the `formula`, and the `data` arguments, that can cause problems when `eval()` is run later while trying to do downstream analysis with the models (`update`, `drop1`, etc.).
+
+### Data
+
+* If the `data` argument is missing, variables in the formula are supposed to be looked for in the environment of the formula, *or* in the calling argument of `glmer`, or the other now-possible routes down to the place where formulae are evaluated ...
+* If the `data` argument is present, variables in the formula are supposed to be looked for first within the specified data frame, *then* in the places specified in the previous point
+* the first paradigm (no `data` argument) seems inherently dangerous/fragile, but we should make it work if we can possibly do so. Mixing the first and second (i.e. taking some variables from an environment and some from within the `data` argument) seems even worse, but J. Dushoff seemed to think it was reasonable. Is there a good use case we should think about?
+
+### Formulae
+
+* The safest way to specify formulae is as actual objects of type `formula` -- because these objects store their environments, which other objects don't.  This mitigates some of the possible problems with data listed above.
+* If possible, we should also try to make it possible for users to specify formulae as objects (typically `character`) that can be coerced o formulae, as `lm()` does.  The only tricky part here is that in this case we have to try to coerce them within the correct environments ...
+
+### Outlook/solutions
+
+We had this mostly sorted out in the previous version/main branch, but we have now broken it somewhat, at least in part because we nested formula evaluation one level deeper than previously.
+
+There are lots of tests in `inst/tests/test-formulaEval.R`.  In particular, we have the test cases
+
+* `x ~ y + z + (1|r)` (formula as formula, in-line)
+* `as.formula(modStr)` (formula coerced from a stored string, on the fly)
+* `modForm` (formula stored in a variable)
+* `modStr` (formula stored as a string)
+* `"x ~ y + z + (1|r)"` (formula as string, in-line)
+
+If we needed to we could forbid cases 4 and 5 (i.e. say that the `formula` argument **must** be a formula), but the other three cases should definitely work.  In principle, all five of these should also work whether or not a `data` argument is specified; again, if necessary we could insist on a `data` argument ...
+
+The basic procedure is that within `checkFormulaData` (which is typically called from `[g]lFormula`, which is typically called from `[g]lmer`), we try to evaluate (1) whether there is a `data` argument, (2) whether the `formula` argument has an environment or not.  If the former, we make the data into an environment and return it to `[g]lFormula`, to be assigned as the environment of the formula.  If the latter, we return the formula's environment, to be (re)assigned as the formula environment. If neither of these is true, we hope for the best and return `parent.frame(2L)` as the appropriate environment. *This works because we have called `[g]lFormula` with `env=parent.frame(1L)`*: therefore since we are in the call stack `checkFormulaData` < `[g]lFormula` < `[g]lmer`, `parent.frame(2L)` actually goes up to the calling environment of `glmer` ...
+
+Calling auxiliary functions such as `update` or `drop1` generally makes things harder, as we may have left important information behind.  In particular, there is one case that fails. `drop1` and `update` try to re-evaluate the function call. The problem here is that we need to re-evaluate in an environment *that contains the data argument* -- not just an environment that contains the components of the data.  
+
+Right now, things mostly work anyway -- because we are generally looking in the right place for the data.  It fails if we both specify the formula as a string and specify the `data` argument. This is because we (1) set the formula environment as the data and (2) re-evaluate within the formula environment; but the formula environment *doesn't contain the data argument itself*, just the contents of the data argument.
+
+* Might it work to `NULL` out the data argument when calling `update`/`drop1` (unless a new `data` argument is explicitly specified in `update`?)
+* Revisit the evaluation choices in `drop1.merMod` now that we understand things a little better?
+
+```{r echo=FALSE,message=FALSE}
+library("lme4")
+set.seed(101)
+n <- 20
+x <- rbinom(n, 1, 1/2)
+y <- rnorm(n)
+z <- rnorm(n)
+r <- sample(1:5, size=n, replace=TRUE)
+d <- data.frame(x,y,z,r)
+F <- "z"
+rF <- "(1|r)"
+modStr <- (paste("x ~", "y +", F, "+", rF))
+modForm <- as.formula(modStr)
+m_nodata.0 <- glmer( x ~ y + z + (1|r) , family="binomial")
+m_nodata.1 <- glmer( as.formula(modStr) , family="binomial")
+m_nodata.2 <- glmer( modForm , family="binomial")
+m_nodata.3 <- glmer( modStr , family="binomial")
+m_nodata.4 <- glmer( "x ~ y + z + (1|r)" , family="binomial")
+fnames <- c("formula","coerced_stored_string","stored_formula","stored_string","string")
+m_nodata_List <- setNames(list(m_nodata.0,m_nodata.1,m_nodata.2,m_nodata.3,m_nodata.4),fnames)
+m_nodata_try <- lapply(m_nodata_List,function(x) try(drop1(x),silent=TRUE))
+m_nodata_results <- sapply(m_nodata_try,inherits,"try-error")
+m_nodata_msg <- sapply(m_nodata_try,function(x) 
+   if (!inherits(x,"try-error")) NA else attr(x,"condition")$message)
+## data argument specified
+m_data.0 <- glmer( x ~ y + z + (1|r) , data=d, family="binomial")
+m_data.1 <- glmer( as.formula(modStr) , data=d, family="binomial")
+m_data.2 <- glmer( modForm , data=d, family="binomial")
+m_data.3 <- glmer( modStr , data=d, family="binomial")
+m_data.4 <- glmer( "x ~ y + z + (1|r)" , data=d, family="binomial")
+```
+

@@ -590,7 +590,7 @@ checkArgs <- function(type,sparseX,...) {
 ## if #3 is true *and* the user is doing something tricky with nested functions,
 ## this may fail ...
 
-checkFormulaData <- function(formula,data) {
+checkFormulaData <- function(formula,data,debug=FALSE) {
     dataName <- deparse(substitute(data))
     missingData <- inherits(try(eval(data),silent=TRUE),"try-error")
     ## data not found (this *should* only happen with garbage input,
@@ -624,6 +624,13 @@ checkFormulaData <- function(formula,data) {
                 denv <- ee 
             } else {
                 ## e.g. no environment, e.g. because formula is a character vector
+                ## parent.frame(2L) works because [g]lFormula (our calling environment)
+                ## has been called within [g]lmer with env=parent.frame(1L)
+                ## If you call checkFormulaData in some other bizarre way such that
+                ## parent.frame(2L) is *not* OK, you deserve what you get
+                ## calling checkFormulaData directly from the global
+                ## environment should be OK, since trying to go up beyond the global
+                ## environment keeps bringing you back to the global environment ...
                 denv <- parent.frame(2L)
             }
         } else {
@@ -632,19 +639,22 @@ checkFormulaData <- function(formula,data) {
         }
     }
     ## FIXME: set enclosing environment of denv to environment(formula), or parent.frame(2L) ?
-    ## cat("Debugging parent frames in checkFormulaData:\n")
-    ## glEnv <- 1
-    ## while (!identical(parent.frame(glEnv),.GlobalEnv)) {
-    ##     glEnv <- glEnv+1
-    ## }
-    ## where are vars?
-    ## for (i in 1:glEnv) {
-    ##     OK <- allvarex(env=parent.frame(i))
-    ##     cat("vars exist in parent frame ",i)
-    ##     if (i==glEnv) cat(" (global)")
-    ##     cat(" ",OK,"\n")
-    ## }
-    ## cat("vars exist in env of formula ",allvarex(env=denv),"\n")
+    if (debug) {
+        cat("Debugging parent frames in checkFormulaData:\n")
+        ## find global environment -- could do this with sys.nframe() ?
+        glEnv <- 1
+        while (!identical(parent.frame(glEnv),.GlobalEnv)) {
+            glEnv <- glEnv+1
+        }
+        ## where are vars?
+        for (i in 1:glEnv) {
+            OK <- allvarex(env=parent.frame(i))
+            cat("vars exist in parent frame ",i)
+            if (i==glEnv) cat(" (global)")
+            cat(" ",OK,"\n")
+        }
+        cat("vars exist in env of formula ",allvarex(env=denv),"\n")
+    } ## if (debug)
     
     stopifnot(length(as.formula(formula,env=denv)) == 3)  ## check for two-sided formula
     return(denv)
