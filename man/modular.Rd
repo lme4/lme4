@@ -56,7 +56,9 @@
 
   \item{nAGQ}{number of Gauss-Hermite quadrature points}
 
-  \item{stage}{optimization stage}
+  \item{stage}{optimization stage (1: nAGQ=0, optimize over
+  theta only; 2: nAGQ possibly >0, optimize over theta and
+  beta)}
 
   \item{formula}{a two-sided linear formula object
   describing both the fixed-effects and fixed-effects part
@@ -188,12 +190,10 @@
   logical flag: use restricted maximum likelihood? (Copy of
   argument.)} \item{start}{starting value information.
   (Copy of argument.)}
-
   (mkLmerDevfun, mkGlmerDevfun) a function to calculate
   deviance (or restricted deviance) as a function of the
   theta (random-effect) parameters (for GlmerDevfun, of
   beta (fixed-effect) parameters as well)
-
   (optimizeLmer) results of an optimization
 }
 \description{

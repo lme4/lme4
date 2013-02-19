@@ -220,7 +220,9 @@ glFormula <- function(formula, data=NULL, family = gaussian, sparseX = FALSE,
     if ((rankX <- rankMatrix(X)) < p)
         stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
     
-    return(list(fr = fr, X = X, reTrms = reTrms, family = family, formula = formula))
+    out <- list(fr = fr, X = X, reTrms = reTrms, family = family)
+    attr(out, "formula") <- formula
+    return(out)
 }
 
 ##' @rdname modular
