@@ -3,7 +3,7 @@
 \title{Create an lmerResp, glmResp or nlsResp instance}
 \usage{
   mkRespMod(fr, REML = NULL, family = NULL, nlenv = NULL,
-    nlmod = NULL)
+    nlmod = NULL, ...)
 }
 \arguments{
   \item{fr}{a model frame}
@@ -17,6 +17,11 @@
   (nlsResp only)}
 
   \item{nlmod}{the nonlinear model function (nlsResp only)}
+
+  \item{...}{where to look for response information if
+  \code{fr} is missing.  Can contain a model response,
+  \code{y}, offset, \code{offset}, and weights,
+  \code{weights}.}
 }
 \value{
   an lmerResp or glmResp or nlsResp instance

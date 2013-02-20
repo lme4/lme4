@@ -136,12 +136,32 @@ mkReTrms <- function(bars, fr) {
 ##' @param family the optional glm family (glmResp only)
 ##' @param nlenv the nonlinear model evaluation environment (nlsResp only)
 ##' @param nlmod the nonlinear model function (nlsResp only)
+##' @param ... where to look for response information if \code{fr} is missing.
+##'   Can contain a model response, \code{y}, offset, \code{offset}, and weights,
+##'   \code{weights}.
 ##' @return an lmerResp or glmResp or nlsResp instance
 ##' @family utilities
 ##' @export
-mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL) {
-    ## FIXME: may need to add X, or pass it somehow, if we want to use glm.fit
+mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, ...) {
+  
+  if(!missing(fr)){
     y <- model.response(fr)
+    offset <- model.offset(fr)
+    weights <- model.weights(fr)
+    N <- n <- nrow(fr)
+    etastart_update <- model.extract(fr, "etastart")
+  }
+  else{
+    fr <- list(...)
+    y <- fr$y
+    N <- n <- if(is.matrix(y)) nrow(y) else length(y)
+    offset <- fr$offset
+    weights <- fr$weights
+    etastart_update <- fr$etastart
+  }
+  
+  ## FIXME: may need to add X, or pass it somehow, if we want to use glm.fit
+  #y <- model.response(fr)
     if(length(dim(y)) == 1) {
 	## avoid problems with 1D arrays, but keep names
 	nm <- rownames(y)
@@ -153,7 +173,7 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL) 
     if (!is.null(REML)) rho$REML <- REML
     rho$etastart <- fr$etastart
     rho$mustart <- fr$mustart
-    N <- n <- nrow(fr)
+    #N <- n <- nrow(fr)
     if (!is.null(nlenv)) {
         stopifnot(is.language(nlmod),
                   is.environment(nlenv),
@@ -170,12 +190,12 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL) 
             unname(unlist(lapply(pnames,
                                  function(nm) get(nm, envir=nlenv))))
     }
-    if (!is.null(offset <- model.offset(fr))) {
+    if (!is.null(offset)) {
         if (length(offset) == 1L) offset <- rep.int(offset, N)
         stopifnot(length(offset) == N)
         rho$offset <- unname(offset)
     } else rho$offset <- rep.int(0, N)
-    if (!is.null(weights <- model.weights(fr))) {
+    if (!is.null(weights)) {
         stopifnot(length(weights) == n, all(weights >= 0))
         rho$weights <- unname(weights)
     } else rho$weights <- rep.int(1, n)
@@ -194,7 +214,7 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL) 
     ll <- as.list(rho)
     ans <- do.call(new, c(list(Class="glmResp", family=family),
                           ll[setdiff(names(ll), c("m", "nobs", "mustart"))]))
-    ans$updateMu(if (!is.null(es <- model.extract(fr, "etastart"))) es else
+  ans$updateMu(if (!is.null(es <- etastart_update)) es else
                  family$linkfun(get("mustart", rho)))
     ans
 }
@@ -540,6 +560,8 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc) {
              sigmaML=sqrt(unname(if (rcl=="glmResp") NA else pwrss/dims['n'])),
              sigmaREML=sqrt(unname(if (rcl!="lmerResp") NA else pwrss/dims['nmp'])),
              tolPwrss=rho$tolPwrss)
+    # TODO:  improve this hack to get something in frame slot (maybe need weights, etc...)
+    if(missing(fr)) fr <- data.frame(resp$y)
     new(switch(rcl, lmerResp="lmerMod", glmResp="glmerMod", nlsResp="nlmerMod"),
         call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
         Gp=reTrms$Gp, theta=pp$theta, beta=beta, u=pp$u(fac),

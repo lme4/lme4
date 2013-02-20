@@ -143,7 +143,7 @@ lmer <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
     lmod$formula <- NULL
     devfun <- do.call(mkLmerDevfun, lmod) ## optimize deviance function over covariance parameters
     if (devFunOnly) return(devfun)
-    opt <- optimizeLmer(devfun, lmod$reTrms, ...)
+    opt <- optimizeLmer(devfun, ...)
                                         ## prepare output
     mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr, mcout)
 }## { lmer }
@@ -274,6 +274,7 @@ glmer <- function(formula, data=NULL, family = gaussian, sparseX = FALSE,
                   contrasts = NULL, mustart, etastart, devFunOnly = FALSE,
                   tolPwrss = 1e-7, optimizer=c("bobyqa","Nelder_Mead"), ...)
 {
+  
     mc <- mcout <- match.call()
 
     ## family-checking code duplicated here and in glFormula (for now) since
@@ -292,9 +293,14 @@ glmer <- function(formula, data=NULL, family = gaussian, sparseX = FALSE,
     }
                                         # parse the formula and data
     mc[[1]] <- as.name("glFormula")
+    #m <- match(c("formula", "data", "family", "sparseX", "subset", "weights",
+    #        "na.action", "offset", "contrasts", "mustart", "etastart"), 
+    #      names(mc), 0)
+    #mc <- mc[c(1, m)]
+    
     glmod <- eval(mc, parent.frame(1L)) # SCW:  changed from 2L to 1L
-    mcout$formula <- glmod$formula
-    glmod$formula <- NULL
+    mcout$formula <- attr(glmod, "formula")
+    #glmod$formula <- NULL # not necessary now that formula is returned from glFormula as an attribute
     
     if (length(optimizer)==1) {
         optimizer <- replicate(2,optimizer)

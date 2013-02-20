@@ -1,4 +1,4 @@
-\name{lFormula}
+\name{modular}
 \alias{glFormula}
 \alias{lFormula}
 \alias{mkGlmerDevfun}
@@ -10,26 +10,21 @@
 \title{Modular functions for mixed model fits}
 \usage{
   lFormula(formula, data = NULL, REML = TRUE,
-    sparseX = FALSE, control = list(), start = NULL,
-    verbose = 0L, subset, weights, na.action, offset,
-    contrasts = NULL, devFunOnly = FALSE,
-    optimizer = "Nelder_Mead", ...)
+    sparseX = FALSE, subset, weights, na.action, offset,
+    contrasts = NULL, ...)
 
   mkLmerDevfun(fr, X, reTrms, REML = TRUE, start = NULL,
     ...)
 
-  optimizeLmer(devfun, reTrms, optimizer = "Nelder_Mead",
+  optimizeLmer(devfun, optimizer = "Nelder_Mead",
     verbose = 0L, control = list())
 
   glFormula(formula, data = NULL, family = gaussian,
-    sparseX = FALSE, control = list(), start = NULL,
-    verbose = 0L, nAGQ = 1L, compDev = TRUE, subset,
-    weights, na.action, offset, contrasts = NULL, mustart,
-    etastart, devFunOnly = FALSE, tolPwrss = 1e-07,
-    optimizer = c("bobyqa", "Nelder_Mead"), ...)
+    sparseX = FALSE, subset, weights, na.action, offset,
+    contrasts = NULL, mustart, etastart, ...)
 
   mkGlmerDevfun(fr, X, reTrms, family, nAGQ = 1L,
-    verbose = 0L, tolPwrss = 1e-07, compDev = TRUE)
+    verbose = 0L, tolPwrss = 1e-07, compDev = TRUE, ...)
 
   optimizeGlmer(devfun, optimizer = "bobyqa", nAGQ = 1L,
     verbose = 0L, control = list(), stage = 1)
@@ -39,7 +34,9 @@
 \arguments{
   \item{\dots}{other potential arguments.}
 
-  \item{fr}{model frame}
+  \item{fr}{A model frame containing the variables needed
+  to create an \code{\link{lmerResp}} or
+  \code{\link{glmResp}} instance}
 
   \item{X}{fixed-effects design matrix}
 
@@ -85,30 +82,6 @@
   used for the fixed-effects terms?  Defaults to
   \code{FALSE}. Currently inactive.}
 
-  \item{control}{a named list of control parameters for the
-  estimation algorithm, specifying only the ones to be
-  changed from their default values.  Hence defaults to an
-  empty list.\cr Possible control options and their default
-  values are: \describe{ \item{\code{msVerbose}:}{a logical
-  value passed as the \code{trace} argument to
-  \code{nlminb} (see documentation on that function).
-  Default is \code{getOption("verbose")}.}
-  \item{\code{maxIter}:}{a positive integer passed as the
-  \code{maxIter} argument to \code{nlminb} (see
-  documentation on that function).  Default is \code{300}.}
-  \item{\code{maxFN}:}{a positive integer specifying the
-  maximum number of evaluations of the deviance function
-  allowed during the optimization. Default is \code{900}.}
-  \item{\code{tol}:}{a positive number specifying the
-  convergence tolerance, currently only for the PWRSS
-  iterations in \code{\link{glmer}}.  Default is
-  \code{0.000001}.} }}
-
-  \item{verbose}{integer scalar.  If \code{> 0} verbose
-  output is generated during the optimization of the
-  parameter estimates.  If \code{> 1} verbose output is
-  generated during the individual PIRLS steps.}
-
   \item{subset}{an optional expression indicating the
   subset of the rows of \code{data} that should be used in
   the fit. This can be a logical vector, or a numeric
@@ -137,9 +110,6 @@
   \item{contrasts}{an optional list. See the
   \code{contrasts.arg} of \code{model.matrix.default}.}
 
-  \item{devFunOnly}{logical - return only the deviance
-  evaluation function.}
-
   \item{optimizer}{character - name of optimizing function.
   The built-in optimizers are \code{\link{Nelder_Mead}} and
   \code{\link[minqa]{bobyqa}} (from the \pkg{minqa}
@@ -161,12 +131,32 @@
   the \code{method} argument to \code{optim} in the
   \code{control} argument.}
 
+  \item{verbose}{integer scalar.  If \code{> 0} verbose
+  output is generated during the optimization of the
+  parameter estimates.  If \code{> 1} verbose output is
+  generated during the individual PIRLS steps.}
+
+  \item{control}{a named list of control parameters for the
+  estimation algorithm, specifying only the ones to be
+  changed from their default values.  Hence defaults to an
+  empty list.\cr Possible control options and their default
+  values are: \describe{ \item{\code{msVerbose}:}{a logical
+  value passed as the \code{trace} argument to
+  \code{nlminb} (see documentation on that function).
+  Default is \code{getOption("verbose")}.}
+  \item{\code{maxIter}:}{a positive integer passed as the
+  \code{maxIter} argument to \code{nlminb} (see
+  documentation on that function).  Default is \code{300}.}
+  \item{\code{maxFN}:}{a positive integer specifying the
+  maximum number of evaluations of the deviance function
+  allowed during the optimization. Default is \code{900}.}
+  \item{\code{tol}:}{a positive number specifying the
+  convergence tolerance, currently only for the PWRSS
+  iterations in \code{\link{glmer}}.  Default is
+  \code{0.000001}.} }}
+
   \item{family}{a GLM family, see \code{\link[stats]{glm}}
   and \code{\link[stats]{family}}.}
-
-  \item{compDev}{logical scalar - should compiled code be
-  used for the deviance evaluation during the optimization
-  of the parameter estimates?  Defaults to \code{TRUE}.}
 
   \item{mustart}{optional starting values on the scale of
   the conditional mean, as in \code{\link[stats]{glm}}; see
@@ -180,6 +170,10 @@
   declaring convergence in the penalized iteratively
   weighted residual sum-of-squares step.  Defaults to
   1e-10.}
+
+  \item{compDev}{logical scalar - should compiled code be
+  used for the deviance evaluation during the optimization
+  of the parameter estimates?  Defaults to \code{TRUE}.}
 }
 \value{
   (lFormula, glFormula) a list containing components:
@@ -188,8 +182,7 @@
   random effects structure: result of
   \code{\link{mkMerMod}}} \item{REML}{(lFormula only):
   logical flag: use restricted maximum likelihood? (Copy of
-  argument.)} \item{start}{starting value information.
-  (Copy of argument.)}
+  argument.)}
   (mkLmerDevfun, mkGlmerDevfun) a function to calculate
   deviance (or restricted deviance) as a function of the
   theta (random-effect) parameters (for GlmerDevfun, of
@@ -219,5 +212,49 @@
   an optimization, a list of random-effect terms, a model
   frame, and a model all and produces a \code{[g]lmerMod}
   object }
+}
+\examples{
+### Fitting a linear mixed model in 4 modularized steps
+
+## 1.  Parse the data and formula:
+lmod <- lFormula(Reaction ~ Days + (Days|Subject), sleepstudy)
+names(lmod)
+## 2.  Create the deviance function to be optimized:
+(devfun <- do.call(mkLmerDevfun, lmod))
+ls(environment(devfun)) # the environment of devfun contains lots of info
+## 3.  Optimize the deviance function:
+opt <- optimizeLmer(devfun)
+opt[1:3]
+## 4.  Package up the results:
+mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr)
+
+
+### Same model in one line
+lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+
+
+### Fitting a generalized linear mixed model in six modularized steps
+
+## 1.  Parse the data and formula:
+glmod <- glFormula(cbind(incidence, size - incidence) ~ period + (1 | herd),
+data = cbpp, family = binomial)
+names(glmod)
+## 2.  Create the deviance function for optimizing over theta:
+(devfun <- do.call(mkGlmerDevfun, glmod))
+ls(environment(devfun)) # the environment of devfun contains lots of info
+## 3.  Optimize over theta using a rough approximation (i.e. nAGQ = 0):
+(opt <- optimizeGlmer(devfun))
+## 4.  Update the deviance function for optimizing over theta and beta:
+(devfun <- updateGlmerDevfun(devfun, glmod$reTrms))
+## 5.  Optimize over theta and beta:
+opt <- optimizeGlmer(devfun, stage=2)
+opt[1:3]
+## 6.  Package up the results:
+mkMerMod(environment(devfun), opt, glmod$reTrms, fr = glmod$fr)
+
+
+### Same model in one line
+glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+data = cbpp, family = binomial)
 }
 

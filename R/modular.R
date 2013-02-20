@@ -1,14 +1,9 @@
 ##' @rdname modular
+##' @name modular
 ##' @title Modular functions for mixed model fits
 ##' @aliases modular
 ##' @inheritParams lmer
 ##' @param \dots other potential arguments.
-##' @return (lFormula, glFormula) a list containing components:
-##' \item{fr}{model frame}
-##' \item{X}{fixed-effect design matrix}
-##' \item{reTrms}{list containing information on random effects structure: result of \code{\link{mkMerMod}}}
-##' \item{REML}{(lFormula only): logical flag: use restricted maximum likelihood? (Copy of argument.)}
-##' \item{start}{starting value information. (Copy of argument.)}
 ##' @details These functions make up the internal components of a(n) [gn]lmer fit.
 ##' \itemize{
 ##' \item \code{[g]lFormula} takes the arguments that would normally be passed to \code{[g]lmer},
@@ -22,12 +17,62 @@
 ##' an optimization, a list of random-effect terms, a model frame, and a model all and produces a
 ##' \code{[g]lmerMod} object
 ##' }
+##' @examples
+##' 
+##' ### Fitting a linear mixed model in 4 modularized steps
+##' 
+##' ## 1.  Parse the data and formula:
+##' lmod <- lFormula(Reaction ~ Days + (Days|Subject), sleepstudy)
+##' names(lmod)
+##' ## 2.  Create the deviance function to be optimized:
+##' (devfun <- do.call(mkLmerDevfun, lmod))
+##' ls(environment(devfun)) # the environment of devfun contains lots of info
+##' ## 3.  Optimize the deviance function:
+##' opt <- optimizeLmer(devfun)
+##' opt[1:3]
+##' ## 4.  Package up the results:
+##' mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr)
+##' 
+##' 
+##' ### Same model in one line
+##' lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+##' 
+##' 
+##' ### Fitting a generalized linear mixed model in six modularized steps
+##' 
+##' ## 1.  Parse the data and formula:
+##' glmod <- glFormula(cbind(incidence, size - incidence) ~ period + (1 | herd), 
+##' data = cbpp, family = binomial)
+##' names(glmod)
+##' ## 2.  Create the deviance function for optimizing over theta:
+##' (devfun <- do.call(mkGlmerDevfun, glmod))
+##' ls(environment(devfun)) # the environment of devfun contains lots of info
+##' ## 3.  Optimize over theta using a rough approximation (i.e. nAGQ = 0):
+##' (opt <- optimizeGlmer(devfun))
+##' ## 4.  Update the deviance function for optimizing over theta and beta:
+##' (devfun <- updateGlmerDevfun(devfun, glmod$reTrms))
+##' ## 5.  Optimize over theta and beta:
+##' opt <- optimizeGlmer(devfun, stage=2)
+##' opt[1:3]
+##' ## 6.  Package up the results:
+##' mkMerMod(environment(devfun), opt, glmod$reTrms, fr = glmod$fr)
+##' 
+##' 
+##' ### Same model in one line
+##' glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+##' data = cbpp, family = binomial)
+##' 
+NULL
+
+##' @rdname modular
+##' @return (lFormula, glFormula) a list containing components:
+##' \item{fr}{model frame}
+##' \item{X}{fixed-effect design matrix}
+##' \item{reTrms}{list containing information on random effects structure: result of \code{\link{mkMerMod}}}
+##' \item{REML}{(lFormula only): logical flag: use restricted maximum likelihood? (Copy of argument.)}
 ##' @export
 lFormula <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
-                     control = list(), start = NULL,
-                     verbose = 0L, subset, weights, na.action, offset,
-                     contrasts = NULL, devFunOnly=FALSE,
-                     optimizer="Nelder_Mead", ...)
+                     subset, weights, na.action, offset, contrasts = NULL, ...)
 {
     
     mf <- mc <- match.call()
@@ -68,11 +113,12 @@ lFormula <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
     p <- ncol(X)
     if ((rankX <- rankMatrix(X)) < p)
         stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
-    return(list(fr = fr, X = X, reTrms = reTrms, REML = REML, start = start, formula = formula))
+    return(list(fr = fr, X = X, reTrms = reTrms, REML = REML, formula = formula))
 }
 
 ##' @rdname modular
-##' @param fr model frame
+##' @param fr A model frame containing the variables needed to create an 
+##'   \code{\link{lmerResp}} or \code{\link{glmResp}} instance
 ##' @param X fixed-effects design matrix
 ##' @param reTrms information on random effects structure (see \code{\link{mkReTrms}})
 ##' @param REML (logical) fit restricted maximum likelihood model?
@@ -80,14 +126,17 @@ lFormula <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
 ##' @return (mkLmerDevfun, mkGlmerDevfun) a function to calculate deviance (or restricted deviance) as a function of the theta (random-effect) parameters (for GlmerDevfun, of beta (fixed-effect) parameters as well)
 ##' @export
 mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, ...) {
-    if (missing(fr)) {
-        ## reconstitute frame
-    }
+  
+    #if (missing(fr)) {
+    ## reconstitute frame 
+    #}
     ## pull necessary arguments for making the model frame out of ...
     p <- ncol(X) # maybe also do rank check on X here??
     rho <- new.env(parent=parent.env(environment()))
     rho$pp <- do.call(merPredD$new, c(reTrms[c("Zt","theta","Lambdat","Lind")], n=nrow(X), list(X=X)))
-    rho$resp <- mkRespMod(fr, if(REML) p else 0L) 
+    REMLpass <- if(REML) p else 0L
+    if(missing(fr)) rho$resp <- mkRespMod(REML = REMLpass, ...)
+    else rho$resp <- mkRespMod(fr, REML = REMLpass) 
     ## note:  REML does double duty as rank of X and a flag for using REML
     ## maybe this should be mentioned in the help file for mkRespMod??
     ## currently that help file says REML is logical
@@ -97,6 +146,7 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, ...) {
         rho$pp$setTheta(unlist(start))
     }
     devfun(rho$pp$theta) # one evaluation to ensure all values are set
+    rho$lower <- reTrms$lower # SCW:  in order to be more consistent with mkLmerDevfun
     return(devfun) # this should pass the rho environment implicitly
 }
 
@@ -106,7 +156,7 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, ...) {
 ##' @param devfun a deviance function, as generated by \code{\link{mkLmerDevfun}}
 ##' @return (optimizeLmer) results of an optimization
 ##' @export
-optimizeLmer <- function(devfun, reTrms, 
+optimizeLmer <- function(devfun, 
                          optimizer="Nelder_Mead", verbose = 0L,
                          control = list()){
     verbose <- as.integer(verbose)
@@ -117,14 +167,14 @@ optimizeLmer <- function(devfun, reTrms,
     }
     rho <- environment(devfun)
     opt <- optwrap(optimizer,
-                   devfun, rho$pp$theta, lower=reTrms$lower, control=control,
+                   devfun, rho$pp$theta, lower=rho$lower, control=control,
                    adj=FALSE, verbose=verbose)
     
     if (restart) {
         ## FIXME: should we be looking at rho$pp$theta or opt$par
         ##  at this point???  in koller example (for getData(13)) we have
         ##   rho$pp$theta=0, opt$par=0.08
-        if (length(bvals <- which(rho$pp$theta==reTrms$lower))>0) {
+        if (length(bvals <- which(rho$pp$theta==rho$lower))>0) {
             ## *don't* use numDeriv -- cruder but fewer dependencies, no worries
             ##  about keeping to the interior of the allowed space
             theta0 <- new("numeric",rho$pp$theta) ## 'deep' copy ...
@@ -133,7 +183,7 @@ optimizeLmer <- function(devfun, reTrms,
             ## FIXME: opt$fval is wrong
             bgrad <- sapply(bvals,
                             function(i) {
-                                bndval <- reTrms$lower[i]
+                                bndval <- rho$lower[i]
                                 theta <- theta0
                                 theta[i] <- bndval+btol
                                 (devfun(theta)-d0)/btol
@@ -145,7 +195,7 @@ optimizeLmer <- function(devfun, reTrms,
                 if (verbose) message("some theta parameters on the boundary, restarting")
                 opt <- optwrap(optimizer,
                                devfun, opt$par,
-                               lower=reTrms$lower, control=control,
+                               lower=rho$lower, control=control,
                                adj=FALSE, verbose=verbose)
             }
         }
@@ -158,13 +208,10 @@ optimizeLmer <- function(devfun, reTrms,
 ##' @inheritParams glmer
 ##' @export
 glFormula <- function(formula, data=NULL, family = gaussian, sparseX = FALSE,
-                      control = list(), start = NULL, verbose = 0L, nAGQ = 1L,
-                      compDev = TRUE, subset, weights, na.action, offset,
-                      contrasts = NULL, mustart, etastart, devFunOnly = FALSE,
-                      tolPwrss = 1e-7, optimizer=c("bobyqa","Nelder_Mead"), ...){
+                      subset, weights, na.action, offset,
+                      contrasts = NULL, mustart, etastart, ...){
     ## FIXME: probably don't need devFunOnly
     ## FIXME: does start= do anything? test & fix
-    verbose <- as.integer(verbose)
     mf <- mc <- match.call()
                                         # extract family, call lmer for gaussian
     if (is.character(family))
@@ -179,10 +226,6 @@ glFormula <- function(formula, data=NULL, family = gaussian, sparseX = FALSE,
         stop('"quasi" families cannot be used in glmer')
     
     checkArgs("glmer",sparseX,...)
-    
-    stopifnot(length(nAGQ <- as.integer(nAGQ)) == 1L,
-              nAGQ >= 0L,
-              nAGQ <= 25L)
     
     denv <- checkFormulaData(formula,data)
     mc$formula <- formula <- as.formula(formula,env=denv)    ## substitute evaluated version
@@ -227,15 +270,19 @@ glFormula <- function(formula, data=NULL, family = gaussian, sparseX = FALSE,
 
 ##' @rdname modular
 ##' @export
-mkGlmerDevfun <- function(fr, X, reTrms, family,
-                          nAGQ = 1L, verbose = 0L, tolPwrss = 1e-7, compDev = TRUE){
-
+mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L, 
+                          tolPwrss = 1e-7, compDev = TRUE, ...){
+    stopifnot(length(nAGQ <- as.integer(nAGQ)) == 1L,
+            nAGQ >= 0L,
+            nAGQ <= 25L)
+    verbose <- as.integer(verbose)
     rho             <- as.environment(list(verbose=verbose, tolPwrss=tolPwrss)) 
     parent.env(rho) <- parent.frame()
     rho$pp          <- do.call(merPredD$new,
                                c(reTrms[c("Zt","theta","Lambdat","Lind")],
                                  n=nrow(X), list(X=X)))
-    rho$resp        <- mkRespMod(fr, family=family)
+    if (missing(fr)) rho$resp <- mkRespMod(family=family, ...)
+    else rho$resp             <- mkRespMod(fr, family=family)
     if (length(unique(rho$resp$y)) < 2L)
         stop("Response is constant - cannot fit the model")
     rho$verbose     <- as.integer(verbose)
@@ -260,6 +307,7 @@ optimizeGlmer <- function(devfun, optimizer="bobyqa",
                           nAGQ = 1L, verbose = 0L, control = list(),
                           stage = 1) {
     ## FIXME: do we need nAGQ here?? or can we clean up?
+    verbose <- as.integer(verbose)
     rho <- environment(devfun)
     if (stage==1) {
         start <- rho$pp$theta
@@ -272,8 +320,6 @@ optimizeGlmer <- function(devfun, optimizer="bobyqa",
     opt <- optwrap(optimizer, devfun, start, rho$lower,
                    control=control, adj=adj, verbose=verbose)
     
-    ## not sure where next two lines should be placed??  maybe mkglmerdevfun2??
-    ## put here b/c i want to avoid an if structure in mkglmerdevfun2
     if (stage==1) {
         rho$control <- attr(opt,"control")
         rho$nAGQ <- nAGQ
