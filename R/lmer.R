@@ -310,7 +310,7 @@ glmer <- function(formula, data=NULL, family = gaussian, sparseX = FALSE,
     devfun <- do.call(mkGlmerDevfun, c(glmod, list(compDev = compDev)))
     if (nAGQ==0 && devFunOnly) return(devfun)
                                         # optimize deviance function over covariance parameters
-    opt <- optimizeGlmer(devfun, optimizer = optimizer[[1]], ...)
+    opt <- optimizeGlmer(devfun, optimizer = optimizer[[1]], nAGQ = nAGQ, ...)
     
     if(nAGQ > 0L){
                                         # update deviance function to include fixed effects as inputs
