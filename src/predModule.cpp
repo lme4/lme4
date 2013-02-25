@@ -1,7 +1,7 @@
 //
 // predModule.cpp: implementation of predictor module using Eigen
 //
-// Copyright (C) 2011-2012 Douglas Bates, Martin Maechler and Ben Bolker
+// Copyright (C) 2011-2013 Douglas Bates, Martin Maechler, Ben Bolker and Steve Walker
 //
 // This file is part of lme4.
 
@@ -95,7 +95,7 @@ namespace lme4 {
     Rcpp::List merPredD::condVar(const Rcpp::Environment& rho) const {
 	const Rcpp::List ll(as<Rcpp::List>(rho["flist"])), trmlst(as<Rcpp::List>(rho["terms"]));
 	const int nf(ll.size());
-	const MiVec nc(as<MiVec>(rho["ncols"])), nl(as<MiVec>(rho["nlevs"])),
+	const MiVec nl(as<MiVec>(rho["nlevs"])),
 	    nct(as<MiVec>(rho["nctot"])), off(as<MiVec>(rho["offsets"]));
 
 	Rcpp::List ans(nf);
