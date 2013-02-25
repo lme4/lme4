@@ -123,6 +123,7 @@ importFrom(methods,show)
 importFrom(minqa,bobyqa)
 importFrom(nlme,VarCorr)
 importFrom(nlme,fixef)
+## importMethodsFrom(nlme,fixef) ## FIXME? after nlme setGeneric() change
 importFrom(nlme,ranef)
 importFrom(splines,backSpline)
 importFrom(splines,interpSpline)
