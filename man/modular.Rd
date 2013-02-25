@@ -176,18 +176,20 @@
   of the parameter estimates?  Defaults to \code{TRUE}.}
 }
 \value{
-  (lFormula, glFormula) a list containing components:
+  \bold{lFormula, glFormula}: A list containing components,
   \item{fr}{model frame} \item{X}{fixed-effect design
   matrix} \item{reTrms}{list containing information on
   random effects structure: result of
   \code{\link{mkMerMod}}} \item{REML}{(lFormula only):
   logical flag: use restricted maximum likelihood? (Copy of
   argument.)}
-  (mkLmerDevfun, mkGlmerDevfun) a function to calculate
-  deviance (or restricted deviance) as a function of the
-  theta (random-effect) parameters (for GlmerDevfun, of
-  beta (fixed-effect) parameters as well)
-  (optimizeLmer) results of an optimization
+  \bold{mkLmerDevfun, mkGlmerDevfun}: A function to
+  calculate deviance (or restricted deviance) as a function
+  of the theta (random-effect) parameters (for GlmerDevfun,
+  of beta (fixed-effect) parameters as well).  These
+  deviance functions have an environment containing objects
+  required for their evaluation. \cr \cr
+  \bold{optimizeLmer}: Results of an optimization. \cr \cr
 }
 \description{
   Modular functions for mixed model fits
@@ -221,7 +223,7 @@ lmod <- lFormula(Reaction ~ Days + (Days|Subject), sleepstudy)
 names(lmod)
 ## 2.  Create the deviance function to be optimized:
 (devfun <- do.call(mkLmerDevfun, lmod))
-ls(environment(devfun)) # the environment of devfun contains lots of info
+ls(environment(devfun)) # the environment of devfun contains objects required for its evaluation
 ## 3.  Optimize the deviance function:
 opt <- optimizeLmer(devfun)
 opt[1:3]
