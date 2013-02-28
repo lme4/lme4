@@ -13,9 +13,10 @@
   of \code{\link{lmer}()}, \code{\link{glmer}()} or
   \code{\link{nlmer}()}.}
 
-  \item{name}{a character string specifying the name of the
-  \dQuote{component}.  Possible values are:\cr \describe{
-  \item{X}{fixed-effects model matrix}
+  \item{name}{a character vector specifying the name(s) of
+  the \dQuote{component}. If \code{length(name)}>1, a named
+  list of components will be returned. Possible values
+  are:\cr \describe{ \item{X}{fixed-effects model matrix}
   \item{Z}{random-effects model matrix} \item{Zt}{transpose
   of random-effects model matrix} \item{y}{response vector}
   \item{mu}{conditional mean of the response}

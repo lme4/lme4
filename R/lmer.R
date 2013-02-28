@@ -1529,8 +1529,9 @@ setMethod("getL", "merMod", function(x) {
 ##' @param object a fitted mixed-effects model of class
 ##' \code{"\linkS4class{merMod}"}, i.e. typically the result of
 ##' \code{\link{lmer}()}, \code{\link{glmer}()} or \code{\link{nlmer}()}.
-##' @param name a character string specifying the name of the
-##' \dQuote{component}.  Possible values are:\cr
+##' @param name a character vector specifying the name(s) of the
+##' \dQuote{component}. If \code{length(name)}>1, a named list of
+##' components will be returned. Possible values are:\cr
 ##' \describe{
 ##'     \item{X}{fixed-effects model matrix}
 ##'     \item{Z}{random-effects model matrix}
@@ -1601,8 +1602,11 @@ getME <- function(object,
                     "offset", "lower"))
 {
     if(missing(name)) stop("'name' must not be missing")
-    stopifnot(length(name <- as.character(name)) == 1,
-	      is(object, "merMod"))
+    stopifnot(is(object,"merMod"))
+    if (length(name <- as.character(name))>1) {
+        names(name) <- name
+        return(lapply(name, getME, object=object))
+    }
     name <- match.arg(name)
     rsp  <- object@resp
     PR   <- object@pp
