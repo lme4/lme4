@@ -6,7 +6,7 @@ Title: Linear mixed-effects models using Eigen and S4
 Author: Douglas Bates <bates@stat.wisc.edu>,
     Martin Maechler <maechler@R-project.org> and
     Ben Bolker <bolker@mcmaster.ca>
-Maintainer: <lme4-authors@R-forge.wu-wien.ac.at>
+Maintainer: Ben Bolker <bolker@mcmaster.ca>
 Description: Fit linear and generalized linear mixed-effects models.
     The models and their components are represented using S4 classes and
     methods.  The core computational algorithms are implemented using the
