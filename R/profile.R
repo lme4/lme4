@@ -1005,10 +1005,4 @@ as.data.frame.thpr <- function(x,...) {
     x
 }
 
-if (FALSE) { ## FIXME Ben , e.g. mv to ../testsx/ ?
-    source("~/R/misc/slice.R")
-    dd <- lme4:::devfun2(nm1,useSc=TRUE)
-    s1 <- slice(attr(dd,"optimum"),dd,dim=2)
-    splom(s1)
-}
 
