@@ -41,3 +41,7 @@ chkMEs(fm1, nmME)
 chkMEs(fm2, nmME)
 chkMEs(fm3, nmME)
 chkMEs(fm4, nmME)
+
+## multiple components can now be retrieved at once
+gg <- getME(fm2,c("theta","beta"))
+gg2 <- getME(fm2,c("theta","beta","X"))
