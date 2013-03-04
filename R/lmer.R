@@ -305,22 +305,25 @@ glmer <- function(formula, data=NULL, family = gaussian, sparseX = FALSE,
     if (length(optimizer)==1) {
         optimizer <- replicate(2,optimizer)
     }
-    
+    print("mkGlmerDevfun")
                                         # create deviance function for covariance parameters (theta)
     devfun <- do.call(mkGlmerDevfun, c(glmod, list(compDev = compDev)))
     if (nAGQ==0 && devFunOnly) return(devfun)
+    print('optimizeGlmer')
                                         # optimize deviance function over covariance parameters
     opt <- optimizeGlmer(devfun, optimizer = optimizer[[1]], nAGQ = nAGQ, ...)
     
     if(nAGQ > 0L){
+      print('updateGlmerDevfun')
                                         # update deviance function to include fixed effects as inputs
         devfun <- updateGlmerDevfun(devfun, glmod$reTrms, nAGQ = nAGQ)
                                         # reoptimize deviance function over covariance parameters and fixed effects
         if (devFunOnly) return(devfun)
+        print("optimizeGlmer")
         opt <- optimizeGlmer(devfun, optimizer = optimizer[[2]], 
                              verbose = verbose, control = control, stage=2)
     }
-    
+    print("mkMerMod")
                                         # prepare output
     mkMerMod(environment(devfun), opt, glmod$reTrms, fr = glmod$fr, mcout)
 
