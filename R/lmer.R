@@ -136,16 +136,15 @@ lmer <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
 {
 
     ## see functions in modular.R for the body ...
-    mc <- mcout <- match.call()           ## parse data and formula
+    mc <- mcout <- match.call() 
     mc[[1]] <- as.name("lFormula")
-    lmod <- eval(mc, parent.frame(1L))    ## create deviance function for covariance parameters (theta)
+    lmod <- eval(mc, parent.frame(1L))  ## parse data and formula
     mcout$formula <- lmod$formula
     lmod$formula <- NULL
-    devfun <- do.call(mkLmerDevfun, lmod) ## optimize deviance function over covariance parameters
+    devfun <- do.call(mkLmerDevfun, lmod) ## create deviance function for covariance parameters (theta)
     if (devFunOnly) return(devfun)
-    opt <- optimizeLmer(devfun, ...)
-                                        ## prepare output
-    mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr, mcout)
+    opt <- optimizeLmer(devfun, ...)    ## optimize deviance function over covariance parameters
+    mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr, mcout) ## prepare output
 }## { lmer }
 
 
@@ -291,40 +290,33 @@ glmer <- function(formula, data=NULL, family = gaussian, sparseX = FALSE,
         mc["family"] <- NULL            # to avoid an infinite loop
         return(eval(mc, parent.frame()))
     }
-                                        # parse the formula and data
     mc[[1]] <- as.name("glFormula")
     #m <- match(c("formula", "data", "family", "sparseX", "subset", "weights",
     #        "na.action", "offset", "contrasts", "mustart", "etastart"), 
     #      names(mc), 0)
     #mc <- mc[c(1, m)]
     
-    glmod <- eval(mc, parent.frame(1L)) # SCW:  changed from 2L to 1L
+    glmod <- eval(mc, parent.frame(1L)) # parse the formula and data
     mcout$formula <- attr(glmod, "formula")
     #glmod$formula <- NULL # not necessary now that formula is returned from glFormula as an attribute
     
     if (length(optimizer)==1) {
         optimizer <- replicate(2,optimizer)
     }
-    print("mkGlmerDevfun")
-                                        # create deviance function for covariance parameters (theta)
-    devfun <- do.call(mkGlmerDevfun, c(glmod, list(compDev = compDev)))
+                                        
+    devfun <- do.call(mkGlmerDevfun, c(glmod, list(compDev = compDev))) # create deviance function for covariance parameters (theta)
     if (nAGQ==0 && devFunOnly) return(devfun)
-    print('optimizeGlmer')
-                                        # optimize deviance function over covariance parameters
-    opt <- optimizeGlmer(devfun, optimizer = optimizer[[1]], nAGQ = nAGQ, ...)
+    opt <- optimizeGlmer(devfun, optimizer = optimizer[[1]], nAGQ = nAGQ, ...) # optimize deviance function over covariance parameters
     
     if(nAGQ > 0L){
-      print('updateGlmerDevfun')
-                                        # update deviance function to include fixed effects as inputs
+        # update deviance function to include fixed effects as inputs
         devfun <- updateGlmerDevfun(devfun, glmod$reTrms, nAGQ = nAGQ)
-                                        # reoptimize deviance function over covariance parameters and fixed effects
         if (devFunOnly) return(devfun)
-        print("optimizeGlmer")
+        # reoptimize deviance function over covariance parameters and fixed effects
         opt <- optimizeGlmer(devfun, optimizer = optimizer[[2]], 
                              verbose = verbose, control = control, stage=2)
     }
-    print("mkMerMod")
-                                        # prepare output
+    # prepare output
     mkMerMod(environment(devfun), opt, glmod$reTrms, fr = glmod$fr, mcout)
 
 }## {glmer}
