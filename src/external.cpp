@@ -353,9 +353,12 @@ extern "C" {
 		    //Rcpp::Rcout << "\nmin delu at pt 2 of step halving iteration " << k << ": " << pp->delu().minCoeff() << std::endl;
         //Rcpp::Rcout << "\nmax delu at pt 2 of step halving iteration " << k << ": " << pp->delu().maxCoeff() << std::endl;
         
-        pdev = internal_glmerWrkIter(pp, rp, uOnly);
+        //pdev = internal_glmerWrkIter(pp, rp, uOnly);
         //pdev <- rp->resDev() + pp->sqrL(1.);  // experiment!!  SCW
-		    
+		    rp->updateMu(pp->linPred(1.)); // experiment!!
+        pdev = rp->resDev() + pp->sqrL(1.); // experiment!!
+        
+        
         //Rcpp::Rcout << "\nmin delu at pt 3 of step halving iteration " << k << ": " << pp->delu().minCoeff() << std::endl;
         //Rcpp::Rcout << "\nmax delu at pt 3 of step halving iteration " << k << ": " << pp->delu().maxCoeff() << std::endl;
         
