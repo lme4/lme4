@@ -29,11 +29,46 @@ test_that("glmer", {
     expect_that(as(Lambdat, "matrix"),                  is_equivalent_to(diag(theta, 15L, 15L)))
     expect_error(gm2 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                              data = subset(cbpp, herd==levels(herd)[1]), family = binomial),
-                 "must have at least 1")
+                 "must have > 1")
     expect_warning(gm2 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                              data = subset(cbpp, herd %in% levels(herd)[1:4]), family = binomial),
-                   "fewer than 5")
+                   "< 5 sampled levels")
     expect_warning(fm1. <- glmer(Reaction ~ Days + (Days|Subject), sleepstudy),
                    regexp="calling .* with family=gaussian .* as a shortcut")
+    options(warn=2)
+    cbppX <- transform(cbpp,prop=incidence/size)
+    expect_that(gm1 <- glmer(prop ~ period + (1 | herd),
+                             data = cbppX, family = binomial, weights=size), is_a("glmerMod"))
+    expect_that(glmer(prop ~ period + (1 | herd),
+                      data = cbppX, family = binomial, weights=size, start=NULL),
+                is_a("glmerMod"))
+    expect_that(glmer(prop ~ period + (1 | herd),
+                      data = cbppX, family = binomial, weights=size, verbose=0L),
+                is_a("glmerMod"))
+    expect_that(glmer(prop ~ period + (1 | herd),
+                      data = cbppX, family = binomial, weights=size, subset=TRUE),
+                is_a("glmerMod"))
+    expect_that(glmer(prop ~ period + (1 | herd),
+                      data = cbppX, family = binomial, weights=size, na.action="na.exclude"),
+                is_a("glmerMod"))
+    expect_that(glmer(prop ~ period + (1 | herd),
+                      data = cbppX, family = binomial, weights=size, offset=rep(0,nrow(cbppX))),
+                is_a("glmerMod"))
+    expect_that(glmer(prop ~ period + (1 | herd),
+                      data = cbppX, family = binomial, weights=size, contrasts=NULL),
+                is_a("glmerMod"))
+    expect_that(glmer(prop ~ period + (1 | herd),
+                      data = cbppX, family = binomial, weights=size, devFunOnly=FALSE),
+                is_a("glmerMod"))
+    expect_that(glmer(prop ~ period + (1 | herd),
+                      data = cbppX, family = binomial, weights=size, optimizer="Nelder_Mead"),
+                is_a("glmerMod"))
+    expect_that(glmer(prop ~ period + (1 | herd),
+                      data = cbppX, family = binomial, weights=size, control=list()),
+                is_a("glmerMod"))
+    options(warn=0)
+    expect_warning(glmer(prop ~ period + (1 | herd),
+                      data = cbppX, family = binomial, weights=size, junkArg=TRUE),
+                   "extra argument.*disregarded")
 })
 

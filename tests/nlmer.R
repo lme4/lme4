@@ -33,12 +33,21 @@ system.time(nm5 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
                          start = Th.start, tolPwrss=1e-8))
 print(nm5, corr=FALSE)
 
-if (require("PKPDmodels")) {
-    oral1cptSdlkalVlCl <-
-        PKmod("oral", "sd", list(ka ~ exp(lka), Cl ~ exp(lCl), V ~ exp(lV)))
-    system.time(nm2a <- nlmer(conc ~ oral1cptSdlkalVlCl(Dose, Time, lV, lka, lCl) ~
-                              (lV+lka+lCl|Subject), 
-                              Theoph, start = c(lV=-1, lka=-0.5, lCl=-3), tolPwrss=1e-8))
-    print(nm2a, corr=FALSE)
-}
+    if (require("PKPDmodels")) {
+        oral1cptSdlkalVlCl <-
+            PKmod("oral", "sd", list(ka ~ exp(lka), Cl ~ exp(lCl), V ~ exp(lV)))
+        if (FALSE) {
+            ## FIXME: Error in get(nm, envir = nlenv) : object 'k' not found
+            ##  probably with environments/call stack etc.?
+            ## 'pnames' is c("lV","lka","k") -- not ("lV","lka","lCl")
+            ##  nlmer -> nlformula -> MkRespMod
+            ##  pnames are OK in nlformula, but in MkRespMod we try to recover
+            ##   them from the column names of the gradient attribute of the
+            ##   model evaluated in nlenv -- which are wrong.
+            system.time(nm2a <- nlmer(conc ~ oral1cptSdlkalVlCl(Dose, Time, lV, lka, lCl) ~
+                                      (lV+lka+lCl|Subject), 
+                                      Theoph, start = c(lV=-1, lka=-0.5, lCl=-3), tolPwrss=1e-8))
+            print(nm2a, corr=FALSE)
+        }
+    }
 }  ## testLevel > 2

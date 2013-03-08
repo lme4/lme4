@@ -576,8 +576,9 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc) {
 ## generic argument checking
 ## 'type': name of calling function ("glmer", "lmer", "nlmer")
 ## 
-checkArgs <- function(type,sparseX,...) {
-    if (isTRUE(sparseX)) warning("sparseX = TRUE has no effect at present")
+checkArgs <- function(type,...) {
+    l... <- list(...)
+    if (isTRUE(l...[["sparseX"]])) warning("sparseX = TRUE has no effect at present")
     ## '...' handling up front, safe-guarding against typos ("familiy") :
     if(length(l... <- list(...))) {
         if (!is.null(l...[["family"]])) {  # call glmer if family specified
@@ -692,4 +693,12 @@ checkFormulaData <- function(formula,data,debug=FALSE) {
 ##     return(data)
 ## }
 
- 
+
+## stub ...
+lmerControl <- glmerControl <- function(...) {
+    ## add: rankTolZ
+    ## minFmax
+    ## optimizer??
+    ## tolPwrss
+    ## ... are arguments to pass to optimizer
+}

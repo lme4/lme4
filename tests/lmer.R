@@ -13,27 +13,9 @@ assertError(lmer(incidence ~ period + (1|herd),
 set.seed(7)
 n <- 10
 X <- data.frame(y=runif(n), x=rnorm(n), z=sample(c("A","B"), n, TRUE))
-fm <- lmer(log(y) ~ x | z, data=X)
+fm <- suppressWarnings(lmer(log(y) ~ x | z, data=X))  ## ignore grouping factors with 
 ## gave error inside  model.frame()
 stopifnot(all.equal(unname(fixef(fm)), -0.8345, tol=.01))
-
-sstudy9 <- subset(sleepstudy, Days == 1 | Days == 9)
-try({## This "did work" in lme4.0 and nlme -- FIXME ??
- m1 <- lmer(Reaction ~ 1 + Days + (1 + Days | Subject), data = sstudy9)
- if (FALSE) {
-     image(reTrms$Zt)
-     testRankZt <- function(object) {
-         rankMatrix(cBind(reTrms$Zt,1))<nrow(reTrms$Zt)
-     }
- }
- ## -> Error in ptr() : Downdated VtV is not positive definite
- ## FIXME?(2): More helpful error message, or rank-checking diagnostics?
- ## how would we check the rank here?
-
- print(sm1 <- summary(m1))
- fm1 <- fitted(m1)
-})
-showProc.time()
 
 ## check working of Matrix methods on  vcov(.) etc ----------------------
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
@@ -87,19 +69,7 @@ xtabs( ~ Operator + Part, data=lsDat) # --> 4 empty cells, quite a few with only
 ##        4 1 1 2 2 2
 ##        5 1 2 2 1 2
 
-old_lme4_vcov <- 0.254166752231642 ## lme4.0_0.999999-1
+fm3 <- lmer(y ~ (1|Part) + (1|Operator) + (1|Part:Operator), data = lsDat)
 
-fm3 <- suppressWarnings(lmer(y ~ (1|Part) + (1|Operator) + (1|Part:Operator),
-            data = lsDat))
-
-## FIXME: should suppress 'caught warning' message in optwrap!
-## --> *many* warnings   Cholmod warning 'not positive definite' ..
-
-## FIXME: failing in vcov.merMod <- mkVcov <- as(V,"dpoMatrix")
-## (fm3@pp$unsc() contains NaN, function catches "not a positive definite matrix"
-##  and converts to "Computed variance-covariance matrix is not positive definite")
-## fm3 # gave an error {no longer does}
-## currently (2012-06-25) full of  NA/NaN  -- old lme4 does
 showProc.time()
-
 cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''

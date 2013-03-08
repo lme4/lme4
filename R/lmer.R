@@ -303,8 +303,10 @@ glmer <- function(formula, data=NULL, family = gaussian, sparseX = FALSE,
     if (length(optimizer)==1) {
         optimizer <- replicate(2,optimizer)
     }
-                                        
-    devfun <- do.call(mkGlmerDevfun, c(glmod, list(compDev = compDev))) # create deviance function for covariance parameters (theta)
+
+    ## create deviance function for covariance parameters (theta)
+    devfun <- do.call(mkGlmerDevfun, c(glmod, list(compDev = compDev,
+                                                   nAGQ = 0))) 
     if (nAGQ==0 && devFunOnly) return(devfun)
     opt <- optimizeGlmer(devfun, optimizer = optimizer[[1]], nAGQ = nAGQ, ...) # optimize deviance function over covariance parameters
     
@@ -463,7 +465,7 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0) {
 	    }
 	else
 	    function(pars) {
-	  #pp$setDelu(rep(0, length(pp$delu)))
+                ## pp$setDelu(rep(0, length(pp$delu)))
 		resp$updateMu(lp0)
 		pp$setTheta(as.double(pars[dpars])) # theta is first part of pars
                 spars <- as.numeric(pars[-dpars])

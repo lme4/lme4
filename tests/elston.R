@@ -62,8 +62,7 @@ if (testLevel>1) {
             logLik=logLik(full_mod2),time=t2["elapsed"])
     ## refit
     full_mod3 <- refit(full_mod2,grouseticks$TICKS)
-    ## all.equal(full_mod2,full_mod3,) ## FIXME: uncomment after optinfo stuff fixed
-
+    all.equal(full_mod2,full_mod3,tol=5e-5)
 }
 allcoefs <- function(x) c(getME(x,"theta"),getME(x,"beta"))
 

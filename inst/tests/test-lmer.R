@@ -42,8 +42,27 @@ test_that("lmer", {
     expect_that(fm3 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy), is_a("lmerMod"))
     expect_that(getME(fm3,"n_rtrms"),                   equals(1L))
     expect_error(fm4 <- lmer(Reaction ~ Days + (1|Subject),
-                            subset(sleepstudy,Subject==levels(Subject)[1])), "must have at least 1")
+                            subset(sleepstudy,Subject==levels(Subject)[1])), "must have > 1")
     expect_warning(fm4 <- lmer(Reaction ~ Days + (1|Subject),
-                            subset(sleepstudy,Subject %in% levels(Subject)[1:4])), "fewer than 5")
+                            subset(sleepstudy,Subject %in% levels(Subject)[1:4])), "< 5 sampled levels")
+    sstudy9 <- subset(sleepstudy, Days == 1 | Days == 9)
+    expect_error(m1 <- lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
+                            data = sleepstudy, subset = (Days == 1 | Days == 9)),
+                 "rank\\(Z\\)>=number of observations")
+    ## test arguments
+    options(warn=2)
+    expect_that(lmer(Yield ~ 1|Batch, Dyestuff, REML=TRUE), is_a("lmerMod"))
+    expect_that(lmer(Yield ~ 1|Batch, Dyestuff, start=NULL), is_a("lmerMod"))
+    expect_that(lmer(Yield ~ 1|Batch, Dyestuff, verbose=0L), is_a("lmerMod"))
+    expect_that(lmer(Yield ~ 1|Batch, Dyestuff, subset=TRUE), is_a("lmerMod"))
+    expect_that(lmer(Yield ~ 1|Batch, Dyestuff, weights=rep(1,nrow(Dyestuff))), is_a("lmerMod"))
+    expect_that(lmer(Yield ~ 1|Batch, Dyestuff, na.action="na.exclude"), is_a("lmerMod"))
+    expect_that(lmer(Yield ~ 1|Batch, Dyestuff, offset=rep(0,nrow(Dyestuff))), is_a("lmerMod"))
+    expect_that(lmer(Yield ~ 1|Batch, Dyestuff, contrasts=NULL), is_a("lmerMod"))
+    expect_that(lmer(Yield ~ 1|Batch, Dyestuff, devFunOnly=FALSE), is_a("lmerMod"))
+    expect_that(lmer(Yield ~ 1|Batch, Dyestuff, optimizer="Nelder_Mead"), is_a("lmerMod"))
+    expect_that(lmer(Yield ~ 1|Batch, Dyestuff, control=list()), is_a("lmerMod"))
+    options(warn=0)
+    expect_warning(lmer(Yield ~ 1|Batch, Dyestuff, junkArg=TRUE),"extra argument.*disregarded")
 })
 

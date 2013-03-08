@@ -9,9 +9,8 @@
 \alias{updateGlmerDevfun}
 \title{Modular functions for mixed model fits}
 \usage{
-  lFormula(formula, data = NULL, REML = TRUE,
-    sparseX = FALSE, subset, weights, na.action, offset,
-    contrasts = NULL, ...)
+  lFormula(formula, data = NULL, REML = TRUE, subset,
+    weights, na.action, offset, contrasts = NULL, ...)
 
   mkLmerDevfun(fr, X, reTrms, REML = TRUE, start = NULL,
     ...)
@@ -20,8 +19,8 @@
     verbose = 0L, control = list())
 
   glFormula(formula, data = NULL, family = gaussian,
-    sparseX = FALSE, subset, weights, na.action, offset,
-    contrasts = NULL, mustart, etastart, ...)
+    subset, weights, na.action, offset, contrasts = NULL,
+    mustart, etastart, ...)
 
   mkGlmerDevfun(fr, X, reTrms, family, nAGQ = 1L,
     verbose = 0L, tolPwrss = 1e-07, compDev = TRUE, ...)
@@ -77,10 +76,6 @@
   variables will be taken from the environment of
   \code{formula} (if specified as a formula) or from the
   parent frame (if specified as a character vector).}
-
-  \item{sparseX}{logical - should a sparse model matrix be
-  used for the fixed-effects terms?  Defaults to
-  \code{FALSE}. Currently inactive.}
 
   \item{subset}{an optional expression indicating the
   subset of the rows of \code{data} that should be used in
@@ -183,12 +178,14 @@
   \code{\link{mkMerMod}}} \item{REML}{(lFormula only):
   logical flag: use restricted maximum likelihood? (Copy of
   argument.)}
+
   \bold{mkLmerDevfun, mkGlmerDevfun}: A function to
   calculate deviance (or restricted deviance) as a function
   of the theta (random-effect) parameters (for GlmerDevfun,
   of beta (fixed-effect) parameters as well).  These
   deviance functions have an environment containing objects
   required for their evaluation. \cr \cr
+
   \bold{optimizeLmer}: Results of an optimization. \cr \cr
 }
 \description{

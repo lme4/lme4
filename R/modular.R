@@ -71,12 +71,16 @@ NULL
 ##' \item{reTrms}{list containing information on random effects structure: result of \code{\link{mkMerMod}}}
 ##' \item{REML}{(lFormula only): logical flag: use restricted maximum likelihood? (Copy of argument.)}
 ##' @export
-lFormula <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
+lFormula <- function(formula, data=NULL, REML = TRUE, 
                      subset, weights, na.action, offset, contrasts = NULL, ...)
 {
     
     mf <- mc <- match.call()
-    checkArgs("lmer",sparseX,...)
+
+    ignoreArgs <- c("start","verbose","devFunOnly","optimizer","control")
+    l... <- list(...)
+    l... <- l...[!names(l...) %in% ignoreArgs]
+    do.call("checkArgs",c(list("lmer"),l...))
     if (!is.null(list(...)[["family"]])) {
         ## lmer(...,family=...); warning issued within checkArgs
         mc[[1]] <- as.name("glFormula")
@@ -97,11 +101,14 @@ lFormula <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
     ## random effects and terms modules
     reTrms <- mkReTrms(findbars(formula[[3]]), fr)
     nlevelVec <- unlist(lapply(reTrms$flist, function(x) nlevels(droplevels(x)) ))
-    if (any(nlevelVec==1)) stop("grouping factors must have at least 1 sampled level")
+    if (any(nlevelVec==1)) stop("grouping factors must have > 1 sampled level")
     if (any(nlevelVec >= nrow(fr)))
         stop("number of levels of each grouping factor must be ",
-             "less than number of obs")
-    if (any(nlevelVec<5))  warning("grouping factors with fewer than 5 sampled levels may give unreliable estimates")
+             "< number of observations")
+    if (any(nlevelVec<5))  warning("grouping factors with < 5 sampled levels may give unreliable estimates")
+    if ((rankZ <- rankMatrix(reTrms$Zt)) >= nrow(fr)) {
+        stop("rank(Z)>=number of observations; variance-covariance matrix will be unidentifiable")
+    }
     ## fixed-effects model matrix X - remove random effects from formula:
     fixedform <- formula
     fixedform[[3]] <- if(is.null(nb <- nobars(fixedform[[3]]))) 1 else nb
@@ -214,9 +221,10 @@ optimizeLmer <- function(devfun,
 ##' @rdname modular
 ##' @inheritParams glmer
 ##' @export
-glFormula <- function(formula, data=NULL, family = gaussian, sparseX = FALSE,
+glFormula <- function(formula, data=NULL, family = gaussian, 
                       subset, weights, na.action, offset,
-                      contrasts = NULL, mustart, etastart, ...){
+                      contrasts = NULL, mustart, etastart, 
+                      ...) {
     ## FIXME: probably don't need devFunOnly
     ## FIXME: does start= do anything? test & fix
     mf <- mc <- match.call()
@@ -231,9 +239,12 @@ glFormula <- function(formula, data=NULL, family = gaussian, sparseX = FALSE,
     }
     if (family$family %in% c("quasibinomial", "quasipoisson", "quasi"))
         stop('"quasi" families cannot be used in glmer')
-    
-    checkArgs("glmer",sparseX,...)
-    
+
+    ignoreArgs <- c("start","verbose","devFunOnly","optimizer", "control", "nAGQ")
+    l... <- list(...)
+    l... <- l...[!names(l...) %in% ignoreArgs]
+    do.call("checkArgs",c(list("glmer"),l...))
+
     denv <- checkFormulaData(formula,data)
     mc$formula <- formula <- as.formula(formula,env=denv)    ## substitute evaluated version
     
@@ -249,17 +260,20 @@ glFormula <- function(formula, data=NULL, family = gaussian, sparseX = FALSE,
                                         # random-effects module
     reTrms <- mkReTrms(findbars(formula[[3]]), fr)
     nlevelVec <- unlist(lapply(reTrms$flist, function(x) nlevels(droplevels(x)) ))
-    if (any(nlevelVec==1)) stop("grouping factors must have at least 1 sampled level")
+    if (any(nlevelVec==1)) stop("grouping factors must have > 1 sampled level")
     if ((maxlevels <- max(nlevelVec)) > nrow(fr))
         stop("number of levels of each grouping factor must be",
-             "greater than or equal to number of obs")
-    if (any(nlevelVec<5))  warning("grouping factors with fewer than 5 sampled levels may give unreliable estimates")
-    
-    ## FIXME: adjust test for families with estimated scale;
+             ">= number of obs")
+    if (any(nlevelVec<5))  warning("grouping factors with < 5 sampled levels may give unreliable estimates")
+    if ((rankZ <- rankMatrix(reTrms$Zt)) > nrow(fr)) {
+        stop("rank(Z)>number of observations; variance-covariance matrix will be unidentifiable")
+    }
+    ## FIXME: adjust test for families with estimated scale parameter:
     ##   useSc is not defined yet/not defined properly?
     ##  if (useSc && maxlevels == nrow(fr))
     ##          stop("number of levels of each grouping factor must be",
     ##                "greater than number of obs")
+    ## [and the same test for rankZ]
     
     ## fixed-effects model matrix X - remove random parts from formula:
     form <- formula
@@ -293,7 +307,7 @@ mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L,
     if (length(unique(rho$resp$y)) < 2L)
         stop("Response is constant - cannot fit the model")
     rho$verbose     <- as.integer(verbose)
-                                        # initialize (from mustart)
+    ## initialize (from mustart)
     .Call(glmerLaplace, rho$pp$ptr(), rho$resp$ptr(), 0L, tolPwrss, verbose)
     rho$lp0         <- rho$pp$linPred(1) # each pwrss opt begins at this eta
     rho$pwrssUpdate <- glmerPwrssUpdate

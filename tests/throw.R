@@ -11,7 +11,7 @@ d$eta0 <- 4+3*d$x  ## version without random effects
 d$eta <- d$eta0+reff_f[d$block]
 ## inverse link
 d$mu <- 1/d$eta
-d$y <- rgamma(nrow(d),scale=d$mu/2,shape=2)
+gd$y <- rgamma(nrow(d),scale=d$mu/2,shape=2)
 
 ## various pwrssUpdate did not converge/encountered NA conditions
 try(gm1 <- glmer(y ~ 1|block, d, Gamma, nAGQ=25L))
