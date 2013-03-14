@@ -402,7 +402,7 @@ lmResp <-                               # base class for response modules
                      })
                 )
                 
-lmResp$lock("mu", "offset", "sqrtXwt", "sqrtrwt", "weights", "wtres", "y")
+lmResp$lock("mu", "offset", "sqrtXwt", "sqrtrwt", "weights", "wtres")#, "y")
 
 ##' Classes \code{"lmResp"}, \code{"glmResp"}, \code{"nlsResp"} and
 ##' \code{"lmerResp"}
