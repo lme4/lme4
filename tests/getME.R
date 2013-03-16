@@ -45,3 +45,15 @@ chkMEs(fm4, nmME)
 ## multiple components can now be retrieved at once
 gg <- getME(fm2,c("theta","beta"))
 gg2 <- getME(fm2,c("theta","beta","X"))
+
+##
+lapply(getME(fm2,c("Ztlist")),dim)
+
+## distinction between number of RE terms
+##  and number of RE grouping factors
+stopifnot(getME(fm2,"n_rtrms")==1)
+stopifnot(getME(fm2,"n_rfacs")==1)
+
+lapply(getME(fm4,c("Ztlist")),dim)
+stopifnot(getME(fm4,"n_rtrms")==2)
+stopifnot(getME(fm4,"n_rfacs")==1)

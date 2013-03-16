@@ -5,7 +5,7 @@
 \title{Extract or Get Generalize Components from a Fitted Mixed Effects Model}
 \usage{
   getME(object,
-    name = c("X", "Z", "Zt", "y", "mu", "u", "b", "Gp", "L", "Lambda", "Lambdat", "Lind", "A", "RX", "RZX", "flist", "beta", "theta", "REML", "n_rtrms", "is_REML", "devcomp", "offset", "lower"))
+    name = c("X", "Z", "Zt", "Ztlist", "y", "mu", "u", "b", "Gp", "L", "Lambda", "Lambdat", "Lind", "A", "RX", "RZX", "flist", "beta", "theta", "REML", "is_REML", "n_rtrms", "n_rfacs", "devcomp", "offset", "lower"))
 }
 \arguments{
   \item{object}{a fitted mixed-effects model of class
@@ -18,17 +18,20 @@
   list of components will be returned. Possible values
   are:\cr \describe{ \item{X}{fixed-effects model matrix}
   \item{Z}{random-effects model matrix} \item{Zt}{transpose
-  of random-effects model matrix} \item{y}{response vector}
-  \item{mu}{conditional mean of the response}
-  \item{u}{conditional mode of the \dQuote{spherical}
-  random effects variable} \item{b}{conditional mode of the
-  random effects variable} \item{Gp}{groups pointer vector.
-  A pointer to the beginning of each group of random
-  effects corresponding to the random-effects terms.}
-  \item{L}{sparse Cholesky factor of the penalized
-  random-effects model.} \item{Lambda}{relative covariance
-  factor of the random effects.} \item{Lambdat}{transpose
-  of the relative covariance factor of the random effects.}
+  of random-effects model matrix} \item{Ztlist}{list of
+  components of the transpose of the random-effects model
+  matrix, separated by individual variance component}
+  \item{y}{response vector} \item{mu}{conditional mean of
+  the response} \item{u}{conditional mode of the
+  \dQuote{spherical} random effects variable}
+  \item{b}{conditional mode of the random effects variable}
+  \item{Gp}{groups pointer vector.  A pointer to the
+  beginning of each group of random effects corresponding
+  to the random-effects terms.} \item{L}{sparse Cholesky
+  factor of the penalized random-effects model.}
+  \item{Lambda}{relative covariance factor of the random
+  effects.} \item{Lambdat}{transpose of the relative
+  covariance factor of the random effects.}
   \item{Lind}{index vector for inserting elements of
   \eqn{\theta}{theta} into the nonzeros of
   \eqn{\Lambda}{Lambda}} \item{A}{Scaled sparse model
@@ -45,13 +48,14 @@
   \item{theta}{random-effects parameter estimates: these
   are parameterized as the relative Cholesky factors of
   each random effect term} \item{n_rtrms}{number of
-  random-effects terms} \item{is_REML}{same as the result
-  of \code{\link{isREML}}} \item{devcomp}{a list consisting
-  of a named numeric vector, \dQuote{cmp}, and a named
-  integer vector, \dQuote{dims}, describing the fitted
-  model} \item{offset}{model offset} \item{lower}{lower
-  bounds on model parameters (random effects parameters
-  only)} }}
+  random-effects terms} \item{n_rfacs}{number of distinct
+  random-effects grouping factors} \item{REML}{restricted
+  maximum likelihood} \item{is_REML}{same as the result of
+  \code{\link{isREML}}} \item{devcomp}{a list consisting of
+  a named numeric vector, \dQuote{cmp}, and a named integer
+  vector, \dQuote{dims}, describing the fitted model}
+  \item{offset}{model offset} \item{lower}{lower bounds on
+  model parameters (random effects parameters only)} }}
 }
 \value{
   Unspecified, as very much depending on the

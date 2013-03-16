@@ -1534,6 +1534,8 @@ setMethod("getL", "merMod", function(x) {
 ##'     \item{X}{fixed-effects model matrix}
 ##'     \item{Z}{random-effects model matrix}
 ##'     \item{Zt}{transpose of random-effects model matrix}
+##'     \item{Ztlist}{list of components of the transpose of the random-effects model matrix,
+##'              separated by individual variance component}
 ##'     \item{y}{response vector}
 ##'     \item{mu}{conditional mean of the response}
 ##'     \item{u}{conditional mode of the \dQuote{spherical} random effects variable}
@@ -1555,6 +1557,8 @@ setMethod("getL", "merMod", function(x) {
 ##'     \item{beta}{fixed-effects parameter estimates (identical to the result of \code{\link{fixef}}, but without names)}
 ##'     \item{theta}{random-effects parameter estimates: these are parameterized as the relative Cholesky factors of each random effect term}
 ##'     \item{n_rtrms}{number of random-effects terms}
+##'     \item{n_rfacs}{number of distinct random-effects grouping factors}
+##'     \item{REML}{restricted maximum likelihood}
 ##'     \item{is_REML}{same as the result of \code{\link{isREML}}}
 ##'     \item{devcomp}{a list consisting of a named numeric vector, \dQuote{cmp}, and
 ##'                    a named integer vector, \dQuote{dims}, describing the fitted model}
@@ -1590,14 +1594,16 @@ setMethod("getL", "merMod", function(x) {
 ##'
 ##' @export
 getME <- function(object,
-		  name = c("X", "Z","Zt", "y", "mu", "u", "b",
+		  name = c("X", "Z","Zt", "Ztlist",
+                  "y", "mu", "u", "b",
 		  "Gp",
 		  "L", "Lambda", "Lambdat", "Lind", "A",
 		  "RX", "RZX",
                   "flist",
                   "beta", "theta",
-		  "REML", "n_rtrms", "is_REML", "devcomp",
-                    "offset", "lower"))
+		  "REML", "is_REML",
+                  "n_rtrms", "n_rfacs",
+                  "devcomp", "offset", "lower"))
 {
     if(missing(name)) stop("'name' must not be missing")
     stopifnot(is(object,"merMod"))
@@ -1611,10 +1617,31 @@ getME <- function(object,
     dc   <- object@devcomp
     cmp  <- dc $ cmp
     dims <- dc $ dims
+    ## construct names of individual theta components
+    tnames <- function(diag.only=FALSE) {
+        nc <- c(unlist(mapply(function(g,e) {
+            mm <- outer(e,e,paste,sep=".")
+            diag(mm) <- e
+            mm <- if (diag.only) diag(mm) else mm[lower.tri(mm,diag=TRUE)]
+            paste(g,mm,sep=".")
+        },
+        names(object@cnms),object@cnms)))
+        nc
+    }
     switch(name,
 	   "X" = PR$X, ## ok ? - check -- use model.matrix() method instead?
 	   "Z" = t(PR$Zt),
 	   "Zt"= PR$Zt,
+     "Ztlist" = {
+         getInds <- function(i) {
+             n <- diff(object@Gp)[i]      ## number of elements in this block
+             nt <- length(object@cnms[[i]]) ## number of REs
+             inds <- lapply(seq(nt),seq,to=n,by=nt)  ## pull out individual RE indices
+             inds <- lapply(inds,function(x) x + object@Gp[i])  ## add group offset
+         }
+         inds <- do.call(c,lapply(seq_along(object@cnms),getInds))
+         setNames(lapply(inds,function(i) PR$Zt[i,]),tnames(diag.only=TRUE))
+     },
      "y" = rsp$y,
      "mu"=rsp$mu,
      "u" = object@u,
@@ -1630,28 +1657,14 @@ getME <- function(object,
            "Gp" = object@Gp,
            "flist" = object@flist,
 	   "beta" = object@beta,
-           "theta"= {
-               tt <- object@theta
-               nc <- c(unlist(mapply(function(g,e) {
-                   mm <- outer(e,e,paste,sep=".")
-                   diag(mm) <- e
-                   mm <- mm[lower.tri(mm,diag=TRUE)]
-                   paste(g,mm,sep=".")
-               },
-                                     names(object@cnms),object@cnms)))
-               names(tt) <- nc
-               tt
-           }, ## *OR*  PR $ theta  --- which one ??  Should be the same.
-
+           "theta"= setNames(object@theta,tnames()),
 	   "REML" = dims["REML"],
 	   "is_REML" = isREML(object),
-
-	   "n_rtrms" = length(object@flist),  ## should this be length(object@cnms) instead?
-
-           ## Yes, assuming that you want the number of random-effects
-           ## terms in the formula.  Multiple terms with the same
-           ## grouping factors are allowed.
-
+           ## number of random-effects terms
+	   "n_rtrms" = length(object@cnms),
+           ## number of random-effects grouping factors
+           "n_rfacs" = length(object@flist),
+           
            "devcomp" = dc,
            "offset" = rsp$offset,
            "lower" = object@lower,
