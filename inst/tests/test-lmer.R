@@ -40,7 +40,8 @@ test_that("lmer", {
     expect_that(Lambdat <- getME(fm1, "Lambdat"),       is_a("dgCMatrix"))
     expect_that(as(Lambdat, "matrix"),                  is_equivalent_to(diag(theta, 6L, 6L)))
     expect_that(fm3 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy), is_a("lmerMod"))
-    expect_that(getME(fm3,"n_rtrms"),                   equals(1L))
+    expect_that(getME(fm3,"n_rtrms"),                   equals(2L))
+    expect_that(getME(fm3,"n_rfacs"),                   equals(1L))
     expect_error(fm4 <- lmer(Reaction ~ Days + (1|Subject),
                             subset(sleepstudy,Subject==levels(Subject)[1])), "must have > 1")
     expect_warning(fm4 <- lmer(Reaction ~ Days + (1|Subject),
