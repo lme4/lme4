@@ -277,3 +277,33 @@ showProc.time() #
 #	  all.EQ(S4_2list(P2.1),
 #		 S4_2list(P2.2)))
 
+
+## example from Kevin Thorpe: synthesized equivalent
+## http://thread.gmane.org/gmane.comp.lang.r.lme4.devel/9835
+
+## number of levels with each level of replication
+levs <- c(800,300,150,100,50,50,50,20,20,5,2,2,2,2)
+n <- seq_along(levs)
+flevels <- seq(sum(levs))
+set.seed(101)
+fakedat <- data.frame(DA=factor(rep(flevels,rep(n,levs))),
+                      zbmi=rnorm(sum(n*levs)))
+## add NA values
+fakedat[sample(nrow(fakedat),100),"zbmi"] <- NA
+fakedat[sample(nrow(fakedat),100),"DA"] <- NA
+## should take ~< 0.1 seconds -- have to worry about rank tests
+if (FALSE) {
+    system.time(m5 <- lmer(zbmi ~ (1|DA) , data = fakedat))
+    stopifnot(c(VarCorr(m5)[["DA"]])>0)
+    system.time(m6 <- lmer(zbmi ~ (1|DA) , data = na.omit(fakedat)))
+}
+
+## testing rank methods ...
+## Zt <- getME(m6,"Zt")
+## dim(Zt)
+## rmeth <- eval(formals(rankMatrix)$method)
+## methtest <- setNames(lapply(rmeth,function(m) {
+##     tt <- system.time(res <- try(rankMatrix(Zt,method=m))["user"])
+##     list(time=tt,res=res)
+## }),rmeth)
+

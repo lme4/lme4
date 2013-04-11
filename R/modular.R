@@ -106,6 +106,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
         stop("number of levels of each grouping factor must be ",
              "< number of observations")
     if (any(nlevelVec<5))  warning("grouping factors with < 5 sampled levels may give unreliable estimates")
+    ## FIXME: this test is slow on large Z matrices. What to do?
     if ((rankZ <- rankMatrix(reTrms$Zt)) >= nrow(fr)) {
         stop("rank(Z)>=number of observations; variance-covariance matrix will be unidentifiable")
     }
@@ -265,6 +266,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
         stop("number of levels of each grouping factor must be",
              ">= number of obs")
     if (any(nlevelVec<5))  warning("grouping factors with < 5 sampled levels may give unreliable estimates")
+    ## FIXME: slow test
     if ((rankZ <- rankMatrix(reTrms$Zt)) > nrow(fr)) {
         stop("rank(Z)>number of observations; variance-covariance matrix will be unidentifiable")
     }
