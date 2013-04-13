@@ -281,6 +281,12 @@ showProc.time() #
 ## example from Kevin Thorpe: synthesized equivalent
 ## http://thread.gmane.org/gmane.comp.lang.r.lme4.devel/9835
 
+## NA issue: simpler example
+d <- data.frame(y=1:60,f=factor(rep(1:6,each=10)))
+## d$y[2] <- NA
+d$f[3:4] <- NA
+lmer(y~(1|f),data=d)
+
 ## number of levels with each level of replication
 levs <- c(800,300,150,100,50,50,50,20,20,5,2,2,2,2)
 n <- seq_along(levs)
