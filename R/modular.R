@@ -106,9 +106,11 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
         stop("number of levels of each grouping factor must be ",
              "< number of observations")
     if (any(nlevelVec<5))  warning("grouping factors with < 5 sampled levels may give unreliable estimates")
-    ## FIXME: this test is slow on large Z matrices. What to do?
-    if ((rankZ <- rankMatrix(reTrms$Zt)) >= nrow(fr)) {
-        stop("rank(Z)>=number of observations; variance-covariance matrix will be unidentifiable")
+    ## FIXME: improve testing logic
+    if (prod(dim(reTrms$Zt))<1e6) {
+        if ((rankZ <- rankMatrix(reTrms$Zt)) >= nrow(fr)) {
+            stop("rank(Z)>=number of observations; variance-covariance matrix will be unidentifiable")
+        }
     }
     ## fixed-effects model matrix X - remove random effects from formula:
     fixedform <- formula
@@ -117,7 +119,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     ## re-evaluate model frame to extract predvars component
     fixedfr <- eval(mf, parent.frame())
     attr(attr(fr,"terms"),"predvars.fixed") <- attr(attr(fixedfr,"terms"),"predvars")
-    X <- model.matrix(fixedform, fixedfr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
+    X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     p <- ncol(X)
     if ((rankX <- rankMatrix(X)) < p)
         stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))

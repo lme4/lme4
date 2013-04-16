@@ -283,33 +283,27 @@ showProc.time() #
 
 ## NA issue: simpler example
 d <- data.frame(y=1:60,f=factor(rep(1:6,each=10)))
-## d$y[2] <- NA
+d$y[2] <- NA
 d$f[3:4] <- NA
 lmer(y~(1|f),data=d)
+glmer(y~(1|f),data=d,family=poisson)
 
+## NOT working: gives _correct_ zero variance estimates
 ## number of levels with each level of replication
-levs <- c(800,300,150,100,50,50,50,20,20,5,2,2,2,2)
-n <- seq_along(levs)
-flevels <- seq(sum(levs))
-set.seed(101)
-fakedat <- data.frame(DA=factor(rep(flevels,rep(n,levs))),
-                      zbmi=rnorm(sum(n*levs)))
-## add NA values
-fakedat[sample(nrow(fakedat),100),"zbmi"] <- NA
-fakedat[sample(nrow(fakedat),100),"DA"] <- NA
-## should take ~< 0.1 seconds -- have to worry about rank tests
-if (FALSE) {
-    system.time(m5 <- lmer(zbmi ~ (1|DA) , data = fakedat))
-    stopifnot(c(VarCorr(m5)[["DA"]])>0)
-    system.time(m6 <- lmer(zbmi ~ (1|DA) , data = na.omit(fakedat)))
-}
+## levs <- c(800,300,150,100,50,50,50,20,20,5,2,2,2,2)
+## n <- seq_along(levs)
+## flevels <- seq(sum(levs))
+## set.seed(101)
+## fakedat <- data.frame(DA=factor(rep(flevels,rep(n,levs))),
+##                       zbmi=rnorm(sum(n*levs)))
+## ## add NA values
+## fakedat[sample(nrow(fakedat),100),"zbmi"] <- NA
+## fakedat[sample(nrow(fakedat),100),"DA"] <- NA
+## ## should take ~< 0.1 seconds -- have to worry about rank tests
+## system.time(m5 <- lmer(zbmi ~ (1|DA) , data = fakedat))
+## stopifnot(c(VarCorr(m5)[["DA"]])>0)
+## system.time(m6 <- lmer(zbmi ~ (1|DA) , data = na.omit(fakedat)))
+## stopifnot(c(VarCorr(m6)[["DA"]])>0)
 
-## testing rank methods ...
-## Zt <- getME(m6,"Zt")
-## dim(Zt)
-## rmeth <- eval(formals(rankMatrix)$method)
-## methtest <- setNames(lapply(rmeth,function(m) {
-##     tt <- system.time(res <- try(rankMatrix(Zt,method=m))["user"])
-##     list(time=tt,res=res)
-## }),rmeth)
+
 
