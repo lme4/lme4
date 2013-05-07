@@ -315,7 +315,7 @@ extern "C" {
     static void pwrssUpdate(glmResp *rp, merPredD *pp, bool uOnly, double tol, int verbose) {
 	//Rcpp::Rcout << "\nFirst pwrssUpdate resDev:  " << rp->resDev() << std::endl;
   double oldpdev=std::numeric_limits<double>::max();
-	bool   cvgd = false, verb = verbose > 2;
+  bool   cvgd = false; //, verb = verbose > 2;
 	for (int i = 0; i < 30; i++) {
       //Rcpp::Rcout << "\nmin delu at iteration " << i << ": " << pp->delu().minCoeff() << std::endl;
       //Rcpp::Rcout << "\nmax delu at iteration " << i << ": " << pp->delu().maxCoeff() << std::endl;
@@ -520,9 +520,9 @@ extern "C" {
     }
 	
     SEXP isNullExtPtr(SEXP Ptr) {
-	BEGIN_RCPP;
-	return ::Rf_ScalarLogical(XPtr<lmResp>(Ptr) == (lmResp*)NULL);
-	END_RCPP;
+	void *ptr = R_ExternalPtrAddr(Ptr);
+//	Rcpp::Rcout << "In isNullExtPtr, address is " << ptr << std::endl;
+	return ::Rf_ScalarLogical(ptr == (void*)NULL);
     }
 
     // linear model response (also the base class for other response classes)
@@ -915,6 +915,39 @@ extern "C" {
 	return ::Rf_ScalarReal(XPtr<nlsResp>(ptr_)->updateMu(as<MVec>(gamma)));
 	END_RCPP;
     }
+
+    SEXP showlocation(SEXP obj) {
+	int ll = Rf_length(obj);
+	if (Rf_isReal(obj)) {
+	    double *vv = REAL(obj);
+	    Rcpp::Rcout << "Numeric vector of length " << ll
+			<< " at location: " << vv << std::endl;
+	    if (ll > 0) {
+		Rcpp::Rcout << "Values: " << vv[0];
+		for(int i = 1; i < std::min(ll, 5); ++i)
+		    Rcpp::Rcout << "," << vv[i];
+		if (ll > 8) Rcpp::Rcout << ",...,";
+		for (int i = std::max(5, ll - 3); i < ll; ++i)
+		    Rcpp::Rcout << "," << vv[i];
+		Rcpp::Rcout << std::endl;
+	    }
+	}
+	if (Rf_isInteger(obj)) {
+	    int *vv = INTEGER(obj);
+	    Rcpp::Rcout << "Numeric vector of length " << ll
+			<< " at location: " << vv << std::endl;
+	    if (ll > 0) {
+		Rcpp::Rcout << "Values: " << vv[0];
+		for(int i = 1; i < std::min(ll, 5); ++i)
+		    Rcpp::Rcout << "," << vv[i];
+		if (ll > 8) Rcpp::Rcout << ",...,";
+		for (int i = std::max(5,ll - 3); i < ll; ++i)
+		    Rcpp::Rcout << "," << vv[i];
+		Rcpp::Rcout << std::endl;
+	    }
+	}
+	return R_NilValue;
+    }
 }
 
 #include <R_ext/Rdynload.h>
@@ -1041,6 +1074,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(nls_Laplace,        4), // methods
     CALLDEF(nls_updateMu,       2),
 
+    CALLDEF(showlocation,       1),
     {NULL, NULL, 0}
 };
 

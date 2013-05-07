@@ -114,7 +114,7 @@ merPredD <-
                          LamtUt <<- LtUt
                          Xw <- list(...)$Xwts
                          Xwts <<- if (is.null(Xw)) rep.int(1, N) else as.numeric(Xw)
-                         updateXwts(Xwts)
+                         initializePtr()
                      },
                      CcNumer      = function() {
                          'returns the numerator of the orthogonality convergence criterion'
@@ -184,17 +184,18 @@ merPredD <-
                          'update u0 and beta0 to the values for step factor fac'
                          .Call(merPredDinstallPars, ptr(), as.numeric(fac))
                      },
+                    initializePtr = function() {
+                        Ptr <<- .Call(merPredDCreate, as(X, "matrix"), Lambdat,
+                                      LamtUt, Lind, RZX, Ut, Utr, V, VtV, Vtr,
+                                      Xwts, Zt, beta0, delb, delu, theta, u0)
+                        .Call(merPredDsetTheta, Ptr, theta)
+                        .Call(merPredDupdateXwts, Ptr, Xwts)
+                        .Call(merPredDupdateDecomp, Ptr)
+                     },
                      ptr          = function() {
                          'returns the external pointer, regenerating if necessary'
                          if (length(theta)) {
-                             if (.Call(isNullExtPtr, Ptr)) {
-                                 Ptr <<- .Call(merPredDCreate, as(X, "matrix"), Lambdat,
-                                               LamtUt, Lind, RZX, Ut, Utr, V, VtV, Vtr,
-                                               Xwts, Zt, beta0, delb, delu, theta, u0)
-                                 .Call(merPredDsetTheta, Ptr, theta)
-                                 .Call(merPredDupdateXwts, Ptr, Xwts)
-                                 .Call(merPredDupdateDecomp, Ptr)
-                             }
+                             if (.Call(isNullExtPtr, Ptr)) initializePtr()
                          }
                          Ptr
                      },
@@ -330,76 +331,77 @@ lmResp <-                               # base class for response modules
                      y       = "numeric"),
                 methods =
                 list(
-                     allInfo = function() {
-                         'return all the information available on the object'
-                         data.frame(y=y, offset=offset, weights=weights, mu=mu,
-                                    rwt=sqrtrwt, wres=wtres, Xwt=sqrtXwt)
-                     },
-                     initialize = function(...) {
-                         if (!nargs()) return()
-                         ll <- list(...)
-                         if (is.null(ll$y)) stop("y must be specified")
-                         y <<- as.numeric(ll$y)
-                         n <- length(y)
-                         mu <<- if (!is.null(ll$mu))
-                             as.numeric(ll$mu) else numeric(n)
-                         offset <<- if (!is.null(ll$offset))
-                             as.numeric(ll$offset) else numeric(n)
-                         weights <<- if (!is.null(ll$weights))
-                             as.numeric(ll$weights) else rep.int(1,n)
-                         sqrtXwt <<- if (!is.null(ll$sqrtXwt))
-                             as.numeric(ll$sqrtXwt) else sqrt(weights)
-                         sqrtrwt <<- if (!is.null(ll$sqrtrwt))
-                             as.numeric(ll$sqrtrwt) else sqrt(weights)
-                         wtres   <<- sqrtrwt * (y - mu)
-                     },
-                     copy         = function(shallow = FALSE) {
-                         def <- .refClassDef
-                         selfEnv <- as.environment(.self)
-                         vEnv    <- new.env(parent=emptyenv())
-                         for (field in setdiff(names(def@fieldClasses), "Ptr")) {
-                             if (shallow) 
-                                 assign(field, get(field, envir = selfEnv), envir = vEnv)
-                             else {
-                                 current <- get(field, envir = selfEnv)
-                                 if (is(current, "envRefClass")) 
-                                     current <- current$copy(FALSE)
-                                 assign(field, current, envir = vEnv)
-                             }
-                         }
-                         do.call(new, c(as.list(vEnv), Class=def))
-                     },
-                     ptr       = function() {
-                         'returns the external pointer, regenerating if necessary'
-                         if (length(y)) {
-                             if (.Call(isNullExtPtr, Ptr)) {
-                                 Ptr <<- .Call(lm_Create, y, weights, offset, mu, sqrtXwt,
-                                               sqrtrwt, wtres)
-                                 .Call(lm_updateMu, Ptr, mu)
-                             }
-                         }
-                         Ptr
-                     },
-                     setOffset  = function(oo) {
-                         'change the offset in the model (used in profiling)'
-                         .Call(lm_setOffset, ptr(), as.numeric(oo))
-                     },
-                     setResp    = function(rr) {
-                         'change the response in the model, usually after a deep copy'
-                         .Call(lm_setResp, ptr(), as.numeric(rr))
-                     },
-                     setWeights = function(ww) {
-                         'change the prior weights in the model'
-                         .Call(lm_setWeights, ptr(), as.numeric(ww))
-                     },
-                     updateMu  = function(gamma) {
-                         'update mu, wtres and wrss from the linear predictor'
-                         .Call(lm_updateMu, ptr(), as.numeric(gamma))
-                     },
-                     wrss      = function() {
-                         'returns the weighted residual sum of squares'
-                         .Call(lm_wrss, ptr())
-                     })
+                    allInfo = function() {
+                        'return all the information available on the object'
+                        data.frame(y=y, offset=offset, weights=weights, mu=mu,
+                                   rwt=sqrtrwt, wres=wtres, Xwt=sqrtXwt)
+                    },
+                    initialize = function(...) {
+                        if (!nargs()) return()
+                        ll <- list(...)
+                        if (is.null(ll$y)) stop("y must be specified")
+                        y <<- as.numeric(ll$y)
+                        n <- length(y)
+                        mu <<- if (!is.null(ll$mu))
+                            as.numeric(ll$mu) else numeric(n)
+                        offset <<- if (!is.null(ll$offset))
+                            as.numeric(ll$offset) else numeric(n)
+                        weights <<- if (!is.null(ll$weights))
+                            as.numeric(ll$weights) else rep.int(1,n)
+                        sqrtXwt <<- if (!is.null(ll$sqrtXwt))
+                            as.numeric(ll$sqrtXwt) else sqrt(weights)
+                        sqrtrwt <<- if (!is.null(ll$sqrtrwt))
+                            as.numeric(ll$sqrtrwt) else sqrt(weights)
+                        wtres   <<- sqrtrwt * (y - mu)
+                    },
+                    copy         = function(shallow = FALSE) {
+                        def <- .refClassDef
+                        selfEnv <- as.environment(.self)
+                        vEnv    <- new.env(parent=emptyenv())
+                        for (field in setdiff(names(def@fieldClasses), "Ptr")) {
+                            if (shallow) 
+                                assign(field, get(field, envir = selfEnv), envir = vEnv)
+                            else {
+                                current <- get(field, envir = selfEnv)
+                                if (is(current, "envRefClass")) 
+                                    current <- current$copy(FALSE)
+                                assign(field, current, envir = vEnv)
+                            }
+                        }
+                        do.call(new, c(as.list(vEnv), Class=def))
+                    },
+                    initializePtr = function() {
+                        Ptr <<- .Call(lm_Create, y, weights, offset, mu, sqrtXwt,
+                                      sqrtrwt, wtres)
+                        .Call(lm_updateMu, Ptr, mu)
+                    },
+                    ptr       = function() {
+                        'returns the external pointer, regenerating if necessary'
+                        if (length(y)) {
+                            if (.Call(isNullExtPtr, Ptr)) initializePtr()
+                        }
+                        Ptr
+                    },
+                    setOffset  = function(oo) {
+                        'change the offset in the model (used in profiling)'
+                        .Call(lm_setOffset, ptr(), as.numeric(oo))
+                    },
+                    setResp    = function(rr) {
+                        'change the response in the model, usually after a deep copy'
+                        .Call(lm_setResp, ptr(), as.numeric(rr))
+                    },
+                    setWeights = function(ww) {
+                        'change the prior weights in the model'
+                        .Call(lm_setWeights, ptr(), as.numeric(ww))
+                    },
+                    updateMu  = function(gamma) {
+                        'update mu, wtres and wrss from the linear predictor'
+                        .Call(lm_updateMu, ptr(), as.numeric(gamma))
+                    },
+                    wrss      = function() {
+                        'returns the weighted residual sum of squares'
+                        .Call(lm_wrss, ptr())
+                    })
                 )
                 
 lmResp$lock("mu", "offset", "sqrtXwt", "sqrtrwt", "weights", "wtres")#, "y")
@@ -453,16 +455,16 @@ lmerResp <-
                          if (length(REML) != 1L) REML <<- 0L
                          callSuper(...)
                      },
+                     initializePtr = function() {
+                         Ptr <<- .Call(lmer_Create, y, weights, offset, mu, sqrtXwt,
+                                       sqrtrwt, wtres)
+                         .Call(lm_updateMu, Ptr, mu - offset)
+                         .Call(lmer_setREML, Ptr, REML)
+                     },
                      ptr        = function() {
                          'returns the external pointer, regenerating if necessary'
-                         if (length(y)) {
-                             if (.Call(isNullExtPtr, Ptr)) {
-                                 Ptr <<- .Call(lmer_Create, y, weights, offset, mu, sqrtXwt,
-                                               sqrtrwt, wtres)
-                                 .Call(lm_updateMu, Ptr, mu - offset)
-                                 .Call(lmer_setREML, Ptr, REML)
-                             }
-                         }
+                         if (length(y))
+                             if (.Call(isNullExtPtr, Ptr)) initializePtr()
                          Ptr
                      },
                      objective  = function(ldL2, ldRX2, sqrL) {
@@ -477,7 +479,7 @@ setOldClass("family")
 glmResp <-
     setRefClass("glmResp",
                 fields=
-                list(eta="numeric", family="family", n="integer"),
+                list(eta="numeric", family="family", n="numeric"),
                 contains="lmResp",
                 methods=
                 list(initialize = function(...) {
@@ -485,7 +487,7 @@ glmResp <-
                          ll <- list(...)
                          if (is.null(ll$family)) stop("family must be specified")
                          family <<- ll$family
-                         n <<- if (!is.null(ll$n)) as.integer(ll$n) else rep.int(1,length(y))
+                         n <<- if (!is.null(ll$n)) as.numeric(ll$n) else rep.int(1,length(y))
                          eta <<- numeric(length(y))
                      },
                      aic          = function() {
