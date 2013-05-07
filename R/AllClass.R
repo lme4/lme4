@@ -921,7 +921,7 @@ NULL
 setClass("merMod",
          representation(Gp      = "integer",
                         call    = "call",
-			frame   = "data.frame", # "model.frame" is not S4-ized yet
+                        frame   = "data.frame", # "model.frame" is not S4-ized yet
                         flist   = "list",
                         cnms    = "list",
                         lower   = "numeric",
