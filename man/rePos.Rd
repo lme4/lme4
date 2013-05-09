@@ -1,6 +1,9 @@
 \name{rePos}
 \alias{rePos}
 \title{Generator object for the rePos (random-effects positions) class}
+\usage{
+  rePos(...)
+}
 \arguments{
   \item{\dots}{Argument list (see Note).}
 }
