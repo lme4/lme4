@@ -1,6 +1,9 @@
 \name{golden}
 \alias{golden}
 \title{Generator object for the golden search optimizer class.}
+\usage{
+  golden(...)
+}
 \arguments{
   \item{\dots}{additional, optional arguments.  None are
   used at present.}
