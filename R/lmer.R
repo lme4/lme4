@@ -617,6 +617,23 @@ anovaLmer <- function(object, ...) {
 	mods <- c(list(object), dots[modp])
 	## model names
 	mNms <- .sapply(as.list(mCall)[c(FALSE, TRUE, modp)], deparse)
+        ## HACK to try to identify model names in situations such as
+        ## 'do.call(anova,list(model1,model2))' where the model names
+        ## are lost in the call stack ... this doesn't quite work but might
+        ## be useful for future attempts?
+        ## maxdepth <- -2
+        ## depth <- -1
+        ## while (depth>=maxdepth &
+        ##        all(grepl("S4 object of class structure",mNms))) {
+        ##     xCall <- match.call(call=sys.call(depth))
+        ##     mNms <- .sapply(as.list(xCall)[c(FALSE, TRUE, modp)], deparse)
+        ##     depth <- depth-1
+        ## }
+        ## if (depth<maxdepth) {
+        if (any(duplicated(mNms))) {
+            warning("failed to find unique model names, assigning generic names")
+            mNms <- paste0("MODEL",seq_along(mNms))
+        }
 	names(mods) <- sub("@env$", '', mNms) # <- hack
 	mods <- lapply(mods, refitML)
 
