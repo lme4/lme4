@@ -1,4 +1,3 @@
-## FIXME: Gamma fits are problematic -- recheck when PIRLS issues are sorted out ...
 ## original code was designed to detect segfaults/hangs from error handling
 
 library(lme4)
@@ -13,12 +12,12 @@ d$eta <- d$eta0+reff_f[d$block]
 d$mu <- 1/d$eta
 d$y <- rgamma(nrow(d),scale=d$mu/2,shape=2)
 
-## various pwrssUpdate did not converge/encountered NA conditions
-try(gm1 <- glmer(y ~ 1|block, d, Gamma, nAGQ=25L))
-try(gm1 <- glmer(y ~ 1|block, d, Gamma, nAGQ=25L, compDev=FALSE))
-try(gm1 <- glmer(y ~ 1|block, d, Gamma, nAGQ=25L, compDev=FALSE,
-                 optimizer="Nelder_Mead"))
-try(gm2 <- glmer(y ~ 1|block, d, Gamma, nAGQ=25L, verbose=10))
-try(gm3 <- glmer(y ~ 1|block, d, Gamma, nAGQ=25L))
+## update: these all work now (2013 May, but compDev is ignored
+gm1 <- glmer(y ~ 1|block, d, Gamma, nAGQ=25L)
+gm1 <- glmer(y ~ 1|block, d, Gamma, nAGQ=25L, compDev=FALSE)
+gm1 <- glmer(y ~ 1|block, d, Gamma, nAGQ=25L, compDev=FALSE,
+                 optimizer="Nelder_Mead")
+gm2 <- glmer(y ~ 1|block, d, Gamma, nAGQ=25L)
+gm3 <- glmer(y ~ 1|block, d, Gamma, nAGQ=25L)
 
 

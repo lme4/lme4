@@ -119,7 +119,7 @@ stopifnot(is((cm1 <- coef(m1b)), "coef.mer"),
                         coef_m1_glmmadmb,
                         coef_m1_lme4.0,
                         coef_m1_glmmML,
-		    tol = 4e-5)
+		    tol = 5e-4)
 	  )
 
 

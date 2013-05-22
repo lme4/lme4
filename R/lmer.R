@@ -466,6 +466,7 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0) {
 	else
 	    function(pars) {
                 ## pp$setDelu(rep(0, length(pp$delu)))
+                resp$setOffset(baseOffset)
 		resp$updateMu(lp0)
 		pp$setTheta(as.double(pars[dpars])) # theta is first part of pars
                 spars <- as.numeric(pars[-dpars])

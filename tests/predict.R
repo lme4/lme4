@@ -1,18 +1,19 @@
 library(lme4)
 library(testthat)
+do.plots <- FALSE
 gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
              data = cbpp, family = binomial)
 
 ## fitted values
 p0 <- predict(gm1)
 p0B <- predict(gm1,newdata=cbpp)
-expect_true(all.equal(p0,unname(p0B),tol=1e-5)) ## FIXME: why not closer?
+expect_true(all.equal(p0,unname(p0B),tol=2e-5)) ## FIXME: why not closer?
 ## fitted values, unconditional (level-0)
 p1 <- predict(gm1,REform=NA)
 expect_true(length(unique(p1))==length(unique(cbpp$period)))
 
 
-matplot(cbind(p0,p1),col=1:2,type="b")
+if (do.plots) matplot(cbind(p0,p1),col=1:2,type="b")
 newdata <- with(cbpp,expand.grid(period=unique(period),herd=unique(herd)))
 ## new data, all RE
 p2 <- predict(gm1,newdata)
@@ -26,7 +27,7 @@ expect_true(all.equal(p2,p4))
 p5 <- predict(gm1,type="response")
 expect_true(all.equal(p5,plogis(p0)))
 
-matplot(cbind(p2,p3),col=1:2,type="b")
+if (do.plots) matplot(cbind(p2,p3),col=1:2,type="b")
 
 ## effects of new RE levels
 newdata2 <- rbind(newdata,
@@ -44,7 +45,7 @@ p0 <- predict(fm1)
 ## fitted values, unconditional (level-0)
 p1 <- predict(fm1,REform=NA)
 
-matplot(cbind(p0,p1),col=1:2,type="b")
+if (do.plots) matplot(cbind(p0,p1),col=1:2,type="b")
 newdata <- with(Penicillin,expand.grid(plate=unique(plate),sample=unique(sample)))
 ## new data, all RE
 p2 <- predict(fm1,newdata)
@@ -58,7 +59,7 @@ expect_true(all.equal(p2,p4,p4B))
 p5 <- predict(fm1,newdata,REform=~(1|sample))
 p6 <- predict(fm1,newdata,REform=~(1|plate))
 
-matplot(cbind(p2,p3,p5,p6),type="b",lty=1,pch=16)
+if (do.plots) matplot(cbind(p2,p3,p5,p6),type="b",lty=1,pch=16)
 
 fm2 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 p0 <- predict(fm2)
@@ -98,7 +99,7 @@ expect_true(all.equal(head(newdata),refval))
 library(lattice)
 tmpf <- function(data,...) {
   data$Reaction <- predict(fm2,data,...)
-  xyplot(Reaction~Days,group=Subject,data=data,type="l")
+  if (do.plots) xyplot(Reaction~Days,group=Subject,data=data,type="l")
 }
 tmpf(sleepstudy)
 tmpf(sleepstudy,REform=NA)

@@ -22,7 +22,6 @@ if (testLevel>2) {
                       0.548900267825802, -0.623934772981894), .Names = c("(Intercept)", 
                           "sex", "pped"))), .Names = c("sigma", "beta"))
 
-    stopifnot(all.equal(lme4_results,glmmML_est,tol=1e-3))
-    stopifnot(all.equal(lme4_results,lme4.0_est,tol=1e-3))
-
+    stopifnot(all.equal(lme4_results,glmmML_est,tol=3e-3))
+    stopifnot(all.equal(lme4_results,lme4.0_est,tol=3e-3))
 }

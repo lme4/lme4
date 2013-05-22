@@ -63,13 +63,9 @@ stopifnot(all.equal(sd(coef(gm1)),1.00753942148611))
 
 gm2 <- glmer(y ~ 1 + (1|block), d, Gamma, nAGQ=0)
 gm3 <- glmer(y ~ x + (1|block), d, Gamma, nAGQ=0)
-if (FALSE) {
-    gm2B <- glmer(y ~ 1 + (1|block), d, Gamma)
-    gm3B <- glmer(y ~ x + (1|block), d, Gamma)
-    ## FIXME: fails with "Error: pwrssUpdate did not converge in 30 iterations"
-    ## will succeed with control=list(MinfMax=0) , or by brute-force
-    ## optimization resetting deviance function every time: see glmmExt2.R
-}
+gm2B <- glmer(y ~ 1 + (1|block), d, Gamma)
+gm3B <- glmer(y ~ x + (1|block), d, Gamma)
+
 
 ## Gamma/log
 ggl1 <- glmer(y ~ 1 + (1|block), data=dgl, family=Gamma(link="log"))
@@ -101,18 +97,15 @@ gG2 <- glmer(y ~ x + (1|block), data=dG, family=gaussian(link="log"))
 
 ## Gaussian/inverse
 gGi1 <- glmer(y ~ 1 + (1|block), data=dGi,family=gaussian(link="inverse"))
+gGi2 <- glmer(y ~ x + (1|block), data=dGi, family=gaussian(link="inverse"))
 
-if (FALSE) {
-    ## FIXME: "Downdated VtV is not positive definite"
-    gGi2 <- glmer(y ~ x + (1|block), data=dGi, family=gaussian(link="inverse"),
-                  verbose=3)
-}
 
 ## Binomial/cloglog
 gBc1 <- glmer(y ~ 1 + (1|block), data=dBc, family=binomial(link="cloglog"))
 
 if (FALSE) {
     ## FIXME: still problematic, "pwrssUpdate did not converge ..."
+    ##  change starting values??
     ##  can't even create devfun: fails in first .Call(glmerLaplace, ...)
     gBc2 <- glmer(y ~ x + (1|block), data=dBc,
               family=binomial(link="cloglog"), nAGQ=0)
@@ -131,8 +124,5 @@ if (FALSE) {
                              .Names = c("fixef", "VarCorr"))
 }
 
-if (FALSE) {
-    ##   Downdated VtV is not positive definite
-    gBi1 <- glmer(y ~ 1 + (1|block), data=dBi, family=binomial(link="identity"))
-    gBi2 <- glmer(y ~ x + (1|block), data=dBi, family=binomial(link="identity"))
-}
+gBi1 <- glmer(y ~ 1 + (1|block), data=dBi, family=binomial(link="identity"))
+gBi2 <- glmer(y ~ x + (1|block), data=dBi, family=binomial(link="identity"))
