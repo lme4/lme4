@@ -6,11 +6,15 @@ pkgmax <- function(x,y) {
     if (package_version(x)>package_version(y)) x else y
 }
 
-
 checkPkg <- function(pn,verbose=FALSE,tarballdir="./tarballs",libdir="./library",
                      checkdir=".",skip=FALSE) {
     ## FIXME: check for/document local version of tarball more recent than R-forge/CRAN versions
     ## FIXME: consistent implementation of checkdir
+
+    ## expand paths to protect against setwd() for R CMD check
+    tarballdir <- normalizePath(tarballdir)
+    libdir <- normalizePath(libdir)
+    
     rforge <- "http://r-forge.r-project.org"  
     if (!exists("availCRAN")) {
         if (verbose) cat("getting list of available packages from CRAN\n")
@@ -37,7 +41,7 @@ checkPkg <- function(pn,verbose=FALSE,tarballdir="./tarballs",libdir="./library"
         pkginfo <- availCRAN[pn,]
     }
     ## FIXME: look for local tarballs???
-    locpkg <- list.files(tarballdir,paste0("^",pn))
+    locpkg <- list.files(tarballdir,paste0("^",pn,"_[0-9]+"))
     if (length(locpkg)>0) {
         locver <- gsub(paste0(pn,"_([-0-9.]+).tar.gz"),"\\1",locpkg)
     } else locver <- NULL
@@ -85,6 +89,7 @@ checkPkg <- function(pn,verbose=FALSE,tarballdir="./tarballs",libdir="./library"
     unlink(file.path(checkdir,paste0(pn,".Rcheck")))  ## erase existing check directory
     ## FIXME: run R CMD check in checkdir ...
     if (!skip) {
+        setwd(checkdir)
         tt <- system.time(ss <- suppressWarnings(system(paste("R CMD check",
                                                               file.path(tarballdir,tn)),
                                                         intern=TRUE)))
@@ -92,6 +97,7 @@ checkPkg <- function(pn,verbose=FALSE,tarballdir="./tarballs",libdir="./library"
         stat <- attr(ss,"status")
         ss <- paste0(seq(ss),": ",ss)
         t0 <- tt["elapsed"]
+        setwd("..")
     } else {
         stat <- "skipped"
         t0 <- NA
@@ -123,7 +129,7 @@ errstrings <- c(error_ex="checking examples \\.\\.\\. ERROR",
                 error_install="checking whether package.+can be installed.+ERROR",
                 error_vignette="Errors in running code in vignettes")
 
-procError <- function(z,pkgname=NULL,debug=FALSE) {
+procError <- function(z,pkgname=NULL,debug=FALSE,checkdir="check") {
     if (is.null(loc <- z$location)) loc <- ""
     if (is.null(ver <- z$version)) ver <- ""
     L <- list(pkgname=pkgname,location=loc,version=ver)
@@ -136,7 +142,7 @@ procError <- function(z,pkgname=NULL,debug=FALSE) {
             m <- list(result="error_depfail",diag=grep(errstrings["error_depfail"],z$msg,value=TRUE))
         } else if (any(grepl(errstrings["error_install"],z$msg))) {
             m <- list(result="error_install",
-                      diag=tail(readLines(file.path(paste0(pkgname,".Rcheck"),"00install.out"))))
+                      diag=tail(readLines(file.path(checkdir,paste0(pkgname,".Rcheck"),"00install.out"))))
         } else if (any(grepl(errstrings["error_vignette"],z$msg))) {
             m <- list(result="error_vignette",diag=tail(z$msg,3))
         } else m <- list(result="OK",diag="")
@@ -144,12 +150,15 @@ procError <- function(z,pkgname=NULL,debug=FALSE) {
     c(L,m)
 }
 
-genReport <- function(X,testresults,
+genReport <- function(depmatrix,      ## results of reverse_dependencies_with_maintainer()
+                      testresults,   ## list of packages with elements status, msg, time, location, version
                       contact="lme4-authors <at> r-forge.wu-wien.ac.at",
+                      pkg="lme4",
                       verbose=FALSE) {
-    require(lme4)  ## for lme4 package version  (FIXME: should be stored with test results!)
+    
+    require(pkg,character.only=TRUE)  ## for package version  (FIXME: should be stored with test results!)
     ## FIXME: should store/pull date from test results too
-    require(R2HTML)
+    require("R2HTML")
     
     isOK <- !sapply(testresults,inherits,what="try-error")
     tOK <- testresults[isOK]
@@ -169,17 +178,18 @@ genReport <- function(X,testresults,
                   })
     rpt <- do.call(rbind,rpt)
     rpt$result <- colorCode(rpt$result)
-    rpt <- merge(rpt,X,by.x="pkgname",by.y="X")
-    rpt <- rpt[,c("pkgname","location","version","name","result","diag")] ## drop e-mail, reorder
+    rpt <- merge(rpt,as.data.frame(depmatrix),by.x="pkgname",by.y="Package")
+    rpt <- rpt[,c("pkgname","location","version","Maintainer","result","diag")] ## drop e-mail, reorder
     names(rpt)[4] <- "maintainer"
     rpt$maintainer <- dumbBrackets(rpt$maintainer)
 
     ## write file
-    HTMLInitFile(filename="lme4_compat_report",outdir=".",
-                 Title="lme4 downstream package report")
+    title <- paste0(pkg,": downstream package report")
+    HTMLInitFile(filename=paste0(pkg,"_compat_report"),outdir=".",
+                 Title=title)
     HTML("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">")  ## for special chars in names etc.
-    HTML.title("downstream lme4 package test report",HR=1)
-    HTML(paste("lme4 version: ",dumbQuotes(packageVersion(sessionInfo()$otherPkgs$lme4))))
+    HTML.title(title,HR=1)
+    HTML(paste(pkg,"version:",dumbQuotes(packageVersion(sessionInfo()$otherPkgs$lme4))))
     HTML(paste("Test date: ",date()))
     HTML.title("Notes",HR=2)
     HTML("<ul>")

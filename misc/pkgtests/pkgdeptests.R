@@ -3,20 +3,18 @@
 ## include all downstream packages from CRAN, r-forge:
 ## packages to check, loaded from package-dependency scan
 
-
-## these should eventually be default arguments
-verbose <- TRUE
+options(repos=c(CRAN="http://probability.ca/cran"))
 ## need this because R can't handle '@CRAN@' magic default
 ## in non-interactive mode ...
-options(repos=c(CRAN="http://probability.ca/cran"))
-pkg <- "lme4"
-do_parallel <- TRUE
-testdir <- getwd()
-tarballdir <- file.path(testdir,"tarballs")
-libdir <-     file.path(testdir,"library")
-checkdir <-     file.path(testdir,"check")
-reinstall_pkg <- FALSE
-locpkg <- "lme4_0.99999911-2.tar.gz"
+
+doPkgDeptests <- function(pkg="lme4",do_parallel=TRUE,
+                          testdir=getwd(),
+                          tarballdir=file.path(testdir,"tarballs"),
+                          libdir=file.path(testdir,"library"),
+                          checkdir=file.path(testdir,"check"),
+                          reinstall_pkg=FALSE,
+                          locpkg="lme4_0.99999911-3.tar.gz",
+                          verbose=TRUE) {
 
 ## FIXME: should get these straight from DESCRIPTION file
 pkgdep <- c("Rcpp","RcppEigen","minqa")
@@ -30,11 +28,14 @@ if (reinstall_pkg) {
 }
                  
 if (verbose) cat("retrieving dependency information\n")
-source("http://developer.r-project.org/CRAN/Scripts/depends.R")
-## FIXME: should download a local copy of this, for future-proofing
+if (!file.exists("depends.R")) {
+    download.file("http://developer.r-project.org/CRAN/Scripts/depends.R",
+                  dest="depends.R")
+}
+source("depends.R")
 
 rr <- reverse_dependencies_with_maintainers(pkg)
-source("lme4depfuns.R")  ## component/utility functions
+source("pkgdepfuns.R")  ## component/utility functions
 ## packages to skip (because dependencies don't install etc.
 ## skippkgs <- "polytomous"
 skippkgs <- character(0)
@@ -43,7 +44,7 @@ skippkgs <- character(0)
 ##   and  make sure that .R/check.Renviron is set
 ##   (this is done in the 'runtests' script)
 
-##  (repeated from lme4depfuns.R):
+##  (repeated from pkgdepfuns.R):
 ##   FIXME: check for/document local version of tarball more recent than R-forge/CRAN versions
 ##  currently just tries to find most recent version and check it, but could check all versions?
 ##  FIXME: consistent implementation of checkdir
@@ -52,7 +53,7 @@ skippkgs <- character(0)
 ##   checking CRAN/R-forge versions?
 ##  might to be able to use update.packages() ...
   
-## FIXME (?)/warning: need to make sure that latest/appropriate version of lme4 is installed locally ...
+## FIXME (?)/warning: need to make sure that latest/appropriate version of package is installed locally ...
 
 ## FIXME: why are R2admb, RLRsim, sdtalt, Zelig not getting checked?
 
@@ -92,18 +93,26 @@ if (do_parallel) {
 ## FIXME: not sure this is necessary/functional
 testresults <- Apply(pkgnames,function(x) {
     if (verbose) cat("checking package",x,"\n")
-    try(checkPkg(x,verbose=TRUE))
+    try(checkPkg(x,verbose=TRUE,checkdir=checkdir))
 })
 skipresults <- Apply(skippkgs,function(x) try(checkPkg(x,skip=TRUE,verbose=TRUE)))
 testresults <- c(testresults,skipresults)
+testresults
+}
 
+source("pkgdepfuns.R")
+checkPkg("afex",verbose=TRUE,checkdir="check")
+doPkgDeptests("lme4",verbose=TRUE)
 save("testresults",file="pkgtests_out.RData")
 
+###
+source("pkgdepfuns.R")
 if (FALSE) {
     ## playing with results
-    load("pkgtests_out.RData")
+    L <- load("pkgtests_out.RData")
     checkPkg("HSAUR2")
 }
 ## names(testresults) <- X$X  ## should be obsolete after next run
-genReport(X,testresults)
+## what is X??
+genReport(rr,testresults)
 
