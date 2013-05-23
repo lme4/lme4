@@ -34,7 +34,7 @@ gm1 <- glmer(y~x+(1|block),data=d,family=poisson)
 gm1off <- glmer(y~x+(1|block)+offset(3*x),data=d,family=poisson)
 
 ## check equality
-stopifnot(all.equal(fixef(gm1)[2]-3,fixef(gm1off)[2]))
+stopifnot(all.equal(fixef(gm1)[2]-3,fixef(gm1off)[2],tol=2e-4))
 
 p0 <- predict(gm1)
 p1 <- predict(gm1,newdata=d)
