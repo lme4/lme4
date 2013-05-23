@@ -67,7 +67,9 @@
 ##'     See \code{\link{model.offset}}.
 ##' @param contrasts an optional list. See the \code{contrasts.arg} of
 ##'     \code{model.matrix.default}.
-##' @param devFunOnly logical - return only the deviance evaluation function.
+##' @param devFunOnly logical - return only the deviance evaluation function. Note that
+##'    because the deviance function operates on variables stored in its environment,
+##'    it may not return \emph{exactly} the same values on subsequent calls (but the results should always be within machine tolerance).
 ##' @param optimizer character - name of optimizing function. The built-in optimizers are
 ##'    \code{\link{Nelder_Mead}} and \code{\link[minqa]{bobyqa}} (from
 ##'    the \pkg{minqa} package. Any minimizing function that allows
