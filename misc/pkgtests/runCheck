@@ -1,0 +1,3 @@
+#!/bin/bash
+. ./setTestEnv
+R CMD BATCH pkgdeptests.R
