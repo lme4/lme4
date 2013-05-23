@@ -14,6 +14,7 @@ if (FALSE) {
     ## playing with results
     L <- load("pkgtests_out.RData")
     checkPkg("HSAUR2")
+    checkPkg("difR",checkdir="check",verbose=TRUE)
 }
 
 

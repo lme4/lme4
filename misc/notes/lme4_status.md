@@ -7,6 +7,7 @@ Version 2013-05-08 17:03:31
 
 Almost on the list is "how can we release the damn thing?"
 
+* as soon as feasible, update installation instructions, status, etc. [the lme4 r-forge project page](http://lme4.r-forge.r-project.org/) (put recent binary versions on the `lme4` repository, etc.)
 * segfault/issues with R 3.0.+ *seem* to be resolved: can only reproduce segfaults on SCW's machine, with `debug` branch, with build from source (even after a clean Github checkout), with `example(glmer)` (`lmer` is OK).  BMB can't reproduce any more, on either Ubuntu or MacOS.
  * double-check with DB and MM that they can't reproduce any more either (*after* various DB fixes)
  * ??? (blue-sky) implement clean/virtual-machine installations with various permutations of `install_github`, git clone and install from source, install from tarball, various versions of upstream packages (CRAN vs R-forge), etc. (This is not going to happen any time soon!)
