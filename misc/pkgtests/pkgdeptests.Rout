@@ -1,0 +1,54 @@
+
+R Under development (unstable) (2013-05-22 r62774) -- "Unsuffered Consequences"
+Copyright (C) 2013 The R Foundation for Statistical Computing
+Platform: i686-pc-linux-gnu (32-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> ## need this because R can't handle '@CRAN@' magic default
+> ## in non-interactive mode ...
+> options(repos=c(CRAN="http://probability.ca/cran"))
+> 
+> source("pkgdepfuns.R")
+> ## checkPkg("afex",verbose=TRUE,checkdir="check")
+> testresults <- doPkgDeptests("lme4",verbose=TRUE)
+retrieving dependency information
+Loading required package: tools
+packages to test:
+ [1] afex                     aods3                    arm                     
+ [4] Bayesthresh              blme                     boss                    
+ [7] BradleyTerry2            clusterPower             cplm                    
+[10] difR                     EquiNorm                 ez                      
+[13] gamm4                    GRRGI                    HLMdiag                 
+[16] influence.ME             languageR                LMERConvenienceFunctions
+[19] lmerTest                 longpower                MEMSS                   
+[22] mi                       mixAK                    MixMAP                  
+[25] mlmRev                   NetworkAnalysis          nonrandom               
+[28] odprism                  pamm                     PBImisc                 
+[31] pbkrtest                 pedigreemm               phia                    
+[34] polytomous               prLogistic               R2STATS                 
+[37] robustlmm                RVAideMemoire            spacom                  
+[40] ZeligMultilevel         
+Loading required package: parallel
+checking package afex 
+getting list of available packages from CRAN
+checking package aods3 
+getting list of available packages from CRAN
+getting list of available packages from R-forge
+getting list of available packages from R-forge
+checking packagecafex 
+g package aods3 
+running R CMD check ...
+running R CMD check ...

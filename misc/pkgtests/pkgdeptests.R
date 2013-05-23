@@ -12,7 +12,9 @@ genReport(rr,testresults)
 
 if (FALSE) {
     ## playing with results
-    L <- load("pkgtests_out.RData")
+    L <- load("lme4tests_out.RData")
+    rr <- getDepends("lme4")
+    genReport(rr,testresults)
     checkPkg("HSAUR2")
     checkPkg("difR",checkdir="check",verbose=TRUE)
 }

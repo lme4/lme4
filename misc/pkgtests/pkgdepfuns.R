@@ -1,3 +1,13 @@
+getDepends <- function(pkg,verbose=FALSE) {    
+    if (verbose) cat("retrieving dependency information\n")
+    if (!file.exists("depends.R")) {
+        download.file("http://developer.r-project.org/CRAN/Scripts/depends.R",
+                      dest="depends.R")
+    }
+    source("depends.R")
+    as.data.frame(reverse_dependencies_with_maintainers(pkg))
+}
+
 pkgmax <- function(x,y) {
     if (missing(y)) {
         if (length(x)==1) return(x)
@@ -208,6 +218,7 @@ doPkgDeptests <- function(pkg="lme4",do_parallel=TRUE,
                           checkdir=file.path(testdir,"check"),
                           reinstall_pkg=FALSE,
                           locpkg="lme4_0.99999911-3.tar.gz",
+                          skippkgs=character(0),
                           verbose=TRUE) {
 
     ## FIXME: lme4-specific; should get these straight from DESCRIPTION file
@@ -220,20 +231,6 @@ doPkgDeptests <- function(pkg="lme4",do_parallel=TRUE,
     if (reinstall_pkg) {
         install.packages(locpkg,repos=NULL,lib=libdir)
     }
-    
-    if (verbose) cat("retrieving dependency information\n")
-    if (!file.exists("depends.R")) {
-        download.file("http://developer.r-project.org/CRAN/Scripts/depends.R",
-                      dest="depends.R")
-    }
-    source("depends.R")
-
-    rr <- reverse_dependencies_with_maintainers(pkg)
-    source("pkgdepfuns.R")  ## component/utility functions
-    ## packages to skip (because dependencies don't install etc.
-    ## skippkgs <- "polytomous"
-    skippkgs <- character(0)
-
     ## * must export R_LIBS_SITE=./library before running R CMD BATCH
     ##   and  make sure that .R/check.Renviron is set
     ##   (this is done in the 'runtests' script)
@@ -251,12 +248,7 @@ doPkgDeptests <- function(pkg="lme4",do_parallel=TRUE,
 
     ## FIXME: why are R2admb, RLRsim, sdtalt, Zelig not getting checked?
 
-
-
-
     suppressWarnings(rm(list=c("availCRAN","availRforge"))) ## clean up
-
-    ## require(tools)
 
     ## make directories ...
     dir.create(tarballdir,showWarnings=FALSE)
@@ -266,6 +258,7 @@ doPkgDeptests <- function(pkg="lme4",do_parallel=TRUE,
     ## it would be nice to use tools:::testInstalledPackages(), but I may simply
     ##  have to do R CMD check
 
+    rr <- getDepends(pkg,verbose)
     pkgnames <- rr[,"Package"]
 
     names(pkgnames) <- pkgnames ## so results are named
