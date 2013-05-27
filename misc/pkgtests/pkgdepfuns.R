@@ -1,11 +1,14 @@
-getDepends <- function(pkg,verbose=FALSE) {    
+getDepends <- function(pkg="lme4",verbose=FALSE) {    
     if (verbose) cat("retrieving dependency information\n")
     if (!file.exists("depends.R")) {
         download.file("http://developer.r-project.org/CRAN/Scripts/depends.R",
                       dest="depends.R")
     }
     source("depends.R")
-    as.data.frame(reverse_dependencies_with_maintainers(pkg))
+    rr <- data.frame(reverse_dependencies_with_maintainers(pkg),
+                        stringsAsFactors=FALSE)
+    rownames(rr) <- rr$Package
+    rr
 }
 
 pkgmax <- function(x,y) {
@@ -16,10 +19,10 @@ pkgmax <- function(x,y) {
     if (package_version(x)>package_version(y)) x else y
 }
 
-checkPkg <- function(pn,verbose=FALSE,tarballdir="./tarballs",libdir="./library",
-                     checkdir=".",skip=FALSE) {
-    ## FIXME: check for/document local version of tarball more recent than R-forge/CRAN versions
-    ## FIXME: consistent implementation of checkdir
+checkPkg <- function(pn,verbose=FALSE,
+                     tarballdir="./tarballs",libdir="./library",
+                     checkdir=".",skip=FALSE,
+                     check_time=TRUE) {
 
     ## expand paths to protect against setwd() for R CMD check
     tarballdir <- normalizePath(tarballdir)
@@ -34,11 +37,7 @@ checkPkg <- function(pn,verbose=FALSE,tarballdir="./tarballs",libdir="./library"
         if (verbose) cat("getting list of available packages from R-forge\n")
         availRforge <<- available.packages(contriburl=contrib.url(rforge))
     }
-    ## FIXME: maybe this is not effective/not what we want to do?
-    ##  *don't* want to look at any already-installed packages
     .libPaths(libdir) 
-    ## we definitely want this to check for packages in the local library directory;
-    ## not sure if we want to check in the rest of the standard library paths
     instPkgs <- installed.packages(lib.loc=libdir)
     if (verbose) cat("checking package",pn,"\n")
     loc <- "none"  ## where is the package coming from?
@@ -66,8 +65,6 @@ checkPkg <- function(pn,verbose=FALSE,tarballdir="./tarballs",libdir="./library"
             if (verbose) cat("local package is more recent than CRAN or R-forge\n")
         }
     }
-    ## FIXME: can we safely assume if the file is in 'available.packages(Rforge)' that
-    ##   the tarball is really there??
     tn <- paste0(pn,"_",ver,".tar.gz")
     if (loc!="local" && !file.exists(tdn <- file.path(tarballdir,tn)))
     {
@@ -79,7 +76,8 @@ checkPkg <- function(pn,verbose=FALSE,tarballdir="./tarballs",libdir="./library"
                       destfile=tdn)
     }
     ## install suggested packages that aren't already installed
-    ## must have set R_LIBS, R_LIBS_SITE, R_LIBS_USER in order to match R CMD check settings
+    ## must have set R_LIBS, R_LIBS_SITE, R_LIBS_USER
+    ##    in order to match R CMD check settings
     depList <- lapply(c("Suggests","Depends"),
                       tools:::package.dependencies,
                       x=pkginfo,
@@ -94,19 +92,33 @@ checkPkg <- function(pn,verbose=FALSE,tarballdir="./tarballs",libdir="./library"
         instPkgs <- installed.packages(noCache=TRUE,lib.loc=libdir)  ## update installed package info
     }
     ## must have set check.Renviron here in order for R CMD check to respect libdir
-    if (verbose) cat("running R CMD check ...\n")
-    unlink(file.path(checkdir,paste0(pn,".Rcheck")))  ## erase existing check directory
-    ## FIXME: run R CMD check in checkdir ...
+    newer_check <- FALSE
+    curCheckdir <- file.path(checkdir,paste0(pn,".Rcheck"))
+    if (file.exists(curCheckdir)) {
+        checktime <- file.info(curCheckdir)["mtime"]
+        tbtime <- file.info(file.path(tarballdir,tn))["mtime"]
+        newer_check <- (checktime>tbtime)
+        if (!(check_time && newer_check)) unlink(curCheckdir)
+    }
+    if (verbose)
+        cat("running R CMD check ...\n")
     if (!skip) {
-        setwd(checkdir)
-        tt <- system.time(ss <- suppressWarnings(system(paste("R CMD check",
-                                                              file.path(tarballdir,tn)),
-                                                        intern=TRUE)))
-        if (verbose) print(ss)
-        stat <- attr(ss,"status")
-        ss <- paste0(seq(ss),": ",ss)
-        t0 <- tt["elapsed"]
-        setwd("..")
+        if (check_time && newer_check) {
+            if (verbose) cat("check more recent than tarball, skipping\n")
+            ss <- readLines(file.path(curCheckdir,"00check.log"))
+            t0 <- NA
+            stat <- NULL
+        } else {
+            setwd(checkdir)
+            tt <- system.time(ss <- suppressWarnings(system(paste("R CMD check",
+                                                                  file.path(tarballdir,tn)),
+                                                            intern=TRUE)))
+            if (verbose) print(ss)
+            stat <- attr(ss,"status")
+            ss <- paste0(seq(ss),": ",ss)
+            t0 <- tt["elapsed"]
+            setwd("..")
+        }
     } else {
         stat <- "skipped"
         t0 <- NA
@@ -211,13 +223,13 @@ genReport <- function(depmatrix,      ## results of reverse_dependencies_with_ma
     HTMLEndFile()
 }
 
-doPkgDeptests <- function(pkg="lme4",do_parallel=TRUE,
+doPkgDeptests <- function(pkg="lme4",
+                          do_parallel=TRUE,
                           testdir=getwd(),
                           tarballdir=file.path(testdir,"tarballs"),
                           libdir=file.path(testdir,"library"),
                           checkdir=file.path(testdir,"check"),
-                          reinstall_pkg=FALSE,
-                          locpkg="lme4_0.99999911-3.tar.gz",
+                          pkg_tarball="lme4_0.99999911-3.tar.gz",
                           skippkgs=character(0),
                           verbose=TRUE) {
 
@@ -227,9 +239,8 @@ doPkgDeptests <- function(pkg="lme4",do_parallel=TRUE,
     pkgdepMiss <- setdiff(pkgdep,c("R",rownames(instPkgs)))
     if (length(pkgdepMiss)>0)
         install.packages(pkgdepMiss,lib=libdir)
-
-    if (reinstall_pkg) {
-        install.packages(locpkg,repos=NULL,lib=libdir)
+    if (!is.null(pkg_tarball)) {
+        install.packages(pkg_tarball,repos=NULL,lib=libdir)
     }
     ## * must export R_LIBS_SITE=./library before running R CMD BATCH
     ##   and  make sure that .R/check.Renviron is set
@@ -274,10 +285,8 @@ doPkgDeptests <- function(pkg="lme4",do_parallel=TRUE,
         require(parallel)
         Apply <- mclapply
     } else Apply <- lapply
-    ## FIXME (maybe): mclapply doesn't work on Windows ?
-    ##  and might hang Ubuntu VM?
+    ## FIXME (maybe): mclapply doesn't work on Windows??
 
-    ## FIXME: not sure this is necessary/functional
     testresults <- Apply(pkgnames,function(x) {
         if (verbose) cat("checking package",x,"\n")
         try(checkPkg(x,verbose=TRUE,checkdir=checkdir))

@@ -3,7 +3,8 @@
 options(repos=c(CRAN="http://probability.ca/cran"))
 
 source("pkgdepfuns.R")
-## checkPkg("afex",verbose=TRUE,checkdir="check")
+rr <- getDepends("lme4")
+checkPkg("afex",verbose=TRUE,checkdir="check")
 testresults <- doPkgDeptests("lme4",verbose=TRUE)
 save("testresults",file="lme4tests_out.RData")
 genReport(rr,testresults)
