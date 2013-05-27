@@ -1,0 +1,711 @@
+<html xmlns:mml="http://www.w3.org/1998/Math/MathML">
+<head>
+<title> lme4: downstream package report </title>
+<link rel=stylesheet href="R2HTML.css" type=text/css>
+<object id="mathplayer" classid="clsid:32F66A20-7614-11D4-BD11-00104BD3F987"></object>
+<?import namespace="mml" implementation="#mathplayer"?>
+<script type="text/javascript" src="ASCIIMathML.js"></script>
+<link href="./runtime/styles/xp/grid.css" rel="stylesheet" type="text/css" ></link>
+<link href="gridR2HTML.css" rel="stylesheet" type="text/css" ></link>
+
+<script src="./runtime/lib/grid.js"></script>
+
+<script src="./gridR2HTML.js"></script>
+<script>
+   nequations=0;
+</script>
+</head>
+<body onload="translate()" bgcolor= FFFFFF >
+<p class='character'><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></p>
+
+ <h1 > lme4: downstream package report</h1>
+
+<p class='character'>lme4 version: 0.99999911.3</p>
+
+<p class='character'>Test date:  Mon May 27 15:11:41 2013</p>
+
+ <h2 > Notes</h2>
+
+<p class='character'><ul></p>
+
+<br><li>contact: lme4-authors &lt;at&gt r-forge.wu-wien.ac.at
+<br><li>'error_depfail' results are due to packages I haven't managed to get installed yet
+<br><li>'PIRLS step failed' errors are due to known, current GLMM issues (not your fault)
+<p class='character'></ul></p>
+
+
+<style>
+.tablesort  {
+cursor: pointer ;
+ behavior:url(tablesort.htc);
+ -moz-binding: url(moz-behaviors.xml#tablesort.htc);
+}
+</style>
+
+<p align= center >
+<table cellspacing=0 border=1>
+<caption align=bottom class=captiondataframe></caption>
+<tr><td>
+	<table border=1 class=dataframe>
+	<tbody> 
+	<tr class= firstline > 
+		<th><b class="tablesort">&nbsp;</b>  </th>
+		<th><b class="tablesort">pkgname</b>  </th>
+		<th><b class="tablesort">location</b>  </th>
+		<th><b class="tablesort">version</b>  </th>
+		<th><b class="tablesort">maintainer</b>  </th>
+		<th><b class="tablesort">result</b>  </th>
+		<th><b class="tablesort">diag</th> 
+	</tr> 
+<tr> 
+<td class=firstcolumn>1
+</td>
+<td class=cellinside>afex
+</td>
+<td class=cellinside>Rforge
+</td>
+<td class=cellinside>0.5-68
+</td>
+<td class=cellinside>Henrik Singmann
+&lt;henrik.singmann@psychologie.uni-freiburg.de&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>2
+</td>
+<td class=cellinside>aods3
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.3-9
+</td>
+<td class=cellinside>Renaud Lancelot &lt;renaud.lancelot@cirad.fr&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>3
+</td>
+<td class=cellinside>arm
+</td>
+<td class=cellinside>Rforge
+</td>
+<td class=cellinside>1.6-06.01
+</td>
+<td class=cellinside>Yu-Sung Su &lt;suyusung@tsinghua.edu.cn&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>4
+</td>
+<td class=cellinside>Bayesthresh
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>2.0.1
+</td>
+<td class=cellinside>Fabio Mathias Correa &lt;fmcorrea@uesc.br&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>5
+</td>
+<td class=cellinside>blme
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.01-6
+</td>
+<td class=cellinside>Vincent Dorie &lt;vincent@stat.columbia.edu&gt
+</td>
+<td class=cellinside><font style="color:red">error_install</font>
+</td>
+<td class=cellinside>** R<br>** inst<br>** preparing package for lazy loading<br>Error : class "mer" is not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'blme'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/blme.Rcheck/blme'
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>6
+</td>
+<td class=cellinside>boss
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.2
+</td>
+<td class=cellinside>Arend Voorman &lt;voorma@u.washington.edu&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>Error in boss.set(y ~ x1 + x2 + factor(site) + (1 | id), id = data$id,  : <br>  no slot of name "X" for this object of class "lmerMod"<br>Execution halted
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>7
+</td>
+<td class=cellinside>BradleyTerry2
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.0-0
+</td>
+<td class=cellinside>Heather Turner &lt;ht@heatherturner.net&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>Error in match.arg(type) : 'arg' should be one of "link", "response"<br>Calls: predict -> predict.glmmPQL -> match.arg<br>Execution halted
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>8
+</td>
+<td class=cellinside>clusterPower
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.4.1
+</td>
+<td class=cellinside>Nicholas G. Reich &lt;nick@schoolph.umass.edu&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>  trying to get slot "coefs" from an object (class "summary.merMod") that is not an S4 object <br>Calls: power.sim.binomial -> estimation.function<br>Execution halted
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>9
+</td>
+<td class=cellinside>cplm
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.6-4
+</td>
+<td class=cellinside>Wayne Zhang &lt;actuary_zhang@hotmail.com&gt
+</td>
+<td class=cellinside><font style="color:red">error_install</font>
+</td>
+<td class=cellinside>** preparing package for lazy loading<br>Warning in library(pkg, character.only = TRUE, logical.return = TRUE, lib.loc = lib.loc) :<br>  there is no package called 'DBI'<br>Error : package 'DBI' could not be loaded<br>ERROR: lazy loading failed for package 'cplm'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/cplm.Rcheck/cplm'
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>10
+</td>
+<td class=cellinside>difR
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>4.5
+</td>
+<td class=cellinside>David Magis &lt;david.magis@ulg.ac.be&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>11
+</td>
+<td class=cellinside>EquiNorm
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>2.0
+</td>
+<td class=cellinside>Li-Xuan Qin &lt;qinl@mskcc.org&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>Error in eval(expr, envir, enclos) : could not find function "lFormula"<br>Calls: equi.gene.norm ... equi.gene.norm.EM -> computeAuxillaryParameters -> lmer -> eval -> eval<br>Execution halted
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>12
+</td>
+<td class=cellinside>ez
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>4.1-1
+</td>
+<td class=cellinside>Michael A. Lawrence &lt;mike.lwrnc@gmail.com&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>13
+</td>
+<td class=cellinside>gamm4
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.1-6
+</td>
+<td class=cellinside>Simon Wood &lt;simon.wood@r-project.org&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>  calling lmer with family() is deprecated: please use glmer() instead<br>Calls: gamm4 ... lmer -> eval -> eval -> lFormula -> do.call -> checkArgs<br>Execution halted
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>14
+</td>
+<td class=cellinside>GRRGI
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.1
+</td>
+<td class=cellinside>Walter Resch &lt;walt55128@msn.com&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>  unable to find an inherited method for function 'sigma.hat' for signature '"lmerMod"'<br>Calls: MLGI -> sigma.hat -> <Anonymous><br>Execution halted
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>15
+</td>
+<td class=cellinside>HLMdiag
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.2.2
+</td>
+<td class=cellinside>Adam Loy &lt;aloy@iastate.edu&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>16
+</td>
+<td class=cellinside>influence.ME
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.9.2
+</td>
+<td class=cellinside>Rense Nieuwenhuis &lt;r.nieuwenhuis@utwente.nl&gt
+</td>
+<td class=cellinside><font style="color:red">error_install</font>
+</td>
+<td class=cellinside>*** moving datasets to lazyload DB<br>** inst<br>** preparing package for lazy loading<br>Error : object 'summary' is not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'influence.ME'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/influence.ME.Rcheck/influence.ME'
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>17
+</td>
+<td class=cellinside>languageR
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.4
+</td>
+<td class=cellinside>&lt;harald.baayen@uni-tuebingen.de&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>18
+</td>
+<td class=cellinside>LMERConvenienceFunctions
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>2.0
+</td>
+<td class=cellinside>"Antoine Tremblay, Dalhousie University" &lt;trea26@gmail.com&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>19
+</td>
+<td class=cellinside>lmerTest
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.2-0
+</td>
+<td class=cellinside>Alexandra Kuznetsova &lt;alku@imm.dtu.dk&gt
+</td>
+<td class=cellinside><font style="color:red">error_install</font>
+</td>
+<td class=cellinside>** preparing package for lazy loading<br>Error in reconcilePropertiesAndPrototype(name, slots, prototype, superClasses,  : <br>  no definition was found for superclass "mer" in the specification of class "merLmerTest"<br>Error : unable to load R code in package 'lmerTest'<br>ERROR: lazy loading failed for package 'lmerTest'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/lmerTest.Rcheck/lmerTest'
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>20
+</td>
+<td class=cellinside>longpower
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.0-7
+</td>
+<td class=cellinside>Michael C. Donohue &lt;mdonohue@ucsd.edu&gt
+</td>
+<td class=cellinside><font style="color:red">error_install</font>
+</td>
+<td class=cellinside>** R<br>** inst<br>** preparing package for lazy loading<br>Error : class "mer" is not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'longpower'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/longpower.Rcheck/longpower'
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>21
+</td>
+<td class=cellinside>MEMSS
+</td>
+<td class=cellinside>Rforge
+</td>
+<td class=cellinside>0.9-0
+</td>
+<td class=cellinside>&lt;lme4-authors@R-forge.wu-wien.ac.at&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>22
+</td>
+<td class=cellinside>mi
+</td>
+<td class=cellinside>Rforge
+</td>
+<td class=cellinside>0.09-18
+</td>
+<td class=cellinside>Yu-Sung Su &lt;suyusung@tsinghua.edu.cn&gt
+</td>
+<td class=cellinside><font style="color:red">error_install</font>
+</td>
+<td class=cellinside>** data<br>** inst<br>** preparing package for lazy loading<br>Error : objects 'coef', 'fitted', 'resid', 'residuals', 'plot' are not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'mi'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/mi.Rcheck/mi'
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>23
+</td>
+<td class=cellinside>mixAK
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>3.0-1
+</td>
+<td class=cellinside>Arnošt Komárek &lt;arnost.komarek@mff.cuni.cz&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>24
+</td>
+<td class=cellinside>MixMAP
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.0
+</td>
+<td class=cellinside>Gregory J. Matthews &lt;gjm112@gmail.com&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>  invalid class "MixMAP" object: undefined class for slot "lmer.out" ("mer")<br>Calls: MixMAP -> new -> initialize -> initialize -> validObject<br>Execution halted
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>25
+</td>
+<td class=cellinside>mlmRev
+</td>
+<td class=cellinside>Rforge
+</td>
+<td class=cellinside>1.0-3
+</td>
+<td class=cellinside>&lt;lme4-authors@R-forge.wu-wien.ac.at&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>26
+</td>
+<td class=cellinside>NetworkAnalysis
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.3-1
+</td>
+<td class=cellinside>Cedric E Ginestet &lt;cedric.ginestet@kcl.ac.uk&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>27
+</td>
+<td class=cellinside>nonrandom
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.4
+</td>
+<td class=cellinside>Susanne Stampf &lt;susta@imbi.uni-freiburg.de&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>28
+</td>
+<td class=cellinside>odprism
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.1
+</td>
+<td class=cellinside>Martijn van de Pol &lt;m.van.de.pol@myscience.eu&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>  rank(Z)>=number of observations; variance-covariance matrix will be unidentifiable<br>Calls: odprismB -> lmer -> eval -> eval -> lFormula<br>Execution halted
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>29
+</td>
+<td class=cellinside>pamm
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.7
+</td>
+<td class=cellinside>Julien Martin &lt;julien.martin2@usherbrooke.ca&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>30
+</td>
+<td class=cellinside>PBImisc
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.998
+</td>
+<td class=cellinside>Przemyslaw Biecek &lt;przemyslaw.biecek@gmail.com&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>  model should be an object of the class mer<br>Calls: groupDisp -> sapply -> lapply -> FUN -> recalculateLogLik<br>Execution halted
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>31
+</td>
+<td class=cellinside>pbkrtest
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.3-4
+</td>
+<td class=cellinside>Søren Højsgaard &lt;sorenh@math.aau.dk&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>32
+</td>
+<td class=cellinside>pedigreemm
+</td>
+<td class=cellinside>Rforge
+</td>
+<td class=cellinside>0.2-5
+</td>
+<td class=cellinside>Ana Ines Vazquez &lt;anainesvs@gmail.com&gt
+</td>
+<td class=cellinside><font style="color:red">error_install</font>
+</td>
+<td class=cellinside>** preparing package for lazy loading<br>Error in reconcilePropertiesAndPrototype(name, slots, prototype, superClasses,  : <br>  no definition was found for superclass "mer" in the specification of class "pedigreemm"<br>Error : unable to load R code in package 'pedigreemm'<br>ERROR: lazy loading failed for package 'pedigreemm'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/pedigreemm.Rcheck/pedigreemm'
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>33
+</td>
+<td class=cellinside>phia
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.1-1
+</td>
+<td class=cellinside>Helios De Rosario-Martinez &lt;helios.derosario@ibv.upv.es&gt
+</td>
+<td class=cellinside><font style="color:red">error_vignette</font>
+</td>
+<td class=cellinside>Error: $ operator not defined for this S4 class<br>Execution halted<br>
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>34
+</td>
+<td class=cellinside>polytomous
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.1.4
+</td>
+<td class=cellinside>Antti Arppe &lt;antti.arppe@helsinki.fi&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>  calling lmer with family() is deprecated: please use glmer() instead<br>Calls: polytomous -> polytomous.poisson.reformulation<br>Execution halted
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>35
+</td>
+<td class=cellinside>prLogistic
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.1
+</td>
+<td class=cellinside>Raydonal Ospina &lt;raydonal@de.ufpe.br&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>  calling lmer with family() is deprecated: please use glmer() instead<br>Calls: prLogisticDelta ... lmer -> eval -> eval -> lFormula -> do.call -> checkArgs<br>Execution halted
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>36
+</td>
+<td class=cellinside>R2STATS
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.68-31
+</td>
+<td class=cellinside>Yvonnick Noel &lt;yvonnick.noel@uhb.fr&gt
+</td>
+<td class=cellinside><font style="color:red">error_install</font>
+</td>
+<td class=cellinside>** R<br>** inst<br>** preparing package for lazy loading<br>Error : object 'logLik' is not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'R2STATS'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/R2STATS.Rcheck/R2STATS'
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>37
+</td>
+<td class=cellinside>robustlmm
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.0
+</td>
+<td class=cellinside>Manuel Koller &lt;koller.manuel@gmail.com&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>38
+</td>
+<td class=cellinside>RVAideMemoire
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.9-27
+</td>
+<td class=cellinside>Maxime Hervé &lt;mx.herve@gmail.com&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>39
+</td>
+<td class=cellinside>spacom
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.0-0
+</td>
+<td class=cellinside>Till Junge &lt;till.junge@gmail.com&gt
+</td>
+<td class=cellinside><font style="color:red">error_install</font>
+</td>
+<td class=cellinside>** R<br>** data<br>** preparing package for lazy loading<br>Error : objects 'AIC', 'BIC' are not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'spacom'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/spacom.Rcheck/spacom'
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>40
+</td>
+<td class=cellinside>ZeligMultilevel
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.7-0
+</td>
+<td class=cellinside>Matt Owen &lt;mowen@iq.harvard.edu&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td></tr>
+ 
+	</tbody>
+</table>
+ </td></table>
+ <br>
+
+<hr size=1>
+<font size=-1>
+	 Generated on: <i>Mon May 27 15:11:41 2013</i> - <b>R2HTML</b> 
+<hr size=1>
+	</body>
+</html>
