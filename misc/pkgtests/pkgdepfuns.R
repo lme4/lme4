@@ -37,8 +37,9 @@ checkPkg <- function(pn,verbose=FALSE,
         if (verbose) cat("getting list of available packages from R-forge\n")
         availRforge <<- available.packages(contriburl=contrib.url(rforge))
     }
-    .libPaths(libdir) 
-    instPkgs <- installed.packages(lib.loc=libdir)
+    .libPaths(libdir)
+    ## should include both system files and libdir
+    instPkgs <- installed.packages()
     if (verbose) cat("checking package",pn,"\n")
     loc <- "none"  ## where is the package coming from?
     if (pn %in% rownames(availRforge)) {
@@ -78,7 +79,7 @@ checkPkg <- function(pn,verbose=FALSE,
     ## install suggested packages that aren't already installed
     ## must have set R_LIBS, R_LIBS_SITE, R_LIBS_USER
     ##    in order to match R CMD check settings
-    depList <- lapply(c("Suggests","Depends"),
+    depList <- lapply(c("Suggests","Depends","Imports"),
                       tools:::package.dependencies,
                       x=pkginfo,
                       check=FALSE)
@@ -96,9 +97,11 @@ checkPkg <- function(pn,verbose=FALSE,
     curCheckdir <- file.path(checkdir,paste0(pn,".Rcheck"))
     if (file.exists(curCheckdir)) {
         checktime <- file.info(curCheckdir)["mtime"]
-        tbtime <- file.info(file.path(tarballdir,tn))["mtime"]
+        tbinfo <- file.info(file.path(tarballdir,tn))
+        tbtime <- tbinfo["mtime"]
         newer_check <- (checktime>tbtime)
-        if (!(check_time && newer_check)) unlink(curCheckdir)
+        zero_tb <- tbinfo$size==0
+        if (!check_time || !newer_check || zero_tb) unlink(curCheckdir)
     }
     if (verbose)
         cat("running R CMD check ...\n")
@@ -175,6 +178,7 @@ genReport <- function(depmatrix,      ## results of reverse_dependencies_with_ma
                       testresults,   ## list of packages with elements status, msg, time, location, version
                       contact="lme4-authors <at> r-forge.wu-wien.ac.at",
                       pkg="lme4",
+                      outfn=paste0(pkg,"_compat_report"),
                       verbose=FALSE) {
     
     require(pkg,character.only=TRUE)  ## for package version  (FIXME: should be stored with test results!)
@@ -206,7 +210,7 @@ genReport <- function(depmatrix,      ## results of reverse_dependencies_with_ma
 
     ## write file
     title <- paste0(pkg,": downstream package report")
-    HTMLInitFile(filename=paste0(pkg,"_compat_report"),outdir=".",
+    HTMLInitFile(filename=outfn,outdir=".",
                  Title=title)
     HTML("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">")  ## for special chars in names etc.
     HTML.title(title,HR=1)
@@ -217,10 +221,10 @@ genReport <- function(depmatrix,      ## results of reverse_dependencies_with_ma
     HTMLli(paste("contact:",dumbBrackets(contact)))
     HTMLli("'error_depfail' results are due to packages I haven't managed to get installed yet")
     ## HTMLli("'error_install' results due to missing dependencies are probably spurious (packages that are installed elsewhere on my machine but not seen during testing")
-    HTMLli("'PIRLS step failed' errors are due to known, current GLMM issues (not your fault)")
     HTML("</ul>")
     HTML(rpt,innerBorder=1,sortableDF=TRUE)
     HTMLEndFile()
+    outfn
 }
 
 doPkgDeptests <- function(pkg="lme4",
@@ -240,7 +244,11 @@ doPkgDeptests <- function(pkg="lme4",
     if (length(pkgdepMiss)>0)
         install.packages(pkgdepMiss,lib=libdir)
     if (!is.null(pkg_tarball)) {
-        install.packages(pkg_tarball,repos=NULL,lib=libdir)
+        ## FIXME: check if newer than installed version
+        tb0time <- file.info(pkg_tarball)$mtime
+        pkgtime <- file.info(file.path(libdir,pkg))$mtime
+        if (tb0time>pkgtime)
+            install.packages(pkg_tarball,repos=NULL,lib=libdir)
     }
     ## * must export R_LIBS_SITE=./library before running R CMD BATCH
     ##   and  make sure that .R/check.Renviron is set
@@ -288,7 +296,7 @@ doPkgDeptests <- function(pkg="lme4",
     ## FIXME (maybe): mclapply doesn't work on Windows??
 
     testresults <- Apply(pkgnames,function(x) {
-        if (verbose) cat("checking package",x,"\n")
+        ## if (verbose) cat("checking package",x,"\n")  ## redundant
         try(checkPkg(x,verbose=TRUE,checkdir=checkdir))
     })
     skipresults <- Apply(skippkgs,function(x) try(checkPkg(x,skip=TRUE,verbose=TRUE)))
