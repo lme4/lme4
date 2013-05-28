@@ -61,4 +61,5 @@ Collate:
     'plot.R'
     'vcconv.R'
     'modular.R'
+    'hooks.r'
 BuildVignettes: no
