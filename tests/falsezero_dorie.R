@@ -1,3 +1,6 @@
+## test of false zero problem reported by Vince Dorie
+## (no longer occurs with current development lme4)
+## https://github.com/lme4/lme4/issues/17
 library(lme4)
 
 sigma.eps <- 2

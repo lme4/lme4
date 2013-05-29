@@ -143,7 +143,8 @@ namespace glm {
     template<typename T>
     struct clogloginv : public std::unary_function<T, T> {
 	const T operator() (const T& x) const {
-	    return T(pgumbel2(double(x), 0., 1., 1));
+	    return T(std::min(1.-std::numeric_limits<T>::epsilon(),
+                              pgumbel2(double(x), 0., 1., 1)));
 	}
     };
 

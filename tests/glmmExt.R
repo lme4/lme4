@@ -103,26 +103,25 @@ gGi2 <- glmer(y ~ x + (1|block), data=dGi, family=gaussian(link="inverse"))
 ## Binomial/cloglog
 gBc1 <- glmer(y ~ 1 + (1|block), data=dBc, family=binomial(link="cloglog"))
 
-if (FALSE) {
-    ## FIXME: still problematic, "pwrssUpdate did not converge ..."
-    ##  change starting values??
-    ##  can't even create devfun: fails in first .Call(glmerLaplace, ...)
-    gBc2 <- glmer(y ~ x + (1|block), data=dBc,
-              family=binomial(link="cloglog"), nAGQ=0)
-    gBc2 <- glmer(y ~ x + (1|block), data=dBc,
-                  family=binomial(link="cloglog"),
-                  devFunOnly=TRUE, nAGQ=0)
-    ## library("glmmADMB")
-    ## glmmadmbfit <- glmmadmb(y ~ x + (1|block), data=dBc,
-    ## family="binomial",link="cloglog")
-    glmmadmbfit <- structure(list(fixef = structure(c(-0.717146132730349, 2.83642900561633),
-                                  .Names = c("(Intercept)", "x")), VarCorr = structure(list(
-                                                                   block = structure(0.79992, .Dim = c(1L, 1L),
-                                                                   .Dimnames = list(
-                                                                   "(Intercept)", "(Intercept)"))),
-                                                                   .Names = "block", class = "VarCorr")),
-                             .Names = c("fixef", "VarCorr"))
-}
+gBc2 <- glmer(y ~ x + (1|block), data=dBc,
+              family=binomial(link="cloglog"))
+## library("glmmADMB")
+## glmmadmbfit <- glmmadmb(y ~ x + (1|block), data=dBc,
+## family="binomial",link="cloglog")
+glmmadmbfit <- structure(list(fixef = structure(c(-0.717146132730349, 2.83642900561633),
+                        .Names = c("(Intercept)", "x")), VarCorr = structure(list(
+                        block = structure(0.79992, .Dim = c(1L, 1L),
+                        .Dimnames = list(
+                                   "(Intercept)", "(Intercept)"))),
+                           .Names = "block", class = "VarCorr")),
+                            .Names = c("fixef", "VarCorr"))
+stopifnot(all.equal(fixef(gBc2),glmmadmbfit$fixef,tol=5e-3))
+## pretty loose tolerance ...
+stopifnot(all.equal(unname(unlist(VarCorr(gBc2))),
+                    c(glmmadmbfit$VarCorr$block),tol=2e-2))
 
 gBi1 <- glmer(y ~ 1 + (1|block), data=dBi, family=binomial(link="identity"))
 gBi2 <- glmer(y ~ x + (1|block), data=dBi, family=binomial(link="identity"))
+
+## FIXME: should test more of the *results* of these efforts, not
+##  just that they run without crashing ...
