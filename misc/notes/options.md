@@ -3,7 +3,7 @@
 
 # Top-level
 
-These parameters should be definitely be retained as explicit arguments to `[g]lmer`, because they're very basic and very
+These parameters should be all be retained as explicit arguments to `[g]lmer`, because they're very basic and very
 commonly used (and more generally, they affect *what* model
 is fitted rather than *how* it is fitted).
 
@@ -25,7 +25,7 @@ is fitted rather than *how* it is fitted).
 
 The only **required** argument is `formula`, although `data` should usually be specified and `family` should usually be specified for GLMMs.
 
-The ? arguments might be relegated to the "control" level ...
+The ? arguments could possibly be relegated to the "control" level ...
 
 # Control
 
