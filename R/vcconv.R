@@ -1,4 +1,33 @@
-## convert matrix list to concatenated vector of lower triangles
+## These files are not currently exported; we are still trying to figure
+## out the most appropriate user interface/naming convention/etc
+## These functions will become more important, and need to be
+## modified/augmented, if we start allowing for varying V-C structures
+## (e.g. diagonal matrices, compound symmetry ...)
+
+## In principle we might want to extract or input information:
+
+## 1. as variance-covariance matrices
+## 2. as Cholesky factors
+## 3. as 'sdcorr' matrices (std dev on diagonal, correlations off diagonal)
+
+## and we might want the structure to be:
+
+## 1. a concatenated vector representing the lower triangles
+##    (with an attribute carrying the information about group sizes)
+## 2. a list of lower-triangle vectors
+## 3. a list of matrices
+## 4. a block-diagonal matrix
+
+## If we are trying to convert to and from theta vectors, we also
+## have to consider whether we are returning scaled Cholesky factors/
+## var-cov matrices or unscaled ones.  For the code below I have
+## chosen to allow the residual variance etc. to be appended as
+## the last element of a variance-covariance vector.  (This last
+## part is a little less generic than the rest of it.)
+
+## Convert list of matrices to concatenated vector of lower triangles
+## with an attribute that gives the dimension of each matrix
+## in the original list
 mlist2vec <- function(L) {
     n <- sapply(L,nrow)
     ## allow for EITHER upper- or lower-triangular input
@@ -11,6 +40,8 @@ mlist2vec <- function(L) {
     r
 }
 
+## Compute dimensions of a square matrix from the size
+## of the lower triangle (length as a vector)
 get_clen <- function(v,n=NULL) {
     if (is.null(n)) {
         if (is.null(n <- attr(v,"clen"))) {
@@ -21,7 +52,7 @@ get_clen <- function(v,n=NULL) {
     n
 }
 
-## convert concatenated vector to matrix list
+## Convert concatenated vector to matrix list
 ## (lower triangle or symmetric)
 vec2mlist <- function(v,n=NULL,symm=TRUE) {
     n <- get_clen(v,n)
@@ -43,6 +74,7 @@ sdcor2cov  <- function(m) {
     m * outer(sd,sd)
 }
 
+## convert cov to sdcor
 cov2sdcor  <- function(m) {
     v <- diag(m)
     m1 <- cov2cor(m)
@@ -55,6 +87,8 @@ dmult <- function(m,s) {
     m
 }
 
+## attempt to compute Cholesky, allow for positive semi-definite cases
+##  (hackish)
 safe_chol <- function(m) {
     if (all(m==0)) return(m)
     if (nrow(m)==1) return(sqrt(m))
@@ -72,6 +106,7 @@ safe_chol <- function(m) {
     ## but results might be returned in a strange format: TEST
 }
 
+## from var-cov to scaled Cholesky:
 Vv_to_Cv <- function(v,n=NULL,s=1) {
     if (!missing(s)) {
         v <- v[-length(v)]
@@ -82,6 +117,7 @@ Vv_to_Cv <- function(v,n=NULL,s=1) {
     r
 }
 
+## from sd-cor to scaled Cholesky:
 Sv_to_Cv <- function(v,n=NULL,s=1) {
     if (!missing(s)) {
         v <- v[-length(v)]
@@ -92,6 +128,8 @@ Sv_to_Cv <- function(v,n=NULL,s=1) {
     r
 }
 
+## from unscaled Cholesky vector to (possibly scaled)
+## variance-covariance vector
 Cv_to_Vv <- function(v,n=NULL,s=1) {
     r <- mlist2vec(lapply(vec2mlist(v,n,symm=FALSE),
                           function(m) tcrossprod(m)*s^2))
@@ -100,6 +138,7 @@ Cv_to_Vv <- function(v,n=NULL,s=1) {
     r
 }
 
+## from unscaled Chol to sd-cor vector
 Cv_to_Sv <- function(v,n=NULL,s=1) {
     r <- mlist2vec(lapply(vec2mlist(v,n,symm=FALSE),
                           function(m) cov2sdcor(tcrossprod(m)*s^2)))

@@ -26,7 +26,8 @@ tmpf <- function() {
 test <- function() {
     if (doTest) {
         if (pkg %in% c("lme4","lme4.0")) {
-            fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+            fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy,
+                        devFunOnly=TRUE)
         }
         if (pkg=="RcppEigen") {
             data(trees, package="datasets")
@@ -37,6 +38,8 @@ test <- function() {
         }
     }
 }
+if (FALSE) {
+  ## FIXME: disabled test for now
 for (i in 1:6) {
     cat("Attempt #",i,"\n",sep="")
     cat("loading",pkg,"\n")
@@ -50,4 +53,5 @@ for (i in 1:6) {
     tmpf()
     detach("package:nlme",unload=TRUE)
     cat("detaching nlme\n")
+}
 }

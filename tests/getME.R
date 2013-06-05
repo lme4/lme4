@@ -46,8 +46,11 @@ chkMEs(fm4, nmME)
 gg <- getME(fm2,c("theta","beta"))
 gg2 <- getME(fm2,c("theta","beta","X"))
 
-##
+## list of Zt for each random-effects factor
 lapply(getME(fm2,c("Ztlist")),dim)
+## Cholesky factors returned as a list of matrices
+getME(fm1,"ST")
+getME(fm2,"ST")
 
 ## distinction between number of RE terms
 ##  and number of RE grouping factors

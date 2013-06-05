@@ -1560,8 +1560,14 @@ setMethod("getL", "merMod", function(x) {
 ##'     \item{mu}{conditional mean of the response}
 ##'     \item{u}{conditional mode of the \dQuote{spherical} random effects variable}
 ##'     \item{b}{conditional mode of the random effects variable}
-##'     \item{Gp}{groups pointer vector.  A pointer to the beginning of each group
-##'               of random effects corresponding to the random-effects terms.}
+##'     \item{Gp}{groups pointer vector.  A pointer to the beginning
+##'               of each group of random effects corresponding to the
+##'               random-effects terms, beginning with 0 and including
+##'               a final element giving the total number of random effects}
+##'     \item{Tp}{theta pointer vector.  A pointer to the beginning
+##'               of the theta sub-vectors corresponding to the
+##'               random-effects terms, beginning with 0 and including
+##'               a final element giving the total number of random effects}
 ##'     \item{L}{sparse Cholesky factor of the penalized random-effects model.}
 ##'     \item{Lambda}{relative covariance factor of the random effects.}
 ##'     \item{Lambdat}{transpose of the relative covariance factor of the random effects.}
@@ -1576,6 +1582,7 @@ setMethod("getL", "merMod", function(x) {
 ##'     \item{flist}{a list of the grouping variables (factors) involved in the random effect terms}
 ##'     \item{beta}{fixed-effects parameter estimates (identical to the result of \code{\link{fixef}}, but without names)}
 ##'     \item{theta}{random-effects parameter estimates: these are parameterized as the relative Cholesky factors of each random effect term}
+##'     \item{ST}{a list of matrices giving the relative Cholesky factors for each random effect term}
 ##'     \item{n_rtrms}{number of random-effects terms}
 ##'     \item{n_rfacs}{number of distinct random-effects grouping factors}
 ##'     \item{REML}{restricted maximum likelihood}
@@ -1616,11 +1623,11 @@ setMethod("getL", "merMod", function(x) {
 getME <- function(object,
 		  name = c("X", "Z","Zt", "Ztlist",
                   "y", "mu", "u", "b",
-		  "Gp",
+		  "Gp", "Tp",
 		  "L", "Lambda", "Lambdat", "Lind", "A",
 		  "RX", "RZX",
                   "flist",
-                  "beta", "theta",
+                  "beta", "theta", "ST",
 		  "REML", "is_REML",
                   "n_rtrms", "n_rfacs",
                   "devcomp", "offset", "lower"))
@@ -1659,13 +1666,18 @@ getME <- function(object,
              inds <- lapply(seq(nt),seq,to=n,by=nt)  ## pull out individual RE indices
              inds <- lapply(inds,function(x) x + object@Gp[i])  ## add group offset
          }
+         Tpfun <- function(cnms) {
+               ltsize <- function(x) x*(x+1)/2
+               cLen <- cumsum(ltsize(sapply(cnms,length)))
+               setNames(c(0,cLen),c(names(cnms),"__end"))
+           }
          inds <- do.call(c,lapply(seq_along(object@cnms),getInds))
          setNames(lapply(inds,function(i) PR$Zt[i,]),tnames(diag.only=TRUE))
      },
-     "y" = rsp$y,
-     "mu"=rsp$mu,
-     "u" = object@u,
-     "b" = t(PR$Lambdat) %*% object@u,
+           "y" = rsp$y,
+           "mu"=rsp$mu,
+           "u" = object@u,
+           "b" = t(PR$Lambdat) %*% object@u,
 	   "L"= PR$ L(),
 	   "Lambda"= t(PR$ Lambdat),
 	   "Lambdat"= PR$ Lambdat,
@@ -1675,9 +1687,14 @@ getME <- function(object,
 	   "RZX" = structure(PR$RZX, dimnames = list(NULL, colnames(PR$X))), ## maybe add names elsewhere?
 
            "Gp" = object@Gp,
+           "Tp" = Tpfun(object@cnms) ,
            "flist" = object@flist,
 	   "beta" = object@beta,
            "theta"= setNames(object@theta,tnames()),
+           "ST"= setNames(vec2mlist(object@theta,
+                                    n=sapply(object@cnms,length),
+                                    symm=FALSE),
+                         names(object@cnms)),
 	   "REML" = dims["REML"],
 	   "is_REML" = isREML(object),
            ## number of random-effects terms
