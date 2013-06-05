@@ -5,7 +5,7 @@
 \title{Extract or Get Generalize Components from a Fitted Mixed Effects Model}
 \usage{
   getME(object,
-    name = c("X", "Z", "Zt", "Ztlist", "y", "mu", "u", "b", "Gp", "L", "Lambda", "Lambdat", "Lind", "A", "RX", "RZX", "flist", "beta", "theta", "REML", "is_REML", "n_rtrms", "n_rfacs", "devcomp", "offset", "lower"))
+    name = c("X", "Z", "Zt", "Ztlist", "y", "mu", "u", "b", "Gp", "Tp", "L", "Lambda", "Lambdat", "Lind", "A", "RX", "RZX", "flist", "beta", "theta", "ST", "REML", "is_REML", "n_rtrms", "n_rfacs", "devcomp", "offset", "lower"))
 }
 \arguments{
   \item{object}{a fitted mixed-effects model of class
@@ -27,15 +27,20 @@
   \item{b}{conditional mode of the random effects variable}
   \item{Gp}{groups pointer vector.  A pointer to the
   beginning of each group of random effects corresponding
-  to the random-effects terms.} \item{L}{sparse Cholesky
-  factor of the penalized random-effects model.}
-  \item{Lambda}{relative covariance factor of the random
-  effects.} \item{Lambdat}{transpose of the relative
+  to the random-effects terms, beginning with 0 and
+  including a final element giving the total number of
+  random effects} \item{Tp}{theta pointer vector.  A
+  pointer to the beginning of the theta sub-vectors
+  corresponding to the random-effects terms, beginning with
+  0 and including a final element giving the total number
+  of random effects} \item{L}{sparse Cholesky factor of the
+  penalized random-effects model.} \item{Lambda}{relative
   covariance factor of the random effects.}
-  \item{Lind}{index vector for inserting elements of
-  \eqn{\theta}{theta} into the nonzeros of
-  \eqn{\Lambda}{Lambda}} \item{A}{Scaled sparse model
-  matrix (class
+  \item{Lambdat}{transpose of the relative covariance
+  factor of the random effects.} \item{Lind}{index vector
+  for inserting elements of \eqn{\theta}{theta} into the
+  nonzeros of \eqn{\Lambda}{Lambda}} \item{A}{Scaled sparse
+  model matrix (class
   \code{"\link[Matrix:dgCMatrix-class]{dgCMatrix}"}) for
   the unit, orthogonal random effects, \eqn{U}, equal to
   \code{getME(.,"Zt") \%*\% getME(.,"Lambdat")}}
@@ -47,10 +52,12 @@
   to the result of \code{\link{fixef}}, but without names)}
   \item{theta}{random-effects parameter estimates: these
   are parameterized as the relative Cholesky factors of
-  each random effect term} \item{n_rtrms}{number of
-  random-effects terms} \item{n_rfacs}{number of distinct
-  random-effects grouping factors} \item{REML}{restricted
-  maximum likelihood} \item{is_REML}{same as the result of
+  each random effect term} \item{ST}{a list of matrices
+  giving the relative Cholesky factors for each random
+  effect term} \item{n_rtrms}{number of random-effects
+  terms} \item{n_rfacs}{number of distinct random-effects
+  grouping factors} \item{REML}{restricted maximum
+  likelihood} \item{is_REML}{same as the result of
   \code{\link{isREML}}} \item{devcomp}{a list consisting of
   a named numeric vector, \dQuote{cmp}, and a named integer
   vector, \dQuote{dims}, describing the fitted model}

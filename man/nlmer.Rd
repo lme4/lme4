@@ -101,7 +101,11 @@
   \code{contrasts.arg} of \code{model.matrix.default}.}
 
   \item{devFunOnly}{logical - return only the deviance
-  evaluation function.}
+  evaluation function. Note that because the deviance
+  function operates on variables stored in its environment,
+  it may not return \emph{exactly} the same values on
+  subsequent calls (but the results should always be within
+  machine tolerance).}
 
   \item{tolPwrss}{numeric scalar - the tolerance for
   declaring convergence in the penalized iteratively
