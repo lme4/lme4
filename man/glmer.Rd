@@ -3,19 +3,14 @@
 \title{Fit Generalized Linear Mixed-Effects Models}
 \usage{
   glmer(formula, data = NULL, family = gaussian,
-    sparseX = FALSE, control = list(), start = NULL,
-    verbose = 0L, nAGQ = 1L, compDev = TRUE, subset,
-    weights, na.action, offset, contrasts = NULL, mustart,
-    etastart, devFunOnly = FALSE, tolPwrss = 1e-07,
-    optimizer = c("bobyqa", "Nelder_Mead"), ...)
+    control = glmerControl(), start = NULL, verbose = 0L,
+    nAGQ = 1L, subset, weights, na.action, offset,
+    contrasts = NULL, mustart, etastart,
+    devFunOnly = FALSE)
 }
 \arguments{
   \item{family}{a GLM family, see \code{\link[stats]{glm}}
   and \code{\link[stats]{family}}.}
-
-  \item{compDev}{logical scalar - should compiled code be
-  used for the deviance evaluation during the optimization
-  of the parameter estimates?  Defaults to \code{TRUE}.}
 
   \item{nAGQ}{integer scalar - the number of points per
   axis for evaluating the adaptive Gauss-Hermite
@@ -36,38 +31,6 @@
   \code{start} argument of the appropriate length is used
   as the starting value of \code{theta}.}
 
-  \item{optimizer}{which optimizer(s) to use for each phase
-  of optimization.  A character vector or list of
-  functions.  If \code{length(optimizer)==2}, the first
-  element will be used for the preliminary (random effects
-  parameters only) optimization, while the second will be
-  used for the final (random effects plus fixed effect
-  parameters) phase. The built-in optimizers are
-  \code{\link{Nelder_Mead}} and \code{\link[minqa]{bobyqa}}
-  (from the \pkg{minqa} package; the default is to use
-  \code{\link[minqa]{bobyqa}} for the first and
-  \code{\link{Nelder_Mead}} for the final phase.  (FIXME:
-  simplify if possible!). For difficult model fits we have
-  found \code{\link{Nelder_Mead}} to be more reliable but
-  occasionally slower than \code{\link{bobyqa}}. Any
-  minimizing function that allows box constraints can be
-  used provided that it (1) takes input parameters
-  \code{fn} (function to be optimized), \code{par}
-  (starting parameter values), \code{lower} (lower bounds)
-  and \code{control} (control parameters, passed through
-  from the \code{control} argument) and (2) returns a list
-  with (at least) elements \code{par} (best-fit
-  parameters), \code{fval} (best-fit function value),
-  \code{conv} (convergence code) and (optionally)
-  \code{message} (informational message, or explanation of
-  convergence failure).  Special provisions are made for
-  \code{\link{bobyqa}}, \code{\link{Nelder_Mead}}, and
-  optimizers wrapped in the \pkg{optimx} package; to use
-  \pkg{optimx} optimizers (including \code{L-BFGS-B} from
-  base \code{\link{optim}} and \code{\link{nlminb}}), pass
-  the \code{method} argument to \code{optim} in the
-  \code{control} argument.}
-
   \item{mustart}{optional starting values on the scale of
   the conditional mean, as in \code{\link[stats]{glm}}; see
   there for details.}
@@ -75,11 +38,6 @@
   \item{etastart}{optional starting values on the scale of
   the unbounded predictor as in \code{\link[stats]{glm}};
   see there for details.}
-
-  \item{tolPwrss}{numeric scalar - the tolerance for
-  declaring convergence in the penalized iteratively
-  weighted residual sum-of-squares step.  Defaults to
-  1e-10.}
 
   \item{\dots}{other potential arguments.  A \code{method}
   argument was used in earlier versions of the package. Its
@@ -106,29 +64,6 @@
   variables will be taken from the environment of
   \code{formula} (if specified as a formula) or from the
   parent frame (if specified as a character vector).}
-
-  \item{sparseX}{logical - should a sparse model matrix be
-  used for the fixed-effects terms?  Defaults to
-  \code{FALSE}. Currently inactive.}
-
-  \item{control}{a named list of control parameters for the
-  estimation algorithm, specifying only the ones to be
-  changed from their default values.  Hence defaults to an
-  empty list.\cr Possible control options and their default
-  values are: \describe{ \item{\code{msVerbose}:}{a logical
-  value passed as the \code{trace} argument to
-  \code{nlminb} (see documentation on that function).
-  Default is \code{getOption("verbose")}.}
-  \item{\code{maxIter}:}{a positive integer passed as the
-  \code{maxIter} argument to \code{nlminb} (see
-  documentation on that function).  Default is \code{300}.}
-  \item{\code{maxFN}:}{a positive integer specifying the
-  maximum number of evaluations of the deviance function
-  allowed during the optimization. Default is \code{900}.}
-  \item{\code{tol}:}{a positive number specifying the
-  convergence tolerance, currently only for the PWRSS
-  iterations in \code{\link{glmer}}.  Default is
-  \code{0.000001}.} }}
 
   \item{verbose}{integer scalar.  If \code{> 0} verbose
   output is generated during the optimization of the

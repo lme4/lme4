@@ -694,11 +694,3 @@ checkFormulaData <- function(formula,data,debug=FALSE) {
 ## }
 
 
-## stub ...
-lmerControl <- glmerControl <- function(...) {
-    ## add: rankTolZ
-    ## minFmax
-    ## optimizer??
-    ## tolPwrss
-    ## ... are arguments to pass to optimizer
-}

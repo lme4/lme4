@@ -2,10 +2,10 @@
 \alias{lmer}
 \title{Fit Linear Mixed-Effects Models}
 \usage{
-  lmer(formula, data = NULL, REML = TRUE, sparseX = FALSE,
-    control = list(), start = NULL, verbose = 0L, subset,
-    weights, na.action, offset, contrasts = NULL,
-    devFunOnly = FALSE, optimizer = "Nelder_Mead", ...)
+  lmer(formula, data = NULL, REML = TRUE,
+    control = lmerControl(), start = NULL, verbose = 0L,
+    subset, weights, na.action, offset, contrasts = NULL,
+    devFunOnly = FALSE, ...)
 }
 \arguments{
   \item{formula}{a two-sided linear formula object
@@ -33,33 +33,10 @@
   chosen to optimize the REML criterion (as opposed to the
   log-likelihood)?  Defaults to \code{TRUE}.}
 
-  \item{sparseX}{logical - should a sparse model matrix be
-  used for the fixed-effects terms?  Defaults to
-  \code{FALSE}. Currently inactive.}
-
-  \item{control}{a named list of control parameters for the
-  estimation algorithm, specifying only the ones to be
-  changed from their default values.  Hence defaults to an
-  empty list.\cr Possible control options and their default
-  values are: \describe{ \item{\code{msVerbose}:}{a logical
-  value passed as the \code{trace} argument to
-  \code{nlminb} (see documentation on that function).
-  Default is \code{getOption("verbose")}.}
-  \item{\code{maxIter}:}{a positive integer passed as the
-  \code{maxIter} argument to \code{nlminb} (see
-  documentation on that function).  Default is \code{300}.}
-  \item{\code{maxFN}:}{a positive integer specifying the
-  maximum number of evaluations of the deviance function
-  allowed during the optimization. Default is \code{900}.}
-  \item{\code{tol}:}{a positive number specifying the
-  convergence tolerance, currently only for the PWRSS
-  iterations in \code{\link{glmer}}.  Default is
-  \code{0.000001}.} }}
-
   \item{start}{a named list of starting values for the
   parameters in the model.  For \code{lmer} this can be a
   numeric vector or a list with one component named
-  \code{"theta"}. Infrequently used.}
+  \code{"theta"}.}
 
   \item{verbose}{integer scalar.  If \code{> 0} verbose
   output is generated during the optimization of the
@@ -100,27 +77,6 @@
   it may not return \emph{exactly} the same values on
   subsequent calls (but the results should always be within
   machine tolerance).}
-
-  \item{optimizer}{character - name of optimizing function.
-  The built-in optimizers are \code{\link{Nelder_Mead}} and
-  \code{\link[minqa]{bobyqa}} (from the \pkg{minqa}
-  package. Any minimizing function that allows box
-  constraints can be used provided that it (1) takes input
-  parameters \code{fn} (function to be optimized),
-  \code{par} (starting parameter values), \code{lower}
-  (lower bounds) and \code{control} (control parameters,
-  passed through from the \code{control} argument) and (2)
-  returns a list with (at least) elements \code{par}
-  (best-fit parameters), \code{fval} (best-fit function
-  value), \code{conv} (convergence code) and (optionally)
-  \code{message} (informational message, or explanation of
-  convergence failure).  Special provisions are made for
-  \code{\link{bobyqa}}, \code{\link{Nelder_Mead}}, and
-  optimizers wrapped in the \pkg{optimx} package; to use
-  \pkg{optimx} optimizers (including \code{L-BFGS-B} from
-  base \code{\link{optim}} and \code{\link{nlminb}}), pass
-  the \code{method} argument to \code{optim} in the
-  \code{control} argument.}
 
   \item{\dots}{other potential arguments.  A \code{method}
   argument was used in earlier versions of the package. Its
