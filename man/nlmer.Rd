@@ -36,25 +36,6 @@
   \code{formula} (if specified as a formula) or from the
   parent frame (if specified as a character vector).}
 
-  \item{control}{a named list of control parameters for the
-  estimation algorithm, specifying only the ones to be
-  changed from their default values.  Hence defaults to an
-  empty list.\cr Possible control options and their default
-  values are: \describe{ \item{\code{msVerbose}:}{a logical
-  value passed as the \code{trace} argument to
-  \code{nlminb} (see documentation on that function).
-  Default is \code{getOption("verbose")}.}
-  \item{\code{maxIter}:}{a positive integer passed as the
-  \code{maxIter} argument to \code{nlminb} (see
-  documentation on that function).  Default is \code{300}.}
-  \item{\code{maxFN}:}{a positive integer specifying the
-  maximum number of evaluations of the deviance function
-  allowed during the optimization. Default is \code{900}.}
-  \item{\code{tol}:}{a positive number specifying the
-  convergence tolerance, currently only for the PWRSS
-  iterations in \code{\link{glmer}}.  Default is
-  \code{0.000001}.} }}
-
   \item{verbose}{integer scalar.  If \code{> 0} verbose
   output is generated during the optimization of the
   parameter estimates.  If \code{> 1} verbose output is
@@ -106,43 +87,6 @@
   it may not return \emph{exactly} the same values on
   subsequent calls (but the results should always be within
   machine tolerance).}
-
-  \item{tolPwrss}{numeric scalar - the tolerance for
-  declaring convergence in the penalized iteratively
-  weighted residual sum-of-squares step.  Defaults to
-  1e-10.}
-
-  \item{optimizer}{which optimizer(s) to use for each phase
-  of optimization.  A character vector or list of
-  functions.  If \code{length(optimizer)==2}, the first
-  element will be used for the preliminary (random effects
-  parameters only) optimization, while the second will be
-  used for the final (random effects plus fixed effect
-  parameters) phase. The built-in optimizers are
-  \code{\link{Nelder_Mead}} and \code{\link[minqa]{bobyqa}}
-  (from the \pkg{minqa} package; the default is to use
-  \code{\link[minqa]{bobyqa}} for the first and
-  \code{\link{Nelder_Mead}} for the final phase.  (FIXME:
-  simplify if possible!). For difficult model fits we have
-  found \code{\link{Nelder_Mead}} to be more reliable but
-  occasionally slower than \code{\link{bobyqa}}. Any
-  minimizing function that allows box constraints can be
-  used provided that it (1) takes input parameters
-  \code{fn} (function to be optimized), \code{par}
-  (starting parameter values), \code{lower} (lower bounds)
-  and \code{control} (control parameters, passed through
-  from the \code{control} argument) and (2) returns a list
-  with (at least) elements \code{par} (best-fit
-  parameters), \code{fval} (best-fit function value),
-  \code{conv} (convergence code) and (optionally)
-  \code{message} (informational message, or explanation of
-  convergence failure).  Special provisions are made for
-  \code{\link{bobyqa}}, \code{\link{Nelder_Mead}}, and
-  optimizers wrapped in the \pkg{optimx} package; to use
-  \pkg{optimx} optimizers (including \code{L-BFGS-B} from
-  base \code{\link{optim}} and \code{\link{nlminb}}), pass
-  the \code{method} argument to \code{optim} in the
-  \code{control} argument.}
 }
 \description{
   Fit a nonlinear mixed-effects model

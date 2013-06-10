@@ -287,20 +287,19 @@ glmer <- function(formula, data=NULL, family = gaussian,
 ##'               Orange, start = c(Asym = 200, xmid = 725, scal = 350),
 ##'               nAGQ = 0L))
 ##' @export
-nlmer <- function(formula, data=NULL, control = list(), start = NULL, verbose = 0L,
+nlmer <- function(formula, data=NULL, control = nlmerControl(),
+                  start = NULL, verbose = 0L,
                   nAGQ = 1L, subset, weights, na.action, offset,
-                  contrasts = NULL, devFunOnly = 0L, tolPwrss = 1e-10,
-                  optimizer="Nelder_Mead", ...)
+                  contrasts = NULL, devFunOnly = FALSE, ...)
 {
 
-    ## FIXME: not yet adapted for nlmerControl
-    
     vals <- nlformula(mc <- match.call())
     if ((rankX <- rankMatrix(X <- vals$X)) < (p <- ncol(X)))
         stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
 
     rho <- list2env(list(verbose=verbose,
-                         tolPwrss=0.001, # this is reset to the tolPwrss argument's value later
+                         ## FIXME: allow a "two-phase" tolPwrss in nlmerControl?
+                         tolPwrss=0.001, ## this is reset to the tolPwrss argument's value later
                          resp=vals$resp,
                          lower=vals$reTrms$lower),
                     parent=parent.frame())
@@ -311,16 +310,12 @@ nlmer <- function(formula, data=NULL, control = list(), start = NULL, verbose = 
                              envir = rho$resp$nlenv))))))
     rho$u0 <- rho$pp$u0
     rho$beta0 <- rho$pp$beta0
-    devfun <- mkdevfun(rho, 0L) # deviance as a function of theta only
+    devfun <- mkdevfun(rho, 0L, verbose, control) # deviance as a function of theta only
     if (devFunOnly && !nAGQ) return(devfun)
     devfun(rho$pp$theta) # initial coarse evaluation to get u0 and beta0
     rho$u0 <- rho$pp$u0
     rho$beta0 <- rho$pp$beta0
-    rho$tolPwrss <- tolPwrss # Resetting this is intentional. The initial optimization is coarse.
-
-    if (length(optimizer)==1) {
-        optimizer <- replicate(2,optimizer)
-    }
+    rho$tolPwrss <- control$tolPwrss # Resetting this is intentional. The initial optimization is coarse.
 
     opt <- optwrap(control$optimizer[[1]], devfun, rho$pp$theta, rho$lower,
                    control=control$optControl, adj=FALSE)
@@ -336,7 +331,7 @@ nlmer <- function(formula, data=NULL, control = list(), start = NULL, verbose = 
                 stop("nAGQ > 1 is only available for models with a single, scalar random-effects term")
             rho$fac <- vals$reTrms$flist[[1]]
         }
-        devfun <- mkdevfun(rho, nAGQ)
+        devfun <- mkdevfun(rho, nAGQ, verbose, control)
         if (devFunOnly) return(devfun)
 
         opt <- optwrap(control$optimizer[[2]], devfun, par=c(rho$pp$theta, rho$beta0),
@@ -380,7 +375,7 @@ nlmer <- function(formula, data=NULL, control = list(), start = NULL, verbose = 
 ##' (dd <- lmer(Yield ~ 1|Batch, Dyestuff, devFunOnly=TRUE))
 ##' dd(0.8)
 ##' minqa::bobyqa(1, dd, 0)
-mkdevfun <- function(rho, nAGQ=1L, verbose=0) {
+mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
     ## FIXME: should nAGQ be automatically embedded in rho?
     stopifnot(is.environment(rho), is(rho$resp, "lmResp"))
 
@@ -396,13 +391,17 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0) {
 	rho$lmer_Deviance <- lmer_Deviance
 	function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))
     } else if (is(rho$resp, "glmResp")) {
+        ## allow arguments to passed in from control()
+        if (!is.null(control$tolPwrss)) rho$tolPwrss <- control$tolPwrss
+        if (!is.null(control$compDev))  rho$compDev <- control$compDev
 	if (nAGQ == 0L)
 	    function(theta) {
 		resp$updateMu(lp0)
 		pp$setTheta(theta)
-		pwrssUpdate(pp, resp, 1e-7, GHrule(0L), compDev, verbose)
-	    }
-	else
+		pwrssUpdate(pp, resp, tolPwrss, GHrule(0L),
+                            compDev, verbose)
+            }
+	else 
 	    function(pars) {
                 ## pp$setDelu(rep(0, length(pp$delu)))
                 resp$setOffset(baseOffset)
@@ -411,11 +410,13 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0) {
                 spars <- as.numeric(pars[-dpars])
                 offset <- if (length(spars)==0) baseOffset else baseOffset + pp$X %*% spars
 		resp$setOffset(offset)
-		pwrssUpdate(pp, resp, tolPwrss, GQmat, compDev, fac, verbose)
+		pwrssUpdate(pp, resp, tolPwrss, GQmat,
+                            compDev, fac, verbose)
 	    }
     } else if (is(rho$resp, "nlsResp")) {
 	if (nAGQ < 2L) {
 	    rho$nlmerLaplace <- nlmerLaplace
+            if (!is.null(control$tolPwrss)) rho$tolPwrss <- control$tolPwrss
 	    switch(nAGQ + 1L,
 			 function(theta)
 			 .Call(nlmerLaplace, pp$ptr(), resp$ptr(), as.double(theta),
@@ -659,6 +660,7 @@ as.function.merMod <- function(x, ...) {
                            pp=x@pp$copy(),
                            beta0=x@beta,
                            u0=x@u), parent=as.environment("package:lme4"))
+    ## FIXME: extract verbose and control
     mkdevfun(rho, getME(x, "devcomp")$dims["nAGQ"])
 }
 
@@ -1092,7 +1094,8 @@ refit.merMod <- function(object, newresp=NULL, ...)
                           ## save GQmat in the object and use that instead of nAGQ
                           GQmat=GHrule(nAGQ)), devlist)
     }
-    ff <- mkdevfun(list2env(devlist),nAGQ=nAGQ)
+    ## FIXME: make control work
+    ff <- mkdevfun(list2env(devlist),nAGQ=nAGQ, verbose, control)
     xst       <- rep.int(0.1, nth)
     x0        <- pp$theta
     lower     <- object@lower
@@ -2187,11 +2190,22 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
     if (length(optimizer)==1) {
         optimizer <- replicate(2,optimizer)
     }
-
     namedList(optimizer,
               restart_edge,
               tolPwrss,
+              compDev,
               checkControl=namedList(check.rankZ.gtr.obs),
+              optControl=list(...))
+}
+
+nlmerControl <- function(optimizer="Nelder_Mead",
+                         tolPwrss = 1e-10,
+                         ...) {
+    if (length(optimizer)==1) {
+        optimizer <- replicate(2,optimizer)
+    }
+    namedList(optimizer,
+              tolPwrss,
               optControl=list(...))
 }
 

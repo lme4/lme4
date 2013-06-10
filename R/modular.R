@@ -141,14 +141,16 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 ##' \cr
 ##' @export
 mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, ...) {
-  
+
+    ## FIXME: make sure verbose, control get handled properly
     #if (missing(fr)) {
     ## reconstitute frame 
     #}
     ## pull necessary arguments for making the model frame out of ...
     p <- ncol(X) # maybe also do rank check on X here??
     rho <- new.env(parent=parent.env(environment()))
-    rho$pp <- do.call(merPredD$new, c(reTrms[c("Zt","theta","Lambdat","Lind")], n=nrow(X), list(X=X)))
+    rho$pp <- do.call(merPredD$new, c(reTrms[c("Zt","theta","Lambdat","Lind")],
+                                      n=nrow(X), list(X=X)))
     REMLpass <- if(REML) p else 0L
     if(missing(fr)) rho$resp <- mkRespMod(REML = REMLpass, ...)
     else rho$resp <- mkRespMod(fr, REML = REMLpass) 
@@ -295,12 +297,13 @@ glFormula <- function(formula, data=NULL, family = gaussian,
 ##' @rdname modular
 ##' @export
 mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L, 
-                          tolPwrss = 1e-7, compDev = TRUE, ...){
+                          control=glmerControl(), ...){
     stopifnot(length(nAGQ <- as.integer(nAGQ)) == 1L,
             nAGQ >= 0L,
             nAGQ <= 25L)
     verbose <- as.integer(verbose)
-    rho             <- as.environment(list(verbose=verbose, tolPwrss=tolPwrss)) 
+    rho             <- as.environment(list(verbose=verbose, tolPwrss=control$tolPwrss,
+                                           compDev=control$compDev)) 
     parent.env(rho) <- parent.frame()
     rho$pp          <- do.call(merPredD$new,
                                c(reTrms[c("Zt","theta","Lambdat","Lind")],
@@ -311,12 +314,11 @@ mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L,
         stop("Response is constant - cannot fit the model")
     rho$verbose     <- as.integer(verbose)
     ## initialize (from mustart)
-    .Call(glmerLaplace, rho$pp$ptr(), rho$resp$ptr(), 0L, tolPwrss, verbose)
+    .Call(glmerLaplace, rho$pp$ptr(), rho$resp$ptr(), 0L, control$tolPwrss, verbose)
     rho$lp0         <- rho$pp$linPred(1) # each pwrss opt begins at this eta
     rho$pwrssUpdate <- glmerPwrssUpdate
-    rho$compDev     <- compDev
     rho$lower       <- reTrms$lower     # not needed in rho?
-    devfun <- mkdevfun(rho, 0L)
+    devfun <- mkdevfun(rho, 0L, verbose, control)
                                         #if (devFunOnly && !nAGQ) return(devfun)
     return(devfun) # this should pass the rho environment implicitly
 }
