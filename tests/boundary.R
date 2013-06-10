@@ -3,10 +3,10 @@ dat <- read.csv(system.file("testdata","dat20101314.csv",package="lme4"))
 library(lme4)
 fit <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat)
 fit_b <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat,
-              optimizer="bobyqa")
+              control=lmerControl(optimizer="bobyqa"))
 fit_c <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat,
-              control=list(restart=FALSE))
-getME(fit_c,"theta") ## some are zero
+              control=lmerControl(restart_edge=FALSE))
+stopifnot(all(getME(fit_c,"theta")[1:2]==0)) ## some are zero
 
 if (FALSE) {
     ## FIXME: fails on r-forge test on Windows x64 ... ???

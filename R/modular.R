@@ -65,6 +65,7 @@
 NULL
 
 ##' @rdname modular
+##' @param control a list of checking options
 ##' @return \bold{lFormula, glFormula}: A list containing components,
 ##' \item{fr}{model frame}
 ##' \item{X}{fixed-effect design matrix}
@@ -72,9 +73,14 @@ NULL
 ##' \item{REML}{(lFormula only): logical flag: use restricted maximum likelihood? (Copy of argument.)}
 ##' @export
 lFormula <- function(formula, data=NULL, REML = TRUE, 
-                     subset, weights, na.action, offset, contrasts = NULL, ...)
+                     subset, weights, na.action, offset, contrasts = NULL,
+                     control=list(), ...)
 {
-    
+
+    doCheck <- function(x) {
+        !is.null(x) && x!="ignore"
+    }
+
     mf <- mc <- match.call()
 
     ignoreArgs <- c("start","verbose","devFunOnly","control")
@@ -105,12 +111,20 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     if (any(nlevelVec >= nrow(fr)))
         stop("number of levels of each grouping factor must be ",
              "< number of observations")
-    if (any(nlevelVec<5))  warning("grouping factors with < 5 sampled levels may give unreliable estimates")
-    ## FIXME: improve testing logic
-    if (prod(dim(reTrms$Zt))<1e6) {
-        if ((rankZ <- rankMatrix(reTrms$Zt)) >= nrow(fr)) {
-            stop("rank(Z)>=number of observations; variance-covariance matrix will be unidentifiable")
-        }
+    cstr <- "check.numlev.gtr.5"
+    if (doCheck(cc <- control[[cstr]]) && any(nlevelVec<5)) {
+        wstr <- "grouping factors with < 5 sampled levels may give unreliable estimates"
+        switch(cc,warning=warning(wstr),stop=stop(wstr),
+               stop(paste0("unknown check level for '",cstr,"'")))
+    }
+    cstr <- "check.rankZ.gtr.obs"
+    if (doCheck(cc <- control[[cstr]]) &&                   ## not NULL or "ignore"
+        !(grepl(cc,"Small") && prod(dim(reTrms$Zt))>1e6)    ## not "*Small" and large Z mat
+        && (rankZ <- rankMatrix(reTrms$Zt)) >= nrow(fr))    ## test
+    {
+        wstr <- "rank(Z)>=number of observations; variance-covariance matrix will be unidentifiable"
+        switch(cc,warning=warning(wstr),stop=stop(wstr),
+               stop(paste0("unknown check level for '",cstr,"'")))
     }
     ## fixed-effects model matrix X - remove random effects from formula:
     fixedform <- formula
@@ -227,9 +241,8 @@ optimizeLmer <- function(devfun,
 ##' @export
 glFormula <- function(formula, data=NULL, family = gaussian, 
                       subset, weights, na.action, offset,
-                      contrasts = NULL, mustart, etastart, 
-                      ...) {
-    ## FIXME: probably don't need devFunOnly
+                      contrasts = NULL, mustart, etastart,
+                      control=list(), ...) {
     ## FIXME: does start= do anything? test & fix
     mf <- mc <- match.call()
                                         # extract family, call lmer for gaussian

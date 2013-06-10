@@ -41,15 +41,15 @@
 ##'
 ##' tpr2 <- profile(fm01ML, which=1:2, optimizer="Nelder_Mead") ## Batch and residual variance only
 ##'
-##' ## GLMM example (running time ~8 seconds on a modern machine)
+##' ## GLMM example (running time ~11 seconds on a modern machine)
 ##' \dontrun{
 ##' gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
 ##'             data = cbpp, family = binomial)
-##' system.time(pr4 <- profile(gm1))  ## ~ 7 seconds
+##' system.time(pr4 <- profile(gm1))
 ##' xyplot(pr4,layout=c(5,1),as.table=TRUE)
-##' splom(pr4)% FIXME! currently fails!
+##' splom(pr4)
 ##' }
-##' ##' @importFrom splines backSpline interpSpline periodicSpline
+##' @importFrom splines backSpline interpSpline periodicSpline
 ##' @importFrom stats profile
 ##' @method profile merMod
 ##' @export

@@ -2,7 +2,7 @@
 \alias{mkdevfun}
 \title{Create a deviance evaluation function from a predictor and a response module}
 \usage{
-  mkdevfun(rho, nAGQ = 1L, verbose = 0)
+  mkdevfun(rho, nAGQ = 1L, verbose = 0, control = list())
 }
 \arguments{
   \item{rho}{an environment containing \code{pp}, a

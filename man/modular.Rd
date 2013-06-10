@@ -10,7 +10,8 @@
 \title{Modular functions for mixed model fits}
 \usage{
   lFormula(formula, data = NULL, REML = TRUE, subset,
-    weights, na.action, offset, contrasts = NULL, ...)
+    weights, na.action, offset, contrasts = NULL,
+    control = list(), ...)
 
   mkLmerDevfun(fr, X, reTrms, REML = TRUE, start = NULL,
     ...)
@@ -20,10 +21,10 @@
 
   glFormula(formula, data = NULL, family = gaussian,
     subset, weights, na.action, offset, contrasts = NULL,
-    mustart, etastart, ...)
+    mustart, etastart, control = list(), ...)
 
   mkGlmerDevfun(fr, X, reTrms, family, nAGQ = 1L,
-    verbose = 0L, tolPwrss = 1e-07, compDev = TRUE, ...)
+    verbose = 0L, control = glmerControl(), ...)
 
   optimizeGlmer(devfun, optimizer = "bobyqa",
     restart_edge = FALSE, verbose = 0L, control = list(),
@@ -33,6 +34,8 @@
 }
 \arguments{
   \item{\dots}{other potential arguments.}
+
+  \item{control}{a list of checking options}
 
   \item{fr}{A model frame containing the variables needed
   to create an \code{\link{lmerResp}} or
@@ -141,15 +144,6 @@
   effects parameters only) optimization, while the second
   will be used for the final (random effects plus fixed
   effect parameters) phase.}
-
-  \item{tolPwrss}{numeric scalar - the tolerance for
-  declaring convergence in the penalized iteratively
-  weighted residual sum-of-squares step.  Defaults to
-  1e-7.}
-
-  \item{compDev}{logical scalar - should compiled code be
-  used for the deviance evaluation during the optimization
-  of the parameter estimates?  Defaults to \code{TRUE}.}
 
   \item{family}{a GLM family, see \code{\link[stats]{glm}}
   and \code{\link[stats]{family}}.}

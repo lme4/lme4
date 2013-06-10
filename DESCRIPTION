@@ -62,4 +62,5 @@ Collate:
     'vcconv.R'
     'modular.R'
     'hooks.r'
+    'lmerControl.R'
 BuildVignettes: no
