@@ -145,6 +145,11 @@
   will be used for the final (random effects plus fixed
   effect parameters) phase.}
 
+  \item{restart_edge}{logical - should the optimizer
+  attempt a restart when it finds a solution at the
+  boundary (i.e. zero random-effect variances or perfect
+  +/-1 correlations)?}
+
   \item{family}{a GLM family, see \code{\link[stats]{glm}}
   and \code{\link[stats]{family}}.}
 

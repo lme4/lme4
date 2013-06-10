@@ -1,17 +1,21 @@
 \name{lmerControl}
 \alias{glmerControl}
 \alias{lmerControl}
+\alias{nlmerControl}
 \title{Control of mixed model fitting}
 \usage{
   lmerControl(optimizer = "Nelder_Mead",
     restart_edge = FALSE, sparseX = FALSE,
-    check.rankZ.gtr.obs = "ignoreLarge",
-    check.numlev.gtr.5 = "warn", ...)
+    check.rankZ.gtr.obs = "warningSmall",
+    check.numlev.gtr.5 = "warning", ...)
 
   glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     restart_edge = FALSE, sparseX = FALSE,
     check.rankZ.gtr.obs = "ignoreLarge", tolPwrss = 1e-07,
     compDev = TRUE, ...)
+
+  nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
+    ...)
 }
 \arguments{
   \item{optimizer}{character - name of optimizing
@@ -46,6 +50,21 @@
   \item{sparseX}{logical - should a sparse model matrix be
   used for the fixed-effects terms?  Defaults to
   \code{FALSE}. Currently inactive.}
+
+  \item{restart_edge}{logical - should the optimizer
+  attempt a restart when it finds a solution at the
+  boundary (i.e. zero random-effect variances or perfect
+  +/-1 correlations)?}
+
+  \item{check.rankZ.gtr.obs}{character - rules for checking
+  whether the rank of the random effects design matrix Z is
+  greater than the number of observations, indicating
+  possible overfitting. "ignore" ... FIXME}
+
+  \item{check.numlev.gtr.5}{... FIXME}
+
+  \item{\dots}{additional arguments to be passed to the
+  nonlinear optimizer}
 
   \item{tolPwrss}{numeric scalar - the tolerance for
   declaring convergence in the penalized iteratively

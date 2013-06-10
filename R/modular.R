@@ -199,7 +199,7 @@ optimizeLmer <- function(devfun,
     verbose <- as.integer(verbose)
     rho <- environment(devfun)
     opt <- optwrap(optimizer,
-                   devfun, rho$pp$theta, lower=rho$lower, control=control$optControl,
+                   devfun, rho$pp$theta, lower=rho$lower, control=control,
                    adj=FALSE, verbose=verbose)
     
     if (restart_edge) {

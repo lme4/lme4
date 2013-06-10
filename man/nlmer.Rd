@@ -2,10 +2,10 @@
 \alias{nlmer}
 \title{Fit Nonlinear Mixed-Effects Models}
 \usage{
-  nlmer(formula, data = NULL, control = list(),
+  nlmer(formula, data = NULL, control = nlmerControl(),
     start = NULL, verbose = 0L, nAGQ = 1L, subset, weights,
-    na.action, offset, contrasts = NULL, devFunOnly = 0L,
-    tolPwrss = 1e-10, optimizer = "Nelder_Mead", ...)
+    na.action, offset, contrasts = NULL,
+    devFunOnly = FALSE, ...)
 }
 \arguments{
   \item{formula}{a nonlinear mixed model formula (see
@@ -35,6 +35,11 @@
   variables will be taken from the environment of
   \code{formula} (if specified as a formula) or from the
   parent frame (if specified as a character vector).}
+
+  \item{control}{list containing control parameters,
+  including the nonlinear optimizer to be used and
+  parameters to be passed through to the nonlinear
+  optimizer: see \code{link{lmerControl}} for details.}
 
   \item{verbose}{integer scalar.  If \code{> 0} verbose
   output is generated during the optimization of the

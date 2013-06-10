@@ -65,6 +65,11 @@
   \code{formula} (if specified as a formula) or from the
   parent frame (if specified as a character vector).}
 
+  \item{control}{list containing control parameters,
+  including the nonlinear optimizer to be used and
+  parameters to be passed through to the nonlinear
+  optimizer: see \code{link{lmerControl}} for details.}
+
   \item{verbose}{integer scalar.  If \code{> 0} verbose
   output is generated during the optimization of the
   parameter estimates.  If \code{> 1} verbose output is

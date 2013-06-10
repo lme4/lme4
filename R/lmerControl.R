@@ -39,12 +39,16 @@ namedList <- function(...) {
 ##'    fixed effect parameters) phase. 
 ##' @param sparseX logical - should a sparse model matrix be used for the
 ##'    fixed-effects terms?  Defaults to \code{FALSE}. Currently inactive.
+##' @param restart_edge logical - should the optimizer attempt a restart when it finds a solution at the boundary (i.e. zero random-effect variances or perfect +/-1 correlations)?
+##' @param check.rankZ.gtr.obs character - rules for checking whether the rank of the random effects design matrix Z is greater than the number of observations, indicating possible overfitting. "ignore" ... FIXME
+##' @param check.numlev.gtr.5 ... FIXME
+##' @param \dots additional arguments to be passed to the nonlinear optimizer
 ##' @export
 lmerControl <- function(optimizer="Nelder_Mead",
                         restart_edge=FALSE,
                         sparseX=FALSE,
-                        check.rankZ.gtr.obs="ignoreLarge",
-                        check.numlev.gtr.5="warn",
+                        check.rankZ.gtr.obs="warningSmall",
+                        check.numlev.gtr.5="warning",
                         ...) {
     ## FIXME: is there a better idiom?  match.call() ?
     ## FIXME: check list(...) against formals(get(optimizer)) ?
@@ -83,4 +87,19 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
 }
 
 
+##' @rdname lmerControl
+##' @export
+nlmerControl <- function(optimizer="Nelder_Mead",
+                         tolPwrss = 1e-10,
+                         ...) {
+    if (length(optimizer)==1) {
+        optimizer <- replicate(2,optimizer)
+    }
+    namedList(optimizer,
+              tolPwrss,
+              optControl=list(...))
+}
+
+
+                        
                         

@@ -20,8 +20,11 @@
 ##' of \code{formula} (if specified as a formula) or from the parent frame
 ##' (if specified as a character vector).
 ##' @param REML logical scalar - Should the estimates be chosen to optimize
-##'    the REML criterion (as opposed to the log-likelihood)?  Defaults to
-##'    \code{TRUE}.
+##'    the REML criterion (as opposed to the log-likelihood)?
+##' @param control list containing control parameters, including the nonlinear
+##'    optimizer to be used and parameters
+##'    to be passed through to the nonlinear optimizer: see \code{link{lmerControl}}
+##'    for details.
 ##' @param start a named list of starting values for the parameters in the
 ##'    model.  For \code{lmer} this can be a numeric vector or a list with one
 ##'    component named \code{"theta"}.
@@ -105,6 +108,7 @@ lmer <- function(formula, data=NULL, REML = TRUE,
     lmod <- eval(mc, parent.frame(1L))  ## parse data and formula
     mcout$formula <- lmod$formula
     lmod$formula <- NULL
+    ## FIXME: do we need to pass control through ... ?
     devfun <- do.call(mkLmerDevfun, lmod) ## create deviance function for covariance parameters (theta)
     if (devFunOnly) return(devfun)
     ## optimize deviance function over covariance parameters
@@ -287,14 +291,11 @@ glmer <- function(formula, data=NULL, family = gaussian,
 ##'               Orange, start = c(Asym = 200, xmid = 725, scal = 350),
 ##'               nAGQ = 0L))
 ##' @export
-nlmer <- function(formula, data=NULL, control = list(), start = NULL, verbose = 0L,
+nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, verbose = 0L,
                   nAGQ = 1L, subset, weights, na.action, offset,
-                  contrasts = NULL, devFunOnly = 0L, tolPwrss = 1e-10,
-                  optimizer="Nelder_Mead", ...)
+                  contrasts = NULL, devFunOnly = FALSE, ...)
 {
 
-    ## FIXME: not yet adapted for nlmerControl
-    
     vals <- nlformula(mc <- match.call())
     if ((rankX <- rankMatrix(X <- vals$X)) < (p <- ncol(X)))
         stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
@@ -340,7 +341,7 @@ nlmer <- function(formula, data=NULL, control = list(), start = NULL, verbose = 
         if (devFunOnly) return(devfun)
 
         opt <- optwrap(control$optimizer[[2]], devfun, par=c(rho$pp$theta, rho$beta0),
-                       lower=rho$lower, control=control,
+                       lower=rho$lower, control=control$optControl,
                        adj=TRUE, verbose=verbose)
 
 
