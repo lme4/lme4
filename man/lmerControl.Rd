@@ -5,13 +5,13 @@
 \title{Control of mixed model fitting}
 \usage{
   lmerControl(optimizer = "Nelder_Mead",
-    restart_edge = FALSE, sparseX = FALSE,
-    check.rankZ.gtr.obs = "warningSmall",
+    restart_edge = TRUE, sparseX = FALSE,
+    check.rankZ.gtr.obs = "stopSmall",
     check.numlev.gtr.5 = "warning", ...)
 
   glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
-    restart_edge = FALSE, sparseX = FALSE,
-    check.rankZ.gtr.obs = "ignoreLarge", tolPwrss = 1e-07,
+    restart_edge = TRUE, sparseX = FALSE,
+    check.rankZ.gtr.obs = "stopSmall", tolPwrss = 1e-07,
     compDev = TRUE, ...)
 
   nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,

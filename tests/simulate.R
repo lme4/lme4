@@ -44,14 +44,16 @@ u <- rnorm(10)
 d$eta <- with(d,1+2*x+u[f])
 d$y <- rbinom(nrow(d),plogis(d$eta),size=1)
 
-g1 <- glmer(y~x+(1|f),data=d,family="binomial",tolPwrss=1e-5)
+g1 <- glmer(y~x+(1|f),data=d,family="binomial")
+## tolPwrss=1e-5: no longer necessary
 
 if (FALSE) {
   allcoef <- function(x) {
     c(deviance(x),getME(x,"theta"),getME(x,"beta"))
   }
   tfun <- function(t) {
-    gg <- try(glmer(y~x+(1|f),data=d,family="binomial",tolPwrss=10^t))
+    gg <- try(glmer(y~x+(1|f),data=d,family="binomial",
+                    control=glmerControl(tolPwrss=10^t)))
     if (inherits(gg,"try-error")) rep(NA,4) else allcoef(gg)
   }
   tvec <- seq(-4,-16,by=-0.25)
@@ -61,7 +63,7 @@ if (FALSE) {
 s1 <- simulate(g1,seed=102)[[1]]
 
 d$y <- factor(c("N","Y")[d$y+1])
-g1B <- glmer(y~x+(1|f),data=d,family="binomial",tolPwrss=1e-5)
+g1B <- glmer(y~x+(1|f),data=d,family="binomial") ## ,tolPwrss=1e-5)
 s1B <- simulate(g1B,seed=102)[[1]]
 stopifnot(all.equal(s1,as.numeric(s1B)-1))
 

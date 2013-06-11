@@ -105,6 +105,7 @@ lmer <- function(formula, data=NULL, REML = TRUE,
     ## see functions in modular.R for the body ...
     mc <- mcout <- match.call() 
     mc[[1]] <- as.name("lFormula")
+    mc$control <- control$checkControl
     lmod <- eval(mc, parent.frame(1L))  ## parse data and formula
     mcout$formula <- lmod$formula
     lmod$formula <- NULL
@@ -208,7 +209,7 @@ lmer <- function(formula, data=NULL, REML = TRUE,
 glmer <- function(formula, data=NULL, family = gaussian, 
                   control = glmerControl(), start = NULL, verbose = 0L, nAGQ = 1L,
                   subset, weights, na.action, offset,
-                  contrasts = NULL, mustart, etastart, devFunOnly = FALSE)
+                  contrasts = NULL, mustart, etastart, devFunOnly = FALSE, ...)
 {
   
     mc <- mcout <- match.call()
@@ -220,6 +221,7 @@ glmer <- function(formula, data=NULL, family = gaussian,
         family <- get(family, mode = "function", envir = parent.frame(2))
     if( is.function(family)) family <- family()
     if (isTRUE(all.equal(family, gaussian()))) {
+        ## redirect to lmer (with warning)
         warning("calling glmer() with family=gaussian (identity link) as a shortcut to lmer() is deprecated;",
                 " please call lmer() directly")
         mc[[1]] <- as.name("lmer")
@@ -317,11 +319,7 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
     devfun(rho$pp$theta) # initial coarse evaluation to get u0 and beta0
     rho$u0 <- rho$pp$u0
     rho$beta0 <- rho$pp$beta0
-    rho$tolPwrss <- tolPwrss # Resetting this is intentional. The initial optimization is coarse.
-
-    if (length(optimizer)==1) {
-        optimizer <- replicate(2,optimizer)
-    }
+    rho$tolPwrss <- control$tolPwrss # Reset control parameter (the initial optimization is coarse)
 
     opt <- optwrap(control$optimizer[[1]], devfun, rho$pp$theta, rho$lower,
                    control=control$optControl, adj=FALSE)
@@ -373,6 +371,9 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
 ##'     and the random effects are optimized by the iteratively reweighted least
 ##'     squares algorithm.
 ##' @param verbose Logical: print verbose output?
+##' @param control list of control parameters, a subset of those specified
+##'   by \code{\link{lmerControl}} (\code{tolPwrss} and \code{compDev} for GLMMs,
+##' \code{tolPwrss} for NLMMs)
 ##' @return A function of one numeric argument.
 ##' @seealso \code{\link{lmer}}, \code{\link{glmer}} and \code{\link{nlmer}}
 ##' @keywords models
@@ -1057,7 +1058,6 @@ refit.merMod <- function(object, newresp=NULL, ...)
     rr <- object@resp$copy()
 
     if (!is.null(newresp)) {
-
         if (!is.null(na.act <- attr(object@frame,"na.action"))) {
             ## will only get here if na.action is 'na.omit' or 'na.exclude'
             if (is.matrix(newresp)) {
@@ -1066,9 +1066,11 @@ refit.merMod <- function(object, newresp=NULL, ...)
         }
 
         if (isGLMM(object) && rr$family$family=="binomial") {
+            ## re-do conversion of two-column matrix and factor
+            ##  responses to proportion/weights format
             if (is.matrix(newresp) && ncol(newresp)==2) {
                 ntot <- rowSums(newresp)
-                ## FIXME: test what happens for (0,0) columns
+                ## FIXME: test what happens for (0,0) rows
                 newresp <- newresp[,1]/ntot
                 rr$setWeights(ntot)
             }
@@ -1100,8 +1102,7 @@ refit.merMod <- function(object, newresp=NULL, ...)
                           ## save GQmat in the object and use that instead of nAGQ
                           GQmat=GHrule(nAGQ)), devlist)
     }
-    ## FIXME: make control work
-    ff <- mkdevfun(list2env(devlist),nAGQ=nAGQ, verbose, control)
+    ff <- mkdevfun(list2env(devlist),nAGQ=nAGQ, verbose)
     xst       <- rep.int(0.1, nth)
     x0        <- pp$theta
     lower     <- object@lower
@@ -1118,13 +1119,8 @@ refit.merMod <- function(object, newresp=NULL, ...)
         }
     }
     ## control <- c(control,list(xst=0.2*xst, xt=xst*0.0001))
-    ## FIXME: generic optimizer stuff
-### FIXME: Probably should save the control settings and the optimizer name in the merMod object
-    ## FIXME: use optwrap; pull @optinfo from saved values
-
     opt <- optwrap(object@optinfo$optimizer,
                    ff, x0, lower=lower, control=control)
-    ## opt <- Nelder_Mead(ff, x0, lower=lower, control=control)
     if (isGLMM(object)) rr$setOffset(baseOffset)
     mkMerMod(environment(ff), opt,
              list(flist=object@flist, cnms=object@cnms, Gp=object@Gp, lower=object@lower),
@@ -1601,6 +1597,11 @@ getME <- function(object,
         names(object@cnms),object@cnms)))
         nc
     }
+    Tpfun <- function(cnms) {
+        ltsize <- function(x) x*(x+1)/2
+        cLen <- cumsum(ltsize(sapply(cnms,length)))
+        setNames(c(0,cLen),c(names(cnms),"__end"))
+    }
     switch(name,
 	   "X" = PR$X, ## ok ? - check -- use model.matrix() method instead?
 	   "Z" = t(PR$Zt),
@@ -1612,11 +1613,6 @@ getME <- function(object,
              inds <- lapply(seq(nt),seq,to=n,by=nt)  ## pull out individual RE indices
              inds <- lapply(inds,function(x) x + object@Gp[i])  ## add group offset
          }
-         Tpfun <- function(cnms) {
-               ltsize <- function(x) x*(x+1)/2
-               cLen <- cumsum(ltsize(sapply(cnms,length)))
-               setNames(c(0,cLen),c(names(cnms),"__end"))
-           }
          inds <- do.call(c,lapply(seq_along(object@cnms),getInds))
          setNames(lapply(inds,function(i) PR$Zt[i,]),tnames(diag.only=TRUE))
      },

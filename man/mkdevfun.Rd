@@ -17,6 +17,11 @@
   squares algorithm.}
 
   \item{verbose}{Logical: print verbose output?}
+
+  \item{control}{list of control parameters, a subset of
+  those specified by \code{\link{lmerControl}}
+  (\code{tolPwrss} and \code{compDev} for GLMMs,
+  \code{tolPwrss} for NLMMs)}
 }
 \value{
   A function of one numeric argument.

@@ -45,9 +45,9 @@ namedList <- function(...) {
 ##' @param \dots additional arguments to be passed to the nonlinear optimizer
 ##' @export
 lmerControl <- function(optimizer="Nelder_Mead",
-                        restart_edge=FALSE,
+                        restart_edge=TRUE,
                         sparseX=FALSE,
-                        check.rankZ.gtr.obs="warningSmall",
+                        check.rankZ.gtr.obs="stopSmall",
                         check.numlev.gtr.5="warning",
                         ...) {
     ## FIXME: is there a better idiom?  match.call() ?
@@ -55,7 +55,7 @@ lmerControl <- function(optimizer="Nelder_Mead",
     namedList(optimizer,
               restart_edge,
               checkControl=
-              namedList(check.rankZ.gtr.obs,
+                 namedList(check.rankZ.gtr.obs,
                         check.numlev.gtr.5),
               optControl=list(...))
 }
@@ -69,9 +69,9 @@ lmerControl <- function(optimizer="Nelder_Mead",
 ##'    estimates?  Defaults to \code{TRUE}.
 ##' @export
 glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
-                         restart_edge=FALSE,
+                         restart_edge=TRUE,
                          sparseX=FALSE,
-                         check.rankZ.gtr.obs="ignoreLarge",
+                         check.rankZ.gtr.obs="stopSmall",
                          tolPwrss = 1e-7,
                          compDev = TRUE,
                          ...) {

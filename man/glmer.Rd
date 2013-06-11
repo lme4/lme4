@@ -6,7 +6,7 @@
     control = glmerControl(), start = NULL, verbose = 0L,
     nAGQ = 1L, subset, weights, na.action, offset,
     contrasts = NULL, mustart, etastart,
-    devFunOnly = FALSE)
+    devFunOnly = FALSE, ...)
 }
 \arguments{
   \item{family}{a GLM family, see \code{\link[stats]{glm}}
