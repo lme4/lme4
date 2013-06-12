@@ -1,8 +1,16 @@
 pkg <- so_name <- "lme4"; doUnload <- FALSE; doTest <- TRUE
+use_devtools <- FALSE ## only works if wd=lme4 directory
+## .libPaths(c("/usr/local/lib/R/library","/usr/local/lib/R/site-library"))
 ## pkg <- so_name <- "RcppEigen"; doUnload <- TRUE; doTest <- TRUE
 ## need to deal with the fact that DLL name != package name for lme4.0 ...
 ### pkg <- "lme4.0"; so_name <- "lme4"; doUnload <- TRUE
 instPkgs <- as.data.frame(installed.packages(),stringsAsFactors=FALSE)
+Load <- function() {
+    if (use_devtools) {
+        require("devtools")
+        load_all(reset=TRUE)
+    } else library(pkg,character.only=TRUE)
+}
 Unload <- function() {
     ld <- library.dynam()
     pnames <- sapply(ld,"[[","name")
@@ -12,8 +20,14 @@ Unload <- function() {
     library.dynam.unload(so_name, lp)
 }
 Detach <- function() {
-    detach(paste0("package:",pkg),character.only=TRUE,unload=TRUE)
-    if (doUnload) Unload()
+    if (use_devtools) {
+        unload()
+        ## don't really need this -- just load_all(reset=TRUE)
+        ##  should work -- but this helps maintain the same sequence
+    } else {
+        detach(paste0("package:",pkg),character.only=TRUE,unload=TRUE)
+        if (doUnload) Unload()
+    }
 }
 tmpf <- function() {
     g <- getLoadedDLLs()
@@ -43,7 +57,7 @@ if (FALSE) {
 for (i in 1:6) {
     cat("Attempt #",i,"\n",sep="")
     cat("loading",pkg,"\n")
-    library(pkg,character.only=TRUE)
+    Load()
     tmpf()
     test()
     cat("detaching",pkg,"\n")
