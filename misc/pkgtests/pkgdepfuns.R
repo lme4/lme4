@@ -233,12 +233,18 @@ doPkgDeptests <- function(pkg="lme4",
                           tarballdir=file.path(testdir,"tarballs"),
                           libdir=file.path(testdir,"library"),
                           checkdir=file.path(testdir,"check"),
-                          pkg_tarball="lme4_0.99999911-3.tar.gz",
+                          pkg_tarball=NULL,
                           skippkgs=character(0),
                           verbose=TRUE) {
 
+    if (!file.exists(libdir)) dir.create(libdir)
+
     ## FIXME: lme4-specific; should get these straight from DESCRIPTION file
     pkgdep <- c("Rcpp","RcppEigen","minqa")
+    if (missing(pkg_tarball) && is.null(pkg_tarball)) {
+         pkg_tarball <- list.files(pattern=paste0(pkg,".*.tar.gz"))
+         if (length(pkg_tarball)==0) stop("can't find package tarball")
+    }
     instPkgs <- installed.packages(lib.loc=libdir,noCache=TRUE)
     pkgdepMiss <- setdiff(pkgdep,c("R",rownames(instPkgs)))
     if (length(pkgdepMiss)>0)
@@ -246,7 +252,10 @@ doPkgDeptests <- function(pkg="lme4",
     if (!is.null(pkg_tarball)) {
         ## FIXME: check if newer than installed version
         tb0time <- file.info(pkg_tarball)$mtime
-        pkgtime <- file.info(file.path(libdir,pkg))$mtime
+        pkg_inst <- file.exists(file.path(libdir,pkg))
+        pkgtime <- if (!pkg_inst) -Inf else {
+            file.info(file.path(libdir,pkg))$mtime
+        }
         if (tb0time>pkgtime)
             install.packages(pkg_tarball,repos=NULL,lib=libdir)
     }

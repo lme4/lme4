@@ -1,6 +1,9 @@
+## don't forget . ./setTestEnv !!
+
 ## need this because R can't handle '@CRAN@' magic default
 ## in non-interactive mode ...
 options(repos=c(CRAN="http://probability.ca/cran"))
+
 
 source("pkgdepfuns.R")
 rr <- getDepends("lme4")
