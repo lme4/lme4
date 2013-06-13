@@ -1,3 +1,7 @@
+## FIXME: documentation still refers to \linkS4class quite a bit, inappropriately
+## FIXME: need to document S3 methods better (can we pull from r-forge version?)
+
+##'
 ##' Fit a linear mixed model (LMM)
 ##'
 ##' @title Fit Linear Mixed-Effects Models
@@ -56,16 +60,16 @@
 ##' @param \dots other potential arguments.  A \code{method} argument was used
 ##'    in earlier versions of the package. Its functionality has been replaced by
 ##'    the \code{REML} argument.
-##' @return An object of class \code{"\linkS4class{merMod}"}, for which many
-##'    methods are available.  See there for details.
-##' @seealso The \code{\linkS4class{merMod}} class, \code{\link[stats]{lm}}
+##' @return An object of class \code{merMod}, for which many
+##'    methods are available (e.g. \code{methods(class="merMod")})
+##' @seealso \code{\link[stats]{lm}}
 ##' @keywords models
 ##' @details
 ##' \itemize{
 ##' \item{If the \code{formula} argument is specified as a character vector,
 ##' the function will attempt to coerce it to a formula. However, this is
 ##' not recommended (users who want to construct formulas by pasting together
-##' components are advised to use \code{\link{as.formula}}); model fits will
+##' components are advised to use \code{\link{as.formula}} or \code{\link{reformulate}}); model fits will
 ##' work but subsequent methods such as \code{\link{drop1}}, \code{\link{update}}
 ##' may fail.}
 ##' \item{Unlike some simpler modeling frameworks such as \code{\link{lm}}
@@ -74,7 +78,7 @@
 ##' less than full rank.  For example, in cases of models with interactions
 ##' that have unobserved combinations of levels, it is up to the user to
 ##' define a new variable (for example creating
-##' \code{ab} within the data from the results of \code{droplevels(interaction(a,b))}).
+##' \code{ab} within the data from the results of \code{interaction(a,b,drop=TRUE)}).
 ##' }
 ##' \item{the deviance function returned when \code{devFunOnly} is \code{TRUE}
 ##' takes a single numeric vector argument, representing the \code{theta} vector.
@@ -152,6 +156,7 @@ lmer <- function(formula, data=NULL, REML = TRUE,
 ##'
 ##' The default approximation is the Laplace approximation,
 ##' corresponding to \code{nAGQ=1}.
+##' 
 ##' @title Fit Generalized Linear Mixed-Effects Models
 ##' @concept GLMM
 ##' @param family a GLM family, see \code{\link[stats]{glm}} and
@@ -178,9 +183,9 @@ lmer <- function(formula, data=NULL, REML = TRUE,
 ##'    in earlier versions of the package. Its functionality has been replaced by
 ##'    the \code{nAGQ} argument.
 ##' @inheritParams lmer
-##' @return An object of class \code{"\linkS4class{merMod}"}, for which many
-##'    methods are available.  See there for details.
-##' @seealso The \code{\linkS4class{merMod}} class, \code{\link[stats]{glm}}
+##' @return An object of class \code{glmerMod}, for which many
+##'    methods are available (e.g. \code{methods(class="glmerMod")})
+##' @seealso \code{\link{lmer}} (for details on formulas and parameterization); \code{\link[stats]{glm}}
 ##' @keywords models
 ##' @examples
 ##' ## generalized linear mixed model

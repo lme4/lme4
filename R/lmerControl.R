@@ -42,7 +42,8 @@ namedList <- function(...) {
 ##' @param restart_edge logical - should the optimizer attempt a restart when it finds a solution at the boundary (i.e. zero random-effect variances or perfect +/-1 correlations)?
 ##' @param check.numlev.gtr.5 character - rules for checking whether all random effects have >= 5 levels. "ignore": skip the test. "warn": warn if test fails. "stop": throw an error if test fails.
 ##' @param check.rankZ.gtr.obs character - rules for checking whether the rank of the random effects design matrix Z is greater than the number of observations, indicating possible overfitting.  As for \code{check.numlevel.gtr.5}, with the addition of "warnSmall" and "stopSmall", which run the test only if the dimensions of \code{Z} are <1e6.
-##' @param \dots additional arguments to be passed to the nonlinear optimizer
+##' @param \dots additional arguments to be passed to the nonlinear optimizer (see \code{\link{NelderMead}},
+##'    \code{\link[minqa]{bobyqa}})
 ##' @export
 lmerControl <- function(optimizer="Nelder_Mead",
                         restart_edge=TRUE,

@@ -111,8 +111,9 @@
   machine tolerance).}
 }
 \value{
-  An object of class \code{"\linkS4class{merMod}"}, for
-  which many methods are available.  See there for details.
+  An object of class \code{glmerMod}, for which many
+  methods are available (e.g.
+  \code{methods(class="glmerMod")})
 }
 \description{
   Fit a generalized linear mixed model (GLMM)
@@ -175,8 +176,8 @@ cbpp$obs <- 1:nrow(cbpp)
 anova(gm1,gm2)
 }
 \seealso{
-  The \code{\linkS4class{merMod}} class,
-  \code{\link[stats]{glm}}
+  \code{\link{lmer}} (for details on formulas and
+  parameterization); \code{\link[stats]{glm}}
 }
 \concept{
   GLMM

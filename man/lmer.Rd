@@ -89,8 +89,8 @@
   argument.}
 }
 \value{
-  An object of class \code{"\linkS4class{merMod}"}, for
-  which many methods are available.  See there for details.
+  An object of class \code{merMod}, for which many methods
+  are available (e.g. \code{methods(class="merMod")})
 }
 \description{
   Fit a linear mixed model (LMM)
@@ -101,32 +101,33 @@
   attempt to coerce it to a formula. However, this is not
   recommended (users who want to construct formulas by
   pasting together components are advised to use
-  \code{\link{as.formula}}); model fits will work but
-  subsequent methods such as \code{\link{drop1}},
-  \code{\link{update}} may fail.} \item{Unlike some simpler
-  modeling frameworks such as \code{\link{lm}} and
-  \code{\link{glm}} which automatically detect perfectly
-  collinear predictor variables, \code{[gn]lmer} cannot
-  handle design matrices of less than full rank.  For
-  example, in cases of models with interactions that have
-  unobserved combinations of levels, it is up to the user
-  to define a new variable (for example creating \code{ab}
-  within the data from the results of
-  \code{droplevels(interaction(a,b))}). } \item{the
-  deviance function returned when \code{devFunOnly} is
-  \code{TRUE} takes a single numeric vector argument,
-  representing the \code{theta} vector. This vector defines
-  the scaled variance-covariance matrices of the random
-  effects, in the Cholesky parameterization.  For models
-  with only simple (intercept-only) random effects,
-  \code{theta} is a vector of the standard deviations of
-  the random effects. For more complex or multiple random
-  effects, running \code{getME(.,"theta")} to retrieve the
-  \code{theta} vector for a fitted model and examining the
-  names of the vector is probably the easiest way to
-  determine the correspondence between the elements of the
-  \code{theta} vector and elements of the lower triangles
-  of the Cholesky factors of the random effects.} }
+  \code{\link{as.formula}} or \code{\link{reformulate}});
+  model fits will work but subsequent methods such as
+  \code{\link{drop1}}, \code{\link{update}} may fail.}
+  \item{Unlike some simpler modeling frameworks such as
+  \code{\link{lm}} and \code{\link{glm}} which
+  automatically detect perfectly collinear predictor
+  variables, \code{[gn]lmer} cannot handle design matrices
+  of less than full rank.  For example, in cases of models
+  with interactions that have unobserved combinations of
+  levels, it is up to the user to define a new variable
+  (for example creating \code{ab} within the data from the
+  results of \code{interaction(a,b,drop=TRUE)}). }
+  \item{the deviance function returned when
+  \code{devFunOnly} is \code{TRUE} takes a single numeric
+  vector argument, representing the \code{theta} vector.
+  This vector defines the scaled variance-covariance
+  matrices of the random effects, in the Cholesky
+  parameterization.  For models with only simple
+  (intercept-only) random effects, \code{theta} is a vector
+  of the standard deviations of the random effects. For
+  more complex or multiple random effects, running
+  \code{getME(.,"theta")} to retrieve the \code{theta}
+  vector for a fitted model and examining the names of the
+  vector is probably the easiest way to determine the
+  correspondence between the elements of the \code{theta}
+  vector and elements of the lower triangles of the
+  Cholesky factors of the random effects.} }
 }
 \examples{
 ## linear mixed models - reference values from older code
@@ -136,7 +137,6 @@ fm1_ML <- update(fm1,REML=FALSE)
 anova(fm1, fm2)
 }
 \seealso{
-  The \code{\linkS4class{merMod}} class,
   \code{\link[stats]{lm}}
 }
 \concept{

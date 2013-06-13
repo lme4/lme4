@@ -14,13 +14,14 @@ if (FALSE) {
     ## infinite loop
     glmer(formula.poisson,data=data.poisson,family=poisson,verbose=10)
     ## Cholmod not positive definite -> infinite loop
-    glmer(formula.poisson,data=data.poisson,family=poisson,verbose=10,optimizer="bobyqa")
+    glmer(formula.poisson,data=data.poisson,family=poisson,
+          verbose=10,control=glmerControl(optimizer="bobyqa"))
     ## caught warning: maxfun < 10 * length(par)^2 is not recommended. -> infinite loop
 }
 ## works but sloooow ....
 if (FALSE) {
     try(g1 <- glmer(formula.poisson,data=data.poisson,family=poisson,
-                    compDev=FALSE,verbose=1))
+                    control=glmerControl(compDev=FALSE),verbose=1))
     ## runs for 2880 steps until:
     ## Error in pp$updateDecomp() : Downdated VtV is not positive definite
 }

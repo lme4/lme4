@@ -70,7 +70,8 @@
   the dimensions of \code{Z} are <1e6.}
 
   \item{\dots}{additional arguments to be passed to the
-  nonlinear optimizer}
+  nonlinear optimizer (see \code{\link{NelderMead}},
+  \code{\link[minqa]{bobyqa}})}
 
   \item{tolPwrss}{numeric scalar - the tolerance for
   declaring convergence in the penalized iteratively
