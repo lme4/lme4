@@ -23,7 +23,7 @@
 ##'    the REML criterion (as opposed to the log-likelihood)?
 ##' @param control list containing control parameters, including the nonlinear
 ##'    optimizer to be used and parameters
-##'    to be passed through to the nonlinear optimizer: see \code{link{lmerControl}}
+##'    to be passed through to the nonlinear optimizer: see \code{\link{lmerControl}}
 ##'    for details.
 ##' @param start a named list of starting values for the parameters in the
 ##'    model.  For \code{lmer} this can be a numeric vector or a list with one

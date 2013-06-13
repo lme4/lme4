@@ -27,7 +27,7 @@ if (FALSE) {
 
 if (testLevel>2) {
     glmer(formula.poisson,data=data.poisson,family=poisson,
-          compDev=FALSE,verbose=1,optimizer="bobyqa")
+          control=glmerControl(compDev=FALSE),optimizer="bobyqa")
     ## caught warning: maxfun < 10 * length(par)^2 is not recommended.
     ## but runs to completion
 }

@@ -56,12 +56,18 @@
   boundary (i.e. zero random-effect variances or perfect
   +/-1 correlations)?}
 
+  \item{check.numlev.gtr.5}{character - rules for checking
+  whether all random effects have >= 5 levels. "ignore":
+  skip the test. "warn": warn if test fails. "stop": throw
+  an error if test fails.}
+
   \item{check.rankZ.gtr.obs}{character - rules for checking
   whether the rank of the random effects design matrix Z is
   greater than the number of observations, indicating
-  possible overfitting. "ignore" ... FIXME}
-
-  \item{check.numlev.gtr.5}{... FIXME}
+  possible overfitting.  As for
+  \code{check.numlevel.gtr.5}, with the addition of
+  "warnSmall" and "stopSmall", which run the test only if
+  the dimensions of \code{Z} are <1e6.}
 
   \item{\dots}{additional arguments to be passed to the
   nonlinear optimizer}
