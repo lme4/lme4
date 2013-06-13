@@ -24,9 +24,8 @@ gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
              data = cbpp, family = binomial,
              control=glmerControl(tolPwrss=1e-13))
 gm1B <- update(gm1,control=glmerControl(tolPwrss=1e-13,optimizer="bobyqa"))
-
-gm1C <- update(gm1,control=glmerControl(optimizer="optimx",method="nlminb"))
-gm1D <- update(gm1,control=glmerControl(optimizer="optimx",method="L-BFGS-B"))
-stopifnot(is.all.equal4(fixef(gm1),fixef(gm1B),fixef(gm1C),fixef(gm1D),tol=2e-5))
+gm1C <- update(gm1,control=glmerControl(optimizer="optimx",method="nlminb",tolPwrss=1e-13))
+gm1D <- update(gm1,control=glmerControl(optimizer="optimx",method="L-BFGS-B",tolPwrss=1e-13))
+stopifnot(is.all.equal4(fixef(gm1),fixef(gm1B),fixef(gm1C),fixef(gm1D),tol=1e-5))
 
 

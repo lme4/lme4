@@ -109,8 +109,9 @@ lmer <- function(formula, data=NULL, REML = TRUE,
     lmod <- eval(mc, parent.frame(1L))  ## parse data and formula
     mcout$formula <- lmod$formula
     lmod$formula <- NULL
-    ## FIXME: do we need to pass control through ... ?
-    devfun <- do.call(mkLmerDevfun, lmod) ## create deviance function for covariance parameters (theta)
+    ## create deviance function for covariance parameters (theta)
+    devfun <- do.call(mkLmerDevfun, c(lmod,
+                                      list(verbose=verbose,control=control)))
     if (devFunOnly) return(devfun)
     ## optimize deviance function over covariance parameters
     opt <- optimizeLmer(devfun,
@@ -240,7 +241,7 @@ glmer <- function(formula, data=NULL, family = gaussian,
     
 
     ## create deviance function for covariance parameters (theta)
-    devfun <- do.call(mkGlmerDevfun, c(glmod, list(compDev = control$compDev,
+    devfun <- do.call(mkGlmerDevfun, c(glmod, list(control=control,
                                                    nAGQ = 0))) 
     if (nAGQ==0 && devFunOnly) return(devfun)
     ## optimize deviance function over covariance parameters
@@ -400,7 +401,7 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
     } else if (is(rho$resp, "glmResp")) {
         ## control values will override rho values *if present*
         if (!is.null(tp <- control$tolPwrss)) rho$tolPwrss <- tp
-        if (!is.null(cd <- control$compDev)) rho$tolPwrss <- cd
+        if (!is.null(cd <- control$compDev)) rho$compDev <- cd
 	if (nAGQ == 0L)
 	    function(theta) {
 		resp$updateMu(lp0)

@@ -61,10 +61,9 @@ if (testLevel>1) {
     c2 <- c(fixef(full_mod2),unlist(VarCorr(full_mod2)),
             logLik=logLik(full_mod2),time=t2["elapsed"])
     ## refit
+    ## FIXME: eventually would like to get _exactly_ identical answers on refit()
     full_mod3 <- refit(full_mod2,grouseticks$TICKS)
-    ## FIXME: tol was 5e-5; figure out why we aren't getting that close,
-    ##  then restore tighter tolerance
-    all.equal(full_mod2,full_mod3,tol=5e-3) 
+    all.equal(full_mod2,full_mod3,tol=1e-5)
 }
 allcoefs <- function(x) c(getME(x,"theta"),getME(x,"beta"))
 

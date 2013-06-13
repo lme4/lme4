@@ -57,10 +57,11 @@ stopifnot(all.equal(logLik(m1), logLik(m1p)),
           all.equal(BIC(m1),    BIC(m1p)))
 
 
+## changed tolPwrss to 1e-7 to match other default
 m1b <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
              family = binomial, data = cbpp, verbose = 2L,
              control = glmerControl(optimizer="bobyqa",
-             tolPwrss=1e-8, rhobeg=0.2, rhoend=2e-7))
+             tolPwrss=1e-7, rhobeg=0.2, rhoend=2e-7))
 
 ## using nAGQ=9L provides a better evaluation of the deviance
 m.9 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
@@ -150,10 +151,7 @@ if (require('MASS', quietly = TRUE)) {
 			c("(Intercept)"= 2.831609490, "trtdiag"= -1.366722631,
 			  ## now	 0.5842291915,		 -1.599148773
 			  "trtencourage"=0.5840147802, "wk2TRUE"=-1.598591346),
-                        ## tol = 1e-4
-                        ## FIXME: figure out what's different from master branch and restore!
-                        tol=2e-2
-                        )
+                        tol = 1e-4 )
 	      )
 }
 

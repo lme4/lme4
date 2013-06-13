@@ -64,8 +64,13 @@
 ##' 
 NULL
 
+doCheck <- function(x) {
+    !is.null(x) && x!="ignore"
+}
+
 ##' @rdname modular
-##' @param control (for \code{[g]lFormula}) a list giving options for checking model specifications, or
+##' @param control a list giving (for \code{[g]lFormula}) options for checking model specifications;
+##' (for \code{mkLmerDevfun,mkGlmerDevfun}) options for inner optimization step;
 ##' (for \code{optimizeLmer} and \code{optimize[Glmer}) control parameters for nonlinear optimizer
 ##' @return \bold{lFormula, glFormula}: A list containing components,
 ##' \item{fr}{model frame}
@@ -77,10 +82,6 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
                      subset, weights, na.action, offset, contrasts = NULL,
                      control=list(), ...)
 {
-
-    doCheck <- function(x) {
-        !is.null(x) && x!="ignore"
-    }
 
     mf <- mc <- match.call()
 
@@ -148,6 +149,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 ##' @param reTrms information on random effects structure (see \code{\link{mkReTrms}})
 ##' @param REML (logical) fit restricted maximum likelihood model?
 ##' @param start starting values
+##' @param verbose print output?
 ##' @return \bold{mkLmerDevfun, mkGlmerDevfun}: A function to calculate deviance 
 ##' (or restricted deviance) as a function of the theta (random-effect) parameters 
 ##' (for GlmerDevfun, of beta (fixed-effect) parameters as well).  These deviance
@@ -155,9 +157,9 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 ##' \cr
 ##' \cr
 ##' @export
-mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, ...) {
+mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, verbose=0, control=lmerControl(), ...) {
 
-    ## FIXME: make sure verbose, control get handled properly
+    ## FIXME: make sure verbose gets handled properly
     #if (missing(fr)) {
     ## reconstitute frame 
     #}
@@ -172,7 +174,7 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, ...) {
     ## note:  REML does double duty as rank of X and a flag for using REML
     ## maybe this should be mentioned in the help file for mkRespMod??
     ## currently that help file says REML is logical
-    devfun <- mkdevfun(rho, 0L)
+    devfun <- mkdevfun(rho, 0L, verbose, control)
     ## FIXME: should we apply start elsewhere? what about reTrms$theta?
     if (!is.null(start)) {
         rho$pp$setTheta(unlist(start))
@@ -281,10 +283,16 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     if ((maxlevels <- max(nlevelVec)) > nrow(fr))
         stop("number of levels of each grouping factor must be",
              ">= number of obs")
+    ## FIXME: duplicated code between lFormula, glFormula
     if (any(nlevelVec<5))  warning("grouping factors with < 5 sampled levels may give unreliable estimates")
-    ## FIXME: slow test
-    if ((rankZ <- rankMatrix(reTrms$Zt)) > nrow(fr)) {
-        stop("rank(Z)>number of observations; variance-covariance matrix will be unidentifiable")
+    cstr <- "check.rankZ.gtr.obs"
+    if (doCheck(cc <- control[[cstr]]) &&                   ## not NULL or "ignore"
+        !(grepl(cc,"Small") && prod(dim(reTrms$Zt))>1e6)    ## not "*Small" and large Z mat
+        && (rankZ <- rankMatrix(reTrms$Zt)) >= nrow(fr))    ## test
+    {
+        wstr <- "rank(Z)>=number of observations; variance-covariance matrix will be unidentifiable"
+        switch(cc,warningSmall=,warning=warning(wstr),stopSmall=,stop=stop(wstr),
+               stop(paste0("unknown check level for '",cstr,"'")))
     }
     ## FIXME: adjust test for families with estimated scale parameter:
     ##   useSc is not defined yet/not defined properly?
