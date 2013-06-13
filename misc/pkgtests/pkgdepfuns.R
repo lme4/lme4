@@ -240,6 +240,8 @@ doPkgDeptests <- function(pkg="lme4",
                           verbose=TRUE) {
 
     if (!file.exists(libdir)) dir.create(libdir)
+    if (!file.exists(checkdir)) dir.create(checkdir)
+    if (!file.exists(tarballdir)) dir.create(tarballdir)
 
     ## FIXME: lme4-specific; should get these straight from DESCRIPTION file
     pkgdep <- c("Rcpp","RcppEigen","minqa")
