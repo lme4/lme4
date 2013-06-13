@@ -1,4 +1,6 @@
 pkg <- so_name <- "lme4"; doUnload <- FALSE; doTest <- TRUE
+## for running uninstalled R binary:
+## .libPaths(c("/usr/local/lib/R/library","/usr/local/lib/R/site-library"))
 ## pkg <- so_name <- "RcppEigen"; doUnload <- TRUE; doTest <- TRUE
 ## need to deal with the fact that DLL name != package name for lme4.0 ...
 ### pkg <- "lme4.0"; so_name <- "lme4"; doUnload <- TRUE
