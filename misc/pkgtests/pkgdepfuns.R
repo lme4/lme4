@@ -1,11 +1,13 @@
-getDepends <- function(pkg="lme4",verbose=FALSE) {    
+getDepends <- function(pkg="lme4",verbose=FALSE, getSuggests=TRUE) {    
     if (verbose) cat("retrieving dependency information\n")
     if (!file.exists("depends.R")) {
         download.file("http://developer.r-project.org/CRAN/Scripts/depends.R",
                       dest="depends.R")
     }
     source("depends.R")
-    rr <- data.frame(reverse_dependencies_with_maintainers(pkg),
+    w <-  c("Depends", "Imports", "LinkingTo")
+    if (getSuggests) w <- c(w,"Suggests")
+    rr <- data.frame(reverse_dependencies_with_maintainers(pkg,which=w),
                         stringsAsFactors=FALSE)
     rownames(rr) <- rr$Package
     rr
