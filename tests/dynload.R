@@ -1,6 +1,7 @@
+## this is the simpler version of the code for testing/exercising
+## https://github.com/lme4/lme4/issues/35
+## see also ../misc/issues/dynload.R for more complexity
 pkg <- so_name <- "lme4"; doUnload <- FALSE; doTest <- TRUE
-## for running uninstalled R binary:
-## .libPaths(c("/usr/local/lib/R/library","/usr/local/lib/R/site-library"))
 ## pkg <- so_name <- "RcppEigen"; doUnload <- TRUE; doTest <- TRUE
 ## need to deal with the fact that DLL name != package name for lme4.0 ...
 ### pkg <- "lme4.0"; so_name <- "lme4"; doUnload <- TRUE
@@ -41,19 +42,19 @@ test <- function() {
     }
 }
 if (FALSE) {
-  ## FIXME: disabled test for now
-for (i in 1:6) {
-    cat("Attempt #",i,"\n",sep="")
-    cat("loading",pkg,"\n")
-    library(pkg,character.only=TRUE)
-    tmpf()
-    test()
-    cat("detaching",pkg,"\n")
-    Detach()
-    cat("loading nlme\n")
-    library("nlme")
-    tmpf()
-    detach("package:nlme",unload=TRUE)
-    cat("detaching nlme\n")
-}
+    ## FIXME: disabled test for now
+    for (i in 1:6) {
+        cat("Attempt #",i,"\n",sep="")
+        cat("loading",pkg,"\n")
+        library(pkg,character.only=TRUE)
+        tmpf()
+        test()
+        cat("detaching",pkg,"\n")
+        Detach()
+        cat("loading nlme\n")
+        library("nlme")
+        tmpf()
+        detach("package:nlme",unload=TRUE)
+        cat("detaching nlme\n")
+    }
 }
