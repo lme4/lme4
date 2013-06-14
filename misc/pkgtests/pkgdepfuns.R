@@ -4,7 +4,7 @@
 ## * table of outcomes in genReport?
 
 require("tools")
-
+require("plyr") ## for rename()
 ## originally downloaded from http://developer.r-project.org/CRAN/Scripts/depends.R
 ## modified (BMB) to include package dependency type; return results as data frame with package rownames
 reverse_dependencies_with_maintainers <-
@@ -257,9 +257,9 @@ genReport <- function(depmatrix,      ## results of reverse_dependencies_with_ma
     rpt <- rpt[,c("pkgname","depType","location","version","Maintainer","result","diag")] ## drop e-mail, reorder
     rpt$result <- colorCode(rpt$result)
     rpt$depType <- colorCode(rpt$depType,colCodes=c(blue="Depends",green="Suggests",purple="Imports",red=NA))
-    names(rpt)[4] <- "maintainer"
+    ## names(rpt)[4] <- "maintainer"
+    rpt <- rename(rpt,c(Maintainer="maintainer"))
     rpt$maintainer <- dumbBrackets(rpt$maintainer)
-
     ## write file
     title <- paste0(pkg,": downstream package report")
     HTMLInitFile(filename=outfn,outdir=".",
