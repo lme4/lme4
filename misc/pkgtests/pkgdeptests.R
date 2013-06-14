@@ -1,9 +1,8 @@
-## don't forget . ./setTestEnv !!
-
 ## need this because R can't handle '@CRAN@' magic default
 ## in non-interactive mode ...
-options(repos=c(CRAN="http://probability.ca/cran"))
-
+options(repos=c(CRAN="http://probability.ca/cran",
+        rforge="http://r-forge.r-project.org",
+        bioc="http://www.bioconductor.org/packages/release/bioc"))
 
 source("pkgdepfuns.R")
 rr <- getDepends("lme4")
@@ -19,7 +18,8 @@ if (FALSE) {
     ## playing with results
     L <- load("lme4tests_out.RData")
     rr <- getDepends("lme4")
-    genReport(rr,testresults)
+    xx <- read.csv("pkg_notes.csv")
+    genReport(rr,testresults,extra=xx)
     checkPkg("HSAUR2")
     checkPkg("difR",checkdir="check",verbose=TRUE)
 }

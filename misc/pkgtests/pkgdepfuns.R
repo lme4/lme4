@@ -1,16 +1,46 @@
+## TO DO
+## * store pkg version tested, timestamp
+## * include suggests/depends/etc. in genReport, or allow subsetting
+## * table of outcomes in genReport?
+
+require("tools")
+require("plyr") ## for rename()
+## originally downloaded from http://developer.r-project.org/CRAN/Scripts/depends.R
+## modified (BMB) to include package dependency type; return results as data frame with package rownames
+reverse_dependencies_with_maintainers <-
+function(packages, which = c("Depends", "Imports", "LinkingTo"),
+         cols=c("Package", "Version", "Maintainer"),         
+         recursive = FALSE)
+{
+    contrib.url(getOption("repos")["CRAN"], "source") # trigger chooseCRANmirror() if required
+    description <- sprintf("%s/web/packages/packages.rds",
+                           getOption("repos")["CRAN"])
+    con <- if(substring(description, 1L, 7L) == "file://")
+        file(description, "rb")
+    else
+        url(description, "rb")
+    on.exit(close(con))
+    db <- readRDS(gzcon(con))
+    rownames(db) <- NULL
+    rdepends <- package_dependencies(packages, db, which,
+                                     recursive = recursive,
+                                     reverse = TRUE)
+    rdepends <- sort(unique(unlist(rdepends)))
+    pos <- match(rdepends, db[, "Package"], nomatch = 0L)
+    getType <- function(r) {
+        (names(r)[grep(pattern=paste0("(^|[ ,]|\\n)",pkg,"([ ,]|\\n|$)"),r)])[1]
+    }
+    depType <- apply(db[pos, which],1,getType)
+    d <- data.frame(db[pos,cols],depType,stringsAsFactors=FALSE)
+    rownames(d) <- d$Package
+    d
+}
+
 getDepends <- function(pkg="lme4",verbose=FALSE, getSuggests=TRUE) {    
     if (verbose) cat("retrieving dependency information\n")
-    if (!file.exists("depends.R")) {
-        download.file("http://developer.r-project.org/CRAN/Scripts/depends.R",
-                      dest="depends.R")
-    }
-    source("depends.R")
     w <-  c("Depends", "Imports", "LinkingTo")
     if (getSuggests) w <- c(w,"Suggests")
-    rr <- data.frame(reverse_dependencies_with_maintainers(pkg,which=w),
-                        stringsAsFactors=FALSE)
-    rownames(rr) <- rr$Package
-    rr
+    reverse_dependencies_with_maintainers(pkg,which=w)
 }
 
 pkgmax <- function(x,y) {
@@ -90,10 +120,11 @@ checkPkg <- function(pn,verbose=FALSE,
     depMiss <- setdiff(depList,c("R",rownames(instPkgs)))
     if (length(depMiss)>0) {
         if (verbose) cat("installing dependencies",depMiss,"\n")
-        install.packages(depMiss,lib=libdir)
+        install.packages(depMiss,lib=libdir,dependencies=TRUE)
         rPath <- if (loc=="CRAN") getOption("repos") else c(rforge,getOption("repos"))
         instPkgs <- installed.packages(noCache=TRUE,lib.loc=libdir)  ## update installed package info
-    }
+   }
+
     ## must have set check.Renviron here in order for R CMD check to respect libdir
     newer_check <- FALSE
     curCheckdir <- file.path(checkdir,paste0(pn,".Rcheck"))
@@ -142,13 +173,26 @@ dumbQuotes <- function(x) {
     gsub("[“”]","\"",
          gsub("[‘’]","'",x))
 }
-colorCode <- function(x) {
-    fcol <- ifelse(grepl("skipped",x),"gray",
-                   ifelse(grepl("error_depfail",x),"purple",
-                          ifelse(grepl("error_[[:alpha:]]+",x),"red",
-                                 "blue")))
-    paste0("<font style=\"color:",fcol,"\">",x,"</font>")
-}
+## old/obsolete
+## colorCode <- function(x) {
+##     fcol <- ifelse(grepl("skipped",x),"gray",
+##                    ifelse(grepl("error_depfail",x),"purple",
+##                           ifelse(grepl("error_[[:alpha:]]+",x),"red",
+##                                  "blue")))
+##     paste0("<font style=\"color:",fcol,"\">",x,"</font>")
+## }
+## test <- c("skipped","OK","error_depfail","error_other")
+colorCode <- function(strvec,
+                      colCodes=c(gray="skipped",purple="error_depfail",red="error_[[:alpha:]]",blue=NA)) {
+    colvec <- names(colCodes)
+    m <- sapply(colCodes,grepl,x=strvec)
+    otherVal <- names(colCodes)[is.na(colCodes)]
+    tmpf <- function(x) {
+        if (sum(w <- which(na.omit(x)==1))==0) otherVal else names(x[w[1]])
+    }
+    fcol <- apply(m,1,tmpf)
+    paste0("<font style=\"color:",fcol,"\">",strvec,"</font>")
+}    
 
 errstrings <- c(error_ex="checking examples \\.\\.\\. ERROR",
                 error_depfail="Package (suggested|required) but not available",
@@ -181,11 +225,14 @@ genReport <- function(depmatrix,      ## results of reverse_dependencies_with_ma
                       contact="lme4-authors <at> r-forge.wu-wien.ac.at",
                       pkg="lme4",
                       outfn=paste0(pkg,"_compat_report"),
-                      verbose=FALSE) {
-    
+                      verbose=FALSE,
+                      extra.info=NULL) {
     require(pkg,character.only=TRUE)  ## for package version  (FIXME: should be stored with test results!)
     ## FIXME: should store/pull date from test results too
-    require("R2HTML")
+    if (!require("R2HTML")) {
+        ## auto-install because we may be missing it in the test environment ...
+        install.packages("R2HTML"); library("R2HTML")
+    }
     
     isOK <- !sapply(testresults,inherits,what="try-error")
     tOK <- testresults[isOK]
@@ -204,12 +251,17 @@ genReport <- function(depmatrix,      ## results of reverse_dependencies_with_ma
                       data.frame(x,stringsAsFactors=FALSE)
                   })
     rpt <- do.call(rbind,rpt)
-    rpt$result <- colorCode(rpt$result)
+    ## add info from notes, rr
     rpt <- merge(rpt,as.data.frame(depmatrix),by.x="pkgname",by.y="Package")
-    rpt <- rpt[,c("pkgname","location","version","Maintainer","result","diag")] ## drop e-mail, reorder
-    names(rpt)[4] <- "maintainer"
+    ## table of results by package status
+    sumtab <- with(rpt,table(result,depType))
+    rpt <- rpt[,c("pkgname","depType","location","version","Maintainer","result","diag")] ## drop e-mail, reorder
+    rpt$result <- colorCode(rpt$result)
+    rpt$depType <- colorCode(rpt$depType,colCodes=c(blue="Depends",green="Suggests",purple="Imports",red=NA))
+    ## names(rpt)[4] <- "maintainer"
+    rpt <- rename(rpt,c(Maintainer="maintainer"))
     rpt$maintainer <- dumbBrackets(rpt$maintainer)
-
+    if (!is.null(extra.info)) rpt <- merge(rpt,extra.info,by="pkgname",all.x=TRUE)
     ## write file
     title <- paste0(pkg,": downstream package report")
     HTMLInitFile(filename=outfn,outdir=".",
@@ -221,9 +273,12 @@ genReport <- function(depmatrix,      ## results of reverse_dependencies_with_ma
     HTML.title("Notes",HR=2)
     HTML("<ul>")
     HTMLli(paste("contact:",dumbBrackets(contact)))
-    HTMLli("'error_depfail' results are due to packages I haven't managed to get installed yet")
+    HTMLli("error_depfail indicates a dependency problem")
     ## HTMLli("'error_install' results due to missing dependencies are probably spurious (packages that are installed elsewhere on my machine but not seen during testing")
     HTML("</ul>")
+    HTML("<hr>")
+    HTML(sumtab)
+    HTML("<hr>")
     HTML(rpt,innerBorder=1,sortableDF=TRUE)
     HTMLEndFile()
     outfn

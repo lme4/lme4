@@ -20,17 +20,59 @@
 
  <h1 > lme4: downstream package report</h1>
 
-<p class='character'>lme4 version: 0.99999911.3</p>
+<p class='character'>lme4 version: 0.99999911.4</p>
 
-<p class='character'>Test date:  Mon May 27 15:40:30 2013</p>
+<p class='character'>Test date:  Fri Jun 14 19:10:25 2013</p>
 
  <h2 > Notes</h2>
 
 <p class='character'><ul></p>
 
 <br><li>contact: lme4-authors &lt;at&gt r-forge.wu-wien.ac.at
-<br><li>'error_depfail' results are due to packages I haven't managed to get installed yet
+<br><li>error_depfail indicates a dependency problem
 <p class='character'></ul></p>
+
+<p class='character'><hr></p>
+
+
+
+<p align= center >
+<table cellspacing=0 border=1><caption align=bottom class=captiondataframe></caption>
+<tr><td>
+	<table border=0 class=dataframe>
+	<tbody> <tr class= firstline > <th></th><th>Depends</th><th>Imports</th><th>Suggests</th> </tr>
+ 
+<tr><td class=firstcolumn>error_depfail</td>
+<td class=cellinside> 1</td>
+<td class=cellinside> 0</td>
+<td class=cellinside> 0</td></tr>
+ 
+<tr><td class=firstcolumn>error_examples</td>
+<td class=cellinside>10</td>
+<td class=cellinside> 1</td>
+<td class=cellinside> 6</td></tr>
+ 
+<tr><td class=firstcolumn>error_install</td>
+<td class=cellinside> 6</td>
+<td class=cellinside> 2</td>
+<td class=cellinside> 0</td></tr>
+ 
+<tr><td class=firstcolumn>error_vignette</td>
+<td class=cellinside> 1</td>
+<td class=cellinside> 1</td>
+<td class=cellinside> 2</td></tr>
+ 
+<tr><td class=firstcolumn>OK</td>
+<td class=cellinside>16</td>
+<td class=cellinside> 3</td>
+<td class=cellinside>30</td></tr>
+ 
+	</tbody>
+</table>
+ </td></table>
+ <br>
+
+<p class='character'><hr></p>
 
 
 <style>
@@ -50,20 +92,26 @@ cursor: pointer ;
 	<tr class= firstline > 
 		<th><b class="tablesort">&nbsp;</b>  </th>
 		<th><b class="tablesort">pkgname</b>  </th>
+		<th><b class="tablesort">depType</b>  </th>
 		<th><b class="tablesort">location</b>  </th>
 		<th><b class="tablesort">version</b>  </th>
 		<th><b class="tablesort">maintainer</b>  </th>
 		<th><b class="tablesort">result</b>  </th>
-		<th><b class="tablesort">diag</th> 
+		<th><b class="tablesort">diag</b>  </th>
+		<th><b class="tablesort">lme4_contact</b>  </th>
+		<th><b class="tablesort">contacted</b>  </th>
+		<th><b class="tablesort">notes</th> 
 	</tr> 
 <tr> 
 <td class=firstcolumn>1
 </td>
 <td class=cellinside>afex
 </td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
 <td class=cellinside>Rforge
 </td>
-<td class=cellinside>0.5-68
+<td class=cellinside>0.5-71
 </td>
 <td class=cellinside>Henrik Singmann
 &lt;henrik.singmann@psychologie.uni-freiburg.de&gt
@@ -71,28 +119,140 @@ cursor: pointer ;
 <td class=cellinside><font style="color:blue">OK</font>
 </td>
 <td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
 <td class=firstcolumn>2
 </td>
-<td class=cellinside>aods3
+<td class=cellinside>agricolae
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
 </td>
 <td class=cellinside>CRAN
 </td>
-<td class=cellinside>0.3-9
+<td class=cellinside>1.1-4
+</td>
+<td class=cellinside>Felipe de Mendiburu &lt;f.mendiburu@cgiar.org&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>3
+</td>
+<td class=cellinside>agridat
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.6
+</td>
+<td class=cellinside>Kevin Wright &lt;kw.stat@gmail.com&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>  calling lmer with family() is deprecated: please use glmer() instead<br>Calls: lmer -> eval -> eval -> lFormula -> do.call -> checkArgs<br>Execution halted
+</td>
+<td class=cellinside>BMB
+</td>
+<td class=cellinside> TRUE
+</td>
+<td class=cellinside>proximal problem is shallow but there are some deeper issues
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>4
+</td>
+<td class=cellinside>AICcmodavg
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.30
+</td>
+<td class=cellinside>Marc J. Mazerolle &lt;marc.mazerolle@uqat.ca&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>5
+</td>
+<td class=cellinside>aod
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.3
+</td>
+<td class=cellinside>Renaud Lancelot &lt;renaud.lancelot@cirad.fr&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>Error in eval(expr, envir, enclos) : could not find function "glFormula"<br>Calls: iccbin -> <Anonymous> -> eval -> eval<br>Execution halted
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>FALSE
+</td>
+<td class=cellinside>fails because it only imports lme4 then calls lme4::glmer -- evaluation level issues
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>6
+</td>
+<td class=cellinside>aods3
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.3-11
 </td>
 <td class=cellinside>Renaud Lancelot &lt;renaud.lancelot@cirad.fr&gt
 </td>
 <td class=cellinside><font style="color:blue">OK</font>
 </td>
 <td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>3
+<td class=firstcolumn>7
 </td>
 <td class=cellinside>arm
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>Rforge
 </td>
@@ -100,15 +260,23 @@ cursor: pointer ;
 </td>
 <td class=cellinside>Yu-Sung Su &lt;suyusung@tsinghua.edu.cn&gt
 </td>
-<td class=cellinside><font style="color:blue">OK</font>
+<td class=cellinside><font style="color:red">error_examples</font>
 </td>
-<td class=cellinside>
+<td class=cellinside>  unable to find an inherited method for function 'display' for signature '"lmerMod"'<br>Calls: display -> <Anonymous><br>Execution halted
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>4
+<td class=firstcolumn>8
 </td>
 <td class=cellinside>Bayesthresh
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -119,12 +287,44 @@ cursor: pointer ;
 <td class=cellinside><font style="color:blue">OK</font>
 </td>
 <td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>5
+<td class=firstcolumn>9
+</td>
+<td class=cellinside>benchmark
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.3-5
+</td>
+<td class=cellinside>Manuel J. A. Eugster &lt;manuel.eugster@stat.uni-muenchen.de&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>10
 </td>
 <td class=cellinside>blme
+</td>
+<td class=cellinside><font style="color:purple">Imports</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -135,12 +335,20 @@ cursor: pointer ;
 <td class=cellinside><font style="color:red">error_install</font>
 </td>
 <td class=cellinside>** R<br>** inst<br>** preparing package for lazy loading<br>Error : class "mer" is not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'blme'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/blme.Rcheck/blme'
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>6
+<td class=firstcolumn>11
 </td>
 <td class=cellinside>boss
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -151,28 +359,93 @@ cursor: pointer ;
 <td class=cellinside><font style="color:red">error_examples</font>
 </td>
 <td class=cellinside>Error in boss.set(y ~ x1 + x2 + factor(site) + (1 | id), id = data$id,  : <br>  no slot of name "X" for this object of class "lmerMod"<br>Execution halted
+</td>
+<td class=cellinside>BMB
+</td>
+<td class=cellinside> TRUE
+</td>
+<td class=cellinside>fairly simple fixes
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>7
+<td class=firstcolumn>12
 </td>
 <td class=cellinside>BradleyTerry2
 </td>
-<td class=cellinside>CRAN
+<td class=cellinside><font style="color:purple">Imports</font>
 </td>
-<td class=cellinside>1.0-0
+<td class=cellinside>Rforge
+</td>
+<td class=cellinside>1.0-1
 </td>
 <td class=cellinside>Heather Turner &lt;ht@heatherturner.net&gt
 </td>
-<td class=cellinside><font style="color:red">error_examples</font>
+<td class=cellinside><font style="color:blue">OK</font>
 </td>
-<td class=cellinside>Error in match.arg(type) : 'arg' should be one of "link", "response"<br>Calls: predict -> predict.glmmPQL -> match.arg<br>Execution halted
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>8
+<td class=firstcolumn>13
+</td>
+<td class=cellinside>car
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>Rforge
+</td>
+<td class=cellinside>2.0-19
+</td>
+<td class=cellinside>John Fox &lt;jfox@mcmaster.ca&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>14
+</td>
+<td class=cellinside>catdata
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.1
+</td>
+<td class=cellinside>Gunther Schauberger
+&lt;gunther.schauberger@stat.uni-muenchen.de&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>15
 </td>
 <td class=cellinside>clusterPower
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -183,12 +456,20 @@ cursor: pointer ;
 <td class=cellinside><font style="color:red">error_examples</font>
 </td>
 <td class=cellinside>  trying to get slot "coefs" from an object (class "summary.merMod") that is not an S4 object <br>Calls: power.sim.binomial -> estimation.function<br>Execution halted
+</td>
+<td class=cellinside>BMB
+</td>
+<td class=cellinside> TRUE
+</td>
+<td class=cellinside>fairly simple fixes
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>9
+<td class=firstcolumn>16
 </td>
 <td class=cellinside>cplm
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -199,12 +480,44 @@ cursor: pointer ;
 <td class=cellinside><font style="color:red">error_install</font>
 </td>
 <td class=cellinside>*** moving datasets to lazyload DB<br>** inst<br>** preparing package for lazy loading<br>Error : classes "mer", "summary.mer" are not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'cplm'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/cplm.Rcheck/cplm'
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>10
+<td class=firstcolumn>17
+</td>
+<td class=cellinside>DAAG
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.16
+</td>
+<td class=cellinside>W. John Braun &lt;braun@stats.uwo.ca&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>18
 </td>
 <td class=cellinside>difR
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -215,12 +528,68 @@ cursor: pointer ;
 <td class=cellinside><font style="color:blue">OK</font>
 </td>
 <td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>11
+<td class=firstcolumn>19
+</td>
+<td class=cellinside>doBy
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>4.5-6
+</td>
+<td class=cellinside>Søren Højsgaard &lt;sorenh@math.aau.dk&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>20
+</td>
+<td class=cellinside>effects
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>Rforge
+</td>
+<td class=cellinside>2.2-5
+</td>
+<td class=cellinside>John Fox &lt;jfox@mcmaster.ca&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>21
 </td>
 <td class=cellinside>EquiNorm
+</td>
+<td class=cellinside><font style="color:purple">Imports</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -231,12 +600,20 @@ cursor: pointer ;
 <td class=cellinside><font style="color:red">error_examples</font>
 </td>
 <td class=cellinside>Error in eval(expr, envir, enclos) : could not find function "lFormula"<br>Calls: equi.gene.norm ... equi.gene.norm.EM -> computeAuxillaryParameters -> lmer -> eval -> eval<br>Execution halted
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>12
+<td class=firstcolumn>22
 </td>
 <td class=cellinside>ez
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -247,12 +624,68 @@ cursor: pointer ;
 <td class=cellinside><font style="color:blue">OK</font>
 </td>
 <td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>13
+<td class=firstcolumn>23
+</td>
+<td class=cellinside>fbRanks
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.1
+</td>
+<td class=cellinside>E Holmes &lt;eeholmes@u.washington.edu&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>24
+</td>
+<td class=cellinside>flexmix
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>2.3-10
+</td>
+<td class=cellinside>Bettina Gruen &lt;Bettina.Gruen@jku.at&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>25
 </td>
 <td class=cellinside>gamm4
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -263,12 +696,68 @@ cursor: pointer ;
 <td class=cellinside><font style="color:red">error_examples</font>
 </td>
 <td class=cellinside>  calling lmer with family() is deprecated: please use glmer() instead<br>Calls: gamm4 ... lmer -> eval -> eval -> lFormula -> do.call -> checkArgs<br>Execution halted
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>14
+<td class=firstcolumn>26
+</td>
+<td class=cellinside>glmulti
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.0.7
+</td>
+<td class=cellinside>Vincent Calcagno &lt;vincent.calcagno@sophia.inra.fr&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>27
+</td>
+<td class=cellinside>gmodels
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>2.15.4
+</td>
+<td class=cellinside>Gregory R. Warnes &lt;greg@warnes.net&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>  cannot coerce type 'S4' to vector of type 'double'<br>Calls: ci -> ci.default -> sd -> var -> is.data.frame<br>Execution halted
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>28
 </td>
 <td class=cellinside>GRRGI
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -279,12 +768,68 @@ cursor: pointer ;
 <td class=cellinside><font style="color:red">error_examples</font>
 </td>
 <td class=cellinside>  unable to find an inherited method for function 'sigma.hat' for signature '"lmerMod"'<br>Calls: MLGI -> sigma.hat -> <Anonymous><br>Execution halted
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>15
+<td class=firstcolumn>29
+</td>
+<td class=cellinside>GWAF
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>2.1
+</td>
+<td class=cellinside>Ming-Huei Chen &lt;mhchen@bu.edu&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>30
+</td>
+<td class=cellinside>harvestr
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.5.1
+</td>
+<td class=cellinside>Andrew Redd &lt;andrew.redd@hsc.utah.edu&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>31
 </td>
 <td class=cellinside>HLMdiag
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -295,12 +840,68 @@ cursor: pointer ;
 <td class=cellinside><font style="color:blue">OK</font>
 </td>
 <td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>16
+<td class=firstcolumn>32
+</td>
+<td class=cellinside>HSAUR
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.3-2
+</td>
+<td class=cellinside>Torsten Hothorn &lt;Torsten.Hothorn@R-project.org&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>33
+</td>
+<td class=cellinside>HSAUR2
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.1-4
+</td>
+<td class=cellinside>Torsten Hothorn &lt;Torsten.Hothorn@R-project.org&gt
+</td>
+<td class=cellinside><font style="color:red">error_vignette</font>
+</td>
+<td class=cellinside>Error: calling lmer with family() is deprecated: please use glmer() instead<br>Execution halted<br>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>34
 </td>
 <td class=cellinside>influence.ME
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -311,12 +912,68 @@ cursor: pointer ;
 <td class=cellinside><font style="color:red">error_install</font>
 </td>
 <td class=cellinside>*** moving datasets to lazyload DB<br>** inst<br>** preparing package for lazy loading<br>Error : object 'summary' is not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'influence.ME'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/influence.ME.Rcheck/influence.ME'
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>17
+<td class=firstcolumn>35
+</td>
+<td class=cellinside>irtrees
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.1.0
+</td>
+<td class=cellinside>Ivailo Partchev &lt;partchev@gmail.com&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>36
+</td>
+<td class=cellinside>kulife
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.1-11
+</td>
+<td class=cellinside>Claus Ekstrom &lt;cekstrom@health.sdu.dk&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>37
 </td>
 <td class=cellinside>languageR
+</td>
+<td class=cellinside><font style="color:purple">Imports</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -327,12 +984,44 @@ cursor: pointer ;
 <td class=cellinside><font style="color:blue">OK</font>
 </td>
 <td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>FALSE
+</td>
+<td class=cellinside>surprising that this works -- doesn't it use mcmcsamp?
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>18
+<td class=firstcolumn>38
+</td>
+<td class=cellinside>lava
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>Rforge
+</td>
+<td class=cellinside>1.2.2
+</td>
+<td class=cellinside>Klaus K. Holst &lt;kkho@biostat.ku.dk&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>39
 </td>
 <td class=cellinside>LMERConvenienceFunctions
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -343,12 +1032,20 @@ cursor: pointer ;
 <td class=cellinside><font style="color:blue">OK</font>
 </td>
 <td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>19
+<td class=firstcolumn>40
 </td>
 <td class=cellinside>lmerTest
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -359,28 +1056,92 @@ cursor: pointer ;
 <td class=cellinside><font style="color:red">error_install</font>
 </td>
 <td class=cellinside>** preparing package for lazy loading<br>Error in reconcilePropertiesAndPrototype(name, slots, prototype, superClasses,  : <br>  no definition was found for superclass "mer" in the specification of class "merLmerTest"<br>Error : unable to load R code in package 'lmerTest'<br>ERROR: lazy loading failed for package 'lmerTest'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/lmerTest.Rcheck/lmerTest'
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>20
+<td class=firstcolumn>41
 </td>
 <td class=cellinside>longpower
 </td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
 <td class=cellinside>CRAN
 </td>
-<td class=cellinside>1.0-7
+<td class=cellinside>1.0-8
 </td>
 <td class=cellinside>Michael C. Donohue &lt;mdonohue@ucsd.edu&gt
 </td>
 <td class=cellinside><font style="color:red">error_install</font>
 </td>
 <td class=cellinside>** R<br>** inst<br>** preparing package for lazy loading<br>Error : class "mer" is not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'longpower'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/longpower.Rcheck/longpower'
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>21
+<td class=firstcolumn>42
+</td>
+<td class=cellinside>lsmeans
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>Rforge
+</td>
+<td class=cellinside>2.0
+</td>
+<td class=cellinside>Russ Lenth &lt;russell-lenth@uiowa.edu&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>43
+</td>
+<td class=cellinside>mediation
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>4.2.2
+</td>
+<td class=cellinside>Teppei Yamamoto &lt;teppei@mit.edu&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>44
 </td>
 <td class=cellinside>MEMSS
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>Rforge
 </td>
@@ -391,12 +1152,44 @@ cursor: pointer ;
 <td class=cellinside><font style="color:blue">OK</font>
 </td>
 <td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>22
+<td class=firstcolumn>45
+</td>
+<td class=cellinside>metafor
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.8-0
+</td>
+<td class=cellinside>Wolfgang Viechtbauer &lt;wvb@metafor-project.org&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>Error in rma.glmm(measure = "OR", ai = tpos, bi = tneg, ci = cpos, di = cneg,  : <br>  Cannot fit ML model.<br>Execution halted
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>46
 </td>
 <td class=cellinside>mi
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>Rforge
 </td>
@@ -407,28 +1200,68 @@ cursor: pointer ;
 <td class=cellinside><font style="color:red">error_install</font>
 </td>
 <td class=cellinside>** data<br>** inst<br>** preparing package for lazy loading<br>Error : objects 'coef', 'fitted', 'resid', 'residuals', 'plot' are not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'mi'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/mi.Rcheck/mi'
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>23
+<td class=firstcolumn>47
 </td>
-<td class=cellinside>mixAK
+<td class=cellinside>mice
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
 </td>
 <td class=cellinside>CRAN
 </td>
-<td class=cellinside>3.0-1
+<td class=cellinside>2.17
+</td>
+<td class=cellinside>Stef van Buuren &lt;stef.vanbuuren@tno.nl&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>48
+</td>
+<td class=cellinside>mixAK
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>3.1
 </td>
 <td class=cellinside>Arnošt Komárek &lt;arnost.komarek@mff.cuni.cz&gt
 </td>
 <td class=cellinside><font style="color:blue">OK</font>
 </td>
 <td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>24
+<td class=firstcolumn>49
 </td>
 <td class=cellinside>MixMAP
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -439,12 +1272,20 @@ cursor: pointer ;
 <td class=cellinside><font style="color:red">error_examples</font>
 </td>
 <td class=cellinside>  invalid class "MixMAP" object: undefined class for slot "lmer.out" ("mer")<br>Calls: MixMAP -> new -> initialize -> initialize -> validObject<br>Execution halted
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>25
+<td class=firstcolumn>50
 </td>
 <td class=cellinside>mlmRev
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>Rforge
 </td>
@@ -452,15 +1293,119 @@ cursor: pointer ;
 </td>
 <td class=cellinside>&lt;lme4-authors@R-forge.wu-wien.ac.at&gt
 </td>
-<td class=cellinside><font style="color:blue">OK</font>
+<td class=cellinside><font style="color:red">error_vignette</font>
 </td>
-<td class=cellinside>
+<td class=cellinside>Error: cannot allocate vector of size 2.0 Gb<br>Execution halted<br>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>FALSE
+</td>
+<td class=cellinside>this one is ours! running out of memory in vignette ...
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>26
+<td class=firstcolumn>51
+</td>
+<td class=cellinside>MPDiR
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.1-12
+</td>
+<td class=cellinside>Ken Knoblauch &lt;ken.knoblauch@inserm.fr&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>52
+</td>
+<td class=cellinside>multcomp
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>Rforge
+</td>
+<td class=cellinside>1.2-18
+</td>
+<td class=cellinside>Torsten Hothorn &lt;Torsten.Hothorn@R-project.org&gt
+</td>
+<td class=cellinside><font style="color:red">error_vignette</font>
+</td>
+<td class=cellinside>Error: calling lmer with family() is deprecated: please use glmer() instead<br>Execution halted<br>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>53
+</td>
+<td class=cellinside>MuMIn
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>Rforge
+</td>
+<td class=cellinside>1.9.9
+</td>
+<td class=cellinside>Kamil Bartoń &lt;kamil.barton@go2.pl&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>54
+</td>
+<td class=cellinside>NanoStringNorm
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.1.14
+</td>
+<td class=cellinside>Daryl Waggott &lt;Daryl.Waggott@oicr.on.ca&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>55
 </td>
 <td class=cellinside>NetworkAnalysis
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -471,12 +1416,20 @@ cursor: pointer ;
 <td class=cellinside><font style="color:blue">OK</font>
 </td>
 <td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>27
+<td class=firstcolumn>56
 </td>
 <td class=cellinside>nonrandom
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -487,12 +1440,20 @@ cursor: pointer ;
 <td class=cellinside><font style="color:blue">OK</font>
 </td>
 <td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>28
+<td class=firstcolumn>57
 </td>
 <td class=cellinside>odprism
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -503,12 +1464,44 @@ cursor: pointer ;
 <td class=cellinside><font style="color:red">error_examples</font>
 </td>
 <td class=cellinside>  rank(Z)>=number of observations; variance-covariance matrix will be unidentifiable<br>Calls: odprismB -> lmer -> eval -> eval -> lFormula<br>Execution halted
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>FALSE
+</td>
+<td class=cellinside>will need to turn off rankZ test. Don't know if there are other issues
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>29
+<td class=firstcolumn>58
+</td>
+<td class=cellinside>ordinal
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>Rforge
+</td>
+<td class=cellinside>2013.4-17
+</td>
+<td class=cellinside>Rune Haubo B Christensen &lt;rhbc@imm.dtu.dk&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>59
 </td>
 <td class=cellinside>pamm
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -519,12 +1512,44 @@ cursor: pointer ;
 <td class=cellinside><font style="color:blue">OK</font>
 </td>
 <td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>30
+<td class=firstcolumn>60
+</td>
+<td class=cellinside>pan
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.7
+</td>
+<td class=cellinside>Jing hua Zhao &lt;jinghua.zhao@mrc-epid.cam.ac.uk&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>61
 </td>
 <td class=cellinside>PBImisc
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -535,12 +1560,20 @@ cursor: pointer ;
 <td class=cellinside><font style="color:red">error_examples</font>
 </td>
 <td class=cellinside>  model should be an object of the class mer<br>Calls: groupDisp -> sapply -> lapply -> FUN -> recalculateLogLik<br>Execution halted
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>31
+<td class=firstcolumn>62
 </td>
 <td class=cellinside>pbkrtest
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -551,12 +1584,20 @@ cursor: pointer ;
 <td class=cellinside><font style="color:blue">OK</font>
 </td>
 <td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>32
+<td class=firstcolumn>63
 </td>
 <td class=cellinside>pedigreemm
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>Rforge
 </td>
@@ -567,28 +1608,68 @@ cursor: pointer ;
 <td class=cellinside><font style="color:red">error_install</font>
 </td>
 <td class=cellinside>** preparing package for lazy loading<br>Error in reconcilePropertiesAndPrototype(name, slots, prototype, superClasses,  : <br>  no definition was found for superclass "mer" in the specification of class "pedigreemm"<br>Error : unable to load R code in package 'pedigreemm'<br>ERROR: lazy loading failed for package 'pedigreemm'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/pedigreemm.Rcheck/pedigreemm'
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>FALSE
+</td>
+<td class=cellinside>DB contacted; with what results?
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>33
+<td class=firstcolumn>64
 </td>
 <td class=cellinside>phia
 </td>
+<td class=cellinside><font style="color:purple">Imports</font>
+</td>
 <td class=cellinside>CRAN
 </td>
-<td class=cellinside>0.1-1
+<td class=cellinside>0.1-2
 </td>
 <td class=cellinside>Helios De Rosario-Martinez &lt;helios.derosario@ibv.upv.es&gt
 </td>
 <td class=cellinside><font style="color:red">error_vignette</font>
 </td>
 <td class=cellinside>Error: $ operator not defined for this S4 class<br>Execution halted<br>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>34
+<td class=firstcolumn>65
+</td>
+<td class=cellinside>phmm
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.7-4
+</td>
+<td class=cellinside>Michael Donohue &lt;mdonohue@ucsd.edu&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>  calling lmer with family() is deprecated: please use glmer() instead<br>Calls: lmer -> eval -> eval -> lFormula -> do.call -> checkArgs<br>Execution halted
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>66
 </td>
 <td class=cellinside>polytomous
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -599,12 +1680,20 @@ cursor: pointer ;
 <td class=cellinside><font style="color:red">error_examples</font>
 </td>
 <td class=cellinside>  calling lmer with family() is deprecated: please use glmer() instead<br>Calls: polytomous -> polytomous.poisson.reformulation<br>Execution halted
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>FALSE
+</td>
+<td class=cellinside>we have some tests -- models could be fragile?
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>35
+<td class=firstcolumn>67
 </td>
 <td class=cellinside>prLogistic
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -615,12 +1704,44 @@ cursor: pointer ;
 <td class=cellinside><font style="color:red">error_examples</font>
 </td>
 <td class=cellinside>  calling lmer with family() is deprecated: please use glmer() instead<br>Calls: prLogisticDelta ... lmer -> eval -> eval -> lFormula -> do.call -> checkArgs<br>Execution halted
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>36
+<td class=firstcolumn>68
+</td>
+<td class=cellinside>R2admb
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>Rforge
+</td>
+<td class=cellinside>0.7.5.3
+</td>
+<td class=cellinside>Ben Bolker &lt;bolker@mcmaster.ca&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>69
 </td>
 <td class=cellinside>R2STATS
+</td>
+<td class=cellinside><font style="color:purple">Imports</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -631,12 +1752,44 @@ cursor: pointer ;
 <td class=cellinside><font style="color:red">error_install</font>
 </td>
 <td class=cellinside>** R<br>** inst<br>** preparing package for lazy loading<br>Error : object 'logLik' is not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'R2STATS'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/R2STATS.Rcheck/R2STATS'
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>37
+<td class=firstcolumn>70
+</td>
+<td class=cellinside>RLRsim
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>2.0-12
+</td>
+<td class=cellinside>Fabian Scheipl &lt;fabian.scheipl@stat.uni-muenchen.de&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>> X <- m@X<br>Error: no slot of name "X" for this object of class "lmerMod"<br>Execution halted
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside> TRUE
+</td>
+<td class=cellinside>looks like just a few glitches in the examples
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>71
 </td>
 <td class=cellinside>robustlmm
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -647,12 +1800,20 @@ cursor: pointer ;
 <td class=cellinside><font style="color:blue">OK</font>
 </td>
 <td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>38
+<td class=firstcolumn>72
 </td>
 <td class=cellinside>RVAideMemoire
+</td>
+<td class=cellinside><font style="color:purple">Imports</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -663,12 +1824,68 @@ cursor: pointer ;
 <td class=cellinside><font style="color:blue">OK</font>
 </td>
 <td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>39
+<td class=firstcolumn>73
+</td>
+<td class=cellinside>SASmixed
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>local
+</td>
+<td class=cellinside>1.0-2
+</td>
+<td class=cellinside>&lt;lme4-authors@R-forge.wu-wien.ac.at&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>74
+</td>
+<td class=cellinside>sirt
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.31-20
+</td>
+<td class=cellinside>Alexander Robitzsch &lt;a.robitzsch@bifie.at&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>75
 </td>
 <td class=cellinside>spacom
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -676,15 +1893,95 @@ cursor: pointer ;
 </td>
 <td class=cellinside>Till Junge &lt;till.junge@gmail.com&gt
 </td>
-<td class=cellinside><font style="color:red">error_install</font>
+<td class=cellinside><font style="color:purple">error_depfail</font>
 </td>
-<td class=cellinside>** R<br>** data<br>** preparing package for lazy loading<br>Error : objects 'AIC', 'BIC' are not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'spacom'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/spacom.Rcheck/spacom'
+<td class=cellinside>Package suggested but not available: 'geospacom'
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>FALSE
+</td>
+<td class=cellinside>spacom/geospacom have a suggests/depends loop that impedes installation here
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>40
+<td class=firstcolumn>76
+</td>
+<td class=cellinside>SPOT
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.0.4045
+</td>
+<td class=cellinside>Martin Zaefferer &lt;martin.zaefferer@gmx.de&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>77
+</td>
+<td class=cellinside>texreg
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>Rforge
+</td>
+<td class=cellinside>1.27
+</td>
+<td class=cellinside>Philip Leifeld &lt;philip.leifeld@uni-konstanz.de&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>78
+</td>
+<td class=cellinside>TripleR
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.1.8
+</td>
+<td class=cellinside>Felix Schönbrodt &lt;felix.schoenbrodt@psy.lmu.de&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>79
 </td>
 <td class=cellinside>ZeligMultilevel
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
 </td>
 <td class=cellinside>CRAN
 </td>
@@ -695,6 +1992,12 @@ cursor: pointer ;
 <td class=cellinside><font style="color:blue">OK</font>
 </td>
 <td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
 </td></tr>
  
 	</tbody>
@@ -704,7 +2007,7 @@ cursor: pointer ;
 
 <hr size=1>
 <font size=-1>
-	 Generated on: <i>Mon May 27 15:40:30 2013</i> - <b>R2HTML</b> 
+	 Generated on: <i>Fri Jun 14 19:10:25 2013</i> - <b>R2HTML</b> 
 <hr size=1>
 	</body>
 </html>
