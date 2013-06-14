@@ -1,6 +1,8 @@
 ## need this because R can't handle '@CRAN@' magic default
 ## in non-interactive mode ...
-options(repos=c(CRAN="http://probability.ca/cran"))
+options(repos=c(CRAN="http://probability.ca/cran",
+        rforge="http://r-forge.r-project.org",
+        bioc="http://www.bioconductor.org/packages/release/bioc"))
 
 source("pkgdepfuns.R")
 rr <- getDepends("lme4")
