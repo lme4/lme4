@@ -10,8 +10,10 @@ require("plyr") ## for rename()
 reverse_dependencies_with_maintainers <-
 function(packages, which = c("Depends", "Imports", "LinkingTo"),
          cols=c("Package", "Version", "Maintainer"),         
-         recursive = FALSE)
+         recursive = FALSE, depType=TRUE)
 {
+    if (length(packages)>1 && depType)
+        stop('multi-package depType not yet working')
     contrib.url(getOption("repos")["CRAN"], "source") # trigger chooseCRANmirror() if required
     description <- sprintf("%s/web/packages/packages.rds",
                            getOption("repos")["CRAN"])
@@ -28,7 +30,7 @@ function(packages, which = c("Depends", "Imports", "LinkingTo"),
     rdepends <- sort(unique(unlist(rdepends)))
     pos <- match(rdepends, db[, "Package"], nomatch = 0L)
     getType <- function(r) {
-        (names(r)[grep(pattern=paste0("(^|[ ,]|\\n)",pkg,"([ ,]|\\n|$)"),r)])[1]
+        (names(r)[grep(pattern=paste0("(^|[ ,]|\\n)",packages,"([ ,]|\\n|$)"),r)])[1]
     }
     depType <- apply(db[pos, which],1,getType)
     d <- data.frame(db[pos,cols],depType,stringsAsFactors=FALSE)
