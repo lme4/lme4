@@ -1,12 +1,42 @@
-getDepends <- function(pkg="lme4",verbose=FALSE) {    
-    if (verbose) cat("retrieving dependency information\n")
-    if (!file.exists("depends.R")) {
-        download.file("http://developer.r-project.org/CRAN/Scripts/depends.R",
-                      dest="depends.R")
-    }
-    depType <- apply(db[pos, which],1,getType)
-    d <- data.frame(db[pos,cols],depType,stringsAsFactors=FALSE)
+## TO DO
+## * store pkg version tested, timestamp
+## * include suggests/depends/etc. in genReport, or allow subsetting
+## * table of outcomes in genReport?
+
+require("tools")
+require("plyr") ## for rename()
+## originally downloaded from http://developer.r-project.org/CRAN/Scripts/depends.R
+## modified (BMB) to include package dependency type; return results as data frame with package rownames
+reverse_dependencies_with_maintainers <-
+function(packages, which = c("Depends", "Imports", "LinkingTo"),
+         cols=c("Package", "Version", "Maintainer"),         
+         recursive = FALSE, getDepType=TRUE)
+{
+    contrib.url(getOption("repos")["CRAN"], "source") # trigger chooseCRANmirror() if required
+    if (length(packages)>1 && getDepType) stop("can't do depType for >1 package")
+    description <- sprintf("%s/web/packages/packages.rds",
+                           getOption("repos")["CRAN"])
+    con <- if(substring(description, 1L, 7L) == "file://")
+        file(description, "rb")
+    else
+        url(description, "rb")
+    on.exit(close(con))
+    db <- readRDS(gzcon(con))
+    rownames(db) <- NULL
+    rdepends <- package_dependencies(packages, db, which,
+                                     recursive = recursive,
+                                     reverse = TRUE)
+    rdepends <- sort(unique(unlist(rdepends)))
+    pos <- match(rdepends, db[, "Package"], nomatch = 0L)
+    d <- data.frame(db[pos,cols],stringsAsFactors=FALSE)
     rownames(d) <- d$Package
+    if (getDepType) {
+        getType <- function(r) {
+            (names(r)[grep(pattern=paste0("(^|[ ,]|\\n)",packages,"([ ,]|\\n|$)"),r)])[1]
+        }
+        depType <- apply(db[pos, which],1,getType)
+        d$depType <- depType
+    }
     d
 }
 
