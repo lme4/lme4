@@ -36,7 +36,8 @@ namedList <- function(...) {
 ##'    For \code{glmer}, if \code{length(optimizer)==2}, the first element will be used
 ##'    for the preliminary (random effects parameters only) optimization, while
 ##'    the second will be used for the final (random effects plus
-##'    fixed effect parameters) phase. 
+##'    fixed effect parameters) phase. See \code{\link{modular}} for more information on
+##'    these two phases.
 ##' @param sparseX logical - should a sparse model matrix be used for the
 ##'    fixed-effects terms?  Defaults to \code{FALSE}. Currently inactive.
 ##' @param restart_edge logical - should the optimizer attempt a restart when it finds a solution at the boundary (i.e. zero random-effect variances or perfect +/-1 correlations)?
