@@ -62,10 +62,11 @@ test_that("glmer", {
                       data = cbppX, family = binomial, weights=size, devFunOnly=FALSE),
                 "glmerMod")
     expect_is(glmer(prop ~ period + (1 | herd),
-                      data = cbppX, family = binomial, weights=size, optimizer="Nelder_Mead"),
+                      data = cbppX, family = binomial, weights=size,
+                    control=glmerControl(optimizer="Nelder_Mead")),
                 "glmerMod")
     expect_is(glmer(prop ~ period + (1 | herd),
-                      data = cbppX, family = binomial, weights=size, control=list()),
+                      data = cbppX, family = binomial, weights=size, control=glmerControl()),
                  "glmerMod")
     options(warn=0)
     expect_warning(glmer(prop ~ period + (1 | herd),

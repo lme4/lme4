@@ -6,6 +6,9 @@ pkg <- so_name <- "lme4"; doUnload <- FALSE; doTest <- TRUE
 ## need to deal with the fact that DLL name != package name for lme4.0 ...
 ### pkg <- "lme4.0"; so_name <- "lme4"; doUnload <- TRUE
 instPkgs <- as.data.frame(installed.packages(),stringsAsFactors=FALSE)
+Load <- function() {
+    library(pkg,character.only=TRUE)
+}
 Unload <- function() {
     ld <- library.dynam()
     pnames <- sapply(ld,"[[","name")
@@ -42,19 +45,19 @@ test <- function() {
     }
 }
 if (FALSE) {
-    ## FIXME: disabled test for now
-    for (i in 1:6) {
-        cat("Attempt #",i,"\n",sep="")
-        cat("loading",pkg,"\n")
-        library(pkg,character.only=TRUE)
-        tmpf()
-        test()
-        cat("detaching",pkg,"\n")
-        Detach()
-        cat("loading nlme\n")
-        library("nlme")
-        tmpf()
-        detach("package:nlme",unload=TRUE)
-        cat("detaching nlme\n")
-    }
+  ## FIXME: disabled test for now
+for (i in 1:6) {
+    cat("Attempt #",i,"\n",sep="")
+    cat("loading",pkg,"\n")
+    Load()
+    tmpf()
+    test()
+    cat("detaching",pkg,"\n")
+    Detach()
+    cat("loading nlme\n")
+    library("nlme")
+    tmpf()
+    detach("package:nlme",unload=TRUE)
+    cat("detaching nlme\n")
+}
 }

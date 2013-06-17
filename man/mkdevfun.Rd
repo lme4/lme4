@@ -2,7 +2,7 @@
 \alias{mkdevfun}
 \title{Create a deviance evaluation function from a predictor and a response module}
 \usage{
-  mkdevfun(rho, nAGQ = 1L, verbose = 0)
+  mkdevfun(rho, nAGQ = 1L, verbose = 0, control = list())
 }
 \arguments{
   \item{rho}{an environment containing \code{pp}, a
@@ -17,6 +17,11 @@
   squares algorithm.}
 
   \item{verbose}{Logical: print verbose output?}
+
+  \item{control}{list of control parameters, a subset of
+  those specified by \code{\link{lmerControl}}
+  (\code{tolPwrss} and \code{compDev} for GLMMs,
+  \code{tolPwrss} for NLMMs)}
 }
 \value{
   A function of one numeric argument.

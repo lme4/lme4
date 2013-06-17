@@ -1,7 +1,6 @@
 
-R Under development (unstable) (2012-12-14 r61321) -- "Unsuffered Consequences"
-Copyright (C) 2012 The R Foundation for Statistical Computing
-ISBN 3-900051-07-0
+R Under development (unstable) (2013-05-22 r62774) -- "Unsuffered Consequences"
+Copyright (C) 2013 The R Foundation for Statistical Computing
 Platform: i686-pc-linux-gnu (32-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -170,7 +169,7 @@ Fixed effects:
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.88 0.296 1.173 
+Time elapsed:  0.8 0.4 1.227 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -233,7 +232,7 @@ Warning messages:
 > #fmX2s <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
 > 
 > showProc.time() #
-Time elapsed:  0.376 0.06 0.437 
+Time elapsed:  0.424 0.028 0.463 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -356,7 +355,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.6 0.032 0.631 
+Time elapsed:  0.684 0.148 0.861 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -483,7 +482,7 @@ lagoon4 0.000  0.000  0.000
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.368 0.02 0.393 
+Time elapsed:  0.38 0.056 0.445 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -504,7 +503,7 @@ Warning message:
 In Ops.factor(ff, x1) : + not meaningful for factors
 > 
 > showProc.time() #
-Time elapsed:  1.552 0 1.529 
+Time elapsed:  1.816 0 1.928 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -519,6 +518,69 @@ Time elapsed:  1.552 0 1.529
 > #		 S4_2list(P2.2)))
 > 
 > 
+> ## example from Kevin Thorpe: synthesized equivalent
+> ## http://thread.gmane.org/gmane.comp.lang.r.lme4.devel/9835
+> 
+> ## NA issue: simpler example
+> d <- data.frame(y=1:60,f=factor(rep(1:6,each=10)))
+> d$y[2] <- NA
+> d$f[3:4] <- NA
+> lmer(y~(1|f),data=d)
+Linear mixed model fit by REML ['lmerMod']
+Formula: y ~ (1 | f) 
+   Data: d 
+
+REML criterion at convergence: 316.1615 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ f        (Intercept) 338.360  18.395  
+ Residual               9.142   3.024  
+Number of obs: 57, groups: f, 6
+
+Fixed effects:
+            Estimate Std. Error t value
+(Intercept)    30.68       7.52    4.08
+> glmer(y~(1|f),data=d,family=poisson)
+Generalized linear mixed model fit by maximum likelihood ['glmerMod']
+ Family: poisson ( log )
+Formula: y ~ (1 | f) 
+   Data: d 
+
+      AIC       BIC    logLik  deviance 
+ 354.3560  358.4421 -175.1780  350.3560 
+
+Random effects:
+ Groups Name        Variance Std.Dev.
+ f      (Intercept) 0.5062   0.7115  
+Number of obs: 57, groups: f, 6
+
+Fixed effects:
+            Estimate Std. Error z value Pr(>|z|)
+(Intercept)   3.2166     0.2922   11.01   <2e-16
+> 
+> ## we originally thought that these examples should be
+> ## estimating non-zero variances, but they shouldn't ...
+> ## number of levels with each level of replication
+> levs <- c(800,300,150,100,50,50,50,20,20,5,2,2,2,2)
+> n <- seq_along(levs)
+> flevels <- seq(sum(levs))
+> set.seed(101)
+> fakedat <- data.frame(DA=factor(rep(flevels,rep(n,levs))),
++                        zbmi=rnorm(sum(n*levs)))
+> ## add NA values
+> fakedat[sample(nrow(fakedat),100),"zbmi"] <- NA
+> fakedat[sample(nrow(fakedat),100),"DA"] <- NA
+> m5 <- lmer(zbmi ~ (1|DA) , data = fakedat,
++                        control=lmerControl(check.rankZ.gtr.obs="ignore"))
+> stopifnot(c(VarCorr(m5)[["DA"]])==0)
+> m6 <- lmer(zbmi ~ (1|DA) , data = na.omit(fakedat),
++                        control=lmerControl(check.rankZ.gtr.obs="ignore"))
+> stopifnot(c(VarCorr(m6)[["DA"]])==0)
+> 
+> 
+> 
+> 
 > proc.time()
    user  system elapsed 
-  7.776   4.156  12.124 
+  8.660   5.316  14.798 

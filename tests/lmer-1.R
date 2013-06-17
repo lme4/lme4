@@ -288,22 +288,24 @@ d$f[3:4] <- NA
 lmer(y~(1|f),data=d)
 glmer(y~(1|f),data=d,family=poisson)
 
-## NOT working: gives _correct_ zero variance estimates
+## we originally thought that these examples should be
+## estimating non-zero variances, but they shouldn't ...
 ## number of levels with each level of replication
-## levs <- c(800,300,150,100,50,50,50,20,20,5,2,2,2,2)
-## n <- seq_along(levs)
-## flevels <- seq(sum(levs))
-## set.seed(101)
-## fakedat <- data.frame(DA=factor(rep(flevels,rep(n,levs))),
-##                       zbmi=rnorm(sum(n*levs)))
-## ## add NA values
-## fakedat[sample(nrow(fakedat),100),"zbmi"] <- NA
-## fakedat[sample(nrow(fakedat),100),"DA"] <- NA
-## ## should take ~< 0.1 seconds -- have to worry about rank tests
-## system.time(m5 <- lmer(zbmi ~ (1|DA) , data = fakedat))
-## stopifnot(c(VarCorr(m5)[["DA"]])>0)
-## system.time(m6 <- lmer(zbmi ~ (1|DA) , data = na.omit(fakedat)))
-## stopifnot(c(VarCorr(m6)[["DA"]])>0)
+levs <- c(800,300,150,100,50,50,50,20,20,5,2,2,2,2)
+n <- seq_along(levs)
+flevels <- seq(sum(levs))
+set.seed(101)
+fakedat <- data.frame(DA=factor(rep(flevels,rep(n,levs))),
+                       zbmi=rnorm(sum(n*levs)))
+## add NA values
+fakedat[sample(nrow(fakedat),100),"zbmi"] <- NA
+fakedat[sample(nrow(fakedat),100),"DA"] <- NA
+m5 <- lmer(zbmi ~ (1|DA) , data = fakedat,
+                       control=lmerControl(check.rankZ.gtr.obs="ignore"))
+stopifnot(c(VarCorr(m5)[["DA"]])==0)
+m6 <- lmer(zbmi ~ (1|DA) , data = na.omit(fakedat),
+                       control=lmerControl(check.rankZ.gtr.obs="ignore"))
+stopifnot(c(VarCorr(m6)[["DA"]])==0)
 
 
 

@@ -1,3 +1,7 @@
+## FIXME: documentation still refers to \linkS4class quite a bit, inappropriately
+## FIXME: need to document S3 methods better (can we pull from r-forge version?)
+
+##'
 ##' Fit a linear mixed model (LMM)
 ##'
 ##' @title Fit Linear Mixed-Effects Models
@@ -20,31 +24,14 @@
 ##' of \code{formula} (if specified as a formula) or from the parent frame
 ##' (if specified as a character vector).
 ##' @param REML logical scalar - Should the estimates be chosen to optimize
-##'    the REML criterion (as opposed to the log-likelihood)?  Defaults to
-##'    \code{TRUE}.
-##' @param sparseX logical - should a sparse model matrix be used for the
-##'    fixed-effects terms?  Defaults to \code{FALSE}. Currently inactive.
-##' @param control a named list of control parameters for the estimation
-##'     algorithm, specifying only the ones to be changed from their
-##'     default values.  Hence defaults to an empty list.\cr
-##'     Possible control options and their default values are:
-##'   \describe{
-##'      \item{\code{msVerbose}:}{a logical value passed as the
-##'      \code{trace} argument to \code{nlminb} (see documentation on
-##'      that function).  Default is \code{getOption("verbose")}.}
-##'	\item{\code{maxIter}:}{a positive integer passed as the
-##'	\code{maxIter} argument to \code{nlminb} (see documentation on
-##'	that function).  Default is \code{300}.}
-##'	\item{\code{maxFN}:}{a positive integer specifying the
-##'	 maximum number of evaluations of the deviance function allowed
-##'	 during the optimization. Default is \code{900}.}
-##'	\item{\code{tol}:}{a positive number specifying the
-##'	 convergence tolerance, currently only for the PWRSS iterations
-##'	 in \code{\link{glmer}}.  Default is \code{0.000001}.}
-##'   }
+##'    the REML criterion (as opposed to the log-likelihood)?
+##' @param control list containing control parameters, including the nonlinear
+##'    optimizer to be used and parameters
+##'    to be passed through to the nonlinear optimizer: see \code{\link{lmerControl}}
+##'    for details.
 ##' @param start a named list of starting values for the parameters in the
 ##'    model.  For \code{lmer} this can be a numeric vector or a list with one
-##'    component named \code{"theta"}. Infrequently used.
+##'    component named \code{"theta"}.
 ##' @param verbose integer scalar.  If \code{> 0} verbose output is generated
 ##'    during the optimization of the parameter estimates.  If \code{> 1} verbose
 ##'    output is generated during the individual PIRLS steps.
@@ -70,37 +57,19 @@
 ##' @param devFunOnly logical - return only the deviance evaluation function. Note that
 ##'    because the deviance function operates on variables stored in its environment,
 ##'    it may not return \emph{exactly} the same values on subsequent calls (but the results should always be within machine tolerance).
-##' @param optimizer character - name of optimizing function. The built-in optimizers are
-##'    \code{\link{Nelder_Mead}} and \code{\link[minqa]{bobyqa}} (from
-##'    the \pkg{minqa} package. Any minimizing function that allows
-##'    box constraints can be used
-##'    provided that it (1) takes input parameters \code{fn} (function
-##'    to be optimized), \code{par} (starting parameter values),
-##'    \code{lower} (lower bounds) and \code{control} (control parameters,
-##'    passed through from the \code{control} argument) and (2)
-##'    returns a list with (at least) elements \code{par} (best-fit
-##'    parameters), \code{fval} (best-fit function value), \code{conv}
-##'    (convergence code) and (optionally) \code{message} (informational
-##'    message, or explanation of convergence failure).
-##'    Special provisions are made for \code{\link{bobyqa}},
-##'    \code{\link{Nelder_Mead}}, and optimizers wrapped in
-##'    the \pkg{optimx} package; to use \pkg{optimx} optimizers
-##'    (including \code{L-BFGS-B} from base \code{\link{optim}} and
-##'    \code{\link{nlminb}}), pass the \code{method} argument to \code{optim}
-##'    in the \code{control} argument.
 ##' @param \dots other potential arguments.  A \code{method} argument was used
 ##'    in earlier versions of the package. Its functionality has been replaced by
 ##'    the \code{REML} argument.
-##' @return An object of class \code{"\linkS4class{merMod}"}, for which many
-##'    methods are available.  See there for details.
-##' @seealso The \code{\linkS4class{merMod}} class, \code{\link[stats]{lm}}
+##' @return An object of class \code{merMod}, for which many
+##'    methods are available (e.g. \code{methods(class="merMod")})
+##' @seealso \code{\link[stats]{lm}}
 ##' @keywords models
 ##' @details
 ##' \itemize{
 ##' \item{If the \code{formula} argument is specified as a character vector,
 ##' the function will attempt to coerce it to a formula. However, this is
 ##' not recommended (users who want to construct formulas by pasting together
-##' components are advised to use \code{\link{as.formula}}); model fits will
+##' components are advised to use \code{\link{as.formula}} or \code{\link{reformulate}}); model fits will
 ##' work but subsequent methods such as \code{\link{drop1}}, \code{\link{update}}
 ##' may fail.}
 ##' \item{Unlike some simpler modeling frameworks such as \code{\link{lm}}
@@ -109,7 +78,7 @@
 ##' less than full rank.  For example, in cases of models with interactions
 ##' that have unobserved combinations of levels, it is up to the user to
 ##' define a new variable (for example creating
-##' \code{ab} within the data from the results of \code{droplevels(interaction(a,b))}).
+##' \code{ab} within the data from the results of \code{interaction(a,b,drop=TRUE)}).
 ##' }
 ##' \item{the deviance function returned when \code{devFunOnly} is \code{TRUE}
 ##' takes a single numeric vector argument, representing the \code{theta} vector.
@@ -130,22 +99,29 @@
 ##' anova(fm1, fm2)
 ##' @export
 ##' @importFrom minqa bobyqa
-lmer <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
-                 control = list(), start = NULL,
+lmer <- function(formula, data=NULL, REML = TRUE, 
+                 control = lmerControl(), start = NULL,
                  verbose = 0L, subset, weights, na.action, offset,
                  contrasts = NULL, devFunOnly=FALSE,
-                 optimizer="Nelder_Mead", ...)
+                 ...)
 {
 
     ## see functions in modular.R for the body ...
     mc <- mcout <- match.call() 
     mc[[1]] <- as.name("lFormula")
+    mc$control <- control$checkControl
     lmod <- eval(mc, parent.frame(1L))  ## parse data and formula
     mcout$formula <- lmod$formula
     lmod$formula <- NULL
-    devfun <- do.call(mkLmerDevfun, lmod) ## create deviance function for covariance parameters (theta)
+    ## create deviance function for covariance parameters (theta)
+    devfun <- do.call(mkLmerDevfun, c(lmod,
+                                      list(verbose=verbose,control=control)))
     if (devFunOnly) return(devfun)
-    opt <- optimizeLmer(devfun, ...)    ## optimize deviance function over covariance parameters
+    ## optimize deviance function over covariance parameters
+    opt <- optimizeLmer(devfun,
+                        optimizer=control$optimizer,
+                        restart_edge=control$restart_edge,
+                        control=control$optControl)
     mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr, mcout) ## prepare output
 }## { lmer }
 
@@ -180,13 +156,11 @@ lmer <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
 ##'
 ##' The default approximation is the Laplace approximation,
 ##' corresponding to \code{nAGQ=1}.
+##' 
 ##' @title Fit Generalized Linear Mixed-Effects Models
 ##' @concept GLMM
 ##' @param family a GLM family, see \code{\link[stats]{glm}} and
 ##'    \code{\link[stats]{family}}.
-##' @param compDev logical scalar - should compiled code be used for the
-##'    deviance evaluation during the optimization of the parameter
-##'    estimates?  Defaults to \code{TRUE}.
 ##' @param nAGQ integer scalar - the number of points per axis for evaluating
 ##'    the adaptive Gauss-Hermite approximation to the log-likelihood.  Applies
 ##'    only to \code{glmer} and defaults to 1, corresponding to the Laplace
@@ -200,49 +174,18 @@ lmer <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
 ##'    \code{theta}, these are used as the starting values for those slots.
 ##'    A numeric \code{start} argument of the appropriate length is used as the
 ##'    starting value of \code{theta}.
-##' @param optimizer which optimizer(s) to use for each phase of optimization.
-##'    A character vector or list of functions.
-##'    If \code{length(optimizer)==2}, the first element will be used
-##'    for the preliminary (random effects parameters only) optimization, while
-##'    the second will be used for the final (random effects plus
-##'    fixed effect parameters) phase. The built-in optimizers are
-##'    \code{\link{Nelder_Mead}} and \code{\link[minqa]{bobyqa}} (from
-##'    the \pkg{minqa} package; the default
-##'    is to use \code{\link[minqa]{bobyqa}} for the first and
-##'    \code{\link{Nelder_Mead}} for the final phase.
-##'    (FIXME: simplify if possible!). For difficult model fits we have found
-##'    \code{\link{Nelder_Mead}} to be more reliable but occasionally slower than
-##'    \code{\link{bobyqa}}. Any minimizing function that allows
-##'    box constraints can be used
-##'    provided that it (1) takes input parameters \code{fn} (function
-##'    to be optimized), \code{par} (starting parameter values),
-##'    \code{lower} (lower bounds) and \code{control} (control parameters,
-##'    passed through from the \code{control} argument) and (2)
-##'    returns a list with (at least) elements \code{par} (best-fit
-##'    parameters), \code{fval} (best-fit function value), \code{conv}
-##'    (convergence code) and (optionally) \code{message} (informational
-##'    message, or explanation of convergence failure).
-##'    Special provisions are made for \code{\link{bobyqa}},
-##'    \code{\link{Nelder_Mead}}, and optimizers wrapped in
-##'    the \pkg{optimx} package; to use \pkg{optimx} optimizers
-##'    (including \code{L-BFGS-B} from base \code{\link{optim}} and
-##'    \code{\link{nlminb}}), pass the \code{method} argument to \code{optim}
-##'    in the \code{control} argument.
 ##'
 ##' @param mustart optional starting values on the scale of the conditional mean,
 ##'    as in \code{\link[stats]{glm}}; see there for details.
 ##' @param etastart optional starting values on the scale of the unbounded
 ##'    predictor as in \code{\link[stats]{glm}}; see there for details.
-##' @param tolPwrss numeric scalar - the tolerance for declaring convergence in
-##'    the penalized iteratively weighted residual sum-of-squares step.
-##'    Defaults to 1e-10.
 ##' @param \dots other potential arguments.  A \code{method} argument was used
 ##'    in earlier versions of the package. Its functionality has been replaced by
 ##'    the \code{nAGQ} argument.
 ##' @inheritParams lmer
-##' @return An object of class \code{"\linkS4class{merMod}"}, for which many
-##'    methods are available.  See there for details.
-##' @seealso The \code{\linkS4class{merMod}} class, \code{\link[stats]{glm}}
+##' @return An object of class \code{glmerMod}, for which many
+##'    methods are available (e.g. \code{methods(class="glmerMod")})
+##' @seealso \code{\link{lmer}} (for details on formulas and parameterization); \code{\link[stats]{glm}}
 ##' @keywords models
 ##' @examples
 ##' ## generalized linear mixed model
@@ -269,11 +212,10 @@ lmer <- function(formula, data=NULL, REML = TRUE, sparseX = FALSE,
 ##'               family = binomial, data = cbpp))
 ##' anova(gm1,gm2)
 ##' @export
-glmer <- function(formula, data=NULL, family = gaussian, sparseX = FALSE,
-                  control = list(), start = NULL, verbose = 0L, nAGQ = 1L,
-                  compDev = TRUE, subset, weights, na.action, offset,
-                  contrasts = NULL, mustart, etastart, devFunOnly = FALSE,
-                  tolPwrss = 1e-7, optimizer=c("bobyqa","Nelder_Mead"), ...)
+glmer <- function(formula, data=NULL, family = gaussian, 
+                  control = glmerControl(), start = NULL, verbose = 0L, nAGQ = 1L,
+                  subset, weights, na.action, offset,
+                  contrasts = NULL, mustart, etastart, devFunOnly = FALSE, ...)
 {
   
     mc <- mcout <- match.call()
@@ -281,11 +223,11 @@ glmer <- function(formula, data=NULL, family = gaussian, sparseX = FALSE,
     ## family-checking code duplicated here and in glFormula (for now) since
     ## we really need to redirect at this point; eventually deprecate formally
     ## and clean up
-    
     if (is.character(family))
         family <- get(family, mode = "function", envir = parent.frame(2))
     if( is.function(family)) family <- family()
     if (isTRUE(all.equal(family, gaussian()))) {
+        ## redirect to lmer (with warning)
         warning("calling glmer() with family=gaussian (identity link) as a shortcut to lmer() is deprecated;",
                 " please call lmer() directly")
         mc[[1]] <- as.name("lmer")
@@ -302,23 +244,27 @@ glmer <- function(formula, data=NULL, family = gaussian, sparseX = FALSE,
     mcout$formula <- attr(glmod, "formula")
     #glmod$formula <- NULL # not necessary now that formula is returned from glFormula as an attribute
     
-    if (length(optimizer)==1) {
-        optimizer <- replicate(2,optimizer)
-    }
 
     ## create deviance function for covariance parameters (theta)
-    devfun <- do.call(mkGlmerDevfun, c(glmod, list(compDev = compDev,
+    devfun <- do.call(mkGlmerDevfun, c(glmod, list(control=control,
                                                    nAGQ = 0))) 
     if (nAGQ==0 && devFunOnly) return(devfun)
-    opt <- optimizeGlmer(devfun, optimizer = optimizer[[1]], nAGQ = nAGQ, ...) # optimize deviance function over covariance parameters
+    ## optimize deviance function over covariance parameters
+    opt <- optimizeGlmer(devfun,
+                         optimizer = control$optimizer[[1]],
+                         restart_edge=control$restart_edge,
+                         control = control$optControl,
+                         nAGQ = nAGQ)
+
     
     if(nAGQ > 0L){
         # update deviance function to include fixed effects as inputs
         devfun <- updateGlmerDevfun(devfun, glmod$reTrms, nAGQ = nAGQ)
         if (devFunOnly) return(devfun)
         # reoptimize deviance function over covariance parameters and fixed effects
-        opt <- optimizeGlmer(devfun, optimizer = optimizer[[2]], 
-                             verbose = verbose, control = control, stage=2)
+        opt <- optimizeGlmer(devfun, optimizer = control$optimizer[[2]], 
+                             verbose = verbose, control = control$optControl,
+                             stage=2)
     }
     # prepare output
     mkMerMod(environment(devfun), opt, glmod$reTrms, fr = glmod$fr, mcout)
@@ -353,11 +299,11 @@ glmer <- function(formula, data=NULL, family = gaussian, sparseX = FALSE,
 ##'               Orange, start = c(Asym = 200, xmid = 725, scal = 350),
 ##'               nAGQ = 0L))
 ##' @export
-nlmer <- function(formula, data=NULL, control = list(), start = NULL, verbose = 0L,
+nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, verbose = 0L,
                   nAGQ = 1L, subset, weights, na.action, offset,
-                  contrasts = NULL, devFunOnly = 0L, tolPwrss = 1e-10,
-                  optimizer="Nelder_Mead", ...)
+                  contrasts = NULL, devFunOnly = FALSE, ...)
 {
+
     vals <- nlformula(mc <- match.call())
     if ((rankX <- rankMatrix(X <- vals$X)) < (p <- ncol(X)))
         stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
@@ -374,19 +320,15 @@ nlmer <- function(formula, data=NULL, control = list(), start = NULL, verbose = 
                              envir = rho$resp$nlenv))))))
     rho$u0 <- rho$pp$u0
     rho$beta0 <- rho$pp$beta0
-    devfun <- mkdevfun(rho, 0L) # deviance as a function of theta only
+    devfun <- mkdevfun(rho, 0L, verbose, control) # deviance as a function of theta only
     if (devFunOnly && !nAGQ) return(devfun)
     devfun(rho$pp$theta) # initial coarse evaluation to get u0 and beta0
     rho$u0 <- rho$pp$u0
     rho$beta0 <- rho$pp$beta0
-    rho$tolPwrss <- tolPwrss # Resetting this is intentional. The initial optimization is coarse.
+    rho$tolPwrss <- control$tolPwrss # Reset control parameter (the initial optimization is coarse)
 
-    if (length(optimizer)==1) {
-        optimizer <- replicate(2,optimizer)
-    }
-
-    opt <- optwrap(optimizer[[1]], devfun, rho$pp$theta, rho$lower,
-                   control=control, adj=FALSE)
+    opt <- optwrap(control$optimizer[[1]], devfun, rho$pp$theta, rho$lower,
+                   control=control$optControl, adj=FALSE)
     rho$control <- attr(opt,"control")
 
     if (nAGQ > 0L) {
@@ -399,11 +341,11 @@ nlmer <- function(formula, data=NULL, control = list(), start = NULL, verbose = 
                 stop("nAGQ > 1 is only available for models with a single, scalar random-effects term")
             rho$fac <- vals$reTrms$flist[[1]]
         }
-        devfun <- mkdevfun(rho, nAGQ)
+        devfun <- mkdevfun(rho, nAGQ, verbose, control)
         if (devFunOnly) return(devfun)
 
-        opt <- optwrap(optimizer[[2]], devfun, par=c(rho$pp$theta, rho$beta0),
-                       lower=rho$lower, control=control,
+        opt <- optwrap(control$optimizer[[2]], devfun, par=c(rho$pp$theta, rho$beta0),
+                       lower=rho$lower, control=control$optControl,
                        adj=TRUE, verbose=verbose)
 
 
@@ -435,6 +377,9 @@ nlmer <- function(formula, data=NULL, control = list(), start = NULL, verbose = 
 ##'     and the random effects are optimized by the iteratively reweighted least
 ##'     squares algorithm.
 ##' @param verbose Logical: print verbose output?
+##' @param control list of control parameters, a subset of those specified
+##'   by \code{\link{lmerControl}} (\code{tolPwrss} and \code{compDev} for GLMMs,
+##' \code{tolPwrss} for NLMMs)
 ##' @return A function of one numeric argument.
 ##' @seealso \code{\link{lmer}}, \code{\link{glmer}} and \code{\link{nlmer}}
 ##' @keywords models
@@ -443,12 +388,12 @@ nlmer <- function(formula, data=NULL, control = list(), start = NULL, verbose = 
 ##' (dd <- lmer(Yield ~ 1|Batch, Dyestuff, devFunOnly=TRUE))
 ##' dd(0.8)
 ##' minqa::bobyqa(1, dd, 0)
-mkdevfun <- function(rho, nAGQ=1L, verbose=0) {
+mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
     ## FIXME: should nAGQ be automatically embedded in rho?
     stopifnot(is.environment(rho), is(rho$resp, "lmResp"))
 
     ## silence R CMD check warnings
-    ## MM *preferred* to globalVariables()
+    ## [MM prefers this approach to globalVariables()]
     fac <- pp <- resp <- lp0 <- compDev <- dpars <- baseOffset <- tolPwrss <-
 	pwrssUpdate <- ## <-- even though it's a function below
 	GQmat <- nlmerAGQ <- NULL
@@ -459,13 +404,17 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0) {
 	rho$lmer_Deviance <- lmer_Deviance
 	function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))
     } else if (is(rho$resp, "glmResp")) {
+        ## control values will override rho values *if present*
+        if (!is.null(tp <- control$tolPwrss)) rho$tolPwrss <- tp
+        if (!is.null(cd <- control$compDev)) rho$compDev <- cd
 	if (nAGQ == 0L)
 	    function(theta) {
 		resp$updateMu(lp0)
 		pp$setTheta(theta)
-		pwrssUpdate(pp, resp, 1e-7, GHrule(0L), compDev, verbose)
-	    }
-	else
+		pwrssUpdate(pp, resp, tolPwrss, GHrule(0L),
+                            compDev, verbose)
+            }
+	else 
 	    function(pars) {
                 ## pp$setDelu(rep(0, length(pp$delu)))
                 resp$setOffset(baseOffset)
@@ -474,11 +423,13 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0) {
                 spars <- as.numeric(pars[-dpars])
                 offset <- if (length(spars)==0) baseOffset else baseOffset + pp$X %*% spars
 		resp$setOffset(offset)
-		pwrssUpdate(pp, resp, tolPwrss, GQmat, compDev, fac, verbose)
+		pwrssUpdate(pp, resp, tolPwrss, GQmat,
+                            compDev, fac, verbose)
 	    }
     } else if (is(rho$resp, "nlsResp")) {
 	if (nAGQ < 2L) {
 	    rho$nlmerLaplace <- nlmerLaplace
+            rho$tolPwrss <- control$tolPwrss
 	    switch(nAGQ + 1L,
 			 function(theta)
 			 .Call(nlmerLaplace, pp$ptr(), resp$ptr(), as.double(theta),
@@ -722,6 +673,7 @@ as.function.merMod <- function(x, ...) {
                            pp=x@pp$copy(),
                            beta0=x@beta,
                            u0=x@u), parent=as.environment("package:lme4"))
+    ## FIXME: extract verbose and control
     mkdevfun(rho, getME(x, "devcomp")$dims["nAGQ"])
 }
 
@@ -1112,7 +1064,6 @@ refit.merMod <- function(object, newresp=NULL, ...)
     rr <- object@resp$copy()
 
     if (!is.null(newresp)) {
-
         if (!is.null(na.act <- attr(object@frame,"na.action"))) {
             ## will only get here if na.action is 'na.omit' or 'na.exclude'
             if (is.matrix(newresp)) {
@@ -1121,9 +1072,11 @@ refit.merMod <- function(object, newresp=NULL, ...)
         }
 
         if (isGLMM(object) && rr$family$family=="binomial") {
+            ## re-do conversion of two-column matrix and factor
+            ##  responses to proportion/weights format
             if (is.matrix(newresp) && ncol(newresp)==2) {
                 ntot <- rowSums(newresp)
-                ## FIXME: test what happens for (0,0) columns
+                ## FIXME: test what happens for (0,0) rows
                 newresp <- newresp[,1]/ntot
                 rr$setWeights(ntot)
             }
@@ -1155,7 +1108,7 @@ refit.merMod <- function(object, newresp=NULL, ...)
                           ## save GQmat in the object and use that instead of nAGQ
                           GQmat=GHrule(nAGQ)), devlist)
     }
-    ff <- mkdevfun(list2env(devlist),nAGQ=nAGQ)
+    ff <- mkdevfun(list2env(devlist),nAGQ=nAGQ, verbose)
     xst       <- rep.int(0.1, nth)
     x0        <- pp$theta
     lower     <- object@lower
@@ -1172,13 +1125,8 @@ refit.merMod <- function(object, newresp=NULL, ...)
         }
     }
     ## control <- c(control,list(xst=0.2*xst, xt=xst*0.0001))
-    ## FIXME: generic optimizer stuff
-### FIXME: Probably should save the control settings and the optimizer name in the merMod object
-    ## FIXME: use optwrap; pull @optinfo from saved values
-
     opt <- optwrap(object@optinfo$optimizer,
                    ff, x0, lower=lower, control=control)
-    ## opt <- Nelder_Mead(ff, x0, lower=lower, control=control)
     if (isGLMM(object)) rr$setOffset(baseOffset)
     mkMerMod(environment(ff), opt,
              list(flist=object@flist, cnms=object@cnms, Gp=object@Gp, lower=object@lower),
@@ -1655,6 +1603,11 @@ getME <- function(object,
         names(object@cnms),object@cnms)))
         nc
     }
+    Tpfun <- function(cnms) {
+        ltsize <- function(x) x*(x+1)/2
+        cLen <- cumsum(ltsize(sapply(cnms,length)))
+        setNames(c(0,cLen),c(names(cnms),"__end"))
+    }
     switch(name,
 	   "X" = PR$X, ## ok ? - check -- use model.matrix() method instead?
 	   "Z" = t(PR$Zt),
@@ -1666,11 +1619,6 @@ getME <- function(object,
              inds <- lapply(seq(nt),seq,to=n,by=nt)  ## pull out individual RE indices
              inds <- lapply(inds,function(x) x + object@Gp[i])  ## add group offset
          }
-         Tpfun <- function(cnms) {
-               ltsize <- function(x) x*(x+1)/2
-               cLen <- cumsum(ltsize(sapply(cnms,length)))
-               setNames(c(0,cLen),c(names(cnms),"__end"))
-           }
          inds <- do.call(c,lapply(seq_along(object@cnms),getInds))
          setNames(lapply(inds,function(i) PR$Zt[i,]),tnames(diag.only=TRUE))
      },
@@ -2175,5 +2123,4 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
     attr(opt,"warnings") <- curWarnings
     opt
 }
-
 

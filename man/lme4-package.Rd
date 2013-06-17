@@ -1,5 +1,6 @@
 \name{lme4-package}
 \alias{lme4}
+\alias{lme4-package}
 \docType{package}
 \title{Linear, generalized linear, and nonlinear mixed models}
 \description{
