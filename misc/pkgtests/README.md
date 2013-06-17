@@ -9,5 +9,6 @@ HTML output of a relatively recent test can be viewed [here](http://htmlpreview.
 
 ### To do
 
-* clean up "current version install" logic slightly?
-* not sure dependencies-of-dependencies logic is correct ...
+#### lme4-specific
+* why isn't `SASmixed` local tarball being picked up?
+* what's up with `R2MLWiN` ?  (not available, not showing up summary table)
