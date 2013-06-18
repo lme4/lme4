@@ -67,9 +67,9 @@ checkPkg <- function(pn,verbose=FALSE,
     rforge <- "http://r-forge.r-project.org"  
     if (!exists("availCRAN")) {
         if (verbose) cat("getting list of available packages from CRAN\n")
-        availCRAN <<- available.packages()
+        availCRAN <<- available.packages(contriburl=contrib.url(getOption("repos")["CRAN"]))
     }
-    if (!exists("availRforge")) {
+    if (!exists("availRforge") || nrow(availRforge)==0) {
         if (verbose) cat("getting list of available packages from R-forge\n")
         availRforge <<- available.packages(contriburl=contrib.url(rforge))
     }

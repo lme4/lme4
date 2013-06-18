@@ -20,6 +20,7 @@ if (FALSE) {
     xx <- read.csv("pkg_notes.csv")
     genReport(rr,testresults,extra=xx)
     checkPkg("HSAUR2")
+    checkPkg("car",checkdir="check")
     checkPkg("difR",checkdir="check",verbose=TRUE)
 }
 
