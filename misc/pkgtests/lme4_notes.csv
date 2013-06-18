@@ -1,6 +1,6 @@
 pkgname,lme4_contact,contacted,notes
 spacom,NA,FALSE,spacom/geospacom have a suggests/depends loop that impedes installation here
-RLRsim,NA,TRUE,looks like just a few glitches in the examples
+RLRsim,NA,TRUE,looks like just a few glitches in the examples; problem fixed, new version submitted to CRAN, not yet propagated
 aod,NA,FALSE,fails because it only imports lme4 then calls lme4::glmer -- evaluation level issues
 agridat,BMB,TRUE,proximal problem is shallow but there are some deeper issues
 boss,BMB,TRUE,fairly simple fixes
@@ -10,3 +10,4 @@ mlmRev,NA,FALSE,this one is ours! running out of memory in vignette ...
 odprism,NA,FALSE,will need to turn off rankZ test. Don't know if there are other issues
 pedigreemm,NA,FALSE,DB contacted; with what results?
 polytomous,NA,FALSE,we have some tests -- models could be fragile?
+PBImisc,SW,TRUE,responded 13/6/2003: "will try to add fixes as soon as possible"
