@@ -17,7 +17,7 @@ if (FALSE) {
     ## playing with results
     L <- load("lme4tests_out.RData")
     rr <- getDepends("lme4")
-    xx <- read.csv("pkg_notes.csv")
+    xx <- read.csv("lme4_notes.csv")
     genReport(rr,testresults,extra=xx)
     checkPkg("HSAUR2")
     checkPkg("car",checkdir="check")

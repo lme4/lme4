@@ -19,9 +19,9 @@ context("Errors and warnings from glmer")
 test_that("glmer", {
     expect_error(glmer(y ~ 1 + (1|block), data=dBc, family=binomial(link="cloglog")),
                  "Response is constant")
-    expect_error(lmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+    expect_warning(lmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                               family = binomial, data = cbpp),
-                   "calling lmer with family\\(\\) is deprecated.*")
+                   "calling lmer with .*family.* is deprecated.*")
     ## expect_equal(m1,m2)
     expect_warning(glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                          family = binomial, data = cbpp, REML=TRUE),

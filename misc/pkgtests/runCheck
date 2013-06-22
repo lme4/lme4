@@ -1,3 +1,4 @@
 #!/bin/bash
 . ./setTestEnv
 R CMD BATCH --vanilla pkgdeptests.R
+## scp lme4_compat_report.html ms.mcmaster.ca:~/public_html/misc

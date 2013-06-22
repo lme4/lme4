@@ -583,7 +583,7 @@ checkArgs <- function(type,...) {
     if(length(l... <- list(...))) {
         if (!is.null(l...[["family"]])) {  # call glmer if family specified
             ## we will only get here if 'family' is *not* in the arg list
-            stop("calling lmer with family() is deprecated: please use glmer() instead")
+            warning("calling lmer with family() is deprecated: please use glmer() instead")
             type <- "glmer"
         }
         ## Check for method argument which is no longer used
