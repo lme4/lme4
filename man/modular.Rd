@@ -11,7 +11,7 @@
 \usage{
   lFormula(formula, data = NULL, REML = TRUE, subset,
     weights, na.action, offset, contrasts = NULL,
-    control = list(), ...)
+    control = lmerControl(), ...)
 
   mkLmerDevfun(fr, X, reTrms, REML = TRUE, start = NULL,
     verbose = 0, control = lmerControl(), ...)
@@ -21,7 +21,7 @@
 
   glFormula(formula, data = NULL, family = gaussian,
     subset, weights, na.action, offset, contrasts = NULL,
-    mustart, etastart, control = list(), ...)
+    mustart, etastart, control = glmerControl(), ...)
 
   mkGlmerDevfun(fr, X, reTrms, family, nAGQ = 1L,
     verbose = 0L, control = glmerControl(), ...)
@@ -35,12 +35,13 @@
 \arguments{
   \item{\dots}{other potential arguments.}
 
-  \item{control}{a list giving (for \code{[g]lFormula})
-  options for checking model specifications; (for
-  \code{mkLmerDevfun,mkGlmerDevfun}) options for inner
-  optimization step; (for \code{optimizeLmer} and
+  \item{control}{a list giving (for \code{[g]lFormula}) all
+  options (see \code{\link{lmerControl}} for running the
+  model; (for \code{mkLmerDevfun,mkGlmerDevfun}) options
+  for inner optimization step; (for \code{optimizeLmer} and
   \code{optimize[Glmer}) control parameters for nonlinear
-  optimizer}
+  optimizer (typically inherited from the \dots argument to
+  \code{lmerControl})}
 
   \item{fr}{A model frame containing the variables needed
   to create an \code{\link{lmerResp}} or
@@ -143,7 +144,8 @@
   first element will be used for the preliminary (random
   effects parameters only) optimization, while the second
   will be used for the final (random effects plus fixed
-  effect parameters) phase.}
+  effect parameters) phase. See \code{\link{modular}} for
+  more information on these two phases.}
 
   \item{restart_edge}{logical - should the optimizer
   attempt a restart when it finds a solution at the

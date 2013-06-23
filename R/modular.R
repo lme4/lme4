@@ -69,9 +69,9 @@ doCheck <- function(x) {
 }
 
 ##' @rdname modular
-##' @param control a list giving (for \code{[g]lFormula}) options for checking model specifications;
+##' @param control a list giving (for \code{[g]lFormula}) all options (see \code{\link{lmerControl}} for running the model;
 ##' (for \code{mkLmerDevfun,mkGlmerDevfun}) options for inner optimization step;
-##' (for \code{optimizeLmer} and \code{optimize[Glmer}) control parameters for nonlinear optimizer
+##' (for \code{optimizeLmer} and \code{optimize[Glmer}) control parameters for nonlinear optimizer (typically inherited from the \dots argument to \code{lmerControl})
 ##' @return \bold{lFormula, glFormula}: A list containing components,
 ##' \item{fr}{model frame}
 ##' \item{X}{fixed-effect design matrix}
@@ -80,11 +80,12 @@ doCheck <- function(x) {
 ##' @export
 lFormula <- function(formula, data=NULL, REML = TRUE, 
                      subset, weights, na.action, offset, contrasts = NULL,
-                     control=list(), ...)
+                     control=lmerControl(), ...)
 {
 
     mf <- mc <- match.call()
 
+    control <- control$checkControl ## this is all we really need
     ignoreArgs <- c("start","verbose","devFunOnly","control")
     l... <- list(...)
     l... <- l...[!names(l...) %in% ignoreArgs]
@@ -92,7 +93,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     if (!is.null(list(...)[["family"]])) {
         ## lmer(...,family=...); warning issued within checkArgs
         mc[[1]] <- as.name("glFormula")
-        return(eval(mc, parent.frame()) )
+        if (missing(control)) mc[["control"]] <- glmerControl()
+        return(eval(mc, parent.frame()))
     }
     
     denv <- checkFormulaData(formula,data)
@@ -109,7 +111,12 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     ## random effects and terms modules
     reTrms <- mkReTrms(findbars(formula[[3]]), fr)
     nlevelVec <- unlist(lapply(reTrms$flist, function(x) nlevels(droplevels(x)) ))
-    if (any(nlevelVec==1)) stop("grouping factors must have > 1 sampled level")
+    cstr <- "check.numlev.gtr.1"
+    if (doCheck(cc <- control[[cstr]]) && any(nlevelVec<2)) {
+        wstr <- "grouping factors must have > 1 sampled level"
+        switch(cc,warning=warning(wstr),stop=stop(wstr),
+               stop(paste0("unknown check level for '",cstr,"'")))
+    }
     if (any(nlevelVec >= nrow(fr)))
         stop("number of levels of each grouping factor must be ",
              "< number of observations")
@@ -119,7 +126,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
         switch(cc,warning=warning(wstr),stop=stop(wstr),
                stop(paste0("unknown check level for '",cstr,"'")))
     }
-    cstr <- "check.rankZ.gtr.obs"
+    cstr <- "check.rankZ.gtreq.obs"
     if (doCheck(cc <- control[[cstr]]) &&                   ## not NULL or "ignore"
         !(grepl(cc,"Small") && prod(dim(reTrms$Zt))>1e6)    ## not "*Small" and large Z mat
         && (rankZ <- rankMatrix(reTrms$Zt)) >= nrow(fr))    ## test
@@ -244,8 +251,10 @@ optimizeLmer <- function(devfun,
 glFormula <- function(formula, data=NULL, family = gaussian, 
                       subset, weights, na.action, offset,
                       contrasts = NULL, mustart, etastart,
-                      control=list(), ...) {
+                      control=glmerControl(), ...) {
     ## FIXME: does start= do anything? test & fix
+
+    control <- control$checkControl ## this is all we really need    
     mf <- mc <- match.call()
                                         # extract family, call lmer for gaussian
     if (is.character(family))
@@ -290,7 +299,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
         !(grepl(cc,"Small") && prod(dim(reTrms$Zt))>1e6)    ## not "*Small" and large Z mat
         && (rankZ <- rankMatrix(reTrms$Zt)) >= nrow(fr))    ## test
     {
-        wstr <- "rank(Z)>=number of observations; variance-covariance matrix will be unidentifiable"
+        wstr <- "rank(Z)>number of observations; variance-covariance matrix will be unidentifiable"
         switch(cc,warningSmall=,warning=warning(wstr),stopSmall=,stop=stop(wstr),
                stop(paste0("unknown check level for '",cstr,"'")))
     }

@@ -41,8 +41,11 @@ namedList <- function(...) {
 ##' @param sparseX logical - should a sparse model matrix be used for the
 ##'    fixed-effects terms?  Defaults to \code{FALSE}. Currently inactive.
 ##' @param restart_edge logical - should the optimizer attempt a restart when it finds a solution at the boundary (i.e. zero random-effect variances or perfect +/-1 correlations)?
-##' @param check.numlev.gtr.5 character - rules for checking whether all random effects have >= 5 levels. "ignore": skip the test. "warn": warn if test fails. "stop": throw an error if test fails.
-##' @param check.rankZ.gtr.obs character - rules for checking whether the rank of the random effects design matrix Z is greater than the number of observations, indicating possible overfitting.  As for \code{check.numlevel.gtr.5}, with the addition of "warnSmall" and "stopSmall", which run the test only if the dimensions of \code{Z} are <1e6.
+##' @param check.numlev.gtreq.5 character - rules for checking whether all random effects have >= 5 levels. "ignore": skip the test. "warn": warn if test fails. "stop": throw an error if test fails.
+##' @param check.numlev.gtr.1 character - rules for checking whether all random effects have > 1 level. As for \code{check.numlevel.gtr.5}.
+##' @param check.rankZ.gtr.obs character - rules for checking whether the rank of the random effects design matrix Z is greater than the number of observations, indicating possible overfitting.  As for \code{check.numlevel.gtreq.5}, with the addition of "warnSmall" and "stopSmall", which run the test only if the dimensions of \code{Z} are <1e6.
+##' @param check.rankZ.gtreq.obs character - as \code{check.rankZ.gtreq.obs}, but tests for rank(Z)>=number of observations; used for GLMMs
+
 ##' @param \dots additional arguments to be passed to the nonlinear optimizer (see \code{\link{NelderMead}},
 ##'    \code{\link[minqa]{bobyqa}})
 ##' @export
@@ -50,7 +53,8 @@ lmerControl <- function(optimizer="Nelder_Mead",
                         restart_edge=TRUE,
                         sparseX=FALSE,
                         check.rankZ.gtr.obs="stopSmall",
-                        check.numlev.gtr.5="warning",
+                        check.numlev.gtreq.5="warning",
+                        check.numlev.gtr.1="stop",
                         ...) {
     ## FIXME: is there a better idiom?  match.call() ?
     ## FIXME: check list(...) against formals(get(optimizer)) ?
@@ -58,7 +62,8 @@ lmerControl <- function(optimizer="Nelder_Mead",
               restart_edge,
               checkControl=
                  namedList(check.rankZ.gtr.obs,
-                        check.numlev.gtr.5),
+                           check.numlev.gtreq.5,
+                           check.numlev.gtr.1),
               optControl=list(...))
 }
 
@@ -73,7 +78,8 @@ lmerControl <- function(optimizer="Nelder_Mead",
 glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
                          restart_edge=TRUE,
                          sparseX=FALSE,
-                         check.rankZ.gtr.obs="stopSmall",
+                         check.rankZ.gtreq.obs="stopSmall",
+                         check.numlev.gtreq.5="warning",
                          tolPwrss = 1e-7,
                          compDev = TRUE,
                          ...) {
@@ -84,7 +90,9 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
               restart_edge,
               tolPwrss,
               compDev,
-              checkControl=namedList(check.rankZ.gtr.obs),
+              checkControl=
+              namedList(check.rankZ.gtreq.obs,
+                        check.numlev.gtreq.5),
               optControl=list(...))
 }
 

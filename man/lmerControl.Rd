@@ -7,11 +7,13 @@
   lmerControl(optimizer = "Nelder_Mead",
     restart_edge = TRUE, sparseX = FALSE,
     check.rankZ.gtr.obs = "stopSmall",
-    check.numlev.gtr.5 = "warning", ...)
+    check.numlev.gtreq.5 = "warning",
+    check.numlev.gtr.1 = "stop", ...)
 
   glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     restart_edge = TRUE, sparseX = FALSE,
-    check.rankZ.gtr.obs = "stopSmall", tolPwrss = 1e-07,
+    check.rankZ.gtreq.obs = "stopSmall",
+    check.numlev.gtreq.5 = "warning", tolPwrss = 1e-07,
     compDev = TRUE, ...)
 
   nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
@@ -45,7 +47,8 @@
   first element will be used for the preliminary (random
   effects parameters only) optimization, while the second
   will be used for the final (random effects plus fixed
-  effect parameters) phase.}
+  effect parameters) phase. See \code{\link{modular}} for
+  more information on these two phases.}
 
   \item{sparseX}{logical - should a sparse model matrix be
   used for the fixed-effects terms?  Defaults to
@@ -56,18 +59,26 @@
   boundary (i.e. zero random-effect variances or perfect
   +/-1 correlations)?}
 
-  \item{check.numlev.gtr.5}{character - rules for checking
-  whether all random effects have >= 5 levels. "ignore":
-  skip the test. "warn": warn if test fails. "stop": throw
-  an error if test fails.}
+  \item{check.numlev.gtreq.5}{character - rules for
+  checking whether all random effects have >= 5 levels.
+  "ignore": skip the test. "warn": warn if test fails.
+  "stop": throw an error if test fails.}
+
+  \item{check.numlev.gtr.1}{character - rules for checking
+  whether all random effects have > 1 level. As for
+  \code{check.numlevel.gtr.5}.}
 
   \item{check.rankZ.gtr.obs}{character - rules for checking
   whether the rank of the random effects design matrix Z is
   greater than the number of observations, indicating
   possible overfitting.  As for
-  \code{check.numlevel.gtr.5}, with the addition of
+  \code{check.numlevel.gtreq.5}, with the addition of
   "warnSmall" and "stopSmall", which run the test only if
   the dimensions of \code{Z} are <1e6.}
+
+  \item{check.rankZ.gtreq.obs}{character - as
+  \code{check.rankZ.gtreq.obs}, but tests for
+  rank(Z)>=number of observations; used for GLMMs}
 
   \item{\dots}{additional arguments to be passed to the
   nonlinear optimizer (see \code{\link{NelderMead}},
