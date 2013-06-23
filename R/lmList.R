@@ -29,6 +29,8 @@ modelFormula <- function(form)
 lmList <- function(formula, data, family, subset, weights,
                    na.action, offset, pool, ...) {
     stopifnot(is(formula, "formula"))
+    ## model.frame(groupedData) is problematic ...
+    data <- as.data.frame(data)
     mCall <- mf <- match.call()           
     m <- match(c("family", "data", "subset", "weights",
                  "na.action", "offset"), names(mf), 0)
