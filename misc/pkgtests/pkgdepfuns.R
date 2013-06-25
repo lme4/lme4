@@ -298,15 +298,19 @@ doPkgDeptests <- function(pkg="lme4",
                           skippkgs=character(0),
                           verbose=TRUE) {
 
-    if (!file.exists(libdir)) dir.create(libdir)
-    if (!file.exists(checkdir)) dir.create(checkdir)
-    if (!file.exists(tarballdir)) dir.create(tarballdir)
+    if (!file.exists(libdir)) dir.create(libdir,showWarnings=FALSE)
+    if (!file.exists(checkdir)) dir.create(checkdir,showWarnings=FALSE)
+    if (!file.exists(tarballdir)) dir.create(tarballdir,showWarnings=FALSE)
 
-    ## FIXME: lme4-specific; should get these straight from DESCRIPTION file
+    ## install focal package
+    ##   expects recent source tarball in working directory
+
+    ## FIXME: package dependencies
+    ##   lme4-specific; should get these straight from DESCRIPTION file
     pkgdep <- c("Rcpp","RcppEigen","minqa")
     if (missing(pkg_tarball) && is.null(pkg_tarball)) {
          pkg_tarball <- list.files(pattern=paste0(pkg,".*.tar.gz"))
-         if (length(pkg_tarball)==0) stop("can't find package tarball")
+         if (length(pkg_tarball)==0) warning("can't find package tarball: not re-installing focal package")
     }
     instPkgs <- installed.packages(lib.loc=libdir,noCache=TRUE)
     pkgdepMiss <- setdiff(pkgdep,c("R",rownames(instPkgs)))
@@ -341,9 +345,6 @@ doPkgDeptests <- function(pkg="lme4",
 
     suppressWarnings(rm(list=c("availCRAN","availRforge"))) ## clean up
 
-    ## make directories ...
-    dir.create(tarballdir,showWarnings=FALSE)
-    dir.create(libdir,showWarnings=FALSE)
     ## want to install additional dependencies etc. out of the way
     ## to keep original installed base clean, but this may not be feasible
     ## it would be nice to use tools:::testInstalledPackages(), but I may simply

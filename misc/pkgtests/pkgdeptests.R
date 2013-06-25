@@ -4,9 +4,9 @@ options(repos=c(CRAN="http://probability.ca/cran",
         rforge="http://r-forge.r-project.org",
         bioc="http://www.bioconductor.org/packages/release/bioc"))
 
-source("pkgdepfuns.R")
-rr <- getDepends("lme4")
-pkgnotes <- read.csv("lme4_notes.csv")
+source("pkgdepfuns.R")    ## define functions
+rr <- getDepends("lme4")  ## download dependency structure from CRAN
+pkgnotes <- read.csv("lme4_notes.csv")  ## 
 testresults <- doPkgDeptests("lme4",verbose=TRUE,do_parallel=FALSE)
 save("testresults",file="lme4tests_out.RData")
 genReport(rr,testresults,extra.info=pkgnotes)

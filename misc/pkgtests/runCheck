@@ -1,4 +1,4 @@
 #!/bin/bash
-. ./setTestEnv
+. ./setTestEnv  ## set environment variables and check.Renvironb
 R CMD BATCH --vanilla pkgdeptests.R
 ## scp lme4_compat_report.html ms.mcmaster.ca:~/public_html/misc
