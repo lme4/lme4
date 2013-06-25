@@ -12,7 +12,7 @@ function(packages, which = c("Depends", "Imports", "LinkingTo"),
          cols=c("Package", "Version", "Maintainer"),         
          recursive = FALSE, getDepType=TRUE)
 {
-    contrib.url(getOption("repos")["CRAN"], "source") # trigger chooseCRANmirror() if required
+    contrib.url(getOption("repos")["CRAN"],type="source") # trigger chooseCRANmirror() if required
     if (length(packages)>1 && getDepType) stop("can't do depType for >1 package")
     description <- sprintf("%s/web/packages/packages.rds",
                            getOption("repos")["CRAN"])
@@ -67,11 +67,11 @@ checkPkg <- function(pn,verbose=FALSE,
     rforge <- "http://r-forge.r-project.org"  
     if (!exists("availCRAN")) {
         if (verbose) cat("getting list of available packages from CRAN\n")
-        availCRAN <<- available.packages(contriburl=contrib.url(getOption("repos")["CRAN"]))
+        availCRAN <<- available.packages(contriburl=contrib.url(getOption("repos")["CRAN"],type="source"), type="source")
     }
     if (!exists("availRforge") || nrow(availRforge)==0) {
         if (verbose) cat("getting list of available packages from R-forge\n")
-        availRforge <<- available.packages(contriburl=contrib.url(rforge))
+        availRforge <<- available.packages(contriburl=contrib.url(rforge,type="source"), type="source")
     }
     .libPaths(libdir)
     ## should include both system files and libdir
@@ -106,8 +106,8 @@ checkPkg <- function(pn,verbose=FALSE,
     if (loc!="local" && !file.exists(tdn <- file.path(tarballdir,tn)))
     {
         if (verbose) cat("downloading tarball\n")
-        basepath <- switch(loc,CRAN=contrib.url(getOption("repos")),
-                           Rforge=contrib.url(rforge),
+        basepath <- switch(loc,CRAN=contrib.url(getOption("repos"),type="source"),
+                           Rforge=contrib.url(rforge,type="source"),
                            loc=stop("tarball not available"))
         download.file(file.path(basepath,tn),
                       destfile=tdn)
@@ -124,7 +124,7 @@ checkPkg <- function(pn,verbose=FALSE,
     depMiss <- setdiff(depList,c("R",rownames(instPkgs)))
     if (length(depMiss)>0) {
         if (verbose) cat("installing dependencies",depMiss,"\n")
-        install.packages(depMiss,lib=libdir,dependencies=TRUE)
+        install.packages(depMiss,lib=libdir,dependencies=TRUE,type="source")
         rPath <- if (loc=="CRAN") getOption("repos") else c(rforge,getOption("repos"))
         instPkgs <- installed.packages(noCache=TRUE,lib.loc=libdir)  ## update installed package info
    }
@@ -315,7 +315,7 @@ doPkgDeptests <- function(pkg="lme4",
     instPkgs <- installed.packages(lib.loc=libdir,noCache=TRUE)
     pkgdepMiss <- setdiff(pkgdep,c("R",rownames(instPkgs)))
     if (length(pkgdepMiss)>0)
-        install.packages(pkgdepMiss,lib=libdir)
+        install.packages(pkgdepMiss,lib=libdir, type="source")
     if (!is.null(pkg_tarball)) {
         ## FIXME: check if newer than installed version
         tb0time <- file.info(pkg_tarball)$mtime
@@ -324,7 +324,7 @@ doPkgDeptests <- function(pkg="lme4",
             file.info(file.path(libdir,pkg))$mtime
         }
         if (tb0time>pkgtime)
-            install.packages(pkg_tarball,repos=NULL,lib=libdir)
+            install.packages(pkg_tarball,repos=NULL,lib=libdir,type="source")
     }
     ## * must export R_LIBS_SITE=./library before running R CMD BATCH
     ##   and  make sure that .R/check.Renviron is set
