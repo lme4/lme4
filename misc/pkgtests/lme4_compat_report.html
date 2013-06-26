@@ -22,7 +22,7 @@
 
 <p class='character'>lme4 version: 0.99999911.4</p>
 
-<p class='character'>Test date:  Fri Jun 21 10:08:50 2013</p>
+<p class='character'>Test date:  Wed Jun 26 00:49:59 2013</p>
 
  <h2 > Notes</h2>
 
@@ -45,12 +45,12 @@
 <tr><td class=firstcolumn>error_depfail</td>
 <td class=cellinside> 1</td>
 <td class=cellinside> 0</td>
-<td class=cellinside> 0</td></tr>
+<td class=cellinside> 1</td></tr>
  
 <tr><td class=firstcolumn>error_examples</td>
-<td class=cellinside>10</td>
+<td class=cellinside>11</td>
 <td class=cellinside> 1</td>
-<td class=cellinside> 6</td></tr>
+<td class=cellinside> 7</td></tr>
  
 <tr><td class=firstcolumn>error_install</td>
 <td class=cellinside> 6</td>
@@ -58,14 +58,14 @@
 <td class=cellinside> 0</td></tr>
  
 <tr><td class=firstcolumn>error_vignette</td>
-<td class=cellinside> 2</td>
 <td class=cellinside> 1</td>
-<td class=cellinside> 2</td></tr>
+<td class=cellinside> 1</td>
+<td class=cellinside> 1</td></tr>
  
 <tr><td class=firstcolumn>OK</td>
 <td class=cellinside>15</td>
 <td class=cellinside> 3</td>
-<td class=cellinside>31</td></tr>
+<td class=cellinside>30</td></tr>
  
 	</tbody>
 </table>
@@ -111,7 +111,7 @@ cursor: pointer ;
 </td>
 <td class=cellinside>Rforge
 </td>
-<td class=cellinside>0.5-71
+<td class=cellinside>0.6-72
 </td>
 <td class=cellinside>Henrik Singmann
 &lt;henrik.singmann@psychologie.uni-freiburg.de&gt
@@ -166,13 +166,13 @@ cursor: pointer ;
 </td>
 <td class=cellinside><font style="color:red">error_examples</font>
 </td>
-<td class=cellinside>  calling lmer with family() is deprecated: please use glmer() instead<br>Calls: lmer -> eval -> eval -> lFormula -> do.call -> checkArgs<br>Execution halted
+<td class=cellinside>  grouping factors must have > 1 sampled level<br>Calls: lmer -> eval -> eval -> lFormula<br>Execution halted
 </td>
 <td class=cellinside>BMB
 </td>
 <td class=cellinside> TRUE
 </td>
-<td class=cellinside>proximal problem is shallow but there are some deeper issues
+<td class=cellinside>proximal: set control=lmerControl(check.numlev.gtr.1='ignore') in federer.diag
 </td></tr>
  
 <tr> 
@@ -188,15 +188,15 @@ cursor: pointer ;
 </td>
 <td class=cellinside>Marc J. Mazerolle &lt;marc.mazerolle@uqat.ca&gt
 </td>
-<td class=cellinside><font style="color:blue">OK</font>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>Error in aictab(cand.set = Cands, modnames = Model.names, sort = TRUE) : <br>Function not yet defined for this object class<br>Execution halted
+</td>
+<td class=cellinside>BMB
+</td>
+<td class=cellinside>FALSE
 </td>
 <td class=cellinside>
-</td>
-<td class=cellinside> 
-</td>
-<td class=cellinside>   NA
-</td>
-<td class=cellinside> 
 </td></tr>
  
 <tr> 
@@ -216,11 +216,11 @@ cursor: pointer ;
 </td>
 <td class=cellinside>Error in eval(expr, envir, enclos) : could not find function "glFormula"<br>Calls: iccbin -> <Anonymous> -> eval -> eval<br>Execution halted
 </td>
-<td class=cellinside> 
+<td class=cellinside>BMB
 </td>
-<td class=cellinside>FALSE
+<td class=cellinside> TRUE
 </td>
-<td class=cellinside>fails because it only imports lme4 then calls lme4::glmer -- evaluation level issues
+<td class=cellinside>fails because it only imports lme4 then calls lme4::glmer -- evaluation level issues. Deprecated by authors in favour of aods3??
 </td></tr>
  
 <tr> 
@@ -264,11 +264,11 @@ cursor: pointer ;
 </td>
 <td class=cellinside>  unable to find an inherited method for function 'display' for signature '"lmerMod"'<br>Calls: display -> <Anonymous><br>Execution halted
 </td>
-<td class=cellinside> 
+<td class=cellinside>SW
 </td>
 <td class=cellinside>   NA
 </td>
-<td class=cellinside> 
+<td class=cellinside>proximal problem is nonexistence of display.merMod, but we know sim() will need lots of modification
 </td></tr>
  
 <tr> 
@@ -384,11 +384,11 @@ cursor: pointer ;
 </td>
 <td class=cellinside>
 </td>
-<td class=cellinside> 
+<td class=cellinside>BMB
 </td>
-<td class=cellinside>   NA
+<td class=cellinside> TRUE
 </td>
-<td class=cellinside> 
+<td class=cellinside>fine
 </td></tr>
  
 <tr> 
@@ -412,7 +412,7 @@ cursor: pointer ;
 </td>
 <td class=cellinside> TRUE
 </td>
-<td class=cellinside>passes checks -- but Anova.merMod doesn't work 
+<td class=cellinside>
 </td></tr>
  
 <tr> 
@@ -481,9 +481,9 @@ cursor: pointer ;
 </td>
 <td class=cellinside>*** moving datasets to lazyload DB<br>** inst<br>** preparing package for lazy loading<br>Error : classes "mer", "summary.mer" are not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'cplm'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/cplm.Rcheck/cplm'
 </td>
-<td class=cellinside> 
+<td class=cellinside>BMB
 </td>
-<td class=cellinside>   NA
+<td class=cellinside>FALSE
 </td>
 <td class=cellinside> 
 </td></tr>
@@ -601,9 +601,9 @@ cursor: pointer ;
 </td>
 <td class=cellinside>Error in eval(expr, envir, enclos) : could not find function "lFormula"<br>Calls: equi.gene.norm ... equi.gene.norm.EM -> computeAuxillaryParameters -> lmer -> eval -> eval<br>Execution halted
 </td>
-<td class=cellinside> 
+<td class=cellinside>BMB
 </td>
-<td class=cellinside>   NA
+<td class=cellinside>FALSE
 </td>
 <td class=cellinside> 
 </td></tr>
@@ -695,11 +695,11 @@ cursor: pointer ;
 </td>
 <td class=cellinside><font style="color:red">error_examples</font>
 </td>
-<td class=cellinside>  calling lmer with family() is deprecated: please use glmer() instead<br>Calls: gamm4 ... lmer -> eval -> eval -> lFormula -> do.call -> checkArgs<br>Execution halted
+<td class=cellinside>Error in b$FL : $ operator not defined for this S4 class<br>Calls: gamm4<br>Execution halted
 </td>
-<td class=cellinside> 
+<td class=cellinside>MM
 </td>
-<td class=cellinside>   NA
+<td class=cellinside>FALSE
 </td>
 <td class=cellinside> 
 </td></tr>
@@ -769,9 +769,9 @@ cursor: pointer ;
 </td>
 <td class=cellinside>  unable to find an inherited method for function 'sigma.hat' for signature '"lmerMod"'<br>Calls: MLGI -> sigma.hat -> <Anonymous><br>Execution halted
 </td>
-<td class=cellinside> 
+<td class=cellinside>MM
 </td>
-<td class=cellinside>   NA
+<td class=cellinside>FALSE
 </td>
 <td class=cellinside> 
 </td></tr>
@@ -887,7 +887,7 @@ cursor: pointer ;
 </td>
 <td class=cellinside><font style="color:red">error_vignette</font>
 </td>
-<td class=cellinside>Error: calling lmer with family() is deprecated: please use glmer() instead<br>Execution halted<br>
+<td class=cellinside>Error: no slot of name "y" for this object of class "lmerMod"<br>Execution halted<br>
 </td>
 <td class=cellinside> 
 </td>
@@ -913,9 +913,9 @@ cursor: pointer ;
 </td>
 <td class=cellinside>*** moving datasets to lazyload DB<br>** inst<br>** preparing package for lazy loading<br>Error : object 'summary' is not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'influence.ME'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/influence.ME.Rcheck/influence.ME'
 </td>
-<td class=cellinside> 
+<td class=cellinside>MM
 </td>
-<td class=cellinside>   NA
+<td class=cellinside>FALSE
 </td>
 <td class=cellinside> 
 </td></tr>
@@ -985,7 +985,7 @@ cursor: pointer ;
 </td>
 <td class=cellinside>
 </td>
-<td class=cellinside> 
+<td class=cellinside>SW
 </td>
 <td class=cellinside>FALSE
 </td>
@@ -1047,7 +1047,7 @@ cursor: pointer ;
 </td>
 <td class=cellinside><font style="color:blue">Depends</font>
 </td>
-<td class=cellinside>CRAN
+<td class=cellinside>Rforge
 </td>
 <td class=cellinside>1.2-1
 </td>
@@ -1057,9 +1057,9 @@ cursor: pointer ;
 </td>
 <td class=cellinside>** preparing package for lazy loading<br>Error in reconcilePropertiesAndPrototype(name, slots, prototype, superClasses,  : <br>  no definition was found for superclass "mer" in the specification of class "merLmerTest"<br>Error : unable to load R code in package 'lmerTest'<br>ERROR: lazy loading failed for package 'lmerTest'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/lmerTest.Rcheck/lmerTest'
 </td>
-<td class=cellinside> 
+<td class=cellinside>MM
 </td>
-<td class=cellinside>   NA
+<td class=cellinside>FALSE
 </td>
 <td class=cellinside> 
 </td></tr>
@@ -1169,7 +1169,7 @@ cursor: pointer ;
 </td>
 <td class=cellinside>CRAN
 </td>
-<td class=cellinside>1.8-0
+<td class=cellinside>1.9-0
 </td>
 <td class=cellinside>Wolfgang Viechtbauer &lt;wvb@metafor-project.org&gt
 </td>
@@ -1197,9 +1197,9 @@ cursor: pointer ;
 </td>
 <td class=cellinside>Bendix Carstensen &lt;bxc@steno.dk&gt
 </td>
-<td class=cellinside><font style="color:blue">OK</font>
+<td class=cellinside><font style="color:purple">error_depfail</font>
 </td>
-<td class=cellinside>
+<td class=cellinside>Package suggested but not available: 'BRugs'
 </td>
 <td class=cellinside> 
 </td>
@@ -1225,9 +1225,9 @@ cursor: pointer ;
 </td>
 <td class=cellinside>** data<br>** inst<br>** preparing package for lazy loading<br>Error : objects 'coef', 'fitted', 'resid', 'residuals', 'plot' are not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'mi'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/mi.Rcheck/mi'
 </td>
-<td class=cellinside> 
+<td class=cellinside>MM
 </td>
-<td class=cellinside>   NA
+<td class=cellinside>FALSE
 </td>
 <td class=cellinside> 
 </td></tr>
@@ -1297,9 +1297,9 @@ cursor: pointer ;
 </td>
 <td class=cellinside>  invalid class "MixMAP" object: undefined class for slot "lmer.out" ("mer")<br>Calls: MixMAP -> new -> initialize -> initialize -> validObject<br>Execution halted
 </td>
-<td class=cellinside> 
+<td class=cellinside>MM
 </td>
-<td class=cellinside>   NA
+<td class=cellinside>FALSE
 </td>
 <td class=cellinside> 
 </td></tr>
@@ -1317,15 +1317,15 @@ cursor: pointer ;
 </td>
 <td class=cellinside>&lt;lme4-authors@R-forge.wu-wien.ac.at&gt
 </td>
-<td class=cellinside><font style="color:red">error_vignette</font>
+<td class=cellinside><font style="color:red">error_examples</font>
 </td>
-<td class=cellinside>Error: cannot allocate vector of size 2.0 Gb<br>Execution halted<br>
+<td class=cellinside>  Cholmod error 'out of memory' at file ../Core/cholmod_memory.c, line 147<br>Calls: lmer ... svd -> as.matrix -> as.matrix.Matrix -> as -> asMethod<br>Execution halted
 </td>
-<td class=cellinside> 
+<td class=cellinside>SW
 </td>
 <td class=cellinside>FALSE
 </td>
-<td class=cellinside>this one is ours! running out of memory in vignette ...
+<td class=cellinside>very slow/memory-hungry; will skip. Should see whether this is equally bad in lme4.0, or is lme4 1.0 greedier/slower???
 </td></tr>
  
 <tr> 
@@ -1365,9 +1365,9 @@ cursor: pointer ;
 </td>
 <td class=cellinside>Torsten Hothorn &lt;Torsten.Hothorn@R-project.org&gt
 </td>
-<td class=cellinside><font style="color:red">error_vignette</font>
+<td class=cellinside><font style="color:blue">OK</font>
 </td>
-<td class=cellinside>Error: calling lmer with family() is deprecated: please use glmer() instead<br>Execution halted<br>
+<td class=cellinside>
 </td>
 <td class=cellinside> 
 </td>
@@ -1489,11 +1489,11 @@ cursor: pointer ;
 </td>
 <td class=cellinside>  rank(Z)>=number of observations; variance-covariance matrix will be unidentifiable<br>Calls: odprismB -> lmer -> eval -> eval -> lFormula<br>Execution halted
 </td>
-<td class=cellinside> 
+<td class=cellinside>SW
 </td>
 <td class=cellinside>FALSE
 </td>
-<td class=cellinside>will need to turn off rankZ test. Don't know if there are other issues
+<td class=cellinside>proximal: set control=*lmerControl(check.rankZ.gtr.numobs="ignore")
 </td></tr>
  
 <tr> 
@@ -1589,7 +1589,7 @@ cursor: pointer ;
 </td>
 <td class=cellinside> TRUE
 </td>
-<td class=cellinside>responded 13/6/2003: will try to add fixes as soon as possible
+<td class=cellinside>responded 13/6/2003: "will try to add fixes as soon as possible"
 </td></tr>
  
 <tr> 
@@ -1623,9 +1623,9 @@ cursor: pointer ;
 </td>
 <td class=cellinside><font style="color:blue">Depends</font>
 </td>
-<td class=cellinside>local
+<td class=cellinside>CRAN
 </td>
-<td class=cellinside>0.2-5
+<td class=cellinside>0.2-4
 </td>
 <td class=cellinside>Ana Ines Vazquez &lt;anainesvs@gmail.com&gt
 </td>
@@ -1633,9 +1633,9 @@ cursor: pointer ;
 </td>
 <td class=cellinside>** preparing package for lazy loading<br>Error in reconcilePropertiesAndPrototype(name, slots, prototype, superClasses,  : <br>  no definition was found for superclass "mer" in the specification of class "pedigreemm"<br>Error : unable to load R code in package 'pedigreemm'<br>ERROR: lazy loading failed for package 'pedigreemm'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/pedigreemm.Rcheck/pedigreemm'
 </td>
-<td class=cellinside> 
+<td class=cellinside>DB
 </td>
-<td class=cellinside>FALSE
+<td class=cellinside>   NA
 </td>
 <td class=cellinside>DB contacted; with what results?
 </td></tr>
@@ -1655,13 +1655,13 @@ cursor: pointer ;
 </td>
 <td class=cellinside><font style="color:red">error_vignette</font>
 </td>
-<td class=cellinside>66: Error: $ operator not defined for this S4 class<br>67: Execution halted<br>68: 
+<td class=cellinside>Error: $ operator not defined for this S4 class<br>Execution halted<br>
 </td>
 <td class=cellinside>SW
 </td>
-<td class=cellinside>FALSE
+<td class=cellinside> TRUE
 </td>
-<td class=cellinside>looks like problem with car package -- but car passes tests?
+<td class=cellinside>car-related problems sorted; remaining issues should be package-specific
 </td></tr>
  
 <tr> 
@@ -1679,7 +1679,7 @@ cursor: pointer ;
 </td>
 <td class=cellinside><font style="color:red">error_examples</font>
 </td>
-<td class=cellinside>  calling lmer with family() is deprecated: please use glmer() instead<br>Calls: lmer -> eval -> eval -> lFormula -> do.call -> checkArgs<br>Execution halted
+<td class=cellinside>> summary(fit.lmer)@AICtab<br>Error: trying to get slot "AICtab" from an object (class "summary.merMod") that is not an S4 object <br>Execution halted
 </td>
 <td class=cellinside> 
 </td>
@@ -1703,9 +1703,9 @@ cursor: pointer ;
 </td>
 <td class=cellinside><font style="color:red">error_examples</font>
 </td>
-<td class=cellinside>  calling lmer with family() is deprecated: please use glmer() instead<br>Calls: polytomous -> polytomous.poisson.reformulation<br>Execution halted
+<td class=cellinside>Error : pwrssUpdate did not converge in 30 iterations<br>Calls: polytomous -> polytomous.poisson.reformulation<br>Execution halted
 </td>
-<td class=cellinside> 
+<td class=cellinside>SW
 </td>
 <td class=cellinside>FALSE
 </td>
@@ -1727,11 +1727,11 @@ cursor: pointer ;
 </td>
 <td class=cellinside><font style="color:red">error_examples</font>
 </td>
-<td class=cellinside>  calling lmer with family() is deprecated: please use glmer() instead<br>Calls: prLogisticDelta ... lmer -> eval -> eval -> lFormula -> do.call -> checkArgs<br>Execution halted
+<td class=cellinside>  There are not glm and lmer models. Revise arguments and try again<br>Calls: prLogisticDelta -> pr.conditional<br>Execution halted
 </td>
-<td class=cellinside> 
+<td class=cellinside>SW
 </td>
-<td class=cellinside>   NA
+<td class=cellinside>FALSE
 </td>
 <td class=cellinside> 
 </td></tr>
@@ -1777,9 +1777,9 @@ cursor: pointer ;
 </td>
 <td class=cellinside>** R<br>** inst<br>** preparing package for lazy loading<br>Error : object 'logLik' is not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'R2STATS'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/R2STATS.Rcheck/R2STATS'
 </td>
-<td class=cellinside> 
+<td class=cellinside>SW
 </td>
-<td class=cellinside>   NA
+<td class=cellinside>FALSE
 </td>
 <td class=cellinside> 
 </td></tr>
@@ -1801,11 +1801,11 @@ cursor: pointer ;
 </td>
 <td class=cellinside>> X <- m@X<br>Error: no slot of name "X" for this object of class "lmerMod"<br>Execution halted
 </td>
-<td class=cellinside> 
+<td class=cellinside>BMB
 </td>
 <td class=cellinside> TRUE
 </td>
-<td class=cellinside>looks like just a few glitches in the examples; problem fixed, new version submitted to CRAN, not yet propagated
+<td class=cellinside>should be fixed in version 2.1-0? But not yet propagated to CRAN
 </td></tr>
  
 <tr> 
@@ -1923,9 +1923,9 @@ cursor: pointer ;
 </td>
 <td class=cellinside> 
 </td>
-<td class=cellinside>FALSE
+<td class=cellinside> TRUE
 </td>
-<td class=cellinside>spacom/geospacom have a suggests/depends loop that impedes installation here
+<td class=cellinside>spacom/geospacom have a suggests/depends loop that impedes installation here (and BMB is having rgeos install problems too)
 </td></tr>
  
 <tr> 
@@ -2031,7 +2031,7 @@ cursor: pointer ;
 
 <hr size=1>
 <font size=-1>
-	 Generated on: <i>Fri Jun 21 10:08:50 2013</i> - <b>R2HTML</b> 
+	 Generated on: <i>Wed Jun 26 00:49:59 2013</i> - <b>R2HTML</b> 
 <hr size=1>
 	</body>
 </html>
