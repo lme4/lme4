@@ -2,7 +2,7 @@
 
 ## Version numbering
 
-As [previously announced on the lme4 mailing list][announce], we will shortly be releasing a new version of `lme4`, a descendant of the previous development version `lme4Eigen`. For users who do not access any internal structures, there will be few backward-incompatible changes.
+As [previously announced on the lme4 mailing list][announce], we will shortly be releasing a new version of `lme4`, a descendant of the previous development version `lme4Eigen`. For users who do not access any internal structures, there will be few backward-incompatible changes. A feature freeze is scheduled for 8 July 2013, and the release is planned for 1 August 2013.
 
 [announce]: https://stat.ethz.ch/pipermail/r-sig-mixed-models/2012q1/014811.html
 
@@ -10,7 +10,7 @@ As [previously announced on the lme4 mailing list][announce], we will shortly be
 * The current CRAN version (0.999375-42) will be replaced by a nearly identical version called `lme4.0` (currently version 0.9999-2).  `lme4.0` is a maintenance version and will only be changed to fix documented bugs. `mer` objects from older versions of `lme4` can be converted to `lme4.0`-usable form via `convert_old_lme4()` in the `lme4.0` package.
 * all other versions (`lme4a`, `lme4b`, `lme4Eigen` from R-forge) are deprecated.
 
-## Release notes for end-users
+## For end-users
 
 ### Changes in behavior
 * Because the internal computational machinery has changed, results from the newest version of `lme4` will not be numerically identical to those from previous versions.  For reasonably well-defined fits, they will be extremely close (within numerical tolerances of 1e-4 or so), but for unstable or poorly-defined fits the results may change, and very unstable fits may fail when they (apparently) succeeded with previous versions. Similarly, some fits may be slower with the new version, although on average the new version should be faster and more stable. There are more numerical tuning options available than before (see below); non-default settings may restore the speed and/or ability to fit a particular model without an error. If you notice significant or disturbing changes when fitting a model with the new version of `lme4`, **please notify the maintainers**.
@@ -35,14 +35,16 @@ As [previously announced on the lme4 mailing list][announce], we will shortly be
 * Ability to extract a deviance function for the model, allowing further diagnostics/customization of model results
 
 ### Still non-existent features
-* Automatic MCMC sampling based on the fit turns out to be very difficult to implement in a way that is really broadly reliable and robust; `mcmcsamp` will not be implemented in the near future
+* Automatic MCMC sampling based on the fit turns out to be very difficult to implement in a way that is really broadly reliable and robust; `mcmcsamp` will not be implemented in the near future. We recommend parametric boostrapping via `bootMer`, or the Kenward-Roger 
+approximation implemented in the `pbkrtest` package and leveraged by the `lmerTest` package and the `Anova` function in the `car` package.
+
 * "R-side" structures (within-block correlation and heteroscedasticity) are not on the current timetable
 
 ## Notes for package writers
 
 [Current package compatibility test results][pkgtest]
 
-[pkgtest]: ./lme4_compat_report.html
+[pkgtest]: http://htmlpreview.github.io/?https://github.com/lme4/lme4/blob/master/misc/pkgtests/lme4_compat_report.html
 
 * `lme4`-old and `lme4.0` produce objects of class `mer`, `lme4`-new produces `merMod` objects, so any methods written for class `mer` will at least have to be copied to work with class `merMod`
 * You can distinguish `lme4`-old from `lme4`-new via package version; the last old-style version of `lme4` on CRAN is 0.999375-42, so anything after that is `lme4`-new (the current version on <http://lme4.r-forge.r-project.org/repos> is 0.999902344-0).
