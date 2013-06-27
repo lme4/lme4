@@ -1,4 +1,4 @@
-# lme4 release guide
+# lme4 release notes, v 1.0
 
 ## Version numbering
 
@@ -6,8 +6,21 @@ As [previously announced on the lme4 mailing list][announce], we will shortly be
 
 [announce]: https://stat.ethz.ch/pipermail/r-sig-mixed-models/2012q1/014811.html
 
-* the version of `lme4` currently on [https://github.com/lme4/lme4/](github) should be used for new projects if possible; periodically rebuilt versions are available from `http://lme4.r-forge.r-project.org/repos`, or the most recent version can be installed (from source: development toolchain including compiler etc. are required, and you may have to install `RcppEigen` from CRAN first) via `library("devtools"); install_github("lme4",user="lme4")`
-* The current CRAN version (0.999375-42) will be replaced by a nearly identical version called `lme4.0` (currently version 0.9999-2).  `lme4.0` is a maintenance version and will only be changed to fix documented bugs. `mer` objects from older versions of `lme4` can be converted to `lme4.0`-usable form via `convert_old_lme4()` in the `lme4.0` package.
+* the version of `lme4` currently on [https://github.com/lme4/lme4/](github) should be used for new projects if possible; periodically rebuilt versions are available via
+
+```r
+install.packages("lme4", repos = c("http://lme4.r-forge.r-project.org/repos", 
+    getOptions("repos")["CRAN"]))
+```
+
+or the most recent version can be installed (from source: development toolchain including compiler etc. are required, and you may have to install `RcppEigen` from CRAN first) via 
+
+```r
+library("devtools")
+install_github("lme4", user = "lme4")
+```
+
+* The current CRAN version (0.999999-2) will be replaced by a nearly identical version called `lme4.0` (currently version 0.9999-2).  `lme4.0` is a maintenance version and will only be changed to fix documented bugs. `mer` objects from older versions of `lme4` can be converted to `lme4.0`-usable form via `convert_old_lme4()` in the `lme4.0` package.
 * all other versions (`lme4a`, `lme4b`, `lme4Eigen` from R-forge) are deprecated.
 
 ## For end-users
@@ -25,14 +38,14 @@ As [previously announced on the lme4 mailing list][announce], we will shortly be
 * `[gn]lmer` now produces objects of class `merMod` rather than class `mer` as before
 
 ### New features
-* A general-purpose `getME()` accessor method has been used to allow extraction of a wide variety of components of a mixed-model fit; this has been backported to `lme4.0` for compatibility
-* `bootMer`, a framework for obtaining parameter confidence intervals by parametric bootstrapping
-* `plot` methods similar to those from the `nlme` package (although missing `augPred`)
-* A `predict` method, allowing a choice of which random effects are included in the prediction
-* Likelihood profiling (and profile confidence intervals) for `lmer` and `glmer` results
-* `nAGQ=0`, an option to do fast (but inaccurate) fitting of GLMMs
-* Negative binomial models
-* Ability to extract a deviance function for the model, allowing further diagnostics/customization of model results
+* A general-purpose `getME()` accessor method has been used to allow extraction of a wide variety of components of a mixed-model fit; this has been backported to `lme4.0` for compatibility.
+* `bootMer`, a framework for obtaining parameter confidence intervals by parametric bootstrapping.
+* `plot` methods similar to those from the `nlme` package (although missing `augPred`).
+* A `predict` method, allowing a choice of which random effects are included in the prediction.
+* Likelihood profiling (and profile confidence intervals) for `lmer` and `glmer` results.
+* `nAGQ=0`, an option to do fast (but inaccurate) fitting of GLMMs.
+* Using `devFunOnly=TRUE` allows the user to extract a deviance function for the model, allowing further diagnostics/customization of model results.
+* Negative binomial models (still under development).
 
 ### Still non-existent features
 * Automatic MCMC sampling based on the fit turns out to be very difficult to implement in a way that is really broadly reliable and robust; `mcmcsamp` will not be implemented in the near future. We recommend parametric boostrapping via `bootMer`, or the Kenward-Roger 
@@ -49,7 +62,7 @@ approximation implemented in the `pbkrtest` package and leveraged by the `lmerTe
 * `lme4`-old and `lme4.0` produce objects of class `mer`, `lme4`-new produces `merMod` objects, so any methods written for class `mer` will at least have to be copied to work with class `merMod`
 * You can distinguish `lme4`-old from `lme4`-new via package version; the last old-style version of `lme4` on CRAN is 0.999375-42, so anything after that is `lme4`-new (the current version on <http://lme4.r-forge.r-project.org/repos> is 0.999902344-0).
 * So you can test e.g. if `packageVersion("lme4")<="0.999375-43"` (yes, you do want the quotation marks; package versions are weird objects in R).
-* A
+* For example:
 
 ```r
 if (inherits(object, "merMod")) {
@@ -69,8 +82,8 @@ if (inherits(object, "merMod")) {
 
 ### Things that won't work
 
-* Direct extraction of slots via `@` (use `getME()` instead).
+* Direct extraction of slots via `@` (please use `getME()` instead).
 * Methods that depend on `lme4` producing objects of class `mer` (write new methods for class `merMod`; `lme4` now has `isLMM()`, `isGLMM()`, `isNLMM()` that should help you distinguish different types of model if you need to).
 * The `method` argument is no longer used in `glmer` (`nAGQ=1` vs `nAGQ>1` specifies whether to use Laplace or AGQ).
 * `expandSlash` no longer exists (although it does exist within the `findbars` function: could be reconstituted??).
-* Because S4 methods are used less, and (S4) *reference* classes are used, considerably fewer methods are exported, but they are generally available as reference class method "slots".
+* Because S4 methods are used less, and (S4) *reference* classes are used, considerably fewer methods are exported, but they are generally available as reference class method "slots" (if absolutely necessary: see the first bullet point above).
