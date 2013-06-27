@@ -107,14 +107,19 @@ lmer <- function(formula, data=NULL, REML = TRUE,
 {
 
     ## see functions in modular.R for the body ...
-    mc <- mcout <- match.call() 
+    if (!inherits(control,"merControl")) {
+        ## back-compatibility kluge
+        warning("passing control as list is deprecated: please use lmerControl() instead")
+        control <- do.call(lmerControl,control)
+    }
+    mc <- mcout <- match.call()
+    mc$control <- control ## update for  back-compatibility kluge
     if (!is.null(list(...)[["family"]])) {
        warning("calling lmer with 'family' is deprecated; please use glmer() instead")
        mc[[1]] <- as.name("glmer")
        return(eval(mc,parent.frame(1L)))
     }
     mc[[1]] <- as.name("lFormula")
-    mc$control <- control$checkControl
     lmod <- eval(mc, parent.frame(1L))  ## parse data and formula
     mcout$formula <- lmod$formula
     lmod$formula <- NULL

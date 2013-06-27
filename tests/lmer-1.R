@@ -301,10 +301,10 @@ fakedat <- data.frame(DA=factor(rep(flevels,rep(n,levs))),
 fakedat[sample(nrow(fakedat),100),"zbmi"] <- NA
 fakedat[sample(nrow(fakedat),100),"DA"] <- NA
 m5 <- lmer(zbmi ~ (1|DA) , data = fakedat,
-                       control=lmerControl(check.rankZ.gtreq.obs="ignore"))
+                       control=lmerControl(check.numobs.gtr.rankZ="ignore"))
 stopifnot(c(VarCorr(m5)[["DA"]])==0)
 m6 <- lmer(zbmi ~ (1|DA) , data = na.omit(fakedat),
-                       control=lmerControl(check.rankZ.gtreq.obs="ignore"))
+                       control=lmerControl(check.numobs.gtr.rankZ="ignore"))
 stopifnot(c(VarCorr(m6)[["DA"]])==0)
 
 

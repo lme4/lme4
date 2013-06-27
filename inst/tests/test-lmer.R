@@ -53,7 +53,7 @@ test_that("lmer", {
     sstudy9 <- subset(sleepstudy, Days == 1 | Days == 9)
     expect_error(m1 <- lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
                             data = sleepstudy, subset = (Days == 1 | Days == 9)),
-                 "rank\\(Z\\)>=number of observations")
+                 "number of observations.*rank.*unidentifiable")
     ## test arguments
     options(warn=2)
     expect_that(lmer(Yield ~ 1|Batch, Dyestuff, REML=TRUE), is_a("lmerMod"))
@@ -69,5 +69,7 @@ test_that("lmer", {
     expect_that(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl()), is_a("lmerMod"))
     options(warn=0)
     expect_warning(lmer(Yield ~ 1|Batch, Dyestuff, junkArg=TRUE),"extra argument.*disregarded")
+    expect_warning(lmer(Yield ~ 1|Batch, Dyestuff, control=list()),
+                   "passing control as list is deprecated")
 })
 

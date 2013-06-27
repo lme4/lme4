@@ -120,18 +120,18 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     if (any(nlevelVec >= nrow(fr)))
         stop("number of levels of each grouping factor must be ",
              "< number of observations")
-    cstr <- "check.numlev.gtr.5"
+    cstr <- "check.numlev.gtreq.5"
     if (doCheck(cc <- control[[cstr]]) && any(nlevelVec<5)) {
         wstr <- "grouping factors with < 5 sampled levels may give unreliable estimates"
         switch(cc,warning=warning(wstr),stop=stop(wstr),
                stop(paste0("unknown check level for '",cstr,"'")))
     }
-    cstr <- "check.rankZ.gtreq.obs"
+    cstr <- "check.numobs.gtr.rankZ"
     if (doCheck(cc <- control[[cstr]]) &&                   ## not NULL or "ignore"
         !(grepl(cc,"Small") && prod(dim(reTrms$Zt))>1e6)    ## not "*Small" and large Z mat
-        && (rankZ <- rankMatrix(reTrms$Zt)) >= nrow(fr))    ## test
+        && (nrow(fr) <= (rankZ <- rankMatrix(reTrms$Zt))))    ## test
     {
-        wstr <- "rank(Z)>=number of observations; variance-covariance matrix will be unidentifiable"
+        wstr <- "number of observations <= rank(Z) ; variance-covariance matrix is likely to be unidentifiable"
         switch(cc,warningSmall=,warning=warning(wstr),stopSmall=,stop=stop(wstr),
                stop(paste0("unknown check level for '",cstr,"'")))
     }
@@ -294,12 +294,12 @@ glFormula <- function(formula, data=NULL, family = gaussian,
              ">= number of obs")
     ## FIXME: duplicated code between lFormula, glFormula
     if (any(nlevelVec<5))  warning("grouping factors with < 5 sampled levels may give unreliable estimates")
-    cstr <- "check.rankZ.gtr.obs"
+    cstr <- "check.numobs.gtreq.rankZ"
     if (doCheck(cc <- control[[cstr]]) &&                   ## not NULL or "ignore"
         !(grepl(cc,"Small") && prod(dim(reTrms$Zt))>1e6)    ## not "*Small" and large Z mat
-        && (rankZ <- rankMatrix(reTrms$Zt)) >= nrow(fr))    ## test
+        && (nrow(fr) < (rankZ <- rankMatrix(reTrms$Zt))))    ## test
     {
-        wstr <- "rank(Z)>number of observations; variance-covariance matrix will be unidentifiable"
+        wstr <- "number of observations<rank(Z); variance-covariance matrix will be unidentifiable"
         switch(cc,warningSmall=,warning=warning(wstr),stopSmall=,stop=stop(wstr),
                stop(paste0("unknown check level for '",cstr,"'")))
     }

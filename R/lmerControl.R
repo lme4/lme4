@@ -43,28 +43,31 @@ namedList <- function(...) {
 ##' @param restart_edge logical - should the optimizer attempt a restart when it finds a solution at the boundary (i.e. zero random-effect variances or perfect +/-1 correlations)?
 ##' @param check.numlev.gtreq.5 character - rules for checking whether all random effects have >= 5 levels. "ignore": skip the test. "warn": warn if test fails. "stop": throw an error if test fails.
 ##' @param check.numlev.gtr.1 character - rules for checking whether all random effects have > 1 level. As for \code{check.numlevel.gtr.5}.
-##' @param check.rankZ.gtr.obs character - rules for checking whether the rank of the random effects design matrix Z is greater than the number of observations, indicating possible overfitting.  As for \code{check.numlevel.gtreq.5}, with the addition of "warnSmall" and "stopSmall", which run the test only if the dimensions of \code{Z} are <1e6.
-##' @param check.rankZ.gtreq.obs character - as \code{check.rankZ.gtreq.obs}, but tests for rank(Z)>=number of observations; used for GLMMs
+##' @param check.numobs.gtr.rankZ character - rules for checking whether the number of observations is greater than the rank of the random effects design matrix (Z), usually necessary for identifiable variances.  As for \code{check.numlevel.gtreq.5}, with the addition of "warnSmall" and "stopSmall", which run the test only if the dimensions of \code{Z} are <1e6.
+##' @param check.numobs.gtreq.rankZ character - as \code{check.numobs.gtr.rankZ}, but tests for number of observations >=rank(Z); used for GLMMs
 
 ##' @param \dots additional arguments to be passed to the nonlinear optimizer (see \code{\link{NelderMead}},
 ##'    \code{\link[minqa]{bobyqa}})
+##' @return a list (of class \code{merControl}) containing (1) general control parameters (e.g. \code{optimizer}, \code{restart_edge}); (2) a list of data-checking specifications (e.g. \code{check.numobs.gtr.rankZ}); (3) parameters to be passed to the optimizer (i.e., the contents of \dots, for example \code{maxiter})
 ##' @export
 lmerControl <- function(optimizer="Nelder_Mead",
                         restart_edge=TRUE,
                         sparseX=FALSE,
-                        check.rankZ.gtr.obs="stopSmall",
+                        check.numobs.gtr.rankZ="stopSmall",
                         check.numlev.gtreq.5="warning",
                         check.numlev.gtr.1="stop",
                         ...) {
     ## FIXME: is there a better idiom?  match.call() ?
     ## FIXME: check list(...) against formals(get(optimizer)) ?
-    namedList(optimizer,
+    r <- namedList(optimizer,
               restart_edge,
               checkControl=
-                 namedList(check.rankZ.gtr.obs,
+                 namedList(check.numobs.gtr.rankZ,
                            check.numlev.gtreq.5,
                            check.numlev.gtr.1),
               optControl=list(...))
+    class(r) <- "merControl"
+    r
 }
 
 ##' @rdname lmerControl
@@ -78,7 +81,7 @@ lmerControl <- function(optimizer="Nelder_Mead",
 glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
                          restart_edge=TRUE,
                          sparseX=FALSE,
-                         check.rankZ.gtreq.obs="stopSmall",
+                         check.numobs.gtreq.rankZ="stopSmall",
                          check.numlev.gtreq.5="warning",
                          tolPwrss = 1e-7,
                          compDev = TRUE,
@@ -86,14 +89,16 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
     if (length(optimizer)==1) {
         optimizer <- replicate(2,optimizer)
     }
-    namedList(optimizer,
+    r <- namedList(optimizer,
               restart_edge,
               tolPwrss,
               compDev,
               checkControl=
-              namedList(check.rankZ.gtreq.obs,
+              namedList(check.numobs.gtreq.rankZ,
                         check.numlev.gtreq.5),
               optControl=list(...))
+    class(r) <- "merControl"
+    r
 }
 
 
@@ -105,9 +110,11 @@ nlmerControl <- function(optimizer="Nelder_Mead",
     if (length(optimizer)==1) {
         optimizer <- replicate(2,optimizer)
     }
-    namedList(optimizer,
+    r <- namedList(optimizer,
               tolPwrss,
               optControl=list(...))
+        class(r) <- "merControl"
+    r
 }
 
 
