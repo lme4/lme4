@@ -45,6 +45,7 @@ install_github("lme4", user = "lme4")
 * Likelihood profiling (and profile confidence intervals) for `lmer` and `glmer` results.
 * `nAGQ=0`, an option to do fast (but inaccurate) fitting of GLMMs.
 * Using `devFunOnly=TRUE` allows the user to extract a deviance function for the model, allowing further diagnostics/customization of model results.
+* The internal structure of [gn]lmer is now more modular, allowing finer control of the different steps of argument checking; construction of design matrices and data structures; parameter estimation; and construction of the final `merMod` object (see `?modular`).
 * Negative binomial models (still under development).
 
 ### Still non-existent features
