@@ -92,7 +92,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     do.call("checkArgs",c(list("lmer"),l...))
     if (!is.null(list(...)[["family"]])) {
         ## lmer(...,family=...); warning issued within checkArgs
-        mc[[1]] <- as.name("glFormula")
+        mc[[1]] <- quote(lme4::glFormula)
         if (missing(control)) mc[["control"]] <- glmerControl()
         return(eval(mc, parent.frame()))
     }
@@ -129,7 +129,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     cstr <- "check.numobs.vs.rankZ"
     if (doCheck(cc <- control[[cstr]]) &&                   ## not NULL or "ignore"
         !(grepl("Small",cc) && prod(dim(reTrms$Zt))>1e6)    ## not "*Small" and large Z mat
-        && (nrow(fr) <= (rankZ <- rankMatrix(reTrms$Zt))))
+        && (nrow(fr) <= (rankZ <- Matrix::rankMatrix(reTrms$Zt))))
     {
         wstr <- "number of observations <= rank(Z) ; variance-covariance matrix is likely to be unidentifiable"
         switch(cc,warningSmall=,warning=warning(wstr),stopSmall=,stop=stop(wstr),
@@ -144,7 +144,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     attr(attr(fr,"terms"),"predvars.fixed") <- attr(attr(fixedfr,"terms"),"predvars")
     X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     p <- ncol(X)
-    if ((rankX <- rankMatrix(X)) < p)
+    if ((rankX <- Matrix::rankMatrix(X)) < p)
         stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
     return(list(fr = fr, X = X, reTrms = reTrms, REML = REML, formula = formula))
 }
@@ -261,7 +261,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
         family <- get(family, mode = "function", envir = parent.frame(2))
     if( is.function(family)) family <- family()
     if (isTRUE(all.equal(family, gaussian()))) {
-        mc[[1]] <- as.name("lFormula")
+        mc[[1]] <- quote(lme4::lFormula)
         mc["family"] <- NULL            # to avoid an infinite loop
         return(eval(mc, parent.frame()))
     }
@@ -299,7 +299,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     ##   useSc is not defined yet/not defined properly?
     if (doCheck(cc <- control[[cstr]]) &&                   ## not NULL or "ignore"
         !(grepl(cc,"Small") && prod(dim(reTrms$Zt))>1e6)    ## not "*Small" and large Z mat
-        && (nrow(fr) < (rankZ <- rankMatrix(reTrms$Zt))))    ## test
+        && (nrow(fr) < (rankZ <- Matrix::rankMatrix(reTrms$Zt))))    ## test
     {
         wstr <- "number of observations<rank(Z); variance-covariance matrix will be unidentifiable"
         switch(cc,warningSmall=,warning=warning(wstr),stopSmall=,stop=stop(wstr),
@@ -315,7 +315,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     X <- model.matrix(form, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     p <- ncol(X)
     
-    if ((rankX <- rankMatrix(X)) < p)
+    if ((rankX <- Matrix::rankMatrix(X)) < p)
         stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
     
     out <- list(fr = fr, X = X, reTrms = reTrms, family = family)

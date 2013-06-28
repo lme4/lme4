@@ -116,10 +116,13 @@ lmer <- function(formula, data=NULL, REML = TRUE,
     mc$control <- control ## update for  back-compatibility kluge
     if (!is.null(list(...)[["family"]])) {
        warning("calling lmer with 'family' is deprecated; please use glmer() instead")
-       mc[[1]] <- as.name("glmer")
+       mc[[1]] <- quote(lme4::glmer)
        return(eval(mc,parent.frame(1L)))
     }
-    mc[[1]] <- as.name("lFormula")
+    
+    ## https://github.com/lme4/lme4/issues/50
+    ## parse data and formula
+    mc[[1]] <- quote(lme4::lFormula)
     lmod <- eval(mc, parent.frame(1L))  ## parse data and formula
     mcout$formula <- lmod$formula
     lmod$formula <- NULL
@@ -240,17 +243,15 @@ glmer <- function(formula, data=NULL, family = gaussian,
         ## redirect to lmer (with warning)
         warning("calling glmer() with family=gaussian (identity link) as a shortcut to lmer() is deprecated;",
                 " please call lmer() directly")
-        mc[[1]] <- as.name("lmer")
+        mc[[1]] <- quote(lme4::lmer)
         mc["family"] <- NULL            # to avoid an infinite loop
         return(eval(mc, parent.frame()))
     }
-    mc[[1]] <- as.name("glFormula")
-    #m <- match(c("formula", "data", "family", "sparseX", "subset", "weights",
-    #        "na.action", "offset", "contrasts", "mustart", "etastart"), 
-    #      names(mc), 0)
-    #mc <- mc[c(1, m)]
-    
-    glmod <- eval(mc, parent.frame(1L)) # parse the formula and data
+
+    ## see https://github.com/lme4/lme4/issues/50
+    ## parse the formula and data
+    mc[[1]] <- quote(lme4::glFormula)
+    glmod <- eval(mc, parent.frame(1L))
     mcout$formula <- attr(glmod, "formula")
     #glmod$formula <- NULL # not necessary now that formula is returned from glFormula as an attribute
     

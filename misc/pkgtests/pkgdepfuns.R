@@ -327,7 +327,9 @@ doPkgDeptests <- function(pkg="lme4",
     if (length(pkgdepMiss)>0)
         install.packages(pkgdepMiss,lib=libdir, type="source")
     if (!is.null(pkg_tarball)) {
-        tb0time <- max(file.info(pkg_tarball)$mtime)
+        tb0times <- file.info(pkg_tarball)$mtime
+        pkg_tarball <- pkg_tarball[which.max(tb0times)]
+        tb0time <- max(tb0times)
         pkg_inst <- file.exists(file.path(libdir,pkg))
         pkgtime <- if (!pkg_inst) -Inf else {
             file.info(file.path(libdir,pkg))$mtime

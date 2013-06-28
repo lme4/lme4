@@ -1,14 +1,14 @@
 pkgname,lme4_contact,contacted,notes
 agridat,BMB,TRUE,"proximal: set control=lmerControl(check.numlev.gtr.1='ignore') in federer.diag"
 AICcmodavg,BMB,TRUE,
-aod,BMB,TRUE,"fails because it only Suggests: lme4 then calls lme4::glmer -- see https://github.com/lme4/lme4/issues/50. Deprecated by authors in favour of aods3??"
+aod,BMB,TRUE
 arm,SW,NA,"proximal problem is nonexistence of display.merMod, but we know sim() will need lots of modification"
 boss,BMB,TRUE,"fairly simple fixes"
 BradleyTerry2,BMB,TRUE,
 car,BMB,TRUE,
 clusterPower,BMB,TRUE,"fairly simple fixes"
 cplm,BMB,TRUE,NA
-EquiNorm,BMB,TRUE,"fails because it only Imports: lme4 then calls lme4::glmer -- see https://github.com/lme4/lme4/issues/50. Passes with hacked local version that sets Depends: instead of Imports:."
+EquiNorm,BMB,TRUE
 gamm4,MM,FALSE,NA
 GRRGI,MM,FALSE,NA
 influence.ME,MM,FALSE,NA
