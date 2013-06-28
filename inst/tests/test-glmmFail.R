@@ -33,6 +33,7 @@ test_that("glmer", {
     m4 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
     m5 <- suppressWarnings(glmer(Reaction ~ Days + (Days|Subject), sleepstudy, family=gaussian))
     expect_equal(fixef(m3),fixef(m5))
+    m3@call[[1]] <- m5@call[[1]] <- quote(lmer)  ## hack call
     expect_equal(m3,m4)
     expect_equal(m3,m5)
 })

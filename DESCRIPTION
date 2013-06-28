@@ -7,7 +7,7 @@ Authors@R: c(person("Douglas","Bates", email="bates@stat.wisc.edu",
     role="aut"),
     person("Martin","Maechler",email="maechler@R-project.org",
     role="aut"),
-    person("Ben","Bolker",email="bolker@mcmaster.ca",
+    person("Ben","Bolker",email="bbolker+lme4-authors@gmail.com",
     role=c("aut","cre")),
     person("Steven","Walker",role="aut"))
 Description: Fit linear and generalized linear mixed-effects models.
