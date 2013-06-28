@@ -128,8 +128,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     }
     cstr <- "check.numobs.vs.rankZ"
     if (doCheck(cc <- control[[cstr]]) &&                   ## not NULL or "ignore"
-        !(grepl(cc,"Small") && prod(dim(reTrms$Zt))>1e6)    ## not "*Small" and large Z mat
-        && (nrow(fr) <= (rankZ <- rankMatrix(reTrms$Zt))))    ## test
+        !(grepl("Small",cc) && prod(dim(reTrms$Zt))>1e6)    ## not "*Small" and large Z mat
+        && (nrow(fr) <= (rankZ <- rankMatrix(reTrms$Zt))))
     {
         wstr <- "number of observations <= rank(Z) ; variance-covariance matrix is likely to be unidentifiable"
         switch(cc,warningSmall=,warning=warning(wstr),stopSmall=,stop=stop(wstr),
