@@ -126,7 +126,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
         switch(cc,warning=warning(wstr),stop=stop(wstr),
                stop(paste0("unknown check level for '",cstr,"'")))
     }
-    cstr <- "check.numobs.gtr.rankZ"
+    cstr <- "check.numobs.vs.rankZ"
     if (doCheck(cc <- control[[cstr]]) &&                   ## not NULL or "ignore"
         !(grepl(cc,"Small") && prod(dim(reTrms$Zt))>1e6)    ## not "*Small" and large Z mat
         && (nrow(fr) <= (rankZ <- rankMatrix(reTrms$Zt))))    ## test
@@ -294,7 +294,9 @@ glFormula <- function(formula, data=NULL, family = gaussian,
              ">= number of obs")
     ## FIXME: duplicated code between lFormula, glFormula
     if (any(nlevelVec<5))  warning("grouping factors with < 5 sampled levels may give unreliable estimates")
-    cstr <- "check.numobs.gtreq.rankZ"
+    cstr <- "check.numobs.vs.rankZ"
+    ## FIXME: adjust test for families with estimated scale parameter:
+    ##   useSc is not defined yet/not defined properly?
     if (doCheck(cc <- control[[cstr]]) &&                   ## not NULL or "ignore"
         !(grepl(cc,"Small") && prod(dim(reTrms$Zt))>1e6)    ## not "*Small" and large Z mat
         && (nrow(fr) < (rankZ <- rankMatrix(reTrms$Zt))))    ## test
@@ -303,12 +305,9 @@ glFormula <- function(formula, data=NULL, family = gaussian,
         switch(cc,warningSmall=,warning=warning(wstr),stopSmall=,stop=stop(wstr),
                stop(paste0("unknown check level for '",cstr,"'")))
     }
-    ## FIXME: adjust test for families with estimated scale parameter:
-    ##   useSc is not defined yet/not defined properly?
     ##  if (useSc && maxlevels == nrow(fr))
     ##          stop("number of levels of each grouping factor must be",
     ##                "greater than number of obs")
-    ## [and the same test for rankZ]
     
     ## fixed-effects model matrix X - remove random parts from formula:
     form <- formula

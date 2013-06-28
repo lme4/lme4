@@ -54,6 +54,11 @@ test_that("lmer", {
     expect_error(m1 <- lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
                             data = sleepstudy, subset = (Days == 1 | Days == 9)),
                  "number of observations.*rank.*unidentifiable")
+    ## disable test ...
+    expect_is(m1 <- lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
+                            data = sleepstudy, subset = (Days == 1 | Days == 9),
+                            control=lmerControl(check.numobs.vs.rankZ="ignore")),
+                         "merMod")
     ## test arguments
     options(warn=2)
     expect_that(lmer(Yield ~ 1|Batch, Dyestuff, REML=TRUE), is_a("lmerMod"))

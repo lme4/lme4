@@ -6,13 +6,13 @@
 \usage{
   lmerControl(optimizer = "Nelder_Mead",
     restart_edge = TRUE, sparseX = FALSE,
-    check.numobs.gtr.rankZ = "stopSmall",
+    check.numobs.vs.rankZ = "stopSmall",
     check.numlev.gtreq.5 = "warning",
     check.numlev.gtr.1 = "stop", ...)
 
   glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     restart_edge = TRUE, sparseX = FALSE,
-    check.numobs.gtreq.rankZ = "stopSmall",
+    check.numobs.vs.rankZ = "stopSmall",
     check.numlev.gtreq.5 = "warning", tolPwrss = 1e-07,
     compDev = TRUE, ...)
 
@@ -68,17 +68,17 @@
   whether all random effects have > 1 level. As for
   \code{check.numlevel.gtr.5}.}
 
-  \item{check.numobs.gtr.rankZ}{character - rules for
+  \item{check.numobs.vs.rankZ}{character - rules for
   checking whether the number of observations is greater
-  than the rank of the random effects design matrix (Z),
-  usually necessary for identifiable variances.  As for
+  than (or greater than or equal to) the rank of the random
+  effects design matrix (Z), usually necessary for
+  identifiable variances.  As for
   \code{check.numlevel.gtreq.5}, with the addition of
   "warnSmall" and "stopSmall", which run the test only if
-  the dimensions of \code{Z} are <1e6.}
-
-  \item{check.numobs.gtreq.rankZ}{character - as
-  \code{check.numobs.gtr.rankZ}, but tests for number of
-  observations >=rank(Z); used for GLMMs}
+  the dimensions of \code{Z} are <1e6.
+  \code{numobs>rank(Z)} will be tested for LMMs and GLMMs
+  with estimated scale parameters; \code{numobs>=rank(Z)}
+  will be tested for GLMMs with fixed scale parameter.}
 
   \item{\dots}{additional arguments to be passed to the
   nonlinear optimizer (see \code{\link{NelderMead}},
@@ -97,7 +97,7 @@
   a list (of class \code{merControl}) containing (1)
   general control parameters (e.g. \code{optimizer},
   \code{restart_edge}); (2) a list of data-checking
-  specifications (e.g. \code{check.numobs.gtr.rankZ}); (3)
+  specifications (e.g. \code{check.numobs.vs.rankZ}); (3)
   parameters to be passed to the optimizer (i.e., the
   contents of \dots, for example \code{maxiter})
 }
