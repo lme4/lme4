@@ -25,6 +25,8 @@ anova(fm1, fm2)
 ## Now works for glmer
 fm1. <- suppressWarnings(glmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 ## default family=gaussian/identity link -> automatically calls  lmer()  (but with a warning)
+## hack call -- comes out unimportantly different
+fm1.@call[[1]] <- quote(lmer)
 stopifnot(all.equal(fm1, fm1.))
 ## Test against previous version in lmer1 (using bobyqa for consistency)
 #(fm1. <- lmer1(Reaction ~ Days + (Days|Subject), sleepstudy, opt = "bobyqa"))
@@ -41,7 +43,6 @@ stopifnot(all.equal(fm1, fm1.))
 ##           all.equal(fixef(fm1), fixef(fm1.)),
 ##           all.equal(fm1@re@theta, fm1.@re@theta, tol = 1.e-7),
 ##           all.equal(ranef(fm1), ranef(fm1.), tol = 1.e-7))
-
 
 stopifnot(all.equal(fixef(fm1), fixef(fm2), tol = 1.e-13),
           all.equal(unname(fixef(fm1)),
