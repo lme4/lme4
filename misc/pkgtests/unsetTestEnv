@@ -1,0 +1,8 @@
+#! /bin/bash
+## set up proper testing environment;
+## putting the appropriate library path into ~/.R/check.Renviron
+## (should I try to preserve an existing check.Renviron file???)
+rm -f ~/.R/check.Renviron
+export R_LIBS=
+export R_LIBS_USER=
+export R_LIBS_SITE=

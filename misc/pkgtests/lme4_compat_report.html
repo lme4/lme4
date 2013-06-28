@@ -20,9 +20,9 @@
 
  <h1 > lme4: downstream package report</h1>
 
-<p class='character'>lme4 version: 0.99999911.4</p>
+<p class='character'>lme4 version: 0.99999911.5</p>
 
-<p class='character'>Test date:  Wed Jun 26 00:49:59 2013</p>
+<p class='character'>Test date:  Thu Jun 27 23:10:54 2013</p>
 
  <h2 > Notes</h2>
 
@@ -45,12 +45,12 @@
 <tr><td class=firstcolumn>error_depfail</td>
 <td class=cellinside> 1</td>
 <td class=cellinside> 0</td>
-<td class=cellinside> 1</td></tr>
+<td class=cellinside> 0</td></tr>
  
 <tr><td class=firstcolumn>error_examples</td>
 <td class=cellinside>11</td>
-<td class=cellinside> 1</td>
-<td class=cellinside> 7</td></tr>
+<td class=cellinside> 0</td>
+<td class=cellinside> 5</td></tr>
  
 <tr><td class=firstcolumn>error_install</td>
 <td class=cellinside> 6</td>
@@ -64,8 +64,8 @@
  
 <tr><td class=firstcolumn>OK</td>
 <td class=cellinside>15</td>
-<td class=cellinside> 3</td>
-<td class=cellinside>30</td></tr>
+<td class=cellinside> 4</td>
+<td class=cellinside>33</td></tr>
  
 	</tbody>
 </table>
@@ -102,6 +102,678 @@ cursor: pointer ;
 		<th><b class="tablesort">contacted</b>  </th>
 		<th><b class="tablesort">notes</th> 
 	</tr> 
+<tr> 
+<td class=firstcolumn>76
+</td>
+<td class=cellinside>spacom
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.0-0
+</td>
+<td class=cellinside>Till Junge &lt;till.junge@gmail.com&gt
+</td>
+<td class=cellinside><font style="color:purple">error_depfail</font>
+</td>
+<td class=cellinside>Package suggested but not available: 'geospacom'
+</td>
+<td class=cellinside>BMB
+</td>
+<td class=cellinside> TRUE
+</td>
+<td class=cellinside>spacom/geospacom have a suggests/depends loop (but fundamental problem is in spacom)
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>3
+</td>
+<td class=cellinside>agridat
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.6
+</td>
+<td class=cellinside>Kevin Wright &lt;kw.stat@gmail.com&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>  grouping factors must have > 1 sampled level<br>Calls: lmer -> eval -> eval -> lFormula<br>Execution halted
+</td>
+<td class=cellinside>BMB
+</td>
+<td class=cellinside> TRUE
+</td>
+<td class=cellinside>proximal: set control=lmerControl(check.numlev.gtr.1='ignore') in federer.diag
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>5
+</td>
+<td class=cellinside>aod
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.3
+</td>
+<td class=cellinside>Renaud Lancelot &lt;renaud.lancelot@cirad.fr&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>Error in eval(expr, envir, enclos) : could not find function "glFormula"<br>Calls: iccbin -> <Anonymous> -> eval -> eval<br>Execution halted
+</td>
+<td class=cellinside>BMB
+</td>
+<td class=cellinside> TRUE
+</td>
+<td class=cellinside>fails because it only Suggests: lme4 then calls lme4::glmer -- see https://github.com/lme4/lme4/issues/50. Deprecated by authors in favour of aods3??
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>7
+</td>
+<td class=cellinside>arm
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
+<td class=cellinside>Rforge
+</td>
+<td class=cellinside>1.6-06.01
+</td>
+<td class=cellinside>Yu-Sung Su &lt;suyusung@tsinghua.edu.cn&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>  unable to find an inherited method for function 'display' for signature '"lmerMod"'<br>Calls: display -> <Anonymous><br>Execution halted
+</td>
+<td class=cellinside>SW
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside>proximal problem is nonexistence of display.merMod, but we know sim() will need lots of modification
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>11
+</td>
+<td class=cellinside>boss
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.2
+</td>
+<td class=cellinside>Arend Voorman &lt;voorma@u.washington.edu&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>Error in boss.set(y ~ x1 + x2 + factor(site) + (1 | id), id = data$id,  : <br>  no slot of name "X" for this object of class "lmerMod"<br>Execution halted
+</td>
+<td class=cellinside>BMB
+</td>
+<td class=cellinside> TRUE
+</td>
+<td class=cellinside>fairly simple fixes
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>15
+</td>
+<td class=cellinside>clusterPower
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.4.1
+</td>
+<td class=cellinside>Nicholas G. Reich &lt;nick@schoolph.umass.edu&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>  trying to get slot "coefs" from an object (class "summary.merMod") that is not an S4 object <br>Calls: power.sim.binomial -> estimation.function<br>Execution halted
+</td>
+<td class=cellinside>BMB
+</td>
+<td class=cellinside> TRUE
+</td>
+<td class=cellinside>fairly simple fixes
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>25
+</td>
+<td class=cellinside>gamm4
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.1-6
+</td>
+<td class=cellinside>Simon Wood &lt;simon.wood@r-project.org&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>Error in b$FL : $ operator not defined for this S4 class<br>Calls: gamm4<br>Execution halted
+</td>
+<td class=cellinside>MM
+</td>
+<td class=cellinside>FALSE
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>27
+</td>
+<td class=cellinside>gmodels
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>2.15.4
+</td>
+<td class=cellinside>Gregory R. Warnes &lt;greg@warnes.net&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>  cannot coerce type 'S4' to vector of type 'double'<br>Calls: ci -> ci.default -> sd -> var -> is.data.frame<br>Execution halted
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>28
+</td>
+<td class=cellinside>GRRGI
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.1
+</td>
+<td class=cellinside>Walter Resch &lt;walt55128@msn.com&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>  unable to find an inherited method for function 'sigma.hat' for signature '"lmerMod"'<br>Calls: MLGI -> sigma.hat -> <Anonymous><br>Execution halted
+</td>
+<td class=cellinside>MM
+</td>
+<td class=cellinside>FALSE
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>45
+</td>
+<td class=cellinside>metafor
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.9-0
+</td>
+<td class=cellinside>Wolfgang Viechtbauer &lt;wvb@metafor-project.org&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>Error in rma.glmm(measure = "OR", ai = tpos, bi = tneg, ci = cpos, di = cneg,  : <br>  Cannot fit ML model.<br>Execution halted
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>50
+</td>
+<td class=cellinside>MixMAP
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.0
+</td>
+<td class=cellinside>Gregory J. Matthews &lt;gjm112@gmail.com&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>  invalid class "MixMAP" object: undefined class for slot "lmer.out" ("mer")<br>Calls: MixMAP -> new -> initialize -> initialize -> validObject<br>Execution halted
+</td>
+<td class=cellinside>MM
+</td>
+<td class=cellinside>FALSE
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>51
+</td>
+<td class=cellinside>mlmRev
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
+<td class=cellinside>Rforge
+</td>
+<td class=cellinside>1.0-3
+</td>
+<td class=cellinside>&lt;lme4-authors@R-forge.wu-wien.ac.at&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>  Cholmod error 'out of memory' at file ../Core/cholmod_memory.c, line 147<br>Calls: lmer ... svd -> as.matrix -> as.matrix.Matrix -> as -> asMethod<br>Execution halted
+</td>
+<td class=cellinside>SW
+</td>
+<td class=cellinside>FALSE
+</td>
+<td class=cellinside>very slow/memory-hungry; will skip. Should see whether this is equally bad in lme4.0, or is lme4 1.0 greedier/slower???
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>58
+</td>
+<td class=cellinside>odprism
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.1
+</td>
+<td class=cellinside>Martijn van de Pol &lt;m.van.de.pol@myscience.eu&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>  rank(Z)>=number of observations; variance-covariance matrix will be unidentifiable<br>Calls: odprismB -> lmer -> eval -> eval -> lFormula<br>Execution halted
+</td>
+<td class=cellinside>SW
+</td>
+<td class=cellinside>FALSE
+</td>
+<td class=cellinside>proximal: set control=*lmerControl(check.numobs.vs.rankZ="ignore")
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>62
+</td>
+<td class=cellinside>PBImisc
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.998
+</td>
+<td class=cellinside>Przemyslaw Biecek &lt;przemyslaw.biecek@gmail.com&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>  model should be an object of the class mer<br>Calls: groupDisp -> sapply -> lapply -> FUN -> recalculateLogLik<br>Execution halted
+</td>
+<td class=cellinside>SW
+</td>
+<td class=cellinside> TRUE
+</td>
+<td class=cellinside>responded 13/6/2003: "will try to add fixes as soon as possible"
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>66
+</td>
+<td class=cellinside>phmm
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.7-4
+</td>
+<td class=cellinside>Michael Donohue &lt;mdonohue@ucsd.edu&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>> summary(fit.lmer)@AICtab<br>Error: trying to get slot "AICtab" from an object (class "summary.merMod") that is not an S4 object <br>Execution halted
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>67
+</td>
+<td class=cellinside>polytomous
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.1.4
+</td>
+<td class=cellinside>Antti Arppe &lt;antti.arppe@helsinki.fi&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>Error : pwrssUpdate did not converge in 30 iterations<br>Calls: polytomous -> polytomous.poisson.reformulation<br>Execution halted
+</td>
+<td class=cellinside>SW
+</td>
+<td class=cellinside>FALSE
+</td>
+<td class=cellinside>we have some tests -- models could be fragile?
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>68
+</td>
+<td class=cellinside>prLogistic
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.1
+</td>
+<td class=cellinside>Raydonal Ospina &lt;raydonal@de.ufpe.br&gt
+</td>
+<td class=cellinside><font style="color:red">error_examples</font>
+</td>
+<td class=cellinside>  There are not glm and lmer models. Revise arguments and try again<br>Calls: prLogisticDelta -> pr.conditional<br>Execution halted
+</td>
+<td class=cellinside>SW
+</td>
+<td class=cellinside>FALSE
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>10
+</td>
+<td class=cellinside>blme
+</td>
+<td class=cellinside><font style="color:purple">Imports</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.01-6
+</td>
+<td class=cellinside>Vincent Dorie &lt;vincent@stat.columbia.edu&gt
+</td>
+<td class=cellinside><font style="color:red">error_install</font>
+</td>
+<td class=cellinside>** R<br>** inst<br>** preparing package for lazy loading<br>Error : class "mer" is not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'blme'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/blme.Rcheck/blme'
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>16
+</td>
+<td class=cellinside>cplm
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.6-4
+</td>
+<td class=cellinside>Wayne Zhang &lt;actuary_zhang@hotmail.com&gt
+</td>
+<td class=cellinside><font style="color:red">error_install</font>
+</td>
+<td class=cellinside>*** moving datasets to lazyload DB<br>** inst<br>** preparing package for lazy loading<br>Error : classes "mer", "summary.mer" are not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'cplm'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/cplm.Rcheck/cplm'
+</td>
+<td class=cellinside>BMB
+</td>
+<td class=cellinside> TRUE
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>34
+</td>
+<td class=cellinside>influence.ME
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.9.2
+</td>
+<td class=cellinside>Rense Nieuwenhuis &lt;r.nieuwenhuis@utwente.nl&gt
+</td>
+<td class=cellinside><font style="color:red">error_install</font>
+</td>
+<td class=cellinside>*** moving datasets to lazyload DB<br>** inst<br>** preparing package for lazy loading<br>Error : object 'summary' is not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'influence.ME'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/influence.ME.Rcheck/influence.ME'
+</td>
+<td class=cellinside>MM
+</td>
+<td class=cellinside>FALSE
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>40
+</td>
+<td class=cellinside>lmerTest
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
+<td class=cellinside>Rforge
+</td>
+<td class=cellinside>1.2-1
+</td>
+<td class=cellinside>Alexandra Kuznetsova &lt;alku@dtu.dk&gt
+</td>
+<td class=cellinside><font style="color:red">error_install</font>
+</td>
+<td class=cellinside>** preparing package for lazy loading<br>Error in reconcilePropertiesAndPrototype(name, slots, prototype, superClasses,  : <br>  no definition was found for superclass "mer" in the specification of class "merLmerTest"<br>Error : unable to load R code in package 'lmerTest'<br>ERROR: lazy loading failed for package 'lmerTest'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/lmerTest.Rcheck/lmerTest'
+</td>
+<td class=cellinside>MM
+</td>
+<td class=cellinside>FALSE
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>41
+</td>
+<td class=cellinside>longpower
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.0-9
+</td>
+<td class=cellinside>Michael C. Donohue &lt;mdonohue@ucsd.edu&gt
+</td>
+<td class=cellinside><font style="color:red">error_install</font>
+</td>
+<td class=cellinside>** R<br>** inst<br>** preparing package for lazy loading<br>Error : class "mer" is not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'longpower'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/longpower.Rcheck/longpower'
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>47
+</td>
+<td class=cellinside>mi
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
+<td class=cellinside>Rforge
+</td>
+<td class=cellinside>0.09-18
+</td>
+<td class=cellinside>Yu-Sung Su &lt;suyusung@tsinghua.edu.cn&gt
+</td>
+<td class=cellinside><font style="color:red">error_install</font>
+</td>
+<td class=cellinside>** data<br>** inst<br>** preparing package for lazy loading<br>Error : objects 'coef', 'fitted', 'resid', 'residuals', 'plot' are not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'mi'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/mi.Rcheck/mi'
+</td>
+<td class=cellinside>MM
+</td>
+<td class=cellinside>FALSE
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>64
+</td>
+<td class=cellinside>pedigreemm
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.2-4
+</td>
+<td class=cellinside>Ana Ines Vazquez &lt;anainesvs@gmail.com&gt
+</td>
+<td class=cellinside><font style="color:red">error_install</font>
+</td>
+<td class=cellinside>** preparing package for lazy loading<br>Error in reconcilePropertiesAndPrototype(name, slots, prototype, superClasses,  : <br>  no definition was found for superclass "mer" in the specification of class "pedigreemm"<br>Error : unable to load R code in package 'pedigreemm'<br>ERROR: lazy loading failed for package 'pedigreemm'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/pedigreemm.Rcheck/pedigreemm'
+</td>
+<td class=cellinside>DB
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside>DB contacted; with what results?
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>70
+</td>
+<td class=cellinside>R2STATS
+</td>
+<td class=cellinside><font style="color:purple">Imports</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.68-31
+</td>
+<td class=cellinside>Yvonnick Noel &lt;yvonnick.noel@uhb.fr&gt
+</td>
+<td class=cellinside><font style="color:red">error_install</font>
+</td>
+<td class=cellinside>** R<br>** inst<br>** preparing package for lazy loading<br>Error : object 'logLik' is not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'R2STATS'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/R2STATS.Rcheck/R2STATS'
+</td>
+<td class=cellinside>SW
+</td>
+<td class=cellinside>FALSE
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>33
+</td>
+<td class=cellinside>HSAUR2
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.1-4
+</td>
+<td class=cellinside>Torsten Hothorn &lt;Torsten.Hothorn@R-project.org&gt
+</td>
+<td class=cellinside><font style="color:red">error_vignette</font>
+</td>
+<td class=cellinside>Error: no slot of name "y" for this object of class "lmerMod"<br>Execution halted<br>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>65
+</td>
+<td class=cellinside>phia
+</td>
+<td class=cellinside><font style="color:purple">Imports</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>0.1-2
+</td>
+<td class=cellinside>Helios De Rosario-Martinez &lt;helios.derosario@ibv.upv.es&gt
+</td>
+<td class=cellinside><font style="color:red">error_vignette</font>
+</td>
+<td class=cellinside>Error: $ operator not defined for this S4 class<br>Execution halted<br>
+</td>
+<td class=cellinside>SW
+</td>
+<td class=cellinside> TRUE
+</td>
+<td class=cellinside>car-related problems sorted; remaining issues should be package-specific
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>72
+</td>
+<td class=cellinside>robustlmm
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
+<td class=cellinside>CRAN
+</td>
+<td class=cellinside>1.1
+</td>
+<td class=cellinside>Manuel Koller &lt;koller.manuel@gmail.com&gt
+</td>
+<td class=cellinside><font style="color:red">error_vignette</font>
+</td>
+<td class=cellinside>Error: could not find function "Mwgt"<br>Execution halted<br>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
 <tr> 
 <td class=firstcolumn>1
 </td>
@@ -152,30 +824,6 @@ cursor: pointer ;
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>3
-</td>
-<td class=cellinside>agridat
-</td>
-<td class=cellinside><font style="color:green">Suggests</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>1.6
-</td>
-<td class=cellinside>Kevin Wright &lt;kw.stat@gmail.com&gt
-</td>
-<td class=cellinside><font style="color:red">error_examples</font>
-</td>
-<td class=cellinside>  grouping factors must have > 1 sampled level<br>Calls: lmer -> eval -> eval -> lFormula<br>Execution halted
-</td>
-<td class=cellinside>BMB
-</td>
-<td class=cellinside> TRUE
-</td>
-<td class=cellinside>proximal: set control=lmerControl(check.numlev.gtr.1='ignore') in federer.diag
-</td></tr>
- 
-<tr> 
 <td class=firstcolumn>4
 </td>
 <td class=cellinside>AICcmodavg
@@ -184,43 +832,19 @@ cursor: pointer ;
 </td>
 <td class=cellinside>CRAN
 </td>
-<td class=cellinside>1.30
+<td class=cellinside>1.31
 </td>
 <td class=cellinside>Marc J. Mazerolle &lt;marc.mazerolle@uqat.ca&gt
 </td>
-<td class=cellinside><font style="color:red">error_examples</font>
-</td>
-<td class=cellinside>Error in aictab(cand.set = Cands, modnames = Model.names, sort = TRUE) : <br>Function not yet defined for this object class<br>Execution halted
-</td>
-<td class=cellinside>BMB
-</td>
-<td class=cellinside>FALSE
+<td class=cellinside><font style="color:blue">OK</font>
 </td>
 <td class=cellinside>
-</td></tr>
- 
-<tr> 
-<td class=firstcolumn>5
-</td>
-<td class=cellinside>aod
-</td>
-<td class=cellinside><font style="color:green">Suggests</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>1.3
-</td>
-<td class=cellinside>Renaud Lancelot &lt;renaud.lancelot@cirad.fr&gt
-</td>
-<td class=cellinside><font style="color:red">error_examples</font>
-</td>
-<td class=cellinside>Error in eval(expr, envir, enclos) : could not find function "glFormula"<br>Calls: iccbin -> <Anonymous> -> eval -> eval<br>Execution halted
 </td>
 <td class=cellinside>BMB
 </td>
 <td class=cellinside> TRUE
 </td>
-<td class=cellinside>fails because it only imports lme4 then calls lme4::glmer -- evaluation level issues. Deprecated by authors in favour of aods3??
+<td class=cellinside>
 </td></tr>
  
 <tr> 
@@ -245,30 +869,6 @@ cursor: pointer ;
 <td class=cellinside>   NA
 </td>
 <td class=cellinside> 
-</td></tr>
- 
-<tr> 
-<td class=firstcolumn>7
-</td>
-<td class=cellinside>arm
-</td>
-<td class=cellinside><font style="color:blue">Depends</font>
-</td>
-<td class=cellinside>Rforge
-</td>
-<td class=cellinside>1.6-06.01
-</td>
-<td class=cellinside>Yu-Sung Su &lt;suyusung@tsinghua.edu.cn&gt
-</td>
-<td class=cellinside><font style="color:red">error_examples</font>
-</td>
-<td class=cellinside>  unable to find an inherited method for function 'display' for signature '"lmerMod"'<br>Calls: display -> <Anonymous><br>Execution halted
-</td>
-<td class=cellinside>SW
-</td>
-<td class=cellinside>   NA
-</td>
-<td class=cellinside>proximal problem is nonexistence of display.merMod, but we know sim() will need lots of modification
 </td></tr>
  
 <tr> 
@@ -320,54 +920,6 @@ cursor: pointer ;
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>10
-</td>
-<td class=cellinside>blme
-</td>
-<td class=cellinside><font style="color:purple">Imports</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>0.01-6
-</td>
-<td class=cellinside>Vincent Dorie &lt;vincent@stat.columbia.edu&gt
-</td>
-<td class=cellinside><font style="color:red">error_install</font>
-</td>
-<td class=cellinside>** R<br>** inst<br>** preparing package for lazy loading<br>Error : class "mer" is not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'blme'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/blme.Rcheck/blme'
-</td>
-<td class=cellinside> 
-</td>
-<td class=cellinside>   NA
-</td>
-<td class=cellinside> 
-</td></tr>
- 
-<tr> 
-<td class=firstcolumn>11
-</td>
-<td class=cellinside>boss
-</td>
-<td class=cellinside><font style="color:blue">Depends</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>1.2
-</td>
-<td class=cellinside>Arend Voorman &lt;voorma@u.washington.edu&gt
-</td>
-<td class=cellinside><font style="color:red">error_examples</font>
-</td>
-<td class=cellinside>Error in boss.set(y ~ x1 + x2 + factor(site) + (1 | id), id = data$id,  : <br>  no slot of name "X" for this object of class "lmerMod"<br>Execution halted
-</td>
-<td class=cellinside>BMB
-</td>
-<td class=cellinside> TRUE
-</td>
-<td class=cellinside>fairly simple fixes
-</td></tr>
- 
-<tr> 
 <td class=firstcolumn>12
 </td>
 <td class=cellinside>BradleyTerry2
@@ -388,7 +940,7 @@ cursor: pointer ;
 </td>
 <td class=cellinside> TRUE
 </td>
-<td class=cellinside>fine
+<td class=cellinside>
 </td></tr>
  
 <tr> 
@@ -436,54 +988,6 @@ cursor: pointer ;
 <td class=cellinside> 
 </td>
 <td class=cellinside>   NA
-</td>
-<td class=cellinside> 
-</td></tr>
- 
-<tr> 
-<td class=firstcolumn>15
-</td>
-<td class=cellinside>clusterPower
-</td>
-<td class=cellinside><font style="color:blue">Depends</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>0.4.1
-</td>
-<td class=cellinside>Nicholas G. Reich &lt;nick@schoolph.umass.edu&gt
-</td>
-<td class=cellinside><font style="color:red">error_examples</font>
-</td>
-<td class=cellinside>  trying to get slot "coefs" from an object (class "summary.merMod") that is not an S4 object <br>Calls: power.sim.binomial -> estimation.function<br>Execution halted
-</td>
-<td class=cellinside>BMB
-</td>
-<td class=cellinside> TRUE
-</td>
-<td class=cellinside>fairly simple fixes
-</td></tr>
- 
-<tr> 
-<td class=firstcolumn>16
-</td>
-<td class=cellinside>cplm
-</td>
-<td class=cellinside><font style="color:blue">Depends</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>0.6-4
-</td>
-<td class=cellinside>Wayne Zhang &lt;actuary_zhang@hotmail.com&gt
-</td>
-<td class=cellinside><font style="color:red">error_install</font>
-</td>
-<td class=cellinside>*** moving datasets to lazyload DB<br>** inst<br>** preparing package for lazy loading<br>Error : classes "mer", "summary.mer" are not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'cplm'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/cplm.Rcheck/cplm'
-</td>
-<td class=cellinside>BMB
-</td>
-<td class=cellinside>FALSE
 </td>
 <td class=cellinside> 
 </td></tr>
@@ -597,15 +1101,15 @@ cursor: pointer ;
 </td>
 <td class=cellinside>Li-Xuan Qin &lt;qinl@mskcc.org&gt
 </td>
-<td class=cellinside><font style="color:red">error_examples</font>
+<td class=cellinside><font style="color:blue">OK</font>
 </td>
-<td class=cellinside>Error in eval(expr, envir, enclos) : could not find function "lFormula"<br>Calls: equi.gene.norm ... equi.gene.norm.EM -> computeAuxillaryParameters -> lmer -> eval -> eval<br>Execution halted
+<td class=cellinside>
 </td>
 <td class=cellinside>BMB
 </td>
-<td class=cellinside>FALSE
+<td class=cellinside> TRUE
 </td>
-<td class=cellinside> 
+<td class=cellinside>fails because it only Imports: lme4 then calls lme4::glmer -- see https://github.com/lme4/lme4/issues/50. Passes with hacked local version that sets Depends: instead of Imports:.
 </td></tr>
  
 <tr> 
@@ -681,30 +1185,6 @@ cursor: pointer ;
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>25
-</td>
-<td class=cellinside>gamm4
-</td>
-<td class=cellinside><font style="color:blue">Depends</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>0.1-6
-</td>
-<td class=cellinside>Simon Wood &lt;simon.wood@r-project.org&gt
-</td>
-<td class=cellinside><font style="color:red">error_examples</font>
-</td>
-<td class=cellinside>Error in b$FL : $ operator not defined for this S4 class<br>Calls: gamm4<br>Execution halted
-</td>
-<td class=cellinside>MM
-</td>
-<td class=cellinside>FALSE
-</td>
-<td class=cellinside> 
-</td></tr>
- 
-<tr> 
 <td class=firstcolumn>26
 </td>
 <td class=cellinside>glmulti
@@ -724,54 +1204,6 @@ cursor: pointer ;
 <td class=cellinside> 
 </td>
 <td class=cellinside>   NA
-</td>
-<td class=cellinside> 
-</td></tr>
- 
-<tr> 
-<td class=firstcolumn>27
-</td>
-<td class=cellinside>gmodels
-</td>
-<td class=cellinside><font style="color:green">Suggests</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>2.15.4
-</td>
-<td class=cellinside>Gregory R. Warnes &lt;greg@warnes.net&gt
-</td>
-<td class=cellinside><font style="color:red">error_examples</font>
-</td>
-<td class=cellinside>  cannot coerce type 'S4' to vector of type 'double'<br>Calls: ci -> ci.default -> sd -> var -> is.data.frame<br>Execution halted
-</td>
-<td class=cellinside> 
-</td>
-<td class=cellinside>   NA
-</td>
-<td class=cellinside> 
-</td></tr>
- 
-<tr> 
-<td class=firstcolumn>28
-</td>
-<td class=cellinside>GRRGI
-</td>
-<td class=cellinside><font style="color:blue">Depends</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>1.1
-</td>
-<td class=cellinside>Walter Resch &lt;walt55128@msn.com&gt
-</td>
-<td class=cellinside><font style="color:red">error_examples</font>
-</td>
-<td class=cellinside>  unable to find an inherited method for function 'sigma.hat' for signature '"lmerMod"'<br>Calls: MLGI -> sigma.hat -> <Anonymous><br>Execution halted
-</td>
-<td class=cellinside>MM
-</td>
-<td class=cellinside>FALSE
 </td>
 <td class=cellinside> 
 </td></tr>
@@ -868,54 +1300,6 @@ cursor: pointer ;
 <td class=cellinside> 
 </td>
 <td class=cellinside>   NA
-</td>
-<td class=cellinside> 
-</td></tr>
- 
-<tr> 
-<td class=firstcolumn>33
-</td>
-<td class=cellinside>HSAUR2
-</td>
-<td class=cellinside><font style="color:green">Suggests</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>1.1-4
-</td>
-<td class=cellinside>Torsten Hothorn &lt;Torsten.Hothorn@R-project.org&gt
-</td>
-<td class=cellinside><font style="color:red">error_vignette</font>
-</td>
-<td class=cellinside>Error: no slot of name "y" for this object of class "lmerMod"<br>Execution halted<br>
-</td>
-<td class=cellinside> 
-</td>
-<td class=cellinside>   NA
-</td>
-<td class=cellinside> 
-</td></tr>
- 
-<tr> 
-<td class=firstcolumn>34
-</td>
-<td class=cellinside>influence.ME
-</td>
-<td class=cellinside><font style="color:blue">Depends</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>0.9.2
-</td>
-<td class=cellinside>Rense Nieuwenhuis &lt;r.nieuwenhuis@utwente.nl&gt
-</td>
-<td class=cellinside><font style="color:red">error_install</font>
-</td>
-<td class=cellinside>*** moving datasets to lazyload DB<br>** inst<br>** preparing package for lazy loading<br>Error : object 'summary' is not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'influence.ME'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/influence.ME.Rcheck/influence.ME'
-</td>
-<td class=cellinside>MM
-</td>
-<td class=cellinside>FALSE
 </td>
 <td class=cellinside> 
 </td></tr>
@@ -1041,54 +1425,6 @@ cursor: pointer ;
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>40
-</td>
-<td class=cellinside>lmerTest
-</td>
-<td class=cellinside><font style="color:blue">Depends</font>
-</td>
-<td class=cellinside>Rforge
-</td>
-<td class=cellinside>1.2-1
-</td>
-<td class=cellinside>Alexandra Kuznetsova &lt;alku@dtu.dk&gt
-</td>
-<td class=cellinside><font style="color:red">error_install</font>
-</td>
-<td class=cellinside>** preparing package for lazy loading<br>Error in reconcilePropertiesAndPrototype(name, slots, prototype, superClasses,  : <br>  no definition was found for superclass "mer" in the specification of class "merLmerTest"<br>Error : unable to load R code in package 'lmerTest'<br>ERROR: lazy loading failed for package 'lmerTest'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/lmerTest.Rcheck/lmerTest'
-</td>
-<td class=cellinside>MM
-</td>
-<td class=cellinside>FALSE
-</td>
-<td class=cellinside> 
-</td></tr>
- 
-<tr> 
-<td class=firstcolumn>41
-</td>
-<td class=cellinside>longpower
-</td>
-<td class=cellinside><font style="color:blue">Depends</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>1.0-9
-</td>
-<td class=cellinside>Michael C. Donohue &lt;mdonohue@ucsd.edu&gt
-</td>
-<td class=cellinside><font style="color:red">error_install</font>
-</td>
-<td class=cellinside>** R<br>** inst<br>** preparing package for lazy loading<br>Error : class "mer" is not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'longpower'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/longpower.Rcheck/longpower'
-</td>
-<td class=cellinside> 
-</td>
-<td class=cellinside>   NA
-</td>
-<td class=cellinside> 
-</td></tr>
- 
-<tr> 
 <td class=firstcolumn>42
 </td>
 <td class=cellinside>lsmeans
@@ -1161,30 +1497,6 @@ cursor: pointer ;
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>45
-</td>
-<td class=cellinside>metafor
-</td>
-<td class=cellinside><font style="color:green">Suggests</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>1.9-0
-</td>
-<td class=cellinside>Wolfgang Viechtbauer &lt;wvb@metafor-project.org&gt
-</td>
-<td class=cellinside><font style="color:red">error_examples</font>
-</td>
-<td class=cellinside>Error in rma.glmm(measure = "OR", ai = tpos, bi = tneg, ci = cpos, di = cneg,  : <br>  Cannot fit ML model.<br>Execution halted
-</td>
-<td class=cellinside> 
-</td>
-<td class=cellinside>   NA
-</td>
-<td class=cellinside> 
-</td></tr>
- 
-<tr> 
 <td class=firstcolumn>46
 </td>
 <td class=cellinside>MethComp
@@ -1197,37 +1509,13 @@ cursor: pointer ;
 </td>
 <td class=cellinside>Bendix Carstensen &lt;bxc@steno.dk&gt
 </td>
-<td class=cellinside><font style="color:purple">error_depfail</font>
+<td class=cellinside><font style="color:blue">OK</font>
 </td>
-<td class=cellinside>Package suggested but not available: 'BRugs'
+<td class=cellinside>
 </td>
 <td class=cellinside> 
 </td>
 <td class=cellinside>   NA
-</td>
-<td class=cellinside> 
-</td></tr>
- 
-<tr> 
-<td class=firstcolumn>47
-</td>
-<td class=cellinside>mi
-</td>
-<td class=cellinside><font style="color:blue">Depends</font>
-</td>
-<td class=cellinside>Rforge
-</td>
-<td class=cellinside>0.09-18
-</td>
-<td class=cellinside>Yu-Sung Su &lt;suyusung@tsinghua.edu.cn&gt
-</td>
-<td class=cellinside><font style="color:red">error_install</font>
-</td>
-<td class=cellinside>** data<br>** inst<br>** preparing package for lazy loading<br>Error : objects 'coef', 'fitted', 'resid', 'residuals', 'plot' are not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'mi'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/mi.Rcheck/mi'
-</td>
-<td class=cellinside>MM
-</td>
-<td class=cellinside>FALSE
 </td>
 <td class=cellinside> 
 </td></tr>
@@ -1278,54 +1566,6 @@ cursor: pointer ;
 <td class=cellinside>   NA
 </td>
 <td class=cellinside> 
-</td></tr>
- 
-<tr> 
-<td class=firstcolumn>50
-</td>
-<td class=cellinside>MixMAP
-</td>
-<td class=cellinside><font style="color:blue">Depends</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>1.0
-</td>
-<td class=cellinside>Gregory J. Matthews &lt;gjm112@gmail.com&gt
-</td>
-<td class=cellinside><font style="color:red">error_examples</font>
-</td>
-<td class=cellinside>  invalid class "MixMAP" object: undefined class for slot "lmer.out" ("mer")<br>Calls: MixMAP -> new -> initialize -> initialize -> validObject<br>Execution halted
-</td>
-<td class=cellinside>MM
-</td>
-<td class=cellinside>FALSE
-</td>
-<td class=cellinside> 
-</td></tr>
- 
-<tr> 
-<td class=firstcolumn>51
-</td>
-<td class=cellinside>mlmRev
-</td>
-<td class=cellinside><font style="color:blue">Depends</font>
-</td>
-<td class=cellinside>Rforge
-</td>
-<td class=cellinside>1.0-3
-</td>
-<td class=cellinside>&lt;lme4-authors@R-forge.wu-wien.ac.at&gt
-</td>
-<td class=cellinside><font style="color:red">error_examples</font>
-</td>
-<td class=cellinside>  Cholmod error 'out of memory' at file ../Core/cholmod_memory.c, line 147<br>Calls: lmer ... svd -> as.matrix -> as.matrix.Matrix -> as -> asMethod<br>Execution halted
-</td>
-<td class=cellinside>SW
-</td>
-<td class=cellinside>FALSE
-</td>
-<td class=cellinside>very slow/memory-hungry; will skip. Should see whether this is equally bad in lme4.0, or is lme4 1.0 greedier/slower???
 </td></tr>
  
 <tr> 
@@ -1473,30 +1713,6 @@ cursor: pointer ;
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>58
-</td>
-<td class=cellinside>odprism
-</td>
-<td class=cellinside><font style="color:blue">Depends</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>1.1
-</td>
-<td class=cellinside>Martijn van de Pol &lt;m.van.de.pol@myscience.eu&gt
-</td>
-<td class=cellinside><font style="color:red">error_examples</font>
-</td>
-<td class=cellinside>  rank(Z)>=number of observations; variance-covariance matrix will be unidentifiable<br>Calls: odprismB -> lmer -> eval -> eval -> lFormula<br>Execution halted
-</td>
-<td class=cellinside>SW
-</td>
-<td class=cellinside>FALSE
-</td>
-<td class=cellinside>proximal: set control=*lmerControl(check.rankZ.gtr.numobs="ignore")
-</td></tr>
- 
-<tr> 
 <td class=firstcolumn>59
 </td>
 <td class=cellinside>ordinal
@@ -1569,30 +1785,6 @@ cursor: pointer ;
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>62
-</td>
-<td class=cellinside>PBImisc
-</td>
-<td class=cellinside><font style="color:blue">Depends</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>0.998
-</td>
-<td class=cellinside>Przemyslaw Biecek &lt;przemyslaw.biecek@gmail.com&gt
-</td>
-<td class=cellinside><font style="color:red">error_examples</font>
-</td>
-<td class=cellinside>  model should be an object of the class mer<br>Calls: groupDisp -> sapply -> lapply -> FUN -> recalculateLogLik<br>Execution halted
-</td>
-<td class=cellinside>SW
-</td>
-<td class=cellinside> TRUE
-</td>
-<td class=cellinside>responded 13/6/2003: "will try to add fixes as soon as possible"
-</td></tr>
- 
-<tr> 
 <td class=firstcolumn>63
 </td>
 <td class=cellinside>pbkrtest
@@ -1612,126 +1804,6 @@ cursor: pointer ;
 <td class=cellinside> 
 </td>
 <td class=cellinside>   NA
-</td>
-<td class=cellinside> 
-</td></tr>
- 
-<tr> 
-<td class=firstcolumn>64
-</td>
-<td class=cellinside>pedigreemm
-</td>
-<td class=cellinside><font style="color:blue">Depends</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>0.2-4
-</td>
-<td class=cellinside>Ana Ines Vazquez &lt;anainesvs@gmail.com&gt
-</td>
-<td class=cellinside><font style="color:red">error_install</font>
-</td>
-<td class=cellinside>** preparing package for lazy loading<br>Error in reconcilePropertiesAndPrototype(name, slots, prototype, superClasses,  : <br>  no definition was found for superclass "mer" in the specification of class "pedigreemm"<br>Error : unable to load R code in package 'pedigreemm'<br>ERROR: lazy loading failed for package 'pedigreemm'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/pedigreemm.Rcheck/pedigreemm'
-</td>
-<td class=cellinside>DB
-</td>
-<td class=cellinside>   NA
-</td>
-<td class=cellinside>DB contacted; with what results?
-</td></tr>
- 
-<tr> 
-<td class=firstcolumn>65
-</td>
-<td class=cellinside>phia
-</td>
-<td class=cellinside><font style="color:purple">Imports</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>0.1-2
-</td>
-<td class=cellinside>Helios De Rosario-Martinez &lt;helios.derosario@ibv.upv.es&gt
-</td>
-<td class=cellinside><font style="color:red">error_vignette</font>
-</td>
-<td class=cellinside>Error: $ operator not defined for this S4 class<br>Execution halted<br>
-</td>
-<td class=cellinside>SW
-</td>
-<td class=cellinside> TRUE
-</td>
-<td class=cellinside>car-related problems sorted; remaining issues should be package-specific
-</td></tr>
- 
-<tr> 
-<td class=firstcolumn>66
-</td>
-<td class=cellinside>phmm
-</td>
-<td class=cellinside><font style="color:green">Suggests</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>0.7-4
-</td>
-<td class=cellinside>Michael Donohue &lt;mdonohue@ucsd.edu&gt
-</td>
-<td class=cellinside><font style="color:red">error_examples</font>
-</td>
-<td class=cellinside>> summary(fit.lmer)@AICtab<br>Error: trying to get slot "AICtab" from an object (class "summary.merMod") that is not an S4 object <br>Execution halted
-</td>
-<td class=cellinside> 
-</td>
-<td class=cellinside>   NA
-</td>
-<td class=cellinside> 
-</td></tr>
- 
-<tr> 
-<td class=firstcolumn>67
-</td>
-<td class=cellinside>polytomous
-</td>
-<td class=cellinside><font style="color:blue">Depends</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>0.1.4
-</td>
-<td class=cellinside>Antti Arppe &lt;antti.arppe@helsinki.fi&gt
-</td>
-<td class=cellinside><font style="color:red">error_examples</font>
-</td>
-<td class=cellinside>Error : pwrssUpdate did not converge in 30 iterations<br>Calls: polytomous -> polytomous.poisson.reformulation<br>Execution halted
-</td>
-<td class=cellinside>SW
-</td>
-<td class=cellinside>FALSE
-</td>
-<td class=cellinside>we have some tests -- models could be fragile?
-</td></tr>
- 
-<tr> 
-<td class=firstcolumn>68
-</td>
-<td class=cellinside>prLogistic
-</td>
-<td class=cellinside><font style="color:blue">Depends</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>1.1
-</td>
-<td class=cellinside>Raydonal Ospina &lt;raydonal@de.ufpe.br&gt
-</td>
-<td class=cellinside><font style="color:red">error_examples</font>
-</td>
-<td class=cellinside>  There are not glm and lmer models. Revise arguments and try again<br>Calls: prLogisticDelta -> pr.conditional<br>Execution halted
-</td>
-<td class=cellinside>SW
-</td>
-<td class=cellinside>FALSE
 </td>
 <td class=cellinside> 
 </td></tr>
@@ -1761,30 +1833,6 @@ cursor: pointer ;
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>70
-</td>
-<td class=cellinside>R2STATS
-</td>
-<td class=cellinside><font style="color:purple">Imports</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>0.68-31
-</td>
-<td class=cellinside>Yvonnick Noel &lt;yvonnick.noel@uhb.fr&gt
-</td>
-<td class=cellinside><font style="color:red">error_install</font>
-</td>
-<td class=cellinside>** R<br>** inst<br>** preparing package for lazy loading<br>Error : object 'logLik' is not exported by 'namespace:lme4'<br>ERROR: lazy loading failed for package 'R2STATS'<br>* removing '/mnt/hgfs/bolker/Documents/R/pkgs/lme4git/lme4/misc/pkgtests/check/R2STATS.Rcheck/R2STATS'
-</td>
-<td class=cellinside>SW
-</td>
-<td class=cellinside>FALSE
-</td>
-<td class=cellinside> 
-</td></tr>
- 
-<tr> 
 <td class=firstcolumn>71
 </td>
 <td class=cellinside>RLRsim
@@ -1793,43 +1841,19 @@ cursor: pointer ;
 </td>
 <td class=cellinside>CRAN
 </td>
-<td class=cellinside>2.0-12
+<td class=cellinside>2.1-0
 </td>
 <td class=cellinside>Fabian Scheipl &lt;fabian.scheipl@stat.uni-muenchen.de&gt
 </td>
-<td class=cellinside><font style="color:red">error_examples</font>
+<td class=cellinside><font style="color:blue">OK</font>
 </td>
-<td class=cellinside>> X <- m@X<br>Error: no slot of name "X" for this object of class "lmerMod"<br>Execution halted
+<td class=cellinside>
 </td>
 <td class=cellinside>BMB
 </td>
 <td class=cellinside> TRUE
 </td>
-<td class=cellinside>should be fixed in version 2.1-0? But not yet propagated to CRAN
-</td></tr>
- 
-<tr> 
-<td class=firstcolumn>72
-</td>
-<td class=cellinside>robustlmm
-</td>
-<td class=cellinside><font style="color:blue">Depends</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>1.1
-</td>
-<td class=cellinside>Manuel Koller &lt;koller.manuel@gmail.com&gt
-</td>
-<td class=cellinside><font style="color:red">error_vignette</font>
-</td>
-<td class=cellinside>Error: could not find function "Mwgt"<br>Execution halted<br>
-</td>
-<td class=cellinside> 
-</td>
-<td class=cellinside>   NA
-</td>
-<td class=cellinside> 
+<td class=cellinside>
 </td></tr>
  
 <tr> 
@@ -1905,30 +1929,6 @@ cursor: pointer ;
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>76
-</td>
-<td class=cellinside>spacom
-</td>
-<td class=cellinside><font style="color:blue">Depends</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>1.0-0
-</td>
-<td class=cellinside>Till Junge &lt;till.junge@gmail.com&gt
-</td>
-<td class=cellinside><font style="color:purple">error_depfail</font>
-</td>
-<td class=cellinside>Package suggested but not available: 'geospacom'
-</td>
-<td class=cellinside> 
-</td>
-<td class=cellinside> TRUE
-</td>
-<td class=cellinside>spacom/geospacom have a suggests/depends loop that impedes installation here (and BMB is having rgeos install problems too)
-</td></tr>
- 
-<tr> 
 <td class=firstcolumn>77
 </td>
 <td class=cellinside>SPOT
@@ -1937,7 +1937,7 @@ cursor: pointer ;
 </td>
 <td class=cellinside>CRAN
 </td>
-<td class=cellinside>1.0.4045
+<td class=cellinside>1.0.4184
 </td>
 <td class=cellinside>Martin Zaefferer &lt;martin.zaefferer@gmx.de&gt
 </td>
@@ -2031,7 +2031,7 @@ cursor: pointer ;
 
 <hr size=1>
 <font size=-1>
-	 Generated on: <i>Wed Jun 26 00:49:59 2013</i> - <b>R2HTML</b> 
+	 Generated on: <i>Thu Jun 27 23:10:54 2013</i> - <b>R2HTML</b> 
 <hr size=1>
 	</body>
 </html>

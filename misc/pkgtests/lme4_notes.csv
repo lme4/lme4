@@ -1,1 +1,29 @@
-pkgname,lme4_contact,contacted,notesagridat,BMB,TRUE,"proximal: set control=lmerControl(check.numlev.gtr.1='ignore') in federer.diag"AICcmodavg,BMB,FALSE,aod,BMB,TRUE,"fails because it only imports lme4 then calls lme4::glmer -- evaluation level issues. Deprecated by authors in favour of aods3??"arm,SW,NA,"proximal problem is nonexistence of display.merMod, but we know sim() will need lots of modification"boss,BMB,TRUE,"fairly simple fixes"BradleyTerry2,BMB,TRUE,finecar,BMB,TRUE,clusterPower,BMB,TRUE,"fairly simple fixes"cplm,BMB,FALSE,NAEquiNorm,BMB,FALSE,NAgamm4,MM,FALSE,NAGRRGI,MM,FALSE,NAinfluence.ME,MM,FALSE,NAlanguageR,SW,FALSE,"surprising that this works -- doesn't it use mcmcsamp?"lmerTest,MM,FALSE,NAlongPower,MM,FALSE,NAmi,MM,FALSE,NAMixMAP,MM,FALSE,NAmlmRev,SW,FALSE,"very slow/memory-hungry; will skip. Should see whether this is equally bad in lme4.0, or is lme4 1.0 greedier/slower???"odprism,SW,FALSE,"proximal: set control=*lmerControl(check.rankZ.gtr.numobs=""ignore"")"PBImisc,SW,TRUE,"responded 13/6/2003: ""will try to add fixes as soon as possible"""pedigreemm,DB,NA,DB contacted; with what results?phia,SW,TRUE,"car-related problems sorted; remaining issues should be package-specific"polytomous,SW,FALSE,we have some tests -- models could be fragile?prLogistic,SW,FALSE,NAR2STATS,SW,FALSE,NARLRsim,BMB,TRUE,"should be fixed in version 2.1-0? But not yet propagated to CRAN"spacom,NA,TRUE,"spacom/geospacom have a suggests/depends loop that impedes installation here (and BMB is having rgeos install problems too)"
+pkgname,lme4_contact,contacted,notes
+agridat,BMB,TRUE,"proximal: set control=lmerControl(check.numlev.gtr.1='ignore') in federer.diag"
+AICcmodavg,BMB,TRUE,
+aod,BMB,TRUE,"fails because it only Suggests: lme4 then calls lme4::glmer -- see https://github.com/lme4/lme4/issues/50. Deprecated by authors in favour of aods3??"
+arm,SW,NA,"proximal problem is nonexistence of display.merMod, but we know sim() will need lots of modification"
+boss,BMB,TRUE,"fairly simple fixes"
+BradleyTerry2,BMB,TRUE,
+car,BMB,TRUE,
+clusterPower,BMB,TRUE,"fairly simple fixes"
+cplm,BMB,TRUE,NA
+EquiNorm,BMB,TRUE,"fails because it only Imports: lme4 then calls lme4::glmer -- see https://github.com/lme4/lme4/issues/50. Passes with hacked local version that sets Depends: instead of Imports:."
+gamm4,MM,FALSE,NA
+GRRGI,MM,FALSE,NA
+influence.ME,MM,FALSE,NA
+languageR,SW,FALSE,"surprising that this works -- doesn't it use mcmcsamp?"
+lmerTest,MM,FALSE,NA
+longPower,MM,FALSE,NA
+mi,MM,FALSE,NA
+MixMAP,MM,FALSE,NA
+mlmRev,SW,FALSE,"very slow/memory-hungry; will skip. Should see whether this is equally bad in lme4.0, or is lme4 1.0 greedier/slower???"
+odprism,SW,FALSE,"proximal: set control=*lmerControl(check.numobs.vs.rankZ=""ignore"")"
+PBImisc,SW,TRUE,"responded 13/6/2003: ""will try to add fixes as soon as possible"""
+pedigreemm,DB,NA,"DB contacted; with what results?"
+phia,SW,TRUE,"car-related problems sorted; remaining issues should be package-specific"
+polytomous,SW,FALSE,"we have some tests -- models could be fragile?"
+prLogistic,SW,FALSE,NA
+R2STATS,SW,FALSE,NA
+RLRsim,BMB,TRUE,
+spacom,BMB,TRUE,"spacom/geospacom have a suggests/depends loop (but fundamental problem is in spacom)"

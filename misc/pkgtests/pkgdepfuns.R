@@ -224,13 +224,17 @@ procError <- function(z,pkgname=NULL,debug=FALSE,checkdir="check") {
     c(L,m)
 }
 
+errLevels <- c(paste("error",
+                     c("depfail","examples","install","vignette"),sep="_"),
+               "OK")
 genReport <- function(depmatrix,      ## results of reverse_dependencies_with_maintainer()
                       testresults,   ## list of packages with elements status, msg, time, location, version
                       contact="lme4-authors <at> r-forge.wu-wien.ac.at",
                       pkg="lme4",
                       outfn=paste0(pkg,"_compat_report"),
                       verbose=FALSE,
-                      extra.info=NULL) {
+                      extra.info=NULL,
+                      sortCols=c("result","pkgname")) {
     require(pkg,character.only=TRUE)  ## for package version  (FIXME: should be stored with test results!)
     ## FIXME: should store/pull date from test results too
     if (!require("R2HTML")) {
@@ -259,14 +263,20 @@ genReport <- function(depmatrix,      ## results of reverse_dependencies_with_ma
     rpt <- merge(rpt,as.data.frame(depmatrix),by.x="pkgname",by.y="Package")
     ## table of results by package status
     sumtab <- with(rpt,table(result,depType))
-    rpt <- rpt[,c("pkgname","depType","location","version","Maintainer","result","diag")] ## drop e-mail, reorder
-    rpt$result <- colorCode(rpt$result)
-    rpt$depType <- colorCode(rpt$depType,colCodes=c(blue="Depends",green="Suggests",purple="Imports",red=NA))
-    ## names(rpt)[4] <- "maintainer"
+    rpt <- rpt[,c("pkgname",
+                  "depType","location","version",
+                  "Maintainer","result","diag")] ## drop e-mail, reorder
     rpt <- rename(rpt,c(Maintainer="maintainer"))
+    if (!is.null(extra.info))
+        rpt <- merge(rpt,extra.info,by="pkgname",all.x=TRUE)
+    ## mess with ordering by result *before* altering result!
+    rpt <- rpt[do.call(order,rpt[sortCols]),]
+    ## HTML table formatting
     rpt$maintainer <- dumbBrackets(rpt$maintainer)
-    if (!is.null(extra.info)) rpt <- merge(rpt,extra.info,by="pkgname",all.x=TRUE)
-    ## write file
+    rpt$result <- colorCode(as.character(rpt$result))
+    rpt$depType <- colorCode(rpt$depType,
+       colCodes=c(blue="Depends",green="Suggests",purple="Imports",red=NA))
+    ############# now write file
     title <- paste0(pkg,": downstream package report")
     HTMLInitFile(filename=outfn,outdir=".",
                  Title=title)
@@ -317,8 +327,7 @@ doPkgDeptests <- function(pkg="lme4",
     if (length(pkgdepMiss)>0)
         install.packages(pkgdepMiss,lib=libdir, type="source")
     if (!is.null(pkg_tarball)) {
-        ## FIXME: check if newer than installed version
-        tb0time <- file.info(pkg_tarball)$mtime
+        tb0time <- max(file.info(pkg_tarball)$mtime)
         pkg_inst <- file.exists(file.path(libdir,pkg))
         pkgtime <- if (!pkg_inst) -Inf else {
             file.info(file.path(libdir,pkg))$mtime
@@ -328,21 +337,14 @@ doPkgDeptests <- function(pkg="lme4",
     }
     ## * must export R_LIBS_SITE=./library before running R CMD BATCH
     ##   and  make sure that .R/check.Renviron is set
-    ##   (this is done in the 'runtests' script)
+    ##   (this is done by setTestEnv, called from 'runCheck')
 
-    ##  (repeated from pkgdepfuns.R):
-    ##   FIXME: check for/document local version of tarball more recent than R-forge/CRAN versions
-    ##  currently just tries to find most recent version and check it, but could check all versions?
     ##  FIXME: consistent implementation of checkdir
 
     ## FIXME: set up an appropriate makefile structure for this ? (a little tricky if it also depends on
     ##   checking CRAN/R-forge versions?
     ##  might to be able to use update.packages() ...
     
-    ## FIXME (?)/warning: need to make sure that latest/appropriate version of package is installed locally ...
-
-    ## FIXME: why are R2admb, RLRsim, sdtalt, Zelig not getting checked?
-
     suppressWarnings(rm(list=c("availCRAN","availRforge"))) ## clean up
 
     ## want to install additional dependencies etc. out of the way
