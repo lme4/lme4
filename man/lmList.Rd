@@ -48,8 +48,9 @@
 
   \item{na.action}{a function that indicates what should
   happen when the data contain \code{NA}s.  The default
-  action (\code{na.fail}) prints an error message and
-  terminates if there are any incomplete observations.}
+  action (\code{na.omit}, inherited from the 'factory
+  fresh' value of \code{getOption("na.action")}) strips any
+  observations with any missing values in any variables.}
 
   \item{offset}{this can be used to specify an \emph{a
   priori} known component to be included in the linear

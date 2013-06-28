@@ -43,9 +43,9 @@
 ##' @param weights an optional vector of \sQuote{prior weights} to be used in the
 ##'     fitting process.  Should be \code{NULL} or a numeric vector.
 ##' @param na.action a function that indicates what should happen when the
-##'     data contain \code{NA}s.  The default action (\code{na.fail}) prints
-##'     an error message and terminates if there are any incomplete
-##'     observations.
+##'     data contain \code{NA}s.  The default action (\code{na.omit},
+##'     inherited from the 'factory fresh' value of \code{getOption("na.action")})
+##'     strips any observations with any missing values in any variables.
 ##' @param offset this can be used to specify an \emph{a priori} known component
 ##'     to be included in the linear predictor during fitting. This should be
 ##'     \code{NULL} or a numeric vector of length equal to the number of cases.
