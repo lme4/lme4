@@ -6,22 +6,24 @@ As [previously announced on the lme4 mailing list][announce], we will shortly be
 
 [announce]: https://stat.ethz.ch/pipermail/r-sig-mixed-models/2012q1/014811.html
 
-* the version of `lme4` currently on [https://github.com/lme4/lme4/](github) should be used for new projects if possible; periodically rebuilt versions are available via
-
-```r
-install.packages("lme4", repos = c("http://lme4.r-forge.r-project.org/repos", 
-    getOptions("repos")["CRAN"]))
-```
-
-or the most recent version can be installed (from source: development toolchain including compiler etc. are required, and you may have to install `RcppEigen` from CRAN first) via 
+* the version of `lme4` currently on [https://github.com/lme4/lme4/](github) should be used for new projects if possible
+ * the most recent version can be installed (from source: development toolchain including compiler etc. are required, and you may have to install `RcppEigen` from CRAN first) via 
 
 ```r
 library("devtools")
 install_github("lme4", user = "lme4")
 ```
 
+ * periodically rebuilt binaries/source tarballs are available via
+
+```r
+install.packages("lme4", repos = c("http://lme4.r-forge.r-project.org/repos", 
+    getOption("repos")["CRAN"]))
+```
+
+(version 0.99999911-5 is available as of 28 June 2013; we may move to a 1.0-rc sequence shortly)
 * The current CRAN version (0.999999-2) will be replaced by a nearly identical version called `lme4.0` (currently version 0.9999-2).  `lme4.0` is a maintenance version and will only be changed to fix documented bugs. `mer` objects from older versions of `lme4` can be converted to `lme4.0`-usable form via `convert_old_lme4()` in the `lme4.0` package.
-* all other versions (`lme4a`, `lme4b`, `lme4Eigen` from R-forge) are deprecated.
+* all other versions (`lme4a`, `lme4b`, `lme4Eigen`) are deprecated.
 
 ## For end-users
 
