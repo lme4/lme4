@@ -99,7 +99,7 @@
 ##' anova(fm1, fm2)
 ##' @export
 ##' @importFrom minqa bobyqa
-lmer <- function(formula, data=NULL, REML = TRUE, 
+lmer <- function(formula, data=NULL, REML = TRUE,
                  control = lmerControl(), start = NULL,
                  verbose = 0L, subset, weights, na.action, offset,
                  contrasts = NULL, devFunOnly=FALSE,
@@ -119,7 +119,7 @@ lmer <- function(formula, data=NULL, REML = TRUE,
        mc[[1]] <- quote(lme4::glmer)
        return(eval(mc,parent.frame(1L)))
     }
-    
+
     ## https://github.com/lme4/lme4/issues/50
     ## parse data and formula
     mc[[1]] <- quote(lme4::lFormula)
@@ -169,7 +169,7 @@ lmer <- function(formula, data=NULL, REML = TRUE,
 ##'
 ##' The default approximation is the Laplace approximation,
 ##' corresponding to \code{nAGQ=1}.
-##' 
+##'
 ##' @title Fit Generalized Linear Mixed-Effects Models
 ##' @concept GLMM
 ##' @param family a GLM family, see \code{\link[stats]{glm}} and
@@ -225,12 +225,12 @@ lmer <- function(formula, data=NULL, REML = TRUE,
 ##'               family = binomial, data = cbpp))
 ##' anova(gm1,gm2)
 ##' @export
-glmer <- function(formula, data=NULL, family = gaussian, 
+glmer <- function(formula, data=NULL, family = gaussian,
                   control = glmerControl(), start = NULL, verbose = 0L, nAGQ = 1L,
                   subset, weights, na.action, offset,
                   contrasts = NULL, mustart, etastart, devFunOnly = FALSE, ...)
 {
-  
+
     mc <- mcout <- match.call()
 
     ## family-checking code duplicated here and in glFormula (for now) since
@@ -254,11 +254,11 @@ glmer <- function(formula, data=NULL, family = gaussian,
     glmod <- eval(mc, parent.frame(1L))
     mcout$formula <- attr(glmod, "formula")
     #glmod$formula <- NULL # not necessary now that formula is returned from glFormula as an attribute
-    
+
 
     ## create deviance function for covariance parameters (theta)
     devfun <- do.call(mkGlmerDevfun, c(glmod, list(control=control,
-                                                   nAGQ = 0))) 
+                                                   nAGQ = 0)))
     if (nAGQ==0 && devFunOnly) return(devfun)
     ## optimize deviance function over covariance parameters
     opt <- optimizeGlmer(devfun,
@@ -267,13 +267,13 @@ glmer <- function(formula, data=NULL, family = gaussian,
                          control = control$optControl,
                          nAGQ = nAGQ)
 
-    
+
     if(nAGQ > 0L){
         # update deviance function to include fixed effects as inputs
         devfun <- updateGlmerDevfun(devfun, glmod$reTrms, nAGQ = nAGQ)
         if (devFunOnly) return(devfun)
         # reoptimize deviance function over covariance parameters and fixed effects
-        opt <- optimizeGlmer(devfun, optimizer = control$optimizer[[2]], 
+        opt <- optimizeGlmer(devfun, optimizer = control$optimizer[[2]],
                              verbose = verbose, control = control$optControl,
                              stage=2)
     }
@@ -316,7 +316,8 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
 {
 
     vals <- nlformula(mc <- match.call())
-    if ((rankX <- rankMatrix(X <- vals$X)) < (p <- ncol(X)))
+    p <- ncol(X <- vals$X)
+    if ((rankX <- rankMatrix(X)) < p)
         stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
 
     rho <- list2env(list(verbose=verbose,
@@ -425,7 +426,7 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
 		pwrssUpdate(pp, resp, tolPwrss, GHrule(0L),
                             compDev, verbose)
             }
-	else 
+	else
 	    function(pars) {
                 ## pp$setDelu(rep(0, length(pp$delu)))
                 resp$setOffset(baseOffset)
@@ -1660,7 +1661,7 @@ getME <- function(object,
 	   "n_rtrms" = length(object@cnms),
            ## number of random-effects grouping factors
            "n_rfacs" = length(object@flist),
-           
+
            "devcomp" = dc,
            "offset" = rsp$offset,
            "lower" = object@lower,
@@ -1714,7 +1715,7 @@ vcov.summary.merMod <- function(object, correlation = TRUE, ...) {
 }
 
 ##' Make variance and correlation matrices from \code{theta}
-##' 
+##'
 ##' @param sc scale factor (residual standard deviation)
 ##' @param cnms component names
 ##' @param nc numeric vector: number of terms in each RE component
