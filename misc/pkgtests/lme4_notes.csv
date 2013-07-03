@@ -17,12 +17,13 @@ influence.ME,MM,FALSE,NA
 languageR,SW,FALSE,"surprising that this works -- doesn't it use mcmcsamp?"
 lmerTest,MM,FALSE,NA
 longPower,SW,TRUE,NA
+metafor,NA,FALSE,NA
 mi,MM,FALSE,NA
 MixMAP,MM,FALSE,NA
 mlmRev,SW,TRUE,"problems were related to rank-testing"
 odprism,SW,TRUE,"proximal: set control=*lmerControl(check.numobs.vs.rankZ=""ignore"")"
 phmm,SW,TRUE,
-PBImisc,SW,TRUE,"responded 13/6/2013: ""will try to add fixes as soon as possible"""
+PBImisc,SW,TRUE,"responded 13/6/2013: 'will try to add fixes as soon as possible'"
 pedigreemm,DB,NA,"DB contacted; with what results?"
 phia,SW,TRUE,"car-related problems sorted; remaining issues should be package-specific"
 polytomous,SW,FALSE,"we have some tests -- models could be fragile?"
