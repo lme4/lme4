@@ -2,7 +2,7 @@ pkgname,lme4_contact,contacted,notes
 agridat,BMB,TRUE,"proximal: set control=lmerControl(check.numlev.gtr.1='ignore') in federer.diag"
 AICcmodavg,BMB,TRUE,
 aod,BMB,TRUE
-arm,SW,NA,"proximal problem is nonexistence of display.merMod, but we know sim() will need lots of modification"
+arm,SW,TRUE,"proximal problem is nonexistence of display.merMod, but we know sim() will need lots of modification"
 boss,BMB,TRUE,"fairly simple fixes"
 BradleyTerry2,BMB,TRUE,
 car,BMB,TRUE,
