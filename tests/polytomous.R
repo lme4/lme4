@@ -1,5 +1,5 @@
 library(lme4)
-testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
+(testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
 
  ## setup
  ## library(polytomous)
@@ -26,7 +26,7 @@ if (FALSE) {
     ## Error in pp$updateDecomp() : Downdated VtV is not positive definite
 }
 
-if (testLevel>2) {
+if (testLevel > 2) {
     glmer(formula.poisson,data=data.poisson,family=poisson,
           control=glmerControl(compDev=FALSE),optimizer="bobyqa")
     ## caught warning: maxfun < 10 * length(par)^2 is not recommended.

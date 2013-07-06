@@ -1,5 +1,5 @@
 library(lme4)
-testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
+(testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
 mySumm <- function(.) { s <- sigma(.)
                         c(beta =getME(., "beta"),
                           sigma = s, sig01 = unname(s * getME(., "theta"))) }
@@ -16,7 +16,7 @@ fm2 <- lmer(angle ~ recipe * temperature + (1|recipe:replicate), cake)
 boo03 <- bootMer(fm2, mySumm, nsim = 10)
 boo04 <- bootMer(fm2, mySumm, nsim = 10, use.u = TRUE)
 
-if (testLevel>1) {
+if (testLevel > 1) {
     gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                  data = cbpp, family = binomial)
     boo05 <- bootMer(gm1, mySumm, nsim = 10)

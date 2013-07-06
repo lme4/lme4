@@ -1,7 +1,7 @@
 ## generalized linear mixed model
 stopifnot(suppressPackageStartupMessages(require(lme4)))
 options(show.signif.stars = FALSE)
-testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
+(testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
 
 source(system.file("test-tools-1.R", package = "Matrix"), keep.source = FALSE)
 ##
@@ -89,24 +89,24 @@ stopifnot(is((cm2 <- coef(m2)), "coef.mer"),
 
 ## 32-bit Ubuntu 10.04:
 coef_m1_lme4.0 <- structure(c(-1.39853505102576,
-                         -0.992334712470269, -1.12867541092127, 
+                         -0.992334712470269, -1.12867541092127,
                          -1.58037389566025),
-                       .Names = c("(Intercept)", "period2", "period3", 
+                       .Names = c("(Intercept)", "period2", "period3",
                        "period4"))
 
 ## library(glmmADMB)
 ## mg <- glmmadmb(cbind(incidence, size - incidence) ~ period + (1 | herd),
 ##                family = "binomial", data = cbpp)
-coef_m1_glmmadmb <- structure(c(-1.39853810064827, -0.99233330126975, -1.12867317840779, 
--1.58031150854503), .Names = c("(Intercept)", "period2", "period3", 
+coef_m1_glmmadmb <- structure(c(-1.39853810064827, -0.99233330126975, -1.12867317840779,
+-1.58031150854503), .Names = c("(Intercept)", "period2", "period3",
 "period4"))
 
 ## library(glmmML)
 ## mm <- glmmML(cbind(incidence, size - incidence) ~ period,
 ##              cluster=herd,
 ##             family = "binomial", data = cbpp)
-coef_m1_glmmML <- structure(c(-1.39853234657711, -0.992336901732793, -1.12867036466201, 
--1.58030977686564), .Names = c("(Intercept)", "period2", "period3", 
+coef_m1_glmmML <- structure(c(-1.39853234657711, -0.992336901732793, -1.12867036466201,
+-1.58030977686564), .Names = c("(Intercept)", "period2", "period3",
 "period4"))
 
 ## lme4[r 1636], 64-bit ubuntu 11.10:
@@ -218,7 +218,7 @@ stopifnot(all.equal(a01$Chisq[2], 554.334056, tol=1e-5),
           a01$ Df == 3:4,
 	  a01$`Chi Df`[2] == 1)
 
-if (testLevel>1) {
+if (testLevel > 1) {
     nsim <- 10
     set.seed(2)
     system.time(

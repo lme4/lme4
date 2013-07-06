@@ -1,7 +1,7 @@
 library(lme4)
-testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
+(testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
 
-## for now, use hidden functions
+## for now, use hidden functions [MM: this is a sign, we should *export* them]
 getNBdisp <- lme4:::getNBdisp
 refitNB   <- lme4:::refitNB
 
@@ -19,7 +19,7 @@ simfun <- function(sd.u=1, NBtheta=0.5,
                  mu=exp(X %*% beta +u_f[f]),size=NBtheta))
 }
 
-if (testLevel>1) {
+if (testLevel > 1) {
     set.seed(102)
     d.1 <- simfun()
     t1 <- system.time(g1 <- glmer.nb(z ~ x + (1|f), data=d.1, verbose=TRUE))
@@ -119,7 +119,7 @@ glmmADMB_epil_vals <-
          NLL = structure(624.551, class = "logLik", df = 9, nobs = 236L),
          theta = 7.4702)
 
-if (testLevel>3) {
+if (testLevel > 3) {
     ## "too slow" for regular testing -- 49 (MM@lynne: 33, then 26) seconds:
     (t4 <- system.time(g4 <- glmer.nb(y~ Base*trt + Age + Visit + (Visit|subject),
                                       data=epil2, verbose=TRUE)))

@@ -1,5 +1,5 @@
 library(lme4)
-testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
+(testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
 
 ## testing refit
 ## for each type of model, should be able to
@@ -48,7 +48,7 @@ getinfo(gm1R)
 
 ## FIXME: still failing on Windows
 ## gm1S <- refit(gm1,simulate(gm1)[[1]])
-## getinfo(gm1S) 
+## getinfo(gm1S)
 
 ## binomial GLMM (prob/weights)
 gm2 <- glmer(incidence/size ~ period + (1 | herd), cbpp, binomial, weights=size)
@@ -60,7 +60,7 @@ getinfo(gm2R)
 ## gm2S <- refit(gm2,simulate(gm2)[[1]])
 ## getinfo(gm2S)
 
-if (testLevel>1) {
+if (testLevel > 1) {
     ## Bernoulli GLMM (specified as factor)
     data(Contraception,package="mlmRev")
     gm3 <- glmer(use ~ urban+age+livch+(1|district), Contraception, binomial)

@@ -1,7 +1,6 @@
 
-R version 2.15.1 beta (2012-06-14 r59562) -- "Roasted Marshmallows"
-Copyright (C) 2012 The R Foundation for Statistical Computing
-ISBN 3-900051-07-0
+R version 3.0.1 Patched (2013-07-03 r63167) -- "Good Sport"
+Copyright (C) 2013 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -19,6 +18,10 @@ Type 'q()' to quit R.
 > library(lme4)
 Loading required package: lattice
 Loading required package: Matrix
+Loading required package: Rcpp
+Loading required package: RcppEigen
+> (testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
+[1] 1
 > 
 > allEQ <- function(x,y, tolerance = 4e-4, ...)
 +     all.equal.numeric(x,y, tolerance=tolerance, ...)
@@ -52,146 +55,50 @@ scal 0.362 0.762
     Asym     xmid     scal 
 192.0534 727.9074 348.0738 
 > 
-> ## 'Theoph' Data modeling
-> Th.start <- c(lKe = -2.5, lKa = 0.5, lCl = -3)
-> 
-> system.time(nm2 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
-+                          (lKe+lKa+lCl|Subject), 
+> if (testLevel > 2) {
++     ## 'Theoph' Data modeling
++     Th.start <- c(lKe = -2.5, lKa = 0.5, lCl = -3)
++ 
++ system.time(nm2 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
++                          (lKe+lKa+lCl|Subject),
 +                          Theoph, start = Th.start, tolPwrss=1e-8))
-   user  system elapsed 
-  5.480   0.000   5.497 
-> print(nm2, corr=FALSE)
-Nonlinear mixed model fit by maximum likelihood ['nlmerMod']
-Formula: conc ~ SSfol(Dose, Time, lKe, lKa, lCl) ~ (lKe + lKa + lCl |      Subject) 
-   Data: Theoph 
-
-      AIC       BIC    logLik  deviance 
- 366.5270  395.3550 -173.2635  346.5270 
-
-Random effects:
- Groups   Name Variance Std.Dev. Corr         
- Subject  lKe  0.01748  0.1322                
-          lKa  0.40625  0.6374    0.020       
-          lCl  0.06544  0.2558    0.992 -0.096
- Residual      0.46311  0.6805                
-Number of obs: 132, groups: Subject, 12
-
-Fixed effects:
-    Estimate Std. Error t value
-lKe -2.44551    0.06257  -39.08
-lKa  0.47646    0.19395    2.46
-lCl -3.21462    0.08100  -39.69
-> 
-> system.time(nm3 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
++ print(nm2, corr=FALSE)
++ 
++ system.time(nm3 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
 +                          (lKe|Subject) + (lKa|Subject) + (lCl|Subject),
 +                          Theoph, start = Th.start))
-   user  system elapsed 
-  2.728   0.004   2.739 
-> print(nm3, corr=FALSE)
-Nonlinear mixed model fit by maximum likelihood ['nlmerMod']
-Formula: conc ~ SSfol(Dose, Time, lKe, lKa, lCl) ~ (lKe | Subject) + (lKa |      Subject) + (lCl | Subject) 
-   Data: Theoph 
-
-      AIC       BIC    logLik  deviance 
- 367.9835  388.1631 -176.9918  353.9835 
-
-Random effects:
- Groups   Name Variance  Std.Dev.
- Subject  lKe  2.460e-07 0.000496
- Subject  lKa  4.316e-01 0.656941
- Subject  lCl  2.809e-02 0.167588
- Residual      5.008e-01 0.707683
-Number of obs: 132, groups: Subject, 12
-
-Fixed effects:
-    Estimate Std. Error t value
-lKe -2.46537    0.05187  -47.53
-lKa  0.48103    0.20000    2.41
-lCl -3.23045    0.05955  -54.25
-> 
-> ## dropping   lKe  from random effects:
-> system.time(nm4 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~ (lKa+lCl|Subject),
++ print(nm3, corr=FALSE)
++ 
++ ## dropping   lKe  from random effects:
++ system.time(nm4 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~ (lKa+lCl|Subject),
 +                          Theoph, start = Th.start, tolPwrss=1e-8))
-   user  system elapsed 
-  1.624   0.000   1.630 
-> print(nm4, corr=FALSE)
-Nonlinear mixed model fit by maximum likelihood ['nlmerMod']
-Formula: conc ~ SSfol(Dose, Time, lKe, lKa, lCl) ~ (lKa + lCl | Subject) 
-   Data: Theoph 
-
-      AIC       BIC    logLik  deviance 
- 367.9818  388.1614 -176.9909  353.9818 
-
-Random effects:
- Groups   Name Variance Std.Dev. Corr  
- Subject  lKa  0.43176  0.6571         
-          lCl  0.02806  0.1675   -0.005
- Residual      0.50087  0.7077         
-Number of obs: 132, groups: Subject, 12
-
-Fixed effects:
-    Estimate Std. Error t value
-lKe -2.46592    0.05188  -47.53
-lKa  0.48283    0.20004    2.41
-lCl -3.22897    0.05953  -54.24
-> 
-> system.time(nm5 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
++ print(nm4, corr=FALSE)
++ 
++ system.time(nm5 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
 +                          (lKa|Subject) + (lCl|Subject),
 +                          Theoph,
 +                          start = Th.start, tolPwrss=1e-8))
-   user  system elapsed 
-  0.872   0.000   0.874 
-> print(nm5, corr=FALSE)
-Nonlinear mixed model fit by maximum likelihood ['nlmerMod']
-Formula: conc ~ SSfol(Dose, Time, lKe, lKa, lCl) ~ (lKa | Subject) + (lCl |      Subject) 
-   Data: Theoph 
-
-      AIC       BIC    logLik  deviance 
- 365.9817  383.2785 -176.9908  353.9817 
-
-Random effects:
- Groups   Name Variance Std.Dev.
- Subject  lKa  0.43465  0.6593  
- Subject  lCl  0.02813  0.1677  
- Residual      0.50039  0.7074  
-Number of obs: 132, groups: Subject, 12
-
-Fixed effects:
-    Estimate Std. Error t value
-lKe -2.46584    0.05185  -47.56
-lKa  0.48229    0.20064    2.40
-lCl -3.23055    0.05957  -54.23
-> 
-> if (require("PKPDmodels")) {
-+     oral1cptSdlkalVlCl <-
-+         PKmod("oral", "sd", list(ka ~ exp(lka), k ~ exp(lCl)/V, V ~ exp(lV)))
-+     system.time(nm2a <- nlmer(conc ~ oral1cptSdlkalVlCl(Dose, Time, lV, lka, lCl) ~
-+                               (lV+lka+lCl|Subject), 
-+                               Theoph, start = c(lV=-1, lka=-0.5, lCl=-3), tolPwrss=1e-8))
-+     print(nm2a, corr=FALSE)
-+ }
-Loading required package: PKPDmodels
-Nonlinear mixed model fit by maximum likelihood ['nlmerMod']
-Formula: conc ~ oral1cptSdlkalVlCl(Dose, Time, lV, lka, lCl) ~ (lV + lka +      lCl | Subject) 
-   Data: Theoph 
-
-      AIC       BIC    logLik  deviance 
- 366.4875  395.3155 -173.2438  346.4875 
-
-Random effects:
- Groups   Name Variance Std.Dev. Corr         
- Subject  lV   0.01517  0.1232                
-          lka  0.42806  0.6543   -0.202       
-          lCl  0.06343  0.2519    0.993 -0.087
- Residual      0.46237  0.6800                
-Number of obs: 132, groups: Subject, 12
-
-Fixed effects:
-    Estimate Std. Error t value
-lV  -0.77190    0.04208  -18.35
-lka  0.47101    0.19864    2.37
-lCl -3.21971    0.07995  -40.27
++ print(nm5, corr=FALSE)
++ 
++     if (require("PKPDmodels")) {
++         oral1cptSdlkalVlCl <-
++             PKmod("oral", "sd", list(ka ~ exp(lka), Cl ~ exp(lCl), V ~ exp(lV)))
++         if (FALSE) {
++             ## FIXME: Error in get(nm, envir = nlenv) : object 'k' not found
++             ##  probably with environments/call stack etc.?
++             ## 'pnames' is c("lV","lka","k") -- not ("lV","lka","lCl")
++             ##  nlmer -> nlformula -> MkRespMod
++             ##  pnames are OK in nlformula, but in MkRespMod we try to recover
++             ##   them from the column names of the gradient attribute of the
++             ##   model evaluated in nlenv -- which are wrong.
++             system.time(nm2a <- nlmer(conc ~ oral1cptSdlkalVlCl(Dose, Time, lV, lka, lCl) ~
++                                       (lV+lka+lCl|Subject),
++                                       Theoph, start = c(lV=-1, lka=-0.5, lCl=-3), tolPwrss=1e-8))
++             print(nm2a, corr=FALSE)
++         }
++     }
++ }  ## testLevel > 2
 > 
 > proc.time()
    user  system elapsed 
- 19.785   0.080  19.919 
+  4.560   0.132   4.698 

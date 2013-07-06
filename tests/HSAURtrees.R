@@ -1,5 +1,5 @@
 library("lme4")
-testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
+(testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
 
 ## example from HSAUR2 package
  if(FALSE) {
@@ -18,8 +18,9 @@ dfun <- glmer(damage ~ species - 1 + (1 | lattice / plot),
               data = trees513, family = binomial, devFunOnly = TRUE)
 ls.str(environment(dfun))# and you can investigate ...
 
-if (testLevel>2) {
+if (testLevel > 2) {
     mmod <- glmer(damage ~ species - 1 + (1 | lattice / plot),
                   data = trees513, family = binomial())
+    summary(mmod)
 }
 

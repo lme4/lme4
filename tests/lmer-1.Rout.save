@@ -1,13 +1,11 @@
 
-R Under development (unstable) (2013-05-22 r62774) -- "Unsuffered Consequences"
+R version 3.0.1 Patched (2013-07-03 r63167) -- "Good Sport"
 Copyright (C) 2013 The R Foundation for Statistical Computing
-Platform: i686-pc-linux-gnu (32-bit)
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -115,6 +113,8 @@ fm1  6 1763.9 1783.1 -875.97   1751.9 0.0639      1     0.8004
 > ## Now works for glmer
 > fm1. <- suppressWarnings(glmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 > ## default family=gaussian/identity link -> automatically calls  lmer()  (but with a warning)
+> ## hack call -- comes out unimportantly different
+> fm1.@call[[1]] <- quote(lmer)
 > stopifnot(all.equal(fm1, fm1.))
 > ## Test against previous version in lmer1 (using bobyqa for consistency)
 > #(fm1. <- lmer1(Reaction ~ Days + (Days|Subject), sleepstudy, opt = "bobyqa"))
@@ -131,7 +131,6 @@ fm1  6 1763.9 1783.1 -875.97   1751.9 0.0639      1     0.8004
 > ##           all.equal(fixef(fm1), fixef(fm1.)),
 > ##           all.equal(fm1@re@theta, fm1.@re@theta, tol = 1.e-7),
 > ##           all.equal(ranef(fm1), ranef(fm1.), tol = 1.e-7))
-> 
 > 
 > stopifnot(all.equal(fixef(fm1), fixef(fm2), tol = 1.e-13),
 +           all.equal(unname(fixef(fm1)),
@@ -169,7 +168,7 @@ Fixed effects:
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.8 0.4 1.227 
+Time elapsed:  0.708 0.016 0.725 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -228,11 +227,11 @@ Warning messages:
 1: In checkArgs("lmer", sparseX = TRUE) :
   sparseX = TRUE has no effect at present
 2: In checkArgs("lmer", sparseX = TRUE) :
-  extra argument(s) ‘sparseX’ disregarded
+  extra argument(s) 'sparseX' disregarded
 > #fmX2s <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
 > 
 > showProc.time() #
-Time elapsed:  0.424 0.028 0.463 
+Time elapsed:  0.368 0.004 0.374 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -355,7 +354,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.684 0.148 0.861 
+Time elapsed:  0.528 0.004 0.534 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -394,7 +393,7 @@ Warning messages:
 1: In checkArgs("lmer", sparseX = TRUE) :
   sparseX = TRUE has no effect at present
 2: In checkArgs("lmer", sparseX = TRUE) :
-  extra argument(s) ‘sparseX’ disregarded
+  extra argument(s) 'sparseX' disregarded
 > 
 > ## the summary() components we do want to compare 'dense X' vs 'sparse X':
 > nmsSumm <- c("methTitle", "devcomp", "logLik", "ngrps", "coefficients",
@@ -482,7 +481,7 @@ lagoon4 0.000  0.000  0.000
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.38 0.056 0.445 
+Time elapsed:  0.524 0.012 0.535 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -503,7 +502,7 @@ Warning message:
 In Ops.factor(ff, x1) : + not meaningful for factors
 > 
 > showProc.time() #
-Time elapsed:  1.816 0 1.928 
+Time elapsed:  1.212 0.004 1.222 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -572,10 +571,16 @@ Fixed effects:
 > fakedat[sample(nrow(fakedat),100),"zbmi"] <- NA
 > fakedat[sample(nrow(fakedat),100),"DA"] <- NA
 > m5 <- lmer(zbmi ~ (1|DA) , data = fakedat,
-+                        control=lmerControl(check.rankZ.gtr.obs="ignore"))
++                        control=lmerControl(check.numobs.gtr.rankZ="ignore"))
+Warning message:
+In (function (iprint = 0L, maxfun = 10000L, FtolAbs = 1e-05, FtolRel = 1e-15,  :
+  unused control arguments ignored
 > stopifnot(c(VarCorr(m5)[["DA"]])==0)
 > m6 <- lmer(zbmi ~ (1|DA) , data = na.omit(fakedat),
-+                        control=lmerControl(check.rankZ.gtr.obs="ignore"))
++                        control=lmerControl(check.numobs.gtr.rankZ="ignore"))
+Warning message:
+In (function (iprint = 0L, maxfun = 10000L, FtolAbs = 1e-05, FtolRel = 1e-15,  :
+  unused control arguments ignored
 > stopifnot(c(VarCorr(m6)[["DA"]])==0)
 > 
 > 
@@ -583,4 +588,4 @@ Fixed effects:
 > 
 > proc.time()
    user  system elapsed 
-  8.660   5.316  14.798 
+  7.952   0.208   8.177 

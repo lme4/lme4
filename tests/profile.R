@@ -1,5 +1,5 @@
 library(lme4)
-testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
+(testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
 
 fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
 
@@ -19,7 +19,7 @@ stopifnot(dim(CIpr) == c(3,2),
           all.equal(unname(CIpr[".sigma",]),exp(c(3.64362, 4.21446)), tol=1e-6),
           all.equal(unname(CIpr["(Intercept)",]),c(1486.451500,1568.548494)))
 
-if (testLevel>2) {
+if (testLevel > 2) {
 
     ## 2D profiles
     fm2ML <- lmer(diameter ~ 1 + (1|plate) + (1|sample), Penicillin, REML=0)
@@ -38,7 +38,6 @@ if (testLevel>2) {
     print(xyplot(pr2, absVal=0, aspect=1.3, layout=c(4,1)))
     print(splom(pr2))
 
-    
     gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                  data = cbpp, family = binomial)
 
@@ -51,7 +50,7 @@ if (testLevel>2) {
                       data = cbpp, family = binomial,
                       compDev=FALSE,verbose=3)
     }
-    
+
     profile(gm1,which=3)
     xyplot(pr4,layout=c(5,1),as.table=TRUE)
     if (FALSE) {
@@ -72,11 +71,11 @@ if (testLevel>2) {
 
 ## NOT RUN:  ~ 4 theta-variables, 19 seconds
 fm3ML <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, REML=FALSE)
-if (testLevel>3) {
+if (testLevel > 3) {
     system.time(pr3 <- profile(fm3ML))
     xyplot(pr3)
     print(splom(pr3))
-    
+
     data("Contraception",package="mlmRev")
     fm2 <- glmer(use ~ urban+age+livch+(urban|district), Contraception, binomial)
     pr5 <- profile(fm2,verbose=10)
