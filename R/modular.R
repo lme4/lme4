@@ -64,9 +64,63 @@
 ##'
 NULL
 
+### Small utilities to be used in lFormula() and glFormula()
+
 doCheck <- function(x) {
-    !is.null(x) && x!="ignore"
+    is.character(x) && !any(x == "ignore")
 }
+
+checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6)
+{
+    stopifnot(is.list(ctrl), is.numeric(n), is.numeric(nonSmall))
+    cstr <- "check.numobs.vs.rankZ"
+    if (doCheck(cc <- ctrl[[cstr]])) { ## not NULL or "ignore"
+	d <- dim(Zt)
+	doTr <- d[1L] < d[2L] # Zt is "wide" => qr needs transpose(Zt)
+	if(!(grepl("Small",cc) && prod(d) > nonSmall) &&  ## not "*Small" and large Z mat
+	   (n < (rankZ <- rankMatrix(if(doTr) t(Zt) else Zt, method="qr",
+				     sval = numeric(min(d)))))) ## test
+	{
+	    wstr <- "number of observations < rank(Z); variance-covariance matrix will be unidentifiable"
+	    switch(cc,
+		   "warningSmall" =, "warning" = warning(wstr),
+		   "stopSmall" =, "stop" = stop(wstr),
+		   stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
+	}
+    }
+}
+
+checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
+{
+    stopifnot(is.list(ctrl), is.numeric(n))
+    nlevelVec <- unlist(lapply(flist, function(x) nlevels(droplevels(x)) ))
+    ## Part 1 ----------------
+    cstr <- "check.numlev.gtr.1"
+    if (doCheck(cc <- ctrl[[cstr]]) && any(nlevelVec < 2)) {
+	wstr <- "grouping factors must have > 1 sampled level"
+	switch(cc,
+	       "warning" = warning(wstr),
+	       "stop" = stop(wstr),
+	       stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
+    }
+    ## Part 2 ----------------
+    if (any(if(allow.n) nlevelVec > n else nlevelVec >= n))
+	stop(gettextf(
+	    "number of levels of each grouping factor must be %s number of observations",
+	    if(allow.n) "<=" else "<"), domain=NA)
+
+    ## Part 3 ----------------
+    cstr <- "check.numlev.gtreq.5"
+    if (doCheck(cc <- ctrl[[cstr]]) && any(nlevelVec < 5)) {
+	wstr <- "grouping factors with < 5 sampled levels may give unreliable estimates"
+	switch(cc,
+	       "warning" = warning(wstr),
+	       "stop" = stop(wstr),
+	       stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
+    }
+}
+
+
 
 ##' @rdname modular
 ##' @param control a list giving (for \code{[g]lFormula}) all options (see \code{\link{lmerControl}} for running the model;
@@ -83,10 +137,9 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
                      subset, weights, na.action, offset, contrasts = NULL,
                      control=lmerControl(), ...)
 {
-
+    control <- control$checkControl ## this is all we really need
     mf <- mc <- match.call()
 
-    control <- control$checkControl ## this is all we really need
     ignoreArgs <- c("start","verbose","devFunOnly","control")
     l... <- list(...)
     l... <- l...[!names(l...) %in% ignoreArgs]
@@ -105,44 +158,21 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     mf <- mf[c(1, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1]] <- as.name("model.frame")
-    fr.form <- subbars(formula) # substituted "|" by "+" -
+    fr.form <- subbars(formula) # substitute "|" by "+"
     environment(fr.form) <- environment(formula)
     mf$formula <- fr.form
     fr <- eval(mf, parent.frame())
+    n <- nrow(fr)
     ## random effects and terms modules
     reTrms <- mkReTrms(findbars(formula[[3]]), fr)
-    nlevelVec <- unlist(lapply(reTrms$flist, function(x) nlevels(droplevels(x)) ))
-    cstr <- "check.numlev.gtr.1"
-    if (doCheck(cc <- control[[cstr]]) && any(nlevelVec < 2)) {
-        wstr <- "grouping factors must have > 1 sampled level"
-        switch(cc,warning=warning(wstr),stop=stop(wstr),
-               stop(paste0("unknown check level for '",cstr,"'")))
-    }
-    if (any(nlevelVec >= nrow(fr)))
-        stop("number of levels of each grouping factor must be ",
-             "< number of observations")
-    cstr <- "check.numlev.gtreq.5"
-    if (doCheck(cc <- control[[cstr]]) && any(nlevelVec < 5)) {
-        wstr <- "grouping factors with < 5 sampled levels may give unreliable estimates"
-        switch(cc,warning=warning(wstr),stop=stop(wstr),
-               stop(paste0("unknown check level for '",cstr,"'")))
-    }
-    cstr <- "check.numobs.vs.rankZ"
-    if (doCheck(cc <- control[[cstr]]) && ## not NULL or "ignore"
-	!(grepl("Small",cc) &&		  ## not "*Small" and large Z mat
-	  prod(d <- dim(reTrms$Zt)) > 1e6)
-	&& (nrow(fr) <= (rankZ <- rankMatrix(t(reTrms$Zt), method="qr",
-					     sval=numeric(min(d))))))
-    {
-        wstr <- "number of observations <= rank(Z) ; variance-covariance matrix is likely to be unidentifiable"
-        switch(cc,warningSmall=,warning=warning(wstr),stopSmall=,stop=stop(wstr),
-               stop(paste0("unknown check level for '",cstr,"'")))
-    }
+    checkNlevels(reTrms$ flist, n=n, control)
+    checkZrank	(reTrms$ Zt,	n=n, control, nonSmall = 1e6)
+
     ## fixed-effects model matrix X - remove random effects from formula:
     fixedform <- formula
     fixedform[[3]] <- if(is.null(nb <- nobars(fixedform[[3]]))) 1 else nb
     mf$formula <- fixedform
-    ## re-evaluate model frame to extract predvars component
+    ## re-evaluate model frame to extract predvars component {FIXME? glFormula() does not..}
     fixedfr <- eval(mf, parent.frame())
     attr(attr(fr,"terms"),"predvars.fixed") <- attr(attr(fixedfr,"terms"),"predvars")
     X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
@@ -247,7 +277,8 @@ optimizeLmer <- function(devfun,
     return(opt)
 }
 
-## TODO:  remove any arguments that aren't actually used by glFormula (same for lFormula)
+## TODO: remove any arguments that aren't actually used by glFormula (same for lFormula)
+## TODO(?): lFormula() and glFormula()  are very similar: merge or use common baseFun()
 ##' @rdname modular
 ##' @inheritParams glmer
 ##' @export
@@ -259,7 +290,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
 
     control <- control$checkControl ## this is all we really need
     mf <- mc <- match.call()
-                                        # extract family, call lmer for gaussian
+    ## extract family, call lmer for gaussian
     if (is.character(family))
         family <- get(family, mode = "function", envir = parent.frame(2))
     if( is.function(family)) family <- family()
@@ -284,32 +315,20 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     mf <- mf[c(1, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1]] <- as.name("model.frame")
-    fr.form <- subbars(formula) # substitute "|" for "+" -
+    fr.form <- subbars(formula) # substitute "|" by "+"
     environment(fr.form) <- environment(formula)
     mf$formula <- fr.form
     fr <- eval(mf, parent.frame())
-                                        # random-effects module
+    n <- nrow(fr)
+    ## random effects and terms modules
     reTrms <- mkReTrms(findbars(formula[[3]]), fr)
-    nlevelVec <- unlist(lapply(reTrms$flist, function(x) nlevels(droplevels(x)) ))
-    if (any(nlevelVec==1)) stop("grouping factors must have > 1 sampled level")
-    if ((maxlevels <- max(nlevelVec)) > nrow(fr))
-        stop("number of levels of each grouping factor must be >= number of obs")
-    ## FIXME: duplicated code between lFormula, glFormula
-    if (any(nlevelVec < 5))
-	warning("grouping factors with < 5 sampled levels may give unreliable estimates")
-    cstr <- "check.numobs.vs.rankZ"
+    ## TODO: allow.n = !useSc {see FIXME below}
+    checkNlevels(reTrms$ flist, n=n, control, allow.n=TRUE)
+    checkZrank	(reTrms$ Zt,	n=n, control, nonSmall = 1e6)
+
     ## FIXME: adjust test for families with estimated scale parameter:
     ##   useSc is not defined yet/not defined properly?
-    if (doCheck(cc <- control[[cstr]]) &&                   ## not NULL or "ignore"
-        !(grepl(cc,"Small") &&   ## not "*Small" and large Z mat
-          prod(d <- dim(reTrms$Zt)) > 1e6) &&
-        (nrow(fr) < (rankZ <- rankMatrix(t(reTrms$Zt), method="qr", sval=min(d))))) ## test
-    {
-        wstr <- "number of observations < rank(Z); variance-covariance matrix will be unidentifiable"
-        switch(cc,warningSmall=,warning=warning(wstr),stopSmall=,stop=stop(wstr),
-               stop(paste0("unknown check level for '",cstr,"'")))
-    }
-    ##  if (useSc && maxlevels == nrow(fr))
+    ##  if (useSc && maxlevels == n)
     ##          stop("number of levels of each grouping factor must be",
     ##                "greater than number of obs")
 
@@ -321,9 +340,10 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     if ((rankX <- rankMatrix(X)) < p)
         stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
 
-    out <- list(fr = fr, X = X, reTrms = reTrms, family = family)
-    attr(out, "formula") <- formula
-    return(out)
+    ## TODO: list(fr = fr, X = X, reTrms = reTrms, family = family, formula = formula)
+    ## instead,  'formula' is returned as attribute -- Yuck !!!
+    structure(list(fr = fr, X = X, reTrms = reTrms, family = family),
+	      formula = formula)
 }
 
 ##' @rdname modular
