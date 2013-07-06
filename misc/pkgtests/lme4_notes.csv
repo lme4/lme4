@@ -2,7 +2,7 @@ pkgname,lme4_contact,contacted,notes
 agridat,BMB,TRUE,"proximal: set control=lmerControl(check.numlev.gtr.1='ignore') in federer.diag"
 AICcmodavg,BMB,TRUE,
 aod,BMB,TRUE
-arm,SW,NA,"proximal problem is nonexistence of display.merMod, but we know sim() will need lots of modification"
+arm,SW,TRUE,"proximal problem is nonexistence of display.merMod, but we know sim() will need lots of modification"
 boss,BMB,TRUE,"fairly simple fixes"
 BradleyTerry2,BMB,TRUE,
 car,BMB,TRUE,
@@ -12,14 +12,14 @@ EquiNorm,BMB,TRUE
 gamm4,MM,FALSE,NA
 GRRGI,MM,FALSE,NA
 gmodels,SW,TRUE,
-HSAUR2,SW,TRUE,responded 29/6/2013: ""I'll make the change asap!""
+HSAUR2,SW,TRUE,fixed!
 influence.ME,MM,FALSE,NA
 languageR,SW,FALSE,"surprising that this works -- doesn't it use mcmcsamp?"
 lmerTest,MM,FALSE,NA
 longPower,SW,TRUE,NA
 mi,MM,FALSE,NA
 MixMAP,MM,FALSE,NA
-mlmRev,SW,FALSE,"very slow/memory-hungry; will skip. Should see whether this is equally bad in lme4.0, or is lme4 1.0 greedier/slower???"
+mlmRev,SW,TRUE,"problems were related to rank-testing"
 odprism,SW,TRUE,"proximal: set control=*lmerControl(check.numobs.vs.rankZ=""ignore"")"
 phmm,SW,TRUE,
 PBImisc,SW,TRUE,"responded 13/6/2013: ""will try to add fixes as soon as possible"""
