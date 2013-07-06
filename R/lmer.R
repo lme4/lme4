@@ -126,6 +126,7 @@ lmer <- function(formula, data=NULL, REML = TRUE,
     lmod <- eval(mc, parent.frame(1L))  ## parse data and formula
     mcout$formula <- lmod$formula
     lmod$formula <- NULL
+
     ## create deviance function for covariance parameters (theta)
     devfun <- do.call(mkLmerDevfun, c(lmod,
                                       list(verbose=verbose,control=control)))
@@ -252,9 +253,8 @@ glmer <- function(formula, data=NULL, family = gaussian,
     ## parse the formula and data
     mc[[1]] <- quote(lme4::glFormula)
     glmod <- eval(mc, parent.frame(1L))
-    mcout$formula <- attr(glmod, "formula")
-    #glmod$formula <- NULL # not necessary now that formula is returned from glFormula as an attribute
-
+    mcout$formula <- glmod$formula
+    glmod$formula <- NULL
 
     ## create deviance function for covariance parameters (theta)
     devfun <- do.call(mkGlmerDevfun, c(glmod, list(control=control,
@@ -267,8 +267,7 @@ glmer <- function(formula, data=NULL, family = gaussian,
                          control = control$optControl,
                          nAGQ = nAGQ)
 
-
-    if(nAGQ > 0L){
+    if(nAGQ > 0L) {
         # update deviance function to include fixed effects as inputs
         devfun <- updateGlmerDevfun(devfun, glmod$reTrms, nAGQ = nAGQ)
         if (devFunOnly) return(devfun)

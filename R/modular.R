@@ -340,10 +340,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     if ((rankX <- rankMatrix(X)) < p)
         stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
 
-    ## TODO: list(fr = fr, X = X, reTrms = reTrms, family = family, formula = formula)
-    ## instead,  'formula' is returned as attribute -- Yuck !!!
-    structure(list(fr = fr, X = X, reTrms = reTrms, family = family),
-	      formula = formula)
+    list(fr = fr, X = X, reTrms = reTrms, family = family, formula = formula)
 }
 
 ##' @rdname modular
