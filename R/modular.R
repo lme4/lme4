@@ -182,6 +182,33 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     list(fr = fr, X = X, reTrms = reTrms, REML = REML, formula = formula)
 }
 
+## utility f'n for checking starting values
+checkStart <- function(start,lower,which="lmer",component=c("all","theta","fixef")) {
+    if (is.null(start)) return(NULL)
+    if (which=="lmer") {
+        if (is.list(start) && names(start)!="theta")
+            stop("incorrect components in start list")
+    } else if (which=="glmer") {
+        if (is.list(start)) {
+            if (!all(names(start) %in% c("theta","fixef")))
+                stop("incorrect components in start list")
+            component <- match.arg(component)
+            if (component!="all") {
+                start <- start[[component]]
+            }
+        }
+    }
+    start <- unlist(start)
+    if (!is.numeric(start)) stop("start must be numeric")
+    ## only check lower bounds as necessary
+    if ((nstart <- length(start))<(nlow <- length(lower)))
+        start <- c(start,rep(0,nlow-nstart))
+    if (any(start<lower)) stop("bad starting values specified (elements ",
+                                               paste(which(start<lower),
+                                                     collapse=","),")")
+    start
+}
+
 ##' @rdname modular
 ##' @param fr A model frame containing the variables needed to create an
 ##'   \code{\link{lmerResp}} or \code{\link{glmResp}} instance
@@ -217,7 +244,8 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, verbose=0, co
     devfun <- mkdevfun(rho, 0L, verbose, control)
     ## FIXME: should we apply start elsewhere? what about reTrms$theta?
     if (!is.null(start)) {
-        rho$pp$setTheta(unlist(start))
+        start <- checkStart(start,reTrms$lower)
+        rho$pp$setTheta(start)
     }
     devfun(rho$pp$theta) # one evaluation to ensure all values are set
     rho$lower <- reTrms$lower # SCW:  in order to be more consistent with mkLmerDevfun
@@ -236,12 +264,23 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, verbose=0, co
 optimizeLmer <- function(devfun,
                          optimizer="Nelder_Mead",
                          restart_edge=FALSE,
+                         start = NULL,
                          verbose = 0L,
                          control = list()) {
     verbose <- as.integer(verbose)
     rho <- environment(devfun)
+    ## FIXME: would it be better to make 'start' active by adjusting rho$pp$theta earlier??
+    ## if (!is.null(start)) {
+    ##     if (is.list(start)) start <- start$theta
+    ##     if (any(start<rho$lower))
+    ##         stop("invalid starting values (elements ",
+    ##              which(start<rho$lower),")")
+    ## }
+    if (!is.null(start)) {
+        start <- checkStart(start,rho$lower)
+    } else start <- rho$pp$theta
     opt <- optwrap(optimizer,
-                   devfun, rho$pp$theta, lower=rho$lower, control=control,
+                   devfun, start, lower=rho$lower, control=control,
                    adj=FALSE, verbose=verbose)
 
     if (restart_edge) {
@@ -384,15 +423,24 @@ optimizeGlmer <- function(devfun,
                           verbose = 0L,
                           control = list(),
                           nAGQ = 1L,
-                          stage = 1) {
+                          stage = 1,
+                          start = NULL) {
     ## FIXME: do we need nAGQ here?? or can we clean up?
     verbose <- as.integer(verbose)
     rho <- environment(devfun)
     if (stage==1) {
-        start <- rho$pp$theta
+        if (is.null(start)) {
+            start <- rho$pp$theta
+        } else {
+            start <- checkStart(start, lower=rho$lower, which="glmer", component="theta")
+        }
         adj <- FALSE
     } else { ## stage == 2
-        start <- c(rho$pp$theta, rho$pp$delb)
+        if (is.null(start)) {
+            start <- c(rho$pp$theta, rho$pp$delb)
+        } else {
+            start <- checkStart(start, lower=rho$lower, which="glmer", component="all")
+        }
         adj <- TRUE
         if (missing(optimizer)) optimizer <- "Nelder_Mead"  ## BMB: too clever?
     }

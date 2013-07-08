@@ -61,3 +61,8 @@ It's a little complicated making sure all the control options get to the right p
 * from there, most arguments are passed individually on to relevant functions
 * optional arguments have to be stuffed into `rho`, the environment used for the devfun: `tolPwrss`, `compDev` -- it's a little bit tricky figuring out whether these are being extracted from `control` or whether they should be contained in the environment.  (A cleaner design would probably have them being passed explicitly throughout, as environments can be a bit of a grab bag ... for example, I got in a bit of trouble with `updateGlmerDevfun`, which doesn't pass `control` to `mkdevfun` but rather assumes that everything relevant is already contained in the environment ...)
 * need to check `refit` carefully ...
+
+## Starting options
+
+* right now starting values are *supposed* to be set in mkLmerDevfun (although they
+weren't because they weren't being passed through properly)

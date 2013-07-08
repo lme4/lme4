@@ -129,13 +129,16 @@ lmer <- function(formula, data=NULL, REML = TRUE,
 
     ## create deviance function for covariance parameters (theta)
     devfun <- do.call(mkLmerDevfun, c(lmod,
-                                      list(verbose=verbose,control=control)))
+                                      list(start=start,verbose=verbose,control=control
+                                           )))
     if (devFunOnly) return(devfun)
     ## optimize deviance function over covariance parameters
     opt <- optimizeLmer(devfun,
                         optimizer=control$optimizer,
                         restart_edge=control$restart_edge,
-                        control=control$optControl)
+                        control=control$optControl,
+                        verbose=verbose,
+                        start=start)
     mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr, mcout) ## prepare output
 }## { lmer }
 
@@ -176,11 +179,11 @@ lmer <- function(formula, data=NULL, REML = TRUE,
 ##' @param family a GLM family, see \code{\link[stats]{glm}} and
 ##'    \code{\link[stats]{family}}.
 ##' @param nAGQ integer scalar - the number of points per axis for evaluating
-##'    the adaptive Gauss-Hermite approximation to the log-likelihood.  Applies
-##'    only to \code{glmer} and defaults to 1, corresponding to the Laplace
+##'    the adaptive Gauss-Hermite approximation to the log-likelihood.
+##'    Defaults to 1, corresponding to the Laplace
 ##'    approximation.  Values greater than 1 produce greater accuracy in
 ##'    the evaluation of the log-likelihood at the expense of speed.  A value
-##'    of zero use a faster but less exact form of parameter estimation for
+##'    of zero uses a faster but less exact form of parameter estimation for
 ##'    GLMMs by optimizing the random effects and the fixed-effects coefficients
 ##'    in the penalized iteratively reweighted least squares step.
 ##' @param start a named list of starting values for the parameters in the
@@ -188,7 +191,6 @@ lmer <- function(formula, data=NULL, REML = TRUE,
 ##'    \code{theta}, these are used as the starting values for those slots.
 ##'    A numeric \code{start} argument of the appropriate length is used as the
 ##'    starting value of \code{theta}.
-##'
 ##' @param mustart optional starting values on the scale of the conditional mean,
 ##'    as in \code{\link[stats]{glm}}; see there for details.
 ##' @param etastart optional starting values on the scale of the unbounded
@@ -256,24 +258,40 @@ glmer <- function(formula, data=NULL, family = gaussian,
     mcout$formula <- glmod$formula
     glmod$formula <- NULL
 
+    startTheta <- checkStart(start,which="glmer",component="theta",
+                             lower=glmod$reTrms$lower)
+    
     ## create deviance function for covariance parameters (theta)
-    devfun <- do.call(mkGlmerDevfun, c(glmod, list(control=control,
+    
+    devfun <- do.call(mkGlmerDevfun, c(glmod, list(start=startTheta,
+                                                   verbose=verbose,
+                                                   control=control,
                                                    nAGQ = 0)))
     if (nAGQ==0 && devFunOnly) return(devfun)
     ## optimize deviance function over covariance parameters
+
     opt <- optimizeGlmer(devfun,
                          optimizer = control$optimizer[[1]],
                          restart_edge=control$restart_edge,
                          control = control$optControl,
-                         nAGQ = nAGQ)
+                         nAGQ = nAGQ,
+                         verbose=verbose,
+                         start=startTheta)
 
     if(nAGQ > 0L) {
+
+        ##        start <- checkStart(start,which="glmer",component="all",
+        ##    lower=glmod$reTrms$lower)
+        
         # update deviance function to include fixed effects as inputs
         devfun <- updateGlmerDevfun(devfun, glmod$reTrms, nAGQ = nAGQ)
+        
         if (devFunOnly) return(devfun)
         # reoptimize deviance function over covariance parameters and fixed effects
         opt <- optimizeGlmer(devfun, optimizer = control$optimizer[[2]],
-                             verbose = verbose, control = control$optControl,
+                             verbose = verbose,
+                             ## start=start,
+                             control = control$optControl,
                              stage=2)
     }
     # prepare output
@@ -738,6 +756,7 @@ deviance.merMod <- function(object, REML = NULL, ...) {
         if (isREML(object)) {
             cmp["REML"]
         } else {
+            ## adjust ML results to REML
             lnum <- log(2*pi*(cmp["pwrss"]))
             n <- object@devcomp$dims["n"]
             nmp <- n-length(object@beta)
@@ -747,6 +766,7 @@ deviance.merMod <- function(object, REML = NULL, ...) {
         if (!isREML(object)) {
             cmp[["dev"]]
         } else {
+            ## adjust REML results to ML
             n <- object@devcomp$dims["n"]
             lnum <- log(2*pi*(cmp["pwrss"]))
             unname(cmp["ldL2"]+n*(1+lnum-log(n)))
