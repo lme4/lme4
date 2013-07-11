@@ -47,19 +47,16 @@ test_that("lmer", {
     expect_warning(fm4 <- lFormula(Reaction ~ Days + (1|Subject),
                              subset(sleepstudy,Subject==levels(Subject)[1]),
                              control=lmerControl(check.numlev.gtr.1="warning")), "must have > 1")
-    
     expect_warning(fm4 <- lmer(Reaction ~ Days + (1|Subject),
                             subset(sleepstudy,Subject %in% levels(Subject)[1:4])), "< 5 sampled levels")
     sstudy9 <- subset(sleepstudy, Days == 1 | Days == 9)
     expect_error(m1 <- lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
                             data = sleepstudy, subset = (Days == 1 | Days == 9)),
                  "number of observations.*rank.*unidentifiable")
-    ## disable test ...
-    expect_is(m1 <- lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
-                            data = sleepstudy, subset = (Days == 1 | Days == 9),
-                            control=lmerControl(check.numobs.vs.rankZ="ignore")),
-                         "merMod")
-    ## test arguments
+    expect_error(lFormula(Reaction ~ 1 + Days + (1 + Days | Subject),
+                           data = sleepstudy, subset = (Days == 1 | Days == 9)),
+                 "number of observations.*rank.*unidentifiable")
+    ## test arguments: promote warning to error so that any errors will stop the test
     options(warn=2)
     expect_that(lmer(Yield ~ 1|Batch, Dyestuff, REML=TRUE), is_a("lmerMod"))
     expect_that(lmer(Yield ~ 1|Batch, Dyestuff, start=NULL), is_a("lmerMod"))
@@ -72,6 +69,19 @@ test_that("lmer", {
     expect_that(lmer(Yield ~ 1|Batch, Dyestuff, devFunOnly=FALSE), is_a("lmerMod"))
     expect_that(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl(optimizer="Nelder_Mead")), is_a("lmerMod"))
     expect_that(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl()), is_a("lmerMod"))
+    ## disable test ... should be no warning
+    expect_is(lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
+                   data = sleepstudy, subset = (Days == 1 | Days == 9),
+                   control=lmerControl(check.numobs.vs.rankZ="ignore")),
+              "merMod")
+    ## disable warning via options
+    options(lmerControl=list(check.numlev.gtreq.5="ignore",check.numobs.vs.rankZ="ignore"))
+    expect_is(fm4 <- lmer(Reaction ~ Days + (1|Subject),
+                            subset(sleepstudy,Subject %in% levels(Subject)[1:4])), "merMod")
+    expect_is(lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
+                   data = sleepstudy, subset = (Days == 1 | Days == 9)),
+              "merMod")
+    options(lmerControl=NULL)
     options(warn=0)
     expect_warning(lmer(Yield ~ 1|Batch, Dyestuff, junkArg=TRUE),"extra argument.*disregarded")
     expect_warning(lmer(Yield ~ 1|Batch, Dyestuff, control=list()),

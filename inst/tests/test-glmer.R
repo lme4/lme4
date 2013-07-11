@@ -28,17 +28,17 @@ test_that("glmer", {
     expect_equal(Zt@x,                                  rep.int(1, 56L))
     expect_that(Lambdat <- getME(gm1, "Lambdat"),       is_a("dgCMatrix"))
     expect_equivalent(as(Lambdat, "matrix"),            diag(theta, 15L, 15L))
-    expect_error(gm2 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+    expect_error(glFormula(cbind(incidence, size - incidence) ~ period + (1 | herd),
                              data = subset(cbpp, herd==levels(herd)[1]), family = binomial),
                  "must have > 1")
-    expect_warning(gm2 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+    expect_warning(glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                              data = subset(cbpp, herd %in% levels(herd)[1:4]), family = binomial),
                    "< 5 sampled levels")
     expect_warning(fm1. <- glmer(Reaction ~ Days + (Days|Subject), sleepstudy),
                    regexp="calling .* with family=gaussian .* as a shortcut")
     options(warn=2)
     cbppX <- transform(cbpp,prop=incidence/size)
-    expect_is(gm1 <- glmer(prop ~ period + (1 | herd),
+    expect_is(glmer(prop ~ period + (1 | herd),
                              data = cbppX, family = binomial, weights=size), "glmerMod")
     expect_is(glmer(prop ~ period + (1 | herd),
                       data = cbppX, family = binomial, weights=size, start=NULL),

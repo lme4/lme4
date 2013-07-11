@@ -13,7 +13,8 @@
   glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     restart_edge = TRUE, sparseX = FALSE,
     check.numobs.vs.rankZ = "stopSmall",
-    check.numlev.gtreq.5 = "warning", tolPwrss = 1e-07,
+    check.numlev.gtreq.5 = "warning",
+    check.numlev.gtr.1 = "stop", tolPwrss = 1e-07,
     compDev = TRUE, ...)
 
   nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
@@ -103,5 +104,14 @@
 }
 \description{
   Control of mixed model fitting
+}
+\details{
+  if options are set via \code{\link{options}},
+  [gn]lmerControl will use them rather than the default
+  values (but will not override values that are passed as
+  explicit arguments); for example,
+  \code{options(check.numlev.gtreq.5="ignore")} will
+  suppress warnings that there an insufficient random
+  effects levels for reliable estimation.
 }
 

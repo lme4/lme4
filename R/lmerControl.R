@@ -47,6 +47,7 @@ namedList <- function(...) {
 ##' @param \dots additional arguments to be passed to the nonlinear optimizer (see \code{\link{NelderMead}},
 ##'    \code{\link[minqa]{bobyqa}})
 ##' @return a list (of class \code{merControl}) containing (1) general control parameters (e.g. \code{optimizer}, \code{restart_edge}); (2) a list of data-checking specifications (e.g. \code{check.numobs.vs.rankZ}); (3) parameters to be passed to the optimizer (i.e., the contents of \dots, for example \code{maxiter})
+##' @details if options are set via \code{\link{options}}, [gn]lmerControl will use them rather than the default values (but will not override values that are passed as explicit arguments); for example, \code{options(check.numlev.gtreq.5="ignore")} will suppress warnings that there an insufficient random effects levels for reliable estimation.
 ##' @export
 lmerControl <- function(optimizer="Nelder_Mead",
                         restart_edge=TRUE,
@@ -57,13 +58,22 @@ lmerControl <- function(optimizer="Nelder_Mead",
                         ...) {
     ## FIXME: is there a better idiom?  match.call() ?
     ## FIXME: check list(...) against formals(get(optimizer)) ?
+    ## fill in values from options, but **only if not specified explicitly in arguments**
+    ##  (ugh ... is there a better way to do this?  mapply() is clunky:
+    ##  http://stackoverflow.com/questions/16276667/using-apply-with-assign-in-r
+    if (!is.null(lmerOpts <- getOption("lmerControl"))) {
+        for (arg in names(lmerOpts)) {
+            if (do.call(missing,list(arg))) ## missing from explicit arguments
+                assign(arg,lmerOpts[[arg]])
+        }
+    }
     r <- namedList(optimizer,
-              restart_edge,
-              checkControl=
-                 namedList(check.numobs.vs.rankZ,
-                           check.numlev.gtreq.5,
-                           check.numlev.gtr.1),
-              optControl=list(...))
+                   restart_edge,
+                   checkControl=
+                   namedList(check.numobs.vs.rankZ,
+                             check.numlev.gtreq.5,
+                             check.numlev.gtr.1),
+                   optControl=list(...))
     class(r) <- "merControl"
     r
 }
@@ -81,11 +91,26 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
                          sparseX=FALSE,
                          check.numobs.vs.rankZ="stopSmall",
                          check.numlev.gtreq.5="warning",
+                         check.numlev.gtr.1="stop",
                          tolPwrss = 1e-7,
                          compDev = TRUE,
                          ...) {
+    ## FIXME: should try to modularize/refactor/combine with lmerControl if possible
+    ## but note different defaults
+    ##                lmer        glmer
+    ## optimizer    Nelder_Mead  c(Nelder_Mead,bobyqa)
+    ## tolPwrss     N/A          1e-7
+    ## compDev      N/A          TRUE
+    ##
+    ## (and possible future divergence)
     if (length(optimizer)==1) {
         optimizer <- replicate(2,optimizer)
+    }
+    if (!is.null(glmerOpts <- getOption("glmerControl"))) {
+        for (arg in names(glmerOpts)) {
+            if (do.call(missing,list(arg))) ## missing from explicit arguments
+                assign(arg,glmerOpts[[arg]])
+        }
     }
     r <- namedList(optimizer,
               restart_edge,
@@ -93,7 +118,8 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
               compDev,
               checkControl=
               namedList(check.numobs.vs.rankZ,
-                        check.numlev.gtreq.5),
+                        check.numlev.gtreq.5,
+                        check.numlev.gtr.1),
               optControl=list(...))
     class(r) <- "merControl"
     r
