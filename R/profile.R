@@ -930,6 +930,18 @@ dens <- function(pr, npts=201, upper=0.999) {
               {
                   rng <- predy(spl, zeta)
                   if (is.na(rng[1])) rng[1] <- 0
+                  if (is.na(rng[2])) { ## try harder to pick an upper bound
+                      upper <- 1-10^seq(-4,-1,length=21)
+                      i <- 1
+                      while (is.na(rng[2]) && i<=length(upper)) {
+                          rng[2] <- predy(spl,qnorm(upper[i]))
+                          i <- i + 1
+                      }
+                      if (is.na(rng[2])) {
+                          warning("can't find an upper bound for the profile")
+                          return(rep(NA,npts))
+                      }
+                  }
                   seq(rng[1], rng[2], len=npts)
               })
     fr <- data.frame(pval=unlist(rng),
