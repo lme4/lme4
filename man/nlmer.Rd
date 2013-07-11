@@ -48,15 +48,14 @@
 
   \item{nAGQ}{integer scalar - the number of points per
   axis for evaluating the adaptive Gauss-Hermite
-  approximation to the log-likelihood.  Applies only to
-  \code{glmer} and defaults to 1, corresponding to the
-  Laplace approximation.  Values greater than 1 produce
-  greater accuracy in the evaluation of the log-likelihood
-  at the expense of speed.  A value of zero use a faster
-  but less exact form of parameter estimation for GLMMs by
-  optimizing the random effects and the fixed-effects
-  coefficients in the penalized iteratively reweighted
-  least squares step.}
+  approximation to the log-likelihood.  Defaults to 1,
+  corresponding to the Laplace approximation.  Values
+  greater than 1 produce greater accuracy in the evaluation
+  of the log-likelihood at the expense of speed.  A value
+  of zero uses a faster but less exact form of parameter
+  estimation for GLMMs by optimizing the random effects and
+  the fixed-effects coefficients in the penalized
+  iteratively reweighted least squares step.}
 
   \item{subset}{an optional expression indicating the
   subset of the rows of \code{data} that should be used in

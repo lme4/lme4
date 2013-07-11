@@ -70,23 +70,33 @@ doCheck <- function(x) {
     is.character(x) && !any(x == "ignore")
 }
 
-checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6)
+checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
 {
     stopifnot(is.list(ctrl), is.numeric(n), is.numeric(nonSmall))
     cstr <- "check.numobs.vs.rankZ"
     if (doCheck(cc <- ctrl[[cstr]])) { ## not NULL or "ignore"
 	d <- dim(Zt)
 	doTr <- d[1L] < d[2L] # Zt is "wide" => qr needs transpose(Zt)
-	if(!(grepl("Small",cc) && prod(d) > nonSmall) &&  ## not "*Small" and large Z mat
-	   (n < (rankZ <- rankMatrix(if(doTr) t(Zt) else Zt, method="qr",
-				     sval = numeric(min(d)))))) ## test
-	{
-	    wstr <- "number of observations < rank(Z); variance-covariance matrix will be unidentifiable"
-	    switch(cc,
-		   "warningSmall" =, "warning" = warning(wstr),
-		   "stopSmall" =, "stop" = stop(wstr),
-		   stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
-	}
+	if(!(grepl("Small",cc) && prod(d) > nonSmall)) {
+            rankZ <- rankMatrix(if(doTr) t(Zt) else Zt, method="qr",
+                                sval = numeric(min(d)))
+            if (allow.n) {
+                unident <- n<rankZ
+                cmp <- "<"
+            } else {
+                unident <- n<=rankZ
+                cmp <- "<="
+            }
+            ## OR: cmp <- if (allow.n) "<" else "<="
+            ##  if (do.call(cmp,list(n,rankZ)) ...
+            if (unident) {
+                wstr <- paste("number of observations",cmp,"rank(Z); variance-covariance matrix will be unidentifiable")
+                switch(cc,
+                       "warningSmall" =, "warning" = warning(wstr),
+                       "stopSmall" =, "stop" = stop(wstr),
+                       stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
+            }
+        }
     }
 }
 
@@ -363,7 +373,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     reTrms <- mkReTrms(findbars(formula[[3]]), fr)
     ## TODO: allow.n = !useSc {see FIXME below}
     checkNlevels(reTrms$ flist, n=n, control, allow.n=TRUE)
-    checkZrank	(reTrms$ Zt,	n=n, control, nonSmall = 1e6)
+    checkZrank	(reTrms$ Zt,	n=n, control, nonSmall = 1e6, allow.n=TRUE)
 
     ## FIXME: adjust test for families with estimated scale parameter:
     ##   useSc is not defined yet/not defined properly?

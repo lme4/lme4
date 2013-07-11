@@ -69,7 +69,17 @@ xtabs( ~ Operator + Part, data=lsDat) # --> 4 empty cells, quite a few with only
 ##        4 1 1 2 2 2
 ##        5 1 2 2 1 2
 
-fm3 <- lmer(y ~ (1|Part) + (1|Operator) + (1|Part:Operator), data = lsDat)
+## FIXME: rank-Z tests false positive???
+lf <- lFormula(y ~ (1|Part) + (1|Operator) + (1|Part:Operator), data = lsDat,
+               control=lmerControl(check.numobs.vs.rankZ="ignore"))
+Zt <- lf$reTrms$Zt
+c(rankMatrix(Zt)) ## 21
+c(rankMatrix(Zt,method="qr")) ## 31
+c(rankMatrix(t(Zt),method="qr")) ## 30
+nrow(lsDat)
+## lf <- lFormula(y ~ (1|Part) + (1|Operator) + (1|Part:Operator), data = lsDat)
+fm3 <- lmer(y ~ (1|Part) + (1|Operator) + (1|Part:Operator), data = lsDat,
+            control=lmerControl(check.numobs.vs.rankZ="ignore"))
 
 showProc.time()
 cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
