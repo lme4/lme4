@@ -9,17 +9,17 @@ car,BMB,TRUE,
 clusterPower,BMB,TRUE,"fairly simple fixes"
 cplm,BMB,TRUE,NA
 EquiNorm,BMB,TRUE
-gamm4,MM,FALSE,NA
-GRRGI,MM,FALSE,NA
+gamm4,BMB,TRUE,NA
+GRRGI,BMB,TRUE,NA
 gmodels,SW,TRUE,
 HSAUR2,SW,TRUE,fixed!
-influence.ME,MM,FALSE,NA
+influence.ME,BMB,TRUE,NA
 languageR,SW,FALSE,"surprising that this works -- doesn't it use mcmcsamp?"
-lmerTest,MM,FALSE,NA
-longPower,SW,TRUE,NA
-metafor,NA,FALSE,NA
-mi,MM,FALSE,NA
-MixMAP,MM,FALSE,NA
+lmerTest,BMB,TRUE,NA
+longpower,SW,TRUE,NA
+metafor,BMB,TRUE,NA
+mi,BMB,TRUE,NA
+MixMAP,BMB,TRUE,NA
 mlmRev,SW,TRUE,"problems were related to rank-testing"
 odprism,SW,TRUE,"proximal: set control=*lmerControl(check.numobs.vs.rankZ=""ignore"")"
 phmm,SW,TRUE,
