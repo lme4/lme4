@@ -87,7 +87,7 @@ lmerControl <- function(optimizer="Nelder_Mead",
 ##'    estimates?  Defaults to \code{TRUE}.
 ##' @export
 glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
-                         restart_edge=TRUE,
+                         restart_edge=FALSE,
                          sparseX=FALSE,
                          check.numobs.vs.rankZ="stopSmall",
                          check.numlev.gtreq.5="warning",

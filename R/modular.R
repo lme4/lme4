@@ -318,7 +318,7 @@ optimizeLmer <- function(devfun,
                 if (verbose) message("some theta parameters on the boundary, restarting")
                 opt <- optwrap(optimizer,
                                devfun, opt$par,
-                               lower=rho$lower, control=control$optControl,
+                               lower=rho$lower, control=control,
                                adj=FALSE, verbose=verbose)
             }
         }
@@ -463,7 +463,8 @@ optimizeGlmer <- function(devfun,
     } else {  ## stage == 2
         rho$resp$setOffset(rho$baseOffset)
     }
-    ## FIXME: should we worry about restart_edge?
+    ## FIXME: implement this ...
+    if (restart_edge) stop("restart_edge not implemented for optimizeGlmer yet")
     return(opt)
 }
 

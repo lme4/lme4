@@ -11,7 +11,7 @@
     check.numlev.gtr.1 = "stop", ...)
 
   glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
-    restart_edge = TRUE, sparseX = FALSE,
+    restart_edge = FALSE, sparseX = FALSE,
     check.numobs.vs.rankZ = "stopSmall",
     check.numlev.gtreq.5 = "warning",
     check.numlev.gtr.1 = "stop", tolPwrss = 1e-07,
