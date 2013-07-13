@@ -997,8 +997,7 @@ NULL
 ##' typically an \code{"\linkS4class{merMod}"} object.
 ##' @param postVar an optional logical argument indicating if the conditional
 ##' variance-covariance matrices, also called the \dQuote{posterior variances},
-##' of the random effects should be added as an attribute.  Default is
-##' \code{FALSE}.
+##' of the random effects should be added as an attribute.
 ##' @param drop an optional logical argument indicating components of the return
 ##' value that would be data frames with a single column, usually a column
 ##' called \sQuote{\code{(Intercept)}}, should be returned as named vectors.
@@ -1027,6 +1026,8 @@ NULL
 ##' fm3 <- lmer(diameter ~ (1|plate) + (1|sample), Penicillin)
 ##' ranef(fm1)
 ##' str(rr1 <- ranef(fm1, postVar = TRUE))
+##' dotplot(rr1)  ## default
+##' ## specify free scales in order to make Day effects more visible
 ##' dotplot(rr1,scales = list(x = list(relation = 'free')))[["Subject"]]
 ##' if(FALSE) { ##-- postVar=TRUE is not yet implemented for multiple terms -- FIXME
 ##' str(ranef(fm2, postVar = TRUE))
@@ -1203,35 +1204,70 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
 	lower=x@lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=rho$resp)
 }
 
+##' residuals of merMod objects
 ##' @importFrom stats residuals
 ##' @S3method residuals merMod
+##' @method residuals merMod
+##' @param object a fitted [g]lmer (\code{merMod}) object
+##' @param type type of residuals
+##' @param scaled scale residuals by residual standard deviation (=scale parameter)?
+##' @param \dots additional arguments (ignored: for method compatibility)
+##' @details
+##' \itemize{
+##' \item The default residual type
+##' varies between \code{lmerMod} and \code{glmerMod} objects: they try to
+##' mimic \code{\link{residuals.lm}} and \code{\link{residuals.glm}} respectively.
+##' In particular, the default \code{type} is \code{"response"},
+##' i.e. (observed-fitted) for \code{lmerMod} objects
+##' vs. \code{"deviance"} for \code{glmerMod} objects.  \code{type="partial"}
+##' is not yet implemented for either type.
+##' \item Note that the meaning of \code{"pearson"} residuals differs between
+##' \code{\link{residuals.lm}} and \code{\link{residuals.lme}}.  The former
+##' returns values scaled by the square root of user-specified weights (if any),
+##' but \emph{not} by the residual standard deviation,
+##' while the latter returns values scaled by the estimated standard deviation
+##' (which will include the effects of any variance structure specified in
+##' the \code{weights} argument).  To replicate \code{lme} behaviour, use
+##' \code{type="pearson"}, \code{scaled=TRUE}.
+##' }
 residuals.merMod <-
     function(object,
-             type = c("deviance", "pearson", "working", "response", "partial"),
-             ...)
-        residuals(object@resp, match.arg(type), ...)
+             type=if (isGLMM(object)) "deviance" else "response",
+             scaled=FALSE,
+             ...) {
+        r <- residuals(object@resp, type,...)
+        if (scaled) r <- r/sigma(object)
+        if (!is.null(na.action <- attr(model.frame(object),"na.action")))
+            r <- naresid(na.action,r)
+        r
+    }
 
+##' @rdname residuals.merMod
 ##' @S3method residuals lmResp
-residuals.lmResp <- function(object, type = c("deviance", "pearson",
-                                     "working", "response", "partial"),
+##' @method residuals lmResp
+residuals.lmResp <- function(object,
+                             type = c("working", "response", "deviance", 
+                             "pearson", "partial"),
                              ...) {
-### FIXME: This should be extended with na.resid but need to store na.action
+    y <- object$y
+    r <- object$wtres
+    mu <- object$mu
     switch(match.arg(type),
-           working =,
-           response = object$y - object$mu,
-           deviance =,
-           pearson = object$wtres,
-           partial = .NotYetImplemented())
+                    working =,
+                    response = y-mu,
+                    deviance =,
+                    pearson = r,
+                    partial = .NotYetImplemented())
 }
 
-## FIXME: document somewhere that residuals(glmerfit) returns deviance residuals by default
+##' @rdname residuals.merMod
 ##' @S3method residuals glmResp
+##' @method residuals glmResp
 residuals.glmResp <- function(object, type = c("deviance", "pearson",
                                       "working", "response", "partial"),
                               ...) {
     type <- match.arg(type)
     y <- object$y
-    r <- object$wtres
     mu <- object$mu
     switch(type,
            deviance = {
@@ -1409,6 +1445,8 @@ printMerenv <- function(x, digits = max(3, getOption("digits") - 3),
         if (!(is.null(ll <- so$link))) cat(" (", ll, ")")
         cat("\n")
     }
+    cat("Scaled residuals:\n")
+    print(summary(residuals(x,type="pearson",scaled=TRUE)),digits=digits)
     if (!is.null(cc <- so$call$formula))
 	cat("Formula:", deparse(cc),"\n")
     ## if (!is.null(so$family)) {

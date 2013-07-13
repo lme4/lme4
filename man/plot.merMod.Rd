@@ -85,13 +85,13 @@
 data(Orthodont,package="nlme")
 fm1 <- lmer(distance ~ age + (age|Subject), data=Orthodont)
 ## standardized residuals versus fitted values by gender
-plot(fm1, resid(., type = "pearson") ~ fitted(.) | Sex, abline = 0)
+plot(fm1, resid(., scaled=TRUE) ~ fitted(.) | Sex, abline = 0)
 ## box-plots of residuals by Subject
-plot(fm1, Subject ~ resid(.))
+plot(fm1, Subject ~ resid(., scaled=TRUE))
 ## observed versus fitted values by Subject
 plot(fm1, distance ~ fitted(.) | Subject, abline = c(0,1))
 ## residuals by age, separated by Subject
-plot(fm1, resid(., type = "pearson") ~ age | Sex, abline = 0)
+plot(fm1, resid(., scaled=TRUE) ~ age | Sex, abline = 0)
 if (require(ggplot2)) {
     ## we can create the same plots using ggplot2 and the fortify() function
     fm1F <- fortify(fm1)
