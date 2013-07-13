@@ -25,4 +25,6 @@ owd <- setwd(pkgPATH)
 ll <- readLines("NAMESPACE")
 i <- grep("useDynLib", ll)
 ll[i] <- gsub('"', '', ll[i])#"
+## hack explicit export of a method ...
+ll <- c(ll,"export(fortify.lmerMod)")
 writeLines(ll, "NAMESPACE")

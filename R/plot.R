@@ -57,19 +57,22 @@ asOneFormula <-
         as.formula(paste("~", paste(names, collapse = "+"))) # else NULL
 }
 
+getIDLabels <- function(object, form) {
+    if (missing(form)) {
+        grps <- names(getME(object,"flist"))
+    } else {
+        ## whitespace-stripped elements of formula
+        grps <- gsub("(^ +| +$)","",strsplit(as.character(form)[[2]],"\\+")[[1]])
+    }
+    if (grps==".obs") return(seq(fitted(object)))
+    as.character(do.call(interaction,model.frame(object)[grps]))
+}
+
 ## Return the formula(s) for the groups associated with object.
 ## The result is a one-sided formula unless asList is TRUE in which case
 ## it is a list of formulas, one for each level.
-##
-## @title
-## @param object
-## @param asList
-## @param sep
-## @return
 getGroupsFormula <- function(object, asList = FALSE, sep = "+")
     UseMethod("getGroupsFormula")
-
-
 
 getGroupsFormula.default <-
   ## Return the formula(s) for the groups associated with object.
@@ -132,10 +135,91 @@ getResponseFormula <-
   as.formula(paste("~", deparse(form[[2]])))
 }
 
-##--- needs Trellis/Lattice :
+##' diagnostic plots for merMod fits
+##' @param x a fitted [ng]lmer model
+##' @param form an optional formula specifying the desired type of plot. Any
+##' variable present in the original data frame used to obtain
+##' \code{x} can be referenced. In addition, \code{x} itself can be
+##' referenced in the formula using the symbol \code{"."}. Conditional
+##'  expressions on the right of a \code{|} operator can be used to
+##'  define separate panels in a lattice display. Default is
+##' \code{resid(., type = "pearson") ~ fitted(.)}, corresponding to a plot
+##' of the standardized residuals versus fitted values.
+##' @param abline an optional numeric value, or numeric vector of length
+##'   two. If given as a single value, a horizontal line will be added to the
+##'   plot at that coordinate; else, if given as a vector, its values are
+##'   used as the intercept and slope for a line added to the plot. If
+##'   missing, no lines are added to the plot.
+##' @param id an optional numeric value, or one-sided formula. If given as
+##' a value, it is used as a significance level for a two-sided outlier
+##' test for the standardized, or normalized residuals. Observations with
+##'   absolute standardized (normalized) residuals greater than the \eqn{1-value/2}
+##' quantile of the standard normal distribution are
+##' identified in the plot using \code{idLabels}. If given as a one-sided
+##'   formula, its right hand side must evaluate to a  logical, integer, or
+##'   character vector which is used to identify observations in the
+##'   plot. If missing, no observations are identified.
+##' @param idLabels an optional vector, or one-sided formula. If given as a
+##'   vector, it is converted to character and used to label the
+##'   observations identified according to \code{id}. If given as a
+##'    vector, it is converted to character and used to label the
+##'    observations identified according to \code{id}. If given as a
+##'    one-sided formula, its right hand side must evaluate to a vector
+##'    which is converted to character and used to label the identified
+##'    observations. Default is the interaction of all the grouping variables
+##'    in the data frame.  The special formula
+##' @param grid an optional logical value indicating whether a grid should
+##'    be added to plot. Default depends on the type of lattice plot used:
+##'    if \code{xyplot} defaults to \code{TRUE}, else defaults to
+##'    \code{FALSE}.
+##'  @param \dots optional arguments passed to the lattice plot function.
+##' @details Diagnostic plots for the linear mixed-effects fit are obtained. The
+##'  \code{form} argument gives considerable flexibility in the type of
+##'  plot specification. A conditioning expression (on the right side of a
+##'  \code{|} operator) always implies that different panels are used for
+##'  each level of the conditioning factor, according to a lattice
+##'  display. If \code{form} is a one-sided formula, histograms of the
+##'  variable on the right hand side of the formula, before a \code{|}
+##'  operator, are displayed (the lattice function \code{histogram} is
+##'  used). If \code{form} is two-sided and both its left and
+##'  right hand side variables are numeric, scatter plots are displayed
+##'  (the lattice function \code{xyplot} is used). Finally, if \code{form}
+##'  is two-sided and its left had side variable is a factor, box-plots of
+##'  the right hand side variable by the levels of the left hand side
+##'  variable are displayed (the lattice function  \code{bwplot} is used).
+##' @author original version in \code{nlme} package by Jose Pinheiro and Douglas Bates
+##' @examples
+##' data(Orthodont,package="nlme")
+##' fm1 <- lmer(distance ~ age + (age|Subject), data=Orthodont)
+##' ## standardized residuals versus fitted values by gender
+##' plot(fm1, resid(., type = "pearson") ~ fitted(.) | Sex, abline = 0)
+##' ## box-plots of residuals by Subject
+##' plot(fm1, Subject ~ resid(.))
+##' ## observed versus fitted values by Subject
+##' plot(fm1, distance ~ fitted(.) | Subject, abline = c(0,1))
+##' ## residuals by age, separated by Subject
+##' plot(fm1, resid(., type = "pearson") ~ age | Sex, abline = 0)
+
+##' if (require(ggplot2)) {
+##'     ## we can create the same plots using ggplot2 and the fortify() function
+##'     fm1F <- fortify(fm1)
+##'     ggplot(fm1F, aes(.fitted,.resid)) + geom_point(colour="blue") +
+##'            facet_grid(.~Sex) + geom_hline(yintercept=0)
+##'     ## note: Subjects are ordered by mean distance
+##'     ggplot(fm1F, aes(Subject,.resid)) + geom_boxplot() + coord_flip()
+##'     ggplot(fm1F, aes(.fitted,distance))+ geom_point(colour="blue") +
+##'         facet_wrap(~Subject) +geom_abline(intercept=0,slope=1)
+##'     ggplot(fm1F, aes(age,.resid)) + geom_point(colour="blue") + facet_grid(.~Sex) +
+##'         geom_hline(yintercept=0)+geom_line(aes(group=Subject),alpha=0.4)+geom_smooth(method="loess")
+##'     ## (warnings about loess are due to having only 4 unique x values)
+##'     detach("package:ggplot2")
+##' }
+##' @S3method plot merMod
+##' @method plot merMod
+##' @export 
 plot.merMod <-
   function(x, form = resid(., type = "pearson") ~ fitted(.), abline,
-	   id = NULL, idLabels = NULL, idResType = c("pearson", "normalized"),
+	   id = NULL, idLabels = NULL, 
            grid, ...)
   ## Diagnostic plots based on residuals and/or fitted values
 {
@@ -166,8 +250,8 @@ plot.merMod <-
   ## argument list
   dots <- list(...)
   args <- if (length(dots) > 0) dots else list()
-  ## appending object to data
-  data <- as.list(c(as.list(data), . = list(object)))
+  ## appending object to data, and adding observation-number variable
+  data <- as.list(c(as.list(cbind(data,.obs=seq(nrow(data)))), . = list(object)))
   ## covariate - must always be present
   covF <- getCovariateFormula(form)
   .x <- eval(covF[[2]], data)
@@ -218,37 +302,29 @@ plot.merMod <-
   if (is.null(args$cex)) args$cex <- par("cex")
   if (is.null(args$adj)) args$adj <- par("adj")
 
-  if (!is.null(id)) {			# identify points in plot
-    idResType <- match.arg(idResType)
-    id <-
-      switch(mode(id),
-	     numeric = {
-	       if (id <= 0 || id >= 1)
-                   stop("Id must be between 0 and 1")
-	       as.logical(abs(resid(object, type = idResType)) > -qnorm(id / 2))
-	     },
-	     call = eval(asOneSidedFormula(id)[[2]], data),
-	     stop("\"Id\" can only be a formula or numeric.")
-	     )
-    if (is.null(idLabels)) {
-      ## FIXME: Have no example yet, where this is triggered...
-      message("**** getGroups() case in plot.merMod() ****")
-      idLabels <- getGroupsFormula(object)
-      if (length(idLabels) == 0) idLabels <- 1:object$dims$N
-      idLabels <- as.character(idLabels)
-    } else {
-      if (mode(idLabels) == "call") {
-	idLabels <-
-	  as.character(eval(asOneSidedFormula(idLabels)[[2]], data))
-      } else if (is.vector(idLabels)) {
-	if (length(idLabels <- unlist(idLabels)) != length(id)) {
-	  stop("\"IdLabels\" of incorrect length")
-	}
-	idLabels <- as.character(idLabels)
+  if (!is.null(id)) {	      ## identify points in plot
+      idResType <- "pearson"  ## diff from plot.lme: 'normalized' not available
+      id <- switch(mode(id),
+                   numeric = {
+                       if (id <= 0 || id >= 1)
+                           stop("Id must be between 0 and 1")
+                       as.logical(abs(resid(object, type = idResType)) > -qnorm(id / 2))
+                   },
+                   call = eval(asOneSidedFormula(id)[[2]], data),
+                   stop("\"id\" can only be a formula or numeric.")
+                   )
+      if (is.null(idLabels)) {
+          idLabels <- getIDLabels(object)
       } else {
-	stop("\"IdLabels\" can only be a formula or a vector")
+          if (inherits(idLabels,"formula")) {
+              idLabels <- getIDLabels(object,idLabels)
+          } else if (is.vector(idLabels)) {
+              if (length(idLabels <- unlist(idLabels)) != length(id)) {
+                  stop("\"idLabels\" of incorrect length")
+              }
+          } else stop("\"idLabels\" can only be a formula or a vector")
       }
-    }
+      idLabels <- as.character(idLabels)[id]
   }
 
   ## defining abline, if needed
@@ -321,17 +397,36 @@ plot.merMod <-
   do.call(plotFun, as.list(args))
 }
 
+##' add information to data based on a fitted model
+##' @param model fitted model
+##' @param data original data set, if needed
+##' @param \dots additional arguments
+##' @details \code{fortify} is a function defined in the \code{ggplot2} package, q.v. for more details; the
+##' S3 generic is just defined here to avoid inducing an additional \code{Imports:} dependency
+##' @export
+fortify <- function(model, data, ...) UseMethod("fortify")
 
-fortify.merMod <- function(model, data=getData(model), ...) {
-  ## FIXME: get influence measures via influence.ME?
-  ##   (expensive, induces dependency ...)
-  ## FIXME: different kinds of residuals?
-  ## FIXME: deal with na.omit/predict etc.
-  data$.fitted <- predict(model)
-  data$.resid <- resid(model)
-  data
+##' @rdname fortify
+##' @S3method fortify lmerMod
+##' @method fortify lmerMod
+##' @export
+fortify.lmerMod <- function(model, data=getData(model), ...) {
+    ## FIXME:
+
+    ## FIXME: get influence measures via influence.ME?
+    ##   (expensive, induces dependency ...)
+    ## FIXME: different kinds of residuals?
+    ## FIXME: deal with na.omit/predict etc.
+    data$.fitted <- predict(model)
+    data$.resid <- resid(model,type="pearson")
+    data
 }
-## e.g. qplot(.fitted,.resid,data=fm1,colour=Sex)
+
+## FIXME: can we do without this??
+## S3method fortify lmerMod
+## S3method fortify glmerMod
+## S3method fortify nlmerMod
+## fortify.lmerMod <- fortify.nlmerMod <- fortify.glmerMod <- fortify.merMod
 
 ## autoplot???
 
