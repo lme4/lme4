@@ -15,9 +15,10 @@
   \code{set.seed} immediately before the simulation so as
   to generate a reproducible sample.}
 
-  \item{use.u}{(logical) generate a simulation conditional
-  on the current random-effects estimates (TRUE) or
-  generate new random-effects values (FALSE) [FIXME!?]}
+  \item{use.u}{(logical) if \code{TRUE}, generate a
+  simulation conditional on the current random-effects
+  estimates; if \code{FALSE} generate new Normally
+  distributed random-effects values}
 
   \item{...}{optional additional arguments, none are used
   at present}
