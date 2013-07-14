@@ -63,28 +63,30 @@ checkPkg <- function(pn,verbose=FALSE,
     ## expand paths to protect against setwd() for R CMD check
     tarballdir <- normalizePath(tarballdir)
     libdir <- normalizePath(libdir)
-    
-    rforge <- "http://r-forge.r-project.org"  
-    if (!exists("availCRAN")) {
-        if (verbose) cat("getting list of available packages from CRAN\n")
-        availCRAN <<- available.packages(contriburl=contrib.url(getOption("repos")["CRAN"],type="source"), type="source")
-    }
-    if (!exists("availRforge") || nrow(availRforge)==0) {
-        if (verbose) cat("getting list of available packages from R-forge\n")
-        availRforge <<- available.packages(contriburl=contrib.url(rforge,type="source"), type="source")
+
+    reposURL <- c(CRAN=unname(getOption("repos")["CRAN"]),
+                   rforge="http://r-forge.r-project.org",
+                   bioconductor="http://www.bioconductor.org/packages/release/bioc")
+
+    if (!exists("availList")) availList <<- list()
+    for (i in names(reposURL)) {
+        if (is.null(availList[[i]]) || nrow(availList[[i]])==0) {
+            if (verbose) cat("getting list of available packages from ",i,"\n")
+            availList[[i]] <<- available.packages(contriburl=contrib.url(reposURL[[i]],type="source"),
+                                                  type="source")
+        }
     }
     .libPaths(libdir)
     ## should include both system files and libdir
     instPkgs <- installed.packages()
     if (verbose) cat("checking package",pn,"\n")
     loc <- "none"  ## where is the package coming from?
-    if (pn %in% rownames(availRforge)) {
-        ## if available at R-forge ... take the R-forge version
-        loc <- "Rforge"
-        pkginfo <- availRforge[pn,]
-    } else if (pn %in% rownames(availCRAN)) {
-        loc <- "CRAN"
-        pkginfo <- availCRAN[pn,]
+    for (i in rev(names(availList))) {  ## check in BACKWARD order (bioc, rforge, CRAN)
+        if (pn %in% rownames(availList[[i]])) {
+            loc <- i
+            pkginfo <- availList[[i]][pn,]
+            break
+        }
     }
     locpkg <- list.files(tarballdir,paste0("^",pn,"_[0-9]+"))
     if (length(locpkg)>0) {
@@ -346,8 +348,9 @@ doPkgDeptests <- function(pkg="lme4",
     ## FIXME: set up an appropriate makefile structure for this ? (a little tricky if it also depends on
     ##   checking CRAN/R-forge versions?
     ##  might to be able to use update.packages() ...
-    
-    suppressWarnings(rm(list=c("availCRAN","availRforge"))) ## clean up
+
+    suppressWarnings(rm("availList"))
+    ## suppressWarnings(rm(list=c("availCRAN","availRforge"))) ## clean up
 
     ## want to install additional dependencies etc. out of the way
     ## to keep original installed base clean, but this may not be feasible
