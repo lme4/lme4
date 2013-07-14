@@ -1297,9 +1297,8 @@ NULL
 ##' @param nsim positive integer scalar - the number of responses to simulate
 ##' @param seed an optional seed to be used in \code{set.seed} immediately
 ##'     before the simulation so as to generate a reproducible sample.
-##' @param use.u (logical) generate a simulation conditional on the current
-##' random-effects estimates (TRUE) or generate new random-effects values (FALSE) [FIXME!?]
-
+##' @param use.u (logical) if \code{TRUE}, generate a simulation conditional on the current
+##' random-effects estimates; if \code{FALSE} generate new Normally distributed random-effects values
 ##' @param ... optional additional arguments, none are used at present
 ##' @examples
 ##' ## test whether fitted models are consistent with the
@@ -1445,8 +1444,9 @@ printMerenv <- function(x, digits = max(3, getOption("digits") - 3),
         if (!(is.null(ll <- so$link))) cat(" (", ll, ")")
         cat("\n")
     }
-    cat("Scaled residuals:\n")
-    print(summary(residuals(x,type="pearson",scaled=TRUE)),digits=digits)
+    ## FIXME: commenting out for now, restore after release?
+    ## cat("Scaled residuals:\n")
+    ## print(summary(residuals(x,type="pearson",scaled=TRUE)),digits=digits)
     if (!is.null(cc <- so$call$formula))
 	cat("Formula:", deparse(cc),"\n")
     ## if (!is.null(so$family)) {

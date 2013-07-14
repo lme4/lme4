@@ -25,7 +25,7 @@
 \alias{vcov.summary.merMod}
 \title{Class "merMod" of Fitted Mixed-Effect Models}
 \description{
-  A mixed-effects model represented as a
+  A mixed-effects model is represented as a
   \code{\linkS4class{merPredD}} object and a response
   module of a class that inherits from class
   \code{\linkS4class{lmResp}}.  A model with a
@@ -41,6 +41,7 @@
 }
 \examples{
 showClass("merMod")
+methods(class="merMod")
 }
 \seealso{
   \code{\link{lmer}}, \code{\link{glmer}},

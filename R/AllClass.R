@@ -889,7 +889,7 @@ NULL
 
 ##' Class "merMod" of Fitted Mixed-Effect Models
 ##' 
-##' A mixed-effects model represented as a \code{\linkS4class{merPredD}} object
+##' A mixed-effects model is represented as a \code{\linkS4class{merPredD}} object
 ##' and a response module of a class that inherits from class
 ##' \code{\linkS4class{lmResp}}.  A model with a \code{\linkS4class{lmerResp}}
 ##' response has class \code{lmerMod}; a \code{\linkS4class{glmResp}} response
@@ -916,7 +916,7 @@ NULL
 ##' @examples
 ##' 
 ##' showClass("merMod")
-##' 
+##' methods(class="merMod")
 ##' @export
 setClass("merMod",
          representation(Gp      = "integer",

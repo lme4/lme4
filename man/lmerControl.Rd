@@ -82,8 +82,13 @@
   will be tested for GLMMs with fixed scale parameter.}
 
   \item{\dots}{additional arguments to be passed to the
-  nonlinear optimizer (see \code{\link{NelderMead}},
-  \code{\link[minqa]{bobyqa}})}
+  nonlinear optimizer (see \code{\link{Nelder_Mead}},
+  \code{\link[minqa]{bobyqa}}). In particular, both
+  \code{Nelder_Mead} and \code{bobyqa} use \code{maxfun} to
+  specify the maximum number of function evaluations they
+  will try before giving up - in contrast to
+  \code{\link{optim}} and \code{optimx}-wrapped optimizers,
+  which use \code{maxit}.}
 
   \item{tolPwrss}{numeric scalar - the tolerance for
   declaring convergence in the penalized iteratively
