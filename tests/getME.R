@@ -60,3 +60,5 @@ stopifnot(getME(fm2,"n_rfacs")==1)
 lapply(getME(fm4,c("Ztlist")),dim)
 stopifnot(getME(fm4,"n_rtrms")==2)
 stopifnot(getME(fm4,"n_rfacs")==1)
+
+stopifnot(getME(fm1,"sigma")==sigma(fm1))

@@ -5,7 +5,7 @@
 \title{Extract or Get Generalize Components from a Fitted Mixed Effects Model}
 \usage{
   getME(object,
-    name = c("X", "Z", "Zt", "Ztlist", "y", "mu", "u", "b", "Gp", "Tp", "L", "Lambda", "Lambdat", "Lind", "A", "RX", "RZX", "flist", "beta", "theta", "ST", "REML", "is_REML", "n_rtrms", "n_rfacs", "devcomp", "offset", "lower"))
+    name = c("X", "Z", "Zt", "Ztlist", "y", "mu", "u", "b", "Gp", "Tp", "L", "Lambda", "Lambdat", "Lind", "A", "RX", "RZX", "sigma", "flist", "beta", "theta", "ST", "REML", "is_REML", "n_rtrms", "n_rfacs", "devcomp", "offset", "lower"))
 }
 \arguments{
   \item{object}{a fitted mixed-effects model of class
@@ -46,8 +46,9 @@
   \code{getME(.,"Zt") \%*\% getME(.,"Lambdat")}}
   \item{RX}{Cholesky factor for the fixed-effects
   parameters} \item{RZX}{cross-term in the full Cholesky
-  factor} \item{flist}{a list of the grouping variables
-  (factors) involved in the random effect terms}
+  factor} \item{sigma}{residual standard error}
+  \item{flist}{a list of the grouping variables (factors)
+  involved in the random effect terms}
   \item{beta}{fixed-effects parameter estimates (identical
   to the result of \code{\link{fixef}}, but without names)}
   \item{theta}{random-effects parameter estimates: these

@@ -1596,6 +1596,7 @@ setMethod("getL", "merMod", function(x) {
 ##'       equal to \code{getME(.,"Zt") \%*\% getME(.,"Lambdat")}}
 ##'     \item{RX}{Cholesky factor for the fixed-effects parameters}
 ##'     \item{RZX}{cross-term in the full Cholesky factor}
+##'     \item{sigma}{residual standard error}
 ##'     \item{flist}{a list of the grouping variables (factors) involved in the random effect terms}
 ##'     \item{beta}{fixed-effects parameter estimates (identical to the result of \code{\link{fixef}}, but without names)}
 ##'     \item{theta}{random-effects parameter estimates: these are parameterized as the relative Cholesky factors of each random effect term}
@@ -1642,7 +1643,7 @@ getME <- function(object,
                   "y", "mu", "u", "b",
 		  "Gp", "Tp",
 		  "L", "Lambda", "Lambdat", "Lind", "A",
-		  "RX", "RZX",
+		  "RX", "RZX", "sigma",
                   "flist",
                   "beta", "theta", "ST",
 		  "REML", "is_REML",
@@ -1702,7 +1703,7 @@ getME <- function(object,
            "Lind" = PR$ Lind,
 	   "RX" = structure(PR$RX(), dimnames = list(colnames(PR$X), colnames(PR$X))), ## maybe add names elsewhere?
 	   "RZX" = structure(PR$RZX, dimnames = list(NULL, colnames(PR$X))), ## maybe add names elsewhere?
-
+           "sigma" = sigma(object),
            "Gp" = object@Gp,
            "Tp" = Tpfun(object@cnms) ,
            "flist" = object@flist,
