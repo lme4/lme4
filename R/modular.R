@@ -193,29 +193,39 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 }
 
 ## utility f'n for checking starting values
-checkStart <- function(start,lower,which="lmer",component=c("all","theta","fixef")) {
-    if (is.null(start)) return(NULL)
-    if (which=="lmer") {
-        if (is.list(start) && names(start)!="theta")
-            stop("incorrect components in start list")
-    } else if (which=="glmer") {
-        if (is.list(start)) {
-            if (!all(names(start) %in% c("theta","fixef")))
-                stop("incorrect components in start list")
-            component <- match.arg(component)
-            if (component!="all") {
-                start <- start[[component]]
+getStart <- function(start,lower,pred,returnVal=c("theta","all")) {
+    returnVal <- match.arg(returnVal)
+    ## default values
+    theta <- pred$theta
+    fixef <- pred$delb
+    if (!is.null(start)) {
+        if (is.numeric(start)) {
+            theta <- start
+        } else {
+            if (!is.list(start)) stop("start must be a list or a numeric vector")
+            if (!all(sapply(start,is.numeric))) stop("all elements of start must be numeric")
+            if (length((badComp <- setdiff(names(start),c("theta","fixef"))))>0) {
+                stop("incorrect components in start list: ",badComp)
             }
+            if (!is.null(start$theta)) theta <- start$theta
+            if (!is.null(start$fixef)) fixef <- start$fixef
         }
     }
-    start <- unlist(start)
-    if (!is.numeric(start)) stop("start must be numeric")
-    ## only check lower bounds as necessary
-    if ((nstart <- length(start))<(nlow <- length(lower)))
-        start <- c(start,rep(0,nlow-nstart))
-    if (any(start<lower)) stop("bad starting values specified (elements ",
-                                               paste(which(start<lower),
-                                                     collapse=","),")")
+    if (length(theta)!=length(pred$theta))
+        stop("incorrect number of theta components (!=",length(pred$theta),")")
+    if (length(fixef)!=length(pred$delb))
+        stop("incorrect number of fixef components (!=",length(pred$delb),")")
+    if (returnVal=="theta") theta else c(theta,fixef)
+}
+
+## update start
+## should refactor this to
+##  turn numeric start into start=list(theta=start) immediately ... ??
+updateStart <- function(start,theta) {
+    if (is.null(start)) return(NULL)
+    if (is.numeric(start)) {
+        start <- theta
+    } else if (!is.null(start$theta)) start$theta <- theta
     start
 }
 
@@ -252,11 +262,7 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, verbose=0, co
     ## maybe this should be mentioned in the help file for mkRespMod??
     ## currently that help file says REML is logical
     devfun <- mkdevfun(rho, 0L, verbose, control)
-    ## FIXME: should we apply start elsewhere? what about reTrms$theta?
-    if (!is.null(start)) {
-        start <- checkStart(start,reTrms$lower)
-        rho$pp$setTheta(start)
-    }
+    theta <- getStart(start,reTrms$lower,rho$pp)
     devfun(rho$pp$theta) # one evaluation to ensure all values are set
     rho$lower <- reTrms$lower # SCW:  in order to be more consistent with mkLmerDevfun
     return(devfun) # this should pass the rho environment implicitly
@@ -279,18 +285,11 @@ optimizeLmer <- function(devfun,
                          control = list()) {
     verbose <- as.integer(verbose)
     rho <- environment(devfun)
-    ## FIXME: would it be better to make 'start' active by adjusting rho$pp$theta earlier??
-    ## if (!is.null(start)) {
-    ##     if (is.list(start)) start <- start$theta
-    ##     if (any(start<rho$lower))
-    ##         stop("invalid starting values (elements ",
-    ##              which(start<rho$lower),")")
-    ## }
-    if (!is.null(start)) {
-        start <- checkStart(start,rho$lower)
-    } else start <- rho$pp$theta
     opt <- optwrap(optimizer,
-                   devfun, start, lower=rho$lower, control=control,
+                   devfun,
+                   getStart(start,rho$lower,rho$pp),
+                   lower=rho$lower,
+                   control=control,
                    adj=FALSE, verbose=verbose)
 
     if (restart_edge) {
@@ -303,7 +302,6 @@ optimizeLmer <- function(devfun,
             theta0 <- new("numeric",rho$pp$theta) ## 'deep' copy ...
             d0 <- devfun(theta0)
             btol <- 1e-5  ## FIXME: make user-settable?
-            ## FIXME: opt$fval is wrong
             bgrad <- sapply(bvals,
                             function(i) {
                                 bndval <- rho$lower[i]
@@ -317,7 +315,8 @@ optimizeLmer <- function(devfun,
             if (any(bgrad<0)) {
                 if (verbose) message("some theta parameters on the boundary, restarting")
                 opt <- optwrap(optimizer,
-                               devfun, opt$par,
+                               devfun,
+                               opt$par,
                                lower=rho$lower, control=control,
                                adj=FALSE, verbose=verbose)
             }
@@ -439,24 +438,15 @@ optimizeGlmer <- function(devfun,
     verbose <- as.integer(verbose)
     rho <- environment(devfun)
     if (stage==1) {
-        if (is.null(start)) {
-            start <- rho$pp$theta
-        } else {
-            start <- checkStart(start, lower=rho$lower, which="glmer", component="theta")
-        }
+        start <- getStart(start, lower=rho$lower, pred=rho$pp, "theta")
         adj <- FALSE
     } else { ## stage == 2
-        if (is.null(start)) {
-            start <- c(rho$pp$theta, rho$pp$delb)
-        } else {
-            start <- checkStart(start, lower=rho$lower, which="glmer", component="all")
-        }
+        start <- getStart(start, lower=rho$lower, pred=rho$pp, returnVal="all")
         adj <- TRUE
         if (missing(optimizer)) optimizer <- "Nelder_Mead"  ## BMB: too clever?
     }
     opt <- optwrap(optimizer, devfun, start, rho$lower,
                    control=control, adj=adj, verbose=verbose)
-
     if (stage==1) {
         rho$control <- attr(opt,"control")
         rho$nAGQ <- nAGQ

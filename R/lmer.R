@@ -187,10 +187,17 @@ lmer <- function(formula, data=NULL, REML = TRUE,
 ##'    GLMMs by optimizing the random effects and the fixed-effects coefficients
 ##'    in the penalized iteratively reweighted least squares step.
 ##' @param start a named list of starting values for the parameters in the
-##'    model.  If the list contains components named \code{fixef} and/or
-##'    \code{theta}, these are used as the starting values for those slots.
-##'    A numeric \code{start} argument of the appropriate length is used as the
-##'    starting value of \code{theta}.
+##'    model, or a numeric vector. A numeric \code{start} argument
+##'    will be used as the starting value of \code{theta}.  If \code{start}
+##'    is a list, the \code{theta} element (a numeric vector) is used
+##'    as the starting value for the first optimization step (default=1
+##'    for diagonal elements and 0 for off-diagonal elements of the
+##'    lower Cholesky factor); the fitted value of \code{theta} from
+##'    the first step, plus \code{start[["fixef"]]},
+##'    are used as starting values for the second optimization step.
+##'    If \code{start} has both \code{fixef} and \code{theta}
+##'    elements, the first optimization step is skipped. For more details
+##'    or finer control of optimization, see \code{\link{modular}}.
 ##' @param mustart optional starting values on the scale of the conditional mean,
 ##'    as in \code{\link[stats]{glm}}; see there for details.
 ##' @param etastart optional starting values on the scale of the unbounded
@@ -257,41 +264,42 @@ glmer <- function(formula, data=NULL, family = gaussian,
     glmod <- eval(mc, parent.frame(1L))
     mcout$formula <- glmod$formula
     glmod$formula <- NULL
-
-    startTheta <- checkStart(start,which="glmer",component="theta",
-                             lower=glmod$reTrms$lower)
-    
+  
     ## create deviance function for covariance parameters (theta)
     
-    devfun <- do.call(mkGlmerDevfun, c(glmod, list(start=startTheta,
-                                                   verbose=verbose,
+    devfun <- do.call(mkGlmerDevfun, c(glmod, list(verbose=verbose,
                                                    control=control,
                                                    nAGQ = 0)))
     if (nAGQ==0 && devFunOnly) return(devfun)
     ## optimize deviance function over covariance parameters
 
+    if (is.list(start) && !is.null(start$fixef))
+        if (nAGQ==0) stop("should not specify both start$fixef and nAGQ==0")
+    
     opt <- optimizeGlmer(devfun,
                          optimizer = control$optimizer[[1]],
                          restart_edge=control$restart_edge,
                          control = control$optControl,
-                         nAGQ = nAGQ,
-                         verbose=verbose,
-                         start=startTheta)
+                         start=start,
+                         nAGQ = 0,
+                         verbose=verbose)
 
     if(nAGQ > 0L) {
 
-        ##        start <- checkStart(start,which="glmer",component="all",
-        ##    lower=glmod$reTrms$lower)
+        start <- updateStart(start,theta=opt$par)
         
         # update deviance function to include fixed effects as inputs
         devfun <- updateGlmerDevfun(devfun, glmod$reTrms, nAGQ = nAGQ)
         
         if (devFunOnly) return(devfun)
         # reoptimize deviance function over covariance parameters and fixed effects
-        opt <- optimizeGlmer(devfun, optimizer = control$optimizer[[2]],
-                             verbose = verbose,
-                             ## start=start,
+        opt <- optimizeGlmer(devfun,
+                             optimizer = control$optimizer[[2]],
+                             restart_edge=control$restart_edge,
                              control = control$optControl,
+                             start=start,
+                             nAGQ=nAGQ,
+                             verbose = verbose,
                              stage=2)
     }
     # prepare output
@@ -835,6 +843,7 @@ drop1.merMod <- function(object, scope, scale = 0, test = c("none", "Chisq"),
     aod <- data.frame(Df = dfs, AIC = ans[,2])
     test <- match.arg(test)
     if(test == "Chisq") {
+        ## reconstruct deviance from AIC (ugh)
         dev <- ans[, 2L] - k*ans[, 1L]
         dev <- dev - dev[1L] ; dev[1L] <- NA
         nas <- !is.na(dev)

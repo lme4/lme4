@@ -24,11 +24,19 @@
   iteratively reweighted least squares step.}
 
   \item{start}{a named list of starting values for the
-  parameters in the model.  If the list contains components
-  named \code{fixef} and/or \code{theta}, these are used as
-  the starting values for those slots.  A numeric
-  \code{start} argument of the appropriate length is used
-  as the starting value of \code{theta}.}
+  parameters in the model, or a numeric vector. A numeric
+  \code{start} argument will be used as the starting value
+  of \code{theta}.  If \code{start} is a list, the
+  \code{theta} element (a numeric vector) is used as the
+  starting value for the first optimization step (default=1
+  for diagonal elements and 0 for off-diagonal elements of
+  the lower Cholesky factor); the fitted value of
+  \code{theta} from the first step, plus
+  \code{start[["fixef"]]}, are used as starting values for
+  the second optimization step.  If \code{start} has both
+  \code{fixef} and \code{theta} elements, the first
+  optimization step is skipped. For more details or finer
+  control of optimization, see \code{\link{modular}}.}
 
   \item{mustart}{optional starting values on the scale of
   the conditional mean, as in \code{\link[stats]{glm}}; see
