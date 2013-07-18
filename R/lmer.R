@@ -968,7 +968,11 @@ logLik.merMod <- function(object, REML = NULL, ...) {
 
 ##' @importFrom stats logLik
 ##' @S3method model.frame merMod
-model.frame.merMod <- function(formula, ...) formula@frame
+model.frame.merMod <- function(formula, fixed.only=FALSE, ...) {
+    vars <- all.vars(formula(formula,fixed.only=TRUE))
+    fr <- formula@frame
+    if (fixed.only) fr[vars] else fr
+}
 
 ##' @importFrom stats model.matrix
 ##' @S3method model.matrix merMod
