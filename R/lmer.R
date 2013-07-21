@@ -1583,7 +1583,10 @@ setMethod("getL", "merMod", function(x) {
 ##' \describe{
 ##'     \item{X}{fixed-effects model matrix}
 ##'     \item{Z}{random-effects model matrix}
-##'     \item{Zt}{transpose of random-effects model matrix}
+##'     \item{Zt}{transpose of random-effects model matrix.  Note that
+##'              the structure of \code{Zt} has changed since \code{lme4.0};
+##'              to get a backward-compatible structure, use
+##'              \code{do.call(Matrix::rBind,getME(.,"Ztlist"))}}
 ##'     \item{Ztlist}{list of components of the transpose of the random-effects model matrix,
 ##'              separated by individual variance component}
 ##'     \item{y}{response vector}

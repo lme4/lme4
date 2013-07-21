@@ -180,7 +180,9 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
     }
     if (.progress!="none") { close(pb) }
     rownames(t.star) <- names(t0)
-
+    if ((numFail <- sum(apply(is.na(t.star),2,all)))>0) {
+        warning("some bootstrap runs failed (",numFail,"/",nsim,")")
+    }
     ## boot() ends with the equivalent of
     ## structure(list(t0 = t0, t = t.star, R = R, data = data, seed = seed,
     ##		      statistic = statistic, sim = sim, call = call,
