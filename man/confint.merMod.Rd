@@ -48,4 +48,19 @@
   bootstrap distribution according to \code{boot.type} (see
   \code{\link{boot.ci}})
 }
+\examples{
+fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+fm1W <- confint(fm1,method="Wald")
+\dontrun{
+## ~20 seconds, MacBook Pro laptop
+system.time(fm1P <- confint(fm1,method="profile")) ## default
+## ~ 36 seconds
+system.time(fm1B <- confint(fm1,method="boot",
+                    .progress="none", PBargs=list(style=3)))
+}
+load(system.file("testdata","confint_ex.rda",package="lme4"))
+## n.b. type="boot" returns confidence intervals in terms of theta
+## (lower Cholesky factor), while type="profile" returns them
+## in terms of standard deviations and correlations ...
+}
 

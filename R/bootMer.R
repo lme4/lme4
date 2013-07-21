@@ -50,8 +50,8 @@
 ##'    \code{"parametric"} or \code{"semiparametric"}; partial matching is allowed.
 ##' @param verbose logical indicating if progress should print output
 ##' @param .progress character string - type of progress bar to
-##'     display.  Default is \code{"none"}.
-##' @param PBargs a list of additional arguments to the progress bar function.
+##'     display.  Default is \code{"none"}; the function will look for a relevant \code{*ProgressBar} function, so \code{"txt"} will work in general; \code{"tk"} is available if the \code{tcltk} package is loaded; or \code{"win"} on Windows systems.
+##' @param PBargs a list of additional arguments to the progress bar function (the package authors like \code{list(style=3)}).
 ##' @return an object of S3 \code{\link{class}} \code{"boot"}, compatible with
 ##'     \pkg{boot} package's \code{\link[boot]{boot}()} result.
 ##' @seealso
@@ -176,7 +176,7 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
         if (.progress!="none") { setpbfun(pb,i/nsim) }
         foo <- try(FUN(refit(x,ss[[i]])),silent=TRUE)
         if(verbose) { cat(sprintf("%5d :",i)); str(foo) }
-        t.star[,i] <- if (inherits(foo, "error")) NA else foo
+        t.star[,i] <- if (inherits(foo, "try-error")) NA else foo
     }
     if (.progress!="none") { close(pb) }
     rownames(t.star) <- names(t0)

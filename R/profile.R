@@ -560,6 +560,20 @@ confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
 ##' @importFrom stats confint
 ##' @S3method confint merMod
 ##' @method confint merMod
+##' @examples
+##' fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+##' fm1W <- confint(fm1,method="Wald")
+##' \dontrun{
+##' ## ~20 seconds, MacBook Pro laptop
+##' system.time(fm1P <- confint(fm1,method="profile")) ## default
+##' ## ~ 36 seconds
+##' system.time(fm1B <- confint(fm1,method="boot",
+##'                     .progress="none", PBargs=list(style=3)))
+##' }
+##' load(system.file("testdata","confint_ex.rda",package="lme4"))
+##' ## n.b. type="boot" returns confidence intervals in terms of theta
+##' ## (lower Cholesky factor), while type="profile" returns them
+##' ## in terms of standard deviations and correlations ...
 confint.merMod <- function(object, parm, level = 0.95,
 			   method=c("profile","Wald","boot"),
 			   zeta, nsim=500, boot.type="perc",
@@ -571,7 +585,7 @@ confint.merMod <- function(object, parm, level = 0.95,
        {
            if (!missing(parm) && !is.numeric(parm))
                stop("for method='profile', 'parm' must be specified as an integer")
-           message("Computing profile confidence intervals ...")
+           if (!quiet) message("Computing profile confidence intervals ...")
            utils::flush.console()
 	   pp <- if(missing(parm)) profile(object, ...) else profile(object, which=parm, ...)
 	   confint(pp,level=level,zeta=zeta)
@@ -600,11 +614,12 @@ confint.merMod <- function(object, parm, level = 0.95,
     },
 	   "boot" =
        {
-	   message("Computing bootstrap confidence intervals ...")
+	   if (!quiet) message("Computing bootstrap confidence intervals ...")
            utils::flush.console()
            ## FIXME: implement parameters (sigma, resid std err, fixef)
            ## generally clean up this hack!
-	   bb <- bootMer(object, function(x) c(getME(x,"theta"),fixef(x)), nsim=nsim)
+	   bb <- bootMer(object, function(x) c(getME(x,"theta"),fixef(x)),
+                         nsim=nsim,...)
            bci <- lapply(seq_along(bb$t0),
                          boot.out=bb,
                          boot::boot.ci,type=boot.type,conf=level)

@@ -1,4 +1,5 @@
 library(lme4)
+library(testthat)
 (testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
 mySumm <- function(.) { s <- sigma(.)
                         c(beta =getME(., "beta"),
@@ -29,3 +30,8 @@ if (testLevel > 1) {
     boo03 <- bootMer(gm2, mySumm, nsim = 10)
     boo04 <- bootMer(gm2, mySumm, nsim = 10, use.u = TRUE)
 }
+load(system.file("testdata","culcita_dat.RData",package="lme4"))
+cmod <- glmer(predation~ttt+(1|block),family=binomial,data=culcita_dat)
+set.seed(101)
+expect_warning(cc <- confint(cmod,method="boot",nsim=10,quiet=TRUE,
+              .progress="txt",PBargs=list(style=3)),"some bootstrap runs failed")

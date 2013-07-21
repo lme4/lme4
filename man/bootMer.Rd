@@ -34,10 +34,15 @@
   print output}
 
   \item{.progress}{character string - type of progress bar
-  to display.  Default is \code{"none"}.}
+  to display.  Default is \code{"none"}; the function will
+  look for a relevant \code{*ProgressBar} function, so
+  \code{"txt"} will work in general; \code{"tk"} is
+  available if the \code{tcltk} package is loaded; or
+  \code{"win"} on Windows systems.}
 
   \item{PBargs}{a list of additional arguments to the
-  progress bar function.}
+  progress bar function (the package authors like
+  \code{list(style=3)}).}
 }
 \value{
   an object of S3 \code{\link{class}} \code{"boot"},
