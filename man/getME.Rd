@@ -18,29 +18,33 @@
   list of components will be returned. Possible values
   are:\cr \describe{ \item{X}{fixed-effects model matrix}
   \item{Z}{random-effects model matrix} \item{Zt}{transpose
-  of random-effects model matrix} \item{Ztlist}{list of
-  components of the transpose of the random-effects model
-  matrix, separated by individual variance component}
-  \item{y}{response vector} \item{mu}{conditional mean of
-  the response} \item{u}{conditional mode of the
-  \dQuote{spherical} random effects variable}
-  \item{b}{conditional mode of the random effects variable}
-  \item{Gp}{groups pointer vector.  A pointer to the
-  beginning of each group of random effects corresponding
-  to the random-effects terms, beginning with 0 and
-  including a final element giving the total number of
-  random effects} \item{Tp}{theta pointer vector.  A
-  pointer to the beginning of the theta sub-vectors
-  corresponding to the random-effects terms, beginning with
-  0 and including a final element giving the total number
-  of random effects} \item{L}{sparse Cholesky factor of the
-  penalized random-effects model.} \item{Lambda}{relative
+  of random-effects model matrix.  Note that the structure
+  of \code{Zt} has changed since \code{lme4.0}; to get a
+  backward-compatible structure, use
+  \code{do.call(Matrix::rBind,getME(.,"Ztlist"))}}
+  \item{Ztlist}{list of components of the transpose of the
+  random-effects model matrix, separated by individual
+  variance component} \item{y}{response vector}
+  \item{mu}{conditional mean of the response}
+  \item{u}{conditional mode of the \dQuote{spherical}
+  random effects variable} \item{b}{conditional mode of the
+  random effects variable} \item{Gp}{groups pointer vector.
+  A pointer to the beginning of each group of random
+  effects corresponding to the random-effects terms,
+  beginning with 0 and including a final element giving the
+  total number of random effects} \item{Tp}{theta pointer
+  vector.  A pointer to the beginning of the theta
+  sub-vectors corresponding to the random-effects terms,
+  beginning with 0 and including a final element giving the
+  total number of random effects} \item{L}{sparse Cholesky
+  factor of the penalized random-effects model.}
+  \item{Lambda}{relative covariance factor of the random
+  effects.} \item{Lambdat}{transpose of the relative
   covariance factor of the random effects.}
-  \item{Lambdat}{transpose of the relative covariance
-  factor of the random effects.} \item{Lind}{index vector
-  for inserting elements of \eqn{\theta}{theta} into the
-  nonzeros of \eqn{\Lambda}{Lambda}} \item{A}{Scaled sparse
-  model matrix (class
+  \item{Lind}{index vector for inserting elements of
+  \eqn{\theta}{theta} into the nonzeros of
+  \eqn{\Lambda}{Lambda}} \item{A}{Scaled sparse model
+  matrix (class
   \code{"\link[Matrix:dgCMatrix-class]{dgCMatrix}"}) for
   the unit, orthogonal random effects, \eqn{U}, equal to
   \code{getME(.,"Zt") \%*\% getME(.,"Lambdat")}}
