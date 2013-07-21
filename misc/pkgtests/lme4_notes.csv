@@ -2,7 +2,7 @@ pkgname,lme4_contact,contacted,notes
 agridat,BMB,TRUE,"proximal: set control=lmerControl(check.numlev.gtr.1='ignore') in federer.diag"
 AICcmodavg,BMB,TRUE,
 aod,BMB,TRUE
-arm,SW,TRUE,"proximal problem is nonexistence of display.merMod, but we know sim() will need lots of modification"
+arm,SW,TRUE,"package maintainer has fixed: will upload when lme4 released (sim() still in limbo)"
 boss,BMB,TRUE,"fairly simple fixes"
 BradleyTerry2,BMB,TRUE,
 car,BMB,TRUE,
@@ -18,7 +18,7 @@ languageR,SW,FALSE,"surprising that this works -- doesn't it use mcmcsamp?"
 lmerTest,BMB,TRUE,NA
 longpower,SW,TRUE,NA
 metafor,BMB,TRUE,NA
-mi,BMB,TRUE,NA
+mi,BMB,TRUE,NA,"package maintainer has fixed: will upload when lme4 released"
 MixMAP,BMB,TRUE,NA
 mlmRev,SW,TRUE,"problems were related to rank-testing"
 odprism,SW,TRUE,"proximal: set control=*lmerControl(check.numobs.vs.rankZ=""ignore"")"

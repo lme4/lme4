@@ -108,8 +108,10 @@ checkPkg <- function(pn,verbose=FALSE,
     if (loc!="local" && !file.exists(tdn <- file.path(tarballdir,tn)))
     {
         if (verbose) cat("downloading tarball\n")
-        basepath <- switch(loc,CRAN=contrib.url(getOption("repos"),type="source"),
-                           Rforge=contrib.url(rforge,type="source"),
+        basepath <- switch(loc,CRAN=contrib.url(reposURL["CRAN"],type="source"),
+                           rforge=contrib.url(reposURL["rforge"],type="source"),
+                           bioconductor=contrib.url(reposURL["bioconductor"],
+                               type="source"),
                            loc=stop("tarball not available"))
         download.file(file.path(basepath,tn),
                       destfile=tdn)
@@ -127,7 +129,8 @@ checkPkg <- function(pn,verbose=FALSE,
     if (length(depMiss)>0) {
         if (verbose) cat("installing dependencies",depMiss,"\n")
         install.packages(depMiss,lib=libdir,dependencies=TRUE,type="source")
-        rPath <- if (loc=="CRAN") getOption("repos") else c(rforge,getOption("repos"))
+        ## FIXME: not used???
+        rPath <- if (loc=="CRAN") reposURL["CRAN"] else reposURL
         instPkgs <- installed.packages(noCache=TRUE,lib.loc=libdir)  ## update installed package info
    }
 
