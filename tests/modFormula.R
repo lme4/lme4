@@ -1,0 +1,10 @@
+library(lme4)
+library(testthat)
+lmod <- lFormula(Reaction ~ Days + (Days|Subject), sleepstudy)
+devfun <- do.call(mkLmerDevfun, lmod)
+opt <- optimizeLmer(devfun)
+fm1 <- mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr)
+expect_equal(range(residuals(fm1)),c(-101.1789,132.5466),tol=1e-6)
+expect_is(model.frame(fm1),"data.frame")
+expect_equal(formula(model.frame(fm1)),Reaction ~ Days + Subject) ## fixed only
+expect_error(formula(fm1),"doesn't work for modular model fits")

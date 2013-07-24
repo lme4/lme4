@@ -924,6 +924,8 @@ getFixedFormula <- function(form) {
 ##' @importFrom stats formula
 ##' @S3method formula merMod
 formula.merMod <- function(x, fixed.only=FALSE, ...) {
+    if (!grepl("lmer$",deparse(getCall(x)[[1]])))
+            stop("formula() doesn't work for modular model fits")
     form <- as.formula(formula(getCall(x),...))
     if (fixed.only) {
         form <- getFixedFormula(form)
@@ -969,9 +971,12 @@ logLik.merMod <- function(object, REML = NULL, ...) {
 ##' @importFrom stats logLik
 ##' @S3method model.frame merMod
 model.frame.merMod <- function(formula, fixed.only=FALSE, ...) {
-    vars <- all.vars(formula(formula,fixed.only=TRUE))
     fr <- formula@frame
-    if (fixed.only) fr[vars] else fr
+    if (fixed.only) {
+        vars <- all.vars(formula(formula,fixed.only=TRUE))
+        fr <- fr[vars]
+    }
+    fr
 }
 
 ##' @importFrom stats model.matrix
