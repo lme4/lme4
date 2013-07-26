@@ -4,7 +4,8 @@
 \usage{
   \method{confint}{merMod} (object, parm, level = 0.95,
     method = c("profile", "Wald", "boot"), zeta,
-    nsim = 500, boot.type = "perc", quiet = FALSE, ...)
+    nsim = 500, boot.type = "perc", quiet = FALSE,
+    oldNames = TRUE, ...)
 }
 \arguments{
   \item{object}{a fitted [ng]lmer model}
@@ -25,6 +26,10 @@
 
   \item{quiet}{(logical) suppress messages about
   computationally intensive profiling?}
+
+  \item{oldNames}{(logical) use old-style names for
+  \code{method="profile"}? (See \code{signames} argument to
+  \code{\link{profile}}}
 
   \item{\dots}{additional parameters to be passed to
   \code{\link{profile.merMod}}}
@@ -53,14 +58,13 @@ fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 fm1W <- confint(fm1,method="Wald")
 \dontrun{
 ## ~20 seconds, MacBook Pro laptop
-system.time(fm1P <- confint(fm1,method="profile")) ## default
-## ~ 36 seconds
+system.time(fm1P <- confint(fm1,method="profile",oldNames=FALSE)) ## default
+## ~ 40 seconds
 system.time(fm1B <- confint(fm1,method="boot",
-                    .progress="none", PBargs=list(style=3)))
+                    .progress="txt", PBargs=list(style=3)))
 }
 load(system.file("testdata","confint_ex.rda",package="lme4"))
-## n.b. type="boot" returns confidence intervals in terms of theta
-## (lower Cholesky factor), while type="profile" returns them
-## in terms of standard deviations and correlations ...
+fm1P
+fm1B
 }
 

@@ -1575,6 +1575,38 @@ setMethod("getL", "merMod", function(x) {
     getME(x, "L")
 })
 
+##' Construct names of individual theta/sd:cor components
+##' 
+##' @param object a fixed model
+##' @param diag.only include only diagonal elements?
+##' @param old (logical) give backward-compatible results?
+##' @param prefix a character vector with two elements giving the prefix
+##' for diagonal (e.g. "sd") and off-diagonal (e.g. "cor") elements
+##' @export
+tnames <- function(object,diag.only=FALSE,old=TRUE,prefix=NULL) {
+    if (old) {
+        nc <- c(unlist(mapply(function(g,e) {
+            mm <- outer(e,e,paste,sep=".")
+            diag(mm) <- e
+            mm <- if (diag.only) diag(mm) else mm[lower.tri(mm,diag=TRUE)]
+            paste(g,mm,sep=".")
+        },
+        names(object@cnms),object@cnms)))
+        return(nc)
+    } else {
+        pfun <- function(g,e) {
+            mm <- outer(e,e,paste,sep=".")
+            mm[] <- paste(mm,g,sep="|")
+            if (!is.null(prefix)) mm[] <- paste(prefix[2],mm,sep="_")
+            diag(mm) <- paste(e,g,sep="|")
+            if (!is.null(prefix))  diag(mm) <- paste(prefix[1],diag(mm),sep="_")
+            mm <- if (diag.only) diag(mm) else mm[lower.tri(mm,diag=TRUE)]
+        }
+        nc <- c(unlist(mapply(pfun,names(object@cnms),object@cnms)))
+        return(nc)
+    }
+}
+
 ##' Extract or Get Generalize Components from a Fitted Mixed Effects Model
 ##'
 ##' Extract (or \dQuote{get}) \dQuote{components} -- in a generalized sense --
@@ -1690,17 +1722,6 @@ getME <- function(object,
     dc   <- object@devcomp
     cmp  <- dc $ cmp
     dims <- dc $ dims
-    ## construct names of individual theta components
-    tnames <- function(diag.only=FALSE) {
-        nc <- c(unlist(mapply(function(g,e) {
-            mm <- outer(e,e,paste,sep=".")
-            diag(mm) <- e
-            mm <- if (diag.only) diag(mm) else mm[lower.tri(mm,diag=TRUE)]
-            paste(g,mm,sep=".")
-        },
-        names(object@cnms),object@cnms)))
-        nc
-    }
     Tpfun <- function(cnms) {
         ltsize <- function(x) x*(x+1)/2
         cLen <- cumsum(ltsize(sapply(cnms,length)))
@@ -1718,7 +1739,8 @@ getME <- function(object,
              inds <- lapply(inds,function(x) x + object@Gp[i])  ## add group offset
          }
          inds <- do.call(c,lapply(seq_along(object@cnms),getInds))
-         setNames(lapply(inds,function(i) PR$Zt[i,]),tnames(diag.only=TRUE))
+         setNames(lapply(inds,function(i) PR$Zt[i,]),
+                  tnames(object,diag.only=TRUE))
      },
            "y" = rsp$y,
            "mu"=rsp$mu,
@@ -1736,7 +1758,7 @@ getME <- function(object,
            "Tp" = Tpfun(object@cnms) ,
            "flist" = object@flist,
 	   "beta" = object@beta,
-           "theta"= setNames(object@theta,tnames()),
+           "theta"= setNames(object@theta,tnames(object)),
            "ST"= setNames(vec2mlist(object@theta,
                                     n=sapply(object@cnms,length),
                                     symm=FALSE),

@@ -18,6 +18,7 @@
 ##' @param maxmult maximum multiplier of the original step size allowed, defaults to 10.
 ##' @param startmethod method for picking starting conditions for optimization (STUB)
 ##' @param optimizer (character or function) optimizer to use (see \code{\link{lmer}} for details)
+##' @param signames (logical) if \code{TRUE} use abbreviated names of the form \code{.sigNN}, otherwise more meaningful (but longer) names of the form \code{(sd|cor)_(effects)|(group)}. Note that some code for profile transformations (e.g. \code{\link{varianceProf}}) depends on \code{signames==TRUE}
 ##' @param \dots potential further arguments for \code{profile} methods.
 ##' @section Methods: FIXME: These (signatures) will change soon --- document
 ##'  \bold{after} change!
@@ -58,7 +59,8 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
                            verbose=0, devtol=1e-9,
                            maxmult = 10,
                            startmethod = "prev",
-                           optimizer="bobyqa", ...) {
+                           optimizer="bobyqa",
+                           signames=TRUE, ...) {
 
   ## FIXME: allow choice of nextstep/nextstart algorithm?
   ## FIXME: by default, get optimizer from within fitted object
@@ -69,11 +71,10 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
   ##  be careful with scale parameter;
   ##  profile all parameters at once rather than RE first and then fixed)
 
-
     useSc <- isLMM(fitted) || isNLMM(fitted)
-    dd <- devfun2(fitted,useSc)
+    dd <- devfun2(fitted,useSc,signames)
     ## FIXME: figure out to what do here ...
-    if (isGLMM(fitted) && sigma(fitted)!=1)
+    if (isGLMM(fitted) && fitted@devcomp$dims["useSc"])
         stop("can't (yet) profile GLMMs with non-fixed scale parameters")
     base <- attr(dd, "basedev")
     thopt <- attr(dd, "thopt")
@@ -352,8 +353,12 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
 ## @return a function for evaluating the deviance in the extended
 ##     parameterization.  This is profiled with respect to the
 ##     variance-covariance parameters (fixed-effects done separately).
-devfun2 <- function(fm,useSc=TRUE)
+devfun2 <- function(fm,useSc,signames)
 {
+    ## FIXME: have to distinguish between
+    ## 'useSc' (GLMM: report profiled scale parameter) and
+    ## 'useSc' (NLMM/LMM: scale theta by sigma)
+    ## GLMMuseSc <- fm@devcomp$dims["useSc"]
     stopifnot(is(fm, "merMod"))
     fm <- refitML(fm)
     basedev <- deviance(fm)
@@ -362,14 +367,20 @@ devfun2 <- function(fm,useSc=TRUE)
     stdErr <- unname(coef(summary(fm))[,2])
     pp <- fm@pp$copy()
     ## opt <- c(pp$theta*sig, sig)
-    if (!isGLMM(fm)) {
+    if (useSc) {
         opt <- Cv_to_Sv(pp$theta, n=vlist, s=sig)
-        ## FIXME: alternatively use/allow names as in getME(.,"theta") ?
-        names(opt) <- c(sprintf(".sig%02d", seq(length(opt)-1)), ".sigma")
+        names(opt) <- if (signames) {
+            c(sprintf(".sig%02d", seq(length(opt)-1)), ".sigma")
+        } else {
+            c(tnames(fm,old=FALSE,prefix=c("sd","cor")),"sigma")
+        }
     } else {
         opt <- Cv_to_Sv(pp$theta, n=vlist)
-        ## FIXME: alternatively use/allow names as in getME(.,"theta") ?
-        names(opt) <- sprintf(".sig%02d", seq_along(opt))
+        names(opt) <- if (signames) {
+            sprintf(".sig%02d", seq_along(opt))
+        } else {
+            tnames(fm,old=FALSE,prefix=c("sd","cor"))
+        }
     }
     opt <- c(opt, fixef(fm))
     resp <- fm@resp$copy()
@@ -546,6 +557,7 @@ confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
 ##' @param nsim number of simulations for parametric bootstrap intervals
 ##' @param boot.type bootstrap confidence interval type
 ##' @param quiet (logical) suppress messages about computationally intensive profiling?
+##' @param oldNames (logical) use old-style names for \code{method="profile"}? (See \code{signames} argument to \code{\link{profile}}
 ##' @param \dots additional parameters to be passed to  \code{\link{profile.merMod}}
 ##' @return a numeric table of confidence intervals
 
@@ -565,29 +577,32 @@ confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
 ##' fm1W <- confint(fm1,method="Wald")
 ##' \dontrun{
 ##' ## ~20 seconds, MacBook Pro laptop
-##' system.time(fm1P <- confint(fm1,method="profile")) ## default
-##' ## ~ 36 seconds
+##' system.time(fm1P <- confint(fm1,method="profile",oldNames=FALSE)) ## default
+##' ## ~ 40 seconds
 ##' system.time(fm1B <- confint(fm1,method="boot",
-##'                     .progress="none", PBargs=list(style=3)))
+##'                     .progress="txt", PBargs=list(style=3)))
 ##' }
 ##' load(system.file("testdata","confint_ex.rda",package="lme4"))
-##' ## n.b. type="boot" returns confidence intervals in terms of theta
-##' ## (lower Cholesky factor), while type="profile" returns them
-##' ## in terms of standard deviations and correlations ...
+##' fm1P
+##' fm1B
 confint.merMod <- function(object, parm, level = 0.95,
 			   method=c("profile","Wald","boot"),
 			   zeta, nsim=500, boot.type="perc",
-                           quiet=FALSE, ...)
+                           quiet=FALSE, oldNames=TRUE, ...)
 {
     method <- match.arg(method)
+    if (!missing(parm) && !is.numeric(parm) && method %in% c("profile","boot"))
+        stop("for method='",method,"', 'parm' must be specified as an integer")
     switch(method,
 	   "profile" =
        {
-           if (!missing(parm) && !is.numeric(parm))
-               stop("for method='profile', 'parm' must be specified as an integer")
            if (!quiet) message("Computing profile confidence intervals ...")
            utils::flush.console()
-	   pp <- if(missing(parm)) profile(object, ...) else profile(object, which=parm, ...)
+	   pp <- if(missing(parm)) {
+               profile(object, signames=oldNames, ...)
+           } else {
+               profile(object, which=parm, signames=oldNames, ...)
+           }
 	   confint(pp,level=level,zeta=zeta)
        },
 	   "Wald" =
@@ -616,10 +631,28 @@ confint.merMod <- function(object, parm, level = 0.95,
        {
 	   if (!quiet) message("Computing bootstrap confidence intervals ...")
            utils::flush.console()
-           ## FIXME: implement parameters (sigma, resid std err, fixef)
-           ## generally clean up this hack!
-	   bb <- bootMer(object, function(x) c(getME(x,"theta"),fixef(x)),
-                         nsim=nsim,...)
+           bootFun <- function(x) {
+               th <- getME(x,"theta")
+               scaleTh <- (isLMM(x) || isNLMM(x))
+               useSc <- x@devcomp$dims["useSc"]
+               ## FIXME: still ugly.  Best cleanup via Cv_to_Sv ...
+               if (scaleTh) {  ## scale variances by sigma and include it
+                   ss <- setNames(Cv_to_Sv(th,s=sigma(x)),
+                                  c(tnames(x,old=FALSE,
+                                           prefix=c("sd","cor")),"sigma"))
+               } else if (useSc) { ## don't scale variances but do include sigma
+                   ss <- setNames(c(Cv_to_Sv(th),sigma(x)),
+                                  c(tnames(x,old=FALSE,
+                                           prefix=c("sd","cor")),"sigma"))
+               } else {  ## no scaling, no sigma
+                   ss <- setNames(Cv_to_Sv(th),
+                                  tnames(x,old=FALSE,prefix=c("sd","cor")))
+               }
+               res <- c(ss,
+                        fixef(x))
+               res
+           }
+	   bb <- bootMer(object, bootFun, nsim=nsim,...)
            bci <- lapply(seq_along(bb$t0),
                          boot.out=bb,
                          boot::boot.ci,type=boot.type,conf=level)

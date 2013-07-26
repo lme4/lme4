@@ -8,7 +8,8 @@
   \method{profile}{merMod} (fitted, which = 1:nptot,
     alphamax = 0.01, maxpts = 100, delta = cutoff/8,
     verbose = 0, devtol = 1e-09, maxmult = 10,
-    startmethod = "prev", optimizer = "bobyqa", ...)
+    startmethod = "prev", optimizer = "bobyqa",
+    signames = TRUE, ...)
 
   \method{as.data.frame}{thpr} (x, ...)
 }
@@ -52,6 +53,14 @@
 
   \item{optimizer}{(character or function) optimizer to use
   (see \code{\link{lmer}} for details)}
+
+  \item{signames}{(logical) if \code{TRUE} use abbreviated
+  names of the form \code{.sigNN}, otherwise more
+  meaningful (but longer) names of the form
+  \code{(sd|cor)_(effects)|(group)}. Note that some code
+  for profile transformations (e.g.
+  \code{\link{varianceProf}}) depends on
+  \code{signames==TRUE}}
 
   \item{\dots}{potential further arguments for
   \code{profile} methods.}
