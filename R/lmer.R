@@ -929,9 +929,11 @@ getFixedFormula <- function(form) {
 ##' @importFrom stats formula
 ##' @S3method formula merMod
 formula.merMod <- function(x, fixed.only=FALSE, ...) {
-    if (!grepl("lmer$",deparse(getCall(x)[[1]])))
-            stop("formula() doesn't work for modular model fits")
-    form <- as.formula(formula(getCall(x),...))
+    if (is.null(form <- attr(x@frame,"formula"))) {
+        if (!grepl("lmer$",deparse(getCall(x)[[1]])))
+            stop("can't find formula stored in model frame or call")
+        form <- as.formula(formula(getCall(x),...))
+    }
     if (fixed.only) {
         form <- getFixedFormula(form)
     }

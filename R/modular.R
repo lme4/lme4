@@ -172,6 +172,9 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     environment(fr.form) <- environment(formula)
     mf$formula <- fr.form
     fr <- eval(mf, parent.frame())
+    ## store full, original formula & offset
+    attr(fr,"formula") <- formula
+    attr(fr,"offset") <- mf$offset
     n <- nrow(fr)
     ## random effects and terms modules
     reTrms <- mkReTrms(findbars(formula[[3]]), fr)
@@ -367,6 +370,9 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     environment(fr.form) <- environment(formula)
     mf$formula <- fr.form
     fr <- eval(mf, parent.frame())
+    ## store full, original formula & offset
+    attr(fr,"formula") <- formula
+    attr(fr,"offset") <- mf$offset
     n <- nrow(fr)
     ## random effects and terms modules
     reTrms <- mkReTrms(findbars(formula[[3]]), fr)

@@ -38,7 +38,7 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
     type <- match.arg(type)
     if (!is.null(terms)) stop("terms functionality for predict not yet implemented")
     ## FIXME/WARNING: how do we/can we do this in an eval-safe way???
-    form_orig <- eval(object@call$formula,parent.frame())
+    form_orig <- formula(object)
     if (is.null(newdata) && is.null(REform)) {
         ## raw predict() call, just return fitted values (inverse-link if appropriate)
         if (isLMM(object) || isNLMM(object)) {
@@ -72,9 +72,8 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
         if (!is.null(off.num <- attr(tt, "offset"))) {
             for (i in off.num) offset <- offset + eval(attr(tt,"variables")[[i + 1]], newdata)
         }
-        if (!is.null(getCall(object)$offset))
-            ## FIXME: can we assign and re-use getCall(object)$offset ?
-            offset <- offset + eval(object$call$offset, newdata)
+        if (!is.null(frOffset <- attr(object@frame,"offset")))
+            offset <- offset + eval(frOffset, newdata)
         pred <- pred+offset
         if (is.null(REform)) {
             REform <- form_orig[-2]
