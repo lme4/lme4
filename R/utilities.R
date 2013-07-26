@@ -534,6 +534,8 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc) {
               nth=length(pp$theta), q=nrow(pp$Zt),
               nAGQ=rho$nAGQ,
               compDev=rho$compDev,
+              ## 'use scale' in the sense of whether dispersion parameter should
+              ##  be reported/used (*not* whether theta should be scaled by sigma)
               useSc=(rcl != "glmResp" ||
                      !resp$family$family %in% c("poisson","binomial")),
               reTrms=length(reTrms$cnms),
@@ -558,7 +560,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc) {
              REML=if (rcl=="lmerResp" && resp$REML != 0L) opt$fval else NA,
              ## FIXME: construct 'REML deviance' here?
              dev=if (rcl=="lmerResp" && resp$REML != 0L) NA else opt$fval,
-             sigmaML=sqrt(unname(if (rcl=="glmResp") NA else pwrss/sum(weights))),
+             sigmaML=sqrt(unname(if (!dims["useSc"]) NA else pwrss/sum(weights))),
              sigmaREML=sqrt(unname(if (rcl!="lmerResp") NA else pwrss/dims['nmp'])),
              tolPwrss=rho$tolPwrss)
     # TODO:  improve this hack to get something in frame slot (maybe need weights, etc...)

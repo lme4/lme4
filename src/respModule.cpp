@@ -190,7 +190,7 @@ namespace lme4 {
     }
 
     double glmResp::updateWts() {
-	d_sqrtrwt = d_weights.array() / variance().sqrt();
+	d_sqrtrwt = (d_weights.array() / variance()).sqrt();
 	d_sqrtXwt = muEta() * d_sqrtrwt.array();
 	return updateWrss();
     }

@@ -22,8 +22,7 @@ test_that("glmer", {
     gm1 <- glmer(incidence/size ~ period + (1|herd), cbpp, family=binomial, weights=size)
     expect_equal(range(resid(gm1)), c(-3.197512,2.356677), tol=1e-6)
     expect_equal(range(resid(gm1, "response")), c(-0.1946736,0.3184579), tol=1e-6)
-    ## FIXME ... Pearson resids look wonky
-    expect_equal(range(resid(gm1, "pearson")),  c(-0.9246517,0.9553736),tol=1e-6)
+    expect_equal(range(resid(gm1, "pearson")),  c(-2.381643,2.879069),tol=1e-6)
     expect_equal(range(resid(gm1, "working")),  c(-1.241733,5.410587),tol=1e-6)
     expect_equal(resid(gm1),resid(gm1,scaled=TRUE))  ## since sigma==1
     cbppNA <- cbpp

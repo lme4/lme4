@@ -448,8 +448,11 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
 	    function(theta) {
 		resp$updateMu(lp0)
 		pp$setTheta(theta)
-		pwrssUpdate(pp, resp, tolPwrss, GHrule(0L),
+		p <- pwrssUpdate(pp, resp, tolPwrss, GHrule(0L),
                             compDev, verbose)
+                resp$updateWts()
+                p
+
             }
 	else
 	    function(pars) {
@@ -460,8 +463,10 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
                 spars <- as.numeric(pars[-dpars])
                 offset <- if (length(spars)==0) baseOffset else baseOffset + pp$X %*% spars
 		resp$setOffset(offset)
-		pwrssUpdate(pp, resp, tolPwrss, GQmat,
+		p <- pwrssUpdate(pp, resp, tolPwrss, GQmat,
                             compDev, fac, verbose)
+                resp$updateWts()
+                p
 	    }
     } else if (is(rho$resp, "nlsResp")) {
 	if (nAGQ < 2L) {
