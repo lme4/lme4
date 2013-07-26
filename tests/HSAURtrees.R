@@ -4,23 +4,45 @@ library("lme4")
 ## example from HSAUR2 package
  if(FALSE) {
      ## (commented out to avoid R CMD check warning about undeclared dependency
-     ## library("multcomp")
-     trees513 <- subset(trees513, !species %in%
-                        c("fir", "ash/maple/elm/lime", "softwood (other)"))
-     trees513$species <- trees513$species[,drop = TRUE]
-     levels(trees513$species)[nlevels(trees513$species)] <- "hardwood"
-     save("trees513", file="trees513.RData")
+     library("multcomp")
+     trees513A <- droplevels(subset(trees513, !species %in%
+                        c("fir", "ash/maple/elm/lime", "softwood (other)")))
+     levels(trees513A$species)[nlevels(trees513A$species)] <- "hardwood"
+     trees513B <- droplevels(subset(trees513,
+                                    !species %in% c("fir", "softwood (other)")))
+     save("trees513A", "trees513B", file="trees513.RData")
  }
 
-
 load(system.file("testdata","trees513.RData",package="lme4"))
-dfun <- glmer(damage ~ species - 1 + (1 | lattice / plot),
-              data = trees513, family = binomial, devFunOnly = TRUE)
-ls.str(environment(dfun))# and you can investigate ...
+
+## dfun <- glmer(damage ~ species - 1 + (1 | lattice / plot),
+##              data = trees513, family = binomial, devFunOnly = TRUE)
+## ls.str(environment(dfun))# and you can investigate ...
 
 if (testLevel > 2) {
-    mmod <- glmer(damage ~ species - 1 + (1 | lattice / plot),
-                  data = trees513, family = binomial())
-    summary(mmod)
+    ## library(lme4.0)
+    ## system.time(mmod0 <- glmer(damage ~ species - 1 + (1 | lattice / plot),
+    ##               data = trees513, family = binomial()))
+    ## ## 4 seconds
+    ## oldres <- c(fixef(mmod0),getME(mmod0,"theta"))
+    ## detach("package:lme4.0")
+    ## dput(oldres)
+    oldres <- structure(c(5.23645064474105, 4.73568475545248, 2.65289926317093, 
+                          1.29043984816924, 1.59329381563025,
+                          0.532663142106669, 1.16703186884403
+                          ), .Names = c("speciesspruce", "speciespine",
+                             "speciesbeech", 
+                             "speciesoak", "specieshardwood",
+                             "plot:lattice.(Intercept)", 
+                             "lattice.(Intercept)"))
+    system.time(mmodA <- glmer(damage ~ species - 1 + (1 | lattice / plot),
+                              data = trees513A, family = binomial()))
+    ## 7 seconds
+    newres <- c(fixef(mmodA),getME(mmodA,"theta"))
+    stopifnot(all.equal(oldres,newres,tol=1.5e-3))
+    system.time(mmodB <- glmer(damage ~ species - 1 + (1 | lattice / plot),
+                              data = trees513B, family = binomial()))
+    ## 10.4 seconds
+    newresB <- c(fixef(mmodB),getME(mmodB,"theta"))
 }
 
