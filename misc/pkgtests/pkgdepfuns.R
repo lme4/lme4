@@ -58,7 +58,9 @@ pkgmax <- function(x,y) {
 checkPkg <- function(pn,verbose=FALSE,
                      tarballdir="./tarballs",libdir="./library",
                      checkdir=".",skip=FALSE,
-                     check_time=TRUE) {
+                     check_time=TRUE,
+                     upstreamPkg="lme4")
+{
 
     ## expand paths to protect against setwd() for R CMD check
     tarballdir <- normalizePath(tarballdir)
@@ -138,15 +140,15 @@ checkPkg <- function(pn,verbose=FALSE,
     newer_check <- FALSE
     curCheckdir <- file.path(checkdir,paste0(pn,".Rcheck"))
     if (file.exists(curCheckdir)) {
-        checktime <- file.info(curCheckdir)["mtime"]
-        tbinfo <- file.info(file.path(tarballdir,tn))
+        checktime <- file.info(curCheckdir)["mtime"]  ## check time
+        tbinfo <- file.info(file.path(tarballdir,tn)) ## tarball time
         tbtime <- tbinfo["mtime"]
-        newer_check <- (checktime>tbtime)
+        upinfo <- file.info(file.path(libdir,upstreamPkg)) ## upstream pkg time
+        uptime <- upinfo["mtime"]
+        newer_check <- (checktime>tbtime && checktime>uptime)
         zero_tb <- tbinfo$size==0
         if (!check_time || !newer_check || zero_tb) unlink(curCheckdir)
     }
-    if (verbose)
-        cat("running R CMD check ...\n")
     if (!skip) {
         if (check_time && newer_check) {
             if (verbose) cat("check more recent than tarball, skipping\n")
@@ -154,6 +156,8 @@ checkPkg <- function(pn,verbose=FALSE,
             t0 <- NA
             stat <- NULL
         } else {
+            if (verbose)
+                cat("running R CMD check ...\n")
             setwd(checkdir)
             tt <- system.time(ss <- suppressWarnings(system(paste("R CMD check",
                                                                   file.path(tarballdir,tn)),
