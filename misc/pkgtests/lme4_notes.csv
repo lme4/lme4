@@ -1,5 +1,5 @@
 pkgname,lme4_contact,contacted,notes
-agridat,BMB,TRUE,"proximal: set control=lmerControl(check.numlev.gtr.1='ignore') in federer.diag"
+agridat,BMB,TRUE,
 AICcmodavg,BMB,TRUE,
 aod,BMB,TRUE
 arm,SW,TRUE,"package maintainer has fixed: will upload when lme4 released (sim() still in limbo)"
@@ -21,10 +21,10 @@ metafor,BMB,TRUE,NA
 mi,BMB,TRUE,NA,"package maintainer has fixed: will upload when lme4 released"
 MixMAP,BMB,TRUE,NA
 mlmRev,SW,TRUE,"problems were related to rank-testing"
-odprism,SW,TRUE,"proximal: set control=*lmerControl(check.numobs.vs.rankZ=""ignore"")"
+odprism,SW,TRUE,"problems with examples. Proximal: set control=*lmerControl(check.numobs.vs.rankZ=""ignore"")"
 phmm,SW,TRUE,
-PBImisc,SW,TRUE,"responded 13/6/2013: 'will try to add fixes as soon as possible'"
-pedigreemm,DB,NA,"DB contacted; with what results?"
+PBImisc,SW,TRUE,"version 0.999 queued for CRAN"
+pedigreemm,DB,NA,"ready with fixed versions"
 phia,SW,TRUE,"car-related problems sorted; remaining issues should be package-specific"
 polytomous,SW,FALSE,"we have some tests -- models could be fragile?"
 prLogistic,SW,TRUE,NA
