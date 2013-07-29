@@ -32,7 +32,7 @@ namedList <- function(...) {
 ##'    (including \code{L-BFGS-B} from base \code{\link{optim}} and
 ##'    \code{\link{nlminb}}), pass the \code{method} argument to \code{optim}
 ##'    in the \code{control} argument.
-##'    
+##'
 ##'    For \code{glmer}, if \code{length(optimizer)==2}, the first element will be used
 ##'    for the preliminary (random effects parameters only) optimization, while
 ##'    the second will be used for the final (random effects plus
@@ -68,15 +68,14 @@ lmerControl <- function(optimizer="Nelder_Mead",
                 assign(arg,lmerOpts[[arg]])
         }
     }
-    r <- namedList(optimizer,
-                   restart_edge,
-                   checkControl=
-                   namedList(check.numobs.vs.rankZ,
-                             check.numlev.gtreq.5,
-                             check.numlev.gtr.1),
-                   optControl=list(...))
-    class(r) <- "merControl"
-    r
+    structure(namedList(optimizer,
+		   restart_edge,
+		   checkControl=
+		   namedList(check.numobs.vs.rankZ,
+			     check.numlev.gtreq.5,
+			     check.numlev.gtr.1),
+		   optControl=list(...)),
+	      class = c("lmerControl", "merControl"))
 }
 
 ##' @rdname lmerControl
@@ -113,17 +112,16 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
                 assign(arg,glmerOpts[[arg]])
         }
     }
-    r <- namedList(optimizer,
-              restart_edge,
-              tolPwrss,
-              compDev,
-              checkControl=
-              namedList(check.numobs.vs.rankZ,
-                        check.numlev.gtreq.5,
-                        check.numlev.gtr.1),
-              optControl=list(...))
-    class(r) <- "merControl"
-    r
+    structure(namedList(optimizer,
+			restart_edge,
+			tolPwrss,
+			compDev,
+			checkControl=
+			namedList(check.numobs.vs.rankZ,
+				  check.numlev.gtreq.5,
+				  check.numlev.gtr.1),
+			optControl=list(...)),
+	      class = c("glmerControl", "merControl"))
 }
 
 
@@ -135,13 +133,12 @@ nlmerControl <- function(optimizer="Nelder_Mead",
     if (length(optimizer)==1) {
         optimizer <- replicate(2,optimizer)
     }
-    r <- namedList(optimizer,
-              tolPwrss,
-              optControl=list(...))
-        class(r) <- "merControl"
-    r
+    structure(namedList(optimizer,
+			tolPwrss,
+			optControl=list(...)),
+	      class = c("nlmerControl", "merControl"))
 }
 
 
-                        
-                        
+
+

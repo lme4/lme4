@@ -96,8 +96,8 @@ safe_chol <- function(m) {
         return(diag(sqrt(diag(m))))
     }
     ## attempt regular Chol. decomp
-    if (!inherits(try(cc <- chol(m),silent=TRUE),"try-error"))
-        return(cc)
+    if (!is.null(cc <- tryCatch(chol(m), error=function(e) NULL)))
+	return(cc)
     ## ... pivot if necessary ...
     cc <- suppressWarnings(chol(m,pivot=TRUE))
     oo <- order(attr(cc,"pivot"))

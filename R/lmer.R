@@ -106,19 +106,21 @@ lmer <- function(formula, data=NULL, REML = TRUE,
                  ...)
 {
 
+    mc <- mcout <- match.call()
+    missCtrl <- missing(control)
     ## see functions in modular.R for the body ...
-    if (!inherits(control,"merControl")) {
+    if (!missCtrl && !inherits(control, "lmerControl")) {
         ## back-compatibility kluge
         warning("passing control as list is deprecated: please use lmerControl() instead")
-        control <- do.call(lmerControl,control)
+        control <- do.call(lmerControl, control)
     }
-    mc <- mcout <- match.call()
-    mc$control <- control ## update for  back-compatibility kluge
     if (!is.null(list(...)[["family"]])) {
        warning("calling lmer with 'family' is deprecated; please use glmer() instead")
        mc[[1]] <- quote(lme4::glmer)
-       return(eval(mc,parent.frame(1L)))
+       if(missCtrl) mc$control <- glmerControl()
+       return(eval(mc, parent.frame(1L)))
     }
+    mc$control <- control ## update for  back-compatibility kluge
 
     ## https://github.com/lme4/lme4/issues/50
     ## parse data and formula
@@ -128,9 +130,9 @@ lmer <- function(formula, data=NULL, REML = TRUE,
     lmod$formula <- NULL
 
     ## create deviance function for covariance parameters (theta)
-    devfun <- do.call(mkLmerDevfun, c(lmod,
-                                      list(start=start,verbose=verbose,control=control
-                                           )))
+    devfun <- do.call(mkLmerDevfun,
+		      c(lmod,
+			list(start=start,verbose=verbose,control=control)))
     if (devFunOnly) return(devfun)
     ## optimize deviance function over covariance parameters
     opt <- optimizeLmer(devfun,
@@ -240,7 +242,11 @@ glmer <- function(formula, data=NULL, family = gaussian,
                   subset, weights, na.action, offset,
                   contrasts = NULL, mustart, etastart, devFunOnly = FALSE, ...)
 {
-
+    if (!inherits(control, "glmerControl")) {
+	## back-compatibility kluge
+	warning("passing control as list is deprecated: please use glmerControl() instead")
+	control <- do.call(glmerControl, control)
+    }
     mc <- mcout <- match.call()
 
     ## family-checking code duplicated here and in glFormula (for now) since
@@ -264,9 +270,9 @@ glmer <- function(formula, data=NULL, family = gaussian,
     glmod <- eval(mc, parent.frame(1L))
     mcout$formula <- glmod$formula
     glmod$formula <- NULL
-  
+
     ## create deviance function for covariance parameters (theta)
-    
+
     devfun <- do.call(mkGlmerDevfun, c(glmod, list(verbose=verbose,
                                                    control=control,
                                                    nAGQ = 0)))
@@ -275,7 +281,7 @@ glmer <- function(formula, data=NULL, family = gaussian,
 
     if (is.list(start) && !is.null(start$fixef))
         if (nAGQ==0) stop("should not specify both start$fixef and nAGQ==0")
-    
+
     opt <- optimizeGlmer(devfun,
                          optimizer = control$optimizer[[1]],
                          restart_edge=control$restart_edge,
@@ -287,10 +293,10 @@ glmer <- function(formula, data=NULL, family = gaussian,
     if(nAGQ > 0L) {
 
         start <- updateStart(start,theta=opt$par)
-        
+
         # update deviance function to include fixed effects as inputs
         devfun <- updateGlmerDevfun(devfun, glmod$reTrms, nAGQ = nAGQ)
-        
+
         if (devFunOnly) return(devfun)
         # reoptimize deviance function over covariance parameters and fixed effects
         opt <- optimizeGlmer(devfun,
@@ -1271,7 +1277,7 @@ residuals.merMod <-
 ##' @S3method residuals lmResp
 ##' @method residuals lmResp
 residuals.lmResp <- function(object,
-                             type = c("working", "response", "deviance", 
+                             type = c("working", "response", "deviance",
                              "pearson", "partial"),
                              ...) {
     y <- object$y
@@ -1576,7 +1582,7 @@ setMethod("getL", "merMod", function(x) {
 })
 
 ##' Construct names of individual theta/sd:cor components
-##' 
+##'
 ##' @param object a fixed model
 ##' @param diag.only include only diagonal elements?
 ##' @param old (logical) give backward-compatible results?
@@ -2168,14 +2174,15 @@ weights.merMod <- function(object, ...) {
 
 
 getOptfun <- function(optimizer) {
-  if (is.character(optimizer)) {
-    optfun <- try(get(optimizer),silent=TRUE)
-  } else optfun <- optimizer
-  if (inherits(optfun,"try-error")) stop("couldn't find optimizer function ",optimizer)
-  if (!is(optfun,"function")) stop("non-function specified as optimizer")
-  if (any(is.na(match(c("fn","par","lower","control"),names(formals(optfun))))))
-    stop("optimizer function must use (at least) formal parameters 'fn', 'par', 'lower', 'control'")
-  optfun
+    optfun <- if (is.character(optimizer))
+	tryCatch(get(optimizer), error=function(e) NULL)
+    if (is.null(optfun)) stop("couldn't find optimizer function ",optimizer)
+    if (!is.function(optfun)) stop("non-function specified as optimizer")
+    needArgs <- c("fn","par","lower","control")
+    if (any(is.na(match(needArgs, names(formals(optfun))))))
+	stop("optimizer function must use (at least) formal parameters ",
+	     paste(sQuote(needArgs), collapse=", "))
+    optfun
 }
 
 optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
