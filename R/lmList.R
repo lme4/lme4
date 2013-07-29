@@ -22,22 +22,22 @@ modelFormula <- function(form)
 ##' @param family an optional family specification for a generalized
 ##'     linear model.
 ##' @param pool logical scalar, should the variance estimate pool the
-##'     residual sums of squares 
+##'     residual sums of squares
 ##' @param ... additional, optional arguments to be passed to the
-##'     model function or family evaluation. 
+##'     model function or family evaluation.
 ##' @export
 lmList <- function(formula, data, family, subset, weights,
                    na.action, offset, pool, ...) {
     stopifnot(is(formula, "formula"))
     ## model.frame(groupedData) is problematic ...
     data <- as.data.frame(data)
-    mCall <- mf <- match.call()           
+    mCall <- mf <- match.call()
     m <- match(c("family", "data", "subset", "weights",
                  "na.action", "offset"), names(mf), 0)
     mf <- mf[c(1, m)]
     ## substitute `+' for `|' in the formula
 ### FIXME: Figure out what to do here instead of subbars
-    ##          mf$formula <- subbars(formula) 
+    ##          mf$formula <- subbars(formula)
     mf$x <- mf$model <- mf$y <- mf$family <- NULL
     mf$drop.unused.levels <- TRUE
     mf[[1]] <- as.name("model.frame")
@@ -47,29 +47,23 @@ lmList <- function(formula, data, family, subset, weights,
         val <- lapply(split(frm, eval(mform$groups, frm)),
                       function(dat, formula)
                   {
-                      ans <- try({
+		      ans <- tryCatch({
                           data <- as.data.frame(dat)
                           lm(formula, data)
-                      },silent=TRUE)
+		      }, error=function(e) NULL)# => ans is NULL iff an error happened
                       ## FIXME: catch errors and pass them on as warnings?
                       ## (simply passing them along with silent=FALSE
                       ##  gives confusing output)
-                      if (inherits(ans, "try-error"))
-                          NULL
-                      else ans
                   }, formula = mform$model)
     } else {
         val <- lapply(split(frm, eval(mform$groups, frm)),
                       function(dat, formula, family)
                   {
-                      ans <- try({
+		      ans <- tryCatch({
                           data <- as.data.frame(dat)
                           glm(formula, family, data)
-                      })
-                      if (inherits(ans, "try-error"))
-                          NULL
-                      else ans
-                  }, formula = mform$model, family = family)
+                      }, error=function(e) NULL) #-> == NULL iff an error happened
+		  }, formula = mform$model, family = family)
     }
     if (missing(pool)) pool <- TRUE
     new("lmList", val, call = mCall, pool = pool)

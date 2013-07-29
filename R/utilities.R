@@ -143,7 +143,7 @@ mkReTrms <- function(bars, fr) {
 ##' @family utilities
 ##' @export
 mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, ...) {
-  
+
   if(!missing(fr)){
     y <- model.response(fr)
     offset <- model.offset(fr)
@@ -159,7 +159,7 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
     weights <- fr$weights
     etastart_update <- fr$etastart
   }
-  
+
   ## FIXME: may need to add X, or pass it somehow, if we want to use glm.fit
   #y <- model.response(fr)
     if(length(dim(y)) == 1) {
@@ -578,7 +578,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc) {
 
 ## generic argument checking
 ## 'type': name of calling function ("glmer", "lmer", "nlmer")
-## 
+##
 checkArgs <- function(type,...) {
     l... <- list(...)
     if (isTRUE(l...[["sparseX"]])) warning("sparseX = TRUE has no effect at present")
@@ -618,12 +618,12 @@ checkArgs <- function(type,...) {
 
 checkFormulaData <- function(formula,data,debug=FALSE) {
     dataName <- deparse(substitute(data))
-    missingData <- inherits(try(eval(data),silent=TRUE),"try-error")
+    missingData <- inherits(tryCatch(eval(data), error=function(e)e), "error")
     ## data not found (this *should* only happen with garbage input,
     ## OR when strings used as formulae -> drop1/update/etc.)
     ##
     ## alternate attempt (fails)
-    ## 
+    ##
     ## ff <- sys.frames()
     ## ex <- substitute(data)
     ## ii <- rev(seq_along(ff))
@@ -647,7 +647,7 @@ checkFormulaData <- function(formula,data,debug=FALSE) {
         if (is.null(data)) {
             if (!is.null(ee <- environment(formula))) {
                 ## use environment of formula
-                denv <- ee 
+                denv <- ee
             } else {
                 ## e.g. no environment, e.g. because formula is a character vector
                 ## parent.frame(2L) works because [g]lFormula (our calling environment)
@@ -681,7 +681,7 @@ checkFormulaData <- function(formula,data,debug=FALSE) {
         }
         cat("vars exist in env of formula ",allvarex(env=denv),"\n")
     } ## if (debug)
-    
+
     stopifnot(length(as.formula(formula,env=denv)) == 3)  ## check for two-sided formula
     return(denv)
 }

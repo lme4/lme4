@@ -110,7 +110,7 @@
 ##'
 ##' ## extract the bootstrapped values as a data frame ...
 ##' head(as.data.frame(boo01))
-##' 
+##'
 ##' ## ------ Bootstrap-based confidence intervals ------------
 ##'
 ##' ## intercept
@@ -131,11 +131,11 @@
 ##' ## Check stored values from a longer (1000-replicate) run:
 ##' load(system.file("testdata","boo01L.RData",package="lme4"))
 ##' plot(boo01L,index=3)
-##' 
+##'
 ##' @export
 bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
                     type=c("parametric","semiparametric"),
-		    verbose = FALSE, 
+		    verbose = FALSE,
                     .progress="none", PBargs=list())
 {
     stopifnot((nsim <- as.integer(nsim[1])) > 0)
@@ -174,9 +174,9 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
     t.star <- matrix(t0, nrow = length(t0), ncol = nsim)
     for(i in 1:nsim) {
         if (.progress!="none") { setpbfun(pb,i/nsim) }
-        foo <- try(FUN(refit(x,ss[[i]])),silent=TRUE)
+	foo <- tryCatch(FUN(refit(x,ss[[i]])), error=function(e)e)
         if(verbose) { cat(sprintf("%5d :",i)); str(foo) }
-        t.star[,i] <- if (inherits(foo, "try-error")) NA else foo
+	t.star[,i] <- if (inherits(foo, "error")) NA else foo
     }
     if (.progress!="none") { close(pb) }
     rownames(t.star) <- names(t0)

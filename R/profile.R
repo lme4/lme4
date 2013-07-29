@@ -203,24 +203,23 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
        lowcut <- lower[w]
        upcut <- upper[w]
        zeta <- function(xx,start) {
-           ores <- try(optwrap(optimizer, par=start,
-                               fn=function(x) dd(mkpar(npar1, w, xx, x)),
-                               lower = lowvp[-w],
-                               upper = upvp[-w]),silent=TRUE)
-           if (inherits(ores,"try-error"))
-               {
-                   devdiff <- NA
-                   pars <- NA
-               } else {
-                   devdiff <- ores$fval-base
-                   pars <- ores$par
-               }
+	   ores <- tryCatch(optwrap(optimizer, par=start,
+				    fn=function(x) dd(mkpar(npar1, w, xx, x)),
+				    lower = lowvp[-w],
+				    upper = upvp [-w]), error=function(e)NULL)
+	   if (is.null(ores)) {
+	       devdiff <- NA
+	       pars <- NA
+	   } else {
+	       devdiff <- ores$fval-base
+	       pars <- ores$par
+	   }
            if (is.na(devdiff)) {
                warning("NAs detected in profiling")
            } else {
                if (devdiff < (-devtol))
                    stop("profiling detected new, lower deviance")
-               if(devdiff<0)
+               if(devdiff < 0)
                    warning("slightly lower deviances (diff=",devdiff,") detected")
            }
            devdiff <- max(0,devdiff)
@@ -253,8 +252,10 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
        form[[3]] <- as.name(pname)
 
        ## FIXME: test for bad things here??
-       bakspl[[pname]] <- try(backSpline(forspl[[pname]] <- interpSpline(form, bres,na.action=na.omit)),silent=TRUE)
-       if (inherits(bakspl[[pname]],"try-error")) {
+       bakspl[[pname]] <- tryCatch(backSpline(forspl[[pname]] <-
+                                              interpSpline(form, bres,na.action=na.omit)),
+                                   error=function(e)e)
+       if (inherits(bakspl[[pname]],"error")) {
            warning("non-monotonic profile")
      }
 
@@ -310,8 +311,9 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
             ans[[thisnm]] <- bres[order(bres[, poff]), ]
             form[[3]] <- as.name(thisnm)
             bakspl[[thisnm]] <-
-                try(backSpline(forspl[[thisnm]] <- interpSpline(form, bres)),silent=TRUE)
-            if (inherits(bakspl[[thisnm]],"try-error")) warning("non-monotonic profile")
+                tryCatch(backSpline(forspl[[thisnm]] <- interpSpline(form, bres)),
+                         error=function(e)e)
+            if (inherits(bakspl[[thisnm]],"error")) warning("non-monotonic profile")
         } ## for(j in 1..p)
     } ## if isLMM
 
@@ -430,7 +432,7 @@ devfun2 <- function(fm,useSc,signames)
 
 ## extract only the y component from a prediction
 predy <- function(sp, vv) {
-    if (inherits(sp,"try-error")) rep(NA,length(vv))
+    if (inherits(sp,"error")) rep(NA,length(vv))
     else predict(sp, vv)$y
 }
 
@@ -500,8 +502,7 @@ xyplot.thpr <-
              {
                  panel.grid(h = -1, v = -1)
                  myspl <- spl[[panel.number()]]
-                 if (inherits(myspl,"try-error") ||
-                     is.null(myspl)) {
+                 if (inherits(myspl,"error") || is.null(myspl)) {
                      warning(sprintf("bad profile for variable %d: skipped",panel.number()))
                  } else {
                      lsegments(x, y, x, 0, ...)
@@ -552,7 +553,7 @@ confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
 ##' @param parm parameters (specified by integer position)
 ##' @param level confidence level
 ##' @param method for computing confidence intervals
-##' @param zeta likelihood cutoff 
+##' @param zeta likelihood cutoff
 ##' (if not specified, computed from \code{level}: "profile" only)
 ##' @param nsim number of simulations for parametric bootstrap intervals
 ##' @param boot.type bootstrap confidence interval type
@@ -610,16 +611,16 @@ confint.merMod <- function(object, parm, level = 0.95,
         ## copied with small changes from confint.default
         cf <- fixef(object)   ## coef() -> fixef()
         pnames <- names(cf)
-        if (missing(parm)) 
+        if (missing(parm))
           parm <- pnames
-        else if (is.numeric(parm)) 
+        else if (is.numeric(parm))
           parm <- pnames[parm]
         ## n.b. can't use sqrt(...)[parm] (diag() loses names)
         a <- (1 - level)/2
         a <- c(a, 1 - a)
         pct <- stats:::format.perc(a, 3)
         fac <- qnorm(a)
-        ci <- array(NA, dim = c(length(parm), 2L), dimnames = list(parm, 
+        ci <- array(NA, dim = c(length(parm), 2L), dimnames = list(parm,
                                                                     pct))
         sdiag <- function(x) if (length(x)==1) c(x) else diag(x)
         ses <- sqrt(sdiag(vcov(object)[parm,parm]))
@@ -662,9 +663,9 @@ confint.merMod <- function(object, parm, level = 0.95,
            pct <- stats:::format.perc(a, 3)
            dimnames(citab) <- list(names(bb[["t0"]]),pct)
            pnames <- rownames(citab)
-           if (missing(parm)) 
+           if (missing(parm))
                parm <- pnames
-           else if (is.numeric(parm)) 
+           else if (is.numeric(parm))
                parm <- pnames[parm]
            citab[parm,]
        },
@@ -756,7 +757,7 @@ splom.thpr <- function (x, data,
     traces <- lapply(fr1, function(el) lapply(fr1, function(el1) list()))
     for (j in seq_along(nms)[-1]) {
         for (i in seq_len(j - 1)) {
-            .par <- NULL  ## suppress R CMD check warning  
+            .par <- NULL  ## suppress R CMD check warning
             fri <- subset(fr, .par == nms[i])
             sij <- interpSpline(fri[ , i], fri[ , j])
             frj <- subset(fr, .par == nms[j])
@@ -915,7 +916,7 @@ log.thpr <- function (x, base = exp(1)) {
                 sub("^\\.sig", ".lsig", names(attr(x, "forward")))
         for (nm in colnames(x)[sigs]) {
             x[[nm]] <- log(x[[nm]], base = base)
-            .par <- NULL  ## suppress R CMD check warning  
+            .par <- NULL  ## suppress R CMD check warning
             fr <- subset(x, .par == nm & is.finite(x[[nm]]))
             ## FIXME: avoid subset for global-variable false positive
             ## fr <- x[x$.par == nm & is.finite(x[[nm]]),]
@@ -936,7 +937,7 @@ log.thpr <- function (x, base = exp(1)) {
 ## @param x a profile object from a mixed-effects model
 ## @return a modified profile object
 varpr <- function (x) {
-    .par <- NULL  ## suppress R CMD check warning  
+    .par <- NULL  ## suppress R CMD check warning
     cn <- colnames(x)
     sigs <- grep("^\\.sig", cn)
     if (length(sigs)) {
@@ -1032,7 +1033,7 @@ densityplot.thpr <- function(x, data, ...) {
 ##' @return a transformed mixed-effects model profile
 ##' @export
 varianceProf <- function(pr) {
-    .par <- NULL  ## suppress R CMD check warning  
+    .par <- NULL  ## suppress R CMD check warning
     stopifnot(inherits(pr, "thpr"))
     spl <- attr(pr, "forward")
     onms <- names(spl)                  # names of original variables
