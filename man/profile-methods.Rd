@@ -84,7 +84,7 @@
 \examples{
 fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
 ## ~1.2s (on a 2010 Macbook Pro)
-system.time( tpr  <- profile(fm01ML)
+system.time( tpr  <- profile(fm01ML) )
 (confint(tpr) -> CIpr)
 stopifnot(all.equal(CIpr, confint(tpr), tol= 1e-11))
 xyplot(tpr)
