@@ -1,6 +1,6 @@
 ### How to generate the  trees513.RData, needed in ../../tests/HSAURtrees.R:
 
-library("multcomp")
+data("trees513", package = "multcomp")
 trees513A <- droplevels(subset(trees513, !species %in%
 			       c("fir", "ash/maple/elm/lime", "softwood (other)")))
 levels(trees513A$species)[nlevels(trees513A$species)] <- "hardwood"
