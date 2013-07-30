@@ -20,9 +20,9 @@
 
  <h1 > lme4: downstream package report</h1>
 
-<p class='character'>lme4 version: 0.99999911.7</p>
+<p class='character'>lme4 version: 0.99999911.8</p>
 
-<p class='character'>Test date:  Sat Jul 27 11:32:41 2013</p>
+<p class='character'>Test date:  Tue Jul 30 18:08:07 2013</p>
 
  <h2 > Notes</h2>
 
@@ -48,7 +48,7 @@
 <td class=cellinside> 0</td></tr>
  
 <tr><td class=firstcolumn>error_examples</td>
-<td class=cellinside> 8</td>
+<td class=cellinside> 7</td>
 <td class=cellinside> 0</td>
 <td class=cellinside> 3</td></tr>
  
@@ -57,15 +57,10 @@
 <td class=cellinside> 2</td>
 <td class=cellinside> 0</td></tr>
  
-<tr><td class=firstcolumn>error_vignette</td>
-<td class=cellinside> 0</td>
-<td class=cellinside> 0</td>
-<td class=cellinside> 1</td></tr>
- 
 <tr><td class=firstcolumn>OK</td>
-<td class=cellinside>18</td>
+<td class=cellinside>19</td>
 <td class=cellinside> 6</td>
-<td class=cellinside>35</td></tr>
+<td class=cellinside>36</td></tr>
  
 	</tbody>
 </table>
@@ -141,7 +136,7 @@ cursor: pointer ;
 </td>
 <td class=cellinside><font style="color:red">error_examples</font>
 </td>
-<td class=cellinside>  pwrssUpdate did not converge in 30 iterations<br>Calls: lmer ... eval -> <Anonymous> -> do.call -> <Anonymous> -> .Call<br>Execution halted
+<td class=cellinside>  grouping factors must have > 1 sampled level<br>Calls: lmer -> eval -> eval -> <Anonymous> -> checkNlevels<br>Execution halted
 </td>
 <td class=cellinside>BMB
 </td>
@@ -295,30 +290,6 @@ cursor: pointer ;
 </td></tr>
  
 <tr> 
-<td class=firstcolumn>60
-</td>
-<td class=cellinside>PBImisc
-</td>
-<td class=cellinside><font style="color:blue">Depends</font>
-</td>
-<td class=cellinside>CRAN
-</td>
-<td class=cellinside>0.998
-</td>
-<td class=cellinside>Przemyslaw Biecek &lt;przemyslaw.biecek@gmail.com&gt
-</td>
-<td class=cellinside><font style="color:red">error_examples</font>
-</td>
-<td class=cellinside>  model should be an object of the class mer<br>Calls: groupDisp -> sapply -> lapply -> FUN -> recalculateLogLik<br>Execution halted
-</td>
-<td class=cellinside>SW
-</td>
-<td class=cellinside> TRUE
-</td>
-<td class=cellinside>version 0.999 queued for CRAN
-</td></tr>
- 
-<tr> 
 <td class=firstcolumn>64
 </td>
 <td class=cellinside>phmm
@@ -333,7 +304,7 @@ cursor: pointer ;
 </td>
 <td class=cellinside><font style="color:red">error_examples</font>
 </td>
-<td class=cellinside>  pwrssUpdate did not converge in 30 iterations<br>Calls: lmer ... eval -> <Anonymous> -> do.call -> <Anonymous> -> .Call<br>Execution halted
+<td class=cellinside>> summary(fit.lmer)@AICtab<br>Error: trying to get slot "AICtab" from an object (class "summary.merMod") that is not an S4 object <br>Execution halted
 </td>
 <td class=cellinside>SW
 </td>
@@ -381,7 +352,7 @@ cursor: pointer ;
 </td>
 <td class=cellinside><font style="color:red">error_examples</font>
 </td>
-<td class=cellinside>  calling lmer with 'family' is deprecated; please use glmer() instead<br>Error: pwrssUpdate did not converge in 30 iterations<br>Execution halted
+<td class=cellinside>  There are not glm and lmer models. Revise arguments and try again<br>Calls: prLogisticDelta -> pr.conditional<br>Execution halted
 </td>
 <td class=cellinside>SW
 </td>
@@ -554,30 +525,6 @@ cursor: pointer ;
 <td class=cellinside>SW
 </td>
 <td class=cellinside>FALSE
-</td>
-<td class=cellinside> 
-</td></tr>
- 
-<tr> 
-<td class=firstcolumn>52
-</td>
-<td class=cellinside>multcomp
-</td>
-<td class=cellinside><font style="color:green">Suggests</font>
-</td>
-<td class=cellinside>rforge
-</td>
-<td class=cellinside>1.2-18
-</td>
-<td class=cellinside>Torsten Hothorn &lt;Torsten.Hothorn@R-project.org&gt
-</td>
-<td class=cellinside><font style="color:red">error_vignette</font>
-</td>
-<td class=cellinside>Error: pwrssUpdate did not converge in 30 iterations<br>Execution halted<br>
-</td>
-<td class=cellinside> 
-</td>
-<td class=cellinside>   NA
 </td>
 <td class=cellinside> 
 </td></tr>
@@ -1521,6 +1468,30 @@ cursor: pointer ;
 </td></tr>
  
 <tr> 
+<td class=firstcolumn>52
+</td>
+<td class=cellinside>multcomp
+</td>
+<td class=cellinside><font style="color:green">Suggests</font>
+</td>
+<td class=cellinside>rforge
+</td>
+<td class=cellinside>1.2-18
+</td>
+<td class=cellinside>Torsten Hothorn &lt;Torsten.Hothorn@R-project.org&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside> 
+</td>
+<td class=cellinside>   NA
+</td>
+<td class=cellinside> 
+</td></tr>
+ 
+<tr> 
 <td class=firstcolumn>53
 </td>
 <td class=cellinside>MuMIn
@@ -1686,6 +1657,30 @@ cursor: pointer ;
 <td class=cellinside>   NA
 </td>
 <td class=cellinside> 
+</td></tr>
+ 
+<tr> 
+<td class=firstcolumn>60
+</td>
+<td class=cellinside>PBImisc
+</td>
+<td class=cellinside><font style="color:blue">Depends</font>
+</td>
+<td class=cellinside>local
+</td>
+<td class=cellinside>0.999
+</td>
+<td class=cellinside>Przemyslaw Biecek &lt;przemyslaw.biecek@gmail.com&gt
+</td>
+<td class=cellinside><font style="color:blue">OK</font>
+</td>
+<td class=cellinside>
+</td>
+<td class=cellinside>SW
+</td>
+<td class=cellinside> TRUE
+</td>
+<td class=cellinside>version 0.999 queued for CRAN
 </td></tr>
  
 <tr> 
@@ -2007,7 +2002,7 @@ cursor: pointer ;
 
 <hr size=1>
 <font size=-1>
-	 Generated on: <i>Sat Jul 27 11:32:41 2013</i> - <b>R2HTML</b> 
+	 Generated on: <i>Tue Jul 30 18:08:08 2013</i> - <b>R2HTML</b> 
 <hr size=1>
 	</body>
 </html>
