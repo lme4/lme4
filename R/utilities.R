@@ -550,6 +550,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc) {
     pwrss   <- wrss + sqrLenU
     weights <- resp$weights
     beta    <- pp$beta(fac)
+    sigmaML <- pwrss/sum(weights)
     if (rcl != "lmerResp") {
         pars <- opt$par
         if (length(pars) > length(pp$theta)) beta <- pars[-(seq_along(pp$theta))]
@@ -560,8 +561,8 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc) {
              REML=if (rcl=="lmerResp" && resp$REML != 0L) opt$fval else NA,
              ## FIXME: construct 'REML deviance' here?
              dev=if (rcl=="lmerResp" && resp$REML != 0L) NA else opt$fval,
-             sigmaML=sqrt(unname(if (!dims["useSc"]) NA else pwrss/sum(weights))),
-             sigmaREML=sqrt(unname(if (rcl!="lmerResp") NA else pwrss/dims['nmp'])),
+             sigmaML=sqrt(unname(if (!dims["useSc"]) NA else sigmaML)),
+             sigmaREML=sqrt(unname(if (rcl!="lmerResp") NA else sigmaML*(dims['n']/dims['nmp']))),
              tolPwrss=rho$tolPwrss)
     # TODO:  improve this hack to get something in frame slot (maybe need weights, etc...)
     if(missing(fr)) fr <- data.frame(resp$y)
