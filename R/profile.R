@@ -29,6 +29,7 @@
 ##' @keywords methods
 ##' @examples
 ##' fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
+##' system.time( tpr  <- profile(fm01ML, optimizer="Nelder_Mead") ) 
 ##' ## ~1.2s (on a 2010 Macbook Pro)
 ##' system.time( tpr  <- profile(fm01ML)
 ##' (confint(tpr) -> CIpr)

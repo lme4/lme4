@@ -83,24 +83,31 @@
 }
 \examples{
 fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
-## ~1.2s (on a 2010 Macbook Pro)
-system.time( tpr  <- profile(fm01ML) )
+system.time(tpr <- profile(fm01ML)) ## ~1.2s (on a 2010 Macbook Pro)
+## + warning about bobyqa convergence
 (confint(tpr) -> CIpr)
-stopifnot(all.equal(CIpr, confint(tpr), tol= 1e-11))
+\donttest{% too much precision (etc). but just FYI:
+stopifnot(all.equal(CIpr,
+   array(c(12.1985292, 38.2299848, 1486.4515,
+           84.0630513, 67.6576964, 1568.54849), dim = 3:2,
+         dimnames = list(c(".sig01", ".sigma", "(Intercept)"),
+                         c("2.5 \%", "97.5 \%"))),
+                     tol= 1e-07))# 1.37e-9 {64b}
+}
 xyplot(tpr)
 densityplot(tpr, main="densityplot( profile(lmer(..)) )")
 splom(tpr)
-
-\dontrun{
+\donttest{% for time constraint
 ##
-tpr2 <- profile(fm01ML, which=1:2, optimizer="Nelder_Mead") ## Batch and residual variance only
+system.time(tpr2 <- profile(fm01ML, which=1:2, optimizer="Nelder_Mead"))
+             ## Batch and residual variance only
 ## GLMM example (running time ~11 seconds on a modern machine)
 gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
             data = cbpp, family = binomial)
 system.time(pr4 <- profile(gm1))
 xyplot(pr4,layout=c(5,1),as.table=TRUE)
 splom(pr4)
-}
+}% dont
 }
 \seealso{
   For (more expensive) alternative confidence intervals:
