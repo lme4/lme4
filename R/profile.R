@@ -20,8 +20,7 @@
 ##' @param optimizer (character or function) optimizer to use (see \code{\link{lmer}} for details)
 ##' @param signames (logical) if \code{TRUE} use abbreviated names of the form \code{.sigNN}, otherwise more meaningful (but longer) names of the form \code{(sd|cor)_(effects)|(group)}. Note that some code for profile transformations (e.g. \code{\link{varianceProf}}) depends on \code{signames==TRUE}
 ##' @param \dots potential further arguments for \code{profile} methods.
-##' @section Methods: FIXME: These (signatures) will change soon --- document
-##'  \bold{after} change!
+##' @section Methods:
 ##' \describe{
 ##'     \item{signature(fitted = \"merMod\")}{ ...  } }
 ##' @seealso For (more expensive) alternative confidence intervals:
@@ -30,24 +29,30 @@
 ##' @examples
 ##' fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
 ##' system.time( tpr  <- profile(fm01ML, optimizer="Nelder_Mead") ) 
-##' ## ~1.2s (on a 2010 Macbook Pro)
-##' system.time( tpr  <- profile(fm01ML)
+##' ## ~2.6s (on a 2010 Macbook Pro)
+##' system.time( tpr  <- profile(fm01ML))
+##' ## ~1s, + possible warning about bobyqa convergence
 ##' (confint(tpr) -> CIpr)
-##' stopifnot(all.equal(CIpr, confint(tpr), tol= 1e-11))
+##' \donttest{% too much precision (etc). but just FYI:
+##' stopifnot(all.equal(CIpr,
+##'   array(c(12.1985292, 38.2299848, 1486.4515,
+##'           84.0630513, 67.6576964, 1568.54849), dim = 3:2,
+##'         dimnames = list(c(".sig01", ".sigma", "(Intercept)"),
+##'                         c("2.5 \%", "97.5 \%"))),
+##'                     tol= 1e-07))# 1.37e-9 {64b}
+##' }
 ##' xyplot(tpr)
 ##' densityplot(tpr, main="densityplot( profile(lmer(..)) )")
 ##' splom(tpr)
-##'
-##' \dontrun{
-##' ## 
-##' tpr2 <- profile(fm01ML, which=1:2, optimizer="Nelder_Mead") ## Batch and residual variance only
+##' \donttest{% for time constraint
+##' system.time(tpr2 <- profile(fm01ML, which=1:2, optimizer="Nelder_Mead")) ## Batch and residual variance only
 ##' ## GLMM example (running time ~11 seconds on a modern machine)
 ##' gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
 ##'             data = cbpp, family = binomial)
 ##' system.time(pr4 <- profile(gm1))
 ##' xyplot(pr4,layout=c(5,1),as.table=TRUE)
 ##' splom(pr4)
-##' }
+##' }%donttest
 ##' @importFrom splines backSpline interpSpline periodicSpline
 ##' @importFrom stats profile
 ##' @method profile merMod
@@ -557,7 +562,7 @@ confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
 ##' @param boot.type bootstrap confidence interval type
 ##' @param quiet (logical) suppress messages about computationally intensive profiling?
 ##' @param oldNames (logical) use old-style names for \code{method="profile"}? (See \code{signames} argument to \code{\link{profile}}
-##' @param \dots additional parameters to be passed to  \code{\link{profile.merMod}}
+##' @param \dots additional parameters to be passed to  \code{\link{profile.merMod}} or \code{\link{bootMer}}
 ##' @return a numeric table of confidence intervals
 
 ##' @details Depending on the method specified, this function will

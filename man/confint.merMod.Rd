@@ -32,7 +32,7 @@
   \code{\link{profile}}}
 
   \item{\dots}{additional parameters to be passed to
-  \code{\link{profile.merMod}}}
+  \code{\link{profile.merMod}} or \code{\link{bootMer}}}
 }
 \value{
   a numeric table of confidence intervals
