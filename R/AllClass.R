@@ -40,16 +40,16 @@ setClass("lmList.confint", contains = "array")
 ##' \itemize{
 ##' \item{X}{ dense model matrix for the fixed-effects parameters, to be stored
 ##'     in the \code{X} field.}
-##' \item{Zt}{transpose of the sparse model matrix for the random effects.  It
+##' \item{Zt}{ transpose of the sparse model matrix for the random effects.  It
 ##'     is stored in the \code{Zt} field.}
-##' \item{Lambdat}{transpose of the sparse lower triangular relative variance
+##' \item{Lambdat}{ transpose of the sparse lower triangular relative variance
 ##'     factor (stored in the \code{Lambdat} field).}
-##' \item{Lind}{integer vector of the same length as the \code{"x"} slot in the
+##' \item{Lind}{ integer vector of the same length as the \code{"x"} slot in the
 ##'     \code{Lambdat} field.  Its elements should be in the range 1 to the length
 ##'     of the \code{theta} field.}
-##' \item{theta}{numeric vector of variance component parameters (stored in the
+##' \item{theta}{ numeric vector of variance component parameters (stored in the
 ##'     \code{theta} field).}
-##' \item{n}{sample size, usually \code{nrow(X)}.}
+##' \item{n}{ sample size, usually \code{nrow(X)}.}
 ##' }
 ##' @seealso \code{\linkS4class{merPredD}}
 ##' @keywords classes
