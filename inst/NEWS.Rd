@@ -57,9 +57,14 @@
     \itemize{
       \item A general-purpose `getME()` accessor method has been used to 
       allow extraction of a wide variety of components of a mixed-model 
-      fit. This has been backported to be compatible with older
-      versions of `lme4` that still produce `mer` objects rather than
-      `merMod` objects. However, 
+      fit. `getME()` also allows a vector of objects to be returned as
+      a list of mixed-model componenets. This has been backported to
+      be compatible with older versions of `lme4` that still produce `mer` 
+      objects rather than `merMod` objects. However, backporting is incomplete 
+      and some objects are still not extractable using `getME()` in older versions
+      of `lme4`.
+      \item Optimization information (convergence info, warnings, etc.) now
+      stored in an `@optinfo` slot.
       \item `bootMer`, a framework for obtaining parameter confidence 
       intervals by parametric bootstrapping.
       \item `plot` methods similar to those from the `nlme` package 
@@ -76,7 +81,34 @@
       finer control of the different steps of argument checking; construction 
       of design matrices and data structures; parameter estimation; and construction 
       of the final `merMod` object (see `?modular`).
-      \item Negative binomial models (still under development).
+    }
+  }
+  \subsection{STILL NON-EXISTENT FEATURES}{
+    \itemize{
+      \item Automatic MCMC sampling based on the fit turns out to be very difficult
+      to implement in a way that is really broadly reliable and robust; `mcmcsamp`
+      will not be implemented in the near future. We recommend parametric boostrapping 
+      via `bootMer`, or the Kenward-Roger approximation implemented in the `pbkrtest`
+      package and leveraged by the `lmerTest` package and the `Anova` function in the 
+      `car` package.
+      \item "R-side" structures (within-block correlation and heteroscedasticity) are 
+      not on the current timetable
+      \item Adaptive Gaussian quadrature (AGQ) is not available for multiple and/or
+      non-scalar random effects.
+      \item 
+    }
+  }
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item In a development version, prior weights were not being used properly in 
+      the calculation of the residual standard deviation, but this has been fixed.
+      Thank you to Simon Wood for pointing this out.
+      \item In a development version, the step-halving component of the penalized 
+      iteratively reweighted least squares algorithm was not working, but
+      this is now fixed.
+      \item In a development version, square `RZX` matrices would lead to a 
+      `pwrssUpdate did not converge in 30 iterations` error. This has been fixed
+      by adding an extra column of zeros to `RZX`.
     }
   }
 }
