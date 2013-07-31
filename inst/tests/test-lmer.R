@@ -85,6 +85,8 @@ test_that("lmer", {
     options(warn=0)
     expect_warning(lmer(Yield ~ 1|Batch, Dyestuff, junkArg=TRUE),"extra argument.*disregarded")
     expect_warning(lmer(Yield ~ 1|Batch, Dyestuff, control=list()),
+                    "passing control as list is deprecated")
+    expect_warning(lmer(Yield ~ 1|Batch, Dyestuff, control=glmerControl()),
                    "passing control as list is deprecated")
 })
 

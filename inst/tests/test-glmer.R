@@ -72,5 +72,14 @@ test_that("glmer", {
     expect_warning(glmer(prop ~ period + (1 | herd),
                       data = cbppX, family = binomial, weights=size, junkArg=TRUE),
                    "extra argument.*disregarded")
+    expect_warning(glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+                             data = cbpp, family = binomial,
+                         control=list()),
+                   "instead of passing a list of class")
+    expect_warning(glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+                         data = cbpp, family = binomial,
+                         control=lmerControl()),
+                   "instead of passing a list of class")
+
 })
 
