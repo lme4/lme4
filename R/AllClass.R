@@ -3,7 +3,7 @@
 NULL
 
 ##' Class "lmList" of 'lm' Objects on Common Model
-##' 
+##'
 ##' Class \code{"lmList"} is an S4 class with basically a list of objects of
 ##' class \code{\link{lm}} with a common model.
 ##' @name lmList-class
@@ -27,7 +27,7 @@ setClass("lmList.confint", contains = "array")
 ### for the dense and sparse X cases ?
 
 ##' Generator object for the \code{\linkS4class{merPredD}} class
-##' 
+##'
 ##' The generator object for the \code{\linkS4class{merPredD}} reference class.
 ##' Such an object is primarily used through its \code{new} method.
 ##'
@@ -53,7 +53,7 @@ setClass("lmList.confint", contains = "array")
 ##' @seealso \code{\linkS4class{merPredD}}
 ##' @keywords classes
 ##' @export
-merPredD <- 
+merPredD <-
     setRefClass("merPredD", # Predictor class for mixed-effects models with dense X
                 fields =
                 list(Lambdat = "dgCMatrix",
@@ -71,7 +71,7 @@ merPredD <-
                      Zt      = "dgCMatrix",
                      beta0   = "numeric",
                      delb    = "numeric",
-                     delu    = "numeric",                     
+                     delu    = "numeric",
                      theta   = "numeric",
                      u0      = "numeric"),
                 methods =
@@ -87,7 +87,7 @@ merPredD <-
                          p <- ncol(X)
                          q <- nrow(Zt)
                          stopifnot(length(theta) > 0L,
-                                   length(Lind) > 0L, 
+                                   length(Lind) > 0L,
                                    all(sort(unique(Lind)) == seq_along(theta)))
                          RZX <<- array(0, c(q, p))
                          Utr <<- numeric(q)
@@ -153,11 +153,11 @@ merPredD <-
                          selfEnv <- as.environment(.self)
                          vEnv    <- new.env(parent=emptyenv())
                          for (field in setdiff(names(def@fieldClasses), "Ptr")) {
-                             if (shallow) 
+                             if (shallow)
                                  assign(field, get(field, envir = selfEnv), envir = vEnv)
                              else {
                                  current <- get(field, envir = selfEnv)
-                                 if (is(current, "envRefClass")) 
+                                 if (is(current, "envRefClass"))
                                      current <- current$copy(FALSE)
                                  assign(field, current, envir = vEnv)
                              }
@@ -257,7 +257,7 @@ merPredD$lock("Lambdat", "LamtUt", "Lind", "RZX", "Ut", "Utr", "V", "VtV", "Vtr"
               "X", "Xwts", "Zt", "beta0", "delb", "delu", "theta", "u0")
 
 ##' Class \code{"merPredD"} - a dense predictor reference class
-##' 
+##'
 ##' A reference class for a mixed-effects model predictor module with a dense
 ##' model matrix for the fixed-effects parameters.  The reference class is
 ##' associated with a C++ class of the same name.  As is customary, the
@@ -280,19 +280,19 @@ merPredD$lock("Lambdat", "LamtUt", "Lind", "RZX", "Ut", "Utr", "V", "VtV", "Vtr"
 ##'     \code{\link{merPredD}}, \code{\linkS4class{merMod}}.
 ##' @keywords classes
 ##' @examples
-##' 
+##'
 ##' showClass("merPredD")
 ##' str(slot(lmer(Yield ~ 1|Batch, Dyestuff), "pp"))
-##' 
+##'
 NULL
 
 ##' Generator objects for the response classes
-##' 
+##'
 ##' The generator objects for the \code{\linkS4class{lmResp}},
 ##' \code{\linkS4class{lmerResp}}, \code{\linkS4class{glmResp}} and
 ##' \code{\linkS4class{nlsResp}} reference classes. Such objects are
 ##' primarily used through their \code{new} methods.
-##' 
+##'
 ##' @aliases lmResp lmerResp glmResp nlsResp
 ##' @param ... List of arguments (see Note).
 ##' @note Arguments to the \code{new} methods must be named arguments.
@@ -359,11 +359,11 @@ lmResp <-                               # base class for response modules
                         selfEnv <- as.environment(.self)
                         vEnv    <- new.env(parent=emptyenv())
                         for (field in setdiff(names(def@fieldClasses), "Ptr")) {
-                            if (shallow) 
+                            if (shallow)
                                 assign(field, get(field, envir = selfEnv), envir = vEnv)
                             else {
                                 current <- get(field, envir = selfEnv)
-                                if (is(current, "envRefClass")) 
+                                if (is(current, "envRefClass"))
                                     current <- current$copy(FALSE)
                                 assign(field, current, envir = vEnv)
                             }
@@ -403,12 +403,12 @@ lmResp <-                               # base class for response modules
                         .Call(lm_wrss, ptr())
                     })
                 )
-                
+
 lmResp$lock("mu", "offset", "sqrtXwt", "sqrtrwt", "weights", "wtres")#, "y")
 
 ##' Classes \code{"lmResp"}, \code{"glmResp"}, \code{"nlsResp"} and
 ##' \code{"lmerResp"}
-##' 
+##'
 ##' Reference classes for response modules, including linear models,
 ##' \code{"lmResp"}, generalized linear models, \code{"glmResp"}, nonlinear
 ##' models, \code{"nlsResp"} and linear mixed-effects models, \code{"lmerResp"}.
@@ -432,7 +432,7 @@ lmResp$lock("mu", "offset", "sqrtXwt", "sqrtrwt", "weights", "wtres")#, "y")
 ##' @seealso \code{\link{lmer}}, \code{\link{glmer}}, \code{\link{nlmer}},
 ##'     \code{\linkS4class{merMod}}.
 ##' @examples
-##' 
+##'
 ##' showClass("lmResp")
 ##' str(lmResp$new(y=1:4))
 ##' showClass("glmResp")
@@ -495,7 +495,7 @@ glmResp <-
                      },
                      allInfo = function() {
                          'return all the information available on the object'
-                         cbind(callSuper(), 
+                         cbind(callSuper(),
                                data.frame(eta=eta, muEta=muEta(), var=variance(),
                                           WrkWt=sqrtWrkWt(), wrkRes=wrkResids(),
                                           wrkResp=wrkResp(), devRes=devResid()))
@@ -625,11 +625,11 @@ nlsResp <-
 nlsResp$lock("nlmod", "nlenv", "pnames")
 
 ##' Generator object for the \code{\linkS4class{glmFamily}} class
-##' 
+##'
 ##' The generator object for the \code{\linkS4class{glmFamily}} reference class.
 ##' Such an object is primarily used through its \code{new} method.
-##' 
-##' 
+##'
+##'
 ##' @param ... Named argument (see Note below)
 ##' @note Arguments to the \code{new} method must be named arguments.
 ##' @section Methods: \describe{
@@ -696,15 +696,15 @@ glmFamily <-                            # used in tests of family definitions
                      })
                 )
 ##' Class \code{"glmFamily"} - a reference class for \code{\link{family}}
-##' 
+##'
 ##' This class is a wrapper class for \code{\link{family}} objects specifying a
 ##' distibution family and link function for a generalized linear model
 ##' (\code{\link{glm}}).  The reference class contains an external pointer to a
 ##' C++ object representing the class.  For common families and link functions
 ##' the functions in the family are implemented in compiled code so they can be
 ##' accessed from other compiled code and for a speed boost.
-##' 
-##' 
+##'
+##'
 ##' @name glmFamily-class
 ##' @docType class
 ##' @note Objects from this reference class correspond to objects in a C++
@@ -719,16 +719,16 @@ glmFamily <-                            # used in tests of family definitions
 ##' @seealso \code{\link{family}}, \code{\link{glmFamily}}
 ##' @keywords classes
 ##' @examples
-##' 
+##'
 ##' str(glmFamily$new(family=poisson()))
 NULL
 
 ##' Generator object for the golden search optimizer class.
-##' 
+##'
 ##' The generator objects for the \code{\linkS4class{golden}} class of a scalar
 ##' optimizer for a parameter within an interval.  The optimizer uses reverse
 ##' communications.
-##' 
+##'
 ##' @param \dots additional, optional arguments.  None are used at present.
 ##' @note Arguments to the \code{new} methods must be named arguments.
 ##' \code{lower} and \code{upper} are the bounds for the scalar parameter; they must be finite.
@@ -761,7 +761,7 @@ golden <-
                          Ptr <<- .Call(golden_Create, lower, upper)
                      },
                      ptr        =  function() {
-                         if (length(lowerbd)) 
+                         if (length(lowerbd))
                              if (.Call(isNullExtPtr, Ptr))
                                  Ptr <<- .Call(golden_Create, lowerbd, upperbd)
                          Ptr
@@ -776,36 +776,35 @@ golden <-
                      )
             )
 ##' Class \code{"golden"}
-##' 
+##'
 ##' A reference class for a golden search scalar optimizer using reverse
 ##' communication.
-##' 
-##' 
+##'
+##'
 ##' @name golden-class
 ##' @docType class
 ##' @section Extends: All reference classes extend and inherit methods from
 ##'    \code{"\linkS4class{envRefClass}"}.
 ##' @keywords classes
 ##' @examples
-##' 
+##'
 ##' showClass("golden")
-##' 
+##'
 NULL
 
 ##' Generator object for the Nelder-Mead optimizer class.
-##' 
+##'
 ##' The generator objects for the \code{\linkS4class{NelderMead}} class of
 ##' optimizers subject to box constraints and using reverse communications.
-##' 
+##'
 ##' @rdname NelderMead
 ##' @param \dots Argument list (see Note below).
-##' @note Arguments to the \code{new} methods must be named arguments.
 ##' @section Methods:
-##'     \describe{\code{new(lower, upper, xst, x0, xt)}}{Create a new
+##'     \describe{\code{NelderMead$new(lower, upper, xst, x0, xt)}}{Create a new
 ##'          \code{\linkS4class{NelderMead}} object}
 ##' @seealso \code{\linkS4class{NelderMead}}
-##' @note Arguments to the \code{new} methods must be named arguments:
-##' \itemize{
+##' @note Arguments to the \code{new} method must be named arguments:
+##' \describe{
 ##' \item{lower}{numeric vector of lower bounds - elements may be \code{-Inf}.}
 ##' \item{upper}{numeric vector of upper bounds - elements may be \code{Inf}.}
 ##' \item{xst}{numeric vector of initial step sizes to establish the simplex -
@@ -847,7 +846,7 @@ NelderMead <-
                          Ptr <<- .Call(NelderMead_Create, lowerbd, upperbd, xstep, x0, xtol)
                      },
                      ptr          = function() {
-                         if (length(lowerbd)) 
+                         if (length(lowerbd))
                              if (.Call(isNullExtPtr, Ptr))
                                  Ptr <<- .Call(NelderMead_Create, lowerbd, upperbd, xstep, x0, xtol)
                          Ptr
@@ -868,7 +867,7 @@ NelderMead <-
                      )
             )
 ##' Class \code{"NelderMead"}
-##' 
+##'
 ##' A reference class for a Nelder-Mead simplex optimizer allowing box
 ##' constraints on the parameters and using reverse communication.
 ##'
@@ -883,19 +882,19 @@ NelderMead <-
 ##' @references Based on code in the NLopt collection.
 ##' @keywords classes
 ##' @examples
-##' 
+##'
 ##' showClass("NelderMead")
 NULL
 
 ##' Class "merMod" of Fitted Mixed-Effect Models
-##' 
+##'
 ##' A mixed-effects model is represented as a \code{\linkS4class{merPredD}} object
 ##' and a response module of a class that inherits from class
 ##' \code{\linkS4class{lmResp}}.  A model with a \code{\linkS4class{lmerResp}}
 ##' response has class \code{lmerMod}; a \code{\linkS4class{glmResp}} response
 ##' has class \code{glmerMod}; and a \code{\linkS4class{nlsResp}} response has
 ##' class \code{nlmerMod}.
-##' 
+##'
 ##' @name merMod-class
 ##' @aliases merMod-class lmerMod-class glmerMod-class nlmerMod-class
 ##' show,merMod-method
@@ -903,7 +902,7 @@ NULL
 ##' fitted.merMod formula.merMod logLik.merMod
 ##' model.frame.merMod model.matrix.merMod print.merMod
 ##' show.merMod summary.merMod
-##' terms.merMod update.merMod 
+##' terms.merMod update.merMod
 ##' vcov.merMod print.summary.merMod show.summary.merMod
 ##' summary.summary.merMod vcov.summary.merMod
 ##' @docType class
@@ -914,7 +913,7 @@ NULL
 ##' \code{\linkS4class{glmResp}}, \code{\linkS4class{nlsResp}}
 ##' @keywords classes
 ##' @examples
-##' 
+##'
 ##' showClass("merMod")
 ##' methods(class="merMod")
 ##' @export
@@ -942,7 +941,7 @@ setClass("glmerMod", representation(resp="glmResp"), contains="merMod")
 setClass("nlmerMod", representation(resp="nlsResp"), contains="merMod")
 
 ##' Generator object for the rePos (random-effects positions) class
-##' 
+##'
 ##' The generator object for the \code{\linkS4class{rePos}} class used
 ##' to determine the positions and orders of random effects associated
 ##' with particular random-effects terms in the model.
@@ -975,7 +974,7 @@ rePos <-
                      initialize = function(mer, ...) {
                          stopifnot((ntrms <- length(Cnms <- mer@cnms)) > 0L,
                                    (length(Flist <- mer@flist)) > 0L,
-                                   length(asgn  <- as.integer(attr(Flist, "assign"))) == ntrms) 
+                                   length(asgn  <- as.integer(attr(Flist, "assign"))) == ntrms)
                          cnms    <<- Cnms
                          flist   <<- Flist
                          ncols   <<- unname(vapply(cnms, length, 0L))
@@ -988,19 +987,19 @@ rePos <-
                      )
             )
 ##' Class \code{"rePos"}
-##' 
+##'
 ##' A reference class for determining the positions in the random-effects vector
 ##' that correspond to particular random-effects terms in the model formula
-##' 
+##'
 ##' @name rePos-class
 ##' @docType class
 ##' @section Extends: All reference classes extend and inherit methods from
 ##'    \code{"\linkS4class{envRefClass}"}.
 ##' @keywords classes
 ##' @examples
-##' 
+##'
 ##' showClass("rePos")
-##' 
+##'
 rePos$lock("cnms", "flist", "ncols", "nctot", "nlevs", "terms")
 
 vcRep <-
@@ -1058,7 +1057,7 @@ vcRep <-
                          ans
                      },
                      asCorr      = function() {
-                         ans <- lapply(covar, function(x) 
+                         ans <- lapply(covar, function(x)
                                        list(correlation=attr(x, "correlation"),
                                             stddev=attr(x, "stddev")))
                          attr(ans, "residSD") <- attr(covar, "sc")

@@ -14,8 +14,7 @@
   \item{postVar}{an optional logical argument indicating if
   the conditional variance-covariance matrices, also called
   the \dQuote{posterior variances}, of the random effects
-  should be added as an attribute.  Default is
-  \code{FALSE}.}
+  should be added as an attribute.}
 
   \item{drop}{an optional logical argument indicating
   components of the return value that would be data frames
@@ -80,6 +79,8 @@ fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy)
 fm3 <- lmer(diameter ~ (1|plate) + (1|sample), Penicillin)
 ranef(fm1)
 str(rr1 <- ranef(fm1, postVar = TRUE))
+dotplot(rr1)  ## default
+## specify free scales in order to make Day effects more visible
 dotplot(rr1,scales = list(x = list(relation = 'free')))[["Subject"]]
 if(FALSE) { ##-- postVar=TRUE is not yet implemented for multiple terms -- FIXME
 str(ranef(fm2, postVar = TRUE))

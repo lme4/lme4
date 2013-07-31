@@ -131,12 +131,14 @@ load(system.file("testdata","boo01L.RData",package="lme4"))
 plot(boo01L,index=3)
 }
 \references{
-  \itemize{ \item Davison, A.C. and Hinkley, D.V. (1997)
-  \emph{Bootstrap Methods and Their Application}.
-  Cambridge University Press. \item Morris, J. S. (2002).
-  The BLUPs Are Not \sQuote{best} When It Comes to
-  Bootstrapping. \emph{Statistics & Probability Letters}
-  56(4): 425-430. doi:10.1016/S0167-7152(02)00041-X. }
+  Davison, A.C. and Hinkley, D.V. (1997) \emph{Bootstrap
+  Methods and Their Application}.  Cambridge University
+  Press.
+
+  Morris, J. S. (2002). The BLUPs Are Not \sQuote{best}
+  When It Comes to Bootstrapping. \emph{Statistics &
+  Probability Letters} \bold{56}(4): 425--430.
+  doi:10.1016/S0167-7152(02)00041-X.
 }
 \seealso{
   \itemize{ \item For inference, including confidence

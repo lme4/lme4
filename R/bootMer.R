@@ -81,11 +81,13 @@
 ##' \item The case where \code{use.u} is {FALSE} and \code{type=="semiparametric"} is not implemented; Morris (2002) suggests that resampling from the estimated values of \eqn{u} is not good practice.
 ##' }
 ##' @references
-##' \itemize{
-##' \item Davison, A.C. and Hinkley, D.V. (1997) \emph{Bootstrap Methods
-##'     and Their Application}.  Cambridge University Press.
-##' \item Morris, J. S. (2002). The BLUPs Are Not \sQuote{best} When It Comes to Bootstrapping. \emph{Statistics & Probability Letters} 56(4): 425-430. doi:10.1016/S0167-7152(02)00041-X.
-##' }
+##' Davison, A.C. and Hinkley, D.V. (1997)
+##' \emph{Bootstrap Methods and Their Application}.  Cambridge University Press.
+##'
+##' Morris, J. S. (2002).
+##' The BLUPs Are Not \sQuote{best} When It Comes to Bootstrapping.
+##' \emph{Statistics & Probability Letters} \bold{56}(4): 425--430.
+##' doi:10.1016/S0167-7152(02)00041-X.
 ##' @keywords models htest
 ##' @examples
 ##' fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)

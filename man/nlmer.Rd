@@ -36,10 +36,13 @@
   \code{formula} (if specified as a formula) or from the
   parent frame (if specified as a character vector).}
 
-  \item{control}{list containing control parameters,
-  including the nonlinear optimizer to be used and
-  parameters to be passed through to the nonlinear
-  optimizer: see \code{\link{lmerControl}} for details.}
+  \item{control}{a list (of correct class, resulting from
+  \code{\link{lmerControl}()} or
+  \code{\link{glmerControl}()} respectively) containing
+  control parameters, including the nonlinear optimizer to
+  be used and parameters to be passed through to the
+  nonlinear optimizer, see the \code{*lmerControl}
+  documentation for details.}
 
   \item{verbose}{integer scalar.  If \code{> 0} verbose
   output is generated during the optimization of the

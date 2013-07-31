@@ -17,21 +17,22 @@
   \item{par}{numeric vector of starting values for the
   parameters.}
 
-  \item{control}{a named list of control settings.
-  Possible settings are}
-
   \item{lower}{numeric vector of lower bounds (elements may
   be \code{-Inf}).}
 
   \item{upper}{numeric vector of upper bounds (elements may
-  be \code{Inf}). \describe{ \item{iprint}{numeric scalar -
-  frequency of printing evaluation information.  Defaults
-  to 0 indicating no printing.} \item{maxfun}{numeric
-  scalar - maximum number of function evaluations allowed
-  (default:10000).} \item{FtolAbs}{numeric scalar -
-  absolute tolerance on change in function values (default:
-  1e-5)} \item{FtolRel}{numeric scalar - relative tolerance
-  on change in function values (default:1e-15)}
+  be \code{Inf}).}
+
+  \item{control}{a named list of control settings.
+  Possible settings are \describe{ \item{iprint}{numeric
+  scalar - frequency of printing evaluation information.
+  Defaults to 0 indicating no printing.}
+  \item{maxfun}{numeric scalar - maximum number of function
+  evaluations allowed (default:10000).}
+  \item{FtolAbs}{numeric scalar - absolute tolerance on
+  change in function values (default: 1e-5)}
+  \item{FtolRel}{numeric scalar - relative tolerance on
+  change in function values (default:1e-15)}
   \item{XtolRel}{numeric scalar - relative tolerance on
   change in parameter values (default: 1e-7)}
   \item{MinfMax}{numeric scalar - maximum value of the
@@ -64,12 +65,9 @@
   constraints
 }
 \note{
-  Arguments to the \code{new} methods must be named
-  arguments.
-
-  Arguments to the \code{new} methods must be named
-  arguments: \itemize{ \item{lower}{numeric vector of lower
-  bounds - elements may be \code{-Inf}.}
+  Arguments to the \code{new} method must be named
+  arguments: \describe{ \item{lower}{numeric vector of
+  lower bounds - elements may be \code{-Inf}.}
   \item{upper}{numeric vector of upper bounds - elements
   may be \code{Inf}.} \item{xst}{numeric vector of initial
   step sizes to establish the simplex - all elements must
@@ -77,15 +75,17 @@
   for the parameters.} \item{xt}{numeric vector of
   tolerances on the parameters.} }
 
-  Return codes: \describe{ \item{-4}{\code{nm_evals}:
-  maximum evaluations reached} \item{-3}{\code{nm_forced}:
-  ?} \item{-2}{\code{nm_nofeasible}: cannot generate a
+  Return error codes (\code{ierr}): \describe{
+  \item{-4}{\code{nm_evals}: maximum evaluations reached}
+  \item{-3}{\code{nm_forced}: ?}
+  \item{-2}{\code{nm_nofeasible}: cannot generate a
   feasible simplex} \item{-1}{\code{nm_x0notfeasible}:
   initial x is not feasible (?)} }
 }
 \section{Methods}{
-  \describe{\code{new(lower, upper, xst, x0, xt)}}{Create a
-  new \code{\linkS4class{NelderMead}} object}
+  \describe{\code{NelderMead$new(lower, upper, xst, x0,
+  xt)}}{Create a new \code{\linkS4class{NelderMead}}
+  object}
 }
 \seealso{
   \code{\linkS4class{NelderMead}}

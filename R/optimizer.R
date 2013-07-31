@@ -2,9 +2,9 @@
 ##' @title Nelder-Mead optimization of parameters, possibly with box constraints
 ##' @param fn a function of a single numeric vector argument returning a numeric scalar
 ##' @param par numeric vector of starting values for the parameters.
-##' @param control a named list of control settings.  Possible settings are
 ##' @param lower numeric vector of lower bounds (elements may be \code{-Inf}).
 ##' @param upper numeric vector of upper bounds (elements may be \code{Inf}).
+##' @param control a named list of control settings.  Possible settings are
 ##' \describe{
 ##'     \item{iprint}{numeric scalar - frequency of printing evaluation information.
 ##'                   Defaults to 0 indicating no printing.}
@@ -20,14 +20,14 @@
 ##'         2=print every 10 evalutions, 3=print every evaluation.  Sets \sQuote{iprint},
 ##'         if specified, but does not override it.}
 ##' }
-##' 
+##'
 ##' @return a list with 4 components
 ##' \item{fval}{numeric scalar - the minimum function value achieved}
 ##' \item{par}{numeric vector - the value of \code{x} providing the minimum}
 ##' \item{ierr}{integer scalar - error code (see below)}
 ##' \item{control}{list - the list of control settings after substituting for defaults}
 ##' @note
-##' Return codes:
+##' Return error codes (\code{ierr}):
 ##' \describe{
 ##' \item{-4}{\code{nm_evals}: maximum evaluations reached}
 ##' \item{-3}{\code{nm_forced}: ?}

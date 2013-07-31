@@ -33,10 +33,13 @@
   chosen to optimize the REML criterion (as opposed to the
   log-likelihood)?}
 
-  \item{control}{list containing control parameters,
-  including the nonlinear optimizer to be used and
-  parameters to be passed through to the nonlinear
-  optimizer: see \code{\link{lmerControl}} for details.}
+  \item{control}{a list (of correct class, resulting from
+  \code{\link{lmerControl}()} or
+  \code{\link{glmerControl}()} respectively) containing
+  control parameters, including the nonlinear optimizer to
+  be used and parameters to be passed through to the
+  nonlinear optimizer, see the \code{*lmerControl}
+  documentation for details.}
 
   \item{start}{a named list of starting values for the
   parameters in the model.  For \code{lmer} this can be a

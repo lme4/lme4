@@ -104,7 +104,7 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
     ##
     ## (and possible future divergence)
     if (length(optimizer)==1) {
-        optimizer <- replicate(2,optimizer)
+	optimizer <- replicate(2,optimizer) # works evevn when optimizer is function
     }
     if (!is.null(glmerOpts <- getOption("glmerControl"))) {
         for (arg in names(glmerOpts)) {
