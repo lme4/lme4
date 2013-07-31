@@ -57,7 +57,9 @@
     \itemize{
       \item A general-purpose `getME()` accessor method has been used to 
       allow extraction of a wide variety of components of a mixed-model 
-      fit; this has been backported to `lme4.0` for compatibility.
+      fit. This has been backported to be compatible with older
+      versions of `lme4` that still produce `mer` objects rather than
+      `merMod` objects. However, 
       \item `bootMer`, a framework for obtaining parameter confidence 
       intervals by parametric bootstrapping.
       \item `plot` methods similar to those from the `nlme` package 

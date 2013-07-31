@@ -49,6 +49,7 @@ setClass("lmList.confint", contains = "array")
 ##'     of the \code{theta} field.}
 ##' \item{theta}{numeric vector of variance component parameters (stored in the
 ##'     \code{theta} field).}
+##' \item{n}{sample size, usually \code{nrow(X)}.}
 ##' }
 ##' @seealso \code{\linkS4class{merPredD}}
 ##' @keywords classes

@@ -25,7 +25,7 @@
   field.  Its elements should be in the range 1 to the
   length of the \code{theta} field.} \item{theta}{numeric
   vector of variance component parameters (stored in the
-  \code{theta} field).} }
+  \code{theta} field).} \item{n}{sample size, usually \code{nrow(X)}.} }
 }
 \section{Methods}{
   \describe{ \item{new(X, Zt, Lambdat, Lind,
