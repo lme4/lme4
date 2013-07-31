@@ -25,10 +25,11 @@
 ##' (if specified as a character vector).
 ##' @param REML logical scalar - Should the estimates be chosen to optimize
 ##'    the REML criterion (as opposed to the log-likelihood)?
-##' @param control list containing control parameters, including the nonlinear
-##'    optimizer to be used and parameters
-##'    to be passed through to the nonlinear optimizer: see \code{\link{lmerControl}}
-##'    for details.
+##' @param control a list (of correct class, resulting from
+##'    \code{\link{lmerControl}()} or \code{\link{glmerControl}()} respectively)
+##'    containing control parameters, including the nonlinear optimizer to be
+##'    used and parameters to be passed through to the nonlinear optimizer, see
+##'    the \code{*lmerControl} documentation for details.
 ##' @param start a named list of starting values for the parameters in the
 ##'    model.  For \code{lmer} this can be a numeric vector or a list with one
 ##'    component named \code{"theta"}.
@@ -110,8 +111,10 @@ lmer <- function(formula, data=NULL, REML = TRUE,
     missCtrl <- missing(control)
     ## see functions in modular.R for the body ...
     if (!missCtrl && !inherits(control, "lmerControl")) {
+        if(!is.list(control)) stop("'control' is not a list; use lmerControl()")
         ## back-compatibility kluge
-        warning("passing control as list is deprecated: please use lmerControl() instead")
+	warning("passing control as list is deprecated: please use lmerControl() instead",
+		immediate.=TRUE)
         control <- do.call(lmerControl, control)
     }
     if (!is.null(list(...)[["family"]])) {
@@ -243,8 +246,11 @@ glmer <- function(formula, data=NULL, family = gaussian,
                   contrasts = NULL, mustart, etastart, devFunOnly = FALSE, ...)
 {
     if (!inherits(control, "glmerControl")) {
+	if(!is.list(control)) stop("'control' is not a list; use glmerControl()")
 	## back-compatibility kluge
-	warning("passing control as list is deprecated: please use glmerControl() instead")
+	msg <- "Use control=glmerControl(..) instead of passing a list"
+	if(length(cl <- class(control))) msg <- paste(msg, "of class", dQuote(cl[1]))
+	warning(msg, immediate.=TRUE)
 	control <- do.call(glmerControl, control)
     }
     mc <- mcout <- match.call()
