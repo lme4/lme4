@@ -6,47 +6,47 @@
 \section{CHANGES IN VERSION 1.0.0 (2013-08-01)}{
   \subsection{MAJOR USER-VISIBLE CHANGES}{
     \itemize{
-      \item Because the internal computational machinery has changed, 
-      results from the newest version of \code{lme4} will not be numerically 
+      \item Because the internal computational machinery has changed,
+      results from the newest version of \code{lme4} will not be numerically
       identical to those from previous versions.  For reasonably well-
-      defined fits, they will be extremely close (within numerical 
-      tolerances of 1e-4 or so), but for unstable or poorly-defined fits 
-      the results may change, and very unstable fits may fail when they 
-      (apparently) succeeded with previous versions. Similarly, some fits 
-      may be slower with the new version, although on average the new 
-      version should be faster and more stable. More numerical 
-      tuning options are now available (see below); non-default settings 
-      may restore the speed and/or ability to fit a particular model without 
-      an error. If you notice significant or disturbing changes when fitting 
+      defined fits, they will be extremely close (within numerical
+      tolerances of 1e-4 or so), but for unstable or poorly-defined fits
+      the results may change, and very unstable fits may fail when they
+      (apparently) succeeded with previous versions. Similarly, some fits
+      may be slower with the new version, although on average the new
+      version should be faster and more stable. More numerical
+      tuning options are now available (see below); non-default settings
+      may restore the speed and/or ability to fit a particular model without
+      an error. If you notice significant or disturbing changes when fitting
       a model with the new version of \code{lme4}, \emph{please notify the maintainers}.
-      \item \code{VarCorr} returns its results in the same format as before (as a 
-      list of variance-covariance matrices with \code{correlation} and \code{stddev} 
-      attributes, plus a \code{sc} attribute giving the residual standard 
-      deviation/scale parameter when appropriate), but prints them in a 
+      \item \code{VarCorr} returns its results in the same format as before (as a
+      list of variance-covariance matrices with \code{correlation} and \code{stddev}
+      attributes, plus a \code{sc} attribute giving the residual standard
+      deviation/scale parameter when appropriate), but prints them in a
       different (nicer) way.
-      \item By default \code{residuals} gives deviance (rather than Pearson) 
+      \item By default \code{residuals} gives deviance (rather than Pearson)
       residuals when applied to \code{glmer} fits (a side effect of matching \code{glm}
       behaviour more closely).
     }
   }
   \subsection{MINOR USER-VISIBLE CHANGES}{
     \itemize{
-      \item More use is made of S3 rather than S4 classes and methods: one 
+      \item More use is made of S3 rather than S4 classes and methods: one
       side effect is that the \code{nlme} and \code{lme4} packages are now much more
       compatible; methods such as \code{fixef} no longer conflict.
-      \item The internal optimizer has changed. \code{[gn]lmer} now has an 
-      \code{optimizer} argument; \code{"Nelder_Mead"} is the default for \code{[n]lmer}, 
-      while a combination of \code{"bobyqa"} (an alternative derivative-free 
-      method) and \code{"Nelder_Mead"} is the default for \code{glmer}. To use the 
-      \code{nlminb} optimizer as in the old version of \code{lme4}, you can use 
-      \code{optimizer="optimx"} with \code{control=list(method="nlminb")} (you will 
+      \item The internal optimizer has changed. \code{[gn]lmer} now has an
+      \code{optimizer} argument; \code{"Nelder_Mead"} is the default for \code{[n]lmer},
+      while a combination of \code{"bobyqa"} (an alternative derivative-free
+      method) and \code{"Nelder_Mead"} is the default for \code{glmer}. To use the
+      \code{nlminb} optimizer as in the old version of \code{lme4}, you can use
+      \code{optimizer="optimx"} with \code{control=list(method="nlminb")} (you will
       need the \code{optimx} package to be installed and loaded). See
       \code{\link{lmerControl}} for details.
       \item Families in GLMMs are no longer restricted to built-in/hard-
-      coded families; any family described in \code{\link{family}}, or following that 
-      design, is usable (although there are some hard-coded families, which 
+      coded families; any family described in \code{\link{family}}, or following that
+      design, is usable (although there are some hard-coded families, which
       will be faster).
-      \item \code{[gn]lmer} now produces objects of class \code{merMod} rather than 
+      \item \code{[gn]lmer} now produces objects of class \code{merMod} rather than
       class \code{mer} as before.
       \item the structure of the \code{Zt} (transposed random effect
       design matrix) as returned by \code{getME(.,"Zt")}, and the
@@ -61,18 +61,18 @@
   \subsection{NEW FEATURES}{
     \itemize{
       \item A general-purpose \code{\link{getME}} accessor method allows
-      extraction of a wide variety of components of a mixed-model 
+      extraction of a wide variety of components of a mixed-model
       fit. \code{getME} also allows a vector of objects to be returned as
       a list of mixed-model componenets. This has been backported to
-      be compatible with older versions of \code{lme4} that still produce \code{mer} 
+      be compatible with older versions of \code{lme4} that still produce \code{mer}
       objects rather than \code{merMod} objects. However, backporting is incomplete;
       some objects are only extractable in newer versions of \code{lme4}.
       \item Optimization information (convergence codes, warnings, etc.)
       is now stored in an \code{@optinfo} slot.
-      \item \code{\link{bootMer}} provides a framework for obtaining parameter confidence 
+      \item \code{\link{bootMer}} provides a framework for obtaining parameter confidence
       intervals by parametric bootstrapping.
       \item \code{\link{plot.merMod}} provides diagnostic plotting
-      methods similar to those from the \code{nlme} package 
+      methods similar to those from the \code{nlme} package
       (although missing \code{augPred}).
       \item A \code{\link{predict.merMod}} method gives predictions;
       it allows an effect-specific choice of conditional prediction or prediction at the
@@ -83,12 +83,12 @@
       parametric bootstrap, or Wald approximation (fixed effects only):
       see \code{\link{confint.merMod}}
       \item \code{nAGQ=0}, an option to do fast (but inaccurate) fitting of GLMMs.
-      \item Using \code{devFunOnly=TRUE} allows the user to extract a deviance 
-      function for the model, allowing further diagnostics/customization of 
+      \item Using \code{devFunOnly=TRUE} allows the user to extract a deviance
+      function for the model, allowing further diagnostics/customization of
       model results.
-      \item The internal structure of [gn]lmer is now more modular, allowing 
-      finer control of the different steps of argument checking; construction 
-      of design matrices and data structures; parameter estimation; and construction 
+      \item The internal structure of [gn]lmer is now more modular, allowing
+      finer control of the different steps of argument checking; construction
+      of design matrices and data structures; parameter estimation; and construction
       of the final \code{merMod} object (see \code{?modular}).
       \item the \code{formula}, \code{model.frame}, and \code{terms}
       methods return full versions (including random effect terms and
@@ -112,19 +112,19 @@
       to implement in a way that is really broadly reliable and robust; \code{mcmcsamp}
       will not be implemented in the near future. See
       \code{\link{pvalues}} for alternatives.
-      \item "R-side" structures (within-block correlation and heteroscedasticity) are 
+      \item "R-side" structures (within-block correlation and heteroscedasticity) are
       not on the current timetable.
     }
   }
   \subsection{BUG FIXES}{
     \itemize{
-      \item In a development version, prior weights were not being used properly in 
+      \item In a development version, prior weights were not being used properly in
       the calculation of the residual standard deviation, but this has been fixed.
       Thanks to Simon Wood for pointing this out.
-      \item In a development version, the step-halving component of the penalized 
+      \item In a development version, the step-halving component of the penalized
       iteratively reweighted least squares algorithm was not working, but
       this is now fixed.
-      \item In a development version, square \code{RZX} matrices would lead to a 
+      \item In a development version, square \code{RZX} matrices would lead to a
       \code{pwrssUpdate did not converge in 30 iterations} error. This has been fixed
       by adding an extra column of zeros to \code{RZX}.
     }
