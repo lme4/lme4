@@ -1368,7 +1368,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE, ...) {
     }
     U <- getME(object, "Z") %*% getME(object, "Lambda")
     u <- if (use.u) {
-        rep(getME(object, "u"), nsim)
+        rep(getME(object, "u"), nsim)/sigma  ## ??? u is 'spherized' but not scaled ???
     } else {
         rnorm(ncol(U)*nsim)
     }
