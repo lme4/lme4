@@ -8,7 +8,7 @@ fm1 <- lmer(Reaction~Days+(1|Subject),sleepstudy)
 set.seed(101)
 pp <- predict(fm1)
 rr <- range(usim2 <- simulate(fm1,1,use.u=TRUE)[[1]])
-stopifnot(all.equal(range(rr),c(159.3896,439.1616),tol=1e-6))
+stopifnot(all.equal(rr,c(159.3896,439.1616),tol=1e-6))
 if (do.plot) {
     plot(,ylim=rr)
     lines(sleepstudy$Reaction)
