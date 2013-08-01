@@ -120,7 +120,7 @@
     \itemize{
       \item In a development version, prior weights were not being used properly in 
       the calculation of the residual standard deviation, but this has been fixed.
-      Thank you to Simon Wood for pointing this out.
+      Thanks to Simon Wood for pointing this out.
       \item In a development version, the step-halving component of the penalized 
       iteratively reweighted least squares algorithm was not working, but
       this is now fixed.

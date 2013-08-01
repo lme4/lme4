@@ -29,7 +29,7 @@
 }
 \section{Methods}{
   \describe{ \item{new(X, Zt, Lambdat, Lind,
-  theta):}{Create a new \code{\linkS4class{merPredD}}
+  theta, n):}{Create a new \code{\linkS4class{merPredD}}
   object} }
 }
 \seealso{

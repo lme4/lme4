@@ -34,7 +34,7 @@ setClass("lmList.confint", contains = "array")
 ##' @param ... List of arguments (see Note).
 ##' @section Methods:
 ##' \describe{
-##'   \item{new(X, Zt, Lambdat, Lind, theta):}{Create a new \code{\linkS4class{merPredD}} object}
+##'   \item{new(X, Zt, Lambdat, Lind, theta, n):}{Create a new \code{\linkS4class{merPredD}} object}
 ##' }
 ##' @note Arguments to the \code{new} methods must be named arguments:
 ##' \itemize{
