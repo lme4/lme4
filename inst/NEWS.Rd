@@ -96,6 +96,12 @@
       allows access to the fixed effect submodel.
     }
   }
+  \subsection{EXPERIMENTAL FEATURES}{
+    \itemize{
+      \item \code{\link{glmer.nb}} provides an embryonic negative
+      binomial fitting capability.
+    }
+  }
   \subsection{STILL NON-EXISTENT FEATURES}{
     \itemize{
       \item Adaptive Gaussian quadrature (AGQ) is not available for multiple and/or
