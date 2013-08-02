@@ -987,12 +987,15 @@ logLik.merMod <- function(object, REML = NULL, ...) {
     val
 }
 
+stripwhite <- function(x) gsub("(^ +| +$)","",x)
 ##' @importFrom stats logLik
 ##' @S3method model.frame merMod
 model.frame.merMod <- function(formula, fixed.only=FALSE, ...) {
     fr <- formula@frame
     if (fixed.only) {
-        vars <- all.vars(formula(formula,fixed.only=TRUE))
+        ff <- formula(formula,fixed.only=TRUE)
+        ## thanks to Thomas Leeper and Roman Luštrik, Stack Overflow
+        vars <- rownames(attr(terms.formula(ff), "factors"))
         fr <- fr[vars]
     }
     fr
