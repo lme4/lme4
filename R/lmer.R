@@ -1383,6 +1383,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE, ...) {
       ## GLMM
       ## n.b. DON'T scale random-effects (???)
       	      etasim <- etasim.fix+etasim.reff
+              ## FIXME:: try to avoid @call ...
 	      family <- object@call$family
 	      if(is.symbol(family)) family <- as.character(family)
 	      if(is.character(family))
@@ -1402,7 +1403,8 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE, ...) {
                               if (!is.matrix(resp)) {  ## bernoulli, or weights specified
                                 if (is.factor(resp)) {
                                   if (any(weights(object)!=1)) stop("non-uniform weights with factor response??")
-                                  factor(levels(resp)[Y+1],levels=levels(resp))
+                                  f <- factor(levels(resp)[Y+1],levels=levels(resp))
+                                  split(f, rep(seq_len(nsim), each = n))
                                 } else {
                                   Y/w
                                 }
