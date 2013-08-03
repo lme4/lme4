@@ -1,8 +1,8 @@
 \docType{methods}
 \name{profile-methods}
 \alias{as.data.frame.thpr}
-\alias{profile.merMod}
 \alias{profile-methods}
+\alias{profile.merMod}
 \title{Profile method for merMod objects}
 \usage{
   \method{profile}{merMod} (fitted, which = 1:nptot,

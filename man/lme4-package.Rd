@@ -48,7 +48,8 @@
   was deemed to be unreliable.  Alternatives for computing p-values
   include parametric bootstrapping (\code{\link{bootMer}}) or methods
   implemented in the \code{pbkrtest} package and leveraged by the
-  \code{lmerTest} package and the \code{Anova} function in the \code{car} package.
+  \code{lmerTest} package and the \code{Anova} function in the \code{car} package
+  (see \code{\link{pvalues}} for more details).
 }
 }
 \section{Caveats and trouble-shooting}{
