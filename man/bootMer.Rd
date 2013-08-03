@@ -28,7 +28,9 @@
 
   \item{type}{character string specifying the type of
   bootstrap, \code{"parametric"} or
-  \code{"semiparametric"}; partial matching is allowed.}
+  \code{"semiparametric"}; partial matching is allowed.
+  Note that the semiparametric bootstrap is currently an
+  experimental feature, and therefore may not be stable.}
 
   \item{verbose}{logical indicating if progress should
   print output}
@@ -69,18 +71,20 @@
   \dQuote{\emph{spherized}} random effects \eqn{u} and the
   i.i.d. errors \eqn{\epsilon}, using \code{\link{rnorm}()}
   with parameters corresponding to the fitted model
-  \code{x}. \item If \code{use.u} is {TRUE} and
-  \code{type=="parametric"} semipar, only the i.i.d. errors
-  (or, for GLMMs, response values drawn from the
-  appropriate distributions) are resampled, with the values
-  of \eqn{u} staying fixed at their estimated values. \item
-  If \code{use.u} is {TRUE} and
+  \code{x}. \item If \code{use.u} is \code{TRUE} and
+  \code{type=="parametric"}, only the i.i.d. errors (or,
+  for GLMMs, response values drawn from the appropriate
+  distributions) are resampled, with the values of \eqn{u}
+  staying fixed at their estimated values. \item If
+  \code{use.u} is \code{TRUE} and
   \code{type=="semiparametric"}, the i.i.d. errors are
   sampled from the distribution of (response) residuals.
   (For GLMMs, the resulting sample will no longer have the
   same properties as the original sample, and the method
-  may not make sense; a warning is generated.) \item The
-  case where \code{use.u} is {FALSE} and
+  may not make sense; a warning is generated.) Note that
+  the semiparametric bootstrap is currently an experimental
+  feature, and therefore may not be stable. \item The case
+  where \code{use.u} is \code{FALSE} and
   \code{type=="semiparametric"} is not implemented; Morris
   (2002) suggests that resampling from the estimated values
   of \eqn{u} is not good practice. }

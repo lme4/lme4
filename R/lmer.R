@@ -987,12 +987,15 @@ logLik.merMod <- function(object, REML = NULL, ...) {
     val
 }
 
+stripwhite <- function(x) gsub("(^ +| +$)","",x)
 ##' @importFrom stats logLik
 ##' @S3method model.frame merMod
 model.frame.merMod <- function(formula, fixed.only=FALSE, ...) {
     fr <- formula@frame
     if (fixed.only) {
-        vars <- all.vars(formula(formula,fixed.only=TRUE))
+        ff <- formula(formula,fixed.only=TRUE)
+        ## thanks to Thomas Leeper and Roman Luštrik, Stack Overflow
+        vars <- rownames(attr(terms.formula(ff), "factors"))
         fr <- fr[vars]
     }
     fr
@@ -1383,6 +1386,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE, ...) {
       ## GLMM
       ## n.b. DON'T scale random-effects (???)
       	      etasim <- etasim.fix+etasim.reff
+              ## FIXME:: try to avoid @call ...
 	      family <- object@call$family
 	      if(is.symbol(family)) family <- as.character(family)
 	      if(is.character(family))
@@ -1402,7 +1406,8 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE, ...) {
                               if (!is.matrix(resp)) {  ## bernoulli, or weights specified
                                 if (is.factor(resp)) {
                                   if (any(weights(object)!=1)) stop("non-uniform weights with factor response??")
-                                  factor(levels(resp)[Y+1],levels=levels(resp))
+                                  f <- factor(levels(resp)[Y+1],levels=levels(resp))
+                                  split(f, rep(seq_len(nsim), each = n))
                                 } else {
                                   Y/w
                                 }
