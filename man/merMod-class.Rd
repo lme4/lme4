@@ -8,6 +8,7 @@
 \alias{glmerMod-class}
 \alias{lmerMod-class}
 \alias{logLik.merMod}
+\alias{merMod}
 \alias{merMod-class}
 \alias{model.frame.merMod}
 \alias{model.matrix.merMod}

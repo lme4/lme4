@@ -897,7 +897,7 @@ NULL
 ##' class \code{nlmerMod}.
 ##'
 ##' @name merMod-class
-##' @aliases merMod-class lmerMod-class glmerMod-class nlmerMod-class
+##' @aliases merMod-class lmerMod-class glmerMod-class nlmerMod-class merMod
 ##' show,merMod-method
 ##' anova.merMod coef.merMod deviance.merMod
 ##' fitted.merMod formula.merMod logLik.merMod
