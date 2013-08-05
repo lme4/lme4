@@ -1,6 +1,6 @@
 Package: lme4
 Version: 0.99999911-8
-Date: 29 July 2013
+Date: 2013-08-05
 Title: Linear mixed-effects models using Eigen and S4
 Authors@R: c(person("Douglas","Bates", email="bates@stat.wisc.edu",
     role="aut"),
@@ -9,6 +9,7 @@ Authors@R: c(person("Douglas","Bates", email="bates@stat.wisc.edu",
     person("Ben","Bolker",email="bbolker+lme4-authors@gmail.com",
     role=c("aut","cre")),
     person("Steven","Walker",role="aut"))
+Maintainer: Ben Bolker <bbolker+lme4-authors@gmail.com>
 Description: Fit linear and generalized linear mixed-effects models.
     The models and their components are represented using S4 classes and
     methods.  The core computational algorithms are implemented using the
