@@ -25,3 +25,4 @@ install.packages("lme4",
 ```
 library("devtools"); install_github("lme4",user="lme4")
 ```
+(The last approach requires that you build from source, i.e. `make` and compilers must be installed on your system -- see the R FAQ for your operating system; you may also need to install dependencies manually.)
