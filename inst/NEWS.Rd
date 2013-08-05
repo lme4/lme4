@@ -3,7 +3,7 @@
 \name{NEWS}
 \title{lme4 News}
 \encoding{UTF-8}
-\section{CHANGES IN VERSION 1.0.0 (2013-08-01)}{
+\section{CHANGES IN VERSION 1.0-0 (2013-08-01)}{
   \subsection{MAJOR USER-VISIBLE CHANGES}{
     \itemize{
       \item Because the internal computational machinery has changed,
@@ -29,7 +29,7 @@
       behaviour more closely).
       \item As another side effect of matching \code{\link{glm}}
       behaviour, reported log-likelihoods from \code{\link{glmer}} models
-      are no longer consistent with those from pre-1.0.0 \code{lme4},
+      are no longer consistent with those from pre-1.0 \code{lme4},
       but \emph{are} consistent with \code{glm}; see \code{\link{glmer}}
       examples.
     }
@@ -146,7 +146,7 @@
       near zero (e.g.
       \url{https://stat.ethz.ch/pipermail/r-sig-mixed-models/2009q4/003115.html}),
       \code{mcmcsamp} has been withdrawn (or more precisely,
-      not updated to work with \code{lme4} versions >=1.0.0).
+      not updated to work with \code{lme4} versions >=1.0).
       \item Calling \code{glmer} with the default \code{gaussian} family
       redirects to \code{lmer}, but this is deprecated
       (in the future \code{glmer(...,family="gaussian")} may
