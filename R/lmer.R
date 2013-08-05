@@ -239,6 +239,16 @@ lmer <- function(formula, data=NULL, REML = TRUE,
 ##'     (1 | herd) +  (1|obs),
 ##'               family = binomial, data = cbpp))
 ##' anova(gm1,gm2)
+##'
+##' ## glmer and glm log-likelihoods are consistent
+##' gm1Devfun <- update(gm1,devFunOnly=TRUE)
+##' gm0 <- glm(cbind(incidence, size - incidence) ~ period,
+##'            family = binomial, data = cbpp)
+##' ## evaluate GLMM deviance at RE variance=theta=0, beta=(GLM coeffs)
+##' gm1Dev0 <- gm1Devfun(c(0,coef(gm0)))
+##' ## compare
+##' stopifnot(all.equal(gm1Dev0,c(-2*logLik(gm0))))
+##'
 ##' @export
 glmer <- function(formula, data=NULL, family = gaussian,
                   control = glmerControl(), start = NULL, verbose = 0L, nAGQ = 1L,
