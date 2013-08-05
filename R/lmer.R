@@ -412,6 +412,9 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
     mkMerMod(environment(devfun), opt, vals$reTrms, vals$frame, mc)
 }## {nlmer}
 
+## R 3.1.0 devel [2013-08-05]: This does not help yet
+if(getRversion() >= "3.1.0") utils::suppressForeignCheck("nlmerAGQ")
+if(getRversion() < "3.1.0") dontCheck <- identity
 
 ##' Create a deviance evaluation function from a predictor and a response module
 ##'
@@ -451,8 +454,8 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
     ## FIXME: should nAGQ be automatically embedded in rho?
     stopifnot(is.environment(rho), is(rho$resp, "lmResp"))
 
-    ## silence R CMD check warnings
-    ## [MM prefers this approach to globalVariables()]
+    ## silence R CMD check warnings *locally* in this function
+    ## (clearly preferred to using globalVariables() !]
     fac <- pp <- resp <- lp0 <- compDev <- dpars <- baseOffset <- tolPwrss <-
 	pwrssUpdate <- ## <-- even though it's a function below
 	GQmat <- nlmerAGQ <- NULL
@@ -504,9 +507,11 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
 	} else {
 	    rho$nlmerAGQ <- nlmerAGQ
 	    rho$GQmat	 <- GHrule(nAGQ)
-	    function(pars)
-		.Call(nlmerAGQ, pp$ptr(), resp$ptr(), fac, GQmat, pars[dpars],
+	    function(pars) {
+		.Call(nlmerAGQ, ## <- dontCheck(nlmerAGQ)  should work according to docs but does not
+		      pp$ptr(), resp$ptr(), fac, GQmat, pars[dpars],
 		      u0, pars[-dpars], tolPwrss)
+            }
 	}
     }
     else stop("code not yet written")
