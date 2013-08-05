@@ -15,7 +15,8 @@ pDIR <- switch((U <- Sys.getenv("USER")),
 pkgPATH <- file.path(pDIR, pkg)
 #
 library(roxygen2)
-if(FALSE) {
+if(TRUE) { # come on; the auto-produced *.Rd is awful, and then produces CRAN check notes
+           # about lines too wide ..
   roxygenize(pkgPATH, roclets = c("collate", "namespace"))## *NOT* using "rd"
 } else {
   roxygenize(pkgPATH)## <-- also recreates *.Rd files
