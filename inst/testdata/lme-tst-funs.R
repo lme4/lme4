@@ -11,11 +11,13 @@ gSim <- function(nblk=26,
                  nperblk=100,
                  sigma=1,    ## st.dev. of ran.eff  B
                  beta=c(4,3),
-                 x = runif(n),## sd = sqrt(1/12) = sqrt(3)/6 = 0.288675; also x=c(0,1)
+                 x = runif(n),## sd = sqrt(1/12) = 0.2887; allow also x=c(0,1)
                  shape=2,    ## shape parameter for Gamma
                  nbinom=10,  ## N for binomial trials
                  family=Gamma())
 {
+    stopifnot(nblk <= 50000)# some sanity, may increase (but remain "finite"!)
+    ## ch.set: a potentially large set of "letters", as level-labels for 'block':
     nc <- length(ch.set <- c(LETTERS, letters,
                              paste0(LETTERS,LETTERS), paste0(LETTERS,letters)))
     while(nblk > nc) nc <-

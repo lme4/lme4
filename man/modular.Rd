@@ -179,7 +179,18 @@
   of the theta (random-effect) parameters (for GlmerDevfun,
   of beta (fixed-effect) parameters as well).  These
   deviance functions have an environment containing objects
-  required for their evaluation. \cr \cr
+  required for their evaluation. CAUTION: The output object
+  of \code{mk(Gl|L)merDevfun} is an
+  \code{\link{environment}} containing reference class
+  objects (see \code{\link{ReferenceClasses}},
+  \code{\link{merPredD-class}},
+  \code{\link{lmResp-class}}), which behave in ways that
+  may surprise many users. For example, if the output of
+  \code{mk(Gl|L)merDevfun} is naively copied, then
+  modifications to the original will also appear in the
+  copy (and vice versa). To avoid this behavior one must
+  make a deep copy (see \code{\link{ReferenceClasses}} for
+  details). \cr \cr
 
   \bold{optimizeLmer}: Results of an optimization. \cr \cr
 }

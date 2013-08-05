@@ -38,9 +38,16 @@
 \section{Differences between current (1.0.+) and previous versions of
   \code{lme4}}{
   \itemize{
+  \item \code{[gn]lmer} now produces objects of class \code{\linkS4class{merMod}}
+  rather than class \code{mer} as before
   \item the new version uses a combination of S3 and reference classes
-  rather than S4 classes; partly for this reason it is more
-  interoperable with \code{nlme}
+  (see \code{\link{ReferenceClasses}}, \code{\link{merPredD-class}}, and
+  \code{\link{lmResp-class}}) as well as S4 classes; partly for this reason 
+  it is more interoperable with \code{nlme}
+  \item The internal structure of [gn]lmer is now more modular, allowing 
+  finer control of the different steps of argument checking; construction 
+  of design matrices and data structures; parameter estimation; and construction 
+  of the final \code{merMod} object (see \code{\link{modular}})
   \item profiling and parametric bootstrapping are new in
   the current version
   \item the new version of \code{lme4} does \emph{not} provide

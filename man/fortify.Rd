@@ -22,6 +22,7 @@
   \code{fortify} is a function defined in the
   \code{ggplot2} package, q.v. for more details; the S3
   generic is just defined here to avoid inducing an
-  additional \code{Imports:} dependency
+  additional \code{Imports:} dependency. This is currently
+  an experimental feature.
 }
 

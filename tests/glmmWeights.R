@@ -1,33 +1,8 @@
 library(lme4)
 library(testthat)
 
-## a general simulation function ...
-gSim <- function(nblk=26,  
-                 nperblk=100,
-                 sigma=1,
-                 beta=c(4,3),
-                 shape=2,    ## shape parameter for Gamma
-                 nbinom=10,  ## N for binomial trials
-                 family=Gamma()) {
-    d <- expand.grid(block=LETTERS[1:nblk],
-                     rep=1:nperblk, KEEP.OUT.ATTRS = FALSE)
-    d$x <- runif(nrow(d))  ## sd=1
-    reff_f <- rnorm(length(levels(d$block)),sd=sigma)
-    ## need intercept large enough to avoid negative values
-    d$eta0 <- beta[1]+beta[2]*d$x  ## fixed effects only
-    d$eta <- d$eta0+reff_f[d$block]
-    d$mu <- family$linkinv(d$eta)
-    d$y <- switch(family$family,
-                  Gamma=rgamma(nrow(d),scale=d$mu/shape,shape=shape),
-                  poisson=rpois(nrow(d),d$mu),
-                  binomial=if (nbinom==1) {
-                      rbinom(nrow(d),prob=d$mu,size=1)
-                  } else 
-              {z <- rbinom(nrow(d),prob=d$mu,size=nbinom);
-               cbind(succ=z,fail=nbinom-z)})
-    d
-}
-
+source(system.file("testdata/lme-tst-funs.R", package="lme4", mustWork=TRUE))
+##-> gSim(), a general simulation function ...
 
 ## hand-coded Pearson residuals
 mypresid <- function(x) {
@@ -48,7 +23,6 @@ sumFun <- function(m) {
 }
 
 set.seed(101)
-library(lme4)
 
 ## GAMMA
 g0 <-  glmer(y~x+(1|block),data=gSim(),family=Gamma)
@@ -60,7 +34,7 @@ g1 <-  glmer(y~x+(1|block),data=gSim(family=binomial(),nbinom=1),
 expect_equal(var(sumFun(g1)),0)
 
 
-## POISSON 
+## POISSON
 g2 <-  glmer(y~x+(1|block),data=gSim(family=poisson()),
              family=poisson)
 expect_equal(var(sumFun(g2)),0)

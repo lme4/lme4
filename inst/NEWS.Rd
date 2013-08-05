@@ -27,6 +27,11 @@
       \item By default \code{residuals} gives deviance (rather than Pearson)
       residuals when applied to \code{glmer} fits (a side effect of matching \code{glm}
       behaviour more closely).
+      \item As another side effect of matching \code{\link{glm}}
+      behaviour, reported log-likelihoods from \code{\link{glmer}} models
+      are no longer consistent with those from pre-1.0.0 \code{lme4},
+      but \emph{are} consistent with \code{glm}; see \code{\link{glmer}}
+      examples.
     }
   }
   \subsection{MINOR USER-VISIBLE CHANGES}{
