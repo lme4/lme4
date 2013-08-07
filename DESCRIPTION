@@ -64,4 +64,4 @@ Collate:
     'modular.R'
     'hooks.r'
     'lmerControl.R'
-BuildVignettes: no
+BuildVignettes: yes
