@@ -9,7 +9,7 @@ Authors@R: c(person("Douglas","Bates", email="bates@stat.wisc.edu",
     person("Ben","Bolker",email="bbolker+lme4-authors@gmail.com",
     role=c("aut","cre")),
     person("Steven","Walker",role="aut"))
-Maintainer: Ben Bolker <bbolker+lme4-authors@gmail.com>
+Maintainer: Ben Bolker <bbolker@gmail.com>
 Description: Fit linear and generalized linear mixed-effects models.
     The models and their components are represented using S4 classes and
     methods.  The core computational algorithms are implemented using the
