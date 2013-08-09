@@ -36,3 +36,18 @@ if (do.plot) {
 }
 
 stopifnot(all.equal(unname(ss_sum2[,2]),unname(pp2),tol=8e-3))
+
+## predict(...,newdata=...) on models with derived variables in the random effects
+## e.g. (f:g, f/g)
+set.seed(101)
+d <- expand.grid(f=factor(letters[1:10]),g=factor(letters[1:10]),
+                 rep=1:10)
+d$y <- rnorm(nrow(d))
+m1 <- lmer(y~(1|f:g),d)
+p1 <- predict(m1)
+p2 <- predict(m1,newdata=d)
+all.equal(p1,unname(p2))
+m2 <- lmer(y~(1|f/g),d)
+p3 <- predict(m2)
+p4 <- predict(m2,newdata=d)
+all.equal(p3,unname(p4))
