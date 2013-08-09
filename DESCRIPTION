@@ -1,12 +1,12 @@
 Package: lme4
 Version: 1.0-0
-Date: 2013-08-05
+Date: 2013-08-09
 Title: Linear mixed-effects models using Eigen and S4
 Authors@R: c(person("Douglas","Bates", email="bates@stat.wisc.edu",
     role="aut"),
     person("Martin","Maechler",email="maechler@R-project.org",
     role="aut"),
-    person("Ben","Bolker",email="bbolker+lme4-authors@gmail.com",
+    person("Ben","Bolker",email="bbolker@gmail.com",
     role=c("aut","cre")),
     person("Steven","Walker",role="aut"))
 Maintainer: Ben Bolker <bbolker@gmail.com>
@@ -19,9 +19,7 @@ Depends:
     lattice,
     Matrix(>= 1.0),
     methods,
-    stats,
-    Rcpp (>= 0.10.1),
-    RcppEigen (>= 0.3.1.2)
+    stats
 LinkingTo: Rcpp, RcppEigen
 Imports:
     graphics,
@@ -41,7 +39,9 @@ Suggests:
     optimx,
     plyr,
     reshape,
-    optimx
+    optimx,
+    Rcpp (>= 0.10.1),
+    RcppEigen (>= 0.3.1.2)
 LazyData: yes
 License: GPL (>=2)
 URL: http://lme4.r-forge.r-project.org/
