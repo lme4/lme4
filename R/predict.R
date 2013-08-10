@@ -96,8 +96,11 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
             if (!allow.new.levels && any(sapply(ReTrms$flist,function(x) any(is.na(x)))))
                 stop("NAs are not allowed in prediction data for grouping variables unless allow.new.levels is TRUE")
             unames <- unique(sort(names(ReTrms$cnms)))  ## FIXME: same as names(ReTrms$flist) ?
-            ## FIXME:
-            Rfacs <- setNames(lapply(unames,function(x) eval(parse(text=x),envir=newdata)),
+            ## convert numeric grouping variables to factors as necessary
+            for (i in all.vars(REform[[2]])) {
+                newdata[[i]] <- factor(newdata[[i]])
+            }
+            Rfacs <- setNames(lapply(unames,function(x) factor(eval(parse(text=x),envir=newdata))),
                               unames)
             new_levels <- lapply(Rfacs,function(x) levels(droplevels(factor(x))))
             ## FIXME: should this be unique(as.character(x)) instead?
