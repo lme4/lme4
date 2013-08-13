@@ -1,4 +1,5 @@
 library(lme4)
+(testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
 source(system.file("test-tools-1.R", package = "Matrix"), keep.source = FALSE)
 
 ## should be able to run any example with any bounds-constrained optimizer ...
@@ -18,6 +19,15 @@ if (.Platform$OS.type != "windows") {
     fm1D <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy,
                  control=lmerControl(optimizer="optimx", method="L-BFGS-B"))
     stopifnot(is.all.equal4(fixef(fm1),fixef(fm1B),fixef(fm1C),fixef(fm1D)))
+
+    if (testLevel > 2) {
+        fm1E <- update(fm1,control=lmerControl(optimizer="optimx",method=c("nlminb","L-BFGS-B")))
+        ## hack equivalence of call and optinfo
+        fm1E@call <- fm1C@call
+        fm1E@optinfo <- fm1C@optinfo
+        ## FIXME: this *should* be identical, but we have small numeric differences
+        all.equal(fm1C,fm1E,tol=1e-5)
+    }
 }
 
 gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
@@ -28,4 +38,11 @@ gm1C <- update(gm1,control=glmerControl(optimizer="optimx",method="nlminb",tolPw
 gm1D <- update(gm1,control=glmerControl(optimizer="optimx",method="L-BFGS-B",tolPwrss=1e-13))
 stopifnot(is.all.equal4(fixef(gm1),fixef(gm1B),fixef(gm1C),fixef(gm1D),tol=1e-5))
 
+gm1E <- update(gm1,control=glmerControl(optimizer="optimx",method=c("nlminb","L-BFGS-B"),tolPwrss=1e-13))
 
+if (testLevel > 2) {
+    ## hack equivalence of call and optinfo
+    gm1E@call <- gm1C@call
+    gm1E@optinfo <- gm1C@optinfo
+    all.equal(gm1E,gm1C,tol=1e-5)  ## FIXME: this *should* be identical, but we have small numeric differences
+}

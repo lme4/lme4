@@ -2262,9 +2262,12 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
         opt$convergence <- opt$ierr
     }
     if (optimizer=="optimx") {
-        optr <- lapply(opt,"[[",1)[c("par","fvalues","conv")]
-        optr$message <- attr(opt,"details")[[1]]$message
-        opt <- optr
+        ## optr <- lapply(opt,"[[",1)[c("par","fvalues","conv")]
+        ## opt$message <- attr(opt,"details")[[1]]$message
+        opt <- list(par=coef(opt)[1,],
+                    fvalues=opt$value[1],
+                    conv=opt$convcode[1],
+                    message=attr(opt,"details")[,"message"][[1]])
     }
     if (opt$conv!=0) {
         wmsg <- paste("convergence code",opt$conv,"from",optimizer)

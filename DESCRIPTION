@@ -36,7 +36,7 @@ Suggests:
     testthat,
     ggplot2,
     mlmRev,
-    optimx,
+    optimx (>= 2013.8.6),
     plyr,
     reshape,
     optimx,
