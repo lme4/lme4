@@ -346,6 +346,7 @@ glmer <- function(formula, data=NULL, family = gaussian,
 ##' @param \dots other potential arguments.  A \code{method} argument was used
 ##'    in earlier versions of the package. Its functionality has been replaced by
 ##'    the \code{nAGQ} argument.
+##' @note Adaptive Gauss-Hermite quadrature (\code{nAGQ}>1) is not currently implemented for \code{nlmer}. 
 ##' @inheritParams glmer
 ##' @keywords models
 ##' @examples
@@ -505,13 +506,14 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
 			 .Call(nlmerLaplace, pp$ptr(), resp$ptr(), pars[dpars], u0,
 			       pars[-dpars], verbose, TRUE, tolPwrss))
 	} else {
+            stop("AGQ>1 not yet implemented for nlmer models")
 	    rho$nlmerAGQ <- nlmerAGQ
 	    rho$GQmat	 <- GHrule(nAGQ)
-	    function(pars) {
-		.Call(nlmerAGQ, ## <- dontCheck(nlmerAGQ)  should work according to docs but does not
-		      pp$ptr(), resp$ptr(), fac, GQmat, pars[dpars],
-		      u0, pars[-dpars], tolPwrss)
-            }
+	    ## function(pars) {
+            ## .Call(nlmerAGQ, ## <- dontCheck(nlmerAGQ)  should work according to docs but does not
+            ## pp$ptr(), resp$ptr(), fac, GQmat, pars[dpars],
+            ## u0, pars[-dpars], tolPwrss)
+            ##}
 	}
     }
     else stop("code not yet written")

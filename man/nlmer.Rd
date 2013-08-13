@@ -103,6 +103,10 @@
   Fit nonlinear mixed-effects models, such as those used in
   population pharmacokinetics.
 }
+\note{
+  Adaptive Gauss-Hermite quadrature (\code{nAGQ}>1) is not
+  currently implemented for \code{nlmer}.
+}
 \examples{
 ## nonlinear mixed models --- 3-part formulas ---
 
