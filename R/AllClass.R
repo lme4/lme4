@@ -234,7 +234,7 @@ merPredD <-
                      },
                      updateDecomp = function() {
                          'update L, RZX and RX from Ut, Vt and VtV'
-                         .Call(merPredDupdateDecomp, ptr())
+                         invisible(.Call(merPredDupdateDecomp, ptr()))
                      },
                      updateL = function() {
                          'update LamtUt and L'
