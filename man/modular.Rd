@@ -170,7 +170,7 @@
   \item{fr}{model frame} \item{X}{fixed-effect design
   matrix} \item{reTrms}{list containing information on
   random effects structure: result of
-  \code{\link{mkMerMod}}} \item{REML}{(lFormula only):
+  \code{\link{mkReTrms}}} \item{REML}{(lFormula only):
   logical flag: use restricted maximum likelihood? (Copy of
   argument.)}
 

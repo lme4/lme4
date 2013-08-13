@@ -139,7 +139,7 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
 ##' @return \bold{lFormula, glFormula}: A list containing components,
 ##' \item{fr}{model frame}
 ##' \item{X}{fixed-effect design matrix}
-##' \item{reTrms}{list containing information on random effects structure: result of \code{\link{mkMerMod}}}
+##' \item{reTrms}{list containing information on random effects structure: result of \code{\link{mkReTrms}}}
 ##' \item{REML}{(lFormula only): logical flag: use restricted maximum likelihood? (Copy of argument.)}
 ##' @importFrom Matrix rankMatrix
 ##' @export
