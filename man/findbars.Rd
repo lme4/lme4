@@ -14,7 +14,9 @@
   From the right hand side of a formula for a mixed-effects
   model, determine the pairs of expressions that are
   separated by the vertical bar operator.  Also expand the
-  slash operator in grouping factor expressions.
+  slash operator in grouping factor expressions and expand
+  terms with the double vertical bar operator into separate,
+  independent random effect terms.
 }
 \section{Note}{
   This function is called recursively on individual terms
@@ -23,11 +25,12 @@
   formula.
 }
 \examples{
-findbars(f1 <- Reaction ~ Days + (Days|Subject))
+findbars(f1 <- Reaction ~ Days + (Days | Subject))
 ## => list( Days | Subject )
-findbars(y ~ Days + (1|Subject) + (0+Days|Subject))
-## => list of length 2:  list ( 1 | Subject ,  0+Days|Subject)
-findbars(~ 1 + (1|batch/cask))
+findbars(y ~ Days + (1 | Subject) + (0 + Days | Subject))
+findbars(y ~ Days + (Days || Subject))
+## => list of length 2:  list ( 1 | Subject ,  0 + Days | Subject)
+findbars(~ 1 + (1 | batch / cask))
 ## => list of length 2:  list ( 1 | cask:batch ,  1 | batch)
 \dontshow{
 stopifnot(identical(findbars(f1),
