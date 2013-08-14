@@ -26,7 +26,7 @@
 ##' str(p4 <- predict(gm1,newdata,REform=~(1|herd))) # explicitly specify RE
 ##' @method predict merMod
 ##' @export
-predict.merMod <- function(object, newdata=NULL, REform=NULL,
+predict.merMod <- function(object, newdata=NULL, newparams=NULL, REform=NULL,
                            terms=NULL, type=c("link","response"),
                            allow.new.levels=FALSE, na.action=na.pass, ...) {
     ## FIXME: appropriate names for result vector?
@@ -151,4 +151,120 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
     }
 }    
 
+##' @importFrom stats simulate
+NULL
+##' Simulate responses from the model represented by a fitted model object
+##'
+##' @title Simulate responses from a \code{\linkS4class{merMod}} object
+##' @param object a fitted model object
+##' @param nsim positive integer scalar - the number of responses to simulate
+##' @param seed an optional seed to be used in \code{set.seed} immediately
+##'     before the simulation so as to generate a reproducible sample.
+##' @param use.u (logical) if \code{TRUE}, generate a simulation conditional on the current
+##' random-effects estimates; if \code{FALSE} generate new Normally distributed random-effects values
+##' @param ... optional additional arguments, none are used at present
+##' @examples
+##' ## test whether fitted models are consistent with the
+##' ##  observed number of zeros in CBPP data set:
+##' gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+##'              data = cbpp, family = binomial)
+##' gg <- simulate(gm1,1000)
+##' zeros <- sapply(gg,function(x) sum(x[,"incidence"]==0))
+##' plot(table(zeros))
+##' abline(v=sum(cbpp$incidence==0),col=2)
+##' @method simulate merMod
+##' @export
+simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
+                            REform=NA, ...) {
+    stopifnot((nsim <- as.integer(nsim[1])) > 0,
+	      is(object, "merMod"))
+    if (!missing(use.u) && !missing(REform)) stop("should specify only one of ",sQuote("use.u"),
+                                                  " and ",sQuote("REform"))
+    if (!missing(use.u)) REform <- if (use.u) NULL else NA
+    if(!is.null(seed)) set.seed(seed)
+    if(!exists(".Random.seed", envir = .GlobalEnv))
+	runif(1) # initialize the RNG if necessary
+    RNGstate <- .Random.seed
 
+    sigma <- sigma(object)
+    n <- nrow(X <- getME(object, "X"))
+    if (is.null(nm <- names(fitted(object)))) nm <- seq(n)
+
+
+    pp <- predict(object, newdata=newdata, REform
+    # fixed-effect contribution
+    etasim.fix <- as.vector(X %*% getME(object, "beta"))
+    if (length(offset <- getME(object,"offset"))>0) {
+      etasim.fix <- etasim.fix+offset
+    }
+    U <- getME(object, "Z") %*% getME(object, "Lambda")
+    u <- if (use.u) {
+        rep(getME(object, "u"), nsim)/sigma  ## ??? u is 'spherized' but not scaled ???
+    } else {
+        rnorm(ncol(U)*nsim)
+    }
+    etasim.reff <- ## UNSCALED random-effects contribution:
+        as(U %*% matrix(u, ncol = nsim), "matrix")
+    if (is(object@resp,"lmerResp")) {
+      ## result will be matrix  n x nsim :
+      val <- etasim.fix + sigma * (etasim.reff +
+        ## residual contribution:
+        matrix(rnorm(n * nsim), ncol = nsim))
+    } else if (is(object@resp,"glmResp")) {
+      ## GLMM
+      ## n.b. DON'T scale random-effects (???)
+      	      etasim <- etasim.fix+etasim.reff
+              ## FIXME:: try to avoid @call ...
+	      family <- object@call$family
+	      if(is.symbol(family)) family <- as.character(family)
+	      if(is.character(family))
+		  family <- get(family, mode = "function", envir = parent.frame(2))
+	      if(is.function(family)) family <- family()
+              if(is.language(family)) family <- eval(family)
+	      if(is.null(family$family)) stop("'family' not recognized")
+	      musim <- family$linkinv(etasim)
+	      ntot <- length(musim) ## FIXME: or could be dims["n"]?
+              ## FIXME: is it possible to leverage family$simulate ... ???
+              val <- switch(family$family,
+			    poisson=rpois(ntot,lambda=musim),
+			    binomial={
+                              w <- weights(object)
+                              Y <- rbinom(ntot,prob=musim,size=w)
+                              resp <- model.response(object@frame)
+                              if (!is.matrix(resp)) {  ## bernoulli, or weights specified
+                                if (is.factor(resp)) {
+                                  if (any(weights(object)!=1)) stop("non-uniform weights with factor response??")
+                                  f <- factor(levels(resp)[Y+1],levels=levels(resp))
+                                  split(f, rep(seq_len(nsim), each = n))
+                                } else {
+                                  Y/w
+                                }
+                              } else {
+                                ## FIXME: should "N-size" (column 2) be named?
+                                ## copying structures from stats/R/family.R
+                                nresp <- nrow(resp)
+                                YY <- cbind(Y, w - Y)
+                                yy <- lapply(split(YY,gl(nsim,nresp,2*nsim*nresp)),
+                                             matrix, ncol=2,
+                                             dimnames=list(NULL,colnames(resp)))
+                                names(yy) <- paste("sim",seq_along(yy),sep="_")
+                                yy
+                              }
+                            },
+			    stop("simulation not implemented for family",
+				 family$family))
+            } else {
+              stop("simulate method for NLMMs not yet implemented")
+            }
+    ## from src/library/stats/R/lm.R
+    if(!is.list(val)) {
+      dim(val) <- c(n, nsim)
+      val <- as.data.frame(val)
+    }
+    else
+      class(val) <- "data.frame"
+    names(val) <- paste("sim", seq_len(nsim), sep="_")
+    row.names(val) <- nm
+    attr(val, "seed") <- RNGstate
+    val
+  }
