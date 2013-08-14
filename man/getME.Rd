@@ -2,14 +2,14 @@
 \alias{getL}
 \alias{getL,merMod-method}
 \alias{getME}
-\title{Extract or Get Generalize Components from a Fitted Mixed Effects Model}
+\title{Extract or Get Generalized Components from a Fitted Mixed Effects Model}
 \usage{
 getME(object,
       name = c("X", "Z", "Zt", "Ztlist", "y", "mu", "u", "b",
                "Gp", "Tp", "L", "Lambda", "Lambdat", "Lind",
                "A", "RX", "RZX", "sigma", "flist",
                "beta", "theta", "ST", "REML", "is_REML",
-               "n_rtrms", "n_rfacs", "devcomp", "offset", "lower"))
+               "n_rtrms", "n_rfacs", "cnms", "devcomp", "offset", "lower"))
 }
 \arguments{
   \item{object}{a fitted mixed-effects model of class
@@ -111,9 +111,12 @@ stopifnot(is(Z, "CsparseMatrix"),
 		    check.attr=FALSE, tol = 0))
 
 ## A way to get *all* getME()s :
-(nmME <- eval(formals(getME)$name))
+getME.all <- function(obj) {
+    sapply(eval(formals(getME)$name), getME, object=fm1, simplify=FALSE)
+}
 ## internal consistency check ensuring that all work:
-str(parts <- sapply(nmME, getME, object=fm1, simplify=FALSE))
+parts <- getME.all(fm1)
+str(parts, max=2)
 }
 \keyword{utilities}
 
