@@ -43,38 +43,38 @@ namedList <- function(...) {
 ##' @param restart_edge logical - should the optimizer attempt a restart when it finds a solution at the boundary (i.e. zero random-effect variances or perfect +/-1 correlations)?
 ##' @param check.numlev.gtreq.5 character - rules for checking whether all random effects have >= 5 levels. "ignore": skip the test. "warn": warn if test fails. "stop": throw an error if test fails.
 ##' @param check.numlev.gtr.1 character - rules for checking whether all random effects have > 1 level. As for \code{check.numlevel.gtr.5}.
-##' @param check.numobs.vs.rankZ character - rules for checking whether the number of observations is greater than (or greater than or equal to) the rank of the random effects design matrix (Z), usually necessary for identifiable variances.  As for \code{check.numlevel.gtreq.5}, with the addition of "warnSmall" and "stopSmall", which run the test only if the dimensions of \code{Z} are <1e6. \code{numobs>rank(Z)} will be tested for LMMs and GLMMs with estimated scale parameters; \code{numobs>=rank(Z)} will be tested for GLMMs with fixed scale parameter.
+##' @param check.nobs.vs.rankZ character - rules for checking whether the number of observations is greater than (or greater than or equal to) the rank of the random effects design matrix (Z), usually necessary for identifiable variances.  As for \code{check.numlevel.gtreq.5}, with the addition of "warnSmall" and "stopSmall", which run the test only if the dimensions of \code{Z} are <1e6. \code{nobs>rank(Z)} will be tested for LMMs and GLMMs with estimated scale parameters; \code{nobs>=rank(Z)} will be tested for GLMMs with fixed scale parameter.
 ##' @param \dots additional arguments to be passed to the nonlinear optimizer (see \code{\link{Nelder_Mead}},
 ##'    \code{\link[minqa]{bobyqa}}). In particular, both \code{Nelder_Mead} and \code{bobyqa} use \code{maxfun} to specify
 ##'    the maximum number of function evaluations they will try before giving up - in contrast to \code{\link{optim}} and \code{optimx}-wrapped optimizers, which use \code{maxit}.
-##' @return a list (of class \code{merControl}) containing (1) general control parameters (e.g. \code{optimizer}, \code{restart_edge}); (2) a list of data-checking specifications (e.g. \code{check.numobs.vs.rankZ}); (3) parameters to be passed to the optimizer (i.e., the contents of \dots, for example \code{maxiter})
+##' @return a list (of class \code{merControl}) containing (1) general control parameters (e.g. \code{optimizer}, \code{restart_edge}); (2) a list of data-checking specifications (e.g. \code{check.nobs.vs.rankZ}); (3) parameters to be passed to the optimizer (i.e., the contents of \dots, for example \code{maxiter})
 ##' @details if options are set via \code{\link{options}}, [gn]lmerControl will use them rather than the default values (but will not override values that are passed as explicit arguments); for example, \code{options(check.numlev.gtreq.5="ignore")} will suppress warnings that there an insufficient random effects levels for reliable estimation.
 ##' @export
 lmerControl <- function(optimizer="Nelder_Mead",
                         restart_edge=TRUE,
                         sparseX=FALSE,
-                        check.numobs.vs.rankZ="stopSmall",
+                        check.nobs.vs.rankZ="stopSmall",
                         check.numlev.gtreq.5="warning",
                         check.numlev.gtr.1="stop",
-                        ...) {
+                        optControl = list())
+{
     ## FIXME: is there a better idiom?  match.call() ?
-    ## FIXME: check list(...) against formals(get(optimizer)) ?
     ## fill in values from options, but **only if not specified explicitly in arguments**
     ##  (ugh ... is there a better way to do this?  mapply() is clunky:
     ##  http://stackoverflow.com/questions/16276667/using-apply-with-assign-in-r
+    stopifnot(is.list(optControl))
     if (!is.null(lmerOpts <- getOption("lmerControl"))) {
         for (arg in names(lmerOpts)) {
             if (do.call(missing,list(arg))) ## missing from explicit arguments
                 assign(arg,lmerOpts[[arg]])
         }
     }
-    structure(namedList(optimizer,
-		   restart_edge,
-		   checkControl=
-		   namedList(check.numobs.vs.rankZ,
+    structure(namedList(optimizer, restart_edge,
+                        checkControl =
+		   namedList(check.nobs.vs.rankZ,
 			     check.numlev.gtreq.5,
 			     check.numlev.gtr.1),
-		   optControl=list(...)),
+                        optControl=optControl),
 	      class = c("lmerControl", "merControl"))
 }
 
@@ -89,12 +89,13 @@ lmerControl <- function(optimizer="Nelder_Mead",
 glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
                          restart_edge=FALSE,
                          sparseX=FALSE,
-                         check.numobs.vs.rankZ="stopSmall",
+                         check.nobs.vs.rankZ="stopSmall",
                          check.numlev.gtreq.5="warning",
                          check.numlev.gtr.1="stop",
                          tolPwrss = 1e-7,
                          compDev = TRUE,
-                         ...) {
+                         optControl = list())
+{
     ## FIXME: should try to modularize/refactor/combine with lmerControl if possible
     ## but note different defaults
     ##                lmer        glmer
@@ -103,6 +104,7 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
     ## compDev      N/A          TRUE
     ##
     ## (and possible future divergence)
+    stopifnot(is.list(optControl))
     if (length(optimizer)==1) {
 	optimizer <- replicate(2,optimizer) # works evevn when optimizer is function
     }
@@ -117,10 +119,10 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
 			tolPwrss,
 			compDev,
 			checkControl=
-			namedList(check.numobs.vs.rankZ,
+			namedList(check.nobs.vs.rankZ,
 				  check.numlev.gtreq.5,
 				  check.numlev.gtr.1),
-			optControl=list(...)),
+                        optControl=optControl),
 	      class = c("glmerControl", "merControl"))
 }
 
@@ -129,16 +131,14 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
 ##' @export
 nlmerControl <- function(optimizer="Nelder_Mead",
                          tolPwrss = 1e-10,
-                         ...) {
+                         optControl = list())
+{
+    stopifnot(is.list(optControl))
     if (length(optimizer)==1) {
         optimizer <- replicate(2,optimizer)
     }
     structure(namedList(optimizer,
 			tolPwrss,
-			optControl=list(...)),
+			optControl=optControl),
 	      class = c("nlmerControl", "merControl"))
 }
-
-
-
-
