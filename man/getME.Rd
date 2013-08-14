@@ -2,14 +2,14 @@
 \alias{getL}
 \alias{getL,merMod-method}
 \alias{getME}
-\title{Extract or Get Generalize Components from a Fitted Mixed Effects Model}
+\title{Extract or Get Generalized Components from a Fitted Mixed Effects Model}
 \usage{
 getME(object,
       name = c("X", "Z", "Zt", "Ztlist", "y", "mu", "u", "b",
                "Gp", "Tp", "L", "Lambda", "Lambdat", "Lind",
                "A", "RX", "RZX", "sigma", "flist",
                "beta", "theta", "ST", "REML", "is_REML",
-               "n_rtrms", "n_rfacs", "devcomp", "offset", "lower"))
+               "n_rtrms", "n_rfacs", "cnms", "devcomp", "offset", "lower"))
 }
 \arguments{
   \item{object}{a fitted mixed-effects model of class
@@ -122,14 +122,13 @@ stopifnot(is(Z, "CsparseMatrix"),
 	  all.equal(fixef(fm1), getME(fm1, "beta"),
 		    check.attr=FALSE, tol = 0))
 
-## All that can be accessed [potentially ..]:
-(nmME <- eval(formals(getME)$name))
-\dontshow{
+## A way to get *all* getME()s :
+getME.all <- function(obj) {
+    sapply(eval(formals(getME)$name), getME, object=fm1, simplify=FALSE)
+}
 ## internal consistency check ensuring that all work:
-## "try(.)" because some are not yet implemented:
-str(parts <- sapply(nmME, function(nm) try(getME(fm1, nm)),
-                    simplify=FALSE))
-}% dont..
+parts <- getME.all(fm1)
+str(parts, max=2)
 }
 \keyword{utilities}
 
