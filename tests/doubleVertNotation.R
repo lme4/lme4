@@ -42,5 +42,7 @@ expect_equivalent(findbars(y ~ (x1*x2 || id)),
                   findbars(y ~ (1 | id) + (0+x1 | id) + (0 + x2 | id) +
                              (0 + x1:x2 | id)))
       
-                
-                  
+## update now works as expected:
+(m <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy))
+update(m, .~.-(0 + Days | Subject))
+   

@@ -250,88 +250,103 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
 ##' @export
 findbars <- function(term)
 {
-  expandDoubleVerts <- function(term)
-  {
-    if (is.name(term) || !is.language(term)) return(term)
-    if (term[[1]] == as.name("(")) {
-      term[[2]] <- expandDoubleVerts(term[[2]])
-      return(term)
-    }  
-    stopifnot(is.call(term))
-    if (term[[1]] == as.name('||')) {
-      term <- expandDoubleVert(term)
-      return(term)
-    } 
-    if (length(term) == 2){
-      term[[2]] <- expandDoubleVerts(term[[2]])
-      return(term)
-    } 
-    term[[2]] <- expandDoubleVerts(term[[2]])
-    if(length(term) == 3){ 
-      term[[3]] <- expandDoubleVerts(term[[3]])
-    }  
-    term
-  }
-  
-  expandDoubleVert <- function(term){
-    frml <- formula(paste0("~", deparse(term[[2]])))
-    #need term.labels not all.vars to capture interactions too:
-    newtrms <- paste0("0+", attr(terms(frml), "term.labels"))
-    
-    if(attr(terms(frml), "intercept")!=0) newtrms <- c("1", newtrms)
-    
-    as.name(paste(sapply(newtrms, function(trm){
-      paste0(trm, "|", deparse(term[[3]]))  
-    }), collapse=")+("))
-  }  
-  
-  
-  ## Recursive function applied to individual terms
-  fb <- function(term)
-  {
-    if (is.name(term) || !is.language(term)) return(NULL)
-    if (term[[1]] == as.name("(")) return(fb(term[[2]]))
-    stopifnot(is.call(term))
-    if (term[[1]] == as.name('|')) return(term)
-    if (length(term) == 2) return(fb(term[[2]]))
-    c(fb(term[[2]]), fb(term[[3]]))
-  }
-  ## Expand any slashes in the grouping factors returned by fb
-  expandSlash <- function(bb)
-  {
-    ## Create the interaction terms for nested effects
-    makeInteraction <- function(x)
-    {
-      if (length(x) < 2) return(x)
-      trm1 <- makeInteraction(x[[1]])
-      trm11 <- if(is.list(trm1)) trm1[[1]] else trm1
-      list(substitute(foo:bar, list(foo=x[[2]], bar = trm11)), trm1)
-    }
-    ## Return the list of '/'-separated terms
-    slashTerms <- function(x)
-    {
-      if (!("/" %in% all.names(x))) return(x)
-      if (x[[1]] != as.name("/"))
-        stop("unparseable formula for grouping factor")
-      list(slashTerms(x[[2]]), slashTerms(x[[3]]))
-    }
-    
-    if (!is.list(bb)) return(expandSlash(list(bb)))
-    ## lapply(unlist(... - unlist returns a flattened list
-    unlist(lapply(bb, function(x) {
-      if (length(x) > 2 && is.list(trms <- slashTerms(x[[3]])))
-        return(lapply(unlist(makeInteraction(trms)),
-                      function(trm) substitute(foo|bar,
-                                               list(foo = x[[2]],
-                                                    bar = trm))))
-      x
-    }))
-  }
-
-  modterm <- as.formula(paste("~", gsub("`", "",
-                                        deparse(expandDoubleVerts(term)))))
-  expandSlash(fb(modterm))
+	
+	
+	## Recursive function applied to individual terms
+	fb <- function(term)
+	{
+		if (is.name(term) || !is.language(term)) return(NULL)
+		if (term[[1]] == as.name("(")) return(fb(term[[2]]))
+		stopifnot(is.call(term))
+		if (term[[1]] == as.name('|')) return(term)
+		if (length(term) == 2) return(fb(term[[2]]))
+		c(fb(term[[2]]), fb(term[[3]]))
+	}
+	## Expand any slashes in the grouping factors returned by fb
+	expandSlash <- function(bb)
+	{
+		## Create the interaction terms for nested effects
+		makeInteraction <- function(x)
+		{
+			if (length(x) < 2) return(x)
+			trm1 <- makeInteraction(x[[1]])
+			trm11 <- if(is.list(trm1)) trm1[[1]] else trm1
+			list(substitute(foo:bar, list(foo=x[[2]], bar = trm11)), trm1)
+		}
+		## Return the list of '/'-separated terms
+		slashTerms <- function(x)
+		{
+			if (!("/" %in% all.names(x))) return(x)
+			if (x[[1]] != as.name("/"))
+				stop("unparseable formula for grouping factor")
+			list(slashTerms(x[[2]]), slashTerms(x[[3]]))
+		}
+		
+		if (!is.list(bb)) return(expandSlash(list(bb)))
+		## lapply(unlist(... - unlist returns a flattened list
+		unlist(lapply(bb, function(x) {
+			if (length(x) > 2 && is.list(trms <- slashTerms(x[[3]])))
+				return(lapply(unlist(makeInteraction(trms)),
+							  function(trm) substitute(foo|bar,
+							  						 list(foo = x[[2]],
+							  						 	 bar = trm))))
+			x
+		}))
+	}
+	
+	modterm <- expandDoubleVerts(term)
+	expandSlash(fb(modterm))
 }
+
+##' From the right hand side of a formula for a mixed-effects model,
+##' expand terms with the double vertical bar operator
+##' into separate, independent random effect terms.
+##'
+##' @title Expand terms with \code{'||'} notation into separate \code{'|'} terms
+##' @seealso \code{\link{formula}}, \code{\link{model.frame}}, \code{\link{model.matrix}}.
+##' @param term a mixed-model formula
+##' @return the modified term
+##' @family utilities
+##' @keywords models utilities
+##' @export
+expandDoubleVerts <- function(term)
+{
+	expandDoubleVert <- function(term){
+		frml <- formula(paste0("~", deparse(term[[2]])))
+		#need term.labels not all.vars to capture interactions too:
+		newtrms <- paste0("0+", attr(terms(frml), "term.labels"))
+		
+		if(attr(terms(frml), "intercept")!=0) newtrms <- c("1", newtrms)
+		
+		as.name(paste(sapply(newtrms, function(trm){
+			paste0(trm, "|", deparse(term[[3]]))  
+		}), collapse=")+("))
+	}  
+	
+	if (is.name(term) || !is.language(term)) return(term)
+	if (term[[1]] == as.name("(")) {
+		term[[2]] <- expandDoubleVerts(term[[2]])
+		return(term)
+	}  
+	stopifnot(is.call(term))
+	if (term[[1]] == as.name('||')) {
+		term <- expandDoubleVert(term)
+		return(term)
+	} 
+	if (length(term) == 2){
+		term[[2]] <- expandDoubleVerts(term[[2]])
+		return(term)
+	} 
+	term[[2]] <- expandDoubleVerts(term[[2]])
+	if(length(term) == 3){ 
+		term[[3]] <- expandDoubleVerts(term[[3]])
+	}  
+	
+	as.formula(paste("~", gsub("`", "",
+							   deparse(term))))[[2]]
+}
+
+
 
 ##' Remove the random-effects terms from a mixed-effects formula,
 ##' thereby producing the fixed-effects formula.
@@ -350,22 +365,22 @@ findbars <- function(term)
 ##' @export
 nobars <- function(term)
 {
-  if (!any(c('|','||') %in% all.names(term))) return(term)
-  if (is.call(term) && term[[1]] == as.name('|')) return(NULL)
-  if (is.call(term) && term[[1]] == as.name('||')) return(NULL)
-  if (length(term) == 2) {
-    nb <- nobars(term[[2]])
-    if (is.null(nb)) return(NULL)
-    term[[2]] <- nb
-    return(term)
-  }
-  nb2 <- nobars(term[[2]])
-  nb3 <- nobars(term[[3]])
-  if (is.null(nb2)) return(nb3)
-  if (is.null(nb3)) return(nb2)
-  term[[2]] <- nb2
-  term[[3]] <- nb3
-  term
+	if (!any(c('|','||') %in% all.names(term))) return(term)
+	if (is.call(term) && term[[1]] == as.name('|')) return(NULL)
+	if (is.call(term) && term[[1]] == as.name('||')) return(NULL)
+	if (length(term) == 2) {
+		nb <- nobars(term[[2]])
+		if (is.null(nb)) return(NULL)
+		term[[2]] <- nb
+		return(term)
+	}
+	nb2 <- nobars(term[[2]])
+	nb3 <- nobars(term[[3]])
+	if (is.null(nb2)) return(nb3)
+	if (is.null(nb3)) return(nb2)
+	term[[2]] <- nb2
+	term[[3]] <- nb3
+	term
 }
 
 ##' Substitute the '+' function for the '|' and '||' function in a mixed-model
@@ -386,18 +401,18 @@ nobars <- function(term)
 ##' @export
 subbars <- function(term)
 {
-  if (is.name(term) || !is.language(term)) return(term)
-  if (length(term) == 2) {
-    term[[2]] <- subbars(term[[2]])
-    return(term)
-  }
-  stopifnot(length(term) >= 3)
-  if (is.call(term) && term[[1]] == as.name('|'))
-    term[[1]] <- as.name('+')
-  if (is.call(term) && term[[1]] == as.name('||'))
-    term[[1]] <- as.name('+')
-  for (j in 2:length(term)) term[[j]] <- subbars(term[[j]])
-  term
+	if (is.name(term) || !is.language(term)) return(term)
+	if (length(term) == 2) {
+		term[[2]] <- subbars(term[[2]])
+		return(term)
+	}
+	stopifnot(length(term) >= 3)
+	if (is.call(term) && term[[1]] == as.name('|'))
+		term[[1]] <- as.name('+')
+	if (is.call(term) && term[[1]] == as.name('||'))
+		term[[1]] <- as.name('+')
+	for (j in 2:length(term)) term[[j]] <- subbars(term[[j]])
+	term
 }
 
 ##' Does every level of f1 occur in conjunction with exactly one level
