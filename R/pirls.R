@@ -46,128 +46,116 @@ pirls <- function(theta, beta, u,
                   offset = rep(0, length(y)),
                   tol = 10^-6, npirls = 30,
                   nAGQ = 0){
-  
- # expand glmod
- Lind <- glmod$reTrms$Lind
- Lambdat <- glmod$reTrms$Lambdat
- Zt <- glmod$reTrms$Zt
- X <- glmod$X
- n <- nrow(X)
- p <- ncol(X)
- q <- nrow(Zt)
-
- # initialize beta and u
- # (only necessary if step-halving starts immediately)
- if(missing(beta)) beta <- rep(0, p)
- if(missing(u)) u <- rep(0, q)
- newbeta <- beta
- 
- # update theta
- Lambdat@x <- theta[Lind]
-
- # initialize penalized deviance and convergence flag
- oldpdev <- .Machine$double.xmax
- cvgd <- FALSE
-
- # PIRLS
- for(i in 1:npirls){
- 
-  # update w and muEta
-  w <- weights/as.vector(family()$variance(mu))
-  muEta <- as.vector(family()$mu.eta(eta))
-
-  # update Ut and V
-  Xwts <- sqrt(w)*muEta
-  Ut <- Lambdat%*%Zt%*%Diagonal(n, Xwts)
-  UtU <- tcrossprod(Ut)
-  if(!nAGQ){
-    V <- diag(Xwts, n, n)%*%X
-    VtV <- t(V)%*%V
-    UtV <- Ut%*%V
-  }
-
-  # update L, RZX, and RX
-  L <- Cholesky(UtU, LDL = FALSE, Imult=1)
-  if(!nAGQ){
-    RZX <- solve(L, UtV, system = "L")
-    RX <- try(chol(VtV - crossprod(RZX)))
-    if(inherits(RX, "try-error"))
-      stop("Downdated VtV not positive definite")
-  }
-
-  # update Utr and Vtr
-  if(nAGQ){
-    r <- Xwts*(eta - offset - X%*%beta + ((y-mu)/muEta))    
-  }
-  else {
-    r <- Xwts*(eta - offset + ((y-mu)/muEta))
-    Vtr <- t(V)%*%r
-  }
-  Utr <- Ut%*%r
-
-  # solve for u and beta
-  cu <- solve(L, Utr, system = "L")
-  if(!nAGQ){
-    cb <- solve(t(RX), Vtr - t(RZX)%*%cu)
-    newbeta <- as.vector(solve(RX, cb))
-    newu <- as.vector(solve(L, cu - RZX%*%newbeta,
-                            system = "Lt"))
-  }
-  else {
-    newu <- as.vector(solve(L, cu, system = "Lt"))
-  }
-
-  # update mu and eta
-  eta <- offset + as.vector((t(Lambdat%*%Zt)%*%newu) +
-                            (X%*%newbeta))
-  mu <- as.vector(family()$linkinv(eta))
-  
-  # compute penalized deviance
-  pdev <- sum(family()$dev.resid(y, mu, weights)) +
-    sum(newu^2)
-  if(abs((oldpdev - pdev) / pdev) < tol){
-    cvgd <- TRUE
-    break
-  }
-
-  # step-halving
-  if(pdev > oldpdev){
-    for(j in 1:10){
-      newu <- (newu + u)/2
-      if(!nAGQ) newbeta <- (newbeta + beta)/2
-      eta <- offset +
-        as.vector((t(Lambdat%*%Zt)%*%newu) +
-                  (X%*%newbeta))
-      mu <- as.vector(family()$linkinv(eta))
-      pdev <- sum(family()$dev.resid(y, mu, weights)) +
-        sum(newu^2)
-      if(!(pdev > oldpdev)) break
+    
+                                        # expand glmod
+    Lind <- glmod$reTrms$Lind
+    Lambdat <- glmod$reTrms$Lambdat
+    Zt <- glmod$reTrms$Zt
+    X <- glmod$X
+    n <- nrow(X)
+    p <- ncol(X)
+    q <- nrow(Zt)
+                                        # initialize beta and u
+                        # (only necessary if step-halving starts immediately)
+    if(missing(beta)) beta <- rep(0, p)
+    if(missing(u)) u <- rep(0, q)
+    newbeta <- beta
+                                        # update theta
+    Lambdat@x <- theta[Lind]
+                        # initialize penalized deviance and convergence flag
+    oldpdev <- .Machine$double.xmax
+    cvgd <- FALSE
+                                        # PIRLS
+    for(i in 1:npirls){
+                                        # update w and muEta
+        w <- weights/as.vector(family()$variance(mu))
+        muEta <- as.vector(family()$mu.eta(eta))
+                                        # update Ut and V
+        Xwts <- sqrt(w)*muEta
+        Ut <- Lambdat%*%Zt%*%Diagonal(n, Xwts)
+        UtU <- tcrossprod(Ut)
+        if(!nAGQ){
+            V <- diag(Xwts, n, n)%*%X
+            VtV <- t(V)%*%V
+            UtV <- Ut%*%V
+        }
+                                        # update L, RZX, and RX
+        L <- Cholesky(UtU, LDL = FALSE, Imult=1)
+        if(!nAGQ){
+            RZX <- solve(L, UtV, system = "L")
+            RX <- try(chol(VtV - crossprod(RZX)))
+            if(inherits(RX, "try-error"))
+                stop("Downdated VtV not positive definite")
+        }
+                                        # update Utr and Vtr
+        if(nAGQ){
+            r <- Xwts*(eta - offset - X%*%beta + ((y-mu)/muEta))    
+        }
+        else {
+            r <- Xwts*(eta - offset + ((y-mu)/muEta))
+            Vtr <- t(V)%*%r
+        }
+        Utr <- Ut%*%r
+                                        # solve for u and beta
+        cu <- solve(L, Utr, system = "L")
+        if(!nAGQ){
+            cb <- solve(t(RX), Vtr - t(RZX)%*%cu)
+            newbeta <- as.vector(solve(RX, cb))
+            newu <- as.vector(solve(L, cu - RZX%*%newbeta,
+                                    system = "Lt"))
+        }
+        else {
+            newu <- as.vector(solve(L, cu, system = "Lt"))
+        }
+                                        # update mu and eta
+        eta <- offset + as.vector((t(Lambdat%*%Zt)%*%newu) +
+                                  (X%*%newbeta))
+        mu <- as.vector(family()$linkinv(eta))
+                                        # compute penalized deviance
+        pdev <- sum(family()$dev.resid(y, mu, weights)) +
+            sum(newu^2)
+        if(abs((oldpdev - pdev) / pdev) < tol){
+            cvgd <- TRUE
+            break
+        }
+                                        # step-halving
+        if(pdev > oldpdev){
+            for(j in 1:10){
+                newu <- (newu + u)/2
+                if(!nAGQ) newbeta <- (newbeta + beta)/2
+                eta <- offset +
+                    as.vector((t(Lambdat%*%Zt)%*%newu) +
+                              (X%*%newbeta))
+                mu <- as.vector(family()$linkinv(eta))
+                pdev <- sum(family()$dev.resid(y, mu, weights)) +
+                    sum(newu^2)
+                if(!(pdev > oldpdev)) break
+            }
+            if((pdev - oldpdev) > tol)
+                stop("Step-halving failed")
+        }
+        oldpdev <- pdev
+        u <- newu
+        if(!nAGQ) beta <- newbeta
     }
-    if((pdev - oldpdev) > tol)
-      stop("Step-halving failed")
-  }
-  oldpdev <- pdev
-  u <- newu
-  if(!nAGQ) beta <- newbeta
- }
- if(cvgd){
-    # calculate laplace deviance approximation
-    ldL2 <- 2*determinant(L, logarithm = TRUE)$modulus
-    attributes(ldL2) <- NULL
-    ldev <- pdev + ldL2 + (q/2)*log(2*pi)
-    out <- structure(ldev, pdev = pdev,
-                     beta = newbeta, u = newu)
-    return(out)
- }
- stop("PIRLS failed to converge")
+    if(cvgd){
+        ## calculate laplace deviance approximation
+        ldL2 <- 2*determinant(L, logarithm = TRUE)$modulus
+        attributes(ldL2) <- NULL
+        ldev <- pdev + ldL2 + (q/2)*log(2*pi)
+        out <- structure(ldev, pdev = pdev,
+                         beta = newbeta, u = newu)
+        return(out)
+    }
+    stop("PIRLS failed to converge")
 }
 
 ##' @rdname pirls
 ##' @export
 pirls1 <- function(thetabeta, ...){
-  p <- ncol(glmod$X)
-  nth <- length(thetabeta) - p
-  theta <- thetabeta[1:nth]
-  beta <- thetabeta[-(1:nth)]
-  pirls(theta, beta, ..., nAGQ = 1)
+    p <- ncol(glmod$X)
+    nth <- length(thetabeta) - p
+    theta <- thetabeta[1:nth]
+    beta <- thetabeta[-(1:nth)]
+    pirls(theta, beta, ..., nAGQ = 1)
 }

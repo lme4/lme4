@@ -25,69 +25,54 @@
 ##' }
 ##' @export
 pls <- function(theta, lmod, y,
-                    weights = rep(1, length(y)),
-                    offset = rep(0, length(y)),
-                    REML = TRUE){
-
-  # expand lmod
-  Lind <- lmod$reTrms$Lind
-  Lambdat <- lmod$reTrms$Lambdat
-  Zt <- lmod$reTrms$Zt
-  X <- lmod$X
-  n <- nrow(X)
-  p <- ncol(X)
-  q <- nrow(Zt)
-  
-  # update Lambdat
-  Lambdat@x <- theta[Lind]
-
-  # calculate weighted design matrices
-  Ut <- Zt%*%Diagonal(n, sqrt(weights))
-  LamtUt <- Lambdat%*%Ut
-  V <- diag(sqrt(weights), n, n)%*%X
-
-  # calculate weighted response
-  wtResp <- sqrt(weights)*y
-  
-  # calculate decomposition of cross-product matrix
-  L <- Cholesky(tcrossprod(LamtUt), LDL = FALSE,
-                Imult=1)
-  RZX <- solve(L, LamtUt%*%V, system = "L")
-  RX <- try(chol(t(V)%*%V - crossprod(RZX)))
-  if(inherits(RX, "try-error")) return(NA)
-  
-  # solve for fixed effect estimates and conditional modes
-  cu <- solve(L, LamtUt%*%wtResp, system = "L")
-  cb <- solve(t(RX), t(V)%*%wtResp - t(RZX)%*%cu)
-  beta <- solve(RX, cb)
-  u <- solve(L, cu - RZX%*%beta, system = "Lt")
-  
-  # calculate conditional mean of the response
-  mu <- (t(Lambdat%*%Zt)%*%u) + (X%*%beta) + offset
-
-  # calculate weighted residuals
-  wtres <- sqrt(weights)*(y-mu)
-
-  # calculate residual sums of squares
-  wrss <- sum(wtres^2)
-  pwrss <- wrss + sum(u^2) # penalize
-
-  # calculate log determinants
-  ldL2 <- 2*determinant(L)$modulus
-  ldRX2 <- 2*determinant(RX)$modulus
-  attributes(ldL2) <- attributes(ldRX2) <- NULL
-  
-  # calculate profiled deviance for theta
-  devML <- ldL2 + n*(1 + log(2*pi*pwrss) - log(n))
-  devREML <- ldL2 + ldRX2 + (n-p)*(1 + log(2*pi*pwrss) -
-                                   log(n-p))
-
-  if(REML) dev <- devREML
-  else dev <- devML
-
-  sigmaML <- sqrt(pwrss/sum(weights))
-  
-  return(structure(dev, devML = devML, devREML = devREML, beta = beta, u = u,
-                   sigmaML = sigmaML,
-                   sigmaREML = sigmaML*(n/(n-p))))
+                weights = rep(1, length(y)),
+                offset = rep(0, length(y)),
+                REML = TRUE){
+                                        # expand lmod
+    Lind <- lmod$reTrms$Lind
+    Lambdat <- lmod$reTrms$Lambdat
+    Zt <- lmod$reTrms$Zt
+    X <- lmod$X
+    n <- nrow(X)
+    p <- ncol(X)
+    q <- nrow(Zt)
+                                        # update Lambdat
+    Lambdat@x <- theta[Lind]
+                                        # calculate weighted design matrices
+    Ut <- Zt%*%Diagonal(n, sqrt(weights))
+    LamtUt <- Lambdat%*%Ut
+    V <- diag(sqrt(weights), n, n)%*%X
+                                        # calculate weighted response
+    wtResp <- sqrt(weights)*y
+                                        # calculate decomposition of cross-product matrix
+    L <- Cholesky(tcrossprod(LamtUt), LDL = FALSE, Imult=1)
+    RZX <- solve(L, LamtUt%*%V, system = "L")
+    RX <- try(chol(t(V)%*%V - crossprod(RZX)))
+    if(inherits(RX, "try-error")) return(NA)
+                                        # solve for fixed effect estimates and conditional modes
+    cu <- solve(L, LamtUt%*%wtResp, system = "L")
+    cb <- solve(t(RX), t(V)%*%wtResp - t(RZX)%*%cu)
+    beta <- solve(RX, cb)
+    u <- solve(L, cu - RZX%*%beta, system = "Lt")
+                                        # calculate conditional mean of the response
+    mu <- (t(Lambdat%*%Zt)%*%u) + (X%*%beta) + offset
+                                        # calculate weighted residuals
+    wtres <- sqrt(weights)*(y-mu)
+                                        # calculate residual sums of squares
+    wrss <- sum(wtres^2)
+    pwrss <- wrss + sum(u^2)            # penalize
+                                        # calculate log determinants
+    ldL2 <- 2*determinant(L)$modulus
+    ldRX2 <- 2*determinant(RX)$modulus
+    attributes(ldL2) <- attributes(ldRX2) <- NULL
+                                        # calculate profiled deviance for theta
+    devML <- ldL2 + n*(1 + log(2*pi*pwrss) - log(n))
+    devREML <- ldL2 + ldRX2 + (n-p)*(1 + log(2*pi*pwrss) -
+                                     log(n-p))
+    if(REML) dev <- devREML
+    else dev <- devML
+    sigmaML <- sqrt(pwrss/sum(weights))
+    return(structure(dev, devML = devML, devREML = devREML, beta = beta, u = u,
+                     sigmaML = sigmaML,
+                     sigmaREML = sigmaML*(n/(n-p))))
 }
