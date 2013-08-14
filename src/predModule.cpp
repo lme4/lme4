@@ -20,9 +20,9 @@ namespace lme4 {
     typedef Eigen::Map<VectorXi>  MiVec;
 
     merPredD::merPredD(SEXP X, SEXP Lambdat, SEXP LamtUt, SEXP RZX,
-		       SEXP Ut, SEXP Utr, SEXP V, SEXP VtV, SEXP Vtr,
-		       SEXP Xwts, SEXP Zt, SEXP beta0, SEXP delb,
-		       SEXP delu, SEXP u0)
+                       SEXP Ut, SEXP Utr, SEXP V, SEXP VtV, SEXP Vtr,
+                       SEXP Xwts, SEXP Zt, SEXP beta0, SEXP delb,
+                       SEXP delu, SEXP u0)
         : d_X(       as<MMat>(X)),
           d_RZX(     as<MMat>(RZX)),
           d_V(       as<MMat>(V)),
@@ -143,10 +143,10 @@ namespace lme4 {
     }
 
     void merPredD::updateLambda(const VectorXd& Lambdax) {
-	int nnz(d_Lambdat.nonZeros());
+        int nnz(d_Lambdat.nonZeros());
         if (Lambdax.size() != nnz)
             throw invalid_argument("Lambdax size mismatch");
-	std::copy(Lambdax.data(), Lambdax.data() + nnz, d_Lambdat.valuePtr());
+        std::copy(Lambdax.data(), Lambdax.data() + nnz, d_Lambdat.valuePtr());
     }
 
     merPredD::Scalar merPredD::solve() {
