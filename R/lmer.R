@@ -12,7 +12,8 @@
 ##'    \code{~} operator and the terms, separated by \code{+} operators, on
 ##'    the right.  Random-effects terms are distinguished by vertical bars
 ##'    (\code{"|"}) separating expressions for design matrices from
-##'    grouping factors.
+##'    grouping factors. Two vertical bars (\code{"||"}) can be used to specify 
+##'    multiple uncorrelated random effects for the same grouping variable.
 ##' @param data an optional data frame containing the variables named in
 ##'    \code{formula}.  By default the variables are taken from the environment
 ##'    from which \code{lmer} is called. While \code{data} is optional,
@@ -94,9 +95,9 @@
 ##' }
 ##' @examples
 ##' ## linear mixed models - reference values from older code
-##' (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
+##' (fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy))
 ##' fm1_ML <- update(fm1,REML=FALSE)
-##' (fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
+##' (fm2 <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy))
 ##' anova(fm1, fm2)
 ##' @export
 ##' @importFrom minqa bobyqa
