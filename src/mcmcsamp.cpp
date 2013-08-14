@@ -18,6 +18,7 @@ namespace lme4 {
 	return std::sqrt(pwrss(pred, resp)/double(resp->y().size()));
     }
 
+#if 0
     mcmcsamp::mcmcsamp(lme4::merPredD *pred, lme4::lmResp *resp,
 		       SEXP dev, SEXP fixef, SEXP sigma, SEXP ranef)
 	: d_dev(  as<MVec>(dev)),
@@ -30,7 +31,7 @@ namespace lme4 {
 	bool           rr(   d_ranef.rows() > 0);
 	int            n(    resp->y().size());
 	int            nsamp(d_dev.size());
-	int            nth(  pred->theta().size());
+//	int            nth(  pred->theta().size());
 	int            p(    pred->beta0().size());
 	int            q(    pred->u0().size());
 	double         npq(  n + q);
@@ -53,7 +54,6 @@ namespace lme4 {
 	}
     }
 
-#if 0
 /**
  * Generate a Markov-chain Monte Carlo sample from an mer object
  *

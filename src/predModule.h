@@ -32,15 +32,14 @@ namespace lme4 {
     protected:
 	MMap          d_X, d_RZX, d_V, d_VtV;
 	MSpMatrixd    d_Zt, d_Ut, d_LamtUt, d_Lambdat;
-	MVec          d_theta, d_Vtr, d_Utr, d_Xwts, d_beta0, d_delb, d_delu, d_u0;
-	MiVec         d_Lind;
+	MVec          d_Vtr, d_Utr, d_Xwts, d_beta0, d_delb, d_delu, d_u0;
 	Index         d_N, d_p, d_q;
 	Scalar        d_CcNumer, d_ldL2, d_ldRX2;
 	ChmDecomp     d_L;
 	LLT<MatrixXd> d_RX;
     public:
 	merPredD(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, 
-		 SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+		 SEXP, SEXP, SEXP, SEXP, SEXP);
 
 	VectorXi             Pvec() const;
 
@@ -79,7 +78,6 @@ namespace lme4 {
 	const MVec&          delb() const {return d_delb;}
 	const MVec&          delu() const {return d_delu;}
 	const MVec&         beta0() const {return d_beta0;}
-	const MVec&         theta() const {return d_theta;}
 	const MVec&            u0() const {return d_u0;}
 
 	int                  info() const {return d_L.info();}
@@ -89,10 +87,10 @@ namespace lme4 {
 	void             setBeta0(const VectorXd&);
 	void              setDelb(const VectorXd&);
 	void              setDelu(const VectorXd&);
-	void             setTheta(const VectorXd&);
 	void                setU0(const VectorXd&);
 	void         updateDecomp();
 	void              updateL();
+	void         updateLambda(const VectorXd&);
 	void         updateLamtUt();
 	void            updateRes(const VectorXd&);
 	void           updateXwts(const  ArrayXd&);

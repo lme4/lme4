@@ -8,14 +8,13 @@ if(getRversion() < "2.15")
 ##' random-effects terms.  See the description of the returned value for a
 ##' detailed list.
 ##'
-##' @title Create Z, Lambda, Lind, etc.
+##' @title Create Z, Lambda, thfun, etc.
 ##' @param bars a list of parsed random-effects terms
 ##' @param fr a model frame in which to evaluate these terms
 ##' @return a list with components
 ##' \item{Zt}{transpose of the sparse model matrix for the random effects}
 ##' \item{Lambdat}{transpose of the sparse relative covariance factor}
-##' \item{Lind}{an integer vector of indices determining the mapping of the
-##'     elements of the \code{theta} to the \code{"x"} slot of \code{Lambdat}}
+##' \item{thfun}{a function mapping theta to the \code{"x"} slot of \code{Lambdat}}
 ##' \item{theta}{initial values of the covariance parameters}
 ##' \item{lower}{lower bounds on the covariance parameters}
 ##' \item{flist}{list of grouping factors used in the random-effects terms}
@@ -73,7 +72,7 @@ mkReTrms <- function(bars, fr) {
   Zt <- do.call(rBind, lapply(blist, "[[", "sm"))
   q <- nrow(Zt)
   
-  ## Create and install Lambdat, Lind, etc.  This must be done after
+  ## Create and install Lambdat, etc.  This must be done after
   ## any potential reordering of the terms.
   cnms <- lapply(blist, "[[", "cnms")
   nc <- sapply(cnms, length)		# no. of columns per term
@@ -104,13 +103,17 @@ mkReTrms <- function(bars, fr) {
                                                    thoff[i]))
                       }))))
   thet <- numeric(sum(nth))
-  ll <- list(Zt=Matrix::drop0(Zt), theta=thet, Lind=as.integer(Lambdat@x),
-             Gp=unname(c(0L, cumsum(nb))))
+  Lind <- as.integer(Lambdat@x)
+  ll <- list(Zt=Matrix::drop0(Zt), theta=thet, Gp=unname(c(0L, cumsum(nb))))
   ## lower bounds on theta elements are 0 if on diagonal, else -Inf
   ll$lower <- -Inf * (thet + 1)
   ll$lower[unique(diag(Lambdat))] <- 0
   ll$theta[] <- is.finite(ll$lower) # initial values of theta are 0 off-diagonal, 1 on
-  Lambdat@x[] <- ll$theta[ll$Lind]  # initialize elements of Lambdat
+  ll$thfun <- local({
+      Lind <- Lind
+      function(theta) theta[Lind]
+  })
+  Lambdat@x[] <- ll$theta[Lind]  # initialize elements of Lambdat
   ll$Lambdat <- Lambdat
   # massage the factor list
   fl <- lapply(blist, "[[", "ff")

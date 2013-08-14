@@ -466,13 +466,13 @@ extern "C" {
         if (!cvgd) throw runtime_error("prss failed to converge in 300 iterations");
     }
 
-    SEXP nlmerLaplace(SEXP pp_, SEXP rp_, SEXP theta_, SEXP u0_, SEXP beta0_,
+    SEXP nlmerLaplace(SEXP pp_, SEXP rp_, SEXP Lambdax_, SEXP u0_, SEXP beta0_,
                       SEXP verbose_, SEXP uOnly_, SEXP tol_) {
         BEGIN_RCPP;
 
         XPtr<nlsResp>     rp(rp_);
         XPtr<merPredD>    pp(pp_);
-        pp->setTheta(as<MVec>(theta_));
+        pp->updateLambda(as<MVec>(Lambdax_));
         pp->setU0(as<MVec>(u0_));
         pp->setBeta0(as<MVec>(beta0_));
         prssUpdate(rp, pp, ::Rf_asInteger(verbose_), ::Rf_asLogical(uOnly_),
@@ -585,8 +585,8 @@ extern "C" {
         END_RCPP;
     }
 
-    static double lmer_dev(XPtr<merPredD> ppt, XPtr<lmerResp> rpt, const Eigen::VectorXd& theta) {
-        ppt->setTheta(theta);
+    static double lmer_dev(XPtr<merPredD> ppt, XPtr<lmerResp> rpt, const Eigen::VectorXd& Lambdax) {
+        ppt->updateLambda(Lambdax);
 	ppt->updateXwts(rpt->sqrtXwt());
         ppt->updateDecomp();
         rpt->updateMu(ppt->linPred(0.));
@@ -621,22 +621,22 @@ extern "C" {
 
     // dense predictor module for mixed-effects models
 
-    SEXP merPredDCreate(SEXP Xs, SEXP Lambdat, SEXP LamtUt, SEXP Lind,
+    SEXP merPredDCreate(SEXP Xs, SEXP Lambdat, SEXP LamtUt,
                         SEXP RZX, SEXP Ut, SEXP Utr, SEXP V, SEXP VtV,
                         SEXP Vtr, SEXP Xwts, SEXP Zt, SEXP beta0,
-                        SEXP delb, SEXP delu, SEXP theta, SEXP u0) {
+                        SEXP delb, SEXP delu, SEXP u0) {
         BEGIN_RCPP;
-        merPredD *ans = new merPredD(Xs, Lambdat, LamtUt, Lind, RZX, Ut, Utr, V, VtV,
-                                     Vtr, Xwts, Zt, beta0, delb, delu, theta, u0);
+        merPredD *ans = new merPredD(Xs, Lambdat, LamtUt, RZX, Ut, Utr, V, VtV,
+                                     Vtr, Xwts, Zt, beta0, delb, delu, u0);
         return wrap(XPtr<merPredD>(ans, true));
         END_RCPP;
     }
 
                                 // setters
-    SEXP merPredDsetTheta(SEXP ptr, SEXP theta) {
+    SEXP merPredDupdateLambda(SEXP ptr, SEXP Lambdax) {
         BEGIN_RCPP;
-        XPtr<merPredD>(ptr)->setTheta(as<MVec>(theta));
-        return theta;
+        XPtr<merPredD>(ptr)->updateLambda(as<MVec>(Lambdax));
+        return Lambdax;
         END_RCPP;
     }
 
@@ -1017,9 +1017,8 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(lmer_Laplace,       4),
     CALLDEF(lmer_opt1,          4),
 
-    CALLDEF(merPredDCreate,    17), // generate external pointer
+    CALLDEF(merPredDCreate,    15), // generate external pointer
 
-    CALLDEF(merPredDsetTheta,   2), // setters
     CALLDEF(merPredDsetBeta0,   2), 
 
     CALLDEF(merPredDsetDelu,    2), // setters
@@ -1038,14 +1037,15 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(merPredDb,          2), // methods
     CALLDEF(merPredDbeta,       2),
     CALLDEF(merPredDcondVar,    2),
-    CALLDEF(merPredDlinPred,    2),
     CALLDEF(merPredDinstallPars,2),
+    CALLDEF(merPredDlinPred,    2),
     CALLDEF(merPredDsolve,      1),
     CALLDEF(merPredDsolveU,     1),
     CALLDEF(merPredDsqrL,       2),
     CALLDEF(merPredDu,          2),
     CALLDEF(merPredDupdateDecomp,1),
     CALLDEF(merPredDupdateL,    1),
+    CALLDEF(merPredDupdateLambda,1),
     CALLDEF(merPredDupdateLamtUt,1),
     CALLDEF(merPredDupdateRes,  2),
     CALLDEF(merPredDupdateXwts, 2),

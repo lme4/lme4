@@ -281,7 +281,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
                                      X = Xdrop,
                                      Zt = pp$Zt,
                                      Lambdat = pp$Lambdat,
-                                     Lind = pp$Lind,
+                                     thfun = pp$thfun,
                                      theta = pp$theta,
                                      n = nrow(Xdrop))
                            )

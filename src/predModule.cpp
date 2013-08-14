@@ -19,10 +19,10 @@ namespace lme4 {
     typedef Eigen::Map<VectorXd>  MVec;
     typedef Eigen::Map<VectorXi>  MiVec;
 
-    merPredD::merPredD(SEXP X, SEXP Lambdat, SEXP LamtUt, SEXP Lind,
-                       SEXP RZX, SEXP Ut, SEXP Utr, SEXP V, SEXP VtV,
-                       SEXP Vtr, SEXP Xwts, SEXP Zt, SEXP beta0,
-                       SEXP delb, SEXP delu, SEXP theta, SEXP u0)
+    merPredD::merPredD(SEXP X, SEXP Lambdat, SEXP LamtUt, SEXP RZX,
+		       SEXP Ut, SEXP Utr, SEXP V, SEXP VtV, SEXP Vtr,
+		       SEXP Xwts, SEXP Zt, SEXP beta0, SEXP delb,
+		       SEXP delu, SEXP u0)
         : d_X(       as<MMat>(X)),
           d_RZX(     as<MMat>(RZX)),
           d_V(       as<MMat>(V)),
@@ -31,7 +31,6 @@ namespace lme4 {
           d_Ut(      as<MSpMatrixd>(Ut)),
           d_LamtUt(  as<MSpMatrixd>(LamtUt)),
           d_Lambdat( as<MSpMatrixd>(Lambdat)),
-          d_theta(   as<MVec>(theta)),
           d_Vtr(     as<MVec>(Vtr)),
           d_Utr(     as<MVec>(Utr)),
           d_Xwts(    as<MVec>(Xwts)),
@@ -39,7 +38,6 @@ namespace lme4 {
           d_delb(    as<MVec>(delb)),
           d_delu(    as<MVec>(delu)),
           d_u0(      as<MVec>(u0)),
-          d_Lind(    as<MiVec>(Lind)),
           d_N(       d_X.rows()),
           d_p(       d_X.cols()),
           d_q(       d_Zt.rows()),
@@ -47,14 +45,10 @@ namespace lme4 {
     {                           // Check consistency of dimensions
         if (d_N != d_Zt.cols())
             throw invalid_argument("Z dimension mismatch");
-        if (d_Lind.size() != d_Lambdat.nonZeros())
-            throw invalid_argument("size of Lind does not match nonzeros in Lambda");
-        // checking of the range of Lind is now done in R code for reference class
                                 // initialize beta0, u0, delb, delu and VtV
         d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
         d_RX.compute(d_VtV);    // ensure d_RX is initialized even in the 0-column X case
 
-        setTheta(d_theta);          // starting values into Lambda
         d_L.cholmod().final_ll = 1; // force an LL' decomposition
         updateLamtUt();
         d_L.analyzePattern(d_LamtUt); // perform symbolic analysis
@@ -148,17 +142,11 @@ namespace lme4 {
         d_ldL2 = ::M_chm_factor_ldetL2(d_L.factor());
     }
 
-    void merPredD::setTheta(const VectorXd& theta) {
-        if (theta.size() != d_theta.size())
-            throw invalid_argument("theta size mismatch");
-                                // update theta
-        std::copy(theta.data(), theta.data() + theta.size(), d_theta.data());
-                                // update Lambdat
-        int    *lipt = d_Lind.data();
-        double *LamX = d_Lambdat.valuePtr(), *thpt = d_theta.data();
-        for (int i = 0; i < d_Lind.size(); ++i) {
-            LamX[i] = thpt[lipt[i] - 1];
-        }
+    void merPredD::updateLambda(const VectorXd& Lambdax) {
+	int nnz(d_Lambdat.nonZeros());
+        if (Lambdax.size() != nnz)
+            throw invalid_argument("Lambdax size mismatch");
+	std::copy(Lambdax.data(), Lambdax.data() + nnz, d_Lambdat.valuePtr());
     }
 
     merPredD::Scalar merPredD::solve() {
