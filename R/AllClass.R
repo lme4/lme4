@@ -34,7 +34,7 @@ setClass("lmList.confint", contains = "array")
 ##' @param ... List of arguments (see Note).
 ##' @section Methods:
 ##' \describe{
-##'   \item{new(X, Zt, Lambdat, Lind, theta, n):}{Create a new \code{\linkS4class{merPredD}} object}
+##'   \item{new(X, Zt, Lambdat, thfun, theta, n):}{Create a new \code{\linkS4class{merPredD}} object}
 ##' }
 ##' @note Arguments to the \code{new} methods must be named arguments:
 ##' \itemize{
@@ -44,9 +44,8 @@ setClass("lmList.confint", contains = "array")
 ##'     is stored in the \code{Zt} field.}
 ##' \item{Lambdat}{ transpose of the sparse lower triangular relative variance
 ##'     factor (stored in the \code{Lambdat} field).}
-##' \item{Lind}{ integer vector of the same length as the \code{"x"} slot in the
-##'     \code{Lambdat} field.  Its elements should be in the range 1 to the length
-##'     of the \code{theta} field.}
+##' \item{thfun}{function mapping \code{"theta"} to the \code{"x"} slot in the
+##'     \code{Lambdat} field.}
 ##' \item{theta}{ numeric vector of variance component parameters (stored in the
 ##'     \code{theta} field).}
 ##' \item{n}{ sample size, usually \code{nrow(X)}.}
@@ -59,7 +58,6 @@ merPredD <-
                 fields =
                 list(Lambdat = "dgCMatrix",
                      LamtUt  = "dgCMatrix",
-                     Lind    = "integer",
                      Ptr     = "externalptr",
                      RZX     = "matrix",
                      Ut      = "dgCMatrix",
@@ -74,22 +72,21 @@ merPredD <-
                      delb    = "numeric",
                      delu    = "numeric",
                      theta   = "numeric",
+                     thfun   = "function",
                      u0      = "numeric"),
                 methods =
                 list(
-                     initialize = function(X, Zt, Lambdat, Lind, theta, n, ...) {
+                     initialize = function(X, Zt, Lambdat, thfun, theta, n, ...) {
                          if (!nargs()) return
                          X <<- as(X, "matrix")
                          Zt <<- as(Zt, "dgCMatrix")
                          Lambdat <<- as(Lambdat, "dgCMatrix")
-                         Lind <<- as.integer(Lind)
+                         thfun <<- as.function(thfun)
                          theta <<- as.numeric(theta)
                          N <- nrow(X)
                          p <- ncol(X)
                          q <- nrow(Zt)
-                         stopifnot(length(theta) > 0L,
-                                   length(Lind) > 0L,
-                                   all(sort(unique(Lind)) == seq_along(theta)))
+                         stopifnot(length(theta) > 0L)
                          RZX <<- array(0, c(q, p))
                          Utr <<- numeric(q)
                          V <<- array(0, c(n, p))
@@ -187,9 +184,8 @@ merPredD <-
                      },
                     initializePtr = function() {
                         Ptr <<- .Call(merPredDCreate, as(X, "matrix"), Lambdat,
-                                      LamtUt, Lind, RZX, Ut, Utr, V, VtV, Vtr,
-                                      Xwts, Zt, beta0, delb, delu, theta, u0)
-                        .Call(merPredDsetTheta, Ptr, theta)
+                                      LamtUt, RZX, Ut, Utr, V, VtV, Vtr,
+                                      Xwts, Zt, beta0, delb, delu, u0)
                         .Call(merPredDupdateXwts, Ptr, Xwts)
                         .Call(merPredDupdateDecomp, Ptr)
                      },
@@ -203,10 +199,6 @@ merPredD <-
                      setBeta0     = function(beta0) {
                          'install a new value of theta'
                          .Call(merPredDsetBeta0, ptr(), as.numeric(beta0))
-                     },
-                     setTheta     = function(theta) {
-                         'install a new value of theta'
-                         .Call(merPredDsetTheta, ptr(), as.numeric(theta))
                      },
                      solve        = function() {
                          'solve for the coefficient increments delu and delb'
@@ -240,6 +232,10 @@ merPredD <-
                          'update LamtUt and L'
                          .Call(merPredDupdateL, ptr())
                      },
+                     updateLambda = function(Lambdax) {
+                         'update x slot of Lambdat'
+                         .Call(merPredDupdateLambda, ptr(), Lambdax)
+                     },
                      updateLamtUt = function() {
                          'update LamtUt and L'
                          .Call(merPredDupdateLamtUt, ptr())
@@ -254,7 +250,7 @@ merPredD <-
                      }
                      )
                 )
-merPredD$lock("Lambdat", "LamtUt", "Lind", "RZX", "Ut", "Utr", "V", "VtV", "Vtr",
+merPredD$lock("Lambdat", "LamtUt", "RZX", "Ut", "Utr", "V", "VtV", "Vtr",
               "X", "Xwts", "Zt", "beta0", "delb", "delu", "theta", "u0")
 
 ##' Class \code{"merPredD"} - a dense predictor reference class

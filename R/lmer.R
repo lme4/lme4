@@ -375,7 +375,7 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
                          lower=vals$reTrms$lower),
                     parent=parent.frame())
     rho$pp <- do.call(merPredD$new,
-                      c(vals$reTrms[c("Zt","theta","Lambdat","Lind")],
+                      c(vals$reTrms[c("Zt","theta","Lambdat","thfun")],
                         list(X=X, n=length(vals$respMod$mu), Xwts=vals$respMod$sqrtXwt,
                              beta0=qr.coef(qr(X), unlist(lapply(vals$pnames, get,
                              envir = rho$resp$nlenv))))))
@@ -466,7 +466,7 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
     ff <-
     if (is(rho$resp, "lmerResp")) {
 	rho$lmer_Deviance <- lmer_Deviance
-	function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))
+	function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pp$thfun(as.double(theta)))
     } else if (is(rho$resp, "glmResp")) {
         ## control values will override rho values *if present*
         if (!is.null(tp <- control$tolPwrss)) rho$tolPwrss <- tp
@@ -474,7 +474,7 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
 	if (nAGQ == 0L)
 	    function(theta) {
 		resp$updateMu(lp0)
-		pp$setTheta(theta)
+		pp$updateLambda(thfun(theta))
 		p <- pwrssUpdate(pp, resp, tolPwrss, GHrule(0L),
                             compDev, verbose)
                 resp$updateWts()
@@ -486,7 +486,7 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
                 ## pp$setDelu(rep(0, length(pp$delu)))
                 resp$setOffset(baseOffset)
 		resp$updateMu(lp0)
-		pp$setTheta(as.double(pars[dpars])) # theta is first part of pars
+		pp$updateLambda(thfun(as.double(pars[dpars]))) # theta is first part of pars
                 spars <- as.numeric(pars[-dpars])
                 offset <- if (length(spars)==0) baseOffset else baseOffset + pp$X %*% spars
 		resp$setOffset(offset)
@@ -607,7 +607,6 @@ glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, ve
 ## 	      is((fem <- rho$fem), "Rcpp_deFeMod"),
 ## 	      is((resp <- rho$resp), "Rcpp_lmerResp"),
 ## 	      all((lower <- rem$lower) == 0))
-##     Lind <- rem$Lind
 ##     n <- length(resp$y)
 ##     function(pars) {
 ## 	sigma <- pars[1]
@@ -1244,7 +1243,7 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
     rho$resp <- new(class(rr), y=rr$y, offset=rr$offset, weights=rr$weights, REML=0L)
     xpp <- x@pp
     rho$pp <- new(class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat,
-                  Lind=xpp$Lind, theta=xpp$theta, n=nrow(xpp$X))
+                  thfun=xpp$thfun, theta=xpp$theta, n=nrow(xpp$X))
     devfun <- mkdevfun(rho, 0L)
     opt <- optwrap(optimizer, devfun, x@theta, lower=x@lower)
     ##  opt <- bobyqa(x@theta, devfun, x@lower)
@@ -1688,7 +1687,7 @@ tnames <- function(object,diag.only=FALSE,old=TRUE,prefix=NULL) {
 ##'     \item{L}{sparse Cholesky factor of the penalized random-effects model.}
 ##'     \item{Lambda}{relative covariance factor of the random effects.}
 ##'     \item{Lambdat}{transpose of the relative covariance factor of the random effects.}
-##'     \item{Lind}{index vector for inserting elements of \eqn{\theta}{theta} into the
+##'     \item{thfun}{a function mapping \eqn{\theta}{theta} into the
 ##'                 nonzeros of \eqn{\Lambda}{Lambda}}
 ##'     \item{A}{Scaled sparse model matrix (class
 ##'      \code{"\link[Matrix:dgCMatrix-class]{dgCMatrix}"}) for
@@ -1790,7 +1789,7 @@ getME <- function(object,
 	   "Lambda"= t(PR$ Lambdat),
 	   "Lambdat"= PR$ Lambdat,
            "A" = PR$Lambdat %*% PR$Zt,
-           "Lind" = PR$ Lind,
+           "Lind" = environment(PR$thfun)$Lind,
 	   "RX" = structure(PR$RX(), dimnames = list(colnames(PR$X), colnames(PR$X))), ## maybe add names elsewhere?
 	   "RZX" = structure(PR$RZX, dimnames = list(NULL, colnames(PR$X))), ## maybe add names elsewhere?
            "sigma" = sigma(object),
