@@ -1038,7 +1038,7 @@ NULL
 ##'
 ##' If grouping factor i has k levels and j random effects per level the ith
 ##' component of the list returned by \code{ranef} is a data frame with k rows
-##' and j columns.  If \code{postVar} is \code{TRUE} the \code{"postVar"}
+##' and j columns.  If \code{condVar} is \code{TRUE} the \code{"postVar"}
 ##' attribute is an array of dimension j by j by k.  The kth face of this array
 ##' is a positive definite symmetric j by j matrix.  If there is only one
 ##' grouping factor in the model the variance-covariance matrix for the entire
@@ -1052,9 +1052,9 @@ NULL
 ##' @aliases ranef ranef.merMod
 ##' @param object an object of a class of fitted models with random effects,
 ##' typically an \code{"\linkS4class{merMod}"} object.
-##' @param postVar an optional logical argument indicating if the conditional
-##' variance-covariance matrices, also called the \dQuote{posterior variances},
-##' of the random effects should be added as an attribute.
+##' @param condVar an optional logical argument indicating if the conditional
+##' variance-covariance matrices of the random effects should be added as an attribute.
+##' @param postVar a (deprecated) synonym for \code{condVar}
 ##' @param drop an optional logical argument indicating components of the return
 ##' value that would be data frames with a single column, usually a column
 ##' called \sQuote{\code{(Intercept)}}, should be returned as named vectors.
@@ -1068,7 +1068,7 @@ NULL
 ##' the grouping factor.  The number of columns is the dimension of the random
 ##' effect associated with each level of the factor.
 ##'
-##' If \code{postVar} is \code{TRUE} each of the data frames has an attribute
+##' If \code{condVar} is \code{TRUE} each of the data frames has an attribute
 ##' called \code{"postVar"} which is a three-dimensional array with symmetric
 ##' faces.
 ##'
@@ -1076,18 +1076,18 @@ NULL
 ##' a single column are converted to named numeric vectors.
 ##' @note To produce a \dQuote{caterpillar plot} of the random effects apply
 ##' \code{\link[lattice:xyplot]{dotplot}} to the result of a call to
-##' \code{ranef} with \code{postVar = TRUE}.
+##' \code{ranef} with \code{condVar = TRUE}.
 ##' @examples
 ##' fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 ##' fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy)
 ##' fm3 <- lmer(diameter ~ (1|plate) + (1|sample), Penicillin)
 ##' ranef(fm1)
-##' str(rr1 <- ranef(fm1, postVar = TRUE))
+##' str(rr1 <- ranef(fm1, condVar = TRUE))
 ##' dotplot(rr1)  ## default
 ##' ## specify free scales in order to make Day effects more visible
 ##' dotplot(rr1,scales = list(x = list(relation = 'free')))[["Subject"]]
-##' if(FALSE) { ##-- postVar=TRUE is not yet implemented for multiple terms -- FIXME
-##' str(ranef(fm2, postVar = TRUE))
+##' if(FALSE) { ##-- condVar=TRUE is not yet implemented for multiple terms -- FIXME
+##' str(ranef(fm2, condVar = TRUE))
 ##' }
 ##' op <- options(digits = 4)
 ##' ranef(fm3, drop = TRUE)
@@ -1095,9 +1095,14 @@ NULL
 ##' @keywords models methods
 ##' @method ranef merMod
 ##' @export
-ranef.merMod <- function(object, postVar = FALSE, drop = FALSE,
-			 whichel = names(ans), ...)
+ranef.merMod <- function(object, condVar = FALSE, drop = FALSE,
+			 whichel = names(ans), postVar = FALSE, ...)
 {
+    if (!missing(postVar) && missing(condVar)) {
+        warning(sQuote("postVar")," is deprecated: please use ",
+                sQuote("condVar")," instead")
+        condVar <- postVar
+    }
     ans <- object@pp$b(1.)
     if (!is.null(object@flist)) {
 	## evaluate the list of matrices
@@ -1123,7 +1128,7 @@ ranef.merMod <- function(object, postVar = FALSE, drop = FALSE,
 	whchL <- names(ans) %in% whichel
 	ans <- ans[whchL]
 
-	if (postVar) {
+	if (condVar) {
             sigsqr <- sigma(object)^2
 	    vv <- .Call(merPredDcondVar, object@pp$ptr(), as.environment(rePos$new(object)))
 	    for (i in names(ans)) ## seq_along(ans))
@@ -1136,10 +1141,10 @@ ranef.merMod <- function(object, postVar = FALSE, drop = FALSE,
 			  pv <- drop(attr(el, "postVar"))
 			  el <- drop(as.matrix(el))
 			  if (!is.null(pv))
-			      attr(el, "postVar") <- pv
+                              attr(el, "postVar") <- pv
 			  el
 		      })
-	class(ans) <- "ranef.mer"
+     	class(ans) <- "ranef.mer"
     }
     ans
 }## ranef.merMod
@@ -2155,7 +2160,8 @@ qqmath.ranef.mer <- function(x, data, ...)
 	panel.xyplot(x, y, pch = pch, ...)
     }
     f <- function(x) {
-	if (!is.null(pv <- attr(x, "postVar"))) {
+	if (!is.null(pv <- attr(x, "postVar")))
+        {
 	    cols <- 1:(dim(pv)[1])
 	    se <- unlist(lapply(cols, function(i) sqrt(pv[i, i, ])))
 	    nr <- nrow(x)
