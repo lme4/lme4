@@ -1,0 +1,18 @@
+Package: lme4pureR
+Type: Package
+Title: lme4 in pure R
+Version: 0.0-1
+Date: 2013-08-09
+Author: Steve Walker
+Maintainer: Steve Walker <steve.walker@utoronto.ca>
+Description: Doug Bates' PIRLS algorithm in pure R. The purpose is to clarify
+    how PIRLS works without having to read through C++ code, and as a sandbox
+    for trying out modified versions of PIRLS.
+Depends:
+    Matrix
+Imports:
+    Matrix
+License: GPL-2
+Collate:
+    'pirls.R'
+    'pls.R'
