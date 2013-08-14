@@ -73,7 +73,7 @@ doCheck <- function(x) {
 checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
 {
     stopifnot(is.list(ctrl), is.numeric(n), is.numeric(nonSmall))
-    cstr <- "check.numobs.vs.rankZ"
+    cstr <- "check.nobs.vs.rankZ"
     if (doCheck(cc <- ctrl[[cstr]])) { ## not NULL or "ignore"
 	d <- dim(Zt)
 	doTr <- d[1L] < d[2L] # Zt is "wide" => qr needs transpose(Zt)

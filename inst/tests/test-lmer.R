@@ -72,10 +72,10 @@ test_that("lmer", {
     ## disable test ... should be no warning
     expect_is(lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
                    data = sleepstudy, subset = (Days == 1 | Days == 9),
-                   control=lmerControl(check.numobs.vs.rankZ="ignore")),
+                   control=lmerControl(check.nobs.vs.rankZ="ignore")),
               "merMod")
     ## disable warning via options
-    options(lmerControl=list(check.numlev.gtreq.5="ignore",check.numobs.vs.rankZ="ignore"))
+    options(lmerControl=list(check.numlev.gtreq.5="ignore",check.nobs.vs.rankZ="ignore"))
     expect_is(fm4 <- lmer(Reaction ~ Days + (1|Subject),
                             subset(sleepstudy,Subject %in% levels(Subject)[1:4])), "merMod")
     expect_is(lmer(Reaction ~ 1 + Days + (1 + Days | Subject),

@@ -11,17 +11,17 @@ lmerControl(optimizer = "Nelder_Mead",
     restart_edge = TRUE, sparseX = FALSE,
     check.nobs.vs.rankZ = "stopSmall",
     check.numlev.gtreq.5 = "warning",
-    check.numlev.gtr.1 = "stop", optControl = list())
+    check.numlev.gtr.1 = "stop", optCtrl = list())
 
 glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     restart_edge = FALSE, sparseX = FALSE,
     check.nobs.vs.rankZ = "stopSmall",
     check.numlev.gtreq.5 = "warning",
     check.numlev.gtr.1 = "stop", tolPwrss = 1e-07,
-    compDev = TRUE, optControl = list())
+    compDev = TRUE, optCtrl = list())
 
 nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
-             optControl = list())
+             optCtrl = list())
 }
 \arguments{
   \item{optimizer}{character - name of optimizing
@@ -82,7 +82,7 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     estimated scale parameters; \code{nobs >= rank(Z)} will be tested
     for GLMMs with fixed scale parameter.}
 
-  \item{optControl}{a \code{\link{list}} of additional arguments to be
+  \item{optCtrl}{a \code{\link{list}} of additional arguments to be
     passed to the nonlinear optimizer (see \code{\link{Nelder_Mead}},
     \code{\link[minqa]{bobyqa}}).  In particular, both
     \code{Nelder_Mead} and \code{bobyqa} use \code{maxfun} to
@@ -103,7 +103,7 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
   \code{restart_edge});
   (2) a list of data-checking specifications
   (e.g. \code{check.nobs.vs.rankZ});
-  (3) parameters to be passed to the optimizer, i.e., the \code{optControl}
+  (3) parameters to be passed to the optimizer, i.e., the \code{optCtrl}
   list, which may contain \code{maxiter}.)
 }
 \details{

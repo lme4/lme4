@@ -141,7 +141,7 @@ lmer <- function(formula, data=NULL, REML = TRUE,
     opt <- optimizeLmer(devfun,
                         optimizer=control$optimizer,
                         restart_edge=control$restart_edge,
-                        control=control$optControl,
+                        control=control$optCtrl,
                         verbose=verbose,
                         start=start)
     mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr, mcout) ## prepare output
@@ -301,7 +301,7 @@ glmer <- function(formula, data=NULL, family = gaussian,
     opt <- optimizeGlmer(devfun,
                          optimizer = control$optimizer[[1]],
                          restart_edge=control$restart_edge,
-                         control = control$optControl,
+                         control = control$optCtrl,
                          start=start,
                          nAGQ = 0,
                          verbose=verbose)
@@ -318,7 +318,7 @@ glmer <- function(formula, data=NULL, family = gaussian,
         opt <- optimizeGlmer(devfun,
                              optimizer = control$optimizer[[2]],
                              restart_edge=control$restart_edge,
-                             control = control$optControl,
+                             control = control$optCtrl,
                              start=start,
                              nAGQ=nAGQ,
                              verbose = verbose,
@@ -388,7 +388,7 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
     rho$tolPwrss <- control$tolPwrss # Reset control parameter (the initial optimization is coarse)
 
     opt <- optwrap(control$optimizer[[1]], devfun, rho$pp$theta, rho$lower,
-                   control=control$optControl, adj=FALSE)
+                   control=control$optCtrl, adj=FALSE)
     rho$control <- attr(opt,"control")
 
     if (nAGQ > 0L) {
@@ -405,7 +405,7 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
         if (devFunOnly) return(devfun)
 
         opt <- optwrap(control$optimizer[[2]], devfun, par=c(rho$pp$theta, rho$beta0),
-                       lower=rho$lower, control=control$optControl,
+                       lower=rho$lower, control=control$optCtrl,
                        adj=TRUE, verbose=verbose)
 
 
