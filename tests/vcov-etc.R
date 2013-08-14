@@ -62,7 +62,7 @@ system.time(fm9 <-
                  (1|s) + (1|d) + (1|dept:service) + (1|dept),
                  InstEval, verbose = 1L, REML=FALSE))
 fm9
-rr <- ranef(fm9, postVar = TRUE)
+rr <- ranef(fm9, condVar = TRUE)
 qqmath(rr,strip=FALSE)$d
 dotplot(rr,strip=FALSE)$`dept:service`
 }
