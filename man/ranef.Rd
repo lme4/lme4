@@ -12,8 +12,7 @@
   \code{"\linkS4class{merMod}"} object.}
 
   \item{condVar}{an optional logical argument indicating if
-  the conditional variance-covariance matrices, also called
-  the \dQuote{posterior variances}, of the random effects
+  the conditional variance-covariance matrices of the random effects
   should be added as an attribute.}
 
   \item{drop}{an optional logical argument indicating
@@ -40,7 +39,8 @@
 
   If \code{condVar} is \code{TRUE} each of the data frames
   has an attribute called \code{"postVar"} which is a
-  three-dimensional array with symmetric faces.
+  three-dimensional array with symmetric faces. (The name
+  of this attribute is a historical artifact.)
 
   When \code{drop} is \code{TRUE} any components that would
   be data frames of a single column are converted to named
