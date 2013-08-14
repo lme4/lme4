@@ -1,11 +1,11 @@
 # testing "||" notation for independent ranefs
-#setwd("C:/birs/lme4")
+# setwd("C:/birs/lme4")
+# library(devtools)
+# rm(list=ls())
+# load_all()
+
 
 library(testthat)
-library(devtools)
-
-rm(list=ls())
-load_all()
 
 #basic intercept + slope
 expect_equivalent(
