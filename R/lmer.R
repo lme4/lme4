@@ -346,7 +346,7 @@ glmer <- function(formula, data=NULL, family = gaussian,
 ##' @param \dots other potential arguments.  A \code{method} argument was used
 ##'    in earlier versions of the package. Its functionality has been replaced by
 ##'    the \code{nAGQ} argument.
-##' @note Adaptive Gauss-Hermite quadrature (\code{nAGQ}>1) is not currently implemented for \code{nlmer}. 
+##' @note Adaptive Gauss-Hermite quadrature (\code{nAGQ}>1) is not currently implemented for \code{nlmer}.
 ##' @inheritParams glmer
 ##' @keywords models
 ##' @examples
@@ -1746,7 +1746,7 @@ getME <- function(object,
                   "flist",
                   "beta", "theta", "ST",
 		  "REML", "is_REML",
-                  "n_rtrms", "n_rfacs",
+                  "n_rtrms", "n_rfacs", "cnms",
                   "devcomp", "offset", "lower"))
 {
     if(missing(name)) stop("'name' must not be missing")
@@ -1760,29 +1760,32 @@ getME <- function(object,
     PR   <- object@pp
     dc   <- object@devcomp
     cmp  <- dc $ cmp
+    cnms <- object@cnms
     dims <- dc $ dims
     Tpfun <- function(cnms) {
-        ltsize <- function(x) x*(x+1)/2
-        cLen <- cumsum(ltsize(sapply(cnms,length)))
-        setNames(c(0,cLen),c(names(cnms),"__end"))
+	ltsize <- function(n) n*(n+1)/2 # lower triangle size
+	cLen <- cumsum(ltsize(vapply(cnms,length, 1L)))
+	setNames(c(0, cLen),
+		 c("beg__", names(cnms))) ## such that diff( Tp ) is well-named
     }
     switch(name,
 	   "X" = PR$X, ## ok ? - check -- use model.matrix() method instead?
 	   "Z" = t(PR$Zt),
 	   "Zt"= PR$Zt,
-     "Ztlist" = {
-         getInds <- function(i) {
-             n <- diff(object@Gp)[i]      ## number of elements in this block
-             nt <- length(object@cnms[[i]]) ## number of REs
-             inds <- lapply(seq(nt),seq,to=n,by=nt)  ## pull out individual RE indices
-             inds <- lapply(inds,function(x) x + object@Gp[i])  ## add group offset
-         }
-         inds <- do.call(c,lapply(seq_along(object@cnms),getInds))
-         setNames(lapply(inds,function(i) PR$Zt[i,]),
-                  tnames(object,diag.only=TRUE))
-     },
+           "Ztlist" =
+       {
+           getInds <- function(i) {
+               n <- diff(object@Gp)[i]      ## number of elements in this block
+               nt <- length(cnms[[i]]) ## number of REs
+               inds <- lapply(seq(nt),seq,to=n,by=nt)  ## pull out individual RE indices
+               inds <- lapply(inds,function(x) x + object@Gp[i])  ## add group offset
+           }
+           inds <- do.call(c,lapply(seq_along(cnms),getInds))
+           setNames(lapply(inds,function(i) PR$Zt[i,]),
+                    tnames(object,diag.only=TRUE))
+       },
            "y" = rsp$y,
-           "mu"=rsp$mu,
+           "mu"= rsp$mu,
            "u" = object@u,
            "b" = t(PR$Lambdat) %*% object@u,
 	   "L"= PR$ L(),
@@ -1794,21 +1797,21 @@ getME <- function(object,
 	   "RZX" = structure(PR$RZX, dimnames = list(NULL, colnames(PR$X))), ## maybe add names elsewhere?
            "sigma" = sigma(object),
            "Gp" = object@Gp,
-           "Tp" = Tpfun(object@cnms) ,
+           "Tp" = Tpfun(cnms) ,
            "flist" = object@flist,
 	   "beta" = object@beta,
            "theta"= setNames(object@theta,tnames(object)),
            "ST"= setNames(vec2mlist(object@theta,
-                                    n=sapply(object@cnms,length),
+                                    n=sapply(cnms,length),
                                     symm=FALSE),
-                         names(object@cnms)),
+                         names(cnms)),
 	   "REML" = dims["REML"],
 	   "is_REML" = isREML(object),
            ## number of random-effects terms
-	   "n_rtrms" = length(object@cnms),
+	   "n_rtrms" = length(cnms),
            ## number of random-effects grouping factors
            "n_rfacs" = length(object@flist),
-
+           "cnms" = cnms,
            "devcomp" = dc,
            "offset" = rsp$offset,
            "lower" = object@lower,
@@ -2287,4 +2290,3 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
     attr(opt,"warnings") <- curWarnings
     opt
 }
-
