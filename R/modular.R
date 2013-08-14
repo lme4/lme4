@@ -162,7 +162,12 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     }
 
     denv <- checkFormulaData(formula,data)
-    mc$formula <- formula <- as.formula(formula,env=denv) ## substitute evaluated call
+    #mc$formula <- formula <- as.formula(formula,env=denv) ## substitute evaluated call
+    formula <- as.formula(formula,env=denv)
+    # get rid of || terms so update() works as expected
+    formula[[3]] <- expandDoubleVerts(formula[[3]])
+    mc$formula <- formula
+    	
     m <- match(c("data", "subset", "weights", "na.action", "offset"),
                names(mf), 0)
     mf <- mf[c(1, m)]
