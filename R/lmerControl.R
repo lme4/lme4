@@ -56,13 +56,13 @@ lmerControl <- function(optimizer="Nelder_Mead",
                         check.nobs.vs.rankZ="stopSmall",
                         check.numlev.gtreq.5="warning",
                         check.numlev.gtr.1="stop",
-                        optControl = list())
+                        optCtrl = list())
 {
     ## FIXME: is there a better idiom?  match.call() ?
     ## fill in values from options, but **only if not specified explicitly in arguments**
     ##  (ugh ... is there a better way to do this?  mapply() is clunky:
     ##  http://stackoverflow.com/questions/16276667/using-apply-with-assign-in-r
-    stopifnot(is.list(optControl))
+    stopifnot(is.list(optCtrl))
     if (!is.null(lmerOpts <- getOption("lmerControl"))) {
         for (arg in names(lmerOpts)) {
             if (do.call(missing,list(arg))) ## missing from explicit arguments
@@ -74,7 +74,7 @@ lmerControl <- function(optimizer="Nelder_Mead",
 		   namedList(check.nobs.vs.rankZ,
 			     check.numlev.gtreq.5,
 			     check.numlev.gtr.1),
-                        optControl=optControl),
+                        optCtrl=optCtrl),
 	      class = c("lmerControl", "merControl"))
 }
 
@@ -94,7 +94,7 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
                          check.numlev.gtr.1="stop",
                          tolPwrss = 1e-7,
                          compDev = TRUE,
-                         optControl = list())
+                         optCtrl = list())
 {
     ## FIXME: should try to modularize/refactor/combine with lmerControl if possible
     ## but note different defaults
@@ -104,7 +104,7 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
     ## compDev      N/A          TRUE
     ##
     ## (and possible future divergence)
-    stopifnot(is.list(optControl))
+    stopifnot(is.list(optCtrl))
     if (length(optimizer)==1) {
 	optimizer <- replicate(2,optimizer) # works evevn when optimizer is function
     }
@@ -122,7 +122,7 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
 			namedList(check.nobs.vs.rankZ,
 				  check.numlev.gtreq.5,
 				  check.numlev.gtr.1),
-                        optControl=optControl),
+                        optCtrl=optCtrl),
 	      class = c("glmerControl", "merControl"))
 }
 
@@ -131,14 +131,14 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
 ##' @export
 nlmerControl <- function(optimizer="Nelder_Mead",
                          tolPwrss = 1e-10,
-                         optControl = list())
+                         optCtrl = list())
 {
-    stopifnot(is.list(optControl))
+    stopifnot(is.list(optCtrl))
     if (length(optimizer)==1) {
         optimizer <- replicate(2,optimizer)
     }
     structure(namedList(optimizer,
 			tolPwrss,
-			optControl=optControl),
+			optCtrl=optCtrl),
 	      class = c("nlmerControl", "merControl"))
 }

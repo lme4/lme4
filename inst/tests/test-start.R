@@ -3,7 +3,7 @@ library("lme4")
 context("specifying starting values")
 test_that("lmer", {
     frm <- as.formula("Reaction ~ Days + (Days|Subject)")
-    ctrl <- lmerControl(maxfun=50)
+    ctrl <- lmerControl(optCtrl=list(maxfun=50))
     x <- suppressWarnings(lmer(frm, data=sleepstudy, control=ctrl, REML=FALSE))
     x2 <- suppressWarnings(update(x,start=c(1,0,1)))
     x3 <- suppressWarnings(update(x,start=list(theta=c(1,0,1))))
@@ -23,7 +23,7 @@ test_that("lmer", {
                  unname(deviance(y)))
 })
 test_that("glmer", {
-    ctrl <- glmerControl(maxfun=50)
+    ctrl <- glmerControl(optCtrl=list(maxfun=50))
     x <- suppressWarnings(glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                    data = cbpp, family = binomial, control=ctrl))
     ## theta only

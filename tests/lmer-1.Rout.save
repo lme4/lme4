@@ -1,5 +1,5 @@
 
-R version 3.0.1 Patched (2013-07-03 r63167) -- "Good Sport"
+R version 3.0.1 Patched (2013-08-13 r63557) -- "Good Sport"
 Copyright (C) 2013 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -168,7 +168,7 @@ Fixed effects:
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.708 0.016 0.725 
+Time elapsed:  1.012 0.012 1.12 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -231,7 +231,7 @@ Warning messages:
 > #fmX2s <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
 > 
 > showProc.time() #
-Time elapsed:  0.368 0.004 0.374 
+Time elapsed:  0.4 0 0.402 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -354,7 +354,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.528 0.004 0.534 
+Time elapsed:  0.784 0.004 0.789 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -481,7 +481,7 @@ lagoon4 0.000  0.000  0.000
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.524 0.012 0.535 
+Time elapsed:  0.388 0.008 0.398 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -502,7 +502,7 @@ Warning message:
 In Ops.factor(ff, x1) : + not meaningful for factors
 > 
 > showProc.time() #
-Time elapsed:  1.212 0.004 1.222 
+Time elapsed:  1.476 0.004 1.49 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -565,27 +565,21 @@ Fixed effects:
 > n <- seq_along(levs)
 > flevels <- seq(sum(levs))
 > set.seed(101)
-> fakedat <- data.frame(DA=factor(rep(flevels,rep(n,levs))),
-+                        zbmi=rnorm(sum(n*levs)))
+> fakedat <- data.frame(DA = factor(rep(flevels,rep(n,levs))),
++                       zbmi=rnorm(sum(n*levs)))
 > ## add NA values
 > fakedat[sample(nrow(fakedat),100),"zbmi"] <- NA
 > fakedat[sample(nrow(fakedat),100),"DA"] <- NA
+> 
 > m5 <- lmer(zbmi ~ (1|DA) , data = fakedat,
-+                        control=lmerControl(check.numobs.gtr.rankZ="ignore"))
-Warning message:
-In (function (iprint = 0L, maxfun = 10000L, FtolAbs = 1e-05, FtolRel = 1e-15,  :
-  unused control arguments ignored
-> stopifnot(c(VarCorr(m5)[["DA"]])==0)
-> m6 <- lmer(zbmi ~ (1|DA) , data = na.omit(fakedat),
-+                        control=lmerControl(check.numobs.gtr.rankZ="ignore"))
-Warning message:
-In (function (iprint = 0L, maxfun = 10000L, FtolAbs = 1e-05, FtolRel = 1e-15,  :
-  unused control arguments ignored
-> stopifnot(c(VarCorr(m6)[["DA"]])==0)
++ 	   control=lmerControl(check.nobs.vs.rankZ="ignore"))
+> m6 <- update(m5, data=na.omit(fakedat))
+> stopifnot(VarCorr(m5)[["DA"]] == 0,
++ 	  VarCorr(m6)[["DA"]] == 0)
 > 
 > 
 > 
 > 
 > proc.time()
    user  system elapsed 
-  7.952   0.208   8.177 
+  8.400   0.072   8.608 

@@ -62,7 +62,7 @@ m1b <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
 	     family = binomial, data = cbpp, verbose = 2L,
 	     control =
 	     glmerControl(optimizer="bobyqa", tolPwrss=1e-7,
-			  optControl=list(rhobeg=0.2, rhoend=2e-7)))
+			  optCtrl=list(rhobeg=0.2, rhoend=2e-7)))
 
 ## using nAGQ=9L provides a better evaluation of the deviance
 m.9 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),

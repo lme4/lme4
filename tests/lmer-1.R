@@ -296,17 +296,17 @@ levs <- c(800,300,150,100,50,50,50,20,20,5,2,2,2,2)
 n <- seq_along(levs)
 flevels <- seq(sum(levs))
 set.seed(101)
-fakedat <- data.frame(DA=factor(rep(flevels,rep(n,levs))),
-                       zbmi=rnorm(sum(n*levs)))
+fakedat <- data.frame(DA = factor(rep(flevels,rep(n,levs))),
+                      zbmi=rnorm(sum(n*levs)))
 ## add NA values
 fakedat[sample(nrow(fakedat),100),"zbmi"] <- NA
 fakedat[sample(nrow(fakedat),100),"DA"] <- NA
+
 m5 <- lmer(zbmi ~ (1|DA) , data = fakedat,
-                       control=lmerControl(check.numobs.gtr.rankZ="ignore"))
-stopifnot(c(VarCorr(m5)[["DA"]])==0)
-m6 <- lmer(zbmi ~ (1|DA) , data = na.omit(fakedat),
-                       control=lmerControl(check.numobs.gtr.rankZ="ignore"))
-stopifnot(c(VarCorr(m6)[["DA"]])==0)
+	   control=lmerControl(check.nobs.vs.rankZ="ignore"))
+m6 <- update(m5, data=na.omit(fakedat))
+stopifnot(VarCorr(m5)[["DA"]] == 0,
+	  VarCorr(m6)[["DA"]] == 0)
 
 
 
