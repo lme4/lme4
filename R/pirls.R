@@ -1,6 +1,6 @@
-##' Penalized iteratively reweighted least squares
+##' Create an approximate deviance evaluation function for GLMMs
 ##'
-##' A pure \code{R} implementation of Doug Bates'
+##' A pure \code{R} implementation of the
 ##' penalized iteratively reweighted least squares (PIRLS)
 ##' algorithm for computing generalized linear mixed model
 ##' deviances. The purpose is to clarify how
@@ -8,7 +8,6 @@
 ##' and as a sandbox for trying out modified versions of
 ##' PIRLS.
 ##'
-##' @param theta covariance parameters
 ##' @param beta initial beta
 ##' @param u initial u
 ##' @param mu fitted values
@@ -38,15 +37,12 @@
 ##' @importMethodsFrom Matrix t %*% crossprod diag tcrossprod solve determinant
 ##' @rdname pirls
 ##' @export
-pirls <- function(theta, beta, u,
-                  mu, eta,
-                  glmod, y,
+pirls <- function(glmod, y, eta,
                   family = binomial,
                   weights = rep(1, length(y)),
                   offset = rep(0, length(y)),
                   tol = 10^-6, npirls = 30,
                   nAGQ = 0){
-    
                                         # expand glmod
     Lind <- glmod$reTrms$Lind
     Lambdat <- glmod$reTrms$Lambdat
@@ -55,107 +51,71 @@ pirls <- function(theta, beta, u,
     n <- nrow(X)
     p <- ncol(X)
     q <- nrow(Zt)
-                                        # initialize beta and u
-                        # (only necessary if step-halving starts immediately)
-    if(missing(beta)) beta <- rep(0, p)
-    if(missing(u)) u <- rep(0, q)
-    newbeta <- beta
-                                        # update theta
-    Lambdat@x <- theta[Lind]
-                        # initialize penalized deviance and convergence flag
-    oldpdev <- .Machine$double.xmax
-    cvgd <- FALSE
-                                        # PIRLS
-    for(i in 1:npirls){
+    if (is.function(family)) family <- family() # ensure family is a list
+    mu <- family$linkinv(eta)
+    beta <- numeric(p)
+    u <- numeric(q)
+    L <- Cholesky(tcrossprod(Lambdat %*% Zt), perm=FALSE, LDL=FALSE, Imult=1)
+    betaind <- -seq_len(max(Lind))      # indices to drop 1:nth
+    function(thetabeta) {
+        Lambdat@x[] <<- thetabeta[Lind] # update Lambdat
+        beta[] <<- thetabeta[betaind]
+                                        # initialization
+        oldpdev <- .Machine$double.xmax
+        cvgd <- FALSE
+        for(i in 1:npirls){             # PIRLS
                                         # update w and muEta
-        w <- weights/as.vector(family()$variance(mu))
-        muEta <- as.vector(family()$mu.eta(eta))
+            W <- Diagonal(x=weights/family$variance(mu))
+            muEta <- as.vector(family$mu.eta(eta))
                                         # update Ut and V
-        Xwts <- sqrt(w)*muEta
-        Ut <- Lambdat%*%Zt%*%Diagonal(n, Xwts)
-        UtU <- tcrossprod(Ut)
-        if(!nAGQ){
-            V <- diag(Xwts, n, n)%*%X
-            VtV <- t(V)%*%V
-            UtV <- Ut%*%V
-        }
-                                        # update L, RZX, and RX
-        L <- Cholesky(UtU, LDL = FALSE, Imult=1)
-        if(!nAGQ){
-            RZX <- solve(L, UtV, system = "L")
-            RX <- try(chol(VtV - crossprod(RZX)))
-            if(inherits(RX, "try-error"))
-                stop("Downdated VtV not positive definite")
-        }
-                                        # update Utr and Vtr
-        if(nAGQ){
-            r <- Xwts*(eta - offset - X%*%beta + ((y-mu)/muEta))    
-        }
-        else {
-            r <- Xwts*(eta - offset + ((y-mu)/muEta))
-            Vtr <- t(V)%*%r
-        }
-        Utr <- Ut%*%r
-                                        # solve for u and beta
-        cu <- solve(L, Utr, system = "L")
-        if(!nAGQ){
-            cb <- solve(t(RX), Vtr - t(RZX)%*%cu)
-            newbeta <- as.vector(solve(RX, cb))
-            newu <- as.vector(solve(L, cu - RZX%*%newbeta,
-                                    system = "Lt"))
-        }
-        else {
-            newu <- as.vector(solve(L, cu, system = "Lt"))
-        }
-                                        # update mu and eta
-        eta <- offset + as.vector((t(Lambdat%*%Zt)%*%newu) +
-                                  (X%*%newbeta))
-        mu <- as.vector(family()$linkinv(eta))
-                                        # compute penalized deviance
-        pdev <- sum(family()$dev.resid(y, mu, weights)) +
-            sum(newu^2)
-        if(abs((oldpdev - pdev) / pdev) < tol){
-            cvgd <- TRUE
-            break
-        }
-                                        # step-halving
-        if(pdev > oldpdev){
-            for(j in 1:10){
-                newu <- (newu + u)/2
-                if(!nAGQ) newbeta <- (newbeta + beta)/2
-                eta <- offset +
-                    as.vector((t(Lambdat%*%Zt)%*%newu) +
-                              (X%*%newbeta))
-                mu <- as.vector(family()$linkinv(eta))
-                pdev <- sum(family()$dev.resid(y, mu, weights)) +
-                    sum(newu^2)
-                if(!(pdev > oldpdev)) break
+            Xwts <- Diagonal(x = sqrt(W@x) * muEta)
+            Ut <- Lambdat %*% Zt %*% Xwts
+            L <- update(L, Ut, 1)
+            if(!nAGQ){                  # update Utr and Vtr
+                V <- Xwts %*% Matrix(X)
+                VtV <- crossprod(V)
+                RZX <- solve(L, Ut %*% V, system = "L")
+                DD <- as(as(VtV - crossprod(RZX), "denseMatrix"),"dpoMatrix")
+                r <- Xwts %*% (eta - offset + ((y-mu)/muEta))
+                cu <- solve(L, Ut %*% r, system = "L")
+                newbeta <- as.vector(solve(DD, crossprod(V,r) - crossprod(RZX,cu)))
+                newu <- as.vector(solve(L, cu - RZX %*% newbeta, system = "Lt"))
+            } else {
+                r <- Xwts %*% (eta - offset - X%*%beta + ((y-mu)/muEta))
+                newu <- as.vector(solve(L, Ut %*% r))
+                newbeta <- beta
             }
-            if((pdev - oldpdev) > tol)
-                stop("Step-halving failed")
+                                        # update mu and eta
+            eta[] <<- as.vector(offset + X %*% newbeta +
+                                crossprod(Zt,crossprod(Lambdat,newu)))
+            mu[] <<- family$linkinv(eta)
+                                        # compute penalized deviance
+            pdev <- sum(family$dev.resid(y, mu, weights)) + sum(newu^2)
+            if(abs((oldpdev - pdev) / pdev) < tol){
+                cvgd <- TRUE
+                break
+            }
+                                        # step-halving
+            if(pdev > oldpdev){
+                for(j in 1:10){
+                    newu <- (newu + u)/2
+                    if(!nAGQ) newbeta <- (newbeta + beta)/2
+                    eta[] <- as.vector(offset + X %*% newbeta +
+                                       crossprod(Zt, crossprod(Lambdat,newu)))
+                    mu <- family$linkinv(eta)
+                    pdev <- sum(family$dev.resid(y, mu, weights)) + sum(newu^2)
+                    if(!(pdev > oldpdev)) break
+                }
+                if((pdev - oldpdev) > tol) stop("Step-halving failed")
+            }
+            oldpdev <- pdev
+            u <- newu
+            if(!nAGQ) beta[] <<- newbeta
         }
-        oldpdev <- pdev
-        u <- newu
-        if(!nAGQ) beta <- newbeta
-    }
-    if(cvgd){
-        ## calculate laplace deviance approximation
+        if(!cvgd) stop("PIRLS failed to converge")
+        ## calculate Laplace deviance approximation
         ldL2 <- 2*determinant(L, logarithm = TRUE)$modulus
         attributes(ldL2) <- NULL
-        ldev <- pdev + ldL2 + (q/2)*log(2*pi)
-        out <- structure(ldev, pdev = pdev,
-                         beta = newbeta, u = newu)
-        return(out)
+        pdev + ldL2 + (q/2)*log(2*pi)
     }
-    stop("PIRLS failed to converge")
-}
-
-##' @rdname pirls
-##' @export
-pirls1 <- function(thetabeta, ...){
-    p <- ncol(glmod$X)
-    nth <- length(thetabeta) - p
-    theta <- thetabeta[1:nth]
-    beta <- thetabeta[-(1:nth)]
-    pirls(theta, beta, ..., nAGQ = 1)
 }
