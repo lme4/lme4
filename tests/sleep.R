@@ -1,6 +1,9 @@
 library(lme4)
+library(nloptwrap)
 lmod <- lFormula(Reaction ~ Days + (Days|Subject), sleepstudy)
-bobyqa(c(1, 0, 1), function(theta) pls(lmod,theta,sleepstudy$Reaction),lower=c(0,-Inf,0))$par
+devf <- pls(lmod,sleepstudy$Reaction)
+bobyqa(c(1, 0, 1), devf, lower=c(0,-Inf,0))[c("par","value")]
 mML <- lmer(Reaction ~ Days + (Days|Subject),
             sleepstudy, REML = FALSE)
 getME(mML, "theta")
+deviance(mML)
