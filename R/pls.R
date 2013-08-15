@@ -21,8 +21,8 @@ pls <- function(obj,theta,y,...) UseMethod("pls")
 ##' @method pls matrix
 ##' @S3method pls matrix
 pls.matrix <- function(X,y,Zt,Lambdat,thfun,
-                       weights = rep(1, length(y)),
-                       offset = rep(0, length(y)),
+                       weights = rep(1, n),
+                       offset = numeric(n),
                        REML = TRUE){
     n <- length(y)
     p <- ncol(X)
@@ -34,27 +34,31 @@ pls.matrix <- function(X,y,Zt,Lambdat,thfun,
               is.function(thfun))
                                         # calculate weighted products
     W <- Diagonal(x = weights)
-    L <- Cholesky(tcrossprod(Lambdat %*% Zt), perm=FALSE, LDL = FALSE, Imult=1)
+    L <- Cholesky(tcrossprod(Lambdat %*% Zt), LDL = FALSE, Imult=1)
     XtWX <- crossprod(X, W %*% X)
     XtWy <- crossprod(X, W %*% y)
-    ZtWy <- Zt %*% (W %*% y)
     ZtWX <- Zt %*% (W %*% X)
+    ZtWy <- Zt %*% (W %*% y)
     beta <- numeric(ncol(X))
     u <- numeric(nrow(Zt))
     mu <- numeric(nrow(X))
     function(theta) {
-        Lambdat@x[] <- thfun(theta) 
+        Lambdat@x[] <<- thfun(theta) 
         L <- update(L, Lambdat %*% Zt, mult = 1)
-        cu <- solve(L, Lambdat %*% ZtWy, system = "L")
-        RZX <- solve(L, Lambdat %*% ZtWX, system = "L")
-        ## downdate XtWX and form Cholesky factor
+        ## solve system from equation 30
+        cu <- solve(L, solve(L, Lambdat %*% ZtWy, system="P"), system="L")
+        ## solve system from eqn. 31
+        RZX <- solve(L, solve(L, Lambdat %*% ZtWX, system="P"), system="L")
+        ## downdate XtWX and form Cholesky factor (eqn. 32)
         DD <- as(XtWX - crossprod(RZX), "dpoMatrix")
-        ## conditional estimate of fixed-effects coefficients
-        beta <<- solve(DD, XtWy - crossprod(RZX, cu))
-        ## conditional mode of the spherical random-effects coefficients
-        u <<- solve(L, cu - RZX %*% beta, system = "Lt")
+        ## conditional estimate of fixed-effects coefficients (solve eqn. 33)
+        beta[] <<- as.vector(solve(DD, XtWy - crossprod(RZX, cu)))
+        ## conditional mode of the spherical random-effects coefficients (eqn. 34)
+        u[] <<- as.vector(solve(L, solve(L, cu - RZX %*% beta, system = "Lt"), system="Pt"))
                                         # conditional mean of the response
-        mu <<- crossprod(Zt,crossprod(Lambdat,u)) + X %*% beta + offset
+
+        ## crossprod(Zt,crossprod(Lambdat,u))  == Z Lambda u == Z b
+        mu[] <<- as.vector(crossprod(Zt,crossprod(Lambdat,u)) + X %*% beta + offset)
                                         # weighted residuals
         wtres <- sqrt(weights)*(y-mu)
                                         # weighted residual sums of squares
