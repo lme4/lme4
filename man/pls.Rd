@@ -1,14 +1,23 @@
 \name{pls}
 \alias{pls}
+\alias{pls.list}
+\alias{pls.matrix}
 \title{Compute linear mixed model deviance}
 \usage{
-  pls(theta, lmod, y, weights = rep(1, length(y)),
+  pls(obj, theta, y, ...)
+
+  \method{pls}{matrix} (obj, theta, y, Zt, Lambdat, Lind,
+    weights = rep(1, length(y)),
+    offset = rep(0, length(y)), REML = TRUE)
+
+  \method{pls}{list} (obj, theta, y,
+    weights = rep(1, length(y)),
     offset = rep(0, length(y)), REML = TRUE)
 }
 \arguments{
-  \item{theta}{covariance parameters}
+  \item{obj}{output of \code{lFormula} or a model matrix}
 
-  \item{lmod}{output of \code{lFormula}}
+  \item{theta}{covariance parameters}
 
   \item{y}{response}
 
