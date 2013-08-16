@@ -470,7 +470,7 @@ lmerResp <-
                      },
                      objective  = function(ldL2, ldRX2, sqrL) {
                          'returns the profiled deviance or REML criterion'
-                         .Call(lmer_Laplace, ptr, ldL2, ldRX2, sqrL)
+                         .Call(lmer_Laplace, ptr(), ldL2, ldRX2, sqrL)
                      })
                 )
 

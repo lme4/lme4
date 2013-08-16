@@ -73,7 +73,7 @@ doCheck <- function(x) {
 checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
 {
     stopifnot(is.list(ctrl), is.numeric(n), is.numeric(nonSmall))
-    cstr <- "check.numobs.vs.rankZ"
+    cstr <- "check.nobs.vs.rankZ"
     if (doCheck(cc <- ctrl[[cstr]])) { ## not NULL or "ignore"
 	d <- dim(Zt)
 	doTr <- d[1L] < d[2L] # Zt is "wide" => qr needs transpose(Zt)
@@ -162,7 +162,12 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     }
 
     denv <- checkFormulaData(formula,data)
-    mc$formula <- formula <- as.formula(formula,env=denv) ## substitute evaluated call
+    #mc$formula <- formula <- as.formula(formula,env=denv) ## substitute evaluated call
+    formula <- as.formula(formula,env=denv)
+    # get rid of || terms so update() works as expected
+    formula[[3]] <- expandDoubleVerts(formula[[3]])
+    mc$formula <- formula
+    	
     m <- match(c("data", "subset", "weights", "na.action", "offset"),
                names(mf), 0)
     mf <- mf[c(1, m)]

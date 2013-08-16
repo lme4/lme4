@@ -1,5 +1,6 @@
 export(bootMer)
 export(devcomp)
+export(expandDoubleVerts)
 export(findbars)
 export(fixef)
 export(fortify)
