@@ -42,15 +42,20 @@ pls.matrix <- function(X,y,Zt,Lambdat,thfun,
     beta <- numeric(ncol(X))
     u <- numeric(nrow(Zt))
     mu <- numeric(nrow(X))
+    DD <- NULL
+    RZX <- matrix(0,nrow=q,ncol=p)
+    cu <- numeric(q)
     function(theta) {
         Lambdat@x[] <<- thfun(theta) 
         L <- update(L, Lambdat %*% Zt, mult = 1)
         ## solve system from equation 30
-        cu <- solve(L, solve(L, Lambdat %*% ZtWy, system="P"), system="L")
+        cu[] <- as.vector(solve(L, solve(L, Lambdat %*% ZtWy, system="P"),
+                                system="L"))
         ## solve system from eqn. 31
-        RZX <- solve(L, solve(L, Lambdat %*% ZtWX, system="P"), system="L")
+        RZX[] <<- as.vector(solve(L, solve(L, Lambdat %*% ZtWX, system="P"),
+                                  system="L"))
         ## downdate XtWX and form Cholesky factor (eqn. 32)
-        DD <- as(XtWX - crossprod(RZX), "dpoMatrix")
+        DD <<- as(XtWX - crossprod(RZX), "dpoMatrix")
         ## conditional estimate of fixed-effects coefficients (solve eqn. 33)
         beta[] <<- as.vector(solve(DD, XtWy - crossprod(RZX, cu)))
         ## conditional mode of the spherical random-effects coefficients (eqn. 34)
