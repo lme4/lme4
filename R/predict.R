@@ -17,11 +17,15 @@ noReForm <- function(ReForm) {
 ##' theta and/or beta; maybe eventually further parameters ...
 ##' What updating do we have to do in order to make the resulting object
 ##' consistent/safe?
-##' What kind of checking of input do we have to do?  (Abstract from
+##' TODO: What kind of checking of input do we have to do?  (Abstract from
 ##' lmer/glmer code ...)
+##' TODO: make sure this gets updated when the parameter structure changes
+##' from (theta, beta) to alpha=(theta, beta, phi)
 setParams <- function(object,params,copy=TRUE) {
     if (copy) {
         newObj <- object
+        ## make a copy of the reference class slots to
+        ##  decouple them from the original object
         newObj@pp <- newObj@pp$copy()
         newObj@resp <- newObj@resp$copy()
         if (!is.null(beta <- params$beta)) newObj@pp$setBeta0(beta)

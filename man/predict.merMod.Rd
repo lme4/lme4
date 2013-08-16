@@ -3,7 +3,7 @@
 \title{Predictions from a model at new data values}
 \usage{
   \method{predict}{merMod} (object, newdata = NULL,
-    REform = NULL, terms = NULL,
+    ReForm = NULL, terms = NULL,
     type = c("link", "response"), allow.new.levels = FALSE,
     na.action = na.pass, ...)
 }
@@ -13,7 +13,7 @@
   \item{newdata}{data frame for which to evaluate
   predictions}
 
-  \item{REform}{formula for random effects to include.  If
+  \item{ReForm}{formula for random effects to include.  If
   NULL, include all random effects; if NA, include no
   random effects}
 
@@ -56,10 +56,10 @@
 \examples{
 (gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 |herd), cbpp, binomial))
 str(p0 <- predict(gm1))            # fitted values
-str(p1 <- predict(gm1,REform=NA))  # fitted values, unconditional (level-0)
+str(p1 <- predict(gm1,ReForm=NA))  # fitted values, unconditional (level-0)
 newdata <- with(cbpp, expand.grid(period=unique(period), herd=unique(herd)))
 str(p2 <- predict(gm1,newdata))    # new data, all RE
-str(p3 <- predict(gm1,newdata,REform=NA)) # new data, level-0
-str(p4 <- predict(gm1,newdata,REform=~(1|herd))) # explicitly specify RE
+str(p3 <- predict(gm1,newdata,ReForm=NA)) # new data, level-0
+str(p4 <- predict(gm1,newdata,ReForm=~(1|herd))) # explicitly specify RE
 }
 
