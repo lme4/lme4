@@ -19,7 +19,7 @@ s3 <- simulate(gm1,seed=101,use.u=TRUE)
 d <- data.frame(y=factor(rep(letters[1:2],each=100)),
                 f=factor(rep(1:10,10)))
 g1 <- glmer(y~(1|f),data=d,family=binomial)
-simulate(g1,nsim=10)
+invisible(simulate(g1,nsim=10))
 
 ## test explicitly stated link function
 gm3 <- glmer(cbind(incidence, size - incidence) ~ period +

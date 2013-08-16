@@ -37,7 +37,8 @@ expect_true(all(is.na(p1_pass[1:5])))
 p1_omit <- predict(m.lmer, newdata=cake2, REform=NA, na.action=na.omit)
 p1_exclude <- predict(m.lmer, newdata=cake2, REform=NA, na.action=na.exclude)
 expect_true(length(p1_omit)==nrow(na.omit(cake2)))
-expect_true(all.equal(p1_exclude,p1_omit))
+expect_true(length(p1_exclude)==nrow(cake2))
+expect_true(all.equal(c(na.omit(p1_exclude)),p1_omit))
 expect_that(predict(m.lmer, newdata=cake2, REform=NA, na.action=na.fail),
             throws_error("missing values in object"))
 
@@ -48,7 +49,7 @@ expect_true(all(is.na(p2_pass[1:5])))
 p2_omit <- predict(m.lmer, newdata=cake2, REform=NULL, na.action=na.omit)
 p2_exclude <- predict(m.lmer, newdata=cake2, REform=NULL, na.action=na.exclude)
 expect_true(length(p2_omit)==nrow(na.omit(cake2)))
-expect_true(all.equal(p2_exclude,p2_omit))
+expect_true(all.equal(c(na.omit(p2_exclude)),p2_omit))
 expect_that(predict(m.lmer, newdata=cake2, REform=NULL, na.action=na.fail),
             throws_error("missing values in object"))
 
