@@ -144,60 +144,61 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
 ##' @importFrom Matrix rankMatrix
 ##' @export
 lFormula <- function(formula, data=NULL, REML = TRUE,
-                     subset, weights, na.action, offset, contrasts = NULL,
-                     control=lmerControl(), ...)
+					 subset, weights, na.action, offset, contrasts = NULL,
+					 control=lmerControl(), ...)
 {
-    control <- control$checkControl ## this is all we really need
-    mf <- mc <- match.call()
-
-    ignoreArgs <- c("start","verbose","devFunOnly","control")
-    l... <- list(...)
-    l... <- l...[!names(l...) %in% ignoreArgs]
-    do.call("checkArgs",c(list("lmer"),l...))
-    if (!is.null(list(...)[["family"]])) {
-        ## lmer(...,family=...); warning issued within checkArgs
-        mc[[1]] <- quote(lme4::glFormula)
-        if (missing(control)) mc[["control"]] <- glmerControl()
-        return(eval(mc, parent.frame()))
-    }
-
-    denv <- checkFormulaData(formula,data)
-    #mc$formula <- formula <- as.formula(formula,env=denv) ## substitute evaluated call
-    formula <- as.formula(formula,env=denv)
-    # get rid of || terms so update() works as expected
-    formula[[3]] <- expandDoubleVerts(formula[[3]])
-    mc$formula <- formula
-    	
-    m <- match(c("data", "subset", "weights", "na.action", "offset"),
-               names(mf), 0)
-    mf <- mf[c(1, m)]
-    mf$drop.unused.levels <- TRUE
-    mf[[1]] <- as.name("model.frame")
-    fr.form <- subbars(formula) # substitute "|" by "+"
-    environment(fr.form) <- environment(formula)
-    mf$formula <- fr.form
-    fr <- eval(mf, parent.frame())
-    ## store full, original formula & offset
-    attr(fr,"formula") <- formula
-    attr(fr,"offset") <- mf$offset
-    n <- nrow(fr)
-    ## random effects and terms modules
-    reTrms <- mkReTrms(findbars(formula[[3]]), fr)
-    checkNlevels(reTrms$ flist, n=n, control)
-    checkZrank	(reTrms$ Zt,	n=n, control, nonSmall = 1e6)
-
-    ## fixed-effects model matrix X - remove random effects from formula:
-    fixedform <- formula
-    fixedform[[3]] <- if(is.null(nb <- nobars(fixedform[[3]]))) 1 else nb
-    mf$formula <- fixedform
-    ## re-evaluate model frame to extract predvars component {FIXME? glFormula() does not..}
-    fixedfr <- eval(mf, parent.frame())
-    attr(attr(fr,"terms"),"predvars.fixed") <- attr(attr(fixedfr,"terms"),"predvars")
-    X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
-    p <- ncol(X)
-    if ((rankX <- rankMatrix(X)) < p)
-	stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
-    list(fr = fr, X = X, reTrms = reTrms, REML = REML, formula = formula)
+	control <- control$checkControl ## this is all we really need
+	mf <- mc <- match.call()
+	
+	ignoreArgs <- c("start","verbose","devFunOnly","control")
+	l... <- list(...)
+	l... <- l...[!names(l...) %in% ignoreArgs]
+	do.call("checkArgs",c(list("lmer"),l...))
+	if (!is.null(list(...)[["family"]])) {
+		## lmer(...,family=...); warning issued within checkArgs
+		mc[[1]] <- quote(lme4::glFormula)
+		if (missing(control)) mc[["control"]] <- glmerControl()
+		return(eval(mc, parent.frame()))
+	}
+	
+	denv <- checkFormulaData(formula,data)
+	#mc$formula <- formula <- as.formula(formula,env=denv) ## substitute evaluated call
+	formula <- as.formula(formula,env=denv)
+	# get rid of || terms so update() works as expected
+	formula[[3]] <- expandDoubleVerts(formula[[3]])
+	mc$formula <- formula
+	
+	m <- match(c("data", "subset", "weights", "na.action", "offset"),
+			   names(mf), 0)
+	mf <- mf[c(1, m)]
+	mf$drop.unused.levels <- TRUE
+	mf[[1]] <- as.name("model.frame")
+	fr.form <- subbars(formula) # substitute "|" by "+"
+	environment(fr.form) <- environment(formula)
+	mf$formula <- fr.form
+	fr <- eval(mf, parent.frame())
+	## store full, original formula & offset
+	attr(fr,"formula") <- formula
+	attr(fr,"offset") <- mf$offset
+	n <- nrow(fr)
+	## random effects and terms modules
+	reGenerators <- l...$reGenerators
+	reTrms <- mkReTrms(findbars(formula[[3]]), fr, reGenerators)
+	checkNlevels(reTrms$ flist, n=n, control)
+	checkZrank	(reTrms$ Zt,	n=n, control, nonSmall = 1e6)
+	
+	## fixed-effects model matrix X - remove random effects from formula:
+	fixedform <- formula
+	fixedform[[3]] <- if(is.null(nb <- nobars(fixedform[[3]]))) 1 else nb
+	mf$formula <- fixedform
+	## re-evaluate model frame to extract predvars component {FIXME? glFormula() does not..}
+	fixedfr <- eval(mf, parent.frame())
+	attr(attr(fr,"terms"),"predvars.fixed") <- attr(attr(fixedfr,"terms"),"predvars")
+	X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
+	p <- ncol(X)
+	if ((rankX <- rankMatrix(X)) < p)
+		stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
+	list(fr = fr, X = X, reTrms = reTrms, REML = REML, formula = formula)
 }
 
 ## utility f'n for checking starting values
