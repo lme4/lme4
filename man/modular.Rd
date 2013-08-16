@@ -75,7 +75,10 @@
   operator and the terms, separated by \code{+} operators,
   on the right.  Random-effects terms are distinguished by
   vertical bars (\code{"|"}) separating expressions for
-  design matrices from grouping factors.}
+  design matrices from grouping factors. Two vertical bars
+  (\code{"||"}) can be used to specify multiple
+  uncorrelated random effects for the same grouping
+  variable.}
 
   \item{data}{an optional data frame containing the
   variables named in \code{formula}.  By default the

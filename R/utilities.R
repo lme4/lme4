@@ -12,7 +12,7 @@ if(getRversion() < "2.15")
 ##' @param bars a list of parsed random-effects terms
 ##' @param fr a model frame in which to evaluate these terms
 ##' @param reGenerators a list of random effect generators that return structures
-##' 	similar to what's returned by the \code{mkReList}-function when applied to \code{fr}.
+##' 	similar to what's returned by the \code{mkReTrm}-function when applied to \code{fr}.
 ##' 	THIS IS AN EXPERIMENTAL FEATURE, USE AT YOUR OWN RISK. 
 ##' @return a list with components
 ##' \item{Zt}{transpose of the sparse model matrix for the random effects}
@@ -41,72 +41,8 @@ mkReTrms <- function(bars, fr, reGenerators=NULL) {
 		stopifnot(is.list(bars), all(sapply(bars, is.language)),
 				  inherits(fr, "data.frame"))
 		names(bars) <- unlist(lapply(bars, function(x) deparse(x[[3]])))
-		
-		mkReList <- function(x) {
-			frloc <- fr
-			## convert grouping variables to factors as necessary
-			for (i in all.vars(x[[3]])) {
-				frloc[[i]] <- factor(frloc[[i]])
-			}
-			ff <- eval(substitute(factor(fac), list(fac = x[[3]])), frloc)
-			if (all(is.na(ff)))
-				stop("Invalid grouping factor specification, ",
-					 deparse(x[[3]]))
-			nl <- length(levels(ff))
-			
-			#design for covariates:
-			design <- t(model.matrix(eval(substitute(~ lhs, list(lhs=x[[2]]))), fr))
-			
-			nc <- nrow(design)
-			nb <- nl*nc #how many ranefs
-			ntheta <- as.integer((nc * (nc+1))/2) #how many var/cov-parameters
-			
-			#design for grouping variable, repeated nc times
-			Zt <- as(ff, "sparseMatrix")[rep(1:nl, t=nc), ]
-			#fill with covariate values:
-			Zt@x <- as.vector(design)
-			## When nc > 1 permute the order of the rows of Zt
-			## so random effects for the same level of the
-			## grouping factor are adjacent.
-			if (nc > 1){
-				Zt <- Zt[as.vector(matrix(seq_len(nc * nl),
-											ncol = nl, byrow = TRUE)),]
-			}
-			
-			#initialize theta (diagonals 1, off-diagonals 0)
-			theta <- rep(0, ntheta)
-			theta[cumsum(1:nc)] <- 1
-			
-			#initalize Lambdat as repeated upper triagonal:
-			oneLevel <- as(1*upper.tri(diag(nc), diag=TRUE), "dgCMatrix")
-			Lambdat <- suppressMessages(kronecker(Diagonal(nl), oneLevel))
-			#need standard dgC not dtT but no direct coerce exists:
-			Lambdat <- as(as(Lambdat, "dgTMatrix"), "dgCMatrix")
-			
-			Lind <- rep(1:ntheta, times=nl)
-			Lambdat@x <- theta[Lind]
-			
-			# upper/lower limits:
-			upper <- rep(Inf, ntheta)
-			lower <- rep(0, ntheta)
-			lower[theta==0] <- -Inf
-			
-			list(ff = ff, Zt = Zt, nl = nl, cnms = rownames(design),
-				 nb = nl*nc, #how many ranefs
-				 ntheta = as.integer((nc * (nc+1))/2), # how many var-cov. params
-				 nc = nc, #how many ranefs per level
-				 nlambda = length(Lambdat@x), #how many non-zeroes in Lambdat 
-				 Lambdat=Lambdat,
-				 theta = theta,
-				 Lind = Lind,
-				 updateLambdatx = local({
-				 	Lind <- Lind
-				 	function(theta) theta[Lind]
-				 }),
-				 upper = upper,
-				 lower = lower)
-		}
-		reTrms <- lapply(bars, mkReList)
+
+		reTrms <- lapply(bars, mkReTrm, fr=fr)
 		nl <- unlist(lapply(reTrms, "[[", "nl")) 
 		special <- rep(FALSE, length(nl))
 	} 
@@ -118,9 +54,10 @@ mkReTrms <- function(bars, fr, reGenerators=NULL) {
 		nl <- c(nl, unlist(lapply(reTrms2, "[[", "nl")))
 		special <- c(special, rep(TRUE, reTrms2))
 	}
-	nReTrms <- length(reTrms)
+	nreTrms <- length(reTrms)
 	
-	## order terms stably by decreasing number of levels in the factor
+	## order terms stably by decreasing number of levels in the grouping 
+	## factor
 	if (any(diff(nl)) > 0) {
 		ord <- order(nl, decreasing=TRUE)
 		reTrms <- reTrms[ord]
@@ -157,9 +94,9 @@ mkReTrms <- function(bars, fr, reGenerators=NULL) {
 	
 	# to be backwards compatible, supply valid Lind 
 	# (valid at least if no reGenerators are present)
-	thetaoff <- cumsum(c(0, ntheta))
+	thetap <- cumsum(c(0, ntheta))
 	Lind <- as.integer(sapply(reTrms, "[[", "Lind") + 
-					   	rep(head(thetaoff, -1), nlambda))
+					   	rep(head(thetap, -1), nlambda))
 	
 	ll <- list(Zt = Matrix::drop0(Zt),
 			   Lambdat = do.call(bdiag, unname(lapply(reTrms, "[[", "Lambdat"))),
@@ -177,14 +114,161 @@ mkReTrms <- function(bars, fr, reGenerators=NULL) {
 			   	 }
 			    }),
 			   Gp = unname(c(0L, cumsum(nb))),
+			   thetap = thetap,
 			   flist = fl,
 			   cnms = cnms,
 			   special = special,
 			   nlambda=nlambda,
 			   ntheta=ntheta)
 	ll
-} ## {mkReTrms}
+} 
 
+ 
+##' Generates the partial design matrix, the partial Cholesky factor
+##' for an unstrucured covariance of the random effects,
+##' a function mapping the variance-covariance parameters to the entries
+##' in the partial Cholesky factor and additional information required to
+##' construct the full models for one random effect term in the .
+##' 
+##' @title Generate a random effect design from a standard '|' term
+##' @param bar a random effect specification as returned by \code{\link{findbars}}.
+##' @param fr a \code{model.frame}
+##' @return a list with components
+##' \item{ff}{the grouping factor} 
+##' \item{Zt}{transpose of the sparse model matrix for the random effect}
+##' \item{Lambdat}{transpose of the sparse relative covariance factor}
+##' \item{theta}{initial values of the covariance parameters}
+##' \item{Lind}{index vector: which entries in \code{theta} go into which entries in
+##'   the \code{x} slot of \code{Lambdat} (included for backwards compatibility)} 
+##' \item{thfun}{a function mapping theta to the \code{"x"} slot of \code{Lambdat} --
+##'    in this case, simply \code{theta[Lind]}}
+##' \item{lower}{lower bounds on the covariance parameters}
+##' \item{upper}{upper bounds on the covariance parameters}
+##' \item{cnms}{a list of column names of the random effects according to
+##'     the grouping factors}
+##'  \item{special}{\code{FALSE}}
+##'  \item{nlambda}{the number of non-zero entries in \code{Lambdat}}
+##'  \item{ntheta}{\code{length(theta)}, number of (co-)variance parameters}    
+##'  \item{nc}{the number of ranefs per level}    
+##'  \item{nb}{\code{nrow(Zt)}, the number of random effects}    
+##'  \item{nl}{number of levels of this grouping factor}    
+mkReTrm <- function(bar, fr) {
+	
+	ff <- getGrouping(bar, fr)
+	
+	nl <- length(levels(ff))
+	
+	#initialize transposed design
+	Ztl <- mkZt(ff, bar, fr)
+	Zt <- Ztl$Zt
+	nc <- Ztl$nc
+	cnms <- Ztl$cnms
+	rm(Ztl)
+	
+	ntheta <- as.integer((nc * (nc+1))/2) #how many var/cov-parameters
+	
+	#initialize theta with diagonals 1, off-diagonals 0
+	theta <- rep(0, ntheta)
+	theta[cumsum(1:nc)] <- 1
+
+	# initialize the upper triangular Cholesky factor for Cov(b)
+	Lambdat <- mkLambdatUS(nc, nl, theta)
+	# which theta goes where in Lambdat
+	Lind <- rep(1:ntheta, times=nl)
+	
+	# upper/lower limits:
+	upper <- rep(Inf, ntheta)
+	lower <- rep(0, ntheta)
+	lower[theta==0] <- -Inf
+	
+	list(ff = ff, Zt = Zt, nl = nl, cnms = cnms,
+		 nb = nl*nc, #how many ranefs
+		 ntheta = as.integer((nc * (nc+1))/2), # how many var-cov. params
+		 nc = nc, #how many ranefs per level
+		 nlambda = length(Lambdat@x), #how many non-zeroes in Lambdat 
+		 Lambdat=Lambdat,
+		 theta = theta,
+		 Lind = Lind,
+		 updateLambdatx = local({
+		 	Lind <- Lind
+		 	function(theta) theta[Lind]
+		 }),
+		 upper = upper,
+		 lower = lower)
+}
+
+##' @title Extract the grouping factor from a random effect specification
+##' @param bar the random effect specification as returned by \code{findbars}
+##' @param fr a \code{model.frame}
+##' @return a factor  
+getGrouping <- function(bar, fr){
+	#let "1" denote no grouping...
+	if(deparse(bar[[2]])=="1"){
+		return(factor(rep(1, nrow(fr))))
+	} else {
+		frloc <- fr
+		## convert grouping variables to factors as necessary
+		for (i in all.vars(bar[[3]])) {
+			frloc[[i]] <- factor(frloc[[i]])
+		}
+		ff <- eval(substitute(factor(fac), list(fac = bar[[3]])), frloc)
+		if (all(is.na(ff)))
+			stop("Invalid grouping factor specification, ",
+				 deparse(bar[[3]]))
+		ff
+	}	
+}
+
+##' @title Generate (transpose of) random effect design matrix
+##' @param ff the grouping factor
+##' @param bar the random effect specification as returned by \code{findbars}
+##' @param fr a \code{model.frame}
+##' @return a list with entries \code{Zt}, \code{nc} for the number of effects 
+##'   per level of the grouping factor, and \code{cnms} giving the names of the
+##'   different random effects.  
+mkZt <- function(ff, bar, fr){
+	nl <- length(levels(ff))
+	
+	#design for covariates:
+	design <- t(model.matrix(eval(substitute(~ lhs, list(lhs=bar[[2]]))), fr))
+	
+	nc <- nrow(design)
+	nb <- nl*nc 
+	
+	#design for grouping variable, repeated nc times
+	Zt <- as(ff, "sparseMatrix")[rep(1:nl, t=nc), ]
+	#fill with covariate values:
+	Zt@x <- as.vector(design)
+	## When nc > 1 permute the order of the rows of Zt
+	## so random effects for the same level of the
+	## grouping factor are adjacent.
+	if (nc > 1){
+		Zt <- Zt[as.vector(matrix(seq_len(nc * nl),
+								  ncol = nl, byrow = TRUE)),]
+	}
+	return(list(Zt=as(Zt, "dgCMatrix"), nc=nc, cnms=rownames(design)))
+}
+
+##' Initalize upper triangular Cholesky factor of an
+##' unstructured covariance matrix
+##' @param nc number of effects per level
+##' @param nl number of levels
+##' @param theta vector of variance-covariance parameters
+##' @return a sparse upper triangular matrix
+mkLambdatUS <- function(nc, nl, theta){
+	
+	ntheta <-  length(theta)
+	#initalize Lambdat as repeated upper triagonal:
+	oneLevel <- as(1*upper.tri(diag(nc), diag=TRUE), "dgCMatrix")
+	Lambdat <- suppressMessages(kronecker(Diagonal(nl), oneLevel))
+	#need standard dgC not dtT but no direct coerce exists:
+	Lambdat <- as(as(Lambdat, "dgTMatrix"), "dgCMatrix")
+	
+	Lind <- rep(1:ntheta, times=nl)
+	Lambdat@x <- theta[Lind]
+	
+	Lambdat
+}
 
 ##' Create an lmerResp, glmResp or nlsResp instance
 ##'
@@ -290,7 +374,7 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
 ##' @section Note: This function is called recursively on individual
 ##' terms in the model, which is why the argument is called \code{term} and not
 ##' a name like \code{form}, indicating a formula.
-##' @example
+##' @examples
 ##' findbars(f1 <- Reaction ~ Days + (Days|Subject))
 ##' ## => list( Days | Subject )
 ##' findbars(y ~ Days + (1|Subject) + (0+Days|Subject))
