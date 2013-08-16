@@ -1,3 +1,5 @@
 misc/cache
 misc/issues
 misc/oldcode
+^.*\.Rproj$
+^\.Rproj\.user$
