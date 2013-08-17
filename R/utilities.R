@@ -76,9 +76,10 @@ mkReTrms <- function(bars, fr) {
     ## Create and install Lambdat, Lind, etc.  This must be done after
     ## any potential reordering of the terms.
     cnms <- lapply(blist, "[[", "cnms")
-    nc <- sapply(cnms, length)		# no. of columns per term
+    nc <- vapply(cnms, length, 1L)    # no. of columns per term
     nth <- as.integer((nc * (nc+1))/2)	# no. of parameters per term
-    nb <- nc * nl			# no. of random effects per term
+    nb <- nc * nl                     # no. of random effects per term
+
     stopifnot(sum(nb) == q)
     boff <- cumsum(c(0L, nb))		# offsets into b
     thoff <- cumsum(c(0L, nth))		# offsets into theta
@@ -86,23 +87,23 @@ mkReTrms <- function(bars, fr) {
 ### operator?  In other words should Lambdat be generated directly
 ### instead of generating Lambda first then transposing?
     Lambdat <-
-	t(do.call(sparseMatrix,
-		  do.call(rBind,
-			  lapply(seq_along(blist), function(i)
-			     {
-				 mm <- matrix(seq_len(nb[i]), ncol = nc[i],
-					      byrow = TRUE)
-				 dd <- diag(nc[i])
-				 ltri <- lower.tri(dd, diag = TRUE)
-				 ii <- row(dd)[ltri]
-				 jj <- col(dd)[ltri]
-				 dd[cbind(ii, jj)] <- seq_along(ii)
-				 data.frame(i = as.vector(mm[, ii]) + boff[i],
-					    j = as.vector(mm[, jj]) + boff[i],
-					    x = as.double(rep.int(seq_along(ii),
-					    rep.int(nl[i], length(ii))) +
-					    thoff[i]))
-			     }))))
+        t(do.call(sparseMatrix,
+                  do.call(rBind,
+                          lapply(seq_along(blist), function(i)
+                             {
+                                 mm <- matrix(seq_len(nb[i]), ncol = nc[i],
+                                              byrow = TRUE)
+                                 dd <- diag(nc[i])
+                                 ltri <- lower.tri(dd, diag = TRUE)
+                                 ii <- row(dd)[ltri]
+                                 jj <- col(dd)[ltri]
+                                 dd[cbind(ii, jj)] <- seq_along(ii)
+                                 data.frame(i = as.vector(mm[, ii]) + boff[i],
+                                            j = as.vector(mm[, jj]) + boff[i],
+                                            x = as.double(rep.int(seq_along(ii),
+                                            rep.int(nl[i], length(ii))) +
+                                            thoff[i]))
+                             }))))
     thet <- numeric(sum(nth))
     ll <- list(Zt=Matrix::drop0(Zt), theta=thet, Lind=as.integer(Lambdat@x),
                Gp=unname(c(0L, cumsum(nb))))
@@ -112,13 +113,13 @@ mkReTrms <- function(bars, fr) {
     ll$theta[] <- is.finite(ll$lower) # initial values of theta are 0 off-diagonal, 1 on
     Lambdat@x[] <- ll$theta[ll$Lind]  # initialize elements of Lambdat
     ll$Lambdat <- Lambdat
-					# massage the factor list
+                                        # massage the factor list
     fl <- lapply(blist, "[[", "ff")
-					# check for repeated factors
+                                        # check for repeated factors
     fnms <- names(fl)
     if (length(fnms) > length(ufn <- unique(fnms))) {
-	fl <- fl[match(ufn, fnms)]
-	asgn <- match(fnms, ufn)
+        fl <- fl[match(ufn, fnms)]
+        asgn <- match(fnms, ufn)
     } else asgn <- seq_along(fl)
     names(fl) <- ufn
     fl <- do.call(data.frame, c(fl, check.names = FALSE))
@@ -238,6 +239,8 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
 ##' ## => list of length 2:  list ( 1 | Subject ,  0+Days|Subject)
 ##' findbars(~ 1 + (1|batch/cask))
 ##' ## => list of length 2:  list ( 1 | cask:batch ,  1 | batch)
+##' identical(findbars(~ 1 + (Days || Subject)),
+##'     findbars(~ 1 + (1|Subject) + (0+Days|Subject)))
 ##' \dontshow{
 ##' stopifnot(identical(findbars(f1),
 ##'                     list(expression(Days | Subject)[[1]])))

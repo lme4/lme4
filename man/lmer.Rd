@@ -1,6 +1,10 @@
 \name{lmer}
-\alias{lmer}
 \title{Fit Linear Mixed-Effects Models}
+\alias{lmer}
+\concept{ LMM }
+\description{
+  Fit a linear mixed-effects model (LMM) to data.
+}
 \usage{
   lmer(formula, data = NULL, REML = TRUE,
     control = lmerControl(), start = NULL, verbose = 0L,
@@ -16,6 +20,7 @@
   vertical bars (\code{"|"}) separating expressions for
   design matrices from grouping factors.}
 
+
   \item{data}{an optional data frame containing the
   variables named in \code{formula}.  By default the
   variables are taken from the environment from which
@@ -29,22 +34,19 @@
   \code{formula} (if specified as a formula) or from the
   parent frame (if specified as a character vector).}
 
-  \item{REML}{logical scalar - Should the estimates be
-  chosen to optimize the REML criterion (as opposed to the
-  log-likelihood)?}
+  \item{REML}{logical scalar - Should the estimates be chosen to
+    optimize the REML criterion (as opposed to the log-likelihood)?}
 
   \item{control}{a list (of correct class, resulting from
-  \code{\link{lmerControl}()} or
-  \code{\link{glmerControl}()} respectively) containing
-  control parameters, including the nonlinear optimizer to
-  be used and parameters to be passed through to the
-  nonlinear optimizer, see the \code{*lmerControl}
-  documentation for details.}
+    \code{\link{lmerControl}()} or \code{\link{glmerControl}()}
+    respectively) containing control parameters, including the nonlinear
+    optimizer to be used and parameters to be passed through to the
+    nonlinear optimizer, see the \code{*lmerControl} documentation for
+    details.}
 
-  \item{start}{a named list of starting values for the
-  parameters in the model.  For \code{lmer} this can be a
-  numeric vector or a list with one component named
-  \code{"theta"}.}
+  \item{start}{a named \code{\link{list}} of starting values for the
+    parameters in the model.  For \code{lmer} this can be a numeric
+    vector or a list with one component named \code{"theta"}.}
 
   \item{verbose}{integer scalar.  If \code{> 0} verbose
   output is generated during the optimization of the
@@ -96,9 +98,6 @@
   An object of class \code{merMod}, for which many methods
   are available (e.g. \code{methods(class="merMod")})
 }
-\description{
-  Fit a linear mixed model (LMM)
-}
 \details{
   \itemize{ \item{If the \code{formula} argument is
   specified as a character vector, the function will
@@ -133,18 +132,22 @@
   vector and elements of the lower triangles of the
   Cholesky factors of the random effects.} }
 }
-\examples{
-## linear mixed models - reference values from older code
-(fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
-fm1_ML <- update(fm1,REML=FALSE)
-(fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
-anova(fm1, fm2)
-}
 \seealso{
   \code{\link[stats]{lm}}
 }
-\concept{
-  LMM
+\examples{
+## linear mixed models - reference values from older code
+<<<<<<< HEAD
+(fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
+=======
+(fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy))
+summary(fm1)# (with its own print method)
+>>>>>>> 051116a... More print() / print(summary(.)): print() only does "Std.Dev."
+fm1_ML <- update(fm1,REML=FALSE)
+(fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
+anova(fm1, fm2)
+sm2 <- summary(fm2)
+print(fm2, digits=7, ranef.comp="Var") # the print.merMod()         method
+print(sm2, digits=3, corr=FALSE)       # the print.summary.merMod() method
 }
 \keyword{models}
-
