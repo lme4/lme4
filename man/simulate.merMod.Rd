@@ -3,25 +3,39 @@
 \title{Simulate responses from a \code{\linkS4class{merMod}} object}
 \usage{
   \method{simulate}{merMod} (object, nsim = 1, seed = NULL,
-    use.u = FALSE, ...)
+    use.u = FALSE, ReForm=NA, newdata=NULL, newparams=NULL,
+                            allow.new.levels=FALSE, \dots)
 }
 \arguments{
   \item{object}{a fitted model object}
-
   \item{nsim}{positive integer scalar - the number of
-  responses to simulate}
-
+    responses to simulate}
   \item{seed}{an optional seed to be used in
-  \code{set.seed} immediately before the simulation so as
-  to generate a reproducible sample.}
-
+    \code{set.seed} immediately before the simulation so as
+    to generate a reproducible sample.}
   \item{use.u}{(logical) if \code{TRUE}, generate a
   simulation conditional on the current random-effects
   estimates; if \code{FALSE} generate new Normally
-  distributed random-effects values}
-
-  \item{...}{optional additional arguments, none are used
-  at present}
+  distributed random-effects values. (Redundant with \code{ReForm},
+  which is preferred: \code{TRUE} corresponds to \code{ReForm=NULL}
+  (condition on all random effects), while \code{TRUE} corresponds to
+  \code{ReForm=~0} (condition on none of the random effects).)}
+\item{ReForm}{formula for random effects to condition on.  If \code{NULL},
+  include all random effects; if \code{NA} or \code{~0},
+  include no random effects.}
+  \item{newdata}{data frame for which to evaluate
+    predictions}
+  \item{newparams}{new parameters to use in evaluating predictions,
+    specified as in the \code{start} parameter for \code{\link{lmer}}
+    or \code{\link{glmer}} -- a list with components \code{theta} and/or
+    (for GLMMs) \code{beta}}
+    \item{allow.new.levels}{(logical) if FALSE (default),
+    then any new levels (or NA values) detected in
+    \code{newdata} will trigger an error; if TRUE, then the
+    prediction will use the unconditional (population-level)
+    values for data with previously unobserved levels (or
+    NAs)}
+  \item{\dots}{optional additional arguments: none are used at present}
 }
 \description{
   Simulate responses from the model represented by a fitted

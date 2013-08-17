@@ -130,20 +130,24 @@ mkNewReTrms <- function(object,newdata,ReForm=NULL, na.action=na.pass,
 }
 
 ##'
-##' ##' \code{\link{predict}} method for \code{\linkS4class{merMod}} objects
+##' \code{\link{predict}} method for \code{\linkS4class{merMod}} objects
 ##'
 ##' @title Predictions from a model at new data values
 ##' @param object a fitted model object
 ##' @param newdata data frame for which to evaluate predictions
-##' @param ReForm formula for random effects to include.  If NULL,
-##'    include all random effects; if NA, include no random effects
+##' @param newparams new parameters to use in evaluating predictions
+##' @param newX new design matrix to use in evaluating predictions
+##' (alternative to \code{newdata})
+##' @param ReForm formula for random effects to condition on.  If \code{NULL},
+##' include all random effects; if \code{NA} or \code{~0},
+##' include no random effects
 ##' @param terms a \code{\link{terms}} object - not used at present
 ##' @param type character string - either \code{"link"}, the default,
 ##'    or \code{"response"} indicating the type of prediction object returned
 ##' @param allow.new.levels (logical) if FALSE (default), then any new levels
 ##'    (or NA values) detected in \code{newdata} will trigger an error; if TRUE, then
 ##'    the prediction will use the unconditional (population-level)
-##'    values for data with previously unobserved levels (or NAs)
+##'    values for data with previously unobserved levels (or \code{NA}s)
 ##' @param na.action function determining what should be done with missing values for fixed effects in \code{newdata}. The default is to predict \code{NA}: see \code{\link{na.pass}}.
 ##' @param ... optional additional parameters.  None are used at present.
 ##' @return a numeric vector of predicted values
