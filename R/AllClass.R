@@ -1087,7 +1087,7 @@ vcRep <-
                                    all(names(CV) == names(covar)),
                                    all(sapply(CV, isSymmetric)),
                                    all(sapply(CV, ncol) == covsiz))
-                         if (!all(sapply(cnms, length) == covsiz))
+                         if (!all(vapply(cnms, length, 1L) == covsiz))
                              error("setRECovar currently requires distinct grouping factors")
                          theta <<- sapply(CV, function(mm)
                                       {
