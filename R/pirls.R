@@ -51,6 +51,7 @@ pirls <- function(glmod, y, eta,
     linkinv <- family$linkinv
     variance <- family$variance
     muEta <- family$mu.eta
+    aic <- family$aic
     sqDevResid <- family$dev.resid
     mu <- linkinv(eta)
     beta <- numeric(p)
@@ -131,12 +132,13 @@ pirls <- function(glmod, y, eta,
         ## calculate Laplace deviance approximation
         ldL2 <- 2*determinant(L, logarithm = TRUE)$modulus
         attributes(ldL2) <- NULL
-        pdev <- ucden + ldL2 + (q/2)*log(2*pi) # penalized deviance
+        ## create the Laplace approx to -2log(L)
+        Lm2ll <- aic(y,rep.int(1,n),mu,weights,NULL) + sum(u^2) + ldL2 + (q/2)*log(2*pi)
         if (verbose > 0L) {
-            cat(sprintf("%10.3f: %12.4g", pdev, thetabeta[1]))
+            cat(sprintf("%10.3f: %12.4g", Lm2ll, thetabeta[1]))
             for (j in 2:length(thetabeta)) cat(sprintf(" %12.4g", thetabeta[j]))
             cat("\n")
         }
-        pdev
+        Lm2ll
     }
 }
