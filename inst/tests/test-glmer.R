@@ -32,7 +32,9 @@ test_that("glmer", {
                              data = subset(cbpp, herd==levels(herd)[1]), family = binomial),
                  "must have > 1")
     expect_warning(glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-                             data = subset(cbpp, herd %in% levels(herd)[1:4]), family = binomial),
+                         data = subset(cbpp, herd %in% levels(herd)[1:4]),
+                         family = binomial,
+                         control=glmerControl(check.nlev.gtreq.5="warning")),
                    "< 5 sampled levels")
     expect_warning(fm1. <- glmer(Reaction ~ Days + (Days|Subject), sleepstudy),
                    regexp="calling .* with family=gaussian .* as a shortcut")

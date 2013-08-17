@@ -191,7 +191,7 @@ merPredD <-
                                       Xwts, Zt, beta0, delb, delu, theta, u0)
                         .Call(merPredDsetTheta, Ptr, theta)
                         .Call(merPredDupdateXwts, Ptr, Xwts)
-                        .Call(merPredDupdateDecomp, Ptr)
+                        .Call(merPredDupdateDecomp, Ptr, NULL)
                      },
                      ptr          = function() {
                          'returns the external pointer, regenerating if necessary'
@@ -232,9 +232,9 @@ merPredD <-
                          'orthogonal random effects for step factor fac'
                          .Call(merPredDu, ptr(), as.numeric(fac))
                      },
-                     updateDecomp = function() {
+                     updateDecomp = function(XPenalty = NULL) {
                          'update L, RZX and RX from Ut, Vt and VtV'
-                         invisible(.Call(merPredDupdateDecomp, ptr()))
+                         invisible(.Call(merPredDupdateDecomp, ptr(), XPenalty))
                      },
                      updateL = function() {
                          'update LamtUt and L'
@@ -468,9 +468,9 @@ lmerResp <-
                              if (.Call(isNullExtPtr, Ptr)) initializePtr()
                          Ptr
                      },
-                     objective  = function(ldL2, ldRX2, sqrL) {
+                     objective  = function(ldL2, ldRX2, sqrL, sigma.sq = NULL) {
                          'returns the profiled deviance or REML criterion'
-                         .Call(lmer_Laplace, ptr(), ldL2, ldRX2, sqrL)
+                         .Call(lmer_Laplace, ptr(), ldL2, ldRX2, sqrL, sigma.sq)
                      })
                 )
 
@@ -1087,7 +1087,7 @@ vcRep <-
                                    all(names(CV) == names(covar)),
                                    all(sapply(CV, isSymmetric)),
                                    all(sapply(CV, ncol) == covsiz))
-                         if (!all(sapply(cnms, length) == covsiz))
+                         if (!all(vapply(cnms, length, 1L) == covsiz))
                              error("setRECovar currently requires distinct grouping factors")
                          theta <<- sapply(CV, function(mm)
                                       {

@@ -1,5 +1,5 @@
 
-R version 3.0.1 Patched (2013-07-03 r63167) -- "Good Sport"
+R version 3.0.1 Patched (2013-08-16 r63595) -- "Good Sport"
 Copyright (C) 2013 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -18,8 +18,6 @@ Type 'q()' to quit R.
 > library(lme4)
 Loading required package: lattice
 Loading required package: Matrix
-Loading required package: Rcpp
-Loading required package: RcppEigen
 > (testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
 [1] 1
 > 
@@ -31,26 +29,16 @@ Loading required package: RcppEigen
 Nonlinear mixed model fit by maximum likelihood ['nlmerMod']
 Formula: circumference ~ SSlogis(age, Asym, xmid, scal) ~ (Asym | Tree) 
    Data: Orange 
-
       AIC       BIC    logLik  deviance 
  273.1438  280.9205 -131.5719  263.1438 
-
 Random effects:
- Groups   Name Variance Std.Dev.
- Tree     Asym 1001.50  31.646  
- Residual        61.51   7.843  
+ Groups   Name Std.Dev.
+ Tree     Asym 31.646  
+ Residual       7.843  
 Number of obs: 35, groups: Tree, 5
-
-Fixed effects:
-     Estimate Std. Error t value
-Asym   192.05      15.58   12.32
-xmid   727.91      34.44   21.14
-scal   348.07      26.31   13.23
-
-Correlation of Fixed Effects:
-     Asym  xmid 
-xmid 0.384      
-scal 0.362 0.762
+Fixed Effects:
+ Asym   xmid   scal  
+192.1  727.9  348.1  
 > fixef(nm1)
     Asym     xmid     scal 
 192.0534 727.9074 348.0738 
@@ -101,4 +89,4 @@ scal 0.362 0.762
 > 
 > proc.time()
    user  system elapsed 
-  4.560   0.132   4.698 
+  5.080   0.092   5.187 

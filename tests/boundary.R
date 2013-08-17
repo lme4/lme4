@@ -7,14 +7,11 @@
 dat <- read.csv(system.file("testdata","dat20101314.csv",package="lme4"))
 library(lme4)
 
-fit <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat,
-            control=lmerControl(check.numlev.gtreq.5="ignore"))
+fit <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat)
 fit_b <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat,
-              control=lmerControl(optimizer="bobyqa",restart_edge=FALSE,
-              check.numlev.gtreq.5="ignore"))
+              control=lmerControl(optimizer="bobyqa",restart_edge=FALSE))
 fit_c <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat,
-              control=lmerControl(restart_edge=FALSE,
-              check.numlev.gtreq.5="ignore"))
+              control=lmerControl(restart_edge=FALSE))
 ## tol=1e-5 seems OK in interactive use but not in R CMD check ... ??
 stopifnot(all.equal(getME(fit,"theta"),getME(fit_b,"theta"),tol=2e-5))
 stopifnot(all(getME(fit,"theta")>0))

@@ -46,9 +46,11 @@ test_that("lmer", {
                             subset(sleepstudy,Subject==levels(Subject)[1])), "must have > 1")
     expect_warning(fm4 <- lFormula(Reaction ~ Days + (1|Subject),
                              subset(sleepstudy,Subject==levels(Subject)[1]),
-                             control=lmerControl(check.numlev.gtr.1="warning")), "must have > 1")
+                             control=lmerControl(check.nlev.gtr.1="warning")), "must have > 1")
     expect_warning(fm4 <- lmer(Reaction ~ Days + (1|Subject),
-                            subset(sleepstudy,Subject %in% levels(Subject)[1:4])), "< 5 sampled levels")
+                            subset(sleepstudy,Subject %in% levels(Subject)[1:4]),
+                               control=lmerControl(check.nlev.gtreq.5="warning")),
+                   "< 5 sampled levels")
     sstudy9 <- subset(sleepstudy, Days == 1 | Days == 9)
     expect_error(m1 <- lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
                             data = sleepstudy, subset = (Days == 1 | Days == 9)),
@@ -75,7 +77,7 @@ test_that("lmer", {
                    control=lmerControl(check.nobs.vs.rankZ="ignore")),
               "merMod")
     ## disable warning via options
-    options(lmerControl=list(check.numlev.gtreq.5="ignore",check.nobs.vs.rankZ="ignore"))
+    options(lmerControl=list(check.nobs.vs.rankZ="ignore"))
     expect_is(fm4 <- lmer(Reaction ~ Days + (1|Subject),
                             subset(sleepstudy,Subject %in% levels(Subject)[1:4])), "merMod")
     expect_is(lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
