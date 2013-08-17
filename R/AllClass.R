@@ -191,7 +191,7 @@ merPredD <-
                                       Xwts, Zt, beta0, delb, delu, theta, u0)
                         .Call(merPredDsetTheta, Ptr, theta)
                         .Call(merPredDupdateXwts, Ptr, Xwts)
-                        .Call(merPredDupdateDecomp, Ptr, NULL)
+                        .Call(merPredDupdateDecomp, Ptr)
                      },
                      ptr          = function() {
                          'returns the external pointer, regenerating if necessary'
@@ -232,9 +232,9 @@ merPredD <-
                          'orthogonal random effects for step factor fac'
                          .Call(merPredDu, ptr(), as.numeric(fac))
                      },
-                     updateDecomp = function(XPenalty = NULL) {
+                     updateDecomp = function() {
                          'update L, RZX and RX from Ut, Vt and VtV'
-                         invisible(.Call(merPredDupdateDecomp, ptr(), XPenalty))
+                         invisible(.Call(merPredDupdateDecomp, ptr()))
                      },
                      updateL = function() {
                          'update LamtUt and L'
@@ -468,9 +468,9 @@ lmerResp <-
                              if (.Call(isNullExtPtr, Ptr)) initializePtr()
                          Ptr
                      },
-                     objective  = function(ldL2, ldRX2, sqrL, sigma.sq = NULL) {
+                     objective  = function(ldL2, ldRX2, sqrL) {
                          'returns the profiled deviance or REML criterion'
-                         .Call(lmer_Laplace, ptr(), ldL2, ldRX2, sqrL, sigma.sq)
+                         .Call(lmer_Laplace, ptr(), ldL2, ldRX2, sqrL)
                      })
                 )
 

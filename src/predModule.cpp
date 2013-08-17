@@ -235,25 +235,15 @@ namespace lme4 {
         updateL();
     }
 
-    void merPredD::updateDecomp() {
-        updateDecomp(NULL);
-    }
-    
-    // using a point so as to detect NULL
-    void merPredD::updateDecomp(const MatrixXd* xPenalty) {  // update L, RZX and RX
+    void merPredD::updateDecomp() { // update L, RZX and RX
         updateL();
         d_RZX         = d_LamtUt * d_V;
         if (d_p > 0) {
             d_L.solveInPlace(d_RZX, CHOLMOD_P);
             d_L.solveInPlace(d_RZX, CHOLMOD_L);
-            
+
             MatrixXd      VtVdown(d_VtV);
-            
-            if (xPenalty == NULL)
-                d_RX.compute(VtVdown.selfadjointView<Eigen::Upper>().rankUpdate(d_RZX.adjoint(), -1));
-            else {
-                d_RX.compute(VtVdown.selfadjointView<Eigen::Upper>().rankUpdate(d_RZX.adjoint(), -1).rankUpdate(*xPenalty, 1));
-            }
+            d_RX.compute(VtVdown.selfadjointView<Eigen::Upper>().rankUpdate(d_RZX.adjoint(), -1));
             if (d_RX.info() != Eigen::Success)
                 ::Rf_error("Downdated VtV is not positive definite");
             d_ldRX2         = 2. * d_RX.matrixLLT().diagonal().array().abs().log().sum();
