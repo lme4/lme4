@@ -293,8 +293,8 @@ findbars <- function(term)
 			x
 		}))
 	}
-	if(class(term)=="formula"){
-		modterm <- expandDoubleVerts(term[[3]])	
+	if(is(term, "formula")){
+		modterm <- expandDoubleVerts(term[[length(term)]])	
 	} else modterm <- expandDoubleVerts(term)
 	expandSlash(fb(modterm))
 }
