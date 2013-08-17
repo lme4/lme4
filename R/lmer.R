@@ -1578,12 +1578,8 @@ printMerenv <- function(x, digits = max(3, getOption("digits") - 3),
 			ranef.comp = c("Variance", "Std.Dev."), ...)
 {
     so <- summary(x)
-    cat(sprintf("%s ['%s']\n",so$methTitle, class(x)))
-    if (!is.null(f <- so$family)) {
-	cat(" Family:", f)
-        if (!(is.null(ll <- so$link))) cat(" (", ll, ")")
-        cat("\n")
-    }
+    cat(sprintf("%s ['%s']\n",so$methTitle, so$objClass))
+    .prt.family(so)
     ## FIXME: commenting out for now, restore after release?
     ## cat("Scaled residuals:\n")
     ## print(summary(residuals(x,type="pearson",scaled=TRUE)),digits=digits)
@@ -1593,10 +1589,6 @@ printMerenv <- function(x, digits = max(3, getOption("digits") - 3),
 	    comp = ranef.comp, ...)
     .prt.grps(so$ngrps, nobs= so$devcomp$dims[["n"]])
 
-    ngrps <- so$ngrps
-    cat(sprintf("Number of obs: %d, groups: ", so$devcomp$dims[["n"]]))
-    cat(paste(paste(names(ngrps), ngrps, sep = ", "), collapse = "; "))
-    cat("\n")
     p <- nrow(so$coefficients)
     if (p > 0) {
 	cat("\nFixed effects:\n")
@@ -2133,7 +2125,7 @@ summary.merMod <- function(object, ...)
 	colnames(coefs)[3] <- paste(if(useSc) "t" else "z", "value")
         if (isGLMM(object))
             coefs <- cbind(coefs, "Pr(>|z|)" =
-                     2*pnorm(abs(cf3), lower.tail=FALSE))
+                           2*pnorm(abs(cf3), lower.tail=FALSE))
     }
 
     llAIC <- getLlikAIC(object)
