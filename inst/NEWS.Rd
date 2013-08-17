@@ -25,6 +25,11 @@
       \item \code{getME(.,"cnms")} added
       \item \code{print} method for \code{merMod} objects is now more
       terse, and different from \code{summary.merMod}
+      \item the \code{objective} method for the \code{respMod}
+      reference class now takes an optional \code{sigma.sq} parameter
+      (defaulting to \code{NULL}) to allow calculation of the
+      objective function with a residual variance different from
+      the profiled value (Vince Dorie)
     }
   }
 }
