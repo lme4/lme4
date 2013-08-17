@@ -37,31 +37,36 @@ pirls <- function(glmod, y, eta,
                   tol = 10^-6, npirls = 30,
                   nAGQ = 0, verbose=0L){
                                         # expand glmod
-    Lind <- glmod$reTrms$Lind
-    if (is.null(Lind)) Lind <- environment(glmod$reTrms$thfun)$Lind
-    thfun <- glmod$reTrms$thfun
-    Lambdat <- glmod$reTrms$Lambdat
-    Zt <- glmod$reTrms$Zt
+    retrms <- glmod$reTrms
+    thfun <- retrms$thfun
+    nth <- max(thfun(retrms$theta))
+    betaind <- -seq_len(nth) # indices to drop 1:nth
+    Lambdat <- retrms$Lambdat
+    Zt <- retrms$Zt
     X <- glmod$X
     n <- nrow(X)
     p <- ncol(X)
     q <- nrow(Zt)
     if (is.function(family)) family <- family() # ensure family is a list
-    mu <- family$linkinv(eta)
+    linkinv <- family$linkinv
+    variance <- family$variance
+    muEta <- family$mu.eta
+    sqDevResid <- family$dev.resid
+    mu <- linkinv(eta)
     beta <- numeric(p)
     u <- numeric(q)
     L <- Cholesky(tcrossprod(Lambdat %*% Zt), perm=FALSE, LDL=FALSE, Imult=1)
-    betaind <- -seq_len(max(Lind))      # indices to drop 1:nth
+    rm(retrms, glmod,family)
     function(thetabeta) {
         Lambdat@x[] <<- thfun(thetabeta)# update Lambdat
-        beta[] <<- thetabeta[betaind]
+        if (nAGQ) beta[] <<- thetabeta[betaind]
                                         # initialization
-        oldpdev <- .Machine$double.xmax
+        olducden <- .Machine$double.xmax # unscaled conditional density
         cvgd <- FALSE
         for(i in 1:npirls){             # PIRLS
                                         # update w and muEta
-            W <- Diagonal(x=weights/family$variance(mu))
-            muEta <- as.vector(family$mu.eta(eta))
+            W <- Diagonal(x=weights/variance(mu))
+            muEta <- muEta(eta)
                                         # update Ut and V
             sqrtW <- Diagonal(x = sqrt(W@x))
             Xwts <- Diagonal(x = sqrtW@x * muEta)
@@ -90,35 +95,35 @@ pirls <- function(glmod, y, eta,
                                         # update mu and eta
             eta[] <<- as.vector(offset + X %*% (beta+delbeta) +
                                 crossprod(Zt,crossprod(Lambdat,newu)))
-            mu[] <<- family$linkinv(eta)
-                                        # compute penalized deviance
-            pdev <- sum(family$dev.resid(y, mu, weights)) + sum(newu^2)
+            mu[] <<- linkinv(eta)
+                                        # compute conditional density of U
+            ucden <- sum(sqDevResid(y, mu, weights)) + sum(newu^2)
             if (verbose > 1L) {
-                cat(sprintf("%6.4f: %10.3f\n", 1, pdev))
+                cat(sprintf("%6.4f: %10.3f\n", 1, ucden))
             }
                 
-            if(abs((oldpdev - pdev) / pdev) < tol){
+            if(abs((olducden - ucden) / ucden) < tol){
                 cvgd <- TRUE
                 break
             }
                                         # step-halving
-            if(pdev > oldpdev){
+            if(ucden > olducden){
                 for(j in 1:10){
                     delu <- delu/2
                     newu <- u + delu
                     delbeta <- delbeta/2
                     eta[] <<- as.vector(offset + X %*% (beta + delbeta) +
                                        crossprod(Zt, crossprod(Lambdat,newu)))
-                    mu[] <<- family$linkinv(eta)
-                    pdev <- sum(family$dev.resid(y, mu, weights)) + sum(newu^2)
+                    mu[] <<- linkinv(eta)
+                    ucden <- sum(sqDevResid(y, mu, weights)) + sum(newu^2)
                     if (verbose > 1L) {
-                        cat(sprintf("%6.4f: %10.3f\n", 1/2^j, pdev))
+                        cat(sprintf("%6.4f: %10.3f\n", 1/2^j, ucden))
                     }
-                    if(!(pdev > oldpdev)) break
+                    if(!(ucden > olducden)) break
                 }
-                if((pdev - oldpdev) > tol) stop("Step-halving failed")
+                if((ucden - olducden) > tol) stop("Step-halving failed")
             }
-            oldpdev <- pdev
+            olducden <- ucden
             u[] <<- u + delu
             beta[] <<- beta + delbeta
         }
@@ -126,11 +131,12 @@ pirls <- function(glmod, y, eta,
         ## calculate Laplace deviance approximation
         ldL2 <- 2*determinant(L, logarithm = TRUE)$modulus
         attributes(ldL2) <- NULL
-        res <- pdev + ldL2 + (q/2)*log(2*pi)
+        pdev <- ucden + ldL2 + (q/2)*log(2*pi) # penalized deviance
         if (verbose > 0L) {
-            cat(sprintf("%10.3f: %12.4g", res, thetabeta[1]))
+            cat(sprintf("%10.3f: %12.4g", pdev, thetabeta[1]))
             for (j in 2:length(thetabeta)) cat(sprintf(" %12.4g", thetabeta[j]))
             cat("\n")
         }
+        pdev
     }
 }
