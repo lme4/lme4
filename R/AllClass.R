@@ -198,7 +198,7 @@ merPredD <-
                     },
                     setTheta     = function(th) {
                         'install a new theta'
-                        theta[] <- th
+                        theta[] <<- th
                     },
 
                     setBeta0     = function(beta0) {

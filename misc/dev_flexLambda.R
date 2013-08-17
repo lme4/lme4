@@ -1,11 +1,11 @@
 if(FALSE){
-	library(lme4pureR)
-	library(nloptwrap)
-	library(ggplot2)
-	library(mgcv)
+#	library(lme4pureR)
+#	library(nloptwrap)
 	
 	setwd("C:/lme4")
 	library(devtools)
+	library(ggplot2)
+	library(mgcv)
 	load_all()
 	source('misc/reGenerators_flexLambda.R', echo=TRUE)
 	options(error=recover)
@@ -35,17 +35,15 @@ setParams <- function(object,params,copy=TRUE) {
 ########################
 ### basic lmer example:
 lmod <- lFormula(Reaction ~ Days + (Days|Subject), sleepstudy)
+devfun <- do.call(mkLmerDevfun, lmod)
+opt <- optimizeLmer(devfun)
+environment(devfun)$pp$theta <- opt$par
+mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr)
 
-devf <- pls(lmod,sleepstudy$Reaction)
-opttheta <- bobyqa(c(1, 0, 1), devf, lower=c(0,-Inf,0))
-environment(devf)$beta
-opttheta$par
-
-# opttheta$conv <- "foo"
-# lmerdevf <- do.call(mkLmerDevfun, lmod)
-# m <- mkMerMod(environment(lmerdevf), opttheta, 
-# 			   lmod$reTrms, fr = lmod$fr)
-# (setParams(m, list(beta=environment(devf)$beta, theta=opttheta$par)))
+# devf <- pls(lmod,sleepstudy$Reaction)
+# opttheta <- bobyqa(c(1, 0, 1), devf, lower=c(0,-Inf,0))
+# environment(devf)$beta
+# opttheta$par
 
 
 ########################
@@ -63,19 +61,24 @@ data <- within(data, {
 }) 
 qplot(x=subject, y=y, col=treatment, group=subject, data=data)
 
-
 lmod <- lFormula(y ~ treatment, data, reGenerators= ~d(~(0+treatment|subject)))			   
+devfun <- do.call(mkLmerDevfun, lmod)
+opt <- optimizeLmer(devfun)
+environment(devfun)$pp$theta <- opt$par
+(m <- mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr))
+opt$par*sigma(m)
 
-devf <- pls(lmod, data$y)
-opttheta <- bobyqa(lmod$reTrms$theta, devf, lower=lmod$reTrms$lower)
 
-data$tr1 <- 1*(data$treatment=="1")
-data$tr2 <- 1*(data$treatment=="2")
-gm <- gam(y ~ treatment + s(subject, by=tr1, bs="re") + s(subject, by=tr2, bs="re"), 
-		  data=data, method="REML")
-
-gm$coefficients[1:2]; environment(devf)$beta
-opttheta$par; (x<-gam.vcomp(gm)[1:2,1])/sqrt(gm$reml.scale)
+# devf <- pls(lmod, data$y)
+# opttheta <- bobyqa(lmod$reTrms$theta, devf, lower=lmod$reTrms$lower)
+# 
+# data$tr1 <- 1*(data$treatment=="1")
+# data$tr2 <- 1*(data$treatment=="2")
+# gm <- gam(y ~ treatment + s(subject, by=tr1, bs="re") + s(subject, by=tr2, bs="re"), 
+# 		  data=data, method="REML")
+# 
+# gm$coefficients[1:2]; environment(devf)$beta
+# opttheta$par; (x<-gam.vcomp(gm)[1:2,1])/sqrt(gm$reml.scale)
 
 ########################
 ## iid example
@@ -94,6 +97,11 @@ qplot(x=subject, y=y, col=treatment, group=subject, data=data)
 
 
 lmod <- lFormula(y ~ treatment, data, reGenerators= ~d(~(0+treatment|subject), iid=TRUE))			   
+devfun <- do.call(mkLmerDevfun, lmod)
+opt <- optimizeLmer(devfun)
+environment(devfun)$pp$theta <- opt$par
+(m <- mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr))
+opt$par*sigma(m)
 
 devf <- pls(lmod, data$y)
 opttheta <- bobyqa(lmod$reTrms$theta, devf, lower=lmod$reTrms$lower)

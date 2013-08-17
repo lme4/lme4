@@ -489,7 +489,7 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
                 ## pp$setDelu(rep(0, length(pp$delu)))
                 resp$setOffset(baseOffset)
 		resp$updateMu(lp0)
-                theta <- thfun(as.double(pars[dpars])) # theta is first part of pars
+                theta <- as.double(pars[dpars]) # theta is first part of pars
 		pp$updateLambda(theta,thfun(theta))
                 spars <- as.numeric(pars[-dpars])
                 offset <- if (length(spars)==0) baseOffset else baseOffset + pp$X %*% spars
