@@ -76,182 +76,191 @@ merPredD <-
                      u0      = "numeric"),
                 methods =
                 list(
-                     initialize = function(X, Zt, Lambdat, thfun, theta, n, ...) {
-                         if (!nargs()) return
-                         X <<- as(X, "matrix")
-                         Zt <<- as(Zt, "dgCMatrix")
-                         Lambdat <<- as(Lambdat, "dgCMatrix")
-                         thfun <<- as.function(thfun)
-                         theta <<- as.numeric(theta)
-                         N <- nrow(X)
-                         p <- ncol(X)
-                         q <- nrow(Zt)
-                         stopifnot(length(theta) > 0L)
-                         RZX <<- array(0, c(q, p))
-                         Utr <<- numeric(q)
-                         V <<- array(0, c(n, p))
-                         VtV <<- array(0, c(p, p))
-                         Vtr <<- numeric(p)
-                         b0 <- list(...)$beta0
-                         beta0 <<- if (is.null(b0)) numeric(p) else b0
-                         delb <<- numeric(p)
-                         delu <<- numeric(q)
-                         uu <- list(...)$u0
-                         u0 <<- if (is.null(uu)) numeric(q) else uu
-                         Ut <<- if (n == N) Zt + 0 else
-                             Zt %*% sparseMatrix(i=seq_len(N), j=as.integer(gl(n, 1, N)), x=rep.int(1,N))
-                         ## The following is a kludge to overcome problems when Zt is square
-                         ## by making LamtUt rectangular
-                         LtUt <- Lambdat %*% Ut
-                         if (nrow(LtUt) == ncol(LtUt))
-                             LtUt <- cbind2(LtUt,
-                                            sparseMatrix(i=integer(0),
-                                                         j=integer(0),
-                                                         x=numeric(0),
-                                                         dims=c(nrow(LtUt),1)))
-                         LamtUt <<- LtUt
-                         Xw <- list(...)$Xwts
-                         Xwts <<- if (is.null(Xw)) rep.int(1, N) else as.numeric(Xw)
-                         initializePtr()
-                     },
-                     CcNumer      = function() {
-                         'returns the numerator of the orthogonality convergence criterion'
-                         .Call(merPredDCcNumer, ptr())
-                     },
-                     L            = function() {
-                         'returns the current value of the sparse Cholesky factor'
-                         .Call(merPredDL, ptr())
-                     },
-                     P            = function() {
-                         'returns the permutation vector for the sparse Cholesky factor'
-                         .Call(merPredDPvec, ptr())
-                     },
-                     RX           = function() {
-                         'returns the dense downdated Cholesky factor for the fixed-effects parameters'
-                         .Call(merPredDRX, ptr())
-                     },
-                     RXi          = function() {
-                         'returns the inverse of the dense downdated Cholesky factor for the fixed-effects parameters'
-                         .Call(merPredDRXi, ptr())
-                     },
-                     RXdiag       = function() {
-                         'returns the diagonal of the dense downdated Cholesky factor'
-                         .Call(merPredDRXdiag, ptr())
-                     },
-                     b            = function(fac) {
-                         'random effects on original scale for step factor fac'
-                         .Call(merPredDb, ptr(), as.numeric(fac))
-                     },
-                     beta         = function(fac) {
-                         'fixed-effects coefficients for step factor fac'
-                         .Call(merPredDbeta, ptr(), as.numeric(fac))
-                     },
-                     copy         = function(shallow = FALSE) {
-                         def <- .refClassDef
-                         selfEnv <- as.environment(.self)
-                         vEnv    <- new.env(parent=emptyenv())
-                         for (field in setdiff(names(def@fieldClasses), "Ptr")) {
-                             if (shallow)
-                                 assign(field, get(field, envir = selfEnv), envir = vEnv)
-                             else {
-                                 current <- get(field, envir = selfEnv)
-                                 if (is(current, "envRefClass"))
-                                     current <- current$copy(FALSE)
-                                 assign(field, current, envir = vEnv)
-                             }
-                         }
-                         do.call(new, c(as.list(vEnv), n=nrow(vEnv$V), Class=def))
-                     },
-                     ldL2         = function() {
-                         'twice the log determinant of the sparse Cholesky factor'
-                         .Call(merPredDldL2, ptr())
-                     },
-                     ldRX2        = function() {
-                         'twice the log determinant of the downdated dense Cholesky factor'
-                         .Call(merPredDldRX2, ptr())
-                     },
-                     unsc         = function() {
-                         'the unscaled variance-covariance matrix of the fixed-effects parameters'
-                         .Call(merPredDunsc, ptr())
-                     },
-                     linPred      = function(fac) {
-                         'evaluate the linear predictor for step factor fac'
-                         .Call(merPredDlinPred, ptr(), as.numeric(fac))
-                     },
-                     installPars  = function(fac) {
-                         'update u0 and beta0 to the values for step factor fac'
-                         .Call(merPredDinstallPars, ptr(), as.numeric(fac))
-                     },
+                    initialize = function(X, Zt, Lambdat, thfun, theta, n, ...) {
+                        if (!nargs()) return
+                        X <<- as(X, "matrix")
+                        Zt <<- as(Zt, "dgCMatrix")
+                        Lambdat <<- as(Lambdat, "dgCMatrix")
+                        thfun <<- as.function(thfun)
+                        theta <<- as.numeric(theta)
+                        N <- nrow(X)
+                        p <- ncol(X)
+                        q <- nrow(Zt)
+                        stopifnot(length(theta) > 0L)
+                        RZX <<- array(0, c(q, p))
+                        Utr <<- numeric(q)
+                        V <<- array(0, c(n, p))
+                        VtV <<- array(0, c(p, p))
+                        Vtr <<- numeric(p)
+                        b0 <- list(...)$beta0
+                        beta0 <<- if (is.null(b0)) numeric(p) else b0
+                        delb <<- numeric(p)
+                        delu <<- numeric(q)
+                        uu <- list(...)$u0
+                        u0 <<- if (is.null(uu)) numeric(q) else uu
+                        Ut <<- if (n == N) Zt + 0 else
+                        Zt %*% sparseMatrix(i=seq_len(N), j=as.integer(gl(n, 1, N)), x=rep.int(1,N))
+                        ## The following is a kludge to overcome problems when Zt is square
+                        ## by making LamtUt rectangular
+                        LtUt <- Lambdat %*% Ut
+                        if (nrow(LtUt) == ncol(LtUt))
+                            LtUt <- cbind2(LtUt,
+                                           sparseMatrix(i=integer(0),
+                                                        j=integer(0),
+                                                        x=numeric(0),
+                                                        dims=c(nrow(LtUt),1)))
+                        LamtUt <<- LtUt
+                        Xw <- list(...)$Xwts
+                        Xwts <<- if (is.null(Xw)) rep.int(1, N) else as.numeric(Xw)
+                        initializePtr()
+                    },
+                    CcNumer      = function() {
+                        'returns the numerator of the orthogonality convergence criterion'
+                        .Call(merPredDCcNumer, ptr())
+                    },
+                    L            = function() {
+                        'returns the current value of the sparse Cholesky factor'
+                        .Call(merPredDL, ptr())
+                    },
+                    P            = function() {
+                        'returns the permutation vector for the sparse Cholesky factor'
+                        .Call(merPredDPvec, ptr())
+                    },
+                    RX           = function() {
+                        'returns the dense downdated Cholesky factor for the fixed-effects parameters'
+                        .Call(merPredDRX, ptr())
+                    },
+                    RXi          = function() {
+                        'returns the inverse of the dense downdated Cholesky factor for the fixed-effects parameters'
+                        .Call(merPredDRXi, ptr())
+                    },
+                    RXdiag       = function() {
+                        'returns the diagonal of the dense downdated Cholesky factor'
+                        .Call(merPredDRXdiag, ptr())
+                    },
+                    b            = function(fac) {
+                        'random effects on original scale for step factor fac'
+                        .Call(merPredDb, ptr(), as.numeric(fac))
+                    },
+                    beta         = function(fac) {
+                        'fixed-effects coefficients for step factor fac'
+                        .Call(merPredDbeta, ptr(), as.numeric(fac))
+                    },
+                    copy         = function(shallow = FALSE) {
+                        def <- .refClassDef
+                        selfEnv <- as.environment(.self)
+                        vEnv    <- new.env(parent=emptyenv())
+                        for (field in setdiff(names(def@fieldClasses), "Ptr")) {
+                            if (shallow)
+                                assign(field, get(field, envir = selfEnv), envir = vEnv)
+                            else {
+                                current <- get(field, envir = selfEnv)
+                                if (is(current, "envRefClass"))
+                                    current <- current$copy(FALSE)
+                                assign(field, current, envir = vEnv)
+                            }
+                        }
+                        do.call(new, c(as.list(vEnv), n=nrow(vEnv$V), Class=def))
+                    },
+                    ldL2         = function() {
+                        'twice the log determinant of the sparse Cholesky factor'
+                        .Call(merPredDldL2, ptr())
+                    },
+                    ldRX2        = function() {
+                        'twice the log determinant of the downdated dense Cholesky factor'
+                        .Call(merPredDldRX2, ptr())
+                    },
+                    unsc         = function() {
+                        'the unscaled variance-covariance matrix of the fixed-effects parameters'
+                        .Call(merPredDunsc, ptr())
+                    },
+                    linPred      = function(fac) {
+                        'evaluate the linear predictor for step factor fac'
+                        .Call(merPredDlinPred, ptr(), as.numeric(fac))
+                    },
+                    installPars  = function(fac) {
+                        'update u0 and beta0 to the values for step factor fac'
+                        .Call(merPredDinstallPars, ptr(), as.numeric(fac))
+                    },
                     initializePtr = function() {
                         Ptr <<- .Call(merPredDCreate, as(X, "matrix"), Lambdat,
                                       LamtUt, RZX, Ut, Utr, V, VtV, Vtr,
                                       Xwts, Zt, beta0, delb, delu, u0)
                         .Call(merPredDupdateXwts, Ptr, Xwts)
                         .Call(merPredDupdateDecomp, Ptr)
-                     },
-                     ptr          = function() {
-                         'returns the external pointer, regenerating if necessary'
-                         if (length(theta)) {
-                             if (.Call(isNullExtPtr, Ptr)) initializePtr()
-                         }
-                         Ptr
-                     },
-                     setBeta0     = function(beta0) {
-                         'install a new value of theta'
-                         .Call(merPredDsetBeta0, ptr(), as.numeric(beta0))
-                     },
-                     solve        = function() {
-                         'solve for the coefficient increments delu and delb'
-                         .Call(merPredDsolve, ptr())
-                     },
-                     solveU       = function() {
-                         'solve for the coefficient increment delu only (beta is fixed)'
-                         .Call(merPredDsolveU, ptr())
-                     },
-                     setDelu      = function(val) {
-                         'set the coefficient increment delu'
-                         .Call(merPredDsetDelu , ptr(), as.numeric(val))
-                     },
-                     setDelb      = function(val) {
-                         'set the coefficient increment delb'
-                         .Call(merPredDsetDelb , ptr(), as.numeric(val))
-                     },
-                     sqrL         = function(fac) {
-                         'squared length of u0 + fac * delu'
-                         .Call(merPredDsqrL, ptr(), as.numeric(fac))
-                     },
-                     u            = function(fac) {
-                         'orthogonal random effects for step factor fac'
-                         .Call(merPredDu, ptr(), as.numeric(fac))
-                     },
-                     updateDecomp = function() {
-                         'update L, RZX and RX from Ut, Vt and VtV'
-                         invisible(.Call(merPredDupdateDecomp, ptr()))
-                     },
-                     updateL = function() {
-                         'update LamtUt and L'
-                         .Call(merPredDupdateL, ptr())
-                     },
-                     updateLambda = function(Lambdax) {
-                         'update x slot of Lambdat'
-                         .Call(merPredDupdateLambda, ptr(), Lambdax)
-                     },
-                     updateLamtUt = function() {
-                         'update LamtUt and L'
-                         .Call(merPredDupdateLamtUt, ptr())
-                     },
-                     updateRes    = function(wtres) {
-                         'update Vtr and Utr using the vector of weighted residuals'
-                         .Call(merPredDupdateRes, ptr(), as.numeric(wtres))
-                     },
-                     updateXwts   = function(wts) {
-                         'update Ut and V from Zt and X using X weights'
-                         .Call(merPredDupdateXwts, ptr(), wts)
-                     }
-                     )
+                    },
+                    ptr          = function() {
+                        'returns the external pointer, regenerating if necessary'
+                        if (length(theta)) {
+                            if (.Call(isNullExtPtr, Ptr)) initializePtr()
+                        }
+                        Ptr
+                    },
+                    setTheta     = function(th) {
+                        'install a new theta'
+                        theta[] <- th
+                    },
+
+                    setBeta0     = function(beta0) {
+                        'install a new value of beta0'
+                        .Call(merPredDsetBeta0, ptr(), as.numeric(beta0))
+                    },
+
+                    setDelu      = function(val) {
+                        'set the coefficient increment delu'
+                        .Call(merPredDsetDelu , ptr(), as.numeric(val))
+                    },
+
+                    setDelb      = function(val) {
+                        'set the coefficient increment delb'
+                        .Call(merPredDsetDelb , ptr(), as.numeric(val))
+                    },
+
+                    solve        = function() {
+                        'solve for the coefficient increments delu and delb'
+                        .Call(merPredDsolve, ptr())
+                    },
+                    solveU       = function() {
+                        'solve for the coefficient increment delu only'
+                        .Call(merPredDsolveU, ptr())
+                    },
+                    sqrL         = function(fac) {
+                        'squared length of u0 + fac * delu'
+                        .Call(merPredDsqrL, ptr(), as.numeric(fac))
+                    },
+                    u            = function(fac) {
+                        'orthogonal random effects for step factor fac'
+                        .Call(merPredDu, ptr(), as.numeric(fac))
+                    },
+                    updateDecomp = function() {
+                        'update L, RZX and RX from Ut, Vt and VtV'
+                        invisible(.Call(merPredDupdateDecomp, ptr()))
+                    },
+                    updateL = function() {
+                        'update LamtUt and L'
+                        .Call(merPredDupdateL, ptr())
+                    },
+                    updateLambda = function(th,Lambdax) {
+                        'update x slot of Lambdat and record th'
+                        setTheta(th)
+                        .Call(merPredDupdateLambda, ptr(), Lambdax)
+                    },
+                    updateLamtUt = function() {
+                        'update LamtUt and L'
+                        .Call(merPredDupdateLamtUt, ptr())
+                    },
+                    updateRes    = function(wtres) {
+                        'update Vtr and Utr using the vector of weighted residuals'
+                        .Call(merPredDupdateRes, ptr(), as.numeric(wtres))
+                    },
+                    updateXwts   = function(wts) {
+                        'update Ut and V from Zt and X using X weights'
+                        .Call(merPredDupdateXwts, ptr(), wts)
+                    }
+                    )
                 )
 merPredD$lock("Lambdat", "LamtUt", "RZX", "Ut", "Utr", "V", "VtV", "Vtr",
-              "X", "Xwts", "Zt", "beta0", "delb", "delu", "theta", "u0")
+              "X", "Xwts", "Zt", "beta0", "delb", "delu", "u0")
 
 ##' Class \code{"merPredD"} - a dense predictor reference class
 ##'

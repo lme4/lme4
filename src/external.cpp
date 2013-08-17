@@ -646,13 +646,11 @@ extern "C" {
         END_RCPP;
     }
 
-
     SEXP merPredDsetDelu(SEXP ptr, SEXP delu) {
         BEGIN_RCPP;
         XPtr<merPredD>(ptr)->setDelu(as<MVec>(delu));
         END_RCPP;
     }
-
 
     SEXP merPredDsetDelb(SEXP ptr, SEXP delb) {
         BEGIN_RCPP;
@@ -1022,7 +1020,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(merPredDsetBeta0,   2), 
 
     CALLDEF(merPredDsetDelu,    2), // setters
-    CALLDEF(merPredDsetDelb,    2), 
+    CALLDEF(merPredDsetDelb,    2),
 
     CALLDEF(merPredDCcNumer,    1), // getters
     CALLDEF(merPredDL,          1),

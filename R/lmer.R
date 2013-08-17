@@ -145,7 +145,9 @@ lmer <- function(formula, data=NULL, REML = TRUE,
                         control=control$optControl,
                         verbose=verbose,
                         start=start)
-    mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr, mcout) ## prepare output
+    rho <- environment(devfun)
+    rho$pp$theta[] <- opt$par
+    mkMerMod(rho, opt, lmod$reTrms, fr = lmod$fr, mcout) ## prepare output
 }## { lmer }
 
 
@@ -466,7 +468,8 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
     ff <-
     if (is(rho$resp, "lmerResp")) {
 	rho$lmer_Deviance <- lmer_Deviance
-	function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pp$thfun(as.double(theta)))
+	function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(),
+                              pp$thfun(as.double(theta)))
     } else if (is(rho$resp, "glmResp")) {
         ## control values will override rho values *if present*
         if (!is.null(tp <- control$tolPwrss)) rho$tolPwrss <- tp
@@ -474,7 +477,7 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
 	if (nAGQ == 0L)
 	    function(theta) {
 		resp$updateMu(lp0)
-		pp$updateLambda(thfun(theta))
+		pp$updateLambda(theta,thfun(theta))
 		p <- pwrssUpdate(pp, resp, tolPwrss, GHrule(0L),
                             compDev, verbose)
                 resp$updateWts()
@@ -486,7 +489,8 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
                 ## pp$setDelu(rep(0, length(pp$delu)))
                 resp$setOffset(baseOffset)
 		resp$updateMu(lp0)
-		pp$updateLambda(thfun(as.double(pars[dpars]))) # theta is first part of pars
+                theta <- thfun(as.double(pars[dpars])) # theta is first part of pars
+		pp$updateLambda(theta,thfun(theta))
                 spars <- as.numeric(pars[-dpars])
                 offset <- if (length(spars)==0) baseOffset else baseOffset + pp$X %*% spars
 		resp$setOffset(offset)
