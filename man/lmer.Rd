@@ -137,12 +137,8 @@
 }
 \examples{
 ## linear mixed models - reference values from older code
-<<<<<<< HEAD
-(fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
-=======
 (fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy))
 summary(fm1)# (with its own print method)
->>>>>>> 051116a... More print() / print(summary(.)): print() only does "Std.Dev."
 fm1_ML <- update(fm1,REML=FALSE)
 (fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
 anova(fm1, fm2)
