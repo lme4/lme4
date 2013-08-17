@@ -35,9 +35,11 @@ pirls <- function(glmod, y, eta,
                   weights = rep(1, length(y)),
                   offset = rep(0, length(y)),
                   tol = 10^-6, npirls = 30,
-                  nAGQ = 0){
+                  nAGQ = 0, verbose=0L){
                                         # expand glmod
     Lind <- glmod$reTrms$Lind
+    if (is.null(Lind)) Lind <- environment(glmod$reTrms$thfun)$Lind
+    thfun <- glmod$reTrms$thfun
     Lambdat <- glmod$reTrms$Lambdat
     Zt <- glmod$reTrms$Zt
     X <- glmod$X
@@ -51,7 +53,7 @@ pirls <- function(glmod, y, eta,
     L <- Cholesky(tcrossprod(Lambdat %*% Zt), perm=FALSE, LDL=FALSE, Imult=1)
     betaind <- -seq_len(max(Lind))      # indices to drop 1:nth
     function(thetabeta) {
-        Lambdat@x[] <<- thetabeta[Lind] # update Lambdat
+        Lambdat@x[] <<- thfun(thetabeta)# update Lambdat
         beta[] <<- thetabeta[betaind]
                                         # initialization
         oldpdev <- .Machine$double.xmax
@@ -78,12 +80,22 @@ pirls <- function(glmod, y, eta,
                 newu <- as.vector(solve(L, Ut %*% r))
                 newbeta <- beta
             }
+            if (verbose > 0L) {
+                cat(sprintf("inc: %12.4g", newu[1]))
+                nprint <- min(5,length(newu))
+                for (j in 2:nprint) cat(sprintf(" %12.4g", newu[j]))
+                cat("\n")
+            }
                                         # update mu and eta
             eta[] <<- as.vector(offset + X %*% newbeta +
                                 crossprod(Zt,crossprod(Lambdat,newu)))
             mu[] <<- family$linkinv(eta)
                                         # compute penalized deviance
             pdev <- sum(family$dev.resid(y, mu, weights)) + sum(newu^2)
+            if (verbose > 1L) {
+                cat(sprintf("%6.4f: %10.3f\n", 1, pdev))
+            }
+                
             if(abs((oldpdev - pdev) / pdev) < tol){
                 cvgd <- TRUE
                 break
@@ -97,6 +109,9 @@ pirls <- function(glmod, y, eta,
                                        crossprod(Zt, crossprod(Lambdat,newu)))
                     mu <- family$linkinv(eta)
                     pdev <- sum(family$dev.resid(y, mu, weights)) + sum(newu^2)
+                    if (verbose > 1L) {
+                        cat(sprintf("%6.4f: %10.3f\n", 1/2^j, pdev))
+                    }
                     if(!(pdev > oldpdev)) break
                 }
                 if((pdev - oldpdev) > tol) stop("Step-halving failed")
@@ -109,6 +124,11 @@ pirls <- function(glmod, y, eta,
         ## calculate Laplace deviance approximation
         ldL2 <- 2*determinant(L, logarithm = TRUE)$modulus
         attributes(ldL2) <- NULL
-        pdev + ldL2 + (q/2)*log(2*pi)
+        res <- pdev + ldL2 + (q/2)*log(2*pi)
+        if (verbose > 0L) {
+            cat(sprintf("%10.3f: %12.4g", res, thetabeta[1]))
+            for (j in 2:length(thetabeta)) cat(sprintf(" %12.4g", thetabeta[j]))
+            cat("\n")
+        }
     }
 }
