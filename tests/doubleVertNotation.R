@@ -5,6 +5,7 @@
 # load_all()
 
 
+library(lme4)
 library(testthat)
 
 #basic intercept + slope
