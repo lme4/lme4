@@ -319,15 +319,14 @@ expandDoubleVerts <- function(term)
 		
 		if(attr(terms(frml), "intercept")!=0) newtrms <- c("1", newtrms)
 		
-		as.name(paste(sapply(newtrms, function(trm){
+		as.formula(paste("~(", paste(sapply(newtrms, function(trm){
 			paste0(trm, "|", deparse(term[[3]]))  
-		}), collapse=")+("))
+		}), collapse=")+("), ")"))[[2]]
 	}  
 	
 	if (is.name(term) || !is.language(term)) return(term)
 	if (term[[1]] == as.name("(")) {
 		term[[2]] <- expandDoubleVerts(term[[2]])
-		return(term)
 	}  
 	stopifnot(is.call(term))
 	if (term[[1]] == as.name('||')) {
@@ -343,8 +342,7 @@ expandDoubleVerts <- function(term)
 		term[[3]] <- expandDoubleVerts(term[[3]])
 	}  
 	
-	as.formula(paste("~", gsub("`", "",
-							   deparse(term))))[[2]]
+	term
 }
 
 
