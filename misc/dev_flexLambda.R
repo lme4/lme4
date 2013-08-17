@@ -1,10 +1,14 @@
 if(FALSE){
 	library(lme4pureR)
 	library(nloptwrap)
+	library(ggplot2)
+	library(mgcv)
 	
 	setwd("C:/lme4")
 	library(devtools)
 	load_all()
+	source('misc/reGenerators_flexLambda.R', echo=TRUE)
+	options(error=recover)
 }
 
 (fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy))
@@ -45,28 +49,57 @@ opttheta$par
 
 
 ########################
-#### diag/iid example
+## diag example
+n <- 200
+nsubj <- 20
+data <- data.frame(subject = factor(gl(n/nsubj, nsubj)), 
+				   treatment = factor(rep(rep(c(1,2), each=n/nsubj), times=n/nsubj)))
+sd.treat <- c(.5, 2)
+data <- within(data, {
+	mu <- model.matrix(~0+treatment, data)%*%c(0, 5) + 
+		model.matrix(~0+subject:treatment, data) %*% c(rnorm(n/nsubj, sd=sd.treat[1]), 
+													   rnorm(n/nsubj, sd=sd.treat[2]))
+	y <- mu + rnorm(n, sd=.1)
+}) 
+qplot(x=subject, y=y, col=treatment, group=subject, data=data)
 
-n <- 100
-data <- data.frame(y=rnorm(n), x1=rnorm(n), x2=rnorm(n),
-				   id=gl(20, n/20), id2=sample(gl(10, n/10)))
-reGenerators=NULL
-frml <- y ~ x1 + (x1|id) + (x1|id2)
 
-fr <- model.frame(formula=as.formula(subbars(frml), env=data),
-				  data=data, drop.unused.levels=TRUE)
-attr(fr,"formula") <- frml
-bars <- findbars(frml[[3]])
+lmod <- lFormula(y ~ treatment, data, reGenerators= ~d(~(0+treatment|subject)))			   
 
-y ~ (1|id) + ar(~(.rows|1), order=1)
+devf <- pls(lmod, data$y)
+opttheta <- bobyqa(lmod$reTrms$theta, devf, lower=lmod$reTrms$lower)
 
-~ diag(~(f|g))  us(~(f|g))
+data$tr1 <- 1*(data$treatment=="1")
+data$tr2 <- 1*(data$treatment=="2")
+gm <- gam(y ~ treatment + s(subject, by=tr1, bs="re") + s(subject, by=tr2, bs="re"), 
+		  data=data, method="REML")
 
-n <- 20
-rho <- .6
-.rows <- 1:20
-C <- rho^abs(outer(.rows, .rows, "-"))
-image(L <- as(chol(C), "Matrix"))
+gm$coefficients[1:2]; environment(devf)$beta
+opttheta$par; (x<-gam.vcomp(gm)[1:2,1])/sqrt(gm$reml.scale)
 
-formula <- ~ (0+f|id)
+########################
+## iid example
+n <- 200
+nsubj <- 20
+data <- data.frame(subject = factor(gl(n/nsubj, nsubj)), 
+				   treatment = factor(rep(rep(c(1,2), each=n/nsubj), times=n/nsubj)))
+sd.treat <- 2
+data <- within(data, {
+	mu <- model.matrix(~0+treatment, data)%*%c(0, 5) + 
+		model.matrix(~0+subject:treatment, data) %*% c(rnorm(n/nsubj, sd=sd.treat), 
+													   rnorm(n/nsubj, sd=sd.treat))
+	y <- mu + rnorm(n, sd=.1)
+}) 
+qplot(x=subject, y=y, col=treatment, group=subject, data=data)
 
+
+lmod <- lFormula(y ~ treatment, data, reGenerators= ~d(~(0+treatment|subject), iid=TRUE))			   
+
+devf <- pls(lmod, data$y)
+opttheta <- bobyqa(lmod$reTrms$theta, devf, lower=lmod$reTrms$lower)
+
+gm <- gam(y ~ treatment + s(subject, by=treatment, bs="re"), 
+		  data=data, method="REML")
+
+gm$coefficients[1:2]; environment(devf)$beta
+opttheta$par; (x<-gam.vcomp(gm)[1:2,1])/sqrt(gm$reml.scale)

@@ -3,7 +3,8 @@
 ##' @title Modular functions for mixed model fits
 ##' @aliases modular
 ##' @inheritParams lmer
-##' @param \dots other potential arguments.
+##' @param \dots other potential arguments, notably \code{reGenerators}, i.e. a one-sided formula with 
+##'   specifying non-standard random effects.
 ##' @details These functions make up the internal components of a(n) [gn]lmer fit.
 ##' \itemize{
 ##' \item \code{[g]lFormula} takes the arguments that would normally be passed to \code{[g]lmer},
@@ -161,6 +162,19 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 		return(eval(mc, parent.frame()))
 	}
 	
+	reGenerators <- l...$reGenerators
+	hasReGen <- !is.null(reGenerators) 
+	# if there are special terms... 
+	if(hasReGen){
+		# ...save varnames so they show up in mf
+		reGenVars <- all.vars(reGenerators)
+		#rm special "." term for row indices
+		reGenVars <- reGenVars[reGenVars!="."]
+		# ...and initialize them
+		reGenerators <- sapply(attr(terms(reGenerators), 
+									"variables"), eval)[-1]
+	}
+	
 	denv <- checkFormulaData(formula,data)
 	#mc$formula <- formula <- as.formula(formula,env=denv) ## substitute evaluated call
 	formula <- as.formula(formula,env=denv)
@@ -174,6 +188,13 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 	mf$drop.unused.levels <- TRUE
 	mf[[1]] <- as.name("model.frame")
 	fr.form <- subbars(formula) # substitute "|" by "+"
+	
+	# also make sure reGenerator variables show up in mf
+	if(hasReGen && length(reGenVars)){
+		reGenFrml <- formula(paste(".~.+",paste(reGenVars, collapse="+")))
+		fr.form <- update(fr.form, reGenFrml) 
+	}
+		
 	environment(fr.form) <- environment(formula)
 	mf$formula <- fr.form
 	fr <- eval(mf, parent.frame())
@@ -181,8 +202,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 	attr(fr,"formula") <- formula
 	attr(fr,"offset") <- mf$offset
 	n <- nrow(fr)
+	
 	## random effects and terms modules
-	reGenerators <- l...$reGenerators
 	reTrms <- mkReTrms(findbars(formula[[3]]), fr, reGenerators)
 	checkNlevels(reTrms$ flist, n=n, control)
 	checkZrank	(reTrms$ Zt,	n=n, control, nonSmall = 1e6)

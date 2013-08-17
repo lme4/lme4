@@ -48,11 +48,11 @@ mkReTrms <- function(bars, fr, reGenerators=NULL) {
 	} 
 	if(!is.null(reGenerators)){
 		reTrms2 <- lapply(reGenerators, function(reGenerator){
-			reGenerator$mkTrm(fr)	
+			reGenerator(fr)	
 		})
 		reTrms <- c(reTrms, reTrms2)
 		nl <- c(nl, unlist(lapply(reTrms2, "[[", "nl")))
-		special <- c(special, rep(TRUE, reTrms2))
+		special <- c(special, rep(TRUE, length(reTrms2)))
 	}
 	nreTrms <- length(reTrms)
 	
@@ -93,16 +93,16 @@ mkReTrms <- function(bars, fr, reGenerators=NULL) {
 	attr(fl, "assign") <- asgn
 	
 	# to be backwards compatible, supply valid Lind 
-	# (valid at least if no reGenerators are present)
+	# (valid at least if no reGenerators are supplied)
 	thetap <- cumsum(c(0, ntheta))
-	Lind <- as.integer(sapply(reTrms, "[[", "Lind") + 
+	Lind <- as.integer(unlist(sapply(reTrms, "[[", "Lind")) + 
 					   	rep(head(thetap, -1), nlambda))
 	
 	ll <- list(Zt = Matrix::drop0(Zt),
 			   Lambdat = do.call(bdiag, unname(lapply(reTrms, "[[", "Lambdat"))),
-			   lower = as.vector(sapply(reTrms, "[[", "lower")),
-			   upper = as.vector(sapply(reTrms, "[[", "upper")),
-			   theta = as.vector(sapply(reTrms, "[[", "theta")),
+			   lower = as.numeric(unlist(sapply(reTrms, "[[", "lower"))),
+			   upper = as.numeric(unlist(sapply(reTrms, "[[", "upper"))),
+			   theta = as.numeric(unlist(sapply(reTrms, "[[", "theta"))),
 			   thfun = local({
 			   	  thfunlist <- lapply(reTrms, "[[", "updateLambdatx")
 			   	  splits <- rep(1:length(reTrms), times=ntheta)
@@ -110,7 +110,7 @@ mkReTrms <- function(bars, fr, reGenerators=NULL) {
 			   		theta <- lapply(split(theta, splits), function(x) list(theta=x))
 			   		# apply the appropriate transformation (theta --> Lambdat@x)
 			   		# to each subvector of theta:
-			   		as.vector(mapply(do.call, what=thfunlist, args=theta))
+			   		as.numeric(unlist(mapply(do.call, what=thfunlist, args=theta)))
 			   	 }
 			    }),
 			   Gp = unname(c(0L, cumsum(nb))),
@@ -203,7 +203,7 @@ mkReTrm <- function(bar, fr) {
 ##' @return a factor  
 getGrouping <- function(bar, fr){
 	#let "1" denote no grouping...
-	if(deparse(bar[[2]])=="1"){
+	if(deparse(bar[[3]])=="1"){
 		return(factor(rep(1, nrow(fr))))
 	} else {
 		frloc <- fr

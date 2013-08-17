@@ -40,8 +40,8 @@ d <- function(formula, iid=FALSE){
 			
 			# initialize the upper triangular Cholesky factor for Cov(b)
 			# we want standard dgC not ddI (?) but no direct coerce exists:
-			Lambdat <- as(as(kronecker(Diagonal(nc), Diagonal(nl)), 
-							 "dgTMatrix"), "dgCMatrix")
+			Lambdat <- suppressMessages(as(as(kronecker(Diagonal(nc), Diagonal(nl)), 
+							 "dgTMatrix"), "dgCMatrix"))
 			
 			
 			# upper/lower limits:
@@ -72,10 +72,10 @@ d <- function(formula, iid=FALSE){
 
 
 
-ar <- function(formula=~(.rows|1), order=1, max.dist=NA, init=.2){
+ar <- function(formula=~(.|1), order=1, max.dist=NA, init=.2){
 	stopifnot(all(order==1, band==NA))
 	
-	mkIndex <- if(deparse(bar[[2]])==".rows"){
+	mkIndex <- if(deparse(bar[[2]])=="."){
 		mk
 	}
 	
