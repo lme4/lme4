@@ -10,6 +10,9 @@ Description: Doug Bates' PIRLS algorithm in pure R. The purpose is to clarify
     for trying out modified versions of PIRLS.
 Depends:
     Matrix
+Suggests:
+    nloptwrap,
+    lme4
 Imports:
     Matrix
 License: GPL-2

@@ -8,19 +8,13 @@
     nAGQ = 0)
 }
 \arguments{
-  \item{beta}{initial beta}
-
-  \item{u}{initial u}
-
-  \item{mu}{fitted values}
-
-  \item{eta}{linear predictor}
-
   \item{glmod}{output of \code{glFormula}}
 
   \item{y}{response}
 
-  \item{family}{family}
+  \item{eta}{linear predictor}
+
+  \item{family}{a \code{glm} family object}
 
   \item{weights}{prior weights}
 
@@ -33,11 +27,6 @@
   \item{nAGQ}{either 0 (PIRLS for \code{u} and \code{beta})
   or 1 (\code{u} only).  currently no quadature is
   available}
-
-  \item{thetabeta}{\code{c(theta,beta)} (\code{pirls1}
-  only)}
-
-  \item{...}{Arguments to pass to \code{pirls}}
 }
 \value{
   the laplace approximated deviance with a bunch of

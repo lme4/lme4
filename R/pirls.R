@@ -8,21 +8,16 @@
 ##' and as a sandbox for trying out modified versions of
 ##' PIRLS.
 ##'
-##' @param beta initial beta
-##' @param u initial u
-##' @param mu fitted values
-##' @param eta linear predictor
 ##' @param glmod output of \code{glFormula}
 ##' @param y response
-##' @param family family
+##' @param eta linear predictor
+##' @param family a \code{glm} family object
 ##' @param weights prior weights
 ##' @param offset offset
 ##' @param tol convergence tolerance
 ##' @param npirls maximum number of iterations
 ##' @param nAGQ either 0 (PIRLS for \code{u} and \code{beta}) or 1 (\code{u} only).
-##'  currently no quadature is available
-##' @param thetabeta \code{c(theta,beta)} (\code{pirls1} only)
-##' @param ... Arguments to pass to \code{pirls}
+##'     currently no quadature is available
 ##'
 ##' @details \code{pirls1} is a convenience function for optimizing \code{pirls}
 ##' under \code{nAGQ = 1}. In particular, it wraps \code{theta} and \code{beta}
@@ -34,8 +29,6 @@
 ##' \item[beta] fixed effects at convergence (\code{pirls0} only)
 ##' \item[u] spherized random effects at convergence
 ##' }
-##' @importMethodsFrom Matrix t %*% crossprod diag tcrossprod solve determinant
-##' @rdname pirls
 ##' @export
 pirls <- function(glmod, y, eta,
                   family = binomial,

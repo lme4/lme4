@@ -1,5 +1,6 @@
 library(lme4)
-#library(nloptwrap)
+library(nloptwrap)
+library(lme4pureR)
 form <- cbind(incidence, size - incidence) ~ period + (1 | herd)
 glmod <- glFormula(form, cbpp, binomial)
 gm1 <- glm(nobars(form), binomial, cbpp)
