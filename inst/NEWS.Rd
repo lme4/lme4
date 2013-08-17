@@ -3,6 +3,31 @@
 \name{NEWS}
 \title{lme4 News}
 \encoding{UTF-8}
+\section{CHANGES IN VERSION 1.0-1 (2013-08-17)}{
+  \subsection{MINOR USER-VISIBLE CHANGES}{
+    \itemize{
+      \item \code{check.numobs.*} and \code{check.numlev.*} in
+      \code{(g)lmerControl} have been changed (from recent development
+      versions) to \code{check.nobs.*} and
+      \code{check.nlev.*} respectively, and the default value of
+      \code{check.nlev.gtreq.5} has been changed to \code{"ignore"}
+      \item in \code{(g)lmerControl}, arguments to the optimizer
+      should be passed as a list called \code{optCtrl}, rather than
+      specified as additional (ungrouped) arguments
+      \item the \code{postVar} argument to \code{ranef} has been
+      changed to the (more sensible) \code{condVar} ("posterior variance"
+      was a misnomer, "conditional variance" -- short for "variance of the
+      conditional mode" -- is preferred)
+      \item the \code{REform} argument to \code{predict} has been changed
+      to \code{ReForm} for consistency
+      \item the \code{tnames} function, briefly exported, has been
+      unexported
+      \item \code{getME(.,"cnms")} added
+      \item \code{print} method for \code{merMod} objects is now more
+      terse, and different from \code{summary.merMod}
+    }
+  }
+}
 \section{CHANGES IN VERSION 1.0-0 (2013-08-01)}{
   \subsection{MAJOR USER-VISIBLE CHANGES}{
     \itemize{

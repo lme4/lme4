@@ -817,6 +817,12 @@ deviance.merMod <- function(object, REML = NULL, ...) {
     }
 }
 
+## copied from stats:::safe_pchisq
+safe_pchisq <- function (q, df, ...) {
+    df[df <= 0] <- NA
+    pchisq(q = q, df = df, ...)
+}
+
 ##' @importFrom stats drop1
 ##' @S3method drop1 merMod
 drop1.merMod <- function(object, scope, scale = 0, test = c("none", "Chisq"),
@@ -884,7 +890,7 @@ drop1.merMod <- function(object, scope, scale = 0, test = c("none", "Chisq"),
         nas <- !is.na(dev)
         P <- dev
         ## BMB: hack to extract safe_pchisq
-        P[nas] <- stats:::safe_pchisq(dev[nas], dfs[nas], lower.tail = FALSE)
+        P[nas] <- safe_pchisq(dev[nas], dfs[nas], lower.tail = FALSE)
         aod[, c("LRT", "Pr(Chi)")] <- list(dev, P)
     } else if (test == "F") {
         ## FIXME: allow this if denominator df are specified externally?
@@ -894,7 +900,7 @@ drop1.merMod <- function(object, scope, scale = 0, test = c("none", "Chisq"),
         nas <- !is.na(dev)
         P <- dev
         ## BMB: hack to extract safe_pchisq
-        P[nas] <- stats:::safe_pchisq(dev[nas], dfs[nas], lower.tail = FALSE)
+        P[nas] <- safe_pchisq(dev[nas], dfs[nas], lower.tail = FALSE)
         aod[, c("LRT", "Pr(F)")] <- list(dev, P)
     }
     head <- c("Single term deletions", "\nModel:", deparse(formula(object)),

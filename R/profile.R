@@ -527,6 +527,13 @@ xyplot.thpr <-
     do.call(xyplot, stripExpr(ll, names(spl)))
 }
 
+## copy of stats:::format.perc
+format.perc <- function (probs, digits) {
+    paste(format(100 * probs, trim = TRUE,
+                 scientific = FALSE, digits = digits), 
+          "%")
+}
+
 ##' @importFrom stats confint
 ##' @S3method confint thpr
 confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
@@ -541,7 +548,7 @@ confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
         a <- (1 - level)/2
         a <- c(a, 1 - a)
         zeta <- qnorm(a)
-        cn <- stats:::format.perc(a, 3)
+        cn <- format.perc(a, 3)
     }
     ci <- t(sapply(parm, function(nm) predy(bak[[nm]], zeta)))
     colnames(ci) <- cn
@@ -621,7 +628,7 @@ confint.merMod <- function(object, parm, level = 0.95,
         ## n.b. can't use sqrt(...)[parm] (diag() loses names)
         a <- (1 - level)/2
         a <- c(a, 1 - a)
-        pct <- stats:::format.perc(a, 3)
+        pct <- format.perc(a, 3)
         fac <- qnorm(a)
         ci <- array(NA, dim = c(length(parm), 2L), dimnames = list(parm,
                                                                     pct))
@@ -663,7 +670,7 @@ confint.merMod <- function(object, parm, level = 0.95,
            citab <- t(sapply(bci,function(x) x[["percent"]][4:5]))
            a <- (1 - level)/2
            a <- c(a, 1 - a)
-           pct <- stats:::format.perc(a, 3)
+           pct <- format.perc(a, 3)
            dimnames(citab) <- list(names(bb[["t0"]]),pct)
            pnames <- rownames(citab)
            if (missing(parm))
@@ -723,6 +730,14 @@ cont <- function(sij, sji, levels, nseg = 101)
                                    nseg = nseg), levels[i])
     levs <- c(-rev(levels), 0, levels)
     list(tki = predict(sij, levs), tkj = predict(sji, levs), pts = pts)
+}
+
+## copied from lattice:::chooseFace
+chooseFace <- function (fontface = NULL, font = 1) 
+{
+    if (is.null(fontface)) 
+        font
+    else fontface
 }
 
 
@@ -840,7 +855,7 @@ splom.thpr <- function (x, data,
                       gpar(col = varname.col,
                            cex = varname.cex,
                            lineheight = varname.lineheight,
-                           fontface = lattice:::chooseFace(varname.fontface,
+                           fontface = chooseFace(varname.fontface,
                            varname.font),
                            fontfamily = varname.fontfamily))
         if (draw)

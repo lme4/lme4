@@ -1,15 +1,15 @@
 Package: lme4
-Version: 1.0-0
-Date: 2013-08-13
+Version: 1.0-1
+Date: 2013-08-17
 Title: Linear mixed-effects models using Eigen and S4
 Authors@R: c(person("Douglas","Bates",
     role="aut"),
     person("Martin","Maechler",
     role="aut"),
-    person("Ben","Bolker",email="bbolker+lme4-authors@gmail.com",
+    person("Ben","Bolker",email="bbolker+lme4@gmail.com",
     role=c("aut","cre")),
     person("Steven","Walker",role="aut"))
-Maintainer: Ben Bolker <bbolker+lme4-authors@gmail.com>
+Maintainer: Ben Bolker <bbolker+lme4@gmail.com>
 Contact: LME4 Authors <lme4-authors@lists.r-forge.r-project.org>
 Author: Doug Bates, Ben Bolker, Martin Maechler and Steven Walker
 Description: Fit linear and generalized linear mixed-effects models.
