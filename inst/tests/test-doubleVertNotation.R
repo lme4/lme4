@@ -49,8 +49,8 @@ test_that("plays nice with parens in fixed or random formulas", {
                   findbars(y ~ (z + x)^2 + (1 | id) + (0 + x | id)))
 	
 	expect_equivalent(findbars(y ~ ((x || id)) + (x2|id)),
-					  findbars(y ~ (1 | id) + (0 + x | id) + (x2|id))
-})	
+					  findbars(y ~ (1 | id) + (0 + x | id) + (x2|id)))
+    })
 
 test_that("update works as expected", {
 	m <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy)
