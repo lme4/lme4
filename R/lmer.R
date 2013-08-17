@@ -716,7 +716,7 @@ anovaLmer <- function(object, ...) {
 	    nmeffects <- c("(Intercept)", nmeffects)
 	ss <- unlist(lapply(split(ss, asgn), sum))
 	stopifnot(length(ss) == length(nmeffects))
-	df <- unlist(lapply(split(asgn,	 asgn), length))
+	df <- vapply(split(asgn, asgn), length, 1L)
 	## dfr <- unlist(lapply(split(dfr, asgn), function(x) x[1]))
 	ms <- ss/df
 	f <- ms/(sigma(object)^2)
@@ -999,10 +999,12 @@ logLik.merMod <- function(object, REML = NULL, ...) {
     val <- -deviance(object, REML = REML)/2
     dc <- object@devcomp
     dims <- dc$dims
-    attr(val, "nall") <- attr(val, "nobs") <- nrow(object@frame) ## FIXME use nobs() ?
-    attr(val, "df") <- length(object@beta) + length(object@theta) + dims[["useSc"]]
-    class(val) <- "logLik"
-    val
+    nobs <- nrow(object@frame) ## FIXME use nobs() ?
+    structure(val,
+	      nobs = nobs,
+	      nall = nobs,
+	      df = length(object@beta) + length(object@theta) + dims[["useSc"]],
+	      class = "logLik")
 }
 
 stripwhite <- function(x) gsub("(^ +| +$)","",x)
@@ -1110,8 +1112,8 @@ ranef.merMod <- function(object, condVar = FALSE, drop = FALSE,
 	levs <- lapply(fl <- object@flist, levels)
 	asgn <- attr(fl, "assign")
 	cnms <- object@cnms
-	nc <- sapply(cnms, length)
-	nb <- nc * (nl <- unlist(lapply(levs, length))[asgn])
+	nc <- vapply(cnms, length, 1L)
+	nb <- nc * (nl <- vapply(levs, length, 1L)[asgn])
 	nbseq <- rep.int(seq_along(nb), nb)
 	ml <- split(ans, nbseq)
 	for (i in seq_along(ml))
@@ -1547,10 +1549,13 @@ getLlikAIC <- function(object, cmp = object@devcomp$cmp) {
     else print(t.4)
 }
 
-.prt.VC <- function(varcor, digits, useScale, ...) {
-    cat("\nRandom effects:\n")
-    print(formatVC(varcor, digits = digits, useScale = useScale),
-	  quote = FALSE, digits = digits, ...)
+.prt.VC <- function(varcor, digits, comp, ...) {
+    cat("Random effects:\n")
+    fVC <- if(missing(comp))
+	formatVC(varcor, digits=digits)
+    else
+	formatVC(varcor, digits=digits, comp=comp)
+    print(fVC, quote = FALSE, digits = digits, ...)
 }
 
 .prt.grps <- function(ngrps, nobs) {
@@ -1563,7 +1568,8 @@ getLlikAIC <- function(object, cmp = object@devcomp$cmp) {
 ## Prints *both*  'mer' and 'merenv' - as it uses summary(x) mainly
 printMerenv <- function(x, digits = max(3, getOption("digits") - 3),
 			correlation = NULL, symbolic.cor = FALSE,
-			signif.stars = getOption("show.signif.stars"), ...)
+			signif.stars = getOption("show.signif.stars"),
+			ranef.comp = c("Variance", "Std.Dev."), ...)
 {
     so <- summary(x)
     cat(sprintf("%s ['%s']\n",so$methTitle, so$objClass))
@@ -1572,8 +1578,9 @@ printMerenv <- function(x, digits = max(3, getOption("digits") - 3),
     ## cat("Scaled residuals:\n")
     ## print(summary(residuals(x,type="pearson",scaled=TRUE)),digits=digits)
     .prt.call(so$call); cat("\n")
-    .prt.aictab(so$AICtab, 4)
-    .prt.VC(so$varcor, digits=digits, useScale= so$useScale, ...)
+    .prt.aictab(so$AICtab, 4); cat("\n")
+    .prt.VC(so$varcor, digits=digits, useScale= so$useScale,
+	    comp = ranef.comp, ...)
     .prt.grps(so$ngrps, nobs= so$devcomp$dims[["n"]])
 
     p <- nrow(so$coefficients)
@@ -1626,8 +1633,9 @@ printMerenv <- function(x, digits = max(3, getOption("digits") - 3),
 
 ##' @S3method print merMod
 print.merMod <- function(x, digits = max(3, getOption("digits") - 3),
-			correlation = NULL, symbolic.cor = FALSE,
-			signif.stars = getOption("show.signif.stars"), ...)
+                         correlation = NULL, symbolic.cor = FALSE,
+                         signif.stars = getOption("show.signif.stars"),
+			 ranef.comp = "Std.Dev.", ...)
 {
     dims <- (devC <- x@devcomp)$dims
     methTit <- methTitle(x, dims=dims)
@@ -1640,15 +1648,14 @@ print.merMod <- function(x, digits = max(3, getOption("digits") - 3),
     llAIC <- getLlikAIC(x)
     .prt.aictab(llAIC$AICtab, 4)
     varcor <- VarCorr(x)
-    .prt.VC(varcor, digits=digits, useScale= useScale, ...)
+    .prt.VC(varcor, digits=digits, comp = ranef.comp, ...)
     ngrps <- sapply(x@flist, function(x) length(levels(x)))
     .prt.grps(ngrps, nobs= dims[["n"]])
     if(length(cf <- fixef(x)) >= 0) {
-	cat("Coefficients:\n")
+	cat("Fixed Effects:\n")
 	print.default(format(cf, digits = digits),
-		      print.gap = 2L, quote = FALSE)
-    } else cat("No coefficients\n")
-    cat("\n")
+		      print.gap = 2L, quote = FALSE, ...)
+    } else cat("No fixed effect coefficients\n")
     invisible(x)
 }
 ##' @exportMethod show
@@ -1943,6 +1950,9 @@ vcov.summary.merMod <- function(object, correlation = TRUE, ...) {
 mkVarCorr <- function(sc, cnms, nc, theta, nms) {
     ncseq <- seq_along(nc)
     thl <- split(theta, rep.int(ncseq, (nc * (nc + 1))/2))
+    if(!all(nms == names(cnms))) ## the above FIXME
+	warning("nms != names(cnms)  -- whereas lme4-authors thought they were --\n",
+		"Please report!", immediate.=TRUE)
     ans <- lapply(ncseq, function(i)
 	      {
 		  ## Li := \Lambda_i, the i-th block diagonal of \Lambda(\theta)
@@ -1952,35 +1962,22 @@ mkVarCorr <- function(sc, cnms, nc, theta, nms) {
 		  ## val := \Sigma_i = \sigma^2 \Lambda_i \Lambda_i', the
 		  val <- tcrossprod(sc * Li) # variance-covariance
 		  stddev <- sqrt(diag(val))
-		  correl <- t(val / stddev)/stddev
-		  diag(correl) <- 1
-		  attr(val, "stddev") <- stddev
-		  attr(val, "correlation") <- correl
-		  val
+		  corr <- t(val / stddev)/stddev
+		  diag(corr) <- 1
+		  structure(val, stddev = stddev, correlation = corr)
 	      })
     if(is.character(nms)) {
-        names(ans) <- nms
-        ## FIXME: do we want this?  Maybe not.
-        ## Potential problem: the names of the elements of the VarCorr() list
-        ##  are not necessarily unique (e.g. fm2 from example("lmer") has *two*
-        ##  Subject terms, so the names are "Subject", "Subject".  The print method
-        ##  for VarCorrs handles this just fine, but it's a little awkward if we
-        ##  want to dig out elements of the VarCorr list ... ???
-        ## if (anyDuplicated(nms)) {
-        ##     ## disambiguate by first element:
-        ##     ## split names and name-list by names
-        ##     ss <- split(nms,nms)
-        ##     ns <- lapply(split(lapply(cnms,"[",1),nms),unlist)  ## *vector* of first names for each component
-        ##     nss <- sapply(ss,length)
-        ##     ## for all duplicated elements, paste the names and the first elements of the component names
-        ##     ss[nss>1] <- mapply(paste,ss[nss>1],
-        ##                         ns[nss>1],sep=".",SIMPLIFY=FALSE)
-        ##     ## FIXME: should we sanitize names (make.names) ?
-        ##     names(ans) <- unlist(ss)
-        ## }
+	## FIXME: do we want this?  Maybe not.
+	## Potential problem: the names of the elements of the VarCorr() list
+	##  are not necessarily unique (e.g. fm2 from example("lmer") has *two*
+	##  Subject terms, so the names are "Subject", "Subject".  The print method
+	##  for VarCorrs handles this just fine, but it's a little awkward if we
+	##  want to dig out elements of the VarCorr list ... ???
+	if (anyDuplicated(nms))
+	    nms <- make.names(nms, unique=TRUE)
+	names(ans) <- nms
     }
-    attr(ans, "sc") <- sc
-    ans
+    structure(ans, sc = sc)
 }
 
 ##' Extract variance and correlation components
@@ -2024,20 +2021,14 @@ VarCorr.merMod <- function(x, sigma, rdig)# <- 3 args from nlme
 	stop("VarCorr methods require reTrms, not just reModule")
     if(missing(sigma)) # "bug": fails via default 'sigma=sigma(x)'
 	sigma <- lme4::sigma(x)  ## FIXME: do we still need lme4:: ?
-    nc <- sapply(cnms, length)	  # no. of columns per term
-    m <- mkVarCorr(sigma, cnms=cnms, nc=nc, theta = x@theta,
-	      nms = {fl <- x@flist; names(fl)[attr(fl, "assign")]})
-    attr(m,"useSc") <- as.logical(x@devcomp$dims["useSc"])
-    class(m) <- "VarCorr.merMod"
-    m
+    nc <- vapply(cnms, length, 1L) # no. of columns per term
+    structure(mkVarCorr(sigma, cnms=cnms, nc=nc, theta = x@theta,
+			nms = {fl <- x@flist; names(fl)[attr(fl, "assign")]}),
+	      useSc = as.logical(x@devcomp$dims["useSc"]),
+	      class = "VarCorr.merMod")
 }
 
-## FIXME: should ... go to formatVC or to print ... ?
-##' @S3method print VarCorr.merMod
-print.VarCorr.merMod <- function(x,digits = max(3, getOption("digits") - 2), ...) {
-  print(formatVC(x, digits = digits, useScale = attr(x,"useSc"),  ...),quote=FALSE)
-}
-
+if(FALSE)## *NOWHERE* used _FIXME_ ??
 ## Compute standard errors of fixed effects from an merMod object
 ##
 ## @title Standard errors of fixed effects
@@ -2049,21 +2040,45 @@ unscaledVar <- function(object, ...) {
     sigma(object) * diag(object@pp$unsc())
 }
 
-### "format()" the 'VarCorr' matrix of the random effects -- for show()ing
+##' @S3method print VarCorr.merMod
+print.VarCorr.merMod <- function(x, digits = max(3, getOption("digits") - 2),
+		   comp = "Std.Dev.", ...)
+    print(formatVC(x, digits=digits, comp=comp), quote=FALSE, ...)
+
+##' __NOT YET EXPORTED__
+##' "format()" the 'VarCorr' matrix of the random effects -- for
+##' print()ing and show()ing
+##'
+##' @title Format the 'VarCorr' Matrix of Random Effects
+##' @param varc a \code{\link{VarCorr}} (-like) matrix with attributes.
+##' @param digits the number of significant digits.
+##' @param comp character vector of length one or two indicating which
+##' columns out of "Variance" and "Std.Dev." should be shown in the
+##' formatted output.
+##' @return a character matrix of formatted VarCorr entries from \code{varc}.
 formatVC <- function(varc, digits = max(3, getOption("digits") - 2),
-		     useScale) {
-    sc <- unname(attr(varc, "sc"))
+		     comp = "Std.Dev.")
+{
+    c.nms <- c("Groups", "Name", "Variance", "Std.Dev.")
+    avail.c <- c.nms[-(1:2)]
+    if(any(is.na(mcc <- pmatch(comp, avail.c))))
+	stop("Illegal 'comp': ", comp[is.na(mcc)])
+    nc <- length(colnms <- c(c.nms[1:2], (use.c <- avail.c[mcc])))
+    if(length(use.c) == 0)
+	stop("Must *either* show variances or standard deviations")
+    useScale <- attr(varc, "useSc")
     recorr <- lapply(varc, attr, "correlation")
-    reStdDev <- c(lapply(varc, attr, "stddev"), if(useScale) list(Residual = sc))
-    reLens <- unlist(c(lapply(reStdDev, length)))
+    reStdDev <- c(lapply(varc, attr, "stddev"),
+		  if(useScale) list(Residual = unname(attr(varc, "sc"))))
+    reLens <- vapply(reStdDev, length, 1L)
     nr <- sum(reLens)
-    reMat <- array('', c(nr, 4),
-		   list(rep.int('', nr),
-			c("Groups", "Name", "Variance", "Std.Dev.")))
-    reMat[1+cumsum(reLens)-reLens, 1] <- names(reLens)
-    reMat[,2] <- c(unlist(lapply(varc, colnames)), if(useScale) "")
-    reMat[,3] <- format(unlist(reStdDev)^2, digits = digits)
-    reMat[,4] <- format(unlist(reStdDev), digits = digits)
+    reMat <- array('', c(nr, nc), list(rep.int('', nr), colnms))
+    reMat[1+cumsum(reLens)-reLens, "Groups"] <- names(reLens)
+    reMat[,"Name"] <- c(unlist(lapply(varc, colnames)), if(useScale) "")
+    if(any("Variance" == use.c))
+    reMat[,"Variance"] <- format(unlist(reStdDev)^2, digits = digits)
+    if(any("Std.Dev." == use.c))
+    reMat[,"Std.Dev."] <- format(unlist(reStdDev),   digits = digits)
     if (any(reLens > 1)) {
 	maxlen <- max(reLens)
 	corr <-
@@ -2071,16 +2086,16 @@ formatVC <- function(varc, digits = max(3, getOption("digits") - 2),
 		    lapply(recorr,
 			   function(x) {
 			       x <- as(x, "matrix")
-			       cc <- format(round(x, 3), nsmall = 3)
+			       dig <- max(2, digits - 2) # use 'digits' !
+			       cc <- format(round(x, dig), nsmall = dig)
 			       cc[!lower.tri(cc)] <- ""
-			       nr <- dim(cc)[1]
+			       nr <- nrow(cc)
 			       if (nr >= maxlen) return(cc)
 			       cbind(cc, matrix("", nr, maxlen-nr))
 			   }))[, -maxlen, drop = FALSE]
 	if (nrow(corr) < nrow(reMat))
-	    corr <- rbind(corr, matrix("", nrow = nrow(reMat) - nrow(corr), ncol = ncol(corr)))
-	colnames(corr) <- rep.int("", ncol(corr))
-	colnames(corr)[1] <- "Corr"
+	    corr <- rbind(corr, matrix("", nrow(reMat) - nrow(corr), ncol(corr)))
+	colnames(corr) <- c("Corr", rep.int("", min(0L, ncol(corr)-1L)))
 	cbind(reMat, corr)
     } else reMat
 }

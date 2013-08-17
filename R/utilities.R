@@ -26,106 +26,106 @@ if(getRversion() < "2.15")
 ##' @family utilities
 ##' @export
 mkReTrms <- function(bars, fr) {
-  if (!length(bars))
-    stop("No random effects terms specified in formula")
-  stopifnot(is.list(bars), all(sapply(bars, is.language)),
-            inherits(fr, "data.frame"))
-  names(bars) <- unlist(lapply(bars, function(x) deparse(x[[3]])))
-  
-  ## auxiliary {named, for easier inspection}:
-  mkBlist <- function(x) {
-    frloc <- fr
-    ## convert grouping variables to factors as necessary
-    for (i in all.vars(x[[3]])) {
-      frloc[[i]] <- factor(frloc[[i]])
+    if (!length(bars))
+        stop("No random effects terms specified in formula")
+    stopifnot(is.list(bars), all(sapply(bars, is.language)),
+              inherits(fr, "data.frame"))
+    names(bars) <- unlist(lapply(bars, function(x) deparse(x[[3]])))
+
+    ## auxiliary {named, for easier inspection}:
+    mkBlist <- function(x) {
+        frloc <- fr
+        ## convert grouping variables to factors as necessary
+        for (i in all.vars(x[[3]])) {
+            frloc[[i]] <- factor(frloc[[i]])
+        }
+        ff <- eval(substitute(factor(fac), list(fac = x[[3]])), frloc)
+        if (all(is.na(ff)))
+            stop("Invalid grouping factor specification, ",
+                 deparse(x[[3]]))
+        nl <- length(levels(ff))
+        mm <- model.matrix(eval(substitute( ~ foo,
+                                           list(foo = x[[2]]))), fr)
+        nc <- ncol(mm)
+        nseq <- seq_len(nc)
+        sm <- as(ff, "sparseMatrix")
+        if (nc	> 1)
+            sm <- do.call(rBind, lapply(nseq, function(i) sm))
+        ## hack for NA values contained in factor (FIXME: test elsewhere for consistency?)
+        sm@x[] <- t(mm[!is.na(ff),])
+        ## When nc > 1 switch the order of the rows of sm
+        ## so the random effects for the same level of the
+        ## grouping factor are adjacent.
+        if (nc > 1)
+            sm <- sm[as.vector(matrix(seq_len(nc * nl),
+                                      ncol = nl, byrow = TRUE)),]
+        list(ff = ff, sm = sm, nl = nl, cnms = colnames(mm))
     }
-    ff <- eval(substitute(factor(fac), list(fac = x[[3]])), frloc)
-    if (all(is.na(ff)))
-      stop("Invalid grouping factor specification, ",
-           deparse(x[[3]]))
-    nl <- length(levels(ff))
-    mm <- model.matrix(eval(substitute( ~ foo,
-                                        list(foo = x[[2]]))), fr)
-    nc <- ncol(mm)
-    nseq <- seq_len(nc)
-    sm <- as(ff, "sparseMatrix")
-    if (nc	> 1)
-      sm <- do.call(rBind, lapply(nseq, function(i) sm))
-    ## hack for NA values contained in factor (FIXME: test elsewhere for consistency?)
-    sm@x[] <- t(mm[!is.na(ff),])
-    ## When nc > 1 switch the order of the rows of sm
-    ## so the random effects for the same level of the
-    ## grouping factor are adjacent.
-    if (nc > 1)
-      sm <- sm[as.vector(matrix(seq_len(nc * nl),
-                                ncol = nl, byrow = TRUE)),]
-    list(ff = ff, sm = sm, nl = nl, cnms = colnames(mm))
-  }
-  blist <- lapply(bars, mkBlist)
-  nl <- unlist(lapply(blist, "[[", "nl")) # no. of levels per term
-  
-  ## order terms stably by decreasing number of levels in the factor
-  if (any(diff(nl)) > 0) {
-    ord <- rev(order(nl))
-    blist <- blist[ord]
-    nl <- nl[ord]
-  }
-  Zt <- do.call(rBind, lapply(blist, "[[", "sm"))
-  q <- nrow(Zt)
-  
-  ## Create and install Lambdat, Lind, etc.  This must be done after
-  ## any potential reordering of the terms.
-  cnms <- lapply(blist, "[[", "cnms")
-  nc <- sapply(cnms, length)		# no. of columns per term
-  nth <- as.integer((nc * (nc+1))/2)	# no. of parameters per term
-  nb <- nc * nl			# no. of random effects per term
-  stopifnot(sum(nb) == q)
-  boff <- cumsum(c(0L, nb))		# offsets into b
-  thoff <- cumsum(c(0L, nth))		# offsets into theta
-  ### FIXME: should this be done with cBind and avoid the transpose
-  ### operator?  In other words should Lambdat be generated directly
-  ### instead of generating Lambda first then transposing?
-  Lambdat <-
-    t(do.call(sparseMatrix,
-              do.call(rBind,
-                      lapply(seq_along(blist), function(i)
-                      {
-                        mm <- matrix(seq_len(nb[i]), ncol = nc[i],
-                                     byrow = TRUE)
-                        dd <- diag(nc[i])
-                        ltri <- lower.tri(dd, diag = TRUE)
-                        ii <- row(dd)[ltri]
-                        jj <- col(dd)[ltri]
-                        dd[cbind(ii, jj)] <- seq_along(ii)
-                        data.frame(i = as.vector(mm[, ii]) + boff[i],
-                                   j = as.vector(mm[, jj]) + boff[i],
-                                   x = as.double(rep.int(seq_along(ii),
-                                                         rep.int(nl[i], length(ii))) +
-                                                   thoff[i]))
-                      }))))
-  thet <- numeric(sum(nth))
-  ll <- list(Zt=Matrix::drop0(Zt), theta=thet, Lind=as.integer(Lambdat@x),
-             Gp=unname(c(0L, cumsum(nb))))
-  ## lower bounds on theta elements are 0 if on diagonal, else -Inf
-  ll$lower <- -Inf * (thet + 1)
-  ll$lower[unique(diag(Lambdat))] <- 0
-  ll$theta[] <- is.finite(ll$lower) # initial values of theta are 0 off-diagonal, 1 on
-  Lambdat@x[] <- ll$theta[ll$Lind]  # initialize elements of Lambdat
-  ll$Lambdat <- Lambdat
-  # massage the factor list
-  fl <- lapply(blist, "[[", "ff")
-  # check for repeated factors
-  fnms <- names(fl)
-  if (length(fnms) > length(ufn <- unique(fnms))) {
-    fl <- fl[match(ufn, fnms)]
-    asgn <- match(fnms, ufn)
-  } else asgn <- seq_along(fl)
-  names(fl) <- ufn
-  fl <- do.call(data.frame, c(fl, check.names = FALSE))
-  attr(fl, "assign") <- asgn
-  ll$flist <- fl
-  ll$cnms <- cnms
-  ll
+    blist <- lapply(bars, mkBlist)
+    nl <- unlist(lapply(blist, "[[", "nl")) # no. of levels per term
+
+    ## order terms stably by decreasing number of levels in the factor
+    if (any(diff(nl)) > 0) {
+        ord <- rev(order(nl))
+        blist <- blist[ord]
+        nl <- nl[ord]
+    }
+    Zt <- do.call(rBind, lapply(blist, "[[", "sm"))
+    q <- nrow(Zt)
+
+    ## Create and install Lambdat, Lind, etc.  This must be done after
+    ## any potential reordering of the terms.
+    cnms <- lapply(blist, "[[", "cnms")
+    nc <- vapply(cnms, length, 1L)    # no. of columns per term
+    nth <- as.integer((nc * (nc+1))/2)	# no. of parameters per term
+    nb <- nc * nl                     # no. of random effects per term
+    stopifnot(sum(nb) == q)
+    boff <- cumsum(c(0L, nb))		# offsets into b
+    thoff <- cumsum(c(0L, nth))		# offsets into theta
+### FIXME: should this be done with cBind and avoid the transpose
+### operator?  In other words should Lambdat be generated directly
+### instead of generating Lambda first then transposing?
+    Lambdat <-
+        t(do.call(sparseMatrix,
+                  do.call(rBind,
+                          lapply(seq_along(blist), function(i)
+                             {
+                                 mm <- matrix(seq_len(nb[i]), ncol = nc[i],
+                                              byrow = TRUE)
+                                 dd <- diag(nc[i])
+                                 ltri <- lower.tri(dd, diag = TRUE)
+                                 ii <- row(dd)[ltri]
+                                 jj <- col(dd)[ltri]
+                                 dd[cbind(ii, jj)] <- seq_along(ii)
+                                 data.frame(i = as.vector(mm[, ii]) + boff[i],
+                                            j = as.vector(mm[, jj]) + boff[i],
+                                            x = as.double(rep.int(seq_along(ii),
+                                            rep.int(nl[i], length(ii))) +
+                                            thoff[i]))
+                             }))))
+    thet <- numeric(sum(nth))
+    ll <- list(Zt=Matrix::drop0(Zt), theta=thet, Lind=as.integer(Lambdat@x),
+               Gp=unname(c(0L, cumsum(nb))))
+    ## lower bounds on theta elements are 0 if on diagonal, else -Inf
+    ll$lower <- -Inf * (thet + 1)
+    ll$lower[unique(diag(Lambdat))] <- 0
+    ll$theta[] <- is.finite(ll$lower) # initial values of theta are 0 off-diagonal, 1 on
+    Lambdat@x[] <- ll$theta[ll$Lind]  # initialize elements of Lambdat
+    ll$Lambdat <- Lambdat
+                                        # massage the factor list
+    fl <- lapply(blist, "[[", "ff")
+                                        # check for repeated factors
+    fnms <- names(fl)
+    if (length(fnms) > length(ufn <- unique(fnms))) {
+        fl <- fl[match(ufn, fnms)]
+        asgn <- match(fnms, ufn)
+    } else asgn <- seq_along(fl)
+    names(fl) <- ufn
+    fl <- do.call(data.frame, c(fl, check.names = FALSE))
+    attr(fl, "assign") <- asgn
+    ll$flist <- fl
+    ll$cnms <- cnms
+    ll
 } ## {mkReTrms}
 
 ##' Create an lmerResp, glmResp or nlsResp instance
@@ -143,7 +143,7 @@ mkReTrms <- function(bars, fr) {
 ##' @family utilities
 ##' @export
 mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, ...) {
-  
+
   if(!missing(fr)){
     y <- model.response(fr)
     offset <- model.offset(fr)
@@ -159,7 +159,7 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
     weights <- fr$weights
     etastart_update <- fr$etastart
   }
-  
+
   ## FIXME: may need to add X, or pass it somehow, if we want to use glm.fit
   #y <- model.response(fr)
   if(length(dim(y)) == 1) {
@@ -240,7 +240,7 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
 ##' findbars(~ 1 + (1|batch/cask))
 ##' ## => list of length 2:  list ( 1 | cask:batch ,  1 | batch)
 ##' identical(findbars(~ 1 + (Days || Subject)),
-##'     findbars(~ 1 + (1|Subject) + (0+Days|Subject))) 
+##'     findbars(~ 1 + (1|Subject) + (0+Days|Subject)))
 ##' \dontshow{
 ##' stopifnot(identical(findbars(f1),
 ##'                     list(expression(Days | Subject)[[1]])))
@@ -250,8 +250,8 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
 ##' @export
 findbars <- function(term)
 {
-	
-	
+
+
 	## Recursive function applied to individual terms
 	fb <- function(term)
 	{
@@ -281,7 +281,7 @@ findbars <- function(term)
 				stop("unparseable formula for grouping factor")
 			list(slashTerms(x[[2]]), slashTerms(x[[3]]))
 		}
-		
+
 		if (!is.list(bb)) return(expandSlash(list(bb)))
 		## lapply(unlist(... - unlist returns a flattened list
 		unlist(lapply(bb, function(x) {
@@ -294,7 +294,7 @@ findbars <- function(term)
 		}))
 	}
 	if(is(term, "formula")){
-		modterm <- expandDoubleVerts(term[[length(term)]])	
+		modterm <- expandDoubleVerts(term[[length(term)]])
 	} else modterm <- expandDoubleVerts(term)
 	expandSlash(fb(modterm))
 }
@@ -316,33 +316,33 @@ expandDoubleVerts <- function(term)
 		frml <- formula(paste0("~", deparse(term[[2]])))
 		#need term.labels not all.vars to capture interactions too:
 		newtrms <- paste0("0+", attr(terms(frml), "term.labels"))
-		
+
 		if(attr(terms(frml), "intercept")!=0) newtrms <- c("1", newtrms)
-		
+
 		as.name(paste(sapply(newtrms, function(trm){
-			paste0(trm, "|", deparse(term[[3]]))  
+			paste0(trm, "|", deparse(term[[3]]))
 		}), collapse=")+("))
-	}  
-	
+	}
+
 	if (is.name(term) || !is.language(term)) return(term)
 	if (term[[1]] == as.name("(")) {
 		term[[2]] <- expandDoubleVerts(term[[2]])
 		return(term)
-	}  
+	}
 	stopifnot(is.call(term))
 	if (term[[1]] == as.name('||')) {
 		term <- expandDoubleVert(term)
 		return(term)
-	} 
+	}
 	if (length(term) == 2){
 		term[[2]] <- expandDoubleVerts(term[[2]])
 		return(term)
-	} 
+	}
 	term[[2]] <- expandDoubleVerts(term[[2]])
-	if(length(term) == 3){ 
+	if(length(term) == 3){
 		term[[3]] <- expandDoubleVerts(term[[3]])
-	}  
-	
+	}
+
 	as.formula(paste("~", gsub("`", "",
 							   deparse(term))))[[2]]
 }
@@ -525,7 +525,7 @@ nlformula <- function(mc) {
   start <- eval(mc$start, parent.frame(2L))
   if (is.numeric(start)) start <- list(nlpars = start)
   stopifnot(is.numeric(nlpars <- start$nlpars),
-            all(sapply(nlpars, length) == 1L),
+            all(vapply(nlpars, length, 0L) == 1L),
             length(pnames <- names(nlpars)) == length(nlpars),
             length(form <- as.formula(mc$formula)) == 3L,
             is(nlform <- eval(form[[2]]), "formula"),
@@ -545,7 +545,7 @@ nlformula <- function(mc) {
   nlenv <- list2env(fr, parent=parent.frame(2L))
   lapply(pnames, function(nm) nlenv[[nm]] <- rep.int(nlpars[[nm]], n))
   respMod <- mkRespMod(fr, nlenv=nlenv, nlmod=nlmod)
-  
+
   chck1(meform <- form[[3L]])
   pnameexpr <- parse(text=paste(pnames, collapse='+'))[[1]]
   nb <- nobars(meform)
@@ -556,7 +556,7 @@ nlformula <- function(mc) {
     frE[[nm]] <- as.numeric(rep(nm == pnames, each = n))
   X <- model.matrix(fe, frE)
   rownames(X) <- NULL
-  
+
   reTrms <- mkReTrms(lapply(findbars(meform),
                             function(expr) {
                               expr[[2]] <- substitute(0+foo, list(foo=expr[[2]]))
@@ -743,7 +743,7 @@ checkFormulaData <- function(formula,data,debug=FALSE) {
     }
     cat("vars exist in env of formula ",allvarex(env=denv),"\n")
   } ## if (debug)
-  
+
   stopifnot(length(as.formula(formula,env=denv)) == 3)  ## check for two-sided formula
   return(denv)
 }
