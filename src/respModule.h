@@ -76,7 +76,8 @@ namespace lme4 {
     public:
 	lmerResp(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
 
-	double         Laplace(double,double,double)const;
+	double         Laplace(double,double,double) const;
+  double         Laplace(double,double,double,double) const;
 	int               REML() const {return d_reml;}
 	void           setReml(int);
     };

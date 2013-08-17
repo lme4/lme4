@@ -577,11 +577,16 @@ extern "C" {
         END_RCPP;
     }
 
-    SEXP lmer_Laplace(SEXP ptr_, SEXP ldL2, SEXP ldRX2, SEXP sqrL) {
+    SEXP lmer_Laplace(SEXP ptr_, SEXP ldL2, SEXP ldRX2, SEXP sqrL, SEXP sigma_sq) {
         BEGIN_RCPP;
+        if (Rf_isNull(sigma_sq))
+            return ::Rf_ScalarReal(XPtr<lmerResp>(ptr_)->Laplace(::Rf_asReal(ldL2),
+                                                                 ::Rf_asReal(ldRX2),
+                                                                 ::Rf_asReal(sqrL)));
         return ::Rf_ScalarReal(XPtr<lmerResp>(ptr_)->Laplace(::Rf_asReal(ldL2),
                                                              ::Rf_asReal(ldRX2),
-                                                             ::Rf_asReal(sqrL)));
+                                                             ::Rf_asReal(sqrL),
+                                                             ::Rf_asReal(sigma_sq)));
         END_RCPP;
     }
 
@@ -770,9 +775,13 @@ extern "C" {
         END_RCPP;
     }
 
-    SEXP merPredDupdateDecomp(SEXP ptr) {
+    SEXP merPredDupdateDecomp(SEXP ptr, SEXP xPenalty_) {
         BEGIN_RCPP;
-        XPtr<merPredD>(ptr)->updateDecomp();
+        if (Rf_isNull(xPenalty_)) XPtr<merPredD>(ptr)->updateDecomp(NULL);
+        else {
+            const Mat & xPenalty(as<MMat>(xPenalty_));
+            XPtr<merPredD>(ptr)->updateDecomp(&xPenalty);
+        }
         END_RCPP;
     }
 
@@ -1014,7 +1023,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(lmer_setREML,       2), // setter
 
     CALLDEF(lmer_Deviance,      3), // methods
-    CALLDEF(lmer_Laplace,       4),
+    CALLDEF(lmer_Laplace,       5),
     CALLDEF(lmer_opt1,          4),
 
     CALLDEF(merPredDCreate,    17), // generate external pointer
@@ -1044,7 +1053,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(merPredDsolveU,     1),
     CALLDEF(merPredDsqrL,       2),
     CALLDEF(merPredDu,          2),
-    CALLDEF(merPredDupdateDecomp,1),
+    CALLDEF(merPredDupdateDecomp,2),
     CALLDEF(merPredDupdateL,    1),
     CALLDEF(merPredDupdateLamtUt,1),
     CALLDEF(merPredDupdateRes,  2),
