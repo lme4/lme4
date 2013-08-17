@@ -63,7 +63,8 @@ pirls <- function(glmod, y, eta,
             W <- Diagonal(x=weights/family$variance(mu))
             muEta <- as.vector(family$mu.eta(eta))
                                         # update Ut and V
-            Xwts <- Diagonal(x = sqrt(W@x) * muEta)
+            sqrtW <- Diagonal(x = sqrt(W@x))
+            Xwts <- Diagonal(x = sqrtW@x * muEta)
             Ut <- Lambdat %*% Zt %*% Xwts
             L <- update(L, Ut, 1)
             if(!nAGQ){                  # update Utr and Vtr
@@ -76,18 +77,18 @@ pirls <- function(glmod, y, eta,
                 newbeta <- as.vector(solve(DD, crossprod(V,r) - crossprod(RZX,cu)))
                 newu <- as.vector(solve(L, cu - RZX %*% newbeta, system = "Lt"))
             } else {
-                r <- Xwts %*% (eta - offset - X%*%beta + ((y-mu)/muEta))
-                newu <- as.vector(solve(L, Ut %*% r))
-                newbeta <- beta
+                delu <- as.vector(solve(L, Ut %*% (sqrtW@x * (y-mu)) - u))
+                delbeta <- numeric(length(beta))
             }
             if (verbose > 0L) {
-                cat(sprintf("inc: %12.4g", newu[1]))
-                nprint <- min(5,length(newu))
-                for (j in 2:nprint) cat(sprintf(" %12.4g", newu[j]))
+                cat(sprintf("inc: %12.4g", delu[1]))
+                nprint <- min(5,length(delu))
+                for (j in 2:nprint) cat(sprintf(" %12.4g", delu[j]))
                 cat("\n")
             }
+            newu <- u + delu
                                         # update mu and eta
-            eta[] <<- as.vector(offset + X %*% newbeta +
+            eta[] <<- as.vector(offset + X %*% (beta+delbeta) +
                                 crossprod(Zt,crossprod(Lambdat,newu)))
             mu[] <<- family$linkinv(eta)
                                         # compute penalized deviance
@@ -103,11 +104,12 @@ pirls <- function(glmod, y, eta,
                                         # step-halving
             if(pdev > oldpdev){
                 for(j in 1:10){
-                    newu <- (newu + u)/2
-                    if(!nAGQ) newbeta <- (newbeta + beta)/2
-                    eta[] <- as.vector(offset + X %*% newbeta +
+                    delu <- delu/2
+                    newu <- u + delu
+                    delbeta <- delbeta/2
+                    eta[] <<- as.vector(offset + X %*% (beta + delbeta) +
                                        crossprod(Zt, crossprod(Lambdat,newu)))
-                    mu <- family$linkinv(eta)
+                    mu[] <<- family$linkinv(eta)
                     pdev <- sum(family$dev.resid(y, mu, weights)) + sum(newu^2)
                     if (verbose > 1L) {
                         cat(sprintf("%6.4f: %10.3f\n", 1/2^j, pdev))
@@ -117,8 +119,8 @@ pirls <- function(glmod, y, eta,
                 if((pdev - oldpdev) > tol) stop("Step-halving failed")
             }
             oldpdev <- pdev
-            u <- newu
-            if(!nAGQ) beta[] <<- newbeta
+            u[] <<- u + delu
+            beta[] <<- beta + delbeta
         }
         if(!cvgd) stop("PIRLS failed to converge")
         ## calculate Laplace deviance approximation
