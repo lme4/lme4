@@ -12,7 +12,7 @@
 ##'    \code{~} operator and the terms, separated by \code{+} operators, on
 ##'    the right.  Random-effects terms are distinguished by vertical bars
 ##'    (\code{"|"}) separating expressions for design matrices from
-##'    grouping factors. Two vertical bars (\code{"||"}) can be used to specify 
+##'    grouping factors. Two vertical bars (\code{"||"}) can be used to specify
 ##'    multiple uncorrelated random effects for the same grouping variable.
 ##' @param data an optional data frame containing the variables named in
 ##'    \code{formula}.  By default the variables are taken from the environment
@@ -1496,6 +1496,69 @@ update.merMod <- function(object, formula., ..., evaluate = TRUE) {
     else call
 }
 
+###----- Printing etc ----------------------------
+
+methTitle <- function(object, dims = object@devcomp$dims)
+    paste(switch(1L + dims[["GLMM"]] * 2L + dims[["NLMM"]],
+                 "Linear", "Nonlinear",
+                 "Generalized linear", "Generalized nonlinear"),
+          "mixed model fit by",
+          if(isREML(object)) "REML" else "maximum likelihood")
+
+famlink <- function(object, resp = object@resp) {
+    if(is(resp, "glmResp"))
+	resp$family[c("family", "link")]
+    else list(family = NULL, link = NULL)
+}
+
+.prt.family <- function(famL) {
+    if (!is.null(f <- famL$family)) {
+	cat(" Family:", f)
+        if (!(is.null(ll <- famL$link))) cat(" (", ll, ")")
+        cat("\n")
+    }
+}
+
+.prt.call <- function(call) {
+    if (!is.null(cc <- call$formula))
+	cat("Formula:", deparse(cc),"\n")
+    if (!is.null(cc <- call$data))
+	cat("   Data:", deparse(cc), "\n")
+    if (!is.null(cc <- call$subset))
+	cat(" Subset:", deparse(asOneSidedFormula(cc)[[2]]),"\n")
+}
+
+getLlikAIC <- function(object, cmp = object@devcomp$cmp) {
+    llik <- logLik(object)   # returns NA for a REML fit - maybe change?
+    AICstats <- {
+	if(isREML(object)) cmp["REML"] # *no* likelihood stats here
+	else {
+	    c(AIC = AIC(llik), BIC = BIC(llik), logLik = c(llik),
+	      deviance = deviance(object))
+	}
+    }
+    list(logLik=llik, AICtab = AICstats)
+}
+
+.prt.aictab <- function(aictab, digits=4) {
+    t.4 <- round(aictab, digits)
+    if (length(aictab) == 1 && names(aictab) == "REML")
+	cat("REML criterion at convergence:", t.4, "\n")
+    else print(t.4)
+}
+
+.prt.VC <- function(varcor, digits, useScale, ...) {
+    cat("\nRandom effects:\n")
+    print(formatVC(varcor, digits = digits, useScale = useScale),
+	  quote = FALSE, digits = digits, ...)
+}
+
+.prt.grps <- function(ngrps, nobs) {
+    cat(sprintf("Number of obs: %d, groups: ", nobs))
+    cat(paste(paste(names(ngrps), ngrps, sep = ", "), collapse = "; "))
+    cat("\n")
+}
+
 ## This is modeled a bit after	print.summary.lm :
 ## Prints *both*  'mer' and 'merenv' - as it uses summary(x) mainly
 printMerenv <- function(x, digits = max(3, getOption("digits") - 3),
@@ -1503,39 +1566,16 @@ printMerenv <- function(x, digits = max(3, getOption("digits") - 3),
 			signif.stars = getOption("show.signif.stars"), ...)
 {
     so <- summary(x)
-    cat(sprintf("%s ['%s']\n",so$methTitle, class(x)))
-    if (!is.null(f <- so$family)) {
-	cat(" Family:", f)
-        if (!(is.null(ll <- so$link))) cat(" (", ll, ")")
-        cat("\n")
-    }
+    cat(sprintf("%s ['%s']\n",so$methTitle, so$objClass))
+    .prt.family(so)
     ## FIXME: commenting out for now, restore after release?
     ## cat("Scaled residuals:\n")
     ## print(summary(residuals(x,type="pearson",scaled=TRUE)),digits=digits)
-    if (!is.null(cc <- so$call$formula))
-	cat("Formula:", deparse(cc),"\n")
-    ## if (!is.null(so$family)) {
-    ##     cat("Family: ",so$family,
-    ##         " (link=",so$link,")\n",
-    ##         sep="")
-    ## }
-    if (!is.null(cc <- so$call$data))
-	cat("   Data:", deparse(cc), "\n")
-    if (!is.null(cc <- so$call$subset))
-	cat(" Subset:", deparse(asOneSidedFormula(cc)[[2]]),"\n")
-    cat("\n")
-    tab <- so$AICtab
-    if (length(tab) == 1 && names(tab) == "REML")
-	cat("REML criterion at convergence:", round(tab, 4), "\n")
-    else print(round(so$AICtab, 4))
-    cat("\nRandom effects:\n")
-    print(formatVC(so$varcor, digits = digits, useScale = so$useScale),
-	  quote = FALSE, digits = digits, ...)
+    .prt.call(so$call); cat("\n")
+    .prt.aictab(so$AICtab, 4)
+    .prt.VC(so$varcor, digits=digits, useScale= so$useScale, ...)
+    .prt.grps(so$ngrps, nobs= so$devcomp$dims[["n"]])
 
-    ngrps <- so$ngrps
-    cat(sprintf("Number of obs: %d, groups: ", so$devcomp$dims[["n"]]))
-    cat(paste(paste(names(ngrps), ngrps, sep = ", "), collapse = "; "))
-    cat("\n")
     p <- nrow(so$coefficients)
     if (p > 0) {
 	cat("\nFixed effects:\n")
@@ -1583,11 +1623,36 @@ printMerenv <- function(x, digits = max(3, getOption("digits") - 3),
     invisible(x)
 }## printMerenv()
 
-##' @S3method print merMod
-print.merMod <- printMerenv
 
+##' @S3method print merMod
+print.merMod <- function(x, digits = max(3, getOption("digits") - 3),
+			correlation = NULL, symbolic.cor = FALSE,
+			signif.stars = getOption("show.signif.stars"), ...)
+{
+    dims <- (devC <- x@devcomp)$dims
+    methTit <- methTitle(x, dims=dims)
+    cat(sprintf("%s ['%s']\n",methTit, class(x)))
+    famL <- famlink(x, resp = x@resp)
+    .prt.family(famL)
+    .prt.call(x@call)
+    useScale <- as.logical(dims[["useSc"]])
+
+    llAIC <- getLlikAIC(x)
+    .prt.aictab(llAIC$AICtab, 4)
+    varcor <- VarCorr(x)
+    .prt.VC(varcor, digits=digits, useScale= useScale, ...)
+    ngrps <- sapply(x@flist, function(x) length(levels(x)))
+    .prt.grps(ngrps, nobs= dims[["n"]])
+    if(length(cf <- fixef(x)) >= 0) {
+	cat("Coefficients:\n")
+	print.default(format(cf, digits = digits),
+		      print.gap = 2L, quote = FALSE)
+    } else cat("No coefficients\n")
+    cat("\n")
+    invisible(x)
+}
 ##' @exportMethod show
-setMethod("show",  "merMod", function(object) printMerenv(object))
+setMethod("show",  "merMod", function(object) print.merMod(object))
 
 ##' @S3method print summary.merMod
 print.summary.merMod <- printMerenv
@@ -2027,55 +2092,42 @@ summary.merMod <- function(object, ...)
     devC <- object@devcomp
     dd <- devC$dims
     cmp <- devC$cmp
-    useSc <- as.logical(dd["useSc"])
+    useSc <- as.logical(dd[["useSc"]])
     sig <- sigma(object)
     REML <- isREML(object)
 
-    link <- fam <- NULL
-    if(is(resp, "glmResp")) {
-        fam <- resp$family$family
-        link <- resp$family$link
-    }
+    famL <- famlink(resp=resp)
     coefs <- cbind("Estimate" = fixef(object),
 		   "Std. Error" = sig * sqrt(diag(object@pp$unsc())))
     if (nrow(coefs) > 0) {
-	coefs <- cbind(coefs, coefs[,1]/coefs[,2], deparse.level=0)
+	coefs <- cbind(coefs, (cf3 <- coefs[,1]/coefs[,2]), deparse.level=0)
 	colnames(coefs)[3] <- paste(if(useSc) "t" else "z", "value")
-        if (isGLMM(object)) {
-          coefs <- cbind(coefs,2*pnorm(abs(coefs[,3]),lower.tail=FALSE))
-          colnames(coefs)[4] <- c("Pr(>|z|)")
-        }
+	if (isGLMM(object))
+	    coefs <- cbind(coefs, "Pr(>|z|)" =
+			   2*pnorm(abs(cf3), lower.tail=FALSE))
     }
-    mName <- paste(switch(1L + dd[["GLMM"]] * 2L + dd[["NLMM"]],
-			  "Linear", "Nonlinear",
-			  "Generalized linear", "Generalized nonlinear"),
-		   "mixed model fit by",
-		   if(REML) "REML" else "maximum likelihood")
-    llik <- logLik(object)   # returns NA for a REML fit - maybe change?
-    AICstats <- {
-	if (REML) cmp["REML"] # do *not* show likelihood stats here
-	else {
-	    c(AIC = AIC(llik), BIC = BIC(llik), logLik = c(llik),
-	      deviance = deviance(object))
-	}
-    }
+
+    llAIC <- getLlikAIC(object)
     ## FIXME: You can't count on object@re@flist,
     ##	      nor compute VarCorr() unless is(re, "reTrms"):
     varcor <- VarCorr(object)
 					# use S3 class for now
-    structure(list(methTitle=mName, devcomp=devC,
-                   isLmer=is(resp, "lmerResp"), useScale=useSc,
-		   logLik=llik, family=fam, link=link,
+    structure(list(methTitle = methTitle(object, dims=dd),
+		   objClass = class(object),
+		   devcomp = devC,
+		   isLmer=is(resp, "lmerResp"), useScale=useSc,
+		   logLik=llAIC[["logLik"]],
+		   family=famL$fami, link=famL$link,
 		   ngrps=sapply(object@flist, function(x) length(levels(x))),
 		   coefficients=coefs, sigma=sig,
 		   vcov=vcov(object, correlation=TRUE, sigm=sig),
 		   varcor=varcor, # and use formatVC(.) for printing.
-		   AICtab=AICstats, call=object@call
+		   AICtab = llAIC[["AICtab"]], call=object@call
 		   ), class = "summary.merMod")
 }
 
 ##' @S3method summary summary.merMod
-summary.summary.merMod <- function(object, varcov = FALSE, ...) {
+summary.summary.merMod <- function(object, varcov = TRUE, ...) {
     if(varcov && is.null(object$vcov))
 	object$vcov <- vcov(object, correlation=TRUE, sigm = object$sigma)
     object
