@@ -1621,7 +1621,7 @@ setMethod("getL", "merMod", function(x) {
 ##' @param old (logical) give backward-compatible results?
 ##' @param prefix a character vector with two elements giving the prefix
 ##' for diagonal (e.g. "sd") and off-diagonal (e.g. "cor") elements
-##' @export
+##' ## @export
 tnames <- function(object,diag.only=FALSE,old=TRUE,prefix=NULL) {
     if (old) {
         nc <- c(unlist(mapply(function(g,e) {
