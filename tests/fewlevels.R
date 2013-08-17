@@ -25,7 +25,7 @@ library(nlme)
 m.lme <- lme(y ~ x, random=~ 1|fac ,data=sim())
 v.lme <- as.numeric(VarCorr(m.lme)[1,1])
 library(lme4)
-m.lmer <- lmer(y ~ x + (1|fac),data=sim(),
-               control=lmerControl(check.nlev.gtreq.5="ignore"))
+
+m.lmer <- lmer(y ~ x + (1|fac),data=sim())
 v.lmer <- VarCorr(m.lmer)[[1]][1,1]
 stopifnot(all.equal(v.lmer,19.54829,tol=1e-6))

@@ -10,13 +10,21 @@
 lmerControl(optimizer = "Nelder_Mead",
     restart_edge = TRUE, sparseX = FALSE,
     check.nobs.vs.rankZ = "stopSmall",
+<<<<<<< HEAD
     check.nlev.gtreq.5 = "warning",
+=======
+    check.nlev.gtreq.5 = "ignore",
+>>>>>>> 04467d9... "ignore" levels<5; check.numlevel -> check.nlev
     check.nlev.gtr.1 = "stop", optCtrl = list())
 
 glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     restart_edge = FALSE, sparseX = FALSE,
     check.nobs.vs.rankZ = "stopSmall",
+<<<<<<< HEAD
     check.nlev.gtreq.5 = "warning",
+=======
+    check.nlev.gtreq.5 = "ignore",
+>>>>>>> 04467d9... "ignore" levels<5; check.numlevel -> check.nlev
     check.nlev.gtr.1 = "stop", tolPwrss = 1e-07,
     compDev = TRUE, optCtrl = list())
 
@@ -64,7 +72,7 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
 
   \item{check.nlev.gtreq.5}{character - rules for
     checking whether all random effects have >= 5 levels.
-    "ignore": skip the test. "warn": warn if test fails.
+    "ignore": skip the test. "warning": warn if test fails.
     "stop": throw an error if test fails.}
 
   \item{check.nlev.gtr.1}{character - rules for checking
@@ -76,7 +84,11 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     than (or greater than or equal to) the rank of the random
     effects design matrix (Z), usually necessary for
     identifiable variances.  As for \code{check.nlevel.gtreq.5}, with
+<<<<<<< HEAD
     the addition of \code{"warnSmall"} and \code{"stopSmall"}, which run
+=======
+    the addition of \code{"warningSmall"} and \code{"stopSmall"}, which run
+>>>>>>> 04467d9... "ignore" levels<5; check.numlevel -> check.nlev
     the test only if the dimensions of \code{Z} are < 1e6.
     \code{nobs > rank(Z)} will be tested for LMMs and GLMMs with
     estimated scale parameters; \code{nobs >= rank(Z)} will be tested
