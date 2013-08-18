@@ -109,20 +109,16 @@ cs <- function(formula, init=NULL, het=TRUE){
 				nlambda <- nl*((nc+1)*nc/2)
 				
 				# upper/lower limits:
-				upper <- rep(Inf, nc+1)
-				lower <- c(rep(0, nc), -Inf)
+				upper <- c(rep(Inf, nc), .99)
+				lower <- c(rep(0, nc), -.99)
 				
 				#diagonal entries of the cholesky are sqrt(<this expression>)*sd
 				diagfactors <- function(x, col=nc) -(((col-1)*x^2- (col-2)*x - 1) /((col-2)*x + 1))
-				# (upper not implemented yet, so need transform on corr)
-				# lower limit for corr depends on nc:
-				# - ((nc-1)^2*rho-(nc-2)*rho - 1) / ((nc-2)*rho + 1) > 0
-				cl <- c(-.5, .5) 
 				if(nc>2){
 					#rational function is wild, so find small interval with root in it first
-					grid <- seq(0, cl[1], l=500)
+					grid <- seq(0, -1, l=500)
 					if(any(diagfactors(grid)<0)){
-						cl[1] <- uniroot(diagfactors, lower=grid[min(which(diagfactors(grid)<0))],
+						lower[nc+1] <- .95*uniroot(diagfactors, lower=grid[min(which(diagfactors(grid)<0))],
 										 upper=grid[min(which(diagfactors(grid)<0))-1])$root
 					} 
 				} 	
@@ -132,9 +128,8 @@ cs <- function(formula, init=NULL, het=TRUE){
 				if(!is.null(init)){
 					stopifnot(length(init)!=nc+1)
 					stopifnot(all(init[1:nc]>0))
-					stopifnot((init[nc+1] > cl[1]) & (init[nc+1] < cl[2]))
-					theta <- init
-					theta[nc+1] <- qlogis((init[nc+1]-cl[1])/(diff(cl))) 
+					stopifnot((init[nc+1] > lower[nc+1]) & (init[nc+1] < upper[nc+1]))
+					theta <- init 
 				} else {
 					theta <- c(rep(1, nc), .1)
 				}
@@ -151,10 +146,9 @@ cs <- function(formula, init=NULL, het=TRUE){
 					# theta[1:nc]: sd's; theta[nc+1]: transformed corr
 					C <- diag(nc)
 					nl <- nl
-					cl <- cl
 					function(theta){
 						#get rho
-						rho <-  diff(cl) * plogis(theta[nc+1]) + cl[1]
+						rho <-  theta[nc+1]
 						C[upper.tri(C)] <- C[lower.tri(C)] <- rho
 						#make covariance:
 						sd <- theta[1:nc]
@@ -212,32 +206,19 @@ cs <- function(formula, init=NULL, het=TRUE){
 				nlambda <- nl*((nc+1)*nc/2)
 				
 				# upper/lower limits:
-				upper <- rep(Inf, 2)
-				lower <- c(0, -Inf)
+				upper <- rep(Inf, .99)
+				lower <- c(0, -.99)
 				
 				#diagonal entries of the cholesky are sqrt(<this expression>)*sd
 				diagfactors <- function(x, col=nc) -(((col-1)*x^2- (col-2)*x - 1) /((col-2)*x + 1))
-				# (upper not implemented yet, so need transform on corr)
-				# lower limit for corr depends on nc:
-				# - ((nc-1)^2*rho-(nc-2)*rho - 1) / ((nc-2)*rho + 1) > 0
-				cl <- c(-.5, .5) 
-				if(nc>2){
-					#rational function is wild, so find small interval with root in it first
-					grid <- seq(0, cl[1], l=500)
-					if(any(diagfactors(grid)<0)){
-						cl[1] <- uniroot(diagfactors, lower=grid[min(which(diagfactors(grid)<0))],
-										 upper=grid[min(which(diagfactors(grid)<0))-1])$root
-					} 
-				} 	
-				
+								
 				# initialize variances (default sd=1, cor=<middle of valid range>)
 				# (upper not implemented yet, so map reals into (cl[1], cl[2]) by a scaled logistic
 				if(!is.null(init)){
 					stopifnot(length(init)!=2)
 					stopifnot(init[1]>0)
-					stopifnot((init[2] > cl[1]) & (init[2] < cl[2]))
+					stopifnot((init[2] > lower[2]) & (init[2] < upper[2]))
 					theta <- init
-					theta[2] <- qlogis((init[2]-cl[1])/(diff(cl))) 
 				} else {
 					theta <- c(1, .1)
 				}
@@ -257,7 +238,7 @@ cs <- function(formula, init=NULL, het=TRUE){
 					cl <- cl
 					function(theta){
 						#get rho
-						rho <-  diff(cl) * plogis(theta[2]) + cl[1]
+						rho <-  theta[2]
 						C[upper.tri(C)] <- C[lower.tri(C)] <- rho
 						#make covariance:
 						sd <- theta[1]
