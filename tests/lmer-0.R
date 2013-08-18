@@ -1,5 +1,5 @@
 require(lme4)
-source(system.file("test-tools.R", package = "Matrix"))# identical3() etc
+source(system.file("test-tools-1.R", package = "Matrix"))# identical3() etc
 
 ## Check that quasi families throw an error
 assertError(lmer(cbind(incidence, size - incidence) ~ period + (1|herd),
@@ -60,6 +60,7 @@ lsDat <- data.frame(
                     -0.94, -0.81, 0.77, 0.4, -2.37, -2.78, 1.29, -0.95,
                     -1.58, -2.06, -3.11,-3.2, -0.1, -0.49,-2.02, -0.75,
                     1.71,  -0.85, -1.19, 0.13, 1.35, 1.92, 1.04,  1.08))
+
 xtabs( ~ Operator + Part, data=lsDat) # --> 4 empty cells, quite a few with only one obs.:
 ##         Part
 ## Operator 1 2 3 4 5
@@ -68,18 +69,25 @@ xtabs( ~ Operator + Part, data=lsDat) # --> 4 empty cells, quite a few with only
 ##        3 2 2 2 1 1
 ##        4 1 1 2 2 2
 ##        5 1 2 2 1 2
+lsD29 <- lsDat[1:29, ]
 
-## FIXME: rank-Z tests false positive???
-lf <- lFormula(y ~ (1|Part) + (1|Operator) + (1|Part:Operator), data = lsDat,
-               control=lmerControl(check.nobs.vs.rankZ="ignore"))
-Zt <- lf$reTrms$Zt
+## FIXME: rank-Z test should probably not happen in this case:
+(sm3 <- summary(m3 <- lm(y ~ Part*Operator, data=lsDat)))# ok: some interactions not estimable
+nrow(coef(sm3))# 21 *are* estimable
+sm4  <- summary(m4 <- lm(y ~ Part*Operator, data=lsD29)) # ok: 20 *are* estimable
+lf <- lFormula(y ~ (1|Part) + (1|Operator) + (1|Part:Operator), data = lsDat)
+dim(Zt <- lf$reTrms$Zt)## 31 x 31
 c(rankMatrix(Zt)) ## 21
-c(rankMatrix(Zt,method="qr")) ## 31
+c(rankMatrix(Zt,method="qr")) ## 31 ||  29 (64 bit Lnx)
 c(rankMatrix(t(Zt),method="qr")) ## 30
 nrow(lsDat)
-## lf <- lFormula(y ~ (1|Part) + (1|Operator) + (1|Part:Operator), data = lsDat)
 fm3 <- lmer(y ~ (1|Part) + (1|Operator) + (1|Part:Operator), data = lsDat,
-            control=lmerControl(check.nobs.vs.rankZ="ignore"))
+            control=lmerControl(check.nobs.vs.rankZ="warningSmall"))
+
+lf29 <- lFormula(y ~ (1|Part) + (1|Operator) + (1|Part:Operator), data = lsD29)
+(fm4 <- update(fm3, data=lsD29))
+fm4. <- update(fm4, REML=FALSE)
+summary(fm4.)
 
 showProc.time()
 cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
