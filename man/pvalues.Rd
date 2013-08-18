@@ -33,7 +33,7 @@
   approximation using \code{KRmodcomp} from the
   \code{pbkrtest} package (MC) \item \code{car::Anova} and
   \code{lmerTest::anova} provide wrappers for
-  \code{pbkrtest}: the latter also provides t tests via the
+  \code{pbkrtest}: \code{lmerTest::anova} also provides t tests via the
   Satterthwaite approximation (P,*) } In the list above,
   the methods marked \code{MC} provide explicit model
   comparisons; \code{CI} denotes confidence intervals; and
