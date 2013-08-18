@@ -930,6 +930,7 @@ setClass("merMod",
                         flist   = "list",
                         cnms    = "list",
                         lower   = "numeric",
+                        upper   = "numeric",
                         theta   = "numeric",
                         beta    = "numeric",
                         u       = "numeric",
@@ -1014,6 +1015,7 @@ vcRep <-
                 list(
                      theta     = "numeric",
                      lower     = "numeric",
+                     upper     = "numeric",
                      Lambdat   = "dgCMatrix",
                      Lind      = "integer",
                      Gp        = "integer",
@@ -1036,6 +1038,7 @@ vcRep <-
                                    (length(Flist <- mer@flist)) > 0L,
                                    length(asgn  <- as.integer(attr(Flist, "assign"))) == ntrms)
                          lower   <<- getME(mer, "lower")
+                         upper   <<- getME(mer, "upper")
                          theta   <<- getME(mer, "theta")
                          Lambdat <<- getME(mer, "Lambdat")
                          Lind    <<- getME(mer, "Lind")
@@ -1071,7 +1074,8 @@ vcRep <-
                      },
                      setTheta    = function(ntheta) {
                          stopifnot(length(ntheta <- as.numeric(ntheta)) == length(lower),
-                                   all(ntheta >= lower))
+                                   all(ntheta >= lower),
+                                   all(ntheta <= upper))
                          theta   <<- ntheta
                          covar   <<- mkVarCorr(sig, cnms, ncols, theta, nms)
                      },

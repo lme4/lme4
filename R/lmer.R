@@ -374,7 +374,8 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
     rho <- list2env(list(verbose=verbose,
                          tolPwrss=0.001, # this is reset to the tolPwrss argument's value later
                          resp=vals$resp,
-                         lower=vals$reTrms$lower),
+                         lower=vals$reTrms$lower,
+                         upper=vals$reTrms$upper),
                     parent=parent.frame())
     rho$pp <- do.call(merPredD$new,
                       c(vals$reTrms[c("Zt","theta","Lambdat","thfun")],
@@ -390,12 +391,14 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
     rho$beta0 <- rho$pp$beta0
     rho$tolPwrss <- control$tolPwrss # Reset control parameter (the initial optimization is coarse)
 
-    opt <- optwrap(control$optimizer[[1]], devfun, rho$pp$theta, rho$lower,
+    opt <- optwrap(control$optimizer[[1]], devfun, rho$pp$theta,
+                   rho$lower, rho$upper, 
                    control=control$optControl, adj=FALSE)
     rho$control <- attr(opt,"control")
 
     if (nAGQ > 0L) {
         rho$lower <- c(rho$lower, rep.int(-Inf, length(rho$beta0)))
+        rho$upper <- c(rho$upper, rep.int( Inf, length(rho$beta0)))
         rho$u0    <- rho$pp$u0
         rho$beta0 <- rho$pp$beta0
         rho$dpars <- seq_along(rho$pp$theta)
@@ -408,7 +411,8 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
         if (devFunOnly) return(devfun)
 
         opt <- optwrap(control$optimizer[[2]], devfun, par=c(rho$pp$theta, rho$beta0),
-                       lower=rho$lower, control=control$optControl,
+                       lower=rho$lower, upper=rho$upper,
+                       control=control$optControl,
                        adj=TRUE, verbose=verbose)
 
 
@@ -1210,6 +1214,7 @@ refit.merMod <- function(object, newresp=NULL, ...)
     xst       <- rep.int(0.1, nth)
     x0        <- pp$theta
     lower     <- object@lower
+    upper     <- object@upper
     if (!is.na(nAGQ) && nAGQ > 0L) {
         xst   <- c(xst, sqrt(diag(pp$unsc())))
         x0    <- c(x0, unname(fixef(object)))
@@ -1751,7 +1756,7 @@ getME <- function(object,
                   "beta", "theta", "ST",
 		  "REML", "is_REML",
                   "n_rtrms", "n_rfacs",
-                  "devcomp", "offset", "lower"))
+                  "devcomp", "offset", "lower", "upper"))
 {
     if(missing(name)) stop("'name' must not be missing")
     stopifnot(is(object,"merMod"))
@@ -1816,6 +1821,7 @@ getME <- function(object,
            "devcomp" = dc,
            "offset" = rsp$offset,
            "lower" = object@lower,
+           "upper" = object@upper,
             ## FIXME: current version gives lower bounds for theta parameters only -- these must be extended for [GN]LMMs -- give extended value including -Inf values for beta values?
 	   "..foo.." =# placeholder!
 	   stop(gettextf("'%s' is not implemented yet",
@@ -2216,7 +2222,7 @@ getOptfun <- function(optimizer) {
 	tryCatch(get(optimizer), error=function(e) NULL)
     if (is.null(optfun)) stop("couldn't find optimizer function ",optimizer)
     if (!is.function(optfun)) stop("non-function specified as optimizer")
-    needArgs <- c("fn","par","lower","control")
+    needArgs <- c("fn","par","lower","upper","control")
     if (any(is.na(match(needArgs, names(formals(optfun))))))
 	stop("optimizer function must use (at least) formal parameters ",
 	     paste(sQuote(needArgs), collapse=", "))
