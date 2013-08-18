@@ -114,10 +114,13 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
 	       stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
     }
     ## Part 2 ----------------
-    if (any(if(allow.n) nlevelVec > n else nlevelVec >= n))
-	stop(gettextf(
-	    "number of levels of each grouping factor must be %s number of observations",
-	    if(allow.n) "<=" else "<"), domain=NA)
+    cstr <- "check.nobs.vs.nlev"
+    if (doCheck(cc <- ctrl[[cstr]])) {
+        if (any(if(allow.n) nlevelVec > n else nlevelVec >= n))
+            stop(gettextf(
+                "number of levels of each grouping factor must be %s number of observations",
+                if(allow.n) "<=" else "<"), domain=NA)
+    }
 
     ## Part 3 ----------------
     cstr <- "check.nlev.gtreq.5"
