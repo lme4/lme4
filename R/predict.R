@@ -287,7 +287,7 @@ NULL
 ##' @export
 simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                             ReForm=NA, newdata=NULL, newparams=NULL,
-                            allow.new.levels=FALSE, ...) {
+                            allow.new.levels=FALSE, na.action=na.pass, ...) {
     stopifnot((nsim <- as.integer(nsim[1])) > 0,
               is(object, "merMod"))
     if (!is.null(newparams)) {

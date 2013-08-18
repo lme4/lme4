@@ -57,3 +57,17 @@ m1N <- update(m1,data=dn)
 p1NA <- predict(m1N)
 p1NB <- predict(m1N,newdata=dn)
 stopifnot(all.equal(p1NA,unname(p1NB)))
+
+##
+set.seed(1)
+s1 <- simulate(fm1)
+set.seed(1)
+s2 <- simulate.merMod(fm1,newdata=model.frame(fm1),
+               newparams=getME(fm1,c("theta","beta")))
+all.equal(s1,s2)
+
+fm0 <- update(fm1,.~.-Days)
+##
+## sim() -> simulate() -> refit() -> deviance
+##
+
