@@ -250,20 +250,18 @@ mkZt <- function(ff, bar, fr){
 }
 
 ##' Initalize upper triangular Cholesky factor of an
-##' unstructured covariance matrix
+##' UnStructured covariance matrix
 ##' @param nc number of effects per level
 ##' @param nl number of levels
 ##' @param theta vector of variance-covariance parameters
 ##' @return a sparse upper triangular matrix
 mkLambdatUS <- function(nc, nl, theta){
+	stopifnot(length(theta) == (nc+1)*nc/2)
 	
-	ntheta <-  length(theta)
 	#initalize Lambdat as repeated upper triagonal:
-	oneLevel <- as(1*upper.tri(diag(nc), diag=TRUE), "dgCMatrix")
-	Lambdat <- suppressMessages(kronecker(Diagonal(nl), oneLevel))
-	#need standard dgC not dtT but no direct coerce exists:
-	Lambdat <- as(as(Lambdat, "dgTMatrix"), "dgCMatrix")
-	
+	Lambdat <- 1 * do.call(bdiag, 
+						   replicate(nl, list(upper.tri(diag(nc), diag=TRUE))))
+	ntheta <-  length(theta)
 	Lind <- rep(1:ntheta, times=nl)
 	Lambdat@x <- theta[Lind]
 	
@@ -625,6 +623,12 @@ chck1 <- function(expr) {
     return()
   } else
     for (j in seq_len(le)[-1]) Recall(expr[[j]])
+}
+
+
+## Create an upper triagonal matrix 
+mkUpperTriDgc <- function(dim){
+   		
 }
 
 ##' Check and manipulate the formula for a nonlinear model.
