@@ -58,7 +58,7 @@ mkReTrms <- function(bars, fr, reGenerators=NULL) {
 	
 	## order terms stably by decreasing number of levels in the grouping 
 	## factor
-	if (any(diff(nl)) > 0) {
+	if (length(nl) > 1 && any(diff(nl) != 0)) {
 		ord <- order(nl, decreasing=TRUE)
 		reTrms <- reTrms[ord]
 		nl <- nl[ord]

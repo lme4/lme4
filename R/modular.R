@@ -150,9 +150,12 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 {
 	control <- control$checkControl ## this is all we really need
 	mf <- mc <- match.call()
-	
-	ignoreArgs <- c("start","verbose","devFunOnly","control")
 	l... <- list(...)
+	
+	reGenerators <- l...$reGenerators
+	hasReGen <- !is.null(reGenerators) 
+	
+	ignoreArgs <- c("start","verbose","devFunOnly","control", "reGenerators")
 	l... <- l...[!names(l...) %in% ignoreArgs]
 	do.call("checkArgs",c(list("lmer"),l...))
 	if (!is.null(list(...)[["family"]])) {
@@ -162,8 +165,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 		return(eval(mc, parent.frame()))
 	}
 	
-	reGenerators <- l...$reGenerators
-	hasReGen <- !is.null(reGenerators) 
+	
 	# if there are special terms... 
 	if(hasReGen){
 		# ...save varnames so they show up in mf

@@ -97,8 +97,9 @@ cs <- function(formula, init=NULL, het=TRUE){
 				nc <- Ztl$nc
 				
 				if(nc <= 2){
-					warning("Using the experimental stuff when you could just use the stable specification?
-						What are you, som?")
+					warning(
+						paste("Using the experimental stuff when you could just use the stable specification?",
+						"What are you, some jerk?"))
 				}
 				
 				cnms <- Ztl$cnms
@@ -123,8 +124,6 @@ cs <- function(formula, init=NULL, het=TRUE){
 					} 
 				} 	
 				
-				# initialize variances (default sd=1, cor=<middle of valid range>)
-				# (upper not implemented yet, so map reals into (cl[1], cl[2]) by a scaled logistic
 				if(!is.null(init)){
 					stopifnot(length(init)!=nc+1)
 					stopifnot(all(init[1:nc]>0))
@@ -206,14 +205,12 @@ cs <- function(formula, init=NULL, het=TRUE){
 				nlambda <- nl*((nc+1)*nc/2)
 				
 				# upper/lower limits:
-				upper <- rep(Inf, .99)
+				upper <- c(Inf, .99)
 				lower <- c(0, -.99)
 				
 				#diagonal entries of the cholesky are sqrt(<this expression>)*sd
 				diagfactors <- function(x, col=nc) -(((col-1)*x^2- (col-2)*x - 1) /((col-2)*x + 1))
 								
-				# initialize variances (default sd=1, cor=<middle of valid range>)
-				# (upper not implemented yet, so map reals into (cl[1], cl[2]) by a scaled logistic
 				if(!is.null(init)){
 					stopifnot(length(init)!=2)
 					stopifnot(init[1]>0)
@@ -235,7 +232,6 @@ cs <- function(formula, init=NULL, het=TRUE){
 					# theta[1:nc]: sd's; theta[nc+1]: transformed corr
 					C <- diag(nc)
 					nl <- nl
-					cl <- cl
 					function(theta){
 						#get rho
 						rho <-  theta[2]
