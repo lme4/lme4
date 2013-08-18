@@ -119,7 +119,7 @@ data <- expand.grid(reps=factor(1:nreps),
 					dose=1:nc,
 					subject=factor(1:nsubj))
 
-sd.dose <- (1:nc)
+sd.dose <- rep(2, nc)# (1:nc)
 cor <- .5
 S <- {
 	C <- diag(nc)
@@ -145,7 +145,7 @@ environment(ddevfun)$pp$theta <- dopt$par
 (dm <- mkMerMod(environment(ddevfun), dopt, dlmod$reTrms, fr = dlmod$fr))
 dopt$par*sigma(dm)
 
-lmod <- lFormula(y ~ dose, data, reGenerators= ~vh(~(0+doseF|subject)))			   
+lmod <- lFormula(y ~ dose, data, reGenerators= ~cs(~(0+doseF|subject)))			   
 devfun <- do.call(mkLmerDevfun, lmod)
 opt <- optimizeLmer(devfun, verbose=5)
 environment(devfun)$pp$theta <- opt$par
@@ -159,11 +159,32 @@ sqrt(diag(estS)); cov2cor(estS); sigma(m)
 plot(data$y, fitted(m))
 
 
+hlmod <- lFormula(y ~ dose, data, reGenerators= ~cs(~(0+doseF|subject), het=FALSE))			   
+hdevfun <- do.call(mkLmerDevfun, hlmod)
+hopt <- optimizeLmer(hdevfun, verbose=5)
+environment(hdevfun)$pp$theta <- hopt$par
+(hm <- mkMerMod(environment(hdevfun), hopt, hlmod$reTrms, fr = hlmod$fr))
+hestS <- with(environment(hdevfun),{
+	Lt <- pp$Lambdat
+	Lt@x <- pp$thfun(opt$par)
+	crossprod(Lt[1:nc, 1:nc])
+})*sigma(hm)^2 
+sqrt(diag(hestS)); cov2cor(hestS); sigma(hm)
+plot(data$y, fitted(m))
+
+
 nc <- 5 
-sd <- c(4, 0, 1:3)#1:nc
-rho <- .2
+sd <- 2
+rho <- .5
 C <- diag(nc); C[upper.tri(C)] <- C[lower.tri(C)] <- rho
 (S <- t(C*sd)*sd)
+sd*sqrt(diagfactors(rho,1:nc))
+sd*rho
+(rho-rho^2)/sqrt(1-rho^2) * sd
+(rho-rho^2)/sqrt(1-rho^2) * sd
+
+
+chol(S)
 #chol(t(S*sd)*sd)
 theta <- c(sd, 0)
 
