@@ -1,6 +1,5 @@
 ## compare range, average, etc. of simulations to
 ## conditional and unconditional prediction
-
 library(lme4)
 do.plot <- FALSE
 
@@ -10,7 +9,7 @@ pp <- predict(fm1)
 rr <- range(usim2 <- simulate(fm1,1,use.u=TRUE)[[1]])
 stopifnot(all.equal(rr,c(159.3896,439.1616),tol=1e-6))
 if (do.plot) {
-    plot(,ylim=rr)
+    plot(pp,ylim=rr)
     lines(sleepstudy$Reaction)
     points(simulate(fm1,1)[[1]],col=4)
     points(usim2,col=2)
@@ -31,7 +30,7 @@ ss2 <- simulate(fm1,1000,use.u=FALSE)
 ss_sum2 <- t(apply(ss2,1,quantile,c(0.025,0.5,0.975)))
 
 if (do.plot) {
-    plot(pp2)
+    plot(pp2,ylim=c(200,400))
     matlines(ss_sum2,col=c(1,2,1),lty=c(2,1,2))
 }
 
@@ -46,15 +45,29 @@ d$y <- rnorm(nrow(d))
 m1 <- lmer(y~(1|f:g),d)
 p1A <- predict(m1)
 p1B <- predict(m1,newdata=d)
-all.equal(p1A,unname(p1B))
+stopifnot(all.equal(p1A,unname(p1B)))
 m2 <- lmer(y~(1|f/g),d)
 p2A <- predict(m2)
 p2B <- predict(m2,newdata=d)
-all.equal(p2A,unname(p2B))
+stopifnot(all.equal(p2A,unname(p2B)))
 
 ## with numeric grouping variables
 dn <- transform(d,f=as.numeric(f),g=as.numeric(g))
 m1N <- update(m1,data=dn)
 p1NA <- predict(m1N)
 p1NB <- predict(m1N,newdata=dn)
-all.equal(p1NA,unname(p1NB))
+stopifnot(all.equal(p1NA,unname(p1NB)))
+
+##
+set.seed(1)
+s1 <- simulate(fm1)
+set.seed(1)
+s2 <- simulate(fm1,newdata=model.frame(fm1),
+               newparams=getME(fm1,c("theta","beta")))
+all.equal(s1,s2)
+
+fm0 <- update(fm1,.~.-Days)
+##
+## sim() -> simulate() -> refit() -> deviance
+##
+
