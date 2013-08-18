@@ -9,14 +9,14 @@
 \usage{
 lmerControl(optimizer = "Nelder_Mead",
     restart_edge = TRUE, sparseX = FALSE,
-    check.nobs.vs.rankZ = "stopSmall",
+    check.nobs.vs.rankZ = "warningSmall",
     check.nobs.vs.nlev = "stop",
     check.nlev.gtreq.5 = "ignore",
     check.nlev.gtr.1 = "stop", optCtrl = list())
 
 glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     restart_edge = FALSE, sparseX = FALSE,
-    check.nobs.vs.rankZ = "stopSmall",
+    check.nobs.vs.rankZ = "warningSmall",
     check.nobs.vs.nlev = "stop",
     check.nlev.gtreq.5 = "ignore",
     check.nlev.gtr.1 = "stop", tolPwrss = 1e-07,
