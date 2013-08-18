@@ -105,7 +105,7 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
     stopifnot(is.list(ctrl), is.numeric(n))
     nlevelVec <- unlist(lapply(flist, function(x) nlevels(droplevels(x)) ))
     ## Part 1 ----------------
-    cstr <- "check.numlev.gtr.1"
+    cstr <- "check.nlev.gtr.1"
     if (doCheck(cc <- ctrl[[cstr]]) && any(nlevelVec < 2)) {
 	wstr <- "grouping factors must have > 1 sampled level"
 	switch(cc,
@@ -120,7 +120,7 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
 	    if(allow.n) "<=" else "<"), domain=NA)
 
     ## Part 3 ----------------
-    cstr <- "check.numlev.gtreq.5"
+    cstr <- "check.nlev.gtreq.5"
     if (doCheck(cc <- ctrl[[cstr]]) && any(nlevelVec < 5)) {
 	wstr <- "grouping factors with < 5 sampled levels may give unreliable estimates"
 	switch(cc,

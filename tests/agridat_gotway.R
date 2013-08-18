@@ -22,7 +22,7 @@ lme4.0fit <- structure(list(fixef = structure(c(1.50345713031203, -0.19385325938
 ## start doesn't work because we don't get there
 library(lme4)
 m1 <- glmer(cbind(y, n-y) ~ gen + (1|block), data=gotway.hessianfly, family=binomial,
-                 control=glmerControl(check.numlev.gtreq.5="ignore"))
+                 control=glmerControl(check.nlev.gtreq.5="ignore"))
 lme4fit <- list(fixef=fixef(m1),theta=getME(m1,"theta"))
 
 ## hack around slight naming differences
@@ -44,9 +44,9 @@ expect_equal(lme4fit,lme4.0fit,tol=1e-4)
 ## m2 <- glmer(cbind(y, n-y) ~ block+ (1|gen) + (1|obs), data=dat, family=binomial)
 
 if (FALSE) {
-    c1 <- lmerControl(check.numlev.gtreq.5="ignore")
-    c2 <- glmerControl(check.numlev.gtreq.5="ignore")
-    c3 <- glmerControl(check.numlev.gtreq.5="ignore",optimizer="Nelder_Mead")
+    c1 <- lmerControl(check.nlev.gtreq.5="ignore")
+    c2 <- glmerControl(check.nlev.gtreq.5="ignore")
+    c3 <- glmerControl(check.nlev.gtreq.5="ignore",optimizer="Nelder_Mead")
 
     ## n.b. we still get wonky answers when we use `lmerControl` instead of `glmerControl`.
     ## add an attribute/type to the control list?

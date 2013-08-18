@@ -10,14 +10,14 @@
 lmerControl(optimizer = "Nelder_Mead",
     restart_edge = TRUE, sparseX = FALSE,
     check.nobs.vs.rankZ = "stopSmall",
-    check.numlev.gtreq.5 = "warning",
-    check.numlev.gtr.1 = "stop", optCtrl = list())
+    check.nlev.gtreq.5 = "warning",
+    check.nlev.gtr.1 = "stop", optCtrl = list())
 
 glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     restart_edge = FALSE, sparseX = FALSE,
     check.nobs.vs.rankZ = "stopSmall",
-    check.numlev.gtreq.5 = "warning",
-    check.numlev.gtr.1 = "stop", tolPwrss = 1e-07,
+    check.nlev.gtreq.5 = "warning",
+    check.nlev.gtr.1 = "stop", tolPwrss = 1e-07,
     compDev = TRUE, optCtrl = list())
 
 nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
@@ -62,20 +62,20 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     boundary (i.e. zero random-effect variances or perfect
     +/-1 correlations)?}
 
-  \item{check.numlev.gtreq.5}{character - rules for
+  \item{check.nlev.gtreq.5}{character - rules for
     checking whether all random effects have >= 5 levels.
     "ignore": skip the test. "warn": warn if test fails.
     "stop": throw an error if test fails.}
 
-  \item{check.numlev.gtr.1}{character - rules for checking
+  \item{check.nlev.gtr.1}{character - rules for checking
     whether all random effects have > 1 level. As for
-    \code{check.numlevel.gtr.5}.}
+    \code{check.nlevel.gtr.5}.}
 
   \item{check.nobs.vs.rankZ}{character - rules for
     checking whether the number of observations is greater
     than (or greater than or equal to) the rank of the random
     effects design matrix (Z), usually necessary for
-    identifiable variances.  As for \code{check.numlevel.gtreq.5}, with
+    identifiable variances.  As for \code{check.nlevel.gtreq.5}, with
     the addition of \code{"warnSmall"} and \code{"stopSmall"}, which run
     the test only if the dimensions of \code{Z} are < 1e6.
     \code{nobs > rank(Z)} will be tested for LMMs and GLMMs with
@@ -110,7 +110,7 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
   If options are set via \code{\link{options}}, \code{[gn]lmerControl}
   will use them rather than the default values but will \emph{not}
   override values that are passed as explicit arguments); for example,
-  \code{options(check.numlev.gtreq.5 = "ignore")} will suppress warnings
+  \code{options(check.nlev.gtreq.5 = "ignore")} will suppress warnings
   that there an insufficient random effects levels for reliable
   estimation.
 }
