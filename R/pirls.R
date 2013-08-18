@@ -1,4 +1,5 @@
-##' Create an approximate deviance evaluation function for GLMMs
+##' Create an approximate deviance evaluation function for GLMMs using Laplace
+##' Must use the flexLambda branch of lme4
 ##'
 ##' A pure \code{R} implementation of the
 ##' penalized iteratively reweighted least squares (PIRLS)
