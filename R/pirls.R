@@ -35,7 +35,7 @@ pirls <- function(glmod, y, eta,
                   weights = rep(1, length(y)),
                   offset = rep(0, length(y)),
                   tol = 10^-6, npirls = 30,
-                  nAGQ = 0, verbose=0L){
+                  nAGQ = 1, verbose=0L){
                                         # expand glmod
     retrms <- glmod$reTrms
     thfun <- retrms$thfun
@@ -58,87 +58,69 @@ pirls <- function(glmod, y, eta,
     u <- numeric(q)
     L <- Cholesky(tcrossprod(Lambdat %*% Zt), perm=FALSE, LDL=FALSE, Imult=1)
     rm(retrms, glmod,family)
-    function(thetabeta) {
-        Lambdat@x[] <<- thfun(thetabeta)# update Lambdat
-        if (nAGQ) beta[] <<- thetabeta[betaind]
-                                        # initialization
-        olducden <- .Machine$double.xmax # unscaled conditional density
-        cvgd <- FALSE
-        for(i in 1:npirls){             # PIRLS
-                                        # update w and muEta
-            W <- Diagonal(x=weights/variance(mu))
-            muEta <- muEta(eta)
-                                        # update Ut and V
-            sqrtW <- Diagonal(x = sqrt(W@x))
-            Xwts <- Diagonal(x = sqrtW@x * muEta)
-            Ut <- Lambdat %*% Zt %*% Xwts
-            L <- update(L, Ut, 1)
-            if(!nAGQ){                  # update Utr and Vtr
-                V <- Xwts %*% Matrix(X)
-                VtV <- crossprod(V)
-                RZX <- solve(L, Ut %*% V, system = "L")
-                DD <- as(as(VtV - crossprod(RZX), "denseMatrix"),"dpoMatrix")
-                r <- Xwts %*% (eta - offset + ((y-mu)/muEta))
-                cu <- solve(L, Ut %*% r, system = "L")
-                newbeta <- as.vector(solve(DD, crossprod(V,r) - crossprod(RZX,cu)))
-                newu <- as.vector(solve(L, cu - RZX %*% newbeta, system = "Lt"))
-            } else {
-                delu <- as.vector(solve(L, Ut %*% (sqrtW@x * (y-mu)) - u))
-                delbeta <- numeric(length(beta))
+    if (nAGQ > 0L) {
+        function(thetabeta) {
+            Lambdat@x[] <<- thfun(thetabeta) # update Lambdat
+            LtZt <- Lambdat %*% Zt
+            beta[] <<- thetabeta[betaind]
+            offb <- offset + X %*% beta
+            updatemu <- function(uu) {
+                eta[] <- offb + as.vector(crossprod(LtZt, uu))
+                mu[] <- linkinv(eta)
+                sum(sqDevResid(y, mu, weights)) + sum(uu^2)
             }
+            u[] <- 0
+            olducden <- updatemu(u)
+                                        # initialization
+            cvgd <- FALSE
+            for(i in 1:npirls){         # PIRLS
+                                        # update w and muEta
+                Whalf <- Diagonal(x=sqrt(weights/variance(mu)))
+                LtZtMWhalf <- LtZt %*% (Diagonal(x=muEta(eta)) %*% Whalf)
+                L <- update(L, LtZtMWhalf, 1)
+                delu <- as.vector(solve(L, LtZtMWhalf %*%(Whalf %*% (y - mu)) - u))
+                if (verbose > 0L) {
+                    cat(sprintf("inc: %12.4g", delu[1]))
+                    nprint <- min(5,length(delu))
+                    for (j in 2:nprint) cat(sprintf(" %12.4g", delu[j]))
+                    cat("\n")
+                }
+                ucden <- updatemu(u + delu)
+                if (verbose > 1L) {
+                    cat(sprintf("%6.4f: %10.3f\n", 1, ucden))
+                }
+                
+                if(abs((olducden - ucden) / ucden) < tol){
+                    cvgd <- TRUE
+                    break
+                }
+                                        # step-halving
+                if(ucden > olducden){
+                    for(j in 1:10){
+                        ucden <- updatemu(u + (delu <- delu/2))
+                        if (verbose > 1L) {
+                            cat(sprintf("%6.4f: %10.3f\n", 1/2^j, ucden))
+                        }
+                        if(ucden < olducden) break
+                    }
+                    if(ucden > olducden) stop("Step-halving failed")
+                }
+                olducden <- ucden
+                u[] <<- u + delu
+            }
+            if(!cvgd) stop("PIRLS failed to converge")
+
+            ldL2 <- 2*determinant(L, logarithm = TRUE)$modulus
+            attributes(ldL2) <- NULL
+            ## create the Laplace approx to -2log(L)
+            Lm2ll <- aic(y,rep.int(1,n),mu,weights,NULL) + sum(u^2) +
+                ldL2 + (q/2)*log(2*pi)
             if (verbose > 0L) {
-                cat(sprintf("inc: %12.4g", delu[1]))
-                nprint <- min(5,length(delu))
-                for (j in 2:nprint) cat(sprintf(" %12.4g", delu[j]))
+                cat(sprintf("%10.3f: %12.4g", Lm2ll, thetabeta[1]))
+                for (j in 2:length(thetabeta)) cat(sprintf(" %12.4g", thetabeta[j]))
                 cat("\n")
             }
-            newu <- u + delu
-                                        # update mu and eta
-            eta[] <<- as.vector(offset + X %*% (beta+delbeta) +
-                                crossprod(Zt,crossprod(Lambdat,newu)))
-            mu[] <<- linkinv(eta)
-                                        # compute conditional density of U
-            ucden <- sum(sqDevResid(y, mu, weights)) + sum(newu^2)
-            if (verbose > 1L) {
-                cat(sprintf("%6.4f: %10.3f\n", 1, ucden))
-            }
-                
-            if(abs((olducden - ucden) / ucden) < tol){
-                cvgd <- TRUE
-                break
-            }
-                                        # step-halving
-            if(ucden > olducden){
-                for(j in 1:10){
-                    delu <- delu/2
-                    newu <- u + delu
-                    delbeta <- delbeta/2
-                    eta[] <<- as.vector(offset + X %*% (beta + delbeta) +
-                                       crossprod(Zt, crossprod(Lambdat,newu)))
-                    mu[] <<- linkinv(eta)
-                    ucden <- sum(sqDevResid(y, mu, weights)) + sum(newu^2)
-                    if (verbose > 1L) {
-                        cat(sprintf("%6.4f: %10.3f\n", 1/2^j, ucden))
-                    }
-                    if(!(ucden > olducden)) break
-                }
-                if((ucden - olducden) > tol) stop("Step-halving failed")
-            }
-            olducden <- ucden
-            u[] <<- u + delu
-            beta[] <<- beta + delbeta
+            Lm2ll
         }
-        if(!cvgd) stop("PIRLS failed to converge")
-        ## calculate Laplace deviance approximation
-        ldL2 <- 2*determinant(L, logarithm = TRUE)$modulus
-        attributes(ldL2) <- NULL
-        ## create the Laplace approx to -2log(L)
-        Lm2ll <- aic(y,rep.int(1,n),mu,weights,NULL) + sum(u^2) + ldL2 + (q/2)*log(2*pi)
-        if (verbose > 0L) {
-            cat(sprintf("%10.3f: %12.4g", Lm2ll, thetabeta[1]))
-            for (j in 2:length(thetabeta)) cat(sprintf(" %12.4g", thetabeta[j]))
-            cat("\n")
-        }
-        Lm2ll
-    }
+    } else stop("code for nAGQ == 0 needs to be added")
 }

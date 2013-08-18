@@ -1,12 +1,12 @@
+options(show.signif.stars = FALSE)
 library(lme4)
 library(nloptwrap)
-library(mlmRev)
-Contraception <- within(Contraception,
-                        ch <- factor(as.numeric(as.numeric(livch) > 1)))
+#library(mlmRev)
+data(Contraception, package="mlmRev")
+Contraception <- within(Contraception, ch <- factor(as.numeric(as.integer(livch)>1L)))
 form <- use ~ age + I(age^2) + ch + urban + (1|district)
-gm1 <- glm(nobars(form), binomial, Contraception)
-options(show.signif.stars = FALSE)
-print(summary(gm1), corr=FALSE)
+gm0 <- glm(nobars(form), binomial, Contraception)
+print(summary(gm0), corr=FALSE)
 ## Call: glm(formula = nobars(form), family = binomial, data = Contraception)
 
 ## Deviance Residuals: 
@@ -28,12 +28,12 @@ print(summary(gm1), corr=FALSE)
 ## AIC: 2428
 
 ## Number of Fisher Scoring iterations: 4
-beta0 <- c(-1.26902348936715, -1.17076272514038, -1.30140533385642,
-           -1.78227863534165)
-dput(deviance(gm1)) # 2417.86412239273
-logLik(gm1) # -1208.93206119637
 
-# gm2 <- glmer(form, Contraception, binomial, nAGQ=1L)
+dput(deviance(gm0)) # 2417.86412239273
+logLik(gm0) # -1208.93206119637
+beta0 <- coef(gm0)
+
+# gm1 <- glmer(form, Contraception, binomial, nAGQ=1L)
 ## Generalized linear mixed model fit by maximum likelihood ['summary.merMod']
 ##  Family: binomial ( logit )
 ## Formula: use ~ age + I(age^2) + ch + urban + (1 | district) 
@@ -55,9 +55,12 @@ logLik(gm1) # -1208.93206119637
 ## ch1          0.860382   0.147353    5.84  5.3e-09
 ## urbanY       0.692922   0.119668    5.79  7.0e-09
 
-beta1 <- c(-1.00637368953914, 0.00625611018864605, -0.00463527887823825,
-           0.860382098849009, 0.692921941313297)
+glmod <- glFormula(form, Contraception, binomial)
+devf <- pirls(glmod, gm0$y, gm0$linear.predictor)
+devf(c(1,beta0))
+beta1 <- c(-1.00637368953914, 0.00625611018864605, -0.00463527887823825, 0.860382098849009, 0.692921941313297)
 theta1 <- 0.473985228740739
+devf(c(theta1,beta1))
 # deviance(gm2)  # 2373.18581907321
 # head(getME(gm2,"u")) # c(-1.56655252109295, -0.0451095377205166,
 #    0.453409972754753, 0.35265189198274, 0.252723822217955, -0.504481434155787)
@@ -66,7 +69,7 @@ theta1 <- 0.473985228740739
 
 form1 <- use ~ age + I(age^2) + ch + urban + (1|district) + (1|district:urban)
 
-## > print(summary(gm3 <- glmer(form1,Contraception,binomial)), corr=FALSE)
+## > print(summary(gm2 <- glmer(form1,Contraception,binomial)), corr=FALSE)
 ## Generalized linear mixed model fit by maximum likelihood ['summary.merMod']
 ##  Family: binomial ( logit )
 ## Formula: use ~ age + I(age^2) + ch + urban + (1 | district) + (1 | district:urban) 
@@ -93,17 +96,17 @@ beta2 <- c(-1.03274535458238, 0.00587602227525672, -0.0045372320199417,
            0.872690858261632, 0.764670407439094)
 theta2 <- c(0.564472021994911, 0.0845334785825269)
 
-## dput(head(unname(getME(gm3,"u"))))
+## dput(head(unname(getME(gm2,"u"))))
 ## c(-1.60622219325897, -0.981855964992823, -0.0339024704692014, 
 ##    0.505250674118111, -0.428344594466731, 1.10122436874433)
 
-## dput(head(unname(getME(gm3,"mu"))))
+## dput(head(unname(getME(gm2,"mu"))))
 ## c(0.195157958203462, 0.26347290296241, 0.504168959587931, 0.436350391068322, 
 ## 0.145679693412778, 0.178092903689705)
 
 form2 <- use ~ age + I(age^2) + ch + urban + (1 | district:urban)
 
-## print(summary(gm4 <- glmer(form2,Contraception,binomial)), corr=FALSE)
+## print(summary(gm3 <- glmer(form2,Contraception,binomial)), corr=FALSE)
 ## Generalized linear mixed model fit by maximum likelihood ['summary.merMod']
 ##  Family: binomial ( logit )
 ## Formula: use ~ age + I(age^2) + ch + urban + (1 | district:urban) 
@@ -129,10 +132,10 @@ beta3 <- c(-1.03282920682185, 0.00586163322902896, -0.00453480196155543,
            0.872715839072072, 0.766667032721774)
 theta3 <- 0.571568547571509
 
-## dput(head(unname(getME(gm4,"mu"))))
+## dput(head(unname(getME(gm3,"mu"))))
 ## c(0.195804532044805, 0.264187372529822, 0.505051933870551, 0.43723605274129, 
 ## 0.146198921135808, 0.178681337173397)
 
-## dput(head(unname(getME(gm4,"u"))))
+## dput(head(unname(getME(gm3,"u"))))
 ## c(-1.63882047908625, -1.02416872093547, -0.0343530888451908, 
 ## 0.510937117406129, -0.419566092717808, 1.10846888333543)
