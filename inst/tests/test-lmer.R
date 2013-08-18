@@ -76,6 +76,15 @@ test_that("lmer", {
                    data = sleepstudy, subset = (Days == 1 | Days == 9),
                    control=lmerControl(check.nobs.vs.rankZ="ignore")),
               "merMod")
+    expect_error(lmer(Reaction ~ 1 + Days + (1|obs),
+                      data = transform(sleepstudy,obs=seq(nrow(sleepstudy))),
+                      "number of levels of each grouping factor"))
+    expect_is(lmer(Reaction ~ 1 + Days + (1|obs),
+                   data = transform(sleepstudy,obs=seq(nrow(sleepstudy))),
+                   control=lmerControl(check.nobs.vs.nlev="ignore",
+                   check.nobs.vs.rankZ="ignore")),
+              "merMod")
+
     ## disable warning via options
     options(lmerControl=list(check.nlev.gtreq.5="ignore",check.nobs.vs.rankZ="ignore"))
     expect_is(fm4 <- lmer(Reaction ~ Days + (1|Subject),
