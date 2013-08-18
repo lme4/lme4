@@ -52,10 +52,10 @@ test_that("lmer", {
                                control=lmerControl(check.nlev.gtreq.5="warning")),
                    "< 5 sampled levels")
     sstudy9 <- subset(sleepstudy, Days == 1 | Days == 9)
-    expect_error(m1 <- lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
+    expect_warning(m1 <- lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
                             data = sleepstudy, subset = (Days == 1 | Days == 9)),
                  "number of observations.*rank.*unidentifiable")
-    expect_error(lFormula(Reaction ~ 1 + Days + (1 + Days | Subject),
+    expect_warning(lFormula(Reaction ~ 1 + Days + (1 + Days | Subject),
                            data = sleepstudy, subset = (Days == 1 | Days == 9)),
                  "number of observations.*rank.*unidentifiable")
     ## test arguments: promote warning to error so that any errors will stop the test
