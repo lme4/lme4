@@ -2100,7 +2100,7 @@ formatVC <- function(varc, digits = max(3, getOption("digits") - 2),
 			   }))[, -maxlen, drop = FALSE]
 	if (nrow(corr) < nrow(reMat))
 	    corr <- rbind(corr, matrix("", nrow(reMat) - nrow(corr), ncol(corr)))
-	colnames(corr) <- c("Corr", rep.int("", min(0L, ncol(corr)-1L)))
+	colnames(corr) <- c("Corr", rep.int("", max(0L, ncol(corr)-1L)))
 	cbind(reMat, corr)
     } else reMat
 }
