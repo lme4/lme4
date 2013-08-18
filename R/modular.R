@@ -301,6 +301,7 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, verbose=0, co
     theta <- getStart(start,reTrms$lower,rho$pp)
     devfun(rho$pp$theta) # one evaluation to ensure all values are set
     rho$lower <- reTrms$lower # SCW:  in order to be more consistent with mkLmerDevfun
+    rho$upper <- reTrms$upper
     return(devfun) # this should pass the rho environment implicitly
 }
 
@@ -325,6 +326,7 @@ optimizeLmer <- function(devfun,
                    devfun,
                    getStart(start,rho$lower,rho$pp),
                    lower=rho$lower,
+                   upper=rho$upper,
                    control=control,
                    adj=FALSE, verbose=verbose)
 
@@ -453,7 +455,8 @@ mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L,
     .Call(glmerLaplace, rho$pp$ptr(), rho$resp$ptr(), 0L, control$tolPwrss, verbose)
     rho$lp0         <- rho$pp$linPred(1) # each pwrss opt begins at this eta
     rho$pwrssUpdate <- glmerPwrssUpdate
-    rho$lower       <- reTrms$lower     # not needed in rho?
+    rho$lower       <- reTrms$lower
+    rho$upper       <- reTrms$upper
     devfun <- mkdevfun(rho, 0L, verbose, control)
                                         #if (devFunOnly && !nAGQ) return(devfun)
     return(devfun) # this should pass the rho environment implicitly

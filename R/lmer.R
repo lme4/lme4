@@ -392,7 +392,7 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
     rho$tolPwrss <- control$tolPwrss # Reset control parameter (the initial optimization is coarse)
 
     opt <- optwrap(control$optimizer[[1]], devfun, rho$pp$theta,
-                   rho$lower, rho$upper, 
+                   lower=rho$lower, upper=rho$upper, 
                    control=control$optControl, adj=FALSE)
     rho$control <- attr(opt,"control")
 
