@@ -99,7 +99,7 @@ cs <- function(formula, init=NULL, het=TRUE){
 				if(nc <= 2){
 					warning(
 						paste("Using the experimental stuff when you could just use the stable specification?",
-						"What are you, some jerk?"))
+							  "What are you, some jerk?"))
 				}
 				
 				cnms <- Ztl$cnms
@@ -120,7 +120,7 @@ cs <- function(formula, init=NULL, het=TRUE){
 					grid <- seq(0, -1, l=500)
 					if(any(diagfactors(grid)<0)){
 						lower[nc+1] <- .95*uniroot(diagfactors, lower=grid[min(which(diagfactors(grid)<0))],
-										 upper=grid[min(which(diagfactors(grid)<0))-1])$root
+												   upper=grid[min(which(diagfactors(grid)<0))-1])$root
 					} 
 				} 	
 				
@@ -210,7 +210,7 @@ cs <- function(formula, init=NULL, het=TRUE){
 				
 				#diagonal entries of the cholesky are sqrt(<this expression>)*sd
 				diagfactors <- function(x, col=nc) -(((col-1)*x^2- (col-2)*x - 1) /((col-2)*x + 1))
-								
+				
 				if(!is.null(init)){
 					stopifnot(length(init)!=2)
 					stopifnot(init[1]>0)
@@ -274,39 +274,205 @@ cs <- function(formula, init=NULL, het=TRUE){
 		return(mkReTrmCSHom)
 	}
 }
-# 
-# # fixed correlation
-# fc <- function(formula, P, S=solve)
-# 	
-# 	fr <- expand.grid(t=1:5, subject=factor(1:10))
-# formula <- ~(.|1)
-# mkIndex <- if(deparse(bar[[2]])=="."){
-# 	fr[["..rows"]] <- 1:nrow(fr)
-# 	
-# 	
-# }
-# 
-# 
-# 
-# ar <- function(formula=~(.|1), order=1, max.dist=NA, init=.2){
-# 	stopifnot(all(order==1, band==NA))
-# 	
-# 	mkIndex <- if(deparse(bar[[2]])=="."){
-# 		mk
-# 	}
-# 	
-# 	mkReTrmAR <- local({
-# 		bar <- formula[[2]][[2]]
-# 		function(fr){
-# 			ff <- as.factor(fr[[deparse(group[[2]])]])
-# 			nl <- length(levels(ff))
-# 			
-# 			
-# 			addRowIndex <- deparse(bar[[2]])==".rows"
-# 			if(addRowIndex) fr[".rows"] <- 1:nrow(fr)
-# 			
-# 			
-# 		}
-# 	})
-# 	
-# }
+
+
+#' @title Autocorrelated random intercepts 
+#' 
+#' For a \code{formula=~(<time>|<id>)}, specifies random effects with an AR(1)-correlation
+#' structure in (discrete, equidistant!) \code{<time>} for each level of \code{<id>}, i.e. for 2 observations
+#' \eqn{y_ij} and \eqn{y_ij'} that are \eqn{d} units of \code{time} apart, the covariance is
+#' \eqn{\sigma^2\rho^d}. 
+#' In this first stab at this, observations within each group have to be ordered and 1 timeunit apart, because the math for
+#' the entries in Lambdat gets too messy otherwise... 
+#' The default, \code{formula=~(.|1)}, yields one auto-correlated intercept per observation under the assumptions
+#' that the data are ordered and equidistant in time. Note that the covariance will be dense and slow as hell
+#' to evaluate.
+#' @param formula a one sided formula specifying a random effect in
+#'     \code{lme4} notation, i.e. \code{~(<time> | <id>)}. \code{~(. | <id>)} is a valid
+#'     specification that simply uses the rownumbers as time index. \code{<time>} cannot be a factor.
+#' @param init (optional) initial values for the standard deviations and the correlation.
+#' 		  If not supplied, sd's will be 1 and the inital correlation will be .1.	    
+#' @param het NOT YET IMPLEMENTED
+#' @param max.lag NOT YET IMPLEMENTED
+#' @return a function creating a return object like \code{mkReTrm} 
+ar1d <- function(formula=~(.|1), order=1, init=c(1, .2), het=NULL, max.lag=NULL){
+	stopifnot(all(order==1))
+	
+	mkReTrmAR <- local({
+		bar <- formula[[2]][[2]]
+		addRowIndex <- deparse(bar[[2]])=="."
+		
+		function(fr){
+	        
+			ff <- getGrouping(bar, fr)
+			nl <- length(levels(ff))
+			if(addRowIndex){
+				##FIXME: all this will surely break for predict/simulate...
+				## still a nice default behaviour to have.
+				fr[".rows."] <- 1:nrow(fr)
+				Zt <-  Matrix(0, nrow(fr), nrow(fr))
+				diag(Zt) <- 1
+				Zt <- as(Zt, "dgCMatrix")
+				nc <- NA ## makes no sense as can have differnt number of obs
+				## per level...
+				cnms <- ".rows."
+				bar[[2]] <- as.symbol(".rows.")
+			} else {
+				#convert time variable into factor to get
+				#one effect per timepoint per subject
+				Zfr <- fr
+				Zfr[[deparse(bar[[2]])]] <- as.factor(fr[[deparse(bar[[2]])]])
+				#initialize transposed design
+				Zbar <- bar
+				Zbar[[2]] <- substitute( 0 + lhs, list(lhs=bar[[2]])  )
+				Ztl <- mkZt(ff, Zbar, Zfr)
+				Zt <- Ztl$Zt
+				nc <- Ztl$nc
+				cnms <- Ztl$cnms
+				rm(Ztl)
+			}
+			#1 variance + 1 corr
+			ntheta <- 2
+			
+			upper <- c(Inf, .99)
+			lower <- c(0, -.99)
+			
+			#initalize Lambdatx
+			arChol <- function(r, d, firstrow){
+				firstrow*r^d + (!firstrow)*(sqrt(1-r^2))*r^d
+			}
+			timepoints <- with(fr, split(eval(bar[[2]]), ff))
+			arinfo <- lapply(timepoints, function(t){
+				#FIXME: we need only unique(t), but that
+				#means the check for ordered, equidist is sloppy!
+				t <- unique(t)
+				if(any(diff(t)!=1)){
+					stop("Timepoints either unsorted or not equidistant.")	
+				}
+				d <- abs(outer(t, t, "-"))
+				firstrow <- as.vector((row(d)==1)[upper.tri(d, diag=TRUE)])
+				d <- as.vector(d[upper.tri(d, diag=TRUE)])
+				return(list(d=d, firstrow=firstrow, dim=length(t)))
+			}) 
+			Lambdablocks <- lapply(arinfo, function(info){
+				fill <- arChol(init[2], info$d, info$firstrow)
+				Lambdablock <- Matrix(0, info$dim, info$dim)
+				Lambdablock[upper.tri(Lambdablock, diag=TRUE)] <- fill
+				drop0(Lambdablock)
+			})
+			Lambdat <- init[1] * do.call(bdiag, unname(Lambdablocks))
+			nlambda <- length(Lambdat@x)
+			
+			updateLambdatx <- local({
+				# theta[1:nc]: sd's; theta[nc+1]: transformed corr
+				arChol <- arChol
+				d <- unlist(sapply(arinfo, "[[", "d"))
+				firstrow <- unlist(sapply(arinfo, "[[", "firstrow"))
+				function(theta){
+					theta[1] * arChol(theta[2], d, firstrow)
+				}
+			})
+			
+			list(ff = ff, Zt = Zt, nl = nl, cnms = cnms,
+				 nb = nrow(Zt), #how many ranefs
+				 ntheta = ntheta, # how many var-cov. params
+				 nc = nc, #how many ranefs per level
+				 nlambda = nlambda, #how many non-zeroes in Lambdat 
+				 Lambdat=Lambdat,
+				 theta = init,
+				 Lind = rep(NA, nlambda),
+				 updateLambdatx = updateLambdatx,
+				 upper = upper,
+				 lower = lower, 
+				 special = TRUE)
+		}
+		
+	})
+}
+
+#' @title Random intercepts with a given, fixed correlation structure. 
+#' 
+grf <- function(formula=~(.|1), S){
+	C <- chol(S)
+	
+	mkReTrmAR <- local({
+		C <- C
+		bar <- formula[[2]][[2]]
+		
+		function(fr){
+			
+			ff <- getGrouping(bar, fr)
+			nl <- length(levels(ff))
+			stopifnot(is.factor(fr[[deparse(bar[[2]])]]))
+			stopifnot(nlevels(fr[[deparse(bar[[2]])]]) == ncol(C))
+			stopifnot(all(levels(fr[[deparse(bar[[2]])]]) == colnames(C)))
+			
+		    bar[[2]] <- substitute( 0 + lhs, list(lhs=bar[[2]])  )
+			Ztl <- mkZt(ff, bar, fr)
+			Zt <- Ztl$Zt
+			nc <- Ztl$nc
+			cnms <- Ztl$cnms
+			rm(Ztl)
+			
+			#1 variance
+			ntheta <- 1
+			
+			upper <- c(Inf)
+			lower <- c(0)
+			
+			#initalize Lambdatx
+			arChol <- function(r, d, firstrow){
+				firstrow*r^d + (!firstrow)*(sqrt(1-r^2))*r^d
+			}
+			timepoints <- with(fr, split(eval(bar[[2]]), ff))
+			arinfo <- lapply(timepoints, function(t){
+				#FIXME: we need only unique(t), but that
+				#means the check for ordered, equidist is sloppy!
+				t <- unique(t)
+				if(any(diff(t)!=1)){
+					stop("Timepoints either unsorted or not equidistant.")	
+				}
+				d <- abs(outer(t, t, "-"))
+				firstrow <- as.vector((row(d)==1)[upper.tri(d, diag=TRUE)])
+				d <- as.vector(d[upper.tri(d, diag=TRUE)])
+				return(list(d=d, firstrow=firstrow, dim=length(t)))
+			}) 
+			Lambdablocks <- lapply(arinfo, function(info){
+				fill <- arChol(init[2], info$d, info$firstrow)
+				Lambdablock <- Matrix(0, info$dim, info$dim)
+				Lambdablock[upper.tri(Lambdablock, diag=TRUE)] <- fill
+				drop0(Lambdablock)
+			})
+			Lambdat <- init[1] * do.call(bdiag, unname(Lambdablocks))
+			nlambda <- length(Lambdat@x)
+			
+			updateLambdatx <- local({
+				# theta[1:nc]: sd's; theta[nc+1]: transformed corr
+				arChol <- arChol
+				d <- unlist(sapply(arinfo, "[[", "d"))
+				firstrow <- unlist(sapply(arinfo, "[[", "firstrow"))
+				function(theta){
+					theta[1] * arChol(theta[2], d, firstrow)
+				}
+			})
+			
+			list(ff = ff, Zt = Zt, nl = nl, cnms = cnms,
+				 nb = nrow(Zt), #how many ranefs
+				 ntheta = ntheta, # how many var-cov. params
+				 nc = nc, #how many ranefs per level
+				 nlambda = nlambda, #how many non-zeroes in Lambdat 
+				 Lambdat=Lambdat,
+				 theta = init,
+				 Lind = rep(NA, nlambda),
+				 updateLambdatx = updateLambdatx,
+				 upper = upper,
+				 lower = lower, 
+				 special = TRUE)
+		}
+		
+	})
+}
+
+
+if(FALSE){
+	}

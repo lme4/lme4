@@ -207,7 +207,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 	
 	## random effects and terms modules
 	reTrms <- mkReTrms(findbars(formula[[3]]), fr, reGenerators)
-	checkNlevels(reTrms$ flist, n=n, control)
+	if(any(!reTrms$special)) checkNlevels(reTrms$flist[!reTrms$special], n=n, control)
 	checkZrank	(reTrms$ Zt,	n=n, control, nonSmall = 1e6)
 	
 	## fixed-effects model matrix X - remove random effects from formula:

@@ -10,7 +10,7 @@ library(mvtnorm)
 load_all()
 source('misc/reGenerators_flexLambda.R', echo=TRUE)
 
-flexLmer <- function(formula, data, specials=c("cs", "d"), verbose=0L){
+flexLmer <- function(formula, data, specials=c("cs", "d", "ar1d"), verbose=0L){
 	#split off reGenerator terms:
 	frmlterms <- terms(formula, specials=specials)
 	termnames <- attr(frmlterms, "variables")
@@ -251,6 +251,56 @@ Compare:
 ````{r}
 m4Old
 ````
+
+
+### Simple AR(1)
+
+Subjects with multiple measurements at same timepoint, errors autocorrelated over time on subject leve:
+````{r}
+set.seed(2352)
+nsubj <- 20
+nreps <- 2
+length <- 20
+n <- nsubj*nreps*length
+fr <- expand.grid(
+	time=1:length,
+	id=factor(1:nsubj),
+	rep=factor(1:nreps))
+
+rho <- .8
+sd.b <- 3
+b <- sd.b * as.vector(replicate(nsubj, arima.sim(n=length, model=list(ar=c(rho)))))				 
+sd.eps <- 1
+beta <- .5
+fr <- within(fr,{
+	mu <- beta*time
+	y <- mu + model.matrix(~0+as.factor(time):id)%*%b + 
+		rnorm(n, sd=sd.eps)
+})	
+(p5 <- qplot(y=mu, x=time, data=fr, geom="line") + facet_wrap(~id) + 
+	geom_point(aes(y=y, col=rep)))
+````
+
+
+Fit & check results:
+````{r}
+m5 <-  flexLmer(y ~ time + ar1d(~(time|id)), data=fr)
+````
+True variance components & correlation: `r c(sd.b, rho, sd.eps)`
+
+Estimates: 
+`r c(m5$opt$par[1]*sigma(m5$model), m5$opt$par[2], sigma(m5$model))`
+
+... scale of AR(1) seems to get overestimated all the time...?!? 
+
+True betas: `r c(0, beta)`
+
+Estimates: `r m5$model@beta`
+
+... look a little weird, too. Does not seem stable yet.
+
+
+
 
 ### TODOs
 - **for all of these cases I get the 'assertion failure' crash reported earlier if I set `nreps <- 1`!!**

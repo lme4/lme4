@@ -76,7 +76,7 @@ mkReTrms <- function(bars, fr, reGenerators=NULL) {
 	cnms <- lapply(reTrms, "[[", "cnms")
 	nc <- sapply(reTrms, "[[", "nc") # no. of columns per term
 	ntheta <- sapply(reTrms, "[[", "ntheta")	# no. of parameters per term
-	nb <- nc * sapply(reTrms, "[[", "nl") # no. of random effects per term
+	nb <- sapply(reTrms, "[[", "nb")
 	nlambda <- sapply(reTrms, "[[", "nlambda") #no. of non-zero Lambdatx
 	stopifnot(sum(nb) == q)
 	
