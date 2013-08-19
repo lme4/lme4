@@ -29,7 +29,8 @@ Imports:
     splines,
     MASS,
     nlme,
-    minqa(>= 1.1.15)
+    minqa(>= 1.1.15),
+    parallel
 Suggests:
     boot,
     PKPDmodels,

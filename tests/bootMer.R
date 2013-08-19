@@ -36,3 +36,8 @@ set.seed(101)
 ## FIXME: sensitive to step-halving PIRLS tests
 ## expect_warning(cc <- confint(cmod,method="boot",nsim=10,quiet=TRUE,
 ##              .progress="txt",PBargs=list(style=3)),"some bootstrap runs failed")
+
+## FIXME: how do we make this safe for testing anywhere?
+boo01P <- bootMer(fm1, mySumm, nsim = 10, parallel="multicore", ncpus=2)
+## FIXME: fails on my machine, but I don't know what I'm doing (BMB)
+## boo01P.snow <- bootMer(fm1, mySumm, nsim = 10, parallel="snow", ncpus=2)
