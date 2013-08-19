@@ -402,7 +402,7 @@ devfun2 <- function(fm,useSc,signames)
             ## .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pars[-np]/sigma)
             ## convert from sdcor vector back to 'unscaled theta'
             thpars <- Sv_to_Cv(pars,n=vlist,s=sigma)
-            .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)
+            .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pp$thfun(as.double(thpars)))
             sigsq <- sigma^2
             pp$ldL2() + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
         }
