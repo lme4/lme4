@@ -390,89 +390,87 @@ ar1d <- function(formula=~(.|1), order=1, init=c(1, .2), het=NULL, max.lag=NULL)
 	})
 }
 
-#' @title Random intercepts with a given, fixed correlation structure. 
+#' @title Random intercepts as realisations of a Gaussian random field with a given, 
+#' fixed correlation structure. 
 #' 
-grf <- function(formula=~(.|1), S){
-	C <- chol(S)
-	
-	mkReTrmAR <- local({
-		C <- C
-		bar <- formula[[2]][[2]]
-		
-		function(fr){
-			
-			ff <- getGrouping(bar, fr)
-			nl <- length(levels(ff))
-			stopifnot(is.factor(fr[[deparse(bar[[2]])]]))
-			stopifnot(nlevels(fr[[deparse(bar[[2]])]]) == ncol(C))
-			stopifnot(all(levels(fr[[deparse(bar[[2]])]]) == colnames(C)))
-			
-		    bar[[2]] <- substitute( 0 + lhs, list(lhs=bar[[2]])  )
-			Ztl <- mkZt(ff, bar, fr)
-			Zt <- Ztl$Zt
-			nc <- Ztl$nc
-			cnms <- Ztl$cnms
-			rm(Ztl)
-			
-			#1 variance
-			ntheta <- 1
-			
-			upper <- c(Inf)
-			lower <- c(0)
-			
-			#initalize Lambdatx
-			arChol <- function(r, d, firstrow){
-				firstrow*r^d + (!firstrow)*(sqrt(1-r^2))*r^d
-			}
-			timepoints <- with(fr, split(eval(bar[[2]]), ff))
-			arinfo <- lapply(timepoints, function(t){
-				#FIXME: we need only unique(t), but that
-				#means the check for ordered, equidist is sloppy!
-				t <- unique(t)
-				if(any(diff(t)!=1)){
-					stop("Timepoints either unsorted or not equidistant.")	
-				}
-				d <- abs(outer(t, t, "-"))
-				firstrow <- as.vector((row(d)==1)[upper.tri(d, diag=TRUE)])
-				d <- as.vector(d[upper.tri(d, diag=TRUE)])
-				return(list(d=d, firstrow=firstrow, dim=length(t)))
-			}) 
-			Lambdablocks <- lapply(arinfo, function(info){
-				fill <- arChol(init[2], info$d, info$firstrow)
-				Lambdablock <- Matrix(0, info$dim, info$dim)
-				Lambdablock[upper.tri(Lambdablock, diag=TRUE)] <- fill
-				drop0(Lambdablock)
-			})
-			Lambdat <- init[1] * do.call(bdiag, unname(Lambdablocks))
-			nlambda <- length(Lambdat@x)
-			
-			updateLambdatx <- local({
-				# theta[1:nc]: sd's; theta[nc+1]: transformed corr
-				arChol <- arChol
-				d <- unlist(sapply(arinfo, "[[", "d"))
-				firstrow <- unlist(sapply(arinfo, "[[", "firstrow"))
-				function(theta){
-					theta[1] * arChol(theta[2], d, firstrow)
-				}
-			})
-			
-			list(ff = ff, Zt = Zt, nl = nl, cnms = cnms,
-				 nb = nrow(Zt), #how many ranefs
-				 ntheta = ntheta, # how many var-cov. params
-				 nc = nc, #how many ranefs per level
-				 nlambda = nlambda, #how many non-zeroes in Lambdat 
-				 Lambdat=Lambdat,
-				 theta = init,
-				 Lind = rep(NA, nlambda),
-				 updateLambdatx = updateLambdatx,
-				 upper = upper,
-				 lower = lower, 
-				 special = TRUE)
-		}
-		
-	})
-}
+# grf <- function(formula=~(.|1), S){
+# 	C <- chol(S)
+# 	
+# 	mkReTrmGrf <- local({
+# 		C <- C
+# 		bar <- formula[[2]][[2]]
+# 		
+# 		function(fr){
+# 			
+# 			ff <- getGrouping(bar, fr)
+# 			nl <- length(levels(ff))
+# 			stopifnot(is.factor(fr[[deparse(bar[[2]])]]))
+# 			stopifnot(nlevels(fr[[deparse(bar[[2]])]]) == ncol(C))
+# 			stopifnot(all(levels(fr[[deparse(bar[[2]])]]) == colnames(C)))
+# 			
+# 		    bar[[2]] <- substitute( 0 + lhs, list(lhs=bar[[2]])  )
+# 			Ztl <- mkZt(ff, bar, fr)
+# 			Zt <- Ztl$Zt
+# 			nc <- Ztl$nc
+# 			cnms <- Ztl$cnms
+# 			rm(Ztl)
+# 			
+# 			#1 variance
+# 			ntheta <- 1
+# 			
+# 			upper <- c(Inf)
+# 			lower <- c(0)
+# 			
+# 			#initalize Lambdatx
+# 			arChol <- function(r, d, firstrow){
+# 				firstrow*r^d + (!firstrow)*(sqrt(1-r^2))*r^d
+# 			}
+# 			timepoints <- with(fr, split(eval(bar[[2]]), ff))
+# 			arinfo <- lapply(timepoints, function(t){
+# 				#FIXME: we need only unique(t), but that
+# 				#means the check for ordered, equidist is sloppy!
+# 				t <- unique(t)
+# 				if(any(diff(t)!=1)){
+# 					stop("Timepoints either unsorted or not equidistant.")	
+# 				}
+# 				d <- abs(outer(t, t, "-"))
+# 				firstrow <- as.vector((row(d)==1)[upper.tri(d, diag=TRUE)])
+# 				d <- as.vector(d[upper.tri(d, diag=TRUE)])
+# 				return(list(d=d, firstrow=firstrow, dim=length(t)))
+# 			}) 
+# 			Lambdablocks <- lapply(arinfo, function(info){
+# 				fill <- arChol(init[2], info$d, info$firstrow)
+# 				Lambdablock <- Matrix(0, info$dim, info$dim)
+# 				Lambdablock[upper.tri(Lambdablock, diag=TRUE)] <- fill
+# 				drop0(Lambdablock)
+# 			})
+# 			Lambdat <- init[1] * do.call(bdiag, unname(Lambdablocks))
+# 			nlambda <- length(Lambdat@x)
+# 			
+# 			updateLambdatx <- local({
+# 				# theta[1:nc]: sd's; theta[nc+1]: transformed corr
+# 				arChol <- arChol
+# 				d <- unlist(sapply(arinfo, "[[", "d"))
+# 				firstrow <- unlist(sapply(arinfo, "[[", "firstrow"))
+# 				function(theta){
+# 					theta[1] * arChol(theta[2], d, firstrow)
+# 				}
+# 			})
+# 			
+# 			list(ff = ff, Zt = Zt, nl = nl, cnms = cnms,
+# 				 nb = nrow(Zt), #how many ranefs
+# 				 ntheta = ntheta, # how many var-cov. params
+# 				 nc = nc, #how many ranefs per level
+# 				 nlambda = nlambda, #how many non-zeroes in Lambdat 
+# 				 Lambdat=Lambdat,
+# 				 theta = init,
+# 				 Lind = rep(NA, nlambda),
+# 				 updateLambdatx = updateLambdatx,
+# 				 upper = upper,
+# 				 lower = lower, 
+# 				 special = TRUE)
+# 		}
+# 		
+# 	})
+# }
 
-
-if(FALSE){
-	}

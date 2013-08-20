@@ -5,3 +5,4 @@ src/*.so
 src/*.dll
 *.Rproj.user
 *.Rproj
+.Rproj.user
