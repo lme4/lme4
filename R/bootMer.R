@@ -199,13 +199,23 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
             stop("semiparametric bootstrapping with use.u=FALSE not yet implemented")
         }
     }
-
-    ffun <- function(i) {
+    
+    # define ffun as a closure containing the referenced variables 
+    # in its scope to avoid explicit clusterExport statement
+    # in the PSOCKcluster case 
+    ffun <- local({
+      FUN <- FUN
+      refit <- refit
+      x <- x
+      ss <- ss
+      verbose <- verbose
+      length.t0 <- length(t0)
+      function(i) {
         foo <- try(FUN(refit(x,ss[[i]])),silent=TRUE)
         if(verbose) { cat(sprintf("%5d :",i)); str(foo) }
         if (!do_parallel && .progress!="none") { setpbfun(pb,i/nsim) }
-        if (inherits(foo, "try-error")) rep(NA,length(t0)) else foo
-    }
+        if (inherits(foo, "try-error")) rep(NA, length.t0) else foo
+    }})
 
     simvec <- seq_len(nsim)
      res <- if (do_parallel) {
@@ -214,6 +224,8 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
         } else if (have_snow) {
             if (is.null(cl)) {
                 cl <- parallel::makePSOCKcluster(rep("localhost", ncpus))
+                ##FIXME: explicit export of the lme4 namespace shouldn't really be necessary
+                parallel::clusterExport(cl, varlist=getNamespaceExports("lme4"))
                 if(RNGkind()[1L] == "L'Ecuyer-CMRG")
                     parallel::clusterSetRNGStream(cl)
                 res <- parallel::parLapply(cl, simvec, ffun)
