@@ -2,7 +2,7 @@ Flexible Correlation Structures for Random Effects
 ========================================================
 
 ```{r}
-setwd("C:/lme4")
+setwd("~/lme4")
 options(digits=3)
 library(devtools)
 library(ggplot2)
@@ -38,12 +38,12 @@ Example data: Different variances for different treatment levels
 ````{r}
 ## sim & plot data:
 set.seed(2323)
-nsubj <- 40
+nsubj <- 100
 nreps <- 5
 ntreat <- 3
 n <- ntreat*nsubj*nreps
 data <- expand.grid(treatment=factor(1:ntreat), 
-					reps=1:5, 
+					reps=1:nreps, 
 					subject=factor(1:nsubj))
 sd.treat <- 1:ntreat
 sd.eps <- .5
@@ -258,17 +258,17 @@ m4Old
 Subjects with multiple measurements at same timepoint, errors autocorrelated over time on subject leve:
 ````{r}
 set.seed(2352)
-nsubj <- 20
-nreps <- 2
-length <- 20
+nsubj <- 50
+nreps <- 1
+length <- 100
 n <- nsubj*nreps*length
 fr <- expand.grid(
 	time=1:length,
 	id=factor(1:nsubj),
 	rep=factor(1:nreps))
 
-rho <- .8
-sd.b <- 3
+rho <- .2
+sd.b <- 5
 b <- sd.b * as.vector(replicate(nsubj, arima.sim(n=length, model=list(ar=c(rho)))))				 
 sd.eps <- 1
 beta <- .5
@@ -278,7 +278,7 @@ fr <- within(fr,{
 		rnorm(n, sd=sd.eps)
 })	
 (p5 <- qplot(y=mu, x=time, data=fr, geom="line") + facet_wrap(~id) + 
-	geom_point(aes(y=y, col=rep)))
+	geom_line(aes(y=y, col=rep), lwd=.5))
 ````
 
 
@@ -291,7 +291,7 @@ True variance components & correlation: `r c(sd.b, rho, sd.eps)`
 Estimates: 
 `r c(m5$opt$par[1]*sigma(m5$model), m5$opt$par[2], sigma(m5$model))`
 
-... scale of AR(1) seems to get overestimated all the time...?!? 
+... scale of AR(1) seems to get overestimated ...?!? 
 
 True betas: `r c(0, beta)`
 
@@ -302,8 +302,9 @@ Estimates: `r m5$model@beta`
 
 
 
-### TODOs
-- **for all of these cases I get the 'assertion failure' crash reported earlier if I set `nreps <- 1`!!**
+### TODOs:
+
+- **Windows issue:** for all of these cases I get the 'assertion failure' crash reported earlier if I set `nreps <- 1`!!
 - fix need for manual assignment of `theta` into `environment(devfun)` 
 - `VarCorr`methods etc. for sensible output and summaries
 - more structures: 
