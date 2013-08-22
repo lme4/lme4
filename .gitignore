@@ -6,3 +6,4 @@ src/*.dll
 *.Rproj.user
 *.Rproj
 .Rproj.user
+.Rhistory

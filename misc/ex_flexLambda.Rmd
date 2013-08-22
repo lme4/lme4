@@ -10,24 +10,73 @@ library(mvtnorm)
 load_all()
 source('misc/reGenerators_flexLambda.R', echo=TRUE)
 
-flexLmer <- function(formula, data, specials=c("cs", "d", "ar1d"), verbose=0L){
-	#split off reGenerator terms:
-	frmlterms <- terms(formula, specials=specials)
-	termnames <- attr(frmlterms, "variables")
-	where.specials <- unlist(attr(frmlterms, "specials"))-1 #offset by one since response is counted
-	lmerformula <- formula(paste(formula[[2]], "~", 
-								 paste(attr(frmlterms, "term.labels")[-where.specials], collapse="+")))
-	reGenerators <- as.formula(paste("~",
-							paste(attr(frmlterms, "term.labels")[where.specials], collapse="+")))
-	# see example(modular)
-	lmod <- lFormula(lmerformula, data, reGenerators=reGenerators)
-	devfun <- do.call(mkLmerDevfun, lmod)
-	opt <- optimizeLmer(devfun, verbose=verbose)
-	#FIXME: this should not be necessary...
-	environment(devfun)$pp$theta <- opt$par
-	list(model=mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr),
-		 opt=opt, devfun=devfun)
-}
+flexLmer <- function(formula, data=NULL, REML = TRUE,
+                     control = lmerControl(), start = NULL,
+                     verbose = 0L, subset, weights, na.action, offset,
+                     contrasts = NULL, devFunOnly=FALSE,
+                     specials=c("cs", "d", "ar1d"), ...){
+  
+  mc <- mcout <- match.call()
+  missCtrl <- missing(control)
+  ## see functions in modular.R for the body ...
+  if (!missCtrl && !inherits(control, "lmerControl")) {
+    if(!is.list(control)) stop("'control' is not a list; use lmerControl()")
+    ## back-compatibility kluge
+    warning("passing control as list is deprecated: please use lmerControl() instead",
+            immediate.=TRUE)
+    control <- do.call(lmerControl, control)
+    }
+  if (!is.null(list(...)[["family"]])) {
+    stop("flexGlmer NOT IMPLEMENTED YET")
+    }
+  mc$control <- control ## update for  back-compatibility kluge
+  
+  #split off reGenerator terms:
+  frmlterms <- terms(formula, specials=specials)
+  termnames <- attr(frmlterms, "variables")
+  where.specials <- unlist(attr(frmlterms, "specials"))-1 #offset by one since response is counted
+  lmerformula <- if(length(where.specials)) {
+    formula(paste(formula[[2]], "~", 
+                  paste(attr(frmlterms, "term.labels")[-where.specials], collapse="+")))
+    } else formula
+  reGenerators <- if(length(where.specials)){
+    formula(paste("~", paste(attr(frmlterms, "term.labels")[where.specials], 
+                           collapse="+")))
+    } else NULL
+      
+  ## https://github.com/lme4/lme4/issues/50
+  ## parse data and formula
+  mc[[1]] <- quote(lme4::lFormula)
+  mc$formula <- lmerformula
+  mc$reGenerators <- reGenerators
+  lmod <- eval(mc, parent.frame(1L))  ## parse data and formula
+  mcout$formula <- lmod$formula
+  lmod$formula <- NULL
+  
+  devfun <- do.call(mkLmerDevfun, lmod)
+  opt <- optimizeLmer(devfun, verbose=verbose)
+  #FIXME: this should not be necessary...
+  environment(devfun)$pp$theta <- opt$par
+  list(model=mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr),
+       opt=opt, devfun=devfun)
+  
+  
+  ## create deviance function for covariance parameters (theta)
+  devfun <- do.call(mkLmerDevfun,
+                    c(lmod,
+                      list(start=start,verbose=verbose,control=control)))
+  if (devFunOnly) return(devfun)
+  ## optimize deviance function over covariance parameters
+  opt <- optimizeLmer(devfun,
+                      optimizer=control$optimizer,
+                      restart_edge=control$restart_edge,
+                      control=control$optControl,
+                      verbose=verbose,
+                      start=start)
+  rho <- environment(devfun)
+  rho$pp$theta[] <- opt$par
+  mkMerMod(rho, opt, lmod$reTrms, fr = lmod$fr, mcout)
+  }
 ````
 
 ### Diagonal random effects:
@@ -43,33 +92,33 @@ nreps <- 5
 ntreat <- 3
 n <- ntreat*nsubj*nreps
 data <- expand.grid(treatment=factor(1:ntreat), 
-					reps=1:nreps, 
-					subject=factor(1:nsubj))
+                    reps=1:nreps, 
+                    subject=factor(1:nsubj))
 sd.treat <- 1:ntreat
 sd.eps <- .5
 beta <- (3*1:ntreat)
 data <- within(data, {
-	mu <- model.matrix(~treatment, data)%*%beta + 
-		model.matrix(~0+subject:treatment, data) %*% rnorm(nsubj*ntreat, sd=rep(sd.treat, e=nsubj))
-	y <- mu + rnorm(n, sd=sd.eps)
-}) 
+  mu <- model.matrix(~treatment, data)%*%beta + 
+    model.matrix(~0+subject:treatment, data) %*% rnorm(nsubj*ntreat, sd=rep(sd.treat, e=nsubj))
+  y <- mu + rnorm(n, sd=sd.eps)
+  }) 
 (p <- qplot(x=subject, y=y, col=treatment, data=data) + theme_bw() + coord_flip()) 
 ````
 Fit & check results (estimates overlaid as crosses):
 ````{r}
 m <- flexLmer(y ~ treatment + d(~(0+treatment|subject)), data)
-mOld <- lmer(y ~ treatment + (0+treatment|subject), data)
+mOld <- flexLmer(y ~ treatment + (0+treatment|subject), data)
 # --> sd(treatment2)!
 
-p + geom_point(aes(y=fitted(m$model)), shape=4, size=5)
+p + geom_point(aes(y=fitted(m)), shape=4, size=5)
 ````
 True variance components: [`r c(sd.treat, sd.eps)`]
 
-Estimated: [`r c(m$opt$par*sigma(m$model), sigma(m$model))`]
+Estimated: [`r c(m@pp$theta*sigma(m), sigma(m))`]
 
 True beta: [`r beta`]
 
-Estimated: [`r m$model@beta`]
+Estimated: [`r m@beta`]
 
 Compare:
 ````{r}
@@ -87,35 +136,35 @@ nreps <- 10
 ntreat <- 4
 n <- ntreat*nsubj*nreps
 data <- expand.grid(treatment=factor(1:ntreat), 
-					reps=1:nreps, 
-					subject=factor(1:nsubj))
+                    reps=1:nreps, 
+                    subject=factor(1:nsubj))
 sd.treat <- 2
 sd.eps <- .2
 beta <- 1:ntreat
 
 data <- within(data, {
-	mu <- model.matrix(~ treatment, data)%*%beta + 
-		model.matrix(~0+subject:treatment, data) %*% rnorm(ntreat*nsubj, sd=sd.treat)
-	y <- mu + rnorm(n, sd=sd.eps)
-}) 
+  mu <- model.matrix(~ treatment, data)%*%beta + 
+    model.matrix(~0+subject:treatment, data) %*% rnorm(ntreat*nsubj, sd=sd.treat)
+  y <- mu + rnorm(n, sd=sd.eps)
+  }) 
 (p2 <- qplot(x=subject, y=y, col=treatment, group=subject, data=data) + theme_bw()+ coord_flip())
 ````
 
 Fit & check results:
 ````{r}
 m2 <- flexLmer(y ~ treatment + d(~(0+treatment|subject), iid=TRUE), data)
-m2Old <- lmer(y ~ treatment + (0+treatment|subject), data)
+m2Old <- flexLmer(y ~ treatment + (0+treatment|subject), data)
 
-p2 + geom_point(aes(y=fitted(m2$model)), shape=4, size=5)
+p2 + geom_point(aes(y=fitted(m2)), shape=4, size=5)
 ````
 
 True variance components: [`r c(sd.treat, sd.eps)`]
 
-Estimated: [`r c(m2$opt$par*sigma(m2$model), sigma(m2$model))`]
+Estimated: [`r c(m2@pp$theta*sigma(m2), sigma(m2))`]
 
 True beta: [`r beta`]
 
-Estimated: [`r m2$model@beta`]
+Estimated: [`r m2@beta`]
 
 Compare:
 ````{r}
@@ -136,55 +185,55 @@ nreps <- 10
 ndose <- 4
 n <- nsubj*nreps*ndose
 data <- expand.grid(reps=factor(1:nreps),
-					dose=1:ndose,
-					subject=factor(1:nsubj))
+                    dose=1:ndose,
+                    subject=factor(1:nsubj))
 
 # set up cov.mat for random effects 
 # (i.e., variance increases with dose, subject-deviations positively correlated):
 sd.dose <- 1:ndose
 cor <- .5
 S <- {
-	C <- diag(ndose)
-	C[upper.tri(C)] <- C[lower.tri(C)] <- cor
-	sd.dose*t(sd.dose*C)
-}
+  C <- diag(ndose)
+  C[upper.tri(C)] <- C[lower.tri(C)] <- cor
+  sd.dose*t(sd.dose*C)
+  }
 sd.eps <- 1
 beta <- 2
 
 data <- within(data, {
-	y <- dose*beta + 
-		model.matrix(~0+as.factor(dose):subject)%*%
-		as.vector(replicate(nsubj, rmvnorm(1, sigma=S)[1,]))  +
-		rnorm(n, sd=sd.eps)
-	doseF <- as.factor(dose)
-	subjectreps <- subject:reps
-})
+  y <- dose*beta + 
+    model.matrix(~0+as.factor(dose):subject)%*%
+    as.vector(replicate(nsubj, rmvnorm(1, sigma=S)[1,]))  +
+    rnorm(n, sd=sd.eps)
+  doseF <- as.factor(dose)
+  subjectreps <- subject:reps
+  })
 (p3 <- qplot(x=dose, y=y, col=subject, data=data, geom=c("point", "line"), alpha=.2, facets=~reps) +
- 	theme_bw() + theme(legend.position="none"))
+   theme_bw() + theme(legend.position="none"))
 ````
 
 
 Fit & check results:
 ````{r}
 m3 <- flexLmer(y ~ dose + cs(~(0+doseF|subject)), data)
-m3Old <- lmer(y ~ dose + (0+doseF|subject), data)
+m3Old <- flexLmer(y ~ dose + (0+doseF|subject), data)
 
 #true  random effect covariance:
 S
 
 #estimated: 
-(estS <- with(environment(m3$devfun),{
-		Lt <- pp$Lambdat
-		Lt@x <- pp$thfun(m3$opt$par)
-		crossprod(Lt[1:ndose, 1:ndose])
-	})*sigma(m3$model)^2) 
+(estS <- {
+  Lt <- m3@pp$Lambdat
+  Lt@x <-m3@pp$thfun(m3@pp$theta)
+  crossprod(Lt[1:ndose, 1:ndose])
+  }*sigma(m3)^2) 
 ````
-True correlation: `r cor`, estimated as `r m3$opt$par[ndose+1]`.
+True correlation: `r cor`, estimated as `r m3@pp$theta[ndose+1]`.
 
 
-True error sd: `r sd.eps`, estimated as `r sigma(m3$model)`.
+True error sd: `r sd.eps`, estimated as `r sigma(m3)`.
 
-True beta: [`r c(0, beta)`], estimated as [`r m3$model@beta`].
+True beta: [`r c(0, beta)`], estimated as [`r m3@beta`].
 
 Compare:
 ````{r}
@@ -204,31 +253,31 @@ nreps <- 5
 ndose <- 5
 n <- nsubj*nreps*ndose
 data <- expand.grid(reps=factor(1:nreps),
-					dose=1:ndose,
-					subject=factor(1:nsubj))
+                    dose=1:ndose,
+                    subject=factor(1:nsubj))
 
 # set up cov.mat for random effects 
 # (i.e., variance constant for doses, subject-deviations positively correlated):
 sd.dose <- 2
 cor <- .8
 S <- {
-	C <- diag(ndose)
-	C[upper.tri(C)] <- C[lower.tri(C)] <- cor
-	sd.dose*t(sd.dose*C)
-}
+  C <- diag(ndose)
+  C[upper.tri(C)] <- C[lower.tri(C)] <- cor
+  sd.dose*t(sd.dose*C)
+  }
 sd.eps <- 1
 beta <- 2
 
 data <- within(data, {
-	y <- dose*beta + 
-		model.matrix(~0+as.factor(dose):subject)%*%
-		as.vector(replicate(nsubj, rmvnorm(1, sigma=S)[1,]))  +
-		rnorm(n, sd=sd.eps)
-	doseF <- as.factor(dose)
-	subjectreps <- subject:reps
-})
+  y <- dose*beta + 
+    model.matrix(~0+as.factor(dose):subject)%*%
+    as.vector(replicate(nsubj, rmvnorm(1, sigma=S)[1,]))  +
+    rnorm(n, sd=sd.eps)
+  doseF <- as.factor(dose)
+  subjectreps <- subject:reps
+  })
 (p4 <- qplot(x=dose, y=y, col=subject, data=data, geom=c("point", "line"), alpha=.2, facets=~reps) +
- 	theme_bw() + theme(legend.position="none"))
+   theme_bw() + theme(legend.position="none"))
 ````
 NB: for this data with such a strong correlation between the dose-specific random intercepts
 simply doing `~(1|subject)` would probably make more sense...
@@ -241,11 +290,11 @@ m4Old <- lmer(y ~ dose + (0+doseF|subject), data)
 True variance components & correlation: `r c(sd.dose, cor, sd.eps)`
 
 Estimates: 
-`r c(m4$opt$par[1]*sigma(m4$model), m4$opt$par[2], sigma(m4$model))`
+`r c(m4@pp$theta[1]*sigma(m4), m4@pp$theta[2], sigma(m4))`
 
 True betas: `r c(0, beta)`
 
-Estimates: `r m4$model@beta`
+Estimates: `r m4@beta`
 
 Compare:
 ````{r}
@@ -255,47 +304,51 @@ m4Old
 
 ### Simple AR(1)
 
-Subjects with multiple measurements at same timepoint, errors autocorrelated over time on subject leve:
+Multiple subjects observed over time, errors autocorrelated over time on subject level:
 ````{r}
 set.seed(2352)
-nsubj <- 50
+nsubj <- 30
 nreps <- 1
-length <- 100
+length <- 50
 n <- nsubj*nreps*length
 fr <- expand.grid(
-	time=1:length,
-	id=factor(1:nsubj),
-	rep=factor(1:nreps))
+  time= 0:(length-1)/10,
+  id=factor(1:nsubj),
+  rep=factor(1:nreps))
 
-rho <- .2
-sd.b <- 5
-b <- sd.b * as.vector(replicate(nsubj, arima.sim(n=length, model=list(ar=c(rho)))))				 
-sd.eps <- 1
-beta <- .5
+beta <- 3
+sd.b <- c(1, 2)
+
+rho <- .8
+sd.ar <- 2
+e.ar <- sd.ar * as.vector(replicate(nsubj, arima.sim(n=length, model=list(ar=c(rho)))))				 
+
+sd.eps <- .2
+
 fr <- within(fr,{
-	mu <- beta*time
-	y <- mu + model.matrix(~0+as.factor(time):id)%*%b + 
-		rnorm(n, sd=sd.eps)
-})	
+  mu <- beta*time
+  mu_i <-  mu + model.matrix(~time*id-time-1)%*%
+    rnorm(2*nsubj, sd=rep(sd.b, e=nsubj)) 
+  y <- mu_i + model.matrix(~0+as.factor(time):id)%*%e.ar + rnorm(n, sd=sd.eps)
+  })	
 (p5 <- qplot(y=mu, x=time, data=fr, geom="line") + facet_wrap(~id) + 
-	geom_line(aes(y=y, col=rep), lwd=.5))
+   geom_line(aes(y=mu_i), col="blue", lwd=.5) + 
+   geom_line(aes(y=y), col="red", lwd=.5) + theme_bw())
 ````
 
 
 Fit & check results:
 ````{r}
-m5 <-  flexLmer(y ~ time + ar1d(~(time|id)), data=fr)
+m5 <-  flexLmer(y ~ time + d(~(time|id)) + ar1d(~(.|id)), data=fr)
 ````
-True variance components & correlation: `r c(sd.b, rho, sd.eps)`
+True variance components & correlation: `r c(sd.b, sd.ar, rho, sd.eps)`
 
 Estimates: 
-`r c(m5$opt$par[1]*sigma(m5$model), m5$opt$par[2], sigma(m5$model))`
-
-... scale of AR(1) seems to get overestimated ...?!? 
+`r c(m5@pp$theta[1:3]*sigma(m5), m5@pp$theta[4], sigma(m5))`
 
 True betas: `r c(0, beta)`
 
-Estimates: `r m5$model@beta`
+Estimates: `r m5@beta`
 
 ... look a little weird, too. Does not seem stable yet.
 
@@ -308,9 +361,9 @@ Estimates: `r m5$model@beta`
 - fix need for manual assignment of `theta` into `environment(devfun)` 
 - `VarCorr`methods etc. for sensible output and summaries
 - more structures: 
-    - AR(1), at least for discrete time
-    - effects with fixed correlation structure $C$: $b_i \sim N_k(0, \sigma^2 C)$, where $C$ comes from some measure of spatial/temporal/genetic/... distance.
-    - diagonal covariance where $\sigma_{ij}=\exp(x_{ij}\beta)$ or similar, i.e. covariate-dependent. 
+- AR(1), at least for discrete time
+- effects with fixed correlation structure $C$: $b_i \sim N_k(0, \sigma^2 C)$, where $C$ comes from some measure of spatial/temporal/genetic/... distance.
+- diagonal covariance where $\sigma_{ij}=\exp(x_{ij}\beta)$ or similar, i.e. covariate-dependent. 
 
 ### System setup:
 Using 'flexLambda' branch!
