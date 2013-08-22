@@ -2,12 +2,13 @@ Flexible Correlation Structures for Random Effects
 ========================================================
 
 ```{r}
-setwd("C:/lme4")
+## setwd("C:/lme4")
+## load_all()
 options(digits=3)
 library(devtools)
 library(ggplot2)
 library(mvtnorm)
-load_all()
+library(lme4)
 source('misc/reGenerators_flexLambda.R', echo=TRUE)
 
 flexLmer <- function(formula, data, specials=c("cs", "d", "ar1d"), verbose=0L){
@@ -255,7 +256,7 @@ m4Old
 
 ### Simple AR(1)
 
-Subjects with multiple measurements at same timepoint, errors autocorrelated over time on subject leve:
+Subjects with multiple measurements at same timepoint, errors autocorrelated over time on subject level:
 ````{r}
 set.seed(2352)
 nsubj <- 20
