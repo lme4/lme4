@@ -73,10 +73,12 @@ merPredD <-
                      delu    = "numeric",
                      theta   = "numeric",
                      thfun   = "function",
+                     phi     = "numeric",
+                     phifun1 = "function",
                      u0      = "numeric"),
                 methods =
                 list(
-                    initialize = function(X, Zt, Lambdat, thfun, theta, n, ...) {
+                    initialize = function(X, Zt, Lambdat, thfun, theta, n, phifun1, phi, ...) {
                         if (!nargs()) return
                         X <<- as(X, "matrix")
                         Zt <<- as(Zt, "dgCMatrix")
@@ -94,6 +96,8 @@ merPredD <-
                         Vtr <<- numeric(p)
                         b0 <- list(...)$beta0
                         beta0 <<- if (is.null(b0)) numeric(p) else b0
+                        phi <<- phi
+                        phifun1 <<- as.function(phifun1)
                         delb <<- numeric(p)
                         delu <<- numeric(q)
                         uu <- list(...)$u0
@@ -199,6 +203,10 @@ merPredD <-
                     setTheta     = function(th) {
                         'install a new theta'
                         theta[] <<- th
+                    },
+                    setPhi     = function(phi) {
+                        'install a new phi'
+                        phi[] <<- phi
                     },
 
                     setBeta0     = function(beta0) {

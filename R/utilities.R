@@ -99,27 +99,30 @@ mkReTrms <- function(bars, fr, reGenerators=NULL) {
 					   	rep(head(thetap, -1), nlambda))
 	
 	ll <- list(Zt = Matrix::drop0(Zt),
-			   Lambdat = do.call(bdiag, unname(lapply(reTrms, "[[", "Lambdat"))),
-			   lower = as.numeric(unlist(sapply(reTrms, "[[", "lower"))),
-			   upper = as.numeric(unlist(sapply(reTrms, "[[", "upper"))),
-			   theta = as.numeric(unlist(sapply(reTrms, "[[", "theta"))),
-			   thfun = local({
-			   	  thfunlist <- lapply(reTrms, "[[", "updateLambdatx")
-			   	  splits <- rep(1:length(reTrms), times=ntheta)
-			   	  function(theta){
-			   		theta <- lapply(split(theta, splits), function(x) list(theta=x))
+                   Lambdat = do.call(bdiag, unname(lapply(reTrms, "[[", "Lambdat"))),
+                   lower = as.numeric(unlist(sapply(reTrms, "[[", "lower"))),
+                   upper = as.numeric(unlist(sapply(reTrms, "[[", "upper"))),
+                   theta = as.numeric(unlist(sapply(reTrms, "[[", "theta"))),
+                   thfun = local({
+                       thfunlist <- lapply(reTrms, "[[", "updateLambdatx")
+                       splits <- rep(1:length(reTrms), times=ntheta)
+                       function(theta){
+                           theta <- lapply(split(theta, splits), function(x) list(theta=x))
 			   		# apply the appropriate transformation (theta --> Lambdat@x)
 			   		# to each subvector of theta:
-			   		as.numeric(unlist(mapply(do.call, what=thfunlist, args=theta)))
-			   	 }
-			    }),
-			   Gp = unname(c(0L, cumsum(nb))),
-			   thetap = thetap,
-			   flist = fl,
-			   cnms = cnms,
-			   special = special,
-			   nlambda=nlambda,
-			   ntheta=ntheta)
+                           as.numeric(unlist(mapply(do.call, what=thfunlist, args=theta)))
+                       }
+                   }),
+                   Gp = unname(c(0L, cumsum(nb))),
+                   thetap = thetap,
+                   flist = fl,
+                   cnms = cnms,
+                   special = special,
+                   nlambda=nlambda,
+                   ntheta=ntheta,
+                   phi=numeric(0),
+                   phifun1=function(phi) { } ## no-op
+                   )
 	ll
 } 
 

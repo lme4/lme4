@@ -291,7 +291,7 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, verbose=0, co
     ## pull necessary arguments for making the model frame out of ...
     p <- ncol(X) # maybe also do rank check on X here??
     rho <- new.env(parent=parent.env(environment()))
-    rho$pp <- do.call(merPredD$new, c(reTrms[c("Zt","theta","Lambdat","thfun")],
+    rho$pp <- do.call(merPredD$new, c(reTrms[c("Zt","theta","Lambdat","thfun","phi","phifun1")],
                                       n=nrow(X), list(X=X)))
     REMLpass <- if(REML) p else 0L
     if(missing(fr)) rho$resp <- mkRespMod(REML = REMLpass, ...)
@@ -446,7 +446,7 @@ mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L,
                                            compDev=control$compDev))
     parent.env(rho) <- parent.frame()
     rho$pp          <- do.call(merPredD$new,
-                               c(reTrms[c("Zt","theta","Lambdat","thfun")],
+                               c(reTrms[c("Zt","theta","Lambdat","thfun","phifun1","phi")],
                                  n=nrow(X), list(X=X)))
     if (missing(fr)) rho$resp <- mkRespMod(family=family, ...)
     else rho$resp             <- mkRespMod(fr, family=family)
