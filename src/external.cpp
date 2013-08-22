@@ -1043,7 +1043,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(merPredDu,          2),
     CALLDEF(merPredDupdateDecomp,1),
     CALLDEF(merPredDupdateL,    1),
-    CALLDEF(merPredDupdateLambda,1),
+    CALLDEF(merPredDupdateLambda,2),
     CALLDEF(merPredDupdateLamtUt,1),
     CALLDEF(merPredDupdateRes,  2),
     CALLDEF(merPredDupdateXwts, 2),

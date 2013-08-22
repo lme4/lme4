@@ -481,7 +481,7 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
 	if (nAGQ == 0L)
 	    function(theta) {
 		resp$updateMu(lp0)
-		pp$updateLambda(theta,thfun(theta))
+		pp$updateLambda(theta,pp$thfun(theta))
 		p <- pwrssUpdate(pp, resp, tolPwrss, GHrule(0L),
                             compDev, verbose)
                 resp$updateWts()
@@ -494,7 +494,7 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
                 resp$setOffset(baseOffset)
 		resp$updateMu(lp0)
                 theta <- as.double(pars[dpars]) # theta is first part of pars
-		pp$updateLambda(theta,thfun(theta))
+		pp$updateLambda(theta,pp$thfun(theta))
                 spars <- as.numeric(pars[-dpars])
                 offset <- if (length(spars)==0) baseOffset else baseOffset + pp$X %*% spars
 		resp$setOffset(offset)
