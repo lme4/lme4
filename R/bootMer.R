@@ -204,11 +204,12 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
     # in its scope to avoid explicit clusterExport statement
     # in the PSOCKcluster case 
     ffun <- local({
-      FUN <- FUN
-      refit <- refit
-      x <- x
-      ss <- ss
-      verbose <- verbose
+      FUN 
+      refit 
+      x 
+      ss 
+      verbose 
+      do_parallel
       length.t0 <- length(t0)
       function(i) {
         foo <- try(FUN(refit(x,ss[[i]])),silent=TRUE)
@@ -224,7 +225,8 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
         } else if (have_snow) {
             if (is.null(cl)) {
                 cl <- parallel::makePSOCKcluster(rep("localhost", ncpus))
-                ##FIXME: explicit export of the lme4 namespace shouldn't really be necessary
+                ## explicit export of the lme4 namespace since most FUNs will probably
+                ## use some of them
                 parallel::clusterExport(cl, varlist=getNamespaceExports("lme4"))
                 if(RNGkind()[1L] == "L'Ecuyer-CMRG")
                     parallel::clusterSetRNGStream(cl)
