@@ -336,6 +336,8 @@ doPkgDeptests <- function(pkg="lme4",
     }
 
     if(xvfb) {
+        if (length(which_xvfb <- system("which Xvfb",intern=TRUE))==0)
+            stop("Xvfb not installed")
         pid <- tools:::start_virtual_X11_fb(xvfb_options)
         on.exit(tools:::close_virtual_X11_db(pid), add = TRUE)
     }
