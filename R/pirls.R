@@ -66,11 +66,11 @@ pirls <- function(glmod, y, eta,
             beta[] <<- thetabeta[betaind]
             offb <- offset + X %*% beta
             updatemu <- function(uu) {
-                eta[] <- offb + as.vector(crossprod(LtZt, uu))
-                mu[] <- linkinv(eta)
+                eta[] <<- offb + as.vector(crossprod(LtZt, uu))
+                mu[] <<- linkinv(eta)
                 sum(sqDevResid(y, mu, weights)) + sum(uu^2)
             }
-            u[] <- 0
+            u[] <<- numeric(q)
             olducden <- updatemu(u)
                                         # initialization
             cvgd <- FALSE
@@ -115,7 +115,7 @@ pirls <- function(glmod, y, eta,
             attributes(ldL2) <- NULL
             ## create the Laplace approx to -2log(L)
             Lm2ll <- aic(y,rep.int(1,n),mu,weights,NULL) + sum(u^2) +
-                ldL2 + (q/2)*log(2*pi)
+                ldL2 #+ (q/2)*log(2*pi)
             if (verbose > 0L) {
                 cat(sprintf("%10.3f: %12.4g", Lm2ll, thetabeta[1]))
                 for (j in 2:length(thetabeta)) cat(sprintf(" %12.4g", thetabeta[j]))
