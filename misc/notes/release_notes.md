@@ -1,8 +1,13 @@
-# lme4 release notes, v 1.0
+# lme4 release notes, v 1.0.x
+
+2013-08-24 15:41:54
+
+
+
 
 ## Version numbering
 
-As [previously announced on the lme4 mailing list][announce], we will shortly be releasing a new version of `lme4`, a descendant of the previous development version `lme4Eigen`. For users who do not access any internal structures, there will be few backward-incompatible changes. A feature freeze is scheduled for 8 July 2013, and the release is planned for 1 August 2013.
+As [previously announced on the lme4 mailing list][announce], we will shortly be releasing a new version of `lme4`, a descendant of the previous development version `lme4Eigen`. For users who do not access any internal structures, there will be few backward-incompatible changes. We are currently (24 August 2013) in the process of working out some issues with our CRAN submission, but hope the package will appear on CRAN within the next week. 
 
 [announce]: https://stat.ethz.ch/pipermail/r-sig-mixed-models/2012q1/014811.html
 
@@ -21,10 +26,12 @@ install.packages("lme4", repos = c("http://lme4.r-forge.r-project.org/repos",
     getOption("repos")))
 ```
 
-(version 0.99999911-5 is available as of 28 June 2013; we may move to a 1.0-rc sequence shortly)
+(version 0.99999911-8 is available as of 2013-08-24 15:41:57; we hope to post some 1.0-x versions shortly)
 * Note that the binary versions from the r-forge repository (at least the Windows version) will (apparently) not work on R version 3.0.0; *either* an earlier (<=2.15.3) or a later (>=3.0.1) version is required
-* The current CRAN version (0.999999-2) will be replaced by a nearly identical version called `lme4.0` (currently version 0.9999-2).  `lme4.0` is a maintenance version and will only be changed to fix documented bugs. `mer` objects from older versions of `lme4` can be converted to `lme4.0`-usable form via `convert_old_lme4()` in the `lme4.0` package.
+* *Solaris/Solaris Studio compiler users*: the Eigen linear algebra library, on which the new version of `lme4` is built, is apparently incompatible with Sun compilers; it is unclear whether the fault lies with `Eigen` (which claims to be compatible with the C++1998 standard) or with the Sun compilers. If you need to build `lme4` with Sun compilers, and would be willing to help in sorting out the Sun/Eigen incompatibilities, please contact the package maintainers.
+* We hope that the current CRAN version (0.999999-2) will be replaced by a nearly identical version called `lme4.0` (currently version 0.9999-2) (*this is currently under negotiation with the CRAN maintainers*).  `lme4.0` is a maintenance version and will only be changed to fix documented bugs. `mer` objects from older versions of `lme4` can be converted to `lme4.0`-usable form via `convert_old_lme4()` in the `lme4.0` package.
 * all other versions (`lme4a`, `lme4b`, `lme4Eigen`) are deprecated.
+
 
 ## For end-users
 
@@ -54,8 +61,7 @@ install.packages("lme4", repos = c("http://lme4.r-forge.r-project.org/repos",
 ### Still non-existent features
 * Automatic MCMC sampling based on the fit turns out to be very difficult to implement in a way that is really broadly reliable and robust; `mcmcsamp` will not be implemented in the near future. We recommend parametric boostrapping via `bootMer`, or the Kenward-Roger 
 approximation implemented in the `pbkrtest` package and leveraged by the `lmerTest` package and the `Anova` function in the `car` package.
-
-* "R-side" structures (within-block correlation and heteroscedasticity) are not on the current timetable
+* "R-side" structures (within-block correlation and heteroscedasticity) are being implemented in an experimental version on Github, but with no definite release timetable
 
 ## Notes for package writers
 
@@ -64,16 +70,15 @@ approximation implemented in the `pbkrtest` package and leveraged by the `lmerTe
 [pkgtest]: http://htmlpreview.github.io/?https://github.com/lme4/lme4/blob/master/misc/pkgtests/lme4_compat_report.html
 
 * `lme4`-old and `lme4.0` produce objects of class `mer`, `lme4`-new produces `merMod` objects, so any methods written for class `mer` will at least have to be copied to work with class `merMod`
-* You can distinguish `lme4`-old from `lme4`-new via package version; the last old-style version of `lme4` on CRAN is 0.999375-42, so anything after that is `lme4`-new (the current version on <http://lme4.r-forge.r-project.org/repos> is 0.999902344-0).
-* So you can test e.g. if `packageVersion("lme4")<="0.999375-43"` (yes, you do want the quotation marks; package versions are weird objects in R).
+* You can distinguish `lme4`-old from `lme4`-new via package version; the last old-style version of `lme4` on CRAN is 0.999999-2, so anything after that is `lme4`-new (the current version on <http://lme4.r-forge.r-project.org/repos> is 0.99999911-8).
+* So you can test e.g. if `packageVersion("lme4")<="0.999999-2"` (yes, you do want the quotation marks; package versions are weird objects in R).
 * For example:
 
 ```r
 if (inherits(object, "merMod")) {
     ## code relevant to development version
 } else if (inherits(object, "mer")) {
-    ## stable version code if you need to differentiate between lme4.0 and
-    ## lme4:
+    ## stable version code if you need to differentiate between lme4.0 and lme4:
     pkg <- attr(class(object), "package")
     ## you can use if (pkg=='lme4.0') or, e.g.
     getFromNamespace("nobars", ns = pkg)
