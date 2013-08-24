@@ -63,6 +63,6 @@ Collate:
     'plot.R'
     'vcconv.R'
     'modular.R'
-    'hooks.r'
+    'hooks.R'
     'lmerControl.R'
 BuildVignettes: yes
