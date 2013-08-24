@@ -1252,7 +1252,8 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
     rho$resp <- new(class(rr), y=rr$y, offset=rr$offset, weights=rr$weights, REML=0L)
     xpp <- x@pp
     rho$pp <- new(class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat,
-                  thfun=xpp$thfun, theta=xpp$theta, n=nrow(xpp$X))
+                  thfun=xpp$thfun, theta=xpp$theta, n=nrow(xpp$X),
+                  phi=xpp$phi, phifun1=xpp$phifun1)
     devfun <- mkdevfun(rho, 0L)
     opt <- optwrap(optimizer, devfun, x@theta, lower=x@lower)
     ##  opt <- bobyqa(x@theta, devfun, x@lower)

@@ -306,7 +306,7 @@ Estimates: `r m5$model@beta`
 ### TODOs
 - **for all of these cases I get the 'assertion failure' crash reported earlier if I set `nreps <- 1`!!**
 - fix need for manual assignment of `theta` into `environment(devfun)` 
-- `VarCorr`methods etc. for sensible output and summaries
+- `VarCorr` methods etc. for sensible output and summaries
 - more structures: 
     - AR(1), at least for discrete time
     - effects with fixed correlation structure $C$: $b_i \sim N_k(0, \sigma^2 C)$, where $C$ comes from some measure of spatial/temporal/genetic/... distance.
