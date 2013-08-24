@@ -70,11 +70,23 @@ doCheck <- function(x) {
     is.character(x) && !any(x == "ignore")
 }
 
+##' @param cstr name of control being set
+##' @param val value of control being set
+checkCtrlLevels <- function(cstr,val,smallOK=FALSE) {
+    bvals <- c("stop","warning","ignore")
+    if (smallOK) bvals <- outer(bvals,c("","Small"),paste0)
+    if (!is.null(val) && !val %in% bvals)
+        stop("invalid control level ",sQuote(val)," in ",cstr,": valid options are {",
+             paste(sapply(bvals,sQuote),collapse=","),"}")
+    invisible(NULL)
+}
+                     
 checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
 {
     stopifnot(is.list(ctrl), is.numeric(n), is.numeric(nonSmall))
     cstr <- "check.nobs.vs.rankZ"
     if (doCheck(cc <- ctrl[[cstr]])) { ## not NULL or "ignore"
+        checkCtrlLevels(cstr,ctrl[[cstr]],smallOK=TRUE)
 	d <- dim(Zt)
 	doTr <- d[1L] < d[2L] # Zt is "wide" => qr needs transpose(Zt)
 	if(!(grepl("Small",cc) && prod(d) > nonSmall)) {
@@ -106,6 +118,7 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
     nlevelVec <- unlist(lapply(flist, function(x) nlevels(droplevels(x)) ))
     ## Part 1 ----------------
     cstr <- "check.nlev.gtr.1"
+    checkCtrlLevels(cstr,ctrl[[cstr]])
     if (doCheck(cc <- ctrl[[cstr]]) && any(nlevelVec < 2)) {
 	wstr <- "grouping factors must have > 1 sampled level"
 	switch(cc,
@@ -115,6 +128,7 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
     }
     ## Part 2 ----------------
     cstr <- "check.nobs.vs.nlev"
+    checkCtrlLevels(cstr,ctrl[[cstr]])
     if (doCheck(cc <- ctrl[[cstr]])) {
         if (any(if(allow.n) nlevelVec > n else nlevelVec >= n))
             stop(gettextf(
@@ -124,6 +138,7 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
 
     ## Part 3 ----------------
     cstr <- "check.nlev.gtreq.5"
+    checkCtrlLevels(cstr,ctrl[[cstr]])
     if (doCheck(cc <- ctrl[[cstr]]) && any(nlevelVec < 5)) {
 	wstr <- "grouping factors with < 5 sampled levels may give unreliable estimates"
 	switch(cc,

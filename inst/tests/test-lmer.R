@@ -82,6 +82,15 @@ test_that("lmer", {
                    check.nobs.vs.rankZ="ignore")),
               "merMod")
 
+    ## check for errors with illegal control options
+    flags <- grep("^check",names(formals(lmerControl)),value=TRUE)
+    ctrls <- lapply(flags,function(x) do.call(lmerControl,setNames(list(c("warnign")),x))) ## DELIBERATE TYPO
+    lapply(ctrls,
+           function(x) {
+               expect_error(lFormula(Reaction ~ 1 + Days + (1|Subject),data=sleepstudy,
+                                     control=x),"invalid control level")
+           })
+    
     ## disable warning via options
     options(lmerControl=list(check.nobs.vs.rankZ="ignore"))
     expect_is(fm4 <- lmer(Reaction ~ Days + (1|Subject),
