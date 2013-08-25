@@ -149,7 +149,6 @@
 bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
                     type=c("parametric","semiparametric"),
 		    verbose = FALSE,
-                    do_parallel=FALSE,
                     .progress="none", PBargs=list(),
                     parallel = c("no", "multicore", "snow"),
                     ncpus = getOption("boot.ncpus", 1L), cl = NULL)

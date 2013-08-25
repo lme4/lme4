@@ -4,7 +4,9 @@
 \usage{
   bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
     type = c("parametric", "semiparametric"),
-    verbose = FALSE, .progress = "none", PBargs = list())
+    verbose = FALSE, .progress = "none", PBargs = list(),
+    parallel = c("no", "multicore", "snow"),
+    ncpus = getOption("boot.ncpus", 1L), cl = NULL)
 }
 \arguments{
   \item{x}{fitted \code{*lmer()} model: see
