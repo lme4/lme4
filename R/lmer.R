@@ -825,9 +825,14 @@ safe_pchisq <- function (q, df, ...) {
 
 ##' @importFrom stats drop1
 ##' @S3method drop1 merMod
-drop1.merMod <- function(object, scope, scale = 0, test = c("none", "Chisq"),
-                         k = 2, trace = FALSE, evalhack="formulaenv", ...) {
-    ## FIXME: incorporate na.predict() stuff?
+drop1.merMod <- function(object, scope, scale = 0, test = c("none", "Chisq", "user"),
+                         k = 2, trace = FALSE,
+                         sumFun=NULL, ...) {
+    evalhack <- "formulaenv"
+    test <- match.arg(test)
+    if ((test=="user" && is.null(sumFun)) ||
+        ((test!="user" && !is.null(sumFun))))
+        stop(sQuote("sumFun"),' must be specified if (and only if) test=="user"')
     tl <- attr(terms(object), "term.labels")
     if(missing(scope)) scope <- drop.scope(object)
     else {
@@ -839,9 +844,14 @@ drop1.merMod <- function(object, scope, scale = 0, test = c("none", "Chisq"),
 	    stop("scope is not a subset of term labels")
     }
     ns <- length(scope)
-    ans <- matrix(nrow = ns + 1L, ncol = 2L,
-                  dimnames =  list(c("<none>", scope), c("df", "AIC")))
-    ans[1, ] <- extractAIC(object, scale, k = k, ...)
+    if (is.null(sumFun)) {
+        sumFun <- function(x,scale,k,...)
+            setNames(extractAIC(x,scale,k,...),c("df","AIC"))
+    }
+    ss <- sumFun(object, scale=scale, k=k, ...)
+    ans <- matrix(nrow = ns + 1L, ncol = length(ss),
+                  dimnames =  list(c("<none>", scope), names(ss)))
+    ans[1, ] <- ss
     n0 <- nobs(object, use.fallback = TRUE)
     env <- environment(formula(object)) # perhaps here is where trouble begins??
     for(i in seq_along(scope)) {  ## was seq(ns), failed on empty scope
@@ -874,37 +884,45 @@ drop1.merMod <- function(object, scope, scale = 0, test = c("none", "Chisq"),
                            evaluate = FALSE)
             nfit <- eval(nfit,envir=env)
         }
-	ans[i+1, ] <- extractAIC(nfit, scale, k = k, ...)
+	if (test=="user") {
+            ans[i+1, ] <- sumFun(object, nfit, scale=scale, k=k, ...)
+        } else {
+            ans[i+1, ] <- sumFun(nfit, scale, k = k, ...)
+        }
         nnew <- nobs(nfit, use.fallback = TRUE)
         if(all(is.finite(c(n0, nnew))) && nnew != n0)
             stop("number of rows in use has changed: remove missing values?")
     }
-    dfs <- ans[1L , 1L] - ans[, 1L]
-    dfs[1L] <- NA
-    aod <- data.frame(Df = dfs, AIC = ans[,2])
-    test <- match.arg(test)
-    if(test == "Chisq") {
-        ## reconstruct deviance from AIC (ugh)
-        dev <- ans[, 2L] - k*ans[, 1L]
-        dev <- dev - dev[1L] ; dev[1L] <- NA
-        nas <- !is.na(dev)
-        P <- dev
-        ## BMB: hack to extract safe_pchisq
-        P[nas] <- safe_pchisq(dev[nas], dfs[nas], lower.tail = FALSE)
-        aod[, c("LRT", "Pr(Chi)")] <- list(dev, P)
-    } else if (test == "F") {
-        ## FIXME: allow this if denominator df are specified externally?
-        stop("F test STUB -- unfinished maybe forever")
-        dev <- ans[, 2L] - k*ans[, 1L]
-        dev <- dev - dev[1L] ; dev[1L] <- NA
-        nas <- !is.na(dev)
-        P <- dev
-        ## BMB: hack to extract safe_pchisq
-        P[nas] <- safe_pchisq(dev[nas], dfs[nas], lower.tail = FALSE)
-        aod[, c("LRT", "Pr(F)")] <- list(dev, P)
+    if (test=="user") {
+        aod <- as.data.frame(ans)
+    } else {
+        dfs <- ans[1L , 1L] - ans[, 1L]
+        dfs[1L] <- NA
+        aod <- data.frame(Df = dfs, AIC = ans[,2])
+        if(test == "Chisq") {
+            ## reconstruct deviance from AIC (ugh)
+            dev <- ans[, 2L] - k*ans[, 1L]
+            dev <- dev - dev[1L] ; dev[1L] <- NA
+            nas <- !is.na(dev)
+            P <- dev
+            P[nas] <- safe_pchisq(dev[nas], dfs[nas], lower.tail = FALSE)
+            aod[, c("LRT", "Pr(Chi)")] <- list(dev, P)
+        } else if (test == "F") {
+            ## FIXME: allow this if denominator df are specified externally?
+            stop("F test STUB -- unfinished maybe forever")
+            dev <- ans[, 2L] - k*ans[, 1L]
+            dev <- dev - dev[1L] ; dev[1L] <- NA
+            nas <- !is.na(dev)
+            P <- dev
+            P[nas] <- safe_pchisq(dev[nas], dfs[nas], lower.tail = FALSE)
+            aod[, c("LRT", "Pr(F)")] <- list(dev, P)
+        }
     }
     head <- c("Single term deletions", "\nModel:", deparse(formula(object)),
 	      if(scale > 0) paste("\nscale: ", format(scale), "\n"))
+    if (!is.null(method <- attr(ss,"method"))) {
+        head <- c(head,"Method: ",method,"\n")
+    }
     class(aod) <- c("anova", "data.frame")
     attr(aod, "heading") <- head
     aod
