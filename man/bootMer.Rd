@@ -9,11 +9,12 @@
     ncpus = getOption("boot.ncpus", 1L), cl = NULL)
 }
 \arguments{
-  \item{x}{fitted \code{*lmer()} model: see
+  \item{x}{a fitted \code{merMod} object: see
     \code{\link{lmer}}, \code{\link{glmer}}, etc.}
-  \item{FUN}{a \code{\link{function}(x)}, computing the
-    \emph{statistic} of interest, which must be a numeric
-    vector, possibly named.}
+  \item{FUN}{a function taking a fitted
+    \code{merMod} object as input and returning the
+    \emph{statistic} of interest, which must be a (possibly named)
+    numeric vector.}
   \item{nsim}{number of simulations, positive integer; the
     bootstrap \eqn{B} (or \eqn{R}).}
   \item{seed}{optional argument to \code{\link{set.seed}}.}
@@ -150,10 +151,22 @@ plot(boo01L,index=3)
   doi:10.1016/S0167-7152(02)00041-X.
 }
 \seealso{
-  \itemize{ \item For inference, including confidence
-    intervals, \code{\link{profile-methods}}. \item
-    \code{\link[boot]{boot}()}, and then
-    \code{\link[boot]{boot.ci}} from package \pkg{boot}. }
+  \itemize{
+    \item \code{\link{confint.merMod}},
+    for a more specific approach to bootstrap confidence
+    intervals on parameters.
+    \item     \code{\link{refit}()},
+    or \code{\link[pbkrtest]{PBmodcomp}()} from the
+    \code{pbkrtest} package,
+    for parametric bootstrap comparison of models.
+    \item \code{\link[boot]{boot}()}, and then
+    \code{\link[boot]{boot.ci}}, from the \pkg{boot} package.
+    \item \code{\link{profile-methods}}, for likelihood-based inference,
+    including confidence intervals.
+    \item \code{\link{pvalues}},
+    for more general approaches to inference and p-value computation
+    in mixed models.
+  }
 }
 \keyword{htest}
 \keyword{models}
