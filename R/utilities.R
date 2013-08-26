@@ -45,7 +45,7 @@ mkReTrms <- function(bars, fr) {
            deparse(x[[3]]))
     nl <- length(levels(ff))
     mm <- model.matrix(eval(substitute( ~ foo,
-                                        list(foo = x[[2]]))), fr)
+                                        list(foo = x[[2]]))), frloc)
     nc <- ncol(mm)
     nseq <- seq_len(nc)
     sm <- as(ff, "sparseMatrix")
@@ -65,7 +65,7 @@ mkReTrms <- function(bars, fr) {
   nl <- unlist(lapply(blist, "[[", "nl")) # no. of levels per term
   
   ## order terms stably by decreasing number of levels in the factor
-  if (any(diff(nl)) > 0) {
+  if (any(diff(nl) > 0)) {
     ord <- rev(order(nl))
     blist <- blist[ord]
     nl <- nl[ord]
