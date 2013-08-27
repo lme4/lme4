@@ -82,11 +82,8 @@ lmerControl <- function(optimizer="Nelder_Mead",
                              check.nobs.vs.nlev,
 			     check.nlev.gtreq.5,
 			     check.nlev.gtr.1,
-<<<<<<< HEAD
-                             check.formula.LHS),
-=======
+                             check.formula.LHS,
                              check.nobs.vs.nRE),
->>>>>>> master
                         optCtrl=optCtrl),
 	      class = c("lmerControl", "merControl"))
 }
