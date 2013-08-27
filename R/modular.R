@@ -70,6 +70,15 @@ doCheck <- function(x) {
     is.character(x) && !any(x == "ignore")
 }
 
+RHSForm <- function(formula) {
+    formula[[length(formula)]]
+}
+
+`RHSForm<-` <- function(formula,value) {
+    formula[[length(formula)]] <- value
+    formula
+}
+
 checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
 {
     stopifnot(is.list(ctrl), is.numeric(n), is.numeric(nonSmall))
@@ -161,11 +170,11 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
         return(eval(mc, parent.frame()))
     }
 
-    denv <- checkFormulaData(formula,data)
+    denv <- checkFormulaData(formula,data,checkLHS=(control$check.formula.LHS=="stop"))
     #mc$formula <- formula <- as.formula(formula,env=denv) ## substitute evaluated call
     formula <- as.formula(formula,env=denv)
     # get rid of || terms so update() works as expected
-    formula[[3]] <- expandDoubleVerts(formula[[3]])
+    RHSForm(formula) <- expandDoubleVerts(RHSForm(formula))
     mc$formula <- formula
     	
     m <- match(c("data", "subset", "weights", "na.action", "offset"),
@@ -182,13 +191,13 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     attr(fr,"offset") <- mf$offset
     n <- nrow(fr)
     ## random effects and terms modules
-    reTrms <- mkReTrms(findbars(formula[[3]]), fr)
+    reTrms <- mkReTrms(findbars(RHSForm(formula)), fr)
     checkNlevels(reTrms$ flist, n=n, control)
     checkZrank	(reTrms$ Zt,	n=n, control, nonSmall = 1e6)
 
     ## fixed-effects model matrix X - remove random effects from formula:
     fixedform <- formula
-    fixedform[[3]] <- if(is.null(nb <- nobars(fixedform[[3]]))) 1 else nb
+    RHSForm(fixedform) <- if(is.null(nb <- nobars(RHSForm(fixedform)))) 1 else nb
     mf$formula <- fixedform
     ## re-evaluate model frame to extract predvars component {FIXME? glFormula() does not..}
     fixedfr <- eval(mf, parent.frame())
@@ -369,7 +378,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     l... <- l...[!names(l...) %in% ignoreArgs]
     do.call("checkArgs",c(list("glmer"),l...))
 
-    denv <- checkFormulaData(formula,data)
+    denv <- checkFormulaData(formula,data,checkLHS=(control$check.formula.LHS=="stop"))
     mc$formula <- formula <- as.formula(formula,env=denv)    ## substitute evaluated version
 
     m <- match(c("data", "subset", "weights", "na.action", "offset",
@@ -386,7 +395,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     attr(fr,"offset") <- mf$offset
     n <- nrow(fr)
     ## random effects and terms modules
-    reTrms <- mkReTrms(findbars(formula[[3]]), fr)
+    reTrms <- mkReTrms(findbars(RHSForm(formula)), fr)
     ## TODO: allow.n = !useSc {see FIXME below}
     checkNlevels(reTrms$ flist, n=n, control, allow.n=TRUE)
     checkZrank	(reTrms$ Zt,	n=n, control, nonSmall = 1e6, allow.n=TRUE)
@@ -399,7 +408,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
 
     ## fixed-effects model matrix X - remove random parts from formula:
     form <- formula
-    form[[3]] <- if(is.null(nb <- nobars(form[[3]]))) 1 else nb
+    RHSForm(form) <- if(is.null(nb <- nobars(RHSForm(form)))) 1 else nb
     X <- model.matrix(form, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     p <- ncol(X)
     if ((rankX <- rankMatrix(X)) < p)
@@ -424,13 +433,17 @@ mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L,
                                  n=nrow(X), list(X=X)))
     if (missing(fr)) rho$resp <- mkRespMod(family=family, ...)
     else rho$resp             <- mkRespMod(fr, family=family)
-    if (length(unique(rho$resp$y)) < 2L)
-        stop("Response is constant - cannot fit the model")
-    rho$verbose     <- as.integer(verbose)
-    ## initialize (from mustart)
-    .Call(glmerLaplace, rho$pp$ptr(), rho$resp$ptr(), 0L, control$tolPwrss, verbose)
-    rho$lp0         <- rho$pp$linPred(1) # each pwrss opt begins at this eta
-    rho$pwrssUpdate <- glmerPwrssUpdate
+    ## allow trivial y
+    if (length(y <- rho$resp$y)>0) {
+        if (length(unique(y)) < 2L)
+            stop("Response is constant - cannot fit the model")
+        rho$verbose     <- as.integer(verbose)
+    
+        ## initialize (from mustart)
+        .Call(glmerLaplace, rho$pp$ptr(), rho$resp$ptr(), 0L, control$tolPwrss, verbose)
+        rho$lp0         <- rho$pp$linPred(1) # each pwrss opt begins at this eta
+        rho$pwrssUpdate <- glmerPwrssUpdate
+    }
     rho$lower       <- reTrms$lower     # not needed in rho?
     devfun <- mkdevfun(rho, 0L, verbose, control)
                                         #if (devFunOnly && !nAGQ) return(devfun)

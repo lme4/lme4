@@ -57,7 +57,7 @@ params <- list(theta=0.5,beta=c(2,-1,-2,-3))
 simdat <- with(cbpp,expand.grid(herd=levels(herd),period=factor(1:4)))
 simdat$size <- 15
 simdat$incidence <- sample(0:1,size=nrow(simdat),replace=TRUE)
-lme4:::simulate.merMod(formula=formula(gm1),newdata=simdat,family=binomial,
+form <- formula(gm1)[-2]
+lme4:::simulate.merMod(formula=form,newdata=simdat,family=binomial,
     newparams=params)
 }
-

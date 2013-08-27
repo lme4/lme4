@@ -223,11 +223,13 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
             fit.na.action <- attr(object@frame,"na.action")  ## original NA action
         } else {
             ## evaluate new fixed effect
-            RHS <- formula(object,fixed.only=TRUE)[-2]
+            RHS <- formula(substitute(~R,
+                              list(R=RHSForm(formula(object,fixed.only=TRUE)))))
             Terms <- terms(object,fixed.only=TRUE)
-            X <- model.matrix(RHS, mfnew <- model.frame(delete.response(Terms),
-                                                        newdata,
-                                                        na.action=na.action),
+            mfnew <- model.frame(delete.response(Terms),
+                                 newdata,
+                                 na.action=na.action)
+            X <- model.matrix(RHS, mfnew,
                               contrasts.arg=attr(X_orig,"contrasts"))
             fit.na.action <- attr(mfnew,"na.action")
         }
@@ -298,16 +300,18 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                  sQuote("formula"),", ",sQuote("newdata"),", and ",
                  sQuote("newparams"))
         }
+        
         ## construct fake-fitted object from data, params
         if (is.null(family)) {
-            lmod <- lFormula(formula,newdata)
+            lmod <- lFormula(formula,newdata,
+                             control=lmerControl(check.formula.LHS="ignore"))
             devfun <- do.call(mkLmerDevfun, lmod)
             object <- mkMerMod(environment(devfun),
                                ## (real parameters will be filled in later)
                                opt=list(par=NA,fval=NA,conv=NA),
                                lmod$reTrms,fr=lmod$fr)
         } else {
-            glmod <- glFormula(formula,newdata,family=family)
+            glmod <- glFormula(formula,newdata,family=family,control=glmerControl(check.formula.LHS="ignore"))
             devfun <- do.call(mkGlmerDevfun, glmod)
             object <- mkMerMod(environment(devfun),
                                ## (real parameters will be filled in later)
@@ -421,4 +425,70 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     row.names(val) <- nm
     attr(val, "seed") <- RNGstate
     val
+}
+
+########################
+## modified from stats/family.R
+binomial_simfun <- function(object, nsim,ftd=fitted(object)) {
+    n <- length(ftd)
+    ntot <- n*nsim
+    wts <- weights(object)
+    if (any(wts %% 1 != 0))
+        stop("cannot simulate from non-integer prior.weights")
+    ## Try to fathom out if the original data were
+    ## proportions, a factor or a two-column matrix
+    if (!is.null(m <- model.frame(object))) {
+        y <- model.response(m)
+        if(is.factor(y)) {
+            ## ignore weights
+            yy <- factor(1+rbinom(ntot, size = 1, prob = ftd),
+                         labels = levels(y))
+            split(yy, rep(seq_len(nsim), each = n))
+        } else if(is.matrix(y) && ncol(y) == 2) {
+            yy <- vector("list", nsim)
+            for (i in seq_len(nsim)) {
+                Y <- rbinom(n, size = wts, prob = ftd)
+                YY <- cbind(Y, wts - Y)
+                colnames(YY) <- colnames(y)
+                yy[[i]] <- YY
+            }
+            yy
+        } else
+            rbinom(ntot, size = wts, prob = ftd)/wts
+    } else rbinom(ntot, size = wts, prob = ftd)/wts
+}
+
+poisson_simfun <- function(object, nsim, ftd=fitted(object)) {
+        ## A Poisson GLM has dispersion fixed at 1, so prior weights
+        ## do not have a simple unambiguous interpretation:
+        ## they might be frequency weights or indicate averages.
+        wts <- object$prior.weights
+        if (any(wts != 1)) warning("ignoring prior weights")
+        rpois(nsim*length(ftd), ftd)
+    }
+
+
+## FIXME: need a gamma.shape.merMod method
+Gamma_simfun <- function(object, nsim, ftd=fitted(object)) {
+    wts <- weights(object)
+    if (any(wts != 1)) message("using weights as shape parameters")
+    ftd <- fitted(object)
+    shape <- MASS::gamma.shape(object)$alpha * wts
+    rgamma(nsim*length(ftd), shape = shape, rate = shape/ftd)
+}
+
+## FIXME: include without inducing SuppDists dependency?
+## inverse.gaussian_simfun <- function(object, nsim, ftd=fitted(object)) {
+##     if(is.null(tryCatch(loadNamespace("SuppDists"),
+##                         error = function(e) NULL)))
+##         stop("need CRAN package 'SuppDists' for the 'inverse.gaussian' family")
+##     wts <- weights(object)
+##     if (any(wts != 1)) message("using weights as inverse variances")
+##     SuppDists::rinvGauss(nsim * length(ftd), nu = ftd,
+##                          lambda = wts/summary(object)$dispersion)
+## }
+
+negative.binomial_simfun <- function (object, nsim, ftd=fitted(object)) 
+{
+    val <- rnbinom(nsim * length(ftd), mu=ftd, size=.Theta)
 }

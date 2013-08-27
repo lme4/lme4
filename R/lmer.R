@@ -958,7 +958,7 @@ fixef.merMod <- function(object, ...)
     structure(object@beta, names = dimnames(object@pp$X)[[2]])
 
 getFixedFormula <- function(form) {
-    form[[3]] <- if (is.null(nb <- nobars(form[[3]]))) 1 else nb
+    RHSForm(form) <- if (is.null(nb <- nobars(RHSForm(form)))) 1 else nb
     form
 }
 
