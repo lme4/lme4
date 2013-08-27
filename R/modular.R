@@ -90,7 +90,7 @@ checkCtrlLevels <- function(cstr,val,smallOK=FALSE) {
     invisible(NULL)
 }
 
-checkZdims <- function(Ztlist, n, allow.n=FALSE) {
+checkZdims <- function(Ztlist, n, ctrl, allow.n=FALSE) {
     ## Ztlist: list of Zt matrices - one for each r.e. term
     ## n: no. observations
     ## allow.n: allow as many random-effects as there are observations
@@ -99,21 +99,25 @@ checkZdims <- function(Ztlist, n, allow.n=FALSE) {
     ## For each r.e. term, test if Z has more columns than rows to detect
     ## unidentifiability:
     stopifnot(is.list(Ztlist), is.numeric(n))
+    cstr <- "check.nobs.vs.nRE"
+    checkCtrlLevels(cstr,ctrl[[cstr]])
     term.names <- names(Ztlist)
     rows <- vapply(Ztlist, nrow, numeric(1L))
     cols <- vapply(Ztlist, ncol, numeric(1L))
     stopifnot(all(cols == n))
-    for(i in seq_along(Ztlist)) {
-        if(allow.n) {
-            condition <- rows[i] > cols[i]
-            cmp <- ">"
-        } else {
-            condition <- rows[i] >= cols[i]
-            cmp <- ">="
+    if (doCheck(cc <- ctrl[[cstr]])) {
+        for(i in seq_along(Ztlist)) {
+            if(allow.n) {
+                condition <- rows[i] > cols[i]
+                cmp <- ">"
+            } else {
+                condition <- rows[i] >= cols[i]
+                cmp <- ">="
+            }
+            if(condition)
+                stop(gettextf("no. random effects (=%d) %s no. observations (=%d) for term: (%s)",
+                              rows[i], cmp, n, term.names[i]), call.=FALSE)
         }
-        if(condition)
-            stop(gettextf("no. random effects (=%d) %s no. observations (=%d) for term: (%s)",
-                          rows[i], cmp, n, term.names[i]), call.=FALSE)
     }
 }
 
@@ -239,7 +243,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     ## random effects and terms modules
     reTrms <- mkReTrms(findbars(RHSForm(formula)), fr)
     checkNlevels(reTrms$flist, n=n, control)
-    checkZdims(reTrms$Ztlist, n=n, allow.n=FALSE)
+    checkZdims(reTrms$Ztlist, n=n, control, allow.n=FALSE)
     checkZrank(reTrms$Zt, n=n, control, nonSmall = 1e6)
 
     ## fixed-effects model matrix X - remove random effects from formula:
@@ -445,7 +449,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     reTrms <- mkReTrms(findbars(RHSForm(formula)), fr)
     ## TODO: allow.n = !useSc {see FIXME below}
     checkNlevels(reTrms$ flist, n=n, control, allow.n=TRUE)
-    checkZdims(reTrms$Ztlist, n=n, allow.n=TRUE)
+    checkZdims(reTrms$Ztlist, n=n, control, allow.n=TRUE)
     checkZrank(reTrms$ Zt, n=n, control, nonSmall = 1e6, allow.n=TRUE)
 
     ## FIXME: adjust test for families with estimated scale parameter:
