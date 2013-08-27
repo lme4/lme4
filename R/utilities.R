@@ -31,7 +31,8 @@ mkReTrms <- function(bars, fr) {
   stopifnot(is.list(bars), all(sapply(bars, is.language)),
             inherits(fr, "data.frame"))
   names(bars) <- unlist(lapply(bars, function(x) deparse(x[[3]])))
-  
+  term.names <- unlist(lapply(bars, function(x) deparse(x)))
+
   ## auxiliary {named, for easier inspection}:
   mkBlist <- function(x) {
     frloc <- fr
@@ -45,7 +46,7 @@ mkReTrms <- function(bars, fr) {
            deparse(x[[3]]))
     nl <- length(levels(ff))
     mm <- model.matrix(eval(substitute( ~ foo,
-                                        list(foo = x[[2]]))), fr)
+                                        list(foo = x[[2]]))), frloc)
     nc <- ncol(mm)
     nseq <- seq_len(nc)
     sm <- as(ff, "sparseMatrix")
@@ -63,16 +64,18 @@ mkReTrms <- function(bars, fr) {
   }
   blist <- lapply(bars, mkBlist)
   nl <- unlist(lapply(blist, "[[", "nl")) # no. of levels per term
-  
+
   ## order terms stably by decreasing number of levels in the factor
-  if (any(diff(nl)) > 0) {
+  if (any(diff(nl) > 0)) {
     ord <- rev(order(nl))
     blist <- blist[ord]
     nl <- nl[ord]
   }
-  Zt <- do.call(rBind, lapply(blist, "[[", "sm"))
+  Ztlist <- lapply(blist, "[[", "sm")
+  Zt <- do.call(rBind, Ztlist)
+  names(Ztlist) <- term.names
   q <- nrow(Zt)
-  
+
   ## Create and install Lambdat, Lind, etc.  This must be done after
   ## any potential reordering of the terms.
   cnms <- lapply(blist, "[[", "cnms")
@@ -125,6 +128,7 @@ mkReTrms <- function(bars, fr) {
   attr(fl, "assign") <- asgn
   ll$flist <- fl
   ll$cnms <- cnms
+  ll$Ztlist <- Ztlist
   ll
 } ## {mkReTrms}
 
@@ -173,7 +177,7 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
     if (!is.null(REML)) rho$REML <- REML
     rho$etastart <- fr$etastart
     rho$mustart <- fr$mustart
-                                        #N <- n <- nrow(fr)
+    ##N <- n <- nrow(fr)
     if (!is.null(nlenv)) {
         stopifnot(is.language(nlmod),
                   is.environment(nlenv),
@@ -207,10 +211,8 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
                               pnames=pnames), as.list(rho))))
     }
     stopifnot(inherits(family, "family"))
-
-                                        # need weights for initializing evaluation
+    ## need weights for initializing evaluation
     rho$nobs <- n
-
     ## allow trivial objects, e.g. for simulation
     if (length(y)>0) eval(family$initialize, rho) 
     family$initialize <- NULL     # remove clutter from str output
@@ -243,7 +245,7 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
 ##' findbars(~ 1 + (1|batch/cask))
 ##' ## => list of length 2:  list ( 1 | cask:batch ,  1 | batch)
 ##' identical(findbars(~ 1 + (Days || Subject)),
-##'     findbars(~ 1 + (1|Subject) + (0+Days|Subject))) 
+##'     findbars(~ 1 + (1|Subject) + (0+Days|Subject)))
 ##' \dontshow{
 ##' stopifnot(identical(findbars(f1),
 ##'                     list(expression(Days | Subject)[[1]])))
@@ -253,8 +255,8 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
 ##' @export
 findbars <- function(term)
 {
-	
-	
+
+
 	## Recursive function applied to individual terms
 	fb <- function(term)
 	{
@@ -284,7 +286,7 @@ findbars <- function(term)
 				stop("unparseable formula for grouping factor")
 			list(slashTerms(x[[2]]), slashTerms(x[[3]]))
 		}
-		
+
 		if (!is.list(bb)) return(expandSlash(list(bb)))
 		## lapply(unlist(... - unlist returns a flattened list
 		unlist(lapply(bb, function(x) {
@@ -297,7 +299,7 @@ findbars <- function(term)
 		}))
 	}
 	if(is(term, "formula")){
-		modterm <- expandDoubleVerts(term[[length(term)]])	
+		modterm <- expandDoubleVerts(term[[length(term)]])
 	} else modterm <- expandDoubleVerts(term)
 	expandSlash(fb(modterm))
 }
@@ -317,16 +319,13 @@ expandDoubleVerts <- function(term)
 {
     expandDoubleVert <- function(term){
         frml <- formula(paste0("~", deparse(term[[2]])))
-                                        #need term.labels not all.vars to capture interactions too:
+        ##need term.labels not all.vars to capture interactions too:
         newtrms <- paste0("0+", attr(terms(frml), "term.labels"))
-        
         if(attr(terms(frml), "intercept")!=0) newtrms <- c("1", newtrms)
-        
         as.formula(paste("~(", paste(sapply(newtrms, function(trm){
             paste0(trm, "|", deparse(term[[3]]))  
         }), collapse=")+("), ")"))[[2]]
     }  
-    
     if (is.name(term) || !is.language(term)) return(term)
     if (term[[1]] == as.name("(")) {
         term[[2]] <- expandDoubleVerts(term[[2]])
@@ -734,6 +733,7 @@ checkFormulaData <- function(formula,data,checkLHS=TRUE,debug=FALSE) {
             denv <- list2env(data)
         }
     }
+<<<<<<< HEAD
     ## FIXME: set enclosing environment of denv to environment(formula), or parent.frame(2L) ?
     if (debug) {
         cat("Debugging parent frames in checkFormulaData:\n")

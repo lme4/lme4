@@ -1,5 +1,5 @@
 Package: lme4
-Version: 1.0-1
+Version: 1.1-0
 Date: 2013-08-17
 Title: Linear mixed-effects models using Eigen and S4
 Authors@R: c(person("Douglas","Bates",
@@ -29,7 +29,8 @@ Imports:
     splines,
     MASS,
     nlme,
-    minqa(>= 1.1.15)
+    minqa(>= 1.1.15),
+    parallel
 Suggests:
     boot,
     PKPDmodels,
@@ -41,7 +42,8 @@ Suggests:
     plyr,
     reshape,
     Rcpp (>= 0.10.1),
-    RcppEigen (>= 0.3.1.2)
+    RcppEigen (>= 0.3.1.2),
+    pbkrtest
 LazyData: yes
 License: GPL (>=2)
 URL: http://lme4.r-forge.r-project.org/
@@ -62,6 +64,6 @@ Collate:
     'plot.R'
     'vcconv.R'
     'modular.R'
-    'hooks.r'
+    'hooks.R'
     'lmerControl.R'
 BuildVignettes: yes

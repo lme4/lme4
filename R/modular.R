@@ -79,11 +79,51 @@ RHSForm <- function(formula) {
     formula
 }
 
+##' @param cstr name of control being set
+##' @param val value of control being set
+checkCtrlLevels <- function(cstr,val,smallOK=FALSE) {
+    bvals <- c("stop","warning","ignore")
+    if (smallOK) bvals <- outer(bvals,c("","Small"),paste0)
+    if (!is.null(val) && !val %in% bvals)
+        stop("invalid control level ",sQuote(val)," in ",cstr,": valid options are {",
+             paste(sapply(bvals,sQuote),collapse=","),"}")
+    invisible(NULL)
+}
+
+checkZdims <- function(Ztlist, n, allow.n=FALSE) {
+    ## Ztlist: list of Zt matrices - one for each r.e. term
+    ## n: no. observations
+    ## allow.n: allow as many random-effects as there are observations
+    ## for each term?
+    ##
+    ## For each r.e. term, test if Z has more columns than rows to detect
+    ## unidentifiability:
+    stopifnot(is.list(Ztlist), is.numeric(n))
+    term.names <- names(Ztlist)
+    rows <- vapply(Ztlist, nrow, numeric(1L))
+    cols <- vapply(Ztlist, ncol, numeric(1L))
+    stopifnot(all(cols == n))
+    for(i in seq_along(Ztlist)) {
+        if(allow.n) {
+            condition <- rows[i] > cols[i]
+            cmp <- ">"
+        } else {
+            condition <- rows[i] >= cols[i]
+            cmp <- ">="
+        }
+        if(condition)
+            stop(gettextf("no. random effects (=%d) %s no. observations (=%d) for term: (%s)",
+                          rows[i], cmp, n, term.names[i]), call.=FALSE)
+    }
+}
+
+
 checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
 {
     stopifnot(is.list(ctrl), is.numeric(n), is.numeric(nonSmall))
     cstr <- "check.nobs.vs.rankZ"
     if (doCheck(cc <- ctrl[[cstr]])) { ## not NULL or "ignore"
+        checkCtrlLevels(cstr,ctrl[[cstr]],smallOK=TRUE)
 	d <- dim(Zt)
 	doTr <- d[1L] < d[2L] # Zt is "wide" => qr needs transpose(Zt)
 	if(!(grepl("Small",cc) && prod(d) > nonSmall)) {
@@ -115,6 +155,7 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
     nlevelVec <- unlist(lapply(flist, function(x) nlevels(droplevels(x)) ))
     ## Part 1 ----------------
     cstr <- "check.nlev.gtr.1"
+    checkCtrlLevels(cstr,ctrl[[cstr]])
     if (doCheck(cc <- ctrl[[cstr]]) && any(nlevelVec < 2)) {
 	wstr <- "grouping factors must have > 1 sampled level"
 	switch(cc,
@@ -123,13 +164,18 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
 	       stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
     }
     ## Part 2 ----------------
-    if (any(if(allow.n) nlevelVec > n else nlevelVec >= n))
-	stop(gettextf(
-	    "number of levels of each grouping factor must be %s number of observations",
-	    if(allow.n) "<=" else "<"), domain=NA)
+    cstr <- "check.nobs.vs.nlev"
+    checkCtrlLevels(cstr,ctrl[[cstr]])
+    if (doCheck(cc <- ctrl[[cstr]])) {
+        if (any(if(allow.n) nlevelVec > n else nlevelVec >= n))
+            stop(gettextf(
+                "number of levels of each grouping factor must be %s number of observations",
+                if(allow.n) "<=" else "<"), domain=NA)
+    }
 
     ## Part 3 ----------------
     cstr <- "check.nlev.gtreq.5"
+    checkCtrlLevels(cstr,ctrl[[cstr]])
     if (doCheck(cc <- ctrl[[cstr]]) && any(nlevelVec < 5)) {
 	wstr <- "grouping factors with < 5 sampled levels may give unreliable estimates"
 	switch(cc,
@@ -176,7 +222,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     # get rid of || terms so update() works as expected
     RHSForm(formula) <- expandDoubleVerts(RHSForm(formula))
     mc$formula <- formula
-    	
+
     m <- match(c("data", "subset", "weights", "na.action", "offset"),
                names(mf), 0)
     mf <- mf[c(1, m)]
@@ -192,8 +238,9 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     n <- nrow(fr)
     ## random effects and terms modules
     reTrms <- mkReTrms(findbars(RHSForm(formula)), fr)
-    checkNlevels(reTrms$ flist, n=n, control)
-    checkZrank	(reTrms$ Zt,	n=n, control, nonSmall = 1e6)
+    checkNlevels(reTrms$flist, n=n, control)
+    checkZdims(reTrms$Ztlist, n=n, allow.n=FALSE)
+    checkZrank(reTrms$Zt, n=n, control, nonSmall = 1e6)
 
     ## fixed-effects model matrix X - remove random effects from formula:
     fixedform <- formula
@@ -398,7 +445,8 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     reTrms <- mkReTrms(findbars(RHSForm(formula)), fr)
     ## TODO: allow.n = !useSc {see FIXME below}
     checkNlevels(reTrms$ flist, n=n, control, allow.n=TRUE)
-    checkZrank	(reTrms$ Zt,	n=n, control, nonSmall = 1e6, allow.n=TRUE)
+    checkZdims(reTrms$Ztlist, n=n, allow.n=TRUE)
+    checkZrank(reTrms$ Zt, n=n, control, nonSmall = 1e6, allow.n=TRUE)
 
     ## FIXME: adjust test for families with estimated scale parameter:
     ##   useSc is not defined yet/not defined properly?

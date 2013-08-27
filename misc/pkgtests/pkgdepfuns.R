@@ -315,7 +315,32 @@ doPkgDeptests <- function(pkg="lme4",
                           checkdir=file.path(testdir,"check"),
                           pkg_tarball=NULL,
                           skippkgs=character(0),
-                          verbose=TRUE) {
+                          verbose=TRUE,
+                          xvfb=TRUE) {
+
+    ## from tools::check_package_in_dir
+    ## Xvfb usage and options.
+    ## We do not use Xvfb on Windows.
+    ## Otherwise, if argument 'xvfb' is
+    ## * a logical, Xvfb is used only if identical to TRUE;
+    ## * something else, then as.character(xvfb) gives the Xvfb options.
+    xvfb_options <- "-screen 0 1280x1024x24"
+    if(.Platform$OS.type == "windows")
+        xvfb <- FALSE
+    else if(is.logical(xvfb)) {
+        if(!identical(xvfb, TRUE))
+            xvfb <- FALSE
+    } else {
+        xvfb_options <- as.character(xvfb)
+        xvfb <- TRUE
+    }
+
+    if(xvfb) {
+        if (length(which_xvfb <- system("which Xvfb",intern=TRUE))==0)
+            stop("Xvfb not installed")
+        pid <- tools:::start_virtual_X11_fb(xvfb_options)
+        on.exit(tools:::close_virtual_X11_db(pid), add = TRUE)
+    }
 
     if (!file.exists(libdir)) dir.create(libdir,showWarnings=FALSE)
     if (!file.exists(checkdir)) dir.create(checkdir,showWarnings=FALSE)

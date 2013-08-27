@@ -44,6 +44,10 @@ namedList <- function(...) {
 ##' @param check.nlev.gtreq.5 character - rules for checking whether all random effects have >= 5 levels. "ignore": skip the test. "warn": warn if test fails. "stop": throw an error if test fails.
 ##' @param check.nlev.gtr.1 character - rules for checking whether all random effects have > 1 level. As for \code{check.nlevel.gtr.5}.
 ##' @param check.nobs.vs.rankZ character - rules for checking whether the number of observations is greater than (or greater than or equal to) the rank of the random effects design matrix (Z), usually necessary for identifiable variances.  As for \code{check.nlevel.gtreq.5}, with the addition of "warnSmall" and "stopSmall", which run the test only if the dimensions of \code{Z} are <1e6. \code{nobs>rank(Z)} will be tested for LMMs and GLMMs with estimated scale parameters; \code{nobs>=rank(Z)} will be tested for GLMMs with fixed scale parameter.
+## FIXME: add (something like) allow.nobs.eq.nlev (and/or rankZ), and
+## add better logic for distinguishing whether the scale parameter is
+## being estimated
+##' @param check.nobs.vs.nlev character - rules for checking whether the number of observations is less than (or less than or equal to) the number of levels of every grouping factor, usually necessary for identifiable variances.  As for \code{check.nlevel.gtreq.5}: \code{nobs<nlevels} will be tested for LMMs and GLMMs with estimated scale parameters; \code{nobs<=nlevels} will be tested for GLMMs with fixed scale parameter.
 ##' @param \dots additional arguments to be passed to the nonlinear optimizer (see \code{\link{Nelder_Mead}},
 ##'    \code{\link[minqa]{bobyqa}}). In particular, both \code{Nelder_Mead} and \code{bobyqa} use \code{maxfun} to specify
 ##'    the maximum number of function evaluations they will try before giving up - in contrast to \code{\link{optim}} and \code{optimx}-wrapped optimizers, which use \code{maxit}.
@@ -53,7 +57,8 @@ namedList <- function(...) {
 lmerControl <- function(optimizer="Nelder_Mead",
                         restart_edge=TRUE,
                         sparseX=FALSE,
-                        check.nobs.vs.rankZ="stopSmall",
+                        check.nobs.vs.rankZ="warningSmall",
+                        check.nobs.vs.nlev="stop",
                         check.nlev.gtreq.5="ignore",
                         check.nlev.gtr.1="stop",
                         check.formula.LHS="stop",
@@ -73,6 +78,7 @@ lmerControl <- function(optimizer="Nelder_Mead",
     structure(namedList(optimizer, restart_edge,
                         checkControl =
 		   namedList(check.nobs.vs.rankZ,
+                             check.nobs.vs.nlev,
 			     check.nlev.gtreq.5,
 			     check.nlev.gtr.1,
                              check.formula.LHS),
@@ -91,7 +97,8 @@ lmerControl <- function(optimizer="Nelder_Mead",
 glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
                          restart_edge=FALSE,
                          sparseX=FALSE,
-                         check.nobs.vs.rankZ="stopSmall",
+                         check.nobs.vs.rankZ="warningSmall",
+                         check.nobs.vs.nlev="stop",
                          check.nlev.gtreq.5="ignore",
                          check.nlev.gtr.1="stop",
                          check.formula.LHS="stop",
@@ -123,6 +130,7 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
 			compDev,
 			checkControl=
 			namedList(check.nobs.vs.rankZ,
+                                  check.nobs.vs.nlev,
 				  check.nlev.gtreq.5,
 				  check.nlev.gtr.1,
                                   check.formula.LHS),

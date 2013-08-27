@@ -9,8 +9,10 @@
       \item \code{check.numobs.*} and \code{check.numlev.*} in
       \code{(g)lmerControl} have been changed (from recent development
       versions) to \code{check.nobs.*} and
-      \code{check.nlev.*} respectively, and the default value of
-      \code{check.nlev.gtreq.5} has been changed to \code{"ignore"}
+      \code{check.nlev.*} respectively, and the default values of
+      \code{check.nlev.gtreq.5} and \code{check.nobs.vs.rankZ}
+      have been changed to \code{"ignore"} and \code{"warningSmall"}
+      respectively
       \item in \code{(g)lmerControl}, arguments to the optimizer
       should be passed as a list called \code{optCtrl}, rather than
       specified as additional (ungrouped) arguments

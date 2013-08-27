@@ -1,3 +1,7 @@
 misc/cache
 misc/issues
 misc/oldcode
+misc/pkgtests
+misc/pkgtests2
+^.*\.Rproj$
+^\.Rproj\.user$

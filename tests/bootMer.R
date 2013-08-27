@@ -1,9 +1,14 @@
 library(lme4)
 library(testthat)
 (testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
-mySumm <- function(.) { s <- sigma(.)
-                        c(beta =getME(., "beta"),
-                          sigma = s, sig01 = unname(s * getME(., "theta"))) }
+
+mySumm <- function(.) {
+  s <- sigma(.)
+  c(beta =getME(., "beta"),
+    sigma = s,
+    sig01 = unname(s * getME(., "theta"))) 
+}
+
 fm1 <- lmer(Yield ~ 1|Batch, Dyestuff)
 boo01 <- bootMer(fm1, mySumm, nsim = 10)
 boo02 <- bootMer(fm1, mySumm, nsim = 10, use.u = TRUE)
@@ -36,3 +41,11 @@ set.seed(101)
 ## FIXME: sensitive to step-halving PIRLS tests
 ## expect_warning(cc <- confint(cmod,method="boot",nsim=10,quiet=TRUE,
 ##              .progress="txt",PBargs=list(style=3)),"some bootstrap runs failed")
+
+if(.Platform$OS.type != "windows"){
+  boo01P <- bootMer(fm1, mySumm, nsim = 10, parallel="multicore", ncpus=2)  
+}
+
+boo01P.snow <- bootMer(fm1, mySumm, nsim = 10, parallel="snow", ncpus=2)
+
+
