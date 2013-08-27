@@ -1249,7 +1249,7 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
     stopifnot(is(rr <- x@resp, "lmerResp"))
     rho <- new.env(parent=parent.env(environment()))
     rho$resp <- new(class(rr), y=rr$y, offset=rr$offset, weights=rr$weights, REML=0L)
-    xpp <- x@pp
+    xpp <- x@pp$copy()
     rho$pp <- new(class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat,
                   Lind=xpp$Lind, theta=xpp$theta, n=nrow(xpp$X))
     devfun <- mkdevfun(rho, 0L)
