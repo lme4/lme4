@@ -733,7 +733,6 @@ checkFormulaData <- function(formula,data,checkLHS=TRUE,debug=FALSE) {
             denv <- list2env(data)
         }
     }
-<<<<<<< HEAD
     ## FIXME: set enclosing environment of denv to environment(formula), or parent.frame(2L) ?
     if (debug) {
         cat("Debugging parent frames in checkFormulaData:\n")
