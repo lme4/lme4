@@ -65,23 +65,6 @@ mkReTrms <- function(bars, fr) {
   blist <- lapply(bars, mkBlist)
   nl <- unlist(lapply(blist, "[[", "nl")) # no. of levels per term
 
-  ## For each r.e. term, test if Z has more columns than rows to detect
-  ## unidentifiability:
-  ## dim <- lapply(blist, function(b) dim(b$sm))
-  rows <- vapply(blist, function(b) nrow(b$sm), numeric(1L))
-  cols <- vapply(blist, function(b) ncol(b$sm), numeric(1L))
-  for(i in seq_along(blist)) {
-      ## Zti <- blist[[i]][["sm"]]
-      if(rows[i] > cols[i]) {
-          ## if(dim[[i]][1] > dim[[i]][2]) {
-          ## if(nrow(Zti) > ncol(Zti)) {
-          term.names <- unlist(lapply(bars, function(x) deparse(x)))
-          stop(gettextf("no. random effects (=%d) > no. observations (=%d) for term: (%s)",
-                        ## nrow(Zti), ncol(Zti), term.names[i]), call.=FALSE)
-                        rows[i], cols[i], term.names[i]), call.=FALSE)
-      }
-  }
-
   ## order terms stably by decreasing number of levels in the factor
   if (any(diff(nl) > 0)) {
     ord <- rev(order(nl))
