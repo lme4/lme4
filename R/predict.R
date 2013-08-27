@@ -28,7 +28,10 @@ setParams <- function(object,params,copy=TRUE) {
         ##  decouple them from the original object
         newObj@pp <- newObj@pp$copy()
         newObj@resp <- newObj@resp$copy()
-        if (!is.null(beta <- params$beta)) newObj@pp$setBeta0(beta)
+        if (!is.null(beta <- params$beta)) {
+            newObj@pp$setBeta0(beta)
+            newObj@beta <- beta
+        }
         if (!is.null(theta <- params$theta)) {
             ## where does theta live and how do I set it?
             ## (1) in .@theta
@@ -287,7 +290,31 @@ NULL
 ##' @export
 simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                             ReForm=NA, newdata=NULL, newparams=NULL,
+                            formula=NULL,family=NULL,
                             allow.new.levels=FALSE, na.action=na.pass, ...) {
+    if (missing(object)) {
+        if (is.null(formula) || is.null(newdata) || is.null(newparams)) {
+            stop("if ",sQuote("object")," is missing, must specify all of ",
+                 sQuote("formula"),", ",sQuote("newdata"),", and ",
+                 sQuote("newparams"))
+        }
+        ## construct fake-fitted object from data, params
+        if (is.null(family)) {
+            lmod <- lFormula(formula,newdata)
+            devfun <- do.call(mkLmerDevfun, lmod)
+            object <- mkMerMod(environment(devfun),
+                               ## (real parameters will be filled in later)
+                               opt=list(par=NA,fval=NA,conv=NA),
+                               lmod$reTrms,fr=lmod$fr)
+        } else {
+            glmod <- glFormula(formula,newdata,family=family)
+            devfun <- do.call(mkGlmerDevfun, glmod)
+            object <- mkMerMod(environment(devfun),
+                               ## (real parameters will be filled in later)
+                               opt=list(par=NA,fval=NA,conv=NA),
+                               glmod$reTrms,fr=glmod$fr)
+        }
+    }
     stopifnot((nsim <- as.integer(nsim[1])) > 0,
               is(object, "merMod"))
     if (!is.null(newparams)) {

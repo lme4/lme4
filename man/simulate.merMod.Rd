@@ -50,5 +50,14 @@ gg <- simulate(gm1,1000)
 zeros <- sapply(gg,function(x) sum(x[,"incidence"]==0))
 plot(table(zeros))
 abline(v=sum(cbpp$incidence==0),col=2)
+##
+## simulate from a non-fitted model; in this case we are just
+## replicating the previous model, but
+params <- list(theta=0.5,beta=c(2,-1,-2,-3))
+simdat <- with(cbpp,expand.grid(herd=levels(herd),period=factor(1:4)))
+simdat$size <- 15
+simdat$incidence <- sample(0:1,size=nrow(simdat),replace=TRUE)
+lme4:::simulate.merMod(formula=formula(gm1),newdata=simdat,family=binomial,
+    newparams=params)
 }
 
