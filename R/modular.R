@@ -80,7 +80,35 @@ checkCtrlLevels <- function(cstr,val,smallOK=FALSE) {
              paste(sapply(bvals,sQuote),collapse=","),"}")
     invisible(NULL)
 }
-                     
+
+checkZdims <- function(Ztlist, n, allow.n=FALSE) {
+    ## Ztlist: list of Zt matrices - one for each r.e. term
+    ## n: no. observations
+    ## allow.n: allow as many random-effects as there are observations
+    ## for each term?
+    ##
+    ## For each r.e. term, test if Z has more columns than rows to detect
+    ## unidentifiability:
+    stopifnot(is.list(Ztlist), is.numeric(n))
+    term.names <- names(Ztlist)
+    rows <- vapply(Ztlist, nrow, numeric(1L))
+    cols <- vapply(Ztlist, ncol, numeric(1L))
+    stopifnot(all(cols == n))
+    for(i in seq_along(Ztlist)) {
+        if(allow.n) {
+            condition <- rows[i] > cols[i]
+            cmp <- ">"
+        } else {
+            condition <- rows[i] >= cols[i]
+            cmp <- ">="
+        }
+        if(condition)
+            stop(gettextf("no. random effects (=%d) %s no. observations (=%d) for term: (%s)",
+                          rows[i], cmp, n, term.names[i]), call.=FALSE)
+    }
+}
+
+
 checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
 {
     stopifnot(is.list(ctrl), is.numeric(n), is.numeric(nonSmall))
@@ -185,7 +213,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     # get rid of || terms so update() works as expected
     formula[[3]] <- expandDoubleVerts(formula[[3]])
     mc$formula <- formula
-    	
+
     m <- match(c("data", "subset", "weights", "na.action", "offset"),
                names(mf), 0)
     mf <- mf[c(1, m)]
@@ -201,8 +229,9 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     n <- nrow(fr)
     ## random effects and terms modules
     reTrms <- mkReTrms(findbars(formula[[3]]), fr)
-    checkNlevels(reTrms$ flist, n=n, control)
-    checkZrank	(reTrms$ Zt,	n=n, control, nonSmall = 1e6)
+    checkNlevels(reTrms$flist, n=n, control)
+    checkZdims(reTrms$Ztlist, n=n, allow.n=FALSE)
+    checkZrank(reTrms$Zt, n=n, control, nonSmall = 1e6)
 
     ## fixed-effects model matrix X - remove random effects from formula:
     fixedform <- formula
@@ -407,7 +436,8 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     reTrms <- mkReTrms(findbars(formula[[3]]), fr)
     ## TODO: allow.n = !useSc {see FIXME below}
     checkNlevels(reTrms$ flist, n=n, control, allow.n=TRUE)
-    checkZrank	(reTrms$ Zt,	n=n, control, nonSmall = 1e6, allow.n=TRUE)
+    checkZdims(reTrms$Ztlist, n=n, allow.n=TRUE)
+    checkZrank(reTrms$ Zt, n=n, control, nonSmall = 1e6, allow.n=TRUE)
 
     ## FIXME: adjust test for families with estimated scale parameter:
     ##   useSc is not defined yet/not defined properly?
