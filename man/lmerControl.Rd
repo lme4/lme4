@@ -12,14 +12,18 @@ lmerControl(optimizer = "Nelder_Mead",
     check.nobs.vs.rankZ = "warningSmall",
     check.nobs.vs.nlev = "stop",
     check.nlev.gtreq.5 = "ignore",
-    check.nlev.gtr.1 = "stop", optCtrl = list())
+    check.nlev.gtr.1 = "stop",
+    check.formula.LHS = "stop",
+    optCtrl = list())
 
 glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     restart_edge = FALSE, sparseX = FALSE,
     check.nobs.vs.rankZ = "warningSmall",
     check.nobs.vs.nlev = "stop",
     check.nlev.gtreq.5 = "ignore",
-    check.nlev.gtr.1 = "stop", tolPwrss = 1e-07,
+    check.nlev.gtr.1 = "stop",
+    check.formula.LHS = "stop",
+    tolPwrss = 1e-07,
     compDev = TRUE, optCtrl = list())
 
 nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
@@ -92,6 +96,11 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
   scale parameters; \code{nobs<=nlevels} will be tested for GLMMs with
   fixed scale parameter.}
 
+\item{check.formula.LHS}{ check whether specified formula has
+  a left-hand side. Primarily for internal use within
+  \code{simulate.merMod};
+  \emph{use at your own risk} as it may allow the generation
+  of unstable \code{merMod} objects}
   \item{optCtrl}{a \code{\link{list}} of additional arguments to be
     passed to the nonlinear optimizer (see \code{\link{Nelder_Mead}},
     \code{\link[minqa]{bobyqa}}).  In particular, both

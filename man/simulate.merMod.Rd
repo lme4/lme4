@@ -1,45 +1,61 @@
 \name{simulate.merMod}
 \alias{simulate.merMod}
+\alias{simulate.formula}
 \title{Simulate responses from a \code{\linkS4class{merMod}} object}
 \usage{
   \method{simulate}{merMod} (object, nsim = 1, seed = NULL,
     use.u = FALSE, ReForm=NA, newdata=NULL, newparams=NULL,
-                            allow.new.levels=FALSE, \dots)
+    family=NULL,
+    allow.new.levels=FALSE, na.action=na.pass, \dots)
+  \method{simulate}{formula} (object, family=NULL, \dots)
 }
 \arguments{
-  \item{object}{a fitted model object}
+  \item{object}{a fitted model object or a (one-sided) mixed model
+    formula, as described for \code{\link{lmer}}}
   \item{nsim}{positive integer scalar - the number of
     responses to simulate}
   \item{seed}{an optional seed to be used in
     \code{set.seed} immediately before the simulation so as
     to generate a reproducible sample.}
   \item{use.u}{(logical) if \code{TRUE}, generate a
-  simulation conditional on the current random-effects
-  estimates; if \code{FALSE} generate new Normally
-  distributed random-effects values. (Redundant with \code{ReForm},
-  which is preferred: \code{TRUE} corresponds to \code{ReForm=NULL}
-  (condition on all random effects), while \code{TRUE} corresponds to
-  \code{ReForm=~0} (condition on none of the random effects).)}
-\item{ReForm}{formula for random effects to condition on.  If \code{NULL},
-  include all random effects; if \code{NA} or \code{~0},
-  include no random effects.}
+    simulation conditional on the current random-effects
+    estimates; if \code{FALSE} generate new Normally
+    distributed random-effects values. (Redundant with \code{ReForm},
+    which is preferred: \code{TRUE} corresponds to \code{ReForm=NULL}
+    (condition on all random effects), while \code{TRUE} corresponds to
+    \code{ReForm=~0} (condition on none of the random effects).)}
+  \item{ReForm}{formula for random effects to condition on.  If \code{NULL},
+    include all random effects; if \code{NA} or \code{~0},
+    include no random effects.}
   \item{newdata}{data frame for which to evaluate
     predictions}
   \item{newparams}{new parameters to use in evaluating predictions,
     specified as in the \code{start} parameter for \code{\link{lmer}}
     or \code{\link{glmer}} -- a list with components \code{theta} and/or
     (for GLMMs) \code{beta}}
-    \item{allow.new.levels}{(logical) if FALSE (default),
+  \item{family}{a GLM family, as in \code{\link{glmer}}}
+  \item{allow.new.levels}{(logical) if FALSE (default),
     then any new levels (or NA values) detected in
     \code{newdata} will trigger an error; if TRUE, then the
     prediction will use the unconditional (population-level)
     values for data with previously unobserved levels (or
     NAs)}
+  \item{na.action}{what to do with \code{NA} values in new data:
+    see \code{\link{na.fail}}}
   \item{\dots}{optional additional arguments: none are used at present}
 }
 \description{
   Simulate responses from the model represented by a fitted
   model object
+}
+\details{
+  \itemize{
+    \item{ordinarily \code{simulate} is used to generate new
+      values from an existing, fitted model (\code{merMod} object):
+      however, if \code{formula}, \code{newdata}, and \code{newparams} are
+      specified, \code{simulate} generates the appropriate model
+      structure to simulate from}
+  }
 }
 \examples{
 ## test whether fitted models are consistent with the
@@ -58,6 +74,6 @@ simdat <- with(cbpp,expand.grid(herd=levels(herd),period=factor(1:4)))
 simdat$size <- 15
 simdat$incidence <- sample(0:1,size=nrow(simdat),replace=TRUE)
 form <- formula(gm1)[-2]
-lme4:::simulate.merMod(formula=form,newdata=simdat,family=binomial,
+simulate(form,newdata=simdat,family=binomial,
     newparams=params)
 }

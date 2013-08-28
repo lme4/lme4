@@ -290,7 +290,21 @@ NULL
 ##' abline(v=sum(cbpp$incidence==0),col=2)
 ##' @method simulate merMod
 ##' @export
+##'
+simulate.formula <- function(object, family, ...) {
+    simulateFun(formula=object,family=family,...)
+}
+
 simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
+                            ReForm=NA, newdata=NULL, newparams=NULL,
+                            formula=NULL,family=NULL,
+                            allow.new.levels=FALSE, na.action=na.pass, ...) {
+    mc <- match.call()
+    mc[[1]] <- quote(lme4:::simulateFun)
+    return(eval(mc, parent.frame(1L)))
+}
+
+simulateFun <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                             ReForm=NA, newdata=NULL, newparams=NULL,
                             formula=NULL,family=NULL,
                             allow.new.levels=FALSE, na.action=na.pass, ...) {
