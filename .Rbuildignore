@@ -1,7 +1,5 @@
-misc/cache
-misc/issues
-misc/oldcode
-misc/pkgtests
-misc/pkgtests2
+misc/
+testsx/
+do-roxy
 ^.*\.Rproj$
 ^\.Rproj\.user$
