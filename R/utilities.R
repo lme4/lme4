@@ -28,7 +28,7 @@ if(getRversion() < "2.15")
 mkReTrms <- function(bars, fr) {
   if (!length(bars))
     stop("No random effects terms specified in formula")
-  stopifnot(is.list(bars), all(sapply(bars, is.language)),
+  stopifnot(is.list(bars), vapply(bars, is.language, NA),
             inherits(fr, "data.frame"))
   names(bars) <- unlist(lapply(bars, function(x) deparse(x[[3]])))
   term.names <- unlist(lapply(bars, function(x) deparse(x)))
@@ -45,12 +45,11 @@ mkReTrms <- function(bars, fr) {
       stop("Invalid grouping factor specification, ",
            deparse(x[[3]]))
     nl <- length(levels(ff))
-    mm <- model.matrix(eval(substitute( ~ foo,
-                                        list(foo = x[[2]]))), frloc)
+    mm <- model.matrix(eval(substitute( ~ foo, list(foo = x[[2]]))), frloc)
     nc <- ncol(mm)
     nseq <- seq_len(nc)
     sm <- as(ff, "sparseMatrix")
-    if (nc	> 1)
+    if (nc > 1)
       sm <- do.call(rBind, lapply(nseq, function(i) sm))
     ## hack for NA values contained in factor (FIXME: test elsewhere for consistency?)
     sm@x[] <- t(mm[!is.na(ff),])
@@ -63,7 +62,7 @@ mkReTrms <- function(bars, fr) {
     list(ff = ff, sm = sm, nl = nl, cnms = colnames(mm))
   }
   blist <- lapply(bars, mkBlist)
-  nl <- unlist(lapply(blist, "[[", "nl")) # no. of levels per term
+  nl <- vapply(blist, `[[`, 0L, "nl") # no. of levels per term
 
   ## order terms stably by decreasing number of levels in the factor
   if (any(diff(nl) > 0)) {
@@ -79,7 +78,7 @@ mkReTrms <- function(bars, fr) {
   ## Create and install Lambdat, Lind, etc.  This must be done after
   ## any potential reordering of the terms.
   cnms <- lapply(blist, "[[", "cnms")
-  nc <- sapply(cnms, length)		# no. of columns per term
+  nc <- vapply(cnms, length, 0L)	# no. of columns per term
   nth <- as.integer((nc * (nc+1))/2)	# no. of parameters per term
   nb <- nc * nl			# no. of random effects per term
   stopifnot(sum(nb) == q)
@@ -254,53 +253,51 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
 ##' @export
 findbars <- function(term)
 {
-
-
-	## Recursive function applied to individual terms
-	fb <- function(term)
+    ## Recursive function applied to individual terms
+    fb <- function(term)
+    {
+	if (is.name(term) || !is.language(term)) return(NULL)
+	if (term[[1]] == as.name("(")) return(fb(term[[2]]))
+	stopifnot(is.call(term))
+	if (term[[1]] == as.name('|')) return(term)
+	if (length(term) == 2) return(fb(term[[2]]))
+	c(fb(term[[2]]), fb(term[[3]]))
+    }
+    ## Expand any slashes in the grouping factors returned by fb
+    expandSlash <- function(bb)
+    {
+	## Create the interaction terms for nested effects
+	makeInteraction <- function(x)
 	{
-		if (is.name(term) || !is.language(term)) return(NULL)
-		if (term[[1]] == as.name("(")) return(fb(term[[2]]))
-		stopifnot(is.call(term))
-		if (term[[1]] == as.name('|')) return(term)
-		if (length(term) == 2) return(fb(term[[2]]))
-		c(fb(term[[2]]), fb(term[[3]]))
+	    if (length(x) < 2) return(x)
+	    trm1 <- makeInteraction(x[[1]])
+	    trm11 <- if(is.list(trm1)) trm1[[1]] else trm1
+	    list(substitute(foo:bar, list(foo=x[[2]], bar = trm11)), trm1)
 	}
-	## Expand any slashes in the grouping factors returned by fb
-	expandSlash <- function(bb)
+	## Return the list of '/'-separated terms
+	slashTerms <- function(x)
 	{
-		## Create the interaction terms for nested effects
-		makeInteraction <- function(x)
-		{
-			if (length(x) < 2) return(x)
-			trm1 <- makeInteraction(x[[1]])
-			trm11 <- if(is.list(trm1)) trm1[[1]] else trm1
-			list(substitute(foo:bar, list(foo=x[[2]], bar = trm11)), trm1)
-		}
-		## Return the list of '/'-separated terms
-		slashTerms <- function(x)
-		{
-			if (!("/" %in% all.names(x))) return(x)
-			if (x[[1]] != as.name("/"))
-				stop("unparseable formula for grouping factor")
-			list(slashTerms(x[[2]]), slashTerms(x[[3]]))
-		}
-
-		if (!is.list(bb)) return(expandSlash(list(bb)))
-		## lapply(unlist(... - unlist returns a flattened list
-		unlist(lapply(bb, function(x) {
-			if (length(x) > 2 && is.list(trms <- slashTerms(x[[3]])))
-				return(lapply(unlist(makeInteraction(trms)),
-							  function(trm) substitute(foo|bar,
-							  						 list(foo = x[[2]],
-							  						 	 bar = trm))))
-			x
-		}))
+	    if (!("/" %in% all.names(x))) return(x)
+	    if (x[[1]] != as.name("/"))
+		stop("unparseable formula for grouping factor")
+	    list(slashTerms(x[[2]]), slashTerms(x[[3]]))
 	}
-	if(is(term, "formula")){
-		modterm <- expandDoubleVerts(term[[length(term)]])
-	} else modterm <- expandDoubleVerts(term)
-	expandSlash(fb(modterm))
+
+	if (!is.list(bb))
+	    expandSlash(list(bb))
+	else
+	    unlist(lapply(bb, function(x) {
+		if (length(x) > 2 && is.list(trms <- slashTerms(x[[3]])))
+		    ## lapply(unlist(...)) - unlist returns a flattened list
+		    lapply(unlist(makeInteraction(trms)),
+			   function(trm) substitute(foo|bar, list(foo = x[[2]], bar = trm)))
+		else x
+	    }))
+    }## {expandSlash}
+
+    modterm <- expandDoubleVerts(
+	if(is(term, "formula")) term[[length(term)]] else term)
+    expandSlash(fb(modterm))
 }
 
 ##' From the right hand side of a formula for a mixed-effects model,
@@ -316,37 +313,33 @@ findbars <- function(term)
 ##' @export
 expandDoubleVerts <- function(term)
 {
-	expandDoubleVert <- function(term){
-		frml <- formula(paste0("~", deparse(term[[2]])))
-		#need term.labels not all.vars to capture interactions too:
-		newtrms <- paste0("0+", attr(terms(frml), "term.labels"))
+    expandDoubleVert <- function(term) {
+	frml <- formula(paste0("~", deparse(term[[2]])))
+	## need term.labels not all.vars to capture interactions too:
+	newtrms <- paste0("0+", attr(terms(frml), "term.labels"))
+	if(attr(terms(frml), "intercept")!=0)
+	    newtrms <- c("1", newtrms)
+	as.formula(paste("~(",
+			 paste(vapply(newtrms, function(trm)
+				      paste0(trm, "|", deparse(term[[3]])), ""),
+			       collapse=")+("), ")"))[[2]]
+    }
 
-		if(attr(terms(frml), "intercept")!=0) newtrms <- c("1", newtrms)
-
-		as.formula(paste("~(", paste(sapply(newtrms, function(trm){
-			paste0(trm, "|", deparse(term[[3]]))
-		}), collapse=")+("), ")"))[[2]]
-	}
-
-	if (is.name(term) || !is.language(term)) return(term)
+    if (!is.name(term) && is.language(term)) {
 	if (term[[1]] == as.name("(")) {
-		term[[2]] <- expandDoubleVerts(term[[2]])
+	    term[[2]] <- expandDoubleVerts(term[[2]])
 	}
 	stopifnot(is.call(term))
-	if (term[[1]] == as.name('||')) {
-		term <- expandDoubleVert(term)
-		return(term)
-	}
-	if (length(term) == 2){
-		term[[2]] <- expandDoubleVerts(term[[2]])
-		return(term)
-	}
+	if (term[[1]] == as.name('||'))
+	    return( expandDoubleVert(term) )
+	## else :
 	term[[2]] <- expandDoubleVerts(term[[2]])
-	if(length(term) == 3){
+	if (length(term) != 2) {
+	    if(length(term) == 3)
 		term[[3]] <- expandDoubleVerts(term[[3]])
 	}
-
-	term
+    }
+    term
 }
 
 
@@ -448,25 +441,24 @@ isNested <- function(f1, f2)
 }
 
 subnms <- function(form, nms) {
-  ## Recursive function applied to individual terms
-  sbnm <- function(term)
-  {
-    if (is.name(term))
-      if (any(term == nms)) return(0) else return(term)
-    switch(length(term),
-           return(term),
-{
-  term[[2]] <- sbnm(term[[2]])
-  return(term)
-},
-{
-  term[[2]] <- sbnm(term[[2]])
-  term[[3]] <- sbnm(term[[3]])
-  return(term)
-})
-    NULL
-  }
-  sbnm(form)
+    ## Recursive function applied to individual terms
+    sbnm <- function(term)
+    {
+	if (is.name(term)) {
+	    if (any(term == nms)) 0 else term
+	} else switch(length(term),
+	       term, ## 1
+	   {   ## 2
+	       term[[2]] <- sbnm(term[[2]])
+	       term
+	   },
+	   {   ## 3
+	       term[[2]] <- sbnm(term[[2]])
+	       term[[3]] <- sbnm(term[[3]])
+	       term
+	   })
+    }
+    sbnm(form)
 }
 
 ## Check for a constant term (a literal 1) in an expression
@@ -527,7 +519,7 @@ nlformula <- function(mc) {
   start <- eval(mc$start, parent.frame(2L))
   if (is.numeric(start)) start <- list(nlpars = start)
   stopifnot(is.numeric(nlpars <- start$nlpars),
-            all(sapply(nlpars, length) == 1L),
+            all(vapply(nlpars, length, 0L) == 1L),
             length(pnames <- names(nlpars)) == length(nlpars),
             length(form <- as.formula(mc$formula)) == 3L,
             is(nlform <- eval(form[[2]]), "formula"),
@@ -701,7 +693,7 @@ checkFormulaData <- function(formula,data,debug=FALSE) {
   if (missingData) {
     varex <- function(v,env) exists(v,envir=env,inherits=FALSE)
     allvars <- all.vars(as.formula(formula))
-    allvarex <- function(vvec=allvars,...) { all(sapply(vvec,varex,...)) }
+    allvarex <- function(vvec=allvars,...) all(vapply(vvec,varex, NA, ...))
     if (allvarex(env=(ee <- environment(formula)))) {
       stop("'data' not found, but variables found in environment of formula: ",
            "try specifying 'formula' as a formula rather ",
