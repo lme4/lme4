@@ -1,5 +1,5 @@
 
-R version 3.0.1 Patched (2013-08-13 r63557) -- "Good Sport"
+R version 3.0.1 Patched (2013-08-28 r63747) -- "Good Sport"
 Copyright (C) 2013 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -19,7 +19,7 @@ Type 'q()' to quit R.
 > stopifnot(suppressPackageStartupMessages(require(lme4)))
 > options(show.signif.stars = FALSE)
 > 
-> source(system.file("test-tools.R", package = "Matrix"))# identical3() etc
+> source(system.file("test-tools-1.R", package = "Matrix"))# identical3() etc
 > all.EQ <- function(u,v, ...) all.equal.X(u, v, except = c("call", "frame"), ...)
 > S4_2list <- function(obj) {   # no longer used
 +    sn <- slotNames(obj)
@@ -38,7 +38,6 @@ Type 'q()' to quit R.
 Linear mixed model fit by REML ['lmerMod']
 Formula: Reaction ~ Days + (Days | Subject) 
    Data: sleepstudy 
-
 REML criterion at convergence: 1743.628 
 Random effects:
  Groups   Name        Std.Dev. Corr
@@ -49,12 +48,10 @@ Number of obs: 180, groups: Subject, 18
 Fixed Effects:
 (Intercept)         Days  
      251.41        10.47  
-
 > (fm1a <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, REML = FALSE))
 Linear mixed model fit by maximum likelihood ['lmerMod']
 Formula: Reaction ~ Days + (Days | Subject) 
    Data: sleepstudy 
-
       AIC       BIC    logLik  deviance 
 1763.9393 1783.0971 -875.9697 1751.9393 
 Random effects:
@@ -66,12 +63,10 @@ Number of obs: 180, groups: Subject, 18
 Fixed Effects:
 (Intercept)         Days  
      251.41        10.47  
-
 > (fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
 Linear mixed model fit by REML ['lmerMod']
 Formula: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject) 
    Data: sleepstudy 
-
 REML criterion at convergence: 1743.669 
 Random effects:
  Groups    Name        Std.Dev.
@@ -82,7 +77,6 @@ Number of obs: 180, groups: Subject, 18
 Fixed Effects:
 (Intercept)         Days  
      251.41        10.47  
-
 > anova(fm1, fm2)
 Data: sleepstudy
 Models:
@@ -133,7 +127,6 @@ fm1  6 1763.9 1783.1 -875.97   1751.9 0.0639      1     0.8004
 Linear mixed model fit by REML ['lmerMod']
 Formula: Yield ~ 1 | Batch 
    Data: Dyestuff2 
-
 REML criterion at convergence: 161.8283 
 Random effects:
  Groups   Name        Std.Dev.
@@ -143,22 +136,18 @@ Number of obs: 30, groups: Batch, 6
 Fixed Effects:
 (Intercept)  
       5.666  
-
 > stopifnot(all.equal(coef(summary(fm3)),
 + 		    array(c(5.6656, 0.67838803150, 8.3515624346),
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-
-Time elapsed:  0.98 0.012 0.995 
-
+Time elapsed:  0.802 0.007 0.816 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 Linear mixed model fit by REML ['lmerMod']
 Formula: Reaction ~ Days + (Days | Subject) 
    Data: sleepstudy 
-
 REML criterion at convergence: 1743.628 
 Random effects:
  Groups   Name        Std.Dev. Corr
@@ -169,12 +158,10 @@ Number of obs: 180, groups: Subject, 18
 Fixed Effects:
 (Intercept)         Days  
      251.41        10.47  
-
 > (fm.1 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
 Linear mixed model fit by REML ['lmerMod']
 Formula: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject) 
    Data: sleepstudy 
-
 REML criterion at convergence: 1743.669 
 Random effects:
  Groups    Name        Std.Dev.
@@ -185,7 +172,6 @@ Number of obs: 180, groups: Subject, 18
 Fixed Effects:
 (Intercept)         Days  
      251.41        10.47  
-
 > 
 > #(fmX2 <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy))
 > #(fm.2 <- lmer2(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
@@ -202,8 +188,7 @@ Warning messages:
 > #fmX2s <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
 > 
 > showProc.time() #
-Time elapsed:  0.428 0 0.427 
-
+Time elapsed:  0.317 0.004 0.324 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -280,7 +265,7 @@ attr(,"class")
 [1] "coef.mer"
 > ## check show( <"summary.mer"> ):
 > (sf1 <- summary(fit.1)) # --> now looks as for fit.1
-Linear mixed model fit by REML ['summary.merMod']
+Linear mixed model fit by REML ['lmerMod']
 Formula: y ~ 1 + (1 | group.id) 
 
 REML criterion at convergence: 73.4034 
@@ -326,8 +311,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.768 0.004 0.777 
-
+Time elapsed:  0.498 0.006 0.519 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -384,7 +368,6 @@ Warning messages:
 Linear mixed model fit by REML ['lmerMod']
 Formula: y ~ 0 + lagoon + (1 | habitat) 
    Data: dat 
-
 REML criterion at convergence: 709.7447 
 Random effects:
  Groups   Name        Std.Dev.
@@ -394,7 +377,6 @@ Number of obs: 100, groups: habitat, 20
 Fixed Effects:
 lagoon1  lagoon2  lagoon3  lagoon4  
   101.7    200.3    301.8    400.8  
-
 > 
 > 
 > ### mcmcsamp() :
@@ -444,8 +426,7 @@ lagoon1  lagoon2  lagoon3  lagoon4
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.592 0.004 0.596 
-
+Time elapsed:  0.313 0.001 0.316 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -466,8 +447,7 @@ Warning message:
 In Ops.factor(ff, x1) : + not meaningful for factors
 > 
 > showProc.time() #
-Time elapsed:  1.512 0.004 1.526 
-
+Time elapsed:  1.314 0.007 1.336 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -493,7 +473,6 @@ Time elapsed:  1.512 0.004 1.526
 Linear mixed model fit by REML ['lmerMod']
 Formula: y ~ (1 | f) 
    Data: d 
-
 REML criterion at convergence: 316.1615 
 Random effects:
  Groups   Name        Std.Dev.
@@ -503,13 +482,11 @@ Number of obs: 57, groups: f, 6
 Fixed Effects:
 (Intercept)  
       30.68  
-
 > glmer(y~(1|f),data=d,family=poisson)
 Generalized linear mixed model fit by maximum likelihood ['glmerMod']
  Family: poisson ( log )
 Formula: y ~ (1 | f) 
    Data: d 
-
       AIC       BIC    logLik  deviance 
  354.3560  358.4421 -175.1780  350.3560 
 Random effects:
@@ -519,7 +496,6 @@ Number of obs: 57, groups: f, 6
 Fixed Effects:
 (Intercept)  
       3.217  
-
 > 
 > ## we originally thought that these examples should be
 > ## estimating non-zero variances, but they shouldn't ...
@@ -545,5 +521,4 @@ Fixed Effects:
 > 
 > proc.time()
    user  system elapsed 
-  8.904   0.088   9.022 
-
+  6.980   0.136   7.348 
