@@ -30,10 +30,12 @@
 ## in the original list
 mlist2vec <- function(L) {
     n <- sapply(L,nrow)
-    ## allow for EITHER upper- or lower-triangular input
+    ## allow for EITHER upper- or lower-triangular input;
+    ## in either case, read off in "lower-triangular" order
+    ## (column-wise)
     ff <- function(x) {
         if (all(x[upper.tri(x)]==0)) t(x[lower.tri(x,diag=TRUE)])
-        else x[upper.tri(x,diag=TRUE)]
+        else t(x)[lower.tri(x,diag=TRUE)]
     }
     r <- unlist(lapply(L,ff))
     attr(r,"clen") <- n
