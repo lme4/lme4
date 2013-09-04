@@ -52,7 +52,7 @@ get_clen <- function(v,n=NULL) {
     n
 }
 
-## Convert concatenated vector to matrix list
+## Convert concatenated vector to list of Cholesky factors
 ## (lower triangle or symmetric)
 vec2mlist <- function(v,n=NULL,symm=TRUE) {
     n <- get_clen(v,n)
@@ -64,6 +64,17 @@ vec2mlist <- function(v,n=NULL,symm=TRUE) {
         m0
     },s,n,SIMPLIFY=FALSE)
     m
+}
+
+## Convert concatenated vector to list of ST matrices
+vec2STlist <- function(v, n = NULL){
+  ch <- vec2mlist(v, n, FALSE) # cholesky
+  nch <- length(ch)
+  lapply(ch, function(L) {
+    ST <- L%*%diag(1/diag(L))
+    diag(ST) <- diag(L)
+    ST
+  })
 }
 
 ## convert 'sdcor' format -- diagonal = std dev, off-diag=cor
