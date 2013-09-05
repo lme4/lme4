@@ -21,20 +21,31 @@
   function from the \code{languageR} package which relies
   on \code{mcmcsamp}, will be deeply disappointed by this
   lacuna. Users who need p-values have a variety of
-  options: \itemize{ \item likelihood ratio tests via
-  \code{anova} (MC,+) \item profile confidence intervals
-  via \code{\link{profile.merMod}} and
-  \code{\link{confint.merMod}} (CI,+) \item parametric
-  bootstrap confidence intervals and model comparisons via
-  \code{\link{bootMer}} (or \code{PBmodcomp} in the
-  \code{pbkrtest} package) (MC/CI,*,+) \item for random
-  effects, simulation tests via the \code{RLRsim} package
-  (MC,*) \item for fixed effects, F tests via Kenward-Roger
-  approximation using \code{KRmodcomp} from the
-  \code{pbkrtest} package (MC) \item \code{car::Anova} and
-  \code{lmerTest::anova} provide wrappers for
-  \code{pbkrtest}: \code{lmerTest::anova} also provides t tests via the
-  Satterthwaite approximation (P,*) } In the list above,
+  options:
+  \itemize{
+    \item likelihood ratio tests via \code{anova} (MC,+)
+    \item{profile confidence intervals via \code{\link{profile.merMod}} and
+      \code{\link{confint.merMod}} (CI,+)
+    }
+    \item{parametric bootstrap confidence intervals and model comparisons via
+      \code{\link{bootMer}} (or \code{PBmodcomp} in the
+      \code{pbkrtest} package) (MC/CI,*,+)
+    }
+    \item{for random
+      effects, simulation tests via the \code{RLRsim} package
+      (MC,*)
+    }
+    \item{for fixed effects, F tests via Kenward-Roger
+      approximation using \code{KRmodcomp} from the
+      \code{pbkrtest} package (MC)
+    }
+    \item{\code{car::Anova} and
+      \code{lmerTest::anova} provide wrappers for
+      \code{pbkrtest}: \code{lmerTest::anova} also provides t tests via the
+      Satterthwaite approximation (P,*)
+    }
+  }
+  In the list above,
   the methods marked \code{MC} provide explicit model
   comparisons; \code{CI} denotes confidence intervals; and
   \code{P} denotes parameter-level or sequential tests of
@@ -42,6 +53,9 @@
   provide finite-size corrections (important when the
   number of groups is <50); those marked (+) support GLMMs
   as well as LMMs.
+
+  \code{arm::sim}, or \code{\link{bootMer}}, can be used
+  to compute confidence intervals on predictions.
 
   When all else fails, don't forget to keep p-values in
   perspective:
