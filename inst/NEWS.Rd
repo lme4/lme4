@@ -3,6 +3,16 @@
 \name{NEWS}
 \title{lme4 News}
 \encoding{UTF-8}
+\section{CHANGES IN VERSION 1.1-0}{
+  \subsection{MINOR USER-VISIBLE CHANGES}{
+    \itemize{
+      \item when using the default \code{method="profile"},
+      \code{confint} now returns appropriate upper/lower bounds
+      (-1/1 for correlations, 0/Inf for standard deviations)
+      rather than \code{NA} when appropriate
+    }
+  }
+}
 \section{CHANGES IN VERSION 1.0-1 (2013-08-17)}{
   \subsection{MINOR USER-VISIBLE CHANGES}{
     \itemize{

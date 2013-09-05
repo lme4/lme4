@@ -17,3 +17,18 @@ test_that("bootMer", {
     corvals <- bb[grep("^cor_",rownames(bb)),]
     expect_true(all(abs(corvals)<=1))
 })
+
+context("confint")
+test_that("confint", {
+    load(system.file("testdata","gotway_hessianfly.rda",package="lme4"))
+    ## gotway_hessianfly_fit <- glmer(cbind(y, n-y) ~ gen + (1|block),
+    ##              data=gotway.hessianfly, family=binomial,
+    ##              control=glmerControl(check.nlev.gtreq.5="ignore"))
+    ## gotway_hessianfly_prof <- profile(gotway_hessianfly_fit,which=1)
+    ## save(list=ls(pattern="gotway"),file="gotway_hessianfly.rda")
+    expect_equal(confint(gotway_hessianfly_prof)[1,1],0)
+    ## FIXME: should add tests for {-1,1} bounds on correlations as well
+})
+
+
+

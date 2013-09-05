@@ -190,6 +190,8 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
     upper <- c(upper, rep.int(Inf, p))
     npar1 <- if (isLMM(fitted)) nvp else nptot
 
+    ## check that devfun2() computation for the base parameters is (approx.) the
+    ##  same as the original devfun() computation
     stopifnot(all.equal(unname(dd(opt[seq(npar1)])),base,tol=1e-5))
 
     seqnvp <- intersect(seq_len(npar1),which)
@@ -326,6 +328,8 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
     attr(ans, "forward") <- forspl
     attr(ans, "backward") <- bakspl
     class(ans) <- c("thpr", "data.frame")
+    attr(ans, "lower") <- lower[seqnvp]
+    attr(ans, "upper") <- upper[seqnvp]
     ans
 }
 
@@ -539,6 +543,12 @@ format.perc <- function (probs, digits) {
 confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
 {
     bak <- attr(object, "backward")
+    ## fallback strategy for old profiles that don't have a lower/upper
+    ##  attribute saved ...
+    if (is.null(lower <- attr(object,"lower")))
+        lower <- rep(NA,length(parm))
+    if (is.null(upper <- attr(object,"upper")))
+        upper <- rep(NA,length(parm))
     bnms <- names(bak)
     if (missing(parm)) parm <- bnms
     else if (is.numeric(parm)) parm <- bnms[parm]
@@ -550,8 +560,21 @@ confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
         zeta <- qnorm(a)
         cn <- format.perc(a, 3)
     }
-    ci <- t(sapply(parm, function(nm) predy(bak[[nm]], zeta)))
-    colnames(ci) <- cn
+    ci <- matrix(NA,nrow=length(parm),ncol=2,
+                 dimnames=list(parm,cn))
+    for (i in seq_along(parm)) {
+        nm <- parm[i]
+        ## would like to build this machinery into predy, but
+        ## predy is used in many places and it's much harder to
+        ## tell in general whether an NA indicates a lower or an
+        ## upper bound ...
+        if (!is(b <- bak[[nm]],"try-error")) {
+            p <- predy(b, zeta)
+            if (is.na(p[1])) p[1] <- lower[i]
+            if (is.na(p[2])) p[2] <- upper[i]
+            ci[i,] <- p
+        }
+    }
     ci
 }
 
