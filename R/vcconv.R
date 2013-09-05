@@ -72,8 +72,11 @@ vec2mlist <- function(v,n=NULL,symm=TRUE) {
 vec2STlist <- function(v, n = NULL){
   ch <- vec2mlist(v, n, FALSE) # cholesky
   nch <- length(ch)
+  sdiag <- function(x) { ## 'safe' diag()
+      if (length(x)==1) matrix(x,1,1) else diag(x)
+  }
   lapply(ch, function(L) {
-    ST <- L%*%diag(1/diag(L))
+    ST <- L%*%sdiag(1/sdiag(L))
     diag(ST) <- diag(L)
     ST
   })
