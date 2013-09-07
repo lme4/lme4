@@ -6,6 +6,14 @@
 \section{CHANGES IN VERSION 1.1-0}{
   \subsection{MINOR USER-VISIBLE CHANGES}{
     \itemize{
+      \item \code{getME(.,"ST")} was returning a list
+      containing the Cholesky factorizations that get repeated in
+      Lambda. But this was inconsistent with what \code{ST} represents in
+      \code{lme4.0}. This inconsistency has now been fixed and
+      \code{getME(.,"ST")} is now consistent with the definition of the
+      \code{ST} matrix in \code{lme4.0}. See
+      \code{https://github.com/lme4/lme4/issues/111} for more
+      detail. Thanks to Vince Dorie.
       \item when using the default \code{method="profile"},
       \code{confint} now returns appropriate upper/lower bounds
       (-1/1 for correlations, 0/Inf for standard deviations)
