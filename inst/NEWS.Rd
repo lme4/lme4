@@ -6,6 +6,20 @@
 \section{CHANGES IN VERSION 1.1-0}{
   \subsection{MINOR USER-VISIBLE CHANGES}{
     \itemize{
+      \item when using the default \code{method="profile"},
+      \code{confint} now returns appropriate upper/lower bounds
+      (-1/1 for correlations, 0/Inf for standard deviations)
+      rather than \code{NA} when appropriate
+    }
+  }
+}
+
+\section{CHANGES IN VERSION 1.0-4 (2013-09-08)}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{refit()} now works, again, with lists of
+      length 1, so that e.g. \code{refit(.,simulate(.))} works.
+      (Reported by Gustaf Granath)
       \item \code{getME(.,"ST")} was returning a list
       containing the Cholesky factorizations that get repeated in
       Lambda. But this was inconsistent with what \code{ST} represents in
@@ -14,13 +28,16 @@
       \code{ST} matrix in \code{lme4.0}. See
       \code{https://github.com/lme4/lme4/issues/111} for more
       detail. Thanks to Vince Dorie.
-      \item when using the default \code{method="profile"},
-      \code{confint} now returns appropriate upper/lower bounds
-      (-1/1 for correlations, 0/Inf for standard deviations)
-      rather than \code{NA} when appropriate
+      \item Corrected order of unpacking of standard
+      deviation/correlation components, which affected results
+      from \code{confint(.,method="boot")}. (Reported by Reinhold
+      Kliegl)
+      \item fixed a copying bug that made \code{refitML()}
+      modify the original model
     }
   }
 }
+
 \section{CHANGES IN VERSION 1.0-1 (2013-08-17)}{
   \subsection{MINOR USER-VISIBLE CHANGES}{
     \itemize{
