@@ -27,7 +27,7 @@ test_that("confint", {
     ##              control=glmerControl(check.nlev.gtreq.5="ignore"))
     ## gotway_hessianfly_prof <- profile(gotway_hessianfly_fit,which=1)
     ## save(list=ls(pattern="gotway"),file="gotway_hessianfly.rda")
-    expect_equal(confint(gotway_hessianfly_prof)[1,1],0)
+    ## expect_equal(confint(gotway_hessianfly_prof)[1,1],0)
     ## FIXME: should add tests for {-1,1} bounds on correlations as well
 })
 
