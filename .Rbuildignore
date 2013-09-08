@@ -1,5 +1,9 @@
-misc/cache
-misc/issues
-misc/oldcode
-misc/pkgtests
-misc/pkgtests2
+misc/
+testsx/
+do-roxy
+do-roxy-docs
+^.*\.Rproj$
+^\.Rproj\.user$
+build-pkg
+build-pkg-no
+clean
