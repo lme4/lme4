@@ -3,6 +3,31 @@
 \name{NEWS}
 \title{lme4 News}
 \encoding{UTF-8}
+
+\section{CHANGES IN VERSION 1.0-4 (2013-09-08)}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{refit()} now works, again, with lists of
+      length 1, so that e.g. \code{refit(.,simulate(.))} works.
+      (Reported by Gustaf Granath)
+      \item \code{getME(.,"ST")} was returning a list
+      containing the Cholesky factorizations that get repeated in
+      Lambda. But this was inconsistent with what \code{ST} represents in
+      \code{lme4.0}. This inconsistency has now been fixed and
+      \code{getME(.,"ST")} is now consistent with the definition of the
+      \code{ST} matrix in \code{lme4.0}. See
+      \code{https://github.com/lme4/lme4/issues/111} for more
+      detail. Thanks to Vince Dorie.
+      \item Corrected order of unpacking of standard
+      deviation/correlation components, which affected results
+      from \code{confint(.,method="boot")}. (Reported by Reinhold
+      Kliegl)
+      \item fixed a copying bug that made \code{refitML()}
+      modify the original model
+    }
+  }
+}
+
 \section{CHANGES IN VERSION 1.0-1 (2013-08-17)}{
   \subsection{MINOR USER-VISIBLE CHANGES}{
     \itemize{

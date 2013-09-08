@@ -1165,6 +1165,16 @@ refit.merMod <- function(object, newresp=NULL, ...)
 {
     rr <- object@resp$copy()
 
+    ## for backward compatibility/functioning of refit(fit,simulate(fit))
+    if (is.list(newresp)) {
+        if (length(newresp)==1) {
+            newresp <- newresp[[1]]
+        } else {
+            stop("refit not implemented for lists with length>1: ",
+                 "consider ",sQuote("lapply(object,refit)"))
+        }
+    }
+    
     if (!is.null(newresp)) {
         if (!is.null(na.act <- attr(object@frame,"na.action"))) {
             ## will only get here if na.action is 'na.omit' or 'na.exclude'
