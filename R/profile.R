@@ -667,20 +667,20 @@ confint.merMod <- function(object, parm, level = 0.95,
            utils::flush.console()
            bootFun <- function(x) {
                th <- getME(x,"theta")
+               nvec <- sapply(getME(x,"cnms"),length)
                scaleTh <- (isLMM(x) || isNLMM(x))
-               useSc <- x@devcomp$dims["useSc"]
+               useSc <- as.logical(x@devcomp$dims["useSc"])
                ## FIXME: still ugly.  Best cleanup via Cv_to_Sv ...
+               tn <- tnames(x,old=FALSE,prefix=c("sd","cor"))
                if (scaleTh) {  ## scale variances by sigma and include it
-                   ss <- setNames(Cv_to_Sv(th,s=sigma(x)),
-                                  c(tnames(x,old=FALSE,
-                                           prefix=c("sd","cor")),"sigma"))
+                   ss <- setNames(Cv_to_Sv(th,n=nvec,s=sigma(x)),
+                                  c(tn,"sigma"))
                } else if (useSc) { ## don't scale variances but do include sigma
-                   ss <- setNames(c(Cv_to_Sv(th),sigma(x)),
-                                  c(tnames(x,old=FALSE,
-                                           prefix=c("sd","cor")),"sigma"))
+                   ss <- setNames(c(Cv_to_Sv(th,n=nvec),sigma(x)),
+                                  c(tn,"sigma"))
                } else {  ## no scaling, no sigma
-                   ss <- setNames(Cv_to_Sv(th),
-                                  tnames(x,old=FALSE,prefix=c("sd","cor")))
+                   ss <- setNames(Cv_to_Sv(th,n=nvec),
+                                  tn)
                }
                res <- c(ss,
                         fixef(x))

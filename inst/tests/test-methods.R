@@ -17,6 +17,12 @@ test_that("bootMer", {
     bb <- suppressWarnings(confint(m1,method="boot",nsim=3,quiet=TRUE))
     corvals <- bb[grep("^cor_",rownames(bb)),]
     expect_true(all(abs(corvals)<=1))
+    ## test bootMer with GLMM, multiple RE
+    gm2 <- fit_cbpp_2
+    expect_is(suppressWarnings(confint(gm2,method="boot",nsim=2,quiet=TRUE)),
+                               "matrix")
+    expect_equal(nrow(suppressWarnings(confint(gm2,
+                 method="boot",nsim=2,quiet=TRUE,parm=4:6))),3)
 })
 
 context("confint")
