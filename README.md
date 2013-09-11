@@ -21,8 +21,11 @@ install.packages("lme4",
    repos=c("http://lme4.r-forge.r-project.org/repos",
           getOption("repos")["CRAN"]))
 ```
-* Development version from github:
+* Development version from Github:
 ```
 library("devtools"); install_github("lme4",user="lme4")
 ```
-(The last approach requires that you build from source, i.e. `make` and compilers must be installed on your system -- see the R FAQ for your operating system; you may also need to install dependencies manually.)
+(This is installs the "master" (development) branch; if you
+want the release branch from Github add `ref="release"` to the
+above command.
+The `install_github` approach requires that you build from source, i.e. `make` and compilers must be installed on your system -- see the R FAQ for your operating system; you may also need to install dependencies manually.)
