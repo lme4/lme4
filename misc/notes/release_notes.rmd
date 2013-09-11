@@ -12,7 +12,7 @@ rforgever4.0 <- a2["lme4.0","Version"]
 
 ## Version numbering
 
-As [previously announced on the lme4 mailing list][announce], we will shortly be releasing a new version of `lme4`, a descendant of the previous development version `lme4Eigen`. For users who do not access any internal structures, there will be few backward-incompatible changes. We are currently (24 August 2013) in the process of working out some issues with our CRAN submission, but hope the package will appear on CRAN within the next week. 
+As [previously announced on the lme4 mailing list][announce], we will shortly be releasing a new version of `lme4`, a descendant of the previous development version `lme4Eigen`. For users who do not access any internal structures, there will be few backward-incompatible changes. We uploaded version 1.0-4 to CRAN on 9 September 2013. We hope it will appear on CRAN shortly, but it will initially be posted *only for the development version of R*, to allow downstream package maintainers to upload forward-compatible versions of their packages before the package is released for R 3.0.1. **At this point we are still uncertain whether the CRAN maintainers will allow the `lme4.0` version of the package to be hosted on CRAN**; we will post more information on the status of `lme4.0` as it becomes available.
 
 [announce]: https://stat.ethz.ch/pipermail/r-sig-mixed-models/2012q1/014811.html
 
@@ -21,18 +21,20 @@ As [previously announced on the lme4 mailing list][announce], we will shortly be
 ```{r eval=FALSE}
 library("devtools"); install_github("lme4",user="lme4")
 ```
+This will install the `master` branch, version 1.1-x; if you want the release (1.0-x) branch, add the argument `ref="release"`.
  * periodically rebuilt binaries/source tarballs are available via
 ```{r eval=FALSE}
 install.packages("lme4",
    repos=c("http://lme4.r-forge.r-project.org/repos",
           getOption("repos")))
 ```
-(version `r rforgever` is available as of `r as.character(Sys.time())`; we hope to post some 1.0-x versions shortly)
-* Note that the binary versions from the r-forge repository (at least the Windows version) will (apparently) not work on R version 3.0.0; *either* an earlier (<=2.15.3) or a later (>=3.0.1) version is required
+(version `r rforgever` is available as of `r as.character(Sys.time())`)
+* The binary versions from the r-forge repository (at least the Windows version) will (apparently) not work on R version 3.0.0; *either* an earlier (<=2.15.3) or a later (>=3.0.1) version of R is required.
 * *Solaris/Solaris Studio compiler users*: the Eigen linear algebra library, on which the new version of `lme4` is built, is apparently incompatible with Sun compilers; it is unclear whether the fault lies with `Eigen` (which claims to be compatible with the C++1998 standard) or with the Sun compilers. If you need to build `lme4` with Sun compilers, and would be willing to help in sorting out the Sun/Eigen incompatibilities, please contact the package maintainers.
 * We hope that the current CRAN version (`r CRANver`) will be replaced by a nearly identical version called `lme4.0` (currently version `r rforgever4.0`) (*this is currently under negotiation with the CRAN maintainers*).  `lme4.0` is a maintenance version and will only be changed to fix documented bugs. `mer` objects from older versions of `lme4` can be converted to `lme4.0`-usable form via `convert_old_lme4()` in the `lme4.0` package.
 * all other versions (`lme4a`, `lme4b`, `lme4Eigen`) are deprecated.
 
+Changes to `lme4` are listed in the [NEWS.Rd file](https://github.com/lme4/lme4/blob/master/inst/NEWS.Rd); the major points are reiterated below.
 
 ## For end-users
 
