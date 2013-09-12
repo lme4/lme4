@@ -1,0 +1,76 @@
+
+The CRAN check difference (due to lme4) is
+
+                S V S_Old S_New      V_Old   V_New
+ChainLadder     *      OK ERROR      0.1.6   0.1.6
+EquiNorm        *      OK ERROR        2.0     2.0
+MixMAP          *      OK ERROR        1.1     1.1
+R2STATS         *      OK ERROR    0.68-31 0.68-31
+SASmixed        *      OK ERROR      1.0-1   1.0-1
+ZeligMultilevel *      OK ERROR      0.7-0   0.7-0
+agridat         *      OK ERROR        1.7     1.7
+blme            *      OK ERROR     0.01-6  0.01-6
+boss            *      OK ERROR        2.0     2.0
+clusterPower    *      OK ERROR      0.4.1   0.4.1
+cplm            *      OK ERROR      0.6-4   0.6-4
+geospacom       *      OK ERROR      0.5-6   0.5-6
+gmodels         *      OK ERROR     2.15.4  2.15.4
+harvestr        *      OK ERROR      0.5.1   0.5.1
+influence.ME    *      OK ERROR      0.9.2   0.9.2
+longpower       *      OK ERROR      1.0-9   1.0-9
+mediation       *      OK ERROR      4.2.3   4.2.3
+mixAK           *      OK ERROR        3.4     3.4
+mlmRev          *      OK ERROR      1.0-1   1.0-1
+papeR           *      OK ERROR        0.3     0.3
+pedigreemm      *      OK ERROR      0.2-4   0.2-4
+phia            *      OK ERROR      0.1-3   0.1-3
+phmm            *      OK ERROR      0.7-4   0.7-4
+prLogistic      *      OK ERROR        1.1     1.1
+spacom          *      OK ERROR      1.0-0   1.0-0
+robustlmm       * *    OK  WARN        1.1   1.1-1
+
+the last being an update needed for Matrix 1.0-13.
+
+The detailed logs are now at http://cran.r-project.org/web/checks/check_summary.html in the fedora-gcc (and fedora-clang) columns.
+
+We had pending submissions for boss and changePower, and have now sent these back for corrections.  (We also had one for robustlmm but that has been rather overtaken by events.)
+
+R2STATS blme cplm influence.ME mixAK pedigreemm spacom
+
+are installation failures, and ChainLadder depends on cplm, geospacom on spacom.
+
+In addition,
+
+RLRsim languageR metafor texreg
+
+are showing missing objects from lme4;
+
+BradleyTerry2 HLMdiag afex
+
+have ::: calls to lme4 objects now exported;
+
+MuMIn has
+Missing or unexported object: 'lme4::formula'
+
+MEMSS multcomp robustlmm
+
+have different output to their .save files.
+
+----------------------------
+
+Both BioC packages depending on lme4 fail (and this we leave to you).
+
+Uwe has Windows binaries up now (for R-devel).
+
+We will now start reporting to the maintainers, asking for an update before Sept 27 at about which time we intend to move 1.0 to the main area.
+
+We noticed that 3 of your[*] packages need updates, MEMSS, SASmixed and mlmRev.  So please update as soon as possible.
+
+[*] the lme4 authors. (As far as we can tell: they have no named maintainer.)
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272866 (PA)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
