@@ -12,14 +12,18 @@ lmerControl(optimizer = "Nelder_Mead",
     check.nobs.vs.rankZ = "warningSmall",
     check.nobs.vs.nlev = "stop",
     check.nlev.gtreq.5 = "ignore",
-    check.nlev.gtr.1 = "stop", optCtrl = list())
+    check.nlev.gtr.1 = "stop", 
+    check.nobs.vs.nRE="stop", 
+    optCtrl = list())
 
 glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     restart_edge = FALSE, sparseX = FALSE,
     check.nobs.vs.rankZ = "warningSmall",
     check.nobs.vs.nlev = "stop",
     check.nlev.gtreq.5 = "ignore",
-    check.nlev.gtr.1 = "stop", tolPwrss = 1e-07,
+    check.nlev.gtr.1 = "stop",
+    check.nobs.vs.nRE="stop",
+    tolPwrss = 1e-07,
     compDev = TRUE, optCtrl = list())
 
 nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
@@ -64,16 +68,13 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     attempt a restart when it finds a solution at the
     boundary (i.e. zero random-effect variances or perfect
     +/-1 correlations)?}
-
   \item{check.nlev.gtreq.5}{character - rules for
     checking whether all random effects have >= 5 levels.
     "ignore": skip the test. "warning": warn if test fails.
     "stop": throw an error if test fails.}
-
   \item{check.nlev.gtr.1}{character - rules for checking
     whether all random effects have > 1 level. As for
     \code{check.nlevel.gtr.5}.}
-
   \item{check.nobs.vs.rankZ}{character - rules for
     checking whether the number of observations is greater
     than (or greater than or equal to) the rank of the random
@@ -84,15 +85,18 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     \code{nobs > rank(Z)} will be tested for LMMs and GLMMs with
     estimated scale parameters; \code{nobs >= rank(Z)} will be tested
     for GLMMs with fixed scale parameter.}
-
   \item{check.nobs.vs.nlev}{ character - rules for checking whether the
-  number of observations is less than (or less than or equal to) the
-  number of levels of every grouping factor, usually necessary for
-  identifiable variances.  As for \code{check.nlevel.gtreq.5}.
-  \code{nobs<nlevels} will be tested for LMMs and GLMMs with estimated
-  scale parameters; \code{nobs<=nlevels} will be tested for GLMMs with
-  fixed scale parameter.}
-
+    number of observations is less than (or less than or equal to) the
+    number of levels of every grouping factor, usually necessary for
+    identifiable variances.  As for \code{check.nlevel.gtreq.5}.
+    \code{nobs<nlevels} will be tested for LMMs and GLMMs with estimated
+    scale parameters; \code{nobs<=nlevels} will be tested for GLMMs with
+    fixed scale parameter.}
+  \item{check.nobs.vs.nRE}{character - rules for
+    checking whether the number of observations is greater
+    than (or greater than or equal to) the number of random-effects
+    levels for each term, usually necessary for identifiable variances.
+    As for \code{check.nobs.vs.nlev}.} 
   \item{optCtrl}{a \code{\link{list}} of additional arguments to be
     passed to the nonlinear optimizer (see \code{\link{Nelder_Mead}},
     \code{\link[minqa]{bobyqa}}).  In particular, both
