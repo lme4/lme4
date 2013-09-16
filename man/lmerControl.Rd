@@ -117,12 +117,12 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
   list, which may contain \code{maxiter}.)
 }
 \details{
-  If options are set via \code{\link{options}}, \code{[gn]lmerControl}
-  will use them rather than the default values but will \emph{not}
+  If checking options are set via \code{\link{options}}, \code{[g]lmerControl}
+  will use them rather than the default values (but will \emph{not}
   override values that are passed as explicit arguments); for example,
-  \code{options(check.nlev.gtreq.5 = "ignore")} will suppress warnings
-  that there an insufficient random effects levels for reliable
-  estimation.
+  \code{options(lmerControl=list(check.nobs.vs.rankZ = "ignore"))} will
+  suppress warnings that the number of observations is less than
+  the rank of the random effects model matrix \code{Z}.
 }
 \examples{
 str(lmerControl())
