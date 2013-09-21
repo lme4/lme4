@@ -45,7 +45,7 @@ Suggests:
     pbkrtest
 LazyData: yes
 License: GPL (>=2)
-URL: http://lme4.r-forge.r-project.org/
+URL: https://github.com/lme4/lme4/
 Collate:
     'AllClass.R'
     'AllGeneric.R'
