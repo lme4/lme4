@@ -2,28 +2,22 @@
 
 ## Version numbering
 
-As [previously announced on the lme4 mailing list][announce], we will shortly be releasing a new version of `lme4`, a descendant of the previous development version `lme4Eigen`. For users who do not access any internal structures, there will be few backward-incompatible changes. A feature freeze is scheduled for 8 July 2013, and the release is planned for 1 August 2013.
-
-[announce]: https://stat.ethz.ch/pipermail/r-sig-mixed-models/2012q1/014811.html
-
-* the version of `lme4` currently on [https://github.com/lme4/lme4/](github) should be used for new projects if possible
+* the version of `lme4` currently on CRAN is 1.0-4
+* patched (1.0-4) and more recent versions (1.1-0) of `lme4` are available on [https://github.com/lme4/lme4/](github)
  * the most recent version can be installed (from source: development toolchain including compiler etc. are required, and you may have to install `RcppEigen` from CRAN first) via 
 
 ```r
 library("devtools")
 install_github("lme4", user = "lme4")
 ```
-
  * periodically rebuilt binaries/source tarballs are available via
 
 ```r
 install.packages("lme4", repos = c("http://lme4.r-forge.r-project.org/repos", 
     getOption("repos")))
 ```
-
-(version 0.99999911-5 is available as of 28 June 2013; we may move to a 1.0-rc sequence shortly)
 * Note that the binary versions from the r-forge repository (at least the Windows version) will (apparently) not work on R version 3.0.0; *either* an earlier (<=2.15.3) or a later (>=3.0.1) version is required
-* The current CRAN version (0.999999-2) will be replaced by a nearly identical version called `lme4.0` (currently version 0.9999-2).  `lme4.0` is a maintenance version and will only be changed to fix documented bugs. `mer` objects from older versions of `lme4` can be converted to `lme4.0`-usable form via `convert_old_lme4()` in the `lme4.0` package.
+* We hope that the current CRAN version (0.999999-2) will be replaced by a nearly identical version called `lme4.0` (currently version 0.9999-2).  `lme4.0` is a maintenance version and will only be changed to fix documented bugs. `mer` objects from older versions of `lme4` can be converted to `lme4.0`-usable form via `convert_old_lme4()` in the `lme4.0` package.  `lme4.0` is available from r-forge, but it is uncertain whether it will be allowed on CRAN or not.
 * all other versions (`lme4a`, `lme4b`, `lme4Eigen`) are deprecated.
 
 ## For end-users
@@ -39,6 +33,7 @@ install.packages("lme4", repos = c("http://lme4.r-forge.r-project.org/repos",
 * The internal optimizer has changed. `[gn]lmer` now has an `optimizer` argument; `"Nelder_Mead"` is the default for `[n]lmer`, while a combination of `"bobyqa"` (an alternative derivative-free method) and `"Nelder_Mead"` is the default for `glmer`; to use the `nlminb` optimizer as in the old version of `lme4`, you can use `optimizer="optimx"` with `control=list(method="nlminb")` (you will need the `optimx` package to be installed and loaded). See the help pages for details.
 * Families in GLMMs are no longer restricted to built-in/hard-coded families; any family described in `?family`, or following that design, is usable (although there are some hard-coded families, which will be faster)
 * `[gn]lmer` now produces objects of class `merMod` rather than class `mer` as before
+* `mcmcsamp` is no longer available (see below)
 
 ### New features
 * A general-purpose `getME()` accessor method has been used to allow extraction of a wide variety of components of a mixed-model fit; this has been backported to `lme4.0` for compatibility.
@@ -52,9 +47,9 @@ install.packages("lme4", repos = c("http://lme4.r-forge.r-project.org/repos",
 * Negative binomial models (still under development).
 
 ### Still non-existent features
-* Automatic MCMC sampling based on the fit turns out to be very difficult to implement in a way that is really broadly reliable and robust; `mcmcsamp` will not be implemented in the near future. We recommend parametric boostrapping via `bootMer`, or the Kenward-Roger 
-approximation implemented in the `pbkrtest` package and leveraged by the `lmerTest` package and the `Anova` function in the `car` package.
-
+* Automatic MCMC sampling based on the fit turns out to be very difficult to implement in a way that is really broadly reliable and robust; `mcmcsamp` will not be implemented in the near future. We recommend parametric bootstrapping via `bootMer`, or the Kenward-Roger approximation implemented in the `pbkrtest` package and leveraged by the `lmerTest` package and the `Anova` function in the `car` package: see `?pvalues` in the released version of `lme4`
+* At present `lme4` does not do AGQ for vector-valued random effects
+* Variances of the conditional modes are not yet available for vector-valued random effects
 * "R-side" structures (within-block correlation and heteroscedasticity) are not on the current timetable
 
 ## Notes for package writers
