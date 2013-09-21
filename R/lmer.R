@@ -1600,17 +1600,22 @@ getLlikAIC <- function(object, cmp = object@devcomp$cmp) {
 
 ## This is modeled a bit after	print.summary.lm :
 ## Prints *both*  'mer' and 'merenv' - as it uses summary(x) mainly
-printMerenv <- function(x, digits = max(3, getOption("digits") - 3),
+##' @S3method print summary.merMod
+print.summary.merMod <- function(x, digits = max(3, getOption("digits") - 3),
 			correlation = NULL, symbolic.cor = FALSE,
 			signif.stars = getOption("show.signif.stars"),
 			ranef.comp = c("Variance", "Std.Dev."), ...)
 {
-    so <- summary(x)
+    cat("called print.summary.merMod\n")
+    ## so <- summary(x)
+    so <- x
     cat(sprintf("%s ['%s']\n",so$methTitle, so$objClass))
     .prt.family(so)
-    ## FIXME: commenting out for now, restore after release?
+    ## not for patched branch?
+    ## need residuals.merMod() rather than residuals(): 
+    ##  summary.merMod has no residuals method
     ## cat("Scaled residuals:\n")
-    ## print(summary(residuals(x,type="pearson",scaled=TRUE)),digits=digits)
+    ## print(residuals.merMod(x,type="pearson",scaled=TRUE)),digits=digits)
     .prt.call(so$call); cat("\n")
     .prt.aictab(so$AICtab, 4); cat("\n")
     .prt.VC(so$varcor, digits=digits, useScale= so$useScale,
@@ -1626,7 +1631,7 @@ printMerenv <- function(x, digits = max(3, getOption("digits") - 3),
 	    correlation <- p <= 20
 	    if(!correlation) {
 		nam <- deparse(substitute(x)) # << TODO: improve if this is called from show()
-		cat(sprintf(paste("\nCorrelation matrix not shown by default, as p = %d > 20.",
+		message(sprintf(paste("\nCorrelation matrix not shown by default, as p = %d > 20.",
 				  "Use print(%s, correlation=TRUE)  or",
 				  "    vcov(%s)	 if you need it\n", sep="\n"),
 			    p, nam, nam))
@@ -1636,9 +1641,8 @@ printMerenv <- function(x, digits = max(3, getOption("digits") - 3),
 	    if(is.null(VC <- so$vcov)) VC <- vcov(x)
 	    corF <- VC@factors$correlation
 	    if (is.null(corF)) {
-		cat("\nCorrelation of Fixed Effets is not available\n")
-	    }
-	    else {
+		cat("\nCorrelation of Fixed Effects is not available\n")
+	    } else {
 		p <- ncol(corF)
 		if (p > 1) {
 		    rn <- rownames(so$coefficients)
@@ -1649,18 +1653,17 @@ printMerenv <- function(x, digits = max(3, getOption("digits") - 3),
 			dimnames(corf) <- list(rns,
 					       abbreviate(rn, minlength=1, strict=TRUE))
 			print(symnum(corf))
-		    }
-		    else {
+		    } else {
 			corf <- matrix(format(round(corF@x, 3), nsmall = 3),
 				       ncol = p,
 				       dimnames = list(rns, abbreviate(rn, minlength=6)))
 			corf[!lower.tri(corf)] <- ""
 			print(corf[-1, -p, drop=FALSE], quote = FALSE)
-		    }
-		}
-	    }
-	}
-    }
+		    } ## !symbolic.cor
+		}  ## if (p > 1)
+            }  ## !is.null(corF)
+        } ## if (correlation)
+    } ## if (p>0)
     invisible(x)
 }## printMerenv()
 
@@ -1694,9 +1697,6 @@ print.merMod <- function(x, digits = max(3, getOption("digits") - 3),
 
 ##' @exportMethod show
 setMethod("show",  "merMod", function(object) print.merMod(object))
-
-##' @S3method print summary.merMod
-print.summary.merMod <- printMerenv
 
 ##' Return the deviance component list
 ##'
@@ -2170,7 +2170,8 @@ summary.merMod <- function(object, ...)
 		   coefficients=coefs, sigma=sig,
 		   vcov=vcov(object, correlation=TRUE, sigm=sig),
 		   varcor=varcor, # and use formatVC(.) for printing.
-		   AICtab = llAIC[["AICtab"]], call=object@call
+		   AICtab = llAIC[["AICtab"]], call=object@call,
+                   residuals=residuals(object,"pearson")
 		   ), class = "summary.merMod")
 }
 
