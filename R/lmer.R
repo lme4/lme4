@@ -1587,9 +1587,7 @@ print.summary.merMod <- function(x, digits = max(3, getOption("digits") - 3),
 			signif.stars = getOption("show.signif.stars"),
 			ranef.comp = c("Variance", "Std.Dev."), ...)
 {
-    cat("called print.summary.merMod\n")
-    ## so <- summary(x)
-    so <- x
+    so <- summary(x)  ## add vcov if necessary
     cat(sprintf("%s ['%s']\n",so$methTitle, so$objClass))
     .prt.family(so)
     ## not for patched branch?
@@ -1611,7 +1609,11 @@ print.summary.merMod <- function(x, digits = max(3, getOption("digits") - 3),
 	if(!is.logical(correlation)) { # default
 	    correlation <- p <= 20
 	    if(!correlation) {
-		nam <- deparse(substitute(x)) # << TODO: improve if this is called from show()
+                ## TODO: improve if this is called from show();
+                ##  understand why it recurses when print is called
+                ## implicitly
+		## nam <- deparse(substitute(x)) # 
+                nam <- "."
 		message(sprintf(paste("\nCorrelation matrix not shown by default, as p = %d > 20.",
 				  "Use print(%s, correlation=TRUE)  or",
 				  "    vcov(%s)	 if you need it\n", sep="\n"),
@@ -2156,6 +2158,7 @@ summary.merMod <- function(object, ...)
 		   ), class = "summary.merMod")
 }
 
+## TODO: refactor?
 ##' @S3method summary summary.merMod
 summary.summary.merMod <- function(object, varcov = TRUE, ...) {
     if(varcov && is.null(object$vcov))
