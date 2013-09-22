@@ -1,9 +1,16 @@
 library("testthat")
 library("lme4")
-load(system.file("testdata/lme-tst-fits.rda", package="lme4", mustWork=TRUE))
+L <- load(system.file("testdata/lme-tst-fits.rda",
+                      package="lme4", mustWork=TRUE))
 fm1 <- fit_sleepstudy_1
 fm0 <- fit_sleepstudy_0
 
+context("summary")
+test_that("summary", {
+    ## test for multiple-correlation-warning bug
+    cc <- capture.output(summary(fit_agridat_archbold))
+    expect_true(length(g <- grep("not shown by default",cc))==0 || g<=1)
+})
 context("anova")
 test_that("lmer", {
     expect_that(anova(fm0,fm1),                        is_a("anova"))

@@ -1,7 +1,8 @@
 #### Saved fits for lme4 testing
 ####  ----------------------------------
+fn <- system.file("testdata/lme-tst-fits.rda", package="lme4", mustWork=TRUE)
 if(FALSE) ### "Load" these by
-    load(system.file("testdata/lme-tst-fits.rda", package="lme4", mustWork=TRUE))
+    load(fn)
 
 library(lme4)
 ## intercept only in both fixed and random effects
@@ -24,3 +25,15 @@ fit_cbpp_1 <- update(fit_cbpp_0, . ~ . + period)
 fit_cbpp_2 <- update(fit_cbpp_1, . ~ . + (1|obs))
 
 save(list=ls(pattern="fit_"),file="lme-tst-fits.rda")
+
+## an example with >20 fixed effects:
+if (require(agridat)) {
+    dat <- archbold.apple
+    ## Define main plot and subplot
+    dat <- transform(dat, rep=factor(rep),
+                     spacing=factor(spacing), trt=factor(trt),
+                     mp = factor(paste(row,spacing,sep="")),
+                     sp = factor(paste(row,spacing,stock,sep="")))
+    fit_agridat_archbold <- lmer(yield ~ -1 + trt + (1|rep/mp/sp), dat)
+    save(list=ls(pattern="fit_"),file="lme-tst-fits.rda")
+}
