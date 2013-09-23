@@ -145,5 +145,8 @@ anova(fm1, fm2)
 sm2 <- summary(fm2)
 print(fm2, digits=7, ranef.comp="Var") # the print.merMod()         method
 print(sm2, digits=3, corr=FALSE)       # the print.summary.merMod() method
+
+(vv <- vcov.merMod(fm2, corr=TRUE))
+as(vv, "corMatrix")# extracts the ("hidden") 'correlation' entry in @factors
 }
 \keyword{models}
