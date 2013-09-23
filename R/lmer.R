@@ -1,4 +1,4 @@
-## FIXME: documentation still refers to \linkS4class quite a bit, inappropriately
+## NB:  doc in ../man/*.Rd  ***not*** auto generated
 ## FIXME: need to document S3 methods better (can we pull from r-forge version?)
 
 ##'
@@ -1587,48 +1587,45 @@ print.summary.merMod <- function(x, digits = max(3, getOption("digits") - 3),
 			signif.stars = getOption("show.signif.stars"),
 			ranef.comp = c("Variance", "Std.Dev."), ...)
 {
-    so <- summary(x)  ## add vcov if necessary
-    cat(sprintf("%s ['%s']\n",so$methTitle, so$objClass))
-    .prt.family(so)
+    cat(sprintf("%s ['%s']\n",x$methTitle, x$objClass))
+    .prt.family(x)
     ## not for patched branch?
-    ## need residuals.merMod() rather than residuals(): 
+    ## need residuals.merMod() rather than residuals():
     ##  summary.merMod has no residuals method
     ## cat("Scaled residuals:\n")
     ## print(residuals.merMod(x,type="pearson",scaled=TRUE)),digits=digits)
-    .prt.call(so$call); cat("\n")
-    .prt.aictab(so$AICtab, 4); cat("\n")
-    .prt.VC(so$varcor, digits=digits, useScale= so$useScale,
+    .prt.call(x$call); cat("\n")
+    .prt.aictab(x$AICtab, 4); cat("\n")
+    .prt.VC(x$varcor, digits=digits, useScale= x$useScale,
 	    comp = ranef.comp, ...)
-    .prt.grps(so$ngrps, nobs= so$devcomp$dims[["n"]])
+    .prt.grps(x$ngrps, nobs= x$devcomp$dims[["n"]])
 
-    p <- nrow(so$coefficients)
+    p <- nrow(x$coefficients)
     if (p > 0) {
 	cat("\nFixed effects:\n")
-	printCoefmat(so$coefficients, zap.ind = 3, #, tst.ind = 4
+	printCoefmat(x$coefficients, zap.ind = 3, #, tst.ind = 4
 		     digits = digits, signif.stars = signif.stars)
-	if(!is.logical(correlation)) { # default
+	if(is.null(correlation)) { # default
 	    correlation <- p <= 20
 	    if(!correlation) {
-                ## TODO: improve if this is called from show();
-                ##  understand why it recurses when print is called
-                ## implicitly
-		## nam <- deparse(substitute(x)) # 
-                nam <- "."
+		nam <- deparse(substitute(x))
+		if(length(nam) > 1 || nchar(nam) >= 32) nam <- "...."
 		message(sprintf(paste("\nCorrelation matrix not shown by default, as p = %d > 20.",
 				  "Use print(%s, correlation=TRUE)  or",
 				  "    vcov(%s)	 if you need it\n", sep="\n"),
 			    p, nam, nam))
 	    }
 	}
+	else if(!is.logical(correlation)) stop("'correlation' must be NULL or logical")
 	if(correlation) {
-	    if(is.null(VC <- so$vcov)) VC <- vcov(x)
+	    if(is.null(VC <- x$vcov)) VC <- vcov(x)
 	    corF <- VC@factors$correlation
 	    if (is.null(corF)) {
 		cat("\nCorrelation of Fixed Effects is not available\n")
 	    } else {
 		p <- ncol(corF)
 		if (p > 1) {
-		    rn <- rownames(so$coefficients)
+		    rn <- rownames(x$coefficients)
 		    rns <- abbreviate(rn, minlength=11)
 		    cat("\nCorrelation of Fixed Effects:\n")
 		    if (is.logical(symbolic.cor) && symbolic.cor) {
@@ -1648,7 +1645,7 @@ print.summary.merMod <- function(x, digits = max(3, getOption("digits") - 3),
         } ## if (correlation)
     } ## if (p>0)
     invisible(x)
-}## printMerenv()
+}## print.summary.merMod
 
 
 ##' @S3method print merMod
