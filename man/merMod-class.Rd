@@ -34,6 +34,18 @@
   \code{\linkS4class{glmResp}} response has class \code{glmerMod}; and a
   \code{\linkS4class{nlsResp}} response has class \code{nlmerMod}.
 }
+\usage{
+\S3method{vcov}{merMod}(object, correlation = TRUE, sigm = sigma(object), \dots)
+}
+\arguments{
+  \item{object}{an \R object of class \code{\linkS4class{merMod}}, i.e.,
+    as resulting from \code{\link{lmer}()}, or \code{\link{glmer}()}, etc.}
+  \item{correlation}{logical indicating if the correlation matrix is
+    desired in addition to the variance covariance one.}
+  \item{sigm}{the residual standard error; by default
+    \code{\link{sigma}(object)}.}
+  \item{\dots}{potentially further arguments pass from other methods.}
+}
 \section{Objects from the Class}{
   Objects are created by calls to \code{\link{lmer}},
   \code{\link{glmer}} or \code{\link{nlmer}}.
@@ -48,5 +60,7 @@
 \examples{
 showClass("merMod")
 methods(class="merMod")## over 30  (S3) methods available
+
+## -> example(lmer)  for an example of vcov.merMod()
 }
 \keyword{classes}
