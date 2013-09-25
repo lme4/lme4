@@ -280,7 +280,7 @@ extern "C" {
 			    double tol, int verbose) {
 	double oldpdev=std::numeric_limits<double>::max();
 	double pdev;
-	int maxit = 30;
+	int maxit = 30, maxstephalfit = 10;
 	bool   cvgd = false, verb = verbose > 2, moreverb = verbose > 10;
 
 	pdev = oldpdev; // define so debugging statements work on first step
@@ -305,15 +305,37 @@ extern "C" {
 		    std::endl; // if (verb) 
 	    }
 	    if (std::abs((oldpdev - pdev) / pdev) < tol) {cvgd = true; break;}
-	    if (pdev > oldpdev) { // PWRSS step led to _larger_ deviation; try step halving
-		if (verb) Rcpp::Rcout << "\npwrssUpdate: Entering step halving loop" << std::endl;
-		for (int k = 0; k < 10 && pdev > oldpdev; k++) {
+
+	    // if (pdev != pdev) Rcpp::Rcout << "nan detected" << std::endl;
+	    // if (isnan(pdev)) Rcpp::Rcout << "nan detected" << std::endl;
+
+	    // trying to detect nan; may be hard to do it completely portably,
+	    // and hard to detect in advance (i.e. what conditions lead to
+	    // nan from internal_glmerWrkIter ... ?)
+	    // http://stackoverflow.com/questions/570669/checking-if-a-double-or-float-is-nan-in-c
+	    // check use of isnan() in base R code, or other Rcpp code??
+	    if (isnan(pdev) | (pdev > oldpdev)) { 
+		// PWRSS step led to _larger_ deviation, or nan; try step halving
+		if (verb) Rcpp::Rcout << 
+			      "\npwrssUpdate: Entering step halving loop" 
+				      << std::endl;
+		for (int k = 0; k < maxstephalfit && 
+			 (isnan(pdev) | pdev > oldpdev); k++) {
 		    pp->setDelu((olddelu + pp->delu())/2.);
 		    if (!uOnly) pp->setDelb((olddelb + pp->delb())/2.);
 		    rp->updateMu(pp->linPred(1.));
 		    pdev = rp->resDev() + pp->sqrL(1.);
+		    if (moreverb) {
+			Rcpp::Rcout << "step-halving iteration " <<
+			    k << ":  pdev=" << pdev << 
+			    "; delu_min: " << pp->delu().minCoeff() <<
+			    "; delu_max: " << pp->delu().maxCoeff() <<
+			    "; delb_min: " << pp->delb().minCoeff() <<
+			    "; delb_max: " << pp->delb().maxCoeff() <<
+			    std::endl; 
+		    } // if (moreverb) 
 		}
-		if ((pdev - oldpdev) > tol) throw runtime_error("PIRLS step-halving failed to reduce deviance in pwrssUpdate");
+		if (isnan(pdev) | (pdev - oldpdev) > tol) throw runtime_error("PIRLS step-halving failed to reduce deviance in pwrssUpdate");
 	    } // step-halving
 	    oldpdev = pdev;
 	} // pwrss loop
