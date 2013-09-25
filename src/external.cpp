@@ -291,13 +291,22 @@ extern "C" {
     static void pwrssUpdate(glmResp *rp, merPredD *pp, bool uOnly, double tol, int verbose) {
         //Rcpp::Rcout << "\nFirst pwrssUpdate resDev:  " << rp->resDev() << std::endl;
 	double oldpdev=std::numeric_limits<double>::max();
-	bool   cvgd = false, verb = verbose > 2;
-	for (int i = 0; i < 30; i++) {
-	    // Rcpp::Rcout << "*** pwrssUpdate step " << i << std::endl;
-	    // Rcpp::Rcout << "\nmin delu at iteration " << i << ": " << pp->delu().minCoeff() << std::endl;
-	    // Rcpp::Rcout << "\nmax delu at iteration " << i << ": " << pp->delu().maxCoeff() << std::endl;
-	    // Rcpp::Rcout << "\nresDev before dels, iter:  " << i << ",  " << rp->resDev() << std::endl;
-	    // Rcpp::Rcout << "\ndelb 1: " << pp->delb() << std::endl;
+	double pdev;
+	int maxit = 30, maxstephalfit = 10;
+	bool   cvgd = false, verb = verbose > 2, moreverb = verbose > 10;
+
+	pdev = oldpdev; // define so debugging statements work on first step
+	for (int i = 0; i < maxit; i++) {
+	    if (verb) {
+		Rcpp::Rcout << "*** pwrssUpdate step " << i << std::endl;
+		// Rcpp::Rcout << "\nmin delu at iteration " << i << ": " << pp->delu().minCoeff() << std::endl;
+		// Rcpp::Rcout << "\nmax delu at iteration " << i << ": " << pp->delu().maxCoeff() << std::endl;
+		// Rcpp::Rcout << "\nresDev before dels, iter:  " << i << ",  " << rp->resDev() << std::endl;
+		// FIXME: would like to print this in row, not column, format
+		// 
+		// Rcpp::Rcout << "before update:" << "pdev = " << pdev << std::endl; // if (verb) 
+	    }
+
 	    Vec   olddelu(pp->delu()), olddelb(pp->delb());
 	    // Rcpp::Rcout << "\ndelb 2: " << pp->delb() << std::endl;
 	    // Rcpp::Rcout << "\nresDev before internal_glmerWrkIter, iter:  " << i << ",  " << rp->resDev() << std::endl;
@@ -332,12 +341,15 @@ extern "C" {
 		    //pdev <- rp->resDev() + pp->sqrL(1.);  // experiment!!  SCW
 		    rp->updateMu(pp->linPred(1.));
 		    pdev = rp->resDev() + pp->sqrL(1.);
-		    // Rcpp::Rcout << "min delu at pt 3 of step halving iteration " << k << ": " << pp->delu().minCoeff() << std::endl;
-		    // Rcpp::Rcout << "max delu at pt 3 of step halving iteration " << k << ": " << pp->delu().maxCoeff() << std::endl;
-		    // Rcpp::Rcout << "Step " << k << ": " << oldpdev << " = "
-		    // 		<< oldpdev << ", pdev = " << pdev
-		    // 		<< ", diff = " << (pdev-oldpdev)
-		    // 		<< std::endl;
+		    if (moreverb) {
+			Rcpp::Rcout << "step-halving iteration " <<
+			    k << ":  pdev=" << pdev << 
+			    "; delu_min: " << pp->delu().minCoeff() <<
+			    "; delu_max: " << pp->delu().maxCoeff() <<
+			    "; delb_min: " << pp->delb().minCoeff() <<
+			    "; delb_max: " << pp->delb().maxCoeff() <<
+			    std::endl; 
+		    } // if (moreverb) 
 		}
 		if (isNAN(pdev) | (pdev - oldpdev) > tol) 
 		    // FIXME: fill in max halfsetp iters in error statement
