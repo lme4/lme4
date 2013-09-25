@@ -263,13 +263,47 @@ extern "C" {
 	return rp->resDev() + pp->sqrL(1.);
     }
 
+    // FIXME: improve verbose output (remove code, even commented,
+    //     intended for finding pointer/referencing/updating bugs;
+    //     leave code that allows end-user to see what's going on
+    //     in PWRSS iterations)
+    //
+    //   Separate verb settings for min/max delu, delb 
+    //      (and which_min, which_max) vs entire
+    //       delu/delb vectors? note length(delu) will generally be 
+    //       >> length(delb) ...
+    //
+    // FIXME: sufficient to print just before/after update?
+    //
+    // FIXME: allow user-set maxit
     static void pwrssUpdate(glmResp *rp, merPredD *pp, bool uOnly,
 			    double tol, int verbose) {
 	double oldpdev=std::numeric_limits<double>::max();
-	bool   cvgd = false, verb = verbose > 2;
-	for (int i = 0; i < 30; i++) {
+	double pdev;
+	int maxit = 30;
+	bool   cvgd = false, verb = verbose > 2, moreverb = verbose > 10;
+
+	pdev = oldpdev; // define so debugging statements work on first step
+	for (int i = 0; i < maxit; i++) {
+	    if (verb) {
+		Rcpp::Rcout << "*** pwrssUpdate step " << i << std::endl;
+		// Rcpp::Rcout << "\nmin delu at iteration " << i << ": " << pp->delu().minCoeff() << std::endl;
+		// Rcpp::Rcout << "\nmax delu at iteration " << i << ": " << pp->delu().maxCoeff() << std::endl;
+		// Rcpp::Rcout << "\nresDev before dels, iter:  " << i << ",  " << rp->resDev() << std::endl;
+		// FIXME: would like to print this in row, not column, format
+		// 
+		// Rcpp::Rcout << "before update:" << "pdev = " << pdev << std::endl; // if (verb) 
+	    }
 	    Vec   olddelu(pp->delu()), olddelb(pp->delb());
-	    double pdev=internal_glmerWrkIter(pp, rp, uOnly);
+	    pdev = internal_glmerWrkIter(pp, rp, uOnly);
+	    if (verb) {
+		Rcpp::Rcout << "pdev=" << pdev << 
+		    "; delu_min: " << pp->delu().minCoeff() <<
+		    "; delu_max: " << pp->delu().maxCoeff() <<
+		    "; delb_min: " << pp->delb().minCoeff() <<
+		    "; delb_max: " << pp->delb().maxCoeff() <<
+		    std::endl; // if (verb) 
+	    }
 	    if (std::abs((oldpdev - pdev) / pdev) < tol) {cvgd = true; break;}
 	    if (pdev > oldpdev) { // PWRSS step led to _larger_ deviation; try step halving
 		if (verb) Rcpp::Rcout << "\npwrssUpdate: Entering step halving loop" << std::endl;
@@ -284,13 +318,19 @@ extern "C" {
 	    oldpdev = pdev;
 	} // pwrss loop
 	if (!cvgd)
-	    throw runtime_error("pwrssUpdate did not converge in 30 iterations");
+	    // FIXME: fill in max iters in error statement
+	    throw runtime_error("pwrssUpdate did not converge in (maxit) iterations");
     }
 
     SEXP glmerLaplace(SEXP pp_, SEXP rp_, SEXP nAGQ_, SEXP tol_, SEXP verbose_) {
         BEGIN_RCPP;
         XPtr<glmResp>  rp(rp_);
         XPtr<merPredD> pp(pp_);
+
+	if ( ::Rf_asInteger(verbose_) >100) {
+	    Rcpp::Rcout << "\nglmerLaplace resDev:  " << rp->resDev() << std::endl;
+	    Rcpp::Rcout << "\ndelb 1:  " << pp->delb() << std::endl;
+	}
 	pwrssUpdate(rp, pp, ::Rf_asInteger(nAGQ_), ::Rf_asReal(tol_), ::Rf_asInteger(verbose_));
         return ::Rf_ScalarReal(rp->Laplace(pp->ldL2(), pp->ldRX2(), pp->sqrL(1.)));
         END_RCPP;
