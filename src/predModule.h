@@ -81,6 +81,7 @@ namespace lme4 {
 	const MVec&         beta0() const {return d_beta0;}
 	const MVec&         theta() const {return d_theta;}
 	const MVec&            u0() const {return d_u0;}
+	const MVec&          Xwts() const {return d_Xwts;}
 
 	int                  info() const {return d_L.info();}
 

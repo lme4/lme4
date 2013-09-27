@@ -254,12 +254,25 @@ extern "C" {
     }
 
     static double internal_glmerWrkIter(merPredD *pp, glmResp *rp, bool uOnly) {
+	int debug=0; // !=0 to enable
 	pp->updateXwts(rp->sqrtWrkWt());
+	if (debug) Rcpp::Rcout << "(igWI) Xwts: min: " << pp->Xwts().minCoeff() << 
+	    " max: " << pp->Xwts().maxCoeff() << std::endl;
 	pp->updateDecomp();
 	pp->updateRes(rp->wtWrkResp());
 	if (uOnly) pp->solveU();
         else pp->solve();
+	if (debug) {
+	    Rcpp::Rcout << "(igWI)" <<
+		" delu_min: " << pp->delu().minCoeff() <<
+		"; delu_max: " << pp->delu().maxCoeff() <<
+		"; delb_min: " << pp->delb().minCoeff() <<
+		"; delb_max: " << pp->delb().maxCoeff() <<
+		std::endl; // if (verb) 
+	}
 	rp->updateMu(pp->linPred(1.));
+	if (debug) Rcpp::Rcout << "(igWI) mu: min: " << rp->mu().minCoeff() << 
+		       " max: " << rp->mu().maxCoeff() << std::endl;
 	return rp->resDev() + pp->sqrL(1.);
     }
 
