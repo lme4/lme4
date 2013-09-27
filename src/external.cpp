@@ -254,22 +254,10 @@ extern "C" {
     }
 
     static double internal_glmerWrkIter(merPredD *pp, glmResp *rp, bool uOnly) {
-        // Rcpp::Rcout << "\nresDev before updateXwts:" << rp->resDev() << std::endl;
-	// Rcpp::Rcout << "sqrL:" << pp->sqrL(1.) << std::endl;
-	// Rcpp::Rcout << "delb 1:\n" << pp->delb() << std::endl;
-  	// Rcpp::Rcout << "before:\n" << rp->muEta() << std::endl;
-  	// Rcpp::Rcout << "min delu at pt 1 of gwi: " << pp->delu().minCoeff() << std::endl;
-	// Rcpp::Rcout << "max delu at pt 1 of gwi: " << pp->delu().maxCoeff() << std::endl;
+	int debug=0; // !=0 to enable
 	pp->updateXwts(rp->sqrtWrkWt());
-	// Rcpp::Rcout << "\nmin after:\n" << rp->muEta().minCoeff() << std::endl;
-	// Rcpp::Rcout << "max after:\n" << rp->muEta().maxCoeff() << std::endl;
-  	// Rcpp::Rcout << "resDev after updateXwts:" << rp->resDev() << std::endl;
-	// Rcpp::Rcout << "sqrL:" << pp->sqrL(1.) << std::endl;
-        // Rcpp::Rcout << "delb 2:\n" << pp->delb() << std::endl; 
-	// Rcpp::Rcout << "min delu at pt 2 of gwi: " << pp->delu().minCoeff() << std::endl;
-	// Rcpp::Rcout << "max delu at pt 2 of gwi: " << pp->delu().maxCoeff() << std::endl;
-	// n.b. next line fails to compile ... 'no method'
-	// Rcpp::Rcout << "\nd_L before updateDecomp: " << pp->L() << std::endl;
+	if (debug) Rcpp::Rcout << "(igWI) Xwts: min: " << pp->Xwts().minCoeff() << 
+	    " max: " << pp->Xwts().maxCoeff() << std::endl;
 	pp->updateDecomp();
 	// n.b. next line fails to compile ... 'no method'
 	// Rcpp::Rcout << "\nd_L after updateDecomp: " << pp->L() << std::endl;
@@ -286,20 +274,17 @@ extern "C" {
 	// Rcpp::Rcout << "max delu at pt 4 of gwi: " << pp->delu().maxCoeff() << std::endl;
 	if (uOnly) pp->solveU();
         else pp->solve();
-	// Rcpp::Rcout << "\nresDev after solve:" << rp->resDev() << std::endl;
-	// Rcpp::Rcout << "sqrL:" << pp->sqrL(1.) << std::endl;
-	// Rcpp::Rcout << "delb 5:\n" << pp->delb() << std::endl;
-	// Rcpp::Rcout << "min delu at pt 5 of gwi: " << pp->delu().minCoeff() << std::endl;
-	// Rcpp::Rcout << "max delu at pt 5 of gwi: " << pp->delu().maxCoeff() << std::endl;
+	if (debug) {
+	    Rcpp::Rcout << "(igWI)" <<
+		" delu_min: " << pp->delu().minCoeff() <<
+		"; delu_max: " << pp->delu().maxCoeff() <<
+		"; delb_min: " << pp->delb().minCoeff() <<
+		"; delb_max: " << pp->delb().maxCoeff() <<
+		std::endl; // if (verb) 
+	}
 	rp->updateMu(pp->linPred(1.));
-	// Rcpp::Rcout << "\nresDev after updateMu:" << rp->resDev() << std::endl;
-	// Rcpp::Rcout << "sqrL:" << pp->sqrL(1.) << std::endl;
-	// Rcpp::Rcout << "delb 6: " << pp->delb() << std::endl;
-	// Rcpp::Rcout << "resDev before end:\n" << rp->resDev() << std::endl;
-	// Rcpp::Rcout << "min delu at pt 6 of gwi: " << pp->delu().minCoeff() << std::endl;
-	// Rcpp::Rcout << "max delu at pt 6 of gwi: " << pp->delu().maxCoeff() << std::endl;
-	// Rcpp::Rcout << "rp->resDev() at pt 6 of gwi: " << rp->resDev() << std::endl;
-	// Rcpp::Rcout << "pp->sqrL(1.) at pt 6 of gwi: " << pp->sqrL(1.) << std::endl;
+	if (debug) Rcpp::Rcout << "(igWI) mu: min: " << rp->mu().minCoeff() << 
+		       " max: " << rp->mu().maxCoeff() << std::endl;
 	return rp->resDev() + pp->sqrL(1.);
     }
 

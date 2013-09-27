@@ -169,6 +169,7 @@ namespace lme4 {
     }
 
     double glmResp::updateMu(const VectorXd& gamma) {
+	int debug=0;
 	// Rcpp::Rcout << "\nstart of updateMu:\nminimum mu 1:\n" << d_mu.minCoeff() << std::endl;
 	// Rcpp::Rcout << "maximum mu 1:\n" << d_mu.maxCoeff() << std::endl;
 	// Rcpp::Rcout << "minimum gamma 1:\n" << gamma.minCoeff() << std::endl;
@@ -187,7 +188,9 @@ namespace lme4 {
 	// Rcpp::Rcout << "minimum eta 2:\n" << d_eta.minCoeff() << std::endl;
 	// Rcpp::Rcout << "maximum eta 2:\n" << d_eta.maxCoeff() << std::endl;
 	d_mu  = d_fam.linkInv(d_eta);
-	// Rcpp::Rcout << "\nafter linkInv:\nminimum mu 3:\n" << d_mu.minCoeff() << std::endl;
+	if (debug) Rcpp::Rcout << "updateMu: min mu:" << 
+		       d_mu.minCoeff() << " max mu: " << 
+		       d_mu.maxCoeff() << std::endl;
 	// Rcpp::Rcout << "maximum mu 3:\n" << d_mu.maxCoeff() << std::endl;
 	// Rcpp::Rcout << "minimum gamma 3:\n" << gamma.minCoeff() << std::endl;
 	// Rcpp::Rcout << "maximum gamma 3:\n" << gamma.maxCoeff() << std::endl;
