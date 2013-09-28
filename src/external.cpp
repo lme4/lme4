@@ -327,13 +327,14 @@ extern "C" {
 	    // nan from internal_glmerWrkIter ... ?)
 	    // http://stackoverflow.com/questions/570669/checking-if-a-double-or-float-is-nan-in-c
 	    // check use of isnan() in base R code, or other Rcpp code??
-	    if (isnan(pdev) | (pdev > oldpdev)) { 
+#define isNAN(a)  (a!=a)
+	    if (isNAN(pdev) | (pdev > oldpdev)) { 
 		// PWRSS step led to _larger_ deviation, or nan; try step halving
 		if (verb) Rcpp::Rcout << 
 			      "\npwrssUpdate: Entering step halving loop" 
 				      << std::endl;
 		for (int k = 0; k < maxstephalfit && 
-			 (isnan(pdev) | pdev > oldpdev); k++) {
+			 (isNAN(pdev) | pdev > oldpdev); k++) {
 		    pp->setDelu((olddelu + pp->delu())/2.);
 		    if (!uOnly) pp->setDelb((olddelb + pp->delb())/2.);
 		    rp->updateMu(pp->linPred(1.));
@@ -348,7 +349,9 @@ extern "C" {
 			    std::endl; 
 		    } // if (moreverb) 
 		}
-		if (isnan(pdev) | (pdev - oldpdev) > tol) throw runtime_error("PIRLS step-halving failed to reduce deviance in pwrssUpdate");
+		if (isNAN(pdev) | (pdev - oldpdev) > tol) 
+		    // FIXME: fill in max halfsetp iters in error statement
+		    throw runtime_error("(maxstephalfit) PIRLS step-halvings failed to reduce deviance in pwrssUpdate");
 	    } // step-halving
 	    oldpdev = pdev;
 	} // pwrss loop
