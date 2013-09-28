@@ -64,37 +64,63 @@
   \code{\link{glmer}} results.
 
   The working name for bootMer() was
-  \dQuote{simulestimate()}, as it is an extension of
-  \code{\link{simulate}}, but we want to emphasize its
-  potential for valid inference.
-
+  \dQuote{simulestimate()}, as it is an extension of \code{simulate}
+  (see \link{simulate.merMod}), but we want to emphasize its potential
+  for valid inference.
   \itemize{
-    \item If \code{use.u} is \code{FALSE} and
-    \code{type} is \code{"parametric"}, each simulation
-    generates new values of both the
-    \dQuote{\emph{spherized}} random effects \eqn{u} and the
+    \item If \code{use.u} is \code{FALSE} and \code{type} is
+    \code{"parametric"}, each simulation generates new values of both
+    the \dQuote{\emph{spherized}} random effects \eqn{u} and the
     i.i.d. errors \eqn{\epsilon}, using \code{\link{rnorm}()}
-    with parameters corresponding to the fitted model
-    \code{x}.
-    \item If \code{use.u} is \code{TRUE} and
-    \code{type=="parametric"}, only the i.i.d. errors (or,
-    for GLMMs, response values drawn from the appropriate
-    distributions) are resampled, with the values of \eqn{u}
-    staying fixed at their estimated values.
-    \item If \code{use.u} is \code{TRUE} and
-    \code{type=="semiparametric"}, the i.i.d. errors are
-    sampled from the distribution of (response) residuals.
-    (For GLMMs, the resulting sample will no longer have the
-    same properties as the original sample, and the method
-    may not make sense; a warning is generated.)
-    The semiparametric bootstrap is currently an experimental
-    feature, and therefore may not be stable.
+    with parameters corresponding to the fitted model \code{x}.
+
+    \item If \code{use.u} is \code{TRUE} and \code{type=="parametric"},
+    only the i.i.d. errors (or, for GLMMs, response values drawn from
+    the appropriate distributions) are resampled, with the values of
+    \eqn{u} staying fixed at their estimated values.
+
+    \item If \code{use.u} is \code{TRUE} and \code{type=="semiparametric"},
+    the i.i.d. errors are sampled from the distribution of (response)
+    residuals.  (For GLMMs, the resulting
+    sample will no longer have the same properties as the original
+    sample, and the method may not make sense; a warning is generated.)
+    The semiparametric bootstrap is currently an experimental feature,
+    and therefore may not be stable.
+
     \item The case where \code{use.u} is \code{FALSE} and
-    \code{type=="semiparametric"} is not implemented; Morris
-    (2002) suggests that resampling from the estimated values
-    of \eqn{u} is not good practice.
+    \code{type=="semiparametric"} is not implemented; Morris (2002)
+    suggests that resampling from the estimated values of \eqn{u} is not
+    good practice.
   } %% itemize
 } %% details
+\references{
+  Davison, A.C. and Hinkley, D.V. (1997)
+  \emph{Bootstrap Methods and Their Application}.
+  Cambridge University Press.
+
+  Morris, J. S. (2002).
+  The BLUPs Are Not \sQuote{best} When It Comes to Bootstrapping.
+  \emph{Statistics & Probability Letters} \bold{56}(4): 425--430.
+  doi:10.1016/S0167-7152(02)00041-X.
+}
+\seealso{
+  \itemize{
+    \item \code{\link{confint.merMod}},
+    for a more specific approach to bootstrap confidence
+    intervals on parameters.
+    \item     \code{\link{refit}()},
+    or \code{\link[pbkrtest]{PBmodcomp}()} from the
+    \code{pbkrtest} package,
+    for parametric bootstrap comparison of models.
+    \item \code{\link[boot]{boot}()}, and then
+    \code{\link[boot]{boot.ci}}, from the \pkg{boot} package.
+    \item \code{\link{profile-methods}}, for likelihood-based inference,
+    including confidence intervals.
+    \item \code{\link{pvalues}},
+    for more general approaches to inference and p-value computation
+    in mixed models.
+  }
+}
 \examples{
 fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
 ## see ?"profile-methods"
@@ -139,34 +165,6 @@ plot(boo01,index=3)
 ## Check stored values from a longer (1000-replicate) run:
 load(system.file("testdata","boo01L.RData",package="lme4"))
 plot(boo01L,index=3)
-}
-\references{
-  Davison, A.C. and Hinkley, D.V. (1997) \emph{Bootstrap
-    Methods and Their Application}.  Cambridge University
-  Press.
-
-  Morris, J. S. (2002). The BLUPs Are Not \sQuote{best}
-  When It Comes to Bootstrapping. \emph{Statistics &
-    Probability Letters} \bold{56}(4): 425--430.
-  doi:10.1016/S0167-7152(02)00041-X.
-}
-\seealso{
-  \itemize{
-    \item \code{\link{confint.merMod}},
-    for a more specific approach to bootstrap confidence
-    intervals on parameters.
-    \item     \code{\link{refit}()},
-    or \code{\link[pbkrtest]{PBmodcomp}()} from the
-    \code{pbkrtest} package,
-    for parametric bootstrap comparison of models.
-    \item \code{\link[boot]{boot}()}, and then
-    \code{\link[boot]{boot.ci}}, from the \pkg{boot} package.
-    \item \code{\link{profile-methods}}, for likelihood-based inference,
-    including confidence intervals.
-    \item \code{\link{pvalues}},
-    for more general approaches to inference and p-value computation
-    in mixed models.
-  }
 }
 \keyword{htest}
 \keyword{models}
