@@ -45,7 +45,7 @@
     \item{\code{"boot"}:}{perform parametric
       bootstrapping with confidence intervals computed from the
       bootstrap distribution according to \code{boot.type} (see
-      \code{\link{boot.ci}}).}
+      \code{\link[boot]{boot.ci}}).}
   }
 }
 \examples{
