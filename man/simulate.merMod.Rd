@@ -23,9 +23,13 @@
   \item{...}{optional additional arguments, none are used
   at present}
 }
+\seealso{
+  \code{\link{bootMer}} for \dQuote{simulestimate}, i.e., where each
+  simulation is followed by refitting the model.
+}
 \description{
-  Simulate responses from the model represented by a fitted
-  model object
+  Simulate responses from the model represented by a \code{"merMod"} fitted
+  model object.
 }
 \examples{
 ## test whether fitted models are consistent with the
