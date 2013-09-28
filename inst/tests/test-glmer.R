@@ -83,5 +83,25 @@ test_that("glmer", {
                          control=lmerControl()),
                    "instead of passing a list of class")
 
+    ##
+    load(system.file("testdata","radinger_dat.RData",package="lme4"))
+    mod <- glmer(presabs~predictor+(1|species),family=binomial,
+                 radinger_dat)
+    expect_is(mod,"merMod")
+    ## TODO: is this reliable across platforms or do we have to loosen?
+    expect_equal(unname(fixef(mod)),c(0.5425528,6.4289962))
+    set.seed(101)
+    d <- data.frame(y=rbinom(1000,size=1,p=0.5),
+                    x=runif(1000),
+                    f=factor(rep(1:20,each=50)),
+                    x2=rep(0:1,c(999,1)))
+    mod2 <- glmer(y~x+x2+(1|f),data=d,family=binomial)
+    expect_equal(unname(fixef(mod2))[1:2],
+                 c(-0.10036244,0.03548523),tol=1e-7)
+    expect_true(unname(fixef(mod2)[3]<(-10)))
+    mod3 <- update(mod2,family=binomial(link="probit"))
+    expect_equal(unname(fixef(mod3))[1:2],
+                 c(-0.06288878,0.02224270),tol=1e-7)
+    expect_true(unname(fixef(mod3)[3]<(-4)))
+    mod4 <- update(mod2,family=binomial(link="cauchit"))
 })
-

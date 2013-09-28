@@ -91,7 +91,8 @@ namespace glm {
     template<typename T>
     struct cauchitinv : public std::unary_function<T, T> {
 	const T operator() (const T& x) const {
-	    return T(::Rf_pcauchy(double(x), 0., 1., 1, 0));
+	    return T(std::min(1.-std::numeric_limits<T>::epsilon(),
+			      ::Rf_pcauchy(double(x), 0., 1., 1, 0)));
 	}
     };
 
@@ -122,7 +123,6 @@ namespace glm {
 	}
     };
 
-
     template<typename T>
     struct logit : public std::unary_function<T, T> {
 	const T operator() (const T& x) const {
@@ -140,7 +140,8 @@ namespace glm {
     template<typename T>
     struct probitinv : public std::unary_function<T, T> {
 	const T operator() (const T& x) const {
-	    return T(::Rf_pnorm5(double(x), 0., 1., 1, 0));
+	    return T(std::min(1.-std::numeric_limits<T>::epsilon(),
+			      ::Rf_pnorm5(double(x), 0., 1., 1, 0)));
 	}
     };
 
@@ -174,6 +175,15 @@ namespace glm {
     };
     //@}
 
+    template<typename T>
+    struct boundexp : public std::unary_function<T, T> {
+	const T operator() (const T& x) const {
+	    return T(std::max(std::numeric_limits<T>::epsilon(),
+			      exp(double(x))));
+	}
+    };
+
+
     //@{
     double                binomialDist::aic     (const ArrayXd& y, const ArrayXd& n, const ArrayXd& mu,
 						 const ArrayXd& wt, double dev) const {
@@ -190,7 +200,9 @@ namespace glm {
 	if (debug) {
 	    for (int i=0; i < mu.size(); ++i) {
 		double r = 2. * wt[i] * (Y_log_Y(y[i], mu[i]) + Y_log_Y(1. - y[i], 1. - mu[i]));
-		if (isnan(r)) {
+		if (r!=r) {  
+		    // attempt to detect `nan` (needs cross-platform testing, but should compile 
+		    // everywhere whether or not it actually works)
 		    Rcpp::Rcout << "(bD) " << "nan @ pos " << i << ": y= " << y[i] 
 				<< "; mu=" << mu[i] 
 				<< "; wt=" << wt[i] 
@@ -284,8 +296,8 @@ namespace glm {
 
     //@{
     const ArrayXd      logLink::linkFun(const ArrayXd&  mu) const {return  mu.log();}
-    const ArrayXd      logLink::linkInv(const ArrayXd& eta) const {return eta.exp();}
-    const ArrayXd      logLink::muEta(  const ArrayXd& eta) const {return eta.exp();}
+    const ArrayXd      logLink::linkInv(const ArrayXd& eta) const {return eta.unaryExpr(boundexp<double>());}
+    const ArrayXd      logLink::muEta(  const ArrayXd& eta) const {return eta.unaryExpr(boundexp<double>());}
     //@}
 
     //@{

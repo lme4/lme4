@@ -307,26 +307,23 @@ extern "C" {
 	    // Rcpp::Rcout << i << ": " << pdev << std::endl; // if (verb) 
 	    // Rcpp::Rcout << "i = " << i << ", pdev = " << pdev << std::endl; // if (verb) 
 	    if (std::abs((oldpdev - pdev) / pdev) < tol) {cvgd = true; break;}
-	    // Rcpp::Rcout << "\ndelb 4: " << pp->delb() << std::endl;
-	    if (pdev > oldpdev) { // PWRSS step led to _larger_ deviation; try step halving
-		if (verb) Rcpp::Rcout << "\npwrssUpdate: Entering step halving loop" << std::endl;
-		// Vec   saved_delu(pp->delu());
-		// for (int m = 0; m < 100; m++) {
-		//  double ustep = m/100.0;
-		//  pp->setDelu(olddelu+saved_delu*ustep);
-		//  Rcpp::Rcout << "\npdev test, iter: " << m << " " << internal_glmerWrkIter(pp, rp, uOnly) << std::endl;
-		//}
-		//pp->setDelu(saved_delu);
-		// Rcpp::Rcout << "Step halving: oldpdev = "
-		// 	    << oldpdev << ", pdev = " << pdev
-		// 	    << ", diff = " << (pdev-oldpdev)
-		// 	    << std::endl;
-		for (int k = 0; k < 10 && pdev > oldpdev; k++) {
-		    //Rcpp::Rcout << "\nben's test: " << pp->delu()[0] << std::endl;
-		    //Rcpp::Rcout << "\nben's test: " << olddelu[0] << std::endl;
-		    //Rcpp::Rcout << "\nStep halving time!" << std::endl;
-		    // Rcpp::Rcout << "min delu at pt 1 of step halving iteration " << k << ": " << pp->delu().minCoeff() << std::endl;
-		    // Rcpp::Rcout << "max delu at pt 1 of step halving iteration " << k << ": " << pp->delu().maxCoeff() << std::endl;
+
+	    // if (pdev != pdev) Rcpp::Rcout << "nan detected" << std::endl;
+	    // if (isnan(pdev)) Rcpp::Rcout << "nan detected" << std::endl;
+
+	    // trying to detect nan; may be hard to do it completely portably,
+	    // and hard to detect in advance (i.e. what conditions lead to
+	    // nan from internal_glmerWrkIter ... ?)
+	    // http://stackoverflow.com/questions/570669/checking-if-a-double-or-float-is-nan-in-c
+	    // check use of isnan() in base R code, or other Rcpp code??
+#define isNAN(a)  (a!=a)
+	    if (isNAN(pdev) | (pdev > oldpdev)) { 
+		// PWRSS step led to _larger_ deviation, or nan; try step halving
+		if (verb) Rcpp::Rcout << 
+			      "\npwrssUpdate: Entering step halving loop" 
+				      << std::endl;
+		for (int k = 0; k < maxstephalfit && 
+			 (isNAN(pdev) | pdev > oldpdev); k++) {
 		    pp->setDelu((olddelu + pp->delu())/2.);
 		    if (!uOnly) pp->setDelb((olddelb + pp->delb())/2.);
 		    // Rcpp::Rcout << "min delu at pt 2 of step halving iteration " << k << ": " << pp->delu().minCoeff() << std::endl;
@@ -342,8 +339,9 @@ extern "C" {
 		    // 		<< ", diff = " << (pdev-oldpdev)
 		    // 		<< std::endl;
 		}
-		if ((pdev - oldpdev) > tol) throw runtime_error("PIRLS step-halving failed to reduce deviance in pwrssUpdate");
-		// if (pdev > oldpdev) throw runtime_error("PIRLS step failed");
+		if (isNAN(pdev) | (pdev - oldpdev) > tol) 
+		    // FIXME: fill in max halfsetp iters in error statement
+		    throw runtime_error("(maxstephalfit) PIRLS step-halvings failed to reduce deviance in pwrssUpdate");
 	    } // step-halving
 	    //Rcpp::Rcout << "\ndelb 5: " << pp->delb() << std::endl;
 	    oldpdev = pdev;
