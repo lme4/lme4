@@ -1,5 +1,6 @@
 misc/
 testsx/
-do-roxy
+do-roxy*
 ^.*\.Rproj$
 ^\.Rproj\.user$
+build-pkg*
