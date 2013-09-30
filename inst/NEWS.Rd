@@ -14,6 +14,19 @@
   }
 }
 
+\section{CHANGES IN VERSION 1.0-5 (2013-09-30)}{
+  \subsection{USER-VISIBLE CHANGES}{
+    \item \code{confint.merMod} and \code{vcov.merMod} are
+    now exported, for downstream package-author convenience
+  }
+  \subsection{BUG FIXES}{
+    \item eliminated redundant messages about suppressed
+    fixed-effect correlation matrices when p>20
+    \item most inverse-link functions are now bounded where
+    appropriate by \code{.Machine$double.eps}, allowing fitting
+    of GLMMs with extreme parameter values
+  }
+}
 \section{CHANGES IN VERSION 1.0-4 (2013-09-08)}{
   \subsection{BUG FIXES}{
     \itemize{
