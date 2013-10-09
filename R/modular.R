@@ -188,9 +188,10 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     fixedform <- formula
     fixedform[[3]] <- if(is.null(nb <- nobars(fixedform[[3]]))) 1 else nb
     mf$formula <- fixedform
-    ## re-evaluate model frame to extract predvars component {FIXME? glFormula() does not..}
+    ## re-evaluate model frame to extract predvars component
     fixedfr <- eval(mf, parent.frame())
-    attr(attr(fr,"terms"),"predvars.fixed") <- attr(attr(fixedfr,"terms"),"predvars")
+    attr(attr(fr,"terms"),"predvars.fixed") <-
+        attr(attr(fixedfr,"terms"),"predvars")
     X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     p <- ncol(X)
     if ((rankX <- rankMatrix(X)) < p)
@@ -396,9 +397,15 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     ##                "greater than number of obs")
 
     ## fixed-effects model matrix X - remove random parts from formula:
-    form <- formula
-    form[[3]] <- if(is.null(nb <- nobars(form[[3]]))) 1 else nb
-    X <- model.matrix(form, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
+    fixedform <- formula
+    fixedform[[3]] <- if(is.null(nb <- nobars(fixedform[[3]]))) 1 else nb
+    mf$formula <- fixedform
+    ## re-evaluate model frame to extract predvars component
+    fixedfr <- eval(mf, parent.frame())
+    attr(attr(fr,"terms"),"predvars.fixed") <-
+        attr(attr(fixedfr,"terms"),"predvars")
+    X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
+
     p <- ncol(X)
     if ((rankX <- rankMatrix(X)) < p)
         stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
