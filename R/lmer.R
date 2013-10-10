@@ -1163,10 +1163,11 @@ ranef.merMod <- function(object, condVar = FALSE, drop = FALSE,
 ##' @export
 refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
 {
-    rr <- object@resp$copy()
 
-    if (length(list(...))>0) warning("additional arguments to refit.merMod ignored")
+    if (length(list(...))>0)
+        warning("additional arguments to refit.merMod ignored")
     newrespSub <- substitute(newresp)
+
     ## for backward compatibility/functioning of refit(fit,simulate(fit))
     if (is.list(newresp)) {
         if (length(newresp)==1) {
@@ -1176,9 +1177,10 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
                  "consider ",sQuote("lapply(object,refit)"))
         }
     }
-    
-    if (!is.null(newresp)) {
 
+    rr <- object@resp$copy()
+
+    if (!is.null(newresp)) {
 
         ## update call and model frame with new response
         rcol <- attr(attr(mf <- model.frame(object),"terms"),"response")
@@ -1195,6 +1197,8 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
             } else newresp <- newresp[-na.act]
         }
 
+        object@frame[,rcol] <- newresp
+
         if (isGLMM(object) && rr$family$family=="binomial") {
             ## re-do conversion of two-column matrix and factor
             ##  responses to proportion/weights format
@@ -1210,7 +1214,10 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
                 newresp <- as.numeric(newresp)-1
             }
         }
-        stopifnot(length(newresp <- as.numeric(as.vector(newresp))) == length(rr$y))
+
+        stopifnot(length(newresp <- as.numeric(as.vector(newresp))) ==
+                  length(rr$y))
+
         rr$setResp(newresp)
     }
 
