@@ -2334,9 +2334,13 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
                    if(!is.numeric(control$rhoend)) control$rhoend <- 2e-7
                },
                Nelder_Mead = {
-                   if (is.null(control$xst))
-                       xst <- c(rep.int(0.1, length(environment(fn)$pp$theta)),  ## theta parameters
-                                sqrt(diag(environment(fn)$pp$unsc())))
+                   if (is.null(control$xst))  {
+                       thetaStep <- 0.1
+                       nTheta <- length(environment(fn)$pp$theta)
+                       betaSD <- sqrt(diag(environment(fn)$pp$unsc()))
+                       xst <- c(rep.int(thetaStep, nTheta),
+                                pmin(betaSD,10))
+                   }
                    control$xst <- 0.2*xst
                    if (is.null(control$xt)) control$xt <- control$xst*5e-4
                })
