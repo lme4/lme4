@@ -1,6 +1,9 @@
 library("testthat")
 library("lme4")
 
+testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL")))
+                 as.numeric(s) else 1
+
 context("fitting glmer models")
 test_that("glmer", {
     expect_warning(glmer(z~ 1|f, family=binomial, method="abc"),"Use the nAGQ argument")
@@ -104,4 +107,14 @@ test_that("glmer", {
                  c(-0.06288878,0.02224270),tol=1e-7)
     expect_true(unname(fixef(mod3)[3]<(-4)))
     mod4 <- update(mod2,family=binomial(link="cauchit"))
+
+    ## on-the-fly creation of index variables
+    set.seed(101)
+    d <- data.frame(y1=rpois(100,1),  x=rnorm(100), ID=1:100)
+    fit1 <- glmer(y1 ~ x+(1|ID),data=d,family=poisson)
+    fit2 <- update(fit1, .~ x+(1|rownames(d)))
+    expect_equal(unname(unlist(VarCorr(fit1))),
+                 unname(unlist(VarCorr(fit2))))
+
+    
 })

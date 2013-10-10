@@ -28,9 +28,13 @@
       \item most inverse-link functions are now bounded where
       appropriate by \code{.Machine$double.eps}, allowing fitting
       of GLMMs with extreme parameter values
-      \item \code{merMod} objects created with \code{refit} did not work with \code{update}: optional
-            \code{rename.response} option added to \code{refit.merMod}, to allow
-            this (but the default is still \code{FALSE}, for back-compatibility (reported by A. Kuznetsova)
+      \item \code{merMod} objects created with \code{refit} did not
+      work with \code{update}: optional
+      \code{rename.response} option added to \code{refit.merMod}, to allow
+      this (but the default is still \code{FALSE}, for
+      back-compatibility (reported by A. Kuznetsova)
+      \item fixed buglet preventing on-the-fly creation of index variables,
+      e.g. \code{y~1+(1|rownames(data))} (reported by J. Dushoff)
     }
   }
 }

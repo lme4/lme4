@@ -37,8 +37,11 @@ mkReTrms <- function(bars, fr) {
   mkBlist <- function(x) {
     frloc <- fr
     ## convert grouping variables to factors as necessary
+    ## TODO: variables that are *not* in the data frame are
+    ##  not converted -- these could still break, e.g. if someone
+    ##  tries to use the : operator
     for (i in all.vars(x[[3]])) {
-      frloc[[i]] <- factor(frloc[[i]])
+        if (!is.null(frloc[[i]])) frloc[[i]] <- factor(frloc[[i]])
     }
     ff <- eval(substitute(factor(fac), list(fac = x[[3]])), frloc)
     if (all(is.na(ff)))
