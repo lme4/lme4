@@ -116,5 +116,18 @@ test_that("glmer", {
     expect_equal(unname(unlist(VarCorr(fit1))),
                  unname(unlist(VarCorr(fit2))))
 
+    ##
+    if (testLevel>1) {
+        load(system.file("testdata","mastitis.rda",package="lme4"))
+        t1 <- system.time(g1 <-
+                          glmer(NCM ~ birth + calvingYear + (1|sire) +
+                     (1|herd),mastitis,poisson))
+        t2 <- system.time(g2 <- update(g1,
+                         control=glmerControl(optimizer="bobyqa")))
+        ## 20 seconds N-M vs 8 seconds bobyqa ...
+        ## problem is fairly ill-conditioned so parameters
+        ##  are relatively far apart even though likelihoods are OK
+        expect_equal(logLik(g1),logLik(g2),tol=1e-7)
+    }
     
 })
