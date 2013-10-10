@@ -1180,10 +1180,18 @@ ranef.merMod <- function(object, condVar = FALSE, drop = FALSE,
 ##' @method refit merMod
 ##' @rdname refit
 ##' @export
-refit.merMod <- function(object, newresp=NULL, ...)
+refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
 {
-    rr <- object@resp$copy()
 
+    if (length(list(...))>0)
+        warning("additional arguments to refit.merMod ignored")
+    
+    ## TODO: not clear whether we should reset the names
+    ##       to the new response variable.  Maybe not.
+    
+    ## retrieve name before it gets mangled by operations on newresp
+    newrespSub <- substitute(newresp)
+    
     ## for backward compatibility/functioning of refit(fit,simulate(fit))
     if (is.list(newresp)) {
         if (length(newresp)==1) {
@@ -1194,13 +1202,26 @@ refit.merMod <- function(object, newresp=NULL, ...)
         }
     }
 
+    rr <- object@resp$copy()
+
     if (!is.null(newresp)) {
+
+        ## update call and model frame with new response
+        rcol <- attr(attr(mf <- model.frame(object),"terms"),"response")
+        if (rename.response) {
+            attr(object@frame,"formula")[[2]] <- object@call$formula[[2]] <-
+                newrespSub
+            names(object@frame)[rcol] <- deparse(newrespSub)
+        }
+
         if (!is.null(na.act <- attr(object@frame,"na.action"))) {
             ## will only get here if na.action is 'na.omit' or 'na.exclude'
             if (is.matrix(newresp)) {
                 newresp <- newresp[-na.act,]
             } else newresp <- newresp[-na.act]
         }
+
+        object@frame[,rcol] <- newresp
 
         if (isGLMM(object) && rr$family$family=="binomial") {
             ## re-do conversion of two-column matrix and factor
@@ -1217,7 +1238,10 @@ refit.merMod <- function(object, newresp=NULL, ...)
                 newresp <- as.numeric(newresp)-1
             }
         }
-        stopifnot(length(newresp <- as.numeric(as.vector(newresp))) == length(rr$y))
+
+        stopifnot(length(newresp <- as.numeric(as.vector(newresp))) ==
+                  length(rr$y))
+
         rr$setResp(newresp)
     }
 

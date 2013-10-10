@@ -23,7 +23,9 @@ fit_cbpp_0 <- glmer(cbind(incidence,size-incidence) ~ 1 + (1|herd),
                     cbpp, family=binomial)
 fit_cbpp_1 <- update(fit_cbpp_0, . ~ . + period)
 fit_cbpp_2 <- update(fit_cbpp_1, . ~ . + (1|obs))
-
+fit_cbpp_3 <- update(fit_cbpp_0,
+                     formula=incidence/size ~ period + (1 | herd),
+                     weights=size)
 save(list=ls(pattern="fit_"),file="lme-tst-fits.rda")
 
 ## an example with >20 fixed effects:
