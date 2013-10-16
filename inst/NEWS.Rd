@@ -4,7 +4,7 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.0-5 (2013-09-30)}{
+\section{CHANGES IN VERSION 1.0-5 (2013-10-16)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item \code{confint.merMod} and \code{vcov.merMod} are
