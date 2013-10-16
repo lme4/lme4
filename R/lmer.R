@@ -1180,10 +1180,10 @@ ranef.merMod <- function(object, condVar = FALSE, drop = FALSE,
 ##' @method refit merMod
 ##' @rdname refit
 ##' @export
-refit.merMod <- function(object, newresp=NULL, renameVar=FALSE, ...)
+refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
 {
 
-    if (length(list(...))==0) warning("additional arguments to refit.merMod ignored")
+    if (length(list(...))>0) warning("additional arguments to refit.merMod ignored")
     ## TODO: not clear whether we should reset the names
     ##       to the new response variable.  Maybe not.
     
@@ -1206,7 +1206,7 @@ refit.merMod <- function(object, newresp=NULL, renameVar=FALSE, ...)
 
         ## update call and model frame with new response
         rcol <- attr(attr(mf <- model.frame(object),"terms"),"response")
-        if (renameVar) {
+        if (rename.response) {
             attr(object@frame,"formula")[[2]] <- object@call$formula[[2]] <-
                 newrespSub
             names(object@frame)[rcol] <- deparse(newrespSub)

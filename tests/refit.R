@@ -1,4 +1,5 @@
 library(lme4)
+library(testthat)
 load(system.file("testdata","lme-tst-fits.rda",package="lme4"))
 
 (testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
@@ -66,6 +67,8 @@ d <- data.frame(y1=Y[,1],  x=rnorm(100), f=rep(1:10,10))
 fit1 <- lmer(y1 ~ x+(1|f),data=d)
 fit2 <- refit(fit1, newresp = Y[,2], rename.response=TRUE)
 ## check, but ignore terms attribute of model frame ...
+expect_warning(refit(fit1, newresp = Y[,2], junk=TRUE))
+if (isTRUE(all.equal(fit1,fit2))) stop("fit1 and fit2 should not be equal")
 stopifnot(all.equal(dropterms(fit2), dropterms(u2 <- update(fit2))))
 
 ## FIXME: check on Windows
