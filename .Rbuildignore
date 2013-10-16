@@ -4,3 +4,4 @@ do-roxy*
 ^.*\.Rproj$
 ^\.Rproj\.user$
 build-pkg*
+clean
