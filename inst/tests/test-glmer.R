@@ -1,6 +1,9 @@
 library("testthat")
 library("lme4")
 
+testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL")))
+                 as.numeric(s) else 1
+
 context("fitting glmer models")
 test_that("glmer", {
     expect_warning(glmer(z~ 1|f, family=binomial, method="abc"),"Use the nAGQ argument")
@@ -118,8 +121,13 @@ test_that("glmer", {
                      unname(unlist(VarCorr(fit2))))
     }
 
-    ##
+    ## ?? 
+    testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL")))
+        as.numeric(s) else 1
+
     if (testLevel>1) {
+
+
         load(system.file("testdata","mastitis.rda",package="lme4"))
         t1 <- system.time(g1 <-
                           glmer(NCM ~ birth + calvingYear + (1|sire) +
