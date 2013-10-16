@@ -1161,10 +1161,12 @@ ranef.merMod <- function(object, condVar = FALSE, drop = FALSE,
 ##' @method refit merMod
 ##' @rdname refit
 ##' @export
-refit.merMod <- function(object, newresp=NULL, ...)
+refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
 {
     rr <- object@resp$copy()
 
+    if (length(list(...))>0) warning("additional arguments to refit.merMod ignored")
+    newrespSub <- substitute(newresp)
     ## for backward compatibility/functioning of refit(fit,simulate(fit))
     if (is.list(newresp)) {
         if (length(newresp)==1) {
@@ -1176,6 +1178,16 @@ refit.merMod <- function(object, newresp=NULL, ...)
     }
     
     if (!is.null(newresp)) {
+
+
+        ## update call and model frame with new response
+        rcol <- attr(attr(mf <- model.frame(object),"terms"),"response")
+        if (rename.response) {
+            attr(object@frame,"formula")[[2]] <- object@call$formula[[2]] <-
+                newrespSub
+            names(object@frame)[rcol] <- deparse(newrespSub)
+        }
+
         if (!is.null(na.act <- attr(object@frame,"na.action"))) {
             ## will only get here if na.action is 'na.omit' or 'na.exclude'
             if (is.matrix(newresp)) {
