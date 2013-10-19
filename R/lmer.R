@@ -711,7 +711,7 @@ anovaLmer <- function(object, ...) {
 	ss <- as.vector(object@pp$RX() %*% object@beta)^2
 	names(ss) <- colnames(X)
 	terms <- terms(object)
-        nmeffects <- attr(terms, "term.labels")
+        nmeffects <- attr(terms, "term.labels")[unique(asgn)]
 	if ("(Intercept)" %in% names(ss))
 	    nmeffects <- c("(Intercept)", nmeffects)
 	ss <- unlist(lapply(split(ss, asgn), sum))
@@ -1186,10 +1186,10 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
     if (length(list(...))>0) warning("additional arguments to refit.merMod ignored")
     ## TODO: not clear whether we should reset the names
     ##       to the new response variable.  Maybe not.
-    
+
     ## retrieve name before it gets mangled by operations on newresp
     newrespSub <- substitute(newresp)
-    
+
     ## for backward compatibility/functioning of refit(fit,simulate(fit))
     if (is.list(newresp)) {
         if (length(newresp)==1) {

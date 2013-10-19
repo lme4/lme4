@@ -12,7 +12,12 @@ test_that("lmerRank", {
     d <- data.frame(x,y,z,r)
     d$y2 <- d$y + c(0.001,rep(0,n-1))
 
-    expect_error(lmer( z ~ x + y + (1|r), data=d),"rank of X")
+    expect_message(fm <- lmer( z ~ x + y + (1|r), data=d),
+                   "design is column rank deficient")
+    expect_equal(nrow(anova(fm)), 1L)
+    expect_error(lmer( z ~ x + y + (1|r), data=d,
+                      control=lmerControl(ensureXrank=FALSE)),
+                 "rank of X")
     ## should work:
     expect_that(lmer( z ~ x + y2 + (1|r), data=d), is_a("lmerMod"))
 
@@ -21,10 +26,17 @@ test_that("lmerRank", {
     d2 <- transform(d2,r=sample(1:5, size=n, replace=TRUE),
                      z=rnorm(n))
     d2 <- subset(d2,!(a=="4" & b=="4"))
-    expect_error(lmer( z ~ a*b + (1|r), data=d2),"rank of X")
+    expect_error(lmer( z ~ a*b + (1|r), data=d2,
+                      control=lmerControl(ensureXrank=FALSE)),
+                 "rank of X")
+    expect_message(fm <- lmer( z ~ a*b + (1|r), data=d2),
+                   "design is column rank deficient")
     d2 <- transform(d2, ab=droplevels(interaction(a,b)))
     ## should work:
-    expect_that(lmer( z ~ ab + (1|r), data=d2), is_a("lmerMod"))
+    expect_that(fm2 <- lmer( z ~ ab + (1|r), data=d2), is_a("lmerMod"))
+    expect_equal(logLik(fm), logLik(fm2))
+    expect_equal(sum(anova(fm)[, "Df"]), anova(fm2)[, "Df"])
+    expect_equal(sum(anova(fm)[, "Sum Sq"]), anova(fm2)[, "Sum Sq"])
 })
 
 test_that("glmerRank", {
@@ -38,7 +50,11 @@ test_that("glmerRank", {
     ## FIXME: figure out how small a difference will still fail?
     d$y2 <- rnorm(n)
 
-    expect_error(glmer( z ~ x + y + (1|r), data=d, family=binomial), "rank of X")
+    expect_message(fm <- glmer( z ~ x + y + (1|r), data=d, family=binomial),
+                   "design is column rank deficient")
+    expect_error(glmer( z ~ x + y + (1|r), data=d, family=binomial,
+                       control=glmerControl(ensureXrank=FALSE)),
+                 "rank of X")
     expect_that(glmer( z ~ x + y2 + (1|r), data=d, family=binomial),is_a("glmerMod"))
 })
 
@@ -52,7 +68,7 @@ test_that("nlmerRank", {
     r <- sample(1:nblock, size=n, replace=TRUE)
     d <- data.frame(x,y,z,r)
     ## save("d","nlmerRank.RData")  ## see what's going on with difference in contexts
-    
+
     fModel <- function(a,b)  (exp(a)*x)^(b*y)
     fModf <- deriv(body(fModel), namevec = c("a","b"),
                    func = fModel)
