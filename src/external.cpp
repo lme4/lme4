@@ -255,9 +255,14 @@ extern "C" {
 
     static double internal_glmerWrkIter(merPredD *pp, glmResp *rp, bool uOnly) {
 	int debug=0; // !=0 to enable
+	if (debug) Rcpp::Rcout << "(igWI, pre-updateXwts) Xwts: min: " << 
+		       pp->Xwts().minCoeff() << 
+		       " sqrtWrkWt: min: " <<
+		       rp->sqrtWrkWt().minCoeff() << std::endl;
 	pp->updateXwts(rp->sqrtWrkWt());
-	if (debug) Rcpp::Rcout << "(igWI) Xwts: min: " << pp->Xwts().minCoeff() << 
-	    " max: " << pp->Xwts().maxCoeff() << std::endl;
+	if (debug) Rcpp::Rcout << "(igWI) Xwts: min: " << 
+		       pp->Xwts().minCoeff() << 
+		       " max: " << pp->Xwts().maxCoeff() << std::endl;
 	pp->updateDecomp();
 	// n.b. next line fails to compile ... 'no method'
 	// Rcpp::Rcout << "\nd_L after updateDecomp: " << pp->L() << std::endl;

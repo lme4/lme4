@@ -157,6 +157,11 @@ namespace lme4 {
     }
 
     ArrayXd glmResp::sqrtWrkWt() const {
+	int debug=0;
+	if (debug) Rcpp::Rcout << "(sqrtWrkWt) min muEta: " <<
+		       muEta().minCoeff() <<
+		       " min weights: " << d_weights.array().minCoeff() <<
+		       std::endl;
 	return muEta() * (d_weights.array() / variance()).sqrt();
     }
 
