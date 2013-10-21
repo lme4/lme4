@@ -115,6 +115,7 @@ namespace glm {
     // * clamp from both sides?
     // * intercept problems elsewhere?
     // * allow toggling of clamp activity by user?
+    // (applies to logitmueta too)
     template<typename T>
     struct logitinv : public std::unary_function<T, T> {
 	const T operator() (const T& x) const {
@@ -133,7 +134,8 @@ namespace glm {
     template<typename T>
     struct logitmueta : public std::unary_function<T, T> {
 	const T operator() (const T& x) const {
-	    return T(::Rf_dlogis(double(x), 0., 1., 0));
+	    return T(std::max(std::numeric_limits<T>::epsilon(),
+			      Rf_dlogis(double(x), 0., 1., 0)));
 	}
     };
 
