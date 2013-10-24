@@ -4,11 +4,15 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.0-5 (2013-10-16)}{
+\section{CHANGES IN VERSION 1.0-5 (2013-10-24)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item \code{confint.merMod} and \code{vcov.merMod} are
       now exported, for downstream package-author convenience
+      \item the package now depends on Matrix >=1.1-0 and RcppEigen
+      >=0.3.1.2.3
+      \item new \code{rename.response} option for \code{refit} (see BUG
+      FIXES section)
     }
   }
   \subsection{BUG FIXES}{
@@ -18,9 +22,18 @@
       \item most inverse-link functions are now bounded where
       appropriate by \code{.Machine$double.eps}, allowing fitting
       of GLMMs with extreme parameter values
-      \item \code{merMod} objects created with \code{refit} did not work with \code{update}: optional
-            \code{rename.response} option added to \code{refit.merMod}, to allow
-            this (but the default is still \code{FALSE}, for back-compatibility (reported by A. Kuznetsova)
+      \item \code{merMod} objects created with \code{refit} did not
+      work with \code{update}: optional
+      \code{rename.response} option added to \code{refit.merMod}, to allow
+      this (but the default is still \code{FALSE}, for
+      back-compatibility (reported by A. Kuznetsova)
+      \item fixed buglet preventing on-the-fly creation of index variables,
+      e.g. \code{y~1+(1|rownames(data))} (reported by J. Dushoff)
+      \item \code{predict} now works properly for \code{glmer} models
+      with basis-creating terms (e.g. \code{poly}, \code{ns})
+      \item step sizes determined from fixed effect coefficient standard
+      errors after first state of \code{glmer} fitting are now bounded,
+      allowing some additional models to be fitted
     }
   }
 }
