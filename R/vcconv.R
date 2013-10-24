@@ -93,7 +93,10 @@ sdcor2cov  <- function(m) {
 ## convert cov to sdcor
 cov2sdcor  <- function(m) {
     v <- diag(m)
-    m1 <- cov2cor(m)
+    ## don't want
+    ## warning("diag(.) had 0 or NA entries; non-finite result is doubtful")
+    ## (this is the only warning that cov2cor produces)
+    m1 <- suppressWarnings(cov2cor(m))
     diag(m1) <- sqrt(v)
     m1
 }
