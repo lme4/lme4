@@ -1,17 +1,15 @@
 Package: lme4
 Version: 1.0-5
-Date: 2013-10-23
+Date: 2013-10-25
 Title: Linear mixed-effects models using Eigen and S4
-Authors@R: c(person("Douglas","Bates",
-    role="aut"),
-    person("Martin","Maechler",
-    role="aut"),
-    person("Ben","Bolker",email="bbolker+lme4@gmail.com",
-    role=c("aut","cre")),
+Authors@R: c(person("Douglas","Bates", role="aut"),
+    person("Martin","Maechler", role="aut"),
+    person("Ben","Bolker",email="bbolker+lme4@gmail.com", role=c("aut","cre")),
     person("Steven","Walker",role="aut"))
 Maintainer: Ben Bolker <bbolker+lme4@gmail.com>
 Contact: LME4 Authors <lme4-authors@lists.r-forge.r-project.org>
-Author: Doug Bates, Ben Bolker, Martin Maechler and Steven Walker
+Author: Douglas Bates [aut], Martin Maechler [aut], 
+	Ben Bolker [aut, cre], Steven Walker [aut]
 Description: Fit linear and generalized linear mixed-effects models.
     The models and their components are represented using S4 classes and
     methods.  The core computational algorithms are implemented using the
@@ -22,7 +20,7 @@ Depends:
     Matrix (>= 1.1),
     methods,
     stats
-LinkingTo: Rcpp, RcppEigen (>= 0.3.1.2.3)
+LinkingTo: Rcpp (>= 0.10.1), RcppEigen (>= 0.3.1.2.3)
 Imports:
     graphics,
     grid,
@@ -44,5 +42,6 @@ Suggests:
     RcppEigen (>= 0.3.1.2.3)
 LazyData: yes
 License: GPL (>=2)
-URL: http://lme4.r-forge.r-project.org/
+URL: https://github.com/lme4/lme4/
+     http://lme4.r-forge.r-project.org/
 BuildVignettes: yes
