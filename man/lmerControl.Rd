@@ -50,10 +50,12 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     }
     Special provisions are made for \code{\link{bobyqa}},
     \code{\link{Nelder_Mead}}, and optimizers wrapped in the
-    \pkg{optimx} package; to use \pkg{optimx} optimizers (including
+    \pkg{optimx} package; to use the \pkg{optimx} optimizers (including
     \code{L-BFGS-B} from base \code{\link{optim}} and
     \code{\link{nlminb}}), pass the \code{method} argument to
-    \code{optim} in the \code{control} argument.
+    \code{optim} in the \code{optCtrl} argument (you may also
+    need to load the \code{optimx} package manually using
+    \code{\link{library}(optimx)} or \code{\link{require}(optimx)}).
 
     For \code{glmer}, if \code{length(optimizer)==2}, the first element
     will be used for the preliminary (random effects parameters only)
@@ -67,7 +69,8 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
   \item{restart_edge}{logical - should the optimizer
     attempt a restart when it finds a solution at the
     boundary (i.e. zero random-effect variances or perfect
-    +/-1 correlations)?}
+    +/-1 correlations)?  (Currently only implemented for
+    \code{lmerControl}.)}
   \item{check.nlev.gtreq.5}{character - rules for
     checking whether all random effects have >= 5 levels.
     "ignore": skip the test. "warning": warn if test fails.
