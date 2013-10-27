@@ -60,8 +60,13 @@ predict.merMod <- function(object, newdata=NULL, REform=NULL,
             ## evaluate new fixed effect
             RHS <- formula(object,fixed.only=TRUE)[-2]
             Terms <- terms(object,fixed.only=TRUE)
+            orig_facs <- which(sapply(mf <- model.frame(object,fixed.only=TRUE),
+                                      is,"factor"))
+            orig_levs <- lapply(mf[orig_facs],levels)
             X <- model.matrix(RHS, mfnew <- model.frame(delete.response(Terms),
-                                                        newdata, na.action=na.action),
+                                                        newdata,
+                                                        na.action=na.action,
+                                                        xlev=orig_levs),
                               contrasts.arg=attr(X_orig,"contrasts"))
         }
         pred <- drop(X %*% fixef(object))
