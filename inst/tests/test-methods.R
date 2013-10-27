@@ -52,6 +52,7 @@ test_that("refit", {
     expect_error(refit(fm1,s2),"refit not implemented for lists")
 })
 
+gm1 <- fit_cbpp_1
 context("predict")
 test_that("predict", {
     d1 <- with(cbpp, expand.grid(period=unique(period), herd=unique(herd)))
