@@ -46,3 +46,17 @@ test_that("refit", {
     expect_error(refit(fm1,s2),"refit not implemented for lists")
 })
 
+context("predict")
+test_that("predict", {
+    d1 <- with(cbpp, expand.grid(period=unique(period), herd=unique(herd)))
+    d2 <- data.frame(period="1", herd=unique(cbpp$herd))
+    d3 <- expand.grid(period=as.character(1:3),
+                      herd=unique(cbpp$herd))
+    p0 <- predict(gm1)
+    p1 <- unname(predict(gm1,d1))
+    p2 <- unname(predict(gm1,d2))
+    p3 <- unname(predict(gm1,d3))
+    expect_equal(p0[1],p1[1],tol=4e-5)
+    expect_equal(p0[1],p2[1],tol=4e-5)
+    expect_equal(p0[1],p3[1],tol=4e-5)
+})
