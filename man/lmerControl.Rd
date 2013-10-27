@@ -12,8 +12,9 @@ lmerControl(optimizer = "Nelder_Mead",
     check.nobs.vs.rankZ = "warningSmall",
     check.nobs.vs.nlev = "stop",
     check.nlev.gtreq.5 = "ignore",
-    check.nlev.gtr.1 = "stop", 
-    check.nobs.vs.nRE="stop", 
+    check.nlev.gtr.1 = "stop",
+    check.nobs.vs.nRE="stop",
+    ensureXrank=TRUE,
     optCtrl = list())
 
 glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
@@ -23,6 +24,7 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     check.nlev.gtreq.5 = "ignore",
     check.nlev.gtr.1 = "stop",
     check.nobs.vs.nRE="stop",
+    ensureXrank=TRUE,
     tolPwrss = 1e-07,
     compDev = TRUE, optCtrl = list())
 
@@ -99,7 +101,10 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     checking whether the number of observations is greater
     than (or greater than or equal to) the number of random-effects
     levels for each term, usually necessary for identifiable variances.
-    As for \code{check.nobs.vs.nlev}.} 
+    As for \code{check.nobs.vs.nlev}.}
+  \item{ensureXrank}{logical - drop columns from the design matrix to ensure to
+    ensure that it has full rank. Sometimes needed to make the model
+    identifiable.}
   \item{optCtrl}{a \code{\link{list}} of additional arguments to be
     passed to the nonlinear optimizer (see \code{\link{Nelder_Mead}},
     \code{\link[minqa]{bobyqa}}).  In particular, both

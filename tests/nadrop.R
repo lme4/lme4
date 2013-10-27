@@ -22,7 +22,7 @@ nNA <- sum(is.na(d$x))
 stopifnot(sum(is.na(predict(fm2)))==nNA)
 stopifnot(sum(is.na(residuals(fm2)))==nNA)
 expect_error(fm3 <- lmer(y~x+(1|f),data=d,na.action="na.pass"),
-             "infinite or missing values")
+             "Error in qr.default")
 
 refit(fm0)
 refit(fm1)

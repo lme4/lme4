@@ -48,6 +48,7 @@ namedList <- function(...) {
 ## add better logic for distinguishing whether the scale parameter is
 ## being estimated
 ##' @param check.nobs.vs.nlev character - rules for checking whether the number of observations is less than (or less than or equal to) the number of levels of every grouping factor, usually necessary for identifiable variances.  As for \code{check.nlevel.gtreq.5}: \code{nobs<nlevels} will be tested for LMMs and GLMMs with estimated scale parameters; \code{nobs<=nlevels} will be tested for GLMMs with fixed scale parameter.
+##' @param ensureXrank logical - drop columns from the design matrix to ensure to ensure that it has full rank. Sometimes needed to make the model identifiable.
 ##' @param \dots additional arguments to be passed to the nonlinear optimizer (see \code{\link{Nelder_Mead}},
 ##'    \code{\link[minqa]{bobyqa}}). In particular, both \code{Nelder_Mead} and \code{bobyqa} use \code{maxfun} to specify
 ##'    the maximum number of function evaluations they will try before giving up - in contrast to \code{\link{optim}} and \code{optimx}-wrapped optimizers, which use \code{maxit}.
@@ -62,6 +63,7 @@ lmerControl <- function(optimizer="Nelder_Mead",
                         check.nlev.gtreq.5="ignore",
                         check.nlev.gtr.1="stop",
                         check.nobs.vs.nRE="stop",
+                        ensureXrank=TRUE,
                         optCtrl = list())
 {
     ## FIXME: is there a better idiom?  match.call() ?
@@ -81,7 +83,8 @@ lmerControl <- function(optimizer="Nelder_Mead",
                              check.nobs.vs.nlev,
 			     check.nlev.gtreq.5,
 			     check.nlev.gtr.1,
-                             check.nobs.vs.nRE),
+                             check.nobs.vs.nRE,
+                             ensureXrank),
                         optCtrl=optCtrl),
 	      class = c("lmerControl", "merControl"))
 }
@@ -102,6 +105,7 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
                          check.nlev.gtreq.5="ignore",
                          check.nlev.gtr.1="stop",
                          check.nobs.vs.nRE="stop",
+                         ensureXrank=TRUE,
                          tolPwrss = 1e-7,
                          compDev = TRUE,
                          optCtrl = list())
@@ -133,7 +137,8 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
                                   check.nobs.vs.nlev,
 				  check.nlev.gtreq.5,
 				  check.nlev.gtr.1,
-                                  check.nobs.vs.nRE),
+                                  check.nobs.vs.nRE,
+                                  ensureXrank),
                         optCtrl=optCtrl),
 	      class = c("glmerControl", "merControl"))
 }

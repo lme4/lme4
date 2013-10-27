@@ -180,7 +180,52 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
     }
 }
 
-
+##' Coefficients (columns) are dropped from a design matrix to
+##' ensure that it has full rank.
+##'
+##'  Redundant columns of the design matrix are identified with the
+##'  LINPACK implementation of the \code{\link{qr}} decomposition and
+##'  removed. The returned design matrix will have \code{qr(X)$rank}
+##'  columns.
+##'
+##' (Note: I have lifted this function from the ordinal (soon Rufus)
+##' package and modified it slightly./rhbc)
+##'
+##' @title Ensure full rank design matrix
+##' @param X a design matrix, e.g., the result of
+##' \code{\link{model.matrix}} possibly of less than full column rank,
+##' i.e., with redundant parameters.
+##' @param silent should a message not be issued if X is column rank
+##' deficient?
+##' @return The design matrix \code{X} without redundant columns.
+##' @seealso \code{\link{qr}} and \code{\link{lm}}
+##' @author Rune Haubo Bojesen Christensen
+drop.coef <- function(X, silent = TRUE) {
+    ## Test and match arguments:
+    stopifnot(is.matrix(X))
+    silent <- as.logical(silent)[1]
+    ## Perform the qr-decomposition of X using LINPACK methods:
+    qr.X <- qr(X, tol = 1e-7, LAPACK = FALSE)
+    if (qr.X$rank == ncol(X))
+        return(X) ## return X if X has full column rank
+    if (!silent) ## message the no. dropped columns:
+        message(gettextf("design is column rank deficient so dropping %d coef",
+                         ncol(X) - qr.X$rank))
+    ## Return the columns correponding to the first qr.x$rank pivot
+    ## elements of X:
+    keep <- qr.X$pivot[seq_len(qr.X$rank)]
+    newX <- X[, keep, drop = FALSE]
+    ## Re-assign relevant attributes:
+    if(!is.null(contr <- attr(X, "contrasts")))
+        attr(newX, "contrasts") <- contr
+    if(!is.null(asgn <- attr(X, "assign")))
+        attr(newX, "assign") <- asgn[keep]
+    ## did we succeed? stop-if-not: - already checked in [g]lFormula.
+    ## if(qr.X$rank != qr(newX)$rank)
+    ##   stop(gettextf("determination of full column rank design matrix failed"),
+    ##        call. = FALSE)
+    newX
+}
 
 ##' @rdname modular
 ##' @param control a list giving (for \code{[g]lFormula}) all options (see \code{\link{lmerControl}} for running the model;
@@ -246,6 +291,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     attr(attr(fr,"terms"),"predvars.fixed") <-
         attr(attr(fixedfr,"terms"),"predvars")
     X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
+    ## Attempt to drop columns from X to make it full rank:
+    if(control[["ensureXrank"]]) X <- drop.coef(X, silent=FALSE)
     p <- ncol(X)
     if ((rankX <- rankMatrix(X)) < p)
 	stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
@@ -459,7 +506,8 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     attr(attr(fr,"terms"),"predvars.fixed") <-
         attr(attr(fixedfr,"terms"),"predvars")
     X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
-
+    ## Attempt to drop columns from X to make it full rank:
+    if(control[["ensureXrank"]]) X <- drop.coef(X, silent=FALSE)
     p <- ncol(X)
     if ((rankX <- rankMatrix(X)) < p)
         stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
