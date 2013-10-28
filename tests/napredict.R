@@ -31,25 +31,26 @@ m.lmer <- lmer (angle ~ temp + (1 | recipe) + (1 | replicate), data=cake)
 cake2                   <- cake
 cake2$temp[1:5]         <- NA
 
-p1_pass <- predict(m.lmer, newdata=cake2, REform=NA, na.action=na.pass)
+p1_pass <- predict(m.lmer, newdata=cake2, ReForm=NA, na.action=na.pass)
 expect_true(length(p1_pass)==nrow(cake2))
 expect_true(all(is.na(p1_pass[1:5])))
-p1_omit <- predict(m.lmer, newdata=cake2, REform=NA, na.action=na.omit)
-p1_exclude <- predict(m.lmer, newdata=cake2, REform=NA, na.action=na.exclude)
+p1_omit <- predict(m.lmer, newdata=cake2, ReForm=NA, na.action=na.omit)
+p1_exclude <- predict(m.lmer, newdata=cake2, ReForm=NA, na.action=na.exclude)
 expect_true(length(p1_omit)==nrow(na.omit(cake2)))
-expect_true(all.equal(p1_exclude,p1_omit))
-expect_that(predict(m.lmer, newdata=cake2, REform=NA, na.action=na.fail),
+expect_true(length(p1_exclude)==nrow(cake2))
+expect_true(all.equal(c(na.omit(p1_exclude)),p1_omit))
+expect_that(predict(m.lmer, newdata=cake2, ReForm=NA, na.action=na.fail),
             throws_error("missing values in object"))
 
-## now try it with REform==NULL
-p2_pass <- predict(m.lmer, newdata=cake2, REform=NULL, na.action=na.pass)
+## now try it with ReForm==NULL
+p2_pass <- predict(m.lmer, newdata=cake2, ReForm=NULL, na.action=na.pass)
 expect_true(length(p2_pass)==nrow(cake2))
 expect_true(all(is.na(p2_pass[1:5])))
-p2_omit <- predict(m.lmer, newdata=cake2, REform=NULL, na.action=na.omit)
-p2_exclude <- predict(m.lmer, newdata=cake2, REform=NULL, na.action=na.exclude)
+p2_omit <- predict(m.lmer, newdata=cake2, ReForm=NULL, na.action=na.omit)
+p2_exclude <- predict(m.lmer, newdata=cake2, ReForm=NULL, na.action=na.exclude)
 expect_true(length(p2_omit)==nrow(na.omit(cake2)))
-expect_true(all.equal(p2_exclude,p2_omit))
-expect_that(predict(m.lmer, newdata=cake2, REform=NULL, na.action=na.fail),
+expect_true(all.equal(c(na.omit(p2_exclude)),p2_omit))
+expect_that(predict(m.lmer, newdata=cake2, ReForm=NULL, na.action=na.fail),
             throws_error("missing values in object"))
 
 
@@ -57,9 +58,9 @@ expect_that(predict(m.lmer, newdata=cake2, REform=NULL, na.action=na.fail),
 ## treated 
 cake3 <- cake
 cake3$replicate[1:5] <- NA
-expect_that(predict(m.lmer, newdata=cake3, REform=NULL),
+expect_that(predict(m.lmer, newdata=cake3, ReForm=NULL),
             throws_error("NAs are not allowed in prediction data"))
-p4 <- predict(m.lmer, newdata=cake3, REform=NULL, allow.new.levels=TRUE)
-p4B <- predict(m.lmer, newdata=cake3, REform=~1|recipe, allow.new.levels=TRUE)
+p4 <- predict(m.lmer, newdata=cake3, ReForm=NULL, allow.new.levels=TRUE)
+p4B <- predict(m.lmer, newdata=cake3, ReForm=~1|recipe, allow.new.levels=TRUE)
 expect_true(all.equal(p4[1:5],p4B[1:5]))
-p4C <- predict(m.lmer, newdata=cake3, REform=NA)
+p4C <- predict(m.lmer, newdata=cake3, ReForm=NA)

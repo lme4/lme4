@@ -149,80 +149,81 @@ mkReTrms <- function(bars, fr) {
 ##' @family utilities
 ##' @export
 mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, ...) {
+  
+    if(!missing(fr)){
+        y <- model.response(fr)
+        offset <- model.offset(fr)
+        weights <- model.weights(fr)
+        N <- n <- nrow(fr)
+        etastart_update <- model.extract(fr, "etastart")
+    } else {
+        fr <- list(...)
+        y <- fr$y
+        N <- n <- if(is.matrix(y)) nrow(y) else length(y)
+        offset <- fr$offset
+        weights <- fr$weights
+        etastart_update <- fr$etastart
+    }
 
-  if(!missing(fr)){
-    y <- model.response(fr)
-    offset <- model.offset(fr)
-    weights <- model.weights(fr)
-    N <- n <- nrow(fr)
-    etastart_update <- model.extract(fr, "etastart")
-  }
-  else{
-    fr <- list(...)
-    y <- fr$y
-    N <- n <- if(is.matrix(y)) nrow(y) else length(y)
-    offset <- fr$offset
-    weights <- fr$weights
-    etastart_update <- fr$etastart
-  }
 
-  ## FIXME: may need to add X, or pass it somehow, if we want to use glm.fit
-  #y <- model.response(fr)
-  if(length(dim(y)) == 1) {
-    ## avoid problems with 1D arrays, but keep names
-    nm <- rownames(y)
-    dim(y) <- NULL
-    if(!is.null(nm)) names(y) <- nm
-  }
-  rho <- new.env()
-  rho$y <- if (is.null(y)) numeric(0) else y
-  if (!is.null(REML)) rho$REML <- REML
-  rho$etastart <- fr$etastart
-  rho$mustart <- fr$mustart
-  #N <- n <- nrow(fr)
-  if (!is.null(nlenv)) {
-    stopifnot(is.language(nlmod),
-              is.environment(nlenv),
-              is.numeric(val <- eval(nlmod, nlenv)),
-              length(val) == n,
-              is.matrix(gr <- attr(val, "gradient")),
-              mode(gr) == "numeric",
-              nrow(gr) == n,
-              !is.null(pnames <- colnames(gr)))
-    N <- length(gr)
-    rho$mu <- as.vector(val)
-    rho$sqrtXwt <- as.vector(gr)
-    rho$gam <-
-      unname(unlist(lapply(pnames,
-                           function(nm) get(nm, envir=nlenv))))
-  }
-  if (!is.null(offset)) {
-    if (length(offset) == 1L) offset <- rep.int(offset, N)
-    stopifnot(length(offset) == N)
-    rho$offset <- unname(offset)
-  } else rho$offset <- rep.int(0, N)
-  if (!is.null(weights)) {
-    stopifnot(length(weights) == n, all(weights >= 0))
-    rho$weights <- unname(weights)
-  } else rho$weights <- rep.int(1, n)
-  if (is.null(family)) {
-    if (is.null(nlenv)) return(do.call(lmerResp$new, as.list(rho)))
-    return(do.call(nlsResp$new,
-                   c(list(nlenv=nlenv,
-                          nlmod=substitute(~foo, list(foo=nlmod)),
-                          pnames=pnames), as.list(rho))))
-  }
-  stopifnot(inherits(family, "family"))
-  # need weights for initialize evaluation
-  rho$nobs <- n
-  eval(family$initialize, rho)
-  family$initialize <- NULL     # remove clutter from str output
-  ll <- as.list(rho)
-  ans <- do.call(new, c(list(Class="glmResp", family=family),
-                        ll[setdiff(names(ll), c("m", "nobs", "mustart"))]))
-  ans$updateMu(if (!is.null(es <- etastart_update)) es else
-    family$linkfun(get("mustart", rho)))
-  ans
+   ## FIXME: may need to add X, or pass it somehow, if we want to use glm.fit
+    ##y <- model.response(fr)
+    if(length(dim(y)) == 1) {
+        ## avoid problems with 1D arrays, but keep names
+        nm <- rownames(y)
+        dim(y) <- NULL
+        if(!is.null(nm)) names(y) <- nm
+    }
+    rho <- new.env()
+    rho$y <- if (is.null(y)) numeric(0) else y
+    if (!is.null(REML)) rho$REML <- REML
+    rho$etastart <- fr$etastart
+    rho$mustart <- fr$mustart
+    ##N <- n <- nrow(fr)
+    if (!is.null(nlenv)) {
+        stopifnot(is.language(nlmod),
+                  is.environment(nlenv),
+                  is.numeric(val <- eval(nlmod, nlenv)),
+                  length(val) == n,
+                  is.matrix(gr <- attr(val, "gradient")),
+                  mode(gr) == "numeric",
+                  nrow(gr) == n,
+                  !is.null(pnames <- colnames(gr)))
+        N <- length(gr)
+        rho$mu <- as.vector(val)
+        rho$sqrtXwt <- as.vector(gr)
+        rho$gam <-
+            unname(unlist(lapply(pnames,
+                                 function(nm) get(nm, envir=nlenv))))
+    }
+    if (!is.null(offset)) {
+        if (length(offset) == 1L) offset <- rep.int(offset, N)
+        stopifnot(length(offset) == N)
+        rho$offset <- unname(offset)
+    } else rho$offset <- rep.int(0, N)
+    if (!is.null(weights)) {
+        stopifnot(length(weights) == n, all(weights >= 0))
+        rho$weights <- unname(weights)
+    } else rho$weights <- rep.int(1, n)
+    if (is.null(family)) {
+        if (is.null(nlenv)) return(do.call(lmerResp$new, as.list(rho)))
+        return(do.call(nlsResp$new,
+                       c(list(nlenv=nlenv,
+                              nlmod=substitute(~foo, list(foo=nlmod)),
+                              pnames=pnames), as.list(rho))))
+    }
+    stopifnot(inherits(family, "family"))
+    ## need weights for initializing evaluation
+    rho$nobs <- n
+    ## allow trivial objects, e.g. for simulation
+    if (length(y)>0) eval(family$initialize, rho) 
+    family$initialize <- NULL     # remove clutter from str output
+    ll <- as.list(rho)
+    ans <- do.call(new, c(list(Class="glmResp", family=family),
+                          ll[setdiff(names(ll), c("m", "nobs", "mustart"))]))
+    if (length(y)>0) ans$updateMu(if (!is.null(es <- etastart_update)) es else
+                                  family$linkfun(get("mustart", rho)))
+    ans
 }
 
 ##' From the right hand side of a formula for a mixed-effects model,
@@ -364,22 +365,22 @@ expandDoubleVerts <- function(term)
 ##' @export
 nobars <- function(term)
 {
-	if (!any(c('|','||') %in% all.names(term))) return(term)
-	if (is.call(term) && term[[1]] == as.name('|')) return(NULL)
-	if (is.call(term) && term[[1]] == as.name('||')) return(NULL)
-	if (length(term) == 2) {
-		nb <- nobars(term[[2]])
-		if (is.null(nb)) return(NULL)
-		term[[2]] <- nb
-		return(term)
-	}
-	nb2 <- nobars(term[[2]])
-	nb3 <- nobars(term[[3]])
-	if (is.null(nb2)) return(nb3)
-	if (is.null(nb3)) return(nb2)
-	term[[2]] <- nb2
-	term[[3]] <- nb3
-	term
+    if (!any(c('|','||') %in% all.names(term))) return(term)
+    if (is.call(term) && term[[1]] == as.name('|')) return(NULL)
+    if (is.call(term) && term[[1]] == as.name('||')) return(NULL)
+    if (length(term) == 2) {
+        nb <- nobars(term[[2]])
+        if (is.null(nb)) return(NULL)
+        term[[2]] <- nb
+        return(term)
+    }
+    nb2 <- nobars(term[[2]])
+    nb3 <- nobars(term[[3]])
+    if (is.null(nb2)) return(nb3)
+    if (is.null(nb3)) return(nb2)
+    term[[2]] <- nb2
+    term[[3]] <- nb3
+    term
 }
 
 ##' Substitute the '+' function for the '|' and '||' function in a mixed-model
@@ -400,18 +401,18 @@ nobars <- function(term)
 ##' @export
 subbars <- function(term)
 {
-	if (is.name(term) || !is.language(term)) return(term)
-	if (length(term) == 2) {
-		term[[2]] <- subbars(term[[2]])
-		return(term)
-	}
-	stopifnot(length(term) >= 3)
-	if (is.call(term) && term[[1]] == as.name('|'))
-		term[[1]] <- as.name('+')
-	if (is.call(term) && term[[1]] == as.name('||'))
-		term[[1]] <- as.name('+')
-	for (j in 2:length(term)) term[[j]] <- subbars(term[[j]])
-	term
+    if (is.name(term) || !is.language(term)) return(term)
+    if (length(term) == 2) {
+        term[[2]] <- subbars(term[[2]])
+        return(term)
+    }
+    stopifnot(length(term) >= 3)
+    if (is.call(term) && term[[1]] == as.name('|'))
+        term[[1]] <- as.name('+')
+    if (is.call(term) && term[[1]] == as.name('||'))
+        term[[1]] <- as.name('+')
+    for (j in 2:length(term)) term[[j]] <- subbars(term[[j]])
+    term
 }
 
 ##' Does every level of f1 occur in conjunction with exactly one level
@@ -431,23 +432,23 @@ subbars <- function(term)
 ##' @export
 isNested <- function(f1, f2)
 {
-  f1 <- as.factor(f1)
-  f2 <- as.factor(f2)
-  stopifnot(length(f1) == length(f2))
-  k <- length(levels(f1))
-  sm <- as(new("ngTMatrix",
-               i = as.integer(f2) - 1L,
-               j = as.integer(f1) - 1L,
-               Dim = c(length(levels(f2)), k)),
-           "CsparseMatrix")
-  all(sm@p[2:(k+1L)] - sm@p[1:k] <= 1L)
+    f1 <- as.factor(f1)
+    f2 <- as.factor(f2)
+    stopifnot(length(f1) == length(f2))
+    k <- length(levels(f1))
+    sm <- as(new("ngTMatrix",
+                 i = as.integer(f2) - 1L,
+                 j = as.integer(f1) - 1L,
+                 Dim = c(length(levels(f2)), k)),
+             "CsparseMatrix")
+    all(sm@p[2:(k+1L)] - sm@p[1:k] <= 1L)
 }
 
 subnms <- function(form, nms) {
     ## Recursive function applied to individual terms
     sbnm <- function(term)
     {
-	if (is.name(term)) {
+        if (is.name(term)) {
 	    if (any(term == nms)) 0 else term
 	} else switch(length(term),
 	       term, ## 1
@@ -475,12 +476,12 @@ subnms <- function(form, nms) {
 ## @param expr an expression
 ## @return NULL.  The function is executed for its side effect.
 chck1 <- function(expr) {
-  if ((le <- length(expr)) == 1) {
-    if (is.numeric(expr) && expr == 1)
-      stop("1 is not meaningful in a nonlinear model formula")
-    return()
-  } else
-    for (j in seq_len(le)[-1]) Recall(expr[[j]])
+    if ((le <- length(expr)) == 1) {
+        if (is.numeric(expr) && expr == 1)
+            stop("1 is not meaningful in a nonlinear model formula")
+        return()
+    } else
+        for (j in seq_len(le)[-1]) Recall(expr[[j]])
 }
 
 ##' Check and manipulate the formula for a nonlinear model.
@@ -528,38 +529,38 @@ nlformula <- function(mc) {
             is(nlform <- eval(form[[2]]), "formula"),
             all(pnames %in%
                   (av <- all.vars(nlmod <- as.call(nlform[[lnl <- length(nlform)]])))))
-  nlform[[lnl]] <- parse(text= paste(setdiff(all.vars(form), pnames), collapse=' + '))[[1]]
-  nlform <- eval(nlform)
-  environment(nlform) <- environment(form)
-  m <- match(c("data", "subset", "weights", "na.action", "offset"),
-             names(mc), 0)
-  mc <- mc[c(1, m)]
-  mc$drop.unused.levels <- TRUE
-  mc[[1]] <- as.name("model.frame")
-  mc$formula <- nlform
-  fr <- eval(mc, parent.frame(2L))
-  n <- nrow(fr)
-  nlenv <- list2env(fr, parent=parent.frame(2L))
-  lapply(pnames, function(nm) nlenv[[nm]] <- rep.int(nlpars[[nm]], n))
-  respMod <- mkRespMod(fr, nlenv=nlenv, nlmod=nlmod)
-
-  chck1(meform <- form[[3L]])
-  pnameexpr <- parse(text=paste(pnames, collapse='+'))[[1]]
-  nb <- nobars(meform)
-  fe <- eval(substitute(~ 0 + nb + pnameexpr))
-  environment(fe) <- environment(form)
-  frE <- do.call(rbind, lapply(seq_along(nlpars), function(i) fr)) # rbind s copies of the frame
-  for (nm in pnames) # convert these variables in fr to indicators
-    frE[[nm]] <- as.numeric(rep(nm == pnames, each = n))
-  X <- model.matrix(fe, frE)
-  rownames(X) <- NULL
-
-  reTrms <- mkReTrms(lapply(findbars(meform),
-                            function(expr) {
-                              expr[[2]] <- substitute(0+foo, list(foo=expr[[2]]))
-                              expr
-                            }), frE)
-  list(respMod=respMod, frame=fr, X=X, reTrms=reTrms, pnames=pnames)
+    nlform[[lnl]] <- parse(text= paste(setdiff(all.vars(form), pnames), collapse=' + '))[[1]]
+    nlform <- eval(nlform)
+    environment(nlform) <- environment(form)
+    m <- match(c("data", "subset", "weights", "na.action", "offset"),
+               names(mc), 0)
+    mc <- mc[c(1, m)]
+    mc$drop.unused.levels <- TRUE
+    mc[[1]] <- as.name("model.frame")
+    mc$formula <- nlform
+    fr <- eval(mc, parent.frame(2L))
+    n <- nrow(fr)
+    nlenv <- list2env(fr, parent=parent.frame(2L))
+    lapply(pnames, function(nm) nlenv[[nm]] <- rep.int(nlpars[[nm]], n))
+    respMod <- mkRespMod(fr, nlenv=nlenv, nlmod=nlmod)
+    
+    chck1(meform <- form[[3L]])
+    pnameexpr <- parse(text=paste(pnames, collapse='+'))[[1]]
+    nb <- nobars(meform)
+    fe <- eval(substitute(~ 0 + nb + pnameexpr))
+    environment(fe) <- environment(form)
+    frE <- do.call(rbind, lapply(seq_along(nlpars), function(i) fr)) # rbind s copies of the frame
+    for (nm in pnames) # convert these variables in fr to indicators
+        frE[[nm]] <- as.numeric(rep(nm == pnames, each = n))
+    X <- model.matrix(fe, frE)
+    rownames(X) <- NULL
+    
+    reTrms <- mkReTrms(lapply(findbars(meform),
+                              function(expr) {
+                                  expr[[2]] <- substitute(0+foo, list(foo=expr[[2]]))
+                                  expr
+                              }), frE)
+    list(respMod=respMod, frame=fr, X=X, reTrms=reTrms, pnames=pnames)
 }
 
 ##' Create an object in a subclass of \code{\linkS4class{merMod}}
@@ -575,95 +576,102 @@ nlformula <- function(mc) {
 ##' @return an object from a class that inherits from \code{\linkS4class{merMod}}
 ##' @export
 mkMerMod <- function(rho, opt, reTrms, fr, mc) {
-  if(missing(mc)) mc <- match.call()
-  stopifnot(is.environment(rho),
-            is(pp <- rho$pp, "merPredD"),
-            is(resp <- rho$resp, "lmResp"),
-            is.list(opt),
-            "par" %in% names(opt),
-            all(c("conv","fval") %in% substr(names(opt),1,4)), ## "conv[ergence]", "fval[ues]"
-            is.list(reTrms),
-            all(c("flist", "cnms", "Gp", "lower") %in%
+    if(missing(mc)) mc <- match.call()
+    stopifnot(is.environment(rho),
+              is(pp <- rho$pp, "merPredD"),
+              is(resp <- rho$resp, "lmResp"),
+              is.list(opt),
+              "par" %in% names(opt),
+              all(c("conv","fval") %in% substr(names(opt),1,4)), ## "conv[ergence]", "fval[ues]"
+              is.list(reTrms),
+              all(c("flist", "cnms", "Gp", "lower") %in%
                   names(reTrms)))
-  rcl  <- class(resp)
-  n    <- nrow(pp$V)
-  p    <- ncol(pp$V)
-  dims <- c(N=nrow(pp$X), n=n, p=p, nmp=n-p,
-            nth=length(pp$theta), q=nrow(pp$Zt),
-            nAGQ=rho$nAGQ,
-            compDev=rho$compDev,
-            ## 'use scale' in the sense of whether dispersion parameter should
-            ##  be reported/used (*not* whether theta should be scaled by sigma)
-            useSc=(rcl != "glmResp" ||
+    rcl  <- class(resp)
+    n    <- nrow(pp$V)
+    p    <- ncol(pp$V)
+    dims <- c(N=nrow(pp$X), n=n, p=p, nmp=n-p,
+              nth=length(pp$theta), q=nrow(pp$Zt),
+              nAGQ=rho$nAGQ,
+              compDev=rho$compDev,
+              ## 'use scale' in the sense of whether dispersion parameter should
+              ##  be reported/used (*not* whether theta should be scaled by sigma)
+              useSc=(rcl != "glmResp" ||
                      !resp$family$family %in% c("poisson","binomial")),
-            reTrms=length(reTrms$cnms),
-            spFe=0L,
-            REML=if (rcl=="lmerResp") resp$REML else 0L,
-            GLMM=(rcl=="glmResp"),
-            NLMM=(rcl=="nlsResp"))
-  storage.mode(dims) <- "integer"
-  fac     <- as.numeric(rcl != "nlsResp")
-  sqrLenU <- pp$sqrL(fac)
-  wrss    <- resp$wrss()
-  pwrss   <- wrss + sqrLenU
-  weights <- resp$weights
-  beta    <- pp$beta(fac)
-  sigmaML <- pwrss/sum(weights)
-  if (rcl != "lmerResp") {
-    pars <- opt$par
-    if (length(pars) > length(pp$theta)) beta <- pars[-(seq_along(pp$theta))]
-  }
-  cmp <- c(ldL2=pp$ldL2(), ldRX2=pp$ldRX2(), wrss=wrss,
-           ussq=sqrLenU, pwrss=pwrss,
-           drsum=if (rcl=="glmResp") resp$resDev() else NA,
-           REML=if (rcl=="lmerResp" && resp$REML != 0L) opt$fval else NA,
-           ## FIXME: construct 'REML deviance' here?
-           dev=if (rcl=="lmerResp" && resp$REML != 0L) NA else opt$fval,
-           sigmaML=sqrt(unname(if (!dims["useSc"]) NA else sigmaML)),
-           sigmaREML=sqrt(unname(if (rcl!="lmerResp") NA else sigmaML*(dims['n']/dims['nmp']))),
-           tolPwrss=rho$tolPwrss)
-  # TODO:  improve this hack to get something in frame slot (maybe need weights, etc...)
-  if(missing(fr)) fr <- data.frame(resp$y)
-  new(switch(rcl, lmerResp="lmerMod", glmResp="glmerMod", nlsResp="nlmerMod"),
-      call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
-      Gp=reTrms$Gp, theta=pp$theta, beta=beta, u=pp$u(fac),
-      lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=resp,
-      optinfo=list(optimizer=attr(opt,"optimizer"),
-                   control=attr(opt,"control"),
-                   conv=opt$conv,
-                   warnings=attr(opt,"warnings"))
-  )
+              reTrms=length(reTrms$cnms),
+              spFe=0L,
+              REML=if (rcl=="lmerResp") resp$REML else 0L,
+              GLMM=(rcl=="glmResp"),
+              NLMM=(rcl=="nlsResp"))
+    storage.mode(dims) <- "integer"
+    fac     <- as.numeric(rcl != "nlsResp")
+    if (trivial.y <- (length(resp$y)==0)) {
+        ## trivial model
+        sqrLenU <- wrss <- pwrss <- NA
+    } else {
+        sqrLenU <- pp$sqrL(fac)
+        wrss    <- resp$wrss()
+        pwrss   <- wrss + sqrLenU
+    }
+    weights <- resp$weights
+    beta    <- pp$beta(fac)
+    sigmaML <- pwrss/sum(weights)
+    if (rcl != "lmerResp") {
+        pars <- opt$par
+        if (length(pars) > length(pp$theta)) beta <- pars[-(seq_along(pp$theta))]
+    }
+    cmp <- c(ldL2=pp$ldL2(), ldRX2=pp$ldRX2(), wrss=wrss,
+             ussq=sqrLenU, pwrss=pwrss,
+             drsum=if (rcl=="glmResp" && !trivial.y) resp$resDev() else NA,
+             REML=if (rcl=="lmerResp" && resp$REML != 0L && !trivial.y)
+                  opt$fval else NA,
+             ## FIXME: construct 'REML deviance' here?
+             dev=if (rcl=="lmerResp" && resp$REML != 0L || trivial.y) NA else opt$fval,
+             sigmaML=sqrt(unname(if (!dims["useSc"] || trivial.y) NA else sigmaML)),
+             sigmaREML=sqrt(unname(if (rcl!="lmerResp" || trivial.y) NA else sigmaML*(dims['n']/dims['nmp']))),
+             tolPwrss=rho$tolPwrss)
+                                        # TODO:  improve this hack to get something in frame slot (maybe need weights, etc...)
+    if(missing(fr)) fr <- data.frame(resp$y)
+    new(switch(rcl, lmerResp="lmerMod", glmResp="glmerMod", nlsResp="nlmerMod"),
+        call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
+        Gp=reTrms$Gp, theta=pp$theta, beta=beta,
+        u=if (trivial.y) rep(NA_real_,nrow(pp$Zt)) else pp$u(fac),
+        lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=resp,
+        optinfo=list(optimizer=attr(opt,"optimizer"),
+        control=attr(opt,"control"),
+        conv=opt$conv,
+        warnings=attr(opt,"warnings"))
+        )
 }
 
 ## generic argument checking
 ## 'type': name of calling function ("glmer", "lmer", "nlmer")
 ##
 checkArgs <- function(type,...) {
-  l... <- list(...)
-  if (isTRUE(l...[["sparseX"]])) warning("sparseX = TRUE has no effect at present")
-  ## '...' handling up front, safe-guarding against typos ("familiy") :
-  if(length(l... <- list(...))) {
-    if (!is.null(l...[["family"]])) {  # call glmer if family specified
-      ## we will only get here if 'family' is *not* in the arg list
-      warning("calling lmer with family() is deprecated: please use glmer() instead")
-      type <- "glmer"
+    l... <- list(...)
+    if (isTRUE(l...[["sparseX"]])) warning("sparseX = TRUE has no effect at present")
+    ## '...' handling up front, safe-guarding against typos ("familiy") :
+    if(length(l... <- list(...))) {
+        if (!is.null(l...[["family"]])) {  # call glmer if family specified
+            ## we will only get here if 'family' is *not* in the arg list
+            warning("calling lmer with family() is deprecated: please use glmer() instead")
+            type <- "glmer"
+        }
+        ## Check for method argument which is no longer used
+        ## (different meanings/hints depending on glmer vs lmer)
+        if (!is.null(method <- l...[["method"]])) {
+            msg <- paste("Argument", sQuote("method"), "is deprecated.")
+            if (type=="lmer") msg <- paste(msg,"Use the REML argument to specify ML or REML estimation.")
+            if (type=="glmer") msg <- paste(msg,"Use the nAGQ argument to specify Laplace (nAGQ=1) or adaptive",
+                "Gauss-Hermite quadrature (nAGQ>1).  PQL is no longer available.")
+            warning(msg)
+            l... <- l...[names(l...) != "method"]
+        }
+        if(length(l...)) {
+            warning("extra argument(s) ",
+                    paste(sQuote(names(l...)), collapse=", "),
+                    " disregarded")
+        }
     }
-    ## Check for method argument which is no longer used
-    ## (different meanings/hints depending on glmer vs lmer)
-    if (!is.null(method <- l...[["method"]])) {
-      msg <- paste("Argument", sQuote("method"), "is deprecated.")
-      if (type=="lmer") msg <- paste(msg,"Use the REML argument to specify ML or REML estimation.")
-      if (type=="glmer") msg <- paste(msg,"Use the nAGQ argument to specify Laplace (nAGQ=1) or adaptive",
-                                      "Gauss-Hermite quadrature (nAGQ>1).  PQL is no longer available.")
-      warning(msg)
-      l... <- l...[names(l...) != "method"]
-    }
-    if(length(l...)) {
-      warning("extra argument(s) ",
-              paste(sQuote(names(l...)), collapse=", "),
-              " disregarded")
-    }
-  }
 }
 
 ## check formula and data: return an environment suitable for evaluating
@@ -675,74 +683,74 @@ checkArgs <- function(type,...) {
 ## if #3 is true *and* the user is doing something tricky with nested functions,
 ## this may fail ...
 
-checkFormulaData <- function(formula,data,debug=FALSE) {
-  dataName <- deparse(substitute(data))
-  missingData <- inherits(tryCatch(eval(data), error=function(e)e), "error")
-  ## data not found (this *should* only happen with garbage input,
-  ## OR when strings used as formulae -> drop1/update/etc.)
-  ##
-  ## alternate attempt (fails)
-  ##
-  ## ff <- sys.frames()
-  ## ex <- substitute(data)
-  ## ii <- rev(seq_along(ff))
-  ## for(i in ii) {
-  ##     ex <- eval(substitute(substitute(x, env=sys.frames()[[n]]),
-  ##                           env = list(x = ex, n=i)))
-  ## }
-  ## origName <- deparse(ex)
-  ## missingData <- !exists(origName)
-  ## (!dataName=="NULL" && !exists(dataName))
-  if (missingData) {
-    varex <- function(v,env) exists(v,envir=env,inherits=FALSE)
-    allvars <- all.vars(as.formula(formula))
-    allvarex <- function(vvec=allvars,...) all(vapply(vvec,varex, NA, ...))
-    if (allvarex(env=(ee <- environment(formula)))) {
-      stop("'data' not found, but variables found in environment of formula: ",
-           "try specifying 'formula' as a formula rather ",
-           "than a string in the original model")
-    } else stop("'data' not found, and some variables missing from formula environment")
-  } else {
-    if (is.null(data)) {
-      if (!is.null(ee <- environment(formula))) {
-        ## use environment of formula
-        denv <- ee
-      } else {
-        ## e.g. no environment, e.g. because formula is a character vector
-        ## parent.frame(2L) works because [g]lFormula (our calling environment)
-        ## has been called within [g]lmer with env=parent.frame(1L)
-        ## If you call checkFormulaData in some other bizarre way such that
-        ## parent.frame(2L) is *not* OK, you deserve what you get
-        ## calling checkFormulaData directly from the global
-        ## environment should be OK, since trying to go up beyond the global
-        ## environment keeps bringing you back to the global environment ...
-        denv <- parent.frame(2L)
-      }
+checkFormulaData <- function(formula,data,checkLHS=TRUE,debug=FALSE) {
+    dataName <- deparse(substitute(data))
+    missingData <- inherits(tryCatch(eval(data), error=function(e)e), "error")
+    ## data not found (this *should* only happen with garbage input,
+    ## OR when strings used as formulae -> drop1/update/etc.)
+    ##
+    ## alternate attempt (fails)
+    ##
+    ## ff <- sys.frames()
+    ## ex <- substitute(data)
+    ## ii <- rev(seq_along(ff))
+    ## for(i in ii) {
+    ##     ex <- eval(substitute(substitute(x, env=sys.frames()[[n]]),
+    ##                           env = list(x = ex, n=i)))
+    ## }
+    ## origName <- deparse(ex)
+    ## missingData <- !exists(origName)
+    ## (!dataName=="NULL" && !exists(dataName))
+    if (missingData) {
+        varex <- function(v,env) exists(v,envir=env,inherits=FALSE)
+        allvars <- all.vars(as.formula(formula))
+        allvarex <- function(vvec=allvars,...) { all(sapply(vvec,varex,...)) }
+        if (allvarex(env=(ee <- environment(formula)))) {
+            stop("'data' not found, but variables found in environment of formula: ",
+                 "try specifying 'formula' as a formula rather ",
+                 "than a string in the original model")
+        } else stop("'data' not found, and some variables missing from formula environment")
     } else {
-      ## data specified
-      denv <- list2env(data)
+        if (is.null(data)) {
+            if (!is.null(ee <- environment(formula))) {
+                ## use environment of formula
+                denv <- ee
+            } else {
+                ## e.g. no environment, e.g. because formula is a character vector
+                ## parent.frame(2L) works because [g]lFormula (our calling environment)
+                ## has been called within [g]lmer with env=parent.frame(1L)
+                ## If you call checkFormulaData in some other bizarre way such that
+                ## parent.frame(2L) is *not* OK, you deserve what you get
+                ## calling checkFormulaData directly from the global
+                ## environment should be OK, since trying to go up beyond the global
+                ## environment keeps bringing you back to the global environment ...
+                denv <- parent.frame(2L)
+            }
+        } else {
+            ## data specified
+            denv <- list2env(data)
+        }
     }
-  }
-  ## FIXME: set enclosing environment of denv to environment(formula), or parent.frame(2L) ?
-  if (debug) {
-    cat("Debugging parent frames in checkFormulaData:\n")
-    ## find global environment -- could do this with sys.nframe() ?
-    glEnv <- 1
-    while (!identical(parent.frame(glEnv),.GlobalEnv)) {
-      glEnv <- glEnv+1
-    }
-    ## where are vars?
-    for (i in 1:glEnv) {
-      OK <- allvarex(env=parent.frame(i))
-      cat("vars exist in parent frame ",i)
-      if (i==glEnv) cat(" (global)")
-      cat(" ",OK,"\n")
-    }
-    cat("vars exist in env of formula ",allvarex(env=denv),"\n")
-  } ## if (debug)
-
-  stopifnot(length(as.formula(formula,env=denv)) == 3)  ## check for two-sided formula
-  return(denv)
+    ## FIXME: set enclosing environment of denv to environment(formula), or parent.frame(2L) ?
+    if (debug) {
+        cat("Debugging parent frames in checkFormulaData:\n")
+        ## find global environment -- could do this with sys.nframe() ?
+        glEnv <- 1
+        while (!identical(parent.frame(glEnv),.GlobalEnv)) {
+            glEnv <- glEnv+1
+        }
+        ## where are vars?
+        for (i in 1:glEnv) {
+            OK <- allvarex(env=parent.frame(i))
+            cat("vars exist in parent frame ",i)
+            if (i==glEnv) cat(" (global)")
+            cat(" ",OK,"\n")
+        }
+        cat("vars exist in env of formula ",allvarex(env=denv),"\n")
+    } ## if (debug)
+    
+    stopifnot(!checkLHS || length(as.formula(formula,env=denv)) == 3)  ## check for two-sided formula
+    return(denv)
 }
 
 ## checkFormulaData <- function(formula,data) {

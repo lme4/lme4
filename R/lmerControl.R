@@ -64,6 +64,7 @@ lmerControl <- function(optimizer="Nelder_Mead",
                         check.nlev.gtr.1="stop",
                         check.nobs.vs.nRE="stop",
                         ensureXrank=TRUE,
+                        check.formula.LHS="stop",
                         optCtrl = list())
 {
     ## FIXME: is there a better idiom?  match.call() ?
@@ -84,9 +85,10 @@ lmerControl <- function(optimizer="Nelder_Mead",
 			     check.nlev.gtreq.5,
 			     check.nlev.gtr.1,
                              check.nobs.vs.nRE,
-                             ensureXrank),
+                             ensureXrank,
+                             check.formula.LHS),
                         optCtrl=optCtrl),
-	      class = c("lmerControl", "merControl"))
+              class = c("lmerControl", "merControl"))
 }
 
 ##' @rdname lmerControl
@@ -106,6 +108,7 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
                          check.nlev.gtr.1="stop",
                          check.nobs.vs.nRE="stop",
                          ensureXrank=TRUE,
+                         check.formula.LHS="stop",
                          tolPwrss = 1e-7,
                          compDev = TRUE,
                          optCtrl = list())
@@ -138,7 +141,8 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
 				  check.nlev.gtreq.5,
 				  check.nlev.gtr.1,
                                   check.nobs.vs.nRE,
-                                  ensureXrank),
+                                  ensureXrank,
+                                  check.formula.LHS),
                         optCtrl=optCtrl),
 	      class = c("glmerControl", "merControl"))
 }

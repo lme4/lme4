@@ -16,7 +16,6 @@ d$eta <- d$eta0+reff_f[d$block]
 ## Gamma, inverse link
 d$mu <- 1/d$eta
 d$y <- rgamma(nrow(d),scale=d$mu/2,shape=2)
-str(d)## 2600 obs .. 'block' with 26 levels
 
 ## Gamma, log link
 dgl <- d
@@ -66,6 +65,10 @@ gm3 <- glmer(y ~ x + (1|block), d, Gamma, nAGQ=0)
 gm2B <- glmer(y ~ 1 + (1|block), d, Gamma)
 gm3B <- glmer(y ~ x + (1|block), d, Gamma)
 
+##
+## library(hglm)
+## h1 <- hglm2(y~x+(1|block), data=d, family=Gamma())
+## lme4.0 fails on all of these ...
 
 ## Gamma/log
 ggl1 <- glmer(y ~ 1 + (1|block), data=dgl, family=Gamma(link="log"))

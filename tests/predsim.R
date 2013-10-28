@@ -25,7 +25,7 @@ matlines(ss_sum,col=c(1,2,1),lty=c(2,1,2))
 stopifnot(all.equal(unname(ss_sum[,2]),pp,tolerance=5e-3))
 
 ## population-level prediction
-pp2 <- predict(fm1,REform=NA)
+pp2 <- predict(fm1,ReForm=NA)
 ss2 <- simulate(fm1,1000,use.u=FALSE)
 ss_sum2 <- t(apply(ss2,1,quantile,c(0.025,0.5,0.975)))
 
@@ -58,11 +58,11 @@ p1NA <- predict(m1N)
 p1NB <- predict(m1N,newdata=dn)
 stopifnot(all.equal(p1NA,unname(p1NB)))
 
-##
+## simulate with modified parameters
 set.seed(1)
 s1 <- simulate(fm1)
 set.seed(1)
-s2 <- simulate(fm1,newdata=model.frame(fm1),
+s2 <- simulate.merMod(fm1,newdata=model.frame(fm1),
                newparams=getME(fm1,c("theta","beta")))
 all.equal(s1,s2)
 

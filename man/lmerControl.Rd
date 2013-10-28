@@ -15,6 +15,7 @@ lmerControl(optimizer = "Nelder_Mead",
     check.nlev.gtr.1 = "stop",
     check.nobs.vs.nRE="stop",
     ensureXrank=TRUE,
+    check.formula.LHS = "stop",
     optCtrl = list())
 
 glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
@@ -25,6 +26,7 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     check.nlev.gtr.1 = "stop",
     check.nobs.vs.nRE="stop",
     ensureXrank=TRUE,
+    check.formula.LHS = "stop",
     tolPwrss = 1e-07,
     compDev = TRUE, optCtrl = list())
 
@@ -105,6 +107,11 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
   \item{ensureXrank}{logical - drop columns from the design matrix to ensure to
     ensure that it has full rank. Sometimes needed to make the model
     identifiable.}
+  \item{check.formula.LHS}{ check whether specified formula has
+    a left-hand side. Primarily for internal use within
+    \code{simulate.merMod};
+    \emph{use at your own risk} as it may allow the generation
+    of unstable \code{merMod} objects}
   \item{optCtrl}{a \code{\link{list}} of additional arguments to be
     passed to the nonlinear optimizer (see \code{\link{Nelder_Mead}},
     \code{\link[minqa]{bobyqa}}).  In particular, both
