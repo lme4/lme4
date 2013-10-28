@@ -4,6 +4,16 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
+\section{CHANGES IN VERSION 1.0-6 (2013-10-27)}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item prediction now works when new data have fewer factor
+      levels than are present in the original data (Github issue #143,
+      reported by Rune Haubo)
+    }
+  }
+}
+
 \section{CHANGES IN VERSION 1.0-5 (2013-10-24)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{

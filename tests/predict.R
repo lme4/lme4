@@ -1,8 +1,13 @@
 library(lme4)
 library(testthat)
 do.plots <- FALSE
-gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-             data = cbpp, family = binomial)
+
+L <- load(system.file("testdata/lme-tst-fits.rda",
+                      package="lme4", mustWork=TRUE))
+
+gm1 <- fit_cbpp_1
+## glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+##             data = cbpp, family = binomial)
 
 ## fitted values
 p0 <- predict(gm1)
@@ -61,7 +66,7 @@ p6 <- predict(fm1,newdata,REform=~(1|plate))
 
 if (do.plots) matplot(cbind(p2,p3,p5,p6),type="b",lty=1,pch=16)
 
-fm2 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+fm2 <- fit_sleepstudy_2
 p0 <- predict(fm2)
 p1 <- predict(fm2,REform=NA)
 ## linear model, so results should be identical patterns but smaller --
