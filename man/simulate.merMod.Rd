@@ -8,7 +8,7 @@
     use.u = FALSE, ReForm=NA, newdata=NULL, newparams=NULL,
     family=NULL,
     allow.new.levels=FALSE, na.action=na.pass, \dots)
-  \method{simulate}{formula} (object, nsim = 1 , seed = NULL, family, \dots)
+  \method{simulate}{formula} (object, nsim = 1 , seed = NULL, family, weights=NULL, offset=NULL, \dots)
 .simulateFun(object, nsim = 1, seed = NULL, use.u = FALSE,
                             ReForm=NA, newdata=NULL, newparams=NULL,
                             formula=NULL,family=NULL,

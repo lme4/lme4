@@ -79,6 +79,10 @@ RHSForm <- function(formula) {
     formula
 }
 
+dropRHSForm <- function(formula) {
+    if (length(formula)==2) formula else formula[-2]
+}
+
 ##' @param cstr name of control being set
 ##' @param val value of control being set
 checkCtrlLevels <- function(cstr,val,smallOK=FALSE) {
@@ -265,6 +269,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
         return(eval(mc, parent.frame()))
     }
 
+    cstr <- "check.formula.LHS"
+    checkCtrlLevels(cstr,control[[cstr]])
     denv <- checkFormulaData(formula,data,checkLHS=(control$check.formula.LHS=="stop"))
     #mc$formula <- formula <- as.formula(formula,env=denv) ## substitute evaluated call
     formula <- as.formula(formula,env=denv)
@@ -477,6 +483,9 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     l... <- l...[!names(l...) %in% ignoreArgs]
     do.call("checkArgs",c(list("glmer"),l...))
 
+    cstr <- "check.formula.LHS"
+    checkCtrlLevels(cstr,control[[cstr]])
+
     denv <- checkFormulaData(formula,data,checkLHS=(control$check.formula.LHS=="stop"))
     mc$formula <- formula <- as.formula(formula,env=denv)    ## substitute evaluated version
 
@@ -487,6 +496,12 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     mf[[1]] <- as.name("model.frame")
     fr.form <- subbars(formula) # substitute "|" by "+"
     environment(fr.form) <- environment(formula)
+    ## model.frame.default looks for these objects in the environment
+    ## of the *formula* (see 'extras', which is anything passed in ...),
+    ## so they have to be put there ...
+    for (i in c("weights", "offset")) {
+        assign(i,get(i,parent.frame()),environment(fr.form))
+    }
     mf$formula <- fr.form
     fr <- eval(mf, parent.frame())
     ## store full, original formula & offset

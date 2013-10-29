@@ -67,3 +67,4 @@ test_that("predict", {
     expect_equal(p0[1],p2[1],tol=4e-5)
     expect_equal(p0[1],p3[1],tol=4e-5)
 })
+

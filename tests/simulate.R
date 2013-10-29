@@ -1,19 +1,21 @@
 library(lme4)
 
-fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+(testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
+L <- load(system.file("testdata/lme-tst-fits.rda",
+                      package="lme4", mustWork=TRUE))
+fm1 <- fit_sleepstudy_1
+
 s1 <- simulate(fm1,seed=101)[[1]]
 s2 <- simulate(fm1,seed=101,use.u=TRUE)
 
 ## binomial (2-column and prob/weights)
-gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-              data = cbpp, family = binomial)
-gm2 <- glmer(incidence/size ~ period + (1 | herd), weights=size,
-              data = cbpp, family = binomial)
+gm1 <- fit_cbpp_1
+gm2 <- fit_cbpp_3
 
-s1 <- simulate(gm1,seed=101)[[1]]
-s2 <- simulate(gm2,seed=101)[[1]]
-stopifnot(all.equal(s1[,1]/rowSums(s1),s2))
-s3 <- simulate(gm1,seed=101,use.u=TRUE)
+gm1_s1 <- simulate(gm1,seed=101)[[1]]
+gm1_s2 <- simulate(gm2,seed=101)[[1]]
+stopifnot(all.equal(gm1_s1[,1]/rowSums(gm1_s1),gm1_s2))
+gm1_s3 <- simulate(gm1,seed=101,use.u=TRUE)
 
 ## binomial (factor): Kubovy bug report 1 Aug 2013
 d <- data.frame(y=factor(rep(letters[1:2],each=100)),
@@ -36,7 +38,7 @@ s6 <- simulate(gm4,seed=101,use.u=TRUE)[[1]]
 
 ## Bernoulli
 ## works, but too slow
-if (FALSE) {
+if (testLevel>2) {
   data(guImmun,package="mlmRev")
   g1 <- glmer(immun~kid2p+mom25p+ord+ethn+momEd+husEd+momWork+rural+pcInd81+
               (1|comm/mom),family="binomial",data=guImmun)
@@ -84,3 +86,16 @@ s4 <- simulate(g2)
 
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 s5 <- simulate(fm1)
+
+## simulation 'from scratch' with formulas
+form <- formula(gm1)[-2]
+gm1_s4 <- simulate(form,newdata=model.frame(gm1),
+               newparams=list(theta=getME(gm1,"theta"),
+               beta=fixef(gm1)),
+               family=binomial,
+               weights=rowSums(model.frame(gm1)[[1]]),
+               seed=101)[[1]]
+stopifnot(all.equal(gm1_s2,gm1_s4))
+
+## TO DO: wider range of tests, including offsets ...
+

@@ -93,6 +93,13 @@ test_that("lmer", {
                expect_error(lFormula(Reaction ~ 1 + Days + (1|Subject),data=sleepstudy,
                                      control=x),"invalid control level")
            })
+
+    L <- lapply(ctrls,
+           function(x) try (lFormula(Reaction ~ 1 + Days + (1|Subject),data=sleepstudy,
+                                     control=x)))
+    sapply(L,is,"try-error")
+
+
     
     ## disable warning via options
     options(lmerControl=list(check.nobs.vs.rankZ="ignore",check.nobs.vs.nRE="ignore"))

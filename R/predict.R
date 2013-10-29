@@ -252,7 +252,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
         if (!noReForm(ReForm)) {
             if (is.null(ReForm)) {
                 ## original formula, minus response
-                ReForm <- formula(object)[-2]  
+                ReForm <- dropRHSForm(formula(object))
             }
             newRE <- mkNewReTrms(object,newdata,ReForm,na.action=na.action,
                                  allow.new.levels=allow.new.levels)
@@ -294,10 +294,10 @@ NULL
 ##' @method simulate merMod
 ##' @export
 ##'
-simulate.formula <- function(object, nsim = 1, seed = NULL, family, ...) {
+simulate.formula <- function(object, nsim = 1, seed = NULL, family, weights=NULL, offset=NULL, ...) {
     ## N.B. *must* name all arguments so that 'object' is missing in
     ## .simulateFun
-    .simulateFun(formula=object, nsim=nsim, seed=seed, family=family, ...)
+    .simulateFun(formula=object, nsim=nsim, seed=seed, family=family, weights=weights, offset=offset, ...)
 }
 
 simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
@@ -310,9 +310,11 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 }
 
 .simulateFun <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
-                            ReForm=NA, newdata=NULL, newparams=NULL,
-                            formula=NULL,family=NULL,
-                            allow.new.levels=FALSE, na.action=na.pass, ...) {
+                         ReForm=NA, newdata=NULL, newparams=NULL,
+                         formula=NULL,family=NULL,
+                         weights=NULL,
+                         offset=NULL,
+                         allow.new.levels=FALSE, na.action=na.pass, ...) {
     if (missing(object)) {
         if (is.null(formula) || is.null(newdata) || is.null(newparams)) {
             stop("if ",sQuote("object")," is missing, must specify all of ",
@@ -330,7 +332,10 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                                opt=list(par=NA,fval=NA,conv=NA),
                                lmod$reTrms,fr=lmod$fr)
         } else {
-            glmod <- glFormula(formula,newdata,family=family,control=glmerControl(check.formula.LHS="ignore"))
+            glmod <- glFormula(formula,newdata,family=family,
+                               weights=weights,
+                               offset=offset,
+                               control=glmerControl(check.formula.LHS="ignore"))
             devfun <- do.call(mkGlmerDevfun, glmod)
             object <- mkMerMod(environment(devfun),
                                ## (real parameters will be filled in later)
@@ -352,7 +357,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     }
     if (is.null(ReForm)) {
         ## original formula, minus response
-        ReForm <- formula(object)[-2]  
+        ReForm <- dropRHSForm(formula(object))
     }
     if(!is.null(seed)) set.seed(seed)
     if(!exists(".Random.seed", envir = .GlobalEnv))
@@ -371,7 +376,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     ## now add random components:
     ##  only the ones we did *not* condition on
 
-    compReForm <- formula(object)[-2]
+    compReForm <- dropRHSForm(formula(object))
 
     if (!noReForm(ReForm)) {
         rr <- ReForm[[length(ReForm)]] ## RHS of formula
@@ -448,6 +453,18 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 
 ########################
 ## modified from stats/family.R
+## TODO: the $simulate methods included with R families by default
+## are not sufficiently flexible to be re-used by lme4.
+## these are modified by:
+## (1) adding a 'ftd' argument for the fitted values
+##     that defaults to fitted(object), to allow more flexibility
+##     e.g. in conditioning on or marginalizing over random effects
+##     (fitted(object) can be produced from predict.merMod() with
+##     alternative parameters rather than being extracted directly
+##     from the fitted objects -- this allows simulation with new
+##     parameters or new predictor variables
+## (2) modifying wts from object$prior.weights to weights(object)
+##
 binomial_simfun <- function(object, nsim,ftd=fitted(object)) {
     n <- length(ftd)
     ntot <- n*nsim
@@ -481,13 +498,13 @@ poisson_simfun <- function(object, nsim, ftd=fitted(object)) {
         ## A Poisson GLM has dispersion fixed at 1, so prior weights
         ## do not have a simple unambiguous interpretation:
         ## they might be frequency weights or indicate averages.
-        wts <- object$prior.weights
+        wts <- weights(object)
         if (any(wts != 1)) warning("ignoring prior weights")
         rpois(nsim*length(ftd), ftd)
     }
 
 
-## FIXME: need a gamma.shape.merMod method
+## FIXME: need a gamma.shape.merMod method in order for this to work
 Gamma_simfun <- function(object, nsim, ftd=fitted(object)) {
     wts <- weights(object)
     if (any(wts != 1)) message("using weights as shape parameters")
@@ -507,7 +524,10 @@ Gamma_simfun <- function(object, nsim, ftd=fitted(object)) {
 ##                          lambda = wts/summary(object)$dispersion)
 ## }
 
+## in the original MASS version, .Theta is assigned into the environment
+## (triggers a NOTE in R CMD check)
 negative.binomial_simfun <- function (object, nsim, ftd=fitted(object)) 
 {
-    val <- rnbinom(nsim * length(ftd), mu=ftd, size=.Theta)
+    stop("not implemented yet")
+    ## val <- rnbinom(nsim * length(ftd), mu=ftd, size=.Theta)
 }
