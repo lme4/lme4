@@ -1,0 +1,12 @@
+## notes on performance comparison of lme4.0, lme4 versions, Julia::MixedModels
+## Oct-Nov 2013
+## Martin Wieling, Doug Bates, Ben Bolker
+language,package,version,,optimizer,optimizer_ver,time,fn_eval,REML,deviance,word_var1,word_corr12,notes
+##notes,,,,,,ksec,,,"at REML est of theta",PopSize.log_residGeo.z,"cor(PopSize.log_residGeo.z,PopAvgAge_residPopAvgIncome.log_Geo.z)",
+Julia,MixedModels,0.2.1,,bobyqa,nlopt,2.65,797,NA,-29529,0.000593,-0.856,"""fitted by maximum likelihood"""
+R,lme4.0,0.9999-2,,nlminb,R,,,,,,,
+R,lme4,0.999999.2,,nlminb,R,5,,-29462,-29529,0.000345,-0.86,
+R,lme4,1.0-4,,Nelder-Mead,lme4,15,,-25446,,0.00064,-1,
+R,lme4,1.0-4,,nlminb,R,9.8,,-29458,,0.000343,-1,
+R,lme4,1.0-4,,bobyqa,minqa,8.9,,-28320,,0,NaN,
+R,lme4,1.0-4,,bobyqa,nloptr,,,,,,,
