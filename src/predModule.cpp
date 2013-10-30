@@ -149,16 +149,24 @@ namespace lme4 {
     }
 
     void merPredD::setTheta(const VectorXd& theta) {
-        if (theta.size() != d_theta.size())
-            throw invalid_argument("theta size mismatch");
-                                // update theta
-        std::copy(theta.data(), theta.data() + theta.size(), d_theta.data());
-                                // update Lambdat
-        int    *lipt = d_Lind.data();
-        double *LamX = d_Lambdat.valuePtr(), *thpt = d_theta.data();
-        for (int i = 0; i < d_Lind.size(); ++i) {
-            LamX[i] = thpt[lipt[i] - 1];
-        }
+
+        if (theta.size() != d_theta.size()) {
+	    Rcpp::Rcout << "(" << theta.size() << "!=" <<
+		d_theta.size() << ")" << std::endl;
+	    // char errstr[100];
+	    // sprintf(errstr,"theta size mismatch (%d != %d)",
+	    //	    theta.size(),d_theta.size());
+	    throw invalid_argument("theta size mismatch");
+	}
+	// update theta
+	std::copy(theta.data(), theta.data() + theta.size(), 
+		  d_theta.data());
+	// update Lambdat
+	int    *lipt = d_Lind.data();
+	double *LamX = d_Lambdat.valuePtr(), *thpt = d_theta.data();
+	for (int i = 0; i < d_Lind.size(); ++i) {
+	    LamX[i] = thpt[lipt[i] - 1];
+	}
     }
 
     merPredD::Scalar merPredD::solve() {

@@ -12,6 +12,7 @@
 .simulateFun(object, nsim = 1, seed = NULL, use.u = FALSE,
                             ReForm=NA, newdata=NULL, newparams=NULL,
                             formula=NULL,family=NULL,
+                            weights=NULL, offset=NULL,
                             allow.new.levels=FALSE, na.action=na.pass, \dots)
 }
 \arguments{
@@ -42,6 +43,9 @@
     or \code{\link{glmer}} -- a list with components \code{theta} and/or
     (for GLMMs) \code{beta}}
   \item{family}{a GLM family, as in \code{\link{glmer}}}
+  \item{weights}{prior weights, as in \code{\link{lmer}}
+    or \code{\link{glmer}}}
+  \item{offset}{offset, as in \code{\link{glmer}}}
   \item{allow.new.levels}{(logical) if FALSE (default),
     then any new levels (or NA values) detected in
     \code{newdata} will trigger an error; if TRUE, then the

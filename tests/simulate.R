@@ -27,11 +27,12 @@ invisible(simulate(g1,nsim=10))
 gm3 <- glmer(cbind(incidence, size - incidence) ~ period +
              (1 | herd), data = cbpp, family = binomial(link="logit"))
 s4 <- simulate(gm3,seed=101)[[1]]
-stopifnot(all.equal(s1,s4))
+stopifnot(all.equal(gm1_s1,s4))
 
 cbpp$obs <- factor(seq(nrow(cbpp)))
-gm4 <- glmer(cbind(incidence, size - incidence) ~ period +
-             (1 | herd) + (1|obs), data = cbpp, family = binomial)
+gm4 <- fit_cbpp_2
+## glmer(cbind(incidence, size - incidence) ~ period +
+##             (1 | herd) + (1|obs), data = cbpp, family = binomial)
 
 s5 <- simulate(gm4,seed=101)[[1]]
 s6 <- simulate(gm4,seed=101,use.u=TRUE)[[1]]
@@ -77,15 +78,12 @@ stopifnot(all.equal(s1,as.numeric(s1B)-1))
 
 ## another Bernoulli
 data(Contraception,package="mlmRev")
-fm1 <- glmer(use ~ urban+age+livch+(1|district), Contraception, binomial)
-s3 <- simulate(fm1)
+gm5 <- glmer(use ~ urban+age+livch+(1|district), Contraception, binomial)
+s3 <- simulate(gm5)
 
 d$y <- rpois(nrow(d),exp(d$eta))
-g2 <- glmer(y~x+(1|f),data=d,family="poisson")
-s4 <- simulate(g2)
-
-fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
-s5 <- simulate(fm1)
+gm6 <- glmer(y~x+(1|f),data=d,family="poisson")
+s4 <- simulate(gm6)
 
 ## simulation 'from scratch' with formulas
 form <- formula(gm1)[-2]

@@ -951,7 +951,13 @@ family.nlsResp <- function(object, ...) gaussian()
 
 ##' @importFrom stats fitted
 ##' @S3method fitted merMod
-fitted.merMod <- function(object, ...) object@resp$mu
+fitted.merMod <- function(object, ...) {
+    xx <- object@resp$mu
+    if (!is.null(fit.na.action <- attr(model.frame(object),"na.action"))) {
+        xx <- napredict(fit.na.action,xx)
+    }
+    xx
+}
 
 ##' Extract the fixed-effects estimates
 ##'

@@ -211,9 +211,9 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
         } else { ## inverse-link
             pred <-  switch(type,response=object@resp$mu, ## == fitted(object),
                             link=object@resp$eta)
-        }
-        if (!is.null(fit.na.action <- attr(model.frame(object),"na.action"))) {
-            pred <- napredict(fit.na.action,pred)
+            if (!is.null(fit.na.action <- attr(model.frame(object),"na.action"))) {
+                pred <- napredict(fit.na.action,pred)
+            }
         }
         return(pred)
     } else { ## newdata and/or ReForm and/or newparams specified

@@ -4,7 +4,8 @@ cake2 <- rbind(cake,tail(cake,1))
 cake2[nrow(cake2),"angle"] <- NA
 fm0 <- lmer(angle ~ recipe * temperature + (1|recipe:replicate), cake)
 fm1 <- update(fm0,data=cake2)
-expect_that(update(fm1,na.action=na.fail),throws_error("missing values in object"))
+expect_that(update(fm1,na.action=na.fail),
+            throws_error("missing values in object"))
 fm1_omit <- update(fm1,na.action=na.omit)
 ## check equal:
 expect_true(all.equal(fixef(fm0),fixef(fm1)))
@@ -14,6 +15,8 @@ expect_true(all.equal(ranef(fm0),ranef(fm1)))
 fm1_pass <- update(fm1,na.action=na.pass)
 expect_true(all(is.na(fitted(fm1_pass))))
 fm1_exclude <- update(fm1,na.action=na.exclude)
+expect_equal(length(fitted(fm1_omit)),270)
+expect_equal(length(fitted(fm1_exclude)),271)
 
 ## FIXME:  fails on Windows (not on Linux!)
 expect_true(is.na(tail(predict(fm1_exclude),1)))
