@@ -62,7 +62,7 @@ stopifnot(all.equal(p1NA,unname(p1NB)))
 set.seed(1)
 s1 <- simulate(fm1)
 set.seed(1)
-s2 <- simulate.merMod(fm1,newdata=model.frame(fm1),
+s2 <- simulate(fm1,newdata=model.frame(fm1),
                newparams=getME(fm1,c("theta","beta")))
 all.equal(s1,s2)
 
