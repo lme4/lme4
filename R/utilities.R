@@ -27,10 +27,11 @@ if(getRversion() < "2.15")
 ##' @export
 mkReTrms <- function(bars, fr) {
     if (!length(bars))
-	stop("No random effects terms specified in formula")
-    stopifnot(is.list(bars), all(sapply(bars, is.language)),
-	      inherits(fr, "data.frame"))
+        stop("No random effects terms specified in formula")
+    stopifnot(is.list(bars), vapply(bars, is.language, NA),
+              inherits(fr, "data.frame"))
     names(bars) <- unlist(lapply(bars, function(x) deparse(x[[3]])))
+    term.names <- unlist(lapply(bars, function(x) paste(deparse(x),collapse=" ")))
 
     ## auxiliary {named, for easier inspection}:
     mkBlist <- function(x) {

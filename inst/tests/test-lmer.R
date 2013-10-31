@@ -101,5 +101,23 @@ test_that("lmer", {
                     "passing control as list is deprecated")
     expect_warning(lmer(Yield ~ 1|Batch, Dyestuff, control=glmerControl()),
                    "passing control as list is deprecated")
+
+    ## test deparsing of very long terms inside mkReTrms
+    set.seed(101)
+    longNames <- sapply(letters[1:25],
+                        function(x) paste(rep(x,8),collapse=""))
+    tstdat <- data.frame(Y=rnorm(10),
+                         F=factor(1:10),
+                         matrix(runif(250),ncol=25,
+                                dimnames=list(NULL,
+                                longNames)))
+    expect_is(lFormula(Y~1+(aaaaaaaa+bbbbbbbb+cccccccc+dddddddd+
+                        eeeeeeee+ffffffff+gggggggg+hhhhhhhh+
+                        iiiiiiii+jjjjjjjj+kkkkkkkk+llllllll|F),
+                   data=tstdat,
+                   control=lmerControl(check.nobs.vs.nlev="ignore",
+                   check.nobs.vs.nRE="ignore",
+                   check.nobs.vs.rankZ="ignore")),"list")
+
 })
 
