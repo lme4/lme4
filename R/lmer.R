@@ -1186,8 +1186,8 @@ print.ranef.mer <- function(x, ...) {
     print(unclass(x), ...)
     if(any(has.pv <- vapply(x, function(el)
 			    !is.null(attr(el, "postVar")), NA)))
-	cat('with "postVar"-iances for',
-	    paste(names(x)[has.pv], sep=", "))
+	cat('with conditional variances for',
+	    paste(dQuote(names(x)[has.pv]), sep=", "), "\n")
     invisible(x)
 }
 
@@ -1657,6 +1657,7 @@ print.summary.merMod <- function(x, digits = max(3, getOption("digits") - 3),
 
     p <- nrow(x$coefficients)
     if (p > 0) {
+
 	cat("\nFixed effects:\n")
 	printCoefmat(x$coefficients, zap.ind = 3, #, tst.ind = 4
 		     digits = digits, signif.stars = signif.stars)
