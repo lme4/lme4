@@ -1182,6 +1182,14 @@ ranef.merMod <- function(object, condVar = FALSE, drop = FALSE,
     ans
 }## ranef.merMod
 
+print.ranef.mer <- function(x, ...) {
+    print(unclass(x), ...)
+    if(any(has.pv <- vapply(x, function(el)
+			    !is.null(attr(el, "postVar")), NA)))
+	cat('with "postVar"-iances for',
+	    paste(names(x)[has.pv], sep=", "))
+    invisible(x)
+}
 
 ##' @method refit merMod
 ##' @rdname refit
@@ -2103,8 +2111,10 @@ unscaledVar <- function(object, ...) {
 
 ##' @S3method print VarCorr.merMod
 print.VarCorr.merMod <- function(x, digits = max(3, getOption("digits") - 2),
-		   comp = "Std.Dev.", ...)
+		   comp = "Std.Dev.", ...) {
     print(formatVC(x, digits=digits, comp=comp), quote=FALSE, ...)
+    invisible(x)
+}
 
 ##' __NOT YET EXPORTED__
 ##' "format()" the 'VarCorr' matrix of the random effects -- for

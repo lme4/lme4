@@ -6,7 +6,7 @@ importFrom("graphics", plot)
 importFrom("splines", backSpline,interpSpline,periodicSpline)
 importFrom("methods", show)
 importFrom("stats",
-           anova, coef, confint, deviance, drop1, 
+           anova, coef, confint, deviance, drop1,
            extractAIC, family, fitted, formula, logLik,
            model.matrix, nobs, profile, residuals, simulate, terms,
            update, vcov, weights)
@@ -125,6 +125,7 @@ S3method(plot,merMod)
 S3method(plot,ranef.mer)
 S3method(predict,merMod)
 S3method(print,merMod)
+S3method(print,ranef.mer)
 S3method(print,summary.merMod)
 S3method(print,VarCorr.merMod)
 S3method(profile,merMod)
