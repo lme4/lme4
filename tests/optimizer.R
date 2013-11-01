@@ -1,5 +1,4 @@
 library(lme4)
-(testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
 source(system.file("test-tools-1.R", package = "Matrix"), keep.source = FALSE)
 
 ## should be able to run any example with any bounds-constrained optimizer ...
@@ -16,6 +15,8 @@ lmerCtrl.optx <- function(method, ...)
 glmerCtrl.optx <- function(method, ...)
     glmerControl(optimizer="optimx", ..., optCtrl=list(method=method))
 
+(testLevel <- lme4:::testLevel())
+
 ## FAILS on Windows (on r-forge only, not win-builder)... 'function is infeasible at initial parameters'
 ## (can we test whether we are on r-forge??)
 if (.Platform$OS.type != "windows") {
@@ -31,7 +32,7 @@ if (.Platform$OS.type != "windows") {
         fm1E@call <- fm1C@call
         fm1E@optinfo <- fm1C@optinfo
         ## FIXME: this *should* be identical, but we have small numeric differences
-        all.equal(fm1C,fm1E,tol=1e-5)
+        stopifnot( all.equal(fm1C,fm1E, tol=1e-5) )
     }
 }
 

@@ -53,23 +53,24 @@ if (require(pbkrtest)) {
       r
    }
    drop1(fm1,test="user",sumFun=KRSumFun)
-   \dontrun{
-   nsim <- 100
-   ## slow! for non-trivial models and numbers of PB simulations
-   ## this example is ~16s on a modern laptop
-   PBSumFun <- function(object, objectDrop, ...) {
-      pbnames <- c("stat","p.value")
-      r <- if (missing(objectDrop)) {
-          setNames(rep(NA,length(pbnames)),pbnames)
-      } else {
-         pbtest <- PBmodcomp(object,objectDrop,nsim=nsim)
-         unlist(pbtest$test[2,pbnames])
-      }
-      attr(r,"method") <- c("Parametric bootstrap via pbkrtest package")
-      r
+
+   if(lme4:::testLevel() >= 3) { ## takes about 16 sec
+     nsim <- 100
+     ## slow! for non-trivial models and numbers of PB simulations
+     ## this example is ~16s on a modern laptop
+     PBSumFun <- function(object, objectDrop, ...) {
+	pbnames <- c("stat","p.value")
+	r <- if (missing(objectDrop)) {
+	    setNames(rep(NA,length(pbnames)),pbnames)
+	} else {
+	   pbtest <- PBmodcomp(object,objectDrop,nsim=nsim)
+	   unlist(pbtest$test[2,pbnames])
+	}
+	attr(r,"method") <- c("Parametric bootstrap via pbkrtest package")
+	r
+     }
+     system.time(drop1(fm1,test="user",sumFun=PBSumFun))
    }
-   system.time(drop1(fm1,test="user",sumFun=PBSumFun))
-   }
-}
+ }
 }
 \keyword{misc}

@@ -1,7 +1,6 @@
 ## generalized linear mixed model
 stopifnot(suppressPackageStartupMessages(require(lme4)))
 options(show.signif.stars = FALSE)
-(testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
 
 source(system.file("test-tools-1.R", package = "Matrix"), keep.source = FALSE)
 ##
@@ -219,7 +218,7 @@ stopifnot(all.equal(a01$Chisq[2], 554.334056, tol=1e-5),
           a01$ Df == 3:4,
 	  a01$`Chi Df`[2] == 1)
 
-if (testLevel > 1) {
+if(lme4:::testLevel() > 1) {
     nsim <- 10
     set.seed(2)
     system.time(

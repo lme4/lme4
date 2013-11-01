@@ -2,8 +2,8 @@
 ##   (Thailand, clustered-data) in prLogistic package
 load(system.file("testdata","prLogistic.RData",package="lme4"))
 library(lme4)
-(testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
 
+(testLevel <- lme4:::testLevel())
 if (testLevel > 2) {
     lme4_est <- glmer(rgi ~ sex + pped + (1|schoolid),
                 data = dataset, family=binomial)

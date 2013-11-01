@@ -149,7 +149,7 @@ mkReTrms <- function(bars, fr) {
 ##' @family utilities
 ##' @export
 mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, ...) {
-  
+
     if(!missing(fr)){
         y <- model.response(fr)
         offset <- model.offset(fr)
@@ -216,7 +216,7 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
     ## need weights for initializing evaluation
     rho$nobs <- n
     ## allow trivial objects, e.g. for simulation
-    if (length(y)>0) eval(family$initialize, rho) 
+    if (length(y)>0) eval(family$initialize, rho)
     family$initialize <- NULL     # remove clutter from str output
     ll <- as.list(rho)
     ans <- do.call(new, c(list(Class="glmResp", family=family),
@@ -543,7 +543,7 @@ nlformula <- function(mc) {
     nlenv <- list2env(fr, parent=parent.frame(2L))
     lapply(pnames, function(nm) nlenv[[nm]] <- rep.int(nlpars[[nm]], n))
     respMod <- mkRespMod(fr, nlenv=nlenv, nlmod=nlmod)
-    
+
     chck1(meform <- form[[3L]])
     pnameexpr <- parse(text=paste(pnames, collapse='+'))[[1]]
     nb <- nobars(meform)
@@ -554,7 +554,7 @@ nlformula <- function(mc) {
         frE[[nm]] <- as.numeric(rep(nm == pnames, each = n))
     X <- model.matrix(fe, frE)
     rownames(X) <- NULL
-    
+
     reTrms <- mkReTrms(lapply(findbars(meform),
                               function(expr) {
                                   expr[[2]] <- substitute(0+foo, list(foo=expr[[2]]))
@@ -748,7 +748,7 @@ checkFormulaData <- function(formula,data,checkLHS=TRUE,debug=FALSE) {
         }
         cat("vars exist in env of formula ",allvarex(env=denv),"\n")
     } ## if (debug)
-    
+
     stopifnot(!checkLHS || length(as.formula(formula,env=denv)) == 3)  ## check for two-sided formula
     return(denv)
 }
@@ -764,3 +764,8 @@ checkFormulaData <- function(formula,data,checkLHS=TRUE,debug=FALSE) {
 ## }
 
 
+##' Not exported; for tests (and examples) that can be slow;
+##' Use   if(lme4:::testLevel() >= 1.) .....  see ../README.md
+testLevel <- function()
+    if(nzchar(s <- Sys.getenv("LME4_TEST_LEVEL")) &&
+       is.finite(s <- as.numeric(s))) s else 1

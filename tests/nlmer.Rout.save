@@ -1,5 +1,5 @@
 
-R version 3.0.1 Patched (2013-08-16 r63595) -- "Good Sport"
+R version 3.0.2 Patched (2013-10-30 r64125) -- "Frisbee Sailing"
 Copyright (C) 2013 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -16,10 +16,7 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > library(lme4)
-Loading required package: lattice
 Loading required package: Matrix
-> (testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
-[1] 1
 > 
 > allEQ <- function(x,y, tolerance = 4e-4, ...)
 +     all.equal.numeric(x,y, tolerance=tolerance, ...)
@@ -43,7 +40,7 @@ Fixed Effects:
     Asym     xmid     scal 
 192.0534 727.9074 348.0738 
 > 
-> if (testLevel > 2) {
+> if (lme4:::testLevel() > 2) {
 +     ## 'Theoph' Data modeling
 +     Th.start <- c(lKe = -2.5, lKa = 0.5, lCl = -3)
 + 
@@ -89,4 +86,4 @@ Fixed Effects:
 > 
 > proc.time()
    user  system elapsed 
-  5.080   0.092   5.187 
+  4.044   0.064   4.112 

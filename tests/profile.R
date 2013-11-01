@@ -1,6 +1,5 @@
 library(lme4)
 library(lattice)
-(testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
 
 fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
 
@@ -20,7 +19,8 @@ stopifnot(dim(CIpr) == c(3,2),
           all.equal(unname(CIpr[".sigma",]),exp(c(3.64362, 4.21446)), tol=1e-6),
           all.equal(unname(CIpr["(Intercept)",]),c(1486.451500,1568.548494)))
 
-if (testLevel > 2) {
+(testLevel <- lme4:::testLevel())
+if(testLevel > 2) {
 
     ## 2D profiles
     fm2ML <- lmer(diameter ~ 1 + (1|plate) + (1|sample), Penicillin, REML=0)

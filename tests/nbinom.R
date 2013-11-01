@@ -1,5 +1,4 @@
 library(lme4)
-(testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
 
 ## for now, use hidden functions [MM: this is a sign, we should *export* them]
 getNBdisp <- lme4:::getNBdisp
@@ -19,7 +18,7 @@ simfun <- function(sd.u=1, NBtheta=0.5,
                  mu=exp(X %*% beta +u_f[f]),size=NBtheta))
 }
 
-if (testLevel > 1) {
+if ((testLevel <- lme4:::testLevel()) > 1) {
     set.seed(102)
     d.1 <- simfun()
     t1 <- system.time(g1 <- glmer.nb(z ~ x + (1|f), data=d.1, verbose=TRUE))

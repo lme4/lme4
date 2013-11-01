@@ -1,5 +1,4 @@
 library("lme4")
-(testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
 
 ## example from HSAUR2 package; data from 'multcomp'; see ../inst/testdata/trees513.R
 load(system.file("testdata","trees513.RData",package="lme4"))
@@ -13,7 +12,7 @@ ls.str(environment(dfun))# "for your information"
 
 .not.call <- function(x) x[names(x) != "call"]
 
-if (testLevel < 2) q("no")
+if(lme4:::testLevel() < 2) q("no")
 ## {{advantage to  if(. >= 2) { ........} : autoprint of system.time() etc
 
 ## else  (testLevel >= 2) : --------------------------------------------------

@@ -1,6 +1,6 @@
 library(lme4)
 
-(testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
+(testLevel <- lme4:::testLevel())
 L <- load(system.file("testdata/lme-tst-fits.rda",
                       package="lme4", mustWork=TRUE))
 fm1 <- fit_sleepstudy_1

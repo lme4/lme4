@@ -23,7 +23,6 @@
 ## save("grouseticks","grouseticks_agg",file="grouseticks.rda")
 
 library(lme4)
-(testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
 data(grouseticks)
 do.plots <- FALSE
 form <- TICKS~YEAR+HEIGHT+(1|BROOD)+(1|INDEX)+(1|LOCATION)
@@ -56,7 +55,7 @@ allcoefs1 <- structure(c(0.541509425632023, 0.750034415832756,
                        .Names = c("", "", "", "(Intercept)",
                          "YEAR96", "YEAR97",  "HEIGHT"))
 
-if (testLevel > 1) {
+if (lme4:::testLevel() > 1) {
     t2 <- system.time(full_mod2  <- glmer(form, family="poisson",data=grouseticks))
     c2 <- c(fixef(full_mod2),unlist(VarCorr(full_mod2)),
             logLik=logLik(full_mod2),time=t2["elapsed"])
