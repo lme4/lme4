@@ -1,4 +1,5 @@
 library(lme4)
+library(lattice)
 (testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
 
 fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)

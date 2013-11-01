@@ -1,4 +1,5 @@
 library(lme4)
+library(lattice)
 library(testthat)
 do.plots <- FALSE
 

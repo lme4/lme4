@@ -1,4 +1,5 @@
 stopifnot(require(lme4))
+library(lattice)
 ## "MEMSS" is just 'Suggest' -- must still work, when it's missing:
 if (suppressWarnings(!require(MEMSS,quietly=TRUE)) ||
     (data(ergoStool, package="MEMSS") != "ergoStool")) {
