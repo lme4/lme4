@@ -37,6 +37,7 @@
 }
 \examples{
 str(Pastes)
+require(lattice)
 dotplot(cask ~ strength | reorder(batch, strength), Pastes,
         strip = FALSE, strip.left = TRUE, layout = c(1, 10),
         ylab = "Cask within batch",

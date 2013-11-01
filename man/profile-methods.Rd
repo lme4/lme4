@@ -80,6 +80,7 @@ stopifnot(all.equal(CIpr,
                         c("2.5 \%", "97.5 \%"))),
                     tol= 1e-07))# 1.37e-9 {64b}
 }
+require(lattice)
 xyplot(tpr)
 densityplot(tpr, main="densityplot( profile(lmer(..)) )")
 splom(tpr)

@@ -1,6 +1,5 @@
 useDynLib(lme4,.registration=TRUE)
 
-
 ## base packages
 importFrom("graphics", plot)
 importFrom("splines", backSpline,interpSpline,periodicSpline)
@@ -13,7 +12,18 @@ importFrom("stats",
 ## Recommended packages
 importClassesFrom("Matrix", corMatrix, dgCMatrix, dpoMatrix)
 importFrom("grid", gpar,viewport)
-importFrom("lattice", densityplot, dotplot, qqmath, splom, xyplot)
+importFrom("lattice",
+           bwplot,
+           current.panel.limits,
+           densityplot,dotplot,
+           histogram,
+           llines,lpoints,lsegments,ltext,
+           panel.abline,panel.axis,panel.bwplot,panel.grid,panel.histogram,
+           panel.lines,panel.number,panel.segments,panel.xyplot,
+           qqmath,splom,
+           strip.default,
+           trellis.par.get,
+           xyplot)
 importFrom("MASS", negative.binomial, theta.ml)
 importFrom("Matrix", drop0, rankMatrix, rBind, sparseMatrix)
 importFrom("nlme", fixef,ranef,VarCorr)

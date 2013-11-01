@@ -83,6 +83,7 @@
  pkgI("minqa")
  pkgI("lme4")
 }
+require(lattice)
 str(Dyestuff)
 dotplot(reorder(Batch, Yield) ~ Yield, Dyestuff,
         ylab = "Batch", jitter.y = TRUE, aspect = 0.3,

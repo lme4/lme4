@@ -76,6 +76,7 @@
   TRUE}.
 }
 \examples{
+require(lattice)
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy)
 fm3 <- lmer(diameter ~ (1|plate) + (1|sample), Penicillin)
