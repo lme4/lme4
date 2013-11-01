@@ -5,3 +5,6 @@ do-roxy*
 ^\.Rproj\.user$
 build-pkg*
 clean
+/.git/
+/.gitignore
+/.Rproj.user
