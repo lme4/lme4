@@ -134,5 +134,8 @@ test_that("glmer", {
         ##  are relatively far apart even though likelihoods are OK
         expect_equal(logLik(g1),logLik(g2),tol=1e-7)
     }
+    ## test bootstrap/refit with nAGQ>1
+    gm1AGQ <- update(gm1,nAGQ=2)
+    expect_equal(attr(bootMer(gm1AGQ,fixef),"bootFail"),0)
     
 })

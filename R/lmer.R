@@ -1273,7 +1273,9 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
                           baseOffset=baseOffset,
                           pwrssUpdate=glmerPwrssUpdate,
                           ## save GQmat in the object and use that instead of nAGQ
-                          GQmat=GHrule(nAGQ)), devlist)
+                          GQmat=GHrule(nAGQ),
+                          fac=object@flist[[1]]),
+                     devlist)
     }
     ff <- mkdevfun(list2env(devlist),nAGQ=nAGQ, verbose)
     xst       <- rep.int(0.1, nth)
