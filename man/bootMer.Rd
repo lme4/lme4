@@ -2,11 +2,11 @@
 \alias{bootMer}
 \title{Model-based (Semi-)Parametric Bootstrap for Mixed Models}
 \usage{
-  bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
-    type = c("parametric", "semiparametric"),
-    verbose = FALSE, .progress = "none", PBargs = list(),
-    parallel = c("no", "multicore", "snow"),
-    ncpus = getOption("boot.ncpus", 1L), cl = NULL)
+bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
+	type = c("parametric", "semiparametric"),
+	verbose = FALSE, .progress = "none", PBargs = list(),
+	parallel = c("no", "multicore", "snow"),
+	ncpus = getOption("boot.ncpus", 1L), cl = NULL)
 }
 \arguments{
   \item{x}{a fitted \code{merMod} object: see
@@ -33,7 +33,7 @@
     to display.  Default is \code{"none"}; the function will
     look for a relevant \code{*ProgressBar} function, so
     \code{"txt"} will work in general; \code{"tk"} is
-    available if the \code{tcltk} package is loaded; or
+    available if the \pkg{tcltk} package is loaded; or
     \code{"win"} on Windows systems. Progress bars are
     disabled (with a message) for parallel operation.}
   \item{PBargs}{a list of additional arguments to the
@@ -108,10 +108,9 @@
     \item \code{\link{confint.merMod}},
     for a more specific approach to bootstrap confidence
     intervals on parameters.
-    \item     \code{\link{refit}()},
-    or \code{\link[pbkrtest]{PBmodcomp}()} from the
-    \code{pbkrtest} package,
-    for parametric bootstrap comparison of models.
+    \item \code{\link{refit}()}, or \code{\link[pbkrtest]{PBmodcomp}()}
+    from the \pkg{pbkrtest} package, for parametric bootstrap comparison
+    of models.
     \item \code{\link[boot]{boot}()}, and then
     \code{\link[boot]{boot.ci}}, from the \pkg{boot} package.
     \item \code{\link{profile-methods}}, for likelihood-based inference,
@@ -129,7 +128,7 @@ mySumm <- function(.) { s <- sigma(.)
 (t0 <- mySumm(fm01ML)) # just three parameters
 ## alternatively:
 mySumm2 <- function(.) {
-c(beta=fixef(.),sigma=sigma(.),sig01=unlist(VarCorr(.)))
+   c(beta=fixef(.),sigma=sigma(.), sig01=sqrt(unlist(VarCorr(.))))
 }
 
 set.seed(101)
