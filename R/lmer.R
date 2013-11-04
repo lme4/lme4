@@ -2286,7 +2286,7 @@ plot.ranef.mer <- function(x, y, ...)
 
 ##' @importFrom lattice qqmath
 ##' @S3method qqmath ranef.mer
-qqmath.ranef.mer <- function(x, data, ...)
+qqmath.ranef.mer <- function(x, data, main=TRUE, ...)
 {
     prepanel.ci <- function(x, y, se, subscripts, ...) {
 	x <- as.numeric(x)
@@ -2303,30 +2303,31 @@ qqmath.ranef.mer <- function(x, data, ...)
 	panel.segments(x - 1.96 * se, y, x + 1.96 * se, y, col = 'black')
 	panel.xyplot(x, y, pch = pch, ...)
     }
-    f <- function(x) {
-	if (!is.null(pv <- attr(x, "postVar")))
+    f <- function(nx) {
+	xt <- x[[nx]]
+        mtit <- if(main) nx # else NULL
+	if (!is.null(pv <- attr(xt, "postVar")))
         {
-	    cols <- 1:(dim(pv)[1])
-	    se <- unlist(lapply(cols, function(i) sqrt(pv[i, i, ])))
-	    nr <- nrow(x)
-	    nc <- ncol(x)
-	    ord <- unlist(lapply(x, order)) +
-		rep((0:(nc - 1)) * nr, each = nr)
+	    d <- dim(pv)
+	    se <- vapply(seq_len(d[1]), function(i) sqrt(pv[i, i, ]), numeric(d[3]))
+	    nr <- nrow(xt)
+	    nc <- ncol(xt)
+	    ord <- unlist(lapply(xt, order)) + rep((0:(nc - 1)) * nr, each = nr)
 	    rr <- 1:nr
-	    ind <- gl(ncol(x), nrow(x), labels = names(x))
-	    xyplot(rep(qnorm((rr - 0.5)/nr), ncol(x)) ~ unlist(x)[ord] | ind[ord],
+	    ind <- gl(nc, nr, labels = names(xt))
+	    xyplot(rep(qnorm((rr - 0.5)/nr), nc) ~ unlist(xt)[ord] | ind[ord],
 		   se = se[ord], prepanel = prepanel.ci, panel = panel.ci,
 		   scales = list(x = list(relation = "free")),
 		   ylab = "Standard normal quantiles",
-		   xlab = NULL, ...)
+		   xlab = NULL, main = mtit, ...)
 	} else {
-	    qqmath(~values|ind, stack(x),
+	    qqmath(~values|ind, stack(xt),
 		   scales = list(y = list(relation = "free")),
 		   xlab = "Standard normal quantiles",
-		   ylab = NULL, ...)
+		   ylab = NULL, main = mtit, ...)
 	}
     }
-    lapply(x, f)
+    sapply(names(x), f, simplify=FALSE)
 }
 
 ##' @importFrom graphics plot
