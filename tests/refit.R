@@ -71,8 +71,15 @@ fit2 <- refit(fit1, newresp = Y[,2], rename.response=TRUE)
 
 expect_warning(refit(fit1, newresp = Y[,2], junk=TRUE))
 if (isTRUE(all.equal(fit1,fit2))) stop("fit1 and fit2 should not be equal")
-stopifnot(all.equal(dropterms(fit2), dropterms(u2 <- update(fit2))))
+## hack number of function evaluations
+u2 <- update(fit2)
+fit2@optinfo$feval <- u2@optinfo$feval <-  NA
+stopifnot(all.equal(d1 <- dropterms(fit2), d2 <- dropterms(u2)))
 
+## for (i in slotNames(d1)) {
+##     cat(i,"\n")
+##    print(isTRUE(all.equal(slot(d1,i),slot(d2,i))))
+## }
 ## FIXME: check on Windows
 ## gm2S <- refit(gm2,simulate(gm2)[[1]])
 ## getinfo(gm2S)

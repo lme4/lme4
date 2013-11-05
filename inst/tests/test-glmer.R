@@ -141,6 +141,7 @@ test_that("glmer", {
     }
     ## test bootstrap/refit with nAGQ>1
     gm1AGQ <- update(gm1,nAGQ=2)
-    expect_equal(attr(bootMer(gm1AGQ,fixef),"bootFail"),0)
+    ## attr(.,"bootFail" doesn't exist on release branch ...
+    expect_is(bootMer(gm1AGQ,fixef)$mle$theta,"numeric")
     
 })

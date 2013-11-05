@@ -86,7 +86,7 @@ test_that("lmer", {
                    control=lmerControl(check.nobs.vs.nlev="ignore",
                    check.nobs.vs.rankZ="ignore")),
               "merMod")
-
+    
     ## disable warning via options
     options(lmerControl=list(check.nlev.gtreq.5="ignore",check.nobs.vs.rankZ="ignore"))
     expect_is(fm4 <- lmer(Reaction ~ Days + (1|Subject),
