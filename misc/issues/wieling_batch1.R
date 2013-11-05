@@ -65,8 +65,9 @@ argList <-
         nloptsubplex=list(optimizer="nloptwrap2",
         optCtrl=list(algorithm="NLOPT_LN_SBPLX",xtol_rel=1e-4)))
 
-fitList1 <- lapply(argList,
-                   function(L) do.call(fitLme4,L))
-save(c("fitList0","fitList1"),
+library(plyr)
+fitList1 <- llply(argList,
+                   function(L) do.call(fitLme4,L),.progress="text")
+save("fitList0","fitList1",
      file="wieling_batch1.RData")
 
