@@ -2354,11 +2354,21 @@ weights.merMod <- function(object, ...) {
   object@resp$weights
 }
 
-
+## note: getOptfun() allows 'optimizer' to be a function OR character, but the
+## docs say that 'optimizer' must be character, and the code breaks elsewhere
+## if 'optimizer' is a function ...
 getOptfun <- function(optimizer) {
-    optfun <- if (is.character(optimizer))
+    if (((is.character(optimizer) && optimizer=="optimx") ||
+         deparse(substitute(optimizer))=="optimx") &&
+        !("package:optimx") %in% search())
+        stop(shQuote("optimx")," package must be loaded in order to ",
+             "use ",shQuote('optimizer="optimx"'))
+    optfun <- if (is.character(optimizer)) {
 	tryCatch(get(optimizer), error=function(e) NULL)
-    if (is.null(optfun)) stop("couldn't find optimizer function ",optimizer)
+    } else optimizer
+    if (is.null(optfun)) {
+        stop("couldn't find optimizer function ",optimizer)
+    }
     if (!is.function(optfun)) stop("non-function specified as optimizer")
     needArgs <- c("fn","par","lower","control")
     if (any(is.na(match(needArgs, names(formals(optfun))))))
@@ -2420,11 +2430,10 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
         opt$convergence <- opt$ierr
     }
     if (optimizer=="optimx") {
-        ## optr <- lapply(opt,"[[",1)[c("par","fvalues","conv")]
-        ## opt$message <- attr(opt,"details")[[1]]$message
         opt <- list(par=coef(opt)[1,],
                     fvalues=opt$value[1],
                     conv=opt$convcode[1],
+                    feval=opt$fevals+opt$gevals,
                     message=attr(opt,"details")[,"message"][[1]])
     }
     if (opt$conv!=0) {

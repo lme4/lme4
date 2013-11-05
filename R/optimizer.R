@@ -71,13 +71,18 @@ Nelder_Mead <- function(fn, par, lower=rep.int(-Inf, n),
     nM$setIprint(cc$iprint)
     nM$setMaxeval(cc$maxfun)
     nM$setMinfMax(cc$MinfMax)
-    while ((nMres <- nM$newf(fn(nM$xeval()))) == 0L) {}
+    it <- 0 
+    repeat {
+        it <- it + 1
+        nMres <- nM$newf(fn(nM$xeval()))
+        if (nMres != 0L) break
+    }
 
     cmsg <- "reached max evaluations"
     if (nMres==-4) {
-      ## map max evals from error to warning
-      cmsg <- warning(sprintf("failure to converge in %d evaluations",cc$maxfun))
-      nMres <- 4
+        ## map max evals from error to warning
+        cmsg <- warning(sprintf("failure to converge in %d evaluations",cc$maxfun))
+        nMres <- 4
     }
 
     msgvec <- c("nm_forced","cannot generate a feasible simplex","initial x is not feasible",
@@ -88,5 +93,5 @@ Nelder_Mead <- function(fn, par, lower=rep.int(-Inf, n),
 
     cc <- c(cc,xst=xst,xt=xt)
     list(fval=nM$value(), par=nM$xpos(), convergence=pmin(nMres,0), message=msgvec[nMres+4],
-         control=cc)
+         control=cc, feval=it)
 }

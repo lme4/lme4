@@ -639,6 +639,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc) {
         optinfo=list(optimizer=attr(opt,"optimizer"),
         control=attr(opt,"control"),
         conv=opt$conv,
+        feval=if (is.null(opt$feval)) NA else opt$feval,
         warnings=attr(opt,"warnings"))
         )
 }

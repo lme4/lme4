@@ -70,10 +70,12 @@ test_that("lmer", {
     expect_is(lmer(Yield ~ 1|Batch, Dyestuff, devFunOnly=FALSE), "lmerMod")
     expect_is(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl(optimizer="Nelder_Mead")), "lmerMod")
     expect_is(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl()), "lmerMod")
-    expect_is(m1. <- lmer(Reaction ~ 1 + Days + (1 + Days | Subject), data = sstudy9,
-                          control = lmerControl(check.nobs.vs.nRE="ignore",
-                          check.nobs.vs.rankZ="ignore",
-                          )),
+    expect_error(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl(optimizer="optimx")),"must be loaded")
+    expect_error(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl(optimizer="junk")), "couldn't find optimizer function")
+    ## disable test ... should be no warning
+    expect_is(lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
+                   data = sleepstudy, subset = (Days == 1 | Days == 9),
+                   control=lmerControl(check.nobs.vs.rankZ="ignore")),
               "merMod")
     expect_error(lmer(Reaction ~ 1 + Days + (1|obs),
                       data = transform(sleepstudy,obs=seq(nrow(sleepstudy))),
