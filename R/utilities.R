@@ -574,9 +574,10 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc) {
         Gp=reTrms$Gp, theta=pp$theta, beta=beta, u=pp$u(fac),
         lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=resp,
         optinfo=list(optimizer=attr(opt,"optimizer"),
-                     control=attr(opt,"control"),
-                     conv=opt$conv,
-                     warnings=attr(opt,"warnings"))
+        control=attr(opt,"control"),
+        conv=opt$conv,
+        feval=if (is.null(opt$feval)) NA else opt$feval,
+        warnings=attr(opt,"warnings"))
         )
 }
 

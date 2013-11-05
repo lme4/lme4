@@ -71,6 +71,8 @@ test_that("lmer", {
     expect_that(lmer(Yield ~ 1|Batch, Dyestuff, devFunOnly=FALSE), is_a("lmerMod"))
     expect_that(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl(optimizer="Nelder_Mead")), is_a("lmerMod"))
     expect_that(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl()), is_a("lmerMod"))
+    expect_error(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl(optimizer="optimx")),"must be loaded")
+    expect_error(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl(optimizer="junk")), "couldn't find optimizer function")
     ## disable test ... should be no warning
     expect_is(lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
                    data = sleepstudy, subset = (Days == 1 | Days == 9),
