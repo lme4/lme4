@@ -137,5 +137,11 @@ test_that("glmer", {
     ## test bootstrap/refit with nAGQ>1
     gm1AGQ <- update(gm1,nAGQ=2)
     expect_equal(attr(bootMer(gm1AGQ,fixef),"bootFail"),0)
+
+    ## do.call(new,...) bug
+    new <- "foo"
+    expect_that(gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+                             data = cbpp, family = binomial), is_a("glmerMod"))
+    rm("new")
     
 })

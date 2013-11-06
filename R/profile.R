@@ -279,7 +279,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
             std <- stderr[j]
             Xw <-X.orig[, j, drop=TRUE]
             Xdrop <- .modelMatrixDrop(X.orig, j)
-            pp1 <- do.call(new, list(Class = class(pp),
+            pp1 <- do.call("new", list(Class = class(pp),
                                      X = Xdrop,
                                      Zt = pp$Zt,
                                      Lambdat = pp$Lambdat,

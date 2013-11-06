@@ -163,7 +163,7 @@ merPredD <-
                                  assign(field, current, envir = vEnv)
                              }
                          }
-                         do.call(new, c(as.list(vEnv), n=nrow(vEnv$V), Class=def))
+                         do.call("new", c(as.list(vEnv), n=nrow(vEnv$V), Class=def))
                      },
                      ldL2         = function() {
                          'twice the log determinant of the sparse Cholesky factor'
@@ -369,7 +369,7 @@ lmResp <-                               # base class for response modules
                                 assign(field, current, envir = vEnv)
                             }
                         }
-                        do.call(new, c(as.list(vEnv), Class=def))
+                        do.call("new", c(as.list(vEnv), Class=def))
                     },
                     initializePtr = function() {
                         Ptr <<- .Call(lm_Create, y, weights, offset, mu, sqrtXwt,
