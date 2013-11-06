@@ -10,6 +10,8 @@
       \item prediction now works when new data have fewer factor
       levels than are present in the original data (Github issue #143,
       reported by Rune Haubo)
+      \item the existence of a variable "new" in the global environment
+  would mess up reported at http://stackoverflow.com/questions/19801070/error-message-glmer-using-r-what-must-be-a-character-string-or-a-function
     }
   }
 }

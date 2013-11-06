@@ -1,7 +1,7 @@
-library("testthat")
-library("lme4")
+stopifnot(require("testthat"), require("lme4"))
 
 context("fitting lmer models")
+
 test_that("lmer", {
     expect_warning(lmer(z~ 1|f, method="abc"),"Use the REML argument")
     expect_warning(lmer(z~ 1|f, method="Laplace"),"Use the REML argument")
@@ -119,5 +119,9 @@ test_that("lmer", {
                    check.nobs.vs.nRE="ignore",
                    check.nobs.vs.rankZ="ignore")),"list")
 
+    ## do.call(new,...) bug
+    new <- "foo"
+    expect_is(refit(fm1),"merMod")
+    rm("new")
 })
 

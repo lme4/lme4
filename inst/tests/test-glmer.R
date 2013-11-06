@@ -143,5 +143,11 @@ test_that("glmer", {
     gm1AGQ <- update(gm1,nAGQ=2)
     ## attr(.,"bootFail" doesn't exist on release branch ...
     expect_is(bootMer(gm1AGQ,fixef)$mle$theta,"numeric")
+
+    ## do.call(new,...) bug
+    new <- "foo"
+    expect_that(gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+                             data = cbpp, family = binomial), is_a("glmerMod"))
+    rm("new")
     
 })
