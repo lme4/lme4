@@ -116,7 +116,6 @@ test_that("lmer", {
                         iiiiiiii+jjjjjjjj+kkkkkkkk+llllllll|F),
                    data=tstdat,
                    control=lmerControl(check.nobs.vs.nlev="ignore",
-                   check.nobs.vs.nRE="ignore",
                    check.nobs.vs.rankZ="ignore")),"list")
 
     ## do.call(new,...) bug
