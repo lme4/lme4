@@ -62,8 +62,12 @@ getME(object,
       \item{theta}{random-effects parameter estimates: these
 	are parameterized as the relative Cholesky factors of
 	each random effect term}
-      \item{ST}{a list of matrices giving the relative Cholesky factors
-	for each random effect term}
+      \item{ST}{A list of S and T factors in the TSST' Cholesky
+      factorization of the relative variance matrices of the random
+      effects associated with each random-effects term.  The unit lower
+      triangular matrix, \eqn{T}, and the diagonal matrix, \eqn{S}, for
+      each term are stored as a single matrix with diagonal elements
+      from \eqn{S} and off-diagonal elements from \eqn{T}.}
       \item{n_rtrms}{number of random-effects terms}
       \item{n_rfacs}{number of distinct random-effects grouping factors}
       \item{cnms}{the \dQuote{component names}, a \code{\link{list}}.}
