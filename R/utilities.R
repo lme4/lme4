@@ -778,6 +778,14 @@ testLevel <- function()
 ##' and at the (RE)ML estimate of the fixed effects and covariance
 ##' parameters.  Please regard this as a first draft.
 ##' Not exported.
+##'
+##' TODO:
+##' (1) Figure out slight discrepancies from lme4.0.
+##' (2) Write up quite note on theory (e.g. Laplace approximation).
+##' (3) Figure out how to convert between full q-by-q matrix, and
+##'     the format currently in the postVar attributes of the
+##'     elements of the output of ranef.
+##' (4) Test.
 ##' 
 ##' @param object \code{merMod} object
 ##' @return Sparse covariance matrix
