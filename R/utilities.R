@@ -770,3 +770,21 @@ checkFormulaData <- function(formula,data,checkLHS=TRUE,debug=FALSE) {
 testLevel <- function()
     if(nzchar(s <- Sys.getenv("LME4_TEST_LEVEL")) &&
        is.finite(s <- as.numeric(s))) s else 1
+
+##' Conditional variance-covariance matrix
+##'
+##' Experimental function for calculating the variance-covariance
+##' matrix of the random effects, conditional on the observed data
+##' and at the (RE)ML estimate of the fixed effects and covariance
+##' parameters.  Please regard this as a first draft.
+##' Not exported.
+##' 
+##' @param object \code{merMod} object
+##' @return Sparse covariance matrix
+condVar <- function(object) {
+  s2 <- sigma(object)^2
+  Lamt <- getME(object,"Lambdat")
+  UtU <- tcrossprod(object@pp$LamtUt)
+  UtUpI <- UtU + Diagonal(nrow(UtU))
+  s2*tcrossprod(tcrossprod(Lamt, solve(UtUpI)), Lamt)
+}
