@@ -773,7 +773,7 @@ testLevel <- function()
 
 ##' Conditional variance-covariance matrix
 ##'
-##' Experimental function for calculating the variance-covariance
+##' Experimental function for estimating the variance-covariance
 ##' matrix of the random effects, conditional on the observed data
 ##' and at the (RE)ML estimate of the fixed effects and covariance
 ##' parameters.  Please regard this as a first draft.
@@ -786,6 +786,9 @@ testLevel <- function()
 ##'     the format currently in the postVar attributes of the
 ##'     elements of the output of ranef.
 ##' (4) Test.
+##' (5) Do we need to think carefully about the differences
+##'     between REML and ML, beyond just multiplying by a different
+##'     sigma^2 estimate?
 ##' 
 ##' @param object \code{merMod} object
 ##' @return Sparse covariance matrix
