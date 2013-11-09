@@ -172,7 +172,8 @@ namespace glm {
     template<typename T>
     struct cloglogmueta : public std::unary_function<T, T> {
 	const T operator() (const T& x) const {
-	    return T(dgumbel2(double(x), 0., 1., 0));
+	    return T(std::max(std::numeric_limits<T>::epsilon(),
+			      dgumbel2(double(x), 0., 1., 0)));
 	}
     };
     //@}
