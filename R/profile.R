@@ -222,8 +222,18 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
            if (is.na(devdiff)) {
                warning("NAs detected in profiling")
            } else {
-               if (devdiff < (-devtol))
-                   stop("profiling detected new, lower deviance")
+               if (devdiff < (-devtol)) {
+                   stopmsg <-  "profiling detected new, lower deviance"
+                   if (verbose) {
+                       stopmsg <- paste0(stopmsg,"\n",
+                                        "old deviance ",base,",\n",
+                                        "new deviance ",ores$fval,",\n",
+                                        "new params ",
+                                        paste(mkpar(npar1,w,xx,ores$par),
+                                              collapse=","),"\n")
+                       stop(stopmsg)
+                   }
+               }
                if(devdiff < 0)
                    warning("slightly lower deviances (diff=",devdiff,") detected")
            }
