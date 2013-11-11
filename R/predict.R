@@ -21,18 +21,33 @@ noReForm <- function(ReForm) {
 ##' lmer/glmer code ...)
 ##' TODO: make sure this gets updated when the parameter structure changes
 ##' from (theta, beta) to alpha=(theta, beta, phi)
-setParams <- function(object,params,copy=TRUE) {
+setParams <- function(object,params,copy=TRUE,subset=FALSE) {
+    if (!is.list(params) ||
+        length(setdiff(names(params),c("beta","theta")))>0)
+        stop("params should be specifed as a list with elements ",
+             shQuote("beta")," and ",shQuote("theta"))
+    if (!subset && (is.null(params$beta) || is.null(params$theta))) {
+        warning("some parameters not specified in setParams()")
+    }
+    nbeta <- length(object@pp$beta(1))
+    ntheta <- length(object@pp$theta)
+    if (!is.null(beta <- params$beta) && length(beta)!=nbeta)
+        stop("length mismatch in beta (",length(beta),
+             "!=",nbeta,")")
+    if (!is.null(theta <- params$theta) && length(theta)!=ntheta)
+        stop("length mismatch in theta (",length(theta),
+             "!=",ntheta,")")
     if (copy) {
         newObj <- object
         ## make a copy of the reference class slots to
         ##  decouple them from the original object
         newObj@pp <- newObj@pp$copy()
         newObj@resp <- newObj@resp$copy()
-        if (!is.null(beta <- params$beta)) {
+        if (!is.null(beta)) {
             newObj@pp$setBeta0(beta)
             newObj@beta <- beta
         }
-        if (!is.null(theta <- params$theta)) {
+        if (!is.null(theta)) {
             ## where does theta live and how do I set it?
             ## (1) in .@theta
             ## (2) in .@pp$theta
