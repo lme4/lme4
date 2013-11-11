@@ -795,7 +795,6 @@ testLevel <- function()
 condVar <- function(object) {
   s2 <- sigma(object)^2
   Lamt <- getME(object,"Lambdat")
-  UtU <- tcrossprod(object@pp$LamtUt)
-  UtUpI <- UtU + Diagonal(nrow(UtU))
-  s2*tcrossprod(tcrossprod(Lamt, solve(UtUpI)), Lamt)
+  L <- getME(object,"L")
+  s2*tcrossprod(tcrossprod(Lamt, solve(L, system = "A")), Lamt)
 }
