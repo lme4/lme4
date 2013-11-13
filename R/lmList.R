@@ -29,6 +29,9 @@ modelFormula <- function(form)
 lmList <- function(formula, data, family, subset, weights,
                    na.action, offset, pool, ...) {
     stopifnot(is(formula, "formula"))
+    ## FIXME: converting data to data.frame here doesn't help
+    ##  because model.frame is accessed through eval(...,parent.frame())
+    ##  below, so it picks up the *original* value of data
     ## model.frame(groupedData) is problematic ...
     data <- as.data.frame(data)
     mCall <- mf <- match.call()
