@@ -15,6 +15,31 @@ context("anova")
 test_that("lmer", {
     expect_that(anova(fm0,fm1),                        is_a("anova"))
     expect_warning(do.call(anova,list(fm0,fm1)),"assigning generic names")
+
+    dat <- data.frame(y=1:5,u=c(rep("A",2),rep("B",3)),t=c(rep("A",3),rep("B",2)))
+    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa <-  dat
+    expect_is(stats::anova(lmer(y ~ u + (1 | t),
+                                dat = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
+                                REML=FALSE),
+                           lmer(y ~ 1 + (1 | t),
+                                dat = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
+                                REML=FALSE)),"anova")
+    expect_equal(rownames(stats::anova(lmer(y ~ u + (1 | t),
+                                            dat = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
+                                            REML=FALSE),
+                                       lmer(y ~ 1 + (1 | t),
+                                            dat = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
+                                            REML=FALSE),
+                                       model.names=c("a","b"))),
+                 c("b","a"))
+    expect_error(rownames(stats::anova(lmer(y ~ u + (1 | t),
+                                            dat = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
+                                            REML=FALSE),
+                                       lmer(y ~ 1 + (1 | t),
+                                            dat = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
+                                            REML=FALSE),
+                                       model.names=c("a","b","c"))),
+                 "different lengths")
 })
 
 context("bootMer")

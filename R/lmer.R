@@ -633,7 +633,7 @@ glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, ve
 ## @param a merMod object
 ## @param ...	further such objects
 ## @return an "anova" data frame; the traditional (S3) result of anova()
-anovaLmer <- function(object, ...) {
+anovaLmer <- function(object, ..., model.names=NULL) {
     mCall <- match.call(expand.dots = TRUE)
     dots <- list(...)
     .sapply <- function(L, FUN, ...) unlist(lapply(L, FUN, ...))
@@ -642,7 +642,10 @@ anovaLmer <- function(object, ...) {
 	opts <- dots[!modp]
 	mods <- c(list(object), dots[modp])
 	## model names
-	mNms <- .sapply(as.list(mCall)[c(FALSE, TRUE, modp)], deparse)
+        if (is.null(mNms <- model.names)) {
+            mNms <- .sapply(as.list(mCall)[c(FALSE, TRUE, modp)],
+                            function(x) paste(deparse(x),collapse=" "))
+        }
         ## HACK to try to identify model names in situations such as
         ## 'do.call(anova,list(model1,model2))' where the model names
         ## are lost in the call stack ... this doesn't quite work but might
@@ -660,6 +663,8 @@ anovaLmer <- function(object, ...) {
             warning("failed to find unique model names, assigning generic names")
             mNms <- paste0("MODEL",seq_along(mNms))
         }
+        if (length(mNms) != length(mods))
+            stop("model names vector and model list have different lengths")
 	names(mods) <- sub("@env$", '', mNms) # <- hack
 	mods <- lapply(mods, refitML)
 
