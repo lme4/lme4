@@ -26,8 +26,10 @@
 	triangle of a matrix with standard deviations on the diagonal
 	and correlations off the diagonal.}
     }
-    }%% FIXME: allow parameter names.
-  \item{alphamax}{maximum alpha value for likelihood ratio confidence
+  }%% FIXME: allow parameter names
+  %%  FIXME easier: allow at least something like "beta_", "theta_"
+  \item{alphamax}{a number in \eqn{(0,1)}, such that \code{1 - alphamax}
+    is the maximum alpha value for likelihood ratio confidence
     regions; used to establish the range of values to be profiled.}
   \item{maxpts}{maximum number of points (in each direction, for each
     parameter) to evaluate in attempting to construct the profile.}
