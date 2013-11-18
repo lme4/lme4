@@ -89,13 +89,23 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
 
     opt <- attr(dd, "optimum")
     nptot <- length(opt)
+    nvp <- nptot - p    # number of variance-covariance pars
+    wh.vp <- seq_len(nvp)
+    if(nvp > 0) fe.orig <- opt[- wh.vp]
+
+    if(is.character(which)) {
+        wh <- integer()
+        if(any(which == "theta_")) wh <- wh.vp
+        if(any(which == "beta_") && p > 0) wh <- c(wh, seq(nvp+1, nptot))
+	if(verbose) message(gettextf("From original which = %s: new which <- %s",
+				     deparse(which, nlines=1), deparse(wh, nlines=1)),
+			    domain=NA)
+        which <- wh
+    } # else stopifnot( .. numeric ..) 
 
     ans <- lapply(opt[which], function(el) NULL)
     bakspl <- forspl <- ans
 
-
-    nvp <- nptot - p    # number of variance-covariance pars
-    fe.orig <- opt[-seq_len(nvp)]
     res <- c(.zeta = 0, opt)
     res <- matrix(res, nrow = maxpts, ncol = length(res),
                   dimnames = list(NULL, names(res)), byrow = TRUE)

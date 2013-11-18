@@ -14,9 +14,9 @@
 }
 \arguments{
   \item{fitted}{a fitted model, e.g., the result of \code{\link{lmer}(..)}.}
-  \item{which}{integer indicating which parameters to profile:
-    default is all parameters.  The parameters are ordered as
-    follows:
+  \item{which}{integer or character vector indicating which parameters
+    to profile: default is all parameters.  For integer, i.e., indexing,
+    the parameters are ordered as follows:
     \describe{
       \item{(1)}{random effects (theta) parameters;}
       \item{(2)}{residual standard deviation (or scale parameter for GLMMs
@@ -26,8 +26,10 @@
 	triangle of a matrix with standard deviations on the diagonal
 	and correlations off the diagonal.}
     }
+    In addition, \code{which} may be a character, containing
+    \code{"beta_"} or \code{"theta_"} which means the fixed and random
+    effects (\dQuote{}) parameters, respectively.
   }%% FIXME: allow parameter names
-  %%  FIXME easier: allow at least something like "beta_", "theta_"
   \item{alphamax}{a number in \eqn{(0,1)}, such that \code{1 - alphamax}
     is the maximum alpha value for likelihood ratio confidence
     regions; used to establish the range of values to be profiled.}
@@ -69,7 +71,10 @@
 }
 \examples{
 fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
-system.time( tpr  <- profile(fm01ML, optimizer="Nelder_Mead") )
+system.time(
+  tpr  <- profile(fm01ML, optimizer="Nelder_Mead", which="beta_")
+)## fast; as only *one* beta parameter is profiled over
+## full profiling (default which means 'all) needs
 ## ~2.6s (on a 2010 Macbook Pro)
 system.time( tpr  <- profile(fm01ML))
 ## ~1s, + possible warning about bobyqa convergence
