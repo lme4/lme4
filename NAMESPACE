@@ -5,7 +5,7 @@ importFrom("graphics", plot)
 importFrom("splines", backSpline,interpSpline,periodicSpline)
 importFrom("methods", show)
 importFrom("stats",
-           anova, coef, confint, deviance, drop1,
+           anova, coef, confint, deviance, df.residual, drop1,
            extractAIC, family, fitted, formula, logLik,
            model.matrix, nobs, profile, residuals, simulate, terms,
            update, vcov, weights)
@@ -106,6 +106,7 @@ export(confint.merMod)
 S3method(confint,thpr)
 S3method(densityplot,thpr)
 S3method(deviance,merMod)
+S3method(df.residual,merMod)
 S3method(dotplot,coef.mer)
 S3method(dotplot,ranef.mer)
 S3method(drop1,merMod)

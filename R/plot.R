@@ -307,11 +307,11 @@ plot.merMod <-
       id <- switch(mode(id),
                    numeric = {
                        if (id <= 0 || id >= 1)
-                           stop("Id must be between 0 and 1")
+                           stop(shQuote("id")," must be between 0 and 1")
                        as.logical(abs(resid(object, type = idResType)) > -qnorm(id / 2))
                    },
                    call = eval(asOneSidedFormula(id)[[2]], data),
-                   stop("\"id\" can only be a formula or numeric.")
+                   stop(shQuote("id")," can only be a formula or numeric.")
                    )
       if (is.null(idLabels)) {
           idLabels <- getIDLabels(object)

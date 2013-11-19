@@ -1026,6 +1026,12 @@ isLMM.merMod <- function(x,...) {
   ## or: is(x@resp,"lmerResp") ?
 }
 
+npar.merMod <- function(object) {
+    length(object@beta) + length(object@theta) +
+        object@devcomp[["dims"]][["useSc"]]
+    ## TODO: how do we feel about counting the scale parameter ???
+}
+
 ##' @importFrom stats logLik
 ##' @S3method logLik merMod
 logLik.merMod <- function(object, REML = NULL, ...) {
@@ -1038,8 +1044,19 @@ logLik.merMod <- function(object, REML = NULL, ...) {
     structure(val,
 	      nobs = nobs,
 	      nall = nobs,
-	      df = length(object@beta) + length(object@theta) + dims[["useSc"]],
+	      df = npar.merMod(object),
+              ## length(object@beta) + length(object@theta) + dims[["useSc"]],
 	      class = "logLik")
+}
+
+##' @importFrom stats df.residual
+##' @S3method df.residual merMod
+##  TODO: not clear whether the residual df should be based
+##  on p=length(beta) or p=length(c(theta,beta)) ... but
+##  this is just to allow things like aods3::gof to work ...
+##
+df.residual.merMod <- function(object, ...) {
+    nobs(object)-npar.merMod(object)
 }
 
 stripwhite <- function(x) gsub("(^ +| +$)","",x)

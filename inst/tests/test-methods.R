@@ -16,30 +16,39 @@ test_that("lmer", {
     expect_that(anova(fm0,fm1),                        is_a("anova"))
     expect_warning(do.call(anova,list(fm0,fm1)),"assigning generic names")
 
-    dat <- data.frame(y=1:5,u=c(rep("A",2),rep("B",3)),t=c(rep("A",3),rep("B",2)))
+    dat <- data.frame(y=1:5,u=c(rep("A",2),rep("B",3)),
+                      t=c(rep("A",3),rep("B",2)))
+
+    datfun <- function(x) dat
     aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa <-  dat
     expect_is(stats::anova(lmer(y ~ u + (1 | t),
-                                dat = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
+    dat = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
                                 REML=FALSE),
                            lmer(y ~ 1 + (1 | t),
-                                dat = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
+     dat = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
                                 REML=FALSE)),"anova")
     expect_equal(rownames(stats::anova(lmer(y ~ u + (1 | t),
-                                            dat = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
+     dat = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
                                             REML=FALSE),
                                        lmer(y ~ 1 + (1 | t),
-                                            dat = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
+     dat = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
                                             REML=FALSE),
                                        model.names=c("a","b"))),
                  c("b","a"))
     expect_error(rownames(stats::anova(lmer(y ~ u + (1 | t),
-                                            dat = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
-                                            REML=FALSE),
+                                            dat = dat, REML=FALSE),
                                        lmer(y ~ 1 + (1 | t),
-                                            dat = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
-                                            REML=FALSE),
+                                            dat = dat, REML=FALSE),
                                        model.names=c("a","b","c"))),
                  "different lengths")
+    z <- 1
+    stats::anova(lmer(y ~ u + (1 | t),
+                      data = datfun(z), REML=FALSE),
+                 lmer(y ~ 1 + (1 | t),
+                      data = datfun(z), REML=FALSE))
+
+    datList <- list(data,data,data)
+    
 })
 
 context("bootMer")
@@ -92,4 +101,7 @@ test_that("predict", {
     expect_equal(p0[1],p2[1],tol=4e-5)
     expect_equal(p0[1],p3[1],tol=4e-5)
 })
-
+context("misc")
+test_that("misc", {
+    expect_equal(df.residual(fm1),176)
+})
