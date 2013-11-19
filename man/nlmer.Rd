@@ -8,11 +8,21 @@
     devFunOnly = FALSE, ...)
 }
 \arguments{
-  \item{formula}{a nonlinear mixed model formula (see
-  detailed documentation)}
+  \item{formula}{a three-part \dQuote{nonlinear mixed model} formula,
+    of the form \code{resp ~ Nonlin(...) ~ fixed + random},
+    where the third part is similar to the RHS formula of, e.g.,
+    \code{\link{lmer}}. %% (see detailed documentation)  FIXME!  where would that be?
+    
+    Currently, the \code{Nonlin(..)} formula part must not only return a
+    numeric vector, but also must have a \code{"gradient"} attribute, a
+    \code{\link{matrix}}.  The \code{\link{SSbiexp}},
+    \code{\link{SSlogis}}, etc, see \code{\link{selfStart}} functions
+    provide this (and more).  Alternatively, you can use
+    \code{\link{deriv}()} to automatically produce such functions or
+    expressions.}%% FIXME: Provide an example on how to do this
 
   \item{start}{starting estimates for the nonlinear model
-  parameters, as a named numeric vector or as a list with
+    parameters, as a named numeric vector or as a list with
   components \describe{ \item{nlpars}{required numeric
   vector of starting values for the nonlinear model
   parameters} \item{theta}{optional numeric vector of

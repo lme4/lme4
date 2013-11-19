@@ -185,6 +185,7 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
                   is.environment(nlenv),
                   is.numeric(val <- eval(nlmod, nlenv)),
                   length(val) == n,
+		  ## FIXME?  Restriction, not present in ole' nlme():
                   is.matrix(gr <- attr(val, "gradient")),
                   mode(gr) == "numeric",
                   nrow(gr) == n,
