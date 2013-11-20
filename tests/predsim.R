@@ -71,3 +71,11 @@ fm0 <- update(fm1,.~.-Days)
 ## sim() -> simulate() -> refit() -> deviance
 ##
 
+## predictions and simulations with offsets
+
+set.seed(101)
+d <- data.frame(y=rpois(100,5),x=rlnorm(100,1,1),
+                f=factor(sample(10,size=100,replace=TRUE)))
+gm1 <- glmer(y~offset(log(x))+(1|f),data=d,
+             family=poisson)
+s1 <- simulate(gm1)

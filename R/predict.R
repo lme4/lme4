@@ -97,7 +97,7 @@ mkNewReTrms <- function(object,newdata,ReForm=NULL, na.action=na.pass,
                  " for grouping variables unless allow.new.levels is TRUE")
         unames <- unique(sort(names(ReTrms$cnms)))  ## FIXME: same as names(ReTrms$flist) ?
         ## convert numeric grouping variables to factors as necessary
-        for (i in all.vars(ReForm[[2]])) {
+        for (i in all.vars(RHSForm(ReForm))) {
             rfd[[i]] <- factor(rfd[[i]])
         }
         Rfacs <- setNames(lapply(unames,
@@ -233,9 +233,15 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
         return(pred)
     } else { ## newdata and/or ReForm and/or newparams specified
         X_orig <- getME(object, "X")
+        ## modified from predict.glm ...
         if (is.null(newdata)) {
+            ## get original model matrix and offset
             X <- X_orig
             fit.na.action <- attr(object@frame,"na.action")  ## original NA action
+            ## orig. offset: will be zero if there are no matches ...
+            offset <- rowSums(object@frame[grepl("offset\\(.*\\)",
+                                                 names(object@frame))])
+
         } else {
             ## evaluate new fixed effect
             RHS <- formula(substitute(~R,
@@ -249,25 +255,25 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
                                                         na.action=na.action,
                                                         xlev=orig_levs),
                               contrasts.arg=attr(X_orig,"contrasts"))
+            offset <- rep(0, nrow(X))
+            tt <- terms(object)
+            if (!is.null(off.num <- attr(tt, "offset"))) {
+                for (i in off.num)
+                    offset <- offset + eval(attr(tt,"variables")[[i + 1]], newdata)
+            }
             fit.na.action <- attr(mfnew,"na.action")
         }
         pred <- drop(X %*% fixef(object))
-        ## modified from predict.glm ...
-        offset <- rep(0, nrow(X))
-        tt <- terms(object)
         ## FIXME:: need to unname()  ?
-        if (!is.null(off.num <- attr(tt, "offset"))) {
-            for (i in off.num)
-                offset <- offset + eval(attr(tt,"variables")[[i + 1]], newdata)
-        }
         ## FIXME: is this redundant??
-        if (!is.null(frOffset <- attr(object@frame,"offset")))
-            offset <- offset + eval(frOffset, newdata)
+        ## if (!is.null(frOffset <- attr(object@frame,"offset")))
+        ##     offset <- offset + eval(frOffset, newdata)
         pred <- pred+offset
         if (!noReForm(ReForm)) {
             if (is.null(ReForm)) {
                 ## original formula, minus response
                 ReForm <- dropRHSForm(formula(object))
+                ReTrms <- mkReTrms(findbars(ReForm[[2]]), newdata)
             }
             newRE <- mkNewReTrms(object,newdata,ReForm,na.action=na.action,
                                  allow.new.levels=allow.new.levels)
@@ -391,7 +397,13 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     ## now add random components:
     ##  only the ones we did *not* condition on
 
-    compReForm <- dropRHSForm(formula(object))
+    ## compReForm <- dropRHSForm(formula(object))
+    ## construct RE formula ONLY: leave out fixed terms,
+    ##   which might have loose terms like offsets in them ...
+    fb <- findbars(formula(object))
+    pfun <- function(x) paste("(",paste(deparse(x),collapse=" "),")")
+    compReForm <- reformulate(sapply(fb,pfun))
+
 
     if (!noReForm(ReForm)) {
         rr <- ReForm[[length(ReForm)]] ## RHS of formula

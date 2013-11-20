@@ -101,6 +101,13 @@ test_that("predict", {
     expect_equal(p0[1],p2[1],tol=4e-5)
     expect_equal(p0[1],p3[1],tol=4e-5)
 })
+
+context("simulate")
+test_that("simulate", {
+    gm2 <- fit_cbpp_2
+    expect_is(simulate(gm2),"data.frame")
+})
+
 context("misc")
 test_that("misc", {
     expect_equal(df.residual(fm1),176)
