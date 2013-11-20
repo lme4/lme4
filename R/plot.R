@@ -229,7 +229,7 @@ plot.merMod <-
   ## constructing data
   ## can I get away with using object@frame???
   allV <- all.vars(asOneFormula(form, id, idLabels))
-  allV <- allV[is.na(match(allV,c("T","F","TRUE","FALSE")))]
+  allV <- allV[is.na(match(allV,c("T","F","TRUE","FALSE",".obs")))]
   if (length(allV) > 0) {
     data <- getData(object)
     if (is.null(data)) {		# try to construct data
@@ -324,7 +324,8 @@ plot.merMod <-
               }
           } else stop("\"idLabels\" can only be a formula or a vector")
       }
-      idLabels <- as.character(idLabels)[id]
+      ## DON'T subscript by id, will be done later
+      idLabels <- as.character(idLabels)
   }
 
   ## defining abline, if needed

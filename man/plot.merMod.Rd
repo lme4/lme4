@@ -49,7 +49,8 @@
   converted to character and used to label the identified
   observations. Default is the interaction of all the
   grouping variables in the data frame.  The special
-  formula}
+  formula \code{idLabels=~.obs} will label the observations
+  according to observation number.}
 
   \item{grid}{an optional logical value indicating whether
   a grid should be added to plot. Default depends on the
