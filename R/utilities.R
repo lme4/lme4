@@ -797,5 +797,7 @@ condVar <- function(object) {
   s2 <- sigma(object)^2
   Lamt <- getME(object,"Lambdat")
   L <- getME(object,"L")
-  s2*tcrossprod(tcrossprod(Lamt, solve(L, system = "A")), Lamt)
+  V <- solve(L, system = "A")
+  s2*crossprod(Lambdat, V) %*% Lambdat
+  # s2*tcrossprod(tcrossprod(Lamt, solve(L, system = "A")), Lamt)
 }

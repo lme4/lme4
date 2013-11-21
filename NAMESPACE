@@ -10,7 +10,7 @@ importFrom("stats",
            model.matrix, nobs, profile, residuals, simulate, terms,
            update, vcov, weights)
 ## Recommended packages
-importClassesFrom("Matrix", corMatrix, dgCMatrix, dpoMatrix)
+importClassesFrom("Matrix", corMatrix, dgCMatrix, dpoMatrix, dCHMsimpl)
 importFrom("grid", gpar,viewport)
 importFrom("lattice",
            bwplot,
@@ -27,7 +27,7 @@ importFrom("lattice",
 importFrom("MASS", negative.binomial, theta.ml)
 importFrom("Matrix", drop0, rankMatrix, rBind, sparseMatrix)
 importFrom("nlme", fixef,ranef,VarCorr)
-importMethodsFrom("Matrix", "%*%",coerce,crossprod,diag,t,tcrossprod)
+importMethodsFrom("Matrix", "%*%",coerce,crossprod,diag,t,tcrossprod,solve)
 ## other CRAN packages:
 importFrom("minqa", bobyqa)
 
