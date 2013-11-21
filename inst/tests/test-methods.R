@@ -2,8 +2,10 @@ library("testthat")
 library("lme4")
 L <- load(system.file("testdata/lme-tst-fits.rda",
                       package="lme4", mustWork=TRUE))
-fm1 <- fit_sleepstudy_1
 fm0 <- fit_sleepstudy_0
+fm1 <- fit_sleepstudy_1
+gm1 <- fit_cbpp_1
+gm2 <- fit_cbpp_2
 
 context("summary")
 test_that("summary", {
@@ -86,7 +88,6 @@ test_that("refit", {
     expect_error(refit(fm1,s2),"refit not implemented for lists")
 })
 
-gm1 <- fit_cbpp_1
 context("predict")
 test_that("predict", {
     d1 <- with(cbpp, expand.grid(period=unique(period), herd=unique(herd)))
@@ -104,11 +105,12 @@ test_that("predict", {
 
 context("simulate")
 test_that("simulate", {
-    gm2 <- fit_cbpp_2
     expect_is(simulate(gm2),"data.frame")
 })
 
 context("misc")
 test_that("misc", {
     expect_equal(df.residual(fm1),176)
+    expect_is(fortify(fm1),"data.frame")
+    expect_is(fortify(gm1),"data.frame")
 })

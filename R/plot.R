@@ -412,7 +412,7 @@ fortify <- function(model, data, ...) UseMethod("fortify")
 ##' @S3method fortify lmerMod
 ##' @method fortify lmerMod
 ##' @export
-fortify.lmerMod <- function(model, data=getData(model), ...) {
+fortify.merMod <- function(model, data=getData(model), ...) {
     ## FIXME:
 
     ## FIXME: get influence measures via influence.ME?

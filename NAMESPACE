@@ -119,8 +119,8 @@ S3method(fitted,merMod)
 S3method(fixef,merMod)
 S3method(formula,lmList)
 S3method(formula,merMod)
-S3method(fortify,lmerMod)# but don't hide:
-export(fortify.lmerMod)
+S3method(fortify,merMod)# but don't hide:
+export(fortify.merMod)
 S3method(isGLMM,merMod)
 S3method(isLMM,merMod)
 S3method(isNLMM,merMod)

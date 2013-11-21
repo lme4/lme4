@@ -1,11 +1,11 @@
 \name{fortify}
 \alias{fortify}
-\alias{fortify.lmerMod}
+\alias{fortify.merMod}
 \title{add information to data based on a fitted model}
 \usage{
   fortify(model, data, ...)
 
-  \method{fortify}{lmerMod} (model, data = getData(model),
+  \method{fortify}{merMod} (model, data = getData(model),
     ...)
 }
 \arguments{
