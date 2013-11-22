@@ -797,6 +797,12 @@ condVar <- function(object) {
   s2 <- sigma(object)^2
   Lamt <- getME(object,"Lambdat")
   L <- getME(object,"L")
-  V <- solve(L, system = "A")
-  s2*crossprod(Lamt, V) %*% Lamt
+
+  ## never do it this way! fortune("SOOOO")
+  #V <- solve(L, system = "A")
+  #V <- chol2inv(L)  
+  #s2*crossprod(Lamt, V) %*% Lamt
+
+  LL <- solve(L, Lamt, system = "A")
+  s2 * crossprod(Lamt, LL)
 }
