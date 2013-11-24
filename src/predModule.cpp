@@ -97,17 +97,14 @@ namespace lme4 {
         const int nf(ll.size());
         const MiVec nl(as<MiVec>(rho["nlevs"])),
             nct(as<MiVec>(rho["nctot"])), off(as<MiVec>(rho["offsets"]));
-
 	// ll : flist
 	// trmlst : terms : list with one element per factor, indicating corresponding term
         // nf : : number of unique factors
 	// nl : nlevs : number of levels for each unique factor
 	// nct : nctot : total number of components per factor
 	// off : offsets : points to where each term starts
-
         Rcpp::List ans(nf);
         ans.names() = clone(as<Rcpp::CharacterVector>(ll.names()));
-
         const SpMatrixd d_Lambda(d_Lambdat.adjoint());
         for (int i = 0; i < nf; i++) {
             int         ncti(nct[i]), nli(nl[i]);
@@ -125,10 +122,6 @@ namespace lme4 {
 		    MatrixXd LvT(d_Lambdat.innerVectors(offset + j * ncti, ncti));
 		    MatrixXd Lv(LvT.adjoint());
 		    d_L.solveInPlace(LvT, CHOLMOD_A);
-		    // crossproduct Lv'Lv (where issue #148 was)
-                    // MatrixXd rr(MatrixXd(ncti, ncti).setZero().
-                    //            selfadjointView<Eigen::Lower>().rankUpdate(Lv.adjoint()));
-		    // proposed fix:
 		    MatrixXd rr(Lv * LvT);
 		    std::copy(rr.data(), rr.data() + rr.size(), &ansi[j * ncti * ncti]);
                 }
