@@ -127,9 +127,13 @@ namespace lme4 {
                     // Rcpp::Rcout << "\nLv before\n" << Lv << std::endl;
 		    d_L.solveInPlace(Lv, CHOLMOD_A);
 		    // Rcpp::Rcout << "\nLv after\n" << Lv << std::endl;
+		    
+		    // crossproduct Lv'Lv 
                     MatrixXd rr(MatrixXd(ncti, ncti).setZero().
                                 selfadjointView<Eigen::Lower>().rankUpdate(Lv.adjoint()));
-                    std::copy(rr.data(), rr.data() + rr.size(), &ansi[j * ncti * ncti]);
+                    
+		    // store Lv'Lv in the correct face of ans (this part's working fine)
+		    std::copy(rr.data(), rr.data() + rr.size(), &ansi[j * ncti * ncti]);
                 }
             } else {
                 throw std::runtime_error("multiple terms per factor not yet written");
