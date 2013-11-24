@@ -14,6 +14,7 @@ as.numeric(attr(ranef(fm,postVar=TRUE)$Batch,"postVar"))
 
 # but lme4 gets it wrong
 library(lme4)
+
 gm <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
               data = cbpp, family = binomial)
 as.numeric(attr(ranef(gm,condVar=TRUE)$herd,"postVar"))
@@ -67,7 +68,7 @@ lme4:::condVar(fm) # with experimental function
 # these differences have to be due to the conditional variance
 # estimates, because all the other estimates are very similar.
 # do conditional variance estimates take uncertainty in fixed
-# effects into account? i didn't think so but know i'm wondering.
+# effects into account? i didn't think so but now i'm wondering.
 library(lme4)
 fm <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)
 lme4:::condVar(fm)[1:2, 1:2] # experimental function
@@ -75,6 +76,7 @@ lme4:::condVar(fm)[1:2, 1:2] # experimental function
 ##                          
 ## [1,] 137.19563 -22.869327
 ## [2,] -22.86933   6.017249
+
 
 library(lme4.0)
 fm <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)

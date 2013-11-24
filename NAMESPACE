@@ -27,7 +27,7 @@ importFrom("lattice",
 importFrom("MASS", negative.binomial, theta.ml)
 importFrom("Matrix", drop0, rankMatrix, rBind, sparseMatrix)
 importFrom("nlme", fixef,ranef,VarCorr)
-importMethodsFrom("Matrix", "%*%",coerce,crossprod,diag,t,tcrossprod,solve)
+importMethodsFrom("Matrix", "%*%",coerce,crossprod,diag,t,tcrossprod,solve,chol2inv)
 ## other CRAN packages:
 importFrom("minqa", bobyqa)
 
