@@ -962,17 +962,19 @@ rePos <-
     setRefClass("rePos",
                 fields =
                 list(
-                     cnms    = "list",
-                     flist   = "list",
-                     ncols   = "integer",
-                     nctot   = "integer",
-                     nlevs   = "integer",
-                     offsets = "integer",
-                     terms   = "list"
+                     cnms    = "list", # component names (components are terms within a RE term)
+                     flist   = "list", # list of grouping factors used in the random-effects terms
+                     ncols   = "integer", # number of components for each RE term
+                     nctot   = "integer", # total number of components per factor
+                     nlevs   = "integer", # number of levels for each unique factor
+                     offsets = "integer", # points to where each term starts
+                     terms   = "list" # list with one element per factor, indicating corresponding term
                      ),
                 methods =
                 list(
                      initialize = function(mer, ...) {
+                         ##' asgn indicates unique elements of flist
+                         ##' 
                          stopifnot((ntrms <- length(Cnms <- mer@cnms)) > 0L,
                                    (length(Flist <- mer@flist)) > 0L,
                                    length(asgn  <- as.integer(attr(Flist, "assign"))) == ntrms)
@@ -981,6 +983,7 @@ rePos <-
                          ncols   <<- unname(vapply(cnms, length, 0L))
                          nctot   <<- unname(as.vector(tapply(ncols, asgn, sum)))
                          nlevs   <<- unname(vapply(flist, function(el) length(levels(el)), 0L))
+                         # why not replace the sapply with ncols*nlevs[asgn] ??
                          offsets <<- c(0L, cumsum(sapply(seq_along(asgn),
                                                          function(i) ncols[i] * nlevs[asgn[i]])))
                          terms   <<- lapply(seq_along(flist), function(i) which(asgn == i))

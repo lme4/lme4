@@ -98,6 +98,13 @@ namespace lme4 {
         const MiVec nl(as<MiVec>(rho["nlevs"])),
             nct(as<MiVec>(rho["nctot"])), off(as<MiVec>(rho["offsets"]));
 
+	// ll : flist
+	// trmlst : terms : list with one element per factor, indicating corresponding term
+        // nf : : number of unique factors
+	// nl : nlevs : number of levels for each unique factor
+	// nct : nctot : total number of components per factor
+	// off : offsets : points to where each term starts
+
         Rcpp::List ans(nf);
         ans.names() = clone(as<Rcpp::CharacterVector>(ll.names()));
 
@@ -108,11 +115,18 @@ namespace lme4 {
             ansi.attr("dim") = Rcpp::IntegerVector::create(ncti, ncti, nli);
             ans[i] = ansi;
             const MiVec trms(as<MiVec>(trmlst(i)));
+	    // ncti : total number of components in factor i
+	    // nli : number of levels in factor i
+	    // ansi : array in which to store condVar's for factor i
+	    // trms : pointers to terms corresponding to factor i
+	    Rcpp::Rcout << "\ntrms size\n\n" << trms.size() << std::endl;
             if (trms.size() == 1) { // simple case
                 int offset = off[trms[0] - 1];
                 for (int j = 0; j < nli; ++j) {
                     MatrixXd Lv(d_Lambda.innerVectors(offset + j * ncti, ncti));
-                    d_L.solveInPlace(Lv, CHOLMOD_A);
+                    // Rcpp::Rcout << "\nLv before\n" << Lv << std::endl;
+		    d_L.solveInPlace(Lv, CHOLMOD_A);
+		    // Rcpp::Rcout << "\nLv after\n" << Lv << std::endl;
                     MatrixXd rr(MatrixXd(ncti, ncti).setZero().
                                 selfadjointView<Eigen::Lower>().rankUpdate(Lv.adjoint()));
                     std::copy(rr.data(), rr.data() + rr.size(), &ansi[j * ncti * ncti]);
