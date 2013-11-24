@@ -119,20 +119,17 @@ namespace lme4 {
 	    // nli : number of levels in factor i
 	    // ansi : array in which to store condVar's for factor i
 	    // trms : pointers to terms corresponding to factor i
-	    Rcpp::Rcout << "\ntrms size\n\n" << trms.size() << std::endl;
             if (trms.size() == 1) { // simple case
                 int offset = off[trms[0] - 1];
                 for (int j = 0; j < nli; ++j) {
                     MatrixXd Lv(d_Lambda.innerVectors(offset + j * ncti, ncti));
-                    // Rcpp::Rcout << "\nLv before\n" << Lv << std::endl;
-		    d_L.solveInPlace(Lv, CHOLMOD_A);
-		    // Rcpp::Rcout << "\nLv after\n" << Lv << std::endl;
-		    
-		    // crossproduct Lv'Lv 
-                    MatrixXd rr(MatrixXd(ncti, ncti).setZero().
-                                selfadjointView<Eigen::Lower>().rankUpdate(Lv.adjoint()));
-                    
-		    // store Lv'Lv in the correct face of ans (this part's working fine)
+		    MatrixXd LvT(Lv.adjoint());
+		    d_L.solveInPlace(Lv, CHOLMOD_A);		    
+		    // crossproduct Lv'Lv (where issue #148 was)
+                    // MatrixXd rr(MatrixXd(ncti, ncti).setZero().
+                    //            selfadjointView<Eigen::Lower>().rankUpdate(Lv.adjoint()));
+		    // proposed fix:
+		    MatrixXd rr(LvT * Lv);
 		    std::copy(rr.data(), rr.data() + rr.size(), &ansi[j * ncti * ncti]);
                 }
             } else {
