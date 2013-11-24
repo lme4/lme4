@@ -1185,9 +1185,16 @@ ranef.merMod <- function(object, condVar = FALSE, drop = FALSE,
 
 	if (condVar) {
             sigsqr <- sigma(object)^2
-	    vv <- .Call(merPredDcondVar, object@pp$ptr(), as.environment(rePos$new(object)))
-	    for (i in names(ans)) ## seq_along(ans))
-                attr(ans[[i]], "postVar") <- vv[[i]] * sigsqr
+            rp <- rePos$new(object)
+            if(any(sapply(rp$terms, length) > 1)){
+                # TODO: actually use condVar and then convert back to array format
+                warning("conditional variances not currently available via ",
+                        "ranef when there are multiple terms per factor")
+            } else{
+                vv <- .Call(merPredDcondVar, object@pp$ptr(), as.environment(rp))
+                for (i in names(ans)) ## seq_along(ans))
+                    attr(ans[[i]], "postVar") <- vv[[i]] * sigsqr
+            }
 	}
 	if (drop)
 	    ans <- lapply(ans, function(el)

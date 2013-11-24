@@ -772,22 +772,22 @@ testLevel <- function()
     if(nzchar(s <- Sys.getenv("LME4_TEST_LEVEL")) &&
        is.finite(s <- as.numeric(s))) s else 1
 
-##' Conditional variance-covariance matrix
+##' General conditional variance-covariance matrix
 ##'
 ##' Experimental function for estimating the variance-covariance
 ##' matrix of the random effects, conditional on the observed data
 ##' and at the (RE)ML estimate of the fixed effects and covariance
-##' parameters.  Please regard this as a first draft.
+##' parameters.  Applicable for any Lambda matrix, but slower than
+##' other block-by-block methods.
 ##' Not exported.
 ##'
 ##' TODO:
-##' (1) Figure out slight discrepancies from lme4.0.
-##' (2) Write up quite note on theory (e.g. Laplace approximation).
-##' (3) Figure out how to convert between full q-by-q matrix, and
+##' (1) Write up quite note on theory (e.g. Laplace approximation).
+##' (2) Figure out how to convert between full q-by-q matrix, and
 ##'     the format currently in the postVar attributes of the
 ##'     elements of the output of ranef.
-##' (4) Test.
-##' (5) Do we need to think carefully about the differences
+##' (3) Test.
+##' (4) Do we need to think carefully about the differences
 ##'     between REML and ML, beyond just multiplying by a different
 ##'     sigma^2 estimate?
 ##' 
