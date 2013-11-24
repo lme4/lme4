@@ -122,14 +122,14 @@ namespace lme4 {
             if (trms.size() == 1) { // simple case
                 int offset = off[trms[0] - 1];
                 for (int j = 0; j < nli; ++j) {
-                    MatrixXd Lv(d_Lambda.innerVectors(offset + j * ncti, ncti));
-		    MatrixXd LvT(Lv.adjoint());
-		    d_L.solveInPlace(Lv, CHOLMOD_A);		    
+		    MatrixXd LvT(d_Lambdat.innerVectors(offset + j * ncti, ncti));
+		    MatrixXd Lv(LvT.adjoint());
+		    d_L.solveInPlace(LvT, CHOLMOD_A);
 		    // crossproduct Lv'Lv (where issue #148 was)
                     // MatrixXd rr(MatrixXd(ncti, ncti).setZero().
                     //            selfadjointView<Eigen::Lower>().rankUpdate(Lv.adjoint()));
 		    // proposed fix:
-		    MatrixXd rr(LvT * Lv);
+		    MatrixXd rr(Lv * LvT);
 		    std::copy(rr.data(), rr.data() + rr.size(), &ansi[j * ncti * ncti]);
                 }
             } else {

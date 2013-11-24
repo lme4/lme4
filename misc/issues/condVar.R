@@ -70,17 +70,24 @@ lme4:::condVar(fm) # with experimental function
 # do conditional variance estimates take uncertainty in fixed
 # effects into account? i didn't think so but now i'm wondering.
 library(lme4)
-fm <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)
+fm <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+attr(ranef(fm,condVar=TRUE)$Subject,"postVar")[,,1]
+##           [,1]      [,2]
+## [1,] 142.61353 -23.33522
+## [2,] -23.33522   6.02113
 lme4:::condVar(fm)[1:2, 1:2] # experimental function
-## 2 x 2 sparse Matrix of class "dgCMatrix"
-##                          
-## [1,] 137.19563 -22.869327
-## [2,] -22.86933   6.017249
-
+## 2 x 2 sparse Matrix of class "dgCMatrix"                        
+## [1,] 145.70544 -21.44448
+## [2,] -21.44448   5.31228
 
 library(lme4.0)
-fm <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)
+fm <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 attr(ranef(fm,postVar=TRUE)$Subject,"postVar")[,,1]
 ##           [,1]       [,2]
-## [1,] 140.97552 -20.600364
-## [2,] -20.60036   5.156403
+## [1,] 145.71273 -21.440414
+## [2,] -21.44041   5.310927
+
+s2 <- sigma(fm)^2
+Lamt <- getME(fm, "Lambdat")
+L <- getME(fm, "L")
+s2 * crossprod(Lamt[,1:2], solve(L, Lamt[,1:2], system = "A"))[1:2,1:2]

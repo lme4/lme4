@@ -1,7 +1,15 @@
+library(lme4)
+
 lme4.0condVarDyestuff <- c(362.3583, 362.3583, 362.3583, 362.3583, 362.3583, 362.3583)
 fm <- lmer(Yield ~ 1|Batch, Dyestuff, REML=FALSE)
 lme4condVarDyestuff <- as.numeric(attr(ranef(fm,condVar=TRUE)$Batch,"postVar"))
 stopifnot(all.equal(lme4.0condVarDyestuff, lme4condVarDyestuff, tol = 1e-3))
+
+lme4.0condVarsleepstudy <- matrix(c(145.71273, -21.440414,
+                                    -21.44041,   5.310927), 2, 2)
+fm <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+lme4condVarsleepstudy <- attr(ranef(fm,condVar=TRUE)$Subject,"postVar")[,,1]
+stopifnot(all.equal(lme4.0condVarsleepstudy, lme4condVarsleepstudy, tol = 1e-4))
 
 lme4.0condVarcbpp <- c(0.12128867, 0.13363275, 0.08839850, 0.17337928, 0.12277914, 0.14436663,
                        0.10658333, 0.10309812, 0.21289738, 0.13740279, 0.09555677, 0.19460241,
