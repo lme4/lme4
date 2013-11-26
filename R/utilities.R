@@ -43,10 +43,16 @@ mkReTrms <- function(bars, fr) {
     for (i in all.vars(x[[3]])) {
         if (!is.null(frloc[[i]])) frloc[[i]] <- factor(frloc[[i]])
     }
-    ff <- eval(substitute(factor(fac), list(fac = x[[3]])), frloc)
+    if (is.null(ff <- tryCatch(eval(substitute(factor(fac),
+                                               list(fac = x[[3]])), frloc),
+                error=function(e) NULL)))
+        stop("couldn't evaluate grouping factor ",
+             deparse(x[[3]])," within model frame:",
+             " try adding grouping factor to data ",
+             "frame explicitly if possible")
     if (all(is.na(ff)))
-      stop("Invalid grouping factor specification, ",
-           deparse(x[[3]]))
+        stop("Invalid grouping factor specification, ",
+             deparse(x[[3]]))
     nl <- length(levels(ff))
     mm <- model.matrix(eval(substitute( ~ foo, list(foo = x[[2]]))), frloc)
     nc <- ncol(mm)
