@@ -274,6 +274,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     denv <- checkFormulaData(formula,data,checkLHS=(control$check.formula.LHS=="stop"))
     #mc$formula <- formula <- as.formula(formula,env=denv) ## substitute evaluated call
     formula <- as.formula(formula,env=denv)
+    ## as.formula ONLY sets environment if not already explicitly set ...
+    ## ?? environment(formula) <- denv
     # get rid of || terms so update() works as expected
     RHSForm(formula) <- expandDoubleVerts(RHSForm(formula))
     mc$formula <- formula
@@ -285,6 +287,13 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     mf[[1]] <- as.name("model.frame")
     fr.form <- subbars(formula) # substitute "|" by "+"
     environment(fr.form) <- environment(formula)
+    ## (DRY! copied from glFormula)
+    ## model.frame.default looks for these objects in the environment
+    ## of the *formula* (see 'extras', which is anything passed in ...),
+    ## so they have to be put there ...
+    for (i in c("weights", "offset")) {
+        assign(i,get(i,parent.frame()),environment(fr.form))
+    }
     mf$formula <- fr.form
     fr <- eval(mf, parent.frame())
     ## store full, original formula & offset
@@ -391,7 +400,8 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, verbose=0, co
     ## currently that help file says REML is logical
     devfun <- mkdevfun(rho, 0L, verbose, control)
     theta <- getStart(start,reTrms$lower,rho$pp)
-    devfun(rho$pp$theta) # one evaluation to ensure all values are set
+    if (length(rho$resp$y)>0)  ## only if non-trivial y
+        devfun(rho$pp$theta) # one evaluation to ensure all values are set
     rho$lower <- reTrms$lower # SCW:  in order to be more consistent with mkLmerDevfun
     return(devfun) # this should pass the rho environment implicitly
 }

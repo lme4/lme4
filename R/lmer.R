@@ -1512,7 +1512,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE, ...) {
       ## GLMM
       ## n.b. DON'T scale random-effects (???)
       	      etasim <- etasim.fix+etasim.reff
-              ## FIXME:: try to avoid @call ...
+              ## FIXME:: try to avoid @call ... and DRY on interpreting family() ...
 	      family <- object@call$family
 	      if(is.symbol(family)) family <- as.character(family)
 	      if(is.character(family))

@@ -22,11 +22,12 @@ noReForm <- function(ReForm) {
 ##' TODO: make sure this gets updated when the parameter structure changes
 ##' from (theta, beta) to alpha=(theta, beta, phi)
 setParams <- function(object,params,copy=TRUE,subset=FALSE) {
-    if (!is.list(params) ||
-        length(setdiff(names(params),c("beta","theta")))>0)
-        stop("params should be specifed as a list with elements ",
-             shQuote("beta")," and ",shQuote("theta"))
-    if (!subset && (is.null(params$beta) || is.null(params$theta))) {
+    pNames <- c("beta","theta")
+    if (useSc <- object@devcomp$dims["useSc"]) pNames <- c(pNames,"sigma")
+    if (!is.list(params) || length(setdiff(names(params),pNames))>0)
+        stop("params should be specifed as a list with elements from ",
+             "{",paste(shQuote(pNames),collapse=", "),"}")
+    if (!subset && length(s <- setdiff(pNames,names(params)))>0) {
         warning("some parameters not specified in setParams()")
     }
     nbeta <- length(object@pp$beta(1))
@@ -37,6 +38,7 @@ setParams <- function(object,params,copy=TRUE,subset=FALSE) {
     if (!is.null(theta <- params$theta) && length(theta)!=ntheta)
         stop("length mismatch in theta (",length(theta),
              "!=",ntheta,")")
+    sigma <- params$sigma
     if (copy) {
         newObj <- object
         ## make a copy of the reference class slots to
@@ -53,6 +55,10 @@ setParams <- function(object,params,copy=TRUE,subset=FALSE) {
             ## (2) in .@pp$theta
             newObj@theta <- theta
             newObj@pp$setTheta(theta)
+        }
+        if (!is.null(sigma)) {
+            snm <- if (object@devcomp$dims[["REML"]]) "sigmaREML" else "sigmaML"
+            newObj@devcomp[["cmp"]][snm] <- sigma
         }
         return(newObj)
     } else stop("modification in place (copy=FALSE) not yet implemented")
@@ -242,7 +248,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
             offset <- rowSums(object@frame[grepl("offset\\(.*\\)",
                                                  names(object@frame))])
 
-        } else {
+        } else {  ## new data specified
             ## evaluate new fixed effect
             RHS <- formula(substitute(~R,
                               list(R=RHSForm(formula(object,fixed.only=TRUE)))))
@@ -318,7 +324,8 @@ NULL
 simulate.formula <- function(object, nsim = 1, seed = NULL, family, weights=NULL, offset=NULL, ...) {
     ## N.B. *must* name all arguments so that 'object' is missing in
     ## .simulateFun
-    .simulateFun(formula=object, nsim=nsim, seed=seed, family=family, weights=weights, offset=offset, ...)
+    .simulateFun(formula=object, nsim=nsim, seed=seed,
+                 family=family, weights=weights, offset=offset, ...)
 }
 
 simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
@@ -342,10 +349,20 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                  sQuote("formula"),", ",sQuote("newdata"),", and ",
                  sQuote("newparams"))
         }
-        
+
+        if (is.null(weights)) weights <- rep(1,nrow(newdata))
         ## construct fake-fitted object from data, params
-        if (is.null(family)) {
+        ## copied from glm(): DRY; this all stems from the
+        ## original sin of handling family=gaussian as a special
+        ## case
+        if (is.character(family)) 
+            family <- get(family, mode = "function", envir = parent.frame())
+        if (is.function(family)) 
+            family <- family()
+        if (is.null(family) || family$family=="gaussian") {
             lmod <- lFormula(formula,newdata,
+                             weights=weights,
+                             offset=offset,
                              control=lmerControl(check.formula.LHS="ignore"))
             devfun <- do.call(mkLmerDevfun, lmod)
             object <- mkMerMod(environment(devfun),
@@ -434,34 +451,23 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         musim <- family$linkinv(etasim)
         ntot <- length(musim) ## FIXME: or could be dims["n"]?
         ## FIXME: is it possible to leverage family$simulate ... ???
-        val <- switch(family$family,
-                      poisson=rpois(ntot,lambda=musim),
-                      binomial={
-                          w <- weights(object)
-                          Y <- rbinom(ntot,prob=musim,size=w)
-                          resp <- model.response(object@frame)
-                          if (!is.matrix(resp)) {  ## bernoulli, or weights specified
-                              if (is.factor(resp)) {
-                                  if (any(weights(object)!=1)) stop("non-uniform weights with factor response??")
-                                  f <- factor(levels(resp)[Y+1],levels=levels(resp))
-                                  split(f, rep(seq_len(nsim), each = n))
-                              } else {
-                                  Y/w
-                              }
-                          } else {
-                              ## FIXME: should "N-size" (column 2) be named?
-                              ## copying structures from stats/R/family.R
-                              nresp <- nrow(resp)
-                              YY <- cbind(Y, w - Y)
-                              yy <- lapply(split(YY,gl(nsim,nresp,2*nsim*nresp)),
-                                           matrix, ncol=2,
-                                           dimnames=list(NULL,colnames(resp)))
-                              names(yy) <- paste("sim",seq_along(yy),sep="_")
-                              yy
-                          }
-                      },
-                      stop("simulation not implemented for family",
-                           family$family))
+        ##
+        if (is.null(sfun <- simfunList[[family$family]]) &&
+            is.null(family$simulate))
+            stop("simulation not implemented for family",
+                 family$family)
+        ## don't rely on automatic recycling
+        musim <- rep(musim,length.out=n*nsim)
+        val <- sfun(object,
+                    nsim=1,
+                    ftd=musim)
+        ## split results into nsims: need special case for binomial matrix/factor responses
+        if (family$family=="binomial" && is.matrix(r <- model.response(object@frame))) {
+            val <- lapply(split(val[[1]], gl(nsim, n, 2 * nsim * n)), matrix, 
+                          ncol = 2, dimnames = list(NULL, colnames(r)))
+        } else if (family$family=="binomial" && is.factor(val[[1]])) {
+            val <- split(val[[1]],gl(nsim,n))
+        } else val <- split(val,gl(nsim,n))
     } else {
         stop("simulate method for NLMMs not yet implemented")
     }
@@ -469,9 +475,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     if(!is.list(val)) {
         dim(val) <- c(n, nsim)
         val <- as.data.frame(val)
-    }
-    else
-        class(val) <- "data.frame"
+    }  else class(val) <- "data.frame"
     names(val) <- paste("sim", seq_len(nsim), sep="_")
     row.names(val) <- nm
     attr(val, "seed") <- RNGstate
@@ -492,7 +496,17 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 ##     parameters or new predictor variables
 ## (2) modifying wts from object$prior.weights to weights(object)
 ##
-binomial_simfun <- function(object, nsim,ftd=fitted(object)) {
+##
+## these can be incorporated by overwriting the simulate()
+## components, or calling them
+##
+gaussian_simfun <- function(object, nsim, ftd=fitted(object)) {
+    wts <- weights(object)
+    if (any(wts != 1)) warning("ignoring prior weights")
+    rnorm(nsim*length(ftd), ftd, sd=sigma(object))
+}
+
+binomial_simfun <- function(object, nsim, ftd=fitted(object)) {
     n <- length(ftd)
     ntot <- n*nsim
     wts <- weights(object)
@@ -558,3 +572,9 @@ negative.binomial_simfun <- function (object, nsim, ftd=fitted(object))
     stop("not implemented yet")
     ## val <- rnbinom(nsim * length(ftd), mu=ftd, size=.Theta)
 }
+
+simfunList <- list(gaussian=gaussian_simfun,
+                binomial=binomial_simfun,
+                poisson=poisson_simfun,
+                Gamma=Gamma_simfun,
+                negative.binomial=negative.binomial_simfun)
