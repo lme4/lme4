@@ -1622,6 +1622,14 @@ famlink <- function(object, resp = object@resp) {
     }
 }
 
+.prt.resids <- function(resids,digits,title="Scaled residuals:") {
+    cat(title,"\n")
+    nam <- c("Min", "1Q", "Median", "3Q", "Max")
+    rq <- setNames(zapsmall(quantile(resids), digits + 1L),nam)
+    print(rq,digits=digits)
+    cat("\n")
+}
+
 .prt.call <- function(call) {
     if (!is.null(cc <- call$formula))
 	cat("Formula:", deparse(cc),"\n")
@@ -1637,17 +1645,23 @@ getLlikAIC <- function(object, cmp = object@devcomp$cmp) {
 	if(isREML(object)) cmp["REML"] # *no* likelihood stats here
 	else {
 	    c(AIC = AIC(llik), BIC = BIC(llik), logLik = c(llik),
-	      deviance = deviance(object))
+	      deviance = deviance(object),
+              df.resid = df.residual(object))
 	}
     }
     list(logLik=llik, AICtab = AICstats)
 }
 
-.prt.aictab <- function(aictab, digits=4) {
+.prt.aictab <- function(aictab, digits=1) {
     t.4 <- round(aictab, digits)
     if (length(aictab) == 1 && names(aictab) == "REML")
 	cat("REML criterion at convergence:", t.4, "\n")
-    else print(t.4)
+    else {
+        ## slight hack to get residual df formatted as an integer
+        t.4F <- format(t.4)
+        t.4F["df.resid"] <- format(t.4["df.resid"])
+        print(t.4F,quote=FALSE)
+    }
 }
 
 .prt.VC <- function(varcor, digits, comp, ...) {
@@ -1669,26 +1683,27 @@ getLlikAIC <- function(object, cmp = object@devcomp$cmp) {
 ## Prints *both*  'mer' and 'merenv' - as it uses summary(x) mainly
 ##' @S3method print summary.merMod
 print.summary.merMod <- function(x, digits = max(3, getOption("digits") - 3),
-			correlation = NULL, symbolic.cor = FALSE,
-			signif.stars = getOption("show.signif.stars"),
-			ranef.comp = c("Variance", "Std.Dev."), ...)
+                                 correlation = NULL, symbolic.cor = FALSE,
+                                 signif.stars = getOption("show.signif.stars"),
+                                 ranef.comp = c("Variance", "Std.Dev."),
+                                 show.resids = TRUE, ...)
 {
     cat(sprintf("%s ['%s']\n",x$methTitle, x$objClass))
     .prt.family(x)
-    ## not for patched branch?
-    ## need residuals.merMod() rather than residuals():
-    ##  summary.merMod has no residuals method
+    .prt.call(x$call); cat("\n")
+    .prt.aictab(x$AICtab); cat("\n")
+    if (show.resids)
+        ## need residuals.merMod() rather than residuals():
+        ##  summary.merMod has no residuals method
+        .prt.resids(x$residuals,digits=digits)
     ## cat("Scaled residuals:\n")
     ## print(residuals.merMod(x,type="pearson",scaled=TRUE)),digits=digits)
-    .prt.call(x$call); cat("\n")
-    .prt.aictab(x$AICtab, 4); cat("\n")
     .prt.VC(x$varcor, digits=digits, useScale= x$useScale,
 	    comp = ranef.comp, ...)
     .prt.grps(x$ngrps, nobs= x$devcomp$dims[["n"]])
 
     p <- nrow(x$coefficients)
     if (p > 0) {
-
 	cat("\nFixed effects:\n")
 	printCoefmat(x$coefficients, zap.ind = 3, #, tst.ind = 4
 		     digits = digits, signif.stars = signif.stars)
@@ -2241,7 +2256,7 @@ summary.merMod <- function(object, ...)
 		   vcov=vcov(object, correlation=TRUE, sigm=sig),
 		   varcor=varcor, # and use formatVC(.) for printing.
 		   AICtab = llAIC[["AICtab"]], call=object@call,
-                   residuals=residuals(object,"pearson")
+                   residuals=residuals(object,"pearson",scaled=TRUE)
 		   ), class = "summary.merMod")
 }
 
@@ -2407,7 +2422,8 @@ getOptfun <- function(optimizer) {
 }
 
 optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
-                    control=list(), adj=FALSE, verbose=0L) {
+                    control=list(), adj=FALSE, ## calc.derivs=FALSE,
+                    verbose=0L) {
     ## control must be specified if adj==TRUE;
     ##  otherwise this is a fairly simple wrapper
     optfun <- getOptfun(optimizer)
@@ -2471,9 +2487,14 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
         warning(wmsg)
         curWarnings <<- append(curWarnings,list(wmsg))
     }
+    ## STUB for derivative calculation
+    ##if (calc.derivs) {
+        ## derivs <- genD(fn,opt$conv)
+    ##} else derivs <- NULL
     ## store all auxiliary information
     attr(opt,"optimizer") <- optimizer
     attr(opt,"control") <- control
     attr(opt,"warnings") <- curWarnings
+    ## attr(opt,"derivs") <- derivs
     opt
 }
