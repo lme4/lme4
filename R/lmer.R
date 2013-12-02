@@ -2302,7 +2302,8 @@ dotplot.ranef.mer <- function(x, data, ...)
     f <- function(x, ...) {
 	ss <- stack(x)
 	ss$ind <- factor(as.character(ss$ind), levels = colnames(x))
-	ss$.nn <- rep.int(reorder(factor(rownames(x)), x[[1]]), ncol(x))
+	ss$.nn <- rep.int(reorder(factor(rownames(x)), x[[1]],
+                                  FUN=mean,sort=sort), ncol(x))
 	se <- NULL
 	if (!is.null(pv <- attr(x, "postVar")))
 	    se <- unlist(lapply(1:(dim(pv)[1]), function(i) sqrt(pv[i, i, ])))
