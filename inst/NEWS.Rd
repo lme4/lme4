@@ -12,6 +12,13 @@
       rather than \code{NA} when appropriate
     }
   }
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item in a previous development version, \code{ranef} returned
+      incorrect conditional variances (github issue #148). this is 
+      now fixed
+    }
+  }
 }
 
 \section{CHANGES IN VERSION 1.0-6 (2013-10-27)}{
