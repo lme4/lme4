@@ -27,7 +27,7 @@ nloptwrap2 <- function(fn,par,lower,upper,control=list(),...) {
                   message=message))
 }
 
-##+ getData
+##+ getData,cache=TRUE
 ( load("dialectNL.rda") ) # "dialectNL
 ## str(dialectNL)
 
@@ -108,9 +108,9 @@ cat("Timing:\n")
 t(sapply(fitList, `[[`, "time")[1:3,])
 fits <- lapply(fitList, `[[`, "fit")
 ff <- sapply(fits, fixef)
-llik <- sapply(fits, logLik)
+REMLcrit <- sapply(fits, deviance)
 ff1 <- ff; rownames(ff1) <- abbreviate(rownames(ff))
-ff1 <- cbind(logLik=llik, t(ff1))[order(llik, decreasing=TRUE),]
+ff1 <- cbind(REML=REMLcrit, t(ff1))[order(REMLcrit),]
 op <- options(width=120, digits=4)
 ff1
 options(op)
@@ -131,11 +131,9 @@ fits[["nm1"]]@optinfo
 ##' * look at slices to explore the likelihood/deviance surface (will be slooow -- approx 400*7*13 evaluations for good slices)
 
 
-##+ nlopttest
+##+ nlopttest,eval=FALSE
 ## dd <- update(fits[["nm1"]],devFunOnly=TRUE)  ## FAILS (bad stuff with finding optCtrl in environments ...)
-        nloptbobyqa=list(optimizer="nloptwrap2",
-            optCtrl=nlopt("NLOPT_LN_BOBYQA")),
 dd <- lme4::lmer(fullForm,data=subdat,devFunOnly=TRUE)
 lbound <- lme4:::getME(fits[["nm1"]],"lower")
-res <- nloptr(x0=rep(1,14),eval_f=dd,lb=lbound,opts=list(algorithm="NLOPT_LN_BOBYQA",
-                                               xtol_rel=1e-6))
+res <- nloptr(x0=rep(1,14),eval_f=dd,lb=lbound,opts=nlopt("NLOPT_LN_BOBYQA"))
+

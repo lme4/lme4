@@ -187,9 +187,9 @@ hr {
  mechanism we explicitly create a wieling_batch1.RData file, so
  delete this file if you want to update the output &hellip;)</p>
 
-<pre><code class="r">pkgs &lt;- c(&quot;lme4&quot;, &quot;optimx&quot;, &quot;lme4.0&quot;, &quot;nloptr&quot;)
-invisible(lapply(pkgs, library, character.only = TRUE))
-print(sapply(pkgs, function(x) as.character(packageVersion(x))), quote = FALSE)
+<pre><code class="r">pkgs &lt;- c(&quot;lme4&quot;,&quot;optimx&quot;,&quot;lme4.0&quot;,&quot;nloptr&quot;)
+invisible(lapply(pkgs,library,character.only=TRUE))
+print(sapply(pkgs,function(x) as.character(packageVersion(x))),quote=FALSE)
 </code></pre>
 
 <pre><code>##       lme4     optimx     lme4.0     nloptr 
@@ -198,18 +198,19 @@ print(sapply(pkgs, function(x) as.character(packageVersion(x))), quote = FALSE)
 
 <p>Wrapper to make <code>nloptwrap</code> look the way <code>glmer</code> wants it to</p>
 
-<pre><code class="r">nloptwrap2 &lt;- function(fn, par, lower, upper, control = list(), ...) {
+<pre><code class="r">nloptwrap2 &lt;- function(fn,par,lower,upper,control=list(),...) {
     ## use DMB&#39;s suggested setting of xtol_rel=1e-6
-    if (is.null(control$xtol_rel)) 
-        control$xtol_rel &lt;- 1e-06
-    res &lt;- nloptr(x0 = par, eval_f = fn, lb = lower, ub = upper, opts = control, 
-        ...)
-    with(res, list(par = solution, fval = objective, conv = if (status &gt; 0) 0 else status, 
-        message = message))
+    if (is.null(control$xtol_rel)) control$xtol_rel &lt;- 1e-6
+    if (is.null(control$maxeval)) control$maxeval &lt;- 1e5
+    res &lt;- nloptr(x0=par,eval_f=fn,lb=lower,ub=upper,opts=control,...)
+    with(res,list(par=solution,
+                  fval=objective,
+                  conv=if (status&gt;0) 0 else status,
+                  message=message))
 }
 </code></pre>
 
-<pre><code class="r">(load(&quot;dialectNL.rda&quot;))  # &#39;dialectNL
+<pre><code class="r">( load(&quot;dialectNL.rda&quot;) ) # &quot;dialectNL
 </code></pre>
 
 <pre><code>## [1] &quot;dialectNL&quot;
@@ -218,8 +219,8 @@ print(sapply(pkgs, function(x) as.character(packageVersion(x))), quote = FALSE)
 <pre><code class="r">## str(dialectNL)
 
 ## Find more factors: which are integer or half-integer?
-which(isI &lt;- sapply(dialectNL, function(x) !is.factor(x) &amp;&amp; isTRUE(all.equal(2 * 
-    x, round(2 * x), tol = 1e-12))))
+which(isI &lt;- sapply(dialectNL, function(x) !is.factor(x) &amp;&amp;
+                    isTRUE(all.equal(2 * x, round(2 * x), tol=1e-12))))
 </code></pre>
 
 <pre><code>##     WordIsNounOrAdverb       SpeakerBirthYear SpeakerEmploymentLevel 
@@ -313,6 +314,11 @@ fitLme4 &lt;- function(optCtrl=list(), optimizer, data=subdat) {
     list(time=tval, fit=fit)
 }
 
+## use this rather than the nloptwrap2 control above so that
+## the control settings are recorded in the fitted object ...
+nlopt &lt;- function(algorithm,xtol_rel=1e-6,maxeval=1e5) {
+    list(algorithm=algorithm,xtol_rel=xtol_rel,maxeval=maxeval)
+}
 argList &lt;-
     list(
         nm1=list(optimizer=&quot;Nelder_Mead&quot;),
@@ -321,22 +327,22 @@ argList &lt;-
         nlminb=list(optimizer=&quot;optimx&quot;,optCtrl=list(method=&quot;nlminb&quot;)),
         lbfgsb=list(optimizer=&quot;optimx&quot;,optCtrl=list(method=&quot;L-BFGS-B&quot;)),
         ## nloptr derivative-free choices
-        ## (these seem to finish very quickly but I think are mostly way off)
-        ## use default xtol_rel=1e-4 throughout to avoid warnings
         nloptbobyqa=list(optimizer=&quot;nloptwrap2&quot;,
-        optCtrl=list(algorithm=&quot;NLOPT_LN_BOBYQA&quot;)),
+            optCtrl=nlopt(&quot;NLOPT_LN_BOBYQA&quot;)),
         nloptcobyla=list(optimizer=&quot;nloptwrap2&quot;,
-        optCtrl=list(algorithm=&quot;NLOPT_LN_COBYLA&quot;)),
+            optCtrl=nlopt(&quot;NLOPT_LN_COBYLA&quot;)),
         nloptNM=list(optimizer=&quot;nloptwrap2&quot;,
-        optCtrl=list(algorithm=&quot;NLOPT_LN_NELDERMEAD&quot;)),
+            optCtrl=nlopt(&quot;NLOPT_LN_NELDERMEAD&quot;)),
         nloptsubplex=list(optimizer=&quot;nloptwrap2&quot;,
-        optCtrl=list(algorithm=&quot;NLOPT_LN_SBPLX&quot;)))
+            optCtrl=nlopt(&quot;NLOPT_LN_SBPLX&quot;))
+        )
 </code></pre>
 
 <pre><code class="r">if (!file.exists(batchfn)) {
     fitList0 &lt;- fitLme4.0()
-    fitList1 &lt;- lapply(argList, do.call, what = fitLme4)
-    save(&quot;fitList0&quot;, &quot;fitList1&quot;, file = batchfn)
+    fitList1 &lt;- lapply(argList, do.call, what=fitLme4)
+    save(&quot;fitList0&quot;,&quot;fitList1&quot;,
+         file=batchfn)
 }
 load(batchfn)
 </code></pre>
@@ -345,33 +351,75 @@ load(batchfn)
 </code></pre>
 
 <pre><code>##              user.self sys.self elapsed
-## lme4.0          24.594    0.192  26.796
-## nm1            100.134    0.128 134.449
-## nm2            165.102    0.272 231.301
-## bobyqa1         14.057    0.036  30.655
-## nlminb          25.714    3.188  39.595
-## lbfgsb          24.629    0.024  30.714
-## nloptbobyqa      2.205    0.024   4.780
-## nloptcobyla      1.140    0.020   3.065
-## nloptNM          1.128    0.020   3.416
-## nloptsubplex     2.132    0.020   4.855
+## lme4.0           24.43    0.704   27.62
+## nm1              98.63    0.028  114.02
+## nm2             162.13    0.136  190.34
+## bobyqa1          13.14    0.124   14.02
+## nlminb           24.81    3.020   29.85
+## lbfgsb           24.72    0.000   27.99
+## nloptbobyqa      11.37    0.104   12.52
+## nloptcobyla     127.36    0.093  138.11
+## nloptNM          64.18    0.108   74.22
+## nloptsubplex    977.44    1.188 1260.29
 </code></pre>
 
-<pre><code>##                   logLik      (In)       Geo       PS._      PAA_       PAI.    WF..    WINO    WVC.
-## lme4.0            -168.8 -0.008725    1.2869   -0.01518   0.07848 -3.893e-02 0.01742 0.02257 0.06792
-## nlminb.REML       -168.8  0.046412    1.4073    0.10579   0.01121 -1.978e-03 0.01742 0.02257 0.06792
-## bobyqa1.REML      -168.8 -0.175684    1.5248   -0.41794   0.45728 -2.573e-01 0.01742 0.02256 0.06792
-## lbfgsb.REML       -168.8 -0.009024    1.2893   -0.01600   0.07973 -3.966e-02 0.01742 0.02256 0.06793
-## nm2.REML          -169.5 -8.170198 1310.6653 -104.64172 402.73605 -2.516e+02 0.01758 0.02204 0.06758
-## nm1.REML          -175.6 -0.173689    3.9399   -0.74453   1.39751 -1.100e+00 0.02278 0.05465 0.06754
-## nloptbobyqa.REML  -186.9  0.043555    0.4866    0.22202  -0.33361  2.819e-01 0.02121 0.04078 0.06365
-## nloptcobyla.REML  -199.0  0.007200    1.2667    0.07086  -0.01018  4.843e-02 0.02388 0.04884 0.06340
-## nloptNM.REML      -217.8  0.043820    1.2116    0.19096  -0.13602  1.655e-01 0.02397 0.04735 0.06162
-## nloptsubplex.REML -350.6 -0.013181    1.2871   -0.02950   0.09180 -5.746e-02 0.02278 0.04111 0.05845
+<pre><code>##                    REML      (In)       Geo       PS._      PAA_       PAI.    WF..    WINO    WVC.
+## nloptNM.REML      337.5 -0.029976    1.2408   -0.06182   0.10450 -5.323e-02 0.01742 0.02257 0.06792
+## nloptbobyqa.REML  337.5 -0.091413    0.2997   -0.14779  -0.05501  4.813e-02 0.01742 0.02257 0.06792
+## lme4.0            337.5 -0.008725    1.2869   -0.01518   0.07848 -3.893e-02 0.01742 0.02257 0.06792
+## nlminb.REML       337.5  0.046412    1.4073    0.10579   0.01121 -1.978e-03 0.01742 0.02257 0.06792
+## nloptcobyla.REML  337.5 -0.013936    1.0799   -0.01478   0.02799 -7.871e-03 0.01742 0.02257 0.06792
+## bobyqa1.REML      337.5 -0.175684    1.5248   -0.41794   0.45728 -2.573e-01 0.01742 0.02256 0.06792
+## lbfgsb.REML       337.5 -0.009024    1.2893   -0.01600   0.07973 -3.966e-02 0.01742 0.02256 0.06793
+## nloptsubplex.REML 337.6  0.021449    0.0519    0.12836  -0.33516  2.092e-01 0.01741 0.02285 0.06782
+## nm2.REML          339.0 -8.170198 1310.6653 -104.64172 402.73605 -2.516e+02 0.01758 0.02204 0.06758
+## nm1.REML          351.3 -0.173689    3.9399   -0.74453   1.39751 -1.100e+00 0.02278 0.05465 0.06754
 </code></pre>
 
-<p>Note that  &#39;bobyqa&#39; (# 3) gets the same good logLik, but 
-quite different coefficients &hellip; but then these seem not to be significant..</p>
+<h3>Notes/conclusion</h3>
+
+<ul>
+<li><code>lme4.0</code>, and <code>L-BFGS-B</code> get similar parameters and log-likelihoods</li>
+<li><code>bobyqa1</code> (via <code>minqa</code>/built-in) and <code>nlminb</code> get similar log-likelihoods, but different parameters</li>
+<li><code>nm2</code> (built-in Nelder-Mead with <code>maxfun</code> extended to 1e5) gets slightly worse logLik and bogus parameters</li>
+<li><code>nm1</code> (built-in Nelder-Mead with default <code>maxfun=1e4</code>) gets stuck, bad LL and parameters; we get a convergence warning, but I think there&#39;s a glitch somewhere because the <code>@optinfo$conv</code> flag isn&#39;t set??</li>
+</ul>
+
+<pre><code class="r">fits[[&quot;nm1&quot;]]@optinfo
+</code></pre>
+
+<pre><code>## $optimizer
+## [1] &quot;Nelder_Mead&quot;
+## 
+## $control
+## $control$verbose
+## [1] 0
+## 
+## 
+## $conv
+## [1] 0
+## 
+## $feval
+## [1] 10001
+## 
+## $warnings
+## $warnings[[1]]
+## [1] &quot;failure to converge in 10000 evaluations&quot;
+</code></pre>
+
+<h3>To do</h3>
+
+<ul>
+<li>could make caching more flexible (re-run individual models rather than all or nothing)</li>
+<li>make sure number of evals is saved in output, show results for all models</li>
+<li>look at slices to explore the likelihood/deviance surface (will be slooow &ndash; approx 400*7*13 evaluations for good slices)</li>
+</ul>
+
+<pre><code class="r">## dd &lt;- update(fits[[&quot;nm1&quot;]],devFunOnly=TRUE)  ## FAILS (bad stuff with finding optCtrl in environments ...)
+dd &lt;- lme4::lmer(fullForm,data=subdat,devFunOnly=TRUE)
+lbound &lt;- lme4:::getME(fits[[&quot;nm1&quot;]],&quot;lower&quot;)
+res &lt;- nloptr(x0=rep(1,14),eval_f=dd,lb=lbound,opts=nlopt(&quot;NLOPT_LN_BOBYQA&quot;))
+</code></pre>
 
 </body>
 
