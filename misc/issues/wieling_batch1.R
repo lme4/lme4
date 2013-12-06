@@ -1,10 +1,25 @@
-library(lme4)
-library(optimx)
-library(lme4.0)
-library(nloptr)
+##' ## Wieling test case
 
-## wrapper to make nloptwrap look the way glmer wants it to
-nloptwrap2 <- function(fn,par,lower,upper,control,...) {
+##+ opts,echo=FALSE
+batchfn <- "wieling_batch1.RData"
+if (require(knitr)) opts_chunk$set(tidy=FALSE)
+
+##' (This R code can be run via `R CMD BATCH` or alternately via knitr::spin
+##'  to create nicely formatted output.  Rather than use knitr's caching
+##'  mechanism we explicitly create a `r batchfn` file, so
+##'  delete this file if you want to update the output ...)
+
+##+ pkgs,message=FALSE,warning=FALSE
+pkgs <- c("lme4","optimx","lme4.0","nloptr")
+invisible(lapply(pkgs,library,character.only=TRUE))
+print(sapply(pkgs,function(x) as.character(packageVersion(x))),quote=FALSE)
+
+##' Wrapper to make `nloptwrap` look the way `glmer` wants it to
+##+ nloptwrapper
+nloptwrap2 <- function(fn,par,lower,upper,control=list(),...) {
+    ## use DMB's suggested setting of xtol_rel=1e-6
+    if (is.null(control$xtol_rel)) control$xtol_rel <- 1e-6
+    if (is.null(control$maxeval)) control$maxeval <- 1e5
     res <- nloptr(x0=par,eval_f=fn,lb=lower,ub=upper,opts=control,...)
     with(res,list(par=solution,
                   fval=objective,
@@ -12,13 +27,15 @@ nloptwrap2 <- function(fn,par,lower,upper,control,...) {
                   message=message))
 }
 
+##+ getData
 ( load("dialectNL.rda") ) # "dialectNL
-str(dialectNL)
+## str(dialectNL)
+
 ## Find more factors: which are integer or half-integer?
 which(isI <- sapply(dialectNL, function(x) !is.factor(x) &&
                     isTRUE(all.equal(2 * x, round(2 * x), tol=1e-12))))
-## five of them
-## whereas this one, interestingly has quite interesting values:
+##' Five of them (this one has quite interesting values ...)
+##+ speakerIsMale
 with(dialectNL, table(SpeakerIsMale))
 ## SpeakerIsMale
 ##      0   0.33    0.5   0.75      1 
@@ -47,14 +64,17 @@ fitLme4.0 <- function(data=subdat) {
     list(time=tval, fit=fit)
 }
 
-fitList0 <- fitLme4.0()
-
 fitLme4 <- function(optCtrl=list(), optimizer, data=subdat) {
     tval <- system.time(fit <- lme4::lmer(fullForm,data=data,
           control=lmerControl(optimizer=optimizer, optCtrl=optCtrl)))
     list(time=tval, fit=fit)
 }
 
+## use this rather than the nloptwrap2 control above so that
+## the control settings are recorded in the fitted object ...
+nlopt <- function(algorithm,xtol_rel=1e-6,maxeval=1e5) {
+    list(algorithm=algorithm,xtol_rel=xtol_rel,maxeval=maxeval)
+}
 argList <-
     list(
         nm1=list(optimizer="Nelder_Mead"),
@@ -63,48 +83,59 @@ argList <-
         nlminb=list(optimizer="optimx",optCtrl=list(method="nlminb")),
         lbfgsb=list(optimizer="optimx",optCtrl=list(method="L-BFGS-B")),
         ## nloptr derivative-free choices
-        ## (these seem to finish very quickly but I think are mostly way off)
-        ## use default xtol_rel=1e-4 throughout to avoid warnings
         nloptbobyqa=list(optimizer="nloptwrap2",
-        optCtrl=list(algorithm="NLOPT_LN_BOBYQA",xtol_rel=1e-4)),
+            optCtrl=nlopt("NLOPT_LN_BOBYQA")),
         nloptcobyla=list(optimizer="nloptwrap2",
-        optCtrl=list(algorithm="NLOPT_LN_COBYLA",xtol_rel=1e-4)),
+            optCtrl=nlopt("NLOPT_LN_COBYLA")),
         nloptNM=list(optimizer="nloptwrap2",
-        optCtrl=list(algorithm="NLOPT_LN_NELDERMEAD",xtol_rel=1e-4)),
+            optCtrl=nlopt("NLOPT_LN_NELDERMEAD")),
         nloptsubplex=list(optimizer="nloptwrap2",
-        optCtrl=list(algorithm="NLOPT_LN_SBPLX",xtol_rel=1e-4)))
+            optCtrl=nlopt("NLOPT_LN_SBPLX"))
+        )
 
-if(FALSE){ ## The only reason to use plyr is the .progress option, 
-           ## but that's very inaccurate  
-    library(plyr)
-    fitList1 <- llply(argList,
-                      function(L) do.call(fitLme4,L),.progress="text")
-} else
-fitList1 <- lapply(argList, do.call, what=fitLme4)
-save("fitList0","fitList1",
-     file="wieling_batch1.RData")
+##+ fitAll
+if (!file.exists(batchfn)) {
+    fitList0 <- fitLme4.0()
+    fitList1 <- lapply(argList, do.call, what=fitLme4)
+    save("fitList0","fitList1",
+         file=batchfn)
+}
+load(batchfn)
 
+##+ output,echo=FALSE
 fitList <- c(lme4.0 = list(fitList0), fitList1)
 cat("Timing:\n")
-t(sapply(fitList, `[[`, 1)[1:3,])
-fits <- lapply(fitList, `[[`, 2)
-str(fits, max=1)
+t(sapply(fitList, `[[`, "time")[1:3,])
+fits <- lapply(fitList, `[[`, "fit")
 ff <- sapply(fits, fixef)
 llik <- sapply(fits, logLik)
 ff1 <- ff; rownames(ff1) <- abbreviate(rownames(ff))
 ff1 <- cbind(logLik=llik, t(ff1))[order(llik, decreasing=TRUE),]
-op <- options(width=99, digits=4); ff1 ;  options(op)
-##                   logLik      (In)     Geo     PS._     PAA_     PAI.    WF..    WINO    WVC.
-## lme4.0            -168.8 -0.009019  1.2892 -0.01601  0.07971 -0.03966 0.01742 0.02257 0.06792
-## nlminb.REML       -168.8 -0.008997  1.2555 -0.01391  0.06986 -0.03367 0.01742 0.02257 0.06792
-## bobyqa1.REML      -168.8  0.075895 -0.2183  0.27273 -0.51582  0.31628 0.01742 0.02257 0.06792
-## lbfgsb.REML       -168.8 -0.009024  1.2893 -0.01600  0.07973 -0.03966 0.01742 0.02256 0.06793
-## nm2.REML          -175.6 -0.586885  9.7266 -2.66368  4.58369 -3.74450 0.02264 0.05388 0.06744
-## nm1.REML          -175.6 -0.578448  9.7740 -2.62885  4.56213 -3.71126 0.02254 0.05400 0.06745
-## nloptsubplex.REML -201.2 -0.006643  1.3084 -0.01446  0.07952 -0.04440 0.02049 0.03881 0.06168
-## nloptcobyla.REML  -204.4 -0.002736  1.2456  0.03927  0.01427  0.02277 0.02373 0.05002 0.06419
-## nloptNM.REML      -217.8  0.052678  1.2023  0.22124 -0.16660  0.19470 0.02397 0.04735 0.06162
-## nloptbobyqa.REML    -Inf  0.013847  0.8769  0.11600 -0.14256  0.14017 0.02163 0.04853 0.06347
+op <- options(width=120, digits=4)
+ff1
+options(op)
+## see .md or .html files for output ...
 
-## Note that  'bobyqa' (# 3) gets the same good logLik, but 
-## quite different coefficients ... but then these seem not to be significant..
+##' ### Notes/conclusion
+##'
+##' * `lme4.0`, and `L-BFGS-B` get similar parameters and log-likelihoods
+##' * `bobyqa1` (via `minqa`/built-in) and `nlminb` get similar log-likelihoods, but different parameters
+##' * `nm2` (built-in Nelder-Mead with `maxfun` extended to 1e5) gets slightly worse logLik and bogus parameters
+##' * `nm1` (built-in Nelder-Mead with default `maxfun=1e4`) gets stuck, bad LL and parameters; we get a convergence warning, but I think there's a glitch somewhere because the `@optinfo$conv` flag isn't set??
+fits[["nm1"]]@optinfo
+
+
+##' ### To do
+##' * could make caching more flexible (re-run individual models rather than all or nothing)
+##' * make sure number of evals is saved in output, show results for all models
+##' * look at slices to explore the likelihood/deviance surface (will be slooow -- approx 400*7*13 evaluations for good slices)
+
+
+##+ nlopttest
+## dd <- update(fits[["nm1"]],devFunOnly=TRUE)  ## FAILS (bad stuff with finding optCtrl in environments ...)
+        nloptbobyqa=list(optimizer="nloptwrap2",
+            optCtrl=nlopt("NLOPT_LN_BOBYQA")),
+dd <- lme4::lmer(fullForm,data=subdat,devFunOnly=TRUE)
+lbound <- lme4:::getME(fits[["nm1"]],"lower")
+res <- nloptr(x0=rep(1,14),eval_f=dd,lb=lbound,opts=list(algorithm="NLOPT_LN_BOBYQA",
+                                               xtol_rel=1e-6))
