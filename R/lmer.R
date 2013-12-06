@@ -637,7 +637,8 @@ anovaLmer <- function(object, ..., model.names=NULL) {
     mCall <- match.call(expand.dots = TRUE)
     dots <- list(...)
     .sapply <- function(L, FUN, ...) unlist(lapply(L, FUN, ...))
-    modp <- as.logical(.sapply(dots, is, "merMod")) | as.logical(.sapply(dots, is, "lm"))
+    modp <- (as.logical(.sapply(dots, is, "merMod")) |
+             as.logical(.sapply(dots, is, "lm")))
     if (any(modp)) {			# multiple models - form table
 	opts <- dots[!modp]
 	mods <- c(list(object), dots[modp])
@@ -667,8 +668,7 @@ anovaLmer <- function(object, ..., model.names=NULL) {
             stop("model names vector and model list have different lengths")
 	names(mods) <- sub("@env$", '', mNms) # <- hack
 	mods <- lapply(mods, refitML)
-
-	devs <- sapply(mods, deviance)
+	## devs <- sapply(mods, deviance)
 	llks <- lapply(mods, logLik)
 	ii <- order(Df <- .sapply(llks, attr, "df"))
 	mods <- mods[ii]
@@ -699,12 +699,11 @@ anovaLmer <- function(object, ..., model.names=NULL) {
 			  "Pr(>Chisq)" = pchisq(chisq, dfChisq, lower.tail = FALSE),
 			  row.names = names(mods), check.names = FALSE)
 	class(val) <- c("anova", class(val))
+	forms <- lapply(lapply(calls, `[[`, "formula"), deparse)
 	attr(val, "heading") <-
 	    c(header, "Models:",
-	      paste(rep(names(mods), times = unlist(lapply(lapply(lapply(calls,
-				     "[[", "formula"), deparse), length))),
-		    unlist(lapply(lapply(calls, "[[", "formula"), deparse)),
-		    sep = ": "))
+	      paste(rep(names(mods), times = vapply(forms, length, 1)),
+		    unlist(forms), sep = ": "))
 	return(val)
     }
     else { ## ------ single model ---------------------
@@ -2451,7 +2450,7 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
                    if (is.null(control$xt)) control$xt <- control$xst*5e-4
                })
     if (optimizer=="Nelder_Mead") control$verbose <- verbose
-    if (optimizer=="bobyqa" && all(par==0)) par[] <- 0.001  ## minor kluge
+    if (optimizer=="bobyqa" && all(par==0)) par[] <- 0.001  ## minor kludge
     arglist <- list(fn=fn, par=par, lower=lower, upper=upper, control=control)
     ## optimx: must pass method in control (?) because 'method' was previously
     ## used in lme4 to specify REML vs ML
