@@ -443,3 +443,39 @@ plot.summary.mer <- function(object, type="fixef", ...) {
 
 }
 
+## TO DO: add idLabels machinery (test/document)
+## TO DO: allow faceting formula
+## TO DO: allow qqline to be optional
+## TO DO (harder): steal machinery from qq.gam for better GLMM Q-Q plots
+qqmath.merMod <- function(x, data, id=NULL, idLabels=NULL, ...) {
+    ## if (!is.null(id) || !is.null(idLabels))
+    ##  stop("id and idLabels options not yet implemented")
+    values <- residuals(x)
+    if (is.null(idLabels)) {
+        idLabels <- getIDLabels(x)
+    } else {
+        if (inherits(idLabels,"formula")) {
+            idLabels <- getIDLabels(x,idLabels)
+        } else if (is.vector(idLabels)) {
+            if (length(idLabels <- unlist(idLabels)) != length(id)) {
+                stop("\"idLabels\" of incorrect length")
+            }
+        } else stop("\"idLabels\" can only be a formula or a vector")
+    }
+    ## DON'T subscript by id, will be done later
+    idLabels <- as.character(idLabels)
+
+    qqmath(values, xlab = "Standard normal quantiles",
+           prepanel = prepanel.qqmathline,
+           panel = function(x, subscripts, ...) {
+               panel.qqmathline(x, ...)
+               panel.qqmath(x, ...)
+               ## TO DO: figure out subscripts, x-values ...
+               ## if (any(ids <- id[subscripts])){
+               ##     ltext(x[ids], y[ids], idLabels[subscripts][ids],
+               ##           cex = dots$cex, adj = dots$adj)
+               ## }
+           })
+}
+
+## qqmath(~residuals(gm1)|cbpp$herd)
