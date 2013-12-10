@@ -26,7 +26,7 @@
         where appropriate);}
       \item{(3)}{fixed effect (beta) parameters.}
     }
-    
+
     In addition, \code{which} may be a character, containing
     \code{"beta_"} or \code{"theta_"} which means the fixed and random
     effects parameters, respectively, or also containing parameter
@@ -105,9 +105,8 @@ if(doMore) { ## not typically, for time constraint reasons
  print( xyplot(pr4,layout=c(5,1),as.table=TRUE) )
  print( splom(pr4) )
  print( system.time( # quicker: only sig01 and one fixed effect
-     pr2 <- profile(gm1, which=c("theta_", "period2"))
-     print( confint(pr2) )
- )) 
+     pr2 <- profile(gm1, which=c("theta_", "period2"))))
+ print( confint(pr2) )
 }
 }
 \keyword{methods}
