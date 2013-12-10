@@ -70,15 +70,19 @@ if(testLevel > 2) {
     }
 }  ## testLevel > 2
 
-## NOT RUN:  ~ 4 theta-variables, 19 seconds
-fm3ML <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, REML=FALSE)
 if (testLevel > 3) {
-    system.time(pr3 <- profile(fm3ML))
-    xyplot(pr3)
+    fm3ML <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, REML=FALSE)
+    ## ~ 4 theta-variables (+ 2 fixed), 19 seconds :
+    print(system.time(pr3 <- profile(fm3ML)))
+    print(xyplot(pr3)) 
     print(splom(pr3))
 
-    data("Contraception",package="mlmRev")
-    fm2 <- glmer(use ~ urban+age+livch+(urban|district), Contraception, binomial)
-    pr5 <- profile(fm2,verbose=10)
-    xyplot(pr5)
+    if (testLevel > 4) {
+        ## takes much longer
+        data("Contraception", package="mlmRev")
+        fm2 <- glmer(use ~ urban+age+livch+(urban|district), Contraception, binomial)
+        print(system.time(pr5 <- profile(fm2,verbose=10)))
+        print(xyplot(pr5))
+    }  ## testLevel > 4
+
 }  ## testLevel > 3

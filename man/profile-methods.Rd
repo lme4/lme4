@@ -18,18 +18,20 @@
     to profile: default is all parameters.  For integer, i.e., indexing,
     the parameters are ordered as follows:
     \describe{
-      \item{(1)}{random effects (theta) parameters;}
+      \item{(1)}{random effects (theta) parameters; these are ordered as
+	in \code{getME(.,"theta")}, i.e., as the lower triangle of a
+	matrix with standard deviations on the diagonal and correlations
+	off the diagonal.}
       \item{(2)}{residual standard deviation (or scale parameter for GLMMs
         where appropriate);}
-      \item{(3)}{fixed effect parameters.  Random effects parameters are
-	ordered as in \code{getME(.,"theta")}, i.e., as the lower
-	triangle of a matrix with standard deviations on the diagonal
-	and correlations off the diagonal.}
+      \item{(3)}{fixed effect (beta) parameters.}
     }
+    
     In addition, \code{which} may be a character, containing
     \code{"beta_"} or \code{"theta_"} which means the fixed and random
-    effects (\dQuote{}) parameters, respectively.
-  }%% FIXME: allow parameter names
+    effects parameters, respectively, or also containing parameter
+    names, such as \code{".sigma"} or \code{"(Intercept)"}.
+  }
   \item{alphamax}{a number in \eqn{(0,1)}, such that \code{1 - alphamax}
     is the maximum alpha value for likelihood ratio confidence
     regions; used to establish the range of values to be profiled.}
@@ -91,16 +93,21 @@ require(lattice)
 xyplot(tpr)
 densityplot(tpr, main="densityplot( profile(lmer(..)) )")
 splom(tpr)
-\donttest{% for time constraint
-## Batch and residual variance only
-system.time(tpr2 <- profile(fm01ML, which=1:2, optimizer="Nelder_Mead"))
-## GLMM example (running time ~11 seconds on a modern machine)
-gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-            data = cbpp, family = binomial)
-system.time(pr4 <- profile(gm1))
-xyplot(pr4,layout=c(5,1),as.table=TRUE)
-splom(pr4)
-}%donttest
+doMore <- lme4:::testLevel() > 1
+if(doMore) { ## not typically, for time constraint reasons
+ ## Batch and residual variance only
+ system.time(tpr2 <- profile(fm01ML, which=1:2, optimizer="Nelder_Mead"))
+ ## GLMM example
+ gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+	     data = cbpp, family = binomial)
+ ## running time ~9 seconds on a modern machine:
+ print( system.time(pr4 <- profile(gm1)) )
+ print( xyplot(pr4,layout=c(5,1),as.table=TRUE) )
+ print( splom(pr4) )
+ print( system.time( # quicker: only sig01 and one fixed effect
+     pr2 <- profile(gm1, which=c("theta_", "period2"))
+     print( confint(pr2) )
+ )) 
+}
 }
 \keyword{methods}
-

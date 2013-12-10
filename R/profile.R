@@ -90,17 +90,25 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
     opt <- attr(dd, "optimum")
     nptot <- length(opt)
     nvp <- nptot - p    # number of variance-covariance pars
-    wh.vp <- seq_len(nvp)
-    if(nvp > 0) fe.orig <- opt[- wh.vp]
+    wi.vp <- seq_len(nvp)
+    if(nvp > 0) fe.orig <- opt[- wi.vp]
 
     if(is.character(which)) {
-        wh <- integer()
-        if(any(which == "theta_")) wh <- wh.vp
-        if(any(which == "beta_") && p > 0) wh <- c(wh, seq(nvp+1, nptot))
+	wi <- integer(); wh <- which
+	if(any(j <- wh == "theta_")) {
+	    wi <- wi.vp; wh <- wh[!j] }
+	if(any(j <- wh == "beta_") && p > 0) {
+	    wi <- c(wi, seq(nvp+1, nptot)); wh <- wh[!j] }
+	if(any(j <- names(opt) %in% wh)) { ## which containing param.names
+	    wi <- sort(unique(c(wi, seq_len(nptot)[j])))
+	}
 	if(verbose) message(gettextf("From original which = %s: new which <- %s",
-				     deparse(which, nlines=1), deparse(wh, nlines=1)),
+				     deparse(which, nlines=1), deparse(wi, nlines=1)),
 			    domain=NA)
-        which <- wh
+	if(length(wi) == 0)
+	    warning(gettextf("Nothing selected by 'which=%s'", deparse(which)),
+		    domain=NA)
+        which <- wi
     } # else stopifnot( .. numeric ..) 
 
     ans <- lapply(opt[which], function(el) NULL)
