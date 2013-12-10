@@ -1,4 +1,3 @@
-rm(list = ls())
 set.seed(1)
 nGroups <- 100
 nObs <- 1000
@@ -31,20 +30,20 @@ w <- 1/v
 
 library("nlme")
 lmeMods <- list(
-    ML1 = lme(y ~ x, random = ~ 1|g, weights = varFixed(~v), method = "ML"),
+    ML1   = lme(y ~ x, random = ~ 1|g, weights = varFixed(~v), method = "ML"),
     REML1 = lme(y ~ x, random = ~ 1|g, weights = varFixed(~v), method = "REML"),
-    ML2 = lme(y ~ x, random = ~ x|g, weights = varFixed(~v), method = "ML"),
+    ML2   = lme(y ~ x, random = ~ x|g, weights = varFixed(~v), method = "ML"),
     REML2 = lme(y ~ x, random = ~ x|g, weights = varFixed(~v), method = "REML"),
-    ML1 = lme(y ~ x+z, random = ~ x+z|g, weights = varFixed(~v), method = "ML"),
+    ML1   = lme(y ~ x+z, random = ~ x+z|g, weights = varFixed(~v), method = "ML"),
     REML2 = lme(y ~ x+z, random = ~ x+z|g, weights = varFixed(~v), method = "REML"))
 
 library("lme4")
 lmerMods <- list(
-    ML1 = lmer(y ~ x + (1|g), weights = w, REML = FALSE),
-    REML1 = lmer(y ~ x + (1|g), weights = w, REML = TRUE),
-    ML2 = lmer(y ~ x + (x|g), weights = w, REML = FALSE),
-    REML2 = lmer(y ~ x + (x|g), weights = w, REML = TRUE),
-    ML3 = lmer(y ~ x + z + (x+z|g), weights = w, REML = FALSE),
+    ML1 =   lmer(y ~ x +  (1|g),      weights = w, REML = FALSE),
+    REML1 = lmer(y ~ x +  (1|g),      weights = w, REML = TRUE),
+    ML2 =   lmer(y ~ x +  (x|g),      weights = w, REML = FALSE),
+    REML2 = lmer(y ~ x +  (x|g),      weights = w, REML = TRUE),
+    ML3 =   lmer(y ~ x + z + (x+z|g), weights = w, REML = FALSE),
     REML3 = lmer(y ~ x + z + (x+z|g), weights = w, REML = TRUE))
 
 compFunc <- function(lmeMod, lmerMod, tol = 1e-2){
@@ -60,28 +59,41 @@ compFunc <- function(lmeMod, lmerMod, tol = 1e-2){
 }
 comp <- mapply(compFunc, lmeMods, lmerMods, SIMPLIFY=FALSE)
 stopifnot(all(sapply(comp, do.call, what = all.equal)))
-
+## Look at the relative differences:
+sapply(mapply(compFunc, lmeMods, lmerMods, SIMPLIFY=FALSE, tol = 0),
+       do.call, what = all.equal)
 
 
 ## library("lme4")
 
-## set.seed(2)
-## n <- 40
-## w <- runif(n)
-## x <- runif(n)
-## g <- factor(sample(1:10,n,replace=TRUE))
-## Z <- model.matrix(~g-1);
-## y <- Z%*%rnorm(ncol(Z)) + x + rnorm(n)/w^.5
-## m <- lmer(y~x+(1|g),weights=w, REML = TRUE)
+set.seed(2)
+n <- 40
+w <- runif(n)
+x <- runif(n)
+g <- factor(sample(1:10,n,replace=TRUE))
+Z <- model.matrix(~g-1);
+y <- Z%*%rnorm(ncol(Z)) + x + rnorm(n)/w^.5
+m <- lmer(y ~ x + (1|g), weights=w, REML = TRUE)
 
-## fixef_lme4.0 <- c(-0.730654, 2.028954)
-## stopifnot(all.equal(unname(fixef(m)), fixef_lme4.0, tol = 10^-3))
+if(require("lme4.0")) {
+    m.0 <- lme4.0::lmer(y ~ x + (1|g), weights=w, REML = TRUE)
+    dput(fixef(m.0)) # c(-0.73065400610675, 2.02895402562926)
+    dput(sigma(m.0)) # 1.73614301673377
+    dput(VarCorr(m.0)$g[1,1]) # 2.35670451590395
+    dput(unname(coef(summary(m.0))[,"Std. Error"]))
+    ## c(0.95070076853232, 1.37650858268602)
+}
+fixef_lme4.0 <- c(-0.7306540061, 2.0289540256)
+sigma_lme4.0 <- 1.7361430
+Sigma_lme4.0 <- 2.3567045
+SE_lme4.0 <- c(0.95070077, 1.37650858)
+try(detach("package:lme4.0"))
 
-## sigma_lme4.0 <- 1.736143
-## stopifnot(all.equal(sigma(m), sigma_lme4.0, tol = 10^-3))
+stopifnot(all.equal(unname(fixef(m)), fixef_lme4.0, tol = 1e-3))
+          all.equal(unname(fixef(m)), fixef_lme4.0, tol = 0) #-> 1.657e-5
 
-## Sigma_lme4.0 <- 2.356705
-## stopifnot(all.equal(as.vector(VarCorr(m)$g), Sigma_lme4.0, tol = 10^-3))
-
-## SE_lme4.0 <- c(0.9507008, 1.3765086)
-## stopifnot(all.equal(as.vector(summary(m)$coefficients[,2]), SE_lme4.0, tol = 10^-3))
+## but these are not at all equal :
+(all.equal(sigma(m),                		sigma_lme4.0, tol = 10^-3)) # 0.4276
+(all.equal(as.vector(VarCorr(m)$g), 		Sigma_lme4.0, tol = 10^-3)) # 1.038
+(all.equal(as.vector(summary(m)$coefficients[,2]), SE_lme4.0, tol = 10^-3)) # 0.4276
+## so, lme4.0 was clearly wrong here
