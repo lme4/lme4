@@ -36,6 +36,12 @@
 }
 \usage{
 \S3method{vcov}{merMod}(object, correlation = TRUE, sigm = sigma(object), \dots)
+\S3method{summary}{merMod}(object, \dots)
+\S3method{print}{summary.merMod}(x, digits = max(3, getOption("digits") - 3),
+                                 correlation = NULL, symbolic.cor = FALSE,
+                                 signif.stars = getOption("show.signif.stars"),
+                                 ranef.comp = c("Variance", "Std.Dev."),
+                                 show.resids = TRUE, ...)
 }
 \arguments{
   \item{object}{an \R object of class \code{\linkS4class{merMod}}, i.e.,
@@ -44,6 +50,16 @@
     desired in addition to the variance covariance one.}
   \item{sigm}{the residual standard error; by default
     \code{\link{sigma}(object)}.}
+  \item{x}{An \R object of class \code{summary.merMod}, i.e., as resulting
+    from \code{summary.merMod}.}
+  \item{digits}{Number of significant digits for printing}
+  \item{correlation}{Should the fixed-effects correlation matrix be printed?}
+  \item{symbolic.cor}{Should a symbolic encoding of the fixed-effects correlation
+    matrix be printed? If so, the \code{\link{symnum}} function is used}
+  \item{signif.stars}{Should significance stars be used?}
+  \item{ranef.comp}{Report random-effects parameters on the variance 
+    and/or standard deviation scale}
+  \item{show.resids}{Should the quantiles of the scaled residuals be printed?}
   \item{\dots}{potentially further arguments pass from other methods.}
 }
 \section{Objects from the Class}{
