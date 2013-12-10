@@ -621,7 +621,8 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc) {
     }
     weights <- resp$weights
     beta    <- pp$beta(fac)
-    sigmaML <- pwrss/sum(weights)
+    #sigmaML <- pwrss/sum(weights)
+    sigmaML <- pwrss/n
     if (rcl != "lmerResp") {
         pars <- opt$par
         if (length(pars) > length(pp$theta)) beta <- pars[-(seq_along(pp$theta))]
