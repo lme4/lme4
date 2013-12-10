@@ -23,6 +23,7 @@ nloptwrap2 <- function(fn,par,lower,upper,control=list(),...) {
     res <- nloptr(x0=par,eval_f=fn,lb=lower,ub=upper,opts=control,...)
     with(res,list(par=solution,
                   fval=objective,
+                  feval=iterations,
                   conv=if (status>0) 0 else status,
                   message=message))
 }
@@ -37,9 +38,6 @@ which(isI <- sapply(dialectNL, function(x) !is.factor(x) &&
 ##' Five of them (this one has quite interesting values ...)
 ##+ speakerIsMale
 with(dialectNL, table(SpeakerIsMale))
-## SpeakerIsMale
-##      0   0.33    0.5   0.75      1 
-##  60708    555   3243    513 150082 
 
 dialectNL[isI] <- lapply(dialectNL[isI], as.factor)
 str(dialectNL)
@@ -102,15 +100,26 @@ if (!file.exists(batchfn)) {
 }
 load(batchfn)
 
-##+ output,echo=FALSE
+##+ calcOutput,echo=FALSE
 fitList <- c(lme4.0 = list(fitList0), fitList1)
-cat("Timing:\n")
-t(sapply(fitList, `[[`, "time")[1:3,])
+tinfo <- function(x) {
+    times <- c(x[["time"]][1:3])
+    evals <- if (!is(f <- x[["fit"]],"merMod")) NA else f@optinfo$feval
+    c(times,nevals=evals)
+}
+ttab <- t(sapply(fitList,tinfo))
 fits <- lapply(fitList, `[[`, "fit")
 ff <- sapply(fits, fixef)
 REMLcrit <- sapply(fits, deviance)
 ff1 <- ff; rownames(ff1) <- abbreviate(rownames(ff))
-ff1 <- cbind(REML=REMLcrit, t(ff1))[order(REMLcrit),]
+ff1 <- cbind(REML=REMLcrit, t(ff1))
+rownames(ff1) <- colnames(ff)
+ff1 <- ff1[order(REMLcrit),]
+ttab <- ttab[order(REMLcrit),]
+
+##+ output, echo=FALSE
+cat("Timing:\n")
+ttab
 op <- options(width=120, digits=4)
 ff1
 options(op)
@@ -118,8 +127,8 @@ options(op)
 
 ##' ### Notes/conclusion
 ##'
-##' * `lme4.0`, and `L-BFGS-B` get similar parameters and log-likelihoods
-##' * `bobyqa1` (via `minqa`/built-in) and `nlminb` get similar log-likelihoods, but different parameters
+##' * `lme4.0`, and `L-BFGS-B` get similar parameters and log-likelihoods (probably because they're both derivative-based, although `nlminb` is different
+##' * most of the `nloptr` optimizers do OK with deviance (although `COBYLA` does relatively poorly), but the parameters are all over the place (very flat surface ...)
 ##' * `nm2` (built-in Nelder-Mead with `maxfun` extended to 1e5) gets slightly worse logLik and bogus parameters
 ##' * `nm1` (built-in Nelder-Mead with default `maxfun=1e4`) gets stuck, bad LL and parameters; we get a convergence warning, but I think there's a glitch somewhere because the `@optinfo$conv` flag isn't set??
 fits[["nm1"]]@optinfo
@@ -127,9 +136,8 @@ fits[["nm1"]]@optinfo
 
 ##' ### To do
 ##' * could make caching more flexible (re-run individual models rather than all or nothing)
-##' * make sure number of evals is saved in output, show results for all models
 ##' * look at slices to explore the likelihood/deviance surface (will be slooow -- approx 400*7*13 evaluations for good slices)
-
+##' * start scaling up: compare timings 
 
 ##+ nlopttest,eval=FALSE
 ## dd <- update(fits[["nm1"]],devFunOnly=TRUE)  ## FAILS (bad stuff with finding optCtrl in environments ...)
@@ -137,3 +145,4 @@ dd <- lme4::lmer(fullForm,data=subdat,devFunOnly=TRUE)
 lbound <- lme4:::getME(fits[["nm1"]],"lower")
 res <- nloptr(x0=rep(1,14),eval_f=dd,lb=lbound,opts=nlopt("NLOPT_LN_BOBYQA"))
 
+load("wieling_batch2.RData")
