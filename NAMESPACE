@@ -15,14 +15,13 @@ importFrom("grid", gpar,viewport)
 importFrom("lattice",
            bwplot,
            current.panel.limits,
-           densityplot,dotplot,
+           densityplot, dotplot,
            histogram,
            llines,lpoints,lsegments,ltext,
            panel.abline,panel.axis,panel.bwplot,panel.grid,panel.histogram,
-           panel.lines,panel.number,panel.segments,panel.xyplot,
-           qqmath,splom,
-           strip.default,
-           trellis.par.get,
+           panel.lines, panel.number, panel.segments, panel.xyplot,
+           prepanel.qqmathline, panel.qqmathline, panel.qqmath, qqmath,
+           splom, strip.default, trellis.par.get,
            xyplot)
 importFrom("MASS", negative.binomial, theta.ml)
 importFrom("Matrix", drop0, rankMatrix, rBind, sparseMatrix)
