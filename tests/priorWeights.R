@@ -75,19 +75,20 @@ Z <- model.matrix(~g-1);
 y <- Z%*%rnorm(ncol(Z)) + x + rnorm(n)/w^.5
 m <- lmer(y ~ x + (1|g), weights=w, REML = TRUE)
 
-if(has4.0 <- require("lme4.0")) {
-    m.0 <- lme4.0::lmer(y ~ x + (1|g), weights=w, REML = TRUE)
-    dput(fixef(m.0)) # c(-0.73065400610675, 2.02895402562926)
-    dput(sigma(m.0)) # 1.73614301673377
-    dput(VarCorr(m.0)$g[1,1]) # 2.35670451590395
-    dput(unname(coef(summary(m.0))[,"Std. Error"]))
-    ## c(0.95070076853232, 1.37650858268602)
-}
+## CRAN policy does not allow this to be active:
+## if(has4.0 <- require("lme4.0")) {
+##     m.0 <- lme4.0::lmer(y ~ x + (1|g), weights=w, REML = TRUE)
+##     dput(fixef(m.0)) # c(-0.73065400610675, 2.02895402562926)
+##     dput(sigma(m.0)) # 1.73614301673377
+##     dput(VarCorr(m.0)$g[1,1]) # 2.35670451590395
+##     dput(unname(coef(summary(m.0))[,"Std. Error"]))
+##     ## c(0.95070076853232, 1.37650858268602)
+## }
 fixef_lme4.0 <- c(-0.7306540061, 2.0289540256)
 sigma_lme4.0 <- 1.7361430
 Sigma_lme4.0 <- 2.3567045
 SE_lme4.0 <- c(0.95070077, 1.37650858)
-if(has4.0) try(detach("package:lme4.0"))
+## if(has4.0) try(detach("package:lme4.0"))
 
 stopifnot(all.equal(unname(fixef(m)), fixef_lme4.0, tol = 1e-3))
           all.equal(unname(fixef(m)), fixef_lme4.0, tol = 0) #-> 1.657e-5
