@@ -233,6 +233,22 @@ namespace glm {
 	return -2. * ans + 2.;
     }
     const ArrayXd            gammaDist::devResid(const ArrayXd& y, const ArrayXd& mu, const ArrayXd& wt) const {
+	int debug=1;
+	if (debug) {
+	    for (int i=0; i < mu.size(); ++i) {
+		double r;
+		r = -2. * wt[i] * (log(y[i]/mu[i])- (y[i] - mu[i])/mu[i]);
+		if (r!=r) {   // detect 'nan'
+		    Rcpp::Rcout << "(bG) " << "nan @ pos " << i << ": y= " << y[i] 
+				<< "; mu=" << mu[i] 
+				<< "; wt=" << wt[i] 
+				<< "; y/mu=" << y[i]/mu[i]
+				<< "; log(y/mu) =" << log(y[i]/mu[i])
+				<< std::endl;
+		}
+	    }
+	}
+	// throw std::runtime_error("illegal values detected in Gamma response")
 	return -2. * wt * ((y/mu).unaryExpr(logN0<double>()) - (y - mu)/mu);
     }
     const ArrayXd            gammaDist::variance(const ArrayXd& mu) const {return mu.square();}

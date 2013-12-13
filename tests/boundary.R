@@ -21,7 +21,18 @@ stopifnot(all(getME(fit,"theta")>0))
 source(system.file("testdata","koller-data.R",package="lme4"))
 
 ldata <- getData(13)
-fm4 <- lmer(y ~ (1|Var2), ldata)
+fm4 <- lmer(y ~ (1|Var2), ldata, control=lmerControl(calc.derivs=FALSE))
+## opt$par is 0.08 but environment(fn)$pp$theta is 0 ... ??
+## fn(0.08)=3334.46; fn(0)=3336.095
+## 3.2413, 15.3855 (correct)
+fm4a <- lmer(y ~ (1|Var2), ldata)
+## end of first optim ([before restart_edge])
+## $fval= 3334.46; $par = 0.08;
+## 1.2504, 15.6302 (wrong)
+dd <- update(fm4,devFunOnly=TRUE)
+lme4:::deriv12(dd,getME(fm4,"theta"))
+dd2 <- update(fm4a,devFunOnly=TRUE)
+lme4:::deriv12(dd2,getME(fm4a,"theta"))
 fm4b <- lmer(y ~ (1|Var2), ldata, control=lmerControl(restart_edge=FALSE))
 stopifnot(getME(fm4b,"theta")==0)
 fm4c <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="bobyqa"))

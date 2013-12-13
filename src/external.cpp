@@ -588,14 +588,21 @@ extern "C" {
     }
 
     static double lmer_dev(XPtr<merPredD> ppt, XPtr<lmerResp> rpt, const Eigen::VectorXd& theta) {
+	int debug=1;
+	double val;
+
         ppt->setTheta(theta);
+	if (debug) Rcpp::Rcout << "lmer_dev: theta=" << ppt->theta() <<
+		       std::endl;
 	ppt->updateXwts(rpt->sqrtXwt());
         ppt->updateDecomp();
         rpt->updateMu(ppt->linPred(0.));
         ppt->updateRes(rpt->wtres());
         ppt->solve();
         rpt->updateMu(ppt->linPred(1.));
-        return rpt->Laplace(ppt->ldL2(), ppt->ldRX2(), ppt->sqrL(1.));
+	val=rpt->Laplace(ppt->ldL2(), ppt->ldRX2(), ppt->sqrL(1.));
+	if (debug) Rcpp::Rcout << val << std::endl;
+        return val;
     }
 
     SEXP lmer_Deviance(SEXP pptr_, SEXP rptr_, SEXP theta_) {

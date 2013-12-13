@@ -144,8 +144,12 @@ lmer <- function(formula, data=NULL, REML = TRUE,
                         restart_edge=control$restart_edge,
                         control=control$optCtrl,
                         verbose=verbose,
-                        start=start)
-    mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr, mcout) ## prepare output
+                        start=start,
+                        calc.derivs=control$calc.derivs)
+    cc <- checkConv(attr(opt,"derivs"),opt$par,
+                    lbound=environment(devfun)$lower)
+    mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr, mcout,
+             lme4conv=cc) ## prepare output
 }## { lmer }
 
 
@@ -305,7 +309,8 @@ glmer <- function(formula, data=NULL, family = gaussian,
                          control = control$optCtrl,
                          start=start,
                          nAGQ = 0,
-                         verbose=verbose)
+                         verbose=verbose,
+                         calc.derivs=FALSE)
 
     if(nAGQ > 0L) {
 
@@ -323,10 +328,17 @@ glmer <- function(formula, data=NULL, family = gaussian,
                              start=start,
                              nAGQ=nAGQ,
                              verbose = verbose,
-                             stage=2)
+                             stage=2,
+                             calc.derivs=control$calc.derivs)
     }
-    # prepare output
-    mkMerMod(environment(devfun), opt, glmod$reTrms, fr = glmod$fr, mcout)
+    cc <- if (!control$calc.derivs) NULL else {
+        checkConv(attr(opt,"derivs"),opt$par,
+                  lbound=environment(devfun)$lower)
+    }
+
+    ## prepare output
+    mkMerMod(environment(devfun), opt, glmod$reTrms, fr = glmod$fr, mcout,
+             lme4conv=cc)
 
 }## {glmer}
 
@@ -408,7 +420,6 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
         opt <- optwrap(control$optimizer[[2]], devfun, par=c(rho$pp$theta, rho$beta0),
                        lower=rho$lower, control=control$optCtrl,
                        adj=TRUE, verbose=verbose)
-
 
     }
     mkMerMod(environment(devfun), opt, vals$reTrms, vals$frame, mc)
@@ -1323,7 +1334,9 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
     }
     ## control <- c(control,list(xst=0.2*xst, xt=xst*0.0001))
     opt <- optwrap(object@optinfo$optimizer,
-                   ff, x0, lower=lower, control=control)
+                   ff, x0, lower=lower, control=control,
+                   calc.derivs=TRUE)
+    ## FIX ME: inherit calc.derivs rules from previous fit
     if (isGLMM(object)) rr$setOffset(baseOffset)
     mkMerMod(environment(ff), opt,
              list(flist=object@flist, cnms=object@cnms, Gp=object@Gp, lower=object@lower),
@@ -1348,7 +1361,9 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
     rho$pp <- new(class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat,
                   Lind=xpp$Lind, theta=xpp$theta, n=nrow(xpp$X))
     devfun <- mkdevfun(rho, 0L)
-    opt <- optwrap(optimizer, devfun, x@theta, lower=x@lower)
+    opt <- optwrap(optimizer, devfun, x@theta, lower=x@lower,
+                   calc.derivs=TRUE)
+    ## FIXME: smarter calc.derivs rules
     ##  opt <- bobyqa(x@theta, devfun, x@lower)
     n <- length(rr$y)
     pp <- rho$pp
@@ -2422,7 +2437,7 @@ getOptfun <- function(optimizer) {
 }
 
 optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
-                    control=list(), adj=FALSE, ## calc.derivs=FALSE,
+                    control=list(), adj=FALSE, calc.derivs=TRUE,
                     verbose=0L) {
     ## control must be specified if adj==TRUE;
     ##  otherwise this is a fairly simple wrapper
@@ -2487,14 +2502,21 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
         warning(wmsg)
         curWarnings <<- append(curWarnings,list(wmsg))
     }
-    ## STUB for derivative calculation
-    ##if (calc.derivs) {
-        ## derivs <- genD(fn,opt$conv)
-    ##} else derivs <- NULL
+    ## pp_before <- environment(fn)$pp
+    ## save(pp_before,file="pp_before.RData")
+
+    if (calc.derivs) {
+        derivs <- deriv12(fn,opt$par,fx=opt$value)
+        ## run one more evaluation of the function at the optimized
+        ##  value, to reset the internal/environment variables in devfun ...
+        fn(opt$par)
+    } else derivs <- NULL
+    ## pp_after <- environment(fn)$pp
+    ## save(pp_after,file="pp_after.RData")
     ## store all auxiliary information
     attr(opt,"optimizer") <- optimizer
     attr(opt,"control") <- control
     attr(opt,"warnings") <- curWarnings
-    ## attr(opt,"derivs") <- derivs
+    attr(opt,"derivs") <- derivs
     opt
 }

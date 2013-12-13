@@ -29,9 +29,6 @@ importFrom("nlme", fixef,ranef,VarCorr)
 importMethodsFrom("Matrix", "%*%",coerce,crossprod,diag,t,tcrossprod,solve,chol2inv)
 ## other CRAN packages:
 importFrom("minqa", bobyqa)
-importFrom("numDeriv", grad)
-importFrom("numDeriv", hessian)
-importFrom("numDeriv", genD)
 
 export(bootMer)
 export(devcomp)

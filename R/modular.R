@@ -420,7 +420,8 @@ optimizeLmer <- function(devfun,
                          restart_edge=FALSE,
                          start = NULL,
                          verbose = 0L,
-                         control = list()) {
+                         control = list(),
+                         calc.derivs = TRUE) {
     verbose <- as.integer(verbose)
     rho <- environment(devfun)
     opt <- optwrap(optimizer,
@@ -428,7 +429,9 @@ optimizeLmer <- function(devfun,
                    getStart(start,rho$lower,rho$pp),
                    lower=rho$lower,
                    control=control,
-                   adj=FALSE, verbose=verbose)
+                   adj=FALSE, verbose=verbose,
+                   calc.derivs=calc.derivs)
+
 
     if (restart_edge) {
         ## FIXME: should we be looking at rho$pp$theta or opt$par
@@ -456,7 +459,8 @@ optimizeLmer <- function(devfun,
                                devfun,
                                opt$par,
                                lower=rho$lower, control=control,
-                               adj=FALSE, verbose=verbose)
+                               adj=FALSE, verbose=verbose,
+                               calc.derivs=calc.derivs)
             }
         }
     }
@@ -596,7 +600,8 @@ optimizeGlmer <- function(devfun,
                           control = list(),
                           nAGQ = 1L,
                           stage = 1,
-                          start = NULL) {
+                          start = NULL,
+                          calc.derivs = TRUE) {
     ## FIXME: do we need nAGQ here?? or can we clean up?
     verbose <- as.integer(verbose)
     rho <- environment(devfun)
@@ -609,7 +614,8 @@ optimizeGlmer <- function(devfun,
         if (missing(optimizer)) optimizer <- "Nelder_Mead"  ## BMB: too clever?
     }
     opt <- optwrap(optimizer, devfun, start, rho$lower,
-                   control=control, adj=adj, verbose=verbose)
+                   control=control, adj=adj, verbose=verbose,
+                   calc.derivs=calc.derivs)
     if (stage==1) {
         rho$control <- attr(opt,"control")
         rho$nAGQ <- nAGQ

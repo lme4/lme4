@@ -57,6 +57,7 @@ namedList <- function(...) {
 ##' @export
 lmerControl <- function(optimizer="Nelder_Mead",
                         restart_edge=TRUE,
+                        calc.derivs=TRUE,
                         sparseX=FALSE,
                         check.nobs.vs.rankZ="warningSmall",
                         check.nobs.vs.nlev="stop",
@@ -65,7 +66,8 @@ lmerControl <- function(optimizer="Nelder_Mead",
                         check.nobs.vs.nRE="stop",
                         ensureXrank=TRUE,
                         check.formula.LHS="stop",
-                        optCtrl = list())
+                        optCtrl = list()
+                        )
 {
     ## FIXME: is there a better idiom?  match.call() ?
     ## fill in values from options, but **only if not specified explicitly in arguments**
@@ -78,7 +80,9 @@ lmerControl <- function(optimizer="Nelder_Mead",
                 assign(arg,lmerOpts[[arg]])
         }
     }
-    structure(namedList(optimizer, restart_edge,
+    structure(namedList(optimizer,
+                        restart_edge,
+                        calc.derivs,
                         checkControl =
 		   namedList(check.nobs.vs.rankZ,
                              check.nobs.vs.nlev,
@@ -101,6 +105,7 @@ lmerControl <- function(optimizer="Nelder_Mead",
 ##' @export
 glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
                          restart_edge=FALSE,
+                         calc.derivs=TRUE,
                          sparseX=FALSE,
                          check.nobs.vs.rankZ="warningSmall",
                          check.nobs.vs.nlev="stop",
@@ -132,6 +137,7 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
         }
     }
     structure(namedList(optimizer,
+                        calc.derivs,
 			restart_edge,
 			tolPwrss,
 			compDev,

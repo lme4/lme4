@@ -8,7 +8,8 @@
 }
 \usage{
 lmerControl(optimizer = "Nelder_Mead",
-    restart_edge = TRUE, sparseX = FALSE,
+    restart_edge = TRUE, calc.derivs=TRUE,
+    sparseX = FALSE,
     check.nobs.vs.rankZ = "warningSmall",
     check.nobs.vs.nlev = "stop",
     check.nlev.gtreq.5 = "ignore",
@@ -19,7 +20,9 @@ lmerControl(optimizer = "Nelder_Mead",
     optCtrl = list())
 
 glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
-    restart_edge = FALSE, sparseX = FALSE,
+    restart_edge = FALSE,
+    calc.derivs=TRUE,
+    sparseX = FALSE,
     check.nobs.vs.rankZ = "warningSmall",
     check.nobs.vs.nlev = "stop",
     check.nlev.gtreq.5 = "ignore",
@@ -67,6 +70,8 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     effects plus fixed effect parameters) phase.  See
     \code{\link{modular}} for more information on these two phases.
   }
+  \item{calc.derivs}{logical - compute gradient and Hessian of nonlinear
+    optimization solution?}
   \item{sparseX}{logical - should a sparse model matrix be
     used for the fixed-effects terms?  Defaults to \code{FALSE}.
     Currently inactive.}

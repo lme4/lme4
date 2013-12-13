@@ -18,7 +18,7 @@
 
   optimizeLmer(devfun, optimizer = "Nelder_Mead",
     restart_edge = FALSE, start = NULL, verbose = 0L,
-    control = list())
+    control = list(), calc.derivs = TRUE)
 
   glFormula(formula, data = NULL, family = gaussian,
     subset, weights, na.action, offset, contrasts = NULL,
@@ -29,7 +29,8 @@
 
   optimizeGlmer(devfun, optimizer = "bobyqa",
     restart_edge = FALSE, verbose = 0L, control = list(),
-    nAGQ = 1L, stage = 1, start = NULL)
+    nAGQ = 1L, stage = 1, start = NULL,
+    calc.derivs=TRUE)
 
   updateGlmerDevfun(devfun, reTrms, nAGQ = 1L)
 }
@@ -157,6 +158,7 @@
   see there for details.}
   \item{\dots}{other potential arguments.}
 
+  \item{calc.derivs}{see \code{\link{lmerControl}}}
 }
 \value{
   \bold{lFormula, glFormula}: A list containing components,
