@@ -13,8 +13,7 @@ randEff1 <- rep(rnorm(nGroups),each=nObs/nGroups)
 randEff2 <- rep(rnorm(nGroups),each=nObs/nGroups)
 
 # residuals with heterogeneous variance
-residSD <- rpois(nObs,1)+1
-#residSD <- rep(1,nObs)
+residSD <- rpois(nObs,1) + 1
 residError <- rnorm(nObs,sd=residSD)
 
 # response variable
@@ -47,13 +46,18 @@ lmerMods <- list(
     REML3 = lmer(y ~ x + z + (x+z|g), weights = w, REML = TRUE))
 
 compFunc <- function(lmeMod, lmerMod, tol = 1e-2){
-    lmeOut <- c(as.numeric(VarCorr(lmeMod)[,"StdDev"]),
-                as.numeric(summary(lmeMod)$tTable[,-c(3,5)]))
+    lmeVarCorr <- VarCorr(lmeMod)[,"StdDev"]
+    lmeCoef <- summary(lmeMod)$tTable[,-c(3,5)]
+    lmeOut <- c(as.numeric(lmeVarCorr), as.numeric(lmeCoef))
+    names(lmeOut) <- c(
+        paste(names(lmeVarCorr), "Var"),
+        as.character(do.call(outer, c(dimnames(lmeCoef), list("paste")))))
 
-    lmerOut <- c(attr(VarCorr(lmerMod)$g, "stddev"),
-                 attr(VarCorr(lmerMod), "sc"),
-                 as.numeric(summary(lmerMod)$coefficients))
-    names(lmeOut) <- names(lmerOut) <- NULL
+    lmerVarCorr <- c(attr(VarCorr(lmerMod)$g, "stddev"),
+                     attr(VarCorr(lmerMod), "sc"))
+    lmerCoef <- summary(lmerMod)$coefficients
+    lmerOut <- c(lmerVarCorr, as.numeric(lmerCoef))
+    names(lmerOut) <- names(lmeOut)
 
     return(list(target = lmeOut, current = lmerOut, tolerance = tol))
 }
