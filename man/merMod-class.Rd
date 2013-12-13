@@ -14,7 +14,7 @@
 \alias{model.frame.merMod}
 \alias{model.matrix.merMod}
 \alias{nlmerMod-class}
-\alias{print.merMod}%- FIXME: document print.*(), notably 'comps'
+\alias{print.merMod}
 \alias{print.summary.merMod}
 \alias{show,merMod-method}
 \alias{show.merMod}
@@ -38,33 +38,34 @@
 \S3method{vcov}{merMod}(object, correlation = TRUE, sigm = sigma(object), \dots)
 \S3method{summary}{merMod}(object, \dots)
 \S3method{print}{summary.merMod}(x, digits = max(3, getOption("digits") - 3),
-                                 correlation = NULL, symbolic.cor = FALSE,
-                                 signif.stars = getOption("show.signif.stars"),
-                                 ranef.comp = c("Variance", "Std.Dev."),
-                                 show.resids = TRUE, ...)
+      correlation = NULL, symbolic.cor = FALSE,
+      signif.stars = getOption("show.signif.stars"),
+      ranef.comp = c("Variance", "Std.Dev."), show.resids = TRUE, ...)
+\S3method{print}{merMod}(x, digits = max(3, getOption("digits") - 3),
+      correlation = NULL, symbolic.cor = FALSE,
+      signif.stars = getOption("show.signif.stars"), ranef.comp = "Std.Dev.", ...) 
 }
 \arguments{
   \item{object}{an \R object of class \code{\linkS4class{merMod}}, i.e.,
     as resulting from \code{\link{lmer}()}, or \code{\link{glmer}()}, etc.}
   \item{correlation}{logical indicating if the correlation matrix is
-    desired in addition to the variance covariance one.}
-  \item{sigm}{the residual standard error; by default
-    \code{\link{sigma}(object)}.}
-  \item{x}{An \R object of class \code{summary.merMod}, i.e., as resulting
+    desired; for \code{vcov()}, in addition to the variance covariance one.}
+  \item{sigm}{the residual standard error; by default \code{\link{sigma}(object)}.}
+  \item{x}{an \R object of class \code{summary.merMod}, i.e., as resulting
     from \code{summary.merMod}.}
-  \item{digits}{Number of significant digits for printing}
-  \item{correlation}{Should the fixed-effects correlation matrix be printed?}
-  \item{symbolic.cor}{Should a symbolic encoding of the fixed-effects correlation
-    matrix be printed? If so, the \code{\link{symnum}} function is used}
-  \item{signif.stars}{Should significance stars be used?}
-  \item{ranef.comp}{Report random-effects parameters on the variance 
-    and/or standard deviation scale}
-  \item{show.resids}{Should the quantiles of the scaled residuals be printed?}
-  \item{\dots}{potentially further arguments pass from other methods.}
+  \item{digits}{number of significant digits for printing}
+  \item{symbolic.cor}{should a symbolic encoding of the fixed-effects correlation
+    matrix be printed? If so, the \code{\link{symnum}} function is used.}
+  \item{signif.stars}{logiigicalshould significance stars be used?}
+  \item{ranef.comp}{character vector of length one or two, indiciating
+    if random-effects parameters are reported on the variance and/or
+    standard deviation scale.}
+  \item{show.resids}{should the quantiles of the scaled residuals be printed?}
+  \item{\dots}{potentially further arguments passed from other methods.}
 }
 \section{Objects from the Class}{
-  Objects are created by calls to \code{\link{lmer}},
-  \code{\link{glmer}} or \code{\link{nlmer}}.
+  Objects of class \code{merMod} are created by calls to
+  \code{\link{lmer}}, \code{\link{glmer}} or \code{\link{nlmer}}.
 }
 \seealso{
   \code{\link{lmer}}, \code{\link{glmer}},
