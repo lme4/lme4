@@ -632,6 +632,7 @@ glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, ve
 ## @title anova() for merMod objects
 ## @param a merMod object
 ## @param ...	further such objects
+## @param refit should objects be refitted with ML (if applicable)
 ## @return an "anova" data frame; the traditional (S3) result of anova()
 anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
     mCall <- match.call(expand.dots = TRUE)
