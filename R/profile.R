@@ -62,8 +62,8 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
                            verbose=0, devtol=1e-9,
                            maxmult = 10,
                            startmethod = "prev",
-                           optimizer="bobyqa",
-                           signames=TRUE, ...) {
+                           optimizer = "bobyqa",
+                           signames = TRUE, ...) {
 
   ## FIXME: allow choice of nextstep/nextstart algorithm?
   ## FIXME: by default, get optimizer from within fitted object
@@ -210,7 +210,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
 
     ## check that devfun2() computation for the base parameters is (approx.) the
     ##  same as the original devfun() computation
-    stopifnot(all.equal(unname(dd(opt[seq(npar1)])),base,tol=1e-5))
+    stopifnot(all.equal(unname(dd(opt[seq(npar1)])), base, tol=1e-5))
 
     seqnvp <- intersect(seq_len(npar1),which)
     seqpar1 <- seq_len(npar1)
@@ -219,7 +219,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
     form <- .zeta ~ foo           # pattern for interpSpline formula
 
     for (w in seqnvp) {
-       if (verbose) cat(if (isLMM(fitted)) "var-cov " else "", "parameter ",w,":\n",sep="")
+       if (verbose) cat(if(isLMM(fitted)) "var-cov " else "", "parameter ",w,":\n",sep="")
        wp1 <- w + 1L
        start <- opt[seqpar1][-w]
        pw <- opt[w]
@@ -234,7 +234,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
 	       devdiff <- NA
 	       pars <- NA
 	   } else {
-	       devdiff <- ores$fval-base
+	       devdiff <- ores$fval - base
 	       pars <- ores$par
 	   }
            if (is.na(devdiff)) {
@@ -242,6 +242,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
            } else {
                if (devdiff < (-devtol)) {
                    stopmsg <-  "profiling detected new, lower deviance"
+                   ## FIXME: this is wrong: stop()ing or not must *NOT* depend on verbose!
                    if (verbose) {
                        stopmsg <- paste0(stopmsg,"\n",
                                         "old deviance ",base,",\n",
@@ -258,9 +259,8 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
            devdiff <- max(0,devdiff)
            zz <- sign(xx - pw) * sqrt(devdiff)
            r <- c(zz, mkpar(npar1, w, xx, pars))
-           if (isLMM(fitted)) r <- c(r,pp$beta(1))
-           r
-       }
+           if (isLMM(fitted)) c(r, pp$beta(1)) else r
+       }## {zeta}
 
 ### FIXME: The starting values for the conditional optimization should
 ### be determined from recent starting values, not always the global
@@ -330,7 +330,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
                 fv <- ores$fval
                 sig <- sqrt((rr$wrss() + pp1$sqrL(1))/n)
                 c(sign(fw - est) * sqrt(fv - base),
-                  Cv_to_Sv(ores$par, sapply(fitted@cnms,length),s=sig),
+                  Cv_to_Sv(ores$par, vapply(fitted@cnms,length, 1), s=sig),
                   ## ores$par * sig, sig,
                   mkpar(p, j, fw, pp1$beta(1)))
             }
@@ -390,7 +390,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
 ## @return a function for evaluating the deviance in the extended
 ##     parameterization.  This is profiled with respect to the
 ##     variance-covariance parameters (fixed-effects done separately).
-devfun2 <- function(fm,useSc,signames)
+devfun2 <- function(fm, useSc, signames)
 {
     ## FIXME: have to distinguish between
     ## 'useSc' (GLMM: report profiled scale parameter) and
@@ -559,7 +559,7 @@ xyplot.thpr <-
     do.call(xyplot, stripExpr(ll, names(spl)))
 }
 
-## copy of stats:::format.perc
+## copy of stats:::format.perc (not exported, and ":::" being forbidden nowadays):
 format.perc <- function (probs, digits) {
     paste(format(100 * probs, trim = TRUE,
                  scientific = FALSE, digits = digits), 
