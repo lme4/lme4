@@ -1621,11 +1621,11 @@ famlink <- function(object, resp = object@resp) {
     }
 }
 
-.prt.resids <- function(resids,digits,title="Scaled residuals:") {
+.prt.resids <- function(resids, digits, title="Scaled residuals:", ...) {
     cat(title,"\n")
-    nam <- c("Min", "1Q", "Median", "3Q", "Max")
-    rq <- setNames(zapsmall(quantile(resids), digits + 1L),nam)
-    print(rq,digits=digits)
+    rq <- setNames(zapsmall(quantile(resids), digits + 1L),
+                   c("Min", "1Q", "Median", "3Q", "Max"))
+    print(rq, digits=digits, ...)
     cat("\n")
 }
 
@@ -1678,6 +1678,8 @@ getLlikAIC <- function(object, cmp = object@devcomp$cmp) {
     cat("\n")
 }
 
+.summary.cor.max <- 20
+
 ## This is modeled a bit after	print.summary.lm :
 ## Prints *both*  'mer' and 'merenv' - as it uses summary(x) mainly
 ##' @S3method print summary.merMod
@@ -1694,9 +1696,7 @@ print.summary.merMod <- function(x, digits = max(3, getOption("digits") - 3),
     if (show.resids)
         ## need residuals.merMod() rather than residuals():
         ##  summary.merMod has no residuals method
-        .prt.resids(x$residuals,digits=digits)
-    ## cat("Scaled residuals:\n")
-    ## print(residuals.merMod(x,type="pearson",scaled=TRUE)),digits=digits)
+        .prt.resids(x$residuals, digits=digits)
     .prt.VC(x$varcor, digits=digits, useScale= x$useScale,
 	    comp = ranef.comp, ...)
     .prt.grps(x$ngrps, nobs= x$devcomp$dims[["n"]])
@@ -1707,22 +1707,23 @@ print.summary.merMod <- function(x, digits = max(3, getOption("digits") - 3),
 	printCoefmat(x$coefficients, zap.ind = 3, #, tst.ind = 4
 		     digits = digits, signif.stars = signif.stars)
 	if(is.null(correlation)) { # default
-	    correlation <- p <= 20
+	    correlation <- p <= .summary.cor.max
 	    if(!correlation) {
 		nam <- deparse(substitute(x))
 		if(length(nam) > 1 || nchar(nam) >= 32) nam <- "...."
-		message(sprintf(paste("\nCorrelation matrix not shown by default, as p = %d > 20.",
-				  "Use print(%s, correlation=TRUE)  or",
-				  "    vcov(%s)	 if you need it\n", sep="\n"),
-			    p, nam, nam))
+		message(sprintf(paste(
+		    "\nCorrelation matrix not shown by default, as p = %d > %d.",
+		    "Use print(%s, correlation=TRUE)  or",
+		    "	 vcov(%s)	 if you need it\n", sep="\n"),
+				p, .summary.cor.max, nam, nam))
 	    }
 	}
 	else if(!is.logical(correlation)) stop("'correlation' must be NULL or logical")
 	if(correlation) {
-	    if(is.null(VC <- x$vcov)) VC <- vcov(x)
+	    if(is.null(VC <- x$vcov)) VC <- vcov(x, correlation=TRUE)
 	    corF <- VC@factors$correlation
 	    if (is.null(corF)) {
-		cat("\nCorrelation of Fixed Effects is not available\n")
+		cat("\nCorrelation of fixed effects must be required in summary()\n")
 	    } else {
 		p <- ncol(corF)
 		if (p > 1) {
@@ -2047,7 +2048,7 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object), ...)
 
 ##' @importFrom stats vcov
 ##' @S3method vcov summary.merMod
-vcov.summary.merMod <- function(object, correlation = TRUE, ...) {
+vcov.summary.merMod <- function(object, ...) {
     if(is.null(object$vcov)) stop("logic error in summary of merMod object")
     object$vcov
 }
@@ -2218,7 +2219,8 @@ formatVC <- function(varc, digits = max(3, getOption("digits") - 2),
 }
 
 ##' @S3method summary merMod
-summary.merMod <- function(object, ...)
+summary.merMod <- function(object,
+                           correlation = (p <= .summary.cor.max), ...)
 {
     resp <- object@resp
     devC <- object@devcomp
@@ -2229,12 +2231,13 @@ summary.merMod <- function(object, ...)
     REML <- isREML(object)
 
     famL <- famlink(resp=resp)
-    coefs <- cbind("Estimate" = fixef(object),
-		   "Std. Error" = sig * sqrt(diag(object@pp$unsc())))
-    if (nrow(coefs) > 0) {
+    p <- length(coefs <- fixef(object))
+    coefs <- cbind("Estimate" = coefs,
+                   "Std. Error" = sig * sqrt(diag(object@pp$unsc())))
+    if (p > 0) {
 	coefs <- cbind(coefs, (cf3 <- coefs[,1]/coefs[,2]), deparse.level=0)
 	colnames(coefs)[3] <- paste(if(useSc) "t" else "z", "value")
-        if (isGLMM(object))
+        if (isGLMM(object)) # FIXME: if "t" above, cannot have "z" here
             coefs <- cbind(coefs, "Pr(>|z|)" =
                            2*pnorm(abs(cf3), lower.tail=FALSE))
     }
@@ -2250,9 +2253,9 @@ summary.merMod <- function(object, ...)
                    isLmer=is(resp, "lmerResp"), useScale=useSc,
                    logLik=llAIC[["logLik"]],
                    family=famL$fami, link=famL$link,
-		   ngrps=sapply(object@flist, function(x) length(levels(x))),
+		   ngrps = vapply(object@flist, nlevels, 1),
 		   coefficients=coefs, sigma=sig,
-		   vcov=vcov(object, correlation=TRUE, sigm=sig),
+		   vcov=vcov(object, correlation=correlation, sigm=sig),
 		   varcor=varcor, # and use formatVC(.) for printing.
 		   AICtab = llAIC[["AICtab"]], call=object@call,
                    residuals=residuals(object,"pearson",scaled=TRUE)

@@ -36,7 +36,7 @@
 }
 \usage{
 \S3method{vcov}{merMod}(object, correlation = TRUE, sigm = sigma(object), \dots)
-\S3method{summary}{merMod}(object, \dots)
+\S3method{summary}{merMod}(object, correlation = , \dots)
 \S3method{print}{summary.merMod}(x, digits = max(3, getOption("digits") - 3),
       correlation = NULL, symbolic.cor = FALSE,
       signif.stars = getOption("show.signif.stars"),
@@ -49,7 +49,7 @@
   \item{object}{an \R object of class \code{\linkS4class{merMod}}, i.e.,
     as resulting from \code{\link{lmer}()}, or \code{\link{glmer}()}, etc.}
   \item{correlation}{logical indicating if the correlation matrix is
-    desired; for \code{vcov()}, in addition to the variance covariance one.}
+    desired / to be printed.}
   \item{sigm}{the residual standard error; by default \code{\link{sigma}(object)}.}
   \item{x}{an \R object of class \code{summary.merMod}, i.e., as resulting
     from \code{summary.merMod}.}
