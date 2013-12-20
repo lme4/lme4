@@ -91,29 +91,35 @@ sdcor2cov  <- function(m) {
 }
 
 ## convert cov to sdcor
-cov2sdcor  <- function(m) {
-    v <- diag(m)
-    ## don't want
-    ## warning("diag(.) had 0 or NA entries; non-finite result is doubtful")
-    ## (this is the only warning that cov2cor produces)
-    m1 <- suppressWarnings(cov2cor(m))
-    diag(m1) <- sqrt(v)
-    m1
+cov2sdcor  <- function(V) {
+    ## "own version" of cov2cor():  1. no warning for NA;   2. diagonal = sd(.)
+    p <- (d <- dim(V))[1L]
+    if (!is.numeric(V) || length(d) != 2L || p != d[2L]) 
+        stop("'V' is not a square numeric matrix")
+    sd <- sqrt(diag(V))
+    Is <- 1/sd
+    r <- V
+    r[] <- Is * V * rep(Is, each = p)
+    diag(r) <- sd
+    r
 }
 
-dmult <- function(m,s) {
-    diag(m) <- diag(m)*s
-    m
-}
+## dmult <- function(m,s) {
+##     diag(m) <- diag(m)*s
+##     m
+## }
+## From Matrix package  isDiagonal(.) :
+all0 <- function(x) !any(is.na(x)) && all(!x)
+.isDiagonal.sq.matrix <- function(M, n = dim(M)[1L])
+    all0(M[rep_len(c(FALSE, rep.int(TRUE,n)), n^2)])
 
 ## attempt to compute Cholesky, allow for positive semi-definite cases
 ##  (hackish)
 safe_chol <- function(m) {
     if (all(m==0)) return(m)
     if (nrow(m)==1) return(sqrt(m))
-    if (all(dmult(m,0)==0)) {  ## diagonal
-        return(diag(sqrt(diag(m))))
-    }
+    if (.isDiagonal.sq.matrix(m)) return(diag(sqrt(diag(m))))
+
     ## attempt regular Chol. decomp
     if (!is.null(cc <- tryCatch(chol(m), error=function(e) NULL)))
 	return(cc)
