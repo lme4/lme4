@@ -7,7 +7,7 @@ fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
 ##
 system.time( tpr <- profile(fm01ML) )
 
-## test all combinations of 'which', including plots
+## test all combinations of 'which', including plots (but don't show plots)
 wlist <- list(1:3,1:2,1,2:3,2,3,c(1,3))
 invisible(lapply(wlist,function(w) xyplot(profile(fm01ML,which=w))))
 
@@ -24,7 +24,7 @@ if(testLevel > 2) {
 
     ## 2D profiles
     fm2ML <- lmer(diameter ~ 1 + (1|plate) + (1|sample), Penicillin, REML=0)
-    system.time(pr2 <- profile(fm2ML))
+    system.time(pr2 <- profile(fm2ML)) # 5.2 sec
     (confint(pr2) -> CIpr2)
 
     lme4a_CIpr2 <-
@@ -45,19 +45,10 @@ if(testLevel > 2) {
     ## GLMM profiles
     system.time(pr4 <- profile(gm1))  ## ~ 10 seconds
 
-    ## FIXME: compDev=FALSE fails
-    if (FALSE) {
-        gm1B <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-                      data = cbpp, family = binomial,
-                      compDev=FALSE,verbose=3)
-    }
-
     profile(gm1,which=3)
     xyplot(pr4,layout=c(5,1),as.table=TRUE)
-    if (FALSE) {
-        ## FIXME! fails because of NAs
-        splom(pr4)
-    }
+
+    splom(pr4) ## used to fail because of NAs
 
     nm1 <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~ Asym|Tree,
                  Orange, start = c(Asym = 200, xmid = 725, scal = 350))
@@ -74,7 +65,7 @@ if (testLevel > 3) {
     fm3ML <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, REML=FALSE)
     ## ~ 4 theta-variables (+ 2 fixed), 19 seconds :
     print(system.time(pr3 <- profile(fm3ML)))
-    print(xyplot(pr3)) 
+    print(xyplot(pr3))
     print(splom(pr3))
 
     if (testLevel > 4) {
