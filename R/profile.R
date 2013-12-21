@@ -1,70 +1,18 @@
-##' Methods for profile() of [ng]lmer fitted models
-##'
-##' Methods for function \code{\link{profile}} (package \pkg{stats}), here for
-##' profiling (fitted) mixed effect models.
-##'
-##'
-##' @name profile-methods
-##' @title Profile method for merMod objects
-##' @aliases profile-methods profile.merMod
-##' @docType methods
-##' @param fitted a fitted model, e.g., the result of \code{\link{lmer}(..)}.
-##' @param which (integer) which parameters to profile: default is all parameters. The parameters are ordered as follows: (1) random effects (theta) parameters; (2) residual standard deviation (or scale parameter for GLMMs where appropriate); (3) fixed effect parameters.  Random effects parameters are ordered as in \code{getME(.,"theta")}, i.e. as the lower triangle of a matrix with standard deviations on the diagonal and correlations off the diagonal. FIXME: allow parameter names.
-##' @param alphamax maximum alpha value for likelihood ratio confidence regions; used to establish the range of values to be profiled
-##' @param maxpts maximum number of points (in each direction, for each parameter) to evaluate in attempting to construct the profile
-##' @param delta stepping scale for deciding on next point to profile
-##' @param verbose level of output from internal calculations
-##' @param devtol tolerance for fitted deviances less than baseline (supposedly minimum) deviance
-##' @param maxmult maximum multiplier of the original step size allowed, defaults to 10.
-##' @param startmethod method for picking starting conditions for optimization (STUB)
-##' @param optimizer (character or function) optimizer to use (see \code{\link{lmer}} for details)
-##' @param signames (logical) if \code{TRUE} use abbreviated names of the form \code{.sigNN}, otherwise more meaningful (but longer) names of the form \code{(sd|cor)_(effects)|(group)}. Note that some code for profile transformations (e.g. \code{\link{varianceProf}}) depends on \code{signames==TRUE}
-##' @param \dots potential further arguments for \code{profile} methods.
-##' @section Methods:
-##' \describe{
-##'     \item{signature(fitted = \"merMod\")}{ ...  } }
-##' @seealso For (more expensive) alternative confidence intervals:
-##' \code{\link{bootMer}}.
-##' @keywords methods
-##' @examples
-##' fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
-##' system.time( tpr  <- profile(fm01ML, optimizer="Nelder_Mead") ) 
-##' ## ~2.6s (on a 2010 Macbook Pro)
-##' system.time( tpr  <- profile(fm01ML))
-##' ## ~1s, + possible warning about bobyqa convergence
-##' (confint(tpr) -> CIpr)
-##' \donttest{% too much precision (etc). but just FYI:
-##' stopifnot(all.equal(CIpr,
-##'   array(c(12.1985292, 38.2299848, 1486.4515,
-##'           84.0630513, 67.6576964, 1568.54849), dim = 3:2,
-##'         dimnames = list(c(".sig01", ".sigma", "(Intercept)"),
-##'                         c("2.5 \%", "97.5 \%"))),
-##'                     tol= 1e-07))# 1.37e-9 {64b}
-##' }
-##' xyplot(tpr)
-##' densityplot(tpr, main="densityplot( profile(lmer(..)) )")
-##' splom(tpr)
-##' \donttest{% for time constraint
-##' system.time(tpr2 <- profile(fm01ML, which=1:2, optimizer="Nelder_Mead")) ## Batch and residual variance only
-##' ## GLMM example (running time ~11 seconds on a modern machine)
-##' gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-##'             data = cbpp, family = binomial)
-##' system.time(pr4 <- profile(gm1))
-##' xyplot(pr4,layout=c(5,1),as.table=TRUE)
-##' splom(pr4)
-##' }%donttest
+## --> ../man/profile-methods.Rd
+
 ##' @importFrom splines backSpline interpSpline periodicSpline
 ##' @importFrom stats profile
 ##' @method profile merMod
 ##' @export
-profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100, delta = cutoff/8,
+profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
+			   maxpts = 100, delta = cutoff/8,
                            ##  tr = 0,  ## FIXME:  remove if not doing anything ...
                            verbose=0, devtol=1e-9,
                            maxmult = 10,
                            startmethod = "prev",
                            optimizer = "bobyqa",
-                           signames = TRUE, ...) {
-
+                           signames = TRUE, ...)
+{
   ## FIXME: allow choice of nextstep/nextstart algorithm?
   ## FIXME: by default, get optimizer from within fitted object
   ## FIXME: allow selection of individual variables to profile by name?
@@ -79,6 +27,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
     ## FIXME: figure out to what do here ...
     if (isGLMM(fitted) && fitted@devcomp$dims["useSc"])
         stop("can't (yet) profile GLMMs with non-fixed scale parameters")
+    stopifnot(devtol >= 0)
     base <- attr(dd, "basedev")
     thopt <- attr(dd, "thopt")
     stderr <- attr(dd, "stderr")
@@ -109,7 +58,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
 	    warning(gettextf("Nothing selected by 'which=%s'", deparse(which)),
 		    domain=NA)
         which <- wi
-    } # else stopifnot( .. numeric ..) 
+    } # else stopifnot( .. numeric ..)
 
     ans <- lapply(opt[which], function(el) NULL)
     bakspl <- forspl <- ans
@@ -240,21 +189,17 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
            if (is.na(devdiff)) {
                warning("NAs detected in profiling")
            } else {
-               if (devdiff < (-devtol)) {
-                   stopmsg <-  "profiling detected new, lower deviance"
-                   ## FIXME: this is wrong: stop()ing or not must *NOT* depend on verbose!
-                   if (verbose) {
-                       stopmsg <- paste0(stopmsg,"\n",
-                                        "old deviance ",base,",\n",
-                                        "new deviance ",ores$fval,",\n",
-                                        "new params ",
-                                        paste(mkpar(npar1,w,xx,ores$par),
-                                              collapse=","),"\n")
-                       stop(stopmsg)
-                   }
-               }
+               if(verbose && devdiff < 0)
+                   cat("old deviance ",base,",\n",
+                       "new deviance ",ores$fval,",\n",
+                       "new params ",
+                       paste(mkpar(npar1,w,xx,ores$par),
+                             collapse=","),"\n")
+               if (devdiff < (-devtol))
+                   stop("profiling detected new, lower deviance")
                if(devdiff < 0)
-                   warning("slightly lower deviances (diff=",devdiff,") detected")
+                   warning(gettextf("slightly lower deviances (diff=%g) detected",
+                                    devdiff), domain=NA)
            }
            devdiff <- max(0,devdiff)
            zz <- sign(xx - pw) * sqrt(devdiff)
@@ -562,7 +507,7 @@ xyplot.thpr <-
 ## copy of stats:::format.perc (not exported, and ":::" being forbidden nowadays):
 format.perc <- function (probs, digits) {
     paste(format(100 * probs, trim = TRUE,
-                 scientific = FALSE, digits = digits), 
+                 scientific = FALSE, digits = digits),
           "%")
 }
 
@@ -710,9 +655,7 @@ confint.merMod <- function(object, parm, level = 0.95,
                    ss <- setNames(Cv_to_Sv(th,n=nvec),
                                   tn)
                }
-               res <- c(ss,
-                        fixef(x))
-               res
+               c(ss, fixef(x))
            }
 	   bb <- bootMer(object, bootFun, nsim=nsim,...)
            bci <- lapply(seq_along(bb$t0),
@@ -733,13 +676,13 @@ confint.merMod <- function(object, parm, level = 0.95,
            stop("unknown confidence interval method"))
 }
 
-## Convert x-cosine and y-cosine to average and difference.
-
-## Convert the x-cosine and the y-cosine to an average and difference
-## ensuring that the difference is positive by flipping signs if
-## necessary
-## @param xc x-cosine
-## @param yc y-cosine
+##' Convert x-cosine and y-cosine to average and difference.
+##'
+##' Convert the x-cosine and the y-cosine to an average and difference
+##' ensuring that the difference is positive by flipping signs if
+##' necessary
+##' @param xc x-cosine
+##' @param yc y-cosine
 ad <- function(xc, yc)
 {
     a <- (xc + yc)/2
@@ -747,27 +690,27 @@ ad <- function(xc, yc)
     cbind(sign(d)* a, abs(d))
 }
 
-## convert d versus a (as an xyVector) and level to a matrix of taui and tauj
-## @param xy an xyVector
-## @param lev the level of the contour
+##' convert d versus a (as an xyVector) and level to a matrix of taui and tauj
+##' @param xy an xyVector
+##' @param lev the level of the contour
 tauij <- function(xy, lev) lev * cos(xy$x + outer(xy$y/2, c(-1, 1)))
 
-## @title safe arc-cosine
-## @param x numeric vector argument
-## @return acos(x) being careful of boundary conditions
+##' @title safe arc-cosine
+##' @param x numeric vector argument
+##' @return acos(x) being careful of boundary conditions
 sacos <- function(x) acos(pmax.int(-0.999, pmin.int(0.999, x)))
 
-## Generate a contour
-##
-## @title Generate a contour
-## @param sij the arc-cosines of i on j
-## @param sji the arc-cosines of j on i
-## @param levels numeric vector of levels at which to interpolate
-## @param nseg number of segments in the interpolated contour
-## @return a list with components
-## \item{tki}{the tau-scale predictions of i on j at the contour levels}
-## \item{tkj}{the tau-scale predictions of j on i at the contour levels}
-## \item{pts}{an array of dimension (length(levels), nseg, 2) containing the points on the contours}
+##' Generate a contour
+##'
+##' @title Generate a contour
+##' @param sij the arc-cosines of i on j
+##' @param sji the arc-cosines of j on i
+##' @param levels numeric vector of levels at which to interpolate
+##' @param nseg number of segments in the interpolated contour
+##' @return a list with components
+##' \item{tki}{the tau-scale predictions of i on j at the contour levels}
+##' \item{tkj}{the tau-scale predictions of j on i at the contour levels}
+##' \item{pts}{an array of dimension (length(levels), nseg, 2) containing the points on the contours}
 cont <- function(sij, sji, levels, nseg = 101)
 {
     ada <- array(0, c(length(levels), 2, 4))
@@ -784,9 +727,9 @@ cont <- function(sij, sji, levels, nseg = 101)
 }
 
 ## copied from lattice:::chooseFace
-chooseFace <- function (fontface = NULL, font = 1) 
+chooseFace <- function (fontface = NULL, font = 1)
 {
-    if (is.null(fontface)) 
+    if (is.null(fontface))
         font
     else fontface
 }
@@ -963,16 +906,16 @@ splom.thpr <- function (x, data,
     splom(~ pfr, lower.panel = lp, upper.panel = up, diag.panel = dp, ...)
 }
 
-## Transform an lmer profile to the scale of the logarithm of the
-## standard deviation of the random effects.
-## @title Transform an lmer profile to the logarithm scale
-## @param x an object that inherits from class "thpr"
-## @param base the base of the logarithm.  Defaults to natural
-##        logarithms
-##
-## @return an lmer profile like x with all the .sigNN parameters
-##      replaced by .lsigNN.  The forward and backward splines for
-##      these parameters are recalculated.
+##' Transform an lmer profile to the scale of the logarithm of the
+##' standard deviation of the random effects.
+##' @title Transform an lmer profile to the logarithm scale
+##' @param x an object that inherits from class "thpr"
+##' @param base the base of the logarithm.  Defaults to natural
+##'        logarithms
+##'
+##' @return an lmer profile like x with all the .sigNN parameters
+##'      replaced by .lsigNN.  The forward and backward splines for
+##'      these parameters are recalculated.
 ##' @S3method log thpr
 log.thpr <- function (x, base = exp(1)) {
     cn <- colnames(x)
@@ -1028,14 +971,13 @@ varpr <- function (x) {
     x
 }
 
-## Create an approximating density from a profile object
-##
-## @title Approximate densities from profiles
-## @param pr a profile object
-## @param npts number of points at which to evaluate the density
-## @param upper upper bound on cumulative for a cutoff
-## @return a data frame
-## @export
+##' Create an approximating density from a profile object
+##'
+##' @title Approximate densities from profiles
+##' @param pr a profile object
+##' @param npts number of points at which to evaluate the density
+##' @param upper upper bound on cumulative for a cutoff
+##' @return a data frame
 dens <- function(pr, npts=201, upper=0.999) {
     stopifnot(inherits(pr, "thpr"))
     npts <- as.integer(npts)
