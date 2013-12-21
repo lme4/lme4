@@ -1,9 +1,13 @@
-\docType{methods}
 \name{profile-methods}
+\title{Profile method for merMod objects}
+\docType{methods}
 \alias{as.data.frame.thpr}
 \alias{profile-methods}
 \alias{profile.merMod}
-\title{Profile method for merMod objects}
+\description{
+  Methods for \code{\link{profile}}() of [ng]\code{\link{lmer}} fitted
+  models.
+}
 \usage{
 \method{profile}{merMod}(fitted, which = 1:nptot, alphamax = 0.01,
 	maxpts = 100, delta = cutoff/8, verbose = 0, devtol = 1e-09,
@@ -11,6 +15,7 @@
 	signames = TRUE, ...)
 
 \method{as.data.frame}{thpr} (x, ...)
+\method{log}{thpr} (x, ...) %%<<- FIXME: document it, see ../R/profile.R
 }
 \arguments{
   \item{fitted}{a fitted model, e.g., the result of \code{\link{lmer}(..)}.}
@@ -55,13 +60,22 @@
   \item{\dots}{potential further arguments for \code{profile} methods.}
   \item{x}{the result of \code{\link{profile}} (or very similar structure)}
 }
-\description{
-  Methods for profile() of [ng]lmer fitted models
+\value{
+  an object of S3 class \code{"thpr"},% = th[eoretical]?? pr[ofile]
+  \code{\link{data.frame}}-like.  Methods for such a profile object
+  are notably \code{\link{confint}()}, the three plots methods
+  \code{\link[=xyplot.thpr]{xyplot}}, \code{densityplot}, and
+  \code{splom}.
+
+  Further, \code{\link{log}()} and \code{\link{as.data.frame}()}.
 }
 \details{
   Methods for function \code{\link{profile}} (package
   \pkg{stats}), here for profiling (fitted) mixed effect
   models.
+
+%% FIXME: ../inst/doc/profiling.txt  contains  motivation and more by
+%% Doug Bates. Should add here (partly), or "link to there".
 }
 \section{Methods}{
   \describe{ \item{signature(fitted = \"merMod\")}{ ...  }
@@ -93,7 +107,7 @@ require(lattice)
 xyplot(tpr)
 densityplot(tpr, main="densityplot( profile(lmer(..)) )")
 splom(tpr)
-doMore <- lme4:::testLevel() > 1
+doMore <- lme4:::testLevel() > 1 %% even more --> ../tests/profile.R
 if(doMore) { ## not typically, for time constraint reasons
  ## Batch and residual variance only
  system.time(tpr2 <- profile(fm01ML, which=1:2, optimizer="Nelder_Mead"))
@@ -107,6 +121,6 @@ if(doMore) { ## not typically, for time constraint reasons
  print( system.time( # quicker: only sig01 and one fixed effect
      pr2 <- profile(gm1, which=c("theta_", "period2"))))
  print( confint(pr2) )
-}
+}% doMore
 }
 \keyword{methods}
