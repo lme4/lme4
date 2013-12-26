@@ -649,8 +649,9 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
         derivs=attr(opt,"derivs"),
         conv=list(opt=opt$conv,lme4=lme4conv),
         feval=if (is.null(opt$feval)) NA else opt$feval,
-        warnings=attr(opt,"warnings"))
-        )
+        warnings=attr(opt,"warnings"),
+        val=opt$par))
+        
 }
 
 ## generic argument checking

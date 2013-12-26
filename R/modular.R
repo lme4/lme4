@@ -421,7 +421,7 @@ optimizeLmer <- function(devfun,
                          start = NULL,
                          verbose = 0L,
                          control = list(),
-                         calc.derivs = TRUE) {
+                         ...) {
     verbose <- as.integer(verbose)
     rho <- environment(devfun)
     opt <- optwrap(optimizer,
@@ -430,7 +430,7 @@ optimizeLmer <- function(devfun,
                    lower=rho$lower,
                    control=control,
                    adj=FALSE, verbose=verbose,
-                   calc.derivs=calc.derivs)
+                   ...)
 
 
     if (restart_edge) {
@@ -460,7 +460,7 @@ optimizeLmer <- function(devfun,
                                opt$par,
                                lower=rho$lower, control=control,
                                adj=FALSE, verbose=verbose,
-                               calc.derivs=calc.derivs)
+                               ...)
             }
         }
     }
@@ -601,7 +601,7 @@ optimizeGlmer <- function(devfun,
                           nAGQ = 1L,
                           stage = 1,
                           start = NULL,
-                          calc.derivs = TRUE) {
+                          ...) {
     ## FIXME: do we need nAGQ here?? or can we clean up?
     verbose <- as.integer(verbose)
     rho <- environment(devfun)
@@ -615,7 +615,7 @@ optimizeGlmer <- function(devfun,
     }
     opt <- optwrap(optimizer, devfun, start, rho$lower,
                    control=control, adj=adj, verbose=verbose,
-                   calc.derivs=calc.derivs)
+                   ...)
     if (stage==1) {
         rho$control <- attr(opt,"control")
         rho$nAGQ <- nAGQ

@@ -4,6 +4,7 @@
 //
 // This file is part of lme4.
 
+#include <iomanip>
 #include "predModule.h"
 #include "respModule.h"
 #include "optimizer.h"
@@ -588,12 +589,11 @@ extern "C" {
     }
 
     static double lmer_dev(XPtr<merPredD> ppt, XPtr<lmerResp> rpt, const Eigen::VectorXd& theta) {
-	int debug=1;
+	int debug=0;
 	double val;
 
         ppt->setTheta(theta);
-	if (debug) Rcpp::Rcout << "lmer_dev: theta=" << ppt->theta() <<
-		       std::endl;
+
 	ppt->updateXwts(rpt->sqrtXwt());
         ppt->updateDecomp();
         rpt->updateMu(ppt->linPred(0.));
@@ -601,7 +601,16 @@ extern "C" {
         ppt->solve();
         rpt->updateMu(ppt->linPred(1.));
 	val=rpt->Laplace(ppt->ldL2(), ppt->ldRX2(), ppt->sqrL(1.));
-	if (debug) Rcpp::Rcout << val << std::endl;
+	std::cout.precision(15);
+	if (debug) {
+	    Rcpp::Rcout.precision(10);
+	    Rcpp::Rcout << "lmer_dev: theta=" <<
+		ppt->theta() << ", val=" << val << std::endl;
+	    // Rprintf("lmer_dev: val=%1.12lf\n", // theta=%1.12lf\n",
+	    // val);
+	    
+	}
+
         return val;
     }
 

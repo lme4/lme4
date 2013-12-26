@@ -58,6 +58,7 @@ namedList <- function(...) {
 lmerControl <- function(optimizer="Nelder_Mead",
                         restart_edge=TRUE,
                         calc.derivs=TRUE,
+                        use.last.params=FALSE,
                         sparseX=FALSE,
                         check.nobs.vs.rankZ="warningSmall",
                         check.nobs.vs.nlev="stop",
@@ -83,6 +84,7 @@ lmerControl <- function(optimizer="Nelder_Mead",
     structure(namedList(optimizer,
                         restart_edge,
                         calc.derivs,
+                        use.last.params,
                         checkControl =
 		   namedList(check.nobs.vs.rankZ,
                              check.nobs.vs.nlev,
@@ -106,6 +108,7 @@ lmerControl <- function(optimizer="Nelder_Mead",
 glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
                          restart_edge=FALSE,
                          calc.derivs=TRUE,
+                         use.last.params=FALSE,
                          sparseX=FALSE,
                          check.nobs.vs.rankZ="warningSmall",
                          check.nobs.vs.nlev="stop",
@@ -136,8 +139,13 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
                 assign(arg,glmerOpts[[arg]])
         }
     }
+    if (use.last.params && calc.derivs)
+        warning("using ",shQuote("use.last.params"),"=TRUE and ",
+                shQuote("calc.derivs"),"=TRUE with ",shQuote("glmer"),
+                " will not give backward-compatible results")
     structure(namedList(optimizer,
                         calc.derivs,
+                        use.last.params,
 			restart_edge,
 			tolPwrss,
 			compDev,

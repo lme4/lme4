@@ -3,6 +3,9 @@ library("lme4")
 context("residuals")
 test_that("lmer", {
     fm1 <- lmer(Reaction ~ Days + (Days|Subject),sleepstudy)
+    ## fm2 <- lmer(Reaction ~ Days + (Days|Subject),sleepstudy,
+    ## control=lmerControl(calc.derivs=FALSE))
+    ## all.equal(resid(fm1),resid(fm2))
     expect_equal(range(resid(fm1)), c(-101.1789,132.5466), tol=1e-6)
     expect_equal(range(resid(fm1, scaled=TRUE)), c(-3.953567,5.179260), tol=1e-6)
     expect_equal(resid(fm1,"response"),resid(fm1))
@@ -19,7 +22,11 @@ test_that("lmer", {
     expect_true(!any(is.na(resid(fm1NA_exclude)[-na_ind])))
 })
 test_that("glmer", {
-    gm1 <- glmer(incidence/size ~ period + (1|herd), cbpp, family=binomial, weights=size, control=glmerControl(calc.derivs=FALSE))
+    gm1 <- glmer(incidence/size ~ period + (1|herd), cbpp,
+                 family=binomial, weights=size)
+    gm2 <- update(gm1,control=glmerControl(calc.derivs=FALSE))
+    all.equal(resid(gm1),resid(gm2))
+    ## y, wtres, mu change ??
     ## FIX ME:: why does turning on derivative calculation make these tests fail???
     expect_equal(range(resid(gm1)), c(-3.197512,2.356677), tol=1e-6)
     expect_equal(range(resid(gm1, "response")), c(-0.1946736,0.3184579), tol=1e-5)

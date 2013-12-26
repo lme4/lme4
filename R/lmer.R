@@ -145,7 +145,8 @@ lmer <- function(formula, data=NULL, REML = TRUE,
                         control=control$optCtrl,
                         verbose=verbose,
                         start=start,
-                        calc.derivs=control$calc.derivs)
+                        calc.derivs=control$calc.derivs,
+                        use.last.params=control$use.last.params)
     cc <- checkConv(attr(opt,"derivs"),opt$par,
                     lbound=environment(devfun)$lower)
     mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr, mcout,
@@ -332,6 +333,7 @@ glmer <- function(formula, data=NULL, family = gaussian,
                              calc.derivs=control$calc.derivs)
     }
     cc <- if (!control$calc.derivs) NULL else {
+        if (verbose>10) cat("checking convergence\n")
         checkConv(attr(opt,"derivs"),opt$par,
                   lbound=environment(devfun)$lower)
     }
@@ -417,7 +419,8 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
         devfun <- mkdevfun(rho, nAGQ, verbose, control)
         if (devFunOnly) return(devfun)
 
-        opt <- optwrap(control$optimizer[[2]], devfun, par=c(rho$pp$theta, rho$beta0),
+        opt <- optwrap(control$optimizer[[2]], devfun,
+                       par=c(rho$pp$theta, rho$beta0),
                        lower=rho$lower, control=control$optCtrl,
                        adj=TRUE, verbose=verbose)
 
@@ -1333,10 +1336,11 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
         }
     }
     ## control <- c(control,list(xst=0.2*xst, xt=xst*0.0001))
+    ## FIXME: appropriate behaviour of calc.derivs
     opt <- optwrap(object@optinfo$optimizer,
                    ff, x0, lower=lower, control=control,
                    calc.derivs=TRUE)
-    ## FIX ME: inherit calc.derivs rules from previous fit
+        ## FIX ME: inherit calc.derivs rules from previous fit
     if (isGLMM(object)) rr$setOffset(baseOffset)
     mkMerMod(environment(ff), opt,
              list(flist=object@flist, cnms=object@cnms, Gp=object@Gp, lower=object@lower),
@@ -2438,6 +2442,7 @@ getOptfun <- function(optimizer) {
 
 optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
                     control=list(), adj=FALSE, calc.derivs=TRUE,
+                    use.last.params=FALSE,
                     verbose=0L) {
     ## control must be specified if adj==TRUE;
     ##  otherwise this is a fairly simple wrapper
@@ -2506,13 +2511,30 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
     ## save(pp_before,file="pp_before.RData")
 
     if (calc.derivs) {
+        if (use.last.params) {
+            ## +0 tricks R into doing a deep copy ...
+            ## otherwise element of ref class changes!
+            ## FIXME:: clunky!!
+            orig_pars <- opt$par
+            orig_theta <- environment(fn)$pp$theta+0
+            orig_pars[seq_along(orig_theta)] <- orig_theta
+        }
+        if (verbose>10) cat("computing derivatives\n")
         derivs <- deriv12(fn,opt$par,fx=opt$value)
+        if (use.last.params) {
+            ## run one more evaluation of the function at the optimized
+            ##  value, to reset the internal/environment variables in devfun ...
+            fn(orig_pars)
+        }
+    } else derivs <- NULL
+
+    if (!use.last.params) {
         ## run one more evaluation of the function at the optimized
         ##  value, to reset the internal/environment variables in devfun ...
         fn(opt$par)
-    } else derivs <- NULL
-    ## pp_after <- environment(fn)$pp
-    ## save(pp_after,file="pp_after.RData")
+    }
+        
+
     ## store all auxiliary information
     attr(opt,"optimizer") <- optimizer
     attr(opt,"control") <- control
