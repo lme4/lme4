@@ -1634,6 +1634,8 @@ famlink <- function(object, resp = object@resp) {
 	cat("Formula:", deparse(cc),"\n")
     if (!is.null(cc <- call$data))
 	cat("   Data:", deparse(cc), "\n")
+    if (!is.null(cc <- call$weights))
+        cat("Weights:", deparse(cc), "\n")
     if (!is.null(cc <- call$subset))
 	cat(" Subset:", deparse(asOneSidedFormula(cc)[[2]]),"\n")
 }
