@@ -1,5 +1,5 @@
 
-R version 3.0.1 Patched (2013-08-28 r63747) -- "Good Sport"
+R version 3.0.2 Patched (2013-12-27 r64562) -- "Frisbee Sailing"
 Copyright (C) 2013 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -52,8 +52,8 @@ Fixed Effects:
 Linear mixed model fit by maximum likelihood ['lmerMod']
 Formula: Reaction ~ Days + (Days | Subject) 
    Data: sleepstudy 
-      AIC       BIC    logLik  deviance 
-1763.9393 1783.0971 -875.9697 1751.9393 
+      AIC       BIC    logLik  deviance  df.resid 
+1763.9393 1783.0971 -875.9697 1751.9393       174 
 Random effects:
  Groups   Name        Std.Dev. Corr
  Subject  (Intercept) 23.781       
@@ -141,7 +141,7 @@ Fixed Effects:
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.802 0.007 0.816 
+Time elapsed:  0.988 0.012 1.005 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -188,7 +188,7 @@ Warning messages:
 > #fmX2s <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
 > 
 > showProc.time() #
-Time elapsed:  0.317 0.004 0.324 
+Time elapsed:  0.404 0 0.403 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -268,7 +268,11 @@ attr(,"class")
 Linear mixed model fit by REML ['lmerMod']
 Formula: y ~ 1 + (1 | group.id) 
 
-REML criterion at convergence: 73.4034 
+REML criterion at convergence: 73.4 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-1.1193 -0.5973  0.0728  0.4817  1.1179 
 
 Random effects:
  Groups   Name        Variance Std.Dev.
@@ -290,28 +294,28 @@ Fixed effects:
 > 
 > ## ranef and coef
 > rr <- ranef(fm1)
-> stopifnot(is.list(rr), length(rr) == 1, class(rr[[1]]) == "data.frame")
+> stopifnot(is.list(rr), length(rr) == 1, is.data.frame(rr[[1]]))
 > print(plot(rr))
 $Subject
 
 > stopifnot(is(cc <- coef(fm1), "coef.mer"),
-+ 	  is.list(cc), length(cc) == 1, class(cc[[1]]) == "data.frame")
++ 	  is.list(cc), length(cc) == 1, is.data.frame(cc[[1]]))
 > print(plot(cc))
 $Subject
 
 > rr <- ranef(fm2)
-> stopifnot(is.list(rr), length(rr) == 1, class(rr[[1]]) == "data.frame")
+> stopifnot(is.list(rr), length(rr) == 1, is.data.frame(rr[[1]]))
 > print(plot(rr))
 $Subject
 
 > stopifnot(is(cc <- coef(fm2), "coef.mer"),
-+ 	  is.list(cc), length(cc) == 1, class(cc[[1]]) == "data.frame")
++ 	  is.list(cc), length(cc) == 1, is.data.frame(cc[[1]]))
 > print(plot(cc))
 $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.498 0.006 0.519 
+Time elapsed:  0.82 0.004 0.827 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -426,7 +430,7 @@ lagoon1  lagoon2  lagoon3  lagoon4
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.313 0.001 0.316 
+Time elapsed:  0.384 0.008 0.395 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -447,7 +451,7 @@ Warning message:
 In Ops.factor(ff, x1) : + not meaningful for factors
 > 
 > showProc.time() #
-Time elapsed:  1.314 0.007 1.336 
+Time elapsed:  1.412 0 1.417 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -487,8 +491,8 @@ Generalized linear mixed model fit by maximum likelihood ['glmerMod']
  Family: poisson ( log )
 Formula: y ~ (1 | f) 
    Data: d 
-      AIC       BIC    logLik  deviance 
- 354.3560  358.4421 -175.1780  350.3560 
+      AIC       BIC    logLik  deviance  df.resid 
+ 354.3560  358.4421 -175.1780  350.3560        55 
 Random effects:
  Groups Name        Std.Dev.
  f      (Intercept) 0.7115  
@@ -521,4 +525,4 @@ Fixed Effects:
 > 
 > proc.time()
    user  system elapsed 
-  6.980   0.136   7.348 
+  8.552   0.096   8.670 

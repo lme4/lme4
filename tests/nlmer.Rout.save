@@ -1,5 +1,5 @@
 
-R version 3.0.2 Patched (2013-10-30 r64125) -- "Frisbee Sailing"
+R version 3.0.2 Patched (2013-12-27 r64562) -- "Frisbee Sailing"
 Copyright (C) 2013 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -26,8 +26,8 @@ Loading required package: Matrix
 Nonlinear mixed model fit by maximum likelihood ['nlmerMod']
 Formula: circumference ~ SSlogis(age, Asym, xmid, scal) ~ (Asym | Tree) 
    Data: Orange 
-      AIC       BIC    logLik  deviance 
- 273.1438  280.9205 -131.5719  263.1438 
+      AIC       BIC    logLik  deviance  df.resid 
+ 273.1438  280.9205 -131.5719  263.1438        30 
 Random effects:
  Groups   Name Std.Dev.
  Tree     Asym 31.646  
@@ -86,4 +86,4 @@ Fixed Effects:
 > 
 > proc.time()
    user  system elapsed 
-  4.044   0.064   4.112 
+  4.800   0.064   4.875 

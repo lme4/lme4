@@ -141,16 +141,16 @@ stopifnot(all.equal(fixef(fit.1), c("(Intercept)" = 1.571312129)),
 
 ## ranef and coef
 rr <- ranef(fm1)
-stopifnot(is.list(rr), length(rr) == 1, class(rr[[1]]) == "data.frame")
+stopifnot(is.list(rr), length(rr) == 1, is.data.frame(rr[[1]]))
 print(plot(rr))
 stopifnot(is(cc <- coef(fm1), "coef.mer"),
-	  is.list(cc), length(cc) == 1, class(cc[[1]]) == "data.frame")
+	  is.list(cc), length(cc) == 1, is.data.frame(cc[[1]]))
 print(plot(cc))
 rr <- ranef(fm2)
-stopifnot(is.list(rr), length(rr) == 1, class(rr[[1]]) == "data.frame")
+stopifnot(is.list(rr), length(rr) == 1, is.data.frame(rr[[1]]))
 print(plot(rr))
 stopifnot(is(cc <- coef(fm2), "coef.mer"),
-	  is.list(cc), length(cc) == 1, class(cc[[1]]) == "data.frame")
+	  is.list(cc), length(cc) == 1, is.data.frame(cc[[1]]))
 print(plot(cc))
 
 showProc.time() #
