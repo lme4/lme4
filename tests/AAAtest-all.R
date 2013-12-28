@@ -3,5 +3,5 @@ if(require("testthat", quietly = TRUE)) {
     require(pkg, character.only=TRUE, quietly=TRUE)
     test_package(pkg)
 } else {
-    print( "package 'testthat' not available, cannot run unit tests" )
+    cat( "package 'testthat' not available, cannot run unit tests\n" )
 }
