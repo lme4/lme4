@@ -7,8 +7,10 @@ test_that("lmer", {
     expect_warning(lmer(z~ 1|f, method="abc"),"Use the REML argument")
     expect_warning(lmer(z~ 1|f, method="Laplace"),"Use the REML argument")
     expect_warning(lmer(z~ 1|f, sparseX=TRUE),"has no effect at present")
-    ## FIX ME: calc.derivs=TRUE should *not* change variance calculations etc.
     expect_is(fm1 <- lmer(Yield ~ 1|Batch, Dyestuff), "lmerMod")
+    expect_is(fm1_noCD <- update(fm1,control=lmerControl(calc.derivs=FALSE)),
+              "lmerMod")
+    expect_equal(VarCorr(fm1),VarCorr(fm1_noCD))
     ## backward compatibility version
     expect_is(fm1.old <- update(fm1,control=lmerControl(use.last.params=TRUE)),
                                 "lmerMod")

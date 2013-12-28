@@ -304,6 +304,7 @@ glmer <- function(formula, data=NULL, family = gaussian,
     if (is.list(start) && !is.null(start$fixef))
         if (nAGQ==0) stop("should not specify both start$fixef and nAGQ==0")
 
+    ## FIX ME: allow calc.derivs, use.last.params etc. if nAGQ=0
     opt <- optimizeGlmer(devfun,
                          optimizer = control$optimizer[[1]],
                          restart_edge=control$restart_edge,
@@ -330,7 +331,8 @@ glmer <- function(formula, data=NULL, family = gaussian,
                              nAGQ=nAGQ,
                              verbose = verbose,
                              stage=2,
-                             calc.derivs=control$calc.derivs)
+                             calc.derivs=control$calc.derivs,
+                             use.last.params=control$use.last.params)
     }
     cc <- if (!control$calc.derivs) NULL else {
         if (verbose>10) cat("checking convergence\n")
@@ -1336,15 +1338,17 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
         }
     }
     ## control <- c(control,list(xst=0.2*xst, xt=xst*0.0001))
-    ## FIXME: appropriate behaviour of calc.derivs
+    ## FIX ME: set calc.derivs/use.last.params appropriately
+    ##  (inherit from previous fit)
     opt <- optwrap(object@optinfo$optimizer,
-                   ff, x0, lower=lower, control=control,
-                   calc.derivs=TRUE)
-        ## FIX ME: inherit calc.derivs rules from previous fit
+                   ff, x0, lower=lower, control=control)
+    cc <- checkConv(attr(opt,"derivs"),opt$par,
+                    lbound=lower)
     if (isGLMM(object)) rr$setOffset(baseOffset)
     mkMerMod(environment(ff), opt,
-             list(flist=object@flist, cnms=object@cnms, Gp=object@Gp, lower=object@lower),
-             object@frame, getCall(object))
+             list(flist=object@flist, cnms=object@cnms,
+                  Gp=object@Gp, lower=object@lower),
+             object@frame, getCall(object), cc)
 }
 
 ##-- BUG in roxygen2: If we use  @S3method instead of @method,

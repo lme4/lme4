@@ -16,6 +16,11 @@ checkConv <- function(derivs,
     if (is.null(derivs)) return(NULL)  ## bail out
     ntheta <- length(lbound)
     res <- list()
+    if (any(is.na(derivs$gradient))) {
+        res$code <- -5L
+        res$messages <- gettextf("Gradient contains NAs")
+        return(res)  ## bail out
+    }
     ## gradients:
     ## check absolute gradient (default)
     if ((max.grad <- max(abs(derivs$gradient))) > control$gradTol) {

@@ -601,14 +601,10 @@ extern "C" {
         ppt->solve();
         rpt->updateMu(ppt->linPred(1.));
 	val=rpt->Laplace(ppt->ldL2(), ppt->ldRX2(), ppt->sqrL(1.));
-	std::cout.precision(15);
 	if (debug) {
 	    Rcpp::Rcout.precision(10);
 	    Rcpp::Rcout << "lmer_dev: theta=" <<
 		ppt->theta() << ", val=" << val << std::endl;
-	    // Rprintf("lmer_dev: val=%1.12lf\n", // theta=%1.12lf\n",
-	    // val);
-	    
 	}
 
         return val;

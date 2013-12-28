@@ -8,7 +8,9 @@
 }
 \usage{
 lmerControl(optimizer = "Nelder_Mead",
-    restart_edge = TRUE, calc.derivs=TRUE,
+    restart_edge = TRUE,
+    calc.derivs=TRUE,
+    use.last.params=FALSE,
     sparseX = FALSE,
     check.nobs.vs.rankZ = "warningSmall",
     check.nobs.vs.nlev = "stop",
@@ -22,6 +24,7 @@ lmerControl(optimizer = "Nelder_Mead",
 glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     restart_edge = FALSE,
     calc.derivs=TRUE,
+    use.last.params=FALSE,
     sparseX = FALSE,
     check.nobs.vs.rankZ = "warningSmall",
     check.nobs.vs.nlev = "stop",
@@ -72,6 +75,11 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
   }
   \item{calc.derivs}{logical - compute gradient and Hessian of nonlinear
     optimization solution?}
+  \item{use.last.params}{logical - should the last value of the
+    parameters evaluated (\code{TRUE}), rather than the value of the
+    parameters corresponding to the minimum deviance, be returned?
+    This is a "backward bug-compatibility" option; use \code{TRUE}
+    only when trying to match previous results.}
   \item{sparseX}{logical - should a sparse model matrix be
     used for the fixed-effects terms?  Defaults to \code{FALSE}.
     Currently inactive.}

@@ -3,9 +3,10 @@
 ## only case where we get stuck; either optimizer=bobyqa or
 ## restart_edge=TRUE (default) works
 
+library(lme4)
+
 ## Stephane Laurent:
 dat <- read.csv(system.file("testdata","dat20101314.csv",package="lme4"))
-library(lme4)
 
 fit <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat)
 fit_b <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat,
@@ -19,30 +20,56 @@ stopifnot(all(getME(fit,"theta")>0))
 ## Manuel Koller
 
 source(system.file("testdata","koller-data.R",package="lme4"))
-
 ldata <- getData(13)
-fm4 <- lmer(y ~ (1|Var2), ldata, control=lmerControl(calc.derivs=FALSE))
-## opt$par is 0.08 but environment(fn)$pp$theta is 0 ... ??
-## fn(0.08)=3334.46; fn(0)=3336.095
-## 3.2413, 15.3855 (correct)
-fm4a <- lmer(y ~ (1|Var2), ldata)
-## end of first optim ([before restart_edge])
-## $fval= 3334.46; $par = 0.08;
-## 1.2504, 15.6302 (wrong)
-dd <- update(fm4,devFunOnly=TRUE)
-lme4:::deriv12(dd,getME(fm4,"theta"))
-dd2 <- update(fm4a,devFunOnly=TRUE)
-lme4:::deriv12(dd2,getME(fm4a,"theta"))
-fm4b <- lmer(y ~ (1|Var2), ldata, control=lmerControl(restart_edge=FALSE))
+## old (backward compatible/buggy)
+fm4 <- lmer(y ~ (1|Var2), ldata, control=lmerControl(use.last.params=TRUE))
+fm4b <- lmer(y ~ (1|Var2), ldata, control=lmerControl(restart_edge=FALSE,
+                                  use.last.params=TRUE))
 stopifnot(getME(fm4b,"theta")==0)
-fm4c <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="bobyqa"))
+fm4c <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="bobyqa",
+                                  use.last.params=TRUE))
 stopifnot(all.equal(getME(fm4,"theta"),getME(fm4c,"theta"),tol=1e-4))
 stopifnot(all(getME(fm4,"theta")>0))
 
-## dd <- lmer(y ~ (1|Var2), ldata, devFunOnly=TRUE)
-## tvec <- 10^seq(-7,0,by=0.1)
-## dvec <- sapply(tvec,dd)
-## d0 <- dd(0)
-## plot(tvec,dvec,type="b")
-## plot(tvec,abs(dvec-d0),log="xy",col=ifelse(dvec<d0,"black","red"))
+## new: doesn't get stuck at edge any more,  but gets stuck somewhere else ...
+fm5 <- lmer(y ~ (1|Var2), ldata)
+fm5b <- lmer(y ~ (1|Var2), ldata, control=lmerControl(restart_edge=FALSE))
+fm5c <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="bobyqa"))
+stopifnot(all(getME(fm4,"theta")>0))
 
+if (FALSE) {
+    ## additional stuff for diagnosing Nelder-Mead problems.
+    ## library(nloptr) call commented out to avoid R CMD check problems/needing to
+    ##  Suggest: nloptr
+    
+    library(optimx)
+    fm5d <- update(fm5,control=lmerControl(optimizer="optimx",
+                       optCtrl=list(method="L-BFGS-B")))
+
+    ## library(nloptr)
+    defaultControl <- list(algorithm="NLOPT_LN_BOBYQA",xtol_rel=1e-6,maxeval=1e5)
+    nloptwrap2 <- function(fn,par,lower,upper,control=list(),...) {
+        for (n in names(defaultControl)) 
+            if (is.null(control[[n]])) control[[n]] <- defaultControl[[n]]
+        res <- nloptr(x0=par,eval_f=fn,lb=lower,ub=upper,opts=control,...)
+        with(res,list(par=solution,
+                      fval=objective,
+                      conv=if (status>0) 0 else status,
+                      message=message))
+    }
+    fm5e <- update(fm5,control=lmerControl(optimizer="nloptwrap2"))
+
+    mList <- setNames(list(fm4,fm4b,fm4c,fm5,fm5b,fm5c,fm5d,fm5e),
+                      c("NM/uselast","NM/uselast/norestart","bobyqa/uselast",
+                        "NM","NM/norestart","bobyqa","LBFGSB","nloptr/bobyqa"))
+    pp <- profile(fm5c,which=1)
+    dd <- as.data.frame(pp)
+    par(las=1,bty="l")
+    v <- sapply(mList,
+                function(x) sqrt(VarCorr(x)[[1]]))
+    (v2 <- sapply(mList,getME,"theta"))
+
+    plot(.zeta^2~.sig01,data=dd,type="b")
+    abline(v=v)
+
+}

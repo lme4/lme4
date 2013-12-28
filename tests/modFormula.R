@@ -3,7 +3,10 @@ library(testthat)
 lmod <- lFormula(Reaction ~ Days + (Days|Subject), sleepstudy)
 devfun <- do.call(mkLmerDevfun, lmod)
 opt <- optimizeLmer(devfun)
-fm1 <- mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr)
+cc <- lme4:::checkConv(attr(opt,"derivs"),opt$par,
+                lbound=environment(devfun)$lower)
+fm1 <- mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr,
+                lme4conv=cc)
 fm2 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 
 ## basic equivalence

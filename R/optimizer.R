@@ -85,8 +85,13 @@ Nelder_Mead <- function(fn, par, lower=rep.int(-Inf, n),
         nMres <- 4
     }
 
-    msgvec <- c("nm_forced","cannot generate a feasible simplex","initial x is not feasible",
-                "active","minf_max","fcvg","xcvg",  ## FIXME: names (see NelderMead_newf in external.cpp)
+    msgvec <- c("nm_forced",
+                "cannot generate a feasible simplex",
+                "initial x is not feasible",
+                "active",
+                "objective function went below allowed minimum",
+                "objective function values converged to within tolerance",
+                "parameter values converged to within tolerance",
                 cmsg)
 
     if (nMres<0) stop(msgvec[nMres+4])

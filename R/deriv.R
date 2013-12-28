@@ -1,3 +1,6 @@
+## FIX ME: get rid of unnecessary/leftover stuff;
+## right now we are only using deriv12??
+
 #' @title Compute gradient of a function.
 #'
 #' @description
