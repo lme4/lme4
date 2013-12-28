@@ -42,9 +42,9 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     restart_edge = FALSE,
     calc.derivs=TRUE,
     use.last.params=FALSE,
+    sparseX = FALSE,
     tolPwrss=1e-7,
     compDev=TRUE,
-    sparseX = FALSE,
     ## input checking options
     check.nobs.vs.rankZ = "warningSmall",
     check.nobs.vs.nlev = "stop",
@@ -147,6 +147,15 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     than (or greater than or equal to) the number of random-effects
     levels for each term, usually necessary for identifiable variances.
     As for \code{check.nobs.vs.nlev}.}
+  \item{check.conv.grad}{character - rules for
+    checking the gradient of the deviance function for convergence.}
+  \item{check.conv.singular}{character - rules for
+    checking for a singular fit, i.e. one where some parameters are on
+    the boundary of the feasible space (for example, random effects
+    variances equal to 0 or correlations between random effects
+    equal to +/- 1.0)}
+  \item{check.conv.hess}{character - rules for
+    checking the Hessian of the deviance function for convergence.}
     \item{ensureXrank}{logical - drop columns from the design matrix to ensure to
     ensure that it has full rank. Sometimes needed to make the model
     identifiable.}
