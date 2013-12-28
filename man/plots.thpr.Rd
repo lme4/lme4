@@ -36,11 +36,14 @@
     derived from \code{conf}.}
   \item{conf}{numeric vector of confidence levels to be
     shown as contours.}
+  \item{absVal}{logical indicating if \code{\link{abs}(.)}olute values
+      should be plotted, often preferred for confidence interval
+      visualization.}
   \item{...}{further arguments passed to \code{\link{xyplot}},
     \code{\link{densityplot}}, or \code{\link{splom}} from package
     \pkg{lattice}, respectively.}
 }
-\seealso{ \code{\link[profile-methods]{profile}}, notably for an
+\seealso{ \code{\link[=profile-methods]{profile}}, notably for an
   example.
 }
 \value{
