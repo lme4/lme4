@@ -60,6 +60,8 @@ Nelder_Mead <- function(fn, par, lower=rep.int(-Inf, n),
         (if(cc$warnOnly) warning else stop)( msgvec[nMres+4] )
     }
 
-    list(fval=nM$value(), par=nM$xpos(), convergence= nMres, message=msgvec[nMres+4],
-         control = c(cc, xst=xst, xt=xt), feval = it)
+    list(fval = nM$value(), par = nM$xpos(),
+	 convergence = pmin(0, nMres), # positive nMres is also 'convergence'
+	 NM.result = nMres, `message` = msgvec[nMres+4],
+	 control = c(cc, xst=xst, xt=xt), feval = it)
 }
