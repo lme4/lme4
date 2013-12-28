@@ -1665,12 +1665,12 @@ getLlikAIC <- function(object, cmp = object@devcomp$cmp) {
     }
 }
 
-.prt.VC <- function(varcor, digits, comp, ...) {
+.prt.VC <- function(varcor, digits, comp, formatter=format, ...) {
     cat("Random effects:\n")
     fVC <- if(missing(comp))
-	formatVC(varcor, digits=digits)
+	formatVC(varcor, digits=digits, formatter=formatter)
     else
-	formatVC(varcor, digits=digits, comp=comp)
+	formatVC(varcor, digits=digits, formatter=formatter, comp=comp)
     print(fVC, quote = FALSE, digits = digits, ...)
 }
 
@@ -2160,8 +2160,8 @@ unscaledVar <- function(object, ...) {
 
 ##' @S3method print VarCorr.merMod
 print.VarCorr.merMod <- function(x, digits = max(3, getOption("digits") - 2),
-		   comp = "Std.Dev.", ...) {
-    print(formatVC(x, digits=digits, comp=comp), quote=FALSE, ...)
+		   comp = "Std.Dev.", formatter=format, ...) {
+    print(formatVC(x, digits=digits, comp=comp, formatter=formatter), quote=FALSE, ...)
     invisible(x)
 }
 
@@ -2175,9 +2175,15 @@ print.VarCorr.merMod <- function(x, digits = max(3, getOption("digits") - 2),
 ##' @param comp character vector of length one or two indicating which
 ##' columns out of "Variance" and "Std.Dev." should be shown in the
 ##' formatted output.
+##' @param formatter the \code{\link{function}} to be used for
+##' formatting the standard deviations and or variances (but
+##' \emph{not} the correlations which (currently) are always formatted
+##' as "0.nnn"
+##' @param ... optional arguments for \code{formatter(*)} in addition
+##' to the first (numeric vector) and \code{digits}.
 ##' @return a character matrix of formatted VarCorr entries from \code{varc}.
 formatVC <- function(varc, digits = max(3, getOption("digits") - 2),
-		     comp = "Std.Dev.")
+		     comp = "Std.Dev.", formatter = format, ...)
 {
     c.nms <- c("Groups", "Name", "Variance", "Std.Dev.")
     avail.c <- c.nms[-(1:2)]
@@ -2187,7 +2193,6 @@ formatVC <- function(varc, digits = max(3, getOption("digits") - 2),
     if(length(use.c) == 0)
 	stop("Must *either* show variances or standard deviations")
     useScale <- attr(varc, "useSc")
-    recorr <- lapply(varc, attr, "correlation")
     reStdDev <- c(lapply(varc, attr, "stddev"),
 		  if(useScale) list(Residual = unname(attr(varc, "sc"))))
     reLens <- vapply(reStdDev, length, 1L)
@@ -2196,17 +2201,19 @@ formatVC <- function(varc, digits = max(3, getOption("digits") - 2),
     reMat[1+cumsum(reLens)-reLens, "Groups"] <- names(reLens)
     reMat[,"Name"] <- c(unlist(lapply(varc, colnames)), if(useScale) "")
     if(any("Variance" == use.c))
-    reMat[,"Variance"] <- format(unlist(reStdDev)^2, digits = digits)
+    reMat[,"Variance"] <- formatter(unlist(reStdDev)^2, digits = digits, ...)
     if(any("Std.Dev." == use.c))
-    reMat[,"Std.Dev."] <- format(unlist(reStdDev),   digits = digits)
+    reMat[,"Std.Dev."] <- formatter(unlist(reStdDev),   digits = digits, ...)
     if (any(reLens > 1)) {
 	maxlen <- max(reLens)
+	recorr <- lapply(varc, attr, "correlation")
 	corr <-
 	    do.call("rBind",
 		    lapply(recorr,
 			   function(x) {
 			       x <- as(x, "matrix")
 			       dig <- max(2, digits - 2) # use 'digits' !
+                               ## not using formatter() for correlations
 			       cc <- format(round(x, dig), nsmall = dig)
 			       cc[!lower.tri(cc)] <- ""
 			       nr <- nrow(cc)
