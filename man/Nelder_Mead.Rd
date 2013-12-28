@@ -1,27 +1,24 @@
 \name{NelderMead}
 \alias{Nelder_Mead}
-\alias{NelderMead}
-\title{Generator object for the Nelder-Mead optimizer class.}
+\title{Nelder-Mead Optimization of Parameters, Possibly (Box) Constrained}
+\description{
+  Nelder-Mead optimization of parameters, allowing
+  optimization subject to box constraints (contrary to the default,
+  \code{method = "Nelder-Mead"}, in \R's \code{\link{optim}()}, and
+  using reverse communications.
+}
 \usage{
-NelderMead(...)
-
 Nelder_Mead(fn, par, lower = rep.int(-Inf, n), upper = rep.int(Inf, n),
             control = list())
 }
 \arguments{
-  \item{\dots}{Argument list (see Note below).}
+  \item{fn}{a \code{\link{function}} of a single numeric vector argument
+    returning a numeric scalar.}
 
-  \item{fn}{a function of a single numeric vector argument
-  returning a numeric scalar}
+  \item{par}{numeric vector of starting values for the parameters.}
 
-  \item{par}{numeric vector of starting values for the
-  parameters.}
-
-  \item{lower}{numeric vector of lower bounds (elements may
-  be \code{-Inf}).}
-
-  \item{upper}{numeric vector of upper bounds (elements may
-  be \code{Inf}).}
+  \item{lower}{numeric vector of lower bounds (elements may be \code{-Inf}).}
+  \item{upper}{numeric vector of upper bounds (elements may be \code{Inf}).}
 
   \item{control}{a named list of control settings. Possible settings are
     \describe{
@@ -45,50 +42,34 @@ Nelder_Mead(fn, par, lower = rep.int(-Inf, n), upper = rep.int(Inf, n),
 	1=print every 20 evaluations, 2=print every 10
 	evalutions, 3=print every evaluation.  Sets
 	\sQuote{iprint}, if specified, but does not override it.}
-  }}
+      \item{warnOnly}{a logical indicating if non-convergence (codes
+	-1,-2,-3) should not \code{\link{stop}(.)}, but rather only call
+	\code{\link{warning}} and return a result which might inspected.
+	Defaults to \code{FALSE}, i.e., stop on non-convergence.}
+    }
+  }
 }
 \value{
-  a list with 4 components,
+  a \code{\link{list}} with components
   \item{fval}{numeric scalar - the minimum function value achieved}
   \item{par}{numeric vector - the value of \code{x} providing the minimum}
-  \item{ierr}{integer scalar - error code (see below)}
+  \item{convergence}{integer valued scalar, if not \code{0}, an error code:
+    \describe{
+      \item{-4}{\code{nm_evals}: maximum evaluations reached}
+      \item{-3}{\code{nm_forced}: ?}
+      \item{-2}{\code{nm_nofeasible}: cannot generate a feasible simplex}
+      \item{-1}{\code{nm_x0notfeasible}: initial x is not feasible (?)}
+      \item{0}{successful convergence}
+    }
+  }
+  \item{message}{a string specifying the kind of convergence.}
   \item{control}{the \code{\link{list}} of control settings after
     substituting for defaults.}
-}
-\description{
-  The generator objects for the
-  \code{\linkS4class{NelderMead}} class of optimizers
-  subject to box constraints and using reverse
-  communications.
-
-  Nelder-Mead optimization of parameters, possibly with box
-  constraints
-}
-\note{
-  Arguments to the \code{new} method must be named
-  arguments:
-  \describe{
-    \item{lower}{numeric vector of lower bounds - elements may be \code{-Inf}.}
-    \item{upper}{numeric vector of upper bounds - elements may be \code{Inf}.}
-    \item{xst}{numeric vector of initial step sizes to establish the
-      simplex - all elements must be non-zero.}
-    \item{x0}{numeric vector of starting values for the parameters.}
-    \item{xt}{numeric vector of tolerances on the parameters.}
-  }
-  Return error codes (\code{ierr}):
-  \describe{
-    \item{-4}{\code{nm_evals}: maximum evaluations reached}
-    \item{-3}{\code{nm_forced}: ?}
-    \item{-2}{\code{nm_nofeasible}: cannot generate a feasible simplex}
-    \item{-1}{\code{nm_x0notfeasible}: initial x is not feasible (?)}
-  }
-}
-\section{Methods}{
-  \describe{\code{NelderMead$new(lower, upper, xst, x0, xt)}}{Create a
-    new \code{\linkS4class{NelderMead}} object}
+  \item{feval}{the number of function evaluations.}
 }
 \seealso{
-  The \code{\linkS4class{NelderMead}} class definition
+  The \code{\linkS4class{NelderMead}} class definition and generator
+  function.
 }
 \examples{
 fr <- function(x) {   ## Rosenbrock Banana function

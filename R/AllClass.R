@@ -1,6 +1,4 @@
 ### Class definitions for the package
-##' @useDynLib lme4 .registration=TRUE
-NULL
 
 ##' Class "lmList" of 'lm' Objects on Common Model
 ##'
@@ -793,29 +791,10 @@ golden <-
 ##'
 NULL
 
-##' Generator object for the Nelder-Mead optimizer class.
-##'
-##' The generator objects for the \code{\linkS4class{NelderMead}} class of
-##' optimizers subject to box constraints and using reverse communications.
-##'
-##' @rdname NelderMead
-##' @param \dots Argument list (see Note below).
-##' @section Methods:
-##'     \describe{\code{NelderMead$new(lower, upper, xst, x0, xt)}}{Create a new
-##'          \code{\linkS4class{NelderMead}} object}
-##' @seealso \code{\linkS4class{NelderMead}}
-##' @note Arguments to the \code{new} method must be named arguments:
-##' \describe{
-##' \item{lower}{numeric vector of lower bounds - elements may be \code{-Inf}.}
-##' \item{upper}{numeric vector of upper bounds - elements may be \code{Inf}.}
-##' \item{xst}{numeric vector of initial step sizes to establish the simplex -
-##'     all elements must be non-zero.}
-##' \item{x0}{numeric vector of starting values for the parameters.}
-##' \item{xt}{numeric vector of tolerances on the parameters.}
-##' }
-
-##' @keywords classes
-##' @export
+## Generator object for the Nelder-Mead optimizer class  "NelderMead"
+##
+## A reference class for a Nelder-Mead simplex optimizer allowing box
+## constraints on the parameters and using reverse communication.
 NelderMead <-
     setRefClass("NelderMead", # Reverse communication implementation of Nelder-Mead simplex optimizer
                 fields =
@@ -867,25 +846,7 @@ NelderMead <-
                      xpos         = function()         .Call(NelderMead_xpos, ptr())
                      )
             )
-##' Class \code{"NelderMead"}
-##'
-##' A reference class for a Nelder-Mead simplex optimizer allowing box
-##' constraints on the parameters and using reverse communication.
-##'
-##' @docType class
-##' @name NelderMead-class
-##' @note This is the default optimizer for the second stage of
-##' \code{\link{glmer}} and \code{\link{nlmer}} fits.  We found that it was more
-##' reliable and often faster than more sophisticated optimizers.
-##' @section Extends: All reference classes extend and inherit methods from
-##' \code{"\linkS4class{envRefClass}"}.
-##' @seealso \code{\link{glmer}}, \code{\link{nlmer}}
-##' @references Based on code in the NLopt collection.
-##' @keywords classes
-##' @examples
-##'
-##' showClass("NelderMead")
-NULL
+
 
 ##' Class "merMod" of Fitted Mixed-Effect Models
 ##'
