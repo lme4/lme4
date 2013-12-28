@@ -6,7 +6,6 @@
 ##' @export
 profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
 			   maxpts = 100, delta = cutoff/8,
-                           ##  tr = 0,  ## FIXME:  remove if not doing anything ...
                            verbose=0, devtol=1e-9,
                            maxmult = 10,
                            startmethod = "prev",
@@ -906,35 +905,26 @@ splom.thpr <- function (x, data,
     splom(~ pfr, lower.panel = lp, upper.panel = up, diag.panel = dp, ...)
 }
 
-##' Transform an lmer profile to the scale of the logarithm of the
-##' standard deviation of the random effects.
-##' @title Transform an lmer profile to the logarithm scale
-##' @param x an object that inherits from class "thpr"
-##' @param base the base of the logarithm.  Defaults to natural
-##'        logarithms
-##'
-##' @return an lmer profile like x with all the .sigNN parameters
-##'      replaced by .lsigNN.  The forward and backward splines for
-##'      these parameters are recalculated.
-##' @S3method log thpr
-log.thpr <- function (x, base = exp(1)) {
+## return an lmer profile like x with all the .sigNN parameters
+## replaced by .lsigNN.  The forward and backward splines for
+## these parameters are recalculated.
+log.thpr <- function (x, base = exp(1)) { ## -> ../man/profile-methods.Rd
     cn <- colnames(x)
-    sigs <- grep("^\\.sig", cn)
-    if (length(sigs)) {
-        colnames(x) <- sub("^\\.sig", ".lsig", cn)
+    if (length(sigs <- grep("^\\.sig", cn))) {
+	colnames(x) <- cn <- sub("^\\.sig", ".lsig", cn)
         levels(x[[".par"]]) <- sub("^\\.sig", ".lsig", levels(x[[".par"]]))
         names(attr(x, "backward")) <-
             names(attr(x, "forward")) <-
                 sub("^\\.sig", ".lsig", names(attr(x, "forward")))
-        for (nm in colnames(x)[sigs]) {
+	for (nm in cn[sigs]) {
             x[[nm]] <- log(x[[nm]], base = base)
             .par <- NULL  ## suppress R CMD check warning
             fr <- subset(x, .par == nm & is.finite(x[[nm]]))
             ## FIXME: avoid subset for global-variable false positive
             ## fr <- x[x$.par == nm & is.finite(x[[nm]]),]
             form <- eval(substitute(.zeta ~ nm, list(nm = as.name(nm))))
-            attr(x, "forward")[[nm]] <- interpSpline(form, fr)
-            attr(x, "backward")[[nm]] <- backSpline(attr(x, "forward")[[nm]])
+            attr(x, "forward")[[nm]] <- isp <- interpSpline(form, fr)
+            attr(x, "backward")[[nm]] <- backSpline(isp)
         }
         ## eliminate rows that produced non-finite logs
         x <- x[apply(is.finite(as.matrix(x[, sigs])), 1, all),]
@@ -962,8 +952,8 @@ varpr <- function (x) {
             x[[nm]] <- x[[nm]]^2
             fr <- subset(x, .par == nm & is.finite(x[[nm]]))
             form <- eval(substitute(.zeta ~ nm, list(nm = as.name(nm))))
-            attr(x, "forward")[[nm]] <- interpSpline(form, fr)
-            attr(x, "backward")[[nm]] <- backSpline(attr(x, "forward")[[nm]])
+            attr(x, "forward")[[nm]] <- isp <- interpSpline(form, fr)
+            attr(x, "backward")[[nm]] <- backSpline(isp)
         }
         ## eliminate rows the produced non-finite logs
         x <- x[apply(is.finite(as.matrix(x[, sigs])), 1, all),]

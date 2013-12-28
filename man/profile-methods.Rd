@@ -2,11 +2,18 @@
 \title{Profile method for merMod objects}
 \docType{methods}
 \alias{as.data.frame.thpr}
+\alias{log.thpr}
 \alias{profile-methods}
 \alias{profile.merMod}
 \description{
   Methods for \code{\link{profile}}() of [ng]\code{\link{lmer}} fitted
   models.
+
+  The \code{log()} method transforms a lmer profile
+  to the scale of the logarithm of the standard deviation of the random
+  effects, i.e. it returns a profile with all the .sigNN parameters
+  replaced by .lsigNN.  The forward and backward splines for these
+  parameters are recalculated.
 }
 \usage{
 \method{profile}{merMod}(fitted, which = 1:nptot, alphamax = 0.01,
@@ -15,7 +22,7 @@
 	signames = TRUE, ...)
 
 \method{as.data.frame}{thpr} (x, ...)
-\method{log}{thpr} (x, ...) %%<<- FIXME: document it, see ../R/profile.R
+\method{log}{thpr} (x, base = exp(1))
 }
 \arguments{
   \item{fitted}{a fitted model, e.g., the result of \code{\link{lmer}(..)}.}
@@ -58,16 +65,18 @@
     that some code for profile transformations (e.g.,
     \code{\link{varianceProf}}) depends on \code{signames==TRUE}.}
   \item{\dots}{potential further arguments for \code{profile} methods.}
-  \item{x}{the result of \code{\link{profile}} (or very similar structure)}
+  \item{x}{the result of \code{\link{profile}(<merMod>} (or very similar structure)}
+  \item{base}{the base of the logarithm.  Defaults to natural logarithms.}
 }
 \value{
+  \code{profile(<merMod>)} returns
   an object of S3 class \code{"thpr"},% = th[eoretical]?? pr[ofile]
   \code{\link{data.frame}}-like.  Methods for such a profile object
   are notably \code{\link{confint}()}, the three plots methods
   \code{\link[=xyplot.thpr]{xyplot}}, \code{densityplot}, and
   \code{splom}.
 
-  Further, \code{\link{log}()} and \code{\link{as.data.frame}()}.
+  Further, \code{\link{log}()} (see above) and \code{\link{as.data.frame}()}.
 }
 \details{
   Methods for function \code{\link{profile}} (package
@@ -105,18 +114,23 @@ stopifnot(all.equal(CIpr,
 }
 require(lattice)
 xyplot(tpr)
+xyplot(tpr, absVal=TRUE) # easier to see conf.int.s (and check symmetry)
 densityplot(tpr, main="densityplot( profile(lmer(..)) )")
 splom(tpr)
 doMore <- lme4:::testLevel() > 1 %% even more --> ../tests/profile.R
 if(doMore) { ## not typically, for time constraint reasons
  ## Batch and residual variance only
  system.time(tpr2 <- profile(fm01ML, which=1:2, optimizer="Nelder_Mead"))
+ print( xyplot(tpr2) )
+ print( xyplot(log(tpr2)) )# log(sigma) is better
+
  ## GLMM example
  gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
 	     data = cbpp, family = binomial)
  ## running time ~9 seconds on a modern machine:
  print( system.time(pr4 <- profile(gm1)) )
  print( xyplot(pr4,layout=c(5,1),as.table=TRUE) )
+ print( xyplot(log(pr4), absVal=TRUE) ) # log(sigma_1)
  print( splom(pr4) )
  print( system.time( # quicker: only sig01 and one fixed effect
      pr2 <- profile(gm1, which=c("theta_", "period2"))))
