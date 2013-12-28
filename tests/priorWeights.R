@@ -15,11 +15,12 @@ compFunc <- function(lmeMod, lmerMod, tol = 1e-2){
     vcLmer <- VarCorr(lmerMod)
     vcLmer <- vcLmer[length(vcLmer):1]
     ##
-    
+
     lmerVarCorr <- c(sapply(vcLmer, attr, "stddev"),
                      attr(VarCorr(lmerMod), "sc"))
-    if(class(lmerMod)=="merMod") lmerCoef <- summary(lmerMod)$coefficients
-    else lmerCoef <- summary(lmerMod)@coefs
+    ## differentiate lme4{new} and lme4.0 :
+    lmerCoef <- if(is(lmerMod, "merMod"))
+	summary(lmerMod)$coefficients else summary(lmerMod)@coefs
     lmerOut <- c(lmerVarCorr, as.numeric(lmerCoef))
     names(lmerOut) <- names(lmeOut)
 
@@ -118,8 +119,13 @@ Z <- model.matrix(~g-1);
 y <- Z%*%rnorm(ncol(Z)) + x + rnorm(n)/w^.5
 m <- lmer(y ~ x + (1|g), weights=w, REML = TRUE)
 
-if(has4.0 <- require("lme4.0")) {
-    m.0 <- lme4.0::lmer(y ~ x + (1|g), weights=w, REML = TRUE)
+## CRAN-forbidden:
+## has4.0 <- require("lme4.0"))
+has4.0 <- FALSE
+if(has4.0) {
+    ## m.0 <- lme4.0::lmer(y ~ x + (1|g), weights=w, REML = TRUE)
+    lmer0 <- get("lmer", envir=asNamespace("lme4.0"))
+    m.0 <- lmer0(y ~ x + (1|g), weights=w, REML = TRUE)
     dput(fixef(m.0)) # c(-0.73065400610675, 2.02895402562926)
     dput(sigma(m.0)) # 1.73614301673377
     dput(VarCorr(m.0)$g[1,1]) # 2.35670451590395
