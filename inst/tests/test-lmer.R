@@ -91,22 +91,20 @@ test_that("lmer", {
 
     ## check for errors with illegal control options
     flags <- grep("^check",names(formals(lmerControl)),value=TRUE)
-    ctrls <- lapply(flags,function(x) do.call(lmerControl,setNames(list(c("warnign")),x))) ## DELIBERATE TYPO
-    invisible(lapply(ctrls,
-           function(x) {
-               expect_error(lFormula(Reaction ~ 1 + Days + (1|Subject),data=sleepstudy,
-                                     control=x),"invalid control level")
-           }))
-
-    L <- lapply(ctrls,
-           function(x) try (lFormula(Reaction ~ 1 + Days + (1|Subject),data=sleepstudy,
-                                     control=x)))
-    expect_true(all(sapply(L,is,"try-error")))
+    ## set each to invalid string:
+    ctrls <- lapply(flags,function(x) do.call(lmerControl, ## Deliberate: fake typo
+					      ##		    vv
+					      setNames(list(c("warnign")),x)))
+    invisible(lapply(ctrls, function(CTR) {
+	expect_error(lFormula(Reaction ~ 1 + Days + (1|Subject),
+			      data = sleepstudy, control = CTR),
+		     "invalid control level")
+    }))
 
     ## disable warning via options
     options(lmerControl=list(check.nobs.vs.rankZ="ignore",check.nobs.vs.nRE="ignore"))
     expect_is(fm4 <- lmer(Reaction ~ Days + (1|Subject),
-                            subset(sleepstudy,Subject %in% levels(Subject)[1:4])), "merMod")
+			  subset(sleepstudy,Subject %in% levels(Subject)[1:4])), "merMod")
     expect_is(lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
                    data = sleepstudy, subset = (Days == 1 | Days == 9)),
               "merMod")
@@ -139,5 +137,5 @@ test_that("lmer", {
     new <- "foo"
     expect_is(refit(fm1),"merMod")
     rm("new")
-})
 
+}) ## test_that(..)
