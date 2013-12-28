@@ -24,7 +24,7 @@ V1 <- vcov(fm1)
 TOL <- 0 # to show the differences below
 TOL <- 1e-5 # for the check
 stopifnot(
-	  all.equal(diag(V), 0.176078, tol = TOL) # 64b: 2.4e-8
+	  all.equal(diag(V), 0.176076, tol = TOL) # 64b: 2.4e-8
 	  ,
 	  all.equal(as.numeric(chol(V)), 0.4196165, tol = TOL)	# 64b: 3.2e-8
 	  ,

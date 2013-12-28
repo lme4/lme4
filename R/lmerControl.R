@@ -19,14 +19,16 @@ namedList <- function(...) {
 ##' @return those elements of \code{nms} which are "checking options"
 ##' @author Martin Maechler
 .get.checkingOpts <- function(nms)
-    nms[grepl("^check\\.", nms) | nms == "ensureXrank"]
+    nms[grepl("^check\\.(?!conv)", nms, perl=TRUE) | nms == "ensureXrank"]
 
 
 ## DOC: ../man/lmerControl.Rd
 lmerControl <- function(optimizer="Nelder_Mead",
                         restart_edge=TRUE,
+                        calc.derivs=TRUE,
+                        use.last.params=FALSE,
                         sparseX=FALSE,
-                        ## now all the "checking options"
+                        ## input checking options:
                         check.nobs.vs.rankZ="warningSmall",
                         check.nobs.vs.nlev="stop",
                         check.nlev.gtreq.5="ignore",
@@ -34,44 +36,63 @@ lmerControl <- function(optimizer="Nelder_Mead",
                         check.nobs.vs.nRE="stop",
                         ensureXrank=TRUE,
                         check.formula.LHS="stop",
-
-                        optCtrl = list())
+                        check.conv.grad="warning",
+                        check.conv.singular="ignore",
+                        check.conv.hess="warning",
+                        optCtrl = list()
+                        )
 {
     ## FIXME: is there a better idiom?  match.call() ?
     ## fill in values from options, but **only if not specified explicitly in arguments**
     ##  (ugh ... is there a better way to do this?  mapply() is clunky:
     ##  http://stackoverflow.com/questions/16276667/using-apply-with-assign-in-r
     stopifnot(is.list(optCtrl))
-    if (!is.null(opts <- getOption("lmerControl")))
-        for (arg in .get.checkingOpts(names(opts)))
-            if (do.call(missing,list(arg))) ## only if missing from explicit arguments
-                assign(arg, opts[[arg]])
 
-    structure(namedList(optimizer, restart_edge,
+    if (!is.null(lmerOpts <- getOption("lmerControl"))) {
+        for (arg in .get.checkingOpts(names(lmerOpts))) {
+            if (do.call(missing,list(arg))) ## only if missing from explicit arguments
+                assign(arg,lmerOpts[[arg]])
+        }
+    }
+    structure(namedList(optimizer,
+                        restart_edge,
+                        calc.derivs,
+                        use.last.params,
                         checkControl =
-		   namedList(check.nobs.vs.rankZ,
-                             check.nobs.vs.nlev,
-			     check.nlev.gtreq.5,
-			     check.nlev.gtr.1,
-                             check.nobs.vs.nRE,
-                             ensureXrank,
-                             check.formula.LHS),
+                        namedList(check.nobs.vs.rankZ,
+                                  check.nobs.vs.nlev,
+                                  check.nlev.gtreq.5,
+                                  check.nlev.gtr.1,
+                                  check.nobs.vs.nRE,
+                                  ensureXrank,
+                                  check.formula.LHS),
+                        checkConv=
+                        namedList(check.conv.grad,
+                                  check.conv.singular,
+                                  check.conv.hess),
                         optCtrl=optCtrl),
               class = c("lmerControl", "merControl"))
 }
 
 glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
-                         restart_edge=FALSE, sparseX=FALSE,
-                         tolPwrss = 1e-7, compDev = TRUE,
-                         ## now all the "checking options":
+                         restart_edge=FALSE,
+                         calc.derivs=TRUE,
+                         use.last.params=FALSE,
+                         sparseX=FALSE,
+                         tolPwrss = 1e-7,
+                         compDev = TRUE,
+                         ## input checking options
                          check.nobs.vs.rankZ="warningSmall",
                          check.nobs.vs.nlev="stop",
                          check.nlev.gtreq.5="ignore",
                          check.nlev.gtr.1="stop",
                          check.nobs.vs.nRE="stop",
+                         ## convergence checking options
+                         check.conv.grad="warning",
+                         check.conv.singular="ignore",
+                         check.conv.hess="warning",
                          ensureXrank=TRUE,
                          check.formula.LHS="stop",
-
                          optCtrl = list())
 {
     ## FIXME: should try to modularize/refactor/combine with lmerControl if possible
@@ -86,12 +107,19 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
     if (length(optimizer)==1) {
 	optimizer <- replicate(2,optimizer) # works evevn when optimizer is function
     }
-    if (!is.null(opts <- getOption("glmerControl")))
-        for (arg in .get.checkingOpts(names(opts)))
+    if (!is.null(glmerOpts <- getOption("glmerControl"))) {
+        for (arg in .get.checkingOpts(names(glmerOpts))) {
             if (do.call(missing,list(arg))) ## only if missing from explicit arguments
-                assign(arg, opts[[arg]])
-
+                assign(arg, glmerOpts[[arg]])
+        }
+    }
+    if (use.last.params && calc.derivs)
+        warning("using ",shQuote("use.last.params"),"=TRUE and ",
+                shQuote("calc.derivs"),"=TRUE with ",shQuote("glmer"),
+                " will not give backward-compatible results")
     structure(namedList(optimizer,
+                        calc.derivs,
+                        use.last.params,
 			restart_edge,
 			tolPwrss,
 			compDev,
@@ -103,6 +131,10 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
                                   check.nobs.vs.nRE,
                                   ensureXrank,
                                   check.formula.LHS),
+                        checkConv=
+                        namedList(check.conv.grad,
+                                  check.conv.singular,
+                                  check.conv.hess),
                         optCtrl=optCtrl),
 	      class = c("glmerControl", "merControl"))
 }

@@ -48,7 +48,11 @@ set.seed(101)
 Y <- matrix(rnorm(1000),ncol=10)
 res <- list()
 d <- data.frame(y=Y[,1],x=rnorm(100),f=rep(1:10,10))
-fit1 <- lmer(y~x+(1|f),data=d)
+## need to disregard convergence checks because we
+## are doing a fake example
+fit1 <- lmer(y~x+(1|f),data=d,
+             control=lmerControl(check.conv.grad="ignore",
+             check.conv.hess="ignore"))
 res <- c(fit1,lapply(as.data.frame(Y[,-1]),
         refit,object=fit1))
 }

@@ -582,7 +582,7 @@ nlformula <- function(mc) {
 ##' @param mc matched call from the calling function
 ##' @return an object from a class that inherits from \code{\linkS4class{merMod}}
 ##' @export
-mkMerMod <- function(rho, opt, reTrms, fr, mc) {
+mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
     if(missing(mc)) mc <- match.call()
     stopifnot(is.environment(rho),
               is(pp <- rho$pp, "merPredD"),
@@ -643,13 +643,17 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc) {
         call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
         Gp=reTrms$Gp, theta=pp$theta, beta=beta,
         u=if (trivial.y) rep(NA_real_,nrow(pp$Zt)) else pp$u(fac),
-        lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=resp,
+        lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims),
+        pp=pp, resp=resp,
         optinfo=list(optimizer=attr(opt,"optimizer"),
-        control=attr(opt,"control"),
-        conv=opt$conv,
-        feval=if (is.null(opt$feval)) NA else opt$feval,
-        warnings=attr(opt,"warnings"))
+                control=attr(opt,"control"),
+                derivs=attr(opt,"derivs"),
+                conv=list(opt=opt$conv,lme4=lme4conv),
+                feval=if (is.null(opt$feval)) NA else opt$feval,
+                warnings=attr(opt,"warnings"),
+                val=opt$par)
         )
+        
 }
 
 ## generic argument checking

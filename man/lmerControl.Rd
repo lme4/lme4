@@ -19,8 +19,11 @@
 }
 \usage{
 lmerControl(optimizer = "Nelder_Mead",
-    restart_edge = TRUE, sparseX = FALSE,
-    ## "checking options":
+    restart_edge = TRUE,
+    calc.derivs=TRUE,
+    use.last.params=FALSE,
+    sparseX = FALSE,
+    ## input checking options
     check.nobs.vs.rankZ = "warningSmall",
     check.nobs.vs.nlev = "stop",
     check.nlev.gtreq.5 = "ignore",
@@ -28,21 +31,33 @@ lmerControl(optimizer = "Nelder_Mead",
     check.nobs.vs.nRE="stop",
     ensureXrank=TRUE,
     check.formula.LHS = "stop",
-    ## optimizer args:
+    ## convergence checking options
+    check.conv.grad="warning",
+    check.conv.singular="ignore",
+    check.conv.hess="warning",
+    ## optimizer args
     optCtrl = list())
 
 glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
-    restart_edge = FALSE, sparseX = FALSE,
-    tolPwrss = 1e-07, compDev = TRUE,
-    ## "checking options":
+    restart_edge = FALSE,
+    calc.derivs=TRUE,
+    use.last.params=FALSE,
+    tolPwrss=1e-7,
+    compDev=TRUE,
+    sparseX = FALSE,
+    ## input checking options
     check.nobs.vs.rankZ = "warningSmall",
     check.nobs.vs.nlev = "stop",
     check.nlev.gtreq.5 = "ignore",
     check.nlev.gtr.1 = "stop",
     check.nobs.vs.nRE="stop",
+    ## convergence checking options
+    check.conv.grad="warning",
+    check.conv.singular="ignore",
+    check.conv.hess="warning",
     ensureXrank=TRUE,
     check.formula.LHS = "stop",
-    ## optimizer args:
+    ## optimizer args
     optCtrl = list())
 
 nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
@@ -82,23 +97,27 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     effects plus fixed effect parameters) phase.  See
     \code{\link{modular}} for more information on these two phases.
   }
+  \item{calc.derivs}{logical - compute gradient and Hessian of nonlinear
+    optimization solution?}
+  \item{use.last.params}{logical - should the last value of the
+    parameters evaluated (\code{TRUE}), rather than the value of the
+    parameters corresponding to the minimum deviance, be returned?
+    This is a "backward bug-compatibility" option; use \code{TRUE}
+    only when trying to match previous results.}
   \item{sparseX}{logical - should a sparse model matrix be
-    used for the fixed-effects terms?  Defaults to \code{FALSE}.
+    used for the fixed-effects terms?
     Currently inactive.}
   \item{restart_edge}{logical - should the optimizer
     attempt a restart when it finds a solution at the
     boundary (i.e. zero random-effect variances or perfect
     +/-1 correlations)?  (Currently only implemented for
     \code{lmerControl}.)}
-
   \item{tolPwrss}{numeric scalar - the tolerance for declaring
     convergence in the penalized iteratively weighted residual
-    sum-of-squares step.  Defaults to 1e-7.}
+    sum-of-squares step.}
   \item{compDev}{logical scalar - should compiled code be
     used for the deviance evaluation during the optimization
-    of the parameter estimates?  Defaults to \code{TRUE}.}
-
-
+    of the parameter estimates?}
   \item{check.nlev.gtreq.5}{character - rules for
     checking whether all random effects have >= 5 levels.
     "ignore": skip the test. "warning": warn if test fails.
@@ -128,7 +147,7 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     than (or greater than or equal to) the number of random-effects
     levels for each term, usually necessary for identifiable variances.
     As for \code{check.nobs.vs.nlev}.}
-  \item{ensureXrank}{logical - drop columns from the design matrix to ensure to
+    \item{ensureXrank}{logical - drop columns from the design matrix to ensure to
     ensure that it has full rank. Sometimes needed to make the model
     identifiable.}
   \item{check.formula.LHS}{ check whether specified formula has

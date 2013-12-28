@@ -118,9 +118,14 @@ checkZdims <- function(Ztlist, n, ctrl, allow.n=FALSE) {
                 condition <- rows[i] >= cols[i]
                 cmp <- ">="
             }
-            if(condition)
-                stop(gettextf("no. random effects (=%d) %s no. observations (=%d) for term: (%s)",
-                              rows[i], cmp, n, term.names[i]), call.=FALSE)
+            if(condition) {
+                wstr <- gettextf("no. random effects (=%d) %s no. observations (=%d) for term: (%s)",
+                                rows[i], cmp, n, term.names[i])
+            switch(cc,
+                   "warning" = warning(wstr),
+                   "stop" = stop(wstr),
+                   stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
+            }
         }
     }
 }
@@ -420,7 +425,8 @@ optimizeLmer <- function(devfun,
                          restart_edge=FALSE,
                          start = NULL,
                          verbose = 0L,
-                         control = list()) {
+                         control = list(),
+                         ...) {
     verbose <- as.integer(verbose)
     rho <- environment(devfun)
     opt <- optwrap(optimizer,
@@ -428,7 +434,9 @@ optimizeLmer <- function(devfun,
                    getStart(start,rho$lower,rho$pp),
                    lower=rho$lower,
                    control=control,
-                   adj=FALSE, verbose=verbose)
+                   adj=FALSE, verbose=verbose,
+                   ...)
+
 
     if (restart_edge) {
         ## FIXME: should we be looking at rho$pp$theta or opt$par
@@ -456,7 +464,8 @@ optimizeLmer <- function(devfun,
                                devfun,
                                opt$par,
                                lower=rho$lower, control=control,
-                               adj=FALSE, verbose=verbose)
+                               adj=FALSE, verbose=verbose,
+                               ...)
             }
         }
     }
@@ -596,7 +605,8 @@ optimizeGlmer <- function(devfun,
                           control = list(),
                           nAGQ = 1L,
                           stage = 1,
-                          start = NULL) {
+                          start = NULL,
+                          ...) {
     ## FIXME: do we need nAGQ here?? or can we clean up?
     verbose <- as.integer(verbose)
     rho <- environment(devfun)
@@ -609,7 +619,8 @@ optimizeGlmer <- function(devfun,
         if (missing(optimizer)) optimizer <- "Nelder_Mead"  ## BMB: too clever?
     }
     opt <- optwrap(optimizer, devfun, start, rho$lower,
-                   control=control, adj=adj, verbose=verbose)
+                   control=control, adj=adj, verbose=verbose,
+                   ...)
     if (stage==1) {
         rho$control <- attr(opt,"control")
         rho$nAGQ <- nAGQ

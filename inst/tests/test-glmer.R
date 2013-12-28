@@ -94,6 +94,7 @@ test_that("glmer", {
     ## TODO: is this reliable across platforms or do we have to loosen?
     expect_equal(unname(fixef(mod)),c(0.5425528,6.4289962))
     set.seed(101)
+    ## complete separation case
     d <- data.frame(y=rbinom(1000,size=1,p=0.5),
                     x=runif(1000),
                     f=factor(rep(1:20,each=50)),

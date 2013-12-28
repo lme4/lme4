@@ -1,14 +1,16 @@
 Package: lme4
-Version: 1.1-2
+Version: 1.1-3
 Title: Linear mixed-effects models using Eigen and S4
 Authors@R: c(person("Douglas","Bates", role="aut"),
     person("Martin","Maechler", role="aut"),
     person("Ben","Bolker",email="bbolker+lme4@gmail.com", role=c("aut","cre")),
-    person("Steven","Walker",role="aut"))
+    person("Steven","Walker",role="aut"),
+    person("Rune Haubo Bojesen","Christensen", role="ctb"))
 Maintainer: Ben Bolker <bbolker+lme4@gmail.com>
 Contact: LME4 Authors <lme4-authors@lists.r-forge.r-project.org>
 Author: Douglas Bates [aut], Martin Maechler [aut], 
-	Ben Bolker [aut, cre], Steven Walker [aut]
+	Ben Bolker [aut, cre], Steven Walker [aut],
+        Rune Haubo Bojesen Christensen [ctb]
 Description: Fit linear and generalized linear mixed-effects models.
     The models and their components are represented using S4 classes and
     methods.  The core computational algorithms are implemented using the
@@ -16,7 +18,7 @@ Description: Fit linear and generalized linear mixed-effects models.
 Depends: R (>= 2.14.0), Matrix (>= 1.1), methods, stats
 LinkingTo: Rcpp, RcppEigen
 Imports: graphics, grid, splines, parallel, MASS, nlme, lattice, 
-    minqa (>= 1.1.15), numDeriv
+    minqa (>= 1.1.15)
 Suggests:
     boot,
     PKPDmodels,

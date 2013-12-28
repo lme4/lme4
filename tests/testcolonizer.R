@@ -13,8 +13,6 @@ load(system.file("testdata","colonizer_rand.rda",package="lme4"))
 library("lme4")
 packageVersion("lme4")
 
-## FIXME: currently fails.  Works in lme4.0, BUT ... this is a very poorly
-##   posed problem (complete separation etc.)  nAGQ=0 gives decent results.
-try(m1 <- glmer(form1,data=randdat, family=poisson, verbose=10L))  ## PIRLS step failed
-try(m1 <- glmer(form1,data=randdat, family=poisson, verbose=10L, nAGQ=0))  ## OK
-try(m2 <- glmer(form2,data=randdat, family=poisson, verbose=10L))  ## ditto
+m1 <- glmer(form1,data=randdat, family=poisson)  ## PIRLS step failed
+m2 <- glmer(form1,data=randdat, family=poisson, nAGQ=0)  ## OK
+m3 <- glmer(form2,data=randdat, family=poisson)  ## ditto

@@ -48,17 +48,20 @@
 \arguments{
   \item{object}{an \R object of class \code{\linkS4class{merMod}}, i.e.,
     as resulting from \code{\link{lmer}()}, or \code{\link{glmer}()}, etc.}
-  \item{correlation}{logical indicating if the correlation matrix is
-    desired / to be printed.}
+  \item{correlation}{(logical) for \code{vcov}, indicates whether the
+    correlation matrix as well as the variance-covariance matrix
+    is desired; for \code{print.summary.merMod}, indicates whether
+    the correlation matrix of the fixed-effects parameters should
+    be printed}
   \item{sigm}{the residual standard error; by default \code{\link{sigma}(object)}.}
   \item{x}{an \R object of class \code{summary.merMod}, i.e., as resulting
     from \code{summary.merMod}.}
   \item{digits}{number of significant digits for printing}
   \item{symbolic.cor}{should a symbolic encoding of the fixed-effects correlation
     matrix be printed? If so, the \code{\link{symnum}} function is used.}
-  \item{signif.stars}{logiigicalshould significance stars be used?}
-  \item{ranef.comp}{character vector of length one or two, indiciating
-    if random-effects parameters are reported on the variance and/or
+  \item{signif.stars}{(logical) should significance stars be used?}
+  \item{ranef.comp}{character vector of length one or two, indicating
+    if random-effects parameters should be reported on the variance and/or
     standard deviation scale.}
   \item{show.resids}{should the quantiles of the scaled residuals be printed?}
   \item{\dots}{potentially further arguments passed from other methods.}
