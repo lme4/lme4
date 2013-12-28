@@ -118,9 +118,14 @@ checkZdims <- function(Ztlist, n, ctrl, allow.n=FALSE) {
                 condition <- rows[i] >= cols[i]
                 cmp <- ">="
             }
-            if(condition)
-                stop(gettextf("no. random effects (=%d) %s no. observations (=%d) for term: (%s)",
-                              rows[i], cmp, n, term.names[i]), call.=FALSE)
+            if(condition) {
+                wstr <- gettextf("no. random effects (=%d) %s no. observations (=%d) for term: (%s)",
+                                rows[i], cmp, n, term.names[i])
+            switch(cc,
+                   "warning" = warning(wstr),
+                   "stop" = stop(wstr),
+                   stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
+            }
         }
     }
 }

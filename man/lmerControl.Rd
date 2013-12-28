@@ -19,6 +19,9 @@ lmerControl(optimizer = "Nelder_Mead",
     check.nobs.vs.nRE="stop",
     ensureXrank=TRUE,
     check.formula.LHS = "stop",
+    check.conv.grad="warning",
+    check.conv.singular="ignore",
+    check.conv.hess="warning",
     optCtrl = list())
 
 glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
@@ -31,6 +34,9 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     check.nlev.gtreq.5 = "ignore",
     check.nlev.gtr.1 = "stop",
     check.nobs.vs.nRE="stop",
+    check.conv.grad="warning",
+    check.conv.singular="ignore",
+    check.conv.hess="warning",
     ensureXrank=TRUE,
     check.formula.LHS = "stop",
     tolPwrss = 1e-07,
@@ -117,7 +123,7 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     than (or greater than or equal to) the number of random-effects
     levels for each term, usually necessary for identifiable variances.
     As for \code{check.nobs.vs.nlev}.}
-  \item{ensureXrank}{logical - drop columns from the design matrix to ensure to
+    \item{ensureXrank}{logical - drop columns from the design matrix to ensure to
     ensure that it has full rank. Sometimes needed to make the model
     identifiable.}
   \item{check.formula.LHS}{ check whether specified formula has

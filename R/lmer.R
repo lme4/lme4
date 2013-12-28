@@ -148,6 +148,7 @@ lmer <- function(formula, data=NULL, REML = TRUE,
                         calc.derivs=control$calc.derivs,
                         use.last.params=control$use.last.params)
     cc <- checkConv(attr(opt,"derivs"),opt$par,
+                    checkCtrl = control$checkConv,
                     lbound=environment(devfun)$lower)
     mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr, mcout,
              lme4conv=cc) ## prepare output
@@ -337,6 +338,7 @@ glmer <- function(formula, data=NULL, family = gaussian,
     cc <- if (!control$calc.derivs) NULL else {
         if (verbose>10) cat("checking convergence\n")
         checkConv(attr(opt,"derivs"),opt$par,
+                  checkCtrl = control$checkConv,
                   lbound=environment(devfun)$lower)
     }
 
@@ -1338,11 +1340,14 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
         }
     }
     ## control <- c(control,list(xst=0.2*xst, xt=xst*0.0001))
-    ## FIX ME: set calc.derivs/use.last.params appropriately
-    ##  (inherit from previous fit)
+    ## FIX ME: allow use.last.params to be passed through
+    calc.derivs <- !is.null(object@optinfo$derivs)
     opt <- optwrap(object@optinfo$optimizer,
-                   ff, x0, lower=lower, control=control)
+                   ff, x0, lower=lower, control=control,
+                   calc.derivs=calc.derivs)
     cc <- checkConv(attr(opt,"derivs"),opt$par,
+                    ## FIXME: fragile??
+                    checkCtrl = eval(object@call$control)$checkConv,
                     lbound=lower)
     if (isGLMM(object)) rr$setOffset(baseOffset)
     mkMerMod(environment(ff), opt,

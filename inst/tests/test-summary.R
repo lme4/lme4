@@ -21,4 +21,4 @@ test_that("lmer", {
 
   summary(lmer(y ~ x.1 + x.2 + (1 + x.1 | g)))
   summary(lmer(y ~ x.1 + x.2 + (1 + x.1 + x.2 | g)))
-});
+})

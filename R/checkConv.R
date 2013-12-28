@@ -8,11 +8,15 @@
 checkConv <- function(derivs,
                       coefs,
                       control=list(gradTol=1e-3,
-                                   gradRelTol=NULL,
-                                   singTol=1e-4,
-                                   hessTol=1e-6),
+                      gradRelTol=NULL,
+                      singTol=1e-4,
+                      hessTol=1e-6),
+                      checkCtrl=list(
+                      check.conv.grad="warning",
+                      check.conv.singular="ignore",
+                      check.conv.hess="warning"),
                       lbound,
-                      debug=TRUE) {
+                      debug=FALSE) {
     if (is.null(derivs)) return(NULL)  ## bail out
     ntheta <- length(lbound)
     res <- list()
@@ -23,40 +27,80 @@ checkConv <- function(derivs,
     }
     ## gradients:
     ## check absolute gradient (default)
-    if ((max.grad <- max(abs(derivs$gradient))) > control$gradTol) {
-        res$code <- -1L
-        res$messages <-
-            gettextf("Model failed to converge with max|grad| = %g (tol = %g)",
-                     max.grad, control$gradTol)
-    }
-    ## note: kktc package uses gmax > kkttol * (1 + abs(fval))
-    ##  where kkttol defaults to 1e-3 and fval is the objective f'n value
-    ## check relative gradient (only if enabled)
-    if (!is.null(control$gradRelTol)) {
-        if ((max.rel.grad <- max(abs(derivs$gradient/coefs))) >
-            control$gradRelTol) {
-            res$code <- -2L
-            res$messages <-
-                gettextf("Model failed to converge with max|relative grad| = %g (tol = %g)",
-                         max.rel.grad, control$gradRelTol)
-            
+    cstr <- "check.conv.grad"
+    checkCtrlLevels(cstr,cc <- checkCtrl[[cstr]])
+    if (doCheck(cc)) {
+        if ((max.grad <- max(abs(derivs$gradient))) > control$gradTol) {
+            res$code <- -1L
+            wstr <- gettextf("Model failed to converge with max|grad| = %g (tol = %g)",
+                             max.grad, control$gradTol)
+            res$messages <- wstr
+            switch(cc,
+                   "warning" = warning(wstr),
+                   "stop" = stop(wstr),
+                   stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
+        }
+        ## note: kktc package uses gmax > kkttol * (1 + abs(fval))
+        ##  where kkttol defaults to 1e-3 and fval is the objective f'n value
+        ## check relative gradient (only if enabled)
+        if (!is.null(control$gradRelTol)) {
+            if ((max.rel.grad <- max(abs(derivs$gradient/coefs))) >
+                control$gradRelTol) {
+                res$code <- -2L
+                wstr <-
+                    gettextf("Model failed to converge with max|relative grad| = %g (tol = %g)",
+                             max.rel.grad, control$gradRelTol)
+                res$messages <- wstr
+                switch(cc,
+                       "warning" = warning(wstr),
+                       "stop" = stop(wstr),
+                       stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
+                
+            }
         }
     }
-    bcoefs <- seq(ntheta)[lbound==0]
-    if (any(coefs[bcoefs]<control$singTol)) {
-        ## singular fit
-        ## are there other circumstances where we can get a singular fit?
-        res$messages <- c(res$messages,"singular fit")
-        ## should we warn or not?  control settings?
-        ## project??
+    cstr <- "check.conv.singular"
+    checkCtrlLevels(cstr,cc <- checkCtrl[[cstr]])
+    if (doCheck(cc)) {
+        bcoefs <- seq(ntheta)[lbound==0]
+        if (any(coefs[bcoefs]<control$singTol)) {
+            ## singular fit
+            ## are there other circumstances where we can get a singular fit?
+            wstr <- "singular fit"
+            res$messages <- c(res$messages,wstr)
+            switch(cc,
+                   "warning" = warning(wstr),
+                   "stop" = stop(wstr),
+                   stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
+        }
+    }
+    cstr <- "check.conv.hess"
+    checkCtrlLevels(cstr,cc <- checkCtrl[[cstr]])
+    if (doCheck(cc)) {
         if (length(coefs)>ntheta) {
             ## GLMM, check for issues with beta parameters
             H.beta <- derivs$Hessian[-seq(ntheta),-seq(ntheta)]
-            res <- checkHess(H.beta,control$hessTol,"fixed-effect")
+            resHess <- checkHess(H.beta,control$hessTol,"fixed-effect")
+            if (resHess$code!=0) {
+                res$code <- resHess$code
+                res$messages <- c(res$messages,resHess$messages)
+                wstr <- paste(resHess$messages,collapse=";")
+                switch(cc,
+                       "warning" = warning(wstr),
+                       "stop" = stop(wstr),
+                       stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
+            }
         }
-    } else {
-        ## non-singular fit
-        res <- checkHess(derivs$Hessian,control$hessTol)
+        resHess <- checkHess(derivs$Hessian,control$hessTol)
+        if (resHess$code!=0) {
+            res$code <- resHess$code
+            res$messages <- c(res$messages,resHess$messages)
+            wstr <- paste(resHess$messages,collapse=";")
+            switch(cc,
+                   "warning" = warning(wstr),
+                   "stop" = stop(wstr),
+                   stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
+        }
     }
     if (debug && length(res$messages)>0) {
         print(res$messages)
@@ -65,7 +109,7 @@ checkConv <- function(derivs,
 }
 
 checkHess <- function(H,tol,hesstype="") {
-    res <- list()
+    res <- list(code=0,messages=list())
     evd <- eigen(H, symmetric=TRUE, only.values=TRUE)$values
     negative <- sum(evd < -tol)
     if(negative) {

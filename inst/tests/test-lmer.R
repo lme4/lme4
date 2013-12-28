@@ -92,7 +92,8 @@ test_that("lmer", {
     expect_is(lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
                    data = sleepstudy, subset = (Days == 1 | Days == 9),
                    control=lmerControl(check.nobs.vs.rankZ="ignore",
-                   check.nobs.vs.nRE="ignore")),
+                   check.nobs.vs.nRE="ignore",
+                   check.conv.hess="ignore")),
               "merMod")
     expect_error(lmer(Reaction ~ 1 + Days + (1|obs),
                       data = transform(sleepstudy,obs=seq(nrow(sleepstudy))),
@@ -105,25 +106,25 @@ test_that("lmer", {
               "merMod")
 
     ## check for errors with illegal control options
-    flags <- grep("^check",names(formals(lmerControl)),value=TRUE)
-    ctrls <- lapply(flags,function(x) do.call(lmerControl,setNames(list(c("warnign")),x))) ## DELIBERATE TYPO
-    invisible(lapply(ctrls,
-           function(x) {
-               expect_error(lFormula(Reaction ~ 1 + Days + (1|Subject),data=sleepstudy,
-                                     control=x),"invalid control level")
-           }))
-
-    L <- lapply(ctrls,
-           function(x) try (lFormula(Reaction ~ 1 + Days + (1|Subject),data=sleepstudy,
-                                     control=x)))
-    expect_true(all(sapply(L,is,"try-error")))
+    flags <- grep("^check\\.(?!conv)",names(formals(lmerControl)),
+                  perl=TRUE,value=TRUE)
+    for (i in seq_along(flags)) {
+        ## cat(flags[i],"\n")
+        expect_error(lFormula(Reaction~1+Days+(1|Subject),
+                              data=sleepstudy,
+                              control=do.call(lmerControl,
+                              ## DELIBERATE TYPO
+                              setNames(list(c("warnign")),flags[i]))),
+                     "invalid control level")
+    }
 
     ## disable warning via options
     options(lmerControl=list(check.nobs.vs.rankZ="ignore",check.nobs.vs.nRE="ignore"))
     expect_is(fm4 <- lmer(Reaction ~ Days + (1|Subject),
                             subset(sleepstudy,Subject %in% levels(Subject)[1:4])), "merMod")
     expect_is(lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
-                   data = sleepstudy, subset = (Days == 1 | Days == 9)),
+                   data = sleepstudy, subset = (Days == 1 | Days == 9),
+                   control=lmerControl(check.conv.hess="ignore")),
               "merMod")
     options(lmerControl=NULL)
     options(warn=0)
