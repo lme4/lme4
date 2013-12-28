@@ -4,11 +4,23 @@
 \alias{lmerControl}
 \alias{nlmerControl}
 \description{
-  Construct a control structure for mixed model fitting.
+  Construct control structures for mixed model fitting.  All arguments
+  have defaults, and can be grouped into
+  \itemize{
+    \item general control parameters, most importantly \code{optimizer},
+    further \code{restart_edge}, etc;
+    \item model- or data-checking specifications, in short
+    \dQuote{checking options}, such as \code{check.nobs.vs.rankZ}, or
+    \code{ensureXrank} (currently not for \code{nlmerControl});
+    \item all the parameters to be passed to the optimizer, e.g.,
+    maximal number of iterations, passed via the \code{optCtrl} list
+    argument.
+  }
 }
 \usage{
 lmerControl(optimizer = "Nelder_Mead",
     restart_edge = TRUE, sparseX = FALSE,
+    ## "checking options":
     check.nobs.vs.rankZ = "warningSmall",
     check.nobs.vs.nlev = "stop",
     check.nlev.gtreq.5 = "ignore",
@@ -16,10 +28,13 @@ lmerControl(optimizer = "Nelder_Mead",
     check.nobs.vs.nRE="stop",
     ensureXrank=TRUE,
     check.formula.LHS = "stop",
+    ## optimizer args:
     optCtrl = list())
 
 glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     restart_edge = FALSE, sparseX = FALSE,
+    tolPwrss = 1e-07, compDev = TRUE,
+    ## "checking options":
     check.nobs.vs.rankZ = "warningSmall",
     check.nobs.vs.nlev = "stop",
     check.nlev.gtreq.5 = "ignore",
@@ -27,8 +42,8 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     check.nobs.vs.nRE="stop",
     ensureXrank=TRUE,
     check.formula.LHS = "stop",
-    tolPwrss = 1e-07,
-    compDev = TRUE, optCtrl = list())
+    ## optimizer args:
+    optCtrl = list())
 
 nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
              optCtrl = list())
@@ -75,6 +90,15 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     boundary (i.e. zero random-effect variances or perfect
     +/-1 correlations)?  (Currently only implemented for
     \code{lmerControl}.)}
+
+  \item{tolPwrss}{numeric scalar - the tolerance for declaring
+    convergence in the penalized iteratively weighted residual
+    sum-of-squares step.  Defaults to 1e-7.}
+  \item{compDev}{logical scalar - should compiled code be
+    used for the deviance evaluation during the optimization
+    of the parameter estimates?  Defaults to \code{TRUE}.}
+
+
   \item{check.nlev.gtreq.5}{character - rules for
     checking whether all random effects have >= 5 levels.
     "ignore": skip the test. "warning": warn if test fails.
@@ -112,6 +136,7 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     \code{simulate.merMod};
     \emph{use at your own risk} as it may allow the generation
     of unstable \code{merMod} objects}
+
   \item{optCtrl}{a \code{\link{list}} of additional arguments to be
     passed to the nonlinear optimizer (see \code{\link{Nelder_Mead}},
     \code{\link[minqa]{bobyqa}}).  In particular, both
@@ -120,30 +145,30 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     will try before giving up - in contrast to
     \code{\link{optim}} and \code{optimx}-wrapped optimizers,
     which use \code{maxit}.}
-  \item{tolPwrss}{numeric scalar - the tolerance for declaring
-    convergence in the penalized iteratively weighted residual
-    sum-of-squares step.  Defaults to 1e-7.}
-  \item{compDev}{logical scalar - should compiled code be
-    used for the deviance evaluation during the optimization
-    of the parameter estimates?  Defaults to \code{TRUE}.}
 }
 \value{
-  a list (of class \code{"merControl"}) containing
-  (1) general control parameters (e.g. \code{optimizer},
-  \code{restart_edge});
-  (2) a list of data-checking specifications
-  (e.g. \code{check.nobs.vs.rankZ});
-  (3) parameters to be passed to the optimizer, i.e., the \code{optCtrl}
-  list, which may contain \code{maxiter}.)
+  a list (inheriting from class \code{"merControl"}) containing
+  \enumerate{
+    \item general control parameters, such as \code{optimizer}, \code{restart_edge};
+    \item (currently not for \code{nlmerControl}:)
+      \code{"checkControl"}, a \code{\link{list}} of data-checking
+      specifications, e.g., \code{check.nobs.vs.rankZ};
+    \item parameters to be passed to the optimizer, i.e., the \code{optCtrl}
+    list, which may contain \code{maxiter}.
+  }
 }
 \details{
-  If checking options are set via \code{\link{options}}, \code{[g]lmerControl}
-  will use them rather than the default values (but will \emph{not}
-  override values that are passed as explicit arguments); for example,
-  \code{options(lmerControl=list(check.nobs.vs.rankZ = "ignore"))} will
-  suppress warnings that the number of observations is less than
+  Note that (only!) the \dQuote{checking options}, i.e., all those starting with
+  \code{"check."} plus \code{ensureXrank}, may also be set via \code{\link{options}}.
+  In that case, \code{(g)lmerControl} will use them rather than the
+  default values, but will \emph{not} override values that are passed as
+  explicit arguments.
+
+  For example, \code{options(lmerControl=list(check.nobs.vs.rankZ = "ignore"))}
+  will suppress warnings that the number of observations is less than
   the rank of the random effects model matrix \code{Z}.
 }
 \examples{
 str(lmerControl())
+str(glmerControl())
 }
