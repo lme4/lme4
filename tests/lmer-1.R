@@ -17,6 +17,7 @@ S4_2list <- function(obj) {   # no longer used
 ##     }
 ## })
 
+oldOpts <- options(digits=2)
 (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 (fm1a <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, REML = FALSE))
 (fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
@@ -74,6 +75,7 @@ stopifnot(all.equal(fm.1, fm.3))
 
 fmX1s <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
 #fmX2s <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
+options(oldOpts)  ## restore digits
 
 showProc.time() #
 
@@ -127,7 +129,9 @@ a.group <- rnorm(n.groups, 1, 2)
 y <- rnorm (n, a.group[group.id], 1)
 ## fit and summarize the model
 fit.1 <- lmer (y ~ 1 + (1 | group.id))
+oldOpts <- options(digits=3)
 coef (fit.1)
+options(oldOpts)
 ## check show( <"summary.mer"> ):
 (sf1 <- summary(fit.1)) # --> now looks as for fit.1
 

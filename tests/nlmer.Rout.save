@@ -1,11 +1,13 @@
 
-R version 3.0.2 Patched (2013-12-27 r64562) -- "Frisbee Sailing"
+R Under development (unstable) (2013-12-06 r64406) -- "Unsuffered Consequences"
 Copyright (C) 2013 The R Foundation for Statistical Computing
-Platform: x86_64-unknown-linux-gnu (64-bit)
+Platform: i686-pc-linux-gnu (32-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -38,7 +40,7 @@ Fixed Effects:
 192.1  727.9  348.1  
 > fixef(nm1)
     Asym     xmid     scal 
-192.0534 727.9074 348.0738 
+192.0528 727.9045 348.0721 
 > 
 > if (lme4:::testLevel() > 2) {
 +     ## 'Theoph' Data modeling
@@ -86,4 +88,4 @@ Fixed Effects:
 > 
 > proc.time()
    user  system elapsed 
-  4.800   0.064   4.875 
+  3.984   2.708   6.840 

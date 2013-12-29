@@ -1,11 +1,13 @@
 
-R version 3.0.2 Patched (2013-12-27 r64562) -- "Frisbee Sailing"
+R Under development (unstable) (2013-12-06 r64406) -- "Unsuffered Consequences"
 Copyright (C) 2013 The R Foundation for Statistical Computing
-Platform: x86_64-unknown-linux-gnu (64-bit)
+Platform: i686-pc-linux-gnu (32-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -34,57 +36,58 @@ Type 'q()' to quit R.
 > ##     }
 > ## })
 > 
+> oldOpts <- options(digits=2)
 > (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 Linear mixed model fit by REML ['lmerMod']
 Formula: Reaction ~ Days + (Days | Subject) 
    Data: sleepstudy 
-REML criterion at convergence: 1743.628 
+REML criterion at convergence: 1744 
 Random effects:
  Groups   Name        Std.Dev. Corr
- Subject  (Intercept) 24.741       
-          Days         5.922   0.07
- Residual             25.592       
+ Subject  (Intercept) 24.74        
+          Days         5.92    0.07
+ Residual             25.59        
 Number of obs: 180, groups: Subject, 18
 Fixed Effects:
 (Intercept)         Days  
-     251.41        10.47  
+      251.4         10.5  
 > (fm1a <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, REML = FALSE))
 Linear mixed model fit by maximum likelihood ['lmerMod']
 Formula: Reaction ~ Days + (Days | Subject) 
    Data: sleepstudy 
-      AIC       BIC    logLik  deviance  df.resid 
-1763.9393 1783.0971 -875.9697 1751.9393       174 
+     AIC      BIC   logLik deviance df.resid 
+    1764     1783     -876     1752      174 
 Random effects:
  Groups   Name        Std.Dev. Corr
- Subject  (Intercept) 23.781       
-          Days         5.717   0.08
- Residual             25.592       
+ Subject  (Intercept) 23.78        
+          Days         5.72    0.08
+ Residual             25.59        
 Number of obs: 180, groups: Subject, 18
 Fixed Effects:
 (Intercept)         Days  
-     251.41        10.47  
+      251.4         10.5  
 > (fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
 Linear mixed model fit by REML ['lmerMod']
 Formula: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject) 
    Data: sleepstudy 
-REML criterion at convergence: 1743.669 
+REML criterion at convergence: 1744 
 Random effects:
  Groups    Name        Std.Dev.
- Subject   (Intercept) 25.052  
- Subject.1 Days         5.988  
- Residual              25.565  
+ Subject   (Intercept) 25.05   
+ Subject.1 Days         5.99   
+ Residual              25.57   
 Number of obs: 180, groups: Subject, 18
 Fixed Effects:
 (Intercept)         Days  
-     251.41        10.47  
+      251.4         10.5  
 > anova(fm1, fm2)
 Data: sleepstudy
 Models:
 fm2: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject)
 fm1: Reaction ~ Days + (Days | Subject)
-    Df    AIC    BIC  logLik deviance  Chisq Chi Df Pr(>Chisq)
-fm2  5 1762.0 1778.0 -876.00   1752.0                         
-fm1  6 1763.9 1783.1 -875.97   1751.9 0.0639      1     0.8004
+    Df  AIC  BIC logLik deviance Chisq Chi Df Pr(>Chisq)
+fm2  5 1762 1778   -876     1752                        
+fm1  6 1764 1783   -876     1752  0.06      1        0.8
 > 
 > ## Now works for glmer
 > fm1. <- suppressWarnings(glmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -117,61 +120,61 @@ fm1  6 1763.9 1783.1 -875.97   1751.9 0.0639      1     0.8004
 > fm1ML <- refitML(fm1)
 > fm2ML <- refitML(fm2)
 > print(AIC(fm1ML)); print(AIC(fm2ML))
-[1] 1763.939
-[1] 1762.003
+[1] 1764
+[1] 1762
 > print(BIC(fm1ML)); print(BIC(fm2ML))
-[1] 1783.097
-[1] 1777.968
+[1] 1783
+[1] 1778
 > 
 > (fm3 <- lmer(Yield ~ 1|Batch, Dyestuff2))
 Linear mixed model fit by REML ['lmerMod']
 Formula: Yield ~ 1 | Batch 
    Data: Dyestuff2 
-REML criterion at convergence: 161.8283 
+REML criterion at convergence: 162 
 Random effects:
  Groups   Name        Std.Dev.
- Batch    (Intercept) 0.000   
- Residual             3.716   
+ Batch    (Intercept) 0.00    
+ Residual             3.72    
 Number of obs: 30, groups: Batch, 6
 Fixed Effects:
 (Intercept)  
-      5.666  
+       5.67  
 > stopifnot(all.equal(coef(summary(fm3)),
 + 		    array(c(5.6656, 0.67838803150, 8.3515624346),
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.988 0.012 1.005 
+Time elapsed:  0.87 0.088 0.98 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 Linear mixed model fit by REML ['lmerMod']
 Formula: Reaction ~ Days + (Days | Subject) 
    Data: sleepstudy 
-REML criterion at convergence: 1743.628 
+REML criterion at convergence: 1744 
 Random effects:
  Groups   Name        Std.Dev. Corr
- Subject  (Intercept) 24.741       
-          Days         5.922   0.07
- Residual             25.592       
+ Subject  (Intercept) 24.74        
+          Days         5.92    0.07
+ Residual             25.59        
 Number of obs: 180, groups: Subject, 18
 Fixed Effects:
 (Intercept)         Days  
-     251.41        10.47  
+      251.4         10.5  
 > (fm.1 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
 Linear mixed model fit by REML ['lmerMod']
 Formula: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject) 
    Data: sleepstudy 
-REML criterion at convergence: 1743.669 
+REML criterion at convergence: 1744 
 Random effects:
  Groups    Name        Std.Dev.
- Subject   (Intercept) 25.052  
- Subject.1 Days         5.988  
- Residual              25.565  
+ Subject   (Intercept) 25.05   
+ Subject.1 Days         5.99   
+ Residual              25.57   
 Number of obs: 180, groups: Subject, 18
 Fixed Effects:
 (Intercept)         Days  
-     251.41        10.47  
+      251.4         10.5  
 > 
 > #(fmX2 <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy))
 > #(fm.2 <- lmer2(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
@@ -184,11 +187,12 @@ Warning messages:
 1: In checkArgs("lmer", sparseX = TRUE) :
   sparseX = TRUE has no effect at present
 2: In checkArgs("lmer", sparseX = TRUE) :
-  extra argument(s) 'sparseX' disregarded
+  extra argument(s) ‘sparseX’ disregarded
 > #fmX2s <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
+> options(oldOpts)  ## restore digits
 > 
 > showProc.time() #
-Time elapsed:  0.404 0 0.403 
+Time elapsed:  0.384 0.004 0.395 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -247,22 +251,24 @@ Time elapsed:  0.404 0 0.403
 > y <- rnorm (n, a.group[group.id], 1)
 > ## fit and summarize the model
 > fit.1 <- lmer (y ~ 1 + (1 | group.id))
+> oldOpts <- options(digits=3)
 > coef (fit.1)
 $group.id
    (Intercept)
-1    3.3760010
-2   -0.2384543
-3    3.1859572
-4    3.1121389
-5    1.4381126
-6   -1.7593534
-7   -0.2546156
-8    0.6977977
-9    1.2121810
-10   4.9433563
+1        3.376
+2       -0.238
+3        3.186
+4        3.112
+5        1.438
+6       -1.759
+7       -0.255
+8        0.698
+9        1.212
+10       4.943
 
 attr(,"class")
 [1] "coef.mer"
+> options(oldOpts)
 > ## check show( <"summary.mer"> ):
 > (sf1 <- summary(fit.1)) # --> now looks as for fit.1
 Linear mixed model fit by REML ['lmerMod']
@@ -315,7 +321,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.82 0.004 0.827 
+Time elapsed:  0.612 0.052 0.683 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -332,7 +338,13 @@ Error in FUN(X[[1L]], ...) :
 In addition: Warning message:
 In Ops.factor(habitat, lagoon) : * not meaningful for factors
 > r1  <- lmer(y ~ 0+habitat + (1|habitat:lagoon), data = dat) # ok, but senseless
+Warning message:
+In checkConv(attr(opt, "derivs"), opt$par, checkCtrl = control$checkConv,  :
+   Hessian is numerically singular: parameters are not uniquely determined
 > r1b <- lmer(y ~ 0+habitat + (1|habitat), data = dat) # same model, clearly indeterminable
+Warning message:
+In checkConv(attr(opt, "derivs"), opt$par, checkCtrl = control$checkConv,  :
+   Hessian is numerically singular: parameters are not uniquely determined
 > ## "TODO" :  summary(r1)  should ideally warn the user
 > stopifnot(all.equal(fixef(r1), fixef(r1b), tol= 1e-15),
 +           all.equal(ranef(r1), ranef(r1b), tol= 1e-15, check.attributes=FALSE))
@@ -354,7 +366,7 @@ Warning messages:
 1: In checkArgs("lmer", sparseX = TRUE) :
   sparseX = TRUE has no effect at present
 2: In checkArgs("lmer", sparseX = TRUE) :
-  extra argument(s) 'sparseX' disregarded
+  extra argument(s) ‘sparseX’ disregarded
 > 
 > ## the summary() components we do want to compare 'dense X' vs 'sparse X':
 > nmsSumm <- c("methTitle", "devcomp", "logLik", "ngrps", "coefficients",
@@ -430,7 +442,7 @@ lagoon1  lagoon2  lagoon3  lagoon4
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.384 0.008 0.395 
+Time elapsed:  0.288 0.036 0.333 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -451,7 +463,7 @@ Warning message:
 In Ops.factor(ff, x1) : + not meaningful for factors
 > 
 > showProc.time() #
-Time elapsed:  1.412 0 1.417 
+Time elapsed:  1.476 0.036 1.588 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -525,4 +537,4 @@ Fixed Effects:
 > 
 > proc.time()
    user  system elapsed 
-  8.552   0.096   8.670 
+  7.216   2.960  10.371 
