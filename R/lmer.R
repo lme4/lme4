@@ -650,8 +650,9 @@ glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, ve
 ## @title anova() for merMod objects
 ## @param a merMod object
 ## @param ...	further such objects
+## @param refit should objects be refitted with ML (if applicable)
 ## @return an "anova" data frame; the traditional (S3) result of anova()
-anovaLmer <- function(object, ..., model.names=NULL) {
+anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
     mCall <- match.call(expand.dots = TRUE)
     dots <- list(...)
     .sapply <- function(L, FUN, ...) unlist(lapply(L, FUN, ...))
@@ -685,7 +686,16 @@ anovaLmer <- function(object, ..., model.names=NULL) {
         if (length(mNms) != length(mods))
             stop("model names vector and model list have different lengths")
 	names(mods) <- sub("@env$", '', mNms) # <- hack
-	mods <- lapply(mods, refitML)
+  # only refit if refit == TRUE
+  # else: check if models are consistent (all REML or all ML)
+	models.reml <- vapply(mods, isREML, NA)
+  if (refit) {
+    # message only if at least one models is REML:
+    if (any(models.reml)) message("refitting model(s) with ML (instead of REML)")  
+    mods <- lapply(mods, refitML)
+  } else {
+    if (any(models.reml) & any(!models.reml)) warning("some models fit with REML = TRUE, some not")
+  }
 	## devs <- sapply(mods, deviance)
 	llks <- lapply(mods, logLik)
 	ii <- order(Df <- .sapply(llks, attr, "df"))

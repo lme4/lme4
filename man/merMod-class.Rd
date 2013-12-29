@@ -44,6 +44,7 @@
 \S3method{print}{merMod}(x, digits = max(3, getOption("digits") - 3),
       correlation = NULL, symbolic.cor = FALSE,
       signif.stars = getOption("show.signif.stars"), ranef.comp = "Std.Dev.", ...) 
+\S3method{anova}{merMod}(object, ..., refit = TRUE, model.names=NULL)
 }
 \arguments{
   \item{object}{an \R object of class \code{\linkS4class{merMod}}, i.e.,
@@ -64,11 +65,30 @@
     if random-effects parameters should be reported on the variance and/or
     standard deviation scale.}
   \item{show.resids}{should the quantiles of the scaled residuals be printed?}
+  \item{refit}{logical indicating if objects of class \code{lmerMod} should be
+    refitted with ML before produceing the anova table, default is \code{TRUE}.}
+  \item{model.names}{character vectors of model names to be used in the anova table.}
   \item{\dots}{potentially further arguments passed from other methods.}
 }
 \section{Objects from the Class}{
   Objects of class \code{merMod} are created by calls to
   \code{\link{lmer}}, \code{\link{glmer}} or \code{\link{nlmer}}.
+}
+\section{S3 methods}{
+The following S3 methods with arguments given above exist (this list is currently not complete):
+  \describe{
+  \item{\code{summary}:}{Computes and returns a list of summary statistics of the 
+      fitted model, the amount of output can be controlled via the \code{print} method, 
+      see also \code{\link{summary}}.}
+   \item{\code{print.summary}:}{Controls the output for the summary method.}
+  \item{\code{vcov}:}{Calculate variance-covariance matrix of the \emph{fixed} 
+     effect terms, see also \code{\link{vcov}}.}
+  \item{\code{anova}:}{returns the sequential decomposition of the contributions of 
+      fixed-effects terms or, for multiple arguments, model comparison statistics. 
+      For objects of class \code{lmerMod} the default behavior is to refit the models 
+      with LM if fitted with \code{REML = TRUE}, this can be controlled via the 
+      \code{refit} argument. See also \code{\link{anova}}.}
+      }
 }
 \seealso{
   \code{\link{lmer}}, \code{\link{glmer}},
