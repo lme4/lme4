@@ -72,10 +72,19 @@ test_that("lmer", {
     sstudy9 <- subset(sleepstudy, Days == 1 | Days == 9)
     expect_error(lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
                         data = sleepstudy, subset = (Days == 1 | Days == 9)),
-                   "no. random effects")
+                   "no. random effects \\(=36\\) >= no. observations \\(=36\\)")
     expect_error(lFormula(Reaction ~ 1 + Days + (1 + Days | Subject),
                            data = sleepstudy, subset = (Days == 1 | Days == 9)),
-                 "no. random effects")
+                 "no. random effects \\(=36\\) >= no. observations \\(=36\\)")
+    ## with most recent Matrix (1.1-1), should *not* flag this
+    ## for insufficient rank
+    load(system.file("testdata","rankMatrix.rda",package="lme4"))
+    expect_is(lFormula(y ~ (1|sample)+(1|day)+(1|operator)+
+                       (1|day:sample)+(1|day:operator)+(1|sample:operator)+
+                       (1|day:sample:operator), 
+                       data=dat,
+                       control=lmerControl(check.nobs.vs.rankZ="stop")),
+                       "list")
     ## Promote warning to error so that warnings or errors will stop the test:
     options(warn=2)
     expect_is(lmer(Yield ~ 1|Batch, Dyestuff, REML=TRUE), "lmerMod")

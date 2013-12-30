@@ -134,7 +134,11 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     the test only if the dimensions of \code{Z} are < 1e6.
     \code{nobs > rank(Z)} will be tested for LMMs and GLMMs with
     estimated scale parameters; \code{nobs >= rank(Z)} will be tested
-    for GLMMs with fixed scale parameter.}
+    for GLMMs with fixed scale parameter.
+    The rank test is done using the
+    \code{method="qr"} option of the \code{\link[Matrix]{rankMatrix}}
+    function.
+  }
   \item{check.nobs.vs.nlev}{ character - rules for checking whether the
     number of observations is less than (or less than or equal to) the
     number of levels of every grouping factor, usually necessary for

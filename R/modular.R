@@ -152,7 +152,7 @@ checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
             ## OR: cmp <- if (allow.n) "<" else "<="
             ##  if (do.call(cmp,list(n,rankZ)) ...
             if (unident) {
-                wstr <- paste("number of observations",cmp,"rank(Z); variance-covariance matrix will be unidentifiable")
+                wstr <- sprintf("number of observations (=%d) %s rank(Z) (=%d); variance-covariance matrix will be unidentifiable",n,cmp,rankZ)
                 switch(cc,
                        "warningSmall" =, "warning" = warning(wstr),
                        "stopSmall" =, "stop" = stop(wstr),

@@ -72,7 +72,7 @@ xyplot(y ~ log10(as.numeric(as.character(sample))), dat)
 ## 2) 'operator' (with only 2) as random effect is also a bit extreme
 
 
-Mlibrary(lme4)
+library(lme4)
 fitAV3 <- lmer(log10(y) ~ (1|sample)+(1|day)+(1|operator)+
                (1|day:sample)+(1|day:operator)+(1|sample:operator)+
                (1|day:sample:operator),
