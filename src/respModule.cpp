@@ -90,6 +90,7 @@ namespace lme4 {
 	if (ww.size() != d_weights.size())
 	    throw invalid_argument("setWeights: Size mismatch");
 	d_weights = ww;
+	d_sqrtrwt = ww.array().sqrt();
     }
 
     lmerResp::lmerResp(SEXP y, SEXP weights, SEXP offset, SEXP mu,
