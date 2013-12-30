@@ -113,4 +113,5 @@ test_that("misc", {
     expect_equal(df.residual(fm1),176)
     expect_is(fortify(fm1),"data.frame")
     expect_is(fortify(gm1),"data.frame")
+    expect_is(as.data.frame(VarCorr(fm1)),"data.frame")
 })

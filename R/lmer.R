@@ -2573,3 +2573,25 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
     attr(opt,"derivs") <- derivs
     opt
 }
+
+as.data.frame.VarCorr.merMod <- function(x,row.names = NULL, optional = FALSE, ...)  {
+    tmpf <- function(v,n) {
+        vcov <- c(diag(v),v[lower.tri(v,diag=FALSE)])
+        sdcor <- c(attr(v,"stddev"),
+                   attr(v,"correlation")[lower.tri(v,diag=FALSE)])
+        nm <- rownames(v)
+        var1 <- nm[c(seq(nrow(v)),col(v)[lower.tri(v,diag=FALSE)])]
+        var2 <- c(rep(NA,nrow(v)),nm[row(v)[lower.tri(v,diag=FALSE)]])
+        data.frame(grp=n,var1,var2,vcov,sdcor,stringsAsFactors=FALSE)
+    }
+    r <- do.call(rbind,
+                 mapply(tmpf,x,names(x),SIMPLIFY=FALSE))
+    if (attr(x,"useSc")) {
+        ss <- attr(x,"sc")
+        r <- rbind(r,data.frame(grp="Residual",var1=NA,var2=NA,
+                                vcov=ss^2,
+                                sdcor=ss))
+    }
+    rownames(r) <- NULL
+    r
+}
