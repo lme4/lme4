@@ -8,11 +8,12 @@ library(lme4)
 ## Stephane Laurent:
 dat <- read.csv(system.file("testdata","dat20101314.csv",package="lme4"))
 
-fit <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat)
+fit <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat,
+              control=lmerControl(optimizer="Nelder_Mead"))
 fit_b <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat,
               control=lmerControl(optimizer="bobyqa",restart_edge=FALSE))
 fit_c <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat,
-              control=lmerControl(restart_edge=FALSE))
+              control=lmerControl(optimizer="Nelder_Mead", restart_edge=FALSE))
 ## tol=1e-5 seems OK in interactive use but not in R CMD check ... ??
 stopifnot(all.equal(getME(fit,"theta"),getME(fit_b,"theta"),tol=2e-5))
 stopifnot(all(getME(fit,"theta")>0))
@@ -22,9 +23,11 @@ stopifnot(all(getME(fit,"theta")>0))
 source(system.file("testdata","koller-data.R",package="lme4"))
 ldata <- getData(13)
 ## old (backward compatible/buggy)
-fm4 <- lmer(y ~ (1|Var2), ldata, control=lmerControl(use.last.params=TRUE))
-fm4b <- lmer(y ~ (1|Var2), ldata, control=lmerControl(restart_edge=FALSE,
+fm4  <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="Nelder_Mead",
                                   use.last.params=TRUE))
+## gives two warnings:
+fm4b <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="Nelder_Mead",
+                                  use.last.params=TRUE, restart_edge=FALSE))
 stopifnot(getME(fm4b,"theta")==0)
 fm4c <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="bobyqa",
                                   use.last.params=TRUE))
@@ -41,7 +44,7 @@ if (FALSE) {
     ## additional stuff for diagnosing Nelder-Mead problems.
     ## library(nloptr) call commented out to avoid R CMD check problems/needing to
     ##  Suggest: nloptr
-    
+
     library(optimx)
     fm5d <- update(fm5,control=lmerControl(optimizer="optimx",
                        optCtrl=list(method="L-BFGS-B")))
@@ -49,7 +52,7 @@ if (FALSE) {
     ## library(nloptr)
     defaultControl <- list(algorithm="NLOPT_LN_BOBYQA",xtol_rel=1e-6,maxeval=1e5)
     nloptwrap2 <- function(fn,par,lower,upper,control=list(),...) {
-        for (n in names(defaultControl)) 
+        for (n in names(defaultControl))
             if (is.null(control[[n]])) control[[n]] <- defaultControl[[n]]
         res <- nloptr(x0=par,eval_f=fn,lb=lower,ub=upper,opts=control,...)
         with(res,list(par=solution,
@@ -71,5 +74,4 @@ if (FALSE) {
 
     plot(.zeta^2~.sig01,data=dd,type="b")
     abline(v=v)
-
 }
