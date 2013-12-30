@@ -691,7 +691,7 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
 	models.reml <- vapply(mods, isREML, NA)
   if (refit) {
     # message only if at least one models is REML:
-    if (any(models.reml)) message("refitting model(s) with ML (instead of REML)")  
+    if (any(models.reml)) message("refitting model(s) with ML (instead of REML)")
     mods <- lapply(mods, refitML)
   } else {
     if (any(models.reml) & any(!models.reml)) warning("some models fit with REML = TRUE, some not")
@@ -2448,9 +2448,8 @@ weights.merMod <- function(object, ...) {
   object@resp$weights
 }
 
-## note: getOptfun() allows 'optimizer' to be a function OR character, but the
-## docs say that 'optimizer' must be character, and the code breaks elsewhere
-## if 'optimizer' is a function ...
+##' @title Get the optimizer function and check it minimally
+##' @param optimizer character string ( = function name) *or* function
 getOptfun <- function(optimizer) {
     if (((is.character(optimizer) && optimizer=="optimx") ||
          deparse(substitute(optimizer))=="optimx") &&
@@ -2460,9 +2459,7 @@ getOptfun <- function(optimizer) {
     optfun <- if (is.character(optimizer)) {
 	tryCatch(get(optimizer), error=function(e) NULL)
     } else optimizer
-    if (is.null(optfun)) {
-        stop("couldn't find optimizer function ",optimizer)
-    }
+    if (is.null(optfun)) stop("couldn't find optimizer function ",optimizer)
     if (!is.function(optfun)) stop("non-function specified as optimizer")
     needArgs <- c("fn","par","lower","control")
     if (any(is.na(match(needArgs, names(formals(optfun))))))
@@ -2474,22 +2471,26 @@ getOptfun <- function(optimizer) {
 optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
                     control=list(), adj=FALSE, calc.derivs=TRUE,
                     use.last.params=FALSE,
-                    verbose=0L) {
+                    verbose=0L)
+{
     ## control must be specified if adj==TRUE;
     ##  otherwise this is a fairly simple wrapper
     optfun <- getOptfun(optimizer)
+    optName <- if(is.character(optimizer)) optimizer
+    else ## "good try":
+        deparse(substitute(optimizer))[[1L]]
 
     lower <- rep(lower, length.out=length(par))
     upper <- rep(upper, length.out=length(par))
 
-    if (adj && is.character(optimizer))
+    if (adj)
         ## control parameter tweaks: only for second round in nlmer, glmer
-        switch(optimizer,
-               bobyqa = {
+        switch(optName,
+               "bobyqa" = {
                    if(!is.numeric(control$rhobeg)) control$rhobeg <- 0.0002
                    if(!is.numeric(control$rhoend)) control$rhoend <- 2e-7
                },
-               Nelder_Mead = {
+               "Nelder_Mead" = {
                    if (is.null(control$xst))  {
                        thetaStep <- 0.1
                        nTheta <- length(environment(fn)$pp$theta)
@@ -2500,17 +2501,25 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
                    control$xst <- 0.2*xst
                    if (is.null(control$xt)) control$xt <- control$xst*5e-4
                })
-    if (optimizer=="Nelder_Mead") control$verbose <- verbose
-    if (optimizer=="bobyqa" && all(par==0)) par[] <- 0.001  ## minor kludge
+    switch(optName,
+	   "bobyqa" = {
+	       if(all(par==0)) par[] <- 0.001  ## minor kludge
+	       if(!is.numeric(control$iprint)) control$iprint <- min(verbose, 3L)
+	   },
+	   "Nelder_Mead" = control$verbose <- verbose,
+	   ## otherwise:
+	   if(verbose) warning(gettextf(
+	       "'verbose' not yet passed to optimizer '%s'; consider fixing optwrap()",
+					optName), domain=NA)
+	   )
     arglist <- list(fn=fn, par=par, lower=lower, upper=upper, control=control)
     ## optimx: must pass method in control (?) because 'method' was previously
     ## used in lme4 to specify REML vs ML
-    ## FIXME: test -- does deparse(substitute(...)) clause work?
-    if (optimizer=="optimx" || deparse(substitute(optimizer))=="optimx") {
+    if (optName == "optimx") {
         if (is.null(method <- control$method))
             stop("must specify 'method' explicitly for optimx")
         arglist$control$method <- NULL
-        arglist <- c(arglist,list(method=method))
+        arglist <- c(arglist, list(method=method))
     }
     ## FIXME: test!  effects of multiple warnings??
     ## may not need to catch warnings after all??
@@ -2522,10 +2531,10 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
     ## cat("***",unlist(tail(curWarnings,1)),"\n")
     ## FIXME: set code to warn on convergence !=0
     ## post-fit tweaking
-    if (optimizer=="bobyqa") {
+    if (optName=="bobyqa") {
         opt$convergence <- opt$ierr
     }
-    if (optimizer=="optimx") {
+    else if (optName=="optimx") {
         opt <- list(par=coef(opt)[1,],
                     fvalues=opt$value[1],
                     conv=opt$convcode[1],
@@ -2533,7 +2542,7 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
                     message=attr(opt,"details")[,"message"][[1]])
     }
     if (opt$conv!=0) {
-        wmsg <- paste("convergence code",opt$conv,"from",optimizer)
+        wmsg <- paste("convergence code",opt$conv,"from",optName)
         if (!is.null(opt$msg)) wmsg <- paste0(wmsg,": ",opt$msg)
         warning(wmsg)
         curWarnings <<- append(curWarnings,list(wmsg))
@@ -2550,7 +2559,7 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
             orig_theta <- environment(fn)$pp$theta+0
             orig_pars[seq_along(orig_theta)] <- orig_theta
         }
-        if (verbose>10) cat("computing derivatives\n")
+        if (verbose > 10) cat("computing derivatives\n")
         derivs <- deriv12(fn,opt$par,fx=opt$value)
         if (use.last.params) {
             ## run one more evaluation of the function at the optimized
@@ -2564,7 +2573,7 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
         ##  value, to reset the internal/environment variables in devfun ...
         fn(opt$par)
     }
-        
+
 
     ## store all auxiliary information
     attr(opt,"optimizer") <- optimizer
