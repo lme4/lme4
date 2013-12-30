@@ -2,6 +2,8 @@
 stopifnot(require("testthat"), require("lme4"))
 
 context("fitting lmer models")
+## is "Nelder_Mead" default optimizer?
+isNM <- formals(lmerControl)$optimizer == "Nelder_Mead"
 
 test_that("lmer", {
     expect_warning(lmer(z~ 1|f, method="abc"),"Use the REML argument")
@@ -11,19 +13,17 @@ test_that("lmer", {
     expect_is(fm1_noCD <- update(fm1,control=lmerControl(calc.derivs=FALSE)),
               "lmerMod")
     expect_equal(VarCorr(fm1),VarCorr(fm1_noCD))
-    ## backward compatibility version
-    expect_is(fm1.old <- update(fm1,control=lmerControl(use.last.params=TRUE)),
+    ## backward compatibility version {for optimizer="Nelder-Mead" only}:
+    if(isNM) expect_is(fm1.old <- update(fm1,control=lmerControl(use.last.params=TRUE)),
                                 "lmerMod")
     expect_is(fm1@resp,				"lmerResp")
     expect_is(fm1@pp, 				"merPredD")
     expect_that(fe1 <- fixef(fm1),                      is_equivalent_to(1527.5))
-    expect_that(VarCorr(fm1)[[1]][1,1],
-                equals(1764.03751951707))
+    expect_that(VarCorr(fm1)[[1]][1,1], ## "bobyqa" : 1764.050060
+                equals(1764.0375195, tol = 1e-5))
     ## back-compatibility ...
-    expect_that(VarCorr(fm1.old)[[1]][1,1],
-                equals(1764.07265427677))
+    if(isNM) expect_that(VarCorr(fm1.old)[[1]][1,1], equals(1764.0726543))
 
-    
     expect_that(isREML(fm1),                            equals(TRUE))
     expect_is(REMLfun <- as.function(fm1),	"function")
     expect_that(REMLfun(1),                             equals(319.792389042002))
@@ -32,14 +32,16 @@ test_that("lmer", {
     expect_that(isREML(fm1ML <- refitML(fm1)),          equals(FALSE))
     expect_that(deviance(fm1)[["REML"]],                equals(319.654276842342))
     expect_that(deviance(fm1ML),                        equals(327.327059881135))
-    expect_that(sigma(fm1),                             equals(49.5101272946856))
-    expect_that(sigma(fm1.old),                         equals(49.5100503990048))
+    ##						"bobyqa":      49.51009984775
+    expect_that(sigma(fm1),                             equals(49.5101272946856, tol=1e-6))
+    if(isNM) expect_that(sigma(fm1.old),		equals(49.5100503990048))
     expect_that(sigma(fm1ML),                           equals(49.5100999308089))
     expect_that(extractAIC(fm1),                        equals(c(3, 333.327059881135)))
     expect_that(extractAIC(fm1ML),                      equals(c(3, 333.327059881135)))
-    expect_that(vcov(fm1)[1,1],                         equals(375.714676744045))
-    expect_that(vcov(fm1.old)[1,1],                     equals(375.72027872986))
-    expect_that(vcov(fm1ML)[1,1],			equals(313.09721874266, tol=1e-7))
+    ##						"bobyqa":      375.71667627943
+    expect_that(vcov(fm1)    [1,1],			equals(375.714676744, tol=1e-5))
+    if(isNM) expect_that(vcov(fm1.old)[1,1],		equals(375.72027872986))
+    expect_that(vcov(fm1ML)  [1,1],			equals(313.09721874266, tol=1e-7))
 					#		   was 313.0972246957
     expect_is(fm2 <- refit(fm1, Dyestuff2$Yield), "lmerMod")
     expect_that(fixef(fm2),                             is_equivalent_to(5.6656))
@@ -49,8 +51,9 @@ test_that("lmer", {
     expect_is(Zt <- getME(fm1, "Zt"),		"dgCMatrix")
     expect_that(dim(Zt),                                equals(c(6L, 30L)))
     expect_that(Zt@x,                                   equals(rep.int(1, 30L)))
-    expect_that(theta <- getME(fm1, "theta"),           is_equivalent_to(0.8483203125))
-    expect_that(theta.old <- getME(fm1.old, "theta"),       is_equivalent_to(0.848330078125))
+    ##						"bobyqa":      0.8483237982
+    expect_that(theta <- getME(fm1, "theta"),           equals(0.84832031, tol=6e-6, check.attr=FALSE))
+    if(isNM) expect_that(getME(fm1.old, "theta"),	is_equivalent_to(0.848330078))
     expect_is(Lambdat <- getME(fm1, "Lambdat"), "dgCMatrix")
     expect_that(as(Lambdat, "matrix"),                  is_equivalent_to(diag(theta, 6L, 6L)))
     expect_is(fm3 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy),
