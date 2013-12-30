@@ -1667,13 +1667,17 @@ famlink <- function(object, resp = object@resp) {
     cat("\n")
 }
 
-.prt.call <- function(call) {
+.prt.call <- function(call, long=TRUE) {
     if (!is.null(cc <- call$formula))
 	cat("Formula:", deparse(cc),"\n")
     if (!is.null(cc <- call$data))
 	cat("   Data:", deparse(cc), "\n")
     if (!is.null(cc <- call$weights))
         cat("Weights:", deparse(cc), "\n")
+    if (long && length(cc <- call$control) &&
+	!identical((dc <- deparse(cc)), "lmerControl()") &&
+	!identical(eval(cc), lmerControl()))
+	cat("Control:", dc, "\n")
     if (!is.null(cc <- call$subset))
 	cat(" Subset:", deparse(asOneSidedFormula(cc)[[2]]),"\n")
 }
@@ -1801,7 +1805,7 @@ print.merMod <- function(x, digits = max(3, getOption("digits") - 3),
     cat(sprintf("%s ['%s']\n",methTit, class(x)))
     famL <- famlink(x, resp = x@resp)
     .prt.family(famL)
-    .prt.call(x@call)
+    .prt.call(x@call, long=FALSE)
     useScale <- as.logical(dims[["useSc"]])
 
     llAIC <- getLlikAIC(x)
