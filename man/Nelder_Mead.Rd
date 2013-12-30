@@ -4,7 +4,7 @@
 \description{
   Nelder-Mead optimization of parameters, allowing
   optimization subject to box constraints (contrary to the default,
-  \code{method = "Nelder-Mead"}, in \R's \code{\link{optim}()}, and
+  \code{method = "Nelder-Mead"}, in \R's \code{\link{optim}()}), and
   using reverse communications.
 }
 \usage{
