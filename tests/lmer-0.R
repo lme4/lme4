@@ -13,9 +13,12 @@ assertError(lmer(incidence ~ period + (1|herd),
 set.seed(7)
 n <- 10
 X <- data.frame(y=runif(n), x=rnorm(n), z=sample(c("A","B"), n, TRUE))
-fm <- suppressWarnings(lmer(log(y) ~ x | z, data=X))  ## ignore grouping factors with
+fm <- lmer(log(y) ~ x | z, data=X)  ## ignore grouping factors with
 ## gave error inside  model.frame()
 stopifnot(all.equal(unname(fixef(fm)), -0.8345, tol=.01))
+
+## is "Nelder_Mead" default optimizer?
+isNM <- formals(lmerControl)$optimizer == "Nelder_Mead"
 
 ## check working of Matrix methods on  vcov(.) etc ----------------------
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
@@ -24,9 +27,9 @@ V1 <- vcov(fm1)
 TOL <- 0 # to show the differences below
 TOL <- 1e-5 # for the check
 stopifnot(
-	  all.equal(diag(V), 0.176076, tol = TOL) # 64b: 2.4e-8
+	  all.equal(diag(V), if(isNM) 0.176076 else 0.176068575, tol = TOL) # 64b: 2.4e-8
 	  ,
-	  all.equal(as.numeric(chol(V)), 0.4196165, tol = TOL)	# 64b: 3.2e-8
+	  all.equal(as.numeric(chol(V)), if(isNM) 0.4196165 else 0.41960526, tol=TOL)# 64b: 3.2e-8
 	  ,
 	  all.equal(diag(V1), c(46.574978, 2.389469), tol = TOL)# 64b: 9.8e-9
 	  , dim(C1 <- chol(V1)) == c(2,2) ,
