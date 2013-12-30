@@ -26,15 +26,15 @@ t0 <- system.time(m0 <- lmer(rtr2 ~ turnsec + (turnsec | id.trn) +
                              (turnsec | turnid) + (turnsec | idnr),
                              verbose = TRUE, d3))
 outf <- "Bachl_out.RData"
-save(list=ls(pattern="^[mt]"),file=ouft)
+save(list=ls(pattern="^[mt]"),file=outf)
 detach("package:lme4.0")
 library("lme4")
 t1 <- system.time(m1 <- lmer(rtr2 ~ turnsec + (turnsec | id.trn) +
                              (turnsec | turnid) + (turnsec | idnr),
                              verbose = TRUE, d3))
-save(list=ls(pattern="^[mt]"),file=ouft)
+save(list=ls(pattern="^[mt]"),file=outf)
 t2 <- system.time(m2 <- update(m1,control=lmerControl(optimizer="bobyqa")))
-save(list=ls(pattern="^[mt]"),file=ouft)
+save(list=ls(pattern="^[mt]"),file=outf)
 
 library(nloptr)
 defaultControl <- list(algorithm="NLOPT_LN_BOBYQA",
@@ -50,11 +50,11 @@ nloptwrap2 <- function(fn,par,lower,upper,control=list(),...) {
 }
 
 t3 <- system.time(m3 <- update(m1,control=lmerControl(optimizer="nloptwrap2")))
-save(list=ls(pattern="^[mt]"),file=ouft)
+save(list=ls(pattern="^[mt]"),file=outf)
 
 t4 <- system.time(m4 <- update(m1,control=lmerControl(optimizer="nloptwrap2",
 			optCtrl=list(algorithm = "NLOPT_LN_NELDERMEAD"))))
-save(list=ls(pattern="^[mt]"),file=ouft)
+save(list=ls(pattern="^[mt]"),file=outf)
 
 ###---------- Analysis: ------------------------
 if(!(file.exists(outf) && "t4" %in% load(outf))  && !interactive())
