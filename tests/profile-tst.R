@@ -1,6 +1,21 @@
 library(lme4)
 library(lattice)
 
+### __ was ./profile_plots.R ___
+fm1 <- lmer(Reaction~ Days + (Days|Subject), sleepstudy)
+pfile <- system.file("testdata","tprfm1.RData", package="lme4")
+if(file.exists(pfile)) print(load(pfile)) else {
+ system.time( tpr.fm1 <- profile(fm1, optimizer="Nelder_Mead") )  ## 20 seconds
+ save(tpr.fm1, file= "../../inst/testdata/tprfm1.RData")
+}
+oo <- options(warn = 2) # {warnings are errors from here on}
+
+pdf("profile_plots.pdf")
+xyplot(tpr.fm1)
+splom(tpr.fm1)
+densityplot(tpr.fm1, main="densityplot( profile(lmer(..)) )")
+### end {profile_plots.R}
+
 fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
 
 ## 0.8s (on a 5600 MIPS 64bit fast(year 2009) desktop "AMD Phenom(tm) II X4 925"):
@@ -18,6 +33,8 @@ print(xyplot(tpr))
 stopifnot(dim(CIpr) == c(3,2),
           all.equal(unname(CIpr[".sigma",]),exp(c(3.64362, 4.21446)), tol=1e-6),
           all.equal(unname(CIpr["(Intercept)",]),c(1486.451500,1568.548494)))
+
+options(oo)# warnings allowed ..
 
 (testLevel <- lme4:::testLevel())
 if(testLevel > 2) {
