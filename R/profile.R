@@ -416,18 +416,17 @@ predy <- function(sp, vv) {
 }
 
 stripExpr <- function(ll, nms) {
-    stopifnot(inherits(ll, "list"), is.character(nms))
-    sigNm <- which(nms == ".sigma")
-    lsigNm <- which(nms == ".lsigma")
-    sigNms <- grep("^.sig[0-9]+", nms)
-    sigsub <- as.integer(substring(nms[sigNms], 5))
+    stopifnot(is.list(ll), is.character(nms))
+    fLevs <- as.expression(nms) # variable names; now replacing log(sigma[.])'s:
+    fLevs[nms ==  ".sigma"] <- expression(sigma)
+    fLevs[nms == ".lsigma"] <- expression(log(sigma))
+    sigNms  <- grep("^.sig[0-9]+", nms)
     lsigNms <- grep("^.lsig[0-9]+", nms)
+    ## the <n> in ".sig0<n>" and then in ".lsig0<n>":
+    sigsub  <- as.integer(substring(nms[ sigNms], 5))
     lsigsub <- as.integer(substring(nms[lsigNms], 6))
-    fLevs <- as.expression(nms)
-    fLevs[sigNm]  <- quote(sigma)
-    fLevs[lsigNm] <- quote(log(sigma))
-    fLevs[sigNms] <-  bquote(    sigma[.(sigsub) ])
-    fLevs[lsigNms] <- bquote(log(sigma[.(lsigsub)]))
+    fLevs[ sigNms] <- lapply( sigsub, function(i) bquote(    sigma[.(i)]))
+    fLevs[lsigNms] <- lapply(lsigsub, function(i) bquote(log(sigma[.(i)])))
     levsExpr <- substitute(strip.custom(factor.levels=foo), list(foo=fLevs))
     llNms <- names(ll)
     snames <- c("strip", "strip.left")
