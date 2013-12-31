@@ -11,7 +11,8 @@ noReForm <- function(ReForm) {
 ## noReForm(~0+x)
 
 ##' Force new parameters into a merMod object
-##' (should this be an S3 method?)
+##' (should this be an S3 method?):   params(object) <- newvalue
+##' @param object
 ##' @param params a list of the form specified by \code{start} in
 ##' \code{\link{lmer}} or \code{\link{glmer}} (i.e. a list containing
 ##' theta and/or beta; maybe eventually further parameters ...
@@ -21,13 +22,22 @@ noReForm <- function(ReForm) {
 ##' lmer/glmer code ...)
 ##' TODO: make sure this gets updated when the parameter structure changes
 ##' from (theta, beta) to alpha=(theta, beta, phi)
-setParams <- function(object,params,copy=TRUE,subset=FALSE) {
+##' @param inplace logical specifying if object should be modified in place; not yet
+##' @param subset logical; needs to be true, if only parts of params are to be reset
+##' @examples
+##' fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+##' fm1M <- setParams(fm1,list(theta=rep(1,3)))
+##' getME(fm1M,"theta")
+##' getME(fm1,"theta") ## check that original didn't get messed up
+##' ## check that @resp and @pp are the only reference class slots ...
+##' sapply(slotNames(fm1),function(x) class(slot(fm1,x)))
+setParams <- function(object, params, inplace=FALSE, subset=FALSE) {
     pNames <- c("beta","theta")
     if (useSc <- object@devcomp$dims["useSc"]) pNames <- c(pNames,"sigma")
-    if (!is.list(params) || length(setdiff(names(params),pNames))>0)
+    if (!is.list(params) || length(setdiff(names(params),pNames)) > 0)
         stop("params should be specifed as a list with elements from ",
              "{",paste(shQuote(pNames),collapse=", "),"}")
-    if (!subset && length(s <- setdiff(pNames,names(params)))>0) {
+    if (!subset && length(setdiff(pNames,names(params))) > 0) {
         warning("some parameters not specified in setParams()")
     }
     nbeta <- length(object@pp$beta(1))
@@ -39,7 +49,9 @@ setParams <- function(object,params,copy=TRUE,subset=FALSE) {
         stop("length mismatch in theta (",length(theta),
              "!=",ntheta,")")
     sigma <- params$sigma
-    if (copy) {
+    if(inplace) {
+        stop("modification in place (copy=FALSE) not yet implemented")
+    } else { ## copy :
         newObj <- object
         ## make a copy of the reference class slots to
         ##  decouple them from the original object
@@ -61,16 +73,9 @@ setParams <- function(object,params,copy=TRUE,subset=FALSE) {
             newObj@devcomp[["cmp"]][snm] <- sigma
         }
         return(newObj)
-    } else stop("modification in place (copy=FALSE) not yet implemented")
+    }
 }
 
-##' @examples
-##' fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
-##' fm1M <- setParams(fm1,list(theta=rep(1,3)))
-##' getME(fm1M,"theta")
-##' getME(fm1,"theta") ## check that original didn't get messed up
-##' ## check that @resp and @pp are the only reference class slots ...
-##' sapply(slotNames(fm1),function(x) class(slot(fm1,x)))
 
 ##' Make new random effect terms from specified object and new data,
 ##' possibly omitting some random effect terms
@@ -95,7 +100,7 @@ mkNewReTrms <- function(object,newdata,ReForm=NULL, na.action=na.pass,
             newdata <- newdata[-fit.na.action,]
         }
         re <- ranef(object)
-        rfd <- if(is.null(newdata)) object@frame else newdata 
+        rfd <- if(is.null(newdata)) object@frame else newdata
         ReTrms <- mkReTrms(findbars(ReForm[[2]]), rfd)
         if (!allow.new.levels &&
             any(sapply(ReTrms$flist,function(x) any(is.na(x)))))
@@ -106,33 +111,28 @@ mkNewReTrms <- function(object,newdata,ReForm=NULL, na.action=na.pass,
         for (i in all.vars(RHSForm(ReForm))) {
             rfd[[i]] <- factor(rfd[[i]])
         }
-        Rfacs <- setNames(lapply(unames,
-                                 function(x) factor(eval(parse(text=x),envir=rfd))),
-                          unames)
+        Rfacs <- lapply(setNames(unames,unames),
+                        function(x) factor(eval(parse(text=x),envir=rfd)))
         new_levels <- lapply(Rfacs,function(x) levels(droplevels(factor(x))))
         ## FIXME: should this be unique(as.character(x)) instead?
         ##   (i.e., what is the proper way to protect against non-factors?)
         levelfun <- function(x,n) {
             ## find and deal with new levels
-            if (any(!new_levels[[n]] %in% rownames(x))) {
+            nl.n <- new_levels[[n]]
+            if (!all(nl.n %in% rownames(x))) {
                 if (!allow.new.levels) stop("new levels detected in newdata")
                 ## create an all-zero data frame corresponding to the new set of levels ...
-                newx <- as.data.frame(matrix(0,nrow=length(new_levels[[n]]),
-                                             ncol=ncol(x),
-                                             dimnames=list(new_levels[[n]],
-                                                 names(x))))
+                newx <- as.data.frame(matrix(0, nrow=length(nl.n), ncol=ncol(x),
+                                             dimnames=list(nl.n, names(x))))
                 ## then paste in the matching RE values from the original fit/set of levels
                 newx[rownames(x),] <- x
                 x <- newx
             }
             ## find and deal with missing old levels
-            if (any(!rownames(x) %in% new_levels[[n]])) {
-                x <- x[rownames(x) %in% new_levels[[n]],,drop=FALSE]
-            }
-            x
+	    if (!all(r.inn <- rownames(x) %in% nl.n)) x[r.inn,,drop=FALSE] else x
         }
         ## fill in/delete levels as appropriate
-        re_x <- mapply(levelfun,re,names(re),SIMPLIFY=FALSE)
+        re_x <- mapply(levelfun, re, names(re), SIMPLIFY=FALSE)
         re_new <- list()
         if (any(!names(ReTrms$cnms) %in% names(re)))
             stop("grouping factors specified in ReForm that were not present in original model")
@@ -216,7 +216,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
     ## prediction if allow.new.levels is TRUE; if it's FALSE they give
     ## an error (although it could be argued that in that case they
     ## should follow 'na.action' instead ...)
-    
+
     if (length(list(...)>0)) warning("unused arguments ignored")
     type <- match.arg(type)
     if (!is.null(terms))
@@ -284,7 +284,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
             newRE <- mkNewReTrms(object,newdata,ReForm,na.action=na.action,
                                  allow.new.levels=allow.new.levels)
             pred <- pred + drop(as.matrix(newRE$b %*% newRE$Zt))
-        }            
+        }
         if (isGLMM(object) && type=="response") {
             pred <- object@resp$family$linkinv(pred)
         }
@@ -355,9 +355,9 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         ## copied from glm(): DRY; this all stems from the
         ## original sin of handling family=gaussian as a special
         ## case
-        if (is.character(family)) 
+        if (is.character(family))
             family <- get(family, mode = "function", envir = parent.frame())
-        if (is.function(family)) 
+        if (is.function(family))
             family <- family()
         if (is.null(family) || family$family=="gaussian") {
             lmod <- lFormula(formula,newdata,
@@ -427,7 +427,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         ftemplate <- substitute(.~.-XX, list(XX=rr))
         compReForm <- update.formula(compReForm,ftemplate)
     }
-        
+
     ## (1) random effect(s)
     if (!is.null(findbars(compReForm))) {
         newRE <- mkNewReTrms(object,newdata,compReForm,
@@ -463,7 +463,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                     ftd=musim)
         ## split results into nsims: need special case for binomial matrix/factor responses
         if (family$family=="binomial" && is.matrix(r <- model.response(object@frame))) {
-            val <- lapply(split(val[[1]], gl(nsim, n, 2 * nsim * n)), matrix, 
+            val <- lapply(split(val[[1]], gl(nsim, n, 2 * nsim * n)), matrix,
                           ncol = 2, dimnames = list(NULL, colnames(r)))
         } else if (family$family=="binomial" && is.factor(val[[1]])) {
             val <- split(val[[1]],gl(nsim,n))
@@ -567,7 +567,7 @@ Gamma_simfun <- function(object, nsim, ftd=fitted(object)) {
 
 ## in the original MASS version, .Theta is assigned into the environment
 ## (triggers a NOTE in R CMD check)
-negative.binomial_simfun <- function (object, nsim, ftd=fitted(object)) 
+negative.binomial_simfun <- function (object, nsim, ftd=fitted(object))
 {
     stop("not implemented yet")
     ## val <- rnbinom(nsim * length(ftd), mu=ftd, size=.Theta)

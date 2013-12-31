@@ -491,51 +491,21 @@ chck1 <- function(expr) {
         for (j in seq_len(le)[-1]) Recall(expr[[j]])
 }
 
-##' Check and manipulate the formula for a nonlinear model.
-##'
-##' The model formula for a nonlinear mixed-effects model is of the form
-##' \code{resp ~ nlmod ~ mixed} where \code{"resp"} is an expression
-##' (usually just a name) for the response, \code{nlmod} is the
-##' call to the nonlinear model function, and \code{mixed} is the
-##' mixed-effects formula defining the linear predictor for the
-##' parameter matrix.  If the formula is to be used for optimizing
-##' designs, the \code{"resp"} part can be omitted.
-##'
-##'
-##' @title Manipulate a nonlinear model formula.
-##' @param mc matched call from the calling function.  Should have arguments named
-##' \describe{
-##'     \item{formula}{a formula of the form \code{resp ~ nlmod ~ meform}
-##'                    where \code{resp} is an expression for the response,
-##'                    \code{nlmod} is the nonlinear model expression and
-##'                    \code{meform} is the mixed-effects model formula. \code{resp}
-##'                    can be omitted when, e.g., optimizing a design.}
-##'     \item{data}{a data frame in which to evaluate the model function}
-##'     \item{start}{either a numeric vector containing initial estimates for the
-##'                  nonlinear model parameters or a list with components
-##'          \describe{
-##'              \item{nlpars}{the initial estimates of the nonlinear model parameters}
-##'              \item{theta}{the initial estimates of the variance component parameters}
-##'          }
-##'     }
-##' }
-##' @return a list with components
-##'  \item{"respMod"}{a response module of class \code{"\linkS4class{nlsResp}"}}
-##'  \item{"frame"}{the model frame, including a terms attribute}
-##'  \item{"X"}{the fixed-effects model matrix}
-##'  \item{"reTrms"}{the random-effects terms object}
-##' @export
-##' @family utilities
+## ---> ../man/nlformula.Rd --- Manipulate a nonlinear model formula
+##' @param mc matched call from the caller, with arguments 'formula','start',...
+##' @return a list with components "respMod", "frame", "X", "reTrms"
 nlformula <- function(mc) {
   start <- eval(mc$start, parent.frame(2L))
   if (is.numeric(start)) start <- list(nlpars = start)
   stopifnot(is.numeric(nlpars <- start$nlpars),
-            all(vapply(nlpars, length, 0L) == 1L),
+            vapply(nlpars, length, 0L) == 1L,
             length(pnames <- names(nlpars)) == length(nlpars),
             length(form <- as.formula(mc$formula)) == 3L,
             is(nlform <- eval(form[[2]]), "formula"),
-            all(pnames %in%
-                  (av <- all.vars(nlmod <- as.call(nlform[[lnl <- length(nlform)]])))))
+            pnames %in%
+                  (av <- all.vars(nlmod <- as.call(nlform[[lnl <- length(nlform)]]))))
+
+  ## MM{FIXME}: fortune(106) even twice in here!
     nlform[[lnl]] <- parse(text= paste(setdiff(all.vars(form), pnames), collapse=' + '))[[1]]
     nlform <- eval(nlform)
     environment(nlform) <- environment(form)
@@ -568,32 +538,21 @@ nlformula <- function(mc) {
                                   expr
                               }), frE)
     list(respMod=respMod, frame=fr, X=X, reTrms=reTrms, pnames=pnames)
-}
+} ## {nlformula}
 
-##' Create an object in a subclass of \code{\linkS4class{merMod}}
-##' from the environment of the objective function and the value
-##' returned by the optimizer.
-##'
-##' @title Create a merMod object
+##--> ../man/mkMerMod.Rd ---Create a merMod object
 ##' @param rho the environment of the objective function
 ##' @param opt the value returned by the optimizer
 ##' @param reTrms reTrms list from the calling function
-##' @param fr model frame
-##' @param mc matched call from the calling function
-##' @return an object from a class that inherits from \code{\linkS4class{merMod}}
-##' @export
 mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
     if(missing(mc)) mc <- match.call()
     stopifnot(is.environment(rho),
               is(pp <- rho$pp, "merPredD"),
               is(resp <- rho$resp, "lmResp"),
-              is.list(opt),
-              "par" %in% names(opt),
-              all(c("conv","fval") %in% substr(names(opt),1,4)), ## "conv[ergence]", "fval[ues]"
-              is.list(reTrms),
-              all(c("flist", "cnms", "Gp", "lower") %in%
-                  names(reTrms)))
-    rcl  <- class(resp)
+              is.list(opt), "par" %in% names(opt),
+              c("conv","fval") %in% substr(names(opt),1,4), ## "conv[ergence]", "fval[ues]"
+              is.list(reTrms), c("flist", "cnms", "Gp", "lower") %in% names(reTrms),
+              length(rcl <- class(resp)) == 1)
     n    <- nrow(pp$V)
     p    <- ncol(pp$V)
     dims <- c(N=nrow(pp$X), n=n, p=p, nmp=n-p,
@@ -637,7 +596,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
              sigmaML=sqrt(unname(if (!dims["useSc"] || trivial.y) NA else sigmaML)),
              sigmaREML=sqrt(unname(if (rcl!="lmerResp" || trivial.y) NA else sigmaML*(dims['n']/dims['nmp']))),
              tolPwrss=rho$tolPwrss)
-                                        # TODO:  improve this hack to get something in frame slot (maybe need weights, etc...)
+    ## TODO:  improve this hack to get something in frame slot (maybe need weights, etc...)
     if(missing(fr)) fr <- data.frame(resp$y)
     new(switch(rcl, lmerResp="lmerMod", glmResp="glmerMod", nlsResp="nlmerMod"),
         call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
@@ -645,16 +604,14 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
         u=if (trivial.y) rep(NA_real_,nrow(pp$Zt)) else pp$u(fac),
         lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims),
         pp=pp, resp=resp,
-        optinfo=list(optimizer=attr(opt,"optimizer"),
-                control=attr(opt,"control"),
-                derivs=attr(opt,"derivs"),
-                conv=list(opt=opt$conv,lme4=lme4conv),
-                feval=if (is.null(opt$feval)) NA else opt$feval,
-                warnings=attr(opt,"warnings"),
-                val=opt$par)
+	optinfo = list (optimizer= attr(opt,"optimizer"),
+			control	 = attr(opt,"control"),
+			derivs	 = attr(opt,"derivs"),
+			conv  = list(opt=opt$conv, lme4=lme4conv),
+			feval = if (is.null(opt$feval)) NA else opt$feval,
+			warnings = attr(opt,"warnings"), val = opt$par)
         )
-        
-}
+}## {mkMerMod}
 
 ## generic argument checking
 ## 'type': name of calling function ("glmer", "lmer", "nlmer")
@@ -801,7 +758,7 @@ testLevel <- function()
 ##' (4) Do we need to think carefully about the differences
 ##'     between REML and ML, beyond just multiplying by a different
 ##'     sigma^2 estimate?
-##' 
+##'
 ##' @param object \code{merMod} object
 ##' @return Sparse covariance matrix
 condVar <- function(object) {
@@ -811,7 +768,7 @@ condVar <- function(object) {
 
   ## never do it this way! fortune("SOOOO")
   #V <- solve(L, system = "A")
-  #V <- chol2inv(L)  
+  #V <- chol2inv(L)
   #s2*crossprod(Lamt, V) %*% Lamt
 
   LL <- solve(L, Lamt, system = "A")

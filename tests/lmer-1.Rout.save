@@ -1,13 +1,11 @@
 
-R Under development (unstable) (2013-12-06 r64406) -- "Unsuffered Consequences"
+R version 3.0.2 Patched (2013-12-30 r64588) -- "Frisbee Sailing"
 Copyright (C) 2013 The R Foundation for Statistical Computing
-Platform: i686-pc-linux-gnu (32-bit)
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -81,6 +79,7 @@ Fixed Effects:
 (Intercept)         Days  
       251.4         10.5  
 > anova(fm1, fm2)
+refitting model(s) with ML (instead of REML)
 Data: sleepstudy
 Models:
 fm2: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject)
@@ -144,7 +143,7 @@ Fixed Effects:
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.87 0.088 0.98 
+Time elapsed:  0.88 0.008 0.89 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -187,12 +186,12 @@ Warning messages:
 1: In checkArgs("lmer", sparseX = TRUE) :
   sparseX = TRUE has no effect at present
 2: In checkArgs("lmer", sparseX = TRUE) :
-  extra argument(s) ‘sparseX’ disregarded
+  extra argument(s) 'sparseX' disregarded
 > #fmX2s <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
 > options(oldOpts)  ## restore digits
 > 
 > showProc.time() #
-Time elapsed:  0.384 0.004 0.395 
+Time elapsed:  0.36 0.004 0.365 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -321,7 +320,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.612 0.052 0.683 
+Time elapsed:  0.7 0.012 0.713 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -366,7 +365,7 @@ Warning messages:
 1: In checkArgs("lmer", sparseX = TRUE) :
   sparseX = TRUE has no effect at present
 2: In checkArgs("lmer", sparseX = TRUE) :
-  extra argument(s) ‘sparseX’ disregarded
+  extra argument(s) 'sparseX' disregarded
 > 
 > ## the summary() components we do want to compare 'dense X' vs 'sparse X':
 > nmsSumm <- c("methTitle", "devcomp", "logLik", "ngrps", "coefficients",
@@ -442,7 +441,7 @@ lagoon1  lagoon2  lagoon3  lagoon4
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.288 0.036 0.333 
+Time elapsed:  0.324 0 0.327 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -463,7 +462,7 @@ Warning message:
 In Ops.factor(ff, x1) : + not meaningful for factors
 > 
 > showProc.time() #
-Time elapsed:  1.476 0.036 1.588 
+Time elapsed:  1.292 0.004 1.298 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -537,4 +536,4 @@ Fixed Effects:
 > 
 > proc.time()
    user  system elapsed 
-  7.216   2.960  10.371 
+  7.552   0.116   7.687 
