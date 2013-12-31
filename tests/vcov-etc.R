@@ -19,19 +19,21 @@ fe1.s <- fixef(fm1.s)
 print(s1.d <- summary(fm1))
 print(s1.s <- summary(fm1.s))
 stopifnot(
-	  all.equal(fe1, fe1.s, tol= 1e-12
-	  ),
+	  all.equal(fe1, fe1.s, tol= 1e-12)
+	  ,
 	  all.equal(se1.d <- coef(s1.d)[,"Std. Error"],
-		    se1.s <- coef(s1.s)[,"Std. Error"]#, tol = 1e-10
-	  ),
+		    se1.s <- coef(s1.s)[,"Std. Error"])#, tol = 1e-10
+	  ,
 	  all.equal(V.d <- vcov(fm1),
-		    V.s <- vcov(fm1.s)#, tol = 1e-9
-	  ),
+		    V.s <- vcov(fm1.s))#, tol = 1e-9
+	  ,
 	  all.equal(Matrix::diag(V.d), unname(se1.d)^2, tol= 1e-12)
 	  ,
 	  all.equal(unname(se1.d),
-                    c(0.576011960125099, rep.int(0.518683987372292,3L)),
-                    tol = 1.e-8)
+		    if(fm1@optinfo$optimizer == "Nelder_Mead")
+		    c(0.57601196, rep(0.51868399, 3)) else ## "bobyqa"
+		    c(0.57601226, rep(0.51868384, 3)),
+		    tol = 1e-6) ## std.err.: no extreme accuracy needed
           )
 
 }## if( ergoStool is available from pkg MEMSS )
@@ -41,7 +43,7 @@ str(InstEval)
 
 if (FALSE) { # sparse X is not currently implemented, so forget about this:
 
-system.time(## works with 'sparseX'; d has 1128 levels 
+system.time(## works with 'sparseX'; d has 1128 levels
 fm7 <- lmer(y ~ d + service + studage + lectage + (1|s),
              data = InstEval, sparseX=TRUE, verbose=1L, REML=FALSE)
 )
@@ -63,14 +65,31 @@ if(testLevel <= 1) { cat('Time elapsed: ', proc.time(),'\n'); q("no") }
 
 ## ELSE : (testLevel > 1) :
 library(lattice)
+source(system.file("testdata/lme-tst-funs.R", package="lme4", mustWork=TRUE))
+##--> all.equal(), isOptimized(), ...
 
 system.time(
-    fm8 <- lmer(y ~ service * dept + studage + lectage +
-                (1|s) + (1|d), InstEval, verbose = 1L, REML=FALSE)
-    ) ## 62 secs [MM@lynne; 2013-11]
-fm8
-sm8 <- summary(fm8)
-str(r8 <- ranef(fm8))
+    fm8.N <- lmer(y ~ service * dept + studage + lectage +
+                  (1|s) + (1|d), InstEval, REML=FALSE,
+                  control=lmerControl("Nelder_Mead"), verbose = 1L)
+    ) ## 62   sec [MM@lynne; 2013-11]
+      ## 59.5 sec [nb-mm3;   2013-12-31]
+system.time(
+    fm8.B <- lmer(y ~ service * dept + studage + lectage +
+                  (1|s) + (1|d), InstEval, REML=FALSE,
+                  control=lmerControl("bobyqa"), verbose = 2L)
+    )
+      ## 34.1 sec [nb-mm3; 2013-12-31]
+
+stopifnot(isOptimized(fm8.N), isOptimized(fm8.B))
+all.equal(fm8.B, fm8.N, tol=0)
+## "Mean relative difference: 3.31 e-06"   [nb-mm3; 2013-12-31]
+
+str(baseOpti(fm8.N))
+str(baseOpti(fm8.B))
+
+(sm8 <- summary(fm8.B))
+str(r8 <- ranef(fm8.B))
 sapply(r8, summary)
 r.m8 <- cov2cor(vcov(sm8))
 Matrix::image(r.m8, main="cor(<fixed eff[ lmer(*,InstEval) ]>)")

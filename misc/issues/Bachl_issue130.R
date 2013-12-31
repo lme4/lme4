@@ -57,12 +57,18 @@ t4 <- system.time(m4 <- update(m1,control=lmerControl(optimizer="nloptwrap2",
 save(list=ls(pattern="^[mt]"),file=outf)
 
 ###---------- Analysis: ------------------------
+###           --------
+## Start here, once you've run the above once { ESS:  M-[Enter] }
+outf <- "Bachl_out.RData" # <- (repeated from above)
 if(!(file.exists(outf) && "t4" %in% load(outf))  && !interactive())
     q("no")
 
+source(system.file("testdata/lme-tst-funs.R", package="lme4", mustWork=TRUE))
+##-> gimME(), allcoefs() ..
+
 nms.m <- c("lme4.0",
-           "i..NM",  "i..byq",
-           "nl.byq", "nl.NM")
+           "i..NM",  "mq.byq", # "mq." : from 'minqa'  package
+           "nl.byq", "nl.NM")  # "nl." : from 'nloptr'
 tim <- rbind(t0, t1,t2,t3,t4)[, 1:3]
 rownames(tim) <- nms.m
 
@@ -70,45 +76,47 @@ round(tim, 1)
 ##        user.self sys.self elapsed
 ## lme4.0     302.7      9.3   313.5  <-- lme4.0 clearly fastest
 ## i..NM      734.7      1.4   739.7
-## i..byq    1155.3      3.0  1164.2
+## mq.byq    1155.3      3.0  1164.2
 ## nl.byq     540.3     27.3   570.5
 ## nl.NM      725.0      3.0   731.6
 
 mods <- setNames(lapply(ls(patt="^m[0-9]"), get), nms.m)
-
 sapply(mods, object.size)
-##    lme4.0    i..NM   i..byq   nl.byq    nl.NM
+##    lme4.0    i..NM   mq.byq   nl.byq    nl.NM
 ## 34'267160  6471536  6471848  6471600  6472336
 
 lapply(mods, getCall)# just to verify our  nms.m  are ok
+
+## Optimizer convergence ok:
+stopifnot(0 == sapply(lapply(mods[-1], slot, "optinfo"),
+          function(.) .$conv$opt))
+## lme4 convergence checks, all are *not* ok {but NM seem worse}
+cbind(sapply(lapply(mods[-1], slot, "optinfo"),
+             function(.) .$conv$lme4$message[1]))
 
 smods <- lapply(mods, summary)
 if(FALSE)## much output:
     print(smods)
 lapply(smods, coef)
-gimME <- function(mod, nm)
-    if(is(mod,"mer")) lme4.0::getME(mod,nm) else lme4::getME(mod,nm)
 
-th.b <- t(sapply(mods, function(.)
-                 c(beta=gimME(.,"beta"), gimME(.,"theta"))))
+th.b <- t(sapply(mods, allcoefs))
 ## or rather also the std.err., t-value:
-sb.b <- t(sapply(mods, function(.)
-                 c(beta=coef(summary(.)), gimME(.,"theta"))))
+sb.b <- t(sapply(mods, allcoef.t))
 
 ## Look at the distances
 D <- dist(th.b)
 round(D, 2)
-##        lme4.0 i..NM i..byq nl.byq
+##        lme4.0 i..NM mq.byq nl.byq
 ## i..NM    1.95
-## i..byq   0.02  1.95
+## mq.byq   0.02  1.95
 ## nl.byq   0.02  1.95   0.00
 ## nl.NM    3.62  2.71   3.62   3.62
 
 ## or, similar
 round(100* dist(sb.b))
-##        lme4.0 i..NM i..byq nl.byq
+##        lme4.0 i..NM mq.byq nl.byq
 ## i..NM     796
-## i..byq      2   797
+## mq.byq      2   797
 ## nl.byq      2   797      0
 ## nl.NM     920   405    920    920
 
