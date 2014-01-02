@@ -54,7 +54,7 @@ xyplot(log10(y) ~ log10(as.numeric(as.character(sample))), dat)
 
 ## Given the above picture, it seems *very*  "adventurous" to take
 ## 1) 'sample' as random effect factor; rather log10(..) should be used as *numeric* fixed effect
-## 2) 'operator' (with only 2) as random effect is also a bit extreme
+## 2) 'operator' (with only 2 levels) as random effect is also a bit extreme
 
 
 library(lme4)
