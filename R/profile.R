@@ -443,6 +443,34 @@ stripExpr <- function(ll, nms) {
     ll
 }
 
+panel.thpr <- function(x, y, spl, absVal, ...)
+{
+    panel.grid(h = -1, v = -1)
+    myspl <- spl[[panel.number()]]
+    if (!is(myspl,"spline")) {
+        ## 'difficult' data
+        if (absVal) myspl$y <- abs(myspl$y)
+        panel.lines(myspl$x,myspl$y)
+        panel.points(myspl$x,myspl$y)
+        warning(sprintf("bad profile for variable %d: using linear interpolation",panel.number()))
+    } else {
+        lsegments(x, y, x, 0, ...)
+        lims <- current.panel.limits()$xlim
+        krange <- range(myspl$knots)
+        pr <- predict(myspl,
+                      seq(max(lims[1], krange[1]),
+                          min(lims[2], krange[2]), len = 101))
+        if (absVal) {
+            pr$y <- abs(pr$y)
+            y[y == 0] <- NA
+            lsegments(x, y, rev(x), y)
+        } else {
+            panel.abline(h = 0, ...)
+        }
+        panel.lines(pr$x, pr$y)
+    }
+}
+
 ## A lattice-based plot method for profile objects
 ##' @importFrom lattice xyplot
 ##' @S3method xyplot thpr
@@ -455,6 +483,16 @@ xyplot.thpr <-
     levels <- sort(levels[is.finite(levels) & levels > 0])
     spl <- attr(x, "forward")
     bspl <- attr(x, "backward")
+    ## for parameters for which spline couldn't be computed,
+    ## replace the 'spl' element with the raw profile data
+    badSpl <- sapply(spl,is.null)
+    spl[badSpl] <- lapply(seq_along(which(badSpl)),
+                          function(i) {
+                              n <- levels(x[[".par"]])[i]
+                              r <- x[x[[".par"]]==n,]
+                              data.frame(y=r[[".zeta"]],
+                                         x=r[[n]])
+                          })
     zeta <- c(-rev(levels), 0, levels)
     fr <- data.frame(zeta = rep.int(zeta, length(spl)),
                      pval = unlist(lapply(bspl,predy,zeta)),
@@ -464,8 +502,9 @@ xyplot.thpr <-
         for (i in ind)
 ### FIXME: Should check which bound has been violated, although it
 ### will almost always be the minimum.
-            if (!is.null(curspl <-  spl[[fr[i, "pnm"] ]]))
+            if (is(curspl <-  spl[[fr[i, "pnm"] ]],"spline")) {
                 fr[i, "pval"] <- min(curspl$knots)
+            }
     }
     ylab <- expression(zeta)
     if (absVal) {
@@ -475,30 +514,9 @@ xyplot.thpr <-
     ll <- c(list(...),
             list(x = zeta ~ pval | pnm, data=fr,
                  scales = list(x = list(relation = 'free')),
-                 ylab = ylab, xlab = NULL,
-                 panel = function(x, y, ...)
-             {
-                 panel.grid(h = -1, v = -1)
-                 myspl <- spl[[panel.number()]]
-                 if (inherits(myspl,"error") || is.null(myspl)) {
-                     warning(sprintf("bad profile for variable %d: skipped",panel.number()))
-                 } else {
-                     lsegments(x, y, x, 0, ...)
-                     lims <- current.panel.limits()$xlim
-                     krange <- range(myspl$knots)
-                     pr <- predict(myspl,
-                                   seq(max(lims[1], krange[1]),
-                                       min(lims[2], krange[2]), len = 101))
-                     if (absVal) {
-                         pr$y <- abs(pr$y)
-                         y[y == 0] <- NA
-                         lsegments(x, y, rev(x), y)
-                     } else {
-                         panel.abline(h = 0, ...)
-                     }
-                     panel.lines(pr$x, pr$y)
-                 }
-             }))
+                 ylab = ylab, xlab = NULL, panel=panel.thpr,
+                 spl = spl, absVal = absVal))
+    
     do.call(xyplot, stripExpr(ll, names(spl)))
 }
 

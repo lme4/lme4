@@ -2181,7 +2181,7 @@ mkVarCorr <- function(sc, cnms, nc, theta, nms) {
 ##' @export VarCorr
 ##' @method VarCorr merMod
 ##' @export
-VarCorr.merMod <- function(x, sigma, rdig)# <- 3 args from nlme
+VarCorr.merMod <- function(x, sigma=1, rdig=3)# <- 3 args from nlme
 {
   ## FIXME:: would like to fix nlme to add ...
   ## FIXME:: add type=c("varcov","sdcorr","logs" ?)
