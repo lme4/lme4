@@ -985,6 +985,12 @@ family.nlsResp <- function(object, ...) gaussian()
 ##' @S3method fitted merMod
 fitted.merMod <- function(object, ...) {
     xx <- object@resp$mu
+    if (length(xx)==0) {
+        ## handle 'fake' objects created by simulate()
+        xx <- rep(NA,nrow(model.frame(object)))
+    }
+    if (is.null(nm <- rownames(model.frame(object)))) nm <- seq_along(xx)
+    names(xx) <- nm
     if (!is.null(fit.na.action <- attr(model.frame(object),"na.action"))) {
         xx <- napredict(fit.na.action,xx)
     }
@@ -1439,6 +1445,8 @@ residuals.merMod <-
              scaled=FALSE,
              ...) {
         r <- residuals(object@resp, type,...)
+        if (is.null(nm <- rownames(model.frame(object)))) nm <- seq_along(r)
+        names(r) <- nm
         if (scaled) r <- r/sigma(object)
         if (!is.null(na.action <- attr(model.frame(object),"na.action")))
             r <- naresid(na.action,r)

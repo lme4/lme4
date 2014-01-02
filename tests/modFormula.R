@@ -21,7 +21,7 @@ expect_equal(formula(fm1),Reaction~Days+(Days|Subject))
 ## predictions
 expect_equal(predict(fm1,newdata=sleepstudy[1:10,],ReForm=NULL),
              predict(fm2,newdata=sleepstudy[1:10,],ReForm=NULL))
-expect_equal(unname(predict(fm1,newdata=sleepstudy)),
+expect_equal(predict(fm1,newdata=sleepstudy),
              predict(fm1))
 
 lmodOff <- lFormula(Reaction ~ Days + (Days|Subject) + offset(0.5*Days),

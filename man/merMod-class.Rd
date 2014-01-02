@@ -66,7 +66,7 @@
     standard deviation scale.}
   \item{show.resids}{should the quantiles of the scaled residuals be printed?}
   \item{refit}{logical indicating if objects of class \code{lmerMod} should be
-    refitted with ML before produceing the anova table, default is \code{TRUE}.}
+    refitted with ML before producing the anova table, default is \code{TRUE}.}
   \item{model.names}{character vectors of model names to be used in the anova table.}
   \item{\dots}{potentially further arguments passed from other methods.}
 }

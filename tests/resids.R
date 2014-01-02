@@ -2,7 +2,7 @@ library(lme4)
 
 ## raw residuals for LMMs
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
-stopifnot(all.equal(residuals(fm1),sleepstudy$Reaction-fitted(fm1)))
+all.equal(residuals(fm1),sleepstudy$Reaction-fitted(fm1))
 
 r1 <- residuals(fm1,type="pearson")
 

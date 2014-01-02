@@ -188,7 +188,7 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
     ## FIXME: remove prefix when incorporated in package
 
     if (type=="parametric") {
-        ss <- simulate(x, nsim=nsim, use.u=use.u)
+        ss <- simulate(x, nsim=nsim, use.u=use.u, na.action=na.exclude)
     } else {
         if (use.u) {
             if (isGLMM(x)) warning("semiparametric bootstrapping is questionable for GLMMs")

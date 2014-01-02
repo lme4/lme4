@@ -976,6 +976,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(glm_Create, 10),    // generate external pointer
 
     CALLDEF(glm_setN, 2),       // setters
+    CALLDEF(glm_setTheta,       2),
 
     CALLDEF(glm_aic,            1), // getters
     CALLDEF(glm_devResid,       1),
@@ -983,7 +984,6 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(glm_link,           1),
     CALLDEF(glm_muEta,          1),
     CALLDEF(glm_resDev,         1),
-    CALLDEF(glm_setTheta,       2),
     CALLDEF(glm_sqrtWrkWt,      1),
     CALLDEF(glm_theta,          1),
     CALLDEF(glm_variance,       1),

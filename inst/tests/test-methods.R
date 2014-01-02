@@ -66,6 +66,17 @@ test_that("bootMer", {
                                "matrix")
     expect_equal(nrow(suppressWarnings(confint(gm2,
                  method="boot",nsim=2,quiet=TRUE,parm=4:6))),3)
+    ## bootMer with NA values
+    PastesNA <- Pastes
+    PastesNA$Sample[1:3] <- NA
+    m2 <- update(m1,data=PastesNA)
+    confint(m2,method="boot",nsim=10,quiet=TRUE,seed=101)
+    fm1 <- lmer(Reaction~Days+(Days|Subject),sleepstudy)
+    sleepstudyNA <- sleepstudy
+    sleepstudyNA$Days[1:3] = NA
+    fm2 <- update(fm1,data=sleepstudyNA)
+    confint(fm2, method="boot", nsim=10, seed=101)
+
 })
 
 context("confint")
@@ -95,9 +106,9 @@ test_that("predict", {
     d3 <- expand.grid(period=as.character(1:3),
                       herd=unique(cbpp$herd))
     p0 <- predict(gm1)
-    p1 <- unname(predict(gm1,d1))
-    p2 <- unname(predict(gm1,d2))
-    p3 <- unname(predict(gm1,d3))
+    p1 <- predict(gm1,d1)
+    p2 <- predict(gm1,d2)
+    p3 <- predict(gm1,d3)
     expect_equal(p0[1],p1[1],tol=4e-5)
     expect_equal(p0[1],p2[1],tol=4e-5)
     expect_equal(p0[1],p3[1],tol=4e-5)

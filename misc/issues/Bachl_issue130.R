@@ -45,6 +45,7 @@ nloptwrap2 <- function(fn,par,lower,upper,control=list(),...) {
     res <- nloptr(par, eval_f=fn, lb=lower, ub=upper, opts=control, ...)
     with(res,list(par=solution,
                   fval=objective,
+                  feval=iterations,
                   conv=if (status>0) 0 else status,
                   message=message))
 }

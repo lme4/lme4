@@ -218,25 +218,29 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
     ## should follow 'na.action' instead ...)
 
     if (length(list(...)>0)) warning("unused arguments ignored")
+
+    fit.na.action <- NULL
     type <- match.arg(type)
     if (!is.null(terms))
         stop("terms functionality for predict not yet implemented")
     if (!is.null(newparams)) {
         object <- setParams(object,newparams)
     }
-    if (is.null(newdata) && is.null(ReForm) && is.null(newparams)) {
+    if ((rawPred <- is.null(newdata) &&
+                    is.null(ReForm) && is.null(newparams))) { 
         ## raw predict() call, just return fitted values
         ##   (inverse-link if appropriate)
         if (isLMM(object) || isNLMM(object)) {
-            pred <- fitted(object)
+            ## make sure we do *NOT* have NAs in fitted object
+            pred <- na.omit(fitted(object))
         } else { ## inverse-link
             pred <-  switch(type,response=object@resp$mu, ## == fitted(object),
                             link=object@resp$eta)
-            if (!is.null(fit.na.action <- attr(model.frame(object),"na.action"))) {
-                pred <- napredict(fit.na.action,pred)
-            }
+            if (is.null(nm <- rownames(model.frame(object))))
+                nm <- seq_along(pred)
+            names(pred) <- nm
         }
-        return(pred)
+        ## flow jumps to end for na.predict
     } else { ## newdata and/or ReForm and/or newparams specified
         X_orig <- getME(object, "X")
         ## modified from predict.glm ...
@@ -288,12 +292,20 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
         if (isGLMM(object) && type=="response") {
             pred <- object@resp$family$linkinv(pred)
         }
-        ## fill in NAs as appropriate
-        if (!is.null(fit.na.action)) {
-            pred <- napredict(fit.na.action,pred)
+    }  ## newdata/newparams/ReForm
+    ## fill in NAs as appropriate: if NAs were detected in
+    ## original model fit, OR in updated model frame construction
+    ## but DON'T double-NA if raw prediction in the first place
+    old.fit.na.action <- attr(model.frame(object),"na.action")
+    if (!is.null(fit.na.action) ||  ## NA used in new construction
+        (!is.null(fit.na.action <- old.fit.na.action))) {
+        if (!missing(na.action)) {
+            ## hack to override action where explicitly specified
+            class(fit.na.action) <- class(attr(na.action(NA),"na.action"))
         }
-        return(pred)
-    } ## newdata/newparams/ReForm
+        pred <- napredict(fit.na.action,pred)
+    }
+    pred
 }
 
 ##' @importFrom stats simulate
@@ -305,9 +317,6 @@ NULL
 ##' @param nsim positive integer scalar - the number of responses to simulate
 ##' @param seed an optional seed to be used in \code{set.seed} immediately
 ##'     before the simulation so as to generate a reproducible sample.
-##' @param use.u (logical) if \code{TRUE}, generate a simulation conditional on the current
-##' random-effects estimates; if \code{FALSE} generate new Normally distributed random-effects values
-##' @param ReForm (formula): specifies which random-effects estimates to condition on; if specified, overrides \code{use.u}
 ##' @param ... optional additional arguments, none are used at present
 ##' @examples
 ##' ## test whether fitted models are consistent with the
@@ -380,6 +389,10 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                                opt=list(par=NA,fval=NA,conv=NA),
                                glmod$reTrms,fr=glmod$fr)
         }
+        ## would like to do this:
+        ## so predict() -> fitted() -> set default names will work
+        ## instead we have a special case in fitted()
+        ## object@resp$mu <- rep(NA_real_,nrow(model.frame(object)))
     }
     stopifnot((nsim <- as.integer(nsim[1])) > 0,
               is(object, "merMod"))
@@ -404,10 +417,11 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 
     sigma <- sigma(object)
     n <- nrow(X <- getME(object, "X"))
-    if (is.null(nm <- names(fitted(object)))) nm <- seq(n)
     link <- if (isGLMM(object)) "response"
 
     ## predictions, conditioned as specified, on link scale
+    ## do **NOT** use na.action as specified here (inherit
+    ## from object instead, for consistency)
     etapred <- predict(object, newdata=newdata, ReForm=ReForm,
                        type="link")
 
@@ -477,7 +491,24 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         val <- as.data.frame(val)
     }  else class(val) <- "data.frame"
     names(val) <- paste("sim", seq_len(nsim), sep="_")
+    if (is.null(nm <- names(fitted(object)))) nm <- seq(n)
     row.names(val) <- nm
+
+    if (!missing(na.action)) {
+        if (!is.null(fit.na.action <- attr(model.frame(object),"na.action"))) {
+            class.na.action <- class(attr(na.action(NA),"na.action"))
+            if (class.na.action != class(fit.na.action)) {
+                ## hack to override action where explicitly specified
+                class(fit.na.action) <- class.na.action
+                val <- as.data.frame(lapply(val,napredict,
+                      omit=fit.na.action))
+                ## reconstruct names
+                row.names(val) <- names(napredict(fitted(object),
+                                                  omit=fit.na.action))
+            }
+        }
+    }
+
     attr(val, "seed") <- RNGstate
     val
 }

@@ -3,6 +3,62 @@
 \name{NEWS}
 \title{lme4 News}
 \encoding{UTF-8}
+\section{CHANGES IN VERSION 1.1-3}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item The gradient and Hessian are now computed via finite
+      differencing after the nonlinear fit is done, and the results
+      are used for additional convergence tests. Control of the
+      behaviour is available through the \code{check.conv.*} options
+      in \code{[g]lmerControl}. Singular fits (fits with estimated
+      variances of zero or correlations of +/- 1) can also be tested for,
+      although the current default value of the \code{check.conv.singular}
+      option is \code{"ignore"}; this may be changed to \code{"warning"}
+      in the future. The results are stored in \code{@optinfo$derivs}.
+      (Github issue #120; based on code by Rune Christensen.)
+      \item The \code{simulate} method will now work to generate
+      simulations "from scratch" by providing a model formula,
+      a data frame holding the predictor variables, and a list
+      containing the values of the model parameters:
+      see \code{?simulate.merMod}. (Github issue #115)
+      \item \code{VarCorr.merMod} objects now have an \code{as.data.frame}
+      method, converting the list of matrices to a more
+      convenient form for reporting and post-processing. (Github issue #129)
+    }
+  }
+  \subsection{MINOR USER-VISIBLE CHANGES}{
+    \itemize{
+      \item results of \code{fitted()}, \code{predict()},
+      and \code{residuals()} now have
+      names in all cases (previously results were unnamed, or
+      named only when predicting from new data)
+      \item the \code{anova} method now has a \code{refit} argument
+      that controls whether objects of class \code{lmerMod} should be
+      refitted with ML before producing the \code{anova} table.
+      (Github issues #141, #165; contributed by Henrik Singmann.)
+      \item the \code{print} method for \code{VarCorr} objects
+      now has a \code{formatter} argument for finer control
+      of standard deviation and variance formats
+      \item the \code{optinfo} slot now stores slightly more
+      information, including the number of function evaluations
+      (\code{$feval}).
+    }
+  }
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{fitted} now respects \code{na.action} settings (Github
+      issue #149)
+      \item \code{confint(.,method="boot")} now works when there are
+      \code{NA} values in the original data set (Github issue #158)
+      \item previously, the code stored the results (parameter values,
+      residuals, etc.) based on the \emph{last} set of parameters
+      evaluated, rather than the optimal parameters.  These were
+      not always the same, but were almost always very close,
+      but some previous results will change slightly
+      (Github issue #166)
+    }
+  }
+}
 \section{CHANGES IN VERSION 1.1-0}{
   \subsection{MINOR USER-VISIBLE CHANGES}{
     \itemize{
@@ -187,7 +243,7 @@
       \item A general-purpose \code{\link{getME}} accessor method allows
       extraction of a wide variety of components of a mixed-model
       fit. \code{getME} also allows a vector of objects to be returned as
-      a list of mixed-model componenets. This has been backported to
+      a list of mixed-model components. This has been backported to
       be compatible with older versions of \code{lme4} that still produce \code{mer}
       objects rather than \code{merMod} objects. However, backporting is incomplete;
       some objects are only extractable in newer versions of \code{lme4}.

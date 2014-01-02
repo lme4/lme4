@@ -203,4 +203,55 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
 \examples{
 str(lmerControl())
 str(glmerControl())
+\dontrun{
+    ## fit with default Nelder-Mead algorithm ...
+    fm0 <- lmer(Reaction ~ Days + (1 | Subject), sleepstudy)
+    fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+    ## or with minqa::bobyqa ...
+    fm1_bobyqa <- update(fm1,control=lmerControl(optimizer="bobyqa"))
+    ## or with the nlminb function used in older (<1.0) versions of lme4;
+    ## this will usually replicate older results
+    require(optimx)
+    fm1_nlminb <- update(fm1,control=lmerControl(optimizer="optimx",
+                             optCtrl=list(method="nlminb")))
+    ## The other option here is method="L-BFGS-B".
+    ## Or we can wrap base::optim():
+    optimwrap <- function(fn,par,lower,upper,control=list(),
+                          ...) {
+        if (is.null(control$method)) stop("must specify method in optCtrl")
+        method <- control$method
+        control$method <- NULL
+        ## "Brent" requires finite upper values (lower bound will always
+        ##  be zero in this case)
+        if (method=="Brent") upper <- pmin(1e4,upper)
+        res <- optim(par=par,fn=fn,lower=lower,upper=upper,
+                     control=control,method=method,...)
+        with(res,list(par=par,
+                      fval=value,
+                      feval=counts[1],
+                      conv=convergence,
+                      message=message))
+    }
+    fm0_brent <- update(fm0,control=lmerControl(optimizer="optimwrap",
+                            optCtrl=list(method="Brent")))
+    ## You can also use functions from the nloptr package.
+    ## You must run require (nloptr) here ... it is commented out
+    ## to avoid a dependence on nloptr in the package
+    defaultControl <- list(algorithm="NLOPT_LN_BOBYQA",
+                           xtol_rel=1e-6,maxeval=1e5)
+    nloptwrap2 <- function(fn,par,lower,upper,control=list(),...) {
+        for (n in names(defaultControl)) 
+            if (is.null(control[[n]])) control[[n]] <- defaultControl[[n]]
+        res <- nloptr(x0=par,eval_f=fn,lb=lower,ub=upper,opts=control,...)
+        with(res,list(par=solution,
+                      fval=objective,
+                      feval=iterations,
+                      conv=if (status>0) 0 else status,
+                      message=message))
+    }
+    fm1_nloptr <- update(fm1,control=lmerControl(optimizer="nloptwrap2"))
+    fm1_nloptr_NM <- update(fm1,control=lmerControl(optimizer="nloptwrap2",
+                                optCtrl=list(algorithm="NLOPT_LN_NELDERMEAD")))
+    ## other algorithm options include NLOPT_LN_COBYLA, NLOPT_LN_SBPLX
+}
 }

@@ -79,6 +79,11 @@ checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
 	if(!(grepl("Small",cc) && prod(d) > nonSmall)) {
             rankZ <- rankMatrix(if(doTr) t(Zt) else Zt, method="qr",
                                 sval = numeric(min(d)))
+            ## FIXME: should probably trap this earlier ...
+            if (is.na(rankZ)) stop("NA in Z matrix: please use ",
+                                   shQuote("na.action='na.omit'"),
+                                   " or ",
+                                   shQuote("na.action='na.exclude'"))
             if (allow.n) {
                 unident <- n<rankZ
                 cmp <- "<"
@@ -180,6 +185,11 @@ drop.coef <- function(X, silent = TRUE) {
     ##   stop(gettextf("determination of full column rank design matrix failed"),
     ##        call. = FALSE)
     newX
+}
+
+## NA predict and restore rownames of original data if necessary
+napredictx <- function(x,...) {
+    res <- napredict(x)
 }
 
 ##' @rdname modular

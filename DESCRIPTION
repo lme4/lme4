@@ -5,7 +5,8 @@ Authors@R: c(person("Douglas","Bates", role="aut"),
     person("Martin","Maechler", role="aut"),
     person("Ben","Bolker",email="bbolker+lme4@gmail.com", role=c("aut","cre")),
     person("Steven","Walker",role="aut"),
-    person("Rune Haubo Bojesen","Christensen", role="ctb"))
+    person("Rune Haubo Bojesen","Christensen", role="ctb"),
+    person("Henrik","Singmann", role="ctb"))
 Maintainer: Ben Bolker <bbolker+lme4@gmail.com>
 Contact: LME4 Authors <lme4-authors@lists.r-forge.r-project.org>
 Author: Douglas Bates [aut], Martin Maechler [aut],
