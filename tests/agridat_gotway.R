@@ -21,13 +21,20 @@ lme4.0fit <- structure(list(fixef = structure(c(1.50345713031203, -0.19385325938
 
 ## start doesn't work because we don't get there
 library(lme4)
-m1 <- glmer(cbind(y, n-y) ~ gen + (1|block), data=gotway.hessianfly, family=binomial)
+m1 <- glmer(cbind(y, n-y) ~ gen + (1|block), data=gotway.hessianfly,
+            family=binomial)
+m1B <- update(m1,control=glmerControl(optimizer="bobyqa"))
+max(abs(m1@optinfo$derivs$gradient))  ## 0.0012
+max(abs(m1B@optinfo$derivs$gradient)) ## 2.03e-5
+abs(m1@optinfo$derivs$gradient)/abs(m1B@optinfo$derivs$gradient)
+## bobyqa gets gradients *at least* 1.64* lower
+
 lme4fit <- list(fixef=fixef(m1),theta=getME(m1,"theta"))
 
 ## hack around slight naming differences
 lme4fit$theta <- unname(lme4fit$theta)
 lme4.0fit$theta <- unname(lme4.0fit$theta)
-expect_equal(lme4fit,lme4.0fit,tol=3e-4)
+expect_equal(lme4fit,lme4.0fit,tol=5e-5)
 
 ## Fun stuff: visualize and alternative model
 
