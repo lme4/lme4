@@ -23,7 +23,7 @@ namedList <- function(...) {
 
 
 ## DOC: ../man/lmerControl.Rd
-lmerControl <- function(optimizer="Nelder_Mead",
+lmerControl <- function(optimizer="bobyqa",#instead of "Nelder_Mead",
                         restart_edge=TRUE,
                         calc.derivs=TRUE,
                         use.last.params=FALSE,
