@@ -2333,7 +2333,7 @@ summary.summary.merMod <- function(object, varcov = TRUE, ...) {
 
 ##' @importFrom lattice dotplot
 ##' @S3method  dotplot ranef.mer
-dotplot.ranef.mer <- function(x, data, ...)
+dotplot.ranef.mer <- function(x, data, main=TRUE, ...)
 {
     prepanel.ci <- function(x, y, se, subscripts, ...) {
 	if (is.null(se)) return(list())
@@ -2360,19 +2360,21 @@ dotplot.ranef.mer <- function(x, data, ...)
 	}
 	panel.xyplot(x, y, pch = pch, ...)
     }
-    f <- function(x, ...) {
-	ss <- stack(x)
-	ss$ind <- factor(as.character(ss$ind), levels = colnames(x))
-	ss$.nn <- rep.int(reorder(factor(rownames(x)), x[[1]],
-                                  FUN=mean,sort=sort), ncol(x))
+    f <- function(nx, ...) {
+        xt <- x[[nx]]
+	ss <- stack(xt)
+        mtit <- if(main) nx # else NULL
+	ss$ind <- factor(as.character(ss$ind), levels = colnames(xt))
+	ss$.nn <- rep.int(reorder(factor(rownames(xt)), xt[[1]],
+                                  FUN=mean,sort=sort), ncol(xt))
 	se <- NULL
-	if (!is.null(pv <- attr(x, "postVar")))
+	if (!is.null(pv <- attr(xt, "postVar")))
 	    se <- unlist(lapply(1:(dim(pv)[1]), function(i) sqrt(pv[i, i, ])))
 	dotplot(.nn ~ values | ind, ss, se = se,
 		prepanel = prepanel.ci, panel = panel.ci,
-		xlab = NULL, ...)
+		xlab = NULL, main = mtit, ...)
     }
-    lapply(x, f, ...)
+    setNames(lapply(names(x), f, ...),names(x))
 }
 
 ##' @importFrom graphics plot

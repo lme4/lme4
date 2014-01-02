@@ -42,6 +42,8 @@
       \item the \code{optinfo} slot now stores slightly more
       information, including the number of function evaluations
       (\code{$feval}).
+      \item \code{dotplot.ranef.mer} now adds titles to sub-plots by default,
+      like \code{qqmath.ranef.mer}
     }
   }
   \subsection{BUG FIXES}{
