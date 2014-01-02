@@ -142,6 +142,11 @@
 (fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy))
 summary(fm1)# (with its own print method)
 
+str(terms(fm1))
+stopifnot(identical(terms(fm1, fixed.only=FALSE),
+                    terms(model.frame(fm1))))
+attr(terms(fm1, FALSE), "dataClasses") # fixed.only=FALSE needed for dataCl.
+
 fm1_ML <- update(fm1,REML=FALSE)
 (fm2 <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy))
 anova(fm1, fm2)
