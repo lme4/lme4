@@ -2,16 +2,25 @@
 \title{Extract Variance and Correlation Components}
 \alias{VarCorr}
 \alias{VarCorr.merMod}
+\alias{as.data.frame.VarCorr.merMod}
 \usage{
-\method{VarCorr}{merMod} (x, sigma, rdig)
+\method{VarCorr}{merMod} (x, sigma=1, rdig=3)
+\method{as.data.frame}{VarCorr.merMod} (x, row.names = NULL, optional =
+FALSE, ...)
 }
 \arguments{
-  \item{x}{a fitted model object, usually an object inheriting from
-    class \code{\linkS4class{merMod}}.}
+  \item{x}{for \code{VarCorr}: a fitted model object, usually an object inheriting from
+    class \code{\linkS4class{merMod}}. For \code{as.data.frame}, a
+    \code{VarCorr.merMod} object returned from \code{VarCorr}.}
   \item{sigma}{an optional numeric value used as a multiplier for the
-    standard deviations.  Default is \code{1}.}
+    standard deviations.}
   \item{rdig}{an optional integer value specifying the number of digits
-    used to represent correlation estimates.  Default is \code{3}.}
+    used to represent correlation estimates.}
+  \item{row.names}{Ignored: necessary for the \code{as.data.frame}
+    method.}
+  \item{optional}{Ignored: necessary for the \code{as.data.frame}
+    method.}
+  \item{\dots}{Ignored: necessary for the \code{as.data.frame} method.}
 }
 \description{
   This function calculates the estimated variances,
@@ -32,6 +41,17 @@
   residual standard deviation is stored as attribute
   \code{"sc"} (for \code{glmer} fits, this attribute stores
   the scale parameter of the model).
+
+The \code{as.data.frame} method produces a combined data frame with one
+row for each variance or covariance parameter (and a row for the
+residual error term where applicable) and the following columns:
+  \describe{
+    \item{grp}{grouping factor}
+    \item{var1}{first variable}
+    \item{var2}{second variable (\code{NA} for variance parameters)}
+    \item{vcov}{variances or covariances}
+    \item{sdcor}{standard deviations or correlations}
+  }
 }
 \details{
   The \code{print} method for \code{VarCorr.merMod} objects
@@ -56,6 +76,7 @@ fm1 <- lmer(distance ~ age + (age|Subject), data = Orthodont)
 print(vc,comp=c("Variance","Std.Dev."),digits=2)
 ## variance only
 print(vc,comp=c("Variance"))
+as.data.frame(vc)
 }
 \keyword{models}
 

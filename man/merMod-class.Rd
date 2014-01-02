@@ -36,7 +36,7 @@
 }
 \usage{
 \S3method{anova}{merMod}(object, ..., refit = TRUE, model.names=NULL)
-\S3method{terms}{merMod}(object, fixed.only = TRUE, \dots)
+\S3method{terms}{merMod}(x, fixed.only = TRUE, \dots)
 \S3method{vcov}{merMod}(object, correlation = TRUE, sigm = sigma(object), \dots)
 
 \S3method{print}{merMod}(x, digits = max(3, getOption("digits") - 3),
@@ -51,7 +51,10 @@
 }
 \arguments{
   \item{object}{an \R object of class \code{\linkS4class{merMod}}, i.e.,
-    as resulting from \code{\link{lmer}()}, or \code{\link{glmer}()}, etc.}
+    as resulting from \code{\link{lmer}()}, or \code{\link{glmer}()},
+    etc.}
+  \item{x}{an \R object of class \code{merMod} or \code{summary.merMod},
+    respectively, the latter resulting from \code{summary(<merMod>)}.}
   \item{refit}{logical indicating if objects of class \code{lmerMod} should be
     refitted with ML before producing the anova table, default is \code{TRUE}.}
   \item{model.names}{character vectors of model names to be used in the anova table.}
@@ -64,8 +67,6 @@
     correlation matrix of the fixed-effects parameters should be
     printed.}
   \item{sigm}{the residual standard error; by default \code{\link{sigma}(object)}.}
-  \item{x}{an \R object of class \code{merMod} or \code{summary.merMod},
-    respectively, the latter resulting from \code{summary(<merMod>)}.}
   \item{digits}{number of significant digits for printing}
   \item{symbolic.cor}{should a symbolic encoding of the fixed-effects correlation
     matrix be printed? If so, the \code{\link{symnum}} function is used.}
