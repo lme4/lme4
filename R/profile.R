@@ -463,26 +463,26 @@ panel.thpr <- function(x, y, spl, absVal, ...)
 {
     panel.grid(h = -1, v = -1)
     myspl <- spl[[panel.number()]]
+    lsegments(x, y, x, 0, ...)
+    if (absVal) {
+        y[y == 0] <- NA
+        lsegments(x, y, rev(x), y)
+    } else {
+        panel.abline(h = 0, ...)
+    }
     if (!is(myspl,"spline")) {
         ## 'difficult' data
         if (absVal) myspl$y <- abs(myspl$y)
         panel.lines(myspl$x,myspl$y)
-        panel.points(myspl$x,myspl$y)
+        panel.points(myspl$x,myspl$y,pch="+")
         warning(sprintf("bad profile for variable %d: using linear interpolation",panel.number()))
     } else {
-        lsegments(x, y, x, 0, ...)
         lims <- current.panel.limits()$xlim
         krange <- range(myspl$knots)
         pr <- predict(myspl,
                       seq(max(lims[1], krange[1]),
                           min(lims[2], krange[2]), len = 101))
-        if (absVal) {
-            pr$y <- abs(pr$y)
-            y[y == 0] <- NA
-            lsegments(x, y, rev(x), y)
-        } else {
-            panel.abline(h = 0, ...)
-        }
+        if (absVal) pr$y <- abs(pr$y)
         panel.lines(pr$x, pr$y)
     }
 }
@@ -502,16 +502,22 @@ xyplot.thpr <-
     ## for parameters for which spline couldn't be computed,
     ## replace the 'spl' element with the raw profile data
     badSpl <- sapply(spl,is.null)
-    spl[badSpl] <- lapply(seq_along(which(badSpl)),
+    spl[badSpl] <- lapply(which(badSpl),
                           function(i) {
-                              n <- levels(x[[".par"]])[i]
+                              n <- names(badSpl)[i]
                               r <- x[x[[".par"]]==n,]
                               data.frame(y=r[[".zeta"]],
                                          x=r[[n]])
                           })
+    bspl[badSpl] <- lapply(spl[badSpl],function(d) { data.frame(x=d$y,y=d$x) })
     zeta <- c(-rev(levels), 0, levels)
+    ## use linear approximation if backspline doesn't work
+    tmpf <- function(bspl,zeta) {
+        if (is(bspl,"spline")) return(predy(bspl,zeta))
+        return(approx(bspl$x,bspl$y,xout=zeta)$y)
+    }
     fr <- data.frame(zeta = rep.int(zeta, length(spl)),
-                     pval = unlist(lapply(bspl,predy,zeta)),
+                     pval = unlist(lapply(bspl,tmpf,zeta)),
                      pnm = gl(length(spl), length(zeta), labels = names(spl)))
     if (length(ind <- which(is.na(fr$pval)))) {
         fr[ind, "zeta"] <- 0
@@ -784,6 +790,12 @@ splom.thpr <- function (x, data,
               levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 2)),
               conf = c(50, 80, 90, 95, 99)/100, ...)
 {
+    ## FIXME: only works for "old-style" profile names
+    singfit <- FALSE
+    for (i in grep("^\\.sig[0-9]+",names(x))) {
+        singfit <- singfit ||  (any(x[,".zeta"]==0 & x[,i]==0))
+    }
+    if (singfit) warning("splom is unreliable for singular fits")
     mlev <- max(levels)
     spl <- attr(x, "forward")
     frange <- sapply(spl, function(x) range(x$knots))

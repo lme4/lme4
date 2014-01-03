@@ -4,6 +4,7 @@
 ## restart_edge=TRUE (default) works
 
 library(lme4)
+library(testthat)
 
 ## Stephane Laurent:
 dat <- read.csv(system.file("testdata","dat20101314.csv",package="lme4"))
@@ -130,18 +131,19 @@ stopifnot(getME(m5,"theta")==0)
 stopifnot(getME(m5B,"theta")==0)
 p5 <- profile(m5)  ## bobyqa warnings but results look reasonable
 xyplot(p5)
-splom(p5)  ## reveals slight glitch (bottom row of plots doesn't look right)
+## reveals slight glitch (bottom row of plots doesn't look right)
+expect_warning(splom(p5),"unreliable for singular fits")  
 
 ## Case #2: near-boundary estimate, but boundary.tol can't fix it
 m16 <- tmpf(16)
 ## tmpplot(16)
 p16 <- profile(m16)  ## warning message (non-monotonic profile)
-xyplot(p16)  ## warns about linear interpolation in profile for variable 1
+expect_warning(xyplot(p16),"using linear interpolation")  ## warns about linear interpolation in profile for variable 1
 ## (still not quite right)
 d16 <- as.data.frame(p16)
 xyplot(.zeta~.focal|.par,data=d16,type=c("p","l"),
        scales=list(x=list(relation="free")))
-try(splom(p))  ## breaks
+try(splom(p16))  ## breaks
 
 ## bottom line:
 ##  * xyplot.thpr could still be improved
