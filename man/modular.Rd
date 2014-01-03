@@ -19,6 +19,7 @@ mkLmerDevfun(fr, X, reTrms, REML = TRUE, start = NULL,
 optimizeLmer(devfun,
              optimizer    = formals(lmerControl)$optimizer,
              restart_edge = formals(lmerControl)$restart_edge,
+             boundary.tol = formals(lmerControl)$boundary.tol,
              start = NULL, verbose = 0L,
              control = list(), ...)
 
@@ -30,7 +31,9 @@ mkGlmerDevfun(fr, X, reTrms, family, nAGQ = 1L,
     verbose = 0L, control = glmerControl(), ...)
 
 optimizeGlmer(devfun, optimizer = "bobyqa",
-    restart_edge = FALSE, verbose = 0L, control = list(),
+    restart_edge = FALSE,
+    boundary.tol = formals(glmerControl)$boundary.tol,
+    verbose = 0L, control = list(),
     nAGQ = 1L, stage = 1, start = NULL, ...)
 
 updateGlmerDevfun(devfun, reTrms, nAGQ = 1L)
@@ -135,22 +138,14 @@ updateGlmerDevfun(devfun, reTrms, nAGQ = 1L)
   effect parameters) phase. See \code{\link{modular}} for
   more information on these two phases.
 }
-\item{restart_edge}{logical - should the optimizer
-  attempt a restart when it finds a solution at the
-  boundary (i.e. zero random-effect variances or perfect
-  +/-1 correlations)?}
-
-  \item{family}{a GLM family, see \code{\link[stats]{glm}}
+\item{restart_edge}{see \code{\link{lmerControl}}}
+\item{boundary.tol}{see \code{\link{lmerControl}}}
+\item{family}{a GLM family; see \code{\link[stats]{glm}}
   and \code{\link[stats]{family}}.}
-
-  \item{mustart}{optional starting values on the scale of
-  the conditional mean, as in \code{\link[stats]{glm}}; see
-  there for details.}
-
+\item{mustart}{optional starting values on the scale of
+  the conditional mean; see \code{\link[stats]{glm}} for details.}
   \item{etastart}{optional starting values on the scale of
-  the unbounded predictor as in \code{\link[stats]{glm}};
-  see there for details.}
-
+  the unbounded predictor; see \code{\link[stats]{glm}} for details.}
 \item{\dots}{other potential arguments; for \code{optimizeLmer} and
   \code{optimizeGlmer}, these are passed to internal function
   \code{optwrap}, which has relevant parameters \code{calc.derivs}

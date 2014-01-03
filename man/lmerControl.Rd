@@ -20,6 +20,7 @@
 \usage{
 lmerControl(optimizer = "Nelder_Mead",
     restart_edge = TRUE,
+    boundary.tol = 1e-5,
     calc.derivs=TRUE,
     use.last.params=FALSE,
     sparseX = FALSE,
@@ -40,6 +41,7 @@ lmerControl(optimizer = "Nelder_Mead",
 
 glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     restart_edge = FALSE,
+    boundary.tol = 1e-5,
     calc.derivs=TRUE,
     use.last.params=FALSE,
     sparseX = FALSE,
@@ -112,6 +114,9 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     boundary (i.e. zero random-effect variances or perfect
     +/-1 correlations)?  (Currently only implemented for
     \code{lmerControl}.)}
+  \item{boundary.tol}{numeric - within what distance of
+    a boundary should the boundary be checked for a better fit?
+    (Set to zero to disable boundary checking.)}
   \item{tolPwrss}{numeric scalar - the tolerance for declaring
     convergence in the penalized iteratively weighted residual
     sum-of-squares step.}

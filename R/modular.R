@@ -364,6 +364,7 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, verbose=0, co
 optimizeLmer <- function(devfun,
                          optimizer=    formals(lmerControl)$optimizer,
                          restart_edge= formals(lmerControl)$restart_edge,
+                         boundary.tol = formals(lmerControl)$boundary.tol,
                          start = NULL,
                          verbose = 0L,
                          control = list(),
@@ -409,6 +410,9 @@ optimizeLmer <- function(devfun,
                                ...)
             }
         }
+    }
+    if (boundary.tol>0) {
+        opt <- check.boundary(rho,opt,devfun,boundary.tol)
     }
     return(opt)
 }
@@ -542,6 +546,7 @@ mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L,
 optimizeGlmer <- function(devfun,
                           optimizer="bobyqa",
                           restart_edge=FALSE,
+                          boundary.tol = formals(glmerControl)$boundary.tol,
                           verbose = 0L,
                           control = list(),
                           nAGQ = 1L,
@@ -570,6 +575,29 @@ optimizeGlmer <- function(devfun,
     }
     ## FIXME: implement this ...
     if (restart_edge) stop("restart_edge not implemented for optimizeGlmer yet")
+    if (boundary.tol>0) {
+        opt <- check.boundary(rho,opt,devfun,boundary.tol)
+    }
+    return(opt)
+}
+
+check.boundary <- function(rho,opt,devfun,boundary.tol) {
+    bdiff <- rho$pp$theta-rho$lower[seq_along(rho$pp$theta)]
+    if (any(edgevals <- bdiff>0 & bdiff<boundary.tol)) {
+        ## try sucessive "close-to-edge parameters" to see
+        ## if we can improve by setting them equal to the boundary
+        pp <- opt$par
+        for (i in which(edgevals)) {
+            tmppar <- pp
+            tmppar[i] <- rho$lower[i]
+            if (devfun(tmppar)<opt$fval) pp[i] <- tmppar[i]
+        }
+        opt$par <- pp
+        opt$fval <- devfun(opt$par)
+        ## re-run to reset (whether successful or not)
+        ## FIXME: derivatives, Hessian etc. (and any other
+        ## opt messages) *not* recomputed
+    }
     return(opt)
 }
 

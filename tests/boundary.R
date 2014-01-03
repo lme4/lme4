@@ -13,7 +13,10 @@ fit <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat,
 fit_b <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat,
               control=lmerControl(optimizer="bobyqa",restart_edge=FALSE))
 fit_c <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat,
-              control=lmerControl(optimizer="Nelder_Mead", restart_edge=FALSE))
+              control=lmerControl(optimizer="Nelder_Mead", restart_edge=FALSE,
+              check.conv.hess="ignore"))
+## final fit gives degenerate-Hessian warning
+## FIXME: use fit_c with expect_warning() as a check on convergence tests
 ## tol=1e-5 seems OK in interactive use but not in R CMD check ... ??
 stopifnot(all.equal(getME(fit,"theta"),getME(fit_b,"theta"),tol=2e-5))
 stopifnot(all(getME(fit,"theta")>0))
@@ -25,9 +28,12 @@ ldata <- getData(13)
 ## old (backward compatible/buggy)
 fm4  <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="Nelder_Mead",
                                   use.last.params=TRUE))
-## gives two warnings:
+
 fm4b <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="Nelder_Mead",
-                                  use.last.params=TRUE, restart_edge=FALSE))
+                                  use.last.params=TRUE, restart_edge=FALSE,
+                                  check.conv.hess="ignore",
+                                  check.conv.grad="ignore"))
+## FIXME: use as convergence test check
 stopifnot(getME(fm4b,"theta")==0)
 fm4c <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="bobyqa",
                                   use.last.params=TRUE))
@@ -35,10 +41,15 @@ stopifnot(all.equal(getME(fm4,"theta"),getME(fm4c,"theta"),tol=1e-4))
 stopifnot(all(getME(fm4,"theta")>0))
 
 ## new: doesn't get stuck at edge any more,  but gets stuck somewhere else ...
-fm5 <- lmer(y ~ (1|Var2), ldata)
-fm5b <- lmer(y ~ (1|Var2), ldata, control=lmerControl(restart_edge=FALSE))
+fm5 <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="Nelder_Mead",
+                                 check.conv.hess="ignore",
+                                 check.conv.grad="ignore"))
+fm5b <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="Nelder_Mead",
+                                  restart_edge=FALSE,
+                                  check.conv.hess="ignore",
+                                  check.conv.grad="ignore"))
 fm5c <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="bobyqa"))
-stopifnot(all(getME(fm4,"theta")>0))
+stopifnot(all.equal(unname(getME(fm5c,"theta")),0.21067645))
 
 if (FALSE) {
     ## additional stuff for diagnosing Nelder-Mead problems.
@@ -75,3 +86,105 @@ if (FALSE) {
     plot(.zeta^2~.sig01,data=dd,type="b")
     abline(v=v)
 }
+
+######################
+library(lattice)
+## testing boundary and near-boundary cases
+
+tmpf <- function(i,...) {
+    set.seed(i)
+    d <- data.frame(x=rnorm(60),f=factor(rep(1:6,each=10)))
+    d$y <- simulate(~x+(1|f),family=gaussian,newdata=d,
+                    newparams=list(theta=0.01,beta=c(1,1),sigma=5))[[1]]
+    lmer(y~x+(1|f),data=d,...)
+}
+sumf <- function(m) {
+    unlist(VarCorr(m))[1]
+}
+if (FALSE) {
+    ## figuring out which seeds will give boundary and
+    ## near-boundary solutions
+    mList <- lapply(1:201,tmpf)
+    ss <- sapply(mList,sumf)+1e-50
+    par(las=1,bty="l")
+    hist(log(ss),col="gray",breaks=50)
+    ## values lying on boundary
+    which(log(ss)<(-40))   ## 5, 7-13, 15, 21, ...
+    ## values close to boundary (if check.edge not set)
+    which(log(ss)>(-40) & log(ss) <(-20))  ## 16, 44, 80, 86, 116, ...
+}
+## diagnostic plot
+tmpplot <- function(i,FUN=tmpf) {
+    dd <- FUN(i,devFunOnly=TRUE)
+    x <- 10^seq(-10,-6.5,length=201)
+    dvec <- sapply(x,dd)
+    par(las=1,bty="l")
+    plot(x,dvec-min(dvec)+1e-16,log="xy",type="b")
+    abline(v=getME(FUN(i),"theta"),col=2)
+}
+
+## Case #1: boundary estimate with or without boundary.tol
+m5 <- tmpf(5)
+m5B <- tmpf(5,control=lmerControl(boundary.tol=0))
+stopifnot(getME(m5,"theta")==0)
+stopifnot(getME(m5B,"theta")==0)
+p5 <- profile(m5)  ## bobyqa warnings but results look reasonable
+xyplot(p5)
+splom(p5)  ## reveals slight glitch (bottom row of plots doesn't look right)
+
+## Case #2: near-boundary estimate, but boundary.tol can't fix it
+m16 <- tmpf(16)
+## tmpplot(16)
+p16 <- profile(m16)  ## warning message (non-monotonic profile)
+xyplot(p16)  ## warns about linear interpolation in profile for variable 1
+## (still not quite right)
+d16 <- as.data.frame(p16)
+xyplot(.zeta~.focal|.par,data=d16,type=c("p","l"),
+       scales=list(x=list(relation="free")))
+try(splom(p))  ## breaks
+
+## bottom line:
+##  * xyplot.thpr could still be improved
+##  * most of the near-boundary cases are noisy and can't easily be
+##    fixed
+
+tmpf2 <- function(i,...) {
+    set.seed(i)
+    d <- data.frame(x=rnorm(60),f=factor(rep(1:6,each=10)),
+                    w=rep(10,60))
+    d$y <- simulate(~x+(1|f),family=binomial,
+                    weights=d$w,newdata=d,
+                    newparams=list(theta=0.01,beta=c(1,1)))[[1]]
+    glmer(y~x+(1|f),data=d,family=binomial,weights=w,...)
+}
+
+if (FALSE) {
+    ## figuring out which seeds will give boundary and
+    ## near-boundary solutions
+    mList <- lapply(1:201,tmpf2)
+    ss <- sapply(mList,sumf)+1e-50
+    par(las=1,bty="l")
+    hist(log(ss),col="gray",breaks=50)
+    ## values lying on boundary
+    head(which(log(ss)<(-50)))   ## 1-5, 7 ...
+    ## values close to boundary (if check.edge not set)
+    which(log(ss)>(-50) & log(ss) <(-20))  ## 44, 46, 52, ...
+}
+
+##  m1 <- tmpf2(1)
+
+## FIXME: doesn't work if we generate m1 via tmpf2(1) --
+## some environment lookup problem ...
+
+set.seed(1)
+d <- data.frame(x=rnorm(60),f=factor(rep(1:6,each=10)),
+                w=rep(10,60))
+d$y <- simulate(~x+(1|f),family=binomial,
+                weights=d$w,newdata=d,
+                newparams=list(theta=0.01,beta=c(1,1)))[[1]]
+m1 <- glmer(y~x+(1|f),data=d,family=binomial,weights=w)
+
+p1 <- profile(m1)
+xyplot(p1)
+splom(p1)
+

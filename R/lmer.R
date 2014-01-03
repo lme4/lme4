@@ -142,6 +142,7 @@ lmer <- function(formula, data=NULL, REML = TRUE,
     opt <- optimizeLmer(devfun,
                         optimizer=control$optimizer,
                         restart_edge=control$restart_edge,
+                        boundary.tol=control$boundary.tol,
                         control=control$optCtrl,
                         verbose=verbose,
                         start=start,
@@ -307,13 +308,15 @@ glmer <- function(formula, data=NULL, family = gaussian,
 
     ## FIX ME: allow calc.derivs, use.last.params etc. if nAGQ=0
     opt <- optimizeGlmer(devfun,
-                         optimizer = control$optimizer[[1]],
-                         restart_edge=control$restart_edge,
-                         control = control$optCtrl,
-                         start=start,
-                         nAGQ = 0,
-                         verbose=verbose,
-                         calc.derivs=FALSE)
+                   optimizer = control$optimizer[[1]],
+                   ## DON'T try fancy edge tricks unless nAGQ=0 explicitly set
+                   restart_edge=if (nAGQ==0) control$restart_edge else FALSE,
+                   boundary.tol=if (nAGQ==0) control$boundary.tol else 0,
+                   control = control$optCtrl,
+                   start=start,
+                   nAGQ = 0,
+                   verbose=verbose,
+                   calc.derivs=FALSE)
 
     if(nAGQ > 0L) {
 
@@ -327,6 +330,7 @@ glmer <- function(formula, data=NULL, family = gaussian,
         opt <- optimizeGlmer(devfun,
                              optimizer = control$optimizer[[2]],
                              restart_edge=control$restart_edge,
+                             boundary.tol=control$boundary.tol,
                              control = control$optCtrl,
                              start=start,
                              nAGQ=nAGQ,

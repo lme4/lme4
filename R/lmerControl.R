@@ -25,6 +25,10 @@ namedList <- function(...) {
 ## DOC: ../man/lmerControl.Rd
 lmerControl <- function(optimizer="bobyqa",#instead of "Nelder_Mead",
                         restart_edge=TRUE,
+                        ## don't call this "check." -- will fail
+                        ## automatic check-option-checking in
+                        ## inst/tests/test-lmer.R
+                        boundary.tol=1e-5,
                         calc.derivs=TRUE,
                         use.last.params=FALSE,
                         sparseX=FALSE,
@@ -56,6 +60,7 @@ lmerControl <- function(optimizer="bobyqa",#instead of "Nelder_Mead",
     }
     structure(namedList(optimizer,
                         restart_edge,
+                        boundary.tol,
                         calc.derivs,
                         use.last.params,
                         checkControl =
@@ -76,6 +81,7 @@ lmerControl <- function(optimizer="bobyqa",#instead of "Nelder_Mead",
 
 glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
                          restart_edge=FALSE,
+                         boundary.tol=1e-5,
                          calc.derivs=TRUE,
                          use.last.params=FALSE,
                          sparseX=FALSE,
@@ -121,6 +127,7 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
                         calc.derivs,
                         use.last.params,
 			restart_edge,
+                        boundary.tol,
 			tolPwrss,
 			compDev,
 			checkControl=

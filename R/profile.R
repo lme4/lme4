@@ -218,10 +218,26 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
        pres <- nres <- res
        ## assign one row, determined by inc. sign, from a small shift
        ## FIXME:: do something if pw==0 ???
-       nres[1, ] <- pres[2, ] <- zeta(pw * 1.01, start=opt[seqpar1][-w])
+       shiftpar <- if (pw==0) 1e-3 else pw*1.01
+       ## Since both the pos- and neg-increment matrices are already
+       ## filled with the opt. par. results, this sets the first
+       ## two rows of the positive-increment matrix
+       ## to (opt. par, shiftpar) and the first two rows of
+       ## the negative-increment matrix to (shiftpar, opt. par),
+       ## which sets up two points going in the right direction
+       ## for each matrix (since the profiling algorithm uses increments
+       ## between rows to choose the next parameter increment)
+       nres[1, ] <- pres[2, ] <- zeta(shiftpar, start=opt[seqpar1][-w])
        ## fill in the rest of the arrays and collapse them
-       upperf <- fillmat(pres,lowcut, upcut, zeta, wp1)
-       lowerf <- fillmat(nres,lowcut, upcut, zeta, wp1)
+       upperf <- fillmat(pres, lowcut, upcut, zeta, wp1)
+       if (pw>lowcut) {
+           lowerf <- fillmat(nres, lowcut, upcut, zeta, wp1)
+       } else {
+           ## don't bother to fill in 'nres' matrix
+           lowerf <- nres
+       }
+       ## this will throw away the extra 'opt. par' and 'shiftpar'
+       ## rows introduced above:
        bres <- as.data.frame(unique(rbind2(upperf,lowerf)))
        pname <- names(opt)[w]
        bres$.par <- pname
