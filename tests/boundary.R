@@ -133,6 +133,8 @@ p5 <- profile(m5)  ## bobyqa warnings but results look reasonable
 xyplot(p5)
 ## reveals slight glitch (bottom row of plots doesn't look right)
 expect_warning(splom(p5),"unreliable for singular fits")  
+p5B <- profile(m5,signames=FALSE)
+expect_warning(splom(p5B),"unreliable for singular fits")  
 
 ## Case #2: near-boundary estimate, but boundary.tol can't fix it
 m16 <- tmpf(16)

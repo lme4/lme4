@@ -790,9 +790,8 @@ splom.thpr <- function (x, data,
               levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 2)),
               conf = c(50, 80, 90, 95, 99)/100, ...)
 {
-    ## FIXME: only works for "old-style" profile names
     singfit <- FALSE
-    for (i in grep("^\\.sig[0-9]+",names(x))) {
+    for (i in grep("^(\\.sig[0-9]+|sd_)",names(x))) {
         singfit <- singfit ||  (any(x[,".zeta"]==0 & x[,i]==0))
     }
     if (singfit) warning("splom is unreliable for singular fits")
