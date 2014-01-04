@@ -74,15 +74,19 @@ fitAV3 <- lmer(log10(y) ~ (1|sample)+(1|day)+(1|operator)+
 ## In checkConv(attr(opt, "derivs"), opt$par, checkCtrl = control$checkConv,  :
 ##   Model failed to converge with max|grad| = 0.00122188 (tol = 0.001)
 
-f.tAV3 <- lmer(log10(y) ~ (1|sample)+(1|day)+(1|operator)+
-               (1|day:sample)+(1|day:operator)+(1|sample:operator)+
-               (1|day:sample:operator),
-               control = lmerControl("bobyqa"),
-               data = subset(dat, y > 0) )
+f.tAV3 <- update(fitAV3,
+               control = lmerControl("bobyqa"))
 ## no warning
+
+fitAV3.nobound <- update(fitAV3,
+               control=lmerControl(boundary.tol=0))
+f.tAV3.nobound <- update(f.tAV3,
+               control=lmerControl(boundary.tol=0))
 
 summary(fitAV3) ## looks "fine"
 summary(f.tAV3) ## ditto; but better: the three sigma's are = 0, exactly
+mList <- list(fitAV3,f.tAV3,fitAV3.nobound,f.tAV3.nobound)
+lapply(mList,function(x) which(getME(x,"theta")==0))
 
 myfile <- "fit+pr_AV3.rda"
 if(file.exists(myfile)) print(load(myfile)) else {
