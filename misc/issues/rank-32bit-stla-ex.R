@@ -83,9 +83,16 @@ fitAV3.nobound <- update(fitAV3,
 f.tAV3.nobound <- update(f.tAV3,
                control=lmerControl(boundary.tol=0))
 
+fitAV3.norestart <- update(fitAV3,
+               control=lmerControl(restart_edge=FALSE,boundary.tol=0))
+f.tAV3.norestart <- update(f.tAV3,
+               control=lmerControl(restart_edge=FALSE,boundary.tol=0))
+
 summary(fitAV3) ## looks "fine"
 summary(f.tAV3) ## ditto; but better: the three sigma's are = 0, exactly
-mList <- list(fitAV3,f.tAV3,fitAV3.nobound,f.tAV3.nobound)
+mList <- list(fitAV3,f.tAV3,fitAV3.nobound,f.tAV3.nobound,
+              fitAV3.norestart,f.tAV3.norestart)
+
 lapply(mList,function(x) which(getME(x,"theta")==0))
 
 myfile <- "fit+pr_AV3.rda"
