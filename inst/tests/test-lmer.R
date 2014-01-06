@@ -183,8 +183,7 @@ test_that("coef_lmer", {
                     var3=factor(sample(1:5,size=100,replace=TRUE)))
     library(lme4)
     mix1 <- lmer(resp ~ 0 + var1 + var1:var2 + (1|var3), data=d)
-    print(c1 <- coef(mix1))
-
+    c1 <- coef(mix1)
     expect_is(c1, "coef.mer")
     cd1 <- c1$var3
     expect_is   (cd1, "data.frame")
