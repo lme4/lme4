@@ -6,6 +6,8 @@
 library(lme4)
 library(testthat)
 
+if(!dev.interactive(orNone=TRUE)) pdf("boundary_plots.pdf")
+
 ## Stephane Laurent:
 dat <- read.csv(system.file("testdata","dat20101314.csv",package="lme4"))
 

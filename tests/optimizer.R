@@ -26,14 +26,11 @@ if (.Platform$OS.type != "windows") {
                  control=lmerCtrl.optx(method="L-BFGS-B"))
     stopifnot(is.all.equal4(fixef(fm1),fixef(fm1B),fixef(fm1C),fixef(fm1D)))
 
-    if (testLevel > 2) {
-        fm1E <- update(fm1,control=lmerCtrl.optx(method=c("nlminb","L-BFGS-B")))
-        ## hack equivalence of call and optinfo
-        fm1E@call <- fm1C@call
-        fm1E@optinfo <- fm1C@optinfo
-        ## FIXME: this *should* be identical, but we have small numeric differences
-        stopifnot( all.equal(fm1C,fm1E, tol=1e-5) )
-    }
+    fm1E <- update(fm1,control=lmerCtrl.optx(method=c("nlminb","L-BFGS-B")))
+    ## hack equivalence of call and optinfo
+    fm1E@call <- fm1C@call
+    fm1E@optinfo <- fm1C@optinfo
+    assert.EQ(fm1C,fm1E, tol=1e-5, giveRE=TRUE)# prints unless tol=0--equality
 }
 
 gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
@@ -44,13 +41,11 @@ gm1C <- update(gm1, control=glmerCtrl.optx(tolPwrss=1e-13, method="nlminb"))
 gm1D <- update(gm1, control=glmerCtrl.optx(tolPwrss=1e-13, method="L-BFGS-B"))
 stopifnot(is.all.equal4(fixef(gm1),fixef(gm1B),fixef(gm1C),fixef(gm1D),tol=1e-5))
 
-gm1E <- update(gm1, control=glmerCtrl.optx(tolPwrss=1e-13,
-                    method=c("nlminb","L-BFGS-B")))
-
-
-if (testLevel > 2) {
+if (testLevel > 1) {
+    gm1E <- update(gm1, control=
+		   glmerCtrl.optx(tolPwrss=1e-13, method=c("nlminb","L-BFGS-B")))
     ## hack equivalence of call and optinfo
     gm1E@call <- gm1C@call
     gm1E@optinfo <- gm1C@optinfo
-    all.equal(gm1E,gm1C,tol=1e-5)  ## FIXME: this *should* be identical, but we have small numeric differences
+    assert.EQ(gm1E,gm1C, tol=1e-5, giveRE=TRUE)# prints unless tol=0--equality
 }

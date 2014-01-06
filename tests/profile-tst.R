@@ -10,7 +10,7 @@ if(file.exists(pfile)) print(load(pfile)) else {
 }
 oo <- options(warn = 2) # {warnings are errors from here on}
 
-pdf("profile_plots.pdf")
+if(!dev.interactive(orNone=TRUE)) pdf("profile_plots.pdf")
 xyplot(tpr.fm1)
 splom(tpr.fm1)
 densityplot(tpr.fm1, main="densityplot( profile(lmer(..)) )")
