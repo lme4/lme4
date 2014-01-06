@@ -39,18 +39,19 @@ stopifnot(getME(fm4b,"theta")==0)
 fm4c <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="bobyqa",
                                   use.last.params=TRUE))
 stopifnot(all.equal(getME(fm4,"theta"),getME(fm4c,"theta"),tol=1e-4))
-stopifnot(all(getME(fm4,"theta")>0))
+stopifnot(getME(fm4,"theta") > 0)
 
 ## new: doesn't get stuck at edge any more,  but gets stuck somewhere else ...
 fm5 <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="Nelder_Mead",
-                                 check.conv.hess="ignore",
-                                 check.conv.grad="ignore"))
+				  check.conv.hess="ignore",
+				  check.conv.grad="ignore"))
 fm5b <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="Nelder_Mead",
                                   restart_edge=FALSE,
                                   check.conv.hess="ignore",
                                   check.conv.grad="ignore"))
 fm5c <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="bobyqa"))
-stopifnot(all.equal(unname(getME(fm5c,"theta")),0.21067645))
+stopifnot(all.equal(unname(getME(fm5c,"theta")), 0.21067645, tol = 1e-7))
+					#	 0.21067644264 [64-bit, lynne]
 
 if (FALSE) {
     ## additional stuff for diagnosing Nelder-Mead problems.
