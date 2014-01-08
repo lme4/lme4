@@ -41,23 +41,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
     wi.vp <- seq_len(nvp)
     if(nvp > 0) fe.orig <- opt[- wi.vp]
 
-    if(is.character(which)) {
-	wi <- integer(); wh <- which
-	if(any(j <- wh == "theta_")) {
-	    wi <- wi.vp; wh <- wh[!j] }
-	if(any(j <- wh == "beta_") && p > 0) {
-	    wi <- c(wi, seq(nvp+1, nptot)); wh <- wh[!j] }
-	if(any(j <- names(opt) %in% wh)) { ## which containing param.names
-	    wi <- sort(unique(c(wi, seq_len(nptot)[j])))
-	}
-	if(verbose) message(gettextf("From original which = %s: new which <- %s",
-				     deparse(which, nlines=1), deparse(wi, nlines=1)),
-			    domain=NA)
-	if(length(wi) == 0)
-	    warning(gettextf("Nothing selected by 'which=%s'", deparse(which)),
-		    domain=NA)
-        which <- wi
-    } # else stopifnot( .. numeric ..)
+    which <- get.which(which,nvp,nptot,names(opt),verbose)
 
     ans <- lapply(opt[which], function(el) NULL)
     bakspl <- forspl <- ans
@@ -321,6 +305,28 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
     ans
 }
 
+get.which <- function(which,nvp,nptot,parnames,verbose) {
+    wi.vp <- seq_len(nvp)
+    if(is.character(which)) {
+	wi <- integer(); wh <- which
+	if(any(j <- wh == "theta_")) {
+	    wi <- wi.vp; wh <- wh[!j] }
+	if(any(j <- wh == "beta_") && nptot > nvp) {
+	    wi <- c(wi, seq(nvp+1, nptot)); wh <- wh[!j] }
+	if(any(j <- parnames %in% wh)) { ## which containing param.names
+	    wi <- sort(unique(c(wi, seq_len(nptot)[j])))
+	}
+	if(verbose) message(gettextf("From original which = %s: new which <- %s",
+				     deparse(which, nlines=1), deparse(wi, nlines=1)),
+			    domain=NA)
+	if(length(wi) == 0)
+	    warning(gettextf("Nothing selected by 'which=%s'", deparse(which)),
+		    domain=NA)
+        which <- wi
+    } # else stopifnot( .. numeric ..)
+    which
+}
+
 ## This is a hack.  The preferred approach is to write a
 ## subset method for the ddenseModelMatrix and dsparseModelMatrix
 ## classes
@@ -494,11 +500,17 @@ xyplot.thpr <-
     function (x, data = NULL,
               levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 1)),
               conf = c(50, 80, 90, 95, 99)/100,
-              absVal = FALSE, ...)
+              absVal = FALSE,
+              which = 1:nptot, ...)
 {
+    nptot <- length(nms <- levels(x[[".par"]]))
+    ## FIXME: is this sufficiently reliable?
+    ## (include "sigma" in 'theta' parameters)
+    nvp <- length(grep("^(\\.sig[0-9]+|.sigma|sd_|cor_)",nms))
+    which <- get.which(which,nvp,nptot,nms,verbose=FALSE) 
     levels <- sort(levels[is.finite(levels) & levels > 0])
-    spl <- attr(x, "forward")
-    bspl <- attr(x, "backward")
+    spl <- attr(x, "forward")[which]
+    bspl <- attr(x, "backward")[which]
     ## for parameters for which spline couldn't be computed,
     ## replace the 'spl' element with the raw profile data
     badSpl <- sapply(spl,is.null)
@@ -787,18 +799,28 @@ chooseFace <- function (fontface = NULL, font = 1)
 ##' @method splom thpr
 ##' @export
 splom.thpr <- function (x, data,
-              levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 2)),
-              conf = c(50, 80, 90, 95, 99)/100, ...)
+                    levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 2)),
+                    conf = c(50, 80, 90, 95, 99)/100,
+                    which=1:nptot, ...)
 {
     singfit <- FALSE
     for (i in grep("^(\\.sig[0-9]+|sd_)",names(x))) {
         singfit <- singfit ||  (any(x[,".zeta"]==0 & x[,i]==0))
     }
     if (singfit) warning("splom is unreliable for singular fits")
+
+    nptot <- length(nms <- names(attr(x,"forward")))
+    nvp <- length(grep("^(\\.sig[0-9]+|.sigma|sd_|cor_)",nms))
+    which <- get.which(which,nvp,nptot,nms,verbose=FALSE)
+
+    if (length(which)==1)
+        stop("can't draw a scatterplot matrix for a single variable")
+    
     mlev <- max(levels)
-    spl <- attr(x, "forward")
+    spl <- attr(x, "forward")[which]
     frange <- sapply(spl, function(x) range(x$knots))
-    bsp <- attr(x, "backward")
+    bsp <- attr(x, "backward")[which]
+    x <- x[x[[".par"]] %in% nms[which],c(".zeta",nms[which],".par")]
     brange <- sapply(bsp, function(x) range(x$knots))
     pfr <- do.call(cbind, lapply(bsp, predy, c(-mlev, mlev)))
     pfr[1, ] <- pmax.int(pfr[1, ], frange[1, ], na.rm = TRUE)

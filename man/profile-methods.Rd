@@ -20,7 +20,6 @@
 	maxpts = 100, delta = cutoff/8, verbose = 0, devtol = 1e-09,
         maxmult = 10, startmethod = "prev", optimizer = "bobyqa",
 	signames = TRUE, ...)
-
 \method{as.data.frame}{thpr} (x, ...)
 \method{log}{thpr} (x, base = exp(1))
 }
@@ -38,7 +37,6 @@
         where appropriate);}
       \item{(3)}{fixed effect (beta) parameters.}
     }
-
     In addition, \code{which} may be a character, containing
     \code{"beta_"} or \code{"theta_"} which means the fixed and random
     effects parameters, respectively, or also containing parameter
@@ -64,9 +62,11 @@
     (but longer) of the form \code{(sd|cor)_(effects)|(group)}.  Note
     that some code for profile transformations (e.g.,
     \code{\link{varianceProf}}) depends on \code{signames==TRUE}.}
-  \item{\dots}{potential further arguments for \code{profile} methods.}
-  \item{x}{the result of \code{\link{profile}(<merMod>} (or very similar structure)}
-  \item{base}{the base of the logarithm.  Defaults to natural logarithms.}
+  \item{\dots}{potential further arguments for various methods.}
+  \item{x}{an object of class \code{thpr} (i.e., output of
+    \code{profile})}
+  \item{base}{the base of the logarithm.  Defaults to natural
+    logarithms.}
 }
 \value{
   \code{profile(<merMod>)} returns
