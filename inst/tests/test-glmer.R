@@ -24,10 +24,10 @@ test_that("glmer", {
     expect_equal(extractAIC(gm1),                       c(5, 194.052674598026), tol=1e-5)
                 
     expect_equal(theta <- unname(getME(gm1, "theta")),  0.642226809144453, tol=6e-4)
-###expect_that(X  <- getME(gm1, "X"),                  is_equivalent_to(array(1, c(1, 30))))
+    expect_that(X  <- getME(gm1, "X"),                  is_equivalent_to(
+        model.matrix(model.frame(~ period, data=cbpp), cbpp)))
     expect_that(Zt <- getME(gm1, "Zt"),                 is_a("dgCMatrix"))
     expect_equal(dim(Zt),                               c(15L, 56L))
-    expect_equal(length(Zt@x),                          56L)
     expect_equal(Zt@x,                                  rep.int(1, 56L))
     expect_that(Lambdat <- getME(gm1, "Lambdat"),       is_a("dgCMatrix"))
     expect_equivalent(as(Lambdat, "matrix"),            diag(theta, 15L, 15L))
@@ -44,35 +44,36 @@ test_that("glmer", {
     options(warn=2)
     cbppX <- transform(cbpp,prop=incidence/size)
     expect_is(glmer(prop ~ period + (1 | herd),
-                             data = cbppX, family = binomial, weights=size), "glmerMod")
+		      data = cbppX, family = binomial, weights=size),
+	      "glmerMod")
     expect_is(glmer(prop ~ period + (1 | herd),
-                      data = cbppX, family = binomial, weights=size, start=NULL),
-                "glmerMod")
+		      data = cbppX, family = binomial, weights=size, start=NULL),
+	      "glmerMod")
     expect_is(glmer(prop ~ period + (1 | herd),
-                      data = cbppX, family = binomial, weights=size, verbose=0L),
-                "glmerMod")
+		      data = cbppX, family = binomial, weights=size, verbose=0L),
+	      "glmerMod")
     expect_is(glmer(prop ~ period + (1 | herd),
-                      data = cbppX, family = binomial, weights=size, subset=TRUE),
-                "glmerMod")
+		      data = cbppX, family = binomial, weights=size, subset=TRUE),
+	      "glmerMod")
     expect_is(glmer(prop ~ period + (1 | herd),
-                      data = cbppX, family = binomial, weights=size, na.action="na.exclude"),
-                "glmerMod")
+		      data = cbppX, family = binomial, weights=size, na.action="na.exclude"),
+	      "glmerMod")
     expect_is(glmer(prop ~ period + (1 | herd),
-                      data = cbppX, family = binomial, weights=size, offset=rep(0,nrow(cbppX))),
-                "glmerMod")
+		      data = cbppX, family = binomial, weights=size, offset=rep(0,nrow(cbppX))),
+	      "glmerMod")
     expect_is(glmer(prop ~ period + (1 | herd),
-                      data = cbppX, family = binomial, weights=size, contrasts=NULL),
-                "glmerMod")
+		      data = cbppX, family = binomial, weights=size, contrasts=NULL),
+	      "glmerMod")
     expect_is(glmer(prop ~ period + (1 | herd),
-                      data = cbppX, family = binomial, weights=size, devFunOnly=FALSE),
-                "glmerMod")
+		      data = cbppX, family = binomial, weights=size, devFunOnly=FALSE),
+	      "glmerMod")
     expect_is(glmer(prop ~ period + (1 | herd),
-                      data = cbppX, family = binomial, weights=size,
-                    control=glmerControl(optimizer="Nelder_Mead")),
-                "glmerMod")
+		      data = cbppX, family = binomial, weights=size,
+		    control=glmerControl(optimizer="Nelder_Mead")),
+	      "glmerMod")
     expect_is(glmer(prop ~ period + (1 | herd),
-                      data = cbppX, family = binomial, weights=size, control=glmerControl()),
-                 "glmerMod")
+		      data = cbppX, family = binomial, weights=size, control=glmerControl()),
+	      "glmerMod")
     options(warn=0)
     expect_warning(glmer(prop ~ period + (1 | herd),
                       data = cbppX, family = binomial, weights=size, junkArg=TRUE),
