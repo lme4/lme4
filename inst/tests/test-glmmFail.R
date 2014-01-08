@@ -1,20 +1,14 @@
 library("testthat")
 library("lme4")
 
-set.seed(101)
-d <- expand.grid(block=LETTERS[1:26], rep=1:100, KEEP.OUT.ATTRS = FALSE)
-d$x <- runif(nrow(d))  ## sd=1
-reff_f <- rnorm(length(levels(d$block)),sd=1)
-## set intercept large enough to create a constant response
-d$eta0 <- 4+3*d$x  ## fixed effects only
-d$eta <- d$eta0+reff_f[d$block]
-dBc <- d
-cc <- binomial(link="cloglog")
-dBc$mu <- cc$linkinv(d$eta)
-dBc$y <- rbinom(nrow(d),dBc$mu,size=1)
+source(system.file("testdata/lme-tst-funs.R", package="lme4", mustWork=TRUE))
+##-> gSim(), a general simulation function ...
 
-m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-            family = binomial, data = cbpp)
+set.seed(101)
+dBc <- gSim(family=binomial(link="cloglog"), nbinom = 1) # {0,1} Binomial
+
+## m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+##             family = binomial, data = cbpp)
 context("Errors and warnings from glmer")
 test_that("glmer", {
     expect_error(glmer(y ~ 1 + (1|block), data=dBc, family=binomial(link="cloglog")),
