@@ -30,8 +30,8 @@ gSim <- function(nblk=26,
                  nbinom=10,  ## N for binomial trials
                  family=Gamma())
 {
-    stopifnot(nblk <= 50000)# some sanity, may increase (but remain "finite"!)
-    ## ch.set: a potentially large set of "letters", as level-labels for 'block':
+    stopifnot(nblk <= 1e7, nblk * nperblk <= 5e7) # some sanity ..
+    ## ch.set: a large enough set of "letters", as level-labels for 'block':
     nc <- length(ch.set <- c(LETTERS, letters,
                              paste0(LETTERS,LETTERS), paste0(LETTERS,letters)))
     while(nblk > nc) nc <-
