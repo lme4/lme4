@@ -19,13 +19,13 @@
 \method{xyplot}{thpr}(x, data = NULL,
        levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 1)),
        conf = c(50, 80, 90, 95, 99)/100,
-       absVal = FALSE, ...)
+       absVal = FALSE, which=1:nptot, ...)
 
 \method{densityplot}{thpr}(x, data, ...)
 
 \method{splom}{thpr}(x, data,
       levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 2)),
-      conf = c(50, 80, 90, 95, 99)/100, ...)
+      conf = c(50, 80, 90, 95, 99)/100, which=1:nptot, ...)
 }
 \arguments{
   \item{x}{a mixed-effects profile, i.e., of class \code{"thpr"},
@@ -39,6 +39,10 @@
   \item{absVal}{logical indicating if \code{\link{abs}(.)}olute values
       should be plotted, often preferred for confidence interval
       visualization.}
+    \item{which}{integer or character vector indicating which parameters
+    to profile: default is all parameters (see
+    \code{\link{profile-methods}}
+    for details).}
   \item{...}{further arguments passed to \code{\link{xyplot}},
     \code{\link{densityplot}}, or \code{\link{splom}} from package
     \pkg{lattice}, respectively.}
