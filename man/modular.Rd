@@ -87,16 +87,20 @@ updateGlmerDevfun(devfun, reTrms, nAGQ = 1L)
     more than one is specified their sum is used.  See
     \code{\link{model.offset}}.}
 
-  \item{contrasts}{an optional list. See the
-    \code{contrasts.arg} of \code{model.matrix.default}.}
+  \item{contrasts}{an optional \code{\link{list}}.  See the
+    \code{contrasts.arg} of \code{\link{model.matrix.default}}.}
 
-  \item{control}{a list giving (for \code{[g]lFormula}) all
-    options (see \code{\link{lmerControl}} for running the
-    model; (for \code{mkLmerDevfun,mkGlmerDevfun}) options
-    for inner optimization step; (for \code{optimizeLmer} and
-    \code{optimizeGlmer}) control parameters for nonlinear
-    optimizer (typically inherited from the \dots argument to
-    \code{lmerControl}))}
+  \item{control}{a list giving
+    \describe{
+      \item{for \code{[g]lFormula}:}{all
+	options for running the model, see \code{\link{lmerControl}};}
+      \item{for \code{mkLmerDevfun,mkGlmerDevfun}:}{options
+	for the inner optimization step;}
+      \item{for \code{optimizeLmer} and \code{optimizeGlmer}:}{control
+	parameters for nonlinear optimizer (typically inherited from the
+	\dots argument to \code{lmerControl}).}
+    }
+  }
   \item{fr}{A model frame containing the variables needed to create an
     \code{\link{lmerResp}} or \code{\link{glmResp}} instance.}
   \item{X}{fixed-effects design matrix}
@@ -111,45 +115,48 @@ updateGlmerDevfun(devfun, reTrms, nAGQ = 1L)
   \item{optimizer}{character - name of optimizing
     function(s).  A character vector or list of functions:
     length 1 for \code{lmer} or \code{glmer}, possibly length
-    2 for \code{glmer}. The built-in optimizers are
-    \code{\link{Nelder_Mead}} and \code{\link[minqa]{bobyqa}}
-    (from the \pkg{minqa} package). Any minimizing function
+    2 for \code{glmer}.  The built-in optimizers are
+    \code{"\link{Nelder_Mead}"} and \code{"\link[minqa]{bobyqa}"}
+    (from the \pkg{minqa} package).  Any minimizing function
     that allows box constraints can be used provided that it
-    (1) takes input parameters \code{fn} (function to be
-    optimized), \code{par} (starting parameter values),
-    \code{lower} (lower bounds) and \code{control} (control
-    parameters, passed through from the \code{control}
-    argument) and (2) returns a list with (at least) elements
-    \code{par} (best-fit parameters), \code{fval} (best-fit
-    function value), \code{conv} (convergence code) and
-    (optionally) \code{message} (informational message, or
-    explanation of convergence failure).  Special provisions
-    are made for \code{\link{bobyqa}},
+    \enumerate{
+      \item{takes input parameters \code{fn} (function to be
+	optimized), \code{par} (starting parameter values),
+	\code{lower} (lower bounds) and \code{control} (control
+	parameters, passed through from the \code{control}
+	argument) and}
+      \item{returns a list with (at least) elements
+	\code{par} (best-fit parameters), \code{fval} (best-fit
+	function value), \code{conv} (convergence code) and
+	(optionally) \code{message} (informational message, or
+	explanation of convergence failure)}.
+    }
+    Special provisions are made for \code{\link{bobyqa}},
     \code{\link{Nelder_Mead}}, and optimizers wrapped in the
     \pkg{optimx} package; to use \pkg{optimx} optimizers
     (including \code{L-BFGS-B} from base \code{\link{optim}}
     and \code{\link{nlminb}}), pass the \code{method}
     argument to \code{optim} in the \code{control} argument.
-
-  For \code{glmer}, if \code{length(optimizer)==2}, the
-  first element will be used for the preliminary (random
-  effects parameters only) optimization, while the second
-  will be used for the final (random effects plus fixed
-  effect parameters) phase. See \code{\link{modular}} for
-  more information on these two phases.
-}
-\item{restart_edge}{see \code{\link{lmerControl}}}
-\item{boundary.tol}{see \code{\link{lmerControl}}}
-\item{family}{a GLM family; see \code{\link[stats]{glm}}
-  and \code{\link[stats]{family}}.}
-\item{mustart}{optional starting values on the scale of
-  the conditional mean; see \code{\link[stats]{glm}} for details.}
+    
+    For \code{glmer}, if \code{length(optimizer)==2}, the
+    first element will be used for the preliminary (random
+    effects parameters only) optimization, while the second
+    will be used for the final (random effects plus fixed
+    effect parameters) phase. See \code{\link{modular}} for
+    more information on these two phases.
+  }
+  \item{restart_edge}{see \code{\link{lmerControl}}}
+  \item{boundary.tol}{see \code{\link{lmerControl}}}
+  \item{family}{a GLM family; see \code{\link[stats]{glm}}
+    and \code{\link[stats]{family}}.}
+  \item{mustart}{optional starting values on the scale of
+    the conditional mean; see \code{\link[stats]{glm}} for details.}
   \item{etastart}{optional starting values on the scale of
-  the unbounded predictor; see \code{\link[stats]{glm}} for details.}
-\item{\dots}{other potential arguments; for \code{optimizeLmer} and
-  \code{optimizeGlmer}, these are passed to internal function
-  \code{optwrap}, which has relevant parameters \code{calc.derivs}
-  and \code{use.last.params} (see \code{\link{lmerControl}})}
+    the unbounded predictor; see \code{\link[stats]{glm}} for details.}
+  \item{\dots}{other potential arguments; for \code{optimizeLmer} and
+    \code{optimizeGlmer}, these are passed to internal function
+    \code{optwrap}, which has relevant parameters \code{calc.derivs}
+    and \code{use.last.params} (see \code{\link{lmerControl}}).}
 }
 \value{
   \bold{lFormula, glFormula}: A list containing components,
