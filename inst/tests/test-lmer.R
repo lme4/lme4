@@ -118,20 +118,16 @@ test_that("lmer", {
               "merMod")
 
     ## check for errors with illegal input checking options
-    flags <- grep("^check\\.(?!conv)",names(formals(lmerControl)),
-                  perl=TRUE,value=TRUE)
-    for (i in seq_along(flags)) {
-        ## set each to invalid string:
-        ## cat(flags[i],"\n")
-        expect_error(lFormula(Reaction~1+Days+(1|Subject),
-                              data=sleepstudy,
-                              control=do.call(lmerControl,
-                              ## Deliberate: fake typo
-                              ##                   vvv
-                              setNames(list(c("warnign")),flags[i]))),
-                     "invalid control level")
-    }
-
+    flags <- lme4:::.get.checkingOpts(names(formals(lmerControl)))
+    .t <- lapply(flags, function(OPT)
+	## set each to invalid string:
+	## cat(OPT,"\n")
+	expect_error(lFormula(Reaction~1+Days+(1|Subject), data = sleepstudy,
+			      control = do.call(lmerControl,
+				  ## Deliberate: fake typo
+				  ##		       vvv
+				  setNames(list("warnign"), OPT))),
+		     "invalid control level"))
     ## disable warning via options
     options(lmerControl=list(check.nobs.vs.rankZ="ignore",check.nobs.vs.nRE="ignore"))
     expect_is(fm4 <- lmer(Reaction ~ Days + (1|Subject),
@@ -194,5 +190,4 @@ test_that("coef_lmer", {
                  setNames(c(0.27039541, 0.38329083, 0.45127874,  0.65288384, 0.61098249, 
                             0.49497978, 0.12227105, 0.087020934,-0.28564318,-0.015968354),
                           nn), tol= 7e-7)# 64-bit:  6.73e-9
-
 })

@@ -159,32 +159,58 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
 ##' deficient?
 ##' @return The design matrix \code{X} without redundant columns.
 ##' @seealso \code{\link{qr}} and \code{\link{lm}}
-##' @author Rune Haubo Bojesen Christensen
-drop.coef <- function(X, silent = TRUE) {
+##' @author Rune Haubo Bojesen Christensen (drop.coef()); Martin Maechler
+## drop.cols <- function(X, silent = TRUE, tol = 1e-7) {
+chkRank.drop.cols <- function(X, kind, tol = 1e-7) {
     ## Test and match arguments:
     stopifnot(is.matrix(X))
-    silent <- as.logical(silent)[1]
-    ## Perform the qr-decomposition of X using LINPACK methods:
-    qr.X <- qr(X, tol = 1e-7, LAPACK = FALSE)
-    if (qr.X$rank == ncol(X))
-        return(X) ## return X if X has full column rank
-    if (!silent) ## message the no. dropped columns:
-        message(gettextf("design is column rank deficient so dropping %d coef",
-                         ncol(X) - qr.X$rank))
-    ## Return the columns correponding to the first qr.x$rank pivot
-    ## elements of X:
-    keep <- qr.X$pivot[seq_len(qr.X$rank)]
-    newX <- X[, keep, drop = FALSE]
-    ## Re-assign relevant attributes:
-    if(!is.null(contr <- attr(X, "contrasts")))
-        attr(newX, "contrasts") <- contr
-    if(!is.null(asgn <- attr(X, "assign")))
-        attr(newX, "assign") <- asgn[keep]
-    ## did we succeed? stop-if-not: - already checked in [g]lFormula.
-    ## if(qr.X$rank != qr(newX)$rank)
-    ##   stop(gettextf("determination of full column rank design matrix failed"),
-    ##        call. = FALSE)
-    newX
+    kinds <- eval(formals(lmerControl)[["check.rankX"]])
+    ## c("message+drop.cols", "ignore",
+    ##   "silent.drop.cols", "warn+drop.cols", "stop.deficient"),
+    
+    if(kind == "ignore") return(X)
+    ## else : 
+    p <- ncol(X)
+    if (kind == "stop.deficient") {
+        if ((rX <- rankMatrix(X, tol=tol, method = "qr.R")) < p)
+            stop(gettextf("design is column rank deficient: rank(X) = %d < %d = p",
+                          rX, p),
+                 call. = FALSE)
+    } else { 
+        ## kind is one of "message+drop.cols", "silent.drop.cols", "warn+drop.cols" 
+        ## --> consider to drop extraneous columns: "drop.cols":
+
+        ## Perform the qr-decomposition of X using LINPACK method,
+        ## as we need the "good" pivots (and the same as lm()):
+        ## FIXME: strongly prefer rankMatrix(X, method= "qr.R")
+        qr.X <- qr(X, tol = tol, LAPACK = FALSE)
+        rnkX <- qr.X$rank
+        if (rnkX == p)
+            return(X) ## return X if X has full column rank
+        if (kind != "silent.drop.cols") { ## message about no. dropped columns:
+	    msg <- sprintf(ngettext(p - rnkX,
+			"design is rank deficient so dropping %d column / coefficient",
+			"design is rank deficient so dropping %d columns / coefficients"),
+			   p - rnkX)
+            (if(kind == "warn+drop.cols") warning else message)(msg, domain = NA)
+        }
+        ## Save properties of X
+        contr <- attr(X, "contrasts")
+        asgn <- attr(X, "assign")
+
+        ## Return the columns correponding to the first qr.x$rank pivot
+        ## elements of X:
+        keep <- qr.X$pivot[seq_len(rnkX)]
+        X <- X[, keep, drop = FALSE]
+        if (rankMatrix(X, tol=tol) < ncol(X))
+            stop(gettextf("Dropping columns failed to produce full column rank design matrix"),
+                 call. = FALSE)
+        
+        ## Re-assign relevant attributes:
+        if(!is.null(contr)) attr(X, "contrasts") <- contr
+        if(!is.null(asgn))  attr(X, "assign")    <- asgn[keep]
+    }
+    X
 }
 
 ## NA predict and restore rownames of original data if necessary
@@ -258,7 +284,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     checkZdims(reTrms$Ztlist, n=n, control, allow.n=FALSE)
     checkZrank(reTrms$Zt, n=n, control, nonSmall = 1e6)
 
-    ## fixed-effects model matrix X - remove random effects from formula:
+    ## fixed-effects model matrix X - remove random effect parts from formula:
     fixedform <- formula
     RHSForm(fixedform) <- if(is.null(nb <- nobars(RHSForm(fixedform)))) 1 else nb
     mf$formula <- fixedform
@@ -268,10 +294,15 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
         attr(attr(fixedfr,"terms"),"predvars")
     X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     ## Attempt to drop columns from X to make it full rank:
-    if(control[["ensureXrank"]]) X <- drop.coef(X, silent=FALSE)
-    p <- ncol(X)
-    if ((rankX <- rankMatrix(X)) < p)
-	stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
+    ## if(control[["ensureXrank"]]) X <- drop.cols(X, silent=FALSE)
+    ## p <- ncol(X)
+    ## if ((rankX <- rankMatrix(X)) < p)
+    ##     stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
+    ## backward compatibility (keep no longer than ~2015):
+    if(is.null(rankX.chk <- control[["check.rankX"]]))
+        rankX.chk <- eval(formals(lmerControl)[["check.rankX"]])[[1]]
+    X <- chkRank.drop.cols(X, kind=rankX.chk, tol = 1e-7)
+
     list(fr = fr, X = X, reTrms = reTrms, REML = REML, formula = formula)
 }
 
@@ -485,7 +516,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     ##          stop("number of levels of each grouping factor must be",
     ##                "greater than number of obs")
 
-    ## fixed-effects model matrix X - remove random parts from formula:
+    ## fixed-effects model matrix X - remove random effect parts from formula:
     fixedform <- formula
     RHSForm(fixedform) <- if(is.null(nb <- nobars(RHSForm(fixedform))))
         1 else nb
@@ -496,10 +527,14 @@ glFormula <- function(formula, data=NULL, family = gaussian,
         attr(attr(fixedfr,"terms"),"predvars")
     X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     ## Attempt to drop columns from X to make it full rank:
-    if(control[["ensureXrank"]]) X <- drop.coef(X, silent=FALSE)
-    p <- ncol(X)
-    if ((rankX <- rankMatrix(X)) < p)
-        stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
+    ## if(control[["ensureXrank"]]) X <- drop.cols(X, silent=FALSE)
+    ## p <- ncol(X)
+    ## if ((rankX <- rankMatrix(X)) < p)
+    ##     stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
+    ## backward compatibility (keep no longer than ~2015):
+    if(is.null(rankX.chk <- control[["check.rankX"]]))
+        rankX.chk <- eval(formals(lmerControl)[["check.rankX"]])[[1]]
+    X <- chkRank.drop.cols(X, kind=rankX.chk, tol = 1e-7)
 
     list(fr = fr, X = X, reTrms = reTrms, family = family, formula = formula)
 }

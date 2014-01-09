@@ -15,12 +15,12 @@ namedList <- function(...) {
 ##' implicitly defines what "checking options" are.
 ##'
 ##' @title Extract "checking options" or "checking arguments" (-> ../man/lmerControl.Rd)
+##' those starting with "check." but *not* the "check.conv.." nor "check.rankX.." ones:
 ##' @param nms character vector
 ##' @return those elements of \code{nms} which are "checking options"
 ##' @author Martin Maechler
 .get.checkingOpts <- function(nms)
-    nms[grepl("^check\\.(?!conv)", nms, perl=TRUE) | nms == "ensureXrank"]
-
+    nms[grepl("^check\\.(?!conv|rankX)", nms, perl=TRUE)]
 
 ## DOC: ../man/lmerControl.Rd
 lmerControl <- function(optimizer="bobyqa",#instead of "Nelder_Mead",
@@ -38,7 +38,9 @@ lmerControl <- function(optimizer="bobyqa",#instead of "Nelder_Mead",
                         check.nlev.gtreq.5="ignore",
                         check.nlev.gtr.1="stop",
                         check.nobs.vs.nRE="stop",
-                        ensureXrank=TRUE,
+			check.rankX = c("message+drop.cols",
+			    "silent.drop.cols", "warn+drop.cols", 
+			    "stop.deficient", "ignore"),
                         check.formula.LHS="stop",
                         check.conv.grad="warning",
                         check.conv.singular="ignore",
@@ -58,6 +60,8 @@ lmerControl <- function(optimizer="bobyqa",#instead of "Nelder_Mead",
                 assign(arg,lmerOpts[[arg]])
         }
     }
+    check.rankX <- match.arg(check.rankX)# ==> can abbreviate
+
     structure(namedList(optimizer,
                         restart_edge,
                         boundary.tol,
@@ -69,7 +73,7 @@ lmerControl <- function(optimizer="bobyqa",#instead of "Nelder_Mead",
                                   check.nlev.gtreq.5,
                                   check.nlev.gtr.1,
                                   check.nobs.vs.nRE,
-                                  ensureXrank,
+				  check.rankX,
                                   check.formula.LHS),
                         checkConv=
                         namedList(check.conv.grad,
@@ -97,7 +101,9 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
                          check.conv.grad="warning",
                          check.conv.singular="ignore",
                          check.conv.hess="warning",
-                         ensureXrank=TRUE,
+			 check.rankX = c("message+drop.cols",
+			     "silent.drop.cols", "warn+drop.cols", 
+			     "stop.deficient", "ignore"),
                          check.formula.LHS="stop",
                          optCtrl = list())
 {
@@ -119,6 +125,7 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
                 assign(arg, glmerOpts[[arg]])
         }
     }
+    check.rankX <- match.arg(check.rankX)# ==> can abbreviate
     if (use.last.params && calc.derivs)
         warning("using ",shQuote("use.last.params"),"=TRUE and ",
                 shQuote("calc.derivs"),"=TRUE with ",shQuote("glmer"),
@@ -136,7 +143,7 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
 				  check.nlev.gtreq.5,
 				  check.nlev.gtr.1,
                                   check.nobs.vs.nRE,
-                                  ensureXrank,
+				  check.rankX,
                                   check.formula.LHS),
                         checkConv=
                         namedList(check.conv.grad,

@@ -1,5 +1,12 @@
 library(lme4)
 library(testthat)
+
+.get.checkingOpts <- lme4:::.get.checkingOpts
+stopifnot(identical(
+    .get.checkingOpts(
+    c("CheckMe", "check.foo", "check.conv.1", "check.rankZ", "check.rankX"))
+    , c("check.foo", "check.rankZ")))
+
 lmod <- lFormula(Reaction ~ Days + (Days|Subject), sleepstudy)
 devfun <- do.call(mkLmerDevfun, lmod)
 opt <- optimizeLmer(devfun)

@@ -7,19 +7,21 @@ test_that("lmerRank", {
     set.seed(101)
     n <- 20
     x <- y <- rnorm(n)
-    z <- rnorm(n)
-    r <- sample(1:5, size=n, replace=TRUE)
-    d <- data.frame(x,y,z,r)
-    d$y2 <- d$y + c(0.001,rep(0,n-1))
-
+    d <- data.frame(x,y,
+		    z = rnorm(n),
+		    r = sample(1:5, size=n, replace=TRUE),
+		    y2 = y + c(0.001, rep(0,n-1)))
     expect_message(fm <- lmer( z ~ x + y + (1|r), data=d),
-                   "design is column rank deficient")
+		   "design is .*rank deficient")
     expect_equal(nrow(anova(fm)), 1L)
     expect_error(lmer( z ~ x + y + (1|r), data=d,
-                      control=lmerControl(ensureXrank=FALSE)),
-                 "rank of X")
+		      control=lmerControl(check.rankX="stop")),
+		 "rank deficient")
+    expect_error(lmer( z ~ x + y + (1|r), data=d,
+		      control=lmerControl(check.rankX="ignore")),
+		 "not positive definite")
     ## should work:
-    expect_that(lmer( z ~ x + y2 + (1|r), data=d), is_a("lmerMod"))
+    expect_is(lmer( z ~ x + y2 + (1|r), data=d), "lmerMod")
 
     d2 <- expand.grid(a=factor(1:4),b=factor(1:4),rep=1:10)
     n <- nrow(d2)
@@ -27,35 +29,34 @@ test_that("lmerRank", {
                      z=rnorm(n))
     d2 <- subset(d2,!(a=="4" & b=="4"))
     expect_error(lmer( z ~ a*b + (1|r), data=d2,
-                      control=lmerControl(ensureXrank=FALSE)),
-                 "rank of X")
+                      control=lmerControl(check.rankX="stop")),
+                 "rank deficient")
     expect_message(fm <- lmer( z ~ a*b + (1|r), data=d2),
-                   "design is column rank deficient")
+                   "design is rank deficient")
     d2 <- transform(d2, ab=droplevels(interaction(a,b)))
     ## should work:
-    expect_that(fm2 <- lmer( z ~ ab + (1|r), data=d2), is_a("lmerMod"))
+    expect_is(fm2 <- lmer( z ~ ab + (1|r), data=d2), "lmerMod")
     expect_equal(logLik(fm), logLik(fm2))
     expect_equal(sum(anova(fm)[, "Df"]), anova(fm2)[, "Df"])
     expect_equal(sum(anova(fm)[, "Sum Sq"]), anova(fm2)[, "Sum Sq"])
 })
 
 test_that("glmerRank", {
-    set.seed(101)
+    set.seed(111)
     n <- 100
     x <- y <- rnorm(n)
-    z <- rbinom(n,size=1,prob=0.5)
-    r <- sample(1:5, size=n, replace=TRUE)
-    d <- data.frame(x,y,z,r)
-    ## d$y2 <- d$y + c(0.001,rep(0,n-1))  ## too small: get convergence failures
-    ## FIXME: figure out how small a difference will still fail?
-    d$y2 <- rnorm(n)
-
+    d <- data.frame(x, y,
+		    z = rbinom(n,size=1,prob=0.5),
+		    r = sample(1:5, size=n, replace=TRUE),
+                    y2 = ## y + c(0.001,rep(0,n-1)), ## too small: get convergence failures
+                    ## FIXME: figure out how small a difference will still fail?
+                    rnorm(n))
     expect_message(fm <- glmer( z ~ x + y + (1|r), data=d, family=binomial),
-                   "design is column rank deficient")
+                   "design is rank deficient")
     expect_error(glmer( z ~ x + y + (1|r), data=d, family=binomial,
-                       control=glmerControl(ensureXrank=FALSE)),
-                 "rank of X")
-    expect_that(glmer( z ~ x + y2 + (1|r), data=d, family=binomial),is_a("glmerMod"))
+                       control=glmerControl(check.rankX="stop")),
+                 "rank deficient.* rank.X.")
+    expect_is(glmer( z ~ x + y2 + (1|r), data=d, family=binomial), "glmerMod")
 })
 
 test_that("nlmerRank", {

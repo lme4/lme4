@@ -18,7 +18,7 @@
   }
 }
 \usage{
-lmerControl(optimizer = "Nelder_Mead",
+lmerControl(optimizer = "bobyqa",% was "Nelder_Mead" till Dec.2013
     restart_edge = TRUE,
     boundary.tol = 1e-5,
     calc.derivs=TRUE,
@@ -30,7 +30,8 @@ lmerControl(optimizer = "Nelder_Mead",
     check.nlev.gtreq.5 = "ignore",
     check.nlev.gtr.1 = "stop",
     check.nobs.vs.nRE="stop",
-    ensureXrank=TRUE,
+    check.rankX = c("message+drop.cols", "silent.drop.cols", "warn+drop.cols", 
+                    "stop.deficient", "ignore"),
     check.formula.LHS = "stop",
     ## convergence checking options
     check.conv.grad="warning",
@@ -57,7 +58,8 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     check.conv.grad="warning",
     check.conv.singular="ignore",
     check.conv.hess="warning",
-    ensureXrank=TRUE,
+    check.rankX = c("message+drop.cols", "silent.drop.cols", "warn+drop.cols", 
+                    "stop.deficient", "ignore"),
     check.formula.LHS = "stop",
     ## optimizer args
     optCtrl = list())
@@ -165,9 +167,15 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     equal to +/- 1.0)}
   \item{check.conv.hess}{character - rules for
     checking the Hessian of the deviance function for convergence.}
-    \item{ensureXrank}{logical - drop columns from the design matrix to ensure to
-    ensure that it has full rank. Sometimes needed to make the model
-    identifiable.}
+  \item{check.rankX}{character - specifying if \code{\link[Matrix]{rankMatrix}(X)} 
+    should be compared with \code{ncol(X)} and if columns from the design
+    matrix should possibly be dropped to ensure that it has full rank.
+    Sometimes needed to make the model identifiable.  The options can be
+    abbreviated; the three \code{"*.drop.cols"} options all do drop
+    columns, \code{"stop.deficient"} gives an error when the rank is
+    smaller than the number of columns where \code{"ignore"} does no
+    rank computation, and will typically lead to less easily
+    understandable errors, later.}
   \item{check.formula.LHS}{ check whether specified formula has
     a left-hand side. Primarily for internal use within
     \code{simulate.merMod};
