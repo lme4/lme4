@@ -160,8 +160,7 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
 ##' @return The design matrix \code{X} without redundant columns.
 ##' @seealso \code{\link{qr}} and \code{\link{lm}}
 ##' @author Rune Haubo Bojesen Christensen (drop.coef()); Martin Maechler
-## drop.cols <- function(X, silent = TRUE, tol = 1e-7) {
-chkRank.drop.cols <- function(X, kind, tol = 1e-7) {
+chkRank.drop.cols <- function(X, kind, tol = 1e-7, method = "qr.R") {
     ## Test and match arguments:
     stopifnot(is.matrix(X))
     kinds <- eval(formals(lmerControl)[["check.rankX"]])
@@ -172,7 +171,7 @@ chkRank.drop.cols <- function(X, kind, tol = 1e-7) {
     ## else : 
     p <- ncol(X)
     if (kind == "stop.deficient") {
-        if ((rX <- rankMatrix(X, tol=tol, method = "qr.R")) < p)
+        if ((rX <- rankMatrix(X, tol=tol, method=method)) < p)
             stop(gettextf("design is column rank deficient: rank(X) = %d < %d = p",
                           rX, p),
                  call. = FALSE)
@@ -202,7 +201,7 @@ chkRank.drop.cols <- function(X, kind, tol = 1e-7) {
         ## elements of X:
         keep <- qr.X$pivot[seq_len(rnkX)]
         X <- X[, keep, drop = FALSE]
-        if (rankMatrix(X, tol=tol) < ncol(X))
+	if (rankMatrix(X, tol=tol, method=method) < ncol(X))
             stop(gettextf("Dropping columns failed to produce full column rank design matrix"),
                  call. = FALSE)
         
@@ -293,11 +292,6 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     attr(attr(fr,"terms"),"predvars.fixed") <-
         attr(attr(fixedfr,"terms"),"predvars")
     X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
-    ## Attempt to drop columns from X to make it full rank:
-    ## if(control[["ensureXrank"]]) X <- drop.cols(X, silent=FALSE)
-    ## p <- ncol(X)
-    ## if ((rankX <- rankMatrix(X)) < p)
-    ##     stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
     ## backward compatibility (keep no longer than ~2015):
     if(is.null(rankX.chk <- control[["check.rankX"]]))
         rankX.chk <- eval(formals(lmerControl)[["check.rankX"]])[[1]]
@@ -526,11 +520,6 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     attr(attr(fr,"terms"),"predvars.fixed") <-
         attr(attr(fixedfr,"terms"),"predvars")
     X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
-    ## Attempt to drop columns from X to make it full rank:
-    ## if(control[["ensureXrank"]]) X <- drop.cols(X, silent=FALSE)
-    ## p <- ncol(X)
-    ## if ((rankX <- rankMatrix(X)) < p)
-    ##     stop(gettextf("rank of X = %d < ncol(X) = %d", rankX, p))
     ## backward compatibility (keep no longer than ~2015):
     if(is.null(rankX.chk <- control[["check.rankX"]]))
         rankX.chk <- eval(formals(lmerControl)[["check.rankX"]])[[1]]
