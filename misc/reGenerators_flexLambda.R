@@ -119,8 +119,9 @@ cs <- function(formula, init=NULL, het=TRUE){
 					#rational function is wild, so find small interval with root in it first
 					grid <- seq(0, -1, l=500)
 					if(any(diagfactors(grid)<0)){
-						lower[nc+1] <- .95*uniroot(diagfactors, lower=grid[min(which(diagfactors(grid)<0))],
-												   upper=grid[min(which(diagfactors(grid)<0))-1])$root
+						lower[nc+1] <- .95*uniroot(diagfactors,
+                                                                           lower=grid[min(which(diagfactors(grid)<0))],
+                                                                           upper=grid[min(which(diagfactors(grid)<0))-1])$root
 					} 
 				} 	
 				
