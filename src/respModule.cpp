@@ -10,6 +10,7 @@
 namespace lme4 {
     using Eigen::ArrayXd;
     using Eigen::VectorXd;
+    using Eigen::MatrixXd;
 
     using Rcpp::List;
     using Rcpp::NumericMatrix;
@@ -21,14 +22,15 @@ namespace lme4 {
     typedef Eigen::Map<VectorXd>  MVec;
 
     lmResp::lmResp(SEXP y, SEXP weights, SEXP offset, SEXP mu, SEXP sqrtXwt,
-		   SEXP sqrtrwt, SEXP wtres)
+		   SEXP sqrtrwt, SEXP wtres, SEXP ldW)
 	: d_y(      as<MVec>(y)),
 	  d_weights(as<MVec>(weights)),
 	  d_offset( as<MVec>(offset)),
 	  d_mu(     as<MVec>(mu)),
 	  d_sqrtXwt(as<MVec>(sqrtXwt)),
 	  d_sqrtrwt(as<MVec>(sqrtrwt)),
-	  d_wtres(  as<MVec>(wtres)) {
+	  d_wtres(  as<MVec>(wtres)),
+          d_ldW(    as<Scalar>(ldW)) {
 	updateWrss();
     }
 
@@ -81,11 +83,12 @@ namespace lme4 {
 	    throw invalid_argument("setWeights: Size mismatch");
 	d_weights = ww;
 	d_sqrtrwt = ww.array().sqrt();
+        d_ldW     = ww.log().sum();
     }
 
     lmerResp::lmerResp(SEXP y, SEXP weights, SEXP offset, SEXP mu,
-		       SEXP sqrtXwt, SEXP sqrtrwt, SEXP wtres)
-	: lmResp(y, weights, offset, mu, sqrtXwt, sqrtrwt, wtres),
+		       SEXP sqrtXwt, SEXP sqrtrwt, SEXP wtres, SEXP ldW)
+      : lmResp(y, weights, offset, mu, sqrtXwt, sqrtrwt, wtres, ldW),
 	  d_reml(0) {
     }
 
@@ -111,8 +114,9 @@ namespace lme4 {
     }
     
     glmResp::glmResp(List fam, SEXP y, SEXP weights, SEXP offset,
-		     SEXP mu, SEXP sqrtXwt, SEXP sqrtrwt, SEXP wtres, SEXP eta, SEXP n)
-	: lmResp(y, weights, offset, mu, sqrtXwt, sqrtrwt, wtres),
+		     SEXP mu, SEXP sqrtXwt, SEXP sqrtrwt, SEXP wtres, 
+                     SEXP ldW, SEXP eta, SEXP n)
+      : lmResp(y, weights, offset, mu, sqrtXwt, sqrtrwt, wtres, ldW),
 	  d_fam(fam),
 	  d_eta(as<MVec>(eta)),
 	  d_n(as<MVec>(n)) {
@@ -186,9 +190,9 @@ namespace lme4 {
     }
 
     nlsResp::nlsResp(SEXP y, SEXP weights, SEXP offset, SEXP mu, SEXP sqrtXwt,
-		     SEXP sqrtrwt, SEXP wtres, SEXP gamma, SEXP mm, SEXP ee,
-		     SEXP pp)
-	: lmResp(y, weights, offset, mu, sqrtXwt, sqrtrwt, wtres),
+		     SEXP sqrtrwt, SEXP wtres, SEXP ldW, SEXP gamma, SEXP mm, 
+                     SEXP ee, SEXP pp)
+      : lmResp(y, weights, offset, mu, sqrtXwt, sqrtrwt, wtres, ldW),
 	  d_gamma(as<MVec>(gamma)),
 	  d_nlenv(as<Environment>(ee)),
 	  d_nlmod(as<Language>(mm)),

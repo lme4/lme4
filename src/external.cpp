@@ -75,10 +75,10 @@ extern "C" {
     // generalized linear model (and generalized linear mixed model) response
 
     SEXP glm_Create(SEXP fam, SEXP y, SEXP weights, SEXP offset, SEXP mu,
-                    SEXP sqrtXwt, SEXP sqrtrwt, SEXP wtres, SEXP eta, SEXP n) {
+                    SEXP sqrtXwt, SEXP sqrtrwt, SEXP wtres, SEXP ldW, SEXP eta, SEXP n) {
         BEGIN_RCPP;
         glmResp *ans = new glmResp(List(fam), y, weights, offset, mu,
-                                   sqrtXwt, sqrtrwt, wtres, eta, n);
+                                   sqrtXwt, sqrtrwt, wtres, ldW, eta, n);
         return wrap(XPtr<glmResp>(ans, true));
         END_RCPP;
     }
@@ -520,9 +520,9 @@ extern "C" {
     // linear model response (also the base class for other response classes)
 
     SEXP lm_Create(SEXP y, SEXP weights, SEXP offset, SEXP mu,
-                   SEXP sqrtXwt, SEXP sqrtrwt, SEXP wtres) {
+                   SEXP sqrtXwt, SEXP sqrtrwt, SEXP wtres, SEXP ldW) {
         BEGIN_RCPP;
-        lmResp *ans = new lmResp(y, weights, offset, mu, sqrtXwt, sqrtrwt, wtres);
+        lmResp *ans = new lmResp(y, weights, offset, mu, sqrtXwt, sqrtrwt, wtres, ldW);
         return wrap(XPtr<lmResp>(ans, true));
         END_RCPP;
     }
@@ -560,9 +560,9 @@ extern "C" {
     // linear mixed-effects model response
 
     SEXP lmer_Create(SEXP y, SEXP weights, SEXP offset, SEXP mu,
-                     SEXP sqrtXwt, SEXP sqrtrwt, SEXP wtres) {
+                     SEXP sqrtXwt, SEXP sqrtrwt, SEXP wtres, SEXP ldW) {
         BEGIN_RCPP;
-        lmerResp *ans = new lmerResp(y, weights, offset, mu, sqrtXwt, sqrtrwt, wtres);
+        lmerResp *ans = new lmerResp(y, weights, offset, mu, sqrtXwt, sqrtrwt, wtres, ldW);
         return wrap(XPtr<lmerResp>(ans, true));
         END_RCPP;
     }
@@ -906,10 +906,10 @@ extern "C" {
     // nonlinear model response (also the base class for other response classes)
 
     SEXP nls_Create(SEXP y, SEXP weights, SEXP offset, SEXP mu, SEXP sqrtXwt,
-                    SEXP sqrtrwt, SEXP wtres, SEXP gamma, SEXP mod, SEXP env, SEXP pnms) {
+                    SEXP sqrtrwt, SEXP wtres, SEXP ldW, SEXP gamma, SEXP mod, SEXP env, SEXP pnms) {
         BEGIN_RCPP;
         nlsResp *ans =
-            new nlsResp(y, weights, offset, mu, sqrtXwt, sqrtrwt, wtres, gamma, mod, env, pnms);
+	  new nlsResp(y, weights, offset, mu, sqrtXwt, sqrtrwt, wtres, ldW, gamma, mod, env, pnms);
         return wrap(XPtr<nlsResp>(ans, true));
         END_RCPP;
     }

@@ -12,12 +12,14 @@
 #include "glmFamily.h"
 
 namespace lme4 {
-    typedef Eigen::Map<Eigen::VectorXd> MVec;
-
+    using Eigen::MatrixXd;
     using Rcpp::CharacterVector;
     using Rcpp::Environment;
     using Rcpp::Language;
     using Rcpp::NumericVector;
+
+    typedef Eigen::Map<Eigen::VectorXd> MVec;
+    typedef MatrixXd::Scalar          Scalar;
 
     using glm::glmFamily;
 
@@ -35,8 +37,9 @@ namespace lme4 {
 			* mapping.*/
 	    d_sqrtrwt,	  /**< Square roots of the residual weights */
 	    d_wtres;	  /**< Current weighted residuals */
+	Scalar  d_ldW;
     public:
-	lmResp(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
+	lmResp(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
 
 	const MVec&    sqrtXwt() const {return d_sqrtXwt;}
 				/**< return a const reference to d_sqrtXwt */
@@ -54,6 +57,7 @@ namespace lme4 {
 				/**< return a const reference to d_y */
 	double            wrss() const {return d_wrss;}
 				/**< return the weighted sum of squared residuals */
+	Scalar            ldW() const {return d_ldW;}
 	double        updateMu(const Eigen::VectorXd&);
 	double       updateWts()       {return updateWrss();}
 				/**< update the weights.  For a
@@ -74,7 +78,7 @@ namespace lme4 {
 	int d_reml;		/**< 0 for evaluating the deviance, p
 				 * for evaluating the REML criterion. */
     public:
-	lmerResp(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
+	lmerResp(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
 
 	double         Laplace(double,double,double) const;
   double         Laplace(double,double,double,double) const;
@@ -87,7 +91,7 @@ namespace lme4 {
 	glmFamily  d_fam;
 	MVec       d_eta, d_n;
     public:
-	glmResp(Rcpp::List,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
+	glmResp(Rcpp::List,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
 
 	Eigen::ArrayXd   devResid() const;
 	Eigen::ArrayXd      muEta() const;
@@ -123,7 +127,7 @@ namespace lme4 {
 	Language        d_nlmod;
 	CharacterVector d_pnames;
     public:
-	nlsResp(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
+	nlsResp(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
 
 	double            Laplace(double, double, double) const;
 	double           updateMu(const Eigen::VectorXd&);
