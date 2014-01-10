@@ -12,20 +12,21 @@
 #include "glmFamily.h"
 
 namespace lme4 {
-    using Eigen::MatrixXd;
+    //using Eigen::MatrixXd;
     using Rcpp::CharacterVector;
     using Rcpp::Environment;
     using Rcpp::Language;
     using Rcpp::NumericVector;
 
     typedef Eigen::Map<Eigen::VectorXd> MVec;
-    typedef MatrixXd::Scalar          Scalar;
+    //typedef MatrixXd::Scalar          Scalar;
 
     using glm::glmFamily;
 
     class lmResp {
     protected:
-	double d_wrss; /**< current weighted sum of squared residuals */
+	double d_wrss, /**< current weighted sum of squared residuals */
+	    d_ldW;
 	MVec d_y,      /**< response vector */
 	    d_weights, /**< prior weights - always present even if unity */
 	    d_offset,  /**< offset in the model */
@@ -37,7 +38,6 @@ namespace lme4 {
 			* mapping.*/
 	    d_sqrtrwt,	  /**< Square roots of the residual weights */
 	    d_wtres;	  /**< Current weighted residuals */
-	Scalar  d_ldW;
     public:
 	lmResp(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
 
@@ -57,7 +57,7 @@ namespace lme4 {
 				/**< return a const reference to d_y */
 	double            wrss() const {return d_wrss;}
 				/**< return the weighted sum of squared residuals */
-	Scalar            ldW() const {return d_ldW;}
+	double            ldW() const {return d_ldW;}
 	double        updateMu(const Eigen::VectorXd&);
 	double       updateWts()       {return updateWrss();}
 				/**< update the weights.  For a

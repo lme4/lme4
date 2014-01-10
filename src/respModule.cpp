@@ -30,7 +30,7 @@ namespace lme4 {
 	  d_sqrtXwt(as<MVec>(sqrtXwt)),
 	  d_sqrtrwt(as<MVec>(sqrtrwt)),
 	  d_wtres(  as<MVec>(wtres)),
-          d_ldW(    as<Scalar>(ldW)) {
+          d_ldW(    as<double>(ldW)){
 	updateWrss();
     }
 
