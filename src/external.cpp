@@ -589,8 +589,10 @@ extern "C" {
     }
 
     static double lmer_dev(XPtr<merPredD> ppt, XPtr<lmerResp> rpt, const Eigen::VectorXd& theta) {
-	int debug=0;
+	int debug=1;
 	double val;
+
+	Rcpp::Rcout << "lmer_dev\n\n" << std::endl;
 
         ppt->setTheta(theta);
 
@@ -611,6 +613,7 @@ extern "C" {
     }
 
     SEXP lmer_Deviance(SEXP pptr_, SEXP rptr_, SEXP theta_) {
+	Rcpp::Rcout << "lmer_Deviance\n\n" << std::endl;
         BEGIN_RCPP;
         XPtr<lmerResp>   rpt(rptr_);
         XPtr<merPredD>   ppt(pptr_);

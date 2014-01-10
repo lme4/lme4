@@ -327,13 +327,14 @@ lmResp <-                               # base class for response modules
                      sqrtrwt = "numeric",
                      weights = "numeric",
                      wtres   = "numeric",
+                     ldW     = "numeric",
                      y       = "numeric"),
                 methods =
                 list(
                     allInfo = function() {
                         'return all the information available on the object'
                         data.frame(y=y, offset=offset, weights=weights, mu=mu,
-                                   rwt=sqrtrwt, wres=wtres, Xwt=sqrtXwt)
+                                   rwt=sqrtrwt, wres=wtres, ldW=ldW, Xwt=sqrtXwt)
                     },
                     initialize = function(...) {
                         if (!nargs()) return()
@@ -352,6 +353,7 @@ lmResp <-                               # base class for response modules
                         sqrtrwt <<- if (!is.null(ll$sqrtrwt))
                             as.numeric(ll$sqrtrwt) else sqrt(weights)
                         wtres   <<- sqrtrwt * (y - mu)
+                        ldW     <<- sum(log(weights))
                     },
                     copy         = function(shallow = FALSE) {
                         def <- .refClassDef
@@ -371,7 +373,7 @@ lmResp <-                               # base class for response modules
                     },
                     initializePtr = function() {
                         Ptr <<- .Call(lm_Create, y, weights, offset, mu, sqrtXwt,
-                                      sqrtrwt, wtres)
+                                      sqrtrwt, wtres, ldW)
                         .Call(lm_updateMu, Ptr, mu)
                     },
                     ptr       = function() {
