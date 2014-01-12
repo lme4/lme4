@@ -37,13 +37,14 @@
 \usage{
 \S3method{anova}{merMod}(object, ..., refit = TRUE, model.names=NULL)
 \S3method{terms}{merMod}(x, fixed.only = TRUE, \dots)
-\S3method{vcov}{merMod}(object, correlation = TRUE, sigm = sigma(object), \dots)
+\S3method{vcov}{merMod}(object, correlation = TRUE, sigm = sigma(object),
+use.hessian = NULL, \dots)
 
 \S3method{print}{merMod}(x, digits = max(3, getOption("digits") - 3),
       correlation = NULL, symbolic.cor = FALSE,
       signif.stars = getOption("show.signif.stars"), ranef.comp = "Std.Dev.", ...)
 
-\S3method{summary}{merMod}(object, correlation = , \dots)
+\S3method{summary}{merMod}(object, correlation = , use.hessian = NULL, \dots)
 \S3method{print}{summary.merMod}(x, digits = max(3, getOption("digits") - 3),
       correlation = NULL, symbolic.cor = FALSE,
       signif.stars = getOption("show.signif.stars"),
@@ -66,6 +67,21 @@
     desired; for \code{print.summary.merMod}, indicates whether the
     correlation matrix of the fixed-effects parameters should be
     printed.}
+  \item{use.hessian}{(logical) indicates whether to use the
+    finite-difference Hessian of the deviance function to compute
+    standard errors of the fixed effects, rather estimating
+    based on internal information about the inverse of
+    the model matrix (see \code{\link{getME}(.,"RX")}).
+    The default is to to use the Hessian whenever the
+    fixed effect parameters are arguments to the deviance
+    function, rather than being profiled out (i.e. for
+    GLMMs with \code{nAGQ>0}).
+
+    \code{use.hessian=FALSE} is backward-compatible with older versions
+    of \code{lme4}, but may give less accurate SE estimates when the
+    estimates of the fixed-effect and random-effect parameters
+    are correlated.
+    }
   \item{sigm}{the residual standard error; by default \code{\link{sigma}(object)}.}
   \item{digits}{number of significant digits for printing}
   \item{symbolic.cor}{should a symbolic encoding of the fixed-effects correlation
