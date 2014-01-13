@@ -146,3 +146,10 @@ stopifnot(all.equal(unname(fixef(m)), fixef_lme4.0, tol = 1e-3))
 (all.equal(as.vector(VarCorr(m)$g), 		Sigma_lme4.0, tol = 10^-3)) # 1.038
 (all.equal(as.vector(summary(m)$coefficients[,2]), SE_lme4.0, tol = 10^-3)) # 0.4276
 ## so, lme4.0 was clearly wrong here
+
+
+##' make sure models that differ only in a constant
+##' prior weight have identical deviance:
+fm <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy,REML=FALSE)
+fm_wt <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, weights = rep(5, nrow(sleepstudy)),REML=FALSE)
+all.equal(deviance(fm), deviance(fm_wt))
