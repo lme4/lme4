@@ -3,6 +3,16 @@
 \name{NEWS}
 \title{lme4 News}
 \encoding{UTF-8}
+\section{CHANGES IN VERSION 1.1-4}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item Models with prior weights returned an incorrect sigma and
+      deviance (Github issue #155). The deviance bug was only a
+      practical issue in model comparisons, not with inferences given a
+      particular model.
+    }
+  }
+}
 \section{CHANGES IN VERSION 1.1-3}{
   \subsection{NEW FEATURES}{
     \itemize{
