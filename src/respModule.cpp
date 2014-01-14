@@ -82,6 +82,7 @@ namespace lme4 {
 	    throw invalid_argument("setWeights: Size mismatch");
 	d_weights = ww;
 	d_sqrtrwt = ww.array().sqrt();
+	d_ldW = ww.array().log().sum();
     }
 
     lmerResp::lmerResp(SEXP y, SEXP weights, SEXP offset, SEXP mu,
