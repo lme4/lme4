@@ -9,7 +9,7 @@
       \item Models with prior weights returned an incorrect sigma and
       deviance (Github issue #155). The deviance bug was only a
       practical issue in model comparisons, not with inferences given a
-      particular model.
+      particular model. Both bugs are now fixed.
     }
   }
 }
