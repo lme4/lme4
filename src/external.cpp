@@ -513,7 +513,6 @@ extern "C" {
 
     SEXP isNullExtPtr(SEXP Ptr) {
         void *ptr = R_ExternalPtrAddr(Ptr);
-//      Rcpp::Rcout << "In isNullExtPtr, address is " << ptr << std::endl;
         return ::Rf_ScalarLogical(ptr == (void*)NULL);
     }
 
