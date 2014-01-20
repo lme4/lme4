@@ -1779,27 +1779,27 @@ print.summary.merMod <- function(x, digits = max(3, getOption("digits") - 3),
 	    if(is.null(VC <- x$vcov)) VC <- vcov(x, correlation=TRUE)
 	    corF <- VC@factors$correlation
 	    if (is.null(corF)) {
-		cat("\nCorrelation of fixed effects must be required in summary()\n")
-	    } else {
-		p <- ncol(corF)
-		if (p > 1) {
-		    rn <- rownames(x$coefficients)
-		    rns <- abbreviate(rn, minlength=11)
-		    cat("\nCorrelation of Fixed Effects:\n")
-		    if (is.logical(symbolic.cor) && symbolic.cor) {
-			corf <- as(corF, "matrix")
-			dimnames(corf) <- list(rns,
-					       abbreviate(rn, minlength=1, strict=TRUE))
-			print(symnum(corf))
-		    } else {
-			corf <- matrix(format(round(corF@x, 3), nsmall = 3),
-				       ncol = p,
-				       dimnames = list(rns, abbreviate(rn, minlength=6)))
-			corf[!lower.tri(corf)] <- ""
-			print(corf[-1, -p, drop=FALSE], quote = FALSE)
-		    } ## !symbolic.cor
-		}  ## if (p > 1)
-            }  ## !is.null(corF)
+		message("\nCorrelation of fixed effects could have been required in summary()")
+		corF <- cov2cor(VC)
+	    } ## else {
+	    p <- ncol(corF)
+	    if (p > 1) {
+		rn <- rownames(x$coefficients)
+		rns <- abbreviate(rn, minlength=11)
+		cat("\nCorrelation of Fixed Effects:\n")
+		if (is.logical(symbolic.cor) && symbolic.cor) {
+		    corf <- as(corF, "matrix")
+		    dimnames(corf) <- list(rns,
+					   abbreviate(rn, minlength=1, strict=TRUE))
+		    print(symnum(corf))
+		} else {
+		    corf <- matrix(format(round(corF@x, 3), nsmall = 3),
+				   ncol = p,
+				   dimnames = list(rns, abbreviate(rn, minlength=6)))
+		    corf[!lower.tri(corf)] <- ""
+		    print(corf[-1, -p, drop=FALSE], quote = FALSE)
+		} ## !symbolic.cor
+	    }  ## if (p > 1)
         } ## if (correlation)
     } ## if (p>0)
     invisible(x)
