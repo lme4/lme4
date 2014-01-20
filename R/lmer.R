@@ -2088,16 +2088,18 @@ NULL
 ##' @importFrom stats vcov
 ##' @S3method vcov merMod
 vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
-                        use.hessian = NULL, ...) {
-
+                        use.hessian = NULL, ...) 
+{
     hess.avail <- (!is.null(h <- object@optinfo$derivs$Hessian) &&
                    nrow(h) > (ntheta <- length(getME(object,"theta"))))
     if (is.null(use.hessian)) use.hessian <- hess.avail
     if (use.hessian && !hess.avail) stop(shQuote("use.hessian"),
                                          "=TRUE specified, ",
                                          "but Hessian is unavailable")
-
-    calc.vcov.hess <- function(h) solve(h/2)[-seq(ntheta),-seq(ntheta)]
+    calc.vcov.hess <- function(h) {
+	i <- -seq_len(ntheta)
+	forceSymmetric(solve(h/2)[i,i])
+    }
 
     if (!use.hessian) {
         V <- sigm^2 * object@pp$unsc()
@@ -2108,22 +2110,23 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
             ## (inverting the hessian isn't *too* expensive)
             var.hess.tol <- 1e-4
             V.hess <- calc.vcov.hess(h)
-            if (any(abs(V-V.hess)/V.hess > var.hess.tol))
+            if (any(abs(V-V.hess) > var.hess.tol * V.hess))
                 warning("variance-covariance matrix computed ",
                         "from finite-difference Hessian\nand ",
                         "from RX differ by >",var.hess.tol,": ",
                         "consider ",shQuote("use.hessian=TRUE"))
         }
     } else {
-        V <- tryCatch(calc.vcov.hess(h),
-                      error = function(e) NULL)
+	## V <- tryCatch(calc.vcov.hess(h), error = function(e)e)
+	## if (inherits(V, "error")) stop(....)
+	## rather error here with proper msg than below where the error msg is less clear!
+	V <- calc.vcov.hess(h)
     }
 
-    rr <- tryCatch(as(V, "dpoMatrix"),
-                   error = function(e) NULL)
-
-    if (is.null(rr))
-        stop("Computed variance-covariance matrix is not positive definite")
+    rr <- tryCatch(as(V, "dpoMatrix"), error = function(e)e)
+    if (inherits(rr, "error"))
+	stop(gettextf("Computed variance-covariance matrix problem: %s",
+		      rr$message), domain=NA)
 
     nmsX <- colnames(object@pp$X)
     dimnames(rr) <- list(nmsX,nmsX)
@@ -2131,7 +2134,6 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
     if(correlation)
 	rr@factors$correlation <-
 	    if(!is.na(sigm)) as(rr, "corMatrix") else rr # (is NA anyway)
-
     rr
 }
 
