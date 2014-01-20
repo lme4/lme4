@@ -127,8 +127,8 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
         mat
     }
 
-    ## bounds on Cholesky: [0,Inf) for diag, (-Inf,Inf) for diag
-    ## bounds on sd-corr:  [0,Inf) for diag, (-1.0,1.0) for diag
+    ## bounds on Cholesky: [0,Inf) for diag, (-Inf,Inf) for off-diag
+    ## bounds on sd-corr:  [0,Inf) for diag, (-1.0,1.0) for off-diag
     lower <- pmax(fitted@lower,-1.0)
     upper <- 1/(fitted@lower != 0)## = ifelse(fitted@lower==0, Inf, 1.0)
     if (useSc) { # bounds for sigma
