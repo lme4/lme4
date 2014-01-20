@@ -2084,23 +2084,56 @@ NULL
 ## @param correlation logical scalar, should the correlation matrix
 ##     also be evaluated.
 ## @param ... additional, optional parameters.  None are used at present.
-mkVcov <- function(sigma, unsc, nmsX, correlation = TRUE, ...) {
-    V <- sigma^2 * unsc
-    if(is.null(rr <- tryCatch(as(V, "dpoMatrix"),
-			      error = function(e) NULL)))
-	stop("Computed variance-covariance matrix is not positive definite")
-    dimnames(rr) <- list(nmsX, nmsX)
-    if(correlation)
-	rr@factors$correlation <-
-	    if(!is.na(sigma)) as(rr, "corMatrix") else rr # (is NA anyway)
-    rr
-}
 
 ##' @importFrom stats vcov
 ##' @S3method vcov merMod
-vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object), ...)
-    mkVcov(sigm, unsc = object@pp$unsc(), nmsX = colnames(object@pp$X),
-	   correlation=correlation, ...)
+vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
+                        use.hessian = NULL, ...) {
+
+    hess.avail <- (!is.null(h <- object@optinfo$derivs$Hessian) &&
+                   nrow(h) > (ntheta <- length(getME(object,"theta"))))
+    if (is.null(use.hessian)) use.hessian <- hess.avail
+    if (use.hessian && !hess.avail) stop(shQuote("use.hessian"),
+                                         "=TRUE specified, ",
+                                         "but Hessian is unavailable")
+
+    calc.vcov.hess <- function(h) solve(h/2)[-seq(ntheta),-seq(ntheta)]
+
+    if (!use.hessian) {
+        V <- sigm^2 * object@pp$unsc()
+        
+        if (hess.avail) {
+            ## if hessian is available, go ahead and check
+            ## for similarity with the RX-based estimate
+            ## (inverting the hessian isn't *too* expensive)
+            var.hess.tol <- 1e-4
+            V.hess <- calc.vcov.hess(h)
+            if (any(abs(V-V.hess)/V.hess > var.hess.tol))
+                warning("variance-covariance matrix computed ",
+                        "from finite-difference Hessian\nand ",
+                        "from RX differ by >",var.hess.tol,": ",
+                        "consider ",shQuote("use.hessian=TRUE"))
+        }
+    } else {
+        V <- tryCatch(calc.vcov.hess(h),
+                      error = function(e) NULL)
+    }
+
+    rr <- tryCatch(as(V, "dpoMatrix"),
+                   error = function(e) NULL)
+
+    if (is.null(rr))
+        stop("Computed variance-covariance matrix is not positive definite")
+
+    nmsX <- colnames(object@pp$X)
+    dimnames(rr) <- list(nmsX,nmsX)
+
+    if(correlation)
+	rr@factors$correlation <-
+	    if(!is.na(sigm)) as(rr, "corMatrix") else rr # (is NA anyway)
+
+    rr
+}
 
 ##' @importFrom stats vcov
 ##' @S3method vcov summary.merMod
@@ -2283,8 +2316,18 @@ formatVC <- function(varc, digits = max(3, getOption("digits") - 2),
 
 ##' @S3method summary merMod
 summary.merMod <- function(object,
-                           correlation = (p <= .summary.cor.max), ...)
+                           correlation = (p <= .summary.cor.max),
+                           use.hessian = NULL,
+                           ...)
 {
+    ## se.calc:
+    hess.avail <- (!is.null(h <- object@optinfo$derivs$Hessian) &&
+        nrow(h) > (ntheta <- length(getME(object,"theta"))))
+    if (is.null(use.hessian)) use.hessian <- hess.avail
+    if (use.hessian && !hess.avail) stop(shQuote("use.hessian"),
+                                         "=TRUE specified, ",
+                                         "but Hessian is unavailable")
+    
     resp <- object@resp
     devC <- object@devcomp
     dd <- devC$dims
@@ -2295,8 +2338,10 @@ summary.merMod <- function(object,
 
     famL <- famlink(resp=resp)
     p <- length(coefs <- fixef(object))
+
     coefs <- cbind("Estimate" = coefs,
-                   "Std. Error" = sig * sqrt(diag(object@pp$unsc())))
+                   "Std. Error" = sqrt(diag(vcov(object,
+                   use.hessian=use.hessian))))
     if (p > 0) {
 	coefs <- cbind(coefs, (cf3 <- coefs[,1]/coefs[,2]), deparse.level=0)
 	colnames(coefs)[3] <- paste(if(useSc) "t" else "z", "value")

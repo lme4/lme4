@@ -30,6 +30,7 @@ namespace lme4 {
 	  d_sqrtrwt(as<MVec>(sqrtrwt)),
 	  d_wtres(  as<MVec>(wtres)) {
 	updateWrss();
+	d_ldW = d_weights.array().log().sum();
     }
 
     /** 
@@ -81,6 +82,7 @@ namespace lme4 {
 	    throw invalid_argument("setWeights: Size mismatch");
 	d_weights = ww;
 	d_sqrtrwt = ww.array().sqrt();
+	d_ldW = ww.array().log().sum();
     }
 
     lmerResp::lmerResp(SEXP y, SEXP weights, SEXP offset, SEXP mu,
@@ -91,9 +93,9 @@ namespace lme4 {
 
     double lmerResp::Laplace(double ldL2, double ldRX2, double sqrL) const {
         double lnum = std::log(2.* M_PI * (d_wrss + sqrL));
-        if (d_reml == 0) return ldL2 + d_y.size() * (1. + lnum - std::log(d_y.size()));
+        if (d_reml == 0) return ldL2 - d_ldW + d_y.size() * (1. + lnum - std::log(d_y.size()));
         double nmp = d_y.size() - d_reml;
-        return ldL2 + ldRX2 + nmp * (1. + lnum - std::log(nmp));
+        return ldL2 - d_ldW + ldRX2 + nmp * (1. + lnum - std::log(nmp));
     }
   
     double lmerResp::Laplace(double ldL2, double ldRX2, double sqrL, double sigma_sq) const {
@@ -102,6 +104,7 @@ namespace lme4 {
       double result = df * (2.0 * M_LN_SQRT_2PI + std::log(sigma_sq)); // (2pi sigma_sq)^-df/2
       result += (d_wrss + sqrL) / sigma_sq; // exp(-1/2sigma_sq x |pwrss|)
       result += ldL2 + (d_reml > 0 ? ldRX2 : 0.0); // det|LL'|^-1/2 and similar REML penalty
+      result += -d_ldW; // subtract prior weights factor
       return result;
     }
 

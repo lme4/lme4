@@ -23,7 +23,9 @@ namespace lme4 {
 
     class lmResp {
     protected:
-	double d_wrss; /**< current weighted sum of squared residuals */
+	double d_wrss, /**< current weighted sum of squared residuals */
+	    d_ldW;     /**< sum of log prior weights (i.e. log determinant of 
+                        * the diagonal weights matrix) */
 	MVec d_y,      /**< response vector */
 	    d_weights, /**< prior weights - always present even if unity */
 	    d_offset,  /**< offset in the model */

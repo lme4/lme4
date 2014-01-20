@@ -145,5 +145,25 @@ test_that("glmer", {
     expect_that(gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                              data = cbpp, family = binomial), is_a("glmerMod"))
     rm("new")
-    
+
+    ## test issue #47, from Wolfgang Viechtbauer
+    n <- 100
+    ## create some data
+
+    ai <- c(rep(0,n/2), rep(1,n/2))
+    bi <- 1-ai
+    ci <- c(rep(0,42), rep(1,8), rep(0,18), rep(1,32))
+    di <- 1-ci
+    event <- c(rbind(ai,ci))
+    group <- rep(c(1,0), times=n)
+    id    <- rep(1:n, each=2)
+    gm3 <- glmer(event ~ group + (1 | id), family=binomial, nAGQ=21)
+    expect_equal(sqrt(diag(vcov(gm3))),
+                 c(0.4254257,0.4249225),tol=1e-7)
+    expect_warning(vcov(gm3,use.hessian=FALSE),
+                   "finite-difference Hessian")
+    expect_equal(suppressWarnings(sqrt(diag(vcov(gm3,use.hessian=FALSE)))),
+                 c(0.38409211, 0.3768747), tol=1e-7)
+    expect_equal(sqrt(diag(vcov(gm3))),
+                 unname(coef(summary(gm3))[,"Std. Error"]))
 })

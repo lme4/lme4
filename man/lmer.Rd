@@ -62,9 +62,15 @@
   included, or a character vector of the row names to be
   included.  All observations are included by default.}
 
-  \item{weights}{an optional vector of \sQuote{prior
-  weights} to be used in the fitting process.  Should be
-  \code{NULL} or a numeric vector.}
+  \item{weights}{an optional vector of \sQuote{prior weights} to be used
+  in the fitting process.  Should be \code{NULL} or a numeric vector.
+  Prior \code{weights} are \emph{not} normalized or standardized in any
+  way.  In particular, the diagonal of the residual covariance matrix is
+  the squared residual standard deviation parameter \code{\link{sigma}}
+  times the vector of inverse \code{weights}.  Therefore, if the
+  \code{weights} have relatively large magnitudes, then in order to
+  compensate, the \code{\link{sigma}} parameter will also need to have a
+  relatively large magnitude.}
 
   \item{na.action}{a function that indicates what should
   happen when the data contain \code{NA}s.  The default
