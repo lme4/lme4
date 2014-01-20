@@ -2098,7 +2098,9 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
                                          "but Hessian is unavailable")
     calc.vcov.hess <- function(h) {
 	i <- -seq_len(ntheta)
-	forceSymmetric(solve(h/2)[i,i])
+	## ~= forceSymmetric(solve(h/2)[i,i]) : solve(h/2) = 2*solve(h)
+	h <- solve(h)[i,i]
+	forceSymmetric(h + t(h))
     }
 
     if (!use.hessian) {
