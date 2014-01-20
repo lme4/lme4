@@ -131,11 +131,11 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
     ## bounds on sd-corr:  [0,Inf) for diag, (-1.0,1.0) for diag
     lower <- pmax(fitted@lower,-1.0)
     upper <- 1/(fitted@lower != 0)## = ifelse(fitted@lower==0, Inf, 1.0)
-    if (useSc) {
+    if (useSc) { # bounds for sigma
         lower <- c(lower,0)
         upper <- c(upper,Inf)
     }
-    ## bounds on fixed parameters (could allow user-specified bounds for esp. NLMMs?)
+    ## bounds on fixed parameters (TODO: allow user-specified bounds, e.g. for NLMMs)
     lower <- c(lower,rep.int(-Inf, p))
     upper <- c(upper, rep.int(Inf, p))
     npar1 <- if (isLMM(fitted)) nvp else nptot
