@@ -139,12 +139,13 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
     lower <- c(lower,rep.int(-Inf, p))
     upper <- c(upper, rep.int(Inf, p))
     npar1 <- if (isLMM(fitted)) nvp else nptot
-
     ## check that devfun2() computation for the base parameters is (approx.) the
     ##  same as the original devfun() computation
     stopifnot(all.equal(unname(dd(opt[seq(npar1)])), base, tol=1e-5))
 
+    ## sequence of variance parameters to profile
     seqnvp <- intersect(seq_len(npar1),which)
+    ## sequence of 'all' parameters
     seqpar1 <- seq_len(npar1)
     lowvp <- lower[seqpar1]
     upvp <- upper[seqpar1]
@@ -269,8 +270,12 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
                 parent.env(rho) <- parent.frame()
                 ores <- optwrap(optimizer,
                                 par=thopt, fn=mkdevfun(rho, 0L),
-                                lower = pmax(fitted@lower, -1.0),
-				upper = 1/(fitted@lower != 0))## = ifelse(fitted@lower==0, Inf, 1.0)
+                                lower = fitted@lower)
+                ## ?? this optimization is done on the ORIGINAL
+                ## theta scale (i.e. not the sigma/corr scale ??
+                ## upper=Inf for all cases
+                ## lower = pmax(fitted@lower, -1.0),
+                ## upper = 1/(fitted@lower != 0))## = ifelse(fitted@lower==0, Inf, 1.0)
                 fv <- ores$fval
                 sig <- sqrt((rr$wrss() + pp1$sqrL(1))/n)
                 c(sign(fw - est) * sqrt(fv - base),

@@ -36,6 +36,12 @@ stopifnot(dim(CIpr) == c(3,2),
 
 options(oo)# warnings allowed ..
 
+## fixed-effect profiling with vector RE
+data(Pastes)
+fm <- lmer(strength ~ 1 + (cask | batch), data=Pastes)
+pfm <- profile(fm, which = "beta_", alphamax=.001)
+xyplot(pfm)
+
 (testLevel <- lme4:::testLevel())
 if(testLevel > 2) {
 
@@ -62,7 +68,7 @@ if(testLevel > 2) {
     ## GLMM profiles
     system.time(pr4 <- profile(gm1))  ## ~ 10 seconds
 
-    profile(gm1,which=3)
+    pr4.3 <- profile(gm1,which=3)
     xyplot(pr4,layout=c(5,1),as.table=TRUE)
 
     splom(pr4) ## used to fail because of NAs
