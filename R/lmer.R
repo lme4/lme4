@@ -2103,6 +2103,17 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
 	forceSymmetric(h + t(h))
     }
 
+    symmetrize <-  function(v,warnTol=0,stopTol=sqrt(.Machine$double.eps)) {
+        nonSymm <- max(abs(v[lower.tri(v)]-t(v)[lower.tri(v)]))
+        warnTol <- max(warnTol,stopTol)
+        if (nonSymm>stopTol) stop(sprintf("calculated variance-covariance matrix is non-symmetric (tol=%f)",
+                                          stopTol))
+        if (nonSymm>warnTol) stop(sprintf("calculated variance-covariance matrix is non-symmetric (tol=%f)",
+                                          warnTol))
+        v[upper.tri(v)] <- t(v)[upper.tri(v)]
+        v
+    }
+    
     if (!use.hessian) {
         V <- sigm^2 * object@pp$unsc()
         
@@ -2119,10 +2130,7 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
                         "consider ",shQuote("use.hessian=TRUE"))
         }
     } else {
-	## V <- tryCatch(calc.vcov.hess(h), error = function(e)e)
-	## if (inherits(V, "error")) stop(....)
-	## rather error here with proper msg than below where the error msg is less clear!
-	V <- calc.vcov.hess(h)
+        V <- symmetrize(calc.vcov.hess(h))
     }
 
     rr <- tryCatch(as(V, "dpoMatrix"), error = function(e)e)

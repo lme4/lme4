@@ -163,4 +163,5 @@ test_that("glmer", {
     expect_equal(suppressWarnings(sqrt(diag(vcov(gm3,use.hessian=FALSE)))),
                  c(0.3840921, 0.3768747), tol=1e-7)
     expect_equal(sd3, unname(coef(summary(gm3))[,"Std. Error"]))
+
 })

@@ -81,7 +81,7 @@ checkConv <- function(derivs,
             ## GLMM, check for issues with beta parameters
             H.beta <- derivs$Hessian[-seq(ntheta),-seq(ntheta)]
             resHess <- checkHess(H.beta,control$hessTol,"fixed-effect")
-            if (resHess$code!=0) {
+            if (any(resHess$code)!=0) {
                 res$code <- resHess$code
                 res$messages <- c(res$messages,resHess$messages)
                 wstr <- paste(resHess$messages,collapse=";")
@@ -109,7 +109,7 @@ checkConv <- function(derivs,
 }
 
 checkHess <- function(H,tol,hesstype="") {
-    res <- list(code=0,messages=list())
+    res <- list(code=numeric(0),messages=list())
     evd <- eigen(H, symmetric=TRUE, only.values=TRUE)$values
     negative <- sum(evd < -tol)
     if(negative) {
@@ -147,6 +147,7 @@ checkHess <- function(H,tol,hesstype="") {
             }
         }
     }
+    if (length(res$code)==0) res$code <- 0
     res
 }
 
