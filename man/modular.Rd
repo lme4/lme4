@@ -159,29 +159,37 @@ updateGlmerDevfun(devfun, reTrms, nAGQ = 1L)
     and \code{use.last.params} (see \code{\link{lmerControl}}).}
 }
 \value{
-  \bold{lFormula, glFormula}: A list containing components,
-  \item{fr}{model frame}
-  \item{X}{fixed-effect design matrix}
-  \item{reTrms}{list containing information on random effects structure:
-    result of \code{\link{mkReTrms}}}
-  \item{REML}{(lFormula only): logical indicating if restricted maximum
-    likelihood was used (Copy of argument.)}
+  \code{lFormula} and \code{glFormula} return a list containing
+  components:
+  
+  \describe{
+    \item{fr}{model frame}
+     \item{X}{fixed-effect design matrix}
+     \item{reTrms}{list containing information on random effects structure:
+     result of \code{\link{mkReTrms}}}
+     \item{REML}{(lFormula only): logical indicating if restricted maximum
+     likelihood was used (Copy of argument.)}
+  }
 
-  \bold{mkLmerDevfun, mkGlmerDevfun}: A function to calculate deviance
-  (or restricted deviance) as a function of the theta (random-effect)
-  parameters (for GlmerDevfun, of beta (fixed-effect) parameters as
-  well).  These deviance functions have an environment containing
-  objects required for their evaluation. CAUTION: The output object of
-  \code{mk(Gl|L)merDevfun} is an \code{\link{environment}} containing
-  reference class objects (see \code{\link{ReferenceClasses}},
-  \code{\link{merPredD-class}}, \code{\link{lmResp-class}}), which
-  behave in ways that may surprise many users. For example, if the
-  output of \code{mk(Gl|L)merDevfun} is naively copied, then
-  modifications to the original will also appear in the copy (and vice
-  versa). To avoid this behavior one must make a deep copy (see
-  \code{\link{ReferenceClasses}} for details).
+  \code{mkLmerDevfun} returns a function to calculate deviance (or
+      restricted deviance) as a function of the theta (random-effect)
+      parameters.  \code{mkGlmerDevfun} returns a function to calculate
+      the deviance as a function of theta (when \code{nAGQ=1}) or a
+      concatenation of theta and beta (fixed-effect) parameters (when
+      \code{nAGQ>0}). These deviance functions have an environment
+      containing objects required for their evaluation. CAUTION: The
+      output object of \code{mk(Gl|L)merDevfun} is an
+      \code{\link{environment}} containing reference class objects (see
+      \code{\link{ReferenceClasses}}, \code{\link{merPredD-class}},
+      \code{\link{lmResp-class}}), which behave in ways that may
+      surprise many users. For example, if the output of
+      \code{mk(Gl|L)merDevfun} is naively copied, then modifications to
+      the original will also appear in the copy (and vice versa). To
+      avoid this behavior one must make a deep copy (see
+      \code{\link{ReferenceClasses}} for details).
 
-  \bold{optimizeLmer}: Results of an optimization.
+  \code{optimizeLmer} and \code{optimizeGlmer} return the results of an
+  optimization. 
 }
 \description{
   Modular functions for mixed model fits
@@ -191,7 +199,8 @@ updateGlmerDevfun(devfun, reTrms, nAGQ = 1L)
   \itemize{
     \item \code{[g]lFormula} takes the arguments that would normally be
     passed to \code{[g]lmer}, checking for errors and processing the
-    formula and data input to create
+    formula and data input to create a list of objects required to fit a
+    mixed model.
     \item \code{mk(Gl|L)merDevfun} takes the output of the previous
     step (minus the \code{formula} component) and creates a
     deviance function
