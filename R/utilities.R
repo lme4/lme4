@@ -71,7 +71,8 @@ mkReTrms <- function(bars, fr) {
     list(ff = ff, sm = sm, nl = nl, cnms = colnames(mm))
   }
   blist <- lapply(bars, mkBlist)
-  nl <- vapply(blist, `[[`, 0L, "nl") # no. of levels per term
+  nl <- vapply(blist, `[[`, 0L, "nl")   # no. of levels per term
+                                        # (in lmer jss:  \ell_i)
 
   ## order terms stably by decreasing number of levels in the factor
   if (any(diff(nl) > 0)) {
@@ -86,10 +87,14 @@ mkReTrms <- function(bars, fr) {
 
   ## Create and install Lambdat, Lind, etc.  This must be done after
   ## any potential reordering of the terms.
-  cnms <- lapply(blist, "[[", "cnms")
+  cnms <- lapply(blist, "[[", "cnms")   # list of column names of the
+                                        # model matrix per term
   nc <- vapply(cnms, length, 0L)	# no. of columns per term
+                                        # (in lmer jss:  p_i)
   nth <- as.integer((nc * (nc+1))/2)	# no. of parameters per term
-  nb <- nc * nl			# no. of random effects per term
+                                        # (in lmer jss:  ??)
+  nb <- nc * nl			        # no. of random effects per term
+                                        # (in lmer jss:  q_i)
   stopifnot(sum(nb) == q)
   boff <- cumsum(c(0L, nb))		# offsets into b
   thoff <- cumsum(c(0L, nth))		# offsets into theta
@@ -107,7 +112,7 @@ mkReTrms <- function(bars, fr) {
                         ltri <- lower.tri(dd, diag = TRUE)
                         ii <- row(dd)[ltri]
                         jj <- col(dd)[ltri]
-                        dd[cbind(ii, jj)] <- seq_along(ii)
+                        dd[cbind(ii, jj)] <- seq_along(ii) # FIXME: this line unnecessary?
                         data.frame(i = as.vector(mm[, ii]) + boff[i],
                                    j = as.vector(mm[, jj]) + boff[i],
                                    x = as.double(rep.int(seq_along(ii),
