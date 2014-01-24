@@ -1826,7 +1826,7 @@ print.merMod <- function(x, digits = max(3, getOption("digits") - 3),
     .prt.VC(varcor, digits=digits, comp = ranef.comp, ...)
     ngrps <- sapply(x@flist, function(x) length(levels(x)))
     .prt.grps(ngrps, nobs= dims[["n"]])
-    if(length(cf <- fixef(x)) >= 0) {
+    if(length(cf <- fixef(x)) > 0) {
 	cat("Fixed Effects:\n")
 	print.default(format(cf, digits = digits),
 		      print.gap = 2L, quote = FALSE, ...)
