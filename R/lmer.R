@@ -1686,6 +1686,8 @@ famlink <- function(object, resp = object@resp) {
 	cat("   Data:", deparse(cc), "\n")
     if (!is.null(cc <- call$weights))
         cat("Weights:", deparse(cc), "\n")
+    if (!is.null(cc <- call$offset))
+        cat(" Offset:", deparse(cc), "\n")
     if (long && length(cc <- call$control) &&
 	!identical((dc <- deparse(cc)), "lmerControl()"))
 	## && !identical(eval(cc), lmerControl()))
