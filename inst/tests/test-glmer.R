@@ -15,15 +15,15 @@ test_that("glmer", {
     expect_that(gm1@pp,                                 is_a("merPredD"))
     expect_equal(ge1 <- unname(fixef(gm1)),             c(-1.39854982537216, -0.992335519118859,
                                                           -1.12867532780426, -1.58030423764517),
-                                                         tol=5e-4)
-    expect_equal(c(VarCorr(gm1)[[1]]),                  0.41245527438386, tol=6e-4)
+                                                         tolerance=5e-4)
+    expect_equal(c(VarCorr(gm1)[[1]]),                  0.41245527438386, tolerance=6e-4)
 ### expect_that(family(gm1),                            equals(binomial()))
 ### ?? binomial() has an 'initialize' component ... and the order is different
-    expect_equal(deviance(gm1),                         184.052674598026, tol=1e-5)
+    expect_equal(deviance(gm1),                         184.052674598026, tolerance=1e-5)
     expect_equal(sigma(gm1),                            1)
-    expect_equal(extractAIC(gm1),                       c(5, 194.052674598026), tol=1e-5)
+    expect_equal(extractAIC(gm1),                       c(5, 194.052674598026), tolerance=1e-5)
                 
-    expect_equal(theta <- unname(getME(gm1, "theta")),  0.642226809144453, tol=6e-4)
+    expect_equal(theta <- unname(getME(gm1, "theta")),  0.642226809144453, tolerance=6e-4)
     expect_that(X  <- getME(gm1, "X"),                  is_equivalent_to(
         model.matrix(model.frame(~ period, data=cbpp), cbpp)))
     expect_that(Zt <- getME(gm1, "Zt"),                 is_a("dgCMatrix"))
@@ -102,11 +102,11 @@ test_that("glmer", {
                     x2=rep(0:1,c(999,1)))
     mod2 <- glmer(y~x+x2+(1|f),data=d,family=binomial)
     expect_equal(unname(fixef(mod2))[1:2],
-                 c(-0.10036244,0.03548523),tol=1e-4)
+                 c(-0.10036244,0.03548523),tolerance=1e-4)
     expect_true(unname(fixef(mod2)[3]<(-10)))
     mod3 <- update(mod2,family=binomial(link="probit"))
     expect_equal(unname(fixef(mod3))[1:2],
-                 c(-0.06288878,0.02224270),tol=1e-4)
+                 c(-0.06288878,0.02224270),tolerance=1e-4)
     expect_true(unname(fixef(mod3)[3]<(-4)))
     mod4 <- update(mod2,family=binomial(link="cauchit"))
 
@@ -134,7 +134,7 @@ test_that("glmer", {
         ## 20 seconds N-M vs 8 seconds bobyqa ...
         ## problem is fairly ill-conditioned so parameters
         ##  are relatively far apart even though likelihoods are OK
-        expect_equal(logLik(g1),logLik(g2),tol=1e-7)
+        expect_equal(logLik(g1),logLik(g2),tolerance=1e-7)
     }
     ## test bootstrap/refit with nAGQ>1
     gm1AGQ <- update(gm1,nAGQ=2)
@@ -158,10 +158,10 @@ test_that("glmer", {
     id    <- rep(1:n, each=2)
     gm3 <- glmer(event ~ group + (1 | id), family=binomial, nAGQ=21)
     sd3 <- sqrt(diag(vcov(gm3)))
-    expect_equal(sd3, c(0.4254254, 0.424922), tol=2e-6)
+    expect_equal(sd3, c(0.4254254, 0.424922), tolerance=2e-6)
     expect_warning(vcov(gm3,use.hessian=FALSE), "finite-difference Hessian")
     expect_equal(suppressWarnings(sqrt(diag(vcov(gm3,use.hessian=FALSE)))),
-                 c(0.3840921, 0.3768747), tol=1e-7)
+                 c(0.3840921, 0.3768747), tolerance=1e-7)
     expect_equal(sd3, unname(coef(summary(gm3))[,"Std. Error"]))
 
 })

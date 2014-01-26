@@ -7,7 +7,7 @@ fm1 <- lmer(Reaction~Days+(1|Subject),sleepstudy)
 set.seed(101)
 pp <- predict(fm1)
 rr <- range(usim2 <- simulate(fm1,1,use.u=TRUE)[[1]])
-stopifnot(all.equal(rr,c(159.3896,439.1616),tol=1e-6))
+stopifnot(all.equal(rr,c(159.3896,439.1616),tolerance=1e-6))
 if (do.plot) {
     plot(pp,ylim=rr)
     lines(sleepstudy$Reaction)
@@ -34,7 +34,7 @@ if (do.plot) {
     matlines(ss_sum2,col=c(1,2,1),lty=c(2,1,2))
 }
 
-stopifnot(all.equal(ss_sum2[,2],pp2,tol=8e-3))
+stopifnot(all.equal(ss_sum2[,2],pp2,tolerance=8e-3))
 
 ## predict(...,newdata=...) on models with derived variables in the random effects
 ## e.g. (f:g, f/g)

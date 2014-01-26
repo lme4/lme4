@@ -15,7 +15,7 @@ n <- 10
 X <- data.frame(y=runif(n), x=rnorm(n), z=sample(c("A","B"), n, TRUE))
 fm <- lmer(log(y) ~ x | z, data=X)  ## ignore grouping factors with
 ## gave error inside  model.frame()
-stopifnot(all.equal(unname(fixef(fm)), -0.8345, tol=.01))
+stopifnot(all.equal(unname(fixef(fm)), -0.8345, tolerance=.01))
 
 ## is "Nelder_Mead" default optimizer?
 isNM <- formals(lmerControl)$optimizer == "Nelder_Mead"
@@ -29,12 +29,12 @@ TOL <- 1e-5 # for the check
 stopifnot(
 	  all.equal(diag(V), if(isNM) 0.176076 else 0.176068575, tol = TOL) # 64b: 2.4e-8
 	  ,
-	  all.equal(as.numeric(chol(V)), if(isNM) 0.4196165 else 0.41960526, tol=TOL)# 64b: 3.2e-8
+	  all.equal(as.numeric(chol(V)), if(isNM) 0.4196165 else 0.41960526, tolerance=TOL)# 64b: 3.2e-8
 	  ,
 	  all.equal(diag(V1), c(46.574978, 2.389469), tol = TOL)# 64b: 9.8e-9
 	  , dim(C1 <- chol(V1)) == c(2,2) ,
 	  all.equal(as.numeric(C1),
-		    c(6.82458627, 0, -0.2126260, 1.5310973), tol=TOL)# 64b: 1.6e-9
+		    c(6.82458627, 0, -0.2126260, 1.5310973), tolerance=TOL)# 64b: 1.6e-9
           ,
           dim(chol(crossprod(getME(fm1, "Z")))) == 36
 	  , TRUE)

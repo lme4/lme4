@@ -13,7 +13,7 @@ gm1 <- fit_cbpp_1
 ## fitted values
 p0 <- predict(gm1)
 p0B <- predict(gm1,newdata=cbpp)
-expect_true(all.equal(p0,p0B,tol=2e-5)) ## FIXME: why not closer?
+expect_true(all.equal(p0,p0B,tolerance=2e-5)) ## FIXME: why not closer?
 ## fitted values, unconditional (level-0)
 p1 <- predict(gm1,ReForm=NA)
 expect_true(length(unique(p1))==length(unique(cbpp$period)))

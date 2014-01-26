@@ -23,9 +23,9 @@ fm1 <- fit_sleepstudy_2
 fm1R <- refit(fm1,sleepstudy$Reaction)
 fm1S <- refit(fm1,simulate(fm1)[[1]])
 
-stopifnot(all.equal(getinfo(fm1),getinfo(fm1R),tol=3e-5))
+stopifnot(all.equal(getinfo(fm1),getinfo(fm1R),tolerance=3e-5))
 ## sapply(slotNames(fm1),
-##        function(x) isTRUE(all.equal(slot(fm1,x),slot(fm1R,x),tol=1.5e-5)))
+##        function(x) isTRUE(all.equal(slot(fm1,x),slot(fm1R,x),tolerance=1.5e-5)))
 ## fm1@optinfo
 ## fm1R@optinfo
 
@@ -46,7 +46,7 @@ if (FALSE) {
 
 ## FIXME: why is the difference this large?
 ## check components ...
-stopifnot(all.equal(getinfo(gm1),getinfo(gm1R),tol=1e-4))
+stopifnot(all.equal(getinfo(gm1),getinfo(gm1R),tolerance=1e-4))
 
 if(FALSE) {## FIXME: still failing on Windows
 gm1S <- refit(gm1,simulate(gm1)[[1]])
@@ -57,7 +57,7 @@ getinfo(gm1S)
 gm2 <- fit_cbpp_3
 ## glmer(incidence/size ~ period + (1 | herd), cbpp, binomial, weights=size)
 gm2R <- refit(gm2,with(cbpp,incidence/size))
-stopifnot(all.equal(getinfo(gm2),getinfo(gm2R),tol=6e-4))
+stopifnot(all.equal(getinfo(gm2),getinfo(gm2R),tolerance=6e-4))
 
 ## from Alexandra Kuznetsova
 set.seed(101)
@@ -89,7 +89,7 @@ if (lme4:::testLevel() > 1) {
                      Contraception, binomial)
         gm3R <- refit(gm3,Contraception$use)
         gm3S <- refit(gm3,simulate(gm3)[[1]])
-        stopifnot(all.equal(getinfo(gm3),getinfo(gm3R),tol=3e-4))
+        stopifnot(all.equal(getinfo(gm3),getinfo(gm3R),tolerance=3e-4))
         print(getinfo(gm3))
         print(getinfo(gm3R))
         print(getinfo(gm3S))
@@ -106,7 +106,7 @@ if (lme4:::testLevel() > 1) {
         if(FALSE) ## FIXME (above)
         getinfo(gm4S)
 
-        stopifnot(all.equal(getinfo(gm4),getinfo(gm4R),tol=6e-5))
+        stopifnot(all.equal(getinfo(gm4),getinfo(gm4R),tolerance=6e-5))
     }
 }
 

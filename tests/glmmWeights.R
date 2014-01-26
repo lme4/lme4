@@ -86,5 +86,5 @@ expect_equal(var(sumFun(g3)),0)
 
 ## check dispersion parameter
 ## (lowered tolerance to pass checks on my machine -- SCW)
-expect_equal(sigma(g0)^2, 0.4888248, tol=1e-4)
+expect_equal(sigma(g0)^2, 0.4888248, tolerance=1e-4)
 

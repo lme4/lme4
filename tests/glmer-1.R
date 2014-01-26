@@ -81,10 +81,10 @@ stopifnot(is((cm2 <- coef(m2)), "coef.mer"),
                     ##c(-1.3766013, -1.0058773,
                     ##  -1.1430128, -1.5922817),
 		    tol = 5.e-4,
-                    check.attr=FALSE),
-          all.equal(deviance(m2), 100.010030538022, tol=1e-9)
+                    check.attributes=FALSE),
+          all.equal(deviance(m2), 100.010030538022, tolerance=1e-9)
           ## with bobyqa first (AGQ=0), then
-          ##all.equal(deviance(m2), 101.119749563, tol=1e-9)
+          ##all.equal(deviance(m2), 101.119749563, tolerance=1e-9)
           )
 
 ## 32-bit Ubuntu 10.04:
@@ -115,7 +115,7 @@ coef_m1_glmmML <- structure(c(-1.39853234657711, -0.992336901732793, -1.12867036
 
 stopifnot(is((cm1 <- coef(m1b)), "coef.mer"),
 	  dim(cm1$herd) == c(15,4),
-          all.equal(fixef(m1b),fixef(m1),tol=4e-5),
+          all.equal(fixef(m1b),fixef(m1),tolerance=4e-5),
 	  is.all.equal4(fixef(m1b),
                         coef_m1_glmmadmb,
                         coef_m1_lme4.0,
@@ -213,8 +213,8 @@ stopifnot(isTRUE(chkFixed(m0, true.coef = c(1,2))),
           isTRUE(chkFixed(m1, true.coef = c(1,2))))
 (a01 <- anova(m0, m1))
 
-stopifnot(all.equal(a01$Chisq[2], 554.334056, tol=1e-5),
-	  all.equal(a01$logLik, c(-1073.77193, -796.604902), tol=1e-6),
+stopifnot(all.equal(a01$Chisq[2], 554.334056, tolerance=1e-5),
+	  all.equal(a01$logLik, c(-1073.77193, -796.604902), tolerance=1e-6),
           a01$ Df == 3:4,
 	  a01$`Chi Df`[2] == 1)
 

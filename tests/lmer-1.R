@@ -49,7 +49,7 @@ stopifnot(all.equal(fixef(fm1), fixef(fm2), tol = 1.e-13),
           all.equal(unname(fixef(fm1)),
                     c(251.405104848485, 10.467285959595), tol = 1e-13),
 	  all.equal(Matrix::cov2cor(vcov(fm1))["(Intercept)", "Days"],
-		    -0.13755, tol=1e-4))
+		    -0.13755, tolerance=1e-4))
 
 fm1ML <- refitML(fm1)
 fm2ML <- refitML(fm2)
@@ -139,7 +139,7 @@ stopifnot(all.equal(fixef(fit.1), c("(Intercept)" = 1.571312129)),
 	  all.equal(unname(ranef(fit.1, drop=TRUE)[["group.id"]]),
 		   c(1.8046888, -1.8097665, 1.6146451, 1.5408268, -0.1331995,
                      -3.3306655, -1.8259277, -0.8735145, -0.3591311,  3.3720441),
-		    tol = 1e-5)
+		    tolerance = 1e-5)
 	  )
 
 
@@ -169,23 +169,26 @@ dat <- within(data.frame(lagoon = factor(rep(1:4,each = 25)),
 
 try(reg <- lmer(y ~ habitat + (1|habitat*lagoon), data = dat) # did seg.fault
     ) # now gives error                 ^- should be ":"
-r1  <- lmer(y ~ 0+habitat + (1|habitat:lagoon), data = dat) # ok, but senseless
-r1b <- lmer(y ~ 0+habitat + (1|habitat), data = dat) # same model, clearly indeterminable
+r1  <- lmer(y ~ 0+habitat + (1|habitat:lagoon), data = dat,
+            control=lmerControl(check.conv.hess="ignore")) # ok, but senseless
+r1b <- lmer(y ~ 0+habitat + (1|habitat), data = dat,
+            control=lmerControl(check.conv.hess="ignore")) # same model, clearly unidentifiable
 ## "TODO" :  summary(r1)  should ideally warn the user
-stopifnot(all.equal(fixef(r1), fixef(r1b), tol= 1e-15),
-          all.equal(ranef(r1), ranef(r1b), tol= 1e-15, check.attributes=FALSE))
+stopifnot(all.equal(fixef(r1), fixef(r1b), tolerance= 1e-15),
+          all.equal(ranef(r1), ranef(r1b), tolerance= 1e-15, check.attributes=FALSE))
 
 ## Use a more sensible model:
 r2.0 <- lmer(y ~ 0+lagoon + (1|habitat:lagoon), data = dat) # ok
 r2   <- lmer(y ~ 0+lagoon + (1|habitat), data = dat) # ok, and more clear
-stopifnot(all.equal(fixef(r2), fixef(r2.0), tol= 1e-15),
-          all.equal(ranef(r2), ranef(r2.0), tol= 1e-15, check.attributes=FALSE))
+stopifnot(all.equal(fixef(r2), fixef(r2.0), tolerance= 1e-15),
+          all.equal(ranef(r2), ranef(r2.0), tolerance= 1e-15, check.attributes=FALSE))
 V2 <- vcov(r2)
 assert.EQ.mat(V2, diag(x = 9.9833/3, nr = 4))
 stopifnot(all.equal(unname(fixef(r2)) - (1:4)*100,
 		    c(1.72, 0.28, 1.76, 0.8), tol = 1e-13))
 
 ## sparseX version should give same numbers:
+## (only gives a warning now -- sparseX disregarded)
 r2.  <- lmer(y ~ 0+lagoon + (1|habitat), data = dat,
              sparseX = TRUE, verbose = TRUE)
 
@@ -195,10 +198,10 @@ nmsSumm <- c("methTitle", "devcomp", "logLik", "ngrps", "coefficients",
 sr2  <- summary(r2)
 sr2. <- summary(r2.)
 sr2.$devcomp$dims['spFe'] <- 0L       # to allow for comparisons below
-stopifnot(all.equal(sr2[nmsSumm], sr2.[nmsSumm], tol= 1e-14)
-          , all.equal(ranef(r2), ranef(r2.), tol= 1e-14)
+stopifnot(all.equal(sr2[nmsSumm], sr2.[nmsSumm], tolerance= 1e-14)
+          , all.equal(ranef(r2), ranef(r2.), tolerance= 1e-14)
           , Matrix:::isDiagonal(vcov(r2.)) # ok
-          , all.equal(Matrix::diag(vcov(r2.)), rep.int(V2[1,1], 4), tol= 1e-13)
+          , all.equal(Matrix::diag(vcov(r2.)), rep.int(V2[1,1], 4), tolerance= 1e-13)
 #          , all(vcov(r2.)@factors$correlation == diag(4))  # not sure why this fails
           , TRUE)
 r2.

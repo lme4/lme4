@@ -19,7 +19,7 @@ fe1.s <- fixef(fm1.s)
 print(s1.d <- summary(fm1))
 print(s1.s <- summary(fm1.s))
 stopifnot(
-	  all.equal(fe1, fe1.s, tol= 1e-12)
+	  all.equal(fe1, fe1.s, tolerance= 1e-12)
 	  ,
 	  all.equal(se1.d <- coef(s1.d)[,"Std. Error"],
 		    se1.s <- coef(s1.s)[,"Std. Error"])#, tol = 1e-10
@@ -27,7 +27,7 @@ stopifnot(
 	  all.equal(V.d <- vcov(fm1),
 		    V.s <- vcov(fm1.s))#, tol = 1e-9
 	  ,
-	  all.equal(Matrix::diag(V.d), unname(se1.d)^2, tol= 1e-12)
+	  all.equal(Matrix::diag(V.d), unname(se1.d)^2, tolerance= 1e-12)
 	  ,
 	  all.equal(unname(se1.d),
 		    if(fm1@optinfo$optimizer == "Nelder_Mead")
@@ -82,7 +82,7 @@ system.time(
       ## 34.1 sec [nb-mm3; 2013-12-31]
 
 stopifnot(isOptimized(fm8.N), isOptimized(fm8.B))
-all.equal(fm8.B, fm8.N, tol=0)
+all.equal(fm8.B, fm8.N, tolerance=0)
 ## "Mean relative difference: 3.31 e-06"   [nb-mm3; 2013-12-31]
 
 str(baseOpti(fm8.N))

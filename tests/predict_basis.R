@@ -48,5 +48,5 @@ gm2 <- glmer(y ~ poly(x,2,raw=TRUE) + (1|f), d, family=binomial)
 
 newdat <- data.frame(x=c(1,4,6))
 stopifnot(all.equal(predict(gm1,newdat,ReForm=NA),
-                    predict(gm2,newdat,ReForm=NA),tol=3e-6))
+                    predict(gm2,newdat,ReForm=NA),tolerance=3e-6))
 

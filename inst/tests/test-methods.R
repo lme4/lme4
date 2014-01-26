@@ -109,9 +109,9 @@ test_that("predict", {
     p1 <- predict(gm1,d1)
     p2 <- predict(gm1,d2)
     p3 <- predict(gm1,d3)
-    expect_equal(p0[1],p1[1],tol=4e-5)
-    expect_equal(p0[1],p2[1],tol=4e-5)
-    expect_equal(p0[1],p3[1],tol=4e-5)
+    expect_equal(p0[1],p1[1],tolerance=4e-5)
+    expect_equal(p0[1],p2[1],tolerance=4e-5)
+    expect_equal(p0[1],p3[1],tolerance=4e-5)
 })
 
 context("simulate")

@@ -1,11 +1,13 @@
 
-R version 3.0.2 Patched (2014-01-08 r64705) -- "Frisbee Sailing"
+R Under development (unstable) (2014-01-02 r64625) -- "Unsuffered Consequences"
 Copyright (C) 2014 The R Foundation for Statistical Computing
-Platform: x86_64-unknown-linux-gnu (64-bit)
+Platform: i686-pc-linux-gnu (32-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -114,7 +116,7 @@ fm1  6 1764 1783   -876     1752  0.06      1        0.8
 +           all.equal(unname(fixef(fm1)),
 +                     c(251.405104848485, 10.467285959595), tol = 1e-13),
 + 	  all.equal(Matrix::cov2cor(vcov(fm1))["(Intercept)", "Days"],
-+ 		    -0.13755, tol=1e-4))
++ 		    -0.13755, tolerance=1e-4))
 > 
 > fm1ML <- refitML(fm1)
 > fm2ML <- refitML(fm2)
@@ -143,7 +145,7 @@ Fixed Effects:
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.38 0.009 0.39 
+Time elapsed:  0.68 0.096 1.8 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -186,12 +188,12 @@ Warning messages:
 1: In checkArgs("lmer", sparseX = TRUE) :
   sparseX = TRUE has no effect at present
 2: In checkArgs("lmer", sparseX = TRUE) :
-  extra argument(s) 'sparseX' disregarded
+  extra argument(s) ‘sparseX’ disregarded
 > #fmX2s <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
 > options(oldOpts)  ## restore digits
 > 
 > showProc.time() #
-Time elapsed:  0.123 0 0.124 
+Time elapsed:  0.232 0.02 0.549 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -293,7 +295,7 @@ Fixed effects:
 + 	  all.equal(unname(ranef(fit.1, drop=TRUE)[["group.id"]]),
 + 		   c(1.8046888, -1.8097665, 1.6146451, 1.5408268, -0.1331995,
 +                      -3.3306655, -1.8259277, -0.8735145, -0.3591311,  3.3720441),
-+ 		    tol = 1e-5)
++ 		    tolerance = 1e-5)
 + 	  )
 > 
 > 
@@ -320,7 +322,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.362 0.003 0.376 
+Time elapsed:  0.596 0.044 1.381 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -336,23 +338,26 @@ Error in FUN(X[[1L]], ...) :
   Invalid grouping factor specification, habitat * lagoon
 In addition: Warning message:
 In Ops.factor(habitat, lagoon) : * not meaningful for factors
-> r1  <- lmer(y ~ 0+habitat + (1|habitat:lagoon), data = dat) # ok, but senseless
-> r1b <- lmer(y ~ 0+habitat + (1|habitat), data = dat) # same model, clearly indeterminable
+> r1  <- lmer(y ~ 0+habitat + (1|habitat:lagoon), data = dat,
++             control=lmerControl(check.conv.hess="ignore")) # ok, but senseless
+> r1b <- lmer(y ~ 0+habitat + (1|habitat), data = dat,
++             control=lmerControl(check.conv.hess="ignore")) # same model, clearly unidentifiable
 > ## "TODO" :  summary(r1)  should ideally warn the user
-> stopifnot(all.equal(fixef(r1), fixef(r1b), tol= 1e-15),
-+           all.equal(ranef(r1), ranef(r1b), tol= 1e-15, check.attributes=FALSE))
+> stopifnot(all.equal(fixef(r1), fixef(r1b), tolerance= 1e-15),
++           all.equal(ranef(r1), ranef(r1b), tolerance= 1e-15, check.attributes=FALSE))
 > 
 > ## Use a more sensible model:
 > r2.0 <- lmer(y ~ 0+lagoon + (1|habitat:lagoon), data = dat) # ok
 > r2   <- lmer(y ~ 0+lagoon + (1|habitat), data = dat) # ok, and more clear
-> stopifnot(all.equal(fixef(r2), fixef(r2.0), tol= 1e-15),
-+           all.equal(ranef(r2), ranef(r2.0), tol= 1e-15, check.attributes=FALSE))
+> stopifnot(all.equal(fixef(r2), fixef(r2.0), tolerance= 1e-15),
++           all.equal(ranef(r2), ranef(r2.0), tolerance= 1e-15, check.attributes=FALSE))
 > V2 <- vcov(r2)
 > assert.EQ.mat(V2, diag(x = 9.9833/3, nr = 4))
 > stopifnot(all.equal(unname(fixef(r2)) - (1:4)*100,
 + 		    c(1.72, 0.28, 1.76, 0.8), tol = 1e-13))
 > 
 > ## sparseX version should give same numbers:
+> ## (only gives a warning now -- sparseX disregarded)
 > r2.  <- lmer(y ~ 0+lagoon + (1|habitat), data = dat,
 +              sparseX = TRUE, verbose = TRUE)
 At return
@@ -361,7 +366,7 @@ Warning messages:
 1: In checkArgs("lmer", sparseX = TRUE) :
   sparseX = TRUE has no effect at present
 2: In checkArgs("lmer", sparseX = TRUE) :
-  extra argument(s) 'sparseX' disregarded
+  extra argument(s) ‘sparseX’ disregarded
 > 
 > ## the summary() components we do want to compare 'dense X' vs 'sparse X':
 > nmsSumm <- c("methTitle", "devcomp", "logLik", "ngrps", "coefficients",
@@ -369,10 +374,10 @@ Warning messages:
 > sr2  <- summary(r2)
 > sr2. <- summary(r2.)
 > sr2.$devcomp$dims['spFe'] <- 0L       # to allow for comparisons below
-> stopifnot(all.equal(sr2[nmsSumm], sr2.[nmsSumm], tol= 1e-14)
-+           , all.equal(ranef(r2), ranef(r2.), tol= 1e-14)
+> stopifnot(all.equal(sr2[nmsSumm], sr2.[nmsSumm], tolerance= 1e-14)
++           , all.equal(ranef(r2), ranef(r2.), tolerance= 1e-14)
 +           , Matrix:::isDiagonal(vcov(r2.)) # ok
-+           , all.equal(Matrix::diag(vcov(r2.)), rep.int(V2[1,1], 4), tol= 1e-13)
++           , all.equal(Matrix::diag(vcov(r2.)), rep.int(V2[1,1], 4), tolerance= 1e-13)
 + #          , all(vcov(r2.)@factors$correlation == diag(4))  # not sure why this fails
 +           , TRUE)
 > r2.
@@ -437,7 +442,7 @@ lagoon1  lagoon2  lagoon3  lagoon4
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.155 0.001 0.157 
+Time elapsed:  0.288 0.02 0.669 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -458,7 +463,7 @@ Warning message:
 In Ops.factor(ff, x1) : + not meaningful for factors
 > 
 > showProc.time() #
-Time elapsed:  0.398 0 0.398 
+Time elapsed:  1.02 0.02 2.359 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -532,4 +537,4 @@ Fixed Effects:
 > 
 > proc.time()
    user  system elapsed 
-  3.780   0.103   4.114 
+  6.680   3.092  22.431 

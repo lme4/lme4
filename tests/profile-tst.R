@@ -31,7 +31,7 @@ print(xyplot(tpr))
 ##  comparing against lme4a reference values -- but lme4 returns sigma
 ## rather than log(sigma)
 stopifnot(dim(CIpr) == c(3,2),
-          all.equal(unname(CIpr[".sigma",]),exp(c(3.64362, 4.21446)), tol=1e-6),
+          all.equal(unname(CIpr[".sigma",]),exp(c(3.64362, 4.21446)), tolerance=1e-6),
           all.equal(unname(CIpr["(Intercept)",]),c(1486.451500,1568.548494)))
 
 options(oo)# warnings allowed ..
@@ -57,7 +57,7 @@ if(testLevel > 2) {
                            ".sig02", ".lsig", "(Intercept)"), c("2.5 %", "97.5 %")))
     lme4a_CIpr2[".lsig",] <- exp(lme4a_CIpr2[".lsig",])
 
-    stopifnot(all.equal(unname(CIpr2),unname(lme4a_CIpr2),tol=1e-6))
+    stopifnot(all.equal(unname(CIpr2),unname(lme4a_CIpr2),tolerance=1e-6))
 
     print(xyplot(pr2, absVal=0, aspect=1.3, layout=c(4,1)))
     print(splom(pr2))

@@ -37,7 +37,7 @@ oldres <- structure(c(5.23645064474105, 4.73568475545248, 2.65289926317093,
 system.time(mmodA <- glmer(modForm, data = trees513A, family = binomial()))
 ## 7 seconds
 newres <- c(fixef(mmodA), getME(mmodA,"theta"))
-stopifnot(all.equal(oldres, newres, tol=1.5e-3))
+stopifnot(all.equal(oldres, newres, tolerance=1.5e-3))
 system.time(mmodB <- glmer(modForm, data = trees513B, family = binomial()))
 ## 10.4 seconds
 ##

@@ -53,14 +53,14 @@ logLik.m <- function(x) {
 }
 
 stopifnot(
-          all.equal(   d1,          glmmADMB_vals$theta, tol=0.0016)
+          all.equal(   d1,          glmmADMB_vals$theta, tolerance=0.0016)
           ,
-          all.equal(fixef(g1B),     glmmADMB_vals$ fixef, tol=0.01)# not so close
+          all.equal(fixef(g1B),     glmmADMB_vals$ fixef, tolerance=0.01)# not so close
           ,
           if(FALSE) { ## df = 3  vs  df = 4 --- fails! --- FIXME ??
-              all.equal(logLik.m(g1B), -glmmADMB_vals$ NLL, tol=0.001)
+              all.equal(logLik.m(g1B), -glmmADMB_vals$ NLL, tolerance=0.001)
           } else
-          all.equal(as.numeric(logLik.m(g1B)), as.numeric(-glmmADMB_vals$ NLL), tol= 4e-5)
+          all.equal(as.numeric(logLik.m(g1B)), as.numeric(-glmmADMB_vals$ NLL), tolerance= 4e-5)
           )
 }
 
@@ -125,11 +125,11 @@ if (testLevel > 3) {
     (Lg4 <- logLik(g4))
     attributes(Lg4) <- attributes(Lg4)[c("class","df","nobs")]
     stopifnot(
-              all.equal(getNBdisp(g4),   glmmADMB_epil_vals$ theta, tol= 0.0022)# was 0.002
+              all.equal(getNBdisp(g4),   glmmADMB_epil_vals$ theta, tolerance= 0.0022)# was 0.002
               ,
-              all.equal(fixef    (g4),   glmmADMB_epil_vals$ fixef, tol= 0.004)
+              all.equal(fixef    (g4),   glmmADMB_epil_vals$ fixef, tolerance= 0.004)
               ,
-              all.equal(logLik.m (g4), - glmmADMB_epil_vals$ NLL,	tol= 0.0002)
+              all.equal(logLik.m (g4), - glmmADMB_epil_vals$ NLL,	tolerance= 0.0002)
               )
 }
 

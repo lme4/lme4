@@ -33,15 +33,15 @@ test_that("lmer", {
     expect_that(deviance(fm1)[["REML"]],                equals(319.654276842342))
     expect_that(deviance(fm1ML),                        equals(327.327059881135))
     ##						"bobyqa":      49.51009984775
-    expect_that(sigma(fm1),                             equals(49.5101272946856, tol=1e-6))
+    expect_that(sigma(fm1),                             equals(49.5101272946856, tolerance=1e-6))
     if(isNM) expect_that(sigma(fm1.old),		equals(49.5100503990048))
     expect_that(sigma(fm1ML),                           equals(49.5100999308089))
     expect_that(extractAIC(fm1),                        equals(c(3, 333.327059881135)))
     expect_that(extractAIC(fm1ML),                      equals(c(3, 333.327059881135)))
     ##						"bobyqa":      375.71667627943
-    expect_that(vcov(fm1)    [1,1],			equals(375.714676744, tol=1e-5))
+    expect_that(vcov(fm1)    [1,1],			equals(375.714676744, tolerance=1e-5))
     if(isNM) expect_that(vcov(fm1.old)[1,1],		equals(375.72027872986))
-    expect_that(vcov(fm1ML)  [1,1],			equals(313.09721874266, tol=1e-7))
+    expect_that(vcov(fm1ML)  [1,1],			equals(313.09721874266, tolerance=1e-7))
 					#		   was 313.0972246957
     expect_is(fm2 <- refit(fm1, Dyestuff2$Yield), "lmerMod")
     expect_that(fixef(fm2),                             is_equivalent_to(5.6656))
@@ -52,7 +52,7 @@ test_that("lmer", {
     expect_that(dim(Zt),                                equals(c(6L, 30L)))
     expect_that(Zt@x,                                   equals(rep.int(1, 30L)))
     ##						"bobyqa":      0.8483237982
-    expect_that(theta <- getME(fm1, "theta"),           equals(0.84832031, tol=6e-6, check.attr=FALSE))
+    expect_that(theta <- getME(fm1, "theta"),           equals(0.84832031, tolerance=6e-6, check.attributes=FALSE))
     if(isNM) expect_that(getME(fm1.old, "theta"),	is_equivalent_to(0.848330078))
     expect_is(Lambdat <- getME(fm1, "Lambdat"), "dgCMatrix")
     expect_that(as(Lambdat, "matrix"),                  is_equivalent_to(diag(theta, 6L, 6L)))
@@ -189,5 +189,5 @@ test_that("coef_lmer", {
     expect_equal(fixef(mix1),
                  setNames(c(0.27039541, 0.38329083, 0.45127874,  0.65288384, 0.61098249, 
                             0.49497978, 0.12227105, 0.087020934,-0.28564318,-0.015968354),
-                          nn), tol= 7e-7)# 64-bit:  6.73e-9
+                          nn), tolerance= 7e-7)# 64-bit:  6.73e-9
 })

@@ -118,10 +118,10 @@ glmmadmbfit <- structure(list(fixef = structure(c(-0.717146132730349, 2.83642900
                                    "(Intercept)", "(Intercept)"))),
                            .Names = "block", class = "VarCorr")),
                             .Names = c("fixef", "VarCorr"))
-stopifnot(all.equal(fixef(gBc2),glmmadmbfit$fixef,tol=5e-3))
+stopifnot(all.equal(fixef(gBc2),glmmadmbfit$fixef,tolerance=5e-3))
 ## pretty loose tolerance ...
 stopifnot(all.equal(unname(unlist(VarCorr(gBc2))),
-                    c(glmmadmbfit$VarCorr$block),tol=2e-2))
+                    c(glmmadmbfit$VarCorr$block),tolerance=2e-2))
 
 gBi1 <- glmer(y ~ 1 + (1|block), data=dBi, family=binomial(link="identity"))
 gBi2 <- glmer(y ~ x + (1|block), data=dBi, family=binomial(link="identity"))

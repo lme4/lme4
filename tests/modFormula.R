@@ -20,7 +20,7 @@ fm2 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 fm1C <- fm1
 fm1C@call <- fm2@call
 expect_equal(fm2,fm1C)
-expect_equal(range(residuals(fm1)),c(-101.1789,132.5466),tol=1e-6)
+expect_equal(range(residuals(fm1)),c(-101.1789,132.5466),tolerance=1e-6)
 expect_is(model.frame(fm1),"data.frame")
 ## formulae
 expect_equal(formula(model.frame(fm1)),Reaction ~ Days + Subject) ## fixed only
