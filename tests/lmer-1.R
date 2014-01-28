@@ -33,7 +33,7 @@ stopifnot(all.equal(fm1, fm1.))
 #(fm1. <- lmer1(Reaction ~ Days + (Days|Subject), sleepstudy, opt = "bobyqa"))
 #stopifnot(all.equal(fm1@devcomp$cmp['REML'], fm1.@devcomp$cmp['REML']),
 #          all.equal(fixef(fm1), fixef(fm1.)),
-#          all.equal(fm1@re@theta, fm1.@theta, tol = 1.e-7),
+#          all.equal(fm1@re@theta, fm1.@theta, tolerance = 1.e-7),
 #          all.equal(ranef(fm1), ranef(fm1.)))
 
 ## compDev = FALSE no longer applies to lmer
@@ -42,12 +42,12 @@ stopifnot(all.equal(fm1, fm1.))
 ##              compDev = FALSE)#--> use R code (not C++) for deviance computation
 ## stopifnot(all.equal(fm1@devcomp$cmp['REML'], fm1.@devcomp$cmp['REML']),
 ##           all.equal(fixef(fm1), fixef(fm1.)),
-##           all.equal(fm1@re@theta, fm1.@re@theta, tol = 1.e-7),
-##           all.equal(ranef(fm1), ranef(fm1.), tol = 1.e-7))
+##           all.equal(fm1@re@theta, fm1.@re@theta, tolerance = 1.e-7),
+##           all.equal(ranef(fm1), ranef(fm1.), tolerance = 1.e-7))
 
-stopifnot(all.equal(fixef(fm1), fixef(fm2), tol = 1.e-13),
+stopifnot(all.equal(fixef(fm1), fixef(fm2), tolerance = 1.e-13),
           all.equal(unname(fixef(fm1)),
-                    c(251.405104848485, 10.467285959595), tol = 1e-13),
+                    c(251.405104848485, 10.467285959595), tolerance = 1e-13),
 	  all.equal(Matrix::cov2cor(vcov(fm1))["(Intercept)", "Days"],
 		    -0.13755, tolerance=1e-4))
 
@@ -93,15 +93,15 @@ for(nm in c("coef", "fixef", "ranef", "sigma",
 #    } # else
     FF <- FUN
     stopifnot(
-	      all.equal( FF(fmX1), F.fmX1s, tol =  1e-6)
+	      all.equal( FF(fmX1), F.fmX1s, tolerance =  1e-6)
 #	      ,
-#	      all.equal( FF(fmX2), F.fmX2s, tol = 1e-5)
+#	      all.equal( FF(fmX2), F.fmX2s, tolerance = 1e-5)
 #              ,
-#	      all.equal( FF(fm.1), F.fmX2s, tol = 9e-6) ## these are different models
+#	      all.equal( FF(fm.1), F.fmX2s, tolerance = 9e-6) ## these are different models
 #              ,
-#              all.equal(F.fmX2s,   F.fmX1s, tol = 6e-6)
+#              all.equal(F.fmX2s,   F.fmX1s, tolerance = 6e-6)
 #              ,
-#              all.equal(FUN(fm.1), FUN(fm.2), tol = 6e-6)
+#              all.equal(FUN(fm.1), FUN(fm.2), tolerance = 6e-6)
               ,
               TRUE)
     cat("[Ok]\n")
@@ -185,7 +185,7 @@ stopifnot(all.equal(fixef(r2), fixef(r2.0), tolerance= 1e-15),
 V2 <- vcov(r2)
 assert.EQ.mat(V2, diag(x = 9.9833/3, nr = 4))
 stopifnot(all.equal(unname(fixef(r2)) - (1:4)*100,
-		    c(1.72, 0.28, 1.76, 0.8), tol = 1e-13))
+		    c(1.72, 0.28, 1.76, 0.8), tolerance = 1e-13))
 
 ## sparseX version should give same numbers:
 ## (only gives a warning now -- sparseX disregarded)

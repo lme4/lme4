@@ -6,8 +6,8 @@ test_that("lmer", {
     ## fm2 <- lmer(Reaction ~ Days + (Days|Subject),sleepstudy,
     ## control=lmerControl(calc.derivs=FALSE))
     ## all.equal(resid(fm1),resid(fm2))
-    expect_equal(range(resid(fm1)), c(-101.1789,132.5466), tol=1e-6)
-    expect_equal(range(resid(fm1, scaled=TRUE)), c(-3.953567,5.179260), tol=1e-6)
+    expect_equal(range(resid(fm1)), c(-101.1789,132.5466), tolerance=1e-6)
+    expect_equal(range(resid(fm1, scaled=TRUE)), c(-3.953567,5.179260), tolerance=1e-6)
     expect_equal(resid(fm1,"response"),resid(fm1))
     expect_equal(resid(fm1,"response"),resid(fm1,type="working"))
     expect_equal(resid(fm1,"deviance"),resid(fm1,type="pearson"))
@@ -30,13 +30,13 @@ test_that("glmer", {
     expect_equal(resid(gm1),resid(gm2))
     ## y, wtres, mu change ??
     ## FIX ME:: why does turning on derivative calculation make these tests fail???
-    expect_equal(range(resid(gm1.old)), c(-3.197512,2.356677), tol=1e-6)
-    expect_equal(range(resid(gm1)), c(-3.1975034,2.35668826), tol=1e-6)
-    expect_equal(range(resid(gm1.old, "response")), c(-0.1946736,0.3184579), tol=1e-6)
+    expect_equal(range(resid(gm1.old)), c(-3.197512,2.356677), tolerance=1e-6)
+    expect_equal(range(resid(gm1)), c(-3.1975034,2.35668826), tolerance=1e-6)
+    expect_equal(range(resid(gm1.old, "response")), c(-0.1946736,0.3184579), tolerance=1e-6)
     expect_equal(range(resid(gm1,"response")),c(-0.194674747774946, 0.318458889275477))
-    expect_equal(range(resid(gm1.old, "pearson")),  c(-2.381643,2.879069),tol=1e-5)
+    expect_equal(range(resid(gm1.old, "pearson")),  c(-2.381643,2.879069),tolerance=1e-5)
     expect_equal(range(resid(gm1,"pearson")), c(-2.38163599828335, 2.87908806084918))
-    expect_equal(range(resid(gm1.old, "working")),  c(-1.241733,5.410587),tol=1e-5)
+    expect_equal(range(resid(gm1.old, "working")),  c(-1.241733,5.410587),tolerance=1e-5)
     expect_equal(range(resid(gm1, "working")),    c(-1.24173431447365, 5.41064465283686))
     expect_equal(resid(gm1),resid(gm1,scaled=TRUE))  ## since sigma==1
     cbppNA <- cbpp

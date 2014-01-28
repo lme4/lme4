@@ -20,7 +20,7 @@ test_that("lmer", {
     expect_is(fm1@pp, 				"merPredD")
     expect_that(fe1 <- fixef(fm1),                      is_equivalent_to(1527.5))
     expect_that(VarCorr(fm1)[[1]][1,1], ## "bobyqa" : 1764.050060
-                equals(1764.0375195, tol = 1e-5))
+		equals(1764.0375195, tolerance = 1e-5))
     ## back-compatibility ...
     if(isNM) expect_that(VarCorr(fm1.old)[[1]][1,1], equals(1764.0726543))
 

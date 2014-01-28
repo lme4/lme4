@@ -52,7 +52,7 @@ fm5b <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="Nelder_Mead",
                                   check.conv.hess="ignore",
                                   check.conv.grad="ignore"))
 fm5c <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="bobyqa"))
-stopifnot(all.equal(unname(getME(fm5c,"theta")), 0.21067645, tol = 1e-7))
+stopifnot(all.equal(unname(getME(fm5c,"theta")), 0.21067645, tolerance = 1e-7))
 					#	 0.21067644264 [64-bit, lynne]
 
 if (FALSE) {

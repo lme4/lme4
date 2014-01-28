@@ -138,13 +138,13 @@ Sigma_lme4.0 <- 2.3567045
 SE_lme4.0 <- c(0.95070077, 1.37650858)
 if(has4.0) try(detach("package:lme4.0"))
 
-stopifnot(all.equal(unname(fixef(m)), fixef_lme4.0, tol = 1e-3))
-          all.equal(unname(fixef(m)), fixef_lme4.0, tol = 0) #-> 1.657e-5
+stopifnot(all.equal(unname(fixef(m)), fixef_lme4.0, tolerance = 1e-3))
+          all.equal(unname(fixef(m)), fixef_lme4.0, tolerance = 0) #-> 1.657e-5
 
 ## but these are not at all equal :
-(all.equal(sigma(m),                		sigma_lme4.0, tol = 10^-3)) # 0.4276
-(all.equal(as.vector(VarCorr(m)$g), 		Sigma_lme4.0, tol = 10^-3)) # 1.038
-(all.equal(as.vector(summary(m)$coefficients[,2]), SE_lme4.0, tol = 10^-3)) # 0.4276
+(all.equal(sigma(m),                		sigma_lme4.0, tolerance = 10^-3)) # 0.4276
+(all.equal(as.vector(VarCorr(m)$g), 		Sigma_lme4.0, tolerance = 10^-3)) # 1.038
+(all.equal(as.vector(summary(m)$coefficients[,2]), SE_lme4.0, tolerance = 10^-3)) # 0.4276
 ## so, lme4.0 was clearly wrong here
 
 

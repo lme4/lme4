@@ -44,8 +44,8 @@
 m1p <- glmer(incidence / size ~ period + (1 | herd), weights = size,
              family = binomial, data = cbpp)
 ## Confirm that these are equivalent:
-stopifnot(all.equal(fixef(m1), fixef(m1p), tol = 1e-5),
-          all.equal(ranef(m1), ranef(m1p), tol = 1e-5))
+stopifnot(all.equal(fixef(m1), fixef(m1p), tolerance = 1e-5),
+          all.equal(ranef(m1), ranef(m1p), tolerance = 1e-5))
 %% more extensive variations of the above --> ../tests/glmer-1.R
 
 ## GLMM with individual-level variability (accounting for overdispersion)

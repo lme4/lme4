@@ -33,7 +33,7 @@ stopifnot(
 		    if(fm1@optinfo$optimizer == "Nelder_Mead")
 		    c(0.57601196, rep(0.51868399, 3)) else ## "bobyqa"
 		    c(0.57601226, rep(0.51868384, 3)),
-		    tol = 1e-6) ## std.err.: no extreme accuracy needed
+		    tolerance = 1e-6) ## std.err.: no extreme accuracy needed
           )
 
 }## if( ergoStool is available from pkg MEMSS )
@@ -53,8 +53,8 @@ fm7 # takes a while as it computes summary() again !
 range(t.fm7 <- coef(sfm7)[,"t value"])## -10.94173  10.61535 for REML, -11.03438  10.70103 for ML
 
 m.t.7 <- mean(abs(t.fm7), trim = .01)
-#stopifnot(all.equal(m.t.7, 1.55326395545110, tol = 1.e-9)) ##REML value
-stopifnot(all.equal(m.t.7, 1.56642013605506, tol = 1.e-6)) ## ML
+#stopifnot(all.equal(m.t.7, 1.55326395545110, tolerance = 1.e-9)) ##REML value
+stopifnot(all.equal(m.t.7, 1.56642013605506, tolerance = 1.e-6)) ## ML
 
 hist.t <- cut(t.fm7, floor(min(t.fm7)) : ceiling(max(t.fm7)))
 cbind(table(hist.t))

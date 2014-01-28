@@ -13,4 +13,4 @@ vc0 <- getME(m, 'sigma')^2*tcrossprod(T %*% S)
 vc1 <- VarCorr(m)$Subject[,]
 dimnames(vc0) <- dimnames(vc1)
 
-all.equal(vc0, vc1, tol = 1e-6)
+all.equal(vc0, vc1, tolerance = 1e-6)

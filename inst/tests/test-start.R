@@ -20,10 +20,10 @@ test_that("lmer", {
     th0 <- getME(x,"theta")
     y <- suppressWarnings(update(x,start=th0))
     if(isNM) {
-        expect_equal(AIC(x), 1768.025, tol=1e-6)
-        expect_equal(AIC(y), 1763.949, tol=1e-6)
+        expect_equal(AIC(x), 1768.025, tolerance=1e-6)
+        expect_equal(AIC(y), 1763.949, tolerance=1e-6)
     } else { ## only "bobyqa" tested:
-        expect_equal(AIC(x), 1763.939344, tol=1e-6)
+        expect_equal(AIC(x), 1763.939344, tolerance=1e-6)
         expect_equal(AIC(x), AIC(y))
     }
     if(isNM)
@@ -54,7 +54,7 @@ test_that("glmer", {
     x4@call <- x@call
     expect_equal(x,x4)
     x5 <- suppressWarnings(update(x,start=list(theta=1,fixef=rep(0,4))))
-    expect_equal(AIC(x5),221.5823,tol=1e-6)
+    expect_equal(AIC(x5),221.5823,tolerance=1e-6)
     x6 <- expect_error(update(x,start=list(theta=1,fixef=rep(0,5))),
                        "incorrect number of fixef components")
     ## beta only

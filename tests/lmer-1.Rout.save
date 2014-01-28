@@ -1,13 +1,11 @@
 
-R Under development (unstable) (2014-01-02 r64625) -- "Unsuffered Consequences"
+R Under development (unstable) (2014-01-26 r64897) -- "Unsuffered Consequences"
 Copyright (C) 2014 The R Foundation for Statistical Computing
-Platform: i686-pc-linux-gnu (32-bit)
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -100,7 +98,7 @@ fm1  6 1764 1783   -876     1752  0.06      1        0.8
 > #(fm1. <- lmer1(Reaction ~ Days + (Days|Subject), sleepstudy, opt = "bobyqa"))
 > #stopifnot(all.equal(fm1@devcomp$cmp['REML'], fm1.@devcomp$cmp['REML']),
 > #          all.equal(fixef(fm1), fixef(fm1.)),
-> #          all.equal(fm1@re@theta, fm1.@theta, tol = 1.e-7),
+> #          all.equal(fm1@re@theta, fm1.@theta, tolerance = 1.e-7),
 > #          all.equal(ranef(fm1), ranef(fm1.)))
 > 
 > ## compDev = FALSE no longer applies to lmer
@@ -109,12 +107,12 @@ fm1  6 1764 1783   -876     1752  0.06      1        0.8
 > ##              compDev = FALSE)#--> use R code (not C++) for deviance computation
 > ## stopifnot(all.equal(fm1@devcomp$cmp['REML'], fm1.@devcomp$cmp['REML']),
 > ##           all.equal(fixef(fm1), fixef(fm1.)),
-> ##           all.equal(fm1@re@theta, fm1.@re@theta, tol = 1.e-7),
-> ##           all.equal(ranef(fm1), ranef(fm1.), tol = 1.e-7))
+> ##           all.equal(fm1@re@theta, fm1.@re@theta, tolerance = 1.e-7),
+> ##           all.equal(ranef(fm1), ranef(fm1.), tolerance = 1.e-7))
 > 
-> stopifnot(all.equal(fixef(fm1), fixef(fm2), tol = 1.e-13),
+> stopifnot(all.equal(fixef(fm1), fixef(fm2), tolerance = 1.e-13),
 +           all.equal(unname(fixef(fm1)),
-+                     c(251.405104848485, 10.467285959595), tol = 1e-13),
++                     c(251.405104848485, 10.467285959595), tolerance = 1e-13),
 + 	  all.equal(Matrix::cov2cor(vcov(fm1))["(Intercept)", "Days"],
 + 		    -0.13755, tolerance=1e-4))
 > 
@@ -145,7 +143,7 @@ Fixed Effects:
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.68 0.096 1.8 
+Time elapsed:  0.41 0.005 0.42 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -188,12 +186,12 @@ Warning messages:
 1: In checkArgs("lmer", sparseX = TRUE) :
   sparseX = TRUE has no effect at present
 2: In checkArgs("lmer", sparseX = TRUE) :
-  extra argument(s) ‘sparseX’ disregarded
+  extra argument(s) 'sparseX' disregarded
 > #fmX2s <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
 > options(oldOpts)  ## restore digits
 > 
 > showProc.time() #
-Time elapsed:  0.232 0.02 0.549 
+Time elapsed:  0.123 0 0.123 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -209,15 +207,15 @@ Time elapsed:  0.232 0.02 0.549
 + #    } # else
 +     FF <- FUN
 +     stopifnot(
-+ 	      all.equal( FF(fmX1), F.fmX1s, tol =  1e-6)
++ 	      all.equal( FF(fmX1), F.fmX1s, tolerance =  1e-6)
 + #	      ,
-+ #	      all.equal( FF(fmX2), F.fmX2s, tol = 1e-5)
++ #	      all.equal( FF(fmX2), F.fmX2s, tolerance = 1e-5)
 + #              ,
-+ #	      all.equal( FF(fm.1), F.fmX2s, tol = 9e-6) ## these are different models
++ #	      all.equal( FF(fm.1), F.fmX2s, tolerance = 9e-6) ## these are different models
 + #              ,
-+ #              all.equal(F.fmX2s,   F.fmX1s, tol = 6e-6)
++ #              all.equal(F.fmX2s,   F.fmX1s, tolerance = 6e-6)
 + #              ,
-+ #              all.equal(FUN(fm.1), FUN(fm.2), tol = 6e-6)
++ #              all.equal(FUN(fm.1), FUN(fm.2), tolerance = 6e-6)
 +               ,
 +               TRUE)
 +     cat("[Ok]\n")
@@ -322,7 +320,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.596 0.044 1.381 
+Time elapsed:  0.282 0 0.292 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -354,7 +352,7 @@ In Ops.factor(habitat, lagoon) : * not meaningful for factors
 > V2 <- vcov(r2)
 > assert.EQ.mat(V2, diag(x = 9.9833/3, nr = 4))
 > stopifnot(all.equal(unname(fixef(r2)) - (1:4)*100,
-+ 		    c(1.72, 0.28, 1.76, 0.8), tol = 1e-13))
++ 		    c(1.72, 0.28, 1.76, 0.8), tolerance = 1e-13))
 > 
 > ## sparseX version should give same numbers:
 > ## (only gives a warning now -- sparseX disregarded)
@@ -366,7 +364,7 @@ Warning messages:
 1: In checkArgs("lmer", sparseX = TRUE) :
   sparseX = TRUE has no effect at present
 2: In checkArgs("lmer", sparseX = TRUE) :
-  extra argument(s) ‘sparseX’ disregarded
+  extra argument(s) 'sparseX' disregarded
 > 
 > ## the summary() components we do want to compare 'dense X' vs 'sparse X':
 > nmsSumm <- c("methTitle", "devcomp", "logLik", "ngrps", "coefficients",
@@ -442,7 +440,7 @@ lagoon1  lagoon2  lagoon3  lagoon4
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.288 0.02 0.669 
+Time elapsed:  0.166 0.001 0.168 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -463,7 +461,7 @@ Warning message:
 In Ops.factor(ff, x1) : + not meaningful for factors
 > 
 > showProc.time() #
-Time elapsed:  1.02 0.02 2.359 
+Time elapsed:  0.424 0 0.425 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -537,4 +535,4 @@ Fixed Effects:
 > 
 > proc.time()
    user  system elapsed 
-  6.680   3.092  22.431 
+  3.940   0.064   4.181 

@@ -30,7 +30,7 @@ chkLmers <- function(form, data, verbose = FALSE,
     m2  <- lmer (form, data = data, verbose = verbose) # lmem-dense
     m2. <- lmer (form, data = data, sparseX = TRUE, verbose = verbose)
     ##
-    Eq <- function(x,y) all.equal(x,y, tol = tol)
+    Eq <- function(x,y) all.equal(x,y, tolerance = tol)
     stopifnot(## Compare  sparse & dense of the new class results
               identical(slotNames(m2), slotNames(m2.))
               ,

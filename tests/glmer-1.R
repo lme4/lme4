@@ -80,7 +80,7 @@ stopifnot(is((cm2 <- coef(m2)), "coef.mer"),
                       -1.12782184600404, -1.57946627431248),
                     ##c(-1.3766013, -1.0058773,
                     ##  -1.1430128, -1.5922817),
-		    tol = 5.e-4,
+		    tolerance = 5.e-4,
                     check.attributes=FALSE),
           all.equal(deviance(m2), 100.010030538022, tolerance=1e-9)
           ## with bobyqa first (AGQ=0), then
@@ -144,14 +144,14 @@ if (require('MASS', quietly = TRUE)) {
 			structure(-96.13069, nobs = 220L, nall = 220L,
 				  df = 5L, REML = FALSE,
                                   class = "logLik"),
-                        tol = 5e-4, check.attributes = FALSE)
+                        tolerance = 5e-4, check.attributes = FALSE)
 	      ,
 	      all.equal(fixef(fm5),
 			## was		 2.834218798		 -1.367099481
 			c("(Intercept)"= 2.831609490, "trtdiag"= -1.366722631,
 			  ## now	 0.5842291915,		 -1.599148773
 			  "trtencourage"=0.5840147802, "wk2TRUE"=-1.598591346),
-                        tol = 1e-4 )
+                        tolerance = 1e-4 )
 	      )
 }
 

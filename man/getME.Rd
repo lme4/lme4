@@ -112,7 +112,7 @@ Z <- getME(fm1, "Z")
 stopifnot(is(Z, "CsparseMatrix"),
           c(180,36) == dim(Z),
 	  all.equal(fixef(fm1), getME(fm1, "beta"),
-		    check.attr=FALSE, tol = 0))
+		    check.attributes=FALSE, tolerance = 0))
 
 ## A way to get *all* getME()s :
 getME.all <- function(obj) {
