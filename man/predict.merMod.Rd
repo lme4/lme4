@@ -4,6 +4,7 @@
 \usage{
   \method{predict}{merMod} (object, newdata = NULL,
     newparams=NULL, newX=NULL,
+    re.form = NULL,
     ReForm = NULL, terms = NULL,
     type = c("link", "response"), allow.new.levels = FALSE,
     na.action = na.pass, \dots)
@@ -18,9 +19,11 @@
     (for GLMMs) \code{beta}}
   \item{newX}{new design matrix to use in evaluating predictions
     (alternative to \code{newdata})}
-  \item{ReForm}{formula for random effects to condition on.  If \code{NULL},
+  \item{re.form}{formula for random effects to condition on.  If \code{NULL},
     include all random effects; if \code{NA} or \code{~0},
     include no random effects}
+  \item{ReForm}{allowed for backward compatibility: \code{re.form} is
+    now the preferred argument name}
   \item{terms}{a \code{\link{terms}} object - not used at
     present}
   \item{type}{character string - either \code{"link"}, the
