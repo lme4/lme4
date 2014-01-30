@@ -1,5 +1,7 @@
 library(lme4)
 source(system.file("test-tools-1.R", package = "Matrix"), keep.source = FALSE)
+## N.B. is.all.equal4() and assert.EQ() use 'tol', not 'tolerance' 
+
 
 ## should be able to run any example with any bounds-constrained optimizer ...
 ##  Nelder_Mead, bobyqa built in; optimx/nlminb, optimx/L-BFGS-B
@@ -30,7 +32,7 @@ if (.Platform$OS.type != "windows") {
     ## hack equivalence of call and optinfo
     fm1E@call <- fm1C@call
     fm1E@optinfo <- fm1C@optinfo
-    assert.EQ(fm1C,fm1E, tolerance=1e-5, giveRE=TRUE)# prints unless tolerance=0--equality
+    assert.EQ(fm1C,fm1E, tol=1e-5, giveRE=TRUE)# prints unless tolerance=0--equality
 }
 
 gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
@@ -41,7 +43,6 @@ gm1C <- update(gm1, control=glmerCtrl.optx(tolPwrss=1e-13, method="nlminb"))
 gm1D <- update(gm1, control=glmerCtrl.optx(tolPwrss=1e-13, method="L-BFGS-B"))
 stopifnot(is.all.equal4(fixef(gm1),fixef(gm1B),fixef(gm1C),fixef(gm1D),
                         tol=1e-5))
-## n.b. is.all.equal4 uses 'tol', not 'tolerance' ...
 
 if (testLevel > 1) {
     gm1E <- update(gm1, control=
@@ -49,5 +50,5 @@ if (testLevel > 1) {
     ## hack equivalence of call and optinfo
     gm1E@call <- gm1C@call
     gm1E@optinfo <- gm1C@optinfo
-    assert.EQ(gm1E,gm1C, tolerance=1e-5, giveRE=TRUE)# prints unless tolerance=0--equality
+    assert.EQ(gm1E,gm1C, tol=1e-5, giveRE=TRUE)# prints unless tol=0--equality
 }

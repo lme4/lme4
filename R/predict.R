@@ -1,9 +1,22 @@
 ##' test for no-random-effect specification: TRUE if NA or ~0, other
 ##' possibilities are NULL or a non-trivial formula
-noReForm <- function(ReForm) {
-    (!is.null(ReForm) && !is(ReForm,"formula") && is.na(ReForm)) ||
-        (is(ReForm,"formula") && length(ReForm)==2 && identical(ReForm[[2]],0))
+noReForm <- function(re.form) {
+    (!is.null(re.form) && !is(re.form,"formula") && is.na(re.form)) ||
+        (is(re.form,"formula") && length(re.form)==2 && identical(re.form[[2]],0))
 }
+
+ReFormHack <- function(re.form,ReForm=NULL,REForm=NULL) {
+    if (!is.null(ReForm)) {
+        message(shQuote("re.form")," is now preferred to ",shQuote("ReForm"))
+        return(ReForm)
+    }
+    if (!is.null(REForm)) {
+        message(shQuote("re.form")," is now preferred to ",shQuote("REForm"))
+        return(REForm)
+    }
+    re.form
+}
+
 ## noReForm(NA)   ## TRUE
 ## noReForm(~0)   ## TRUE
 ## noReForm(~y+x)
@@ -81,34 +94,37 @@ setParams <- function(object, params, inplace=FALSE, subset=FALSE) {
 ##' possibly omitting some random effect terms
 ##' @param object fitted model object
 ##' @param newdata (optional) data frame containing new data
-##' @param ReForm formula specifying random effect terms to include (NULL=all, ~0)
+##' @param re.form formula specifying random effect terms to include (NULL=all, ~0)
+##' @param ReForm backward compatibility argument
 ##' @param na.action
 ##'
-mkNewReTrms <- function(object,newdata,ReForm=NULL, na.action=na.pass,
+mkNewReTrms <- function(object, newdata, re.form=NULL, ReForm=NULL,
+                        na.action=na.pass,
                         allow.new.levels=FALSE) {
     ## construct (fixed) model frame in order to find out whether there are
     ## missing data/what to do about them
+    re.form <- ReFormHack(re.form,ReForm)  ## back-compatibility
     mfnew <- if (is.null(newdata)) {
         model.frame(object)  ## FIXME: check ...
     } else {
         Terms <- terms(object,fixed.only=TRUE)
         model.frame(delete.response(Terms),newdata, na.action=na.action)
     }
-    if (is(ReForm,"formula")) {
+    if (is(re.form,"formula")) {
         ## DROP values with NAs in fixed effects
         if (length(fit.na.action <- attr(mfnew,"na.action"))>0) {
             newdata <- newdata[-fit.na.action,]
         }
         re <- ranef(object)
         rfd <- if(is.null(newdata)) object@frame else newdata
-        ReTrms <- mkReTrms(findbars(ReForm[[2]]), rfd)
+        ReTrms <- mkReTrms(findbars(re.form[[2]]), rfd)
         if (!allow.new.levels &&
             any(sapply(ReTrms$flist,function(x) any(is.na(x)))))
             stop("NAs are not allowed in prediction data",
                  " for grouping variables unless allow.new.levels is TRUE")
         unames <- unique(sort(names(ReTrms$cnms)))  ## FIXME: same as names(ReTrms$flist) ?
         ## convert numeric grouping variables to factors as necessary
-        for (i in all.vars(RHSForm(ReForm))) {
+        for (i in all.vars(RHSForm(re.form))) {
             rfd[[i]] <- factor(rfd[[i]])
         }
         Rfacs <- lapply(setNames(unames,unames),
@@ -135,13 +151,13 @@ mkNewReTrms <- function(object,newdata,ReForm=NULL, na.action=na.pass,
         re_x <- mapply(levelfun, re, names(re), SIMPLIFY=FALSE)
         re_new <- list()
         if (any(!names(ReTrms$cnms) %in% names(re)))
-            stop("grouping factors specified in ReForm that were not present in original model")
+            stop("grouping factors specified in re.form that were not present in original model")
         ## pick out random effects values that correspond to
-        ##  random effects incorporated in ReForm ...
+        ##  random effects incorporated in re.form ...
         for (i in seq_along(ReTrms$cnms)) {
             rname <- names(ReTrms$cnms)[i]
             if (any(!ReTrms$cnms[[rname]] %in% names(re[[rname]])))
-                stop("random effects specified in ReForm",
+                stop("random effects specified in re.form",
                      " that were not present in original model")
             re_new[[i]] <- re_x[[rname]][,ReTrms$cnms[[rname]]]
         }
@@ -162,7 +178,7 @@ mkNewReTrms <- function(object,newdata,ReForm=NULL, na.action=na.pass,
 ##' @param newparams new parameters to use in evaluating predictions
 ##' @param newX new design matrix to use in evaluating predictions
 ##' (alternative to \code{newdata})
-##' @param ReForm formula for random effects to condition on.  If \code{NULL},
+##' @param re.form formula for random effects to condition on.  If \code{NULL},
 ##' include all random effects; if \code{NA} or \code{~0},
 ##' include no random effects
 ##' @param terms a \code{\link{terms}} object - not used at present
@@ -179,14 +195,15 @@ mkNewReTrms <- function(object,newdata,ReForm=NULL, na.action=na.pass,
 ##' @examples
 ##' (gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 |herd), cbpp, binomial))
 ##' str(p0 <- predict(gm1))            # fitted values
-##' str(p1 <- predict(gm1,ReForm=NA))  # fitted values, unconditional (level-0)
+##' str(p1 <- predict(gm1,re.form=NA))  # fitted values, unconditional (level-0)
 ##' newdata <- with(cbpp, expand.grid(period=unique(period), herd=unique(herd)))
 ##' str(p2 <- predict(gm1,newdata))    # new data, all RE
-##' str(p3 <- predict(gm1,newdata,ReForm=NA)) # new data, level-0
-##' str(p4 <- predict(gm1,newdata,ReForm=~(1|herd))) # explicitly specify RE
+##' str(p3 <- predict(gm1,newdata,re.form=NA)) # new data, level-0
+##' str(p4 <- predict(gm1,newdata,re.form=~(1|herd))) # explicitly specify RE
 ##' @method predict merMod
 ##' @export
 predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
+                           re.form=NULL,
                            ReForm=NULL,
                            terms=NULL, type=c("link","response"),
                            allow.new.levels=FALSE, na.action=na.pass, ...) {
@@ -217,8 +234,11 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
     ## an error (although it could be argued that in that case they
     ## should follow 'na.action' instead ...)
 
+    re.form <- ReFormHack(re.form,ReForm)
+    
     if (length(list(...)>0)) warning("unused arguments ignored")
 
+    
     fit.na.action <- NULL
     type <- match.arg(type)
     if (!is.null(terms))
@@ -227,7 +247,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
         object <- setParams(object,newparams)
     }
     if ((rawPred <- is.null(newdata) &&
-                    is.null(ReForm) && is.null(newparams))) { 
+                    is.null(re.form) && is.null(newparams))) { 
         ## raw predict() call, just return fitted values
         ##   (inverse-link if appropriate)
         if (isLMM(object) || isNLMM(object)) {
@@ -241,7 +261,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
             names(pred) <- nm
         }
         ## flow jumps to end for na.predict
-    } else { ## newdata and/or ReForm and/or newparams specified
+    } else { ## newdata and/or re.form and/or newparams specified
         X_orig <- getME(object, "X")
         ## modified from predict.glm ...
         if (is.null(newdata)) {
@@ -279,20 +299,20 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
         ## if (!is.null(frOffset <- attr(object@frame,"offset")))
         ##     offset <- offset + eval(frOffset, newdata)
         pred <- pred+offset
-        if (!noReForm(ReForm)) {
-            if (is.null(ReForm)) {
+        if (!noReForm(re.form)) {
+            if (is.null(re.form)) {
                 ## original formula, minus response
-                ReForm <- dropRHSForm(formula(object))
-                ReTrms <- mkReTrms(findbars(ReForm[[2]]), newdata)
+                re.form <- dropRHSForm(formula(object))
+                ReTrms <- mkReTrms(findbars(re.form[[2]]), newdata)
             }
-            newRE <- mkNewReTrms(object,newdata,ReForm,na.action=na.action,
+            newRE <- mkNewReTrms(object,newdata,re.form,na.action=na.action,
                                  allow.new.levels=allow.new.levels)
             pred <- pred + drop(as.matrix(newRE$b %*% newRE$Zt))
         }
         if (isGLMM(object) && type=="response") {
             pred <- object@resp$family$linkinv(pred)
         }
-    }  ## newdata/newparams/ReForm
+    }  ## newdata/newparams/re.form
     ## fill in NAs as appropriate: if NAs were detected in
     ## original model fit, OR in updated model frame construction
     ## but DON'T double-NA if raw prediction in the first place
@@ -338,7 +358,8 @@ simulate.formula <- function(object, nsim = 1, seed = NULL, family, weights=NULL
 }
 
 simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
-                            ReForm=NA, newdata=NULL, newparams=NULL,
+                            re.form=NA, ReForm=NULL, REForm=NULL,
+                            newdata=NULL, newparams=NULL,
                             family=NULL,
                             allow.new.levels=FALSE, na.action=na.pass, ...) {
     mc <- match.call()
@@ -347,11 +368,14 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 }
 
 .simulateFun <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
-                         ReForm=NA, newdata=NULL, newparams=NULL,
+                         re.form=NA, ReForm=NULL, REForm=NULL,
+                         newdata=NULL, newparams=NULL,
                          formula=NULL,family=NULL,
                          weights=NULL,
                          offset=NULL,
                          allow.new.levels=FALSE, na.action=na.pass, ...) {
+    re.form <- reFormHack(re.form,ReForm,REForm)
+
     if (missing(object)) {
         if (is.null(formula) || is.null(newdata) || is.null(newparams)) {
             stop("if ",sQuote("object")," is missing, must specify all of ",
@@ -400,15 +424,15 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         object <- setParams(object,newparams)
     }
     if (!missing(use.u)) {
-        if (!missing(ReForm)) {
+        if (!missing(re.form)) {
             stop("should specify only one of ",sQuote("use.u"),
-                 " and ",sQuote("ReForm"))
+                 " and ",sQuote("re.form"))
         }
-        ReForm <- if (use.u) NULL else ~0
+        re.form <- if (use.u) NULL else ~0
     }
-    if (is.null(ReForm)) {
+    if (is.null(re.form)) {
         ## original formula, minus response
-        ReForm <- dropRHSForm(formula(object))
+        re.form <- dropRHSForm(formula(object))
     }
     if(!is.null(seed)) set.seed(seed)
     if(!exists(".Random.seed", envir = .GlobalEnv))
@@ -422,13 +446,13 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     ## predictions, conditioned as specified, on link scale
     ## do **NOT** use na.action as specified here (inherit
     ## from object instead, for consistency)
-    etapred <- predict(object, newdata=newdata, ReForm=ReForm,
+    etapred <- predict(object, newdata=newdata, re.form=re.form,
                        type="link")
 
     ## now add random components:
     ##  only the ones we did *not* condition on
 
-    ## compReForm <- dropRHSForm(formula(object))
+    ## compre.form <- dropRHSForm(formula(object))
     ## construct RE formula ONLY: leave out fixed terms,
     ##   which might have loose terms like offsets in them ...
     fb <- findbars(formula(object))
@@ -436,8 +460,8 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     compReForm <- reformulate(sapply(fb,pfun))
 
 
-    if (!noReForm(ReForm)) {
-        rr <- ReForm[[length(ReForm)]] ## RHS of formula
+    if (!noReForm(re.form)) {
+        rr <- re.form[[length(re.form)]] ## RHS of formula
         ftemplate <- substitute(.~.-XX, list(XX=rr))
         compReForm <- update.formula(compReForm,ftemplate)
     }

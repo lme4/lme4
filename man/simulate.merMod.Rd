@@ -5,12 +5,14 @@
 \title{Simulate responses from a \code{\linkS4class{merMod}} object}
 \usage{
   \method{simulate}{merMod} (object, nsim = 1, seed = NULL,
-    use.u = FALSE, ReForm=NA, newdata=NULL, newparams=NULL,
+    use.u = FALSE, re.form=NA, ReForm=NULL, REForm=NULL,
+    newdata=NULL, newparams=NULL,
     family=NULL,
     allow.new.levels=FALSE, na.action=na.pass, \dots)
   \method{simulate}{formula} (object, nsim = 1 , seed = NULL, family, weights=NULL, offset=NULL, \dots)
 .simulateFun(object, nsim = 1, seed = NULL, use.u = FALSE,
-                            ReForm=NA, newdata=NULL, newparams=NULL,
+                            re.form=NA, ReForm=NULL, REForm=NULL,
+                            newdata=NULL, newparams=NULL,
                             formula=NULL,family=NULL,
                             weights=NULL, offset=NULL,
                             allow.new.levels=FALSE, na.action=na.pass, \dots)
@@ -29,13 +31,17 @@
   \item{use.u}{(logical) if \code{TRUE}, generate a
     simulation conditional on the current random-effects
     estimates; if \code{FALSE} generate new Normally
-    distributed random-effects values. (Redundant with \code{ReForm},
-    which is preferred: \code{TRUE} corresponds to \code{ReForm=NULL}
+    distributed random-effects values. (Redundant with \code{re.form},
+    which is preferred: \code{TRUE} corresponds to \code{re.form=NULL}
     (condition on all random effects), while \code{TRUE} corresponds to
-    \code{ReForm=~0} (condition on none of the random effects).)}
-  \item{ReForm}{formula for random effects to condition on.  If \code{NULL},
+    \code{re.form=~0} (condition on none of the random effects).)}
+  \item{re.form}{formula for random effects to condition on.  If \code{NULL},
     include all random effects; if \code{NA} or \code{~0},
     include no random effects.}
+  \item{ReForm}{allowed for backward compatibility: \code{re.form} is
+      now the preferred argument name}
+  \item{REForm}{allowed for backward compatibility: \code{re.form} is
+      now the preferred argument name}
   \item{newdata}{data frame for which to evaluate
     predictions}
   \item{newparams}{new parameters to use in evaluating predictions,
