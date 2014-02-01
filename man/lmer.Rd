@@ -162,5 +162,15 @@ print(sm2, digits=3, corr=FALSE)       # the print.summary.merMod() method
 
 (vv <- vcov.merMod(fm2, corr=TRUE))
 as(vv, "corMatrix")# extracts the ("hidden") 'correlation' entry in @factors
+
+## Fit sex-specific variances by constructing numeric dummy variables
+## for sex and sex:age; in this case the estimated variance differences
+## between groups in both intercept and slope are zero ...
+data(Orthodont,package="nlme")
+Orthodont$nsex <- as.numeric(Orthodont$Sex=="Male")
+Orthodont$nsexage <- with(Orthodont, nsex*age)
+lmer(distance ~ age + (age|Subject) + (0+nsex|Subject) +
+     (0 + nsexage|Subject), data=Orthodont)
+
 }
 \keyword{models}
