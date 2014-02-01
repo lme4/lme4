@@ -192,8 +192,8 @@ chkRank.drop.cols <- function(X, kind, tol = 1e-7, method = "qr.R") {
             return(X) ## return X if X has full column rank
         if (kind != "silent.drop.cols") { ## message about no. dropped columns:
 	    msg <- sprintf(ngettext(p - rnkX,
-			"design is rank deficient so dropping %d column / coefficient",
-			"design is rank deficient so dropping %d columns / coefficients"),
+			"fixed-effect model matrix is rank deficient so dropping %d column / coefficient",
+			"fixed-effect model matrix is rank deficient so dropping %d columns / coefficients"),
 			   p - rnkX)
             (if(kind == "warn+drop.cols") warning else message)(msg, domain = NA)
         }

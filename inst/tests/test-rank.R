@@ -12,7 +12,7 @@ test_that("lmerRank", {
 		    r = sample(1:5, size=n, replace=TRUE),
 		    y2 = y + c(0.001, rep(0,n-1)))
     expect_message(fm <- lmer( z ~ x + y + (1|r), data=d),
-		   "design is .*rank deficient")
+		   "fixed-effect model matrix is .*rank deficient")
     expect_equal(nrow(anova(fm)), 1L)
     expect_error(lmer( z ~ x + y + (1|r), data=d,
 		      control=lmerControl(check.rankX="stop")),
@@ -32,7 +32,7 @@ test_that("lmerRank", {
                       control=lmerControl(check.rankX="stop")),
                  "rank deficient")
     expect_message(fm <- lmer( z ~ a*b + (1|r), data=d2),
-                   "design is rank deficient")
+                   "fixed-effect model matrix is rank deficient")
     d2 <- transform(d2, ab=droplevels(interaction(a,b)))
     ## should work:
     expect_is(fm2 <- lmer( z ~ ab + (1|r), data=d2), "lmerMod")
@@ -52,7 +52,7 @@ test_that("glmerRank", {
                     ## FIXME: figure out how small a difference will still fail?
                     rnorm(n))
     expect_message(fm <- glmer( z ~ x + y + (1|r), data=d, family=binomial),
-                   "design is rank deficient")
+                   "fixed-effect model matrix is rank deficient")
     expect_error(glmer( z ~ x + y + (1|r), data=d, family=binomial,
                        control=glmerControl(check.rankX="stop")),
                  "rank deficient.*rank.X.")
