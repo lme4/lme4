@@ -5,7 +5,7 @@
   \method{predict}{merMod} (object, newdata = NULL,
     newparams=NULL, newX=NULL,
     re.form = NULL,
-    ReForm = NULL, terms = NULL,
+    ReForm, terms = NULL,
     type = c("link", "response"), allow.new.levels = FALSE,
     na.action = na.pass, \dots)
 }

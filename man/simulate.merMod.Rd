@@ -5,13 +5,13 @@
 \title{Simulate responses from a \code{\linkS4class{merMod}} object}
 \usage{
   \method{simulate}{merMod} (object, nsim = 1, seed = NULL,
-    use.u = FALSE, re.form=NA, ReForm=NULL, REForm=NULL,
+    use.u = FALSE, re.form=NA, ReForm, REForm,
     newdata=NULL, newparams=NULL,
     family=NULL,
     allow.new.levels=FALSE, na.action=na.pass, \dots)
   \method{simulate}{formula} (object, nsim = 1 , seed = NULL, family, weights=NULL, offset=NULL, \dots)
 .simulateFun(object, nsim = 1, seed = NULL, use.u = FALSE,
-                            re.form=NA, ReForm=NULL, REForm=NULL,
+                            re.form=NA, ReForm, REForm,
                             newdata=NULL, newparams=NULL,
                             formula=NULL,family=NULL,
                             weights=NULL, offset=NULL,
@@ -33,7 +33,7 @@
     estimates; if \code{FALSE} generate new Normally
     distributed random-effects values. (Redundant with \code{re.form},
     which is preferred: \code{TRUE} corresponds to \code{re.form=NULL}
-    (condition on all random effects), while \code{TRUE} corresponds to
+    (condition on all random effects), while \code{FALSE} corresponds to
     \code{re.form=~0} (condition on none of the random effects).)}
   \item{re.form}{formula for random effects to condition on.  If \code{NULL},
     include all random effects; if \code{NA} or \code{~0},

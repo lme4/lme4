@@ -55,7 +55,7 @@ test_that("glmerRank", {
                    "design is rank deficient")
     expect_error(glmer( z ~ x + y + (1|r), data=d, family=binomial,
                        control=glmerControl(check.rankX="stop")),
-                 "rank deficient.* rank.X.")
+                 "rank deficient.*rank.X.")
     expect_is(glmer( z ~ x + y2 + (1|r), data=d, family=binomial), "glmerMod")
 })
 

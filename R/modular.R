@@ -16,7 +16,7 @@ RHSForm <- function(formula) {
     formula
 }
 
-dropRHSForm <- function(formula) {
+LHSForm <- function(formula) {
     if (length(formula)==2) formula else formula[-2]
 }
 
@@ -29,6 +29,23 @@ checkCtrlLevels <- function(cstr,val,smallOK=FALSE) {
         stop("invalid control level ",sQuote(val)," in ",cstr,": valid options are {",
              paste(sapply(bvals,sQuote),collapse=","),"}")
     invisible(NULL)
+}
+
+## general identifiability checker, used both in checkZdim and checkZrank
+wmsg <- function(n,cmp.val,allow.n,msg1="",msg2="",msg3="") {
+    if (allow.n) {
+        unident <- n<cmp.val
+        cmp <- "<"
+        rstr <- ""
+    } else {
+        unident <- n<=cmp.val
+        cmp <- "<="
+        rstr <- " and the residual variance (or scale parameter)"
+    }
+    ## %s without spaces intentional (don't want an extra space if the
+    ## message component is empty)
+    wstr <- sprintf("%s (=%d) %s %s (=%d)%s; the random-effects parameters%s are probably unidentifiable",msg1,n,cmp,msg2,cmp.val,msg3,rstr)
+    list(unident=unident,wstr=wstr)
 }
 
 checkZdims <- function(Ztlist, n, ctrl, allow.n=FALSE) {
@@ -48,19 +65,13 @@ checkZdims <- function(Ztlist, n, ctrl, allow.n=FALSE) {
     stopifnot(all(cols == n))
     if (doCheck(cc <- ctrl[[cstr]])) {
         for(i in seq_along(Ztlist)) {
-            if(allow.n) {
-                condition <- rows[i] > cols[i]
-                cmp <- ">"
-            } else {
-                condition <- rows[i] >= cols[i]
-                cmp <- ">="
-            }
-            if(condition) {
-                wstr <- gettextf("no. random effects (=%d) %s no. observations (=%d) for term: (%s)",
-                                rows[i], cmp, n, term.names[i])
+            ww <- wmsg(cols[i],rows[i],allow.n,"number of observations",
+                       "number of random effects",
+                       sprintf(" for term (%s)",term.names[i]))
+            if(ww$unident) {
             switch(cc,
-                   "warning" = warning(wstr),
-                   "stop" = stop(wstr),
+                   "warning" = warning(ww$wstr),
+                   "stop" = stop(ww$wstr),
                    stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
             }
         }
@@ -80,25 +91,18 @@ checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
             rankZ <- rankMatrix(if(doTr) t(Zt) else Zt, method="qr",
                                 sval = numeric(min(d)))
             ## FIXME: should probably trap this earlier ...
-            if (is.na(rankZ)) stop("NA in Z matrix: please use ",
+            if (is.na(rankZ)) stop("NA in Z (random-effects model matrix): ",
+                                   "please use ",
                                    shQuote("na.action='na.omit'"),
                                    " or ",
                                    shQuote("na.action='na.exclude'"))
-            if (allow.n) {
-                unident <- n<rankZ
-                cmp <- "<"
-            } else {
-                unident <- n<=rankZ
-                cmp <- "<="
-            }
-            ## OR: cmp <- if (allow.n) "<" else "<="
-            ##  if (do.call(cmp,list(n,rankZ)) ...
-            if (unident) {
-                wstr <- sprintf("number of observations (=%d) %s rank(Z) (=%d); variance-covariance matrix will be unidentifiable",n,cmp,rankZ)
+            ww <- wmsg(n,rankZ,allow.n,"number of observations","rank(Z)")
+            if (ww$unident) {
                 switch(cc,
-                       "warningSmall" =, "warning" = warning(wstr),
-                       "stopSmall" =, "stop" = stop(wstr),
-                       stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
+                       "warningSmall" =, "warning" = warning(ww$wstr),
+                       "stopSmall" =, "stop" = stop(ww$wstr),
+                       stop(gettextf("unknown check level for '%s'", cstr),
+                            domain=NA))
             }
         }
     }
@@ -172,7 +176,7 @@ chkRank.drop.cols <- function(X, kind, tol = 1e-7, method = "qr.R") {
     p <- ncol(X)
     if (kind == "stop.deficient") {
         if ((rX <- rankMatrix(X, tol=tol, method=method)) < p)
-            stop(gettextf("design is column rank deficient: rank(X) = %d < %d = p",
+            stop(gettextf("the fixed-effects model matrix is column rank deficient (rank(X) = %d < %d = p); the fixed effects will be jointly unidentifiable",
                           rX, p),
                  call. = FALSE)
     } else { 

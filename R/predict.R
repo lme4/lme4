@@ -5,12 +5,12 @@ noReForm <- function(re.form) {
         (is(re.form,"formula") && length(re.form)==2 && identical(re.form[[2]],0))
 }
 
-ReFormHack <- function(re.form,ReForm=NULL,REForm=NULL) {
-    if (!is.null(ReForm)) {
+reFormHack <- function(re.form,ReForm,REForm) {
+    if (!missing(ReForm)) {
         message(shQuote("re.form")," is now preferred to ",shQuote("ReForm"))
         return(ReForm)
     }
-    if (!is.null(REForm)) {
+    if (!missing(REForm)) {
         message(shQuote("re.form")," is now preferred to ",shQuote("REForm"))
         return(REForm)
     }
@@ -98,12 +98,12 @@ setParams <- function(object, params, inplace=FALSE, subset=FALSE) {
 ##' @param ReForm backward compatibility argument
 ##' @param na.action
 ##'
-mkNewReTrms <- function(object, newdata, re.form=NULL, ReForm=NULL,
+mkNewReTrms <- function(object, newdata, re.form=NULL, ReForm,
                         na.action=na.pass,
                         allow.new.levels=FALSE) {
     ## construct (fixed) model frame in order to find out whether there are
     ## missing data/what to do about them
-    re.form <- ReFormHack(re.form,ReForm)  ## back-compatibility
+    re.form <- reFormHack(re.form,ReForm)  ## back-compatibility
     mfnew <- if (is.null(newdata)) {
         model.frame(object)  ## FIXME: check ...
     } else {
@@ -204,7 +204,7 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, ReForm=NULL,
 ##' @export
 predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
                            re.form=NULL,
-                           ReForm=NULL,
+                           ReForm,
                            terms=NULL, type=c("link","response"),
                            allow.new.levels=FALSE, na.action=na.pass, ...) {
     ## FIXME: appropriate names for result vector?
@@ -234,7 +234,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
     ## an error (although it could be argued that in that case they
     ## should follow 'na.action' instead ...)
 
-    re.form <- ReFormHack(re.form,ReForm)
+    re.form <- reFormHack(re.form,ReForm)
     
     if (length(list(...)>0)) warning("unused arguments ignored")
 
@@ -302,7 +302,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
         if (!noReForm(re.form)) {
             if (is.null(re.form)) {
                 ## original formula, minus response
-                re.form <- dropRHSForm(formula(object))
+                re.form <- LHSForm(formula(object))
                 ReTrms <- mkReTrms(findbars(re.form[[2]]), newdata)
             }
             newRE <- mkNewReTrms(object,newdata,re.form,na.action=na.action,
@@ -358,7 +358,7 @@ simulate.formula <- function(object, nsim = 1, seed = NULL, family, weights=NULL
 }
 
 simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
-                            re.form=NA, ReForm=NULL, REForm=NULL,
+                            re.form=NA, ReForm, REForm,
                             newdata=NULL, newparams=NULL,
                             family=NULL,
                             allow.new.levels=FALSE, na.action=na.pass, ...) {
@@ -368,13 +368,12 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 }
 
 .simulateFun <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
-                         re.form=NA, ReForm=NULL, REForm=NULL,
+                         re.form=NA, ReForm, REForm,
                          newdata=NULL, newparams=NULL,
                          formula=NULL,family=NULL,
                          weights=NULL,
                          offset=NULL,
                          allow.new.levels=FALSE, na.action=na.pass, ...) {
-    re.form <- reFormHack(re.form,ReForm,REForm)
 
     if (missing(object)) {
         if (is.null(formula) || is.null(newdata) || is.null(newparams)) {
@@ -423,8 +422,13 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     if (!is.null(newparams)) {
         object <- setParams(object,newparams)
     }
+
+    ## need to save this before we reset re.form
+    re.form.miss <- missing(re.form)
+    re.form <- reFormHack(re.form,ReForm,REForm)
+
     if (!missing(use.u)) {
-        if (!missing(re.form)) {
+        if (!re.form.miss) {
             stop("should specify only one of ",sQuote("use.u"),
                  " and ",sQuote("re.form"))
         }
@@ -432,7 +436,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     }
     if (is.null(re.form)) {
         ## original formula, minus response
-        re.form <- dropRHSForm(formula(object))
+        re.form <- LHSForm(formula(object))
     }
     if(!is.null(seed)) set.seed(seed)
     if(!exists(".Random.seed", envir = .GlobalEnv))
@@ -452,7 +456,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     ## now add random components:
     ##  only the ones we did *not* condition on
 
-    ## compre.form <- dropRHSForm(formula(object))
+    ## compre.form <- LHSForm(formula(object))
     ## construct RE formula ONLY: leave out fixed terms,
     ##   which might have loose terms like offsets in them ...
     fb <- findbars(formula(object))

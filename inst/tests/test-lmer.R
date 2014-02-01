@@ -1,4 +1,3 @@
-
 stopifnot(require("testthat"), require("lme4"))
 
 context("fitting lmer models")
@@ -72,10 +71,10 @@ test_that("lmer", {
     sstudy9 <- subset(sleepstudy, Days == 1 | Days == 9)
     expect_error(lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
                         data = sleepstudy, subset = (Days == 1 | Days == 9)),
-                   "no. random effects \\(=36\\) >= no. observations \\(=36\\)")
+                   "number of observations \\(=36\\) <= number of random effects \\(=36\\)")
     expect_error(lFormula(Reaction ~ 1 + Days + (1 + Days | Subject),
                            data = sleepstudy, subset = (Days == 1 | Days == 9)),
-                 "no. random effects \\(=36\\) >= no. observations \\(=36\\)")
+                 "number of observations \\(=36\\) <= number of random effects \\(=36\\)")
     ## with most recent Matrix (1.1-1), should *not* flag this
     ## for insufficient rank
     load(system.file("testdata","rankMatrix.rda",package="lme4"))
