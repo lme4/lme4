@@ -11,7 +11,7 @@
     further \code{restart_edge}, etc;
     \item model- or data-checking specifications, in short
     \dQuote{checking options}, such as \code{check.nobs.vs.rankZ}, or
-    \code{ensureXrank} (currently not for \code{nlmerControl});
+    \code{check.rankX} (currently not for \code{nlmerControl});
     \item all the parameters to be passed to the optimizer, e.g.,
     maximal number of iterations, passed via the \code{optCtrl} list
     argument.
@@ -204,7 +204,7 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
 }
 \details{
   Note that (only!) the \dQuote{checking options}, i.e., all those starting with
-  \code{"check."} plus \code{ensureXrank}, may also be set via \code{\link{options}}.
+  \code{"check."}, may also be set via \code{\link{options}}.
   In that case, \code{(g)lmerControl} will use them rather than the
   default values, but will \emph{not} override values that are passed as
   explicit arguments.

@@ -10,6 +10,42 @@
       deviance (Github issue #155). The deviance bug was only a
       practical issue in model comparisons, not with inferences given a
       particular model. Both bugs are now fixed.
+      \item Profiling failed in some cases for models with vector random
+      effects (Github issue #172)
+      \item Standard errors of fixed effects are now computed
+      from the approximate Hessian by default (see the
+      \code{use.hessian} argument in \code{vcov.merMod}); this
+      gives better (correct) answers when the estimates of
+      the random- and fixed-effect parameters are correlated
+      (Github #47)
+    }
+  }
+  \subsection{MAJOR USER-VISIBLE CHANGES}{
+    \itemize{
+      \item The default optimizer for \code{lmer} fits has been
+      switched from "Nelder_Mead" to "bobyqa" because we have
+      generally found the latter to be more reliable.  To switch
+      back to the old behaviour,
+      use \code{control=lmerControl(optimizer="Nelder_Mead")}.
+      \item Better handling of rank-deficient/overparameterized
+      fixed-effect model matrices; see \code{check.rankX} option
+      to \code{[g]lmerControl}.  The default value is
+      "message+drop.cols", which automatically drops redundant
+      columns and issues a message (not a warning). (Github #144)
+    }
+  }
+  \subsection{MINOR USER-VISIBLE CHANGES}{
+    \itemize{
+      \item improved warning messages about rank-deficiency in X and Z
+      etc. (warnings now try to indicate whether the unidentifiability
+      is in the fixed- or random-effects part of the model)
+      \item \code{predict} and \code{simulate} now prefer
+      \code{re.form} as the argument to specify which random effects
+      to condition on, but allow \code{ReForm} and \code{REForm} (the
+      latter for \code{simulate} only), giving a message (not a
+      warning) that they are deprecated (addresses Github #170)
+      \item small fixes for printing consistency in models with no
+      fixed effects
     }
   }
 }
@@ -96,7 +132,7 @@
       levels than are present in the original data (Github issue #143,
       reported by Rune Haubo)
       \item the existence of a variable "new" in the global environment
-  would mess up reported at http://stackoverflow.com/questions/19801070/error-message-glmer-using-r-what-must-be-a-character-string-or-a-function
+  would mess \code{lme4} up: reported at http://stackoverflow.com/questions/19801070/error-message-glmer-using-r-what-must-be-a-character-string-or-a-function
     }
   }
 }
@@ -123,7 +159,7 @@
       work with \code{update}: optional
       \code{rename.response} option added to \code{refit.merMod}, to allow
       this (but the default is still \code{FALSE}, for
-      back-compatibility (reported by A. Kuznetsova)
+      back-compatibility) (reported by A. Kuznetsova)
       \item fixed buglet preventing on-the-fly creation of index variables,
       e.g. \code{y~1+(1|rownames(data))} (reported by J. Dushoff)
       \item \code{predict} now works properly for \code{glmer} models
