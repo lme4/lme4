@@ -205,6 +205,7 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, ReForm,
 predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
                            re.form=NULL,
                            ReForm,
+                           REForm,
                            terms=NULL, type=c("link","response"),
                            allow.new.levels=FALSE, na.action=na.pass, ...) {
     ## FIXME: appropriate names for result vector?
@@ -234,7 +235,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
     ## an error (although it could be argued that in that case they
     ## should follow 'na.action' instead ...)
 
-    re.form <- reFormHack(re.form,ReForm)
+    re.form <- reFormHack(re.form,ReForm,REForm)
     
     if (length(list(...)>0)) warning("unused arguments ignored")
 

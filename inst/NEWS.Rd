@@ -41,9 +41,9 @@
       is in the fixed- or random-effects part of the model)
       \item \code{predict} and \code{simulate} now prefer
       \code{re.form} as the argument to specify which random effects
-      to condition on, but allow \code{ReForm} and \code{REForm} (the
-      latter for \code{simulate} only), giving a message (not a
-      warning) that they are deprecated (addresses Github #170)
+      to condition on, but allow \code{ReForm} and \code{REForm}
+      giving a message (not a warning) that they are deprecated
+      (addresses Github #170)
       \item small fixes for printing consistency in models with no
       fixed effects
     }

@@ -24,6 +24,8 @@
     include no random effects}
   \item{ReForm}{allowed for backward compatibility: \code{re.form} is
     now the preferred argument name}
+  \item{REForm}{allowed for backward compatibility: \code{re.form} is
+    now the preferred argument name}
   \item{terms}{a \code{\link{terms}} object - not used at
     present}
   \item{type}{character string - either \code{"link"}, the
