@@ -17,10 +17,10 @@ Description: Fit linear and generalized linear mixed-effects models.
     The models and their components are represented using S4 classes and
     methods.  The core computational algorithms are implemented using the
     Eigen C++ library for numerical linear algebra and RcppEigen "glue".
-Depends: R (>= 2.14.0), Matrix (>= 1.1.1), methods, stats
+Depends: R (>= 2.14.0), Matrix (>= 1.1.1), methods, stats, Rcpp (>= 0.10.1)
 LinkingTo: Rcpp, RcppEigen
 Imports: graphics, grid, splines, parallel, MASS, nlme, lattice,
-    minqa (>= 1.1.15), Rcpp
+    minqa (>= 1.1.15), RcppEigen (> 0.3.1.2.3)
 Suggests:
     boot,
     PKPDmodels,
@@ -31,8 +31,7 @@ Suggests:
     optimx (>= 2013.8.6),
     plyr,
     reshape,
-    pbkrtest,
-    RcppEigen (>= 0.3.1.2.3)
+    pbkrtest
 LazyData: yes
 License: GPL (>=2)
 URL: https://github.com/lme4/lme4/
