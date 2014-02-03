@@ -740,7 +740,7 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
     }
     else { ## ------ single model ---------------------
 	dc <- getME(object, "devcomp")
-	p <- dc$dims["p"]
+	# p <- dc$dims["p"] # redundant
         X <- getME(object, "X")
 	asgn <- attr(X, "assign")
 	stopifnot(length(asgn) == (p <- dc$dims["p"]))
