@@ -1,22 +1,23 @@
 ## adapted from Rune Haubo's ordinal code
 ## extended convergence checking
 ## http://en.wikipedia.org/wiki/Karush%E2%80%93Kuhn%E2%80%93Tucker_conditions
-##' @param derivs list containing grad and Hessian components
-##' @param coefs  estimated function value
-##' @param control
-##' @param lbound vector of lower bounds \emph{for random-effects parameters only} (length is taken to determine number of RE parameters)
-checkConv <- function(derivs,
-                      coefs,
-                      control=list(gradTol=1e-3,
-                      gradRelTol=NULL,
-                      singTol=1e-4,
-                      hessTol=1e-6),
-                      checkCtrl=list(
-                      check.conv.grad="warning",
-                      check.conv.singular="ignore",
-                      check.conv.hess="warning"),
-                      lbound,
-                      debug=FALSE) {
+##' @param derivs 
+##' @param coefs estimated function value
+##' @param control list of tolerances for the 'checkCtrl' checks
+##' @param checkCtrl list of \dQuote{action} character strings specifying
+##' what should happen when a check triggers.
+##' @param lbound vector of lower bounds \emph{for random-effects parameters only}
+##'   (length is taken to determine number of RE parameters)  
+##' @param debug useful if some checks are on "ignore", but would "trigger"
+checkConv <- function(derivs, coefs,
+		      control = list(gradTol = 1e-3, gradRelTol = NULL,
+			  singTol = 1e-4, hessTol = 1e-6),
+		      checkCtrl = list(
+			  check.conv.grad = "warning",
+			  check.conv.singular = "ignore",
+			  check.conv.hess = "warning"),
+		      lbound, debug = FALSE)
+{
     if (is.null(derivs)) return(NULL)  ## bail out
     ntheta <- length(lbound)
     res <- list()
@@ -43,9 +44,8 @@ checkConv <- function(derivs,
         ## note: kktc package uses gmax > kkttol * (1 + abs(fval))
         ##  where kkttol defaults to 1e-3 and fval is the objective f'n value
         ## check relative gradient (only if enabled)
-        if (!is.null(control$gradRelTol)) {
-            if ((max.rel.grad <- max(abs(derivs$gradient/coefs))) >
-                control$gradRelTol) {
+        if (!is.null(control$gradRelTol) &&
+            (max.rel.grad <- max(abs(derivs$gradient/coefs))) > control$gradRelTol) {
                 res$code <- -2L
                 wstr <-
                     gettextf("Model failed to converge with max|relative grad| = %g (tol = %g)",
@@ -55,8 +55,6 @@ checkConv <- function(derivs,
                        "warning" = warning(wstr),
                        "stop" = stop(wstr),
                        stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
-                
-            }
         }
     }
     cstr <- "check.conv.singular"
@@ -102,7 +100,7 @@ checkConv <- function(derivs,
                    stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
         }
     }
-    if (debug && length(res$messages)>0) {
+    if (debug && length(res$messages) > 0) {
         print(res$messages)
     }
     return(res)
