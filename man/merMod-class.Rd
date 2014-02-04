@@ -57,7 +57,10 @@ use.hessian = NULL, \dots)
   \item{x}{an \R object of class \code{merMod} or \code{summary.merMod},
     respectively, the latter resulting from \code{summary(<merMod>)}.}
   \item{refit}{logical indicating if objects of class \code{lmerMod} should be
-    refitted with ML before producing the anova table, default is \code{TRUE}.}
+    refitted with ML before comparing models. The default is
+    \code{TRUE} to prevent the common mistake of inappropriately
+    comparing REML-fitted models with different fixed effects,
+    whose likelihoods are not directly comparable.}
   \item{model.names}{character vectors of model names to be used in the anova table.}
   \item{fixed.only}{logical indicating if only the fixed effects
     \code{\link{terms}} are sought, defaults to true.  If false, all
