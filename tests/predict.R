@@ -6,6 +6,9 @@ do.plots <- FALSE
 L <- load(system.file("testdata/lme-tst-fits.rda",
                       package="lme4", mustWork=TRUE))
 
+if (getRversion()>"3.0.0") {
+    ## saved fits are not safe with old R versions
+
 gm1 <- fit_cbpp_1
 ## glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
 ##             data = cbpp, family = binomial)
@@ -126,3 +129,4 @@ predict(m, newdata=cake[-1:-18,], ReForm=~ (1 | replicate))
 predict(m, newdata=cake[-1:-18,], ReForm=~ (1 | replicate), allow.new.levels=TRUE)
 
 
+}

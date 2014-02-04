@@ -1,6 +1,9 @@
 library(testthat)
 ## require(agridat)
 ## dat <- gotway.hessianfly
+
+## don't actually use gotway_hessianfly_fit or gotway_hessianfly_prof,
+## so we should be OK even with R< 3.0.1
 load(system.file("testdata","gotway_hessianfly.rda",package="lme4"))
 # Block random.  See Glimmix manual, output 1.18.
 # Note: (Different parameterization)

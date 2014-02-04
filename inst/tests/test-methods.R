@@ -2,6 +2,10 @@ library("testthat")
 library("lme4")
 L <- load(system.file("testdata/lme-tst-fits.rda",
                       package="lme4", mustWork=TRUE))
+
+if (getRversion()>"3.0.0") {
+    ## saved fits are not safe with old R versions
+
 fm0 <- fit_sleepstudy_0
 fm1 <- fit_sleepstudy_1
 gm1 <- fit_cbpp_1
@@ -149,3 +153,4 @@ test_that("misc", {
     expect_is(fortify(gm1),"data.frame")
     expect_is(as.data.frame(VarCorr(fm1)),"data.frame")
 })
+}

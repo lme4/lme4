@@ -1,8 +1,12 @@
 library(lme4)
 library(testthat)
+
 load(system.file("testdata","lme-tst-fits.rda",package="lme4"))
 
-## testing refit
+if (getRversion()>"3.0.0") {
+    ## saved fits are not safe with old R versions
+
+    ## testing refit
 ## for each type of model, should be able to
 ##  (1) refit with same data and get the same answer,
 ##     at least structurally (small numerical differences
@@ -110,3 +114,4 @@ if (lme4:::testLevel() > 1) {
     }
 }
 
+}
