@@ -158,7 +158,7 @@ test_that("glmer", {
     id    <- rep(1:n, each=2)
     gm3 <- glmer(event ~ group + (1 | id), family=binomial, nAGQ=21)
     sd3 <- sqrt(diag(vcov(gm3)))
-    expect_equal(sd3, c(0.4254254, 0.424922), tolerance=2e-6)
+    expect_equal(sd3, c(0.4254254, 0.424922), tolerance=1e-5)
     expect_warning(vcov(gm3,use.hessian=FALSE), "finite-difference Hessian")
     expect_equal(suppressWarnings(sqrt(diag(vcov(gm3,use.hessian=FALSE)))),
                  c(0.3840921, 0.3768747), tolerance=1e-7)

@@ -266,8 +266,8 @@ m0 <- suppressWarnings(lmer(y ~ (x1 + x2)|ff, data = D))
 m1 <- suppressWarnings(lmer(y ~ x1 + x2|ff  , data = D))
 m2 <- suppressWarnings(lmer(y ~ x1 + (x2|ff), data = D))
 m3 <- suppressWarnings(lmer(y ~ (x2|ff) + x1, data = D))
-stopifnot(all.equal(ranef(m0), ranef(m1)),
-          all.equal(ranef(m2), ranef(m3)),
+stopifnot(all.equal(ranef(m0), ranef(m1), tolerance = 1e-5),
+          all.equal(ranef(m2), ranef(m3), tolerance = 1e-5),
           inherits(tryCatch(lmer(y ~ x2|ff + x1, data = D), error = function(e)e),
                    "error"))
 
