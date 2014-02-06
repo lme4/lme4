@@ -162,7 +162,7 @@ mkReTrm <- function(bar, fr) {
 	nl <- length(levels(ff))
 	
 	#initialize transposed design
-	Ztl <- mkZt(ff, bar, fr)
+	Ztl <- lme4::mkZt(ff, bar, fr)
 	Zt <- Ztl$Zt
 	nc <- Ztl$nc
 	cnms <- Ztl$cnms
