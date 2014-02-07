@@ -229,7 +229,7 @@ plot.merMod <-
   ## constructing data
   ## can I get away with using object@frame???
   allV <- all.vars(asOneFormula(form, id, idLabels))
-  allV <- allV[is.na(match(allV,c("T","F","TRUE","FALSE")))]
+  allV <- allV[is.na(match(allV,c("T","F","TRUE","FALSE",".obs")))]
   if (length(allV) > 0) {
     data <- getData(object)
     if (is.null(data)) {		# try to construct data
@@ -307,11 +307,11 @@ plot.merMod <-
       id <- switch(mode(id),
                    numeric = {
                        if (id <= 0 || id >= 1)
-                           stop("Id must be between 0 and 1")
+                           stop(shQuote("id")," must be between 0 and 1")
                        as.logical(abs(resid(object, type = idResType)) > -qnorm(id / 2))
                    },
                    call = eval(asOneSidedFormula(id)[[2]], data),
-                   stop("\"id\" can only be a formula or numeric.")
+                   stop(shQuote("id")," can only be a formula or numeric.")
                    )
       if (is.null(idLabels)) {
           idLabels <- getIDLabels(object)
@@ -324,7 +324,8 @@ plot.merMod <-
               }
           } else stop("\"idLabels\" can only be a formula or a vector")
       }
-      idLabels <- as.character(idLabels)[id]
+      ## DON'T subscript by id, will be done later
+      idLabels <- as.character(idLabels)
   }
 
   ## defining abline, if needed
@@ -411,7 +412,7 @@ fortify <- function(model, data, ...) UseMethod("fortify")
 ##' @S3method fortify lmerMod
 ##' @method fortify lmerMod
 ##' @export
-fortify.lmerMod <- function(model, data=getData(model), ...) {
+fortify.merMod <- function(model, data=getData(model), ...) {
     ## FIXME:
 
     ## FIXME: get influence measures via influence.ME?
@@ -442,3 +443,39 @@ plot.summary.mer <- function(object, type="fixef", ...) {
 
 }
 
+## TO DO: add idLabels machinery (test/document)
+## TO DO: allow faceting formula
+## TO DO: allow qqline to be optional
+## TO DO (harder): steal machinery from qq.gam for better GLMM Q-Q plots
+qqmath.merMod <- function(x, data, id=NULL, idLabels=NULL, ...) {
+    ## if (!is.null(id) || !is.null(idLabels))
+    ##  stop("id and idLabels options not yet implemented")
+    values <- residuals(x)
+    if (is.null(idLabels)) {
+        idLabels <- getIDLabels(x)
+    } else {
+        if (inherits(idLabels,"formula")) {
+            idLabels <- getIDLabels(x,idLabels)
+        } else if (is.vector(idLabels)) {
+            if (length(idLabels <- unlist(idLabels)) != length(id)) {
+                stop("\"idLabels\" of incorrect length")
+            }
+        } else stop("\"idLabels\" can only be a formula or a vector")
+    }
+    ## DON'T subscript by id, will be done later
+    idLabels <- as.character(idLabels)
+
+    qqmath(values, xlab = "Standard normal quantiles",
+           prepanel = prepanel.qqmathline,
+           panel = function(x, subscripts, ...) {
+               panel.qqmathline(x, ...)
+               panel.qqmath(x, ...)
+               ## TO DO: figure out subscripts, x-values ...
+               ## if (any(ids <- id[subscripts])){
+               ##     ltext(x[ids], y[ids], idLabels[subscripts][ids],
+               ##           cex = dots$cex, adj = dots$adj)
+               ## }
+           })
+}
+
+## qqmath(~residuals(gm1)|cbpp$herd)

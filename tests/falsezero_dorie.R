@@ -25,4 +25,4 @@ R <- S.b / S.w
 
 sigma.the.hat <- sqrt(max((n - 1) * R / n - 1 / n, 0))
 stopifnot(all.equal(sigma.the.hat,lme4Sigma <- unname(getME(lmerFit,"theta")),
-                    tol=2e-5))
+                    tolerance=2e-5))

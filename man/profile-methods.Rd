@@ -1,33 +1,49 @@
-\docType{methods}
 \name{profile-methods}
+\title{Profile method for merMod objects}
+\docType{methods}
 \alias{as.data.frame.thpr}
+\alias{log.thpr}
 \alias{profile-methods}
 \alias{profile.merMod}
-\title{Profile method for merMod objects}
+\description{
+  Methods for \code{\link{profile}}() of [ng]\code{\link{lmer}} fitted
+  models.
+
+  The \code{log()} method transforms a lmer profile
+  to the scale of the logarithm of the standard deviation of the random
+  effects, i.e. it returns a profile with all the .sigNN parameters
+  replaced by .lsigNN.  The forward and backward splines for these
+  parameters are recalculated.
+}
 \usage{
 \method{profile}{merMod}(fitted, which = 1:nptot, alphamax = 0.01,
 	maxpts = 100, delta = cutoff/8, verbose = 0, devtol = 1e-09,
         maxmult = 10, startmethod = "prev", optimizer = "bobyqa",
 	signames = TRUE, ...)
-
 \method{as.data.frame}{thpr} (x, ...)
+\method{log}{thpr} (x, base = exp(1))
 }
 \arguments{
   \item{fitted}{a fitted model, e.g., the result of \code{\link{lmer}(..)}.}
-  \item{which}{integer indicating which parameters to profile:
-    default is all parameters.  The parameters are ordered as
-    follows:
+  \item{which}{integer or character vector indicating which parameters
+    to profile: default is all parameters.  For integer, i.e., indexing,
+    the parameters are ordered as follows:
     \describe{
-      \item{(1)}{random effects (theta) parameters;}
+      \item{(1)}{random effects (theta) parameters; these are ordered as
+	in \code{getME(.,"theta")}, i.e., as the lower triangle of a
+	matrix with standard deviations on the diagonal and correlations
+	off the diagonal.}
       \item{(2)}{residual standard deviation (or scale parameter for GLMMs
         where appropriate);}
-      \item{(3)}{fixed effect parameters.  Random effects parameters are
-	ordered as in \code{getME(.,"theta")}, i.e., as the lower
-	triangle of a matrix with standard deviations on the diagonal
-	and correlations off the diagonal.}
+      \item{(3)}{fixed effect (beta) parameters.}
     }
-    }%% FIXME: allow parameter names.
-  \item{alphamax}{maximum alpha value for likelihood ratio confidence
+    In addition, \code{which} may be a character, containing
+    \code{"beta_"} or \code{"theta_"} which means the fixed and random
+    effects parameters, respectively, or also containing parameter
+    names, such as \code{".sigma"} or \code{"(Intercept)"}.
+  }
+  \item{alphamax}{a number in \eqn{(0,1)}, such that \code{1 - alphamax}
+    is the maximum alpha value for likelihood ratio confidence
     regions; used to establish the range of values to be profiled.}
   \item{maxpts}{maximum number of points (in each direction, for each
     parameter) to evaluate in attempting to construct the profile.}
@@ -46,16 +62,29 @@
     (but longer) of the form \code{(sd|cor)_(effects)|(group)}.  Note
     that some code for profile transformations (e.g.,
     \code{\link{varianceProf}}) depends on \code{signames==TRUE}.}
-  \item{\dots}{potential further arguments for \code{profile} methods.}
-  \item{x}{the result of \code{\link{profile}} (or very similar structure)}
+  \item{\dots}{potential further arguments for various methods.}
+  \item{x}{an object of class \code{thpr} (i.e., output of
+    \code{profile})}
+  \item{base}{the base of the logarithm.  Defaults to natural
+    logarithms.}
 }
-\description{
-  Methods for profile() of [ng]lmer fitted models
+\value{
+  \code{profile(<merMod>)} returns
+  an object of S3 class \code{"thpr"},% = th[eoretical]?? pr[ofile]
+  \code{\link{data.frame}}-like.  Methods for such a profile object
+  are notably \code{\link{confint}()}, the three plots methods
+  \code{\link[=xyplot.thpr]{xyplot}}, \code{densityplot}, and
+  \code{splom}.
+
+  Further, \code{\link{log}()} (see above) and \code{\link{as.data.frame}()}.
 }
 \details{
   Methods for function \code{\link{profile}} (package
   \pkg{stats}), here for profiling (fitted) mixed effect
   models.
+
+%% FIXME: ../inst/doc/profiling.txt  contains  motivation and more by
+%% Doug Bates. Should add here (partly), or "link to there".
 }
 \section{Methods}{
   \describe{ \item{signature(fitted = \"merMod\")}{ ...  }
@@ -67,7 +96,10 @@
 }
 \examples{
 fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
-system.time( tpr  <- profile(fm01ML, optimizer="Nelder_Mead") )
+system.time(
+  tpr  <- profile(fm01ML, optimizer="Nelder_Mead", which="beta_")
+)## fast; as only *one* beta parameter is profiled over
+## full profiling (default which means 'all) needs
 ## ~2.6s (on a 2010 Macbook Pro)
 system.time( tpr  <- profile(fm01ML))
 ## ~1s, + possible warning about bobyqa convergence
@@ -80,19 +112,29 @@ stopifnot(all.equal(CIpr,
                         c("2.5 \%", "97.5 \%"))),
                     tol= 1e-07))# 1.37e-9 {64b}
 }
+require(lattice)
 xyplot(tpr)
+xyplot(tpr, absVal=TRUE) # easier to see conf.int.s (and check symmetry)
 densityplot(tpr, main="densityplot( profile(lmer(..)) )")
 splom(tpr)
-\donttest{% for time constraint
-## Batch and residual variance only
-system.time(tpr2 <- profile(fm01ML, which=1:2, optimizer="Nelder_Mead"))
-## GLMM example (running time ~11 seconds on a modern machine)
-gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-            data = cbpp, family = binomial)
-system.time(pr4 <- profile(gm1))
-xyplot(pr4,layout=c(5,1),as.table=TRUE)
-splom(pr4)
-}%donttest
+doMore <- lme4:::testLevel() > 1 %% even more --> ../tests/profile.R
+if(doMore) { ## not typically, for time constraint reasons
+ ## Batch and residual variance only
+ system.time(tpr2 <- profile(fm01ML, which=1:2, optimizer="Nelder_Mead"))
+ print( xyplot(tpr2) )
+ print( xyplot(log(tpr2)) )# log(sigma) is better
+
+ ## GLMM example
+ gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+	     data = cbpp, family = binomial)
+ ## running time ~9 seconds on a modern machine:
+ print( system.time(pr4 <- profile(gm1)) )
+ print( xyplot(pr4,layout=c(5,1),as.table=TRUE) )
+ print( xyplot(log(pr4), absVal=TRUE) ) # log(sigma_1)
+ print( splom(pr4) )
+ print( system.time( # quicker: only sig01 and one fixed effect
+     pr2 <- profile(gm1, which=c("theta_", "period2"))))
+ print( confint(pr2) )
+}% doMore
 }
 \keyword{methods}
-

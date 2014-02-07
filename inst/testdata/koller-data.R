@@ -1,3 +1,6 @@
+
+getData <- local({
+
 data <- structure(list(Var1 = structure(c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 
                        1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 
                        1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 
@@ -172,19 +175,25 @@ data <- structure(list(Var1 = structure(c(1L, 1L, 1L, 1L, 1L, 1L, 1L,
                   -1.33699218239019, 0.888758869258693, 3.14516697594312, -2.35262555592678, 
                   -4.94052004170718, 6.34707170732277, -10.0261204723322, 2.73257418977353, 
                   -0.638617261850626, 3.2694706345968, 0.947216484246937), class = "data.frame")
-slim <- c(0.1, 40)
-npoints <- 31
-group <- 1
-obs <- which(data$Var2 == levels(data$Var2)[group])
-shifts <- rep(attr(data, 'b')[data$Var2[group]], npoints)
-scales <- seq(slim[1], slim[2], length.out = npoints)
 
-
-getData <- function(i) {
-    lb <- attr(data, 'b')[data$Var2[obs[1]]]
+function(i=1, group = 1, npoints = 31, slim = c(0.1, 40)) {
+    stopifnot(length(slim) == 2, slim[1] < slim[2], length(npoints) == 1,
+              1 <= i, length(i) == 1, i <= npoints)
+    nv2 <- nlevels(V2 <- data$Var2)
+    if(is.numeric(group)) stopifnot(1 <= group, group <= nv2)
+    obs <- which(V2 == levels(V2)[group]) ## those will be shifted and scaled
     ldata <- data
-    ldata$y[obs] <- if (length(obs) == 1)
-        lb + shifts[i] else (ldata$y[obs] - lb)*scales[i] + shifts[i]
+    if(length(obs) > 0) {
+        shifts <- rep_len(attr(data, 'b')[V2[group]], npoints) # <- group can have length > 1
+        scales <- seq(slim[1], slim[2], length.out =  npoints)
+    
+        lb <- attr(data, 'b')[V2[obs[1]]]
+        ldata$y[obs] <- if (length(obs) == 1)
+            lb + shifts[i] else (ldata$y[obs] - lb)*scales[i] + shifts[i]
+    }
     ldata
 }
+})# end{local}
+##--> getData() function {containing everything in its env}.
 
+## getData(group=FALSE)   returns 'data' itself

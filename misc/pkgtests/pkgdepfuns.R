@@ -9,7 +9,7 @@ require("plyr") ## for rename()
 ## modified (BMB) to include package dependency type; return results as data frame with package rownames
 reverse_dependencies_with_maintainers <-
 function(packages, which = c("Depends", "Imports", "LinkingTo"),
-         cols=c("Package", "Version", "Maintainer"),         
+         cols=c("Package", "Version", "Maintainer"),
          recursive = FALSE, getDepType=TRUE)
 {
     contrib.url(getOption("repos")["CRAN"],type="source") # trigger chooseCRANmirror() if required
@@ -40,7 +40,7 @@ function(packages, which = c("Depends", "Imports", "LinkingTo"),
     d
 }
 
-getDepends <- function(pkg="lme4",verbose=FALSE, getSuggests=TRUE) {    
+getDepends <- function(pkg="lme4",verbose=FALSE, getSuggests=TRUE) {
     if (verbose) cat("retrieving dependency information\n")
     w <-  c("Depends", "Imports", "LinkingTo")
     if (getSuggests) w <- c(w,"Suggests")
@@ -205,7 +205,7 @@ colorCode <- function(strvec,
     }
     fcol <- apply(m,1,tmpf)
     paste0("<font style=\"color:",fcol,"\">",strvec,"</font>")
-}    
+}
 
 errstrings <- c(error_ex="checking examples \\.\\.\\. ERROR",
                 error_depfail="Package (suggested|required) but not available",
@@ -250,7 +250,7 @@ genReport <- function(depmatrix,      ## results of reverse_dependencies_with_ma
         ## auto-install because we may be missing it in the test environment ...
         install.packages("R2HTML"); library("R2HTML")
     }
-    
+
     isOK <- !sapply(testresults,inherits,what="try-error")
     tOK <- testresults[isOK]
 
@@ -315,7 +315,32 @@ doPkgDeptests <- function(pkg="lme4",
                           checkdir=file.path(testdir,"check"),
                           pkg_tarball=NULL,
                           skippkgs=character(0),
-                          verbose=TRUE) {
+                          verbose=TRUE,
+                          xvfb=TRUE) {
+
+    ## from tools::check_package_in_dir
+    ## Xvfb usage and options.
+    ## We do not use Xvfb on Windows.
+    ## Otherwise, if argument 'xvfb' is
+    ## * a logical, Xvfb is used only if identical to TRUE;
+    ## * something else, then as.character(xvfb) gives the Xvfb options.
+    xvfb_options <- "-screen 0 1280x1024x24"
+    if(.Platform$OS.type == "windows")
+        xvfb <- FALSE
+    else if(is.logical(xvfb)) {
+        if(!identical(xvfb, TRUE))
+            xvfb <- FALSE
+    } else {
+        xvfb_options <- as.character(xvfb)
+        xvfb <- TRUE
+    }
+
+    if(xvfb) {
+        if (length(which_xvfb <- system("which Xvfb",intern=TRUE))==0)
+            stop("Xvfb not installed")
+        pid <- tools:::start_virtual_X11_fb(xvfb_options)
+        on.exit(tools:::close_virtual_X11_db(pid), add = TRUE)
+    }
 
     if (!file.exists(libdir)) dir.create(libdir,showWarnings=FALSE)
     if (!file.exists(checkdir)) dir.create(checkdir,showWarnings=FALSE)

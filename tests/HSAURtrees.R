@@ -1,5 +1,4 @@
 library("lme4")
-(testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
 
 ## example from HSAUR2 package; data from 'multcomp'; see ../inst/testdata/trees513.R
 load(system.file("testdata","trees513.RData",package="lme4"))
@@ -13,7 +12,7 @@ ls.str(environment(dfun))# "for your information"
 
 .not.call <- function(x) x[names(x) != "call"]
 
-if (testLevel < 2) q("no")
+if(lme4:::testLevel() < 2) q("no")
 ## {{advantage to  if(. >= 2) { ........} : autoprint of system.time() etc
 
 ## else  (testLevel >= 2) : --------------------------------------------------
@@ -38,7 +37,7 @@ oldres <- structure(c(5.23645064474105, 4.73568475545248, 2.65289926317093,
 system.time(mmodA <- glmer(modForm, data = trees513A, family = binomial()))
 ## 7 seconds
 newres <- c(fixef(mmodA), getME(mmodA,"theta"))
-stopifnot(all.equal(oldres, newres, tol=1.5e-3))
+stopifnot(all.equal(oldres, newres, tolerance=1.5e-3))
 system.time(mmodB <- glmer(modForm, data = trees513B, family = binomial()))
 ## 10.4 seconds
 ##

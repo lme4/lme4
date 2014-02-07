@@ -19,10 +19,13 @@ or adaptive Gauss-Hermite quadrature; GLMMs allow user-defined families and link
 ```
 install.packages("lme4",
    repos=c("http://lme4.r-forge.r-project.org/repos",
-          getOptions("repos")["CRAN"]))
+          getOption("repos")["CRAN"]))
 ```
-* Development version from github:
+* Development version from Github:
 ```
 library("devtools"); install_github("lme4",user="lme4")
 ```
-(The last approach requires that you build from source, i.e. `make` and compilers must be installed on your system -- see the R FAQ for your operating system; you may also need to install dependencies manually.)
+(These commands install the "master" (development) branch; if you
+want the release branch from Github add `ref="release"` to the
+`install_github()` call.
+The `install_github()` approach requires that you build from source, i.e. `make` and compilers must be installed on your system -- see the R FAQ for your operating system; you may also need to install dependencies manually.)

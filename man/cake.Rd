@@ -1,7 +1,7 @@
 \docType{data}
 \name{cake}
 \alias{cake}
-\title{Breakage angle of chocolate cakes}
+\title{Breakage Angle of Chocolate Cakes}
 \format{A data frame with 270 observations on the following 5 variables.
   \describe{
     \item{\code{replicate}}{a factor with levels \code{1} to \code{15}}
@@ -31,20 +31,6 @@
   \code{recipe} factor, and \code{temperature} is nested
   within \code{replicate}.
 }
-\examples{
-str(cake)
-## 'temp' is continuous, 'temperature' an ordered factor with 6 levels
-
-fm1 <- lmer(angle ~ recipe * temperature + (1|recipe:replicate), cake, REML= FALSE)
-print(fm1, corr=FALSE)
-fm2 <- lmer(angle ~ recipe + temperature + (1|recipe:replicate), cake, REML= FALSE)
-print(fm2, corr=FALSE)
-fm3 <- lmer(angle ~ recipe + temp        + (1|recipe:replicate), cake, REML= FALSE)
-fm3
-
-## and now "choose" :
-anova(fm3, fm2, fm1)
-}
 \references{
   Cook, F. E. (1938) \emph{Chocolate cake, I. Optimum
   baking temperature}. Master's Thesis, Iowa State College.
@@ -56,6 +42,17 @@ anova(fm3, fm2, fm1)
   \emph{Generalized linear models with random effects.
   Unified analysis via H-likelihood}. Boca Raton, Chapman
   and Hall/CRC.
+}
+\examples{
+str(cake)
+## 'temp' is continuous, 'temperature' an ordered factor with 6 levels
+
+(fm1 <- lmer(angle ~ recipe * temperature + (1|recipe:replicate), cake, REML= FALSE))
+(fm2 <- lmer(angle ~ recipe + temperature + (1|recipe:replicate), cake, REML= FALSE))
+(fm3 <- lmer(angle ~ recipe + temp        + (1|recipe:replicate), cake, REML= FALSE))
+
+## and now "choose" :
+anova(fm3, fm2, fm1)
 }
 \keyword{datasets}
 

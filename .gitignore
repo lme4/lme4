@@ -3,6 +3,6 @@ TAGS
 src/*.o
 src/*.so
 src/*.dll
-*.Rproj.user
-*.Rproj
 .Rproj.user
+lme4.Rproj
+.Rhistory

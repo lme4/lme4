@@ -26,7 +26,7 @@
   The data are described in Davies and Goldsmith (1972) as
   coming from an investigation to \dQuote{assess the
   variability between samples of penicillin by the \emph{B.
-  subtilis} method.  I this test method a bulk-innoculated
+  subtilis} method.  In this test method a bulk-inoculated
   nutrient agar medium is poured into a Petri dish of
   approximately 90 mm. diameter, known as a plate.  When
   the medium has set, six small hollow cylinders or pots
@@ -43,6 +43,7 @@
 }
 \examples{
 str(Penicillin)
+require(lattice)
 dotplot(reorder(plate, diameter) ~ diameter, Penicillin, groups = sample,
         ylab = "Plate", xlab = "Diameter of growth inhibition zone (mm)",
         type = c("p", "a"), auto.key = list(columns = 3, lines = TRUE,

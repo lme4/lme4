@@ -63,10 +63,27 @@ namespace optimizer {
 
     inline bool nl_stop::relstop(const Scalar& vold, const Scalar& vnew,
 			  const Scalar& reltol, const Scalar& abstol) const {
+	int debug=0;
+	bool result;
+
 	if (std::abs(vold) == std::numeric_limits<Scalar>::infinity()) return false;
-	return std::abs(vnew - vold) < abstol
+
+	result = std::abs(vnew - vold) < abstol
 	    || std::abs(vnew - vold) < reltol * (std::abs(vnew) + std::abs(vold)) * 0.5
 	    || (reltol > 0 && vnew == vold);
+
+	if (debug) 
+	Rcpp::Rcout << "(NM) nl_stop vnew=" << vnew 
+		    << " vold=" << vold 
+		    << " diff=" << std::abs(vnew-vold) 
+		    << " abstol=" << abstol
+		    << " reltol=" << reltol
+		    << " scdiff=" << reltol * (std::abs(vnew) + std::abs(vold)) * 0.5 
+		    << " result=" << result
+		    << std::endl;
+
+	return result;
+        
     }
     
     enum nm_status {nm_active, nm_x0notfeasible, nm_nofeasible, nm_forced, nm_minf_max,

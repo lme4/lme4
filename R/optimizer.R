@@ -1,40 +1,4 @@
-##' @rdname NelderMead
-##' @title Nelder-Mead optimization of parameters, possibly with box constraints
-##' @param fn a function of a single numeric vector argument returning a numeric scalar
-##' @param par numeric vector of starting values for the parameters.
-##' @param lower numeric vector of lower bounds (elements may be \code{-Inf}).
-##' @param upper numeric vector of upper bounds (elements may be \code{Inf}).
-##' @param control a named list of control settings.  Possible settings are
-##' \describe{
-##'     \item{iprint}{numeric scalar - frequency of printing evaluation information.
-##'                   Defaults to 0 indicating no printing.}
-##'     \item{maxfun}{numeric scalar - maximum number of function evaluations allowed (default:10000).}
-##'     \item{FtolAbs}{numeric scalar - absolute tolerance on change in function values (default: 1e-5)}
-##'     \item{FtolRel}{numeric scalar - relative tolerance on change in function values (default:1e-15)}
-##'     \item{XtolRel}{numeric scalar - relative tolerance on change in parameter values (default: 1e-7)}
-##'     \item{MinfMax}{numeric scalar - maximum value of the minimum (default: .Machine$double.xmin)}
-##'     \item{xst}{numeric vector of initial step sizes to establish the simplex -
-##'     all elements must be non-zero (default: rep(0.02,length(par)))}
-##'     \item{xt}{numeric vector of tolerances on the parameters (default: xst*5e-4)}
-##'     \item{verbose}{numeric value: 0=no printing, 1=print every 20 evaluations,
-##'         2=print every 10 evalutions, 3=print every evaluation.  Sets \sQuote{iprint},
-##'         if specified, but does not override it.}
-##' }
-##'
-##' @return a list with 4 components
-##' \item{fval}{numeric scalar - the minimum function value achieved}
-##' \item{par}{numeric vector - the value of \code{x} providing the minimum}
-##' \item{ierr}{integer scalar - error code (see below)}
-##' \item{control}{list - the list of control settings after substituting for defaults}
-##' @note
-##' Return error codes (\code{ierr}):
-##' \describe{
-##' \item{-4}{\code{nm_evals}: maximum evaluations reached}
-##' \item{-3}{\code{nm_forced}: ?}
-##' \item{-2}{\code{nm_nofeasible}: cannot generate a feasible simplex}
-##' \item{-1}{\code{nm_x0notfeasible}: initial x is not feasible (?)}
-##' }
-##' @export
+## --> ../man/NelderMead.Rd
 Nelder_Mead <- function(fn, par, lower=rep.int(-Inf, n),
                         upper=rep.int(Inf, n), control=list()) {
     n <- length(par)
@@ -58,35 +22,49 @@ Nelder_Mead <- function(fn, par, lower=rep.int(-Inf, n),
               length(xst <- as.numeric(xst)) == n,
               all(xst != 0),
               length(xt <- as.numeric(xt)) == n)
+    ## "NelderMead" reference class and constructor: --> ./AllClass.R :
     nM <- NelderMead$new(lower=lower, upper=upper, x0=par, xst=xst, xt=xt)
-    cc <- do.call(function(iprint=0L, maxfun=10000L, FtolAbs=1e-5,
-                           FtolRel=1e-15, XtolRel=1e-7,
-                           MinfMax=-.Machine$double.xmax, ...) {
+    cc <- do.call(function(iprint = 0L, maxfun = 10000L, FtolAbs = 1e-5,
+                           FtolRel = 1e-15, XtolRel = 1e-7,
+                           MinfMax= -.Machine$double.xmax, warnOnly=FALSE, ...) {
         if (length(list(...))>0) warning("unused control arguments ignored")
         list(iprint=iprint, maxfun=maxfun, FtolAbs=FtolAbs, FtolRel=FtolRel,
-             XtolRel=XtolRel, MinfMax=MinfMax)
+             XtolRel=XtolRel, MinfMax=MinfMax, warnOnly=warnOnly)
     }, control)
     nM$setFtolAbs(cc$FtolAbs)
     nM$setFtolRel(cc$FtolRel)
-    nM$setIprint(cc$iprint)
+    nM$setIprint (cc$iprint)
     nM$setMaxeval(cc$maxfun)
     nM$setMinfMax(cc$MinfMax)
-    while ((nMres <- nM$newf(fn(nM$xeval()))) == 0L) {}
-
-    cmsg <- "reached max evaluations"
-    if (nMres==-4) {
-      ## map max evals from error to warning
-      cmsg <- warning(sprintf("failure to converge in %d evaluations",cc$maxfun))
-      nMres <- 4
+    it <- 0
+    repeat {
+        it <- it + 1
+        nMres <- nM$newf(fn(nM$xeval()))
+        if (nMres != 0L) break
     }
 
-    msgvec <- c("nm_forced","cannot generate a feasible simplex","initial x is not feasible",
-                "active","minf_max","fcvg","xcvg",  ## FIXME: names (see NelderMead_newf in external.cpp)
+    cmsg <- "reached max evaluations"
+    if (nMres == -4) {
+        ## map max evals from error to warning
+        cmsg <- warning(sprintf("failure to converge in %d evaluations",cc$maxfun))
+        nMres <- 4
+    }
+                                                        ## nMres:
+    msgvec <- c("nm_forced",                            ## -3
+                "cannot generate a feasible simplex",   ## -2
+                "initial x is not feasible",            ## -1
+                "active",                               ## 0 (active)
+                "objective function went below allowed minimum",           ## 1 (minf_max)
+                "objective function values converged to within tolerance", ## 2 (fcvg)
+                "parameter values converged to within tolerance",          ## 3 (xcvg)
                 cmsg)
 
-    if (nMres<0) stop(msgvec[nMres+4])
+    if (nMres < 0) { ## i.e., in {-3, -2, -1}
+        (if(cc$warnOnly) warning else stop)( msgvec[nMres+4] )
+    }
 
-    cc <- c(cc,xst=xst,xt=xt)
-    list(fval=nM$value(), par=nM$xpos(), convergence=pmin(nMres,0), message=msgvec[nMres+4],
-         control=cc)
+    list(fval = nM$value(), par = nM$xpos(),
+	 convergence = pmin(0, nMres), # positive nMres is also 'convergence'
+	 NM.result = nMres, `message` = msgvec[nMres+4],
+	 control = c(cc, xst=xst, xt=xt), feval = it)
 }

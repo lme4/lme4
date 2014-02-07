@@ -1,5 +1,4 @@
 library(lme4)
-(testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
 
 allEQ <- function(x,y, tolerance = 4e-4, ...)
     all.equal.numeric(x,y, tolerance=tolerance, ...)
@@ -8,7 +7,7 @@ allEQ <- function(x,y, tolerance = 4e-4, ...)
               Orange, start = c(Asym = 200, xmid = 725, scal = 350)))
 fixef(nm1)
 
-if (testLevel > 2) {
+if (lme4:::testLevel() > 2) {
     ## 'Theoph' Data modeling
     Th.start <- c(lKe = -2.5, lKa = 0.5, lCl = -3)
 

@@ -63,6 +63,7 @@
  cat("and extra(:= not in R_LIBS) .libPaths():\\n")
  .libPaths()[is.na(match(.libPaths(), nRL))]
 
+ structure(Sys.info()[c(4,5,1:3)], class="simple.list") #-> 'nodename' ..
  sessionInfo()
  searchpaths()
  pkgI <- function(pkgname) {
@@ -83,6 +84,7 @@
  pkgI("minqa")
  pkgI("lme4")
 }
+require(lattice)
 str(Dyestuff)
 dotplot(reorder(Batch, Yield) ~ Yield, Dyestuff,
         ylab = "Batch", jitter.y = TRUE, aspect = 0.3,

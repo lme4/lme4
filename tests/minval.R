@@ -16,4 +16,7 @@ dat <- sims(I, J, sigmab0, sigmaw0)
 
 library(lme4)
 fm3 <- lmer(y ~ (1|group), data=dat)
-stopifnot(all.equal(unname(unlist(VarCorr(fm3))),0.029662844057))
+stopifnot(all.equal(unname(unlist(VarCorr(fm3))),
+		    if(fm3@optinfo$optimizer == "Nelder_Mead")
+		    0.029662844057 else
+		    0.02966269809, tolerance = 1e-7))
