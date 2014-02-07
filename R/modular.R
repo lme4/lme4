@@ -310,7 +310,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
             checkNlevels(reTrms$flist[nonSpecial], n=n, control)
         }
         checkNlevels(reTrms$flist, n=n, control)
-        checkZdims(reTrms$Ztlist, n=n, control, allow.n=FALSE)
+        #checkZdims(reTrms$Ztlist, n=n, control, allow.n=FALSE) # FIXME: flexLambda has no Ztlist in reTrms
         checkZrank(reTrms$Zt, n=n, control, nonSmall = 1e6)
 	
 	## fixed-effects model matrix X - remove random effects from formula:
@@ -534,8 +534,8 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     reTrms <- mkReTrms(findbars(RHSForm(formula)), fr)
     ## TODO: allow.n = !useSc {see FIXME below}
     checkNlevels(reTrms$ flist, n=n, control, allow.n=TRUE)
-    checkZdims(reTrms$Ztlist, n=n, control, allow.n=TRUE)
-    checkZrank(reTrms$ Zt, n=n, control, nonSmall = 1e6, allow.n=TRUE)
+    #checkZdims(reTrms$Ztlist, n=n, control, allow.n=TRUE) # FIXME: flexLambda has no Ztlist in reTrms
+    checkZrank(reTrms$Zt, n=n, control, nonSmall = 1e6, allow.n=TRUE)
 
     ## FIXME: adjust test for families with estimated scale parameter:
     ##   useSc is not defined yet/not defined properly?

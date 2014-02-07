@@ -189,8 +189,8 @@ merPredD <-
                                       LamtUt, RZX, Ut, Utr, V, VtV, Vtr,
                                       Xwts, Zt, beta0, delb, delu, u0)
                         .Call(merPredDupdateXwts, Ptr, Xwts)
-                        .Call(merPredDupdateDecomp, Ptr)
-                       #.Call(merPredDupdateDecomp, Ptr, NULL) # on master
+                        #.Call(merPredDupdateDecomp, Ptr) # on old flexLambda
+                        .Call(merPredDupdateDecomp, Ptr, NULL) # on master
                     },
                     ptr          = function() {
                         'returns the external pointer, regenerating if necessary'
