@@ -5,7 +5,7 @@ noReForm <- function(re.form) {
         (is(re.form,"formula") && length(re.form)==2 && identical(re.form[[2]],0))
 }
 
-reFormHack <- function(re.form,ReForm,REForm) {
+reFormHack <- function(re.form,ReForm,REForm,REform) {
     if (!missing(ReForm)) {
         message(shQuote("re.form")," is now preferred to ",shQuote("ReForm"))
         return(ReForm)
@@ -13,6 +13,10 @@ reFormHack <- function(re.form,ReForm,REForm) {
     if (!missing(REForm)) {
         message(shQuote("re.form")," is now preferred to ",shQuote("REForm"))
         return(REForm)
+    }
+    if (!missing(REform)) {
+        message(shQuote("re.form")," is now preferred to ",shQuote("REform"))
+        return(REform)
     }
     re.form
 }
@@ -206,6 +210,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
                            re.form=NULL,
                            ReForm,
                            REForm,
+                           REform,
                            terms=NULL, type=c("link","response"),
                            allow.new.levels=FALSE, na.action=na.pass, ...) {
     ## FIXME: appropriate names for result vector?
@@ -235,7 +240,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
     ## an error (although it could be argued that in that case they
     ## should follow 'na.action' instead ...)
 
-    re.form <- reFormHack(re.form,ReForm,REForm)
+    re.form <- reFormHack(re.form,ReForm,REForm,REform)
     
     if (length(list(...)>0)) warning("unused arguments ignored")
 
@@ -359,7 +364,7 @@ simulate.formula <- function(object, nsim = 1, seed = NULL, family, weights=NULL
 }
 
 simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
-                            re.form=NA, ReForm, REForm,
+                            re.form=NA, ReForm, REForm, REform,
                             newdata=NULL, newparams=NULL,
                             family=NULL,
                             allow.new.levels=FALSE, na.action=na.pass, ...) {
@@ -369,7 +374,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 }
 
 .simulateFun <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
-                         re.form=NA, ReForm, REForm,
+                         re.form=NA, ReForm, REForm, REform,
                          newdata=NULL, newparams=NULL,
                          formula=NULL,family=NULL,
                          weights=NULL,
@@ -426,7 +431,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 
     ## need to save this before we reset re.form
     re.form.miss <- missing(re.form)
-    re.form <- reFormHack(re.form,ReForm,REForm)
+    re.form <- reFormHack(re.form,ReForm,REForm,REform)
 
     if (!missing(use.u)) {
         if (!re.form.miss) {

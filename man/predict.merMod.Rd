@@ -4,7 +4,7 @@
 \usage{
   \method{predict}{merMod} (object, newdata = NULL,
     newparams=NULL, newX=NULL,
-    re.form = NULL, ReForm, REForm,
+    re.form = NULL, ReForm, REForm, REform,
     terms = NULL,
     type = c("link", "response"), allow.new.levels = FALSE,
     na.action = na.pass, \dots)
@@ -25,6 +25,8 @@
   \item{ReForm}{allowed for backward compatibility: \code{re.form} is
     now the preferred argument name}
   \item{REForm}{allowed for backward compatibility: \code{re.form} is
+    now the preferred argument name}
+  \item{REform}{allowed for backward compatibility: \code{re.form} is
     now the preferred argument name}
   \item{terms}{a \code{\link{terms}} object - not used at
     present}

@@ -37,14 +37,26 @@
   An object of class \code{anova} summarizing the differences in fit
   between the models.
 }
+\details{
+  \code{drop1} relies on being able to find the appropriate information
+  within the environment of the formula of the original model.  If the
+  formula is created in an environment that does not contain the data,
+  or other variables passed to the original model (for example, if
+  a separate function is called to define the formula), then
+  \code{drop1} will fail.  A workaround (see example below) is to
+  manually specify an appropriate environment for the formula.
+}
 \examples{
 fm1 <- lmer(Reaction~Days+(Days|Subject),sleepstudy)
+## likelihood ratio tests
 drop1(fm1,test="Chisq")
+## use Kenward-Roger corrected F test, or parametric bootstrap,
+## to test the significance of each dropped predictor
 if (require(pbkrtest)) {
    KRSumFun <- function(object, objectDrop, ...) {
       krnames <- c("ndf","ddf","Fstat","p.value","F.scaling")
       r <- if (missing(objectDrop)) {
-          setNames(rep(NA,5),krnames)
+          setNames(rep(NA,length(krnames)),krnames)
       } else {
          krtest <- KRmodcomp(object,objectDrop)
          unlist(krtest$stats[krnames])
@@ -56,8 +68,6 @@ if (require(pbkrtest)) {
 
    if(lme4:::testLevel() >= 3) { ## takes about 16 sec
      nsim <- 100
-     ## slow! for non-trivial models and numbers of PB simulations
-     ## this example is ~16s on a modern laptop
      PBSumFun <- function(object, objectDrop, ...) {
 	pbnames <- c("stat","p.value")
 	r <- if (missing(objectDrop)) {
@@ -71,6 +81,19 @@ if (require(pbkrtest)) {
      }
      system.time(drop1(fm1,test="user",sumFun=PBSumFun))
    }
- }
+}
+## workaround for creating a formula in a separate environment
+createFormula <- function(resp, fixed, rand) {  
+    f <- reformulate(c(fixed,rand),response=resp)
+    ## use the parent (createModel) environment, not the
+    ## environment of this function (which does not contain 'data')
+    environment(f) <- parent.frame()
+    f
+}
+createModel <- function(data) {
+    mf.final <- createFormula("Reaction", "Days", "(Days|Subject)")
+    lmer(mf.final, data=data)
+}
+drop1(createModel(data=sleepstudy))
 }
 \keyword{misc}

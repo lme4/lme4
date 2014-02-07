@@ -5,13 +5,13 @@
 \title{Simulate responses from a \code{\linkS4class{merMod}} object}
 \usage{
   \method{simulate}{merMod} (object, nsim = 1, seed = NULL,
-    use.u = FALSE, re.form=NA, ReForm, REForm,
+    use.u = FALSE, re.form=NA, ReForm, REForm, REform,
     newdata=NULL, newparams=NULL,
     family=NULL,
     allow.new.levels=FALSE, na.action=na.pass, \dots)
   \method{simulate}{formula} (object, nsim = 1 , seed = NULL, family, weights=NULL, offset=NULL, \dots)
 .simulateFun(object, nsim = 1, seed = NULL, use.u = FALSE,
-                            re.form=NA, ReForm, REForm,
+                            re.form=NA, ReForm, REForm, REform,
                             newdata=NULL, newparams=NULL,
                             formula=NULL,family=NULL,
                             weights=NULL, offset=NULL,
@@ -41,6 +41,8 @@
   \item{ReForm}{allowed for backward compatibility: \code{re.form} is
       now the preferred argument name}
   \item{REForm}{allowed for backward compatibility: \code{re.form} is
+    now the preferred argument name}
+  \item{REform}{allowed for backward compatibility: \code{re.form} is
       now the preferred argument name}
   \item{newdata}{data frame for which to evaluate
     predictions}
