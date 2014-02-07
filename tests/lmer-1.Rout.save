@@ -1,7 +1,7 @@
 
-R Under development (unstable) (2014-01-26 r64897) -- "Unsuffered Consequences"
+R Under development (unstable) (2014-01-29 r64898) -- "Unsuffered Consequences"
 Copyright (C) 2014 The R Foundation for Statistical Computing
-Platform: x86_64-unknown-linux-gnu (64-bit)
+Platform: x86_64-apple-darwin10.8.0 (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -143,7 +143,7 @@ Fixed Effects:
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.41 0.005 0.42 
+Time elapsed:  0.4 0.005 0.4 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -191,7 +191,7 @@ Warning messages:
 > options(oldOpts)  ## restore digits
 > 
 > showProc.time() #
-Time elapsed:  0.123 0 0.123 
+Time elapsed:  0.124 0.001 0.125 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -320,7 +320,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.282 0 0.292 
+Time elapsed:  0.278 0.004 0.284 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -440,7 +440,7 @@ lagoon1  lagoon2  lagoon3  lagoon4
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.166 0.001 0.168 
+Time elapsed:  0.174 0.002 0.176 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -453,15 +453,15 @@ Time elapsed:  0.166 0.001 0.168
 > m1 <- suppressWarnings(lmer(y ~ x1 + x2|ff  , data = D))
 > m2 <- suppressWarnings(lmer(y ~ x1 + (x2|ff), data = D))
 > m3 <- suppressWarnings(lmer(y ~ (x2|ff) + x1, data = D))
-> stopifnot(all.equal(ranef(m0), ranef(m1)),
-+           all.equal(ranef(m2), ranef(m3)),
+> stopifnot(all.equal(ranef(m0), ranef(m1), tolerance = 1e-5),
++           all.equal(ranef(m2), ranef(m3), tolerance = 1e-5),
 +           inherits(tryCatch(lmer(y ~ x2|ff + x1, data = D), error = function(e)e),
 +                    "error"))
 Warning message:
 In Ops.factor(ff, x1) : + not meaningful for factors
 > 
 > showProc.time() #
-Time elapsed:  0.424 0 0.425 
+Time elapsed:  0.543 0.001 0.544 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -535,4 +535,4 @@ Fixed Effects:
 > 
 > proc.time()
    user  system elapsed 
-  3.940   0.064   4.181 
+  4.001   0.078   4.072 
