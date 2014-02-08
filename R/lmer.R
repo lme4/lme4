@@ -400,7 +400,7 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
                          upper=vals$reTrms$upper),
                     parent=parent.frame())
     rho$pp <- do.call(merPredD$new,
-                      c(vals$reTrms[c("Zt","theta","Lambdat","thfun")],
+                      c(vals$reTrms[c("Zt","theta","Lambdat","thfun","phifun1","phi")],
                         list(X=X, n=length(vals$respMod$mu), Xwts=vals$respMod$sqrtXwt,
                              beta0=qr.coef(qr(X), unlist(lapply(vals$pnames, get,
                              envir = rho$resp$nlenv))))))
@@ -530,11 +530,11 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
             rho$tolPwrss <- control$tolPwrss
 	    switch(nAGQ + 1L,
 			 function(theta)
-			 .Call(nlmerLaplace, pp$ptr(), resp$ptr(), as.double(theta),
+			 .Call(nlmerLaplace, pp$ptr(), resp$ptr(), pp$thfun(as.double(theta)),
 			       as.double(u0), beta0, verbose, FALSE, tolPwrss),
 			 function(pars)
-			 .Call(nlmerLaplace, pp$ptr(), resp$ptr(), pars[dpars], u0,
-			       pars[-dpars], verbose, TRUE, tolPwrss))
+			 .Call(nlmerLaplace, pp$ptr(), resp$ptr(), pp$thfun(as.double(pars[dpars])),
+                               u0, pars[-dpars], verbose, TRUE, tolPwrss))
 	} else {
             stop("AGQ>1 not yet implemented for nlmer models")
 	    rho$nlmerAGQ <- nlmerAGQ
