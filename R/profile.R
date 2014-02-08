@@ -141,7 +141,10 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
     npar1 <- if (isLMM(fitted)) nvp else nptot
     ## check that devfun2() computation for the base parameters is (approx.) the
     ##  same as the original devfun() computation
-    stopifnot(all.equal(unname(dd(opt[seq(npar1)])), base, tolerance=1e-5))
+    if(!all.equal(unname(dd(opt[seq(npar1)])), base, tolerance=1e-5)){
+        stop("Profiling over both the residual variance and\n",
+             "fixed effects is not numerically consistent with\n",
+             "profiling over the fixed effects only")}
 
     ## sequence of variance parameters to profile
     seqnvp <- intersect(seq_len(npar1),which)
