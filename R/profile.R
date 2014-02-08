@@ -258,7 +258,9 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
                                      Lambdat = pp$Lambdat,
                                      thfun = pp$thfun,
                                      theta = pp$theta,
-                                     n = nrow(Xdrop))
+                                     n = nrow(Xdrop),
+                                     phifun1 = pp$phifun1,
+                                     phi = pp$phi)
                            )
 ### FIXME Change this to use the deep copy and setWeights, setOffset, etc.
             rr <- new(Class=class(fitted@resp), y=fitted@resp$y)
