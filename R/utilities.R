@@ -247,8 +247,7 @@ mkZt <- function(ff, bar, fr){
 	## so random effects for the same level of the
 	## grouping factor are adjacent.
 	if (nc > 1){
-		Zt <- Zt[as.vector(matrix(seq_len(nc * nl),
-								  ncol = nl, byrow = TRUE)),]
+		Zt <- Zt[as.vector(matrix(seq_len(nc * nl), ncol = nl, byrow = TRUE)),]
 	}
 	return(list(Zt=as(Zt, "dgCMatrix"), nc=nc, cnms=rownames(design)))
 }
@@ -263,8 +262,7 @@ mkLambdatUS <- function(nc, nl, theta){
 	stopifnot(length(theta) == (nc+1)*nc/2)
 	
 	#initalize Lambdat as repeated upper triagonal:
-	Lambdat <- 1 * do.call(bdiag, 
-						   replicate(nl, list(upper.tri(diag(nc), diag=TRUE))))
+	Lambdat <- 1 * do.call(bdiag, replicate(nl, list(upper.tri(diag(nc), diag=TRUE))))
 	ntheta <-  length(theta)
 	Lind <- rep(1:ntheta, times=nl)
 	Lambdat@x <- theta[Lind]
