@@ -2106,6 +2106,7 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
     }
 
     symmetrize <-  function(v,warnTol=0,stopTol=sqrt(.Machine$double.eps)) {
+        if(nrow(v)==1L) return(v)       # 1-by-1 matrices are always symmetrical
         nonSymm <- max(abs(v[lower.tri(v)]-t(v)[lower.tri(v)]))
         warnTol <- max(warnTol,stopTol)
         if (nonSymm>stopTol) stop(sprintf("calculated variance-covariance matrix is non-symmetric (tol=%f)",
