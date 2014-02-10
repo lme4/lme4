@@ -125,7 +125,27 @@ mkReTrms <- function(bars, fr, reGenerators=NULL) {
                    phifun1=function(phi) { } ## no-op
                    )
 	ll
-} 
+}
+
+##' Experimental
+parseReTrm <- function(bar, fr){
+                                        # grouping factor
+    ff <- getGrouping(bar, fr)
+                                        # number of levels
+    nl <- length(levels(ff))
+                                        # transposed model matrix
+    tmm <- t(model.matrix(eval(substitute(~ lhs, list(lhs=bar[[2]]))), fr))
+                                        # number of columns of model matrix
+    nc <- nrow(design)
+                                        # column names of the model matrix
+    cnms <- row.names(tmm)
+                                        # number of realisations of random
+                                        # coefficient
+    nb <- nl*nc
+                                        # how many var/cov-parameters
+    ntheta <- as.integer((nc * (nc+1))/2)    
+}    
+    
 
  
 ##' Generates the partial design matrix, the partial Cholesky factor

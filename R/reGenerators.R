@@ -8,7 +8,6 @@
 #' @param formula a one sided formula specifying a random effect in
 #'     \code{lme4} notation, i.e. \code{~(<covariates> | <grouping>)}.
 #' @param iid enforce identical variances for each component of the random effects.
-#' @export
 #' @return a function creating a return object like \code{mkReTrm}
 d <- function(formula, iid=FALSE){
 	mkReTrmDiagonal <- local({
@@ -82,7 +81,6 @@ d <- function(formula, iid=FALSE){
 #' @param init (optional) initial values for the standard deviations and the correlation.
 #' 		  If not supplied, sd's will be 1 and the inital correlation will be .1.	    
 #' @param het allow variance heterogeneity? defaults to true.
-#' @export
 #' @return a function creating a return object like \code{mkReTrm}    
 cs <- function(formula, init=NULL, het=TRUE){
 	if(het){
@@ -296,7 +294,6 @@ cs <- function(formula, init=NULL, het=TRUE){
 #' 		  If not supplied, sd's will be 1 and the inital correlation will be .1.	    
 #' @param het NOT YET IMPLEMENTED
 #' @param max.lag NOT YET IMPLEMENTED
-#' @export
 #' @return a function creating a return object like \code{mkReTrm} 
 ar1d <- function(formula=~(.|1), order=1, init=c(1, .2), het=NULL, max.lag=NULL){
 	stopifnot(all(order==1))
