@@ -41,11 +41,27 @@
       is in the fixed- or random-effects part of the model)
       \item \code{predict} and \code{simulate} now prefer
       \code{re.form} as the argument to specify which random effects
-      to condition on, but allow \code{ReForm} and \code{REForm}
-      giving a message (not a warning) that they are deprecated
-      (addresses Github #170)
+      to condition on, but allow \code{ReForm}, \code{REForm}, or
+      \code{REform}, giving a message (not a warning) that they are
+      deprecated (addresses Github #170)
       \item small fixes for printing consistency in models with no
       fixed effects
+      \item we previously exported a \code{fortify} function identical
+      to the one found in \code{ggplot2} in order to be able to define a
+      \code{fortify.merMod} S3 method without inducing a dependency on
+      \code{ggplot2}.  This has now been unexported to avoid masking
+      \code{ggplot2}'s own \code{fortify} methods; if you want to
+      add diagnostic information to the results of a model, use
+      \code{fortify.merMod} explicitly.
+      \item \code{simulate.formula} now checks for names associated
+      with the \code{theta} and \code{beta} parameter vectors. If
+      missing, it prints a message (not a warning); otherwise, it
+      re-orders the parameter vectors to match the internal
+      representation.
+      \item preliminary implementation of a \code{check.scaleX} argument
+      in \code{[g]lmerControl} that warns about scaling if some columns
+      of the fixed-effect model matrix have large standard
+      deviations (relative to 1, or to each other)
     }
   }
 }
