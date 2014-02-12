@@ -1,4 +1,5 @@
 library(lme4)
+library(testthat)
 
 (testLevel <- lme4:::testLevel())
 L <- load(system.file("testdata/lme-tst-fits.rda",
@@ -107,6 +108,34 @@ gm1_s4 <- simulate(form,newdata=model.frame(gm1),
                weights=rowSums(model.frame(gm1)[[1]]),
                seed=101)[[1]]
 stopifnot(all.equal(gm1_s2,gm1_s4))
+
+
+tt <- getME(gm1,"theta")
+bb <- fixef(gm1)
+expect_message(simulate(form,newdata=model.frame(gm1),
+               newparams=list(theta=unname(tt),
+               beta=fixef(gm1)),
+               family=binomial,
+               weights=rowSums(model.frame(gm1)[[1]]),
+               seed=101),"assuming same order")
+expect_error(simulate(form,newdata=model.frame(gm1),
+               newparams=list(theta=setNames(tt,"abc"),
+               beta=fixef(gm1)),
+               family=binomial,
+               weights=rowSums(model.frame(gm1)[[1]]),
+               seed=101),"mismatch between")
+expect_message(simulate(form,newdata=model.frame(gm1),
+               newparams=list(theta=tt,
+               beta=unname(bb)),
+               family=binomial,
+               weights=rowSums(model.frame(gm1)[[1]]),
+               seed=101),"assuming same order")
+expect_error(simulate(form,newdata=model.frame(gm1),
+               newparams=list(theta=tt,
+               beta=setNames(bb,c("abc",names(bb)[-1]))),
+               family=binomial,
+               weights=rowSums(model.frame(gm1)[[1]]),
+               seed=101),"mismatch between")
 
 ## Gaussian
 form <- formula(fm1)[-2]

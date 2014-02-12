@@ -65,6 +65,23 @@ setParams <- function(object, params, inplace=FALSE, subset=FALSE) {
     if (!is.null(theta <- params$theta) && length(theta)!=ntheta)
         stop("length mismatch in theta (",length(theta),
              "!=",ntheta,")")
+    matchNames <- function(x,tn,vecname="theta") {
+        if (!is.null(pn <- names(x))) {
+            if (!setequal(pn,tn)) {
+                ## pn.not.tn <- setdiff(pn,tn)
+                ## tn.not.pn <- setdiff(tn,pn)
+                ## TO DO: more detail?
+                stop("mismatch between ",shQuote(vecname)," parameter vector names and internal names (",
+                     paste(tn,collapse=","),")")
+            }
+            x <- x[tn]  ## reorder
+        } else {
+            message(vecname," parameter vector not named: assuming same order as internal vector")
+        }
+        x
+    }
+    theta <- matchNames(theta,tnames(object),"theta")
+    beta <- matchNames(beta,colnames(getME(object,"X")),"beta")
     sigma <- params$sigma
     if(inplace) {
         stop("modification in place (copy=FALSE) not yet implemented")
