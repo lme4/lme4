@@ -1546,7 +1546,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE, ...) {
     }
     U <- getME(object, "Z") %*% getME(object, "Lambda")
     u <- if (use.u) {
-        rep(getME(object, "u"), nsim)/sigma  ## ??? u is 'spherized' but not scaled ???
+        rep(getME(object, "u"), nsim)/sigma  ## ??? u is 'spherical' but not scaled ???
     } else {
         rnorm(ncol(U)*nsim)
     }
@@ -2106,6 +2106,7 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
     }
 
     symmetrize <-  function(v,warnTol=0,stopTol=sqrt(.Machine$double.eps)) {
+        if(nrow(v)==1L) return(v)       # 1-by-1 matrices are always symmetrical
         nonSymm <- max(abs(v[lower.tri(v)]-t(v)[lower.tri(v)]))
         warnTol <- max(warnTol,stopTol)
         if (nonSymm>stopTol) stop(sprintf("calculated variance-covariance matrix is non-symmetric (tol=%f)",
