@@ -109,6 +109,12 @@ cov2sdcor  <- function(V) {
 ##     m
 ## }
 ## From Matrix package  isDiagonal(.) :
+
+## for pre-3.0.0 compatibility:
+if (!exists("rep_len")) rep_len <- function(x, length.out) {
+    rep(x,length.out=length.out)
+}
+                                            
 all0 <- function(x) !any(is.na(x)) && all(!x)
 .isDiagonal.sq.matrix <- function(M, n = dim(M)[1L])
     all0(M[rep_len(c(FALSE, rep.int(TRUE,n)), n^2)])
