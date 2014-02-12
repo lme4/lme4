@@ -32,6 +32,7 @@ lmerControl(optimizer = "bobyqa",% was "Nelder_Mead" till Dec.2013
     check.nobs.vs.nRE="stop",
     check.rankX = c("message+drop.cols", "silent.drop.cols", "warn+drop.cols", 
                     "stop.deficient", "ignore"),
+    check.scaleX  = "warning",
     check.formula.LHS = "stop",
     ## convergence checking options
     check.conv.grad="warning",
@@ -54,12 +55,13 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     check.nlev.gtreq.5 = "ignore",
     check.nlev.gtr.1 = "stop",
     check.nobs.vs.nRE="stop",
+    check.rankX = c("message+drop.cols", "silent.drop.cols", "warn+drop.cols", 
+                    "stop.deficient", "ignore"),
+    check.scaleX  = "warning",
     ## convergence checking options
     check.conv.grad="warning",
     check.conv.singular="ignore",
     check.conv.hess="warning",
-    check.rankX = c("message+drop.cols", "silent.drop.cols", "warn+drop.cols", 
-                    "stop.deficient", "ignore"),
     check.formula.LHS = "stop",
     ## optimizer args
     optCtrl = list())
@@ -176,6 +178,9 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     smaller than the number of columns where \code{"ignore"} does no
     rank computation, and will typically lead to less easily
     understandable errors, later.}
+  \item{check.scaleX}{character - check for problematic scaling of
+    columns of fixed-effect model matrix, e.g. parameters measured on
+    very different scales}
   \item{check.formula.LHS}{ check whether specified formula has
     a left-hand side. Primarily for internal use within
     \code{simulate.merMod};

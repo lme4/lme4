@@ -108,6 +108,29 @@ checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
     }
 }
 
+## check scale of non-dummy columns of X, both
+## against each other and against 1 (implicit scale of theta parameters)?
+## (shouldn't matter for lmer models?)
+checkScaleX <- function(X, tol=1e4, ctrl) {
+    cstr <- "check.scaleX"
+    checkCtrlLevels(cstr,ctrl[[cstr]])
+    if (doCheck(cc <- ctrl[[cstr]])) { ## not NULL or "ignore"
+        cont.cols <- apply(X,2,function(z) !all(z %in% c(0,1)))
+        col.sd <- apply(X[,cont.cols, drop=FALSE],2,sd)
+        sdcomp <- outer(col.sd,col.sd,"/")
+        logcomp <- abs(log(sdcomp[lower.tri(sdcomp)]))
+        logsd <- abs(log(col.sd))
+        wmsg <- "Some predictor variables are on very different scales: consider rescaling"
+        if (any(c(logcomp,logsd)>log(tol))) {
+            switch(cc, "warning" = warning(wmsg),
+                   "stop" = stop(wmsg),
+                   stop(gettextf("unknown check level for '%s'", cstr),
+                        domain=NA))
+        }
+    }
+    X
+}
+
 checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
 {
     stopifnot(is.list(ctrl), is.numeric(n))
@@ -300,7 +323,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     if(is.null(rankX.chk <- control[["check.rankX"]]))
         rankX.chk <- eval(formals(lmerControl)[["check.rankX"]])[[1]]
     X <- chkRank.drop.cols(X, kind=rankX.chk, tol = 1e-7)
-
+    X <- checkScaleX(X, ctrl= control)
+    
     list(fr = fr, X = X, reTrms = reTrms, REML = REML, formula = formula)
 }
 
@@ -528,7 +552,8 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     if(is.null(rankX.chk <- control[["check.rankX"]]))
         rankX.chk <- eval(formals(lmerControl)[["check.rankX"]])[[1]]
     X <- chkRank.drop.cols(X, kind=rankX.chk, tol = 1e-7)
-
+    X <- checkScaleX(X, ctrl=control)
+    
     list(fr = fr, X = X, reTrms = reTrms, family = family, formula = formula)
 }
 

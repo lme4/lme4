@@ -118,7 +118,7 @@ test_that("lmer", {
 
     ## check for errors with illegal input checking options
     flags <- lme4:::.get.checkingOpts(names(formals(lmerControl)))
-    .t <- lapply(flags, function(OPT)
+    .t <- lapply(flags, function(OPT) {
 	## set each to invalid string:
 	## cat(OPT,"\n")
 	expect_error(lFormula(Reaction~1+Days+(1|Subject), data = sleepstudy,
@@ -126,7 +126,8 @@ test_that("lmer", {
 				  ## Deliberate: fake typo
 				  ##		       vvv
 				  setNames(list("warnign"), OPT))),
-		     "invalid control level"))
+		     "invalid control level")
+    })
     ## disable warning via options
     options(lmerControl=list(check.nobs.vs.rankZ="ignore",check.nobs.vs.nRE="ignore"))
     expect_is(fm4 <- lmer(Reaction ~ Days + (1|Subject),
