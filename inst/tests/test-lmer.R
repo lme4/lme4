@@ -84,6 +84,11 @@ test_that("lmer", {
                        data=dat,
                        control=lmerControl(check.nobs.vs.rankZ="stop")),
                        "list")
+    ## check scale
+    ss <- transform(sleepstudy,Days=Days*1e6)
+    expect_warning(lmer(Reaction~Days+(1|Subject),ss),
+                 "predictor variables are on very different scales")
+    
     ## Promote warning to error so that warnings or errors will stop the test:
     options(warn=2)
     expect_is(lmer(Yield ~ 1|Batch, Dyestuff, REML=TRUE), "lmerMod")
