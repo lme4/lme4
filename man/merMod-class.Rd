@@ -83,8 +83,9 @@ use.hessian = NULL, \dots)
 
     \code{use.hessian=FALSE} is backward-compatible with older versions
     of \code{lme4}, but may give less accurate SE estimates when the
-    random effect coefficients are correlated with the estimates of the
-    fixed-effect coefficients.
+    estimates of the fixed-effect (see \code{\link{getME}(.,"beta")})
+    and random-effect (see \code{\link{getME}(.,"theta")}) parameters
+    are correlated.
     }
   \item{sigm}{the residual standard error; by default \code{\link{sigma}(object)}.}
   \item{digits}{number of significant digits for printing}
