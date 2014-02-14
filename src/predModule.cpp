@@ -332,11 +332,12 @@ namespace lme4 {
         return d_RX.matrixU();
     }
 
-    MatrixXd merPredD::RXi() const {
+    MatrixXd merPredD::RXi() const { // inverse RX
         return d_RX.matrixU().solve(MatrixXd::Identity(d_p,d_p));
     }
 
-    MatrixXd merPredD::unsc() const {
+    MatrixXd merPredD::unsc() const { // unscaled var-cov mat of FE
+        // R translation: tcrossprod(RXi)
         return MatrixXd(MatrixXd(d_p, d_p).setZero().
                         selfadjointView<Eigen::Lower>().
                         rankUpdate(RXi()));

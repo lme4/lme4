@@ -1077,7 +1077,7 @@ logLik.merMod <- function(object, REML = NULL, ...) {
     val <- -deviance(object, REML = REML)/2
     dc <- object@devcomp
     dims <- dc$dims
-    nobs <- nrow(object@frame) ## FIXME use nobs() ?
+    nobs <- nobs.merMod(object)
     structure(val,
 	      nobs = nobs,
 	      nall = nobs,
@@ -1096,7 +1096,7 @@ df.residual.merMod <- function(object, ...) {
     nobs(object)-npar.merMod(object)
 }
 
-stripwhite <- function(x) gsub("(^ +| +$)","",x)
+stripwhite <- function(x) gsub("(^ +| +$)","",x) # FIXME: never used ?
 ##' @importFrom stats logLik
 ##' @S3method model.frame merMod
 model.frame.merMod <- function(formula, fixed.only=FALSE, ...) {
@@ -2124,7 +2124,7 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
             ## if hessian is available, go ahead and check
             ## for similarity with the RX-based estimate
             ## (inverting the hessian isn't *too* expensive)
-            var.hess.tol <- 1e-4
+            var.hess.tol <- 1e-4 # FIXME: should var.hess.tol be user controlled?
             V.hess <- calc.vcov.hess(h)
             if (any(abs(V-V.hess) > var.hess.tol * V.hess))
                 warning("variance-covariance matrix computed ",

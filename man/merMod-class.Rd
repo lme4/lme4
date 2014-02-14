@@ -77,13 +77,14 @@ use.hessian = NULL, \dots)
     the model matrix (see \code{\link{getME}(.,"RX")}).
     The default is to to use the Hessian whenever the
     fixed effect parameters are arguments to the deviance
-    function, rather than being profiled out (i.e. for
-    GLMMs with \code{nAGQ>0}).
+    function (i.e. for GLMMs with \code{nAGQ>0}), and to use
+    \code{\link{getME}(.,"RX")} whenever the fixed effect parameters are
+    profiled out (i.e. for GLMMs with \code{nAGQ==0} or LMMs).
 
     \code{use.hessian=FALSE} is backward-compatible with older versions
     of \code{lme4}, but may give less accurate SE estimates when the
-    estimates of the fixed-effect and random-effect parameters
-    are correlated.
+    random effect coefficients are correlated with the estimates of the
+    fixed-effect coefficients.
     }
   \item{sigm}{the residual standard error; by default \code{\link{sigma}(object)}.}
   \item{digits}{number of significant digits for printing}
