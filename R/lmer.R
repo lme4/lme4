@@ -2522,8 +2522,15 @@ dotplot.coef.mer <- function(x, data, ...) {
 
 ##' @importFrom stats weights
 ##' @S3method weights merMod
-weights.merMod <- function(object, ...) {
-  object@resp$weights
+weights.merMod <- function(object, type=c("prior","working"), ...) {
+    type <- match.arg(type)
+    isPrior <- type == "prior"
+    if(!isGLMM(object) && !isPrior)
+        stop("working weights only available for GLMMs")
+    res <- if(isPrior) object@resp$weights else object@pp$Xwts^2
+    ## FIXME:  what to do about missing values (see stats:::weights.glm)?
+    ## FIXME:  add unit tests
+    return(res)
 }
 
 ##' @title Get the optimizer function and check it minimally
