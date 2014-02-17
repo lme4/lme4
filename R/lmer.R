@@ -1472,7 +1472,9 @@ residuals.lmResp <- function(object,
                     response = y-mu,
                     deviance =,
                     pearson = r,
-                    partial = .NotYetImplemented())
+                      partial = stop(gettextf("partial residuals are not implemented yet"),
+                    call. = FALSE)
+       )
 }
 
 ##' @rdname residuals.merMod
@@ -1492,7 +1494,10 @@ residuals.glmResp <- function(object, type = c("deviance", "pearson",
            pearson = object$wtres,
            working = object$wrkResids(),
            response = y - mu,
-           partial = .NotYetImplemented())
+           partial = stop(gettextf("partial residuals are not implemented yet"),
+                    call. = FALSE)
+       )
+
 }
 
 ##' @S3method sigma merMod
