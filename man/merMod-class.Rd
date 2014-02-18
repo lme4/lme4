@@ -25,6 +25,7 @@
 \alias{update.merMod}
 \alias{vcov.merMod}
 \alias{vcov.summary.merMod}
+\alias{weights.merMod}
 \description{
   A mixed-effects model is represented as a
   \code{\linkS4class{merPredD}} object and a response
@@ -49,6 +50,7 @@ use.hessian = NULL, \dots)
       correlation = NULL, symbolic.cor = FALSE,
       signif.stars = getOption("show.signif.stars"),
       ranef.comp = c("Variance", "Std.Dev."), show.resids = TRUE, ...)
+\S3method{weights}{merMod}(object, type = c("prior", "working"), ...)
 }
 \arguments{
   \item{object}{an \R object of class \code{\linkS4class{merMod}}, i.e.,
@@ -95,7 +97,12 @@ use.hessian = NULL, \dots)
   \item{ranef.comp}{character vector of length one or two, indicating
     if random-effects parameters should be reported on the variance and/or
     standard deviation scale.}
-  \item{show.resids}{should the quantiles of the scaled residuals be printed?}
+  \item{show.resids}{should the quantiles of the scaled residuals be
+    printed?}
+  \item{type}{type of weights to be returned; either \code{"prior"} for
+    the initially supplied weights or \code{"working"} for the weights
+    at the final iteration of the penalized iteratively reweighted least
+    squares algorithm.}
   \item{\dots}{potentially further arguments passed from other methods.}
 }
 \section{Objects from the Class}{
