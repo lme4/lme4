@@ -2533,6 +2533,17 @@ weights.merMod <- function(object, type=c("prior","working"), ...) {
     if(!isGLMM(object) && !isPrior)
         stop("working weights only available for GLMMs")
     res <- if(isPrior) object@resp$weights else object@pp$Xwts^2
+    ## the working weights available through pp$Xwts should be
+    ## equivalent to:
+    ##     object@resp$weights*(object@resp$muEta()^2)/object@resp$variance()
+    ## however, the unit tests in tests/glmmWeights.R suggest that this
+    ## equivalence is approximate.  this may be fine, however, if the
+    ## discrepancy is due to another instance of the general problem of
+    ## reference class fields not being updated at the optimum, then this
+    ## could cause real problems.  see for example:
+    ## https://github.com/lme4/lme4/issues/166
+    
+    
     ## FIXME:  what to do about missing values (see stats:::weights.glm)?
     ## FIXME:  add unit tests
     return(res)
