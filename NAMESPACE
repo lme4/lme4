@@ -35,6 +35,7 @@ importFrom("minqa", bobyqa)
 
 export(bootMer)
 export(devcomp)
+export(dummy)
 export(expandDoubleVerts)
 export(findbars)
 export(fixef)

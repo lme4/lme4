@@ -1114,6 +1114,38 @@ model.frame.merMod <- function(formula, fixed.only=FALSE, ...) {
 ##' @S3method model.matrix merMod
 model.matrix.merMod <- function(object, ...) object@pp$X
 
+##' Dummy variables (experimental)
+##'
+##' Largely a wrapper for \code{model.matrix} that
+##' accepts a factor, \code{f}, and returns a dummy
+##' matrix with \code{nlevels(f)-1} columns.
+dummy <- function(f, levelsToKeep){
+                                        # create model matrix
+  f <- as.factor(f)
+  mm <- model.matrix(~ 0 + f)
+                                        # ensure column names match levels
+  colnames(mm) <- levels(f)
+
+                                        # sort out levels to keep
+  missingLevels <- missing(levelsToKeep)
+  if(missingLevels) levelsToKeep <- levels(f)[-1]
+  if(!any(levels(f) %in% levelsToKeep))
+      stop("at least some of the levels in f ",
+           "must also be present in levelsToKeep")
+  if(!all(levelsToKeep %in% levels(f)))
+      stop("all of the levelsToKeep must be levels of f")
+  mm <- mm[, levelsToKeep, drop=FALSE]
+
+  ##                                       # communicate that some usages are unlikely
+  ##                                       # to help with readibility, which is the
+  ##                                       # whole purpose of dummy()
+  ## if((!missingLevels)&&(ncol(mm)>1))
+  ##     message("note from dummy:  explicitly specifying more than one ",
+  ##             "level to keep may do little to improve readibility")
+  return(mm)
+}
+
+
 ##' @importFrom stats nobs
 ##' @S3method nobs merMod
 nobs.merMod <- function(object, ...) nrow(object@frame)
