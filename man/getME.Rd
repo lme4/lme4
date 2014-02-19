@@ -140,7 +140,7 @@ stopifnot(is(Z, "CsparseMatrix"),
 
 ## A way to get *all* getME()s :
 getME.all <- function(obj) {
-    sapply(eval(formals(getME)$name), getME, object=fm1, simplify=FALSE)
+    sapply(eval(formals(getME)$name), getME, object=obj, simplify=FALSE)
 }
 ## internal consistency check ensuring that all work:
 parts <- getME.all(fm1)
