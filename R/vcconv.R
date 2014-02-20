@@ -30,10 +30,12 @@
 ## in the original list
 mlist2vec <- function(L) {
     n <- sapply(L,nrow)
-    ## allow for EITHER upper- or lower-triangular input
+    ## allow for EITHER upper- or lower-triangular input;
+    ## in either case, read off in "lower-triangular" order
+    ## (column-wise)
     ff <- function(x) {
         if (all(x[upper.tri(x)]==0)) t(x[lower.tri(x,diag=TRUE)])
-        else x[upper.tri(x,diag=TRUE)]
+        else t(x)[lower.tri(x,diag=TRUE)]
     }
     r <- unlist(lapply(L,ff))
     attr(r,"clen") <- n
@@ -52,7 +54,7 @@ get_clen <- function(v,n=NULL) {
     n
 }
 
-## Convert concatenated vector to matrix list
+## Convert concatenated vector to list of Cholesky factors
 ## (lower triangle or symmetric)
 vec2mlist <- function(v,n=NULL,symm=TRUE) {
     n <- get_clen(v,n)
@@ -66,6 +68,20 @@ vec2mlist <- function(v,n=NULL,symm=TRUE) {
     m
 }
 
+## Convert concatenated vector to list of ST matrices
+vec2STlist <- function(v, n = NULL){
+  ch <- vec2mlist(v, n, FALSE) # cholesky
+  nch <- length(ch)
+  sdiag <- function(x) { ## 'safe' diag()
+      if (length(x)==1) matrix(x,1,1) else diag(x)
+  }
+  lapply(ch, function(L) {
+    ST <- L%*%sdiag(1/sdiag(L))
+    diag(ST) <- diag(L)
+    ST
+  })
+}
+
 ## convert 'sdcor' format -- diagonal = std dev, off-diag=cor
 ##  to and from variance-covariance matrix
 sdcor2cov  <- function(m) {
@@ -75,26 +91,35 @@ sdcor2cov  <- function(m) {
 }
 
 ## convert cov to sdcor
-cov2sdcor  <- function(m) {
-    v <- diag(m)
-    m1 <- cov2cor(m)
-    diag(m1) <- sqrt(v)
-    m1
+cov2sdcor  <- function(V) {
+    ## "own version" of cov2cor():  1. no warning for NA;   2. diagonal = sd(.)
+    p <- (d <- dim(V))[1L]
+    if (!is.numeric(V) || length(d) != 2L || p != d[2L]) 
+        stop("'V' is not a square numeric matrix")
+    sd <- sqrt(diag(V))
+    Is <- 1/sd
+    r <- V
+    r[] <- Is * V * rep(Is, each = p)
+    diag(r) <- sd
+    r
 }
 
-dmult <- function(m,s) {
-    diag(m) <- diag(m)*s
-    m
-}
+## dmult <- function(m,s) {
+##     diag(m) <- diag(m)*s
+##     m
+## }
+## From Matrix package  isDiagonal(.) :
+all0 <- function(x) !any(is.na(x)) && all(!x)
+.isDiagonal.sq.matrix <- function(M, n = dim(M)[1L])
+    all0(M[rep_len(c(FALSE, rep.int(TRUE,n)), n^2)])
 
 ## attempt to compute Cholesky, allow for positive semi-definite cases
 ##  (hackish)
 safe_chol <- function(m) {
     if (all(m==0)) return(m)
     if (nrow(m)==1) return(sqrt(m))
-    if (all(dmult(m,0)==0)) {  ## diagonal
-        return(diag(sqrt(diag(m))))
-    }
+    if (.isDiagonal.sq.matrix(m)) return(diag(sqrt(diag(m))))
+
     ## attempt regular Chol. decomp
     if (!is.null(cc <- tryCatch(chol(m), error=function(e) NULL)))
 	return(cc)

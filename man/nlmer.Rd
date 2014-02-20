@@ -8,11 +8,21 @@
     devFunOnly = FALSE, ...)
 }
 \arguments{
-  \item{formula}{a nonlinear mixed model formula (see
-  detailed documentation)}
+  \item{formula}{a three-part \dQuote{nonlinear mixed model} formula,
+    of the form \code{resp ~ Nonlin(...) ~ fixed + random},
+    where the third part is similar to the RHS formula of, e.g.,
+    \code{\link{lmer}}. %% (see detailed documentation)  FIXME!  where would that be?
+    
+    Currently, the \code{Nonlin(..)} formula part must not only return a
+    numeric vector, but also must have a \code{"gradient"} attribute, a
+    \code{\link{matrix}}.  The \code{\link{SSbiexp}},
+    \code{\link{SSlogis}}, etc, see \code{\link{selfStart}} functions
+    provide this (and more).  Alternatively, you can use
+    \code{\link{deriv}()} to automatically produce such functions or
+    expressions.}
 
   \item{start}{starting estimates for the nonlinear model
-  parameters, as a named numeric vector or as a list with
+    parameters, as a named numeric vector or as a list with
   components \describe{ \item{nlpars}{required numeric
   vector of starting values for the nonlinear model
   parameters} \item{theta}{optional numeric vector of
@@ -105,16 +115,46 @@
 }
 \note{
   Adaptive Gauss-Hermite quadrature (\code{nAGQ}>1) is not
-  currently implemented for \code{nlmer}.
+  currently implemented for \code{nlmer}. Several other
+  methods, such as simulation or prediction with new data,
+  are unimplemented or very lightly tested.
 }
 \examples{
 ## nonlinear mixed models --- 3-part formulas ---
-
+## 1. basic nonlinear fit. Use stats::SSlogis for its
+## implementation of the 3-parameter logistic curve.
+## "SS" stands for "self-starting logistic", but the
+## "self-starting" part is not currently used by nlmer ... 'start' is
+## necessary
+startvec <- c(Asym = 200, xmid = 725, scal = 350)
 (nm1 <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~ Asym|Tree,
-             Orange, start = c(Asym = 200, xmid = 725, scal = 350)))
-(nm1a <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~ Asym|Tree,
-              Orange, start = c(Asym = 200, xmid = 725, scal = 350),
-              nAGQ = 0L))
+             Orange, start = startvec))
+## 2. re-run with "quick and dirty" PIRLS step
+(nm1a <- update(nm1, nAGQ = 0L))
+## 3. Fit the same model with a user-built function:
+## a. Define formula
+nform <- ~Asym/(1+exp((xmid-input)/scal))
+## b. Use deriv() to construct function:
+nfun <- deriv(nform,namevec=c("Asym","xmid","scal"),
+              function.arg=c("input","Asym","xmid","scal"))
+nm1b <- update(nm1,circumference ~ nfun(age, Asym, xmid, scal)  ~ Asym | Tree)
+## 4. User-built function without using derivs():
+##    derivatives could be computed more efficiently
+##    by pre-computing components, but these are essentially
+##    the gradients as one would derive them by hand
+nfun2 <- function(input, Asym, xmid, scal) {
+    value <- Asym/(1+exp((xmid-input)/scal))
+    grad <- cbind(Asym=1/(1+exp((xmid-input)/scal)),
+              xmid=-Asym/(1+exp((xmid-input)/scal))^2*1/scal*
+                    exp((xmid-input)/scal),
+              scal=-Asym/(1+exp((xmid-input)/scal))^2*
+                     -(xmid-input)/scal^2*exp((xmid-input)/scal))
+    attr(value,"gradient") <- grad
+    value
+}
+stopifnot(all.equal(attr(nfun(2,1,3,4),"gradient"),
+                    attr(nfun(2,1,3,4),"gradient")))
+nm1c <- update(nm1,circumference ~ nfun2(age, Asym, xmid, scal)  ~ Asym | Tree)
 }
 \keyword{models}
 

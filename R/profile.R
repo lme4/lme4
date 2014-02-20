@@ -1,70 +1,17 @@
-##' Methods for profile() of [ng]lmer fitted models
-##'
-##' Methods for function \code{\link{profile}} (package \pkg{stats}), here for
-##' profiling (fitted) mixed effect models.
-##'
-##'
-##' @name profile-methods
-##' @title Profile method for merMod objects
-##' @aliases profile-methods profile.merMod
-##' @docType methods
-##' @param fitted a fitted model, e.g., the result of \code{\link{lmer}(..)}.
-##' @param which (integer) which parameters to profile: default is all parameters. The parameters are ordered as follows: (1) random effects (theta) parameters; (2) residual standard deviation (or scale parameter for GLMMs where appropriate); (3) fixed effect parameters.  Random effects parameters are ordered as in \code{getME(.,"theta")}, i.e. as the lower triangle of a matrix with standard deviations on the diagonal and correlations off the diagonal. FIXME: allow parameter names.
-##' @param alphamax maximum alpha value for likelihood ratio confidence regions; used to establish the range of values to be profiled
-##' @param maxpts maximum number of points (in each direction, for each parameter) to evaluate in attempting to construct the profile
-##' @param delta stepping scale for deciding on next point to profile
-##' @param verbose level of output from internal calculations
-##' @param devtol tolerance for fitted deviances less than baseline (supposedly minimum) deviance
-##' @param maxmult maximum multiplier of the original step size allowed, defaults to 10.
-##' @param startmethod method for picking starting conditions for optimization (STUB)
-##' @param optimizer (character or function) optimizer to use (see \code{\link{lmer}} for details)
-##' @param signames (logical) if \code{TRUE} use abbreviated names of the form \code{.sigNN}, otherwise more meaningful (but longer) names of the form \code{(sd|cor)_(effects)|(group)}. Note that some code for profile transformations (e.g. \code{\link{varianceProf}}) depends on \code{signames==TRUE}
-##' @param \dots potential further arguments for \code{profile} methods.
-##' @section Methods:
-##' \describe{
-##'     \item{signature(fitted = \"merMod\")}{ ...  } }
-##' @seealso For (more expensive) alternative confidence intervals:
-##' \code{\link{bootMer}}.
-##' @keywords methods
-##' @examples
-##' fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
-##' system.time( tpr  <- profile(fm01ML, optimizer="Nelder_Mead") ) 
-##' ## ~2.6s (on a 2010 Macbook Pro)
-##' system.time( tpr  <- profile(fm01ML))
-##' ## ~1s, + possible warning about bobyqa convergence
-##' (confint(tpr) -> CIpr)
-##' \donttest{% too much precision (etc). but just FYI:
-##' stopifnot(all.equal(CIpr,
-##'   array(c(12.1985292, 38.2299848, 1486.4515,
-##'           84.0630513, 67.6576964, 1568.54849), dim = 3:2,
-##'         dimnames = list(c(".sig01", ".sigma", "(Intercept)"),
-##'                         c("2.5 \%", "97.5 \%"))),
-##'                     tol= 1e-07))# 1.37e-9 {64b}
-##' }
-##' xyplot(tpr)
-##' densityplot(tpr, main="densityplot( profile(lmer(..)) )")
-##' splom(tpr)
-##' \donttest{% for time constraint
-##' system.time(tpr2 <- profile(fm01ML, which=1:2, optimizer="Nelder_Mead")) ## Batch and residual variance only
-##' ## GLMM example (running time ~11 seconds on a modern machine)
-##' gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-##'             data = cbpp, family = binomial)
-##' system.time(pr4 <- profile(gm1))
-##' xyplot(pr4,layout=c(5,1),as.table=TRUE)
-##' splom(pr4)
-##' }%donttest
+## --> ../man/profile-methods.Rd
+
 ##' @importFrom splines backSpline interpSpline periodicSpline
 ##' @importFrom stats profile
 ##' @method profile merMod
 ##' @export
-profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100, delta = cutoff/8,
-                           ##  tr = 0,  ## FIXME:  remove if not doing anything ...
+profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
+			   maxpts = 100, delta = cutoff/8,
                            verbose=0, devtol=1e-9,
                            maxmult = 10,
                            startmethod = "prev",
-                           optimizer="bobyqa",
-                           signames=TRUE, ...) {
-
+                           optimizer = "bobyqa",
+                           signames = TRUE, ...)
+{
   ## FIXME: allow choice of nextstep/nextstart algorithm?
   ## FIXME: by default, get optimizer from within fitted object
   ## FIXME: allow selection of individual variables to profile by name?
@@ -79,6 +26,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
     ## FIXME: figure out to what do here ...
     if (isGLMM(fitted) && fitted@devcomp$dims["useSc"])
         stop("can't (yet) profile GLMMs with non-fixed scale parameters")
+    stopifnot(devtol >= 0)
     base <- attr(dd, "basedev")
     thopt <- attr(dd, "thopt")
     stderr <- attr(dd, "stderr")
@@ -89,13 +37,15 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
 
     opt <- attr(dd, "optimum")
     nptot <- length(opt)
+    nvp <- nptot - p    # number of variance-covariance pars
+    wi.vp <- seq_len(nvp)
+    if(nvp > 0) fe.orig <- opt[- wi.vp]
+
+    which <- get.which(which,nvp,nptot,names(opt),verbose)
 
     ans <- lapply(opt[which], function(el) NULL)
     bakspl <- forspl <- ans
 
-
-    nvp <- nptot - p    # number of variance-covariance pars
-    fe.orig <- opt[-seq_len(nvp)]
     res <- c(.zeta = 0, opt)
     res <- matrix(res, nrow = maxpts, ncol = length(res),
                   dimnames = list(NULL, names(res)), byrow = TRUE)
@@ -177,29 +127,35 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
         mat
     }
 
-    ## bounds on Cholesky: [0,Inf) for diag, (-Inf,Inf) for diag
-    ## bounds on sd-corr:  [0,Inf) for diag, (-1.0,1.0) for diag
+    ## bounds on Cholesky: [0,Inf) for diag, (-Inf,Inf) for off-diag
+    ## bounds on sd-corr:  [0,Inf) for diag, (-1.0,1.0) for off-diag
     lower <- pmax(fitted@lower,-1.0)
     upper <- 1/(fitted@lower != 0)## = ifelse(fitted@lower==0, Inf, 1.0)
-    if (useSc) {
+    if (useSc) { # bounds for sigma
         lower <- c(lower,0)
         upper <- c(upper,Inf)
     }
-    ## bounds on fixed parameters (could allow user-specified bounds for esp. NLMMs?)
+    ## bounds on fixed parameters (TODO: allow user-specified bounds, e.g. for NLMMs)
     lower <- c(lower,rep.int(-Inf, p))
     upper <- c(upper, rep.int(Inf, p))
     npar1 <- if (isLMM(fitted)) nvp else nptot
+    ## check that devfun2() computation for the base parameters is (approx.) the
+    ##  same as the original devfun() computation
+    if(!isTRUE(all.equal(unname(dd(opt[seq(npar1)])), base, tolerance=1e-5))){
+        stop("Profiling over both the residual variance and\n",
+             "fixed effects is not numerically consistent with\n",
+             "profiling over the fixed effects only")}
 
-    stopifnot(all.equal(unname(dd(opt[seq(npar1)])),base,tol=1e-5))
-
+    ## sequence of variance parameters to profile
     seqnvp <- intersect(seq_len(npar1),which)
+    ## sequence of 'all' parameters
     seqpar1 <- seq_len(npar1)
     lowvp <- lower[seqpar1]
     upvp <- upper[seqpar1]
     form <- .zeta ~ foo           # pattern for interpSpline formula
 
     for (w in seqnvp) {
-       if (verbose) cat(if (isLMM(fitted)) "var-cov " else "", "parameter ",w,":\n",sep="")
+       if (verbose) cat(if(isLMM(fitted)) "var-cov " else "", "parameter ",w,":\n",sep="")
        wp1 <- w + 1L
        start <- opt[seqpar1][-w]
        pw <- opt[w]
@@ -214,23 +170,29 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
 	       devdiff <- NA
 	       pars <- NA
 	   } else {
-	       devdiff <- ores$fval-base
+	       devdiff <- ores$fval - base
 	       pars <- ores$par
 	   }
            if (is.na(devdiff)) {
                warning("NAs detected in profiling")
            } else {
+               if(verbose && devdiff < 0)
+                   cat("old deviance ",base,",\n",
+                       "new deviance ",ores$fval,",\n",
+                       "new params ",
+                       paste(mkpar(npar1,w,xx,ores$par),
+                             collapse=","),"\n")
                if (devdiff < (-devtol))
                    stop("profiling detected new, lower deviance")
                if(devdiff < 0)
-                   warning("slightly lower deviances (diff=",devdiff,") detected")
+                   warning(gettextf("slightly lower deviances (diff=%g) detected",
+                                    devdiff), domain=NA)
            }
            devdiff <- max(0,devdiff)
            zz <- sign(xx - pw) * sqrt(devdiff)
            r <- c(zz, mkpar(npar1, w, xx, pars))
-           if (isLMM(fitted)) r <- c(r,pp$beta(1))
-           r
-       }
+           if (isLMM(fitted)) c(r, pp$beta(1)) else r
+       }## {zeta}
 
 ### FIXME: The starting values for the conditional optimization should
 ### be determined from recent starting values, not always the global
@@ -244,10 +206,26 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
        pres <- nres <- res
        ## assign one row, determined by inc. sign, from a small shift
        ## FIXME:: do something if pw==0 ???
-       nres[1, ] <- pres[2, ] <- zeta(pw * 1.01, start=opt[seqpar1][-w])
+       shiftpar <- if (pw==0) 1e-3 else pw*1.01
+       ## Since both the pos- and neg-increment matrices are already
+       ## filled with the opt. par. results, this sets the first
+       ## two rows of the positive-increment matrix
+       ## to (opt. par, shiftpar) and the first two rows of
+       ## the negative-increment matrix to (shiftpar, opt. par),
+       ## which sets up two points going in the right direction
+       ## for each matrix (since the profiling algorithm uses increments
+       ## between rows to choose the next parameter increment)
+       nres[1, ] <- pres[2, ] <- zeta(shiftpar, start=opt[seqpar1][-w])
        ## fill in the rest of the arrays and collapse them
-       upperf <- fillmat(pres,lowcut, upcut, zeta, wp1)
-       lowerf <- fillmat(nres,lowcut, upcut, zeta, wp1)
+       upperf <- fillmat(pres, lowcut, upcut, zeta, wp1)
+       if (pw>lowcut) {
+           lowerf <- fillmat(nres, lowcut, upcut, zeta, wp1)
+       } else {
+           ## don't bother to fill in 'nres' matrix
+           lowerf <- nres
+       }
+       ## this will throw away the extra 'opt. par' and 'shiftpar'
+       ## rows introduced above:
        bres <- as.data.frame(unique(rbind2(upperf,lowerf)))
        pname <- names(opt)[w]
        bres$.par <- pname
@@ -277,13 +255,15 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
             std <- stderr[j]
             Xw <-X.orig[, j, drop=TRUE]
             Xdrop <- .modelMatrixDrop(X.orig, j)
-            pp1 <- do.call(new, list(Class = class(pp),
+            pp1 <- do.call("new", list(Class = class(pp),
                                      X = Xdrop,
                                      Zt = pp$Zt,
                                      Lambdat = pp$Lambdat,
                                      thfun = pp$thfun,
                                      theta = pp$theta,
-                                     n = nrow(Xdrop))
+                                     n = nrow(Xdrop),
+                                     phifun1 = pp$phifun1,
+                                     phi = pp$phi)
                            )
 ### FIXME Change this to use the deep copy and setWeights, setOffset, etc.
             rr <- new(Class=class(fitted@resp), y=fitted@resp$y)
@@ -295,12 +275,16 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
                 parent.env(rho) <- parent.frame()
                 ores <- optwrap(optimizer,
                                 par=thopt, fn=mkdevfun(rho, 0L),
-                                lower = pmax(fitted@lower, -1.0),
-				upper = 1/(fitted@lower != 0))## = ifelse(fitted@lower==0, Inf, 1.0)
+                                lower = fitted@lower)
+                ## ?? this optimization is done on the ORIGINAL
+                ## theta scale (i.e. not the sigma/corr scale ??
+                ## upper=Inf for all cases
+                ## lower = pmax(fitted@lower, -1.0),
+                ## upper = 1/(fitted@lower != 0))## = ifelse(fitted@lower==0, Inf, 1.0)
                 fv <- ores$fval
                 sig <- sqrt((rr$wrss() + pp1$sqrL(1))/n)
                 c(sign(fw - est) * sqrt(fv - base),
-                  Cv_to_Sv(ores$par, sapply(fitted@cnms,length),s=sig),
+                  Cv_to_Sv(ores$par, vapply(fitted@cnms,length, 1), s=sig),
                   ## ores$par * sig, sig,
                   mkpar(p, j, fw, pp1$beta(1)))
             }
@@ -326,7 +310,31 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
     attr(ans, "forward") <- forspl
     attr(ans, "backward") <- bakspl
     class(ans) <- c("thpr", "data.frame")
+    attr(ans, "lower") <- lower[seqnvp]
+    attr(ans, "upper") <- upper[seqnvp]
     ans
+}
+
+get.which <- function(which,nvp,nptot,parnames,verbose) {
+    wi.vp <- seq_len(nvp)
+    if(is.character(which)) {
+	wi <- integer(); wh <- which
+	if(any(j <- wh == "theta_")) {
+	    wi <- wi.vp; wh <- wh[!j] }
+	if(any(j <- wh == "beta_") && nptot > nvp) {
+	    wi <- c(wi, seq(nvp+1, nptot)); wh <- wh[!j] }
+	if(any(j <- parnames %in% wh)) { ## which containing param.names
+	    wi <- sort(unique(c(wi, seq_len(nptot)[j])))
+	}
+	if(verbose) message(gettextf("From original which = %s: new which <- %s",
+				     deparse(which, nlines=1), deparse(wi, nlines=1)),
+			    domain=NA)
+	if(length(wi) == 0)
+	    warning(gettextf("Nothing selected by 'which=%s'", deparse(which)),
+		    domain=NA)
+        which <- wi
+    } # else stopifnot( .. numeric ..)
+    which
 }
 
 ## This is a hack.  The preferred approach is to write a
@@ -358,7 +366,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01, maxpts = 100,
 ## @return a function for evaluating the deviance in the extended
 ##     parameterization.  This is profiled with respect to the
 ##     variance-covariance parameters (fixed-effects done separately).
-devfun2 <- function(fm,useSc,signames)
+devfun2 <- function(fm, useSc, signames)
 {
     ## FIXME: have to distinguish between
     ## 'useSc' (GLMM: report profiled scale parameter) and
@@ -440,18 +448,17 @@ predy <- function(sp, vv) {
 }
 
 stripExpr <- function(ll, nms) {
-    stopifnot(inherits(ll, "list"), is.character(nms))
-    sigNm <- which(nms == ".sigma")
-    lsigNm <- which(nms == ".lsigma")
-    sigNms <- grep("^.sig[0-9]+", nms)
-    sigsub <- as.integer(substring(nms[sigNms], 5))
+    stopifnot(is.list(ll), is.character(nms))
+    fLevs <- as.expression(nms) # variable names; now replacing log(sigma[.])'s:
+    fLevs[nms ==  ".sigma"] <- expression(sigma)
+    fLevs[nms == ".lsigma"] <- expression(log(sigma))
+    sigNms  <- grep("^.sig[0-9]+", nms)
     lsigNms <- grep("^.lsig[0-9]+", nms)
+    ## the <n> in ".sig0<n>" and then in ".lsig0<n>":
+    sigsub  <- as.integer(substring(nms[ sigNms], 5))
     lsigsub <- as.integer(substring(nms[lsigNms], 6))
-    fLevs <- as.expression(nms)
-    fLevs[sigNm] <- expression(sigma)
-    fLevs[lsigNm] <- expression(log(sigma))
-    fLevs[sigNms] <- parse(text=paste("sigma[", sigsub, "]"))
-    fLevs[lsigNms] <- parse(text=paste("log(sigma[", lsigsub, "])"))
+    fLevs[ sigNms] <- lapply( sigsub, function(i) bquote(    sigma[.(i)]))
+    fLevs[lsigNms] <- lapply(lsigsub, function(i) bquote(log(sigma[.(i)])))
     levsExpr <- substitute(strip.custom(factor.levels=foo), list(foo=fLevs))
     llNms <- names(ll)
     snames <- c("strip", "strip.left")
@@ -468,6 +475,34 @@ stripExpr <- function(ll, nms) {
     ll
 }
 
+panel.thpr <- function(x, y, spl, absVal, ...)
+{
+    panel.grid(h = -1, v = -1)
+    myspl <- spl[[panel.number()]]
+    lsegments(x, y, x, 0, ...)
+    if (absVal) {
+        y[y == 0] <- NA
+        lsegments(x, y, rev(x), y)
+    } else {
+        panel.abline(h = 0, ...)
+    }
+    if (!is(myspl,"spline")) {
+        ## 'difficult' data
+        if (absVal) myspl$y <- abs(myspl$y)
+        panel.lines(myspl$x,myspl$y)
+        panel.points(myspl$x,myspl$y,pch="+")
+        warning(sprintf("bad profile for variable %d: using linear interpolation",panel.number()))
+    } else {
+        lims <- current.panel.limits()$xlim
+        krange <- range(myspl$knots)
+        pr <- predict(myspl,
+                      seq(max(lims[1], krange[1]),
+                          min(lims[2], krange[2]), len = 101))
+        if (absVal) pr$y <- abs(pr$y)
+        panel.lines(pr$x, pr$y)
+    }
+}
+
 ## A lattice-based plot method for profile objects
 ##' @importFrom lattice xyplot
 ##' @S3method xyplot thpr
@@ -475,22 +510,45 @@ xyplot.thpr <-
     function (x, data = NULL,
               levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 1)),
               conf = c(50, 80, 90, 95, 99)/100,
-              absVal = FALSE, ...)
+              absVal = FALSE,
+              which = 1:nptot, ...)
 {
+    nptot <- length(nms <- levels(x[[".par"]]))
+    ## FIXME: is this sufficiently reliable?
+    ## (include "sigma" in 'theta' parameters)
+    nvp <- length(grep("^(\\.sig[0-9]+|.sigma|sd_|cor_)",nms))
+    which <- get.which(which,nvp,nptot,nms,verbose=FALSE) 
     levels <- sort(levels[is.finite(levels) & levels > 0])
-    spl <- attr(x, "forward")
-    bspl <- attr(x, "backward")
+    spl <- attr(x, "forward")[which]
+    bspl <- attr(x, "backward")[which]
+    ## for parameters for which spline couldn't be computed,
+    ## replace the 'spl' element with the raw profile data
+    badSpl <- sapply(spl,is.null)
+    spl[badSpl] <- lapply(which(badSpl),
+                          function(i) {
+                              n <- names(badSpl)[i]
+                              r <- x[x[[".par"]]==n,]
+                              data.frame(y=r[[".zeta"]],
+                                         x=r[[n]])
+                          })
+    bspl[badSpl] <- lapply(spl[badSpl],function(d) { data.frame(x=d$y,y=d$x) })
     zeta <- c(-rev(levels), 0, levels)
+    ## use linear approximation if backspline doesn't work
+    tmpf <- function(bspl,zeta) {
+        if (is(bspl,"spline")) return(predy(bspl,zeta))
+        return(approx(bspl$x,bspl$y,xout=zeta)$y)
+    }
     fr <- data.frame(zeta = rep.int(zeta, length(spl)),
-                     pval = unlist(lapply(bspl,predy,zeta)),
+                     pval = unlist(lapply(bspl,tmpf,zeta)),
                      pnm = gl(length(spl), length(zeta), labels = names(spl)))
     if (length(ind <- which(is.na(fr$pval)))) {
         fr[ind, "zeta"] <- 0
         for (i in ind)
 ### FIXME: Should check which bound has been violated, although it
 ### will almost always be the minimum.
-            if (!is.null(curspl <-  spl[[fr[i, "pnm"] ]]))
+            if (is(curspl <-  spl[[fr[i, "pnm"] ]],"spline")) {
                 fr[i, "pval"] <- min(curspl$knots)
+            }
     }
     ylab <- expression(zeta)
     if (absVal) {
@@ -500,31 +558,17 @@ xyplot.thpr <-
     ll <- c(list(...),
             list(x = zeta ~ pval | pnm, data=fr,
                  scales = list(x = list(relation = 'free')),
-                 ylab = ylab, xlab = NULL,
-                 panel = function(x, y, ...)
-             {
-                 panel.grid(h = -1, v = -1)
-                 myspl <- spl[[panel.number()]]
-                 if (inherits(myspl,"error") || is.null(myspl)) {
-                     warning(sprintf("bad profile for variable %d: skipped",panel.number()))
-                 } else {
-                     lsegments(x, y, x, 0, ...)
-                     lims <- current.panel.limits()$xlim
-                     krange <- range(myspl$knots)
-                     pr <- predict(myspl,
-                                   seq(max(lims[1], krange[1]),
-                                       min(lims[2], krange[2]), len = 101))
-                     if (absVal) {
-                         pr$y <- abs(pr$y)
-                         y[y == 0] <- NA
-                         lsegments(x, y, rev(x), y)
-                     } else {
-                         panel.abline(h = 0, ...)
-                     }
-                     panel.lines(pr$x, pr$y)
-                 }
-             }))
+                 ylab = ylab, xlab = NULL, panel=panel.thpr,
+                 spl = spl, absVal = absVal))
+    
     do.call(xyplot, stripExpr(ll, names(spl)))
+}
+
+## copy of stats:::format.perc (not exported, and ":::" being forbidden nowadays):
+format.perc <- function (probs, digits) {
+    paste(format(100 * probs, trim = TRUE,
+                 scientific = FALSE, digits = digits),
+          "%")
 }
 
 ##' @importFrom stats confint
@@ -532,6 +576,12 @@ xyplot.thpr <-
 confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
 {
     bak <- attr(object, "backward")
+    ## fallback strategy for old profiles that don't have a lower/upper
+    ##  attribute saved ...
+    if (is.null(lower <- attr(object,"lower")))
+        lower <- rep(NA,length(parm))
+    if (is.null(upper <- attr(object,"upper")))
+        upper <- rep(NA,length(parm))
     bnms <- names(bak)
     if (missing(parm)) parm <- bnms
     else if (is.numeric(parm)) parm <- bnms[parm]
@@ -541,10 +591,23 @@ confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
         a <- (1 - level)/2
         a <- c(a, 1 - a)
         zeta <- qnorm(a)
-        cn <- stats:::format.perc(a, 3)
+        cn <- format.perc(a, 3)
     }
-    ci <- t(sapply(parm, function(nm) predy(bak[[nm]], zeta)))
-    colnames(ci) <- cn
+    ci <- matrix(NA,nrow=length(parm),ncol=2,
+                 dimnames=list(parm,cn))
+    for (i in seq_along(parm)) {
+        nm <- parm[i]
+        ## would like to build this machinery into predy, but
+        ## predy is used in many places and it's much harder to
+        ## tell in general whether an NA indicates a lower or an
+        ## upper bound ...
+        if (!is(b <- bak[[nm]],"try-error")) {
+            p <- predy(b, zeta)
+            if (is.na(p[1])) p[1] <- lower[i]
+            if (is.na(p[2])) p[2] <- upper[i]
+            ci[i,] <- p
+        }
+    }
     ci
 }
 
@@ -621,7 +684,7 @@ confint.merMod <- function(object, parm, level = 0.95,
         ## n.b. can't use sqrt(...)[parm] (diag() loses names)
         a <- (1 - level)/2
         a <- c(a, 1 - a)
-        pct <- stats:::format.perc(a, 3)
+        pct <- format.perc(a, 3)
         fac <- qnorm(a)
         ci <- array(NA, dim = c(length(parm), 2L), dimnames = list(parm,
                                                                     pct))
@@ -637,24 +700,22 @@ confint.merMod <- function(object, parm, level = 0.95,
            utils::flush.console()
            bootFun <- function(x) {
                th <- getME(x,"theta")
+               nvec <- sapply(getME(x,"cnms"),length)
                scaleTh <- (isLMM(x) || isNLMM(x))
-               useSc <- x@devcomp$dims["useSc"]
+               useSc <- as.logical(x@devcomp$dims["useSc"])
                ## FIXME: still ugly.  Best cleanup via Cv_to_Sv ...
+               tn <- tnames(x,old=FALSE,prefix=c("sd","cor"))
                if (scaleTh) {  ## scale variances by sigma and include it
-                   ss <- setNames(Cv_to_Sv(th,s=sigma(x)),
-                                  c(tnames(x,old=FALSE,
-                                           prefix=c("sd","cor")),"sigma"))
+                   ss <- setNames(Cv_to_Sv(th,n=nvec,s=sigma(x)),
+                                  c(tn,"sigma"))
                } else if (useSc) { ## don't scale variances but do include sigma
-                   ss <- setNames(c(Cv_to_Sv(th),sigma(x)),
-                                  c(tnames(x,old=FALSE,
-                                           prefix=c("sd","cor")),"sigma"))
+                   ss <- setNames(c(Cv_to_Sv(th,n=nvec),sigma(x)),
+                                  c(tn,"sigma"))
                } else {  ## no scaling, no sigma
-                   ss <- setNames(Cv_to_Sv(th),
-                                  tnames(x,old=FALSE,prefix=c("sd","cor")))
+                   ss <- setNames(Cv_to_Sv(th,n=nvec),
+                                  tn)
                }
-               res <- c(ss,
-                        fixef(x))
-               res
+               c(ss, fixef(x))
            }
 	   bb <- bootMer(object, bootFun, nsim=nsim,...)
            bci <- lapply(seq_along(bb$t0),
@@ -663,7 +724,7 @@ confint.merMod <- function(object, parm, level = 0.95,
            citab <- t(sapply(bci,function(x) x[["percent"]][4:5]))
            a <- (1 - level)/2
            a <- c(a, 1 - a)
-           pct <- stats:::format.perc(a, 3)
+           pct <- format.perc(a, 3)
            dimnames(citab) <- list(names(bb[["t0"]]),pct)
            pnames <- rownames(citab)
            if (missing(parm))
@@ -675,13 +736,13 @@ confint.merMod <- function(object, parm, level = 0.95,
            stop("unknown confidence interval method"))
 }
 
-## Convert x-cosine and y-cosine to average and difference.
-
-## Convert the x-cosine and the y-cosine to an average and difference
-## ensuring that the difference is positive by flipping signs if
-## necessary
-## @param xc x-cosine
-## @param yc y-cosine
+##' Convert x-cosine and y-cosine to average and difference.
+##'
+##' Convert the x-cosine and the y-cosine to an average and difference
+##' ensuring that the difference is positive by flipping signs if
+##' necessary
+##' @param xc x-cosine
+##' @param yc y-cosine
 ad <- function(xc, yc)
 {
     a <- (xc + yc)/2
@@ -689,27 +750,27 @@ ad <- function(xc, yc)
     cbind(sign(d)* a, abs(d))
 }
 
-## convert d versus a (as an xyVector) and level to a matrix of taui and tauj
-## @param xy an xyVector
-## @param lev the level of the contour
+##' convert d versus a (as an xyVector) and level to a matrix of taui and tauj
+##' @param xy an xyVector
+##' @param lev the level of the contour
 tauij <- function(xy, lev) lev * cos(xy$x + outer(xy$y/2, c(-1, 1)))
 
-## @title safe arc-cosine
-## @param x numeric vector argument
-## @return acos(x) being careful of boundary conditions
+##' @title safe arc-cosine
+##' @param x numeric vector argument
+##' @return acos(x) being careful of boundary conditions
 sacos <- function(x) acos(pmax.int(-0.999, pmin.int(0.999, x)))
 
-## Generate a contour
-##
-## @title Generate a contour
-## @param sij the arc-cosines of i on j
-## @param sji the arc-cosines of j on i
-## @param levels numeric vector of levels at which to interpolate
-## @param nseg number of segments in the interpolated contour
-## @return a list with components
-## \item{tki}{the tau-scale predictions of i on j at the contour levels}
-## \item{tkj}{the tau-scale predictions of j on i at the contour levels}
-## \item{pts}{an array of dimension (length(levels), nseg, 2) containing the points on the contours}
+##' Generate a contour
+##'
+##' @title Generate a contour
+##' @param sij the arc-cosines of i on j
+##' @param sji the arc-cosines of j on i
+##' @param levels numeric vector of levels at which to interpolate
+##' @param nseg number of segments in the interpolated contour
+##' @return a list with components
+##' \item{tki}{the tau-scale predictions of i on j at the contour levels}
+##' \item{tkj}{the tau-scale predictions of j on i at the contour levels}
+##' \item{pts}{an array of dimension (length(levels), nseg, 2) containing the points on the contours}
 cont <- function(sij, sji, levels, nseg = 101)
 {
     ada <- array(0, c(length(levels), 2, 4))
@@ -723,6 +784,14 @@ cont <- function(sij, sji, levels, nseg = 101)
                                    nseg = nseg), levels[i])
     levs <- c(-rev(levels), 0, levels)
     list(tki = predict(sij, levs), tkj = predict(sji, levs), pts = pts)
+}
+
+## copied from lattice:::chooseFace
+chooseFace <- function (fontface = NULL, font = 1)
+{
+    if (is.null(fontface))
+        font
+    else fontface
 }
 
 
@@ -740,13 +809,28 @@ cont <- function(sij, sji, levels, nseg = 101)
 ##' @method splom thpr
 ##' @export
 splom.thpr <- function (x, data,
-              levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 2)),
-              conf = c(50, 80, 90, 95, 99)/100, ...)
+                    levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 2)),
+                    conf = c(50, 80, 90, 95, 99)/100,
+                    which=1:nptot, ...)
 {
+    singfit <- FALSE
+    for (i in grep("^(\\.sig[0-9]+|sd_)",names(x))) {
+        singfit <- singfit ||  (any(x[,".zeta"]==0 & x[,i]==0))
+    }
+    if (singfit) warning("splom is unreliable for singular fits")
+
+    nptot <- length(nms <- names(attr(x,"forward")))
+    nvp <- length(grep("^(\\.sig[0-9]+|.sigma|sd_|cor_)",nms))
+    which <- get.which(which,nvp,nptot,nms,verbose=FALSE)
+
+    if (length(which)==1)
+        stop("can't draw a scatterplot matrix for a single variable")
+    
     mlev <- max(levels)
-    spl <- attr(x, "forward")
+    spl <- attr(x, "forward")[which]
     frange <- sapply(spl, function(x) range(x$knots))
-    bsp <- attr(x, "backward")
+    bsp <- attr(x, "backward")[which]
+    x <- x[x[[".par"]] %in% nms[which],c(".zeta",nms[which],".par")]
     brange <- sapply(bsp, function(x) range(x$knots))
     pfr <- do.call(cbind, lapply(bsp, predy, c(-mlev, mlev)))
     pfr[1, ] <- pmax.int(pfr[1, ], frange[1, ], na.rm = TRUE)
@@ -840,7 +924,7 @@ splom.thpr <- function (x, data,
                       gpar(col = varname.col,
                            cex = varname.cex,
                            lineheight = varname.lineheight,
-                           fontface = lattice:::chooseFace(varname.fontface,
+                           fontface = chooseFace(varname.fontface,
                            varname.font),
                            fontfamily = varname.fontfamily))
         if (draw)
@@ -897,35 +981,26 @@ splom.thpr <- function (x, data,
     splom(~ pfr, lower.panel = lp, upper.panel = up, diag.panel = dp, ...)
 }
 
-## Transform an lmer profile to the scale of the logarithm of the
-## standard deviation of the random effects.
-## @title Transform an lmer profile to the logarithm scale
-## @param x an object that inherits from class "thpr"
-## @param base the base of the logarithm.  Defaults to natural
-##        logarithms
-##
-## @return an lmer profile like x with all the .sigNN parameters
-##      replaced by .lsigNN.  The forward and backward splines for
-##      these parameters are recalculated.
-##' @S3method log thpr
-log.thpr <- function (x, base = exp(1)) {
+## return an lmer profile like x with all the .sigNN parameters
+## replaced by .lsigNN.  The forward and backward splines for
+## these parameters are recalculated.
+log.thpr <- function (x, base = exp(1)) { ## -> ../man/profile-methods.Rd
     cn <- colnames(x)
-    sigs <- grep("^\\.sig", cn)
-    if (length(sigs)) {
-        colnames(x) <- sub("^\\.sig", ".lsig", cn)
+    if (length(sigs <- grep("^\\.sig", cn))) {
+	colnames(x) <- cn <- sub("^\\.sig", ".lsig", cn)
         levels(x[[".par"]]) <- sub("^\\.sig", ".lsig", levels(x[[".par"]]))
         names(attr(x, "backward")) <-
             names(attr(x, "forward")) <-
                 sub("^\\.sig", ".lsig", names(attr(x, "forward")))
-        for (nm in colnames(x)[sigs]) {
+	for (nm in cn[sigs]) {
             x[[nm]] <- log(x[[nm]], base = base)
             .par <- NULL  ## suppress R CMD check warning
             fr <- subset(x, .par == nm & is.finite(x[[nm]]))
             ## FIXME: avoid subset for global-variable false positive
             ## fr <- x[x$.par == nm & is.finite(x[[nm]]),]
             form <- eval(substitute(.zeta ~ nm, list(nm = as.name(nm))))
-            attr(x, "forward")[[nm]] <- interpSpline(form, fr)
-            attr(x, "backward")[[nm]] <- backSpline(attr(x, "forward")[[nm]])
+            attr(x, "forward")[[nm]] <- isp <- interpSpline(form, fr)
+            attr(x, "backward")[[nm]] <- backSpline(isp)
         }
         ## eliminate rows that produced non-finite logs
         x <- x[apply(is.finite(as.matrix(x[, sigs])), 1, all),]
@@ -953,8 +1028,8 @@ varpr <- function (x) {
             x[[nm]] <- x[[nm]]^2
             fr <- subset(x, .par == nm & is.finite(x[[nm]]))
             form <- eval(substitute(.zeta ~ nm, list(nm = as.name(nm))))
-            attr(x, "forward")[[nm]] <- interpSpline(form, fr)
-            attr(x, "backward")[[nm]] <- backSpline(attr(x, "forward")[[nm]])
+            attr(x, "forward")[[nm]] <- isp <- interpSpline(form, fr)
+            attr(x, "backward")[[nm]] <- backSpline(isp)
         }
         ## eliminate rows the produced non-finite logs
         x <- x[apply(is.finite(as.matrix(x[, sigs])), 1, all),]
@@ -962,14 +1037,13 @@ varpr <- function (x) {
     x
 }
 
-## Create an approximating density from a profile object
-##
-## @title Approximate densities from profiles
-## @param pr a profile object
-## @param npts number of points at which to evaluate the density
-## @param upper upper bound on cumulative for a cutoff
-## @return a data frame
-## @export
+##' Create an approximating density from a profile object
+##'
+##' @title Approximate densities from profiles
+##' @param pr a profile object
+##' @param npts number of points at which to evaluate the density
+##' @param upper upper bound on cumulative for a cutoff
+##' @return a data frame
 dens <- function(pr, npts=201, upper=0.999) {
     stopifnot(inherits(pr, "thpr"))
     npts <- as.integer(npts)

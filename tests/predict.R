@@ -1,15 +1,24 @@
 library(lme4)
+library(lattice)
 library(testthat)
 do.plots <- FALSE
-gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-             data = cbpp, family = binomial)
+
+L <- load(system.file("testdata/lme-tst-fits.rda",
+                      package="lme4", mustWork=TRUE))
+
+if (getRversion()>"3.0.0") {
+    ## saved fits are not safe with old R versions
+
+gm1 <- fit_cbpp_1
+## glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+##             data = cbpp, family = binomial)
 
 ## fitted values
 p0 <- predict(gm1)
 p0B <- predict(gm1,newdata=cbpp)
-expect_true(all.equal(p0,unname(p0B),tol=2e-5)) ## FIXME: why not closer?
+expect_true(all.equal(p0,p0B,tolerance=2e-5)) ## FIXME: why not closer?
 ## fitted values, unconditional (level-0)
-p1 <- predict(gm1,REform=NA)
+p1 <- predict(gm1,ReForm=NA)
 expect_true(length(unique(p1))==length(unique(cbpp$period)))
 
 
@@ -18,9 +27,9 @@ newdata <- with(cbpp,expand.grid(period=unique(period),herd=unique(herd)))
 ## new data, all RE
 p2 <- predict(gm1,newdata)
 ## new data, level-0
-p3 <- predict(gm1,newdata,REform=NA)
+p3 <- predict(gm1,newdata,ReForm=NA)
 ## explicitly specify RE
-p4 <- predict(gm1,newdata,REform=~(1|herd))
+p4 <- predict(gm1,newdata,ReForm=~(1|herd))
 expect_true(all.equal(p2,p4))
 
 
@@ -36,41 +45,41 @@ expect_true(is(try(predict(gm1,newdata2),silent=TRUE),"try-error"))
 p6 <- predict(gm1,newdata2,allow.new.levels=TRUE)
 expect_true(all.equal(p2,p6[1:length(p2)]))  ## original values should match
 ## last 4 values should match unconditional values
-expect_true(all(tail(p6,4)==predict(gm1,newdata=data.frame(period=factor(1:4)),REform=NA)))
+expect_true(all(tail(p6,4)==predict(gm1,newdata=data.frame(period=factor(1:4)),ReForm=NA)))
 
 ## multi-group model
 fm1 <- lmer(diameter ~ (1|plate) + (1|sample), Penicillin)
 ## fitted values
 p0 <- predict(fm1)
 ## fitted values, unconditional (level-0)
-p1 <- predict(fm1,REform=NA)
+p1 <- predict(fm1,ReForm=NA)
 
 if (do.plots) matplot(cbind(p0,p1),col=1:2,type="b")
 newdata <- with(Penicillin,expand.grid(plate=unique(plate),sample=unique(sample)))
 ## new data, all RE
 p2 <- predict(fm1,newdata)
 ## new data, level-0
-p3 <- predict(fm1,newdata,REform=NA)
+p3 <- predict(fm1,newdata,ReForm=NA)
 ## explicitly specify RE
-p4 <- predict(fm1,newdata,REform=~(1|plate)+(~1|sample))
-p4B <- predict(fm1,newdata,REform=~(1|sample)+(~1|plate))
+p4 <- predict(fm1,newdata,ReForm=~(1|plate)+(~1|sample))
+p4B <- predict(fm1,newdata,ReForm=~(1|sample)+(~1|plate))
 expect_true(all.equal(p2,p4,p4B))
 
-p5 <- predict(fm1,newdata,REform=~(1|sample))
-p6 <- predict(fm1,newdata,REform=~(1|plate))
+p5 <- predict(fm1,newdata,ReForm=~(1|sample))
+p6 <- predict(fm1,newdata,ReForm=~(1|plate))
 
 if (do.plots) matplot(cbind(p2,p3,p5,p6),type="b",lty=1,pch=16)
 
-fm2 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+fm2 <- fit_sleepstudy_2
 p0 <- predict(fm2)
-p1 <- predict(fm2,REform=NA)
+p1 <- predict(fm2,ReForm=NA)
 ## linear model, so results should be identical patterns but smaller --
 ##   not including intermediate days
 newdata <- with(sleepstudy,expand.grid(Days=range(Days),Subject=unique(Subject)))
 newdata$p2 <- predict(fm2,newdata)
-newdata$p3 <- predict(fm2,newdata,REform=NA)
-newdata$p4 <- predict(fm2,newdata,REform=~(0+Days|Subject))
-newdata$p5 <- predict(fm2,newdata,REform=~(1|Subject))
+newdata$p3 <- predict(fm2,newdata,ReForm=NA)
+newdata$p4 <- predict(fm2,newdata,ReForm=~(0+Days|Subject))
+newdata$p5 <- predict(fm2,newdata,ReForm=~(1|Subject))
 
 ## reference values from an apparently-working run
 refval <- structure(list(Days = c(0, 9, 0, 9, 0, 9), Subject = structure(c(1L, 
@@ -102,9 +111,9 @@ tmpf <- function(data,...) {
   if (do.plots) xyplot(Reaction~Days,group=Subject,data=data,type="l")
 }
 tmpf(sleepstudy)
-tmpf(sleepstudy,REform=NA)
-tmpf(sleepstudy,REform=~(0+Days|Subject))
-tmpf(sleepstudy,REform=~(1|Subject))
+tmpf(sleepstudy,ReForm=NA)
+tmpf(sleepstudy,ReForm=~(0+Days|Subject))
+tmpf(sleepstudy,ReForm=~(1|Subject))
 
 ## from 'Colonel Triq': examples using *fewer* random effect levels
 ##  than in original data set
@@ -114,9 +123,10 @@ summary(m)
 # replicate 1 only appears in rows 1:18.
 rownames(cake[cake$replicate==1,])
 
-predict(m, newdata=cake[-1:-17,], REform=~ (1 | replicate))
-predict(m, newdata=cake[-1:-18,], REform=NA)
-predict(m, newdata=cake[-1:-18,], REform=~ (1 | replicate)) 
-predict(m, newdata=cake[-1:-18,], REform=~ (1 | replicate), allow.new.levels=TRUE)
+predict(m, newdata=cake[-1:-17,], ReForm=~ (1 | replicate))
+predict(m, newdata=cake[-1:-18,], ReForm=NA)
+predict(m, newdata=cake[-1:-18,], ReForm=~ (1 | replicate)) 
+predict(m, newdata=cake[-1:-18,], ReForm=~ (1 | replicate), allow.new.levels=TRUE)
 
 
+}

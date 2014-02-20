@@ -17,18 +17,23 @@
 
 if(FALSE){
 #	library(lme4pureR)
-#	library(nloptwrap)
-	
-	setwd("C:/lme4")
-	library(devtools)
-	library(ggplot2)
+    ##	library(nloptwrap)
+library(ggplot2)
 	library(mgcv)
 	library(mvtnorm)
+	
+##	setwd("C:/lme4")
+##	library(devtools)
 	load_all()
 	source('misc/reGenerators_flexLambda.R', echo=TRUE)
 	options(error=recover)
 }
 
+library(lme4)
+library(MASS) ## for mvrnorm
+## (rather than mvtnorm::rmvnorm -- try to stick to Recommended pkgs
+library(mgcv)
+source('reGenerators_flexLambda.R')
 (fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy))
 (fm2 <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy))
 (fm3 <- lmer(Reaction ~ Days + (0+ Days | Subject) + (1|Subject), sleepstudy))
@@ -128,12 +133,19 @@ S <- {
 }
 
 data <- within(data, {
-	y <- dose + 
-		model.matrix(~0+as.factor(dose):subject)%*%
-		as.vector(replicate(nsubj, rmvnorm(1, sigma=S)[1,]))  +
-		rnorm(n, sd=1)
-	doseF <- as.factor(dose)
-	subjectreps <- subject:reps
+
+    ## ## testing
+    ## nsubj <- 5000
+    ## reff0 <- as.vector(replicate(nsubj, mvtnorm::rmvnorm(1, sigma=S)[1,]))
+    ## round(var(matrix(reff0,ncol=ncol(S),byrow=TRUE)),1)
+    ## reff <- c(t(MASS::mvrnorm(nsubj, mu=rep(0,ncol(S)), Sigma=S)))
+    ## round(var(matrix(reff,ncol=ncol(S),byrow=TRUE)),1)
+    y <- dose + 
+        model.matrix(~0+as.factor(dose):subject)%*%
+            c(t(MASS::mvrnorm(nsubj, mu=rep(0,ncol(S)), Sigma=S)))+
+               rnorm(n, sd=1)
+    doseF <- as.factor(dose)
+    subjectreps <- subject:reps
 })
 qplot(x=dose, y=y, group=subject, data=data, geom=c("point", "line")) + facet_wrap(~reps)
 lmer(y ~ dose + (0+doseF|subject), data)

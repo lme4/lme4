@@ -79,6 +79,7 @@ namespace lme4 {
 	const MVec&          delu() const {return d_delu;}
 	const MVec&         beta0() const {return d_beta0;}
 	const MVec&            u0() const {return d_u0;}
+	const MVec&          Xwts() const {return d_Xwts;}
 
 	int                  info() const {return d_L.info();}
 
@@ -89,6 +90,7 @@ namespace lme4 {
 	void              setDelu(const VectorXd&);
 	void                setU0(const VectorXd&);
 	void         updateDecomp();
+	void         updateDecomp(const MatrixXd*);
 	void              updateL();
 	void         updateLambda(const VectorXd&);
 	void         updateLamtUt();

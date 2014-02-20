@@ -1,37 +1,42 @@
 \name{ranef}
 \alias{ranef}
 \alias{ranef.merMod}
+\alias{dotplot.ranef.mer}
+\alias{qqmath.ranef.mer}
 \title{Extract the modes of the random effects}
 \usage{
   \method{ranef}{merMod} (object, condVar = FALSE,
     drop = FALSE, whichel = names(ans), postVar=FALSE, ...)
+\method{dotplot}{ranef.mer} (x, data, main=TRUE, ...)
+\method{qqmath}{ranef.mer} (x, data, main=TRUE, ...)
 }
 \arguments{
   \item{object}{an object of a class of fitted models with
-  random effects, typically an
-  \code{"\linkS4class{merMod}"} object.}
-
+    random effects, typically a
+    \code{\linkS4class{merMod}} object.}
   \item{condVar}{an optional logical argument indicating if
-  the conditional variance-covariance matrices of the random effects
-  should be added as an attribute.}
-
-  \item{drop}{an optional logical argument indicating
-  components of the return value that would be data frames
-  with a single column, usually a column called
-  \sQuote{\code{(Intercept)}}, should be returned as named
-  vectors.}
-
-  \item{whichel}{an optional character vector of names of
-  grouping factors for which the random effects should be
-  returned.  Defaults to all the grouping factors.}
-
+    the conditional variance-covariance matrices of the random effects
+    should be added as an attribute.}
+  \item{drop}{should components of the return value that would be data frames
+    with a single column, usually a column called
+    \sQuote{\code{(Intercept)}}, be returned as named
+    vectors instead?}
+  \item{whichel}{character vector of names of
+    grouping factors for which the random effects should be
+    returned.}
   \item{postVar}{a (deprecated) synonym for \code{condVar}}
-
-  \item{\dots}{some methods for this generic function
-  require additional arguments.}
+  \item{x}{a random-effects object (of class \code{ranef.mer})
+    produced by \code{ranef}}
+  \item{main}{include a main title, indicating the grouping factor,
+    on each sub-plot?}
+  \item{data}{This argument is required by the \code{dotplot}
+    and \code{qqmath} generic methods, but is not actually used.}
+  \item{\dots}{some methods for these generic functions
+    require additional arguments.}
 }
 \value{
-  A list of data frames, one for each grouping factor for
+  An object of class \code{ranef.mer} composed of
+  a list of data frames, one for each grouping factor for
   the random effects.  The number of rows in the data frame
   is the number of levels of the grouping factor.  The
   number of columns is the dimension of the random effect
@@ -39,8 +44,11 @@
 
   If \code{condVar} is \code{TRUE} each of the data frames
   has an attribute called \code{"postVar"} which is a
-  three-dimensional array with symmetric faces. (The name
-  of this attribute is a historical artifact.)
+  three-dimensional array with symmetric faces; each face
+  contains the variance-covariance matrix for a particular
+  level of the grouping factor. (The name
+  of this attribute is a historical artifact,
+  and may be changed to \code{condVar} at some point in the future.)
 
   When \code{drop} is \code{TRUE} any components that would
   be data frames of a single column are converted to named
@@ -70,12 +78,14 @@
   matrix itself is no longer block diagonal.
 }
 \note{
-  To produce a \dQuote{caterpillar plot} of the random
+  To produce a (list of) \dQuote{caterpillar plots} of the random
   effects apply \code{\link[lattice:xyplot]{dotplot}} to
   the result of a call to \code{ranef} with \code{condVar =
-  TRUE}.
+    TRUE}; \code{\link[lattice:xyplot]{qqmath}} will generate
+  a list of Q-Q plots.
 }
 \examples{
+require(lattice)
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy)
 fm3 <- lmer(diameter ~ (1|plate) + (1|sample), Penicillin)

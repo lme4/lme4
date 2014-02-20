@@ -2,7 +2,7 @@
 \alias{mkMerMod}
 \title{Create a merMod object}
 \usage{
-  mkMerMod(rho, opt, reTrms, fr, mc)
+  mkMerMod(rho, opt, reTrms, fr, mc, lme4conv=NULL)
 }
 \arguments{
   \item{rho}{the environment of the objective function}
@@ -14,6 +14,8 @@
   \item{fr}{model frame}
 
   \item{mc}{matched call from the calling function}
+
+  \item{lme4conv}{lme4-specific convergence information (results of \code{checkConv})}
 }
 \value{
   an object from a class that inherits from

@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title>Wieling test case</title>
+
+<!-- Styles for R syntax highlighter -->
+<style type="text/css">
+   pre .operator,
+   pre .paren {
+     color: rgb(104, 118, 135)
+   }
+
+   pre .literal {
+     color: rgb(88, 72, 246)
+   }
+
+   pre .number {
+     color: rgb(0, 0, 205);
+   }
+
+   pre .comment {
+     color: rgb(76, 136, 107);
+   }
+
+   pre .keyword {
+     color: rgb(0, 0, 255);
+   }
+
+   pre .identifier {
+     color: rgb(0, 0, 0);
+   }
+
+   pre .string {
+     color: rgb(3, 106, 7);
+   }
+</style>
+
+<!-- R syntax highlighter -->
+<script type="text/javascript">
+var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function f(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function b(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function h(t,s){var p="";for(var r=0;r<t.childNodes.length;r++){if(t.childNodes[r].nodeType==3){var q=t.childNodes[r].nodeValue;if(s){q=q.replace(/\n/g,"")}p+=q}else{if(t.childNodes[r].nodeName=="BR"){p+="\n"}else{p+=h(t.childNodes[r])}}}if(/MSIE [678]/.test(navigator.userAgent)){p=p.replace(/\r/g,"\n")}return p}function a(s){var r=s.className.split(/\s+/);r=r.concat(s.parentNode.className.split(/\s+/));for(var q=0;q<r.length;q++){var p=r[q].replace(/^language-/,"");if(e[p]){return p}}}function c(q){var p=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{if(s.childNodes[r].nodeType==1){p.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);p.push({event:"stop",offset:t,node:s.childNodes[r]})}}}}return t})(q,0);return p}function k(y,w,x){var q=0;var z="";var s=[];function u(){if(y.length&&w.length){if(y[0].offset!=w[0].offset){return(y[0].offset<w[0].offset)?y:w}else{return w[0].event=="start"?y:w}}else{return y.length?y:w}}function t(D){var A="<"+D.nodeName.toLowerCase();for(var B=0;B<D.attributes.length;B++){var C=D.attributes[B];A+=" "+C.nodeName.toLowerCase();if(C.value!==undefined&&C.value!==false&&C.value!==null){A+='="'+m(C.value)+'"'}}return A+">"}while(y.length||w.length){var v=u().splice(0,1)[0];z+=m(x.substr(q,v.offset-q));q=v.offset;if(v.event=="start"){z+=t(v.node);s.push(v.node)}else{if(v.event=="stop"){var p,r=s.length;do{r--;p=s[r];z+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);s.splice(r,1);while(r<s.length){z+=t(s[r]);r++}}}}return z+m(x.substr(q))}function j(){function q(x,y,v){if(x.compiled){return}var u;var s=[];if(x.k){x.lR=f(y,x.l||hljs.IR,true);for(var w in x.k){if(!x.k.hasOwnProperty(w)){continue}if(x.k[w] instanceof Object){u=x.k[w]}else{u=x.k;w="keyword"}for(var r in u){if(!u.hasOwnProperty(r)){continue}x.k[r]=[w,u[r]];s.push(r)}}}if(!v){if(x.bWK){x.b="\\b("+s.join("|")+")\\s"}x.bR=f(y,x.b?x.b:"\\B|\\b");if(!x.e&&!x.eW){x.e="\\B|\\b"}if(x.e){x.eR=f(y,x.e)}}if(x.i){x.iR=f(y,x.i)}if(x.r===undefined){x.r=1}if(!x.c){x.c=[]}x.compiled=true;for(var t=0;t<x.c.length;t++){if(x.c[t]=="self"){x.c[t]=x}q(x.c[t],y,false)}if(x.starts){q(x.starts,y,false)}}for(var p in e){if(!e.hasOwnProperty(p)){continue}q(e[p].dM,e[p],true)}}function d(B,C){if(!j.called){j();j.called=true}function q(r,M){for(var L=0;L<M.c.length;L++){if((M.c[L].bR.exec(r)||[null])[0]==r){return M.c[L]}}}function v(L,r){if(D[L].e&&D[L].eR.test(r)){return 1}if(D[L].eW){var M=v(L-1,r);return M?M+1:0}return 0}function w(r,L){return L.i&&L.iR.test(r)}function K(N,O){var M=[];for(var L=0;L<N.c.length;L++){M.push(N.c[L].b)}var r=D.length-1;do{if(D[r].e){M.push(D[r].e)}r--}while(D[r+1].eW);if(N.i){M.push(N.i)}return f(O,M.join("|"),true)}function p(M,L){var N=D[D.length-1];if(!N.t){N.t=K(N,E)}N.t.lastIndex=L;var r=N.t.exec(M);return r?[M.substr(L,r.index-L),r[0],false]:[M.substr(L),"",true]}function z(N,r){var L=E.cI?r[0].toLowerCase():r[0];var M=N.k[L];if(M&&M instanceof Array){return M}return false}function F(L,P){L=m(L);if(!P.k){return L}var r="";var O=0;P.lR.lastIndex=0;var M=P.lR.exec(L);while(M){r+=L.substr(O,M.index-O);var N=z(P,M);if(N){x+=N[1];r+='<span class="'+N[0]+'">'+M[0]+"</span>"}else{r+=M[0]}O=P.lR.lastIndex;M=P.lR.exec(L)}return r+L.substr(O,L.length-O)}function J(L,M){if(M.sL&&e[M.sL]){var r=d(M.sL,L);x+=r.keyword_count;return r.value}else{return F(L,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){y+=L;M.buffer=""}else{if(M.eB){y+=m(r)+L;M.buffer=""}else{y+=L;M.buffer=r}}D.push(M);A+=M.r}function G(N,M,Q){var R=D[D.length-1];if(Q){y+=J(R.buffer+N,R);return false}var P=q(M,R);if(P){y+=J(R.buffer+N,R);I(P,M);return P.rB}var L=v(D.length-1,M);if(L){var O=R.cN?"</span>":"";if(R.rE){y+=J(R.buffer+N,R)+O}else{if(R.eE){y+=J(R.buffer+N,R)+O+m(M)}else{y+=J(R.buffer+N+M,R)+O}}while(L>1){O=D[D.length-2].cN?"</span>":"";y+=O;L--;D.length--}var r=D[D.length-1];D.length--;D[D.length-1].buffer="";if(r.starts){I(r.starts,"")}return R.rE}if(w(M,R)){throw"Illegal"}}var E=e[B];var D=[E.dM];var A=0;var x=0;var y="";try{var s,u=0;E.dM.buffer="";do{s=p(C,u);var t=G(s[0],s[1],s[2]);u+=s[0].length;if(!t){u+=s[1].length}}while(!s[2]);if(D.length>1){throw"Illegal"}return{r:A,keyword_count:x,value:y}}catch(H){if(H=="Illegal"){return{r:0,keyword_count:0,value:m(C)}}else{throw H}}}function g(t){var p={keyword_count:0,r:0,value:m(t)};var r=p;for(var q in e){if(!e.hasOwnProperty(q)){continue}var s=d(q,t);s.language=q;if(s.keyword_count+s.r>r.keyword_count+r.r){r=s}if(s.keyword_count+s.r>p.keyword_count+p.r){r=p;p=s}}if(r.language){p.second_best=r}return p}function i(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function n(t,w,r){var x=h(t,r);var v=a(t);var y,s;if(v){y=d(v,x)}else{return}var q=c(t);if(q.length){s=document.createElement("pre");s.innerHTML=y.value;y.value=k(q,c(s),x)}y.value=i(y.value,w,r);var u=t.className;if(!u.match("(\\s|^)(language-)?"+v+"(\\s|$)")){u=u?(u+" "+v):v}if(/MSIE [678]/.test(navigator.userAgent)&&t.tagName=="CODE"&&t.parentNode.tagName=="PRE"){s=t.parentNode;var p=document.createElement("div");p.innerHTML="<pre><code>"+y.value+"</code></pre>";t=p.firstChild.firstChild;p.firstChild.cN=s.cN;s.parentNode.replaceChild(p.firstChild,s)}else{t.innerHTML=y.value}t.className=u;t.result={language:v,kw:y.keyword_count,re:y.r};if(y.second_best){t.second_best={language:y.second_best.language,kw:y.second_best.keyword_count,re:y.second_best.r}}}function o(){if(o.called){return}o.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=b(r[p]);if(q){n(q,hljs.tabReplace)}}}function l(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",o,false);window.addEventListener("load",o,false)}else{if(window.attachEvent){window.attachEvent("onload",o)}else{window.onload=o}}}var e={};this.LANGUAGES=e;this.highlight=d;this.highlightAuto=g;this.fixMarkup=i;this.highlightBlock=n;this.initHighlighting=o;this.initHighlightingOnLoad=l;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0[xX][a-fA-F0-9]+|(\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)";this.BNR="\\b(0b[01]+)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.ER="(?![\\s\\S])";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.BNM={cN:"number",b:this.BNR,r:0};this.inherit=function(r,s){var p={};for(var q in r){p[q]=r[q]}if(s){for(var q in s){p[q]=s[q]}}return p}}();hljs.LANGUAGES.cpp=function(){var a={keyword:{"false":1,"int":1,"float":1,"while":1,"private":1,"char":1,"catch":1,"export":1,virtual:1,operator:2,sizeof:2,dynamic_cast:2,typedef:2,const_cast:2,"const":1,struct:1,"for":1,static_cast:2,union:1,namespace:1,unsigned:1,"long":1,"throw":1,"volatile":2,"static":1,"protected":1,bool:1,template:1,mutable:1,"if":1,"public":1,friend:2,"do":1,"return":1,"goto":1,auto:1,"void":2,"enum":1,"else":1,"break":1,"new":1,extern:1,using:1,"true":1,"class":1,asm:1,"case":1,typeid:1,"short":1,reinterpret_cast:2,"default":1,"double":1,register:1,explicit:1,signed:1,typename:1,"try":1,"this":1,"switch":1,"continue":1,wchar_t:1,inline:1,"delete":1,alignof:1,char16_t:1,char32_t:1,constexpr:1,decltype:1,noexcept:1,nullptr:1,static_assert:1,thread_local:1,restrict:1,_Bool:1,complex:1},built_in:{std:1,string:1,cin:1,cout:1,cerr:1,clog:1,stringstream:1,istringstream:1,ostringstream:1,auto_ptr:1,deque:1,list:1,queue:1,stack:1,vector:1,map:1,set:1,bitset:1,multiset:1,multimap:1,unordered_set:1,unordered_map:1,unordered_multiset:1,unordered_multimap:1,array:1,shared_ptr:1}};return{dM:{k:a,i:"</",c:[hljs.CLCM,hljs.CBLCLM,hljs.QSM,{cN:"string",b:"'\\\\?.",e:"'",i:"."},{cN:"number",b:"\\b(\\d+(\\.\\d*)?|\\.\\d+)(u|U|l|L|ul|UL|f|F)"},hljs.CNM,{cN:"preprocessor",b:"#",e:"$"},{cN:"stl_container",b:"\\b(deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\\s*<",e:">",k:a,r:10,c:["self"]}]}}}();hljs.LANGUAGES.r={dM:{c:[hljs.HCM,{cN:"number",b:"\\b0[xX][0-9a-fA-F]+[Li]?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+(?:[eE][+\\-]?\\d*)?L\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+\\.(?!\\d)(?:i\\b)?",e:hljs.IMMEDIATE_RE,r:1},{cN:"number",b:"\\b\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"keyword",b:"(?:tryCatch|library|setGeneric|setGroupGeneric)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\.",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\d+(?![\\w.])",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\b(?:function)",e:hljs.IMMEDIATE_RE,r:2},{cN:"keyword",b:"(?:if|in|break|next|repeat|else|for|return|switch|while|try|stop|warning|require|attach|detach|source|setMethod|setClass)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"literal",b:"(?:NA|NA_integer_|NA_real_|NA_character_|NA_complex_)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"literal",b:"(?:NULL|TRUE|FALSE|T|F|Inf|NaN)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"identifier",b:"[a-zA-Z.][a-zA-Z0-9._]*\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"<\\-(?!\\s*\\d)",e:hljs.IMMEDIATE_RE,r:2},{cN:"operator",b:"\\->|<\\-",e:hljs.IMMEDIATE_RE,r:1},{cN:"operator",b:"%%|~",e:hljs.IMMEDIATE_RE},{cN:"operator",b:">=|<=|==|!=|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||\\$|:",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"%",e:"%",i:"\\n",r:1},{cN:"identifier",b:"`",e:"`",r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE],r:0},{cN:"paren",b:"[[({\\])}]",e:hljs.IMMEDIATE_RE,r:0}]}};
+hljs.initHighlightingOnLoad();
+</script>
+
+<!-- MathJax scripts -->
+<script type="text/javascript" src="https://c328740.ssl.cf1.rackcdn.com/mathjax/2.0-latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 12px;
+   margin: 8px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 { 
+   font-size:2.2em; 
+}
+
+h2 { 
+   font-size:1.8em; 
+}
+
+h3 { 
+   font-size:1.4em; 
+}
+
+h4 { 
+   font-size:1.0em; 
+}
+
+h5 { 
+   font-size:0.9em; 
+}
+
+h6 { 
+   font-size:0.8em; 
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre {	
+   margin-top: 0;
+   max-width: 95%;
+   border: 1px solid #ccc;
+   white-space: pre-wrap;
+}
+
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code.r, code.cpp {
+   background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * { 
+      background: transparent !important; 
+      color: black !important; 
+      filter:none !important; 
+      -ms-filter: none !important; 
+   }
+
+   body { 
+      font-size:12pt; 
+      max-width:100%; 
+   }
+       
+   a, a:visited { 
+      text-decoration: underline; 
+   }
+
+   hr { 
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote { 
+      padding-right: 1em; 
+      page-break-inside: avoid; 
+   }
+
+   tr, img { 
+      page-break-inside: avoid; 
+   }
+
+   img { 
+      max-width: 100% !important; 
+   }
+
+   @page :left { 
+      margin: 15mm 20mm 15mm 10mm; 
+   }
+     
+   @page :right { 
+      margin: 15mm 10mm 15mm 20mm; 
+   }
+
+   p, h2, h3 { 
+      orphans: 3; widows: 3; 
+   }
+
+   h2, h3 { 
+      page-break-after: avoid; 
+   }
+}
+</style>
+
+
+
+</head>
+
+<body>
+<h2>Wieling test case</h2>
+
+<p>(This R code can be run via <code>R CMD BATCH</code> or alternately via knitr::spin
+ to create nicely formatted output.  Rather than use knitr&#39;s caching
+ mechanism we explicitly create a wieling_batch1.RData file, so
+ delete this file if you want to update the output &hellip;)</p>
+
+<pre><code class="r">pkgs &lt;- c(&quot;lme4&quot;,&quot;optimx&quot;,&quot;lme4.0&quot;,&quot;nloptr&quot;)
+invisible(lapply(pkgs,library,character.only=TRUE))
+print(sapply(pkgs,function(x) as.character(packageVersion(x))),quote=FALSE)
+</code></pre>
+
+<pre><code>##       lme4     optimx     lme4.0     nloptr 
+##      1.1.2   2013.8.6 0.999999.4      0.9.6
+</code></pre>
+
+<p>Wrapper to make <code>nloptwrap</code> look the way <code>glmer</code> wants it to</p>
+
+<pre><code class="r">nloptwrap2 &lt;- function(fn,par,lower,upper,control=list(),...) {
+    ## use DMB&#39;s suggested setting of xtol_rel=1e-6
+    if (is.null(control$xtol_rel)) control$xtol_rel &lt;- 1e-6
+    if (is.null(control$maxeval)) control$maxeval &lt;- 1e5
+    res &lt;- nloptr(x0=par,eval_f=fn,lb=lower,ub=upper,opts=control,...)
+    with(res,list(par=solution,
+                  fval=objective,
+                  feval=iterations,
+                  conv=if (status&gt;0) 0 else status,
+                  message=message))
+}
+</code></pre>
+
+<pre><code class="r">( load(&quot;dialectNL.rda&quot;) ) # &quot;dialectNL
+</code></pre>
+
+<pre><code>## [1] &quot;dialectNL&quot;
+</code></pre>
+
+<pre><code class="r">## str(dialectNL)
+
+## Find more factors: which are integer or half-integer?
+which(isI &lt;- sapply(dialectNL, function(x) !is.factor(x) &amp;&amp;
+                    isTRUE(all.equal(2 * x, round(2 * x), tol=1e-12))))
+</code></pre>
+
+<pre><code>##     WordIsNounOrAdverb       SpeakerBirthYear SpeakerEmploymentLevel 
+##                     12                     32                     34 
+##   SpeakerRecordingYear      FieldworkerIsMale 
+##                     35                     37
+</code></pre>
+
+<p>Five of them (this one has quite interesting values &hellip;)</p>
+
+<pre><code class="r">with(dialectNL, table(SpeakerIsMale))
+</code></pre>
+
+<pre><code>## SpeakerIsMale
+##      0   0.33    0.5   0.75      1 
+##  60708    555   3243    513 150082
+</code></pre>
+
+<pre><code class="r">
+dialectNL[isI] &lt;- lapply(dialectNL[isI], as.factor)
+str(dialectNL)
+</code></pre>
+
+<pre><code>## &#39;data.frame&#39;:    225866 obs. of  37 variables:
+##  $ Word                                 : Factor w/ 559 levels &quot;aarde&quot;,&quot;aardig&quot;,..: 1 294 491 408 421 205 147 310 309 451 ...
+##  $ Transcriber                          : Factor w/ 30 levels &quot;AC&quot;,&quot;AG&quot;,&quot;AJ&quot;,..: 5 5 5 5 5 5 5 5 5 5 ...
+##  $ Location                             : Factor w/ 424 levels &quot;Aalsmeer NH&quot;,..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ PronDistStdDutch                     : num  -3.64 -4.1 -4.15 -4.23 -4.61 ...
+##  $ PronDistStdDutch.c                   : num  0.458844 -0.000354 -0.050167 -0.125181 -0.502366 ...
+##  $ Longitude                            : num  4.76 4.76 4.76 4.76 4.76 ...
+##  $ Latitude                             : num  52.3 52.3 52.3 52.3 52.3 ...
+##  $ Geo                                  : num  -0.192 -0.192 -0.192 -0.192 -0.192 ...
+##  $ WordFreq.log                         : num  8.78 5.28 6.58 6.95 3.76 ...
+##  $ WordFreq.log.z                       : num [1:225866, 1] 0.819 -1.025 -0.339 -0.147 -1.829 ...
+##  $ WordCategory                         : Factor w/ 4 levels &quot;N&quot;,&quot;A&quot;,&quot;B&quot;,&quot;V&quot;: 1 1 1 2 1 4 2 3 3 2 ...
+##  $ WordIsNounOrAdverb                   : Factor w/ 2 levels &quot;0&quot;,&quot;1&quot;: 2 2 2 1 2 1 1 2 2 1 ...
+##  $ WordLength.log                       : num  1.39 1.61 1.95 1.61 1.61 ...
+##  $ WordLength.log.z                     : num [1:225866, 1] -0.555 0.348 1.709 0.348 0.348 ...
+##  $ WordVCratio.log                      : num  0 -0.405 -0.288 -0.405 -0.405 ...
+##  $ WordVCratio.log.z                    : num [1:225866, 1] 0.58618 -0.24457 -0.00325 -0.24457 -0.24457 ...
+##  $ PopSize.log                          : num  9.26 9.26 9.26 9.26 9.26 ...
+##  $ PopSize.log.z                        : num [1:225866, 1] 0.616 0.616 0.616 0.616 0.616 ...
+##  $ PopSize.log_residGeo                 : num  0.266 0.266 0.266 0.266 0.266 ...
+##  $ PopSize.log_residGeo.z               : num [1:225866, 1] 0.191 0.191 0.191 0.191 0.191 ...
+##  $ PopAvgIncome.log                     : num  9.21 9.21 9.21 9.21 9.21 ...
+##  $ PopAvgIncome.log.z                   : num [1:225866, 1] 1.92 1.92 1.92 1.92 1.92 ...
+##  $ PopAvgIncome.log_residGeo            : num  0.106 0.106 0.106 0.106 0.106 ...
+##  $ PopAvgIncome.log_residGeo.z          : num [1:225866, 1] 1.28 1.28 1.28 1.28 1.28 ...
+##  $ PopAvgAge                            : num  40.2 40.2 40.2 40.2 40.2 ...
+##  $ PopAvgAge.z                          : num [1:225866, 1] 1.7 1.7 1.7 1.7 1.7 ...
+##  $ PopAvgAge_residPopAvgIncome.log_Geo  : num  3.45 3.45 3.45 3.45 3.45 ...
+##  $ PopAvgAge_residPopAvgIncome.log_Geo.z: num [1:225866, 1] 1.72 1.72 1.72 1.72 1.72 ...
+##  $ PopMaleFemaleRatio                   : num  0.95 0.95 0.95 0.95 0.95 0.95 0.95 0.95 0.95 0.95 ...
+##  $ PopMaleFemaleRatio.z                 : num [1:225866, 1] -0.895 -0.895 -0.895 -0.895 -0.895 ...
+##  $ SpeakerIsMale                        : num  1 1 1 1 1 1 1 1 1 1 ...
+##  $ SpeakerBirthYear                     : Factor w/ 47 levels &quot;1902&quot;,&quot;1904&quot;,..: 20 20 20 20 20 20 20 20 20 20 ...
+##  $ SpeakerBirthYear.z                   : num [1:225866, 1] -0.0612 -0.0612 -0.0612 -0.0612 -0.0612 ...
+##  $ SpeakerEmploymentLevel               : Factor w/ 2 levels &quot;1&quot;,&quot;2&quot;: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ SpeakerRecordingYear                 : Factor w/ 15 levels &quot;1979&quot;,&quot;1980&quot;,..: 5 5 5 5 5 5 5 5 5 5 ...
+##  $ SpeakerRecordingYear.z               : num [1:225866, 1] -1.3 -1.3 -1.3 -1.3 -1.3 ...
+##  $ FieldworkerIsMale                    : Factor w/ 3 levels &quot;0&quot;,&quot;0.5&quot;,&quot;1&quot;: 1 1 1 1 1 1 1 1 1 1 ...
+</code></pre>
+
+<pre><code class="r">
+fullForm &lt;- PronDistStdDutch.c ~ Geo + PopSize.log_residGeo.z +
+    PopAvgAge_residPopAvgIncome.log_Geo.z +
+    PopAvgIncome.log_residGeo.z + WordFreq.log.z +
+    WordIsNounOrAdverb + WordVCratio.log.z +
+    (1 | Word) +
+    (0 + PopSize.log_residGeo.z + PopAvgAge_residPopAvgIncome.log_Geo.z + PopAvgIncome.log_residGeo.z | Word) +
+    (1 + WordFreq.log.z + WordIsNounOrAdverb | Location) +
+    (1 | Transcriber)
+
+sampfrac &lt;- 0.01
+ntot &lt;- nrow(dialectNL)
+set.seed(101)
+## random subset of 1% :
+subdat &lt;- dialectNL[sample(round(sampfrac*ntot)),]
+
+fitLme4.0 &lt;- function(data=subdat) {
+    tval &lt;- system.time(fit &lt;- lme4.0::lmer(fullForm, data=data))
+    list(time=tval, fit=fit)
+}
+
+fitLme4 &lt;- function(optCtrl=list(), optimizer, data=subdat) {
+    tval &lt;- system.time(fit &lt;- lme4::lmer(fullForm,data=data,
+          control=lmerControl(optimizer=optimizer, optCtrl=optCtrl)))
+    list(time=tval, fit=fit)
+}
+
+## use this rather than the nloptwrap2 control above so that
+## the control settings are recorded in the fitted object ...
+nlopt &lt;- function(algorithm,xtol_rel=1e-6,maxeval=1e5) {
+    list(algorithm=algorithm,xtol_rel=xtol_rel,maxeval=maxeval)
+}
+argList &lt;-
+    list(
+        nm1=list(optimizer=&quot;Nelder_Mead&quot;),
+        nm2=list(optimizer=&quot;Nelder_Mead&quot;,optCtrl=list(maxfun=1e5)),
+        bobyqa1=list(optimizer=&quot;bobyqa&quot;),
+        nlminb=list(optimizer=&quot;optimx&quot;,optCtrl=list(method=&quot;nlminb&quot;)),
+        lbfgsb=list(optimizer=&quot;optimx&quot;,optCtrl=list(method=&quot;L-BFGS-B&quot;)),
+        ## nloptr derivative-free choices
+        nloptbobyqa=list(optimizer=&quot;nloptwrap2&quot;,
+            optCtrl=nlopt(&quot;NLOPT_LN_BOBYQA&quot;)),
+        nloptcobyla=list(optimizer=&quot;nloptwrap2&quot;,
+            optCtrl=nlopt(&quot;NLOPT_LN_COBYLA&quot;)),
+        nloptNM=list(optimizer=&quot;nloptwrap2&quot;,
+            optCtrl=nlopt(&quot;NLOPT_LN_NELDERMEAD&quot;)),
+        nloptsubplex=list(optimizer=&quot;nloptwrap2&quot;,
+            optCtrl=nlopt(&quot;NLOPT_LN_SBPLX&quot;))
+        )
+</code></pre>
+
+<pre><code class="r">if (!file.exists(batchfn)) {
+    fitList0 &lt;- fitLme4.0()
+    fitList1 &lt;- lapply(argList, do.call, what=fitLme4)
+    save(&quot;fitList0&quot;,&quot;fitList1&quot;,
+         file=batchfn)
+}
+load(batchfn)
+</code></pre>
+
+<pre><code>## Timing:
+</code></pre>
+
+<pre><code>##              user.self sys.self elapsed nevals
+## nloptNM          64.77    0.108   69.92   6553
+## nloptbobyqa      12.22    0.056   23.44   1164
+## lme4.0           26.08    0.168   30.19     NA
+## nlminb           26.46    3.444   51.76   1579
+## nloptcobyla     131.05    0.180  190.83  13114
+## bobyqa1          14.07    0.024   23.58   1370
+## lbfgsb           24.83    0.180   35.70    106
+## nloptsubplex    977.88    1.208 1145.48 100000
+## nm2             167.70    0.432  238.77  16374
+## nm1             101.46    0.048  137.80  10001
+</code></pre>
+
+<pre><code>##               REML      (In)       Geo       PS._      PAA_       PAI.    WF..    WINO    WVC.
+## nloptNM      337.5 -0.029976    1.2408   -0.06182   0.10450 -5.323e-02 0.01742 0.02257 0.06792
+## nloptbobyqa  337.5 -0.091413    0.2997   -0.14779  -0.05501  4.813e-02 0.01742 0.02257 0.06792
+## lme4.0       337.5 -0.008725    1.2869   -0.01518   0.07848 -3.893e-02 0.01742 0.02257 0.06792
+## nlminb       337.5  0.046412    1.4073    0.10579   0.01121 -1.978e-03 0.01742 0.02257 0.06792
+## nloptcobyla  337.5 -0.013936    1.0799   -0.01478   0.02799 -7.871e-03 0.01742 0.02257 0.06792
+## bobyqa1      337.5 -0.175684    1.5248   -0.41794   0.45728 -2.573e-01 0.01742 0.02256 0.06792
+## lbfgsb       337.5 -0.009024    1.2893   -0.01600   0.07973 -3.966e-02 0.01742 0.02256 0.06793
+## nloptsubplex 337.6  0.021449    0.0519    0.12836  -0.33516  2.092e-01 0.01741 0.02285 0.06782
+## nm2          339.0 -8.170198 1310.6653 -104.64172 402.73605 -2.516e+02 0.01758 0.02204 0.06758
+## nm1          351.3 -0.173689    3.9399   -0.74453   1.39751 -1.100e+00 0.02278 0.05465 0.06754
+</code></pre>
+
+<h3>Notes/conclusion</h3>
+
+<ul>
+<li><code>lme4.0</code>, and <code>L-BFGS-B</code> get similar parameters and log-likelihoods</li>
+<li><code>bobyqa1</code> (via <code>minqa</code>/built-in) and <code>nlminb</code> get similar log-likelihoods, but different parameters</li>
+<li><code>nm2</code> (built-in Nelder-Mead with <code>maxfun</code> extended to 1e5) gets slightly worse logLik and bogus parameters</li>
+<li><code>nm1</code> (built-in Nelder-Mead with default <code>maxfun=1e4</code>) gets stuck, bad LL and parameters; we get a convergence warning, but I think there&#39;s a glitch somewhere because the <code>@optinfo$conv</code> flag isn&#39;t set??</li>
+</ul>
+
+<pre><code class="r">fits[[&quot;nm1&quot;]]@optinfo
+</code></pre>
+
+<pre><code>## $optimizer
+## [1] &quot;Nelder_Mead&quot;
+## 
+## $control
+## $control$verbose
+## [1] 0
+## 
+## 
+## $conv
+## [1] 0
+## 
+## $feval
+## [1] 10001
+## 
+## $warnings
+## $warnings[[1]]
+## [1] &quot;failure to converge in 10000 evaluations&quot;
+</code></pre>
+
+<h3>To do</h3>
+
+<ul>
+<li>could make caching more flexible (re-run individual models rather than all or nothing)</li>
+<li>make sure number of evals is saved in output, show results for all models</li>
+<li>look at slices to explore the likelihood/deviance surface (will be slooow &ndash; approx 400*7*13 evaluations for good slices)</li>
+</ul>
+
+<pre><code class="r">## dd &lt;- update(fits[[&quot;nm1&quot;]],devFunOnly=TRUE)  ## FAILS (bad stuff with finding optCtrl in environments ...)
+dd &lt;- lme4::lmer(fullForm,data=subdat,devFunOnly=TRUE)
+lbound &lt;- lme4:::getME(fits[[&quot;nm1&quot;]],&quot;lower&quot;)
+res &lt;- nloptr(x0=rep(1,14),eval_f=dd,lb=lbound,opts=nlopt(&quot;NLOPT_LN_BOBYQA&quot;))
+</code></pre>
+
+</body>
+
+</html>

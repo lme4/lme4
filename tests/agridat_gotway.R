@@ -1,6 +1,9 @@
 library(testthat)
 ## require(agridat)
 ## dat <- gotway.hessianfly
+
+## don't actually use gotway_hessianfly_fit or gotway_hessianfly_prof,
+## so we should be OK even with R< 3.0.1
 load(system.file("testdata","gotway_hessianfly.rda",package="lme4"))
 # Block random.  See Glimmix manual, output 1.18.
 # Note: (Different parameterization)
@@ -21,14 +24,20 @@ lme4.0fit <- structure(list(fixef = structure(c(1.50345713031203, -0.19385325938
 
 ## start doesn't work because we don't get there
 library(lme4)
-m1 <- glmer(cbind(y, n-y) ~ gen + (1|block), data=gotway.hessianfly, family=binomial,
-                 control=glmerControl(check.numlev.gtreq.5="ignore"))
+m1 <- glmer(cbind(y, n-y) ~ gen + (1|block), data=gotway.hessianfly,
+            family=binomial)
+m1B <- update(m1,control=glmerControl(optimizer="bobyqa"))
+max(abs(m1@optinfo$derivs$gradient))  ## 0.0012
+max(abs(m1B@optinfo$derivs$gradient)) ## 2.03e-5
+abs(m1@optinfo$derivs$gradient)/abs(m1B@optinfo$derivs$gradient)
+## bobyqa gets gradients *at least* 1.64* lower
+
 lme4fit <- list(fixef=fixef(m1),theta=getME(m1,"theta"))
 
 ## hack around slight naming differences
 lme4fit$theta <- unname(lme4fit$theta)
 lme4.0fit$theta <- unname(lme4.0fit$theta)
-expect_equal(lme4fit,lme4.0fit,tol=1e-4)
+expect_equal(lme4fit,lme4.0fit,tolerance=3e-4)
 
 ## Fun stuff: visualize and alternative model
 
@@ -42,17 +51,4 @@ expect_equal(lme4fit,lme4.0fit,tol=1e-4)
 
 ## dat$obs <- factor(seq(nrow(dat)))
 ## m2 <- glmer(cbind(y, n-y) ~ block+ (1|gen) + (1|obs), data=dat, family=binomial)
-
-if (FALSE) {
-    c1 <- lmerControl(check.numlev.gtreq.5="ignore")
-    c2 <- glmerControl(check.numlev.gtreq.5="ignore")
-    c3 <- glmerControl(check.numlev.gtreq.5="ignore",optimizer="Nelder_Mead")
-
-    ## n.b. we still get wonky answers when we use `lmerControl` instead of `glmerControl`.
-    ## add an attribute/type to the control list?
-    update(m1,control=c1)
-    update(m1,control=c2)
-    update(m1,control=c3)
-}
-
 

@@ -23,7 +23,7 @@
 ##' \item parametric bootstrap confidence intervals and model comparisons via \code{\link{bootMer}} (or \code{PBmodcomp} in the \code{pbkrtest} package) (MC/CI,*,+)
 ##' \item for random effects, simulation tests via the \code{RLRsim} package (MC,*)
 ##' \item for fixed effects, F tests via Kenward-Roger approximation using \code{KRmodcomp} from the \code{pbkrtest} package (MC)
-##' \item \code{car::Anova} and \code{lmerTest::anova} provide wrappers for \code{pbkrtest}: the latter also provides t tests via the Satterthwaite approximation (P,*)
+##' \item \code{car::Anova} and \code{lmerTest::anova} provide wrappers for \code{pbkrtest}. \code{lmerTest::anova} also provides t tests via the Satterthwaite approximation (P,*)
 ##' }
 ##' In the list above, the methods marked \code{MC} provide explicit model comparisons; \code{CI} denotes confidence intervals; and \code{P} denotes parameter-level or sequential tests of all effects in a model. The starred (*) suggestions provide finite-size corrections (important when the number of groups is <50); those marked (+) support GLMMs as well as LMMs.
 ##' 

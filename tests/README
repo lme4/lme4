@@ -1,7 +1,7 @@
 Catalog of currently-failing examples (commented out, testsx, etc.):
 
 glmmExt.R: "fail for MM" on Gaussian/inverse examples -- seems fine for me
-lmer.R: sstudy9 example.  Should *not* work; is a meaningful error message possible?
+lmer-0.R: sstudy9 example.  Should *not* work; is a meaningful error message possible?
 prLogistic.R: Thailand/clustered-data example from ?prLogisticDelta example in prLogistic package
            Presumably the problem is that 100/411 random-effect levels have only zeros -- but should this mess things up?
            glmmML and lme4.0 give nearly identical answers

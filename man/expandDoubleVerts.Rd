@@ -15,6 +15,13 @@
  expand terms with the double vertical bar operator
  into separate, independent random effect terms.
 }
+\examples{
+  f <- y ~ x + (x || g)
+  # the right-hand side of f is,
+  f[[3]]
+  # the expanded right-hand side,
+  expandDoubleVerts(f[[3]])
+}
 \seealso{
   \code{\link{formula}}, \code{\link{model.frame}},
   \code{\link{model.matrix}}.

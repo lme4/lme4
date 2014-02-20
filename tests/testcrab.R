@@ -47,7 +47,7 @@ p1X <- c(0.681301656652347, -1.14775239687404, 0.436143018123226,
 0.624173873057839, -1.7908793509579, -2.44540201631615, -1.42365990002708, 
 -2.26780929006268, 0.700928084600075, -1.26220238391029, 0.369024582097804, 
 3.44325347343035, 2.26400391093108)
-stopifnot(all.equal(unname(p1),p1X,tol=0.03))
+stopifnot(all.equal(unname(p1),p1X,tolerance=0.03))
 dfun(p1X)
 dfun(p1)
 ## ~ 1.8 seconds elapsed time
@@ -65,7 +65,7 @@ lme4.0_res <-
           "crab.speciesS:crab.sizeS:snail.sizeS", 
           "crab.speciesS:crab.sizeM:snail.sizeS", "", "", "", ""))
 
-stopifnot(all.equal(res1,lme4.0_res,tol=0.015))
+stopifnot(all.equal(res1,lme4.0_res,tolerance=0.015))
 
 
 ## library("glmmADMB")
@@ -83,4 +83,4 @@ glmmADMB_res <- structure(c(2.7773101267224, 0.609026276823218, -1.6005570463471
 "crab.sizeS:snail.sizeS", "crab.sizeM:snail.sizeS", "crab.speciesS:crab.sizeS:snail.sizeS", 
 "crab.speciesS:crab.sizeM:snail.sizeS", "", "", "", ""))
 
-stopifnot(all.equal(res1B,glmmADMB_res,tol=0.015))
+stopifnot(all.equal(res1B,glmmADMB_res,tolerance=0.015))

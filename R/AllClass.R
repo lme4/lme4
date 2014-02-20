@@ -1,6 +1,4 @@
 ### Class definitions for the package
-##' @useDynLib lme4 .registration=TRUE
-NULL
 
 ##' Class "lmList" of 'lm' Objects on Common Model
 ##'
@@ -73,10 +71,12 @@ merPredD <-
                      delu    = "numeric",
                      theta   = "numeric",
                      thfun   = "function",
+                     phi     = "numeric",
+                     phifun1 = "function",
                      u0      = "numeric"),
                 methods =
                 list(
-                    initialize = function(X, Zt, Lambdat, thfun, theta, n, ...) {
+                    initialize = function(X, Zt, Lambdat, thfun, theta, n, phifun1, phi, ...) {
                         if (!nargs()) return
                         X <<- as(X, "matrix")
                         Zt <<- as(Zt, "dgCMatrix")
@@ -94,12 +94,14 @@ merPredD <-
                         Vtr <<- numeric(p)
                         b0 <- list(...)$beta0
                         beta0 <<- if (is.null(b0)) numeric(p) else b0
+                        phi <<- phi
+                        phifun1 <<- as.function(phifun1)
                         delb <<- numeric(p)
                         delu <<- numeric(q)
                         uu <- list(...)$u0
                         u0 <<- if (is.null(uu)) numeric(q) else uu
                         Ut <<- if (n == N) Zt + 0 else
-                        Zt %*% sparseMatrix(i=seq_len(N), j=as.integer(gl(n, 1, N)), x=rep.int(1,N))
+                            Zt %*% sparseMatrix(i=seq_len(N), j=as.integer(gl(n, 1, N)), x=rep.int(1,N))
                         ## The following is a kludge to overcome problems when Zt is square
                         ## by making LamtUt rectangular
                         LtUt <- Lambdat %*% Ut
@@ -187,7 +189,8 @@ merPredD <-
                                       LamtUt, RZX, Ut, Utr, V, VtV, Vtr,
                                       Xwts, Zt, beta0, delb, delu, u0)
                         .Call(merPredDupdateXwts, Ptr, Xwts)
-                        .Call(merPredDupdateDecomp, Ptr)
+                        #.Call(merPredDupdateDecomp, Ptr) # on old flexLambda
+                        .Call(merPredDupdateDecomp, Ptr, NULL) # on master
                     },
                     ptr          = function() {
                         'returns the external pointer, regenerating if necessary'
@@ -199,6 +202,10 @@ merPredD <-
                     setTheta     = function(th) {
                         'install a new theta'
                         theta[] <<- th
+                    },
+                    setPhi     = function(phi) {
+                        'install a new phi'
+                        phi[] <<- phi
                     },
 
                     setBeta0     = function(beta0) {
@@ -257,7 +264,7 @@ merPredD <-
                         'update Ut and V from Zt and X using X weights'
                         .Call(merPredDupdateXwts, ptr(), wts)
                     }
-                    )
+                    ) # don't know if this bracket is right??
                 )
 merPredD$lock("Lambdat", "LamtUt", "RZX", "Ut", "Utr", "V", "VtV", "Vtr",
               "X", "Xwts", "Zt", "beta0", "delb", "delu", "u0")
@@ -374,7 +381,7 @@ lmResp <-                               # base class for response modules
                                 assign(field, current, envir = vEnv)
                             }
                         }
-                        do.call(new, c(as.list(vEnv), Class=def))
+                        do.call("new", c(as.list(vEnv), Class=def))
                     },
                     initializePtr = function() {
                         Ptr <<- .Call(lm_Create, y, weights, offset, mu, sqrtXwt,
@@ -473,9 +480,9 @@ lmerResp <-
                              if (.Call(isNullExtPtr, Ptr)) initializePtr()
                          Ptr
                      },
-                     objective  = function(ldL2, ldRX2, sqrL) {
+                     objective  = function(ldL2, ldRX2, sqrL, sigma.sq = NULL) {
                          'returns the profiled deviance or REML criterion'
-                         .Call(lmer_Laplace, ptr, ldL2, ldRX2, sqrL)
+                         .Call(lmer_Laplace, ptr(), ldL2, ldRX2, sqrL, sigma.sq)
                      })
                 )
 
@@ -798,29 +805,10 @@ golden <-
 ##'
 NULL
 
-##' Generator object for the Nelder-Mead optimizer class.
-##'
-##' The generator objects for the \code{\linkS4class{NelderMead}} class of
-##' optimizers subject to box constraints and using reverse communications.
-##'
-##' @rdname NelderMead
-##' @param \dots Argument list (see Note below).
-##' @section Methods:
-##'     \describe{\code{NelderMead$new(lower, upper, xst, x0, xt)}}{Create a new
-##'          \code{\linkS4class{NelderMead}} object}
-##' @seealso \code{\linkS4class{NelderMead}}
-##' @note Arguments to the \code{new} method must be named arguments:
-##' \describe{
-##' \item{lower}{numeric vector of lower bounds - elements may be \code{-Inf}.}
-##' \item{upper}{numeric vector of upper bounds - elements may be \code{Inf}.}
-##' \item{xst}{numeric vector of initial step sizes to establish the simplex -
-##'     all elements must be non-zero.}
-##' \item{x0}{numeric vector of starting values for the parameters.}
-##' \item{xt}{numeric vector of tolerances on the parameters.}
-##' }
-
-##' @keywords classes
-##' @export
+## Generator object for the Nelder-Mead optimizer class  "NelderMead"
+##
+## A reference class for a Nelder-Mead simplex optimizer allowing box
+## constraints on the parameters and using reverse communication.
 NelderMead <-
     setRefClass("NelderMead", # Reverse communication implementation of Nelder-Mead simplex optimizer
                 fields =
@@ -872,25 +860,7 @@ NelderMead <-
                      xpos         = function()         .Call(NelderMead_xpos, ptr())
                      )
             )
-##' Class \code{"NelderMead"}
-##'
-##' A reference class for a Nelder-Mead simplex optimizer allowing box
-##' constraints on the parameters and using reverse communication.
-##'
-##' @docType class
-##' @name NelderMead-class
-##' @note This is the default optimizer for the second stage of
-##' \code{\link{glmer}} and \code{\link{nlmer}} fits.  We found that it was more
-##' reliable and often faster than more sophisticated optimizers.
-##' @section Extends: All reference classes extend and inherit methods from
-##' \code{"\linkS4class{envRefClass}"}.
-##' @seealso \code{\link{glmer}}, \code{\link{nlmer}}
-##' @references Based on code in the NLopt collection.
-##' @keywords classes
-##' @examples
-##'
-##' showClass("NelderMead")
-NULL
+
 
 ##' Class "merMod" of Fitted Mixed-Effect Models
 ##'
@@ -968,17 +938,19 @@ rePos <-
     setRefClass("rePos",
                 fields =
                 list(
-                     cnms    = "list",
-                     flist   = "list",
-                     ncols   = "integer",
-                     nctot   = "integer",
-                     nlevs   = "integer",
-                     offsets = "integer",
-                     terms   = "list"
+                     cnms    = "list", # component names (components are terms within a RE term)
+                     flist   = "list", # list of grouping factors used in the random-effects terms
+                     ncols   = "integer", # number of components for each RE term
+                     nctot   = "integer", # total number of components per factor
+                     nlevs   = "integer", # number of levels for each unique factor
+                     offsets = "integer", # points to where each term starts
+                     terms   = "list" # list with one element per factor, indicating corresponding term
                      ),
                 methods =
                 list(
                      initialize = function(mer, ...) {
+                         ##' asgn indicates unique elements of flist
+                         ##' 
                          stopifnot((ntrms <- length(Cnms <- mer@cnms)) > 0L,
                                    (length(Flist <- mer@flist)) > 0L,
                                    length(asgn  <- as.integer(attr(Flist, "assign"))) == ntrms)
@@ -987,6 +959,7 @@ rePos <-
                          ncols   <<- unname(vapply(cnms, length, 0L))
                          nctot   <<- unname(as.vector(tapply(ncols, asgn, sum)))
                          nlevs   <<- unname(vapply(flist, function(el) length(levels(el)), 0L))
+                         # why not replace the sapply with ncols*nlevs[asgn] ??
                          offsets <<- c(0L, cumsum(sapply(seq_along(asgn),
                                                          function(i) ncols[i] * nlevs[asgn[i]])))
                          terms   <<- lapply(seq_along(flist), function(i) which(asgn == i))
@@ -1096,7 +1069,7 @@ vcRep <-
                                    all(names(CV) == names(covar)),
                                    all(sapply(CV, isSymmetric)),
                                    all(sapply(CV, ncol) == covsiz))
-                         if (!all(sapply(cnms, length) == covsiz))
+                         if (!all(vapply(cnms, length, 1L) == covsiz))
                              error("setRECovar currently requires distinct grouping factors")
                          theta <<- sapply(CV, function(mm)
                                       {

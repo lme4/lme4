@@ -1,9 +1,13 @@
 library("testthat")
 library("lme4")
 context("specifying starting values")
+
+## is "Nelder_Mead" default optimizer?
+isNM <- formals(lmerControl)$optimizer == "Nelder_Mead"
+
 test_that("lmer", {
     frm <- as.formula("Reaction ~ Days + (Days|Subject)")
-    ctrl <- lmerControl(maxfun=50)
+    ctrl <- lmerControl(optCtrl=list(maxfun= if(isNM) 50 else 100))
     x <- suppressWarnings(lmer(frm, data=sleepstudy, control=ctrl, REML=FALSE))
     x2 <- suppressWarnings(update(x,start=c(1,0,1)))
     x3 <- suppressWarnings(update(x,start=list(theta=c(1,0,1))))
@@ -15,15 +19,21 @@ test_that("lmer", {
     expect_error(update(x,start=list(Theta=c(1,0,1))),"incorrect components")
     th0 <- getME(x,"theta")
     y <- suppressWarnings(update(x,start=th0))
-    expect_equal(AIC(x), 1768.025, tol=1e-6)
-    expect_equal(AIC(y), 1763.949, tol=1e-6)
+    if(isNM) {
+        expect_equal(AIC(x), 1768.025, tolerance=1e-6)
+        expect_equal(AIC(y), 1763.949, tolerance=1e-6)
+    } else { ## only "bobyqa" tested:
+        expect_equal(AIC(x), 1763.939344, tolerance=1e-6)
+        expect_equal(AIC(x), AIC(y))
+    }
+    if(isNM)
     expect_equal(suppressWarnings(optimizeLmer(ff,control=list(maxfun=50),start=c(1,0,1))$fval),
                  unname(deviance(x)))
     expect_equal(suppressWarnings(optimizeLmer(ff,control=list(maxfun=50),start=th0)$fval),
                  unname(deviance(y)))
 })
 test_that("glmer", {
-    ctrl <- glmerControl(maxfun=50)
+    ctrl <- glmerControl(optCtrl=list(maxfun=50))
     x <- suppressWarnings(glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                    data = cbpp, family = binomial, control=ctrl))
     ## theta only
@@ -44,7 +54,7 @@ test_that("glmer", {
     x4@call <- x@call
     expect_equal(x,x4)
     x5 <- suppressWarnings(update(x,start=list(theta=1,fixef=rep(0,4))))
-    expect_equal(AIC(x5),221.5823,tol=1e-6)
+    expect_equal(AIC(x5),221.5823,tolerance=1e-6)
     x6 <- expect_error(update(x,start=list(theta=1,fixef=rep(0,5))),
                        "incorrect number of fixef components")
     ## beta only

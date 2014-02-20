@@ -2,7 +2,7 @@
 stopifnot(suppressPackageStartupMessages(require(lme4)))
 options(show.signif.stars = FALSE)
 
-source(system.file("test-tools.R", package = "Matrix"))# identical3() etc
+source(system.file("test-tools-1.R", package = "Matrix"))# identical3() etc
 all.EQ <- function(u,v, ...) all.equal.X(u, v, except = c("call", "frame"), ...)
 S4_2list <- function(obj) {   # no longer used
    sn <- slotNames(obj)
@@ -17,6 +17,7 @@ S4_2list <- function(obj) {   # no longer used
 ##     }
 ## })
 
+oldOpts <- options(digits=2)
 (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 (fm1a <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, REML = FALSE))
 (fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
@@ -32,7 +33,7 @@ stopifnot(all.equal(fm1, fm1.))
 #(fm1. <- lmer1(Reaction ~ Days + (Days|Subject), sleepstudy, opt = "bobyqa"))
 #stopifnot(all.equal(fm1@devcomp$cmp['REML'], fm1.@devcomp$cmp['REML']),
 #          all.equal(fixef(fm1), fixef(fm1.)),
-#          all.equal(fm1@re@theta, fm1.@theta, tol = 1.e-7),
+#          all.equal(fm1@re@theta, fm1.@theta, tolerance = 1.e-7),
 #          all.equal(ranef(fm1), ranef(fm1.)))
 
 ## compDev = FALSE no longer applies to lmer
@@ -41,14 +42,14 @@ stopifnot(all.equal(fm1, fm1.))
 ##              compDev = FALSE)#--> use R code (not C++) for deviance computation
 ## stopifnot(all.equal(fm1@devcomp$cmp['REML'], fm1.@devcomp$cmp['REML']),
 ##           all.equal(fixef(fm1), fixef(fm1.)),
-##           all.equal(fm1@re@theta, fm1.@re@theta, tol = 1.e-7),
-##           all.equal(ranef(fm1), ranef(fm1.), tol = 1.e-7))
+##           all.equal(fm1@re@theta, fm1.@re@theta, tolerance = 1.e-7),
+##           all.equal(ranef(fm1), ranef(fm1.), tolerance = 1.e-7))
 
-stopifnot(all.equal(fixef(fm1), fixef(fm2), tol = 1.e-13),
+stopifnot(all.equal(fixef(fm1), fixef(fm2), tolerance = 1.e-13),
           all.equal(unname(fixef(fm1)),
-                    c(251.405104848485, 10.467285959595), tol = 1e-13),
+                    c(251.405104848485, 10.467285959595), tolerance = 1e-13),
 	  all.equal(Matrix::cov2cor(vcov(fm1))["(Intercept)", "Days"],
-		    -0.13755, tol=1e-4))
+		    -0.13755, tolerance=1e-4))
 
 fm1ML <- refitML(fm1)
 fm2ML <- refitML(fm2)
@@ -74,6 +75,7 @@ stopifnot(all.equal(fm.1, fm.3))
 
 fmX1s <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
 #fmX2s <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
+options(oldOpts)  ## restore digits
 
 showProc.time() #
 
@@ -91,15 +93,15 @@ for(nm in c("coef", "fixef", "ranef", "sigma",
 #    } # else
     FF <- FUN
     stopifnot(
-	      all.equal( FF(fmX1), F.fmX1s, tol =  1e-6)
+	      all.equal( FF(fmX1), F.fmX1s, tolerance =  1e-6)
 #	      ,
-#	      all.equal( FF(fmX2), F.fmX2s, tol = 1e-5)
+#	      all.equal( FF(fmX2), F.fmX2s, tolerance = 1e-5)
 #              ,
-#	      all.equal( FF(fm.1), F.fmX2s, tol = 9e-6) ## these are different models
+#	      all.equal( FF(fm.1), F.fmX2s, tolerance = 9e-6) ## these are different models
 #              ,
-#              all.equal(F.fmX2s,   F.fmX1s, tol = 6e-6)
+#              all.equal(F.fmX2s,   F.fmX1s, tolerance = 6e-6)
 #              ,
-#              all.equal(FUN(fm.1), FUN(fm.2), tol = 6e-6)
+#              all.equal(FUN(fm.1), FUN(fm.2), tolerance = 6e-6)
               ,
               TRUE)
     cat("[Ok]\n")
@@ -127,7 +129,9 @@ a.group <- rnorm(n.groups, 1, 2)
 y <- rnorm (n, a.group[group.id], 1)
 ## fit and summarize the model
 fit.1 <- lmer (y ~ 1 + (1 | group.id))
+oldOpts <- options(digits=3)
 coef (fit.1)
+options(oldOpts)
 ## check show( <"summary.mer"> ):
 (sf1 <- summary(fit.1)) # --> now looks as for fit.1
 
@@ -135,22 +139,22 @@ stopifnot(all.equal(fixef(fit.1), c("(Intercept)" = 1.571312129)),
 	  all.equal(unname(ranef(fit.1, drop=TRUE)[["group.id"]]),
 		   c(1.8046888, -1.8097665, 1.6146451, 1.5408268, -0.1331995,
                      -3.3306655, -1.8259277, -0.8735145, -0.3591311,  3.3720441),
-		    tol = 1e-5)
+		    tolerance = 1e-5)
 	  )
 
 
 ## ranef and coef
 rr <- ranef(fm1)
-stopifnot(is.list(rr), length(rr) == 1, class(rr[[1]]) == "data.frame")
+stopifnot(is.list(rr), length(rr) == 1, is.data.frame(rr[[1]]))
 print(plot(rr))
 stopifnot(is(cc <- coef(fm1), "coef.mer"),
-	  is.list(cc), length(cc) == 1, class(cc[[1]]) == "data.frame")
+	  is.list(cc), length(cc) == 1, is.data.frame(cc[[1]]))
 print(plot(cc))
 rr <- ranef(fm2)
-stopifnot(is.list(rr), length(rr) == 1, class(rr[[1]]) == "data.frame")
+stopifnot(is.list(rr), length(rr) == 1, is.data.frame(rr[[1]]))
 print(plot(rr))
 stopifnot(is(cc <- coef(fm2), "coef.mer"),
-	  is.list(cc), length(cc) == 1, class(cc[[1]]) == "data.frame")
+	  is.list(cc), length(cc) == 1, is.data.frame(cc[[1]]))
 print(plot(cc))
 
 showProc.time() #
@@ -165,23 +169,26 @@ dat <- within(data.frame(lagoon = factor(rep(1:4,each = 25)),
 
 try(reg <- lmer(y ~ habitat + (1|habitat*lagoon), data = dat) # did seg.fault
     ) # now gives error                 ^- should be ":"
-r1  <- lmer(y ~ 0+habitat + (1|habitat:lagoon), data = dat) # ok, but senseless
-r1b <- lmer(y ~ 0+habitat + (1|habitat), data = dat) # same model, clearly indeterminable
+r1  <- lmer(y ~ 0+habitat + (1|habitat:lagoon), data = dat,
+            control=lmerControl(check.conv.hess="ignore")) # ok, but senseless
+r1b <- lmer(y ~ 0+habitat + (1|habitat), data = dat,
+            control=lmerControl(check.conv.hess="ignore")) # same model, clearly unidentifiable
 ## "TODO" :  summary(r1)  should ideally warn the user
-stopifnot(all.equal(fixef(r1), fixef(r1b), tol= 1e-15),
-          all.equal(ranef(r1), ranef(r1b), tol= 1e-15, check.attributes=FALSE))
+stopifnot(all.equal(fixef(r1), fixef(r1b), tolerance= 1e-15),
+          all.equal(ranef(r1), ranef(r1b), tolerance= 1e-15, check.attributes=FALSE))
 
 ## Use a more sensible model:
 r2.0 <- lmer(y ~ 0+lagoon + (1|habitat:lagoon), data = dat) # ok
 r2   <- lmer(y ~ 0+lagoon + (1|habitat), data = dat) # ok, and more clear
-stopifnot(all.equal(fixef(r2), fixef(r2.0), tol= 1e-15),
-          all.equal(ranef(r2), ranef(r2.0), tol= 1e-15, check.attributes=FALSE))
+stopifnot(all.equal(fixef(r2), fixef(r2.0), tolerance= 1e-15),
+          all.equal(ranef(r2), ranef(r2.0), tolerance= 1e-15, check.attributes=FALSE))
 V2 <- vcov(r2)
 assert.EQ.mat(V2, diag(x = 9.9833/3, nr = 4))
 stopifnot(all.equal(unname(fixef(r2)) - (1:4)*100,
-		    c(1.72, 0.28, 1.76, 0.8), tol = 1e-13))
+		    c(1.72, 0.28, 1.76, 0.8), tolerance = 1e-13))
 
 ## sparseX version should give same numbers:
+## (only gives a warning now -- sparseX disregarded)
 r2.  <- lmer(y ~ 0+lagoon + (1|habitat), data = dat,
              sparseX = TRUE, verbose = TRUE)
 
@@ -191,10 +198,10 @@ nmsSumm <- c("methTitle", "devcomp", "logLik", "ngrps", "coefficients",
 sr2  <- summary(r2)
 sr2. <- summary(r2.)
 sr2.$devcomp$dims['spFe'] <- 0L       # to allow for comparisons below
-stopifnot(all.equal(sr2[nmsSumm], sr2.[nmsSumm], tol= 1e-14)
-          , all.equal(ranef(r2), ranef(r2.), tol= 1e-14)
+stopifnot(all.equal(sr2[nmsSumm], sr2.[nmsSumm], tolerance= 1e-14)
+          , all.equal(ranef(r2), ranef(r2.), tolerance= 1e-14)
           , Matrix:::isDiagonal(vcov(r2.)) # ok
-          , all.equal(Matrix::diag(vcov(r2.)), rep.int(V2[1,1], 4), tol= 1e-13)
+          , all.equal(Matrix::diag(vcov(r2.)), rep.int(V2[1,1], 4), tolerance= 1e-13)
 #          , all(vcov(r2.)@factors$correlation == diag(4))  # not sure why this fails
           , TRUE)
 r2.
@@ -259,8 +266,8 @@ m0 <- suppressWarnings(lmer(y ~ (x1 + x2)|ff, data = D))
 m1 <- suppressWarnings(lmer(y ~ x1 + x2|ff  , data = D))
 m2 <- suppressWarnings(lmer(y ~ x1 + (x2|ff), data = D))
 m3 <- suppressWarnings(lmer(y ~ (x2|ff) + x1, data = D))
-stopifnot(all.equal(ranef(m0), ranef(m1)),
-          all.equal(ranef(m2), ranef(m3)),
+stopifnot(all.equal(ranef(m0), ranef(m1), tolerance = 1e-5),
+          all.equal(ranef(m2), ranef(m3), tolerance = 1e-5),
           inherits(tryCatch(lmer(y ~ x2|ff + x1, data = D), error = function(e)e),
                    "error"))
 
@@ -296,17 +303,17 @@ levs <- c(800,300,150,100,50,50,50,20,20,5,2,2,2,2)
 n <- seq_along(levs)
 flevels <- seq(sum(levs))
 set.seed(101)
-fakedat <- data.frame(DA=factor(rep(flevels,rep(n,levs))),
-                       zbmi=rnorm(sum(n*levs)))
+fakedat <- data.frame(DA = factor(rep(flevels,rep(n,levs))),
+                      zbmi=rnorm(sum(n*levs)))
 ## add NA values
 fakedat[sample(nrow(fakedat),100),"zbmi"] <- NA
 fakedat[sample(nrow(fakedat),100),"DA"] <- NA
+
 m5 <- lmer(zbmi ~ (1|DA) , data = fakedat,
-                       control=lmerControl(check.numobs.gtr.rankZ="ignore"))
-stopifnot(c(VarCorr(m5)[["DA"]])==0)
-m6 <- lmer(zbmi ~ (1|DA) , data = na.omit(fakedat),
-                       control=lmerControl(check.numobs.gtr.rankZ="ignore"))
-stopifnot(c(VarCorr(m6)[["DA"]])==0)
+	   control=lmerControl(check.nobs.vs.rankZ="ignore"))
+m6 <- update(m5, data=na.omit(fakedat))
+stopifnot(VarCorr(m5)[["DA"]] == 0,
+	  VarCorr(m6)[["DA"]] == 0)
 
 
 

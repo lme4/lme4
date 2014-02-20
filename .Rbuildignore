@@ -1,5 +1,10 @@
-misc/cache
-misc/issues
-misc/oldcode
+misc/
+testsx/
+do-roxy*
 ^.*\.Rproj$
 ^\.Rproj\.user$
+build-pkg*
+clean
+/.git/
+/.gitignore
+/.Rproj.user

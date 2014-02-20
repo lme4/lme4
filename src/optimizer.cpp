@@ -58,6 +58,7 @@ namespace optimizer {
 	  d_stop(  stp),
 	  d_verb(  10)
     {
+
 	d_stop.setForce_stop( 0); // BMB: this was undefined, bad news on Win64
 	if (!d_n || d_lb.size() != d_n ||
 	    d_ub.size() != d_n || d_xstep.size() != d_n)
@@ -164,67 +165,85 @@ namespace optimizer {
  * @return status
  */
     nm_status Nelder_Mead::restart(const Scalar& f) {
+	int debug=0;
+
 	d_fl = d_vals.minCoeff(&d_il);
 	d_fh = d_vals.maxCoeff(&d_ih);
 	d_c = (d_pts.rowwise().sum() - d_pts.col(d_ih)) / d_n; // compute centroid
+	if (debug) Rcpp::Rcout << "(NM) current points: " << d_pts << std::endl;
+	if (debug) Rcpp::Rcout << "(NM) current centroid: " << d_c << std::endl;
 
 	// check for x convergence by calculating the maximum absolute
 	// deviation from the centroid for each coordinate in the simplex
 	if (d_stop.x(VectorXd::Constant(d_n, 0.),
-		     (d_pts.colwise() - d_c).array().abs().rowwise().maxCoeff()))
+		     (d_pts.colwise() - d_c).array().abs().rowwise().maxCoeff())) {
+	    if (debug) Rcpp::Rcout << "(NM) restart, report convergence" << std::endl;
 	    return nm_xcvg;
+	}
 
-	if (!reflectpt(d_xcur, d_c, alpha, d_pts.col(d_ih))) return nm_xcvg;
+	if (!reflectpt(d_xcur, d_c, alpha, d_pts.col(d_ih))) {
+	    if (debug) Rcpp::Rcout << "(NM) reflected; report convergence" << std::endl;
+	    return nm_xcvg;
+	}
 	d_xeval = d_xcur;
+	if (debug) Rcpp::Rcout << "(NM) restart, now postreflect" << std::endl;
 	d_stage = nm_postreflect;
 	return nm_active;
     }
 
     nm_status Nelder_Mead::postreflect(const Scalar& f) {
+	int debug=0; 
 	// Rcpp::Rcout << "postreflect: ";
 	if (f < d_fl) {	// new best point, try to expand
 	    if (!reflectpt(d_xeval, d_c, gamm, d_pts.col(d_ih))) return nm_xcvg;
-	    // Rcpp::Rcout << "New best point" << std::endl;
+	    if (debug) Rcpp::Rcout << "(NM) postreflect: new best point" << std::endl;
+	    if (debug) Rcpp::Rcout << "(NM) postreflect, now postexpand" << std::endl;
 	    d_stage = nm_postexpand;
 	    f_old = f;
 	    return nm_active;
 	}
 	if (f < d_fh) {		// accept new point
-	    // Rcpp::Rcout << "Accept new point" << std::endl;
+	    if (debug) Rcpp::Rcout << "(NM) postreflect: accept new point" << std::endl;
 	    d_vals[d_ih] = f;
 	    d_pts.col(d_ih) = d_xeval;
 	    return restart(f);
 	}
 				// new worst point, contract
-	// Rcpp::Rcout << "New worst point" << std::endl;
+	if (debug) Rcpp::Rcout << "(NM) postreflect: new worst point" << std::endl;
 	if (!reflectpt(d_xcur, d_c, d_fh <= f ? -beta : beta, d_pts.col(d_ih))) return nm_xcvg;
 	f_old = f;
 	d_xeval = d_xcur;
+	if (debug) Rcpp::Rcout << "(NM) postreflect, now postcontract" << std::endl;
 	d_stage = nm_postcontract;
 	return nm_active;
     }
 
     nm_status Nelder_Mead::postexpand(const Scalar& f) {
+	int debug=0;
+	
 	if (f < d_vals[d_ih]) { // expanding improved
-	    // Rcpp::Rcout << "successful expand" << std::endl;
+	    if (debug) Rcpp::Rcout << "(NM) postexpand: successful expand" << std::endl;
 	    d_pts.col(d_ih) = d_xeval;
 	    d_vals[d_ih]    = f;
 	} else {
-	    // Rcpp::Rcout << "unsuccessful expand" << std::endl;
+	    if (debug) Rcpp::Rcout << "(NM) postexpand: unsuccessful expand" << std::endl;
 	    d_pts.col(d_ih) = d_xcur;
 	    d_vals[d_ih]    = f_old;
 	}
+	if (debug) Rcpp::Rcout << "(NM) postexpand: now restart" << std::endl;
 	return restart(f);
     }
 
     nm_status Nelder_Mead::postcontract(const Scalar& f) {
+	int debug=0;
+
 	if (f < f_old && f < d_fh) {
-	    // Rcpp::Rcout << "successful contraction:" << std::endl;
+	    if (debug) Rcpp::Rcout << "(NM) postcontract: successful contraction:" << std::endl;
 	    d_pts.col(d_ih) = d_xeval;
 	    d_vals[d_ih] = f;
 	    return restart(f);
 	}
-	// Rcpp::Rcout << "unsuccessful contraction, shrink simplex" << std::endl;
+	if (debug) Rcpp::Rcout << "(NM) postcontract: unsuccessful contraction, shrink simplex" << std::endl;
 	for (Index i = 0; i <= d_n; ++i) {
 	    if (i != d_il) {
 		if (!reflectpt(d_xeval, d_pts.col(d_il), -delta, d_pts.col(i))) return nm_xcvg;
@@ -249,12 +268,21 @@ namespace optimizer {
    restarting (as in subplex), however. */
     bool Nelder_Mead::reflectpt(VectorXd& xnew, const VectorXd& c,
 				const Scalar& scale, const VectorXd& xold) {
+	int debug=0;
 	xnew = c + scale * (c - xold);
 	bool equalc = true, equalold = true;
 	for (Index i = 0; i < d_n; ++i) {
 	    Scalar newx = std::min(std::max(xnew[i], d_lb[i]), d_ub[i]);
-	    equalc = equalc && close(newx, d_c[i]);
+	    // BMB: what is the difference between using d_c[i] and c[i]?
+	    equalc = equalc && close(newx, c[i]);
+	    if (debug && close(newx,c[i])) Rcpp::Rcout << "reflectpt: close(newx, c[i]) i=" 
+							 << i << " newx=" 
+							 << newx << " c[i]=" << c[i] << std::endl;
 	    equalold = equalold && close(newx, xold[i]);
+	    if (debug && close(newx,xold[i])) Rcpp::Rcout << "reflectpt: close(newx, xold[i]) i=" 
+							  << i << " newx=" 
+							  << newx << " xold[i]=" << xold[i] << std::endl;
+
 	    xnew[i] = newx;
 	}
 	return !(equalc || equalold);
