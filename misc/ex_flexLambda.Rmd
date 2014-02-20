@@ -8,8 +8,7 @@ options(digits=3)
 library(devtools)
 library(ggplot2)
 library(mvtnorm)
-library(lme4)
-source('misc/reGenerators_flexLambda.R', echo=TRUE)
+load_all()
 
 flexLmer <- function(formula, data, specials=c("cs", "d", "ar1d"), verbose=0L){
 	#split off reGenerator terms:
