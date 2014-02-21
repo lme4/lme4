@@ -1099,9 +1099,9 @@ merPhylo <- setRefClass("merPhylo",
                                     edgeLength <<- edgeLength
                                     Nnode <<- Nnode
                                     Ptr <<- .Call(merPhyloCreate,
-                                                  edgeAncestor,
-                                                  edgeDescendent,
+                                                  as.integer(edgeAncestor),
+                                                  as.integer(edgeDescendent),
                                                   edgeLength,
-                                                  Nnode)
+                                                  as.integer(Nnode))
                                 })
                         )
