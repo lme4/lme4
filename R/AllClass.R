@@ -1078,3 +1078,30 @@ vcRep <-
                                       })
                      })
                 )
+
+
+##' Reference class for phylogenetic objects
+merPhylo <- setRefClass("merPhylo",
+                        fields  = list(
+                            Ptr = "externalptr",
+                            edgeAncestor = "integer",
+                            edgeDescendent = "integer",
+                            edgeLength = "numeric",
+                            Nnode = "integer"),
+                        methods = list(
+                            initialize = function(
+                                edgeAncestor,
+                                edgeDescendent,
+                                edgeLength,
+                                Nnode, ...) {
+                                    edgeAncestor <<- edgeAncestor
+                                    edgeDescendent <<- edgeDescendent
+                                    edgeLength <<- edgeLength
+                                    Nnode <<- Nnode
+                                    Ptr <<- .Call(merPhyloCreate,
+                                                  edgeAncestor,
+                                                  edgeDescendent,
+                                                  edgeLength,
+                                                  Nnode)
+                                })
+                        )

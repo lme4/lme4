@@ -8,6 +8,7 @@
 #include "predModule.h"
 #include "respModule.h"
 #include "optimizer.h"
+#include "merPhylo.h"
 
 extern "C" {
     typedef   Eigen::VectorXi        iVec;
@@ -39,6 +40,7 @@ extern "C" {
     using      lme4::lmerResp;
     using      lme4::merPredD;
     using      lme4::nlsResp;
+    using      lme4::merPhylo;
 
     using optimizer::Golden;
     using optimizer::Nelder_Mead;
@@ -978,6 +980,13 @@ extern "C" {
     }
 }
 
+SEXP merPhyloCreate(SEXP edgeAncestor, SEXP edgeDescendent, SEXP edgeLength, SEXP Nnode) {
+    BEGIN_RCPP;
+    merPhylo *ans = new merPhylo(edgeAncestor, edgeDescendent, edgeLength, Nnode);
+    return wrap(XPtr<merPhylo>(ans, true));
+    END_RCPP;
+}
+
 #include <R_ext/Rdynload.h>
 
 #define CALLDEF(name, n)  {#name, (DL_FUNC) &name, n}
@@ -1051,6 +1060,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(lmer_opt1,          4),
 
     CALLDEF(merPredDCreate,    15), // generate external pointer
+    CALLDEF(merPhyloCreate,    4), // generate external pointer
 
     CALLDEF(merPredDsetBeta0,   2), 
 
