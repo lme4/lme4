@@ -5,11 +5,6 @@ namedList <- function(...) {
     if (any(nonames <- nm=="")) nm[nonames] <- snm[nonames]
     setNames(L,nm)
 }
-## TESTING:
-## a <- b <- c <- 1
-## namedList(a,b,c)
-## namedList(a,b,d=c)
-## namedList(e=a,f=b,d=c)
 
 ##' By extracting "checking options" from \code{nms}, this function
 ##' implicitly defines what "checking options" are.
@@ -22,33 +17,78 @@ namedList <- function(...) {
 .get.checkingOpts <- function(nms)
     nms[grepl("^check\\.(?!conv|rankX)", nms, perl=TRUE)]
 
+
+##' Check check.conv.*() options and produce good error message
+chk.convOpt <- function(opt) {
+    cnm <- deparse(nm <- substitute(opt))[[1]]
+    if(!is.list(opt)) stop("check.conv* option ", cnm, " must be a list")
+    if(!is.character(opt$action))
+	stop("check.conv* option ", cnm, " has no 'action' string")
+    if(!is.numeric(tol <- opt$tol))
+	stop("check.conv* option ", cnm, " must have a numeric 'tol' component")
+    if(length(tol) != 1 || tol < 0)
+	stop("check.conv* option ", cnm, "$tol must be number >= 0")
+    if(!is.null(relTol <- opt$relTol))
+	stopifnot(is.numeric(relTol), length(relTol) == 1, relTol >= 0)
+    invisible()
+}
+
+##' Exported constructor for the user calling  *lmerControl():
+.makeCC <- function(action, tol, relTol, ...) {
+    stopifnot(is.character(action), length(action) == 1)
+    if(!is.numeric(tol))
+	stop("must have a numeric 'tol' component")
+    if(length(tol) != 1 || tol < 0)
+	stop("'tol' must be number >= 0")
+    mis.rt <- missing(relTol)
+    if(!mis.rt && !is.null(relTol))
+	stopifnot(is.numeric(relTol), length(relTol) == 1, relTol >= 0)
+    ## and return the list,  the  "..." just being appended unchecked
+    c(list(action = action, tol = tol),
+      if(!mis.rt) list(relTol = relTol),
+      list(...))
+}
+
+##' Internal utility :	Allow check.conv.* to be a string
+chk.cconv <- function(copt, callingFn) {
+    cnm <- deparse(substitute(copt))
+    if(is.character(copt)) {
+	def <- eval(formals(callingFn)[[cnm]])
+	def$action <- copt
+	assign(cnm, def, envir=sys.frame(sys.parent()))
+    } else chk.convOpt(copt)
+}
+
+
 ## DOC: ../man/lmerControl.Rd
-lmerControl <- function(optimizer="bobyqa",#instead of "Nelder_Mead",
-                        restart_edge=TRUE,
-                        ## don't call this "check." -- will fail
-                        ## automatic check-option-checking in
-                        ## inst/tests/test-lmer.R
-                        boundary.tol=1e-5,
-                        calc.derivs=TRUE,
-                        use.last.params=FALSE,
-                        sparseX=FALSE,
-                        ## input checking options:
-                        check.nobs.vs.rankZ="warningSmall",
-                        check.nobs.vs.nlev="stop",
-                        check.nlev.gtreq.5="ignore",
-                        check.nlev.gtr.1="stop",
-                        check.nobs.vs.nRE="stop",
-			check.rankX = c("message+drop.cols",
-			    "silent.drop.cols", "warn+drop.cols", 
-			    "stop.deficient", "ignore"),
-                        check.scaleX = "warning",
-                        ## convergence options
-                        check.formula.LHS="stop",
-                        check.conv.grad="warning",
-                        check.conv.singular="ignore",
-                        check.conv.hess="warning",
-                        optCtrl = list()
-                        )
+lmerControl <-
+    function(optimizer="bobyqa",#instead of "Nelder_Mead",
+	     restart_edge=TRUE,
+	     ## don't call this "check." -- will fail
+	     ## automatic check-option-checking in
+	     ## inst/tests/test-lmer.R
+	     boundary.tol=1e-5,
+	     calc.derivs=TRUE,
+	     use.last.params=FALSE,
+	     sparseX=FALSE,
+	     ## input checking options:
+	     check.nobs.vs.rankZ="warningSmall",
+	     check.nobs.vs.nlev="stop",
+	     check.nlev.gtreq.5="ignore",
+	     check.nlev.gtr.1="stop",
+	     check.nobs.vs.nRE="stop",
+	     check.rankX = c("message+drop.cols",
+	     "silent.drop.cols", "warn+drop.cols",
+	     "stop.deficient", "ignore"),
+	     check.scaleX = "warning",
+	     ##TODO? c("warning","message+scale", "silent.scale","ignore"),
+	     check.formula.LHS = "stop",
+	     ## convergence options
+	     check.conv.grad	 = .makeCC("warning", tol = 1e-3, relTol = NULL),
+	     check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
+	     check.conv.hess	 = .makeCC(action = "warning", tol = 1e-6),
+	     optCtrl = list()
+	     )
 {
     ## FIXME: is there a better idiom?  match.call() ?
     ## fill in values from options, but **only if not specified explicitly in arguments**
@@ -63,6 +103,12 @@ lmerControl <- function(optimizer="bobyqa",#instead of "Nelder_Mead",
         }
     }
     check.rankX <- match.arg(check.rankX)# ==> can abbreviate
+
+    ## compatibility and convenience, caller can specify action string only:
+    me <- sys.function()
+    chk.cconv(check.conv.grad,	   me)
+    chk.cconv(check.conv.singular, me)
+    chk.cconv(check.conv.hess	 , me)
 
     structure(namedList(optimizer,
                         restart_edge,
@@ -86,32 +132,31 @@ lmerControl <- function(optimizer="bobyqa",#instead of "Nelder_Mead",
               class = c("lmerControl", "merControl"))
 }
 
-glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
-                         restart_edge=FALSE,
-                         boundary.tol=1e-5,
-                         calc.derivs=TRUE,
-                         use.last.params=FALSE,
-                         sparseX=FALSE,
-                         tolPwrss = 1e-7,
-                         compDev = TRUE,
-                         ## input checking options
-                         check.nobs.vs.rankZ="warningSmall",
-                         check.nobs.vs.nlev="stop",
-                         check.nlev.gtreq.5="ignore",
-                         check.nlev.gtr.1="stop",
-                         check.nobs.vs.nRE="stop",
-                         check.rankX = c("message+drop.cols",
-                                         "silent.drop.cols", "warn+drop.cols", 
-                                         "stop.deficient", "ignore"),
-                         check.scaleX = "warning",
-                         ## c("warning","message+scale",
-                         ##   "silent.scale","ignore"),
-                         ## convergence checking options
-                         check.conv.grad="warning",
-                         check.conv.singular="ignore",
-                         check.conv.hess="warning",
-                         check.formula.LHS="stop",
-                         optCtrl = list())
+glmerControl <-
+    function(optimizer=c("bobyqa","Nelder_Mead"),
+	     restart_edge=FALSE,
+	     boundary.tol=1e-5,
+	     calc.derivs=TRUE,
+	     use.last.params=FALSE,
+	     sparseX=FALSE,
+	     tolPwrss = 1e-7,
+	     compDev = TRUE,
+	     ## input checking options
+	     check.nobs.vs.rankZ="warningSmall",
+	     check.nobs.vs.nlev="stop",
+	     check.nlev.gtreq.5="ignore",
+	     check.nlev.gtr.1="stop",
+	     check.nobs.vs.nRE="stop",
+	     check.rankX = c("message+drop.cols",
+	     "silent.drop.cols", "warn+drop.cols",
+	     "stop.deficient", "ignore"),
+	     check.scaleX = "warning",
+	     check.formula.LHS="stop",
+	     ## convergence checking options
+	     check.conv.grad	 = .makeCC("warning", tol = 1e-3, relTol = NULL),
+	     check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
+	     check.conv.hess	 = .makeCC(action = "warning", tol = 1e-6),
+	     optCtrl = list())
 {
     ## FIXME: should try to modularize/refactor/combine with lmerControl if possible
     ## but note different defaults
@@ -132,6 +177,13 @@ glmerControl <- function(optimizer=c("bobyqa","Nelder_Mead"),
         }
     }
     check.rankX <- match.arg(check.rankX)# ==> can abbreviate
+
+    ## compatibility and convenience, caller can specify action string only:
+    me <- sys.function()
+    chk.cconv(check.conv.grad,	   me)
+    chk.cconv(check.conv.singular, me)
+    chk.cconv(check.conv.hess	 , me)
+
     if (use.last.params && calc.derivs)
         warning("using ",shQuote("use.last.params"),"=TRUE and ",
                 shQuote("calc.derivs"),"=TRUE with ",shQuote("glmer"),

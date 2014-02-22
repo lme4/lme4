@@ -22,7 +22,7 @@ LHSForm <- function(formula) {
 
 ##' @param cstr name of control being set
 ##' @param val value of control being set
-checkCtrlLevels <- function(cstr,val,smallOK=FALSE) {
+checkCtrlLevels <- function(cstr, val, smallOK=FALSE) {
     bvals <- c("stop","warning","ignore")
     if (smallOK) bvals <- outer(bvals,c("","Small"),paste0)
     if (!is.null(val) && !val %in% bvals)
@@ -58,12 +58,12 @@ checkZdims <- function(Ztlist, n, ctrl, allow.n=FALSE) {
     ## unidentifiability:
     stopifnot(is.list(Ztlist), is.numeric(n))
     cstr <- "check.nobs.vs.nRE"
-    checkCtrlLevels(cstr,ctrl[[cstr]])
+    checkCtrlLevels(cstr, cc <- ctrl[[cstr]])
     term.names <- names(Ztlist)
     rows <- vapply(Ztlist, nrow, numeric(1L))
     cols <- vapply(Ztlist, ncol, numeric(1L))
     stopifnot(all(cols == n))
-    if (doCheck(cc <- ctrl[[cstr]])) {
+    if (doCheck(cc)) {
         for(i in seq_along(Ztlist)) {
             ww <- wmsg(cols[i],rows[i],allow.n,"number of observations",
                        "number of random effects",
@@ -84,7 +84,7 @@ checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
     stopifnot(is.list(ctrl), is.numeric(n), is.numeric(nonSmall))
     cstr <- "check.nobs.vs.rankZ"
     if (doCheck(cc <- ctrl[[cstr]])) { ## not NULL or "ignore"
-        checkCtrlLevels(cstr,ctrl[[cstr]],smallOK=TRUE)
+        checkCtrlLevels(cstr, cc, smallOK=TRUE)
 	d <- dim(Zt)
 	doTr <- d[1L] < d[2L] # Zt is "wide" => qr needs transpose(Zt)
 	if(!(grepl("Small",cc) && prod(d) > nonSmall)) {
@@ -113,8 +113,8 @@ checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
 ## (shouldn't matter for lmer models?)
 checkScaleX <- function(X, tol=1e4, ctrl) {
     cstr <- "check.scaleX"
-    checkCtrlLevels(cstr,ctrl[[cstr]])
-    if (doCheck(cc <- ctrl[[cstr]])) { ## not NULL or "ignore"
+    checkCtrlLevels(cstr, cc <- ctrl[[cstr]])
+    if (doCheck(cc)) { ## not NULL or "ignore"
         cont.cols <- apply(X,2,function(z) !all(z %in% c(0,1)))
         col.sd <- apply(X[,cont.cols, drop=FALSE],2,sd)
         sdcomp <- outer(col.sd,col.sd,"/")
@@ -137,8 +137,8 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
     nlevelVec <- unlist(lapply(flist, function(x) nlevels(droplevels(x)) ))
     ## Part 1 ----------------
     cstr <- "check.nlev.gtr.1"
-    checkCtrlLevels(cstr,ctrl[[cstr]])
-    if (doCheck(cc <- ctrl[[cstr]]) && any(nlevelVec < 2)) {
+    checkCtrlLevels(cstr, cc <- ctrl[[cstr]])
+    if (doCheck(cc) && any(nlevelVec < 2)) {
 	wstr <- "grouping factors must have > 1 sampled level"
 	switch(cc,
 	       "warning" = warning(wstr),
@@ -147,8 +147,8 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
     }
     ## Part 2 ----------------
     cstr <- "check.nobs.vs.nlev"
-    checkCtrlLevels(cstr,ctrl[[cstr]])
-    if (doCheck(cc <- ctrl[[cstr]])) {
+    checkCtrlLevels(cstr, cc <- ctrl[[cstr]])
+    if (doCheck(cc)) {
         if (any(if(allow.n) nlevelVec > n else nlevelVec >= n))
             stop(gettextf(
                 "number of levels of each grouping factor must be %s number of observations",
@@ -157,8 +157,8 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
 
     ## Part 3 ----------------
     cstr <- "check.nlev.gtreq.5"
-    checkCtrlLevels(cstr,ctrl[[cstr]])
-    if (doCheck(cc <- ctrl[[cstr]]) && any(nlevelVec < 5)) {
+    checkCtrlLevels(cstr, cc <- ctrl[[cstr]])
+    if (doCheck(cc) && any(nlevelVec < 5)) {
 	wstr <- "grouping factors with < 5 sampled levels may give unreliable estimates"
 	switch(cc,
 	       "warning" = warning(wstr),
@@ -193,17 +193,17 @@ chkRank.drop.cols <- function(X, kind, tol = 1e-7, method = "qr.R") {
     kinds <- eval(formals(lmerControl)[["check.rankX"]])
     ## c("message+drop.cols", "ignore",
     ##   "silent.drop.cols", "warn+drop.cols", "stop.deficient"),
-    
+
     if(kind == "ignore") return(X)
-    ## else : 
+    ## else :
     p <- ncol(X)
     if (kind == "stop.deficient") {
         if ((rX <- rankMatrix(X, tol=tol, method=method)) < p)
             stop(gettextf("the fixed-effects model matrix is column rank deficient (rank(X) = %d < %d = p); the fixed effects will be jointly unidentifiable",
                           rX, p),
                  call. = FALSE)
-    } else { 
-        ## kind is one of "message+drop.cols", "silent.drop.cols", "warn+drop.cols" 
+    } else {
+        ## kind is one of "message+drop.cols", "silent.drop.cols", "warn+drop.cols"
         ## --> consider to drop extraneous columns: "drop.cols":
 
         ## Perform the qr-decomposition of X using LINPACK method,
@@ -231,7 +231,7 @@ chkRank.drop.cols <- function(X, kind, tol = 1e-7, method = "qr.R") {
 	if (rankMatrix(X, tol=tol, method=method) < ncol(X))
             stop(gettextf("Dropping columns failed to produce full column rank design matrix"),
                  call. = FALSE)
-        
+
         ## Re-assign relevant attributes:
         if(!is.null(contr)) attr(X, "contrasts") <- contr
         if(!is.null(asgn))  attr(X, "assign")    <- asgn[keep]
@@ -324,7 +324,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
         rankX.chk <- eval(formals(lmerControl)[["check.rankX"]])[[1]]
     X <- chkRank.drop.cols(X, kind=rankX.chk, tol = 1e-7)
     X <- checkScaleX(X, ctrl= control)
-    
+
     list(fr = fr, X = X, reTrms = reTrms, REML = REML, formula = formula)
 }
 
@@ -503,7 +503,8 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     cstr <- "check.formula.LHS"
     checkCtrlLevels(cstr,control[[cstr]])
 
-    denv <- checkFormulaData(formula,data,checkLHS=(control$check.formula.LHS=="stop"))
+    denv <- checkFormulaData(formula, data,
+			     checkLHS = (control$check.formula.LHS=="stop"))
     mc$formula <- formula <- as.formula(formula,env=denv)    ## substitute evaluated version
 
     m <- match(c("data", "subset", "weights", "na.action", "offset",
@@ -553,7 +554,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
         rankX.chk <- eval(formals(lmerControl)[["check.rankX"]])[[1]]
     X <- chkRank.drop.cols(X, kind=rankX.chk, tol = 1e-7)
     X <- checkScaleX(X, ctrl=control)
-    
+
     list(fr = fr, X = X, reTrms = reTrms, family = family, formula = formula)
 }
 
