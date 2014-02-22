@@ -6,11 +6,9 @@ testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL")))
 
 context("fitting glmer models")
 test_that("glmer", {
-if(FALSE){## Hadley broke this
     expect_warning(glmer(z~ 1|f, family=binomial, method="abc"),"Use the nAGQ argument")
     expect_warning(glmer(z~ 1|f, family=binomial, method="Laplace"),"Use the nAGQ argument")
     expect_warning(glmer(z~ 1|f, sparseX=TRUE),"has no effect at present")
-}
     expect_that(gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                              data = cbpp, family = binomial), is_a("glmerMod"))
     expect_that(gm1@resp,                               is_a("glmResp"))
@@ -24,7 +22,7 @@ if(FALSE){## Hadley broke this
     expect_equal(deviance(gm1),                         184.052674598026, tolerance=1e-5)
     expect_equal(sigma(gm1),                            1)
     expect_equal(extractAIC(gm1),                       c(5, 194.052674598026), tolerance=1e-5)
-
+                
     expect_equal(theta <- unname(getME(gm1, "theta")),  0.642226809144453, tolerance=6e-4)
     expect_that(X  <- getME(gm1, "X"),                  is_equivalent_to(
         model.matrix(model.frame(~ period, data=cbpp), cbpp)))
@@ -80,7 +78,6 @@ if(FALSE){## Hadley broke this
     expect_warning(glmer(prop ~ period + (1 | herd),
                       data = cbppX, family = binomial, weights=size, junkArg=TRUE),
                    "extra argument.*disregarded")
-if(FALSE) { ## Hadley broke this
     expect_warning(glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                              data = cbpp, family = binomial,
                          control=list()),
@@ -89,7 +86,7 @@ if(FALSE) { ## Hadley broke this
                          data = cbpp, family = binomial,
                          control=lmerControl()),
                    "instead of passing a list of class")
-}
+
     ##
     load(system.file("testdata","radinger_dat.RData",package="lme4"))
     mod <- glmer(presabs~predictor+(1|species),family=binomial,
