@@ -148,8 +148,8 @@ lmer <- function(formula, data=NULL, REML = TRUE,
                         start=start,
                         calc.derivs=control$calc.derivs,
                         use.last.params=control$use.last.params)
-    cc <- checkConv(attr(opt,"derivs"),opt$par,
-                    checkCtrl = control$checkConv,
+    cc <- checkConv(attr(opt,"derivs"), opt$par,
+                    ctrl = control$checkConv,
                     lbound=environment(devfun)$lower)
     mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr, mcout,
              lme4conv=cc) ## prepare output
@@ -342,7 +342,7 @@ glmer <- function(formula, data=NULL, family = gaussian,
     cc <- if (!control$calc.derivs) NULL else {
         if (verbose>10) cat("checking convergence\n")
         checkConv(attr(opt,"derivs"),opt$par,
-                  checkCtrl = control$checkConv,
+                  ctrl = control$checkConv,
                   lbound=environment(devfun)$lower)
     }
 
@@ -1399,7 +1399,7 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
                    calc.derivs=calc.derivs)
     cc <- checkConv(attr(opt,"derivs"),opt$par,
                     ## FIXME: fragile??
-                    checkCtrl = eval(object@call$control)$checkConv,
+		    ctrl = eval(object@call$control)$checkConv,
                     lbound=lower)
     if (isGLMM(object)) rr$setOffset(baseOffset)
     mkMerMod(environment(ff), opt,
@@ -2127,7 +2127,7 @@ NULL
 ##' @importFrom stats vcov
 ##' @S3method vcov merMod
 vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
-                        use.hessian = NULL, ...) 
+                        use.hessian = NULL, ...)
 {
     hess.avail <- (!is.null(h <- object@optinfo$derivs$Hessian) &&
                    nrow(h) > (ntheta <- length(getME(object,"theta"))))
@@ -2153,10 +2153,10 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
         v[upper.tri(v)] <- t(v)[upper.tri(v)]
         v
     }
-    
+
     if (!use.hessian) {
         V <- sigm^2 * object@pp$unsc()
-        
+
         if (hess.avail) {
             ## if hessian is available, go ahead and check
             ## for similarity with the RX-based estimate
@@ -2379,7 +2379,7 @@ summary.merMod <- function(object,
     if (use.hessian && !hess.avail) stop(shQuote("use.hessian"),
                                          "=TRUE specified, ",
                                          "but Hessian is unavailable")
-    
+
     resp <- object@resp
     devC <- object@devcomp
     dd <- devC$dims
@@ -2574,8 +2574,8 @@ weights.merMod <- function(object, type=c("prior","working"), ...) {
     ## reference class fields not being updated at the optimum, then this
     ## could cause real problems.  see for example:
     ## https://github.com/lme4/lme4/issues/166
-    
-    
+
+
     ## FIXME:  what to do about missing values (see stats:::weights.glm)?
     ## FIXME:  add unit tests
     return(res)

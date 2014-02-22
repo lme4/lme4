@@ -10,7 +10,7 @@ stopifnot(identical(
 lmod <- lFormula(Reaction ~ Days + (Days|Subject), sleepstudy)
 devfun <- do.call(mkLmerDevfun, lmod)
 opt <- optimizeLmer(devfun)
-cc <- lme4:::checkConv(attr(opt,"derivs"),opt$par,
+cc <- lme4:::checkConv(attr(opt,"derivs"), opt$par, ctrl = lmerControl()$checkConv,
                 lbound=environment(devfun)$lower)
 fm1 <- mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr,
                 lme4conv=cc)

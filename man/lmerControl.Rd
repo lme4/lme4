@@ -3,6 +3,7 @@
 \alias{glmerControl}
 \alias{lmerControl}
 \alias{nlmerControl}
+\alias{.makeCC}% FIXME not yet doc.ed
 \description{
   Construct control structures for mixed model fitting.  All arguments
   have defaults, and can be grouped into
@@ -30,14 +31,14 @@ lmerControl(optimizer = "bobyqa",% was "Nelder_Mead" till Dec.2013
     check.nlev.gtreq.5 = "ignore",
     check.nlev.gtr.1 = "stop",
     check.nobs.vs.nRE="stop",
-    check.rankX = c("message+drop.cols", "silent.drop.cols", "warn+drop.cols", 
+    check.rankX = c("message+drop.cols", "silent.drop.cols", "warn+drop.cols",
                     "stop.deficient", "ignore"),
     check.scaleX  = "warning",
     check.formula.LHS = "stop",
     ## convergence checking options
-    check.conv.grad="warning",
-    check.conv.singular="ignore",
-    check.conv.hess="warning",
+    check.conv.grad     = .makeCC("warning", tol = 1e-3, relTol = NULL),
+    check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
+    check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
     ## optimizer args
     optCtrl = list())
 
@@ -55,14 +56,14 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     check.nlev.gtreq.5 = "ignore",
     check.nlev.gtr.1 = "stop",
     check.nobs.vs.nRE="stop",
-    check.rankX = c("message+drop.cols", "silent.drop.cols", "warn+drop.cols", 
+    check.rankX = c("message+drop.cols", "silent.drop.cols", "warn+drop.cols",
                     "stop.deficient", "ignore"),
     check.scaleX  = "warning",
-    ## convergence checking options
-    check.conv.grad="warning",
-    check.conv.singular="ignore",
-    check.conv.hess="warning",
     check.formula.LHS = "stop",
+    ## convergence checking options
+    check.conv.grad     = .makeCC("warning", tol = 1e-3, relTol = NULL),
+    check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
+    check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
     ## optimizer args
     optCtrl = list())
 
@@ -160,16 +161,19 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     than (or greater than or equal to) the number of random-effects
     levels for each term, usually necessary for identifiable variances.
     As for \code{check.nobs.vs.nlev}.}
-  \item{check.conv.grad}{character - rules for
-    checking the gradient of the deviance function for convergence.}
-  \item{check.conv.singular}{character - rules for
-    checking for a singular fit, i.e. one where some parameters are on
-    the boundary of the feasible space (for example, random effects
-    variances equal to 0 or correlations between random effects
-    equal to +/- 1.0)}
-  \item{check.conv.hess}{character - rules for
-    checking the Hessian of the deviance function for convergence.}
-  \item{check.rankX}{character - specifying if \code{\link[Matrix]{rankMatrix}(X)} 
+  \item{check.conv.grad}{rules for checking the gradient of the deviance
+    function for convergence.  A list with components \code{action}, a
+    string and \code{tol}, a numeric tolerance, and an optional
+    \code{relTol}.  Possibly also character string with only the action.}
+  \item{check.conv.singular}{rules for checking for a singular fit,
+    i.e. one where some parameters are on the boundary of the feasible
+    space (for example, random effects variances equal to 0 or
+    correlations between random effects equal to +/- 1.0);
+    same structure as \code{check.conv.grad} above.}
+  \item{check.conv.hess}{rules for checking the Hessian of the deviance
+    function for convergence.; same structure as \code{check.conv.grad}
+    above.}
+  \item{check.rankX}{character - specifying if \code{\link[Matrix]{rankMatrix}(X)}
     should be compared with \code{ncol(X)} and if columns from the design
     matrix should possibly be dropped to ensure that it has full rank.
     Sometimes needed to make the model identifiable.  The options can be
@@ -258,7 +262,7 @@ str(glmerControl())
     defaultControl <- list(algorithm="NLOPT_LN_BOBYQA",
                            xtol_rel=1e-6,maxeval=1e5)
     nloptwrap2 <- function(fn,par,lower,upper,control=list(),...) {
-        for (n in names(defaultControl)) 
+        for (n in names(defaultControl))
             if (is.null(control[[n]])) control[[n]] <- defaultControl[[n]]
         res <- nloptr(x0=par,eval_f=fn,lb=lower,ub=upper,opts=control,...)
         with(res,list(par=solution,
