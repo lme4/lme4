@@ -1103,5 +1103,10 @@ merPhylo <- setRefClass("merPhylo",
                                                   as.integer(edgeDescendent),
                                                   edgeLength,
                                                   as.integer(Nnode))
-                                })
-                        )
+                                },
+                            ptr = function() {
+                                Ptr
+                            },
+                            updateEdgeLength = function(newEdgeLength) {
+                                .Call(phylo_updateEdgeLength, ptr(), as.numeric(newEdgeLength))
+                            }))

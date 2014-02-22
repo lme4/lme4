@@ -987,6 +987,13 @@ SEXP merPhyloCreate(SEXP edgeAncestor, SEXP edgeDescendent, SEXP edgeLength, SEX
     END_RCPP;
 }
 
+SEXP phylo_updateEdgeLength(SEXP ptr, SEXP newEdgeLength) {
+    BEGIN_RCPP;
+        XPtr<merPhylo>(ptr)->updateEdgeLength(as<MVec>(newEdgeLength));
+        return newEdgeLength;
+    END_RCPP;
+}
+
 #include <R_ext/Rdynload.h>
 
 #define CALLDEF(name, n)  {#name, (DL_FUNC) &name, n}
@@ -1039,7 +1046,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(golden_xeval,       1),
     CALLDEF(golden_xpos,        1),
 
-    CALLDEF(isNullExtPtr, 1),
+    CALLDEF(isNullExtPtr,       1),
 
     CALLDEF(lm_Create,          7), // generate external pointer
 
@@ -1113,6 +1120,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(nls_updateMu,       2),
 
     CALLDEF(showlocation,       1),
+    CALLDEF(phylo_updateEdgeLength, 2),
     {NULL, NULL, 0}
 };
 

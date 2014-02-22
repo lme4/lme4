@@ -504,6 +504,14 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
     ans
 }
 
+mkPhyloMod <- function(tree, ...){
+    merPhylo$new(tree$edge[,1],
+                 tree$edge[,2],
+                 tree$edge.length,
+                 tree$Nnode)
+}    
+
+
 ##' From the right hand side of a formula for a mixed-effects model,
 ##' determine the pairs of expressions that are separated by the
 ##' vertical bar operator.  Also expand the slash operator in grouping
