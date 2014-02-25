@@ -14,7 +14,7 @@ or adaptive Gauss-Hermite quadrature; GLMMs allow user-defined families and link
 
 ## Installation
 
-* From CRAN (note stable version 0.999999-2 will soon be superseded by stable release 1.0.+)
+* From CRAN (stable release 1.0.+)
 * Nearly up-to-date development binaries from `lme4` r-forge repository:
 ```
 install.packages("lme4",
