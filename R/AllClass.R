@@ -55,14 +55,14 @@ setClass("lmList.confint", contains = "array")
 merPredD <-
     setRefClass("merPredD", # Predictor class for mixed-effects models with dense X
                 fields =
-                list(Lambdat = "dgCMatrix",
-                     LamtUt  = "dgCMatrix",
-                     Lind    = "integer",
-                     Ptr     = "externalptr",
-                     RZX     = "matrix",
-                     Ut      = "dgCMatrix",
-                     Utr     = "numeric",
-                     V       = "matrix",
+                list(Lambdat = "dgCMatrix",   # depends: theta and Lind
+                     LamtUt  = "dgCMatrix",   # depends: Lambdat and Ut
+                     Lind    = "integer",     # depends: nothing
+                     Ptr     = "externalptr", # depends: 
+                     RZX     = "matrix",      # depends: lots
+                     Ut      = "dgCMatrix",   # depends: Zt and weights
+                     Utr     = "numeric",     # depends: lots
+                     V       = "matrix",      # depends: 
                      VtV     = "matrix",
                      Vtr     = "numeric",
                      X       = "matrix",
@@ -148,6 +148,26 @@ merPredD <-
                          .Call(merPredDbeta, ptr(), as.numeric(fac))
                      },
                      copy         = function(shallow = FALSE) {
+                          ## def <- .refClassDef
+                          ## selfEnv <- as.environment(.self)
+                          ## LambdatCopy <- selfEnv$Lambdat
+                          ## LindCopy <- selfEnv$Lind
+                          ## thetaCopy <- selfEnv$theta
+                          ## value <- new(def, X, Zt, LambdatCopy, LindCopy, thetaCopy, ncol(X))
+                          ## vEnv <- as.environment(value)
+                          
+                          ## for (field in names(def@fieldClasses)) {
+                          ##     if (shallow) 
+                          ##         assign(field, get(field, envir = selfEnv), envir = vEnv)
+                          ##     else {
+                          ##         current <- get(field, envir = selfEnv)
+                          ##         if (is(current, "envRefClass")) 
+                          ##             current <- current$copy(FALSE)
+                          ##         assign(field, current, envir = vEnv)
+                          ##     }
+                          ## }
+                          ## value
+                         .Call(isNullExtPtr, Ptr)
                          def <- .refClassDef
                          selfEnv <- as.environment(.self)
                          vEnv    <- new.env(parent=emptyenv())
@@ -161,7 +181,11 @@ merPredD <-
                                  assign(field, current, envir = vEnv)
                              }
                          }
-                         do.call("new", c(as.list(vEnv), n=nrow(vEnv$V), Class=def))
+                         ## PtrNew <- .Call(merPredDDuplicate, as(X, "matrix"), Lambdat,
+                         ##                LamtUt, Lind, RZX, Ut, Utr, V, VtV, Vtr,
+                         ##                Xwts, Zt, beta0, delb, delu, theta, u0)
+                         ## assign("Ptr", PtrNew, envir = vEnv)
+                         do.call(merPredD$new, c(as.list(vEnv), n=nrow(vEnv$V), Class=def))
                      },
                      ldL2         = function() {
                          'twice the log determinant of the sparse Cholesky factor'
