@@ -159,13 +159,11 @@ merPredD <-
                                  current <- get(field, envir = selfEnv)
                                  if (is(current, "envRefClass"))
                                      current <- current$copy(FALSE)
-                                 assign(field, current, envir = vEnv)
+                                 ## hack (https://stat.ethz.ch/pipermail/r-devel/2014-March/068448.html)
+                                 ## ... to ensure real copying
+                                 assign(field, current+0, envir = vEnv)
                              }
                          }
-
-                         ## hack (https://stat.ethz.ch/pipermail/r-devel/2014-March/068448.html)
-                         assign("theta", get("theta",envir=selfEnv)+0, envir=vEnv)
-
                          do.call(merPredD$new, c(as.list(vEnv), n=nrow(vEnv$V), Class=def))
                      },
                      ldL2         = function() {
@@ -369,7 +367,14 @@ lmResp <-                               # base class for response modules
                                 current <- get(field, envir = selfEnv)
                                 if (is(current, "envRefClass"))
                                     current <- current$copy(FALSE)
-                                assign(field, current, envir = vEnv)
+                                forceCopy <- function(x) {
+                                    if (is.numeric(x)) return(x+0)
+                                    ## doesn't handle family field yet ...
+                                    ## need equivalent force-copy no-op
+                                    x
+                                }
+                                ## deep-copy hack +0
+                                assign(field, forceCopy(current), envir = vEnv)
                             }
                         }
                         do.call("new", c(as.list(vEnv), Class=def))
