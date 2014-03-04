@@ -20,6 +20,14 @@ setClass("lmList",
 ## TODO: export
 setClass("lmList.confint", contains = "array")
 
+forceCopy <- function(x) {
+    if (is.numeric(x)) return(x+0)
+    ## FIXME: doesn't handle non-numeric fields yet ...
+    ## resp@family is the only non-numeric field other than Ptr
+    ## need equivalent force-copy no-op for other classes
+    x
+}
+
 ### FIXME
 ### shouldn't we have "merPred"  with two *sub* classes "merPredD" and "merPredS"
 ### for the dense and sparse X cases ?
@@ -161,7 +169,7 @@ merPredD <-
                                      current <- current$copy(FALSE)
                                  ## hack (https://stat.ethz.ch/pipermail/r-devel/2014-March/068448.html)
                                  ## ... to ensure real copying
-                                 assign(field, current+0, envir = vEnv)
+                                 assign(field, forceCopy(current), envir = vEnv)
                              }
                          }
                          do.call(merPredD$new, c(as.list(vEnv), n=nrow(vEnv$V), Class=def))
@@ -367,12 +375,6 @@ lmResp <-                               # base class for response modules
                                 current <- get(field, envir = selfEnv)
                                 if (is(current, "envRefClass"))
                                     current <- current$copy(FALSE)
-                                forceCopy <- function(x) {
-                                    if (is.numeric(x)) return(x+0)
-                                    ## doesn't handle family field yet ...
-                                    ## need equivalent force-copy no-op
-                                    x
-                                }
                                 ## deep-copy hack +0
                                 assign(field, forceCopy(current), envir = vEnv)
                             }
