@@ -2,7 +2,7 @@
 //
 // mcmcsamp.h: Markov-chain Monte Carlo sample class using Eigen
 //
-// Copyright (C)       2012 Douglas Bates, Martin Maechler and Ben Bolker
+// Copyright (C)  2012-2014 Douglas Bates, Martin Maechler and Ben Bolker
 //
 // This file is part of lme4.
 #ifndef LME4_MCMCSAMP_H

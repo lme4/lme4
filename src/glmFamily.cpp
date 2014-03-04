@@ -1,7 +1,7 @@
 //
 // glmFamily.cpp: implementation of glmFamily and related classes using Eigen
 //
-// Copyright (C) 2011-2012 Douglas Bates, Martin Maechler and Ben Bolker
+// Copyright (C) 2011-2014 Douglas Bates, Martin Maechler and Ben Bolker
 //
 // This file is part of lme4.
 

@@ -1,7 +1,7 @@
 //
 // predModule.cpp: implementation of predictor module using Eigen
 //
-// Copyright (C) 2011-2013 Douglas Bates, Martin Maechler, Ben Bolker and Steve Walker
+// Copyright (C) 2011-2014 Douglas Bates, Martin Maechler, Ben Bolker and Steve Walker
 //
 // This file is part of lme4.
 
