@@ -22,7 +22,8 @@ extern "C" {
     typedef   Eigen::Map<Ar2>                     MAr2;
     typedef   Eigen::MappedSparseMatrix<double> MSpMat;
     typedef   Eigen::SparseMatrix<double>        SpMat;
-    typedef   Eigen::SimplicialLLT<SpMat>          LLT;
+    typedef   Eigen::SimplicialLLT<SpMat>         SLLT;
+    typedef   Eigen::LLT<Mat>                      LLT;
 
     using      Rcpp::CharacterVector;
     using      Rcpp::Environment;
@@ -31,6 +32,7 @@ extern "C" {
     using      Rcpp::List;
     using      Rcpp::Named;
     using      Rcpp::NumericVector;
+    using      Rcpp::NumericMatrix;
     using      Rcpp::XPtr;
     using      Rcpp::as;
     using      Rcpp::wrap;
@@ -659,21 +661,21 @@ extern "C" {
     SEXP noPtrPred_L(SEXP rho_) {
 	BEGIN_RCPP;
 	Environment  rho(rho_);
-	return wrap(XPtr<LLT>(rho.get("Lptr"))->matrixL().derived());
+	return wrap(XPtr<SLLT>(rho.get("Lptr"))->matrixL().derived());
 	END_RCPP;
     }
 
     SEXP noPtrPred_P(SEXP rho_) {
 	BEGIN_RCPP;
 	Environment  rho(rho_);
-	return wrap(XPtr<LLT>(rho.get("Lptr"))->permutationP().indices());
+	return wrap(XPtr<SLLT>(rho.get("Lptr"))->permutationP().indices());
 	END_RCPP;
     }
 
     SEXP noPtrPred_ldL2(SEXP rho_) {
 	BEGIN_RCPP;
 	Environment   rho(rho_);
-	return ::Rf_ScalarReal(log(XPtr<LLT>(rho.get("Lptr"))->determinant()));
+	return ::Rf_ScalarReal(log(XPtr<SLLT>(rho.get("Lptr"))->determinant()));
 	END_RCPP;
     }
 
@@ -682,10 +684,21 @@ extern "C" {
 	BEGIN_RCPP;
 	Environment   rho(rho_);
         const MSpMat  ZtZ(as<MSpMat>(rho.get("ZtZ")));
-	LLT     *L = new LLT();
+	SLLT     *L = new SLLT();
 	L->setShift(1.0);
 	L->compute(ZtZ);
-	rho.assign("Lptr",wrap(XPtr<LLT>(L)));
+	rho.assign("Lptr",wrap(XPtr<SLLT>(L)));
+	LLT      *RX = new LLT();
+	const MMat    X(as<MMat>(rho.get("X")));
+	RX->compute(X.adjoint() * X);
+	rho.assign("RXpt", wrap(XPtr<LLT>(RX)));
+	END_RCPP;
+    }
+
+    SEXP noPtrPred_RX(SEXP rho_) {
+	BEGIN_RCPP;
+	Environment   rho(rho_);
+	return wrap(Mat(XPtr<LLT>(rho.get("RXpt"))->matrixU()));
 	END_RCPP;
     }
 
@@ -705,10 +718,65 @@ extern "C" {
 	SpMat         LamtZt(Lambdat * Zt);
 	SpMat         LamtZtZLam(LamtZt * LamtZt.adjoint());
 	rho.assign("ZtZ",wrap(LamtZtZLam));
-	XPtr<LLT>(rho.get("Lptr"))->factorize(LamtZtZLam);
+	XPtr<SLLT>(rho.get("Lptr"))->factorize(LamtZtZLam);
 	END_RCPP;
     }
 	
+    SEXP noPtrPred_updtRX(SEXP rho_) {
+	BEGIN_RCPP;
+	Environment   rho(rho_);
+	const MMat    X(as<MMat>(rho.get("X")));
+	const Mat     ZtX(as<MSpMat>(rho.get("Zt")) * X);
+	const MSpMat  Lambdat(as<MSpMat>(rho.get("Lambdat")));
+	SLLT         *L(XPtr<SLLT>(rho.get("Lptr")));
+	Mat           pr(L->permutationP() * (Lambdat * ZtX));
+	Mat           RZX = L->matrixL().solve(pr);
+	NumericMatrix rzx(rho.get("RZX"));
+	std::copy(RZX.data(), RZX.data() + RZX.size(), rzx.begin());
+	XPtr<LLT>(rho.get("RXpt"))->compute(X.adjoint() * X - RZX.adjoint() * RZX);
+	END_RCPP;
+    }
+
+    SEXP noPtrLm_setWeights(SEXP rho_, SEXP wts_) {
+        BEGIN_RCPP;
+	Environment  rho(rho_);
+	const MAr1   wts(as<MAr1>(wts_));
+	as<MAr1>(rho.get("weights")) = wts; // does this copy?
+	as<MAr1>(rho.get("sqrtrwt")) = wts.sqrt();
+	rho.assign("ldW",wrap(wts.log().sum()));
+        END_RCPP;
+    }
+
+    SEXP noPtrLm_updateWrss(SEXP rho_) {
+        BEGIN_RCPP;
+	Environment rho(rho_);
+	const MAr1  y(as<MAr1>(rho.get("y")));
+	const MAr1  mu(as<MAr1>(rho.get("mu")));
+	const MAr1  sqrtrwt(as<MAr1>(rho.get("sqrtrwt")));
+	MVec        wtres(as<MVec>(rho.get("wtres")));
+	wtres = sqrtrwt.cwiseProduct(y - mu);
+	SEXP        ans = ::Rf_ScalarReal(wtres.squaredNorm());
+	rho.assign("wrss", ans);
+	return ans;
+        END_RCPP;
+    }
+
+    SEXP noPtrLm_updateMu(SEXP rho_, SEXP gam_) {
+        BEGIN_RCPP;
+	Environment rho(rho_);
+	const MAr1  gam(as<MAr1>(gam_));
+	const MAr1  y(as<MAr1>(rho.get("y")));
+	MAr1        mu(as<MAr1>(rho.get("mu")));
+	mu = gam;
+	const MAr1  sqrtrwt(as<MAr1>(rho.get("sqrtrwt")));
+	MVec        wtres(as<MVec>(rho.get("wtres")));
+	wtres = sqrtrwt.cwiseProduct(y - mu);
+	SEXP        ans = ::Rf_ScalarReal(wtres.squaredNorm());
+	rho.assign("wrss", ans);
+	return ans;
+        END_RCPP;
+    }
+
     SEXP merPredDsetBeta0(SEXP ptr, SEXP beta0) {
         BEGIN_RCPP;
         XPtr<merPredD>(ptr)->setBeta0(as<MVec>(beta0));
@@ -1122,11 +1190,17 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(merPredDupdateRes,  2),
     CALLDEF(merPredDupdateXwts, 2),
 
+    CALLDEF(noPtrLm_setWeights, 2),
+    CALLDEF(noPtrLm_updateMu,   2),
+    CALLDEF(noPtrLm_updateWrss, 1),
+    
     CALLDEF(noPtrPred_L,        1),
     CALLDEF(noPtrPred_ldL2,     1),
     CALLDEF(noPtrPred_mkL,      1),
     CALLDEF(noPtrPred_P,        1),
+    CALLDEF(noPtrPred_RX,       1),
     CALLDEF(noPtrPred_updtL,    1),
+    CALLDEF(noPtrPred_updtRX,   1),
 
     CALLDEF(NelderMead_Create,  5),
     CALLDEF(NelderMead_newf,    2),

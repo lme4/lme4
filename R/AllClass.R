@@ -262,8 +262,9 @@ noPtrPred <-
         list(
             Lambdat = "dgCMatrix",
             Lind    = "integer",
-            Lptr    = "externalptr",
+            Lptr    = "externalptr",  # make sure Lptr and RXpt are regenetated after serialize/unserialize
             RZX     = "matrix",
+            RXpt    = "externalptr",
             X       = "matrix",
             Zt      = "dgCMatrix",
             ZtZ     = "dgCMatrix", # actually Lambdat * Zt * Z * Lambda
@@ -290,12 +291,14 @@ noPtrPred <-
                 beta <<- numeric(p)
                 u <<- numeric(q)
                 .Call(noPtrPred_mkL, as.environment(.self))
-                .Call(noPtrPred_updtL, as.environment(.self))
+                updtL()
             },
+            L = function() .Call(noPtrPred_L, as.environment(.self)),
+            P = function() .Call(noPtrPred_P, as.environment(.self)) + 1L,
+            RX = function() .Call(noPtrPred_RX, as.environment(.self)),
             ldL2 = function() .Call(noPtrPred_ldL2, as.environment(.self)),
             updtL = function() .Call(noPtrPred_updtL, as.environment(.self)),
-            P = function() .Call(noPtrPred_P, as.environment(.self)) + 1L,
-            L = function() .Call(noPtrPred_L, as.environment(.self))
+            updtRX = function () .Call(noPtrPred_updtRX, as.environment(.self))
             )
         )
 
@@ -361,6 +364,377 @@ NULL
 ##' \code{\linkS4class{glmResp}}, \code{\linkS4class{nlsResp}}
 ##' @keywords classes
 ##' @export
+noPtrLm <-                               # base class for response modules
+    setRefClass(
+        "noPtrLm",
+        fields =
+        list(
+            mu      = "numeric",
+            offset  = "numeric",
+            sqrtXwt = "numeric",
+            sqrtrwt = "numeric",
+            weights = "numeric",
+            wtres   = "numeric",
+            y       = "numeric"),
+        methods =
+        list(
+            allInfo = function() {
+                'return all the information available on the object'
+                data.frame(y=y, offset=offset, weights=weights, mu=mu,
+                           rwt=sqrtrwt, wres=wtres, Xwt=sqrtXwt)
+            },
+            initialize = function(...) {
+                if (!nargs()) return()
+                ll <- list(...)
+                if (is.null(ll$y)) stop("y must be specified")
+                y <<- as.numeric(ll$y)
+                n <- length(y)
+                mu <<- if (!is.null(ll$mu)) as.numeric(ll$mu) else numeric(n)
+                offset <<- if (!is.null(ll$offset)) as.numeric(ll$offset) else numeric(n)
+                weights <<- if (!is.null(ll$weights))
+                    as.numeric(ll$weights) else rep.int(1,n)
+                sqrtXwt <<- if (!is.null(ll$sqrtXwt))
+                    as.numeric(ll$sqrtXwt) else sqrt(weights)
+                sqrtrwt <<- if (!is.null(ll$sqrtrwt))
+                    as.numeric(ll$sqrtrwt) else sqrt(weights)
+                wtres   <<- sqrtrwt * (y - mu)
+            },
+            setOffset  = function(oo) {
+                'change the offset in the model (used in profiling)'
+                offset[] <<- oo
+            },
+            setResp    = function(rr) {
+                'change the response in the model, usually after a deep copy'
+                y[] <<- rr
+            },
+            setWeights = function(ww) {
+                'change the prior weights in the model'
+                .Call(noPtrLm_setWeights, as.environment(.self), as.numeric(ww))
+            },
+            updateMu  = function(gamma) {
+                'update mu, wtres and wrss from the linear predictor'
+                .Call(noPtrLm_updateMu, as.environment(.self), as.numeric(gamma))
+            },
+            updateWrss = function() {
+                'update wtres and wrss, returning wrss'
+                .Call(noPtrLm_updateWrss, as.environment(.self))
+            }
+            )
+        )
+
+##' Classes \code{"lmResp"}, \code{"glmResp"}, \code{"nlsResp"} and
+##' \code{"lmerResp"}
+##'
+##' Reference classes for response modules, including linear models,
+##' \code{"lmResp"}, generalized linear models, \code{"glmResp"}, nonlinear
+##' models, \code{"nlsResp"} and linear mixed-effects models, \code{"lmerResp"}.
+##' Each reference class is associated with a C++ class of the same name.  As is
+##' customary, the generator object for each class has the same name as the
+##' class.
+##' @name lmResp-class
+##' @aliases lmResp-class glmResp-class lmerResp-class nlsResp-class
+##' @note Objects from these reference classes correspond to objects in C++
+##'     classes.  Methods are invoked on the C++ classes using the external pointer
+##'     in the \code{ptr} field.  When saving such an object the external pointer is
+##'     converted to a null pointer, which is why there are redundant fields
+##'     containing enough information as R objects to be able to regenerate the C++
+##'     object.  The convention is that a field whose name begins with an upper-case
+##'     letter is an R object and the corresponding field whose name begins with the
+##'     lower-case letter is a method.  Access to the external pointer should be
+##'     through the method, not through the field.
+##' @section Extends: All reference classes extend and inherit methods from
+##'     \code{"\linkS4class{envRefClass}"}.  Furthermore, \code{"glmResp"},
+##'     \code{"nlsResp"} and \code{"lmerResp"} all extend the \code{"lmResp"} class.
+##' @seealso \code{\link{lmer}}, \code{\link{glmer}}, \code{\link{nlmer}},
+##'     \code{\linkS4class{merMod}}.
+##' @examples
+##'
+##' showClass("lmResp")
+##' str(lmResp$new(y=1:4))
+##' showClass("glmResp")
+##' str(glmResp$new(family=poisson(), y=1:4))
+##' showClass("nlsResp")
+##' showClass("lmerResp")
+##' str(lmerResp$new(y=1:4))
+##' @keywords classes
+NULL
+
+##' @export
+noPtrLmer <-
+    setRefClass("noPtrLmer",
+                fields=
+                list(REML="integer"),
+                contains="noPtrLm",
+                methods=
+                list(initialize = function(...) {
+                         REML <<- as.integer(list(...)$REML)
+                         if (length(REML) != 1L) REML <<- 0L
+                         callSuper(...)
+                     },
+                     objective  = function(ldL2, ldRX2, sqrL, sigma.sq = NULL) {
+                         'returns the profiled deviance or REML criterion'
+                         .Call(lmer_Laplace, as.environment(.self), ldL2, ldRX2, sqrL, sigma.sq)
+                     })
+                )
+
+lmResp <-                               # base class for response modules
+    setRefClass("lmResp",
+                fields =
+                list(Ptr     = "externalptr",
+                     mu      = "numeric",
+                     offset  = "numeric",
+                     sqrtXwt = "numeric",
+                     sqrtrwt = "numeric",
+                     weights = "numeric",
+                     wtres   = "numeric",
+                     y       = "numeric"),
+                methods =
+                list(
+                    allInfo = function() {
+                        'return all the information available on the object'
+                        data.frame(y=y, offset=offset, weights=weights, mu=mu,
+                                   rwt=sqrtrwt, wres=wtres, Xwt=sqrtXwt)
+                    },
+                    initialize = function(...) {
+                        if (!nargs()) return()
+                        ll <- list(...)
+                        if (is.null(ll$y)) stop("y must be specified")
+                        y <<- as.numeric(ll$y)
+                        n <- length(y)
+                        mu <<- if (!is.null(ll$mu))
+                            as.numeric(ll$mu) else numeric(n)
+                        offset <<- if (!is.null(ll$offset))
+                            as.numeric(ll$offset) else numeric(n)
+                        weights <<- if (!is.null(ll$weights))
+                            as.numeric(ll$weights) else rep.int(1,n)
+                        sqrtXwt <<- if (!is.null(ll$sqrtXwt))
+                            as.numeric(ll$sqrtXwt) else sqrt(weights)
+                        sqrtrwt <<- if (!is.null(ll$sqrtrwt))
+                            as.numeric(ll$sqrtrwt) else sqrt(weights)
+                        wtres   <<- sqrtrwt * (y - mu)
+                    },
+                    copy         = function(shallow = FALSE) {
+                        def <- .refClassDef
+                        selfEnv <- as.environment(.self)
+                        vEnv    <- new.env(parent=emptyenv())
+                        for (field in setdiff(names(def@fieldClasses), "Ptr")) {
+                            if (shallow)
+                                assign(field, get(field, envir = selfEnv), envir = vEnv)
+                            else {
+                                current <- get(field, envir = selfEnv)
+                                if (is(current, "envRefClass"))
+                                    current <- current$copy(FALSE)
+                                assign(field, current, envir = vEnv)
+                            }
+                        }
+                        do.call("new", c(as.list(vEnv), Class=def))
+                    },
+                    initializePtr = function() {
+                        Ptr <<- .Call(lm_Create, y, weights, offset, mu, sqrtXwt,
+                                      sqrtrwt, wtres)
+                        .Call(lm_updateMu, Ptr, mu)
+                    },
+                    ptr       = function() {
+                        'returns the external pointer, regenerating if necessary'
+                        if (length(y)) {
+                            if (.Call(isNullExtPtr, Ptr)) initializePtr()
+                        }
+                        Ptr
+                    },
+                    setOffset  = function(oo) {
+                        'change the offset in the model (used in profiling)'
+                        .Call(lm_setOffset, ptr(), as.numeric(oo))
+                    },
+                    setResp    = function(rr) {
+                        'change the response in the model, usually after a deep copy'
+                        .Call(lm_setResp, ptr(), as.numeric(rr))
+                    },
+                    setWeights = function(ww) {
+                        'change the prior weights in the model'
+                        .Call(lm_setWeights, ptr(), as.numeric(ww))
+                    },
+                    updateMu  = function(gamma) {
+                        'update mu, wtres and wrss from the linear predictor'
+                        .Call(lm_updateMu, ptr(), as.numeric(gamma))
+                    },
+                    wrss      = function() {
+                        'returns the weighted residual sum of squares'
+                        .Call(lm_wrss, ptr())
+                    })
+                )
+
+lmResp$lock("mu", "offset", "sqrtXwt", "sqrtrwt", "weights", "wtres")#, "y")
+
+##' Classes \code{"lmResp"}, \code{"glmResp"}, \code{"nlsResp"} and
+##' \code{"lmerResp"}
+##'
+##' Reference classes for response modules, including linear models,
+##' \code{"lmResp"}, generalized linear models, \code{"glmResp"}, nonlinear
+##' models, \code{"nlsResp"} and linear mixed-effects models, \code{"lmerResp"}.
+##' Each reference class is associated with a C++ class of the same name.  As is
+##' customary, the generator object for each class has the same name as the
+##' class.
+##' @name lmResp-class
+##' @aliases lmResp-class glmResp-class lmerResp-class nlsResp-class
+##' @note Objects from these reference classes correspond to objects in C++
+##'     classes.  Methods are invoked on the C++ classes using the external pointer
+##'     in the \code{ptr} field.  When saving such an object the external pointer is
+##'     converted to a null pointer, which is why there are redundant fields
+##'     containing enough information as R objects to be able to regenerate the C++
+##'     object.  The convention is that a field whose name begins with an upper-case
+##'     letter is an R object and the corresponding field whose name begins with the
+##'     lower-case letter is a method.  Access to the external pointer should be
+##'     through the method, not through the field.
+##' @section Extends: All reference classes extend and inherit methods from
+##'     \code{"\linkS4class{envRefClass}"}.  Furthermore, \code{"glmResp"},
+##'     \code{"nlsResp"} and \code{"lmerResp"} all extend the \code{"lmResp"} class.
+##' @seealso \code{\link{lmer}}, \code{\link{glmer}}, \code{\link{nlmer}},
+##'     \code{\linkS4class{merMod}}.
+##' @examples
+##'
+##' showClass("lmResp")
+##' str(lmResp$new(y=1:4))
+##' showClass("glmResp")
+##' str(glmResp$new(family=poisson(), y=1:4))
+##' showClass("nlsResp")
+##' showClass("lmerResp")
+##' str(lmerResp$new(y=1:4))
+##' @keywords classes
+NULL
+
+##' @export
+lmerResp <-
+    setRefClass("lmerResp",
+                fields=
+                list(REML="integer"),
+                contains="lmResp",
+                methods=
+                list(initialize = function(...) {
+                         REML <<- as.integer(list(...)$REML)
+                         if (length(REML) != 1L) REML <<- 0L
+                         callSuper(...)
+                     },
+                     initializePtr = function() {
+                         Ptr <<- .Call(lmer_Create, y, weights, offset, mu, sqrtXwt,
+                                       sqrtrwt, wtres)
+                         .Call(lm_updateMu, Ptr, mu - offset)
+                         .Call(lmer_setREML, Ptr, REML)
+                     },
+                     ptr        = function() {
+                         'returns the external pointer, regenerating if necessary'
+                         if (length(y))
+                             if (.Call(isNullExtPtr, Ptr)) initializePtr()
+                         Ptr
+                     },
+                     objective  = function(ldL2, ldRX2, sqrL, sigma.sq = NULL) {
+                         'returns the profiled deviance or REML criterion'
+                         .Call(lmer_Laplace, ptr(), ldL2, ldRX2, sqrL, sigma.sq)
+                     })
+                )
+
+setOldClass("family")
+
+##' @export
+glmResp <-
+    setRefClass("glmResp",
+                fields=
+                list(eta="numeric", family="family", n="numeric"),
+                contains="lmResp",
+                methods=
+                list(initialize = function(...) {
+                         callSuper(...)
+                         ll <- list(...)
+                         if (is.null(ll$family)) stop("family must be specified")
+                         family <<- ll$family
+                         n <<- if (!is.null(ll$n)) as.numeric(ll$n) else rep.int(1,length(y))
+                         eta <<- numeric(length(y))
+                     },
+                     aic          = function() {
+                         .Call(glm_aic, ptr())
+                     },
+                     allInfo = function() {
+                         'return all the information available on the object'
+                         cbind(callSuper(),
+                               data.frame(eta=eta, muEta=muEta(), var=variance(),
+                                          WrkWt=sqrtWrkWt(), wrkRes=wrkResids(),
+                                          wrkResp=wrkResp(), devRes=devResid()))
+                     },
+                     devResid  = function() {
+                         'returns the vector of deviance residuals'
+                         .Call(glm_devResid, ptr())
+                     },
+                     fam       = function() {
+                         'returns the name of the glm family'
+                         .Call(glm_family, ptr())
+                     },
+                     Laplace   = function(ldL2, ldRX2, sqrL) {
+                         'returns the Laplace approximation to the profiled deviance'
+                         .Call(glm_Laplace, ptr(), ldL2, ldRX2, sqrL)
+                     },
+                     link      = function() {
+                         'returns the name of the glm link'
+                         .Call(glm_link, ptr())
+                     },
+                     muEta     = function() {
+                         'returns the diagonal of the Jacobian matrix, d mu/d eta'
+                         .Call(glm_muEta, ptr())
+                     },
+                     ptr       = function() {
+                         'returns the external pointer, regenerating if necessary'
+                         if (length(y)) {
+                             if (.Call(isNullExtPtr, Ptr)) {
+                                 Ptr <<- .Call(glm_Create, family, y, weights, offset, mu, sqrtXwt,
+                                               sqrtrwt, wtres, eta, n)
+                                 .Call(glm_updateMu, Ptr, eta - offset)
+                             }
+                         }
+                         Ptr
+                     },
+                     resDev = function() {
+                         'returns the sum of the deviance residuals'
+                         .Call(glm_resDev, ptr())
+                     },
+                     setTheta = function(theta) {
+                         'sets a new value of theta, for negative binomial distribution only'
+                         .Call(glm_setTheta, ptr(), as.numeric(theta))
+                     },
+                     sqrtWrkWt = function() {
+                         'returns the square root of the working X weights'
+                         .Call(glm_sqrtWrkWt, ptr())
+                     },
+                     theta = function() {
+                         'query the value of theta, for negative binomial distribution only'
+                         .Call(glm_theta, ptr())
+                     },
+                     updateMu = function(gamma) {
+                         'update mu, residuals, weights, etc. from the linear predictor'
+                         .Call(glm_updateMu, ptr(), as.numeric(gamma))
+                     },
+                     updateWts = function() {
+                         'update the residual and X weights from the current value of eta'
+                         .Call(glm_updateWts, ptr())
+                     },
+                     variance = function() {
+                         'returns the vector of variances'
+                         .Call(glm_variance, ptr())
+                     },
+                     wtWrkResp = function() {
+                         'returns the vector of weighted working responses'
+                         .Call(glm_wtWrkResp, ptr())
+                     },
+                     wrkResids = function() {
+                         'returns the vector of working residuals'
+                         .Call(glm_wrkResids, ptr())
+                     },
+                     wrkResp = function() {
+                         'returns the vector of working responses'
+                         .Call(glm_wrkResp, ptr())
+                     }
+                     )
+                )
+
+
+glmResp$lock("family", "n", "eta")
 lmResp <-                               # base class for response modules
     setRefClass("lmResp",
                 fields =
