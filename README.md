@@ -19,7 +19,7 @@ or adaptive Gauss-Hermite quadrature; GLMMs allow user-defined families and link
 ```
 install.packages("lme4",
    repos=c("http://lme4.r-forge.r-project.org/repos",
-          getOption("repos")["CRAN"]))
+          getOption("repos")[["CRAN"]]))
 ```
 * Development version from Github:
 ```
@@ -40,5 +40,5 @@ The `install_github()` approach requires that you build from source, i.e. `make`
 ```
 install.packages("lme4.0", 
                  repos=c("http://lme4.r-forge.r-project.org/repos",
-                         getOption("repos")))
+                         getOption("repos")[["CRAN"]]))
 ```
