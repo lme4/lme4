@@ -148,29 +148,10 @@ merPredD <-
                          .Call(merPredDbeta, ptr(), as.numeric(fac))
                      },
                      copy         = function(shallow = FALSE) {
-                          ## def <- .refClassDef
-                          ## selfEnv <- as.environment(.self)
-                          ## LambdatCopy <- selfEnv$Lambdat
-                          ## LindCopy <- selfEnv$Lind
-                          ## thetaCopy <- selfEnv$theta
-                          ## value <- new(def, X, Zt, LambdatCopy, LindCopy, thetaCopy, ncol(X))
-                          ## vEnv <- as.environment(value)
-                          
-                          ## for (field in names(def@fieldClasses)) {
-                          ##     if (shallow) 
-                          ##         assign(field, get(field, envir = selfEnv), envir = vEnv)
-                          ##     else {
-                          ##         current <- get(field, envir = selfEnv)
-                          ##         if (is(current, "envRefClass")) 
-                          ##             current <- current$copy(FALSE)
-                          ##         assign(field, current, envir = vEnv)
-                          ##     }
-                          ## }
-                          ## value
-                         .Call(isNullExtPtr, Ptr)
                          def <- .refClassDef
                          selfEnv <- as.environment(.self)
                          vEnv    <- new.env(parent=emptyenv())
+                         
                          for (field in setdiff(names(def@fieldClasses), "Ptr")) {
                              if (shallow)
                                  assign(field, get(field, envir = selfEnv), envir = vEnv)
@@ -181,10 +162,10 @@ merPredD <-
                                  assign(field, current, envir = vEnv)
                              }
                          }
-                         ## PtrNew <- .Call(merPredDDuplicate, as(X, "matrix"), Lambdat,
-                         ##                LamtUt, Lind, RZX, Ut, Utr, V, VtV, Vtr,
-                         ##                Xwts, Zt, beta0, delb, delu, theta, u0)
-                         ## assign("Ptr", PtrNew, envir = vEnv)
+
+                         ## hack (https://stat.ethz.ch/pipermail/r-devel/2014-March/068448.html)
+                         assign("theta",get("theta",envir=selfEnv)+0, envir=vEnv)
+
                          do.call(merPredD$new, c(as.list(vEnv), n=nrow(vEnv$V), Class=def))
                      },
                      ldL2         = function() {
