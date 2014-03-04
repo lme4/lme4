@@ -34,10 +34,10 @@ The `install_github()` approach requires that you build from source, i.e. `make`
 
 * `lme4.0` is a maintained version of lme4 back compatible to CRAN versions of lme4 0.99xy,
   mainly for the purpose of  *reproducible research and data analysis* which was done with 0.99xy versions of lme4.
-* Notably, `lme4.0` features  `getME(<mod>, "..")` which is as much compatible to current `lme4`s version of `getME()`.
+* Notably, `lme4.0` features  `getME(<mod>, "..")` which is compatible (as much as sensibly possible) to current `lme4`s version of `getME()`.
 * It currently resides on R-forge, and you can install it with
 
-```r
+```
 install.packages("lme4.0", 
                  repos=c("http://lme4.r-forge.r-project.org/repos",
                          getOption("repos")))
