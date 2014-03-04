@@ -255,6 +255,50 @@ merPredD <-
 merPredD$lock("Lambdat", "LamtUt", "Lind", "RZX", "Ut", "Utr", "V", "VtV", "Vtr",
               "X", "Xwts", "Zt", "beta0", "delb", "delu", "theta", "u0")
 
+noPtrPred <-
+    setRefClass(
+        "noPtrPred",
+        fields =
+        list(
+            Lambdat = "dgCMatrix",
+            Lind    = "integer",
+            Lptr    = "externalptr",
+            RZX     = "matrix",
+            X       = "matrix",
+            Zt      = "dgCMatrix",
+            ZtZ     = "dgCMatrix", # actually Lambdat * Zt * Z * Lambda
+            beta    = "numeric",
+            theta   = "numeric",
+            u       = "numeric"),
+        methods =
+        list(
+            initialize = function(X, Zt, Lambdat, Lind, theta, ...) {
+                if (!nargs()) return
+                X <<- as(X, "matrix")
+                Zt <<- as(Zt, "dgCMatrix")
+                Lambdat <<- as(Lambdat, "dgCMatrix")
+                Lind <<- as.integer(Lind)
+                theta <<- as.numeric(theta)
+                ZtZ <<- as(tcrossprod(Zt),"dgCMatrix")
+                N <- nrow(X)
+                p <- ncol(X)
+                q <- nrow(Zt)
+                stopifnot(length(theta) > 0L,
+                          length(Lind) > 0L,
+                          all(sort(unique(Lind)) == seq_along(theta)))
+                RZX <<- array(0, c(q, p))
+                beta <<- numeric(p)
+                u <<- numeric(q)
+                .Call(noPtrPred_mkL, as.environment(.self))
+                .Call(noPtrPred_updtL, as.environment(.self))
+            },
+            ldL2 = function() .Call(noPtrPred_ldL2, as.environment(.self)),
+            updtL = function() .Call(noPtrPred_updtL, as.environment(.self)),
+            P = function() .Call(noPtrPred_P, as.environment(.self)) + 1L,
+            L = function() .Call(noPtrPred_L, as.environment(.self))
+            )
+        )
+
 ##' Class \code{"merPredD"} - a dense predictor reference class
 ##'
 ##' A reference class for a mixed-effects model predictor module with a dense

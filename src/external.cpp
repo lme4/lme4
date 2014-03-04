@@ -1,6 +1,6 @@
 // external.cpp: externally .Call'able functions in lme4
 //
-// Copyright (C)       2011-2012 Douglas Bates, Martin Maechler and Ben Bolker
+// Copyright (C)       2011-2014 Douglas Bates, Martin Maechler and Ben Bolker
 //
 // This file is part of lme4.
 
@@ -10,16 +10,19 @@
 #include "optimizer.h"
 
 extern "C" {
-    typedef   Eigen::VectorXi        iVec;
-    typedef   Eigen::Map<iVec>      MiVec;
-    typedef   Eigen::MatrixXd         Mat;
-    typedef   Eigen::Map<Mat>        MMat;
-    typedef   Eigen::VectorXd         Vec;
-    typedef   Eigen::Map<Vec>        MVec;
-    typedef   Eigen::ArrayXd          Ar1;
-    typedef   Eigen::Map<Ar1>        MAr1;
-    typedef   Eigen::ArrayXXd         Ar2;
-    typedef   Eigen::Map<Ar2>        MAr2;
+    typedef   Eigen::VectorXi                     iVec;
+    typedef   Eigen::Map<iVec>                   MiVec;
+    typedef   Eigen::MatrixXd                      Mat;
+    typedef   Eigen::Map<Mat>                     MMat;
+    typedef   Eigen::VectorXd                      Vec;
+    typedef   Eigen::Map<Vec>                     MVec;
+    typedef   Eigen::ArrayXd                       Ar1;
+    typedef   Eigen::Map<Ar1>                     MAr1;
+    typedef   Eigen::ArrayXXd                      Ar2;
+    typedef   Eigen::Map<Ar2>                     MAr2;
+    typedef   Eigen::MappedSparseMatrix<double> MSpMat;
+    typedef   Eigen::SparseMatrix<double>        SpMat;
+    typedef   Eigen::SimplicialLLT<SpMat>          LLT;
 
     using      Rcpp::CharacterVector;
     using      Rcpp::Environment;
@@ -653,6 +656,59 @@ extern "C" {
         END_RCPP;
     }
 
+    SEXP noPtrPred_L(SEXP rho_) {
+	BEGIN_RCPP;
+	Environment  rho(rho_);
+	return wrap(XPtr<LLT>(rho.get("Lptr"))->matrixL().derived());
+	END_RCPP;
+    }
+
+    SEXP noPtrPred_P(SEXP rho_) {
+	BEGIN_RCPP;
+	Environment  rho(rho_);
+	return wrap(XPtr<LLT>(rho.get("Lptr"))->permutationP().indices());
+	END_RCPP;
+    }
+
+    SEXP noPtrPred_ldL2(SEXP rho_) {
+	BEGIN_RCPP;
+	Environment   rho(rho_);
+	return ::Rf_ScalarReal(log(XPtr<LLT>(rho.get("Lptr"))->determinant()));
+	END_RCPP;
+    }
+
+    
+    SEXP noPtrPred_mkL(SEXP rho_) {
+	BEGIN_RCPP;
+	Environment   rho(rho_);
+        const MSpMat  ZtZ(as<MSpMat>(rho.get("ZtZ")));
+	LLT     *L = new LLT();
+	L->setShift(1.0);
+	L->compute(ZtZ);
+	rho.assign("Lptr",wrap(XPtr<LLT>(L)));
+	END_RCPP;
+    }
+
+    SEXP noPtrPred_updtL(SEXP rho_) {
+	BEGIN_RCPP;
+	Environment   rho(rho_);
+	const MSpMat  Zt(as<MSpMat>(rho.get("Zt")));
+	MSpMat        Lambdat(as<MSpMat>(rho.get("Lambdat")));
+	const MiVec   Lind(as<MiVec>(rho.get("Lind")));
+	const MVec    theta(as<MVec>(rho.get("theta")));
+	if (Lind.size() != Lambdat.nonZeros())
+	    throw std::invalid_argument("dimension mismatch");
+	double *LamX = Lambdat.valuePtr();
+	for (int i = 0; i < Lind.size(); ++i) {
+	    LamX[i] = theta(Lind(i) - 1);
+	}
+	SpMat         LamtZt(Lambdat * Zt);
+	SpMat         LamtZtZLam(LamtZt * LamtZt.adjoint());
+	rho.assign("ZtZ",wrap(LamtZtZLam));
+	XPtr<LLT>(rho.get("Lptr"))->factorize(LamtZtZLam);
+	END_RCPP;
+    }
+	
     SEXP merPredDsetBeta0(SEXP ptr, SEXP beta0) {
         BEGIN_RCPP;
         XPtr<merPredD>(ptr)->setBeta0(as<MVec>(beta0));
@@ -711,7 +767,7 @@ extern "C" {
 
     SEXP merPredDcondVar(SEXP ptr, SEXP rho) {
         BEGIN_RCPP;
-        return wrap(XPtr<merPredD>(ptr)->condVar(Rcpp::Environment(rho)));
+        return wrap(XPtr<merPredD>(ptr)->condVar(Environment(rho)));
         END_RCPP;
     }
 
@@ -1038,8 +1094,7 @@ static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(merPredDsetTheta,   2), // setters
     CALLDEF(merPredDsetBeta0,   2), 
-
-    CALLDEF(merPredDsetDelu,    2), // setters
+    CALLDEF(merPredDsetDelu,    2),
     CALLDEF(merPredDsetDelb,    2), 
 
     CALLDEF(merPredDCcNumer,    1), // getters
@@ -1066,6 +1121,12 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(merPredDupdateLamtUt,1),
     CALLDEF(merPredDupdateRes,  2),
     CALLDEF(merPredDupdateXwts, 2),
+
+    CALLDEF(noPtrPred_L,        1),
+    CALLDEF(noPtrPred_ldL2,     1),
+    CALLDEF(noPtrPred_mkL,      1),
+    CALLDEF(noPtrPred_P,        1),
+    CALLDEF(noPtrPred_updtL,    1),
 
     CALLDEF(NelderMead_Create,  5),
     CALLDEF(NelderMead_newf,    2),
