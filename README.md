@@ -29,3 +29,16 @@ library("devtools"); install_github("lme4",user="lme4")
 want the release branch from Github add `ref="release"` to the
 `install_github()` call.
 The `install_github()` approach requires that you build from source, i.e. `make` and compilers must be installed on your system -- see the R FAQ for your operating system; you may also need to install dependencies manually.)
+
+## Installation of `lme4.0`
+
+* `lme4.0` is a maintained version of lme4 back compatible to CRAN versions of lme4 0.99xy,
+  mainly for the purpose of  *reproducible research and data analysis* which was done with 0.99xy versions of lme4.
+* Notably, `lme4.0` features  `getME(<mod>, "..")` which is as much compatible to current `lme4`s version of `getME()`.
+* It currently resides on R-forge, and you can install it with
+
+```r
+install.packages("lme4.0", 
+                 repos=c("http://lme4.r-forge.r-project.org/repos",
+                         getOption("repos")))
+```
