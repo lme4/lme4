@@ -164,7 +164,7 @@ merPredD <-
                          }
 
                          ## hack (https://stat.ethz.ch/pipermail/r-devel/2014-March/068448.html)
-                         assign("theta",get("theta",envir=selfEnv)+0, envir=vEnv)
+                         assign("theta", get("theta",envir=selfEnv)+0, envir=vEnv)
 
                          do.call(merPredD$new, c(as.list(vEnv), n=nrow(vEnv$V), Class=def))
                      },
