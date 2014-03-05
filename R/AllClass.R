@@ -53,234 +53,39 @@ setClass("lmList.confint", contains = "array")
 ##' @keywords classes
 ##' @export
 merPredD <-
-    setRefClass("merPredD", # Predictor class for mixed-effects models with dense X
-                fields =
-                list(Lambdat = "dgCMatrix",
-                     LamtUt  = "dgCMatrix",
-                     Lind    = "integer",
-                     Ptr     = "externalptr",
-                     RZX     = "matrix",
-                     Ut      = "dgCMatrix",
-                     Utr     = "numeric",
-                     V       = "matrix",
-                     VtV     = "matrix",
-                     Vtr     = "numeric",
-                     X       = "matrix",
-                     Xwts    = "numeric",
-                     Zt      = "dgCMatrix",
-                     beta0   = "numeric",
-                     delb    = "numeric",
-                     delu    = "numeric",
-                     theta   = "numeric",
-                     u0      = "numeric"),
-                methods =
-                list(
-                     initialize = function(X, Zt, Lambdat, Lind, theta, n, ...) {
-                         if (!nargs()) return
-                         X <<- as(X, "matrix")
-                         Zt <<- as(Zt, "dgCMatrix")
-                         Lambdat <<- as(Lambdat, "dgCMatrix")
-                         Lind <<- as.integer(Lind)
-                         theta <<- as.numeric(theta)
-                         N <- nrow(X)
-                         p <- ncol(X)
-                         q <- nrow(Zt)
-                         stopifnot(length(theta) > 0L,
-                                   length(Lind) > 0L,
-                                   all(sort(unique(Lind)) == seq_along(theta)))
-                         RZX <<- array(0, c(q, p))
-                         Utr <<- numeric(q)
-                         V <<- array(0, c(n, p))
-                         VtV <<- array(0, c(p, p))
-                         Vtr <<- numeric(p)
-                         b0 <- list(...)$beta0
-                         beta0 <<- if (is.null(b0)) numeric(p) else b0
-                         delb <<- numeric(p)
-                         delu <<- numeric(q)
-                         uu <- list(...)$u0
-                         u0 <<- if (is.null(uu)) numeric(q) else uu
-                         Ut <<- if (n == N) Zt + 0 else
-                             Zt %*% sparseMatrix(i=seq_len(N), j=as.integer(gl(n, 1, N)), x=rep.int(1,N))
-                         ## The following is a kludge to overcome problems when Zt is square
-                         ## by making LamtUt rectangular
-                         LtUt <- Lambdat %*% Ut
-                         if (nrow(LtUt) == ncol(LtUt))
-                             LtUt <- cbind2(LtUt,
-                                            sparseMatrix(i=integer(0),
-                                                         j=integer(0),
-                                                         x=numeric(0),
-                                                         dims=c(nrow(LtUt),1)))
-                         LamtUt <<- LtUt
-                         Xw <- list(...)$Xwts
-                         Xwts <<- if (is.null(Xw)) rep.int(1, N) else as.numeric(Xw)
-                         initializePtr()
-                     },
-                     CcNumer      = function() {
-                         'returns the numerator of the orthogonality convergence criterion'
-                         .Call(merPredDCcNumer, ptr())
-                     },
-                     L            = function() {
-                         'returns the current value of the sparse Cholesky factor'
-                         .Call(merPredDL, ptr())
-                     },
-                     P            = function() {
-                         'returns the permutation vector for the sparse Cholesky factor'
-                         .Call(merPredDPvec, ptr())
-                     },
-                     RX           = function() {
-                         'returns the dense downdated Cholesky factor for the fixed-effects parameters'
-                         .Call(merPredDRX, ptr())
-                     },
-                     RXi          = function() {
-                         'returns the inverse of the dense downdated Cholesky factor for the fixed-effects parameters'
-                         .Call(merPredDRXi, ptr())
-                     },
-                     RXdiag       = function() {
-                         'returns the diagonal of the dense downdated Cholesky factor'
-                         .Call(merPredDRXdiag, ptr())
-                     },
-                     b            = function(fac) {
-                         'random effects on original scale for step factor fac'
-                         .Call(merPredDb, ptr(), as.numeric(fac))
-                     },
-                     beta         = function(fac) {
-                         'fixed-effects coefficients for step factor fac'
-                         .Call(merPredDbeta, ptr(), as.numeric(fac))
-                     },
-                     copy         = function(shallow = FALSE) {
-                         def <- .refClassDef
-                         selfEnv <- as.environment(.self)
-                         vEnv    <- new.env(parent=emptyenv())
-                         for (field in setdiff(names(def@fieldClasses), "Ptr")) {
-                             if (shallow)
-                                 assign(field, get(field, envir = selfEnv), envir = vEnv)
-                             else {
-                                 current <- get(field, envir = selfEnv)
-                                 if (is(current, "envRefClass"))
-                                     current <- current$copy(FALSE)
-                                 assign(field, current, envir = vEnv)
-                             }
-                         }
-                         do.call("new", c(as.list(vEnv), n=nrow(vEnv$V), Class=def))
-                     },
-                     ldL2         = function() {
-                         'twice the log determinant of the sparse Cholesky factor'
-                         .Call(merPredDldL2, ptr())
-                     },
-                     ldRX2        = function() {
-                         'twice the log determinant of the downdated dense Cholesky factor'
-                         .Call(merPredDldRX2, ptr())
-                     },
-                     unsc         = function() {
-                         'the unscaled variance-covariance matrix of the fixed-effects parameters'
-                         .Call(merPredDunsc, ptr())
-                     },
-                     linPred      = function(fac) {
-                         'evaluate the linear predictor for step factor fac'
-                         .Call(merPredDlinPred, ptr(), as.numeric(fac))
-                     },
-                     installPars  = function(fac) {
-                         'update u0 and beta0 to the values for step factor fac'
-                         .Call(merPredDinstallPars, ptr(), as.numeric(fac))
-                     },
-                    initializePtr = function() {
-                        Ptr <<- .Call(merPredDCreate, as(X, "matrix"), Lambdat,
-                                      LamtUt, Lind, RZX, Ut, Utr, V, VtV, Vtr,
-                                      Xwts, Zt, beta0, delb, delu, theta, u0)
-                        .Call(merPredDsetTheta, Ptr, theta)
-                        .Call(merPredDupdateXwts, Ptr, Xwts)
-                        .Call(merPredDupdateDecomp, Ptr, NULL)
-                     },
-                     ptr          = function() {
-                         'returns the external pointer, regenerating if necessary'
-                         if (length(theta)) {
-                             if (.Call(isNullExtPtr, Ptr)) initializePtr()
-                         }
-                         Ptr
-                     },
-                     setBeta0     = function(beta0) {
-                         'install a new value of theta'
-                         .Call(merPredDsetBeta0, ptr(), as.numeric(beta0))
-                     },
-                     setTheta     = function(theta) {
-                         'install a new value of theta'
-                         .Call(merPredDsetTheta, ptr(), as.numeric(theta))
-                     },
-                     solve        = function() {
-                         'solve for the coefficient increments delu and delb'
-                         .Call(merPredDsolve, ptr())
-                     },
-                     solveU       = function() {
-                         'solve for the coefficient increment delu only (beta is fixed)'
-                         .Call(merPredDsolveU, ptr())
-                     },
-                     setDelu      = function(val) {
-                         'set the coefficient increment delu'
-                         .Call(merPredDsetDelu , ptr(), as.numeric(val))
-                     },
-                     setDelb      = function(val) {
-                         'set the coefficient increment delb'
-                         .Call(merPredDsetDelb , ptr(), as.numeric(val))
-                     },
-                     sqrL         = function(fac) {
-                         'squared length of u0 + fac * delu'
-                         .Call(merPredDsqrL, ptr(), as.numeric(fac))
-                     },
-                     u            = function(fac) {
-                         'orthogonal random effects for step factor fac'
-                         .Call(merPredDu, ptr(), as.numeric(fac))
-                     },
-                     updateDecomp = function(XPenalty = NULL) {
-                         'update L, RZX and RX from Ut, Vt and VtV'
-                         invisible(.Call(merPredDupdateDecomp, ptr(), XPenalty))
-                     },
-                     updateL = function() {
-                         'update LamtUt and L'
-                         .Call(merPredDupdateL, ptr())
-                     },
-                     updateLamtUt = function() {
-                         'update LamtUt and L'
-                         .Call(merPredDupdateLamtUt, ptr())
-                     },
-                     updateRes    = function(wtres) {
-                         'update Vtr and Utr using the vector of weighted residuals'
-                         .Call(merPredDupdateRes, ptr(), as.numeric(wtres))
-                     },
-                     updateXwts   = function(wts) {
-                         'update Ut and V from Zt and X using X weights'
-                         .Call(merPredDupdateXwts, ptr(), wts)
-                     }
-                     )
-                )
-merPredD$lock("Lambdat", "LamtUt", "Lind", "RZX", "Ut", "Utr", "V", "VtV", "Vtr",
-              "X", "Xwts", "Zt", "beta0", "delb", "delu", "theta", "u0")
-
-noPtrPred <-
     setRefClass(
-        "noPtrPred",
+        "merPredD", # Predictor class for mixed-effects models with dense X
         fields =
         list(
             Lambdat = "dgCMatrix",
+            LamtUt  = "dgCMatrix",
             Lind    = "integer",
             Lptr    = "externalptr",  # make sure Lptr and RXpt are regenetated after serialize/unserialize
             RZX     = "matrix",
             RXpt    = "externalptr",
+            Ut      = "dgCMatrix",
+            Utr     = "numeric",
+            V       = "matrix",
+            VtV     = "matrix",
+            Vtr     = "numeric",
             X       = "matrix",
+            Xwts    = "numeric",
             Zt      = "dgCMatrix",
             ZtZ     = "dgCMatrix", # actually Lambdat * Zt * Z * Lambda
-            beta    = "numeric",
+            beta0   = "numeric",
+            delb    = "numeric",
+            delu    = "numeric",
             theta   = "numeric",
-            u       = "numeric"),
+            u0      = "numeric"),
         methods =
         list(
-            initialize = function(X, Zt, Lambdat, Lind, theta, ...) {
+            initialize = function(X, Zt, Lambdat, Lind, theta, n, ...) {
                 if (!nargs()) return
                 X <<- as(X, "matrix")
                 Zt <<- as(Zt, "dgCMatrix")
                 Lambdat <<- as(Lambdat, "dgCMatrix")
                 Lind <<- as.integer(Lind)
                 theta <<- as.numeric(theta)
-                ZtZ <<- as(tcrossprod(Zt),"dgCMatrix")
                 N <- nrow(X)
                 p <- ncol(X)
                 q <- nrow(Zt)
@@ -288,19 +93,128 @@ noPtrPred <-
                           length(Lind) > 0L,
                           all(sort(unique(Lind)) == seq_along(theta)))
                 RZX <<- array(0, c(q, p))
-                beta <<- numeric(p)
-                u <<- numeric(q)
-                .Call(noPtrPred_mkL, as.environment(.self))
+                Utr <<- numeric(q)
+                V <<- array(0, c(n, p))
+                VtV <<- array(0, c(p, p))
+                Vtr <<- numeric(p)
+                b0 <- list(...)$beta0
+                beta0 <<- if (is.null(b0)) numeric(p) else b0
+                delb <<- numeric(p)
+                delu <<- numeric(q)
+                uu <- list(...)$u0
+                u0 <<- if (is.null(uu)) numeric(q) else uu
+                Ut <<- Zt
+                .Call(predD_mkL, as.environment(.self))
                 updtL()
             },
-            L = function() .Call(noPtrPred_L, as.environment(.self)),
-            P = function() .Call(noPtrPred_P, as.environment(.self)) + 1L,
-            RX = function() .Call(noPtrPred_RX, as.environment(.self)),
-            ldL2 = function() .Call(noPtrPred_ldL2, as.environment(.self)),
-            updtL = function() .Call(noPtrPred_updtL, as.environment(.self)),
-            updtRX = function () .Call(noPtrPred_updtRX, as.environment(.self))
+            CcNumer      = function() {
+                'returns the numerator of the orthogonality convergence criterion'
+                .Call(predD_CcNumer, as.environment(.self))
+            },
+            L            = function() {
+                'returns the current value of the sparse Cholesky factor'
+                .Call(predD_L, as.environment(.self))
+            },
+            P            = function() {
+                'returns the permutation vector for the sparse Cholesky factor'
+                .Call(predD_P, as.environment(.self))
+            },
+            RX           = function() {
+                'returns the dense downdated Cholesky factor for the fixed-effects parameters'
+                .Call(predD_RX, as.environment(.self))
+            },
+            RXi          = function() {
+                'returns the inverse of the dense downdated Cholesky factor for the fixed-effects parameters'
+                .Call(predD_RXi, as.environment(.self))
+            },
+            RXdiag       = function() {
+                'returns the diagonal of the dense downdated Cholesky factor'
+                .Call(predD_RXdiag, as.environment(.self))
+            },
+            b            = function(fac) {
+                'random effects on original scale for step factor fac'
+                .Call(predD_b, as.environment(.self), as.numeric(fac))
+            },
+            beta         = function(fac) {
+                'fixed-effects coefficients for step factor fac'
+                .Call(predD_beta, as.environment(.self), as.numeric(fac))
+            },
+            ldL2         = function() {
+                'twice the log determinant of the sparse Cholesky factor'
+                .Call(predD_ldL2, as.environment(.self))
+            },
+            ldRX2        = function() {
+                'twice the log determinant of the downdated dense Cholesky factor'
+                .Call(predD_ldRX2, as.environment(.self))
+            },
+            unsc         = function() {
+                'the unscaled variance-covariance matrix of the fixed-effects parameters'
+                .Call(predD_unsc, as.environment(.self))
+            },
+            linPred      = function(fac) {
+                'evaluate the linear predictor for step factor fac'
+                .Call(predD_linPred, as.environment(.self), as.numeric(fac))
+            },
+            installPars  = function(fac) {
+                'update u0 and beta0 to the values for step factor fac'
+                .Call(predD_installPars, as.environment(.self), as.numeric(fac))
+            },
+            setBeta0     = function(beta0) {
+                'install a new value of theta'
+                .Call(predD_setBeta0, as.environment(.self), as.numeric(beta0))
+            },
+            setTheta     = function(theta) {
+                'install a new value of theta'
+                .Call(predD_setTheta, as.environment(.self), as.numeric(theta))
+            },
+            solve        = function() {
+                'solve for the coefficient increments delu and delb'
+                .Call(predD_solve, as.environment(.self))
+            },
+            solveU       = function() {
+                'solve for the coefficient increment delu only (beta is fixed)'
+                .Call(predD_solveU, as.environment(.self))
+            },
+            setDelu      = function(val) {
+                'set the coefficient increment delu'
+                .Call(predD_setDelu , as.environment(.self), as.numeric(val))
+            },
+            setDelb      = function(val) {
+                'set the coefficient increment delb'
+                .Call(predD_setDelb , as.environment(.self), as.numeric(val))
+            },
+            sqrL         = function(fac) {
+                'squared length of u0 + fac * delu'
+                .Call(predD_sqrL, as.environment(.self), as.numeric(fac))
+            },
+            u            = function(fac) {
+                'orthogonal random effects for step factor fac'
+                .Call(predD_u, as.environment(.self), as.numeric(fac))
+            },
+            updateDecomp = function(XPenalty = NULL) {
+                'update L, RZX and RX from Ut, Vt and VtV'
+                invisible(.Call(predD_updateDecomp, as.environment(.self), XPenalty))
+            },
+            updtL = function() {
+                'update LamtUt and L'
+                .Call(predD_updtL, as.environment(.self))
+            },
+            updateLamtUt = function() {
+                'update LamtUt and L'
+                .Call(predD_updateLamtUt, as.environment(.self))
+            },
+            updateRes    = function(wtres) {
+                'update Vtr and Utr using the vector of weighted residuals'
+                .Call(predD_updateRes, as.environment(.self), as.numeric(wtres))
+            },
+            updateXwts   = function(wts) {
+                'update Ut and V from Zt and X using X weights'
+                .Call(predD_updateXwts, as.environment(.self), wts)
+            }
             )
         )
+merPredD$lock("Lambdat", "LamtUt", "Lind", "RZX", "Ut", "Utr", "V", "VtV", "Vtr",
+              "X", "Xwts", "Zt", "beta0", "delb", "delu", "theta", "u0")
 
 ##' Class \code{"merPredD"} - a dense predictor reference class
 ##'
@@ -364,17 +278,19 @@ NULL
 ##' \code{\linkS4class{glmResp}}, \code{\linkS4class{nlsResp}}
 ##' @keywords classes
 ##' @export
-noPtrLm <-                               # base class for response modules
+lmResp <-                               # base class for response modules
     setRefClass(
-        "noPtrLm",
+        "lmResp",
         fields =
         list(
+            ldW     = "numeric", # scalar - log-determinant of prior weight matrix
             mu      = "numeric",
             offset  = "numeric",
             sqrtXwt = "numeric",
             sqrtrwt = "numeric",
             weights = "numeric",
             wtres   = "numeric",
+            wrss    = "numeric",
             y       = "numeric"),
         methods =
         list(
@@ -389,8 +305,10 @@ noPtrLm <-                               # base class for response modules
                 if (is.null(ll$y)) stop("y must be specified")
                 y <<- as.numeric(ll$y)
                 n <- length(y)
-                mu <<- if (!is.null(ll$mu)) as.numeric(ll$mu) else numeric(n)
-                offset <<- if (!is.null(ll$offset)) as.numeric(ll$offset) else numeric(n)
+                mu <<- if (!is.null(ll$mu))
+                    as.numeric(ll$mu) else numeric(n)
+                offset <<- if (!is.null(ll$offset))
+                    as.numeric(ll$offset) else numeric(n)
                 weights <<- if (!is.null(ll$weights))
                     as.numeric(ll$weights) else rep.int(1,n)
                 sqrtXwt <<- if (!is.null(ll$sqrtXwt))
@@ -398,26 +316,23 @@ noPtrLm <-                               # base class for response modules
                 sqrtrwt <<- if (!is.null(ll$sqrtrwt))
                     as.numeric(ll$sqrtrwt) else sqrt(weights)
                 wtres   <<- sqrtrwt * (y - mu)
+                wrss    <<- sum(wtres^2)
             },
             setOffset  = function(oo) {
                 'change the offset in the model (used in profiling)'
-                offset[] <<- oo
+                .Call(lm_setOffset, as.environment(.self), as.numeric(oo))
             },
             setResp    = function(rr) {
                 'change the response in the model, usually after a deep copy'
-                y[] <<- rr
+                .Call(lm_setResp, as.environment(.self), as.numeric(rr))
             },
             setWeights = function(ww) {
-                'change the prior weights in the model'
-                .Call(noPtrLm_setWeights, as.environment(.self), as.numeric(ww))
+                'change the prior weights in the model, update sqrtrwt and ldW'
+                .Call(lm_setWeights, as.environment(.self), as.numeric(ww))
             },
             updateMu  = function(gamma) {
                 'update mu, wtres and wrss from the linear predictor'
-                .Call(noPtrLm_updateMu, as.environment(.self), as.numeric(gamma))
-            },
-            updateWrss = function() {
-                'update wtres and wrss, returning wrss'
-                .Call(noPtrLm_updateWrss, as.environment(.self))
+                .Call(lm_updateMu, as.environment(.self), as.numeric(gamma))
             }
             )
         )
@@ -460,110 +375,24 @@ noPtrLm <-                               # base class for response modules
 NULL
 
 ##' @export
-noPtrLmer <-
-    setRefClass("noPtrLmer",
-                fields=
-                list(REML="integer"),
-                contains="noPtrLm",
-                methods=
-                list(initialize = function(...) {
-                         REML <<- as.integer(list(...)$REML)
-                         if (length(REML) != 1L) REML <<- 0L
-                         callSuper(...)
-                     },
-                     objective  = function(ldL2, ldRX2, sqrL, sigma.sq = NULL) {
-                         'returns the profiled deviance or REML criterion'
-                         .Call(lmer_Laplace, as.environment(.self), ldL2, ldRX2, sqrL, sigma.sq)
-                     })
-                )
-
-lmResp <-                               # base class for response modules
-    setRefClass("lmResp",
-                fields =
-                list(Ptr     = "externalptr",
-                     mu      = "numeric",
-                     offset  = "numeric",
-                     sqrtXwt = "numeric",
-                     sqrtrwt = "numeric",
-                     weights = "numeric",
-                     wtres   = "numeric",
-                     y       = "numeric"),
-                methods =
-                list(
-                    allInfo = function() {
-                        'return all the information available on the object'
-                        data.frame(y=y, offset=offset, weights=weights, mu=mu,
-                                   rwt=sqrtrwt, wres=wtres, Xwt=sqrtXwt)
-                    },
-                    initialize = function(...) {
-                        if (!nargs()) return()
-                        ll <- list(...)
-                        if (is.null(ll$y)) stop("y must be specified")
-                        y <<- as.numeric(ll$y)
-                        n <- length(y)
-                        mu <<- if (!is.null(ll$mu))
-                            as.numeric(ll$mu) else numeric(n)
-                        offset <<- if (!is.null(ll$offset))
-                            as.numeric(ll$offset) else numeric(n)
-                        weights <<- if (!is.null(ll$weights))
-                            as.numeric(ll$weights) else rep.int(1,n)
-                        sqrtXwt <<- if (!is.null(ll$sqrtXwt))
-                            as.numeric(ll$sqrtXwt) else sqrt(weights)
-                        sqrtrwt <<- if (!is.null(ll$sqrtrwt))
-                            as.numeric(ll$sqrtrwt) else sqrt(weights)
-                        wtres   <<- sqrtrwt * (y - mu)
-                    },
-                    copy         = function(shallow = FALSE) {
-                        def <- .refClassDef
-                        selfEnv <- as.environment(.self)
-                        vEnv    <- new.env(parent=emptyenv())
-                        for (field in setdiff(names(def@fieldClasses), "Ptr")) {
-                            if (shallow)
-                                assign(field, get(field, envir = selfEnv), envir = vEnv)
-                            else {
-                                current <- get(field, envir = selfEnv)
-                                if (is(current, "envRefClass"))
-                                    current <- current$copy(FALSE)
-                                assign(field, current, envir = vEnv)
-                            }
-                        }
-                        do.call("new", c(as.list(vEnv), Class=def))
-                    },
-                    initializePtr = function() {
-                        Ptr <<- .Call(lm_Create, y, weights, offset, mu, sqrtXwt,
-                                      sqrtrwt, wtres)
-                        .Call(lm_updateMu, Ptr, mu)
-                    },
-                    ptr       = function() {
-                        'returns the external pointer, regenerating if necessary'
-                        if (length(y)) {
-                            if (.Call(isNullExtPtr, Ptr)) initializePtr()
-                        }
-                        Ptr
-                    },
-                    setOffset  = function(oo) {
-                        'change the offset in the model (used in profiling)'
-                        .Call(lm_setOffset, ptr(), as.numeric(oo))
-                    },
-                    setResp    = function(rr) {
-                        'change the response in the model, usually after a deep copy'
-                        .Call(lm_setResp, ptr(), as.numeric(rr))
-                    },
-                    setWeights = function(ww) {
-                        'change the prior weights in the model'
-                        .Call(lm_setWeights, ptr(), as.numeric(ww))
-                    },
-                    updateMu  = function(gamma) {
-                        'update mu, wtres and wrss from the linear predictor'
-                        .Call(lm_updateMu, ptr(), as.numeric(gamma))
-                    },
-                    wrss      = function() {
-                        'returns the weighted residual sum of squares'
-                        .Call(lm_wrss, ptr())
-                    })
-                )
-
-lmResp$lock("mu", "offset", "sqrtXwt", "sqrtrwt", "weights", "wtres")#, "y")
+lmerResp <-
+    setRefClass(
+        "lmerResp",
+        fields=
+        list(REML="integer"),
+        contains="lmResp",
+        methods=
+        list(
+            initialize = function(...) {
+                REML <<- as.integer(list(...)$REML)
+                if (length(REML) != 1L) REML <<- 0L
+                callSuper(...)
+            },
+            objective  = function(ldL2, ldRX2, sqrL, sigma.sq = NULL) {
+                'returns the profiled deviance or REML criterion'
+                .Call(lmer_Laplace, as.environment(.self), ldL2, ldRX2, sqrL, sigma.sq)
+            })
+        )
 
 ##' Classes \code{"lmResp"}, \code{"glmResp"}, \code{"nlsResp"} and
 ##' \code{"lmerResp"}
@@ -603,34 +432,6 @@ lmResp$lock("mu", "offset", "sqrtXwt", "sqrtrwt", "weights", "wtres")#, "y")
 NULL
 
 ##' @export
-lmerResp <-
-    setRefClass("lmerResp",
-                fields=
-                list(REML="integer"),
-                contains="lmResp",
-                methods=
-                list(initialize = function(...) {
-                         REML <<- as.integer(list(...)$REML)
-                         if (length(REML) != 1L) REML <<- 0L
-                         callSuper(...)
-                     },
-                     initializePtr = function() {
-                         Ptr <<- .Call(lmer_Create, y, weights, offset, mu, sqrtXwt,
-                                       sqrtrwt, wtres)
-                         .Call(lm_updateMu, Ptr, mu - offset)
-                         .Call(lmer_setREML, Ptr, REML)
-                     },
-                     ptr        = function() {
-                         'returns the external pointer, regenerating if necessary'
-                         if (length(y))
-                             if (.Call(isNullExtPtr, Ptr)) initializePtr()
-                         Ptr
-                     },
-                     objective  = function(ldL2, ldRX2, sqrL, sigma.sq = NULL) {
-                         'returns the profiled deviance or REML criterion'
-                         .Call(lmer_Laplace, ptr(), ldL2, ldRX2, sqrL, sigma.sq)
-                     })
-                )
 
 setOldClass("family")
 
@@ -678,17 +479,6 @@ glmResp <-
                      muEta     = function() {
                          'returns the diagonal of the Jacobian matrix, d mu/d eta'
                          .Call(glm_muEta, ptr())
-                     },
-                     ptr       = function() {
-                         'returns the external pointer, regenerating if necessary'
-                         if (length(y)) {
-                             if (.Call(isNullExtPtr, Ptr)) {
-                                 Ptr <<- .Call(glm_Create, family, y, weights, offset, mu, sqrtXwt,
-                                               sqrtrwt, wtres, eta, n)
-                                 .Call(glm_updateMu, Ptr, eta - offset)
-                             }
-                         }
-                         Ptr
                      },
                      resDev = function() {
                          'returns the sum of the deviance residuals'
@@ -735,93 +525,6 @@ glmResp <-
 
 
 glmResp$lock("family", "n", "eta")
-lmResp <-                               # base class for response modules
-    setRefClass("lmResp",
-                fields =
-                list(Ptr     = "externalptr",
-                     mu      = "numeric",
-                     offset  = "numeric",
-                     sqrtXwt = "numeric",
-                     sqrtrwt = "numeric",
-                     weights = "numeric",
-                     wtres   = "numeric",
-                     y       = "numeric"),
-                methods =
-                list(
-                    allInfo = function() {
-                        'return all the information available on the object'
-                        data.frame(y=y, offset=offset, weights=weights, mu=mu,
-                                   rwt=sqrtrwt, wres=wtres, Xwt=sqrtXwt)
-                    },
-                    initialize = function(...) {
-                        if (!nargs()) return()
-                        ll <- list(...)
-                        if (is.null(ll$y)) stop("y must be specified")
-                        y <<- as.numeric(ll$y)
-                        n <- length(y)
-                        mu <<- if (!is.null(ll$mu))
-                            as.numeric(ll$mu) else numeric(n)
-                        offset <<- if (!is.null(ll$offset))
-                            as.numeric(ll$offset) else numeric(n)
-                        weights <<- if (!is.null(ll$weights))
-                            as.numeric(ll$weights) else rep.int(1,n)
-                        sqrtXwt <<- if (!is.null(ll$sqrtXwt))
-                            as.numeric(ll$sqrtXwt) else sqrt(weights)
-                        sqrtrwt <<- if (!is.null(ll$sqrtrwt))
-                            as.numeric(ll$sqrtrwt) else sqrt(weights)
-                        wtres   <<- sqrtrwt * (y - mu)
-                    },
-                    copy         = function(shallow = FALSE) {
-                        def <- .refClassDef
-                        selfEnv <- as.environment(.self)
-                        vEnv    <- new.env(parent=emptyenv())
-                        for (field in setdiff(names(def@fieldClasses), "Ptr")) {
-                            if (shallow)
-                                assign(field, get(field, envir = selfEnv), envir = vEnv)
-                            else {
-                                current <- get(field, envir = selfEnv)
-                                if (is(current, "envRefClass"))
-                                    current <- current$copy(FALSE)
-                                assign(field, current, envir = vEnv)
-                            }
-                        }
-                        do.call("new", c(as.list(vEnv), Class=def))
-                    },
-                    initializePtr = function() {
-                        Ptr <<- .Call(lm_Create, y, weights, offset, mu, sqrtXwt,
-                                      sqrtrwt, wtres)
-                        .Call(lm_updateMu, Ptr, mu)
-                    },
-                    ptr       = function() {
-                        'returns the external pointer, regenerating if necessary'
-                        if (length(y)) {
-                            if (.Call(isNullExtPtr, Ptr)) initializePtr()
-                        }
-                        Ptr
-                    },
-                    setOffset  = function(oo) {
-                        'change the offset in the model (used in profiling)'
-                        .Call(lm_setOffset, ptr(), as.numeric(oo))
-                    },
-                    setResp    = function(rr) {
-                        'change the response in the model, usually after a deep copy'
-                        .Call(lm_setResp, ptr(), as.numeric(rr))
-                    },
-                    setWeights = function(ww) {
-                        'change the prior weights in the model'
-                        .Call(lm_setWeights, ptr(), as.numeric(ww))
-                    },
-                    updateMu  = function(gamma) {
-                        'update mu, wtres and wrss from the linear predictor'
-                        .Call(lm_updateMu, ptr(), as.numeric(gamma))
-                    },
-                    wrss      = function() {
-                        'returns the weighted residual sum of squares'
-                        .Call(lm_wrss, ptr())
-                    })
-                )
-
-lmResp$lock("mu", "offset", "sqrtXwt", "sqrtrwt", "weights", "wtres")#, "y")
 
 ##' Classes \code{"lmResp"}, \code{"glmResp"}, \code{"nlsResp"} and
 ##' \code{"lmerResp"}
@@ -861,34 +564,6 @@ lmResp$lock("mu", "offset", "sqrtXwt", "sqrtrwt", "weights", "wtres")#, "y")
 NULL
 
 ##' @export
-lmerResp <-
-    setRefClass("lmerResp",
-                fields=
-                list(REML="integer"),
-                contains="lmResp",
-                methods=
-                list(initialize = function(...) {
-                         REML <<- as.integer(list(...)$REML)
-                         if (length(REML) != 1L) REML <<- 0L
-                         callSuper(...)
-                     },
-                     initializePtr = function() {
-                         Ptr <<- .Call(lmer_Create, y, weights, offset, mu, sqrtXwt,
-                                       sqrtrwt, wtres)
-                         .Call(lm_updateMu, Ptr, mu - offset)
-                         .Call(lmer_setREML, Ptr, REML)
-                     },
-                     ptr        = function() {
-                         'returns the external pointer, regenerating if necessary'
-                         if (length(y))
-                             if (.Call(isNullExtPtr, Ptr)) initializePtr()
-                         Ptr
-                     },
-                     objective  = function(ldL2, ldRX2, sqrL, sigma.sq = NULL) {
-                         'returns the profiled deviance or REML criterion'
-                         .Call(lmer_Laplace, ptr(), ldL2, ldRX2, sqrL, sigma.sq)
-                     })
-                )
 
 setOldClass("family")
 
@@ -936,17 +611,6 @@ glmResp <-
                      muEta     = function() {
                          'returns the diagonal of the Jacobian matrix, d mu/d eta'
                          .Call(glm_muEta, ptr())
-                     },
-                     ptr       = function() {
-                         'returns the external pointer, regenerating if necessary'
-                         if (length(y)) {
-                             if (.Call(isNullExtPtr, Ptr)) {
-                                 Ptr <<- .Call(glm_Create, family, y, weights, offset, mu, sqrtXwt,
-                                               sqrtrwt, wtres, eta, n)
-                                 .Call(glm_updateMu, Ptr, eta - offset)
-                             }
-                         }
-                         Ptr
                      },
                      resDev = function() {
                          'returns the sum of the deviance residuals'
@@ -1021,17 +685,6 @@ nlsResp <-
                      Laplace =function(ldL2, ldRX2, sqrL) {
                          'returns the profiled deviance or REML criterion'
                          .Call(nls_Laplace, ptr(), ldL2, ldRX2, sqrL)
-                     },
-                     ptr     = function() {
-                         'returns the external pointer, regenerating if necessary'
-                         if (length(y)) {
-                             if (.Call(isNullExtPtr, Ptr)) {
-                                 Ptr <<- .Call(nls_Create, y, weights, offset, mu, sqrtXwt,
-                                               sqrtrwt, wtres, gam, nlmod[[2]], nlenv, pnames)
-                                 .Call(nls_updateMu, Ptr, gam)
-                             }
-                         }
-                         Ptr
                      },
                      updateMu=function(gamma) {
                          'update mu, residuals, gradient, etc. given the linear predictor matrix'

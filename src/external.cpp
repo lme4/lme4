@@ -50,6 +50,7 @@ extern "C" {
     using optimizer::nm_status;
 
     using      std::runtime_error;
+    using      std::invalid_argument;
 
     // utilities
 
@@ -260,31 +261,31 @@ extern "C" {
     }
 
     static double internal_glmerWrkIter(merPredD *pp, glmResp *rp, bool uOnly) {
-	int debug=0; // !=0 to enable
-	if (debug) Rcpp::Rcout << "(igWI, pre-updateXwts) Xwts: min: " << 
-		       pp->Xwts().minCoeff() << 
-		       " sqrtWrkWt: min: " <<
-		       rp->sqrtWrkWt().minCoeff() << std::endl;
-	pp->updateXwts(rp->sqrtWrkWt());
-	if (debug) Rcpp::Rcout << "(igWI) Xwts: min: " << 
-		       pp->Xwts().minCoeff() << 
-		       " max: " << pp->Xwts().maxCoeff() << std::endl;
-	pp->updateDecomp();
-	pp->updateRes(rp->wtWrkResp());
-	if (uOnly) pp->solveU();
+        int debug=0; // !=0 to enable
+        if (debug) Rcpp::Rcout << "(igWI, pre-updateXwts) Xwts: min: " <<
+                       pp->Xwts().minCoeff() <<
+                       " sqrtWrkWt: min: " <<
+                       rp->sqrtWrkWt().minCoeff() << std::endl;
+        pp->updateXwts(rp->sqrtWrkWt());
+        if (debug) Rcpp::Rcout << "(igWI) Xwts: min: " <<
+                       pp->Xwts().minCoeff() <<
+                       " max: " << pp->Xwts().maxCoeff() << std::endl;
+        pp->updateDecomp();
+        pp->updateRes(rp->wtWrkResp());
+        if (uOnly) pp->solveU();
         else pp->solve();
-	if (debug) {
-	    Rcpp::Rcout << "(igWI)" <<
-		" delu_min: " << pp->delu().minCoeff() <<
-		"; delu_max: " << pp->delu().maxCoeff() <<
-		"; delb_min: " << pp->delb().minCoeff() <<
-		"; delb_max: " << pp->delb().maxCoeff() <<
-		std::endl; // if (verb) 
-	}
-	rp->updateMu(pp->linPred(1.));
-	if (debug) Rcpp::Rcout << "(igWI) mu: min: " << rp->mu().minCoeff() << 
-		       " max: " << rp->mu().maxCoeff() << std::endl;
-	return rp->resDev() + pp->sqrL(1.);
+        if (debug) {
+            Rcpp::Rcout << "(igWI)" <<
+                " delu_min: " << pp->delu().minCoeff() <<
+                "; delu_max: " << pp->delu().maxCoeff() <<
+                "; delb_min: " << pp->delb().minCoeff() <<
+                "; delb_max: " << pp->delb().maxCoeff() <<
+                std::endl; // if (verb)
+        }
+        rp->updateMu(pp->linPred(1.));
+        if (debug) Rcpp::Rcout << "(igWI) mu: min: " << rp->mu().minCoeff() <<
+                       " max: " << rp->mu().maxCoeff() << std::endl;
+        return rp->resDev() + pp->sqrL(1.);
     }
 
     // FIXME: improve verbose output (remove code, even commented,
@@ -301,74 +302,74 @@ extern "C" {
     //
     // FIXME: allow user-set maxit
     static void pwrssUpdate(glmResp *rp, merPredD *pp, bool uOnly,
-			    double tol, int verbose) {
-	double oldpdev=std::numeric_limits<double>::max();
-	double pdev;
-	int maxit = 30, maxstephalfit = 10;
-	bool   cvgd = false, verb = verbose > 2, moreverb = verbose > 10;
+                            double tol, int verbose) {
+        double oldpdev=std::numeric_limits<double>::max();
+        double pdev;
+        int maxit = 30, maxstephalfit = 10;
+        bool   cvgd = false, verb = verbose > 2, moreverb = verbose > 10;
 
-	pdev = oldpdev; // define so debugging statements work on first step
-	for (int i = 0; i < maxit; i++) {
-	    if (verb) {
-		Rcpp::Rcout << "*** pwrssUpdate step " << i << std::endl;
-		// Rcpp::Rcout << "\nmin delu at iteration " << i << ": " << pp->delu().minCoeff() << std::endl;
-		// Rcpp::Rcout << "\nmax delu at iteration " << i << ": " << pp->delu().maxCoeff() << std::endl;
-		// Rcpp::Rcout << "\nresDev before dels, iter:  " << i << ",  " << rp->resDev() << std::endl;
-		// FIXME: would like to print this in row, not column, format
-		// 
-		// Rcpp::Rcout << "before update:" << "pdev = " << pdev << std::endl; // if (verb) 
-	    }
-	    Vec   olddelu(pp->delu()), olddelb(pp->delb());
-	    pdev = internal_glmerWrkIter(pp, rp, uOnly);
-	    if (verb) {
-		Rcpp::Rcout << "pdev=" << pdev << 
-		    "; delu_min: " << pp->delu().minCoeff() <<
-		    "; delu_max: " << pp->delu().maxCoeff() <<
-		    "; delb_min: " << pp->delb().minCoeff() <<
-		    "; delb_max: " << pp->delb().maxCoeff() <<
-		    std::endl; // if (verb) 
-	    }
-	    if (std::abs((oldpdev - pdev) / pdev) < tol) {cvgd = true; break;}
+        pdev = oldpdev; // define so debugging statements work on first step
+        for (int i = 0; i < maxit; i++) {
+            if (verb) {
+                Rcpp::Rcout << "*** pwrssUpdate step " << i << std::endl;
+                // Rcpp::Rcout << "\nmin delu at iteration " << i << ": " << pp->delu().minCoeff() << std::endl;
+                // Rcpp::Rcout << "\nmax delu at iteration " << i << ": " << pp->delu().maxCoeff() << std::endl;
+                // Rcpp::Rcout << "\nresDev before dels, iter:  " << i << ",  " << rp->resDev() << std::endl;
+                // FIXME: would like to print this in row, not column, format
+                //
+                // Rcpp::Rcout << "before update:" << "pdev = " << pdev << std::endl; // if (verb)
+            }
+            Vec   olddelu(pp->delu()), olddelb(pp->delb());
+            pdev = internal_glmerWrkIter(pp, rp, uOnly);
+            if (verb) {
+                Rcpp::Rcout << "pdev=" << pdev <<
+                    "; delu_min: " << pp->delu().minCoeff() <<
+                    "; delu_max: " << pp->delu().maxCoeff() <<
+                    "; delb_min: " << pp->delb().minCoeff() <<
+                    "; delb_max: " << pp->delb().maxCoeff() <<
+                    std::endl; // if (verb)
+            }
+            if (std::abs((oldpdev - pdev) / pdev) < tol) {cvgd = true; break;}
 
-	    // if (pdev != pdev) Rcpp::Rcout << "nan detected" << std::endl;
-	    // if (isnan(pdev)) Rcpp::Rcout << "nan detected" << std::endl;
+            // if (pdev != pdev) Rcpp::Rcout << "nan detected" << std::endl;
+            // if (isnan(pdev)) Rcpp::Rcout << "nan detected" << std::endl;
 
-	    // trying to detect nan; may be hard to do it completely portably,
-	    // and hard to detect in advance (i.e. what conditions lead to
-	    // nan from internal_glmerWrkIter ... ?)
-	    // http://stackoverflow.com/questions/570669/checking-if-a-double-or-float-is-nan-in-c
-	    // check use of isnan() in base R code, or other Rcpp code??
+            // trying to detect nan; may be hard to do it completely portably,
+            // and hard to detect in advance (i.e. what conditions lead to
+            // nan from internal_glmerWrkIter ... ?)
+            // http://stackoverflow.com/questions/570669/checking-if-a-double-or-float-is-nan-in-c
+            // check use of isnan() in base R code, or other Rcpp code??
 #define isNAN(a)  (a!=a)
-	    if (isNAN(pdev) || (pdev > oldpdev)) { 
-		// PWRSS step led to _larger_ deviation, or nan; try step halving
-		if (verb) Rcpp::Rcout << 
-			      "\npwrssUpdate: Entering step halving loop" 
-				      << std::endl;
-		for (int k = 0; k < maxstephalfit && 
-			 (isNAN(pdev) || (pdev > oldpdev)); k++) {
-		    pp->setDelu((olddelu + pp->delu())/2.);
-		    if (!uOnly) pp->setDelb((olddelb + pp->delb())/2.);
-		    rp->updateMu(pp->linPred(1.));
-		    pdev = rp->resDev() + pp->sqrL(1.);
-		    if (moreverb) {
-			Rcpp::Rcout << "step-halving iteration " <<
-			    k << ":  pdev=" << pdev << 
-			    "; delu_min: " << pp->delu().minCoeff() <<
-			    "; delu_max: " << pp->delu().maxCoeff() <<
-			    "; delb_min: " << pp->delb().minCoeff() <<
-			    "; delb_max: " << pp->delb().maxCoeff() <<
-			    std::endl; 
-		    } // if (moreverb) 
-		}
-		if (isNAN(pdev) || ((pdev - oldpdev) > tol) )
-		    // FIXME: fill in max halfsetp iters in error statement
-		    throw runtime_error("(maxstephalfit) PIRLS step-halvings failed to reduce deviance in pwrssUpdate");
-	    } // step-halving
-	    oldpdev = pdev;
-	} // pwrss loop
-	if (!cvgd)
-	    // FIXME: fill in max iters in error statement
-	    throw runtime_error("pwrssUpdate did not converge in (maxit) iterations");
+            if (isNAN(pdev) || (pdev > oldpdev)) {
+                // PWRSS step led to _larger_ deviation, or nan; try step halving
+                if (verb) Rcpp::Rcout <<
+                              "\npwrssUpdate: Entering step halving loop" 
+                                      << std::endl;
+                for (int k = 0; k < maxstephalfit &&
+                         (isNAN(pdev) || (pdev > oldpdev)); k++) {
+                    pp->setDelu((olddelu + pp->delu())/2.);
+                    if (!uOnly) pp->setDelb((olddelb + pp->delb())/2.);
+                    rp->updateMu(pp->linPred(1.));
+                    pdev = rp->resDev() + pp->sqrL(1.);
+                    if (moreverb) {
+                        Rcpp::Rcout << "step-halving iteration " <<
+                            k << ":  pdev=" << pdev <<
+                            "; delu_min: " << pp->delu().minCoeff() <<
+                            "; delu_max: " << pp->delu().maxCoeff() <<
+                            "; delb_min: " << pp->delb().minCoeff() <<
+                            "; delb_max: " << pp->delb().maxCoeff() <<
+                            std::endl;
+                    } // if (moreverb)
+                }
+                if (isNAN(pdev) || ((pdev - oldpdev) > tol) )
+                    // FIXME: fill in max halfsetp iters in error statement
+                    throw runtime_error("(maxstephalfit) PIRLS step-halvings failed to reduce deviance in pwrssUpdate");
+            } // step-halving
+            oldpdev = pdev;
+        } // pwrss loop
+        if (!cvgd)
+            // FIXME: fill in max iters in error statement
+            throw runtime_error("pwrssUpdate did not converge in (maxit) iterations");
     }
 
     SEXP glmerLaplace(SEXP pp_, SEXP rp_, SEXP nAGQ_, SEXP tol_, SEXP verbose_) {
@@ -376,11 +377,11 @@ extern "C" {
         XPtr<glmResp>  rp(rp_);
         XPtr<merPredD> pp(pp_);
 
-	if ( ::Rf_asInteger(verbose_) >100) {
-	    Rcpp::Rcout << "\nglmerLaplace resDev:  " << rp->resDev() << std::endl;
-	    Rcpp::Rcout << "\ndelb 1:  " << pp->delb() << std::endl;
-	}
-	pwrssUpdate(rp, pp, ::Rf_asInteger(nAGQ_), ::Rf_asReal(tol_), ::Rf_asInteger(verbose_));
+        if ( ::Rf_asInteger(verbose_) >100) {
+            Rcpp::Rcout << "\nglmerLaplace resDev:  " << rp->resDev() << std::endl;
+            Rcpp::Rcout << "\ndelb 1:  " << pp->delb() << std::endl;
+        }
+        pwrssUpdate(rp, pp, ::Rf_asInteger(nAGQ_), ::Rf_asReal(tol_), ::Rf_asInteger(verbose_));
         return ::Rf_ScalarReal(rp->Laplace(pp->ldL2(), pp->ldRX2(), pp->sqrL(1.)));
         END_RCPP;
     }
@@ -523,93 +524,108 @@ extern "C" {
 
     // linear model response (also the base class for other response classes)
 
-    SEXP lm_Create(SEXP y, SEXP weights, SEXP offset, SEXP mu,
-                   SEXP sqrtXwt, SEXP sqrtrwt, SEXP wtres) {
+    SEXP lm_updateWrss(Environment rho) {
+        const MAr1  y(as<MAr1>(rho.get("y")));
+        const MAr1  mu(as<MAr1>(rho.get("mu")));
+        const MAr1  sqrtrwt(as<MAr1>(rho.get("sqrtrwt")));
+        MVec        wtres(as<MVec>(rho.get("wtres")));
+        wtres = sqrtrwt.cwiseProduct(y - mu);
+        SEXP        ans = ::Rf_ScalarReal(wtres.squaredNorm());
+        rho.assign("wrss", ans);
+        return ans;
+    }
+
+    SEXP lm_setOffset(SEXP rho_, SEXP oo_) {
         BEGIN_RCPP;
-        lmResp *ans = new lmResp(y, weights, offset, mu, sqrtXwt, sqrtrwt, wtres);
-        return wrap(XPtr<lmResp>(ans, true));
+        Environment  rho(rho_);
+	const MAr1   oo(as<MAr1>(oo_));
+	MAr1         offset(as<MAr1>(rho.get("offset")));
+	if (oo.size() != offset.size())
+	    throw invalid_argument("size mismatch in setOffset");
+	offset = oo;
+	return lm_updateWrss(rho);
+	END_RCPP;
+    }
+
+    SEXP lm_setResp(SEXP rho_, SEXP rr_) {
+        BEGIN_RCPP;
+        Environment  rho(rho_);
+	const MAr1   rr(as<MAr1>(rr_));
+	MAr1         y(as<MAr1>(rho.get("y")));
+	if (rr.size() != y.size())
+	    throw invalid_argument("size mismatch in setResp");
+	y = rr;
+	return lm_updateWrss(rho);
+	END_RCPP;
+    }
+
+    SEXP lm_setWeights(SEXP rho_, SEXP wts_) {
+        BEGIN_RCPP;
+        Environment  rho(rho_);
+        const MAr1   wts(as<MAr1>(wts_));
+	MAr1         weights(as<MAr1>(rho.get("weights")));
+	if (wts.size() != weights.size())
+	    throw invalid_argument("size mismatch in setWeights");
+	weights = wts;
+        as<MAr1>(rho.get("sqrtrwt")) = wts.sqrt();
+        rho.assign("ldW",wrap(wts.log().sum()));
+	return lm_updateWrss(rho);
         END_RCPP;
     }
 
-    SEXP lm_setOffset(SEXP ptr_, SEXP offset) {
+    SEXP lm_updateMu(SEXP rho_, SEXP gam_) {
         BEGIN_RCPP;
-        XPtr<lmResp>(ptr_)->setOffset(as<MVec>(offset));
-        END_RCPP;
-    }
-
-    SEXP lm_setResp(SEXP ptr_, SEXP resp) {
-        BEGIN_RCPP;
-        XPtr<lmResp>(ptr_)->setResp(as<MVec>(resp));
-        END_RCPP;
-    }
-
-    SEXP lm_setWeights(SEXP ptr_, SEXP weights) {
-        BEGIN_RCPP;
-        XPtr<lmResp>(ptr_)->setWeights(as<MVec>(weights));
-        END_RCPP;
-    }
-
-    SEXP lm_wrss(SEXP ptr_) {
-        BEGIN_RCPP;
-        return ::Rf_ScalarReal(XPtr<lmResp>(ptr_)->wrss());
-        END_RCPP;
-    }
-
-    SEXP lm_updateMu(SEXP ptr_, SEXP gamma) {
-        BEGIN_RCPP;
-        return ::Rf_ScalarReal(XPtr<lmerResp>(ptr_)->updateMu(as<MVec>(gamma)));
+        Environment  rho(rho_);
+	const MAr1   gam(as<MAr1>(gam_));
+	MAr1         mu(as<MAr1>(rho.get("mu")));
+	if (gam.size() != mu.size())
+	    throw invalid_argument("size mismatch in updateMu");
+	mu = gam;
+        return lm_updateWrss(rho);
         END_RCPP;
     }
 
     // linear mixed-effects model response
 
-    SEXP lmer_Create(SEXP y, SEXP weights, SEXP offset, SEXP mu,
-                     SEXP sqrtXwt, SEXP sqrtrwt, SEXP wtres) {
+    SEXP lmer_Laplace(SEXP rho_, SEXP ldL2_, SEXP ldRX2_, SEXP sqrL_, SEXP sigma_sq_) {
         BEGIN_RCPP;
-        lmerResp *ans = new lmerResp(y, weights, offset, mu, sqrtXwt, sqrtrwt, wtres);
-        return wrap(XPtr<lmerResp>(ans, true));
-        END_RCPP;
-    }
+	Environment   rho(rho_);
+	int n     = ::Rf_length(rho.get("y")),
+	    REML  = ::Rf_asInteger(rho.get("REML"));
+	double
+	    ldL2  = ::Rf_asReal(ldL2_),
+	    ldRX2 = ::Rf_asReal(ldRX2_),
+	    nmp   = n - REML,
+	    sigsq = ::Rf_isNull(sigma_sq_) ? 1.0 : ::Rf_asReal(sigma_sq_),
+	    sqrL  = ::Rf_asReal(sqrL_),
+	    wrss  = ::Rf_asReal(rho.get("wrss"));
 
-    SEXP lmer_setREML(SEXP ptr_, SEXP REML) {
-        BEGIN_RCPP;
-        int reml = ::Rf_asInteger(REML);
-        XPtr<lmerResp>(ptr_)->setReml(reml);
-        return ::Rf_ScalarInteger(reml);
-        END_RCPP;
-    }
-
-    SEXP lmer_Laplace(SEXP ptr_, SEXP ldL2, SEXP ldRX2, SEXP sqrL, SEXP sigma_sq) {
-        BEGIN_RCPP;
-        if (Rf_isNull(sigma_sq))
-            return ::Rf_ScalarReal(XPtr<lmerResp>(ptr_)->Laplace(::Rf_asReal(ldL2),
-                                                                 ::Rf_asReal(ldRX2),
-                                                                 ::Rf_asReal(sqrL)));
-        return ::Rf_ScalarReal(XPtr<lmerResp>(ptr_)->Laplace(::Rf_asReal(ldL2),
-                                                             ::Rf_asReal(ldRX2),
-                                                             ::Rf_asReal(sqrL),
-                                                             ::Rf_asReal(sigma_sq)));
+	double result = nmp * (2.0 * M_LN_SQRT_2PI + std::log(sigsq)); // (2pi sigma_sq)^-df/2
+	result += (wrss + sqrL) / sigsq; // exp(-1/2sigma_sq x |pwrss|)
+	result += ldL2 + (REML > 0 ? ldRX2 : 0.0); // det|LL'|^-1/2 and similar REML penalty
+	result -= ::Rf_asReal(rho.get("ldW")); // subtract prior weights factor
+	return ::Rf_ScalarReal(result);
         END_RCPP;
     }
 
     static double lmer_dev(XPtr<merPredD> ppt, XPtr<lmerResp> rpt, const Eigen::VectorXd& theta) {
-	int debug=0;
-	double val;
+        int debug=0;
+        double val;
 
         ppt->setTheta(theta);
 
-	ppt->updateXwts(rpt->sqrtXwt());
+        ppt->updateXwts(rpt->sqrtXwt());
         ppt->updateDecomp();
         rpt->updateMu(ppt->linPred(0.));
         ppt->updateRes(rpt->wtres());
         ppt->solve();
         rpt->updateMu(ppt->linPred(1.));
-	val=rpt->Laplace(ppt->ldL2(), ppt->ldRX2(), ppt->sqrL(1.));
-	if (debug) {
-	    Rcpp::Rcout.precision(10);
-	    Rcpp::Rcout << "lmer_dev: theta=" <<
-		ppt->theta() << ", val=" << val << std::endl;
-	}
+        val=rpt->Laplace(ppt->ldL2(), ppt->ldRX2(), ppt->sqrL(1.));
+        if (debug) {
+            Rcpp::Rcout.precision(10);
+            Rcpp::Rcout << "lmer_dev: theta=" <<
+                ppt->theta() << ", val=" << val << std::endl;
+        }
 
         return val;
     }
@@ -639,219 +655,156 @@ extern "C" {
 
     // dense predictor module for mixed-effects models
 
-    SEXP merPredDCreate(SEXP Xs, SEXP Lambdat, SEXP LamtUt, SEXP Lind,
-                        SEXP RZX, SEXP Ut, SEXP Utr, SEXP V, SEXP VtV,
-                        SEXP Vtr, SEXP Xwts, SEXP Zt, SEXP beta0,
-                        SEXP delb, SEXP delu, SEXP theta, SEXP u0) {
-        BEGIN_RCPP;
-        merPredD *ans = new merPredD(Xs, Lambdat, LamtUt, Lind, RZX, Ut, Utr, V, VtV,
-                                     Vtr, Xwts, Zt, beta0, delb, delu, theta, u0);
-        return wrap(XPtr<merPredD>(ans, true));
-        END_RCPP;
-    }
-
                                 // setters
-    SEXP merPredDsetTheta(SEXP ptr, SEXP theta) {
+    SEXP predD_setTheta(SEXP ptr, SEXP theta) {
         BEGIN_RCPP;
+//	Environment rho(rho_);
         XPtr<merPredD>(ptr)->setTheta(as<MVec>(theta));
         return theta;
         END_RCPP;
     }
 
-    SEXP noPtrPred_L(SEXP rho_) {
-	BEGIN_RCPP;
-	Environment  rho(rho_);
-	return wrap(XPtr<SLLT>(rho.get("Lptr"))->matrixL().derived());
-	END_RCPP;
-    }
-
-    SEXP noPtrPred_P(SEXP rho_) {
-	BEGIN_RCPP;
-	Environment  rho(rho_);
-	return wrap(XPtr<SLLT>(rho.get("Lptr"))->permutationP().indices());
-	END_RCPP;
-    }
-
-    SEXP noPtrPred_ldL2(SEXP rho_) {
-	BEGIN_RCPP;
-	Environment   rho(rho_);
-	return ::Rf_ScalarReal(log(XPtr<SLLT>(rho.get("Lptr"))->determinant()));
-	END_RCPP;
-    }
-
-    
-    SEXP noPtrPred_mkL(SEXP rho_) {
-	BEGIN_RCPP;
-	Environment   rho(rho_);
-        const MSpMat  ZtZ(as<MSpMat>(rho.get("ZtZ")));
-	SLLT     *L = new SLLT();
-	L->setShift(1.0);
-	L->compute(ZtZ);
-	rho.assign("Lptr",wrap(XPtr<SLLT>(L)));
-	LLT      *RX = new LLT();
-	const MMat    X(as<MMat>(rho.get("X")));
-	RX->compute(X.adjoint() * X);
-	rho.assign("RXpt", wrap(XPtr<LLT>(RX)));
-	END_RCPP;
-    }
-
-    SEXP noPtrPred_RX(SEXP rho_) {
-	BEGIN_RCPP;
-	Environment   rho(rho_);
-	return wrap(Mat(XPtr<LLT>(rho.get("RXpt"))->matrixU()));
-	END_RCPP;
-    }
-
-    SEXP noPtrPred_updtL(SEXP rho_) {
-	BEGIN_RCPP;
-	Environment   rho(rho_);
-	const MSpMat  Zt(as<MSpMat>(rho.get("Zt")));
-	MSpMat        Lambdat(as<MSpMat>(rho.get("Lambdat")));
-	const MiVec   Lind(as<MiVec>(rho.get("Lind")));
-	const MVec    theta(as<MVec>(rho.get("theta")));
-	if (Lind.size() != Lambdat.nonZeros())
-	    throw std::invalid_argument("dimension mismatch");
-	double *LamX = Lambdat.valuePtr();
-	for (int i = 0; i < Lind.size(); ++i) {
-	    LamX[i] = theta(Lind(i) - 1);
-	}
-	SpMat         LamtZt(Lambdat * Zt);
-	SpMat         LamtZtZLam(LamtZt * LamtZt.adjoint());
-	rho.assign("ZtZ",wrap(LamtZtZLam));
-	XPtr<SLLT>(rho.get("Lptr"))->factorize(LamtZtZLam);
-	END_RCPP;
-    }
-	
-    SEXP noPtrPred_updtRX(SEXP rho_) {
-	BEGIN_RCPP;
-	Environment   rho(rho_);
-	const MMat    X(as<MMat>(rho.get("X")));
-	const Mat     ZtX(as<MSpMat>(rho.get("Zt")) * X);
-	const MSpMat  Lambdat(as<MSpMat>(rho.get("Lambdat")));
-	SLLT         *L(XPtr<SLLT>(rho.get("Lptr")));
-	Mat           pr(L->permutationP() * (Lambdat * ZtX));
-	Mat           RZX = L->matrixL().solve(pr);
-	NumericMatrix rzx(rho.get("RZX"));
-	std::copy(RZX.data(), RZX.data() + RZX.size(), rzx.begin());
-	XPtr<LLT>(rho.get("RXpt"))->compute(X.adjoint() * X - RZX.adjoint() * RZX);
-	END_RCPP;
-    }
-
-    SEXP noPtrLm_setWeights(SEXP rho_, SEXP wts_) {
+    SEXP predD_L(SEXP rho_) {
         BEGIN_RCPP;
-	Environment  rho(rho_);
-	const MAr1   wts(as<MAr1>(wts_));
-	as<MAr1>(rho.get("weights")) = wts; // does this copy?
-	as<MAr1>(rho.get("sqrtrwt")) = wts.sqrt();
-	rho.assign("ldW",wrap(wts.log().sum()));
+        Environment  rho(rho_);
+        return wrap(XPtr<SLLT>(rho.get("Lptr"))->matrixL().derived());
         END_RCPP;
     }
 
-    SEXP noPtrLm_updateWrss(SEXP rho_) {
+    SEXP predD_P(SEXP rho_) {
         BEGIN_RCPP;
-	Environment rho(rho_);
-	const MAr1  y(as<MAr1>(rho.get("y")));
-	const MAr1  mu(as<MAr1>(rho.get("mu")));
-	const MAr1  sqrtrwt(as<MAr1>(rho.get("sqrtrwt")));
-	MVec        wtres(as<MVec>(rho.get("wtres")));
-	wtres = sqrtrwt.cwiseProduct(y - mu);
-	SEXP        ans = ::Rf_ScalarReal(wtres.squaredNorm());
-	rho.assign("wrss", ans);
-	return ans;
+        Environment  rho(rho_);
+        return wrap(XPtr<SLLT>(rho.get("Lptr"))->permutationP().indices());
         END_RCPP;
     }
 
-    SEXP noPtrLm_updateMu(SEXP rho_, SEXP gam_) {
+    SEXP predD_RX(SEXP rho_) {
         BEGIN_RCPP;
-	Environment rho(rho_);
-	const MAr1  gam(as<MAr1>(gam_));
-	const MAr1  y(as<MAr1>(rho.get("y")));
-	MAr1        mu(as<MAr1>(rho.get("mu")));
-	mu = gam;
-	const MAr1  sqrtrwt(as<MAr1>(rho.get("sqrtrwt")));
-	MVec        wtres(as<MVec>(rho.get("wtres")));
-	wtres = sqrtrwt.cwiseProduct(y - mu);
-	SEXP        ans = ::Rf_ScalarReal(wtres.squaredNorm());
-	rho.assign("wrss", ans);
-	return ans;
+        Environment   rho(rho_);
+        return wrap(Mat(XPtr<LLT>(rho.get("RXpt"))->matrixU()));
         END_RCPP;
     }
 
-    SEXP merPredDsetBeta0(SEXP ptr, SEXP beta0) {
+    SEXP predD_RXdiag(SEXP rho_) {
+        BEGIN_RCPP;
+        Environment   rho(rho_);
+        return wrap(Mat(XPtr<LLT>(rho.get("RXpt"))->matrixU()).diagonal());
+        END_RCPP;
+    }
+
+    SEXP predD_RXi(SEXP rho_) {
+        BEGIN_RCPP;
+        Environment   rho(rho_);
+	LLT           *RXpt(XPtr<LLT>(rho.get("RXpt")));
+	int            p(::Rf_length(rho.get("beta0")));
+	return wrap(Mat(RXpt->matrixU().solve(Eigen::MatrixXd::Identity(p,p))));
+        END_RCPP;
+    }
+
+    SEXP predD_ldL2(SEXP rho_) {
+        BEGIN_RCPP;
+        Environment   rho(rho_);
+        return ::Rf_ScalarReal(log(XPtr<SLLT>(rho.get("Lptr"))->determinant()));
+        END_RCPP;
+    }
+
+				// methods
+    SEXP predD_mkL(SEXP rho_) {
+        BEGIN_RCPP;
+        Environment   rho(rho_);
+        const MSpMat  Zt(as<MSpMat>(rho.get("Zt")));
+        SLLT     *L = new SLLT();
+        L->setShift(1.0);
+        L->compute(Zt * Zt.adjoint());
+        rho.assign("Lptr",wrap(XPtr<SLLT>(L)));
+        LLT      *RX = new LLT();
+        const MMat    X(as<MMat>(rho.get("X")));
+        RX->compute(X.adjoint() * X);
+        rho.assign("RXpt", wrap(XPtr<LLT>(RX)));
+        END_RCPP;
+    }
+
+    SEXP predD_updtL(SEXP rho_) {
+        BEGIN_RCPP;
+        Environment   rho(rho_);
+        const MSpMat  Zt(as<MSpMat>(rho.get("Zt")));
+	Rcpp::Rcout << Zt << std::endl;
+        MSpMat        Lambdat(as<MSpMat>(rho.get("Lambdat")));
+	Rcpp::Rcout << Lambdat << std::endl;
+        const MiVec   Lind(as<MiVec>(rho.get("Lind")));
+	Rcpp::Rcout << Lind << std::endl;
+        const MVec    theta(as<MVec>(rho.get("theta")));
+	Rcpp::Rcout << theta << std::endl;
+        if (Lind.size() != Lambdat.nonZeros())
+            throw std::invalid_argument("dimension mismatch");
+        double *LamX = Lambdat.valuePtr();
+        for (int i = 0; i < Lind.size(); ++i) {
+            LamX[i] = theta(Lind(i) - 1);
+        }
+	Rcpp::Rcout << Lambdat << std::endl;
+        SpMat         LamtZt(Lambdat * Zt);
+	Rcpp::Rcout << LamtZt << std::endl;
+        SpMat         LamtZtZLam(LamtZt * LamtZt.adjoint());
+	Rcpp::Rcout << LamtZtZLam << std::endl;
+        rho.assign("ZtZ",wrap(LamtZtZLam));
+        XPtr<SLLT>(rho.get("Lptr"))->factorize(LamtZtZLam);
+        END_RCPP;
+    }
+
+    SEXP predD_updtRX(SEXP rho_) {
+        BEGIN_RCPP;
+        Environment   rho(rho_);
+        const MMat    X(as<MMat>(rho.get("X")));
+        const Mat     ZtX(as<MSpMat>(rho.get("Zt")) * X);
+        const MSpMat  Lambdat(as<MSpMat>(rho.get("Lambdat")));
+        SLLT         *L(XPtr<SLLT>(rho.get("Lptr")));
+        Mat           pr(L->permutationP() * (Lambdat * ZtX));
+        Mat           RZX = L->matrixL().solve(pr);
+        NumericMatrix rzx(rho.get("RZX"));
+        std::copy(RZX.data(), RZX.data() + RZX.size(), rzx.begin());
+        XPtr<LLT>(rho.get("RXpt"))->compute(X.adjoint() * X - RZX.adjoint() * RZX);
+        END_RCPP;
+    }
+
+    SEXP predD_setBeta0(SEXP ptr, SEXP beta0) {
         BEGIN_RCPP;
         XPtr<merPredD>(ptr)->setBeta0(as<MVec>(beta0));
         END_RCPP;
     }
 
 
-    SEXP merPredDsetDelu(SEXP ptr, SEXP delu) {
+    SEXP predD_setDelu(SEXP ptr, SEXP delu) {
         BEGIN_RCPP;
         XPtr<merPredD>(ptr)->setDelu(as<MVec>(delu));
         END_RCPP;
     }
 
 
-    SEXP merPredDsetDelb(SEXP ptr, SEXP delb) {
+    SEXP predD_setDelb(SEXP ptr, SEXP delb) {
         BEGIN_RCPP;
         XPtr<merPredD>(ptr)->setDelb(as<MVec>(delb));
         END_RCPP;
     }
                                 // getters
-    SEXP merPredDCcNumer(SEXP ptr) {
+    SEXP predD_CcNumer(SEXP ptr) {
         BEGIN_RCPP;
         return ::Rf_ScalarReal(XPtr<merPredD>(ptr)->CcNumer());
         END_RCPP;
     }
 
-    SEXP merPredDL(SEXP ptr) {
-        BEGIN_RCPP;
-        return wrap(XPtr<merPredD>(ptr)->L());
-        END_RCPP;
-    }
-
-    SEXP merPredDPvec(SEXP ptr) {
-        BEGIN_RCPP;
-        return wrap(XPtr<merPredD>(ptr)->Pvec());
-        END_RCPP;
-    }
-
-    SEXP merPredDRX(SEXP ptr) {
-        BEGIN_RCPP;
-        return wrap(XPtr<merPredD>(ptr)->RX());
-        END_RCPP;
-    }
-
-    SEXP merPredDRXi(SEXP ptr) {
-        BEGIN_RCPP;
-        return wrap(XPtr<merPredD>(ptr)->RXi());
-        END_RCPP;
-    }
-
-    SEXP merPredDRXdiag(SEXP ptr) {
-        BEGIN_RCPP;
-        return wrap(XPtr<merPredD>(ptr)->RXdiag());
-        END_RCPP;
-    }
-
-    SEXP merPredDcondVar(SEXP ptr, SEXP rho) {
+    SEXP predD_condVar(SEXP ptr, SEXP rho) {
         BEGIN_RCPP;
         return wrap(XPtr<merPredD>(ptr)->condVar(Environment(rho)));
         END_RCPP;
     }
 
-    SEXP merPredDldL2(SEXP ptr) {
-        BEGIN_RCPP;
-        return ::Rf_ScalarReal(XPtr<merPredD>(ptr)->ldL2());
-        END_RCPP;
-    }
-
-    SEXP merPredDldRX2(SEXP ptr) {
+    SEXP predD_ldRX2(SEXP ptr) {
         BEGIN_RCPP;
         return ::Rf_ScalarReal(XPtr<merPredD>(ptr)->ldRX2());
         END_RCPP;
     }
 
-    SEXP merPredDunsc(SEXP ptr) {
+    SEXP predD_unsc(SEXP ptr) {
         BEGIN_RCPP;
         return wrap(XPtr<merPredD>(ptr)->unsc());
         END_RCPP;
@@ -859,55 +812,55 @@ extern "C" {
 
     // methods
 
-    SEXP merPredDb(SEXP ptr, SEXP fac) {
+    SEXP predD_b(SEXP ptr, SEXP fac) {
         BEGIN_RCPP;
         return wrap(XPtr<merPredD>(ptr)->b(::Rf_asReal(fac)));
         END_RCPP;
     }
 
-    SEXP merPredDbeta(SEXP ptr, SEXP fac) {
+    SEXP predD_beta(SEXP ptr, SEXP fac) {
         BEGIN_RCPP;
         return wrap(XPtr<merPredD>(ptr)->beta(::Rf_asReal(fac)));
         END_RCPP;
     }
 
-    SEXP merPredDinstallPars(SEXP ptr, SEXP fac) {
+    SEXP predD_installPars(SEXP ptr, SEXP fac) {
         BEGIN_RCPP;
         XPtr<merPredD>(ptr)->installPars(::Rf_asReal(fac));
         END_RCPP;
     }
 
-    SEXP merPredDlinPred(SEXP ptr, SEXP fac) {
+    SEXP predD_linPred(SEXP ptr, SEXP fac) {
         BEGIN_RCPP;
         return wrap(XPtr<merPredD>(ptr)->linPred(::Rf_asReal(fac)));
         END_RCPP;
     }
 
-    SEXP merPredDsolve(SEXP ptr) {
+    SEXP predD_solve(SEXP ptr) {
         BEGIN_RCPP;
         return ::Rf_ScalarReal(XPtr<merPredD>(ptr)->solve());
         END_RCPP;
     }
 
-    SEXP merPredDsolveU(SEXP ptr) {
+    SEXP predD_solveU(SEXP ptr) {
         BEGIN_RCPP;
         return ::Rf_ScalarReal(XPtr<merPredD>(ptr)->solveU());
         END_RCPP;
     }
 
-    SEXP merPredDsqrL(SEXP ptr, SEXP fac) {
+    SEXP predD_sqrL(SEXP ptr, SEXP fac) {
         BEGIN_RCPP;
         return ::Rf_ScalarReal(XPtr<merPredD>(ptr)->sqrL(::Rf_asReal(fac)));
         END_RCPP;
     }
 
-    SEXP merPredDu(SEXP ptr, SEXP fac) {
+    SEXP predD_u(SEXP ptr, SEXP fac) {
         BEGIN_RCPP;
         return wrap(XPtr<merPredD>(ptr)->u(::Rf_asReal(fac)));
         END_RCPP;
     }
 
-    SEXP merPredDupdateDecomp(SEXP ptr, SEXP xPenalty_) {
+    SEXP predD_updateDecomp(SEXP ptr, SEXP xPenalty_) {
         BEGIN_RCPP;
         if (Rf_isNull(xPenalty_)) XPtr<merPredD>(ptr)->updateDecomp(NULL);
         else {
@@ -917,25 +870,25 @@ extern "C" {
         END_RCPP;
     }
 
-    SEXP merPredDupdateL(SEXP ptr) {
+    SEXP predD_updateL(SEXP ptr) {
         BEGIN_RCPP;
         XPtr<merPredD>(ptr)->updateL();
         END_RCPP;
     }
 
-    SEXP merPredDupdateLamtUt(SEXP ptr) {
+    SEXP predD_updateLamtUt(SEXP ptr) {
         BEGIN_RCPP;
         XPtr<merPredD>(ptr)->updateLamtUt();
         END_RCPP;
     }
 
-    SEXP merPredDupdateRes(SEXP ptr, SEXP wtres) {
+    SEXP predD_updateRes(SEXP ptr, SEXP wtres) {
         BEGIN_RCPP;
         XPtr<merPredD>(ptr)->updateRes(as<MVec>(wtres));
         END_RCPP;
     }
 
-    SEXP merPredDupdateXwts(SEXP ptr, SEXP wts) {
+    SEXP predD_updateXwts(SEXP ptr, SEXP wts) {
         BEGIN_RCPP;
         XPtr<merPredD>(ptr)->updateXwts(as<MVec>(wts));
         END_RCPP;
@@ -943,7 +896,7 @@ extern "C" {
 
     SEXP NelderMead_Create(SEXP lb_, SEXP ub_, SEXP xstep0_, SEXP x_, SEXP xtol_) {
         BEGIN_RCPP;
-        MVec  lb(as<MVec>(lb_)), ub(as<MVec>(ub_)), xstep0(as<MVec>(xstep0_)), x(as<MVec>(x_)), xtol(as<MVec>(xtol_));
+        MVec  lb(as<MVec>(lb_)), ub(as<MVec>(ub_)), xstep0(as<MVec>(xstep0_)), x(as<MVec>(x_));
         Nelder_Mead *ans =
             new Nelder_Mead(lb, ub, xstep0, x, optimizer::nl_stop(as<MVec>(xtol_)));
         return wrap(XPtr<Nelder_Mead>(ans, true));
@@ -1140,67 +1093,49 @@ static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(isNullExtPtr, 1),
 
-    CALLDEF(lm_Create,          7), // generate external pointer
-
     CALLDEF(lm_setOffset,       2), // setters
     CALLDEF(lm_setResp,         2),
     CALLDEF(lm_setWeights,      2),
 
-    CALLDEF(lm_wrss,            1), // getter
-
-    CALLDEF(lm_updateMu,        2), // method
-
-    CALLDEF(lmer_Create,        7), // generate external pointer
-
-    CALLDEF(lmer_setREML,       2), // setter
+    CALLDEF(lm_updateMu,        2), // methods
+    CALLDEF(lm_updateWrss,      1),
 
     CALLDEF(lmer_Deviance,      3), // methods
     CALLDEF(lmer_Laplace,       5),
     CALLDEF(lmer_opt1,          4),
 
-    CALLDEF(merPredDCreate,    17), // generate external pointer
 
-    CALLDEF(merPredDsetTheta,   2), // setters
-    CALLDEF(merPredDsetBeta0,   2), 
-    CALLDEF(merPredDsetDelu,    2),
-    CALLDEF(merPredDsetDelb,    2), 
+    CALLDEF(predD_setTheta,     2), // setters
+    CALLDEF(predD_setBeta0,     2),
+    CALLDEF(predD_setDelu,      2),
+    CALLDEF(predD_setDelb,      2),
 
-    CALLDEF(merPredDCcNumer,    1), // getters
-    CALLDEF(merPredDL,          1),
-    CALLDEF(merPredDPvec,       1),
-    CALLDEF(merPredDRX,         1),
-    CALLDEF(merPredDRXdiag,     1),
-    CALLDEF(merPredDRXi,        1),
-    CALLDEF(merPredDldL2,       1),
-    CALLDEF(merPredDldRX2,      1),
-    CALLDEF(merPredDunsc,       1),
+    CALLDEF(predD_CcNumer,      1), // getters
+    CALLDEF(predD_L,            1),
+    CALLDEF(predD_P,            1),
+    CALLDEF(predD_RX,           1),
+    CALLDEF(predD_RXdiag,       1),
+    CALLDEF(predD_RXi,          1),
+    CALLDEF(predD_ldL2,         1),
+    CALLDEF(predD_ldRX2,        1),
+    CALLDEF(predD_unsc,         1),
 
-    CALLDEF(merPredDb,          2), // methods
-    CALLDEF(merPredDbeta,       2),
-    CALLDEF(merPredDcondVar,    2),
-    CALLDEF(merPredDlinPred,    2),
-    CALLDEF(merPredDinstallPars,2),
-    CALLDEF(merPredDsolve,      1),
-    CALLDEF(merPredDsolveU,     1),
-    CALLDEF(merPredDsqrL,       2),
-    CALLDEF(merPredDu,          2),
-    CALLDEF(merPredDupdateDecomp,2),
-    CALLDEF(merPredDupdateL,    1),
-    CALLDEF(merPredDupdateLamtUt,1),
-    CALLDEF(merPredDupdateRes,  2),
-    CALLDEF(merPredDupdateXwts, 2),
-
-    CALLDEF(noPtrLm_setWeights, 2),
-    CALLDEF(noPtrLm_updateMu,   2),
-    CALLDEF(noPtrLm_updateWrss, 1),
-    
-    CALLDEF(noPtrPred_L,        1),
-    CALLDEF(noPtrPred_ldL2,     1),
-    CALLDEF(noPtrPred_mkL,      1),
-    CALLDEF(noPtrPred_P,        1),
-    CALLDEF(noPtrPred_RX,       1),
-    CALLDEF(noPtrPred_updtL,    1),
-    CALLDEF(noPtrPred_updtRX,   1),
+    CALLDEF(predD_b,            2), // methods
+    CALLDEF(predD_beta,         2),
+    CALLDEF(predD_condVar,      2),
+    CALLDEF(predD_linPred,      2),
+    CALLDEF(predD_installPars,  2),
+    CALLDEF(predD_mkL,          1),
+    CALLDEF(predD_solve,        1),
+    CALLDEF(predD_solveU,       1),
+    CALLDEF(predD_sqrL,         2),
+    CALLDEF(predD_u,            2),
+    CALLDEF(predD_updateDecomp, 2),
+    CALLDEF(predD_updtL,        1),
+    CALLDEF(predD_updateLamtUt, 1),
+    CALLDEF(predD_updtRX,       1),
+    CALLDEF(predD_updateRes,    2),
+    CALLDEF(predD_updateXwts,   2),
 
     CALLDEF(NelderMead_Create,  5),
     CALLDEF(NelderMead_newf,    2),
