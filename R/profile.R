@@ -310,9 +310,6 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
     class(ans) <- c("thpr", "data.frame")
     attr(ans, "lower") <- lower[seqnvp]
     attr(ans, "upper") <- upper[seqnvp]
-                                        # reset devfun (i.e. dd) environment
-                                        # at the optimum
-    dd(attr(dd, "optimum")[1:npar1])
     ans
 } ## profile.merMod
 

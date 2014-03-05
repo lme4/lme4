@@ -169,7 +169,9 @@ merPredD <-
                                      current <- current$copy(FALSE)
                                  ## hack (https://stat.ethz.ch/pipermail/r-devel/2014-March/068448.html)
                                  ## ... to ensure real copying
-                                 assign(field, forceCopy(current), envir = vEnv)
+                                 ## forceCopy() does **NOT** work here, but +0 does
+                                 ## we can get away with this because all fields other than Ptr are numeric
+                                 assign(field, current+0, envir = vEnv)
                              }
                          }
                          do.call(merPredD$new, c(as.list(vEnv), n=nrow(vEnv$V), Class=def))
