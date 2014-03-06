@@ -33,6 +33,7 @@ extern "C" {
     using      Rcpp::Named;
     using      Rcpp::NumericVector;
     using      Rcpp::NumericMatrix;
+    using      Rcpp::Rcout;
     using      Rcpp::XPtr;
     using      Rcpp::as;
     using      Rcpp::wrap;
@@ -53,6 +54,13 @@ extern "C" {
     using      std::invalid_argument;
 
     // utilities
+
+    // check the sizes of mapped vectors and, if consistent, copy src to dest
+    static inline void sized_copy(MVec& dest, const MVec& src) {
+        int n = dest.size();
+        if (src.size() != n) throw invalid_argument("size mismatch");
+        dest = src;
+    }
 
     SEXP allPerm_int(SEXP v_) {
         BEGIN_RCPP;
@@ -538,49 +546,49 @@ extern "C" {
     SEXP lm_setOffset(SEXP rho_, SEXP oo_) {
         BEGIN_RCPP;
         Environment  rho(rho_);
-	const MAr1   oo(as<MAr1>(oo_));
-	MAr1         offset(as<MAr1>(rho.get("offset")));
-	if (oo.size() != offset.size())
-	    throw invalid_argument("size mismatch in setOffset");
-	offset = oo;
-	return lm_updateWrss(rho);
-	END_RCPP;
+        const MAr1   oo(as<MAr1>(oo_));
+        MAr1         offset(as<MAr1>(rho.get("offset")));
+        if (oo.size() != offset.size())
+            throw invalid_argument("size mismatch in setOffset");
+        offset = oo;
+        return lm_updateWrss(rho);
+        END_RCPP;
     }
 
     SEXP lm_setResp(SEXP rho_, SEXP rr_) {
         BEGIN_RCPP;
         Environment  rho(rho_);
-	const MAr1   rr(as<MAr1>(rr_));
-	MAr1         y(as<MAr1>(rho.get("y")));
-	if (rr.size() != y.size())
-	    throw invalid_argument("size mismatch in setResp");
-	y = rr;
-	return lm_updateWrss(rho);
-	END_RCPP;
+        const MAr1   rr(as<MAr1>(rr_));
+        MAr1         y(as<MAr1>(rho.get("y")));
+        if (rr.size() != y.size())
+            throw invalid_argument("size mismatch in setResp");
+        y = rr;
+        return lm_updateWrss(rho);
+        END_RCPP;
     }
 
     SEXP lm_setWeights(SEXP rho_, SEXP wts_) {
         BEGIN_RCPP;
         Environment  rho(rho_);
         const MAr1   wts(as<MAr1>(wts_));
-	MAr1         weights(as<MAr1>(rho.get("weights")));
-	if (wts.size() != weights.size())
-	    throw invalid_argument("size mismatch in setWeights");
-	weights = wts;
+        MAr1         weights(as<MAr1>(rho.get("weights")));
+        if (wts.size() != weights.size())
+            throw invalid_argument("size mismatch in setWeights");
+        weights = wts;
         as<MAr1>(rho.get("sqrtrwt")) = wts.sqrt();
         rho.assign("ldW",wrap(wts.log().sum()));
-	return lm_updateWrss(rho);
+        return lm_updateWrss(rho);
         END_RCPP;
     }
 
     SEXP lm_updateMu(SEXP rho_, SEXP gam_) {
         BEGIN_RCPP;
         Environment  rho(rho_);
-	const MAr1   gam(as<MAr1>(gam_));
-	MAr1         mu(as<MAr1>(rho.get("mu")));
-	if (gam.size() != mu.size())
-	    throw invalid_argument("size mismatch in updateMu");
-	mu = gam;
+        const MAr1   gam(as<MAr1>(gam_));
+        MAr1         mu(as<MAr1>(rho.get("mu")));
+        if (gam.size() != mu.size())
+            throw invalid_argument("size mismatch in updateMu");
+        mu = gam;
         return lm_updateWrss(rho);
         END_RCPP;
     }
@@ -589,22 +597,22 @@ extern "C" {
 
     SEXP lmer_Laplace(SEXP rho_, SEXP ldL2_, SEXP ldRX2_, SEXP sqrL_, SEXP sigma_sq_) {
         BEGIN_RCPP;
-	Environment   rho(rho_);
-	int n     = ::Rf_length(rho.get("y")),
-	    REML  = ::Rf_asInteger(rho.get("REML"));
-	double
-	    ldL2  = ::Rf_asReal(ldL2_),
-	    ldRX2 = ::Rf_asReal(ldRX2_),
-	    nmp   = n - REML,
-	    sigsq = ::Rf_isNull(sigma_sq_) ? 1.0 : ::Rf_asReal(sigma_sq_),
-	    sqrL  = ::Rf_asReal(sqrL_),
-	    wrss  = ::Rf_asReal(rho.get("wrss"));
+        Environment   rho(rho_);
+        int n     = ::Rf_length(rho.get("y")),
+            REML  = ::Rf_asInteger(rho.get("REML"));
+        double
+            ldL2  = ::Rf_asReal(ldL2_),
+            ldRX2 = ::Rf_asReal(ldRX2_),
+            nmp   = n - REML,
+            sigsq = ::Rf_isNull(sigma_sq_) ? 1.0 : ::Rf_asReal(sigma_sq_),
+            sqrL  = ::Rf_asReal(sqrL_),
+            wrss  = ::Rf_asReal(rho.get("wrss"));
 
-	double result = nmp * (2.0 * M_LN_SQRT_2PI + std::log(sigsq)); // (2pi sigma_sq)^-df/2
-	result += (wrss + sqrL) / sigsq; // exp(-1/2sigma_sq x |pwrss|)
-	result += ldL2 + (REML > 0 ? ldRX2 : 0.0); // det|LL'|^-1/2 and similar REML penalty
-	result -= ::Rf_asReal(rho.get("ldW")); // subtract prior weights factor
-	return ::Rf_ScalarReal(result);
+        double result = nmp * (2.0 * M_LN_SQRT_2PI + std::log(sigsq)); // (2pi sigma_sq)^-df/2
+        result += (wrss + sqrL) / sigsq; // exp(-1/2sigma_sq x |pwrss|)
+        result += ldL2 + (REML > 0 ? ldRX2 : 0.0); // det|LL'|^-1/2 and similar REML penalty
+        result -= ::Rf_asReal(rho.get("ldW")); // subtract prior weights factor
+        return ::Rf_ScalarReal(result);
         END_RCPP;
     }
 
@@ -658,7 +666,7 @@ extern "C" {
                                 // setters
     SEXP predD_setTheta(SEXP ptr, SEXP theta) {
         BEGIN_RCPP;
-//	Environment rho(rho_);
+//      Environment rho(rho_);
         XPtr<merPredD>(ptr)->setTheta(as<MVec>(theta));
         return theta;
         END_RCPP;
@@ -695,9 +703,9 @@ extern "C" {
     SEXP predD_RXi(SEXP rho_) {
         BEGIN_RCPP;
         Environment   rho(rho_);
-	LLT           *RXpt(XPtr<LLT>(rho.get("RXpt")));
-	int            p(::Rf_length(rho.get("beta0")));
-	return wrap(Mat(RXpt->matrixU().solve(Eigen::MatrixXd::Identity(p,p))));
+        LLT           *RXpt(XPtr<LLT>(rho.get("RXpt")));
+        int            p(::Rf_length(rho.get("beta0")));
+        return wrap(Mat(RXpt->matrixU().solve(Eigen::MatrixXd::Identity(p,p))));
         END_RCPP;
     }
 
@@ -708,7 +716,7 @@ extern "C" {
         END_RCPP;
     }
 
-				// methods
+                                // methods
     SEXP predD_mkL(SEXP rho_) {
         BEGIN_RCPP;
         Environment   rho(rho_);
@@ -728,24 +736,17 @@ extern "C" {
         BEGIN_RCPP;
         Environment   rho(rho_);
         const MSpMat  Zt(as<MSpMat>(rho.get("Zt")));
-	Rcpp::Rcout << Zt << std::endl;
         MSpMat        Lambdat(as<MSpMat>(rho.get("Lambdat")));
-	Rcpp::Rcout << Lambdat << std::endl;
         const MiVec   Lind(as<MiVec>(rho.get("Lind")));
-	Rcpp::Rcout << Lind << std::endl;
         const MVec    theta(as<MVec>(rho.get("theta")));
-	Rcpp::Rcout << theta << std::endl;
         if (Lind.size() != Lambdat.nonZeros())
             throw std::invalid_argument("dimension mismatch");
         double *LamX = Lambdat.valuePtr();
         for (int i = 0; i < Lind.size(); ++i) {
             LamX[i] = theta(Lind(i) - 1);
         }
-	Rcpp::Rcout << Lambdat << std::endl;
         SpMat         LamtZt(Lambdat * Zt);
-	Rcpp::Rcout << LamtZt << std::endl;
         SpMat         LamtZtZLam(LamtZt * LamtZt.adjoint());
-	Rcpp::Rcout << LamtZtZLam << std::endl;
         rho.assign("ZtZ",wrap(LamtZtZLam));
         XPtr<SLLT>(rho.get("Lptr"))->factorize(LamtZtZLam);
         END_RCPP;
@@ -758,31 +759,33 @@ extern "C" {
         const Mat     ZtX(as<MSpMat>(rho.get("Zt")) * X);
         const MSpMat  Lambdat(as<MSpMat>(rho.get("Lambdat")));
         SLLT         *L(XPtr<SLLT>(rho.get("Lptr")));
+        MMat          RZX(as<MMat>(rho.get("RZX")));
         Mat           pr(L->permutationP() * (Lambdat * ZtX));
-        Mat           RZX = L->matrixL().solve(pr);
-        NumericMatrix rzx(rho.get("RZX"));
-        std::copy(RZX.data(), RZX.data() + RZX.size(), rzx.begin());
+        RZX = L->matrixL().solve(pr);
         XPtr<LLT>(rho.get("RXpt"))->compute(X.adjoint() * X - RZX.adjoint() * RZX);
         END_RCPP;
     }
 
-    SEXP predD_setBeta0(SEXP ptr, SEXP beta0) {
+    SEXP predD_setBeta0(SEXP rho_, SEXP b0_) {
         BEGIN_RCPP;
-        XPtr<merPredD>(ptr)->setBeta0(as<MVec>(beta0));
+        MVec           beta0(as<MVec>(Environment(rho_).get("beta0")));
+        sized_copy(beta0, as<MVec>(b0_));
         END_RCPP;
     }
 
 
-    SEXP predD_setDelu(SEXP ptr, SEXP delu) {
+    SEXP predD_setDelu(SEXP rho_, SEXP du_) {
         BEGIN_RCPP;
-        XPtr<merPredD>(ptr)->setDelu(as<MVec>(delu));
+        MVec           delu(as<MVec>(Environment(rho_).get("delu")));
+        sized_copy(delu, as<MVec>(du_));
         END_RCPP;
     }
 
 
-    SEXP predD_setDelb(SEXP ptr, SEXP delb) {
+    SEXP predD_setDelb(SEXP rho_, SEXP db_) {
         BEGIN_RCPP;
-        XPtr<merPredD>(ptr)->setDelb(as<MVec>(delb));
+        MVec           delb(as<MVec>(Environment(rho_).get("delb")));
+        sized_copy(delb, as<MVec>(db_));
         END_RCPP;
     }
                                 // getters
@@ -798,9 +801,10 @@ extern "C" {
         END_RCPP;
     }
 
-    SEXP predD_ldRX2(SEXP ptr) {
+    SEXP predD_ldRX2(SEXP rho_) {
         BEGIN_RCPP;
-        return ::Rf_ScalarReal(XPtr<merPredD>(ptr)->ldRX2());
+        return ::Rf_ScalarReal(
+            Mat(XPtr<LLT>(Environment(rho_).get("RXpt"))->matrixL()).diagonal().log().sum());
         END_RCPP;
     }
 
@@ -812,21 +816,36 @@ extern "C" {
 
     // methods
 
-    SEXP predD_b(SEXP ptr, SEXP fac) {
+    static inline Vec uvec(SEXP rho_, SEXP fac_) {
+        Environment rho(rho_);
+        return as<Vec>(rho.get("u0")) += ::Rf_asReal(fac_) * as<MVec>(rho.get("delu"));
+    }
+
+    SEXP predD_b(SEXP rho_, SEXP fac_) {
         BEGIN_RCPP;
-        return wrap(XPtr<merPredD>(ptr)->b(::Rf_asReal(fac)));
+        return wrap(as<MMat>(Environment(rho_).get("Lambdat")).adjoint() * uvec(rho_, fac_));
         END_RCPP;
     }
 
-    SEXP predD_beta(SEXP ptr, SEXP fac) {
+    SEXP predD_beta(SEXP rho_, SEXP fac_) {
         BEGIN_RCPP;
-        return wrap(XPtr<merPredD>(ptr)->beta(::Rf_asReal(fac)));
+        Environment rho(rho_);
+        return wrap(as<Vec>(rho.get("beta0")) += ::Rf_asReal(fac_) * as<MVec>(rho.get("delb")));
         END_RCPP;
     }
 
-    SEXP predD_installPars(SEXP ptr, SEXP fac) {
+    SEXP predD_installPars(SEXP rho_, SEXP fac_) {
         BEGIN_RCPP;
-        XPtr<merPredD>(ptr)->installPars(::Rf_asReal(fac));
+        Environment rho(rho_);
+        double      fac(::Rf_asReal(fac_));
+        MVec        beta0(as<MVec>(rho.get("beta0")));
+        MVec        delb(as<MVec>(rho.get("delb")));
+        MVec        u0(as<MVec>(rho.get("u0")));
+        MVec        delu(as<MVec>(rho.get("delu")));
+        beta0 += fac * delb;
+        u0 += fac * delu;
+        delb.setZero();
+        delu.setZero();
         END_RCPP;
     }
 
@@ -848,15 +867,15 @@ extern "C" {
         END_RCPP;
     }
 
-    SEXP predD_sqrL(SEXP ptr, SEXP fac) {
+    SEXP predD_sqrL(SEXP rho_, SEXP fac_) {
         BEGIN_RCPP;
-        return ::Rf_ScalarReal(XPtr<merPredD>(ptr)->sqrL(::Rf_asReal(fac)));
+        return ::Rf_ScalarReal(uvec(rho_,fac_).squaredNorm());
         END_RCPP;
     }
 
-    SEXP predD_u(SEXP ptr, SEXP fac) {
+    SEXP predD_u(SEXP rho_, SEXP fac_) {
         BEGIN_RCPP;
-        return wrap(XPtr<merPredD>(ptr)->u(::Rf_asReal(fac)));
+        return wrap(uvec(rho_,fac_));
         END_RCPP;
     }
 
