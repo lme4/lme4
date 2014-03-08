@@ -2142,6 +2142,8 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
 	forceSymmetric(h + t(h))
     }
 
+    ## OBSOLETE??  checks for symmetry, but symmetry is now forced
+    ## within calc.vcov.hess anyway
     symmetrize <-  function(v,warnTol=0,stopTol=sqrt(.Machine$double.eps)) {
         if(nrow(v)==1L) return(v)       # 1-by-1 matrices are always symmetrical
         nonSymm <- max(abs(v[lower.tri(v)]-t(v)[lower.tri(v)]))
@@ -2170,7 +2172,7 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
                         "consider ",shQuote("use.hessian=TRUE"))
         }
     } else {
-        V <- symmetrize(calc.vcov.hess(h))
+        V <- calc.vcov.hess(h)
     }
 
     rr <- tryCatch(as(V, "dpoMatrix"), error = function(e)e)
