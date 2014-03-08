@@ -20,6 +20,14 @@ setClass("lmList",
 ## TODO: export
 setClass("lmList.confint", contains = "array")
 
+forceCopy <- function(x) {
+    if (is.numeric(x)) return(x+0)
+    ## FIXME: doesn't handle non-numeric fields yet ...
+    ## resp@family is the only non-numeric field other than Ptr
+    ## need equivalent force-copy no-op for other classes
+    x
+}
+
 ### FIXME
 ### shouldn't we have "merPred"  with two *sub* classes "merPredD" and "merPredS"
 ### for the dense and sparse X cases ?
@@ -55,14 +63,14 @@ setClass("lmList.confint", contains = "array")
 merPredD <-
     setRefClass("merPredD", # Predictor class for mixed-effects models with dense X
                 fields =
-                list(Lambdat = "dgCMatrix",
-                     LamtUt  = "dgCMatrix",
-                     Lind    = "integer",
-                     Ptr     = "externalptr",
-                     RZX     = "matrix",
-                     Ut      = "dgCMatrix",
-                     Utr     = "numeric",
-                     V       = "matrix",
+                list(Lambdat = "dgCMatrix",   # depends: theta and Lind
+                     LamtUt  = "dgCMatrix",   # depends: Lambdat and Ut
+                     Lind    = "integer",     # depends: nothing
+                     Ptr     = "externalptr", # depends: 
+                     RZX     = "matrix",      # depends: lots
+                     Ut      = "dgCMatrix",   # depends: Zt and weights
+                     Utr     = "numeric",     # depends: lots
+                     V       = "matrix",      # depends: 
                      VtV     = "matrix",
                      Vtr     = "numeric",
                      X       = "matrix",
@@ -151,6 +159,7 @@ merPredD <-
                          def <- .refClassDef
                          selfEnv <- as.environment(.self)
                          vEnv    <- new.env(parent=emptyenv())
+                         
                          for (field in setdiff(names(def@fieldClasses), "Ptr")) {
                              if (shallow)
                                  assign(field, get(field, envir = selfEnv), envir = vEnv)
@@ -158,10 +167,14 @@ merPredD <-
                                  current <- get(field, envir = selfEnv)
                                  if (is(current, "envRefClass"))
                                      current <- current$copy(FALSE)
-                                 assign(field, current, envir = vEnv)
+                                 ## hack (https://stat.ethz.ch/pipermail/r-devel/2014-March/068448.html)
+                                 ## ... to ensure real copying
+                                 ## forceCopy() does **NOT** work here, but +0 does
+                                 ## we can get away with this because all fields other than Ptr are numeric
+                                 assign(field, current+0, envir = vEnv)
                              }
                          }
-                         do.call("new", c(as.list(vEnv), n=nrow(vEnv$V), Class=def))
+                         do.call(merPredD$new, c(as.list(vEnv), n=nrow(vEnv$V), Class=def))
                      },
                      ldL2         = function() {
                          'twice the log determinant of the sparse Cholesky factor'
@@ -364,7 +377,8 @@ lmResp <-                               # base class for response modules
                                 current <- get(field, envir = selfEnv)
                                 if (is(current, "envRefClass"))
                                     current <- current$copy(FALSE)
-                                assign(field, current, envir = vEnv)
+                                ## deep-copy hack +0
+                                assign(field, forceCopy(current), envir = vEnv)
                             }
                         }
                         do.call("new", c(as.list(vEnv), Class=def))

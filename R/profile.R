@@ -311,7 +311,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
     attr(ans, "lower") <- lower[seqnvp]
     attr(ans, "upper") <- upper[seqnvp]
     ans
-}
+} ## profile.merMod
 
 get.which <- function(which,nvp,nptot,parnames,verbose) {
     wi.vp <- seq_len(nvp)
