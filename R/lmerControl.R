@@ -84,7 +84,7 @@ lmerControl <-
 	     ##TODO? c("warning","message+scale", "silent.scale","ignore"),
 	     check.formula.LHS = "stop",
 	     ## convergence options
-	     check.conv.grad	 = .makeCC("warning", tol = 1e-3, relTol = NULL),
+	     check.conv.grad	 = .makeCC("warning", tol = 2e-3, relTol = NULL),
 	     check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
 	     check.conv.hess	 = .makeCC(action = "warning", tol = 1e-6),
 	     optCtrl = list()
