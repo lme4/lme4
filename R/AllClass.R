@@ -56,27 +56,28 @@ merPredD <-
     setRefClass(
         "merPredD", # Predictor class for mixed-effects models with dense X
         fields =
-        list(
+        list(                           # objects defining the model
             Lambdat = "dgCMatrix",
-            LamtUt  = "dgCMatrix",
             Lind    = "integer",
-            Lptr    = "externalptr",  # make sure Lptr and RXpt are regenetated after serialize/unserialize
-            RZX     = "matrix",
+            X       = "matrix",
+            Zt      = "dgCMatrix",
+            mu      = "numeric",
+            theta   = "numeric",
+                                        # derived objects
+            LamtUt  = "dgCMatrix",
+            Lptr    = "externalptr",
             RXpt    = "externalptr",
-            Ut      = "dgCMatrix",
+            RZX     = "matrix",
+            UtV     = "matrix",
             Utr     = "numeric",
-            V       = "matrix",
             VtV     = "matrix",
             Vtr     = "numeric",
-            X       = "matrix",
             Xwts    = "numeric",
-            Zt      = "dgCMatrix",
-            ZtZ     = "dgCMatrix", # actually Lambdat * Zt * Z * Lambda
             beta0   = "numeric",
             delb    = "numeric",
             delu    = "numeric",
-            theta   = "numeric",
-            u0      = "numeric"),
+            u0      = "numeric"
+            ),
         methods =
         list(
             initialize = function(X, Zt, Lambdat, Lind, theta, n, ...) {
@@ -86,135 +87,59 @@ merPredD <-
                 Lambdat <<- as(Lambdat, "dgCMatrix")
                 Lind <<- as.integer(Lind)
                 theta <<- as.numeric(theta)
+                nzLam <- length(Lambdat@x)
                 N <- nrow(X)
                 p <- ncol(X)
                 q <- nrow(Zt)
-                stopifnot(length(theta) > 0L,
-                          length(Lind) > 0L,
-                          all(sort(unique(Lind)) == seq_along(theta)))
+                stopifnot(
+                    ncol(Zt) == N,
+                    length(theta) > 0L,
+                    nzLam > 0L,
+                    length(Lind) == nzLam,
+                    all(sort(unique(Lind)) == seq_along(theta))
+                    )
                 RZX <<- array(0, c(q, p))
-                Utr <<- numeric(q)
-                V <<- array(0, c(n, p))
-                VtV <<- array(0, c(p, p))
-                Vtr <<- numeric(p)
-                b0 <- list(...)$beta0
-                beta0 <<- if (is.null(b0)) numeric(p) else b0
+                UtV <<- as.matrix(Zt %*% X)
+                LamtUt <<- Lambdat %*% Zt # check if this is needed
+                Utr <<- as.numeric(q)
+                Vtr <<- as.numeric(p)
+                Xwts <<- rep.int(1,n)
+                VtV <<- crossprod(X)
+                beta0 <<- numeric(p)
                 delb <<- numeric(p)
                 delu <<- numeric(q)
-                uu <- list(...)$u0
-                u0 <<- if (is.null(uu)) numeric(q) else uu
-                Ut <<- Zt
+                u0 <<- numeric(q)
                 .Call(predD_mkL, as.environment(.self))
                 updtL()
+                updtRX()
             },
-            CcNumer      = function() {
-                'returns the numerator of the orthogonality convergence criterion'
-                .Call(predD_CcNumer, as.environment(.self))
-            },
-            L            = function() {
-                'returns the current value of the sparse Cholesky factor'
-                .Call(predD_L, as.environment(.self))
-            },
-            P            = function() {
-                'returns the permutation vector for the sparse Cholesky factor'
-                .Call(predD_P, as.environment(.self))
-            },
-            RX           = function() {
-                'returns the dense downdated Cholesky factor for the fixed-effects parameters'
-                .Call(predD_RX, as.environment(.self))
-            },
-            RXi          = function() {
-                'returns the inverse of the dense downdated Cholesky factor for the fixed-effects parameters'
-                .Call(predD_RXi, as.environment(.self))
-            },
-            RXdiag       = function() {
-                'returns the diagonal of the dense downdated Cholesky factor'
-                .Call(predD_RXdiag, as.environment(.self))
-            },
-            b            = function(fac) {
-                'random effects on original scale for step factor fac'
-                .Call(predD_b, as.environment(.self), as.numeric(fac))
-            },
-            beta         = function(fac) {
-                'fixed-effects coefficients for step factor fac'
-                .Call(predD_beta, as.environment(.self), as.numeric(fac))
-            },
-            ldL2         = function() {
-                'twice the log determinant of the sparse Cholesky factor'
-                .Call(predD_ldL2, as.environment(.self))
-            },
-            ldRX2        = function() {
-                'twice the log determinant of the downdated dense Cholesky factor'
-                .Call(predD_ldRX2, as.environment(.self))
-            },
-            unsc         = function() {
-                'the unscaled variance-covariance matrix of the fixed-effects parameters'
-                .Call(predD_unsc, as.environment(.self))
-            },
-            linPred      = function(fac) {
-                'evaluate the linear predictor for step factor fac'
-                .Call(predD_linPred, as.environment(.self), as.numeric(fac))
-            },
-            installPars  = function(fac) {
-                'update u0 and beta0 to the values for step factor fac'
-                .Call(predD_installPars, as.environment(.self), as.numeric(fac))
-            },
-            setBeta0     = function(beta0) {
-                'install a new value of theta'
-                .Call(predD_setBeta0, as.environment(.self), as.numeric(beta0))
-            },
-            setTheta     = function(theta) {
-                'install a new value of theta'
-                .Call(predD_setTheta, as.environment(.self), as.numeric(theta))
-            },
-            solve        = function() {
-                'solve for the coefficient increments delu and delb'
-                .Call(predD_solve, as.environment(.self))
-            },
-            solveU       = function() {
-                'solve for the coefficient increment delu only (beta is fixed)'
-                .Call(predD_solveU, as.environment(.self))
-            },
-            setDelu      = function(val) {
-                'set the coefficient increment delu'
-                .Call(predD_setDelu , as.environment(.self), as.numeric(val))
-            },
-            setDelb      = function(val) {
-                'set the coefficient increment delb'
-                .Call(predD_setDelb , as.environment(.self), as.numeric(val))
-            },
-            sqrL         = function(fac) {
-                'squared length of u0 + fac * delu'
-                .Call(predD_sqrL, as.environment(.self), as.numeric(fac))
-            },
-            u            = function(fac) {
-                'orthogonal random effects for step factor fac'
-                .Call(predD_u, as.environment(.self), as.numeric(fac))
-            },
-            updateDecomp = function(XPenalty = NULL) {
-                'update L, RZX and RX from Ut, Vt and VtV'
-                invisible(.Call(predD_updateDecomp, as.environment(.self), XPenalty))
-            },
-            updtL = function() {
-                'update LamtUt and L'
-                .Call(predD_updtL, as.environment(.self))
-            },
-            updateLamtUt = function() {
-                'update LamtUt and L'
-                .Call(predD_updateLamtUt, as.environment(.self))
-            },
-            updateRes    = function(wtres) {
-                'update Vtr and Utr using the vector of weighted residuals'
-                .Call(predD_updateRes, as.environment(.self), as.numeric(wtres))
-            },
-            updateXwts   = function(wts) {
-                'update Ut and V from Zt and X using X weights'
-                .Call(predD_updateXwts, as.environment(.self), wts)
-            }
+            CcNumer = function() .Call(predD_CcNumer, as.environment(.self)),
+            L = function() .Call(predD_L, as.environment(.self)),
+            P = function() .Call(predD_P, as.environment(.self)),
+            RX = function() .Call(predD_RX, as.environment(.self)),
+            RXdiag = function() .Call(predD_RXdiag, as.environment(.self)),
+            RXi = function() .Call(predD_RXi, as.environment(.self)),
+            b = function(f) .Call(predD_b, as.environment(.self), as.numeric(f)),
+            beta = function(f) .Call(predD_beta, as.environment(.self), as.numeric(f)),
+            installPars = function(f) .Call(predD_installPars,as.environment(.self), as.numeric(f)),
+            ldL2 = function() .Call(predD_ldL2, as.environment(.self)),
+            ldRX2 = function() .Call(predD_ldRX2, as.environment(.self)),
+            linPred = function(f) .Call(predD_linPred, as.environment(.self),as.numeric(f)),
+            setBeta0 = function(beta0) .Call(predD_setBeta0, as.environment(.self),as.numeric(beta0)),
+            setDelb = function(delb) .Call(predD_setDelb, as.environment(.self),as.numeric(delb)),
+            setDelu = function(delu) .Call(predD_setDelu, as.environment(.self),as.numeric(delu)),
+            setTheta = function(theta) .Call(predD_setTheta, as.environment(.self),as.numeric(theta)),
+            solve = function() .Call(predD_solve, as.environment(.self)),
+            solveU = function() .Call(predD_solveU, as.environment(.self)),
+            sqrL = function(f) .Call(predD_sqrL, as.environment(.self), as.numeric(f)),
+            u = function(f) .Call(predD_, as.environment(.self), as.numeric(f)),
+            unsc = function() .Call(predD_unsc, as.environment(.self)),
+            updtL = function() .Call(predD_updtL, as.environment(.self)),
+            updtRX = function() .Call(predD_updtRX, as.environment(.self)),
+            updtRes = function(wtres) .Call(predD_updtRes, as.environment(.self), as.numeric(wtres)),
+            updtXwts = function(wts) .Call(predD_updtXwts, as.environment(.self), wts)
             )
         )
-merPredD$lock("Lambdat", "LamtUt", "Lind", "RZX", "Ut", "Utr", "V", "VtV", "Vtr",
-              "X", "Xwts", "Zt", "beta0", "delb", "delu", "theta", "u0")
 
 ##' Class \code{"merPredD"} - a dense predictor reference class
 ##'

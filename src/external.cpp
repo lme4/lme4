@@ -616,10 +616,10 @@ extern "C" {
         END_RCPP;
     }
 
-    static double lmer_dev(XPtr<merPredD> ppt, XPtr<lmerResp> rpt, const Eigen::VectorXd& theta) {
+    static double lmer_dev(Environment pred, Environment resp, const MVec& theta) {
         int debug=0;
-        double val;
-
+        double val = 1.;
+/*
         ppt->setTheta(theta);
 
         ppt->updateXwts(rpt->sqrtXwt());
@@ -634,7 +634,7 @@ extern "C" {
             Rcpp::Rcout << "lmer_dev: theta=" <<
                 ppt->theta() << ", val=" << val << std::endl;
         }
-
+*/
         return val;
     }
 
@@ -662,142 +662,119 @@ extern "C" {
     }
 
     // dense predictor module for mixed-effects models
-
-                                // setters
-    SEXP predD_setTheta(SEXP ptr, SEXP theta) {
-        BEGIN_RCPP;
-//      Environment rho(rho_);
-        XPtr<merPredD>(ptr)->setTheta(as<MVec>(theta));
-        return theta;
-        END_RCPP;
-    }
-
-    SEXP predD_L(SEXP rho_) {
-        BEGIN_RCPP;
-        Environment  rho(rho_);
-        return wrap(XPtr<SLLT>(rho.get("Lptr"))->matrixL().derived());
-        END_RCPP;
-    }
-
-    SEXP predD_P(SEXP rho_) {
-        BEGIN_RCPP;
-        Environment  rho(rho_);
-        return wrap(XPtr<SLLT>(rho.get("Lptr"))->permutationP().indices());
-        END_RCPP;
-    }
-
-    SEXP predD_RX(SEXP rho_) {
-        BEGIN_RCPP;
-        Environment   rho(rho_);
-        return wrap(Mat(XPtr<LLT>(rho.get("RXpt"))->matrixU()));
-        END_RCPP;
-    }
-
-    SEXP predD_RXdiag(SEXP rho_) {
-        BEGIN_RCPP;
-        Environment   rho(rho_);
-        return wrap(Mat(XPtr<LLT>(rho.get("RXpt"))->matrixU()).diagonal());
-        END_RCPP;
-    }
-
-    SEXP predD_RXi(SEXP rho_) {
-        BEGIN_RCPP;
-        Environment   rho(rho_);
-        LLT           *RXpt(XPtr<LLT>(rho.get("RXpt")));
-        int            p(::Rf_length(rho.get("beta0")));
-        return wrap(Mat(RXpt->matrixU().solve(Eigen::MatrixXd::Identity(p,p))));
-        END_RCPP;
-    }
-
-    SEXP predD_ldL2(SEXP rho_) {
-        BEGIN_RCPP;
-        Environment   rho(rho_);
-        return ::Rf_ScalarReal(log(XPtr<SLLT>(rho.get("Lptr"))->determinant()));
-        END_RCPP;
-    }
-
-                                // methods
+				// methods that can be called by other methods
     SEXP predD_mkL(SEXP rho_) {
+	// create the SLLT and LLT objects and assign external pointers in rho_
         BEGIN_RCPP;
-        Environment   rho(rho_);
-        const MSpMat  Zt(as<MSpMat>(rho.get("Zt")));
-        SLLT     *L = new SLLT();
+        Environment  rho(rho_);
+        const MSpMat Zt(as<MSpMat>(rho.get("Zt")));
+        SLLT        *L = new SLLT();
         L->setShift(1.0);
         L->compute(Zt * Zt.adjoint());
         rho.assign("Lptr",wrap(XPtr<SLLT>(L)));
-        LLT      *RX = new LLT();
-        const MMat    X(as<MMat>(rho.get("X")));
+        LLT         *RX = new LLT();
+        const MMat   X(as<MMat>(rho.get("X")));
         RX->compute(X.adjoint() * X);
         rho.assign("RXpt", wrap(XPtr<LLT>(RX)));
         END_RCPP;
     }
 
     SEXP predD_updtL(SEXP rho_) {
+	// update Lambdat, LambdatZt and L
         BEGIN_RCPP;
         Environment   rho(rho_);
         const MSpMat  Zt(as<MSpMat>(rho.get("Zt")));
         MSpMat        Lambdat(as<MSpMat>(rho.get("Lambdat")));
         const MiVec   Lind(as<MiVec>(rho.get("Lind")));
         const MVec    theta(as<MVec>(rho.get("theta")));
-        if (Lind.size() != Lambdat.nonZeros())
-            throw std::invalid_argument("dimension mismatch");
+        if (Lind.size() != Lambdat.nonZeros()) throw invalid_argument("updtL: size mismatch");
         double *LamX = Lambdat.valuePtr();
         for (int i = 0; i < Lind.size(); ++i) {
             LamX[i] = theta(Lind(i) - 1);
         }
-        SpMat         LamtZt(Lambdat * Zt);
-        SpMat         LamtZtZLam(LamtZt * LamtZt.adjoint());
-        rho.assign("ZtZ",wrap(LamtZtZLam));
-        XPtr<SLLT>(rho.get("Lptr"))->factorize(LamtZtZLam);
+        SpMat         LamtUt(Lambdat * Zt);
+	rho.assign("LamtUt",wrap(LamtUt));
+        XPtr<SLLT>(rho.get("Lptr"))->factorize(LamtUt * LamtUt.adjoint());
         END_RCPP;
     }
 
     SEXP predD_updtRX(SEXP rho_) {
         BEGIN_RCPP;
         Environment   rho(rho_);
-        const MMat    X(as<MMat>(rho.get("X")));
-        const Mat     ZtX(as<MSpMat>(rho.get("Zt")) * X);
+        const MMat    UtV(as<MMat>(rho.get("UtV")));
         const MSpMat  Lambdat(as<MSpMat>(rho.get("Lambdat")));
         SLLT         *L(XPtr<SLLT>(rho.get("Lptr")));
         MMat          RZX(as<MMat>(rho.get("RZX")));
-        Mat           pr(L->permutationP() * (Lambdat * ZtX));
+        Mat           pr(L->permutationP() * (Lambdat * UtV));
         RZX = L->matrixL().solve(pr);
-        XPtr<LLT>(rho.get("RXpt"))->compute(X.adjoint() * X - RZX.adjoint() * RZX);
+        XPtr<LLT>(rho.get("RXpt"))->compute(as<MMat>(rho.get("VtV")) - RZX.adjoint() * RZX);
         END_RCPP;
     }
-
+                                // setters
     SEXP predD_setBeta0(SEXP rho_, SEXP b0_) {
         BEGIN_RCPP;
-        MVec           beta0(as<MVec>(Environment(rho_).get("beta0")));
+        MVec        beta0(as<MVec>(Environment(rho_).get("beta0")));
         sized_copy(beta0, as<MVec>(b0_));
         END_RCPP;
     }
 
+    SEXP predD_setDelb(SEXP rho_, SEXP db_) {
+        BEGIN_RCPP;
+        MVec        delb(as<MVec>(Environment(rho_).get("delb")));
+        sized_copy(delb, as<MVec>(db_));
+        END_RCPP;
+    }
 
     SEXP predD_setDelu(SEXP rho_, SEXP du_) {
         BEGIN_RCPP;
-        MVec           delu(as<MVec>(Environment(rho_).get("delu")));
+        MVec        delu(as<MVec>(Environment(rho_).get("delu")));
         sized_copy(delu, as<MVec>(du_));
         END_RCPP;
     }
 
-
-    SEXP predD_setDelb(SEXP rho_, SEXP db_) {
+    SEXP predD_setTheta(SEXP rho_, SEXP th_) {
         BEGIN_RCPP;
-        MVec           delb(as<MVec>(Environment(rho_).get("delb")));
-        sized_copy(delb, as<MVec>(db_));
+        MVec        theta(as<MVec>(Environment(rho_).get("theta")));
+        sized_copy(theta, as<MVec>(th_));
+	return predD_updtL(rho_);
         END_RCPP;
     }
                                 // getters
-    SEXP predD_CcNumer(SEXP ptr) {
+    SEXP predD_L(SEXP rho_) {
         BEGIN_RCPP;
-        return ::Rf_ScalarReal(XPtr<merPredD>(ptr)->CcNumer());
+        return wrap(XPtr<SLLT>(Environment(rho_).get("Lptr"))->matrixL().derived());
         END_RCPP;
     }
 
-    SEXP predD_condVar(SEXP ptr, SEXP rho) {
+    SEXP predD_P(SEXP rho_) {
         BEGIN_RCPP;
-        return wrap(XPtr<merPredD>(ptr)->condVar(Environment(rho)));
+        return wrap(XPtr<SLLT>(Environment(rho_).get("Lptr"))->permutationP().indices());
+        END_RCPP;
+    }
+
+    SEXP predD_RX(SEXP rho_) {
+        BEGIN_RCPP;
+        return wrap(Mat(XPtr<LLT>(Environment(rho_).get("RXpt"))->matrixU()));
+        END_RCPP;
+    }
+
+    SEXP predD_RXdiag(SEXP rho_) {
+        BEGIN_RCPP;
+        return wrap(Mat(XPtr<LLT>(Environment(rho_).get("RXpt"))->matrixU()).diagonal());
+        END_RCPP;
+    }
+
+    SEXP predD_RXi(SEXP rho_) {
+        BEGIN_RCPP;
+        LLT           *RXpt(XPtr<LLT>(Environment(rho_).get("RXpt")));
+        int            p(RXpt->rows());
+        return wrap(Mat(RXpt->matrixU().solve(Mat::Identity(p,p))));
+        END_RCPP;
+    }
+
+    SEXP predD_ldL2(SEXP rho_) {
+        BEGIN_RCPP;
+        return ::Rf_ScalarReal(log(XPtr<SLLT>(Environment(rho_).get("Lptr"))->determinant()));
         END_RCPP;
     }
 
@@ -808,29 +785,79 @@ extern "C" {
         END_RCPP;
     }
 
-    SEXP predD_unsc(SEXP ptr) {
+    SEXP predD_unsc(SEXP rho_) {
         BEGIN_RCPP;
-        return wrap(XPtr<merPredD>(ptr)->unsc());
+        LLT           *RXpt(XPtr<LLT>(Environment(rho_).get("RXpt")));
+        int            p(RXpt->rows());
+        return wrap(Mat(RXpt->solve(Mat::Identity(p,p))));
         END_RCPP;
     }
 
-    // methods
+                                // methods
+    SEXP predD_CcNumer(SEXP rho_) {
+        BEGIN_RCPP;
+// FIXME: needs a body	
+//        return ::Rf_ScalarReal(XPtr<merPredD>(ptr)->CcNumer());
+        END_RCPP;
+    }
 
-    static inline Vec uvec(SEXP rho_, SEXP fac_) {
-        Environment rho(rho_);
-        return as<Vec>(rho.get("u0")) += ::Rf_asReal(fac_) * as<MVec>(rho.get("delu"));
+    SEXP predD_condVar(SEXP rho_, SEXP respEnv_) {
+        BEGIN_RCPP;
+// FIXME: needs a body
+//        return wrap(XPtr<merPredD>(ptr)->condVar(Environment(rho)));
+        END_RCPP;
+    }
+
+    SEXP predD_solve(SEXP rho_) {
+        BEGIN_RCPP;
+	Environment    rho(rho_);
+	const MSpMat   Lamt(as<MSpMat>(rho.get("Lambdat")));
+	const SLLT    *Lp(XPtr<SLLT>(rho.get("Lptr")));
+	const Vec      PLamtUtr(Lp->permutationP()*(Lamt * as<MVec>(rho.get("Utr"))));
+	Vec            cu(Lp->matrixL().solve(PLamtUtr));
+	const MMat     RZX(as<MMat>(rho.get("RZX")));
+	MVec           delb(as<MVec>(rho.get("delb")));
+	delb = XPtr<LLT>(rho.get("RXpt"))->solve(as<MVec>(rho.get("Vtr")) - RZX.adjoint() * cu);
+	MVec           delu(as<MVec>(rho.get("delu")));
+	delu = Lp->permutationPinv() * Lp->matrixU().solve(cu - RZX * delb);
+        END_RCPP;
+    }
+
+    SEXP predD_solveU(SEXP rho_) {
+        BEGIN_RCPP;
+	Environment    rho(rho_);
+	const SLLT    *Lp(XPtr<SLLT>(rho.get("Lptr")));
+	MVec           delu(as<MVec>(rho.get("delu")));
+	delu = Lp->solve(as<MVec>(rho.get("Utr")));
+        END_RCPP;
+    }
+
+    static inline Vec internal_uvec(Environment rho, double fac) {
+        return as<Vec>(rho.get("u0")) += fac * as<MVec>(rho.get("delu"));
+    }
+
+    static inline Vec internal_b(Environment rho, double fac) {
+	return as<MSpMat>(rho.get("Lambdat")).adjoint() * internal_uvec(rho, fac);
+    }
+
+    static inline Vec internal_beta(Environment rho, double fac) {
+	return as<Vec>(rho.get("beta0")) += fac * as<MVec>(rho.get("delb"));
+    }
+
+    static inline Vec internal_linpred(Environment rho, double fac) {
+	return as<MMat>(rho.get("X")) * internal_beta(rho,fac) +
+	    as<MSpMat>(rho.get("Zt")).adjoint() * internal_b(rho,fac);
     }
 
     SEXP predD_b(SEXP rho_, SEXP fac_) {
         BEGIN_RCPP;
-        return wrap(as<MMat>(Environment(rho_).get("Lambdat")).adjoint() * uvec(rho_, fac_));
+	return wrap(internal_b(Environment(rho_), ::Rf_asReal(fac_)));
         END_RCPP;
     }
 
     SEXP predD_beta(SEXP rho_, SEXP fac_) {
         BEGIN_RCPP;
-        Environment rho(rho_);
-        return wrap(as<Vec>(rho.get("beta0")) += ::Rf_asReal(fac_) * as<MVec>(rho.get("delb")));
+	return wrap(internal_beta(Environment(rho_), ::Rf_asReal(fac_)));
         END_RCPP;
     }
 
@@ -849,67 +876,38 @@ extern "C" {
         END_RCPP;
     }
 
-    SEXP predD_linPred(SEXP ptr, SEXP fac) {
+    SEXP predD_linPred(SEXP rho_, SEXP fac_) {
         BEGIN_RCPP;
-        return wrap(XPtr<merPredD>(ptr)->linPred(::Rf_asReal(fac)));
-        END_RCPP;
-    }
-
-    SEXP predD_solve(SEXP ptr) {
-        BEGIN_RCPP;
-        return ::Rf_ScalarReal(XPtr<merPredD>(ptr)->solve());
-        END_RCPP;
-    }
-
-    SEXP predD_solveU(SEXP ptr) {
-        BEGIN_RCPP;
-        return ::Rf_ScalarReal(XPtr<merPredD>(ptr)->solveU());
+	return wrap(internal_linpred(Environment(rho_), ::Rf_asReal(fac_)));
         END_RCPP;
     }
 
     SEXP predD_sqrL(SEXP rho_, SEXP fac_) {
         BEGIN_RCPP;
-        return ::Rf_ScalarReal(uvec(rho_,fac_).squaredNorm());
+        return ::Rf_ScalarReal(internal_uvec(Environment(rho_),::Rf_asReal(fac_)).squaredNorm());
         END_RCPP;
     }
 
     SEXP predD_u(SEXP rho_, SEXP fac_) {
         BEGIN_RCPP;
-        return wrap(uvec(rho_,fac_));
+        return wrap(internal_uvec(Environment(rho_),::Rf_asReal(fac_)));
         END_RCPP;
     }
 
-    SEXP predD_updateDecomp(SEXP ptr, SEXP xPenalty_) {
+    SEXP predD_updtRes(SEXP rho_, SEXP wres_) {
         BEGIN_RCPP;
-        if (Rf_isNull(xPenalty_)) XPtr<merPredD>(ptr)->updateDecomp(NULL);
-        else {
-            const Mat & xPenalty(as<MMat>(xPenalty_));
-            XPtr<merPredD>(ptr)->updateDecomp(&xPenalty);
-        }
+	Environment rho(rho_);
+	const MVec  wres(as<MVec>(wres_));
+// in-place update works for Vtr but not Utr, not sure why
+	rho.assign("Utr", wrap(as<MSpMat>(rho.get("Zt")) * wres));
+	MVec        Vtr(as<MVec>(rho.get("Vtr")));
+	Vtr = as<MMat>(rho.get("X")).adjoint() * wres;
         END_RCPP;
     }
 
-    SEXP predD_updateL(SEXP ptr) {
+    SEXP predD_updtXwts(SEXP rho_, SEXP wts_) {
         BEGIN_RCPP;
-        XPtr<merPredD>(ptr)->updateL();
-        END_RCPP;
-    }
-
-    SEXP predD_updateLamtUt(SEXP ptr) {
-        BEGIN_RCPP;
-        XPtr<merPredD>(ptr)->updateLamtUt();
-        END_RCPP;
-    }
-
-    SEXP predD_updateRes(SEXP ptr, SEXP wtres) {
-        BEGIN_RCPP;
-        XPtr<merPredD>(ptr)->updateRes(as<MVec>(wtres));
-        END_RCPP;
-    }
-
-    SEXP predD_updateXwts(SEXP ptr, SEXP wts) {
-        BEGIN_RCPP;
-        XPtr<merPredD>(ptr)->updateXwts(as<MVec>(wts));
+// needs a body
         END_RCPP;
     }
 
@@ -1123,11 +1121,10 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(lmer_Laplace,       5),
     CALLDEF(lmer_opt1,          4),
 
-
-    CALLDEF(predD_setTheta,     2), // setters
-    CALLDEF(predD_setBeta0,     2),
-    CALLDEF(predD_setDelu,      2),
+    CALLDEF(predD_setBeta0,     2), // setters
     CALLDEF(predD_setDelb,      2),
+    CALLDEF(predD_setDelu,      2),
+    CALLDEF(predD_setTheta,     2),
 
     CALLDEF(predD_CcNumer,      1), // getters
     CALLDEF(predD_L,            1),
@@ -1149,12 +1146,10 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(predD_solveU,       1),
     CALLDEF(predD_sqrL,         2),
     CALLDEF(predD_u,            2),
-    CALLDEF(predD_updateDecomp, 2),
     CALLDEF(predD_updtL,        1),
-    CALLDEF(predD_updateLamtUt, 1),
     CALLDEF(predD_updtRX,       1),
-    CALLDEF(predD_updateRes,    2),
-    CALLDEF(predD_updateXwts,   2),
+    CALLDEF(predD_updtRes,      2),
+    CALLDEF(predD_updtXwts,     2),
 
     CALLDEF(NelderMead_Create,  5),
     CALLDEF(NelderMead_newf,    2),
