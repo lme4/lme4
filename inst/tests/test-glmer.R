@@ -6,11 +6,12 @@ testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL")))
 
 context("fitting glmer models")
 test_that("glmer", {
-if(FALSE){## Hadley broke this
-    expect_warning(glmer(z~ 1|f, family=binomial, method="abc"),"Use the nAGQ argument")
-    expect_warning(glmer(z~ 1|f, family=binomial, method="Laplace"),"Use the nAGQ argument")
-    expect_warning(glmer(z~ 1|f, sparseX=TRUE),"has no effect at present")
-}
+    set.seed(101)
+    d <- data.frame(z=rbinom(200,size=1,prob=0.5),
+                    f=factor(sample(1:10,200,replace=TRUE)))
+    expect_warning(glmer(z~ 1|f, d, family=binomial, method="abc"),"Use the nAGQ argument")
+    expect_warning(glmer(z~ 1|f, d, family=binomial, method="Laplace"),"Use the nAGQ argument")
+    expect_warning(glmer(z~ 1|f, d, sparseX=TRUE),"has no effect at present")
     expect_that(gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                              data = cbpp, family = binomial), is_a("glmerMod"))
     expect_that(gm1@resp,                               is_a("glmResp"))

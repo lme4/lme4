@@ -5,11 +5,13 @@ context("fitting lmer models")
 isNM <- formals(lmerControl)$optimizer == "Nelder_Mead"
 
 test_that("lmer", {
-if(FALSE){## Hadley broke this
-    expect_warning(lmer(z~ 1|f, method="abc"),"Use the REML argument")
-    expect_warning(lmer(z~ 1|f, method="Laplace"),"Use the REML argument")
-    expect_warning(lmer(z~ 1|f, sparseX=TRUE),"has no effect at present")
-}
+    set.seed(101)
+    d <- data.frame(z=rnorm(200),
+                    f=factor(sample(1:10,200,replace=TRUE)))
+
+    expect_warning(lmer(z~ 1|f, d, method="abc"),"Use the REML argument")
+    expect_warning(lmer(z~ 1|f, d, method="Laplace"),"Use the REML argument")
+    expect_warning(lmer(z~ 1|f, d, sparseX=TRUE),"has no effect at present")
     expect_is(fm1 <- lmer(Yield ~ 1|Batch, Dyestuff), "lmerMod")
     expect_is(fm1_noCD <- update(fm1,control=lmerControl(calc.derivs=FALSE)),
               "lmerMod")
