@@ -61,7 +61,6 @@ merPredD <-
             Lind    = "integer",
             X       = "matrix",
             Zt      = "dgCMatrix",
-            mu      = "numeric",
             theta   = "numeric",
                                         # derived objects
             LamtUt  = "dgCMatrix",
@@ -119,20 +118,20 @@ merPredD <-
             RX = function() .Call(predD_RX, as.environment(.self)),
             RXdiag = function() .Call(predD_RXdiag, as.environment(.self)),
             RXi = function() .Call(predD_RXi, as.environment(.self)),
-            b = function(f) .Call(predD_b, as.environment(.self), as.numeric(f)),
-            beta = function(f) .Call(predD_beta, as.environment(.self), as.numeric(f)),
-            installPars = function(f) .Call(predD_installPars,as.environment(.self), as.numeric(f)),
+            b = function(f=1) .Call(predD_b, as.environment(.self),as.numeric(f)),
+            beta = function(f=1) .Call(predD_beta, as.environment(.self),as.numeric(f)),
+            installPars = function(f=1) .Call(predD_installPars,as.environment(.self),as.numeric(f)),
             ldL2 = function() .Call(predD_ldL2, as.environment(.self)),
             ldRX2 = function() .Call(predD_ldRX2, as.environment(.self)),
-            linPred = function(f) .Call(predD_linPred, as.environment(.self),as.numeric(f)),
+            linPred = function(f=1) .Call(predD_linPred, as.environment(.self),as.numeric(f)),
             setBeta0 = function(beta0) .Call(predD_setBeta0, as.environment(.self),as.numeric(beta0)),
             setDelb = function(delb) .Call(predD_setDelb, as.environment(.self),as.numeric(delb)),
             setDelu = function(delu) .Call(predD_setDelu, as.environment(.self),as.numeric(delu)),
             setTheta = function(theta) .Call(predD_setTheta, as.environment(.self),as.numeric(theta)),
             solve = function() .Call(predD_solve, as.environment(.self)),
             solveU = function() .Call(predD_solveU, as.environment(.self)),
-            sqrL = function(f) .Call(predD_sqrL, as.environment(.self), as.numeric(f)),
-            u = function(f) .Call(predD_, as.environment(.self), as.numeric(f)),
+            sqrL = function(f=1) .Call(predD_sqrL, as.environment(.self), as.numeric(f)),
+            u = function(f=1) .Call(predD_, as.environment(.self), as.numeric(f)),
             unsc = function() .Call(predD_unsc, as.environment(.self)),
             updtL = function() .Call(predD_updtL, as.environment(.self)),
             updtRX = function() .Call(predD_updtRX, as.environment(.self)),
@@ -235,6 +234,7 @@ lmResp <-                               # base class for response modules
                     as.numeric(ll$offset) else numeric(n)
                 weights <<- if (!is.null(ll$weights))
                     as.numeric(ll$weights) else rep.int(1,n)
+                ldW <<- sum(log(weights))
                 sqrtXwt <<- if (!is.null(ll$sqrtXwt))
                     as.numeric(ll$sqrtXwt) else sqrt(weights)
                 sqrtrwt <<- if (!is.null(ll$sqrtrwt))
