@@ -36,6 +36,9 @@
   }
   \subsection{MINOR USER-VISIBLE CHANGES}{
     \itemize{
+      \item slight changes in convergence checking; tolerances can
+      be specified where appropriate, and some default tolerances
+      have changed (e.g., \code{check.conv.grad})
       \item improved warning messages about rank-deficiency in X and Z
       etc. (warnings now try to indicate whether the unidentifiability
       is in the fixed- or random-effects part of the model)
