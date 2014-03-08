@@ -224,11 +224,10 @@ lmResp <-                               # base class for response modules
                 data.frame(y=y, offset=offset, weights=weights, mu=mu,
                            rwt=sqrtrwt, wres=wtres, Xwt=sqrtXwt)
             },
-            initialize = function(...) {
+            initialize = function(y, ...) {
                 if (!nargs()) return()
                 ll <- list(...)
-                if (is.null(ll$y)) stop("y must be specified")
-                y <<- as.numeric(ll$y)
+                y <<- as.numeric(y)
                 n <- length(y)
                 mu <<- if (!is.null(ll$mu))
                     as.numeric(ll$mu) else numeric(n)
@@ -243,22 +242,10 @@ lmResp <-                               # base class for response modules
                 wtres   <<- sqrtrwt * (y - mu)
                 wrss    <<- sum(wtres^2)
             },
-            setOffset  = function(oo) {
-                'change the offset in the model (used in profiling)'
-                .Call(lm_setOffset, as.environment(.self), as.numeric(oo))
-            },
-            setResp    = function(rr) {
-                'change the response in the model, usually after a deep copy'
-                .Call(lm_setResp, as.environment(.self), as.numeric(rr))
-            },
-            setWeights = function(ww) {
-                'change the prior weights in the model, update sqrtrwt and ldW'
-                .Call(lm_setWeights, as.environment(.self), as.numeric(ww))
-            },
-            updateMu  = function(gamma) {
-                'update mu, wtres and wrss from the linear predictor'
-                .Call(lm_updateMu, as.environment(.self), as.numeric(gamma))
-            }
+            setOffset = function(oo).Call(lm_setOffset, as.environment(.self), as.numeric(oo)),
+            setResp = function(rr) .Call(lm_setResp, as.environment(.self), as.numeric(rr)),
+            setWeights = function(ww) .Call(lm_setWeights, as.environment(.self), as.numeric(ww)),
+            updateMu  = function(gamma) .Call(lm_updateMu, as.environment(.self), as.numeric(gamma))
             )
         )
 

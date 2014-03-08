@@ -616,8 +616,8 @@ extern "C" {
         END_RCPP;
     }
 
-    static double lmer_dev(Environment pred, Environment resp, const MVec& theta) {
-        int debug=0;
+    static double lmer_dev(Environment pred, Environment resp, const Vec& theta) {
+//        int debug=0;
         double val = 1.;
 /*
         ppt->setTheta(theta);
@@ -638,23 +638,21 @@ extern "C" {
         return val;
     }
 
-    SEXP lmer_Deviance(SEXP pptr_, SEXP rptr_, SEXP theta_) {
+    SEXP lmer_Deviance(SEXP rpr_, SEXP rrs_, SEXP theta_) {
         BEGIN_RCPP;
-        XPtr<lmerResp>   rpt(rptr_);
-        XPtr<merPredD>   ppt(pptr_);
-        return ::Rf_ScalarReal(lmer_dev(ppt, rpt, as<MVec>(theta_)));
+        return ::Rf_ScalarReal(lmer_dev(Environment(rpr_), Environment(rrs_), as<MVec>(theta_)));
         END_RCPP;
     }
 
-    SEXP lmer_opt1(SEXP pptr_, SEXP rptr_, SEXP lower_, SEXP upper_) {
+    SEXP lmer_opt1(SEXP rpr_, SEXP rrs_, SEXP lower_, SEXP upper_) {
         BEGIN_RCPP;
-        XPtr<lmerResp>     rpt(rptr_);
-        XPtr<merPredD>     ppt(pptr_);
-        Eigen::VectorXd     th(1);
+	Environment rpr(rpr_);
+	Environment rrs(rrs_);
+        Vec         th(1);
         optimizer::Golden gold(::Rf_asReal(lower_), ::Rf_asReal(upper_));
         for (int i = 0; i < 30; ++i) {
             th[0] = gold.xeval();
-            gold.newf(lmer_dev(ppt, rpt, th));
+            gold.newf(lmer_dev(rpr, rrs, th));
         }
         return List::create(Named("theta") = ::Rf_ScalarReal(gold.xpos()),
                             Named("objective") = ::Rf_ScalarReal(gold.value()));
