@@ -22,7 +22,7 @@ importFrom("lattice",
            panel.lines, panel.number, panel.points,
            panel.segments, panel.xyplot,
            prepanel.qqmathline, panel.qqmathline, panel.qqmath, qqmath,
-           splom, strip.default, trellis.par.get,
+           splom, strip.custom, strip.default, trellis.par.get,
            xyplot)
 importFrom("MASS", negative.binomial, theta.ml)
 importFrom("Matrix", drop0, rankMatrix, rBind, sparseMatrix)
