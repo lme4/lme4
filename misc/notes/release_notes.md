@@ -9,7 +9,7 @@
 
 As [previously announced on the lme4 mailing list][announce], we will shortly be releasing a new version of `lme4`, a descendant of the previous development version `lme4Eigen`. For users who do not access any internal structures, there will be few backward-incompatible changes. We uploaded version 1.0-4 to CRAN on 9 September 2013. We hope it will appear on CRAN shortly, but it will initially be posted *only for the development version of R*, to allow downstream package maintainers to upload forward-compatible versions of their packages before the package is released for R 3.0.1. 
 In the mean time we've learned that a new CRAN policy does not allow the `lme4.0` version of the package to be hosted on CRAN. Instead we will host it separately in order to provide reproducible research and data analysis of previous work,
-see [https://github.com/lme4/lme4/blob/master/README.md#installation-of-lme40](lme4's README) for installation.
+see [lme4's README](https://github.com/lme4/lme4/blob/master/README.md#installation-of-lme40) for installation.
 
 [announce]: https://stat.ethz.ch/pipermail/r-sig-mixed-models/2012q1/014811.html
 
