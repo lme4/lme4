@@ -1150,6 +1150,14 @@ dummy <- function(f, levelsToKeep){
 ##' @S3method nobs merMod
 nobs.merMod <- function(object, ...) nrow(object@frame)
 
+ngrps <- function(object, ...) UseMethod("ngrps")
+
+ngrps.default <- function(object, ...) stop("Cannot extract the number of groups from this object")
+
+ngrps.merMod <- function(object, ...) vapply(object@flist, nlevels, 1)
+
+ngrps.factor <- function(object, ...) nlevels(object)
+
 ##' @importFrom nlme ranef
 ##' @export ranef
 NULL
@@ -2415,7 +2423,7 @@ summary.merMod <- function(object,
                    isLmer=is(resp, "lmerResp"), useScale=useSc,
                    logLik=llAIC[["logLik"]],
                    family=famL$fami, link=famL$link,
-		   ngrps = vapply(object@flist, nlevels, 1),
+		   ngrps = ngrps(object),
 		   coefficients=coefs, sigma=sig,
 		   vcov=vcov(object, correlation=correlation, sigm=sig),
 		   varcor=varcor, # and use formatVC(.) for printing.
