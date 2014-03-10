@@ -558,8 +558,8 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
               c("conv","fval") %in% substr(names(opt),1,4), ## "conv[ergence]", "fval[ues]"
               is.list(reTrms), c("flist", "cnms", "Gp", "lower") %in% names(reTrms),
               length(rcl <- class(resp)) == 1)
-    n    <- nrow(pp$V)
-    p    <- ncol(pp$V)
+    n    <- length(resp$y)
+    p    <- ncol(pp$X)
     dims <- c(N=nrow(pp$X), n=n, p=p, nmp=n-p,
               nth=length(pp$theta), q=nrow(pp$Zt),
               nAGQ=rho$nAGQ,
@@ -580,7 +580,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
         sqrLenU <- wrss <- pwrss <- NA
     } else {
         sqrLenU <- pp$sqrL(fac)
-        wrss    <- resp$wrss()
+        wrss    <- resp$wrss
         pwrss   <- wrss + sqrLenU
     }
     weights <- resp$weights

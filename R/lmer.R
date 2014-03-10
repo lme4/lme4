@@ -488,7 +488,9 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
     ff <-
     if (is(rho$resp, "lmerResp")) {
 	rho$lmer_Deviance <- lmer_Deviance
-	function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))
+        rho$pp$updtRes(rho$resp$wtres)
+	function(theta) .Call(lmer_Deviance, as.environment(pp),
+                              as.environment(resp), as.double(theta))
     } else if (is(rho$resp, "glmResp")) {
         ## control values will override rho values *if present*
         if (!is.null(tp <- control$tolPwrss)) rho$tolPwrss <- tp

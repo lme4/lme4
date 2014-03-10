@@ -9,53 +9,52 @@
 #include "respModule.h"
 #include "optimizer.h"
 
-extern "C" {
-    typedef   Eigen::VectorXi                     iVec;
-    typedef   Eigen::Map<iVec>                   MiVec;
-    typedef   Eigen::MatrixXd                      Mat;
-    typedef   Eigen::Map<Mat>                     MMat;
-    typedef   Eigen::VectorXd                      Vec;
-    typedef   Eigen::Map<Vec>                     MVec;
-    typedef   Eigen::ArrayXd                       Ar1;
-    typedef   Eigen::Map<Ar1>                     MAr1;
-    typedef   Eigen::ArrayXXd                      Ar2;
-    typedef   Eigen::Map<Ar2>                     MAr2;
-    typedef   Eigen::MappedSparseMatrix<double> MSpMat;
-    typedef   Eigen::SparseMatrix<double>        SpMat;
-    typedef   Eigen::SimplicialLLT<SpMat>         SLLT;
-    typedef   Eigen::LLT<Mat>                      LLT;
+typedef   Eigen::VectorXi                     iVec;
+typedef   Eigen::Map<iVec>                   MiVec;
+typedef   Eigen::MatrixXd                      Mat;
+typedef   Eigen::Map<Mat>                     MMat;
+typedef   Eigen::VectorXd                      Vec;
+typedef   Eigen::Map<Vec>                     MVec;
+typedef   Eigen::ArrayXd                       Ar1;
+typedef   Eigen::Map<Ar1>                     MAr1;
+typedef   Eigen::ArrayXXd                      Ar2;
+typedef   Eigen::Map<Ar2>                     MAr2;
+typedef   Eigen::MappedSparseMatrix<double> MSpMat;
+typedef   Eigen::SparseMatrix<double>        SpMat;
+typedef   Eigen::SimplicialLLT<SpMat>         SLLT;
+typedef   Eigen::LLT<Mat>                      LLT;
 
-    using      Rcpp::CharacterVector;
-    using      Rcpp::Environment;
-    using      Rcpp::IntegerVector;
-    using      Rcpp::Language;
-    using      Rcpp::List;
-    using      Rcpp::Named;
-    using      Rcpp::NumericVector;
-    using      Rcpp::NumericMatrix;
-    using      Rcpp::Rcout;
-    using      Rcpp::XPtr;
-    using      Rcpp::as;
-    using      Rcpp::wrap;
+using      Rcpp::CharacterVector;
+using      Rcpp::Environment;
+using      Rcpp::IntegerVector;
+using      Rcpp::Language;
+using      Rcpp::List;
+using      Rcpp::Named;
+using      Rcpp::NumericVector;
+using      Rcpp::NumericMatrix;
+using      Rcpp::Rcout;
+using      Rcpp::XPtr;
+using      Rcpp::as;
+using      Rcpp::wrap;
 
-    using       glm::glmFamily;
+using       glm::glmFamily;
 
-    using      lme4::glmResp;
-    using      lme4::lmResp;
-    using      lme4::lmerResp;
-    using      lme4::merPredD;
-    using      lme4::nlsResp;
+using      lme4::glmResp;
+using      lme4::lmResp;
+using      lme4::lmerResp;
+using      lme4::merPredD;
+using      lme4::nlsResp;
 
-    using optimizer::Golden;
-    using optimizer::Nelder_Mead;
-    using optimizer::nm_status;
+using optimizer::Golden;
+using optimizer::Nelder_Mead;
+using optimizer::nm_status;
 
-    using      std::runtime_error;
-    using      std::invalid_argument;
-    using      std::endl;
+using      std::runtime_error;
+using      std::invalid_argument;
+using      std::endl;
 
-    // utilities
-
+				// utilities
+namespace internal {
     // check the sizes of mapped vectors and, if consistent, copy src to dest
     static inline void sized_copy(MVec& dest, const Vec& src) {
         int n = dest.size();
@@ -63,11 +62,15 @@ extern "C" {
         dest = src;
     }
 
-    static inline double internal_ldRX2(Environment rho) {
-	return 2.*Mat(XPtr<LLT>(rho.get("RXpt"))->matrixL()).diagonal().log().sum();
+    static inline double ldRX2(Environment rho) {
+	return 2.*Mat(XPtr<LLT>(rho.get("RXpt"))->matrixL()).diagonal().array().log().sum();
+    }
+
+    static inline double ldL2(Environment rho) {
+	return 2.*SpMat(XPtr<SLLT>(rho.get("Lptr"))->matrixL()).diagonal().array().log().sum();
     }
 				// update Lambdat, LambdatZt and L
-    static void internal_updtL(Environment rho) {
+    static void updtL(Environment rho) {
         const MSpMat  Zt(as<MSpMat>(rho.get("Zt")));
         MSpMat        Lambdat(as<MSpMat>(rho.get("Lambdat")));
         const MiVec   Lind(as<MiVec>(rho.get("Lind")));
@@ -83,7 +86,7 @@ extern "C" {
         XPtr<SLLT>(rho.get("Lptr"))->factorize(LamtUt * LamtUt.adjoint());
     }
 
-    static void internal_updtRX(Environment rho) {
+    static void updtRX(Environment rho) {
 	const MMat    UtV(as<MMat>(rho.get("UtV")));
         const MSpMat  Lambdat(as<MSpMat>(rho.get("Lambdat")));
         SLLT         *L(XPtr<SLLT>(rho.get("Lptr")));
@@ -94,14 +97,12 @@ extern "C" {
 					    RZX.adjoint() * RZX);
     }
 				// update the products with residuals
-    static void internal_updtRes(Environment pred, const Vec& wres) {
-// in-place update works for Vtr but not Utr, not sure why
+    static void updtRes(Environment pred, const Vec& wres) {
 	pred.assign("Utr", wrap(as<MSpMat>(pred.get("Zt")) * wres));
-	MVec        Vtr(as<MVec>(pred.get("Vtr")));
-	Vtr = as<MMat>(pred.get("X")).adjoint() * wres;
+	pred.assign("Vtr", wrap(as<MMat>(pred.get("X")).adjoint() * wres));
     }
 				// solve for both delu and delb
-    static void internal_predD_solve(Environment rho) {
+    static void predD_solve(Environment rho) {
 	const MSpMat  Lamt(as<MSpMat>(rho.get("Lambdat")));
 	const SLLT   *Lp(XPtr<SLLT>(rho.get("Lptr")));
 	const Vec     PLamtUtr(Lp->permutationP()*(Lamt*as<MVec>(rho.get("Utr"))));
@@ -112,32 +113,32 @@ extern "C" {
 						 RZX.adjoint() * cu);
 	MVec           delu(as<MVec>(rho.get("delu")));
 	delu = Lp->permutationPinv() * Lp->matrixU().solve(cu - RZX * delb);
-    }	
+    }
 				// install theta and update L
-    static void internal_setTheta(Environment rho, const Vec& th) {
+    static void setTheta(Environment rho, const Vec& th) {
 	MVec       theta(as<MVec>(rho.get("theta")));
-	sized_copy(theta,th);
-	internal_updtL(rho);
+	internal::sized_copy(theta,th);
+	updtL(rho);
     }
 				// extract the u vector for step factor fac
-    static inline Vec internal_uvec(Environment rho, double fac) {
+    static inline Vec uvec(Environment rho, double fac) {
         return as<Vec>(rho.get("u0")) += fac * as<MVec>(rho.get("delu"));
     }
 				// extract the b vector for step factor fac
-    static inline Vec internal_b(Environment rho, double fac) {
-	return as<MSpMat>(rho.get("Lambdat")).adjoint() * internal_uvec(rho, fac);
+    static inline Vec bvec(Environment rho, double fac) {
+	return as<MSpMat>(rho.get("Lambdat")).adjoint() * uvec(rho, fac);
     }
 				// extract the beta vector for step factor fac
-    static inline Vec internal_beta(Environment rho, double fac) {
+    static inline Vec beta(Environment rho, double fac) {
 	return as<Vec>(rho.get("beta0")) += fac * as<MVec>(rho.get("delb"));
     }
 				// extract the linear predictor for step factor fac
-    static inline Vec internal_linpred(Environment rho, double fac) {
-	return as<MMat>(rho.get("X")) * internal_beta(rho,fac) +
-	    as<MSpMat>(rho.get("Zt")).adjoint() * internal_b(rho,fac);
+    static inline Vec linpred(Environment rho, double fac) {
+	return as<MMat>(rho.get("X")) * beta(rho,fac) +
+	    as<MSpMat>(rho.get("Zt")).adjoint() * bvec(rho,fac);
     }
 
-    static double internal_lm_updtWrss(Environment rho) {
+    static double lm_updtWrss(Environment rho) {
         const MAr1  y(as<MAr1>(rho.get("y")));
         const MAr1  mu(as<MAr1>(rho.get("mu")));
         const MAr1  sqrtrwt(as<MAr1>(rho.get("sqrtrwt")));
@@ -147,7 +148,9 @@ extern "C" {
         rho.assign("wrss", ::Rf_ScalarReal(ans));
         return ans;
     }
-	
+}
+
+extern "C" {
     SEXP allPerm_int(SEXP v_) {
         BEGIN_RCPP;
         iVec     v(as<iVec>(v_));   // forces a copy
@@ -622,8 +625,8 @@ extern "C" {
         BEGIN_RCPP;
         Environment rho(rho_);
 	MVec        offset(as<MVec>(rho.get("offset")));
-	sized_copy(offset,as<MVec>(oo_));
-        return ::Rf_ScalarReal(internal_lm_updtWrss(rho));
+	internal::sized_copy(offset,as<MVec>(oo_));
+        return ::Rf_ScalarReal(internal::lm_updtWrss(rho));
         END_RCPP;
     }
 
@@ -631,8 +634,8 @@ extern "C" {
         BEGIN_RCPP;
         Environment rho(rho_);
 	MVec        y(as<MVec>(rho.get("y")));
-	sized_copy(y,as<MVec>(rr_));
-        return ::Rf_ScalarReal(internal_lm_updtWrss(rho));
+	internal::sized_copy(y,as<MVec>(rr_));
+        return ::Rf_ScalarReal(internal::lm_updtWrss(rho));
         END_RCPP;
     }
 
@@ -641,10 +644,10 @@ extern "C" {
         Environment rho(rho_);
 	MAr1        wts(as<MAr1>(wts_));
 	MVec        weights(as<MVec>(rho.get("weights")));
-	sized_copy(weights,wts.matrix());
+	internal::sized_copy(weights,wts.matrix());
         as<MAr1>(rho.get("sqrtrwt")) = wts.array().sqrt();
         rho.assign("ldW",wrap(wts.log().sum()));
-        return ::Rf_ScalarReal(internal_lm_updtWrss(rho));
+        return ::Rf_ScalarReal(internal::lm_updtWrss(rho));
         END_RCPP;
     }
 
@@ -652,8 +655,8 @@ extern "C" {
         BEGIN_RCPP;
         Environment  rho(rho_);
 	MVec         mu(as<MVec>(rho.get("mu")));
-	sized_copy(mu,as<MVec>(gam_));
-        return ::Rf_ScalarReal(internal_lm_updtWrss(rho));
+	internal::sized_copy(mu,as<MVec>(gam_));
+        return ::Rf_ScalarReal(internal::lm_updtWrss(rho));
         END_RCPP;
     }
 
@@ -685,17 +688,17 @@ extern "C" {
 	Environment pred(rpr_);
 	Environment resp(rrs_);
 	int         REML(::Rf_asInteger(resp.get("REML")));
-	internal_setTheta(pred, as<MVec>(theta_));
-	double      ldL2(log(XPtr<SLLT>(pred.get("Lptr"))->determinant()));
-	internal_updtRX(pred);
-	internal_predD_solve(pred);
+	internal::setTheta(pred, as<MVec>(theta_));
+	double      ldL2(internal::ldL2(pred));
+	internal::updtRX(pred);
+	internal::predD_solve(pred);
 	MVec        mu(as<MVec>(resp.get("mu")));
-	sized_copy(mu, internal_linpred(pred,1.));
-	double      wrss(internal_lm_updtWrss(resp));
+	internal::sized_copy(mu, internal::linpred(pred,1.));
+	double      wrss(internal::lm_updtWrss(resp));
 	double      fn(mu.size() - REML);
-	double      ssqu(internal_uvec(pred,1.).squaredNorm());
+	double      ssqu(internal::uvec(pred,1.).squaredNorm());
 	double      obj(ldL2 + fn * (1. + log(2. * M_PI * (wrss + ssqu)/fn)));
-	if (REML > 0) obj += internal_ldRX2(pred);
+	if (REML > 0) obj += internal::ldRX2(pred);
 	return ::Rf_ScalarReal(obj);
         END_RCPP;
     }
@@ -735,42 +738,40 @@ extern "C" {
 
     SEXP predD_updtL(SEXP rho_) {
         BEGIN_RCPP;
-	internal_updtL(Environment(rho_));
+	internal::updtL(Environment(rho_));
         END_RCPP;
     }
 
     SEXP predD_updtRX(SEXP rho_) {
         BEGIN_RCPP;
-        internal_updtRX(Environment(rho_));
+        internal::updtRX(Environment(rho_));
         END_RCPP;
     }
                                 // setters
     SEXP predD_setBeta0(SEXP rho_, SEXP b0_) {
         BEGIN_RCPP;
         MVec        beta0(as<MVec>(Environment(rho_).get("beta0")));
-        sized_copy(beta0, as<MVec>(b0_));
+        internal::sized_copy(beta0, as<MVec>(b0_));
         END_RCPP;
     }
 
     SEXP predD_setDelb(SEXP rho_, SEXP db_) {
         BEGIN_RCPP;
         MVec        delb(as<MVec>(Environment(rho_).get("delb")));
-        sized_copy(delb, as<MVec>(db_));
+        internal::sized_copy(delb, as<MVec>(db_));
         END_RCPP;
     }
 
     SEXP predD_setDelu(SEXP rho_, SEXP du_) {
         BEGIN_RCPP;
         MVec        delu(as<MVec>(Environment(rho_).get("delu")));
-        sized_copy(delu, as<MVec>(du_));
+        internal::sized_copy(delu, as<MVec>(du_));
         END_RCPP;
     }
 
     SEXP predD_setTheta(SEXP rho_, SEXP th_) {
         BEGIN_RCPP;
-        MVec        theta(as<MVec>(Environment(rho_).get("theta")));
-        sized_copy(theta, as<MVec>(th_));
-	return predD_updtL(rho_);
+	internal::setTheta(Environment(rho_),as<MVec>(th_));
         END_RCPP;
     }
                                 // getters
@@ -808,13 +809,13 @@ extern "C" {
 
     SEXP predD_ldL2(SEXP rho_) {
         BEGIN_RCPP;
-        return ::Rf_ScalarReal(log(XPtr<SLLT>(Environment(rho_).get("Lptr"))->determinant()));
+        return ::Rf_ScalarReal(internal::ldL2(Environment(rho_)));
         END_RCPP;
     }
 
     SEXP predD_ldRX2(SEXP rho_) {
         BEGIN_RCPP;
-	return ::Rf_ScalarReal(internal_ldRX2(Environment(rho_)));
+	return ::Rf_ScalarReal(internal::ldRX2(Environment(rho_)));
         END_RCPP;
     }
 
@@ -843,7 +844,7 @@ extern "C" {
 
     SEXP predD_solve(SEXP rho_) {
         BEGIN_RCPP;
-	internal_predD_solve(Environment(rho_));
+	internal::predD_solve(Environment(rho_));
         END_RCPP;
     }
 
@@ -856,15 +857,15 @@ extern "C" {
         END_RCPP;
     }
 
-    SEXP predD_b(SEXP rho_, SEXP fac_) {
+    SEXP predD_bvec(SEXP rho_, SEXP fac_) {
         BEGIN_RCPP;
-	return wrap(internal_b(Environment(rho_), ::Rf_asReal(fac_)));
+	return wrap(internal::bvec(Environment(rho_), ::Rf_asReal(fac_)));
         END_RCPP;
     }
 
     SEXP predD_beta(SEXP rho_, SEXP fac_) {
         BEGIN_RCPP;
-	return wrap(internal_beta(Environment(rho_), ::Rf_asReal(fac_)));
+	return wrap(internal::beta(Environment(rho_), ::Rf_asReal(fac_)));
         END_RCPP;
     }
 
@@ -885,25 +886,25 @@ extern "C" {
 
     SEXP predD_linPred(SEXP rho_, SEXP fac_) {
         BEGIN_RCPP;
-	return wrap(internal_linpred(Environment(rho_), ::Rf_asReal(fac_)));
+	return wrap(internal::linpred(Environment(rho_), ::Rf_asReal(fac_)));
         END_RCPP;
     }
 
     SEXP predD_sqrL(SEXP rho_, SEXP fac_) {
         BEGIN_RCPP;
-        return ::Rf_ScalarReal(internal_uvec(Environment(rho_),::Rf_asReal(fac_)).squaredNorm());
+        return ::Rf_ScalarReal(internal::uvec(Environment(rho_),::Rf_asReal(fac_)).squaredNorm());
         END_RCPP;
     }
 
-    SEXP predD_u(SEXP rho_, SEXP fac_) {
+    SEXP predD_uvec(SEXP rho_, SEXP fac_) {
         BEGIN_RCPP;
-        return wrap(internal_uvec(Environment(rho_),::Rf_asReal(fac_)));
+        return wrap(internal::uvec(Environment(rho_),::Rf_asReal(fac_)));
         END_RCPP;
     }
 
     SEXP predD_updtRes(SEXP rho_, SEXP wres_) {
         BEGIN_RCPP;
-	internal_updtRes(Environment(rho_), as<MVec>(wres_));
+	internal::updtRes(Environment(rho_), as<MVec>(wres_));
         END_RCPP;
     }
 
@@ -1138,7 +1139,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(predD_ldRX2,        1),
     CALLDEF(predD_unsc,         1),
 
-    CALLDEF(predD_b,            2), // methods
+    CALLDEF(predD_bvec,         2), // methods
     CALLDEF(predD_beta,         2),
     CALLDEF(predD_condVar,      2),
     CALLDEF(predD_linPred,      2),
@@ -1147,7 +1148,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(predD_solve,        1),
     CALLDEF(predD_solveU,       1),
     CALLDEF(predD_sqrL,         2),
-    CALLDEF(predD_u,            2),
+    CALLDEF(predD_uvec,         2),
     CALLDEF(predD_updtL,        1),
     CALLDEF(predD_updtRX,       1),
     CALLDEF(predD_updtRes,      2),
