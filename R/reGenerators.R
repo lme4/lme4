@@ -474,3 +474,74 @@ ar1d <- function(formula=~(.|1), order=1, init=c(1, .2), het=NULL, max.lag=NULL)
 # 	})
 # }
 
+
+
+#' @title Random effects with diagonal covariance
+#' 
+#' Specifies random effects without correlation, i.e., the covariance
+#' for the \eqn{q}-dim. random effect in each grouping level is 
+#' \eqn{\text{diag}(\vartheta^2_1, \dots, \vartheta^2_q))} if \code{iid==FALSE} or
+#' \eqn{\vartheta^2 I_q} if \code{iid==TRUE}.
+#' 
+#' @param formula a one sided formula specifying a random effect in
+#'     \code{lme4} notation, i.e. \code{~(<covariates> | <grouping>)}.
+#' @param iid enforce identical variances for each component of the random effects.
+#' @return a function creating a return object like \code{mkReTrm}
+template <- function(formula, iid=FALSE){
+	mkReTrmDiagonal <- local({
+		bar <- formula[[2]][[2]]
+		iid <- iid
+		function(fr){
+			ff <- getGrouping(bar, fr)
+			
+			nl <- length(levels(ff))
+			
+			#initialize transposed design
+			Ztl <- mkZt(ff, bar, fr)
+			Zt <- Ztl$Zt
+			nc <- Ztl$nc
+			cnms <- Ztl$cnms
+			rm(Ztl)
+			
+			#enforce identical variance for all effects?
+			if(iid){
+				ntheta <- 1 
+				# which theta goes where in Lambdat
+				Lind <- rep(1, times=nl*nc)
+			} else {
+				ntheta <- nc 
+				# which theta goes where in Lambdat
+				Lind <- rep(1:ntheta, times=nl)
+			}
+			
+			#initialize variances with  1
+			theta <- rep(1, ntheta)
+			
+			# initialize the upper triangular Cholesky factor for Cov(b)
+			Lambdat <- as(do.call(bdiag, replicate(nl, list(Diagonal(nc)))),
+						  "dgCMatrix")
+			
+			
+			# upper/lower limits:
+			upper <- rep(Inf, ntheta)
+			lower <- rep(0, ntheta)
+			
+			list(ff = ff, Zt = Zt, nl = nl, cnms = cnms,
+				 nb = nl*nc, #how many ranefs
+				 ntheta = ntheta, # how many var-cov. params
+				 nc = nc, #how many ranefs per level
+				 nlambda = nl*nc, #how many non-zeroes in Lambdat 
+				 Lambdat=Lambdat,
+				 theta = theta,
+				 Lind = Lind,
+				 updateLambdatx = local({
+				 	Lind <- Lind
+				 	function(theta) theta[Lind]
+				 }),
+				 upper = upper,
+				 lower = lower, 
+				 special = TRUE)
+		}
+	})
+	mkReTrmDiagonal
+}

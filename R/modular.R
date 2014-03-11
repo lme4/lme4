@@ -246,12 +246,12 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 	ignoreArgs <- c("start","verbose","devFunOnly","control", "reGenerators")
 	l... <- l...[!names(l...) %in% ignoreArgs]
 	do.call("checkArgs",c(list("lmer"),l...))
-	if (!is.null(list(...)[["family"]])) {
-		## lmer(...,family=...); warning issued within checkArgs
-		mc[[1]] <- quote(lme4::glFormula)
-		if (missing(control)) mc[["control"]] <- glmerControl()
-		return(eval(mc, parent.frame()))
-	}
+	## if (!is.null(list(...)[["family"]])) {
+	## 	## lmer(...,family=...); warning issued within checkArgs
+	## 	mc[[1]] <- quote(lme4::glFormula)
+	## 	if (missing(control)) mc[["control"]] <- glmerControl()
+	## 	return(eval(mc, parent.frame()))
+	## }
 	
 	
 	# if there are special terms... 
@@ -485,25 +485,40 @@ glFormula <- function(formula, data=NULL, family = gaussian,
                       contrasts = NULL, mustart, etastart,
                       control=glmerControl(), ...) {
     ## FIXME: does start= do anything? test & fix
-
+    
     control <- control$checkControl ## this is all we really need
     mf <- mc <- match.call()
-    ## extract family, call lmer for gaussian
-    if (is.character(family))
-        family <- get(family, mode = "function", envir = parent.frame(2))
-    if( is.function(family)) family <- family()
-    if (isTRUE(all.equal(family, gaussian()))) {
-        mc[[1]] <- quote(lme4::lFormula)
-        mc["family"] <- NULL            # to avoid an infinite loop
-        return(eval(mc, parent.frame()))
-    }
-    if (family$family %in% c("quasibinomial", "quasipoisson", "quasi"))
-        stop('"quasi" families cannot be used in glmer')
-
-    ignoreArgs <- c("start","verbose","devFunOnly","optimizer", "control", "nAGQ")
     l... <- list(...)
+
+    reGenerators <- l...$reGenerators
+    hasReGen <- !is.null(reGenerators)
+    
+    ## extract family, call lmer for gaussian
+    ## if (is.character(family))
+    ##     family <- get(family, mode = "function", envir = parent.frame(2))
+    ## if( is.function(family)) family <- family()
+    ## if (isTRUE(all.equal(family, gaussian()))) {
+    ##     mc[[1]] <- quote(lme4::lFormula)
+    ##     mc["family"] <- NULL            # to avoid an infinite loop
+    ##     return(eval(mc, parent.frame()))
+    ## }
+    ## if (family$family %in% c("quasibinomial", "quasipoisson", "quasi"))
+    ##     stop('"quasi" families cannot be used in glmer')
+
+    ignoreArgs <- c("start","verbose","devFunOnly","optimizer", "control", "nAGQ", "reGenerators")
+    
     l... <- l...[!names(l...) %in% ignoreArgs]
     do.call("checkArgs",c(list("glmer"),l...))
+
+                                        # if there are special terms...
+    if(hasReGen){
+                                        # ...save varnames so they show up in mf
+        reGenVars <- all.vars(reGenerators)
+                                        #rm special "." term for row indices
+        reGenVars <- reGenVars[reGenVars!="."]
+                                        # ...and initialize them
+        reGenerators <- sapply(attr(terms(reGenerators), "variables"), eval)[-1]
+    }
 
     cstr <- "check.formula.LHS"
     checkCtrlLevels(cstr,control[[cstr]])
@@ -517,6 +532,11 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     mf$drop.unused.levels <- TRUE
     mf[[1]] <- as.name("model.frame")
     fr.form <- subbars(formula) # substitute "|" by "+"
+    # also make sure reGenerator variables show up in mf
+    if(hasReGen && length(reGenVars)){
+        reGenFrml <- formula(paste(".~.+",paste(reGenVars, collapse="+")))
+        fr.form <- update(fr.form, reGenFrml)
+    }
     environment(fr.form) <- environment(formula)
     ## model.frame.default looks for these objects in the environment
     ## of the *formula* (see 'extras', which is anything passed in ...),
@@ -531,7 +551,12 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     attr(fr,"offset") <- mf$offset
     n <- nrow(fr)
     ## random effects and terms modules
-    reTrms <- mkReTrms(findbars(RHSForm(formula)), fr)
+    reTrms <- mkReTrms(findbars(RHSForm(formula)), fr, reGenerators)
+    if(any(!reTrms$special)) {
+        ## test only factors that occur in some 'non-special' terms
+        nonSpecial <- unique(names(reTrms$cnms)[!reTrms$special])
+        checkNlevels(reTrms$flist[nonSpecial], n=n, control)
+    }
     ## TODO: allow.n = !useSc {see FIXME below}
     checkNlevels(reTrms$ flist, n=n, control, allow.n=TRUE)
     #checkZdims(reTrms$Ztlist, n=n, control, allow.n=TRUE) # FIXME: flexLambda has no Ztlist in reTrms
