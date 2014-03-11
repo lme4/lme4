@@ -183,7 +183,7 @@ mkReTrm <- function(bar, fr) {
 	nl <- length(levels(ff))
 	
 	#initialize transposed design
-	Ztl <- lme4::mkZt(ff, bar, fr)
+	Ztl <- lme4::mkZt0(ff, bar, fr)
 	Zt <- Ztl$Zt
 	nc <- Ztl$nc
 	cnms <- Ztl$cnms
@@ -243,6 +243,14 @@ getGrouping <- function(bar, fr){
 	}	
 }
 
+##' @title Extract the grouping factor from a random effect specification
+##' @param bar the random effect specification as returned by \code{findbars}
+##' @param fr a \code{model.frame}
+##' @return a factor  
+getModelMatrix <- function(bar, fr){
+    model.matrix(eval(substitute(~ lhs, list(lhs=bar[[2]]))), fr)
+}    
+
 ##' @title Generate (transpose of) random effect design matrix
 ##' @param ff the grouping factor
 ##' @param bar the random effect specification as returned by \code{findbars}
@@ -250,7 +258,7 @@ getGrouping <- function(bar, fr){
 ##' @return a list with entries \code{Zt}, \code{nc} for the number of effects 
 ##'   per level of the grouping factor, and \code{cnms} giving the names of the
 ##'   different random effects.  
-mkZt <- function(ff, bar, fr){
+mkZt0 <- function(ff, bar, fr){
 	nl <- length(levels(ff))
 	
 	#design for covariates:

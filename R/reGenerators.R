@@ -92,7 +92,7 @@ cs <- function(formula, init=NULL, het=TRUE){
 				nl <- length(levels(ff))
 				
 				#initialize transposed design
-				Ztl <- mkZt(ff, bar, fr)
+				Ztl <- mkZt0(ff, bar, fr)
 				Zt <- Ztl$Zt
 				nc <- Ztl$nc
 				
@@ -193,7 +193,7 @@ cs <- function(formula, init=NULL, het=TRUE){
 				nl <- length(levels(ff))
 				
 				#initialize transposed design
-				Ztl <- mkZt(ff, bar, fr)
+				Ztl <- mkZt0(ff, bar, fr)
 				Zt <- Ztl$Zt
 				nc <- Ztl$nc
 				
@@ -325,7 +325,7 @@ ar1d <- function(formula=~(.|1), order=1, init=c(1, .2), het=NULL, max.lag=NULL)
 				#initialize transposed design
 				Zbar <- bar
 				Zbar[[2]] <- substitute( 0 + lhs, list(lhs=bar[[2]])  )
-				Ztl <- mkZt(ff, Zbar, Zfr)
+				Ztl <- mkZt0(ff, Zbar, Zfr)
 				Zt <- Ztl$Zt
 				nc <- Ztl$nc
 				cnms <- Ztl$cnms
@@ -409,7 +409,7 @@ ar1d <- function(formula=~(.|1), order=1, init=c(1, .2), het=NULL, max.lag=NULL)
 # 			stopifnot(all(levels(fr[[deparse(bar[[2]])]]) == colnames(C)))
 # 			
 # 		    bar[[2]] <- substitute( 0 + lhs, list(lhs=bar[[2]])  )
-# 			Ztl <- mkZt(ff, bar, fr)
+# 			Ztl <- mkZt0(ff, bar, fr)
 # 			Zt <- Ztl$Zt
 # 			nc <- Ztl$nc
 # 			cnms <- Ztl$cnms
@@ -487,17 +487,21 @@ ar1d <- function(formula=~(.|1), order=1, init=c(1, .2), het=NULL, max.lag=NULL)
 #'     \code{lme4} notation, i.e. \code{~(<covariates> | <grouping>)}.
 #' @param iid enforce identical variances for each component of the random effects.
 #' @return a function creating a return object like \code{mkReTrm}
-template <- function(formula, iid=FALSE){
-	mkReTrmDiagonal <- local({
-		bar <- formula[[2]][[2]]
-		iid <- iid
-		function(fr){
-			ff <- getGrouping(bar, fr)
-			
-			nl <- length(levels(ff))
+template <- function(formula, corr){
+    mkReTrmTemplate <- local({
+        bar <- formula[[2]][[2]]
+        corr <- corr
+        function(fr){
+            mm <- getModelMatrix(bar, fr)
+            grp <- getGrouping(bar, fr)
+            mkRanefStructuresCorr(corr, grp, mm)
+
+
+
+            nl <- length(levels(ff))
 			
 			#initialize transposed design
-			Ztl <- mkZt(ff, bar, fr)
+			Ztl <- mkZt0(ff, bar, fr)
 			Zt <- Ztl$Zt
 			nc <- Ztl$nc
 			cnms <- Ztl$cnms
