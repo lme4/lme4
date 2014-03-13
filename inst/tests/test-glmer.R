@@ -167,5 +167,11 @@ if(FALSE) { ## Hadley broke this
     expect_equal(suppressWarnings(sqrt(diag(vcov(gm3,use.hessian=FALSE)))),
                  c(0.3840921, 0.3768747), tolerance=1e-7)
     expect_equal(sd3, unname(coef(summary(gm3))[,"Std. Error"]))
-
+    ## test non-pos-def finite-difference Hessian ...
+    if (getRversion()>"3.0.0") {
+        ## saved fits are not safe with old R versions
+        L <- load(system.file("testdata","polytomous_vcov_ex.RData",
+                              package="lme4", mustWork=TRUE))
+    }
+    expect_warning(vcov(polytomous_vcov_ex),"falling back to var-cov")
 })

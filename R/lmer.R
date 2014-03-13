@@ -2164,9 +2164,9 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
         v
     }
 
-    if (!use.hessian) {
-        V <- sigm^2 * object@pp$unsc()
+    V <- sigm^2 * object@pp$unsc()
 
+    if (!use.hessian) {
         if (hess.avail) {
             ## if hessian is available, go ahead and check
             ## for similarity with the RX-based estimate
@@ -2180,13 +2180,23 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
                         "consider ",shQuote("use.hessian=TRUE"))
         }
     } else {
-        V <- calc.vcov.hess(h)
+        V.hess <- calc.vcov.hess(h)
+        e.hess <- eigen(V.hess,symmetric=TRUE,only.values=TRUE)$values
+        if (min(e.hess)<=0) {
+            warning("variance-covariance matrix computed ",
+                    "from finite-difference Hessian is\n",
+                    "not positive definite: falling back to ",
+                    "var-cov estimated from RX")
+        } else V <- V.hess
     }
 
+    ## FIXME: try to catch non-PD matrices
     rr <- tryCatch(as(V, "dpoMatrix"), error = function(e)e)
-    if (inherits(rr, "error"))
-	stop(gettextf("Computed variance-covariance matrix problem: %s",
-		      rr$message), domain=NA)
+    if (inherits(rr, "error")) {
+	warning(gettextf("Computed variance-covariance matrix problem: %s;\nreturning NA matrix",
+                         rr$message), domain=NA)
+        rr <- matrix(NA,nrow(V),ncol(V))
+    }
 
     nmsX <- colnames(object@pp$X)
     dimnames(rr) <- list(nmsX,nmsX)
