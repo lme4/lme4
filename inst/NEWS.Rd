@@ -3,6 +3,27 @@
 \name{NEWS}
 \title{lme4 News}
 \encoding{UTF-8}
+\section{CHANGES IN VERSION 1.1-5}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item made internal handling of \code{weights}/\code{offset}
+      arguments slightly more robust (Github #191)
+      \item handle non-positive-definite estimated fixed effect
+      variance-covariance matrices slightly more generally/robustly
+      (fall back on RX approximation, with a warning,
+      if finite-difference Hessian
+      is non-PD; return \code{NA} matrix if RX approximation is
+      also bad)
+    } 
+  }
+  \subsection{MINOR USER-VISIBLE CHANGES}{
+    \itemize{
+      \item Added output specifying when Gauss-Hermite quadrature
+      was used to fit the model, and specifying number of GHQ points
+      (Github #190)
+    }
+  }
+}
 \section{CHANGES IN VERSION 1.1-4}{
   \subsection{BUG FIXES}{
     \itemize{
