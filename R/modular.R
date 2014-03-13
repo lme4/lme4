@@ -296,7 +296,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     ## of the *formula* (see 'extras', which is anything passed in ...),
     ## so they have to be put there ...
     for (i in c("weights", "offset")) {
-        assign(i,get(i,parent.frame()),environment(fr.form))
+        if (!eval(bquote(missing(x=.(i)))))
+            assign(i,get(i,parent.frame()),environment(fr.form))
     }
     mf$formula <- fr.form
     fr <- eval(mf, parent.frame())
@@ -518,7 +519,8 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     ## of the *formula* (see 'extras', which is anything passed in ...),
     ## so they have to be put there ...
     for (i in c("weights", "offset")) {
-        assign(i,get(i,parent.frame()),environment(fr.form))
+        if (!eval(bquote(missing(x=.(i)))))
+            assign(i,get(i,parent.frame()),environment(fr.form))
     }
     mf$formula <- fr.form
     fr <- eval(mf, parent.frame())
