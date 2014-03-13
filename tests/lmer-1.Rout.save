@@ -1,7 +1,7 @@
 
-R Under development (unstable) (2014-01-29 r64898) -- "Unsuffered Consequences"
+R version 3.0.3 Patched (2014-03-06 r65176) -- "Warm Puppy"
 Copyright (C) 2014 The R Foundation for Statistical Computing
-Platform: x86_64-apple-darwin10.8.0 (64-bit)
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -37,9 +37,9 @@ Type 'q()' to quit R.
 > oldOpts <- options(digits=2)
 > (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 Linear mixed model fit by REML ['lmerMod']
-Formula: Reaction ~ Days + (Days | Subject) 
-   Data: sleepstudy 
-REML criterion at convergence: 1744 
+Formula: Reaction ~ Days + (Days | Subject)
+   Data: sleepstudy
+REML criterion at convergence: 1744
 Random effects:
  Groups   Name        Std.Dev. Corr
  Subject  (Intercept) 24.74        
@@ -50,9 +50,9 @@ Fixed Effects:
 (Intercept)         Days  
       251.4         10.5  
 > (fm1a <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, REML = FALSE))
-Linear mixed model fit by maximum likelihood ['lmerMod']
-Formula: Reaction ~ Days + (Days | Subject) 
-   Data: sleepstudy 
+Linear mixed model fit by maximum likelihood  ['lmerMod']
+Formula: Reaction ~ Days + (Days | Subject)
+   Data: sleepstudy
      AIC      BIC   logLik deviance df.resid 
     1764     1783     -876     1752      174 
 Random effects:
@@ -66,9 +66,9 @@ Fixed Effects:
       251.4         10.5  
 > (fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
 Linear mixed model fit by REML ['lmerMod']
-Formula: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject) 
-   Data: sleepstudy 
-REML criterion at convergence: 1744 
+Formula: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject)
+   Data: sleepstudy
+REML criterion at convergence: 1744
 Random effects:
  Groups    Name        Std.Dev.
  Subject   (Intercept) 25.05   
@@ -127,9 +127,9 @@ fm1  6 1764 1783   -876     1752  0.06      1        0.8
 > 
 > (fm3 <- lmer(Yield ~ 1|Batch, Dyestuff2))
 Linear mixed model fit by REML ['lmerMod']
-Formula: Yield ~ 1 | Batch 
-   Data: Dyestuff2 
-REML criterion at convergence: 162 
+Formula: Yield ~ 1 | Batch
+   Data: Dyestuff2
+REML criterion at convergence: 162
 Random effects:
  Groups   Name        Std.Dev.
  Batch    (Intercept) 0.00    
@@ -143,14 +143,14 @@ Fixed Effects:
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.4 0.005 0.4 
+Time elapsed:  0.44 0.007 0.45 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 Linear mixed model fit by REML ['lmerMod']
-Formula: Reaction ~ Days + (Days | Subject) 
-   Data: sleepstudy 
-REML criterion at convergence: 1744 
+Formula: Reaction ~ Days + (Days | Subject)
+   Data: sleepstudy
+REML criterion at convergence: 1744
 Random effects:
  Groups   Name        Std.Dev. Corr
  Subject  (Intercept) 24.74        
@@ -162,9 +162,9 @@ Fixed Effects:
       251.4         10.5  
 > (fm.1 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
 Linear mixed model fit by REML ['lmerMod']
-Formula: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject) 
-   Data: sleepstudy 
-REML criterion at convergence: 1744 
+Formula: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject)
+   Data: sleepstudy
+REML criterion at convergence: 1744
 Random effects:
  Groups    Name        Std.Dev.
  Subject   (Intercept) 25.05   
@@ -191,7 +191,7 @@ Warning messages:
 > options(oldOpts)  ## restore digits
 > 
 > showProc.time() #
-Time elapsed:  0.124 0.001 0.125 
+Time elapsed:  0.13 0 0.13 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -271,9 +271,9 @@ attr(,"class")
 > ## check show( <"summary.mer"> ):
 > (sf1 <- summary(fit.1)) # --> now looks as for fit.1
 Linear mixed model fit by REML ['lmerMod']
-Formula: y ~ 1 + (1 | group.id) 
+Formula: y ~ 1 + (1 | group.id)
 
-REML criterion at convergence: 73.4 
+REML criterion at convergence: 73.4
 
 Scaled residuals: 
     Min      1Q  Median      3Q     Max 
@@ -320,7 +320,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.278 0.004 0.284 
+Time elapsed:  0.304 0.002 0.316 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -380,9 +380,9 @@ Warning messages:
 +           , TRUE)
 > r2.
 Linear mixed model fit by REML ['lmerMod']
-Formula: y ~ 0 + lagoon + (1 | habitat) 
-   Data: dat 
-REML criterion at convergence: 709.7447 
+Formula: y ~ 0 + lagoon + (1 | habitat)
+   Data: dat
+REML criterion at convergence: 709.7447
 Random effects:
  Groups   Name        Std.Dev.
  habitat  (Intercept) 0.000   
@@ -440,7 +440,7 @@ lagoon1  lagoon2  lagoon3  lagoon4
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.174 0.002 0.176 
+Time elapsed:  0.288 0 0.289 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -461,7 +461,7 @@ Warning message:
 In Ops.factor(ff, x1) : + not meaningful for factors
 > 
 > showProc.time() #
-Time elapsed:  0.543 0.001 0.544 
+Time elapsed:  0.424 0.001 0.426 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -485,9 +485,9 @@ Time elapsed:  0.543 0.001 0.544
 > d$f[3:4] <- NA
 > lmer(y~(1|f),data=d)
 Linear mixed model fit by REML ['lmerMod']
-Formula: y ~ (1 | f) 
-   Data: d 
-REML criterion at convergence: 316.1615 
+Formula: y ~ (1 | f)
+   Data: d
+REML criterion at convergence: 316.1615
 Random effects:
  Groups   Name        Std.Dev.
  f        (Intercept) 18.395  
@@ -497,10 +497,10 @@ Fixed Effects:
 (Intercept)  
       30.68  
 > glmer(y~(1|f),data=d,family=poisson)
-Generalized linear mixed model fit by maximum likelihood ['glmerMod']
+Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) ['glmerMod']
  Family: poisson ( log )
-Formula: y ~ (1 | f) 
-   Data: d 
+Formula: y ~ (1 | f)
+   Data: d
       AIC       BIC    logLik  deviance  df.resid 
  354.3560  358.4421 -175.1780  350.3560        55 
 Random effects:
@@ -535,4 +535,4 @@ Fixed Effects:
 > 
 > proc.time()
    user  system elapsed 
-  4.001   0.078   4.072 
+  4.025   0.066   4.287 

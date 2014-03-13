@@ -33,7 +33,7 @@ test_that("lmer", {
     expect_that(REMLfun(0),                             equals(326.023232155879))
     expect_that(family(fm1),                            equals(gaussian()))
     expect_that(isREML(fm1ML <- refitML(fm1)),          equals(FALSE))
-    expect_that(deviance(fm1)[["REML"]],                equals(319.654276842342))
+    expect_that(deviance(fm1),                		equals(319.654276842342))
     expect_that(deviance(fm1ML),                        equals(327.327059881135))
     ##						"bobyqa":      49.51009984775
     expect_that(sigma(fm1),                             equals(49.5101272946856, tolerance=1e-6))

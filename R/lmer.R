@@ -1,113 +1,13 @@
 ## NB:  doc in ../man/*.Rd  ***not*** auto generated
 ## FIXME: need to document S3 methods better (can we pull from r-forge version?)
 
-##'
 ##' Fit a linear mixed model (LMM)
-##'
-##' @title Fit Linear Mixed-Effects Models
-##' @concept LMM
-##' @aliases lmer
-##' @param formula a two-sided linear formula object describing both the fixed-effects and
-##'    fixed-effects part of the model, with the response on the left of a
-##'    \code{~} operator and the terms, separated by \code{+} operators, on
-##'    the right.  Random-effects terms are distinguished by vertical bars
-##'    (\code{"|"}) separating expressions for design matrices from
-##'    grouping factors. Two vertical bars (\code{"||"}) can be used to specify
-##'    multiple uncorrelated random effects for the same grouping variable.
-##' @param data an optional data frame containing the variables named in
-##'    \code{formula}.  By default the variables are taken from the environment
-##'    from which \code{lmer} is called. While \code{data} is optional,
-##'    the package authors \emph{strongly} recommend its use,
-##'    especially when later applying methods such as
-##'    \code{update} and \code{drop1} to the fitted model
-##' (\emph{such methods are not guaranteed to work properly if \code{data} is omitted}).
-##' If \code{data} is omitted, variables will be taken from the environment
-##' of \code{formula} (if specified as a formula) or from the parent frame
-##' (if specified as a character vector).
-##' @param REML logical scalar - Should the estimates be chosen to optimize
-##'    the REML criterion (as opposed to the log-likelihood)?
-##' @param control a list (of correct class, resulting from
-##'    \code{\link{lmerControl}()} or \code{\link{glmerControl}()} respectively)
-##'    containing control parameters, including the nonlinear optimizer to be
-##'    used and parameters to be passed through to the nonlinear optimizer, see
-##'    the \code{*lmerControl} documentation for details.
-##' @param start a named list of starting values for the parameters in the
-##'    model.  For \code{lmer} this can be a numeric vector or a list with one
-##'    component named \code{"theta"}.
-##' @param verbose integer scalar.  If \code{> 0} verbose output is generated
-##'    during the optimization of the parameter estimates.  If \code{> 1} verbose
-##'    output is generated during the individual PIRLS steps.
-##' @param subset an optional expression indicating the subset of the rows of
-##'     \code{data} that should be used in the fit. This can be a logical
-##'     vector, or a numeric vector indicating which observation numbers are
-##'     to be included, or a  character  vector of the row names to be
-##'     included.  All observations are included by default.
-##' @param weights an optional vector of \sQuote{prior weights} to be used in the
-##'     fitting process.  Should be \code{NULL} or a numeric vector.
-##' @param na.action a function that indicates what should happen when the
-##'     data contain \code{NA}s.  The default action (\code{na.omit},
-##'     inherited from the 'factory fresh' value of \code{getOption("na.action")})
-##'     strips any observations with any missing values in any variables.
-##' @param offset this can be used to specify an \emph{a priori} known component
-##'     to be included in the linear predictor during fitting. This should be
-##'     \code{NULL} or a numeric vector of length equal to the number of cases.
-##'     One or more \code{\link{offset}} terms can be included in the formula
-##'     instead or as well, and if more than one is specified their sum is used.
-##'     See \code{\link{model.offset}}.
-##' @param contrasts an optional list. See the \code{contrasts.arg} of
-##'     \code{model.matrix.default}.
-##' @param devFunOnly logical - return only the deviance evaluation function. Note that
-##'    because the deviance function operates on variables stored in its environment,
-##'    it may not return \emph{exactly} the same values on subsequent calls (but the results should always be within machine tolerance).
-##' @param \dots other potential arguments.  A \code{method} argument was used
-##'    in earlier versions of the package. Its functionality has been replaced by
-##'    the \code{REML} argument.
-##' @return An object of class \code{merMod}, for which many
-##'    methods are available (e.g. \code{methods(class="merMod")})
-##' @seealso \code{\link[stats]{lm}}
-##' @keywords models
-##' @details
-##' \itemize{
-##' \item{If the \code{formula} argument is specified as a character vector,
-##' the function will attempt to coerce it to a formula. However, this is
-##' not recommended (users who want to construct formulas by pasting together
-##' components are advised to use \code{\link{as.formula}} or \code{\link{reformulate}}); model fits will
-##' work but subsequent methods such as \code{\link{drop1}}, \code{\link{update}}
-##' may fail.}
-##' \item{Unlike some simpler modeling frameworks such as \code{\link{lm}}
-##' and \code{\link{glm}} which automatically detect perfectly collinear
-##' predictor variables, \code{[gn]lmer} cannot handle design matrices of
-##' less than full rank.  For example, in cases of models with interactions
-##' that have unobserved combinations of levels, it is up to the user to
-##' define a new variable (for example creating
-##' \code{ab} within the data from the results of \code{interaction(a,b,drop=TRUE)}).
-##' }
-##' \item{the deviance function returned when \code{devFunOnly} is \code{TRUE}
-##' takes a single numeric vector argument, representing the \code{theta} vector.
-##' This vector defines the scaled variance-covariance matrices of the random effects,
-##' in the Cholesky parameterization.  For models with only simple (intercept-only) random effects,
-##' \code{theta} is a vector of the standard deviations of the random effects. For more
-##' complex or multiple random effects, running \code{getME(.,"theta")} to
-##' retrieve the \code{theta} vector for a fitted model and examining the
-##' names of the vector is probably the easiest way to determine the correspondence
-##' between the elements of the \code{theta} vector and elements of the lower
-##' triangles of the Cholesky factors of the random effects.}
-##' }
-##' @examples
-##' ## linear mixed models - reference values from older code
-##' (fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy))
-##' fm1_ML <- update(fm1,REML=FALSE)
-##' (fm2 <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy))
-##' anova(fm1, fm2)
-##' @export
-##' @importFrom minqa bobyqa
 lmer <- function(formula, data=NULL, REML = TRUE,
                  control = lmerControl(), start = NULL,
                  verbose = 0L, subset, weights, na.action, offset,
                  contrasts = NULL, devFunOnly=FALSE,
                  ...)
 {
-
     mc <- mcout <- match.call()
     missCtrl <- missing(control)
     ## see functions in modular.R for the body ...
@@ -157,107 +57,6 @@ lmer <- function(formula, data=NULL, REML = TRUE,
 
 
 ##' Fit a generalized linear mixed model (GLMM)
-##'
-##' Fit a generalized linear mixed model, which incorporates both fixed-effects
-##' parameters and random effects in a linear predictor, via maximum
-##' likelihood. The linear predictor is related to the conditional
-##' mean of the response through the inverse link function defined in
-##' the GLM \code{family}.
-##'
-##' The expression for the likelihood of a mixed-effects model is an integral over
-##' the random effects space. For a linear mixed-effects model (LMM), as fit by
-##' \code{\link{lmer}}, this integral can be evaluated exactly.  For a
-##' GLMM the integral must be approximated.  The most reliable
-##' approximation for GLMMs with a single grouping factor for the
-##' random effects is adaptive Gauss-Hermite quadrature.  The
-##' \code{nAGQ} argument controls the number of nodes in the
-##' quadrature formula.  A model with a single, scalar random-effects
-##' term could reasonably use up to 25 quadrature points per scalar
-##' integral.
-##'
-##' With vector-valued random effects the complexity of the
-##' Gauss-Hermite quadrature formulas increases dramatically with the
-##' dimension.  For a 3-dimensional vector-valued random effect
-##' \code{nAGQ=5} requires 93 evaluations of the GLM deviance per
-##' evaluation of the approximate GLMM deviance.  For 20-dimensional
-##  vector-valued random effects, \code{nAGQ=2} requires 41
-##' evaluations of the GLM deviance per evaluation of the approximate
-##' GLMM deviance.
-##'
-##' The default approximation is the Laplace approximation,
-##' corresponding to \code{nAGQ=1}.
-##'
-##' @title Fit Generalized Linear Mixed-Effects Models
-##' @concept GLMM
-##' @param family a GLM family, see \code{\link[stats]{glm}} and
-##'    \code{\link[stats]{family}}.
-##' @param nAGQ integer scalar - the number of points per axis for evaluating
-##'    the adaptive Gauss-Hermite approximation to the log-likelihood.
-##'    Defaults to 1, corresponding to the Laplace
-##'    approximation.  Values greater than 1 produce greater accuracy in
-##'    the evaluation of the log-likelihood at the expense of speed.  A value
-##'    of zero uses a faster but less exact form of parameter estimation for
-##'    GLMMs by optimizing the random effects and the fixed-effects coefficients
-##'    in the penalized iteratively reweighted least squares step.
-##' @param start a named list of starting values for the parameters in the
-##'    model, or a numeric vector. A numeric \code{start} argument
-##'    will be used as the starting value of \code{theta}.  If \code{start}
-##'    is a list, the \code{theta} element (a numeric vector) is used
-##'    as the starting value for the first optimization step (default=1
-##'    for diagonal elements and 0 for off-diagonal elements of the
-##'    lower Cholesky factor); the fitted value of \code{theta} from
-##'    the first step, plus \code{start[["fixef"]]},
-##'    are used as starting values for the second optimization step.
-##'    If \code{start} has both \code{fixef} and \code{theta}
-##'    elements, the first optimization step is skipped. For more details
-##'    or finer control of optimization, see \code{\link{modular}}.
-##' @param mustart optional starting values on the scale of the conditional mean,
-##'    as in \code{\link[stats]{glm}}; see there for details.
-##' @param etastart optional starting values on the scale of the unbounded
-##'    predictor as in \code{\link[stats]{glm}}; see there for details.
-##' @param \dots other potential arguments.  A \code{method} argument was used
-##'    in earlier versions of the package. Its functionality has been replaced by
-##'    the \code{nAGQ} argument.
-##' @inheritParams lmer
-##' @return An object of class \code{glmerMod}, for which many
-##'    methods are available (e.g. \code{methods(class="glmerMod")})
-##' @seealso \code{\link{lmer}} (for details on formulas and parameterization); \code{\link[stats]{glm}}
-##' @keywords models
-##' @examples
-##' ## generalized linear mixed model
-##' library(lattice)
-##' xyplot(incidence/size ~ period|herd, cbpp, type=c('g','p','l'),
-##'        layout=c(3,5), index.cond = function(x,y)max(y))
-##' (gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-##'               data = cbpp, family = binomial))
-##' ## using nAGQ=0 only gets close to the optimum
-##' (gm1a <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-##'                cbpp, binomial, nAGQ = 0))
-##' ## using  nAGQ = 9  provides a better evaluation of the deviance
-##' ## Currently the internal calculations use the sum of deviance residuals,
-##' ## which is not directly comparable with the nAGQ=0 or nAGQ=1 result.
-##' (gm1a <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-##'                cbpp, binomial, nAGQ = 9))
-##'
-##' ## GLMM with individual-level variability (accounting for overdispersion)
-##' ## For this data set the model is the same as one allowing for a period:herd
-##' ## interaction, which the plot indicates could be needed.
-##' cbpp$obs <- 1:nrow(cbpp)
-##' (gm2 <- glmer(cbind(incidence, size - incidence) ~ period +
-##'     (1 | herd) +  (1|obs),
-##'               family = binomial, data = cbpp))
-##' anova(gm1,gm2)
-##'
-##' ## glmer and glm log-likelihoods are consistent
-##' gm1Devfun <- update(gm1,devFunOnly=TRUE)
-##' gm0 <- glm(cbind(incidence, size - incidence) ~ period,
-##'            family = binomial, data = cbpp)
-##' ## evaluate GLMM deviance at RE variance=theta=0, beta=(GLM coeffs)
-##' gm1Dev0 <- gm1Devfun(c(0,coef(gm0)))
-##' ## compare
-##' stopifnot(all.equal(gm1Dev0,c(-2*logLik(gm0))))
-##'
-##' @export
 glmer <- function(formula, data=NULL, family = gaussian,
                   control = glmerControl(), start = NULL, verbose = 0L, nAGQ = 1L,
                   subset, weights, na.action, offset,
@@ -353,34 +152,6 @@ glmer <- function(formula, data=NULL, family = gaussian,
 }## {glmer}
 
 ##' Fit a nonlinear mixed-effects model
-##'
-##' Fit nonlinear mixed-effects models, such as those used in
-##' population pharmacokinetics.
-##' @title Fit Nonlinear Mixed-Effects Models
-##' @param formula a nonlinear mixed model formula (see detailed documentation)
-##' @param start starting estimates for the nonlinear model
-##'    parameters, as a named numeric vector or as a list with components
-##'    \describe{
-##'    \item{nlpars}{required numeric vector of starting values for the
-##'         nonlinear model parameters}
-##'    \item{theta}{optional numeric vector of starting values for the
-##'         covariance parameters}
-##'    }
-##' @param \dots other potential arguments.  A \code{method} argument was used
-##'    in earlier versions of the package. Its functionality has been replaced by
-##'    the \code{nAGQ} argument.
-##' @note Adaptive Gauss-Hermite quadrature (\code{nAGQ}>1) is not currently implemented for \code{nlmer}.
-##' @inheritParams glmer
-##' @keywords models
-##' @examples
-##' ## nonlinear mixed models --- 3-part formulas ---
-##'
-##' (nm1 <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~ Asym|Tree,
-##'              Orange, start = c(Asym = 200, xmid = 725, scal = 350)))
-##' (nm1a <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~ Asym|Tree,
-##'               Orange, start = c(Asym = 200, xmid = 725, scal = 350),
-##'               nAGQ = 0L))
-##' @export
 nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, verbose = 0L,
                   nAGQ = 1L, subset, weights, na.action, offset,
                   contrasts = NULL, devFunOnly = FALSE, ...)
@@ -441,39 +212,6 @@ if(getRversion() >= "3.1.0") utils::suppressForeignCheck("nlmerAGQ")
 if(getRversion() < "3.1.0") dontCheck <- identity
 
 ##' Create a deviance evaluation function from a predictor and a response module
-##'
-##' From an merMod object create an R function that takes a single argument,
-##' which is the new parameter value, and returns the deviance.
-##'
-##' The function returned by \code{mkdevfun} evaluates the deviance of the model
-##' represented by the predictor module, \code{pp}, and the response module,
-##' \code{resp}.
-##'
-##' For \code{\link{lmer}} model objects the argument of the resulting function
-##' is the variance component parameter, \code{theta}, with lower bound.  For
-##' \code{glmer} or \code{nlmer} model objects with \code{nAGQ = 0} the argument
-##' is also \code{theta}.  However, when nAGQ > 0 the argument is \code{c(theta,
-##' beta)}.
-##'
-##' @param rho an environment containing \code{pp}, a prediction module,
-##'     typically of class \code{\linkS4class{merPredD}} and \code{resp}, a response
-##'     module, e.g., of class \code{\linkS4class{lmerResp}}.
-##' @param nAGQ scalar integer - the number of adaptive Gauss-Hermite quadrature
-##'     points.  A value of 0 indicates that both the fixed-effects parameters
-##'     and the random effects are optimized by the iteratively reweighted least
-##'     squares algorithm.
-##' @param verbose Logical: print verbose output?
-##' @param control list of control parameters, a subset of those specified
-##'   by \code{\link{lmerControl}} (\code{tolPwrss} and \code{compDev} for GLMMs,
-##' \code{tolPwrss} for NLMMs)
-##' @return A function of one numeric argument.
-##' @seealso \code{\link{lmer}}, \code{\link{glmer}} and \code{\link{nlmer}}
-##' @keywords models
-##' @examples
-##'
-##' (dd <- lmer(Yield ~ 1|Batch, Dyestuff, devFunOnly=TRUE))
-##' dd(0.8)
-##' minqa::bobyqa(1, dd, 0)
 mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
     ## FIXME: should nAGQ be automatically embedded in rho?
     stopifnot(is.environment(rho), is(rho$resp, "lmResp"))
@@ -740,10 +478,10 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
     }
     else { ## ------ single model ---------------------
 	dc <- getME(object, "devcomp")
-	# p <- dc$dims["p"] # redundant
+	# p <- dc$dims[["p"]] # redundant
         X <- getME(object, "X")
 	asgn <- attr(X, "assign")
-	stopifnot(length(asgn) == (p <- dc$dims["p"]))
+	stopifnot(length(asgn) == (p <- dc$dims[["p"]]))
 	ss <- as.vector(object@pp$RX() %*% object@beta)^2
 	names(ss) <- colnames(X)
 	terms <- terms(object)
@@ -782,7 +520,7 @@ as.function.merMod <- function(x, ...) {
                            beta0=x@beta,
                            u0=x@u), parent=as.environment("package:lme4"))
     ## FIXME: extract verbose and control
-    mkdevfun(rho, getME(x, "devcomp")$dims["nAGQ"])
+    mkdevfun(rho, getME(x, "devcomp")$dims[["nAGQ"]])
 }
 
 ## coef() method for all kinds of "mer", "*merMod", ... objects
@@ -833,22 +571,22 @@ deviance.merMod <- function(object, REML = NULL, ...) {
         REML <- isREML(object)
     if (REML) {
         if (isREML(object)) {
-            cmp["REML"]
+            cmp[["REML"]]
         } else {
             ## adjust ML results to REML
-            lnum <- log(2*pi*(cmp["pwrss"]))
-            n <- object@devcomp$dims["n"]
-            nmp <- n-length(object@beta)
-            unname(cmp["ldL2"]+cmp["ldRX2"]+nmp*(1.+lnum-log(nmp)))
+	    lnum <- log(2*pi*cmp[["pwrss"]])
+	    n <- object@devcomp$dims[["n"]]
+	    nmp <- n - length(object@beta)
+	    cmp[["ldL2"]] + cmp[["ldRX2"]] + nmp*(1 + lnum - log(nmp))
         }
     } else {
         if (!isREML(object)) {
             cmp[["dev"]]
         } else {
             ## adjust REML results to ML
-            n <- object@devcomp$dims["n"]
-            lnum <- log(2*pi*(cmp["pwrss"]))
-            unname(cmp["ldL2"]+n*(1+lnum-log(n)))
+            n <- object@devcomp$dims[["n"]]
+            lnum <- log(2*pi*cmp[["pwrss"]])
+            cmp[["ldL2"]] + n*(1 + lnum - log(n))
         }
     }
 }
@@ -1043,7 +781,7 @@ formula.merMod <- function(x, fixed.only=FALSE, ...) {
 }
 
 ##' @S3method isREML merMod
-isREML.merMod <- function(x, ...) as.logical(x@devcomp$dims["REML"])
+isREML.merMod <- function(x, ...) as.logical(x@devcomp$dims[["REML"]])
 
 ##' @S3method isGLMM merMod
 isGLMM.merMod <- function(x,...) {
@@ -1365,16 +1103,16 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
 
     pp        <- object@pp$copy()
     dc        <- object@devcomp
-    nAGQ      <- dc$dims["nAGQ"]
-    nth       <- dc$dims["nth"]
+    nAGQ      <- dc$dims["nAGQ"] # possibly NA
+    nth       <- dc$dims[["nth"]]
     verbose   <- list(...)$verbose
     if (is.null(verbose)) verbose <- 0L
     devlist <- list(pp=pp, resp=rr, u0=pp$u0, verbose=verbose, dpars=seq_len(nth))
     if (isGLMM(object)) {
         baseOffset <- object@resp$offset
-        devlist <- c(list(tolPwrss=unname(dc$cmp["tolPwrss"]),
-                          compDev=unname(dc$dims["compDev"]),
-                          nAGQ=unname(nAGQ),
+        devlist <- c(list(tolPwrss= dc$cmp [["tolPwrss"]],
+                          compDev = dc$dims[["compDev"]],
+			  nAGQ = unname(nAGQ),
                           lp0=object@resp$eta - baseOffset,
                           baseOffset=baseOffset,
                           pwrssUpdate=glmerPwrssUpdate,
@@ -1383,7 +1121,7 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
                           fac=object@flist[[1]]),
                      devlist)
     }
-    ff <- mkdevfun(list2env(devlist),nAGQ=nAGQ, verbose)
+    ff <- mkdevfun(list2env(devlist), nAGQ=nAGQ, verbose)
     xst       <- rep.int(0.1, nth)
     x0        <- pp$theta
     lower     <- object@lower
@@ -1615,7 +1353,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE, ...) {
               if(is.language(family)) family <- eval(family)
 	      if(is.null(family$family)) stop("'family' not recognized")
 	      musim <- family$linkinv(etasim)
-	      ntot <- length(musim) ## FIXME: or could be dims["n"]?
+	      ntot <- length(musim) ## FIXME: or could be dims[["n"]]?
               ## FIXME: is it possible to leverage family$simulate ... ???
               val <- switch(family$family,
 			    poisson=rpois(ntot,lambda=musim),
@@ -1695,17 +1433,46 @@ update.merMod <- function(object, formula., ..., evaluate = TRUE) {
 
 ###----- Printing etc ----------------------------
 
-methTitle <- function(object, dims = object@devcomp$dims)
-    paste(switch(1L + dims[["GLMM"]] * 2L + dims[["NLMM"]],
-                 "Linear", "Nonlinear",
-                 "Generalized linear", "Generalized nonlinear"),
-          "mixed model fit by",
-          if(isREML(object)) "REML" else "maximum likelihood")
+## lme4.0, for GLMM had
+## 'Generalized linear mixed model fit by the Laplace approximation'
+## 'Generalized linear mixed model fit by the adaptive Gaussian Hermite approximation'
+## so did *not* mention  "maximum likelihood" at all in the GLMM case
+
+methTitle <- function(object, dims = object@devcomp$dims) {
+    GLMM <- dims[["GLMM"]]
+    kind <- switch(1L + GLMM * 2L + dims[["NLMM"]],
+		   "Linear", "Nonlinear",
+		   "Generalized linear", "Generalized nonlinear")
+    paste(kind, "mixed model fit by",
+	  if(isREML(object)) "REML"
+	  else paste("maximum likelihood",
+		     if(GLMM) {
+			 if((nAGQ <- dims[["nAGQ"]]) == 1)
+			     "(Laplace Approximation)"
+			 else
+			     sprintf("(Adaptive Gauss-Hermite Quadrature, nAGQ = %d)",
+				     nAGQ)
+			 }))
+}
+
+cat.f <- function(...) cat(..., fill = TRUE)
 
 famlink <- function(object, resp = object@resp) {
     if(is(resp, "glmResp"))
 	resp$family[c("family", "link")]
     else list(family = NULL, link = NULL)
+}
+
+##' @title print method title
+##' @param mtit the result of methTitle(obj)
+##' @param class typically class(obj)
+.prt.methTit <- function(mtit, class) {
+    if(nchar(mtit) + 5 + nchar(class) > (w <- getOption("width"))) {
+	## wrap around
+	mtit <- strwrap(mtit, width = w - 2, exdent = 2)
+	cat(mtit, " [",class,"]", sep="", fill = TRUE)
+    } else ## previous: simple one-liner
+	cat(sprintf("%s ['%s']\n", mtit, class))
 }
 
 .prt.family <- function(famL) {
@@ -1726,19 +1493,19 @@ famlink <- function(object, resp = object@resp) {
 
 .prt.call <- function(call, long=TRUE) {
     if (!is.null(cc <- call$formula))
-	cat("Formula:", deparse(cc),"\n")
+	cat.f("Formula:", deparse(cc))
     if (!is.null(cc <- call$data))
-	cat("   Data:", deparse(cc), "\n")
+	cat.f("   Data:", deparse(cc))
     if (!is.null(cc <- call$weights))
-        cat("Weights:", deparse(cc), "\n")
+        cat.f("Weights:", deparse(cc))
     if (!is.null(cc <- call$offset))
-        cat(" Offset:", deparse(cc), "\n")
+        cat.f(" Offset:", deparse(cc))
     if (long && length(cc <- call$control) &&
 	!identical((dc <- deparse(cc)), "lmerControl()"))
 	## && !identical(eval(cc), lmerControl()))
-	cat("Control:", dc, "\n")
+	cat.f("Control:", dc)
     if (!is.null(cc <- call$subset))
-	cat(" Subset:", deparse(asOneSidedFormula(cc)[[2]]),"\n")
+	cat.f(" Subset:", deparse(asOneSidedFormula(cc)[[2]]))
 }
 
 getLlikAIC <- function(object, cmp = object@devcomp$cmp) {
@@ -1757,7 +1524,7 @@ getLlikAIC <- function(object, cmp = object@devcomp$cmp) {
 .prt.aictab <- function(aictab, digits=1) {
     t.4 <- round(aictab, digits)
     if (length(aictab) == 1 && names(aictab) == "REML")
-	cat("REML criterion at convergence:", t.4, "\n")
+	cat.f("REML criterion at convergence:", t.4)
     else {
         ## slight hack to get residual df formatted as an integer
         t.4F <- format(t.4)
@@ -1792,7 +1559,7 @@ print.summary.merMod <- function(x, digits = max(3, getOption("digits") - 3),
                                  ranef.comp = c("Variance", "Std.Dev."),
                                  show.resids = TRUE, ...)
 {
-    cat(sprintf("%s ['%s']\n",x$methTitle, x$objClass))
+    .prt.methTit(x$methTitle, x$objClass)
     .prt.family(x)
     .prt.call(x$call); cat("\n")
     .prt.aictab(x$AICtab); cat("\n")
@@ -1860,10 +1627,8 @@ print.merMod <- function(x, digits = max(3, getOption("digits") - 3),
 			 ranef.comp = "Std.Dev.", ...)
 {
     dims <- (devC <- x@devcomp)$dims
-    methTit <- methTitle(x, dims=dims)
-    cat(sprintf("%s ['%s']\n",methTit, class(x)))
-    famL <- famlink(x, resp = x@resp)
-    .prt.family(famL)
+    .prt.methTit(methTitle(x, dims=dims), class(x))
+    .prt.family(famlink(x, resp = x@resp))
     .prt.call(x@call, long=FALSE)
     useScale <- as.logical(dims[["useSc"]])
 
@@ -1885,16 +1650,6 @@ print.merMod <- function(x, digits = max(3, getOption("digits") - 3),
 setMethod("show",  "merMod", function(object) print.merMod(object))
 
 ##' Return the deviance component list
-##'
-##' A fitted model of class \code{\linkS4class{merMod}} has a \code{devcomp}
-##' slot as described in the value section.
-##' @title Extract the deviance component list
-##' @param x a fitted model of class \code{\linkS4class{merMod}}
-##' @return a list with components
-##' \item{dims}{a named integer vector of various dimensions}
-##' \item{cmp}{a named numeric vector of components of the deviance}
-##' @export
-##' @note This function is deprecated, use \code{getME(., "devcomp")}
 devcomp <- function(x) {
     .Deprecated("getME(., \"devcomp\")")
     stopifnot(is(x, "merMod"))
@@ -1914,7 +1669,6 @@ setMethod("getL", "merMod", function(x) {
 ##' @param old (logical) give backward-compatible results?
 ##' @param prefix a character vector with two elements giving the prefix
 ##' for diagonal (e.g. "sd") and off-diagonal (e.g. "cor") elements
-##' ## @export
 tnames <- function(object,diag.only=FALSE,old=TRUE,prefix=NULL) {
     if (old) {
         nc <- c(unlist(mapply(function(g,e) {
@@ -1939,97 +1693,8 @@ tnames <- function(object,diag.only=FALSE,old=TRUE,prefix=NULL) {
     }
 }
 
+## -> ../man/getME.Rd
 ##' Extract or Get Generalize Components from a Fitted Mixed Effects Model
-##'
-##' Extract (or \dQuote{get}) \dQuote{components} -- in a generalized sense --
-##' from a fitted mixed-effects model, i.e. (in this version of the package)
-##' from an object of class \code{"\linkS4class{merMod}"}.
-##'
-##' The goal is to provide \dQuote{everything a user may want} from a fitted
-##' \code{"merMod"} object \emph{as far} as it is not available by methods, such
-##' as \code{\link{fixef}}, \code{\link{ranef}}, \code{\link{vcov}}, etc.
-##'
-##' @aliases getME getL getL,merMod-method
-##' @param object a fitted mixed-effects model of class
-##' \code{"\linkS4class{merMod}"}, i.e. typically the result of
-##' \code{\link{lmer}()}, \code{\link{glmer}()} or \code{\link{nlmer}()}.
-##' @param name a character vector specifying the name(s) of the
-##' \dQuote{component}. If \code{length(name)}>1, a named list of
-##' components will be returned. Possible values are:\cr
-##' \describe{
-##'     \item{X}{fixed-effects model matrix}
-##'     \item{Z}{random-effects model matrix}
-##'     \item{Zt}{transpose of random-effects model matrix.  Note that
-##'              the structure of \code{Zt} has changed since \code{lme4.0};
-##'              to get a backward-compatible structure, use
-##'              \code{do.call(Matrix::rBind,getME(.,"Ztlist"))}}
-##'     \item{Ztlist}{list of components of the transpose of the random-effects model matrix,
-##'              separated by individual variance component}
-##'     \item{y}{response vector}
-##'     \item{mu}{conditional mean of the response}
-##'     \item{u}{conditional mode of the \dQuote{spherical} random effects variable}
-##'     \item{b}{conditional mode of the random effects variable}
-##'     \item{Gp}{groups pointer vector.  A pointer to the beginning
-##'               of each group of random effects corresponding to the
-##'               random-effects terms, beginning with 0 and including
-##'               a final element giving the total number of random effects}
-##'     \item{Tp}{theta pointer vector.  A pointer to the beginning
-##'               of the theta sub-vectors corresponding to the
-##'               random-effects terms, beginning with 0 and including
-##'               a final element giving the total number of random effects}
-##'     \item{L}{sparse Cholesky factor of the penalized random-effects model.}
-##'     \item{Lambda}{relative covariance factor of the random effects.}
-##'     \item{Lambdat}{transpose of the relative covariance factor of the random effects.}
-##'     \item{Lind}{index vector for inserting elements of \eqn{\theta}{theta} into the
-##'                 nonzeros of \eqn{\Lambda}{Lambda}}
-##'     \item{A}{Scaled sparse model matrix (class
-##'      \code{"\link[Matrix:dgCMatrix-class]{dgCMatrix}"}) for
-##'      the unit, orthogonal random effects, \eqn{U},
-##'       equal to \code{getME(.,"Zt") \%*\% getME(.,"Lambdat")}}
-##'     \item{RX}{Cholesky factor for the fixed-effects parameters}
-##'     \item{RZX}{cross-term in the full Cholesky factor}
-##'     \item{sigma}{residual standard error}
-##'     \item{flist}{a list of the grouping variables (factors) involved in the random effect terms}
-##'     \item{beta}{fixed-effects parameter estimates (identical to the result of \code{\link{fixef}}, but without names)}
-##'     \item{theta}{random-effects parameter estimates: these are parameterized as the relative Cholesky factors of each random effect term}
-##'     \item{ST}{a list of matrices giving the relative Cholesky factors for each random effect term}
-##'     \item{n_rtrms}{number of random-effects terms}
-##'     \item{n_rfacs}{number of distinct random-effects grouping factors}
-##'     \item{REML}{restricted maximum likelihood}
-##'     \item{is_REML}{same as the result of \code{\link{isREML}}}
-##'     \item{devcomp}{a list consisting of a named numeric vector, \dQuote{cmp}, and
-##'                    a named integer vector, \dQuote{dims}, describing the fitted model}
-##'     \item{offset}{model offset}
-##'     \item{lower}{lower bounds on model parameters (random effects parameters only)}
-##' }
-##' @return Unspecified, as very much depending on the \code{\link{name}}.
-##' @seealso \code{\link{getCall}()},
-##' More standard methods for mer objects, such as \code{\link{ranef}},
-##' \code{\link{fixef}}, \code{\link{vcov}}, etc.:
-##' see \code{methods(class="merMod")}
-##' @keywords utilities
-##' @examples
-##'
-##' ## shows many methods you should consider *before* using getME():
-##' methods(class = "merMod")
-##'
-##' (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
-##' Z <- getME(fm1, "Z")
-##' stopifnot(is(Z, "CsparseMatrix"),
-##'           c(180,36) == dim(Z),
-##' 	  all.equal(fixef(fm1), getME(fm1, "beta"),
-##' 		    check.attr=FALSE, tol = 0))
-##'
-##' ## All that can be accessed [potentially ..]:
-##' (nmME <- eval(formals(getME)$name))
-##' \dontshow{
-##' ## internal consistency check ensuring that all work:
-##' ## "try(.)" because some are not yet implemented:
-##' str(parts <- sapply(nmME, function(nm) try(getME(fm1, nm)),
-##'                     simplify=FALSE))
-##' }% dont..
-##'
-##' @export
 getME <- function(object,
 		  name = c("X", "Z","Zt", "Ztlist",
                   "y", "mu", "u", "b",
@@ -2097,7 +1762,7 @@ getME <- function(object,
            "ST"= setNames(vec2STlist(object@theta,
                                     n=sapply(cnms,length)),
                          names(cnms)),
-	   "REML" = dims["REML"],
+	   "REML" = dims[["REML"]],
 	   "is_REML" = isREML(object),
            ## number of random-effects terms
 	   "n_rtrms" = length(cnms),
@@ -2122,18 +1787,6 @@ NULL
 
 ## Extract the conditional variance-covariance matrix of the fixed-effects
 ## parameters
-##
-## @title Extract conditional covariance matrix of fixed effects
-## @param sigma numeric scalar, the residual standard error
-## @param unsc matrix of class \code{"\linkS4class{dpoMatrix}"}, the
-##     unscaled variance-covariance matrix
-## @param nmsX character vector of column names of the model matrix
-## @param correlation logical scalar, should the correlation matrix
-##     also be evaluated.
-## @param ... additional, optional parameters.  None are used at present.
-
-##' @importFrom stats vcov
-##' @S3method vcov merMod
 vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
                         use.hessian = NULL, ...)
 {
@@ -2259,37 +1912,6 @@ mkVarCorr <- function(sc, cnms, nc, theta, nms) {
 
 ##' Extract variance and correlation components
 ##'
-##' This function calculates the estimated variances, standard deviations, and
-##' correlations between the random-effects terms in a mixed-effects model, of
-##' class \code{\linkS4class{merMod}} (linear, generalized or nonlinear).  The
-##' within-group error variance and standard deviation are also calculated.
-##'
-##' @name VarCorr
-##' @aliases VarCorr VarCorr.merMod
-##' @param x a fitted model object, usually an object inheriting from class
-##' \code{\linkS4class{merMod}}.
-##' @param sigma an optional numeric value used as a multiplier for the standard
-##' deviations.  Default is \code{1}.
-##' @param rdig an optional integer value specifying the number of digits used
-##' to represent correlation estimates.  Default is \code{3}.
-##' @return a list of matrices, one for each random effects grouping term.
-##' For each grouping term, the standard deviations and correlation matrices for each grouping term
-##' are stored as attributes \code{"stddev"} and \code{"correlation"}, respectively, of the
-##' variance-covariance matrix, and
-##' the residual standard deviation is stored as attribute \code{"sc"}
-##' (for \code{glmer} fits, this attribute stores the scale parameter of the model).
-##' @author This is modeled after \code{\link[nlme]{VarCorr}} from package
-##' \pkg{nlme}, by Jose Pinheiro and Douglas Bates.
-##' @seealso \code{\link{lmer}}, \code{\link{nlmer}}
-##' @examples
-##' data(Orthodont, package="nlme")
-##' fm1 <- lmer(distance ~ age + (age|Subject), data = Orthodont)
-##' VarCorr(fm1)
-##' @keywords models
-##' @importFrom nlme VarCorr
-##' @export VarCorr
-##' @method VarCorr merMod
-##' @export
 VarCorr.merMod <- function(x, sigma=1, rdig=3)# <- 3 args from nlme
 {
   ## FIXME:: would like to fix nlme to add ...
@@ -2301,7 +1923,7 @@ VarCorr.merMod <- function(x, sigma=1, rdig=3)# <- 3 args from nlme
     nc <- vapply(cnms, length, 1L) # no. of columns per term
     structure(mkVarCorr(sigma, cnms=cnms, nc=nc, theta = x@theta,
 			nms = {fl <- x@flist; names(fl)[attr(fl, "assign")]}),
-	      useSc = as.logical(x@devcomp$dims["useSc"]),
+	      useSc = as.logical(x@devcomp$dims[["useSc"]]),
 	      class = "VarCorr.merMod")
 }
 
@@ -2681,7 +2303,7 @@ optwrap <- function(optimizer, fn, par, lower=-Inf, upper=Inf,
                                warning = function(w) {
                                    curWarnings <<- append(curWarnings,list(w$message))
                                })
-    ## cat("***",unlist(tail(curWarnings,1)),"\n")
+    ## cat("***",unlist(tail(curWarnings,1)))
     ## FIXME: set code to warn on convergence !=0
     ## post-fit tweaking
     if (optName=="bobyqa") {
