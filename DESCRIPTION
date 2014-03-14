@@ -1,5 +1,5 @@
 Package: lme4
-Version: 1.1-5
+Version: 1.1-6
 Title: Linear mixed-effects models using Eigen and S4
 Authors@R: c(person("Douglas","Bates", role="aut"),
     person("Martin","Maechler", role="aut"),
