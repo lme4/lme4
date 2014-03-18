@@ -410,8 +410,10 @@ devfun2 <- function(fm, useSc, signames)
             thpars <- Sv_to_Cv(pars,n=vlist,s=sigma)
             .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)
             sigsq <- sigma^2
-            pp$ldL2() + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
+            pp$ldL2() - ldW + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
         }
+        ldW <- sum(log(environment(ans)$resp$weights))
+        assign("ldW", ldW, envir = environment(ans))
     } else {
         d0 <- update(fm,devFunOnly=TRUE)
         ## from glmer:

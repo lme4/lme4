@@ -1040,7 +1040,6 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(lmer_opt1,          4),
 
     CALLDEF(merPredDCreate,    17), // generate external pointer
-    CALLDEF(merPredDDuplicate, 17), // generate external pointer to duplicate merPredD
 
     CALLDEF(merPredDsetTheta,   2), // setters
     CALLDEF(merPredDsetBeta0,   2), 
