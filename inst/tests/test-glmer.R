@@ -172,6 +172,6 @@ if(FALSE) { ## Hadley broke this
         ## saved fits are not safe with old R versions
         L <- load(system.file("testdata","polytomous_vcov_ex.RData",
                               package="lme4", mustWork=TRUE))
+        expect_warning(vcov(polytomous_vcov_ex),"falling back to var-cov")
     }
-    expect_warning(vcov(polytomous_vcov_ex),"falling back to var-cov")
 })

@@ -52,7 +52,7 @@ fm1 <- lmer(Reaction~Days+(Days|Subject),sleepstudy)
 drop1(fm1,test="Chisq")
 ## use Kenward-Roger corrected F test, or parametric bootstrap,
 ## to test the significance of each dropped predictor
-if (require(pbkrtest)) {
+if (require(pbkrtest) && packageVersion("pbkrtest")>="0.3.8") {
    KRSumFun <- function(object, objectDrop, ...) {
       krnames <- c("ndf","ddf","Fstat","p.value","F.scaling")
       r <- if (missing(objectDrop)) {
