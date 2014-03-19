@@ -649,24 +649,6 @@ extern "C" {
         END_RCPP;
     }
 
-    SEXP merPredDDuplicate(SEXP Xs, SEXP Lambdat, SEXP LamtUt, SEXP Lind,
-			   SEXP RZX, SEXP Ut, SEXP Utr, SEXP V, SEXP VtV,
-			   SEXP Vtr, SEXP Xwts, SEXP Zt, SEXP beta0,
-			   SEXP delb, SEXP delu, SEXP theta, SEXP u0) {
-        BEGIN_RCPP;
-        merPredD *ans = new merPredD(::Rf_duplicate(Xs), ::Rf_duplicate(Lambdat), 
-				     ::Rf_duplicate(LamtUt), ::Rf_duplicate(Lind), 
-				     ::Rf_duplicate(RZX), ::Rf_duplicate(Ut), 
-				     ::Rf_duplicate(Utr), ::Rf_duplicate(V), 
-				     ::Rf_duplicate(VtV), ::Rf_duplicate(Vtr), 
-				     ::Rf_duplicate(Xwts), ::Rf_duplicate(Zt), 
-				     ::Rf_duplicate(beta0), ::Rf_duplicate(delb), 
-				     ::Rf_duplicate(delu), ::Rf_duplicate(theta), 
-				     ::Rf_duplicate(u0));
-        return wrap(XPtr<merPredD>(ans, true));
-        END_RCPP;
-    }
-
                                 // setters
     SEXP merPredDsetTheta(SEXP ptr, SEXP theta) {
         BEGIN_RCPP;
@@ -1058,7 +1040,6 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(lmer_opt1,          4),
 
     CALLDEF(merPredDCreate,    17), // generate external pointer
-    CALLDEF(merPredDDuplicate, 17), // generate external pointer to duplicate merPredD
 
     CALLDEF(merPredDsetTheta,   2), // setters
     CALLDEF(merPredDsetBeta0,   2), 
