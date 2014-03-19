@@ -6,6 +6,7 @@
 \section{CHANGES IN VERSION 1.1-5}{
   \subsection{BUG FIXES}{
     \itemize{
+      \item improved NA handling in \code{simulate} and \code{refit}
       \item made internal handling of \code{weights}/\code{offset}
       arguments slightly more robust (Github #191)
       \item handle non-positive-definite estimated fixed effect

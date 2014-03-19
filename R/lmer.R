@@ -1051,7 +1051,9 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
     ## for backward compatibility/functioning of refit(fit,simulate(fit))
     if (is.list(newresp)) {
         if (length(newresp)==1) {
+            na.action <- attr(newresp,"na.action")
             newresp <- newresp[[1]]
+            attr(newresp,"na.action") <- na.action
         } else {
             stop("refit not implemented for lists with length>1: ",
                  "consider ",sQuote("lapply(object,refit)"))
@@ -1070,8 +1072,11 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
             names(object@frame)[rcol] <- deparse(newrespSub)
         }
 
-        if (!is.null(na.act <- attr(object@frame,"na.action"))) {
+        if (!is.null(na.act <- attr(object@frame,"na.action")) &&
+            is.null(attr(newresp,"na.action"))) {
             ## will only get here if na.action is 'na.omit' or 'na.exclude'
+            ## *and* newresp does not have an 'na.action' attribute
+            ## indicating that NAs have already been filtered
             if (is.matrix(newresp)) {
                 newresp <- newresp[-na.act,]
             } else newresp <- newresp[-na.act]

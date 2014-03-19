@@ -471,10 +471,12 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     link <- if (isGLMM(object)) "response"
 
     ## predictions, conditioned as specified, on link scale
-    ## do **NOT** use na.action as specified here (inherit
-    ## from object instead, for consistency)
+    ## previously: do **NOT** use na.action as specified here (inherit
+    ##     from object instead, for consistency)
+    ## now: use na.omit, because we have to match up
+    ##    with whatever is done in mkNewReTrms
     etapred <- predict(object, newdata=newdata, re.form=re.form,
-                       type="link")
+                       type="link", na.action=na.omit)
 
     ## now add random components:
     ##  only the ones we did *not* condition on
@@ -542,24 +544,49 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         val <- as.data.frame(val)
     }  else class(val) <- "data.frame"
     names(val) <- paste("sim", seq_len(nsim), sep="_")
-    if (is.null(nm <- names(fitted(object)))) nm <- seq(n)
+    ## have not yet filled in NAs, so need to use names of fitted
+    ## object NOT including values with NAs
+    f <- fitted(object)
+    nm <- names(f)[!is.na(f)]  
+    if (length(nm)==0) nm <- seq(n)
     row.names(val) <- nm
 
-    if (!missing(na.action)) {
-        if (!is.null(fit.na.action <- attr(model.frame(object),"na.action"))) {
-            class.na.action <- class(attr(na.action(NA),"na.action"))
-            if (class.na.action != class(fit.na.action)) {
-                ## hack to override action where explicitly specified
-                class(fit.na.action) <- class.na.action
-                val <- as.data.frame(lapply(val,napredict,
-                      omit=fit.na.action))
-                ## reconstruct names
-                row.names(val) <- names(napredict(fitted(object),
-                                                  omit=fit.na.action))
-            }
+    fit.na.action <- attr(model.frame(object),"na.action")
+
+    if (!missing(na.action) &&  !is.null(fit.na.action)) {
+        ## retrieve name of na.action type ("omit", "exclude", "pass")
+        class.na.action <- class(attr(na.action(NA),"na.action"))
+        if (class.na.action != class(fit.na.action)) {
+            ## hack to override action where explicitly specified
+            class(fit.na.action) <- class.na.action
         }
     }
 
+    if (is.matrix(val[[1]])) {
+        ## have to handle binomial response matrices differently --
+        ## fill in NAs as appropriate in *both* columns
+        val <- lapply(val,function(x) { apply(x,2,napredict,
+                                       omit=fit.na.action) })
+        ## have to put this back into a (weird) data frame again,
+        ## carefully (should do the napredict stuff
+        ## earlier, so we don't have to redo this transformation!)
+        class(val) <- "data.frame"
+    } else {
+        val <- as.data.frame(lapply(val,napredict, omit=fit.na.action))
+    }
+
+    ## reconstruct names: first get rid of NAs, then refill them
+    ## as appropriate based on fit.na.action (which may be different
+    ## from the original model's na.action spec)
+    if (length(nm2 <- names(napredict(na.omit(f),
+                                        omit=fit.na.action)))>0)
+        row.names(val) <- nm2
+
+    ## as.data.frame(lapply(...)) blows away na.action attribute,
+    ##  so we have to re-assign here
+    attr(val,"na.action") <- fit.na.action
+
+    
     attr(val, "seed") <- RNGstate
     val
 }

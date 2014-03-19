@@ -200,5 +200,5 @@ m1 <- glmer(y~x+(1|f),data=d,family=binomial,weights=w)
 
 p1 <- profile(m1)
 xyplot(p1)
-splom(p1)
+expect_warning(splom(p1),"splom is unreliable")
 
