@@ -6,10 +6,13 @@
 ## need to do this stuff.
 if (FALSE) {
     library(polytomous)
+    data(think)
     think.polytomous.lmer1 <-
         polytomous(Lexeme ~ Agent + Patient + (1|Register),
                    data=think, heuristic="poisson.reformulation")
-    ## extract V, object from browser mode
+    ## lme4 2013-03-20: works with warning "falling back to var-cov .. RX"
+
+    ## extract V, object from browser mode (<-- ???)
     form <- formula(object)
     data.poisson <- model.frame(object)
     library(lme4.0)
@@ -27,6 +30,8 @@ library(lme4.0)
 ## full parameter set for lme4.0 and lme4 fits
 m0parms <- c(getME(m0,"theta"),fixef(m0))
 m1parms <- c(lme4::getME(m1,"theta"),fixef(m1))
+stopifnot(identical(names(m1parms),
+                    names(m0parms)))
 length(m0parms)     ## 50 parameters
 nrow(data.poisson)  ## 220 observations
 ## Number of obs: 220, groups: Observation, 55; Register, 2
@@ -49,11 +54,36 @@ dd(m0parms)
 dd(m1parms)  ## m1parms are supposedly MUCH better ...
 
 ## but we have a problem with the variance-covariance matrix
-try(vcov(m1))
+V1 <- try(vcov(m1))# now (2013-03-20) works, with a *warning*
+## (no longer)
 ## Error in vcov.merMod(m1) : 
 ##   Computed variance-covariance matrix problem: not a positive definite matrix
-try(as(V,"dpoMatrix"))  ## ditto
 
+try(as(V,"dpoMatrix"))
+## Error in asMethod(object) : not a positive definite matrix
+
+## MM's "new analysis" -------------------------
+
+## Why not use  isSymmetric(), part of R and Matrix ?
+stopifnot(isSymmetric(V))
+## and is it *is*, please do directly look at the (sorted!) eigen values:
+evV <- eigen(V, only.values=TRUE)$values
+round(evV, 2)
+## [1] 2462625.50   43189.28       2.30       1.03       0.85        0.43       0.41
+## [8]       0.41       0.35       0.30       0.28       0.27        0.24       0.24
+## ....
+## [43]       0.01       0.01       0.00       0.00       0.00  -42442.39
+
+## Now again, why not use  Matrix package again
+str(npV <- nearPD(V))
+plot(npV$eigenvalues ~ evV); abline(0,1, lty=3)# the extreme one is the same..
+V. <- npV$mat
+norm(V - V.)/ norm((V + V.)/2) ## 0.0165.. == 1.65% deviation
+stopifnot(is(V., "dpoMatrix"))
+## However, I don't really 'believe' V. either with this extreme EV
+
+
+## Ben's original analysis -------------------------
 ## look for asymmetries
 asymm <- function(x) {
     u <- x[upper.tri(x)]
@@ -64,6 +94,7 @@ asymm <- function(x) {
 }
 image(V) ## doesn't look symmetric???  Is this matrix somehow
          ## confusing the image method for "dgeMatrix" objects?
+##-> bug fixed in Matrix >= 1.1.3
 V[47,47]
 asymm(V)  ## symmetric
 head(rev(e <- eigen(V)$values))  ## ... but one disgusting eigenvalue
@@ -83,3 +114,8 @@ as(V3,"dpoMatrix")
 ## we *could* fall back on the RX-based computation:
 image(vcov.merMod(m1,use.hessian=FALSE))
 
+## New
+op <- options(digits=4, width=110)
+coef(summary(m1))
+## somewhat reasonable: 3 x {large coef, very large SE, small t}
+options(op)
