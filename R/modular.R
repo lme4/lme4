@@ -34,11 +34,11 @@ checkCtrlLevels <- function(cstr, val, smallOK=FALSE) {
 ## general identifiability checker, used both in checkZdim and checkZrank
 wmsg <- function(n,cmp.val,allow.n,msg1="",msg2="",msg3="") {
     if (allow.n) {
-        unident <- n<cmp.val
+        unident <- n < cmp.val
         cmp <- "<"
         rstr <- ""
     } else {
-        unident <- n<=cmp.val
+        unident <- n <= cmp.val
         cmp <- "<="
         rstr <- " and the residual variance (or scale parameter)"
     }
@@ -121,7 +121,7 @@ checkScaleX <- function(X, tol=1e4, ctrl) {
         logcomp <- abs(log(sdcomp[lower.tri(sdcomp)]))
         logsd <- abs(log(col.sd))
         wmsg <- "Some predictor variables are on very different scales: consider rescaling"
-        if (any(c(logcomp,logsd)>log(tol))) {
+        if (any(c(logcomp,logsd) > log(tol))) {
             switch(cc, "warning" = warning(wmsg),
                    "stop" = stop(wmsg),
                    stop(gettextf("unknown check level for '%s'", cstr),
@@ -341,7 +341,7 @@ getStart <- function(start,lower,pred,returnVal=c("theta","all")) {
         } else {
             if (!is.list(start)) stop("start must be a list or a numeric vector")
             if (!all(sapply(start,is.numeric))) stop("all elements of start must be numeric")
-            if (length((badComp <- setdiff(names(start),c("theta","fixef"))))>0) {
+            if (length((badComp <- setdiff(names(start),c("theta","fixef")))) > 0) {
                 stop("incorrect components in start list: ",badComp)
             }
             if (!is.null(start$theta)) theta <- start$theta
@@ -406,7 +406,7 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, verbose=0, co
     ## currently that help file says REML is logical
     devfun <- mkdevfun(rho, 0L, verbose, control)
     theta <- getStart(start,reTrms$lower,rho$pp)
-    if (length(rho$resp$y)>0)  ## only if non-trivial y
+    if (length(rho$resp$y) > 0)  ## only if non-trivial y
         devfun(rho$pp$theta) # one evaluation to ensure all values are set
     rho$lower <- reTrms$lower # SCW:  in order to be more consistent with mkLmerDevfun
     return(devfun) # this should pass the rho environment implicitly
@@ -438,7 +438,7 @@ optimizeLmer <- function(devfun,
         ## FIXME: should we be looking at rho$pp$theta or opt$par
         ##  at this point???  in koller example (for getData(13)) we have
         ##   rho$pp$theta=0, opt$par=0.08
-        if (length(bvals <- which(rho$pp$theta==rho$lower))>0) {
+        if (length(bvals <- which(rho$pp$theta==rho$lower)) > 0) {
             ## *don't* use numDeriv -- cruder but fewer dependencies, no worries
             ##  about keeping to the interior of the allowed space
             theta0 <- new("numeric",rho$pp$theta) ## 'deep' copy ...
@@ -454,7 +454,7 @@ optimizeLmer <- function(devfun,
             ## what do I need to do to reset rho$pp$theta to original value???
             devfun(theta0) ## reset rho$pp$theta after tests
             ## FIXME: allow user to specify ALWAYS restart if on boundary?
-            if (any(bgrad<0)) {
+            if (any(bgrad < 0)) {
                 if (verbose) message("some theta parameters on the boundary, restarting")
                 opt <- optwrap(optimizer,
                                devfun,
@@ -465,7 +465,7 @@ optimizeLmer <- function(devfun,
             }
         }
     }
-    if (boundary.tol>0) {
+    if (boundary.tol > 0) {
         opt <- check.boundary(rho,opt,devfun,boundary.tol)
     }
     return(opt)
@@ -577,7 +577,7 @@ mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L,
     if (missing(fr)) rho$resp <- mkRespMod(family=family, ...)
     else rho$resp             <- mkRespMod(fr, family=family)
     ## allow trivial y
-    if (length(y <- rho$resp$y)>0) {
+    if (length(y <- rho$resp$y) > 0) {
         if (length(unique(y)) < 2L)
             stop("Response is constant - cannot fit the model")
         rho$verbose     <- as.integer(verbose)
@@ -631,7 +631,7 @@ optimizeGlmer <- function(devfun,
     }
     ## FIXME: implement this ...
     if (restart_edge) stop("restart_edge not implemented for optimizeGlmer yet")
-    if (boundary.tol>0) {
+    if (boundary.tol > 0) {
         opt <- check.boundary(rho,opt,devfun,boundary.tol)
     }
     return(opt)
@@ -639,14 +639,14 @@ optimizeGlmer <- function(devfun,
 
 check.boundary <- function(rho,opt,devfun,boundary.tol) {
     bdiff <- rho$pp$theta-rho$lower[seq_along(rho$pp$theta)]
-    if (any(edgevals <- bdiff>0 & bdiff<boundary.tol)) {
+    if (any(edgevals <- 0 < bdiff & bdiff < boundary.tol)) {
         ## try sucessive "close-to-edge parameters" to see
         ## if we can improve by setting them equal to the boundary
         pp <- opt$par
         for (i in which(edgevals)) {
             tmppar <- pp
             tmppar[i] <- rho$lower[i]
-            if (devfun(tmppar)<opt$fval) pp[i] <- tmppar[i]
+            if (devfun(tmppar) < opt$fval) pp[i] <- tmppar[i]
         }
         opt$par <- pp
         opt$fval <- devfun(opt$par)
