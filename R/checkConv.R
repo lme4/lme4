@@ -82,7 +82,7 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
             }
         }
         resHess <- checkHess(derivs$Hessian, ccl$tol)
-        if (resHess$code != 0) {
+        if (any(resHess$code != 0)) {
             res$code <- resHess$code
             res$messages <- c(res$messages,resHess$messages)
             wstr <- paste(resHess$messages,collapse=";")
