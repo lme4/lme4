@@ -1669,6 +1669,24 @@ setMethod("getL", "merMod", function(x) {
     getME(x, "L")
 })
 
+mkPfun <- function(diag.only = FALSE, old = TRUE, prefix = NULL){
+    local({
+        function(g,e) {
+            mm <- outer(e,e,paste,sep = ".")
+            if(old) {
+                diag(mm) <- e
+            } else {
+                mm[] <- paste(mm,g,sep = "|")
+                if (!is.null(prefix)) mm[] <- paste(prefix[2],mm,sep = "_")
+                diag(mm) <- paste(e,g,sep = "|")
+                if (!is.null(prefix))  diag(mm) <- paste(prefix[1],diag(mm),sep = "_")
+            }
+            mm <- if (diag.only) diag(mm) else mm[lower.tri(mm,diag = TRUE)]
+            if(old) paste(g,mm,sep = ".")
+        }
+    })
+}
+
 ##' Construct names of individual theta/sd:cor components
 ##'
 ##' @param object a fixed model
@@ -1677,27 +1695,8 @@ setMethod("getL", "merMod", function(x) {
 ##' @param prefix a character vector with two elements giving the prefix
 ##' for diagonal (e.g. "sd") and off-diagonal (e.g. "cor") elements
 tnames <- function(object,diag.only = FALSE,old = TRUE,prefix = NULL) {
-    if (old) {
-        nc <- c(unlist(mapply(function(g,e) {
-            mm <- outer(e,e,paste,sep = ".")
-            diag(mm) <- e
-            mm <- if (diag.only) diag(mm) else mm[lower.tri(mm,diag = TRUE)]
-            paste(g,mm,sep = ".")
-        },
-        names(object@cnms),object@cnms)))
-        return(nc)
-    } else {
-        pfun <- function(g,e) {
-            mm <- outer(e,e,paste,sep = ".")
-            mm[] <- paste(mm,g,sep = "|")
-            if (!is.null(prefix)) mm[] <- paste(prefix[2],mm,sep = "_")
-            diag(mm) <- paste(e,g,sep = "|")
-            if (!is.null(prefix))  diag(mm) <- paste(prefix[1],diag(mm),sep = "_")
-            mm <- if (diag.only) diag(mm) else mm[lower.tri(mm,diag = TRUE)]
-        }
-        nc <- c(unlist(mapply(pfun,names(object@cnms),object@cnms)))
-        return(nc)
-    }
+    pfun <- mkPfun(diag.only = diag.only, old = old, prefix = prefix)
+    c(unlist(mapply(pfun, names(object@cnms), object@cnms)))
 }
 
 ## -> ../man/getME.Rd
