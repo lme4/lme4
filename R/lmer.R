@@ -1682,7 +1682,7 @@ mkPfun <- function(diag.only = FALSE, old = TRUE, prefix = NULL){
                 if (!is.null(prefix))  diag(mm) <- paste(prefix[1],diag(mm),sep = "_")
             }
             mm <- if (diag.only) diag(mm) else mm[lower.tri(mm,diag = TRUE)]
-            if(old) paste(g,mm,sep = ".")
+            if(old) paste(g,mm,sep = ".") else mm
         }
     })
 }
