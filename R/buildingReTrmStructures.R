@@ -8,9 +8,15 @@ mkRanefStructures <- function(grp, mm){
     if(!is.list(grp)) grp <- list(grp)
     if(!is.list(mm)) mm <- list(mm)
     grp <- lapply(grp, as.factor)
-    
 
-    nl <- sapply(grp, nlevels)   # number of grouping factor levels per term 
+    n  <- sapply(grp, length)
+    nn <- sapply(mm, nrow)
+    if(!all(n==nn))
+        stop("\nNumber of observations of each grouping\n",
+             "factor must match the number of columns\n",
+             "in the corresponding model matrix\n")
+
+    nl <- sapply(grp, nlevels)   # number of grouping factor levels per term
     nc <- sapply(mm, ncol)       # number of model matrix columns per term
     templates <- mkTemplates(nc) # templates for relative covariance factor
     theta <- mkTheta(templates)
