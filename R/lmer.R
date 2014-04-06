@@ -1669,6 +1669,7 @@ setMethod("getL", "merMod", function(x) {
     getME(x, "L")
 })
 
+##' used by tnames
 mkPfun <- function(diag.only = FALSE, old = TRUE, prefix = NULL){
     local({
         function(g,e) {
@@ -1708,7 +1709,7 @@ getME <- function(object,
 		  "L", "Lambda", "Lambdat", "Lind", "A",
 		  "RX", "RZX", "sigma",
                   "flist",
-                  "beta", "theta", "ST",
+                  "fixef", "beta", "theta", "ST",
 		  "REML", "is_REML",
                   "n_rtrms", "n_rfacs", "cnms",
                   "devcomp", "offset", "lower"))
@@ -1763,6 +1764,7 @@ getME <- function(object,
            "Gp" = object@Gp,
            "Tp" = Tpfun(cnms), # "term-wise theta pointer"
            "flist" = object@flist,
+           "fixef" = object@beta,
 	   "beta" = object@beta,
            "theta" = setNames(object@theta,tnames(object)),
 	   "ST" = setNames(vec2STlist(object@theta, n = vapply(cnms, length, 0L)),

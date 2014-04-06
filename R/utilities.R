@@ -779,3 +779,25 @@ condVar <- function(object) {
   LL <- solve(L, Lamt, system = "A")
   s2 * crossprod(Lamt, LL)
 }
+
+##' Make template for mixed model parameters
+mkParsTemplate <- function(formula, data){
+    mkMinimalData <- function(formula) {
+        vars <- all.vars(formula)
+        nVars <- length(vars)
+        matr <- matrix(0, 2, nVars)
+        data <- as.data.frame(matr)
+        setNames(data, vars)
+    }
+    if(missing(data)) data <- mkMinimalData(formula)
+    mfRanef <- model.frame( subbars(formula), data)
+    mmFixef <- model.matrix(nobars(formula) , data)
+    reTrms <- mkReTrms(findbars(formula), mfRanef)
+    cnms <- reTrms$cnms
+    thetaNamesList <- mapply(mkPfun(), names(cnms), cnms)
+    thetaNames <- unlist(thetaNamesList)
+    betaNames <- colnames(mmFixef)
+    list(beta  = setNames(numeric(length( betaNames)),  betaNames),
+         theta = setNames(reTrms$theta, thetaNames),
+         sigma = 1)
+}
