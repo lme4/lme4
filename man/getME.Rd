@@ -8,7 +8,7 @@ getME(object,
       name = c("X", "Z", "Zt", "Ztlist", "y", "mu", "u", "b",
                "Gp", "Tp", "L", "Lambda", "Lambdat", "Lind",
                "A", "RX", "RZX", "sigma", "flist",
-               "beta", "theta", "ST", "REML", "is_REML",
+               "fixef", "beta", "theta", "ST", "REML", "is_REML",
                "n_rtrms", "n_rfacs", "cnms", "devcomp", "offset", "lower"))
 }
 \arguments{
@@ -57,6 +57,7 @@ getME(object,
       \item{sigma}{residual standard error; note that \code{sigma(object)} is preferred.}
       \item{flist}{a list of the grouping variables (factors)
 	involved in the random effect terms}
+      \item{fixef}{fixed-effects parameter estimates}
       \item{beta}{fixed-effects parameter estimates (identical
 	to the result of \code{\link{fixef}}, but without names)}
       \item{theta}{random-effects parameter estimates: these

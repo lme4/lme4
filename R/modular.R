@@ -345,7 +345,18 @@ getStart <- function(start,lower,pred,returnVal=c("theta","all")) {
                 stop("incorrect components in start list: ",badComp)
             }
             if (!is.null(start$theta)) theta <- start$theta
-            if (!is.null(start$fixef)) fixef <- start$fixef
+            noFixef <- is.null(start$fixef)
+            noBeta <- is.null(start$beta)
+            if (!noFixef) {
+                fixef <- start$fixef
+                if (!noBeta) {
+                    message("Starting values for fixed effects coefficients",
+                            "specified through both 'fixef' and 'beta',",
+                            "only 'fixef' used")
+                }
+            } else if(!noBeta) {
+                fixef <- start$beta
+            }
         }
     }
     if (length(theta)!=length(pred$theta))

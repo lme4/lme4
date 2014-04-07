@@ -1764,7 +1764,7 @@ getME <- function(object,
            "Gp" = object@Gp,
            "Tp" = Tpfun(cnms), # "term-wise theta pointer"
            "flist" = object@flist,
-           "fixef" = object@beta,
+           "fixef" = fixef(object),
 	   "beta" = object@beta,
            "theta" = setNames(object@theta,tnames(object)),
 	   "ST" = setNames(vec2STlist(object@theta, n = vapply(cnms, length, 0L)),
