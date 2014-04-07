@@ -30,7 +30,7 @@ mkReTrms <- function(bars, fr) {
     stop("No random effects terms specified in formula")
   stopifnot(is.list(bars), vapply(bars, is.language, NA),
             inherits(fr, "data.frame"))
-  names(bars) <- unlist(lapply(bars, function(x) deparse(x[[3]])))
+  names(bars) <- barnames(bars)
   term.names <- unlist(lapply(bars, function(x) paste(deparse(x),collapse=" ")))
 
   ## auxiliary {named, for easier inspection}:
@@ -427,6 +427,11 @@ subbars <- function(term)
     term
 }
 
+##' @param bars result of findbars
+barnames <- function(bars) {
+    unlist(lapply(findbars(bars), function(x) deparse(x[[3]])))
+}
+
 ##' Does every level of f1 occur in conjunction with exactly one level
 ##' of f2? The function is based on converting a triplet sparse matrix
 ##' to a compressed column-oriented form in which the nesting can be
@@ -780,15 +785,16 @@ condVar <- function(object) {
   s2 * crossprod(Lamt, LL)
 }
 
+mkMinimalData <- function(formula) {
+    vars <- all.vars(formula)
+    nVars <- length(vars)
+    matr <- matrix(0, 2, nVars)
+    data <- as.data.frame(matr)
+    setNames(data, vars)
+}
+
 ##' Make template for mixed model parameters
 mkParsTemplate <- function(formula, data){
-    mkMinimalData <- function(formula) {
-        vars <- all.vars(formula)
-        nVars <- length(vars)
-        matr <- matrix(0, 2, nVars)
-        data <- as.data.frame(matr)
-        setNames(data, vars)
-    }
     if(missing(data)) data <- mkMinimalData(formula)
     mfRanef <- model.frame( subbars(formula), data)
     mmFixef <- model.matrix(nobars(formula) , data)
@@ -800,4 +806,12 @@ mkParsTemplate <- function(formula, data){
     list(beta  = setNames(numeric(length( betaNames)),  betaNames),
          theta = setNames(reTrms$theta, thetaNames),
          sigma = 1)
+}
+
+##' FIXME:  not done
+mkDataTemplate <- function(formula, data, n){
+    if(missing(data)) data <- mkMinimalData(formula)
+    grpFacNames <- barnames(findbars(formula))
+    varNames <- all.vars(lme4:::LHSForm(form))
+    covariateNames <- setDiff(varNames, grpFacNames)
 }

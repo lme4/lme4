@@ -654,14 +654,36 @@ poisson_simfun <- function(object, nsim, ftd=fitted(object)) {
     }
 
 
-## FIXME: need a gamma.shape.merMod method in order for this to work
+##' FIXME: need a gamma.shape.merMod method in order for this to work.
+##'        (see initial shot at gamma.shape.merMod below)
 Gamma_simfun <- function(object, nsim, ftd=fitted(object)) {
     wts <- weights(object)
     if (any(wts != 1)) message("using weights as shape parameters")
-    ftd <- fitted(object)
+    ## ftd <- fitted(object)
     shape <- MASS::gamma.shape(object)$alpha * wts
     rgamma(nsim*length(ftd), shape = shape, rate = shape/ftd)
 }
+
+gamma.shape.merMod <- function(object, ...) {
+    if(!(family(object)$family == "Gamma"))
+        stop("Can not fit gamma shape parameter ",
+             "because Gamma family not used")
+
+    y <- getME(object, "y")
+    mu <- getME(object, "mu")
+    w <- weights(object)
+                                        # Sec 8.3.2 (MN)
+    L <- w*(log(y/mu)-((y-mu)/mu))
+    dev <- -2*sum(L)
+                                        # Eqs. between 8.2 & 8.3 (MN)
+    Dbar <- dev/length(y)
+    alpha <- (6+2*Dbar)/(Dbar*(6+Dbar))
+                                        # FIXME: obtain standard error
+    res <- list(alpha = alpha, SE = NA)
+    class(res) <- "gamma.shape"
+    res
+}
+
 
 ## FIXME: include without inducing SuppDists dependency?
 ## inverse.gaussian_simfun <- function(object, nsim, ftd=fitted(object)) {
