@@ -350,8 +350,10 @@ namespace glm {
 
     //@{
     const ArrayXd  inverseLink::linkFun(const ArrayXd&  mu) const {return mu.inverse();}
-    const ArrayXd  inverseLink::linkInv(const ArrayXd& eta) const {return eta.unaryExpr(inverse<double>());}
-    const ArrayXd  inverseLink::muEta(  const ArrayXd& eta) const {return -(eta.unaryExpr(inverse<double>()).square());}
+  //const ArrayXd  inverseLink::linkInv(const ArrayXd& eta) const {return eta.unaryExpr(inverse<double>());}
+    const ArrayXd  inverseLink::linkInv(const ArrayXd& eta) const {return eta.inverse();}
+  // const ArrayXd  inverseLink::muEta(  const ArrayXd& eta) const {return -(eta.unaryExpr(inverse<double>()).square());}
+    const ArrayXd  inverseLink::muEta(  const ArrayXd& eta) const {return -(eta.inverse().square());}
     //@}
 
     //@{
