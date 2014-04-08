@@ -429,7 +429,7 @@ subbars <- function(term)
 
 ##' @param bars result of findbars
 barnames <- function(bars) {
-    unlist(lapply(findbars(bars), function(x) deparse(x[[3]])))
+    unlist(lapply(bars, function(x) deparse(x[[3]])))
 }
 
 ##' Does every level of f1 occur in conjunction with exactly one level
@@ -809,9 +809,15 @@ mkParsTemplate <- function(formula, data){
 }
 
 ##' FIXME:  not done
-mkDataTemplate <- function(formula, data, n){
+mkDataTemplate <- function(formula, data,
+                           nObs, nGrps = 2,
+                           rfunc = NULL){
     if(missing(data)) data <- mkMinimalData(formula)
     grpFacNames <- barnames(findbars(formula))
     varNames <- all.vars(lme4:::LHSForm(form))
-    covariateNames <- setDiff(varNames, grpFacNames)
+    covariateNames <- setdiff(varNames, grpFacNames)
+    nGrpFac <- length(grpFacNames)
+    if(missing(nObs)) nObs <- nGrps * nGrpFac
+    grpFac <- gl(nGrps, nGrpFac)[1:nObs]
+    replicate(nGrpFac, list(grpFac), simplify = FALSE)
 }
