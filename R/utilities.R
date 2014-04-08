@@ -808,16 +808,33 @@ mkParsTemplate <- function(formula, data){
          sigma = 1)
 }
 
-##' FIXME:  not done
+##' Make template for mixed model data
+##'
+##' Useful for simulating balanced designs and for
+##' getting started on unbalanced simulations
+##'
+##' @param formula formula
+##' @param data data -- not necessary
+##' @param nGrps number of groups per grouping factor
+##' @param rfunc function for generating covariate data
+##' @param ... additional parameters for rfunc
 mkDataTemplate <- function(formula, data,
-                           nObs, nGrps = 2,
-                           rfunc = NULL){
+                           nGrps = 2, nPerGrp = 1,
+                           rfunc = NULL, ...){
     if(missing(data)) data <- mkMinimalData(formula)
-    grpFacNames <- barnames(findbars(formula))
-    varNames <- all.vars(lme4:::LHSForm(form))
+    grpFacNames <- unique(barnames(findbars(formula)))
+    varNames <- all.vars(formula)
     covariateNames <- setdiff(varNames, grpFacNames)
     nGrpFac <- length(grpFacNames)
-    if(missing(nObs)) nObs <- nGrps * nGrpFac
-    grpFac <- gl(nGrps, nGrpFac)[1:nObs]
-    replicate(nGrpFac, list(grpFac), simplify = FALSE)
+    nCov <- length(covariateNames)
+    grpFac <- gl(nGrps, nPerGrp)
+    grpDat <- expand.grid(replicate(nGrpFac, grpFac, simplify = FALSE))
+    colnames(grpDat) <- grpFacNames
+    nObs <- nrow(grpDat)
+    if(is.null(rfunc)) rfunc <- function(n, ...) rep(0, n)
+    params <- c(list(nObs), list(...))
+    covDat <- as.data.frame(replicate(nCov, do.call(rfunc, params),
+                                      simplify = FALSE))
+    colnames(covDat) <- covariateNames
+    cbind(grpDat, covDat)
 }
