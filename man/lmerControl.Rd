@@ -222,8 +222,11 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
   
 }
 \details{
-  Note that (only!) the \dQuote{checking options}, i.e., all those starting with
-  \code{"check."}, may also be set via \code{\link{options}}.
+  Note that (only!) the pre-fitting \dQuote{checking options}
+  (i.e., all those starting with \code{"check."} but \emph{not}
+  including the convergence checks (\code{"check.conv.*"}) or
+  rank-checking (\code{"check.rank*"}) options)
+  may also be set globally via \code{\link{options}}.
   In that case, \code{(g)lmerControl} will use them rather than the
   default values, but will \emph{not} override values that are passed as
   explicit arguments.
