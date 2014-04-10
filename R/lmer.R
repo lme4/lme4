@@ -1512,8 +1512,8 @@ famlink <- function(object, resp = object@resp) {
 	## && !identical(eval(cc), lmerControl()))
 	cat.f("Control:", dc)
     if (!is.null(cc <- call$subset))
-	cat.f(" Subset:", deparse(asOneSidedFormula(cc)[[2]]))
-}
+	cat.f(" Subset:", deparse(cc))
+    }
 
 getLlikAIC <- function(object, cmp = object@devcomp$cmp) {
     llik <- logLik(object)   # returns NA for a REML fit - maybe change?

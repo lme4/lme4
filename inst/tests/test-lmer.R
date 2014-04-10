@@ -143,13 +143,10 @@ test_that("lmer", {
     ## disable warning via options
     options(lmerControl=list(check.nobs.vs.rankZ="ignore",check.nobs.vs.nRE="ignore"))
     expect_is(fm4 <- lmer(Reaction ~ Days + (1|Subject),
-			  subset(sleepstudy,Subject %in% levels(Subject)[1:4]),
-                          control=lmerControl(check.conv.grad="ignore")),
-              "merMod")
+			  subset(sleepstudy,Subject %in% levels(Subject)[1:4])), "merMod")
     expect_is(lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
                    data = sleepstudy, subset = (Days == 1 | Days == 9),
-                   control=lmerControl(check.conv.hess="ignore",
-                   check.conv.grad="ignore")),
+                   control=lmerControl(check.conv.hess="ignore")),
               "merMod")
     options(lmerControl=NULL)
     ## check for when ignored options are set
@@ -186,6 +183,10 @@ if(FALSE) ## Hadley broke this
     new <- "foo"
     expect_is(refit(fm1),"merMod")
     rm("new")
+
+    ## test subset-with-( printing from summary
+    fm1 <- lmer(z~1|f,d,subset=(z<1e9))
+    expect_equal(sum(grepl("Subset: \\(",capture.output(summary(fm1)))),1)
 
 }) ## test_that(..)
 
