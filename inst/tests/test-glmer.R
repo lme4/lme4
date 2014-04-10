@@ -45,6 +45,10 @@ test_that("glmer", {
     expect_warning(fm1. <- glmer(Reaction ~ Days + (Days|Subject), sleepstudy),
                    regexp="calling .* with family=gaussian .* as a shortcut")
     options(warn=2)
+    options(glmerControl=list(junk=1,check.conv.grad="ignore"))
+    expect_warning(glmer(z~ 1|f, d, family=binomial),
+                   "some options")
+    options(glmerControl=NULL)
     cbppX <- transform(cbpp,prop=incidence/size)
     expect_is(glmer(prop ~ period + (1 | herd),
 		      data = cbppX, family = binomial, weights=size),

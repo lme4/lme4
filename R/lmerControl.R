@@ -97,7 +97,13 @@ lmerControl <-
     stopifnot(is.list(optCtrl))
 
     if (!is.null(lmerOpts <- getOption("lmerControl"))) {
-        for (arg in .get.checkingOpts(names(lmerOpts))) {
+        nn <- names(lmerOpts)
+        nn.ok <- .get.checkingOpts(names(lmerOpts))
+        if (length(nn.ignored <- setdiff(nn,nn.ok))>0) {
+            warning("some options in ",shQuote("getOption('lmerControl')"),
+                    " ignored : ",paste(nn.ignored,collapse=", "))
+        }
+        for (arg in nn.ok) {
             if (do.call(missing,list(arg))) ## only if missing from explicit arguments
                 assign(arg,lmerOpts[[arg]])
         }
@@ -171,7 +177,13 @@ glmerControl <-
 	optimizer <- replicate(2,optimizer) # works evevn when optimizer is function
     }
     if (!is.null(glmerOpts <- getOption("glmerControl"))) {
-        for (arg in .get.checkingOpts(names(glmerOpts))) {
+        nn <- names(glmerOpts)
+        nn.ok <- .get.checkingOpts(names(glmerOpts))
+        if (length(nn.ignored <- setdiff(nn,nn.ok))>0) {
+            warning("some options in ",shQuote("getOption('glmerControl')"),
+                    " ignored : ",paste(nn.ignored,collapse=", "))
+        }
+        for (arg in nn.ok) {
             if (do.call(missing,list(arg))) ## only if missing from explicit arguments
                 assign(arg, glmerOpts[[arg]])
         }

@@ -113,7 +113,10 @@ test_that("lmer", {
                    data = sleepstudy, subset = (Days == 1 | Days == 9),
                    control=lmerControl(check.nobs.vs.rankZ="ignore",
                    check.nobs.vs.nRE="ignore",
-                   check.conv.hess="ignore")),
+                   check.conv.hess="ignore",
+                   ## need to ignore relative gradient check too;
+                   ## surface is flat so *relative* gradient gets large
+                   check.conv.grad="ignore")),
               "merMod")
     expect_error(lmer(Reaction ~ 1 + Days + (1|obs),
                       data = transform(sleepstudy,obs=seq(nrow(sleepstudy))),
@@ -140,11 +143,19 @@ test_that("lmer", {
     ## disable warning via options
     options(lmerControl=list(check.nobs.vs.rankZ="ignore",check.nobs.vs.nRE="ignore"))
     expect_is(fm4 <- lmer(Reaction ~ Days + (1|Subject),
-			  subset(sleepstudy,Subject %in% levels(Subject)[1:4])), "merMod")
+			  subset(sleepstudy,Subject %in% levels(Subject)[1:4]),
+                          control=lmerControl(check.conv.grad="ignore")),
+              "merMod")
     expect_is(lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
                    data = sleepstudy, subset = (Days == 1 | Days == 9),
-                   control=lmerControl(check.conv.hess="ignore")),
+                   control=lmerControl(check.conv.hess="ignore",
+                   check.conv.grad="ignore")),
               "merMod")
+    options(lmerControl=NULL)
+    ## check for when ignored options are set
+    options(lmerControl=list(junk=1,check.conv.grad="ignore"))
+    expect_warning(lmer(Reaction ~ Days + (1|Subject),sleepstudy),
+                   "some options")
     options(lmerControl=NULL)
     options(warn=0)
     expect_warning(lmer(Yield ~ 1|Batch, Dyestuff, junkArg=TRUE),"extra argument.*disregarded")
