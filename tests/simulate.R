@@ -53,10 +53,12 @@ s6 <- simulate(gm4,seed=101,use.u=TRUE)[[1]]
 ## Bernoulli
 ## works, but too slow
 if (testLevel>2) {
-  data(guImmun,package="mlmRev")
-  g1 <- glmer(immun~kid2p+mom25p+ord+ethn+momEd+husEd+momWork+rural+pcInd81+
-              (1|comm/mom),family="binomial",data=guImmun)
-  s2 <- simulate(g1)
+    if(require("mlmRev")) {
+        data(guImmun,package="mlmRev")
+        g1 <- glmer(immun~kid2p+mom25p+ord+ethn+momEd+husEd+momWork+rural+pcInd81+
+                    (1|comm/mom),family="binomial",data=guImmun)
+        s2 <- simulate(g1)
+    }
 }
 
 set.seed(101)
@@ -90,10 +92,11 @@ s1B <- simulate(g1B,seed=102)[[1]]
 stopifnot(all.equal(gm_s5,as.numeric(s1B)-1))
 
 ## another Bernoulli
-data(Contraception,package="mlmRev")
-gm5 <- glmer(use ~ urban+age+livch+(1|district), Contraception, binomial)
-s3 <- simulate(gm5)
-
+if(require("mlmRev")) {
+    data(Contraception,package="mlmRev")
+    gm5 <- glmer(use ~ urban+age+livch+(1|district), Contraception, binomial)
+    s3 <- simulate(gm5)
+}
 d$y <- rpois(nrow(d),exp(d$eta))
 gm6 <- glmer(y~x+(1|f),data=d,family="poisson")
 s4 <- simulate(gm6)
