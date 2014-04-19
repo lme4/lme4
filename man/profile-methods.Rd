@@ -72,7 +72,8 @@
   \code{profile(<merMod>)} returns
   an object of S3 class \code{"thpr"},% = th[eoretical]?? pr[ofile]
   \code{\link{data.frame}}-like.  Methods for such a profile object
-  are notably \code{\link{confint}()}, the three plots methods
+  are notably \code{\link{confint}()} and the three plotting methods
+  (which require the \pkg{lattice} package),
   \code{\link[=xyplot.thpr]{xyplot}}, \code{densityplot}, and
   \code{splom}.
 
@@ -86,11 +87,10 @@
 %% FIXME: ../inst/doc/profiling.txt  contains  motivation and more by
 %% Doug Bates. Should add here (partly), or "link to there".
 }
-\section{Methods}{
-  \describe{ \item{signature(fitted = \"merMod\")}{ ...  }
-  }
-}
 \seealso{
+  The plotting methods \code{\link[=xyplot.thpr]{xyplot}} etc, for class
+  \code{"thpr"}.
+
   For (more expensive) alternative confidence intervals:
   \code{\link{bootMer}}.
 }
