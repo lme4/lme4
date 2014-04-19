@@ -3,24 +3,20 @@ library(lme4)
 require(optimx)
 require(nloptr)
 
-## copied from https://github.com/lme4/lme4/issues/98:
-defaultControl <- list(algorithm="NLOPT_LN_BOBYQA",xtol_rel=1e-6,maxeval=1e5)
-nloptwrap2 <- function(fn,par,lower,upper,control=list(),...) {
-    for (n in names(defaultControl)) 
+## originally from https://github.com/lme4/lme4/issues/98 :
+
+nloptWrap <- function(fn, par, lower, upper, control=list(), ...) {
+    defaultControl <- list(xtol_rel = 1e-6, maxeval = 1e5)
+    for (n in names(defaultControl))
       if (is.null(control[[n]])) control[[n]] <- defaultControl[[n]]
-    res <- nloptr(x0=par,eval_f=fn,lb=lower,ub=upper,opts=control,...)
+    res <- nloptr(x0=par, eval_f=fn, lb=lower, ub=upper, opts=control, ...)
+    ##     ------
     with(res,list(par=solution,
                   fval=objective,
                   feval=iterations,
                   conv=if (status>0) 0 else status,
                   message=message))
 }
-
-mtab <- data.frame(optimizer=rep(c("bobyqa","Nelder_Mead",
-                   "optimx","nloptwrap2"),c(1,1,2,2)),
-                   method=c("","","nlminb","L-BFGS-B",
-                   "NLOPT_LN_NELDERMEAD","NLOPT_LN_BOBYQA"),
-                   stringsAsFactors=FALSE)
 
 ##' Attempt to re-fit a [g]lmer model with a range of optimizers.
 ##' The default is to use all known optimizers for R that satisfy the
@@ -31,10 +27,12 @@ mtab <- data.frame(optimizer=rep(c("bobyqa","Nelder_Mead",
 ##' an explicit gradient function to be specified; the two provided
 ##' here are really base R functions that can be accessed via optimx,
 ##' (iii) wrapped via nloptr.
-##' 
+##'
 ##' @param m a fitted model
-##' @param method the name of a specific optimization method to pass to the optimizer (leave blank for built-in optimizers)
-##' @param optimizer the \code{optimizer} function to use
+##' @param meth.tab a matrix (or data.frame) with columns
+##' - method  the name of a specific optimization method to pass to the optimizer
+##'           (leave blank for built-in optimizers)
+##' - optimizer  the \code{optimizer} function to use
 ##' @param verbose print progress messages?
 ##' @return a list of fitted \code{merMod} objects
 ##' @seealso slice, slice2D in the bbmle package
@@ -47,24 +45,30 @@ mtab <- data.frame(optimizer=rep(c("bobyqa","Nelder_Mead",
 ##' sapply(gm_all,logLik)                ## log-likelihoods
 ##' sapply(gm_all,getME,"theta")         ## theta parameters
 ##' !sapply(gm_all,inherits,"try-error") ## was fit OK?
-allFit <- function(m,   
-                   method=mtab$method,
-                   optimizer=mtab$optimizer,
-                   verbose=TRUE) {
-    res <- list()
-    fit.names <- paste(optimizer,method,sep=".")
+allFit <- function(m, meth.tab = cbind(optimizer=
+                      rep(c("bobyqa","Nelder_Mead", "optimx",  "nloptWrap"),
+                          c(    1,         1,           2,         2)),
+                      method= c("",        "",  "nlminb","L-BFGS-B",
+                               "NLOPT_LN_NELDERMEAD", "NLOPT_LN_BOBYQA")),
+                   verbose=TRUE)
+{
+    stopifnot(length(dm <- dim(meth.tab)) == 2, dm[1] >= 1, dm[2] >= 2,
+	      is.character(optimizer <- meth.tab[,"optimizer"]),
+	      is.character(method    <- meth.tab[,"method"]))
+    fit.names <- paste(optimizer, method, sep=".")
+    res <- setNames(as.list(fit.names), fit.names)
     for (i in seq_along(fit.names)) {
-        if (verbose) cat(fit.names[i],"\n")
-        c.arglist <- list()
-        c.arglist <- list(optimizer=optimizer[i])
-        c.arglist$optCtrl <- switch(optimizer[i],
-                                    optimx=list(method=method[i]),
-                                    nloptwrap2=list(algorithm=method[i]),
-                                    NULL)
-        cfun <- if (isGLMM(m)) glmerControl else lmerControl
-        res[[i]] <- try(update(m,control=do.call(cfun,c.arglist)),silent=TRUE)
+        if (verbose) cat(fit.names[i],": ")
+        ctrl <- list(optimizer=optimizer[i])
+        ctrl$optCtrl <- switch(optimizer[i],
+                               optimx    = list(method   = method[i]),
+                               nloptWrap = list(algorithm= method[i]),
+                               NULL)
+        ctrl <- do.call(if(isGLMM(m)) glmerControl else lmerControl, ctrl)
+        rr <- tryCatch(update(m, control = ctrl), error = function(e) e)
+        attr(rr, "optCtrl") <- ctrl$optCtrl # contains crucial info here
+        res[[i]] <- rr
+        if (verbose) cat("[Ok]\n")
     }
-    names(res) <- fit.names
-    return(res)
+    res
 }
-
