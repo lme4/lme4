@@ -1737,7 +1737,7 @@ getME <- function(object,
 	   "X" = PR$X, ## ok ? - check -- use model.matrix() method instead?
 	   "Z" = t(PR$Zt),
 	   "Zt" = PR$Zt,
-           "Ztlist" = 
+           "Ztlist" =
        {
            getInds <- function(i) {
                n <- diff(object@Gp)[i]      ## number of elements in this block
@@ -2047,7 +2047,7 @@ summary.merMod <- function(object,
 	coefs <- cbind(coefs, (cf3 <- coefs[,1]/coefs[,2]), deparse.level = 0)
 	colnames(coefs)[3] <- paste(if(useSc) "t" else "z", "value")
         if (isGLMM(object)) # FIXME: if "t" above, cannot have "z" here
-            coefs <- cbind(coefs, "Pr(>|z|)" = 
+            coefs <- cbind(coefs, "Pr(>|z|)" =
                            2*pnorm(abs(cf3), lower.tail = FALSE))
     }
 
@@ -2235,7 +2235,7 @@ weights.merMod <- function(object, type = c("prior","working"), ...) {
 getOptfun <- function(optimizer) {
     if (((is.character(optimizer) && optimizer == "optimx") ||
          deparse(substitute(optimizer)) == "optimx") &&
-        !("package:optimx") %in% search())
+        !"package:optimx" %in% search())
         stop(shQuote("optimx")," package must be loaded in order to ",
              "use ",shQuote('optimizer="optimx"'))
     optfun <- if (is.character(optimizer)) {
@@ -2277,10 +2277,9 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
                        thetaStep <- 0.1
                        nTheta <- length(environment(fn)$pp$theta)
                        betaSD <- sqrt(diag(environment(fn)$pp$unsc()))
-                       xst <- c(rep.int(thetaStep, nTheta),
-                                pmin(betaSD,10))
+                       control$xst <- 0.2* c(rep.int(thetaStep, nTheta),
+                                             pmin(betaSD, 10))
                    }
-                   control$xst <- 0.2*xst
                    if (is.null(control$xt)) control$xt <- control$xst*5e-4
                })
     switch(optName,
@@ -2306,7 +2305,7 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
     ## FIXME: test!  effects of multiple warnings??
     ## may not need to catch warnings after all??
     curWarnings <- list()
-    opt <- withCallingHandlers(do.call(optfun,arglist),
+    opt <- withCallingHandlers(do.call(optfun, arglist),
                                warning = function(w) {
                                    curWarnings <<- append(curWarnings,list(w$message))
                                })
@@ -2320,7 +2319,7 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
         opt <- list(par = coef(opt)[1,],
                     fvalues = opt$value[1],
                     conv = opt$convcode[1],
-                    feval = opt$fevals+opt$gevals,
+                    feval = opt$fevals + opt$gevals,
                     message = attr(opt,"details")[,"message"][[1]])
     }
     if (opt$conv != 0) {
