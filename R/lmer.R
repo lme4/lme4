@@ -2230,6 +2230,7 @@ weights.merMod <- function(object, type = c("prior","working"), ...) {
     return(res)
 }
 
+## Internal utility, only used in optwrap() :
 ##' @title Get the optimizer function and check it minimally
 ##' @param optimizer character string ( = function name) *or* function
 getOptfun <- function(optimizer) {
@@ -2316,11 +2317,12 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
         opt$convergence <- opt$ierr
     }
     else if (optName == "optimx") {
-        opt <- list(par = coef(opt)[1,],
-                    fvalues = opt$value[1],
-                    conv = opt$convcode[1],
-                    feval = opt$fevals + opt$gevals,
-                    message = attr(opt,"details")[,"message"][[1]])
+	opt <- list(par = coef(opt)[1,],
+		    fvalues = opt$value[1],
+		    method = method,
+		    conv = opt$convcode[1],
+		    feval = opt$fevals + opt$gevals,
+		    message = attr(opt,"details")[,"message"][[1]])
     }
     if (opt$conv != 0) {
         wmsg <- paste("convergence code",opt$conv,"from",optName)
@@ -2354,7 +2356,6 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
         ##  value, to reset the internal/environment variables in devfun ...
         fn(opt$par)
     }
-
 
     ## store all auxiliary information
     attr(opt,"optimizer") <- optimizer
