@@ -449,16 +449,21 @@ predy <- function(sp, vv) {
 
 stripExpr <- function(ll, nms) {
     stopifnot(is.list(ll), is.character(nms))
-    fLevs <- as.expression(nms) # variable names; now replacing log(sigma[.])'s:
+    fLevs <- as.expression(nms) # variable names; now replacing log(sigma[.]) etc:
     fLevs[nms ==  ".sigma"] <- expression(sigma)
     fLevs[nms == ".lsigma"] <- expression(log(sigma))
-    sigNms  <- grep("^.sig[0-9]+", nms)
-    lsigNms <- grep("^.lsig[0-9]+", nms)
+    fLevs[nms == ".sigmasq"] <- expression(sigma^2)
+    sigNms  <- grep("^\\.sig[0-9]+", nms)
+    lsigNms <- grep("^\\.lsig[0-9]+", nms)
+    sig2Nms <- grep("^\\.sigsq[0-9]+", nms)
     ## the <n> in ".sig0<n>" and then in ".lsig0<n>":
     sigsub  <- as.integer(substring(nms[ sigNms], 5))
     lsigsub <- as.integer(substring(nms[lsigNms], 6))
+    sig2sub <- as.integer(substring(nms[sig2Nms], 7))
     fLevs[ sigNms] <- lapply( sigsub, function(i) bquote(    sigma[.(i)]))
     fLevs[lsigNms] <- lapply(lsigsub, function(i) bquote(log(sigma[.(i)])))
+    fLevs[sig2Nms] <- lapply(sig2sub, function(i) bquote(   {sigma[.(i)]}^2))
+    ## result of using { .. }^2  is easier to understand    ==          ==
     levsExpr <- substitute(strip.custom(factor.levels=foo), list(foo=fLevs))
     llNms <- names(ll)
     snames <- c("strip", "strip.left")
@@ -517,7 +522,7 @@ xyplot.thpr <-
     ## FIXME: is this sufficiently reliable?
     ## (include "sigma" in 'theta' parameters)
     nvp <- length(grep("^(\\.sig[0-9]+|.sigma|sd_|cor_)",nms))
-    which <- get.which(which,nvp,nptot,nms,verbose=FALSE) 
+    which <- get.which(which,nvp,nptot,nms,verbose=FALSE)
     levels <- sort(levels[is.finite(levels) & levels > 0])
     spl <- attr(x, "forward")[which]
     bspl <- attr(x, "backward")[which]
@@ -560,7 +565,7 @@ xyplot.thpr <-
                  scales = list(x = list(relation = 'free')),
                  ylab = ylab, xlab = NULL, panel=panel.thpr,
                  spl = spl, absVal = absVal))
-    
+
     do.call(xyplot, stripExpr(ll, names(spl)))
 }
 
@@ -825,7 +830,7 @@ splom.thpr <- function (x, data,
 
     if (length(which)==1)
         stop("can't draw a scatterplot matrix for a single variable")
-    
+
     mlev <- max(levels)
     spl <- attr(x, "forward")[which]
     frange <- sapply(spl, function(x) range(x$knots))
@@ -983,21 +988,23 @@ splom.thpr <- function (x, data,
 
 ## return an lmer profile like x with all the .sigNN parameters
 ## replaced by .lsigNN.  The forward and backward splines for
-## these parameters are recalculated.
-log.thpr <- function (x, base = exp(1)) { ## -> ../man/profile-methods.Rd
+## these parameters are recalculated.  -> ../man/profile-methods.Rd
+logProf <- function (x, base = exp(1), ranef=TRUE,
+                        sigIni = if(ranef) "sig" else "sigma")
+{
+    stopifnot(inherits(x, "thpr"))
     cn <- colnames(x)
-    if (length(sigs <- grep("^\\.sig", cn))) {
-	colnames(x) <- cn <- sub("^\\.sig", ".lsig", cn)
-        levels(x[[".par"]]) <- sub("^\\.sig", ".lsig", levels(x[[".par"]]))
+    sigP <- paste0("^\\.", sigIni)
+    if (length(sigs <- grep(sigP, cn))) {
+        repP <- sub("sig", ".lsig", sigIni)
+	colnames(x) <- cn <- sub(sigP, repP, cn)
+        levels(x[[".par"]]) <- sub(sigP, repP, levels(x[[".par"]]))
         names(attr(x, "backward")) <-
             names(attr(x, "forward")) <-
-                sub("^\\.sig", ".lsig", names(attr(x, "forward")))
+                sub(sigP, repP, names(attr(x, "forward")))
 	for (nm in cn[sigs]) {
             x[[nm]] <- log(x[[nm]], base = base)
-            .par <- NULL  ## suppress R CMD check warning
-            fr <- subset(x, .par == nm & is.finite(x[[nm]]))
-            ## FIXME: avoid subset for global-variable false positive
-            ## fr <- x[x$.par == nm & is.finite(x[[nm]]),]
+	    fr <- x[x[[".par"]] == nm & is.finite(x[[nm]]), TRUE, drop=FALSE]
             form <- eval(substitute(.zeta ~ nm, list(nm = as.name(nm))))
             attr(x, "forward")[[nm]] <- isp <- interpSpline(form, fr)
             attr(x, "backward")[[nm]] <- backSpline(isp)
@@ -1007,35 +1014,11 @@ log.thpr <- function (x, base = exp(1)) { ## -> ../man/profile-methods.Rd
     }
     x
 }
+## the log() method must have (x, base); no other arguments
+log.thpr <- function (x, base = exp(1)) logProf(x, base=base)
 
-### FIXME: Not exported and nowhere used
-## Transform a profile from the standard deviation parameters to the variance
-##
-## @title Transform to variance component scale
-## @param x a profile object from a mixed-effects model
-## @return a modified profile object
-varpr <- function (x) {
-    .par <- NULL  ## suppress R CMD check warning
-    cn <- colnames(x)
-    sigs <- grep("^\\.sig", cn)
-    if (length(sigs)) {
-        colnames(x) <- sub("^\\.sig", ".sigsq", cn)
-        levels(x[[".par"]]) <- sub("^\\.sig", ".sigsq", levels(x[[".par"]]))
-        names(attr(x, "backward")) <-
-            names(attr(x, "forward")) <-
-                sub("^\\.sig", ".sigsq", names(attr(x, "forward")))
-        for (nm in colnames(x)[sigs]) {
-            x[[nm]] <- x[[nm]]^2
-            fr <- subset(x, .par == nm & is.finite(x[[nm]]))
-            form <- eval(substitute(.zeta ~ nm, list(nm = as.name(nm))))
-            attr(x, "forward")[[nm]] <- isp <- interpSpline(form, fr)
-            attr(x, "backward")[[nm]] <- backSpline(isp)
-        }
-        ## eliminate rows the produced non-finite logs
-        x <- x[apply(is.finite(as.matrix(x[, sigs])), 1, all),]
-    }
-    x
-}
+
+
 
 ##' Create an approximating density from a profile object
 ##'
@@ -1104,29 +1087,29 @@ densityplot.thpr <- function(x, data, ...) {
 }
 
 ##' Transform a mixed-effects profile to the variance scale
-##'
-##' @title Transform to the variance scale
-##' @param pr a mixed-effects model profile
-##' @return a transformed mixed-effects model profile
-##' @export
-varianceProf <- function(pr) {
-    .par <- NULL  ## suppress R CMD check warning
-    stopifnot(inherits(pr, "thpr"))
-    spl <- attr(pr, "forward")
-    onms <- names(spl)                  # names of original variables
-    vc <- onms[grep("^.sig", onms)]     # variance components
-    ans <- subset(pr, .par %in% vc, select=c(".zeta", vc, ".par"))
-    ans[[".par"]] <- factor(ans[[".par"]])        # drop unused levels
-    if (".lsig" %in% vc) ans$.lsig <- exp(ans$.lsig)
-    attr(ans, "forward") <- attr(ans, "backward") <- list()
-    for (nm in vc) {
-        ans[[nm]] <- ans[[nm]]^2
-        fr <- subset(ans, .par == nm & is.finite(ans[[nm]]))
-        form <- eval(substitute(.zeta ~ nm, list(nm = as.name(nm))))
-        attr(ans, "forward")[[nm]] <- interpSpline(form, fr)
-        attr(ans, "backward")[[nm]] <- backSpline(attr(ans, "forward")[[nm]])
+varianceProf <- function(x, ranef=TRUE) {
+    ## "parallel" to logProf()
+    stopifnot(inherits(x, "thpr"))
+    cn <- colnames(x)
+    if(length(sigs <- grep(paste0("^\\.", if(ranef)"sig" else "sigma"), cn))) {
+        ## s/sigma/sigmasq/ ;  s/sig01/sig01sq/	 etc
+        sigP <- paste0("^(\\.sig", if(ranef) "(ma)?" else "ma", ")")
+	repP <- "\\1sq"
+	colnames(x) <- cn <- sub(sigP, repP, cn)
+	levels(x[[".par"]]) <- sub(sigP, repP, levels(x[[".par"]]))
+	names(attr(x, "backward")) <-
+	    names(attr(x, "forward")) <-
+		sub(sigP, repP, names(attr(x, "forward")))
+	for (nm in cn[sigs]) {
+	    x[[nm]] <- x[[nm]]^2
+	    ## select rows (and currently drop extra attributes)
+	    fr <- x[x[[".par"]] == nm, TRUE, drop=FALSE]
+	    form <- eval(substitute(.zeta ~ nm, list(nm = as.name(nm))))
+	    attr(x, "forward")[[nm]] <- isp <- interpSpline(form, fr)
+	    attr(x, "backward")[[nm]] <- backSpline(isp)
+        }
     }
-    ans
+    x
 }
 
 ## convert profile to data frame, adding a .focal parameter to simplify lattice/ggplot plotting
