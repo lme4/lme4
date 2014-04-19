@@ -177,5 +177,28 @@ if(FALSE) { ## Hadley broke this
         L <- load(system.file("testdata","polytomous_vcov_ex.RData",
                               package="lme4", mustWork=TRUE))
         expect_warning(vcov(polytomous_vcov_ex),"falling back to var-cov")
+
     }
+
+    ## test convergence warnings
+    L <- load(system.file("testdata","gopherdat2.RData",
+                              package="lme4", mustWork=TRUE))
+    g0 <- glmer(shells~prev + (1|Site)+offset(log(Area)),
+                family=poisson,data=Gdat)
+    ## fit year as factor: OK
+    gc <- glmerControl(check.conv.grad="stop")
+    expect_is(update(g0,.~.+factor(year),
+                    control=gc),
+              "glmerMod")
+    ## warning with year as numeric
+    expect_warning(update(g0,.~.+year),"failed to converge with max|grad|")
+    ## OK if we scale & center it
+    expect_is(update(g0,.~.+scale(year),control=gc),"glmerMod")
+    ## not OK if we scale and don't center
+    expect_warning(update(g0,.~.+ scale(year,center=FALSE)),
+                   "failed to converge with max|grad|")
+    ## OK if center and don't scale
+    expect_is(update(g0,.~.+ scale(year,center=TRUE,scale=FALSE),
+                     control=gc),
+              "glmerMod")
 })

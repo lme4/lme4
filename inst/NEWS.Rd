@@ -3,6 +3,27 @@
 \name{NEWS}
 \title{lme4 News}
 \encoding{UTF-8}
+\section{CHANGES IN VERSION 1.1-7}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item change gradient testing from absolute to relative
+    }
+  }
+}
+\section{CHANGES IN VERSION 1.1-6}{
+  This version incorporates no changes in functionality, just
+  modifications to testing and dependencies for CRAN/backward compatibility.
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item change \code{drop1} example to prevent use of old/incompatible
+      \code{pbkrtest} versions, for 2.15.3 compatibility
+      \item explicitly \code{require(mlmRev)} for tests to prevent cyclic
+      dependency
+      \item bump \code{RcppEigen} Imports: requirement from >0.3.1.2.3 to
+      >=0.3.2.0; \code{Rcpp} dependency to >= 0.10.5
+    }
+  }
+}
 \section{CHANGES IN VERSION 1.1-5}{
   \subsection{BUG FIXES}{
     \itemize{

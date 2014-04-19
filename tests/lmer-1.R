@@ -170,9 +170,11 @@ dat <- within(data.frame(lagoon = factor(rep(1:4,each = 25)),
 try(reg <- lmer(y ~ habitat + (1|habitat*lagoon), data = dat) # did seg.fault
     ) # now gives error                 ^- should be ":"
 r1  <- lmer(y ~ 0+habitat + (1|habitat:lagoon), data = dat,
-            control=lmerControl(check.conv.hess="ignore")) # ok, but senseless
+            control=lmerControl(check.conv.hess="ignore",
+                                check.conv.grad="ignore")) # ok, but senseless
 r1b <- lmer(y ~ 0+habitat + (1|habitat), data = dat,
-            control=lmerControl(check.conv.hess="ignore")) # same model, clearly unidentifiable
+            control=lmerControl(check.conv.hess="ignore",
+                                check.conv.grad="ignore")) # same model, clearly unidentifiable
 ## "TODO" :  summary(r1)  should ideally warn the user
 stopifnot(all.equal(fixef(r1), fixef(r1b), tolerance= 1e-15),
           all.equal(ranef(r1), ranef(r1b), tolerance= 1e-15, check.attributes=FALSE))

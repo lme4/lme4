@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2014-03-02 r65102) -- "Unsuffered Consequences"
+R Under development (unstable) (2014-04-10 r65396) -- "Unsuffered Consequences"
 Copyright (C) 2014 The R Foundation for Statistical Computing
 Platform: i686-pc-linux-gnu (32-bit)
 
@@ -22,6 +22,7 @@ Type 'q()' to quit R.
 > options(show.signif.stars = FALSE)
 > 
 > source(system.file("test-tools-1.R", package = "Matrix"))# identical3() etc
+Loading required package: tools
 > all.EQ <- function(u,v, ...) all.equal.X(u, v, except = c("call", "frame"), ...)
 > S4_2list <- function(obj) {   # no longer used
 +    sn <- slotNames(obj)
@@ -47,7 +48,7 @@ Random effects:
  Subject  (Intercept) 24.74        
           Days         5.92    0.07
  Residual             25.59        
-Number of obs: 180, groups: Subject, 18
+Number of obs: 180, groups:  Subject, 18
 Fixed Effects:
 (Intercept)         Days  
       251.4         10.5  
@@ -62,7 +63,7 @@ Random effects:
  Subject  (Intercept) 23.78        
           Days         5.72    0.08
  Residual             25.59        
-Number of obs: 180, groups: Subject, 18
+Number of obs: 180, groups:  Subject, 18
 Fixed Effects:
 (Intercept)         Days  
       251.4         10.5  
@@ -76,7 +77,7 @@ Random effects:
  Subject   (Intercept) 25.05   
  Subject.1 Days         5.99   
  Residual              25.57   
-Number of obs: 180, groups: Subject, 18
+Number of obs: 180, groups:  Subject, 18
 Fixed Effects:
 (Intercept)         Days  
       251.4         10.5  
@@ -136,7 +137,7 @@ Random effects:
  Groups   Name        Std.Dev.
  Batch    (Intercept) 0.00    
  Residual             3.72    
-Number of obs: 30, groups: Batch, 6
+Number of obs: 30, groups:  Batch, 6
 Fixed Effects:
 (Intercept)  
        5.67  
@@ -145,7 +146,7 @@ Fixed Effects:
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.65 0.12 1.7 
+Time elapsed:  0.76 0.11 0.96 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -158,7 +159,7 @@ Random effects:
  Subject  (Intercept) 24.74        
           Days         5.92    0.07
  Residual             25.59        
-Number of obs: 180, groups: Subject, 18
+Number of obs: 180, groups:  Subject, 18
 Fixed Effects:
 (Intercept)         Days  
       251.4         10.5  
@@ -172,7 +173,7 @@ Random effects:
  Subject   (Intercept) 25.05   
  Subject.1 Days         5.99   
  Residual              25.57   
-Number of obs: 180, groups: Subject, 18
+Number of obs: 180, groups:  Subject, 18
 Fixed Effects:
 (Intercept)         Days  
       251.4         10.5  
@@ -193,7 +194,7 @@ Warning messages:
 > options(oldOpts)  ## restore digits
 > 
 > showProc.time() #
-Time elapsed:  0.264 0 0.562 
+Time elapsed:  0.332 0.04 0.397 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -285,7 +286,7 @@ Random effects:
  Groups   Name        Variance Std.Dev.
  group.id (Intercept) 4.5579   2.1349  
  Residual             0.6678   0.8172  
-Number of obs: 20, groups: group.id, 10
+Number of obs: 20, groups:  group.id, 10
 
 Fixed effects:
             Estimate Std. Error t value
@@ -322,7 +323,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.608 0.044 1.459 
+Time elapsed:  0.764 0.044 0.881 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -337,11 +338,13 @@ Time elapsed:  0.608 0.044 1.459
 Error in FUN(X[[1L]], ...) : 
   Invalid grouping factor specification, habitat * lagoon
 In addition: Warning message:
-In Ops.factor(habitat, lagoon) : * not meaningful for factors
+In Ops.factor(habitat, lagoon) : ‘*’ not meaningful for factors
 > r1  <- lmer(y ~ 0+habitat + (1|habitat:lagoon), data = dat,
-+             control=lmerControl(check.conv.hess="ignore")) # ok, but senseless
++             control=lmerControl(check.conv.hess="ignore",
++                                 check.conv.grad="ignore")) # ok, but senseless
 > r1b <- lmer(y ~ 0+habitat + (1|habitat), data = dat,
-+             control=lmerControl(check.conv.hess="ignore")) # same model, clearly unidentifiable
++             control=lmerControl(check.conv.hess="ignore",
++                                 check.conv.grad="ignore")) # same model, clearly unidentifiable
 > ## "TODO" :  summary(r1)  should ideally warn the user
 > stopifnot(all.equal(fixef(r1), fixef(r1b), tolerance= 1e-15),
 +           all.equal(ranef(r1), ranef(r1b), tolerance= 1e-15, check.attributes=FALSE))
@@ -389,7 +392,7 @@ Random effects:
  Groups   Name        Std.Dev.
  habitat  (Intercept) 0.000   
  Residual             9.121   
-Number of obs: 100, groups: habitat, 20
+Number of obs: 100, groups:  habitat, 20
 Fixed Effects:
 lagoon1  lagoon2  lagoon3  lagoon4  
   101.7    200.3    301.8    400.8  
@@ -442,7 +445,7 @@ lagoon1  lagoon2  lagoon3  lagoon4
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.3 0.02 0.692 
+Time elapsed:  0.352 0.044 0.424 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -460,10 +463,10 @@ Time elapsed:  0.3 0.02 0.692
 +           inherits(tryCatch(lmer(y ~ x2|ff + x1, data = D), error = function(e)e),
 +                    "error"))
 Warning message:
-In Ops.factor(ff, x1) : + not meaningful for factors
+In Ops.factor(ff, x1) : ‘+’ not meaningful for factors
 > 
 > showProc.time() #
-Time elapsed:  0.988 0.016 2.203 
+Time elapsed:  1.076 0 1.136 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -494,14 +497,14 @@ Random effects:
  Groups   Name        Std.Dev.
  f        (Intercept) 18.395  
  Residual              3.024  
-Number of obs: 57, groups: f, 6
+Number of obs: 57, groups:  f, 6
 Fixed Effects:
 (Intercept)  
       30.68  
 > glmer(y~(1|f),data=d,family=poisson)
 Generalized linear mixed model fit by maximum likelihood (Laplace
   Approximation) [glmerMod]
- Family: poisson ( log )
+ Family: poisson  ( log )
 Formula: y ~ (1 | f)
    Data: d
       AIC       BIC    logLik  deviance  df.resid 
@@ -509,7 +512,7 @@ Formula: y ~ (1 | f)
 Random effects:
  Groups Name        Std.Dev.
  f      (Intercept) 0.7115  
-Number of obs: 57, groups: f, 6
+Number of obs: 57, groups:  f, 6
 Fixed Effects:
 (Intercept)  
       3.217  
@@ -538,4 +541,4 @@ Fixed Effects:
 > 
 > proc.time()
    user  system elapsed 
-  6.852   3.912  23.906 
+  7.360   3.716  11.624 

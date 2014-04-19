@@ -146,7 +146,8 @@ test_that("lmer", {
 			  subset(sleepstudy,Subject %in% levels(Subject)[1:4])), "merMod")
     expect_is(lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
                    data = sleepstudy, subset = (Days == 1 | Days == 9),
-                   control=lmerControl(check.conv.hess="ignore")),
+                   control=lmerControl(check.conv.hess="ignore",
+                                       check.conv.grad="ignore")),
               "merMod")
     options(lmerControl=NULL)
     ## check for when ignored options are set

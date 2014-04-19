@@ -74,7 +74,8 @@ test_that("bootMer", {
     PastesNA <- Pastes
     PastesNA$Sample[1:3] <- NA
     m2 <- update(m1,data=PastesNA)
-    confint(m2,method="boot",nsim=10,quiet=TRUE,seed=101)
+    suppressWarnings(conf2 <-
+                     confint(m2,method="boot",nsim=10,quiet=TRUE,seed=101))
     fm1 <- lmer(Reaction~Days+(Days|Subject),sleepstudy)
     sleepstudyNA <- sleepstudy
     sleepstudyNA$Days[1:3] = NA

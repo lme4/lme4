@@ -22,11 +22,21 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
     ## gradients:
     ## check absolute gradient (default)
     ccl <- ctrl[[cstr <- "check.conv.grad"]] ; checkCtrlLevels(cstr, cc <- ccl[["action"]])
+    wstr <- NULL
     if (doCheck(cc)) {
-        if ((max.grad <- max(abs(derivs$gradient))) > ccl$tol) {
+        scgrad <- try(with(derivs,solve(Hessian,gradient)),silent=TRUE)
+        if (inherits(scgrad,"try-error")) {
+            wstr <- "unable to evaluate scaled gradient"
             res$code <- -1L
-            wstr <- gettextf("Model failed to converge with max|grad| = %g (tol = %g)",
-                             max.grad, ccl$tol)
+        } else {
+            if ((max.grad <- max(abs(scgrad))) > ccl$tol) {
+                w <- which.max(max.grad)
+                res$code <- -1L
+                wstr <- gettextf("Model failed to converge with max|grad| = %g (tol = %g, component %d)",
+                                 max.grad, ccl$tol,w)
+            }
+        }
+        if (!is.null(wstr)) {
             res$messages <- wstr
             switch(cc,
                    "warning" = warning(wstr),
@@ -82,7 +92,7 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
             }
         }
         resHess <- checkHess(derivs$Hessian, ccl$tol)
-        if (any(resHess$code != 0)) {
+        if (resHess$code != 0) {
             res$code <- resHess$code
             res$messages <- c(res$messages,resHess$messages)
             wstr <- paste(resHess$messages,collapse=";")
