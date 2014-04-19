@@ -62,6 +62,7 @@ export(lmerControl, glmerControl, nlmerControl,
 export(lmerResp)
 export(lmList)
 export(lmResp)
+export(logProf)
 export(merPredD)
 export(mkGlmerDevfun)
 export(mkLmerDevfun)
