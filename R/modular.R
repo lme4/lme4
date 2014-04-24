@@ -16,7 +16,8 @@ RHSForm <- function(formula) {
     formula
 }
 
-LHSForm <- function(formula) {
+##' Original formula, minus response ( = '~ <RHS>') :
+noLHSform <- function(formula) {
     if (length(formula)==2) formula else formula[-2]
 }
 

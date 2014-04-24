@@ -324,8 +324,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
         pred <- pred+offset
         if (!noReForm(re.form)) {
             if (is.null(re.form)) {
-                ## original formula, minus response
-                re.form <- LHSForm(formula(object))
+		re.form <- noLHSform(formula(object)) # formula w/o response
                 ReTrms <- mkReTrms(findbars(re.form[[2]]), newdata)
             }
             newRE <- mkNewReTrms(object,newdata,re.form,na.action=na.action,
@@ -387,7 +386,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                             allow.new.levels=FALSE, na.action=na.pass, ...) {
     mc <- match.call()
     mc[[1]] <- quote(lme4::.simulateFun)
-    return(eval(mc, parent.frame(1L)))
+    eval(mc, parent.frame(1L))
 }
 
 .simulateFun <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
@@ -457,9 +456,8 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         }
         re.form <- if (use.u) NULL else ~0
     }
-    if (is.null(re.form)) {
-        ## original formula, minus response
-        re.form <- LHSForm(formula(object))
+    if (is.null(re.form)) { # formula w/o response
+	re.form <- noLHSform(formula(object))
     }
     if(!is.null(seed)) set.seed(seed)
     if(!exists(".Random.seed", envir = .GlobalEnv))
@@ -481,7 +479,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     ## now add random components:
     ##  only the ones we did *not* condition on
 
-    ## compre.form <- LHSForm(formula(object))
+    ## compre.form <- noLHSform(formula(object))
     ## construct RE formula ONLY: leave out fixed terms,
     ##   which might have loose terms like offsets in them ...
     fb <- findbars(formula(object))
@@ -586,7 +584,6 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     ##  so we have to re-assign here
     attr(val,"na.action") <- fit.na.action
 
-    
     attr(val, "seed") <- RNGstate
     val
 }
