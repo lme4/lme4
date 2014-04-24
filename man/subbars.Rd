@@ -11,26 +11,21 @@
   the formula with all | operators replaced by +
 }
 \description{
-  Substitute the '+' function for the '|' function in a
-  mixed-model formula.  This provides a formula suitable
-  for the current model.frame function.
-}
-\section{Note}{
-  This function is called recursively on individual terms
-  in the model, which is why the argument is called
-  \code{term} and not a name like \code{form}, indicating a
-  formula.
-}
-\examples{
-subbars(Reaction ~ Days + (Days|Subject)) ## => Reaction ~ Days + (Days + Subject)
+  Substitute the '+' function for the '|' function in a mixed-model
+  formula, recursively (hence the argument name \code{term}).  This
+  provides a formula suitable for the current \code{\link{model.frame}}
+  function.
 }
 \seealso{
   \code{\link{formula}}, \code{\link{model.frame}},
   \code{\link{model.matrix}}.
 
-  Other utilities: \code{\link{findbars}},
+  Other utilities: \code{\link{findbars}}, \code{\link{nobars}},
   \code{\link{mkRespMod}}, \code{\link{mkReTrms}},
-  \code{\link{nlformula}}, \code{\link{nobars}}
+  \code{\link{nlformula}}.
+}
+\examples{
+subbars(Reaction ~ Days + (Days|Subject)) ## => Reaction ~ Days + (Days + Subject)
 }
 \keyword{models}
 \keyword{utilities}

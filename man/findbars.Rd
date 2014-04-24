@@ -43,7 +43,7 @@ findbars(~ 1 + (1 | batch / cask))
 ## => list of length 2:  list ( 1 | cask:batch ,  1 | batch)
 \dontshow{
 stopifnot(identical(findbars(f1),
-                    list(expression(Days | Subject)[[1]])))
+                    list(quote(Days | Subject))))
 }
 }
 \keyword{models}

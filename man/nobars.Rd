@@ -14,7 +14,7 @@
   Remove the random-effects terms from a mixed-effects
   formula, thereby producing the fixed-effects formula.
 }
-\section{Note}{
+\note{
   This function is called recursively on individual terms
   in the model, which is why the argument is called
   \code{term} and not a name like \code{form}, indicating a
