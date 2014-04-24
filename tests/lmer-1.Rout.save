@@ -1,13 +1,11 @@
 
-R Under development (unstable) (2014-04-10 r65396) -- "Unsuffered Consequences"
+R version 3.1.0 Patched (2014-04-22 r65455) -- "Spring Dance"
 Copyright (C) 2014 The R Foundation for Statistical Computing
-Platform: i686-pc-linux-gnu (32-bit)
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -338,7 +336,7 @@ Time elapsed:  0.764 0.044 0.881
 Error in FUN(X[[1L]], ...) : 
   Invalid grouping factor specification, habitat * lagoon
 In addition: Warning message:
-In Ops.factor(habitat, lagoon) : ‘*’ not meaningful for factors
+In Ops.factor(habitat, lagoon) : * not meaningful for factors
 > r1  <- lmer(y ~ 0+habitat + (1|habitat:lagoon), data = dat,
 +             control=lmerControl(check.conv.hess="ignore",
 +                                 check.conv.grad="ignore")) # ok, but senseless
@@ -463,7 +461,7 @@ Time elapsed:  0.352 0.044 0.424
 +           inherits(tryCatch(lmer(y ~ x2|ff + x1, data = D), error = function(e)e),
 +                    "error"))
 Warning message:
-In Ops.factor(ff, x1) : ‘+’ not meaningful for factors
+In Ops.factor(ff, x1) : + not meaningful for factors
 > 
 > showProc.time() #
 Time elapsed:  1.076 0 1.136 
