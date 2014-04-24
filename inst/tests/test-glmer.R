@@ -110,13 +110,12 @@ if(FALSE) { ## Hadley broke this
                     x2=rep(0:1,c(999,1)))
     mod2 <- glmer(y~x+x2+(1|f),data=d,family=binomial)
     expect_equal(unname(fixef(mod2))[1:2],
-                 c(-0.10036244,0.03548523),tolerance=1e-4)
-    expect_true(unname(fixef(mod2)[3]<(-10)))
-    mod3 <- update(mod2,family=binomial(link="probit"))
-    expect_equal(unname(fixef(mod3))[1:2],
-                 c(-0.06288878,0.02224270),tolerance=1e-4)
-    expect_true(unname(fixef(mod3)[3]<(-4)))
-    mod4 <- update(mod2,family=binomial(link="cauchit"))
+                 c(-0.10036244,0.03548523), tolerance=1e-4)
+    expect_true(unname(fixef(mod2)[3] < -10))
+    mod3 <- update(mod2, family=binomial(link="probit")) # singular Hessian warning
+    expect_equal(unname(fixef(mod3))[1:2], c(-0.062889, 0.022241), tolerance=1e-4)
+    expect_true(fixef(mod3)[3] < -4)
+    mod4 <- update(mod2, family=binomial(link="cauchit"))#--> singular Hessian warning
 
     ## on-the-fly creation of index variables
     if (FALSE) {
@@ -132,14 +131,16 @@ if(FALSE) { ## Hadley broke this
     }
 
     ##
-    if (testLevel>1) {
+    if(testLevel > 1) {
         load(system.file("testdata","mastitis.rda",package="lme4"))
         t1 <- system.time(g1 <-
-                          glmer(NCM ~ birth + calvingYear + (1|sire) +
-                     (1|herd),mastitis,poisson))
+                          glmer(NCM ~ birth + calvingYear + (1|sire) + (1|herd),
+                                mastitis, poisson,
+                                ## current (2014-04-24) default:
+                                control=glmerControl(optimizer=c("bobyqa","Nelder_Mead"))))
         t2 <- system.time(g2 <- update(g1,
                          control=glmerControl(optimizer="bobyqa")))
-        ## 20 seconds N-M vs 8 seconds bobyqa ...
+        ## 20 (then 13.0) seconds N-M vs 8 (then 4.8) seconds bobyqa ...
         ## problem is fairly ill-conditioned so parameters
         ##  are relatively far apart even though likelihoods are OK
         expect_equal(logLik(g1),logLik(g2),tolerance=1e-7)
@@ -172,33 +173,30 @@ if(FALSE) { ## Hadley broke this
                  c(0.3840921, 0.3768747), tolerance=1e-7)
     expect_equal(sd3, unname(coef(summary(gm3))[,"Std. Error"]))
     ## test non-pos-def finite-difference Hessian ...
-    if (getRversion()>"3.0.0") {
+    if(getRversion() > "3.0.0") {
         ## saved fits are not safe with old R versions
         L <- load(system.file("testdata","polytomous_vcov_ex.RData",
                               package="lme4", mustWork=TRUE))
         expect_warning(vcov(polytomous_vcov_ex),"falling back to var-cov")
-
     }
 
     ## test convergence warnings
     L <- load(system.file("testdata","gopherdat2.RData",
-                              package="lme4", mustWork=TRUE))
+                          package="lme4", mustWork=TRUE))
     g0 <- glmer(shells~prev + (1|Site)+offset(log(Area)),
-                family=poisson,data=Gdat)
+                family=poisson, data=Gdat)
     ## fit year as factor: OK
     gc <- glmerControl(check.conv.grad="stop")
-    expect_is(update(g0,.~.+factor(year),
-                    control=gc),
-              "glmerMod")
-    ## warning with year as numeric
-    expect_warning(update(g0,.~.+year),"failed to converge with max|grad|")
+    expect_is(update(g0,.~.+factor(year), control=gc), "glmerMod")
+    ## error (was 'warning') with year as numeric
+    expect_error(update(g0, .~. +year), "did not converge in")
     ## OK if we scale & center it
-    expect_is(update(g0,.~.+scale(year),control=gc),"glmerMod")
+    expect_is(update(g0,.~. + scale(year), control=gc), "glmerMod")
     ## not OK if we scale and don't center
-    expect_warning(update(g0,.~.+ scale(year,center=FALSE)),
+    expect_warning(update(g0,.~. + scale(year,center=FALSE)),
                    "failed to converge with max|grad|")
     ## OK if center and don't scale
-    expect_is(update(g0,.~.+ scale(year,center=TRUE,scale=FALSE),
+    expect_is(update(g0,.~. + scale(year,center=TRUE,scale=FALSE),
                      control=gc),
               "glmerMod")
 })
