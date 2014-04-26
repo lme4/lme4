@@ -1149,8 +1149,11 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
                    ff, x0, lower=lower, control=control,
                    calc.derivs=calc.derivs)
     cc <- checkConv(attr(opt,"derivs"),opt$par,
-                    ## FIXME: fragile??
-		    ctrl = eval(object@call$control)$checkConv,
+                    ## FIXME: was there a reason that ctrl was passed
+                    ## via the call slot?  it was causing problems
+                    ## when optTheta called refit (github issue #173)
+		    # ctrl = eval(object@call$control)$checkConv,
+                    ctrl = control$checkConv,
                     lbound=lower)
     if (isGLMM(object)) rr$setOffset(baseOffset)
     mkMerMod(environment(ff), opt,

@@ -68,7 +68,7 @@ est_theta <- function(object) {
 ##' @export
 glmer.nb <- function(..., interval = log(th)+c(-3,3), verbose=FALSE)
 {
-  g0 <- glmer(..., family=poisson)
+  g0 <- glmer(..., family = poisson)
   th <- est_theta(g0)
   if(verbose) cat("th := est_theta(glmer(..)) =", format(th),"\n")
   g1 <- update(g0, family = negative.binomial(theta=th))
