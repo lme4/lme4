@@ -25,10 +25,20 @@
 ## the last element of a variance-covariance vector.  (This last
 ## part is a little less generic than the rest of it.)
 
-## Convert list of matrices to concatenated vector of lower triangles
-## with an attribute that gives the dimension of each matrix
-## in the original list
+##' List of matrices to concatenated vector
+##'
+##' Convert list of matrices to concatenated vector of lower triangles
+##' with an attribute that gives the dimension of each matrix in the
+##' original list.  This attribute may be used to reconstruct the
+##' matrices.
+##'
+##' @param L list of symmetric, upper-triangular, or lower-triangular
+##' square matrices
+##' @return A concatenation of the elements in one triangle of each
+##' matrix. An attribute \code{"clen"} gives the dimension of each
+##' matrix.
 mlist2vec <- function(L) {
+    if(is.atomic(L)) L <- list(L)
     n <- sapply(L,nrow)
     ## allow for EITHER upper- or lower-triangular input;
     ## in either case, read off in "lower-triangular" order
@@ -54,8 +64,19 @@ get_clen <- function(v,n=NULL) {
     n
 }
 
-## Convert concatenated vector to list of Cholesky factors
-## (lower triangle or symmetric)
+##' Concatenated vector to list of matrices
+##' 
+##' Convert concatenated vector to list of matrices (lower triangle or
+##' symmetric). These matrices could represent Cholesky factors,
+##' covariance matrices, or correlation matrices (with standard
+##' deviations on the diagonal).
+##'
+##' @param v concatenated vector
+##' @param n FIXME: this has something to do with the dimension of
+##' associated matrices.
+##' @param symm Return symmetric matrix if \code{TRUE} or
+##' lower-triangular if \code{FALSE}
+##' @return List of matrices
 vec2mlist <- function(v,n=NULL,symm=TRUE) {
     n <- get_clen(v,n)
     s <- split(v,rep.int(seq_along(n),n*(n+1)/2))
@@ -82,15 +103,25 @@ vec2STlist <- function(v, n = NULL){
   })
 }
 
-## convert 'sdcor' format -- diagonal = std dev, off-diag=cor
-##  to and from variance-covariance matrix
+##' Standard deviation-correlation matrix to covariance matrix
+##' 
+##' convert 'sdcor' format -- diagonal = std dev, off-diag=cor to and
+##' from variance-covariance matrix
+##'
+##' @param m Standard deviation-correlation matrix
+##' @return Covariance matrix
 sdcor2cov  <- function(m) {
     sd <- diag(m)
     diag(m) <- 1
     m * outer(sd,sd)
 }
 
-## convert cov to sdcor
+##' Covariance matrix to standard deviation-correlation matrix
+##'
+##' convert cov to sdcor
+##'
+##' @param V Covariance matrix
+##' @return Standard deviation-correlation matrix
 cov2sdcor  <- function(V) {
     ## "own version" of cov2cor():  1. no warning for NA;   2. diagonal = sd(.)
     p <- (d <- dim(V))[1L]
@@ -137,7 +168,16 @@ safe_chol <- function(m) {
     ## but results might be returned in a strange format: TEST
 }
 
-## from var-cov to scaled Cholesky:
+##' Variance-covariance to relative covariance factor
+##' 
+##' from var-cov to scaled Cholesky:
+##'
+##' @param v Vector of elements from the lower triangle of a
+##' variance-covariance matrix.
+##' @param n FIXME: see "@param n" above
+##' @param s Scale parameter
+##' @return Vector of elements from the lower triangle of a relative
+##' covariance factor. 
 Vv_to_Cv <- function(v,n=NULL,s=1) {
     if (!missing(s)) {
         v <- v[-length(v)]
@@ -148,7 +188,16 @@ Vv_to_Cv <- function(v,n=NULL,s=1) {
     r
 }
 
-## from sd-cor to scaled Cholesky:
+##' Standard-deviation-correlation to relative covariance factor
+##' 
+##' from sd-cor to scaled Cholesky
+##'
+##' @param v Vector of elements from the lower triangle of a
+##' standard-deviation-correlation matrix.
+##' @param n FIXME: see "@param n" above
+##' @param s Scale parameter
+##' @return Vector of elements from the lower triangle of a relative
+##' covariance factor. 
 Sv_to_Cv <- function(v,n=NULL,s=1) {
     if (!missing(s)) {
         v <- v[-length(v)]
@@ -159,8 +208,17 @@ Sv_to_Cv <- function(v,n=NULL,s=1) {
     r
 }
 
-## from unscaled Cholesky vector to (possibly scaled)
-## variance-covariance vector
+##' Relative covariance factor to variance-covariance
+##' 
+##' from unscaled Cholesky vector to (possibly scaled)
+##' variance-covariance vector
+##'
+##' @param v Vector of elements from the lower triangle of a
+##' relative covariance factor.
+##' @param n FIXME: see "@param n" above
+##' @param s Scale parameter
+##' @return Vector of elements from the lower triangle of a
+##' variance-covariance matrix.
 Cv_to_Vv <- function(v,n=NULL,s=1) {
     r <- mlist2vec(lapply(vec2mlist(v,n,symm=FALSE),
                           function(m) tcrossprod(m)*s^2))
@@ -169,7 +227,16 @@ Cv_to_Vv <- function(v,n=NULL,s=1) {
     r
 }
 
-## from unscaled Chol to sd-cor vector
+##' Relative covariance factor to standard-deviation-correlation
+##' 
+##' from unscaled Chol to sd-cor vector
+##'
+##' @param v Vector of elements from the lower triangle of a
+##' relative covariance factor.
+##' @param n FIXME: see "@param n" above
+##' @param s Scale parameter
+##' @return Vector of elements from the lower triangle of a
+##' standard-deviation-correlation matrix.
 Cv_to_Sv <- function(v,n=NULL,s=1) {
     r <- mlist2vec(lapply(vec2mlist(v,n,symm=FALSE),
                           function(m) cov2sdcor(tcrossprod(m)*s^2)))
