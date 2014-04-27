@@ -1041,7 +1041,14 @@ print.ranef.mer <- function(x, ...) {
 refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
 {
 
-    if (length(list(...)) > 0) warning("additional arguments to refit.merMod ignored")
+    if (ll <- length(l... <- list(...)) > 0) {
+        if ((ll == 1L) &&  (names(l...)[1] == "control")) {
+            newControl <- l...$control
+        }
+        else {
+            warning("additional arguments to refit.merMod ignored")
+        }
+    }
     ## TODO: not clear whether we should reset the names
     ##       to the new response variable.  Maybe not.
 
@@ -1135,18 +1142,21 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
         x0    <- c(x0, unname(fixef(object)))
         lower <- c(lower, rep(-Inf,length(x0)-length(lower)))
     }
-    control <- object@optinfo$control
-    newControl <- list(...)$control
+    ## control <- object@optinfo$control
     if (!is.null(newControl)) {
-        for (i in names(newControl)) {
-            control[[i]] <- newControl[[i]]
-        }
+        control <- newControl
+        control$optCtrl <- object@optinfo$control
+        ## for (i in names(newControl)) {
+        ##     control[[i]] <- newControl[[i]]
+        ## }
+    } else {
+        control <- lmerControl()
     }
     ## control <- c(control,list(xst=0.2*xst, xt=xst*0.0001))
     ## FIX ME: allow use.last.params to be passed through
     calc.derivs <- !is.null(object@optinfo$derivs)
     opt <- optwrap(object@optinfo$optimizer,
-                   ff, x0, lower=lower, control=control,
+                   ff, x0, lower=lower, control=control$optCtrl,
                    calc.derivs=calc.derivs)
     cc <- checkConv(attr(opt,"derivs"),opt$par,
                     ## FIXME: was there a reason that ctrl was passed
@@ -1154,6 +1164,7 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
                     ## when optTheta called refit (github issue #173)
 		    # ctrl = eval(object@call$control)$checkConv,
                     ctrl = control$checkConv,
+                    # ctrl = cntrl$checkConv,
                     lbound=lower)
     if (isGLMM(object)) rr$setOffset(baseOffset)
     mkMerMod(environment(ff), opt,
