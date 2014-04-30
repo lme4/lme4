@@ -189,7 +189,8 @@ if(FALSE) { ## Hadley broke this
     gc <- glmerControl(check.conv.grad="stop")
     expect_is(update(g0,.~.+factor(year), control=gc), "glmerMod")
     ## error (was 'warning') with year as numeric
-    expect_error(update(g0, .~. +year), "did not converge in")
+    ## expect_error(update(g0, .~. +year), "did not converge in")
+    expect_warning(update(g0, .~. +year), "failed to converge")
     ## OK if we scale & center it
     expect_is(update(g0,.~. + scale(year), control=gc), "glmerMod")
     ## not OK if we scale and don't center
