@@ -1041,6 +1041,8 @@ print.ranef.mer <- function(x, ...) {
 refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
 {
 
+    newControl <- NULL
+    
     if (ll <- length(l... <- list(...)) > 0) {
         if ((ll == 1L) &&  (names(l...)[1] == "control")) {
             newControl <- l...$control

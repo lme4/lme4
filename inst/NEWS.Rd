@@ -7,6 +7,8 @@
   \subsection{BUG FIXES}{
     \itemize{
       \item change gradient testing from absolute to relative
+      \item fix \code{confint(.,method="boot")} to allow/work
+      properly with \code{boot.type} values other than \code{"perc"}
     }
   }
 }

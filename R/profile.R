@@ -659,10 +659,11 @@ confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
 ##' fm1B
 confint.merMod <- function(object, parm, level = 0.95,
 			   method=c("profile","Wald","boot"),
-			   zeta, nsim=500, boot.type="perc",
+			   zeta, nsim=500, boot.type=c("perc","basic","norm"),
                            quiet=FALSE, oldNames=TRUE, ...)
 {
     method <- match.arg(method)
+    boot.type <- match.arg(boot.type)
     if (!missing(parm) && !is.numeric(parm) && method %in% c("profile","boot"))
         stop("for method='",method,"', 'parm' must be specified as an integer")
     switch(method,
@@ -726,7 +727,10 @@ confint.merMod <- function(object, parm, level = 0.95,
            bci <- lapply(seq_along(bb$t0),
                          boot.out=bb,
                          boot::boot.ci,type=boot.type,conf=level)
-           citab <- t(sapply(bci,function(x) x[["percent"]][4:5]))
+           cpos <- grep(boot.type,names(bci[[1]]))
+           ## get _last_ two columns
+           ccol <- ncol(bci[[1]][[cpos]])+(-1:0)
+           citab <- t(sapply(bci,function(x) x[[cpos]][ccol]))
            a <- (1 - level)/2
            a <- c(a, 1 - a)
            pct <- format.perc(a, 3)
