@@ -1,47 +1,23 @@
-## copied from Yihui Xie:  
-## https://raw.githubusercontent.com/yihui/knitr/master/.travis.yml
-# it is not really python, but there is no R support on Travis CI yet
+# Sample .travis.yml for R projects.
+#
+# See README.md for instructions, or for more configuration options,
+# see the wiki:
+#   https://github.com/craigcitro/r-travis/wiki
 
-## BMB/lme4 changes
-## change package name
-## set LME4 test level env variable
-##
+language: c
 
-language: python
-
-# environment variables
-env:
-  global:
-    - R_LIBS_USER=~/R
-    - LME4_TEST_LEVEL=20
-  matrix:
-    - TARGET=travis
-    - TARGET=integration DISPLAY=:99.0
-
-# capturing state, early exit if no integration test is needed
 before_install:
-  - env | sort
-  - if [ ${TARGET} = integration ]; then
-      if ! make integration-need; then
-        echo "NOTE:"" Integration test skipped. To enable, create a branch named ${TRAVIS_BRANCH} in ${TRAVIS_REPO_SLUG}-examples.";
-        exit 0;
-      fi;
-    fi
-
-# install dependencies
+  - curl -OL http://raw.github.com/craigcitro/r-travis/master/scripts/travis-tool.sh
+  - chmod 755 ./travis-tool.sh
+  - ./travis-tool.sh bootstrap
 install:
-  - sudo apt-add-repository -y "deb http://cran.rstudio.com/bin/linux/ubuntu `lsb_release -cs`/"
-  - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
-  - sudo apt-add-repository -y ppa:marutter/c2d4u
-  - sudo apt-get update
-  - sudo apt-get install r-base-dev r-cran-xml r-cran-rcurl r-cran-rgl r-recommended r-cran-knitr
-  - sudo apt-get install texinfo
-  - "[ ! -d ${R_LIBS_USER} ] && mkdir ${R_LIBS_USER}"
-  - R --version
-  - R -e '.libPaths(); sessionInfo()'
-  - Rscript -e 'install.packages("lme4", dep = TRUE, repos = c("http://rforge.net", "http://cran.rstudio.org"))'
+  - ./travis-tool.sh install_deps
+script: ./travis-tool.sh run_tests
 
-# run tests
-script:
-  - make ${TARGET}
+after_failure:
+  - ./travis-tool.sh dump_logs
 
+notifications:
+  email:
+    on_success: change
+    on_failure: change
