@@ -5,6 +5,10 @@ noReForm <- function(re.form) {
         (is(re.form,"formula") && length(re.form)==2 && identical(re.form[[2]],0))
 }
 
+reOnly <- function(f) {
+    reformulate(paste0("(",sapply(findbars(f),deparse),")"))
+}
+
 reFormHack <- function(re.form,ReForm,REForm,REform) {
     if (!missing(ReForm)) {
         message(shQuote("re.form")," is now preferred to ",shQuote("ReForm"))
@@ -145,8 +149,11 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, ReForm,
                  " for grouping variables unless allow.new.levels is TRUE")
         unames <- unique(sort(names(ReTrms$cnms)))  ## FIXME: same as names(ReTrms$flist) ?
         ## convert numeric grouping variables to factors as necessary
+        ## must use all.vars() for examples
+        ## TO DO: should restrict attention to grouping factors only
         for (i in all.vars(RHSForm(re.form))) {
-            rfd[[i]] <- factor(rfd[[i]])
+            if (!is.matrix(rfd[[i]]))
+                rfd[[i]] <- factor(rfd[[i]])
         }
         Rfacs <- lapply(setNames(unames,unames),
                         function(x) factor(eval(parse(text=x),envir=rfd)))
@@ -324,8 +331,8 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
         pred <- pred+offset
         if (!noReForm(re.form)) {
             if (is.null(re.form)) {
-		re.form <- noLHSform(formula(object)) # formula w/o response
-                ReTrms <- mkReTrms(findbars(re.form[[2]]), newdata)
+		re.form <- reOnly(formula(object)) # RE formula only
+                ReTrms <- mkReTrms(findbars(re.form), newdata)
             }
             newRE <- mkNewReTrms(object,newdata,re.form,na.action=na.action,
                                  allow.new.levels=allow.new.levels)
