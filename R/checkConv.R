@@ -30,7 +30,7 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
             res$code <- -1L
         } else {
             if ((max.grad <- max(abs(scgrad))) > ccl$tol) {
-                w <- which.max(max.grad)
+                w <- which.max(abs(scgrad))
                 res$code <- -1L
                 wstr <- gettextf("Model failed to converge with max|grad| = %g (tol = %g, component %d)",
                                  max.grad, ccl$tol,w)
@@ -135,8 +135,10 @@ checkHess <- function(H, tol, hesstype="") {
                             "very large eigenvalue",
                             "\n - Rescale variables?", sep=""))
             }
-            if((min(evd) / max(evd)) < tol) {
+            if ((min(evd) / max(evd)) < tol) {
                 res$code <- c(res$code, 3L)
+                ## consider skipping warning message if we've
+                ## already hit the previous flag?
                 if(!5L %in% res$code) {
                     res$messages <-
                         c(res$messages,
