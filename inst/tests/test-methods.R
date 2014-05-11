@@ -159,3 +159,17 @@ test_that("misc", {
     expect_is(as.data.frame(VarCorr(fm1)),"data.frame")
 })
 }
+context("plot")
+test_that("plot", {
+    ## test getData() within plot function: reported by Dieter Menne
+    doFit <- function(){
+        data(Orthodont,package="nlme")
+        data1 <- Orthodont
+        fm1 <- lmer(distance ~ age + (age|Subject), data=data1)
+    }
+    fm0 <- lmer(distance ~ age + (age|Subject), data=Orthodont)
+    expect_is(plot(fm0),"trellis")
+    fm1 <- doFit()
+    pp <- plot(fm1, resid(., scaled=TRUE) ~ fitted(.) | Sex, abline = 0)
+    expect_is(pp,"trellis")
+})
