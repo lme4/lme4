@@ -278,20 +278,25 @@ cs <- function(formula, init=NULL, het=TRUE){
 
 #' @title Autocorrelated random intercepts 
 #' 
-#' For a \code{formula=~(<time>|<id>)}, specifies random effects with an AR(1)-correlation
-#' structure in (discrete, equidistant!) \code{<time>} for each level of \code{<id>}, i.e. for 2 observations
-#' \eqn{y_ij} and \eqn{y_ij'} that are \eqn{d} units of \code{time} apart, the covariance is
-#' \eqn{\sigma^2\rho^d}. 
-#' In this first stab at this, observations within each group have to be ordered and 1 timeunit apart, because the math for
-#' the entries in Lambdat gets too messy otherwise... 
-#' The default, \code{formula=~(.|1)}, yields one auto-correlated intercept per observation under the assumptions
-#' that the data are ordered and equidistant in time. Note that the covariance will be dense and slow as hell
-#' to evaluate.
+#' For a \code{formula=~(<time>|<id>)}, specifies random effects with
+#' an AR(1)-correlation structure in (discrete, equidistant!)
+#' \code{<time>} for each level of \code{<id>}, i.e. for 2
+#' observations \eqn{y_ij} and \eqn{y_ij'} that are \eqn{d} units of
+#' \code{time} apart, the covariance is \eqn{\sigma^2\rho^d}.  In this
+#' first stab at this, observations within each group have to be
+#' ordered and 1 timeunit apart, because the math for the entries in
+#' Lambdat gets too messy otherwise...  The default,
+#' \code{formula=~(.|1)}, yields one auto-correlated intercept per
+#' observation under the assumptions that the data are ordered and
+#' equidistant in time. Note that the covariance will be dense and
+#' slow as hell to evaluate.
 #' @param formula a one sided formula specifying a random effect in
-#'     \code{lme4} notation, i.e. \code{~(<time> | <id>)}. \code{~(. | <id>)} is a valid
-#'     specification that simply uses the rownumbers as time index. \code{<time>} cannot be a factor.
-#' @param init (optional) initial values for the standard deviations and the correlation.
-#' 		  If not supplied, sd's will be 1 and the inital correlation will be .1.	    
+#' \code{lme4} notation, i.e. \code{~(<time> | <id>)}. \code{~(. |
+#' <id>)} is a valid specification that simply uses the rownumbers as
+#' time index. \code{<time>} cannot be a factor.
+#' @param init (optional) initial values for the standard deviations
+#' and the correlation.  If not supplied, sd's will be 1 and the
+#' inital correlation will be .1.
 #' @param het NOT YET IMPLEMENTED
 #' @param max.lag NOT YET IMPLEMENTED
 #' @return a function creating a return object like \code{mkReTrm} 
