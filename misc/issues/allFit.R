@@ -50,7 +50,8 @@ allFit <- function(m, meth.tab = cbind(optimizer=
                           c(    1,         1,           2,         2)),
                       method= c("",        "",  "nlminb","L-BFGS-B",
                                "NLOPT_LN_NELDERMEAD", "NLOPT_LN_BOBYQA")),
-                   verbose=TRUE)
+                   verbose=TRUE,
+                   maxfun=1e5)
 {
     stopifnot(length(dm <- dim(meth.tab)) == 2, dm[1] >= 1, dm[2] >= 2,
 	      is.character(optimizer <- meth.tab[,"optimizer"]),
@@ -63,12 +64,13 @@ allFit <- function(m, meth.tab = cbind(optimizer=
         ctrl$optCtrl <- switch(optimizer[i],
                                optimx    = list(method   = method[i]),
                                nloptWrap = list(algorithm= method[i]),
-                               NULL)
+                               list(maxfun=maxfun))
         ctrl <- do.call(if(isGLMM(m)) glmerControl else lmerControl, ctrl)
-        rr <- tryCatch(update(m, control = ctrl), error = function(e) e)
+        tt <- system.time(rr <- tryCatch(update(m, control = ctrl), error = function(e) e))
         attr(rr, "optCtrl") <- ctrl$optCtrl # contains crucial info here
+        attr(rr, "time") <- tt  # store timing info
         res[[i]] <- rr
-        if (verbose) cat("[Ok]\n")
+        if (verbose) cat("[OK]\n")
     }
     res
 }
