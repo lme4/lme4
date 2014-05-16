@@ -3,6 +3,10 @@
 \alias{isLMM}
 \alias{isNLMM}
 \alias{isREML}
+\alias{isGLMM.merMod}
+\alias{isLMM.merMod}
+\alias{isNLMM.merMod}
+\alias{isREML.merMod}
 \title{Check characteristics of models}
 \usage{
   isREML(x, ...)

@@ -1,5 +1,6 @@
 \name{sigma}
 \alias{sigma}
+\alias{sigma.merMod}
 \title{Extract residual standard error}
 \usage{
   sigma(object, ...)
