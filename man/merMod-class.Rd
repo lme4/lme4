@@ -46,7 +46,10 @@
 \usage{
 \S3method{anova}{merMod}(object, ..., refit = TRUE, model.names=NULL)
 \S3method{coef}{merMod}(object, ...)
+\S3method{extractAIC}{merMod}(fit, scale = 0, k = 2, ...)
+\S3method{family}{merMod}(object, ...)
 \S3method{formula}{merMod}(x, fixed.only = FALSE, ...)
+\S3method{fitted}{merMod}(object, ...)
 \S3method{logLik}{merMod}(object, REML = NULL, ...)
 \S3method{nobs}{merMod}(object, ...)
 \S3method{ngrps}{merMod}(object, ...)
@@ -73,6 +76,7 @@ use.hessian = NULL, \dots)
     etc.}
   \item{x}{an \R object of class \code{merMod} or \code{summary.merMod},
     respectively, the latter resulting from \code{summary(<merMod>)}.}
+  \item{fit}{an \R object of class \code{\linkS4class{merMod}}.}
   \item{formula}{in the case of \code{model.frame}, a
     \code{\linkS4class{merMod}} object.}
   \item{refit}{logical indicating if objects of class \code{lmerMod} should be
@@ -82,6 +86,8 @@ use.hessian = NULL, \dots)
     whose likelihoods are not directly comparable.}
   \item{model.names}{character vectors of model names to be used in the
     anova table.}
+  \item{scale}{Not currently used (see \code{\link{extractAIC}}).}
+  \item{k}{see \code{\link{extractAIC}}.}
   \item{REML}{Logical. If \code{TRUE}, return the restricted log-likelihood 
     rather than the log-likelihood.  If \code{NULL} (the default),
     set \code{REML} to \code{isREML(object)} (see \code{\link{isREML}}).}
@@ -145,6 +151,13 @@ The following S3 methods with arguments given above exist (this list is currentl
   \item{\code{coef}:}{Computes the sum of the random and fixed effects
     coefficients for each explanatory variable for each level of each
     grouping factor.}
+  \item{\code{extractAIC}:}{Computes the (generalized) Akaike An
+    Information Criterion. If \code{isREML(fit)}, then \code{fit} is
+    refitted using maximum likelihood.}
+  \item{\code{family}:}{\code{\link{family}} of fitted GLMM.}
+  \item{\code{fitted}:}{Fitted values, given the conditional modes of
+    the random effects.  For more flexible access to fitted values, use
+    \code{\link{predict.merMod}}.}
   \item{\code{logLik}:}{Log-likelihood at the fitted value of the
     parameters.  Note that for GLMMs, the returned value is only
     proportional to the log probability density (or distribution) of the
