@@ -28,7 +28,8 @@ getME(object,
 	\code{do.call(Matrix::rBind,getME(.,"Ztlist"))}}
       \item{Ztlist}{list of components of the transpose of the
 	random-effects model matrix, separated by individual
-	variance component} \item{y}{response vector}
+	variance component}
+      \item{y}{response vector}
       \item{mu}{conditional mean of the response}
       \item{u}{conditional mode of the \dQuote{spherical}
 	random effects variable}
@@ -71,36 +72,49 @@ getME(object,
       from \eqn{S} and off-diagonal elements from \eqn{T}.}
       \item{n_rtrms}{number of random-effects terms}
       \item{n_rfacs}{number of distinct random-effects grouping factors}
+      \item{N}{number of rows of \code{X}}
+      \item{n}{length of \code{y}}
+      \item{p}{number of columns of \code{X}}
+      \item{q}{number of columns of \code{Z}}
       \item{cnms}{the \dQuote{component names}, a \code{\link{list}}.}
       \item{REML}{restricted maximum likelihood}
       \item{is_REML}{same as the result of \code{\link{isREML}(.)}}
       \item{devcomp}{a list consisting of a named numeric vector,
-        \dQuote{cmp}, and a named integer vector, \dQuote{dims}, describing
-        the fitted model.  The elements of \dQuote{cmp} are
-        \dQuote{ldL2} (twice the log determinant of \dQuote{L}),
-        \dQuote{ldRX2} (twice the log determinant of \dQuote{RX}),
-        \dQuote{wrss} (weighted residual sum of squares),
-        \dQuote{ussq} (squared length of \dQuote{u}),
-        \dQuote{pwrss} (penalized weighted residual sum of squares,
-        \dQuote{wrss + ussq}), \dQuote{drsum} (sum of residual deviance,
-        GLMMs only), \dQuote{REML} (REML criterion at optimum, LMMs fit
-        by REML only), \dQuote{dev} (deviance criterion at optimum,
-        models fit by ML only), \dQuote{sigmaML} (ML estimate of
-        residual standard deviation), \dQuote{sigmaREML} (REML estimate
-        of residual standard deviation), \dQuote{tolPwrss} (tolerance
-        for declaring convergence in the penalized iteratively weighted
-        residual sum-of-squares, GLMMs only).  The elements of
-        \dQuote{dims} are \dQuote{N} (number of rows of \dQuote{X}),
-        \dQuote{n} (length of \dQuote{y}), \dQuote{p} (number of columns
-        of \dQuote{X}), \dQuote{nmp} (\dQuote{n-p}), \dQuote{nth}
-        (length of \dQuote{theta}), \dQuote{q} (number of columns of
-        \dQuote{Z}), \dQuote{nAGQ} (see \code{\link{glmer}}),
-        \dQuote{compDev} (see \code{\link{glmerControl}}),
-        \dQuote{useSc} (\dQuote{TRUE} if model has a dispersion
-        parameter), \dQuote{reTrms} (number of random effects terms),
-        \dQuote{REML} (\dQuote{TRUE} if model fit by REML),
-        \dQuote{GLMM} (\dQuote{TRUE} if a GLMM), \dQuote{NLMM}
-        (\dQuote{TRUE} if an NLMM).}
+        \code{cmp}, and a named integer vector, \code{dims}, describing
+        the fitted model.  The elements of \code{cmp} are:\cr
+	\describe{
+          \item{ldL2}{twice the log determinant of \code{L}}
+          \item{ldRX2}{twice the log determinant of \code{RX}}
+          \item{wrss}{weighted residual sum of squares}
+          \item{ussq}{squared length of \code{u}}
+          \item{pwrss}{penalized weighted residual sum of squares,
+            \dQuote{wrss + ussq}}
+	  \item{drsum}{sum of residual deviance (GLMMs only)}
+	  \item{REML}{REML criterion at optimum (LMMs fit
+            by REML only)}
+	  \item{dev}{deviance criterion at optimum
+            (models fit by ML only)}
+	  \item{sigmaML}{ML estimate of residual standard deviation}
+	  \item{sigmaREML}{REML estimate of residual standard deviation}
+	  \item{tolPwrss}{tolerance for declaring convergence in the
+	  penalized iteratively weighted residual sum-of-squares (GLMMs only)}
+	} The elements of \code{dims} are:\cr
+	\describe{
+	  \item{N}{number of rows of \code{X}}
+          \item{n}{length of \code{y}}
+	  \item{p}{number of columns of \code{X}}
+	  \item{nmp}{\code{n-p}}
+	  \item{nth}{length of \code{theta}}
+	  \item{q}{number of columns of \code{Z}}
+	  \item{nAGQ}{see \code{\link{glmer}}}
+          \item{compDev}{see \code{\link{glmerControl}}}
+          \item{useSc}{\code{TRUE} if model has a scale parameter}
+	  \item{reTrms}{number of random effects terms}
+          \item{REML}{\code{TRUE} if model fit by REML}
+          \item{GLMM}{\code{TRUE} if a GLMM}
+	  \item{NLMM}{\code{TRUE} if an NLMM}
+	}
+      }
       \item{offset}{model offset}
       \item{lower}{lower bounds on model parameters (random effects
 	parameters only).}

@@ -1727,7 +1727,9 @@ getME <- function(object,
                   "flist",
                   "fixef", "beta", "theta", "ST",
 		  "REML", "is_REML",
-                  "n_rtrms", "n_rfacs", "cnms",
+                  "n_rtrms", "n_rfacs",
+                  "N", "n", "p", "q",
+                  "cnms",
                   "devcomp", "offset", "lower"))
 {
     if(missing(name)) stop("'name' must not be missing")
@@ -1791,6 +1793,10 @@ getME <- function(object,
 	   "n_rtrms" = length(cnms),
            ## number of random-effects grouping factors
            "n_rfacs" = length(object@flist),
+           "N" = dc$dims["N"],
+           "n" = dc$dims["n"],
+           "p" = dc$dims["p"],
+           "q" = dc$dims["q"],
            "cnms" = cnms,
            "devcomp" = dc,
            "offset" = rsp$offset,

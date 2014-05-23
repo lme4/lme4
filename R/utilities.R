@@ -760,7 +760,7 @@ testLevel <- function()
 ##' Not exported.
 ##'
 ##' TODO:
-##' (1) Write up quite note on theory (e.g. Laplace approximation).
+##' (1) Write up quick note on theory (e.g. Laplace approximation).
 ##' (2) Figure out how to convert between full q-by-q matrix, and
 ##'     the format currently in the postVar attributes of the
 ##'     elements of the output of ranef.
