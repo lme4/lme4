@@ -850,7 +850,15 @@ model.frame.merMod <- function(formula, fixed.only=FALSE, ...) {
 
 ##' @importFrom stats model.matrix
 ##' @S3method model.matrix merMod
-model.matrix.merMod <- function(object, ...) object@pp$X
+model.matrix.merMod <- function(object, type = c(
+                                            "fixed",
+                                            "random",
+                                            "randomListRaw"), ...) {
+    switch(type[1],
+           "fixed" = object@pp$X,
+           "random" = getME(object, "Z"),
+           "randomListRaw" = mmList(object))
+}
 
 ##' Dummy variables (experimental)
 ##'
@@ -1719,7 +1727,7 @@ tnames <- function(object,diag.only = FALSE,old = TRUE,prefix = NULL) {
 ## -> ../man/getME.Rd
 ##' Extract or Get Generalize Components from a Fitted Mixed Effects Model
 getME <- function(object,
-		  name = c("X", "Z","Zt", "Ztlist",
+		  name = c("X", "Z","Zt", "Ztlist", "mmList",
                   "y", "mu", "u", "b",
 		  "Gp", "Tp",
 		  "L", "Lambda", "Lambdat", "Lind", "A",
@@ -1767,6 +1775,7 @@ getME <- function(object,
            setNames(lapply(inds,function(i) PR$Zt[i,]),
                     tnames(object,diag.only = TRUE))
        },
+           "mmList" = mmList(object),
            "y" = rsp$y,
            "mu" = rsp$mu,
            "u" = object@u,

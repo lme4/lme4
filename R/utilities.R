@@ -838,3 +838,64 @@ mkDataTemplate <- function(formula, data,
     colnames(covDat) <- covariateNames
     cbind(grpDat, covDat)
 }
+
+##' very flexible and convenient wrt formula,
+##' very unflexible wrt everything else
+##'
+##' starting to get a little too sugary?
+quickSimulate <- function(formula, nGrps, nPerGrp, family = gaussian) {
+    pr <- mkParsTemplate(formula)
+    dt <- mkDataTemplate(formula, nGrps = nGrps, nPerGrp = nPerGrp, rfunc = rnorm)
+    response <- deparse(formula[[2]])
+    dt[[response]] <- simulate(formula, newdata = dt, newparams = pr, family = family)[[1]]
+    return(dt)
+}
+
+#----------------------------------------------------------------------
+# formula parsing sugar
+#----------------------------------------------------------------------
+
+##' these functions pick up where findbars leaves off, in terms of sugar
+##' @param REtrm an element of the result of findbars
+##' @param REtrms the result of findbars
+##' @return \code{reexpr} gives a one-sided formula with the linear
+##' model formula for the raw model matrix. \code{grpfact} gives an
+##' expression with the name of the grouping factor associated with
+##' the raw model matrix. \code{termnms} gives a character vector with
+##' the names of the random effects terms.
+reexpr <- function(REtrm) substitute( ~ foo, list(foo = REtrm[[2]]))
+grpfact <- function(REtrm) substitute(factor(fac), list(fac = REtrm[[3]]))
+termnms <- function(REtrms) unlist(lapply(REtrms, function(x) paste(deparse(x),collapse=" ")))
+##' list of model matrices
+mmList <- function(object, ...) UseMethod("mmList")
+mmList.merMod <- function(object, ...) mmList(formula(object), model.frame(object))
+mmList.formula <- function(object, frame, ...) {
+    formula <- object
+    bars <- findbars(formula)
+    mmExprs <- lapply(bars, reexpr)
+    fctExprs <- lapply(bars, grpfact)
+    mm <- setNames(lapply(lapply(mmExprs, eval, frame), model.matrix, frame),
+                   termnms(bars))
+    grp <- lapply(lapply(bars,  grpfact), eval, frame)
+    nl <- unlist(lapply(lapply(grp, levels), length))
+    if (any(diff(nl) > 0)) {
+        ord <- rev(order(nl))
+        mm <- mm[ord]
+    }
+    return(mm)
+}
+##' examples
+if(FALSE) {
+library(lme4)
+m <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+gm <- glmer(cbind(incidence, size-incidence) ~ period + (1|herd), cbpp, binomial)
+simForm <- y ~ x + z + (x | f) + (z | g)
+simDat <- lme4:::quickSimulate(simForm, 10, 5)
+simDat <- simDat[simDat$f != "10", ] # unbalancedish design requiring
+                                     # a flip in the order of terms
+sm <- lmer(simForm, simDat)
+lme4:::mmList.merMod(m)
+lme4:::mmList.merMod(gm)
+smmm <- lme4:::mmList.merMod(sm)
+}
+

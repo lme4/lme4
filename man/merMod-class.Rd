@@ -57,7 +57,7 @@
 \S3method{vcov}{merMod}(object, correlation = TRUE, sigm = sigma(object),
 use.hessian = NULL, \dots)
 \S3method{model.frame}{merMod}(formula, fixed.only = FALSE, ...)
-\S3method{model.matrix}{merMod}(object, ...)
+\S3method{model.matrix}{merMod}(object, type = c("fixed", "random", "randomListRaw"), ...)
 \S3method{print}{merMod}(x, digits = max(3, getOption("digits") - 3),
       correlation = NULL, symbolic.cor = FALSE,
       signif.stars = getOption("show.signif.stars"), ranef.comp = "Std.Dev.", ...)
@@ -128,10 +128,14 @@ use.hessian = NULL, \dots)
     printed?}
   \item{formula.}{see \code{\link{update.formula}}.}
   \item{evaluate}{see \code{\link{update}}.}
-  \item{type}{type of weights to be returned; either \code{"prior"} for
+  \item{type}{For \code{weights}, type of weights to be returned; either \code{"prior"} for
     the initially supplied weights or \code{"working"} for the weights
     at the final iteration of the penalized iteratively reweighted least
-    squares algorithm.}
+    squares algorithm. For \code{model.matrix}, type of model matrix to
+    return (one of \code{fixed} giving the fixed effects model matrix,
+    \code{random} giving the random effects model matrix, or
+    \code{randomListRaw} giving a list of the raw random effects model
+    matrices associated with each random effects term).}
   \item{\dots}{potentially further arguments passed from other methods.}
 }
 \section{Objects from the Class}{

@@ -5,11 +5,12 @@
 \title{Extract or Get Generalized Components from a Fitted Mixed Effects Model}
 \usage{
 getME(object,
-      name = c("X", "Z", "Zt", "Ztlist", "y", "mu", "u", "b",
+      name = c("X", "Z", "Zt", "Ztlist", "mmList", "y", "mu", "u", "b",
                "Gp", "Tp", "L", "Lambda", "Lambdat", "Lind",
                "A", "RX", "RZX", "sigma", "flist",
                "fixef", "beta", "theta", "ST", "REML", "is_REML",
-               "n_rtrms", "n_rfacs", "cnms", "devcomp", "offset", "lower"))
+               "n_rtrms", "n_rfacs", "N", "n", "p", "q",
+               "cnms", "devcomp", "offset", "lower"))
 }
 \arguments{
   \item{object}{a fitted mixed-effects model of class
@@ -21,7 +22,8 @@ getME(object,
     list of components will be returned.  Possible values are:\cr
     \describe{
       \item{X}{fixed-effects model matrix}
-      \item{Z}{random-effects model matrix} \item{Zt}{transpose
+      \item{Z}{random-effects model matrix}
+      \item{Zt}{transpose
 	of random-effects model matrix.  Note that the structure
 	of \code{Zt} has changed since \code{lme4.0}; to get a
 	backward-compatible structure, use
@@ -29,6 +31,8 @@ getME(object,
       \item{Ztlist}{list of components of the transpose of the
 	random-effects model matrix, separated by individual
 	variance component}
+      \item{mmList}{list of raw model matrices associated with random
+	effects terms}
       \item{y}{response vector}
       \item{mu}{conditional mean of the response}
       \item{u}{conditional mode of the \dQuote{spherical}
