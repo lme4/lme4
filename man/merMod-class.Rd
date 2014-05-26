@@ -176,6 +176,28 @@ The following S3 methods with arguments given above exist (this list is currentl
   \item{\code{update}:}{See \code{\link{update}}.}
       }
 }
+\section{Slots}{
+  \describe{
+    \item{\code{resp}:}{A reference class object for an \pkg{lme4}
+      response module (\code{\link{lmResp-class}}).}
+    \item{\code{Gp}:}{See \code{\link{getME}}.}
+    \item{\code{call}:}{The matched call.}
+    \item{\code{frame}:}{The model frame containing all of the variables
+      required to parse the model formula.}
+    \item{\code{flist}:}{See \code{\link{getME}}.}
+    \item{\code{cnms}:}{See \code{\link{getME}}.}
+    \item{\code{lower}:}{See \code{\link{getME}}.}
+    \item{\code{theta}:}{Covariance parameter vector.}
+    \item{\code{beta}:}{Fixed effects coefficients.}
+    \item{\code{u}:}{Conditional model of spherical random effects
+      coefficients.}
+    \item{\code{devcomp}:}{See \code{\link{getME}}.}
+    \item{\code{pp}:}{A reference class object for an \pkg{lme4}
+      predictor module (\code{\link{merPredD-class}}).}
+    \item{\code{optinfo}:}{List containing information about the
+      nonlinear optimization.}
+  }
+}
 \seealso{
   \code{\link{lmer}}, \code{\link{glmer}},
   \code{\link{nlmer}}, \code{\linkS4class{merPredD}},
