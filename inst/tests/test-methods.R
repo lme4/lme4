@@ -167,8 +167,10 @@ test_that("plot", {
         data1 <- Orthodont
         fm1 <- lmer(distance ~ age + (age|Subject), data=data1)
     }
+    data(Orthodont, package="nlme")
     fm0 <- lmer(distance ~ age + (age|Subject), data=Orthodont)
     expect_is(plot(fm0),"trellis")
+    rm("Orthodont")
     fm1 <- doFit()
     pp <- plot(fm1, resid(., scaled=TRUE) ~ fitted(.) | Sex, abline = 0)
     expect_is(pp,"trellis")
