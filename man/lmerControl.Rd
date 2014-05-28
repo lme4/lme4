@@ -33,7 +33,8 @@ lmerControl(optimizer = "bobyqa",% was "Nelder_Mead" till Dec.2013
     check.nobs.vs.nRE="stop",
     check.rankX = c("message+drop.cols", "silent.drop.cols", "warn+drop.cols",
                     "stop.deficient", "ignore"),
-    check.scaleX  = "warning",
+    check.scaleX = c("warning","stop","silent.rescale",
+                              "message+rescale","warn+rescale","ignore"),
     check.formula.LHS = "stop",
     ## convergence checking options
     check.conv.grad     = .makeCC("warning", tol = 2e-3, relTol = NULL),

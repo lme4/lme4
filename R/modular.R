@@ -112,21 +112,35 @@ checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
 ## check scale of non-dummy columns of X, both
 ## against each other and against 1 (implicit scale of theta parameters)?
 ## (shouldn't matter for lmer models?)
-checkScaleX <- function(X, tol=1e4, ctrl) {
+## TODO: check for badly centred models?
+## TODO: check scale of Z columns?
+## What should the rules be?  try to find problematic columns
+##   and rescale them?  scale+center?  Just scale or scale+center
+##   all numeric columns?
+## 
+checkScaleX <- function(X,  kind="warning", tol=1e3) {
     cstr <- "check.scaleX"
-    checkCtrlLevels(cstr, cc <- ctrl[[cstr]])
-    if (doCheck(cc)) { ## not NULL or "ignore"
-        cont.cols <- apply(X,2,function(z) !all(z %in% c(0,1)))
-        col.sd <- apply(X[,cont.cols, drop=FALSE],2,sd)
-        sdcomp <- outer(col.sd,col.sd,"/")
-        logcomp <- abs(log(sdcomp[lower.tri(sdcomp)]))
-        logsd <- abs(log(col.sd))
-        wmsg <- "Some predictor variables are on very different scales: consider rescaling"
-        if (any(c(logcomp,logsd) > log(tol))) {
-            switch(cc, "warning" = warning(wmsg),
-                   "stop" = stop(wmsg),
-                   stop(gettextf("unknown check level for '%s'", cstr),
-                        domain=NA))
+    kinds <- eval(formals(lmerControl)[["check.scaleX"]])
+    if (!kind %in% kinds) stop(sprintf("unknown check-scale option: %s",kind))
+    if (is.null(kind) || kind == "ignore") return(X)
+    ## else :
+    cont.cols <- apply(X,2,function(z) !all(z %in% c(0,1)))
+    col.sd <- apply(X[,cont.cols, drop=FALSE],2,sd)
+    sdcomp <- outer(col.sd,col.sd,"/")
+    logcomp <- abs(log(sdcomp[lower.tri(sdcomp)]))
+    logsd <- abs(log(col.sd))
+    wmsg <- "Some predictor variables are on very different scales: consider rescaling"
+    if (any(c(logcomp,logsd) > log(tol))) {
+        if (kind %in% c("warning","stop")) {
+            switch(kind, "warning" = warning(wmsg, call.=FALSE),
+                   "stop" = stop(wmsg, call.=FALSE))
+        } else {
+            ## mimic scale() because we don't want to make a copy in
+            ##  order to retrieve the center/scale
+            X[,cont.cols] <- sweep(X[,cont.cols,drop=FALSE],2,col.sd,"/")
+            attr(X,"scaled:scale") <- setNames(col.sd,colnames(X)[cont.cols])
+            wmsg <- "Some predictor variables on very different scales: auto-rescaled (results NOT adjusted)"
+            if (kind=="warn+rescale") warning(wmsg)
         }
     }
     X
@@ -325,7 +339,9 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     if(is.null(rankX.chk <- control[["check.rankX"]]))
         rankX.chk <- eval(formals(lmerControl)[["check.rankX"]])[[1]]
     X <- chkRank.drop.cols(X, kind=rankX.chk, tol = 1e-7)
-    X <- checkScaleX(X, ctrl= control)
+    if(is.null(scaleX.chk <- control[["check.scaleX"]]))
+        scaleX.chk <- eval(formals(lmerControl)[["check.scaleX"]])[[1]]
+    X <- checkScaleX(X, kind=scaleX.chk)
 
     list(fr = fr, X = X, reTrms = reTrms, REML = REML, formula = formula)
 }
@@ -567,7 +583,9 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     if(is.null(rankX.chk <- control[["check.rankX"]]))
         rankX.chk <- eval(formals(lmerControl)[["check.rankX"]])[[1]]
     X <- chkRank.drop.cols(X, kind=rankX.chk, tol = 1e-7)
-    X <- checkScaleX(X, ctrl=control)
+    if(is.null(scaleX.chk <- control[["check.scaleX"]]))
+        scaleX.chk <- eval(formals(lmerControl)[["check.scaleX"]])[[1]]
+    X <- checkScaleX(X, kind=scaleX.chk)
 
     list(fr = fr, X = X, reTrms = reTrms, family = family, formula = formula)
 }

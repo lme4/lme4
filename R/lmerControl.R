@@ -15,7 +15,7 @@ namedList <- function(...) {
 ##' @return those elements of \code{nms} which are "checking options"
 ##' @author Martin Maechler
 .get.checkingOpts <- function(nms)
-    nms[grepl("^check\\.(?!conv|rankX)", nms, perl=TRUE)]
+    nms[grepl("^check\\.(?!conv|rankX|scaleX)", nms, perl=TRUE)]
 
 
 ##' Check check.conv.*() options and produce good error message
@@ -78,10 +78,10 @@ lmerControl <-
 	     check.nlev.gtr.1="stop",
 	     check.nobs.vs.nRE="stop",
 	     check.rankX = c("message+drop.cols",
-	     "silent.drop.cols", "warn+drop.cols",
-	     "stop.deficient", "ignore"),
-	     check.scaleX = "warning",
-	     ##TODO? c("warning","message+scale", "silent.scale","ignore"),
+                             "silent.drop.cols", "warn+drop.cols",
+                 	     "stop.deficient", "ignore"),
+	     check.scaleX = c("warning","stop","silent.rescale",
+                              "message+rescale","warn+rescale","ignore"),
 	     check.formula.LHS = "stop",
 	     ## convergence options
 	     check.conv.grad	 = .makeCC("warning", tol = 2e-3, relTol = NULL),
@@ -109,6 +109,7 @@ lmerControl <-
         }
     }
     check.rankX <- match.arg(check.rankX)# ==> can abbreviate
+    check.scaleX <- match.arg(check.scaleX)# ==> can abbreviate
 
     ## compatibility and convenience, caller can specify action string only:
     me <- sys.function()
