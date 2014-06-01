@@ -188,9 +188,18 @@ if(FALSE) { ## Hadley broke this
     ## fit year as factor: OK
     gc <- glmerControl(check.conv.grad="stop")
     expect_is(update(g0,.~.+factor(year), control=gc), "glmerMod")
-    ## error (was 'warning') with year as numeric
-    ## expect_error(update(g0, .~. +year), "did not converge in")
-    expect_warning(update(g0, .~. +year), "failed to converge")
+    ## error/warning with year as numeric:
+    ## don't have full knowledges of which platforms lead to which
+    ## results
+    if (sessionInfo()$platform=="i686-pc-linux-gnu (32-bit)") {
+        expect_warning(update(g0, .~. +year), "failed to converge")
+    } else {
+        ## MacOS x86_64-apple-darwin10.8.0 (64-bit)
+        ## MM's platform
+        ## "pwrssUpdate did not converge in (maxit) iterations"
+        expect_error(update(g0, .~. +year), "pwrssUpdate did not converge in")
+    }
+        
     ## OK if we scale & center it
     expect_is(update(g0,.~. + scale(year), control=gc), "glmerMod")
     ## not OK if we scale and don't center
