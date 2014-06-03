@@ -102,6 +102,11 @@ test_that("refit", {
     expect_is(refit(fm1,s1),"merMod")
     s2 <- simulate(fm1,2)
     expect_error(refit(fm1,s2),"refit not implemented for lists")
+    data(Orthodont,package="nlme")
+    fmOrth <- fm <- lmer(distance ~ I(age - 11) + (I(age - 11) | Subject),
+                         data = Orthodont)
+    expect_equal(simulate(fm,newdata=Orthodont,seed=101),
+                 simulate(fm,seed=101))
 })
 
 context("predict")
@@ -154,8 +159,10 @@ test_that("simulate", {
 context("misc")
 test_that("misc", {
     expect_equal(df.residual(fm1),176)
-    expect_is(fortify(fm1),"data.frame")
-    expect_is(fortify(gm1),"data.frame")
+    if (require(ggplot2)) {
+        expect_is(fortify(fm1),"data.frame")
+        expect_is(fortify(gm1),"data.frame")
+    }
     expect_is(as.data.frame(VarCorr(fm1)),"data.frame")
 })
 }

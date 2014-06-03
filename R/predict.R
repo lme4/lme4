@@ -150,8 +150,11 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, ReForm,
         unames <- unique(sort(names(ReTrms$cnms)))  ## FIXME: same as names(ReTrms$flist) ?
         ## convert numeric grouping variables to factors as necessary
         ## must use all.vars() for examples
+        ## for (i in all.vars(RHSForm(re.form))) {
         ## TO DO: should restrict attention to grouping factors only
-        for (i in all.vars(RHSForm(re.form))) {
+        getgrpvars <- function(x) all.vars(x[[3]])
+        all.grp.vars <- do.call(unique,lapply(findbars(re.form),getgrpvars))
+        for (i in all.grp.vars) {
             if (!is.matrix(rfd[[i]]))
                 rfd[[i]] <- factor(rfd[[i]])
         }
