@@ -41,7 +41,8 @@ set.seed(101)
 ## expect_warning(cc <- confint(cmod,method="boot",nsim=10,quiet=TRUE,
 ##              .progress="txt",PBargs=list(style=3)),"some bootstrap runs failed")
 
-if(.Platform$OS.type != "windows"){
+travis <- nchar(Sys.getenv("TRAVIS"))>0
+if(.Platform$OS.type != "windows" && !travis) {
   boo01P <- bootMer(fm1, mySumm, nsim = 10, parallel="multicore", ncpus=2)
 }
 
