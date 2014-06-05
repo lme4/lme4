@@ -57,7 +57,7 @@ namespace lme4 {
         setTheta(d_theta);          // starting values into Lambda
         d_L.cholmod().final_ll = 1; // force an LL' decomposition
         updateLamtUt();
-        d_L.analyzePattern(d_LamtUt); // perform symbolic analysis
+        d_L.analyzePattern(d_LamtUt * d_LamtUt.transpose()); // perform symbolic analysis
         if (d_L.info() != Eigen::Success)
             throw runtime_error("CholeskyDecomposition.analyzePattern failed");
     }
