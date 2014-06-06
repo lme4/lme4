@@ -81,7 +81,9 @@ getME(object,
       \item{p}{number of columns of \code{X}}
       \item{q}{number of columns of \code{Z}}
       \item{cnms}{the \dQuote{component names}, a \code{\link{list}}.}
-      \item{REML}{restricted maximum likelihood}
+      \item{REML}{\code{0} indicates the model was fitted by maximum
+	likelihood, any other positive integer indicates fitting by 
+	restricted maximum likelihood}
       \item{is_REML}{same as the result of \code{\link{isREML}(.)}}
       \item{devcomp}{a list consisting of a named numeric vector,
         \code{cmp}, and a named integer vector, \code{dims}, describing
@@ -114,7 +116,9 @@ getME(object,
           \item{compDev}{see \code{\link{glmerControl}}}
           \item{useSc}{\code{TRUE} if model has a scale parameter}
 	  \item{reTrms}{number of random effects terms}
-          \item{REML}{\code{TRUE} if model fit by REML}
+          \item{REML}{\code{0} indicates the model was fitted by maximum
+	    likelihood, any other positive integer indicates fitting by 
+	    restricted maximum likelihood}
           \item{GLMM}{\code{TRUE} if a GLMM}
 	  \item{NLMM}{\code{TRUE} if an NLMM}
 	}

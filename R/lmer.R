@@ -715,7 +715,14 @@ extractAIC.merMod <- function(fit, scale = 0, k = 2, ...) {
 family.merMod <- function(object, ...) family(object@resp, ...)
 
 ##' @S3method family glmResp
-family.glmResp <- function(object, ...) object$family
+family.glmResp <- function(object, ...) {
+                                        # regenerate initialize
+                                        # expression if necessary
+    if(is.null(object$family$initialize))
+        return(do.call(object$family$family, list()))
+
+    object$family
+}
 
 ##' @S3method family lmResp
 family.lmResp <- function(object, ...) gaussian()
@@ -866,10 +873,8 @@ model.matrix.merMod <- function(object, type = c(
 ##' accepts a factor, \code{f}, and returns a dummy
 ##' matrix with \code{nlevels(f)-1} columns.
 dummy <- function(f, levelsToKeep){
-                                        # create model matrix
   f <- as.factor(f)
   mm <- model.matrix(~ 0 + f)
-                                        # ensure column names match levels
   colnames(mm) <- levels(f)
 
                                         # sort out levels to keep
@@ -1802,10 +1807,10 @@ getME <- function(object,
 	   "n_rtrms" = length(cnms),
            ## number of random-effects grouping factors
            "n_rfacs" = length(object@flist),
-           "N" = dc$dims["N"],
-           "n" = dc$dims["n"],
-           "p" = dc$dims["p"],
-           "q" = dc$dims["q"],
+           "N" = dims["N"],
+           "n" = dims["n"],
+           "p" = dims["p"],
+           "q" = dims["q"],
            "cnms" = cnms,
            "devcomp" = dc,
            "offset" = rsp$offset,

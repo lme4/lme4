@@ -429,9 +429,11 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, verbose=0, co
     REMLpass <- if(REML) p else 0L
     if(missing(fr)) rho$resp <- mkRespMod(REML = REMLpass, ...)
     else rho$resp <- mkRespMod(fr, REML = REMLpass)
-    ## note:  REML does double duty as rank of X and a flag for using REML
-    ## maybe this should be mentioned in the help file for mkRespMod??
-    ## currently that help file says REML is logical
+    ## note: REML does double duty as rank of X and a flag for using
+    ## REML maybe this should be mentioned in the help file for
+    ## mkRespMod??  currently that help file says REML is logical.  a
+    ## consequence of this double duty is that it is impossible to fit
+    ## a model with no fixed effects using REML.
     devfun <- mkdevfun(rho, 0L, verbose, control)
     theta <- getStart(start,reTrms$lower,rho$pp)
     if (length(rho$resp$y) > 0)  ## only if non-trivial y
