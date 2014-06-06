@@ -1,16 +1,21 @@
 lme4: Mixed-effects models in R. 
 ====
 
-[![Build Status](https://travis-ci.org/lme4/lme4.svg?branch=master)](https://travis-ci.org/lme4/)
+[![Build Status](https://travis-ci.org/lme4/lme4.svg?branch=master)](https://travis-ci.org/lme4/lme4)
 
 ## Recent/release notes
 
-* Recent versions of `lme4` (e.g. 1.1-6) give false convergence warnings. There is a [summary post on r-sig-mixed-models](http://thread.gmane.org/gmane.comp.lang.r.lme4.devel/11893).  In general your model passes this test:
+* Recent versions of `lme4` (e.g. 1.1-6) give false convergence warnings. There is a [summary post on r-sig-mixed-models](http://thread.gmane.org/gmane.comp.lang.r.lme4.devel/11893).  
+   * If you get warnings about `max|grad|` but the  model passes this test:
 ```
 dd <- fit@optinfo$derivs
 with(dd,max(abs(solve(Hessian,gradient)))<2e-3)
 ```
-then it will also pass the convergence tests in future versions (1.1-7 and up).  If you get warnings about the Hessian having negative eigenvalues, you should try rescaling continuous predictor variables.
+then you are seeing a false-positive warning, and the problem will disappear in future versions (1.1-7 and up).  
+   * For other warnings (e.g. about the Hessian being singular or having negative eigenvalues), you can try centering and/or scaling continuous predictor variables. 
+   * You can also try (for `glmer` fits)  `control=glmerControl(optimizer="bobyqa")`, or use [this code](https://github.com/lme4/lme4/blob/master/misc/issues/allFit.R) to try your problem with a range of optimizers, to see if any of them work better.
+* If your convergence warnings persist, the `lme4` maintainers would be happy to hear from you.
+
 
 ## Features
 
@@ -45,7 +50,7 @@ install.packages("lme4",
 
 * `lme4.0` is a maintained version of lme4 back compatible to CRAN versions of lme4 0.99xy,
   mainly for the purpose of  *reproducible research and data analysis* which was done with 0.99xy versions of lme4.
-* Notably, `lme4.0` features  `getME(<mod>, "..")` which is compatible (as much as sensibly possible) to current `lme4`s version of `getME()`.
+* Notably, `lme4.0` features  `getME(<mod>, "..")` which is compatible (as much as sensibly possible) with the current `lme4`'s version of `getME()`.
 * You can use the `convert_old_lme4()` function to take a fitted object created with `lme4` <1.0 and convert it for use with `lme4.0`.
 * It currently resides on R-forge, and you can install it with
 
