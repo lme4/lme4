@@ -153,7 +153,7 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, ReForm,
         ## for (i in all.vars(RHSForm(re.form))) {
         ## TO DO: should restrict attention to grouping factors only
         getgrpvars <- function(x) all.vars(x[[3]])
-        all.grp.vars <- do.call(unique,lapply(findbars(re.form),getgrpvars))
+        all.grp.vars <- unique(unlist(lapply(findbars(re.form),getgrpvars)))
         for (i in all.grp.vars) {
             if (!is.matrix(rfd[[i]]))
                 rfd[[i]] <- factor(rfd[[i]])

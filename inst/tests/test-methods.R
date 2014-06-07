@@ -155,6 +155,18 @@ test_that("simulate", {
     expect_equal(p1,p7)
     expect_equal(p1,p11)
     expect_error(simulate(gm2,use.u=TRUE,re.form=NA),"should specify only one")
+    ## hack: test with three REs
+    p1 <- lmer(diameter ~ (1|plate) + (1|plate) + (1|sample), Penicillin,
+               control=lmerControl(check.conv.hess="ignore"))
+    simulate(p1)
+    data("Pixel", package="nlme")
+    fo1 <- pixel ~ day + I(day^2) + Side + (day | Dog) + (1 | Side/Dog)
+    fo2 <- pixel ~ day + I(day^2) + (day | Dog) + (1 | Side/Dog)
+    fm3 <- lmer(fo1, data = Pixel,
+                control=lmerControl(check.conv.hess="ignore"))
+    fm4 <- lmer(fo2, data = Pixel)
+    expect_is(simulate(fm3),"data.frame")
+    expect_is(simulate(fm4),"data.frame")
 })
 context("misc")
 test_that("misc", {
