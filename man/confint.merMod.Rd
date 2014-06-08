@@ -1,6 +1,10 @@
 \name{confint.merMod}
 \alias{confint.merMod}
-\title{Compute confidence intervals on the parameters of an lme4 fit}
+\title{Compute Confidence Intervals for Parameters of a [ng]lmer Fit}
+\description{
+  Compute confidence intervals on the parameters of a \code{*lmer()}
+  model fit (of class\code{"\linkS4class{merMod}"}).
+}
 \usage{
 \method{confint}{merMod}(object, parm, level = 0.95,
 	method = c("profile", "Wald", "boot"), zeta,
@@ -10,7 +14,10 @@
 }
 \arguments{
   \item{object}{a fitted [ng]lmer model}
-  \item{parm}{parameters (specified by integer position)}
+  \item{parm}{parameters of which intervals are sought. Specified by
+    integer position, or for \code{method = "profile"}, e.g., via a
+    \code{\link{character}} vector, see Note below, and
+    \code{\link[=profile.merMod]{profile}}.}
   \item{level}{confidence level \eqn{< 1}, typically above 0.90.}
   \item{method}{a \code{\link{character}} string determining the method
     for computing the confidence intervals.}
@@ -29,11 +36,18 @@
     \code{\link{profile.merMod}} or \code{\link{bootMer}}, respectively.}
 }
 \value{
-  a numeric table of confidence intervals
+  a numeric table (\code{\link{matrix}} with column and row names) of
+  confidence intervals.
 }
-\description{
-  Compute confidence intervals on the parameters of a \code{*lmer()}
-  model fit (of class\code{"\linkS4class{merMod}"}).
+\note{
+  The default method \code{"profile"} amounts to \preformatted{
+    confint(profile(object, which=parm), signames=oldNames, ...),
+            level, zeta)}
+  where the \code{\link{profile}} method \code{\link{profile.merMod}}
+  does almost all the computations.  Therefore it is typically
+  advisable to store the \link[=profile.merMod]{profile(.)} result, say
+  in \code{pp}, and then use \code{confint(pp, level=*)} e.g., for
+  different levels.
 }
 \details{
   Depending on the \code{method} specified, \code{confint()} computes
@@ -64,7 +78,7 @@ if(interactive() || testLevel >= 3) {
  ## ~ 40 seconds
  system.time(fm1B <- confint(fm1,method="boot",
                              .progress="txt", PBargs=list(style=3)))
-} else 
+} else
   load(system.file("testdata","confint_ex.rda",package="lme4"))
 fm1P
 fm1B
