@@ -310,8 +310,11 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
             RHS <- formula(substitute(~R,
                               list(R=RHSForm(formula(object,fixed.only=TRUE)))))
             Terms <- terms(object,fixed.only=TRUE)
-            isFac <- vapply(mf <- model.frame(object,fixed.only=TRUE),
+            isFac <- vapply(mf <- model.frame(object,
+                                              fixed.only=TRUE),
                             is,"factor",FUN.VALUE=TRUE)
+            ## ignore response variable
+            isFac[attr(Terms,"response")] <- FALSE
             orig_levs <- if (length(isFac)==0) NULL else lapply(mf[isFac],levels)
             X <- model.matrix(RHS, mfnew <- model.frame(delete.response(Terms),
                                                         newdata,

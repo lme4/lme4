@@ -127,6 +127,15 @@ test_that("predict", {
     sleepstudy$X <- cbind(1, sleepstudy$Days)
     m <- lmer(Reaction ~ -1 + X  + (Days | Subject), sleepstudy)
     expect_is(predict(m, newdata=sleepstudy), "numeric")
+    ## test spurious warning with factor as response variable
+    data("Orthodont",package="MEMSS")
+    silly <- glmer(Sex ~ distance + (1|Subject),
+                   data=Orthodont, family=binomial)
+    sillypred <- data.frame(distance=c(20, 25))
+    options(warn=2)
+    expect_is(predict(silly, sillypred, re.form=NA, type="response"),
+              "numeric")
+    options(warn=0)
 })
 
 context("simulate")
