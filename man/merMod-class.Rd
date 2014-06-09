@@ -34,6 +34,7 @@
 \alias{vcov.merMod}
 \alias{vcov.summary.merMod}
 \alias{weights.merMod}
+\alias{REMLcrit}
 \description{
   A mixed-effects model is represented as a
   \code{\linkS4class{merPredD}} object and a response
@@ -46,6 +47,8 @@
 \usage{
 \S3method{anova}{merMod}(object, ..., refit = TRUE, model.names=NULL)
 \S3method{coef}{merMod}(object, ...)
+\S3method{deviance}{merMod}(object, REML = NULL, ...)
+REMLcrit(object)
 \S3method{extractAIC}{merMod}(fit, scale = 0, k = 2, ...)
 \S3method{family}{merMod}(object, ...)
 \S3method{formula}{merMod}(x, fixed.only = FALSE, ...)

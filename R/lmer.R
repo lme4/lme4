@@ -562,6 +562,29 @@ coef.merMod <- coefMer
 ##' @importFrom stats deviance
 ##' @S3method deviance merMod
 deviance.merMod <- function(object, REML = NULL, ...) {
+    if (isREML(object) && is.null(REML)) {
+        warning("deviance() is deprecated for REML fits; use REMLcrit for the REML criterion or deviance(.,REML=FALSE) for deviance calculated at the REML fit")
+        return(devCritFun(object, REML=TRUE))
+    }
+    devCritFun(object, REML=FALSE)
+}
+
+REMLcrit <- function(object) {
+    devCritFun(object, REML=TRUE)
+}
+
+## original deviance.merMod -- now wrapped by REMLcrit
+## REML=NULL:
+##    if REML fit return REML criterion
+##    if ML fit, return deviance
+## REML=TRUE: 
+##    if not LMM, stop.
+##    if ML fit, compute and return REML criterion
+##    if REML fit, return REML criterion
+## REML=FALSE:
+##    if ML fit, return deviance
+##    if REML fit, compute and return deviance
+devCritFun <- function(object, REML = NULL) {    
     ## cf. (1) lmerResp::Laplace in respModule.cpp
     ##     (2) section 5.6 of lMMwR, listing lines 34-42
     if (isTRUE(REML) && !isLMM(object))
@@ -819,7 +842,7 @@ npar.merMod <- function(object) {
 logLik.merMod <- function(object, REML = NULL, ...) {
     if (is.null(REML) || is.na(REML[1]))
         REML <- isREML(object)
-    val <- -deviance(object, REML = REML)/2
+    val <- -devCritFun(object, REML = REML)/2
     dc <- object@devcomp
     dims <- dc$dims
     nobs <- nobs.merMod(object)
@@ -1550,7 +1573,7 @@ getLlikAIC <- function(object, cmp = object@devcomp$cmp) {
 	if(isREML(object)) cmp["REML"] # *no* likelihood stats here
 	else {
 	    c(AIC = AIC(llik), BIC = BIC(llik), logLik = c(llik),
-	      deviance = deviance(object),
+	      deviance = devCritFun(object),
               df.resid = df.residual(object))
 	}
     }
