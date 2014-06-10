@@ -600,7 +600,8 @@ devCritFun <- function(object, REML = NULL) {
 	    lnum <- log(2*pi*cmp[["pwrss"]])
 	    n <- object@devcomp$dims[["n"]]
 	    nmp <- n - length(object@beta)
-	    cmp[["ldL2"]] + cmp[["ldRX2"]] + nmp*(1 + lnum - log(nmp))
+            ldW <- sum(log(weights(object, method = "prior")))
+            - ldW + cmp[["ldL2"]] + cmp[["ldRX2"]] + nmp*(1 + lnum - log(nmp))
         }
     } else {
         if (!isREML(object)) {
@@ -609,7 +610,8 @@ devCritFun <- function(object, REML = NULL) {
             ## adjust REML results to ML
             n <- object@devcomp$dims[["n"]]
             lnum <- log(2*pi*cmp[["pwrss"]])
-            cmp[["ldL2"]] + n*(1 + lnum - log(n))
+            ldW <- sum(log(weights(object, method = "prior")))
+            - ldW + cmp[["ldL2"]] + n*(1 + lnum - log(n))
         }
     }
 }
