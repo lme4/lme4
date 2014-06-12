@@ -3,6 +3,14 @@ library(lme4)
 require(optimx)
 require(nloptr)
 
+namedList <- function(...) {
+    L <- list(...)
+    snm <- sapply(substitute(list(...)),deparse)[-1]
+    if (is.null(nm <- names(L))) nm <- snm
+    if (any(nonames <- nm=="")) nm[nonames] <- snm[nonames]
+    setNames(L,nm)
+}
+
 ## originally from https://github.com/lme4/lme4/issues/98 :
 
 nloptWrap <- function(fn, par, lower, upper, control=list(), ...) {
@@ -51,6 +59,7 @@ allFit <- function(m, meth.tab = cbind(optimizer=
                       method= c("",        "",  "nlminb","L-BFGS-B",
                                "NLOPT_LN_NELDERMEAD", "NLOPT_LN_BOBYQA")),
                    verbose=TRUE,
+                   
                    maxfun=1e5)
 {
     stopifnot(length(dm <- dim(meth.tab)) == 2, dm[1] >= 1, dm[2] >= 2,
@@ -72,5 +81,27 @@ allFit <- function(m, meth.tab = cbind(optimizer=
         res[[i]] <- rr
         if (verbose) cat("[OK]\n")
     }
+    ## 
     res
+}
+
+summary.allfit <- function(object, ...) {
+    which.OK <- !sapply(object,is,"error")
+    msgs <- lapply(object[which.OK],function(x) x@optinfo$conv$lme4$messages)
+    fixef <- t(sapply(object[which.OK],fixef))
+    llik <- sapply(object[which.OK],logLik)
+    times <- t(sapply(object[which.OK],attr,"time"))
+    feval <- sapply(object[which.OK],function(x) x@optinfo$feval)
+    sdcor <- t(sapply(object[which.OK],function(x) {
+        aa <- as.data.frame(VarCorr(x))
+        setNames(aa[,"sdcor"],lme4:::tnames(object[which.OK][[1]]))
+    }))
+    namedList(which.OK,msgs,fixef,llik,sdcor,times,feval)
+}
+print.summary.allfit <- function(object,...) {
+    if (!which.OK==seq(length(object))) {
+        cat("some optimizers failed: ",
+            paste(names(object)[!which.OK],collapse=","),"\n")
+    }
+
 }
