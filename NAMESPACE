@@ -32,6 +32,7 @@ importMethodsFrom("Matrix", "%*%",coerce,crossprod,diag,t,tcrossprod,solve,chol2
 import(RcppEigen)
 importFrom("Rcpp", evalCpp)
 importFrom("minqa", bobyqa)
+importFrom("nloptr", nloptr)
 
 export(bootMer)
 export(devcomp)

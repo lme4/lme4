@@ -6,7 +6,8 @@ Authors@R: c(person("Douglas","Bates", role="aut"),
     person("Ben","Bolker",email="bbolker+lme4@gmail.com", role=c("aut","cre")),
     person("Steven","Walker",role="aut"),
     person("Rune Haubo Bojesen","Christensen", role="ctb"),
-    person("Henrik","Singmann", role="ctb"))
+    person("Henrik","Singmann", role="ctb"),
+    person("Bin", "Dai", role="ctb"))
 Maintainer: Ben Bolker <bbolker+lme4@gmail.com>
 Contact: LME4 Authors <lme4-authors@lists.r-forge.r-project.org>
 Author: Douglas Bates [aut], Martin Maechler [aut],
@@ -20,7 +21,7 @@ Description: Fit linear and generalized linear mixed-effects models.
 Depends: R (>= 2.15.1), Matrix (>= 1.1.1), methods, stats, Rcpp (>= 0.10.5)
 LinkingTo: Rcpp, RcppEigen
 Imports: graphics, grid, splines, parallel, MASS, nlme, lattice,
-    minqa (>= 1.1.15), RcppEigen (>= 0.3.2.0)
+    minqa (>= 1.1.15), RcppEigen (>= 0.3.2.0), nloptr
 Suggests:
     boot,
     PKPDmodels,
