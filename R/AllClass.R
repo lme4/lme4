@@ -112,12 +112,12 @@ merPredD <-
                          ## The following is a kludge to overcome problems when Zt is square
                          ## by making LamtUt rectangular
                          LtUt <- Lambdat %*% Ut
-                         if (nrow(LtUt) == ncol(LtUt))
-                             LtUt <- cbind2(LtUt,
-                                            sparseMatrix(i=integer(0),
-                                                         j=integer(0),
-                                                         x=numeric(0),
-                                                         dims=c(nrow(LtUt),1)))
+                         ## if (nrow(LtUt) == ncol(LtUt))
+                         ##     LtUt <- cbind2(LtUt,
+                         ##                    sparseMatrix(i=integer(0),
+                         ##                                 j=integer(0),
+                         ##                                 x=numeric(0),
+                         ##                                 dims=c(nrow(LtUt),1)))
                          LamtUt <<- LtUt
                          Xw <- list(...)$Xwts
                          Xwts <<- if (is.null(Xw)) rep.int(1, N) else as.numeric(Xw)

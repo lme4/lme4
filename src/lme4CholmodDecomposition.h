@@ -31,10 +31,16 @@ namespace lme4 {
         cholmod_factor* factor() const { return Base::m_cholmodFactor; }
 
         void factorize_p(const typename Base::MatrixType& matrix, Eigen::ArrayXi fset, double beta=0.) {
+	    // FIXME: add forceRectangular flag to allow backward compatibility;
+	    // restore an appropriate version of the square/rectangular test
             eigen_assert(m_analysisIsOk && "You must first call analyzePattern()");
-            cholmod_sparse    A = (matrix.rows() == matrix.cols()) ?
-                    viewAsCholmod(matrix.template selfadjointView<_UpLo>()) :
-                    viewAsCholmod(matrix);
+            cholmod_sparse    A = 
+		// **SKIP square test because we only all this function
+		//   in lme4 when we want to treat the input as a rectangular
+		//   matrix
+		// (!forceRectangularmatrix.rows() == matrix.cols()) ?
+		// viewAsCholmod(matrix.template selfadjointView<_UpLo>()) :
+		viewAsCholmod(matrix);
 
             cholmod_factorize_p(&A, &beta, fset.data(), fset.size(),
                                 factor(), &cholmod());
