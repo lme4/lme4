@@ -4,6 +4,35 @@ library("lme4")
 testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL")))
                  as.numeric(s) else 1
 
+gives_error_or_warning <- function (regexp = NULL, all = FALSE, ...) 
+{
+    function(expr) {
+        res <- try(evaluate_promise(expr),silent=TRUE)
+        no_error <- !inherits(res, "try-error")
+        if (no_error) {
+            warnings <- res$warnings
+
+            if (!is.null(regexp) && length(warnings) > 0) {
+                return(matches(regexp, all = FALSE, ...)(warnings))
+            } else {
+                return(expectation(length(warnings) > 0, "no warnings or errors given", 
+                            paste0(length(warnings), " warnings created")))
+            }
+        }
+        if (!is.null(regexp)) {
+            return(matches(regexp, ...)(res))
+        }
+        else {
+            expectation(TRUE, "no error thrown", "threw an error")
+        }
+    }
+}
+    ## expect_that(stop("foo"),gives_error_or_warning("foo"))
+    ## expect_that(warning("foo"),gives_error_or_warning("foo"))
+    ## expect_that(TRUE,gives_error_or_warning("foo"))
+    ## expect_that(stop("bar"),gives_error_or_warning("foo"))
+    ## expect_that(warning("bar"),gives_error_or_warning("foo"))
+
 context("fitting glmer models")
 test_that("glmer", {
     set.seed(101)
@@ -189,17 +218,20 @@ if(FALSE) { ## Hadley broke this
     gc <- glmerControl(check.conv.grad="stop")
     expect_is(update(g0,.~.+factor(year), control=gc), "glmerMod")
     ## error/warning with year as numeric:
-    ## don't have full knowledges of which platforms lead to which
-    ## results
-    if (sessionInfo()$platform=="i686-pc-linux-gnu (32-bit)") {
-        expect_warning(update(g0, .~. +year), "failed to converge")
-    } else {
-        ## MacOS x86_64-apple-darwin10.8.0 (64-bit)
-        ## MM's platform
-        ## "pwrssUpdate did not converge in (maxit) iterations"
-        expect_error(update(g0, .~. +year), "pwrssUpdate did not converge in")
-    }
-        
+    ## don't have full knowledge of which platforms lead to which
+    ##     results, and can't detect whether we're running on valgrind,
+    ##     which changes the result on 32-bit linux ...
+    expect_that(update(g0,.~.+year),
+       gives_error_or_warning("(failed to converge|pwrssUpdate did not converge)"))
+    ## ("(failed to converge|pwrssUpdate did not converge in)"))
+    ## if (sessionInfo()$platform=="i686-pc-linux-gnu (32-bit)") {
+    ##     expect_warning(update(g0, .~. +year), "failed to converge")
+    ## } else {
+    ##     ## MacOS x86_64-apple-darwin10.8.0 (64-bit)
+    ##     ## MM's platform
+    ##     ## "pwrssUpdate did not converge in (maxit) iterations"
+    ##     expect_error(update(g0, .~. +year), "pwrssUpdate did not converge in")
+    ## }
     ## OK if we scale & center it
     expect_is(update(g0,.~. + scale(year), control=gc), "glmerMod")
     ## not OK if we scale and don't center
