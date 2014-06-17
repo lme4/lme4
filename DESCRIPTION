@@ -13,7 +13,7 @@ Contact: LME4 Authors <lme4-authors@lists.r-forge.r-project.org>
 Author: Douglas Bates [aut], Martin Maechler [aut],
 	Ben Bolker [aut, cre], Steven Walker [aut],
         Rune Haubo Bojesen Christensen [ctb],
-	Henrik Singmann [ctb]
+	Henrik Singmann [ctb], Bin Dai [ctb]
 Description: Fit linear and generalized linear mixed-effects models.
     The models and their components are represented using S4 classes and
     methods.  The core computational algorithms are implemented using the
