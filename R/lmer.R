@@ -1337,6 +1337,26 @@ residuals.glmResp <- function(object, type = c("deviance", "pearson",
 
 }
 
+## influence values (new feature)
+hatvalues.merMod <- function(object, ...) {
+    with(getME(object, c("L", "Lambdat", "Zt", "RX", "X", "RZX")), {
+                                        # prior weights
+        sqrtW <- Diagonal(x = sqrt(weights(object, type = "prior")))
+                                        # right factor of the
+                                        # random-effects component of
+                                        # the hat matrix
+        CL <- solve(L, solve(L, Lambdat%*%Zt%*%sqrtW,
+                             system = "P"), system = "L")
+                                        # right factor of the
+                                        # fixed-effects comonent of
+                                        # the hat matrix
+        CR <- solve(t(RX), t(X)%*%sqrtW - t(RZX)%*%CL)
+                                        # diagonal of the hat matrix
+        apply(CR^2, 2, sum) + apply(CL^2, 2, sum)
+    })
+}
+
+
 ##' @S3method sigma merMod
 sigma.merMod <- function(object, ...) {
     dc <- object@devcomp
