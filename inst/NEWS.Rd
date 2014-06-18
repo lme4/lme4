@@ -10,8 +10,26 @@
       \item fix \code{confint(.,method="boot")} to allow/work
       properly with \code{boot.type} values other than \code{"perc"}
       (reported by Alan Zaslavsky)
-      \item allow plot() to work when data are specified in a different
+      \item allow \code{plot()} to work when data are specified in a different
       environment (reported by Dieter Menne)
+      \item \code{predict} and \code{simulate} work for matrix-valued
+      predictors (Github #201)
+      \item other \code{simulate} bugs (Github #212)
+      \item \code{predict} no longer warns spuriously when
+      original response was a factor (Github #205)
+      \item fix memory access issues (Github #200)
+    }
+  }
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item the use of \code{deviance} to return the REML criterion
+      is now deprecated; users should use \code{REMLcrit()} instead
+      (Github #211)
+      \item preliminary implementation of checks for scaling
+      of model matrix columns (see \code{check.scaleX} in
+      \code{?lmerControl})
+      \item \code{beta} is now allowed as a synonym for \code{fixef}
+      when specifying starting parameters (Github #194)
     }
   }
 }
