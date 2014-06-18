@@ -2,6 +2,7 @@ useDynLib(lme4,.registration=TRUE)
 
 ## base packages
 importFrom("graphics", plot)
+importFrom("grid", gpar,viewport)
 importFrom("splines", backSpline,interpSpline,periodicSpline)
 importFrom("methods", show)
 importFrom("stats",
@@ -11,7 +12,6 @@ importFrom("stats",
            update, vcov, weights)
 ## Recommended packages
 importClassesFrom("Matrix", corMatrix, dgCMatrix, dpoMatrix, dCHMsimpl)
-importFrom("grid", gpar,viewport)
 importFrom("lattice",
            bwplot,
            current.panel.limits,
