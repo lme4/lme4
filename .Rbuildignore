@@ -10,3 +10,11 @@ clean
 .git
 .gitignore
 .Rproj.user
+\.aux$
+\.dvi$
+\.log$
+\.bst$
+\.bbl$
+\.blg$
+\.out$
+jss\.cls

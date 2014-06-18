@@ -23,16 +23,17 @@ LinkingTo: Rcpp, RcppEigen
 Imports: graphics, grid, splines, parallel, MASS, nlme, lattice,
     minqa (>= 1.1.15), RcppEigen (>= 0.3.2.0), nloptr
 Suggests:
+    knitr,
     boot,
     PKPDmodels,
     MEMSS,
-    testthat,
+    testthat (>= 0.8.1),
     ggplot2,
     mlmRev,
     optimx (>= 2013.8.6),
-    plyr,
-    reshape,
+    gamm4,
     pbkrtest
+VignetteBuilder: knitr
 LazyData: yes
 License: GPL (>=2)
 URL: https://github.com/lme4/lme4/

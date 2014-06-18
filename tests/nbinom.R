@@ -78,14 +78,14 @@ if(FALSE) { ## simulation study --------------------
           t.glmmadmb=unname(t2["elapsed"]),theta.glmmadmb=g2$alpha)
     }
 
-    library(plyr)
-    sim50 <- raply(50,simsumfun(),.progress="text")
+    ## library(plyr)
+    ## sim50 <- raply(50,simsumfun(),.progress="text")
     save("sim50",file="nbinomsim1.RData")
-    library(reshape)
-    m1 <- melt(data.frame(run=seq(nrow(sim50)),sim50),id.var="run")
-    m1 <- data.frame(m1,colsplit(m1$variable,"\\.",c("v","method")))
-    m2 <- cast(subset(m1,v=="theta",select=c(run,value,method)),
-               run~method)
+    ## library(reshape)
+    ## m1 <- melt(data.frame(run=seq(nrow(sim50)),sim50),id.var="run")
+    ## m1 <- data.frame(m1,colsplit(m1$variable,"\\.",c("v","method")))
+    ## m2 <- cast(subset(m1,v=="theta",select=c(run,value,method)),
+    ##           run~method)
 
     library(ggplot2)
     ggplot(subset(m1,v=="theta"),aes(x=method,y=value))+
