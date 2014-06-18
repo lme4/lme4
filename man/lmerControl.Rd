@@ -3,6 +3,7 @@
 \alias{glmerControl}
 \alias{lmerControl}
 \alias{nlmerControl}
+\alias{convergence}
 \alias{.makeCC}
 \description{
   Construct control structures for mixed model fitting.  All arguments
@@ -236,6 +237,24 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
   will suppress warnings that the number of observations is less than
   the rank of the random effects model matrix \code{Z}.
 }
+\section{Troubleshooting}{
+  Some additional information about specific warnings and what to do
+  about them:
+  \itemize{
+    \item \code{Model failed to converge with max|grad| ...} The scaled
+    gradient at the fitted (RE)ML estimates
+    is worryingly large. Try switching optimizers to see if you
+    get consistent results, or
+    compute values of the deviance in the neighbourhood of the estimated
+    parameters to double-check that \code{lme4} has really found a
+    local optimum.
+    \item \code{Model is nearly unidentifiable ... Rescale variables?}
+    The Hessian (curvature matrix) at the maximum likelihood or REML
+    estimates has a large eigenvalue, indicating that the surface is
+    nearly flat in some direction. Consider centering and/or scaling
+    continuous predictor variables.
+  }
+}
 \examples{
 str(lmerControl())
 str(glmerControl())
@@ -271,23 +290,23 @@ str(glmerControl())
     fm0_brent <- update(fm0,control=lmerControl(optimizer="optimwrap",
                             optCtrl=list(method="Brent")))
     ## You can also use functions from the nloptr package.
-    ## You must run library(nloptr) here ... it is commented out
-    ## to avoid making lme4 dependent on nloptr
-    defaultControl <- list(algorithm="NLOPT_LN_BOBYQA",
-                           xtol_rel=1e-6,maxeval=1e5)
-    nloptwrap2 <- function(fn,par,lower,upper,control=list(),...) {
-        for (n in names(defaultControl))
-            if (is.null(control[[n]])) control[[n]] <- defaultControl[[n]]
-        res <- nloptr(x0=par,eval_f=fn,lb=lower,ub=upper,opts=control,...)
-        with(res,list(par=solution,
-                      fval=objective,
-                      feval=iterations,
-                      conv=if (status>0) 0 else status,
-                      message=message))
+    if (require(nloptr)) {
+        defaultControl <- list(algorithm="NLOPT_LN_BOBYQA",
+                               xtol_abs=1e-6,ftol_abs=1e-6,maxeval=1e5)
+        nloptwrap <- function(fn,par,lower,upper,control=list(),...) {
+            for (n in names(defaultControl))
+                if (is.null(control[[n]])) control[[n]] <- defaultControl[[n]]
+            res <- nloptr(x0=par,eval_f=fn,lb=lower,ub=upper,opts=control,...)
+            with(res,list(par=solution,
+                          fval=objective,
+                          feval=iterations,
+                          conv=if (status>0) 0 else status,
+                          message=message))
+        }
+        fm1_nloptr <- update(fm1,control=lmerControl(optimizer="nloptwrap"))
+        fm1_nloptr_NM <- update(fm1,control=lmerControl(optimizer="nloptwrap",
+                                    optCtrl=list(algorithm="NLOPT_LN_NELDERMEAD")))
     }
-    fm1_nloptr <- update(fm1,control=lmerControl(optimizer="nloptwrap2"))
-    fm1_nloptr_NM <- update(fm1,control=lmerControl(optimizer="nloptwrap2",
-                                optCtrl=list(algorithm="NLOPT_LN_NELDERMEAD")))
     ## other algorithm options include NLOPT_LN_COBYLA, NLOPT_LN_SBPLX
-}
+  }
 }
