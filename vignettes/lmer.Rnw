@@ -2,7 +2,7 @@
 %\VignetteDepends{ggplot2}
 %\VignetteDepends{gamm4}
 %\VignetteIndexEntry{Fitting linear mixed-effects models using lme4}
-\documentclass{jss}
+\documentclass[nojss]{jss}
 %% need no \usepackage{Sweave.sty}
 %\usepackage{lineno}
 \usepackage[T1]{fontenc}% for correct hyphenation and T1 encoding
