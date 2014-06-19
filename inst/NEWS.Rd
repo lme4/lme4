@@ -4,7 +4,29 @@
 \title{lme4 News}
 \encoding{UTF-8}
 \section{CHANGES IN VERSION 1.1-7}{
-  \subsection{BUG FIXES}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item the \code{nloptr} package is now imported;
+      a wrapper function (\code{nloptwrap}) is provided so that
+      \code{lmerControl(optimizer="nloptwrap")} is all that's necessary
+      to use \code{nloptr} optimizers in the nonlinear optimization
+      stage (the default algorithm is NLopt's implementation
+      of BOBYQA: see \code{?nloptwrap} for examples)
+      \item preliminary implementation of checks for scaling
+      of model matrix columns (see \code{check.scaleX} in
+      \code{?lmerControl})
+      \item \code{beta} is now allowed as a synonym for \code{fixef}
+      when specifying starting parameters (Github #194)
+    }
+  }
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item the use of \code{deviance} to return the REML criterion
+      is now deprecated; users should use \code{REMLcrit()} instead
+      (Github #211)
+    }
+  }
+    \subsection{BUG FIXES}{
     \itemize{
       \item change gradient testing from absolute to relative
       \item fix \code{confint(.,method="boot")} to allow/work
@@ -18,18 +40,6 @@
       \item \code{predict} no longer warns spuriously when
       original response was a factor (Github #205)
       \item fix memory access issues (Github #200)
-    }
-  }
-  \subsection{USER-VISIBLE CHANGES}{
-    \itemize{
-      \item the use of \code{deviance} to return the REML criterion
-      is now deprecated; users should use \code{REMLcrit()} instead
-      (Github #211)
-      \item preliminary implementation of checks for scaling
-      of model matrix columns (see \code{check.scaleX} in
-      \code{?lmerControl})
-      \item \code{beta} is now allowed as a synonym for \code{fixef}
-      when specifying starting parameters (Github #194)
     }
   }
 }
