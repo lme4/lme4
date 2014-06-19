@@ -46,6 +46,13 @@ install.packages("lme4",
           getOption("repos")[["CRAN"]]))
 ```
 
+## Installation on old R (pre-3.0.0)
+
+It is possible to install (but not check) `lme4` at least as recently as 1.1-7
+
+* make sure you have *exactly* these package versions: `Rcpp` 0.10.5, `RcppEigen` 3.2.0.2
+* for installation, use `--no-inst`; this is necessary in order to prevent R from getting hung up by the `knitr`-based vignettes
+
 ## Installation of `lme4.0`
 
 * `lme4.0` is a maintained version of lme4 back compatible to CRAN versions of lme4 0.99xy,
