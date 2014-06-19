@@ -104,13 +104,9 @@ library(lme4)
 ## library(lme4pureR)  ## don't load; masks lme4::lmer, causes trouble
 library(ggplot2)
 theme_set(theme_bw())
-library(RColorBrewer)
 library(grid)
-library(gridExtra)
 zmargin <- theme(panel.margin=unit(0,"lines"))
 library(lattice)
-library(reshape2)
-library(plyr)
 opts_chunk$set(engine='R',dev='pdf',fig.width=9,prompt=TRUE,
                fig.height=5.5,cache=TRUE,tidy=FALSE,comment=NA)
 @ % $ <- for emacs ESS
