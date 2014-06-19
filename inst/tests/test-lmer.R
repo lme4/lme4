@@ -109,11 +109,7 @@ test_that("lmer", {
     expect_error(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl(optimizer="optimx")),"must be loaded")
     expect_error(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl(optimizer="junk")), "couldn't find optimizer function")
     ## disable test ... should be no warning
-    if (FALSE) {
-        ## comment test out because we have a square Zt matrix,
-        ## hence warnings about dimension mismatch
-        ## FIXME: restore after dimension mismatch issue resolved
-        expect_is(lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
+    expect_is(lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
                    data = sleepstudy, subset = (Days == 1 | Days == 9),
                    control=lmerControl(check.nobs.vs.rankZ="ignore",
                    check.nobs.vs.nRE="ignore",
@@ -122,13 +118,12 @@ test_that("lmer", {
                    ## surface is flat so *relative* gradient gets large
                    check.conv.grad="ignore")),
               "merMod")
-        expect_is(lmer(Reaction ~ 1 + Days + (1|obs),
-                       data = transform(sleepstudy,obs=seq(nrow(sleepstudy))),
-                       control=lmerControl(check.nobs.vs.nlev="ignore",
-                       check.nobs.vs.nRE="ignore",
-                       check.nobs.vs.rankZ="ignore")),
-                  "merMod")
-    }
+    expect_is(lmer(Reaction ~ 1 + Days + (1|obs),
+                   data = transform(sleepstudy,obs=seq(nrow(sleepstudy))),
+                   control=lmerControl(check.nobs.vs.nlev="ignore",
+                   check.nobs.vs.nRE="ignore",
+                   check.nobs.vs.rankZ="ignore")),
+              "merMod")
     expect_error(lmer(Reaction ~ 1 + Days + (1|obs),
                       data = transform(sleepstudy,obs=seq(nrow(sleepstudy))),
                       "number of levels of each grouping factor"))
@@ -149,14 +144,11 @@ test_that("lmer", {
     options(lmerControl=list(check.nobs.vs.rankZ="ignore",check.nobs.vs.nRE="ignore"))
     expect_is(fm4 <- lmer(Reaction ~ Days + (1|Subject),
 			  subset(sleepstudy,Subject %in% levels(Subject)[1:4])), "merMod")
-    if (FALSE) {
-        ## FIXME: more disabled tests due to dimension warning
-        expect_is(lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
-                       data = sleepstudy, subset = (Days == 1 | Days == 9),
-                       control=lmerControl(check.conv.hess="ignore",
-                       check.conv.grad="ignore")),
-                  "merMod")
-    }
+    expect_is(lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
+                   data = sleepstudy, subset = (Days == 1 | Days == 9),
+                   control=lmerControl(check.conv.hess="ignore",
+                   check.conv.grad="ignore")),
+              "merMod")
     options(lmerControl=NULL)
     ## check for when ignored options are set
     options(lmerControl=list(junk=1,check.conv.grad="ignore"))
