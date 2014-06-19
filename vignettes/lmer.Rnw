@@ -3,25 +3,20 @@
 %\VignetteDepends{gamm4}
 %\VignetteIndexEntry{Fitting linear mixed-effects models using lme4}
 \documentclass[nojss]{jss}
-%% need no \usepackage{Sweave.sty}
-%\usepackage{lineno}
 \usepackage[T1]{fontenc}% for correct hyphenation and T1 encoding
 \usepackage{lmodern}% latin modern font
 \usepackage[american]{babel}  %% for texi2dvi ~ bug
 \usepackage{bm,amsmath,thumbpdf,amsfonts}%,minted}
 \usepackage{blkarray}
-%
-%\newenvironment{linenomath}{}{}
-\newcommand{\bmb}[1]{{\color{red} \emph{#1}}}
-\newcommand{\scw}[1]{{\color{blue} \emph{#1}}}
-\newcommand{\scwViaDb}[1]{#1}
-\newcommand{\dmb}[1]{{\color{magenta} \emph{#1}}}
 \newcommand{\matindex}[1]{\mbox{\scriptsize#1}}% Matrix index
 \newcommand{\github}{Github}
 \DeclareMathOperator{\tr}{tr}
 \DeclareMathOperator{\VEC}{vec}
+\newcommand{\bmb}[1]{{\color{red} \emph{#1}}}
+\newcommand{\scw}[1]{{\color{blue} \emph{#1}}}
+\newcommand{\dmb}[1]{{\color{magenta} \emph{#1}}}
 
-\shortcites{bolker_strategies_2013,sleepstudy}
+\shortcites{bolker_strategies_2013,sleepstudy,gelman2013bayesian}
 
 \author{Douglas Bates\\U. of Wisconsin - Madison\And
   Martin M\"achler\\ETH Zurich\And
@@ -109,8 +104,13 @@ library(lme4)
 ## library(lme4pureR)  ## don't load; masks lme4::lmer, causes trouble
 library(ggplot2)
 theme_set(theme_bw())
+library(RColorBrewer)
 library(grid)
+library(gridExtra)
+zmargin <- theme(panel.margin=unit(0,"lines"))
 library(lattice)
+library(reshape2)
+library(plyr)
 opts_chunk$set(engine='R',dev='pdf',fig.width=9,prompt=TRUE,
                fig.height=5.5,cache=TRUE,tidy=FALSE,comment=NA)
 @ % $ <- for emacs ESS
@@ -120,23 +120,21 @@ opts_chunk$set(engine='R',dev='pdf',fig.width=9,prompt=TRUE,
 \begin{document}
 %\linenumbers
 
+Submitted to \emph{Journal of Statistical Software}
+
 \section{Introduction}
 \label{sec:intro}
 
-%\scwViaDb{Note about academic honesty: all text in this magenta colour
-%  was directly stolen (or liberally absorbed) by SCW from the vast
-%  amount of material written by DB on \pkg{lme4}.}
-
-The \pkg{lme4} package for \proglang{R} provides functions to fit and analyze
-linear mixed models (LMMs), generalized linear mixed models (GLMMs)
-and nonlinear mixed models (NLMMs).  In each of these names, the term
-``mixed'' or, more fully, ``mixed effects'', denotes a model that
-incorporates both fixed- and random-effects terms in a
-linear predictor expression from which the conditional mean of the
-response can be evaluated.  In this paper we describe the formulation
-and representation of linear mixed models.  The techniques used for
-generalized linear and nonlinear mixed models will be described
-separately, in a future paper.
+The \pkg{lme4} package for \proglang{R} provides functions to fit and
+analyze linear mixed models, generalized linear mixed models and
+nonlinear mixed models.  In each of these names, the term ``mixed''
+or, more fully, ``mixed effects'', denotes a model that incorporates
+both fixed- and random-effects terms in a linear predictor expression
+from which the conditional mean of the response can be evaluated.  In
+this paper we describe the formulation and representation of linear
+mixed models.  The techniques used for generalized linear and
+nonlinear mixed models will be described separately, in a future
+paper.
 
 The development of general software for fitting mixed models remains
 an active area of research with many open problems.  Consequently, the
@@ -145,51 +143,40 @@ continues to improve as we learn more about mixed models. However, we
 recognize the need to maintain stability and backward compatibility of
 \pkg{lme4} so that it continues to be broadly useful. In order to
 maintain stability while continuing to advance mixed-model
-computation, we have developed several additional frameworks
-that draw on the basic ideas of \code{lme4} but modify its
-structure or implementation in various ways. These descendants include the
+computation, we have developed several additional frameworks that draw
+on the basic ideas of \code{lme4} but modify its structure or
+implementation in various ways. These descendants include the
 \mbox{\pkg{MixedModels}} package in \proglang{Julia}, the
 \pkg{lme4pureR} package in \proglang{R}, and the \code{flexLambda}
-development branch of \pkg{lme4}.
-The current article is largely restricted to describing
-of the current stable version of the \pkg{lme4} package (1.1-7), with
-Appendix~\ref{sec:modularExamples} describing hooks into the
-computational machinery that are designed for extension development.
-% , as has been done for example in the \pkg{gamm4} \citep{gamm4} and
-% \pkg{blme} \citep{blme} packages.
+development branch of \pkg{lme4}.  The current article is largely
+restricted to describing the current stable version of the \pkg{lme4}
+package (1.1-7), with Appendix~\ref{sec:modularExamples} describing
+hooks into the computational machinery that are designed for extension
+development. The \pkg{gamm4} \citep{gamm4} and \pkg{blme} \citep{blme}
+packages currently make use of these hooks.
 
 Another goal of this article is to contrast the approach used by
-\pkg{lme4} with previous formulations of mixed models. 
-The expressions for the profiled log-likelihood and profiled REML
+\pkg{lme4} with previous formulations of mixed models.  The
+expressions for the profiled log-likelihood and profiled REML
 (restricted maximum likelihood) criteria derived in
 Section~\ref{sec:profdev} are similar to those presented in
 \citet{bates04:_linear} and, indeed, are closely related to
 ``Henderson's mixed-model equations''~\citep{henderson_1982}.
-Nonetheless there are subtle but important changes in the
-formulation of the model and in the structure of the resulting
-penalized least squares (PLS) problem to be solved
-(Section~\ref{sec:PLSpureR}).  We derive the
-current version of the PLS problem (Section~\ref{sec:plsMath}) and
-contrast this result with earlier formulations
-(Section~\ref{sec:previous_lmm_form}).
-%% \bmb{do we need this last sentence here, or can it wait?}
-%% One specific change is that
-%% both the residual covariance matrix and the random effects covariance
-%% matrix are scaled by a parameter, $\sigma^2$ (Section~\ref{sec:LMMs}).
-%% A consequence of this difference is that a model in which the residual
-%% variance is numerically zero does not exist in the \pkg{lme4}
-%% framework.  As we discuss, excluding this subset of models increases
-%% the stability of our model fitting algorithms
-%% (Sections~\ref{sec:stability}, \ref{sec:previous_lmm_form}).
+Nonetheless there are subtle but important changes in the formulation
+of the model and in the structure of the resulting penalized least
+squares (PLS) problem to be solved (Section~\ref{sec:PLSpureR}).  We
+derive the current version of the PLS problem
+(Section~\ref{sec:plsMath}) and contrast this result with earlier
+formulations (Section~\ref{sec:previous_lmm_form}).
 
 This article is organized into four main sections (\ref{sec:lFormula};
 \ref{sec:mkLmerDevfun}; \ref{sec:optimizeLmer}; \ref{sec:mkMerMod}),
 each of which corresponds to one of the four largely separate modules
-that comprise \pkg{lme4}.  Before describing the details of
-each module, we describe the general form of the
-linear mixed model underlying \pkg{lme4} (Section~\ref{sec:LMMs});
-introduce the \code{sleepstudy} data that will be used as an example
-throughout (Section~\ref{sec:sleepstudy}); and broadly outline \pkg{lme4}'s
+that comprise \pkg{lme4}.  Before describing the details of each
+module, we describe the general form of the linear mixed model
+underlying \pkg{lme4} (Section~\ref{sec:LMMs}); introduce the
+\code{sleepstudy} data that will be used as an example throughout
+(Section~\ref{sec:sleepstudy}); and broadly outline \pkg{lme4}'s
 modular structure (Section~\ref{sec:modular}).
 
 \subsection{Linear mixed models}
@@ -246,22 +233,14 @@ that \pkg{lme4} can fit, this terse description
 hides many important details.  Before moving on to these details, we
 make a few observations:
 \begin{itemize}
-%% \item As mentioned in the introduction and described in greater detail
-%%   below (Section~\ref{sec:stability}), \pkg{lme4} differs from other
-%%   mixed-model formulations in that $\sigma$ scales the covariance
-%%   matrices for both the conditional distribution of $\mc{Y}$ given
-%%   $\mc{B}$ (Eq.~\ref{eq:LMMcondY}) and the marginal distribution of
-%%   $\mc{B}$ (Eq.~\ref{eq:LMMuncondB}). \bmb{how important is this?}
 \item This formulation of linear mixed models allows for a relatively
   compact expression for the profiled log-likelihood of $\bm\theta$
   (Section~\ref{sec:profdev}, Eq.~\ref{eq:profiledDeviance}).
 \item The matrices associated with random effects, $\bm Z$ and $\bLt$,
   typically have a sparse structure with a sparsity pattern that
   encodes various model assumptions.  Sections~\ref{sec:LMMmatrix} and
-  \ref{sec:CSCmats}
-  %, and \ref{sec:RSCmatChol}
-  provide details on
-  these structures, and how to represent them efficiently.
+  \ref{sec:CSCmats} provide details on these structures, and how to
+  represent them efficiently.
 \item The interface provided by \pkg{lme4}'s \code{lmer} function 
   is slightly less general than the model described by equations
   \ref{eq:LMMcondY}, \ref{eq:LMMuncondB}, and \ref{eq:relcovfac}.  To
@@ -270,31 +249,6 @@ make a few observations:
   Appendix~\ref{sec:modularExamples}) or explore the
   experimental \code{flexLambda} branch of \pkg{lme4} on \github.
 \end{itemize}
-
-%% This is the general form of linear mixed models that can be fitted by
-%% the \pkg{lme4} package.  The unknown parameters of this model are
-%% $\bm\beta$, $\thetavec$, and $\sigma^2$, \pkg{lme4} can estimate by
-%% either maximum likelihood or restricted maximum likeihood.  We
-%% describe these model fitting proceedures in Sections ??.  The known
-%% inputs of this model are $\bm o$, $\bm W$, $\bm X$, $\bm Z$, and the
-%% nature of the mapping from $\thetavec$ to $\bm\Lambda$.  The first three
-%% inputs are specified as they are in the \code{lm} function.  The
-%% latter two inputs are more interesting, and reflect the increased
-%% complexity associated with mixed-effects models. We describe how to
-%% specify these elements using \proglang{R} model formulas in Sections
-%% ??.
-
-%% \subsection{Sparse matrix structure}
-
-%% Although all models of the form ?? above can be fitted by the basic
-%% machinary underlying \pkg{lme4}, the \code{lmer} interface puts some
-%% restrictions on the structure of the $\bm Z$ and $\bLt$
-%% matrices.  The structure of $\bm Z$ in particular is based on $k$
-%% model matrices $\bm Z_1, \bm Z_2, ..., \bm Z_k$.  The dimensions of
-%% the $i$th model matrix, $\bm Z_i$, are $n \times q_i$.  The $\sum_i
-%% q_i$ columns give explanatory variables associated with a particular
-%% random effect.  These model matrices are Random effects from the same
-%% model matrix are correlated, where
 
 \subsection{Example}
 \label{sec:sleepstudy}
@@ -328,7 +282,6 @@ However, subjects also appear to vary in the slopes and intercepts
 of these relationships, which suggests a model with random slopes and intercepts.
 As we shall see, such a model may be fitted by minimizing the
 REML criterion (Eq.~\ref{eq:REMLdeviance}) using
-%% BMB: think we can do without the output here??
 <<outputExample,results="hide">>=
 fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 @
@@ -408,10 +361,6 @@ mkMerMod(   rho = environment(devianceFunction),
              fr = parsedFormula$fr)
 @
 % |
-%% \subsection{Roadmap}
-%% \label{sec:roadmap}
-
-%% \scw{Is a roadmap necessary?}
 
 \section{Formula module}
 \label{sec:lFormula}
@@ -419,11 +368,11 @@ mkMerMod(   rho = environment(devianceFunction),
 \subsection{Mixed-model formulas}
 \label{sec:formulas}
 
-\scwViaDb{Like most model-fitting functions in \proglang{R},
-  \code{lmer} takes as its first two arguments a \emph{formula}
-  specifying the model and the \emph{data} with which to evaluate the
-  formula. This second argument, \code{data}, is optional but
-  recommended and is usually the name of an \proglang{R} data frame.}
+Like most model-fitting functions in \proglang{R},
+\code{lmer} takes as its first two arguments a \emph{formula}
+specifying the model and the \emph{data} with which to evaluate the
+formula. This second argument, \code{data}, is optional but
+recommended and is usually the name of an \proglang{R} data frame.
 In the \proglang{R} \code{lm} function for fitting linear models,
 formulas take the form \verb+resp ~ expr+,
 where \code{resp} determines the response variable and \code{expr}
@@ -441,10 +390,6 @@ and the structure of the relative covariance factor,
 $\bLt$ (Section~\ref{sec:mkLambdat}).  In principle, a
 mixed-model formula may contain arbitrarily many random-effects terms,
 but in practice the number of such terms is typically low.
-
-%% Two questions about this formula structure immediately arise.  What
-%% is the meaning of the vertical bar?  Why would one require multiple
-%% random-effects terms?
 
 \subsection{Understanding mixed-model formulas}
 \label{sec:intuitiveFormulas}
@@ -475,19 +420,6 @@ used to obtain shrinkage estimates of regression coefficients
 for lack of independence in the residuals due to block structure or
 repeated measurements (e.g. \citet{laird_ware_1982}).
 
-%% or to estimate regression coefficients when the number of columns in
-%% the model matrix is larger than the number of samples (REFS).
-
-%% Multiple random-effects terms are useful for two principal reasons.
-%% First, they allow one to group data using more than one non-nested
-%% factors.  Such flexibility is required to fit several types of models.
-%% For example, item response models require both \code{item} and
-%% \code{subject} grouping factors, such that nearly every subject is
-%% tested on nearly every item.  Such factors are non-nested and so would
-%% require two random effects terms.  Second, two random effects terms
-%% with the same grouping factor allow one to model the independent
-%% random effects.
-
 Table~\ref{tab:formulas} provides several examples of the
 right-hand-sides of mixed-model formulas. The first example,
 \code{(1|g)}, % |
@@ -502,11 +434,6 @@ Table~\ref{tab:formulas}.  This model contains no fixed effects, or
 more accurately the fixed-effects model matrix, $\bm X$, has zero
 columns and $\bm\beta$ has length zero.
 
-%% In terms of the mathematical formulation of the \code{lmer} model, the
-%% mean is the only element in the vector of fixed-effects coefficients,
-%% $\bm\beta$, and the standard deviation is the only element in the
-%% vector of covariance parameters, $\bm\theta$.
-
 \begin{table}[tb]
   \centering
   \begin{tabular}{lll}
@@ -515,8 +442,6 @@ columns and $\bm\beta$ has length zero.
     \hline
     \code{(1|g)} & \code{1+(1|g)}
     & Random intercept with fixed mean \\
-%%    \code{0+(1|g)} & \code{-1+(1|g)} &
-%%    Random intercept with mean zero \\
     \code{0+offset(o)+(1|g)} & \code{-1+offset(o)+(1|g)}
     & Random intercept with \emph{a priori} means \\
     \code{(1|g1/g2)} & \code{(1|g1)+(1|g1:g2)}   % |
@@ -567,65 +492,37 @@ of Table~\ref{tab:formulas}.  For example, from the printout of model
 (Section~\ref{sec:sleepstudy}), we see that the estimated correlation
 between the slope for \code{Days} and the intercept is fairly low
 (\Sexpr{round(attr(VarCorr(fm1)$Subject, "correlation")[2],3)}) % $
-(See
-Section~\ref{sec:summary} below for more on how to extract the random
-effects covariance matrix.)  We may use the double-bar notation to
+(See Section~\ref{sec:summary} below for more on how to extract the
+random effects covariance matrix.)  We may use double-bar notation to
 fit a model that excludes a correlation parameter:
 <<uncorrelatedModel,results="hide">>=
 fm2 <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy)
 @
-%% Note the expansion of the formula in this printout.
 
-%%<<howTheDoubleBarFormulaIsParsed>>=
-%%formula(fm2)
-%%@
-
-Although mixed models where the random
-slopes and intercepts are assumed independent
-are commonly used to reduce the complexity
-of random-slopes models, they do have one subtle drawback.
-Models in which the slopes and intercepts are allowed
-to have a non-zero correlation
-(e.g. \code{fm1}) are invariant to additive shifts of the
-continuous predictor (\code{Days} in this case).
-This invariance breaks
-down when the correlation is constrained to zero;
-any shift in the predictor will necessarily lead to a change
-in the estimated correlation, and in the likelihood and
-predictions of the model.
-For example, we can eliminate the correlation in
-\code{fm1} simply by shifting \code{Days} by an amount equal to the
-ratio of the estimated among-subject standard deviations 
-multiplied by the estimated
-correlation (i.e., $\sigma_{\text{\small slope}}/\sigma_{\text{\small intercept}} \cdot \rho_{\text{\small slope:intercept}}$).
-The use of such models should ideally be restricted to cases where
-the predictor is measured on a ratio scale (i.e. the zero
-point on the scale is meaningful, not just a location defined
-by convenience or convention).
+Although mixed models where the random slopes and intercepts are
+assumed independent are commonly used to reduce the complexity of
+random-slopes models, they do have one subtle drawback.  Models in
+which the slopes and intercepts are allowed to have a non-zero
+correlation (e.g. \code{fm1}) are invariant to additive shifts of the
+continuous predictor (\code{Days} in this case).  This invariance
+breaks down when the correlation is constrained to zero; any shift in
+the predictor will necessarily lead to a change in the estimated
+correlation, and in the likelihood and predictions of the model.  For
+example, we can eliminate the correlation in \code{fm1} simply by
+shifting \code{Days} by an amount equal to the ratio of the estimated
+among-subject standard deviations multiplied by the estimated
+correlation (i.e., $\sigma_{\text{\small slope}}/\sigma_{\text{\small
+    intercept}} \cdot \rho_{\text{\small slope:intercept}}$).  The use
+of such models should ideally be restricted to cases where the
+predictor is measured on a ratio scale (i.e. the zero point on the
+scale is meaningful, not just a location defined by convenience or
+convention).
 
 %% <<uncorrelatedModelByShifting>>=
 %% sleepstudyShift <- within(sleepstudy, {
 %%     Days <- Days + (24.74*0.07)/5.92 })
 %% lmer(Reaction ~ Days + (Days |  Subject), sleepstudyShift)
 %% @
-
-%% \scw{FIXME: conclusion statement here about an overall lesson}
-
-%% \bmb{I question whether we want to do this, in light of Rune's
-%%   demonstration that we are essentially setting up a model that is no
-%%   longer invariant to recentering of the \code{Days} parameter \ldots
-%%   ? Should we at least warn?  Is there a better illustration of
-%%   double-bar notation?}
-
-%% \scw{I've tried to address this issue with the above paragraph.
-%%   However, this raises some questions for me.  For example, does this
-%%   have implications for degrees of freedom/parameter counting?  More
-%%   importantly, as you also ask, is there a better illustration of
-%%   double-bar?  It would be nice to do uncorrelated random effects
-%%   associated with levels of a factor (i.e. factor to the left of the
-%%   bar), but as I discovered last week, expandDoubleVert does not work
-%%   for this case. ... after some thought, I guess the best example is
-%%   two uncorrelated slopes -- too bad sleepstudy doesn't do that.}
 
 \subsection{Algebraic and computational account of mixed-model formulas}
 \label{sec:LMMmatrix}
@@ -645,9 +542,7 @@ considering first a single term, \code{(r|f)}, % |
 and then generalizing to multiple terms. Tables~\ref{tab:dim} and
 \ref{tab:algebraic} summarize the matrices and vectors that determine
 the structure of $\bm Z$ and
-$\bLt$.  % Below in Section~\ref{sec:SCSmats} we
-% discuss efficient strategies for storing and computing with these
-% matrices.
+$\bLt$.
 
 \begin{table}[tb]
   \centering
@@ -735,7 +630,6 @@ the lower triangle of its left Cholesky factor, $\bm L_{\bm\theta}$,
 described below in Eq.~\ref{eq:blockCholeskyDecomp}). This reduction
 in fill-in provides more efficient matrix operations within the
 penalized least squares algorithm (Section~\ref{sec:plsMath}).
-%\bmb{in the document I got this from (\url{http://lme4.r-forge.r-project.org/slides/2009-07-01-Lausanne/6TheoryD.pdf} p. 20), the first matrix is expressed as $\bm U'\bm U + \bm I$.  Is there any point in adding the notation $\bm U \equiv \bm Z\bLt$?  No.}
 
 \subsubsection{Constructing the random effects model matrix}
 \label{sec:mkZ}
@@ -757,10 +651,6 @@ rows of $\bm X_i$ multiplied by the 0/1 values in the first column of
 $\bm J_i$.  Similarly for the subsequent blocks.  With these
 definitions we may define the term-wise random-effects model matrix,
 $\bm Z_i$, for the $i$th term as a transposed Khatri-Rao product,
-%% \begin{equation}
-%%   \label{eq:12}
-%%   \bm Z_i = \left(\bm J_i\trans * \bm X_i\trans\right)\trans,
-%% \end{equation}
 \begin{equation}
   \label{eq:Zi}
   \bm Z_i = (\bm J_i\trans * \bm X_i\trans)\trans =
@@ -771,12 +661,15 @@ $\bm Z_i$, for the $i$th term as a transposed Khatri-Rao product,
     \bm J_{in}\trans \otimes \bm X_{in}\trans \\
   \end{bmatrix}
 \end{equation}
-where $*$ and $\otimes$ are the Khatri-Rao \citep{khatri1968solutions}
-and Kronecker products, and $\bm J_{ij}\trans$ and $\bm X_{ij}\trans$
-are row vectors of the $j$th rows of $\bm J_i$ and $\bm X_i$.  These rows correspond
-to the $j$th sample in the response vector, $\mc Y$, and thus $j$ runs
-from $1 \dots n$.  The \pkg{Matrix} package for \proglang{R} contains
-a \code{KhatriRao} function, which can be used to form $\bm Z_i$.  For
+where $*$ and $\otimes$ are the Khatri-Rao\footnote{Note that the
+  original definition of the Khatri-Rao product is more general than
+  the definition used in \pkg{Matrix} package, which is the definition
+  we use here.} \citep{khatri1968solutions} and Kronecker products,
+and $\bm J_{ij}\trans$ and $\bm X_{ij}\trans$ are row vectors of the
+$j$th rows of $\bm J_i$ and $\bm X_i$.  These rows correspond to the
+$j$th sample in the response vector, $\mc Y$, and thus $j$ runs from
+$1 \dots n$.  The \pkg{Matrix} package for \proglang{R} contains a
+\code{KhatriRao} function, which can be used to form $\bm Z_i$.  For
 example, if we begin with a raw model matrix,
 <<rawModelMatrix>>=
 (Xi <- cbind(1,rep.int(c(-1,1),3L)))
@@ -817,38 +710,6 @@ is only one random-effects term, and $\bm Z_i = \bm Z$), $\bm
 Z\trans\bm Z$ will be block diagonal.  These block-diagonal properties
 allow for more efficient sparse matrix computations
 (Section~\ref{sec:CSCmats}).
-%% \begin{equation}
-%%   \label{eq:14}
-%%   \begin{split}
-  %% Z_i\trans Z_i = &
-  %%   \begin{bmatrix}
-  %%   \bm J_{i1} \otimes \bm X_{i1} &
-  %%   \bm J_{i2} \otimes \bm X_{i2} &
-  %%   \hdots &
-  %%   \bm J_{in} \otimes \bm X_{in} \\
-  %% \end{bmatrix}
-  %%   \begin{bmatrix}
-  %%   \bm J_{i1}\trans \otimes \bm X_{i1}\trans \\
-  %%   \bm J_{i2}\trans \otimes \bm X_{i2}\trans \\
-  %%   \vdots \\
-  %%   \bm J_{in}\trans \otimes \bm X_{in}\trans \\
-  %% \end{bmatrix} \\
-  %% = &
-  %% (\bm J_{i1} \otimes \bm X_{i1}) (\bm J_{i1}\trans \otimes \bm
-  %% M_{i1}\trans) +
-  %% (\bm J_{i2} \otimes \bm X_{i2}) (\bm J_{i2}\trans \otimes \bm
-  %% M_{i2}\trans) + \hdots +
-  %% (\bm J_{in} \otimes \bm X_{in}) (\bm J_{in}\trans \otimes \bm
-  %% M_{in}\trans) \\
-  %% = &
-  %% \bm J_{i1} \bm J_{i1}\trans \otimes \bm X_{i1} \bm X_{i1}\trans +
-  %% \bm J_{i2} \bm J_{i2}\trans \otimes \bm X_{i2} \bm X_{i2}\trans +
-  %% \hdots +
-  %% \bm J_{in} \bm J_{in}\trans \otimes \bm X_{in} \bm X_{in}\trans \\
-  %% = &
-  %% \sum_{j=1}^n \bm J_{ij} \bm J_{ij}\trans \otimes \bm X_{ij} \bm X_{ij}\trans
-%%   \end{split}
-%% \end{equation}
 
 The full random effects model matrix, $\bm Z$, is constructed from
 $k\ge 1$ blocks,
@@ -862,41 +723,9 @@ $k\ge 1$ blocks,
     \bm Z_k \\
   \end{bmatrix}
 \end{equation}
-%% \begin{equation}
-%%   \label{eq:1}
-%%   \bm Z =
-%%   \begin{bmatrix}
-%%     \left(\bm J_1\trans * \bm X_1\trans\right)\trans &
-%%     \left(\bm J_2\trans * \bm X_2\trans\right)\trans &
-%%     \hdots &
-%%     \left(\bm J_k\trans * \bm X_k\trans\right)\trans \\
-%%   \end{bmatrix}
-%% \end{equation}
-%% The Khatri-Rao product is sometimes referred to as a column-wise
-%% Kronecker product, because,
-%% \begin{equation}
-%%   \label{eq:2}
-%%   \bm A * \bm B =
-%%   \begin{bmatrix}
-%%     \bm a_1 \otimes \bm b_1 &
-%%     \bm a_2 \otimes \bm b_2 &
-%%     \hdots \\
-%%   \end{bmatrix}
-%% \end{equation}
-%% where $\bm a_i$ and $\bm b_i$ are the $i$th columns of $\bm A$ and $\bm
-%% B$.
 By transposing Eq.~\ref{eq:Z} and substituting in Eq.~\ref{eq:Zi}, we
 may represent the structure of the transposed random effects model
 matrix as follows,
-%% \begin{equation}
-%%   \label{eq:3}
-%%   \bm Z\trans =
-%%   \begin{blockarray}{[c]c}
-%%     \bm J_1\trans * \bm Z_1\trans & \text{term 1} \\
-%%     \bm J_2\trans * \bm Z_2\trans & \text{term 2} \\
-%%     \vdots \\
-%%   \end{blockarray}
-%% \end{equation}
 \begin{equation}
   \label{eq:Zt}
   \bm Z\trans =
@@ -926,14 +755,8 @@ zeros is
 Therefore, the sparsity of $\bm Z\trans$ increases with the number of
 grouping factor levels. As the number of levels is often large in
 practice, it is essential for speed and efficiency to take account of
-this sparsity, for example by using sparse matrix methods, when fitting mixed
-models (Section~\ref{sec:CSCmats}).
-
-%% Note that $\bm Z\trans$ contains $n\sum_{i=1}^k p_i$ potentially
-%% non-zero values and $n\sum_{i=1}^k p_i(\ell_i - 1)$ structural zeros.
-%% that each Kronecker product associated with the $i$th term is a
-%% column vector containing $p_i$ potentially non-zero values and
-%% $p_i(\ell_i-1)$ structural zeros. Thus
+this sparsity, for example by using sparse matrix methods, when
+fitting mixed models (Section~\ref{sec:CSCmats}).
 
 \subsubsection{Constructing the relative covariance factor}
 \label{sec:mkLambdat}
@@ -995,19 +818,13 @@ nl <- 2
 <<relativeCovarianceBlock>>=
 (Lambdati <- .bdiag(rep(list(t(template)), nl)))
 @
-For a model with a single random effects term,
-$\bm\Lambda_i\trans$ would be the initial transposed relative
-covariance factor itself.
-%% For multiple terms, the relative covariance factor, $\bLt$,
-%% is a block diagonal matrix whose $i$th block, $\bm\Lambda_i$, is of
-%% size $q_i$, $i = 1,...,k$.  These $\bm\Lambda_i$ matrices are combined
-%% using \code{.bdiag} to construct the complete relative covariance
-%% factor.
+For a model with a single random effects term, $\bm\Lambda_i\trans$
+would be the initial transposed relative covariance factor itself.
 
-The transposed relative covariance factor, $\bLt\trans$, that arises from parsing the
-formula and data is set at the initial value of the covariance
-parameters, $\bm\theta$.  However, during model fitting, it needs to
-be updated to a new $\bm\theta$ value at each iteration (see
+The transposed relative covariance factor, $\bLt\trans$, that arises
+from parsing the formula and data is set at the initial value of the
+covariance parameters, $\bm\theta$.  However, during model fitting, it
+needs to be updated to a new $\bm\theta$ value at each iteration (see
 Section~\ref{sec:plsI}).  This is achieved by constructing a vector of
 indices, \code{Lind}, that identifies which elements of \code{theta}
 should be placed in which elements of \code{Lambdat},
@@ -1108,19 +925,10 @@ the fact that $r^2$ and $\rho^2$ both depend on $\bm\theta$,
 $\betavec$, and $\bm u$.  The reason for the word `penalized' is that
 the term, $\left\| \bm u \right\|^2$, in Eq.~\ref{eq:pwrss} penalizes models with
 larger magnitude values of $\bm u$.
-% \begin{equation}
-%   \label{eq:PLSprob}
-%   \bm\mu_{\mc U|\mc Y=\yobs}=\arg\min_{\begin{bmatrix} \bm u \\
-%   \bm\beta \\ \end{bmatrix}} r^2(\bm\theta, \bm\beta, \bm u)
-% .
-% \end{equation}%\end{linenomath}
 
-% In the so-called ``pseudo-data'' approach to solving such penalized
-% least squares problems we write the objective as a residual
-% sum-of-squares for an extended response vector and model
-In the so-called ``pseudo-data'' approach
-we write the penalized weighted residual sum-of-squares as the squared
-length of a block matrix equation,
+In the so-called ``pseudo-data'' approach we write the penalized
+weighted residual sum-of-squares as the squared length of a block
+matrix equation,
 \begin{equation}
   \label{eq:pwrssPseudoData}
   r^2(\bm\theta,\bm\beta,\bm u) =
@@ -1144,7 +952,7 @@ thought of as a standard least squares problem for an extended
 response vector, which implies that the minimizing value,
 $\begin{bmatrix}
   \bm\mu_{\mc U|\mc Y = \yobs} \\
-  \widehat{\bm\beta}_{\bm\theta} \\ \end{bmatrix}$, follows the
+  \widehat{\bm\beta}_{\bm\theta} \\ \end{bmatrix}$, satisfies the
 normal equations,
 \begin{equation}
   \label{eq:normalEquations}
@@ -1188,21 +996,6 @@ Cholesky decomposed,
 \end{equation}
 We may use this decomposition to rewrite the penalized weighted
 residual sum-of-squares as,
-% \begin{equation}
-%   \label{eq:pwrssBlockIdentity}
-%   r^2(\thetavec,\bm\beta,\bm u) =
-%   r^2(\thetavec,\widehat{\bm\beta}_{\bm\theta},\bm\mu_{\mc U|\mc Y = \yobs}) +
-%   \left\|   \begin{bmatrix}
-%     \bm L\trans_{\bm\theta} & \bm R_{ZX} \\
-%     \bm 0 & \bm R_{X} \\
-%   \end{bmatrix}
-%   \begin{bmatrix}
-%   \bm u - \bm\mu_{\mc U|\mc Y = \yobs} \\
-%   \bm\beta - \widehat{\bm\beta}_{\bm\theta} \\
-%   \end{bmatrix}
-%   \right\|^2 ,
-% \end{equation}
-% and as,
 \begin{equation}
   \label{eq:pwrssIdentity}
   \begin{aligned}
@@ -1316,8 +1109,6 @@ which by the properties of exponential integrands becomes,
   - \left\|\bm R_{X} (\bm\beta - \widehat{\bm\beta}_{\bm\theta})\right\|^2
   }{2\sigma^2}\right] .
 \end{equation}
-% This is the probability density used to form the log likelihood
-% (Eq.~\ref{eq:likelihood}).
 
 \subsection{Evaluating and profiling the deviance and REML criterion}
 \label{sec:profdev}
@@ -1470,7 +1261,7 @@ Eq. 6 of \citet{henderson_1982} and would be expressed as,
   \begin{bmatrix}\bm X\trans\yobs/\sigma^2\\\bm Z\trans\yobs/\sigma^2
   \end{bmatrix} ,
 \end{equation}
-in our notation (ignoring weights and offsets), without loss of
+in our notation (ignoring weights and offsets, without loss of
 generality).  The matrix written as $\bm R$ in \citet{henderson_1982}
 is $\sigma^2\bm I_n$ in our formulation of the model.
 
@@ -1580,28 +1371,9 @@ in the \pkg{MixedModels} package for \proglang{Julia} and do provide
 improved performance.
 
 
-% \scw{should we use
-%   tildes?  Either $\tilde{\bm u}$ or $\bm\mu_{\mc U|\mc Y=\yobs}$}
-
-% \scw{Should have a short concluding paragraph here summing up the
-%   usefulness (or lack thereof) of these gradient expressions.  They are used for certain model types in the Julia implementation and do help.}
-
-%% In the next section we describe how random-effects terms in a model
-%% formula determine sections of $\bm Z$ and $\bLt$ along with the
-%% mapping, $\bm\theta\rightarrow\bLt$.  For models that can be
-%% described by random-effects terms in a model formula,
-%% $\partial\bLt/\partial\theta_i$ will be a sparse binary matrix for
-%% all $i$.  This provides straightforward evaluation of
-%% Eq.~\ref{eq:gradr2} but evaluation of Eq.~\ref{eq:graddet}
-%% remains problematic in the general case.  In certain special cases
-%% it is possible to use aspects of the structure of the matrices in
-%% question to provide effective methods.
-
-
 \subsection{Penalized least squares algorithm}
 \label{sec:PLSpureR}
 
-%% We now describe code for implementing the PLS algorithm.
 For efficiency, in \pkg{lme4} itself, PLS is implemented in compiled
 \proglang{C++} code using the \pkg{Eigen} templated \proglang{C++}
 package for numerical linear algebra.  Here however, in order to
@@ -1609,9 +1381,7 @@ improve readability we describe a version in pure \proglang{R}.
 Section~\ref{sec:CSCmats} provides greater detail on the techniques
 and concepts for computational efficiency, which is important in cases
 where the nonlinear optimizer (Section~\ref{sec:optimizeLmer})
-requires many iterations. % In general, we
-% stress language-agnosticism to emphasize that our interests in PLS
-% extend beyond \pkg{lme4} itself.
+requires many iterations. 
 
 The PLS algorithm takes a vector of covariance parameters,
 $\bm\theta$, as inputs and returns the profiled deviance (Eq.
@@ -1718,7 +1488,7 @@ compiled code as in \pkg{lme4} itself).  This implementation is called
     & $\log|\bm L_{\bm\theta}|^2$ & double \\
     \hline
   \end{tabular}
-  \caption{Quantities updated during an evaluation of the LMM
+  \caption{Quantities updated during an evaluation of the linear mixed model
     objective function.}
   \label{tab:updatePLS}
 \end{table}
@@ -1747,15 +1517,13 @@ returns a numeric vector. The non-zero elements of sparse matrix
 classes in \pkg{Matrix} are stored in a slot called \code{x}.
 
 In the current version of \pkg{lme4} (v. 1.1-7) the mapping from
-$\bm\theta$ to $\bLt$ is represented as an \proglang{R} integer vector,
-\code{Lind}, of indices, so that
-%\code{Lind} has length equal to the number of non-zero
-%elements of $\bLt$,
+$\bm\theta$ to $\bLt$ is represented as an \proglang{R} integer
+vector, \code{Lind}, of indices, so that
 <<PLSupdateThetaWithLind>>=
 mapping <- function(theta) theta[Lind]
-@
-The index vector \code{Lind} is computed during the model setup and stored in
-the function's environment.  Continuing the example from
+@ 
+The index vector \code{Lind} is computed during the model setup and
+stored in the function's environment.  Continuing the example from
 Section~\ref{sec:mkLambdat}, consider a new value for \code{theta},
 <<exampleNewTheta>>=
 thetanew <- c(1, -0.1, 2, 0.1, -0.2, 3)
@@ -1844,82 +1612,6 @@ two assignments determine and apply the permutation matrix
 equation (\code{system="L"}). In the assignment to \code{u[]}, the
 nesting is reversed in order to return to the original permutation.
 
-%% The CHOLMOD library of C functions
-%% \citep{Chen:2008:ACS:1391989.1391995}, on which the sparse matrix
-%% capabilities of the \pkg{Matrix} package for \proglang{R} and the
-%% sparse Cholesky factorization in \proglang{Julia} are based, allows
-%% for separation of the symbolic and numeric phases.  Thus we perform
-%% the symbolic phase as part of establishing the structure representing
-%% the model.  Furthermore, because CHOLMOD functions allow for updating
-%% $\bm L_{\bm\theta}$ directly from the matrix $\bLt\trans\bm Z\trans$
-%% without actually forming $\bLt\trans\bm Z\trans\bm Z\bLt+\bm I$ we
-%% generate and store $\bm Z\trans$ instead of $\bm Z$ (note that we have
-%% ignored the weights matrix, $\bm W$, for simplicity).  As described
-%% below, we can update $\bLt\trans\bm Z\trans$ directly from $\thetavec$
-%% without forming $\bLt$ and multiplying two sparse matrices.  In the
-%% \proglang{Julia} code we use the direct update of $\bLt\trans\bm
-%% Z\trans$.  In the \proglang{R} code we first update $\bLt\trans$ then
-%% form the sparse product $\bLt\trans\bm Z\trans$.  A third alternative
-%% is to compute and save the cross-products of the model matrices, $\bm
-%% X$ and $\bm Z$, and the response, $\bm y$, before starting the
-%% iterations. To allow for case weights, we save the products $\bm
-%% X\trans\bm W\bm X$, $\bm X\trans\bm W\bm y$, $\bm Z\trans\bm X$, $\bm
-%% Z\trans\bm y$ and $\bm Z\trans\bm W\bm Z$.
-
-%% However, note that the
-%% advantage of saving these products is lost if $\bm W$ can change, as
-%% in the Penalized Iteratively-Reweighted Least Squares (PIRLS)
-%% algorithm for fitting generalized linear mixed models (GLMMs).
-%% \bmb{Cite the glmer paper?}
-
-
-
-% In the so-called ``pseudo-data'' approach to solving such penalized
-% least squares problems we write the objective as a residual
-% sum-of-squares for an extended response vector and model
-% matrix%\begin{linenomath}
-% \begin{equation}
-%   \label{eq:pseudoData}
-%   \left\|\yobs-\bm X\bm\beta-\bm Z\bLt\bm u\right\|^2 +
-%   \left\|\bm u\right\|^2 =
-%   \left\| \begin{bmatrix}\yobs-\bm X\bm\beta\\\bm 0\end{bmatrix}-
-%     \begin{bmatrix}\bm Z\bLt\\\bm I_q\end{bmatrix}
-%     \bm u\right\|^2.
-% \end{equation}%\end{linenomath}
-% The contribution to the residual sum-of-squares from the ``pseudo''
-% observations appended to $\yobs-\bm X\bm\beta$ is exactly the penalty
-% term, $\left\|\bm u\right\|^2$.
-
-%% From \eq{eq:normalEquations} we can see that the conditional mean
-%% satisfies%\begin{linenomath}
-%% \begin{equation}
-%%   \label{eq:PLSsol}
-%%   \left(\bLt\trans\bm Z\trans\bm W\bm Z\bLt+\bm I_q\right)
-%%   \bm\mu_{\mc U|\mc Y=\yobs}=\bLt\trans\bm Z\trans\bm W(\yobs-\bm o-\bm X\widehat{\betavec}_\thetavec),
-%% \end{equation}%\end{linenomath}
-%% which would be interesting, but not terribly useful, were it not for
-%% the fact that we can determine the solution to \eq{eq:PLSsol} quickly
-%% and accurately, even when $q$, the size of the system to solve, is
-%% very large indeed.  As described in sect.~\ref{sec:PLSnumer}, the
-%% special structures of the matrices $\bm Z$ and $\bLt$ for
-%% mixed-effects models described by a mixed-model formula result in
-%% $\bLt\trans\bm Z\trans\bm Z\bLt$ being very sparse, so that the
-%% sparse Cholesky factorization~\citep[Ch.~4]{davis06:csparse_book} can
-%% be used to solve Eq.~\ref{eq:PLSsol}.
-
-%% We can write the general approach in terms of a fill-reducing
-%% permutation matrix $\bm P$~\citep[Ch.~7]{davis06:csparse_book}, which
-%% is determined by the pattern of non-zeros in $\bm Z\bLt$ but does
-%% not depend on $\thetavec$ itself, and the \emph{sparse Cholesky
-%%   factor}, $\bm L_\thetavec$, which is a sparse, lower-triangular matrix
-%% such that%\begin{linenomath}
-%% \begin{equation}
-%%   \label{eq:sparseChol}
-%%   \bm L_\thetavec\bm L\trans_\thetavec=\bm P
-%%   \left(\bLt\trans\bm Z\trans\bm Z\bLt+\bm I_q\right)
-%%   \bm P\trans.
-%% \end{equation}%\end{linenomath}
-
 \subsubsection{PLS step III: update linear predictor and residuals}
 \label{sec:plsIII}
 
@@ -1952,9 +1644,6 @@ The profiled deviance consists of three components: (1)
 log-determinant(s) of Cholesky factorization (\code{logDet}), (2) the
 degrees of freedom (\code{degFree}), and the penalized weighted
 residual sum-of-squares (\code{pwrss}).
-
-%% \subsection{Computational details and methods}
-%% \label{sec:generalcomputational}
 
 \subsection{Sparse matrix methods}
 \label{sec:CSCmats}
@@ -2075,8 +1764,8 @@ the output. An internal wrapper allows the use of the \pkg{optimx}
 package \citep{optimx_pkg}, although the only optimizers provided via \pkg{optimx} that
 satisfy the constraints above are the \code{nlminb} and
 \code{L-BFGS-B} algorithms that are themselves wrappers around the
-versions provided in base R's \code{optim} function.  Given a simple
-wrapper function, Several other algorithms from Steven Johnson's
+versions provided in base R. 
+Several other algorithms from Steven Johnson's
 \code{NLopt} package are also available via the \pkg{nloptr} wrapper
 package (e.g., alternate implementations of Nelder-Mead and BOBYQA,
 and Powell's COBYLA algorithm).
@@ -2103,10 +1792,6 @@ parameterization but require the elements of $\bm\theta$ corresponding
 to the diagonal elements of the Cholesky factor to be non-negative.
 With these constraints, the variance-covariance matrix is singular if
 and only if any of the diagonal elements is exactly zero.
-%\bmb{is this
-%  (especially ``only if'') true? As off-diagonal elements go to $\pm
-%  \infty$ we \emph{approach} singularity, but I think the statement is
-%  still technically correct \ldots} \bmb{As mentioned above??}
 Singular fits are common in practical data-analysis situations,
 especially with small- to medium-sized data sets and complex
 variance-covariance models, so being able to fit a singular model is
@@ -2201,53 +1886,49 @@ sigma2*chol2inv(RX)
 @
 which could be computed with \pkg{lme4} as \code{vcov(fm1)}.
 
-The square-root diagonal of this covariance matrix, $\sqrt{\Var_{\bm\theta,
-  \sigma}(\hat\betavec)}$, contains the estimates of the standard errors
-of fixed effects coefficients.  These standard errors are used to
-construct Wald confidence intervals with \code{confint(., method =
-  "Wald")}.  Such confidence intervals are approximate, and depend on
-the assumption that the likelihood profile of the fixed effects is
-linear on the $\zeta$ scale (Section~\ref{sec:profile}).
+The square-root diagonal of this covariance matrix contains the
+estimates of the standard errors of fixed effects coefficients.  These
+standard errors are used to construct Wald confidence intervals with
+\code{confint(., method = "Wald")}.  Such confidence intervals are
+approximate, and depend on the assumption that the likelihood profile
+of the fixed effects is linear on the $\zeta$ scale
+(Section~\ref{sec:profile}).
 
 \subsubsection{Profiling}
 \label{sec:profile}
 
 \newcommand{\devprof}{-2 {\mc L}_p}
 
-The theory of likelihood profiles is straightforward: the 
-deviance (or likelihood) profile, $\devprof()$, 
-for a focal model parameter $P$ is
+The theory of likelihood profiles is straightforward: the deviance (or
+likelihood) profile, $\devprof()$, for a focal model parameter $P$ is
 the minimum value of the deviance conditioned on a particular value of
-$P$.
-For each parameter of interest, our goal is to evaluate the
-deviance profile 
-for many points --- optimizing over all of the non-focal parameters
-each time --- over a wide enough range and with high enough resolution
-to evaluate the shape of the profile
-(in particular, whether it is quadratic, which would allow use of Wald
+$P$.  For each parameter of interest, our goal is to evaluate the
+deviance profile for many points --- optimizing over all of the
+non-focal parameters each time --- over a wide enough range and with
+high enough resolution to evaluate the shape of the profile (in
+particular, whether it is quadratic, which would allow use of Wald
 confidence intervals and tests) and to find the values of $P$ such
-that $\devprof(P)=-2 {\mc L}(\widehat{P}) + \chi^2(1-\alpha)$, which represent the profile
-confidence intervals.  While profile confidence intervals rely on
-the asymptotic distribution of the minimum deviance, this is a much
-weaker assumption than the log-quadratic likelihood surface
-required by Wald tests.
-%\bmb{more info/cites?}
+that $\devprof(P)=-2 {\mc L}(\widehat{P}) + \chi^2(1-\alpha)$, which
+represent the profile confidence intervals.  While profile confidence
+intervals rely on the asymptotic distribution of the minimum deviance,
+this is a much weaker assumption than the log-quadratic likelihood
+surface required by Wald tests.
 
 An additional challenge in profiling arises when we want to compute
 profiles for quantities of interest that are not parameters of our PLS
 function. We have two problems in using the deviance function defined
-above to profile LMMs. First, a parameterization of the random effects
-variance-covariance matrix in terms of standard deviations and
-correlations, or variances and covariances, is much more familiar to
-users, and much more relevant as output of a statistical model, than
-the parameters, $\bm\theta$, of the relative covariance factor ---
-users are interested in inferences on variances or standard
-deviations, not on $\bm\theta$. Second, the fixed-effect coefficients
-and the residual standard deviation, both of which are also of
-interest to users, are profiled out (in the sense used above) of the
-deviance function (Section~\ref{sec:profdev}), so we have to find a
-strategy for estimating the deviance for values of $\bm\beta$ and
-$\sigma^2$ other than the profiled values.
+above to profile linear mixed models. First, a parameterization of the
+random effects variance-covariance matrix in terms of standard
+deviations and correlations, or variances and covariances, is much
+more familiar to users, and much more relevant as output of a
+statistical model, than the parameters, $\bm\theta$, of the relative
+covariance factor --- users are interested in inferences on variances
+or standard deviations, not on $\bm\theta$. Second, the fixed-effect
+coefficients and the residual standard deviation, both of which are
+also of interest to users, are profiled out (in the sense used above)
+of the deviance function (Section~\ref{sec:profdev}), so we have to
+find a strategy for estimating the deviance for values of $\bm\beta$
+and $\sigma^2$ other than the profiled values.
 
 To handle the first problem we create a new version of the deviance
 function that first takes a vector of standard deviations (and
@@ -2266,27 +1947,25 @@ but it serves for likelihood profiling, where one focal parameter is
 varied at a time and the optimization over the other parameters is
 likely to start close to an optimum.
 
-In practice, the \code{profile} method \scwViaDb{systematically varies
-  the parameters in a model, assessing the best possible fit that can
-  be obtained with one parameter fixed at a specific value and
-  comparing this fit to the globally optimal fit, which is the
-  original model fit that allowed all the parameters to vary.  The
-  models are compared according to the change in the deviance, which
-  is the likelihood ratio test statistic.  We apply a signed square
-  root transformation to this statistic and plot the resulting
-  function, which we call the \emph{profile zeta function} or $\zeta$,
-  versus the parameter value.} The signed aspect of this
-transformation means that $\zeta$ is positive where the deviation from the parameter estimate is
-positive and negative otherwise, leading to a monotonically increasing
-function which is zero at the global optimum. \scwViaDb{ A $\zeta$
-  value can be compared to the quantiles of the standard normal
-  distribution.  For example, a 95\% profile deviance confidence
-  interval on the parameter consists of the values for which $-1.96 <
-  \zeta < 1.96$.  Because the process of profiling a fitted model
-  can be computationally
-  intensive --- it involves refitting the model many times ---
-  one should exercise caution with complex models fit to
-  large data sets.}
+In practice, the \code{profile} method systematically varies the
+parameters in a model, assessing the best possible fit that can be
+obtained with one parameter fixed at a specific value and comparing
+this fit to the globally optimal fit, which is the original model fit
+that allowed all the parameters to vary.  The models are compared
+according to the change in the deviance, which is the likelihood ratio
+test statistic.  We apply a signed square root transformation to this
+statistic and plot the resulting function, which we call the
+\emph{profile zeta function} or $\zeta$, versus the parameter
+value. The signed aspect of this transformation means that $\zeta$ is
+positive where the deviation from the parameter estimate is positive
+and negative otherwise, leading to a monotonically increasing function
+which is zero at the global optimum. A $\zeta$ value can be compared
+to the quantiles of the standard normal distribution.  For example, a
+95\% profile deviance confidence interval on the parameter consists of
+the values for which $-1.96 < \zeta < 1.96$.  Because the process of
+profiling a fitted model can be computationally intensive --- it
+involves refitting the model many times --- one should exercise
+caution with complex models fit to large data sets.
 
 The standard approach to this computational challenge is to compute
 $\zeta$ at a limited number of parameter values, and to fill in the
@@ -2307,26 +1986,24 @@ and work outward either until a constraint is reached (i.e. a value of
 0 for a standard deviation parameter or a value of $\pm 1$ for a
 correlation parameter), or until a sufficiently large deviation from
 the minimum deviance is attained.  \pkg{lme4}'s profiler chooses a
-cutoff $\phi$
-%\bmb{ugh, notation}
-based on the $1-\alphamax$ critical
-value of the $\chi^2$ distribution with a number of degrees of freedom
-equal to the \emph{total} number of parameters in the model, where
-$\alphamax$ is set to 0.05 by default. The profile computation
-initially adjusts the focal parameter $p_i$ by an amount $\pstep=1.01
-\hat p_i$ from its ML or REML estimate $\hat p_i$ (or by
-$\pstep=0.001$ if $\hat p_i$ is zero, as in the case of a singular
-variance-covariance model).  The local slope of the likelihood profile
-$(\zeta(\hat p_i+\pstep)-\zeta(\hat p_i))/\pstep$ is used to pick the
-next point to evaluate, extrapolating the local slope to find a new
-$\pstep$ that would be expected to correspond to the desired step size
-$\Delta \zeta$ (equal to $\phi/8$ by default, so that 16 points would
-be used to cover the profile in both directions if the log-likelihood
-surface were exactly quadratic).  Some fail-safe testing is done to
-ensure that the step chosen is always positive, and less than a
-maximum; if a deviance is ever detected that is lower than that of the
-ML deviance, which can occur if the initial fit was wrong due to
-numerical problems, the profiler issues an error and stops.
+cutoff $\phi$ based on the $1-\alphamax$ critical value of the
+$\chi^2$ distribution with a number of degrees of freedom equal to the
+\emph{total} number of parameters in the model, where $\alphamax$ is
+set to 0.05 by default. The profile computation initially adjusts the
+focal parameter $p_i$ by an amount $\pstep=1.01 \hat p_i$ from its ML
+or REML estimate $\hat p_i$ (or by $\pstep=0.001$ if $\hat p_i$ is
+zero, as in the case of a singular variance-covariance model).  The
+local slope of the likelihood profile $(\zeta(\hat
+p_i+\pstep)-\zeta(\hat p_i))/\pstep$ is used to pick the next point to
+evaluate, extrapolating the local slope to find a new $\pstep$ that
+would be expected to correspond to the desired step size $\Delta
+\zeta$ (equal to $\phi/8$ by default, so that 16 points would be used
+to cover the profile in both directions if the log-likelihood surface
+were exactly quadratic).  Some fail-safe testing is done to ensure
+that the step chosen is always positive, and less than a maximum; if a
+deviance is ever detected that is lower than that of the ML deviance,
+which can occur if the initial fit was wrong due to numerical
+problems, the profiler issues an error and stops.
 %% while scaling based on the approximate variance-covariance matrix
 %% might be more accurate in some cases, it may also lead to problems
 %% when the log-likelihood surface is far from quadratic
@@ -2351,20 +2028,6 @@ of \code{bootMer} are adapted from \code{merBoot}, a more ambitious
 framework for bootstrapping \pkg{lme4} model fits which unfortunately
 seems to be unavailable at present \citep{merBoot}.)
 
-%% BMB: this description is actually only relevant to GLMMs --
-%% for better or worse we do _not_ do this for LMMs, because
-%% we would have to implement something via devfun2() with offsets
-%% we might be able to prove that in this case beta and theta
-%% are actually orthogonal ... ?
-%%
-%% While convenient and efficient because it makes use of
-%% structures that have already been computed and stored as
-%% part of the fitting process,
-%% this computation is only accurate to the extent that
-%% the fixed-effect ($\bm\beta$) and variance-covariance ($\thetavec$)
-%% parameters are independent.  Recent versions of \code{lme4}
-%% instead compute a finite-difference approximation of the Hessian
-%% (of the full parameter vector $\{\thetavec,\bm\beta\}$).
 
 \subsubsection{Conditional variances of random effects}
 \label{sec:condVar}
@@ -2392,7 +2055,9 @@ where,
 \begin{equation}
   \label{eq:condVar}
   \bm V = \left(\bm\Lambda_{\widehat{\bm\theta}}\trans\bm Z\trans \bm W
-    \bm Z\bm\Lambda_{\widehat{\bm\theta}} + \bm I_q \right)^{-1}
+    \bm Z\bm\Lambda_{\widehat{\bm\theta}} + \bm I_q \right)^{-1} = 
+  \left(\bm L_{\widehat{\bm\theta}}^{-1}\right)\trans
+  \left(\bm L_{\widehat{\bm\theta}}^{-1}\right)
 \end{equation}
 is the unscaled conditional variance and,
 \begin{equation}
@@ -2411,26 +2076,23 @@ may be expressed as,
   \label{eq:condVarB}
 \widehat{\sigma}^2 \bm\Lambda_{\widehat{\bm\theta}} \bm V \bm\Lambda_{\widehat{\bm\theta}}\trans
 \end{equation}
-%% where $\Var(\mathbf{u|y}) = \mathbf{V}$ is the conditional covariance
-%% of $\mathbf{u}$ derived in the preceding section
-%% (\ref{sec:outputTheory}).
 
-%% Example:
-%% <<condVarExample>>=
-%% s2 <- sigma(fm1)^2
-%% Lambdat <- getME(fm1, "Lambdat")
-%% Lambda <- getME(fm1, "Lambda")
-%% Zt <- getME(fm1, "Zt")
-%% Z <- getME(fm1, "Z")
-%% y <- getME(fm1, "y")
-%% X <- getME(fm1, "X")
-%% beta <- getME(fm1, "beta")
-%% (V <- solve((Lambdat %*% Zt %*% Z %*% Lambda) + Diagonal(n = 36, rep(1, 36))))[1:2,1:2]  # ugly but i like the conceptual and high-level clarity
-%% (s2 * Lambda %*% V %*% Lambdat)[1:2, 1:2]
-%% attr(ranef(fm1, condVar=TRUE)$Subject, "postVar")[,,1] # should be same as Lam %*% V %*% Lamt
-%% (U <- as.vector((V%*%Lambdat%*%Zt%*% (y-X%*%beta))))
-%% getME(fm1, "u")
-%% @
+<<condVarExample, echo=FALSE, eval=FALSE>>=
+s2 <- sigma(fm1)^2
+Lambdat <- getME(fm1, "Lambdat")
+Lambda <- getME(fm1, "Lambda")
+Zt <- getME(fm1, "Zt")
+Z <- getME(fm1, "Z")
+y <- getME(fm1, "y")
+X <- getME(fm1, "X")
+beta <- getME(fm1, "beta")
+L <- getME(fm1, "L")
+(V <- crossprod(solve(L, system = "L")))[1:2, 1:2]
+(s2 * Lambda %*% V %*% Lambdat)[1:2, 1:2]
+attr(ranef(fm1, condVar=TRUE)$Subject, "postVar")[,,1] # should be same as Lam %*% V %*% Lamt
+(U <- as.vector((V%*%Lambdat%*%Zt%*% (y-X%*%beta))))
+getME(fm1, "u")
+@
 
 \subsubsection{The hat matrix}
 \label{sec:hat}
@@ -2489,17 +2151,17 @@ By the Schur complement identity \citep{zhang2006schur},
 Therefore, we may write the hat matrix as,
 \begin{equation}
   \label{eq:hatComputational}
-  \bm H = (\bm C_L\trans \bm C_L + \bm C_R\trans \bm C_R)\bm W
+  \bm H = (\bm C_L\trans \bm C_L + \bm C_R\trans \bm C_R)
 \end{equation}
 where,
 \begin{equation}
   \label{eq:CL}
-  \bm L_{\bm\theta} \bm C_L = \bLt\trans \bm Z\trans
+  \bm L_{\bm\theta} \bm C_L = \bLt\trans \bm Z\trans\bm W^{1/2}
 \end{equation}
 and,
 \begin{equation}
   \label{eq:CR}
-  \bm R\trans_{X} \bm C_R = \bm X\trans - \bm R\trans_{ZX}\bm C_L
+  \bm R\trans_{X} \bm C_R = \bm X\trans\bm W^{1/2} - \bm R\trans_{ZX}\bm C_L
 \end{equation}
 
 The trace of the hat matrix is often used as a measure of the
@@ -2508,8 +2170,8 @@ Using a relationship between the trace and vec operators, the trace of
 $\bm H$ may be expressed as,
 \begin{equation}
   \label{eq:traceHat}
-  \tr(\bm H) = \left\| \VEC(\bm C_L \bm W^{1/2}) \right\|^2
-  + \left\| \VEC(\bm C_R \bm W^{1/2}) \right\|^2
+  \tr(\bm H) = \left\| \VEC(\bm C_L) \right\|^2
+  + \left\| \VEC(\bm C_R) \right\|^2
 \end{equation}
 
 \subsection{Using the output module}
@@ -2546,20 +2208,12 @@ these methods.
     Drop allowable single terms from the model. \\
     \code{extractAIC} &
     Generalized Akaike information criterion \\
-%    methods(class = 'merMod')[10] &  % family
     \code{fitted} &
     Fitted values given conditional modes (Eq.~\ref{eq:meanYgivenU}). \\
     \code{fixef} (\ref{sec:summary}) &
     Estimates of the fixed effects coefficients, $\widehat{\bm\beta}$ \\
     \code{formula} (\ref{sec:uncor}) &
     Mixed-model formula of fitted model. \\
-%    \code{fortify} &
-%    Add information to data used to fit model. \\
-%    methods(class = 'merMod')[15] \\
-%   \code{isLMM} &
-%   \code{TRUE} if the object is a linear mixed model. \\
-%    methods(class = 'merMod')[17] \\ % isREML
-%    methods(class = 'merMod')[18] \\
     \code{logLik} & % logLik
     Maximum log-likelihood. \\
     \code{model.frame} & % model.frame
@@ -2578,8 +2232,6 @@ these methods.
     Basic printout of mixed-model objects. \\
     \code{profile} (\ref{sec:profile}) &
     Profiled likelihood over various model parameters. \\
-%    & Useful for computing confidence intervals. \\
-%    methods(class = 'merMod')[28] \\
     \code{ranef} (\ref{sec:summary}) &
     Conditional modes of the random effects. \\
     \code{refit} (\ref{sec:pb}) &
@@ -2610,106 +2262,6 @@ these methods.
   \label{tab:methods}
 \end{table}
 
-
-% ------------------------------------------------------------
-% The following version of the methods table might be useful for
-% sanity checks
-% ------------------------------------------------------------
-% <<methodsForTable, echo=FALSE>>=
-% methodsForTable <- sub('.merMod', '', methods(class = 'merMod'))
-% @
-
-% \begin{table}
-%   \begin{tabular}{ll}
-%     \hline
-%     Generic (Section) & Brief description of return value \\
-%     \hline
-%     \Sexpr{methodsForTable[1]} (\ref{sec:summary})  &
-%     Estimated variances, standard deviations, and correlations. \\
-%     \Sexpr{methodsForTable[2]} (\ref{sec:modComp}) &
-%     Decomposition of fixed-effects contributions \\
-%     & or model comparison. \\
-%     \Sexpr{methodsForTable[3]} &
-%     Function returning  profiled deviance or REML criterion. \\
-%     \Sexpr{methodsForTable[4]} &
-%     Sum-of the random and fixed effects for each level. \\
-%     \Sexpr{methodsForTable[5]} (\ref{sec:CI}) &
-%     Confidence intervals on linear mixed-model parameters. \\
-%     \Sexpr{methodsForTable[6]} (\ref{sec:summary}) &
-%     Minus twice log-likelihood or REML criterion.\\
-%     \Sexpr{methodsForTable[7]} &
-%     Residual degrees of freedom. \\
-%     \Sexpr{methodsForTable[8]} &
-%     Drop allowable single terms from the model. \\
-%     \Sexpr{methodsForTable[9]} &
-%     Generalized Akaike's information criterion \\
-% %    \Sexpr{methods(class = 'merMod')[10]} &  % family
-%     \Sexpr{methodsForTable[11]} &
-%     Fitted values given conditional modes (Eq.~\ref{eq:meanYgivenU}). \\
-%     \Sexpr{methodsForTable[12]} (\ref{sec:summary}) &
-%     Estimates of the fixed effects coefficients, $\widehat{\bm\beta}$ \\
-%     \Sexpr{methodsForTable[13]} (\ref{sec:uncor}) &
-%     Mixed-model formula of fitted model. \\
-%     \Sexpr{methodsForTable[14]} &
-%     Add information to data used to fit model. \\
-% %    \Sexpr{methods(class = 'merMod')[15]} \\
-%    \Sexpr{methodsForTable[16]} &
-%    \code{TRUE} if the object is a linear mixed model. \\
-% %    \Sexpr{methods(class = 'merMod')[17]} \\ % isREML
-% %    \Sexpr{methods(class = 'merMod')[18]} \\
-%     \Sexpr{methodsForTable[19]} & % logLik
-%     Log-likelihood at the fitted values. \\
-%     \Sexpr{methodsForTable[20]} & % model.frame
-%     Data required to fit the model. \\
-%     \Sexpr{methodsForTable[21]} &
-%     Fixed effects model matrix, $\bm X$.\\
-%     \Sexpr{methodsForTable[22]} (\ref{sec:summary}) &
-%     Number of levels in each grouping factor. \\
-%     \Sexpr{methodsForTable[23]} (\ref{sec:summary}) &
-%     Number of observations.\\
-%     \Sexpr{methodsForTable[24]} &
-%     Diagnostic plots for mixed-model fits. \\
-%     \Sexpr{methodsForTable[25]} &
-%     Various types of predicted values. \\
-%     \Sexpr{methodsForTable[26]} &
-%     Basic printout of mixed-model objects. \\
-%     \Sexpr{methodsForTable[27]} (\ref{sec:profile}) &
-%     Profiled likelihood over various model parameters. \\
-%     & Useful for computing confidence intervals. \\
-% %    \Sexpr{methods(class = 'merMod')[28]} \\
-%     \Sexpr{methodsForTable[29]} (\ref{sec:summary}) &
-%     Conditional modes of the random effects. \\
-%     \Sexpr{methodsForTable[30]} &
-%     Mixed model fitted to new data. \\
-%     \Sexpr{methodsForTable[31]} (\ref{sec:modComp}) &
-%     A maximum likelihood fitted mixed model.  \\
-%     \Sexpr{methodsForTable[32]}  (\ref{sec:summary}) &
-%     Various types of residual values. \\
-%     \Sexpr{methodsForTable[33]} (\ref{sec:summary}) &
-%     Residual standard deviation. \\
-%     \Sexpr{methodsForTable[34]} &
-%     Simulated data from a fitted mixed model. \\
-%     \Sexpr{methodsForTable[35]} (\ref{sec:summary}) &
-%     Summary of a mixed model. \\
-%     \Sexpr{methodsForTable[36]} &
-%     Terms representation of a mixed model. \\
-%     \Sexpr{methodsForTable[37]} (\ref{sec:update}) &
-%     Update a mixed model with revised formula. \\
-%     \Sexpr{methodsForTable[38]} (\ref{sec:summary}) &
-%     Covariance matrix of the fixed effect estimates. \\
-%     \Sexpr{methodsForTable[39]} &
-%     Prior weights used in model fitting. \\
-%     \hline
-%   \end{tabular}
-%   \caption{List of currently available  methods for objects of the class \code{merMod}.}
-%   \label{tab:methods}
-% \end{table}
-
-%% We will now consider a series of modifications to the \code{fm1} and
-%% \code{fm2} models of the \code{sleepstudy} data fitted above in
-%% Sections~\ref{sec:sleepstudy} and \ref{sec:uncor}.  These
-%% modifications illustrate various ways to specify linear mixed models
-%% with \pkg{lme4}.
 
 \subsubsection{Updating fitted mixed models}
 \label{sec:update}
@@ -2954,13 +2506,14 @@ Section~\ref{sec:pb}), we have provided a help page to guide users in
 finding appropriate methods:
 <<pvaluesHelp, eval=FALSE>>=
 help("pvalues")
-@
+@ 
 This help page provides pointers to other packages that provide
 machinery for calculating $p$~values associated with \code{merMod}
 objects. It also suggests framing the inference problem as a
 likelihood ratio test (achieved by supplying multiple \code{merMod}
-objects to the \code{anova} method (Section~\ref{sec:modComp}), as well as
-alternatives to $p$~values such as confidence intervals.
+objects to the \code{anova} method (Section~\ref{sec:modComp}), as
+well as alternatives to $p$~values such as confidence intervals
+(Section~\ref{sec:CI}).
 
 Previous versions of \pkg{lme4} provided the \code{mcmcsamp} function,
 which generated a Markov chain Monte Carlo sample from the posterior
@@ -2972,18 +2525,11 @@ were near zero, \code{mcmcsamp} has been withdrawn.
 \subsubsection{Computing confidence intervals}
 \label{sec:CI}
 
-As described above, \pkg{lme4} provides confidence intervals 
-(using \code{confint}) via Wald
-approximations (for fixed-effect parameters only), likelihood
-profiling, or parametric bootstrapping (the \code{type} argument
-selects the method).
-%% \bmb{I was going to hide these; I figured that readers could understand
-%%how to use \code{confint} without actually seeing the code, and
-%%I didn't want to show the \code{oldNames} argument (now maybe less
-%%important since I'm not trying to construct the figure).  I don't
-%% think I get profile/bootstrap warnings on my system \ldots}
-%% \scw{I've turned off nonconvergence warnings for profile and bootstrap
-%%  CIs, but should they actually be displayed and discussed?}
+As described above (Sections~\ref{sec:vcov}, \ref{sec:profile},
+\ref{sec:pb}), \pkg{lme4} provides confidence intervals (using
+\code{confint}) via Wald approximations (for fixed-effect parameters
+only), likelihood profiling, or parametric bootstrapping (the
+\code{type} argument selects the method).
 <<compareCI,echo=FALSE,cache=TRUE,message=FALSE,warning=FALSE>>=
 ccw <- confint(fm1, method = "Wald")
 ccp <- confint(fm1, method = "profile", oldNames = FALSE)
@@ -2999,7 +2545,7 @@ mdiffpct <- round(100*max(rtol(bw,pw)))
 @
 <<CIplot,echo=FALSE,eval=FALSE>>=
 ## obsolete
-## ,fig.cap="Comparison of confidence intervals \\bmb{not worth showing?? FIXME: get rid of x axis labels;  better display?}",fig.scap="CI comparison"
+## ,fig.cap="Comparison of confidence intervals",fig.scap="CI comparison"
 tf <- function(x,method) data.frame(method=method,
                par=rownames(x),
                setNames(as.data.frame(x),c("lwr","upr")))
@@ -3037,8 +2583,8 @@ the correlation between the intercept and slope random effects
 \label{sec:profzeta}
 
 \pkg{lme4} provides several functions (built on \pkg{lattice}
-graphics) for plotting the profile zeta functions and other related
-quantities.
+graphics) for plotting the profile zeta functions
+(Section~\ref{sec:profile}) and other related quantities.
 
 \begin{itemize}
 \item The \emph{profile zeta} plot
@@ -3054,10 +2600,10 @@ quantities.
   setting the cumulative distribution function (c.d.f) to be
   $\Phi(\zeta)$ where $\Phi$ is the c.d.f.{} of the standard normal
   distribution.  This is not quite the same as evaluating the
-  distribution of the estimator of the parameter, which for
-  mixed models can be very difficult, but it gives a
-  reasonable approximation.  If the profile zeta plot is linear, then
-  the profile density plot will be Gaussian.
+  distribution of the estimator of the parameter, which for mixed
+  models can be very difficult, but it gives a reasonable
+  approximation.  If the profile zeta plot is linear, then the profile
+  density plot will be Gaussian.
 \item The \emph{profile pairs plot}
   (Figure~\ref{fig:profile_pairs_plot}; \code{splom}) gives an
   approximation of the two-dimensional profiles of pairs of
@@ -3093,9 +2639,9 @@ densityplot(pf)
 splom(pf)
 @
 
-For users who want to build their own graphical displays of the profile,
-there is an \code{as.data.frame} method that converts profile (\code{thpr})
-objects to a more convenient format.
+For users who want to build their own graphical displays of the
+profile, there is an \code{as.data.frame} method that converts profile
+(\code{thpr}) objects to a more convenient format.
 
 \subsubsection{Computing fitted and predicted values; simulating}
 \label{sec:predict}
@@ -3116,34 +2662,33 @@ random effect values set to zero).  In models with multiple random
 effects, the user can give \code{re.form} as a formula that specifies
 which random effects are conditioned on.
 
-\pkg{lme4} also provides a \code{simulate} method, which allows similar
-flexibility in conditioning on random effects; in addition it allows
-the user to choose (via the \code{use.u} argument) between
-conditioning on the fitted conditional modes or choosing a new set
-of simulated conditional modes (zero-mean Normal deviates chosen
-according to the estimated random effects variance-covariance matrices).
-Finally, the \code{simulate} method has a method for \code{formula}
-objects, which allows for \emph{de novo} simulation in the absence
-of a fitted model.  In this case, the user must specify the
-random effects ($\bm\theta$), fixed effects ($\bm\beta$),
-and residual standard deviation ($\sigma$) parameters
-via the \code{newparams} argument.  The standard simulation
-method (based on a \code{merMod} object) is the basis of parametric
-bootstrapping (Section~\ref{sec:pb}) and posterior predictive
-simulation (Section~\ref{sec:diagnostics}); \emph{de novo} simulation
-based on a formula provides a flexible framework for power analysis.
+\pkg{lme4} also provides a \code{simulate} method, which allows
+similar flexibility in conditioning on random effects; in addition it
+allows the user to choose (via the \code{use.u} argument) between
+conditioning on the fitted conditional modes or choosing a new set of
+simulated conditional modes (zero-mean Normal deviates chosen
+according to the estimated random effects variance-covariance
+matrices).  Finally, the \code{simulate} method has a method for
+\code{formula} objects, which allows for \emph{de novo} simulation in
+the absence of a fitted model.  In this case, the user must specify
+the random effects ($\bm\theta$), fixed effects ($\bm\beta$), and
+residual standard deviation ($\sigma$) parameters via the
+\code{newparams} argument.  The standard simulation method (based on a
+\code{merMod} object) is the basis of parametric bootstrapping
+(Section~\ref{sec:pb}) and posterior predictive simulation
+(Section~\ref{sec:diagnostics}); \emph{de novo} simulation based on a
+formula provides a flexible framework for power analysis.
 
 \section{Conclusion}
 
 Mixed models are an extremely useful but computationally intensive
-approach. Computational limitations are especially
-important because mixed models are commonly applied to moderately
-large data sets ($10^4$--$10^6$ observations).
-By developing an efficient, general, and (now) well-documented
-platform for fitted mixed models in \proglang{R}, we hope
-to provide both a practical tool for end users interested in
-analyzing data and a reusable, modular framework for downstream
-developers interested in extending the class of models that
+approach. Computational limitations are especially important because
+mixed models are commonly applied to moderately large data sets
+($10^4$--$10^6$ observations).  By developing an efficient, general,
+and (now) well-documented platform for fitted mixed models in
+\proglang{R}, we hope to provide both a practical tool for end users
+interested in analyzing data and a reusable, modular framework for
+downstream developers interested in extending the class of models that
 can be easily and efficiently analyzed in \proglang{R}.
 
 %% "mixed models" +
@@ -3158,36 +2703,32 @@ can be easily and efficiently analyzed in \proglang{R}.
 %%  winbugs: 2250
 %%  gllamm: 1140
 
-We have learned much about linear mixed models in the process
-of developing \pkg{lme4}, both from our own attempts to
-develop robust and reliable procedures and from the
-broad community of \pkg{lme4} users;
-we have attempted to describe many of these lessons
-here.  In moving forward, our main priorities are (1) to 
-maintain the reference implementation of \pkg{lme4} on CRAN, 
-developing relatively few new features; (2) to improve the 
-flexibility, efficiency and scalability of 
-mixed-model analysis across multiple compatible implementations,
-including both the \pkg{MixedModels} package for \proglang{Julia}
-and the experimental \code{flexLambda} branch of \pkg{lme4}.
+We have learned much about linear mixed models in the process of
+developing \pkg{lme4}, both from our own attempts to develop robust
+and reliable procedures and from the broad community of \pkg{lme4}
+users; we have attempted to describe many of these lessons here.  In
+moving forward, our main priorities are (1) to maintain the reference
+implementation of \pkg{lme4} on CRAN, developing relatively few new
+features; (2) to improve the flexibility, efficiency and scalability
+of mixed-model analysis across multiple compatible implementations,
+including both the \pkg{MixedModels} package for \proglang{Julia} and
+the experimental \code{flexLambda} branch of \pkg{lme4}.
 
 \section*{Acknowledgements}
 
-Rune Haubo Christensen, Henrik Singmann, and Bin Dai have
-contributed code to the current version of \pkg{lme4}; the
+Rune Haubo Christensen, Henrik Singmann, Fabian Scheipl,
+Vincent Dorie, and Bin Dai contributed ideas
+and code to the current version of \pkg{lme4}; the
 large community of \pkg{lme4} users has exercised the software,
 discovered bugs, and made many useful suggestions.
+S{\o}ren H{\o}jsgaard participated in useful discussions
+and Xi Xia  and Christian Zingg exercised the code
+and reported problems.
 We would like to thank the Banff International Research Station
-for hosting a working group on \pkg{lme4}, and the other participants
-in that group (Vincent Dorie, S{\o}ren H{\o}jsgaard, and Fabian Scheipl)
-for intellectual contributions.
-We would like to acknowledge an NSERC Discovery grant and
-NSERC postdoctoral fellowship for funding.
-\bmb{any other funding from D\&M?}
-
+for hosting a working group on \pkg{lme4}, and 
+an NSERC Discovery grant and NSERC postdoctoral fellowship for funding.
 
 \bibliography{lmer}
-
 
 \appendix
 
@@ -3639,84 +3180,6 @@ lines(xNew, yHat)
 lines(x[order(x)], (Bsimulation%*%beta)[order(x)],lty=2)
 legend("topright",bty="n",c("fitted","generating"),lty=1:2,col=1)
 @
-
-% \subsection{Correlations between observations on edges}
-% \label{sec:edges}
-
-% \scw{very rough now}
-
-% <<dataSOExamples, echo=FALSE>>=
-% dat<-structure(list(pop1 = c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 10L,
-%                     2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 4L,
-%                     4L, 4L, 4L, 4L, 4L, 5L, 5L, 5L, 5L, 5L, 6L, 6L, 6L, 6L, 7L, 7L,
-%                     7L, 8L, 8L, 9L), pop2 = c(2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 1L,
-%                     3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 4L, 5L, 6L, 7L, 8L, 9L, 10L,
-%                     5L, 6L, 7L, 8L, 9L, 10L, 6L, 7L, 8L, 9L, 10L, 7L, 8L, 9L, 10L,
-%                     8L, 9L, 10L, 9L, 10L, 10L), X = c(0.49136, 0.75587, 0.93952,
-%                     0.61278, 0.79934, 1.07918, 1.13354, 1.15836, 1.2014, 0.43136,
-%                     0.77815, 0.716, 0.93952, 1.13672, 1.16137, 1.18184, 1.21748,
-%                     0.65321, 0.86332, 1.04922, 1.19866, 1.20412, 1.22272, 1.24797,
-%                     0.89763, 1.08991, 1.19033, 1.15836, 1.17319, 1.18752, 0.64345,
-%                     0.93952, 0.98227, 1.01703, 1.07188, 0.78533, 0.94939, 0.99564,
-%                     1.06819, 0.64345, 0.716, 0.85126, -0.04576, 0.4624, 0.30103),
-%            Y = c(0.491694, 0.394703, 0.113303, 0.156597, 0.450924, 0.487845,
-%                  0.21821, 0.129027, -0.131522, 0.35156, -0.116826, 0.18941,
-%                  0.306608, 0.258401, 0.008552, -0.024369, -0.305258, -0.013628,
-%                  0.215715, 0.13783, 0.467272, 0.088882, 0.084295, -0.172337,
-%                  -0.206725, -0.084339, -0.191651, -0.001586, -0.079501, -0.195094,
-%                  0.232045, 0.17102, 0.003742, -0.023688, -0.26085, 0.205326,
-%                  0.172809, 0.133219, -0.159054, 0.082231, 0.011025, -0.238611,
-%                  0.732679, 0.478058, 0.325698)), .Names = c("node1", "node2",
-%                   "X", "Y"), class = "data.frame", row.names = c(NA, -45L))
-% @
-
-% Consider a graph of $n$ nodes, such that every pair of nodes is
-% connected by an edge.  Each of the $\binom{n}{2}$ edges is
-% characterized by a pair of continuous variables, $x$ and $y$. Such a
-% data set was posted on stack overflow (\scw{FIXME:  add link}),
-% <<printDataSOExample>>=
-% dat
-% ggplot(dat) + geom_point(aes(X, Y, colour = node1))
-% @
-% The model of interest is one in which there is a linear relationship
-% between $x$ and $y$ as a fixed slope and intercept, and in which edges
-% that share a node are correlated in the residuals from the fixed
-% effects relationship.  This is a difficult model to specify using the
-% \code{lme4} formula module.  We therefore use the strategy of parsing
-% an \code{lme4} formula for a model that is close to the desired model,
-% and then modify the output before passing it to the remaining model
-% fitting functions.  One such initial model contains a random intercept
-% among one of the nodes,
-% <<formulaSOExample>>=
-% lf <- lFormula(Y ~ X + (1|node1), data=dat)
-% @
-% which results in the following transposed random effects model matrix,
-% <<originalZtSOExample>>=
-% image(lf$reTrms$Zt)
-% @
-% However, for some unstated reason, the OP wants to use the following model matrix,
-% <<randomEffectsMatricesSOExample>>=
-% Zl <- lapply(c("node1","node2"),
-%          function(nm) fac2sparse(dat[[nm]], "d", drop=FALSE))
-% Zt <- Zl[[1]] + Zl[[2]]
-% image(Zt)
-% @
-% It is not easy to construct a mixed-model formula for generating this
-% model matrix.  It is easier to update the transposed random effects
-% model matrix in the \code{lf} object,
-% <<updateZtSOExample>>=
-% lf$reTrms$Zt <- Zt
-% @
-% and continue to fit the model,
-% <<fitModelSoExample>>=
-% dfun <- do.call(mkLmerDevfun,lf)   ## create dev fun from modified lf
-% opt <- optimizeLmer(dfun)          ## fit the model
-% ## make the results into a 'merMod' object
-% fit <- mkMerMod(environment(dfun), opt, lf$reTrms,
-%          fr = lf$fr)
-% summary(fit)
-% @
-
 
 \end{document}
 
