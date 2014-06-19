@@ -28,11 +28,8 @@ nloptwrap(fn,par,lower,upper,control=list(),...)
 environment(nloptwrap)$defaultControl
 library(lme4)
 fm1 <- lmer(Reaction~Days+(Days|Subject),sleepstudy)
-\dontrun{
-    ## need require(nloptr)
-    fm1_nloptr <- update(fm1,control=lmerControl(optimizer="nloptwrap"))
-    fm1_nloptr_NM <- update(fm1,control=lmerControl(optimizer="nloptwrap",
+fm1_nloptr <- update(fm1,control=lmerControl(optimizer="nloptwrap"))
+fm1_nloptr_NM <- update(fm1,control=lmerControl(optimizer="nloptwrap",
                             optCtrl=list(algorithm="NLOPT_LN_NELDERMEAD")))
-}
 ## other algorithm options include NLOPT_LN_COBYLA, NLOPT_LN_SBPLX
 }

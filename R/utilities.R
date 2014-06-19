@@ -917,7 +917,24 @@ smmm <- lme4:::mmList.merMod(sm)
 nloptwrap <- local({
     defaultControl <- list(algorithm="NLOPT_LN_BOBYQA",
                            xtol_abs=1e-6,ftol_abs=1e-6,maxeval=1e5)
+    ## kluge: we would like to import nloptr.default.options from nloptr
+    ##   up front (it's required by nloptr and isn't accessible if
+    ##   nloptr::nloptr is only imported without the package being loaded)
+    ## (1) adding export(nloptr.default.options) to the NAMESPACE
+    ##     of nloptr doesn't work (package install fails)
+    ## (2) the following code puts a copy of nloptr.default.options into the
+    ##   environment of nloptwrap(), but nloptr can't see it
+    ##   from there when called from within nloptwrap ...
+    ##    if (!exists("nloptr.default.options")) {
+    ##         data("nloptr.default.options",
+    ##              package="nloptr",
+    ##              envir=environment()) }
+    ## (3) solution used here is to load it every time nloptwrap() is
+    ##     called (if it doesn't exist) -- ugly but works.
+    ##
     function(fn,par,lower,upper,control=list(),...) {
+        if (!exists("nloptr.default.options")) data("nloptr.default.options",
+                                                package="nloptr")
         for (n in names(defaultControl))
             if (is.null(control[[n]])) control[[n]] <- defaultControl[[n]]
         res <- nloptr(x0=par,eval_f=fn,lb=lower,ub=upper,opts=control,...)
