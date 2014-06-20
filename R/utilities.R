@@ -929,12 +929,27 @@ nloptwrap <- local({
     ##         data("nloptr.default.options",
     ##              package="nloptr",
     ##              envir=environment()) }
-    ## (3) solution used here is to load it every time nloptwrap() is
+    ## (3) solution used here is to load it *into the global environment*
+    ##  every time nloptwrap() is
     ##     called (if it doesn't exist) -- ugly but works.
-    ##
+    ##   ... but it provokes a complaint from R CMD check
+    ##   ... loading it into the environment of nloptwrap, or
+    ##       the environment within nloptwrap (i.e. envir=environment()
+    ##       or envir=parent.env(environment()) doesn't work because
+    ##       nloptr doesn't look there for it.
+    ##   ... loading it into the environment of nloptr doesn't work
+    ##       because the environment is locked (and I don't know if/how
+    ##       to unlock it: ?unlockBinding
+    ##  http://stackoverflow.com/questions/19132492/how-to-unlock-environment-in-r
+    ## https://gist.github.com/wch/3280369#file-unlockenvironment-r
+    ## this seems like a lot of effort to go to 
     function(fn,par,lower,upper,control=list(),...) {
-        if (!exists("nloptr.default.options")) data("nloptr.default.options",
-                                                package="nloptr")
+        ## try to deceive R CMD check
+        ee <- .GlobalEnv ## environment(nloptr)
+        if (!exists("nloptr.default.options",envir=ee))
+            data("nloptr.default.options",
+                 package="nloptr",
+                 envir=ee)
         for (n in names(defaultControl))
             if (is.null(control[[n]])) control[[n]] <- defaultControl[[n]]
         res <- nloptr(x0=par,eval_f=fn,lb=lower,ub=upper,opts=control,...)
