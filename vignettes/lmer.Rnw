@@ -25,8 +25,8 @@
 }
 \Plainauthor{Douglas Bates, Martin M\"achler, Ben Bolker, Steve Walker}
 \title{Fitting linear mixed-effects models using \pkg{lme4}}
-\Plaintitle{Fitting linear mixed-effects models using lme4}
-\Shorttitle{Linear mixed models with lme4}
+\Plaintitle{Fitting Linear Mixed-Effects Models using lme4}
+\Shorttitle{Linear Mixed Models with lme4}
 \Abstract{%
 
   Maximum likelihood or restricted maximum likelihood (REML) estimates
@@ -99,14 +99,13 @@
 %@
 <<preliminaries,include=FALSE,cache=FALSE,message=FALSE>>=
 options(width=69, show.signif.stars=FALSE, str=strOptions(strict.width="cut"))
-library(knitr)
-library(lme4)
-## library(lme4pureR)  ## don't load; masks lme4::lmer, causes trouble
-library(ggplot2)
+library("knitr")
+library("lme4")
+library("ggplot2")
 theme_set(theme_bw())
-library(grid)
+library("grid")
 zmargin <- theme(panel.margin=unit(0,"lines"))
-library(lattice)
+library("lattice")
 opts_chunk$set(engine='R',dev='pdf',fig.width=9,prompt=TRUE,
                fig.height=5.5,cache=TRUE,tidy=FALSE,comment=NA)
 @ % $ <- for emacs ESS
@@ -231,7 +230,7 @@ make a few observations:
 \begin{itemize}
 \item This formulation of linear mixed models allows for a relatively
   compact expression for the profiled log-likelihood of $\bm\theta$
-  (Section~\ref{sec:profdev}, Eq.~\ref{eq:profiledDeviance}).
+  (Section~\ref{sec:profdev}, Equation~\ref{eq:profiledDeviance}).
 \item The matrices associated with random effects, $\bm Z$ and $\bLt$,
   typically have a sparse structure with a sparsity pattern that
   encodes various model assumptions.  Sections~\ref{sec:LMMmatrix} and
@@ -255,7 +254,7 @@ deprivation study \citep{sleepstudy}. On day 0 the subjects had their
 normal amount of sleep.  Starting that night they were restricted to 3
 hours of sleep per night.  The response variable, \code{Reaction},
 represents average reaction times in milliseconds (ms) on a series of tests given each
-\code{Day} to each \code{Subject} (Fig. \ref{fig:sleepPlot}),
+\code{Day} to each \code{Subject} (Figure~\ref{fig:sleepPlot}),
 <<sleep>>=
 str(sleepstudy)
 @
@@ -277,7 +276,7 @@ with the number of sleep-deprived days.
 However, subjects also appear to vary in the slopes and intercepts
 of these relationships, which suggests a model with random slopes and intercepts.
 As we shall see, such a model may be fitted by minimizing the
-REML criterion (Eq.~\ref{eq:REMLdeviance}) using
+REML criterion (Equation~\ref{eq:REMLdeviance}) using
 <<outputExample,results="hide">>=
 fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 @
@@ -399,7 +398,7 @@ with the standard \proglang{R} modelling paradigm
 Each random-effects term is of the form \code{(expr|factor)}.
 The expression \code{expr} is evaluated as a linear model formula,
 producing a model matrix following the same rules used in standard
-\proglang{R} modelling functions (e.g. \code{lm} or \code{glm}). The
+\proglang{R} modelling functions (e.g., \code{lm} or \code{glm}). The
 expression \code{factor} is evaluated as an \proglang{R} factor.  One
 way to think about the vertical bar operator is as a special kind of
 interaction between the model matrix and the grouping factor. This
@@ -409,12 +408,12 @@ this a special kind of interaction is that these effects are modelled
 as unobserved random variables, rather than unknown fixed parameters.
 Much has been written about important practical and philosophical
 differences between these two types of interactions
-(e.g. \citet{henderson_1982}; \citet{gelman2005analysis}).  For
+(e.g., \citet{henderson_1982}; \citet{gelman2005analysis}).  For
 example, the random-effects implementation of such interactions can be
 used to obtain shrinkage estimates of regression coefficients
-(e.g. \citet{1977EfronAndMorris}), or account
+(e.g., \citet{1977EfronAndMorris}), or account
 for lack of independence in the residuals due to block structure or
-repeated measurements (e.g. \citet{laird_ware_1982}).
+repeated measurements (e.g., \citet{laird_ware_1982}).
 
 Table~\ref{tab:formulas} provides several examples of the
 right-hand-sides of mixed-model formulas. The first example,
@@ -470,7 +469,7 @@ crossing two factors, \code{g1} and \code{g2}, then the fourth formula
 in Table \ref{tab:formulas} may be used.  Such models are common in
 item response theory, where \code{subject} and \code{item} factors are
 fully crossed \citep{doran2007estimating}. In addition to varying
-intercepts, we may also have varying slopes (e.g. the
+intercepts, we may also have varying slopes (e.g., the
 \code{sleepstudy} data, Section~\ref{sec:sleepstudy}).  The fifth
 example in Table~\ref{tab:formulas} gives a model where both the
 intercept and slope vary among the levels of the grouping factor.
@@ -499,7 +498,7 @@ Although mixed models where the random slopes and intercepts are
 assumed independent are commonly used to reduce the complexity of
 random-slopes models, they do have one subtle drawback.  Models in
 which the slopes and intercepts are allowed to have a non-zero
-correlation (e.g. \code{fm1}) are invariant to additive shifts of the
+correlation (e.g., \code{fm1}) are invariant to additive shifts of the
 continuous predictor (\code{Days} in this case).  This invariance
 breaks down when the correlation is constrained to zero; any shift in
 the predictor will necessarily lead to a change in the estimated
@@ -510,7 +509,7 @@ among-subject standard deviations multiplied by the estimated
 correlation (i.e., $\sigma_{\text{\small slope}}/\sigma_{\text{\small
     intercept}} \cdot \rho_{\text{\small slope:intercept}}$).  The use
 of such models should ideally be restricted to cases where the
-predictor is measured on a ratio scale (i.e. the zero point on the
+predictor is measured on a ratio scale (i.e., the zero point on the
 scale is meaningful, not just a location defined by convenience or
 convention).
 
@@ -529,9 +528,9 @@ the fixed-effects model matrix, $\bm X$, in the same way that the
 mixed-model formula incorporates $k\ge1$ random-effects terms of the
 form \code{(r|f)} as well. % |
 These $k$ terms are used to produce the random effects model matrix,
-$\bm Z$ (Eq.~\ref{eq:LMMcondY}; Section~\ref{sec:mkZ}), and the
+$\bm Z$ (Equation~\ref{eq:LMMcondY}; Section~\ref{sec:mkZ}), and the
 structure of the relative covariance factor, $\bLt$
-(Eq.~\ref{eq:relcovfac}; Section~\ref{sec:mkLambdat}), which are
+(Equation~\ref{eq:relcovfac}; Section~\ref{sec:mkLambdat}), which are
 matrices that typically have a sparse structure.  We now describe how
 one might construct these matrices from the random-effects terms,
 considering first a single term, \code{(r|f)}, % |
@@ -620,10 +619,10 @@ set.seed(2)
 @
 When $k>1$ we order the random-effects terms so that
 $\ell_1\ge\ell_2\ge\dots\ge\ell_k$; in general, this ordering reduces
-``fill-in'' (i.e. the proportion of elements that are zero in the
+``fill-in'' (i.e., the proportion of elements that are zero in the
 lower triangle of $\bLt\trans\bm Z\trans\bm W\bm Z\bLt+\bm I$ but not in
 the lower triangle of its left Cholesky factor, $\bm L_{\bm\theta}$,
-described below in Eq.~\ref{eq:blockCholeskyDecomp}). This reduction
+described below in Equation~\ref{eq:blockCholeskyDecomp}). This reduction
 in fill-in provides more efficient matrix operations within the
 penalized least squares algorithm (Section~\ref{sec:plsMath}).
 
@@ -701,7 +700,7 @@ $\ell_i$ diagonal blocks each of size $p_i$.\footnote{To see this,
   zeros except for a single $1$ along the diagonal. Therefore, the
   cross products, $\bm X_{ij} \bm X_{ij}\trans$, will be added to one
   of the $\ell_i$ blocks of size $p_i\times p_i$ along the diagonal of
-  $Z_i\trans Z_i$.} Note that this means that when $k=1$ (i.e. there
+  $Z_i\trans Z_i$.} Note that this means that when $k=1$ (i.e., there
 is only one random-effects term, and $\bm Z_i = \bm Z$), $\bm
 Z\trans\bm Z$ will be block diagonal.  These block-diagonal properties
 allow for more efficient sparse matrix computations
@@ -719,7 +718,7 @@ $k\ge 1$ blocks,
     \bm Z_k \\
   \end{bmatrix}
 \end{equation}
-By transposing Eq.~\ref{eq:Z} and substituting in Eq.~\ref{eq:Zi}, we
+By transposing Equation~\ref{eq:Z} and substituting in Equation~\ref{eq:Zi}, we
 may represent the structure of the transposed random effects model
 matrix as follows,
 \begin{equation}
@@ -847,15 +846,15 @@ updating the relative covariance factor in more detail.
 \label{sec:stability}
 
 In our initial formulation of the linear mixed model
-(Eqs.~\ref{eq:LMMcondY}, \ref{eq:LMMuncondB}, and \ref{eq:relcovfac}),
+(Equations~\ref{eq:LMMcondY}, \ref{eq:LMMuncondB}, and \ref{eq:relcovfac}),
 the covariance parameter vector, $\bm\theta$, appears only in the
-marginal distribution of the random effects (Eq.~\ref{eq:LMMuncondB}).
+marginal distribution of the random effects (Equation~\ref{eq:LMMuncondB}).
 However, from the perspective of computational stability and
 efficiency, it is advantageous to reformulate the model such that
 $\bm\theta$ appears only in the conditional distribution for the
 response vector given the random effects.  Such a reformulation allows
 us to work with singular covariance matrices, which regularly arise in
-practice (e.g. during intermediate steps of the nonlinear optimizer,
+practice (e.g., during intermediate steps of the nonlinear optimizer,
 Section~\ref{sec:optimizeLmer}).
 
 The reformulation is made by defining a \emph{spherical}%
@@ -874,11 +873,11 @@ If we set,
   \mc B=\bLt\mc U,
 \end{equation}%\end{linenomath}
 then $\mc B$ will have the desired $\mathcal{N}(\bm
-0,\bm\Sigma_{\bm\theta})$ distribution (Eq.~\ref{eq:LMMuncondB}).
+0,\bm\Sigma_{\bm\theta})$ distribution (Equation~\ref{eq:LMMuncondB}).
 Although it may seem more natural to define $\mc U$ in terms of $\mc
 B$ we must write the relationship as in \eq{eq:BequalsLamU} to allow
 for singular $\bLt$. The conditional distribution
-(Eq.~\ref{eq:LMMcondY}) of the response vector given the random
+(Equation~\ref{eq:LMMcondY}) of the response vector given the random
 effects may now be reformulated as,%\begin{linenomath}
 \begin{equation}
   \label{eq:distYgivenU}
@@ -919,7 +918,7 @@ over $\begin{bmatrix} \bm u \\
 is the weighted residual sum-of-squares. This notation makes explicit
 the fact that $r^2$ and $\rho^2$ both depend on $\bm\theta$,
 $\betavec$, and $\bm u$.  The reason for the word `penalized' is that
-the term, $\left\| \bm u \right\|^2$, in Eq.~\ref{eq:pwrss} penalizes models with
+the term, $\left\| \bm u \right\|^2$, in Equation~\ref{eq:pwrss} penalizes models with
 larger magnitude values of $\bm u$.
 
 In the so-called ``pseudo-data'' approach we write the penalized
@@ -971,7 +970,7 @@ given that $\mc Y = \yobs$.  Note that this conditional mean depends
 on $\bm\theta$, although we do not make this dependency explicit in
 order to reduce notational clutter.
 
-The cross-product matrix in Eq.~\ref{eq:normalEquations} can be
+The cross-product matrix in Equation~\ref{eq:normalEquations} can be
 Cholesky decomposed,
 \begin{equation}
   \label{eq:blockCholeskyDecomp}
@@ -1053,7 +1052,7 @@ The log-likelihood to be maximized can therefore be expressed as,
   \mc L(\bm\theta,\bm\beta,\sigma^2 | \yobs) = \log f_{\mc Y}(\yobs)
 \end{equation} % |
 
-The integral in Eq.~\ref{eq:densityY} may be more explicitly written
+The integral in Equation~\ref{eq:densityY} may be more explicitly written
 as,
 \begin{equation}
   \label{eq:densityYexpand}
@@ -1112,7 +1111,7 @@ which by the properties of exponential integrands becomes,
 We are now in a position to understand why the formulation in
 equations \ref{eq:LMMcondY} and \ref{eq:LMMuncondB} is particularly
 useful. We are able to explicitly profile $\betavec$ and $\sigma$ out
-of the log-likelihood (Eq.~\ref{eq:likelihood}), to find a compact
+of the log-likelihood (Equation~\ref{eq:likelihood}), to find a compact
 expression for the profiled deviance (negative twice the profiled
 log-likelihood) and the profiled REML criterion as a function of the
 relative covariance parameters, $\bm\theta$, only.  Furthermore these
@@ -1133,7 +1132,7 @@ It is very easy to profile out $\bm\beta$, because it enters into
 the ML criterion only through the final term, which is zero if
 $\bm\beta = \widehat{\bm\beta}_{\bm\theta}$, where
 $\widehat{\bm\beta}_{\bm\theta}$ is found by solving the penalized
-least-squares problem in Eq.~\ref{eq:pwrssPseudoData}. Therefore we
+least-squares problem in Equation~\ref{eq:pwrssPseudoData}. Therefore we
 can write a partially profiled ML criterion as,
 \begin{equation}
   \label{eq:partiallyProfiledDeviance}
@@ -1244,7 +1243,7 @@ which leads to the profiled REML criterion,
 We compare the PLS problem as formulated in Section~\ref{sec:plsMath}
 with earlier versions and describe why we use this version.  What have
 become known as ``Henderson's mixed-model equations'' are given as
-Eq. 6 of \citet{henderson_1982} and would be expressed as,
+Equation 6 of \citet{henderson_1982} and would be expressed as,
 \begin{equation}
   \label{eq:henderson}
   \begin{bmatrix}
@@ -1285,11 +1284,11 @@ expressed (on the deviance scale) as
   n\left[1+\log\left(\frac{2\pi r^2_\theta}{n}\right)\right] .
 \end{equation}
 
-The primary difference between Eq.~\ref{eq:henderson} and
-Eq.~\ref{eq:batesDebRoy} is the order of the blocks in the system matrix.
+The primary difference between Equation~\ref{eq:henderson} and
+Equation~\ref{eq:batesDebRoy} is the order of the blocks in the system matrix.
 The PLS problem can be solved using a Cholesky factor of the system
 matrix with the blocks in either order.  The advantage of using the
-arrangement in Eq.~\ref{eq:batesDebRoy} is to allow for evaluation of
+arrangement in Equation~\ref{eq:batesDebRoy} is to allow for evaluation of
 the profiled log-likelihood.  To evaluate $|\bm Z\trans\bm
 Z+\bm\Omega|$ from the Cholesky factor that block must be in the
 upper-left corner, not the lower right.  Also, $\bm Z$ is sparse whereas $\bm
@@ -1306,7 +1305,7 @@ and solving for the mean of $\mc U|\mc Y = \yobs$ instead of the mean
 of $\mc B|\mc Y = \yobs$.  This change improves stability, because the
 solution to the PLS problem in Section~\ref{sec:plsMath} is
 well-defined when $\bLt$ is singular whereas the formulation in
-Eq.~\ref{eq:batesDebRoy} cannot be used in these cases because
+Equation~\ref{eq:batesDebRoy} cannot be used in these cases because
 $\bm\Omega_\theta$ does not exist.
 
 It is important to allow for $\bLt$ to be singular because situations
@@ -1319,8 +1318,8 @@ optimization of the criterion.
 
 \citet{bates04:_linear} also provided expressions for the gradient of
 the profiled log-likelihood expressed as
-Eq.~\ref{eq:batesDebRoyprofdev}.  These expressions can be translated
-into the current formulation.  From Eq.~\ref{eq:profiledDeviance} we can see
+Equation~\ref{eq:batesDebRoyprofdev}.  These expressions can be translated
+into the current formulation.  From Equation~\ref{eq:profiledDeviance} we can see
 that (again ignoring weights),
 \begin{equation}
   \label{eq:grad}
@@ -1380,9 +1379,9 @@ where the nonlinear optimizer (Section~\ref{sec:optimizeLmer})
 requires many iterations. 
 
 The PLS algorithm takes a vector of covariance parameters,
-$\bm\theta$, as inputs and returns the profiled deviance (Eq.
+$\bm\theta$, as inputs and returns the profiled deviance (Equation
 \ref{eq:profiledDeviance}) or the REML criterion
-(Eq. \ref{eq:REMLprofiled}). This PLS algorithm consists of four main
+(Equation \ref{eq:REMLprofiled}). This PLS algorithm consists of four main
 steps:
 \begin{enumerate}
 \item Update the relative covariance factor (Section~\ref{sec:plsI})
@@ -1396,7 +1395,7 @@ updated during the PLS iterations, and so it is useful to store
 various matrix products involving them (Table~\ref{tab:constantPLS}).
 Table~\ref{tab:updatePLS} lists the objects that do get updated over
 the PLS iterations.  The symbols in this table correspond to a version
-of \pkg{lme4} that is implemented entirely in \proglang{R} (i.e. no
+of \pkg{lme4} that is implemented entirely in \proglang{R} (i.e., no
 compiled code as in \pkg{lme4} itself).  This implementation is called
 \pkg{lme4pureR} and is currently available on \github\
 (\url{https://github.com/lme4/lme4pureR/}).
@@ -1411,14 +1410,14 @@ compiled code as in \pkg{lme4} itself).  This implementation is called
     Mapping from covariance parameters to relative covariance factor &
     \code{mapping} &  & function \\
     Response vector & \code{y} & $\yobs$ (Section~\ref{sec:LMMs}) & double vector \\
-    Fixed effects model matrix & \code{X} & $\bm X$ (Eq.~\ref{eq:LMMcondY}) & double dense\footnote{In previous versions of \pkg{lme4} a sparse $X$ matrix, useful for models with categorical fixed-effect predictors with many levels, could be specified; this feature is not currently available.}
+    Fixed effects model matrix & \code{X} & $\bm X$ (Equation~\ref{eq:LMMcondY}) & double dense\footnote{In previous versions of \pkg{lme4} a sparse $X$ matrix, useful for models with categorical fixed-effect predictors with many levels, could be specified; this feature is not currently available.}
     matrix \\
     Transposed random effects model matrix & \code{Zt} & $\bm Z\trans$
-    (Eq.~\ref{eq:LMMcondY}) &
+    (Equation~\ref{eq:LMMcondY}) &
     double sparse matrix \\
     Square-root weights matrix & \code{sqrtW} & $\bm W^{1/2}$
-    (Eq.~\ref{eq:LMMcondY}) & double diagonal matrix \\
-    Offset & \code{offset} & $\bm o$ (Eq.~\ref{eq:LMMcondY}) & double vector \\
+    (Equation~\ref{eq:LMMcondY}) & double diagonal matrix \\
+    Offset & \code{offset} & $\bm o$ (Equation~\ref{eq:LMMcondY}) & double vector \\
     \hline
   \end{tabular}
   \renewcommand{\footnoterule}{%
@@ -1456,28 +1455,28 @@ compiled code as in \pkg{lme4} itself).  This implementation is called
     Name/description & Pseudocode & Math & Type \\
     \hline
     Relative covariance factor & \code{lambda} & $\bLt$
-    (Eq.~\ref{eq:relcovfac})
+    (Equation~\ref{eq:relcovfac})
     & sparse double lower-triangular matrix  \\
     Random-effects Cholesky factor & \code{L} & $\bm L_{\bm\theta}$
-    (Eq.~\ref{eq:blockCholeskyDecomp})
+    (Equation~\ref{eq:blockCholeskyDecomp})
     & double sparse triangular matrix \\
     Intermediate vector in the solution of the normal equations &
-    \code{cu} & $\bm c_u$ (Eq.~\ref{eq:cu}) & double vector \\
+    \code{cu} & $\bm c_u$ (Equation~\ref{eq:cu}) & double vector \\
     Block in the full Cholesky factor & \code{RZX} & $\bm R_{ZX}$
-    (Eq.~\ref{eq:blockCholeskyDecomp})  & double dense matrix \\
+    (Equation~\ref{eq:blockCholeskyDecomp})  & double dense matrix \\
     Cross-product of the fixed-effects Cholesky factor & \code{RXtRX}
-    & $\bm R_X\trans\bm R_X$ (Eq.~\ref{eq:RX}) & double dense matrix \\
+    & $\bm R_X\trans\bm R_X$ (Equation~\ref{eq:RX}) & double dense matrix \\
     Fixed effects coefficients & \code{beta} & $\bm\beta$
-    (Eq.~\ref{eq:LMMcondY}) & double vector \\
+    (Equation~\ref{eq:LMMcondY}) & double vector \\
     Spherical conditional modes & \code{u} & $\bm u$ (Section~\ref{sec:stability}) & double vector \\
     Non-spherical conditional modes & \code{b}
-    & $\bm b$ (Eq.~\ref{eq:LMMcondY}) & double vector \\
+    & $\bm b$ (Equation~\ref{eq:LMMcondY}) & double vector \\
     Linear predictor & \code{mu} & $\bm\mu_{\mc Y|\mc U=\bm u}$
-    (Eq.~\ref{eq:meanYgivenU}) & double vector \\
+    (Equation~\ref{eq:meanYgivenU}) & double vector \\
     Weighted residuals & \code{wtres} & $\bm W^{1/2} (\yobs - \mu)$ &
     double vector \\
     Penalized weighted residual sum-of-squares & \code{pwrss} &
-    $r^2(\bm\theta)$ (Eq.~\ref{eq:pwrssIdentity}) &
+    $r^2(\bm\theta)$ (Equation~\ref{eq:pwrssIdentity}) &
     double \\
     Twice the log determinant random-effects Cholesky factor  &
     \code{logDet}
@@ -1497,7 +1496,7 @@ The first step of PLS is to update the relative covariance factor,
 $\bLt$, from the current value of the covariance parameter vector,
 $\bm\theta$.  The updated $\bLt$ is then used to update the random
 effects Cholesky factor, $\bm L_{\bm\theta}$
-(Eq.~\ref{eq:blockCholeskyDecomp}).  The mapping from the covariance
+(Equation~\ref{eq:blockCholeskyDecomp}).  The mapping from the covariance
 parameters to the relative covariance factor can take many forms, but
 in general involves a function that takes $\bm\theta$ into the values
 of the non-zero elements of $\bLt$.  
@@ -1542,7 +1541,7 @@ factor is treated differently in other implementations of the
 \code{flexLambda} branch of \pkg{lme4} and the \pkg{lme4pureR} package
 allows the capabilities for a completely general mapping.  This added
 flexibility has the advantage of allowing a much wider variety of
-models (e.g. compound symmetry, auto-regression).  However, the
+models (e.g., compound symmetry, auto-regression).  However, the
 disadvantage of this approach is that it becomes possible to fit a
 much wider variety of ill-posed models.  Finally, if one would like
 such added flexibility with the current stable version of \pkg{lme4},
@@ -1559,21 +1558,21 @@ L <- update(L, Lambdat %*% ZtW, mult = 1)
 @
 The \code{mult = 1} argument corresponds to the addition of the
 identity matrix to the upper-left block on the left-hand-side of
-Eq.~\ref{eq:blockCholeskyDecomp}.
+Equation~\ref{eq:blockCholeskyDecomp}.
 
 \subsubsection{PLS step II:  solve normal equations}
 \label{sec:plsII}
 
 With the new covariance parameters installed in $\bLt$, the next step
-is to solve the normal equations (Eq.~\ref{eq:normalEquations}) for the
+is to solve the normal equations (Equation~\ref{eq:normalEquations}) for the
 current estimate of the fixed effects coefficients,
 $\widehat{\betavec}_{\bm\theta}$, and the conditional mode, $\mu_{\mc
   U|\mc Y = \yobs}$. We solve these equations using a sparse Cholesky
-factorization (Eq.~\ref{eq:blockCholeskyDecomp}).  In a complex model
+factorization (Equation~\ref{eq:blockCholeskyDecomp}).  In a complex model
 fit to a large data set, the dominant calculation in the evaluation of
-the profiled deviance (Eq.~\ref{eq:profiledDeviance}) or REML criterion
-(Eq.~\ref{eq:REMLprofiled}) is this sparse Cholesky factorization
-(Eq.~\ref{eq:blockCholeskyDecomp}).  The factorization is performed in two
+the profiled deviance (Equation~\ref{eq:profiledDeviance}) or REML criterion
+(Equation~\ref{eq:REMLprofiled}) is this sparse Cholesky factorization
+(Equation~\ref{eq:blockCholeskyDecomp}).  The factorization is performed in two
 phases; a symbolic phase and a numeric phase.  The symbolic phase, in
 which the fill-reducing permutation $\bm P$ is determined along with
 the positions of the non-zeros in $\bm L_{\bm\theta}$, does not depend
@@ -1612,7 +1611,7 @@ nesting is reversed in order to return to the original permutation.
 \label{sec:plsIII}
 
 The next step is to compute the linear predictor, $\mu_{\mc Y| \mc U}$
-(Eq. \ref{eq:meanYgivenU}), and the weighted residuals with new values for
+(Equation \ref{eq:meanYgivenU}), and the weighted residuals with new values for
 $\widehat{\betavec}_\theta$ and $\mu_{\mc B | \mc Y = \yobs}$.  In
 \pkg{lme4pureR} these quantities can be computed as,
 <<PLSupdateResp, eval = FALSE>>=
@@ -1774,7 +1773,7 @@ problem with the underlying PLS algorithm.  To date we
 have only observed PLS failures, which arise if
 $\bm X\trans\bm W\bm X-\bm R_{ZX}\trans\bm R_{ZX}$ becomes singular
 during an evaluation of the objective function, with badly scaled
-problems (i.e. problems with continuous predictors that take a
+problems (i.e., problems with continuous predictors that take a
 very large or very small numerical range of values).
 
 The requirement for optimizers that can handle box constraints stems
@@ -1801,7 +1800,7 @@ In principle the likelihood surfaces we are trying to optimize over
 are smooth, but in practice using gradient information in optimization
 may or may not be worth the effort. In special cases, we have a
 closed-form solution for the gradients
-(Eqs.~\ref{eq:grad}--\ref{eq:gradr2}), but in general we will have to
+(Equations~\ref{eq:grad}--\ref{eq:gradr2}), but in general we will have to
 approximate them by finite differences, which is expensive and has
 limited accuracy.  (We have considered using automatic
 differentiation approaches to compute the gradients more efficiently,
@@ -1932,7 +1931,7 @@ correlations), and a value of the residual standard deviation, and
 maps them to a $\bm\theta$ vector, and then computes the PLS as
 before; it uses the specified residual standard deviation rather than
 the PLS estimate of the standard deviation
-(Eq.~\ref{eq:residualVarianceEstimate}) in the deviance calculation.
+(Equation~\ref{eq:residualVarianceEstimate}) in the deviance calculation.
 We compute a profile likelihood for the fixed-effect parameters, which
 are profiled out of the deviance calculation, by adding an offset to
 the linear predictor for the focal element of $\bm\beta$.  The
@@ -1978,7 +1977,7 @@ to obtain non-monotonic interpolation curves.  In such a case,
 The last part of the technical specification for computing profiles is
 deciding on a strategy for choosing points to sample.  In one way or
 another one wants to start at the estimated value for each parameter
-and work outward either until a constraint is reached (i.e. a value of
+and work outward either until a constraint is reached (i.e., a value of
 0 for a standard deviation parameter or a value of $\pm 1$ for a
 correlation parameter), or until a sufficiently large deviation from
 the minimum deviance is attained.  \pkg{lme4}'s profiler chooses a
@@ -2031,7 +2030,7 @@ seems to be unavailable at present \citep{merBoot}.)
 It is useful to clarify that the conditional covariance concept in
 \pkg{lme4} is based on a simplification of the linear mixed model.  In
 particular, we simplify the model by assuming that the quantities,
-$\betavec$, $\bLt$, and $\sigma$, are known (i.e. set at their
+$\betavec$, $\bLt$, and $\sigma$, are known (i.e., set at their
 estimated values). In fact, the only way to define the conditional
 covariance is at fixed parameter values.  Our approximation here is
 using the estimated parameter values for the unknown ``true''
@@ -2062,7 +2061,7 @@ is the unscaled conditional variance and,
     \left(\yobs-\bm o - X\widehat{\betavec} \right)
 \end{equation}  % |
 is the conditional mean/mode. Note that in practice the inverse in
-Eq.~\ref{eq:condVar} does not get computed directly, but rather an
+Equation~\ref{eq:condVar} does not get computed directly, but rather an
 efficient method is used that exploits the sparse structures.
 
 The random effects coefficient vector, $\mathbf{b}$, is often of
@@ -2114,7 +2113,7 @@ To find $\bm H$ we note that,
 Next we get an expression for $\begin{bmatrix}
     \mu_{\mc U | \mc Y = \yobs} \\ \widehat{\betavec}_{\bm\theta}
   \end{bmatrix}$ by solving the normal equations
-  (Eq.~\ref{eq:normalEquations}),
+  (Equation~\ref{eq:normalEquations}),
 \begin{equation}
  \begin{bmatrix}
     \mu_{\mc U | \mc Y = \yobs} \\ \widehat{\betavec}_{\bm\theta}
@@ -2161,7 +2160,7 @@ and,
 \end{equation}
 
 The trace of the hat matrix is often used as a measure of the
-effective degrees of freedom (e.g. \citet{vaida2005conditional}).
+effective degrees of freedom (e.g., \citet{vaida2005conditional}).
 Using a relationship between the trace and vec operators, the trace of
 $\bm H$ may be expressed as,
 \begin{equation}
@@ -2205,7 +2204,7 @@ these methods.
     \code{extractAIC} &
     Generalized Akaike information criterion \\
     \code{fitted} &
-    Fitted values given conditional modes (Eq.~\ref{eq:meanYgivenU}). \\
+    Fitted values given conditional modes (Equation~\ref{eq:meanYgivenU}). \\
     \code{fixef} (\ref{sec:summary}) &
     Estimates of the fixed effects coefficients, $\widehat{\bm\beta}$ \\
     \code{formula} (\ref{sec:uncor}) &
@@ -2279,7 +2278,7 @@ information about the model fit.  Here we consider the output of
 \code{summary(fm1)} in four steps.  The first few lines of output
 indicate that the model was fitted by restricted maximum likelihood
 (REML) as well as the value of the REML criterion
-(Eq.~\ref{eq:REMLdeviance}) at convergence (which may also be
+(Equation~\ref{eq:REMLdeviance}) at convergence (which may also be
 extracted using \code{deviance(fm1)}).  The beginning of the summary
 also reproduces the model formula and the scaled Pearson residuals,
 <<summary1,echo=FALSE>>=
@@ -2353,7 +2352,7 @@ return the full fixed-effects parameter table as shown in the summary.
 
 \pkg{lme4} provides tools for generating most of the standard
 graphical diagnostic plots (with the exception of those incorporating
-influence measures, e.g. Cook's distance and
+influence measures, e.g., Cook's distance and
 leverage plots), in a way modeled on the diagnostic graphics of
 \pkg{nlme} \citep{R:Pinheiro+Bates:2000}.  In particular, the following
 commands will show the standard fitted vs. residual, scale-location,
@@ -2373,7 +2372,7 @@ In addition to these standard diagnostic plots, which
 examine the validity of various assumptions (linearity,
 homoscedasticity, normality) at the level of the residuals,
 one can also use the \code{dotplot} and \code{qqmath} methods
-for the conditional modes (i.e. \code{ranef.mer}
+for the conditional modes (i.e., \code{ranef.mer}
 objects generated by \code{ranef(fit)})
 to check for interesting patterns and normality in the conditional
 modes.  \pkg{lme4} does not provide influence diagnostics, but
@@ -2413,7 +2412,7 @@ when the residual variation is large.
 \label{sec:modComp}
 
 Objects of class \code{merMod} have an \code{anova} method which
-returns $F$ statistics corresponding to the sequential decomposition
+returns $F$~statistics corresponding to the sequential decomposition
 of the contributions of fixed-effects terms.  In order to illustrate
 this sequential ANOVA decomposition, we fit a model with orthogonal
 linear and quadratic \code{Days} terms,
@@ -2428,22 +2427,22 @@ anova(fm4)
 @ 
 The relative magnitudes of the two sums of squares indicate that the
 quadratic term explains much less variation than the linear term.
-Furthermore, the magnitudes of the two $F$ statistics strongly
+Furthermore, the magnitudes of the two $F$~statistics strongly
 suggest significance of the linear term, but not the quadratic term.
 Notice that this is only an informal assessment of significance as
-there are no $p$~values associated with these $F$ statistics, an issue
+there are no $p$~values associated with these $F$~statistics, an issue
 discussed in more detail in Section~\ref{sec:pvalues}.
 
 To understand how these quantities are computed, let $\bm R_i$ contain
-the rows of $\bm R_X$ (Eq.~\ref{eq:blockCholeskyDecomp}) associated
+the rows of $\bm R_X$ (Equation~\ref{eq:blockCholeskyDecomp}) associated
 with the $i$th fixed-effects term.  Then the sum of squares for term
 $i$ is,
 \begin{equation}
   \label{eq:SS}
   SS_i = \widehat{\bm\beta}\trans\bm R_i\trans \bm R_i \widehat{\bm\beta}
 \end{equation}
-If $DF_i$ is the number of columns in $\bm R_i$, then the $F$
-statistic for term $i$ is,
+If $DF_i$ is the number of columns in $\bm R_i$, then the
+$F$~statistic for term $i$ is,
 \begin{equation}
   \label{eq:Fstat}
   F_i = \frac{SS_i}{\widehat{\sigma}^2 DF_i}
@@ -2463,7 +2462,7 @@ dp <- pchisq(ddiff,1,lower.tail=FALSE)
 ddiff2 <- deviance(fm2ML)-deviance(fm1ML)
 @
 The output shows $\chi^2$ statistics representing the difference in
-deviance between successive models, as well as $p$ values based on
+deviance between successive models, as well as $p$~values based on
 likelihood ratio test comparisons.  In this case, the sequential
 comparison shows that adding a linear effect of time uncorrelated with
 the intercept leads to an enormous and significant drop in deviance
@@ -2477,19 +2476,19 @@ default behavior is to refit the models with ML if fitted with
 answers when comparing models that differ in their fixed effects; this
 can be controlled via the \code{refit} argument.
 
-\subsubsection{Computing $p$ values}
+\subsubsection{Computing $p$~values}
 \label{sec:pvalues}
 
 One of the more controversial design decisions of \pkg{lme4} has been
 to omit the output of $p$~values associated with sequential ANOVA
 decompositions of fixed effects.  The absence of analytical results for null
 distributions of parameter estimates in complex situations
-(e.g. unbalanced or partially crossed designs) is a long-standing
+(e.g., unbalanced or partially crossed designs) is a long-standing
 problem in mixed-model inference.  While the null distributions (and
 the sampling distributions of non-null estimates) are asymptotically
 normal, these distributions are not $t$~distributed for finite size
 samples --- nor are the corresponding null distributions of
-differences in scaled deviances $F$-distributed.  Thus approximate methods
+differences in scaled deviances $F$~distributed.  Thus approximate methods
 for computing the approximate degrees of freedom for
 $t$~distributions, or the denominator degrees of freedom for
 $F$~statistics \citep{Satterthwaite_1946,kenward_small_1997}, are at
@@ -2646,7 +2645,7 @@ Because mixed models involve random coefficients, one must always
 clarify whether predictions should be based on the marginal
 distribution of the response variable or on the distribution that is
 conditional on the modes of the random effects
-(Eq.~\ref{eq:distYgivenU}).  The \code{fitted} method retrieves fitted
+(Equation~\ref{eq:distYgivenU}).  The \code{fitted} method retrieves fitted
 values that are conditional on all of the modes of the random effects;
 the \code{predict} method returns the same values by default, but also
 allows for predictions to be made conditional on different sets of
@@ -3098,8 +3097,8 @@ particular, the strategy involves the following steps,
 Here we illustrate this general strategy using a simple simulated data
 set,
 <<simulateSplineData,message=FALSE>>=
-library(gamm4)
-library(splines)
+library("gamm4")
+library("splines")
 
 set.seed(1)
                                         # sample size

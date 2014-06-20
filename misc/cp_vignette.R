@@ -14,6 +14,9 @@ if(!file.exists(lmerSrc)) {
     knitr::knit2pdf("lmer.Rnw")
     tools::compactPDF("lmer.pdf",gs_quality="ebook")
     file.copy("lmer.pdf","../inst/doc", overwrite=TRUE)
-    unlink("lmer.pdf")
+    ls.lmer <- function() list.files(pattern="^lmer[.]...$")
+    fls <- local({L <- ls.lmer(); L[!(L %in% paste0("lmer.", c("bib", "Rnw")))]})
+    cat("removing ",fls,": .."); unlink(fls); cat("\n")
+    cat(" --> lmer.* in vignettes:\n"); print(ls.lmer())
     setwd(owd)# back
 }
