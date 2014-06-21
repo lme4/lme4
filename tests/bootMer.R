@@ -47,6 +47,9 @@ if(.Platform$OS.type != "windows" && !travis) {
   boo01P <- bootMer(fm1, mySumm, nsim = 10, parallel="multicore", ncpus=2)
 }
 
-boo01P.snow <- bootMer(fm1, mySumm, nsim = 10, parallel="snow", ncpus=2)
+## works in Solaris from an interactive console but not ???
+##   via R CMD BATCH
+if (Sys.info()$sysname != "SunOS")
+    boo01P.snow <- bootMer(fm1, mySumm, nsim = 10, parallel="snow", ncpus=2)
 
 
