@@ -72,7 +72,7 @@ lmerControl <-
 	     use.last.params=FALSE,
 	     sparseX=FALSE,
 	     ## input checking options:
-	     check.nobs.vs.rankZ="warningSmall",
+	     check.nobs.vs.rankZ="ignore", ## "warningSmall",
 	     check.nobs.vs.nlev="stop",
 	     check.nlev.gtreq.5="ignore",
 	     check.nlev.gtr.1="stop",
@@ -149,7 +149,7 @@ glmerControl <-
 	     tolPwrss = 1e-7,
 	     compDev = TRUE,
 	     ## input checking options
-	     check.nobs.vs.rankZ="warningSmall",
+	     check.nobs.vs.rankZ="ignore", ## "warningSmall",
 	     check.nobs.vs.nlev="stop",
 	     check.nlev.gtreq.5="ignore",
 	     check.nlev.gtr.1="stop",

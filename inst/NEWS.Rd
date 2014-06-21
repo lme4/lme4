@@ -24,6 +24,8 @@
       \item the use of \code{deviance} to return the REML criterion
       is now deprecated; users should use \code{REMLcrit()} instead
       (Github #211)
+    \item changed the default value of \code{check.nobs.vs.rankZ} to
+    \code{"ignore"} (Github #214)
     }
   }
     \subsection{BUG FIXES}{

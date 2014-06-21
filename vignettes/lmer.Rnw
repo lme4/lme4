@@ -88,15 +88,6 @@
 \newcommand{\trans}{\ensuremath{^\top}} %  JSS wants \top
 \newcommand{\yobs}{\ensuremath{\bm y_{\mathrm{obs}}}}
 \newcommand*{\eq}[1]{eqn.~\ref{#1}}% or just {(\ref{#1})}
-%
-%\SweaveOpts{engine=R,eps=FALSE,pdf=TRUE,width=10,height=6.5,strip.white=all}
-%\SweaveOpts{prefix=TRUE,prefix.string=figs/lmer,include=TRUE}
-%\SweaveOpts{keep.source=TRUE}
-%\setkeys{Gin}{width=\textwidth}
-%<<preliminaries,echo=FALSE,results=hide>>=
-%options(width=69,show.signif.stars=FALSE,str=strOptions(strict.width="cut"))
-%library(lme4)
-%@
 <<preliminaries,include=FALSE,cache=FALSE,message=FALSE>>=
 options(width=69, show.signif.stars=FALSE, str=strOptions(strict.width="cut"))
 library("knitr")
@@ -113,7 +104,6 @@ opts_chunk$set(engine='R',dev='pdf',fig.width=9,prompt=TRUE,
 \setkeys{Gin}{height=3.5in}
 
 \begin{document}
-%\linenumbers
 
 Submitted to \emph{Journal of Statistical Software}
 
@@ -433,20 +423,19 @@ columns and $\bm\beta$ has length zero.
   \centering
   \begin{tabular}{lll}
     \hline
-    Formula & Alternative & Meaning \\
-    \hline
-    \code{(1|g)} & \code{1+(1|g)}
+    Formula 			& Alternative & Meaning \\
+    \hline%------------------------------------------------
+    \code{(1|g)}		& \code{1+(1|g)} 
     & Random intercept with fixed mean \\
-    \code{0+offset(o)+(1|g)} & \code{-1+offset(o)+(1|g)}
+    \code{0+offset(o)+(1|g)}    & \code{-1+offset(o)+(1|g)}
     & Random intercept with \emph{a priori} means \\
-    \code{(1|g1/g2)} & \code{(1|g1)+(1|g1:g2)}   % |
-    & Intercept varying among \code{g1} and \code{g2} within
-    \code{g1} \\
-    \code{(1|g1)+(1|g2)} & 1+\code{(1|g1)+(1|g2)} &
+    \code{(1|g1/g2)} 		& \code{(1|g1)+(1|g1:g2)}   % |
+    & Intercept varying among \code{g1} and \code{g2} within \code{g1} \\
+    \code{(1|g1)+(1|g2)} 	& \code{1+(1|g1)+(1|g2)} &
     Intercept varying among \code{g1} and \code{g2} \\
-    \code{x+(x|g)} & \code{1+x+(1+x|g)} &
+    \code{x+(x|g)} 		& \code{1+x+(1+x|g)} &
     Correlated random intercept and slope \\
-    \code{x+(x||g)} & \code{1+x+(1|g)+(0+x|g)}
+    \code{x+(x||g)} 		& \code{1+x+(1|g)+(0+x|g)}
     & Uncorrelated random intercept and slope \\
     \hline
   \end{tabular}
@@ -547,7 +536,7 @@ $\bLt$.
     \hline
     $n$ & Length of the response vector, $\mc{Y}$ \\
     $p$ & Number of columns of fixed effects model matrix, $\bm X$ \\
-    $q$ & Number of columns of random effects model matrix, $\bm Z$ \\
+    $q \sum_i^k q_i$ & Number of columns of random effects model matrix, $\bm Z$ \\
     $p_i$ &  Number of columns of the raw model matrix, $\bm X_i$ \\
     $\ell_i$ &  Number of levels of the grouping factor indices, $\bm i_i$ \\
     $q_i = p_i\ell_i$  & Number of columns of the term-wise model matrix, $\bm Z_i$ \\
@@ -2686,6 +2675,7 @@ interested in analyzing data and a reusable, modular framework for
 downstream developers interested in extending the class of models that
 can be easily and efficiently analyzed in \proglang{R}.
 
+%% Results of some quick Google scholar searches:
 %% "mixed models" +
 %%  stata: 6130
 %%  "PROC MIXED": 12200

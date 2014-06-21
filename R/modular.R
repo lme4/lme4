@@ -91,12 +91,6 @@ checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
 	if(!(grepl("Small",cc) && prod(d) > nonSmall)) {
             rankZ <- rankMatrix(if(doTr) t(Zt) else Zt, method="qr",
                                 sval = numeric(min(d)))
-            ## FIXME: should probably trap this earlier ...
-            if (is.na(rankZ)) stop("NA in Z (random-effects model matrix): ",
-                                   "please use ",
-                                   shQuote("na.action='na.omit'"),
-                                   " or ",
-                                   shQuote("na.action='na.exclude'"))
             ww <- wmsg(n,rankZ,allow.n,"number of observations","rank(Z)")
             if (ww$unident) {
                 switch(cc,
@@ -324,6 +318,13 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     reTrms <- mkReTrms(findbars(RHSForm(formula)), fr)
     checkNlevels(reTrms$flist, n=n, control)
     checkZdims(reTrms$Ztlist, n=n, control, allow.n=FALSE)
+    if (any(is.na(reTrms$Zt))) {
+        stop("NA in Z (random-effects model matrix): ",
+             "please use ",
+             shQuote("na.action='na.omit'"),
+             " or ",
+             shQuote("na.action='na.exclude'"))
+    }
     checkZrank(reTrms$Zt, n=n, control, nonSmall = 1e6)
 
     ## fixed-effects model matrix X - remove random effect parts from formula:

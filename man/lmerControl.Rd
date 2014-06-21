@@ -27,7 +27,7 @@ lmerControl(optimizer = "bobyqa",% was "Nelder_Mead" till Dec.2013
     use.last.params=FALSE,
     sparseX = FALSE,
     ## input checking options
-    check.nobs.vs.rankZ = "warningSmall",
+    check.nobs.vs.rankZ = "ignore", 
     check.nobs.vs.nlev = "stop",
     check.nlev.gtreq.5 = "ignore",
     check.nlev.gtr.1 = "stop",
@@ -53,7 +53,7 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     tolPwrss=1e-7,
     compDev=TRUE,
     ## input checking options
-    check.nobs.vs.rankZ = "warningSmall",
+    check.nobs.vs.rankZ = "ignore",
     check.nobs.vs.nlev = "stop",
     check.nlev.gtreq.5 = "ignore",
     check.nlev.gtr.1 = "stop",
