@@ -41,15 +41,17 @@ set.seed(101)
 ## expect_warning(cc <- confint(cmod,method="boot",nsim=10,quiet=TRUE,
 ##              .progress="txt",PBargs=list(style=3)),"some bootstrap runs failed")
 
-## http://stackoverflow.com/questions/12983137/how-do-detect-if-travis-ci-or-not
-travis <- nchar(Sys.getenv("TRAVIS"))>0
-if(.Platform$OS.type != "windows" && !travis) {
-  boo01P <- bootMer(fm1, mySumm, nsim = 10, parallel="multicore", ncpus=2)
+library(parallel)
+if (detectCores()>1) {
+    ## http://stackoverflow.com/questions/12983137/how-do-detect-if-travis-ci-or-not
+    travis <- nchar(Sys.getenv("TRAVIS"))>0
+    if(.Platform$OS.type != "windows" && !travis) {
+        boo01P <- bootMer(fm1, mySumm, nsim = 10, parallel="multicore", ncpus=2)
+    }
+
+    ## works in Solaris from an interactive console but not ???
+    ##   via R CMD BATCH
+    if (Sys.info()$sysname != "SunOS")
+        boo01P.snow <- bootMer(fm1, mySumm, nsim = 10, parallel="snow", ncpus=2)
 }
-
-## works in Solaris from an interactive console but not ???
-##   via R CMD BATCH
-if (Sys.info()$sysname != "SunOS")
-    boo01P.snow <- bootMer(fm1, mySumm, nsim = 10, parallel="snow", ncpus=2)
-
 
