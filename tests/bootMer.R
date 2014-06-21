@@ -51,7 +51,7 @@ if (detectCores()>1) {
 
     ## works in Solaris from an interactive console but not ???
     ##   via R CMD BATCH
-    if (Sys.info()$sysname != "SunOS")
+    if (Sys.info()["sysname"] != "SunOS")
         boo01P.snow <- bootMer(fm1, mySumm, nsim = 10, parallel="snow", ncpus=2)
 }
 
