@@ -27,7 +27,7 @@ if(getRversion() < "2.15")
 ##' @export
 mkReTrms <- function(bars, fr) {
   if (!length(bars))
-    stop("No random effects terms specified in formula")
+    stop("No random effects terms specified in formula",call.=FALSE)
   stopifnot(is.list(bars), vapply(bars, is.language, NA),
             inherits(fr, "data.frame"))
   names(bars) <- barnames(bars)
@@ -49,10 +49,10 @@ mkReTrms <- function(bars, fr) {
         stop("couldn't evaluate grouping factor ",
              deparse(x[[3]])," within model frame:",
              " try adding grouping factor to data ",
-             "frame explicitly if possible")
+             "frame explicitly if possible",call.=FALSE)
     if (all(is.na(ff)))
         stop("Invalid grouping factor specification, ",
-             deparse(x[[3]]))
+             deparse(x[[3]]),call.=FALSE)
     nl <- length(levels(ff))
     mm <- model.matrix(eval(substitute( ~ foo, list(foo = x[[2]]))), frloc)
     nc <- ncol(mm)
@@ -295,7 +295,7 @@ findbars <- function(term)
 	{
 	    if (!("/" %in% all.names(x))) return(x)
 	    if (x[[1]] != as.name("/"))
-		stop("unparseable formula for grouping factor")
+		stop("unparseable formula for grouping factor",call.=FALSE)
 	    list(slashTerms(x[[2]]), slashTerms(x[[3]]))
 	}
 
@@ -643,12 +643,12 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
 ##
 checkArgs <- function(type,...) {
     l... <- list(...)
-    if (isTRUE(l...[["sparseX"]])) warning("sparseX = TRUE has no effect at present")
+    if (isTRUE(l...[["sparseX"]])) warning("sparseX = TRUE has no effect at present",call.=FALSE)
     ## '...' handling up front, safe-guarding against typos ("familiy") :
     if(length(l... <- list(...))) {
         if (!is.null(l...[["family"]])) {  # call glmer if family specified
             ## we will only get here if 'family' is *not* in the arg list
-            warning("calling lmer with family() is deprecated: please use glmer() instead")
+            warning("calling lmer with family() is deprecated: please use glmer() instead",call.=FALSE)
             type <- "glmer"
         }
         ## Check for method argument which is no longer used
@@ -658,13 +658,13 @@ checkArgs <- function(type,...) {
             if (type=="lmer") msg <- paste(msg,"Use the REML argument to specify ML or REML estimation.")
             if (type=="glmer") msg <- paste(msg,"Use the nAGQ argument to specify Laplace (nAGQ=1) or adaptive",
                 "Gauss-Hermite quadrature (nAGQ>1).  PQL is no longer available.")
-            warning(msg)
+            warning(msg,call.=FALSE)
             l... <- l...[names(l...) != "method"]
         }
         if(length(l...)) {
             warning("extra argument(s) ",
                     paste(sQuote(names(l...)), collapse=", "),
-                    " disregarded")
+                    " disregarded",call.=FALSE)
         }
     }
 }
@@ -703,8 +703,8 @@ checkFormulaData <- function(formula,data,checkLHS=TRUE,debug=FALSE) {
         if (allvarex(env=(ee <- environment(formula)))) {
             stop("'data' not found, but variables found in environment of formula: ",
                  "try specifying 'formula' as a formula rather ",
-                 "than a string in the original model")
-        } else stop("'data' not found, and some variables missing from formula environment")
+                 "than a string in the original model",call.=FALSE)
+        } else stop("'data' not found, and some variables missing from formula environment",call.=FALSE)
     } else {
         if (is.null(data)) {
             if (!is.null(ee <- environment(formula))) {

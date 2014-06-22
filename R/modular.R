@@ -71,8 +71,8 @@ checkZdims <- function(Ztlist, n, ctrl, allow.n=FALSE) {
                        sprintf(" for term (%s)",term.names[i]))
             if(ww$unident) {
             switch(cc,
-                   "warning" = warning(ww$wstr),
-                   "stop" = stop(ww$wstr),
+                   "warning" = warning(ww$wstr,call.=FALSE),
+                   "stop" = stop(ww$wstr,call.=FALSE),
                    stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
             }
         }
@@ -94,8 +94,8 @@ checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
             ww <- wmsg(n,rankZ,allow.n,"number of observations","rank(Z)")
             if (ww$unident) {
                 switch(cc,
-                       "warningSmall" =, "warning" = warning(ww$wstr),
-                       "stopSmall" =, "stop" = stop(ww$wstr),
+                       "warningSmall" =, "warning" = warning(ww$wstr,call.=FALSE),
+                       "stopSmall" =, "stop" = stop(ww$wstr,call.=FALSE),
                        stop(gettextf("unknown check level for '%s'", cstr),
                             domain=NA))
             }
@@ -134,7 +134,7 @@ checkScaleX <- function(X,  kind="warning", tol=1e3) {
             X[,cont.cols] <- sweep(X[,cont.cols,drop=FALSE],2,col.sd,"/")
             attr(X,"scaled:scale") <- setNames(col.sd,colnames(X)[cont.cols])
             wmsg <- "Some predictor variables on very different scales: auto-rescaled (results NOT adjusted)"
-            if (kind=="warn+rescale") warning(wmsg)
+            if (kind=="warn+rescale") warning(wmsg,call.=FALSE)
         }
     }
     X
@@ -150,8 +150,8 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
     if (doCheck(cc) && any(nlevelVec < 2)) {
 	wstr <- "grouping factors must have > 1 sampled level"
 	switch(cc,
-	       "warning" = warning(wstr),
-	       "stop" = stop(wstr),
+	       "warning" = warning(wstr,call.=FALSE),
+	       "stop" = stop(wstr,call.=FALSE),
 	       stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
     }
     ## Part 2 ----------------
@@ -170,8 +170,8 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
     if (doCheck(cc) && any(nlevelVec < 5)) {
 	wstr <- "grouping factors with < 5 sampled levels may give unreliable estimates"
 	switch(cc,
-	       "warning" = warning(wstr),
-	       "stop" = stop(wstr),
+	       "warning" = warning(wstr,call.=FALSE),
+	       "stop" = stop(wstr,call.=FALSE),
 	       stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
     }
 }

@@ -4,6 +4,7 @@
 %\VignetteIndexEntry{Fitting linear mixed-effects models using lme4}
 \documentclass[nojss]{jss}
 \usepackage[T1]{fontenc}% for correct hyphenation and T1 encoding
+\usepackage[utf8]{inputenc}% 
 \usepackage{lmodern}% latin modern font
 \usepackage[american]{babel}  %% for texi2dvi ~ bug
 \usepackage{bm,amsmath,thumbpdf,amsfonts}%,minted}
