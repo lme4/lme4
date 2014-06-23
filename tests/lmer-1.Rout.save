@@ -146,7 +146,7 @@ Fixed Effects:
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.4 0.004 0.41 
+Time elapsed:  0.4 0.02 0.43 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -192,7 +192,7 @@ Warning messages:
 > options(oldOpts)  ## restore digits
 > 
 > showProc.time() #
-Time elapsed:  0.164 0.004 0.167 
+Time elapsed:  0.172 0.004 0.173 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -321,7 +321,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.412 0.008 0.42 
+Time elapsed:  0.432 0 0.433 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -443,7 +443,7 @@ lagoon1  lagoon2  lagoon3  lagoon4
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.216 0.008 0.224 
+Time elapsed:  0.204 0.004 0.21 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -456,15 +456,13 @@ Time elapsed:  0.216 0.008 0.224
 > m1 <- suppressWarnings(lmer(y ~ x1 + x2|ff  , data = D))
 > m2 <- suppressWarnings(lmer(y ~ x1 + (x2|ff), data = D))
 > m3 <- suppressWarnings(lmer(y ~ (x2|ff) + x1, data = D))
-> stopifnot(all.equal(ranef(m0), ranef(m1), tolerance = 1e-5),
+> suppressWarnings(stopifnot(all.equal(ranef(m0), ranef(m1), tolerance = 1e-5),
 +           all.equal(ranef(m2), ranef(m3), tolerance = 1e-5),
 +           inherits(tryCatch(lmer(y ~ x2|ff + x1, data = D), error = function(e)e),
-+                    "error"))
-Warning message:
-In Ops.factor(ff, x1) : '+' not meaningful for factors
++                    "error")))
 > 
 > showProc.time() #
-Time elapsed:  0.7 0 0.701 
+Time elapsed:  0.72 0 0.723 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -539,4 +537,4 @@ Fixed Effects:
 > 
 > proc.time()
    user  system elapsed 
-  4.980   0.124   5.080 
+  5.088   0.140   5.207 
