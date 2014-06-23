@@ -537,7 +537,7 @@ $\bLt$.
     \hline
     $n$ & Length of the response vector, $\mc{Y}$ \\
     $p$ & Number of columns of fixed effects model matrix, $\bm X$ \\
-    $q \sum_i^k q_i$ & Number of columns of random effects model matrix, $\bm Z$ \\
+    $q = \sum_i^k q_i$ & Number of columns of random effects model matrix, $\bm Z$ \\
     $p_i$ &  Number of columns of the raw model matrix, $\bm X_i$ \\
     $\ell_i$ &  Number of levels of the grouping factor indices, $\bm i_i$ \\
     $q_i = p_i\ell_i$  & Number of columns of the term-wise model matrix, $\bm Z_i$ \\
