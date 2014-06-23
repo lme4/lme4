@@ -146,7 +146,7 @@ Fixed Effects:
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.4 0.012 0.41 
+Time elapsed:  0.4 0.004 0.41 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -192,7 +192,7 @@ Warning messages:
 > options(oldOpts)  ## restore digits
 > 
 > showProc.time() #
-Time elapsed:  0.168 0 0.165 
+Time elapsed:  0.164 0.004 0.167 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -321,7 +321,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.408 0.016 0.427 
+Time elapsed:  0.412 0.008 0.42 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -331,11 +331,14 @@ Time elapsed:  0.408 0.016 0.427
 +               y <- round(10*rnorm(100, m = 10*as.numeric(lagoon)))
 +           })
 > 
-> try(reg <- lmer(y ~ habitat + (1|habitat*lagoon), data = dat) # did seg.fault
+> tt <- suppressWarnings(try(reg <- lmer(y ~ habitat + (1|habitat*lagoon), data = dat)
++                                         )
++                                          # did seg.fault)
 +     ) # now gives error                 ^- should be ":"
 Error : Invalid grouping factor specification, habitat * lagoon
-In addition: Warning message:
-In Ops.factor(habitat, lagoon) : '*' not meaningful for factors
+> ## suppress warning that uses different quoting conventions on
+> ## R-release vs. R-devel
+> 
 > r1  <- lmer(y ~ 0+habitat + (1|habitat:lagoon), data = dat,
 +             control=lmerControl(check.conv.hess="ignore",
 +                                 check.conv.grad="ignore")) # ok, but senseless
@@ -440,7 +443,7 @@ lagoon1  lagoon2  lagoon3  lagoon4
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.204 0.012 0.216 
+Time elapsed:  0.216 0.008 0.224 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -461,7 +464,7 @@ Warning message:
 In Ops.factor(ff, x1) : '+' not meaningful for factors
 > 
 > showProc.time() #
-Time elapsed:  0.68 0 0.677 
+Time elapsed:  0.7 0 0.701 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -536,4 +539,4 @@ Fixed Effects:
 > 
 > proc.time()
    user  system elapsed 
-  4.972   0.124   5.072 
+  4.980   0.124   5.080 
