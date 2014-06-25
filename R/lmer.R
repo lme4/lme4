@@ -1625,7 +1625,7 @@ getLlikAIC <- function(object, cmp = object@devcomp$cmp) {
 
 .prt.grps <- function(ngrps, nobs) {
     cat(sprintf("Number of obs: %d, groups: ", nobs),
-        paste(paste(names(ngrps), ngrps, sep = ", "), sep = "; "),
+        paste(paste(names(ngrps), ngrps, sep = ", "), collapse = "; "),
         fill = TRUE)
 }
 
