@@ -2,7 +2,7 @@ year <- sub("-.*", "", meta$Date)
 note <- sprintf("R package version %s", meta$Version)
 
 bibentry(bibtype = "Manual",
-	 title = "{lme4}: Linear mixed-effects models using Eigen and S4",
+	 title = "{lme4}: Linear mixed-effects models using {Eigen} and {S4}",
 	 author = c(person("Douglas", "Bates"),
 	     person("Martin", "Maechler"),
 	     person("Ben", "Bolker"),
@@ -12,7 +12,7 @@ bibentry(bibtype = "Manual",
 	 url = "http://CRAN.R-project.org/package=lme4")
 
 bibentry(bibtype = "Misc",
-	 title = "{lme4}: Linear mixed-effects models using Eigen and S4",
+	 title = "{lme4}: Linear mixed-effects models using {Eigen} and {S4}",
 	 year = "2014",
 	 author = c(person("Douglas", "Bates"),
 	   person("Martin", "Maechler"),
