@@ -25,9 +25,10 @@ importFrom("lattice",
            splom, strip.custom, strip.default, trellis.par.get,
            xyplot)
 importFrom("MASS", negative.binomial, theta.ml)
-importFrom("Matrix", drop0, rankMatrix, rBind, sparseMatrix)
 importFrom("nlme", fixef,ranef,VarCorr)
-importMethodsFrom("Matrix", "%*%",coerce,crossprod,diag,t,tcrossprod,solve,chol2inv)
+importFrom("Matrix", drop0, rankMatrix, sparseMatrix, cBind,rBind)
+importMethodsFrom("Matrix", coerce, "%*%",crossprod,tcrossprod,
+                  t,diag, chol2inv,solve, colSums,rowSums)
 ## other CRAN packages:
 importFrom("Rcpp", evalCpp)
 importFrom("minqa", bobyqa)
