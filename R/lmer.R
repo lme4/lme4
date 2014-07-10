@@ -577,14 +577,14 @@ REMLcrit <- function(object) {
 ## REML=NULL:
 ##    if REML fit return REML criterion
 ##    if ML fit, return deviance
-## REML=TRUE: 
+## REML=TRUE:
 ##    if not LMM, stop.
 ##    if ML fit, compute and return REML criterion
 ##    if REML fit, return REML criterion
 ## REML=FALSE:
 ##    if ML fit, return deviance
 ##    if REML fit, compute and return deviance
-devCritFun <- function(object, REML = NULL) {    
+devCritFun <- function(object, REML = NULL) {
     ## cf. (1) lmerResp::Laplace in respModule.cpp
     ##     (2) section 5.6 of lMMwR, listing lines 34-42
     if (isTRUE(REML) && !isLMM(object))
@@ -1080,7 +1080,7 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
 {
 
     newControl <- NULL
-    
+
     if (ll <- length(l... <- list(...)) > 0) {
         if ((ll == 1L) &&  (names(l...)[1] == "control")) {
             newControl <- l...$control
@@ -1337,22 +1337,20 @@ residuals.glmResp <- function(object, type = c("deviance", "pearson",
 
 }
 
-## influence values (new feature)
+## influence values (new feature); not yet exported
 hatvalues.merMod <- function(object, ...) {
+    ## prior weights, W ^ {1/2} :
+    sqrtW <- Diagonal(x = sqrt(weights(object, type = "prior")))
     with(getME(object, c("L", "Lambdat", "Zt", "RX", "X", "RZX")), {
-                                        # prior weights
-        sqrtW <- Diagonal(x = sqrt(weights(object, type = "prior")))
-                                        # right factor of the
-                                        # random-effects component of
-                                        # the hat matrix
-        CL <- solve(L, solve(L, Lambdat%*%Zt%*%sqrtW,
+        ## CL:= right factor of the random-effects component of the hat matrix (64)
+        CL <- solve(L, solve(L, Lambdat %*% Zt %*% sqrtW,
                              system = "P"), system = "L")
-                                        # right factor of the
-                                        # fixed-effects comonent of
-                                        # the hat matrix
-        CR <- solve(t(RX), t(X)%*%sqrtW - t(RZX)%*%CL)
-                                        # diagonal of the hat matrix
-        apply(CR^2, 2, sum) + apply(CL^2, 2, sum)
+	## CR:= right factor of the fixed-effects component of the hat matrix  (65)
+	##	{MM (FIXME Matrix):  t(.) %*% here faster than crossprod()}
+	CR <- solve(t(RX), t(X) %*% sqrtW - crossprod(RZX, CL))
+	## H = (C_L^T C_L + C_R^T C_R)	       (63)
+	## diagonal of the hat matrix, diag(H) :
+	colSums(CR^2) + colSums(CL^2)
     })
 }
 
