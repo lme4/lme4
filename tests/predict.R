@@ -105,7 +105,7 @@ refval <- structure(list(Days = c(0, 9, 0, 9, 0, 9), Subject = structure(c(1L,
     "Subject=372")), .Names = c("Days", "Subject"))), .Names = c("dim", 
 "dimnames")), row.names = c(NA, 6L), class = "data.frame")
 
-expect_equal(head(newdata), refval)
+expect_equal(head(newdata), refval, tol=5e-7)
 
 library(lattice)
 tmpf <- function(data,...) {
