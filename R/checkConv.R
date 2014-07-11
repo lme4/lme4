@@ -109,6 +109,8 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
 }
 
 checkHess <- function(H, tol, hesstype="") {
+    ## FIXME: not sure why we decided to save messages as a list
+    ## rather than as a character vector??
     res <- list(code=numeric(0),messages=list())
     evd <- eigen(H, symmetric=TRUE, only.values=TRUE)$values
     negative <- sum(evd < -tol)

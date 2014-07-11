@@ -1627,6 +1627,31 @@ getLlikAIC <- function(object, cmp = object@devcomp$cmp) {
         fill = TRUE)
 }
 
+## FIXME: print header ("Warnings:\n") ?
+##  change position in output? comes at the very end, could get lost ...
+.prt.warn <- function(optinfo, summary=FALSE, ...) {
+    ## check all warning slots: print numbers of warnings (if any)
+    cc <- optinfo$conv$opt
+    msgs <- unlist(optinfo$conv$lme4$messages)
+    ## can't put nmsgs/nwarnings compactly into || expression
+    ##   because of short-circuiting
+    nmsgs <- length(msgs)
+    warnings <- optinfo$warnings
+    nwarnings <- length(warnings)
+    if (cc>0 || nmsgs>0 || nwarnings>0) {
+        if (summary) {
+            cat(sprintf("convergence code %d; %d optimizer warnings; %d lme4 warnings",
+                cc,nmsgs,nwarnings),"\n")
+        } else {
+            cat(sprintf("convergence code: %d",cc),
+                msgs,
+                warnings,
+                sep="\n")
+            cat("\n")
+        }
+    }
+}
+    
 .summary.cor.max <- 20
 
 ## This is modeled a bit after	print.summary.lm :
@@ -1695,6 +1720,7 @@ print.summary.merMod <- function(x, digits = max(3, getOption("digits") - 3),
 	    }  ## if (p > 1)
         } ## if (correlation)
     } ## if (p>0)
+    .prt.warn(x$optinfo,summary=FALSE)
     invisible(x)
 }## print.summary.merMod
 
@@ -1722,6 +1748,7 @@ print.merMod <- function(x, digits = max(3, getOption("digits") - 3),
 	print.default(format(cf, digits = digits),
 		      print.gap = 2L, quote = FALSE, ...)
     } else cat("No fixed effect coefficients\n")
+    .prt.warn(x@optinfo,summary=TRUE)
     invisible(x)
 }
 
@@ -2146,7 +2173,8 @@ summary.merMod <- function(object,
 		   vcov = vcov(object, correlation = correlation, sigm = sig),
 		   varcor = varcor, # and use formatVC(.) for printing.
 		   AICtab = llAIC[["AICtab"]], call = object@call,
-                   residuals = residuals(object,"pearson",scaled = TRUE)
+                   residuals = residuals(object,"pearson",scaled = TRUE),
+                   optinfo = object@optinfo
 		   ), class = "summary.merMod")
 }
 
