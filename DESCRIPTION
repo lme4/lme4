@@ -21,7 +21,7 @@ Description: Fit linear and generalized linear mixed-effects models.
 Depends: R (>= 2.15.1), Matrix (>= 1.1.1), methods, stats, Rcpp (>= 0.10.5)
 LinkingTo: Rcpp, RcppEigen
 Imports: graphics, grid, splines, parallel, MASS, nlme, lattice,
-    minqa (>= 1.1.15), nloptr
+    minqa (>= 1.1.15), nloptr (>= 1.0.2)
 Suggests:
     knitr,
     boot,

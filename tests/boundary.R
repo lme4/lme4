@@ -55,27 +55,25 @@ fm5c <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="bobyqa"))
 stopifnot(all.equal(unname(getME(fm5c,"theta")), 0.21067645, tolerance = 1e-7))
 					#	 0.21067644264 [64-bit, lynne]
 
-if (FALSE) {
+##{
     ## additional stuff for diagnosing Nelder-Mead problems.
-    ## library(nloptr) call commented out to avoid R CMD check problems/needing to
-    ##  Suggest: nloptr
 
     library(optimx)
     fm5d <- update(fm5,control=lmerControl(optimizer="optimx",
                        optCtrl=list(method="L-BFGS-B")))
 
-    ## library(nloptr)
-    defaultControl <- list(algorithm="NLOPT_LN_BOBYQA",xtol_rel=1e-6,maxeval=1e5)
-    nloptwrap2 <- function(fn,par,lower,upper,control=list(),...) {
-        for (n in names(defaultControl))
-            if (is.null(control[[n]])) control[[n]] <- defaultControl[[n]]
-        res <- nloptr(x0=par,eval_f=fn,lb=lower,ub=upper,opts=control,...)
-        with(res,list(par=solution,
-                      fval=objective,
-                      conv=if (status>0) 0 else status,
-                      message=message))
-    }
-    fm5e <- update(fm5,control=lmerControl(optimizer="nloptwrap2"))
+    ## library(nloptr) -- not needed (?) as we import nloptr::nloptr and have  nloptwrap() :
+    ## defaultControl <- list(algorithm="NLOPT_LN_BOBYQA",xtol_rel=1e-6,maxeval=1e5)
+    ## nloptwrap2 <- function(fn,par,lower,upper,control=list(),...) {
+    ##     for (n in names(defaultControl))
+    ##         if (is.null(control[[n]])) control[[n]] <- defaultControl[[n]]
+    ##     res <- nloptr(x0=par,eval_f=fn,lb=lower,ub=upper,opts=control,...)
+    ##     with(res,list(par=solution,
+    ##                   fval=objective,
+    ##                   conv=if (status>0) 0 else status,
+    ##                   message=message))
+    ## }
+    fm5e <- update(fm5, control=lmerControl(optimizer="nloptwrap"))
 
     mList <- setNames(list(fm4,fm4b,fm4c,fm5,fm5b,fm5c,fm5d,fm5e),
                       c("NM/uselast","NM/uselast/norestart","bobyqa/uselast",
@@ -83,13 +81,15 @@ if (FALSE) {
     pp <- profile(fm5c,which=1)
     dd <- as.data.frame(pp)
     par(las=1,bty="l")
-    v <- sapply(mList,
-                function(x) sqrt(VarCorr(x)[[1]]))
-    (v2 <- sapply(mList,getME,"theta"))
-
-    plot(.zeta^2~.sig01,data=dd,type="b")
+    plot(.zeta^2~.sig01, data=dd, type="b")
     abline(v=v)
-}
+
+    res <- cbind(VCorr  = sapply(mList, function(x) sqrt(VarCorr(x)[[1]])),
+                 theta  = sapply(mList, getME,"theta"),
+                 loglik = sapply(mList, logLik))
+    res
+    print(sessionInfo(), locale=FALSE)
+##}
 
 ######################
 library(lattice)
@@ -108,7 +108,7 @@ sumf <- function(m) {
 if (FALSE) {
     ## figuring out which seeds will give boundary and
     ## near-boundary solutions
-    mList <- lapply(1:201,tmpf)
+    mList <- lapply(1:201,tmpf) # [FIXME tons of messages "theta parameters vector not named"]
     ss <- sapply(mList,sumf)+1e-50
     par(las=1,bty="l")
     hist(log(ss),col="gray",breaks=50)

@@ -916,7 +916,9 @@ smmm <- lme4:::mmList.merMod(sm)
 
 nloptwrap <- local({
     defaultControl <- list(algorithm="NLOPT_LN_BOBYQA",
-                           xtol_abs=1e-6,ftol_abs=1e-6,maxeval=1e5)
+                           xtol_abs=1e-6, ftol_abs=1e-6, maxeval=1e5)
+    function(fn,par,lower,upper,control=list(),...) {
+        if(packageVersion("nloptr") < "1.0.2") {
     ## kluge: we would like to import nloptr.default.options from nloptr
     ##   up front (it's required by nloptr and isn't accessible if
     ##   nloptr::nloptr is only imported without the package being loaded)
@@ -942,17 +944,15 @@ nloptwrap <- local({
     ##       to unlock it: ?unlockBinding
     ##  http://stackoverflow.com/questions/19132492/how-to-unlock-environment-in-r
     ## https://gist.github.com/wch/3280369#file-unlockenvironment-r
-    ## this seems like a lot of effort to go to 
-    function(fn,par,lower,upper,control=list(),...) {
-        ## try to deceive R CMD check
-        ee <- .GlobalEnv ## environment(nloptr)
-        if (!exists("nloptr.default.options",envir=ee))
-            data("nloptr.default.options",
-                 package="nloptr",
-                 envir=ee)
+    ## this seems like a lot of effort to go to
+            ## try to deceive R CMD check
+            ee <- .GlobalEnv ## environment(nloptr)
+            if (!exists("nloptr.default.options", envir=ee))
+                data("nloptr.default.options", package="nloptr", envir=ee)
+        }
         for (n in names(defaultControl))
             if (is.null(control[[n]])) control[[n]] <- defaultControl[[n]]
-        res <- nloptr(x0=par,eval_f=fn,lb=lower,ub=upper,opts=control,...)
+        res <- nloptr(x0=par, eval_f=fn, lb=lower,ub=upper, opts=control, ...)
         with(res,list(par=solution,
                       fval=objective,
                       feval=iterations,
