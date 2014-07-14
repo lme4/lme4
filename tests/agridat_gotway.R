@@ -1,4 +1,3 @@
-library(testthat)
 ## require(agridat)
 ## dat <- gotway.hessianfly
 
@@ -37,7 +36,7 @@ lme4fit <- list(fixef=fixef(m1),theta=getME(m1,"theta"))
 ## hack around slight naming differences
 lme4fit$theta <- unname(lme4fit$theta)
 lme4.0fit$theta <- unname(lme4.0fit$theta)
-expect_equal(lme4fit,lme4.0fit,tolerance=3e-4)
+stopifnot(all.equal(lme4fit, lme4.0fit, tolerance = 3e-4))
 
 ## Fun stuff: visualize and alternative model
 

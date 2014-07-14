@@ -23,12 +23,12 @@ lme4condVarcbpp <- as.numeric(attr(ranef(gm,condVar=TRUE)$herd,"postVar"))
 stopifnot(all.equal(lme4.0condVarcbpp, lme4condVarcbpp, tolerance = 1e-3))
 
 # return warning when multiple factor terms per factor
-library(testthat)
 set.seed(1)
 y <- rnorm(10)
 x <- rnorm(10)
 g <- rep(c("A","B"),5)
-m1 <- lmer(y ~ 1 + (x | g))
+m1 <- lmer(y ~ 1 + (x | g)) # convergence warnings
 m2 <- lmer(y ~ 1 + (1 | g) + (0 + x | g))
-ranef(m1, condVar = TRUE) # no warnings expected
-expect_warning(ranef(m2, condVar = TRUE))
+options(warn = 2) # no warnings expected in first:
+ranef(m1, condVar = TRUE)
+tools::assertWarning(ranef(m2, condVar = TRUE))

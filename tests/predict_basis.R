@@ -16,18 +16,19 @@ library(splines)
 ## detach("package:nlme")
 
 library(lme4)
-library(testthat)
 fm1 <- lmer(Reaction ~ ns(Days,2) + (1|Subject), sleepstudy)
 fm2 <- lmer(Reaction ~ poly(Days,2) + (1|Subject), sleepstudy)
 fm3 <- lmer(Reaction ~ poly(Days,2,raw=TRUE) + (1|Subject), sleepstudy)
 
-newdat0 <- data.frame(Days=unique(sleepstudy$Days))
-newdat <- data.frame(Days=5:12)
+newdat0 <- data.frame(Days = unique(sleepstudy$Days))
+newdat  <- data.frame(Days = 5:12)
 tmpf <- function(fit) {
-    with(sleepstudy,plot(Reaction~Days,xlim=c(0,12)))
-    with(sleepstudy,points(Days,predict(fit),col=2))
-    with(newdat0,lines(Days,predict(fit,ReForm=NA,newdata=newdat0),col=4))
-    with(newdat,lines(Days,predict(fit,ReForm=NA,newdata=newdat),col=5))
+    with(sleepstudy, {
+        plot  (Reaction~Days, xlim=c(0,12))
+        points(Days, predict(fit), col=2)
+    })
+    lines(newdat0$ Days, predict(fit,ReForm=NA,newdata=newdat0), col=4)
+    lines(newdat $ Days, predict(fit,ReForm=NA,newdata=newdat ), col=5)
 }
 
 stopifnot(all.equal(predict(fm2,newdat,ReForm=NA),

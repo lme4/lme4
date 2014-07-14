@@ -1,5 +1,4 @@
 library(lme4)
-library(testthat)
 
 mySumm <- function(.) {
   s <- sigma(.)
