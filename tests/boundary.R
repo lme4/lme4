@@ -81,6 +81,8 @@ stopifnot(all.equal(unname(getME(fm5c,"theta")), 0.21067645, tolerance = 1e-7))
     pp <- profile(fm5c,which=1)
     dd <- as.data.frame(pp)
     par(las=1,bty="l")
+    v <- sapply(mList,
+                function(x) sqrt(VarCorr(x)[[1]]))
     plot(.zeta^2~.sig01, data=dd, type="b")
     abline(v=v)
 
