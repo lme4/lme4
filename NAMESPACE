@@ -7,7 +7,7 @@ importFrom("splines", backSpline,interpSpline,periodicSpline)
 importFrom("methods", show)
 importFrom("stats",
            anova, coef, confint, deviance, df.residual, drop1,
-           extractAIC, family, fitted, formula, logLik,
+           extractAIC, family, fitted, formula, hatvalues, logLik,
            model.matrix, nobs, profile, residuals, simulate, terms,
            update, vcov, weights)
 ## Recommended packages
@@ -128,6 +128,7 @@ S3method(formula,lmList)
 S3method(formula,merMod)
 ## S3method(fortify,merMod)# but don't hide:
 export(fortify.merMod)
+S3method(hatvalues,merMod)
 S3method(isGLMM,merMod)
 S3method(isLMM,merMod)
 S3method(isNLMM,merMod)
