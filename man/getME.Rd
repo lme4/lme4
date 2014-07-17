@@ -6,7 +6,7 @@
 \usage{
 getME(object,
       name = c("X", "Z", "Zt", "Ztlist", "mmList", "y", "mu", "u", "b",
-               "Gp", "Tp", "L", "Lambda", "Lambdat", "Lind",
+               "Gp", "Tp", "L", "Lambda", "Lambdat", "Lind", "Tlist",
                "A", "RX", "RZX", "sigma", "flist",
                "fixef", "beta", "theta", "ST", "REML", "is_REML",
                "n_rtrms", "n_rfacs", "N", "n", "p", "q",
@@ -53,6 +53,8 @@ getME(object,
       \item{Lambdat}{transpose \eqn{\Lambda'}{Lambda'} of \eqn{\Lambda}{Lambda} above.}
       \item{Lind}{index vector for inserting elements of
 	\eqn{\theta}{theta} into the nonzeros of \eqn{\Lambda}{Lambda}.}
+      \item{Tlist}{vector of template matrices from which the blocks of 
+	\eqn{\Lambda}{Lambda} are generated.}
       \item{A}{Scaled sparse model matrix (class
 	\code{"\link[Matrix:dgCMatrix-class]{dgCMatrix}"}) for
 	the unit, orthogonal random effects, \eqn{U}, equal to

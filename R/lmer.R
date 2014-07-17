@@ -1805,7 +1805,7 @@ getME <- function(object,
 		  name = c("X", "Z","Zt", "Ztlist", "mmList",
                   "y", "mu", "u", "b",
 		  "Gp", "Tp",
-		  "L", "Lambda", "Lambdat", "Lind", "A",
+		  "L", "Lambda", "Lambdat", "Lind", "Tlist", "A",
 		  "RX", "RZX", "sigma",
                   "flist",
                   "fixef", "beta", "theta", "ST",
@@ -1825,6 +1825,7 @@ getME <- function(object,
     rsp  <- object@resp
     PR   <- object@pp
     dc   <- object@devcomp
+    th   <- object@theta
     cmp  <- dc $ cmp
     cnms <- object@cnms
     dims <- dc $ dims
@@ -1868,9 +1869,26 @@ getME <- function(object,
            "flist" = object@flist,
            "fixef" = fixef(object),
 	   "beta" = object@beta,
-           "theta" = setNames(object@theta,tnames(object)),
+           "theta"= setNames(th,tnames(object)),
 	   "ST" = setNames(vec2STlist(object@theta, n = vapply(cnms, length, 0L)),
 			  names(cnms)),
+           "Tlist" = {
+               nc <- vapply(cnms, length, 1L) # number of columns per term
+               nt <- length(nc)         # number of random-effects terms
+               ans <- vector("list",nt)
+               names(ans) <- names(nc)
+               pos <- 0L
+               for (i in 1:nt) { # will need modification for more general Lambda
+                   nci <- nc[i]
+                   tt <- matrix(0., nci, nci)
+                   inds <- lower.tri(tt,diag=TRUE)
+                   nthi <- sum(inds)
+                   tt[lower.tri(tt, diag=TRUE)] <- th[pos + (1L:nthi)]
+                   pos <- pos + nthi
+                   ans[[i]] <- tt
+               }
+               ans
+           },
 	   "REML" = dims[["REML"]],
 	   "is_REML" = isREML(object),
            ## number of random-effects terms
