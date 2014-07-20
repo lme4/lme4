@@ -79,9 +79,16 @@ getME(object,
       \item{n_rtrms}{number of random-effects terms}
       \item{n_rfacs}{number of distinct random-effects grouping factors}
       \item{N}{number of rows of \code{X}}
-      \item{n}{length of \code{y}}
-      \item{p}{number of columns of \code{X}}
-      \item{q}{number of columns of \code{Z}}
+      \item{n}{length of the response vector, \code{y}}
+      \item{p}{number of columns of the fixed effects model matrix, \code{X}}
+      \item{q}{number of columns of the random effects model matrix, \code{Z}}
+      \item{p_i}{numbers of columns of the raw model matrices,
+    \code{mmList}}
+      \item{l_i}{numbers of levels of the grouping factors}
+      \item{q_i}{numbers of columns of the term-wise model matrices, \code{ZtList}}
+      \item{k}{number of random effects terms}
+      \item{m_i}{numbers of covariance parameters in each term}
+      \item{m}{total number of covariance parameters}
       \item{cnms}{the \dQuote{component names}, a \code{\link{list}}.}
       \item{REML}{\code{0} indicates the model was fitted by maximum
 	likelihood, any other positive integer indicates fitting by 

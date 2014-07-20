@@ -1789,7 +1789,7 @@ mkPfun <- function(diag.only = FALSE, old = TRUE, prefix = NULL){
 
 ##' Construct names of individual theta/sd:cor components
 ##'
-##' @param object a fixed model
+##' @param object a fitted model
 ##' @param diag.only include only diagonal elements?
 ##' @param old (logical) give backward-compatible results?
 ##' @param prefix a character vector with two elements giving the prefix
@@ -1812,6 +1812,7 @@ getME <- function(object,
 		  "REML", "is_REML",
                   "n_rtrms", "n_rfacs",
                   "N", "n", "p", "q",
+                  "p_i", "l_i", "q_i", "k", "m_i", "m",
                   "cnms",
                   "devcomp", "offset", "lower"))
 {
@@ -1835,6 +1836,9 @@ getME <- function(object,
 	setNames(c(0, cLen),
 		 c("beg__", names(cnms))) ## such that diff( Tp ) is well-named
     }
+    mmList. <- mmList(object)
+    p_i <- sapply(mmList., ncol)
+    l_i <- sapply(object@flist, nlevels)
     switch(name,
 	   "X" = PR$X, ## ok ? - check -- use model.matrix() method instead?
 	   "Z" = t(PR$Zt),
@@ -1851,7 +1855,7 @@ getME <- function(object,
            setNames(lapply(inds,function(i) PR$Zt[i,]),
                     tnames(object,diag.only = TRUE))
        },
-           "mmList" = mmList(object),
+           "mmList" = mmList.,
            "y" = rsp$y,
            "mu" = rsp$mu,
            "u" = object@u,
@@ -1899,6 +1903,12 @@ getME <- function(object,
            "n" = dims["n"],
            "p" = dims["p"],
            "q" = dims["q"],
+           "p_i" = p_i,
+           "l_i" = l_i,
+           "q_i" = p_i*l_i,
+           "k" = length(cnms),
+           "m_i" = choose(p_i + 1, 2),
+           "m" = dc$dims[["nth"]],
            "cnms" = cnms,
            "devcomp" = dc,
            "offset" = rsp$offset,
@@ -2353,6 +2363,10 @@ weights.merMod <- function(object, type = c("prior","working"), ...) {
     ## FIXME:  what to do about missing values (see stats:::weights.glm)?
     ## FIXME:  add unit tests
     return(res)
+}
+
+dim.merMod <- function(x) {
+    getME(x, c("n", "p", "q", "p_i", "l_i", "q_i", "k", "m_i", "m"))
 }
 
 ## Internal utility, only used in optwrap() :
