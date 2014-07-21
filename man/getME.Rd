@@ -10,6 +10,7 @@ getME(object,
                "A", "RX", "RZX", "sigma", "flist",
                "fixef", "beta", "theta", "ST", "REML", "is_REML",
                "n_rtrms", "n_rfacs", "N", "n", "p", "q",
+               "p_i", "l_i", "q_i", "k", "m_i", "m",
                "cnms", "devcomp", "offset", "lower"))
 }
 \arguments{
