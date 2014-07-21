@@ -1,0 +1,95 @@
+## Deviance and log-likelihood in `lme4`
+
+Up to now/previously, "deviance" has been defined in lme4 as -2*(log likelihood).  In the tweaked development version used here, I've redefined it as the sum of the (squared) deviance residuals.
+
+Fit basic model:
+```{r model1}
+library(lme4)
+gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+             data = cbpp, family = binomial)
+```
+
+Various summaries:
+```{r modelsum1}
+deviance(gm1)
+-2*logLik(gm1)
+dd <- update(gm1,devFunOnly=TRUE)
+dd(unlist(getME(gm1,c("theta","beta"))))
+```
+The "deviance function" actually returns $-2L$, not the deviance.
+
+Create a new version with $\theta$ set to zero (to check match with `glm()`
+likelihood, deviance, etc.):
+```{r fitglm0}
+## wrap deviance function: force $\theta=0$
+dd2 <- function(p) {
+    dd(c(0,p))
+}
+(dev0 <- (opt0 <- optim(fn=dd2,par=getME(gm1,"beta")))$val)
+mm2 <- mm <- getCall(gm1)
+mm[[1]] <- quote(glFormula)
+ff <- eval(mm)  ## auxiliary information
+opt0$par <- c(0,opt0$par)
+## have to convert names of results to make lme4 happy
+names(opt0)[match(c("convergence","value"),names(opt0))] <- c("conv","fval")
+gmb <- with(ff,mkMerMod(environment(dd),opt0,reTrms,fr,mm2))
+```
+
+And with `glm`:
+```{r fitglm1}
+gm0<- glm(cbind(incidence, size - incidence) ~ period,
+             data = cbpp, family = binomial)
+all.equal(deviance(gm0),deviance(gmb))  ## deviances match
+(d0 <- c(-2*logLik(gm0)))
+all.equal(dev0,d0)   ## 'deviance function' matches -2L
+## deviance residuals match
+all.equal(residuals(gmb),residuals(gm0),tol=1e-3)
+```
+
+I'm sure this has been gone over a million times before, but let's review the relationships between the deviance and the log-likelihood as defined in base R (i.e. `glm`): 
+
+* within `glm.fit`, the deviance is defined as the sum of the deviance residuals (i.e. `sum(dev.resids(y, mu, weights))`), which in turn are defined in `binomial()` (or the other results from `family()`) as the *squared* deviance residuals ... it is then stored in the `$deviance` element of the list.
+```{r devrescomp2}
+## access dev. resids built into binomial():
+devres2 <- with(cbpp,
+     binomial()$dev.resid(y=incidence/size,mu=predict(gm0,type="response"),
+                          wt=size))
+all.equal(devres2,unname(residuals(gm0,"deviance")^2))
+```
+(`binomial()$dev.resid()` calls the internal `C_binomial_dev_resids` function, which computes $2 w_i (y \log(y/\mu) + (1-y) \log((1-y)/(1-\mu)))$ \ldots) ... this is the same as the `binomialDist::devResid` defined in `glmFamily.cpp` ...
+
+In `logLik.glm`, the log-likelihood is retrieved (weirdly, as has been pointed out before) from the `$aic` component of the fitted object (by computing ${\cal L}=p-\mbox{AIC}/2$), which is in turn computed directly, e.g. for binomial it is
+```{r binomAIC,eval=FALSE}
+    -2 * sum(ifelse(m > 0, (wt/m), 0) * dbinom(round(m * y), 
+        round(m), mu, log = TRUE))
+```
+(that is, the `$aic` function really computes -2*the log likelihood -- `AIC.default` uses `-2 * val$ll + k * val$df`)
+
+```{r}
+aic2 <- with(cbpp,
+     binomial()$aic(y=incidence/size,n=1,mu=predict(gm0,type="response"),
+                          wt=size))
+all.equal(aic2,c(-2*logLik(gm0)))
+```
+
+But `glm.fit` takes the results of `binomial()$aic()` (which is $-2L$) and converts it to
+```{r eval=FALSE}
+aic.model <- aic(y, n, mu, weights, dev) + 2 * rank
+```
+
+In summary, in *base R*:
+
+* `family()$aic` computes $-2L$, which `glm.fit` translates to an AIC by adding $2k$ and storing it in `model$aic`
+* `logLik.default` retrieves `model$aic` and converts it back to a log-likelihood
+* `stats:::AIC.default` retrieves the log-likelihood and converts it *back* to an AIC (!)
+* `family()$dev.resid()` computes the *squared* deviance residuals
+* `stats:::residuals.glm` retrieves these values and takes the signed square root
+
+In `lme4`:
+
+* `logLik` computes the log-likelihood from scratch based on the weighted penalized residual sum of squares;
+* `residuals.merMod` (which calls `residuals.lmResp` or `residuals.glmResp`) calls the `$devResid()` method, which calls the interval `glm_devResid` function to return the squared deviance residuals, and finds the signed square root.
+* The only real weirdness is that the objective function, which we call the "deviance function", returns $-2L$ rather than the deviance.
+
+**Bottom line**: for GLMMs, I have changed the `deviance()` method to return the sum of squares of the deviance residuals, rather than $-2L$.  Now let's see what breaks ...
+
