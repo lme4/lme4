@@ -372,7 +372,7 @@ devfun2 <- function(fm, useSc, signames)
     ## GLMMuseSc <- fm@devcomp$dims["useSc"]
     stopifnot(is(fm, "merMod"))
     fm <- refitML(fm)
-    basedev <- deviance(fm)
+    basedev <- -2*c(logLik(fm))  ## no longer deviance()
     vlist <- sapply(fm@cnms,length)
     sig <- sigma(fm)  ## only if useSc=TRUE?
     stdErr <- unname(coef(summary(fm))[,2])
