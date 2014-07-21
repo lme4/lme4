@@ -562,6 +562,9 @@ coef.merMod <- coefMer
 ##' @importFrom stats deviance
 ##' @S3method deviance merMod
 deviance.merMod <- function(object, REML = NULL, ...) {
+    if (isGLMM(object)) {
+        return(sum(residuals(object,type="deviance")^2))
+    }
     if (isREML(object) && is.null(REML)) {
         warning("deviance() is deprecated for REML fits; use REMLcrit for the REML criterion or deviance(.,REML=FALSE) for deviance calculated at the REML fit")
         return(devCritFun(object, REML=TRUE))
@@ -1338,10 +1341,10 @@ residuals.glmResp <- function(object, type = c("deviance", "pearson",
 }
 
 ## influence values (new feature); not yet exported
-hatvalues.merMod <- function(object, ...) {
+hatvalues.merMod <- function(model, ...) {
     ## prior weights, W ^ {1/2} :
-    sqrtW <- Diagonal(x = sqrt(weights(object, type = "prior")))
-    with(getME(object, c("L", "Lambdat", "Zt", "RX", "X", "RZX")), {
+    sqrtW <- Diagonal(x = sqrt(weights(model, type = "prior")))
+    with(getME(model, c("L", "Lambdat", "Zt", "RX", "X", "RZX")), {
         ## CL:= right factor of the random-effects component of the hat matrix (64)
         CL <- solve(L, solve(L, Lambdat %*% Zt %*% sqrtW,
                              system = "P"), system = "L")

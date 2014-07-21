@@ -3,6 +3,28 @@
 \name{NEWS}
 \title{lme4 News}
 \encoding{UTF-8}
+\section{CHANGES IN VERSION 1.1-8}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item \code{getME} gains a \code{"Tlist"} option
+      (returns a vector of template matrices from which the blocks of 
+      \code{Lambda} are generated)
+      \item \code{hatvalues} method returns the diagonal of the hat matrix
+      
+    }
+  }
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item \code{deviance()} now returns the deviance, rather than half the
+      negative log-likelihood, for GLMMs (there is no difference for
+      LMMs)
+      \item convergence warning and diagnostic test issues are now
+      reported in \code{print} and \code{summary} methods
+      
+    }
+  }
+}  
+  
 \section{CHANGES IN VERSION 1.1-7}{
   \subsection{NEW FEATURES}{
     \itemize{

@@ -51,7 +51,8 @@ test_that("glmer", {
     expect_equal(c(VarCorr(gm1)[[1]]),                  0.41245527438386, tolerance=6e-4)
 ### expect_that(family(gm1),                            equals(binomial()))
 ### ?? binomial() has an 'initialize' component ... and the order is different
-    expect_equal(deviance(gm1),                         184.052674598026, tolerance=1e-5)
+    expect_equal(deviance(gm1),                         73.47428, tolerance=1e-5)
+    ## was -2L = 184.05267459802
     expect_equal(sigma(gm1),                            1)
     expect_equal(extractAIC(gm1),                       c(5, 194.052674598026), tolerance=1e-5)
 
