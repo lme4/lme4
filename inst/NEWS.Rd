@@ -23,6 +23,12 @@
       
     }
   }
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item fixed \code{bootMer} bug for \code{type=="parametric"},
+      \code{use.u=TRUE} (Mark Lai)
+    }
+  }
 }  
   
 \section{CHANGES IN VERSION 1.1-7}{

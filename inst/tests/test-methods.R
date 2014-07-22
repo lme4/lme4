@@ -82,6 +82,13 @@ test_that("bootMer", {
     fm2 <- update(fm1,data=sleepstudyNA)
     confint(fm2, method="boot", nsim=10, seed=101)
 
+    ## semipar bootstrapping
+    fm01 <- lmer(Yield ~ 1|Batch, Dyestuff)
+    set.seed(1)
+    require(boot)
+    boo01_sp <- bootMer(fm01, fixef, nsim = 100, use.u = TRUE,
+                        type = "semiparametric")
+    expect_equal(sd(boo01_sp$t),8.215586,tol=1e-4)
 })
 
 context("confint")

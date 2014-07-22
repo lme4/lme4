@@ -192,7 +192,8 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
     } else {
         if (use.u) {
             if (isGLMM(x)) warning("semiparametric bootstrapping is questionable for GLMMs")
-            ss <- replicate(nsim,fitted(x)+sample(residuals(x,"response")),
+            ss <- replicate(nsim,fitted(x)+sample(residuals(x,"response"),
+                                                  replace=TRUE),
                             simplify=FALSE)
         } else {
             stop("semiparametric bootstrapping with use.u=FALSE not yet implemented")
