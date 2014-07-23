@@ -960,3 +960,7 @@ nloptwrap <- local({
                       message=message))
     }
 })
+
+glmerLaplaceHandle <- function(pp, resp, nAGQ, tol, verbose) {
+    .Call(glmerLaplace, pp, resp, nAGQ, tol, verbose)
+}

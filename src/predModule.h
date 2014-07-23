@@ -92,6 +92,7 @@ namespace lme4 {
 	void              setDelb(const VectorXd&);
 	void              setDelu(const VectorXd&);
 	void             setTheta(const VectorXd&);
+	void                setZt(const VectorXd&);
 	void                setU0(const VectorXd&);
 	void         updateDecomp();
 	void         updateDecomp(const MatrixXd*);

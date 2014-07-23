@@ -657,6 +657,13 @@ extern "C" {
         END_RCPP;
     }
 
+    SEXP merPredDsetZt(SEXP ptr, SEXP ZtNonZero) {
+        BEGIN_RCPP;
+        XPtr<merPredD>(ptr)->setZt(as<MVec>(ZtNonZero));
+        return ZtNonZero;
+        END_RCPP;
+    }
+
     SEXP merPredDsetBeta0(SEXP ptr, SEXP beta0) {
         BEGIN_RCPP;
         XPtr<merPredD>(ptr)->setBeta0(as<MVec>(beta0));
@@ -1042,6 +1049,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(merPredDCreate,    17), // generate external pointer
 
     CALLDEF(merPredDsetTheta,   2), // setters
+    CALLDEF(merPredDsetZt,      2), 
     CALLDEF(merPredDsetBeta0,   2), 
 
     CALLDEF(merPredDsetDelu,    2), // setters
