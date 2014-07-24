@@ -212,12 +212,16 @@ merPredD <-
                          Ptr
                      },
                      setBeta0     = function(beta0) {
-                         'install a new value of theta'
+                         'install a new value of beta'
                          .Call(merPredDsetBeta0, ptr(), as.numeric(beta0))
                      },
                      setTheta     = function(theta) {
                          'install a new value of theta'
                          .Call(merPredDsetTheta, ptr(), as.numeric(theta))
+                     },
+                     setZt        = function(ZtNonZero) {
+                         'install new values in Zt'
+                         .Call(merPredDsetZt, ptr(), as.numeric(ZtNonZero))
                      },
                      solve        = function() {
                          'solve for the coefficient increments delu and delb'

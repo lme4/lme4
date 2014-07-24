@@ -175,6 +175,12 @@ namespace lme4 {
 	}
     }
 
+    void merPredD::setZt(const VectorXd& ZtNonZero) {
+        double *ZtX = d_Zt.valuePtr(); // where the nonzero values of Zt live
+        std::copy(ZtNonZero.data(), ZtNonZero.data() + ZtNonZero.size(), ZtX);
+    }
+
+
     merPredD::Scalar merPredD::solve() {
         d_delu          = d_Utr - d_u0;
         d_L.solveInPlace(d_delu, CHOLMOD_P);
