@@ -1,0 +1,227 @@
+## Laplace diagnostics
+
+Copied/modified from DMB's code in glmer paper draft ...
+
+```{r pkgs,message=FALSE}
+library(lme4)
+library(lattice)
+library(ggplot2); theme_set(theme_bw())
+library(plyr)      ## for reshaping
+library(abind)     ## ditto
+library(reshape2)  ## for melt() generic
+```
+
+For now, I'm going to leave this function echoed in all its glory ...
+```{r zetafun}
+zeta <- function(m, zmin=-3, zmax=3, npts=NULL,
+                 grps=NULL) {
+    stopifnot (is(m, "glmerMod"),
+               length(m@flist) == 1L)    # single grouping factor
+    nvar <- length(m@cnms[[1]])
+    if (nvar>2) stop("can't handle vector RE with length >2")
+    if (is.null(npts)) npts <- if (nvar>1) 31L else 301L
+    pp <- m  ## ??? why copy? (something to do with reference classes?
+             ## but this is still not a deep copy ...
+    rr <- m@resp                         ## extract response module
+    u0 <- getME(pp,"u")                  ## conditional modes
+    L <- getME(pp,"L")
+    ## sd <- 1/getME(pp,"L")@x
+    ## filled elements of L matrix==diag for simple case
+    ## for more general case need the following -- still efficient
+    sd <- sqrt(diag(chol2inv(L)))
+    ff <- getME(pp,"flist")[[1]]
+    if (is.null(grps)) grps <- seq(length(levels(ff)))
+    ngrps <- length(grps)
+    ## fixed-effects contribution to linear predictor
+    fc <- getME(pp,"X") %*% getME(pp,"beta") 
+    ZL <- t(getME(pp,"Lambdat") %*% getME(pp,"Zt"))
+    ## evaluate the unscaled conditional density on the deviance scale
+    dc <- function(z) {
+        uu <- u0 + z * sd    ## displace conditional modes
+        ##  should still work if z is a vector (by recycling, because u values
+        ##  applying to each group are stored adjacent to each other)
+        rr$updateMu(fc + ZL %*% uu)     ## update linear predictor
+        drc <- unname(as.vector(tapply(rr$devResid(), ff, sum)))
+        uuc <- colSums(matrix(uu * uu,nrow=nvar))
+        (drc + uuc)[grps]
+    }
+    zvals <- seq(zmin, zmax, length.out = npts)
+    if (nvar==1) {
+        vv <- vapply(zvals,dc,numeric(ngrps), USE.NAMES=FALSE)
+        vv <- t(vv)  ## n.z * n.id
+    } else {
+        nz <- length(zvals)
+        vv <- mapply(function(x,y) { dc(c(x,y)) },
+                         rep(zvals,nz),rep(zvals,each=nz))
+        ## result: nu*(nz^2) matrix; want nz*nz*nu array
+        ## *with* each nu slice being a nz^2 matrix for one group
+        ## I'm sure there's a clever way to do this with array/aperm,
+        ## but I just couldn't figure it out.  Instead,
+        ## (1) take each row of vv and make into a matrix, return as list
+        ##     of matrices
+        ## (2) bind matrices into an array
+        vv <- do.call(abind,c(alply(vv,1,matrix,nrow=nz),list(along=3)))
+    }
+    d0 <- dc(0) # because this is the last evaluation, the model is restored to its incoming state
+    sweep.margin <- if (nvar==1) 2 else 3 
+    devarr <- sweep(vv,sweep.margin,d0,"-")
+    ## computing deviance rather than signed sqrt, since we're not using it
+    ## anyway and it's harder to generalize to >1 dimension ...
+    rr <- list(zvals=zvals,
+               devarr=devarr)
+    ## signed square root
+    ## array(ifelse(zvals < 0, -1, 1), c(npts, length(u0))))
+    class(rr) <- "laplaceDiag"
+    rr
+}
+```
+
+Not shown: `melt` function for these objects that converts them from a list ($z$ value vector plus array of deviances) to a data frame ...
+```{r echo=FALSE}
+melt.laplaceDiag <- function(data,...) {
+    require(reshape2)
+    zvals <- data$zval
+    if (length(dim(data$devarr))==2) {
+        n.id <- ncol(data$devarr)
+        n.z <- nrow(data$devarr)
+        data.frame(id=gl(n.id,n.z),
+                   zvals,
+                   dev=c(data$devarr))
+    } else {
+        ## assume for now same z resolution for both dimensions
+        n.z <- dim(data$devarr)[2]
+        n.id <- dim(data$devarr)[3]
+        data.frame(id=gl(n.id,n.z^2),
+                   zval1=rep(zvals,n.z),  ## recycle
+                   zval2=rep(zvals,each=n.z), ## recycle
+                   dev=c(data$devarr))
+    }
+}
+
+dnorm2d <- function(x) {
+    dnorm(x)/sqrt(2*pi)  ## == exp(-x^2/2)/(2*pi)
+}
+
+dnorm2d2 <- function(z1,z2) {
+    exp(-(z1^2+z2^2)/2)/(2*pi)
+}
+
+plot.laplaceDiag <- function(x,scaled=FALSE,
+                             type=c("g","l"),
+                             aspect=0.6,
+                             xlab="z",ylab="density",
+                             ...) {
+    nvar <- length(dim(x$devarr))-1
+    mm <- melt(x)
+    mm <- transform(mm,
+                    y = if (nvar==1) {
+                        if (!scaled) {
+                            dnorm(sqrt(dev))
+                        } else {
+                            dnorm(sqrt(dev))/dnorm(zvals)
+                        }
+                    } else {
+                        if (!scaled) {
+                            dnorm2d(sqrt(dev))
+                        } else {
+                            dnorm2d(sqrt(dev))/dnorm2d2(zval1,zval2)
+                        }
+                    })
+    if (nvar==1) {
+        print(xyplot(y ~ zvals|id, data=mm,
+               type=type, aspect=aspect,
+               xlab=xlab,ylab=ylab,
+               ...,
+               panel=function(x,y,...){
+                   if (!scaled) {
+                       panel.lines(x, dnorm(x), lty=2)
+                   } else {
+                       panel.abline(h=1, lty=2)
+                   }
+                   panel.xyplot(x,y,...)
+               }))
+    } else {
+        print(contourplot(y ~ zval1*zval2|id, data=mm,
+                    type=type, aspect=aspect,
+                    labels=FALSE,
+                    xlab=xlab,ylab=ylab,
+                    scales=list(z=list(relation="free"))))
+    }
+    invisible(mm)
+}
+```
+
+Replicate glmer paper Figs 2/3:
+
+```{r fit1,cache=TRUE}
+m1 <- glmer(cbind(incidence, size-incidence) ~ period + (1|herd),
+                  cbpp, binomial)
+m1.z <- zeta(m1)
+```
+
+```{r fig2}
+plot(m1.z)
+```
+
+```{r fig3}
+plot(m1.z,scaled=TRUE)
+```
+
+Now we need a model with a vector-valued RE for an example.
+I tried simulating something  before, but that appears (??)
+
+```{r toenailfit,cache=TRUE}
+toenail <- read.csv("toenail.csv")
+m2 <- glmer(outcome~treatment+visit+(visit|patient),toenail,
+            family=binomial)
+```
+
+```{r toenailzeta,cache=TRUE}
+m2.z <- zeta(m2,grps=1:25)
+```
+
+This is a nice collection of mussels ...
+```{r}
+plot(m2.z)
+```
+
+Still trying to work out the analogue of Figure 3 (i.e.,
+a version where we scale by the bivariate normal).
+I think this actually *should* work, but this example
+is very badly behaved in the corner ...
+
+```{r ratios}
+zz <- m2.z$zvals
+mm <- 2*pi*dnorm2d(sqrt(m2.z$devarr[,,1]))
+m0 <- 2*pi*dnorm2d(sqrt(outer(zz^2,zz^2,"+")))
+par(mfrow=c(2,2))
+persp(zz,zz,mm,col="gray",main="conditional density")
+persp(zz,zz,m0,col="lightblue",main="bivariate normal")
+persp(zz,zz,mm/m0,col="pink",main="ratio")
+persp(zz,zz,log(mm/m0),col="lightgreen",main="log ratio")
+```
+
+```{r eval=FALSE}
+## also wrong?
+dnorm2dsq <- function(x) {
+    dnorm(sqrt(x))/sqrt(2*pi)  ## == exp(-x^2/2)/(2*pi)
+}
+
+contourplot(dnorm2dsq(dev)/dnorm2dsq(sqrt(zval1^2+zval2^2)) ~ zval1*zval2|id,
+             scales=list(z=list(relation="free")),
+             data=m2.zm,
+             labels=FALSE,
+             type=c("g","l"), aspect=0.6, layout=c(5,5),
+             xlab="z", ylab="density")
+```
+
+```{r echo=FALSE,eval=FALSE}
+## old testing stuff
+    ss <- subset(melt(m2.z),id=="1")
+    ss0 <- m2.z$devarr[,,1]
+    contour(ss0)
+    contour(matrix(exp(-ss$dev/2)/(2*pi),nrow=31))
+    contourplot(exp(-dev/2)/(2*pi)~zval1*zval2,data=ss)
+```
+
+
