@@ -127,39 +127,10 @@ mkReTrms <- function(bars, fr, reGenerators=NULL) {
 }
 
 ##' Experimental
-## parseReTrm <- function(bar, fr){
-##                                         # grouping factor
-##     ff <- getGrouping(bar, fr)
-##                                         # number of levels
-
-mkReTrms <- function(bars, fr) {
-  if (!length(bars))
-    stop("No random effects terms specified in formula",call.=FALSE)
-  stopifnot(is.list(bars), vapply(bars, is.language, NA),
-            inherits(fr, "data.frame"))
-  names(bars) <- barnames(bars)
-  term.names <- unlist(lapply(bars, function(x) paste(deparse(x),collapse=" ")))
-
-  ## auxiliary {named, for easier inspection}:
-  mkBlist <- function(x) {
-    frloc <- fr
-    ## convert grouping variables to factors as necessary
-    ## TODO: variables that are *not* in the data frame are
-    ##  not converted -- these could still break, e.g. if someone
-    ##  tries to use the : operator
-    for (i in all.vars(x[[3]])) {
-        if (!is.null(frloc[[i]])) frloc[[i]] <- factor(frloc[[i]])
-    }
-    if (is.null(ff <- tryCatch(eval(substitute(factor(fac),
-                                               list(fac = x[[3]])), frloc),
-                error=function(e) NULL)))
-        stop("couldn't evaluate grouping factor ",
-             deparse(x[[3]])," within model frame:",
-             " try adding grouping factor to data ",
-             "frame explicitly if possible",call.=FALSE)
-    if (all(is.na(ff)))
-        stop("Invalid grouping factor specification, ",
-             deparse(x[[3]]),call.=FALSE)
+parseReTrm <- function(bar, fr){
+                                        # grouping factor
+    ff <- getGrouping(bar, fr)
+                                        # number of levels
     nl <- length(levels(ff))
                                         # transposed model matrix
     tmm <- t(model.matrix(eval(substitute(~ lhs, list(lhs=bar[[2]]))), fr))
@@ -173,6 +144,36 @@ mkReTrms <- function(bars, fr) {
                                         # how many var/cov-parameters
     ntheta <- as.integer((nc * (nc+1))/2)    
 }    
+
+
+## mkReTrms <- function(bars, fr) {
+##   if (!length(bars))
+##     stop("No random effects terms specified in formula",call.=FALSE)
+##   stopifnot(is.list(bars), vapply(bars, is.language, NA),
+##             inherits(fr, "data.frame"))
+##   names(bars) <- barnames(bars)
+##   term.names <- unlist(lapply(bars, function(x) paste(deparse(x),collapse=" ")))
+
+##   ## auxiliary {named, for easier inspection}:
+##   mkBlist <- function(x) {
+##     frloc <- fr
+##     ## convert grouping variables to factors as necessary
+##     ## TODO: variables that are *not* in the data frame are
+##     ##  not converted -- these could still break, e.g. if someone
+##     ##  tries to use the : operator
+##     for (i in all.vars(x[[3]])) {
+##         if (!is.null(frloc[[i]])) frloc[[i]] <- factor(frloc[[i]])
+##     }
+##     if (is.null(ff <- tryCatch(eval(substitute(factor(fac),
+##                                                list(fac = x[[3]])), frloc),
+##                 error=function(e) NULL)))
+##         stop("couldn't evaluate grouping factor ",
+##              deparse(x[[3]])," within model frame:",
+##              " try adding grouping factor to data ",
+##              "frame explicitly if possible",call.=FALSE)
+##     if (all(is.na(ff)))
+##         stop("Invalid grouping factor specification, ",
+##              deparse(x[[3]]),call.=FALSE)
     
 
  
@@ -211,7 +212,7 @@ mkReTrm <- function(bar, fr) {
 	nl <- length(levels(ff))
 	
 	#initialize transposed design
-	Ztl <- lme4::mkZt0(ff, bar, fr)
+	Ztl <- mkZt0(ff, bar, fr)
 	Zt <- Ztl$Zt
 	nc <- Ztl$nc
 	cnms <- Ztl$cnms
