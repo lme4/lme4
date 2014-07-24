@@ -20,6 +20,14 @@ setClass("lmList",
 ## TODO: export
 setClass("lmList.confint", contains = "array")
 
+forceCopy <- function(x) {
+    if (is.numeric(x)) return(x+0)
+    ## FIXME: doesn't handle non-numeric fields yet ...
+    ## resp@family is the only non-numeric field other than Ptr
+    ## need equivalent force-copy no-op for other classes
+    x
+}
+
 ### FIXME
 ### shouldn't we have "merPred"  with two *sub* classes "merPredD" and "merPredS"
 ### for the dense and sparse X cases ?
@@ -105,12 +113,12 @@ merPredD <-
                         ## The following is a kludge to overcome problems when Zt is square
                         ## by making LamtUt rectangular
                         LtUt <- Lambdat %*% Ut
-                        if (nrow(LtUt) == ncol(LtUt))
-                            LtUt <- cbind2(LtUt,
-                                           sparseMatrix(i=integer(0),
-                                                        j=integer(0),
-                                                        x=numeric(0),
-                                                        dims=c(nrow(LtUt),1)))
+                        ## if (nrow(LtUt) == ncol(LtUt))
+                        ##     LtUt <- cbind2(LtUt,
+                        ##                    sparseMatrix(i=integer(0),
+                        ##                                 j=integer(0),
+                        ##                                 x=numeric(0),
+                        ##                                 dims=c(nrow(LtUt),1)))
                         LamtUt <<- LtUt
                         Xw <- list(...)$Xwts
                         Xwts <<- if (is.null(Xw)) rep.int(1, N) else as.numeric(Xw)
@@ -149,21 +157,26 @@ merPredD <-
                         .Call(merPredDbeta, ptr(), as.numeric(fac))
                     },
                     copy         = function(shallow = FALSE) {
-                        def <- .refClassDef
-                        selfEnv <- as.environment(.self)
-                        vEnv    <- new.env(parent=emptyenv())
-                        for (field in setdiff(names(def@fieldClasses), "Ptr")) {
-                            if (shallow)
-                                assign(field, get(field, envir = selfEnv), envir = vEnv)
-                            else {
-                                current <- get(field, envir = selfEnv)
-                                if (is(current, "envRefClass"))
-                                    current <- current$copy(FALSE)
-                                assign(field, current, envir = vEnv)
-                            }
-                        }
-                        do.call(new, c(as.list(vEnv), n=nrow(vEnv$V), Class=def))
-                    },
+                         def <- .refClassDef
+                         selfEnv <- as.environment(.self)
+                         vEnv    <- new.env(parent=emptyenv())
+                         
+                         for (field in setdiff(names(def@fieldClasses), "Ptr")) {
+                             if (shallow)
+                                 assign(field, get(field, envir = selfEnv), envir = vEnv)
+                             else {
+                                 current <- get(field, envir = selfEnv)
+                                 if (is(current, "envRefClass"))
+                                     current <- current$copy(FALSE)
+                                 ## hack (https://stat.ethz.ch/pipermail/r-devel/2014-March/068448.html)
+                                 ## ... to ensure real copying
+                                 ## forceCopy() does **NOT** work here, but +0 does
+                                 ## we can get away with this because all fields other than Ptr are numeric
+                                 assign(field, current+0, envir = vEnv)
+                             }
+                         }
+                         do.call(merPredD$new, c(as.list(vEnv), n=nrow(vEnv$V), Class=def))
+                     },
                     ldL2         = function() {
                         'twice the log determinant of the sparse Cholesky factor'
                         .Call(merPredDldL2, ptr())
@@ -189,8 +202,7 @@ merPredD <-
                                       LamtUt, RZX, Ut, Utr, V, VtV, Vtr,
                                       Xwts, Zt, beta0, delb, delu, u0)
                         .Call(merPredDupdateXwts, Ptr, Xwts)
-                        #.Call(merPredDupdateDecomp, Ptr) # on old flexLambda
-                        .Call(merPredDupdateDecomp, Ptr, NULL) # on master
+                        .Call(merPredDupdateDecomp, Ptr, NULL)
                     },
                     ptr          = function() {
                         'returns the external pointer, regenerating if necessary'
@@ -207,7 +219,10 @@ merPredD <-
                         'install a new phi'
                         phi[] <<- phi
                     },
-
+                    setZt      = function(ZtNonZero) {
+                        'install new values in Zt'
+                        .Call(merPredDsetZt, ptr(), as.numeric(ZtNonZero))
+                    },
                     setBeta0     = function(beta0) {
                         'install a new value of beta0'
                         .Call(merPredDsetBeta0, ptr(), as.numeric(beta0))
@@ -263,8 +278,7 @@ merPredD <-
                     updateXwts   = function(wts) {
                         'update Ut and V from Zt and X using X weights'
                         .Call(merPredDupdateXwts, ptr(), wts)
-                    }
-                    ) # don't know if this bracket is right??
+                    })
                 )
 merPredD$lock("Lambdat", "LamtUt", "RZX", "Ut", "Utr", "V", "VtV", "Vtr",
               "X", "Xwts", "Zt", "beta0", "delb", "delu", "u0")
@@ -378,7 +392,8 @@ lmResp <-                               # base class for response modules
                                 current <- get(field, envir = selfEnv)
                                 if (is(current, "envRefClass"))
                                     current <- current$copy(FALSE)
-                                assign(field, current, envir = vEnv)
+                                ## deep-copy hack +0
+                                assign(field, forceCopy(current), envir = vEnv)
                             }
                         }
                         do.call("new", c(as.list(vEnv), Class=def))

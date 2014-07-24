@@ -2,16 +2,16 @@ useDynLib(lme4,.registration=TRUE)
 
 ## base packages
 importFrom("graphics", plot)
+importFrom("grid", gpar,viewport)
 importFrom("splines", backSpline,interpSpline,periodicSpline)
 importFrom("methods", show)
 importFrom("stats",
            anova, coef, confint, deviance, df.residual, drop1,
-           extractAIC, family, fitted, formula, logLik,
+           extractAIC, family, fitted, formula, hatvalues, logLik,
            model.matrix, nobs, profile, residuals, simulate, terms,
            update, vcov, weights)
 ## Recommended packages
 importClassesFrom("Matrix", corMatrix, dgCMatrix, dpoMatrix, dCHMsimpl)
-importFrom("grid", gpar,viewport)
 importFrom("lattice",
            bwplot,
            current.panel.limits,
@@ -22,17 +22,19 @@ importFrom("lattice",
            panel.lines, panel.number, panel.points,
            panel.segments, panel.xyplot,
            prepanel.qqmathline, panel.qqmathline, panel.qqmath, qqmath,
-           splom, strip.default, trellis.par.get,
+           splom, strip.custom, strip.default, trellis.par.get,
            xyplot)
 importFrom("MASS", negative.binomial, theta.ml)
-importFrom("Matrix", drop0, rankMatrix, rBind, sparseMatrix)
 importFrom("nlme", fixef,ranef,VarCorr)
-importMethodsFrom("Matrix", "%*%",coerce,crossprod,diag,t,tcrossprod,solve,chol2inv)
+importFrom("Matrix", drop0, rankMatrix, sparseMatrix, cBind,rBind)
+importMethodsFrom("Matrix", coerce, "%*%",crossprod,tcrossprod,
+                  t,diag, chol2inv,solve, colSums,rowSums)
 ## other CRAN packages:
-import(RcppEigen)
-import(ape)
+## import(ape)
+
 importFrom("Rcpp", evalCpp)
 importFrom("minqa", bobyqa)
+importFrom("nloptr", nloptr)
 
 export(cs)
 export(d)
@@ -40,6 +42,7 @@ export(ar1d)
 
 export(bootMer)
 export(devcomp)
+export(dummy)
 export(expandDoubleVerts)
 export(findbars)
 export(fixef)
@@ -54,7 +57,7 @@ export(GHrule)
 export(glFormula)
 export(glmer.nb)
 export(glmer)
-export(glmerControl)
+export(glmerLaplaceHandle)
 export(glmFamily)
 export(glmResp)
 export(golden)
@@ -66,10 +69,12 @@ export(isNLMM)
 export(isREML)
 export(lFormula)
 export(lmer)
-export(lmerControl)
+export(lmerControl, glmerControl, nlmerControl,
+       .makeCC)
 export(lmerResp)
 export(lmList)
 export(lmResp)
+export(logProf)
 export(merPredD)
 export(merPhylo)
 export(mkGlmerDevfun)
@@ -82,9 +87,10 @@ export(mkVarCorr)
 export(mkZt)  ## FIXME: necessary for flexLambda stuff?
 export(Nelder_Mead)
 export(NelderMead)
+export(ngrps)
 export(nlformula)
 export(nlmer)
-export(nlmerControl)
+export(nloptwrap)
 export(nlsResp)
 export(nobars)
 export(optimizeGlmer)
@@ -93,6 +99,7 @@ export(ranef)
 export(refit)
 export(refitML)
 export(rePos)
+export(REMLcrit)
 export(sigma)
 export(.simulateFun)
 export(subbars)
@@ -121,6 +128,7 @@ S3method(confint,thpr)
 S3method(densityplot,thpr)
 S3method(deviance,merMod)
 S3method(df.residual,merMod)
+S3method(dim,merMod)
 S3method(dotplot,coef.mer)
 S3method(dotplot,ranef.mer)
 S3method(drop1,merMod)
@@ -135,6 +143,7 @@ S3method(formula,lmList)
 S3method(formula,merMod)
 ## S3method(fortify,merMod)# but don't hide:
 export(fortify.merMod)
+S3method(hatvalues,merMod)
 S3method(isGLMM,merMod)
 S3method(isLMM,merMod)
 S3method(isNLMM,merMod)
@@ -143,6 +152,8 @@ S3method(log,thpr)
 S3method(logLik,merMod)
 S3method(model.frame,merMod)
 S3method(model.matrix,merMod)
+S3method(ngrps,factor)
+S3method(ngrps,merMod)
 S3method(nobs,merMod)
 S3method(plot,coef.mer)
 S3method(plot,lmList.confint)

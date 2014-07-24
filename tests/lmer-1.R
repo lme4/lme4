@@ -1,6 +1,6 @@
 ### suppressPackageStartupMessages(...)  as we have an *.Rout.save to Rdiff against
 stopifnot(suppressPackageStartupMessages(require(lme4)))
-options(show.signif.stars = FALSE)
+options(show.signif.stars = FALSE, useFancyQuotes=FALSE)
 
 source(system.file("test-tools-1.R", package = "Matrix"))# identical3() etc
 all.EQ <- function(u,v, ...) all.equal.X(u, v, except = c("call", "frame"), ...)
@@ -167,12 +167,19 @@ dat <- within(data.frame(lagoon = factor(rep(1:4,each = 25)),
               y <- round(10*rnorm(100, m = 10*as.numeric(lagoon)))
           })
 
-try(reg <- lmer(y ~ habitat + (1|habitat*lagoon), data = dat) # did seg.fault
+tt <- suppressWarnings(try(reg <- lmer(y ~ habitat + (1|habitat*lagoon), data = dat)
+                                        )
+                                         # did seg.fault)
     ) # now gives error                 ^- should be ":"
+## suppress warning that uses different quoting conventions on
+## R-release vs. R-devel
+
 r1  <- lmer(y ~ 0+habitat + (1|habitat:lagoon), data = dat,
-            control=lmerControl(check.conv.hess="ignore")) # ok, but senseless
+            control=lmerControl(check.conv.hess="ignore",
+                                check.conv.grad="ignore")) # ok, but senseless
 r1b <- lmer(y ~ 0+habitat + (1|habitat), data = dat,
-            control=lmerControl(check.conv.hess="ignore")) # same model, clearly unidentifiable
+            control=lmerControl(check.conv.hess="ignore",
+                                check.conv.grad="ignore")) # same model, clearly unidentifiable
 ## "TODO" :  summary(r1)  should ideally warn the user
 stopifnot(all.equal(fixef(r1), fixef(r1b), tolerance= 1e-15),
           all.equal(ranef(r1), ranef(r1b), tolerance= 1e-15, check.attributes=FALSE))
@@ -266,10 +273,10 @@ m0 <- suppressWarnings(lmer(y ~ (x1 + x2)|ff, data = D))
 m1 <- suppressWarnings(lmer(y ~ x1 + x2|ff  , data = D))
 m2 <- suppressWarnings(lmer(y ~ x1 + (x2|ff), data = D))
 m3 <- suppressWarnings(lmer(y ~ (x2|ff) + x1, data = D))
-stopifnot(all.equal(ranef(m0), ranef(m1), tolerance = 1e-5),
+suppressWarnings(stopifnot(all.equal(ranef(m0), ranef(m1), tolerance = 1e-5),
           all.equal(ranef(m2), ranef(m3), tolerance = 1e-5),
           inherits(tryCatch(lmer(y ~ x2|ff + x1, data = D), error = function(e)e),
-                   "error"))
+                   "error")))
 
 showProc.time() #
 

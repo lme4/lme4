@@ -10,6 +10,9 @@ mypresid <- function(x) {
     (getME(x,"y") - mu) * sqrt(weights(x)) / sqrt(x@resp$family$variance(mu))
 }
 
+## should be equal (up to numerical error) to weights(.,type="working")
+workingWeights <- function(mod) mod@resp$weights*(mod@resp$muEta()^2)/mod@resp$variance()
+
 ##' Sum of weighted residuals, 4 ways; the last three are identical
 sumFun <- function(m) {
     wrss1 <- m@devcomp$cmp["wrss"]
@@ -27,11 +30,15 @@ set.seed(101)
 ## GAMMA
 g0 <-  glmer(y~x+(1|block),data=gSim(),family=Gamma)
 expect_true(all(rel.diff(sumFun(g0)) < 1e-13))
+expect_equal(weights(g0, type = "working"), workingWeights(g0),
+             tolerance = 1e-4)  ## FIXME:  why is such a high tolerance required?
 
 ## BERNOULLI
 g1 <-  glmer(y~x+(1|block),data=gSim(family=binomial(),nbinom=1),
              family=binomial)
 expect_true(all(rel.diff(sumFun(g1)) < 1e-13))
+expect_equal(weights(g1, type = "working"), workingWeights(g1),
+             tolerance = 1e-5)  ## FIXME:  why is such a high tolerance required?
 
 
 ## POISSON
@@ -41,11 +48,20 @@ g2W <- glmer(y ~ x + (1|block), data = d.P, family=poisson, weights = rep(2,n))
 expect_true(all(rel.diff(sumFun(g2 )) < 1e-13))
 expect_true(all(rel.diff(sumFun(g2W)) < 1e-13))
 ## correct
+expect_equal(weights(g2, type = "working"), workingWeights(g2),
+             tolerance = 1e-5)  ## FIXME:  why is such a high tolerance required?
+expect_equal(weights(g2W, type = "working"), workingWeights(g2W),
+             tolerance = 1e-5)  ## FIXME:  why is such a high tolerance required?
+
 
 ## non-Bernoulli BINOMIAL
 g3 <- glmer(y ~ x + (1|block), data= gSim(family=binomial(), nbinom=10),
             family=binomial)
 expect_true(all(rel.diff(sumFun(g3)) < 1e-13))
+expect_equal(weights(g3, type = "working"), workingWeights(g3),
+             tolerance = 1e-4)  ## FIXME:  why is such a high tolerance required?
+
+
 
 d.b.2 <- gSim(nperblk = 2, family=binomial())
 g.b.2 <- glmer(y ~ x + (1|block), data=d.b.2, family=binomial)

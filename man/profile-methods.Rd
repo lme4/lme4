@@ -3,17 +3,16 @@
 \docType{methods}
 \alias{as.data.frame.thpr}
 \alias{log.thpr}
+\alias{logProf}
 \alias{profile-methods}
 \alias{profile.merMod}
 \description{
   Methods for \code{\link{profile}}() of [ng]\code{\link{lmer}} fitted
   models.
 
-  The \code{log()} method transforms a lmer profile
-  to the scale of the logarithm of the standard deviation of the random
-  effects, i.e. it returns a profile with all the .sigNN parameters
-  replaced by .lsigNN.  The forward and backward splines for these
-  parameters are recalculated.
+  The \code{log()} method and the more flexible \code{logProf()}
+  utility transform a lmer profile in one where logarithms of standard deviations
+  are used, see Details.
 }
 \usage{
 \method{profile}{merMod}(fitted, which = 1:nptot, alphamax = 0.01,
@@ -21,7 +20,9 @@
         maxmult = 10, startmethod = "prev", optimizer = "bobyqa",
 	signames = TRUE, ...)
 \method{as.data.frame}{thpr} (x, ...)
-\method{log}{thpr} (x, base = exp(1))
+\method{log}{thpr}(x, base = exp(1))
+logProf(x, base = exp(1), ranef = TRUE,
+           sigIni = if(ranef) "sig" else "sigma")
 }
 \arguments{
   \item{fitted}{a fitted model, e.g., the result of \code{\link{lmer}(..)}.}
@@ -60,37 +61,55 @@
   \item{signames}{logical indicating if abbreviated names of the form
     \code{.sigNN} should be used; otherwise, names are more meaningful
     (but longer) of the form \code{(sd|cor)_(effects)|(group)}.  Note
-    that some code for profile transformations (e.g.,
+    that some code for profile transformations (e.g., \code{log()} or
     \code{\link{varianceProf}}) depends on \code{signames==TRUE}.}
   \item{\dots}{potential further arguments for various methods.}
   \item{x}{an object of class \code{thpr} (i.e., output of
     \code{profile})}
   \item{base}{the base of the logarithm.  Defaults to natural
     logarithms.}
+  \item{ranef}{logical indicating if the sigmas of the random effects
+    should be \code{log()} transformed as well.  If false, only
+    \eqn{\sigma} (standard deviation of errors) is transformed.}
+  \item{sigIni}{character string specifying the initial part of the
+    sigma parameters to be log transformed.}
 }
 \value{
   \code{profile(<merMod>)} returns
   an object of S3 class \code{"thpr"},% = th[eoretical]?? pr[ofile]
   \code{\link{data.frame}}-like.  Methods for such a profile object
-  are notably \code{\link{confint}()}, the three plots methods
+  are notably \code{\link{confint}()} and the three plotting methods
+  (which require the \pkg{lattice} package),
   \code{\link[=xyplot.thpr]{xyplot}}, \code{densityplot}, and
   \code{splom}.
 
   Further, \code{\link{log}()} (see above) and \code{\link{as.data.frame}()}.
 }
 \details{
+  The \code{\link{log}} method and the more flexible \code{logProf()}
+  function transform the profile into one where \eqn{\log(\sigma)} is
+  used instead of \eqn{\sigma}.
+  By default all sigmas, including the standard deviations of the random
+  effects are transformed, i.e., it returns a profile with all the .sigNN
+  parameters replaced by .lsigNN.  If \code{ranef} is false, only
+  \code{".sigma"}, the standard deviation of the errors, is transformed
+  as it should never be zero, whereas a random effect .sigNN is zero,
+  when the corresponding random effect is entirely absent.
+  \cr
+  The forward and backward splines for the log-transformed parameters
+  are recalculated.
+
   Methods for function \code{\link{profile}} (package
-  \pkg{stats}), here for profiling (fitted) mixed effect
-  models.
+  \pkg{stats}), here for profiling (fitted) mixed effect models.
 
 %% FIXME: ../inst/doc/profiling.txt  contains  motivation and more by
 %% Doug Bates. Should add here (partly), or "link to there".
 }
-\section{Methods}{
-  \describe{ \item{signature(fitted = \"merMod\")}{ ...  }
-  }
-}
 \seealso{
+  The plotting methods \code{\link[=xyplot.thpr]{xyplot}} etc, for class
+  \code{"thpr"}; \code{\link{varianceProf}} for transformation (from
+  st.dev.) to variance scale.
+
   For (more expensive) alternative confidence intervals:
   \code{\link{bootMer}}.
 }
@@ -115,14 +134,22 @@ stopifnot(all.equal(CIpr,
 require(lattice)
 xyplot(tpr)
 xyplot(tpr, absVal=TRUE) # easier to see conf.int.s (and check symmetry)
+xyplot(tpr, conf = c(0.95, 0.99), # (instead of all five 50, 80,...)
+       main = "95\% and 99\% profile() intervals")
+xyplot(logProf(tpr, ranef=FALSE),
+       main = expression("lmer profile()s"~~ log(sigma)*" (only log)"))
+
 densityplot(tpr, main="densityplot( profile(lmer(..)) )")
+densityplot(varianceProf(tpr), main=" varianceProf( profile(lmer(..)) )")
 splom(tpr)
+splom(logProf(tpr, ranef=FALSE))
 doMore <- lme4:::testLevel() > 1 %% even more --> ../tests/profile.R
 if(doMore) { ## not typically, for time constraint reasons
  ## Batch and residual variance only
  system.time(tpr2 <- profile(fm01ML, which=1:2, optimizer="Nelder_Mead"))
  print( xyplot(tpr2) )
  print( xyplot(log(tpr2)) )# log(sigma) is better
+ print( xyplot(logProf(tpr2, ranef=FALSE)) )
 
  ## GLMM example
  gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),

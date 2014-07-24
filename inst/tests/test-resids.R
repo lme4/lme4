@@ -12,6 +12,8 @@ test_that("lmer", {
     expect_equal(resid(fm1,"response"),resid(fm1,type="working"))
     expect_equal(resid(fm1,"deviance"),resid(fm1,type="pearson"))
     expect_equal(resid(fm1),resid(fm1,type="pearson"))  ## because no weights given
+    expect_error(residuals(fm1,"partial"),
+                 "partial residuals are not implemented yet")
     sleepstudyNA <- sleepstudy
     na_ind <- c(10,50)
     sleepstudyNA[na_ind,"Days"] <- NA
@@ -39,6 +41,10 @@ test_that("glmer", {
     expect_equal(range(resid(gm1.old, "working")),  c(-1.241733,5.410587),tolerance=1e-5)
     expect_equal(range(resid(gm1, "working")),    c(-1.24173431447365, 5.41064465283686))
     expect_equal(resid(gm1),resid(gm1,scaled=TRUE))  ## since sigma==1
+    
+    expect_error(resid(gm1,"partial"),
+                 "partial residuals are not implemented yet")
+
     cbppNA <- cbpp
     na_ind <- c(10,50)
     cbppNA[na_ind,"period"] <- NA

@@ -18,7 +18,7 @@ bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
   \item{nsim}{number of simulations, positive integer; the
     bootstrap \eqn{B} (or \eqn{R}).}
   \item{seed}{optional argument to \code{\link{set.seed}}.}
-  \item{use.u}{logical, indicating whether the spherized
+  \item{use.u}{logical, indicating whether the spherical
     random effects should be simulated / bootstrapped as
     well.  If \code{TRUE}, they are not changed, and all
     inference is conditional on these values. If
@@ -70,7 +70,7 @@ bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
   \itemize{
     \item If \code{use.u} is \code{FALSE} and \code{type} is
     \code{"parametric"}, each simulation generates new values of both
-    the \dQuote{\emph{spherized}} random effects \eqn{u} and the
+    the \dQuote{\emph{spherical}} random effects \eqn{u} and the
     i.i.d. errors \eqn{\epsilon}, using \code{\link{rnorm}()}
     with parameters corresponding to the fitted model \code{x}.
 

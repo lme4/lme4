@@ -1,11 +1,13 @@
 
-R Under development (unstable) (2014-01-29 r64898) -- "Unsuffered Consequences"
+R Under development (unstable) (2014-06-17 r65965) -- "Unsuffered Consequences"
 Copyright (C) 2014 The R Foundation for Statistical Computing
-Platform: x86_64-apple-darwin10.8.0 (64-bit)
+Platform: i686-pc-linux-gnu (32-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -17,9 +19,10 @@ Type 'q()' to quit R.
 
 > ### suppressPackageStartupMessages(...)  as we have an *.Rout.save to Rdiff against
 > stopifnot(suppressPackageStartupMessages(require(lme4)))
-> options(show.signif.stars = FALSE)
+> options(show.signif.stars = FALSE, useFancyQuotes=FALSE)
 > 
 > source(system.file("test-tools-1.R", package = "Matrix"))# identical3() etc
+Loading required package: tools
 > all.EQ <- function(u,v, ...) all.equal.X(u, v, except = c("call", "frame"), ...)
 > S4_2list <- function(obj) {   # no longer used
 +    sn <- slotNames(obj)
@@ -37,22 +40,22 @@ Type 'q()' to quit R.
 > oldOpts <- options(digits=2)
 > (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 Linear mixed model fit by REML ['lmerMod']
-Formula: Reaction ~ Days + (Days | Subject) 
-   Data: sleepstudy 
-REML criterion at convergence: 1744 
+Formula: Reaction ~ Days + (Days | Subject)
+   Data: sleepstudy
+REML criterion at convergence: 1744
 Random effects:
  Groups   Name        Std.Dev. Corr
  Subject  (Intercept) 24.74        
           Days         5.92    0.07
  Residual             25.59        
-Number of obs: 180, groups: Subject, 18
+Number of obs: 180, groups:  Subject, 18
 Fixed Effects:
 (Intercept)         Days  
       251.4         10.5  
 > (fm1a <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, REML = FALSE))
-Linear mixed model fit by maximum likelihood ['lmerMod']
-Formula: Reaction ~ Days + (Days | Subject) 
-   Data: sleepstudy 
+Linear mixed model fit by maximum likelihood  ['lmerMod']
+Formula: Reaction ~ Days + (Days | Subject)
+   Data: sleepstudy
      AIC      BIC   logLik deviance df.resid 
     1764     1783     -876     1752      174 
 Random effects:
@@ -60,21 +63,21 @@ Random effects:
  Subject  (Intercept) 23.78        
           Days         5.72    0.08
  Residual             25.59        
-Number of obs: 180, groups: Subject, 18
+Number of obs: 180, groups:  Subject, 18
 Fixed Effects:
 (Intercept)         Days  
       251.4         10.5  
 > (fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
 Linear mixed model fit by REML ['lmerMod']
-Formula: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject) 
-   Data: sleepstudy 
-REML criterion at convergence: 1744 
+Formula: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject)
+   Data: sleepstudy
+REML criterion at convergence: 1744
 Random effects:
  Groups    Name        Std.Dev.
  Subject   (Intercept) 25.05   
  Subject.1 Days         5.99   
  Residual              25.57   
-Number of obs: 180, groups: Subject, 18
+Number of obs: 180, groups:  Subject, 18
 Fixed Effects:
 (Intercept)         Days  
       251.4         10.5  
@@ -127,14 +130,14 @@ fm1  6 1764 1783   -876     1752  0.06      1        0.8
 > 
 > (fm3 <- lmer(Yield ~ 1|Batch, Dyestuff2))
 Linear mixed model fit by REML ['lmerMod']
-Formula: Yield ~ 1 | Batch 
-   Data: Dyestuff2 
-REML criterion at convergence: 162 
+Formula: Yield ~ 1 | Batch
+   Data: Dyestuff2
+REML criterion at convergence: 162
 Random effects:
  Groups   Name        Std.Dev.
  Batch    (Intercept) 0.00    
  Residual             3.72    
-Number of obs: 30, groups: Batch, 6
+Number of obs: 30, groups:  Batch, 6
 Fixed Effects:
 (Intercept)  
        5.67  
@@ -143,34 +146,34 @@ Fixed Effects:
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.4 0.005 0.4 
+Time elapsed:  0.4 0.02 0.43 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 Linear mixed model fit by REML ['lmerMod']
-Formula: Reaction ~ Days + (Days | Subject) 
-   Data: sleepstudy 
-REML criterion at convergence: 1744 
+Formula: Reaction ~ Days + (Days | Subject)
+   Data: sleepstudy
+REML criterion at convergence: 1744
 Random effects:
  Groups   Name        Std.Dev. Corr
  Subject  (Intercept) 24.74        
           Days         5.92    0.07
  Residual             25.59        
-Number of obs: 180, groups: Subject, 18
+Number of obs: 180, groups:  Subject, 18
 Fixed Effects:
 (Intercept)         Days  
       251.4         10.5  
 > (fm.1 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
 Linear mixed model fit by REML ['lmerMod']
-Formula: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject) 
-   Data: sleepstudy 
-REML criterion at convergence: 1744 
+Formula: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject)
+   Data: sleepstudy
+REML criterion at convergence: 1744
 Random effects:
  Groups    Name        Std.Dev.
  Subject   (Intercept) 25.05   
  Subject.1 Days         5.99   
  Residual              25.57   
-Number of obs: 180, groups: Subject, 18
+Number of obs: 180, groups:  Subject, 18
 Fixed Effects:
 (Intercept)         Days  
       251.4         10.5  
@@ -183,15 +186,13 @@ Fixed Effects:
 > 
 > fmX1s <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
 Warning messages:
-1: In checkArgs("lmer", sparseX = TRUE) :
-  sparseX = TRUE has no effect at present
-2: In checkArgs("lmer", sparseX = TRUE) :
-  extra argument(s) 'sparseX' disregarded
+1: sparseX = TRUE has no effect at present 
+2: extra argument(s) 'sparseX' disregarded 
 > #fmX2s <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
 > options(oldOpts)  ## restore digits
 > 
 > showProc.time() #
-Time elapsed:  0.124 0.001 0.125 
+Time elapsed:  0.172 0.004 0.173 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -271,9 +272,9 @@ attr(,"class")
 > ## check show( <"summary.mer"> ):
 > (sf1 <- summary(fit.1)) # --> now looks as for fit.1
 Linear mixed model fit by REML ['lmerMod']
-Formula: y ~ 1 + (1 | group.id) 
+Formula: y ~ 1 + (1 | group.id)
 
-REML criterion at convergence: 73.4 
+REML criterion at convergence: 73.4
 
 Scaled residuals: 
     Min      1Q  Median      3Q     Max 
@@ -283,7 +284,7 @@ Random effects:
  Groups   Name        Variance Std.Dev.
  group.id (Intercept) 4.5579   2.1349  
  Residual             0.6678   0.8172  
-Number of obs: 20, groups: group.id, 10
+Number of obs: 20, groups:  group.id, 10
 
 Fixed effects:
             Estimate Std. Error t value
@@ -320,7 +321,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.278 0.004 0.284 
+Time elapsed:  0.432 0 0.433 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -330,16 +331,20 @@ Time elapsed:  0.278 0.004 0.284
 +               y <- round(10*rnorm(100, m = 10*as.numeric(lagoon)))
 +           })
 > 
-> try(reg <- lmer(y ~ habitat + (1|habitat*lagoon), data = dat) # did seg.fault
+> tt <- suppressWarnings(try(reg <- lmer(y ~ habitat + (1|habitat*lagoon), data = dat)
++                                         )
++                                          # did seg.fault)
 +     ) # now gives error                 ^- should be ":"
-Error in FUN(X[[1L]], ...) : 
-  Invalid grouping factor specification, habitat * lagoon
-In addition: Warning message:
-In Ops.factor(habitat, lagoon) : * not meaningful for factors
+Error : Invalid grouping factor specification, habitat * lagoon
+> ## suppress warning that uses different quoting conventions on
+> ## R-release vs. R-devel
+> 
 > r1  <- lmer(y ~ 0+habitat + (1|habitat:lagoon), data = dat,
-+             control=lmerControl(check.conv.hess="ignore")) # ok, but senseless
++             control=lmerControl(check.conv.hess="ignore",
++                                 check.conv.grad="ignore")) # ok, but senseless
 > r1b <- lmer(y ~ 0+habitat + (1|habitat), data = dat,
-+             control=lmerControl(check.conv.hess="ignore")) # same model, clearly unidentifiable
++             control=lmerControl(check.conv.hess="ignore",
++                                 check.conv.grad="ignore")) # same model, clearly unidentifiable
 > ## "TODO" :  summary(r1)  should ideally warn the user
 > stopifnot(all.equal(fixef(r1), fixef(r1b), tolerance= 1e-15),
 +           all.equal(ranef(r1), ranef(r1b), tolerance= 1e-15, check.attributes=FALSE))
@@ -361,10 +366,8 @@ In Ops.factor(habitat, lagoon) : * not meaningful for factors
 At return
  15:     709.74472:  0.00000
 Warning messages:
-1: In checkArgs("lmer", sparseX = TRUE) :
-  sparseX = TRUE has no effect at present
-2: In checkArgs("lmer", sparseX = TRUE) :
-  extra argument(s) 'sparseX' disregarded
+1: sparseX = TRUE has no effect at present 
+2: extra argument(s) 'sparseX' disregarded 
 > 
 > ## the summary() components we do want to compare 'dense X' vs 'sparse X':
 > nmsSumm <- c("methTitle", "devcomp", "logLik", "ngrps", "coefficients",
@@ -380,14 +383,14 @@ Warning messages:
 +           , TRUE)
 > r2.
 Linear mixed model fit by REML ['lmerMod']
-Formula: y ~ 0 + lagoon + (1 | habitat) 
-   Data: dat 
-REML criterion at convergence: 709.7447 
+Formula: y ~ 0 + lagoon + (1 | habitat)
+   Data: dat
+REML criterion at convergence: 709.7447
 Random effects:
  Groups   Name        Std.Dev.
  habitat  (Intercept) 0.000   
  Residual             9.121   
-Number of obs: 100, groups: habitat, 20
+Number of obs: 100, groups:  habitat, 20
 Fixed Effects:
 lagoon1  lagoon2  lagoon3  lagoon4  
   101.7    200.3    301.8    400.8  
@@ -440,7 +443,7 @@ lagoon1  lagoon2  lagoon3  lagoon4
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.174 0.002 0.176 
+Time elapsed:  0.204 0.004 0.21 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -453,15 +456,13 @@ Time elapsed:  0.174 0.002 0.176
 > m1 <- suppressWarnings(lmer(y ~ x1 + x2|ff  , data = D))
 > m2 <- suppressWarnings(lmer(y ~ x1 + (x2|ff), data = D))
 > m3 <- suppressWarnings(lmer(y ~ (x2|ff) + x1, data = D))
-> stopifnot(all.equal(ranef(m0), ranef(m1), tolerance = 1e-5),
+> suppressWarnings(stopifnot(all.equal(ranef(m0), ranef(m1), tolerance = 1e-5),
 +           all.equal(ranef(m2), ranef(m3), tolerance = 1e-5),
 +           inherits(tryCatch(lmer(y ~ x2|ff + x1, data = D), error = function(e)e),
-+                    "error"))
-Warning message:
-In Ops.factor(ff, x1) : + not meaningful for factors
++                    "error")))
 > 
 > showProc.time() #
-Time elapsed:  0.543 0.001 0.544 
+Time elapsed:  0.72 0 0.723 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -485,28 +486,29 @@ Time elapsed:  0.543 0.001 0.544
 > d$f[3:4] <- NA
 > lmer(y~(1|f),data=d)
 Linear mixed model fit by REML ['lmerMod']
-Formula: y ~ (1 | f) 
-   Data: d 
-REML criterion at convergence: 316.1615 
+Formula: y ~ (1 | f)
+   Data: d
+REML criterion at convergence: 316.1615
 Random effects:
  Groups   Name        Std.Dev.
  f        (Intercept) 18.395  
  Residual              3.024  
-Number of obs: 57, groups: f, 6
+Number of obs: 57, groups:  f, 6
 Fixed Effects:
 (Intercept)  
       30.68  
 > glmer(y~(1|f),data=d,family=poisson)
-Generalized linear mixed model fit by maximum likelihood ['glmerMod']
- Family: poisson ( log )
-Formula: y ~ (1 | f) 
-   Data: d 
+Generalized linear mixed model fit by maximum likelihood (Laplace
+  Approximation) [glmerMod]
+ Family: poisson  ( log )
+Formula: y ~ (1 | f)
+   Data: d
       AIC       BIC    logLik  deviance  df.resid 
  354.3560  358.4421 -175.1780  350.3560        55 
 Random effects:
  Groups Name        Std.Dev.
  f      (Intercept) 0.7115  
-Number of obs: 57, groups: f, 6
+Number of obs: 57, groups:  f, 6
 Fixed Effects:
 (Intercept)  
       3.217  
@@ -535,4 +537,4 @@ Fixed Effects:
 > 
 > proc.time()
    user  system elapsed 
-  4.001   0.078   4.072 
+  5.088   0.140   5.207 

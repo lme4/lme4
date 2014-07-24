@@ -187,6 +187,15 @@ namespace glm {
     };
 
 
+    template<typename T>
+    struct inverse : public std::unary_function<T, T> {
+	const T operator() (const T& x) const {
+	  return T(std::max(std::numeric_limits<T>::epsilon(),
+			    pow(double(x), -1)));
+	}
+    };
+
+
     //@{
     double                binomialDist::aic     (const ArrayXd& y, const ArrayXd& n, const ArrayXd& mu,
 						 const ArrayXd& wt, double dev) const {
@@ -239,8 +248,10 @@ namespace glm {
 		double r;
 		r = -2. * wt[i] * (log(y[i]/mu[i])- (y[i] - mu[i])/mu[i]);
 		if (r!=r) {   // detect 'nan'
+		  ArrayXd eta0 = mu.inverse();
 		    Rcpp::Rcout << "(bG) " << "nan @ pos " << i << ": y= " << y[i] 
 				<< "; mu=" << mu[i] 
+				<< "; mu inv=" << eta0[i]
 				<< "; wt=" << wt[i] 
 				<< "; y/mu=" << y[i]/mu[i]
 				<< "; log(y/mu) =" << log(y[i]/mu[i])
@@ -338,8 +349,10 @@ namespace glm {
     //@}
 
     //@{
-    const ArrayXd  inverseLink::linkFun(const ArrayXd&  mu) const {return  mu.inverse();}
+    const ArrayXd  inverseLink::linkFun(const ArrayXd&  mu) const {return mu.inverse();}
+  //const ArrayXd  inverseLink::linkInv(const ArrayXd& eta) const {return eta.unaryExpr(inverse<double>());}
     const ArrayXd  inverseLink::linkInv(const ArrayXd& eta) const {return eta.inverse();}
+  // const ArrayXd  inverseLink::muEta(  const ArrayXd& eta) const {return -(eta.unaryExpr(inverse<double>()).square());}
     const ArrayXd  inverseLink::muEta(  const ArrayXd& eta) const {return -(eta.inverse().square());}
     //@}
 

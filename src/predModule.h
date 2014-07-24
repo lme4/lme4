@@ -10,6 +10,7 @@
 #define LME4_PREDMODULE_H
 
 #include <RcppEigen.h>
+#include "lme4CholmodDecomposition.h"
 
 namespace lme4 {
 
@@ -27,7 +28,7 @@ namespace lme4 {
 	typedef MatrixXd::Scalar                          Scalar;
 	typedef MatrixXd::Index                           Index;
 	typedef Eigen::SparseMatrix<double>               SpMatrixd;
-	typedef Eigen::CholmodDecomposition<SpMatrixd>    ChmDecomp;
+	typedef lme4CholmodDecomposition<SpMatrixd>	  ChmDecomp;
 	typedef Eigen::MappedSparseMatrix<double>         MSpMatrixd;
     protected:
 	MMap          d_X, d_RZX, d_V, d_VtV;
@@ -88,6 +89,8 @@ namespace lme4 {
 	void             setBeta0(const VectorXd&);
 	void              setDelb(const VectorXd&);
 	void              setDelu(const VectorXd&);
+	void             setTheta(const VectorXd&);
+	void                setZt(const VectorXd&);
 	void                setU0(const VectorXd&);
 	void         updateDecomp();
 	void         updateDecomp(const MatrixXd*);

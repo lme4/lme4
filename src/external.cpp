@@ -537,6 +537,10 @@ extern "C" {
         void *ptr = R_ExternalPtrAddr(Ptr);
         return ::Rf_ScalarLogical(ptr == (void*)NULL);
     }
+  
+    void setNullExtPtr(SEXP Ptr) {
+        return R_ClearExternalPtr(Ptr);
+    }
 
     // linear model response (also the base class for other response classes)
 
@@ -670,6 +674,13 @@ extern "C" {
         BEGIN_RCPP;
         XPtr<merPredD>(ptr)->updateLambda(as<MVec>(Lambdax));
         return Lambdax;
+        END_RCPP;
+    }
+
+    SEXP merPredDsetZt(SEXP ptr, SEXP ZtNonZero) {
+        BEGIN_RCPP;
+        XPtr<merPredD>(ptr)->setZt(as<MVec>(ZtNonZero));
+        return ZtNonZero;
         END_RCPP;
     }
 
@@ -1047,6 +1058,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(golden_xpos,        1),
 
     CALLDEF(isNullExtPtr,       1),
+    CALLDEF(setNullExtPtr,      1),
 
     CALLDEF(lm_Create,          7), // generate external pointer
 
@@ -1068,6 +1080,9 @@ static R_CallMethodDef CallEntries[] = {
 
     CALLDEF(merPredDCreate,    15), // generate external pointer
     CALLDEF(merPhyloCreate,    4), // generate external pointer
+
+    //    CALLDEF(merPredDsetTheta,   2), // setters
+    CALLDEF(merPredDsetZt,      2), 
 
     CALLDEF(merPredDsetBeta0,   2), 
 

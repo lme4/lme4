@@ -3,6 +3,8 @@
 \alias{glmerControl}
 \alias{lmerControl}
 \alias{nlmerControl}
+\alias{convergence}
+\alias{.makeCC}
 \description{
   Construct control structures for mixed model fitting.  All arguments
   have defaults, and can be grouped into
@@ -25,18 +27,20 @@ lmerControl(optimizer = "bobyqa",% was "Nelder_Mead" till Dec.2013
     use.last.params=FALSE,
     sparseX = FALSE,
     ## input checking options
-    check.nobs.vs.rankZ = "warningSmall",
+    check.nobs.vs.rankZ = "ignore", 
     check.nobs.vs.nlev = "stop",
     check.nlev.gtreq.5 = "ignore",
     check.nlev.gtr.1 = "stop",
     check.nobs.vs.nRE="stop",
-    check.rankX = c("message+drop.cols", "silent.drop.cols", "warn+drop.cols", 
+    check.rankX = c("message+drop.cols", "silent.drop.cols", "warn+drop.cols",
                     "stop.deficient", "ignore"),
+    check.scaleX = c("warning","stop","silent.rescale",
+                              "message+rescale","warn+rescale","ignore"),
     check.formula.LHS = "stop",
     ## convergence checking options
-    check.conv.grad="warning",
-    check.conv.singular="ignore",
-    check.conv.hess="warning",
+    check.conv.grad     = .makeCC("warning", tol = 2e-3, relTol = NULL),
+    check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
+    check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
     ## optimizer args
     optCtrl = list())
 
@@ -49,23 +53,26 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     tolPwrss=1e-7,
     compDev=TRUE,
     ## input checking options
-    check.nobs.vs.rankZ = "warningSmall",
+    check.nobs.vs.rankZ = "ignore",
     check.nobs.vs.nlev = "stop",
     check.nlev.gtreq.5 = "ignore",
     check.nlev.gtr.1 = "stop",
     check.nobs.vs.nRE="stop",
-    ## convergence checking options
-    check.conv.grad="warning",
-    check.conv.singular="ignore",
-    check.conv.hess="warning",
-    check.rankX = c("message+drop.cols", "silent.drop.cols", "warn+drop.cols", 
+    check.rankX = c("message+drop.cols", "silent.drop.cols", "warn+drop.cols",
                     "stop.deficient", "ignore"),
+    check.scaleX  = "warning",
     check.formula.LHS = "stop",
+    ## convergence checking options
+    check.conv.grad     = .makeCC("warning", tol = 1e-3, relTol = NULL),
+    check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
+    check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
     ## optimizer args
     optCtrl = list())
 
 nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
              optCtrl = list())
+
+.makeCC(action, tol, relTol, \dots)
 }
 \arguments{
   \item{optimizer}{character - name of optimizing
@@ -127,16 +134,14 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     of the parameter estimates?}
   \item{check.nlev.gtreq.5}{character - rules for
     checking whether all random effects have >= 5 levels.
-    "ignore": skip the test. "warning": warn if test fails.
-    "stop": throw an error if test fails.}
+    See \code{action}.}
   \item{check.nlev.gtr.1}{character - rules for checking
-    whether all random effects have > 1 level. As for
-    \code{check.nlevel.gtr.5}.}
+    whether all random effects have > 1 level. See \code{action}.}
   \item{check.nobs.vs.rankZ}{character - rules for
     checking whether the number of observations is greater
     than (or greater than or equal to) the rank of the random
     effects design matrix (Z), usually necessary for
-    identifiable variances.  As for \code{check.nlevel.gtreq.5}, with
+    identifiable variances.  As for \code{action}, with
     the addition of \code{"warningSmall"} and \code{"stopSmall"}, which run
     the test only if the dimensions of \code{Z} are < 1e6.
     \code{nobs > rank(Z)} will be tested for LMMs and GLMMs with
@@ -149,7 +154,7 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
   \item{check.nobs.vs.nlev}{ character - rules for checking whether the
     number of observations is less than (or less than or equal to) the
     number of levels of every grouping factor, usually necessary for
-    identifiable variances.  As for \code{check.nlevel.gtreq.5}.
+    identifiable variances.  As for \code{action}.
     \code{nobs<nlevels} will be tested for LMMs and GLMMs with estimated
     scale parameters; \code{nobs<=nlevels} will be tested for GLMMs with
     fixed scale parameter.}
@@ -158,16 +163,18 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     than (or greater than or equal to) the number of random-effects
     levels for each term, usually necessary for identifiable variances.
     As for \code{check.nobs.vs.nlev}.}
-  \item{check.conv.grad}{character - rules for
-    checking the gradient of the deviance function for convergence.}
-  \item{check.conv.singular}{character - rules for
-    checking for a singular fit, i.e. one where some parameters are on
-    the boundary of the feasible space (for example, random effects
-    variances equal to 0 or correlations between random effects
-    equal to +/- 1.0)}
-  \item{check.conv.hess}{character - rules for
-    checking the Hessian of the deviance function for convergence.}
-  \item{check.rankX}{character - specifying if \code{\link[Matrix]{rankMatrix}(X)} 
+  \item{check.conv.grad}{rules for checking the gradient of the deviance
+    function for convergence.  A list as returned
+    by \code{.makeCC}, or a character string with only the action.}
+  \item{check.conv.singular}{rules for checking for a singular fit,
+    i.e. one where some parameters are on the boundary of the feasible
+    space (for example, random effects variances equal to 0 or
+    correlations between random effects equal to +/- 1.0);
+    as for \code{check.conv.grad} above.}
+  \item{check.conv.hess}{rules for checking the Hessian of the deviance
+    function for convergence.; as for \code{check.conv.grad}
+    above.}
+  \item{check.rankX}{character - specifying if \code{\link[Matrix]{rankMatrix}(X)}
     should be compared with \code{ncol(X)} and if columns from the design
     matrix should possibly be dropped to ensure that it has full rank.
     Sometimes needed to make the model identifiable.  The options can be
@@ -176,6 +183,9 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     smaller than the number of columns where \code{"ignore"} does no
     rank computation, and will typically lead to less easily
     understandable errors, later.}
+  \item{check.scaleX}{character - check for problematic scaling of
+    columns of fixed-effect model matrix, e.g. parameters measured on
+    very different scales.}
   \item{check.formula.LHS}{ check whether specified formula has
     a left-hand side. Primarily for internal use within
     \code{simulate.merMod};
@@ -190,9 +200,16 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     will try before giving up - in contrast to
     \code{\link{optim}} and \code{optimx}-wrapped optimizers,
     which use \code{maxit}.}
+  \item{action}{character - generic choices for the severity level
+    of any test. "ignore": skip the test. "warning": warn if test fails.
+    "stop": throw an error if test fails.}
+  \item{tol}{numeric - tolerance for check }
+  \item{relTol}{numeric - tolerance for checking relative variation}
+  \item{\dots}{other elements to include in check specification}
 }
 \value{
-  a list (inheriting from class \code{"merControl"}) containing
+  The \code{*Control} functions return a list (inheriting from class
+  \code{"merControl"}) containing
   \enumerate{
     \item general control parameters, such as \code{optimizer}, \code{restart_edge};
     \item (currently not for \code{nlmerControl}:)
@@ -201,10 +218,17 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     \item parameters to be passed to the optimizer, i.e., the \code{optCtrl}
     list, which may contain \code{maxiter}.
   }
+
+  \code{.makeCC} returns a list containing the check specification
+  (action, tolerance, and optionally relative tolerance).
+  
 }
 \details{
-  Note that (only!) the \dQuote{checking options}, i.e., all those starting with
-  \code{"check."}, may also be set via \code{\link{options}}.
+  Note that (only!) the pre-fitting \dQuote{checking options}
+  (i.e., all those starting with \code{"check."} but \emph{not}
+  including the convergence checks (\code{"check.conv.*"}) or
+  rank-checking (\code{"check.rank*"}) options)
+  may also be set globally via \code{\link{options}}.
   In that case, \code{(g)lmerControl} will use them rather than the
   default values, but will \emph{not} override values that are passed as
   explicit arguments.
@@ -212,6 +236,24 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
   For example, \code{options(lmerControl=list(check.nobs.vs.rankZ = "ignore"))}
   will suppress warnings that the number of observations is less than
   the rank of the random effects model matrix \code{Z}.
+}
+\section{Troubleshooting}{
+  Some additional information about specific warnings and what to do
+  about them:
+  \itemize{
+    \item \code{Model failed to converge with max|grad| ...} The scaled
+    gradient at the fitted (RE)ML estimates
+    is worryingly large. Try switching optimizers to see if you
+    get consistent results, or
+    compute values of the deviance in the neighbourhood of the estimated
+    parameters to double-check that \code{lme4} has really found a
+    local optimum.
+    \item \code{Model is nearly unidentifiable ... Rescale variables?}
+    The Hessian (curvature matrix) at the maximum likelihood or REML
+    estimates has a large eigenvalue, indicating that the surface is
+    nearly flat in some direction. Consider centering and/or scaling
+    continuous predictor variables.
+  }
 }
 \examples{
 str(lmerControl())
@@ -248,23 +290,23 @@ str(glmerControl())
     fm0_brent <- update(fm0,control=lmerControl(optimizer="optimwrap",
                             optCtrl=list(method="Brent")))
     ## You can also use functions from the nloptr package.
-    ## You must run require (nloptr) here ... it is commented out
-    ## to avoid a dependence on nloptr in the package
-    defaultControl <- list(algorithm="NLOPT_LN_BOBYQA",
-                           xtol_rel=1e-6,maxeval=1e5)
-    nloptwrap2 <- function(fn,par,lower,upper,control=list(),...) {
-        for (n in names(defaultControl)) 
-            if (is.null(control[[n]])) control[[n]] <- defaultControl[[n]]
-        res <- nloptr(x0=par,eval_f=fn,lb=lower,ub=upper,opts=control,...)
-        with(res,list(par=solution,
-                      fval=objective,
-                      feval=iterations,
-                      conv=if (status>0) 0 else status,
-                      message=message))
+    if (require(nloptr)) {
+        defaultControl <- list(algorithm="NLOPT_LN_BOBYQA",
+                               xtol_abs=1e-6,ftol_abs=1e-6,maxeval=1e5)
+        nloptwrap <- function(fn,par,lower,upper,control=list(),...) {
+            for (n in names(defaultControl))
+                if (is.null(control[[n]])) control[[n]] <- defaultControl[[n]]
+            res <- nloptr(x0=par,eval_f=fn,lb=lower,ub=upper,opts=control,...)
+            with(res,list(par=solution,
+                          fval=objective,
+                          feval=iterations,
+                          conv=if (status>0) 0 else status,
+                          message=message))
+        }
+        fm1_nloptr <- update(fm1,control=lmerControl(optimizer="nloptwrap"))
+        fm1_nloptr_NM <- update(fm1,control=lmerControl(optimizer="nloptwrap",
+                                    optCtrl=list(algorithm="NLOPT_LN_NELDERMEAD")))
     }
-    fm1_nloptr <- update(fm1,control=lmerControl(optimizer="nloptwrap2"))
-    fm1_nloptr_NM <- update(fm1,control=lmerControl(optimizer="nloptwrap2",
-                                optCtrl=list(algorithm="NLOPT_LN_NELDERMEAD")))
     ## other algorithm options include NLOPT_LN_COBYLA, NLOPT_LN_SBPLX
-}
+  }
 }

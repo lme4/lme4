@@ -42,7 +42,7 @@
 ##' @param nsim number of simulations, positive integer; the bootstrap \eqn{B}
 ##'     (or \eqn{R}).
 ##' @param seed optional argument to \code{\link{set.seed}}.
-##' @param use.u logical, indicating whether the spherized random effects
+##' @param use.u logical, indicating whether the spherical random effects
 ##' should be simulated / bootstrapped as well.  If \code{TRUE}, they are not
 ##' changed, and all inference is conditional on these values. If \code{FALSE},
 ##' new normal deviates are drawn (see Details).
@@ -74,7 +74,7 @@
 ##' @details
 ##' \itemize{
 ##' \item If \code{use.u} is \code{FALSE} and \code{type} is \code{"parametric"}, each simulation generates
-##' new values of both the \dQuote{\emph{spherized}} random
+##' new values of both the \dQuote{\emph{spherical}} random
 ##' effects \eqn{u} and the i.i.d. errors \eqn{\epsilon}, using
 ##' \code{\link{rnorm}()} with parameters corresponding to the fitted model
 ##' \code{x}.
@@ -192,7 +192,8 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
     } else {
         if (use.u) {
             if (isGLMM(x)) warning("semiparametric bootstrapping is questionable for GLMMs")
-            ss <- replicate(nsim,fitted(x)+sample(residuals(x,"response")),
+            ss <- replicate(nsim,fitted(x)+sample(residuals(x,"response"),
+                                                  replace=TRUE),
                             simplify=FALSE)
         } else {
             stop("semiparametric bootstrapping with use.u=FALSE not yet implemented")

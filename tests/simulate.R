@@ -1,9 +1,10 @@
 library(lme4)
+library(testthat)
 
 (testLevel <- lme4:::testLevel())
 L <- load(system.file("testdata/lme-tst-fits.rda",
                       package="lme4", mustWork=TRUE))
-if (getRversion()>"3.0.0") {
+if (getRversion() > "3.0.0") {
     ## saved fits are not safe with old R versions
 
 fm1 <- fit_sleepstudy_1
@@ -52,10 +53,12 @@ s6 <- simulate(gm4,seed=101,use.u=TRUE)[[1]]
 ## Bernoulli
 ## works, but too slow
 if (testLevel>2) {
-  data(guImmun,package="mlmRev")
-  g1 <- glmer(immun~kid2p+mom25p+ord+ethn+momEd+husEd+momWork+rural+pcInd81+
-              (1|comm/mom),family="binomial",data=guImmun)
-  s2 <- simulate(g1)
+    if(require("mlmRev")) {
+        data(guImmun,package="mlmRev")
+        g1 <- glmer(immun~kid2p+mom25p+ord+ethn+momEd+husEd+momWork+rural+pcInd81+
+                    (1|comm/mom),family="binomial",data=guImmun)
+        s2 <- simulate(g1)
+    }
 }
 
 set.seed(101)
@@ -89,10 +92,11 @@ s1B <- simulate(g1B,seed=102)[[1]]
 stopifnot(all.equal(gm_s5,as.numeric(s1B)-1))
 
 ## another Bernoulli
-data(Contraception,package="mlmRev")
-gm5 <- glmer(use ~ urban+age+livch+(1|district), Contraception, binomial)
-s3 <- simulate(gm5)
-
+if(require("mlmRev")) {
+    data(Contraception,package="mlmRev")
+    gm5 <- glmer(use ~ urban+age+livch+(1|district), Contraception, binomial)
+    s3 <- simulate(gm5)
+}
 d$y <- rpois(nrow(d),exp(d$eta))
 gm6 <- glmer(y~x+(1|f),data=d,family="poisson")
 s4 <- simulate(gm6)
@@ -108,6 +112,34 @@ gm1_s4 <- simulate(form,newdata=model.frame(gm1),
                seed=101)[[1]]
 stopifnot(all.equal(gm1_s2,gm1_s4))
 
+
+tt <- getME(gm1,"theta")
+bb <- fixef(gm1)
+expect_message(simulate(form,newdata=model.frame(gm1),
+               newparams=list(theta=unname(tt),
+               beta=fixef(gm1)),
+               family=binomial,
+               weights=rowSums(model.frame(gm1)[[1]]),
+               seed=101),"assuming same order")
+expect_error(simulate(form,newdata=model.frame(gm1),
+               newparams=list(theta=setNames(tt,"abc"),
+               beta=fixef(gm1)),
+               family=binomial,
+               weights=rowSums(model.frame(gm1)[[1]]),
+               seed=101),"mismatch between")
+expect_message(simulate(form,newdata=model.frame(gm1),
+               newparams=list(theta=tt,
+               beta=unname(bb)),
+               family=binomial,
+               weights=rowSums(model.frame(gm1)[[1]]),
+               seed=101),"assuming same order")
+expect_error(simulate(form,newdata=model.frame(gm1),
+               newparams=list(theta=tt,
+               beta=setNames(bb,c("abc",names(bb)[-1]))),
+               family=binomial,
+               weights=rowSums(model.frame(gm1)[[1]]),
+               seed=101),"mismatch between")
+
 ## Gaussian
 form <- formula(fm1)[-2]
 s7 <- simulate(form,newdata=model.frame(fm1),
@@ -120,5 +152,4 @@ stopifnot(all.equal(s7,s1))
 
 ## TO DO: wider range of tests, including offsets ...
 
-
-}
+}# R >= 3.0.0

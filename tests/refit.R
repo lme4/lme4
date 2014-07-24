@@ -1,9 +1,7 @@
 library(lme4)
-library(testthat)
-
 load(system.file("testdata","lme-tst-fits.rda",package="lme4"))
 
-if (getRversion()>"3.0.0") {
+if (getRversion() > "3.0.0") {
     ## saved fits are not safe with old R versions
 
     ## testing refit
@@ -70,7 +68,7 @@ d <- data.frame(y1=Y[,1],  x=rnorm(100), f=rep(1:10,10))
 fit1 <- lmer(y1 ~ x+(1|f),data=d)
 fit2 <- refit(fit1, newresp = Y[,2], rename.response=TRUE)
 ## check, but ignore terms attribute of model frame ...
-expect_warning(refit(fit1, newresp = Y[,2], junk=TRUE))
+tools::assertWarning(refit(fit1, newresp = Y[,2], junk=TRUE))
 if (isTRUE(all.equal(fit1,fit2))) stop("fit1 and fit2 should not be equal")
 ## hack number of function evaluations
 u2 <- update(fit2)

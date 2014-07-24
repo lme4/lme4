@@ -100,7 +100,8 @@ updateGlmerDevfun(devfun, reTrms, nAGQ = 1L)
 	for the inner optimization step;}
       \item{for \code{optimizeLmer} and \code{optimizeGlmer}:}{control
 	parameters for nonlinear optimizer (typically inherited from the
-	\dots argument to \code{lmerControl}).}
+	\dots argument to \code{\link{lmerControl}}).}
+	% FIXME: reference optCtrl
     }
   }
   \item{fr}{A model frame containing the variables needed to create an

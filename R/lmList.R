@@ -33,7 +33,9 @@ lmList <- function(formula, data, family, subset, weights,
     ##  because model.frame is accessed through eval(...,parent.frame())
     ##  below, so it picks up the *original* value of data
     ## model.frame(groupedData) is problematic ...
-    data <- as.data.frame(data)
+    ## data <- as.data.frame(data)
+    if (is(data,"groupedData"))
+        warning("lmList does not (yet) work correctly on groupedData objects")
     mCall <- mf <- match.call()
     m <- match(c("family", "data", "subset", "weights",
                  "na.action", "offset"), names(mf), 0)

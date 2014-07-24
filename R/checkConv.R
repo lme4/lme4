@@ -1,40 +1,42 @@
-## adapted from Rune Haubo's ordinal code
-## extended convergence checking
-## http://en.wikipedia.org/wiki/Karush%E2%80%93Kuhn%E2%80%93Tucker_conditions
-##' @param derivs 
+### Adapted from Rune Haubo's ordinal code
+### extended convergence checking
+### http://en.wikipedia.org/wiki/Karush%E2%80%93Kuhn%E2%80%93Tucker_conditions
+
+##' @param derivs typically the "derivs" attribute of optimizeLmer(); with
+##' "gradients" and possibly "Hessian" component
 ##' @param coefs estimated function value
-##' @param control list of tolerances for the 'checkCtrl' checks
-##' @param checkCtrl list of \dQuote{action} character strings specifying
-##' what should happen when a check triggers.
+##' @param ctrl list of lists, each with \code{action} character strings specifying
+##' what should happen when a check triggers, and \code{tol} numerical tolerances,
+##' as is the result of \code{\link{lmerControl}()$checkConv}.
 ##' @param lbound vector of lower bounds \emph{for random-effects parameters only}
-##'   (length is taken to determine number of RE parameters)  
+##'   (length is taken to determine number of RE parameters)
 ##' @param debug useful if some checks are on "ignore", but would "trigger"
-checkConv <- function(derivs, coefs,
-		      control = list(gradTol = 1e-3, gradRelTol = NULL,
-			  singTol = 1e-4, hessTol = 1e-6),
-		      checkCtrl = list(
-			  check.conv.grad = "warning",
-			  check.conv.singular = "ignore",
-			  check.conv.hess = "warning"),
-		      lbound, debug = FALSE)
+checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
 {
     if (is.null(derivs)) return(NULL)  ## bail out
+    if (any(is.na(derivs$gradient)))
+	return(list(code = -5L,
+		    messages = gettextf("Gradient contains NAs")))
     ntheta <- length(lbound)
     res <- list()
-    if (any(is.na(derivs$gradient))) {
-        res$code <- -5L
-        res$messages <- gettextf("Gradient contains NAs")
-        return(res)  ## bail out
-    }
     ## gradients:
     ## check absolute gradient (default)
-    cstr <- "check.conv.grad"
-    checkCtrlLevels(cstr,cc <- checkCtrl[[cstr]])
+    ccl <- ctrl[[cstr <- "check.conv.grad"]] ; checkCtrlLevels(cstr, cc <- ccl[["action"]])
+    wstr <- NULL
     if (doCheck(cc)) {
-        if ((max.grad <- max(abs(derivs$gradient))) > control$gradTol) {
+        scgrad <- try(with(derivs,solve(Hessian,gradient)),silent=TRUE)
+        if (inherits(scgrad,"try-error")) {
+            wstr <- "unable to evaluate scaled gradient"
             res$code <- -1L
-            wstr <- gettextf("Model failed to converge with max|grad| = %g (tol = %g)",
-                             max.grad, control$gradTol)
+        } else {
+            if ((max.grad <- max(abs(scgrad))) > ccl$tol) {
+                w <- which.max(abs(scgrad))
+                res$code <- -1L
+                wstr <- gettextf("Model failed to converge with max|grad| = %g (tol = %g, component %d)",
+                                 max.grad, ccl$tol,w)
+            }
+        }
+        if (!is.null(wstr)) {
             res$messages <- wstr
             switch(cc,
                    "warning" = warning(wstr),
@@ -44,12 +46,12 @@ checkConv <- function(derivs, coefs,
         ## note: kktc package uses gmax > kkttol * (1 + abs(fval))
         ##  where kkttol defaults to 1e-3 and fval is the objective f'n value
         ## check relative gradient (only if enabled)
-        if (!is.null(control$gradRelTol) &&
-            (max.rel.grad <- max(abs(derivs$gradient/coefs))) > control$gradRelTol) {
+        if (!is.null(ccl$relTol) &&
+            (max.rel.grad <- max(abs(derivs$gradient/coefs))) > ccl$relTol) {
                 res$code <- -2L
                 wstr <-
                     gettextf("Model failed to converge with max|relative grad| = %g (tol = %g)",
-                             max.rel.grad, control$gradRelTol)
+                             max.rel.grad, ccl$relTol)
                 res$messages <- wstr
                 switch(cc,
                        "warning" = warning(wstr),
@@ -57,11 +59,11 @@ checkConv <- function(derivs, coefs,
                        stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
         }
     }
-    cstr <- "check.conv.singular"
-    checkCtrlLevels(cstr,cc <- checkCtrl[[cstr]])
+
+    ccl <- ctrl[[cstr <- "check.conv.singular"]] ; checkCtrlLevels(cstr, cc <- ccl[["action"]])
     if (doCheck(cc)) {
         bcoefs <- seq(ntheta)[lbound==0]
-        if (any(coefs[bcoefs]<control$singTol)) {
+        if (any(coefs[bcoefs] < ccl$tol)) {
             ## singular fit
             ## are there other circumstances where we can get a singular fit?
             wstr <- "singular fit"
@@ -72,14 +74,14 @@ checkConv <- function(derivs, coefs,
                    stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
         }
     }
-    cstr <- "check.conv.hess"
-    checkCtrlLevels(cstr,cc <- checkCtrl[[cstr]])
+
+    ccl <- ctrl[[cstr <- "check.conv.hess"]] ; checkCtrlLevels(cstr, cc <- ccl[["action"]])
     if (doCheck(cc)) {
-        if (length(coefs)>ntheta) {
+        if (length(coefs) > ntheta) {
             ## GLMM, check for issues with beta parameters
             H.beta <- derivs$Hessian[-seq(ntheta),-seq(ntheta)]
-            resHess <- checkHess(H.beta,control$hessTol,"fixed-effect")
-            if (any(resHess$code)!=0) {
+            resHess <- checkHess(H.beta, ccl$tol, "fixed-effect")
+            if (any(resHess$code!=0)) {
                 res$code <- resHess$code
                 res$messages <- c(res$messages,resHess$messages)
                 wstr <- paste(resHess$messages,collapse=";")
@@ -89,8 +91,8 @@ checkConv <- function(derivs, coefs,
                        stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
             }
         }
-        resHess <- checkHess(derivs$Hessian,control$hessTol)
-        if (resHess$code!=0) {
+        resHess <- checkHess(derivs$Hessian, ccl$tol)
+        if (any(resHess$code != 0)) {
             res$code <- resHess$code
             res$messages <- c(res$messages,resHess$messages)
             wstr <- paste(resHess$messages,collapse=";")
@@ -103,10 +105,12 @@ checkConv <- function(derivs, coefs,
     if (debug && length(res$messages) > 0) {
         print(res$messages)
     }
-    return(res)
+    res
 }
 
-checkHess <- function(H,tol,hesstype="") {
+checkHess <- function(H, tol, hesstype="") {
+    ## FIXME: not sure why we decided to save messages as a list
+    ## rather than as a character vector??
     res <- list(code=numeric(0),messages=list())
     evd <- eigen(H, symmetric=TRUE, only.values=TRUE)$values
     negative <- sum(evd < -tol)
@@ -133,8 +137,10 @@ checkHess <- function(H,tol,hesstype="") {
                             "very large eigenvalue",
                             "\n - Rescale variables?", sep=""))
             }
-            if((min(evd) / max(evd)) < tol) {
+            if ((min(evd) / max(evd)) < tol) {
                 res$code <- c(res$code, 3L)
+                ## consider skipping warning message if we've
+                ## already hit the previous flag?
                 if(!5L %in% res$code) {
                     res$messages <-
                         c(res$messages,

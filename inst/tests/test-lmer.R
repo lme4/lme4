@@ -5,9 +5,13 @@ context("fitting lmer models")
 isNM <- formals(lmerControl)$optimizer == "Nelder_Mead"
 
 test_that("lmer", {
-    expect_warning(lmer(z~ 1|f, method="abc"),"Use the REML argument")
-    expect_warning(lmer(z~ 1|f, method="Laplace"),"Use the REML argument")
-    expect_warning(lmer(z~ 1|f, sparseX=TRUE),"has no effect at present")
+    set.seed(101)
+    d <- data.frame(z=rnorm(200),
+                    f=factor(sample(1:10,200,replace=TRUE)))
+
+    expect_warning(lmer(z~ 1|f, d, method="abc"),"Use the REML argument")
+    expect_warning(lmer(z~ 1|f, d, method="Laplace"),"Use the REML argument")
+    expect_warning(lmer(z~ 1|f, d, sparseX=TRUE),"has no effect at present")
     expect_is(fm1 <- lmer(Yield ~ 1|Batch, Dyestuff), "lmerMod")
     expect_is(fm1_noCD <- update(fm1,control=lmerControl(calc.derivs=FALSE)),
               "lmerMod")
@@ -29,7 +33,7 @@ test_that("lmer", {
     expect_that(REMLfun(0),                             equals(326.023232155879))
     expect_that(family(fm1),                            equals(gaussian()))
     expect_that(isREML(fm1ML <- refitML(fm1)),          equals(FALSE))
-    expect_that(deviance(fm1)[["REML"]],                equals(319.654276842342))
+    expect_that(REMLcrit(fm1),                		equals(319.654276842342))
     expect_that(deviance(fm1ML),                        equals(327.327059881135))
     ##						"bobyqa":      49.51009984775
     expect_that(sigma(fm1),                             equals(49.5101272946856, tolerance=1e-6))
@@ -80,10 +84,15 @@ test_that("lmer", {
     load(system.file("testdata","rankMatrix.rda",package="lme4"))
     expect_is(lFormula(y ~ (1|sample)+(1|day)+(1|operator)+
                        (1|day:sample)+(1|day:operator)+(1|sample:operator)+
-                       (1|day:sample:operator), 
+                       (1|day:sample:operator),
                        data=dat,
                        control=lmerControl(check.nobs.vs.rankZ="stop")),
                        "list")
+    ## check scale
+    ss <- transform(sleepstudy,Days=Days*1e6)
+    expect_warning(lmer(Reaction~Days+(1|Subject),ss),
+                 "predictor variables are on very different scales")
+
     ## Promote warning to error so that warnings or errors will stop the test:
     options(warn=2)
     expect_is(lmer(Yield ~ 1|Batch, Dyestuff, REML=TRUE), "lmerMod")
@@ -104,21 +113,24 @@ test_that("lmer", {
                    data = sleepstudy, subset = (Days == 1 | Days == 9),
                    control=lmerControl(check.nobs.vs.rankZ="ignore",
                    check.nobs.vs.nRE="ignore",
-                   check.conv.hess="ignore")),
+                   check.conv.hess="ignore",
+                   ## need to ignore relative gradient check too;
+                   ## surface is flat so *relative* gradient gets large
+                   check.conv.grad="ignore")),
               "merMod")
-    expect_error(lmer(Reaction ~ 1 + Days + (1|obs),
-                      data = transform(sleepstudy,obs=seq(nrow(sleepstudy))),
-                      "number of levels of each grouping factor"))
     expect_is(lmer(Reaction ~ 1 + Days + (1|obs),
                    data = transform(sleepstudy,obs=seq(nrow(sleepstudy))),
                    control=lmerControl(check.nobs.vs.nlev="ignore",
                    check.nobs.vs.nRE="ignore",
                    check.nobs.vs.rankZ="ignore")),
               "merMod")
+    expect_error(lmer(Reaction ~ 1 + Days + (1|obs),
+                      data = transform(sleepstudy,obs=seq(nrow(sleepstudy))),
+                      "number of levels of each grouping factor"))
 
     ## check for errors with illegal input checking options
     flags <- lme4:::.get.checkingOpts(names(formals(lmerControl)))
-    .t <- lapply(flags, function(OPT)
+    .t <- lapply(flags, function(OPT) {
 	## set each to invalid string:
 	## cat(OPT,"\n")
 	expect_error(lFormula(Reaction~1+Days+(1|Subject), data = sleepstudy,
@@ -126,20 +138,28 @@ test_that("lmer", {
 				  ## Deliberate: fake typo
 				  ##		       vvv
 				  setNames(list("warnign"), OPT))),
-		     "invalid control level"))
+		     "invalid control level")
+    })
     ## disable warning via options
     options(lmerControl=list(check.nobs.vs.rankZ="ignore",check.nobs.vs.nRE="ignore"))
     expect_is(fm4 <- lmer(Reaction ~ Days + (1|Subject),
 			  subset(sleepstudy,Subject %in% levels(Subject)[1:4])), "merMod")
     expect_is(lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
                    data = sleepstudy, subset = (Days == 1 | Days == 9),
-                   control=lmerControl(check.conv.hess="ignore")),
+                   control=lmerControl(check.conv.hess="ignore",
+                   check.conv.grad="ignore")),
               "merMod")
+    options(lmerControl=NULL)
+    ## check for when ignored options are set
+    options(lmerControl=list(junk=1,check.conv.grad="ignore"))
+    expect_warning(lmer(Reaction ~ Days + (1|Subject),sleepstudy),
+                   "some options")
     options(lmerControl=NULL)
     options(warn=0)
     expect_warning(lmer(Yield ~ 1|Batch, Dyestuff, junkArg=TRUE),"extra argument.*disregarded")
     expect_warning(lmer(Yield ~ 1|Batch, Dyestuff, control=list()),
                     "passing control as list is deprecated")
+if(FALSE) ## Hadley broke this
     expect_warning(lmer(Yield ~ 1|Batch, Dyestuff, control=glmerControl()),
                    "passing control as list is deprecated")
 
@@ -165,6 +185,10 @@ test_that("lmer", {
     expect_is(refit(fm1),"merMod")
     rm("new")
 
+    ## test subset-with-( printing from summary
+    fm1 <- lmer(z~1|f,d,subset=(z<1e9))
+    expect_equal(sum(grepl("Subset: \\(",capture.output(summary(fm1)))),1)
+
 }) ## test_that(..)
 
 
@@ -186,7 +210,7 @@ test_that("coef_lmer", {
     nn <- c(n1, paste(n1, "var2", sep=":"))
     expect_identical(names(cd1), c("(Intercept)", nn))
     expect_equal(fixef(mix1),
-                 setNames(c(0.27039541, 0.38329083, 0.45127874,  0.65288384, 0.61098249, 
+                 setNames(c(0.27039541, 0.38329083, 0.45127874,  0.65288384, 0.61098249,
                             0.49497978, 0.12227105, 0.087020934,-0.28564318,-0.015968354),
                           nn), tolerance= 7e-7)# 64-bit:  6.73e-9
 })

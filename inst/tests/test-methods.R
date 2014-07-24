@@ -74,13 +74,21 @@ test_that("bootMer", {
     PastesNA <- Pastes
     PastesNA$Sample[1:3] <- NA
     m2 <- update(m1,data=PastesNA)
-    confint(m2,method="boot",nsim=10,quiet=TRUE,seed=101)
+    suppressWarnings(conf2 <-
+                     confint(m2,method="boot",nsim=10,quiet=TRUE,seed=101))
     fm1 <- lmer(Reaction~Days+(Days|Subject),sleepstudy)
     sleepstudyNA <- sleepstudy
     sleepstudyNA$Days[1:3] = NA
     fm2 <- update(fm1,data=sleepstudyNA)
     confint(fm2, method="boot", nsim=10, seed=101)
 
+    ## semipar bootstrapping
+    fm01 <- lmer(Yield ~ 1|Batch, Dyestuff)
+    set.seed(1)
+    require(boot)
+    boo01_sp <- bootMer(fm01, fixef, nsim = 100, use.u = TRUE,
+                        type = "semiparametric")
+    expect_equal(sd(boo01_sp$t),8.215586,tol=1e-4)
 })
 
 context("confint")
@@ -101,6 +109,11 @@ test_that("refit", {
     expect_is(refit(fm1,s1),"merMod")
     s2 <- simulate(fm1,2)
     expect_error(refit(fm1,s2),"refit not implemented for lists")
+    data(Orthodont,package="nlme")
+    fmOrth <- fm <- lmer(distance ~ I(age - 11) + (I(age - 11) | Subject),
+                         data = Orthodont)
+    expect_equal(simulate(fm,newdata=Orthodont,seed=101),
+                 simulate(fm,seed=101))
 })
 
 context("predict")
@@ -117,6 +130,19 @@ test_that("predict", {
     expect_equal(p0[1],p2[1],tolerance=4e-5)
     expect_equal(p0[1],p3[1],tolerance=4e-5)
     expect_message(predict(gm1,ReForm=NA),"is now preferred to")
+    ## matrix-valued predictors: Github #201 from Fabian S.
+    sleepstudy$X <- cbind(1, sleepstudy$Days)
+    m <- lmer(Reaction ~ -1 + X  + (Days | Subject), sleepstudy)
+    expect_is(predict(m, newdata=sleepstudy), "numeric")
+    ## test spurious warning with factor as response variable
+    data("Orthodont",package="MEMSS")
+    silly <- glmer(Sex ~ distance + (1|Subject),
+                   data=Orthodont, family=binomial)
+    sillypred <- data.frame(distance=c(20, 25))
+    options(warn=2)
+    expect_is(predict(silly, sillypred, re.form=NA, type="response"),
+              "numeric")
+    options(warn=0)
 })
 
 context("simulate")
@@ -145,12 +171,42 @@ test_that("simulate", {
     expect_equal(p1,p7)
     expect_equal(p1,p11)
     expect_error(simulate(gm2,use.u=TRUE,re.form=NA),"should specify only one")
+    ## hack: test with three REs
+    p1 <- lmer(diameter ~ (1|plate) + (1|plate) + (1|sample), Penicillin,
+               control=lmerControl(check.conv.hess="ignore"))
+    simulate(p1)
+    data("Pixel", package="nlme")
+    fo1 <- pixel ~ day + I(day^2) + Side + (day | Dog) + (1 | Side/Dog)
+    fo2 <- pixel ~ day + I(day^2) + (day | Dog) + (1 | Side/Dog)
+    fm3 <- lmer(fo1, data = Pixel,
+                control=lmerControl(check.conv.hess="ignore"))
+    fm4 <- lmer(fo2, data = Pixel)
+    expect_is(simulate(fm3),"data.frame")
+    expect_is(simulate(fm4),"data.frame")
 })
 context("misc")
 test_that("misc", {
     expect_equal(df.residual(fm1),176)
-    expect_is(fortify(fm1),"data.frame")
-    expect_is(fortify(gm1),"data.frame")
+    if (require(ggplot2)) {
+        expect_is(fortify(fm1),"data.frame")
+        expect_is(fortify(gm1),"data.frame")
+    }
     expect_is(as.data.frame(VarCorr(fm1)),"data.frame")
 })
 }
+context("plot")
+test_that("plot", {
+    ## test getData() within plot function: reported by Dieter Menne
+    doFit <- function(){
+        data(Orthodont,package="nlme")
+        data1 <- Orthodont
+        fm1 <- lmer(distance ~ age + (age|Subject), data=data1)
+    }
+    data(Orthodont, package="nlme")
+    fm0 <- lmer(distance ~ age + (age|Subject), data=Orthodont)
+    expect_is(plot(fm0),"trellis")
+    rm("Orthodont")
+    fm1 <- doFit()
+    pp <- plot(fm1, resid(., scaled=TRUE) ~ fitted(.) | Sex, abline = 0)
+    expect_is(pp,"trellis")
+})

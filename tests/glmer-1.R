@@ -82,7 +82,8 @@ stopifnot(is((cm2 <- coef(m2)), "coef.mer"),
                     ##  -1.1430128, -1.5922817),
 		    tolerance = 5.e-4,
                     check.attributes=FALSE),
-          all.equal(deviance(m2), 100.010030538022, tolerance=1e-9)
+          all.equal(c(-2*logLik(m2)), 100.010030538022, tolerance=1e-9),
+          all.equal(deviance(m2), 73.373, tolerance=1e-5)
           ## with bobyqa first (AGQ=0), then
           ##all.equal(deviance(m2), 101.119749563, tolerance=1e-9)
           )

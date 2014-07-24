@@ -1,3 +1,4 @@
+library("lme4")
 library("testthat")
 
 data(Dyestuff, package="lme4")

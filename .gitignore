@@ -3,6 +3,7 @@ TAGS
 src/*.o
 src/*.so
 src/*.dll
+vignettes/cache/*
 .Rproj.user
 lme4.Rproj
 .Rhistory

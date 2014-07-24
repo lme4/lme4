@@ -8,6 +8,13 @@ expect_equal(c0[2,],c0B[1,])
 expect_equal(c(c0B),c(7.437592,13.496980),tolerance=1e-6)
 set.seed(101)
 
+for (bt in c("norm","basic", "perc")) {
+    confint(fm1, method="boot", boot.type=bt, nsim=10)
+}
+for (bt in c("stud","bca","junk")) {
+    expect_error(confint(fm1, method="boot", boot.type=bt, nsim=10),
+                 "should be one of")
+}
 if((testLevel <- lme4:::testLevel()) > 1) {
     c1 <- confint(fm1,method="profile",parm=5:6)
     expect_error(confint(fm1,method="profile",parm="Days"),

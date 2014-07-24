@@ -17,11 +17,16 @@
   \code{mcmcsamp} has been withdrawn (or more precisely,
   not updated to work with \code{lme4} versions >=1.0.0).
 
-  Many users, including users of the \code{aovlmer.fnc}
-  function from the \code{languageR} package which relies
-  on \code{mcmcsamp}, will be deeply disappointed by this
-  lacuna. Users who need p-values have a variety of
-  options:
+  Many users, including users of the \code{aovlmer.fnc} function from
+  the \code{languageR} package which relies on \code{mcmcsamp}, will be
+  deeply disappointed by this lacuna. Users who need p-values have a
+  variety of options. In the list below, the methods marked \code{MC}
+  provide explicit model comparisons; \code{CI} denotes confidence
+  intervals; and \code{P} denotes parameter-level or sequential tests of
+  all effects in a model. The starred (*) suggestions provide
+  finite-size corrections (important when the number of groups is <50);
+  those marked (+) support GLMMs as well as LMMs.
+
   \itemize{
     \item likelihood ratio tests via \code{anova} (MC,+)
     \item{profile confidence intervals via \code{\link{profile.merMod}} and
@@ -44,15 +49,11 @@
       \code{pbkrtest}: \code{lmerTest::anova} also provides t tests via the
       Satterthwaite approximation (P,*)
     }
+    \item{\code{afex::mixed} is another wrapper for
+      \code{pbkrtest} and \code{anova} providing
+      "Type 3" tests of all effects (P,*,+)
+    }
   }
-  In the list above,
-  the methods marked \code{MC} provide explicit model
-  comparisons; \code{CI} denotes confidence intervals; and
-  \code{P} denotes parameter-level or sequential tests of
-  all effects in a model. The starred (*) suggestions
-  provide finite-size corrections (important when the
-  number of groups is <50); those marked (+) support GLMMs
-  as well as LMMs.
 
   \code{arm::sim}, or \code{\link{bootMer}}, can be used
   to compute confidence intervals on predictions.

@@ -93,11 +93,13 @@ if (testLevel > 3) {
     print(splom(pr3))
 
     if (testLevel > 4) {
-        ## takes much longer
-        data("Contraception", package="mlmRev")
-        fm2 <- glmer(use ~ urban+age+livch+(urban|district), Contraception, binomial)
-        print(system.time(pr5 <- profile(fm2,verbose=10)))
-        print(xyplot(pr5))
+        if(require("mlmRev")) {
+            ## takes much longer
+            data("Contraception", package="mlmRev")
+            fm2 <- glmer(use ~ urban+age+livch+(urban|district), Contraception, binomial)
+            print(system.time(pr5 <- profile(fm2,verbose=10)))
+            print(xyplot(pr5))
+        }
     }  ## testLevel > 4
 
 }  ## testLevel > 3

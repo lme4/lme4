@@ -3,6 +3,112 @@
 \name{NEWS}
 \title{lme4 News}
 \encoding{UTF-8}
+\section{CHANGES IN VERSION 1.1-8}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item \code{getME} gains a \code{"Tlist"} option
+      (returns a vector of template matrices from which the blocks of 
+      \code{Lambda} are generated)
+      \item \code{hatvalues} method returns the diagonal of the hat matrix
+      
+    }
+  }
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item \code{deviance()} now returns the deviance, rather than half the
+      negative log-likelihood, for GLMMs (there is no difference for
+      LMMs)
+      \item convergence warning and diagnostic test issues are now
+      reported in \code{print} and \code{summary} methods
+      
+    }
+  }
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item fixed \code{bootMer} bug for \code{type=="parametric"},
+      \code{use.u=TRUE} (Mark Lai)
+    }
+  }
+}  
+  
+\section{CHANGES IN VERSION 1.1-7}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item the \code{nloptr} package is now imported;
+      a wrapper function (\code{nloptwrap}) is provided so that
+      \code{lmerControl(optimizer="nloptwrap")} is all that's necessary
+      to use \code{nloptr} optimizers in the nonlinear optimization
+      stage (the default algorithm is NLopt's implementation
+      of BOBYQA: see \code{?nloptwrap} for examples)
+      \item preliminary implementation of checks for scaling
+      of model matrix columns (see \code{check.scaleX} in
+      \code{?lmerControl})
+      \item \code{beta} is now allowed as a synonym for \code{fixef}
+      when specifying starting parameters (Github #194)
+    }
+  }
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item the use of \code{deviance} to return the REML criterion
+      is now deprecated; users should use \code{REMLcrit()} instead
+      (Github #211)
+    \item changed the default value of \code{check.nobs.vs.rankZ} to
+    \code{"ignore"} (Github #214)
+    }
+  }
+    \subsection{BUG FIXES}{
+    \itemize{
+      \item change gradient testing from absolute to relative
+      \item fix \code{confint(.,method="boot")} to allow/work
+      properly with \code{boot.type} values other than \code{"perc"}
+      (reported by Alan Zaslavsky)
+      \item allow \code{plot()} to work when data are specified in a different
+      environment (reported by Dieter Menne)
+      \item \code{predict} and \code{simulate} work for matrix-valued
+      predictors (Github #201)
+      \item other \code{simulate} bugs (Github #212)
+      \item \code{predict} no longer warns spuriously when
+      original response was a factor (Github #205)
+      \item fix memory access issues (Github #200)
+    }
+  }
+}
+\section{CHANGES IN VERSION 1.1-6}{
+  This version incorporates no changes in functionality, just
+  modifications to testing and dependencies for CRAN/backward compatibility.
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item change \code{drop1} example to prevent use of old/incompatible
+      \code{pbkrtest} versions, for 2.15.3 compatibility
+      \item explicitly \code{require(mlmRev)} for tests to prevent cyclic
+      dependency
+      \item bump \code{RcppEigen} Imports: requirement from >0.3.1.2.3 to
+      >=0.3.2.0; \code{Rcpp} dependency to >= 0.10.5
+    }
+  }
+}
+\section{CHANGES IN VERSION 1.1-5}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item improved NA handling in \code{simulate} and \code{refit}
+      \item made internal handling of \code{weights}/\code{offset}
+      arguments slightly more robust (Github #191)
+      \item handle non-positive-definite estimated fixed effect
+      variance-covariance matrices slightly more generally/robustly
+      (fall back on RX approximation, with a warning,
+      if finite-difference Hessian
+      is non-PD; return \code{NA} matrix if RX approximation is
+      also bad)
+    } 
+  }
+  \subsection{MINOR USER-VISIBLE CHANGES}{
+    \itemize{
+      \item Added output specifying when Gauss-Hermite quadrature
+      was used to fit the model, and specifying number of GHQ points
+      (Github #190)
+    }
+  }
+}
 \section{CHANGES IN VERSION 1.1-4}{
   \subsection{BUG FIXES}{
     \itemize{
@@ -36,16 +142,35 @@
   }
   \subsection{MINOR USER-VISIBLE CHANGES}{
     \itemize{
+      \item slight changes in convergence checking; tolerances can
+      be specified where appropriate, and some default tolerances
+      have changed (e.g., \code{check.conv.grad})
       \item improved warning messages about rank-deficiency in X and Z
       etc. (warnings now try to indicate whether the unidentifiability
       is in the fixed- or random-effects part of the model)
       \item \code{predict} and \code{simulate} now prefer
       \code{re.form} as the argument to specify which random effects
-      to condition on, but allow \code{ReForm} and \code{REForm}
-      giving a message (not a warning) that they are deprecated
-      (addresses Github #170)
+      to condition on, but allow \code{ReForm}, \code{REForm}, or
+      \code{REform}, giving a message (not a warning) that they are
+      deprecated (addresses Github #170)
       \item small fixes for printing consistency in models with no
       fixed effects
+      \item we previously exported a \code{fortify} function identical
+      to the one found in \code{ggplot2} in order to be able to define a
+      \code{fortify.merMod} S3 method without inducing a dependency on
+      \code{ggplot2}.  This has now been unexported to avoid masking
+      \code{ggplot2}'s own \code{fortify} methods; if you want to
+      add diagnostic information to the results of a model, use
+      \code{fortify.merMod} explicitly.
+      \item \code{simulate.formula} now checks for names associated
+      with the \code{theta} and \code{beta} parameter vectors. If
+      missing, it prints a message (not a warning); otherwise, it
+      re-orders the parameter vectors to match the internal
+      representation.
+      \item preliminary implementation of a \code{check.scaleX} argument
+      in \code{[g]lmerControl} that warns about scaling if some columns
+      of the fixed-effect model matrix have large standard
+      deviations (relative to 1, or to each other)
     }
   }
 }

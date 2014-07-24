@@ -7,9 +7,6 @@
 \arguments{
   \item{term}{a mixed-model formula}
 }
-\value{
-  pairs of expressions that were separated by vertical bars
-}
 \description{
   From the right hand side of a formula for a mixed-effects
   model, determine the pairs of expressions that are
@@ -18,24 +15,14 @@
   terms with the double vertical bar operator into separate,
   independent random effect terms.
 }
-\section{Note}{
+\value{
+  pairs of expressions that were separated by vertical bars
+}
+\note{
   This function is called recursively on individual terms
   in the model, which is why the argument is called
   \code{term} and not a name like \code{form}, indicating a
   formula.
-}
-\examples{
-findbars(f1 <- Reaction ~ Days + (Days | Subject))
-## => list( Days | Subject )
-findbars(y ~ Days + (1 | Subject) + (0 + Days | Subject))
-findbars(y ~ Days + (Days || Subject))
-## => list of length 2:  list ( 1 | Subject ,  0 + Days | Subject)
-findbars(~ 1 + (1 | batch / cask))
-## => list of length 2:  list ( 1 | cask:batch ,  1 | batch)
-\dontshow{
-stopifnot(identical(findbars(f1),
-                    list(expression(Days | Subject)[[1]])))
-}
 }
 \seealso{
   \code{\link{formula}}, \code{\link{model.frame}},
@@ -44,6 +31,20 @@ stopifnot(identical(findbars(f1),
   Other utilities: \code{\link{mkRespMod}},
   \code{\link{mkReTrms}}, \code{\link{nlformula}},
   \code{\link{nobars}}, \code{\link{subbars}}
+}
+\examples{
+findbars(f1 <- Reaction ~ Days + (Days | Subject))
+## => list( Days | Subject )
+## These two are equivalent:% tests in ../inst/tests/test-doubleVertNotation.R
+findbars(y ~ Days + (1 | Subject) + (0 + Days | Subject))
+findbars(y ~ Days + (Days || Subject))
+## => list of length 2:  list ( 1 | Subject ,  0 + Days | Subject)
+findbars(~ 1 + (1 | batch / cask))
+## => list of length 2:  list ( 1 | cask:batch ,  1 | batch)
+\dontshow{
+stopifnot(identical(findbars(f1),
+                    list(quote(Days | Subject))))
+}
 }
 \keyword{models}
 \keyword{utilities}

@@ -1,3 +1,7 @@
+## pre-3.0 compatibility
+if (!exists("rep_len")) rep_len <- function(x, length.out) {
+    rep(x,length.out=length.out)
+}
 
 getData <- local({
 

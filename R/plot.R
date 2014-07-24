@@ -27,7 +27,7 @@ allVarsRec <- function(object)
 getData <-  function(object)
 {
   mCall <- object@call
-  data <- eval(mCall$data)
+  data <- eval(mCall$data,environment(formula(object)))
   if (is.null(data)) return(data)
   ## FIXME: deal with NAs, subset appropriately
   ## naPat <- eval(mCall$naPattern)

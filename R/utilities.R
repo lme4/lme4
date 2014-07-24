@@ -31,7 +31,6 @@ if(getRversion() < "2.15")
 ##' @importMethodsFrom Matrix coerce
 ##' @family utilities
 ##' @export
-## <<<<<<< HEAD
 mkReTrms <- function(bars, fr, reGenerators=NULL) {
 	if (!length(bars) & is.null(reGenerators))
 		stop("No random effects terms specified in formula")
@@ -128,10 +127,39 @@ mkReTrms <- function(bars, fr, reGenerators=NULL) {
 }
 
 ##' Experimental
-parseReTrm <- function(bar, fr){
-                                        # grouping factor
-    ff <- getGrouping(bar, fr)
-                                        # number of levels
+## parseReTrm <- function(bar, fr){
+##                                         # grouping factor
+##     ff <- getGrouping(bar, fr)
+##                                         # number of levels
+
+mkReTrms <- function(bars, fr) {
+  if (!length(bars))
+    stop("No random effects terms specified in formula",call.=FALSE)
+  stopifnot(is.list(bars), vapply(bars, is.language, NA),
+            inherits(fr, "data.frame"))
+  names(bars) <- barnames(bars)
+  term.names <- unlist(lapply(bars, function(x) paste(deparse(x),collapse=" ")))
+
+  ## auxiliary {named, for easier inspection}:
+  mkBlist <- function(x) {
+    frloc <- fr
+    ## convert grouping variables to factors as necessary
+    ## TODO: variables that are *not* in the data frame are
+    ##  not converted -- these could still break, e.g. if someone
+    ##  tries to use the : operator
+    for (i in all.vars(x[[3]])) {
+        if (!is.null(frloc[[i]])) frloc[[i]] <- factor(frloc[[i]])
+    }
+    if (is.null(ff <- tryCatch(eval(substitute(factor(fac),
+                                               list(fac = x[[3]])), frloc),
+                error=function(e) NULL)))
+        stop("couldn't evaluate grouping factor ",
+             deparse(x[[3]])," within model frame:",
+             " try adding grouping factor to data ",
+             "frame explicitly if possible",call.=FALSE)
+    if (all(is.na(ff)))
+        stop("Invalid grouping factor specification, ",
+             deparse(x[[3]]),call.=FALSE)
     nl <- length(levels(ff))
                                         # transposed model matrix
     tmm <- t(model.matrix(eval(substitute(~ lhs, list(lhs=bar[[2]]))), fr))
@@ -577,7 +605,7 @@ findbars <- function(term)
 	{
 	    if (!("/" %in% all.names(x))) return(x)
 	    if (x[[1]] != as.name("/"))
-		stop("unparseable formula for grouping factor")
+		stop("unparseable formula for grouping factor",call.=FALSE)
 	    list(slashTerms(x[[2]]), slashTerms(x[[3]]))
 	}
 
@@ -707,6 +735,11 @@ subbars <- function(term)
         term[[1]] <- as.name('+')
     for (j in 2:length(term)) term[[j]] <- subbars(term[[j]])
     term
+}
+
+##' @param bars result of findbars
+barnames <- function(bars) {
+    unlist(lapply(bars, function(x) deparse(x[[3]])))
 }
 
 ##' Does every level of f1 occur in conjunction with exactly one level
@@ -872,6 +905,21 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
     }
     weights <- resp$weights
     beta    <- pp$beta(fac)
+    ## rescale
+    if (!is.null(sc <- attr(pp$X,"scaled:scale"))) {
+        warning("auto(un)scaling not yet finished/tested")
+        ## FIXME: test/handle no-intercept models
+        ##   (only need to worry if we do centering as well as scaling)
+        ## FIXME: adjust Hessian/vcov
+        ## FIXME: where else will these changes propagate?
+        ##        profiling?
+        beta2 <- beta
+        beta2[names(sc)] <- sc*beta2[names(sc)]
+        beta <- beta2
+    }
+    if (!is.null(ctr <- attr(pp$X,"scaled:center"))) {
+        warning("auto(un)centering not yet implemented")
+    }
     #sigmaML <- pwrss/sum(weights)
     sigmaML <- pwrss/n
     if (rcl != "lmerResp") {
@@ -910,12 +958,12 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
 ##
 checkArgs <- function(type,...) {
     l... <- list(...)
-    if (isTRUE(l...[["sparseX"]])) warning("sparseX = TRUE has no effect at present")
+    if (isTRUE(l...[["sparseX"]])) warning("sparseX = TRUE has no effect at present",call.=FALSE)
     ## '...' handling up front, safe-guarding against typos ("familiy") :
     if(length(l... <- list(...))) {
         if (!is.null(l...[["family"]])) {  # call glmer if family specified
             ## we will only get here if 'family' is *not* in the arg list
-            warning("calling lmer with family() is deprecated: please use glmer() instead")
+            warning("calling lmer with family() is deprecated: please use glmer() instead",call.=FALSE)
             type <- "glmer"
         }
         ## Check for method argument which is no longer used
@@ -925,13 +973,13 @@ checkArgs <- function(type,...) {
             if (type=="lmer") msg <- paste(msg,"Use the REML argument to specify ML or REML estimation.")
             if (type=="glmer") msg <- paste(msg,"Use the nAGQ argument to specify Laplace (nAGQ=1) or adaptive",
                 "Gauss-Hermite quadrature (nAGQ>1).  PQL is no longer available.")
-            warning(msg)
+            warning(msg,call.=FALSE)
             l... <- l...[names(l...) != "method"]
         }
         if(length(l...)) {
             warning("extra argument(s) ",
                     paste(sQuote(names(l...)), collapse=", "),
-                    " disregarded")
+                    " disregarded",call.=FALSE)
         }
     }
 }
@@ -970,8 +1018,8 @@ checkFormulaData <- function(formula,data,checkLHS=TRUE,debug=FALSE) {
         if (allvarex(env=(ee <- environment(formula)))) {
             stop("'data' not found, but variables found in environment of formula: ",
                  "try specifying 'formula' as a formula rather ",
-                 "than a string in the original model")
-        } else stop("'data' not found, and some variables missing from formula environment")
+                 "than a string in the original model",call.=FALSE)
+        } else stop("'data' not found, and some variables missing from formula environment",call.=FALSE)
     } else {
         if (is.null(data)) {
             if (!is.null(ee <- environment(formula))) {
@@ -1042,7 +1090,7 @@ testLevel <- function()
 ##' Not exported.
 ##'
 ##' TODO:
-##' (1) Write up quite note on theory (e.g. Laplace approximation).
+##' (1) Write up quick note on theory (e.g. Laplace approximation).
 ##' (2) Figure out how to convert between full q-by-q matrix, and
 ##'     the format currently in the postVar attributes of the
 ##'     elements of the output of ranef.
@@ -1065,4 +1113,169 @@ condVar <- function(object) {
 
   LL <- solve(L, Lamt, system = "A")
   s2 * crossprod(Lamt, LL)
+}
+
+mkMinimalData <- function(formula) {
+    vars <- all.vars(formula)
+    nVars <- length(vars)
+    matr <- matrix(0, 2, nVars)
+    data <- as.data.frame(matr)
+    setNames(data, vars)
+}
+
+##' Make template for mixed model parameters
+mkParsTemplate <- function(formula, data){
+    if(missing(data)) data <- mkMinimalData(formula)
+    mfRanef <- model.frame( subbars(formula), data)
+    mmFixef <- model.matrix(nobars(formula) , data)
+    reTrms <- mkReTrms(findbars(formula), mfRanef)
+    cnms <- reTrms$cnms
+    thetaNamesList <- mapply(mkPfun(), names(cnms), cnms)
+    thetaNames <- unlist(thetaNamesList)
+    betaNames <- colnames(mmFixef)
+    list(beta  = setNames(numeric(length( betaNames)),  betaNames),
+         theta = setNames(reTrms$theta, thetaNames),
+         sigma = 1)
+}
+
+##' Make template for mixed model data
+##'
+##' Useful for simulating balanced designs and for
+##' getting started on unbalanced simulations
+##'
+##' @param formula formula
+##' @param data data -- not necessary
+##' @param nGrps number of groups per grouping factor
+##' @param rfunc function for generating covariate data
+##' @param ... additional parameters for rfunc
+mkDataTemplate <- function(formula, data,
+                           nGrps = 2, nPerGrp = 1,
+                           rfunc = NULL, ...){
+    if(missing(data)) data <- mkMinimalData(formula)
+    grpFacNames <- unique(barnames(findbars(formula)))
+    varNames <- all.vars(formula)
+    covariateNames <- setdiff(varNames, grpFacNames)
+    nGrpFac <- length(grpFacNames)
+    nCov <- length(covariateNames)
+    grpFac <- gl(nGrps, nPerGrp)
+    grpDat <- expand.grid(replicate(nGrpFac, grpFac, simplify = FALSE))
+    colnames(grpDat) <- grpFacNames
+    nObs <- nrow(grpDat)
+    if(is.null(rfunc)) rfunc <- function(n, ...) rep(0, n)
+    params <- c(list(nObs), list(...))
+    covDat <- as.data.frame(replicate(nCov, do.call(rfunc, params),
+                                      simplify = FALSE))
+    colnames(covDat) <- covariateNames
+    cbind(grpDat, covDat)
+}
+
+##' very flexible and convenient wrt formula,
+##' very unflexible wrt everything else
+##'
+##' starting to get a little too sugary?
+quickSimulate <- function(formula, nGrps, nPerGrp, family = gaussian) {
+    pr <- mkParsTemplate(formula)
+    dt <- mkDataTemplate(formula, nGrps = nGrps, nPerGrp = nPerGrp, rfunc = rnorm)
+    response <- deparse(formula[[2]])
+    dt[[response]] <- simulate(formula, newdata = dt, newparams = pr, family = family)[[1]]
+    return(dt)
+}
+
+#----------------------------------------------------------------------
+# formula parsing sugar
+#----------------------------------------------------------------------
+
+##' these functions pick up where findbars leaves off, in terms of sugar
+##' @param REtrm an element of the result of findbars
+##' @param REtrms the result of findbars
+##' @return \code{reexpr} gives a one-sided formula with the linear
+##' model formula for the raw model matrix. \code{grpfact} gives an
+##' expression with the name of the grouping factor associated with
+##' the raw model matrix. \code{termnms} gives a character vector with
+##' the names of the random effects terms.
+reexpr <- function(REtrm) substitute( ~ foo, list(foo = REtrm[[2]]))
+grpfact <- function(REtrm) substitute(factor(fac), list(fac = REtrm[[3]]))
+termnms <- function(REtrms) unlist(lapply(REtrms, function(x) paste(deparse(x),collapse=" ")))
+##' list of model matrices
+mmList <- function(object, ...) UseMethod("mmList")
+mmList.merMod <- function(object, ...) mmList(formula(object), model.frame(object))
+mmList.formula <- function(object, frame, ...) {
+    formula <- object
+    bars <- findbars(formula)
+    mmExprs <- lapply(bars, reexpr)
+    fctExprs <- lapply(bars, grpfact)
+    mm <- setNames(lapply(lapply(mmExprs, eval, frame), model.matrix, frame),
+                   termnms(bars))
+    grp <- lapply(lapply(bars,  grpfact), eval, frame)
+    nl <- unlist(lapply(lapply(grp, levels), length))
+    if (any(diff(nl) > 0)) {
+        ord <- rev(order(nl))
+        mm <- mm[ord]
+    }
+    return(mm)
+}
+##' examples
+if(FALSE) {
+library(lme4)
+m <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+gm <- glmer(cbind(incidence, size-incidence) ~ period + (1|herd), cbpp, binomial)
+simForm <- y ~ x + z + (x | f) + (z | g)
+simDat <- lme4:::quickSimulate(simForm, 10, 5)
+simDat <- simDat[simDat$f != "10", ] # unbalancedish design requiring
+                                     # a flip in the order of terms
+sm <- lmer(simForm, simDat)
+lme4:::mmList.merMod(m)
+lme4:::mmList.merMod(gm)
+smmm <- lme4:::mmList.merMod(sm)
+}
+
+nloptwrap <- local({
+    defaultControl <- list(algorithm="NLOPT_LN_BOBYQA",
+                           xtol_abs=1e-6, ftol_abs=1e-6, maxeval=1e5)
+    function(fn,par,lower,upper,control=list(),...) {
+        if(packageVersion("nloptr") < "1.0.2") {
+    ## kluge: we would like to import nloptr.default.options from nloptr
+    ##   up front (it's required by nloptr and isn't accessible if
+    ##   nloptr::nloptr is only imported without the package being loaded)
+    ## (1) adding export(nloptr.default.options) to the NAMESPACE
+    ##     of nloptr doesn't work (package install fails)
+    ## (2) the following code puts a copy of nloptr.default.options into the
+    ##   environment of nloptwrap(), but nloptr can't see it
+    ##   from there when called from within nloptwrap ...
+    ##    if (!exists("nloptr.default.options")) {
+    ##         data("nloptr.default.options",
+    ##              package="nloptr",
+    ##              envir=environment()) }
+    ## (3) solution used here is to load it *into the global environment*
+    ##  every time nloptwrap() is
+    ##     called (if it doesn't exist) -- ugly but works.
+    ##   ... but it provokes a complaint from R CMD check
+    ##   ... loading it into the environment of nloptwrap, or
+    ##       the environment within nloptwrap (i.e. envir=environment()
+    ##       or envir=parent.env(environment()) doesn't work because
+    ##       nloptr doesn't look there for it.
+    ##   ... loading it into the environment of nloptr doesn't work
+    ##       because the environment is locked (and I don't know if/how
+    ##       to unlock it: ?unlockBinding
+    ##  http://stackoverflow.com/questions/19132492/how-to-unlock-environment-in-r
+    ## https://gist.github.com/wch/3280369#file-unlockenvironment-r
+    ## this seems like a lot of effort to go to
+            ## try to deceive R CMD check
+            ee <- .GlobalEnv ## environment(nloptr)
+            if (!exists("nloptr.default.options", envir=ee))
+                data("nloptr.default.options", package="nloptr", envir=ee)
+        }
+        for (n in names(defaultControl))
+            if (is.null(control[[n]])) control[[n]] <- defaultControl[[n]]
+        res <- nloptr(x0=par, eval_f=fn, lb=lower,ub=upper, opts=control, ...)
+        with(res,list(par=solution,
+                      fval=objective,
+                      feval=iterations,
+                      conv=if (status>0) 0 else status,
+                      message=message))
+    }
+})
+
+glmerLaplaceHandle <- function(pp, resp, nAGQ, tol, verbose) {
+    .Call(glmerLaplace, pp, resp, nAGQ, tol, verbose)
 }
