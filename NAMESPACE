@@ -30,7 +30,7 @@ importFrom("Matrix", drop0, rankMatrix, sparseMatrix, cBind,rBind)
 importMethodsFrom("Matrix", coerce, "%*%",crossprod,tcrossprod,
                   t,diag, chol2inv,solve, colSums,rowSums)
 ## other CRAN packages:
-import(ape)
+# import(ape)
 
 importFrom("Rcpp", evalCpp)
 importFrom("minqa", bobyqa)
