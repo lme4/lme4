@@ -46,10 +46,10 @@ zeta <- function(m, zmin=-3, zmax=3, npts=NULL,
         (drc + uuc)[grps]
     }
     zvals <- seq(zmin, zmax, length.out = npts)
-    if (nvar==1) {
+    if (nvar==1) { # scalar-valued random effects
         vv <- vapply(zvals,dc,numeric(ngrps), USE.NAMES=FALSE)
         vv <- t(vv)  ## n.z * n.id
-    } else {
+    } else { # vector-valued random effects
         nz <- length(zvals)
         vv <- mapply(function(x,y) { dc(c(x,y)) },
                          rep(zvals,nz),rep(zvals,each=nz))
