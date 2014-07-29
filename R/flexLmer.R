@@ -5,10 +5,15 @@
 ##' @param specials Special functions in \code{formula}
 ##' @param verbose Verbose
 ##' @return \code{merMod} object
-flexLmer <- function(formula, data, specials = c("cs", "d", "ar1d"), verbose = 0L) {
+flexLmer <- function(formula, data, specials = c("cs", "d", "ar1d"),
+                     verbose = 0L, control = lmerControl(),
+                     weights = NULL) {
     # see example(modular)
-    lmod <- flexFormula(formula, data, family = NULL, specials = specials, verbose = verbose)
-    devfun <- do.call(mkLmerDevfun, lmod)
+    lmod <- flexFormula(formula, data, family = NULL, specials = specials,
+                        verbose = verbose, control = control, weights = weights)
+    devfun <- do.call(mkLmerDevfun,
+		      c(lmod,
+			list(verbose=verbose,control=control)))
     opt <- optimizeLmer(devfun, verbose = verbose)
     # FIXME: this should not be necessary...
     environment(devfun)$pp$theta <- opt$par
@@ -28,7 +33,8 @@ flexGlmer <- function(formula, data, family = gaussian(), specials = c("cs", "d"
 
 }
 
-flexFormula <- function(formula, data, family = NULL, specials = c("cs","d","ar1d"), verbose = 0L) {
+flexFormula <- function(formula, data, family = NULL, specials = c("cs","d","ar1d"),
+                        verbose = 0L, control, weights = NULL) {
     # split off reGenerator terms:
     frmlterms <- terms(formula, specials = specials)
     termnames <- attr(frmlterms, "variables")
@@ -39,8 +45,11 @@ flexFormula <- function(formula, data, family = NULL, specials = c("cs","d","ar1
         collapse = "+")))
     # see example(modular)
     if(is.null(family)) {
-        return( lFormula(lmerformula, data, reGenerators = reGenerators))
+        return( lFormula(lmerformula, data, reGenerators = reGenerators,
+                         control = control, weights = weights))
     } else {
-        return(glFormula(lmerformula, data, reGenerators = reGenerators, family = family))
+        return(glFormula(lmerformula, data, reGenerators = reGenerators,
+                         control = control, weights = weights,
+                         family = family))
     }
 }

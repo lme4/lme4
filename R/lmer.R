@@ -1885,7 +1885,7 @@ getME <- function(object,
            "flist" = object@flist,
            "fixef" = fixef(object),
 	   "beta" = object@beta,
-           "theta"= setNames(th,tnames(object)),
+           "theta"= th, # FIXME: tnames doesn't work on flexLambda --> setNames(th,tnames(object)),
 	   "ST" = setNames(vec2STlist(object@theta, n = vapply(cnms, length, 0L)),
 			  names(cnms)),
            "Tlist" = {

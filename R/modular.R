@@ -310,7 +310,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 	mc$formula <- formula
 	
 	m <- match(c("data", "subset", "weights", "na.action", "offset"),
-			   names(mf), 0)
+                   names(mf), 0)
 	mf <- mf[c(1, m)]
 	mf$drop.unused.levels <- TRUE
 	mf[[1]] <- as.name("model.frame")
