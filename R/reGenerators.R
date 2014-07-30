@@ -19,7 +19,7 @@ d <- function(formula, iid=FALSE){
 			nl <- length(levels(ff))
 			
 			#initialize transposed design
-			Ztl <- mkZt(ff, bar, fr)
+			Ztl <- mkZt0(ff, bar, fr)
 			Zt <- Ztl$Zt
 			nc <- Ztl$nc
 			cnms <- Ztl$cnms

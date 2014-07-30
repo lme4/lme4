@@ -135,7 +135,7 @@ parseReTrm <- function(bar, fr){
                                         # transposed model matrix
     tmm <- t(model.matrix(eval(substitute(~ lhs, list(lhs=bar[[2]]))), fr))
                                         # number of columns of model matrix
-    nc <- nrow(design)
+    nc <- nrow(tmm)
                                         # column names of the model matrix
     cnms <- row.names(tmm)
                                         # number of realisations of random
