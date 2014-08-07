@@ -616,7 +616,9 @@ mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L,
         rho$verbose     <- as.integer(verbose)
 
         ## initialize (from mustart)
-        .Call(glmerLaplace, rho$pp$ptr(), rho$resp$ptr(), 0L, control$tolPwrss, verbose)
+        .Call(glmerLaplace, rho$pp$ptr(), rho$resp$ptr(), 0L,
+              control$tolPwrss, as.integer(30), # maxit = 30
+              verbose)
         rho$lp0         <- rho$pp$linPred(1) # each pwrss opt begins at this eta
         rho$pwrssUpdate <- glmerPwrssUpdate
     }

@@ -2,13 +2,14 @@
 \alias{glmerLaplaceHandle}
 \title{Handle for \code{glmerLaplace}}
 \usage{
-glmerLaplaceHandle(pp, resp, nAGQ, tol, verbose)
+glmerLaplaceHandle(pp, resp, nAGQ, tol, maxit, verbose)
 }
 \arguments{
   \item{pp}{\code{\link{merPredD}} object}
   \item{resp}{\code{\link{lmResp}} object}
   \item{nAGQ}{see \code{\link{glmer}}}
   \item{tol}{tolerance}
+  \item{maxit}{maximum number of pwrss iterations}
   \item{verbose}{display optimizer progress}
 }
 \description{
