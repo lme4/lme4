@@ -124,26 +124,26 @@ mkReTrms <- function(bars, fr, reGenerators=NULL) {
                    phifun1=function(phi) { } ## no-op
                    )
 	ll
-}
+} # mkReTrms
 
 ##' Experimental
-parseReTrm <- function(bar, fr){
-                                        # grouping factor
-    ff <- getGrouping(bar, fr)
-                                        # number of levels
-    nl <- length(levels(ff))
-                                        # transposed model matrix
-    tmm <- t(model.matrix(eval(substitute(~ lhs, list(lhs=bar[[2]]))), fr))
-                                        # number of columns of model matrix
-    nc <- nrow(tmm)
-                                        # column names of the model matrix
-    cnms <- row.names(tmm)
-                                        # number of realisations of random
-                                        # coefficient
-    nb <- nl*nc
-                                        # how many var/cov-parameters
-    ntheta <- as.integer((nc * (nc+1))/2)    
-}    
+## parseReTrm <- function(bar, fr){
+##                                         # grouping factor
+##     ff <- getGrouping(bar, fr)
+##                                         # number of levels
+##     nl <- length(levels(ff))
+##                                         # transposed model matrix
+##     tmm <- t(model.matrix(eval(substitute(~ lhs, list(lhs=bar[[2]]))), fr))
+##                                         # number of columns of model matrix
+##     nc <- nrow(tmm)
+##                                         # column names of the model matrix
+##     cnms <- row.names(tmm)
+##                                         # number of realisations of random
+##                                         # coefficient
+##     nb <- nl*nc
+##                                         # how many var/cov-parameters
+##     ntheta <- as.integer((nc * (nc+1))/2)    
+## }    
 
 
 ## mkReTrms <- function(bars, fr) {
@@ -248,7 +248,7 @@ mkReTrm <- function(bar, fr) {
 		 }),
 		 upper = upper,
 		 lower = lower)
-}
+} # mkReTrm
 
 ##' @title Extract the grouping factor from a random effect specification
 ##' @param bar the random effect specification as returned by \code{findbars}

@@ -266,7 +266,7 @@ napredictx <- function(x,...) {
 ##' @export
 lFormula <- function(formula, data=NULL, REML = TRUE,
 					 subset, weights, na.action, offset, contrasts = NULL,
-					 control=lmerControl(), ...)
+					 control = lmerControl(), ...)
 {
 ## <<<<<<< HEAD
 	control <- control$checkControl ## this is all we really need
@@ -374,7 +374,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
              scaleX.chk <- eval(formals(lmerControl)[["check.scaleX"]])[[1]]
         X <- checkScaleX(X, kind=scaleX.chk)
 
-	list(fr = fr, X = X, reTrms = reTrms, REML = REML, formula = formula)
+	list(fr = fr, X = X, reTrms = reTrms, REML = REML,
+             formula = formula, reGenerators = reGenerators)
 ## =======
 ##     control <- control$checkControl ## this is all we really need
 ##     mf <- mc <- match.call()
@@ -726,7 +727,8 @@ glFormula <- function(formula, data=NULL, family = gaussian,
         scaleX.chk <- eval(formals(lmerControl)[["check.scaleX"]])[[1]]
     X <- checkScaleX(X, kind=scaleX.chk)
 
-    list(fr = fr, X = X, reTrms = reTrms, family = family, formula = formula)
+    list(fr = fr, X = X, reTrms = reTrms, family = family,
+         formula = formula, reGenerators = reGenerators)
 }
 
 ##' @rdname modular

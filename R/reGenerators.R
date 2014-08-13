@@ -9,63 +9,73 @@
 #'     \code{lme4} notation, i.e. \code{~(<covariates> | <grouping>)}.
 #' @param iid enforce identical variances for each component of the random effects.
 #' @return a function creating a return object like \code{mkReTrm}
-d <- function(formula, iid=FALSE){
-	mkReTrmDiagonal <- local({
-		bar <- formula[[2]][[2]]
-		iid <- iid
-		function(fr){
-			ff <- getGrouping(bar, fr)
-			
-			nl <- length(levels(ff))
-			
-			#initialize transposed design
-			Ztl <- mkZt0(ff, bar, fr)
-			Zt <- Ztl$Zt
-			nc <- Ztl$nc
-			cnms <- Ztl$cnms
-			rm(Ztl)
-			
-			#enforce identical variance for all effects?
-			if(iid){
-				ntheta <- 1 
-				# which theta goes where in Lambdat
-				Lind <- rep(1, times=nl*nc)
-			} else {
-				ntheta <- nc 
-				# which theta goes where in Lambdat
-				Lind <- rep(1:ntheta, times=nl)
-			}
-			
-			#initialize variances with  1
-			theta <- rep(1, ntheta)
-			
-			# initialize the upper triangular Cholesky factor for Cov(b)
-			Lambdat <- as(do.call(bdiag, replicate(nl, list(Diagonal(nc)))),
-						  "dgCMatrix")
-			
-			
-			# upper/lower limits:
-			upper <- rep(Inf, ntheta)
-			lower <- rep(0, ntheta)
-			
-			list(ff = ff, Zt = Zt, nl = nl, cnms = cnms,
-				 nb = nl*nc, #how many ranefs
-				 ntheta = ntheta, # how many var-cov. params
-				 nc = nc, #how many ranefs per level
-				 nlambda = nl*nc, #how many non-zeroes in Lambdat 
-				 Lambdat=Lambdat,
-				 theta = theta,
-				 Lind = Lind,
-				 updateLambdatx = local({
-				 	Lind <- Lind
-				 	function(theta) theta[Lind]
-				 }),
-				 upper = upper,
-				 lower = lower, 
-				 special = TRUE)
-		}
-	})
-	mkReTrmDiagonal
+d <- function(formula, iid = FALSE){
+    mkReTrmDiagonal <- local({
+        
+        ## ----------------------------------------
+        ## reGenerator name
+        ## ----------------------------------------
+        RETypeName <- paste("diagonal",
+                            ifelse(iid, "IID", ""),
+                            collapse = "")
+        
+        
+        
+        bar <- formula[[2]][[2]]
+        iid <- iid
+        function(fr){
+            ff <- getGrouping(bar, fr)
+            
+            nl <- length(levels(ff))
+            
+                                        #initialize transposed design
+                Ztl <- mkZt0(ff, bar, fr)
+            Zt <- Ztl$Zt
+            nc <- Ztl$nc
+            cnms <- Ztl$cnms
+            rm(Ztl)
+            
+                                        #enforce identical variance for all effects?
+            if(iid){
+                ntheta <- 1 
+                                        # which theta goes where in Lambdat
+                Lind <- rep(1, times=nl*nc)
+            } else {
+                ntheta <- nc 
+                                        # which theta goes where in Lambdat
+                Lind <- rep(1:ntheta, times=nl)
+            }
+            
+                                        #initialize variances with  1
+            theta <- rep(1, ntheta)
+            
+                                        # initialize the upper triangular Cholesky factor for Cov(b)
+            Lambdat <- as(do.call(bdiag, replicate(nl, list(Diagonal(nc)))),
+                          "dgCMatrix")
+            
+            
+                                        # upper/lower limits:
+            upper <- rep(Inf, ntheta)
+            lower <- rep(0, ntheta)
+            
+            list(ff = ff, Zt = Zt, nl = nl, cnms = cnms,
+                 nb = nl*nc, #how many ranefs
+                 ntheta = ntheta, # how many var-cov. params
+                 nc = nc, #how many ranefs per level
+                 nlambda = nl*nc, #how many non-zeroes in Lambdat 
+                 Lambdat = Lambdat,
+                 theta = theta,
+                 Lind = Lind,
+                 updateLambdatx = local({
+                     Lind <- Lind
+                     function(theta) theta[Lind]
+                 }),
+                 upper = upper,
+                 lower = lower, 
+                 special = TRUE)
+        }
+    })
+    mkReTrmDiagonal
 }
 
 #' @title (Variance-hetergoneous) compound symmetry random effects 
@@ -294,12 +304,13 @@ cs <- function(formula, init=NULL, het=TRUE){
 #' \code{lme4} notation, i.e. \code{~(<time> | <id>)}. \code{~(. |
 #' <id>)} is a valid specification that simply uses the rownumbers as
 #' time index. \code{<time>} cannot be a factor.
+#' @param order NOT YET IMPLEMENTED
 #' @param init (optional) initial values for the standard deviations
 #' and the correlation.  If not supplied, sd's will be 1 and the
-#' inital correlation will be .1.
+#' inital correlation will be .2.
 #' @param het NOT YET IMPLEMENTED
 #' @param max.lag NOT YET IMPLEMENTED
-#' @return a function creating a return object like \code{mkReTrm} 
+#' @return a function creating a return object like \code{mkReTrm}
 ar1d <- function(formula=~(.|1), order=1, init=c(1, .2), het=NULL, max.lag=NULL){
 	stopifnot(all(order==1))
 	
