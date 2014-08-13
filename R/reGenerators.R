@@ -19,7 +19,19 @@ d <- function(formula, iid = FALSE){
                             ifelse(iid, "IID", ""),
                             collapse = "")
         
+        ## ----------------------------------------
+        ## function for printing parameter
+        ## estimates
+        ## ----------------------------------------
+        parEstPrinter <- function(theta, phi = NULL) {
+            cat("Diagonal covariance structure:\n")
+            cat("------------------------------\n\n")
+            cat("standard deviations")
+        }
         
+        REtnames <- function(theta, cnms) {
+            lme4:::pfun()
+        }
         
         bar <- formula[[2]][[2]]
         iid <- iid
@@ -29,10 +41,11 @@ d <- function(formula, iid = FALSE){
             nl <- length(levels(ff))
             
                                         #initialize transposed design
-                Ztl <- mkZt0(ff, bar, fr)
+            Ztl <- mkZt0(ff, bar, fr)
             Zt <- Ztl$Zt
             nc <- Ztl$nc
             cnms <- Ztl$cnms
+            trmNm <- 
             rm(Ztl)
             
                                         #enforce identical variance for all effects?

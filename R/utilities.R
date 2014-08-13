@@ -31,7 +31,7 @@ if(getRversion() < "2.15")
 ##' @importMethodsFrom Matrix coerce
 ##' @family utilities
 ##' @export
-mkReTrms <- function(bars, fr, reGenerators=NULL) {
+mkReTrms <- function(bars, fr, reGenerators = NULL) {
 	if (!length(bars) & is.null(reGenerators))
 		stop("No random effects terms specified in formula")
 	reTrms <- list()
@@ -48,7 +48,7 @@ mkReTrms <- function(bars, fr, reGenerators=NULL) {
 	} 
 	if(!is.null(reGenerators)){
 		reTrms2 <- lapply(reGenerators, function(reGenerator){
-			reGenerator(fr)	
+			c(reGenerator(fr), list(reGenerator = reGenerator))
 		})
 		reTrms <- c(reTrms, reTrms2)
 		nl <- c(nl, unlist(lapply(reTrms2, "[[", "nl")))
@@ -118,10 +118,10 @@ mkReTrms <- function(bars, fr, reGenerators=NULL) {
                    flist = fl,
                    cnms = cnms,
                    special = special,
-                   nlambda=nlambda,
-                   ntheta=ntheta,
-                   phi=numeric(0),
-                   phifun1=function(phi) { } ## no-op
+                   nlambda = nlambda,
+                   ntheta = ntheta,
+                   phi = numeric(0),
+                   phifun1 = function(phi) { } ## no-op
                    )
 	ll
 } # mkReTrms

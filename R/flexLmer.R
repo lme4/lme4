@@ -18,7 +18,8 @@ flexLmer <- function(formula, data, specials = c("cs", "d", "ar1d"),
     # FIXME: this should not be necessary...
     environment(devfun)$pp$theta <- opt$par
     out <- list(model = mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr), 
-                opt = opt, devfun = devfun, reGenerators = lmod$reGenerators)
+                opt = opt, devfun = devfun, reGenerators = lmod$reGenerators,
+                trmnames = lmod$trmnames)
     class(out) <- "flexMerMod"
     return(out)
 }
@@ -51,24 +52,40 @@ splitregen <- function(formula, specials = c("d", "cs", "ar1d")) {
             if (length(term) == 2) return(fbas(term[[2]]))
             c(fbas(term[[2]]), fbas(term[[3]]))
         }
-        splits <- fbas(formula)
-        splitID <- sapply(lapply(splits, "[[", 1), as.character)
-        splitStan <- splits[splitID == "("]
-        splitSpec <- splits[!(splitID == "(")]
+        formula <- expandDoubleVerts(formula)
+                                        # split formula into separate
+                                        # random effects terms
+                                        # (including special terms)
+        formSplits <- fbas(formula)
+                                        # vector to identify what
+                                        # special (by name), or give
+                                        # "(" for standard terms
+        formSplitID <- sapply(lapply(formSplits, "[[", 1), as.character)
+                                        # standard RE terms
+        formSplitStan <- formSplits[formSplitID == "("]
+                                        # special RE terms
+        formSplitSpec <- formSplits[!(formSplitID == "(")]
 
-        if(length(splitSpec) == 0) stop(
-                     "no special covariance structures",
+        if(length(formSplitSpec) == 0) stop(
+                     "no special covariance structures. ",
                      "please use lmer, not flexLmer")
-        reGenerators <- as.formula(paste("~ ", paste(splitSpec, collapse = " + ")))   
 
-        if(length(splitStan) == 0) {
+                                        # construct the formula for
+                                        # the specials only
+        reGenerators <- as.formula(paste("~ ", paste(formSplitSpec, collapse = " + ")))   
+
+
+                                        # construct the standard
+                                        # 'lmer'-style formula
+                                        # (without the specials)
+        if(length(formSplitStan) == 0) {
             lmerformula <- nobars(formula)
         } else {
             lmerformula <- formula(paste(formula[[2]],                        ## response
                                          "~",
                                          as.character(nobars(formula))[[3]],  ## fixed effects
                                          " + ",
-                                         paste(splitStan, collapse = " + "))) ## standard random effects
+                                         paste(formSplitStan, collapse = " + "))) ## standard random effects
         }
         
     }
@@ -84,7 +101,10 @@ splitregen <- function(formula, specials = c("d", "cs", "ar1d")) {
                                                collapse = "+")))
     }
     return(list(lmerformula = lmerformula,
-                reGenerators = reGenerators))
+                reGenerators = reGenerators,
+                trmnames = c(
+                    sapply(formSplitStan, deparse),
+                    sapply(formSplitSpec, deparse))))
 }
 
 
@@ -95,14 +115,15 @@ flexFormula <- function(formula, data, family = NULL, specials = c("cs","d","ar1
                                         # see example(modular)
     if(is.null(family)) {
         if(missing(control)) control = lmerControl()
-        return( lFormula(splt$lmerformula, data, reGenerators = splt$reGenerators,
-                         control = control, weights = weights))
+        parsedForm <- lFormula(splt$lmerformula, data, reGenerators = splt$reGenerators,
+                               control = control, weights = weights)
     } else {
         if(missing(control)) control = glmerControl()
-        return(glFormula(splt$lmerformula, data, reGenerators = splt$reGenerators,
-                         control = control, weights = weights,
-                         family = family))
+        parsedForm <- glFormula(splt$lmerformula, data, reGenerators = splt$reGenerators,
+                                control = control, weights = weights,
+                                family = family)
     }
+    return(c(parsedForm, list(trmnames = splt$trmnames)))
 }
 
 

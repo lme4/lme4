@@ -1826,7 +1826,8 @@ getME <- function(object,
                   "devcomp", "offset", "lower", "upper",
                   "N", "n", "p", "q",
                   "p_i", "l_i", "q_i", "k", "m_i", "m",
-                  "cnms"))
+                  "cnms",
+                  "splits","thetaSplit","thfun"))
 {
     if(missing(name)) stop("'name' must not be missing")
     stopifnot(is(object,"merMod"))
@@ -1842,6 +1843,7 @@ getME <- function(object,
     cmp  <- dc $ cmp
     cnms <- object@cnms
     dims <- dc $ dims
+    splits <- environment(PR$thfun)$splits
     Tpfun <- function(cnms) {
 	ltsize <- function(n) n*(n+1)/2 # lower triangle size
 	cLen <- cumsum(ltsize(vapply(cnms,length, 1L)))
@@ -1926,6 +1928,9 @@ getME <- function(object,
            "offset" = rsp$offset,
            "lower" = object@lower,
            "upper" = object@upper,
+           "splits" = splits,
+           "thetaSplit" = split(th, splits),
+           "thfun" = PR$thfun,
             ## FIXME: current version gives lower bounds for theta parameters only -- these must be extended for [GN]LMMs -- give extended value including -Inf values for beta values?
 	   "..foo.." = # placeholder!
 	   stop(gettextf("'%s' is not implemented yet",
