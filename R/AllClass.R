@@ -932,6 +932,13 @@ setClass("glmerMod", representation(resp="glmResp"), contains="merMod")
 ##' @export
 setClass("nlmerMod", representation(resp="nlsResp"), contains="merMod")
 
+setClass("flexLmerMod", representation(opt = "list",
+                                       devfun = "function",
+                                       reGenerators = "list",
+                                       trmnames = "character"),
+         contains = "lmerMod")
+
+
 ##' Generator object for the rePos (random-effects positions) class
 ##'
 ##' The generator object for the \code{\linkS4class{rePos}} class used

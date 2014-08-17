@@ -37,12 +37,12 @@ flexGlmer <- function(formula, data, family = gaussian(), specials = c("cs", "d"
     return(out)
 }
 
-splitregen <- function(formula, specials = c("d", "cs", "ar1d")) {
+splitForm <- function(formula, specials = c("d", "cs", "ar1d")) {
 
     if(TRUE) { ## new procedure for spliting specials
         
         ## Recursive function: (f)ind (b)ars (a)nd (s)pecials
-        ## cf. fb function in findbars
+        ## cf. fb function in findbars (i.e. this is a little DRY)
         fbas <- function(term) {
             if (is.name(term) || !is.language(term)) return(NULL)
             for (sp in specials) if (term[[1]] == as.name(sp)) return(term)
@@ -111,7 +111,7 @@ splitregen <- function(formula, specials = c("d", "cs", "ar1d")) {
 flexFormula <- function(formula, data, family = NULL, specials = c("cs","d","ar1d"),
                         verbose = 0L, control, weights = NULL) {
                                         # split off reGenerator terms:
-    splt <- splitregen(formula, specials)
+    splt <- splitForm(formula, specials)
                                         # see example(modular)
     if(is.null(family)) {
         if(missing(control)) control = lmerControl()
