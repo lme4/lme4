@@ -295,6 +295,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 		reGenVars <- reGenVars[reGenVars!="."]
 		# ...and initialize them
 		reGenerators <- sapply(attr(terms(reGenerators), "variables"), eval)[-1]
+                names(reGenerators) <- sapply(lapply(reGenerators, environment),
+                                              "[[", "reTrmName")
 	}
 
         cstr <- "check.formula.LHS"
@@ -318,7 +320,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 	
 	# also make sure reGenerator variables show up in mf
 	if(hasReGen && length(reGenVars)){
-		reGenFrml <- formula(paste(".~.+",paste(reGenVars, collapse="+")))
+		reGenFrml <- formula(paste(".~.+", paste(reGenVars, collapse = "+")))
 		fr.form <- update(fr.form, reGenFrml) 
 	}
 		
@@ -328,8 +330,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
         ## of the *formula* (see 'extras', which is anything passed in ...),
         ## so they have to be put there ...
         for (i in c("weights", "offset")) {
-        if (!eval(bquote(missing(x=.(i)))))
-            assign(i,get(i,parent.frame()),environment(fr.form))
+        if (!eval(bquote(missing(x = .(i)))))
+            assign(i, get(i, parent.frame()), environment(fr.form))
         }
 	mf$formula <- fr.form
 	fr <- eval(mf, parent.frame())

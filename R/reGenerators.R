@@ -11,14 +11,21 @@
 #' @return a function creating a return object like \code{mkReTrm}
 d <- function(formula, iid = FALSE){
     mkReTrmDiagonal <- local({
-        
-        ## ----------------------------------------
+
+        ## ------------------------------------------------------------
         ## reGenerator name
-        ## ----------------------------------------
-        RETypeName <- paste("diagonal",
+        ## ------------------------------------------------------------
+        reTypeName <- paste("diagonal",
                             ifelse(iid, "IID", ""),
-                            collapse = "")
+                            sep = "")
         
+        ## ------------------------------------------------------------
+        ## generate a name for the random effect term
+        ## ------------------------------------------------------------
+        reTrmName <- paste(reTypeName,
+                           deparse(grpfact(formula[[2]][[2]])[[2]]),
+                           sep = ".")
+
         ## ----------------------------------------
         ## function for printing parameter
         ## estimates
@@ -45,7 +52,7 @@ d <- function(formula, iid = FALSE){
             Zt <- Ztl$Zt
             nc <- Ztl$nc
             cnms <- Ztl$cnms
-            trmNm <- 
+            # trmNm <- 
             rm(Ztl)
             
                                         #enforce identical variance for all effects?

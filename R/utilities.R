@@ -38,21 +38,22 @@ mkReTrms <- function(bars, fr, reGenerators = NULL) {
 	nl <- numeric(0)
 	special <- logical(0)
 	if(length(bars)){
-		stopifnot(is.list(bars), all(sapply(bars, is.language)),
-				  inherits(fr, "data.frame"))
-		names(bars) <- unlist(lapply(bars, function(x) deparse(x[[3]])))
-
-		reTrms <- lapply(bars, mkReTrm, fr=fr)
-		nl <- unlist(lapply(reTrms, "[[", "nl")) 
-		special <- rep(FALSE, length(nl))
-	} 
+            stopifnot(is.list(bars), all(sapply(bars, is.language)),
+                      inherits(fr, "data.frame"))
+            names(bars) <- unlist(lapply(bars, function(x) deparse(x[[3]])))
+            
+            reTrms <- lapply(bars, mkReTrm, fr=fr)
+            nl <- unlist(lapply(reTrms, "[[", "nl")) 
+            special <- rep(FALSE, length(nl))
+	}
 	if(!is.null(reGenerators)){
-		reTrms2 <- lapply(reGenerators, function(reGenerator){
-			c(reGenerator(fr), list(reGenerator = reGenerator))
-		})
-		reTrms <- c(reTrms, reTrms2)
-		nl <- c(nl, unlist(lapply(reTrms2, "[[", "nl")))
-		special <- c(special, rep(TRUE, length(reTrms2)))
+            # FIXME: maybe need to set names(reGenerators)?
+            reTrms2 <- lapply(reGenerators, function(reGenerator){
+                c(reGenerator(fr), list(reGenerator = reGenerator))
+            })
+            reTrms <- c(reTrms, reTrms2)
+            nl <- c(nl, unlist(lapply(reTrms2, "[[", "nl")))
+            special <- c(special, rep(TRUE, length(reTrms2)))
 	}
 	nreTrms <- length(reTrms)
 	
@@ -278,7 +279,7 @@ getGrouping <- function(bar, fr){
 ##' @return a factor  
 getModelMatrix <- function(bar, fr){
     model.matrix(eval(substitute(~ lhs, list(lhs=bar[[2]]))), fr)
-}    
+} 
 
 ##' @title Generate (transpose of) random effect design matrix
 ##' @param ff the grouping factor
@@ -290,7 +291,7 @@ getModelMatrix <- function(bar, fr){
 mkZt0 <- function(ff, bar, fr){
 	nl <- length(levels(ff))
 	
-	#design for covariates:
+	# design for covariates:
 	design <- t(model.matrix(eval(substitute(~ lhs, list(lhs=bar[[2]]))), fr))
 	
 	nc <- nrow(design)

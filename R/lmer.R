@@ -1929,7 +1929,7 @@ getME <- function(object,
            "lower" = object@lower,
            "upper" = object@upper,
            "splits" = splits,
-           "thetaSplit" = split(th, splits),
+           "thetaSplit" = setNames(split(th, splits), names(cnms)),
            "thfun" = PR$thfun,
             ## FIXME: current version gives lower bounds for theta parameters only -- these must be extended for [GN]LMMs -- give extended value including -Inf values for beta values?
 	   "..foo.." = # placeholder!

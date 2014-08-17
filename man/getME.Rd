@@ -11,7 +11,8 @@ getME(object,
                "fixef", "beta", "theta", "ST", "REML", "is_REML",
                "n_rtrms", "n_rfacs", "N", "n", "p", "q",
                "p_i", "l_i", "q_i", "k", "m_i", "m",
-               "cnms", "devcomp", "offset", "lower"))
+               "cnms", "devcomp", "offset", "lower",
+               "splits", "thetaSplit", "thfun"))
 }
 \arguments{
   \item{object}{a fitted mixed-effects model of class
@@ -136,6 +137,12 @@ getME(object,
       \item{offset}{model offset}
       \item{lower}{lower bounds on model parameters (random effects
 	parameters only).}
+      \item{splits}{indicate the random effects term that each element
+	of \code{theta} parameterises}
+      \item{thetaSplit}{\code{theta} vector broken up into one list
+	element for each random effects term}
+      \item{thfun}{function for mapping \code{theta} into the non-zero
+	elements of \code{Lambdat}}
     }
   }
 }
