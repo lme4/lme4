@@ -160,15 +160,18 @@ m1.z <- zeta(m1)
 ```
 
 ```{r fig2}
-plot(m1.z)
+plot(m1.z,layout=c(5,3))
 ```
 
 ```{r fig3}
-plot(m1.z,scaled=TRUE)
+plot(m1.z,scaled=TRUE,layout=c(5,3))
 ```
 
-Now we need a model with a vector-valued RE for an example.
-I tried simulating something  before, but that appears (??)
+### Example with vector-valued RE
+
+I tried simulating a Poisson random-slopes model,
+but at least at first glance it looked too good.
+Try the toenail data 
 
 ```{r toenailfit,cache=TRUE}
 toenail <- read.csv("toenail.csv")
@@ -190,6 +193,7 @@ a version where we scale by the bivariate normal).
 I think this actually *should* work, but this example
 is very badly behaved in the corner ...
 
+Just look at patient #1 to try to sort out what's going on here ...
 ```{r ratios}
 zz <- m2.z$zvals
 mm <- 2*pi*dnorm2d(sqrt(m2.z$devarr[,,1]))
@@ -201,27 +205,9 @@ persp(zz,zz,mm/m0,col="pink",main="ratio")
 persp(zz,zz,log(mm/m0),col="lightgreen",main="log ratio")
 ```
 
-```{r eval=FALSE}
-## also wrong?
-dnorm2dsq <- function(x) {
-    dnorm(sqrt(x))/sqrt(2*pi)  ## == exp(-x^2/2)/(2*pi)
-}
+### Further thoughts
 
-contourplot(dnorm2dsq(dev)/dnorm2dsq(sqrt(zval1^2+zval2^2)) ~ zval1*zval2|id,
-             scales=list(z=list(relation="free")),
-             data=m2.zm,
-             labels=FALSE,
-             type=c("g","l"), aspect=0.6, layout=c(5,5),
-             xlab="z", ylab="density")
-```
+Does this really matter, or are we only in trouble if
+we put quadrature points there?
 
-```{r echo=FALSE,eval=FALSE}
-## old testing stuff
-    ss <- subset(melt(m2.z),id=="1")
-    ss0 <- m2.z$devarr[,,1]
-    contour(ss0)
-    contour(matrix(exp(-ss$dev/2)/(2*pi),nrow=31))
-    contourplot(exp(-dev/2)/(2*pi)~zval1*zval2,data=ss)
-```
-
-
+`http://tigger.uic.edu/~hedeker/long.html`
