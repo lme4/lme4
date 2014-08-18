@@ -1,7 +1,11 @@
 ##
 library(lme4)
-require(optimx)
+require(optimx)   ## for optim optimizers
+   ## (optimx-specific optimizers require explicit gradients --
+   ##  we could use numDeriv::grad, but this seems to defeat
+   ##  the intention)
 require(nloptr)
+require(dfoptim)  ## for nmkb
 
 namedList <- function(...) {
     L <- list(...)
@@ -11,20 +15,20 @@ namedList <- function(...) {
     setNames(L,nm)
 }
 
+## incorporated in lme4 1.1-7
 ## originally from https://github.com/lme4/lme4/issues/98 :
-
-nloptWrap <- function(fn, par, lower, upper, control=list(), ...) {
-    defaultControl <- list(xtol_rel = 1e-6, maxeval = 1e5)
-    for (n in names(defaultControl))
-      if (is.null(control[[n]])) control[[n]] <- defaultControl[[n]]
-    res <- nloptr(x0=par, eval_f=fn, lb=lower, ub=upper, opts=control, ...)
-    ##     ------
-    with(res,list(par=solution,
-                  fval=objective,
-                  feval=iterations,
-                  conv=if (status>0) 0 else status,
-                  message=message))
-}
+## nloptWrap <- function(fn, par, lower, upper, control=list(), ...) {
+##     defaultControl <- list(xtol_rel = 1e-6, maxeval = 1e5)
+##     for (n in names(defaultControl))
+##       if (is.null(control[[n]])) control[[n]] <- defaultControl[[n]]
+##     res <- nloptr(x0=par, eval_f=fn, lb=lower, ub=upper, opts=control, ...)
+##     ##     ------
+##     with(res,list(par=solution,
+##                   fval=objective,
+##                   feval=iterations,
+##                   conv=if (status>0) 0 else status,
+##                   message=message))
+## }
 
 ##' Attempt to re-fit a [g]lmer model with a range of optimizers.
 ##' The default is to use all known optimizers for R that satisfy the
@@ -54,7 +58,7 @@ nloptWrap <- function(fn, par, lower, upper, control=list(), ...) {
 ##' sapply(gm_all,getME,"theta")         ## theta parameters
 ##' !sapply(gm_all,inherits,"try-error") ## was fit OK?
 allFit <- function(m, meth.tab = cbind(optimizer=
-                      rep(c("bobyqa","Nelder_Mead", "optimx",  "nloptWrap"),
+                      rep(c("bobyqa","Nelder_Mead", "optimx",  "nloptwrap"),
                           c(    1,         1,           2,         2)),
                       method= c("",        "",  "nlminb","L-BFGS-B",
                                "NLOPT_LN_NELDERMEAD", "NLOPT_LN_BOBYQA")),
@@ -94,7 +98,8 @@ summary.allfit <- function(object, ...) {
     feval <- sapply(object[which.OK],function(x) x@optinfo$feval)
     sdcor <- t(sapply(object[which.OK],function(x) {
         aa <- as.data.frame(VarCorr(x))
-        setNames(aa[,"sdcor"],lme4:::tnames(object[which.OK][[1]]))
+        setNames(aa[,"sdcor"],c(lme4:::tnames(object[which.OK][[1]]),
+                                if (isLMM(object[[1]])) "sigma" else NULL))
     }))
     namedList(which.OK,msgs,fixef,llik,sdcor,times,feval)
 }
