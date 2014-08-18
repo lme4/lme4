@@ -102,9 +102,16 @@ glmer <- function(formula, data=NULL, family = gaussian,
     if (nAGQ==0 && devFunOnly) return(devfun)
     ## optimize deviance function over covariance parameters
 
-    if (is.list(start) && !is.null(start$fixef))
-        if (nAGQ==0) stop("should not specify both start$fixef and nAGQ==0")
-
+    ## FIXME: perhaps should be in glFormula instead??
+    if (is.list(start)) {
+        start.bad <- setdiff(names(start),c("theta","fixef"))
+        if (length(bad)>0) {
+            stop(sprintf("bad name(s) for start vector (%s); should be %s and/or %s"),paste(start.bad,collapse=", "),shQuote("theta"),shQuote(fixef))
+        }
+        if (!is.null(start$fixef) && nAGQ==0)
+            stop("should not specify both start$fixef and nAGQ==0")
+    }
+    
     ## FIX ME: allow calc.derivs, use.last.params etc. if nAGQ=0
     opt <- optimizeGlmer(devfun,
                    optimizer = control$optimizer[[1]],
