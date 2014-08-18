@@ -237,24 +237,6 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
   will suppress warnings that the number of observations is less than
   the rank of the random effects model matrix \code{Z}.
 }
-\section{Troubleshooting}{
-  Some additional information about specific warnings and what to do
-  about them:
-  \itemize{
-    \item \code{Model failed to converge with max|grad| ...} The scaled
-    gradient at the fitted (RE)ML estimates
-    is worryingly large. Try switching optimizers to see if you
-    get consistent results, or
-    compute values of the deviance in the neighbourhood of the estimated
-    parameters to double-check that \code{lme4} has really found a
-    local optimum.
-    \item \code{Model is nearly unidentifiable ... Rescale variables?}
-    The Hessian (curvature matrix) at the maximum likelihood or REML
-    estimates has a large eigenvalue, indicating that the surface is
-    nearly flat in some direction. Consider centering and/or scaling
-    continuous predictor variables.
-  }
-}
 \examples{
 str(lmerControl())
 str(glmerControl())
