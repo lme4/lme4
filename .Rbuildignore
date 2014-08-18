@@ -17,4 +17,10 @@ clean
 \.bbl$
 \.blg$
 \.out$
+\.tex$
+\.tar.gz$
 jss\.cls
+framed.sty
+a4wide.sty
+figure/.*
+cache/.*
