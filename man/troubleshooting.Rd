@@ -1,8 +1,9 @@
 \name{troubleshooting}
 \alias{troubleshooting}
 \title{Troubleshooting}
-
-This page attempts to summarize some of the 
+\description{
+  This page attempts to summarize some of the common problems with
+  fitting \code{[gn]lmer} models and how to troubleshoot them.
   \itemize{
     \item \code{Model failed to converge with max|grad| ...} The scaled
     gradient at the fitted (RE)ML estimates
@@ -18,3 +19,4 @@ This page attempts to summarize some of the
     continuous predictor variables.
   }
 }
+
