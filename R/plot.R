@@ -475,7 +475,7 @@ qqmath.merMod <- function(x, data, id=NULL, idLabels=NULL, ...) {
                ##     ltext(x[ids], y[ids], idLabels[subscripts][ids],
                ##           cex = dots$cex, adj = dots$adj)
                ## }
-           })
+           }, ...)
 }
 
 ## qqmath(~residuals(gm1)|cbpp$herd)
