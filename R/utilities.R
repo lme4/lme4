@@ -961,6 +961,6 @@ nloptwrap <- local({
     }
 })
 
-glmerLaplaceHandle <- function(pp, resp, nAGQ, tol, verbose) {
-    .Call(glmerLaplace, pp, resp, nAGQ, tol, verbose)
+glmerLaplaceHandle <- function(pp, resp, nAGQ, tol, maxit, verbose) {
+    .Call(glmerLaplace, pp, resp, nAGQ, tol, as.integer(maxit), verbose)
 }

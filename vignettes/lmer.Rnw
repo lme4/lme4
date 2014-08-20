@@ -1,14 +1,16 @@
 %\VignetteEngine{knitr::knitr}
 %\VignetteDepends{ggplot2}
 %\VignetteDepends{gamm4}
-%\VignetteIndexEntry{Fitting linear mixed-effects models using lme4}
+%\VignetteIndexEntry{Fitting Linear Mixed-Effects Models using lme4}
 \documentclass[nojss]{jss}
 \usepackage[T1]{fontenc}% for correct hyphenation and T1 encoding
-\usepackage[utf8]{inputenc}% 
+\usepackage[utf8]{inputenc}%
 \usepackage{lmodern}% latin modern font
 \usepackage[american]{babel}  %% for texi2dvi ~ bug
 \usepackage{bm,amsmath,thumbpdf,amsfonts}%,minted}
 \usepackage{blkarray}
+\usepackage{array}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
 \newcommand{\matindex}[1]{\mbox{\scriptsize#1}}% Matrix index
 \newcommand{\github}{Github}
 \DeclareMathOperator{\tr}{tr}
@@ -25,7 +27,7 @@
   Steven C. Walker\\McMaster University
 }
 \Plainauthor{Douglas Bates, Martin M\"achler, Ben Bolker, Steve Walker}
-\title{Fitting linear mixed-effects models using \pkg{lme4}}
+\title{Fitting Linear Mixed-Effects Models using \pkg{lme4}}
 \Plaintitle{Fitting Linear Mixed-Effects Models using lme4}
 \Shorttitle{Linear Mixed Models with lme4}
 \Abstract{%
@@ -90,7 +92,10 @@
 \newcommand{\yobs}{\ensuremath{\bm y_{\mathrm{obs}}}}
 \newcommand*{\eq}[1]{eqn.~\ref{#1}}% or just {(\ref{#1})}
 <<preliminaries,include=FALSE,cache=FALSE,message=FALSE>>=
-options(width=69, show.signif.stars=FALSE, str=strOptions(strict.width="cut"))
+options(width=70, show.signif.stars=FALSE,
+             str=strOptions(strict.width="cut"),
+             prompt = "R> ", continue = "+  ",
+             useFancyQuotes = FALSE)
 library("knitr")
 library("lme4")
 library("ggplot2")
@@ -100,7 +105,7 @@ zmargin <- theme(panel.margin=unit(0,"lines"))
 library("lattice")
 opts_chunk$set(engine='R',dev='pdf',fig.width=9,prompt=TRUE,
                fig.height=5.5,cache=TRUE,tidy=FALSE,comment=NA)
-@ % $ <- for emacs ESS
+@
 \setkeys{Gin}{width=\textwidth}
 \setkeys{Gin}{height=3.5in}
 
@@ -227,7 +232,7 @@ make a few observations:
   encodes various model assumptions.  Sections~\ref{sec:LMMmatrix} and
   \ref{sec:CSCmats} provide details on these structures, and how to
   represent them efficiently.
-\item The interface provided by \pkg{lme4}'s \code{lmer} function 
+\item The interface provided by \pkg{lme4}'s \code{lmer} function
   is slightly less general than the model described by equations
   \ref{eq:LMMcondY}, \ref{eq:LMMuncondB}, and \ref{eq:relcovfac}.  To
   take advantage of the entire range of possibilities, one may use the
@@ -254,11 +259,11 @@ str(sleepstudy)
 ## BMB: seemed more pleasing to arrange by increasing slope rather than
 ## intercept ...
 xyplot(Reaction ~ Days | Subject, sleepstudy, aspect = "xy",
-       layout = c(9,2), type = c("g", "p", "r"),
-       index.cond = function(x,y) coef(lm(y ~ x))[2],
+       layout = c(9, 2), type = c("g", "p", "r"),
+       index.cond = function(x, y) coef(lm(y ~ x))[2],
        xlab = "Days of sleep deprivation",
        ylab = "Average reaction time (ms)",
-       as.table=TRUE)
+       as.table = TRUE)
 @
 % |
 
@@ -328,19 +333,21 @@ model (Section~\ref{sec:mkMerMod}).
 \end{table}
 
 To illustrate this modularity, we recreate the \code{fm1} object by a
-series of four modular steps,
-<<modularExample, tidy=FALSE, eval=FALSE>>=
-                                        # formula module
-parsedFormula <- lFormula(formula = Reaction ~ Days + (Days|Subject),
+series of four modular steps; the formula module,
+<<modularExampleFormula, tidy=FALSE, eval=FALSE>>=
+parsedFormula <- lFormula(formula = Reaction ~ Days + (Days | Subject),
                              data = sleepstudy)
-
-                                        # objective function module
+@
+the objective function module,
+<<modularExampleObjective, tidy=FALSE, eval=FALSE>>=
 devianceFunction <- do.call(mkLmerDevfun, parsedFormula)
-
-                                        # optimization module
+@
+the optimization module,
+<<modularExampleOptimization, tidy=FALSE, eval=FALSE>>=
 optimizerOutput <- optimizeLmer(devianceFunction)
-
-                                        # output module
+@
+and the output module,
+<<modularExampleOutput, tidy=FALSE, eval=FALSE>>=
 mkMerMod(   rho = environment(devianceFunction),
             opt = optimizerOutput,
          reTrms = parsedFormula$reTrms,
@@ -366,7 +373,7 @@ is an expression that specifies the columns of the model matrix.
 Formulas for the \code{lmer} function contain special random-effects
 terms,
 <<MMformula, eval=FALSE>>=
-resp ~ FEexpr + (REexpr1|factor1) + (REexpr2|factor2) + ...
+resp ~ FEexpr + (REexpr1 | factor1) + (REexpr2 | factor2) + ...
 @
 where \code{FEexpr} is an expression determining the columns of the
 fixed-effects model matrix, $\bm X$, and the random-effects terms,
@@ -386,7 +393,7 @@ explanation and then some examples. Our discussion assumes familiarity
 with the standard \proglang{R} modelling paradigm
 \citep{Chambers:1993}.
 
-Each random-effects term is of the form \code{(expr|factor)}.
+Each random-effects term is of the form \code{(expr | factor)}.
 The expression \code{expr} is evaluated as a linear model formula,
 producing a model matrix following the same rules used in standard
 \proglang{R} modelling functions (e.g., \code{lm} or \code{glm}). The
@@ -408,7 +415,7 @@ repeated measurements (e.g., \citet{laird_ware_1982}).
 
 Table~\ref{tab:formulas} provides several examples of the
 right-hand-sides of mixed-model formulas. The first example,
-\code{(1|g)}, % |
+\code{(1 | g)}, % |
 is the simplest possible mixed-model formula, where each level of the
 grouping factor, \code{g}, has its own random intercept. The mean and
 standard deviation of these intercepts are parameters to be estimated.
@@ -422,21 +429,22 @@ columns and $\bm\beta$ has length zero.
 
 \begin{table}[tb]
   \centering
-  \begin{tabular}{lll}
+  \begin{tabular}{llP{1.5in}} %% see new column type for ragged right
     \hline
     Formula 			& Alternative & Meaning \\
     \hline%------------------------------------------------
-    \code{(1|g)}		& \code{1+(1|g)} 
+    \code{(1 | g)}		& \code{1 + (1 | g)}
     & Random intercept with fixed mean \\
-    \code{0+offset(o)+(1|g)}    & \code{-1+offset(o)+(1|g)}
+    \code{0 + offset(o) + (1 | g)}    & \code{-1 + offset(o) + (1 | g)}
     & Random intercept with \emph{a priori} means \\
-    \code{(1|g1/g2)} 		& \code{(1|g1)+(1|g1:g2)}   % |
+    \code{(1 | g1/g2)} 		& \code{(1 | g1)+(1 | g1:g2)}   % |
     & Intercept varying among \code{g1} and \code{g2} within \code{g1} \\
-    \code{(1|g1)+(1|g2)} 	& \code{1+(1|g1)+(1|g2)} &
+    \code{(1 | g1)+(1 | g2)} 	& \code{1 + (1 | g1) + (1 | g2)} &
     Intercept varying among \code{g1} and \code{g2} \\
-    \code{x+(x|g)} 		& \code{1+x+(1+x|g)} &
+    \code{x + (x | g)} 		& \code{1 + x + (1 + x | g)} &
     Correlated random intercept and slope \\
-    \code{x+(x||g)} 		& \code{1+x+(1|g)+(0+x|g)}
+    \code{x + (x || g)} 		& \code{1 + x + (1 | g) + (0 +
+      x | g)}
     & Uncorrelated random intercept and slope \\
     \hline
   \end{tabular}
@@ -470,8 +478,8 @@ intercept and slope vary among the levels of the grouping factor.
 By default, \pkg{lme4} assumes that all coefficients associated with
 the same random-effects term are correlated. To specify an
 uncorrelated slope and intercept (for example), one may either use
-double-bar notation, \code{(x||g)}, or equivalently use multiple
-random effects terms, \code{x+(1|g)+(0+x|g)}, as in the final example
+double-bar notation, \code{(x || g)}, or equivalently use multiple
+random effects terms, \code{x + (1 | g) + (0 + x | g)}, as in the final example
 of Table~\ref{tab:formulas}.  For example, from the printout of model
 \code{fm1} of the \code{sleepstudy} data
 (Section~\ref{sec:sleepstudy}), we see that the estimated correlation
@@ -516,14 +524,14 @@ The fixed-effects terms of a mixed-model formula are parsed to produce
 the fixed-effects model matrix, $\bm X$, in the same way that the
 \proglang{R} \code{lm} function generates model matrices.  However, a
 mixed-model formula incorporates $k\ge1$ random-effects terms of the
-form \code{(r|f)} as well. % |
+form \code{(r | f)} as well. % |
 These $k$ terms are used to produce the random effects model matrix,
 $\bm Z$ (Equation~\ref{eq:LMMcondY}; Section~\ref{sec:mkZ}), and the
 structure of the relative covariance factor, $\bLt$
 (Equation~\ref{eq:relcovfac}; Section~\ref{sec:mkLambdat}), which are
 matrices that typically have a sparse structure.  We now describe how
 one might construct these matrices from the random-effects terms,
-considering first a single term, \code{(r|f)}, % |
+considering first a single term, \code{(r | f)}, % |
 and then generalizing to multiple terms. Tables~\ref{tab:dim} and
 \ref{tab:algebraic} summarize the matrices and vectors that determine
 the structure of $\bm Z$ and
@@ -580,7 +588,7 @@ an \proglang{R} model matrix, $\bm X_i$, of size $n\times p_i$, called
 the \emph{raw random effects model matrix} for term $i$. A term is
 said to be a \emph{scalar} random-effects term when $p_i=1$, otherwise
 it is \emph{vector-valued}.  For a \emph{simple, scalar}
-random-effects term of the form \code{(1|f)}, $\bm X_i$ is the    % |
+random-effects term of the form \code{(1 | f)}, $\bm X_i$ is the    % |
 $n\times 1$ matrix of ones, which implies a random intercept model.
 
 The expression \code{f} evaluates to an \proglang{R} factor, called
@@ -595,7 +603,7 @@ $1,\dots,\ell_i$.\footnote{In practice,
   number of levels in the grouping factor for the $i$th random-effects
   term, is well-defined.}
 Let $\bm J_i$ be the $n\times \ell_i$ matrix of
-indicator columns for $\bm i_i$.  Using the \pkg{Matrix} package 
+indicator columns for $\bm i_i$.  Using the \pkg{Matrix} package
 \citep{Matrix_pkg} in
 \proglang{R}, we may construct the transpose of $\bm J_i$ from a
 factor vector, \code{f}, by coercing \code{f} to a \code{sparseMatrix}
@@ -604,8 +612,8 @@ object.  For example,
 set.seed(2)
 @
 <<factorToSparseMatrix>>=
-(f <- gl(3,2))
-(Ji <- t(as(f, Class="sparseMatrix")))
+(f <- gl(3, 2))
+(Ji <- t(as(f, Class = "sparseMatrix")))
 @
 When $k>1$ we order the random-effects terms so that
 $\ell_1\ge\ell_2\ge\dots\ge\ell_k$; in general, this ordering reduces
@@ -657,12 +665,12 @@ $1 \dots n$.  The \pkg{Matrix} package for \proglang{R} contains a
 \code{KhatriRao} function, which can be used to form $\bm Z_i$.  For
 example, if we begin with a raw model matrix,
 <<rawModelMatrix>>=
-(Xi <- cbind(1,rep.int(c(-1,1),3L)))
+(Xi <- cbind(1, rep.int(c(-1, 1), 3L)))
 @
 then the term-wise random effects
 model matrix is,
 <<KhatriRao>>=
-(Zi <- t(KhatriRao(t(Ji),t(Xi))))
+(Zi <- t(KhatriRao(t(Ji), t(Xi))))
 @
 <<sanityCheck, include=FALSE>>=
 ## alternative formulation of Zi (eq:Zi)
@@ -774,7 +782,7 @@ nc <- 3
 (rowIndices <- rep(1:nc, 1:nc))
 (colIndices <- sequence(1:nc))
 (template <- sparseMatrix(rowIndices, colIndices,
-                          x = 1*(rowIndices==colIndices)))
+                          x = 1 * (rowIndices == colIndices)))
 @
 Note that the \code{rowIndices} and \code{colIndices} fill the entire
 lower triangle, which contains the initial values of the covariance
@@ -814,7 +822,7 @@ Section~\ref{sec:plsI}).  This is achieved by constructing a vector of
 indices, \code{Lind}, that identifies which elements of \code{theta}
 should be placed in which elements of \code{Lambdat},
 <<relativeCovarianceBlockIndices>>=
-LindTemplate <- rowIndices + nc*(colIndices - 1) - choose(colIndices, 2)
+LindTemplate <- rowIndices + nc * (colIndices - 1) - choose(colIndices, 2)
 (Lind <- rep(LindTemplate, nl))
 @
 For example, if we randomly generate a new value for \code{theta},
@@ -889,9 +897,9 @@ value of the random variable, $\mc U$.
 \label{sec:plsMath}
 
 Our computational methods for maximum likelihood fitting of the linear
-mixed model involve repeated applications of the method of penalized
-least-squares (PLS). In particular, the penalized least squares
-problem is to minimize the penalized weighted residual sum-of-squares,
+mixed model involve repeated applications of the PLS method. In
+particular, the PLS problem is to minimize the penalized weighted
+residual sum-of-squares,
 \begin{equation}
   \label{eq:pwrss}
   r^2(\bm\theta, \bm\beta, \bm u)
@@ -1165,9 +1173,8 @@ $\bm\theta$ to find its maximum likelihood estimate.
 \subsubsection{The REML criterion}
 \label{sec:reml}
 
-The REML criterion can be obtained by
-integrating the marginal density for $\mc Y$ with respect to the fixed
-effects \citep{laird_ware_1982},
+The REML criterion can be obtained by integrating the marginal density
+for $\mc Y$ with respect to the fixed effects \citep{laird_ware_1982},
 \begin{equation}
   \label{eq:REMLintegral}
   \int f_{\mc Y}(\yobs)d\bm\beta =
@@ -1366,7 +1373,7 @@ improve readability we describe a version in pure \proglang{R}.
 Section~\ref{sec:CSCmats} provides greater detail on the techniques
 and concepts for computational efficiency, which is important in cases
 where the nonlinear optimizer (Section~\ref{sec:optimizeLmer})
-requires many iterations. 
+requires many iterations.
 
 The PLS algorithm takes a vector of covariance parameters,
 $\bm\theta$, as inputs and returns the profiled deviance (Equation
@@ -1374,10 +1381,10 @@ $\bm\theta$, as inputs and returns the profiled deviance (Equation
 (Equation \ref{eq:REMLprofiled}). This PLS algorithm consists of four main
 steps:
 \begin{enumerate}
-\item Update the relative covariance factor (Section~\ref{sec:plsI})
-\item Solve the normal equations (Section~\ref{sec:plsII})
-\item Update the linear predictor and residuals (Section~\ref{sec:plsIII})
-\item Compute and return the profiled deviance (Section~\ref{sec:plsIV})
+\item Update the relative covariance factor (Section~\ref{sec:plsI}),
+\item Solve the normal equations (Section~\ref{sec:plsII}),
+\item Update the linear predictor and residuals (Section~\ref{sec:plsIII}),
+\item Compute and return the profiled deviance (Section~\ref{sec:plsIV}).
 \end{enumerate}
 PLS also requires the objects described in Table~\ref{tab:inputsPLS},
 which define the structure of the model.  These objects do not get
@@ -1416,7 +1423,7 @@ compiled code as in \pkg{lme4} itself).  This implementation is called
     \kern 2pt
   }
   \end{minipage}
-  \caption{Inputs into an LMM}
+  \caption{Inputs into a linear mixed model.}
   \label{tab:inputsPLS}
 \end{table}
 
@@ -1489,7 +1496,7 @@ effects Cholesky factor, $\bm L_{\bm\theta}$
 (Equation~\ref{eq:blockCholeskyDecomp}).  The mapping from the covariance
 parameters to the relative covariance factor can take many forms, but
 in general involves a function that takes $\bm\theta$ into the values
-of the non-zero elements of $\bLt$.  
+of the non-zero elements of $\bLt$.
 
 If $\bLt$ is stored as an object of class \code{"dgCMatrix"} from the
 \pkg{Matrix} package for \proglang{R}, then we may update $\bLt$ from
@@ -1506,7 +1513,7 @@ $\bm\theta$ to $\bLt$ is represented as an \proglang{R} integer
 vector, \code{Lind}, of indices, so that
 <<PLSupdateThetaWithLind>>=
 mapping <- function(theta) theta[Lind]
-@ 
+@
 The index vector \code{Lind} is computed during the model setup and
 stored in the function's environment.  Continuing the example from
 Section~\ref{sec:mkLambdat}, consider a new value for \code{theta},
@@ -1582,19 +1589,19 @@ following steps,
 which can be solved using the \pkg{Matrix} package with,
 <<PLSsolve, eval = FALSE>>=
 cu[] <- as.vector(solve(L, solve(L, Lambdat %*% ZtWy,
-                                 system="P"), system="L"))
+                                 system = "P"), system = "L"))
 RZX[] <- as.vector(solve(L, solve(L, Lambdat %*% ZtWX,
-                                  system="P"), system="L"))
+                                  system = "P"), system = "L"))
 RXtRX <- as(XtWX - crossprod(RZX), "dpoMatrix")
 beta[] <- as.vector(solve(RXtRX, XtWy - crossprod(RZX, cu)))
 u[] <- as.vector(solve(L, solve(L, cu - RZX %*% beta,
-                                system = "Lt"), system="Pt"))
-b[] <- as.vector(crossprod(Lambdat,u))
-@ 
+                                system = "Lt"), system = "Pt"))
+b[] <- as.vector(crossprod(Lambdat, u))
+@
 Notice the nested calls to \code{solve}.  The inner calls of the first
 two assignments determine and apply the permutation matrix
-(\code{system="P"}), whereas the outer calls actually solve the
-equation (\code{system="L"}). In the assignment to \code{u[]}, the
+(\code{system = "P"}), whereas the outer calls actually solve the
+equation (\code{system = "L"}). In the assignment to \code{u[]}, the
 nesting is reversed in order to return to the original permutation.
 
 \subsubsection{PLS step III: update linear predictor and residuals}
@@ -1605,8 +1612,8 @@ The next step is to compute the linear predictor, $\mu_{\mc Y| \mc U}$
 $\widehat{\betavec}_\theta$ and $\mu_{\mc B | \mc Y = \yobs}$.  In
 \pkg{lme4pureR} these quantities can be computed as,
 <<PLSupdateResp, eval = FALSE>>=
-mu[] <- as.vector(crossprod(Zt,b) + X %*% beta + offset)
-wtres <- sqrtW*(y-mu)
+mu[] <- as.vector(crossprod(Zt, b) + X %*% beta + offset)
+wtres <- sqrtW * (y - mu)
 @
 where \code{b} represents the current estimate of $\mu_{\mc B | \mc Y
   = \yobs}$.
@@ -1623,7 +1630,7 @@ logDet <- 2*determinant(L, logarithm = TRUE)$modulus
 if (REML) logDet <- logDet + determinant(RXtRX,
                                          logarithm = TRUE)$modulus
 attributes(logDet) <- NULL
-profDev <- logDet + degFree*(1 + log(2*pi*pwrss) - log(degFree))
+profDev <- logDet + degFree * (1 + log(2 * pi * pwrss) - log(degFree))
 @
 The profiled deviance consists of three components: (1)
 log-determinant(s) of Cholesky factorization (\code{logDet}), (2) the
@@ -1633,9 +1640,9 @@ residual sum-of-squares (\code{pwrss}).
 \subsection{Sparse matrix methods}
 \label{sec:CSCmats}
 
-In fitting linear mixed models, an instance of the penalized least
-squares (PLS) problem (\ref{eq:normalEquations}) must be solved at each
-evaluation of the objective function during the optimization
+In fitting linear mixed models, an instance of the PLS problem
+(\ref{eq:normalEquations}) must be solved at each evaluation of the
+objective function during the optimization
 (Section~\ref{sec:optimizeLmer}) with respect to $\bm\theta$.  Because
 this operation must be performed many times it is worthwhile
 considering how to provide effective evaluation methods for objects
@@ -1707,17 +1714,18 @@ The column pointers are a vector of size $n+1$ giving the location of
 the start of each column in the vectors of row indices and nonzeros.
 
 Because the number of nonzeros in each column of $\bm Z\trans$, and in
-each column of matrices derived from $\bm Z\trans$ (such as $\bLt\trans\bm Z\trans\bm W^{1/2}$) is constant, the vector of nonzeros in the
-CSC format can be viewed as a dense matrix, say $\bm N$, of size
-$\left(\sum_{i=1}^n p_i\right)\times n$.  We do not need to store the
-column pointers because the columns of $\bm Z\trans$ correspond to
-columns of $\bm N$.  All we need is $\bm N$, the dense matrix of
-nonzeros, and the row indices, which are derived from the grouping
-factor index vectors $\bm i_i,i=1,\dots,k$ and can also be arranged as
-a dense matrix of size $\left(\sum_{i=1}^n p_i\right)\times n$.
-Matrices like $\bm Z\trans$, with the property that there are the same
-number of nonzeros in each column, are sometimes called \emph{regular
-  sparse column-oriented} (RSC) matrices.
+each column of matrices derived from $\bm Z\trans$ (such as
+$\bLt\trans\bm Z\trans\bm W^{1/2}$) is constant, the vector of
+nonzeros in the CSC format can be viewed as a dense matrix, say $\bm
+N$, of size $\left(\sum_{i=1}^n p_i\right)\times n$.  We do not need
+to store the column pointers because the columns of $\bm Z\trans$
+correspond to columns of $\bm N$.  All we need is $\bm N$, the dense
+matrix of nonzeros, and the row indices, which are derived from the
+grouping factor index vectors $\bm i_i,i=1,\dots,k$ and can also be
+arranged as a dense matrix of size $\left(\sum_{i=1}^n
+  p_i\right)\times n$.  Matrices like $\bm Z\trans$, with the property
+that there are the same number of nonzeros in each column, are
+sometimes called \emph{regular sparse column-oriented} (RSC) matrices.
 \section{Nonlinear optimization module}
 \label{sec:optimizeLmer}
 
@@ -1740,7 +1748,7 @@ algorithm adapted from Steven Johnson's \code{NLopt} C library
 \citep{NLopt} and a wrapper for Powell's BOBYQA
 algorithm, implemented in the \pkg{minqa} package \cite{minqa_pkg}
 as a wrapper around
-Powell's original FORTRAN code \citep{Powell_bobyqa}.  More generally,
+Powell's original Fortran code \citep{Powell_bobyqa}.  More generally,
 \pkg{lme4} allows any user-specified optimizer that (1) can work with
 an objective function (i.e., does not require a gradient function to
 be specified), (2) allows box constraints on the parameters, and (3)
@@ -1749,7 +1757,7 @@ the output. An internal wrapper allows the use of the \pkg{optimx}
 package \citep{optimx_pkg}, although the only optimizers provided via \pkg{optimx} that
 satisfy the constraints above are the \code{nlminb} and
 \code{L-BFGS-B} algorithms that are themselves wrappers around the
-versions provided in base R. 
+versions provided in base R.
 Several other algorithms from Steven Johnson's
 \code{NLopt} package are also available via the \pkg{nloptr} wrapper
 package (e.g., alternate implementations of Nelder-Mead and BOBYQA,
@@ -1867,7 +1875,7 @@ matrix can be extracted from a fitted \code{merMod} object as,
 <<vcovByHand>>=
 RX <- getME(fm1, "RX")
 sigma2 <- sigma(fm1)^2
-sigma2*chol2inv(RX)
+sigma2 * chol2inv(RX)
 @
 which could be computed with \pkg{lme4} as \code{vcov(fm1)}.
 
@@ -2040,7 +2048,7 @@ where,
 \begin{equation}
   \label{eq:condVar}
   \bm V = \left(\bm\Lambda_{\widehat{\bm\theta}}\trans\bm Z\trans \bm W
-    \bm Z\bm\Lambda_{\widehat{\bm\theta}} + \bm I_q \right)^{-1} = 
+    \bm Z\bm\Lambda_{\widehat{\bm\theta}} + \bm I_q \right)^{-1} =
   \left(\bm L_{\widehat{\bm\theta}}^{-1}\right)\trans
   \left(\bm L_{\widehat{\bm\theta}}^{-1}\right)
 \end{equation}
@@ -2074,8 +2082,8 @@ beta <- getME(fm1, "beta")
 L <- getME(fm1, "L")
 (V <- crossprod(solve(L, system = "L")))[1:2, 1:2]
 (s2 * Lambda %*% V %*% Lambdat)[1:2, 1:2]
-attr(ranef(fm1, condVar=TRUE)$Subject, "postVar")[,,1] # should be same as Lam %*% V %*% Lamt
-(U <- as.vector((V%*%Lambdat%*%Zt%*% (y-X%*%beta))))
+attr(ranef(fm1, condVar = TRUE)$Subject, "postVar")[ , , 1] # should be same as Lam %*% V %*% Lamt
+(U <- as.vector((V %*% Lambdat %*% Zt %*%  (y - X %*% beta))))
 getME(fm1, "u")
 @
 
@@ -2087,18 +2095,18 @@ diagnostics \citep{cook1982residuals}.  In general, $\bm H$ relates
 the observed and fitted response vectors, but we specifically define
 it as,
 \begin{equation}
-  \left(\bm\mu_{\mc Y|\mc U=\bm u} - \bm o\right) = 
+  \left(\bm\mu_{\mc Y|\mc U=\bm u} - \bm o\right) =
   \bm H \left(\yobs - \bm o\right)
 \end{equation}
 To find $\bm H$ we note that,
 \begin{equation}
-  \left(\bm\mu_{\mc Y|\mc U=\bm u} - \bm o\right) = 
+  \left(\bm\mu_{\mc Y|\mc U=\bm u} - \bm o\right) =
   \begin{bmatrix}
     \bm Z\bm\Lambda & \bm X \\
   \end{bmatrix}
   \begin{bmatrix}
     \mu_{\mc U | \mc Y = \yobs} \\ \widehat{\betavec}_{\bm\theta}
-  \end{bmatrix} 
+  \end{bmatrix}
 \end{equation}
 Next we get an expression for $\begin{bmatrix}
     \mu_{\mc U | \mc Y = \yobs} \\ \widehat{\betavec}_{\bm\theta}
@@ -2107,7 +2115,7 @@ Next we get an expression for $\begin{bmatrix}
 \begin{equation}
  \begin{bmatrix}
     \mu_{\mc U | \mc Y = \yobs} \\ \widehat{\betavec}_{\bm\theta}
-  \end{bmatrix} = 
+  \end{bmatrix} =
   \begin{bmatrix}
     \bm L\trans_{\bm\theta} & \bm R_{ZX} \\
     \bm 0 & \bm R_{X}
@@ -2126,12 +2134,12 @@ By the Schur complement identity \citep{zhang2006schur},
   \begin{bmatrix}
     \bm L\trans_{\bm\theta} & \bm R_{ZX} \\
     \bm 0 & \bm R_{X}
-  \end{bmatrix}^{-1} = 
+  \end{bmatrix}^{-1} =
   \begin{bmatrix}
-    \left(\bm L\trans_{\bm\theta}\right)^{-1} & 
+    \left(\bm L\trans_{\bm\theta}\right)^{-1} &
     - \left(\bm L\trans_{\bm\theta}\right)^{-1} \bm R_{ZX} \bm R_{X}^{-1}\\
     \bm 0 & \bm R_{X}^{-1}
-  \end{bmatrix}  
+  \end{bmatrix}
 \end{equation}
 Therefore, we may write the hat matrix as,
 \begin{equation}
@@ -2254,10 +2262,10 @@ these methods.
 To illustrate the \code{update} method for \code{merMod} objects we
 construct a random intercept only model. This task could be done in
 several ways, but we choose to first remove the random effects term
-\code{(Days|Subject)} and add a new term with a random intercept,
+\code{(Days | Subject)} and add a new term with a random intercept,
 <<updateModel>>=
-fm3 <- update(fm1, .~. - (Days|Subject) + (1|Subject))
-formula(fm3) # how the updated formula is parsed
+fm3 <- update(fm1, . ~ . - (Days | Subject) + (1 | Subject))
+formula(fm3)
 @ % |
 
 \subsubsection{Model summary and associated accessors}
@@ -2266,16 +2274,16 @@ formula(fm3) # how the updated formula is parsed
 The \code{summary} method for \code{merMod} objects provides
 information about the model fit.  Here we consider the output of
 \code{summary(fm1)} in four steps.  The first few lines of output
-indicate that the model was fitted by restricted maximum likelihood
-(REML) as well as the value of the REML criterion
-(Equation~\ref{eq:REMLdeviance}) at convergence (which may also be
-extracted using \code{deviance(fm1)}).  The beginning of the summary
-also reproduces the model formula and the scaled Pearson residuals,
+indicate that the model was fitted by REML as well as the value of the
+REML criterion (Equation~\ref{eq:REMLdeviance}) at convergence (which
+may also be extracted using \code{deviance(fm1)}).  The beginning of
+the summary also reproduces the model formula and the scaled Pearson
+residuals,
 <<summary1,echo=FALSE>>=
 ss <- summary(fm1)
 cc <- capture.output(print(ss))
-reRow <- grep("^Random effects",cc)
-cat(cc[1:(reRow-2)],sep="\n")
+reRow <- grep("^Random effects", cc)
+cat(cc[1:(reRow - 2)], sep = "\n")
 @
 This information may also be obtained using standard accessor
 functions,
@@ -2287,16 +2295,16 @@ quantile(residuals(fm1, "pearson", scaled = TRUE))
 The second piece of \code{summary} output provides information
 regarding the random effects and residual variation,
 <<summary2, echo=FALSE>>=
-feRow <- grep("^Fixed effects",cc)
-cat(cc[reRow:(feRow-2)],sep="\n")
+feRow <- grep("^Fixed effects", cc)
+cat(cc[reRow:(feRow - 2)], sep = "\n")
 @
 which can also be accessed using,
 <<summary2reproduced, eval=FALSE>>=
-print(vc <- VarCorr(fm1), comp = c("Variance","Std.Dev."))
-nobs(fm1)  # number of rows in sleepstudy data
-ngrps(fm1) # number of levels of the Subject grouping factor
-sigma(fm1) # residual standard deviation
-@ 
+print(vc <- VarCorr(fm1), comp = c("Variance", "Std.Dev."))
+nobs(fm1)
+ngrps(fm1)
+sigma(fm1)
+@
 The print method for \code{VarCorr} hides the internal structure of
 \code{VarCorr.merMod} objects. The internal structure of an object of
 this class is a list of matrices, one for each random effects term.
@@ -2319,8 +2327,8 @@ numbers on the standard deviation and correlation scales.
 
 The next chunk of output gives the fixed effect estimates,
 <<summary3, echo=FALSE>>=
-corRow <- grep("^Correlation",cc)
-cat(cc[feRow:(corRow-2)],sep="\n")
+corRow <- grep("^Correlation", cc)
+cat(cc[feRow:(corRow - 2)], sep = "\n")
 @
 Note that there are no $p$~values (see Section~\ref{sec:pvalues}).
 The fixed effect point estimates may be obtained separately via
@@ -2330,8 +2338,8 @@ with \code{ranef} (see section~\ref{sec:condVar} for information on
 the theory).  Finally, we have the correlations between the fixed
 effect estimates
 <<summary4, echo=FALSE>>=
-cat(cc[corRow:length(cc)],sep="\n")
-@ 
+cat(cc[corRow:length(cc)], sep = "\n")
+@
 The full variance-covariance matrix of the fixed effects estimates can
 be obtained in the usual \proglang{R} way with the \code{vcov} method
 (Section~\ref{sec:vcov}).  Alternatively, \code{coef(summary(fm1))} will
@@ -2342,21 +2350,26 @@ return the full fixed-effects parameter table as shown in the summary.
 
 \pkg{lme4} provides tools for generating most of the standard
 graphical diagnostic plots (with the exception of those incorporating
-influence measures, e.g., Cook's distance and
-leverage plots), in a way modeled on the diagnostic graphics of
-\pkg{nlme} \citep{R:Pinheiro+Bates:2000}.  In particular, the following
-commands will show the standard fitted vs. residual, scale-location,
-and quantile-quantile plots familiar from the
-\code{plot} method in base \proglang{R}
-for linear models (objects of class \code{lm}):
+influence measures, e.g., Cook's distance and leverage plots), in a
+way modeled on the diagnostic graphics of \pkg{nlme}
+\citep{R:Pinheiro+Bates:2000}.  In particular, the familiar
+\code{plot} method in base \proglang{R} for linear models (objects of
+class \code{lm}) can be used to create the standard fitted
+vs. residual plots,
 <<diagplot1,fig.keep="none">>=
-plot(fm1,type=c("p","smooth"))          ## fitted vs residual
-plot(fm1,sqrt(abs(resid(.)))~fitted(.), ## scale-location
-     type=c("p","smooth"))
-qqmath(fm1,id=0.05)                     ## quantile-quantile
+plot(fm1, type = c("p", "smooth"))
 @
-(In contrast to \code{plot.lm}, these scale-location and Q-Q plots
-are based on raw rather than standardized residuals.)
+scale-location plots,
+<<diagplot2,fig.keep="none">>=
+plot(fm1, sqrt(abs(resid(.))) ~ fitted(.),
+     type = c("p", "smooth"))
+@
+and quantile-quantile plots, (from \pkg{lattice})
+<<diagplot3,fig.keep="none">>=
+qqmath(fm1, id = 0.05)
+@
+In contrast to \code{plot.lm}, these scale-location and Q-Q plots
+are based on raw rather than standardized residuals.
 
 In addition to these standard diagnostic plots, which
 examine the validity of various assumptions (linearity,
@@ -2378,13 +2391,13 @@ statistic for an ensemble of simulations (Section~\ref{sec:predict}),
 and see where the observed data falls within the simulated
 distribution; if the observed data is extreme, we might conclude that
 the model is a poor representation of reality.  For example, using the
-sleep study fit and choosing the interquartile range 
+sleep study fit and choosing the interquartile range
 of the reaction times as the summary
 statistic:
 <<ppsim,results="hide">>=
-iqrvec <- sapply(simulate(fm1,1000),IQR)
+iqrvec <- sapply(simulate(fm1, 1000), IQR)
 obsval <- IQR(sleepstudy$Reaction)
-post.pred.p <- mean(obsval>=c(obsval,iqrvec))
+post.pred.p <- mean(obsval >= c(obsval, iqrvec))
 @
 The (one-tailed) posterior predictive $p$~value of \Sexpr{round(post.pred.p,2)}
 indicates that the model represents the data adequately, at least for
@@ -2407,14 +2420,14 @@ of the contributions of fixed-effects terms.  In order to illustrate
 this sequential ANOVA decomposition, we fit a model with orthogonal
 linear and quadratic \code{Days} terms,
 <<anovaQuadraticModel>>=
-fm4 <- lmer(Reaction ~ polyDays[,1] + polyDays[,2] + 
-            (polyDays[,1] + polyDays[,2] | Subject), 
+fm4 <- lmer(Reaction ~ polyDays[ , 1] + polyDays[ , 2] +
+            (polyDays[ , 1] + polyDays[ , 2] | Subject),
             within(sleepstudy, polyDays <- poly(Days, 2)))
 anova(fm4)
 @
 <<anovaSanityCheck, include=FALSE>>=
-(getME(fm4, "RX")[2,] %*% getME(fm4, "fixef"))^2
-@ 
+(getME(fm4, "RX")[2, ] %*% getME(fm4, "fixef"))^2
+@
 The relative magnitudes of the two sums of squares indicate that the
 quadratic term explains much less variation than the linear term.
 Furthermore, the magnitudes of the two $F$~statistics strongly
@@ -2441,15 +2454,15 @@ $F$~statistic for term $i$ is,
 For multiple arguments, the \code{anova} method returns model
 comparison statistics,
 <<anovaManyModels>>=
-anova(fm1,fm2,fm3)
+anova(fm1, fm2, fm3)
 @
 <<anovaRes,echo=FALSE>>=
 fm3ML <- refitML(fm3)
 fm2ML <- refitML(fm2)
 fm1ML <- refitML(fm1)
-ddiff <- deviance(fm3ML)-deviance(fm2ML)
-dp <- pchisq(ddiff,1,lower.tail=FALSE)
-ddiff2 <- deviance(fm2ML)-deviance(fm1ML)
+ddiff <- deviance(fm3ML) - deviance(fm2ML)
+dp <- pchisq(ddiff, 1, lower.tail = FALSE)
+ddiff2 <- deviance(fm2ML) - deviance(fm1ML)
 @
 The output shows $\chi^2$ statistics representing the difference in
 deviance between successive models, as well as $p$~values based on
@@ -2491,7 +2504,7 @@ Section~\ref{sec:pb}), we have provided a help page to guide users in
 finding appropriate methods:
 <<pvaluesHelp, eval=FALSE>>=
 help("pvalues")
-@ 
+@
 This help page provides pointers to other packages that provide
 machinery for calculating $p$~values associated with \code{merMod}
 objects. It also suggests framing the inference problem as a
@@ -2514,7 +2527,7 @@ As described above (Sections~\ref{sec:vcov}, \ref{sec:profile},
 \ref{sec:pb}), \pkg{lme4} provides confidence intervals (using
 \code{confint}) via Wald approximations (for fixed-effect parameters
 only), likelihood profiling, or parametric bootstrapping (the
-\code{type} argument selects the method).
+\code{boot.type} argument selects the bootstrap confidence interval type).
 <<compareCI,echo=FALSE,cache=TRUE,message=FALSE,warning=FALSE>>=
 ccw <- confint(fm1, method = "Wald")
 ccp <- confint(fm1, method = "profile", oldNames = FALSE)
@@ -2522,26 +2535,26 @@ ccb <- confint(fm1, method = "boot")
 @
 <<CIqcomp,echo=FALSE,eval=TRUE>>=
 rtol <- function(x,y) {
-    abs((x-y)/((x+y)/2))
+    abs((x - y) / ((x + y) / 2))
 }
-bw <- apply(ccb,1,diff)
-pw <- apply(ccp,1,diff)
-mdiffpct <- round(100*max(rtol(bw,pw)))
+bw <- apply(ccb, 1, diff)
+pw <- apply(ccp, 1, diff)
+mdiffpct <- round(100 * max(rtol(bw, pw)))
 @
 <<CIplot,echo=FALSE,eval=FALSE>>=
 ## obsolete
 ## ,fig.cap="Comparison of confidence intervals",fig.scap="CI comparison"
-tf <- function(x,method) data.frame(method=method,
-               par=rownames(x),
-               setNames(as.data.frame(x),c("lwr","upr")))
-cc.all <- do.call(rbind,mapply(tf,list(ccw,ccp,ccb),
-                               c("Wald","profile","boot"),
-                     SIMPLIFY=FALSE))
-ggplot(cc.all,aes(x=1,ymin=lwr,ymax=upr,colour=method))+
-                       geom_linerange(position=position_dodge(width=0.5))+
-                       facet_wrap(~par,scale="free")+
-                       theme(axis.text.x=element_blank())+
-                       labs(x="")
+tf <- function(x, method) data.frame(method = method,
+               par = rownames(x),
+               setNames(as.data.frame(x), c("lwr", "upr")))
+cc.all <- do.call(rbind, mapply(tf, list(ccw, ccp, ccb),
+                               c("Wald", "profile", "boot"),
+                     SIMPLIFY = FALSE))
+ggplot(cc.all, aes(x = 1, ymin = lwr, ymax = upr, colour = method)) +
+    geom_linerange(position = position_dodge(width = 0.5)) +
+    facet_wrap( ~ par, scale = "free") +
+    theme(axis.text.x = element_blank()) +
+    labs(x = "")
 @
 As is typical for computationally intensive profile confidence
 intervals in R, the intervals can be computed either directly from
@@ -2711,7 +2724,7 @@ S{\o}ren H{\o}jsgaard participated in useful discussions
 and Xi Xia  and Christian Zingg exercised the code
 and reported problems.
 We would like to thank the Banff International Research Station
-for hosting a working group on \pkg{lme4}, and 
+for hosting a working group on \pkg{lme4}, and
 an NSERC Discovery grant and NSERC postdoctoral fellowship for funding.
 
 \bibliography{lmer}
@@ -2726,7 +2739,7 @@ an NSERC Discovery grant and NSERC postdoctoral fellowship for funding.
 
 Consider the following mixed-model formula,
 <<modularSimulationFormula>>=
-form <- respVar ~ 1 + (explVar1|groupFac1) + (explVar2|groupFac2)
+form <- respVar ~ 1 + (explVar1 | groupFac1) + (explVar2 | groupFac2)
 @
 in which we have a fixed intercept and two random effects terms, each
 with a random slope and intercept.  The \code{lmer}  function would
@@ -2738,33 +2751,37 @@ $2 \times 2$ covariance matrix.  We illustrate the use of the modular
 functions in \pkg{lme4} to fit such a model.
 
 We simulate data from this homogeneous covariance model using a
-balanced design that crosses both grouping factors,
-<<modularSimulation>>=
+balanced design that crosses both grouping factors.  We first set the
+seed and number of groups per grouping factor,
+<<modularSimulationInit>>=
 set.seed(1)
-                                        # number of groups per
-                                        # grouping factor
 nGrps <- 50
-                                        # two explanatory variables
+@
+We next simulate two explanatory variables,
+<<modularSimulationExpl>>=
 explVar <- data.frame(explVar1 = rnorm(nGrps^2),
                       explVar2 = rnorm(nGrps^2))
-                                        # two group factors
+@
+two grouping factors,
+<<modularSimulationGroup>>=
 groupFac <- expand.grid(groupFac1 = as.factor(1:nGrps),
                         groupFac2 = as.factor(1:nGrps))
-                                        # random intercepts
+@
+random intercepts and slopes that are negatively correlated,
+<<modularSimulationInterSlope>>=
 randomIntercept <- expand.grid(randomIntercept1 = rnorm(nGrps),
                                randomIntercept2 = rnorm(nGrps))
-                                        # random slopes, negatively
-                                        # correlated with the
-                                        # intercepts
 rnmdSlope <- expand.grid(randomSlope1 = rnorm(nGrps),
                          randomSlope2 = rnorm(nGrps)) - randomIntercept
-                                        # linear predictor
-linearPredictor <- apply(randomIntercept + rnmdSlope*explVar, 1, sum)
-                                        # residual error
+@
+and finally a linear predictor, residual error, and response variable,
+<<modularSimulationPredictor>>=
+linearPredictor <- apply(randomIntercept + rnmdSlope * explVar, 1, sum)
 residError <- rnorm(nGrps^2)
-                                        # resp variable
 respVar <- residError + linearPredictor
-                                        # data set
+@
+We then combine these data into a single object,
+<<modularSimulationDataFrame>>=
 dat <- data.frame(respVar, explVar, groupFac)
 head(dat)
 @
@@ -2882,8 +2899,8 @@ After saving the \code{call}, the next step is to parse the formula
 and data using the \code{lFormula} modular function (setting
 \code{REML} to \code{FALSE} for simplicity),
 <<homoLmerMatchCallAndParseFormula, eval=FALSE>>=
-    mc <- match.call()
-    lfHetero <- lfHomo <- lFormula(formula = formula, data = data, REML = FALSE)
+mc <- match.call()
+lfHetero <- lfHomo <- lFormula(formula = formula, data = data, REML = FALSE)
 @
 We then check to make sure that this \code{formula} is a candidate for
 a homogeneous covariance model.  In particular, a homogeneous
@@ -2891,17 +2908,17 @@ covariance model only makes sense if each random effects term has the
 same number of random effects coefficients,
 <<homoLmerCheck, eval=FALSE>>=
 if(length(pRE <- unique(sapply(cnms <- lfHomo$reTrms$cnms, length))) > 1L) {
-        stop("each random effects term must have the same number\n",
-             "of model matrix columns for a homogeneous structure")
-    }
+    stop("each random effects term must have the same number\n",
+         "of model matrix columns for a homogeneous structure")
+}
 @
 We save the number of fixed effects coefficients, \code{p}, number of
 covariance parameters per term, \code{nth}, and number random effects
 terms, \code{n_trms},
 <<homoLmerDimensions, eval=FALSE>>=
-    p <- ncol(lfHomo$X)
-    nth <- choose(pRE + 1, 2)
-    n_trms <- length(cnms)
+p <- ncol(lfHomo$X)
+nth <- choose(pRE + 1, 2)
+n_trms <- length(cnms)
 @ % $
 We now modify the parsed random effects terms to have homogeneous
 covariance structure, which requires three lines.  First, use only the
@@ -2912,17 +2929,17 @@ covariance parameters to the new \code{theta}.  Third, adjust the
 mapping from the new \code{theta} to the nonzero elements of the
 transposed relative covariance factor, \code{Lambdat}.
 <<homoLmerAdjust, eval=FALSE>>=
-    lfHomo$reTrms <- within(lfHomo$reTrms, {
-        theta <- theta[1:nth]
-        lower <- lower[1:nth]
-        Lind <- rep(1:nth, length = length(lfHomo$reTrms$Lambdat@x))
-    })
+lfHomo$reTrms <- within(lfHomo$reTrms, {
+    theta <- theta[1:nth]
+    lower <- lower[1:nth]
+    Lind <- rep(1:nth, length = length(lfHomo$reTrms$Lambdat@x))
+})
 @
 Then we construct and minimize a deviance function for the homogeneous
 model,
 <<homoLmerFitModifiedModel, eval=FALSE>>=
-    devf <- do.call(mkLmerDevfun, lfHomo)
-    opt <- optimizeLmer(devf)
+devf <- do.call(mkLmerDevfun, lfHomo)
+opt <- optimizeLmer(devf)
 @
 The object \code{opt} contains the optimized values of the homogeneous
 covariance parameters.  However, in order to interpret and make
@@ -2933,9 +2950,9 @@ selected with the \code{use.mkMerMod} logical argument.  If
 formula object, \code{lfHomo}, deviance function, \code{devf}, and
 optimization results, \code{opt}, are returned,
 <<homoLmerReturnRaw, eval=FALSE>>=
-    if(!use.mkMerMod) {
-        return(list(lf = lfHomo, devf = devf, opt = opt))
-    }
+if(!use.mkMerMod) {
+    return(list(lf = lfHomo, devf = devf, opt = opt))
+}
 @
 This option means that the convenience functions of the \code{lme4}
 output module (Section~\ref{sec:mkMerMod}) are not available because the resulting
@@ -2955,16 +2972,16 @@ for this new class.
 Next we update the unmodified model by capturing the modified model
 estimates of the covariance parameters,
 <<homoLmerReExpandTheta, eval=FALSE>>=
-    th <- rep(opt$par, n_trms)
-@ 
+th <- rep(opt$par, n_trms)
+@
 constructing a deviance function for the unmodified model,
 <<unmodDevfun, eval=FALSE>>=
-    devf0 <- do.call(mkLmerDevfun, lfHetero)
-@ 
+devf0 <- do.call(mkLmerDevfun, lfHetero)
+@
 and installing the parameters in the environment of the unmodified
 deviance function,
 <<installDevfun, eval=FALSE>>=
-    devf0(opt$par <- th)
+devf0(opt$par <- th)
 @
 
 Finally, we need to extend the \code{merMod} class,
@@ -2996,30 +3013,22 @@ summary(mod)
 
 We modify the \code{sleepstudy} example,
 <<homoParse>>=
-parsedFormula <- lFormula(formula = Reaction ~ Days + (Days|Subject),
+parsedFormula <- lFormula(formula = Reaction ~ Days + (Days | Subject),
                           data = sleepstudy)
 @
 such that the random slope and intercept are uncorrelated and have
-identical variance
-(because the slope and intercept have different units,
-this example is not entirely sensible --- it is offered for
-technical illustration only).
-  The \code{reTrms} component of
+identical variance (because the slope and intercept have different
+units, this example is not entirely sensible --- it is offered for
+technical illustration only).  The \code{reTrms} component of
 \code{parsedFormula} contains the relevant information, and can be
-modified using the \code{within} function,
+modified using the \code{within} function by (1) altering the mapping
+(\code{Lind}) from \code{theta} to the non-zero elements of
+\code{Lambda}, and force a diagonal \code{Lambda},
 <<homoWithin>>=
 parsedFormula$reTrms <- within(parsedFormula$reTrms, {
-                                        # capture the dimension of
-                                        # Lambda
     q <- nrow(Lambdat)
-                                        # alter the mapping from theta
-                                        # to the non-zero elements of
-                                        # Lambda
     Lind <- rep(1, q)
-                                        # construct a diagonal Lambda
     Lambdat <- sparseMatrix(1:q, 1:q, x = Lind)
-                                        # initialize 1-dimensional
-                                        # theta
     theta <- 1
 })
 @
@@ -3045,25 +3054,16 @@ for producing interpretable output.  For example, to find the residual
 and random-effects standard deviation, we may use,
 <<homoModifiedProcessing>>=
 with(environment(devianceFunction), {
-                                        # dimensions of the problem
     n <- length(resp$y)
     p <- length(pp$beta0)
-                                        # penalized weighted residual
-                                        # sum-of-squares
     pwrss <- resp$wrss() + pp$sqrL(1)
-                                        # residual standard deviation
     sig <- sqrt(pwrss/(n-p))
-    c(Residual = sig,
-                                        # random effects variance
-                                        # requires no matrix algebra
-                                        # in this case because the
-                                        # covariance matrix of the
-                                        # random effects
-                                        # is proportional to the
-                                        # identity matrix
-       Subject = sig*pp$theta)
+    c(Residual = sig, Subject = sig*pp$theta)
 })
 @
+Note that the random effects variance requires no matrix algebra in
+this case because the covariance matrix of the random effects is
+proportional to the identity matrix
 
 \subsection{Additive models}
 \label{sec:additive}
@@ -3090,39 +3090,32 @@ set,
 <<simulateSplineData,message=FALSE>>=
 library("gamm4")
 library("splines")
-
 set.seed(1)
-                                        # sample size
 n <- 100
-                                        # number of columns in the
-                                        # simulation model matrix
 pSimulation <- 3
-                                        # number of columns in the
-                                        # statistical model matrix
 pStatistical <- 8
-                                        # explanatory variable
 x <- rnorm(n)
-                                        # simulation model matrix
 Bsimulation <- ns(x, pSimulation)
-                                        # statistical model matrix
 Bstatistical <- ns(x, pStatistical)
-                                        # simulation model coefficients
 beta <- rnorm(pSimulation)
-                                        # response variable
-y <- as.numeric(Bsimulation%*%beta + rnorm(n, sd = 0.3))
+y <- as.numeric(Bsimulation %*% beta + rnorm(n, sd = 0.3))
 @
+where \code{pSimulation} is the number of columns in the simulation
+model matrix and \code{pStatistical} is the number of columns in the
+statistical model matrix.
+
 We plot the resulting data along with the predictions from the
 generating model,
 <<splineExampleDataPlot, fig.width=4, fig.height=3,fig.align="center">>=
-par(mar = c(4, 4, 1, 1), las=1, bty="l")
+par(mar = c(4, 4, 1, 1), las = 1, bty = "l")
 plot(x, y, las = 1)
-lines(x[order(x)], (Bsimulation%*%beta)[order(x)])
+lines(x[order(x)], (Bsimulation %*% beta)[order(x)])
 @
 We now set up an approximate \pkg{lme4} model formula, and parse it
 using \code{lFormula},
 <<splineExampleApproximateFormula>>=
 pseudoGroups <- as.factor(rep(1:pStatistical, length = n))
-parsedFormula <- lFormula(y ~ x + (1|pseudoGroups))
+parsedFormula <- lFormula(y ~ x + (1 | pseudoGroups))
 @
 We now insert a spline basis into the \code{parsedFormula} object,
 <<splineExampleModifyZt>>=
@@ -3147,29 +3140,15 @@ custom code, and illustrates the general principle that methods for
 \code{merMod} objects constructed from modular fits should only be
 used if the user knows what she is doing,
 <<splineExampleFittedModelPlot, fig.width=4, fig.height=3, fig.align="center">>=
-                                        # evenly spaced x-values
-                                        # for constructing smooth
-                                        # curve
 xNew <- seq(min(x), max(x), length = 100)
-                                        # construct spline matrix
-                                        # over these x-values
 newBstatistical <- predict(Bstatistical, xNew)
-                                        # calculate the linear
-                                        # predictor
-yHat <-   cbind(1,xNew) %*% getME(mSpline, "fixef") +
+yHat <-   cbind(1, xNew) %*% getME(mSpline, "fixef") +
         newBstatistical %*% getME(mSpline, "u")
-                                        # plot the results
-par(mar = c(4, 4, 1, 1), las=1, bty="l")
+par(mar = c(4, 4, 1, 1), las = 1, bty = "l")
 plot(x, y)
 lines(xNew, yHat)
-                                        # add true relationship
-lines(x[order(x)], (Bsimulation%*%beta)[order(x)],lty=2)
-legend("topright",bty="n",c("fitted","generating"),lty=1:2,col=1)
+lines(x[order(x)], (Bsimulation %*% beta)[order(x)],lty = 2)
+legend("topright", bty = "n", c("fitted", "generating"), lty = 1:2,col = 1)
 @
 
 \end{document}
-
-%%% Local Variables:
-%%% mode: latex
-%%% TeX-master: t
-%%% End:

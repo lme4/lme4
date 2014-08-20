@@ -243,7 +243,7 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
 		resp$updateMu(lp0)
 		pp$setTheta(theta)
 		p <- pwrssUpdate(pp, resp, tolPwrss, GHrule(0L),
-                            compDev, verbose)
+                                 compDev, verbose)
                 resp$updateWts()
                 p
 
@@ -333,8 +333,12 @@ glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, ve
     nAGQ <- nrow(GQmat)
     if (compDev) {
         if (nAGQ < 2L)
-            return(.Call(glmerLaplace, pp$ptr(), resp$ptr(), nAGQ, tol, verbose))
-        return(.Call(glmerAGQ, pp$ptr(), resp$ptr(), tol, GQmat, grpFac, verbose))
+            return(.Call(glmerLaplace, pp$ptr(), resp$ptr(),
+                         nAGQ, tol, as.integer(30), # maxit = 30
+                         verbose))
+        return(.Call(glmerAGQ, pp$ptr(), resp$ptr(),
+                     tol, as.integer(30), # maxit = 30
+                     GQmat, grpFac, verbose))
     }
     oldpdev <- .Machine$double.xmax
     uOnly   <- nAGQ == 0L

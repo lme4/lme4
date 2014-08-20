@@ -293,13 +293,11 @@ extern "C" {
     //       >> length(delb) ...
     //
     // FIXME: sufficient to print just before/after update?
-    //
-    // FIXME: allow user-set maxit
     static void pwrssUpdate(glmResp *rp, merPredD *pp, bool uOnly,
-			    double tol, int verbose) {
+			    double tol, int maxit, int verbose) {
 	double oldpdev=std::numeric_limits<double>::max();
 	double pdev;
-	int maxit = 30, maxstephalfit = 10;
+	int maxstephalfit = 10;
 	bool   cvgd = false, verb = verbose > 2, moreverb = verbose > 10;
 
 	pdev = oldpdev; // define so debugging statements work on first step
@@ -366,7 +364,7 @@ extern "C" {
 	    throw runtime_error("pwrssUpdate did not converge in (maxit) iterations");
     }
 
-    SEXP glmerLaplace(SEXP pp_, SEXP rp_, SEXP nAGQ_, SEXP tol_, SEXP verbose_) {
+    SEXP glmerLaplace(SEXP pp_, SEXP rp_, SEXP nAGQ_, SEXP tol_, SEXP maxit_, SEXP verbose_) {
         BEGIN_RCPP;
         XPtr<glmResp>  rp(rp_);
         XPtr<merPredD> pp(pp_);
@@ -375,7 +373,8 @@ extern "C" {
 	    Rcpp::Rcout << "\nglmerLaplace resDev:  " << rp->resDev() << std::endl;
 	    Rcpp::Rcout << "\ndelb 1:  " << pp->delb() << std::endl;
 	}
-	pwrssUpdate(rp, pp, ::Rf_asInteger(nAGQ_), ::Rf_asReal(tol_), ::Rf_asInteger(verbose_));
+	pwrssUpdate(rp, pp, ::Rf_asInteger(nAGQ_), ::Rf_asReal(tol_), 
+		    ::Rf_asInteger(maxit_), ::Rf_asInteger(verbose_));
         return ::Rf_ScalarReal(rp->Laplace(pp->ldL2(), pp->ldRX2(), pp->sqrL(1.)));
         END_RCPP;
     }
@@ -388,18 +387,19 @@ extern "C" {
 
     static double sqrt2pi = std::sqrt(2. * PI);
 
-    SEXP glmerAGQ(SEXP pp_, SEXP rp_, SEXP tol_, SEXP GQmat_, SEXP fac_, SEXP verbose_) {
+    SEXP glmerAGQ(SEXP pp_, SEXP rp_, SEXP tol_, SEXP maxit_, SEXP GQmat_, SEXP fac_, SEXP verbose_) {
         BEGIN_RCPP;
 
         XPtr<glmResp>     rp(rp_);
         XPtr<merPredD>    pp(pp_);
         const MiVec      fac(as<MiVec>(fac_));
         double           tol(::Rf_asReal(tol_));
+	int            maxit(::Rf_asInteger(maxit_));
         double          verb(::Rf_asReal(verbose_));
         if (fac.size() != rp->mu().size())
             throw std::invalid_argument("size of fac must match dimension of response vector");
 
-        pwrssUpdate(rp, pp, true, tol, verb); // should be a no-op
+        pwrssUpdate(rp, pp, true, tol, maxit, verb); // should be a no-op
         const Ar1      devc0(devcCol(fac, pp->u(1.), rp->devResid()));
 
         const unsigned int q(pp->u0().size());
@@ -830,7 +830,7 @@ extern "C" {
 
     SEXP NelderMead_Create(SEXP lb_, SEXP ub_, SEXP xstep0_, SEXP x_, SEXP xtol_) {
         BEGIN_RCPP;
-        MVec  lb(as<MVec>(lb_)), ub(as<MVec>(ub_)), xstep0(as<MVec>(xstep0_)), x(as<MVec>(x_)), xtol(as<MVec>(xtol_));
+        MVec  lb(as<MVec>(lb_)), ub(as<MVec>(ub_)), xstep0(as<MVec>(xstep0_)), x(as<MVec>(x_));
         Nelder_Mead *ans =
             new Nelder_Mead(lb, ub, xstep0, x, optimizer::nl_stop(as<MVec>(xtol_)));
         return wrap(XPtr<Nelder_Mead>(ans, true));
@@ -1016,8 +1016,8 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(glmFamily_theta,    1),
     CALLDEF(glmFamily_variance, 2),
 
-    CALLDEF(glmerAGQ,           6),
-    CALLDEF(glmerLaplace,       5),
+    CALLDEF(glmerAGQ,           7),
+    CALLDEF(glmerLaplace,       6),
 
     CALLDEF(golden_Create,      2),
     CALLDEF(golden_newf,        2),
