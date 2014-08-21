@@ -16,6 +16,7 @@ test_that("lmer", {
     expect_equal(x,x2)
     expect_equal(x,x3)
     expect_error(update(x,start=c("a")),"start must be a list or a numeric vector")
+    ## misspelled
     expect_error(update(x,start=list(Theta=c(1,0,1))),"incorrect components")
     th0 <- getME(x,"theta")
     y <- suppressWarnings(update(x,start=th0))
@@ -44,7 +45,7 @@ test_that("glmer", {
     expect_equal(x,x2)
     expect_equal(x,x3)
     expect_error(update(x,start=c("a")),"start must be a list or a numeric vector")
-    expect_error(update(x,start=list(Theta=c(1))),"incorrect components")
+    expect_error(update(x,start=list(Theta=c(1))),"bad name\\(s\\)")
     th0 <- getME(x,"theta")
     y <- suppressWarnings(update(x,start=th0))
 

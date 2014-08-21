@@ -13,7 +13,7 @@ boo02 <- bootMer(fm1, mySumm, nsim = 10, use.u = TRUE)
 
 ## boo02 <- bootMer(fm1, mySumm, nsim = 500, use.u = TRUE)
 if (require(boot)) {
-    boot.ci(boo02,index=2,type="perc")
+    suppressWarnings(boot.ci(boo02,index=2,type="perc"))
 }
 
 fm2 <- lmer(angle ~ recipe * temperature + (1|recipe:replicate), cake)

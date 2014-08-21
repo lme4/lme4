@@ -106,7 +106,10 @@ glmer <- function(formula, data=NULL, family = gaussian,
     if (is.list(start)) {
         start.bad <- setdiff(names(start),c("theta","fixef"))
         if (length(start.bad)>0) {
-            stop(sprintf("bad name(s) for start vector (%s); should be %s and/or %s"),paste(start.bad,collapse=", "),shQuote("theta"),shQuote(fixef))
+            stop(sprintf("bad name(s) for start vector (%s); should be %s and/or %s",
+                         paste(start.bad,collapse=", "),
+                         shQuote("theta"),
+                         shQuote("fixef")),call.=FALSE)
         }
         if (!is.null(start$fixef) && nAGQ==0)
             stop("should not specify both start$fixef and nAGQ==0")
