@@ -635,16 +635,16 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     hasReGen <- !is.null(reGenerators)
     
     ## extract family, call lmer for gaussian
-    ## if (is.character(family))
-    ##     family <- get(family, mode = "function", envir = parent.frame(2))
-    ## if( is.function(family)) family <- family()
-    ## if (isTRUE(all.equal(family, gaussian()))) {
-    ##     mc[[1]] <- quote(lme4::lFormula)
-    ##     mc["family"] <- NULL            # to avoid an infinite loop
-    ##     return(eval(mc, parent.frame()))
-    ## }
-    ## if (family$family %in% c("quasibinomial", "quasipoisson", "quasi"))
-    ##     stop('"quasi" families cannot be used in glmer')
+    if (is.character(family))
+        family <- get(family, mode = "function", envir = parent.frame(2))
+    if( is.function(family)) family <- family()
+    if (isTRUE(all.equal(family, gaussian()))) {
+        mc[[1]] <- quote(lme4::lFormula)
+        mc["family"] <- NULL            # to avoid an infinite loop
+        return(eval(mc, parent.frame()))
+    }
+    if (family$family %in% c("quasibinomial", "quasipoisson", "quasi"))
+        stop('"quasi" families cannot be used in glmer')
 
     ignoreArgs <- c("start","verbose","devFunOnly","optimizer", "control", "nAGQ", "reGenerators")
     
