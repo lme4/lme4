@@ -1354,7 +1354,6 @@ residuals.glmResp <- function(object, type = c("deviance", "pearson",
 
 }
 
-## influence values (new feature); not yet exported
 hatvalues.merMod <- function(model, fullHatMatrix = FALSE, ...) {
     if(isGLMM(model)) warning("the hat matrix may not make sense for GLMMs")
     ## FIXME:  add restriction for NLMMs?
