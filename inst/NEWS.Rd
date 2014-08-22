@@ -9,7 +9,8 @@
       \item \code{getME} gains a \code{"Tlist"} option
       (returns a vector of template matrices from which the blocks of 
       \code{Lambda} are generated)
-      \item \code{hatvalues} method returns the diagonal of the hat matrix
+      \item \code{hatvalues} method returns the diagonal of the hat
+      matrix of LMMs
       
     }
   }

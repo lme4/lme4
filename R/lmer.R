@@ -1355,7 +1355,10 @@ residuals.glmResp <- function(object, type = c("deviance", "pearson",
 }
 
 ## influence values (new feature); not yet exported
-hatvalues.merMod <- function(model, ...) {
+hatvalues.merMod <- function(model, fullHatMatrix = FALSE, ...) {
+    if(isGLMM(model)) warning("the hat matrix may not make sense for GLMMs")
+    ## FIXME:  add restriction for NLMMs?
+    
     ## prior weights, W ^ {1/2} :
     sqrtW <- Diagonal(x = sqrt(weights(model, type = "prior")))
     with(getME(model, c("L", "Lambdat", "Zt", "RX", "X", "RZX")), {
@@ -1365,6 +1368,7 @@ hatvalues.merMod <- function(model, ...) {
 	## CR:= right factor of the fixed-effects component of the hat matrix  (65)
 	##	{MM (FIXME Matrix):  t(.) %*% here faster than crossprod()}
 	CR <- solve(t(RX), t(X) %*% sqrtW - crossprod(RZX, CL))
+        if(fullHatMatrix) return(crossprod(CL) + crossprod(CR))
 	## H = (C_L^T C_L + C_R^T C_R)	       (63)
 	## diagonal of the hat matrix, diag(H) :
 	colSums(CR^2) + colSums(CL^2)
