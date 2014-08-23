@@ -1,6 +1,6 @@
 %\VignetteEngine{knitr::knitr}
 %\VignetteDepends{ggplot2}
-%\VignetteDepends{gamm4}
+%\VignetteDepends{splines}
 %\VignetteIndexEntry{Fitting Linear Mixed-Effects Models using lme4}
 \documentclass[nojss]{jss}
 \usepackage[T1]{fontenc}% for correct hyphenation and T1 encoding
@@ -3088,7 +3088,6 @@ particular, the strategy involves the following steps,
 Here we illustrate this general strategy using a simple simulated data
 set,
 <<simulateSplineData,message=FALSE>>=
-library("gamm4")
 library("splines")
 set.seed(1)
 n <- 100
