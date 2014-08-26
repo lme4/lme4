@@ -232,8 +232,10 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
     ff <-
     if (is(rho$resp, "lmerResp")) {
 	rho$lmer_Deviance <- lmer_Deviance
-	function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(),
-                              pp$thfun(as.double(theta)))
+	function(theta) {
+            .Call(lmer_Deviance, pp$ptr(), resp$ptr(),
+                  pp$thfun(as.double(theta)))
+        }
     } else if (is(rho$resp, "glmResp")) {
         ## control values will override rho values *if present*
         if (!is.null(tp <- control$tolPwrss)) rho$tolPwrss <- tp
@@ -1088,7 +1090,6 @@ print.ranef.mer <- function(x, ...) {
 ##' @export
 refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
 {
-
     newControl <- NULL
 
     if (ll <- length(l... <- list(...)) > 0) {
@@ -2512,6 +2513,7 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
         ## run one more evaluation of the function at the optimized
         ##  value, to reset the internal/environment variables in devfun ...
         fn(opt$par)
+        environment(fn)$pp$setTheta(opt$par)
     }
 
     ## store all auxiliary information
