@@ -22,7 +22,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
   ##  profile all parameters at once rather than RE first and then fixed)
 
     useSc <- isLMM(fitted) || isNLMM(fitted)
-    dd <- devfun2(fitted,useSc,signames)
+    dd <- devfun2(fitted, useSc, signames)
     ## FIXME: figure out to what do here ...
     if (isGLMM(fitted) && fitted@devcomp$dims["useSc"])
         stop("can't (yet) profile GLMMs with non-fixed scale parameters")
@@ -165,7 +165,9 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
 	   ores <- tryCatch(optwrap(optimizer, par=start,
 				    fn=function(x) dd(mkpar(npar1, w, xx, x)),
 				    lower = lowvp[-w],
-				    upper = upvp [-w]), error=function(e)NULL)
+				    upper = upvp [-w],
+                                    use.last.params = TRUE),
+                            error=function(e)NULL)
 	   if (is.null(ores)) {
 	       devdiff <- NA
 	       pars <- NA
@@ -409,7 +411,7 @@ devfun2 <- function(fm, useSc, signames)
             sigma <- pars[np]
             ## .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pars[-np]/sigma)
             ## convert from sdcor vector back to 'unscaled theta'
-            thpars <- Sv_to_Cv(pars,n=vlist,s=sigma)
+            thpars <- Sv_to_Cv(pars, n = vlist, s = sigma)
             .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pp$thfun(as.double(thpars)))
             sigsq <- sigma^2
             pp$ldL2() - ldW + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
