@@ -9,8 +9,6 @@
 #include "respModule.h"
 #include "optimizer.h"
 #include "merPhylo.h"
-#include <R.h>
-#include <Rinternals.h>
 
 
 extern "C" {
