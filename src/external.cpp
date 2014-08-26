@@ -9,6 +9,9 @@
 #include "respModule.h"
 #include "optimizer.h"
 #include "merPhylo.h"
+#include <R.h>
+#include <Rinternals.h>
+
 
 extern "C" {
     typedef   Eigen::VectorXi        iVec;
@@ -73,6 +76,12 @@ extern "C" {
         return wrap(Eigen::SimdInstructionSetsInUse());
         END_RCPP;
     }
+
+
+    SEXP deepcopy(SEXP x) {
+        return(Rf_duplicate(x));
+    }
+
 
     // generalized linear model (and generalized linear mixed model) response
 
@@ -1014,6 +1023,8 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(Eigen_SSE, 0),
 
     CALLDEF(allPerm_int, 1),
+
+    CALLDEF(deepcopy, 1),
 
     CALLDEF(glm_Create, 10),    // generate external pointer
 
