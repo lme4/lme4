@@ -10,13 +10,15 @@
 namespace lme4 {
     using Rcpp::as;
 
-    static inline double pwrss(lme4::merPredD *pred, lme4::lmResp *resp) {
-	return pred->sqrL(1.) + resp->wrss();
-    }
+  // FIXME:  unused?
+  //static inline double pwrss(lme4::merPredD *pred, lme4::lmResp *resp) {
+  //	return pred->sqrL(1.) + resp->wrss();
+  //}
 
-    static inline double sigmaML(lme4::merPredD *pred, lme4::lmResp *resp) {
-	return std::sqrt(pwrss(pred, resp)/double(resp->y().size()));
-    }
+  // FIXME:  unused?
+  // static inline double sigmaML(lme4::merPredD *pred, lme4::lmResp *resp) {
+  //	return std::sqrt(pwrss(pred, resp)/double(resp->y().size()));
+  // }
 
 #if 0
     mcmcsamp::mcmcsamp(lme4::merPredD *pred, lme4::lmResp *resp,

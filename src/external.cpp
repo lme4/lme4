@@ -621,7 +621,7 @@ extern "C" {
     }
 
     static double lmer_dev(XPtr<merPredD> ppt, XPtr<lmerResp> rpt, const Eigen::VectorXd& Lambdax) {
-	int debug=0;
+        // int debug=0;
 	double val;
         ppt->updateLambda(Lambdax);
 	ppt->updateXwts(rpt->sqrtXwt());
@@ -855,7 +855,7 @@ extern "C" {
 
     SEXP NelderMead_Create(SEXP lb_, SEXP ub_, SEXP xstep0_, SEXP x_, SEXP xtol_) {
         BEGIN_RCPP;
-        MVec  lb(as<MVec>(lb_)), ub(as<MVec>(ub_)), xstep0(as<MVec>(xstep0_)), x(as<MVec>(x_)), xtol(as<MVec>(xtol_));
+        MVec  lb(as<MVec>(lb_)), ub(as<MVec>(ub_)), xstep0(as<MVec>(xstep0_)), x(as<MVec>(x_));
         Nelder_Mead *ans =
             new Nelder_Mead(lb, ub, xstep0, x, optimizer::nl_stop(as<MVec>(xtol_)));
         return wrap(XPtr<Nelder_Mead>(ans, true));
