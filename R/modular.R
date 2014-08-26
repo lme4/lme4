@@ -698,7 +698,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     if(any(!reTrms$special)) {
         ## test only factors that occur in some 'non-special' terms
         nonSpecial <- unique(names(reTrms$cnms)[!reTrms$special])
-        checkNlevels(reTrms$flist[nonSpecial], n=n, control)
+        checkNlevels(reTrms$flist[nonSpecial], n=n, control, allow.n=TRUE)
     }
     ## TODO: allow.n = !useSc {see FIXME below}
     checkNlevels(reTrms$ flist, n=n, control, allow.n=TRUE)
