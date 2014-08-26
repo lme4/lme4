@@ -21,11 +21,7 @@ setClass("lmList",
 setClass("lmList.confint", contains = "array")
 
 forceCopy <- function(x) {
-    if (is.numeric(x)) return(x+0)
-    ## FIXME: doesn't handle non-numeric fields yet ...
-    ## resp@family is the only non-numeric field other than Ptr
-    ## need equivalent force-copy no-op for other classes
-    x
+    .Call('deepcopy', x)
 }
 
 ### FIXME
@@ -167,11 +163,7 @@ merPredD <-
                                  current <- get(field, envir = selfEnv)
                                  if (is(current, "envRefClass"))
                                      current <- current$copy(FALSE)
-                                 ## hack (https://stat.ethz.ch/pipermail/r-devel/2014-March/068448.html)
-                                 ## ... to ensure real copying
-                                 ## forceCopy() does **NOT** work here, but +0 does
-                                 ## we can get away with this because all fields other than Ptr are numeric
-                                 assign(field, current+0, envir = vEnv)
+                                 assign(field, forceCopy(current), envir = vEnv)
                              }
                          }
                          do.call(merPredD$new, c(as.list(vEnv), n=nrow(vEnv$V), Class=def))
