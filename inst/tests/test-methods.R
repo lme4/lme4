@@ -1,9 +1,11 @@
+if(FALSE) { ## for flexLambda debugging only -- don't keep for long!!!
+
 library("testthat")
 library("lme4")
 L <- load(system.file("testdata/lme-tst-fits.rda",
                       package="lme4", mustWork=TRUE))
 
-if (getRversion()>"3.0.0") {
+if(TRUE) { # if (getRversion()>"3.0.0") {
     ## saved fits are not safe with old R versions
 
 fm0 <- fit_sleepstudy_0
@@ -210,3 +212,5 @@ test_that("plot", {
     pp <- plot(fm1, resid(., scaled=TRUE) ~ fitted(.) | Sex, abline = 0)
     expect_is(pp,"trellis")
 })
+
+}

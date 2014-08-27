@@ -2513,7 +2513,8 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
         ## run one more evaluation of the function at the optimized
         ##  value, to reset the internal/environment variables in devfun ...
         fn(opt$par)
-        environment(fn)$pp$setTheta(opt$par[seq_along(orig_theta)])
+        nth <- length(environment(fn)$pp$theta)
+        environment(fn)$pp$setTheta(opt$par[1:nth])
     }
 
     ## store all auxiliary information
