@@ -5,7 +5,8 @@
   Arabidopsis clipping/fertilization data
 }
 \description{
-  Data on 
+  Data on genetic variation in responses to fertilization
+  and simulated herbivory in \emph{Arabidopsis}
 }
 \usage{data("Arabidopsis")}
 \format{
