@@ -1281,3 +1281,5 @@ nloptwrap <- local({
 glmerLaplaceHandle <- function(pp, resp, nAGQ, tol, verbose) {
     .Call(glmerLaplace, pp, resp, nAGQ, tol, verbose)
 }
+
+isFlexLambda <- function() TRUE
