@@ -964,3 +964,5 @@ nloptwrap <- local({
 glmerLaplaceHandle <- function(pp, resp, nAGQ, tol, maxit, verbose) {
     .Call(glmerLaplace, pp, resp, nAGQ, tol, as.integer(maxit), verbose)
 }
+
+isFlexLambda <- function() FALSE
