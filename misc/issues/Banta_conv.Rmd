@@ -1,0 +1,69 @@
+## Troubleshooting Banta fits
+
+I noticed when re-fitting the Banta fruit data (which I hadn't
+previously looked at) that we were now getting some convergence
+warnings when fitting the full data
+
+```{r getstuff}
+dat.tf <- read.csv("../data/Banta_TotalFruits.csv")
+library(lme4)
+```
+
+```{r fit1,cache=TRUE}
+mp1 <- glmer(total.fruits ~ nutrient*amd +
+             rack + status +
+             (amd*nutrient|popu)+
+             (amd*nutrient|gen),
+             data=dat.tf, family="poisson")
+```
+
+### try restarting from the same point
+
+```{r restart,cache=TRUE}
+final <- getME(mp1,c("theta","fixef"))  ## extract theta and beta (fixed)
+sapply(final,length)  ## lots of parameters!
+mp1U <- update(mp1,start=final)
+```
+
+```{r eval_restart}
+summary(fixef(mp1U)/fixef(mp1))
+thratio <- getME(mp1U,"theta")/getME(mp1,"theta")
+summary(thratio)
+## one theta value changed quite a bit!
+## first few values ...
+head(sort(thratio))
+cbind(getME(mp1U,"theta")[thratio<0.9],
+      getME(mp1,"theta")[thratio<0.9])
+## these are all very small-magnitude values ...      
+logLik(mp1U)-logLik(mp1)  ## log-likelihood hardly changed
+scgrad <- function(x) {
+    drv <- x@optinfo$derivs
+    solve(drv$Hessian,drv$gradient)
+}
+range(abs(scgrad(mp1)))
+range(abs(scgrad(mp1U)))
+```
+
+### try other optimizers
+
+```{r allfit,cache=TRUE,message=FALSE}
+source("../R/allFit.R")
+aa <- allFit(mp1)
+```
+
+```{r}
+summary.allfit(aa)
+```
+
+### try looking at likelihood slices
+
+```{r slices,cache=TRUE}
+dd1 <- update(mp1,devFunOnly=TRUE)
+pp1 <- unlist(getME(mp1,c("theta","fixef")))
+s2D.1 <- bbmle:::slice2D(pp1,dd1)
+```
+
+```{r plotslice}
+splom(s2D.1)
+```
+
