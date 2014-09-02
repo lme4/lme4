@@ -21,8 +21,8 @@
       each of two greenhouse racks}
     \item{\code{nutrient}}{fertilization treatment/nutrient level (1,
       minimal nutrients or 8, added nutrients)}
-    \item{\code{amd}}{simulated herbivory or "clipping" (apical meristem damage): \code{unclipped} (baseline) or
-      \code{clipped}}
+    \item{\code{amd}}{simulated herbivory or "clipping" (apical meristem
+      damage): \code{unclipped} (baseline) or \code{clipped}}
     \item{\code{status}}{a nuisance factor for germination method
       (\code{Normal}, \code{Petri.Plate}, or \code{Transplant})}
     \item{\code{total.fruits}}{total fruit set per plant (integer)}
@@ -32,18 +32,21 @@
   From Josh Banta
 }
 \references{
-  Banta, Joshua A, Martin H. H Stevens, and Massimo Pigliucci. 2010. "A Comprehensive Test of the 'limiting Resources' Framework Applied to Plant Tolerance to Apical Meristem Damage." \emph{Oikos} 119 (2): 359–69. doi:10.1111/j.1600-0706.2009.17726.x.
+  Joshua A. Banta, Martin H. H Stevens, and Massimo Pigliucci (2010)
+  A comprehensive test of the 'limiting resources' framework applied to
+  plant tolerance to apical meristem damage.
+  \emph{Oikos} \bold{119}(2), 359--369;
+  \url{http://dx.doi.org/10.1111/j.1600-0706.2009.17726.x}
 }
 \examples{
 data(Arabidopsis)
-summary(Arabidopsis$total.fruits)
-table(gsub("[0-9].","",levels(Arabidopsis$popu)))
+summary(Arabidopsis[,"total.fruits"])
+table(gsub("[0-9].","",levels(Arabidopsis[,"popu"])))
 library(lattice)
-stripplot(log(total.fruits+1) ~ amd|nutrient,
-          data=Arabidopsis, 
-          groups=gen, 
+stripplot(log(total.fruits+1) ~ amd|nutrient, data = Arabidopsis,
+          groups = gen,
           strip=strip.custom(strip.names=c(TRUE,TRUE)),
-          type=c('p','a'), ## points and panel-average value -- 
+          type=c('p','a'), ## points and panel-average value --
           ## see ?panel.xyplot
           scales=list(x=list(rot=90)),
           main="Panel: nutrient, Color: genotype")
