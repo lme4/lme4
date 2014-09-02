@@ -1,33 +1,37 @@
 \name{GHrule}
 \alias{GHrule}
 \title{Univariate Gauss-Hermite quadrature rule}
+\description{
+  Create a univariate Gauss-Hermite quadrature rule.
+}
 \usage{
   GHrule(ord, asMatrix = TRUE)
 }
 \arguments{
   \item{ord}{scalar integer between 1 and 25 - the order,
-  or number of nodes and weights, in the rule.  When the
-  function being multiplied by the standard normal density
-  is a polynomial of order 2k-1 the rule of order k
-  integrates the product exactly.}
+    or number of nodes and weights, in the rule.  When the
+    function being multiplied by the standard normal density
+    is a polynomial of order 2k-1 the rule of order k
+    integrates the product exactly.}
 
   \item{asMatrix}{logical scalar - should the result be
-  returned as a matrix.  If \code{FALSE} a data frame is
-  returned.  Defaults to \code{TRUE}.}
+    returned as a matrix.  If \code{FALSE} a data frame is
+    returned.  Defaults to \code{TRUE}.}
 }
 \value{
-  a matrix with \code{ord} rows and three columns which are
-  \code{z} the node positions, \code{w} the weights and
-  \code{ldnorm}, the logarithm of the normal density
+  a matrix (or data frame, is \code{asMatrix} is false) with \code{ord}
+  rows and three columns which are \code{z} the node positions, \code{w}
+  the weights and \code{ldnorm}, the logarithm of the normal density
   evaluated at the nodes.
 }
-\description{
-  Create a univariate Gauss-Hermite quadrature rule
-}
 \details{
-  This version of Gauss-Hermite quadrature provides the
-  node positions and weights for a scalar integral of a
-  function multiplied by the standard normal density.
+  This version of Gauss-Hermite quadrature provides the node positions
+  and weights for a scalar integral of a function multiplied by the
+  standard normal density.
+
+  Originally based on package \CRANpkg{SparseGrid}'s hidden \code{GQN()}.
+}
+\seealso{a different interface is available via \code{\link{GKdk}()}.
 }
 \examples{
 (r5 <- GHrule(5, asMatrix=FALSE))
