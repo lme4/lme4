@@ -46,8 +46,8 @@
   \url{http://www.sparse-grids.de}.
 }
 \examples{
-GQdk(2,5)
+GQdk(2,5) # 53 x 3
 
-GQN[[3]][[5]]
+GQN[[3]][[5]] # a 14 x 4 matrix
 }
 

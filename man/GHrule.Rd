@@ -29,9 +29,9 @@
   and weights for a scalar integral of a function multiplied by the
   standard normal density.
 
-  Originally based on package \CRANpkg{SparseGrid}'s hidden \code{GQN()}.
+  Originally based on package \pkg{SparseGrid}'s hidden \code{GQN()}.
 }
-\seealso{a different interface is available via \code{\link{GKdk}()}.
+\seealso{a different interface is available via \code{\link{GQdk}()}.
 }
 \examples{
 (r5 <- GHrule(5, asMatrix=FALSE))
