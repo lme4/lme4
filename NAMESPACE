@@ -26,7 +26,8 @@ importFrom("lattice",
            xyplot)
 importFrom("MASS", negative.binomial, theta.ml)
 importFrom("nlme", fixef,ranef,VarCorr)
-importFrom("Matrix", drop0, rankMatrix, sparseMatrix, cBind,rBind)
+importFrom("Matrix", drop0, rankMatrix, sparseMatrix, cBind,rBind,
+           forceSymmetric, fac2sparse, KhatriRao, Diagonal)
 importMethodsFrom("Matrix", coerce, "%*%",crossprod,tcrossprod,
                   t,diag, chol2inv,solve, colSums,rowSums)
 ## other CRAN packages:

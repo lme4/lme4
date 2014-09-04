@@ -2,25 +2,26 @@
 \alias{mkReTrms}
 \title{Create Z, Lambda, Lind, etc.}
 \usage{
-  mkReTrms(bars, fr)
+  mkReTrms(bars, fr, drop.unused.levels=TRUE)
 }
 \arguments{
   \item{bars}{a list of parsed random-effects terms}
-
   \item{fr}{a model frame in which to evaluate these terms}
+  \item{drop.unused.levels}{(logical) drop unused factor levels? (experimental)}
 }
 \value{
-  a list with components \item{Zt}{transpose of the sparse
-  model matrix for the random effects}
-  \item{Lambdat}{transpose of the sparse relative
-  covariance factor} \item{Lind}{an integer vector of
-  indices determining the mapping of the elements of the
-  \code{theta} to the \code{"x"} slot of \code{Lambdat}}
+  a list with components
+  \item{Zt}{transpose of the sparse model matrix for the random effects}
+  \item{Lambdat}{transpose of the sparse relative covariance factor}
+  \item{Lind}{an integer vector of indices determining the mapping of
+    the elements of the \code{theta} vector to the \code{"x"} slot of
+    \code{Lambdat}}
   \item{theta}{initial values of the covariance parameters}
   \item{lower}{lower bounds on the covariance parameters}
   \item{flist}{list of grouping factors used in the
-  random-effects terms} \item{cnms}{a list of column names
-  of the random effects according to the grouping factors}
+    random-effects terms}
+  \item{cnms}{a list of column names
+    of the random effects according to the grouping factors}
 }
 \description{
   From the result of \code{\link{findbars}} applied to a

@@ -80,7 +80,7 @@ test_that("bootMer", {
     sleepstudyNA <- sleepstudy
     sleepstudyNA$Days[1:3] = NA
     fm2 <- update(fm1,data=sleepstudyNA)
-    confint(fm2, method="boot", nsim=10, seed=101)
+    suppressWarnings(confint(fm2, method="boot", nsim=10, seed=101))
 
     ## semipar bootstrapping
     fm01 <- lmer(Yield ~ 1|Batch, Dyestuff)
@@ -205,7 +205,7 @@ test_that("plot", {
     data(Orthodont, package="nlme")
     fm0 <- lmer(distance ~ age + (age|Subject), data=Orthodont)
     expect_is(plot(fm0),"trellis")
-    if (exists("Orthodont")) rm("Orthodont")
+    suppressWarnings(rm("Orthodont"))
     fm1 <- doFit()
     pp <- plot(fm1, resid(., scaled=TRUE) ~ fitted(.) | Sex, abline = 0)
     expect_is(pp,"trellis")

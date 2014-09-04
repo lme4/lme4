@@ -3,6 +3,54 @@ if(getRversion() < "2.15")
 
 ### Utilities for parsing and manipulating mixed-model formulas
 
+
+##' @param x a language object of the form  effect | groupvar
+##' @param frloc model frame
+##' @param drop.unused.levels (logical)
+##' @return list containing grouping factor, sparse model matrix, number of levels, names
+mkBlist <- function(x,frloc, drop.unused.levels=TRUE) {
+    ## convert grouping variables to factors as necessary
+    ## TODO: variables that are *not* in the data frame are
+    ##  not converted -- these could still break, e.g. if someone
+    ##  tries to use the : operator
+    ## TODO: some sensible tests for drop.unused.levels
+    ##       (not actually used, but could come in handy)
+    makeFac <- function(x) if (!is.factor(x)) factor(x) else x
+    for (i in all.vars(x[[3]])) {
+        if (!is.null(curf <- frloc[[i]]))
+            frloc[[i]] <- makeFac(curf)
+    }
+    ## try to evaluate grouping factor within model frame ...
+    if (is.null(ff <- tryCatch(eval(substitute(makeFac(fac),
+                                               list(fac = x[[3]])), frloc),
+                error=function(e) NULL)))
+        stop("couldn't evaluate grouping factor ",
+             deparse(x[[3]])," within model frame:",
+             " try adding grouping factor to data ",
+             "frame explicitly if possible",call.=FALSE)
+    if (all(is.na(ff)))
+        stop("Invalid grouping factor specification, ",
+             deparse(x[[3]]),call.=FALSE)
+    if (drop.unused.levels) ff <- droplevels(ff)
+    nl <- length(levels(ff))
+    ## this section implements eq. 6 of the JSS lmer paper
+    ## (but not by explicit Khatri-Rao products)
+    ## model matrix based on LHS of random effect term
+    mm <- model.matrix(eval(substitute( ~ foo, list(foo = x[[2]]))), frloc)
+    nc <- ncol(mm)
+    nseq <- seq_len(nc)
+    ## this is J^T (see p. 9 of JSS lmer paper)
+    ## use fac2sparse() rather than as() to allow *not* dropping
+    ## unused levels where desired
+    sm <- fac2sparse(ff, to = "d",
+                     drop.unused.levels = drop.unused.levels)
+    ## looks like we don't have to filter NAs explicitly any more ...
+    ## sm <- as(ff,"sparseMatrix")
+    ## sm <- KhatriRao(sm[,!is.na(ff),drop=FALSE],t(mm[!is.na(ff),,drop=FALSE]))
+    sm <- KhatriRao(sm,t(mm)) 
+    list(ff = ff, sm = sm, nl = nl, cnms = colnames(mm))
+}
+
 ##' From the result of \code{\link{findbars}} applied to a model formula and
 ##' and the evaluation frame, create the model matrix, etc. associated with
 ##' random-effects terms.  See the description of the returned value for a
@@ -25,52 +73,16 @@ if(getRversion() < "2.15")
 ##' @importMethodsFrom Matrix coerce
 ##' @family utilities
 ##' @export
-mkReTrms <- function(bars, fr) {
+mkReTrms <- function(bars, fr, drop.unused.levels=TRUE) {
   if (!length(bars))
     stop("No random effects terms specified in formula",call.=FALSE)
   stopifnot(is.list(bars), vapply(bars, is.language, NA),
             inherits(fr, "data.frame"))
   names(bars) <- barnames(bars)
-  term.names <- unlist(lapply(bars, function(x) paste(deparse(x),collapse=" ")))
-
-  ## auxiliary {named, for easier inspection}:
-  mkBlist <- function(x) {
-    frloc <- fr
-    ## convert grouping variables to factors as necessary
-    ## TODO: variables that are *not* in the data frame are
-    ##  not converted -- these could still break, e.g. if someone
-    ##  tries to use the : operator
-    for (i in all.vars(x[[3]])) {
-        if (!is.null(frloc[[i]])) frloc[[i]] <- factor(frloc[[i]])
-    }
-    if (is.null(ff <- tryCatch(eval(substitute(factor(fac),
-                                               list(fac = x[[3]])), frloc),
-                error=function(e) NULL)))
-        stop("couldn't evaluate grouping factor ",
-             deparse(x[[3]])," within model frame:",
-             " try adding grouping factor to data ",
-             "frame explicitly if possible",call.=FALSE)
-    if (all(is.na(ff)))
-        stop("Invalid grouping factor specification, ",
-             deparse(x[[3]]),call.=FALSE)
-    nl <- length(levels(ff))
-    mm <- model.matrix(eval(substitute( ~ foo, list(foo = x[[2]]))), frloc)
-    nc <- ncol(mm)
-    nseq <- seq_len(nc)
-    sm <- as(ff, "sparseMatrix")
-    if (nc > 1)
-      sm <- do.call(rBind, lapply(nseq, function(i) sm))
-    ## hack for NA values contained in factor (FIXME: test elsewhere for consistency?)
-    sm@x[] <- t(mm[!is.na(ff),])
-    ## When nc > 1 switch the order of the rows of sm
-    ## so the random effects for the same level of the
-    ## grouping factor are adjacent.
-    if (nc > 1)
-      sm <- sm[as.vector(matrix(seq_len(nc * nl),
-                                ncol = nl, byrow = TRUE)),]
-    list(ff = ff, sm = sm, nl = nl, cnms = colnames(mm))
-  }
-  blist <- lapply(bars, mkBlist)
+  term.names <- unlist(lapply(bars,
+                              function(x) paste(deparse(x),collapse=" ")))
+  ## get component blocks 
+  blist <- lapply(bars, mkBlist, fr, drop.unused.levels)
   nl <- vapply(blist, `[[`, 0L, "nl")   # no. of levels per term
                                         # (in lmer jss:  \ell_i)
 
@@ -81,7 +93,7 @@ mkReTrms <- function(bars, fr) {
     nl <- nl[ord]
   }
   Ztlist <- lapply(blist, "[[", "sm")
-  Zt <- do.call(rBind, Ztlist)
+  Zt <- do.call(rBind, Ztlist)  ## eq. 7, JSS lmer paper
   names(Ztlist) <- term.names
   q <- nrow(Zt)
 
@@ -95,7 +107,11 @@ mkReTrms <- function(bars, fr) {
                                         # (in lmer jss:  ??)
   nb <- nc * nl			        # no. of random effects per term
                                         # (in lmer jss:  q_i)
-  stopifnot(sum(nb) == q)
+  ## eq. 5, JSS lmer paper
+  if (sum(nb) != q) {
+      stop(sprintf("total number of RE (%d) not equal to nrow(Zt) (%d)",
+                   sum(nb),q))
+  }
   boff <- cumsum(c(0L, nb))		# offsets into b
   thoff <- cumsum(c(0L, nth))		# offsets into theta
   ### FIXME: should this be done with cBind and avoid the transpose

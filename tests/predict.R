@@ -130,5 +130,17 @@ predict(m, newdata=cake[-1:-18,], ReForm=NA)
 predict(m, newdata=cake[-1:-18,], ReForm=~ (1 | replicate)) 
 predict(m, newdata=cake[-1:-18,], ReForm=~ (1 | replicate), allow.new.levels=TRUE)
 
+##
 
+fm1 <- fit_sleepstudy_1
+p0 <- predict(fm1,newdata=data.frame(Days=6,Subject=c("308","309")))
+p1 <- predict(fm1,newdata=data.frame(Days=rep(6,4),
+            Subject=c("308","309")))
+stopifnot(all.equal(rep(unname(p0),2),unname(p1)))
+p2 <- predict(fm1,newdata=data.frame(Days=6,Subject="308"))
+nd <- data.frame(Days=6,
+            Subject=factor("308",levels=levels(sleepstudy$Subject)))
+p3 <- predict(fm1,newdata=nd)
+stopifnot(all.equal(p2,p3))
+stopifnot(all.equal(p2,p0[1]))
 }

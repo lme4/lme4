@@ -338,7 +338,6 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
         if (!noReForm(re.form)) {
             if (is.null(re.form)) {
 		re.form <- reOnly(formula(object)) # RE formula only
-                ReTrms <- mkReTrms(findbars(re.form), newdata)
             }
             newRE <- mkNewReTrms(object,newdata,re.form,na.action=na.action,
                                  allow.new.levels=allow.new.levels)
