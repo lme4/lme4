@@ -161,7 +161,9 @@ The following S3 methods with arguments given above exist (this list is currentl
   \item{\code{extractAIC}:}{Computes the (generalized) Akaike An
     Information Criterion. If \code{isREML(fit)}, then \code{fit} is
     refitted using maximum likelihood.}
-  \item{\code{family}:}{\code{\link{family}} of fitted GLMM.}
+  \item{\code{family}:}{\code{\link{family}} of fitted
+    GLMM. (\emph{Warning:} this accessor may not work properly with
+    customized families/link functions.)}
   \item{\code{fitted}:}{Fitted values, given the conditional modes of
     the random effects.  For more flexible access to fitted values, use
     \code{\link{predict.merMod}}.}

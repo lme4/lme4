@@ -760,8 +760,11 @@ family.merMod <- function(object, ...) family(object@resp, ...)
 family.glmResp <- function(object, ...) {
                                         # regenerate initialize
                                         # expression if necessary
+    
+    ## FIXME: may fail with user-specified/custom family?
     if(is.null(object$family$initialize))
-        return(do.call(object$family$family, list()))
+        return(do.call(object$family$family,
+                       list(link=object$family$link)))
 
     object$family
 }

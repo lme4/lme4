@@ -64,6 +64,12 @@ test_that("glmer", {
     expect_equal(Zt@x,                                  rep.int(1, 56L))
     expect_that(Lambdat <- getME(gm1, "Lambdat"),       is_a("dgCMatrix"))
     expect_equivalent(as(Lambdat, "matrix"),            diag(theta, 15L, 15L))
+
+    expect_is(gm1_probit <- update(gm1,family=binomial(link="probit")),"merMod")
+    expect_equal(family(gm1_probit)$link,"probit")
+
+    ## FIXME: test user-specified/custom family?
+    
     expect_error(glFormula(cbind(incidence, size - incidence) ~ period + (1 | herd),
                              data = subset(cbpp, herd==levels(herd)[1]), family = binomial),
                  "must have > 1")
