@@ -10,7 +10,7 @@
 }
 \usage{
 nloptwrap(par, fn, lower, upper, control=list(),...)
-nlminbwrap(par, fn, lower, upper, control=list(),...) {
+nlminbwrap(par, fn, lower, upper, control=list(),...)
 }
 \arguments{
   \item{par}{starting parameter vector}
