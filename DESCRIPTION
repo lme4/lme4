@@ -7,13 +7,16 @@ Authors@R: c(person("Douglas","Bates", role="aut"),
     person("Steven","Walker",role="aut"),
     person("Rune Haubo Bojesen","Christensen", role="ctb"),
     person("Henrik","Singmann", role="ctb"),
-    person("Bin", "Dai", role="ctb"))
+    person("Bin", "Dai", role="ctb"),
+    person("Gabor", "Grothendieck", role="ctb"))
+)
 Maintainer: Ben Bolker <bbolker+lme4@gmail.com>
 Contact: LME4 Authors <lme4-authors@lists.r-forge.r-project.org>
 Author: Douglas Bates [aut], Martin Maechler [aut],
 	Ben Bolker [aut, cre], Steven Walker [aut],
         Rune Haubo Bojesen Christensen [ctb],
-	Henrik Singmann [ctb], Bin Dai [ctb]
+	Henrik Singmann [ctb], Bin Dai [ctb],
+        Gabor Grothendieck [ctb]
 Description: Fit linear and generalized linear mixed-effects models.
     The models and their components are represented using S4 classes and
     methods.  The core computational algorithms are implemented using the

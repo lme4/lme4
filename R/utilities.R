@@ -933,7 +933,7 @@ smmm <- lme4:::mmList.merMod(sm)
 nloptwrap <- local({
     defaultControl <- list(algorithm="NLOPT_LN_BOBYQA",
                            xtol_abs=1e-6, ftol_abs=1e-6, maxeval=1e5)
-    function(fn,par,lower,upper,control=list(),...) {
+    function(par,fn,lower,upper,control=list(),...) {
         if(packageVersion("nloptr") < "1.0.2") {
     ## kluge: we would like to import nloptr.default.options from nloptr
     ##   up front (it's required by nloptr and isn't accessible if
@@ -977,6 +977,13 @@ nloptwrap <- local({
     }
 })
 
+nlminbwrap <- function(par, fn, lower, upper, control=list(), ...) {
+    res <- nlminb(start = par, fn, gradient = NULL, hessian = NULL, 
+                  scale = 1, lower = lower, upper = upper,
+                  control = control, ...)
+    list(par = res$par, fval = res$objective,
+         conv = res$convergence, message = res$message)
+}
 glmerLaplaceHandle <- function(pp, resp, nAGQ, tol, maxit, verbose) {
     .Call(glmerLaplace, pp, resp, nAGQ, tol, as.integer(maxit), verbose)
 }

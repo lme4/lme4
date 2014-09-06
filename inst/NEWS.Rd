@@ -26,6 +26,8 @@
   }
   \subsection{BUG FIXES}{
     \itemize{
+      \item fixed bug in \code{family.merMod}; non-default links
+      were not retrieved correctly (Alessandro Moscatelli)
       \item fixed \code{bootMer} bug for \code{type=="parametric"},
       \code{use.u=TRUE} (Mark Lai)
     }
