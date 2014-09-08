@@ -11,7 +11,7 @@ getME(object,
                "fixef", "beta", "theta", "ST", "REML", "is_REML",
                "n_rtrms", "n_rfacs", "N", "n", "p", "q",
                "p_i", "l_i", "q_i", "k", "m_i", "m",
-               "cnms", "devcomp", "offset", "lower"))
+               "cnms", "devcomp", "offset", "lower", "devfun"))
 }
 \arguments{
   \item{object}{a fitted mixed-effects model of class
@@ -136,6 +136,7 @@ getME(object,
       \item{offset}{model offset}
       \item{lower}{lower bounds on model parameters (random effects
 	parameters only).}
+      \item{devfun}{deviance function (so far only available for LMMs)}
     }
   }
 }

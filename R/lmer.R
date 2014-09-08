@@ -251,7 +251,7 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
                 p
 
             }
-	else
+	else  ## nAGQ > 0
 	    function(pars) {
                 ## pp$setDelu(rep(0, length(pp$delu)))
                 resp$setOffset(baseOffset)
@@ -1837,7 +1837,8 @@ getME <- function(object,
                   "N", "n", "p", "q",
                   "p_i", "l_i", "q_i", "k", "m_i", "m",
                   "cnms",
-                  "devcomp", "offset", "lower"))
+                  "devcomp", "offset", "lower",
+                  "devfun"))
 {
     if(missing(name)) stop("'name' must not be missing")
     stopifnot(is(object,"merMod"))
@@ -1936,7 +1937,36 @@ getME <- function(object,
            "devcomp" = dc,
            "offset" = rsp$offset,
            "lower" = object@lower,
-            ## FIXME: current version gives lower bounds for theta parameters only -- these must be extended for [GN]LMMs -- give extended value including -Inf values for beta values?
+           "devfun" =
+       {
+           ## copied from refit ... DRY ...
+           devlist <- list(pp=PR,
+                           resp=rsp,
+                           u0=PR$u0,
+                           dpars=seq_along(PR$theta),
+                           ## FIXME: shouldn't need this both
+                           ## within object and in mkdevfun call ...
+                           verbose=getCall(object)$verbose)
+           if (isGLMM(object)) {
+               stop("getME('devfun') not yet working for GLMMs")
+               baseOffset <- rsp$offset
+               nAGQ <- unname(dc$dims["nAGQ"])
+               devlist <- c(list(tolPwrss= dc$cmp ["tolPwrss"],
+                                 compDev = dc$dims["compDev"],
+                                 nAGQ = nAGQ,
+                                 lp0=rsp$eta - baseOffset,
+                                 baseOffset=baseOffset,
+                                 pwrssUpdate=glmerPwrssUpdate,
+                                 GQmat=GHrule(nAGQ),
+                                 fac=object@flist[[1]]),
+                            devlist)
+           }
+           mkdevfun(rho=list2env(devlist),
+                    ## FIXME: fragile ...
+                    verbose=getCall(object)$verbose,
+                    control=object@optinfo$control)
+       },
+           ## FIXME: current version gives lower bounds for theta parameters only -- these must be extended for [GN]LMMs -- give extended value including -Inf values for beta values?
 	   "..foo.." = # placeholder!
 	   stop(gettextf("'%s' is not implemented yet",
 			 sprintf("getME(*, \"%s\")", name))),
