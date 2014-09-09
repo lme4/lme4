@@ -1587,7 +1587,8 @@ famlink <- function(object, resp = object@resp) {
 
 .prt.resids <- function(resids, digits, title = "Scaled residuals:", ...) {
     cat(title,"\n")
-    rq <- setNames(zapsmall(quantile(resids), digits + 1L),
+    ## FIXME: need testing code
+    rq <- setNames(zapsmall(quantile(resids, na.rm=TRUE), digits + 1L),
                    c("Min", "1Q", "Median", "3Q", "Max"))
     print(rq, digits = digits, ...)
     cat("\n")
@@ -2208,6 +2209,10 @@ summary.merMod <- function(object,
                            use.hessian = NULL,
                            ...)
 {
+    if (length(list(...))>0) {
+        ## FIXME: need testing code
+        warning("additional arguments ignored")
+    }
     ## se.calc:
     hess.avail <- (!is.null(h <- object@optinfo$derivs$Hessian) &&
         nrow(h) > (ntheta <- length(getME(object,"theta"))))
