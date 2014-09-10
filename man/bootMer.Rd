@@ -146,17 +146,35 @@ head(as.data.frame(boo01))
 
 ## ------ Bootstrap-based confidence intervals ------------
 
+## warnings about "Some ... intervals may be unstable" go away
+##   for larger bootstrap samples, e.g. nsim=500
+
 ## intercept
 (bCI.1 <- boot.ci(boo01, index=1, type=c("norm", "basic", "perc")))# beta
 
 ## Residual standard deviation - original scale:
 (bCI.2  <- boot.ci(boo01, index=2, type=c("norm", "basic", "perc")))
 ## Residual SD - transform to log scale:
-(bCI.2l <- boot.ci(boo01, index=2, type=c("norm", "basic", "perc"),
+(bCI.2L <- boot.ci(boo01, index=2, type=c("norm", "basic", "perc"),
                    h = log, hdot = function(.) 1/., hinv = exp))
 
 ## Among-batch variance:
-(bCI.3 <- boot.ci(boo01, index=3, type=c("norm", "basic", "perc")))# sig01
+(bCI.3 <- boot.ci(boo01, index=3, type=c("norm", "basic", "perc"))) # sig01
+
+## Extract all CIs (somewhat awkward)
+bCI.tab <- function(b,ind=length(b$t0), type="perc", conf=0.95) {
+    btab0 <- t(sapply(as.list(seq(ind)),
+                    function(i)
+                    boot.ci(b,index=i,conf=conf, type=type)$percent))
+    btab <- btab0[,4:5]
+    rownames(btab) <- names(b$t0)
+    a <- (1 - conf)/2
+    a <- c(a, 1 - a)
+    pct <- stats:::format.perc(a, 3)
+    colnames(btab) <- pct
+    return(btab)
+}
+bCI.tab(boo01)
 
 ## Graphical examination:
 plot(boo01,index=3)
@@ -164,6 +182,7 @@ plot(boo01,index=3)
 ## Check stored values from a longer (1000-replicate) run:
 load(system.file("testdata","boo01L.RData",package="lme4"))
 plot(boo01L,index=3)
+mean(boo01L$t[,"sig01"]==0) ## note point mass at zero!
 }
 \keyword{htest}
 \keyword{models}
