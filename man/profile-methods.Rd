@@ -11,8 +11,8 @@
   models.
 
   The \code{log()} method and the more flexible \code{logProf()}
-  utility transform a lmer profile in one where logarithms of standard deviations
-  are used, see Details.
+  utility transform a lmer profile into one where logarithms of standard deviations
+  are used; see Details.
 }
 \usage{
 \method{profile}{merMod}(fitted, which = 1:nptot, alphamax = 0.01,
@@ -76,25 +76,31 @@ logProf(x, base = exp(1), ranef = TRUE,
 }
 \value{
   \code{profile(<merMod>)} returns
-  an object of S3 class \code{"thpr"},% = th[eoretical]?? pr[ofile]
-  \code{\link{data.frame}}-like.  Methods for such a profile object
-  are notably \code{\link{confint}()} and the three plotting methods
+  an object of S3 class \code{"thpr"},% = th[eta] pr[ofile]
+  which is \code{\link{data.frame}}-like.
+  Notable methods for such a profile object
+  \code{\link{confint}()}, which returns the
+  confidence intervals based on the profile,
+  and three plotting methods
   (which require the \pkg{lattice} package),
   \code{\link[=xyplot.thpr]{xyplot}}, \code{densityplot}, and
   \code{splom}.
 
-  Further, \code{\link{log}()} (see above) and \code{\link{as.data.frame}()}.
+  In addition, the
+  \code{\link{log}()} (see above) and \code{\link{as.data.frame}()}
+  methods can transform \code{"thpr"} objects in useful ways.
 }
 \details{
   The \code{\link{log}} method and the more flexible \code{logProf()}
   function transform the profile into one where \eqn{\log(\sigma)} is
   used instead of \eqn{\sigma}.
-  By default all sigmas, including the standard deviations of the random
-  effects are transformed, i.e., it returns a profile with all the .sigNN
-  parameters replaced by .lsigNN.  If \code{ranef} is false, only
+  By default all sigmas including the standard deviations of the random
+  effects are transformed i.e., the methods return a profile with all
+  of the \code{.sigNN}
+  parameters replaced by \code{.lsigNN}.  If \code{ranef} is false, only
   \code{".sigma"}, the standard deviation of the errors, is transformed
-  as it should never be zero, whereas a random effect .sigNN is zero,
-  when the corresponding random effect is entirely absent.
+  (as it should never be zero, whereas random effect standard
+  deviations (\code{.sigNN}) can be reasonably be zero).
   \cr
   The forward and backward splines for the log-transformed parameters
   are recalculated.

@@ -37,7 +37,8 @@
 }
 \value{
   a numeric table (\code{\link{matrix}} with column and row names) of
-  confidence intervals.
+  confidence intervals; the confidence intervals are computed on the
+  standard deviation scale.
 }
 \note{
   The default method \code{"profile"} amounts to \preformatted{
@@ -56,14 +57,14 @@
     \item{\code{"profile"}:}{computing a
       likelihood profile and finding the appropriate cutoffs
       based on the likelihood ratio test;}
-    \item{\code{"Wald"}:}{approximate
+    \item{\code{"Wald"}:}{approximating
       the confidence intervals (of fixed-effect parameters
       only) based on the estimated local curvature of the
       likelihood surface;}
-    \item{\code{"boot"}:}{perform parametric
+    \item{\code{"boot"}:}{performing parametric
       bootstrapping with confidence intervals computed from the
       bootstrap distribution according to \code{boot.type} (see
-      \code{\link[boot]{boot.ci}}).}
+      \code{\link{bootMer}}, \code{\link[boot]{boot.ci}}).}
   }
 }
 \examples{
