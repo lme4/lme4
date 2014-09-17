@@ -6,7 +6,7 @@
 \usage{
 \method{VarCorr}{merMod} (x, sigma=1, rdig=3)
 \method{as.data.frame}{VarCorr.merMod} (x, row.names = NULL, optional =
-FALSE, ...)
+FALSE, order = c("cov.last", "lower.tri"), ...)
 }
 \arguments{
   \item{x}{for \code{VarCorr}: a fitted model object, usually an object inheriting from
@@ -16,6 +16,10 @@ FALSE, ...)
     standard deviations.}
   \item{rdig}{an optional integer value specifying the number of digits
     used to represent correlation estimates.}
+  \item{order}{arrange data frame with variances/standard deviations
+    first and covariances/correlations last for each random effects
+    term (\code{"cov.last"}), or in the order of the lower triangle of the
+    variance-covariance matrix (\code{"lower.tri"})?}
   \item{row.names}{Ignored: necessary for the \code{as.data.frame}
     method.}
   \item{optional}{Ignored: necessary for the \code{as.data.frame}
@@ -77,6 +81,7 @@ print(vc,comp=c("Variance","Std.Dev."),digits=2)
 ## variance only
 print(vc,comp=c("Variance"))
 as.data.frame(vc)
+as.data.frame(vc,order="lower.tri")
 }
 \keyword{models}
 

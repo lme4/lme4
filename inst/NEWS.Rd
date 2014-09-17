@@ -13,6 +13,9 @@
       matrix of LMMs
       \item \code{nlminbwrap} convenience function allows use of
       \code{nlminb} without going through the \code{optimx} package
+      \item \code{as.data.frame.VarCorr.merMod} gains an \code{order}
+      option that allows the results to be sorted with variances first
+      and covariances last (default) or in lower-triangle order
     }
   }
   \subsection{USER-VISIBLE CHANGES}{

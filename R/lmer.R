@@ -2562,15 +2562,30 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
     opt
 }
 
-as.data.frame.VarCorr.merMod <- function(x,row.names = NULL, optional = FALSE, ...)  {
-    tmpf <- function(v,n) {
+as.data.frame.VarCorr.merMod <- function(x,row.names = NULL,
+                                         optional = FALSE,
+                                         order = c("cov.last", "lower.tri"),
+                                         ...)  {
+    order <- match.arg(order)
+    tmpf <- function(v,grp) {
         vcov <- c(diag(v),v[lower.tri(v,diag = FALSE)])
         sdcor <- c(attr(v,"stddev"),
                    attr(v,"correlation")[lower.tri(v,diag = FALSE)])
         nm <- rownames(v)
-        var1 <- nm[c(seq(nrow(v)),col(v)[lower.tri(v,diag = FALSE)])]
-        var2 <- c(rep(NA,nrow(v)),nm[row(v)[lower.tri(v,diag = FALSE)]])
-        data.frame(grp = n,var1,var2,vcov,sdcor,stringsAsFactors = FALSE)
+        n <- nrow(v)
+        var1 <- nm[c(seq(n),col(v)[lower.tri(v,diag = FALSE)])]
+        var2 <- c(rep(NA,n),nm[row(v)[lower.tri(v,diag = FALSE)]])
+        dd <- data.frame(grp = grp,
+                         var1,var2,
+                         vcov,sdcor,stringsAsFactors = FALSE)
+        if (order=="lower.tri") {
+            ## reorder *back* to lower.tri order
+            m <- matrix(NA,n,n)
+            diag(m) <- seq(n)
+            m[lower.tri(m)] <- (n+1):(n*(n+1)/2)
+            dd <- dd[m[lower.tri(m,diag=TRUE)],]
+        }
+        return(dd)
     }
     r <- do.call(rbind,
                  mapply(tmpf,x,names(x),SIMPLIFY = FALSE))
