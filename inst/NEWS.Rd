@@ -11,7 +11,8 @@
       \code{Lambda} are generated)
       \item \code{hatvalues} method returns the diagonal of the hat
       matrix of LMMs
-      
+      \item \code{nlminbwrap} convenience function allows use of
+      \code{nlminb} without going through the \code{optimx} package
     }
   }
   \subsection{USER-VISIBLE CHANGES}{
@@ -21,7 +22,6 @@
       LMMs)
       \item convergence warning and diagnostic test issues are now
       reported in \code{print} and \code{summary} methods
-      
     }
   }
   \subsection{BUG FIXES}{
