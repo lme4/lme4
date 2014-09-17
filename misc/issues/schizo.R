@@ -32,6 +32,9 @@ ggplot(dd,aes(sweek,imps79b,colour=tx,group=id))+geom_line()+
     stat_sum(aes(group=tx))+
     geom_smooth(method="glm",family="binomial",se=FALSE)
 
+ggplot(dd,aes(sweek,imps79b,colour=tx,group=id))+geom_line()+
+    facet_wrap(~id)
+
 with(dd,table(tx,sweek))
 with(na.omit(dd),table(tx,sweek))
 
