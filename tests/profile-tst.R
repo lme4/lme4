@@ -15,6 +15,12 @@ if(!dev.interactive(orNone=TRUE)) pdf("profile_plots.pdf")
 xyplot(tpr.fm1)
 splom(tpr.fm1)
 densityplot(tpr.fm1, main="densityplot( profile(lmer(..)) )")
+
+## various scale options
+xyplot(tpr.fm1,scale=list(x=list(relation="same")))  ## stupid
+xyplot(tpr.fm1,scale=list(y=list(relation="same")))
+xyplot(tpr.fm1,scale=list(y=list(relation="same"),tck=0))
+
 ### end {profile_plots.R}
 
 fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)

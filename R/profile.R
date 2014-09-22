@@ -516,6 +516,7 @@ xyplot.thpr <-
               levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 1)),
               conf = c(50, 80, 90, 95, 99)/100,
               absVal = FALSE,
+              scales = NULL,
               which = 1:nptot, ...)
 {
     nptot <- length(nms <- levels(x[[".par"]]))
@@ -560,9 +561,25 @@ xyplot.thpr <-
         fr$zeta <- abs(fr$zeta)
         ylab <- expression("|" * zeta * "|")
     }
+    intscales <- list(x = list(relation = 'free'))
+    ## FIXME: is there something less clunky we can do here
+    ##   that allows for all possible user inputs
+    ##   (may want to (1) override x$relation (2) add elements to $x
+    ##    (3) add elements to scales)
+    if (!is.null(scales)) {
+        if (!is.null(scales[["x"]])) {
+            if (!is.null(scales[["x"]]$relation)) {
+                intscales[["x"]]$relation <- scales[["x"]]$relation
+                scales[["x"]]$relation <- NULL
+            }
+            intscales[["x"]] <- c(intscales[["x"]],scales[["x"]])
+            scales[["x"]] <- NULL
+        }
+        intscales <- c(intscales,scales)
+    }
     ll <- c(list(...),
             list(x = zeta ~ pval | pnm, data=fr,
-                 scales = list(x = list(relation = 'free')),
+                 scales = intscales,
                  ylab = ylab, xlab = NULL, panel=panel.thpr,
                  spl = spl, absVal = absVal))
 

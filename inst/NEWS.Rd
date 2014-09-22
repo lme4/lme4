@@ -16,6 +16,8 @@
       \item \code{as.data.frame.VarCorr.merMod} gains an \code{order}
       option that allows the results to be sorted with variances first
       and covariances last (default) or in lower-triangle order
+      \item allow more flexibility in \code{scales} for
+      \code{xyplot.thpr} method (John Maindonald)
     }
   }
   \subsection{USER-VISIBLE CHANGES}{
