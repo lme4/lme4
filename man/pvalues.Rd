@@ -58,6 +58,12 @@
   \code{arm::sim}, or \code{\link{bootMer}}, can be used
   to compute confidence intervals on predictions.
 
+  For \code{glmer} models, the \code{summary} output provides p-values
+  based on asymptotic Wald tests (P); while this is standard practice
+  for generalized linear models, these tests make assumptions both about
+  the shape of the log-likelihood surface and about the accuracy of
+  a chi-squared approximation to differences in log-likelihoods.
+  
   When all else fails, don't forget to keep p-values in
   perspective:
   \url{http://www.phdcomics.com/comics/archive.php?comicid=905}
