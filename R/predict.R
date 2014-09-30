@@ -6,7 +6,18 @@ noReForm <- function(re.form) {
 }
 
 reOnly <- function(f) {
-    reformulate(paste0("(",sapply(findbars(f),deparse),")"))
+    deparse.max <- 500
+    ## hard-coded max deparse length in deparse.c is 512-12 = 500
+    deparseWrap <- function(x,use.as.character=FALSE) {
+        if (use.as.character ||
+            sum(nchar(cc <- as.character(x)))>deparse.max) {
+            if (!use.as.character)
+                warning("using as.character() rather than deparse inside reOnly")
+            return(paste(cc[c(2,1,3)],collapse=""))
+        }
+        deparse(x,width.cutoff=deparse.max)
+    }
+    reformulate(paste0("(",sapply(findbars(f),deparseWrap),")"))
 }
 
 reFormHack <- function(re.form,ReForm,REForm,REform) {
