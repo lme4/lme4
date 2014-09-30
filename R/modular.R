@@ -436,6 +436,19 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, verbose=0, co
     ## consequence of this double duty is that it is impossible to fit
     ## a model with no fixed effects using REML.
     devfun <- mkdevfun(rho, 0L, verbose, control)
+
+    # if all random effects are of the form 1|f and starting values not 
+    # otherwise provided then compute starting values
+    if (is.null(start) && all(reTrms$cnms == "(Intercept)")) {
+	    y <- model.response(fr)
+	    v <- sapply(reTrms$flist, function(f) var(ave(y, f)))
+	    v.e <- var(y) - sum(v)
+	    if (v.e > 0) {
+		 v.rel <- v / v.e
+		 if (all(v.rel >= reTrms$lower^2)) rho$pp$setTheta(sqrt(v.rel))
+	    }
+    }
+
     theta <- getStart(start,reTrms$lower,rho$pp)
     if (length(rho$resp$y) > 0)  ## only if non-trivial y
         devfun(rho$pp$theta) # one evaluation to ensure all values are set
