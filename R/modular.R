@@ -439,11 +439,13 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, verbose=0, co
 
     # if all random effects are of the form 1|f and starting values not 
     # otherwise provided then compute starting values
-    if (is.null(start) && all(reTrms$cnms == "(Intercept)")) {
+    if (is.null(start) && 
+	all(reTrms$cnms == "(Intercept)") && 
+	length(reTrms$flist) == length(reTrms$lower)) {
 	    y <- model.response(fr)
 	    v <- sapply(reTrms$flist, function(f) var(ave(y, f)))
 	    v.e <- var(y) - sum(v)
-	    if (v.e > 0) {
+	    if (!is.na(v.e) && v.e > 0) {
 		 v.rel <- v / v.e
 		 if (all(v.rel >= reTrms$lower^2)) rho$pp$setTheta(sqrt(v.rel))
 	    }
