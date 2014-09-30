@@ -1,4 +1,5 @@
 library(lme4)
+library(testthat)
 library(lattice)
 
 ### __ was ./profile_plots.R ___
@@ -20,6 +21,9 @@ densityplot(tpr.fm1, main="densityplot( profile(lmer(..)) )")
 xyplot(tpr.fm1,scale=list(x=list(relation="same")))  ## stupid
 xyplot(tpr.fm1,scale=list(y=list(relation="same")))
 xyplot(tpr.fm1,scale=list(y=list(relation="same"),tck=0))
+
+##
+expect_error(xyplot(tpr.fm1,conf=50),"must be between 0 and 1")
 
 ### end {profile_plots.R}
 

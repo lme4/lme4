@@ -26,7 +26,10 @@
 
 \method{splom}{thpr}(x, data,
       levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 2)),
-      conf = c(50, 80, 90, 95, 99)/100, which=1:nptot, ...)
+      conf = c(50, 80, 90, 95, 99)/100, which=1:nptot,
+      draw.lower=TRUE,
+     draw.upper=TRUE,
+     ...)
 }
 \arguments{
   \item{x}{a mixed-effects profile, i.e., of class \code{"thpr"},
@@ -45,6 +48,8 @@
     to profile: default is all parameters (see
     \code{\link{profile-methods}}
     for details).}
+  \item{draw.lower}{(logical) draw lower-triangle (zeta scale) panels?}
+  \item{draw.upper}{(logical) draw upper-triangle (standard dev/cor scale) panels?}
   \item{...}{further arguments passed to \code{\link{xyplot}},
     \code{\link{densityplot}}, or \code{\link{splom}} from package
     \pkg{lattice}, respectively.}
