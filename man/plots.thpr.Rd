@@ -19,7 +19,8 @@
 \method{xyplot}{thpr}(x, data = NULL,
        levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 1)),
        conf = c(50, 80, 90, 95, 99)/100,
-       absVal = FALSE, which=1:nptot, ...)
+       absVal = FALSE, scales=NULL,
+       which=1:nptot, ...)
 
 \method{densityplot}{thpr}(x, data, ...)
 
@@ -39,6 +40,7 @@
   \item{absVal}{logical indicating if \code{\link{abs}(.)}olute values
       should be plotted, often preferred for confidence interval
       visualization.}
+    \item{scales}{plotting options to be passed to \code{\link{xyplot}}}
     \item{which}{integer or character vector indicating which parameters
     to profile: default is all parameters (see
     \code{\link{profile-methods}}
