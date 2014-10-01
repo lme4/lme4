@@ -38,6 +38,7 @@ lmer(y ~ service * dept + (1|s) + (1|d), InstEval,
   applies to any `optimx` method):
 
 ```{r}
+library("optimx")
 lmer(y ~ service * dept + (1|s) + (1|d), InstEval,
      control = lmerControl(optimizer = "optimx", calc.derivs = FALSE,
      optCtrl = list(method = "nlminb", starttests = FALSE, kkt = FALSE)))
