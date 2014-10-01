@@ -18,6 +18,8 @@
       and covariances last (default) or in lower-triangle order
       \item allow more flexibility in \code{scales} for
       \code{xyplot.thpr} method (John Maindonald)
+      \item models with only random effects of the form \code{1|f} have
+      better starting values for \code{lmer} optimization.
     }
   }
   \subsection{USER-VISIBLE CHANGES}{
