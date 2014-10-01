@@ -30,28 +30,34 @@ source(system.file("testdata","koller-data.R",package="lme4"))
 ldata <- getData(13)
 ## old (backward compatible/buggy)
 fm4  <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="Nelder_Mead",
-                                  use.last.params=TRUE))
+                                  use.last.params=TRUE),
+             start=list(theta=1))
 
 fm4b <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="Nelder_Mead",
                                   use.last.params=TRUE, restart_edge=FALSE,
                                   check.conv.hess="ignore",
-                                  check.conv.grad="ignore"))
+                                  check.conv.grad="ignore"),
+             start=list(theta=1))
 ## FIXME: use as convergence test check
 stopifnot(getME(fm4b,"theta")==0)
 fm4c <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="bobyqa",
-                                  use.last.params=TRUE))
+                                  use.last.params=TRUE),
+             start=list(theta=1))
 stopifnot(all.equal(getME(fm4,"theta"),getME(fm4c,"theta"),tolerance=1e-4))
 stopifnot(getME(fm4,"theta") > 0)
 
 ## new: doesn't get stuck at edge any more,  but gets stuck somewhere else ...
 fm5 <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="Nelder_Mead",
 				  check.conv.hess="ignore",
-				  check.conv.grad="ignore"))
+				  check.conv.grad="ignore"),
+            start=list(theta=1))
 fm5b <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="Nelder_Mead",
                                   restart_edge=FALSE,
                                   check.conv.hess="ignore",
-                                  check.conv.grad="ignore"))
-fm5c <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="bobyqa"))
+                                  check.conv.grad="ignore"),
+             start=list(theta=1))
+fm5c <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="bobyqa"),
+             start=list(theta=1))
 stopifnot(all.equal(unname(getME(fm5c,"theta")), 0.21067645, tolerance = 1e-7))
 					#	 0.21067644264 [64-bit, lynne]
 
@@ -62,17 +68,6 @@ stopifnot(all.equal(unname(getME(fm5c,"theta")), 0.21067645, tolerance = 1e-7))
     fm5d <- update(fm5,control=lmerControl(optimizer="optimx",
                        optCtrl=list(method="L-BFGS-B")))
 
-    ## library(nloptr) -- not needed (?) as we import nloptr::nloptr and have  nloptwrap() :
-    ## defaultControl <- list(algorithm="NLOPT_LN_BOBYQA",xtol_rel=1e-6,maxeval=1e5)
-    ## nloptwrap2 <- function(fn,par,lower,upper,control=list(),...) {
-    ##     for (n in names(defaultControl))
-    ##         if (is.null(control[[n]])) control[[n]] <- defaultControl[[n]]
-    ##     res <- nloptr(x0=par,eval_f=fn,lb=lower,ub=upper,opts=control,...)
-    ##     with(res,list(par=solution,
-    ##                   fval=objective,
-    ##                   conv=if (status>0) 0 else status,
-    ##                   message=message))
-    ## }
     fm5e <- update(fm5, control=lmerControl(optimizer="nloptwrap"))
 
     mList <- setNames(list(fm4,fm4b,fm4c,fm5,fm5b,fm5c,fm5d,fm5e),
