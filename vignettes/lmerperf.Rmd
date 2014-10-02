@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
   consuming derivative calculation that is performed after the optmization
   is finished. e.g.
 
-```{r}
+```
 lmer(y ~ service * dept + (1|s) + (1|d), InstEval,
   control = lmerControl(calc.derivs = FALSE))
 ```
@@ -32,7 +32,7 @@ lmer(y ~ service * dept + (1|s) + (1|d), InstEval,
   turned off like this (here we have specified the `"nlminb"` method but this 
   applies to any optimx method):
 
-```{r}
+```
 lmer(y ~ service * dept + (1|s) + (1|d), InstEval,
   control = lmerControl(optimizer = "optimx", calc.derivs = FALSE,
     optCtrl = list(method = "nlminb", starttests = FALSE, kkt = FALSE)))
@@ -50,7 +50,7 @@ lmer(y ~ service * dept + (1|s) + (1|d), InstEval,
   increase `maxeval` if the optimization requires more than 1000 iterations
   and you wish to allow it to proceed.)
 
-```{r}
+```
 nlopt <- function(par, fn, lower, upper, control) {
     .nloptr <<- res <- nloptr(par, fn, lb = lower, ub = upper, 
         opts = list(algorithm = "NLOPT_LN_BOBYQA", print_level = 1,
