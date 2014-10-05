@@ -438,12 +438,13 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, verbose=0, co
     devfun <- mkdevfun(rho, 0L, verbose, control)
 
     # if all random effects are of the form 1|f and starting values not 
-    # otherwise provided then compute starting values
+    # otherwise provided (and response variable is present, i.e. not doing
+    # a simulation) then compute starting values
     if (is.null(start) && 
 	all(reTrms$cnms == "(Intercept)") && 
-	length(reTrms$flist) == length(reTrms$lower)) {
-	    y <- model.response(fr)
-	    v <- sapply(reTrms$flist, function(f) var(ave(y, f)))
+	length(reTrms$flist) == length(reTrms$lower) &&
+        !is.null(y <- model.response(fr))) {
+        v <- sapply(reTrms$flist, function(f) var(ave(y, f)))
 	    v.e <- var(y) - sum(v)
 	    if (!is.na(v.e) && v.e > 0) {
 		 v.rel <- v / v.e

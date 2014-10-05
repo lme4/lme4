@@ -5,8 +5,15 @@ noReForm <- function(re.form) {
         (is(re.form,"formula") && length(re.form)==2 && identical(re.form[[2]],0))
 }
 
+## protects against the possibility that results from deparse() will
+## be split after (by default) 60 chars (max deparse width is hard-coded
+## to 500)
+safeDeparse <- function(x,collapse=" ") {
+    paste(deparse(x),collapse=collapse)
+}
+
 reOnly <- function(f) {
-    reformulate(paste0("(",sapply(findbars(f),deparse),")"))
+    reformulate(paste0("(",sapply(findbars(f),safeDeparse),")"))
 }
 
 reFormHack <- function(re.form,ReForm,REForm,REform) {
@@ -495,7 +502,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     ## construct RE formula ONLY: leave out fixed terms,
     ##   which might have loose terms like offsets in them ...
     fb <- findbars(formula(object))
-    pfun <- function(x) paste("(",paste(deparse(x),collapse=" "),")")
+    pfun <- function(x) paste("(",safeDeparse(x),")")
     compReForm <- reformulate(sapply(fb,pfun))
 
 

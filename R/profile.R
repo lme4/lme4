@@ -519,6 +519,7 @@ xyplot.thpr <-
               scales = NULL,
               which = 1:nptot, ...)
 {
+    if (any(conf<=0 || conf>=1)) stop("values of conf must be between 0 and 1")
     nptot <- length(nms <- levels(x[[".par"]]))
     ## FIXME: is this sufficiently reliable?
     ## (include "sigma" in 'theta' parameters)
@@ -835,9 +836,12 @@ chooseFace <- function (fontface = NULL, font = 1)
 ##' @method splom thpr
 ##' @export
 splom.thpr <- function (x, data,
-                    levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 2)),
+                   levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 2)),
                     conf = c(50, 80, 90, 95, 99)/100,
-                    which=1:nptot, ...)
+                    which=1:nptot,
+                    draw.lower=TRUE,
+                    draw.upper=TRUE,
+                        ...)
 {
     singfit <- FALSE
     for (i in grep("^(\\.sig[0-9]+|sd_)",names(x))) {
@@ -1004,7 +1008,11 @@ splom.thpr <- function (x, data,
         }
     }
 
-    splom(~ pfr, lower.panel = lp, upper.panel = up, diag.panel = dp, ...)
+    panel.blank <- function(...) {} 
+    splom(~ pfr,
+          lower.panel = if(draw.lower) lp else panel.blank,
+          upper.panel = if (draw.upper) up else panel.blank,
+          diag.panel = dp, ...)
 }
 
 ## return an lmer profile like x with all the .sigNN parameters

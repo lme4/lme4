@@ -14,4 +14,5 @@ library(lme4)
 fm.NM <- lmer(y ~ x + (1|fac), data=d1, control=lmerControl("Nelder_Mead"))
 fm.Bq <- update(fm.NM, control=lmerControl("bobyqa"))
 v.lmer <- VarCorr(fm.NM)[[1]][1,1]
-stopifnot(all.equal(v.lmer,19.5482,tolerance=1e-5))
+stopifnot(all.equal(v.lmer,19.55,tolerance=1e-3))
+## was 19.5482 with old starting values (1), 19.5493 with new start algorithm

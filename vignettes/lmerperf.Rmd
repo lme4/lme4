@@ -3,10 +3,15 @@
 %\VignetteIndexEntry{lmer Performance Tips}
 -->
 
-```{r, echo = FALSE, message = FALSE}
+```{r opts, echo = FALSE, message = FALSE}
+library("knitr")
 knitr::opts_chunk$set(
   eval = FALSE
 )
+```
+
+```{r loadpkg,message=FALSE}
+library("lme4")
 ```
 
 # lmer Performance Tips
@@ -15,9 +20,9 @@ knitr::opts_chunk$set(
   consuming derivative calculation that is performed after the optmization
   is finished. e.g.
 
-```
+```{r noderivs}
 lmer(y ~ service * dept + (1|s) + (1|d), InstEval,
-  control = lmerControl(calc.derivs = FALSE))
+     control = lmerControl(calc.derivs = FALSE))
 ```
 
 - models that only contain random effects of the form `(1|f)` use better 
@@ -25,20 +30,21 @@ lmer(y ~ service * dept + (1|s) + (1|d), InstEval,
   certain examples by up to 50% relative to the previous default starting 
   values.  The last example, is an example of such a model.
 
-- lmer uses the bobyqa optimizer from the minqa package by default.  If you
-  are specifying the optimx package optimizer instead then note that by 
-  default optimx performs 
-  certain time consuming processing at the beginning and end which can be 
-  turned off like this (here we have specified the `"nlminb"` method but this 
-  applies to any optimx method):
+- lmer uses the `bobyqa` optimizer from the `minqa` package by default.  If you
+  are specifying the `optimx` package optimizer, note that by 
+  default `optimx` performs 
+  certain time-consuming processing at the beginning and end which can be 
+  turned off as follows (here we have specified the `"nlminb"` method but this 
+  applies to any `optimx` method):
 
-```
+```{r}
+library("optimx")
 lmer(y ~ service * dept + (1|s) + (1|d), InstEval,
-  control = lmerControl(optimizer = "optimx", calc.derivs = FALSE,
-    optCtrl = list(method = "nlminb", starttests = FALSE, kkt = FALSE)))
+     control = lmerControl(optimizer = "optimx", calc.derivs = FALSE,
+     optCtrl = list(method = "nlminb", starttests = FALSE, kkt = FALSE)))
 ```
 
-- the nloptr package supports a variety of algorithms and importantly 
+- the `nloptr` package supports a variety of algorithms and importantly 
   supports additional stopping criteria which can stop the optimization
   earlier if it believes its reached the optimum.
   For many problems using these stopping 
@@ -46,11 +52,11 @@ lmer(y ~ service * dept + (1|s) + (1|d), InstEval,
   same solution or nearly the same solution as the default optimizer but in
   less time (up to 50 percent savings have been observed); however, in
   some cases it may stop permaturely giving suboptimal results.
-  (In the example below omit `iprint` if output tracing is not desired and 
+  (In the example below omit `print_level` if output tracing is not desired and 
   increase `maxeval` if the optimization requires more than 1000 iterations
   and you wish to allow it to proceed.)
 
-```
+```{r nlopt}
 nlopt <- function(par, fn, lower, upper, control) {
     .nloptr <<- res <- nloptr(par, fn, lb = lower, ub = upper, 
         opts = list(algorithm = "NLOPT_LN_BOBYQA", print_level = 1,
@@ -62,5 +68,5 @@ nlopt <- function(par, fn, lower, upper, control) {
     )
 }
 lmer(y ~ service * dept + (1|s) + (1|d), InstEval,
-    control = lmerControl(optimizer = "nlopt", calc.derivs = FALSE))
+    control = lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
 ```
