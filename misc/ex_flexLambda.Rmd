@@ -8,9 +8,12 @@ options(digits=3)
 library(devtools)
 library(ggplot2)
 library(mvtnorm)
-load_all()
+#load_all()
 
-flexLmer <- function(formula, data, specials=c("cs", "d", "ar1d"), verbose=0L){
+flexLmer <- function(formula, 
+                     data, 
+                     specials = c("cs", "d", "ar1d"), 
+                     verbose = 0L){
 	#split off reGenerator terms:
 	frmlterms <- terms(formula, specials=specials)
 	termnames <- attr(frmlterms, "variables")

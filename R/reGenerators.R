@@ -252,8 +252,8 @@ cs <- function(formula, init=NULL, het=TRUE){
 				
 				
 				# initialize the upper triangular Cholesky factor for Cov(b)
-				Lambdat <- 1*bdiag(replicate(nl, 
-											 list(upper.tri(diag(nc), diag=TRUE))))
+				Lambdat <- 1*bdiag(replicate(
+                                    nl, list(upper.tri(diag(nc), diag=TRUE))))
 				# somebody more Asperger than me can write up
 				# the explicit analytic recursion for the entries 
 				# in the chol-factor -- it's just one (nc x nc) Cholesky
