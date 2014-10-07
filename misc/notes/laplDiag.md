@@ -2,7 +2,8 @@
 
 Copied/modified from DMB's code in glmer paper draft ...
 
-```{r pkgs,message=FALSE}
+
+```r
 library(lme4)
 library(lattice)
 library(ggplot2); theme_set(theme_bw())
@@ -12,7 +13,8 @@ library(reshape2)  ## for melt() generic
 ```
 
 For now, I'm going to leave this function echoed in all its glory ...
-```{r zetafun}
+
+```r
 zetaDevfun <- function(m,grps=NULL) {    
     stopifnot (is(m, "glmerMod"),
                length(m@flist) == 1L)    # single grouping factor
@@ -86,95 +88,30 @@ zeta <- function(m, zmin=-3, zmax=3, npts=NULL,
 ```
 
 Not shown: `melt` function for these objects that converts them from a list ($z$ value vector plus array of deviances) to a data frame ...
-```{r echo=FALSE}
-melt.laplaceDiag <- function(data,...) {
-    require(reshape2)
-    zvals <- data$zval
-    if (length(dim(data$devarr))==2) {
-        n.id <- ncol(data$devarr)
-        n.z <- nrow(data$devarr)
-        data.frame(id=gl(n.id,n.z),
-                   zvals,
-                   dev=c(data$devarr))
-    } else {
-        ## assume for now same z resolution for both dimensions
-        n.z <- dim(data$devarr)[2]
-        n.id <- dim(data$devarr)[3]
-        data.frame(id=gl(n.id,n.z^2),
-                   zval1=rep(zvals,n.z),  ## recycle
-                   zval2=rep(zvals,each=n.z), ## recycle
-                   dev=c(data$devarr))
-    }
-}
 
-dnorm2d <- function(x) {
-    dnorm(x)/sqrt(2*pi)  ## == exp(-x^2/2)/(2*pi)
-}
-
-dnorm2d2 <- function(z1,z2) {
-    exp(-(z1^2+z2^2)/2)/(2*pi)
-}
-
-plot.laplaceDiag <- function(x,scaled=FALSE,
-                             type=c("g","l"),
-                             aspect=0.6,
-                             xlab="z",ylab="density",
-                             ...) {
-    nvar <- length(dim(x$devarr))-1
-    mm <- melt(x)
-    mm <- transform(mm,
-                    y = if (nvar==1) {
-                        if (!scaled) {
-                            dnorm(sqrt(dev))
-                        } else {
-                            dnorm(sqrt(dev))/dnorm(zvals)
-                        }
-                    } else {
-                        if (!scaled) {
-                            dnorm2d(sqrt(dev))
-                        } else {
-                            dnorm2d(sqrt(dev))/dnorm2d2(zval1,zval2)
-                        }
-                    })
-    if (nvar==1) {
-        print(xyplot(y ~ zvals|id, data=mm,
-               type=type, aspect=aspect,
-               xlab=xlab,ylab=ylab,
-               ...,
-               panel=function(x,y,...){
-                   if (!scaled) {
-                       panel.lines(x, dnorm(x), lty=2)
-                   } else {
-                       panel.abline(h=1, lty=2)
-                   }
-                   panel.xyplot(x,y,...)
-               }))
-    } else {
-        print(contourplot(y ~ zval1*zval2|id, data=mm,
-                    type=type, aspect=aspect,
-                    labels=FALSE,
-                    xlab=xlab,ylab=ylab,
-                    scales=list(z=list(relation="free"))))
-    }
-    invisible(mm)
-}
-```
 
 Replicate glmer paper Figs 2/3:
 
-```{r fit1,cache=TRUE}
+
+```r
 m1 <- glmer(cbind(incidence, size-incidence) ~ period + (1|herd),
                   cbpp, binomial)
 m1.z <- zeta(m1)
 ```
 
-```{r fig2}
+
+```r
 plot(m1.z,layout=c(5,3))
 ```
 
-```{r fig3}
+![plot of chunk fig2](figure/fig2.png) 
+
+
+```r
 plot(m1.z,scaled=TRUE,layout=c(5,3))
 ```
+
+![plot of chunk fig3](figure/fig3.png) 
 
 ### Example with vector-valued RE
 
@@ -182,20 +119,25 @@ I tried simulating a Poisson random-slopes model,
 but at least at first glance it looked too good.
 Try the toenail data 
 
-```{r toenailfit,cache=TRUE}
+
+```r
 toenail <- read.csv("toenail.csv")
 m2 <- glmer(outcome~treatment+visit+(visit|patient),toenail,
             family=binomial)
 ```
 
-```{r toenailzeta,cache=TRUE}
+
+```r
 m2.z <- zeta(m2,grps=1:25)
 ```
 
 This is a nice collection of mussels ...
-```{r plotmussels}
+
+```r
 plot(m2.z)
 ```
+
+![plot of chunk plotmussels](figure/plotmussels.png) 
 
 Still trying to work out the analogue of Figure 3 (i.e.,
 a version where we scale by the bivariate normal).
@@ -203,7 +145,8 @@ I think this actually *should* work, but this example
 is very badly behaved in the corner ...
 
 Just look at patient #1 to try to sort out what's going on here ...
-```{r ratios}
+
+```r
 zz <- m2.z$zvals
 mm <- 2*pi*dnorm2d(sqrt(m2.z$devarr[,,1]))
 m0 <- 2*pi*dnorm2d(sqrt(outer(zz^2,zz^2,"+")))
@@ -213,6 +156,8 @@ persp(zz,zz,m0,col="lightblue",main="bivariate normal")
 persp(zz,zz,mm/m0,col="pink",main="ratio")
 persp(zz,zz,log(mm/m0),col="lightgreen",main="log ratio")
 ```
+
+![plot of chunk ratios](figure/ratios.png) 
 
 Does this really matter, or are we only in trouble if
 we put quadrature points there?
@@ -226,23 +171,48 @@ for different numbers of quadrature points)?
 
 Check that `GHrule` and `GQdk` are equivalent (they're based on
 the same underlying code, so they should be!)
-```{r}
+
+```r
 (gh5 <- GHrule(5))
+```
+
+```
+##              z          w     ldnorm
+## [1,] -2.856970 0.01125741 -5.0000774
+## [2,] -1.355626 0.22207592 -1.8377997
+## [3,]  0.000000 0.53333333 -0.9189385
+## [4,]  1.355626 0.22207592 -1.8377997
+## [5,]  2.856970 0.01125741 -5.0000774
+```
+
+```r
 gh5B <- GQdk(1,5)
 gh5B <- gh5B[order(gh5B[,2]),]
 all.equal(gh5B[,2:1],unname(gh5[,-3]))
+```
+
+```
+## [1] TRUE
 ```
 
 Can we do some simple calculations with `GHrule` and the `zeta` values
 to reconstruct the 1-D Gauss-Hermite results and convince ourselves we're
 getting the same results as from `glmerAGQ` ?
 
-```{r}
+
+```r
 zd <- zetaDevfun(m1)
 z2A <- zeta(m1,zvals=gh5[,"z"])
 z2 <- t(sapply(gh5[,"z"],zd))
 z2B <- sweep(z2,2,zd(0),"-")
 all.equal(unname(z2A$devarr),z2B)
+```
+
+```
+## [1] TRUE
+```
+
+```r
 GH1d <- function(m,nAGQ=2) {
     gh <- GHrule(nAGQ)
     z <- zeta(m,zvals=gh[,"z"])
@@ -252,7 +222,10 @@ GH1vals <- sapply(1:25,GH1d,m=m1)
 plot(-GH1vals[-1])
 ```
 
-```{r GHvec,cache=TRUE}
+![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3.png) 
+
+
+```r
 m1GHvec <- sapply(2:25,
                   function(q) {
                       deviance(update(m1,nAGQ=q))
@@ -264,13 +237,14 @@ m1GHvec2 <- sapply(2:25,
                   })
 ```
 
-```{r}
+
+```r
 par(las=1,bty="l")
 matplot(cbind(diff(m1GHvec2),-diff(GH1vals[-1])),
         type="b",pch=16,lty=1)
 ```
-These patterns don't match ... but we don't necessarily expect them to match,
-as the hand-rolled comparison keeps theta, beta, *and the conditional modes*
-fixed, while using the deviance function updates the conditional modes (I think ...)
+
+![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4.png) 
+These patterns don't match ...
 
 `http://tigger.uic.edu/~hedeker/long.html`
