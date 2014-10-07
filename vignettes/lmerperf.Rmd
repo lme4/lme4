@@ -1,5 +1,5 @@
 <!--
-%\VignetteEngine{knitr}
+%\VignetteEngine{knitr::rmarkdown_notangle}
 %\VignetteIndexEntry{lmer Performance Tips}
 -->
 
@@ -14,30 +14,34 @@ knitr::opts_chunk$set(
 library("lme4")
 ```
 
-# lmer Performance Tips
+# lme4 Performance Tips
 
-- use control = `lmerControl(calc.derivs = FALSE)` to turn off the time
+- use control = `[g]lmerControl(calc.derivs = FALSE)` to turn off the time
   consuming derivative calculation that is performed after the optmization
-  is finished. e.g.
+  is finished, e.g.
 
 ```{r noderivs}
 lmer(y ~ service * dept + (1|s) + (1|d), InstEval,
      control = lmerControl(calc.derivs = FALSE))
 ```
+Note that this will disable some of the convergence tests, as well as
+(for `glmer` only) making `lme4` use a less
+accurate approximation to compute the standard errors of the fixed effects.
 
 - models that only contain random effects of the form `(1|f)` use better 
   starting values for the optimization which in tests have cut run time in 
   certain examples by up to 50% relative to the previous default starting 
-  values.  The last example, is an example of such a model.
+  values.  The `InstEval` fit shown above is one such example.
 
-- lmer uses the `bobyqa` optimizer from the `minqa` package by default.  If you
+- `lmer` uses the `bobyqa` optimizer from the `minqa` package by default;
+  `glmer` uses a combination of Nelder-Mead and `bobyqa`.  If you
   are specifying the `optimx` package optimizer, note that by 
   default `optimx` performs 
   certain time-consuming processing at the beginning and end which can be 
   turned off as follows (here we have specified the `"nlminb"` method but this 
   applies to any `optimx` method):
 
-```{r}
+```{r nlminbfit}
 library("optimx")
 lmer(y ~ service * dept + (1|s) + (1|d), InstEval,
      control = lmerControl(optimizer = "optimx", calc.derivs = FALSE,
@@ -46,12 +50,12 @@ lmer(y ~ service * dept + (1|s) + (1|d), InstEval,
 
 - the `nloptr` package supports a variety of algorithms and importantly 
   supports additional stopping criteria which can stop the optimization
-  earlier if it believes its reached the optimum.
+  earlier if it believes it has reached the optimum.
   For many problems using these stopping 
   criteria will result in the 
   same solution or nearly the same solution as the default optimizer but in
   less time (up to 50 percent savings have been observed); however, in
-  some cases it may stop permaturely giving suboptimal results.
+  some cases it may stop prematurely giving suboptimal results.
   (In the example below omit `print_level` if output tracing is not desired and 
   increase `maxeval` if the optimization requires more than 1000 iterations
   and you wish to allow it to proceed.)
