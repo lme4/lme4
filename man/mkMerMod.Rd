@@ -6,16 +6,14 @@
 }
 \arguments{
   \item{rho}{the environment of the objective function}
-
-  \item{opt}{the value returned by the optimizer}
-
-  \item{reTrms}{reTrms list from the calling function}
-
+  \item{opt}{the optimization result returned by the optimizer
+    (a list: see \code{\link{lmerControl}} for required elements)}
+  \item{reTrms}{random effects structure from the calling function
+       (see \code{\link{mkReTrms}} for required elements)}
   \item{fr}{model frame}
-
   \item{mc}{matched call from the calling function}
-
-  \item{lme4conv}{lme4-specific convergence information (results of \code{checkConv})}
+  \item{lme4conv}{lme4-specific convergence information
+    (results of \code{checkConv})}
 }
 \value{
   an object from a class that inherits from
