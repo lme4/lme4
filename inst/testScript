@@ -1,5 +1,5 @@
 #!/bin/bash
 for i in $( ls tests ); do
-    echo item: $i
+    echo test file: $i
     Rscript tests/$i
 done
