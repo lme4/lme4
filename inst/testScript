@@ -1,0 +1,5 @@
+#!/bin/bash
+for i in $( ls tests ); do
+    echo item: $i
+    Rscript tests/$i
+done
