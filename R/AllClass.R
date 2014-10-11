@@ -996,6 +996,8 @@ rePos <-
 ##'
 rePos$lock("cnms", "flist", "ncols", "nctot", "nlevs", "terms")
 
+## FIXME: what does this do?  is it used anywhere?  is it in prep
+##    for something?  Is it supposed to replace/slot into merMod, merPred?
 vcRep <-
     setRefClass("vcRep",
                 fields =

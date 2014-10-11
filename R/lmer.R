@@ -1831,6 +1831,9 @@ getME <- function(object,
                   "splits","thetaSplit","thfun"))
 {
     if(missing(name)) stop("'name' must not be missing")
+    if (is(object,"flexMerMod")) {
+        return(getME(object$model,name))
+    }
     stopifnot(is(object,"merMod"))
     if (length(name <- as.character(name)) > 1) {
         names(name) <- name
@@ -2037,7 +2040,8 @@ vcov.summary.merMod <- function(object, ...) {
 ##' @seealso \code{\link{VarCorr}}
 ##' @return A matrix
 ##' @export
-mkVarCorr <- function(sc, cnms, nc, theta, nms) {
+mkVarCorr <- function(sc, cnms, nc, theta, nms,
+                      updateLambdatx = NULL ) {
     ncseq <- seq_along(nc)
     thl <- split(theta, rep.int(ncseq, (nc * (nc + 1))/2))
     if(!all(nms == names(cnms))) ## the above FIXME
@@ -2047,7 +2051,10 @@ mkVarCorr <- function(sc, cnms, nc, theta, nms) {
 	      {
 		  ## Li := \Lambda_i, the i-th block diagonal of \Lambda(\theta)
 		  Li <- diag(nrow = nc[i])
-		  Li[lower.tri(Li, diag = TRUE)] <- thl[[i]]
+                  if (is.null(updateLambdatx)) {
+                      Li[lower.tri(Li, diag = TRUE)] <- thl[[i]]
+                  } else {
+                  }
 		  rownames(Li) <- cnms[[i]]
 		  ## val := \Sigma_i = \sigma^2 \Lambda_i \Lambda_i', the
 		  val <- tcrossprod(sc * Li) # variance-covariance
@@ -2128,6 +2135,8 @@ formatVC <- function(varc, digits = max(3, getOption("digits") - 2),
 {
     c.nms <- c("Groups", "Name", "Variance", "Std.Dev.")
     avail.c <- c.nms[-(1:2)]
+    ## FIXME: would setdiff() be cleaner?
+    ##   (and %in% for showVars, showStdDev)
     if(any(is.na(mcc <- pmatch(comp, avail.c))))
 	stop("Illegal 'comp': ", comp[is.na(mcc)])
     nc <- length(colnms <- c(c.nms[1:2], (use.c <- avail.c[mcc])))

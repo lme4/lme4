@@ -11,14 +11,14 @@ test_that("glmerFormX", {
     y <- rnorm(n)
     z <- rnorm(n)
     r <- sample(1:5, size=n, replace=TRUE)
-    d <- data.frame(x,y,z,r)
+    d...LOCAL <- data.frame(x,y,z,r)
 
     F <- "z"
     rF <- "(1|r)"
     modStr <- (paste("x ~", "y +", F, "+", rF))
     modForm <- as.formula(modStr)
 
-    expect_that(m_data.3 <- glmer( modStr , data=d, family="binomial"), is_a("glmerMod"))
+    expect_that(m_data.3 <- glmer( modStr , data=d...LOCAL, family="binomial"), is_a("glmerMod"))
     expect_error(drop1(m_data.3),"'data' not found")
     expect_that(m_data.4 <- glmer( "x ~ y + z + (1|r)" , data=d, family="binomial"), is_a("glmerMod"))
     expect_error(drop1(m_data.4),"'data' not found")
