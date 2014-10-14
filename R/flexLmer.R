@@ -17,10 +17,15 @@ flexLmer <- function(formula, data, specials = c("cs", "d", "ar1d"),
     opt <- optimizeLmer(devfun, verbose = verbose)
     # FIXME: this should not be necessary...
     environment(devfun)$pp$theta <- opt$par
-    out <- list(model = mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr), 
-                opt = opt, devfun = devfun, reGenerators = lmod$reGenerators,
-                trmnames = lmod$trmnames)
-    class(out) <- "flexMerMod"
+    ## should be new()
+    out <- new("flexLmerMod",
+        ## DRY ... from lmer.R
+               call=x@call, frame=x@frame, flist=x@flist,
+               cnms=x@cnms, theta=pp$theta, beta=pp$delb, u=pp$delu,
+               lower=x@lower, devcomp=list(cmp=cmp, dims=dims),
+               pp=pp, resp=rho$resp,
+               ## flex-specific
+               reGenerators = lmod$reGenerators)
     return(out)
 }
 

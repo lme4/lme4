@@ -1831,9 +1831,9 @@ getME <- function(object,
                   "splits","thetaSplit","thfun"))
 {
     if(missing(name)) stop("'name' must not be missing")
-    if (is(object,"flexMerMod")) {
-        return(getME(object$model,name))
-    }
+    ## if (is(object,"flexMerMod")) {
+    ##     return(getME(object$model,name))
+    ## }
     stopifnot(is(object,"merMod"))
     if (length(name <- as.character(name)) > 1) {
         names(name) <- name
