@@ -1,0 +1,83 @@
+%\VignetteEngine{knitr::knitr}
+%\VignetteIndexEntry{flexLambda examples}
+\documentclass{article}
+\newcommand{\code}[1]{{\tt #1}}
+\title{\code{flexLmer} examples}
+\begin{document}
+
+<<pkgs,message=FALSE>>=
+library("nlme")
+library("lme4")
+data(Assay,package="nlme")
+@
+
+<<>>=
+lmerfit1 <- flexLmer(logDens~sample+dilut+cs(~(0+sample|Block),het=FALSE),
+                        as.data.frame(Assay))
+summary(lmerfit1$model)  ## VarCorr output bogus
+getME(lmerfit1,"theta")
+logLik(lmerfit1$model)
+sigma(lmerfit1$model)
+@
+
+Want to modify \code{mkVarCorr} to get proper output (how?)
+
+I don't know how to set up sub/superclasses in S4
+
+<<>>=
+## Li := \Lambda_i, the i-th block diagonal of \Lambda(\theta)
+genLambdatx0 <- function(nc,thl,cnms) {
+    Li <- diag(nrow = nc)
+    Li[lower.tri(Li, diag = TRUE)] <- thl
+    rownames(Li) <- cnms
+    Li
+}
+mkVarCorr <- function(sc,    ## scale factor
+                      cnms,  ## named component names
+                      nc,    ## vector of number of terms
+                      theta, ## theta vector
+                      ntheta = nc*(nc+1)/2, 
+                      nms=names(cnms),   ##
+                      genLambdatx = genLambdatx0) {
+    ncseq <- seq_along(nc)
+    thl <- split(theta, rep.int(ncseq, ntheta))
+    if(!all(nms == names(cnms))) ## the above FIXME
+	warning("nms != names(cnms)  -- whereas lme4-authors thought they were --\n",
+		"Please report!", immediate. = TRUE)
+    Lambdatx <- mapply(genLambdatx0,
+                       nc, thl, cnms)
+    ## val := \Sigma_i = \sigma^2 \Lambda_i \Lambda_i'
+    ans <- lapply(Lambdatx,
+                  function(Li) {
+                      val <- tcrossprod(sc * Li) # variance-covariance
+                      stddev <- sqrt(diag(val))
+                      corr <- t(val / stddev)/stddev
+                      diag(corr) <- 1
+                      structure(val, stddev = stddev, correlation = corr)
+                  })
+    if(is.character(nms)) {
+	## FIXME: do we want this?  Maybe not.
+	## Potential problem: the names of the elements of the VarCorr() list
+	##  are not necessarily unique (e.g. fm2 from example("lmer") has *two*
+	##  Subject terms, so the names are "Subject", "Subject".  The print method
+	##  for VarCorrs handles this just fine, but it's a little awkward if we
+	##  want to dig out elements of the VarCorr list ... ???
+	if (anyDuplicated(nms))
+	    nms <- make.names(nms, unique = TRUE)
+	names(ans) <- nms
+    }
+    structure(ans, sc = sc)
+}
+
+
+<<>>=
+lmefit1 <- lme(logDens~sample+dilut,Assay,
+                random=pdBlocked(list(pdIdent(~1),pdIdent(~sample-1))))
+lmefit2 <- update(lmefit1,random=pdCompSymm(~sample-1))
+lmefit3 <- update(lmefit1,random=~1|Block/sample)
+
+lmefits <- list(lmefit1,lmefit2,lmefit3)
+var(sapply(lmefits,logLik))  ## 5e-23
+@
+
+\end{document}
