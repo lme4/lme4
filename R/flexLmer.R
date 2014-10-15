@@ -9,6 +9,7 @@ flexLmer <- function(formula, data, specials = c("cs", "d", "ar1d"),
                      verbose = 0L, control = lmerControl(),
                      weights = NULL) {
     # see example(modular)
+    mc <- match.call()
     lmod <- flexFormula(formula, data, family = NULL, specials = specials,
                         verbose = verbose, control = control, weights = weights)
     devfun <- do.call(mkLmerDevfun,
@@ -17,14 +18,17 @@ flexLmer <- function(formula, data, specials = c("cs", "d", "ar1d"),
     opt <- optimizeLmer(devfun, verbose = verbose)
     # FIXME: this should not be necessary...
     environment(devfun)$pp$theta <- opt$par
-    ## should be new()
+    ## FIXME: do we need a mkFlexLmerMod, or can we somehow
+    ##  combine pieces?
+    model <- mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr)
+    ## ugh, there must be a better way to do this ...
     out <- new("flexLmerMod",
-        ## DRY ... from lmer.R
-               call=x@call, frame=x@frame, flist=x@flist,
-               cnms=x@cnms, theta=pp$theta, beta=pp$delb, u=pp$delu,
-               lower=x@lower, devcomp=list(cmp=cmp, dims=dims),
-               pp=pp, resp=rho$resp,
-               ## flex-specific
+               call=mc, frame=model@frame, flist=model@flist,
+               cnms=model@cnms, theta=model@theta,
+               beta=model@beta, u=model@u,
+               lower=model@lower,
+               devcomp=model@devcomp,
+               pp=model@pp, resp=model@resp,
                reGenerators = lmod$reGenerators)
     return(out)
 }

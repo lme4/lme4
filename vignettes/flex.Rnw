@@ -11,13 +11,17 @@ library("lme4")
 data(Assay,package="nlme")
 @
 
-<<>>=
+<<ex1>>=
+(lmefit1 <- lme(logDens~sample+dilut,
+                random=pdCompSymm(~sample-1),
+                  Assay))
 lmerfit1 <- flexLmer(logDens~sample+dilut+cs(~(0+sample|Block),het=FALSE),
                         as.data.frame(Assay))
-summary(lmerfit1$model)  ## VarCorr output bogus
-getME(lmerfit1,"theta")
-logLik(lmerfit1$model)
-sigma(lmerfit1$model)
+summary(lmerfit1)  ## VarCorr output bogus
+(tt <- getME(lmerfit1,"theta"))
+all.equal(c(logLik(lmerfit1)),c(logLik(lmefit1)))
+(ss <- sigma(lmerfit1)) ## residual std. dev.
+ss*tt[1]  ## matches among-sample std. dev.
 @
 
 Want to modify \code{mkVarCorr} to get proper output (how?)
