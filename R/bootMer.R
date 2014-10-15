@@ -212,10 +212,15 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
       do_parallel
       length.t0 <- length(t0)
       function(i) {
-        foo <- try(FUN(refit(x,ss[[i]])),silent=TRUE)
-        if(verbose) { cat(sprintf("%5d :",i)); str(foo) }
+        ret <- try(FUN(refit(x,ss[[i]])),silent=TRUE)
+        if(verbose) { cat(sprintf("%5d :",i)); str(ret) }
         if (!do_parallel && .progress!="none") { setpbfun(pb,i/nsim) }
-        if (inherits(foo, "try-error")) rep(NA, length.t0) else foo
+        if (inherits(ret, "try-error")) {
+            msg <- c(ret) ## retrieve error message
+            ret <- rep(NA, length.t0)
+            attr(ret,"fail.msgs") <- msg
+        }
+        return(ret)
     }})
 
     simvec <- seq_len(nsim)
@@ -239,9 +244,11 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
 
     t.star <- do.call(cbind,res)
     rownames(t.star) <- names(t0)
-    if ((numFail <- sum(apply(is.na(t.star),2,all)))>0) {
+    if ((numFail <- sum(bad.runs <- apply(is.na(t.star),2,all)))>0) {
         warning("some bootstrap runs failed (",numFail,"/",nsim,")")
-    }
+        fail.msgs <- vapply(res[bad.runs],FUN=attr,FUN.VAL=character(1),
+                            "fail.msgs")
+    } else fail.msgs <- NULL
     ## boot() ends with the equivalent of
     ## structure(list(t0 = t0, t = t.star, R = R, data = data, seed = seed,
     ##		      statistic = statistic, sim = sim, call = call,
@@ -254,6 +261,7 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
 		   ran.gen = "simulate(<lmerMod>, 1, *)", mle = mle),
 	      class = "boot")
     attr(s,"bootFail") <- numFail
+    attr(s,"boot.fail.msgs") <- fail.msgs
     s
 } ## {bootMer}
 

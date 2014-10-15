@@ -13,7 +13,7 @@ boo02 <- bootMer(fm1, mySumm, nsim = 10, use.u = TRUE)
 
 ## boo02 <- bootMer(fm1, mySumm, nsim = 500, use.u = TRUE)
 if (require(boot)) {
-    suppressWarnings(boot.ci(boo02,index=2,type="perc"))
+    boot.ci(boo02,index=2,type="perc")
 }
 
 fm2 <- lmer(angle ~ recipe * temperature + (1|recipe:replicate), cake)
@@ -40,16 +40,45 @@ set.seed(101)
 ## expect_warning(cc <- confint(cmod,method="boot",nsim=10,quiet=TRUE,
 ##              .progress="txt",PBargs=list(style=3)),"some bootstrap runs failed")
 
+
 library(parallel)
-## http://stackoverflow.com/questions/12983137/how-do-detect-if-travis-ci-or-not
-travis <- nchar(Sys.getenv("TRAVIS"))>0
-if (detectCores()>1 && .Platform$OS.type != "windows" && !travis) {
-    boo01P <- bootMer(fm1, mySumm, nsim = 10, parallel="multicore", ncpus=2)
+if (detectCores()>1) {
+    ## http://stackoverflow.com/questions/12983137/how-do-detect-if-travis-ci-or-not
+    travis <- nchar(Sys.getenv("TRAVIS"))>0
+    if(.Platform$OS.type != "windows" && !travis) {
+        boo01P <- bootMer(fm1, mySumm, nsim = 10, parallel="multicore", ncpus=2)
+    }
+
+    ## works in Solaris from an interactive console but not ???
+    ##   via R CMD BATCH
+    if (Sys.info()["sysname"] != "SunOS")
+        boo01P.snow <- bootMer(fm1, mySumm, nsim = 10, parallel="snow", ncpus=2)
 }
 
-## works in Solaris from an interactive console but not ???
-##   via R CMD BATCH
-if (detectCores()>1 && Sys.info()["sysname"] != "SunOS") {
-    boo01P.snow <- bootMer(fm1, mySumm, nsim = 10, parallel="snow", ncpus=2)
-}
+set.seed(101)
+dd <- data.frame(x=runif(200),
+                 f=rep(1:20,each=10),
+                 o=rnorm(200,mean=2))
+dd$y <- suppressMessages(simulate(~x+(1|f)+offset(o),
+               family="poisson",
+               newdata=dd,
+               newparams=list(theta=1,beta=c(0,2)))[[1]])
+
+## fails under flexLambda
+dd$y2 <- suppressMessages(simulate(~x+(1|f)+offset(o),
+               family="gaussian",
+               newdata=dd,
+               newparams=list(theta=1,beta=c(0,2),sigma=1))[[1]])
+
+fm3 <- glmer(y~x+(1|f)+offset(o),
+             data=dd,family="poisson")
+
+fm4 <- lmer(y2~x+(1|f)+offset(o),
+             data=dd)
+
+mySumm2 <- function(fit) return(c(fixef(fit),getME(fit,'theta')))
+## still some issues to fix here
+bb <- bootMer(fm3,mySumm2,nsim=10)
+attr(bb,"boot.fail.msgs")
+bb2 <- bootMer(fm4,mySumm2,nsim=10)
 
