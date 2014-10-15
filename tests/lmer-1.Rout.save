@@ -1,13 +1,11 @@
 
-R Under development (unstable) (2014-06-17 r65965) -- "Unsuffered Consequences"
+R version 3.1.1 Patched (2014-10-15 r66769) -- "Sock it to Me"
 Copyright (C) 2014 The R Foundation for Statistical Computing
-Platform: i686-pc-linux-gnu (32-bit)
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -146,7 +144,7 @@ Fixed Effects:
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.4 0.02 0.43 
+Time elapsed:  0.4 0.002 0.41 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -192,7 +190,7 @@ Warning messages:
 > options(oldOpts)  ## restore digits
 > 
 > showProc.time() #
-Time elapsed:  0.172 0.004 0.173 
+Time elapsed:  0.133 0 0.133 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -321,7 +319,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.432 0 0.433 
+Time elapsed:  0.365 0.004 0.38 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -363,8 +361,9 @@ Error : Invalid grouping factor specification, habitat * lagoon
 > ## (only gives a warning now -- sparseX disregarded)
 > r2.  <- lmer(y ~ 0+lagoon + (1|habitat), data = dat,
 +              sparseX = TRUE, verbose = TRUE)
+start par. =  13.3722 fn =  805.5555 
 At return
- 15:     709.74472:  0.00000
+eval:  16 fn:      709.74472 par:  0.00000
 Warning messages:
 1: sparseX = TRUE has no effect at present 
 2: extra argument(s) 'sparseX' disregarded 
@@ -443,7 +442,7 @@ lagoon1  lagoon2  lagoon3  lagoon4
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.204 0.004 0.21 
+Time elapsed:  0.179 0.002 0.18 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -462,7 +461,7 @@ Time elapsed:  0.204 0.004 0.21
 +                    "error")))
 > 
 > showProc.time() #
-Time elapsed:  0.72 0 0.723 
+Time elapsed:  0.408 0 0.409 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -537,4 +536,4 @@ Fixed Effects:
 > 
 > proc.time()
    user  system elapsed 
-  5.088   0.140   5.207 
+  3.801   0.067   4.060 
