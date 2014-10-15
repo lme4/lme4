@@ -1,15 +1,23 @@
 %\VignetteEngine{knitr::knitr}
+%\VignetteDepends{ggplot2}
 %\VignetteIndexEntry{flexLambda examples}
 \documentclass{article}
 \newcommand{\code}[1]{{\tt #1}}
 \title{\code{flexLmer} examples}
 \begin{document}
 
+\section{Setup}
+
 <<pkgs,message=FALSE>>=
 library("nlme")
 library("lme4")
+library("ggplot2"); theme_set(theme_bw())
 data(Assay,package="nlme")
 @
+
+\section{Examples}
+
+\subsection{Compound symmetry model}
 
 <<ex1>>=
 (lmefit1 <- lme(logDens~sample+dilut,
@@ -24,11 +32,43 @@ all.equal(c(logLik(lmerfit1)),c(logLik(lmefit1)))
 ss*tt[1]  ## matches among-sample std. dev.
 @
 
-Want to modify \code{mkVarCorr} to get proper output (how?)
+\subsection{AR1 model}
 
-I don't know how to set up sub/superclasses in S4
+This uses Steve Walker's trick from \href{https://github.com/lme4/lme4/issues/224}{Github issue \#224} 
+
+<<gendata,echo=FALSE>>=
+simAR1 <- function(nsubj=20,
+                   nreps=2,
+                   length=20,
+                   rho=0.8,sd.b=3,sd.eps=1,beta=0.5,seed=NULL) {
+    n <- nsubj*nreps*length
+    if (!is.null(seed)) set.seed(seed)
+    b <- sd.b * as.vector(replicate(nsubj,
+                       arima.sim(n=length, model=list(ar=rho))))
+    mu <- with(fr,beta*time)
+    y <- with(fr,mu + model.matrix(~0+as.factor(time):id)%*%b + 
+                  rnorm(n, sd=sd.eps)
+    )
+    return(data.frame(mu,y))
+}
+nsubj <- 20
+nreps <- 1
+length <- 20
+fr <- expand.grid(
+    time=1:length,
+    id=factor(1:nsubj),
+    rep=factor(1:nreps))
+## FIXME: rep is a little bit silly when sd.eps=0
+fr <- data.frame(fr,simAR1(nsubj,nreps,length,sd.eps=0,seed=2352))
+@
 
 <<>>=
+qplot(y=mu, x=time, data=fr, geom="line") + facet_wrap(~id) + 
+    geom_point(aes(y=y),colour="gray")
+@
+
+
+<<mkVarCorr,echo=FALSE>>=
 ## Li := \Lambda_i, the i-th block diagonal of \Lambda(\theta)
 genLambdatx0 <- function(nc,thl,cnms) {
     Li <- diag(nrow = nc)
@@ -72,16 +112,6 @@ mkVarCorr <- function(sc,    ## scale factor
     }
     structure(ans, sc = sc)
 }
-
-
-<<>>=
-lmefit1 <- lme(logDens~sample+dilut,Assay,
-                random=pdBlocked(list(pdIdent(~1),pdIdent(~sample-1))))
-lmefit2 <- update(lmefit1,random=pdCompSymm(~sample-1))
-lmefit3 <- update(lmefit1,random=~1|Block/sample)
-
-lmefits <- list(lmefit1,lmefit2,lmefit3)
-var(sapply(lmefits,logLik))  ## 5e-23
 @
 
 \end{document}
