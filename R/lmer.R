@@ -1644,6 +1644,7 @@ getLlikAIC <- function(object, cmp = object@devcomp$cmp) {
 ##  change position in output? comes at the very end, could get lost ...
 .prt.warn <- function(optinfo, summary=FALSE, ...) {
     ## check all warning slots: print numbers of warnings (if any)
+    ## FIXME (upstream): cc should be non-NULL
     cc <- optinfo$conv$opt
     msgs <- unlist(optinfo$conv$lme4$messages)
     ## can't put nmsgs/nwarnings compactly into || expression
@@ -1651,7 +1652,8 @@ getLlikAIC <- function(object, cmp = object@devcomp$cmp) {
     nmsgs <- length(msgs)
     warnings <- optinfo$warnings
     nwarnings <- length(warnings)
-    if (cc>0 || nmsgs>0 || nwarnings>0) {
+    if (!is.null(cc) &&  ## quick fix: should be unnecessary
+        (cc>0 || nmsgs>0 || nwarnings>0)) {
         if (summary) {
             cat(sprintf("convergence code %d; %d optimizer warnings; %d lme4 warnings",
                 cc,nmsgs,nwarnings),"\n")
