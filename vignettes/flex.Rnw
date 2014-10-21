@@ -2,6 +2,7 @@
 %\VignetteDepends{ggplot2}
 %\VignetteIndexEntry{flexLambda examples}
 \documentclass{article}
+\usepackage{hyperref}
 \newcommand{\code}[1]{{\tt #1}}
 \title{\code{flexLmer} examples}
 \begin{document}
