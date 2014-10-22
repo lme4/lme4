@@ -256,4 +256,8 @@ if(FALSE) { ## Hadley broke this
     expect_is(update(g0,.~. + scale(year,center=TRUE,scale=FALSE),
                      control=gc),
               "glmerMod")
+
+    ## try higher-order AGQ
+    expect_is(update(gm1,nAGQ=90),"glmerMod")
+    expect_error(update(gm1,nAGQ=101),"ord < 101L")
 })

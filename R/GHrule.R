@@ -22,7 +22,7 @@
 ##' with(r5, sapply(seq(2, 10, 2), function(p) sum(w * z^p)))
 ##' }
 ##' @export
-GHrule <- function (ord, asMatrix=TRUE, generator=NULL) {
+GHrule <- function (ord, asMatrix=TRUE) {
     stopifnot(length(ord) == 1,
               (ord <- as.integer(ord)) >= 0L,
               ord < 101L)
