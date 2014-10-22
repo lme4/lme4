@@ -29,11 +29,17 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
             wstr <- "unable to evaluate scaled gradient"
             res$code <- -1L
         } else {
-            if ((max.grad <- max(abs(scgrad))) > ccl$tol) {
-                w <- which.max(abs(scgrad))
+            ## find parallel *minimum* of scaled and absolute gradient
+            ## the logic here is that we can sometimes get large
+            ##  *scaled* gradients even when the *absolute* gradient
+            ##  is small because the curvature is very flat as well ...
+            mingrad <- pmin(abs(scgrad),abs(derivs$gradient))
+            maxmingrad <- max(mingrad)
+            if (maxmingrad > ccl$tol) {
+                w <- which.max(maxmingrad)
                 res$code <- -1L
                 wstr <- gettextf("Model failed to converge with max|grad| = %g (tol = %g, component %d)",
-                                 max.grad, ccl$tol,w)
+                                 maxmingrad, ccl$tol,w)
             }
         }
         if (!is.null(wstr)) {
