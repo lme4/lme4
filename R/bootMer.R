@@ -246,7 +246,7 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
     rownames(t.star) <- names(t0)
     if ((numFail <- sum(bad.runs <- apply(is.na(t.star),2,all)))>0) {
         warning("some bootstrap runs failed (",numFail,"/",nsim,")")
-        fail.msgs <- vapply(res[bad.runs],FUN=attr,FUN.VAL=character(1),
+        fail.msgs <- vapply(res[bad.runs],FUN=attr,FUN.VALUE=character(1),
                             "fail.msgs")
     } else fail.msgs <- NULL
     ## boot() ends with the equivalent of
