@@ -915,6 +915,8 @@ setClass("merMod",
                         pp      = "merPredD",
                         optinfo = "list"))
 
+
+
 ##' @export
 setClass("lmerMod", representation(resp="lmerResp"), contains="merMod")
 
@@ -927,8 +929,10 @@ setClass("nlmerMod", representation(resp="nlsResp"), contains="merMod")
 ## FIXME: would be nice to extend merMod and then have lmer/glmer/nlmerMod
 ## sit on top, but maybe not feasible 
 ##' @export
-setClass("flexLmerMod", representation(reGenerators = "list"),
+setClass("flexLmerMod",
+         representation(reGenerators = "list"),
          contains="lmerMod")
+
 
 ##' Generator object for the rePos (random-effects positions) class
 ##'

@@ -871,7 +871,8 @@ nlformula <- function(mc) {
 ##' @param rho the environment of the objective function
 ##' @param opt the value returned by the optimizer
 ##' @param reTrms reTrms list from the calling function
-mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
+mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv = NULL,
+                     reGenerators = NULL) {
     if(missing(mc)) mc <- match.call()
     stopifnot(is.environment(rho),
               is(pp <- rho$pp, "merPredD"),
@@ -940,19 +941,27 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
              tolPwrss=rho$tolPwrss)
     ## TODO:  improve this hack to get something in frame slot (maybe need weights, etc...)
     if(missing(fr)) fr <- data.frame(resp$y)
-    new(switch(rcl, lmerResp="lmerMod", glmResp="glmerMod", nlsResp="nlmerMod"),
-        call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
-        Gp=reTrms$Gp, theta=pp$theta, beta=beta,
-        u=if (trivial.y) rep(NA_real_,nrow(pp$Zt)) else pp$u(fac),
-        lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims),
-        pp=pp, resp=resp,
-	optinfo = list (optimizer= attr(opt,"optimizer"),
+    flexFlag <- if(is.null(reGenerators)) "" else "flex"
+    mcl <- switch(paste(flexFlag, rcl, sep = ""),
+                  lmerResp="lmerMod",
+                  glmResp="glmerMod",
+                  nlsResp="nlmerMod",
+                  flexlmerResp="flexLmerMod")
+    modList <- list(Class = mcl,
+                    call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
+                    Gp=reTrms$Gp, theta=pp$theta, beta=beta,
+                    u=if (trivial.y) rep(NA_real_,nrow(pp$Zt)) else pp$u(fac),
+                    lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims),
+                    pp=pp, resp=resp,
+                    optinfo = list (optimizer= attr(opt,"optimizer"),
 			control	 = attr(opt,"control"),
 			derivs	 = attr(opt,"derivs"),
 			conv  = list(opt=opt$conv, lme4=lme4conv),
 			feval = if (is.null(opt$feval)) NA else opt$feval,
 			warnings = attr(opt,"warnings"), val = opt$par)
-        )
+                    )
+    if(flexFlag == "flex") modList <- c(modList, list(reGenerators = reGenerators))
+    do.call(new, modList, quote = TRUE)
 }## {mkMerMod}
 
 ## generic argument checking
