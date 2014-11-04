@@ -1,5 +1,5 @@
 <!--
-%\VignetteEngine{knitr::rmarkdown_notangle}
+%\VignetteEngine{knitr::rmarkdown}
 %\VignetteIndexEntry{lmer Performance Tips}
 -->
 
@@ -20,7 +20,7 @@ library("lme4")
   consuming derivative calculation that is performed after the optmization
   is finished, e.g.
 
-```{r noderivs}
+```{r noderivs,eval=FALSE}
 lmer(y ~ service * dept + (1|s) + (1|d), InstEval,
      control = lmerControl(calc.derivs = FALSE))
 ```
@@ -41,7 +41,7 @@ accurate approximation to compute the standard errors of the fixed effects.
   turned off as follows (here we have specified the `"nlminb"` method but this 
   applies to any `optimx` method):
 
-```{r nlminbfit}
+```{r nlminbfit,eval=FALSE}
 library("optimx")
 lmer(y ~ service * dept + (1|s) + (1|d), InstEval,
      control = lmerControl(optimizer = "optimx", calc.derivs = FALSE,
@@ -60,7 +60,7 @@ lmer(y ~ service * dept + (1|s) + (1|d), InstEval,
   increase `maxeval` if the optimization requires more than 1000 iterations
   and you wish to allow it to proceed.)
 
-```{r nlopt}
+```{r nlopt,eval=FALSE}
 nlopt <- function(par, fn, lower, upper, control) {
     .nloptr <<- res <- nloptr(par, fn, lb = lower, ub = upper, 
         opts = list(algorithm = "NLOPT_LN_BOBYQA", print_level = 1,
