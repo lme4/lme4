@@ -54,7 +54,19 @@ test_that("lmer", {
                       data = datfun(z), REML=FALSE))
 
     datList <- list(data,data,data)
-    
+
+    ## from Roger Mundry via Roman Lustrik
+    set.seed(101)
+    d <- data.frame(
+        xfac=as.factor(sample(letters[1:10], 100, replace=TRUE)),
+        xcov=runif(100),
+        resp=rnorm(100))
+    d <- within(d,
+                xcov[sample(1:100, 10)] <- NA)
+    full <- lmer(resp~xcov+(1|xfac), data=d)
+    null <- lmer(resp~1+(1|xfac), data=d)
+    expect_error(anova(null,full),
+                 "models were not all fitted to the same size of dataset")
 })
 
 context("bootMer")
@@ -210,3 +222,4 @@ test_that("plot", {
     pp <- plot(fm1, resid(., scaled=TRUE) ~ fitted(.) | Sex, abline = 0)
     expect_is(pp,"trellis")
 })
+

@@ -417,6 +417,10 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
     if (any(modp)) {			# multiple models - form table
 	opts <- dots[!modp]
 	mods <- c(list(object), dots[modp])
+        nobs.vec <- .sapply(mods,nobs)
+        if (var(nobs.vec)>0)
+            stop("models were not all fitted to the same size of dataset")
+
 	## model names
         if (is.null(mNms <- model.names)) {
             mNms <- .sapply(as.list(mCall)[c(FALSE, TRUE, modp)],
