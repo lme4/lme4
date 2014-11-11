@@ -155,7 +155,7 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, ReForm,
             stop("NAs are not allowed in prediction data",
                  " for grouping variables unless allow.new.levels is TRUE")
         unames <- unique(sort(names(ReTrms$cnms)))  ## FIXME: same as names(ReTrms$flist) ?
-        unames <- paste('`',unames,'`',sep='') # enquote possibly irregular names (Github #254)
+        ## unames <- paste('`',unames,'`',sep='') # enquote possibly irregular names (Github #254)
         ## convert numeric grouping variables to factors as necessary
         ## must use all.vars() for examples
         ## for (i in all.vars(RHSForm(re.form))) {
