@@ -141,7 +141,7 @@ test_that("predict", {
     expect_equal(p0[1],p1[1],tolerance=4e-5)
     expect_equal(p0[1],p2[1],tolerance=4e-5)
     expect_equal(p0[1],p3[1],tolerance=4e-5)
-    expect_message(predict(gm1,ReForm=NA),"is now preferred to")
+    expect_warning(predict(gm1,ReForm=NA),"is deprecated")
     ## matrix-valued predictors: Github #201 from Fabian S.
     sleepstudy$X <- cbind(1, sleepstudy$Days)
     m <- lmer(Reaction ~ -1 + X  + (Days | Subject), sleepstudy)
