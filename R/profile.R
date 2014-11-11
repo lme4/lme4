@@ -12,7 +12,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
                            optimizer = "bobyqa",
                            signames = TRUE,
                            parallel = c("no", "multicore", "snow"),
-                           ncpus = getOption("profile.ncpus", 1L), cl = NULL...)
+                           ncpus = getOption("profile.ncpus", 1L), cl = NULL, ...)
 {
 
     ## FIXME: allow choice of nextstep/nextstart algorithm?
@@ -630,7 +630,7 @@ confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
         ## predy is used in many places and it's much harder to
         ## tell in general whether an NA indicates a lower or an
         ## upper bound ...
-        if (!is(b <- bak[[nm]],"try-error")) {
+	if (!inherits(b <- bak[[nm]], "error")) {
             p <- predy(b, zeta)
             if (is.na(p[1])) p[1] <- lower[i]
             if (is.na(p[2])) p[2] <- upper[i]
@@ -1014,7 +1014,7 @@ splom.thpr <- function (x, data,
         }
     }
 
-    panel.blank <- function(...) {} 
+    panel.blank <- function(...) {}
     splom(~ pfr,
           lower.panel = if(draw.lower) lp else panel.blank,
           upper.panel = if (draw.upper) up else panel.blank,
