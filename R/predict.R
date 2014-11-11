@@ -17,16 +17,19 @@ reOnly <- function(f) {
 }
 
 reFormHack <- function(re.form,ReForm,REForm,REform) {
+    warnDeprec <- function(name)
+        warning(gettextf("'%s' is deprecated; use '%s' instead", name, "re.form"),
+                call.=FALSE, domain=NA)
     if (!missing(ReForm)) {
-        message(shQuote("re.form")," is now preferred to ",shQuote("ReForm"))
+        warnDeprec("ReForm")
         return(ReForm)
     }
     if (!missing(REForm)) {
-        message(shQuote("re.form")," is now preferred to ",shQuote("REForm"))
+        warnDeprec("REForm")
         return(REForm)
     }
     if (!missing(REform)) {
-        message(shQuote("re.form")," is now preferred to ",shQuote("REform"))
+        warnDeprec("REform")
         return(REform)
     }
     re.form
@@ -127,22 +130,21 @@ setParams <- function(object, params, inplace=FALSE, subset=FALSE) {
 ##' @param object fitted model object
 ##' @param newdata (optional) data frame containing new data
 ##' @param re.form formula specifying random effect terms to include (NULL=all, ~0)
-##' @param ReForm backward compatibility argument
 ##' @param na.action
 ##'
-mkNewReTrms <- function(object, newdata, re.form=NULL, ReForm,
-                        na.action=na.pass,
-                        allow.new.levels=FALSE) {
+##' @note Hidden; _only_ used (twice) in this file
+mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
+                        allow.new.levels=FALSE)
+{
     ## construct (fixed) model frame in order to find out whether there are
     ## missing data/what to do about them
-    re.form <- reFormHack(re.form,ReForm)  ## back-compatibility
     mfnew <- if (is.null(newdata)) {
         model.frame(object)  ## FIXME: check ...
     } else {
-        Terms <- terms(object,fixed.only=TRUE)
-        model.frame(delete.response(Terms),newdata, na.action=na.action)
+        model.frame(delete.response(terms(object,fixed.only=TRUE)),
+                    newdata, na.action=na.action)
     }
-    if (is(re.form,"formula")) {
+    if (inherits(re.form,"formula")) {
         ## DROP values with NAs in fixed effects
         if (length(fit.na.action <- attr(mfnew,"na.action"))>0) {
             newdata <- newdata[-fit.na.action,]
@@ -157,6 +159,7 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, ReForm,
         unames <- unique(sort(names(ReTrms$cnms)))  ## FIXME: same as names(ReTrms$flist) ?
         ## unames <- paste('`',unames,'`',sep='') # enquote possibly irregular names (Github #254)
         ## convert numeric grouping variables to factors as necessary
+
         ## must use all.vars() for examples
         ## for (i in all.vars(RHSForm(re.form))) {
         ## TO DO: should restrict attention to grouping factors only
@@ -276,19 +279,16 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
     ## should follow 'na.action' instead ...)
 
     re.form <- reFormHack(re.form,ReForm,REForm,REform)
-    
+
     if (length(list(...)>0)) warning("unused arguments ignored")
 
-    
-    fit.na.action <- NULL
     type <- match.arg(type)
     if (!is.null(terms))
         stop("terms functionality for predict not yet implemented")
-    if (!is.null(newparams)) {
+    if (!is.null(newparams))
         object <- setParams(object,newparams)
-    }
-    if ((rawPred <- is.null(newdata) &&
-                    is.null(re.form) && is.null(newparams))) { 
+
+    if ((is.null(newdata) && is.null(re.form) && is.null(newparams))) {
         ## raw predict() call, just return fitted values
         ##   (inverse-link if appropriate)
         if (isLMM(object) || isNLMM(object)) {
@@ -301,26 +301,24 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
                 nm <- seq_along(pred)
             names(pred) <- nm
         }
+	fit.na.action <- NULL
         ## flow jumps to end for na.predict
     } else { ## newdata and/or re.form and/or newparams specified
-        X_orig <- getME(object, "X")
+        X <- getME(object, "X")
         ## modified from predict.glm ...
         if (is.null(newdata)) {
-            ## get original model matrix and offset
-            X <- X_orig
+            ## Use original model 'X' matrix and offset
             fit.na.action <- attr(object@frame,"na.action")  ## original NA action
             ## orig. offset: will be zero if there are no matches ...
             offset <- rowSums(object@frame[grepl("offset\\(.*\\)",
                                                  names(object@frame))])
-
         } else {  ## new data specified
             ## evaluate new fixed effect
             RHS <- formula(substitute(~R,
-                              list(R=RHSForm(formula(object,fixed.only=TRUE)))))
+                                      list(R=RHSForm(formula(object,fixed.only=TRUE)))))
             Terms <- terms(object,fixed.only=TRUE)
-            isFac <- vapply(mf <- model.frame(object,
-                                              fixed.only=TRUE),
-                            is,"factor",FUN.VALUE=TRUE)
+            mf <- model.frame(object, fixed.only=TRUE)
+            isFac <- vapply(mf, is.factor, FUN.VALUE=TRUE)
             ## ignore response variable
             isFac[attr(Terms,"response")] <- FALSE
             orig_levs <- if (length(isFac)==0) NULL else lapply(mf[isFac],levels)
@@ -328,13 +326,14 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
                                                         newdata,
                                                         na.action=na.action,
                                                         xlev=orig_levs),
-                              contrasts.arg=attr(X_orig,"contrasts"))
+                              contrasts.arg=attr(X,"contrasts"))
             offset <- rep(0, nrow(X))
             tt <- terms(object)
             if (!is.null(off.num <- attr(tt, "offset"))) {
                 for (i in off.num)
                     offset <- offset + eval(attr(tt,"variables")[[i + 1]], newdata)
             }
+            ## FIXME?: simplify(no need for 'mfnew'): can this be different from 'na.action'?
             fit.na.action <- attr(mfnew,"na.action")
         }
         pred <- drop(X %*% fixef(object))
@@ -347,14 +346,15 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
             if (is.null(re.form)) {
 		re.form <- reOnly(formula(object)) # RE formula only
             }
-            newRE <- mkNewReTrms(object,newdata,re.form,na.action=na.action,
+            newRE <- mkNewReTrms(object, newdata, re.form, na.action=na.action,
                                  allow.new.levels=allow.new.levels)
-            pred <- pred + drop(as.matrix(newRE$b %*% newRE$Zt))
+            pred <- pred + base::drop(as(newRE$b %*% newRE$Zt, "matrix"))
         }
         if (isGLMM(object) && type=="response") {
             pred <- object@resp$family$linkinv(pred)
         }
     }  ## newdata/newparams/re.form
+
     ## fill in NAs as appropriate: if NAs were detected in
     ## original model fit, OR in updated model frame construction
     ## but DON'T double-NA if raw prediction in the first place
@@ -565,7 +565,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     ## have not yet filled in NAs, so need to use names of fitted
     ## object NOT including values with NAs
     f <- fitted(object)
-    nm <- names(f)[!is.na(f)]  
+    nm <- names(f)[!is.na(f)]
     if (length(nm)==0) nm <- seq(n)
     row.names(val) <- nm
 
