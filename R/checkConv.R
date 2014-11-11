@@ -24,8 +24,8 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
     ccl <- ctrl[[cstr <- "check.conv.grad"]] ; checkCtrlLevels(cstr, cc <- ccl[["action"]])
     wstr <- NULL
     if (doCheck(cc)) {
-        scgrad <- try(with(derivs,solve(Hessian,gradient)),silent=TRUE)
-        if (inherits(scgrad,"try-error")) {
+        scgrad <- tryCatch(with(derivs,solve(Hessian,gradient)), error=function(e)e)
+        if (inherits(scgrad, "error")) {
             wstr <- "unable to evaluate scaled gradient"
             res$code <- -1L
         } else {
@@ -128,8 +128,7 @@ checkHess <- function(H, tol, hesstype="") {
                      negative)
     } else {
         zero <- sum(abs(evd) < tol)
-        ch <- try(chol(H), silent=TRUE)
-        if(zero || inherits(ch, "try-error")) {
+        if(zero || inherits(tryCatch(chol(H), error=function(e)e), "error")) {
             res$code <- -4L
             res$messages <-
                 paste(hesstype,"Hessian is numerically singular: parameters are not uniquely determined")
@@ -226,8 +225,7 @@ checkHess <- function(H, tol, hesstype="") {
 ##         return(res)
 ##     }
 ##     zero <- sum(abs(evd) < tol)
-##     ch <- try(chol(H), silent=TRUE)
-##     if(zero || inherits(ch, "try-error")) {
+##     if(zero || inherits(tryCatch(chol(H), error=function(e)e), "error")) {
 ##         res$code <- 1L
 ##         res$messages <-
 ##             "Hessian is numerically singular: parameters are not uniquely determined"
