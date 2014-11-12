@@ -21,7 +21,7 @@ fit_c <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat,
 ## final fit gives degenerate-Hessian warning
 ## FIXME: use fit_c with expect_warning() as a check on convergence tests
 ## tolerance=1e-5 seems OK in interactive use but not in R CMD check ... ??
-stopifnot(all.equal(getME(fit,"theta"),getME(fit_b,"theta"),tolerance=2e-5))
+stopifnot(all.equal(getME(fit,"theta"),getME(fit_b,"theta"), tolerance=2e-5))
 stopifnot(all(getME(fit,"theta")>0))
 
 ## Manuel Koller
@@ -115,43 +115,42 @@ if (FALSE) {
     which(log(ss)>(-40) & log(ss) <(-20))  ## 16, 44, 80, 86, 116, ...
 }
 ## diagnostic plot
-tmpplot <- function(i,FUN=tmpf) {
-    dd <- FUN(i,devFunOnly=TRUE)
+tmpplot <- function(i, FUN=tmpf) {
+    dd <- FUN(i, devFunOnly=TRUE)
     x <- 10^seq(-10,-6.5,length=201)
     dvec <- sapply(x,dd)
-    par(las=1,bty="l")
-    plot(x,dvec-min(dvec)+1e-16,log="xy",type="b")
-    abline(v=getME(FUN(i),"theta"),col=2)
+    op <- par(las=1,bty="l"); on.exit(par(op))
+    plot(x,dvec-min(dvec)+1e-16, log="xy", type="b")
+    r <- FUN(i)
+    abline(v = getME(r,"theta"), col=2)
+    invisible(r)
 }
 
 ## Case #1: boundary estimate with or without boundary.tol
-m5 <- tmpf(5)
+m5  <- tmpf(5)
 m5B <- tmpf(5,control=lmerControl(boundary.tol=0))
-stopifnot(getME(m5,"theta")==0)
-stopifnot(getME(m5B,"theta")==0)
+stopifnot(getME(m5, "theta")==0,
+          getME(m5B,"theta")==0)
 p5 <- profile(m5)  ## bobyqa warnings but results look reasonable
 xyplot(p5)
 ## reveals slight glitch (bottom row of plots doesn't look right)
 expect_warning(splom(p5),"unreliable for singular fits")
-p5B <- profile(m5,signames=FALSE)
-expect_warning(splom(p5B),"unreliable for singular fits")
+p5B <- profile(m5, signames=FALSE) # -> bobyqa convergence warning (code 3)
+expect_warning(splom(p5B), "unreliable for singular fits")
 
 if(lme4:::testLevel() >= 2) { ## avoid failure to warn
     ## Case #2: near-boundary estimate, but boundary.tol can't fix it
-    m16 <- tmpf(16)
-    ## tmpplot(16)
-    p16 <- profile(m16)  ## warning message (non-monotonic profile)
-    if(FALSE) ## FIXME: *does* `warn' but that is not caught by expect_warning() , nor suppressWarning() ???
-    if (!.Platform$OS.type=="windows") {
-        expect_warning(xyplot(p16),"using linear interpolation")  ## warns about linear interpolation in profile for variable 1
-        ## FIXME: don't know why this doesn't warn on windows ...
-        ##        ... doesn't warn on mavericks either ...
-    }
-    ## (still not quite right)
+    m16 <- tmpplot(16)
+    ## sometimes[2014-11-11] fails (??) :
+    p16 <- profile(m16)  ## warning message*s* (non-monotonic profile and more)
+    plotOb <- xyplot(p16)
+    ## NB: It's the print()ing of 'plotOb' which warns ==> need to do this explicitly:
+    expect_warning(print(plotOb), ## warns about linear interpolation in profile for variable 1
+                   "using linear interpolation")
     d16 <- as.data.frame(p16)
-    xyplot(.zeta~.focal|.par,data=d16,type=c("p","l"),
-           scales=list(x=list(relation="free")))
-    try(splom(p16))  ## breaks
+    xyplot(.zeta ~ .focal|.par, data=d16, type=c("p","l"),
+           scales = list(x=list(relation="free")))
+    try(splom(p16))  ## breaks when calling predict(.)
 }
 
 ## bottom line:
