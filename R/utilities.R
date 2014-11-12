@@ -1,5 +1,17 @@
-if(getRversion() < "2.15")
-  paste0 <- function(...) paste(..., sep = '')
+if((Rv <- getRversion()) < "3.1.0") {
+  anyNA <- function(x) any(is.na(x))
+  if(Rv < "3.0.0") {
+      rep_len <- function(x, length.out) rep(x, length.out=length.out)
+      if(Rv < "2.15")
+          paste0 <- function(...) paste(..., sep = '')
+  }
+}; rm(Rv)
+
+## From Matrix package  isDiagonal(.) :
+all0 <- function(x) !anyNA(x) && all(!x)
+.isDiagonal.sq.matrix <- function(M, n = dim(M)[1L])
+    all0(M[rep_len(c(FALSE, rep.int(TRUE,n)), n^2)])
+
 
 ### Utilities for parsing and manipulating mixed-model formulas
 
@@ -47,7 +59,7 @@ mkBlist <- function(x,frloc, drop.unused.levels=TRUE) {
     ## looks like we don't have to filter NAs explicitly any more ...
     ## sm <- as(ff,"sparseMatrix")
     ## sm <- KhatriRao(sm[,!is.na(ff),drop=FALSE],t(mm[!is.na(ff),,drop=FALSE]))
-    sm <- KhatriRao(sm,t(mm)) 
+    sm <- KhatriRao(sm,t(mm))
     list(ff = ff, sm = sm, nl = nl, cnms = colnames(mm))
 }
 
@@ -81,7 +93,7 @@ mkReTrms <- function(bars, fr, drop.unused.levels=TRUE) {
   names(bars) <- barnames(bars)
   term.names <- unlist(lapply(bars,
                               function(x) paste(deparse(x),collapse=" ")))
-  ## get component blocks 
+  ## get component blocks
   blist <- lapply(bars, mkBlist, fr, drop.unused.levels)
   nl <- vapply(blist, `[[`, 0L, "nl")   # no. of levels per term
                                         # (in lmer jss:  \ell_i)
@@ -978,7 +990,7 @@ nloptwrap <- local({
 })
 
 nlminbwrap <- function(par, fn, lower, upper, control=list(), ...) {
-    res <- nlminb(start = par, fn, gradient = NULL, hessian = NULL, 
+    res <- nlminb(start = par, fn, gradient = NULL, hessian = NULL,
                   scale = 1, lower = lower, upper = upper,
                   control = control, ...)
     list(par = res$par, fval = res$objective,

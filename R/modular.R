@@ -318,7 +318,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     reTrms <- mkReTrms(findbars(RHSForm(formula)), fr)
     checkNlevels(reTrms$flist, n=n, control)
     checkZdims(reTrms$Ztlist, n=n, control, allow.n=FALSE)
-    if (any(is.na(reTrms$Zt))) {
+    if (anyNA(reTrms$Zt)) {
         stop("NA in Z (random-effects model matrix): ",
              "please use ",
              shQuote("na.action='na.omit'"),

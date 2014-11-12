@@ -14,7 +14,7 @@
 checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
 {
     if (is.null(derivs)) return(NULL)  ## bail out
-    if (any(is.na(derivs$gradient)))
+    if (anyNA(derivs$gradient))
 	return(list(code = -5L,
 		    messages = gettextf("Gradient contains NAs")))
     ntheta <- length(lbound)

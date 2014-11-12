@@ -114,7 +114,7 @@ glmer <- function(formula, data=NULL, family = gaussian,
         if (!is.null(start$fixef) && nAGQ==0)
             stop("should not specify both start$fixef and nAGQ==0")
     }
-    
+
     ## FIX ME: allow calc.derivs, use.last.params etc. if nAGQ=0
     opt <- optimizeGlmer(devfun,
                    optimizer = control$optimizer[[1]],
@@ -764,7 +764,7 @@ family.merMod <- function(object, ...) family(object@resp, ...)
 family.glmResp <- function(object, ...) {
                                         # regenerate initialize
                                         # expression if necessary
-    
+
     ## FIXME: may fail with user-specified/custom family?
     if(is.null(object$family$initialize))
         return(do.call(object$family$family,
@@ -1364,7 +1364,7 @@ residuals.glmResp <- function(object, type = c("deviance", "pearson",
 hatvalues.merMod <- function(model, fullHatMatrix = FALSE, ...) {
     if(isGLMM(model)) warning("the hat matrix may not make sense for GLMMs")
     ## FIXME:  add restriction for NLMMs?
-    
+
     ## prior weights, W ^ {1/2} :
     sqrtW <- Diagonal(x = sqrt(weights(model, type = "prior")))
     with(getME(model, c("L", "Lambdat", "Zt", "RX", "X", "RZX")), {
@@ -1679,7 +1679,7 @@ getLlikAIC <- function(object, cmp = object@devcomp$cmp) {
         }
     }
 }
-    
+
 .summary.cor.max <- 20
 
 ## This is modeled a bit after	print.summary.lm :
@@ -2167,7 +2167,7 @@ formatVC <- function(varc, digits = max(3, getOption("digits") - 2),
 {
     c.nms <- c("Groups", "Name", "Variance", "Std.Dev.")
     avail.c <- c.nms[-(1:2)]
-    if(any(is.na(mcc <- pmatch(comp, avail.c))))
+    if(anyNA(mcc <- pmatch(comp, avail.c)))
 	stop("Illegal 'comp': ", comp[is.na(mcc)])
     nc <- length(colnms <- c(c.nms[1:2], (use.c <- avail.c[mcc])))
     if(length(use.c) == 0)
@@ -2446,7 +2446,7 @@ getOptfun <- function(optimizer) {
     if (is.null(optfun)) stop("couldn't find optimizer function ",optimizer)
     if (!is.function(optfun)) stop("non-function specified as optimizer")
     needArgs <- c("fn","par","lower","control")
-    if (any(is.na(match(needArgs, names(formals(optfun))))))
+    if (anyNA(match(needArgs, names(formals(optfun)))))
 	stop("optimizer function must use (at least) formal parameters ",
 	     paste(sQuote(needArgs), collapse = ", "))
     optfun
