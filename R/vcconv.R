@@ -39,17 +39,14 @@
 ##' matrix.
 mlist2vec <- function(L) {
     if(is.atomic(L)) L <- list(L)
-    n <- sapply(L,nrow)
+    n <- vapply(L, nrow, 1L)
     ## allow for EITHER upper- or lower-triangular input;
     ## in either case, read off in "lower-triangular" order
     ## (column-wise)
     ff <- function(x) {
-        if (all(x[upper.tri(x)]==0)) t(x[lower.tri(x,diag=TRUE)])
-        else t(x)[lower.tri(x,diag=TRUE)]
+	if (all(x[iu <- upper.tri(x)] == 0)) t(x[!iu]) else t(x)[!iu]
     }
-    r <- unlist(lapply(L,ff))
-    attr(r,"clen") <- n
-    r
+    structure(unlist(lapply(L,ff)), clen = n)
 }
 
 ## Compute dimensions of a square matrix from the size
@@ -65,7 +62,7 @@ get_clen <- function(v,n=NULL) {
 }
 
 ##' Concatenated vector to list of matrices
-##' 
+##'
 ##' Convert concatenated vector to list of matrices (lower triangle or
 ##' symmetric). These matrices could represent Cholesky factors,
 ##' covariance matrices, or correlation matrices (with standard
@@ -104,7 +101,7 @@ vec2STlist <- function(v, n = NULL){
 }
 
 ##' Standard deviation-correlation matrix to covariance matrix
-##' 
+##'
 ##' convert 'sdcor' format -- diagonal = std dev, off-diag=cor to and
 ##' from variance-covariance matrix
 ##'
@@ -125,7 +122,7 @@ sdcor2cov  <- function(m) {
 cov2sdcor  <- function(V) {
     ## "own version" of cov2cor():  1. no warning for NA;   2. diagonal = sd(.)
     p <- (d <- dim(V))[1L]
-    if (!is.numeric(V) || length(d) != 2L || p != d[2L]) 
+    if (!is.numeric(V) || length(d) != 2L || p != d[2L])
         stop("'V' is not a square numeric matrix")
     sd <- sqrt(diag(V))
     Is <- 1/sd
@@ -139,16 +136,6 @@ cov2sdcor  <- function(V) {
 ##     diag(m) <- diag(m)*s
 ##     m
 ## }
-## From Matrix package  isDiagonal(.) :
-
-## for pre-3.0.0 compatibility:
-if (!exists("rep_len")) rep_len <- function(x, length.out) {
-    rep(x,length.out=length.out)
-}
-                                            
-all0 <- function(x) !any(is.na(x)) && all(!x)
-.isDiagonal.sq.matrix <- function(M, n = dim(M)[1L])
-    all0(M[rep_len(c(FALSE, rep.int(TRUE,n)), n^2)])
 
 ## attempt to compute Cholesky, allow for positive semi-definite cases
 ##  (hackish)
@@ -169,7 +156,7 @@ safe_chol <- function(m) {
 }
 
 ##' Variance-covariance to relative covariance factor
-##' 
+##'
 ##' from var-cov to scaled Cholesky:
 ##'
 ##' @param v Vector of elements from the lower triangle of a
@@ -177,7 +164,7 @@ safe_chol <- function(m) {
 ##' @param n FIXME: see "@param n" above
 ##' @param s Scale parameter
 ##' @return Vector of elements from the lower triangle of a relative
-##' covariance factor. 
+##' covariance factor.
 Vv_to_Cv <- function(v,n=NULL,s=1) {
     if (!missing(s)) {
         v <- v[-length(v)]
@@ -189,7 +176,7 @@ Vv_to_Cv <- function(v,n=NULL,s=1) {
 }
 
 ##' Standard-deviation-correlation to relative covariance factor
-##' 
+##'
 ##' from sd-cor to scaled Cholesky
 ##'
 ##' @param v Vector of elements from the lower triangle of a
@@ -197,7 +184,7 @@ Vv_to_Cv <- function(v,n=NULL,s=1) {
 ##' @param n FIXME: see "@param n" above
 ##' @param s Scale parameter
 ##' @return Vector of elements from the lower triangle of a relative
-##' covariance factor. 
+##' covariance factor.
 Sv_to_Cv <- function(v,n=NULL,s=1) {
     if (!missing(s)) {
         v <- v[-length(v)]
@@ -209,7 +196,7 @@ Sv_to_Cv <- function(v,n=NULL,s=1) {
 }
 
 ##' Relative covariance factor to variance-covariance
-##' 
+##'
 ##' from unscaled Cholesky vector to (possibly scaled)
 ##' variance-covariance vector
 ##'
@@ -228,7 +215,7 @@ Cv_to_Vv <- function(v,n=NULL,s=1) {
 }
 
 ##' Relative covariance factor to standard-deviation-correlation
-##' 
+##'
 ##' from unscaled Chol to sd-cor vector
 ##'
 ##' @param v Vector of elements from the lower triangle of a
@@ -245,19 +232,4 @@ Cv_to_Sv <- function(v,n=NULL,s=1) {
     r
 }
 
-if (FALSE) {
-    cvec1 <- 1:6
-    Cv_to_Vv(cvec1)
-    Vv_to_Cv(Cv_to_Vv(0))
-    Cv_to_Vv(cvec1,s=2)
-    Sv_to_Cv(Cv_to_Sv(cvec1))
-    Vv_to_Cv(Cv_to_Vv(cvec1))
-    ## for length-1 matrices, Cv_to_Sv should be equivalent
-    ##   to multiplying Cv by sigma and appending sigma ....
-    clist2 <- list(matrix(1),matrix(2),matrix(3))
-    cvec2 <- mlist2vec(clist2)
-    all((cvec3 <- Cv_to_Sv(cvec2,s=2))==c(cvec2*2,2))
-    all(Sv_to_Cv(cvec3,n=rep(1,3),s=2)==
-        cvec3[-length(cvec3)]/cvec3[length(cvec3)])
-}
-
+## tests --> ../inst/tests/test-utils.R
