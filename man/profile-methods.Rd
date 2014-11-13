@@ -75,8 +75,8 @@ logProf(x, base = exp(1), ranef = TRUE,
     sigma parameters to be log transformed.}
 }
 \value{
-  \code{profile(<merMod>)} returns
-  an object of S3 class \code{"thpr"},% = th[eta] pr[ofile]
+  \code{profile(<merMod>)} returns an object of S3 class
+  \code{"thpr"}, %% = th[eta] pr[ofile], now a misnomer, as we also profile beta's
   which is \code{\link{data.frame}}-like.
   Notable methods for such a profile object
   \code{\link{confint}()}, which returns the

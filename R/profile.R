@@ -32,7 +32,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
     useSc <- isLMM(fitted) || isNLMM(fitted)
     dd <- devfun2(fitted,useSc,signames)
     ## FIXME: figure out to what do here ...
-    if (isGLMM(fitted) && fitted@devcomp$dims["useSc"])
+    if (isGLMM(fitted) && fitted@devcomp$dims[["useSc"]])
         stop("can't (yet) profile GLMMs with non-fixed scale parameters")
     stopifnot(devtol >= 0)
     base <- attr(dd, "basedev")
@@ -156,7 +156,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
     seqpar1 <- seq_len(npar1)
     lowvp <- lower[seqpar1]
     upvp <- upper[seqpar1]
-    form <- .zeta ~ foo           # pattern for interpSpline formula
+    form <- .zeta ~ foo # pattern for interpSpline formula
 
     FUN <- function(w) {
         if (verbose) cat(if(isLMM(fitted)) "var-cov " else "",
@@ -215,12 +215,11 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
         nres[1, ] <- pres[2, ] <- zeta(shiftpar, start=opt[seqpar1][-w])
         ## fill in the rest of the arrays and collapse them
         upperf <- fillmat(pres, lowcut, upcut, zeta, wp1)
-        if (pw>lowcut) {
-            lowerf <- fillmat(nres, lowcut, upcut, zeta, wp1)
-        } else {
-            ## don't bother to fill in 'nres' matrix
-            lowerf <- nres
-        }
+        lowerf <-
+            if (pw > lowcut)
+                fillmat(nres, lowcut, upcut, zeta, wp1)
+            else ## don't bother to fill in 'nres' matrix
+                nres
         ## this will throw away the extra 'opt. par' and 'shiftpar'
         ## rows introduced above:
         bres <- as.data.frame(unique(rbind2(upperf,lowerf)))
@@ -230,19 +229,20 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
 
         ## FIXME: test for bad things here??
         form[[3]] <- as.name(pname)
+        forspl <- NULL # (in case of error)
         ## bakspl
-        bakspl <-
-            tryCatch(backSpline(forspl <-
-                interpSpline(form, bres,na.action=na.omit)),
-                     error=function(e)e)
-        if (inherits(bakspl,"error")) {
+	bakspl <-
+	    tryCatch(backSpline(
+		forspl <- interpSpline(form, bres, na.action=na.omit)),
+		     error=function(e)e)
+        if (inherits(bakspl, "error"))
             warning("non-monotonic profile")
-        }
-        ## namedList() is in lmerControl.R
-        return(namedList(bres,bakspl,forspl))
+        ## return:
+        namedList(bres,bakspl,forspl) # namedList() -> lmerControl.R
 
-    } ## for(w in ..)
-    L <- lapply(seqnvp,FUN)
+    } ## FUN()
+
+    L <- lapply(seqnvp, FUN)
     nn <- names(opt[seqnvp])
     ans <-    setNames(lapply(L,"[[","bres"),nn)
     bakspl <- setNames(lapply(L,"[[","bakspl"),nn)
@@ -309,11 +309,11 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
     } ## if isLMM
 
     ans <- do.call(rbind, ans)
-    row.names(ans) <- NULL
+    row.names(ans) <- NULL ## TODO: rbind(*, make.row.names=FALSE)
     ans$.par <- factor(ans$.par)
     attr(ans, "forward") <- forspl
     attr(ans, "backward") <- bakspl
-    class(ans) <- c("thpr", "data.frame")
+    class(ans) <- c("thpr", "data.frame")# 'thpr': see ../man/profile-methods.Rd
     attr(ans, "lower") <- lower[seqnvp]
     attr(ans, "upper") <- upper[seqnvp]
     ans
@@ -600,8 +600,8 @@ format.perc <- function (probs, digits) {
           "%")
 }
 
+##' confint() method for  our profile() results 'thpr'
 ##' @importFrom stats confint
-##' @S3method confint thpr
 confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
 {
     bak <- attr(object, "backward")
@@ -625,12 +625,11 @@ confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
     ci <- matrix(NA,nrow=length(parm),ncol=2,
                  dimnames=list(parm,cn))
     for (i in seq_along(parm)) {
-        nm <- parm[i]
         ## would like to build this machinery into predy, but
         ## predy is used in many places and it's much harder to
         ## tell in general whether an NA indicates a lower or an
         ## upper bound ...
-	if (!inherits(b <- bak[[nm]], "error")) {
+	if (!inherits(b <- bak[[parm[i]]], "error")) {
             p <- predy(b, zeta)
             if (is.na(p[1])) p[1] <- lower[i]
             if (is.na(p[2])) p[2] <- upper[i]
@@ -656,34 +655,9 @@ confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
 ##' @param oldNames (logical) use old-style names for \code{method="profile"}? (See \code{signames} argument to \code{\link{profile}}
 ##' @param \dots additional parameters to be passed to  \code{\link{profile.merMod}} or \code{\link{bootMer}}
 ##' @return a numeric table of confidence intervals
-
-##' @details Depending on the method specified, this function will
-##' compute confidence intervals by ("profile") computing a likelihood profile
-##' and finding the appropriate cutoffs based on the likelihood ratio test;
-##' ("Wald") approximate the confidence intervals (of fixed-effect parameters
-##' only) based on the estimated local curvature of the likelihood surface;
-##' ("boot") perform parametric bootstrapping
-##' with confidence intervals computed from the bootstrap distribution
-##' according to \code{boot.type} (see \code{\link{boot.ci}})
-##' @importFrom stats confint
-##' @S3method confint merMod
-##' @method confint merMod
-##' @examples
-##' fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
-##' fm1W <- confint(fm1,method="Wald")
-##' \dontrun{
-##' ## ~20 seconds, MacBook Pro laptop
-##' system.time(fm1P <- confint(fm1,method="profile",oldNames=FALSE)) ## default
-##' ## ~ 40 seconds
-##' system.time(fm1B <- confint(fm1,method="boot",
-##'                     .progress="txt", PBargs=list(style=3)))
-##' }
-##' load(system.file("testdata","confint_ex.rda",package="lme4"))
-##' fm1P
-##' fm1B
 confint.merMod <- function(object, parm, level = 0.95,
-			   method=c("profile","Wald","boot"),
-			   zeta, nsim=500, boot.type=c("perc","basic","norm"),
+			   method = c("profile","Wald","boot"),
+			   zeta, nsim=500, boot.type = c("perc","basic","norm"),
                            quiet=FALSE, oldNames=TRUE, ...)
 {
     method <- match.arg(method)
@@ -693,14 +667,16 @@ confint.merMod <- function(object, parm, level = 0.95,
     switch(method,
 	   "profile" =
            {
-               if (!quiet) message("Computing profile confidence intervals ...")
-               utils::flush.console()
+	       if (!quiet) {
+		   message("Computing profile confidence intervals ...")
+		   flush.console()
+	       }
                pp <- if(missing(parm)) {
                    profile(object, signames=oldNames, ...)
                } else {
                    profile(object, which=parm, signames=oldNames, ...)
                }
-               confint(pp,level=level,zeta=zeta)
+               confint(pp, level=level, zeta=zeta)
            },
 	   "Wald" =
            {
@@ -711,60 +687,53 @@ confint.merMod <- function(object, parm, level = 0.95,
                    parm <- pnames
                else if (is.numeric(parm))
                    parm <- pnames[parm]
-               ## n.b. can't use sqrt(...)[parm] (diag() loses names)
                a <- (1 - level)/2
                a <- c(a, 1 - a)
-               pct <- format.perc(a, 3)
-               fac <- qnorm(a)
-               ci <- array(NA, dim = c(length(parm), 2L), dimnames = list(parm,
-                                                          pct))
-               sdiag <- function(x) if (length(x)==1) c(x) else diag(x)
-               ses <- sqrt(sdiag(vcov(object)[parm,parm]))
-               ci[] <- cf[parm] + ses %o% fac
-               ci
+               ## N.B. can't use sqrt(...)[parm] (diag() loses names)
+               ses <- sqrt(diag(vcov(object)[parm,parm, drop=FALSE]))
+               array(cf[parm] + ses %o% qnorm(a), dim = c(length(parm), 2L),
+                     dimnames = list(parm, format.perc(a, 3)))
                ## only gives confidence intervals on fixed effects ...
            },
 	   "boot" =
            {
-               if (!quiet) message("Computing bootstrap confidence intervals ...")
-               utils::flush.console()
+	       if (!quiet) {
+		   message("Computing profile confidence intervals ...")
+		   flush.console()
+	       }
                bootFun <- function(x) {
-                   th <- getME(x,"theta")
-                   nvec <- sapply(getME(x,"cnms"),length)
+		   th <- x@theta
+		   nvec <- vapply(x@cnms, length, 1L)
                    scaleTh <- (isLMM(x) || isNLMM(x))
-                   useSc <- as.logical(x@devcomp$dims["useSc"])
-                   ## FIXME: still ugly.  Best cleanup via Cv_to_Sv ...
-                   tn <- tnames(x,old=FALSE,prefix=c("sd","cor"))
-                   if (scaleTh) {  ## scale variances by sigma and include it
-                       ss <- setNames(Cv_to_Sv(th,n=nvec,s=sigma(x)),
-                                      c(tn,"sigma"))
-                   } else if (useSc) { ## don't scale variances but do include sigma
-                       ss <- setNames(c(Cv_to_Sv(th,n=nvec),sigma(x)),
-                                      c(tn,"sigma"))
-                   } else {  ## no scaling, no sigma
-                       ss <- setNames(Cv_to_Sv(th,n=nvec),
-                                      tn)
-                   }
+                   useSc <- as.logical(x@devcomp$dims[["useSc"]])
+		   ## FIXME: still ugly.  Best cleanup via Cv_to_Sv ...
+		   tn <- tnames(x, old=FALSE, prefix=c("sd","cor"))
+		   ss <- if (scaleTh) {	 ## scale variances by sigma and include it
+		       setNames(Cv_to_Sv(th,n=nvec,s=sigma(x)), c(tn,"sigma"))
+		   } else if (useSc) { ## don't scale variances but do include sigma
+		       setNames(c(Cv_to_Sv(th,n=nvec),sigma(x)), c(tn,"sigma"))
+		   } else {  ## no scaling, no sigma
+		       setNames(Cv_to_Sv(th,n=nvec), tn)
+		   }
                    c(ss, fixef(x))
                }
                bb <- bootMer(object, bootFun, nsim=nsim,...)
                bci <- lapply(seq_along(bb$t0),
                              boot.out=bb,
-                             boot::boot.ci,type=boot.type,conf=level)
-               cpos <- grep(boot.type,names(bci[[1]]))
+                             boot::boot.ci, type=boot.type, conf=level)
+               cpos <- grep(boot.type, names(bci[[1]]))
                ## get _last_ two columns
                ccol <- ncol(bci[[1]][[cpos]])+(-1:0)
                citab <- t(sapply(bci,function(x) x[[cpos]][ccol]))
                a <- (1 - level)/2
                a <- c(a, 1 - a)
-               pct <- format.perc(a, 3)
-               dimnames(citab) <- list(names(bb[["t0"]]),pct)
+               dimnames(citab) <- list(names(bb[["t0"]]), format.perc(a, 3))
                pnames <- rownames(citab)
                if (missing(parm))
                    parm <- pnames
                else if (is.numeric(parm))
                    parm <- pnames[parm]
-               citab[parm,]
+               citab[parm, , drop=FALSE]
            },
            stop("unknown confidence interval method"))
 }
