@@ -22,7 +22,7 @@ Description: Fit linear and generalized linear mixed-effects models.
     Eigen C++ library for numerical linear algebra and RcppEigen "glue".
 Depends: R (>= 2.15.1), Matrix (>= 1.1.1), methods, stats, Rcpp (>= 0.10.5)
 LinkingTo: Rcpp, RcppEigen
-Imports: graphics, grid, splines, parallel, MASS, nlme, lattice,
+Imports: graphics, grid, splines, utils, parallel, MASS, nlme, lattice,
     minqa (>= 1.1.15), nloptr
 Suggests:
     knitr,

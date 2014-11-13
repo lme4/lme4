@@ -10,6 +10,8 @@ importFrom("stats",
            extractAIC, family, fitted, formula, hatvalues, logLik,
            model.matrix, nobs, profile, residuals, simulate, terms,
            update, vcov, weights)
+importFrom("utils", flush.console)
+
 ## Recommended packages
 importClassesFrom("Matrix", corMatrix, dgCMatrix, dpoMatrix, dCHMsimpl)
 importFrom("lattice",

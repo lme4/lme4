@@ -678,7 +678,7 @@ drop1.merMod <- function(object, scope, scale = 0, test = c("none", "Chisq", "us
 	tt <- scope[i]
 	if(trace > 1) {
 	    cat("trying -", tt, "\n", sep='')
-	    utils::flush.console()
+	    flush.console()
         }
         ## FIXME: make this more robust, somehow?
         ## three choices explored so far:
