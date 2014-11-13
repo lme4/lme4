@@ -17,14 +17,15 @@ test_that("summary", {
     cc <- capture.output(summary(fit_agridat_archbold))
     expect_true(length(g <- grep("not shown by default",cc))==0 || g<=1)
 })
+
 context("anova")
 test_that("lmer", {
-    expect_that(anova(fm0,fm1),                        is_a("anova"))
-    expect_warning(do.call(anova,list(fm0,fm1)),"assigning generic names")
-
-    dat <- data.frame(y=1:5,u=c(rep("A",2),rep("B",3)),
-                      t=c(rep("A",3),rep("B",2)))
-
+    expect_that(anova(fm0,fm1), is_a("anova"))
+    expect_warning(do.call(anova,list(fm0,fm1)), "assigning generic names")
+    ##
+    dat <- data.frame(y = 1:5,
+                      u = c(rep("A",2), rep("B",3)),
+                      t = c(rep("A",3), rep("B",2)))
     datfun <- function(x) dat
     aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa <-  dat
     expect_is(stats::anova(lmer(y ~ u + (1 | t),
@@ -52,55 +53,54 @@ test_that("lmer", {
                       data = datfun(z), REML=FALSE),
                  lmer(y ~ 1 + (1 | t),
                       data = datfun(z), REML=FALSE))
-
-    datList <- list(data,data,data)
-
+    ##
     ## from Roger Mundry via Roman Lustrik
     set.seed(101)
     d <- data.frame(
         xfac=as.factor(sample(letters[1:10], 100, replace=TRUE)),
         xcov=runif(100),
         resp=rnorm(100))
-    d <- within(d,
-                xcov[sample(1:100, 10)] <- NA)
-    full <- lmer(resp~xcov+(1|xfac), data=d)
-    null <- lmer(resp~1+(1|xfac), data=d)
+    d[sample(1:100, 10), "xcov"] <- NA
+    full <- lmer(resp ~ xcov + (1|xfac), data=d)
+    null <- lmer(resp ~  1   + (1|xfac), data=d)
     expect_error(anova(null,full),
                  "models were not all fitted to the same size of dataset")
 })
 
-context("bootMer")
+context("bootMer confint()")
+set.seed(47)
 test_that("bootMer", {
+    CI.boot <- function(fm, nsim=10, ...)
+        suppressWarnings(confint(fm, method="boot", nsim=nsim, quiet=TRUE, ...))
     ## testing bug-fix for ordering of sd/cor components in sd/cor matrix with >2 rows
     m1 <- lmer(strength~1+(cask|batch),Pastes)
-    bb <- suppressWarnings(confint(m1,method="boot",nsim=3,quiet=TRUE))
-    corvals <- bb[grep("^cor_",rownames(bb)),]
-    expect_true(all(abs(corvals)<=1))
+    ci <- CI.boot(m1)
+    corvals <- ci[grep("^cor_",rownames(ci)),]
+    expect_true(all(abs(corvals) <= 1))
     ## test bootMer with GLMM, multiple RE
-    gm2 <- fit_cbpp_2
-    expect_is(suppressWarnings(confint(gm2,method="boot",nsim=2,quiet=TRUE)),
-                               "matrix")
-    expect_equal(nrow(suppressWarnings(confint(gm2,
-                 method="boot",nsim=2,quiet=TRUE,parm=4:6))),3)
+    ci1 <- CI.boot(gm2, nsim=3)
+    ci2 <- CI.boot(gm2, nsim=5, parm=4:6)
+    expect_true(nrow(ci2) == 3)
+    expect_equal(ci1[4:6,], ci2, tolerance = 0.4)# 0.361
     ## bootMer with NA values
     PastesNA <- Pastes
     PastesNA$Sample[1:3] <- NA
-    m2 <- update(m1,data=PastesNA)
-    suppressWarnings(conf2 <-
-                     confint(m2,method="boot",nsim=10,quiet=TRUE,seed=101))
-    fm1 <- lmer(Reaction~Days+(Days|Subject),sleepstudy)
+    m2 <- update(m1, data=PastesNA)
+    ci3 <- CI.boot(m2, seed=101)
+    expect_equal(ci, ci3, tol = 0.06)# 0.0425
+    fm1. <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
     sleepstudyNA <- sleepstudy
     sleepstudyNA$Days[1:3] = NA
-    fm2 <- update(fm1,data=sleepstudyNA)
-    suppressWarnings(confint(fm2, method="boot", nsim=10, seed=101))
-
+    fm2 <- update(fm1., data=sleepstudyNA)
+    expect_true(nrow(ci4 <- CI.boot(fm2, seed=101)) == 6) # could check more
+    ##
     ## semipar bootstrapping
     fm01 <- lmer(Yield ~ 1|Batch, Dyestuff)
     set.seed(1)
     require(boot)
     boo01_sp <- bootMer(fm01, fixef, nsim = 100, use.u = TRUE,
                         type = "semiparametric")
-    expect_equal(sd(boo01_sp$t),8.215586,tol=1e-4)
+    expect_equal(sd(boo01_sp$t), 8.215586, tol=1e-4)
 })
 
 context("confint")
@@ -159,6 +159,16 @@ test_that("predict", {
     options(warn=0)
     expect_is(ps, "numeric")
     expect_equal(unname(ps), c(0.999989632, 0.999997201))
+    ## a case with interactions (failed in one temporary version):
+    data("Pixel", package="nlme")
+    nPix <<- nrow(Pixel)
+    expect_warning(
+        fm3 <<- lmer(pixel ~ day + I(day^2) + Side + (day | Dog) + (1 | Side/Dog),
+                    data = Pixel), "nearly unidentifiable")
+    fm4 <<- update(fm3, . ~ . - Side)
+    set.seed(1); ii <- sample(nrow(Pixel), 16)
+    expect_equal(predict(fm4, newdata=Pixel[ii,]), fitted(fm4)[ii])
+    expect_equal(predict(fm3, newdata=Pixel[ii,]), fitted(fm3)[ii])
 })
 
 context("simulate")
@@ -190,16 +200,13 @@ test_that("simulate", {
     ## hack: test with three REs
     p1 <- lmer(diameter ~ (1|plate) + (1|plate) + (1|sample), Penicillin,
                control=lmerControl(check.conv.hess="ignore"))
-    simulate(p1)
-    data("Pixel", package="nlme")
-    fo1 <- pixel ~ day + I(day^2) + Side + (day | Dog) + (1 | Side/Dog)
-    fo2 <- pixel ~ day + I(day^2) + (day | Dog) + (1 | Side/Dog)
-    fm3 <- lmer(fo1, data = Pixel,
-                control=lmerControl(check.conv.hess="ignore"))
-    fm4 <- lmer(fo2, data = Pixel)
-    expect_is(simulate(fm3),"data.frame")
-    expect_is(simulate(fm4),"data.frame")
+    expect_is(sp1 <- simulate(p1), "data.frame")
+    expect_true(all(dim(sp1) == c(nrow(Penicillin), 1)))
+    ## Pixel example
+    expect_true(all(dim(simulate(fm3)) == c(nPix,1)))
+    expect_true(all(dim(simulate(fm4)) == c(nPix,1)))
 })
+
 context("misc")
 test_that("misc", {
     expect_equal(df.residual(fm1),176)
@@ -209,7 +216,8 @@ test_that("misc", {
     }
     expect_is(as.data.frame(VarCorr(fm1)),"data.frame")
 })
-}
+}# R >= 3.0.0
+
 context("plot")
 test_that("plot", {
     ## test getData() within plot function: reported by Dieter Menne
@@ -226,4 +234,3 @@ test_that("plot", {
     pp <- plot(fm1, resid(., scaled=TRUE) ~ fitted(.) | Sex, abline = 0)
     expect_is(pp,"trellis")
 })
-

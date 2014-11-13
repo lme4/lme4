@@ -60,6 +60,15 @@ str(p4 <- predict(gm1,newdata,re.form=~(1|herd))) # explicitly specify RE
 stopifnot(identical(p1, predict(gm1,ReForm=NA)))
 stopifnot(identical(p3, predict(gm1,newdata,REForm=NA)))
 stopifnot(identical(p4, predict(gm1,newdata,REform=~(1|herd))))
-}
+
+## predict() should work with variable names with spaces [as lm() does]:
+dd <- expand.grid(y=1:3, "Animal ID" = 1:9)
+fm <- lmer(y ~ 1 + (1 | `Animal ID`),  dd)
+summary(fm)
+isel <- c(7, 9, 11, 13:17, 20:22)
+stopifnot(all.equal(vcov(fm)[1,1], 0.02564102564),
+	  all.equal(unname(predict(fm, newdata = dd[isel,])),
+		    unname( fitted(fm) [isel])))
+}%dont
 }
 

@@ -144,36 +144,19 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
         model.frame(delete.response(terms(object,fixed.only=TRUE)),
                     newdata, na.action=na.action)
     }
-    if (inherits(re.form,"formula")) {
+    if (inherits(re.form, "formula")) {
         ## DROP values with NAs in fixed effects
-        if (length(fit.na.action <- attr(mfnew,"na.action"))>0) {
+        if (length(fit.na.action <- attr(mfnew,"na.action")) > 0) {
             newdata <- newdata[-fit.na.action,]
         }
-        re <- ranef(object)
-        rfd <- if(is.null(newdata)) object@frame else newdata
-        ReTrms <- mkReTrms(findbars(re.form[[2]]), rfd)
-        if (!allow.new.levels &&
-            any(sapply(ReTrms$flist,function(x) any(is.na(x)))))
-            stop("NAs are not allowed in prediction data",
-                 " for grouping variables unless allow.new.levels is TRUE")
-        unames <- unique(sort(names(ReTrms$cnms)))  ## FIXME: same as names(ReTrms$flist) ?
-        ## unames <- paste('`',unames,'`',sep='') # enquote possibly irregular names (Github #254)
-        ## convert numeric grouping variables to factors as necessary
-
-        ## must use all.vars() for examples
-        ## for (i in all.vars(RHSForm(re.form))) {
-        ## TO DO: should restrict attention to grouping factors only
-        getgrpvars <- function(x) all.vars(x[[3]])
-        all.grp.vars <- unique(unlist(lapply(findbars(re.form), getgrpvars)))
-        for (i in all.grp.vars) {
-            if (!is.matrix(rfd[[i]]))
-                rfd[[i]] <- factor(rfd[[i]])
-        }
-        Rfacs <- lapply(setNames(unames,unames),
-                        function(x) factor(eval(parse(text=x),envir=rfd)))
-        new_levels <- lapply(Rfacs,function(x) levels(droplevels(factor(x))))
-        ## FIXME: should this be unique(as.character(x)) instead?
-        ##   (i.e., what is the proper way to protect against non-factors?)
+	rfd <- if(is.null(newdata)) object@frame else newdata
+	ReTrms <- mkReTrms(findbars(re.form[[2]]), rfd)
+	if (!allow.new.levels && any(vapply(ReTrms$flist, anyNA, NA)))
+	    stop("NAs are not allowed in prediction data",
+		 " for grouping variables unless allow.new.levels is TRUE")
+        ## FIXME, should this be unique(as.character(x)) instead, i.e.,
+        ##        what is the proper way to protect against non-factors? :
+        new_levels <- lapply(ReTrms$flist, function(x) levels(factor(x)))
         levelfun <- function(x,n) {
             ## find and deal with new levels
             nl.n <- new_levels[[n]]
@@ -189,26 +172,25 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
             ## find and deal with missing old levels
 	    if (!all(r.inn <- rownames(x) %in% nl.n)) x[r.inn,,drop=FALSE] else x
         }
-        ## fill in/delete levels as appropriate
-        re_x <- mapply(levelfun, re, names(re), SIMPLIFY=FALSE)
-        re_new <- list()
-        if (any(!names(ReTrms$cnms) %in% names(re)))
+        ns.re <- names(re <- ranef(object))
+        nRnms <- names(Rcnms <- ReTrms$cnms)
+        if (!all(nRnms %in% ns.re))
             stop("grouping factors specified in re.form that were not present in original model")
+        ## fill in/delete levels as appropriate
+        re_x <- mapply(levelfun, re, ns.re, SIMPLIFY=FALSE)
         ## pick out random effects values that correspond to
         ##  random effects incorporated in re.form ...
-        for (i in seq_along(ReTrms$cnms)) {
-            rname <- names(ReTrms$cnms)[i]
-            if (any(!ReTrms$cnms[[rname]] %in% names(re[[rname]])))
-                stop("random effects specified in re.form",
-                     " that were not present in original model")
-            re_new[[i]] <- re_x[[rname]][,ReTrms$cnms[[rname]]]
-        }
-        re_newvec <- unlist(lapply(re_new,t))  ## must TRANSPOSE RE matrices before unlisting
+	re_new <- lapply(nRnms, function(rname) {
+	    if (!all(Rcnms[[rname]] %in% names(re[[rname]])))
+		stop("random effects specified in re.form that were not present in original model")
+	    re_x[[rname]][,Rcnms[[rname]]]
+	})
+        re_new <- unlist(lapply(re_new, t))  ## must TRANSPOSE RE matrices before unlisting
+        ## FIXME? use vapply(re_new, t, FUN_VALUE=????)
     }
     Zt <- ReTrms$Zt
-    attr(Zt,"na.action") <-
-        attr(re_newvec,"na.action") <- attr(mfnew,"na.action")
-    list(Zt=Zt,b=re_newvec)
+    attr(Zt, "na.action") <- attr(re_new, "na.action") <- attr(mfnew, "na.action")
+    list(Zt=Zt, b=re_new)
 }
 
 ##'
