@@ -35,7 +35,43 @@ if (require(agridat)) {
                                  mp = factor(paste0(row,spacing)),
                                  sp = factor(paste0(row,spacing,stock)))
     fit_agridat_archbold <- lmer(yield ~ -1 + trt + (1|rep/mp/sp), d.apple.agridat)
-    save(list=c("d.apple.agridat", ls(pattern="fit_")), file=fn0)
+    to.save <- "d.apple.agridat"
 } else
-    save(list=ls(pattern="fit_"), file=fn0)
+    to.save <- character()
 
+##
+data("Pixel", package="nlme")
+fit_Pix.full <- lmer(pixel ~ day + I(day^2) + (day | Dog) + (1 | Side/Dog),
+                     data = Pixel)
+fit_Pix.1Dog <- lmer(pixel ~ day + I(day^2) +   (1 | Dog) + (1 | Side/Dog),
+                     data = Pixel)
+fit_Pix.noD  <- update(fit_Pix.1Dog, .~. - (1 | Dog))
+anova(fit_Pix.full,
+      fit_Pix.1Dog,
+      fit_Pix.noD)
+## Warning about non-monotonic profile
+system.time(prof.fit_Pix.f <- profile(fit_Pix.full, verbose=1))
+## long!! 177.7 sec elapsed
+warnings()## 15 warnings:
+## 12 x code 1 from bobyqa: bobyqa -- maximum number of function evaluations exceeded
+##  3 x non-monotonic profile
+
+print(confint(prof.fit_Pix.f), digits=3)
+##              2.5 % 97.5 %
+## .sig01      10.449 28.909
+## .sig02      12.951 48.203
+## .sig03          NA     NA <<
+## .sig04       1.073  3.066
+## .sig05       0.000 27.794
+## .sigma       7.651 10.592
+## (Intercept)     NA     NA <<
+## day             NA     NA <<
+## I(day^2)    -0.434 -0.298
+
+if(FALSE) ## FIXME
+xyplot(prof.fit_Pix.f)
+## FIXME: Error is ok, but error *message* is unhelpful
+## Error in approx(bspl$x, bspl$y, xout = zeta) : 
+##   need at least two non-NA values to interpolate
+
+save(list=c(to.save, ls(pattern="fit_")), file=fn0)
