@@ -25,7 +25,7 @@ noLHSform <- function(formula) {
 ##' @param val value of control being set
 checkCtrlLevels <- function(cstr, val, smallOK=FALSE) {
     bvals <- c("stop","warning","ignore")
-    if (smallOK) bvals <- outer(bvals,c("","Small"),paste0)
+    if (smallOK) bvals <- outer(bvals, c("","Small"), paste0)
     if (!is.null(val) && !val %in% bvals)
         stop("invalid control level ",sQuote(val)," in ",cstr,": valid options are {",
              paste(sapply(bvals,sQuote),collapse=","),"}")
@@ -45,8 +45,9 @@ wmsg <- function(n,cmp.val,allow.n,msg1="",msg2="",msg3="") {
     }
     ## %s without spaces intentional (don't want an extra space if the
     ## message component is empty)
-    wstr <- sprintf("%s (=%d) %s %s (=%d)%s; the random-effects parameters%s are probably unidentifiable",msg1,n,cmp,msg2,cmp.val,msg3,rstr)
-    list(unident=unident,wstr=wstr)
+    wstr <- sprintf("%s (=%d) %s %s (=%d)%s; the random-effects parameters%s are probably unidentifiable",
+                    msg1, n, cmp,msg2,cmp.val, msg3, rstr)
+    list(unident=unident, wstr=wstr)
 }
 
 checkZdims <- function(Ztlist, n, ctrl, allow.n=FALSE) {
@@ -61,22 +62,23 @@ checkZdims <- function(Ztlist, n, ctrl, allow.n=FALSE) {
     cstr <- "check.nobs.vs.nRE"
     checkCtrlLevels(cstr, cc <- ctrl[[cstr]])
     term.names <- names(Ztlist)
-    rows <- vapply(Ztlist, nrow, numeric(1L))
-    cols <- vapply(Ztlist, ncol, numeric(1L))
+    rows <- vapply(Ztlist, nrow, 1L)
+    cols <- vapply(Ztlist, ncol, 1L)
     stopifnot(all(cols == n))
     if (doCheck(cc)) {
-        for(i in seq_along(Ztlist)) {
-            ww <- wmsg(cols[i],rows[i],allow.n,"number of observations",
+        unique(unlist(lapply(seq_along(Ztlist), function(i) {
+            ww <- wmsg(cols[i], rows[i], allow.n, "number of observations",
                        "number of random effects",
-                       sprintf(" for term (%s)",term.names[i]))
+                       sprintf(" for term (%s)", term.names[i]))
             if(ww$unident) {
-            switch(cc,
-                   "warning" = warning(ww$wstr,call.=FALSE),
-                   "stop" = stop(ww$wstr,call.=FALSE),
-                   stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
-            }
-        }
-    }
+                switch(cc,
+                       "warning" = warning(ww$wstr, call.=FALSE),
+                       "stop"    = stop   (ww$wstr, call.=FALSE),
+                       stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
+                ww$wstr
+            } else character()
+        }))) ## -> possibly empty vector of error messages
+    } else character()
 }
 
 
@@ -98,9 +100,10 @@ checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
                        "stopSmall" =, "stop" = stop(ww$wstr,call.=FALSE),
                        stop(gettextf("unknown check level for '%s'", cstr),
                             domain=NA))
-            }
-        }
-    }
+                ww$wstr
+            } else character()
+        } else character()
+    } else character()
 }
 
 ## check scale of non-dummy columns of X, both
@@ -111,33 +114,35 @@ checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
 ## What should the rules be?  try to find problematic columns
 ##   and rescale them?  scale+center?  Just scale or scale+center
 ##   all numeric columns?
-## 
+##
 checkScaleX <- function(X,  kind="warning", tol=1e3) {
     cstr <- "check.scaleX"
     kinds <- eval(formals(lmerControl)[["check.scaleX"]])
-    if (!kind %in% kinds) stop(sprintf("unknown check-scale option: %s",kind))
+    if (!kind %in% kinds) stop(gettextf("unknown check-scale option: %s",kind))
     if (is.null(kind) || kind == "ignore") return(X)
     ## else :
     cont.cols <- apply(X,2,function(z) !all(z %in% c(0,1)))
-    col.sd <- apply(X[,cont.cols, drop=FALSE],2,sd)
+    col.sd <- apply(X[,cont.cols, drop=FALSE], 2L, sd)
     sdcomp <- outer(col.sd,col.sd,"/")
     logcomp <- abs(log(sdcomp[lower.tri(sdcomp)]))
     logsd <- abs(log(col.sd))
-    wmsg <- "Some predictor variables are on very different scales: consider rescaling"
     if (any(c(logcomp,logsd) > log(tol))) {
+        wmsg <- "Some predictor variables are on very different scales:"
         if (kind %in% c("warning","stop")) {
-            switch(kind, "warning" = warning(wmsg, call.=FALSE),
+            wmsg <- paste(wmsg, "consider rescaling")
+            switch(kind,
+                   "warning" = warning(wmsg, call.=FALSE),
                    "stop" = stop(wmsg, call.=FALSE))
         } else {
+            wmsg <- paste(wmsg, "auto-rescaled (results NOT adjusted)")
             ## mimic scale() because we don't want to make a copy in
             ##  order to retrieve the center/scale
             X[,cont.cols] <- sweep(X[,cont.cols,drop=FALSE],2,col.sd,"/")
             attr(X,"scaled:scale") <- setNames(col.sd,colnames(X)[cont.cols])
-            wmsg <- "Some predictor variables on very different scales: auto-rescaled (results NOT adjusted)"
-            if (kind=="warn+rescale") warning(wmsg,call.=FALSE)
+            if (kind == "warn+rescale") warning(wmsg, call.=FALSE)
         }
     }
-    X
+    structure(X, msgScaleX = wmsg)
 }
 
 checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
@@ -151,9 +156,9 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
 	wstr <- "grouping factors must have > 1 sampled level"
 	switch(cc,
 	       "warning" = warning(wstr,call.=FALSE),
-	       "stop" = stop(wstr,call.=FALSE),
+	       "stop"	 =    stop(wstr,call.=FALSE),
 	       stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
-    }
+    } else wstr <- character()
     ## Part 2 ----------------
     cstr <- "check.nobs.vs.nlev"
     checkCtrlLevels(cstr, cc <- ctrl[[cstr]])
@@ -168,12 +173,14 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
     cstr <- "check.nlev.gtreq.5"
     checkCtrlLevels(cstr, cc <- ctrl[[cstr]])
     if (doCheck(cc) && any(nlevelVec < 5)) {
-	wstr <- "grouping factors with < 5 sampled levels may give unreliable estimates"
+	wst3 <- "grouping factors with < 5 sampled levels may give unreliable estimates"
 	switch(cc,
-	       "warning" = warning(wstr,call.=FALSE),
-	       "stop" = stop(wstr,call.=FALSE),
+	       "warning" = warning(wst3, call.=FALSE),
+	       "stop"	 = stop	  (wst3, call.=FALSE),
 	       stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
-    }
+    } else wst3 <- character()
+    ## return:
+    c(wstr, wst3) ## == character(0) when now warning at all
 }
 
 ##' Coefficients (columns) are dropped from a design matrix to
@@ -208,9 +215,10 @@ chkRank.drop.cols <- function(X, kind, tol = 1e-7, method = "qr.R") {
     p <- ncol(X)
     if (kind == "stop.deficient") {
         if ((rX <- rankMatrix(X, tol=tol, method=method)) < p)
-            stop(gettextf("the fixed-effects model matrix is column rank deficient (rank(X) = %d < %d = p); the fixed effects will be jointly unidentifiable",
-                          rX, p),
-                 call. = FALSE)
+            stop(gettextf(sub("\n +", "\n",
+		  "the fixed-effects model matrix is column rank deficient (rank(X) = %d < %d = p);
+                   the fixed effects will be jointly unidentifiable"),
+                          rX, p), call. = FALSE)
     } else {
         ## kind is one of "message+drop.cols", "silent.drop.cols", "warn+drop.cols"
         ## --> consider to drop extraneous columns: "drop.cols":
@@ -244,6 +252,8 @@ chkRank.drop.cols <- function(X, kind, tol = 1e-7, method = "qr.R") {
         ## Re-assign relevant attributes:
         if(!is.null(contr)) attr(X, "contrasts") <- contr
         if(!is.null(asgn))  attr(X, "assign")    <- asgn[keep]
+	attr(X, "msgRankdrop") <- msg
+	attr(X, "col.dropped") <- base::which(!keep)
     }
     X
 }
@@ -316,8 +326,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     n <- nrow(fr)
     ## random effects and terms modules
     reTrms <- mkReTrms(findbars(RHSForm(formula)), fr)
-    checkNlevels(reTrms$flist, n=n, control)
-    checkZdims(reTrms$Ztlist, n=n, control, allow.n=FALSE)
+    wmsgNlev <- checkNlevels(reTrms$flist, n=n, control)
+    wmsgZdims <- checkZdims(reTrms$Ztlist, n=n, control, allow.n=FALSE)
     if (anyNA(reTrms$Zt)) {
         stop("NA in Z (random-effects model matrix): ",
              "please use ",
@@ -325,7 +335,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
              " or ",
              shQuote("na.action='na.exclude'"))
     }
-    checkZrank(reTrms$Zt, n=n, control, nonSmall = 1e6)
+    wmsgZrank <- checkZrank(reTrms$Zt, n=n, control, nonSmall = 1e6)
 
     ## fixed-effects model matrix X - remove random effect parts from formula:
     fixedform <- formula
@@ -437,11 +447,11 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, verbose=0, co
     ## a model with no fixed effects using REML.
     devfun <- mkdevfun(rho, 0L, verbose, control)
 
-    # if all random effects are of the form 1|f and starting values not 
+    # if all random effects are of the form 1|f and starting values not
     # otherwise provided (and response variable is present, i.e. not doing
     # a simulation) then compute starting values
-    if (is.null(start) && 
-	all(reTrms$cnms == "(Intercept)") && 
+    if (is.null(start) &&
+	all(reTrms$cnms == "(Intercept)") &&
 	length(reTrms$flist) == length(reTrms$lower) &&
         !is.null(y <- model.response(fr))) {
         v <- sapply(reTrms$flist, function(f) var(ave(y, f)))
@@ -578,9 +588,9 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     ## random effects and terms modules
     reTrms <- mkReTrms(findbars(RHSForm(formula)), fr)
     ## TODO: allow.n = !useSc {see FIXME below}
-    checkNlevels(reTrms$ flist, n=n, control, allow.n=TRUE)
-    checkZdims(reTrms$Ztlist, n=n, control, allow.n=TRUE)
-    checkZrank(reTrms$ Zt, n=n, control, nonSmall = 1e6, allow.n=TRUE)
+    wmsgNlev <- checkNlevels(reTrms$ flist, n=n, control, allow.n=TRUE)
+    wmsgZdims <- checkZdims(reTrms$Ztlist, n=n, control, allow.n=TRUE)
+    wmsgZrank <- checkZrank(reTrms$ Zt, n=n, control, nonSmall = 1e6, allow.n=TRUE)
 
     ## FIXME: adjust test for families with estimated scale parameter:
     ##   useSc is not defined yet/not defined properly?
