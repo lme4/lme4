@@ -417,15 +417,14 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
     if (any(modp)) {			# multiple models - form table
 	opts <- dots[!modp]
 	mods <- c(list(object), dots[modp])
-        nobs.vec <- .sapply(mods,nobs)
-        if (var(nobs.vec)>0)
+        nobs.vec <- vapply(mods, nobs, 1L)
+        if (var(nobs.vec) > 0)
             stop("models were not all fitted to the same size of dataset")
 
 	## model names
-        if (is.null(mNms <- model.names)) {
-            mNms <- .sapply(as.list(mCall)[c(FALSE, TRUE, modp)],
-                            function(x) paste(deparse(x),collapse=" "))
-        }
+        if (is.null(mNms <- model.names))
+            mNms <- vapply(as.list(mCall)[c(FALSE, TRUE, modp)], safeDeparse, "")
+
         ## HACK to try to identify model names in situations such as
         ## 'do.call(anova,list(model1,model2))' where the model names
         ## are lost in the call stack ... this doesn't quite work but might
@@ -458,28 +457,26 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
   }
 	## devs <- sapply(mods, deviance)
 	llks <- lapply(mods, logLik)
-	ii <- order(Df <- .sapply(llks, attr, "df"))
+	ii <- order(Df <- vapply(llks, attr, FUN.VALUE=numeric(1), "df"))
 	mods <- mods[ii]
 	llks <- llks[ii]
 	Df   <- Df  [ii]
 	calls <- lapply(mods, getCall)
 	data <- lapply(calls, "[[", "data")
-	if (any(data != data[[1]]))
+	if(!all(vapply(data, identical, NA, data[[1]])))
 	    stop("all models must be fit to the same data object")
 	header <- paste("Data:", data[[1]])
 	subset <- lapply(calls, "[[", "subset")
-	if (any(subset != subset[[1]]))
+	if(!all(vapply(subset, identical, NA, subset[[1]])))
 	    stop("all models must use the same subset")
 	if (!is.null(subset[[1]]))
-	    header <-
-		c(header, paste("Subset", deparse(subset[[1]]),
-				sep = ": "))
+	    header <- c(header, paste("Subset", deparse(subset[[1]]), sep = ": "))
 	llk <- unlist(llks)
 	chisq <- 2 * pmax(0, c(NA, diff(llk)))
 	dfChisq <- c(NA, diff(Df))
 	val <- data.frame(Df = Df,
-			  AIC = .sapply(llks, AIC),
-			  BIC = .sapply(llks, BIC),
+			  AIC = .sapply(llks, AIC), # FIXME? vapply()
+			  BIC = .sapply(llks, BIC), #  "       "
                           logLik = llk,
 			  deviance = -2*llk,
 			  Chisq = chisq,
@@ -488,11 +485,10 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
 			  row.names = names(mods), check.names = FALSE)
 	class(val) <- c("anova", class(val))
 	forms <- lapply(lapply(calls, `[[`, "formula"), deparse)
-	attr(val, "heading") <-
-	    c(header, "Models:",
-	      paste(rep(names(mods), times = vapply(forms, length, 1)),
-		    unlist(forms), sep = ": "))
-	return(val)
+	structure(val,
+                  heading = c(header, "Models:",
+                      paste(rep(names(mods), times = vapply(forms, length, 1)),
+                            unlist(forms), sep = ": ")))
     }
     else { ## ------ single model ---------------------
 	dc <- getME(object, "devcomp")
@@ -521,9 +517,8 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
 		 c("Df", "Sum Sq", "Mean Sq", "F value"))
 	if ("(Intercept)" %in% nmeffects)
 	    table <- table[-match("(Intercept)", nmeffects), ]
-	attr(table, "heading") <- "Analysis of Variance Table"
-	class(table) <- c("anova", "data.frame")
-	table
+        structure(table, heading = "Analysis of Variance Table",
+                  class = c("anova", "data.frame"))
     }
 }## {anovaLmer}
 
@@ -743,9 +738,7 @@ drop1.merMod <- function(object, scope, scale = 0, test = c("none", "Chisq", "us
     if (!is.null(method <- attr(ss,"method"))) {
         head <- c(head,"Method: ",method,"\n")
     }
-    class(aod) <- c("anova", "data.frame")
-    attr(aod, "heading") <- head
-    aod
+    structure(aod, heading = head, class = c("anova", "data.frame"))
 }
 
 ##' @importFrom stats extractAIC
@@ -906,10 +899,9 @@ model.frame.merMod <- function(formula, fixed.only=FALSE, ...) {
 
 ##' @importFrom stats model.matrix
 ##' @S3method model.matrix merMod
-model.matrix.merMod <- function(object, type = c(
-                                            "fixed",
-                                            "random",
-                                            "randomListRaw"), ...) {
+model.matrix.merMod <-
+    function(object,
+             type = c("fixed", "random", "randomListRaw"), ...) {
     switch(type[1],
            "fixed" = object@pp$X,
            "random" = getME(object, "Z"),
@@ -950,6 +942,7 @@ dummy <- function(f, levelsToKeep){
 ##' @S3method nobs merMod
 nobs.merMod <- function(object, ...) nrow(object@frame)
 
+## used in  summary.merMod():
 ngrps <- function(object, ...) UseMethod("ngrps")
 
 ngrps.default <- function(object, ...) stop("Cannot extract the number of groups from this object")
@@ -1861,13 +1854,13 @@ getME <- function(object,
     dims <- dc $ dims
     Tpfun <- function(cnms) {
 	ltsize <- function(n) n*(n+1)/2 # lower triangle size
-	cLen <- cumsum(ltsize(vapply(cnms,length, 1L)))
+	cLen <- cumsum(ltsize(vapply(cnms, length, 1L)))
 	setNames(c(0, cLen),
 		 c("beg__", names(cnms))) ## such that diff( Tp ) is well-named
     }
     mmList. <- mmList(object)
-    p_i <- sapply(mmList., ncol)
-    l_i <- sapply(object@flist, nlevels)
+    p_i <- vapply(mmList., ncol, 1L)
+    l_i <- vapply(object@flist, nlevels, 1L)
     switch(name,
 	   "X" = PR$X, ## ok ? - check -- use model.matrix() method instead?
 	   "Z" = t(PR$Zt),
