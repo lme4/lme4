@@ -1,7 +1,7 @@
 ####  Utility Functions for lme4 Testing
 ####  ----------------------------------
 if(FALSE) ### "Load" these by
-    source(system.file("testdata/lme-tst-funs.R", package="lme4", mustWork=TRUE))
+    source(system.file("testdata", "lme-tst-funs.R", package="lme4", mustWork=TRUE))
 ## e.g. from ../../tests/glmmWeights.R
 
 ##' example originally from Gabor Grothendieck
