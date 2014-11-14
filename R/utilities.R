@@ -15,6 +15,13 @@ all0 <- function(x) !anyNA(x) && all(!x)
 
 ### Utilities for parsing and manipulating mixed-model formulas
 
+##' deparse(.) returning \bold{one} string
+##' @note Protects against the possibility that results from deparse() will be
+##'       split after 'width.cutoff' (by default 60, maximally 500)
+safeDeparse <- function(x, collapse=" ") paste(deparse(x, 500L), collapse=collapse)
+
+##' @param bars result of findbars
+barnames <- function(bars) vapply(bars, function(x) safeDeparse(x[[3]]), "")
 
 ##' @param x a language object of the form  effect | groupvar
 ##' @param frloc model frame
@@ -91,8 +98,7 @@ mkReTrms <- function(bars, fr, drop.unused.levels=TRUE) {
   stopifnot(is.list(bars), vapply(bars, is.language, NA),
             inherits(fr, "data.frame"))
   names(bars) <- barnames(bars)
-  term.names <- unlist(lapply(bars,
-                              function(x) paste(deparse(x),collapse=" ")))
+  term.names <- vapply(bars, safeDeparse, "")
   ## get component blocks
   blist <- lapply(bars, mkBlist, fr, drop.unused.levels)
   nl <- vapply(blist, `[[`, 0L, "nl")   # no. of levels per term
@@ -453,11 +459,6 @@ subbars <- function(term)
         term[[1]] <- as.name('+')
     for (j in 2:length(term)) term[[j]] <- subbars(term[[j]])
     term
-}
-
-##' @param bars result of findbars
-barnames <- function(bars) {
-    unlist(lapply(bars, function(x) deparse(x[[3]])))
 }
 
 ##' Does every level of f1 occur in conjunction with exactly one level
@@ -908,26 +909,25 @@ quickSimulate <- function(formula, nGrps, nPerGrp, family = gaussian) {
 ##' the names of the random effects terms.
 reexpr <- function(REtrm) substitute( ~ foo, list(foo = REtrm[[2]]))
 grpfact <- function(REtrm) substitute(factor(fac), list(fac = REtrm[[3]]))
-termnms <- function(REtrms) unlist(lapply(REtrms, function(x) paste(deparse(x),collapse=" ")))
-##' list of model matrices
+termnms <- function(REtrms) vapply(REtrms, safeDeparse, "")
+
+##' mmList(): list of model matrices
+##' ------    called from getME() & model.matrix(*, "randomListRaw")
 mmList <- function(object, ...) UseMethod("mmList")
 mmList.merMod <- function(object, ...) mmList(formula(object), model.frame(object))
 mmList.formula <- function(object, frame, ...) {
     formula <- object
     bars <- findbars(formula)
-    mmExprs <- lapply(bars, reexpr)
-    fctExprs <- lapply(bars, grpfact)
-    mm <- setNames(lapply(lapply(mmExprs, eval, frame), model.matrix, frame),
-                   termnms(bars))
-    grp <- lapply(lapply(bars,  grpfact), eval, frame)
-    nl <- unlist(lapply(lapply(grp, levels), length))
-    if (any(diff(nl) > 0)) {
-        ord <- rev(order(nl))
-        mm <- mm[ord]
-    }
-    return(mm)
+    mm <- setNames(lapply(bars, function(b) model.matrix(eval(reexpr(b), frame), frame)),
+		   termnms(bars))
+    grp <- lapply(lapply(bars, grpfact), eval, frame)
+    nl <- vapply(grp, nlevels, 1L)
+    if (any(diff(nl) > 0))
+        mm[order(nl, decreasing=TRUE)]
+    else
+        mm
 }
-##' examples
+##' examples  ---FIXME?--- put in tests // or export + 'real examples'
 if(FALSE) {
 library(lme4)
 m <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
