@@ -1,15 +1,37 @@
 library("testthat")
 library("lme4")
-L <- load(system.file("testdata/lme-tst-fits.rda",
+L <- load(system.file("testdata", "lme-tst-fits.rda",
                       package="lme4", mustWork=TRUE))
 
-if (getRversion()>"3.0.0") {
+if (getRversion() > "3.0.0") {
     ## saved fits are not safe with old R versions
 
 fm0 <- fit_sleepstudy_0
 fm1 <- fit_sleepstudy_1
 gm1 <- fit_cbpp_1
 gm2 <- fit_cbpp_2
+## More objects to use in all contexts :
+set.seed(101)
+dNA <- data.frame(
+    xfac= sample(letters[1:10], 100, replace=TRUE),
+    xcov= runif(100),
+    resp= rnorm(100))
+dNA[sample(1:100, 10), "xcov"] <- NA
+##
+rSimple <- function(rep = 2, m.u = 2, kinds = c('fun', 'boring', 'meh')) {
+    stopifnot(is.numeric(rep), rep >= 1,
+              is.numeric(m.u), m.u >= 1,
+              is.character(kinds), (nk <- length(kinds)) >= 1)
+    nobs <- rep * m.u * nk
+    data.frame(kind= rep(kinds, each=rep*m.u),
+               unit = gl(m.u, 1, nobs), y = round(50*rnorm(nobs)))
+}
+d12 <- rSimple()
+
+data("Pixel", package="nlme")
+nPix <- nrow(Pixel)
+fmPix <- lmer(pixel ~ day + I(day^2) + (day | Dog) + (1 | Side/Dog), data = Pixel)
+
 
 context("summary")
 test_that("summary", {
@@ -49,22 +71,30 @@ test_that("lmer", {
                                        model.names=c("a","b","c"))),
                  "different lengths")
     z <- 1
-    stats::anova(lmer(y ~ u + (1 | t),
-                      data = datfun(z), REML=FALSE),
-                 lmer(y ~ 1 + (1 | t),
-                      data = datfun(z), REML=FALSE))
+    stats::anova(lmer(y ~ u + (1 | t), data = datfun(z), REML=FALSE),
+                 lmer(y ~ 1 + (1 | t), data = datfun(z), REML=FALSE))
     ##
     ## from Roger Mundry via Roman Lustrik
-    set.seed(101)
-    d <- data.frame(
-        xfac=as.factor(sample(letters[1:10], 100, replace=TRUE)),
-        xcov=runif(100),
-        resp=rnorm(100))
-    d[sample(1:100, 10), "xcov"] <- NA
-    full <- lmer(resp ~ xcov + (1|xfac), data=d)
-    null <- lmer(resp ~  1   + (1|xfac), data=d)
+    full <- lmer(resp ~ xcov + (1|xfac), data=dNA)
+    null <- lmer(resp ~  1   + (1|xfac), data=dNA)
     expect_error(anova(null,full),
                  "models were not all fitted to the same size of dataset")
+    ## Github issue #256  from Jonas Lindeløv -- issue is *not* specific for this dataset
+    ## Two models with subset() within lmer()
+    full3 <- lmer(y ~ kind + (1|unit), subset(d12, kind != 'boring'), REML=FALSE)
+    null3 <- update(full3, .~. - kind)
+    op <- options(warn = 2) # no warnings!
+    ano3 <- anova(full3, null3)
+    ## had Warning message:
+    ## In data != data[[1]] : longer object length is not a multiple of shorter object length
+    ano3 # FIXME: print()ing  reports 3 x "Data: "
+    ##
+    ## no problem with subset()ting outside lmer() call:
+    d12sub <- subset(d12, kind != 'boring')
+    expect_is(full3s <- lmer(y ~ kind + (1|unit), d12sub, REML=FALSE), "lmerMod")
+    expect_is(null3s <- update(full3s, .~. - kind), "lmerMod")
+    expect_is(ano3s <- anova(full3s, null3s), "anova")
+    options(op)
 })
 
 context("bootMer confint()")
@@ -97,7 +127,7 @@ test_that("bootMer", {
     ## semipar bootstrapping
     fm01 <- lmer(Yield ~ 1|Batch, Dyestuff)
     set.seed(1)
-    require(boot)
+    suppressPackageStartupMessages(require(boot))
     boo01_sp <- bootMer(fm01, fixef, nsim = 100, use.u = TRUE,
                         type = "semiparametric")
     expect_equal(sd(boo01_sp$t), 8.215586, tol=1e-4)
@@ -154,21 +184,28 @@ test_that("predict", {
     silly <- glmer(Sex ~ distance + (1|Subject),
                    data=Orthodont, family=binomial)
     sillypred <- data.frame(distance=c(20, 25))
-    options(warn=2)
+    options(warn=2) # no warnings!
     ps <- predict(silly, sillypred, re.form=NA, type="response")
-    options(warn=0)
     expect_is(ps, "numeric")
     expect_equal(unname(ps), c(0.999989632, 0.999997201))
     ## a case with interactions (failed in one temporary version):
-    data("Pixel", package="nlme")
-    nPix <<- nrow(Pixel)
-    expect_warning(
-        fm3 <<- lmer(pixel ~ day + I(day^2) + Side + (day | Dog) + (1 | Side/Dog),
-                    data = Pixel), "nearly unidentifiable")
-    fm4 <<- update(fm3, . ~ . - Side)
+    expect_warning(fmPixS <<- update(fmPix, .~. + Side), "nearly unidentifiable")
     set.seed(1); ii <- sample(nrow(Pixel), 16)
-    expect_equal(predict(fm4, newdata=Pixel[ii,]), fitted(fm4)[ii])
-    expect_equal(predict(fm3, newdata=Pixel[ii,]), fitted(fm3)[ii])
+    expect_equal(predict(fmPix,  newdata=Pixel[ii,]), fitted(fmPix )[ii])
+    expect_equal(predict(fmPixS, newdata=Pixel[ii,]), fitted(fmPixS)[ii])
+    options(warn=0)
+
+    set.seed(7); n <- 100; y <- rnorm(n)
+    dd <- data.frame(id = factor(sample(10, n, replace = TRUE)),
+                     x1 = 1, y = y, x2 = rnorm(n, mean = sign(y)))
+    m <- lmer(y ~ x1 + x2 + (1 | id), data=dd)
+    ##-> "fixed-effect model matrix is rank deficient so dropping 1 column / coefficient"
+    ## FIXME: 'm' should *know* which columns were dropped!
+    summary(m)
+    ii <- sample(n, 16)
+    if(FALSE) # FIXME
+    expect_equal(predict(m, newdata = dd[ii,]), fitted(m)[ii])
+    ## gave Error in X %*% fixef(object) : non-conformable arguments
 })
 
 context("simulate")
@@ -203,8 +240,8 @@ test_that("simulate", {
     expect_is(sp1 <- simulate(p1), "data.frame")
     expect_true(all(dim(sp1) == c(nrow(Penicillin), 1)))
     ## Pixel example
-    expect_true(all(dim(simulate(fm3)) == c(nPix,1)))
-    expect_true(all(dim(simulate(fm4)) == c(nPix,1)))
+    expect_true(all(dim(simulate(fmPixS)) == c(nPix,1)))
+    expect_true(all(dim(simulate(fmPix )) == c(nPix,1)))
 })
 
 context("misc")

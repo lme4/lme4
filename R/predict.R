@@ -5,15 +5,9 @@ noReForm <- function(re.form) {
         (is(re.form,"formula") && length(re.form)==2 && identical(re.form[[2]],0))
 }
 
-## protects against the possibility that results from deparse() will
-## be split after (by default) 60 chars (max deparse width is hard-coded
-## to 500)
-safeDeparse <- function(x,collapse=" ") {
-    paste(deparse(x),collapse=collapse)
-}
-
+##' Random Effects formula only
 reOnly <- function(f) {
-    reformulate(paste0("(",sapply(findbars(f),safeDeparse),")"))
+    reformulate(paste0("(", vapply(findbars(f), safeDeparse, ""), ")"))
 }
 
 reFormHack <- function(re.form,ReForm,REForm,REform) {
@@ -352,31 +346,11 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
     pred
 }
 
-##' @importFrom stats simulate
-NULL
 ##' Simulate responses from the model represented by a fitted model object
 ##'
-##' @title Simulate responses from a \code{\linkS4class{merMod}} object
-##' @param object a fitted model object
-##' @param nsim positive integer scalar - the number of responses to simulate
-##' @param seed an optional seed to be used in \code{set.seed} immediately
-##'     before the simulation so as to generate a reproducible sample.
-##' @param ... optional additional arguments, none are used at present
-##' @examples
-##' ## test whether fitted models are consistent with the
-##' ##  observed number of zeros in CBPP data set:
-##' gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-##'              data = cbpp, family = binomial)
-##' gg <- simulate(gm1,1000)
-##' zeros <- sapply(gg,function(x) sum(x[,"incidence"]==0))
-##' plot(table(zeros))
-##' abline(v=sum(cbpp$incidence==0),col=2)
-##' @method simulate merMod
-##' @export
-##'
-simulate.formula <- function(object, nsim = 1, seed = NULL, family, weights=NULL, offset=NULL, ...) {
-    ## N.B. *must* name all arguments so that 'object' is missing in
-    ## .simulateFun
+simulate.formula <- function(object, nsim = 1, seed = NULL, family,
+                             weights=NULL, offset=NULL, ...) {
+    ## N.B. *must* name all arguments so that 'object' is missing in .simulateFun()
     .simulateFun(formula=object, nsim=nsim, seed=seed,
                  family=family, weights=weights, offset=offset, ...)
 }
@@ -485,9 +459,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     ## construct RE formula ONLY: leave out fixed terms,
     ##   which might have loose terms like offsets in them ...
     fb <- findbars(formula(object))
-    pfun <- function(x) paste("(",safeDeparse(x),")")
-    compReForm <- reformulate(sapply(fb,pfun))
-
+    compReForm <- reformulate(vapply(fb, function(x) paste("(",safeDeparse(x),")"), ""))
 
     if (!noReForm(re.form)) {
         rr <- re.form[[length(re.form)]] ## RHS of formula
@@ -496,20 +468,21 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     }
 
     ## (1) random effect(s)
-    if (!is.null(findbars(compReForm))) {
-        newRE <- mkNewReTrms(object,newdata,compReForm,
-                             na.action=na.action,
-                             allow.new.levels=allow.new.levels)
-        U <- t(getME(object, "Lambdat") %*% newRE$Zt)
-        u <- rnorm(ncol(U)*nsim)
-        sim.reff <- ## UNSCALED random-effects contribution:
-            as(U %*% matrix(u, ncol = nsim), "matrix")
-    } else sim.reff <- 0
-    if (isLMM(object)) {
+    sim.reff <- if (!is.null(findbars(compReForm))) {
+	newRE <- mkNewReTrms(object, newdata, compReForm,
+			     na.action=na.action,
+			     allow.new.levels=allow.new.levels)
+	U <- t(getME(object, "Lambdat") %*% newRE$Zt)
+	u <- rnorm(ncol(U)*nsim)
+	## UNSCALED random-effects contribution:
+	as(U %*% matrix(u, ncol = nsim), "matrix")
+    } else 0
+
+    val <- if (isLMM(object)) {
         ## result will be matrix  n x nsim :
-        val <- etapred + sigma * (sim.reff +
-                                  ## residual contribution:
-                                  matrix(rnorm(n * nsim), ncol = nsim))
+        etapred + sigma * (sim.reff +
+                               ## residual contribution:
+                               matrix(rnorm(n * nsim), ncol = nsim))
     } else if (isGLMM(object)) {
         ## GLMM
         ## n.b. DON'T scale random-effects (???)
@@ -524,20 +497,17 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
             stop("simulation not implemented for family",
                  family$family)
         ## don't rely on automatic recycling
-        musim <- rep(musim,length.out=n*nsim)
-        val <- sfun(object,
-                    nsim=1,
-                    ftd=musim)
+        val <- sfun(object, nsim=1, ftd = rep_len(musim, n*nsim))
         ## split results into nsims: need special case for binomial matrix/factor responses
         if (family$family=="binomial" && is.matrix(r <- model.response(object@frame))) {
-            val <- lapply(split(val[[1]], gl(nsim, n, 2 * nsim * n)), matrix,
+            lapply(split(val[[1]], gl(nsim, n, 2 * nsim * n)), matrix,
                           ncol = 2, dimnames = list(NULL, colnames(r)))
         } else if (family$family=="binomial" && is.factor(val[[1]])) {
-            val <- split(val[[1]],gl(nsim,n))
-        } else val <- split(val,gl(nsim,n))
-    } else {
+            split(val[[1]], gl(nsim,n))
+        } else split(val, gl(nsim,n))
+    } else
         stop("simulate method for NLMMs not yet implemented")
-    }
+
     ## from src/library/stats/R/lm.R
     if(!is.list(val)) {
         dim(val) <- c(n, nsim)
@@ -562,33 +532,31 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         }
     }
 
-    if (is.matrix(val[[1]])) {
-        ## have to handle binomial response matrices differently --
-        ## fill in NAs as appropriate in *both* columns
-        val <- lapply(val,function(x) { apply(x,2,napredict,
-                                       omit=fit.na.action) })
-        ## have to put this back into a (weird) data frame again,
-        ## carefully (should do the napredict stuff
-        ## earlier, so we don't have to redo this transformation!)
-        class(val) <- "data.frame"
+    val <- if (is.matrix(val[[1]])) {
+	## have to handle binomial response matrices differently --
+	## fill in NAs as appropriate in *both* columns
+	structure(lapply(val, function(x) apply(x, 2L, napredict,
+						omit = fit.na.action)),
+		  ## have to put this back into a (weird) data frame again,
+		  ## carefully (should do the napredict stuff
+		  ## earlier, so we don't have to redo this transformation!)
+		  class = "data.frame")
     } else {
-        val <- as.data.frame(lapply(val,napredict, omit=fit.na.action))
+	as.data.frame(lapply(val, napredict, omit=fit.na.action))
     }
 
     ## reconstruct names: first get rid of NAs, then refill them
     ## as appropriate based on fit.na.action (which may be different
     ## from the original model's na.action spec)
-    if (length(nm2 <- names(napredict(na.omit(f),
-                                        omit=fit.na.action)))>0)
+    if (length(nm2 <- names(napredict(na.omit(f), omit=fit.na.action))) > 0)
         row.names(val) <- nm2
 
-    ## as.data.frame(lapply(...)) blows away na.action attribute,
-    ##  so we have to re-assign here
-    attr(val,"na.action") <- fit.na.action
-
-    attr(val, "seed") <- RNGstate
-    val
-}
+    structure(val,
+              ## as.data.frame(lapply(...)) blows away na.action attribute,
+              ##  so we have to re-assign here
+              na.action = fit.na.action,
+              seed = RNGstate)
+}## .simulateFun()
 
 ########################
 ## modified from stats/family.R
@@ -664,9 +632,8 @@ Gamma_simfun <- function(object, nsim, ftd=fitted(object)) {
 }
 
 gamma.shape.merMod <- function(object, ...) {
-    if(!(family(object)$family == "Gamma"))
-        stop("Can not fit gamma shape parameter ",
-             "because Gamma family not used")
+    if(family(object)$family != "Gamma")
+	stop("Can not fit gamma shape parameter because Gamma family not used")
 
     y <- getME(object, "y")
     mu <- getME(object, "mu")
@@ -676,11 +643,9 @@ gamma.shape.merMod <- function(object, ...) {
     dev <- -2*sum(L)
                                         # Eqs. between 8.2 & 8.3 (MN)
     Dbar <- dev/length(y)
-    alpha <- (6+2*Dbar)/(Dbar*(6+Dbar))
-                                        # FIXME: obtain standard error
-    res <- list(alpha = alpha, SE = NA)
-    class(res) <- "gamma.shape"
-    res
+    structure(list(alpha = (6+2*Dbar)/(Dbar*(6+Dbar)),
+		   SE = NA), # FIXME: obtain standard error
+	      class = "gamma.shape")
 }
 
 
@@ -703,8 +668,8 @@ negative.binomial_simfun <- function (object, nsim, ftd=fitted(object))
     ## val <- rnbinom(nsim * length(ftd), mu=ftd, size=.Theta)
 }
 
-simfunList <- list(gaussian=gaussian_simfun,
-                binomial=binomial_simfun,
-                poisson=poisson_simfun,
-                Gamma=Gamma_simfun,
-                negative.binomial=negative.binomial_simfun)
+simfunList <- list(gaussian = gaussian_simfun,
+		   binomial = binomial_simfun,
+		   poisson  = poisson_simfun,
+		   Gamma    = Gamma_simfun,
+		   negative.binomial = negative.binomial_simfun)

@@ -1,8 +1,8 @@
 stopifnot(require("testthat"), require("lme4"))
 
 context("fitting lmer models")
-## is "Nelder_Mead" default optimizer?
-isNM <- formals(lmerControl)$optimizer == "Nelder_Mead"
+## is "Nelder_Mead" default optimizer? -- no longer
+(isNM <- formals(lmerControl)$optimizer == "Nelder_Mead")
 
 test_that("lmer", {
     set.seed(101)

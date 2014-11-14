@@ -23,7 +23,7 @@ xyplot(tpr.fm1,scale=list(y=list(relation="same")))
 xyplot(tpr.fm1,scale=list(y=list(relation="same"),tck=0))
 
 ##
-expect_error(xyplot(tpr.fm1,conf=50),"must be between 0 and 1")
+expect_error(xyplot(tpr.fm1,conf=50),"must be strictly between 0 and 1")
 
 ### end {profile_plots.R}
 

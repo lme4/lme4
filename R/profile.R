@@ -49,14 +49,14 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
     wi.vp <- seq_len(nvp)
     if(nvp > 0) fe.orig <- opt[- wi.vp]
 
-    which <- get.which(which,nvp,nptot,names(opt),verbose)
+    which <- get.which(which, nvp, nptot, names(opt), verbose)
 
     res <- c(.zeta = 0, opt)
     res <- matrix(res, nrow = maxpts, ncol = length(res),
                   dimnames = list(NULL, names(res)), byrow = TRUE)
+
     ## FIXME: why is cutoff based on nptot (i.e. boundary of simultaneous LRT conf region for nptot values)
     ##  when we are computing (at most) 2-parameter profiles here?
-
     cutoff <- sqrt(qchisq(1 - alphamax, nptot))
 
     ## helper functions
@@ -91,9 +91,9 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
     nextstart <- function(mat, pind, r, method="global") {
         ## FIXME: indexing may need to be checked (e.g. for fixed-effect parameters)
         switch(method,
-               global=opt[seqpar1][-pind],  ## address opt, no zeta column
-               prev=mat[r,1+seqpar1][-pind],
-               extrap=stop("stub")) ## do something with mat[r-(1:0),1+seqnvp])[-pind] ...
+               global= opt[seqpar1][-pind],  ## address opt, no zeta column
+               prev  = mat[r,1+seqpar1][-pind],
+               extrap= stop("stub")) ## do something with mat[r-(1:0),1+seqnvp])[-pind] ...
     }
 
     ## mkpar generates the parameter vector of theta and
@@ -151,7 +151,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
              "profiling over the fixed effects only")}
 
     ## sequence of variance parameters to profile
-    seqnvp <- intersect(seq_len(npar1),which)
+    seqnvp <- intersect(seq_len(npar1), which)
     ## sequence of 'all' parameters
     seqpar1 <- seq_len(npar1)
     lowvp <- lower[seqpar1]
@@ -319,7 +319,9 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
     ans
 } ## profile.merMod
 
-get.which <- function(which,nvp,nptot,parnames,verbose) {
+##' Transform 'which' \in {parnames | integer | "beta_" | "theta_"}
+##' into integer indices
+get.which <- function(which, nvp, nptot, parnames, verbose) {
     wi.vp <- seq_len(nvp)
     if(is.character(which)) {
         wi <- integer(); wh <- which
@@ -500,9 +502,10 @@ panel.thpr <- function(x, y, spl, absVal, ...)
     if (!is(myspl,"spline")) {
         ## 'difficult' data
         if (absVal) myspl$y <- abs(myspl$y)
-        panel.lines(myspl$x,myspl$y)
-        panel.points(myspl$x,myspl$y,pch="+")
-        warning(sprintf("bad profile for variable %d: using linear interpolation",panel.number()))
+        panel.lines (myspl$x, myspl$y)
+        panel.points(myspl$x, myspl$y, pch="+")
+        warning(gettextf("bad profile for variable %d: using linear interpolation",
+                         panel.number()), domain=NA)
     } else {
         lims <- current.panel.limits()$xlim
         krange <- range(myspl$knots)
@@ -519,55 +522,65 @@ panel.thpr <- function(x, y, spl, absVal, ...)
 ##' @S3method xyplot thpr
 xyplot.thpr <-
     function (x, data = NULL,
-              levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 1)),
+              levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), df = 1)),
               conf = c(50, 80, 90, 95, 99)/100,
               absVal = FALSE,
               scales = NULL,
               which = 1:nptot, ...)
 {
-    if (any(conf<=0 || conf>=1)) stop("values of conf must be between 0 and 1")
+    if(any(!is.finite(conf) | conf <= 0 | conf >= 1))
+        stop("values of 'conf' must be strictly between 0 and 1")
     nptot <- length(nms <- levels(x[[".par"]]))
     ## FIXME: is this sufficiently reliable?
     ## (include "sigma" in 'theta' parameters)
-    nvp <- length(grep("^(\\.sig[0-9]+|.sigma|sd_|cor_)",nms))
-    which <- get.which(which,nvp,nptot,nms,verbose=FALSE)
+    nvp <- length(grep("^(\\.sig[0-9]+|.sigma|sd_|cor_)", nms))
+    which <- get.which(which, nvp, nptot, nms, verbose=FALSE)
     levels <- sort(levels[is.finite(levels) & levels > 0])
-    spl <- attr(x, "forward")[which]
+    spl  <- attr(x, "forward") [which]
     bspl <- attr(x, "backward")[which]
     ## for parameters for which spline couldn't be computed,
     ## replace the 'spl' element with the raw profile data
-    badSpl <- sapply(spl,is.null)
-    spl[badSpl] <- lapply(which(badSpl),
-                          function(i) {
-                              n <- names(badSpl)[i]
-                              r <- x[x[[".par"]]==n,]
-                              data.frame(y=r[[".zeta"]],
-                                         x=r[[n]])
-                          })
-    bspl[badSpl] <- lapply(spl[badSpl],function(d) { data.frame(x=d$y,y=d$x) })
+    if(any(badSpl <- vapply(spl, is.null, NA))) {
+	spl[badSpl] <- lapply(which(badSpl), function(i) {
+	    n <- names(badSpl)[i]
+	    r <- x[x[[".par"]] == n, ]
+	    data.frame(y = r[[".zeta"]], x = r[[n]])
+	})
+	bspl[badSpl] <- lapply(spl[badSpl], function(d) data.frame(x=d$y,y=d$x))
+	## FIXME: more efficient, not yet ok ?
+	## ibad <- which(badSpl)
+	## spl[ibad] <- lapply(names(ibad), function(n) {
+	##     r <- x[x[[".par"]]==n,]
+	##     data.frame(y = r[[".zeta"]], x = r[[n]])
+	## })
+	## bspl[ibad] <- lapply(spl[ibad], function(d) data.frame(x=d$y,y=d$x))
+    }
     zeta <- c(-rev(levels), 0, levels)
-    ## use linear approximation if backspline doesn't work
-    tmpf <- function(bspl,zeta) {
-        if (is(bspl,"spline")) return(predy(bspl,zeta))
-        return(approx(bspl$x,bspl$y,xout=zeta)$y)
+    mypred <- function(bs, zeta) { ## use linear approximation if backspline doesn't work
+	if (inherits(bs,"spline"))
+	    predy(bs, zeta)
+	else if(is.numeric(x <- bs$x) && is.numeric(y <- bs$y) && length(x) == length(y))
+	    approx(x, y, xout = zeta)$y
+	else
+	    rep_len(NA, length(zeta))
     }
     fr <- data.frame(zeta = rep.int(zeta, length(spl)),
-                     pval = unlist(lapply(bspl,tmpf,zeta)),
+                     pval = unlist(lapply(bspl, mypred, zeta)),
                      pnm = gl(length(spl), length(zeta), labels = names(spl)))
     if (length(ind <- which(is.na(fr$pval)))) {
         fr[ind, "zeta"] <- 0
         for (i in ind)
 ### FIXME: Should check which bound has been violated, although it
 ### will almost always be the minimum.
-            if (is(curspl <-  spl[[fr[i, "pnm"] ]],"spline")) {
+            if (inherits(curspl <-  spl[[fr[i, "pnm"] ]], "spline")) {
                 fr[i, "pval"] <- min(curspl$knots)
             }
     }
-    ylab <- expression(zeta)
-    if (absVal) {
+    ylab <- if (absVal) {
         fr$zeta <- abs(fr$zeta)
-        ylab <- expression("|" * zeta * "|")
-    }
+        expression("|" * zeta * "|")
+    } else
+        expression(zeta)
     intscales <- list(x = list(relation = 'free'))
     ## FIXME: is there something less clunky we can do here
     ##   that allows for all possible user inputs
