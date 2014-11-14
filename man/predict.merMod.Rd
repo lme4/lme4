@@ -55,7 +55,8 @@ str(p1 <- predict(gm1,re.form=NA))  # fitted values, unconditional (level-0)
 newdata <- with(cbpp, expand.grid(period=unique(period), herd=unique(herd)))
 str(p2 <- predict(gm1,newdata))    # new data, all RE
 str(p3 <- predict(gm1,newdata,re.form=NA)) # new data, level-0
-str(p4 <- predict(gm1,newdata,re.form=~(1|herd))) # explicitly specify RE
+str(p4 <- predict(gm1,newdata,re.form= ~(1|herd))) # explicitly specify RE
+stopifnot(identical(p2, p4))
 \dontshow{%back compatibility - as long as we have it: ReForm, REForm, REform,
 stopifnot(identical(p1, predict(gm1,ReForm=NA)))
 stopifnot(identical(p3, predict(gm1,newdata,REForm=NA)))

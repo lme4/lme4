@@ -17,10 +17,10 @@
 }
 \usage{
 \method{xyplot}{thpr}(x, data = NULL,
-       levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 1)),
+       levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), df = 1)),
        conf = c(50, 80, 90, 95, 99)/100,
        absVal = FALSE, scales=NULL,
-       which=1:nptot, ...)
+       which = 1:nptot, ...)
 
 \method{densityplot}{thpr}(x, data, ...)
 
