@@ -27,7 +27,7 @@
     (for \code{simulate.formula}) a (one-sided) mixed model formula, as
     described for \code{\link{lmer}}.}
   \item{nsim}{positive integer scalar - the number of responses to simulate.}
-  \item{seed}{an optional seed to be used in \code{\code{\link{set.seed}}}
+  \item{seed}{an optional seed to be used in \code{\link{set.seed}}
     immediately before the simulation so as to generate a reproducible sample.}
   \item{use.u}{(logical) if \code{TRUE}, generate a simulation
     conditional on the current random-effects estimates; if \code{FALSE}
