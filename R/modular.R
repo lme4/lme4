@@ -143,7 +143,8 @@ checkScaleX <- function(X,  kind="warning", tol=1e3) {
             attr(X,"scaled:scale") <- setNames(col.sd,colnames(X)[cont.cols])
             if (kind == "warn+rescale") warning(wmsg, call.=FALSE)
         }
-    }
+    } else
+	wmsg <- character()
     structure(X, msgScaleX = wmsg)
 }
 
@@ -239,13 +240,15 @@ chkRank.drop.cols <- function(X, kind, tol = 1e-7, method = "qr.R") {
         rnkX <- qr.X$rank
         if (rnkX == p)
             return(X) ## return X if X has full column rank
-        if (kind != "silent.drop.cols") { ## message about no. dropped columns:
-	    msg <- sprintf(ngettext(p - rnkX,
-			"fixed-effect model matrix is rank deficient so dropping %d column / coefficient",
-			"fixed-effect model matrix is rank deficient so dropping %d columns / coefficients"),
-			   p - rnkX)
+        ## else:
+
+        ## message about no. dropped columns:
+        msg <- sprintf(ngettext(p - rnkX,
+		"fixed-effect model matrix is rank deficient so dropping %d column / coefficient",
+		"fixed-effect model matrix is rank deficient so dropping %d columns / coefficients"),
+                       p - rnkX)
+        if (kind != "silent.drop.cols")
             (if(kind == "warn+drop.cols") warning else message)(msg, domain = NA)
-        }
         ## Save properties of X
         contr <- attr(X, "contrasts")
         asgn <- attr(X, "assign")
@@ -262,10 +265,22 @@ chkRank.drop.cols <- function(X, kind, tol = 1e-7, method = "qr.R") {
         if(!is.null(contr)) attr(X, "contrasts") <- contr
         if(!is.null(asgn))  attr(X, "assign")    <- asgn[keep]
 	attr(X, "msgRankdrop") <- msg
-	attr(X, "col.dropped") <- base::which(!keep)
+	attr(X, "col.dropped") <- qr.X$pivot[(rnkX+1L):p]
     }
     X
 }
+
+##' Extract all warning msgs from a merMod object
+.merMod.msgs <- function(x) {
+    ## currently only those found with 'X' :
+    aX <- attributes(x@pp$X)
+    wmsgs <- grep("^msg", names(aX))
+    if(any(has.msg <- nchar(Xwmsgs <- unlist(aX[wmsgs])) > 0))
+	Xwmsgs[has.msg]
+    else
+	character()
+}
+
 
 ## NA predict and restore rownames of original data if necessary
 napredictx <- function(x,...) {

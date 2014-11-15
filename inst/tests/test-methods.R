@@ -84,16 +84,16 @@ test_that("lmer", {
     full3 <- lmer(y ~ kind + (1|unit), subset(d12, kind != 'boring'), REML=FALSE)
     null3 <- update(full3, .~. - kind)
     op <- options(warn = 2) # no warnings!
-    ano3 <- anova(full3, null3)
-    ## had Warning message:
-    ## In data != data[[1]] : longer object length is not a multiple of shorter object length
-    ano3 # FIXME: print()ing  reports 3 x "Data: "
+    ano3 <- anova(full3, null3)## issue #256: had warning in data != data[[1]] : ...
+    o3 <- capture.output(ano3) # now prints with only one 'Data:'
+    expect_equal(1, grep("^Data:", o3))
     ##
     ## no problem with subset()ting outside lmer() call:
     d12sub <- subset(d12, kind != 'boring')
     expect_is(full3s <- lmer(y ~ kind + (1|unit), d12sub, REML=FALSE), "lmerMod")
     expect_is(null3s <- update(full3s, .~. - kind), "lmerMod")
     expect_is(ano3s <- anova(full3s, null3s), "anova")
+    expect_equal(ano3, ano3s, check.attributes=FALSE)
     options(op)
 })
 
@@ -200,12 +200,10 @@ test_that("predict", {
                      x1 = 1, y = y, x2 = rnorm(n, mean = sign(y)))
     m <- lmer(y ~ x1 + x2 + (1 | id), data=dd)
     ##-> "fixed-effect model matrix is rank deficient so dropping 1 column / coefficient"
-    ## FIXME: 'm' should *know* which columns were dropped!
     summary(m)
     ii <- sample(n, 16)
-    if(FALSE) # FIXME
     expect_equal(predict(m, newdata = dd[ii,]), fitted(m)[ii])
-    ## gave Error in X %*% fixef(object) : non-conformable arguments
+    ## predict(*, new..) gave Error in X %*% fixef(object) - now also drops col.
 })
 
 context("simulate")

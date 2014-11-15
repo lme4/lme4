@@ -1741,6 +1741,10 @@ print.summary.merMod <- function(x, digits = max(3, getOption("digits") - 3),
 	    }  ## if (p > 1)
         } ## if (correlation)
     } ## if (p>0)
+
+    if(length(x$fitMsgs) && any(nchar(x$fitMsgs) > 0)) {
+        cat("fit warnings:\n"); writeLines(x$fitMsgs)
+    }
     .prt.warn(x$optinfo,summary=FALSE)
     invisible(x)
 }## print.summary.merMod
@@ -1769,6 +1773,11 @@ print.merMod <- function(x, digits = max(3, getOption("digits") - 3),
 	print.default(format(cf, digits = digits),
 		      print.gap = 2L, quote = FALSE, ...)
     } else cat("No fixed effect coefficients\n")
+
+    fitMsgs <- .merMod.msgs(x)
+    if(any(nchar(fitMsgs) > 0)) {
+        cat("fit warnings:\n"); writeLines(fitMsgs)
+    }
     .prt.warn(x@optinfo,summary=TRUE)
     invisible(x)
 }
@@ -2206,7 +2215,7 @@ summary.merMod <- function(object,
                            use.hessian = NULL,
                            ...)
 {
-    if (length(list(...))>0) {
+    if (length(list(...)) > 0) {
         ## FIXME: need testing code
         warning("additional arguments ignored")
     }
@@ -2257,6 +2266,7 @@ summary.merMod <- function(object,
 		   varcor = varcor, # and use formatVC(.) for printing.
 		   AICtab = llAIC[["AICtab"]], call = object@call,
                    residuals = residuals(object,"pearson",scaled = TRUE),
+		   fitMsgs = .merMod.msgs(object),
                    optinfo = object@optinfo
 		   ), class = "summary.merMod")
 }

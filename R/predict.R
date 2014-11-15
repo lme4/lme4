@@ -256,7 +256,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
 
     re.form <- reFormHack(re.form,ReForm,REForm,REform)
 
-    if (length(list(...)>0)) warning("unused arguments ignored")
+    if (length(list(...) > 0)) warning("unused arguments ignored")
 
     type <- match.arg(type)
     if (!is.null(terms))
@@ -281,6 +281,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
         ## flow jumps to end for na.predict
     } else { ## newdata and/or re.form and/or newparams specified
         X <- getME(object, "X")
+        X.col.dropped <- attr(X, "col.dropped")
         ## modified from predict.glm ...
         if (is.null(newdata)) {
             ## Use original model 'X' matrix and offset
@@ -303,7 +304,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
                                                         na.action=na.action,
                                                         xlev=orig_levs),
                               contrasts.arg=attr(X,"contrasts"))
-            offset <- rep(0, nrow(X))
+            offset <- 0 # rep(0, nrow(X))
             tt <- terms(object)
             if (!is.null(off.num <- attr(tt, "offset"))) {
                 for (i in off.num)
@@ -312,6 +313,8 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
             ## FIXME?: simplify(no need for 'mfnew'): can this be different from 'na.action'?
             fit.na.action <- attr(mfnew,"na.action")
         }
+	if(is.numeric(X.col.dropped) && length(X.col.dropped) > 0)
+	    X <- X[, -X.col.dropped, drop=FALSE]
         pred <- drop(X %*% fixef(object))
         ## FIXME:: need to unname()  ?
         ## FIXME: is this redundant??
