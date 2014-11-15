@@ -19,6 +19,10 @@ all0 <- function(x) !anyNA(x) && all(!x)
 ##' @note Protects against the possibility that results from deparse() will be
 ##'       split after 'width.cutoff' (by default 60, maximally 500)
 safeDeparse <- function(x, collapse=" ") paste(deparse(x, 500L), collapse=collapse)
+abbrDeparse <- function(x, width=60) {
+    r <- deparse(x, width)
+    if(length(r) > 1) paste(r[1], "...") else r
+}
 
 ##' @param bars result of findbars
 barnames <- function(bars) vapply(bars, function(x) safeDeparse(x[[3]]), "")
@@ -110,14 +114,14 @@ mkReTrms <- function(bars, fr, drop.unused.levels=TRUE) {
     blist <- blist[ord]
     nl <- nl[ord]
   }
-  Ztlist <- lapply(blist, "[[", "sm")
+  Ztlist <- lapply(blist, `[[`, "sm")
   Zt <- do.call(rBind, Ztlist)  ## eq. 7, JSS lmer paper
   names(Ztlist) <- term.names
   q <- nrow(Zt)
 
   ## Create and install Lambdat, Lind, etc.  This must be done after
   ## any potential reordering of the terms.
-  cnms <- lapply(blist, "[[", "cnms")   # list of column names of the
+  cnms <- lapply(blist, `[[`, "cnms")   # list of column names of the
                                         # model matrix per term
   nc <- vapply(cnms, length, 0L)	# no. of columns per term
                                         # (in lmer jss:  p_i)
@@ -163,7 +167,7 @@ mkReTrms <- function(bars, fr, drop.unused.levels=TRUE) {
   Lambdat@x[] <- ll$theta[ll$Lind]  # initialize elements of Lambdat
   ll$Lambdat <- Lambdat
   # massage the factor list
-  fl <- lapply(blist, "[[", "ff")
+  fl <- lapply(blist, `[[`, "ff")
   # check for repeated factors
   fnms <- names(fl)
   if (length(fnms) > length(ufn <- unique(fnms))) {

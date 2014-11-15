@@ -244,9 +244,9 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
 
     L <- lapply(seqnvp, FUN)
     nn <- names(opt[seqnvp])
-    ans <-    setNames(lapply(L,"[[","bres"),nn)
-    bakspl <- setNames(lapply(L,"[[","bakspl"),nn)
-    forspl <- setNames(lapply(L,"[[","forspl"),nn)
+    ans <-    setNames(lapply(L,`[[`,"bres"),nn)
+    bakspl <- setNames(lapply(L,`[[`,"bakspl"),nn)
+    forspl <- setNames(lapply(L,`[[`,"forspl"),nn)
 
     ## profile fixed effects separately (for LMMs)
     if (isLMM(fitted)) {

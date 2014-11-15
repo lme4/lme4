@@ -445,32 +445,32 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
         if (length(mNms) != length(mods))
             stop("model names vector and model list have different lengths")
 	names(mods) <- sub("@env$", '', mNms) # <- hack
-  # only refit if refit == TRUE
-  # else: check if models are consistent (all REML or all ML)
 	models.reml <- vapply(mods, isREML, NA)
-  if (refit) {
-    # message only if at least one models is REML:
-    if (any(models.reml)) message("refitting model(s) with ML (instead of REML)")
-    mods <- lapply(mods, refitML)
-  } else {
-    if (any(models.reml) & any(!models.reml)) warning("some models fit with REML = TRUE, some not")
-  }
+	if (refit) {
+	    ## message only if at least one models is REML:
+	    if (any(models.reml)) message("refitting model(s) with ML (instead of REML)")
+	    mods <- lapply(mods, refitML)
+	} else { ## check that models are consistent (all REML or all ML)
+	    if(any(models.reml) && any(!models.reml))
+		warning("some models fit with REML = TRUE, some not")
+	}
 	## devs <- sapply(mods, deviance)
 	llks <- lapply(mods, logLik)
+        ## Order models by increasing degrees of freedom:
 	ii <- order(Df <- vapply(llks, attr, FUN.VALUE=numeric(1), "df"))
 	mods <- mods[ii]
 	llks <- llks[ii]
 	Df   <- Df  [ii]
 	calls <- lapply(mods, getCall)
-	data <- lapply(calls, "[[", "data")
+	data <- lapply(calls, `[[`, "data")
 	if(!all(vapply(data, identical, NA, data[[1]])))
 	    stop("all models must be fit to the same data object")
-	header <- paste("Data:", data[[1]])
-	subset <- lapply(calls, "[[", "subset")
+	header <- paste("Data:", abbrDeparse(data[[1]]))
+	subset <- lapply(calls, `[[`, "subset")
 	if(!all(vapply(subset, identical, NA, subset[[1]])))
 	    stop("all models must use the same subset")
 	if (!is.null(subset[[1]]))
-	    header <- c(header, paste("Subset", deparse(subset[[1]]), sep = ": "))
+	    header <- c(header, paste("Subset:", abbrDeparse(subset[[1]])))
 	llk <- unlist(llks)
 	chisq <- 2 * pmax(0, c(NA, diff(llk)))
 	dfChisq <- c(NA, diff(Df))

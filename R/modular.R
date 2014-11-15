@@ -50,14 +50,16 @@ wmsg <- function(n,cmp.val,allow.n,msg1="",msg2="",msg3="") {
     list(unident=unident, wstr=wstr)
 }
 
+##' For each r.e. term, test if Z has more columns than rows to detect
+##' unidentifiability:
+##' @title
+##' @param Ztlist list of Zt matrices - one for each r.e. term
+##' @param n no. observations
+##' @param ctrl
+##' @param allow.n allow as many random-effects as there are observations
+##' for each term?
+##' @return possibly empty character string with warning messages
 checkZdims <- function(Ztlist, n, ctrl, allow.n=FALSE) {
-    ## Ztlist: list of Zt matrices - one for each r.e. term
-    ## n: no. observations
-    ## allow.n: allow as many random-effects as there are observations
-    ## for each term?
-    ##
-    ## For each r.e. term, test if Z has more columns than rows to detect
-    ## unidentifiability:
     stopifnot(is.list(Ztlist), is.numeric(n))
     cstr <- "check.nobs.vs.nRE"
     checkCtrlLevels(cstr, cc <- ctrl[[cstr]])
@@ -145,6 +147,13 @@ checkScaleX <- function(X,  kind="warning", tol=1e3) {
     structure(X, msgScaleX = wmsg)
 }
 
+
+##' @title Check that grouping factors have at least 2 and </<= nobs(.) levels
+##' @param flist mkReTrms(.)$flist
+##' @param n
+##' @param ctrl
+##' @param allow.n
+##' @return
 checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
 {
     stopifnot(is.list(ctrl), is.numeric(n))
@@ -180,7 +189,7 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
 	       stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
     } else wst3 <- character()
     ## return:
-    c(wstr, wst3) ## == character(0) when now warning at all
+    c(wstr, wst3) ## possibly == character(0)
 }
 
 ##' Coefficients (columns) are dropped from a design matrix to
