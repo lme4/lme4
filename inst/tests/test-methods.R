@@ -118,17 +118,17 @@ test_that("bootMer", {
     m2 <- update(m1, data=PastesNA)
     ci3 <- CI.boot(m2, seed=101)
     expect_equal(ci, ci3, tol = 0.06)# 0.0425
-    fm1. <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+    m3 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
     sleepstudyNA <- sleepstudy
     sleepstudyNA$Days[1:3] <- NA
-    fm2 <- update(fm1., data = sleepstudyNA)
-    expect_true(nrow(ci4 <- CI.boot(fm2, seed = 101)) == 6) # could check more
+    m4 <- update(m3, data = sleepstudyNA)
+    expect_true(nrow(ci4 <- CI.boot(m4, seed = 101)) == 6) # could check more
     ##
     ## semipar bootstrapping
-    fm01 <- lmer(Yield ~ 1|Batch, Dyestuff)
+    m5 <- lmer(Yield ~ 1|Batch, Dyestuff)
     set.seed(1)
     suppressPackageStartupMessages(require(boot))
-    boo01.sp <- bootMer(fm01, fixef, nsim = 100, use.u = TRUE,
+    boo01.sp <- bootMer(m5, fixef, nsim = 100, use.u = TRUE,
                         type = "semiparametric")
     expect_equal(sd(boo01.sp$t), 8.215586, tol = 1e-4)
 })
@@ -208,7 +208,7 @@ test_that("predict", {
     ## predict(*, new..) with NA in data {and non-simple model}, issue #246:
     m1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
     sleepst.NA <- sleepstudy ; sleepst.NA$Days[2] <- NA
-    m2 <- update(fm1., data = sleepst.NA)
+    m2 <- update(fm1, data = sleepst.NA)
     if(FALSE) ## FIXME
     predict(m2, sleepst.NA[1:4,])
     ## Error: (p <- ncol(X)) == ncol(Y) is not TRUE
@@ -275,13 +275,13 @@ test_that("plot", {
     doFit <- function(){
         data(Orthodont,package = "nlme")
         data1 <- Orthodont
-        fm1 <- lmer(distance ~ age + (age|Subject), data = data1)
+        lmer(distance ~ age + (age|Subject), data = data1)
     }
     data(Orthodont, package = "nlme")
     fm0 <- lmer(distance ~ age + (age|Subject), data = Orthodont)
     expect_is(plot(fm0), "trellis")
     suppressWarnings(rm("Orthodont"))
-    fm1 <- doFit()
-    pp <- plot(fm1, resid(., scaled = TRUE) ~ fitted(.) | Sex, abline = 0)
+    fm <- doFit()
+    pp <- plot(fm, resid(., scaled = TRUE) ~ fitted(.) | Sex, abline = 0)
     expect_is(pp, "trellis")
 })
