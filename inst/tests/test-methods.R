@@ -216,10 +216,10 @@ test_that("predict", {
     ## Wrong 'b' constructed in mkNewReTrms() -- issue #257
     data(Orthodont,package="nlme")
     Orthodont <- within(Orthodont, nsex <- as.numeric(Sex == "Male"))
-    m3 <- lmer(distance ~ age + (age|Subject) + (0 + nsex|Subject), data=Orthodont)
-    if(FALSE) ## FIXME
-    predict(m3, Orthodont)
-    ## Error in .Call(...) [because 'b' is wrong in  b %*% Zt from mkNewReTrms()]
+    m3 <- lmer(distance ~ age + (age|Subject) + (0 + Sex |Subject), data=Orthodont)
+    m4 <- lmer(distance ~ age + (age|Subject) + (0 + nsex|Subject), data=Orthodont)
+    expect_equal(p3 <- predict(m3, Orthodont), fitted(m3), tol=1e-14)
+    expect_equal(p4 <- predict(m4, Orthodont), fitted(m4), tol=1e-14)
 })
 
 context("simulate")

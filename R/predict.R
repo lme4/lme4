@@ -174,10 +174,12 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
         re_x <- mapply(levelfun, re, ns.re, SIMPLIFY=FALSE)
         ## pick out random effects values that correspond to
         ##  random effects incorporated in re.form ...
-	re_new <- lapply(nRnms, function(rname) {
-	    if (!all(Rcnms[[rname]] %in% names(re[[rname]])))
+        ## NB: Need integer indexing, as nRnms can be duplicated: (age|Subj) + (sex|Subj) :
+	re_new <- lapply(seq_along(nRnms), function(i) {
+            rname <- nRnms[i]
+	    if (!all(Rcnms[[i]] %in% names(re[[rname]])))
 		stop("random effects specified in re.form that were not present in original model")
-	    re_x[[rname]][,Rcnms[[rname]]]
+	    re_x[[rname]][,Rcnms[[i]]]
 	})
         re_new <- unlist(lapply(re_new, t))  ## must TRANSPOSE RE matrices before unlisting
         ## FIXME? use vapply(re_new, t, FUN_VALUE=????)
@@ -322,9 +324,8 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
         ##     offset <- offset + eval(frOffset, newdata)
         pred <- pred+offset
         if (!noReForm(re.form)) {
-            if (is.null(re.form)) {
+            if (is.null(re.form))
 		re.form <- reOnly(formula(object)) # RE formula only
-            }
             newRE <- mkNewReTrms(object, newdata, re.form, na.action=na.action,
                                  allow.new.levels=allow.new.levels)
             pred <- pred + base::drop(as(newRE$b %*% newRE$Zt, "matrix"))
@@ -475,7 +476,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 	newRE <- mkNewReTrms(object, newdata, compReForm,
 			     na.action=na.action,
 			     allow.new.levels=allow.new.levels)
-	U <- t(getME(object, "Lambdat") %*% newRE$Zt)
+	U <- t(getME(object, "Lambdat") %*% newRE$Zt) # == Z Lambda
 	u <- rnorm(ncol(U)*nsim)
 	## UNSCALED random-effects contribution:
 	as(U %*% matrix(u, ncol = nsim), "matrix")

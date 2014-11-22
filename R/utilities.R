@@ -920,8 +920,7 @@ termnms <- function(REtrms) vapply(REtrms, safeDeparse, "")
 mmList <- function(object, ...) UseMethod("mmList")
 mmList.merMod <- function(object, ...) mmList(formula(object), model.frame(object))
 mmList.formula <- function(object, frame, ...) {
-    formula <- object
-    bars <- findbars(formula)
+    bars <- findbars(object)
     mm <- setNames(lapply(bars, function(b) model.matrix(eval(reexpr(b), frame), frame)),
 		   termnms(bars))
     grp <- lapply(lapply(bars, grpfact), eval, frame)
