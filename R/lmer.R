@@ -1174,22 +1174,22 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
     dc        <- object@devcomp
     nAGQ      <- dc$dims["nAGQ"] # possibly NA
     nth       <- dc$dims[["nth"]]
-    verbose   <- list(...)$verbose
-    if (is.null(verbose)) verbose <- 0L
-    devlist <- list(pp=pp, resp=rr, u0=pp$u0, verbose=verbose, dpars=seq_len(nth))
-    if (isGLMM(object)) {
-        baseOffset <- object@resp$offset
-        devlist <- c(list(tolPwrss= dc$cmp [["tolPwrss"]],
-                          compDev = dc$dims[["compDev"]],
-			  nAGQ = unname(nAGQ),
-                          lp0=object@resp$eta - baseOffset,
-                          baseOffset=baseOffset,
-                          pwrssUpdate=glmerPwrssUpdate,
-                          ## save GQmat in the object and use that instead of nAGQ
-                          GQmat=GHrule(nAGQ),
-                          fac=object@flist[[1]]),
-                     devlist)
-    }
+    verbose   <- list(...)$verbose; if (is.null(verbose)) verbose <- 0L
+    devlist <-
+	if (isGLMM(object)) {
+	    baseOffset <- object@resp$offset
+	    list(tolPwrss= dc$cmp [["tolPwrss"]],
+		 compDev = dc$dims[["compDev"]],
+		 nAGQ = unname(nAGQ),
+		 lp0=object@resp$eta - baseOffset,
+		 baseOffset=baseOffset,
+		 pwrssUpdate=glmerPwrssUpdate,
+		 ## save GQmat in the object and use that instead of nAGQ
+		 GQmat=GHrule(nAGQ),
+		 fac=object@flist[[1]],
+		 pp=pp, resp=rr, u0=pp$u0, verbose=verbose, dpars=seq_len(nth))
+	} else
+	    list(pp=pp, resp=rr, u0=pp$u0, verbose=verbose, dpars=seq_len(nth))
     ff <- mkdevfun(list2env(devlist), nAGQ=nAGQ, verbose)
     xst       <- rep.int(0.1, nth)
     x0        <- pp$theta
@@ -1849,6 +1849,7 @@ getME <- function(object,
 {
     if(missing(name)) stop("'name' must not be missing")
     stopifnot(is(object,"merMod"))
+    ## Deal with multiple names -- "FIXME" is inefficiently redoing things
     if (length(name <- as.character(name)) > 1) {
         names(name) <- name
         return(lapply(name, getME, object = object))
@@ -1867,9 +1868,10 @@ getME <- function(object,
 	setNames(c(0, cLen),
 		 c("beg__", names(cnms))) ## such that diff( Tp ) is well-named
     }
-    mmList. <- mmList(object)
-    p_i <- vapply(mmList., ncol, 1L)
-    l_i <- vapply(object@flist, nlevels, 1L)
+    ## mmList. <- mmList(object)
+    if(any(name == c("p_i", "q_i", "m_i")))
+	p_i <- vapply(mmList(object), ncol, 1L)
+    ## l_i <- vapply(object@flist, nlevels, 1L)
     switch(name,
 	   "X" = PR$X, ## ok ? - check -- use model.matrix() method instead?
 	   "Z" = t(PR$Zt),
@@ -1886,11 +1888,11 @@ getME <- function(object,
            setNames(lapply(inds,function(i) PR$Zt[i,]),
                     tnames(object,diag.only = TRUE))
        },
-           "mmList" = mmList.,
+	   "mmList" = mmList.merMod(object),
            "y" = rsp$y,
            "mu" = rsp$mu,
            "u" = object@u,
-           "b" = t(PR$Lambdat) %*% object@u,
+	   "b" = crossprod(PR$Lambdat, object@u), # == Lambda %*% u
 	   "L" = PR$ L(),
 	   "Lambda" = t(PR$ Lambdat),
 	   "Lambdat" = PR$ Lambdat,
@@ -1903,10 +1905,10 @@ getME <- function(object,
            "Tp" = Tpfun(cnms), # "term-wise theta pointer"
            "flist" = object@flist,
            "fixef" = fixef(object),
-	   "beta" = object@beta,
-           "theta"= setNames(th,tnames(object)),
+	   "beta"  = object@beta,
+	   "theta" = setNames(th, tnames(object)),
 	   "ST" = setNames(vec2STlist(object@theta, n = vapply(cnms, length, 0L)),
-			  names(cnms)),
+			   names(cnms)),
            "Tlist" = {
                nc <- vapply(cnms, length, 1L) # number of columns per term
                nt <- length(nc)         # number of random-effects terms
@@ -1935,8 +1937,9 @@ getME <- function(object,
            "p" = dims["p"],
            "q" = dims["q"],
            "p_i" = p_i,
-           "l_i" = l_i,
-           "q_i" = p_i*l_i,
+	   "l_i" = vapply(object@flist, nlevels, 1L),
+	   "q_i" = ## == p_i * l_i
+	       p_i*vapply(object@flist, nlevels, 1L),
            "k" = length(cnms),
            "m_i" = choose(p_i + 1, 2),
            "m" = dc$dims[["nth"]],
@@ -1947,31 +1950,27 @@ getME <- function(object,
            "devfun" =
        {
            ## copied from refit ... DRY ...
-           devlist <- list(pp=PR,
-                           resp=rsp,
-                           u0=PR$u0,
-                           dpars=seq_along(PR$theta),
-                           ## FIXME: shouldn't need this both
-                           ## within object and in mkdevfun call ...
-                           verbose=getCall(object)$verbose)
-           if (isGLMM(object)) {
-               stop("getME('devfun') not yet working for GLMMs")
-               baseOffset <- rsp$offset
-               nAGQ <- unname(dc$dims["nAGQ"])
-               devlist <- c(list(tolPwrss= dc$cmp ["tolPwrss"],
-                                 compDev = dc$dims["compDev"],
-                                 nAGQ = nAGQ,
-                                 lp0=rsp$eta - baseOffset,
-                                 baseOffset=baseOffset,
-                                 pwrssUpdate=glmerPwrssUpdate,
-                                 GQmat=GHrule(nAGQ),
-                                 fac=object@flist[[1]]),
-                            devlist)
-           }
+	   verbose <- getCall(object)$verbose; if (is.null(verbose)) verbose <- 0L
+	   devlist <-
+	       if (isGLMM(object)) {
+		   stop("getME('devfun') not yet working for GLMMs")## FIXME
+		   baseOffset <- rsp$offset
+		   nAGQ <- unname(dc$dims["nAGQ"])
+		   list(tolPwrss= dc$cmp ["tolPwrss"],
+			compDev = dc$dims["compDev"],
+			nAGQ = nAGQ,
+			lp0=rsp$eta - baseOffset,
+			baseOffset=baseOffset,
+			pwrssUpdate=glmerPwrssUpdate,
+			GQmat=GHrule(nAGQ),
+			fac=object@flist[[1]],
+			pp=PR, resp=rsp, u0=PR$u0, dpars=seq_along(PR$theta), verbose=verbose)
+	       }
+	       else
+		   list(pp=PR, resp=rsp, u0=PR$u0, dpars=seq_along(PR$theta), verbose=verbose)
            mkdevfun(rho=list2env(devlist),
                     ## FIXME: fragile ...
-                    verbose=getCall(object)$verbose,
-                    control=object@optinfo$control)
+		    verbose=verbose, control=object@optinfo$control)
        },
            ## FIXME: current version gives lower bounds for theta parameters only -- these must be extended for [GN]LMMs -- give extended value including -Inf values for beta values?
 	   "..foo.." = # placeholder!
