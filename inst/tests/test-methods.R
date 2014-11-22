@@ -55,7 +55,7 @@ test_that("lmer", {
                                 REML=FALSE),
                            lmer(y ~ 1 + (1 | t),
      dat = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
-                                REML=FALSE)),"anova")
+                                REML=FALSE)), "anova")
     expect_equal(rownames(stats::anova(lmer(y ~ u + (1 | t),
      dat = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
                                             REML=FALSE),
@@ -120,22 +120,22 @@ test_that("bootMer", {
     expect_equal(ci, ci3, tol = 0.06)# 0.0425
     fm1. <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
     sleepstudyNA <- sleepstudy
-    sleepstudyNA$Days[1:3] = NA
-    fm2 <- update(fm1., data=sleepstudyNA)
-    expect_true(nrow(ci4 <- CI.boot(fm2, seed=101)) == 6) # could check more
+    sleepstudyNA$Days[1:3] <- NA
+    fm2 <- update(fm1., data = sleepstudyNA)
+    expect_true(nrow(ci4 <- CI.boot(fm2, seed = 101)) == 6) # could check more
     ##
     ## semipar bootstrapping
     fm01 <- lmer(Yield ~ 1|Batch, Dyestuff)
     set.seed(1)
     suppressPackageStartupMessages(require(boot))
-    boo01_sp <- bootMer(fm01, fixef, nsim = 100, use.u = TRUE,
+    boo01.sp <- bootMer(fm01, fixef, nsim = 100, use.u = TRUE,
                         type = "semiparametric")
-    expect_equal(sd(boo01_sp$t), 8.215586, tol=1e-4)
+    expect_equal(sd(boo01.sp$t), 8.215586, tol = 1e-4)
 })
 
 context("confint")
 test_that("confint", {
-    load(system.file("testdata","gotway_hessianfly.rda",package="lme4"))
+    load(system.file("testdata", "gotway_hessianfly.rda", package = "lme4"))
     ## gotway_hessianfly_fit <- glmer(cbind(y, n-y) ~ gen + (1|block),
     ##              data=gotway.hessianfly, family=binomial,
     ##              control=glmerControl(check.nlev.gtreq.5="ignore"))
@@ -148,22 +148,22 @@ test_that("confint", {
 context("refit")
 test_that("refit", {
     s1 <- simulate(fm1)
-    expect_is(refit(fm1,s1),"merMod")
+    expect_is(refit(fm1,s1), "merMod")
     s2 <- simulate(fm1,2)
-    expect_error(refit(fm1,s2),"refit not implemented for lists")
-    data(Orthodont,package="nlme")
+    expect_error(refit(fm1,s2), "refit not implemented for lists")
+    data(Orthodont,package = "nlme")
     fmOrth <- fm <- lmer(distance ~ I(age - 11) + (I(age - 11) | Subject),
                          data = Orthodont)
-    expect_equal(simulate(fm,newdata=Orthodont,seed=101),
-                 simulate(fm,seed=101))
+    expect_equal(simulate(fm,newdata = Orthodont,seed = 101),
+                 simulate(fm,seed = 101))
 })
 
 context("predict")
 test_that("predict", {
-    d1 <- with(cbpp, expand.grid(period=unique(period), herd=unique(herd)))
-    d2 <- data.frame(period="1", herd=unique(cbpp$herd))
-    d3 <- expand.grid(period=as.character(1:3),
-                      herd=unique(cbpp$herd))
+    d1 <- with(cbpp, expand.grid(period = unique(period), herd = unique(herd)))
+    d2 <- data.frame(period = "1", herd = unique(cbpp$herd))
+    d3 <- expand.grid(period = as.character(1:3),
+                      herd = unique(cbpp$herd))
     p0 <- predict(gm1)
     p1 <- predict(gm1,d1)
     p2 <- predict(gm1,d2)
@@ -171,57 +171,73 @@ test_that("predict", {
     expect_equal(p0[1], p1[1])
     expect_equal(p0[1], p2[1])
     expect_equal(p0[1], p3[1])
-    expect_warning(predict(gm1,ReForm=NA),"is deprecated")
+    expect_warning(predict(gm1, ReForm=NA), "is deprecated")
     ## matrix-valued predictors: Github #201 from Fabian S.
     sleepstudy$X <- cbind(1, sleepstudy$Days)
     m <- lmer(Reaction ~ -1 + X  + (Days | Subject), sleepstudy)
     pm <- predict(m, newdata=sleepstudy)
     expect_is(pm, "numeric")
-    expect_equal(quantile(pm, names=FALSE),
+    expect_equal(quantile(pm, names = FALSE),
                  c(211.006525, 260.948978, 296.87331, 328.638297, 458.155583))
     ## test spurious warning with factor as response variable
-    data("Orthodont",package="MEMSS")
+    data("Orthodont", package = "MEMSS") # (differently "coded" from the 'default' "nlme" one)
     silly <- glmer(Sex ~ distance + (1|Subject),
-                   data=Orthodont, family=binomial)
-    sillypred <- data.frame(distance=c(20, 25))
-    options(warn=2) # no warnings!
-    ps <- predict(silly, sillypred, re.form=NA, type="response")
+                   data = Orthodont, family = binomial)
+    sillypred <- data.frame(distance = c(20, 25))
+    options(warn = 2) # no warnings!
+    ps <- predict(silly, sillypred, re.form=NA, type = "response")
     expect_is(ps, "numeric")
     expect_equal(unname(ps), c(0.999989632, 0.999997201))
     ## a case with interactions (failed in one temporary version):
     expect_warning(fmPixS <<- update(fmPix, .~. + Side), "nearly unidentifiable")
     set.seed(1); ii <- sample(nrow(Pixel), 16)
-    expect_equal(predict(fmPix,  newdata=Pixel[ii,]), fitted(fmPix )[ii])
-    expect_equal(predict(fmPixS, newdata=Pixel[ii,]), fitted(fmPixS)[ii])
-    options(warn=0)
+    expect_equal(predict(fmPix,  newdata = Pixel[ii,]), fitted(fmPix )[ii])
+    expect_equal(predict(fmPixS, newdata = Pixel[ii,]), fitted(fmPixS)[ii])
+    options(warn = 0)
 
     set.seed(7); n <- 100; y <- rnorm(n)
     dd <- data.frame(id = factor(sample(10, n, replace = TRUE)),
                      x1 = 1, y = y, x2 = rnorm(n, mean = sign(y)))
-    m <- lmer(y ~ x1 + x2 + (1 | id), data=dd)
+    m <- lmer(y ~ x1 + x2 + (1 | id), data = dd)
     ##-> "fixed-effect model matrix is rank deficient so dropping 1 column / coefficient"
     summary(m)
     ii <- sample(n, 16)
     expect_equal(predict(m, newdata = dd[ii,]), fitted(m)[ii])
     ## predict(*, new..) gave Error in X %*% fixef(object) - now also drops col.
+
+    ## predict(*, new..) with NA in data {and non-simple model}, issue #246:
+    m1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+    sleepst.NA <- sleepstudy ; sleepst.NA$Days[2] <- NA
+    m2 <- update(fm1., data = sleepst.NA)
+    if(FALSE) ## FIXME
+    predict(m2, sleepst.NA[1:4,])
+    ## Error: (p <- ncol(X)) == ncol(Y) is not TRUE
+
+    ## Wrong 'b' constructed in mkNewReTrms() -- issue #257
+    data(Orthodont,package="nlme")
+    Orthodont <- within(Orthodont, nsex <- as.numeric(Sex == "Male"))
+    m3 <- lmer(distance ~ age + (age|Subject) + (0 + nsex|Subject), data=Orthodont)
+    if(FALSE) ## FIXME
+    predict(m3, Orthodont)
+    ## Error in .Call(...) [because 'b' is wrong in  b %*% Zt from mkNewReTrms()]
 })
 
 context("simulate")
 test_that("simulate", {
-    expect_is(simulate(gm2),"data.frame")
-    expect_warning(simulate(gm2,ReForm=NA),"is deprecated")
-    expect_warning(simulate(gm2,REForm=NA),"is deprecated")
-    p1 <- simulate(gm2,re.form=NULL,seed=101)
-    p2 <- simulate(gm2,re.form=~0,seed=101)
-    p3 <- simulate(gm2,re.form=NA,seed=101)
-    p4 <- simulate(gm2,re.form=NULL,seed=101)
-    expect_warning(p5 <- simulate(gm2,ReForm=~0,seed=101),"is deprecated")
-    p6 <- simulate(gm2,re.form=NA,seed=101)
-    expect_warning(p7 <- simulate(gm2,REForm=NULL,seed=101),"is deprecated")
-    p8 <- simulate(gm2,re.form=~0,seed=101)
-    p9 <- simulate(gm2,re.form=NA,seed=101)
-    p10 <- simulate(gm2,use.u=FALSE,seed=101)
-    p11 <- simulate(gm2,use.u=TRUE,seed=101)
+    expect_is(simulate(gm2), "data.frame")
+    expect_warning(simulate(gm2, ReForm = NA), "is deprecated")
+    expect_warning(simulate(gm2, REForm = NA), "is deprecated")
+    p1 <- simulate(gm2, re.form = NULL, seed = 101)
+    p2 <- simulate(gm2, re.form = ~0, seed = 101)
+    p3 <- simulate(gm2, re.form = NA, seed = 101)
+    p4 <- simulate(gm2, re.form = NULL, seed = 101)
+    expect_warning(p5 <- simulate(gm2, ReForm = ~0, seed = 101), "is deprecated")
+    p6 <- simulate(gm2, re.form = NA, seed = 101)
+    expect_warning(p7 <- simulate(gm2, REForm = NULL, seed = 101), "is deprecated")
+    p8 <- simulate(gm2, re.form = ~0, seed = 101)
+    p9 <- simulate(gm2, re.form = NA, seed = 101)
+    p10 <- simulate(gm2,use.u = FALSE, seed = 101)
+    p11 <- simulate(gm2,use.u = TRUE, seed = 101)
     expect_equal(p2,p3)
     expect_equal(p2,p5)
     expect_equal(p2,p6)
@@ -231,10 +247,10 @@ test_that("simulate", {
     expect_equal(p1,p4)
     expect_equal(p1,p7)
     expect_equal(p1,p11)
-    expect_error(simulate(gm2,use.u=TRUE,re.form=NA),"should specify only one")
+    expect_error(simulate(gm2,use.u = TRUE, re.form = NA), "should specify only one")
     ## hack: test with three REs
     p1 <- lmer(diameter ~ (1|plate) + (1|plate) + (1|sample), Penicillin,
-               control=lmerControl(check.conv.hess="ignore"))
+               control = lmerControl(check.conv.hess = "ignore"))
     expect_is(sp1 <- simulate(p1), "data.frame")
     expect_true(all(dim(sp1) == c(nrow(Penicillin), 1)))
     ## Pixel example
@@ -246,10 +262,10 @@ context("misc")
 test_that("misc", {
     expect_equal(df.residual(fm1),176)
     if (require(ggplot2)) {
-        expect_is(fortify(fm1),"data.frame")
-        expect_is(fortify(gm1),"data.frame")
+        expect_is(fortify(fm1), "data.frame")
+        expect_is(fortify(gm1), "data.frame")
     }
-    expect_is(as.data.frame(VarCorr(fm1)),"data.frame")
+    expect_is(as.data.frame(VarCorr(fm1)), "data.frame")
 })
 }# R >= 3.0.0
 
@@ -257,15 +273,15 @@ context("plot")
 test_that("plot", {
     ## test getData() within plot function: reported by Dieter Menne
     doFit <- function(){
-        data(Orthodont,package="nlme")
+        data(Orthodont,package = "nlme")
         data1 <- Orthodont
-        fm1 <- lmer(distance ~ age + (age|Subject), data=data1)
+        fm1 <- lmer(distance ~ age + (age|Subject), data = data1)
     }
-    data(Orthodont, package="nlme")
-    fm0 <- lmer(distance ~ age + (age|Subject), data=Orthodont)
-    expect_is(plot(fm0),"trellis")
+    data(Orthodont, package = "nlme")
+    fm0 <- lmer(distance ~ age + (age|Subject), data = Orthodont)
+    expect_is(plot(fm0), "trellis")
     suppressWarnings(rm("Orthodont"))
     fm1 <- doFit()
-    pp <- plot(fm1, resid(., scaled=TRUE) ~ fitted(.) | Sex, abline = 0)
-    expect_is(pp,"trellis")
+    pp <- plot(fm1, resid(., scaled = TRUE) ~ fitted(.) | Sex, abline = 0)
+    expect_is(pp, "trellis")
 })
