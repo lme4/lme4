@@ -583,6 +583,55 @@ nlformula <- function(mc) {
     list(respMod=respMod, frame=fr, X=X, reTrms=reTrms, pnames=pnames)
 } ## {nlformula}
 
+.dims <- function(pp, resp, nAGQ,
+                  reTrms, n, p, rcl,
+                  compDev = NULL) {
+    if(missing(rcl)) rcl <- class(resp)
+    if(missing(n)) n <- nrow(pp$V)
+    if(missing(p)) p <- ncol(pp$V)
+    c(N=nrow(pp$X), n=n, p=p, nmp=n-p,
+      nth=length(pp$theta), q=nrow(pp$Zt),
+      nAGQ=rho$nAGQ,
+      compDev=rho$compDev,
+      ## 'use scale' in the sense of whether dispersion parameter should
+      ##  be reported/used (*not* whether theta should be scaled by sigma)
+      useSc=(rcl != "glmResp" ||
+             !resp$family$family %in% c("poisson","binomial")),
+      reTrms=length(reTrms$cnms),
+      spFe=0L,
+      REML=if (rcl=="lmerResp") resp$REML else 0L,
+      GLMM=(rcl=="glmResp"),
+      NLMM=(rcl=="nlsResp"))
+}
+
+.cmp <- function(pp, resp, dims, fval,
+                 wrss, sqrLenU, pwrss,
+                 sigmaML, rcl, fac,
+                 tolPwrss = NULL,
+                 trivial.y = FALSE) {
+    if(missing(rcl)) rcl <- class(resp)
+    if(missing(fac)) fac <- as.numeric(rcl != "nlsResp")
+    if(missing(wrss)) wrss <- resp$wrss()
+    if(missing(sqrLenU)) sqrLenU <- pp$sqrL(fac)
+    if(missing(pwrss)) pwrss <- wrss + sqrLenU
+    if(missing(sigmaML)) sigmaML <- pwrss/dims['n']
+    c(ldL2=pp$ldL2(), ldRX2=pp$ldRX2(), wrss=wrss,
+      ussq=sqrLenU, pwrss=pwrss,
+      drsum=if (rcl=="glmResp" && !trivial.y) resp$resDev() else NA,
+      REML=if (rcl=="lmerResp" && resp$REML != 0L && !trivial.y)
+      opt$fval else NA,
+      ## FIXME: construct 'REML deviance' here?
+      dev=if (rcl=="lmerResp" && resp$REML != 0L || trivial.y) NA else opt$fval,
+      sigmaML=sqrt(unname(if (!dims["useSc"] || trivial.y) NA else sigmaML)),
+      sigmaREML=sqrt(unname(if (rcl!="lmerResp" || trivial.y) NA else sigmaML*(dims['n']/dims['nmp']))),
+      tolPwrss=rho$tolPwrss)
+}
+
+.minimalOptinfo <- function() {
+    list(conv = list(
+             opt = 0L,
+             lme4 = list(messages = character(0))))
+
 ##--> ../man/mkMerMod.Rd ---Create a merMod object
 ##' @param rho the environment of the objective function
 ##' @param opt the value returned by the optimizer
