@@ -631,6 +631,7 @@ nlformula <- function(mc) {
     list(conv = list(
              opt = 0L,
              lme4 = list(messages = character(0))))
+}
 
 ##--> ../man/mkMerMod.Rd ---Create a merMod object
 ##' @param rho the environment of the objective function

@@ -9,10 +9,8 @@
   getting started on unbalanced simulations.
 }
 \usage{
-mkParsTemplate(formula, data){
-mkDataTemplate(formula, data,
-               nGrps = 2, nPerGrp = 1,
-               rfunc = NULL, ...)
+mkParsTemplate(formula, data)
+mkDataTemplate(formula, data, nGrps = 2, nPerGrp = 1, rfunc = NULL, ...)
 }
 \arguments{
   \item{formula}{A mixed model formula (see \link{\code{lmer}}).}
