@@ -214,7 +214,6 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
         etastart_update <- fr$etastart
     }
 
-
    ## FIXME: may need to add X, or pass it somehow, if we want to use glm.fit
     ##y <- model.response(fr)
     if(length(dim(y)) == 1) {
@@ -263,6 +262,17 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
                               pnames=pnames), as.list(rho))))
     }
     stopifnot(inherits(family, "family"))
+    ## test for non-numeric response here to avoid confusing
+    ## error messages from deeper within GLM machinery
+    if (!(is.num <- is.numeric(y) ||
+              ((is.binom <- family$family=="binomial") && is.factor(y)))) {
+        if (is.binom) {
+            stop("response must be numeric or factor")
+        } else {
+            stop("response must be numeric")
+        }
+    }
+
     ## need weights for initializing evaluation
     rho$nobs <- n
     ## allow trivial objects, e.g. for simulation
