@@ -264,8 +264,9 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
     stopifnot(inherits(family, "family"))
     ## test for non-numeric response here to avoid confusing
     ## error messages from deeper within GLM machinery
-    if (!(is.num <- is.numeric(y) ||
-              ((is.binom <- family$family=="binomial") && is.factor(y)))) {
+    if (!is.null(y) &&  ## y may be NULL if we're doing simulation
+        (!(is.num <- is.numeric(y) ||
+               ((is.binom <- family$family=="binomial") && is.factor(y))))) {
         if (is.binom) {
             stop("response must be numeric or factor")
         } else {
