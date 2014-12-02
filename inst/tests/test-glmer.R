@@ -260,4 +260,11 @@ if(FALSE) { ## Hadley broke this
     ## try higher-order AGQ
     expect_is(update(gm1,nAGQ=90),"glmerMod")
     expect_error(update(gm1,nAGQ=101),"ord < 101L")
+
+    ## non-numeric response variables
+    ss <- transform(sleepstudy,Reaction=as.character(Reaction))
+    expect_error(glmer(Reaction~(1|Days),family="poisson",data=ss),
+                 "response must be numeric")
+    expect_error(glmer(Reaction~(1|Days),family="binomial",data=ss),
+                 "response must be numeric or factor")
 })
