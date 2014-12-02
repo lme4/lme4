@@ -258,7 +258,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
 
     re.form <- reFormHack(re.form,ReForm,REForm,REform)
 
-    if (length(list(...) > 0)) warning("unused arguments ignored")
+    if (length(list(...)) > 0) warning("unused arguments ignored")
 
     type <- match.arg(type)
     if (!is.null(terms))
