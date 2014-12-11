@@ -266,7 +266,7 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
     ## error messages from deeper within GLM machinery
     if (!is.null(y) &&  ## y may be NULL if we're doing simulation
         (!(is.num <- is.numeric(y) ||
-               ((is.binom <- family$family=="binomial") && is.factor(y))))) {
+               ((is.binom <- family$family=="binomial") && (is.factor(y) || is.logical(y)))))) {
         if (is.binom) {
             stop("response must be numeric or factor")
         } else {

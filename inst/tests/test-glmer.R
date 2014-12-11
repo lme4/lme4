@@ -267,4 +267,8 @@ if(FALSE) { ## Hadley broke this
                  "response must be numeric")
     expect_error(glmer(Reaction~(1|Days),family="binomial",data=ss),
                  "response must be numeric or factor")
+    ss2 <- transform(ss,rr=rep(c(TRUE,FALSE),length.out=nrow(ss)))
+    ## should work OK with logical too
+    expect_is(glmer(rr~(1|Days),family="binomial",data=ss2),"merMod")
+
 })
