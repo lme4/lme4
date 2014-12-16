@@ -1,0 +1,38 @@
+> I guess lme4 might have some magic to temporarily suppress the warnings in summary() so withCallingHandlers() is unable to catch them. I looked at the source code of lme4 for a while, but did not figure out whether or how they did it. Here is a reproducible example that you should report to https://github.com/lme4/lme4/issues (ping @bbolker or @mmaechler or someone in the dev team):
+
+A simpler example than the one presented:
+
+```{r setup}
+library("lme4")
+ss <- transform(sleepstudy,obs=factor(1:nrow(sleepstudy)))
+```
+
+Regular run produces a warning:
+
+```{r lme4_warn}
+m1 <- lmer(Reaction~1+(1|obs),data=ss,
+     control=lmerControl(check.nobs.vs.nlev="warning",
+                         check.nobs.vs.nRE="ignore"))
+```
+
+Running inside `summary()` doesn't:
+
+```{r lme4_warnsum}
+sum1 <- summary(m1 <- lmer(Reaction~1+(1|obs),data=ss,
+     control=lmerControl(check.nobs.vs.nlev="warning",
+                         check.nobs.vs.nRE="ignore")))
+```
+
+**BUT** this is the same behaviour as base-R functions!
+
+`sqrt()` produces a warning in this case:
+
+```{r sqrt_warn}
+sq <- sqrt(-1)
+```
+
+... but if we nest inside `summary()` it doesn't!
+
+```{r sqrt_warnsum}
+summary(sq <- sqrt(-1))
+```
