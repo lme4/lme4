@@ -167,16 +167,23 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
 	switch(cc,
 	       "warning" = warning(wstr,call.=FALSE),
 	       "stop"	 =    stop(wstr,call.=FALSE),
+               ## FIXME: should never get here since we have checkCtrLevels test above?
 	       stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
     } else wstr <- character()
     ## Part 2 ----------------
     cstr <- "check.nobs.vs.nlev"
     checkCtrlLevels(cstr, cc <- ctrl[[cstr]])
     if (doCheck(cc)) {
-        if (any(if(allow.n) nlevelVec > n else nlevelVec >= n))
-            stop(gettextf(
+        if (any(if(allow.n) nlevelVec > n else nlevelVec >= n)) {
+            wstr <-  gettextf(
                 "number of levels of each grouping factor must be %s number of observations",
-                if(allow.n) "<=" else "<"), domain=NA)
+                if(allow.n) "<=" else "<")
+            switch(cc,
+                   "warning" = warning(wstr,call.=FALSE),
+                   "stop"	 =    stop(wstr,call.=FALSE)
+                   ## shouldn't reach here 
+                   )
+        }
     }
 
     ## Part 3 ----------------

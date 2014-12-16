@@ -2034,11 +2034,17 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
         }
     } else {
         V.hess <- calc.vcov.hess(h)
-        e.hess <- eigen(V.hess,symmetric = TRUE,only.values = TRUE)$values
-        if (min(e.hess) <= 0) {
+        bad.V.hess <- FALSE
+        if (any(is.na(V.hess))) {
+            bad.V.hess <- TRUE
+        } else {
+            e.hess <- eigen(V.hess,symmetric = TRUE,only.values = TRUE)$values
+            if (min(e.hess) <= 0) bad.V.hess <- TRUE
+        }
+        if (bad.V.hess) {
             warning("variance-covariance matrix computed ",
                     "from finite-difference Hessian is\n",
-                    "not positive definite: falling back to ",
+                    "not positive definite or contains NA values: falling back to ",
                     "var-cov estimated from RX")
         } else V <- V.hess
     }

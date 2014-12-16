@@ -159,9 +159,15 @@ test_that("lmer", {
     expect_warning(lmer(Yield ~ 1|Batch, Dyestuff, junkArg=TRUE),"extra argument.*disregarded")
     expect_warning(lmer(Yield ~ 1|Batch, Dyestuff, control=list()),
                     "passing control as list is deprecated")
-if(FALSE) ## Hadley broke this
-    expect_warning(lmer(Yield ~ 1|Batch, Dyestuff, control=glmerControl()),
-                   "passing control as list is deprecated")
+    if(FALSE) ## Hadley broke this
+        expect_warning(lmer(Yield ~ 1|Batch, Dyestuff, control=glmerControl()),
+                       "passing control as list is deprecated")
+
+    ss <- transform(sleepstudy,obs=factor(seq(nrow(sleepstudy))))
+    expect_warning(lmer(Reaction ~ 1 + (1|obs), data=ss,
+         control=lmerControl(check.nobs.vs.nlev="warning",
+                             check.nobs.vs.nRE="ignore")),
+                   "number of levels of each grouping factor")
 
     ## test deparsing of very long terms inside mkReTrms
     set.seed(101)
