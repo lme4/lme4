@@ -1,18 +1,20 @@
 ## Laplace diagnostics
 
-Copied/modified from DMB's code in glmer paper draft ...
+Version: `r as.character(Sys.time())`
+
+This document reproduces and extends the procedures originally invented by Doug Bates (currently part of a draft paper on GLMMs in `lme4`) to visualize the likelihood profiles of individual conditional modes (random effects parameters for individual groups) in GLMM. In particular, this visualization gives a useful way to understand the accuracy of Laplace and Gauss-Hermite quadrature approximations.
 
 ```{r pkgs,message=FALSE}
-library(lme4)
-library(lattice)
-library(ggplot2); theme_set(theme_bw())
-library(plyr)      ## for reshaping
-library(abind)     ## ditto
-library(reshape2)  ## for melt() generic
+library("lme4")
+library("lattice")
+library("ggplot2"); theme_set(theme_bw())
+library("plyr")      ## for reshaping
+library("abind")     ## ditto
+library("reshape2")  ## for melt() generic
+library("bbmle")     ## for AICtab
 ```
 
-For now, I'm going to leave this function echoed in all its glory ...
-```{r zetafun}
+```{r zetafun,echo=FALSE}
 zetaDevfun <- function(m,grps=NULL) {    
     stopifnot (is(m, "glmerMod"),
                length(m@flist) == 1L)    # single grouping factor
@@ -85,8 +87,8 @@ zeta <- function(m, zmin=-3, zmax=3, npts=NULL,
 }
 ```
 
-Not shown: `melt` function for these objects that converts them from a list ($z$ value vector plus array of deviances) to a data frame ...
 ```{r echo=FALSE}
+## converts zeta objects from a list ($z$ value vector plus array of deviances) to a data frame ...
 melt.laplaceDiag <- function(data,...) {
     require(reshape2)
     zvals <- data$zval
@@ -160,7 +162,9 @@ plot.laplaceDiag <- function(x,scaled=FALSE,
 }
 ```
 
-Replicate glmer paper Figs 2/3:
+Replicate glmer paper Figs 2/3: these graphs show first the likelihood profiles for the individual conditional modes, then the likelihood profiles scaled by the standard Normal.  If the likelihood profiles are proportional to $N(0,1)$, the Laplace approximation will be adequate; if the likelihood profiles are proportional to $f_n(x) \exp(-x^2)$, where $f_n$ is an $n^\textrm{th}$-order polynomial, then an AGHQ fit with $n-1$ quadrature points will be adequate.
+
+The CBPP data are actually pretty boring (if you're looking for deviations):
 
 ```{r fit1,cache=TRUE}
 m1 <- glmer(cbind(incidence, size-incidence) ~ period + (1|herd),
@@ -172,29 +176,59 @@ m1.z <- zeta(m1)
 plot(m1.z,layout=c(5,3))
 ```
 
+The standardized plots make it easier to see the deviations:
+
 ```{r fig3}
 plot(m1.z,scaled=TRUE,layout=c(5,3))
 ```
 
-### Example with vector-valued RE
+### Toenail data example
 
-I tried simulating a Poisson random-slopes model,
-but at least at first glance it looked too good.
-Try the toenail data 
+The toenail data are much more poorly behaved (presumably? due to smaller total numbers of observations per group):
 
-```{r toenailfit,cache=TRUE}
+```{r toenailfit_int,cache=TRUE}
 toenail <- read.csv("toenail.csv")
-m2 <- glmer(outcome~treatment+visit+(visit|patient),toenail,
+m2 <- glmer(outcome~treatment*visit+(1|patient),toenail,
             family=binomial)
 ```
 
+Since there are `r length(unique(toenail$patient))` groups, it will be awkward to plot them all -- we'll look at a subset (**to do**: sort groups by degree of non-Normality)
+
+```{r toenailzeta0,cache=TRUE}
+m2.z <- zeta(m2,grps=1:36)
+```
+
+```{r toenail_1d}
+plot(m2.z)
+```
+
+```{r toenail_1d_scaled}
+plot(m2.z,scaled=TRUE)
+```
+
+### Example with vector-valued RE
+
+Try a random-slopes model:
+
+```{r toenailfit_rslope,cache=TRUE}
+m3 <- glmer(outcome~treatment*visit+(visit|patient),toenail,
+            family=binomial,
+            control=glmerControl(optimizer="bobyqa"))
+```
+
+The data *strongly* support a random-slopes model:
+
+```{r AICtab}
+AICtab(m2,m3)
+```
+
 ```{r toenailzeta,cache=TRUE}
-m2.z <- zeta(m2,grps=1:25)
+m3.z <- zeta(m3,grps=1:25)
 ```
 
 This is a nice collection of mussels ...
 ```{r plotmussels}
-plot(m2.z)
+plot(m3.z)
 ```
 
 Still trying to work out the analogue of Figure 3 (i.e.,
@@ -204,8 +238,8 @@ is very badly behaved in the corner ...
 
 Just look at patient #1 to try to sort out what's going on here ...
 ```{r ratios}
-zz <- m2.z$zvals
-mm <- 2*pi*dnorm2d(sqrt(m2.z$devarr[,,1]))
+zz <- m3.z$zvals
+mm <- 2*pi*dnorm2d(sqrt(m3.z$devarr[,,1]))
 m0 <- 2*pi*dnorm2d(sqrt(outer(zz^2,zz^2,"+")))
 par(mfrow=c(2,2))
 persp(zz,zz,mm,col="gray",main="conditional density")
@@ -269,8 +303,9 @@ par(las=1,bty="l")
 matplot(cbind(diff(m1GHvec2),-diff(GH1vals[-1])),
         type="b",pch=16,lty=1)
 ```
+
 These patterns don't match ... but we don't necessarily expect them to match,
 as the hand-rolled comparison keeps theta, beta, *and the conditional modes*
 fixed, while using the deviance function updates the conditional modes (I think ...)
 
-`http://tigger.uic.edu/~hedeker/long.html`
+Toenail data from [here](http://tigger.uic.edu/~hedeker/long.html).
