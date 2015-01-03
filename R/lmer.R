@@ -445,11 +445,14 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
         if (length(mNms) != length(mods))
             stop("model names vector and model list have different lengths")
 	names(mods) <- sub("@env$", '', mNms) # <- hack
-	models.reml <- vapply(mods, isREML, NA)
+	models.reml <- vapply(mods, function(x) is(x,"merMod") && isREML(x), NA)
+        models.GHQ <- vapply(mods, function(x) is(x,"glmerMod") && getME(x,"devcomp")$dims["nAGQ"]>1 , NA)
+        if (any(models.GHQ) && any(vapply(mods, function(x) is(x,"glm"), NA)))
+            stop("GLMMs with nAGQ>1 have log-likelihoods incommensurate with glm() objects")
 	if (refit) {
 	    ## message only if at least one models is REML:
 	    if (any(models.reml)) message("refitting model(s) with ML (instead of REML)")
-	    mods <- lapply(mods, refitML)
+	    mods[models.reml] <- lapply(mods[models.reml], refitML)
 	} else { ## check that models are consistent (all REML or all ML)
 	    if(any(models.reml) && any(!models.reml))
 		warning("some models fit with REML = TRUE, some not")

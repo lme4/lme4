@@ -95,6 +95,24 @@ test_that("lmer", {
     expect_is(ano3s <- anova(full3s, null3s), "anova")
     expect_equal(ano3, ano3s, check.attributes=FALSE)
     options(op)
+
+    ## anova() of glmer+glm models:
+    gm1 <- glmer(y~(1|u),data=dat[1:4,],family=poisson)
+    gm0 <- glm(y~1,data=dat[1:4,],family=poisson)
+    gm2 <- glmer(y~(1|u),data=dat[1:4,],family=poisson,nAGQ=2)
+    aa <- anova(gm1,gm0)
+    expect_equal(aa[2,"Chisq"],0)
+    expect_error(anova(gm2,gm0),"incommensurate")
+
+    ## anova() of lmer+glm models:
+    dat2 <- dat
+    set.seed(101)
+    dat2$y <- rnorm(5)
+    fm1 <- lmer(y~(1|u),data=dat2,REML=FALSE)
+    fm0 <- lm(y~1,data=dat2)
+    aa2 <- anova(fm1,fm0)
+    expect_equal(aa2[2,"Chisq"],0)
+
 })
 
 context("bootMer confint()")
