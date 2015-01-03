@@ -18,7 +18,8 @@
 \method{profile}{merMod}(fitted, which = 1:nptot, alphamax = 0.01,
 	maxpts = 100, delta = cutoff/8, verbose = 0, devtol = 1e-09,
         maxmult = 10, startmethod = "prev", optimizer = "bobyqa",
-	signames = TRUE, ...)
+	signames = TRUE,  parallel = c("no", "multicore", "snow"),
+        ncpus = getOption("profile.ncpus", 1L), cl = NULL, \dots)
 \method{as.data.frame}{thpr} (x, ...)
 \method{log}{thpr}(x, base = exp(1))
 logProf(x, base = exp(1), ranef = TRUE,
@@ -73,6 +74,15 @@ logProf(x, base = exp(1), ranef = TRUE,
     \eqn{\sigma} (standard deviation of errors) is transformed.}
   \item{sigIni}{character string specifying the initial part of the
     sigma parameters to be log transformed.}
+  \item{parallel}{The type of parallel operation to be used (if any).
+    If missing, the
+    default is taken from the option \code{"boot.parallel"} (and if that
+    is not set, \code{"no"}).}
+  \item{ncpus}{integer: number of processes to be used in parallel operation:
+    typically one would choose this to be the number of available CPUs.}
+  \item{cl}{An optional \pkg{parallel} or \pkg{snow} cluster for use if
+    \code{parallel = "snow"}.  If not supplied, a cluster on the
+    local machine is created for the duration of the \code{profile} call.}
 }
 \value{
   \code{profile(<merMod>)} returns an object of S3 class
