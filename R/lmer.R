@@ -762,6 +762,7 @@ family.glmResp <- function(object, ...) {
                                         # expression if necessary
 
     ## FIXME: may fail with user-specified/custom family?
+    ## should be obsolete
     if(is.null(object$family$initialize))
         return(do.call(object$family$family,
                        list(link=object$family$link)))

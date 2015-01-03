@@ -303,3 +303,12 @@ test_that("plot", {
     pp <- plot(fm, resid(., scaled = TRUE) ~ fitted(.) | Sex, abline = 0)
     expect_is(pp, "trellis")
 })
+
+context("misc")
+test_that("summary", {
+    ## test that family() works when $family element is weird
+    gnb <- glmer(TICKS~1+(1|BROOD),
+                    family=MASS::negative.binomial(theta=2),
+                    data=grouseticks)
+       expect_is(family(gnb),"family")
+   })
