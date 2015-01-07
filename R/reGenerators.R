@@ -529,16 +529,14 @@ ar1d <- function(formula=~(.|1), order=1, init=c(1, .2), het=NULL, max.lag=NULL)
 
 
 
-#' @title Random effects with diagonal covariance
+#' @title Random effects with pre-specified correlation template
 #' 
-#' Specifies random effects without correlation, i.e., the covariance
-#' for the \eqn{q}-dim. random effect in each grouping level is 
-#' \eqn{\text{diag}(\vartheta^2_1, \dots, \vartheta^2_q))} if \code{iid==FALSE} or
-#' \eqn{\vartheta^2 I_q} if \code{iid==TRUE}.
+#' The idea here is to provide an interface for the Ives and Helmus
+#' PGLMM approach
 #' 
 #' @param formula a one sided formula specifying a random effect in
 #'     \code{lme4} notation, i.e. \code{~(<covariates> | <grouping>)}.
-#' @param iid enforce identical variances for each component of the random effects.
+#' @param corr a correlation template
 #' @return a function creating a return object like \code{mkReTrm}
 template <- function(formula, corr){
     mkReTrmTemplate <- local({
@@ -549,6 +547,7 @@ template <- function(formula, corr){
             grp <- getGrouping(bar, fr)
             mkRanefStructuresCorr(corr, grp, mm)
 
+            ## ignore the rest of this function ---------------------------
 
 
             nl <- length(levels(ff))
