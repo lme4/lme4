@@ -409,6 +409,14 @@ extern "C" {
         END_RCPP;
     }
 
+    // R translation of devcCol:
+    // tapply(m@resp$devResid(), getME(m, "flist")[[1]], sum) + getME(m, "u")^2
+    // where m is a merMod object (with potentially modified u's)
+    //
+    // c++ -> r translations of arguments:
+    // fac -> flist
+    // u -> u
+    // devRes -> resp$devResid()
     static Ar1 devcCol(const MiVec& fac, const Ar1& u, const Ar1& devRes) {
         Ar1  ans(u.square());
         for (int i = 0; i < devRes.size(); ++i) ans[fac[i] - 1] += devRes[i];
@@ -434,11 +442,16 @@ extern "C" {
         const unsigned int q(pp->u0().size());
         if (pp->L().factor()->nzmax !=  q)
             throw std::invalid_argument("AGQ only defined for a single scalar random-effects term");
+        
+        // r translation of sd:
+        // 1/m@pp$L()@x
         const Ar1         sd(MAr1((double*)pp->L().factor()->x, q).inverse());
-
+        
+        // r translation of GQmat:
+        // GHrule(getME(m, "devcomp")$dims["nAGQ"])
         const MMat     GQmat(as<MMat>(GQmat_));
-        Ar1             mult(q);
 
+        Ar1             mult(q);
         mult.setZero();
         for (int i = 0; i < GQmat.rows(); ++i) {
             double     zknot(GQmat(i, 0));
@@ -447,12 +460,16 @@ extern "C" {
             else {
                 pp->setU0(zknot * sd); // to be added to current delu
                 rp->updateMu(pp->linPred(1.));
+                //Rcpp::Rcout << "\n" << rp->devResid() << "\n" << std::endl;
                 mult += (-0.5 * (devcCol(fac, pp->u(1.), rp->devResid()) - devc0) -
                          GQmat(i, 2)).exp() * GQmat(i, 1)/sqrt2pi;
             }
         }
         pp->setU0(Vec::Zero(q)); // restore settings from pwrssUpdate;
         rp->updateMu(pp->linPred(1.));
+        
+        //Rcpp::Rcout << "\n" << pp->ldL2() << "\n" << std::endl;
+        //Rcpp::Rcout << "\n" << devc0.sum() << "\n" << std::endl;
         return ::Rf_ScalarReal(devc0.sum() + pp->ldL2() - 2 * std::log(mult.prod()));
         END_RCPP;
     }
@@ -694,6 +711,12 @@ extern "C" {
     SEXP merPredDsetBeta0(SEXP ptr, SEXP beta0) {
         BEGIN_RCPP;
         XPtr<merPredD>(ptr)->setBeta0(as<MVec>(beta0));
+        END_RCPP;
+    }
+
+    SEXP merPredDsetU0(SEXP ptr, SEXP u0) {
+        BEGIN_RCPP;
+        XPtr<merPredD>(ptr)->setU0(as<MVec>(u0));
         END_RCPP;
     }
 
@@ -1094,6 +1117,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(merPredDsetZt,      2), 
 
     CALLDEF(merPredDsetBeta0,   2), 
+    CALLDEF(merPredDsetU0,      2), 
 
     CALLDEF(merPredDsetDelu,    2), // setters
     CALLDEF(merPredDsetDelb,    2),

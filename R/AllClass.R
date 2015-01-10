@@ -219,7 +219,10 @@ merPredD <-
                         'install a new value of beta0'
                         .Call(merPredDsetBeta0, ptr(), as.numeric(beta0))
                     },
-
+                    setU0        = function(u0) {
+                        'install a new value of beta0'
+                        .Call(merPredDsetU0, ptr(), as.numeric(u0))
+                    },
                     setDelu      = function(val) {
                         'set the coefficient increment delu'
                         .Call(merPredDsetDelu , ptr(), as.numeric(val))
