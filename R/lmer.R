@@ -2001,9 +2001,11 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
                                          "=TRUE specified, ",
                                          "but Hessian is unavailable")
     calc.vcov.hess <- function(h) {
-	i <- -seq_len(ntheta)
 	## ~= forceSymmetric(solve(h/2)[i,i]) : solve(h/2) = 2*solve(h)
-	h <- solve(h)[i,i]
+        h <- tryCatch(solve(h),
+                      error=function(e) matrix(NA,nrow=nrow(h),ncol=ncol(h)))
+        i <- -seq_len(ntheta)
+	h <- h[i,i]
 	forceSymmetric(h + t(h))
     }
 
@@ -2023,34 +2025,34 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
 
     V <- sigm^2 * object@pp$unsc()
 
-    if (!use.hessian) {
-        if (hess.avail) {
-            ## if hessian is available, go ahead and check
-            ## for similarity with the RX-based estimate
-            ## (inverting the hessian isn't *too* expensive)
-            var.hess.tol <- 1e-4 # FIXME: should var.hess.tol be user controlled?
-            V.hess <- calc.vcov.hess(h)
-            if (any(abs(V-V.hess) > var.hess.tol * V.hess))
-                warning("variance-covariance matrix computed ",
-                        "from finite-difference Hessian\nand ",
-                        "from RX differ by >",var.hess.tol,": ",
-                        "consider ",shQuote("use.hessian=TRUE"))
-        }
-    } else {
+    if (hess.avail) {
         V.hess <- calc.vcov.hess(h)
-        bad.V.hess <- FALSE
-        if (any(is.na(V.hess))) {
-            bad.V.hess <- TRUE
-        } else {
+        bad.V.hess <- any(is.na(V.hess))
+        if (!bad.V.hess) {
             e.hess <- eigen(V.hess,symmetric = TRUE,only.values = TRUE)$values
             if (min(e.hess) <= 0) bad.V.hess <- TRUE
         }
-        if (bad.V.hess) {
+    }
+    if (!use.hessian && hess.avail) {
+        ## if hessian is available, go ahead and check
+        ## for similarity with the RX-based estimate
+        ## (inverting the hessian isn't *too* expensive)
+        var.hess.tol <- 1e-4 # FIXME: should var.hess.tol be user controlled?
+        if (!bad.V.hess && any(abs(V-V.hess) > var.hess.tol * V.hess))
+            warning("variance-covariance matrix computed ",
+                    "from finite-difference Hessian\nand ",
+                    "from RX differ by >",var.hess.tol,": ",
+                    "consider ",shQuote("use.hessian=TRUE"))
+    }
+    if (use.hessian) {
+        if (!bad.V.hess) {
+            V <- V.hess
+        } else {
             warning("variance-covariance matrix computed ",
                     "from finite-difference Hessian is\n",
                     "not positive definite or contains NA values: falling back to ",
                     "var-cov estimated from RX")
-        } else V <- V.hess
+        }
     }
 
     ## FIXME: try to catch non-PD matrices
