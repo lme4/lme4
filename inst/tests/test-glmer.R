@@ -221,6 +221,12 @@ if(FALSE) { ## Hadley broke this
         expect_warning(vcov(polytomous_vcov_ex),"falling back to var-cov")
     }
 
+    ## damage Hessian to make it singular
+    ## (example thanks to J. Dushoff)
+    gm1H <- gm1
+    gm1H@optinfo$derivs$Hessian[5,] <- 0
+    expect_warning(vcov(gm1H),"falling back to var-cov")
+
     ## test convergence warnings
     L <- load(system.file("testdata","gopherdat2.RData",
                           package="lme4", mustWork=TRUE))
