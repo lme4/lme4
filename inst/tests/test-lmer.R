@@ -195,6 +195,13 @@ test_that("lmer", {
     fm1 <- lmer(z~1|f,d,subset=(z<1e9))
     expect_equal(sum(grepl("Subset: \\(",capture.output(summary(fm1)))),1)
 
+    ## test messed-up Hessian
+    fm1 <- lmer(z~ as.numeric(f) + 1|f, d)
+    fm1@optinfo$derivs$Hessian[2,2] <- NA
+    expect_warning(lme4:::checkConv(fm1@optinfo$derivs,
+                     coefs=c(1,1),
+                     ctrl=lmerControl()$checkConv,lbound=0),
+                   "Problem with Hessian check")
 }) ## test_that(..)
 
 

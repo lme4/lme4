@@ -118,40 +118,46 @@ checkHess <- function(H, tol, hesstype="") {
     ## FIXME: not sure why we decided to save messages as a list
     ## rather than as a character vector??
     res <- list(code=numeric(0),messages=list())
-    evd <- eigen(H, symmetric=TRUE, only.values=TRUE)$values
-    negative <- sum(evd < -tol)
-    if(negative) {
-        res$code <- -3L
-        res$messages <-
-            gettextf(paste("Model failed to converge:",
-                           "degenerate",hesstype,"Hessian with %d negative eigenvalues"),
-                     negative)
+    evd <- tryCatch(eigen(H, symmetric=TRUE, only.values=TRUE)$values,
+                    error=function(e)e)
+    if (inherits(evd,"error")) {
+        res$code <- -6L
+        res$messages <- gettextf("Problem with Hessian check (infinite or missing values?)")
     } else {
-        zero <- sum(abs(evd) < tol)
-        if(zero || inherits(tryCatch(chol(H), error=function(e)e), "error")) {
-            res$code <- -4L
+        negative <- sum(evd < -tol)
+        if(negative) {
+            res$code <- -3L
             res$messages <-
-                paste(hesstype,"Hessian is numerically singular: parameters are not uniquely determined")
+                gettextf(paste("Model failed to converge:",
+                               "degenerate",hesstype,"Hessian with %d negative eigenvalues"),
+                         negative)
         } else {
-            res$cond.H <- max(evd) / min(evd)
-            if(max(evd) * tol > 1) {
-                res$code <- c(res$code, 2L)
+            zero <- sum(abs(evd) < tol)
+            if(zero || inherits(tryCatch(chol(H), error=function(e)e), "error")) {
+                res$code <- -4L
                 res$messages <-
-                    c(res$messages,
-                      paste("Model is nearly unidentifiable: ",
-                            "very large eigenvalue",
-                            "\n - Rescale variables?", sep=""))
-            }
-            if ((min(evd) / max(evd)) < tol) {
-                res$code <- c(res$code, 3L)
-                ## consider skipping warning message if we've
-                ## already hit the previous flag?
-                if(!5L %in% res$code) {
+                    paste(hesstype,"Hessian is numerically singular: parameters are not uniquely determined")
+            } else {
+                res$cond.H <- max(evd) / min(evd)
+                if(max(evd) * tol > 1) {
+                    res$code <- c(res$code, 2L)
                     res$messages <-
                         c(res$messages,
                           paste("Model is nearly unidentifiable: ",
-                                "large eigenvalue ratio",
+                                "very large eigenvalue",
                                 "\n - Rescale variables?", sep=""))
+                }
+                if ((min(evd) / max(evd)) < tol) {
+                    res$code <- c(res$code, 3L)
+                    ## consider skipping warning message if we've
+                    ## already hit the previous flag?
+                    if(!5L %in% res$code) {
+                        res$messages <-
+                            c(res$messages,
+                              paste("Model is nearly unidentifiable: ",
+                                    "large eigenvalue ratio",
+                                    "\n - Rescale variables?", sep=""))
+                    }
                 }
             }
         }
