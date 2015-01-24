@@ -3,53 +3,53 @@ splitFormula <-
   ## split, on the nm call, the rhs of a formula into a list of subformulas
   function(form, sep = "/")
 {
-  if (inherits(form, "formula") ||
-      mode(form) == "call" && form[[1]] == as.name("~"))
-    return(splitFormula(form[[length(form)]], sep = sep))
-  if (mode(form) == "call" && form[[1]] == as.name(sep))
-    return(do.call("c", lapply(as.list(form[-1]), splitFormula, sep = sep)))
-  if (mode(form) == "(") return(splitFormula(form[[2]], sep = sep))
-  if (length(form) < 1) return(NULL)
-  list(asOneSidedFormula(form))
+    if (inherits(form, "formula") ||
+        mode(form) == "call" && form[[1]] == as.name("~"))
+        return(splitFormula(form[[length(form)]], sep = sep))
+    if (mode(form) == "call" && form[[1]] == as.name(sep))
+        return(do.call("c", lapply(as.list(form[-1]), splitFormula, sep = sep)))
+    if (mode(form) == "(") return(splitFormula(form[[2]], sep = sep))
+    if (length(form) < 1) return(NULL)
+    list(asOneSidedFormula(form))
 }
 
 ## Recursive version of all.vars
 allVarsRec <- function(object)
 {
-  if (is.list(object)) {
-    unlist(lapply(object, allVarsRec))
-  } else {
-    all.vars(object)
-  }
+    if (is.list(object)) {
+        unlist(lapply(object, allVarsRec))
+    } else {
+        all.vars(object)
+    }
 }
 
 ## crippled version of getData.gnls from nlme
 getData <-  function(object)
 {
-  mCall <- object@call
-  data <- eval(mCall$data,environment(formula(object)))
-  if (is.null(data)) return(data)
-  ## FIXME: deal with NAs, subset appropriately
-  ## naPat <- eval(mCall$naPattern)
-  ## if (!is.null(naPat)) {
-  ##   data <- data[eval(naPat[[2]], data), , drop = FALSE]
-  ## }
-  ## naAct <- eval(mCall$na.action)
-  ## if (!is.null(naAct)) {
-  ##   data <- naAct(data)
-  ## }
-  ## subset <- mCall@subset
-  ## if (!is.null(subset)) {
-  ##   subset <- eval(asOneSidedFormula(subset)[[2]], data)
-  ##   data <- data[subset, ]
-  ## }
-  return(data)
+    mCall <- object@call
+    data <- eval(mCall$data,environment(formula(object)))
+    if (is.null(data)) return(data)
+    ## FIXME: deal with NAs, subset appropriately
+    ## naPat <- eval(mCall$naPattern)
+    ## if (!is.null(naPat)) {
+    ##   data <- data[eval(naPat[[2]], data), , drop = FALSE]
+    ## }
+    ## naAct <- eval(mCall$na.action)
+    ## if (!is.null(naAct)) {
+    ##   data <- naAct(data)
+    ## }
+    ## subset <- mCall@subset
+    ## if (!is.null(subset)) {
+    ##   subset <- eval(asOneSidedFormula(subset)[[2]], data)
+    ##   data <- data[subset, ]
+    ## }
+    return(data)
 }
 
 asOneFormula <-
-  ## Constructs a linear formula with all the variables used in a
-  ## list of formulas, except for the names in omit
-  function(..., omit = c(".", "pi"))
+    ## Constructs a linear formula with all the variables used in a
+    ## list of formulas, except for the names in omit
+    function(..., omit = c(".", "pi"))
 {
     names <- unique(allVarsRec(list(...)))
     names <- names[is.na(match(names, omit))]
@@ -57,16 +57,20 @@ asOneFormula <-
         as.formula(paste("~", paste(names, collapse = "+"))) # else NULL
 }
 
-getIDLabels <- function(object, form) {
-    if (missing(form)) {
-        grps <- names(getME(object,"flist"))
+getIDLabels <- function(object, form=formula(object)) {
+    mf <- factorize(form,model.frame(object))
+    if (length(ff <- findbars(form))>0) {
+        grps <- lapply(ff,"[[",3)
     } else {
-        ## whitespace-stripped elements of formula
-        grps <- gsub("(^ +| +$)","",strsplit(as.character(form)[[2]],"\\+")[[1]])
+        grps <- form[[2]]
     }
-    if (grps==".obs") return(seq(fitted(object)))
-    as.character(do.call(interaction,model.frame(object)[grps]))
+    if (as.character(grps)==".obs") return(seq(fitted(object)))
+    fList <- lapply(grps,function(x) eval(x,mf))
+    do.call(interaction,fList)
 }
+
+## TESTING
+## lme4:::getIDLabels(fm1)
 
 ## Return the formula(s) for the groups associated with object.
 ## The result is a one-sided formula unless asList is TRUE in which case
@@ -75,41 +79,41 @@ getGroupsFormula <- function(object, asList = FALSE, sep = "+")
     UseMethod("getGroupsFormula")
 
 getGroupsFormula.default <-
-  ## Return the formula(s) for the groups associated with object.
-  ## The result is a one-sided formula unless asList is TRUE in which case
-  ## it is a list of formulas, one for each level.
-  function(object, asList = FALSE, sep = "/")
+    ## Return the formula(s) for the groups associated with object.
+    ## The result is a one-sided formula unless asList is TRUE in which case
+    ## it is a list of formulas, one for each level.
+    function(object, asList = FALSE, sep = "/")
 {
-  form <- formula(object)
-  if (!inherits(form, "formula")){
-    stop("\"Form\" argument must be a formula")
-  }
-  form <- form[[length(form)]]
-  if (!((length(form) == 3) && (form[[1]] == as.name("|")))) {
-    ## no conditioning expression
-    return(NULL)
-  }
-  ## val <- list( asOneSidedFormula( form[[ 3 ]] ) )
-  val <- splitFormula(asOneSidedFormula(form[[3]]), sep = sep)
-  names(val) <- unlist(lapply(val, function(el) deparse(el[[2]])))
-#  if (!missing(level)) {
-#    if (length(level) == 1) {
-#      return(val[[level]])
-#    } else {
-#      val <- val[level]
-#    }
-#  }
-  if (asList) as.list(val)
-  else as.formula(paste("~", paste(names(val), collapse = sep)))
+    form <- formula(object)
+    if (!inherits(form, "formula")){
+        stop("\"Form\" argument must be a formula")
+    }
+    form <- form[[length(form)]]
+    if (!((length(form) == 3) && (form[[1]] == as.name("|")))) {
+        ## no conditioning expression
+        return(NULL)
+    }
+    ## val <- list( asOneSidedFormula( form[[ 3 ]] ) )
+    val <- splitFormula(asOneSidedFormula(form[[3]]), sep = sep)
+    names(val) <- unlist(lapply(val, function(el) deparse(el[[2]])))
+                                        #  if (!missing(level)) {
+                                        #    if (length(level) == 1) {
+                                        #      return(val[[level]])
+                                        #    } else {
+                                        #      val <- val[level]
+                                        #    }
+                                        #  }
+    if (asList) as.list(val)
+    else as.formula(paste("~", paste(names(val), collapse = sep)))
 }
 
 getGroupsFormula.merMod <- function(object,asList=FALSE, sep="+") {
-   if (asList) {
-     lapply(names(object@flist),asOneSidedFormula)
-   } else {
-    asOneSidedFormula(paste(names(object@flist),collapse=sep))
-   }
- }
+    if (asList) {
+        lapply(names(object@flist),asOneSidedFormula)
+    } else {
+        asOneSidedFormula(paste(names(object@flist),collapse=sep))
+    }
+}
 
 getCovariateFormula <- function (object)
 {
@@ -122,17 +126,17 @@ getCovariateFormula <- function (object)
         form <- form[[2]]
     }
     eval(substitute(~form))
-  }
+}
 
 getResponseFormula <-
-  function(object)
+    function(object)
 {
-  ## Return the response formula as a one sided formula
-  form <- formula(object)
-  if (!(inherits(form, "formula") && (length(form) == 3))) {
-    stop("\"Form\" must be a two sided formula")
-  }
-  as.formula(paste("~", deparse(form[[2]])))
+    ## Return the response formula as a one sided formula
+    form <- formula(object)
+    if (!(inherits(form, "formula") && (length(form) == 3))) {
+        stop("\"Form\" must be a two sided formula")
+    }
+    as.formula(paste("~", deparse(form[[2]])))
 }
 
 ##' diagnostic plots for merMod fits
@@ -218,184 +222,185 @@ getResponseFormula <-
 ##' @method plot merMod
 ##' @export 
 plot.merMod <-
-  function(x, form = resid(., type = "pearson") ~ fitted(.), abline,
-	   id = NULL, idLabels = NULL, 
-           grid, ...)
-  ## Diagnostic plots based on residuals and/or fitted values
+    function(x, form = resid(., type = "pearson") ~ fitted(.), abline,
+             id = NULL, idLabels = NULL, 
+             grid, ...)
+        ## Diagnostic plots based on residuals and/or fitted values
 {
-  object <- x
-  if (!inherits(form, "formula"))
-    stop("\"form\" must be a formula")
-  ## constructing data
-  ## can I get away with using object@frame???
-  allV <- all.vars(asOneFormula(form, id, idLabels))
-  allV <- allV[is.na(match(allV,c("T","F","TRUE","FALSE",".obs")))]
-  if (length(allV) > 0) {
-    data <- getData(object)
-    if (is.null(data)) {		# try to construct data
-       alist <- lapply(as.list(allV), as.name)
-       names(alist) <- allV
-       alist <- c(list(as.name("data.frame")), alist)
-       mode(alist) <- "call"
-       data <- eval(alist, sys.parent(1))
-   } else if (any(naV <- is.na(match(allV, names(data)))))
-         stop(allV[naV], " not found in data")
-   } else data <- NULL
+    object <- x
+    if (!inherits(form, "formula"))
+        stop("\"form\" must be a formula")
+    ## constructing data
+    ## can I get away with using object@frame???
+    allV <- all.vars(asOneFormula(form, id, idLabels))
+    allV <- allV[is.na(match(allV,c("T","F","TRUE","FALSE",".obs")))]
+    if (length(allV) > 0) {
+        data <- getData(object)
+        if (is.null(data)) {		# try to construct data
+            alist <- lapply(as.list(allV), as.name)
+            names(alist) <- allV
+            alist <- c(list(as.name("data.frame")), alist)
+            mode(alist) <- "call"
+            data <- eval(alist, sys.parent(1))
+        } else if (any(naV <- is.na(match(allV, names(data)))))
+              stop(allV[naV], " not found in data")
+    } else data <- NULL
 
-  ## this won't do because there may well be variables we want
-  ##  that were not in the model call
+    ## this won't do because there may well be variables we want
+    ##  that were not in the model call
 
-  ## data <- object@frame
+    ## data <- object@frame
 
-  ## argument list
-  dots <- list(...)
-  args <- if (length(dots) > 0) dots else list()
-  ## appending object to data, and adding observation-number variable
-  data <- as.list(c(as.list(cbind(data,.obs=seq(nrow(data)))), . = list(object)))
-  ## covariate - must always be present
-  covF <- getCovariateFormula(form)
-  .x <- eval(covF[[2]], data)
-  if (!is.numeric(.x)) {
-    stop("Covariate must be numeric")
-  }
-  argForm <- ~ .x
-  argData <- data.frame(.x = .x, check.names = FALSE)
-  if (is.null(args$xlab)) {
-      if (is.null(xlab <- attr(.x, "label")))
-	  xlab <- deparse(covF[[2]])
-      args$xlab <- xlab
-  }
-
-  ## response - need not be present
-  respF <- getResponseFormula(form)
-  if (!is.null(respF)) {
-    .y <- eval(respF[[2]], data)
-    if (is.null(args$ylab)) {
-	if (is.null(ylab <- attr(.y, "label")))
-	    ylab <- deparse(respF[[2]])
-	args$ylab <- ylab
+    ## argument list
+    dots <- list(...)
+    args <- if (length(dots) > 0) dots else list()
+    ## appending object to data, and adding observation-number variable
+    data <- as.list(c(as.list(cbind(data,.obs=seq(nrow(data)))), . = list(object)))
+    ## covariate - must always be present
+    covF <- getCovariateFormula(form)
+    .x <- eval(covF[[2]], data)
+    if (!is.numeric(.x)) {
+        stop("Covariate must be numeric")
     }
-    argForm <- .y ~ .x
-    argData[, ".y"] <- .y
-  }
-
-  ## groups - need not be present
-  grpsF <- getGroupsFormula(form)
-  if (!is.null(grpsF)) {
-      ## ?? FIXME ???
-      gr <- splitFormula(grpsF, sep = "*")
-      for(i in seq_along(gr)) {
-          auxGr <- all.vars(gr[[i]])
-          for(j in auxGr)
-              argData[[j]] <- eval(as.name(j), data)
-      }
-      argForm <-
-	  as.formula(paste(if (length(argForm) == 2)
-			   "~ .x |" else ".y ~ .x |",
-			   deparse(grpsF[[2]])))
-  }
-  ## adding to args list
-   args <- c(list(argForm, data = argData), args)
-   if (is.null(args$strip)) {
-      args$strip <- function(...) strip.default(..., style = 1)
+    argForm <- ~ .x
+    argData <- data.frame(.x = .x, check.names = FALSE)
+    if (is.null(args$xlab)) {
+        if (is.null(xlab <- attr(.x, "label")))
+            xlab <- deparse(covF[[2]])
+        args$xlab <- xlab
     }
-  if (is.null(args$cex)) args$cex <- par("cex")
-  if (is.null(args$adj)) args$adj <- par("adj")
 
-  if (!is.null(id)) {	      ## identify points in plot
-      idResType <- "pearson"  ## diff from plot.lme: 'normalized' not available
-      id <- switch(mode(id),
-                   numeric = {
-                       if (id <= 0 || id >= 1)
-                           stop(shQuote("id")," must be between 0 and 1")
-                       as.logical(abs(resid(object, type = idResType)) > -qnorm(id / 2))
-                   },
-                   call = eval(asOneSidedFormula(id)[[2]], data),
-                   stop(shQuote("id")," can only be a formula or numeric.")
-                   )
-      if (is.null(idLabels)) {
-          idLabels <- getIDLabels(object)
-      } else {
-          if (inherits(idLabels,"formula")) {
-              idLabels <- getIDLabels(object,idLabels)
-          } else if (is.vector(idLabels)) {
-              if (length(idLabels <- unlist(idLabels)) != length(id)) {
-                  stop("\"idLabels\" of incorrect length")
-              }
-          } else stop("\"idLabels\" can only be a formula or a vector")
-      }
-      ## DON'T subscript by id, will be done later
-      idLabels <- as.character(idLabels)
-  }
-
-  ## defining abline, if needed
-  if (missing(abline)) {
-      abline <- if (missing(form)) # r ~ f
-          c(0, 0) else NULL
-  }
-
-  #assign("id", id , where = 1)
-  #assign("idLabels", idLabels, where = 1)
-  #assign("abl", abline, where = 1)
-  assign("abl", abline)
-
-  ## defining the type of plot
-  if (length(argForm) == 3) {
-    if (is.numeric(.y)) {		# xyplot
-      plotFun <- "xyplot"
-      if (is.null(args$panel)) {
-        args <- c(args,
-                  panel = list(function(x, y, subscripts, ...)
-		    {
-                      x <- as.numeric(x)
-                      y <- as.numeric(y)
-                      dots <- list(...)
-		      if (grid) panel.grid()
-		      panel.xyplot(x, y, ...)
-                      if (any(ids <- id[subscripts])){
-                          ltext(x[ids], y[ids], idLabels[subscripts][ids],
-                                cex = dots$cex, adj = dots$adj)
-                      }
-		      if (!is.null(abl)) {
-			if (length(abl) == 2) panel.abline(a = abl, ...) else panel.abline(h = abl, ...)
-		      }
-		    }))
-      }
-    } else {				# assume factor or character
-      plotFun <- "bwplot"
-      if (is.null(args$panel)) {
-        args <- c(args,
-                  panel = list(function(x, y, ...)
-		    {
-		      if (grid) panel.grid()
-		      panel.bwplot(x, y, ...)
-		      if (!is.null(abl)) {
-			panel.abline(v = abl[1], ...)
-		      }
-		    }))
-      }
+    ## response - need not be present
+    respF <- getResponseFormula(form)
+    if (!is.null(respF)) {
+        .y <- eval(respF[[2]], data)
+        if (is.null(args$ylab)) {
+            if (is.null(ylab <- attr(.y, "label")))
+                ylab <- deparse(respF[[2]])
+            args$ylab <- ylab
+        }
+        argForm <- .y ~ .x
+        argData[, ".y"] <- .y
     }
-  } else {
-    plotFun <- "histogram"
-    if (is.null(args$panel)) {
-      args <- c(args,
-                panel = list(function(x, ...)
-		  {
-		    if (grid) panel.grid()
-		    panel.histogram(x, ...)
-		    if (!is.null(abl)) {
-		      panel.abline(v = abl[1], ...)
-		    }
-		  }))
-    }
-  }
 
-  ## defining grid
-  if (missing(grid)) {
-    grid <- (plotFun == "xyplot")
-  }
-  # assign("grid", grid, where = 1)
-  do.call(plotFun, as.list(args))
+    ## groups - need not be present
+    grpsF <- getGroupsFormula(form)
+    if (!is.null(grpsF)) {
+        ## ?? FIXME ???
+        gr <- splitFormula(grpsF, sep = "*")
+        for(i in seq_along(gr)) {
+            auxGr <- all.vars(gr[[i]])
+            for(j in auxGr)
+                argData[[j]] <- eval(as.name(j), data)
+        }
+        argForm <-
+            as.formula(paste(if (length(argForm) == 2)
+                                 "~ .x |" else ".y ~ .x |",
+                             deparse(grpsF[[2]])))
+    }
+    ## adding to args list
+    args <- c(list(argForm, data = argData), args)
+    if (is.null(args$strip)) {
+        args$strip <- function(...) strip.default(..., style = 1)
+    }
+    if (is.null(args$cex)) args$cex <- par("cex")
+    if (is.null(args$adj)) args$adj <- par("adj")
+
+    if (!is.null(id)) {	      ## identify points in plot
+        idResType <- "pearson"  ## diff from plot.lme: 'normalized' not available
+        id <- switch(mode(id),
+                     numeric = {
+                         if (id <= 0 || id >= 1)
+                             stop(shQuote("id")," must be between 0 and 1")
+                         abs(resid(object, type = idResType))/sigma(object) >
+                             -qnorm(id / 2)
+                     },
+                     call = eval(asOneSidedFormula(id)[[2]], data),
+                     stop(shQuote("id")," can only be a formula or numeric.")
+                     )
+        if (is.null(idLabels)) {
+            idLabels <- getIDLabels(object)
+        } else {
+            if (inherits(idLabels,"formula")) {
+                idLabels <- getIDLabels(object,idLabels)
+            } else if (is.vector(idLabels)) {
+                if (length(idLabels <- unlist(idLabels)) != length(id)) {
+                    stop("\"idLabels\" of incorrect length")
+                }
+            } else stop("\"idLabels\" can only be a formula or a vector")
+        }
+        ## DON'T subscript by id, will be done later
+        idLabels <- as.character(idLabels)
+    }
+
+    ## defining abline, if needed
+    if (missing(abline)) {
+        abline <- if (missing(form)) # r ~ f
+                      c(0, 0) else NULL
+    }
+
+                                        #assign("id", id , where = 1)
+                                        #assign("idLabels", idLabels, where = 1)
+                                        #assign("abl", abline, where = 1)
+    assign("abl", abline)
+
+    ## defining the type of plot
+    if (length(argForm) == 3) {
+        if (is.numeric(.y)) {		# xyplot
+            plotFun <- "xyplot"
+            if (is.null(args$panel)) {
+                args <- c(args,
+                          panel = list(function(x, y, subscripts, ...)
+                          {
+                              x <- as.numeric(x)
+                              y <- as.numeric(y)
+                              dots <- list(...)
+                              if (grid) panel.grid()
+                              panel.xyplot(x, y, ...)
+                              if (any(ids <- id[subscripts])){
+                                  ltext(x[ids], y[ids], idLabels[subscripts][ids],
+                                        cex = dots$cex, adj = dots$adj)
+                              }
+                              if (!is.null(abl)) {
+                                  if (length(abl) == 2) panel.abline(a = abl, ...) else panel.abline(h = abl, ...)
+                              }
+                          }))
+            }
+        } else {				# assume factor or character
+            plotFun <- "bwplot"
+            if (is.null(args$panel)) {
+                args <- c(args,
+                          panel = list(function(x, y, ...)
+                          {
+                              if (grid) panel.grid()
+                              panel.bwplot(x, y, ...)
+                              if (!is.null(abl)) {
+                                  panel.abline(v = abl[1], ...)
+                              }
+                          }))
+            }
+        }
+    } else {
+        plotFun <- "histogram"
+        if (is.null(args$panel)) {
+            args <- c(args,
+                      panel = list(function(x, ...)
+                      {
+                          if (grid) panel.grid()
+                          panel.histogram(x, ...)
+                          if (!is.null(abl)) {
+                              panel.abline(v = abl[1], ...)
+                          }
+                      }))
+        }
+    }
+
+    ## defining grid
+    if (missing(grid)) {
+        grid <- (plotFun == "xyplot")
+    }
+                                        # assign("grid", grid, where = 1)
+    do.call(plotFun, as.list(args))
 }
 
 ##' add information to data based on a fitted model
@@ -437,45 +442,69 @@ fortify.merMod <- function(model, data=getData(model), ...) {
 ##  horizontal, vertical? other options???
 ##  scale?
 plot.summary.mer <- function(object, type="fixef", ...) {
-  if(any(!type %in% c("fixef","vcov")))
-      stop("'type' not yet implemented: ", type)
-  stop("FIXME -- not yet implemented")
+    if(any(!type %in% c("fixef","vcov")))
+        stop("'type' not yet implemented: ", type)
+    stop("FIXME -- not yet implemented")
 
 }
 
-## TO DO: add idLabels machinery (test/document)
 ## TO DO: allow faceting formula
 ## TO DO: allow qqline to be optional
 ## TO DO (harder): steal machinery from qq.gam for better GLMM Q-Q plots
 qqmath.merMod <- function(x, data, id=NULL, idLabels=NULL, ...) {
     ## if (!is.null(id) || !is.null(idLabels))
     ##  stop("id and idLabels options not yet implemented")
-    values <- residuals(x)
-    if (is.null(idLabels)) {
-        idLabels <- getIDLabels(x)
-    } else {
-        if (inherits(idLabels,"formula")) {
-            idLabels <- getIDLabels(x,idLabels)
-        } else if (is.vector(idLabels)) {
-            if (length(idLabels <- unlist(idLabels)) != length(id)) {
-                stop("\"idLabels\" of incorrect length")
-            }
-        } else stop("\"idLabels\" can only be a formula or a vector")
+    values <- residuals(x,type="pearson",scaled=TRUE)
+    ## DRY: copied from plot.merMod, should modularize/refactor
+    if (!is.null(id)) {	      ## identify points in plot
+        id <- switch(mode(id),
+                     numeric = {
+                         if (id <= 0 || id >= 1)
+                             stop(shQuote("id")," must be between 0 and 1")
+                         as.logical(abs(values) > -qnorm(id / 2))
+                     },
+                     call = eval(asOneSidedFormula(id)[[2]], data),
+                     stop(shQuote("id")," can only be a formula or numeric.")
+                     )
+        if (is.null(idLabels)) {
+            idLabels <- getIDLabels(x)
+        } else {
+            if (inherits(idLabels,"formula")) {
+                idLabels <- getIDLabels(x,idLabels)
+            } else if (is.vector(idLabels)) {
+                if (length(idLabels <- unlist(idLabels)) != length(id)) {
+                    stop("\"idLabels\" of incorrect length")
+                }
+            } else stop("\"idLabels\" can only be a formula or a vector")
+        }
+        idLabels <- as.character(idLabels)
+
     }
     ## DON'T subscript by id, will be done later
-    idLabels <- as.character(idLabels)
-
+    qqpanel <- function(x, subscripts, ...) {
+        dots <- list(...)
+        panel.qqmathline(x, ...)
+        panel.qqmath(x, ...)
+        if (any(ids <- id[subscripts])) {
+            xs <- x[subscripts]
+            pp <- setNames(ppoints(length(xs)),
+                           names(sort(xs)))
+            ## want to plot qnorm(pp) vs sort(x)
+            ## ... but want to pick out the elements that corresponded
+            ## to ids **before** sorting
+            xx <- qnorm(pp)[names(xs)[ids]]
+            yy <- sort(x)[names(xs)][ids] ## quantile(values, pp)[ids]
+            ltext(xx,
+                  yy,
+                  idLabels[ids],
+                  cex = dots$cex, adj = dots$adj)
+        }
+    }
     qqmath(values, xlab = "Standard normal quantiles",
+           ylab = "Standardized residuals",
            prepanel = prepanel.qqmathline,
-           panel = function(x, subscripts, ...) {
-               panel.qqmathline(x, ...)
-               panel.qqmath(x, ...)
-               ## TO DO: figure out subscripts, x-values ...
-               ## if (any(ids <- id[subscripts])){
-               ##     ltext(x[ids], y[ids], idLabels[subscripts][ids],
-               ##           cex = dots$cex, adj = dots$adj)
-               ## }
-           }, ...)
+           panel = qqpanel,
+           ...)
 }
 
 ## qqmath(~residuals(gm1)|cbpp$herd)

@@ -1,14 +1,15 @@
 \name{plot.merMod}
 \alias{plot.merMod}
+\alias{qqmath.merMod}
 \title{diagnostic plots for merMod fits}
 \usage{
   \method{plot}{merMod} (x,
     form = resid(., type = "pearson") ~ fitted(.), abline,
-    id = NULL, idLabels = NULL, grid, ...)
+    id = NULL, idLabels = NULL, grid, \dots)
+\method{qqmath}{merMod}( x, data, id = NULL, idLabels = NULL, \dots)
 }
 \arguments{
   \item{x}{a fitted [ng]lmer model}
-
   \item{form}{an optional formula specifying the desired
   type of plot. Any variable present in the original data
   frame used to obtain \code{x} can be referenced. In
@@ -81,6 +82,10 @@
   is a factor, box-plots of the right hand side variable by
   the levels of the left hand side variable are displayed
   (the lattice function \code{bwplot} is used).
+
+  \code{qqmath} produces a Q-Q plot of the residuals
+  (see \code{link{qqmath.ranef.mer}} for Q-Q plots of the
+  conditional mode values).
 }
 \examples{
 data(Orthodont,package="nlme")
@@ -93,6 +98,7 @@ plot(fm1, Subject ~ resid(., scaled=TRUE))
 plot(fm1, distance ~ fitted(.) | Subject, abline = c(0,1))
 ## residuals by age, separated by Subject
 plot(fm1, resid(., scaled=TRUE) ~ age | Sex, abline = 0)
+qqmath(fm1, id=0.05)
 if (require(ggplot2)) {
     ## we can create the same plots using ggplot2 and the fortify() function
     fm1F <- fortify(fm1)

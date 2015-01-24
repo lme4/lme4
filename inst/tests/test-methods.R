@@ -302,6 +302,16 @@ test_that("plot", {
     fm <- doFit()
     pp <- plot(fm, resid(., scaled = TRUE) ~ fitted(.) | Sex, abline = 0)
     expect_is(pp, "trellis")
+
+    ## test qqmath/getIDLabels()
+    expect_is(q1 <- lattice::qqmath(fm,id=0.05),"trellis")
+
+    cake2 <- transform(cake,replicate=as.numeric(replicate),
+                    recipe=as.numeric(recipe))
+    fm2 <- lmer(angle ~ recipe + temp        +
+                    (1|recipe:replicate), cake2, REML= FALSE)
+    expect_is(lattice::qqmath(fm2,id=0.05), "trellis")
+    expect_is(lattice::qqmath(fm2,id=0.05, idLabels=~recipe), "trellis")
 })
 
 context("misc")

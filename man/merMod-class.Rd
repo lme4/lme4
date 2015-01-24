@@ -23,7 +23,6 @@
 \alias{nlmerMod-class}
 \alias{print.merMod}
 \alias{print.summary.merMod}
-\alias{qqmath.merMod}
 \alias{show,merMod-method}
 \alias{show.merMod}
 \alias{show.summary.merMod}
@@ -148,7 +147,6 @@ use.hessian = NULL, \dots)
 \section{S3 methods}{
 The following S3 methods with arguments given above exist (this list is currently not complete):
 \describe{
-  %% TODO:  document qqmath.merMod
   %% TODO:  document differences between update and update.merMod
     \item{\code{anova}:}{returns the sequential decomposition of the contributions of
       fixed-effects terms or, for multiple arguments, model comparison statistics.
