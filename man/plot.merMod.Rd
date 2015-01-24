@@ -98,8 +98,9 @@ plot(fm1, Subject ~ resid(., scaled=TRUE))
 plot(fm1, distance ~ fitted(.) | Subject, abline = c(0,1))
 ## residuals by age, separated by Subject
 plot(fm1, resid(., scaled=TRUE) ~ age | Sex, abline = 0)
+require("lattice")
 qqmath(fm1, id=0.05)
-if (require(ggplot2)) {
+if (require("ggplot2")) {
     ## we can create the same plots using ggplot2 and the fortify() function
     fm1F <- fortify(fm1)
     ggplot(fm1F, aes(.fitted,.resid)) + geom_point(colour="blue") +
