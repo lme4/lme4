@@ -894,7 +894,7 @@ model.frame.merMod <- function(formula, fixed.only=FALSE, ...) {
     fr <- formula@frame
     if (fixed.only) {
         ff <- formula(formula,fixed.only=TRUE)
-        ## thanks to Thomas Leeper and Roman Luštrik, Stack Overflow
+        ## thanks to Thomas Leeper and Roman Lustrik, Stack Overflow
         vars <- rownames(attr(terms.formula(ff), "factors"))
         fr <- fr[vars]
     }
