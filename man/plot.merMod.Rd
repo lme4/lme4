@@ -6,7 +6,7 @@
   \method{plot}{merMod} (x,
     form = resid(., type = "pearson") ~ fitted(.), abline,
     id = NULL, idLabels = NULL, grid, \dots)
-\method{qqmath}{merMod}( x, data, id = NULL, idLabels = NULL, \dots)
+\method{qqmath}{merMod}( x, id = NULL, idLabels = NULL, \dots)
 }
 \arguments{
   \item{x}{a fitted [ng]lmer model}

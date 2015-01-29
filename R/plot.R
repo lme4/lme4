@@ -28,7 +28,7 @@ getData <-  function(object)
 {
     mCall <- object@call
     data <- eval(mCall$data,environment(formula(object)))
-    if (is.null(data)) return(data)
+    ## if (is.null(data)) return(data)
     ## FIXME: deal with NAs, subset appropriately
     ## naPat <- eval(mCall$naPattern)
     ## if (!is.null(naPat)) {
@@ -451,10 +451,11 @@ plot.summary.mer <- function(object, type="fixef", ...) {
 ## TO DO: allow faceting formula
 ## TO DO: allow qqline to be optional
 ## TO DO (harder): steal machinery from qq.gam for better GLMM Q-Q plots
-qqmath.merMod <- function(x, data, id=NULL, idLabels=NULL, ...) {
+qqmath.merMod <- function(x, id=NULL, idLabels=NULL, ...) {
     ## if (!is.null(id) || !is.null(idLabels))
     ##  stop("id and idLabels options not yet implemented")
     values <- residuals(x,type="pearson",scaled=TRUE)
+    data <- getData(x)
     ## DRY: copied from plot.merMod, should modularize/refactor
     if (!is.null(id)) {	      ## identify points in plot
         id <- switch(mode(id),

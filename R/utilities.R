@@ -27,22 +27,28 @@ abbrDeparse <- function(x, width=60) {
 ##' @param bars result of findbars
 barnames <- function(bars) vapply(bars, function(x) safeDeparse(x[[3]]), "")
 
-##' @param x a language object of the form  effect | groupvar
-##' @param frloc model frame
-##' @param drop.unused.levels (logical)
-##' @return list containing grouping factor, sparse model matrix, number of levels, names
-mkBlist <- function(x,frloc, drop.unused.levels=TRUE) {
+makeFac <- function(x) if (!is.factor(x)) factor(x) else x
+
+factorize <- function(x,frloc) {
     ## convert grouping variables to factors as necessary
     ## TODO: variables that are *not* in the data frame are
     ##  not converted -- these could still break, e.g. if someone
     ##  tries to use the : operator
     ## TODO: some sensible tests for drop.unused.levels
     ##       (not actually used, but could come in handy)
-    makeFac <- function(x) if (!is.factor(x)) factor(x) else x
-    for (i in all.vars(x[[3]])) {
+    for (i in all.vars(RHSForm(x))) {
         if (!is.null(curf <- frloc[[i]]))
             frloc[[i]] <- makeFac(curf)
     }
+    return(frloc)
+}
+
+##' @param x a language object of the form  effect | groupvar
+##' @param frloc model frame
+##' @param drop.unused.levels (logical)
+##' @return list containing grouping factor, sparse model matrix, number of levels, names
+mkBlist <- function(x,frloc, drop.unused.levels=TRUE) {
+    frloc <- factorize(x,frloc)
     ## try to evaluate grouping factor within model frame ...
     if (is.null(ff <- tryCatch(eval(substitute(makeFac(fac),
                                                list(fac = x[[3]])), frloc),
@@ -1068,6 +1074,7 @@ nlminbwrap <- function(par, fn, lower, upper, control=list(), ...) {
     list(par = res$par, fval = res$objective,
          conv = res$convergence, message = res$message)
 }
+
 glmerLaplaceHandle <- function(pp, resp, nAGQ, tol, maxit, verbose) {
     .Call(glmerLaplace, pp, resp, nAGQ, tol, as.integer(maxit), verbose)
 }
