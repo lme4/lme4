@@ -52,6 +52,7 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     sparseX = FALSE,
     tolPwrss=1e-7,
     compDev=TRUE,
+    nAGQ0initStep=TRUE,
     ## input checking options
     check.nobs.vs.rankZ = "ignore",
     check.nobs.vs.nlev = "stop",
@@ -132,6 +133,7 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
   \item{compDev}{logical scalar - should compiled code be
     used for the deviance evaluation during the optimization
     of the parameter estimates?}
+  \item{nAGQ0initStep}{do one initial run with \code{nAGQ = 0}.}
   \item{check.nlev.gtreq.5}{character - rules for
     checking whether all random effects have >= 5 levels.
     See \code{action}.}

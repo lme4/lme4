@@ -116,7 +116,7 @@ glmer <- function(formula, data=NULL, family = gaussian,
     }
 
     ## FIX ME: allow calc.derivs, use.last.params etc. if nAGQ=0
-    if(control$nAGQinitStep) {
+    if(control$nAGQ0initStep) {
         opt <- optimizeGlmer(devfun,
                              optimizer = control$optimizer[[1]],
                              ## DON'T try fancy edge tricks unless nAGQ=0 explicitly set
