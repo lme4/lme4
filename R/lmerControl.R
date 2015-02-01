@@ -148,6 +148,7 @@ glmerControl <-
 	     sparseX=FALSE,
 	     tolPwrss = 1e-7,
 	     compDev = TRUE,
+             nAGQ0initStep = TRUE,
 	     ## input checking options
 	     check.nobs.vs.rankZ="ignore", ## "warningSmall",
 	     check.nobs.vs.nlev="stop",
@@ -208,6 +209,7 @@ glmerControl <-
                         boundary.tol,
 			tolPwrss,
 			compDev,
+                        nAGQ0initStep,
 			checkControl=
 			namedList(check.nobs.vs.rankZ,
                                   check.nobs.vs.nlev,
