@@ -96,9 +96,10 @@ glmer <- function(formula, data=NULL, family = gaussian,
 
     ## create deviance function for covariance parameters (theta)
 
-    devfun <- do.call(mkGlmerDevfun, c(glmod, list(verbose=verbose,
-                                                   control=control,
-                                                   nAGQ = 0)))
+    if(control$nAGQ0initStep) nAGQinit <- 0L else nAGQinit <- 1L
+    devfun <- do.call(mkGlmerDevfun, c(glmod, list(verbose = verbose,
+                                                   control = control,
+                                                   nAGQ = nAGQinit)))
     if (nAGQ==0 && devFunOnly) return(devfun)
     ## optimize deviance function over covariance parameters
 

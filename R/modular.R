@@ -666,6 +666,7 @@ mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L,
                                  n=nrow(X), list(X=X)))
     if (missing(fr)) rho$resp <- mkRespMod(family=family, ...)
     else rho$resp             <- mkRespMod(fr, family=family)
+    if(control$nAGQ0initStep) nAGQinit <- 0L else nAGQinit <- 1L
     ## allow trivial y
     if (length(y <- rho$resp$y) > 0) {
         if (length(unique(y)) < 2L)
@@ -673,14 +674,14 @@ mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L,
         rho$verbose     <- as.integer(verbose)
 
         ## initialize (from mustart)
-        .Call(glmerLaplace, rho$pp$ptr(), rho$resp$ptr(), 0L,
+        .Call(glmerLaplace, rho$pp$ptr(), rho$resp$ptr(), nAGQinit,
               control$tolPwrss, as.integer(30), # maxit = 30
               verbose)
         rho$lp0         <- rho$pp$linPred(1) # each pwrss opt begins at this eta
         rho$pwrssUpdate <- glmerPwrssUpdate
     }
     rho$lower       <- reTrms$lower     # not needed in rho?
-    devfun <- mkdevfun(rho, 0L, verbose, control)
+    devfun <- mkdevfun(rho, nAGQinit, verbose, control)
                                         #if (devFunOnly && !nAGQ) return(devfun)
     return(devfun) # this should pass the rho environment implicitly
 }
