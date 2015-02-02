@@ -119,8 +119,9 @@ namespace glm {
     template<typename T>
     struct logitinv : public std::unary_function<T, T> {
 	const T operator() (const T& x) const {
-	    return T(std::min(1.-std::numeric_limits<T>::epsilon(),
-			      Rf_plogis(double(x), 0., 1., 1, 0)));
+	    return T(std::max(std::numeric_limits<T>::epsilon(),
+			      std::min(1.-std::numeric_limits<T>::epsilon(),
+				       Rf_plogis(double(x), 0., 1., 1, 0))));
 	}
     };
 
