@@ -6,7 +6,7 @@
   objects, i.e. results of \code{\link{lmer}()}, \code{\link{glmer}()}, etc.
 }
 \usage{
-\method{predict}{merMod}(object, newdata = NULL, newparams = NULL, newX = NULL,
+\method{predict}{merMod}(object, newdata = NULL, newparams = NULL,
 	re.form = NULL, ReForm, REForm, REform,	terms = NULL,
 	type = c("link", "response"), allow.new.levels = FALSE,
 	na.action = na.pass, \dots)
@@ -18,8 +18,6 @@
     specified as in the \code{start} parameter for \code{\link{lmer}}
     or \code{\link{glmer}} -- a list with components \code{theta} and/or
     (for GLMMs) \code{beta}.}
-  \item{newX}{new design matrix to use in evaluating predictions
-    (alternative to \code{newdata}).}
   \item{re.form}{formula for random effects to condition on.  If \code{NULL},
     include all random effects; if \code{NA} or \code{~0},
     include no random effects}

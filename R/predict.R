@@ -196,8 +196,6 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
 ##' @param object a fitted model object
 ##' @param newdata data frame for which to evaluate predictions
 ##' @param newparams new parameters to use in evaluating predictions
-##' @param newX new design matrix to use in evaluating predictions
-##' (alternative to \code{newdata})
 ##' @param re.form formula for random effects to condition on.  If \code{NULL},
 ##' include all random effects; if \code{NA} or \code{~0},
 ##' include no random effects
@@ -222,7 +220,7 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
 ##' str(p4 <- predict(gm1,newdata,re.form=~(1|herd))) # explicitly specify RE
 ##' @method predict merMod
 ##' @export
-predict.merMod <- function(object, newdata=NULL, newparams=NULL, newX=NULL,
+predict.merMod <- function(object, newdata=NULL, newparams=NULL, 
                            re.form=NULL,
                            ReForm,
                            REForm,
