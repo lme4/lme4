@@ -149,6 +149,9 @@ test_that("bootMer", {
     boo01.sp <- bootMer(m5, fixef, nsim = 100, use.u = TRUE,
                         type = "semiparametric")
     expect_equal(sd(boo01.sp$t), 8.215586, tol = 1e-4)
+    ## passing FUN to confint: Torbjørn Håkan Ergon
+    testFun <- function(fit) fixef(fit)[1]
+    confint(fm1, method="boot", FUN=testFun, nsim=10)
 })
 
 context("confint")

@@ -9,7 +9,8 @@
 \method{confint}{merMod}(object, parm, level = 0.95,
 	method = c("profile", "Wald", "boot"), zeta,
 	nsim = 500,
-        boot.type = c("perc","basic","norm"), quiet = FALSE,
+        boot.type = c("perc","basic","norm"),
+        FUN = NULL, quiet = FALSE,
 	oldNames = TRUE, ...)
 }
 \arguments{
@@ -24,6 +25,10 @@
   \item{zeta}{(for \code{method = "profile"} only:) likelihood cutoff
     (if not specified, as by default, computed from \code{level}).}
   \item{nsim}{number of simulations for parametric bootstrap intervals.}
+  \item{FUN}{bootstrap function; if \code{NULL}, an internal function
+    that returns the fixed-effect parameters as well as the
+    random-effect parameters on the standard deviation/correlation scale
+    will be used. See \code{\link{bootMer}} for details.}
   \item{boot.type}{bootstrap confidence interval type, as described
     in \code{\link{boot.ci}}. (Methods \sQuote{stud} and \sQuote{bca}
     are unavailable because they require additional components to be

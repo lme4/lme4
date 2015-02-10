@@ -671,7 +671,7 @@ confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
 confint.merMod <- function(object, parm, level = 0.95,
 			   method = c("profile","Wald","boot"),
 			   zeta, nsim=500, boot.type = c("perc","basic","norm"),
-                           quiet=FALSE, oldNames=TRUE, ...)
+                           FUN = NULL, quiet=FALSE, oldNames=TRUE, ...)
 {
     method <- match.arg(method)
     boot.type <- match.arg(boot.type)
@@ -730,7 +730,8 @@ confint.merMod <- function(object, parm, level = 0.95,
 		   }
                    c(ss, fixef(x))
                }
-               bb <- bootMer(object, bootFun, nsim=nsim,...)
+               if (is.null(FUN)) FUN <- bootFun
+               bb <- bootMer(object, FUN=FUN, nsim=nsim,...)
                bci <- lapply(seq_along(bb$t0),
                              boot.out=bb,
                              boot::boot.ci, type=boot.type, conf=level)
