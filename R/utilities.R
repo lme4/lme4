@@ -233,6 +233,7 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
     if (!is.null(REML)) rho$REML <- REML
     rho$etastart <- fr$etastart
     rho$mustart <- fr$mustart
+    rho$start <- NULL
     ##N <- n <- nrow(fr)
     if (!is.null(nlenv)) {
         stopifnot(is.language(nlmod),
@@ -606,7 +607,7 @@ nlformula <- function(mc) {
 ## however, because R CMD check is complaining:
 ## https://github.com/lme4/lme4/commit/8d71e439758999ea8f90eb4752487e189407ef33#commitcomment-8773017
 ################################################################################
-## 
+##
 ## .dims <- function(pp, resp, nAGQ,
 ##                   reTrms, n, p, rcl,
 ##                   compDev = NULL) {
@@ -627,7 +628,7 @@ nlformula <- function(mc) {
 ##       GLMM=(rcl=="glmResp"),
 ##       NLMM=(rcl=="nlsResp"))
 ## }
-## 
+##
 ## .cmp <- function(pp, resp, dims, fval,
 ##                  wrss, sqrLenU, pwrss,
 ##                  sigmaML, rcl, fac,

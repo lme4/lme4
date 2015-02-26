@@ -4,7 +4,7 @@ library("lme4")
 testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL")))
                  as.numeric(s) else 1
 
-gives_error_or_warning <- function (regexp = NULL, all = FALSE, ...) 
+gives_error_or_warning <- function (regexp = NULL, all = FALSE, ...)
 {
     function(expr) {
         res <- try(evaluate_promise(expr),silent=TRUE)
@@ -15,7 +15,7 @@ gives_error_or_warning <- function (regexp = NULL, all = FALSE, ...)
             if (!is.null(regexp) && length(warnings) > 0) {
                 return(matches(regexp, all = FALSE, ...)(warnings))
             } else {
-                return(expectation(length(warnings) > 0, "no warnings or errors given", 
+                return(expectation(length(warnings) > 0, "no warnings or errors given",
                             paste0(length(warnings), " warnings created")))
             }
         }
@@ -69,7 +69,7 @@ test_that("glmer", {
     expect_equal(family(gm1_probit)$link,"probit")
 
     ## FIXME: test user-specified/custom family?
-    
+
     expect_error(glFormula(cbind(incidence, size - incidence) ~ period + (1 | herd),
                              data = subset(cbpp, herd==levels(herd)[1]), family = binomial),
                  "must have > 1")
@@ -277,4 +277,8 @@ if(FALSE) { ## Hadley broke this
     ## should work OK with logical too
     expect_is(glmer(rr~(1|Days),family="binomial",data=ss2),"merMod")
 
+    ## starting values with log(.) link -- thanks to Eric Weese @ Yale:
+    grp <- rep(letters[1:5], 20); set.seed(1); x <- rnorm(100)
+    expect_error(glmer(x ~ 1 + (1|grp), family=gaussian(link="log")),
+		 "valid starting values")
 })
