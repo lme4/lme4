@@ -9,7 +9,8 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
                            verbose=0, devtol=1e-9,
                            maxmult = 10,
                            startmethod = "prev",
-                           optimizer = "bobyqa",
+                           optimizer = NULL,
+                           control = NULL,
                            signames = TRUE,
                            parallel = c("no", "multicore", "snow"),
                            ncpus = getOption("profile.ncpus", 1L), cl = NULL, ...)
@@ -20,6 +21,25 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
     ## FIXME: allow selection of individual variables to profile by name?
     ## FIXME: allow for failure of bounds (non-pos-definite correlation matrices) when >1 cor parameter
 
+    if (missing(parallel)) parallel <- getOption("profile.parallel", "no")
+    parallel <- match.arg(parallel)
+    have_mc <- have_snow <- FALSE
+    do_parallel <- (parallel != "no" && ncpus > 1L)
+    if (do_parallel) {
+        if (parallel == "multicore") have_mc <- .Platform$OS.type != "windows"
+        else if (parallel == "snow") have_snow <- TRUE
+	if (!(have_mc || have_snow))
+	    do_parallel <- FALSE # (only for "windows")
+    }
+
+    if (is.null(optimizer)) optimizer <- fitted@optinfo$optimizer
+    control.internal <- fitted@optinfo$control
+    if (!is.null(control)) {
+        for (i in names(control)) {
+            control.internal[[i]] <- control[[i]]
+        }
+    }
+    control <- control.internal
     ## parallel stuff copied from bootMer ...
     if (missing(parallel)) parallel <- getOption("profile.parallel", "no")
     parallel <- match.arg(parallel)
@@ -170,7 +190,9 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
             ores <- tryCatch(optwrap(optimizer, par=start,
                                      fn=function(x) dd(mkpar(npar1, w, xx, x)),
                                      lower = lowvp[-w],
-                                     upper = upvp [-w]), error=function(e)NULL)
+                                     upper = upvp [-w],
+                                     control = control),
+                             error=function(e) NULL)
             if (is.null(ores)) {
                 devdiff <- NA
                 pars <- NA
@@ -242,7 +264,24 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
 
     } ## FUN()
 
-    L <- lapply(seqnvp, FUN)
+    ## copied from bootMer: DRY!
+    L <- if (do_parallel) {
+        if (have_mc) {
+            parallel::mclapply(seqnvp, FUN, mc.cores = ncpus)
+        } else if (have_snow) {
+            if (is.null(cl)) {
+                cl <- parallel::makePSOCKcluster(rep("localhost", ncpus))
+                ## explicit export of the lme4 namespace since most FUNs will probably
+                ## use some of them
+                parallel::clusterExport(cl, varlist=getNamespaceExports("lme4"))
+                if(RNGkind()[1L] == "L'Ecuyer-CMRG")
+                    parallel::clusterSetRNGStream(cl)
+                res <- parallel::parLapply(cl, seqnvp, FUN)
+                parallel::stopCluster(cl)
+                res
+            } else parallel::parLapply(cl, seqnvp, FUN)
+        }
+    } else lapply(seqnvp, FUN)
     nn <- names(opt[seqnvp])
     ans <-    setNames(lapply(L,`[[`,"bres"),nn)
     bakspl <- setNames(lapply(L,`[[`,"bakspl"),nn)
