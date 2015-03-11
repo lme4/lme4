@@ -33,6 +33,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
     }
 
     if (is.null(optimizer)) optimizer <- fitted@optinfo$optimizer
+    ## FIXME: doesn't work for GLMMs
     control.internal <- fitted@optinfo$control
     if (!is.null(control)) {
         for (i in names(control)) {
@@ -190,8 +191,8 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
             ores <- tryCatch(optwrap(optimizer, par=start,
                                      fn=function(x) dd(mkpar(npar1, w, xx, x)),
                                      lower = lowvp[-w],
-                                     upper = upvp [-w],
-                                     control = control),
+                                     upper = upvp [-w]),
+                             ## control = control),
                              error=function(e) NULL)
             if (is.null(ores)) {
                 devdiff <- NA
