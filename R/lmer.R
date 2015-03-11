@@ -1559,7 +1559,7 @@ getLlikAIC <- function(object, cmp = object@devcomp$cmp) {
         } else {
             cat(sprintf("convergence code: %d",cc),
                 msgs,
-                warnings,
+                unlist(warnings),
                 sep="\n")
             cat("\n")
         }
