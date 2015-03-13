@@ -4,8 +4,12 @@
 ##' @importFrom stats profile
 ##' @method profile merMod
 ##' @export
-profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
-			   maxpts = 100, delta = cutoff/8,
+profile.merMod <- function(fitted,
+                           which=NULL,
+                           alphamax = 0.01,
+			   maxpts = 100,
+                           delta = NULL,
+                           delta.cutoff = 1/8,
                            verbose=0, devtol=1e-9,
                            maxmult = 10,
                            startmethod = "prev",
@@ -33,8 +37,14 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
     }
 
     if (is.null(optimizer)) optimizer <- fitted@optinfo$optimizer
-    ## FIXME: doesn't work for GLMMs
+    ## hack: doesn't work to set bobyqa parameters to *ending* values stored
+    ## in @optinfo$control
+    ignore.pars <- c("xst","xt")
     control.internal <- fitted@optinfo$control
+    ignored <- which(names(control.internal) %in% ignore.pars)
+    if (length(ignored)>0) {
+        control.internal <- control.internal[-ignored]
+    }
     if (!is.null(control)) {
         for (i in names(control)) {
             control.internal[[i]] <- control[[i]]
@@ -76,9 +86,13 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
     res <- matrix(res, nrow = maxpts, ncol = length(res),
                   dimnames = list(NULL, names(res)), byrow = TRUE)
 
-    ## FIXME: why is cutoff based on nptot (i.e. boundary of simultaneous LRT conf region for nptot values)
+    ## FIXME: why is cutoff based on nptot
+    ## (i.e. boundary of simultaneous LRT conf region for nptot values)
     ##  when we are computing (at most) 2-parameter profiles here?
     cutoff <- sqrt(qchisq(1 - alphamax, nptot))
+
+    if (is.null(delta))
+        delta <- cutoff*delta.cutoff
 
     ## helper functions
 
@@ -97,12 +111,17 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
             step <- minstep
         } else {
             step <- absstep*num/denom
-            if (r>1) {
-                if (abs(step) > (maxstep <- abs(maxmult*num))) {
-                    maxstep <- sign(step)*maxstep
-                    if (verbose) cat(sprintf("capped step at %1.2f (multiplier=%1.2f > %1.2f)\n",
-                                             maxstep,abs(step/num),maxmult))
-                    step <- maxstep
+            if (step<0) {
+                warning("unexpected decrease in profile: using minstep")
+                step <- minstep
+            } else {
+                if (r>1) {
+                    if (abs(step) > (maxstep <- abs(maxmult*num))) {
+                        maxstep <- sign(step)*maxstep
+                        if (verbose) cat(sprintf("capped step at %1.2f (multiplier=%1.2f > %1.2f)\n",
+                                                 maxstep,abs(step/num),maxmult))
+                        step <- maxstep
+                    }
                 }
             }
         }
@@ -179,9 +198,14 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
     upvp <- upper[seqpar1]
     form <- .zeta ~ foo # pattern for interpSpline formula
 
-    FUN <- function(w) {
+    ## as in bootMer.R, define FUN as a
+    ##    closure containing the referenced variables
+    ##    in its scope to avoid explicit clusterExport statement
+    ##    in the PSOCKcluster case
+    FUN <- local({
+        function(w) {
         if (verbose) cat(if(isLMM(fitted)) "var-cov " else "",
-                         "parameter ",w,":\n",sep="")
+                             "parameter ",w,":\n",sep="")
         wp1 <- w + 1L
         start <- opt[seqpar1][-w]
         pw <- opt[w]
@@ -191,8 +215,8 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
             ores <- tryCatch(optwrap(optimizer, par=start,
                                      fn=function(x) dd(mkpar(npar1, w, xx, x)),
                                      lower = lowvp[-w],
-                                     upper = upvp [-w]),
-                             ## control = control),
+                                     upper = upvp [-w],
+                                     control = control),
                              error=function(e) NULL)
             if (is.null(ores)) {
                 devdiff <- NA
@@ -263,7 +287,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
         ## return:
         namedList(bres,bakspl,forspl) # namedList() -> lmerControl.R
 
-    } ## FUN()
+    }}) ## FUN()
 
     ## copied from bootMer: DRY!
     L <- if (do_parallel) {
@@ -277,9 +301,9 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
                 parallel::clusterExport(cl, varlist=getNamespaceExports("lme4"))
                 if(RNGkind()[1L] == "L'Ecuyer-CMRG")
                     parallel::clusterSetRNGStream(cl)
-                res <- parallel::parLapply(cl, seqnvp, FUN)
+                pres <- parallel::parLapply(cl, seqnvp, FUN)
                 parallel::stopCluster(cl)
-                res
+                pres
             } else parallel::parLapply(cl, seqnvp, FUN)
         }
     } else lapply(seqnvp, FUN)
@@ -293,6 +317,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
         offset.orig <- fitted@resp$offset
         fp <- seq_len(p)
         fp <- fp[(fp+nvp) %in% which]
+        ## FIXME: parallelize this too ...
         for (j in fp) {
             if (verbose) cat("fixed-effect parameter ",j,":\n",sep="")
             pres <-            # intermediate results for pos. incr.
@@ -362,6 +387,7 @@ profile.merMod <- function(fitted, which=1:nptot, alphamax = 0.01,
 ##' Transform 'which' \in {parnames | integer | "beta_" | "theta_"}
 ##' into integer indices
 get.which <- function(which, nvp, nptot, parnames, verbose) {
+    if (is.null(which)) return(1:nptot)
     wi.vp <- seq_len(nvp)
     if(is.character(which)) {
         wi <- integer(); wh <- which

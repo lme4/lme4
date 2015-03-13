@@ -116,20 +116,21 @@ if (testLevel > 3) {
 
 library(parallel)
 if (detectCores()>1) {
+
+    p0 <- profile(fm1, which="theta_")
     ## http://stackoverflow.com/questions/12983137/how-do-detect-if-travis-ci-or-not
     travis <- nchar(Sys.getenv("TRAVIS"))>0
     if(.Platform$OS.type != "windows" && !travis) {
-        prof01P <- profile(fm1, which="beta_", parallel="multicore", ncpus=2)
+        prof01P <- profile(fm1, which="theta_", parallel="multicore", ncpus=2)
     }
+
+    stopifnot(all.equal(p0,prof01P))
 
     ## works in Solaris from an interactive console but not ???
     ##   via R CMD BATCH
 
-    ## FAILS:
-    ## Error in pres[2, ] <- fe.zeta(est + delta * std) : 
-    ##   incorrect number of subscripts on matrix
-    if (FALSE) {
-        if (Sys.info()["sysname"] != "SunOS")
-            prof01P.snow <- profile(fm1, which="beta_", parallel="snow", ncpus=2)
+    if (Sys.info()["sysname"] != "SunOS") {
+        prof01P.snow <- profile(fm1, which="theta_", parallel="snow", ncpus=2)
+        stopifnot(all.equal(p0,prof01P.snow))
     }
 }
