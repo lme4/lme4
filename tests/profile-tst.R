@@ -114,7 +114,7 @@ if (testLevel > 3) {
 
 }  ## testLevel > 3
 
-library(parallel)
+library("parallel")
 if (detectCores()>1) {
 
     p0 <- profile(fm1, which="theta_")
@@ -122,14 +122,13 @@ if (detectCores()>1) {
     travis <- nchar(Sys.getenv("TRAVIS"))>0
     if(.Platform$OS.type != "windows" && !travis) {
         prof01P <- profile(fm1, which="theta_", parallel="multicore", ncpus=2)
+        stopifnot(all.equal(p0,prof01P))
     }
-
-    stopifnot(all.equal(p0,prof01P))
 
     ## works in Solaris from an interactive console but not ???
     ##   via R CMD BATCH
 
-    if (Sys.info()["sysname"] != "SunOS") {
+    if (Sys.info()["sysname"] != "SunOS" && !travis) {
         prof01P.snow <- profile(fm1, which="theta_", parallel="snow", ncpus=2)
         stopifnot(all.equal(p0,prof01P.snow))
     }
