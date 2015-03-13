@@ -18,8 +18,9 @@
 \method{profile}{merMod}(fitted, which = NULL, alphamax = 0.01,
 	maxpts = 100, delta = NULL,
         delta.cutoff = 1/8, verbose = 0, devtol = 1e-09,
-        maxmult = 10, startmethod = "prev", optimizer = "bobyqa",
-	signames = TRUE,  parallel = c("no", "multicore", "snow"),
+        maxmult = 10, startmethod = "prev", optimizer = NULL,
+        control=NULL, signames = TRUE,
+        parallel = c("no", "multicore", "snow"),
         ncpus = getOption("profile.ncpus", 1L), cl = NULL, \dots)
 \method{as.data.frame}{thpr} (x, ...)
 \method{log}{thpr}(x, base = exp(1))
@@ -72,7 +73,10 @@ logProf(x, base = exp(1), ranef = TRUE,
   \item{startmethod}{method for picking starting conditions for
     optimization (STUB).}
   \item{optimizer}{(character or function) optimizer to use (see
-    \code{\link{lmer}} for details).}
+    \code{\link{lmer}} for details); default is to use the optimizer
+    from the original model fit.}
+  \item{control}{Control options for profiling (see \code{\link{lmerControl}}): default is to use
+    the control settings from the original model fit.}
   \item{signames}{logical indicating if abbreviated names of the form
     \code{.sigNN} should be used; otherwise, names are more meaningful
     (but longer) of the form \code{(sd|cor)_(effects)|(group)}.  Note
