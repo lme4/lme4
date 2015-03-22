@@ -133,3 +133,13 @@ if (detectCores()>1) {
         stopifnot(all.equal(p0,prof01P.snow))
     }
 }
+
+## test profile/update from within functions
+foo <- function() {
+    df <- cbpp
+    gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+                   data = cbpp, family = binomial)
+    pp <- profile(gm1,which="theta_")
+    return(pp)
+}
+stopifnot(is(foo(),"thpr"))

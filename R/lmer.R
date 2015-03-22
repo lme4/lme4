@@ -1422,7 +1422,7 @@ update.merMod <- function(object, formula., ..., evaluate = TRUE) {
 	}
     }
     if (evaluate)
-	eval(call, parent.frame())
+        eval(call, environment(formula(object)))
     else call
 }
 

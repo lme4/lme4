@@ -29,6 +29,8 @@
       LMMs)
       \item convergence warning and diagnostic test issues are now
       reported in \code{print} and \code{summary} methods
+      \item \code{update} now (attempts to) re-evaluate the original fit
+      in the environment of its formula (as is done with \code{drop1})
     }
   }
   \subsection{BUG FIXES}{
