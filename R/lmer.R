@@ -1421,9 +1421,13 @@ update.merMod <- function(object, formula., ..., evaluate = TRUE) {
 	    call <- as.call(call)
 	}
     }
-    if (evaluate)
-        eval(call, environment(formula(object)))
-    else call
+    if (evaluate) {
+        pf <- parent.frame()  ## save parent frame in case we need it
+        tryCatch(eval(call, env=environment(formula(object))),
+                 error=function(e) {
+                     eval(call, pf)
+                 })
+    } else call
 }
 
 ###----- Printing etc ----------------------------
