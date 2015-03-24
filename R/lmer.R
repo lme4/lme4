@@ -1108,7 +1108,6 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
 {
 
     newControl <- NULL
-
     if (ll <- length(l... <- list(...)) > 0) {
         if ((ll == 1L) &&  (names(l...)[1] == "control")) {
             newControl <- l...$control
@@ -1210,13 +1209,20 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
         x0    <- c(x0, unname(fixef(object)))
         lower <- c(lower, rep(-Inf,length(x0)-length(lower)))
     }
-    ## control <- object@optinfo$control
+    ## somewhat repeated from profile.merMod, but sufficiently
+    ##  different that refactoring is slightly non-trivial
+    ## "three minutes' thought would suffice ..."
+    ignore.pars <- c("xst","xt")
+    control.internal <- object@optinfo$control
+    ignored <- which(names(control.internal) %in% ignore.pars)
+    if (length(ignored)>0) {
+        control.internal <- control.internal[-ignored]
+    }
+
     if (!is.null(newControl)) {
         control <- newControl
-        control$optCtrl <- object@optinfo$control
-        ## for (i in names(newControl)) {
-        ##     control[[i]] <- newControl[[i]]
-        ## }
+        if (length(control$optCtrl)==0)
+            control$optCtrl <- control.internal
     } else {
         control <- lmerControl()
     }
@@ -1422,10 +1428,15 @@ update.merMod <- function(object, formula., ..., evaluate = TRUE) {
 	}
     }
     if (evaluate) {
+        ff <- environment(formula(object))
         pf <- parent.frame()  ## save parent frame in case we need it
-        tryCatch(eval(call, env=environment(formula(object))),
+        sf <- sys.frames()[[1]]
+        tryCatch(eval(call, env=ff),
                  error=function(e) {
-                     eval(call, pf)
+                     tryCatch(eval(call, env=sf),
+                              error=function(e) {
+                                  eval(call, pf)
+                              })
                  })
     } else call
 }
@@ -2513,3 +2524,4 @@ as.data.frame.VarCorr.merMod <- function(x,row.names = NULL,
     rownames(r) <- NULL
     r
 }
+
