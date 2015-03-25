@@ -1180,6 +1180,15 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
         rr$setResp(newresp)
     }
 
+    rho <- environment()
+    rho$verbose <- list(...)$verbose; if (is.null(verbose)) verbose <- 0L
+    rho$tolPwrss <- object@devcomp$cmp[["tolPwrss"]]
+    rho$compDev <- object@devcomp$dims[["compDev"]]
+    rho$pp <- object@pp$copy()
+    
+    
+
+        
     pp        <- object@pp$copy()
     dc        <- object@devcomp
     nAGQ      <- dc$dims["nAGQ"] # possibly NA
