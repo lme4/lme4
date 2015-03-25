@@ -777,7 +777,7 @@ confint.merMod <- function(object, parm, level = 0.95,
 	   "boot" =
            {
 	       if (!quiet) {
-		   message("Computing profile confidence intervals ...")
+		   message("Computing bootstrap confidence intervals ...")
 		   flush.console()
 	       }
                bootFun <- function(x) {
