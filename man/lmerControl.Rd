@@ -63,6 +63,7 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
                     "stop.deficient", "ignore"),
     check.scaleX  = "warning",
     check.formula.LHS = "stop",
+    check.response.not.const = "stop",
     ## convergence checking options
     check.conv.grad     = .makeCC("warning", tol = 1e-3, relTol = NULL),
     check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
@@ -193,6 +194,8 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     \code{simulate.merMod};
     \emph{use at your own risk} as it may allow the generation
     of unstable \code{merMod} objects}
+  \item{check.response.not.const}{character - check that the
+    response is not constant.}
 
   \item{optCtrl}{a \code{\link{list}} of additional arguments to be
     passed to the nonlinear optimizer (see \code{\link{Nelder_Mead}},

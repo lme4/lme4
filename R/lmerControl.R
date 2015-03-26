@@ -160,6 +160,7 @@ glmerControl <-
 	     "stop.deficient", "ignore"),
 	     check.scaleX = "warning",
 	     check.formula.LHS="stop",
+	     check.response.not.const = "stop",
 	     ## convergence checking options
 	     check.conv.grad	 = .makeCC("warning", tol = 1e-3, relTol = NULL),
 	     check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
@@ -218,7 +219,8 @@ glmerControl <-
                                   check.nobs.vs.nRE,
 				  check.rankX,
                                   check.scaleX,
-                                  check.formula.LHS),
+                                  check.formula.LHS,
+				                          check.response.not.const),
                         checkConv=
                         namedList(check.conv.grad,
                                   check.conv.singular,
