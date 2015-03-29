@@ -743,13 +743,14 @@ confint.merMod <- function(object, parm, level = 0.95,
     boot.type <- match.arg(boot.type)
     if (!missing(parm) && !is.numeric(parm) && method %in% c("profile","boot"))
         stop("for method='",method,"', 'parm' must be specified as an integer")
+    if (!quiet && method %in% c("profile","boot")) {
+        mtype <- switch(method, profile="profile", boot="bootstrap")
+        message("Computing ",mtype," confidence intervals ...")
+        flush.console()
+    }
     switch(method,
 	   "profile" =
            {
-	       if (!quiet) {
-		   message("Computing profile confidence intervals ...")
-		   flush.console()
-	       }
                pp <- if(missing(parm)) {
                    profile(object, signames=oldNames, ...)
                } else {
@@ -776,10 +777,6 @@ confint.merMod <- function(object, parm, level = 0.95,
            },
 	   "boot" =
            {
-	       if (!quiet) {
-		   message("Computing bootstrap confidence intervals ...")
-		   flush.console()
-	       }
                bootFun <- function(x) {
 		   th <- x@theta
 		   nvec <- vapply(x@cnms, length, 1L)
@@ -815,6 +812,7 @@ confint.merMod <- function(object, parm, level = 0.95,
                    parm <- pnames[parm]
                citab[parm, , drop=FALSE]
            },
+           ## should never get here ...
            stop("unknown confidence interval method"))
 }
 
