@@ -497,7 +497,7 @@ glmResp <-
                          if (is.null(ll$family)) stop("family must be specified")
                          family <<- ll$family
                          n <<- if (!is.null(ll$n)) as.numeric(ll$n) else rep.int(1,length(y))
-                         eta <<- numeric(length(y))
+                         eta <<- if (!is.null(ll$eta)) as.numeric(ll$eta) else numeric(length(y))
                      },
                      aic          = function() {
                          .Call(glm_aic, ptr())
