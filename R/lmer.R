@@ -422,7 +422,7 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
     modp <- (as.logical(vapply(dots, is, NA, "merMod")) |
              as.logical(vapply(dots, is, NA, "lm")))
     if (any(modp)) {			# multiple models - form table
-	opts <- dots[!modp]
+	## opts <- dots[!modp]
 	mods <- c(list(object), dots[modp])
         nobs.vec <- vapply(mods, nobs, 1L)
         if (var(nobs.vec) > 0)
@@ -502,10 +502,8 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
     }
     else { ## ------ single model ---------------------
 	dc <- getME(object, "devcomp")
-	# p <- dc$dims[["p"]] # redundant
         X <- getME(object, "X")
-	asgn <- attr(X, "assign")
-	stopifnot(length(asgn) == (p <- dc$dims[["p"]]))
+	stopifnot(length(asgn <- attr(X, "assign")) == dc$dims[["p"]])
 	ss <- as.vector(object@pp$RX() %*% object@beta)^2
 	names(ss) <- colnames(X)
 	terms <- terms(object)
@@ -874,13 +872,12 @@ logLik.merMod <- function(object, REML = NULL, ...) {
         REML <- isREML(object)
     val <- -devCritFun(object, REML = REML)/2
     dc <- object@devcomp
-    dims <- dc$dims
     nobs <- nobs.merMod(object)
     structure(val,
 	      nobs = nobs,
 	      nall = nobs,
 	      df = npar.merMod(object),
-              ## length(object@beta) + length(object@theta) + dims[["useSc"]],
+              ## length(object@beta) + length(object@theta) + dc$dims[["useSc"]],
 	      class = "logLik")
 }
 
@@ -1046,7 +1043,7 @@ ranef.merMod <- function(object, condVar = FALSE, drop = FALSE,
 	asgn <- attr(fl, "assign")
 	cnms <- object@cnms
 	nc <- vapply(cnms, length, 1L)
-	nb <- nc * (nl <- vapply(levs, length, 1L)[asgn])
+	nb <- nc * vapply(levs, length, 1L)[asgn]
 	nbseq <- rep.int(seq_along(nb), nb)
 	ml <- split(ans, nbseq)
 	for (i in seq_along(ml))
@@ -1139,7 +1136,7 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
     if (!is.null(newresp)) {
 
         ## update call and model frame with new response
-        rcol <- attr(attr(mf <- model.frame(object),"terms"),"response")
+	rcol <- attr(attr(model.frame(object), "terms"), "response")
         if (rename.response) {
             attr(object@frame,"formula")[[2]] <- object@call$formula[[2]] <-
                 newrespSub
@@ -1378,16 +1375,16 @@ hatvalues.merMod <- function(model, fullHatMatrix = FALSE, ...) {
     ## prior weights, W ^ {1/2} :
     sqrtW <- Diagonal(x = sqrt(weights(model, type = "prior")))
     with(getME(model, c("L", "Lambdat", "Zt", "RX", "X", "RZX")), {
-        ## CL:= right factor of the random-effects component of the hat matrix (64)
+        ## CL:= right factor of the random-effects component of the hat matrix	(64)
         CL <- solve(L, solve(L, Lambdat %*% Zt %*% sqrtW,
                              system = "P"), system = "L")
-	## CR:= right factor of the fixed-effects component of the hat matrix  (65)
+	## CR:= right factor of the fixed-effects component of the hat matrix	(65)
 	##	{MM (FIXME Matrix):  t(.) %*% here faster than crossprod()}
 	CR <- solve(t(RX), t(X) %*% sqrtW - crossprod(RZX, CL))
-        if(fullHatMatrix) return(crossprod(CL) + crossprod(CR))
-	## H = (C_L^T C_L + C_R^T C_R)	       (63)
-	## diagonal of the hat matrix, diag(H) :
-	colSums(CR^2) + colSums(CL^2)
+	if(fullHatMatrix) ## H = (C_L^T C_L + C_R^T C_R)			(63)
+	    crossprod(CL) + crossprod(CR)
+	else ## diagonal of the hat matrix, diag(H) :
+	    colSums(CR^2) + colSums(CL^2)
     })
 }
 
@@ -1431,9 +1428,9 @@ update.merMod <- function(object, formula., ..., evaluate = TRUE) {
         ff <- environment(formula(object))
         pf <- parent.frame()  ## save parent frame in case we need it
         sf <- sys.frames()[[1]]
-        tryCatch(eval(call, env=ff),
+        tryCatch(eval(call, envir=ff),
                  error=function(e) {
-                     tryCatch(eval(call, env=sf),
+                     tryCatch(eval(call, envir=sf),
                               error=function(e) {
                                   eval(call, pf)
                               })
@@ -1672,7 +1669,7 @@ print.merMod <- function(x, digits = max(3, getOption("digits") - 3),
     .prt.methTit(methTitle(x, dims = dims), class(x))
     .prt.family(famlink(x, resp = x@resp))
     .prt.call(x@call, long = FALSE)
-    useScale <- as.logical(dims[["useSc"]])
+    ## useScale <- as.logical(dims[["useSc"]])
 
     llAIC <- getLlikAIC(x)
     .prt.aictab(llAIC$AICtab, 4)
@@ -1919,17 +1916,19 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
 
     ## OBSOLETE??  checks for symmetry, but symmetry is now forced
     ## within calc.vcov.hess anyway
-    symmetrize <-  function(v,warnTol = 0,stopTol = sqrt(.Machine$double.eps)) {
-        if(nrow(v) == 1L) return(v)       # 1-by-1 matrices are always symmetrical
-        nonSymm <- max(abs(v[lower.tri(v)]-t(v)[lower.tri(v)]))
-        warnTol <- max(warnTol,stopTol)
-        if (nonSymm > stopTol) stop(sprintf("calculated variance-covariance matrix is non-symmetric (tol=%f)",
-                                          stopTol))
-        if (nonSymm > warnTol) stop(sprintf("calculated variance-covariance matrix is non-symmetric (tol=%f)",
-                                          warnTol))
-        v[upper.tri(v)] <- t(v)[upper.tri(v)]
-        v
-    }
+    ## symmetrize <-  function(v,warnTol = 0,stopTol = sqrt(.Machine$double.eps)) {
+    ##     if(nrow(v) == 1L) return(v)       # 1-by-1 matrices are always symmetrical
+    ##     nonSymm <- max(abs(v[lower.tri(v)]-t(v)[lower.tri(v)]))
+    ##     warnTol <- max(warnTol,stopTol)
+    ##     if (nonSymm > stopTol) stop(sprintf(
+    ##         "calculated variance-covariance matrix is non-symmetric (tol=%f)",
+    ##                                       stopTol))
+    ##     if (nonSymm > warnTol) stop(sprintf(
+    ##         "calculated variance-covariance matrix is non-symmetric (tol=%f)",
+    ##                                       warnTol))
+    ##     v[upper.tri(v)] <- t(v)[upper.tri(v)]
+    ##     v
+    ## }
 
     V <- sigm^2 * object@pp$unsc()
 
@@ -2140,7 +2139,7 @@ summary.merMod <- function(object,
     }
     ## se.calc:
     hess.avail <- (!is.null(h <- object@optinfo$derivs$Hessian) &&
-        nrow(h) > (ntheta <- length(getME(object,"theta"))))
+                   nrow(h) > length(getME(object,"theta")))
     if (is.null(use.hessian)) use.hessian <- hess.avail
     if (use.hessian && !hess.avail) stop(shQuote("use.hessian"),
                                          "=TRUE specified, ",
@@ -2149,10 +2148,10 @@ summary.merMod <- function(object,
     resp <- object@resp
     devC <- object@devcomp
     dd <- devC$dims
-    cmp <- devC$cmp
+    ## cmp <- devC$cmp
     useSc <- as.logical(dd[["useSc"]])
     sig <- sigma(object)
-    REML <- isREML(object)
+    ## REML <- isREML(object)
 
     famL <- famlink(resp = resp)
     p <- length(coefs <- fixef(object))

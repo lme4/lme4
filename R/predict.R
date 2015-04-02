@@ -58,7 +58,7 @@ reFormHack <- function(re.form,ReForm,REForm,REform) {
 ##' sapply(slotNames(fm1),function(x) class(slot(fm1,x)))
 setParams <- function(object, params, inplace=FALSE, subset=FALSE) {
     pNames <- c("beta","theta")
-    if (useSc <- object@devcomp$dims["useSc"]) pNames <- c(pNames,"sigma")
+    if (object@devcomp$dims["useSc"]) pNames <- c(pNames, "sigma")
     if (!is.list(params) || length(setdiff(names(params),pNames)) > 0)
         stop("params should be specifed as a list with elements from ",
              "{",paste(shQuote(pNames),collapse=", "),"}")
@@ -220,7 +220,7 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
 ##' str(p4 <- predict(gm1,newdata,re.form=~(1|herd))) # explicitly specify RE
 ##' @method predict merMod
 ##' @export
-predict.merMod <- function(object, newdata=NULL, newparams=NULL, 
+predict.merMod <- function(object, newdata=NULL, newparams=NULL,
                            re.form=NULL,
                            ReForm,
                            REForm,

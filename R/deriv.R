@@ -42,12 +42,12 @@ gradient <- function(fun, x, delta=1e-4, lower=rep(NA,length(x)),
     sapply(seq_along(x), function(i) {
         ldelta <- udelta <- delta
         xadd[i] <- x[i] + udelta
-        if (!is.na(uu <- upper[i]) && xadd[i]>uu) {
+        if (!is.na(uu <- upper[i]) && xadd[i] > uu) {
             udelta <- uu-x[i]
             xadd[i] <- uu
         }
         xsub[i] <- x[i] + ldelta
-        if (!is.na(ll <- lower[i]) && xsub[i]<ll) {
+        if (!is.na(ll <- lower[i]) && xsub[i] < ll) {
             ldelta <- x[i]-ll
             xsub[i] <- ll
         }

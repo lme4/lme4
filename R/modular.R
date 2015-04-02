@@ -118,7 +118,7 @@ checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
 ##   all numeric columns?
 ##
 checkScaleX <- function(X,  kind="warning", tol=1e3) {
-    cstr <- "check.scaleX"
+    ## cstr <- "check.scaleX"
     kinds <- eval(formals(lmerControl)[["check.scaleX"]])
     if (!kind %in% kinds) stop(gettextf("unknown check-scale option: %s",kind))
     if (is.null(kind) || kind == "ignore") return(X)
@@ -173,18 +173,16 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
     ## Part 2 ----------------
     cstr <- "check.nobs.vs.nlev"
     checkCtrlLevels(cstr, cc <- ctrl[[cstr]])
-    if (doCheck(cc)) {
-        if (any(if(allow.n) nlevelVec > n else nlevelVec >= n)) {
-            wstr <-  gettextf(
-                "number of levels of each grouping factor must be %s number of observations",
-                if(allow.n) "<=" else "<")
-            switch(cc,
-                   "warning" = warning(wstr,call.=FALSE),
-                   "stop"	 =    stop(wstr,call.=FALSE)
-                   ## shouldn't reach here 
-                   )
-        }
-    }
+    if (doCheck(cc) && any(if(allow.n) nlevelVec > n else nlevelVec >= n)) {
+	wst2 <- gettextf(
+	    "number of levels of each grouping factor must be %s number of observations",
+	    if(allow.n) "<=" else "<")
+	switch(cc,
+	       "warning" = warning(wst2, call.=FALSE),
+	       "stop"    =    stop(wst2, call.=FALSE)
+	       ## shouldn't reach here
+	       )
+    } else wst2 <- character()
 
     ## Part 3 ----------------
     cstr <- "check.nlev.gtreq.5"
@@ -197,7 +195,7 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
 	       stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
     } else wst3 <- character()
     ## return:
-    c(wstr, wst3) ## possibly == character(0)
+    c(wstr, wst2, wst3) ## possibly == character(0)
 }
 
 ##' Coefficients (columns) are dropped from a design matrix to
@@ -224,6 +222,7 @@ chkRank.drop.cols <- function(X, kind, tol = 1e-7, method = "qr.R") {
     ## Test and match arguments:
     stopifnot(is.matrix(X))
     kinds <- eval(formals(lmerControl)[["check.rankX"]])
+    if (!kind %in% kinds) stop(gettextf("undefined option for 'kind': %s", kind))
     ## c("message+drop.cols", "ignore",
     ##   "silent.drop.cols", "warn+drop.cols", "stop.deficient"),
 
@@ -290,9 +289,9 @@ chkRank.drop.cols <- function(X, kind, tol = 1e-7, method = "qr.R") {
 
 
 ## NA predict and restore rownames of original data if necessary
-napredictx <- function(x,...) {
-    res <- napredict(x)
-}
+## napredictx <- function(x,...) {
+##     res <- napredict(x)
+## }
 
 ##' @rdname modular
 ##' @param control a list giving (for \code{[g]lFormula}) all options (see \code{\link{lmerControl}} for running the model;
@@ -385,7 +384,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
         scaleX.chk <- eval(formals(lmerControl)[["check.scaleX"]])[[1]]
     X <- checkScaleX(X, kind=scaleX.chk)
 
-    list(fr = fr, X = X, reTrms = reTrms, REML = REML, formula = formula)
+    list(fr = fr, X = X, reTrms = reTrms, REML = REML, formula = formula,
+	 wmsgs = c(Nlev = wmsgNlev, Zdims = wmsgZdims, Zrank = wmsgZrank))
 }
 
 ## utility f'n for checking starting values
@@ -493,7 +493,9 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, verbose=0, co
 	    }
     }
 
-    theta <- getStart(start,reTrms$lower,rho$pp)
+    ## theta <- getStart(start, reTrms$lower, rho$pp)
+    ## ^^^^^ unused / obfuscation? should the above be rho$pp$setTheta(.) ?
+    ## MM: commenting it did not break any of our checks
     if (length(rho$resp$y) > 0)  ## only if non-trivial y
         devfun(rho$pp$theta) # one evaluation to ensure all values are set
     rho$lower <- reTrms$lower # SCW:  in order to be more consistent with mkLmerDevfun
@@ -647,7 +649,8 @@ glFormula <- function(formula, data=NULL, family = gaussian,
         scaleX.chk <- eval(formals(lmerControl)[["check.scaleX"]])[[1]]
     X <- checkScaleX(X, kind=scaleX.chk)
 
-    list(fr = fr, X = X, reTrms = reTrms, family = family, formula = formula)
+    list(fr = fr, X = X, reTrms = reTrms, family = family, formula = formula,
+	 wmsgs = c(Nlev = wmsgNlev, Zdims = wmsgZdims, Zrank = wmsgZrank))
 }
 
 ##' @rdname modular
