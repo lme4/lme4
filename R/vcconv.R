@@ -89,7 +89,6 @@ vec2mlist <- function(v,n=NULL,symm=TRUE) {
 ## Convert concatenated vector to list of ST matrices
 vec2STlist <- function(v, n = NULL){
   ch <- vec2mlist(v, n, FALSE) # cholesky
-  nch <- length(ch)
   sdiag <- function(x) { ## 'safe' diag()
       if (length(x)==1) matrix(x,1,1) else diag(x)
   }

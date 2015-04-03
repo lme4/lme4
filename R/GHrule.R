@@ -47,8 +47,7 @@ GHrule <- function (ord, asMatrix=TRUE) {
 
     fr <- as.data.frame(fgq_rules[[ord]])
 
-    rownames(fr) <- z <- NULL
-    fr <- within(fr, ldnorm <- dnorm(z, log=TRUE))
-    if (asMatrix) return(as.matrix(fr))
-    fr
+    rownames(fr) <- NULL
+    fr$ldnorm <- dnorm(fr$z, log=TRUE)
+    if (asMatrix) as.matrix(fr) else fr
 }

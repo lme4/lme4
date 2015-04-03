@@ -914,7 +914,7 @@ splom.thpr <- function (x, data,
     frange <- sapply(spl, function(x) range(x$knots))
     bsp <- attr(x, "backward")[which]
     x <- x[x[[".par"]] %in% nms[which],c(".zeta",nms[which],".par")]
-    brange <- sapply(bsp, function(x) range(x$knots))
+    ## brange <- sapply(bsp, function(x) range(x$knots))
     pfr <- do.call(cbind, lapply(bsp, predy, c(-mlev, mlev)))
     pfr[1, ] <- pmax.int(pfr[1, ], frange[1, ], na.rm = TRUE)
     pfr[2, ] <- pmin.int(pfr[2, ], frange[2, ], na.rm = TRUE)
@@ -961,7 +961,7 @@ splom.thpr <- function (x, data,
         tr <- traces[[jj]][[ii]]
         ll <- tr$ll
         pts <- ll$pts
-        limits <- current.panel.limits()
+        ## limits <- current.panel.limits()
         psij <- predict(tr$sij)
         psji <- predict(tr$sji)
         ## do the actual plotting

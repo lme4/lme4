@@ -57,8 +57,8 @@ est_theta <- function(object) {
   mu <- fitted(object)
   w <- object@resp$weights
   control <- list(maxit=20,trace=0)
-  th <- theta.ml(Y, mu, sum(w), w, limit = control$maxit,
-                 trace = control$trace > 2)
+  theta.ml(Y, mu, sum(w), w, limit = control$maxit,
+           trace = control$trace > 2)
 }
 
 ## FIXME: really should document glmer.nb() on the same help page as glmer()

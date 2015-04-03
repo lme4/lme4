@@ -563,8 +563,8 @@ nlformula <- function(mc) {
             length(pnames <- names(nlpars)) == length(nlpars),
             length(form <- as.formula(mc$formula)) == 3L,
             is(nlform <- eval(form[[2]]), "formula"),
-            pnames %in%
-                  (av <- all.vars(nlmod <- as.call(nlform[[lnl <- length(nlform)]]))))
+            pnames %in% all.vars(nlmod <-
+                as.call(nlform[[lnl <- length(nlform)]])))
 
   ## MM{FIXME}: fortune(106) even twice in here!
     nlform[[lnl]] <- parse(text= paste(setdiff(all.vars(form), pnames), collapse=' + '))[[1]]
@@ -697,7 +697,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
         wrss    <- resp$wrss()
         pwrss   <- wrss + sqrLenU
     }
-    weights <- resp$weights
+    ## weights <- resp$weights
     beta    <- pp$beta(fac)
     ## rescale
     if (!is.null(sc <- attr(pp$X,"scaled:scale"))) {
@@ -711,7 +711,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
         beta2[names(sc)] <- sc*beta2[names(sc)]
         beta <- beta2
     }
-    if (!is.null(ctr <- attr(pp$X,"scaled:center"))) {
+    if (!is.null(attr(pp$X,"scaled:center"))) {
         warning("auto(un)centering not yet implemented")
     }
     #sigmaML <- pwrss/sum(weights)
@@ -762,7 +762,7 @@ checkArgs <- function(type,...) {
         }
         ## Check for method argument which is no longer used
         ## (different meanings/hints depending on glmer vs lmer)
-        if (!is.null(method <- l...[["method"]])) {
+	if (!is.null(l...[["method"]])) {
             msg <- paste("Argument", sQuote("method"), "is deprecated.")
             if (type=="lmer") msg <- paste(msg,"Use the REML argument to specify ML or REML estimation.")
             if (type=="glmer") msg <- paste(msg,"Use the nAGQ argument to specify Laplace (nAGQ=1) or adaptive",
