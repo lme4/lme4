@@ -1,91 +1,68 @@
+## n.b. the tests run here were not really all done in the same
+## run -- the runs were done separately and stitched together --
+## so it's possible there are some inconsistencies in naming etc.
+## across runs with different optimizers (hopefully not)
 library("lme4")
-library("numDeriv")
 library("gridExtra")
 
-do.sim <- FALSE
-do.plots <- FALSE
 batchfn <- "penicillin_conv.RData"
-plotfn <- "penicillin_conv.pdf"
+nsim <- 20
+lsizevec <- seq(2,6,by=0.5)
 
-simfun <- function(size=nrow(Penicillin),seed=NULL,
-                   data=Penicillin,
-                   formula=diameter ~ 1 + (1|plate) + (1|sample),
-                   fn = lmer, ...) {
-    if (!is.null(seed)) set.seed(seed)
-    sdat <- data[sample(x=nrow(data),size=size,replace=TRUE),]
-    fm2 <- fn(formula, sdat, ...)
-    derivs <- fm2@optinfo$derivs
-    ## copied from lme4:::checkConv
-    mineig <- min(eigen(fm2@optinfo$derivs$Hessian,only.values=TRUE)$value)
-    dd <- as.function(fm2)  ## FIXME for glmer()
-    hh <- hessian(dd,getME(fm2,"theta"))
-    mineigND <- min(eigen(hh,only.values=TRUE)$value)
-    scgrad <- tryCatch(with(derivs, solve(Hessian, gradient)), 
-                       error = function(e) e)
-    if (inherits(scgrad, "error")) {
-        wstr <- "unable to evaluate scaled gradient"
-        maxscgrad <- maxmingrad <- NA
-    } else {
-        maxscgrad <- max(abs(scgrad))
-        mingrad <- pmin(abs(scgrad), abs(derivs$gradient))
-        maxmingrad <- max(mingrad)
-    }
-    return(c(maxgrad=max(abs(derivs$gradient)),
-             maxscgrad=maxscgrad,
-             maxmingrad=maxmingrad,
-             mineig=mineig,
-             mineigND=mineigND,
-             getME(fm2,"theta")))
-}
+## testing
+## nsim <- 3
+## lsizevec <- seq(2,4,by=0.5)
 
+source("conv_simfuns.R")
 
-if (do.sim) {
-    res <- expand.grid(log10size=seq(2,6,by=0.5),rep=1:20,
-                       maxgrad=NA,maxscgrad=NA,maxmingrad=NA,
-                       mineig=NA,
-                       mineigND=NA,
-                       theta1=NA,theta2=NA)
-    for (i in 1:nrow(res)) {
-        ## want to save 
-        cat(i,res$log10size[i],"\n")
-        res[i,-(1:2)] <- simfun(size=round(10^res$log10size[i]),seed=1000+i)
+## get dimensions/names of sim results, set up 
+s0 <- simfun(size=1000,seed=1001)
+res0 <- expand.grid(log10size=lsizevec,rep=seq(nsim))
+resB <- setNames(as.data.frame(matrix(NA,nrow=nrow(res0),ncol=length(s0))),
+                 names(s0))
+res <- res0 <- cbind(res0,resB)
+
+## run nlminb
+k <- 1
+for (i in seq(nsim)) {
+    for (j in seq_along(lsizevec)) {
+        cat(i,lsizevec[j],"\n")
+        res[k,-(1:2)] <- simfun(size=round(10^lsizevec[j]),seed=1000+i,
+                                control=lmerControl(optimizer="nlminbwrap"))
+        k <- k+1
         save("res",file=batchfn)
     }
 }
+res1 <- data.frame(data="Penicillin",optimizer="nlminb",res)
 
-if (do.plots) {
-## PLOTS
-    library("ggplot2"); theme_set(theme_bw())
-    library("scales") ## for squish()
-    ## with apologies for Hadleyverse 2 ...
-    library("tidyr")
-    library("dplyr")
-    load(batchfn)
-    m <- res %>%
-        mutate_each("log10",c(maxgrad,maxscgrad,maxmingrad)) %>%
-            gather(var,val,-c(rep,log10size))
+## reset, run bobyqa (default)
+res <- res0
+k <- 1
+for (i in seq(nsim)) {
+    for (j in seq_along(lsizevec)) {
+        cat(i,lsizevec[j],"\n")
+        res[k,-(1:2)] <- simfun(size=round(10^lsizevec[j]),seed=1000+i)
+        k <- k+1
+        save("res",file=batchfn)
+    }
+}
+res2 <- data.frame(data="Penicillin",optimizer="bobyqa",res)
+res <- rbind(res1,res2)
+save("res",file=batchfn)
 
-    ggplot(m,aes(log10size,val))+geom_point()+
-        facet_wrap(~var,scales="free")+
-            geom_smooth(method="lm",formula=y~1+offset(x))
-
-    ## PLOT: gradients vs log10size
-    gg1 <- ggplot(filter(m,var %in% c("maxgrad","maxscgrad","maxmingrad")),
-               aes(log10size,val,colour=var))+geom_point()+
-                   geom_smooth(method="lm",formula=y~1+offset(x))+
-                       geom_smooth(method="loess",linetype=2)+
-                           geom_hline(yintercept=-3,lty=2)
-
-
-    gg2 <- ggplot(filter(m,var %in% c("mineig","mineigND")),
-                  aes(log10size,val,colour=var))+geom_point(alpha=0.25,size=5)
-
-    gg3 <- gg2 + scale_y_continuous(limits=c(0,20),oob=squish)
-    gg4 <- gg2 + scale_y_continuous(limits=c(0.5,2),oob=squish)
-
-    pdf(plotfn,width=8,height=8)
-    grid.arrange(gg1,gg2,gg3,gg4,nrow=2)
-    dev.off()
-
-    filter(res,maxmingrad>1e-3)
-
+batchfn <- "penicillin_conv_nloptr.RData"
+## reset, run bobyqa (default)
+res3 <- res0
+k <- 1
+for (i in seq(nsim)) {
+    for (j in seq_along(lsizevec)) {
+        cat(i,lsizevec[j],"\n")
+        res3[k,-(1:2)] <- simfun(size=round(10^lsizevec[j]),seed=1000+i,
+                                 control=lmerControl(optimizer="nloptwrap"))
+        k <- k+1
+        save("res3",file=batchfn)
+    }
+}
+res3 <- data.frame(data="Penicillin",optimizer="nloptr_bobyqa",res3)
+res <- rbind(res,res3)
+save("res",file=batchfn)

@@ -1,0 +1,226 @@
+---
+title: "Exploring convergence issues"
+date: "`r format(Sys.time(), '%H:%M %d %B %Y')`"
+author: Ben Bolker
+---
+
+One of the major issues in recent releases of `lme4` (1.1-6) forward
+has been the increased rate of model fits that are reported not to
+converge.  Possibly contrary to popular belief, this increased rate of
+reported problems is **not** due to greater instability or other
+problems in the fitting algorithm itself; the algorithms themselves
+and their default settings have changed only slightly in recent
+releases (see the
+[lme4 NEWS file](https://github.com/lme4/lme4/blob/master/inst/NEWS.Rd)).
+Rather, we introduced new convergence checks, so lots of models that
+*seemed* to fit with previous versions now report convergence issues
+(but in fact are fitting just as well, or as poorly, as before).
+
+Along with the convergence tests, however, have come some false-positive
+warnings.  These were particularly bad in 1.1-6; version 1.1-7 improved
+things considerably by testing the *scaled* gradient (i.e., the solution
+of $\boldsymbol{H}\boldsymbol{s} = \boldsymbol{g}$, where
+$\boldsymbol{H}$ is the estimated Hessian at the MLE, $\boldsymbol{g}$
+is the absolute gradient, and $\boldsymbol{s}$ is the scaled gradient).
+To a first approximation, one can think of the scaled gradient as measuring
+the expected change in the log-likelihood over a scale of one standard error of
+parameter change, rather than on the scale of the original parameter.
+A further change ([22 October 2014](https://github.com/lme4/lme4/commit/60d73d2023c380c99759d159caaf104aaf5649c8), in Github/1.1-8 version but not yet in the [CRAN version](http://cran.r-project.org/web/packages/lme4/index.html), dated 19 July 2014) changed the test to find the maximum absolute value of the *minimum* of absolute and scaled gradient, to handle situations where the estimated likelihood surface was very flat (poorly determined parameters/large standard errors) so that the scaled gradient would be very large.
+
+The examples below explore the dependence of the scaled gradient and computed Hessians for relatively well-behaved data sets as a function of (simulated) data set size.  This does not tell us exactly where we should set the threshold for convergence warnings, but it does indicate that 
+
+1. our thresholds are probably too strict for large data sets [for well-behaved examples below where we think we are getting the correct answers, our current rules would report convergence failures].
+2. the thresholds might be scaled to sample size, but as explored below this is difficult.  If we deprecated use of `nlminb` for large problems, an overall scaled tolerance of 0.01 might be appropriate ...
+3. we should switch from our current, fast-but-sloppy finite difference calculation of Hessians to the more accurate but slower Richardson extrapolation calculation implemented in the `numDeriv` package for large sample sizes.
+
+```{r pkgs,message=FALSE}
+library("lme4")
+library("grid")
+library("ggplot2")
+## preferred (cosmetic) settings
+theme_set(theme_bw()+theme(panel.margin=unit(0,"lines")))
+library("gridExtra")
+library("scales") ## for squish()
+## with apologies for Hadleyverse 2 ...
+library("tidyr")
+library("dplyr")
+```
+
+Get data:
+
+```{r getdat}
+load("penicillin_conv.RData")
+id_vars <- c("data","optimizer","log10size","rep")
+data_vars <- setdiff(names(res),id_vars)
+```
+
+```{r process,echo=FALSE}
+m <- res %>%
+    mutate_each("log10",c(maxgrad,maxscgrad,maxmingrad)) %>%
+        gather_("var","val",data_vars)
+badvals <- res %>% group_by(optimizer,log10size) %>%
+    summarise(propbad=mean(mineig<0 | maxmingrad>1e-3),
+              n=n())
+```
+
+
+```{r gradplot,echo=FALSE}
+gg1 <- ggplot(filter(m,var %in% c("maxgrad","maxscgrad","maxmingrad")),
+              aes(log10size,val,colour=var))+geom_point()+
+                  geom_smooth(method="lm",formula=y~1+offset(x))+
+                      geom_smooth(method="loess",linetype=2)+
+                          geom_hline(yintercept=-3,lty=2)+
+                              facet_wrap(~optimizer)+
+                                  labs(x="log10(# obs)",y="log10(gradient)")
+print(gg1)
+```
+
+* the straight lines are the best-fit slope-1 lines (i.e. gradient strictly proportional to sample size); the dashed lines are the usual loess fits
+* the horizontal dashed line shows our current checking cutoff of 0.001
+The `nloptr_bobyqa` results are using a slightly different implementation of the same algorithm used in the built-in (`minqa`-packaged) BOBYQA, but using looser tolerance settings, so they perform worse (in terms of gradients) at small sample sizes, but compare reasonably well to other methods 
+* the scaled-gradient points are largely invisible because in this case, the scaled gradient is almost smaller than the absolute gradient, so the maxmingrad point (which is drawn later) covers the scaled-gradient point except in a few cases.
+* As explored in more detail below, the highest points for the `nlminb` optimizer (i.e. the cases where the absolute gradient goes up to about 1) probably do represent problematic fits.
+
+
+Proportion of bad fits under current rules:
+```{r badplot,echo=FALSE,warning=FALSE}
+gg_bad <-
+    ggplot(badvals,aes(x=log10size,y=propbad,colour=optimizer))+geom_point()+
+    scale_colour_brewer(palette="Dark2")+
+        geom_smooth(method="gam",family="binomial",aes(weight=n),se=FALSE)+
+            labs(x="log10(# obs)",
+                 y="proportion flagged as bad\n(grad>0.001 or neg. Hessian eigenvalue)")
+print(gg_bad)
+## confidence intervals suppressed because `bobyqa` gets complete separation/Hauck-Donner problems for lower values where there are never bad values
+```
+
+
+Behaviour of estimated minimum eigenvalues (top row, unmodified: bottom row, clamped to (0.5,5)):
+```{r eigplots,echo=FALSE,fig.width=8,fig.height=5}
+gg2 <- ggplot(filter(m,var %in% c("mineig","mineigND")),
+              aes(log10size,val,colour=var))+geom_point(alpha=0.25,size=3)+
+                  facet_wrap(~optimizer)
+gg4 <- gg2 + scale_y_continuous(limits=c(0.5,5),oob=squish)
+grid.arrange(gg2,gg4,nrow=2)
+```
+
+Timing:
+
+```{r time_plot,echo=FALSE}
+timedat <- filter(m,var %in% c("t.tot","t.hessian"))
+ggplot(timedat,
+       aes(log10size,val,colour=optimizer))+
+           geom_point(aes(shape=var))+
+               geom_smooth(aes(linetype=var),se=FALSE,method="loess")+
+               scale_y_log10(breaks=10^seq(-2,2),
+                      labels = trans_format("log10", math_format(10^.x)))+
+                   scale_colour_brewer(palette="Dark2")+
+                       labs(y="Time (seconds)")
+times <- round(unlist(timedat %>% filter(log10size==6) %>% group_by(var) %>%
+                    summarise(val=mean(val)) %>% select(val)))
+```
+
+Unfortunately, for larger data sets
+(where it's needed), a reliable Hessian calculation takes
+an appreciable fraction of the full fitting time 
+(e.g. for the largest data sets, about `r times[1]` seconds for the full fit
+vs. `r times[2]` seconds for the Hessian calculation) ...
+
+Actual parameter estimates:
+
+```{r theta_plot,echo=FALSE}
+ggplot(filter(m,grepl("theta",as.character(var))),
+       aes(log10size,val,fill=optimizer))+
+           geom_boxplot(aes(group=interaction(log10size,optimizer)))+
+           facet_wrap(~var,scale="free")+
+               scale_fill_brewer(palette="Dark2")
+```
+
+(Would like outlier colours to match, but too much trouble; 
+`outlier.colour=NULL` doesn't work for some reason.)
+This shows that `nlminb` becomes unreliable at large sample sizes (don't know how these incorrect estimates match up with convergence tests).
+
+What if we try to figure out which estimates actually *are* bad (as judged by their difference from a consensus estimate), rather than just seeing which ones fail the convergence tests?
+Compute proportion of fit/parameter combinations where all but estimates from all but one optimizer agree to within 1% (relative standard deviation <1%) *and* the remaining estimate differs by >1%:
+
+```{r bad_ests,echo=FALSE}
+find_bad <- function(x,reltol=1e-2,cut=TRUE) {
+    r <- numeric(length(x))
+    for (i in 1:length(x)) {
+        m <- mean(x[-i])
+        if (cut) {
+            r[i] <- (sd(x[-i]/m) < reltol) &&  ## other ests agree
+                !isTRUE(all.equal(x[i],m,tol=reltol))
+        } else {
+            r[i] <- if (sd(x[-i]/m) > reltol) NA else abs(1-x[i]/m)
+        }
+    }
+    r
+}
+bad_ests <- m %>% filter(grepl("theta",as.character(var))) %>%
+    group_by(log10size,rep,var) %>%
+        mutate(bad=find_bad(val)) %>%
+            group_by(log10size,optimizer) %>%
+            summarise(propbad=mean(bad),
+                      n=n())
+gg_bad2 <-
+    ggplot(bad_ests,aes(x=log10size,y=propbad,colour=optimizer))+geom_point()+
+    scale_colour_brewer(palette="Dark2")+
+        geom_smooth(method="gam",family="binomial",aes(weight=n),se=FALSE)+
+            labs(x="log10(# obs)",
+                 y="proportion bad\n(differ from agreement by >1%)")
+gg_bad2
+```
+
+What if we compare the max gradient with the size of the error (= mean difference of parameters from consensus)?
+
+```{r bad2,echo=FALSE,message=FALSE,warning=FALSE}
+bad_ests2 <- m %>% filter(grepl("theta",as.character(var))) %>%
+    group_by(log10size,rep,var) %>%
+        mutate(bad=find_bad(val,cut=FALSE)) %>%
+            select(-c(data,val)) %>%
+            group_by(log10size,rep,optimizer)  %>%
+                summarise(bad=mean(bad))
+red2 <- m %>% filter(var=="maxmingrad") %>%
+    select(-c(data,var)) %>%
+        rename(grad=val)
+bad_ests3 <- full_join(bad_ests2,red2) %>% ungroup() %>%
+    mutate(sfac=factor(floor(log10size)))
+ggplot(bad_ests3,aes(x=grad,y=bad,colour=optimizer))+
+    geom_point(aes(shape=sfac))+
+        scale_y_log10()+
+            scale_colour_brewer(palette="Dark2")+
+                labs(x="max(abs(grad))",y="mean difference from consensus")+
+                    scale_shape(name="floor(log10(obs))")
+```
+
+Unfortunately there's no threshold we can draw with respect to the 
+max-gradient (i.e., on the horizontal axis)
+that will separate "bad" (say >1%) results.
+
+If we scale the gradient by the size (i.e. $\log(\textrm{grad})+\log(\textrm{nobs})$, equivalent to scaling the cutoff by the number of observations) we do a little better, but still can't draw a clean cutoff:
+
+```{r bad_scale,echo=FALSE,warning=FALSE}
+xlab <- expression(log[10]*(max(abs("grad")))+log[10]("nobs"))
+ggplot(bad_ests3,aes(x=grad+log10size,y=bad,colour=optimizer))+
+    geom_point(aes(shape=sfac))+
+        scale_y_log10()+
+            scale_colour_brewer(palette="Dark2")+
+                scale_shape(name="floor(log10(obs))")+
+                    labs(x=xlab,y="mean difference from consensus")+
+                        geom_vline(xintercept=2.5,linetype=2)+
+                            geom_hline(yintercept=0.01,linetype=2)
+```
+
+For example, if we required
+$\log_{10}(\max(|\textrm{grad}|))+\log_{10}(\textrm{nobs})<2.5$,
+we would get most (but not all) of the cases with error >1%, but
+we would still catch a variety of cases (with large data sets)
+with error <0.1% ...
+
+### To do
+
+* Other data sets? Less well-behaved examples? `glmer` examples?
+* Simulated data? 
+* Will it help to pick out parameters one at a time rather than taking mean difference from consensus (e.g. if badness is not spread evenly across parameters)?  Is there some other metric we can look at to detect bad fits?
+* Other ways to detect bad fits, e.g. restarting rather than just trying to detect lack of/difference from consensus?
