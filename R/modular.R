@@ -276,6 +276,20 @@ chkRank.drop.cols <- function(X, kind, tol = 1e-7, method = "qr.R") {
     X
 }
 
+# check that response is not constant
+checkResponse <- function(y, ctrl) {
+  stopifnot(is.list(ctrl))
+  cstr <- "check.response.not.const"
+  checkCtrlLevels(cstr, cc <- ctrl[[cstr]])
+  if (doCheck(cc) && length(unique(y)) < 2L) {
+    wstr <- "Response is constant"
+    switch(cc,
+           "warning" = warning(wstr, call.=FALSE),
+           "stop"   =    stop(wstr, call.=FALSE),
+           stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
+  } else character()
+}
+
 ##' Extract all warning msgs from a merMod object
 .merMod.msgs <- function(x) {
     ## currently only those found with 'X' :
@@ -672,8 +686,7 @@ mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L,
     if(control$nAGQ0initStep) nAGQinit <- 0L else nAGQinit <- 1L
     ## allow trivial y
     if (length(y <- rho$resp$y) > 0) {
-        if (length(unique(y)) < 2L)
-            stop("Response is constant - cannot fit the model")
+        checkResponse(y, control$checkControl)
         rho$verbose     <- as.integer(verbose)
 
         ## initialize (from mustart)
