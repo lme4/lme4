@@ -1,13 +1,35 @@
-data(Orthodont,package="nlme")
-Orthodont <- as.data.frame(Orthodont)
 library(lme4)
-fm1 <- lmList(Reaction ~ Days | Subject, sleepstudy)
-fm1 <- lmList(Reaction ~ Days | Subject, sleepstudy, pool=TRUE)
+
+set.seed(17)
+fm1. <- lmList(Reaction ~ Days | Subject, sleepstudy, pool=FALSE)
+fm1  <- lmList(Reaction ~ Days | Subject, sleepstudy)
 coef(fm1)
-summary(fm1)
-confint(fm1)
+cf.fm1 <- data.frame(
+    `(Intercept)` =
+        c(244.19267, 205.05495, 203.48423, 289.68509, 285.73897, 264.25161,
+          275.01911, 240.16291, 263.03469, 290.10413, 215.11177, 225.8346,
+          261.14701, 276.37207, 254.96815, 210.44909, 253.63604, 267.0448),
+    Days =
+        c(21.764702, 2.2617855, 6.1148988, 3.0080727, 5.2660188, 9.5667679,
+          9.1420455, 12.253141, -2.8810339, 19.025974, 13.493933, 19.504017,
+          6.4334976, 13.566549, 11.348109, 18.056151, 9.1884448, 11.298073))
+stopifnot(all.equal(signif(coef(fm1), 8), cf.fm1,
+		    tolerance = 1e-7, check.attributes=FALSE),
+	  all.equal(coef(fm1.), coef(fm1), tolerance = 1e-15),
+	  inherits(formula(fm1), "formula") # <- had been wrong till 2015-04-09
+	  )
+
+sm1. <- summary(fm1.)
+(sm1 <- summary(fm1))
+stopifnot(all.equal(sm1$RSE, 25.5918156267, tolerance = 1e-10))
+(cf1 <- confint(fm1))
+
+data(Orthodont, package="nlme")
+Orthodont <- as.data.frame(Orthodont) # no "groupedData"
 fm2 <- lmList(distance ~ age | Subject, Orthodont)
 coef(fm2)
+if(FALSE)# FIXME
+fixef(fm2)# did fail
 
 d <- data.frame(
   g = sample(c("A","B","C","D","E"), 250, replace=TRUE),
@@ -15,24 +37,25 @@ d <- data.frame(
   y2 = sample(c(0,1), 250, replace=TRUE)
 )
 
-fm1 <- lmList(y1 ~ 1 | g, data=d)
-coef(fm1)
-confint(fm1)
+fm3.1 <- lmList(y1 ~ 1 | g, data=d)
+coef(fm3.1)
+confint(fm3.1)
 
-fm2 <- lmList(y2 ~ 1 | g, data=d, family=binomial)
-confint(fm2)
+fm3.2 <- lmList(y2 ~ 1 | g, data=d, family=binomial)
+confint(fm3.2)
 
-
-fm3 <- lmList(cbind(incidence, size - incidence) ~ period|herd,
+## "glmList":
+fm4 <- lmList(cbind(incidence, size - incidence) ~ period |herd,
              family=binomial, data=cbpp)
-coef(fm3)
+(cf4 <- coef(fm4)) # with some 5 NA's
+stopifnot(dim(cf4) == c(15,4),
+          identical(which(is.na(cf4)),
+                    sort(as.integer(c(8+15*(0:3), 47)))))
+if(FALSE)## FIXME
+summary(fm4)
 
 ## this is a slightly odd example because the residual df from
 ##  these fits are in fact zero ...  so pooled.SD fails, as it should
-
-## FIXME: methods(class="lmList") shows lots of methods inherited from nlme
-##    that will probably fail ...
-##  hide/fix these?
 
 ## library(reshape2)
 ## library(ggplot2)
@@ -40,14 +63,36 @@ coef(fm3)
 ##       aes(value,Var2,colour=factor(Var1)))+
 ##    geom_point()+
 ##       geom_path(aes(group=factor(Var1)))
-       
 
-if (FALSE) {
-    for (i in c(unclass(methods(class="lmList")))) {
-        method <- gsub("\\.lmList","",i)
-        cat(method,"\n")
-        ## do.call(,fm3)
-        ## argh; do.call("coef",fm3) and coef(fm3) behave differently
-        try(eval(parse(text=paste0(method,"(fm3)"))))
-    }
-}    
+if(getRversion() < "3.2.0") {
+    if(interactive()) break # gives an error
+    else q() # <- undesirable when interactive !
+}
+
+
+## Try all "standard" (statistical) S3 methods:
+(s3m <- .S3methods(class= class(fm3.1)[1])) ## works for "old and new" class
+ii <- attr(s3m,"info")
+s3fn <- ii[!ii[, "isS4"], "generic"]
+noquote(s3fn <- s3fn[s3fn != "print"]) # it is show() not print() that works
+## [1] coef   confint  fitted  fixef  formula   logLik   pairs
+## [8] plot   predict  qqnorm  ranef  residuals summary  update
+
+## In lme4 1.1-7 (July 2014), only these worked:
+##  coef(), confint(), formula(), logLik(), summary(), update():
+evs <- sapply(s3fn, function(fn) {
+       tryCatch( do.call(fn, list(fm3.1)), error = function(e) e)
+       ## this gives slightly better error message for pairs():
+       ## tryCatch(eval(parse(text = paste(fn,"(fm3.1)"))), error=function(e) e)
+    })
+
+cls <- sapply(evs, function(.) class(.)[1])
+## Now, at least these are ok:
+clsOk <- cls[c("confint", "fixef", "formula", "logLik",
+               "ranef", "summary", "update")]
+stopifnot(identical(unname(clsOk),
+                    c("lmList4.confint", "numeric", "formula", "logLik",
+                      "ranef.lmList", "summary.lmList", "lmList4")))
+## print() / show():
+evs
+
