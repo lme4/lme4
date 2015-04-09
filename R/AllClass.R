@@ -1,28 +1,22 @@
 ### Class definitions for the package
 
 ##' Class "lmList4" of 'lm' Objects on Common Model
-##'
-##' Class \code{"lmList4"} is an S4 class with basically a list of objects of
-##' class \code{\link{lm}} with a common model.
-##' @name lmList4-class
-##' @aliases lmList4-class show,lmList4-method
-##' @docType class
-##' @section Objects from the Class: Objects can be created by calls of the form
-##' \code{new("lmList4", ...)} or, more commonly, by a call to
-##' \code{\link{lmList4}}.
+##'  --> ../man/lmList4-class.Rd
+##'      ~~~~~~~~~~~~~~~~~~~~~~~
 ##' @keywords classes
 ##' @export
 setClass("lmList4",
-         representation(call = "call",
-                        pool = "logical"),
-         contains = "list")
+	 representation(call = "call", pool = "logical",
+			groups = "ordered", # or "factor"?  nlme does use ordered()
+			origOrder = "integer" # a permutation
+			),
+	 contains = "list")
 
-## TODO: export
+## TODO?: export
 setClass("lmList4.confint", contains = "array")
 
-forceCopy <- function(x) {
-    .Call('deepcopy', x)
-}
+forceCopy <- function(x) .Call(deepcopy, x)
+
 
 ### FIXME
 ### shouldn't we have "merPred"  with two *sub* classes "merPredD" and "merPredS"

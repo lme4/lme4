@@ -51,7 +51,8 @@ lmList <- function(formula, data, family, subset, weights,
     errorH <- function(e) NULL # => NULL iff an error happened
     ## FIXME: catch errors and pass them on as warnings?
     ## (simply passing them along silently gives confusing output)
-    val <- lapply(split(frm, eval(mform$groups, frm)),
+    groups <- eval(mform$groups, frm)
+    val <- lapply(split(frm, groups),
 		  if (missing(family)) ## lm(.)
 		      function(dat, formula) {
 			  tryCatch({
@@ -68,7 +69,14 @@ lmList <- function(formula, data, family, subset, weights,
 		      },
 		  formula = as.formula(mform$model))
 
-    new("lmList4", val, call = mCall, pool = pool)
+    ## NB:  identical(levels(groups), names(split(frm, groups))):
+    nms <- levels(groups)
+    ## Contrary to nlme, we keep the erronous ones as well
+    new("lmList4", setNames(val, nms),
+	call = mCall, pool = pool,
+	groups = ordered(groups),
+        origOrder = match(unique(as.character(groups)), nms)
+        )
 }
 
 ##' @importFrom stats coef
@@ -129,7 +137,7 @@ coef.lmList4 <- function(object,
 }
 
 ### FIXME:  nlme *does* export this
-pooledSD <- function(x, ...)
+pooledSD <- function(x)
 {
     stopifnot(is(x, "lmList4"))
     sumsqr <- rowSums(sapply(x,
@@ -148,6 +156,9 @@ pooledSD <- function(x, ...)
     attr(val, "df") <- sumsqr[2]
     val
 }
+
+sigma.lmList4 <- function(object, ...) as.vector(pooledSD(object))
+
 
 ##' @importFrom methods show
 ##' @exportMethod show
@@ -207,6 +218,7 @@ confint.lmList4 <- function(object, parm, level = 0.95, ...)
 }
 
 ##' @importFrom graphics plot
+##' @importFrom lattice .......
 ##' @S3method plot lmList4.confint
 plot.lmList4.confint <- function(x, y, ...)
 {
@@ -292,6 +304,10 @@ update.lmList4 <- function(object, formula., ..., evaluate = TRUE) {
 ##' @return of class "formula" ==> as.formula() rather than just [["formula"]]
 formula.lmList4 <- function(x, ...) structure(x@call[["formula"]], class = "formula")
 
+##' Get the grouping factor of an "lmList4" object
+##' Important as auxiliary method for many of the nlme-imported methods:
+getGroups.lmList4 <- function(object, ...) object@groups
+
 
 ### All the other "lmList4" S3 methods are imported from  nmle :
 ##
@@ -313,7 +329,7 @@ formula.lmList4 <- function(x, ...) structure(x@call[["formula"]], class = "form
 ## residuals.lmList4: no visible global function definition for 'getGroups'
 ##
 ## which we avoid via
-for(fn in c("getGroups", "gsummary", "c_deparse")) {
+for(fn in c("gsummary", "c_deparse")) {
     assign(fn, get(fn, envir = .ns.nlme, inherits=FALSE))
 }
 

@@ -27,7 +27,8 @@ importFrom("lattice",
            splom, strip.custom, strip.default, trellis.par.get,
            xyplot)
 importFrom("MASS", negative.binomial, theta.ml)
-importFrom("nlme", fixef,ranef,VarCorr) # generics we provide methods for and re-export
+## generics we provide methods for and re-export:
+importFrom("nlme", fixef,ranef, VarCorr, getGroups)
 
 importFrom("Matrix", drop0, rankMatrix, sparseMatrix, cBind,rBind,
            forceSymmetric, fac2sparse, KhatriRao, Diagonal)
@@ -193,7 +194,9 @@ S3method(vcov,summary.merMod)
 S3method(weights,merMod)
 S3method(xyplot,thpr)
 
-## Re-using nlme S3 methods (for 'lmList') as S3 methods for our 'lmList4':
+S3method(sigma,lmList4)
+
+## Re-using S3 methods from nlme (for 'lmList') as methods for our 'lmList4':
 S3method(fitted,lmList4)
 S3method(fixef,lmList4)
 S3method(logLik,lmList4)
@@ -205,3 +208,5 @@ S3method(qqnorm,lmList4)
 S3method(ranef,lmList4)
 S3method(residuals,lmList4)
 S3method(summary,lmList4)
+## Auxiliaries:
+S3method(getGroups,lmList4)

@@ -23,13 +23,17 @@ sm1. <- summary(fm1.)
 (sm1 <- summary(fm1))
 stopifnot(all.equal(sm1$RSE, 25.5918156267, tolerance = 1e-10))
 (cf1 <- confint(fm1))
+## Calling the plot.lmList4.confint() method :
+stopifnot(inherits(pcf1 <- plot(cf1), "trellis"))
+pcf1 # nice lattice plot
 
 data(Orthodont, package="nlme")
 Orthodont <- as.data.frame(Orthodont) # no "groupedData"
 fm2 <- lmList(distance ~ age | Subject, Orthodont)
 coef(fm2)
-if(FALSE)# FIXME
-fixef(fm2)# did fail
+(fe2 <- fixef(fm2))# did fail, now fine
+stopifnot(all.equal(fe2, c("(Intercept)" = 16.7611111111111,
+                           age = 0.660185185185185)))
 
 d <- data.frame(
   g = sample(c("A","B","C","D","E"), 250, replace=TRUE),
@@ -39,10 +43,14 @@ d <- data.frame(
 
 fm3.1 <- lmList(y1 ~ 1 | g, data=d)
 coef(fm3.1)
-confint(fm3.1)
+(cf31 <- confint(fm3.1))
+stopifnot(inherits(print(plot(cf31)), "trellis"))
+
 
 fm3.2 <- lmList(y2 ~ 1 | g, data=d, family=binomial)
-confint(fm3.2)
+(cf32 <- confint(fm3.2))
+stopifnot(inherits(print(plot(cf32)), "trellis"))
+
 
 ## "glmList":
 fm4 <- lmList(cbind(incidence, size - incidence) ~ period |herd,
@@ -89,10 +97,10 @@ evs <- sapply(s3fn, function(fn) {
 cls <- sapply(evs, function(.) class(.)[1])
 ## Now, at least these are ok:
 clsOk <- cls[c("confint", "fixef", "formula", "logLik",
-               "ranef", "summary", "update")]
+               "ranef", "sigma", "summary", "update")]
 stopifnot(identical(unname(clsOk),
                     c("lmList4.confint", "numeric", "formula", "logLik",
-                      "ranef.lmList", "summary.lmList", "lmList4")))
+                      "ranef.lmList", "numeric", "summary.lmList", "lmList4")))
 ## print() / show():
 evs
 
