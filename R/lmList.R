@@ -3,10 +3,10 @@
 ## Extract the model formula
 modelFormula <- function(form)
 {
-    if (class(form) != "formula" || length(form) != 3)
+    if (!inherits(form, "formula") || length(form) != 3)
         stop("formula must be a two-sided formula object")
     rhs <- form[[3]]
-    if (class(rhs) != "call" || rhs[[1]] != as.symbol('|'))
+    if (!inherits(rhs, "call") || rhs[[1]] != as.symbol('|'))
         stop("rhs of formula must be a conditioning expression")
     form[[3]] <- rhs[[2]]
     list(model = form, groups = rhs[[3]])
@@ -27,8 +27,8 @@ modelFormula <- function(form)
 ##'     model function or family evaluation.
 ##' @export
 lmList <- function(formula, data, family, subset, weights,
-                   na.action, offset, pool, ...) {
-    stopifnot(is(formula, "formula"))
+                   na.action, offset, pool = TRUE, ...) {
+    stopifnot(inherits(formula, "formula"))
     ## FIXME: converting data to data.frame here doesn't help
     ##  because model.frame is accessed through eval(...,parent.frame())
     ##  below, so it picks up the *original* value of data
@@ -46,50 +46,47 @@ lmList <- function(formula, data, family, subset, weights,
     mf$x <- mf$model <- mf$y <- mf$family <- NULL
     mf$drop.unused.levels <- TRUE
     mf[[1]] <- as.name("model.frame")
-    frm <- eval(mf, parent.frame())
+    frm <- eval(mf, parent.frame())## <- including "..."
     mform <- modelFormula(formula)
-    if (missing(family)) {
-        val <- lapply(split(frm, eval(mform$groups, frm)),
-                      function(dat, formula)
-                  {
-		      ans <- tryCatch({
-                          data <- as.data.frame(dat)
-                          lm(formula, data)
-		      }, error=function(e) NULL)# => ans is NULL iff an error happened
-                      ## FIXME: catch errors and pass them on as warnings?
-                      ## (simply passing them along with silent=FALSE
-                      ##  gives confusing output)
-                  }, formula = mform$model)
-    } else {
-        val <- lapply(split(frm, eval(mform$groups, frm)),
-                      function(dat, formula, family)
-                  {
-		      ans <- tryCatch({
-                          data <- as.data.frame(dat)
-                          glm(formula, family, data)
-                      }, error=function(e) NULL) #-> == NULL iff an error happened
-		  }, formula = mform$model, family = family)
-    }
-    if (missing(pool)) pool <- TRUE
-    new("lmList", val, call = mCall, pool = pool)
+    errorH <- function(e) NULL # => NULL iff an error happened
+    ## FIXME: catch errors and pass them on as warnings?
+    ## (simply passing them along silently gives confusing output)
+    val <- lapply(split(frm, eval(mform$groups, frm)),
+		  if (missing(family)) ## lm(.)
+		      function(dat, formula) {
+			  tryCatch({
+				       data <- as.data.frame(dat)
+				       lm(formula, data)
+				   }, error = errorH)
+		      }
+		  else ## family ==> glm(.)
+		      function(dat, formula) {
+			  tryCatch({
+				       data <- as.data.frame(dat)
+				       glm(formula, family=family, data)
+				   }, error = errorH)
+		      },
+		  formula = as.formula(mform$model))
+
+    new("lmList4", val, call = mCall, pool = pool)
 }
 
 ##' @importFrom stats coef
-##' @S3method coef lmList
+##' @S3method coef lmList4
 ## Extract the coefficients and form a  data.frame if possible
 ## FIXME: commented out nlme stuff (augFrame etc.).  Restore, or delete for good
 ## FIXME: modified so that non-estimated values will be NA rather than set to
 ##        coefs of first non-null estimate.  Is that OK??
-coef.lmList <- function(object,
+coef.lmList4 <- function(object,
                         ## augFrame = FALSE, data = NULL,
                         ##which = NULL, FUN = mean, omitGroupingFactor = TRUE,
                         ...) {
     coefs <- lapply(object, coef)
-    non.null <- !unlist(lapply(coefs, is.null))
-    if (sum(non.null) > 0) {
+    non.null <- !vapply(coefs, is.null, logical(1))
+    if (any(non.null)) {
         template <- coefs[non.null][[1]]
         ## different parameter sets may be estimated for different subsets of data ...
-        allnames <- Reduce(union,lapply(coefs[non.null],names))
+        allnames <- Reduce(union, lapply(coefs[non.null], names))
         if (is.numeric(template)) {
             co <- matrix(NA,
                          ncol = length(allnames),
@@ -127,22 +124,23 @@ coef.lmList <- function(object,
             attr(coefs, "effectNames") <- effectNames
             attr(coefs, "standardized") <- FALSE
         } ## is.numeric(template)
-    } ## sum(non.null)>0
+    }
     coefs
 }
 
+### FIXME:  nlme *does* export this
 pooledSD <- function(x, ...)
 {
-    stopifnot(is(x, "lmList"))
-    sumsqr <- apply(sapply(x,
-                           function(el) {
-                               if (is.null(el)) {
-                                   c(0,0)
-                               } else {
-                                   res <- resid(el)
-                                   c(sum(res^2), length(res) - length(coef(el)))
-                               }
-                           }), 1, sum)
+    stopifnot(is(x, "lmList4"))
+    sumsqr <- rowSums(sapply(x,
+                             function(el) {
+                                 if (is.null(el)) {
+                                     c(0,0)
+                                 } else {
+                                     res <- resid(el)
+                                     c(sum(res^2), length(res) - length(coef(el)))
+                                 }
+			     }))
     if (sumsqr[2] == 0) {
         stop("No degrees of freedom for estimating std. dev.")
     }
@@ -153,7 +151,7 @@ pooledSD <- function(x, ...)
 
 ##' @importFrom methods show
 ##' @exportMethod show
-setMethod("show", signature(object = "lmList"),
+setMethod("show", signature(object = "lmList4"),
           function(object)
       {
           mCall <- object@call
@@ -172,15 +170,15 @@ setMethod("show", signature(object = "lmList"),
           }
       })
 
-##' @S3method confint lmList
-confint.lmList <- function(object, parm, level = 0.95, ...)
+##' @S3method confint lmList4
+confint.lmList4 <- function(object, parm, level = 0.95, ...)
 {
     mCall <- match.call()
     if (length(object) < 1)
-        return(new("lmList.confint", array(numeric(0), c(0,0,0))))
+        return(new("lmList4.confint", array(numeric(0), c(0,0,0))))
     mCall$object <- object[[1]]
     ## the old recursive strategy doesn't work with S3 objects --
-    ##  calls "confint.lmList" again instead of calling "confint"
+    ##  calls "confint.lmList4" again instead of calling "confint"
     mCall[[1]] <- quote(confint)
     ## confint.glm() returns a data frame -- must cast to matrix!
     template <- as.matrix(eval(mCall))
@@ -205,12 +203,12 @@ confint.lmList <- function(object, parm, level = 0.95, ...)
             val[ , , i] <- eval(mCall)
         }
     }
-    new("lmList.confint", aperm(val, c(3, 2, 1)))
+    new("lmList4.confint", aperm(val, c(3, 2, 1)))
 }
 
 ##' @importFrom graphics plot
-##' @S3method plot lmList.confint
-plot.lmList.confint <- function(x, y, ...)
+##' @S3method plot lmList4.confint
+plot.lmList4.confint <- function(x, y, ...)
 {
 ##    stopifnot(require("lattice"))
     arr <- as(x, "array")
@@ -268,8 +266,8 @@ plot.lmList.confint <- function(x, y, ...)
 }
 
 ##' @importFrom stats update
-##' @S3method update lmList
-update.lmList <- function(object, formula., ..., evaluate = TRUE) {
+##' @S3method update lmList4
+update.lmList4 <- function(object, formula., ..., evaluate = TRUE) {
     call <- object@call
     if (is.null(call))
         stop("need an object with call slot")
@@ -290,5 +288,40 @@ update.lmList <- function(object, formula., ..., evaluate = TRUE) {
 }
 
 ##' @importFrom stats formula
-##' @S3method formula lmList
-formula.lmList <- function(x, ...) x@call[["formula"]]
+##' @S3method formula lmList4
+##' @return of class "formula" ==> as.formula() rather than just [["formula"]]
+formula.lmList4 <- function(x, ...) structure(x@call[["formula"]], class = "formula")
+
+
+### All the other "lmList4" S3 methods are imported from  nmle :
+##
+.ns.nlme <- asNamespace("nlme")
+.ns.lme4 <- environment() ## == asNamespace("lme4") during build/load
+##
+## To do this, we need to make them use *our* namespace, e.g. to use our  pooledSD()
+## However, then we get from codetools :
+##
+## fitted.lmList4: no visible global function definition for 'getGroups'
+## pairs.lmList4: no visible global function definition for 'gsummary'
+## pairs.lmList4: no visible global function definition for 'getGroups'
+## plot.lmList4: no visible global function definition for 'c_deparse'
+## plot.lmList4: no visible global function definition for 'getGroups'
+## predict.lmList4: no visible global function definition for 'getGroups'
+## print.lmList4: no visible global function definition for 'c_deparse'
+## qqnorm.lmList4: no visible global function definition for 'getGroups'
+## qqnorm.lmList4: no visible global function definition for 'gsummary'
+## residuals.lmList4: no visible global function definition for 'getGroups'
+##
+## which we avoid via
+for(fn in c("getGroups", "gsummary", "c_deparse")) {
+    assign(fn, get(fn, envir = .ns.nlme, inherits=FALSE))
+}
+
+for(fn in c("fitted", "fixef", "logLik", "pairs", "plot", "predict",
+           "print", "qqnorm", "ranef", "residuals", "summary")) {
+    meth <- get(paste(fn, "lmList",  sep="."), envir = .ns.nlme, inherits=FALSE)
+    environment(meth) <- .ns.lme4 # e.g. in order to use *our* pooledSD()
+    assign(paste(fn, "lmList4", sep="."), meth)
+}
+rm(fn)
+

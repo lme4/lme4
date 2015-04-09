@@ -1,24 +1,24 @@
 ### Class definitions for the package
 
-##' Class "lmList" of 'lm' Objects on Common Model
+##' Class "lmList4" of 'lm' Objects on Common Model
 ##'
-##' Class \code{"lmList"} is an S4 class with basically a list of objects of
+##' Class \code{"lmList4"} is an S4 class with basically a list of objects of
 ##' class \code{\link{lm}} with a common model.
-##' @name lmList-class
-##' @aliases lmList-class show,lmList-method
+##' @name lmList4-class
+##' @aliases lmList4-class show,lmList4-method
 ##' @docType class
 ##' @section Objects from the Class: Objects can be created by calls of the form
-##' \code{new("lmList", ...)} or, more commonly, by a call to
-##' \code{\link{lmList}}.
+##' \code{new("lmList4", ...)} or, more commonly, by a call to
+##' \code{\link{lmList4}}.
 ##' @keywords classes
 ##' @export
-setClass("lmList",
+setClass("lmList4",
          representation(call = "call",
                         pool = "logical"),
          contains = "list")
 
 ## TODO: export
-setClass("lmList.confint", contains = "array")
+setClass("lmList4.confint", contains = "array")
 
 forceCopy <- function(x) {
     .Call('deepcopy', x)
@@ -62,11 +62,11 @@ merPredD <-
                 list(Lambdat = "dgCMatrix",   # depends: theta and Lind
                      LamtUt  = "dgCMatrix",   # depends: Lambdat and Ut
                      Lind    = "integer",     # depends: nothing
-                     Ptr     = "externalptr", # depends: 
+                     Ptr     = "externalptr", # depends:
                      RZX     = "matrix",      # depends: lots
                      Ut      = "dgCMatrix",   # depends: Zt and weights
                      Utr     = "numeric",     # depends: lots
-                     V       = "matrix",      # depends: 
+                     V       = "matrix",      # depends:
                      VtV     = "matrix",
                      Vtr     = "numeric",
                      X       = "matrix",
@@ -155,7 +155,7 @@ merPredD <-
                          def <- .refClassDef
                          selfEnv <- as.environment(.self)
                          vEnv    <- new.env(parent=emptyenv())
-                         
+
                          for (field in setdiff(names(def@fieldClasses), "Ptr")) {
                              if (shallow)
                                  assign(field, get(field, envir = selfEnv), envir = vEnv)
@@ -945,7 +945,7 @@ rePos <-
                 list(
                      initialize = function(mer, ...) {
                          ##' asgn indicates unique elements of flist
-                         ##' 
+                         ##'
                          stopifnot((ntrms <- length(Cnms <- mer@cnms)) > 0L,
                                    (length(Flist <- mer@flist)) > 0L,
                                    length(asgn  <- as.integer(attr(Flist, "assign"))) == ntrms)
