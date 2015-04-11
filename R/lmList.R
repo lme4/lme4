@@ -48,12 +48,13 @@ lmList <- function(formula, data, family, subset, weights,
     mf[[1]] <- as.name("model.frame")
     frm <- eval(mf, parent.frame())## <- including "..."
     mform <- modelFormula(formula)
+    isGLM <- !missing(family) ## TODO in future, consider isNLM / isNLS
     errorH <- function(e) NULL # => NULL iff an error happened
     ## FIXME: catch errors and pass them on as warnings?
     ## (simply passing them along silently gives confusing output)
     groups <- eval(mform$groups, frm)
     val <- lapply(split(frm, groups),
-		  if (missing(family)) ## lm(.)
+		  if (!isGLM) ## lm(.)
 		      function(dat, formula) {
 			  tryCatch({
 				       data <- as.data.frame(dat)
@@ -72,12 +73,31 @@ lmList <- function(formula, data, family, subset, weights,
     ## NB:  identical(levels(groups), names(split(frm, groups))):
     nms <- levels(groups)
     ## Contrary to nlme, we keep the erronous ones as well
+    pool <- !isGLM || .hasScale(family2char(family))
     new("lmList4", setNames(val, nms),
 	call = mCall, pool = pool,
 	groups = ordered(groups),
         origOrder = match(unique(as.character(groups)), nms)
         )
 }
+
+## (currently hidden) auxiliaries
+isGLMlist <- function(object, ...) {
+    D <- getDataPart(object)
+    length(D) >= 1 && inherits(D[[1]], "glm")
+}
+
+## does a glm family have a "scale" [from stats:::logLik.glm() ] :
+.hasScale <- function(family)
+    family %in% c("gaussian", "Gamma", "inverse.gaussian")
+family2char <- function(fam) {
+    if(is.function(fam)) fam()$family else if(!is.character(fam)) fam$family else fam
+}
+
+##' Does a lmList4 object have a "scale" / sigma / useScale ?
+hasScale <- function(object)
+    !isGLMlist(object) || .hasScale(family(object[[1]])$family)
+
 
 ##' @importFrom stats coef
 ##' @S3method coef lmList4
@@ -136,10 +156,17 @@ coef.lmList4 <- function(object,
     coefs
 }
 
-### FIXME:  nlme *does* export this
-pooledSD <- function(x)
+### FIXME?:  nlme *does* export this -- we export sigma()  [instead ?]
+pooledSD <- function(x, allow.0.df = TRUE)
 {
     stopifnot(is(x, "lmList4"))
+    if(!hasScale(x)) {
+        if(allow.0.df)
+            return(structure(1, df = NA)) ## scale := 1  if(!useScale)
+        ## else
+        stop("no scale, hence no pooled SD for this object")
+    }
+
     sumsqr <- rowSums(sapply(x,
                              function(el) {
                                  if (is.null(el)) {
@@ -149,7 +176,7 @@ pooledSD <- function(x)
                                      c(sum(res^2), length(res) - length(coef(el)))
                                  }
 			     }))
-    if (sumsqr[2] == 0) {
+    if (sumsqr[2] == 0) { ## FIXME? rather return NA with a warning ??
         stop("No degrees of freedom for estimating std. dev.")
     }
     val <- sqrt(sumsqr[1]/sumsqr[2])
@@ -157,29 +184,30 @@ pooledSD <- function(x)
     val
 }
 
-sigma.lmList4 <- function(object, ...) as.vector(pooledSD(object))
+sigma.lmList4 <- function(object, ...)
+    if(hasScale(object)) as.vector(pooledSD(object)) else 1
+## 1 for GLM  <==>  1 when useScale is FALSE for [G]LMMs
 
 
 ##' @importFrom methods show
 ##' @exportMethod show
-setMethod("show", signature(object = "lmList4"),
-          function(object)
-      {
-          mCall <- object@call
-          cat("Call:", deparse(mCall), "\n")
-          cat("Coefficients:\n")
-          invisible(print(coef(object)))
-          if (object@pool) {
-              cat("\n")
-              poolSD <- pooledSD(object)
-              dfRes <- attr(poolSD, "df")
-              RSE <- c(poolSD)
-              cat("Degrees of freedom: ", length(unlist(lapply(object, fitted))),
-                  " total; ", dfRes, " residual\n", sep = "")
-              cat("Residual standard error:", format(RSE))
-              cat("\n")
-          }
-      })
+setMethod("show", "lmList4", function(object)
+{
+    mCall <- object@call
+    cat("Call:", deparse(mCall), "\n")
+    cat("Coefficients:\n")
+    print(coef(object))
+    if (object@pool) {
+        cat("\n")
+        poolSD <- pooledSD(object)
+        dfRes <- attr(poolSD, "df")
+        RSE <- c(poolSD)
+        cat("Degrees of freedom: ", length(unlist(lapply(object, fitted))),
+            " total; ", dfRes, " residual\n", sep = "")
+        cat("Residual standard error:", format(RSE))
+        cat("\n")
+    }
+})
 
 ##' @S3method confint lmList4
 confint.lmList4 <- function(object, parm, level = 0.95, ...)
@@ -191,30 +219,37 @@ confint.lmList4 <- function(object, parm, level = 0.95, ...)
     ## the old recursive strategy doesn't work with S3 objects --
     ##  calls "confint.lmList4" again instead of calling "confint"
     mCall[[1]] <- quote(confint)
-    ## confint.glm() returns a data frame -- must cast to matrix!
-    template <- as.matrix(eval(mCall))
-    val <- array(template, c(dim(template), length(object)),
+    template <- eval(mCall)
+    if(is.null(d <- dim(template))) ## MASS:::confint.profile.glm() uses drop(), giving vector
+	d <- dim(template <- rbind("(Intercept)" = template))
+    template[] <- NA_real_
+    val <- array(template, c(d, length(object)),
                  c(dimnames(template), list(names(object))))
     pool <- list(...)$pool
     if (is.null(pool)) pool <- object$pool
-    if (length(pool) > 0 && pool[1]) {
+    if (length(pool) > 0 && pool[1]) { ## do our own
         sd <- pooledSD(object)
         a <- (1 - level)/2
         fac <- sd * qt(c(a, 1 - a)/2, attr(sd, "df"))
         parm <- dimnames(template)[[1]]
-        for (i in seq_along(object))
-            val[ , , i] <-
-                coef(object[[i]])[parm] +
-                    sqrt(diag(summary(object[[i]],
-                                      corr = FALSE)$cov.unscaled
-                              )[parm]) %o% fac
-    } else {
-        for (i in seq_along(object)) {
-            mCall$object <- object[[i]]
-            val[ , , i] <- eval(mCall)
-        }
+	for (i in seq_along(object))
+	    if(!is.null(ob.i <- object[[i]]))
+		val[ , , i] <- coef(ob.i)[parm] +
+		    sqrt(diag(summary(object[[i]], corr = FALSE)$cov.unscaled
+			      )[parm]) %o% fac
+    } else { ## build on confint() method for "glm" / "lm" :
+	for (i in seq_along(object))
+	    if(!is.null(mCall$object <- object[[i]])) {
+		ci <- eval(mCall)
+		if(is.null(dim(ci))) ## MASS:::confint.profile.glm() ...
+		    ci <- rbind("(Intercept)" = ci)
+		if(identical(dim(ci), d))
+		    val[ , , i] <- ci
+		else ## some coefficients were not estimable
+		    val[rownames(ci), , i] <- ci
+	    }
     }
-    new("lmList4.confint", aperm(val, c(3, 2, 1)))
+    new("lmList4.confint", aperm(val, 3:1))
 }
 
 ##' @importFrom graphics plot
@@ -334,7 +369,8 @@ for(fn in c("gsummary", "c_deparse")) {
 }
 
 for(fn in c("fitted", "fixef", "logLik", "pairs", "plot", "predict",
-           "print", "qqnorm", "ranef", "residuals", "summary")) {
+            ## "print", <- have our own show()
+           "qqnorm", "ranef", "residuals", "summary")) {
     meth <- get(paste(fn, "lmList",  sep="."), envir = .ns.nlme, inherits=FALSE)
     environment(meth) <- .ns.lme4 # e.g. in order to use *our* pooledSD()
     assign(paste(fn, "lmList4", sep="."), meth)

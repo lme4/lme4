@@ -23,6 +23,9 @@ sm1. <- summary(fm1.)
 (sm1 <- summary(fm1))
 stopifnot(all.equal(sm1$RSE, 25.5918156267, tolerance = 1e-10))
 (cf1 <- confint(fm1))
+
+if(!dev.interactive(orNone=TRUE)) pdf("lmList_plots.pdf")
+
 ## Calling the plot.lmList4.confint() method :
 stopifnot(inherits(pcf1 <- plot(cf1), "trellis"))
 pcf1 # nice lattice plot
@@ -34,7 +37,11 @@ coef(fm2)
 (fe2 <- fixef(fm2))# did fail, now fine
 stopifnot(all.equal(fe2, c("(Intercept)" = 16.7611111111111,
                            age = 0.660185185185185)))
+stopifnot(inherits(print(pairs(fm2)), "trellis"))
+##                       ----- needs a non-trivial X matrix
 
+
+set.seed(12)
 d <- data.frame(
   g = sample(c("A","B","C","D","E"), 250, replace=TRUE),
   y1 = runif(250, max=100),
@@ -46,15 +53,19 @@ coef(fm3.1)
 (cf31 <- confint(fm3.1))
 stopifnot(inherits(print(plot(cf31)), "trellis"))
 
-
 fm3.2 <- lmList(y2 ~ 1 | g, data=d, family=binomial)
-(cf32 <- confint(fm3.2))
-stopifnot(inherits(print(plot(cf32)), "trellis"))
+(cf32 <- confint(fm3.2)) #                 ^^^^^^^^ "glmList"
+stopifnot(identical(dim(cf32), c(5L,2:1)),
+	  inherits(print(plot(cf32)), "trellis"),
+	  all.equal(unname(getDataPart(signif(drop(cf32), 6))),
+		    cbind(c(-0.400041, -0.311489, -1.07774, -0.841075, -0.273828),
+			  c( 0.743188,  0.768538, 0.0723138, 0.274392,  0.890795))))
 
 
-## "glmList":
-fm4 <- lmList(cbind(incidence, size - incidence) ~ period |herd,
+## "glmList" (2) -- here,  herd == 8 has only one observation => not estimable
+fm4 <- lmList(cbind(incidence, size - incidence) ~ period | herd,
              family=binomial, data=cbpp)
+fm4 # no pooled SD for glm
 (cf4 <- coef(fm4)) # with some 5 NA's
 stopifnot(dim(cf4) == c(15,4),
           identical(which(is.na(cf4)),
@@ -79,28 +90,52 @@ if(getRversion() < "3.2.0") {
 
 
 ## Try all "standard" (statistical) S3 methods:
-(s3m <- .S3methods(class= class(fm3.1)[1])) ## works for "old and new" class
-ii <- attr(s3m,"info")
-s3fn <- ii[!ii[, "isS4"], "generic"]
-noquote(s3fn <- s3fn[s3fn != "print"]) # it is show() not print() that works
-## [1] coef   confint  fitted  fixef  formula   logLik   pairs
-## [8] plot   predict  qqnorm  ranef  residuals summary  update
+.S3generics <- function(class) {
+    s3m <- .S3methods(class=class)
+    ii <- attr(s3m, "info")
+    ii[!ii[, "isS4"], "generic"]
+}
+
+s3fn <- .S3generics(class= class(fm3.1)[1]) ## works for "old and new" class
+
+noquote(s3fn <- s3fn[s3fn != "print"])# <-- it is show() not print() that works
+## [1] coef    confint fitted fixef     formula logLik  pairs  plot
+## [9] predict qqnorm  ranef  residuals sigma   summary update
 
 ## In lme4 1.1-7 (July 2014), only these worked:
-##  coef(), confint(), formula(), logLik(), summary(), update():
-evs <- sapply(s3fn, function(fn) {
-       tryCatch( do.call(fn, list(fm3.1)), error = function(e) e)
-       ## this gives slightly better error message for pairs():
-       ## tryCatch(eval(parse(text = paste(fn,"(fm3.1)"))), error=function(e) e)
-    })
+##  coef(), confint(), formula(), logLik(), summary(), update()
+
+## pairs() is excluded for fm3.1 which has only intercept:
+## no errors otherwise:
+(evs <- sapply(s3fn[s3fn != "pairs"], do.call, args = list(fm3.1)))
 
 cls <- sapply(evs, function(.) class(.)[1])
-## Now, at least these are ok:
 clsOk <- cls[c("confint", "fixef", "formula", "logLik",
                "ranef", "sigma", "summary", "update")]
 stopifnot(identical(unname(clsOk),
                     c("lmList4.confint", "numeric", "formula", "logLik",
                       "ranef.lmList", "numeric", "summary.lmList", "lmList4")))
-## print() / show():
-evs
 
+## --- fm2 --- non-trivial X: can use pairs(), too:
+(evs2 <- sapply(s3fn, do.call, args = list(fm2)))
+
+## --- fm3.2 --- no failures for this "glmList" :
+evs3.2 <- sapply(s3fn[s3fn != "pairs"], do.call, args = list(fm3.2))
+evs3.2
+
+## --- fm4 ---
+evs4 <- sapply(s3fn, function(fn)
+    tryCatch(do.call(fn, list(fm4)), error=function(e) e))
+length(warnings())
+unique(warnings()) ##  glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+str(sapply(evs4, class)) # more errors than above
+isok4 <- !sapply(evs4, is, class2="error")
+
+## includes a nice pairs():
+evs4[isok4]
+## Error msgs of those with errors, first 5, now 3, then 2 :
+str(errs4 <- lapply(evs4[!isok4], conditionMessage))
+## $ logLik : chr "log-likelihood not available with NULL fits"
+## $ summary: chr "subscript out of bounds"
+stopifnot(length(errs4) <= 2)
