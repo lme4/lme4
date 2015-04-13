@@ -256,7 +256,6 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
                                  compDev, verbose)
                 resp$updateWts()
                 p
-
             }
 	else  ## nAGQ > 0
 	    function(pars) {
@@ -339,6 +338,13 @@ RglmerWrkIter <- function(pp, resp, uOnly=FALSE) {
     resp$resDev() + pp$sqrL(1)
 }
 
+##' @param pp pred module
+##' @param resp resp module
+##' @param tol numeric tolerance
+##' @param GQmat matrix of Gauss-Hermite quad info
+##' @param compDev compute in C++ (as opposed to doing as much as possible in R)
+##' @param grpFac grouping factor (normally found in environment ...)
+##' @param verbose verbosity, of course
 glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, verbose=0) {
     nAGQ <- nrow(GQmat)
     if (compDev) {
@@ -1133,6 +1139,31 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
 
     rr <- object@resp$copy()
 
+    ## somewhat repeated from profile.merMod, but sufficiently
+    ##  different that refactoring is slightly non-trivial
+    ## "three minutes' thought would suffice ..."
+    ignore.pars <- c("xst","xt")
+    control.internal <- object@optinfo$control
+    ignored <- which(names(control.internal) %in% ignore.pars)
+    if (length(ignored)>0) {
+        control.internal <- control.internal[-ignored]
+    }
+
+    if (!is.null(newControl)) {
+        control <- newControl
+        if (length(control$optCtrl)==0)
+            control$optCtrl <- control.internal
+    } else {
+        control <- if (isGLMM(object)) glmerControl() else lmerControl()
+    }
+
+    ## we need this stuff defined before we call .glmerLaplace below ...
+    pp        <- object@pp$copy()
+    dc        <- object@devcomp
+    nAGQ      <- dc$dims["nAGQ"] # possibly NA
+    nth       <- dc$dims[["nth"]]
+    verbose   <- list(...)$verbose; if (is.null(verbose)) verbose <- 0L
+    if (isGLMM(object)) GQmat     <- GHrule(nAGQ)
     if (!is.null(newresp)) {
 
         ## update call and model frame with new response
@@ -1174,21 +1205,36 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
         stopifnot(length(newresp <- as.numeric(as.vector(newresp))) ==
                   length(rr$y))
 
+        ## hacking around to try to get internals properly set up
+        ##  for refitting.  This helps, but not all the way ...
+        oldresp <- rr$y
         rr$setResp(newresp)
+        ##rr$setResp(oldresp)
+        ##rr$setResp(newresp)
+        if (isGLMM(object)) {
+            if (nAGQ<=1) {
+                glmerPwrssUpdate(pp,rr,control$tolPwrss,GQmat )
+            } else {
+                  glmerPwrssUpdate(pp,rr,control$tolPwrss,GQmat,
+                                   grpFac = object@flist[[1]])
+              }
+        }
+        ## .Call(glmerLaplace, pp$ptr(), rr$ptr(), nAGQ,
+        ## control$tolPwrss, as.integer(30), verbose)
+##              nAGQ,
+##              control$tolPwrss, as.integer(30), # maxit = 30
+##              verbose)
+##        lp0         <- pp$linPred(1) # each pwrss opt begins at this eta
     }
 
-    pp        <- object@pp$copy()
-    dc        <- object@devcomp
-    nAGQ      <- dc$dims["nAGQ"] # possibly NA
-    nth       <- dc$dims[["nth"]]
-    verbose   <- list(...)$verbose; if (is.null(verbose)) verbose <- 0L
     devlist <-
 	if (isGLMM(object)) {
 	    baseOffset <- object@resp$offset
+            
 	    list(tolPwrss= dc$cmp [["tolPwrss"]],
 		 compDev = dc$dims[["compDev"]],
 		 nAGQ = unname(nAGQ),
-		 lp0=object@resp$eta - baseOffset,
+		 lp0=pp$linPred(1), ## object@resp$eta - baseOffset,
 		 baseOffset=baseOffset,
 		 pwrssUpdate=glmerPwrssUpdate,
 		 ## save GQmat in the object and use that instead of nAGQ
@@ -1205,23 +1251,6 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
         xst   <- c(xst, sqrt(diag(pp$unsc())))
         x0    <- c(x0, unname(fixef(object)))
         lower <- c(lower, rep(-Inf,length(x0)-length(lower)))
-    }
-    ## somewhat repeated from profile.merMod, but sufficiently
-    ##  different that refactoring is slightly non-trivial
-    ## "three minutes' thought would suffice ..."
-    ignore.pars <- c("xst","xt")
-    control.internal <- object@optinfo$control
-    ignored <- which(names(control.internal) %in% ignore.pars)
-    if (length(ignored)>0) {
-        control.internal <- control.internal[-ignored]
-    }
-
-    if (!is.null(newControl)) {
-        control <- newControl
-        if (length(control$optCtrl)==0)
-            control$optCtrl <- control.internal
-    } else {
-        control <- lmerControl()
     }
     ## control <- c(control,list(xst=0.2*xst, xt=xst*0.0001))
     ## FIX ME: allow use.last.params to be passed through
