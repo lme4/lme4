@@ -27,9 +27,11 @@ abbrDeparse <- function(x, width=60) {
 ##' @param bars result of findbars
 barnames <- function(bars) vapply(bars, function(x) safeDeparse(x[[3]]), "")
 
-makeFac <- function(x) if (!is.factor(x)) factor(x) else x
+makeFac <- function(x,char.only=FALSE) {
+    if (!is.factor(x) && (!char.only || is.character(x))) factor(x) else x
+}
 
-factorize <- function(x,frloc) {
+factorize <- function(x,frloc,char.only=FALSE) {
     ## convert grouping variables to factors as necessary
     ## TODO: variables that are *not* in the data frame are
     ##  not converted -- these could still break, e.g. if someone
@@ -38,7 +40,7 @@ factorize <- function(x,frloc) {
     ##       (not actually used, but could come in handy)
     for (i in all.vars(RHSForm(x))) {
         if (!is.null(curf <- frloc[[i]]))
-            frloc[[i]] <- makeFac(curf)
+            frloc[[i]] <- makeFac(curf,char.only)
     }
     return(frloc)
 }

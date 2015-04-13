@@ -364,6 +364,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     }
     mf$formula <- fr.form
     fr <- eval(mf, parent.frame())
+    ## convert character vectors to factor (defensive)
+    fr <- factorize(fr.form,fr,char.only=TRUE)
     ## store full, original formula & offset
     attr(fr,"formula") <- formula
     attr(fr,"offset") <- mf$offset
@@ -628,6 +630,8 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     }
     mf$formula <- fr.form
     fr <- eval(mf, parent.frame())
+    ## DRY ... 
+    fr <- factorize(fr.form,fr,char.only=TRUE)
     ## store full, original formula & offset
     attr(fr,"formula") <- formula
     attr(fr,"offset") <- mf$offset

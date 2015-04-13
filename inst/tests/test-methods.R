@@ -36,13 +36,13 @@ fmPix <- lmer(pixel ~ day + I(day^2) + (day | Dog) + (1 | Side/Dog), data = Pixe
 context("summary")
 test_that("summary", {
     ## test for multiple-correlation-warning bug
-    cc <- capture.output(summary(fit_agridat_archbold))
+    cc <- capture.output(print(summary(fit_agridat_archbold),correlation=FALSE))
     expect_true(length(g <- grep("not shown by default",cc))==0 || g<=1)
 })
 
 context("anova")
 test_that("lmer", {
-    expect_that(anova(fm0,fm1), is_a("anova"))
+    expect_that(suppressMessages(anova(fm0,fm1)), is_a("anova"))
     expect_warning(do.call(anova,list(fm0,fm1)), "assigning generic names")
     ##
     dat <- data.frame(y = 1:5,
@@ -151,7 +151,10 @@ test_that("bootMer", {
     expect_equal(sd(boo01.sp$t), 8.215586, tol = 1e-4)
     ## passing FUN to confint: Torbjørn Håkan Ergon
     testFun <- function(fit) fixef(fit)[1]
-    confint(fm1, method="boot", FUN=testFun, nsim=10)
+    expect_equal(c(unclass(
+        suppressWarnings(confint(fm1, method="boot", FUN=testFun, nsim=10,
+                                 quiet=TRUE)))),
+                 c(243.7551,256.9104),tol=1e-3)
 })
 
 context("confint")
@@ -175,8 +178,8 @@ test_that("refit", {
     data(Orthodont,package = "nlme")
     fmOrth <- fm <- lmer(distance ~ I(age - 11) + (I(age - 11) | Subject),
                          data = Orthodont)
-    expect_equal(simulate(fm,newdata = Orthodont,seed = 101),
-                 simulate(fm,seed = 101))
+    expect_equal(s1 <- simulate(fm,newdata = Orthodont,seed = 101),
+                 s2 <- simulate(fm,seed = 101))
 })
 
 context("predict")
@@ -230,6 +233,7 @@ test_that("predict", {
     m1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
     sleepst.NA <- sleepstudy ; sleepst.NA$Days[2] <- NA
     m2 <- update(fm1, data = sleepst.NA)
+    ## TRICKY for evaluation; fm1 was defined elsewhere, so data
     if(FALSE) ## FIXME
     predict(m2, sleepst.NA[1:4,])
     ## Error: (p <- ncol(X)) == ncol(Y) is not TRUE
@@ -241,7 +245,24 @@ test_that("predict", {
     m4 <- lmer(distance ~ age + (age|Subject) + (0 + nsex|Subject), data=Orthodont)
     expect_equal(p3 <- predict(m3, Orthodont), fitted(m3), tol=1e-14)
     expect_equal(p4 <- predict(m4, Orthodont), fitted(m4), tol=1e-14)
+
+    ## related to GH #275 (*passes*),
+    ss <- sleepstudy
+    set.seed(1)
+    ss$noiseChar <- ifelse(runif(nrow(sleepstudy)) > 0.8, "Yes", "No")
+    ss$noiseFactor <- factor(ss$noiseChar)
+    fm2 <- lmer(Reaction ~ Days + noiseChar + (Days | Subject), ss)
+    expect_equal(predict(fm2, newdata = model.frame(fm2)[2:3, ])[2],
+                 predict(fm2, newdata = model.frame(fm2)[3, ]))
+    fm3 <- lmer(Reaction ~ Days + noiseFactor + (Days | Subject), ss)
+    expect_equal(predict(fm3, newdata = model.frame(fm3)[2:3, ])[2],
+                 predict(fm3, newdata = model.frame(fm3)[3, ]))
+
 })
+
+
+
+
 
 context("simulate")
 test_that("simulate", {
@@ -277,6 +298,12 @@ test_that("simulate", {
     ## Pixel example
     expect_true(all(dim(simulate(fmPixS)) == c(nPix,1)))
     expect_true(all(dim(simulate(fmPix )) == c(nPix,1)))
+
+    ## simulation with newdata smaller/larger different from original
+    fm <- lmer(diameter ~ 1 + (1|plate) + (1|sample),Penicillin)
+    expect_is(simulate(fm,newdata=Penicillin[1:10,],allow.new.levels=TRUE),"data.frame")
+    expect_is(simulate(fm,newdata=do.call(rbind,replicate(4,Penicillin,simplify=FALSE))),"data.frame")
+             
 })
 
 context("misc")

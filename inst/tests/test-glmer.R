@@ -188,6 +188,7 @@ if(FALSE) { ## Hadley broke this
     }
     ## test bootstrap/refit with nAGQ>1
     gm1AGQ <- update(gm1,nAGQ=2)
+    s1 <- simulate(gm1AGQ)
     expect_equal(attr(bootMer(gm1AGQ,fixef),"bootFail"),0)
 
     ## do.call(new,...) bug
@@ -281,4 +282,12 @@ if(FALSE) { ## Hadley broke this
     grp <- rep(letters[1:5], 20); set.seed(1); x <- rnorm(100)
     expect_error(glmer(x ~ 1 + (1|grp), family=gaussian(link="log")),
 		 "valid starting values")
+
+    ## related to GH 231
+    rr <- gm1@resp$copy()
+    ff <- setdiff(ls(gm1@resp),c("copy","initialize","initialize#lmResp","ptr",
+                                 "updateMu","updateWts","resDev","setOffset","wrss"))
+    for (i in ff) {
+        expect_equal(gm1@resp[[i]],rr[[i]])
+    }
 })

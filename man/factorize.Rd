@@ -2,11 +2,12 @@
 \alias{factorize}
 \title{Attempt to convert grouping variables to factors}
 \usage{
-factorize(x,frloc)
+factorize(x,frloc,char.only=FALSE)
 }
 \arguments{
   \item{x}{a formula}
   \item{frloc}{a data frame}
+  \item{char.only}{(logical) convert only \code{character} variables to factors?}
 }
 \description{
   If variables within a data frame are not factors, try to

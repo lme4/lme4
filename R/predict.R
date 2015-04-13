@@ -144,34 +144,21 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
             newdata <- newdata[-fit.na.action,]
         }
 	rfd <- if(is.null(newdata)) object@frame else newdata
+        ## note: mkReTrms automatically *drops* unused levels
 	ReTrms <- mkReTrms(findbars(re.form[[2]]), rfd)
+        ## update Lambdat (ugh, better way to do this?)
+        ReTrms <- within(ReTrms,Lambdat@x <- unname(getME(object,"theta")[Lind]))
 	if (!allow.new.levels && any(vapply(ReTrms$flist, anyNA, NA)))
 	    stop("NAs are not allowed in prediction data",
 		 " for grouping variables unless allow.new.levels is TRUE")
-        ## FIXME, should this be unique(as.character(x)) instead, i.e.,
-        ##        what is the proper way to protect against non-factors? :
-        new_levels <- lapply(ReTrms$flist, function(x) levels(factor(x)))
-        levelfun <- function(x,n) {
-            ## find and deal with new levels
-            nl.n <- new_levels[[n]]
-            if (!all(nl.n %in% rownames(x))) {
-                if (!allow.new.levels) stop("new levels detected in newdata")
-                ## create an all-zero data frame corresponding to the new set of levels ...
-                newx <- as.data.frame(matrix(0, nrow=length(nl.n), ncol=ncol(x),
-                                             dimnames=list(nl.n, names(x))))
-                ## then paste in the matching RE values from the original fit/set of levels
-                newx[rownames(x),] <- x
-                x <- newx
-            }
-            ## find and deal with missing old levels
-	    if (!all(r.inn <- rownames(x) %in% nl.n)) x[r.inn,,drop=FALSE] else x
-        }
         ns.re <- names(re <- ranef(object))
         nRnms <- names(Rcnms <- ReTrms$cnms)
         if (!all(nRnms %in% ns.re))
             stop("grouping factors specified in re.form that were not present in original model")
+        new_levels <- lapply(ReTrms$flist, function(x) levels(factor(x)))
         ## fill in/delete levels as appropriate
-        re_x <- mapply(levelfun, re, ns.re, SIMPLIFY=FALSE)
+        re_x <- Map(function(r,n) levelfun(r,n,allow.new.levels=allow.new.levels),
+                    re[names(new_levels)], new_levels)
         ## pick out random effects values that correspond to
         ##  random effects incorporated in re.form ...
         ## NB: Need integer indexing, as nRnms can be duplicated: (age|Subj) + (sex|Subj) :
@@ -186,7 +173,29 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
     }
     Zt <- ReTrms$Zt
     attr(Zt, "na.action") <- attr(re_new, "na.action") <- attr(mfnew, "na.action")
-    list(Zt=Zt, b=re_new)
+    list(Zt=Zt, b=re_new, Lambdat = ReTrms$Lambdat)
+}
+
+##' @param x a random effect (i.e., data frame with rows equal to levels, columns equal to terms
+##' @param n vector of new levels
+levelfun <- function(x,nl.n,allow.new.levels=FALSE) {
+    ## 1. find and deal with new levels
+    if (!all(nl.n %in% rownames(x))) {
+        if (!allow.new.levels) stop("new levels detected in newdata")
+        ## create an all-zero data frame corresponding to the new set of levels ...
+        newx <- as.data.frame(matrix(0, nrow=length(nl.n), ncol=ncol(x),
+                                     dimnames=list(nl.n, names(x))))
+        ## then paste in the matching RE values from the original fit/set of levels
+        newx[rownames(x),] <- x
+        x <- newx
+    }
+    ## 2. find and deal with missing old levels
+    ## ... these should have been dropped when making the Z matrices
+    ##     etc. in mkReTrms, so we'd better drop them here to match ...
+    if (!all(r.inn <- rownames(x) %in% nl.n)) {
+        x <- x[r.inn,,drop=FALSE]
+    }
+    return(x)
 }
 
 ##'
@@ -443,7 +452,8 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     RNGstate <- .Random.seed
 
     sigma <- sigma(object)
-    n <- nrow(X <- getME(object, "X"))
+    ## OBSOLETE: no longer use X?
+    ## n <- nrow(X <- getME(object, "X"))
     link <- if (isGLMM(object)) "response"
 
     ## predictions, conditioned as specified, on link scale
@@ -453,7 +463,8 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     ##    with whatever is done in mkNewReTrms
     etapred <- predict(object, newdata=newdata, re.form=re.form,
                        type="link", na.action=na.omit)
-
+    n <- length(etapred)
+    
     ## now add random components:
     ##  only the ones we did *not* condition on
 
@@ -474,7 +485,10 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 	newRE <- mkNewReTrms(object, newdata, compReForm,
 			     na.action=na.action,
 			     allow.new.levels=allow.new.levels)
-	U <- t(getME(object, "Lambdat") %*% newRE$Zt) # == Z Lambda
+        ## paranoia ...
+        stopifnot(!is.null(newdata) ||
+                      isTRUE(all.equal(newRE$Lambdat,getME(object,"Lambdat"))))
+	U <- t(newRE$Lambdat %*% newRE$Zt) # == Z Lambda
 	u <- rnorm(ncol(U)*nsim)
 	## UNSCALED random-effects contribution:
 	as(U %*% matrix(u, ncol = nsim), "matrix")
@@ -520,7 +534,13 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     ## object NOT including values with NAs
     f <- fitted(object)
     nm <- names(f)[!is.na(f)]
-    if (length(nm)==0) nm <- seq(n)
+    ## unnamed input, *or* simulation from new data ...
+    if (length(nm)==0) {
+        nm <- as.character(seq(n))
+    } else if (!is.null(newdata)) {
+          nm <- rownames(newdata)
+      }
+
     row.names(val) <- nm
 
     fit.na.action <- attr(model.frame(object),"na.action")
@@ -544,14 +564,20 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 		  ## earlier, so we don't have to redo this transformation!)
 		  class = "data.frame")
     } else {
-	as.data.frame(lapply(val, napredict, omit=fit.na.action))
-    }
+          as.data.frame(lapply(val, napredict, omit=fit.na.action))
+      }
 
     ## reconstruct names: first get rid of NAs, then refill them
     ## as appropriate based on fit.na.action (which may be different
     ## from the original model's na.action spec)
-    if (length(nm2 <- names(napredict(na.omit(f), omit=fit.na.action))) > 0)
+      if (is.null(newdata)) {
+          nm2 <- names(napredict(na.omit(f), omit=fit.na.action))
+      } else {
+            nm2 <- rownames(napredict(na.omit(newdata), omit=fit.na.action))
+        }
+    if (length(nm2) > 0) {
         row.names(val) <- nm2
+    }
 
     structure(val,
               ## as.data.frame(lapply(...)) blows away na.action attribute,
