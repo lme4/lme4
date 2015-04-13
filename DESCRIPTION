@@ -34,7 +34,8 @@ Suggests:
     mlmRev,
     optimx (>= 2013.8.6),
     gamm4,
-    pbkrtest
+    pbkrtest,
+    HSAUR2
 VignetteBuilder: knitr
 LazyData: yes
 License: GPL (>=2)

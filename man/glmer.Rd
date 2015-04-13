@@ -172,6 +172,15 @@ gm0 <- glm(cbind(incidence, size - incidence) ~ period,
 gm1Dev0 <- gm1Devfun(c(0,coef(gm0)))
 ## compare
 stopifnot(all.equal(gm1Dev0,c(-2*logLik(gm0))))
+## the toenail oncholysis data from Backer et al 1998
+## these data are notoriously difficult to fit
+\dontrun{
+if (require("HSAUR2")) {
+    gm2 <- glmer(outcome~treatment*visit+(1|patientID),
+                 data=toenail,
+                 family=binomial,nAGQ=20)
+}
+}
 }
 \keyword{models}
 
