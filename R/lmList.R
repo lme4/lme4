@@ -255,16 +255,15 @@ confint.lmList4 <- function(object, parm, level = 0.95, ...)
 ##' @importFrom graphics plot
 ##' @importFrom lattice .......
 ##' @S3method plot lmList4.confint
-plot.lmList4.confint <- function(x, y, ...)
+plot.lmList4.confint <- function(x, y, order, ...)
 {
 ##    stopifnot(require("lattice"))
     arr <- as(x, "array")
     dd <- dim(arr)
     dn <- dimnames(arr)
     levs <- dn[[1]]
-    dots <- list(...)
-    if (length(dots$order) > 0 &&
-        (ord <- round(dots$order[1])) %in% seq(dd[3]))
+    if (!missing(order) &&
+        (ord <- round(order[1])) %in% seq(dd[3]))
         levs <- levs[order(rowSums(arr[ , , ord]))]
     ll <- length(arr)
     df <- data.frame(group =
@@ -273,20 +272,7 @@ plot.lmList4.confint <- function(x, y, ...)
                      intervals = as.vector(arr),
                      what = gl(dd[3], dd[1] * dd[2], length = ll, labels = dn[[3]]),
                      end = gl(dd[2], dd[1], length = ll))
-    strip <- dots[["strip"]]
-    if (is.null(strip)) {
-        strip <- function(...) strip.default(..., style = 1)
-    }
-    xlab <- dots[["xlab"]]
-    if (is.null(xlab)) xlab <- ""
-    ylab <- dots[["ylab"]]
-    if (is.null(ylab)) ylab <- ""
-    dotplot(group ~ intervals | what,
-            data = df,
-            scales = list(x="free"),
-            strip = strip,
-            xlab = xlab, ylab = ylab,
-            panel = function(x, y, pch = dot.symbol$pch,
+    panelfun <- function(x, y, pch = dot.symbol$pch,
             col = dot.symbol$col, cex = dot.symbol$cex,
             font = dot.symbol$font, ...)
         {
@@ -303,13 +289,17 @@ plot.lmList4.confint <- function(x, y, ...)
             lower <- tapply(xx, yy, min)
             upper <- tapply(xx, yy, max)
             nams <- as.numeric(names(lower))
-            lsegments(lower, nams, upper, nams, col = 1, lty = 1, lwd =
+            lsegments(lower, nams, upper, nams, col = col, lty = 1, lwd =
                       if (dot.line$lwd) {
                           dot.line$lwd
                       } else {
                           2
                       })
-        }, ...)
+        }
+    dotplot(group ~ intervals | what,
+            data = df,
+            scales = list(x="free"),
+            panel=panelfun, ...)
 }
 
 ##' @importFrom stats update

@@ -1,5 +1,6 @@
 \name{lmList}
 \alias{lmList}
+\alias{plot.lmList}
 \title{Fit List of lm Objects with a Common Model}
 \description{
   Fit a list of \code{\link{lm}} objects with a common model for
@@ -77,4 +78,5 @@ stopifnot( all.equal(coef(fm.2), coef(fm.plm)) )
 (ci <- confint(fm.plm)) # print and rather *see* :
 plot(ci)                # how widely they vary for the individuals
 }
+\seealso{\code{\linkS4class{lmList4}}, \code{\link{plot.lmList4}}}
 \keyword{models}

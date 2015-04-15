@@ -6,7 +6,7 @@
 \description{
   Class \code{"lmList4"} is an S4 class with basically a
   \code{\link{list}} of objects of class \code{\link{lm}} with a common
-  model (but different data), see \code{\link{lmList}()} which returns
+  model (but different data); see \code{\link{lmList}()} which returns
   these.
 
   Package \pkg{nlme}'s \code{\link[nlme]{lmList}()} returns objects of
@@ -19,7 +19,7 @@
   \code{\link{lmList}()}.
 }
 \section{Methods}{
-  A dozen of \code{\link{methods}} are provided.  Currently, S4
+  A dozen \code{\link{methods}} are provided.  Currently, S4
   methods for \code{\link{show}}, coercion (\code{\link{as}(.,.)}) and
   others inherited via \code{"list"},  and S3 methods for
   \code{\link{coef}}, \code{\link{confint}}, \code{\link{fitted}},
@@ -31,11 +31,12 @@
 
   \describe{
     \item{sigma(object)}{returns the standard deviation
-      \eqn{\hat{\sigma}}{\sigma^} (of the errors in the linear models), assuming a
+      \eqn{\hat{\sigma}}{\sigma-hat} (of the errors in the linear models), assuming a
       \emph{common} variance \eqn{\sigma^2} by pooling (even when
       \code{pool = FALSE} was used in the fit).}
   }
 }
+\seealso{\code{\link{lmList}}, \code{\link{plot.lmList4}}}
 \examples{
 if(getRversion() >= "3.2.0") {
   (mm <- methods(class = "lmList4"))
