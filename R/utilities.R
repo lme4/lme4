@@ -600,7 +600,7 @@ nlformula <- function(mc) {
 
     chck1(meform <- form[[3L]])
     pnameexpr <- parse(text=paste(pnames, collapse='+'))[[1]]
-    nb <- nobars(meform)
+    nb <- nobars_(meform)  ## call ORIGINAL recursive form
     fe <- eval(substitute(~ 0 + nb + pnameexpr))
     environment(fe) <- environment(form)
     frE <- do.call(rbind, lapply(seq_along(nlpars), function(i) fr)) # rbind s copies of the frame
