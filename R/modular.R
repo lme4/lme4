@@ -385,7 +385,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 
     ## fixed-effects model matrix X - remove random effect parts from formula:
     fixedform <- formula
-    RHSForm(fixedform) <- if(is.null(nb <- nobars(RHSForm(fixedform)))) 1 else nb
+    RHSForm(fixedform) <- nobars(RHSForm(fixedform))
     mf$formula <- fixedform
     ## re-evaluate model frame to extract predvars component
     fixedfr <- eval(mf, parent.frame())
@@ -651,8 +651,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
 
     ## fixed-effects model matrix X - remove random effect parts from formula:
     fixedform <- formula
-    RHSForm(fixedform) <- if(is.null(nb <- nobars(RHSForm(fixedform))))
-        1 else nb
+    RHSForm(fixedform) <- nobars(RHSForm(fixedform))
     mf$formula <- fixedform
     ## re-evaluate model frame to extract predvars component
     fixedfr <- eval(mf, parent.frame())

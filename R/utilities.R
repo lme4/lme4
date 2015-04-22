@@ -433,19 +433,33 @@ expandDoubleVerts <- function(term)
 ##' @family utilities
 ##' @keywords models utilities
 ##' @export
-nobars <- function(term)
+nobars <- function(term) {
+    nb <- nobars_(term)  ## call recursive version
+    if (is(term,"formula") && length(term)==3 && is.symbol(nb)) {
+        ## called with two-sided RE-only formula:
+        ##    construct response~1 formula
+        nb <- reformulate("1",response=deparse(nb))
+    }
+    ## called with one-sided RE-only formula, or RHS alone
+    if (is.null(nb)) {
+        nb <- if (is(term,"formula")) ~1 else 1
+    }
+    nb
+}
+
+nobars_ <- function(term)
 {
     if (!any(c('|','||') %in% all.names(term))) return(term)
     if (is.call(term) && term[[1]] == as.name('|')) return(NULL)
     if (is.call(term) && term[[1]] == as.name('||')) return(NULL)
     if (length(term) == 2) {
-        nb <- nobars(term[[2]])
+        nb <- nobars_(term[[2]])
         if (is.null(nb)) return(NULL)
         term[[2]] <- nb
         return(term)
     }
-    nb2 <- nobars(term[[2]])
-    nb3 <- nobars(term[[3]])
+    nb2 <- nobars_(term[[2]])
+    nb3 <- nobars_(term[[3]])
     if (is.null(nb2)) return(nb3)
     if (is.null(nb3)) return(nb2)
     term[[2]] <- nb2
