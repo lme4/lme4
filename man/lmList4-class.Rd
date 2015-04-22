@@ -36,7 +36,7 @@
       \code{pool = FALSE} was used in the fit).}
   }
 }
-\seealso{\code{\link{lmList}}, \code{\link{plot.lmList4}}}
+\seealso{\code{\link{lmList}}}
 \examples{
 if(getRversion() >= "3.2.0") {
   (mm <- methods(class = "lmList4"))

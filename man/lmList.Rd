@@ -78,5 +78,5 @@ stopifnot( all.equal(coef(fm.2), coef(fm.plm)) )
 (ci <- confint(fm.plm)) # print and rather *see* :
 plot(ci)                # how widely they vary for the individuals
 }
-\seealso{\code{\linkS4class{lmList4}}, \code{\link{plot.lmList4}}}
+\seealso{\code{\linkS4class{lmList4}}}
 \keyword{models}
