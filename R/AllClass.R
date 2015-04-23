@@ -87,8 +87,6 @@ merPredD <-
                          stopifnot(length(theta) > 0L,
                                    length(Lind) > 0L,
                                    all(sort(unique(Lind)) == seq_along(theta)))
-                         ## mu <<- if (!is.null(ll$mu))
-                         ##    as.numeric(ll$mu) else numeric(n)
                          RZX <<- if (!is.null(ll$RZX))
                              array(ll$RZX, c(q, p)) else array(0, c(q, p))
                          Utr <<- if (!is.null(ll$Utr))
