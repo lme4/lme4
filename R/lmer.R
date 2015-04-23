@@ -1215,8 +1215,8 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
             if (nAGQ<=1) {
                 glmerPwrssUpdate(pp,rr,control$tolPwrss,GQmat )
             } else {
-                  glmerPwrssUpdate(pp,rr,control$tolPwrss,GQmat,
-                                   grpFac = object@flist[[1]])
+                glmerPwrssUpdate(pp,rr,control$tolPwrss,GQmat,
+                                 grpFac = object@flist[[1]])
               }
         }
         ## .Call(glmerLaplace, pp$ptr(), rr$ptr(), nAGQ,

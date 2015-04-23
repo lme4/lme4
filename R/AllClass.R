@@ -75,6 +75,7 @@ merPredD <-
                 list(
                      initialize = function(X, Zt, Lambdat, Lind, theta, n, ...) {
                          if (!nargs()) return
+                         ll <- list(...)
                          X <<- as(X, "matrix")
                          Zt <<- as(Zt, "dgCMatrix")
                          Lambdat <<- as(Lambdat, "dgCMatrix")
@@ -86,16 +87,25 @@ merPredD <-
                          stopifnot(length(theta) > 0L,
                                    length(Lind) > 0L,
                                    all(sort(unique(Lind)) == seq_along(theta)))
-                         RZX <<- array(0, c(q, p))
-                         Utr <<- numeric(q)
-                         V <<- array(0, c(n, p))
-                         VtV <<- array(0, c(p, p))
-                         Vtr <<- numeric(p)
-                         b0 <- list(...)$beta0
+                         ## mu <<- if (!is.null(ll$mu))
+                         ##    as.numeric(ll$mu) else numeric(n)
+                         RZX <<- if (!is.null(ll$RZX))
+                             array(ll$RZX, c(q, p)) else array(0, c(q, p))
+                         Utr <<- if (!is.null(ll$Utr))
+                             as.numeric(ll$Utr) else numeric(q)
+                         V <<- if (!is.null(ll$V))
+                             array(ll$V, c(n, p)) else array(0, c(n, p))
+                         VtV <<- if (!is.null(ll$VtV))
+                             array(ll$VtV, c(p, p)) else array(0, c(p, p))
+                         Vtr <<- if (!is.null(ll$Vtr))
+                             as.numeric(ll$Vtr) else numeric(p)
+                         b0 <- ll$beta0 ## list(...)$beta0
                          beta0 <<- if (is.null(b0)) numeric(p) else b0
-                         delb <<- numeric(p)
-                         delu <<- numeric(q)
-                         uu <- list(...)$u0
+                         delb <<- if (!is.null(ll$delb))
+                             as.numeric(ll$delb) else numeric(p)
+                         delu <<- if (!is.null(ll$delu))
+                             as.numeric(ll$delu) else numeric(q)
+                         uu <- ll$u0 ## list(...)$u0
                          u0 <<- if (is.null(uu)) numeric(q) else uu
                          Ut <<- if (n == N) Zt + 0 else
                              Zt %*% sparseMatrix(i=seq_len(N), j=as.integer(gl(n, 1, N)), x=rep.int(1,N))
@@ -109,7 +119,7 @@ merPredD <-
                          ##                                 x=numeric(0),
                          ##                                 dims=c(nrow(LtUt),1)))
                          LamtUt <<- LtUt
-                         Xw <- list(...)$Xwts
+                         Xw <- ll$Xwts ## list(...)$Xwts
                          Xwts <<- if (is.null(Xw)) rep.int(1, N) else as.numeric(Xw)
                          initializePtr()
                      },
