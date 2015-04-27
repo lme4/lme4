@@ -1140,7 +1140,10 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
     oldresp <- object@resp$y # need to set this before deep copy,
                              # otherwise it gets reset with the call
                              # to setResp below
-    rr <- object@resp$copy()
+
+    modFrame <- model.frame(object)
+    modFrame[, attr(terms(modFrame), "response")] <- newresp
+    rr <- mkRespMod(modFrame, family = object@resp$family)
 
     ## somewhat repeated from profile.merMod, but sufficiently
     ##  different that refactoring is slightly non-trivial
@@ -1211,9 +1214,9 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
         ## hacking around to try to get internals properly set up
         ##  for refitting.  This helps, but not all the way ...
         ## oldresp <- rr$y # set this above from before copy
-        rr$setResp(newresp)
-        ##rr$setResp(oldresp)
-        ##rr$setResp(newresp)
+        ## rr$setResp(newresp)
+        ## rr$setResp(oldresp)
+        ## rr$setResp(newresp)
         if (isGLMM(object)) {
             if (nAGQ<=1) {
                 glmerPwrssUpdate(pp,rr,control$tolPwrss,GQmat )
@@ -1247,6 +1250,7 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
 	} else
 	    list(pp=pp, resp=rr, u0=pp$u0, verbose=verbose, dpars=seq_len(nth))
     ff <- mkdevfun(list2env(devlist), nAGQ=nAGQ, verbose)
+    ## rho <- environment(ff)
     xst       <- rep.int(0.1, nth)
     x0        <- pp$theta
     lower     <- object@lower
@@ -1258,6 +1262,11 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
     ## control <- c(control,list(xst=0.2*xst, xt=xst*0.0001))
     ## FIX ME: allow use.last.params to be passed through
     calc.derivs <- !is.null(object@optinfo$derivs)
+    if(FALSE) { ## if(isGLMM(object)) {
+        rho$resp$updateWts()
+        rho$pp$updateDecomp()
+        rho$lp0 <- rho$pp$linPred(1)
+    }
     opt <- optwrap(object@optinfo$optimizer,
                    ff, x0, lower=lower, control=control$optCtrl,
                    calc.derivs=calc.derivs)

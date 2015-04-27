@@ -585,7 +585,7 @@ optimizeLmer <- function(devfun,
 glFormula <- function(formula, data=NULL, family = gaussian,
                       subset, weights, na.action, offset,
                       contrasts = NULL, mustart, etastart,
-                      control=glmerControl(), ...) {
+                      control = glmerControl(), ...) {
     ## FIXME: does start= do anything? test & fix
 
     control <- control$checkControl ## this is all we really need
@@ -605,14 +605,14 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     ignoreArgs <- c("start","verbose","devFunOnly","optimizer", "control", "nAGQ")
     l... <- list(...)
     l... <- l...[!names(l...) %in% ignoreArgs]
-    do.call("checkArgs",c(list("glmer"),l...))
+    do.call("checkArgs", c(list("glmer"), l...))
 
     cstr <- "check.formula.LHS"
-    checkCtrlLevels(cstr,control[[cstr]])
+    checkCtrlLevels(cstr, control[[cstr]])
 
     denv <- checkFormulaData(formula, data,
 			     checkLHS = (control$check.formula.LHS=="stop"))
-    mc$formula <- formula <- as.formula(formula,env=denv)    ## substitute evaluated version
+    mc$formula <- formula <- as.formula(formula, env = denv)    ## substitute evaluated version
 
     m <- match(c("data", "subset", "weights", "na.action", "offset",
                  "mustart", "etastart"), names(mf), 0)
@@ -626,12 +626,12 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     ## so they have to be put there ...
     for (i in c("weights", "offset")) {
         if (!eval(bquote(missing(x=.(i)))))
-            assign(i,get(i,parent.frame()),environment(fr.form))
+            assign(i, get(i, parent.frame()), environment(fr.form))
     }
     mf$formula <- fr.form
     fr <- eval(mf, parent.frame())
     ## DRY ... 
-    fr <- factorize(fr.form,fr,char.only=TRUE)
+    fr <- factorize(fr.form, fr, char.only = TRUE)
     ## store full, original formula & offset
     attr(fr,"formula") <- formula
     attr(fr,"offset") <- mf$offset
@@ -639,9 +639,9 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     ## random effects and terms modules
     reTrms <- mkReTrms(findbars(RHSForm(formula)), fr)
     ## TODO: allow.n = !useSc {see FIXME below}
-    wmsgNlev <- checkNlevels(reTrms$ flist, n=n, control, allow.n=TRUE)
-    wmsgZdims <- checkZdims(reTrms$Ztlist, n=n, control, allow.n=TRUE)
-    wmsgZrank <- checkZrank(reTrms$ Zt, n=n, control, nonSmall = 1e6, allow.n=TRUE)
+    wmsgNlev <- checkNlevels(reTrms$ flist, n = n, control, allow.n = TRUE)
+    wmsgZdims <- checkZdims(reTrms$Ztlist, n = n, control, allow.n = TRUE)
+    wmsgZrank <- checkZrank(reTrms$ Zt, n = n, control, nonSmall = 1e6, allow.n = TRUE)
 
     ## FIXME: adjust test for families with estimated scale parameter:
     ##   useSc is not defined yet/not defined properly?
