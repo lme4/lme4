@@ -1136,7 +1136,10 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
                  "consider ",sQuote("lapply(object,refit)"))
         }
     }
-
+    
+    oldresp <- object@resp$y # need to set this before deep copy,
+                             # otherwise it gets reset with the call
+                             # to setResp below
     rr <- object@resp$copy()
 
     ## somewhat repeated from profile.merMod, but sufficiently
@@ -1207,7 +1210,7 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
 
         ## hacking around to try to get internals properly set up
         ##  for refitting.  This helps, but not all the way ...
-        oldresp <- rr$y
+        ## oldresp <- rr$y # set this above from before copy
         rr$setResp(newresp)
         ##rr$setResp(oldresp)
         ##rr$setResp(newresp)
