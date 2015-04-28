@@ -23,7 +23,8 @@ test_that("naming", {
     ## test simulation
     expect_is(attr(simulate(fm2),"na.action"),"omit")
     expect_is(refit(fm2,simulate(fm2)),"merMod")
-    expect_equal(fixef(fm2),fixef(refit(fm2,sleepstudyNA$Reaction)))
+    expect_equal(fixef(fm2),fixef(refit(fm2,sleepstudyNA$Reaction)),
+                 tolerance = 1e-5)
     fm2ex <- update(fm2,na.action=na.exclude)
     expect_equal(nrow(ss2 <- simulate(fm2ex)),180)
     expect_is(refit(fm2,ss2[[1]]),"merMod")
