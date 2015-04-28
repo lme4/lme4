@@ -1140,10 +1140,7 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
     oldresp <- object@resp$y # need to set this before deep copy,
                              # otherwise it gets reset with the call
                              # to setResp below
-
-    modFrame <- model.frame(object)
-    modFrame[, attr(terms(modFrame), "response")] <- newresp
-    rr <- mkRespMod(modFrame, family = object@resp$family)
+    
 
     ## somewhat repeated from profile.merMod, but sufficiently
     ##  different that refactoring is slightly non-trivial
@@ -1192,21 +1189,35 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
 
         object@frame[,rcol] <- newresp
 
-        if (isGLMM(object) && rr$family$family=="binomial") {
-            ## re-do conversion of two-column matrix and factor
-            ##  responses to proportion/weights format
-            if (is.matrix(newresp) && ncol(newresp)==2) {
-                ntot <- rowSums(newresp)
-                ## FIXME: test what happens for (0,0) rows
-                newresp <- newresp[,1]/ntot
-                rr$setWeights(ntot)
+        ## modFrame <- model.frame(object)
+        ## modFrame[, attr(terms(modFrame), "response")] <- newresp
+        if(isLMM(object)) {
+            rr <- mkRespMod(model.frame(object), REML = isREML(object))
+        } else if(isGLMM(object)) {
+            rr <- mkRespMod(model.frame(object), family = family(object))
+            if(family(object)$family == "binomial") {
+                ## re-do conversion of two-column matrix and factor
+                ##  responses to proportion/weights format
+                if (is.matrix(newresp) && ncol(newresp)==2) {
+                    ntot <- rowSums(newresp)
+                    ## FIXME: test what happens for (0,0) rows
+                    newresp <- newresp[,1]/ntot
+                    rr$setWeights(ntot)
+                }
+                if (is.factor(newresp)) {
+                    ## FIXME: would be better to do this consistently with
+                    ## whatever machinery is used in glm/glm.fit/glmer ... ??
+                    newresp <- as.numeric(newresp)-1
+                }
             }
-            if (is.factor(newresp)) {
-                ## FIXME: would be better to do this consistently with
-                ## whatever machinery is used in glm/glm.fit/glmer ... ??
-                newresp <- as.numeric(newresp)-1
-            }
+        } else {
+            stop("refitting not working for nonlinear mixed models")
         }
+
+
+        ## if (isGLMM(object) && rr$family$family=="binomial") {
+           
+        ## }
 
         stopifnot(length(newresp <- as.numeric(as.vector(newresp))) ==
                   length(rr$y))
