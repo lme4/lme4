@@ -114,4 +114,27 @@ if (lme4:::testLevel() > 1) {
     }
 }
 
+## ----------------------------------------------------------------------
+## issue: #231, http://ms.mcmaster.ca/~bolker/misc/boot_reset.html
+## commits: 1a34cd0, e33d698, 53ce966, 7dbfff1, 73aa1bb, a693ba9, 8dc8cf0
+## ----------------------------------------------------------------------
+
+formGrouse <- TICKS ~ YEAR + scale(HEIGHT) + (1 | BROOD) + (1 | INDEX) + (1 | LOCATION)
+gmGrouse <- glmer(formGrouse, family = "poisson", data = grouseticks)
+set.seed(105)
+simTICKS <- simulate(gmGrouse)[[1]]
+newdata <- transform(grouseticks, TICKS = simTICKS)
+gmGrouseUpdate <- update(gmGrouse, data = newdata)
+gmGrouseRefit  <-  refit(gmGrouse, newresp = simTICKS)
+
+all.equal(fixef(gmGrouseUpdate),
+          fixef(gmGrouseRefit),
+          tolerance = 1e-5)
+all.equal(getME(gmGrouseUpdate, "theta"),
+          getME(gmGrouseRefit,  "theta"),
+          tolerance = 1e-5)
+all.equal(deviance(gmGrouseUpdate),
+          deviance(gmGrouseRefit),
+          tolerance = 1e-5)
+
 }
