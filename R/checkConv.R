@@ -24,7 +24,8 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
     ccl <- ctrl[[cstr <- "check.conv.grad"]] ; checkCtrlLevels(cstr, cc <- ccl[["action"]])
     wstr <- NULL
     if (doCheck(cc)) {
-        scgrad <- tryCatch(with(derivs,solve(Hessian,gradient)), error=function(e)e)
+        scgrad <- tryCatch(with(derivs,solve(chol(Hessian),gradient)),
+                           error=function(e)e)
         if (inherits(scgrad, "error")) {
             wstr <- "unable to evaluate scaled gradient"
             res$code <- -1L
