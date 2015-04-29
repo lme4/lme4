@@ -19,7 +19,7 @@
       \item allow more flexibility in \code{scales} for
       \code{xyplot.thpr} method (John Maindonald)
       \item models with only random effects of the form \code{1|f} have
-      better starting values for \code{lmer} optimization.
+      better starting values for \code{lmer} optimization (Gabor Grothendieck)
     }
   }
   \subsection{USER-VISIBLE CHANGES}{
@@ -31,14 +31,25 @@
       reported in \code{print} and \code{summary} methods
       \item \code{update} now (attempts to) re-evaluate the original fit
       in the environment of its formula (as is done with \code{drop1})
+     
+      
     }
   }
   \subsection{BUG FIXES}{
     \itemize{
+      \item \code{simulate} and \code{predict} now work more
+      consistently with different-length data, differing
+      factor levels, and \code{NA} values (Github #153, #197, #246, #275)
+      \item \code{refit} now works correctly for \code{glmer}
+      fits (Github #231)
       \item fixed bug in \code{family.merMod}; non-default links
       were not retrieved correctly (Alessandro Moscatelli)
       \item fixed \code{bootMer} bug for \code{type=="parametric"},
       \code{use.u=TRUE} (Mark Lai)
+      \item gradient scaling for convergence checks now uses the Cholesky factor of the
+      Hessian; while it is more correct, this will lead to some additional (probably
+      false-positive) convergence warnings
+
     }
   }
 }  

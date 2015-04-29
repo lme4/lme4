@@ -3,7 +3,6 @@
 \alias{glmerControl}
 \alias{lmerControl}
 \alias{nlmerControl}
-\alias{convergence}
 \alias{.makeCC}
 \description{
   Construct control structures for mixed model fitting.  All arguments
@@ -242,6 +241,7 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
   will suppress warnings that the number of observations is less than
   the rank of the random effects model matrix \code{Z}.
 }
+\seealso{\link{convergence}}
 \examples{
 str(lmerControl())
 str(glmerControl())

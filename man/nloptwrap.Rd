@@ -6,7 +6,6 @@
   Wrappers to allow use of alternative optimizers,
   from \code{NLopt} library or elsewhere, for
   nonlinear optimization stage
-
 }
 \usage{
 nloptwrap(par, fn, lower, upper, control=list(),...)
