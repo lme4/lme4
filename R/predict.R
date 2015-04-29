@@ -132,18 +132,28 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
 {
     ## construct (fixed) model frame in order to find out whether there are
     ## missing data/what to do about them
-    mfnew <- if (is.null(newdata)) {
-        model.frame(object)  ## FIXME: check ...
+    ## need rfd to inherit appropriate na.action; need grouping
+    ## variables as well as any covariates that are included
+    ## in RE terms
+    if (is.null(newdata)) {
+        rfd <- mfnew <- model.frame(object)
     } else {
-        model.frame(delete.response(terms(object,fixed.only=TRUE)),
-                    newdata, na.action=na.action)
-    }
+          mfnew <- model.frame(delete.response(terms(object,fixed.only=TRUE)),
+                               newdata, na.action=na.action)
+          ## make sure we pass na.action with new data
+          ## it would be nice to do something more principled like
+          ## rfd <- model.frame(~.,newdata,na.action=na.action)
+          ## but this adds complexities (stored terms, formula, etc.)
+          ## that mess things up later on ...
+          rfd <- na.action(newdata)
+          if (is.null(attr(rfd,"na.action")))
+              attr(rfd,"na.action") <- na.action
+      }
     if (inherits(re.form, "formula")) {
         ## DROP values with NAs in fixed effects
         if (length(fit.na.action <- attr(mfnew,"na.action")) > 0) {
             newdata <- newdata[-fit.na.action,]
         }
-	rfd <- if(is.null(newdata)) object@frame else newdata
         ## note: mkReTrms automatically *drops* unused levels
 	ReTrms <- mkReTrms(findbars(re.form[[2]]), rfd)
         ## update Lambdat (ugh, better way to do this?)
@@ -308,10 +318,12 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
             ## ignore response variable
             isFac[attr(Terms,"response")] <- FALSE
             orig_levs <- if (length(isFac)==0) NULL else lapply(mf[isFac],levels)
-            X <- model.matrix(RHS, mfnew <- model.frame(delete.response(Terms),
-                                                        newdata,
-                                                        na.action=na.action,
-                                                        xlev=orig_levs),
+            
+            mfnew <- model.frame(delete.response(Terms),
+                                 newdata,
+                                 na.action=na.action,
+                                 xlev=orig_levs)
+            X <- model.matrix(RHS, data=mfnew,
                               contrasts.arg=attr(X,"contrasts"))
             offset <- 0 # rep(0, nrow(X))
             tt <- terms(object)
@@ -333,7 +345,8 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
         if (!noReForm(re.form)) {
             if (is.null(re.form))
 		re.form <- reOnly(formula(object)) # RE formula only
-            newRE <- mkNewReTrms(object, newdata, re.form, na.action=na.action,
+            newRE <- mkNewReTrms(object,
+                                 newdata, re.form, na.action=na.action,
                                  allow.new.levels=allow.new.levels)
             pred <- pred + base::drop(as(newRE$b %*% newRE$Zt, "matrix"))
         }

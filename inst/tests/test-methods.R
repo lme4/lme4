@@ -222,9 +222,9 @@ test_that("predict", {
     set.seed(7); n <- 100; y <- rnorm(n)
     dd <- data.frame(id = factor(sample(10, n, replace = TRUE)),
                      x1 = 1, y = y, x2 = rnorm(n, mean = sign(y)))
-    m <- lmer(y ~ x1 + x2 + (1 | id), data = dd)
-    ##-> "fixed-effect model matrix is rank deficient so dropping 1 column / coefficient"
-    summary(m)
+    expect_message(m <- lmer(y ~ x1 + x2 + (1 | id), data = dd),
+                   "fixed-effect model matrix is rank deficient")
+    expect_is(summary(m),"summary.merMod")
     ii <- sample(n, 16)
     expect_equal(predict(m, newdata = dd[ii,]), fitted(m)[ii])
     ## predict(*, new..) gave Error in X %*% fixef(object) - now also drops col.
@@ -233,15 +233,15 @@ test_that("predict", {
     m1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
     sleepst.NA <- sleepstudy ; sleepst.NA$Days[2] <- NA
     m2 <- update(fm1, data = sleepst.NA)
-    ## TRICKY for evaluation; fm1 was defined elsewhere, so data
-    if(FALSE) ## FIXME
-    predict(m2, sleepst.NA[1:4,])
-    ## Error: (p <- ncol(X)) == ncol(Y) is not TRUE
+    ## maybe tricky for evaluation; fm1 was defined elsewhere, so data
+    expect_equal(length(predict(m2, sleepst.NA[1:4,])),4)
 
     ## Wrong 'b' constructed in mkNewReTrms() -- issue #257
     data(Orthodont,package="nlme")
     Orthodont <- within(Orthodont, nsex <- as.numeric(Sex == "Male"))
-    m3 <- lmer(distance ~ age + (age|Subject) + (0 + Sex |Subject), data=Orthodont)
+    m3 <- lmer(distance ~ age + (age|Subject) + (0 + Sex |Subject),
+               data=Orthodont,
+               control=lmerControl(check.conv.hess="ignore"))
     m4 <- lmer(distance ~ age + (age|Subject) + (0 + nsex|Subject), data=Orthodont)
     expect_equal(p3 <- predict(m3, Orthodont), fitted(m3), tol=1e-14)
     expect_equal(p4 <- predict(m4, Orthodont), fitted(m4), tol=1e-14)
