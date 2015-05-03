@@ -1085,6 +1085,10 @@ nloptwrap <- local({
 })
 
 nlminbwrap <- function(par, fn, lower, upper, control=list(), ...) {
+    if (!is.null(control$maxfun)) {
+        control$eval.max <- control$maxfun
+        control$maxfun <- NULL
+    }
     res <- nlminb(start = par, fn, gradient = NULL, hessian = NULL,
                   scale = 1, lower = lower, upper = upper,
                   control = control, ...)
