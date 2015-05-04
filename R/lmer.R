@@ -1198,7 +1198,8 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
     } else if(isGLMM(object)) {
         rr <- mkRespMod(model.frame(object), family = family(object))
     } else {
-        stop("refitting not working for nonlinear mixed models")
+        stop("refit.merMod not working for nonlinear mixed models.\n",
+             "try update.merMod instead.")
     }
 
     if(!is.null(newresp)) {

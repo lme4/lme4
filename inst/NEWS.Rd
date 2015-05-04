@@ -31,7 +31,9 @@
       reported in \code{print} and \code{summary} methods
       \item \code{update} now (attempts to) re-evaluate the original fit
       in the environment of its formula (as is done with \code{drop1})
-     
+      \item \code{refit} of a nonlinear mixed model fit now throws an
+      error, but this will hopefully change in future releases (related
+      to bug fixes for Github #231)
       
     }
   }
