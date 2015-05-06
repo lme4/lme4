@@ -203,17 +203,19 @@ test_that("predict", {
     expect_is(pm, "numeric")
     expect_equal(quantile(pm, names = FALSE),
                  c(211.006525, 260.948978, 296.87331, 328.638297, 458.155583))
-    ## test spurious warning with factor as response variable
-    data("Orthodont", package = "MEMSS") # (differently "coded" from the 'default' "nlme" one)
-    silly <- glmer(Sex ~ distance + (1|Subject),
-                   data = Orthodont, family = binomial)
-    sillypred <- data.frame(distance = c(20, 25))
-    options(warn = 2) # no warnings!
-    ps <- predict(silly, sillypred, re.form=NA, type = "response")
-    expect_is(ps, "numeric")
-    expect_equal(unname(ps), c(0.999989632, 0.999997201))
-    ## a case with interactions (failed in one temporary version):
-    expect_warning(fmPixS <<- update(fmPix, .~. + Side), "nearly unidentifiable")
+    if (require("MEMSS",quietly=TRUE)) {
+        ## test spurious warning with factor as response variable
+        data("Orthodont", package = "MEMSS") # (differently "coded" from the 'default' "nlme" one)
+        silly <- glmer(Sex ~ distance + (1|Subject),
+                       data = Orthodont, family = binomial)
+        sillypred <- data.frame(distance = c(20, 25))
+        options(warn = 2) # no warnings!
+        ps <- predict(silly, sillypred, re.form=NA, type = "response")
+        expect_is(ps, "numeric")
+        expect_equal(unname(ps), c(0.999989632, 0.999997201))
+        ## a case with interactions (failed in one temporary version):
+        expect_warning(fmPixS <<- update(fmPix, .~. + Side), "nearly unidentifiable")
+    }
     set.seed(1); ii <- sample(nrow(Pixel), 16)
     expect_equal(predict(fmPix,  newdata = Pixel[ii,]), fitted(fmPix )[ii])
     expect_equal(predict(fmPixS, newdata = Pixel[ii,]), fitted(fmPixS)[ii])
