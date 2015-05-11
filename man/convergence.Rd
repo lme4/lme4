@@ -108,7 +108,7 @@ fm1.restart <- update(fm1,start=pars)
 ## 5. try all available optimizers:
 ## ## commented out for now, to avoid additional
 ## ## dependence on dfoptim package
-## source(system.file("misc","allFit.R",package="lme4"))
+## source(system.file("utils","allFit.R",package="lme4"))
 ## fm1_all <- allFit(fm1)
 ## ss <- summary(fm1_all)
 ## ss$fixef               ## extract fixed effects
