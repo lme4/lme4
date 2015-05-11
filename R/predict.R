@@ -336,7 +336,17 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
         }
 	if(is.numeric(X.col.dropped) && length(X.col.dropped) > 0)
 	    X <- X[, -X.col.dropped, drop=FALSE]
-        pred <- drop(X %*% fixef(object))
+        if (dim(X)[2] == length(fixef(object))) {
+      	  pred <- drop(X %*% fixef(object))
+        } else if (dim(X)[2] > length(fixef(object))) {
+          # drop the extra levels in the model matrix
+          X <- X[, which(dimnames(X)[[2]] %in% names(fixef(object)))]
+          pred <- drop(X %*% fixef(object))
+        } else if (dim(X)[2] < length(fixef(object))) {
+          # drop the extra levels in the fixef
+          FE <- fixef(object)[which(names(fixef(object)) %in% dimnames(X)[[2]])]
+          pred <- drop(X %*% FE)
+        }
         ## FIXME:: need to unname()  ?
         ## FIXME: is this redundant??
         ## if (!is.null(frOffset <- attr(object@frame,"offset")))
