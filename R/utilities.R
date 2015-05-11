@@ -449,12 +449,12 @@ nobars <- function(term) {
 
 nobars_ <- function(term)
 {
-    if (!any(c('|','||') %in% all.names(term))) return(term)
-    if (is.call(term) && term[[1]] == as.name('|')) return(NULL)
-    if (is.call(term) && term[[1]] == as.name('||')) return(NULL)
+    if (!anyBars(term)) return(term)
+    if (isBar(term)) return(NULL)
+    if (isAnyArgBar(term)) return(NULL)
     if (length(term) == 2) {
         nb <- nobars_(term[[2]])
-        if (is.null(nb)) return(NULL)
+        if(is.null(nb)) return(NULL)
         term[[2]] <- nb
         return(term)
     }
@@ -466,6 +466,29 @@ nobars_ <- function(term)
     term[[3]] <- nb3
     term
 }
+
+isBar <- function(term) {
+    if(is.call(term)) {
+        if((term[[1]] == as.name("|")) || (term[[1]] == as.name("||"))) {
+            return(TRUE)
+        }
+    }
+    FALSE
+}
+
+isAnyArgBar <- function(term) {
+    if ((term[[1]] != as.name("~")) && (term[[1]] != as.name("("))) {
+        for(i in seq_along(term)) {
+            if(isBar(term[[i]])) return(TRUE)
+        }
+    }
+    FALSE
+}
+
+anyBars <- function(term) {
+    any(c('|','||') %in% all.names(term))
+}
+
 
 ##' Substitute the '+' function for the '|' and '||' function in a mixed-model
 ##' formula.  This provides a formula suitable for the current

@@ -1197,11 +1197,11 @@ and the profiled REML criterion as
 \label{sec:rand-vari-model}
 \begin{description}
 \item[$\bc B$] Random-effects vector of dimension $q$,
-  $\bc{B}\sim\mathcal{N}(\bm 0,\sigma^2\bm V(\bm\theta)\bm
-  V(\bm\theta)\trans)$.
+  $\bc{B}\sim\mathcal{N}(\bm 0,\sigma^2\bm \Lambda(\bm\theta)\bm
+  \Lambda(\bm\theta)\trans)$.
 \item[$\bm U$] ``Spherical'' random-effects vector of dimension $q$,
   $\bc U\sim\mathcal{N}(\bm 0,\sigma^2\bm I_q)$, $\bc B=\bm
-  V(\bm\theta)\bc U$.
+  \Lambda(\bm\theta)\bc U$.
 \item[$\bc Y$] Response vector of dimension $n$.
 \end{description}
 
@@ -1236,7 +1236,7 @@ and the profiled REML criterion as
   matrix.  $\bm L_{\bm Z}$ is $q\times q$; $\bm L_{\bm X}$ is $p\times p$.
 \item[$\bm P$] Fill-reducing permutation for the random effects model
   matrix. (Size $q\times q$.)
-\item[$\bm V$] Left factor of the relative covariance matrix of the
+\item[$\bm \Lambda$] Left factor of the relative covariance matrix of the
   random effects. (Size $q\times q$.)
 \item[$\bm X$] Model matrix for the fixed-effects parameters,
   $\bm\beta$. (Size $(ns)\times p$.)

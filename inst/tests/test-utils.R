@@ -36,12 +36,18 @@ test_that("Var-Cov factor conversions", { ## from ../../R/vcconv.R
 })
 
 test_that("nobar", {
-              rr <- lme4:::RHSForm
-              expect_equal(nobars(y~1+(1|g)),y~1)
-              expect_equal(nobars(y~1|g),    y~1)
-              expect_equal(nobars(~1+(1|g)),  ~1)
-              expect_equal(nobars(~(1|g)),~1)       
-              expect_equal(nobars(rr(y~1+(1|g))),1)
-              expect_equal(nobars(rr(y~(1|g))),  1) 
-          })
+    rr <- lme4:::RHSForm
+    expect_equal(nobars(y~1+(1|g)),                      y~1)
+    expect_equal(nobars(y~1|g),                          y~1)
+    expect_equal(nobars(y~1+(1||g)),                     y~1)
+    expect_equal(nobars(y~1||g),                         y~1)
+    expect_equal(nobars(y~1+(x:z|g)),                    y~1)
+    expect_equal(nobars(y~1+(x*z|g/h)),                  y~1)
+    expect_equal(nobars(y~(1|g)+x+(x|h)),                y~x)
+    expect_equal(nobars(y~(1|g)+x+(x+z|h)),              y~x)
+    expect_equal(nobars(~1+(1|g)),                        ~1)
+    expect_equal(nobars(~(1|g)),                          ~1)
+    expect_equal(nobars(rr(y~1+(1|g))),                    1)
+    expect_equal(nobars(rr(y~(1|g))),                      1)
+})
 
