@@ -16,8 +16,8 @@ test_that("lmerRank", {
     ## test reconstitution of full parameter vector (with NAs)
     expect_equal(names(fixef(fm,add.dropped=TRUE)),
                  c("(Intercept)","x","y"))
-    expect_equal(fixef(fm2,add.dropped=TRUE)[1:2],
-                 fixef(fm2))
+    expect_equal(fixef(fm,add.dropped=TRUE)[1:2],
+                 fixef(fm))
 
     expect_equal(nrow(anova(fm)), 1L)
     expect_error(lmer( z ~ x + y + (1|r), data=d,
