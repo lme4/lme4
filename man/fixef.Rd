@@ -33,7 +33,7 @@ fm2 <- lmer(Reaction ~ Days + Days2 + (1|Subject),
 fixef(fm2,add.dropped=TRUE)
 ## first two parameters are the same ...
 stopifnot(all.equal(fixef(fm2,add.dropped=TRUE)[1:2],
-                    fixef(fm2)))
+                    fixef(fm)))
 }
 \keyword{models}
 
