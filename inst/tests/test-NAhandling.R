@@ -3,9 +3,10 @@ stopifnot(require("testthat"), require("lme4"))
 context("NA handling")
 test_that("naming", {
     ## baseline model
-    rownames(sleepstudy) <- paste0("a",rownames(sleepstudy))
-    fm1 <- lmer(Reaction~Days+(Days|Subject),sleepstudy)
-    sleepstudyNA <- sleepstudy
+    sleepst.a <- sleepstudy
+    rownames(sleepst.a) <- paste0("a", rownames(sleepstudy))
+    fm1 <- lmer(Reaction~Days+(Days|Subject),sleepst.a)
+    sleepstudyNA <- sleepst.a
     sleepstudyNA$Reaction[1:3] <- NA
     ## na.omit
     fm2 <- update(fm1, data=sleepstudyNA,
@@ -38,8 +39,8 @@ test_that("naming", {
     fm3 <- update(fm1,data=sleepstudyNA,
                   control=lmerControl(check.conv.grad="ignore"),
                   na.action=na.pass)
-    sleepstudyNA2 <- sleepstudy
-    sleepstudyNA2$Days[1:3] = NA
+    sleepstudyNA2 <- sleepst.a
+    sleepstudyNA2$Days[1:3] <- NA
     expect_error(fm4 <- update(fm1,data=sleepstudyNA2,
                                control=lmerControl(check.conv.grad="ignore"),
                                na.action=na.pass),"NA in Z")
