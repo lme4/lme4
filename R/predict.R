@@ -584,7 +584,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     ## from the original model's na.action spec)
     nm2 <-
 	if (is.null(newdata))
-	    names(napredict(f, omit=fit.na.action))
+	    names(napredict(na.omit(f), omit=fit.na.action))
 	else
 	    rownames(napredict(newdata, omit=fit.na.action))
     if (length(nm2) > 0)
