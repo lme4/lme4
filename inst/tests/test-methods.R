@@ -314,6 +314,16 @@ test_that("simulate", {
     g1 <- glmer.nb(y~x+(1|f),data=dd)
     s1 <- simulate(g1)
     expect_equal(mean(s1[[1]]),2.35)
+
+    d <- sleepstudy
+    d$Subject <- factor(rep(1:18, each=10))
+    ## Add 18 new subjects:
+    d <- rbind(sleepstudy, sleepstudy)
+    d$Subject <- factor(rep(1:36, each=10))
+    d$simulated <- simulate(fm1, seed=1, newdata=d[-1],
+                            re.form=NULL,
+                            allow.new.levels=TRUE)[[1]]
+    expect_equal(mean(d$simulated),299.9384608)
 })
 
 context("misc")

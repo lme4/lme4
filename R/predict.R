@@ -475,7 +475,8 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     ## now: use na.omit, because we have to match up
     ##    with whatever is done in mkNewReTrms
     etapred <- predict(object, newdata=newdata, re.form=re.form,
-                       type="link", na.action=na.omit)
+                       type="link", na.action=na.omit,
+                       allow.new.levels=allow.new.levels)
     n <- length(etapred)
 
     ## now add random components:
