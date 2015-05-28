@@ -78,7 +78,11 @@
       If a random effect is included in \code{re.form}, it will
       be \emph{conditioned on} - that is, the conditional modes
       of that random effect will be included in the deterministic
-      part of the simulation. If a random effect is \emph{not}
+      part of the simulation. (If new levels are used
+      (and \code{allow.new.levels} is \code{TRUE}),
+      the random effects value for all unobserved levels will be zero/
+      their conditional modes will be equal to the population mode.)
+      If a random effect is \emph{not}
       included in \code{re.form}, it will be \emph{simulated from} -
       that is, new values will be chosen for each group based
       on the estimated random-effects variances. The default
