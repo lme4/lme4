@@ -38,7 +38,7 @@
     of the random effects).)}
   \item{re.form}{formula for random effects to condition on.  If
     \code{NULL}, include all random effects; if \code{NA} or \code{~0},
-    include no random effects.}
+    include no random effects.  See Details.}
   \item{ReForm, REForm, REform}{allowed for backward compatibility: \code{re.form} is
     now the preferred argument name.}
   \item{newdata}{data frame for which to evaluate predictions.}
@@ -73,6 +73,18 @@
       however, if \code{formula}, \code{newdata}, and \code{newparams} are
       specified, \code{simulate} generates the appropriate model
       structure to simulate from.}
+    \item{The \code{re.form} argument allows the user to specify
+      how the random effects are incorporated in the simulation.
+      If a random effect is included in \code{re.form}, it will
+      be \emph{conditioned on} - that is, the conditional modes
+      of that random effect will be included in the deterministic
+      part of the simulation. If a random effect is \emph{not}
+      included in \code{re.form}, it will be \emph{simulated from} -
+      that is, new values will be chosen for each group based
+      on the estimated random-effects variances. The default
+      behaviour (using \code{re.form=NA}) is to simulate new
+      values for all of the random effects.
+    }
   }
 }
 \examples{
