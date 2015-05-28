@@ -305,7 +305,15 @@ test_that("simulate", {
     fm <- lmer(diameter ~ 1 + (1|plate) + (1|sample),Penicillin)
     expect_is(simulate(fm,newdata=Penicillin[1:10,],allow.new.levels=TRUE),"data.frame")
     expect_is(simulate(fm,newdata=do.call(rbind,replicate(4,Penicillin,simplify=FALSE))),"data.frame")
-             
+
+    ## negative binomial sims
+    set.seed(101)
+    dd <- data.frame(f=factor(rep(1:10,each=20)),
+                     x=runif(200),
+                     y=rnbinom(200,size=2,mu=2))
+    g1 <- glmer.nb(y~x+(1|f),data=dd)
+    s1 <- simulate(g1)
+    expect_equal(mean(s1[[1]]),2.35)
 })
 
 context("misc")
