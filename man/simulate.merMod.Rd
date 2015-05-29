@@ -37,9 +37,9 @@
     \code{FALSE} corresponds to \code{re.form = ~0} (condition on none
     of the random effects).)}
   \item{re.form}{formula for random effects to condition on.  If
-    \code{NULL}, include all random effects; if \code{NA} or \code{~0},
-    include no random effects.  See Details.}
-  \item{ReForm, REForm, REform}{allowed for backward compatibility: \code{re.form} is
+    \code{NULL}, condition on all random effects; if \code{NA} or \code{~0},
+    condition on no random effects.  See Details.}
+  \item{ReForm, REForm, REform}{deprecated: \code{re.form} is
     now the preferred argument name.}
   \item{newdata}{data frame for which to evaluate predictions.}
   \item{newparams}{new parameters to use in evaluating predictions,
@@ -54,10 +54,10 @@
     \code{\link{glmer}}.}
   \item{offset}{offset, as in \code{\link{glmer}}.}
   \item{allow.new.levels}{(logical) if FALSE (default), then any new
-    levels (or NA values) detected in \code{newdata} will trigger an
+    levels (or \code{NA} values) detected in \code{newdata} will trigger an
     error; if TRUE, then the prediction will use the unconditional
     (population-level) values for data with previously unobserved levels
-    (or NAs).}
+    (or \code{NA}s).}
   \item{na.action}{what to do with \code{NA} values in new data: see
     \code{\link{na.fail}}}
   \item{\dots}{optional additional arguments: none are used at present.}
@@ -73,21 +73,24 @@
       however, if \code{formula}, \code{newdata}, and \code{newparams} are
       specified, \code{simulate} generates the appropriate model
       structure to simulate from.}
-    \item{The \code{re.form} argument allows the user to specify
-      how the random effects are incorporated in the simulation.
-      If a random effect is included in \code{re.form}, it will
-      be \emph{conditioned on} - that is, the conditional modes
-      of that random effect will be included in the deterministic
-      part of the simulation. (If new levels are used
-      (and \code{allow.new.levels} is \code{TRUE}),
-      the random effects value for all unobserved levels will be zero/
-      their conditional modes will be equal to the population mode.)
-      If a random effect is \emph{not}
-      included in \code{re.form}, it will be \emph{simulated from} -
-      that is, new values will be chosen for each group based
-      on the estimated random-effects variances. The default
-      behaviour (using \code{re.form=NA}) is to simulate new
-      values for all of the random effects.
+    
+    \item{The \code{re.form} argument allows the user to specify how the
+      random effects are incorporated in the simulation.  All of the
+      random effects terms included in \code{re.form} will be
+      \emph{conditioned on} - that is, the conditional modes of those
+      random effects will be included in the deterministic part of the
+      simulation. (If new levels are used (and \code{allow.new.levels}
+      is \code{TRUE}), the conditional modes for these levels will be
+      set to the population mode, i.e. values of zero will be used for
+      the random effects.)  Conversely, the random effect terms that are
+      \emph{not} included in \code{re.form} will be \emph{simulated
+      from} - that is, new values will be chosen for each group based on
+      the estimated random-effects variances.
+
+      The default behaviour (using \code{re.form=NA}) is to condition on
+      none of the random effects, simulating new values for all of the
+      random effects.
+
     }
   }
 }
