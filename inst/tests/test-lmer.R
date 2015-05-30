@@ -54,6 +54,9 @@ test_that("lmer", {
     expect_is(Zt <- getME(fm1, "Zt"),		"dgCMatrix")
     expect_that(dim(Zt),                                equals(c(6L, 30L)))
     expect_that(Zt@x,                                   equals(rep.int(1, 30L)))
+    expect_equal(dimnames(Zt),
+                  list(levels(Dyestuff$Batch),
+                       rownames(Dyestuff)))
     ##						"bobyqa":      0.8483237982
     expect_that(theta <- getME(fm1, "theta"),           equals(0.84832031, tolerance=6e-6, check.attributes=FALSE))
     if(isNM) expect_that(getME(fm1.old, "theta"),	is_equivalent_to(0.848330078))

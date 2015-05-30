@@ -79,7 +79,9 @@ mkBlist <- function(x,frloc, drop.unused.levels=TRUE) {
     ## sm <- as(ff,"sparseMatrix")
     ## sm <- KhatriRao(sm[,!is.na(ff),drop=FALSE],t(mm[!is.na(ff),,drop=FALSE]))
     sm <- KhatriRao(sm,t(mm))
-    dimnames(sm) <- list(levels(ff),rownames(mm))
+    dimnames(sm) <- list(
+        rep(levels(ff),each=ncol(mm)),
+        rownames(mm))
     list(ff = ff, sm = sm, nl = nl, cnms = colnames(mm))
 }
 
