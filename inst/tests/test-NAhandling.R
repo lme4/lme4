@@ -3,15 +3,16 @@ stopifnot(require("testthat"), require("lme4"))
 context("NA handling")
 test_that("naming", {
     ## baseline model
-    rownames(sleepstudy) <- paste0("a",rownames(sleepstudy))
-    fm1 <- lmer(Reaction~Days+(Days|Subject),sleepstudy)
-    sleepstudyNA <- sleepstudy
-    sleepstudyNA$Reaction[1:3] = NA
+    sleepst.a <- sleepstudy
+    rownames(sleepst.a) <- paste0("a", rownames(sleepstudy))
+    fm1 <- lmer(Reaction~Days+(Days|Subject),sleepst.a)
+    sleepstudyNA <- sleepst.a
+    sleepstudyNA$Reaction[1:3] <- NA
     ## na.omit
-    fm2 <- update(fm1,data=sleepstudyNA,
+    fm2 <- update(fm1, data=sleepstudyNA,
                   control=lmerControl(check.conv.grad="ignore"))
-    expect_equal(head(names(fitted(fm1))),paste0("a",1:6))
-    expect_equal(head(names(fitted(fm2))),paste0("a",4:9))
+    expect_equal(head(names(fitted(fm1))), paste0("a",1:6))
+    expect_equal(head(names(fitted(fm2))), paste0("a",4:9))
     expect_equal(names(predict(fm2)),names(fitted(fm2)))
     expect_equal(length(p1 <- predict(fm2)),177)
     expect_equal(length(p2 <- predict(fm2,na.action=na.exclude)),180)
@@ -28,13 +29,18 @@ test_that("naming", {
     fm2ex <- update(fm2,na.action=na.exclude)
     expect_equal(nrow(ss2 <- simulate(fm2ex)),180)
     expect_is(refit(fm2,ss2[[1]]),"merMod")
+    ## issue #197, 18 new subjects; some with NA in y
+    d2 <- sleepstudyNA[c(1:180, 1:180),]
+    d2[,"Subject"] <- factor(rep(1:36, each=10))
+    d2[d2$Subject == 19, "Reaction"] <- NA
+    expect_equal(dim( simulate(fm1, newdata=d2, allow.new.levels=TRUE) ), c(360,1))
 
     ## na.pass (pretty messed up)
     fm3 <- update(fm1,data=sleepstudyNA,
                   control=lmerControl(check.conv.grad="ignore"),
                   na.action=na.pass)
-    sleepstudyNA2 <- sleepstudy
-    sleepstudyNA2$Days[1:3] = NA
+    sleepstudyNA2 <- sleepst.a
+    sleepstudyNA2$Days[1:3] <- NA
     expect_error(fm4 <- update(fm1,data=sleepstudyNA2,
                                control=lmerControl(check.conv.grad="ignore"),
                                na.action=na.pass),"NA in Z")
@@ -102,7 +108,7 @@ test_that("other_NA", {
                 throws_error("missing values in object"))
 
     ## experiment with NA values in random effects -- should get
-    ## treated 
+    ## treated
     cake3 <- cake
     cake3$replicate[1:5] <- NA
     expect_that(predict(m.lmer, newdata=cake3, re.form=NULL),

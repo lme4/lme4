@@ -13,6 +13,12 @@ test_that("lmerRank", {
 		    y2 = y + c(0.001, rep(0,n-1)))
     expect_message(fm <- lmer( z ~ x + y + (1|r), data=d),
 		   "fixed-effect model matrix is .*rank deficient")
+    ## test reconstitution of full parameter vector (with NAs)
+    expect_equal(names(fixef(fm,add.dropped=TRUE)),
+                 c("(Intercept)","x","y"))
+    expect_equal(fixef(fm,add.dropped=TRUE)[1:2],
+                 fixef(fm))
+
     expect_equal(nrow(anova(fm)), 1L)
     expect_error(lmer( z ~ x + y + (1|r), data=d,
 		      control=lmerControl(check.rankX="stop")),

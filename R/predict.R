@@ -318,7 +318,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
             ## ignore response variable
             isFac[attr(Terms,"response")] <- FALSE
             orig_levs <- if (length(isFac)==0) NULL else lapply(mf[isFac],levels)
-            
+
             mfnew <- model.frame(delete.response(Terms),
                                  newdata,
                                  na.action=na.action,
@@ -475,9 +475,10 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     ## now: use na.omit, because we have to match up
     ##    with whatever is done in mkNewReTrms
     etapred <- predict(object, newdata=newdata, re.form=re.form,
-                       type="link", na.action=na.omit)
+                       type="link", na.action=na.omit,
+                       allow.new.levels=allow.new.levels)
     n <- length(etapred)
-    
+
     ## now add random components:
     ##  only the ones we did *not* condition on
 
@@ -500,7 +501,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 			     allow.new.levels=allow.new.levels)
         ## paranoia ...
         stopifnot(!is.null(newdata) ||
-                      isTRUE(all.equal(newRE$Lambdat,getME(object,"Lambdat"))))
+                       isTRUE(all.equal(newRE$Lambdat,getME(object,"Lambdat"))))
 	U <- t(newRE$Lambdat %*% newRE$Zt) # == Z Lambda
 	u <- rnorm(ncol(U)*nsim)
 	## UNSCALED random-effects contribution:
@@ -517,6 +518,10 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         ## n.b. DON'T scale random-effects (???)
         etasim <- etapred+sim.reff
         family <- object@resp$family
+        ## hack (NB families have weird names) from @aosmith16
+        if(gsub("[^[:alpha:]]", "", family$family) == "NegativeBinomial") {
+            family$family <- "negative.binomial"
+        }
         musim <- family$linkinv(etasim)
         ntot <- length(musim) ## FIXME: or could be dims["n"]?
         ## FIXME: is it possible to leverage family$simulate ... ???
@@ -541,26 +546,25 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     if(!is.list(val)) {
         dim(val) <- c(n, nsim)
         val <- as.data.frame(val)
-    }  else class(val) <- "data.frame"
+    } else class(val) <- "data.frame"
     names(val) <- paste("sim", seq_len(nsim), sep="_")
     ## have not yet filled in NAs, so need to use names of fitted
     ## object NOT including values with NAs
     f <- fitted(object)
     nm <- names(f)[!is.na(f)]
     ## unnamed input, *or* simulation from new data ...
-    if (length(nm)==0) {
+    if (length(nm) == 0) {
         nm <- as.character(seq(n))
     } else if (!is.null(newdata)) {
-          nm <- rownames(newdata)
-      }
-
+        nm <- rownames(newdata)
+    }
     row.names(val) <- nm
 
-    fit.na.action <- attr(model.frame(object),"na.action")
+    fit.na.action <- attr(model.frame(object), "na.action")
 
     if (!missing(na.action) &&  !is.null(fit.na.action)) {
         ## retrieve name of na.action type ("omit", "exclude", "pass")
-        class.na.action <- class(attr(na.action(NA),"na.action"))
+        class.na.action <- class(attr(na.action(NA), "na.action"))
         if (class.na.action != class(fit.na.action)) {
             ## hack to override action where explicitly specified
             class(fit.na.action) <- class.na.action
@@ -577,20 +581,19 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 		  ## earlier, so we don't have to redo this transformation!)
 		  class = "data.frame")
     } else {
-          as.data.frame(lapply(val, napredict, omit=fit.na.action))
-      }
+        as.data.frame(lapply(val, napredict, omit=fit.na.action))
+    }
 
     ## reconstruct names: first get rid of NAs, then refill them
     ## as appropriate based on fit.na.action (which may be different
     ## from the original model's na.action spec)
-      if (is.null(newdata)) {
-          nm2 <- names(napredict(na.omit(f), omit=fit.na.action))
-      } else {
-            nm2 <- rownames(napredict(na.omit(newdata), omit=fit.na.action))
-        }
-    if (length(nm2) > 0) {
+    nm2 <-
+	if (is.null(newdata))
+	    names(napredict(na.omit(f), omit=fit.na.action))
+	else
+	    rownames(napredict(newdata, omit=fit.na.action))
+    if (length(nm2) > 0)
         row.names(val) <- nm2
-    }
 
     structure(val,
               ## as.data.frame(lapply(...)) blows away na.action attribute,
@@ -703,11 +706,18 @@ gamma.shape.merMod <- function(object, ...) {
 
 ## in the original MASS version, .Theta is assigned into the environment
 ## (triggers a NOTE in R CMD check)
+## modified from @aosmith16 GH contribution
 negative.binomial_simfun <- function (object, nsim, ftd=fitted(object))
 {
-    stop("not implemented yet")
-    ## val <- rnbinom(nsim * length(ftd), mu=ftd, size=.Theta)
+    wts <- weights(object)
+    if (any(wts != 1))
+        warning("ignoring prior weights")
+    theta <- as.numeric(gsub("[[:alpha:][:blank:]+?&/\\()]", "",
+                             object@resp$family$family))
+    rnbinom(nsim * length(ftd), mu = ftd,
+            size = theta)
 }
+
 
 simfunList <- list(gaussian = gaussian_simfun,
 		   binomial = binomial_simfun,

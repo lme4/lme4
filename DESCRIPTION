@@ -35,7 +35,8 @@ Suggests:
     optimx (>= 2013.8.6),
     gamm4,
     pbkrtest,
-    HSAUR2
+    HSAUR2,
+    numDeriv
 VignetteBuilder: knitr
 LazyData: yes
 License: GPL (>=2)

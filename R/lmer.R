@@ -822,8 +822,25 @@ fitted.merMod <- function(object, ...) {
 ##' @export fixef
 ##' @method fixef merMod
 ##' @export
-fixef.merMod <- function(object, ...)
-    structure(object@beta, names = dimnames(object@pp$X)[[2]])
+fixef.merMod <- function(object, add.dropped=FALSE, ...) {
+    X <- getME(object,"X")
+    ff <- structure(object@beta, names = dimnames(X)[[2]])
+    if (add.dropped) {
+        if (!is.null(dd <- attr(X,"col.dropped"))) {
+            ## restore positions dropped for rank deficiency
+            vv <- numeric(length(ff)+length(dd))
+            all.pos <- seq_along(vv)
+            kept.pos <- all.pos[-dd]
+            vv[kept.pos] <- ff
+            names(vv)[kept.pos] <- names(ff)
+            vv[dd] <- NA
+            names(vv)[dd] <- names(dd)
+            ff <- vv
+        }
+    }
+    return(ff)
+}
+
 
 getFixedFormula <- function(form) {
     RHSForm(form) <- nobars(RHSForm(form))

@@ -262,6 +262,7 @@ chkRank.drop.cols <- function(X, kind, tol = 1e-7, method = "qr.R") {
         ## Return the columns correponding to the first qr.x$rank pivot
         ## elements of X:
         keep <- qr.X$pivot[seq_len(rnkX)]
+        dropped.names <- colnames(X[,-keep,drop=FALSE])
         X <- X[, keep, drop = FALSE]
 	if (rankMatrix(X, tol=tol, method=method) < ncol(X))
             stop(gettextf("Dropping columns failed to produce full column rank design matrix"),
@@ -271,7 +272,8 @@ chkRank.drop.cols <- function(X, kind, tol = 1e-7, method = "qr.R") {
         if(!is.null(contr)) attr(X, "contrasts") <- contr
         if(!is.null(asgn))  attr(X, "assign")    <- asgn[keep]
 	attr(X, "msgRankdrop") <- msg
-	attr(X, "col.dropped") <- qr.X$pivot[(rnkX+1L):p]
+	attr(X, "col.dropped") <- setNames(qr.X$pivot[(rnkX+1L):p],
+                                           dropped.names)
     }
     X
 }
