@@ -38,7 +38,7 @@ of the relevant issues are
   relative to the sampling variance of the conditional distribution);
   for GLMMs, scale fixed-effect gradients by the standard deviations
   of the corresponding input variable, or (2) scale gradients by
-  the inverse Choleski factor of the Hessian, equivalent to scaling
+  the inverse Cholesky factor of the Hessian, equivalent to scaling
   by the estimated Wald standard error of the estimated parameters.
   The latter approach is used in the current version of \pkg{lme4};
   it has the disadvantage that it requires us to estimate the Hessian
