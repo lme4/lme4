@@ -65,7 +65,7 @@ given below):
   Cholesky factor are zero or very small, the convergence testing methods may be
   inappropriate (see examples)
   \item double-check the Hessian calculation with the more expensive
-  Richardson extrapolation method
+  Richardson extrapolation method (see examples)
   \item restart the fit from the apparent optimum, or from a point
   perturbed slightly away from the optimum
   \item try all available optimizers (e.g. several different implementations
@@ -86,7 +86,7 @@ fm1.CS <- update(fm1,data=ss.CS)
 ## 2. check singularity
 diag.vals <- getME(fm1,"theta")[getME(fm1,"lower")==0]
 any(diag.vals<1e-6)
-## 3. recompute gradient and Hessian using numDeriv
+## 3. recompute gradient and Hessian with Richardson extrapolation
 devfun <- update(fm1,devFunOnly=TRUE)
 if (isLMM(fm1)) {
     pars <- getME(fm1,"theta")
