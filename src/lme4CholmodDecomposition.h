@@ -35,7 +35,7 @@ namespace lme4 {
 	    // restore an appropriate version of the square/rectangular test
             eigen_assert(m_analysisIsOk && "You must first call analyzePattern()");
             cholmod_sparse    A = 
-		// **SKIP square test because we only all this function
+		// **SKIP square test because we only call this function
 		//   in lme4 when we want to treat the input as a rectangular
 		//   matrix
 		// (!forceRectangularmatrix.rows() == matrix.cols()) ?
