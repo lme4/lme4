@@ -13,7 +13,7 @@ a single class of computational machinery, but it's rather hard
 to design an interface that makes it possible to specify all
 possible models in a reasonably straightforward but extendable way.
 
-Some of this overlaps with questions about the design of the `flexLambda` branch of `lme4`, and with Steve's `lme4ord` package.
+Some of this overlaps with questions about the design of the `flexLambda` [branch](https://github.com/lme4/lme4/tree/flexLambda/) of `lme4`, and with Steve's `lme4ord` [package](http://stevencarlislewalker.github.io/lme4ord/).
 
 * the `nlme` package uses the basic R formula interface, with separate
 `formula` and `random` arguments for the response+fixed and
@@ -73,4 +73,10 @@ where `cs()` stands for compound symmetry.  The other currently implemented choi
 * compound symmetry
 * heterogeneous residual variance across random-effect group levels
 * heterogeneous residual variance across fixed factor levels
+
+Some `lme4ord` [examples](http://stevencarlislewalker.github.io/lme4ord/analysts.html) illustrate the basic idea of `lme4ord`, but these aren't full runable examples.  Here is a simple one that is runable:
+```{r lme4ord}
+## require(lme4ord)
+## FIXME
+```
 
