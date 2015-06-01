@@ -23,7 +23,8 @@ random terms respectively.
 	* The variance-covariance matrices of the `random`  terms can in principle be specified by using the `pdMat` classes, e.g. to construct crossed-random-effect models, but these are underused ...
    * In addition, `nlme` allows the use of 
 separate `weights` and `correlation` terms to specify models
-for heteroscedasticity and residual correlation. 
+for heteroscedasticity and residual correlation.  Several CRAN packages offer additional correlation models that are useful for phylogenetic or geostatistical applications (`fields`, `ramps`, `ape` ...)
+
 ```{r nlme_classes,message=FALSE}
 library("nlme")
 library("ramps")
@@ -38,12 +39,12 @@ ff("var")
 ff("cor")
 ```
 
-    * Several CRAN packages offer additional correlation models that are useful for phylogenetic or geostatistical applications (`fields`, `ramps`, `ape` ...)
 * `MCMCglmm` uses a derivative (I think) of the AS-REML/GENSTAT specification.
-* `idv` (independent/constant variance), `idh` (independent/heterogeneous variance),  `cor` (unstructured correlation matrix), `us` (unstructured)
+     * `idv` (independent/constant variance), `idh` (independent/heterogeneous variance),  `cor` (unstructured correlation matrix), `us` (unstructured)
 	* somewhat complex code for constructing multi-response models
 * `lme4` uses a variant of `nlme`'s specification that (1) allows terms based on non-nested grouping variables; (2) puts the fixed and random-effect specificati  ons into a single formula.  Extensions such as allowing different residual variances or different variance-covariance matrices of random effects per (fixed-effect) group can be achieved, somewhat clunkily, by using the `dummy()` helper function to construct an indicator variable to multiply by individual levels of interest.  It also allows a special `||` operator to specify models with independent slopes and intercepts, but this really isn't as general as it should be; it *semantically* expands the covariate formula into separate (and hence independent) terms, rather than building a diagonal variance-covariance matrix; hence it doesn't work as (might be) expected for categorical covariates
 * `glmmADMB` allows either `nlme`-style (separate fixed & random) or `lme4`-style (single formula) specification, but doesn't have any of the extra 
+* `SAS` gives a wide variety of covariance/correlation structures in [table 56.13](http://support.sas.com/documentation/cdl/en/statug/63033/HTML/default/viewer.htm#statug_mixed_sect019.htm#statug.mixed.mixedcovstruct) ... I think they're applicable to either R-side or G-side effects ...
 
 ## Desiderata
 
@@ -57,6 +58,7 @@ ff("cor")
 blocked, cor...) should be applicable to any level of the model (residuals or a random effect matrix)
 * in principle it would be nice to have information about the grouping structure assigned to/carried along with the data; `groupedData` objects in `lme` do this, but for reasons I don't entirely understand they never really took off.  Farther in the future we can imagine direct links to structures like Steve's `multitable` package or other relational databases
 * it would be useful to be able to use, or automatically adapt/convert, `nlme`-style var/cor/pd classes (especially `cor` classes, some of which have a lot of cholesky-factor construction machinery built in)
+
 
 ## Examples
 

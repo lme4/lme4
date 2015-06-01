@@ -63,7 +63,7 @@ img {
 <div id="header">
 <h1 class="title">Interfaces for mixed model fitting software</h1>
 <h4 class="author"><em>Ben Bolker</em></h4>
-<h4 class="date"><em>12:48 01 June 2015</em></h4>
+<h4 class="date"><em>13:02 01 June 2015</em></h4>
 </div>
 
 
@@ -76,7 +76,7 @@ img {
 <li>the <code>random</code> argument is typically of the form <code>x1+x2+...xn|g1/g2/g3</code> where the <code>xi</code> specify covariates (or <code>1</code>) and the <code>gi</code> specify <em>nested</em> grouping variables. (One can also specify a list with different models for each grouping variable, but the grouping variables must still be nested.)</li>
 <li>The variance-covariance matrices of the <code>random</code> terms can in principle be specified by using the <code>pdMat</code> classes, e.g. to construct crossed-random-effect models, but these are underused …</li>
 </ul></li>
-<li>In addition, <code>nlme</code> allows the use of separate <code>weights</code> and <code>correlation</code> terms to specify models for heteroscedasticity and residual correlation.</li>
+<li>In addition, <code>nlme</code> allows the use of separate <code>weights</code> and <code>correlation</code> terms to specify models for heteroscedasticity and residual correlation. Several CRAN packages offer additional correlation models that are useful for phylogenetic or geostatistical applications (<code>fields</code>, <code>ramps</code>, <code>ape</code> …)</li>
 </ul>
 <pre class="r"><code>library(&quot;nlme&quot;)
 library(&quot;ramps&quot;)
@@ -115,15 +115,15 @@ ff(&quot;pd&quot;)</code></pre>
 ##  [1] &quot;corRCauchy&quot;   &quot;corRExp&quot;      &quot;corRExp2&quot;     &quot;corRExpwr&quot;   
 ##  [5] &quot;corRExpwr2&quot;   &quot;corRExpwr2Dt&quot; &quot;corRGaus&quot;     &quot;corRGneit&quot;   
 ##  [9] &quot;corRLin&quot;      &quot;corRMatern&quot;   &quot;corRSpher&quot;    &quot;corRWave&quot;</code></pre>
-<pre><code>* Several CRAN packages offer additional correlation models that are useful for phylogenetic or geostatistical applications (`fields`, `ramps`, `ape` ...)</code></pre>
 <ul>
-<li><code>MCMCglmm</code> uses a derivative (I think) of the AS-REML/GENSTAT specification.</li>
-<li><code>idv</code> (independent/constant variance), <code>idh</code> (independent/heterogeneous variance), <code>cor</code> (unstructured correlation matrix), <code>us</code> (unstructured)
+<li><code>MCMCglmm</code> uses a derivative (I think) of the AS-REML/GENSTAT specification.
 <ul>
+<li><code>idv</code> (independent/constant variance), <code>idh</code> (independent/heterogeneous variance), <code>cor</code> (unstructured correlation matrix), <code>us</code> (unstructured)</li>
 <li>somewhat complex code for constructing multi-response models</li>
 </ul></li>
 <li><code>lme4</code> uses a variant of <code>nlme</code>’s specification that (1) allows terms based on non-nested grouping variables; (2) puts the fixed and random-effect specificati ons into a single formula. Extensions such as allowing different residual variances or different variance-covariance matrices of random effects per (fixed-effect) group can be achieved, somewhat clunkily, by using the <code>dummy()</code> helper function to construct an indicator variable to multiply by individual levels of interest. It also allows a special <code>||</code> operator to specify models with independent slopes and intercepts, but this really isn’t as general as it should be; it <em>semantically</em> expands the covariate formula into separate (and hence independent) terms, rather than building a diagonal variance-covariance matrix; hence it doesn’t work as (might be) expected for categorical covariates</li>
 <li><code>glmmADMB</code> allows either <code>nlme</code>-style (separate fixed &amp; random) or <code>lme4</code>-style (single formula) specification, but doesn’t have any of the extra</li>
+<li><code>SAS</code> gives a wide variety of covariance/correlation structures in <a href="http://support.sas.com/documentation/cdl/en/statug/63033/HTML/default/viewer.htm#statug_mixed_sect019.htm#statug.mixed.mixedcovstruct">table 56.13</a> … I think they’re applicable to either R-side or G-side effects …</li>
 </ul>
 <div id="desiderata" class="section level2">
 <h2>Desiderata</h2>
