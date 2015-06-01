@@ -1,0 +1,74 @@
+---
+title: "Interfaces for mixed model fitting software"
+date: "`r format(Sys.time(), '%H:%M %d %B %Y')`"
+author: Ben Bolker
+---
+
+Thoughts/brain dump on interface design for mixed model fitting
+software, mostly thinking about R, but trying to draw on ideas
+and inspirations from other software (Stata, GENSTAT/AS-REML,
+SAS PROC MIXED ...)  The basic problem is that there is a very
+large, complex set of models that are potentially feasible within
+a single class of computational machinery, but it's rather hard
+to design an interface that makes it possible to specify all
+possible models in a reasonably straightforward but extendable way.
+
+Some of this overlaps with questions about the design of the `flexLambda` branch of `lme4`, and with Steve's `lme4ord` package.
+
+* the `nlme` package uses the basic R formula interface, with separate
+`formula` and `random` arguments for the response+fixed and
+random terms respectively. 
+   * the `formula` argument follows standard R formula specifications (Wilkinson-Rogers, see `?model.matrix`)
+    * the `random` argument is typically of the form `x1+x2+...xn|g1/g2/g3` where the `xi` specify covariates (or `1`) and the `gi` specify *nested* grouping variables.  (One can also specify a list with different models for each grouping variable, but the grouping variables must still be nested.)
+	* The variance-covariance matrices of the `random`  terms can in principle be specified by using the `pdMat` classes, e.g. to construct crossed-random-effect models, but these are underused ...
+   * In addition, `nlme` allows the use of 
+separate `weights` and `correlation` terms to specify models
+for heteroscedasticity and residual correlation. 
+```{r nlme_classes,message=FALSE}
+library("nlme")
+library("ramps")
+library("ape")
+ff <- function(x) {
+    s <- apropos(paste0("^",x,"[A-Z]"),ignore.case=FALSE)
+    f <- gsub("package:","",sapply(s,find))
+    split(s,f)
+}
+ff("pd")
+ff("var")
+ff("cor")
+```
+
+    * Several CRAN packages offer additional correlation models that are useful for phylogenetic or geostatistical applications (`fields`, `ramps`, `ape` ...)
+* `MCMCglmm` uses a derivative (I think) of the AS-REML/GENSTAT specification.
+* `idv` (independent/constant variance), `idh` (independent/heterogeneous variance),  `cor` (unstructured correlation matrix), `us` (unstructured)
+	* somewhat complex code for constructing multi-response models
+* `lme4` uses a variant of `nlme`'s specification that (1) allows terms based on non-nested grouping variables; (2) puts the fixed and random-effect specificati  ons into a single formula.  Extensions such as allowing different residual variances or different variance-covariance matrices of random effects per (fixed-effect) group can be achieved, somewhat clunkily, by using the `dummy()` helper function to construct an indicator variable to multiply by individual levels of interest.  It also allows a special `||` operator to specify models with independent slopes and intercepts, but this really isn't as general as it should be; it *semantically* expands the covariate formula into separate (and hence independent) terms, rather than building a diagonal variance-covariance matrix; hence it doesn't work as (might be) expected for categorical covariates
+* `glmmADMB` allows either `nlme`-style (separate fixed & random) or `lme4`-style (single formula) specification, but doesn't have any of the extra 
+
+## Desiderata
+
+* there are several classes of problems with different degrees of complexity/model-fitting and model-specification difficulty:
+    * unstructured models (i.e. all variance-covariance matrices are positive (semi)definite but with no further constraints); $Z$ matrices may be special (e.g. moving-average models)
+	* structured matrices; the mapping from parameters ($\theta$) to the elements of the variance-covariance or $\Lambda$ (Cholesky factor) matrix needs to be specified, but the elements of $\Lambda$ can be specified as a simple (possibly many-to-one) map of $\theta$ (e.g. compound symmetry models)
+	* transformed matrices: some computation needs to be done to map $\theta$ to $\Lambda$ (we may choose to rename the parameter vector at this point).  Ideally we can directly compute the Cholesky factor from the parameters (e.g. AR1); worst-case scenario we have to numerically compute the Cholesky decomposition (but hopefully of a small matrix) for each set of parameter estimates
+	* additional covariates: we may need access to variables in the model frame
+	* additional structures: we may need to reference a non-rectangular structure (distance matrix, phylogenetic tree, etc.) when building the model.  The interface for this in the built-in 
+* any specification for matrix structure (diagonal, correlation, Toeplitz,
+blocked, cor...) should be applicable to any level of the model (residuals or a random effect matrix)
+* in principle it would be nice to have information about the grouping structure assigned to/carried along with the data; `groupedData` objects in `lme` do this, but for reasons I don't entirely understand they never really took off.  Farther in the future we can imagine direct links to structures like Steve's `multitable` package or other relational databases
+* it would be useful to be able to use, or automatically adapt/convert, `nlme`-style var/cor/pd classes (especially `cor` classes, some of which have a lot of cholesky-factor construction machinery built in)
+
+## Examples
+
+?? would be nice to have some reasonably juicy examples here and show how they're implemented in different models (e.g. something like an extended version of the [table on the glmm.wikidot faq](http://glmm.wikidot.com/faq#modelspec) or of the table in my Fox *et al.* GLMM chapter (which compares model statements for four (G)LMMs in `lme4`, `MCMCglmm`, and `glmmADMB`)
+
+Current `flexLambda` examples:
+```{r eval=FALSE}
+logDens~sample+dilut+cs(~(0+sample|Block),het=FALSE)
+f1 <- Reaction ~ Days + d(~(Days | Subject))
+```
+where `cs()` stands for compound symmetry.  The other currently implemented choices are `d()` (diagonal) and `ar1d` (AR order 1, 1-dimensional/temporal model).  I'm not sure where the `het` parameter is interpreted, but presumably it's to specify heterogeneous variances or not.
+* compound symmetry
+* heterogeneous residual variance across random-effect group levels
+* heterogeneous residual variance across fixed factor levels
+
