@@ -386,29 +386,50 @@ extern "C" {
         END_RCPP;
     }
 
+    // function used below in glmerAGQ
+    //
+    // fac: mapped integer vector indicating the factor levels
+    // u: current conditional modes
+    // devRes: current deviance residuals (i.e. similar to results of 
+    // family()$dev.resid, but computed in glmFamily.cpp)
     static Ar1 devcCol(const MiVec& fac, const Ar1& u, const Ar1& devRes) {
         Ar1  ans(u.square());
         for (int i = 0; i < devRes.size(); ++i) ans[fac[i] - 1] += devRes[i];
+        // return: vector the size of u (i.e. length = number of
+        // grouping factor levels), containing the squared conditional
+        // modes plus the sum of the deviance residuals associated
+        // with each level
         return ans;
     }
 
     static double sqrt2pi = std::sqrt(2. * PI);
 
+    // tol: tolerance for pirls
+    // maxit: maximum number of pirls iterations
+    // GQmat: matrix of quadrature weights
+    // fac: grouping factor (gets converted to mapped integer below)
     SEXP glmerAGQ(SEXP pp_, SEXP rp_, SEXP tol_, SEXP maxit_, SEXP GQmat_, SEXP fac_, SEXP verbose_) {
         BEGIN_RCPP;
 
         XPtr<glmResp>     rp(rp_);
         XPtr<merPredD>    pp(pp_);
-        const MiVec      fac(as<MiVec>(fac_));
+        const MiVec      fac(as<MiVec>(fac_)); // convert grouping
+                                               // factor to mapped
+                                               // integer
         double           tol(::Rf_asReal(tol_));
 	int            maxit(::Rf_asInteger(maxit_));
         double          verb(::Rf_asReal(verbose_));
         if (fac.size() != rp->mu().size())
             throw std::invalid_argument("size of fac must match dimension of response vector");
 
-        pwrssUpdate(rp, pp, true, tol, maxit, verb); // should be a no-op
-        const Ar1      devc0(devcCol(fac, pp->u(1.), rp->devResid()));
+        pwrssUpdate(rp, pp, true, tol, maxit, verb); // should be a
+                                                     // no-op
 
+                    // devc0: vector with one element per grouping
+                    // factor level containing the the squared
+                    // conditional modes plus the sum of the deviance
+                    // residuals associated with each level
+        const Ar1      devc0(devcCol(fac, pp->u(1.), rp->devResid())); 
         const unsigned int q(pp->u0().size());
         if (pp->L().factor()->nzmax !=  q)
             throw std::invalid_argument("AGQ only defined for a single scalar random-effects term");
