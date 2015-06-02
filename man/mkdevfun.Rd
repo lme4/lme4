@@ -2,7 +2,7 @@
 \alias{mkdevfun}
 \title{Create a deviance evaluation function from a predictor and a response module}
 \usage{
-  mkdevfun(rho, nAGQ = 1L, verbose = 0, control = list())
+  mkdevfun(rho, nAGQ = 1L, verbose = 0, maxit = 100, control = list())
 }
 \arguments{
   \item{rho}{an environment containing \code{pp}, a
@@ -16,12 +16,14 @@
   effects are optimized by the iteratively reweighted least
   squares algorithm.}
 
-  \item{verbose}{Logical: print verbose output?}
+  \item{verbose}{scalar logical: print verbose output?}
+  \item{maxit}{scalar integer, currently only for GLMMs: the maximal
+    number of Pwrss update iterations.}
 
   \item{control}{list of control parameters, a subset of
-  those specified by \code{\link{lmerControl}}
-  (\code{tolPwrss} and \code{compDev} for GLMMs,
-  \code{tolPwrss} for NLMMs)}
+    those specified by \code{\link{lmerControl}}
+    (\code{tolPwrss} and \code{compDev} for GLMMs,
+    \code{tolPwrss} for NLMMs)}
 }
 \value{
   A function of one numeric argument.

@@ -229,7 +229,7 @@ if(getRversion() >= "3.1.0") utils::suppressForeignCheck("nlmerAGQ")
 if(getRversion() < "3.1.0") dontCheck <- identity
 
 ##' Create a deviance evaluation function from a predictor and a response module
-mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
+mkdevfun <- function(rho, nAGQ=1L, maxit=100L, verbose=0, control=list()) {
     ## FIXME: should nAGQ be automatically embedded in rho?
     stopifnot(is.environment(rho), is(rho$resp, "lmResp"))
 
@@ -247,13 +247,13 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
     } else if (is(rho$resp, "glmResp")) {
         ## control values will override rho values *if present*
         if (!is.null(tp <- control$tolPwrss)) rho$tolPwrss <- tp
-        if (!is.null(cd <- control$compDev)) rho$compDev <- cd
+        if (!is.null(cd <- control$ compDev)) rho$compDev <- cd
 	if (nAGQ == 0L)
 	    function(theta) {
 		resp$updateMu(lp0)
 		pp$setTheta(theta)
-		p <- pwrssUpdate(pp, resp, tolPwrss, GHrule(0L),
-                                 compDev, verbose)
+		p <- pwrssUpdate(pp, resp, tol=tolPwrss, GQmat=GHrule(0L),
+                                 compDev=compDev, maxit=maxit, verbose=verbose)
                 resp$updateWts()
                 p
             }
@@ -266,8 +266,8 @@ mkdevfun <- function(rho, nAGQ=1L, verbose=0, control=list()) {
                 spars <- as.numeric(pars[-dpars])
                 offset <- if (length(spars)==0) baseOffset else baseOffset + pp$X %*% spars
 		resp$setOffset(offset)
-		p <- pwrssUpdate(pp, resp, tolPwrss, GQmat,
-                            compDev, fac, verbose)
+		p <- pwrssUpdate(pp, resp, tol=tolPwrss, GQmat=GQmat,
+                                 compDev=compDev, grpFac=fac, maxit=maxit, verbose=verbose)
                 resp$updateWts()
                 p
 	    }
@@ -345,15 +345,15 @@ RglmerWrkIter <- function(pp, resp, uOnly=FALSE) {
 ##' @param compDev compute in C++ (as opposed to doing as much as possible in R)
 ##' @param grpFac grouping factor (normally found in environment ...)
 ##' @param verbose verbosity, of course
-glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, verbose=0) {
+glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, maxit = 70L, verbose=0) {
     nAGQ <- nrow(GQmat)
     if (compDev) {
         if (nAGQ < 2L)
             return(.Call(glmerLaplace, pp$ptr(), resp$ptr(),
-                         nAGQ, tol, as.integer(30), # maxit = 30
+                         nAGQ, tol, as.integer(maxit),
                          verbose))
         return(.Call(glmerAGQ, pp$ptr(), resp$ptr(),
-                     tol, as.integer(30), # maxit = 30
+                     tol, as.integer(maxit),
                      GQmat, grpFac, verbose))
     }
     oldpdev <- .Machine$double.xmax
@@ -1124,7 +1124,7 @@ print.ranef.mer <- function(x, ...) {
 ##' @method refit merMod
 ##' @rdname refit
 ##' @export
-refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
+refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, maxit = 100L, ...)
 {
 
     newControl <- NULL
@@ -1153,11 +1153,11 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
                  "consider ",sQuote("lapply(object,refit)"))
         }
     }
-    
+
     oldresp <- object@resp$y # need to set this before deep copy,
                              # otherwise it gets reset with the call
                              # to setResp below
-    
+
 
     ## somewhat repeated from profile.merMod, but sufficiently
     ##  different that refactoring is slightly non-trivial
@@ -1237,7 +1237,7 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
         }
 
     ## if (isGLMM(object) && rr$family$family=="binomial") {
-    
+
     ## }
 
         stopifnot(length(newresp <- as.numeric(as.vector(newresp))) ==
@@ -1251,10 +1251,10 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
     ## rr$setResp(oldresp)
     ## rr$setResp(newresp)
     if (isGLMM(object)) {
-        if (nAGQ<=1) {
-            glmerPwrssUpdate(pp,rr,control$tolPwrss,GQmat )
+        if (nAGQ <= 1) {
+            glmerPwrssUpdate(pp,rr, control$tolPwrss, GQmat, maxit=maxit)
         } else {
-            glmerPwrssUpdate(pp,rr,control$tolPwrss,GQmat,
+            glmerPwrssUpdate(pp,rr, control$tolPwrss, GQmat, maxit=maxit,
                              grpFac = object@flist[[1]])
         }
     }
@@ -1265,20 +1265,19 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, ...)
     ##              verbose)
     ##        lp0         <- pp$linPred(1) # each pwrss opt begins at this eta
 
-
     devlist <-
 	if (isGLMM(object)) {
 	    baseOffset <- object@resp$offset
-            
+
 	    list(tolPwrss= dc$cmp [["tolPwrss"]],
 		 compDev = dc$dims[["compDev"]],
 		 nAGQ = unname(nAGQ),
-		 lp0=pp$linPred(1), ## object@resp$eta - baseOffset,
-		 baseOffset=baseOffset,
-		 pwrssUpdate=glmerPwrssUpdate,
+		 lp0 = pp$linPred(1), ## object@resp$eta - baseOffset,
+		 baseOffset = baseOffset,
+		 pwrssUpdate = glmerPwrssUpdate,
 		 ## save GQmat in the object and use that instead of nAGQ
-		 GQmat=GHrule(nAGQ),
-		 fac=object@flist[[1]],
+		 GQmat = GHrule(nAGQ),
+		 fac = object@flist[[1]],
 		 pp=pp, resp=rr, u0=pp$u0, verbose=verbose, dpars=seq_len(nth))
 	} else
 	    list(pp=pp, resp=rr, u0=pp$u0, verbose=verbose, dpars=seq_len(nth))
@@ -1942,11 +1941,11 @@ getME <- function(object,
 		   list(tolPwrss= dc$cmp ["tolPwrss"],
 			compDev = dc$dims["compDev"],
 			nAGQ = nAGQ,
-			lp0=rsp$eta - baseOffset,
-			baseOffset=baseOffset,
-			pwrssUpdate=glmerPwrssUpdate,
-			GQmat=GHrule(nAGQ),
-			fac=object@flist[[1]],
+			lp0  = rsp$eta - baseOffset,
+			baseOffset  = baseOffset,
+			pwrssUpdate = glmerPwrssUpdate,
+			GQmat = GHrule(nAGQ),
+			fac = object@flist[[1]],
 			pp=PR, resp=rsp, u0=PR$u0, dpars=seq_along(PR$theta), verbose=verbose)
 	       }
 	       else

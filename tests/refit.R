@@ -1,10 +1,12 @@
-library(lme4)
-load(system.file("testdata","lme-tst-fits.rda",package="lme4"))
+#### Testing  refit()
+#### ----------------
 
 if (getRversion() > "3.0.0") {
     ## saved fits are not safe with old R versions
 
-    ## testing refit
+library(lme4)
+attach(system.file("testdata", "lme-tst-fits.rda", package="lme4"))
+
 ## for each type of model, should be able to
 ##  (1) refit with same data and get the same answer,
 ##     at least structurally (small numerical differences
@@ -12,7 +14,7 @@ if (getRversion() > "3.0.0") {
 ##  (2) refit with simulate()d data
 
 getinfo <- function(x) {
-  c(fixef(x),logLik(x),unlist(ranef(x)),unlist(VarCorr(x)))
+  c(fixef(x), logLik(x), unlist(ranef(x)), unlist(VarCorr(x)))
 }
 
 dropterms <- function(x) {
@@ -22,16 +24,23 @@ dropterms <- function(x) {
 
 ## LMM
 fm1 <- fit_sleepstudy_2
-fm1R <- refit(fm1,sleepstudy$Reaction)
-fm1S <- refit(fm1,simulate(fm1)[[1]])
+fm1R <- refit(fm1, sleepstudy$Reaction)
+fm1S <- refit(fm1, simulate(fm1)[[1]])
 
-stopifnot(all.equal(getinfo(fm1),getinfo(fm1R),tolerance=6e-3))
-## sapply(slotNames(fm1),
-##        function(x) isTRUE(all.equal(slot(fm1,x),slot(fm1R,x),tolerance=1.5e-5)))
-## fm1@optinfo
-## fm1R@optinfo
+stopifnot(all.equal(getinfo(fm1), getinfo(fm1R), tolerance = 6e-3))
 
-getinfo(refitML(fm1))
+sapply(slotNames(fm1), function(.)
+    all.equal( slot(fm1,.), slot(fm1R,.), tolerance=0))
+
+sapply(slotNames(fm1),
+       function(.) isTRUE(all.equal( slot(fm1,.), slot(fm1R,.), tolerance=1.5e-5)))
+if(FALSE) {## differences
+fm1@optinfo
+fm1R@optinfo
+}
+
+getinfo(fm1ML <- refitML(fm1))
+## TODO: check
 
 ## binomial GLMM (two-column)
 gm1 <- fit_cbpp_1
@@ -88,25 +97,25 @@ fit2@optinfo$feval <- u2@optinfo$feval <-  NA
 if (lme4:::testLevel() > 1) {
     ## Bernoulli GLMM (specified as factor)
     if (require("mlmRev")) {
-        data(Contraception,package="mlmRev")
+        data(Contraception, package="mlmRev")
         gm3 <- glmer(use ~ urban+age+livch+(1|district),
                      Contraception, binomial)
         gm3R <- refit(gm3,Contraception$use)
         gm3S <- refit(gm3,simulate(gm3)[[1]])
         stopifnot(all.equal(getinfo(gm3),getinfo(gm3R),tolerance=3e-4))
-        print(getinfo(gm3))
-        print(getinfo(gm3R))
-        print(getinfo(gm3S))
+        cat("gm3: glmer(..):\n"        ); print(getinfo(gm3))
+        cat("gm3R: refit(*, y):\n"     ); print(getinfo(gm3R))
+        cat("gm3S: refit(*, sim.()):\n"); print(getinfo(gm3S))
 
-        data(Mmmec,package="mlmRev")
+        data(Mmmec, package="mlmRev")
         gm4 <- glmer(deaths ~ uvb + (1|region), data=Mmmec,
                      family = poisson,
                      offset = log(expected))
-        gm4R <- refit(gm4,Mmmec$deaths)
+        gm4R <- refit(gm4, Mmmec $ deaths)
         if(FALSE) ## FIXME: following fails, not finding 'expected'
         gm4S <- refit(gm4,simulate(gm4)[[1]])
-        print( getinfo(gm4) )
-        print( getinfo(gm4R) )
+        cat("gm4: glmer(..):\n"   ); print( getinfo(gm4) )
+        cat("gm4R: refit(*,y):\n" ); print( getinfo(gm4R) )
         if(FALSE) ## FIXME (above)
         getinfo(gm4S)
 
@@ -137,4 +146,4 @@ all.equal(deviance(gmGrouseUpdate),
           deviance(gmGrouseRefit),
           tolerance = 1e-5)
 
-}
+}## only if R > 3.0.0

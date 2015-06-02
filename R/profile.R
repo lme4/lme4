@@ -21,7 +21,6 @@ profile.merMod <- function(fitted,
 {
 
     ## FIXME: allow choice of nextstep/nextstart algorithm?
-    ## FIXME: by default, get optimizer from within fitted object
     ## FIXME: allow selection of individual variables to profile by name?
     ## FIXME: allow for failure of bounds (non-pos-definite correlation matrices) when >1 cor parameter
 
@@ -128,12 +127,13 @@ profile.merMod <- function(fitted,
         min(upper, max(lower, pvals[2] + sign(num) * step))
     }
 
-    nextstart <- function(mat, pind, r, method="global") {
+    nextstart <- function(mat, pind, r, method) {
         ## FIXME: indexing may need to be checked (e.g. for fixed-effect parameters)
         switch(method,
                global= opt[seqpar1][-pind],  ## address opt, no zeta column
                prev  = mat[r,1+seqpar1][-pind],
-               extrap= stop("stub")) ## do something with mat[r-(1:0),1+seqnvp])[-pind] ...
+               extrap = stop("not yet implemented"),## do something with mat[r-(1:0),1+seqnvp])[-pind]
+               stop("invalid nextstart method"))
     }
 
     ## mkpar generates the parameter vector of theta and
@@ -155,7 +155,7 @@ profile.merMod <- function(fitted,
         while (i < nr && mat[i, cc] > lowcut && mat[i,cc] < upcut &&
                    (is.na(curzeta <- abs(mat[i, ".zeta"])) || curzeta <= cutoff)) {
             np <- nextpar(mat, cc, i, delta, lowcut, upcut)
-            ns <- nextstart(mat, cc-1, i, startmethod)
+            ns <- nextstart(mat, pind = cc-1, r=i, method=startmethod)
             mat[i + 1L, ] <- zetafun(np,ns)
             if (verbose>0) {
                 cat(i,cc,mat[i+1L,],"\n")
@@ -173,7 +173,7 @@ profile.merMod <- function(fitted,
 
     ## bounds on Cholesky: [0,Inf) for diag, (-Inf,Inf) for off-diag
     ## bounds on sd-corr:  [0,Inf) for diag, (-1.0,1.0) for off-diag
-    lower <- pmax(fitted@lower,-1.0)
+    lower <- pmax(fitted@lower, -1.)
     upper <- 1/(fitted@lower != 0)## = ifelse(fitted@lower==0, Inf, 1.0)
     if (useSc) { # bounds for sigma
         lower <- c(lower,0)
@@ -324,7 +324,7 @@ profile.merMod <- function(fitted,
                 nres <- res    # and negative increments
             est <- opt[nvp + j]
             std <- stderr[j]
-            Xw <-X.orig[, j, drop=TRUE]
+            Xw <- X.orig[, j, drop=TRUE]
             Xdrop <- .modelMatrixDrop(X.orig, j)
             pp1 <- do.call("new", list(Class = class(pp),
                                        X = Xdrop,
@@ -376,23 +376,23 @@ profile.merMod <- function(fitted,
     ans <- do.call(rbind, ans)
     row.names(ans) <- NULL ## TODO: rbind(*, make.row.names=FALSE)
     ans$.par <- factor(ans$.par)
-    attr(ans, "forward") <- forspl
-    attr(ans, "backward") <- bakspl
-    class(ans) <- c("thpr", "data.frame")# 'thpr': see ../man/profile-methods.Rd
-    attr(ans, "lower") <- lower[seqnvp]
-    attr(ans, "upper") <- upper[seqnvp]
-    ans
+    structure(ans,
+	      forward = forspl,
+	      backward = bakspl,
+	      lower = lower[seqnvp],
+	      upper = upper[seqnvp],
+	      class = c("thpr", "data.frame"))# 'thpr': see ../man/profile-methods.Rd
 } ## profile.merMod
 
 ##' Transform 'which' \in {parnames | integer | "beta_" | "theta_"}
 ##' into integer indices
-get.which <- function(which, nvp, nptot, parnames, verbose) {
-    if (is.null(which)) return(1:nptot)
-    wi.vp <- seq_len(nvp)
-    if(is.character(which)) {
+get.which <- function(which, nvp, nptot, parnames, verbose=FALSE) {
+    if (is.null(which))
+        seq_len(nptot)
+    else if (is.character(which)) {
         wi <- integer(); wh <- which
         if(any(j <- wh == "theta_")) {
-            wi <- wi.vp; wh <- wh[!j] }
+            wi <- seq_len(nvp); wh <- wh[!j] }
         if(any(j <- wh == "beta_") && nptot > nvp) {
             wi <- c(wi, seq(nvp+1, nptot)); wh <- wh[!j] }
         if(any(j <- parnames %in% wh)) { ## which containing param.names
@@ -404,9 +404,9 @@ get.which <- function(which, nvp, nptot, parnames, verbose) {
         if(length(wi) == 0)
             warning(gettextf("Nothing selected by 'which=%s'", deparse(which)),
                     domain=NA)
-        which <- wi
-    } # else stopifnot( .. numeric ..)
-    which
+        wi
+    } else #  stopifnot( .. numeric ..)
+        which
 }
 
 ## This is a hack.  The preferred approach is to write a
@@ -592,7 +592,7 @@ xyplot.thpr <-
               conf = c(50, 80, 90, 95, 99)/100,
               absVal = FALSE,
               scales = NULL,
-              which = 1:nptot, ...)
+              which = seq_len(nptot), ...)
 {
     if(any(!is.finite(conf) | conf <= 0 | conf >= 1))
         stop("values of 'conf' must be strictly between 0 and 1")
@@ -600,7 +600,7 @@ xyplot.thpr <-
     ## FIXME: is this sufficiently reliable?
     ## (include "sigma" in 'theta' parameters)
     nvp <- length(grep("^(\\.sig[0-9]+|.sigma|sd_|cor_)", nms))
-    which <- get.which(which, nvp, nptot, nms, verbose=FALSE)
+    which <- get.which(which, nvp, nptot, nms)
     levels <- sort(levels[is.finite(levels) & levels > 0])
     spl  <- attr(x, "forward") [which]
     bspl <- attr(x, "backward")[which]
@@ -891,10 +891,8 @@ chooseFace <- function (fontface = NULL, font = 1)
 splom.thpr <- function (x, data,
                         levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 2)),
                         conf = c(50, 80, 90, 95, 99)/100,
-                        which=1:nptot,
-                        draw.lower=TRUE,
-                        draw.upper=TRUE,
-                        ...)
+                        which = seq_len(nptot),
+                        draw.lower = TRUE, draw.upper = TRUE, ...)
 {
     singfit <- FALSE
     for (i in grep("^(\\.sig[0-9]+|sd_)",names(x))) {
@@ -904,7 +902,7 @@ splom.thpr <- function (x, data,
 
     nptot <- length(nms <- names(attr(x,"forward")))
     nvp <- length(grep("^(\\.sig[0-9]+|.sigma|sd_|cor_)",nms))
-    which <- get.which(which,nvp,nptot,nms,verbose=FALSE)
+    which <- get.which(which, nvp, nptot, nms)
 
     if (length(which)==1)
         stop("can't draw a scatterplot matrix for a single variable")
@@ -936,7 +934,7 @@ splom.thpr <- function (x, data,
             traces[[j]][[i]] <- list(sij = sij, sji = sji, ll = ll)
         }
     }
-    ## panel function for lower triangle
+    if(draw.lower) ## panel function for lower triangle
     lp <- function(x, y, groups, subscripts, i, j, ...) {
         tr <- traces[[j]][[i]]
         grid::pushViewport(viewport(xscale = c(-1.07, 1.07) * mlev,
@@ -953,7 +951,7 @@ splom.thpr <- function (x, data,
         for (k in seq_along(levels)) llines(ll$pts[k, , ], ...)
         grid::popViewport(1)
     }
-    ## panel function for upper triangle
+    if(draw.upper) ## panel function for upper triangle
     up <- function(x, y, groups, subscripts, i, j, ...) {
         ## panels are transposed so reverse i and j
         jj <- i
@@ -1064,7 +1062,7 @@ splom.thpr <- function (x, data,
     panel.blank <- function(...) {}
     splom(~ pfr,
           lower.panel = if(draw.lower) lp else panel.blank,
-          upper.panel = if (draw.upper) up else panel.blank,
+          upper.panel = if(draw.upper) up else panel.blank,
           diag.panel = dp, ...)
 }
 
