@@ -98,7 +98,7 @@ In `lme4`:
 
 As discussed above, even in GLMs there are questions about how to define deviance.  For example is it just minus twice the log-likelihood or does it involve subtracting the deviance for the saturated model?  With GLMMs there is the additional distinction between marginal and conditional deviance.
 
-We represent the conditional log-likelihood as $\log p_{\theta, \beta}(y | u)$ and the marginal as $\log p_{\theta, \beta}(y)$.  The exact relation between the two is $p_{\theta, \beta}(y) = \int p_{\theta, \beta}(y | u) p(u)$, where $p(u)$ is an independent multivariate normal.  For canonical links, the Laplace approximation to the marginal log-likelihood is $\log (p_{\theta, \beta}(y | u)) - \frac{1}{2}\|u\|^2 - |L_{\theta}|$.  Here are several ways to compute the log-likelihood:
+We represent the conditional log-likelihood as $\log p_{\theta, \beta}(y | u)$ and the marginal as $\log p_{\theta, \beta}(y)$.  The exact relation between the two is $p_{\theta, \beta}(y) = \int p_{\theta, \beta}(y | u) p(u)$, where $p(u)$ is an independent multivariate normal.  For canonical links, the Laplace approximation to the marginal log-likelihood is $\log (p_{\theta, \beta}(y | u)) - \frac{1}{2}\|u\|^2 - |L_{\theta}|$.  Here are several ways to compute this approximate marginal log-likelihood:
 ```{r}
 logLik(gm1) # which calls ...
 -0.5 * lme4:::devCritFun(gm1) # which calls ...
