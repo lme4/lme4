@@ -1,12 +1,13 @@
 \name{convergence}
 \alias{convergence}
-\title{Assessing convergence for fitted models}
+\title{Assessing Convergence for Fitted Models}
 
 \description{
   The \pkg{lme4} package uses general-purpose nonlinear optimizers
   (e.g. Nelder-Mead or Powell's BOBYQA method) to estimate the
   variance-covariance matrices of the random effects.  Assessing
-  reliably whether such algorithms have converged is difficult.  For example, evaluating the
+  reliably whether such algorithms have converged is difficult.  For
+  example, evaluating the
   \href{http://en.wikipedia.org/wiki/Karush\%E2\%80\%93Kuhn\%E2\%80\%93Tucker_conditions}{%
     Karush-Kuhn-Tucker conditions} (convergence criteria which in the
   simplest case of non-constrained optimization reduce to showing that
@@ -14,9 +15,9 @@
   challenging because of the difficulty of evaluating the gradient and
   Hessian.
 
-  We (the \code{lme4} authors and maintainers) are still in the
-  process of finding the best strategies for testing convergence. Some
-  of the relevant issues are
+  We (the \code{lme4} authors and maintainers) are still in the process
+  of finding the best strategies for testing convergence.  Some of the
+  relevant issues are
   \itemize{
     \item the gradient and Hessian are the basic ingredients of
     KKT-style testing, but when they have to be estimated by finite
@@ -39,20 +40,22 @@
 
     \item it is important to scale the estimated gradient at
     the estimate appropriately; two reasonable approaches are
-    (1) don't scale random-effects (Cholesky) gradients, since these
-    are essentially already unitless (for LMMs they are scaled
-    relative to the residual variance; for GLMMs they are scaled
-    relative to the sampling variance of the conditional distribution);
-    for GLMMs, scale fixed-effect gradients by the standard deviations
-    of the corresponding input variable, or (2) scale gradients by
-    the inverse Cholesky factor of the Hessian, equivalent to scaling
-    by the estimated Wald standard error of the estimated parameters.
-    The latter approach is used in the current version of \pkg{lme4};
-    it has the disadvantage that it requires us to estimate the Hessian
-    (although the Hessian is required
-    \href{https://github.com/lme4/lme4/issues/47}{for reliable estimation
-      of the fixed-effect standard errors for GLMMs} in any case).
-
+    \enumerate{
+      \item don't scale random-effects (Cholesky) gradients, since these
+      are essentially already unitless (for LMMs they are scaled
+      relative to the residual variance; for GLMMs they are scaled
+      relative to the sampling variance of the conditional distribution);
+      for GLMMs, scale fixed-effect gradients by the standard deviations
+      of the corresponding input variable, or
+      \item scale gradients by the inverse Cholesky factor of the
+      Hessian, equivalent to scaling by the estimated Wald standard error
+      of the estimated parameters.  The latter approach is used in the
+      current version of \pkg{lme4}; it has the disadvantage that it
+      requires us to estimate the Hessian (although the Hessian is
+      required \href{https://github.com/lme4/lme4/issues/47}{for
+	reliable estimation of the fixed-effect standard errors for GLMMs}
+      in any case).
+    }
     \item Exploratory analyses suggest that (1) the naive estimation
     of the Hessian may fail for large data sets (number of observations
     greater than approximately
@@ -82,8 +85,8 @@
     warnings to be false positives.
   }
   To quote Douglas Adams,
-  \href{http://en.wikipedia.org/wiki/So_Long,_and_Thanks_for_All_the_Fish}{%
-  we apologize for the inconvenience}.
+  \href{http://en.wikipedia.org/wiki/So_Long,_and_Thanks_for_All_the_Fish}{we
+    apologize for the inconvenience}.
 }% end{description}
 
 \examples{
@@ -118,9 +121,8 @@ fm1@optinfo$derivs
 ## a slightly perturbed value):
 fm1.restart <- update(fm1, start=pars)
 
-## 5. try all available optimizers:
-if(FALSE) { ## not run for now, to avoid additional
-            ## dependence on dfoptim package
+## 5. try all available optimizers
+
   source(system.file("utils", "allFit.R", package="lme4"))
   fm1.all <- allFit(fm1)
   ss <- summary(fm1.all)
@@ -129,7 +131,7 @@ if(FALSE) { ## not run for now, to avoid additional
   ss$ sdcor               ## SDs and correlations
   ss$ theta               ## Cholesky factors
   ss$ which.OK            ## which fits worked
-}
+
 }
 
 \seealso{\code{\link{lmerControl}}}
