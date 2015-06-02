@@ -2,10 +2,13 @@
 ####  ----------------------------------
 fn <- system.file("testdata", (fn0 <- "lme-tst-fits.rda"),
                   package="lme4", mustWork=TRUE)
-if(FALSE) ### "Load" these by
-    load(fn)
+if(FALSE) ### "Load" these by  load(fn)
+    ## or "better"
+    attach(fn)
 
 library(lme4)
+str(packageDescription("lme4")[c("Version", "Packaged", "Built")])
+
 ## intercept only in both fixed and random effects
 fit_sleepstudy_0 <- lmer(Reaction ~ 1 + (1|Subject), sleepstudy)
 ## fixed slope, intercept-only RE
@@ -13,12 +16,11 @@ fit_sleepstudy_1 <- lmer(Reaction ~ Days + (1|Subject), sleepstudy)
 ## fixed slope, intercept & slope RE
 fit_sleepstudy_2 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 ## fixed slope, independent intercept & slope RE
-fit_sleepstudy_3 <- lmer(Reaction ~ Days + (1|Subject)+
-                         (0+Days|Subject), sleepstudy)
+fit_sleepstudy_3 <- lmer(Reaction ~ Days + (1|Subject)+ (0+Days|Subject), sleepstudy)
 
 cbpp$obs <- factor(seq(nrow(cbpp)))
 ## intercept-only fixed effect
-fit_cbpp_0 <- glmer(cbind(incidence,size-incidence) ~ 1 + (1|herd),
+fit_cbpp_0 <- glmer(cbind(incidence, size-incidence) ~ 1 + (1|herd),
                     cbpp, family=binomial)
 ## include fixed effect of period
 fit_cbpp_1 <- update(fit_cbpp_0, . ~ . + period)
@@ -49,14 +51,14 @@ fit_Pix.noD  <- update(fit_Pix.1Dog, .~. - (1 | Dog))
 anova(fit_Pix.full,
       fit_Pix.1Dog,
       fit_Pix.noD)
-## Warning about non-monotonic profile
-system.time(prof.fit_Pix.f <- profile(fit_Pix.full, verbose=1))
-## long!! 177.7 sec elapsed
-warnings()## 15 warnings:
-## 12 x code 1 from bobyqa: bobyqa -- maximum number of function evaluations exceeded
-##  3 x non-monotonic profile
 
-print(confint(prof.fit_Pix.f), digits=3)
+## Warnings about non-monotonic profile (and more):
+options(warn=1) # print as they happen {interspersed in verbose profile() msgs}:
+system.time(prof.fit_Pix.f <- profile(fit_Pix.full, verbose=1))
+## ~ 90 sec on nb-mm4 [i7-5600U, 2015]
+
+signif(confint(prof.fit_Pix.f), digits=3)
+## Results in Nov.2014: -- now .sig03 now shows [-1, 1]
 ##              2.5 % 97.5 %
 ## .sig01      10.449 28.909
 ## .sig02      12.951 48.203
@@ -68,10 +70,10 @@ print(confint(prof.fit_Pix.f), digits=3)
 ## day             NA     NA <<
 ## I(day^2)    -0.434 -0.298
 
-if(FALSE) ## FIXME
-xyplot(prof.fit_Pix.f)
-## FIXME: Error is ok, but error *message* is unhelpful
-## Error in approx(bspl$x, bspl$y, xout = zeta) : 
+try( ## FIXME --> ../../R/profile.R  [FIXME: show plots for the *valid* parts!]
+lattice::xyplot(prof.fit_Pix.f)
+) ## FIXME: Error is ok, but error *message* is unhelpful
+## Error in approx(bspl$x, bspl$y, xout = zeta) :
 ##   need at least two non-NA values to interpolate
 
 save(list=c(to.save, ls(pattern="fit_")), file=fn0)
