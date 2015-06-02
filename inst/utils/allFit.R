@@ -17,29 +17,30 @@ meth.tab.0 <- cbind(optimizer=
                   method= c(rep("",4), "L-BFGS-B",
                   "NLOPT_LN_NELDERMEAD", "NLOPT_LN_BOBYQA"))
 
-if (!require("dfoptim")) {
-    ## for nmkb
-    meth.tab <- meth.tab[meth.tab[,"optimizer"]!="nmkbw",]
-}
-
-nlminbw <- lme4:::nlminbwrap
-
+nlminbw   <- lme4:::nlminbwrap
 namedList <- lme4:::namedList
 
-nmkbw <- function(fn,par,lower,upper,control) {
-    if (length(par)==1) {
-        res <- optim(fn=fn,par=par,lower=lower,upper=100*par,
-                     method="Brent")
-    } else {
-        if (!is.null(control$maxfun)) {
-            control$maxfeval <- control$maxfun
-            control$maxfun <- NULL
-        }
-        res <- nmkb(fn=fn,par=par,lower=lower,upper=upper,control=control)
+if (require("dfoptim")) {
+    nmkbw <- function(fn,par,lower,upper,control) {
+	if (length(par)==1) {
+	    res <- optim(fn=fn,par=par,lower=lower,upper=100*par,
+			 method="Brent")
+	} else {
+	    if (!is.null(control$maxfun)) {
+		control$maxfeval <- control$maxfun
+		control$maxfun <- NULL
+	    }
+	    res <- nmkb(fn=fn,par=par,lower=lower,upper=upper,control=control)
+	}
+	res$fval <- res$value
+	res
     }
-    res$fval <- res$value
-    return(res)
+} else { ## pkg{dfoptim} not available
+    ## for nmkb
+    meth.tab.0 <- meth.tab.0[meth.tab.0[,"optimizer"] != "nmkbw",]
 }
+
+
 
 ##' Attempt to re-fit a [g]lmer model with a range of optimizers.
 ##' The default is to use all known optimizers for R that satisfy the
@@ -72,7 +73,7 @@ nmkbw <- function(fn,par,lower,upper,control) {
 ##' ss$which.OK            ## which fits worked
 
 
-allFit <- function(m,meth.tab=meth.tab.0,
+allFit <- function(m, meth.tab = meth.tab.0,
                    data=NULL,
                    verbose=TRUE,
                    maxfun=1e5)
@@ -97,12 +98,10 @@ allFit <- function(m,meth.tab=meth.tab.0,
         res[[i]] <- rr
         if (verbose) cat("[OK]\n")
     }
-    attr(res,"sessionInfo") <- sessionInfo()
-    attr(res,"fit") <- m
-    if (!is.null(data)) attr(res,"data") <- data
-    ##
-    class(res) <- "allfit"
-    res
+
+    structure(res, class = "allfit", fit = m, sessionInfo =  sessionInfo(),
+              data = data # is dropped if NULL
+              )
 }
 
 print.allfit <- function(object, width=80, ...) {
@@ -127,22 +126,23 @@ print.allfit <- function(object, width=80, ...) {
     nllvec <- -sapply(object[!which.bad],logLik)
     print(summary(nllvec-min(nllvec)))
 }
+
 summary.allfit <- function(object, ...) {
-    which.OK <- !sapply(object,is,"error")
-    msgs <- lapply(object[which.OK],function(x) x@optinfo$conv$lme4$messages)
-    fixef <- do.call(rbind,lapply(object[which.OK],fixef))
-    llik <- sapply(object[which.OK],logLik)
-    times <- t(sapply(object[which.OK],attr,"time"))
-    feval <- sapply(object[which.OK],function(x) x@optinfo$feval)
-    sdcor <- do.call(rbind,lapply(object[which.OK],function(x) {
-        aa <- as.data.frame(VarCorr(x))[,"sdcor"]
-    }))
-    theta <- do.call(rbind,lapply(object[which.OK],
-                                  function(x) getME(x,"theta")))
-    colnames(sdcor) <- unname(c(lme4:::tnames(object[which.OK][[1]]),
-                                if (isLMM(object[[1]])) "sigma" else NULL))
+    which.OK <- !sapply(object, is, "error")
+    objOK <- object[which.OK]
+    msgs <- lapply(objOK, function(x) x@optinfo$conv$lme4$messages)
+    fixef <- do.call(rbind, lapply(objOK, fixef))
+    llik <- sapply(objOK, logLik)
+    times <- t(sapply(objOK, attr, "time"))
+    feval <- sapply(objOK, function(x) x@optinfo$feval)
+    sdcor <- do.call(rbind, lapply(objOK, function(x)
+        as.data.frame(VarCorr(x))[, "sdcor"]))
+    theta <- do.call(rbind, lapply(objOK,
+                                   function(x) getME(x, "theta")))
+    colnames(sdcor) <- unname(c(lme4:::tnames(objOK[[1]]),
+                                if(isLMM(object[[1]])) "sigma"))
     sdcor <- as.data.frame(sdcor)
-    namedList(which.OK,msgs,fixef,llik,sdcor,theta,times,feval)
+    namedList(which.OK, msgs, fixef, llik, sdcor, theta, times, feval)
 }
 
 ## should add a print method for summary:
