@@ -155,7 +155,7 @@ c(logLik(gm2))
 This seems to be fixable with:
 
 ```{r}
-c(logLik(gm2)) - 0.5 * (sum(gm2@resp$devResid()) + sum(getME(gm2, "u")^2))
+c(logLik(gm2)) - 0.5 * (deviance(gm2) + sum(getME(gm2, "u")^2))
 ```
 
 If this holds up with more examples, should we modify `logLik.merMod` accordingly?
