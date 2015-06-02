@@ -93,3 +93,24 @@ In `lme4`:
 
 **Bottom line**: for GLMMs, I have changed the `deviance()` method to return the sum of squares of the deviance residuals, rather than $-2L$.  Now let's see what breaks ...
 
+
+### The definition of deviance and log-likelihood
+
+As discussed above, even in GLMs there are questions about how to define deviance.  For example is it just minus twice the log-likelihood or does it involve subtracting the deviance for the saturated model?  With GLMMs there is the additional distinction between marginal and conditional deviance.
+
+We represent the conditional log-likelihood as $\log p_{\theta, \beta}(y | u)$ and the marginal as $\log p_{\theta, \beta}(y)$.  The exact relation between the two is $p_{\theta, \beta}(y) = \int p_{\theta, \beta}(y | u) p(u)$, where $p(u)$ is an independent multivariate normal.  For canonical links, the Laplace approximation to the marginal log-likelihood is $\log (p_{\theta, \beta}(y | u)) - \frac{1}{2}\|u\|^2 - |L_{\theta}|$.  Here are several ways to compute the log-likelihood:
+```{r}
+logLik(gm1) # which calls ...
+-0.5 * lme4:::devCritFun(gm1) # which calls ...
+-0.5 * gm1@devcomp$cmp["dev"] # which is computed from something like ...
+-0.5 * update(gm1, devFunOnly = TRUE)(gm1@optinfo$val) # which is computed from something like ...
+-0.5 * (gm1@resp$aic() + gm1@pp$sqrL(1) + gm1@pp$ldL2()) # which is wrapped into ...
+lme4ord:::laplace(gm1)
+```
+
+For reasons discussed above, it may confuse some users that another log-likelihood synonym is not,
+```{r}
+-0.5 * (deviance(gm1) + gm1@pp$sqrL(1) + gm1@pp$ldL2())
+```
+
+
