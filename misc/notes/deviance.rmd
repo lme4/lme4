@@ -2,11 +2,13 @@
 
 Up to now/previously, "deviance" has been defined in lme4 as -2*(log likelihood).  In the tweaked development version used here, I've redefined it as the sum of the (squared) deviance residuals.
 
-Fit basic model:
+Fit two basic models:
 ```{r model1}
 library(lme4)
 gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
              data = cbpp, family = binomial)
+gm2 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+             data = cbpp, family = binomial, nAGQ = 2)
 ```
 
 Various summaries:
@@ -124,4 +126,37 @@ In summary, on the deviance scale, we have:
 | --------------------- | -----------         | --------              |
 | yes                   | `deviance(object)`  | ????                  |
 | no                    | `object@resp$aic()` | `-2 * logLik(object)` |
+
+Considering this table helps to identify several inconsistencies with terminology.  For example, the deviance reported in the `print.merMod` method is actually reporting `-2 * logLik(object)` as opposed to `deviance(object)`:
+
+```{r}
+lme4:::getLlikAIC(gm1)$AICtab["deviance"]
+deviance(gm1)
+```
+
+On one hand it makes sense to give a marginal deviance in the `print` method because marginal `AIC` is used there too:
+
+```{r}
+lme4:::getLlikAIC(gm1)$AICtab["AIC"]
+AIC(gm1)
+lme4:::getLlikAIC(gm1)$AICtab["deviance"] + 2 * length(gm1@optinfo$val)
+```
+
+On the other hand, as discussed above, deviance usually is defined relative to the saturated model.  So arguably what we need in the `print` method is a marginal version of the deviance relative to the saturated model (see the ????'s in the table above).
+
+### Inconsistencies between Laplace and Gauss-Hermite (#161)
+
+Recall that `gm1` and `gm2` were fitted with Laplace approximation and `nAGQ = 2` respectively.  These two models should have rather similar log-likelihoods, but yet we have:
+```{r}
+c(logLik(gm1))
+c(logLik(gm2))
+```
+
+This seems to be fixable with:
+
+```{r}
+c(logLik(gm2)) - 0.5 * (deviance(gm2) + sum(getME(gm2, "u")^2))
+```
+
+If this holds up with more examples, should we modify `logLik.merMod` accordingly?
 
