@@ -1,4 +1,4 @@
-lme4: Mixed-effects models in R. 
+lme4: Mixed-effects models in R.
 ====
 
 [![Build Status](https://travis-ci.org/lme4/lme4.svg?branch=master)](https://travis-ci.org/lme4/lme4)
@@ -11,9 +11,9 @@ lme4: Mixed-effects models in R.
 
 ## Features
 
-* Efficient for large data sets, using algorithms from the 
+* Efficient for large data sets, using algorithms from the
 [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page)
-linear algebra package via the [RcppEigen](http://cran.r-project.org/web/packages/RcppEigen/index.html)
+linear algebra package via the [RcppEigen](http://cran.r-project.org/package=RcppEigen)
 interface layer.
 * Allows arbitrarily many nested and crossed random effects.
 * Fits generalized linear mixed models (GLMMs) and nonlinear mixed models (NLMMs) via Laplace approximation
@@ -56,7 +56,7 @@ It is possible to install (but not easily to check) `lme4` at least as recently 
 * You can use the `convert_old_lme4()` function to take a fitted object created with `lme4` <1.0 and convert it for use with `lme4.0`.
 * It currently resides on R-forge, and you should be able to install it with
 ```
-install.packages("lme4.0", 
+install.packages("lme4.0",
                  repos=c("http://lme4.r-forge.r-project.org/repos",
                          getOption("repos")[["CRAN"]]))
 ```
