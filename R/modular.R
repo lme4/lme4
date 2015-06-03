@@ -494,7 +494,7 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, verbose=0, co
     ## mkRespMod??  currently that help file says REML is logical.  a
     ## consequence of this double duty is that it is impossible to fit
     ## a model with no fixed effects using REML.
-    devfun <- mkdevfun(rho, 0L, verbose, control)
+    devfun <- mkdevfun(rho, 0L, verbose=verbose, control=control)
 
     # if all random effects are of the form 1|f and starting values not
     # otherwise provided (and response variable is present, i.e. not doing
@@ -632,7 +632,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     }
     mf$formula <- fr.form
     fr <- eval(mf, parent.frame())
-    ## DRY ... 
+    ## DRY ...
     fr <- factorize(fr.form, fr, char.only = TRUE)
     ## store full, original formula & offset
     attr(fr,"formula") <- formula
@@ -674,37 +674,39 @@ glFormula <- function(formula, data=NULL, family = gaussian,
 
 ##' @rdname modular
 ##' @export
-mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L,
-                          control=glmerControl(), ...){
+mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L, maxit = 100L,
+                          control=glmerControl(), ...) {
     stopifnot(length(nAGQ <- as.integer(nAGQ)) == 1L,
             nAGQ >= 0L,
             nAGQ <= 25L)
     verbose <- as.integer(verbose)
-    rho             <- as.environment(list(verbose=verbose, tolPwrss=control$tolPwrss,
-                                           compDev=control$compDev))
-    parent.env(rho) <- parent.frame()
-    rho$pp          <- do.call(merPredD$new,
-                               c(reTrms[c("Zt","theta","Lambdat","Lind")],
-                                 n=nrow(X), list(X=X)))
-    if (missing(fr)) rho$resp <- mkRespMod(family=family, ...)
-    else rho$resp             <- mkRespMod(fr, family=family)
-    if(control$nAGQ0initStep) nAGQinit <- 0L else nAGQinit <- 1L
+    maxit   <- as.integer(maxit)
+    rho <- list2env(list(verbose=verbose, maxit=maxit,
+                         tolPwrss= control$tolPwrss,
+                         compDev = control$compDev),
+                    parent = parent.frame())
+    rho$pp <- do.call(merPredD$new,
+                      c(reTrms[c("Zt","theta","Lambdat","Lind")],
+                        n=nrow(X), list(X=X)))
+    rho$resp <- if (missing(fr))
+        mkRespMod(family=family, ...)
+    else
+        mkRespMod(fr, family=family)
+    nAGQinit <- if(control$nAGQ0initStep) 0L else 1L
     ## allow trivial y
     if (length(y <- rho$resp$y) > 0) {
         checkResponse(y, control$checkControl)
-        rho$verbose     <- as.integer(verbose)
+        rho$verbose <- as.integer(verbose)
 
         ## initialize (from mustart)
         .Call(glmerLaplace, rho$pp$ptr(), rho$resp$ptr(), nAGQinit,
-              control$tolPwrss, as.integer(30), # maxit = 30
-              verbose)
+              control$tolPwrss, maxit, verbose)
         rho$lp0         <- rho$pp$linPred(1) # each pwrss opt begins at this eta
         rho$pwrssUpdate <- glmerPwrssUpdate
     }
-    rho$lower       <- reTrms$lower     # not needed in rho?
-    devfun <- mkdevfun(rho, nAGQinit, verbose, control)
-                                        #if (devFunOnly && !nAGQ) return(devfun)
-    return(devfun) # this should pass the rho environment implicitly
+    rho$lower <- reTrms$lower     # not needed in rho?
+    mkdevfun(rho, nAGQinit, maxit=maxit, verbose=verbose, control=control)
+    ## this should pass the rho environment implicitly
 }
 
 
@@ -787,6 +789,5 @@ updateGlmerDevfun <- function(devfun, reTrms, nAGQ = 1L){
         if (length(reTrms$flist) != 1L || length(reTrms$cnms[[1]]) != 1L)
             stop("nAGQ > 1 is only available for models with a single, scalar random-effects term")
     }
-    devfun <- mkdevfun(rho, nAGQ)  # does this attach rho to devfun??
-    return(devfun)
+    mkdevfun(rho, nAGQ)  # does this attach rho to devfun??
 }

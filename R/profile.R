@@ -340,11 +340,9 @@ profile.merMod <- function(fitted,
             fe.zeta <- function(fw, start) {
                 ## (start parameter ignored)
                 rr$setOffset(Xw * fw + offset.orig)
-                rho <- as.environment(list(pp=pp1, resp=rr))
-                parent.env(rho) <- parent.frame()
-                ores <- optwrap(optimizer,
-                                par=thopt, fn=mkdevfun(rho, 0L),
-                                lower = fitted@lower)
+		rho <- list2env(list(pp=pp1, resp=rr), parent = parent.frame())
+		ores <- optwrap(optimizer, par = thopt, fn = mkdevfun(rho, 0L),
+				lower = fitted@lower)
                 ## this optimization is done on the ORIGINAL
                 ##   theta scale (i.e. not the sigma/corr scale)
                 ## upper=Inf for all cases
@@ -590,13 +588,12 @@ xyplot.thpr <-
     function (x, data = NULL,
               levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), df = 1)),
               conf = c(50, 80, 90, 95, 99)/100,
-              absVal = FALSE,
-              scales = NULL,
-              which = seq_len(nptot), ...)
+              absVal = FALSE, scales = NULL,
+              which = 1:nptot, ...)
 {
     if(any(!is.finite(conf) | conf <= 0 | conf >= 1))
         stop("values of 'conf' must be strictly between 0 and 1")
-    nptot <- length(nms <- levels(x[[".par"]]))
+    stopifnot(1 <= (nptot <- length(nms <- levels(x[[".par"]]))))
     ## FIXME: is this sufficiently reliable?
     ## (include "sigma" in 'theta' parameters)
     nvp <- length(grep("^(\\.sig[0-9]+|.sigma|sd_|cor_)", nms))
@@ -890,21 +887,18 @@ chooseFace <- function (fontface = NULL, font = 1)
 ##' @export
 splom.thpr <- function (x, data,
                         levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 2)),
-                        conf = c(50, 80, 90, 95, 99)/100,
-                        which = seq_len(nptot),
+                        conf = c(50, 80, 90, 95, 99)/100, which = 1:nptot,
                         draw.lower = TRUE, draw.upper = TRUE, ...)
 {
+    stopifnot(1 <= (nptot <- length(nms <- names(attr(x, "forward")))))
     singfit <- FALSE
-    for (i in grep("^(\\.sig[0-9]+|sd_)",names(x))) {
-        singfit <- singfit ||  (any(x[,".zeta"]==0 & x[,i]==0))
-    }
+    for (i in grep("^(\\.sig[0-9]+|sd_)", names(x)))
+        singfit <- singfit || any(x[,".zeta"] == 0  &  x[,i] == 0)
     if (singfit) warning("splom is unreliable for singular fits")
 
-    nptot <- length(nms <- names(attr(x,"forward")))
-    nvp <- length(grep("^(\\.sig[0-9]+|.sigma|sd_|cor_)",nms))
+    nvp <- length(grep("^(\\.sig[0-9]+|.sigma|sd_|cor_)", nms))
     which <- get.which(which, nvp, nptot, nms)
-
-    if (length(which)==1)
+    if (length(which) == 1)
         stop("can't draw a scatterplot matrix for a single variable")
 
     mlev <- max(levels)

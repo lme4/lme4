@@ -1,7 +1,7 @@
 \name{refit}
 \alias{refit}
 \alias{refit.merMod}
-\title{Refit a (merMod) Model with a New Response}
+\title{Refit a (merMod) Model with a Different Response}
 \description{
    Refit a model, possibly after modifying the response vector.  This
    makes use of the model representation and directly goes to the
@@ -10,7 +10,8 @@
 \usage{
 refit(object, newresp, \dots)
 
-\method{refit}{merMod}(object, newresp = NULL, rename.response=FALSE, \dots)
+\method{refit}{merMod}(object, newresp = NULL, rename.response = FALSE,
+      maxit = 100, \dots)
 }
 \arguments{
   \item{object}{a fitted model, usually of class
@@ -23,6 +24,8 @@ refit(object, newresp, \dots)
   \item{rename.response}{when refitting the model, should the name of
     the response variable in the formula and model frame be replaced with
     the name of \code{newresp}?}
+  \item{maxit}{scalar integer, currently only for GLMMs: the maximal
+    number of Pwrss update iterations.}
   \item{\dots}{optional additional parameters.  For the \code{merMod}
     method, \code{control}.}
 }
@@ -82,3 +85,4 @@ fm1 <- lmer(Reaction ~ Days + (1|Subject), sleepstudyNA, na.action=na.exclude)
 ss <- simulate(fm1, 5)
 res2 <- refit(fm1, ss[[5]])
 }
+%% unit tests --> ../tests/refit.R

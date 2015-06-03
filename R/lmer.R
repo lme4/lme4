@@ -100,7 +100,7 @@ glmer <- function(formula, data=NULL, family = gaussian,
 
     ## create deviance function for covariance parameters (theta)
 
-    if(control$nAGQ0initStep) nAGQinit <- 0L else nAGQinit <- 1L
+    nAGQinit <- if(control$nAGQ0initStep) 0L else 1L
     devfun <- do.call(mkGlmerDevfun, c(glmod, list(verbose = verbose,
                                                    control = control,
                                                    nAGQ = nAGQinit)))
@@ -191,14 +191,15 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
                              envir = rho$resp$nlenv))))))
     rho$u0 <- rho$pp$u0
     rho$beta0 <- rho$pp$beta0
-    devfun <- mkdevfun(rho, 0L, verbose, control) # deviance as a function of theta only
+    ## deviance as a function of theta only :
+    devfun <- mkdevfun(rho, 0L, verbose=verbose, control=control)
     if (devFunOnly && !nAGQ) return(devfun)
     devfun(rho$pp$theta) # initial coarse evaluation to get u0 and beta0
     rho$u0 <- rho$pp$u0
     rho$beta0 <- rho$pp$beta0
     rho$tolPwrss <- control$tolPwrss # Reset control parameter (the initial optimization is coarse)
 
-    opt <- optwrap(control$optimizer[[1]], devfun, rho$pp$theta, rho$lower,
+    opt <- optwrap(control$optimizer[[1]], devfun, rho$pp$theta, lower=rho$lower,
                    control=control$optCtrl, adj=FALSE)
     rho$control <- attr(opt,"control")
 
@@ -212,13 +213,13 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
                 stop("nAGQ > 1 is only available for models with a single, scalar random-effects term")
             rho$fac <- vals$reTrms$flist[[1]]
         }
-        devfun <- mkdevfun(rho, nAGQ, verbose, control)
+        devfun <- mkdevfun(rho, nAGQ, verbose=verbose, control=control)
         if (devFunOnly) return(devfun)
 
         opt <- optwrap(control$optimizer[[2]], devfun,
-                       par=c(rho$pp$theta, rho$beta0),
-                       lower=rho$lower, control=control$optCtrl,
-                       adj=TRUE, verbose=verbose)
+                       par = c(rho$pp$theta, rho$beta0),
+                       lower = rho$lower, control = control$optCtrl,
+                       adj = TRUE, verbose=verbose)
 
     }
     mkMerMod(environment(devfun), opt, vals$reTrms, vals$frame, mc)
@@ -276,12 +277,12 @@ mkdevfun <- function(rho, nAGQ=1L, maxit=100L, verbose=0, control=list()) {
 	    rho$nlmerLaplace <- nlmerLaplace
             rho$tolPwrss <- control$tolPwrss
 	    switch(nAGQ + 1L,
-			 function(theta)
-			 .Call(nlmerLaplace, pp$ptr(), resp$ptr(), as.double(theta),
-			       as.double(u0), beta0, verbose, FALSE, tolPwrss),
-			 function(pars)
-			 .Call(nlmerLaplace, pp$ptr(), resp$ptr(), pars[dpars], u0,
-			       pars[-dpars], verbose, TRUE, tolPwrss))
+                   function(theta)
+                       .Call(nlmerLaplace, pp$ptr(), resp$ptr(), as.double(theta),
+                             as.double(u0), beta0, verbose, FALSE, tolPwrss),
+                   function(pars)
+                       .Call(nlmerLaplace, pp$ptr(), resp$ptr(), pars[dpars],
+                             u0,  pars[-dpars], verbose, TRUE, tolPwrss))
 	} else {
             stop("AGQ>1 not yet implemented for nlmer models")
 	    rho$nlmerAGQ <- nlmerAGQ
@@ -542,11 +543,12 @@ anova.merMod <- anovaLmer
 
 ##' @S3method as.function merMod
 as.function.merMod <- function(x, ...) {
-    rho <- list2env(list(resp=x@resp$copy(),
-                           pp=x@pp$copy(),
-                           beta0=x@beta,
-                           u0=x@u), parent=as.environment("package:lme4"))
-    ## FIXME: extract verbose and control
+    rho <- list2env(list(resp  = x@resp$copy(),
+                         pp    = x@pp$copy(),
+                         beta0 = x@beta,
+                         u0   =  x@u),
+                    parent=as.environment("package:lme4"))
+    ## FIXME: extract verbose [, maxit] and control
     mkdevfun(rho, getME(x, "devcomp")$dims[["nAGQ"]])
 }
 
@@ -1281,7 +1283,7 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, maxit = 10
 		 pp=pp, resp=rr, u0=pp$u0, verbose=verbose, dpars=seq_len(nth))
 	} else
 	    list(pp=pp, resp=rr, u0=pp$u0, verbose=verbose, dpars=seq_len(nth))
-    ff <- mkdevfun(list2env(devlist), nAGQ=nAGQ, verbose)
+    ff <- mkdevfun(list2env(devlist), nAGQ=nAGQ, maxit=maxit, verbose=verbose)
     ## rho <- environment(ff)
     xst       <- rep.int(0.1, nth)
     x0        <- pp$theta
@@ -1317,13 +1319,6 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, maxit = 10
              object@frame, getCall(object), cc)
 }
 
-##-- BUG in roxygen2: If we use  @S3method instead of @method,
-##-- the \usage{ ... } will have
-##-- refitML.merMod(..) instead of \method{refitML}{mermod}(..)
-##' @param optimizer a string indicating the optimizer to be used.
-##' @method refitML merMod
-##' @rdname refitML
-##' @export
 refitML.merMod <- function (x, optimizer="bobyqa", ...) {
     ## FIXME: optimizer is set to 'bobyqa' for back-compatibility, but that's not
     ##  consistent with lmer (default NM).  Should be based on internally stored 'optimizer' value
@@ -1334,7 +1329,7 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
     xpp <- x@pp$copy()
     rho$pp <- new(class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat,
                   Lind=xpp$Lind, theta=xpp$theta, n=nrow(xpp$X))
-    devfun <- mkdevfun(rho, 0L)
+    devfun <- mkdevfun(rho, 0L) # also pass ?? (verbose, maxit, control)
     opt <- optwrap(optimizer, devfun, x@theta, lower=x@lower,
                    calc.derivs=TRUE)
     ## FIXME: smarter calc.derivs rules
@@ -1358,64 +1353,40 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
 	lower=x@lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=rho$resp)
 }
 
-##' residuals of merMod objects
-##' @importFrom stats residuals
-##' @S3method residuals merMod
-##' @method residuals merMod
+##' residuals of merMod objects 		--> ../man/residuals.merMod.Rd
 ##' @param object a fitted [g]lmer (\code{merMod}) object
 ##' @param type type of residuals
 ##' @param scaled scale residuals by residual standard deviation (=scale parameter)?
 ##' @param \dots additional arguments (ignored: for method compatibility)
-##' @details
-##' \itemize{
-##' \item The default residual type
-##' varies between \code{lmerMod} and \code{glmerMod} objects: they try to
-##' mimic \code{\link{residuals.lm}} and \code{\link{residuals.glm}} respectively.
-##' In particular, the default \code{type} is \code{"response"},
-##' i.e. (observed-fitted) for \code{lmerMod} objects
-##' vs. \code{"deviance"} for \code{glmerMod} objects.  \code{type="partial"}
-##' is not yet implemented for either type.
-##' \item Note that the meaning of \code{"pearson"} residuals differs between
-##' \code{\link{residuals.lm}} and \code{\link{residuals.lme}}.  The former
-##' returns values scaled by the square root of user-specified weights (if any),
-##' but \emph{not} by the residual standard deviation,
-##' while the latter returns values scaled by the estimated standard deviation
-##' (which will include the effects of any variance structure specified in
-##' the \code{weights} argument).  To replicate \code{lme} behaviour, use
-##' \code{type="pearson"}, \code{scaled=TRUE}.
-##' }
-residuals.merMod <-
-    function(object,
-             type=if (isGLMM(object)) "deviance" else "response",
-             scaled=FALSE,
-             ...) {
-        r <- residuals(object@resp, type,...)
-        if (is.null(nm <- rownames(model.frame(object)))) nm <- seq_along(r)
-        names(r) <- nm
-        if (scaled) r <- r/sigma(object)
-        if (!is.null(na.action <- attr(model.frame(object),"na.action")))
-            r <- naresid(na.action,r)
-        r
-    }
+residuals.merMod <- function(object,
+                             type = if(isGLMM(object)) "deviance" else "response",
+                             scaled = FALSE, ...) {
+    r <- residuals(object@resp, type,...)
+    if (is.null(nm <- rownames(model.frame(object)))) nm <- seq_along(r)
+    names(r) <- nm
+    if (scaled) r <- r/sigma(object)
+    if (!is.null(na.action <- attr(model.frame(object),"na.action")))
+        r <- naresid(na.action,r)
+    r
+}
 
 ##' @rdname residuals.merMod
 ##' @S3method residuals lmResp
 ##' @method residuals lmResp
 residuals.lmResp <- function(object,
                              type = c("working", "response", "deviance",
-                             "pearson", "partial"),
-                             ...) {
+                                      "pearson", "partial"), ...) {
     y <- object$y
     r <- object$wtres
     mu <- object$mu
     switch(match.arg(type),
-                    working =,
-                    response = y-mu,
-                    deviance =,
-                    pearson = r,
-                      partial = stop(gettextf("partial residuals are not implemented yet"),
-                    call. = FALSE)
-       )
+           working =,
+           response = y-mu,
+           deviance =,
+           pearson = r,
+           partial = stop(gettextf("partial residuals are not implemented yet"),
+                          call. = FALSE)
+           )
 }
 
 ##' @rdname residuals.merMod
@@ -2551,13 +2522,11 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
         ##  value, to reset the internal/environment variables in devfun ...
         fn(opt$par)
     }
-
-    ## store all auxiliary information
-    attr(opt,"optimizer") <- optimizer
-    attr(opt,"control") <- control
-    attr(opt,"warnings") <- curWarnings
-    attr(opt,"derivs") <- derivs
-    opt
+    structure(opt, ## store all auxiliary information
+              optimizer = optimizer,
+              control   = control,
+              warnings  = curWarnings,
+              derivs    = derivs)
 }
 
 as.data.frame.VarCorr.merMod <- function(x,row.names = NULL,
@@ -2566,16 +2535,17 @@ as.data.frame.VarCorr.merMod <- function(x,row.names = NULL,
                                          ...)  {
     order <- match.arg(order)
     tmpf <- function(v,grp) {
-        vcov <- c(diag(v),v[lower.tri(v,diag = FALSE)])
+        vcov <- c(diag(v), v[lt.v <- lower.tri(v, diag = FALSE)])
         sdcor <- c(attr(v,"stddev"),
-                   attr(v,"correlation")[lower.tri(v,diag = FALSE)])
+                   attr(v,"correlation")[lt.v])
         nm <- rownames(v)
         n <- nrow(v)
-        var1 <- nm[c(seq(n),col(v)[lower.tri(v,diag = FALSE)])]
-        var2 <- c(rep(NA,n),nm[row(v)[lower.tri(v,diag = FALSE)]])
         dd <- data.frame(grp = grp,
-                         var1,var2,
-                         vcov,sdcor,stringsAsFactors = FALSE)
+                         var1 = nm[c(seq(n), col(v)[lt.v])],
+                         var2 = c(rep(NA,n), nm[row(v)[lt.v]]),
+                         vcov,
+                         sdcor,
+                         stringsAsFactors = FALSE)
         if (order=="lower.tri") {
             ## reorder *back* to lower.tri order
             m <- matrix(NA,n,n)
@@ -2583,7 +2553,7 @@ as.data.frame.VarCorr.merMod <- function(x,row.names = NULL,
             m[lower.tri(m)] <- (n+1):(n*(n+1)/2)
             dd <- dd[m[lower.tri(m,diag=TRUE)],]
         }
-        return(dd)
+        dd
     }
     r <- do.call(rbind,
                  mapply(tmpf,x,names(x),SIMPLIFY = FALSE))
