@@ -1,21 +1,26 @@
 \name{sigma}
+\title{Extract Residual Standard Deviation 'Sigma'}
 \alias{sigma}
 \alias{sigma.merMod}
-\title{Extract residual standard error}
+\description{
+  Extract the estimated standard deviation of the errors, the
+  \dQuote{residual standard deviation} (misnomed also
+  \dQuote{residual standard error}), from a fitted model.
+}
 \usage{
 \S3method{sigma}{merMod}(object, \dots)
 }
 \arguments{
   \item{object}{a fitted model.}
 
-  \item{\dots}{additional, optional arguments.  (None are
-  used in the merMod method)}
+  \item{\dots}{additional, optional arguments, passed from or to
+    methods. (None currently in our two methods.)}
 }
 \value{
-  the residual standard error as a scalar
-}
-\description{
-  Extract the residual standard error from a fitted model.
+  typically a number, the estimated standard deviation of the
+  errors (\dQuote{residual standard deviation}) for Gaussian
+  models, and---less interpretably---the square root of the residual
+  deviance per degree of freedom in more general models.
 }
 \details{
   Package \pkg{lme4} provides methods for mixed-effects models of class
