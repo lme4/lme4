@@ -896,7 +896,7 @@ logLik.merMod <- function(object, REML = NULL, ...) {
     if (is.null(REML) || is.na(REML[1]))
         REML <- isREML(object)
     val <- -devCritFun(object, REML = REML)/2
-    dc <- object@devcomp
+    ## dc <- object@devcomp
     nobs <- nobs.merMod(object)
     structure(val,
 	      nobs = nobs,
@@ -1156,10 +1156,9 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, maxit = 10
         }
     }
 
-    oldresp <- object@resp$y # need to set this before deep copy,
-                             # otherwise it gets reset with the call
-                             # to setResp below
-
+    ## oldresp <- object@resp$y # need to set this before deep copy,
+    ##                          # otherwise it gets reset with the call
+    ##                          # to setResp below
 
     ## somewhat repeated from profile.merMod, but sufficiently
     ##  different that refactoring is slightly non-trivial
@@ -1296,11 +1295,11 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, maxit = 10
     ## control <- c(control,list(xst=0.2*xst, xt=xst*0.0001))
     ## FIX ME: allow use.last.params to be passed through
     calc.derivs <- !is.null(object@optinfo$derivs)
-    if(FALSE) { ## if(isGLMM(object)) {
-        rho$resp$updateWts()
-        rho$pp$updateDecomp()
-        rho$lp0 <- rho$pp$linPred(1)
-    }
+    ## if(isGLMM(object)) {
+    ##     rho$resp$updateWts()
+    ##     rho$pp$updateDecomp()
+    ##     rho$lp0 <- rho$pp$linPred(1)
+    ## }
     opt <- optwrap(object@optinfo$optimizer,
                    ff, x0, lower=lower, control=control$optCtrl,
                    calc.derivs=calc.derivs)
@@ -1812,7 +1811,7 @@ getME <- function(object,
     PR   <- object@pp
     dc   <- object@devcomp
     th   <- object@theta
-    cmp  <- dc $ cmp
+    ## cmp  <- dc $ cmp
     cnms <- object@cnms
     dims <- dc $ dims
     Tpfun <- function(cnms) {
@@ -1917,7 +1916,8 @@ getME <- function(object,
 			pwrssUpdate = glmerPwrssUpdate,
 			GQmat = GHrule(nAGQ),
 			fac = object@flist[[1]],
-			pp=PR, resp=rsp, u0=PR$u0, dpars=seq_along(PR$theta), verbose=verbose)
+			pp=PR, resp=rsp, u0=PR$u0, dpars=seq_along(PR$theta),
+			verbose=verbose)
 	       }
 	       else
 		   list(pp=PR, resp=rsp, u0=PR$u0, dpars=seq_along(PR$theta), verbose=verbose)
@@ -2081,8 +2081,8 @@ VarCorr.merMod <- function(x, sigma = 1, rdig = 3)# <- 3 args from nlme
   ## FIXME:: add type=c("varcov","sdcorr","logs" ?)
     if (is.null(cnms <- x@cnms))
 	stop("VarCorr methods require reTrms, not just reModule")
-    if(missing(sigma)) # "bug": fails via default 'sigma=sigma(x)'
-	sigma <- lme4::sigma(x)  ## FIXME: do we still need lme4:: ?
+    if(missing(sigma))
+	sigma <- sigma(x)
     nc <- vapply(cnms, length, 1L) # no. of columns per term
     structure(mkVarCorr(sigma, cnms = cnms, nc = nc, theta = x@theta,
 			nms = { fl <- x@flist; names(fl)[attr(fl, "assign")]}),
