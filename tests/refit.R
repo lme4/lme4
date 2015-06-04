@@ -4,6 +4,12 @@
 library(lme4)
 set.seed(101)
 
+<<<<<<< Updated upstream
+=======
+library(lme4)
+attach(system.file("testdata", "lme-tst-fits.rda", package="lme4"))
+
+>>>>>>> Stashed changes
 ## for each type of model, should be able to
 ##  (1) refit with same data and get the same answer,
 ##     at least structurally (small numerical differences
@@ -43,6 +49,7 @@ if (getRversion() >= "3.0.0") {
 fm1 <- fit_sleepstudy_2
 fm1R <- refit(fm1, sleepstudy$Reaction)
 fm1S <- refit(fm1, simulate(fm1)[[1]])
+<<<<<<< Updated upstream
 
 stopifnot(all.equal(getinfo(fm1 ),
                     getinfo(fm1R), tolerance = 6e-3),
@@ -64,6 +71,23 @@ stopifnot(
     all.equal(getinfo(fm1), getinfo(fm1ML), tolerance=0.05)# 0.029998
 )
 
+=======
+
+stopifnot(all.equal(getinfo(fm1), getinfo(fm1R), tolerance = 6e-3))
+
+sapply(slotNames(fm1), function(.)
+    all.equal( slot(fm1,.), slot(fm1R,.), tolerance=0))
+
+sapply(slotNames(fm1),
+       function(.) isTRUE(all.equal( slot(fm1,.), slot(fm1R,.), tolerance=1.5e-5)))
+if(FALSE) {## differences
+fm1@optinfo
+fm1R@optinfo
+}
+
+getinfo(fm1ML <- refitML(fm1))
+## TODO: check
+>>>>>>> Stashed changes
 
 ## binomial GLMM (two-column)
 gm1 <- fit_cbpp_1
@@ -108,6 +132,7 @@ if (isTRUE(all.equal(fit1,fit2))) stop("fit1 and fit2 should not be equal")
 u2 <- update(fit2)
 fit2@optinfo$feval <- u2@optinfo$feval <-  NA
 
+<<<<<<< Updated upstream
 d1 <- dropterms(fit2)
 d2 <- dropterms( u2 )
 ## They are not "all equal", but mostly :
@@ -149,6 +174,45 @@ if (require("mlmRev")) {
             cat("gm4S: refit(*,y):\n" ); print( getinfo(gm4S) )
             stopifnot(all.equal(getinfo(gm4),getinfo(gm4R),tolerance=6e-5))
         }
+=======
+## TEMPORARILY disable while waiting for refclass checking to stabilize
+## stopifnot(all.equal(d1 <- dropterms(fit2), d2 <- dropterms(u2)))
+
+## for (i in slotNames(d1)) {
+##     cat(i,"\n")
+##    print(isTRUE(all.equal(slot(d1,i),slot(d2,i))))
+## }
+## FIXME: check on Windows
+## gm2S <- refit(gm2,simulate(gm2)[[1]])
+## getinfo(gm2S)
+
+if (lme4:::testLevel() > 1) {
+    ## Bernoulli GLMM (specified as factor)
+    if (require("mlmRev")) {
+        data(Contraception, package="mlmRev")
+        gm3 <- glmer(use ~ urban+age+livch+(1|district),
+                     Contraception, binomial)
+        gm3R <- refit(gm3,Contraception$use)
+        gm3S <- refit(gm3,simulate(gm3)[[1]])
+        stopifnot(all.equal(getinfo(gm3),getinfo(gm3R),tolerance=3e-4))
+        cat("gm3: glmer(..):\n"        ); print(getinfo(gm3))
+        cat("gm3R: refit(*, y):\n"     ); print(getinfo(gm3R))
+        cat("gm3S: refit(*, sim.()):\n"); print(getinfo(gm3S))
+
+        data(Mmmec, package="mlmRev")
+        gm4 <- glmer(deaths ~ uvb + (1|region), data=Mmmec,
+                     family = poisson,
+                     offset = log(expected))
+        gm4R <- refit(gm4, Mmmec $ deaths)
+        if(FALSE) ## FIXME: following fails, not finding 'expected'
+        gm4S <- refit(gm4,simulate(gm4)[[1]])
+        cat("gm4: glmer(..):\n"   ); print( getinfo(gm4) )
+        cat("gm4R: refit(*,y):\n" ); print( getinfo(gm4R) )
+        if(FALSE) ## FIXME (above)
+        getinfo(gm4S)
+
+        stopifnot(all.equal(getinfo(gm4),getinfo(gm4R),tolerance=6e-5))
+>>>>>>> Stashed changes
     }
 }
 
@@ -165,6 +229,7 @@ newdata <- transform(grouseticks, TICKS = simTICKS)
 gmGrouseUpdate <- update(gmGrouse, data = newdata)
 gmGrouseRefit  <-  refit(gmGrouse, newresp = simTICKS)
 
+<<<<<<< Updated upstream
 all.equal(bet.U <- fixef(gmGrouseUpdate),
           bet.R <- fixef(gmGrouseRefit), tolerance = 0)
 all.equal(th.U <- getME(gmGrouseUpdate, "theta"),
@@ -175,3 +240,16 @@ stopifnot(
     all.equal(bet.U, bet.R, tolerance = 4e-5), # saw 1.0e-5
     all.equal( th.U,  th.R, tolerance = 4e-5), # saw 1.2e-5
     all.equal(dev.U, dev.R, tolerance = 2e-5)) # saw 4.6e-6
+=======
+all.equal(fixef(gmGrouseUpdate),
+          fixef(gmGrouseRefit),
+          tolerance = 1e-5)
+all.equal(getME(gmGrouseUpdate, "theta"),
+          getME(gmGrouseRefit,  "theta"),
+          tolerance = 1e-5)
+all.equal(deviance(gmGrouseUpdate),
+          deviance(gmGrouseRefit),
+          tolerance = 1e-5)
+
+}## only if R > 3.0.0
+>>>>>>> Stashed changes

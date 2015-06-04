@@ -7,7 +7,11 @@
   returns the deviance.
 }
 \usage{
+<<<<<<< Updated upstream
 mkdevfun(rho, nAGQ = 1L, maxit = 100, verbose = 0, control = list())
+=======
+  mkdevfun(rho, nAGQ = 1L, verbose = 0, maxit = 100, control = list())
+>>>>>>> Stashed changes
 }
 \arguments{
   \item{rho}{an environment containing \code{pp}, a
@@ -21,9 +25,15 @@ mkdevfun(rho, nAGQ = 1L, maxit = 100, verbose = 0, control = list())
     effects are optimized by the iteratively reweighted least
     squares algorithm.}
 
+<<<<<<< Updated upstream
   \item{maxit}{scalar integer, currently only for GLMMs: the maximal
     number of Pwrss update iterations.}
   \item{verbose}{scalar logical: print verbose output?}
+=======
+  \item{verbose}{scalar logical: print verbose output?}
+  \item{maxit}{scalar integer, currently only for GLMMs: the maximal
+    number of Pwrss update iterations.}
+>>>>>>> Stashed changes
 
   \item{control}{list of control parameters, a subset of
     those specified by \code{\link{lmerControl}}
