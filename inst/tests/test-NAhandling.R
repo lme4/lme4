@@ -51,9 +51,8 @@ test_that("naming", {
                   control=lmerControl(check.conv.grad="ignore"),
                   na.action=na.pass),
                  "NA/NaN/Inf in 'y'")
-    sleepstudyNA2 <- sleepst.a
-    sleepstudyNA2$Days[1:3] <- NA
-    expect_error(fm4 <- update(fm1,data=sleepstudyNA2,
+    sleepstudyNA2 <- within(sleepst.a, Days[1:3] <- NA)
+    expect_error(fm4 <- update(fm1, data = sleepstudyNA2,
                                control=lmerControl(check.conv.grad="ignore"),
                                na.action=na.pass),"NA in Z")
     expect_is(suppressWarnings(confint(fm2,method="boot",nsim=3,
@@ -66,29 +65,25 @@ test_that("other_NA", {
     fm0 <- lmer(angle ~ recipe * temperature + (1|recipe:replicate), cake)
     ## NA's in response :
     fm1 <- update(fm0, data=cakeNA)
-
-    expect_error(update(fm1, na.action=na.fail), "missing values in object")
-    fm1_omit <-  update(fm1, na.action=na.omit)
-    ## check equal:
-    expect_true(all.equal(fixef(fm0),fixef(fm1)))
+    expect_true(all.equal(  fixef(fm0),  fixef(fm1)))
     expect_true(all.equal(VarCorr(fm0),VarCorr(fm1)))
-    expect_true(all.equal(ranef(fm0),ranef(fm1)))
-    ## works, but doesn't make much sense
-    fm1_pass <- update(fm1,na.action=na.pass)
-    expect_true(all(is.na(fitted(fm1_pass))))
-    fm1_exclude <- update(fm1,na.action=na.exclude)
-    expect_equal(length(fitted(fm1_omit)),270)
-    expect_equal(length(fitted(fm1_exclude)),271)
-    expect_true(is.na(tail(predict(fm1_exclude),1)))
+    expect_true(all.equal(  ranef(fm0),  ranef(fm1)))
+
+    fm1_omit <-  update(fm1, na.action = na.omit)
+    fm1_excl <-  update(fm1, na.action = na.exclude)
+    expect_error(update(fm1, na.action = na.fail), "missing values in object")
+    expect_error(update(fm1, na.action = na.pass), "NA/NaN")
+    expect_equal(length(fitted(fm1_omit)), 270)
+    expect_equal(length(fitted(fm1_excl)), 271)
+    expect_true(is.na(tail(predict(fm1_excl),1)))
     ## test predict.lm
-    d <- data.frame(x=1:10,y=c(rnorm(9),NA))
-    lm1 <- lm(y~x,data=d,na.action=na.exclude)
-    expect_is(predict(lm1),"numeric")
-    expect_equal(sum(is.na(predict(lm1,newdata=data.frame(x=c(1:4,NA))))),1)
+    d <- data.frame(x = 1:10, y = c(rnorm(9),NA))
+    lm1 <- lm(y~x, data=d, na.action=na.exclude)
+    expect_is(predict(lm1), "numeric")
+    expect_equal(1, sum(is.na(predict(lm1, newdata = data.frame(x=c(1:4,NA))))))
 
     ## Triq examples ...
-    m.lmer <- lmer (angle ~ temp + (1 | recipe) + (1 | replicate),
-                    data=cake)
+    m.lmer <- lmer (angle ~ temp + (1 | recipe) + (1 | replicate), data=cake)
     ## NAs in fixed effect
     p1_pass <- predict(m.lmer, newdata=cakeNA.X, re.form=NA,
                        na.action=na.pass)
