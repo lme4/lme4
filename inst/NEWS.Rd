@@ -7,7 +7,7 @@
   \subsection{NEW FEATURES}{
     \itemize{
       \item \code{getME} gains a \code{"Tlist"} option
-      (returns a vector of template matrices from which the blocks of 
+      (returns a vector of template matrices from which the blocks of
       \code{Lambda} are generated)
       \item \code{hatvalues} method returns the diagonal of the hat
       matrix of LMMs
@@ -34,7 +34,7 @@
       \item \code{refit} of a nonlinear mixed model fit now throws an
       error, but this will hopefully change in future releases (related
       to bug fixes for Github #231)
-      
+
     }
   }
   \subsection{BUG FIXES}{
@@ -51,11 +51,13 @@
       \item gradient scaling for convergence checks now uses the Cholesky factor of the
       Hessian; while it is more correct, this will lead to some additional (probably
       false-positive) convergence warnings
+      \item As with \code{lm()}, users now get an error for infinite
+      values in the response. Github #310
 
     }
   }
-}  
-  
+}
+
 \section{CHANGES IN VERSION 1.1-7}{
   \subsection{NEW FEATURES}{
     \itemize{
@@ -124,7 +126,7 @@
       if finite-difference Hessian
       is non-PD; return \code{NA} matrix if RX approximation is
       also bad)
-    } 
+    }
   }
   \subsection{MINOR USER-VISIBLE CHANGES}{
     \itemize{
@@ -269,7 +271,7 @@
   \subsection{BUG FIXES}{
     \itemize{
       \item in a previous development version, \code{ranef} returned
-      incorrect conditional variances (github issue #148). this is 
+      incorrect conditional variances (github issue #148). this is
       now fixed
     }
   }
