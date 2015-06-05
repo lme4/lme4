@@ -36,9 +36,10 @@ test_that("naming", {
     expect_equal(dim( simulate(fm1, newdata=d2, allow.new.levels=TRUE) ), c(360,1))
 
     ## na.pass (pretty messed up)
-    fm3 <- update(fm1,data=sleepstudyNA,
+    expect_error(update(fm1,data=sleepstudyNA,
                   control=lmerControl(check.conv.grad="ignore"),
-                  na.action=na.pass)
+                  na.action=na.pass),
+                 "NA/NaN/Inf in 'y'")
     sleepstudyNA2 <- sleepst.a
     sleepstudyNA2$Days[1:3] <- NA
     expect_error(fm4 <- update(fm1,data=sleepstudyNA2,
