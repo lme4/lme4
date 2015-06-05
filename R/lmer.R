@@ -515,13 +515,15 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
 	terms <- terms(object)
         nmeffects <- attr(terms, "term.labels")[unique(asgn)]
 	if ("(Intercept)" %in% names(ss))
-	    nmeffects <- c("(Intercept)", nmeffecwts)
+	    nmeffects <- c("(Intercept)", nmeffects)
 	ss <- unlist(lapply(split(ss, asgn), sum))
 	stopifnot(length(ss) == length(nmeffects))
 	df <- vapply(split(asgn, asgn), length, 1L)
 	## dfr <- unlist(lapply(split(dfr, asgn), function(x) x[1]))
 	ms <- ss/df
 	f <- ms/(sigma(object)^2)
+        ## No longer provide p-values, but still the F statistic (may not be F distributed):
+        ##
 	## P <- pf(f, df, dfr, lower.tail = FALSE)
 	## table <- data.frame(df, ss, ms, dfr, f, P)
 	table <- data.frame(df, ss, ms, f)
