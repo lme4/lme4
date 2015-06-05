@@ -831,7 +831,7 @@ checkArgs <- function(type,...) {
 
 checkFormulaData <- function(formula, data, checkLHS=TRUE, debug=FALSE) {
     dataName <- deparse(substitute(data))
-    missingData <- is.null(tryCatch(eval(data), error= function(e) NULL))
+    wrongData <- isTRUE(tryCatch(eval(data), error = function(e)TRUE))
     ## data not found (this *should* only happen with garbage input,
     ## OR when strings used as formulae -> drop1/update/etc.)
     ##
@@ -845,14 +845,14 @@ checkFormulaData <- function(formula, data, checkLHS=TRUE, debug=FALSE) {
     ##                           env = list(x = ex, n=i)))
     ## }
     ## origName <- deparse(ex)
-    ## missingData <- !exists(origName)
+    ## wrongData <- !exists(origName)
     ## (!dataName=="NULL" && !exists(dataName))
-    if (missingData || debug) {
+    if (wrongData || debug) {
         varex <- function(v, env) exists(v, envir=env, inherits=FALSE)
         allvars <- all.vars(as.formula(formula))
         allvarex <- function(env, vvec=allvars) all(vapply(vvec, varex, NA, env))
     }
-    if (missingData) { ## Choose helpful error message:
+    if (wrongData) { ## Choose helpful error message:
         if (allvarex(environment(formula))) {
             stop("'data' not found, but variables found in environment of formula: ",
                  "try specifying 'formula' as a formula rather ",
