@@ -421,8 +421,8 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
             devfun <- do.call(mkLmerDevfun, lmod)
             object <- mkMerMod(environment(devfun),
                                ## (real parameters will be filled in later)
-                               opt=list(par=NA,fval=NA,conv=NA),
-                               lmod$reTrms,fr=lmod$fr)
+                               opt = list(par=NA,fval=NA,conv=NA),
+                               lmod$reTrms, fr = lmod$fr)
         } else {
             glmod <- glFormula(formula,newdata,family=family,
                                weights=weights,
@@ -431,8 +431,8 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
             devfun <- do.call(mkGlmerDevfun, glmod)
             object <- mkMerMod(environment(devfun),
                                ## (real parameters will be filled in later)
-                               opt=list(par=NA,fval=NA,conv=NA),
-                               glmod$reTrms,fr=glmod$fr)
+                               opt = list(par=NA,fval=NA,conv=NA),
+                               glmod$reTrms, fr = glmod$fr)
         }
         ## would like to do this:
         ## so predict() -> fitted() -> set default names will work

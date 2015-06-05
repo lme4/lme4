@@ -36,27 +36,26 @@ lmer <- function(formula, data=NULL, REML = TRUE,
     ## create deviance function for covariance parameters (theta)
     devfun <- do.call(mkLmerDevfun,
 		      c(lmod,
-			list(start=start,verbose=verbose,control=control)))
+			list(start=start, verbose=verbose, control=control)))
     if (devFunOnly) return(devfun)
     ## optimize deviance function over covariance parameters
-    if (control$optimizer=="none") {
-        opt <- list(par=NA,fval=NA,conv=1000,message="no optimization")
-    } else {
-        opt <- optimizeLmer(devfun,
-                        optimizer=control$optimizer,
-                        restart_edge=control$restart_edge,
-                        boundary.tol=control$boundary.tol,
-                        control=control$optCtrl,
-                        verbose=verbose,
-                        start=start,
-                        calc.derivs=control$calc.derivs,
-                        use.last.params=control$use.last.params)
+    opt <- if (control$optimizer=="none")
+        list(par=NA,fval=NA,conv=1000,message="no optimization")
+    else {
+        optimizeLmer(devfun, optimizer = control$optimizer,
+                     restart_edge = control$restart_edge,
+                     boundary.tol = control$boundary.tol,
+                     control = control$optCtrl,
+                     verbose=verbose,
+                     start=start,
+                     calc.derivs=control$calc.derivs,
+                     use.last.params=control$use.last.params)
     }
     cc <- checkConv(attr(opt,"derivs"), opt$par,
                     ctrl = control$checkConv,
                     lbound=environment(devfun)$lower)
-    mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr, mcout,
-             lme4conv=cc) ## prepare output
+    mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr,
+             mc = mcout, lme4conv=cc) ## prepare output
 }## { lmer }
 
 
@@ -163,8 +162,8 @@ glmer <- function(formula, data=NULL, family = gaussian,
     }
 
     ## prepare output
-    mkMerMod(environment(devfun), opt, glmod$reTrms, fr = glmod$fr, mcout,
-             lme4conv=cc)
+    mkMerMod(environment(devfun), opt, glmod$reTrms, fr = glmod$fr,
+             mc = mcout, lme4conv=cc)
 
 }## {glmer}
 
@@ -222,7 +221,7 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
                        adj = TRUE, verbose=verbose)
 
     }
-    mkMerMod(environment(devfun), opt, vals$reTrms, vals$frame, mc)
+    mkMerMod(environment(devfun), opt, vals$reTrms, fr = vals$frame, mc = mc)
 }## {nlmer}
 
 ## R 3.1.0 devel [2013-08-05]: This does not help yet
@@ -516,7 +515,7 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
 	terms <- terms(object)
         nmeffects <- attr(terms, "term.labels")[unique(asgn)]
 	if ("(Intercept)" %in% names(ss))
-	    nmeffects <- c("(Intercept)", nmeffects)
+	    nmeffects <- c("(Intercept)", nmeffecwts)
 	ss <- unlist(lapply(split(ss, asgn), sum))
 	stopifnot(length(ss) == length(nmeffects))
 	df <- vapply(split(asgn, asgn), length, 1L)

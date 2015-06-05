@@ -829,9 +829,9 @@ checkArgs <- function(type,...) {
 ## if #3 is true *and* the user is doing something tricky with nested functions,
 ## this may fail ...
 
-checkFormulaData <- function(formula,data,checkLHS=TRUE,debug=FALSE) {
+checkFormulaData <- function(formula, data, checkLHS=TRUE, debug=FALSE) {
     dataName <- deparse(substitute(data))
-    missingData <- inherits(tryCatch(eval(data), error=function(e)e), "error")
+    missingData <- is.null(tryCatch(eval(data), error= function(e) NULL))
     ## data not found (this *should* only happen with garbage input,
     ## OR when strings used as formulae -> drop1/update/etc.)
     ##
@@ -847,20 +847,22 @@ checkFormulaData <- function(formula,data,checkLHS=TRUE,debug=FALSE) {
     ## origName <- deparse(ex)
     ## missingData <- !exists(origName)
     ## (!dataName=="NULL" && !exists(dataName))
-    if (missingData) {
-        varex <- function(v,env) exists(v,envir=env,inherits=FALSE)
+    if (missingData || debug) {
+        varex <- function(v, env) exists(v, envir=env, inherits=FALSE)
         allvars <- all.vars(as.formula(formula))
-        allvarex <- function(vvec=allvars,...) { all(sapply(vvec,varex,...)) }
-        if (allvarex(env=(ee <- environment(formula)))) {
+        allvarex <- function(env, vvec=allvars) all(vapply(vvec, varex, NA, env))
+    }
+    if (missingData) { ## Choose helpful error message:
+        if (allvarex(environment(formula))) {
             stop("'data' not found, but variables found in environment of formula: ",
                  "try specifying 'formula' as a formula rather ",
                  "than a string in the original model",call.=FALSE)
         } else stop("'data' not found, and some variables missing from formula environment",call.=FALSE)
     } else {
-        if (is.null(data)) {
-            if (!is.null(ee <- environment(formula))) {
-                ## use environment of formula
-                denv <- ee
+        denv <- ## The data as environment
+            if (is.null(data)) {
+                if (!is.null(ee <- environment(formula))) {
+                    ee ## use environment of formula
             } else {
                 ## e.g. no environment, e.g. because formula is a character vector
                 ## parent.frame(2L) works because [g]lFormula (our calling environment)
@@ -870,29 +872,27 @@ checkFormulaData <- function(formula,data,checkLHS=TRUE,debug=FALSE) {
                 ## calling checkFormulaData directly from the global
                 ## environment should be OK, since trying to go up beyond the global
                 ## environment keeps bringing you back to the global environment ...
-                denv <- parent.frame(2L)
+                parent.frame(2L)
             }
-        } else {
-            ## data specified
-            denv <- list2env(data)
-        }
+        } else ## data specified
+            list2env(data)
     }
     ## FIXME: set enclosing environment of denv to environment(formula), or parent.frame(2L) ?
     if (debug) {
         cat("Debugging parent frames in checkFormulaData:\n")
         ## find global environment -- could do this with sys.nframe() ?
-        glEnv <- 1
+        glEnv <- 1L
         while (!identical(parent.frame(glEnv),.GlobalEnv)) {
-            glEnv <- glEnv+1
+            glEnv <- glEnv+1L
         }
         ## where are vars?
         for (i in 1:glEnv) {
-            OK <- allvarex(env=parent.frame(i))
-            cat("vars exist in parent frame ",i)
-            if (i==glEnv) cat(" (global)")
+            OK <- allvarex(parent.frame(i))
+            cat("vars exist in parent frame ", i)
+            if (i == glEnv) cat(" (global)")
             cat(" ",OK,"\n")
         }
-        cat("vars exist in env of formula ",allvarex(env=denv),"\n")
+        cat("vars exist in env of formula ", allvarex(denv), "\n")
     } ## if (debug)
 
     stopifnot(!checkLHS || length(as.formula(formula,env=denv)) == 3)  ## check for two-sided formula

@@ -10,7 +10,7 @@
     (a list: see \code{\link{lmerControl}} for required elements)}
   \item{reTrms}{random effects structure from the calling function
        (see \code{\link{mkReTrms}} for required elements)}
-  \item{fr}{model frame}
+  \item{fr}{model frame (see \code{\link{model.frame}})}
   \item{mc}{matched call from the calling function}
   \item{lme4conv}{lme4-specific convergence information
     (results of \code{checkConv})}
