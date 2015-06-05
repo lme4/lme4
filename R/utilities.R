@@ -68,8 +68,8 @@ mkBlist <- function(x,frloc, drop.unused.levels=TRUE) {
     ## (but not by explicit Khatri-Rao products)
     ## model matrix based on LHS of random effect term
     mm <- model.matrix(eval(substitute( ~ foo, list(foo = x[[2]]))), frloc)
-    nc <- ncol(mm)
-    nseq <- seq_len(nc)
+    ## nc <- ncol(mm)
+    ## nseq <- seq_len(nc)
     ## this is J^T (see p. 9 of JSS lmer paper)
     ## use fac2sparse() rather than as() to allow *not* dropping
     ## unused levels where desired
@@ -78,7 +78,7 @@ mkBlist <- function(x,frloc, drop.unused.levels=TRUE) {
     ## looks like we don't have to filter NAs explicitly any more ...
     ## sm <- as(ff,"sparseMatrix")
     ## sm <- KhatriRao(sm[,!is.na(ff),drop=FALSE],t(mm[!is.na(ff),,drop=FALSE]))
-    sm <- KhatriRao(sm,t(mm))
+    sm <- KhatriRao(sm, t(mm))
     dimnames(sm) <- list(
         rep(levels(ff),each=ncol(mm)),
         rownames(mm))

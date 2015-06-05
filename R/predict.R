@@ -467,7 +467,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     sigma <- sigma(object)
     ## OBSOLETE: no longer use X?
     ## n <- nrow(X <- getME(object, "X"))
-    link <- if (isGLMM(object)) "response"
+    ## link <- if (isGLMM(object)) "response"
 
     ## predictions, conditioned as specified, on link scale
     ## previously: do **NOT** use na.action as specified here (inherit
@@ -486,8 +486,8 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     ## construct RE formula ONLY: leave out fixed terms,
     ##   which might have loose terms like offsets in them ...
     fb <- findbars(formula(object))
-    compReForm <- reformulate(vapply(fb, function(x) paste("(",safeDeparse(x),")"), ""))
-
+    compReForm <- reformulate(vapply(fb, function(x)
+                                         paste("(",safeDeparse(x),")"), ""))
     if (!noReForm(re.form)) {
         rr <- re.form[[length(re.form)]] ## RHS of formula
         ftemplate <- substitute(.~.-XX, list(XX=rr))
@@ -501,7 +501,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 			     allow.new.levels=allow.new.levels)
         ## paranoia ...
         stopifnot(!is.null(newdata) ||
-                       isTRUE(all.equal(newRE$Lambdat,getME(object,"Lambdat"))))
+                  isTRUE(all.equal(newRE$Lambdat,getME(object,"Lambdat"))))
 	U <- t(newRE$Lambdat %*% newRE$Zt) # == Z Lambda
 	u <- rnorm(ncol(U)*nsim)
 	## UNSCALED random-effects contribution:
@@ -523,7 +523,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
             family$family <- "negative.binomial"
         }
         musim <- family$linkinv(etasim)
-        ntot <- length(musim) ## FIXME: or could be dims["n"]?
+        ## ntot <- length(musim) ## FIXME: or could be dims["n"]?
         ## FIXME: is it possible to leverage family$simulate ... ???
         ##
         if (is.null(sfun <- simfunList[[family$family]]) &&
