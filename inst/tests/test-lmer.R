@@ -84,16 +84,16 @@ test_that("lmer", {
                  "number of observations \\(=36\\) <= number of random effects \\(=36\\)")
     ## with most recent Matrix (1.1-1), should *not* flag this
     ## for insufficient rank
-    load(system.file("testdata","rankMatrix.rda",package="lme4"))
-    expect_is(lFormula(y ~ (1|sample)+(1|day)+(1|operator)+
-                       (1|day:sample)+(1|day:operator)+(1|sample:operator)+
-                       (1|day:sample:operator),
-                       data=dat,
-                       control=lmerControl(check.nobs.vs.rankZ="stop")),
+    dat <- readRDS(system.file("testdata", "rankMatrix.rds", package="lme4"))
+    expect_is(lFormula(y ~ (1|sample) + (1|day) + (1|day:sample) +
+                           (1|operator) + (1|day:operator) + (1|sample:operator) +
+                           (1|day:sample:operator),
+                       data = dat,
+                       control = lmerControl(check.nobs.vs.rankZ = "stop")),
                        "list")
     ## check scale
-    ss <- transform(sleepstudy,Days=Days*1e6)
-    expect_warning(lmer(Reaction~Days+(1|Subject),ss),
+    ss <- within(sleepstudy, Days <- Days*1e6)
+    expect_warning(lmer(Reaction ~ Days + (1|Subject), data=ss),
                  "predictor variables are on very different scales")
 
     ## Promote warning to error so that warnings or errors will stop the test:
