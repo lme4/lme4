@@ -60,8 +60,8 @@ test_that("other_NA", {
     expect_true(all.equal(fixef(fm0),fixef(fm1)))
     expect_true(all.equal(VarCorr(fm0),VarCorr(fm1)))
     expect_true(all.equal(ranef(fm0),ranef(fm1)))
-    ## works, but doesn't make much sense
-    fm1_pass <- update(fm1,na.action=na.pass)
+    expect_error(update(fm1,na.action=na.pass),
+                 "NA/NaN/Inf in 'y'")
     expect_true(all(is.na(fitted(fm1_pass))))
     fm1_exclude <- update(fm1,na.action=na.exclude)
     expect_equal(length(fitted(fm1_omit)),270)
