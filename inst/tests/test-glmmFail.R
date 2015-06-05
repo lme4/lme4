@@ -20,9 +20,10 @@ test_that("glmer", {
     expect_warning(glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                          family = binomial, data = cbpp, REML=TRUE),
                    "extra argument.*REML")
-    expect_warning(glmer(Reaction ~ Days + (Days|Subject), sleepstudy),"calling glmer.*family=gaussian.*deprecated")
+    expect_warning(glmer(Reaction ~ Days + (Days|Subject), sleepstudy),
+                   "calling glmer.*family=gaussian.*deprecated")
     expect_warning(glmer(Reaction ~ Days + (Days|Subject), sleepstudy, family=gaussian),
-                          "calling glmer.*family=gaussian.*deprecated")
+                   "calling glmer.*family=gaussian.*deprecated")
     m3 <- suppressWarnings(glmer(Reaction ~ Days + (Days|Subject), sleepstudy))
     m4 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
     m5 <- suppressWarnings(glmer(Reaction ~ Days + (Days|Subject), sleepstudy, family=gaussian))
