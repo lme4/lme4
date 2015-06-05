@@ -588,14 +588,8 @@ xyplot.thpr <-
     function (x, data = NULL,
               levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), df = 1)),
               conf = c(50, 80, 90, 95, 99)/100,
-<<<<<<< Updated upstream
               absVal = FALSE, scales = NULL,
               which = 1:nptot, ...)
-=======
-              absVal = FALSE,
-              scales = NULL,
-              which = seq_len(nptot), ...)
->>>>>>> Stashed changes
 {
     if(any(!is.finite(conf) | conf <= 0 | conf >= 1))
         stop("values of 'conf' must be strictly between 0 and 1")
@@ -893,12 +887,7 @@ chooseFace <- function (fontface = NULL, font = 1)
 ##' @export
 splom.thpr <- function (x, data,
                         levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 2)),
-<<<<<<< Updated upstream
                         conf = c(50, 80, 90, 95, 99)/100, which = 1:nptot,
-=======
-                        conf = c(50, 80, 90, 95, 99)/100,
-                        which = seq_len(nptot),
->>>>>>> Stashed changes
                         draw.lower = TRUE, draw.upper = TRUE, ...)
 {
     stopifnot(1 <= (nptot <- length(nms <- names(attr(x, "forward")))))
@@ -907,17 +896,9 @@ splom.thpr <- function (x, data,
         singfit <- singfit || any(x[,".zeta"] == 0  &  x[,i] == 0)
     if (singfit) warning("splom is unreliable for singular fits")
 
-<<<<<<< Updated upstream
     nvp <- length(grep("^(\\.sig[0-9]+|.sigma|sd_|cor_)", nms))
     which <- get.which(which, nvp, nptot, nms)
     if (length(which) == 1)
-=======
-    nptot <- length(nms <- names(attr(x,"forward")))
-    nvp <- length(grep("^(\\.sig[0-9]+|.sigma|sd_|cor_)",nms))
-    which <- get.which(which, nvp, nptot, nms)
-
-    if (length(which)==1)
->>>>>>> Stashed changes
         stop("can't draw a scatterplot matrix for a single variable")
 
     mlev <- max(levels)
