@@ -43,7 +43,6 @@ if (getRversion() >= "3.0.0") {
 fm1 <- fit_sleepstudy_2
 fm1R <- refit(fm1, sleepstudy$Reaction)
 fm1S <- refit(fm1, simulate(fm1)[[1]])
-<<<<<<< Updated upstream
 
 stopifnot(all.equal(getinfo(fm1 ),
                     getinfo(fm1R), tolerance = 6e-3),
@@ -185,6 +184,3 @@ all.equal(getME(gmGrouseUpdate, "theta"),
 all.equal(deviance(gmGrouseUpdate),
           deviance(gmGrouseRefit),
           tolerance = 1e-5)
-
-}## only if R > 3.0.0
-
