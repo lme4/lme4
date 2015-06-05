@@ -330,7 +330,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     ignoreArgs <- c("start","verbose","devFunOnly","control")
     l... <- list(...)
     l... <- l...[!names(l...) %in% ignoreArgs]
-    do.call("checkArgs",c(list("lmer"),l...))
+    do.call("checkArgs", c(list("lmer"),l...))
     if (!is.null(list(...)[["family"]])) {
         ## lmer(...,family=...); warning issued within checkArgs
         mc[[1]] <- quote(lme4::glFormula)
@@ -340,9 +340,10 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 
     cstr <- "check.formula.LHS"
     checkCtrlLevels(cstr,control[[cstr]])
-    denv <- checkFormulaData(formula,data,checkLHS=(control$check.formula.LHS=="stop"))
+    denv <- checkFormulaData(formula, data,
+                             checkLHS = control$check.formula.LHS == "stop")
     #mc$formula <- formula <- as.formula(formula,env=denv) ## substitute evaluated call
-    formula <- as.formula(formula,env=denv)
+    formula <- as.formula(formula, env=denv)
     ## as.formula ONLY sets environment if not already explicitly set ...
     ## ?? environment(formula) <- denv
     # get rid of || terms so update() works as expected
@@ -350,8 +351,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     mc$formula <- formula
 
     m <- match(c("data", "subset", "weights", "na.action", "offset"),
-               names(mf), 0)
-    mf <- mf[c(1, m)]
+               names(mf), 0L)
+    mf <- mf[c(1L, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1]] <- as.name("model.frame")
     fr.form <- subbars(formula) # substitute "|" by "+"
@@ -366,8 +367,10 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     }
     mf$formula <- fr.form
     fr <- eval(mf, parent.frame())
+    if(!all(is.finite(model.response(fr))))
+	stop("NA/NaN/Inf in 'y'") # <- as from lm.fit()
     ## convert character vectors to factor (defensive)
-    fr <- factorize(fr.form,fr,char.only=TRUE)
+    fr <- factorize(fr.form, fr, char.only=TRUE)
     ## store full, original formula & offset
     attr(fr,"formula") <- formula
     attr(fr,"offset") <- mf$offset
@@ -391,8 +394,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     mf$formula <- fixedform
     ## re-evaluate model frame to extract predvars component
     fixedfr <- eval(mf, parent.frame())
-    attr(attr(fr,"terms"),"predvars.fixed") <-
-        attr(attr(fixedfr,"terms"),"predvars")
+    attr(attr(fr,"terms"), "predvars.fixed") <-
+        attr(attr(fixedfr,"terms"), "predvars")
     X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     ## backward compatibility (keep no longer than ~2015):
     if(is.null(rankX.chk <- control[["check.rankX"]]))
@@ -613,7 +616,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     checkCtrlLevels(cstr, control[[cstr]])
 
     denv <- checkFormulaData(formula, data,
-			     checkLHS = (control$check.formula.LHS=="stop"))
+			     checkLHS = control$check.formula.LHS == "stop")
     mc$formula <- formula <- as.formula(formula, env = denv)    ## substitute evaluated version
 
     m <- match(c("data", "subset", "weights", "na.action", "offset",
