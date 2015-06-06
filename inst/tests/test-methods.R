@@ -174,7 +174,7 @@ test_that("refit", {
     s1 <- simulate(fm1)
     expect_is(refit(fm1,s1), "merMod")
     s2 <- simulate(fm1,2)
-    expect_error(refit(fm1,s2), "refit not implemented for lists")
+    expect_error(refit(fm1,s2), "refit not implemented .* lists")
     data(Orthodont,package = "nlme")
     fmOrth <- fm <- lmer(distance ~ I(age - 11) + (I(age - 11) | Subject),
                          data = Orthodont)

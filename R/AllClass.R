@@ -21,41 +21,37 @@ forceCopy <- function(x) .Call(deepcopy, x)
 ### FIXME
 ### shouldn't we have "merPred"  with two *sub* classes "merPredD" and "merPredS"
 ### for the dense and sparse X cases ?
+##
+## MM: _Or_ have "merPred" with X  of class  "mMatrix" := classUnion {matrix, Matrix}
 
-##' Generator object for the \code{\linkS4class{merPredD}} class
+##' Class \code{"merPredD"} - a dense predictor reference class
 ##'
-##' The generator object for the \code{\linkS4class{merPredD}} reference class.
-##' Such an object is primarily used through its \code{new} method.
-##'
-##' @param ... List of arguments (see Note).
-##' @section Methods:
-##' \describe{
-##'   \item{new(X, Zt, Lambdat, Lind, theta, n):}{Create a new \code{\linkS4class{merPredD}} object}
-##' }
-##' @note Arguments to the \code{new} methods must be named arguments:
-##' \itemize{
-##' \item{X}{ dense model matrix for the fixed-effects parameters, to be stored
-##'     in the \code{X} field.}
-##' \item{Zt}{ transpose of the sparse model matrix for the random effects.  It
-##'     is stored in the \code{Zt} field.}
-##' \item{Lambdat}{ transpose of the sparse lower triangular relative variance
-##'     factor (stored in the \code{Lambdat} field).}
-##' \item{Lind}{ integer vector of the same length as the \code{"x"} slot in the
-##'     \code{Lambdat} field.  Its elements should be in the range 1 to the length
-##'     of the \code{theta} field.}
-##' \item{theta}{ numeric vector of variance component parameters (stored in the
-##'     \code{theta} field).}
-##' \item{n}{ sample size, usually \code{nrow(X)}.}
-##' }
-##' @seealso \code{\linkS4class{merPredD}}
-##' @keywords classes
-##' @export
+##' A reference class for a mixed-effects model predictor module with a dense
+##' model matrix for the fixed-effects parameters.  The reference class is
+##' associated with a C++ class of the same name.  As is customary, the
+##' generator object, \code{\link{merPredD}}, for the class has the same name as
+##' the class.
+##' @name merPredD-class
+##' @note Objects from this reference class correspond to objects in a C++
+##'     class.  Methods are invoked on the C++ class object using the external
+##'     pointer in the \code{Ptr} field.  When saving such an object the external
+##'     pointer is converted to a null pointer, which is why there are redundant
+##'     fields containing enough information as R objects to be able to regenerate
+##'     the C++ object.  The convention is that a field whose name begins with an
+##'     upper-case letter is an R object and the corresponding field, whose name
+##'     begins with the lower-case letter is a method.  References to the
+##'     external pointer should be through the method, not directly through the
+##'     \code{Ptr} field.
 merPredD <-
     setRefClass("merPredD", # Predictor class for mixed-effects models with dense X
                 fields =
                 list(Lambdat = "dgCMatrix",   # depends: theta and Lind
+                     ## = t(Lambda); Lambda := lower triangular relative variance factor
                      LamtUt  = "dgCMatrix",   # depends: Lambdat and Ut
                      Lind    = "integer",     # depends: nothing
+                     ## integer vector of the same length as 'x' slot in Lambdat.
+                     ## Its elements should be in 1: length(theta)
+
                      Ptr     = "externalptr", # depends:
                      RZX     = "matrix",      # depends: lots
                      Ut      = "dgCMatrix",   # depends: Zt and weights
@@ -63,18 +59,19 @@ merPredD <-
                      V       = "matrix",      # depends:
                      VtV     = "matrix",
                      Vtr     = "numeric",
-                     X       = "matrix",
+                     X       = "matrix",    # model matrix for the fixed-effects parameters
                      Xwts    = "numeric",
-                     Zt      = "dgCMatrix",
+                     Zt      = "dgCMatrix", # = t(Z); Z = sparse model matrix for the random effects
                      beta0   = "numeric",
                      delb    = "numeric",
                      delu    = "numeric",
-                     theta   = "numeric",
+                     theta   = "numeric", # numeric vector of variance component parameters
                      u0      = "numeric"),
-                methods =
-                list(
-                     initialize = function(X, Zt, Lambdat, Lind, theta, n, ...) {
-                         if (!nargs()) return
+                methods = list(
+                     initialize = function(X, Zt, Lambdat, Lind, theta,
+                                           n, # = sample size, usually = nrow(X)
+                                           ...) {
+			 if (!nargs()) return()
                          ll <- list(...)
                          X <<- as(X, "matrix")
                          Zt <<- as(Zt, "dgCMatrix")
@@ -97,14 +94,12 @@ merPredD <-
                              array(ll$VtV, c(p, p)) else array(0, c(p, p))
                          Vtr <<- if (!is.null(ll$Vtr))
                              as.numeric(ll$Vtr) else numeric(p)
-                         b0 <- ll$beta0 ## list(...)$beta0
-                         beta0 <<- if (is.null(b0)) numeric(p) else b0
+                         beta0 <<- if (!is.null(ll$beta0)) ll$beta0 else numeric(p)
                          delb <<- if (!is.null(ll$delb))
                              as.numeric(ll$delb) else numeric(p)
                          delu <<- if (!is.null(ll$delu))
                              as.numeric(ll$delu) else numeric(q)
-                         uu <- ll$u0 ## list(...)$u0
-                         u0 <<- if (is.null(uu)) numeric(q) else uu
+                         u0 <<- if (!is.null(ll$u0)) ll$u0 else numeric(q)
                          Ut <<- if (n == N) Zt + 0 else
                              Zt %*% sparseMatrix(i=seq_len(N), j=as.integer(gl(n, 1, N)), x=rep.int(1,N))
                          ## The following is a kludge to overcome problems when Zt is square
@@ -266,35 +261,6 @@ merPredD <-
 merPredD$lock("Lambdat", "LamtUt", "Lind", "RZX", "Ut", "Utr", "V", "VtV", "Vtr",
               "X", "Xwts", "Zt", "beta0", "delb", "delu", "theta", "u0")
 
-##' Class \code{"merPredD"} - a dense predictor reference class
-##'
-##' A reference class for a mixed-effects model predictor module with a dense
-##' model matrix for the fixed-effects parameters.  The reference class is
-##' associated with a C++ class of the same name.  As is customary, the
-##' generator object, \code{\link{merPredD}}, for the class has the same name as
-##' the class.
-##' @name merPredD-class
-##' @note Objects from this reference class correspond to objects in a C++
-##'     class.  Methods are invoked on the C++ class object using the external
-##'     pointer in the \code{Ptr} field.  When saving such an object the external
-##'     pointer is converted to a null pointer, which is why there are redundant
-##'     fields containing enough information as R objects to be able to regenerate
-##'     the C++ object.  The convention is that a field whose name begins with an
-##'     upper-case letter is an R object and the corresponding field, whose name
-##'     begins with the lower-case letter is a method.  References to the
-##'     external pointer should be through the method, not directly through the
-##'     \code{Ptr} field.
-##' @section Extends: All reference classes extend and inherit methods from
-##'     \code{"\linkS4class{envRefClass}"}.
-##' @seealso \code{\link{lmer}}, \code{\link{glmer}}, \code{\link{nlmer}},
-##'     \code{\link{merPredD}}, \code{\linkS4class{merMod}}.
-##' @keywords classes
-##' @examples
-##'
-##' showClass("merPredD")
-##' str(slot(lmer(Yield ~ 1|Batch, Dyestuff), "pp"))
-##'
-NULL
 
 ##' Generator objects for the response classes
 ##'

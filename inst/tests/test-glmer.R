@@ -269,10 +269,10 @@ if(FALSE) { ## Hadley broke this
     expect_error(update(gm1,nAGQ=101),"ord < 101L")
 
     ## non-numeric response variables
-    ss <- transform(sleepstudy,Reaction=as.character(Reaction))
-    expect_error(glmer(Reaction~(1|Days),family="poisson",data=ss),
+    ss <- transform(sleepstudy, Reaction = as.character(Reaction))
+    expect_error(glmer(Reaction~(1|Days), family="poisson", data=ss),
                  "response must be numeric")
-    expect_error(glmer(Reaction~(1|Days),family="binomial",data=ss),
+    expect_error(glmer(Reaction~(1|Days), family="binomial", data=ss),
                  "response must be numeric or factor")
     ss2 <- transform(ss,rr=rep(c(TRUE,FALSE),length.out=nrow(ss)))
     ## should work OK with logical too
@@ -284,7 +284,7 @@ if(FALSE) { ## Hadley broke this
 		 "valid starting values")
 
     ## related to GH 231
-    ## fails on some platforms, skip for now 
+    ## fails on some platforms, skip for now
     if (FALSE) {
         rr <- gm1@resp$copy()
         ff <- setdiff(ls(gm1@resp),c("copy","initialize","initialize#lmResp","ptr",

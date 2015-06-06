@@ -208,9 +208,9 @@ mkReTrms <- function(bars, fr, drop.unused.levels=TRUE) {
 ##' @return an lmerResp or glmResp or nlsResp instance
 ##' @family utilities
 ##' @export
-mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, ...) {
-
-    if(!missing(fr)){
+mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, ...)
+{
+    if(!missing(fr)) {
         y <- model.response(fr)
         offset <- model.offset(fr)
         weights <- model.weights(fr)
@@ -219,27 +219,39 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
     } else {
         fr <- list(...)
         y <- fr$y
-        N <- n <- if(is.matrix(y)) nrow(y) else length(y)
+        N <- n <- NROW(y)
         offset <- fr$offset
         weights <- fr$weights
         etastart_update <- fr$etastart
     }
+    if(length(dim(y)) == 1L)
+	y <- drop(y) ## avoid problems with 1D arrays and keep names
 
+    if(isGLMM <- !is.null(family))
+        stopifnot(inherits(family, "family"))
    ## FIXME: may need to add X, or pass it somehow, if we want to use glm.fit
-    ##y <- model.response(fr)
-    if(length(dim(y)) == 1) {
-        ## avoid problems with 1D arrays, but keep names
-        nm <- rownames(y)
-        dim(y) <- NULL
-        if(!is.null(nm)) names(y) <- nm
+
+    ## test for non-numeric response here to avoid later
+    ## confusing error messages from deeper machinery
+    if (!is.null(y)) { ## 'y' may be NULL if we're doing simulation
+	if(!(is.numeric(y) ||
+	    ((is.binom <- isGLMM && family$family == "binomial") &&
+                (is.factor(y) || is.logical(y))))) {
+	    if (is.binom)
+		stop("response must be numeric or factor")
+	    else
+		stop("response must be numeric")
+	}
+	if(!all(is.finite(y)))
+	    stop("NA/NaN/Inf in 'y'") # same msg as from lm.fit()
     }
+
     rho <- new.env()
     rho$y <- if (is.null(y)) numeric(0) else y
     if (!is.null(REML)) rho$REML <- REML
     rho$etastart <- fr$etastart
     rho$mustart <- fr$mustart
     rho$start <- NULL
-    ##N <- n <- nrow(fr)
     if (!is.null(nlenv)) {
         stopifnot(is.language(nlmod),
                   is.environment(nlenv),
@@ -247,56 +259,45 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
                   length(val) == n,
 		  ## FIXME?  Restriction, not present in ole' nlme():
                   is.matrix(gr <- attr(val, "gradient")),
-                  mode(gr) == "numeric",
+                  is.numeric(gr),
                   nrow(gr) == n,
                   !is.null(pnames <- colnames(gr)))
         N <- length(gr)
         rho$mu <- as.vector(val)
         rho$sqrtXwt <- as.vector(gr)
-        rho$gam <-
+        rho$gam <- ## FIXME more efficient  mget(pnames, envir=nlenv)
             unname(unlist(lapply(pnames,
                                  function(nm) get(nm, envir=nlenv))))
     }
-    if (!is.null(offset)) {
+    rho$offset <- if (!is.null(offset)) {
         if (length(offset) == 1L) offset <- rep.int(offset, N)
-        stopifnot(length(offset) == N)
-        rho$offset <- unname(offset)
-    } else rho$offset <- rep.int(0, N)
-    if (!is.null(weights)) {
+        else stopifnot(length(offset) == N)
+        unname(offset)
+    } else rep.int(0, N)
+    rho$weights <- if (!is.null(weights)) {
         stopifnot(length(weights) == n, all(weights >= 0))
-        rho$weights <- unname(weights)
-    } else rho$weights <- rep.int(1, n)
-    if (is.null(family)) {
-        if (is.null(nlenv)) return(do.call(lmerResp$new, as.list(rho)))
-        return(do.call(nlsResp$new,
-                       c(list(nlenv=nlenv,
-                              nlmod=substitute(~foo, list(foo=nlmod)),
-                              pnames=pnames), as.list(rho))))
-    }
-    stopifnot(inherits(family, "family"))
-    ## test for non-numeric response here to avoid confusing
-    ## error messages from deeper within GLM machinery
-    if (!is.null(y) &&  ## y may be NULL if we're doing simulation
-        (!(is.num <- is.numeric(y) ||
-               ((is.binom <- family$family=="binomial") && (is.factor(y) || is.logical(y)))))) {
-        if (is.binom) {
-            stop("response must be numeric or factor")
-        } else {
-            stop("response must be numeric")
-        }
-    }
+        unname(weights)
+    } else rep.int(1, n)
 
-    ## need weights for initializing evaluation
-    rho$nobs <- n
-    ## allow trivial objects, e.g. for simulation
-    if (length(y)>0) eval(family$initialize, rho)
-    ## family$initialize <- NULL     # remove clutter from str output
-    ll <- as.list(rho)
-    ans <- do.call("new", c(list(Class="glmResp", family=family),
-                          ll[setdiff(names(ll), c("m", "nobs", "mustart"))]))
-    if (length(y)>0) ans$updateMu(if (!is.null(es <- etastart_update)) es else
-                                  family$linkfun(get("mustart", rho)))
-    ans
+    if(isGLMM) {
+        ## need weights for initializing evaluation
+        rho$nobs <- n
+        ## allow trivial objects, e.g. for simulation
+        if (length(y)>0) eval(family$initialize, rho)
+        ## family$initialize <- NULL     # remove clutter from str output
+        ll <- as.list(rho)
+        ans <- do.call(new, c(list(Class="glmResp", family=family),
+                              ll[setdiff(names(ll), c("m", "nobs", "mustart"))]))
+        if (length(y)>0) ans$updateMu(if (!is.null(es <- etastart_update)) es else
+                                      family$linkfun(get("mustart", rho)))
+        ans
+    } else if (is.null(nlenv)) ## lmer
+        do.call(lmerResp$new, as.list(rho))
+    else ## nlmer
+        do.call(nlsResp$new,
+                c(list(nlenv=nlenv,
+                       nlmod=substitute(~foo, list(foo=nlmod)),
+                       pnames=pnames), as.list(rho)))
 }
 
 ##' From the right hand side of a formula for a mixed-effects model,
@@ -770,7 +771,8 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
              ## FIXME: construct 'REML deviance' here?
              dev=if (rcl=="lmerResp" && resp$REML != 0L || trivial.y) NA else opt$fval,
              sigmaML=sqrt(unname(if (!dims["useSc"] || trivial.y) NA else sigmaML)),
-             sigmaREML=sqrt(unname(if (rcl!="lmerResp" || trivial.y) NA else sigmaML*(dims['n']/dims['nmp']))),
+             sigmaREML=sqrt(unname(if (rcl!="lmerResp" || trivial.y) NA else
+                                   sigmaML*(dims['n']/dims['nmp']))),
              tolPwrss=rho$tolPwrss)
     ## TODO:  improve this hack to get something in frame slot (maybe need weights, etc...)
     if(missing(fr)) fr <- data.frame(resp$y)
