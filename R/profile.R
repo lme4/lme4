@@ -38,16 +38,13 @@ profile.merMod <- function(fitted,
     if (is.null(optimizer)) optimizer <- fitted@optinfo$optimizer
     ## hack: doesn't work to set bobyqa parameters to *ending* values stored
     ## in @optinfo$control
-    ignore.pars <- c("xst","xt")
+    ignore.pars <- c("xst", "xt")
     control.internal <- fitted@optinfo$control
-    ignored <- which(names(control.internal) %in% ignore.pars)
-    if (length(ignored)>0) {
-        control.internal <- control.internal[-ignored]
-    }
+    if (length(ign <- which(names(control.internal) %in% ignore.pars)) > 0)
+        control.internal <- control.internal[-ign]
     if (!is.null(control)) {
-        for (i in names(control)) {
-            control.internal[[i]] <- control[[i]]
-        }
+        i <- names(control)
+        control.internal[[i]] <- control[[i]]
     }
     control <- control.internal
     ## parallel stuff copied from bootMer ...
@@ -326,14 +323,13 @@ profile.merMod <- function(fitted,
             std <- stderr[j]
             Xw <- X.orig[, j, drop=TRUE]
             Xdrop <- .modelMatrixDrop(X.orig, j)
-            pp1 <- do.call("new", list(Class = class(pp),
-                                       X = Xdrop,
-                                       Zt = pp$Zt,
-                                       Lambdat = pp$Lambdat,
-                                       Lind = pp$Lind,
-                                       theta = pp$theta,
-                                       n = nrow(Xdrop))
-                           )
+            pp1 <- new(class(pp),
+                       X = Xdrop,
+                       Zt = pp$Zt,
+                       Lambdat = pp$Lambdat,
+                       Lind = pp$Lind,
+                       theta = pp$theta,
+                       n = nrow(Xdrop))
 ### FIXME Change this to use the deep copy and setWeights, setOffset, etc.
             rr <- new(Class=class(fitted@resp), y=fitted@resp$y)
             rr$setWeights(fitted@resp$weights)
@@ -357,17 +353,19 @@ profile.merMod <- function(fitted,
             }
             nres[1, ] <- pres[2, ] <- fe.zeta(est + delta * std)
             poff <- nvp + 1L + j
-            bres <-
-                as.data.frame(unique(rbind2(fillmat(pres,-Inf, Inf, fe.zeta, poff),
-                                            fillmat(nres,-Inf, Inf, fe.zeta, poff))))
-            thisnm <- names(fe.orig)[j]
-            bres$.par <- thisnm
-            ans[[thisnm]] <- bres[order(bres[, poff]), ]
-            form[[3]] <- as.name(thisnm)
-            bakspl[[thisnm]] <-
-                tryCatch(backSpline(forspl[[thisnm]] <- interpSpline(form, bres)),
+            ## Workaround R bug [rbind2() is S4 generic; cannot catch warnings in its arg]
+            ## see lme4 GH issue #304
+            upperf <- fillmat(pres, -Inf, Inf, fe.zeta, poff)
+            lowerf <- fillmat(nres, -Inf, Inf, fe.zeta, poff)
+            bres <- as.data.frame(unique(rbind2(upperf, lowerf)))
+            bres$.par <- n.j <- names(fe.orig)[j]
+            ans[[n.j]] <- bres[order(bres[, poff]), ]
+            form[[3]] <- as.name(n.j)
+            bakspl[[n.j]] <-
+                tryCatch(backSpline(forspl[[n.j]] <- interpSpline(form, bres)),
                          error=function(e)e)
-            if (inherits(bakspl[[thisnm]],"error")) warning("non-monotonic profile")
+            if (inherits(bakspl[[n.j]], "error"))
+                warning("non-monotonic profile for ", n.j)
         } ## for(j in 1..p)
     } ## if isLMM
 

@@ -75,8 +75,9 @@ logProf(x, base = exp(1), ranef = TRUE,
   \item{optimizer}{(character or function) optimizer to use (see
     \code{\link{lmer}} for details); default is to use the optimizer
     from the original model fit.}
-  \item{control}{Control options for profiling (see \code{\link{lmerControl}}): default is to use
-    the control settings from the original model fit.}
+  \item{control}{a \code{\link{list}} of options controlling the
+    profiling (see \code{\link{lmerControl}}): default is to use the
+    control settings from the original model fit.}
   \item{signames}{logical indicating if abbreviated names of the form
     \code{.sigNN} should be used; otherwise, names are more meaningful
     (but longer) of the form \code{(sd|cor)_(effects)|(group)}.  Note
@@ -185,16 +186,18 @@ if(doMore) { ## not typically, for time constraint reasons
  ## GLMM example
  gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
 	     data = cbpp, family = binomial)
- ## running time ~9-12 seconds on a modern machine:
- print( system.time(pr4 <- profile(gm1)) )
- print( xyplot(pr4,layout=c(5,1),as.table=TRUE) )
+ ## running ~ 10-12 seconds on a modern machine {-> "verbose" while you wait}:
+ print( system.time(pr4 <- profile(gm1, verbose=TRUE)) )
+ print( xyplot(pr4, layout=c(5,1), as.table=TRUE) )
  print( xyplot(log(pr4), absVal=TRUE) ) # log(sigma_1)
  print( splom(pr4) )
  print( system.time( # quicker: only sig01 and one fixed effect
      pr2 <- profile(gm1, which=c("theta_", "period2"))))
  print( confint(pr2) )
- ## higher underlying resolution
- print(xyplot(profile(gm1, which="theta_",delta.cutoff=1/16)))
+ ## delta..: higher underlying resolution, only for 'sigma_1':
+ print( system.time(
+     pr4.hr <- profile(gm1, which="theta_", delta.cutoff=1/16)))
+ print( xyplot(pr4.hr) )
 }% doMore
 }
 \keyword{methods}
