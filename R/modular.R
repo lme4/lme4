@@ -350,6 +350,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     RHSForm(formula) <- expandDoubleVerts(RHSForm(formula))
     mc$formula <- formula
 
+    ## (DRY! copied from glFormula)
     m <- match(c("data", "subset", "weights", "na.action", "offset"),
                names(mf), 0L)
     mf <- mf[c(1L, m)]
@@ -357,7 +358,6 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     mf[[1]] <- as.name("model.frame")
     fr.form <- subbars(formula) # substitute "|" by "+"
     environment(fr.form) <- environment(formula)
-    ## (DRY! copied from glFormula)
     ## model.frame.default looks for these objects in the environment
     ## of the *formula* (see 'extras', which is anything passed in ...),
     ## so they have to be put there ...
@@ -367,8 +367,6 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     }
     mf$formula <- fr.form
     fr <- eval(mf, parent.frame())
-    if(!all(is.finite(model.response(fr))))
-	stop("NA/NaN/Inf in 'y'") # <- as from lm.fit()
     ## convert character vectors to factor (defensive)
     fr <- factorize(fr.form, fr, char.only=TRUE)
     ## store full, original formula & offset
@@ -478,8 +476,9 @@ updateStart <- function(start,theta) {
 ##' \cr
 ##' \cr
 ##' @export
-mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, verbose=0, control=lmerControl(), ...) {
-
+mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL,
+                         verbose = 0, control = lmerControl(), ...)
+{
     ## FIXME: make sure verbose gets handled properly
     #if (missing(fr)) {
     ## reconstitute frame
@@ -490,8 +489,8 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, verbose=0, co
     rho$pp <- do.call(merPredD$new, c(reTrms[c("Zt","theta","Lambdat","Lind")],
                                       n=nrow(X), list(X=X)))
     REMLpass <- if(REML) p else 0L
-    if(missing(fr)) rho$resp <- mkRespMod(REML = REMLpass, ...)
-    else rho$resp <- mkRespMod(fr, REML = REMLpass)
+    rho$resp <-
+        if(missing(fr)) mkRespMod(REML = REMLpass, ...) else mkRespMod(fr, REML = REMLpass)
     ## note: REML does double duty as rank of X and a flag for using
     ## REML maybe this should be mentioned in the help file for
     ## mkRespMod??  currently that help file says REML is logical.  a
@@ -507,11 +506,11 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, verbose=0, co
 	length(reTrms$flist) == length(reTrms$lower) &&
         !is.null(y <- model.response(fr))) {
         v <- sapply(reTrms$flist, function(f) var(ave(y, f)))
-	    v.e <- var(y) - sum(v)
-	    if (!is.na(v.e) && v.e > 0) {
-		 v.rel <- v / v.e
-		 if (all(v.rel >= reTrms$lower^2)) rho$pp$setTheta(sqrt(v.rel))
-	    }
+        v.e <- var(y) - sum(v)
+        if (!is.na(v.e) && v.e > 0) {
+            v.rel <- v / v.e
+            if (all(v.rel >= reTrms$lower^2)) rho$pp$setTheta(sqrt(v.rel))
+        }
     }
 
     ## theta <- getStart(start, reTrms$lower, rho$pp)
@@ -520,7 +519,7 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL, verbose=0, co
     if (length(rho$resp$y) > 0)  ## only if non-trivial y
         devfun(rho$pp$theta) # one evaluation to ensure all values are set
     rho$lower <- reTrms$lower # SCW:  in order to be more consistent with mkLmerDevfun
-    return(devfun) # this should pass the rho environment implicitly
+    devfun # this should pass the rho environment implicitly
 }
 
 
@@ -619,9 +618,10 @@ glFormula <- function(formula, data=NULL, family = gaussian,
 			     checkLHS = control$check.formula.LHS == "stop")
     mc$formula <- formula <- as.formula(formula, env = denv)    ## substitute evaluated version
 
+    ## DRY ...
     m <- match(c("data", "subset", "weights", "na.action", "offset",
-                 "mustart", "etastart"), names(mf), 0)
-    mf <- mf[c(1, m)]
+                 "mustart", "etastart"), names(mf), 0L)
+    mf <- mf[c(1L, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1]] <- as.name("model.frame")
     fr.form <- subbars(formula) # substitute "|" by "+"
@@ -635,7 +635,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     }
     mf$formula <- fr.form
     fr <- eval(mf, parent.frame())
-    ## DRY ...
+    ## convert character vectors to factor (defensive)
     fr <- factorize(fr.form, fr, char.only = TRUE)
     ## store full, original formula & offset
     attr(fr,"formula") <- formula
@@ -680,8 +680,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
 mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L, maxit = 100L,
                           control=glmerControl(), ...) {
     stopifnot(length(nAGQ <- as.integer(nAGQ)) == 1L,
-            nAGQ >= 0L,
-            nAGQ <= 25L)
+              0L <= nAGQ, nAGQ <= 25L)
     verbose <- as.integer(verbose)
     maxit   <- as.integer(maxit)
     rho <- list2env(list(verbose=verbose, maxit=maxit,
@@ -748,12 +747,12 @@ optimizeGlmer <- function(devfun,
     } else {  ## stage == 2
         rho$resp$setOffset(rho$baseOffset)
     }
-    ## FIXME: implement this ...
-    if (restart_edge) stop("restart_edge not implemented for optimizeGlmer yet")
-    if (boundary.tol > 0) {
-        opt <- check.boundary(rho,opt,devfun,boundary.tol)
-    }
-    return(opt)
+    if (restart_edge) ## FIXME: implement this ...
+        stop("restart_edge not implemented for optimizeGlmer yet")
+    if (boundary.tol > 0)
+        check.boundary(rho, opt, devfun, boundary.tol)
+    else
+        opt
 }
 
 check.boundary <- function(rho,opt,devfun,boundary.tol) {
@@ -780,6 +779,10 @@ check.boundary <- function(rho,opt,devfun,boundary.tol) {
 ##' @rdname modular
 ##' @export
 updateGlmerDevfun <- function(devfun, reTrms, nAGQ = 1L){
+    if (nAGQ > 1L) {
+        if (length(reTrms$flist) != 1L || length(reTrms$cnms[[1]]) != 1L)
+            stop("nAGQ > 1 is only available for models with a single, scalar random-effects term")
+    }
     rho <- environment(devfun)
     rho$nAGQ       <- nAGQ
     rho$lower      <- c(rho$lower, rep.int(-Inf, length(rho$pp$beta0)))
@@ -788,9 +791,5 @@ updateGlmerDevfun <- function(devfun, reTrms, nAGQ = 1L){
     rho$baseOffset <- rho$resp$offset + 0 # forcing a copy (!)
     rho$GQmat      <- GHrule(nAGQ)
     rho$fac        <- reTrms$flist[[1]]
-    if (nAGQ > 1L) {
-        if (length(reTrms$flist) != 1L || length(reTrms$cnms[[1]]) != 1L)
-            stop("nAGQ > 1 is only available for models with a single, scalar random-effects term")
-    }
     mkdevfun(rho, nAGQ)  # does this attach rho to devfun??
 }
