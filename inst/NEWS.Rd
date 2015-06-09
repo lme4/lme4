@@ -45,9 +45,6 @@
       \item \code{lmList} now returns objects of class \code{lmList4},
       to avoid overwriting \code{lmList} methods from the recommended
       \code{nlme} package
-      \item non-finite values (\code{Inf}, \code{NA}, \code{NaN}) in
-      the response vector now trigger an explicit warning unless
-      \code{na.action} is set to exclude or omit them
     }
   }
   \subsection{BUG FIXES}{
@@ -64,8 +61,10 @@
       \item gradient scaling for convergence checks now uses the Cholesky factor of the
       Hessian; while it is more correct, this will lead to some additional (probably
       false-positive) convergence warnings
-      \item As with \code{lm()}, users now get an error for infinite
-      values in the response. Github #310
+      \item As with \code{lm()}, users now get an error for non-finite
+      (\code{Inf}, \code{NA}, or \code{NaN})
+      values in the response unless \code{na.action} is set to
+      exclude or omit them. Github #310
 
     }
   }
