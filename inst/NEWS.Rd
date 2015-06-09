@@ -19,7 +19,10 @@
       \item allow more flexibility in \code{scales} for
       \code{xyplot.thpr} method (John Maindonald)
       \item models with only random effects of the form \code{1|f} have
-      better starting values for \code{lmer} optimization (Gabor Grothendieck)
+      better starting values for \code{lmer} optimization (Gabor
+      Grothendieck)
+      \item \code{glmer} now allows a logical vector as the response
+      for binomial models
     }
   }
   \subsection{USER-VISIBLE CHANGES}{
@@ -34,7 +37,9 @@
       \item \code{refit} of a nonlinear mixed model fit now throws an
       error, but this will hopefully change in future releases (related
       to bug fixes for Github #231)
-
+      \item \code{lmList} now returns objects of class \code{lmList4},
+      to avoid overwriting \code{lmList} methods from the recommended
+      \code{nlme} package
     }
   }
   \subsection{BUG FIXES}{

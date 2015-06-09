@@ -6,8 +6,11 @@ lme4: Mixed-effects models in R.
 
 ## Recent/release notes
 
-* The major user-visible change in release 1.1-7 is that most of the recent rash of false convergence warnings have been cleared up.  As far as we know, any convergence warnings you get with `lme4` >= 1.1-7 are actually cause for concern and should be handled in the usual ways (e.g. try alternative optimizers within `lme4` or alternative R packages/software to cross-check the results; explore data for outliers or complete separation; center and scale continuous predictors).
-* Otherwise, see the `NEWS` file (or  `news(Version=="1.1.7",package="lme4")`).
+* We are preparing to send release 1.1-8 to CRAN. There are no major user-visible changes.
+   * We have fixed some bugs in `predict`, `simulate`, and `refit`. 
+   * Convergence and positive-definite-Hessian warnings are still overly conservative for large (>10^4 rows) data sets, but we are holding off on changing anything until we really understand the problem; see `help("convergence")`.
+   * The deviance computation has changed for GLMMs (more details to come)
+* Otherwise, see the `NEWS` file (or  `news(Version=="1.1.8",package="lme4")`).
 
 ## Features
 
