@@ -10,7 +10,7 @@ lme4: Mixed-effects models in R.
    * We have fixed some bugs in `predict`, `simulate`, and `refit`. 
    * Convergence and positive-definite-Hessian warnings are still overly conservative for large (>10^4 rows) data sets, but we are holding off on changing anything until we really understand the problem; see `help("convergence")`.
    * The deviance computation has changed for GLMMs (more details to come)
-* Otherwise, see the `NEWS` file (or  `news(Version=="1.1.8",package="lme4")`).
+* Otherwise, see the [NEWS file](https://github.com/lme4/lme4/blob/master/inst/NEWS.Rd) (or  `news(Version=="1.1.8",package="lme4")`).
 
 ## Features
 
