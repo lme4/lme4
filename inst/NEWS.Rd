@@ -23,9 +23,6 @@
       Grothendieck)
       \item \code{glmer} now allows a logical vector as the response
       for binomial models
-      \item non-finite values (\code{Inf}, \code{NA}, \code{NaN}) in
-      the response vector now trigger an explicit warning unless
-      \code{na.action} is set to exclude or omit them
       \item \code{anova} will now do (sequential) likelihood ratio
       tests for two or more models including both \code{merMod} and
       \code{glm} or \code{lm} models (at present, only for GLMMs
@@ -48,6 +45,9 @@
       \item \code{lmList} now returns objects of class \code{lmList4},
       to avoid overwriting \code{lmList} methods from the recommended
       \code{nlme} package
+      \item non-finite values (\code{Inf}, \code{NA}, \code{NaN}) in
+      the response vector now trigger an explicit warning unless
+      \code{na.action} is set to exclude or omit them
     }
   }
   \subsection{BUG FIXES}{
