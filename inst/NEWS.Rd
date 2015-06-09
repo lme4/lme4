@@ -23,13 +23,21 @@
       Grothendieck)
       \item \code{glmer} now allows a logical vector as the response
       for binomial models
+      \item non-finite values (\code{Inf}, \code{NA}, \code{NaN}) in
+      the response vector now trigger an explicit warning unless
+      \code{na.action} is set to exclude or omit them
+      \item \code{anova} will now do (sequential) likelihood ratio
+      tests for two or more models including both \code{merMod} and
+      \code{glm} or \code{lm} models (at present, only for GLMMs
+      fitted with the Laplace approximation)
     }
   }
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item \code{deviance()} now returns the deviance, rather than half the
-      negative log-likelihood, for GLMMs (there is no difference for
-      LMMs)
+      negative log-likelihood, for GLMMs fitted with Laplace
+      (the behaviour for LMMs and GLMMs fitted with \code{nAGQ>1} has
+      not changed)
       \item convergence warning and diagnostic test issues are now
       reported in \code{print} and \code{summary} methods
       \item \code{update} now (attempts to) re-evaluate the original fit
