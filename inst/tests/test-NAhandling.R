@@ -5,8 +5,9 @@ context("NA (and Inf) handling")
 ## Modified sleepstudy data :
 sleepst.a <- sleepstudy
 rownames(sleepst.a) <- paste0("a", rownames(sleepstudy))
-sleepstudyNA <- within(sleepst.a,  Reaction[1:3] <- NA)
-sleepInf     <- within(sleepstudy, Reaction[Reaction > 400] <- Inf)
+sleepstudyNA  <- within(sleepst.a,  Reaction[1:3] <- NA)
+sleepstudyNA2 <- within(sleepst.a,  Days[1:3] <- NA)
+sleepInf      <- within(sleepstudy, Reaction[Reaction > 400] <- Inf)
 
 ## Modified  cake  data :
 cakeNA <- rbind(cake, tail(cake,1))
@@ -19,14 +20,16 @@ cakeNA.Z <- within(cake, replicate[1:5] <- NA)
 test_that("naming", {
     ## baseline model
     fm1 <- lmer(Reaction~Days+(Days|Subject), sleepst.a)
-    ## na.omit
+    ## default: na.omit
     fm2 <- update(fm1, data=sleepstudyNA,
                   control=lmerControl(check.conv.grad="ignore"))
     expect_equal(head(names(fitted(fm1))), paste0("a",1:6))
     expect_equal(head(names(fitted(fm2))), paste0("a",4:9))
     expect_equal(names(predict(fm2)), names(fitted(fm2)))
-    expect_equal(length(p1 <- predict(fm2)),177)
-    expect_equal(length(p2 <- predict(fm2,na.action=na.exclude)),180)
+    expect_equal(length(p1 <- predict(fm2)), 177)
+    ## predict with na.exclude -> has 3 NA's, but otherwise identical:
+    expect_equal(length(p2 <- predict(fm2, na.action=na.exclude)), 180)
+    expect_identical(p1, p2[!is.na(p2)])
     expect_equal(length((s1 <- simulate(fm1,1))[[1]]),180)
     expect_equal(length((s2 <- simulate(fm2,1))[[1]]),177)
     expect_equal(head(rownames(s1)),paste0("a",1:6))
@@ -35,9 +38,9 @@ test_that("naming", {
     ## test simulation
     expect_is(attr(simulate(fm2),"na.action"),"omit")
     expect_is(refit(fm2,simulate(fm2)),"merMod")
-    expect_equal(fixef(fm2),fixef(refit(fm2,sleepstudyNA$Reaction)),
-                 tolerance = 1e-5)
-    fm2ex <- update(fm2,na.action=na.exclude)
+    expect_equal(fixef(fm2),
+                 fixef(refit(fm2, sleepstudyNA$Reaction)), tolerance = 1e-5)
+    fm2ex <- update(fm2, na.action=na.exclude)
     expect_equal(nrow(ss2 <- simulate(fm2ex)),180)
     expect_is(refit(fm2,ss2[[1]]),"merMod")
     ## issue #197, 18 new subjects; some with NA in y
@@ -51,18 +54,18 @@ test_that("naming", {
                   control=lmerControl(check.conv.grad="ignore"),
                   na.action=na.pass),
                  "NA/NaN/Inf in 'y'")
-<<<<<<< HEAD
-    sleepstudyNA2 <- sleepst.a
-    sleepstudyNA2$Days[1:3] <- NA
-    expect_error(fm4 <- update(fm1,data=sleepstudyNA2,
-=======
     sleepstudyNA2 <- within(sleepst.a, Days[1:3] <- NA)
     expect_error(fm4 <- update(fm1, data = sleepstudyNA2,
->>>>>>> d529bbd9dcad03b160cc43cc28158aecda5ae437
                                control=lmerControl(check.conv.grad="ignore"),
                                na.action=na.pass),"NA in Z")
     expect_is(suppressWarnings(confint(fm2,method="boot",nsim=3,
                                        quiet=TRUE)),"matrix")
+    expect_error(update(fm1, data = sleepstudyNA2,
+                        control = lmerControl(check.conv.grad="ignore"),
+                        na.action = na.pass),
+                 "NA in Z")
+    expect_is(suppressWarnings(
+                  ci2 <- confint(fm2, method="boot", nsim=3, quiet=TRUE)), "matrix")
 })
 
 test_that("other_NA", {
@@ -70,29 +73,21 @@ test_that("other_NA", {
 
     fm0 <- lmer(angle ~ recipe * temperature + (1|recipe:replicate), cake)
     ## NA's in response :
-    fm1 <- update(fm0, data=cakeNA)
+    fm1 <- update(fm0, data = cakeNA)
     expect_true(all.equal(  fixef(fm0),  fixef(fm1)))
     expect_true(all.equal(VarCorr(fm0),VarCorr(fm1)))
-<<<<<<< HEAD
-    expect_true(all.equal(ranef(fm0),ranef(fm1)))
-    expect_error(update(fm1,na.action=na.pass),
-                 "NA/NaN/Inf in 'y'")
-    expect_true(all(is.na(fitted(fm1_pass))))
-    fm1_exclude <- update(fm1,na.action=na.exclude)
-    expect_equal(length(fitted(fm1_omit)),270)
-    expect_equal(length(fitted(fm1_exclude)),271)
-    expect_true(is.na(tail(predict(fm1_exclude),1)))
-=======
     expect_true(all.equal(  ranef(fm0),  ranef(fm1)))
 
     fm1_omit <-  update(fm1, na.action = na.omit)
     fm1_excl <-  update(fm1, na.action = na.exclude)
-    expect_error(update(fm1, na.action = na.fail), "missing values in object")
     expect_error(update(fm1, na.action = na.pass), "NA/NaN")
+    expect_error(update(fm1, na.action = na.fail), "missing values in object")
+    fm1_omit@call <- fm1@call ## <- just for comparing:
+    expect_equal(fm1, fm1_omit)
     expect_equal(length(fitted(fm1_omit)), 270)
     expect_equal(length(fitted(fm1_excl)), 271)
     expect_true(is.na(tail(predict(fm1_excl),1)))
->>>>>>> d529bbd9dcad03b160cc43cc28158aecda5ae437
+
     ## test predict.lm
     d <- data.frame(x = 1:10, y = c(rnorm(9),NA))
     lm1 <- lm(y~x, data=d, na.action=na.exclude)

@@ -19,14 +19,22 @@
       \item allow more flexibility in \code{scales} for
       \code{xyplot.thpr} method (John Maindonald)
       \item models with only random effects of the form \code{1|f} have
-      better starting values for \code{lmer} optimization (Gabor Grothendieck)
+      better starting values for \code{lmer} optimization (Gabor
+      Grothendieck)
+      \item \code{glmer} now allows a logical vector as the response
+      for binomial models
+      \item \code{anova} will now do (sequential) likelihood ratio
+      tests for two or more models including both \code{merMod} and
+      \code{glm} or \code{lm} models (at present, only for GLMMs
+      fitted with the Laplace approximation)
     }
   }
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item \code{deviance()} now returns the deviance, rather than half the
-      negative log-likelihood, for GLMMs (there is no difference for
-      LMMs)
+      negative log-likelihood, for GLMMs fitted with Laplace
+      (the behaviour for LMMs and GLMMs fitted with \code{nAGQ>1} has
+      not changed)
       \item convergence warning and diagnostic test issues are now
       reported in \code{print} and \code{summary} methods
       \item \code{update} now (attempts to) re-evaluate the original fit
@@ -34,7 +42,9 @@
       \item \code{refit} of a nonlinear mixed model fit now throws an
       error, but this will hopefully change in future releases (related
       to bug fixes for Github #231)
-
+      \item \code{lmList} now returns objects of class \code{lmList4},
+      to avoid overwriting \code{lmList} methods from the recommended
+      \code{nlme} package
     }
   }
   \subsection{BUG FIXES}{
@@ -51,8 +61,10 @@
       \item gradient scaling for convergence checks now uses the Cholesky factor of the
       Hessian; while it is more correct, this will lead to some additional (probably
       false-positive) convergence warnings
-      \item As with \code{lm()}, users now get an error for infinite
-      values in the response. Github #310
+      \item As with \code{lm()}, users now get an error for non-finite
+      (\code{Inf}, \code{NA}, or \code{NaN})
+      values in the response unless \code{na.action} is set to
+      exclude or omit them. Github #310
 
     }
   }

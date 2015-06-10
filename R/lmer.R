@@ -29,7 +29,7 @@ lmer <- function(formula, data=NULL, REML = TRUE,
     ## https://github.com/lme4/lme4/issues/50
     ## parse data and formula
     mc[[1]] <- quote(lme4::lFormula)
-    lmod <- eval(mc, parent.frame(1L))  ## parse data and formula
+    lmod <- eval(mc, parent.frame(1L))
     mcout$formula <- lmod$formula
     lmod$formula <- NULL
 
@@ -800,10 +800,10 @@ fitted.merMod <- function(object, ...) {
     }
     if (is.null(nm <- rownames(model.frame(object)))) nm <- seq_along(xx)
     names(xx) <- nm
-    if (!is.null(fit.na.action <- attr(model.frame(object),"na.action"))) {
-        xx <- napredict(fit.na.action,xx)
-    }
-    xx
+    if (!is.null(fit.na.action <- attr(model.frame(object),"na.action")))
+        napredict(fit.na.action, xx)
+    else
+        xx
 }
 
 ##' Extract the fixed-effects estimates
@@ -1124,9 +1124,7 @@ print.ranef.mer <- function(x, ...) {
     invisible(x)
 }
 
-##' @method refit merMod
-##' @rdname refit
-##' @export
+## FIXME DRY: much of copy'n'paste from lmer() etc .. ==> become more modular (?)
 refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, maxit = 100L, ...)
 {
 
@@ -1152,8 +1150,8 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, maxit = 10
             newresp <- newresp[[1]]
             attr(newresp,"na.action") <- na.action
         } else {
-            stop("refit not implemented for lists with length>1: ",
-                 "consider ",sQuote("lapply(object,refit)"))
+            stop("refit not implemented for 'newresp' lists of length > 1: ",
+                 "consider ", sQuote("lapply(object,refit)"))
         }
     }
 
@@ -1164,13 +1162,10 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, maxit = 10
     ## somewhat repeated from profile.merMod, but sufficiently
     ##  different that refactoring is slightly non-trivial
     ## "three minutes' thought would suffice ..."
-    ignore.pars <- c("xst","xt")
+    ignore.pars <- c("xst", "xt")
     control.internal <- object@optinfo$control
-    ignored <- which(names(control.internal) %in% ignore.pars)
-    if (length(ignored)>0) {
-        control.internal <- control.internal[-ignored]
-    }
-
+    if (length(ign <- which(names(control.internal) %in% ignore.pars)) > 0)
+        control.internal <- control.internal[-ign]
     if (!is.null(newControl)) {
         control <- newControl
         if (length(control$optCtrl)==0)
@@ -1180,14 +1175,12 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, maxit = 10
     }
 
     ## we need this stuff defined before we call .glmerLaplace below ...
-    pp        <- object@pp$copy()
-    dc        <- object@devcomp
-    nAGQ      <- dc$dims["nAGQ"] # possibly NA
-    nth       <- dc$dims[["nth"]]
-    verbose   <- list(...)$verbose; if (is.null(verbose)) verbose <- 0L
-    if (isGLMM(object)) GQmat     <- GHrule(nAGQ)
+    pp      <- object@pp$copy()
+    dc      <- object@devcomp
+    nAGQ    <- dc$dims["nAGQ"] # possibly NA
+    nth     <- dc$dims[["nth"]]
+    verbose <- l...$verbose; if (is.null(verbose)) verbose <- 0L
     if (!is.null(newresp)) {
-
         ## update call and model frame with new response
 	rcol <- attr(attr(model.frame(object), "terms"), "response")
         if (rename.response) {
@@ -1195,37 +1188,34 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, maxit = 10
                 newrespSub
             names(object@frame)[rcol] <- deparse(newrespSub)
         }
-
         if (!is.null(na.act <- attr(object@frame,"na.action")) &&
             is.null(attr(newresp,"na.action"))) {
             ## will only get here if na.action is 'na.omit' or 'na.exclude'
             ## *and* newresp does not have an 'na.action' attribute
             ## indicating that NAs have already been filtered
-            if (is.matrix(newresp)) {
-                newresp <- newresp[-na.act,]
-            } else newresp <- newresp[-na.act]
+            newresp <- if (is.matrix(newresp))
+                newresp[-na.act, ]
+            else newresp[-na.act]
         }
-
         object@frame[,rcol] <- newresp
 
         ## modFrame <- model.frame(object)
         ## modFrame[, attr(terms(modFrame), "response")] <- newresp
     }
 
-    if(isLMM(object)) {
-        rr <- mkRespMod(model.frame(object), REML = isREML(object))
-    } else if(isGLMM(object)) {
-        rr <- mkRespMod(model.frame(object), family = family(object))
-    } else {
+    rr <- if(isLMM(object))
+        mkRespMod(model.frame(object), REML = isREML(object))
+    else if(isGLMM(object))
+        mkRespMod(model.frame(object), family = family(object))
+    else
         stop("refit.merMod not working for nonlinear mixed models.\n",
              "try update.merMod instead.")
-    }
 
     if(!is.null(newresp)) {
         if(family(object)$family == "binomial") {
             ## re-do conversion of two-column matrix and factor
             ##  responses to proportion/weights format
-            if (is.matrix(newresp) && ncol(newresp)==2) {
+            if (is.matrix(newresp) && ncol(newresp) == 2) {
                 ntot <- rowSums(newresp)
                 ## FIXME: test what happens for (0,0) rows
                 newresp <- newresp[,1]/ntot
@@ -1237,11 +1227,9 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, maxit = 10
                 newresp <- as.numeric(newresp)-1
             }
         }
+        ## if (isGLMM(object) && rr$family$family=="binomial") {
 
-    ## if (isGLMM(object) && rr$family$family=="binomial") {
-
-    ## }
-
+        ## }
         stopifnot(length(newresp <- as.numeric(as.vector(newresp))) ==
                   length(rr$y))
 
@@ -1253,6 +1241,7 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, maxit = 10
     ## rr$setResp(oldresp)
     ## rr$setResp(newresp)
     if (isGLMM(object)) {
+        GQmat <- GHrule(nAGQ)
         if (nAGQ <= 1) {
             glmerPwrssUpdate(pp,rr, control$tolPwrss, GQmat, maxit=maxit)
         } else {
@@ -1362,12 +1351,14 @@ residuals.merMod <- function(object,
                              type = if(isGLMM(object)) "deviance" else "response",
                              scaled = FALSE, ...) {
     r <- residuals(object@resp, type,...)
-    if (is.null(nm <- rownames(model.frame(object)))) nm <- seq_along(r)
+    fr <- model.frame(object)
+    if (is.null(nm <- rownames(fr))) nm <- seq_along(r)
     names(r) <- nm
     if (scaled) r <- r/sigma(object)
-    if (!is.null(na.action <- attr(model.frame(object),"na.action")))
-        r <- naresid(na.action,r)
-    r
+    if (!is.null(na.action <- attr(fr, "na.action")))
+        naresid(na.action, r)
+    else
+        r
 }
 
 ##' @rdname residuals.merMod
