@@ -26,7 +26,6 @@ test_that("glmerFormX", {
 
 test_that("glmerForm", {
     set.seed(101)
-
     n <- 50
     x <- rbinom(n, 1, 1/2)
     y <- rnorm(n)
@@ -83,7 +82,7 @@ test_that("glmerForm", {
         glmer( x ~ y + z + (1|r), family="binomial")
     }
     m_data.6 <- ff2()
-   
+
 
     m_data_List <- list(m_data.0,m_data.1,m_data.2,m_data.3,m_data.4,m_data.5,m_data.6)
     badNums <- 4:5
@@ -93,7 +92,7 @@ test_that("glmerForm", {
     ## they DO fail in the testthat context
     expect_error(drop1(m_data.3),"'data' not found")
     expect_error(drop1(m_data.4),"'data' not found")
-    
+
     ## expect_error(lapply(m_data_List[4],drop1))
     ## expect_error(lapply(m_data_List[5],drop1))
     ## d_data_List <- lapply(m_data_List,drop1,evalhack="parent")  ## fails on element 1
@@ -163,6 +162,6 @@ test_that("lmerForm", {
     ff <- lme4:::reOnly(form)
     environment(ff) <- .GlobalEnv
     expect_equal(ff,
-     ~(varname_aa + varname_ba + varname_ca + varname_da + varname_ea + 
+     ~(varname_aa + varname_ba + varname_ca + varname_da + varname_ea +
        varname_fa + varname_ga + varname_ha + varname_ia | f))
 })
