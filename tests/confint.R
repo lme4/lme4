@@ -1,4 +1,5 @@
 library("lme4")
+library("testthat")
 
 L <- load(system.file("testdata", "lme-tst-fits.rda",
                       package="lme4", mustWork=TRUE))
