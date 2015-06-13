@@ -8,6 +8,7 @@ if (getRversion() > "3.0.0") {
 
 fm0 <- fit_sleepstudy_0
 fm1 <- fit_sleepstudy_1
+fm2 <- fit_sleepstudy_2
 gm1 <- fit_cbpp_1
 gm2 <- fit_cbpp_2
 ## More objects to use in all contexts :
@@ -17,6 +18,11 @@ dNA <- data.frame(
     xcov= runif(100),
     resp= rnorm(100))
 dNA[sample(1:100, 10), "xcov"] <- NA
+
+CI.boot <- function(fm, nsim=10, seed=101, ...)
+    suppressWarnings(confint(fm, method="boot", nsim=nsim,
+                             quiet=TRUE, seed=seed, ...))
+
 ##
 rSimple <- function(rep = 2, m.u = 2, kinds = c('fun', 'boring', 'meh')) {
     stopifnot(is.numeric(rep), rep >= 1,
@@ -118,29 +124,30 @@ test_that("lmer", {
 context("bootMer confint()")
 set.seed(47)
 test_that("bootMer", {
-    CI.boot <- function(fm, nsim=10, ...)
-        suppressWarnings(confint(fm, method="boot", nsim=nsim, quiet=TRUE, ...))
     ## testing bug-fix for ordering of sd/cor components in sd/cor matrix with >2 rows
     m1 <- lmer(strength~1+(cask|batch),Pastes)
     ci <- CI.boot(m1)
     corvals <- ci[grep("^cor_",rownames(ci)),]
     expect_true(all(abs(corvals) <= 1))
     ## test bootMer with GLMM, multiple RE
-    ci1 <- CI.boot(gm2, nsim=3)
-    ci2 <- CI.boot(gm2, nsim=5, parm=4:6)
-    expect_true(nrow(ci2) == 3)
-    expect_equal(ci1[4:6,], ci2, tolerance = 0.4)# 0.361
+    ci1 <- CI.boot(gm2, nsim=5)
+    ci2 <- CI.boot(gm2, nsim=5, parm=3:6)
+    ci2B <- CI.boot(gm2, nsim=5, parm="beta_")
+    ## previously tested with nsim=5 vs nsim=3
+    expect_true(nrow(ci2) == 4)
+    expect_equal(ci2,ci2B)
+    expect_equal(ci1[3:6,], ci2) ## , tolerance = 0.4)# 0.361
     ## bootMer with NA values
     PastesNA <- Pastes
-    PastesNA$Sample[1:3] <- NA
+    PastesNA$cask[1:3] <- NA
+    ## previously set 'Sample' (sic) -- no effect!
     m2 <- update(m1, data=PastesNA)
-    ci3 <- CI.boot(m2, seed=101)
-    expect_equal(ci, ci3, tol = 0.06)# 0.0425
-    m3 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+    ci3 <- CI.boot(m2)
+    expect_equal(ci, ci3, tol=0.2)
     sleepstudyNA <- sleepstudy
     sleepstudyNA$Days[1:3] <- NA
-    m4 <- update(m3, data = sleepstudyNA)
-    expect_true(nrow(ci4 <- CI.boot(m4, seed = 101)) == 6) # could check more
+    m4 <- update(fm2, data = sleepstudyNA)
+    expect_true(nrow(ci4 <- CI.boot(m4)) == 6) # could check more
     ##
     ## semipar bootstrapping
     m5 <- lmer(Yield ~ 1|Batch, Dyestuff)
@@ -156,10 +163,10 @@ test_that("bootMer", {
                                  quiet=TRUE)))),
                  c(243.7551,256.9104),tol=1e-3)
 })
-
-context("confint")
+context("confint_other")
 test_that("confint", {
     load(system.file("testdata", "gotway_hessianfly.rda", package = "lme4"))
+    ## generated via:
     ## gotway_hessianfly_fit <- glmer(cbind(y, n-y) ~ gen + (1|block),
     ##              data=gotway.hessianfly, family=binomial,
     ##              control=glmerControl(check.nlev.gtreq.5="ignore"))
@@ -167,6 +174,31 @@ test_that("confint", {
     ## save(list=ls(pattern="gotway"),file="gotway_hessianfly.rda")
     expect_equal(confint(gotway_hessianfly_prof)[1,1],0)
     ## FIXME: should add tests for {-1,1} bounds on correlations as well
+    expect_equal(c(confint(fm1,method="Wald",parm="beta_")),
+                 c(232.301892,8.891041,270.508318,12.043531),
+                 tol=1e-5)
+    ## Wald gives NA for theta values
+    expect_true(all(is.na(confint(fm1,method="Wald",parm="theta_"))))
+
+    ## check names
+    ci1.p <- suppressWarnings(confint(fm1,quiet=TRUE))
+    ci1.w <- confint(fm1,method="Wald")
+    ci1.b <- CI.boot(fm1, nsim=2)
+    expect_equal(dimnames(ci1.p),
+                 list(c(".sig01", ".sigma", "(Intercept)", "Days"),
+                      c("2.5 %", "97.5 %")))
+    expect_equal(dimnames(ci1.p),dimnames(ci1.w))
+    expect_equal(dimnames(ci1.p),dimnames(ci1.b))
+    ci1.p.n <- suppressWarnings(confint(fm1,quiet=TRUE,oldNames=FALSE))
+    ci1.w.n <- confint(fm1,method="Wald", oldNames=FALSE)
+    ci1.b.n <- CI.boot(fm1, nsim=2, oldNames=FALSE)
+    expect_equal(dimnames(ci1.p.n),
+                         list(c("sd_(Intercept)|Subject", "sigma", "(Intercept)", "Days"),
+                              c("2.5 %", "97.5 %")))
+    expect_equal(dimnames(ci1.p.n),dimnames(ci1.w.n))
+    expect_equal(dimnames(ci1.p.n),dimnames(ci1.b.n))
+
+
 })
 
 context("refit")

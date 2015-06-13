@@ -1,5 +1,19 @@
 ## --> ../man/profile-methods.Rd
 
+profnames <- function(object,signames) {
+    useSc <- as.logical(object@devcomp$dims[["useSc"]])
+    ntp <- length(getME(object,"theta"))
+    nn <- if (signames) {
+        sprintf(".sig%02d",seq(ntp))
+    } else {
+        tnames(object,old=FALSE,prefix=c("sd","cor"))
+    }
+    if (useSc) {
+        nn <- c(nn,if (signames) ".sigma" else "sigma")
+    }
+    return(nn)
+}
+
 ##' @importFrom splines backSpline interpSpline periodicSpline
 ##' @importFrom stats profile
 ##' @method profile merMod
@@ -382,6 +396,17 @@ profile.merMod <- function(fitted,
 
 ##' Transform 'which' \in {parnames | integer | "beta_" | "theta_"}
 ##' into integer indices
+##' @param which numeric or character vector
+##' @param nvp number of variance-covariance parameters
+##' @param nptot total number of parameters
+##' @param parnames vector of parameter names
+##' @param verbose print messages?
+##' @examples
+##' fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+##' tn <- names(getME(fm1,"theta"))
+##' nn <- c(tn,names(fixef(fm1)))
+##' get.which("theta_",length(tn),length(nn),nn, verbose=TRUE)
+##' 
 get.which <- function(which, nvp, nptot, parnames, verbose=FALSE) {
     if (is.null(which))
         seq_len(nptot)
@@ -450,19 +475,10 @@ devfun2 <- function(fm, useSc, signames)
     ## opt <- c(pp$theta*sig, sig)
     if (useSc) {
         opt <- Cv_to_Sv(pp$theta, n=vlist, s=sig)
-        names(opt) <- if (signames) {
-            c(sprintf(".sig%02d", seq(length(opt)-1)), ".sigma")
-        } else {
-            c(tnames(fm,old=FALSE,prefix=c("sd","cor")),"sigma")
-        }
     } else {
         opt <- Cv_to_Sv(pp$theta, n=vlist)
-        names(opt) <- if (signames) {
-            sprintf(".sig%02d", seq_along(opt))
-        } else {
-            tnames(fm,old=FALSE,prefix=c("sd","cor"))
-        }
     }
+    names(opt) <- profnames(fm, signames)
     opt <- c(opt, fixef(fm))
     resp <- fm@resp$copy()
     np <- length(pp$theta)
@@ -736,39 +752,47 @@ confint.merMod <- function(object, parm, level = 0.95,
 {
     method <- match.arg(method)
     boot.type <- match.arg(boot.type)
-    if (!missing(parm) && !is.numeric(parm) && method %in% c("profile","boot"))
-        stop("for method='",method,"', 'parm' must be specified as an integer")
-    if (!quiet && method %in% c("profile","boot")) {
-        mtype <- switch(method, profile="profile", boot="bootstrap")
-        message("Computing ",mtype," confidence intervals ...")
-        flush.console()
+    ## 'parm' corresponds to 'which' in other contexts
+    if (method=="boot" && !is.null(FUN)) {
+        ## custom boot function, don't expand parameter names
+    } else {
+        vn <- profnames(object,oldNames)
+        an <- c(vn,names(fixef(object)))
+        if (missing(parm)) {
+            parm <- seq(length(an))
+        } else {
+            parm <- get.which(parm, nvp=length(vn), nptot=length(an),
+                              parnames=an)
+        }
+        if (!quiet && method %in% c("profile","boot")) {
+            mtype <- switch(method, profile="profile", boot="bootstrap")
+            message("Computing ",mtype," confidence intervals ...")
+            flush.console()
+        }
     }
     switch(method,
 	   "profile" =
            {
-               pp <- if(missing(parm)) {
-                   profile(object, signames=oldNames, ...)
-               } else {
-                   profile(object, which=parm, signames=oldNames, ...)
-               }
+               pp <- profile(object, which=parm, signames=oldNames, ...)
                confint(pp, level=level, zeta=zeta)
            },
 	   "Wald" =
            {
+               a <- (1 - level)/2
+               a <- c(a, 1 - a)
+               ci.vcov <- array(NA,dim = c(length(vn), 2L),
+                                dimnames = list(vn, format.perc(a,3)))
                ## copied with small changes from confint.default
                cf <- fixef(object)   ## coef() -> fixef()
                pnames <- names(cf)
-               if (missing(parm))
-                   parm <- pnames
-               else if (is.numeric(parm))
-                   parm <- pnames[parm]
-               a <- (1 - level)/2
-               a <- c(a, 1 - a)
                ## N.B. can't use sqrt(...)[parm] (diag() loses names)
-               ses <- sqrt(diag(vcov(object)[parm,parm, drop=FALSE]))
-               array(cf[parm] + ses %o% qnorm(a), dim = c(length(parm), 2L),
-                     dimnames = list(parm, format.perc(a, 3)))
-               ## only gives confidence intervals on fixed effects ...
+               ses <- sqrt(diag(vcov(object)))
+               ci.fixed <- array(cf + ses %o% qnorm(a),
+                                 dim = c(length(pnames), 2L),
+                                 dimnames = list(pnames, format.perc(a, 3)))
+               vnames <- tnames(object)
+               ci.all <- rbind(ci.vcov,ci.fixed)
+               ci.all[parm,,drop=FALSE]
            },
 	   "boot" =
            {
@@ -778,13 +802,12 @@ confint.merMod <- function(object, parm, level = 0.95,
                    scaleTh <- (isLMM(x) || isNLMM(x))
                    useSc <- as.logical(x@devcomp$dims[["useSc"]])
 		   ## FIXME: still ugly.  Best cleanup via Cv_to_Sv ...
-		   tn <- tnames(x, old=FALSE, prefix=c("sd","cor"))
 		   ss <- if (scaleTh) {	 ## scale variances by sigma and include it
-		       setNames(Cv_to_Sv(th,n=nvec,s=sigma(x)), c(tn,"sigma"))
+		       setNames(Cv_to_Sv(th,n=nvec,s=sigma(x)), vn)
 		   } else if (useSc) { ## don't scale variances but do include sigma
-		       setNames(c(Cv_to_Sv(th,n=nvec),sigma(x)), c(tn,"sigma"))
+		       setNames(c(Cv_to_Sv(th,n=nvec),sigma(x)), vn)
 		   } else {  ## no scaling, no sigma
-		       setNames(Cv_to_Sv(th,n=nvec), tn)
+		       setNames(Cv_to_Sv(th,n=nvec), vn)
 		   }
                    c(ss, fixef(x))
                }
@@ -800,11 +823,10 @@ confint.merMod <- function(object, parm, level = 0.95,
                a <- (1 - level)/2
                a <- c(a, 1 - a)
                dimnames(citab) <- list(names(bb[["t0"]]), format.perc(a, 3))
-               pnames <- rownames(citab)
-               if (missing(parm))
-                   parm <- pnames
-               else if (is.numeric(parm))
-                   parm <- pnames[parm]
+               if (missing(parm)) {
+                   ## only happens if we have custom boot method
+                   parm <- rownames(citab)
+               }
                citab[parm, , drop=FALSE]
            },
            ## should never get here ...

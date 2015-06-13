@@ -45,6 +45,13 @@
       \item \code{lmList} now returns objects of class \code{lmList4},
       to avoid overwriting \code{lmList} methods from the recommended
       \code{nlme} package
+      \item names of random effects parameters in \code{confint}
+      changed (modified for consistency across methods);
+      \code{oldNames=TRUE} (default) gives \code{".sig01"}-style names,
+      \code{oldNames=FALSE} gives \code{"sd_(Intercept)|Subject"}-style names
+      \item \code{confint(.,method="Wald")} result now contains rows
+      for random effects parameters (values set to \code{NA})
+      as well as for fixed-effect parameters
     }
   }
   \subsection{BUG FIXES}{
