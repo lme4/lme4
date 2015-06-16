@@ -65,7 +65,24 @@ In `logLik.glm`, the log-likelihood is retrieved (weirdly, as has been pointed o
     -2 * sum(ifelse(m > 0, (wt/m), 0) * dbinom(round(m * y), 
         round(m), mu, log = TRUE))
 ```
-(that is, the `$aic` function really computes -2*the log likelihood -- `AIC.default` uses `-2 * val$ll + k * val$df`)
+(that is, the `$aic` function really computes -2*the log likelihood --
+`AIC.default` uses `-2 * val$ll + k * val$df`)  However, it gets worse
+for families with a scale parameter, for which the `$aic` component returns $-2{\cal L} + 2$. 
+The additional $2$ presumably accounts for the scale parameter,
+e.g. for the `gaussian` family we have
+```{r gaussianAIC}
+n <- 10
+yy <- rnorm(n)
+mu <- rnorm(n)
+ss <- sum((yy-mu)^2)
+all.equal(gaussian()$aic(yy, 1, mu, 1, ss),
+          -2 * sum(dnorm(yy, mu, sqrt(ss/n), log = TRUE)) + 2)
+```
+Note also the added two at the end of the definition of `Gamma()$aic`,
+which is
+```{r GammaAIC, eval=TRUE}
+-2 * sum(dgamma(y, 1/disp, scale = mu * disp, log = TRUE) * wt) + 2
+```
 
 ```{r}
 aic2 <- with(cbpp,
@@ -100,7 +117,16 @@ In `lme4`:
 
 As discussed above, even in GLMs there are questions about how to define deviance.  For example is it just minus twice the log-likelihood or does it involve subtracting the deviance for the saturated model?  With GLMMs there is the additional distinction between marginal and conditional deviance.
 
-We represent the conditional log-likelihood as $\log p_{\theta, \beta}(y | u)$ and the marginal as $\log p_{\theta, \beta}(y)$.  The exact relation between the two is $p_{\theta, \beta}(y) = \int p_{\theta, \beta}(y | u) p(u)$, where $p(u)$ is an independent multivariate normal.  For canonical links, the Laplace approximation to the marginal log-likelihood is $\log (p_{\theta, \beta}(y | u)) - \frac{1}{2}\|u\|^2 - |L_{\theta}|$ (nb that this is technically an approximate Laplace approximation in the non-canonical link case).  Here are several ways to compute this approximate marginal log-likelihood:
+We represent the conditional log-likelihood as $\log p_{\theta,
+\beta}(y | u)$ and the unconditional as $\log p_{\theta, \beta}(y)$.  The
+exact relation between the two is $p_{\theta, \beta}(y) = \int
+p_{\theta, \beta}(y | u) p(u)$, where $p(u)$ is an independent
+multivariate normal.  For canonical links, the Laplace approximation
+to the marginal log-likelihood is $\log (p_{\theta, \beta}(y | u)) -
+\frac{1}{2}\|u\|^2 - |L_{\theta}|$ (nb that this is technically an
+approximate Laplace approximation in the non-canonical link case).
+Here are several ways to compute this approximate marginal
+log-likelihood: 
 ```{r}
 logLik(gm1) # which calls ...
 -0.5 * lme4:::devCritFun(gm1) # which calls ...
@@ -113,11 +139,10 @@ sum(with(cbpp, dbinom(incidence, size, fitted(gm1), log = TRUE))) - 0.5 * (gm1@p
 
 The explanation of these results is that `-0.5 * object@resp$aic()` gives the conditional log-likelihood, $\log p_{\theta, \beta}(y | u)$, which is why this term can also be obtained with `dbinom` in the above example.  The Laplace approximation correction terms for converting a conditional log-likelihood into a marginal log-likelihood are `gm1@pp$sqrL(1)` and `gm1@pp$ldL2())`.
 
-For reasons discussed above, it may confuse some users that another log-likelihood synonym is not,
+For reasons discussed above, it may be confusing that another log-likelihood synonym is not,
 ```{r}
 -0.5 * (deviance(gm1) + gm1@pp$sqrL(1) + gm1@pp$ldL2())
 ```
-
 The reason why is that `deviance` returns the _conditional_ model deviance minus the _conditional_ saturated deviance.
 
 In summary, on the deviance scale, we have:
