@@ -4,9 +4,9 @@
 ##
 ## Based on the following set of distinctions:
 ##
-##           conditional      unconditional
-## relative  GLM deviance     ???
-## absolute  -2 GLM density   standard normal average of -2 GLM density
+##            conditional          unconditional
+## relative   GLM deviance         ???
+## absolute   -2 GLM log density   standard normal average of -2 GLM density
 ##
 ## Naming conventions:
 ##
