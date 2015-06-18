@@ -63,8 +63,7 @@ glmer(formula, data = NULL, family = gaussian, control = glmerControl(),
     value of zero uses a faster but less exact form of parameter
     estimation for GLMMs by optimizing the random effects and the
     fixed-effects coefficients in the penalized iteratively reweighted
-    least squares step.}
-
+    least squares step. (See \link{Details}.)}
   \item{subset}{an optional expression indicating the subset of the rows
     of \code{data} that should be used in the fit. This can be a logical
     vector, or a numeric vector indicating which observation numbers are
@@ -117,27 +116,29 @@ glmer(formula, data = NULL, family = gaussian, control = glmerControl(),
   integral over the random effects space.  For a linear mixed-effects
   model (LMM), as fit by \code{\link{lmer}}, this integral can be
   evaluated exactly.  For a GLMM the integral must be approximated.  The
-  most reliable approximation for GLMMs with a single grouping factor
-  for the random effects is adaptive Gauss-Hermite quadrature.  The
+  most reliable approximation for GLMMs 
+  is adaptive Gauss-Hermite quadrature,
+  at present implemented only for models with
+  a single scalar random effect.  The
   \code{nAGQ} argument controls the number of nodes in the quadrature
   formula.  A model with a single, scalar random-effects term could
   reasonably use up to 25 quadrature points per scalar integral.
 
-  With vector-valued random effects the complexity of the Gauss-Hermite
-  quadrature formulas increases dramatically with the dimension.  For a
-  3-dimensional vector-valued random effect \code{nAGQ=5} requires 93
-  evaluations of the GLM deviance per evaluation of the approximate GLMM
-  deviance.  For 20-dimensional evaluations of the GLM deviance per
-  evaluation of the approximate GLMM deviance.
+%  With vector-valued random effects the complexity of the Gauss-Hermite
+%  quadrature formulas increases dramatically with the dimension.  For a
+%  3-dimensional vector-valued random effect \code{nAGQ=5} requires 93
+%  evaluations of the GLM deviance per evaluation of the approximate GLMM
+%  deviance.  For 20-dimensional evaluations of the GLM deviance per
+%  evaluation of the approximate GLMM deviance.
+%  The default approximation is the Laplace approximation,
+%  corresponding to \code{nAGQ=1}.  
 
-  The default approximation is the Laplace approximation,
-  corresponding to \code{nAGQ=1}.
 }
 \seealso{
   \code{\link{lmer}} (for details on formulas and
   parameterization); \code{\link[stats]{glm}} for Generalized Linear
-  Models (with\emph{out} random effects).
-  \code{\link{lmer}} for nonlinear mixed-effects.
+  Models (\emph{without} random effects).
+  \code{\link{nlmer}} for nonlinear mixed-effects models.
 }
 \examples{
 ## generalized linear mixed model
