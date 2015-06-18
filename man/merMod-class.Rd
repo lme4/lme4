@@ -183,6 +183,89 @@ The following S3 methods with arguments given above exist (this list is currentl
   \item{\code{update}:}{See \code{\link{update}}.}
       }
 }
+\section{Deviance and log-likelihood of GLMMs}{
+  
+  One must be careful when defining the deviance of a GLM.  For example,
+  should the deviance be defined as minus twice the log-likelihood or
+  does it involve subtracting the deviance for a saturated model?  To
+  distinguish these two possibilities we refer to absolute deviance
+  (minus twice the log-likelihood) and relative deviance (relative to a
+  saturated model, e.g. Section 2.3.1 in McCullagh and Nelder 1989).
+  With GLMMs however, there is an additional complication involving the
+  distinction between the likelihood and the conditional likelihood.
+  The latter is the likelihood obtained by conditioning on the estimates
+  of the conditional modes of the spherical random effects coefficients,
+  whereas the likelihood itself (i.e. the unconditional likelihood)
+  involves integrating out these coefficients. The following table
+  summarizes how to extract the various types of deviance for a
+  \code{glmerMod} object.
+
+  \tabular{lrr}{
+             \tab conditional              \tab unconditional \cr
+    relative \tab \code{deviance(object)}  \tab NA in \code{lme4} \cr
+    absolute \tab \code{object@resp$aic()} \tab \code{-2*logLik(object)}
+  }
+
+  This table requires two caveat:
+
+  \itemize{
+
+    \item If the link function involves a scale parameter
+    (e.g. \code{Gamma}) then \code{object@resp$aic() - 2 * getME(object,
+    "devcomp")$dims["useSc"]} is required for the absolute-conditional
+    case.
+
+    \item If adaptive Gauss-Hermite quadrature is used, then
+    \code{logLik(object)} is currently only proportional to the
+    absolute-unconditional log-likelihood.
+
+  }
+
+  For more information about this topic see the \code{misc/logLikGLMM}
+  directory in the package source.
+
+  %% We define the conditional likelihood as the density of the response
+  %% variable, \eqn{y}, conditional on the spherical random effects,
+  %% \eqn{u}:
+  
+  %% \deqn{f_{\theta,\beta}(y|u)}{f(y|u)}
+  
+  %% which depends on the fixed effect and covariance parameters,
+  %% \eqn{\beta} and \eqn{\theta}.  We define the likelihood itself as:
+  
+  %% \deqn{f_{\theta,\beta}(y) = \int f_{\theta,\beta}(y|u) f(u)}{f(y) = integral(f(y|u)f(u))}
+  
+  %% where \eqn{f(u)} is an independent multivariate normal.  It is not
+  %% typically possible to evaluate this integral for GLMMs.  In
+  %% \code{lme4} we approximate it using the Laplace approximation and
+  %% adaptive Gauss-Hermite quadrature.
+  
+  %% For canonical links, the Laplace approximation to the log-likelihood
+  %% is:
+
+  %% \deqn{log f_{\theta,\beta}(y | u)-0.5|u|^2 - log|L_{\theta}|}
+  %% {log f(y|u) - 0.5|u|^2 - log|L|}
+
+  %% where \eqn{|u|^2} is the squared length of the vector of spherical
+  %% random effects, \eqn{u}, and \eqn{|L_{\theta}|}{|L|} is the
+  %% determinant of the Cholesky factor for the cross-product matrix for
+  %% the random effects (\code{\link{getME}(., "L")}).  Note that in the
+  %% non-canonical link case, the above equation is technically an
+  %% approximation to the Laplace approximation.
+
+  %% For models with a single scalar random effect one may also obtain an
+  %% approximate log-likelihood using adaptive Gauss-Hermite quadrature as:
+
+  %% \deqn{-\log|\bm L| - \frac{q}{2}\log(2\pi) + \sum_j^q \log \left[\sum_k^{N_{AGQ}} w_k f(y, u_{jk}) e^{-\frac{1}{2}u_{jk}^2 - l_k}\right]}
+
+  %% where \eqn{N_{AGQ}} is the number of quadrature nodes, \eqn{q} is the
+  %% number of levels of the random effect, the \eqn{w_k} and \eqn{l_k} are
+  %% weights and log of the normal density associated with the \eqn{k}th
+  %% quadrature node (\code{\link{GHrule}}), and \eqn{u_{jk}} is the value
+  %% of the spherical random effect coefficient associated with the
+  %% \eqn{j}th level of the grouping factor and \eqn{k}th quadrature node.
+  
+}
 \section{Slots}{
   \describe{
     \item{\code{resp}:}{A reference class object for an \pkg{lme4}
