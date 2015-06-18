@@ -63,7 +63,7 @@ glmer(formula, data = NULL, family = gaussian, control = glmerControl(),
     value of zero uses a faster but less exact form of parameter
     estimation for GLMMs by optimizing the random effects and the
     fixed-effects coefficients in the penalized iteratively reweighted
-    least squares step. (See \link{Details}.)}
+    least squares step. (See Details.)}
   \item{subset}{an optional expression indicating the subset of the rows
     of \code{data} that should be used in the fit. This can be a logical
     vector, or a numeric vector indicating which observation numbers are
