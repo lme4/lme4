@@ -246,7 +246,9 @@ test_that("predict", {
         expect_is(ps, "numeric")
         expect_equal(unname(ps), c(0.999989632, 0.999997201))
         ## a case with interactions (failed in one temporary version):
-        expect_warning(fmPixS <<- update(fmPix, .~. + Side), "nearly unidentifiable")
+        ## fails differently on Windows and on other platforms?
+        expect_warning(fmPixS <<- update(fmPix, .~. + Side),
+                       "(nearly unidentifiable|not uniquely determined)")
     }
     set.seed(1); ii <- sample(nrow(Pixel), 16)
     expect_equal(predict(fmPix,  newdata = Pixel[ii,]), fitted(fmPix )[ii])
