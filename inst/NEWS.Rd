@@ -15,7 +15,7 @@
     \itemize{
       \item prediction and simulation now work when random-effects
       terms have data-dependent bases (e.g., \code{poly(.)} or
-      \code{ns(.)} terms)
+      \code{ns(.)} terms) (Github #313, Edgar Gonzalez)
     }
   }
 }
