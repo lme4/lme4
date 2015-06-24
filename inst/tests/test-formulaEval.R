@@ -51,8 +51,6 @@ test_that("glmerForm", {
     ## data argument not specified:
     ## should work, but documentation warns against it
 
-    ## m_nodata.0 FAILS on BMB_ranpred_fix branch???
-    ## (but work fine in interactive env.)
     expect_that(m_nodata.0 <- glmer( x ~ y + z + (1|r) , family="binomial"), is_a("glmerMod"))
     expect_that(m_nodata.1 <- glmer( as.formula(modStr) , family="binomial"), is_a("glmerMod"))
     expect_that(m_nodata.2 <- glmer( modForm , family="binomial"), is_a("glmerMod"))

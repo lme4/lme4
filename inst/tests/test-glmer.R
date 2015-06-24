@@ -102,10 +102,10 @@ test_that("glmer", {
 		      data = cbppX, family = binomial, weights=size, na.action="na.exclude"),
 	      "glmerMod")
 
-    ## FAILS on BMB_ranpred_fix ranch?
-    ## expect_is(glmer(prop ~ period + (1 | herd),
-    ##		      data = cbppX, family = binomial, weights=size, offset=rep(0,nrow(cbppX))),
-    ## "glmerMod")
+    ## initially failed on BMB_ranpred_fix branch
+    expect_is(glmer(prop ~ period + (1 | herd),
+    		      data = cbppX, family = binomial, weights=size, offset=rep(0,nrow(cbppX))),
+    "glmerMod")
     expect_is(glmer(prop ~ period + (1 | herd),
 		      data = cbppX, family = binomial, weights=size, contrasts=NULL),
 	      "glmerMod")
@@ -209,8 +209,8 @@ if(FALSE) { ## Hadley broke this
     event <- c(rbind(ai,ci))
     group <- rep(c(1,0), times=n)
     id    <- rep(1:n, each=2)
-    d <- data.frame(event,group,id)  ## seems to be necessary on BMB_ranpred_fix branch??
-    gm3 <- glmer(event ~ group + (1 | id), family=binomial, nAGQ=21, data=d)
+    ## d <- data.frame(event,group,id)  ## initially necessary on BMB_ranpred_fix branch
+    gm3 <- glmer(event ~ group + (1 | id), family=binomial, nAGQ=21) ## , data=d)
     sd3 <- sqrt(diag(vcov(gm3)))
     expect_equal(sd3, c(0.4254254, 0.424922), tolerance=1e-5)
     expect_warning(vcov(gm3,use.hessian=FALSE), "finite-difference Hessian")
@@ -283,9 +283,8 @@ if(FALSE) { ## Hadley broke this
 
     ## starting values with log(.) link -- thanks to Eric Weese @ Yale:
     grp <- rep(letters[1:5], 20); set.seed(1); x <- rnorm(100)
-    d <- data.frame(grp,x)
-    ## BMB_ranef_fix branch requires data ...
-    expect_error(glmer(x ~ 1 + (1|grp), family=gaussian(link="log"),data=d),
+    ## d <- data.frame(grp,x)
+    expect_error(glmer(x ~ 1 + (1|grp), family=gaussian(link="log")),
 		 "valid starting values")
 
     ## related to GH 231
