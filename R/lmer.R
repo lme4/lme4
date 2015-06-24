@@ -852,7 +852,9 @@ getFixedFormula <- function(form) {
 
 ##' @importFrom stats formula
 ##' @S3method formula merMod
-formula.merMod <- function(x, fixed.only=FALSE, ...) {
+formula.merMod <- function(x, fixed.only=FALSE, random.only=FALSE, ...) {
+    if (missing(fixed.only) && random.only) fixed.only <- FALSE
+    if (fixed.only && random.only) stop("can't specify 'only fixed' and 'only random' terms")
     if (is.null(form <- attr(x@frame,"formula"))) {
         if (!grepl("lmer$",deparse(getCall(x)[[1]])))
             stop("can't find formula stored in model frame or call")
@@ -860,6 +862,10 @@ formula.merMod <- function(x, fixed.only=FALSE, ...) {
     }
     if (fixed.only) {
         form <- getFixedFormula(form)
+    }
+    if (random.only) {
+        ## from predict.R
+        form <- reOnly(form,response=TRUE)
     }
     form
 }
@@ -1434,13 +1440,20 @@ sigma.merMod <- function(object, ...) {
 
 ##' @importFrom stats terms
 ##' @S3method terms merMod
-terms.merMod <- function(x, fixed.only=TRUE, ...) {
-  if (fixed.only) {
-      tt <- terms.formula(formula(x,fixed.only=TRUE))
-      attr(tt,"predvars") <- attr(attr(x@frame,"terms"),"predvars.fixed")
-      tt
-  }
-  else attr(x@frame,"terms")
+terms.merMod <- function(x, fixed.only=TRUE, random.only=FALSE, ...) {
+    if (missing(fixed.only) && random.only) fixed.only <- FALSE
+    if (fixed.only && random.only) stop("can't specify 'only fixed' and 'only random' terms")
+    tt <- attr(x@frame,"terms")
+    if (fixed.only) {
+        tt <- terms.formula(formula(x,fixed.only=TRUE))
+        attr(tt,"predvars") <- attr(terms(x@frame),"predvars.fixed")
+    }
+    if (random.only) {
+        tt <- terms.formula(subbars(formula(x,random.only=TRUE)))
+        ## FIXME: predvars should be random-only
+        attr(tt,"predvars") <- attr(terms(x@frame),"predvars.random")
+    }
+    tt
 }
 
 ##' @importFrom stats update

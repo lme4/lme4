@@ -246,9 +246,7 @@ test_that("predict", {
         expect_is(ps, "numeric")
         expect_equal(unname(ps), c(0.999989632, 0.999997201))
         ## a case with interactions (failed in one temporary version):
-        ## fails differently on Windows and on other platforms?
-        expect_warning(fmPixS <<- update(fmPix, .~. + Side),
-                       "(nearly unidentifiable|not uniquely determined)")
+        expect_warning(fmPixS <<- update(fmPix, .~. + Side), "nearly unidentifiable")
     }
     set.seed(1); ii <- sample(nrow(Pixel), 16)
     expect_equal(predict(fmPix,  newdata = Pixel[ii,]), fitted(fmPix )[ii])
@@ -294,11 +292,13 @@ test_that("predict", {
     expect_equal(predict(fm3, newdata = model.frame(fm3)[2:3, ])[2],
                  predict(fm3, newdata = model.frame(fm3)[3, ]))
 
+    ## complex-basis functions in RANDOM effect: (currently)
+    fm5 <- lmer(Reaction~Days+(poly(Days,2)|Subject),sleepstudy)
+    expect_equal(predict(fm5,sleepstudy[1,]),fitted(fm5)[1])
+    ## complex-basis functions in FIXED effect are fine
+    fm6 <- lmer(Reaction~poly(Days,2)+(1|Subject),sleepstudy)
+    expect_equal(predict(fm6,sleepstudy[1,]),fitted(fm6)[1])
 })
-
-
-
-
 
 context("simulate")
 test_that("simulate", {
@@ -328,7 +328,8 @@ test_that("simulate", {
     expect_error(simulate(gm2,use.u = TRUE, re.form = NA), "should specify only one")
     ## hack: test with three REs
     p1 <- lmer(diameter ~ (1|plate) + (1|plate) + (1|sample), Penicillin,
-               control = lmerControl(check.conv.hess = "ignore"))
+               control = lmerControl(check.conv.hess = "ignore",
+                                     check.conv.grad = "ignore"))
     expect_is(sp1 <- simulate(p1), "data.frame")
     expect_true(all(dim(sp1) == c(nrow(Penicillin), 1)))
     ## Pixel example
@@ -406,3 +407,4 @@ test_that("summary", {
                     data=grouseticks)
        expect_is(family(gnb),"family")
    })
+

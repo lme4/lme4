@@ -6,8 +6,10 @@ noReForm <- function(re.form) {
 }
 
 ##' Random Effects formula only
-reOnly <- function(f) {
-    reformulate(paste0("(", vapply(findbars(f), safeDeparse, ""), ")"))
+reOnly <- function(f,response=FALSE) {
+    response <- if (response && length(f)==3) f[[2]] else NULL
+    reformulate(paste0("(", vapply(findbars(f), safeDeparse, ""), ")"),
+                response=response)
 }
 
 reFormHack <- function(re.form,ReForm,REForm,REform) {
@@ -135,20 +137,52 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
     ## need rfd to inherit appropriate na.action; need grouping
     ## variables as well as any covariates that are included
     ## in RE terms
+    ## FIXME: mfnew is new data frame, rfd is processed new data
+    ##        why do we need both/what is each doing/how do they differ?
+    ##        rfd is *only* used in mkReTrms
+    ##        mfnew is *only* used for its na.action attribute (!) [fixed only]
+    ##        using model.frame would mess up matrix-valued predictors (GH #201)
     if (is.null(newdata)) {
         rfd <- mfnew <- model.frame(object)
     } else {
-          mfnew <- model.frame(delete.response(terms(object,fixed.only=TRUE)),
-                               newdata, na.action=na.action)
-          ## make sure we pass na.action with new data
-          ## it would be nice to do something more principled like
-          ## rfd <- model.frame(~.,newdata,na.action=na.action)
-          ## but this adds complexities (stored terms, formula, etc.)
-          ## that mess things up later on ...
-          rfd <- na.action(newdata)
-          if (is.null(attr(rfd,"na.action")))
-              attr(rfd,"na.action") <- na.action
-      }
+        mfnew <- model.frame(delete.response(terms(object,fixed.only=TRUE)),
+                             newdata, na.action=na.action)
+        ## make sure we pass na.action with new data
+        ## it would be nice to do something more principled like
+        ## rfd <- model.frame(~.,newdata,na.action=na.action)
+        ## but this adds complexities (stored terms, formula, etc.)
+        ## that mess things up later on ...
+        ## rfd <- na.action(get_all_vars(delete.response(terms(object,fixed.only=FALSE)), newdata))
+        old <- FALSE
+        if (old) {
+            rfd <- na.action(newdata)
+            if (is.null(attr(rfd,"na.action")))
+                attr(rfd,"na.action") <- na.action
+        } else {
+            newdata.NA <- newdata
+            if (!is.null(fixed.na.action <- attr(mfnew,"na.action"))) {
+                newdata.NA <- newdata.NA[-fixed.na.action,]
+            }
+            tt <- delete.response(terms(object,random.only=TRUE))
+            ## need to let NAs in RE components go through -- they're handled downstream
+            rfd <- model.frame(tt,newdata.NA,na.action=na.pass)
+            if (!is.null(fixed.na.action))
+                attr(rfd,"na.action") <- fixed.na.action
+        }
+        ##
+        ## ## need terms to preserve info about spline/orthog polynomial bases
+        ## attr(rfd,"terms") <- terms(object)
+        ## ## ... but variables list messes things up; can we fix it?
+        ## vlist <- lapply(all.vars(terms(object)), as.name)
+        ## attr(attr(rfd,"terms"),"variables") <-  as.call(c(quote(list), vlist))
+        ##
+        ## take out variables that appear *only* in fixed effects
+        ## all.v <- all.vars(delete.response(terms(object,fixed.only=FALSE)))
+        ## ran.v <- vapply(findbars(formula(object)),all.vars,"")
+        ## fix.v <- all.vars(delete.response(terms(object,fixed.only=TRUE)))
+        ## rfd <- model.frame(delete.response(terms(object,fixed.only=FALSE)),
+        ## newdata,na.action=na.action)
+    }
     if (inherits(re.form, "formula")) {
         ## DROP values with NAs in fixed effects
         if (length(fit.na.action <- attr(mfnew,"na.action")) > 0) {

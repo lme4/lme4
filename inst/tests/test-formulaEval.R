@@ -18,10 +18,19 @@ test_that("glmerFormX", {
     modStr <- (paste("x ~", "y +", F, "+", rF))
     modForm <- as.formula(modStr)
 
+    ## WARNING: these drop/environment tests are extremely sensitive to environment
+    ## they may fail/not fail, or fail differently, within a "testthat" environment vs.
+    ##   when run interactively
+    ## AICvec <- c(77.0516381151634, 75.0819116367084, 75.1915023640827)
     expect_that(m_data.3 <- glmer( modStr , data=d, family="binomial"), is_a("glmerMod"))
-    expect_error(drop1(m_data.3),"'data' not found")
     expect_that(m_data.4 <- glmer( "x ~ y + z + (1|r)" , data=d, family="binomial"), is_a("glmerMod"))
+    ## interactively:
+    ## expect_equal(drop1(m_data.3)$AIC,AICvec)
+    ## expect_equal(drop1(m_data.4)$AIC,AICvec)
+    ## in test environment:
+    expect_error(drop1(m_data.3),"'data' not found")
     expect_error(drop1(m_data.4),"'data' not found")
+
 })
 
 test_that("glmerForm", {
@@ -41,6 +50,7 @@ test_that("glmerForm", {
     ## formulas have environments associated, but character vectors don't
     ## data argument not specified:
     ## should work, but documentation warns against it
+
     expect_that(m_nodata.0 <- glmer( x ~ y + z + (1|r) , family="binomial"), is_a("glmerMod"))
     expect_that(m_nodata.1 <- glmer( as.formula(modStr) , family="binomial"), is_a("glmerMod"))
     expect_that(m_nodata.2 <- glmer( modForm , family="binomial"), is_a("glmerMod"))
@@ -48,11 +58,12 @@ test_that("glmerForm", {
     expect_that(m_nodata.4 <- glmer( "x ~ y + z + (1|r)" , family="binomial"), is_a("glmerMod"))
 
     ## apply drop1 to all of these ...
-    m_nodata_List <- list(m_nodata.0,m_nodata.1,m_nodata.2,m_nodata.3,m_nodata.4)
+    m_nodata_List <- list(m_nodata.0,
+                          m_nodata.1,m_nodata.2,m_nodata.3,m_nodata.4)
     d_nodata_List <- lapply(m_nodata_List,drop1)
 
     rm(list=c("x","y","z","r"))
-
+    
     ## data argument specified
     expect_that(m_data.0 <- glmer( x ~ y + z + (1|r) , data=d, family="binomial"), is_a("glmerMod"))
     expect_that(m_data.1 <- glmer( as.formula(modStr) , data=d, family="binomial"), is_a("glmerMod"))
