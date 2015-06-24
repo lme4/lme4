@@ -50,12 +50,12 @@
 REMLcrit(object)
 \S3method{extractAIC}{merMod}(fit, scale = 0, k = 2, ...)
 \S3method{family}{merMod}(object, ...)
-\S3method{formula}{merMod}(x, fixed.only = FALSE, ...)
+\S3method{formula}{merMod}(x, fixed.only = FALSE, random.only = FALSE, ...)
 \S3method{fitted}{merMod}(object, ...)
 \S3method{logLik}{merMod}(object, REML = NULL, ...)
 \S3method{nobs}{merMod}(object, ...)
 \S3method{ngrps}{merMod}(object, ...)
-\S3method{terms}{merMod}(x, fixed.only = TRUE, \dots)
+\S3method{terms}{merMod}(x, fixed.only = TRUE, random.only = FALSE, \dots)
 \S3method{vcov}{merMod}(object, correlation = TRUE, sigm = sigma(object),
 use.hessian = NULL, \dots)
 \S3method{model.frame}{merMod}(formula, fixed.only = FALSE, ...)
@@ -94,8 +94,12 @@ use.hessian = NULL, \dots)
     rather than the log-likelihood.  If \code{NULL} (the default),
     set \code{REML} to \code{isREML(object)} (see \code{\link{isREML}}).}
   \item{fixed.only}{logical indicating if only the fixed effects
-    \code{\link{terms}} are sought, defaults to true.  If false, all
-    terms, including random ones are returned.}
+    components (terms or formula elements) are sought.  If false, all
+    components, including random ones, are returned.}
+  \item{random.only}{complement of \code{fixed.only}; indicates
+    whether random components only are sought. (Trying to specify
+    \code{fixed.only} and \code{random.only} at the same time
+    will produce an error.)}
   \item{correlation}{(logical) for \code{vcov}, indicates whether the
     correlation matrix as well as the variance-covariance matrix is
     desired; for \code{print.summary.merMod}, indicates whether the
