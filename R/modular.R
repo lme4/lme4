@@ -397,7 +397,9 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
         attr(attr(fixedfr,"terms"), "predvars")
 
     ## ran-effects model frame (for predvars)
-    ranform <- subbars(reOnly(formula,response=TRUE))
+    ## important to COPY formula (and its environment)?
+    ranform <- formula
+    RHSForm(ranform) <- subbars(RHSForm(reOnly(formula)))
     mf$formula <- ranform
     ranfr <- eval(mf, parent.frame())
     attr(attr(fr,"terms"), "predvars.random") <-
@@ -672,14 +674,16 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     fixedfr <- eval(mf, parent.frame())
     attr(attr(fr,"terms"),"predvars.fixed") <-
         attr(attr(fixedfr,"terms"),"predvars")
-    
+
     ## ran-effects model frame (for predvars)
-    ranform <- subbars(reOnly(formula,response=TRUE))
+    ## important to COPY formula (and its environment)?
+    ranform <- formula
+    RHSForm(ranform) <- subbars(RHSForm(reOnly(formula)))
     mf$formula <- ranform
     ranfr <- eval(mf, parent.frame())
     attr(attr(fr,"terms"), "predvars.random") <-
         attr(terms(ranfr), "predvars")
-
+    
     X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     ## backward compatibility (keep no longer than ~2015):
     if(is.null(rankX.chk <- control[["check.rankX"]]))

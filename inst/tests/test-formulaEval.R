@@ -50,6 +50,9 @@ test_that("glmerForm", {
     ## formulas have environments associated, but character vectors don't
     ## data argument not specified:
     ## should work, but documentation warns against it
+
+    ## m_nodata.0 FAILS on BMB_ranpred_fix branch???
+    ## (but work fine in interactive env.)
     expect_that(m_nodata.0 <- glmer( x ~ y + z + (1|r) , family="binomial"), is_a("glmerMod"))
     expect_that(m_nodata.1 <- glmer( as.formula(modStr) , family="binomial"), is_a("glmerMod"))
     expect_that(m_nodata.2 <- glmer( modForm , family="binomial"), is_a("glmerMod"))
@@ -57,11 +60,12 @@ test_that("glmerForm", {
     expect_that(m_nodata.4 <- glmer( "x ~ y + z + (1|r)" , family="binomial"), is_a("glmerMod"))
 
     ## apply drop1 to all of these ...
-    m_nodata_List <- list(m_nodata.0,m_nodata.1,m_nodata.2,m_nodata.3,m_nodata.4)
+    m_nodata_List <- list(m_nodata.0,
+                          m_nodata.1,m_nodata.2,m_nodata.3,m_nodata.4)
     d_nodata_List <- lapply(m_nodata_List,drop1)
 
     rm(list=c("x","y","z","r"))
-
+    
     ## data argument specified
     expect_that(m_data.0 <- glmer( x ~ y + z + (1|r) , data=d, family="binomial"), is_a("glmerMod"))
     expect_that(m_data.1 <- glmer( as.formula(modStr) , data=d, family="binomial"), is_a("glmerMod"))
