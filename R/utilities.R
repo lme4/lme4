@@ -67,6 +67,8 @@ mkBlist <- function(x,frloc, drop.unused.levels=TRUE) {
     ## this section implements eq. 6 of the JSS lmer paper
     ## (but not by explicit Khatri-Rao products)
     ## model matrix based on LHS of random effect term
+    ## BMB: we run into trouble here if we have 'interesting' terms
+    ##      in the LHS (such as I(age))
     mm <- model.matrix(eval(substitute( ~ foo, list(foo = x[[2]]))), frloc)
     ## nc <- ncol(mm)
     ## nseq <- seq_len(nc)

@@ -18,10 +18,19 @@ test_that("glmerFormX", {
     modStr <- (paste("x ~", "y +", F, "+", rF))
     modForm <- as.formula(modStr)
 
+    ## WARNING: these drop/environment tests are extremely sensitive to environment
+    ## they may fail/not fail, or fail differently, within a "testthat" environment vs.
+    ##   when run interactively
+    ## AICvec <- c(77.0516381151634, 75.0819116367084, 75.1915023640827)
     expect_that(m_data.3 <- glmer( modStr , data=d, family="binomial"), is_a("glmerMod"))
-    expect_error(drop1(m_data.3),"'data' not found")
     expect_that(m_data.4 <- glmer( "x ~ y + z + (1|r)" , data=d, family="binomial"), is_a("glmerMod"))
+    ## interactively:
+    ## expect_equal(drop1(m_data.3)$AIC,AICvec)
+    ## expect_equal(drop1(m_data.4)$AIC,AICvec)
+    ## in test environment:
+    expect_error(drop1(m_data.3),"'data' not found")
     expect_error(drop1(m_data.4),"'data' not found")
+
 })
 
 test_that("glmerForm", {

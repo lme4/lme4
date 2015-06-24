@@ -19,6 +19,10 @@ test_that("lmer", {
        x.2 * (beta[3] + u[g,3]) +
        rnorm(N)
 
-  summary(lmer(y ~ x.1 + x.2 + (1 + x.1 | g)))
-  summary(lmer(y ~ x.1 + x.2 + (1 + x.1 + x.2 | g)))
+  ## FIXME: after tweaking predvars for fixed and random
+  ##  components, this fails *only in testthat context* if
+  ##  data are not specified ... ?
+  d <- data.frame(y,x.1,x.2,g)
+  summary(lmer(y ~ x.1 + x.2 + (1 + x.1 | g),d))
+  summary(lmer(y ~ x.1 + x.2 + (1 + x.1 + x.2 | g),d))
 })
