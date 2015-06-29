@@ -227,11 +227,11 @@ d <- expand.grid(block=LETTERS[1:26], rep=1:10, KEEP.OUT.ATTRS = FALSE)
 d$x <- runif(nrow(d))  ## sd=1
 reff_f <- rnorm(length(levels(d$block)),sd=1)
 ## need intercept large enough to avoid negative values
-d$eta0 <- 4+3*d$x  ## fixed effects only
-d$eta <- d$eta0+reff_f[d$block]
+d$eta0 <- 4 + 3 * d$x  ## fixed effects only
+d$eta <- d$eta0 + reff_f[d$block]
 dgl <- d
 dgl$mu <- exp(d$eta)
-dgl$y <- rgamma(nrow(d),scale=dgl$mu/2,shape=2)
+dgl$y <- rgamma(nrow(d), scale = dgl$mu/2, shape = 2)
 gm <- glmer(y ~ 1 + (1 | block), data = dgl, family = Gamma(link = "log"))
 dqu <- c(devianceLaplace(gm), sapply(2:25, devianceAGQ, object = gm))
 dis <- devianceImportSamp(gm, Nis)
@@ -244,4 +244,25 @@ all.equal(-2 * c(logLik(gm)) - 2, ## minus two is for the scale
                                   ## parameter (should include this in
                                   ## lme4)
           devianceLaplace(gm))
+
+aic1 <- Gamma()$aic(getME(gm, "y"),
+                    gm@resp$n,
+                    getME(gm, "mu"),
+                    weights(gm),
+                    deviance(gm))
+
+aic0 <- Gamma()$aic(getME(gm, "y"),
+                    gm@resp$n,
+                    getME(gm, "y"),
+                    weights(gm),
+                    deviance(gm))
+
+disp <- deviance(gm)/sum(weights(gm))
+
+aic1 - aic0
+sum(Gamma()$dev.resids(getME(gm, "y"),
+                       getME(gm, "mu"),
+                       weights(gm)))/disp
+
+
 
