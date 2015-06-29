@@ -3,6 +3,22 @@
 \name{NEWS}
 \title{lme4 News}
 \encoding{UTF-8}
+
+\section{CHANGES IN VERSION 1.1-9}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item \code{terms} and \code{formula} methods now have
+      \code{random.only} options
+    }
+  }
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item prediction and simulation now work when random-effects
+      terms have data-dependent bases (e.g., \code{poly(.)} or
+      \code{ns(.)} terms) (Github #313, Edgar Gonzalez)
+    }
+  }
+}
 \section{CHANGES IN VERSION 1.1-8}{
   \subsection{NEW FEATURES}{
     \itemize{

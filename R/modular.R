@@ -7,8 +7,9 @@ doCheck <- function(x) {
     is.character(x) && !any(x == "ignore")
 }
 
-RHSForm <- function(formula) {
-    formula[[length(formula)]]
+RHSForm <- function(form,as.form=FALSE) {
+    rhsf <- form[[length(form)]]
+    if (as.form) reformulate(deparse(rhsf)) else rhsf
 }
 
 `RHSForm<-` <- function(formula,value) {
@@ -394,6 +395,17 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     fixedfr <- eval(mf, parent.frame())
     attr(attr(fr,"terms"), "predvars.fixed") <-
         attr(attr(fixedfr,"terms"), "predvars")
+
+    ## ran-effects model frame (for predvars)
+    ## important to COPY formula (and its environment)?
+    ranform <- formula
+    RHSForm(ranform) <- subbars(RHSForm(reOnly(formula)))
+    mf$formula <- ranform
+    ranfr <- eval(mf, parent.frame())
+    attr(attr(fr,"terms"), "predvars.random") <-
+        attr(terms(ranfr), "predvars")
+    
+    ## FIXME: shouldn't we have this already in the full-frame predvars?
     X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     ## backward compatibility (keep no longer than ~2015):
     if(is.null(rankX.chk <- control[["check.rankX"]]))
@@ -662,6 +674,16 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     fixedfr <- eval(mf, parent.frame())
     attr(attr(fr,"terms"),"predvars.fixed") <-
         attr(attr(fixedfr,"terms"),"predvars")
+
+    ## ran-effects model frame (for predvars)
+    ## important to COPY formula (and its environment)?
+    ranform <- formula
+    RHSForm(ranform) <- subbars(RHSForm(reOnly(formula)))
+    mf$formula <- ranform
+    ranfr <- eval(mf, parent.frame())
+    attr(attr(fr,"terms"), "predvars.random") <-
+        attr(terms(ranfr), "predvars")
+    
     X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     ## backward compatibility (keep no longer than ~2015):
     if(is.null(rankX.chk <- control[["check.rankX"]]))

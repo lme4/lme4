@@ -286,7 +286,7 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
         if (length(y)>0) eval(family$initialize, rho)
         ## family$initialize <- NULL     # remove clutter from str output
         ll <- as.list(rho)
-        ans <- do.call(new, c(list(Class="glmResp", family=family),
+        ans <- do.call("new", c(list(Class="glmResp", family=family),
                               ll[setdiff(names(ll), c("m", "nobs", "mustart"))]))
         if (length(y)>0) ans$updateMu(if (!is.null(es <- etastart_update)) es else
                                       family$linkfun(get("mustart", rho)))

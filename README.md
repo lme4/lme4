@@ -7,7 +7,7 @@ lme4: Mixed-effects models in R.
 
 ## Recent/release notes
 
-* We have submitted release 1.1-8 to CRAN. There are no major user-visible changes.
+* Release 1.1-8 is on CRAN now. There are no major user-visible changes.
    * We have fixed some bugs in `predict`, `simulate`, and `refit`. 
    * Convergence and positive-definite-Hessian warnings are still overly conservative for large (>10^4 rows) data sets, but we are holding off on changing anything until we really understand the problem; see `help("convergence")`.
    * The deviance computation has changed for GLMMs; see "Deviance and log-likelihood of GLMMs" in [merMod-class.Rd](https://github.com/lme4/lme4/blob/6203f71f4f6aa75e3a69f08c40e5d2fc176610d6/man/merMod-class.Rd)
