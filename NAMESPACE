@@ -1,16 +1,27 @@
 useDynLib(lme4,.registration=TRUE)
 
 ## base packages
-importFrom("graphics", plot)
-importFrom("grid", gpar,viewport)
-importFrom("splines", backSpline,interpSpline,periodicSpline)
-importFrom("methods", show)
+importFrom("graphics", par, plot)
+importFrom("grid", gpar, viewport)
+importFrom("splines", backSpline, interpSpline, periodicSpline)
+importFrom("methods", as, getDataPart, is, new, rbind2, show, slot, slotNames)
 importFrom("stats",
-           anova, coef, confint, deviance, df.residual, drop1,
-           extractAIC, family, fitted, formula, hatvalues, logLik,
-           model.matrix, nobs, profile, residuals, simulate, terms,
-           update, vcov, weights)
-importFrom("utils", flush.console)
+           AIC, BIC, anova, approx, as.formula, asOneSidedFormula, ave,
+           coef, confint, cov2cor, delete.response,
+           deviance, df.residual, dnorm, drop.scope, drop1, extractAIC,
+           family, fitted, formula, gaussian, getCall, glm,
+           hatvalues, lm, logLik, model.extract, model.frame,
+           model.matrix, model.offset, model.response, model.weights,
+           na.exclude, na.omit, na.pass, napredict, naresid, nlminb,
+           nobs, optimize, pchisq, pnorm, poisson, ppoints,
+           predict, printCoefmat, profile, pt, qchisq, qnorm,
+           qqnorm, qt, quantile, rbinom, reformulate, reorder,
+           resid, residuals, rgamma, rnbinom, rnorm, rpois,
+           runif, sd, setNames, simulate, symnum, terms, terms.formula,
+           update, update.formula, var, vcov, weights)
+
+importFrom("utils", flush.console, packageVersion, stack, str)
+
 
 ## Recommended packages
 importClassesFrom("Matrix", corMatrix, dgCMatrix, dpoMatrix, dCHMsimpl)
