@@ -1,0 +1,106 @@
+Refit weirdness
+===============
+
+Exploring/expanding [issue #316](https://github.com/lme4/lme4/issues/316) from @pitakakariki:
+
+```{r pkgs}
+library("lme4")
+library("plyr")   ## for ldply
+```
+
+Simulation setup:
+```{r sim1}
+set.seed(123)
+n <- c(2765,439,3356,82,801,798,329,299,319,2388,128,252,190,789,4322,92)
+f <- as.factor(rep(letters[1:16], n))
+x <- sample(1:7, sum(n), replace=TRUE)
+obs <- 1:sum(n)
+testdata <- data.frame(x, f, obs)
+p <- list(theta=c(0.89, 0, 1.04), beta=c(-0.46, 0.0048))
+testdata$y <- suppressWarnings(simulate( ~ x + (x||f) + (1|obs),
+                                        family="poisson",
+                       newdata=testdata, newparams=p)[[1]])
+```
+
+```{r fit1,cache=TRUE}
+t1 <- system.time(glmer_orig <- glmer(y ~ x + (x||f) + (1|obs),
+                                      family="poisson", data=testdata))
+z <- simulate(glmer_orig,seed=42)[[1]]
+```
+
+Summary function: give log-likelihood and deviance relative to
+first value, elapsed time, and estimated fixed-effect parameter values ...
+
+```{r sumfun}
+cfun <- function(x.list,t.list) {
+    dfun <- if (getME(x.list[[1]],"REML")==0) deviance else REMLcrit
+    tvec <- sapply(t.list,"[","elapsed")
+    glance.list <- ldply(x.list,function(x) c(logLik=logLik(x),dev=dfun(x)))
+    glance.list[,-1] <- lapply(glance.list[,-1],function(x) x-x[1])
+    glance.list <- cbind(glance.list,t=tvec)
+    comb.list <- merge(glance.list,ldply(x.list,fixef))
+    return(comb.list)
+}
+```
+
+## Fit `glmer()` models
+
+```{r glmerfits,cache=TRUE}
+t2 <- system.time(glmer_refit0 <- refit(glmer_orig, z))
+t3 <- system.time(glmer_refit_start <- refit(glmer_orig,
+                                             z, start=list(theta=c(1,1,1))))
+t4 <- system.time(glmer_update <- update(glmer_orig,
+                                         data=transform(testdata, y=z)))
+```
+
+```{r sumglmerfits}
+glmer.list <- lme4:::namedList(glmer_refit0,
+                               glmer_refit_start,glmer_update)
+t.list <- list(t2,t3,t4)
+options(digits=3)
+cfun(glmer.list,t.list)
+```
+
+Uh-oh.
+
+* `refit` with and without setting the starting values back to
+the original values get (almost) the same answers, but using `update()`
+instead gives a radically different result for the deviance
+*despite the fact that the log-likelihood is off by only 0.14 ...*
+
+## Fit `lmer()` models
+
+```{r lmerfits,cache=TRUE}
+system.time(lmer_orig <- lmer(y ~ x + (x||f) + (1|obs), data=testdata,
+            control=lmerControl(check.nobs.vs.nlev="ignore",
+                                check.nobs.vs.nRE="ignore"),
+                              REML=TRUE))
+t5 <- system.time(lmer_refit0 <- refit(lmer_orig, z))
+t6 <- system.time(lmer_refit_start <- refit(lmer_orig,
+                                            z, start=list(theta=c(1,1,1))))
+t7 <- system.time(lmer_update <- update(lmer_orig,
+                                        data=transform(testdata, y=z)))
+```
+
+```{r sumlmer}
+lmer.list <- lme4:::namedList(lmer_refit0,lmer_refit_start,lmer_update)
+t2.list <- list(t5,t6,t7)
+cfun(lmer.list,t2.list)
+```
+
+Can we refactor `refit`?
+
+```{r}
+refit2 <- function(object,y) {
+    newobj <- object
+    ## make new resp mod
+    ## how do I step back just far enough to do this?
+    ## extract reTrms equivalent from fitted model
+    ## modify model frame?
+    mkLmerDevfun(fr, X, reTrms, REML = TRUE, start = NULL,
+                 verbose = 0, control = lmerControl(), ...)
+
+}
+```
+
+
