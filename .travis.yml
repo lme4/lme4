@@ -4,7 +4,12 @@
 # see the wiki:
 #   https://github.com/craigcitro/r-travis/wiki
 
-sudo: false ## http://docs.travis-ci.com/user/migrating-from-legacy/?utm_source=legacy-notice&utm_medium=banner&utm_campaign=legacy-upgrade
+sudo: required
+
+## would like to update to container infrastructure, but both r-travis
+##  (below) and metacran/r-builder pkg-build files appear to require sudo ...
+## http://docs.travis-ci.com/user/migrating-from-legacy/?utm_source=legacy-notice&utm_medium=banner&utm_campaign=legacy-upgrade
+
 language: c
 
 before_install:
