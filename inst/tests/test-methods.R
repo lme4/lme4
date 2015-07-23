@@ -346,9 +346,13 @@ test_that("simulate", {
     dd <- data.frame(f=factor(rep(1:10,each=20)),
                      x=runif(200),
                      y=rnbinom(200,size=2,mu=2))
-    g1 <- glmer.nb(y~x+(1|f),data=dd)
-    s1 <- simulate(g1)
-    expect_equal(mean(s1[[1]]),2.35)
+    g1 <- glmer.nb(y ~ x + (1|f), data=dd)
+    expect_equal(fixef(g1), c("(Intercept)" = 0.687274, x = -0.0822692), tol = 1e-4)
+    s1 <- simulate(g1)[,1]
+    expect_identical(sum(s1), 470)
+    ts1 <- table(s1)
+    expect_identical(as.vector(ts1[as.character(0:5)]),
+                     c(138L, 17L, 9L, 7L, 5L, 1L))
 
     d <- sleepstudy
     d$Subject <- factor(rep(1:18, each=10))

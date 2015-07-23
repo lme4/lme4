@@ -27,59 +27,74 @@ refitNB <- function(object, theta, control = NULL) {
   refit(setNBdisp(object, theta), control = control)
 }
 
+##' @title Optimize over the Negative Binomial Parameter Theta
+##' @param object a "glmerMod" object, updated from poisson to negative.binomial()
+##' @param interval and
+##' @param tol      are both passed to \code{\link{optimize}()}.
+##' @param verbose  ## show our own progress
+##' @param control passed to \code{\link{refit}()}
+##' @return the last fit, an object like 'object'
 optTheta <- function(object,
                      interval = c(-5,5),
-                     maxit = 20,
+                     tol = .Machine$double.eps^0.25,
                      verbose = FALSE,
-                     control = NULL) {
+                     control = NULL)
+{
   lastfit <- object
-  evalcnt <- 0
+  it <- 0L
   optval <- optimize(function(t) {
-      ## FIXME: kluge to retain last value and evaluation count
-      ## Perhaps use a reference class object to keep track of this
-      ## auxilliary information?  DB
+      ## Kluge to retain last value and evaluation count {good enough for ..}
       dev <- deviance(lastfit <<- refitNB(lastfit,
                                           theta = exp(t),
                                           control = control))
-      evalcnt <<- evalcnt+1
-      if (verbose) cat(evalcnt,exp(t),dev,"\n")
+      it <<- it+1L
+      if (verbose) cat(sprintf("%2d: th=%#15.10g, dev=%#14.8f\n", it, exp(t), dev))
       dev
-  }, interval=interval)
-  stopifnot(all.equal(optval$minimum,log(getNBdisp(lastfit))))
+  }, interval=interval, tol=tol)
+  stopifnot(all.equal(optval$minimum, log(getNBdisp(lastfit))))
   ## FIXME: return eval count info somewhere else? MM: new slot there, why not?
-  attr(lastfit,"nevals") <- evalcnt
+  attr(lastfit,"nevals") <- it
+  ## fix up the 'th' expression, replacing it by the real number,
+  ## so effects:::mer.to.glm() can eval() it:
+  lastfit@call$family[["theta"]] <- exp(optval$minimum)
   lastfit
 }
 
 ## use MASS machinery to estimate theta from residuals
-est_theta <- function(object) {
+est_theta <- function(object, limit = 20,
+                      eps = .Machine$double.eps^0.25, trace = 0)
+{
   Y <- model.response(model.frame(object))
   mu <- fitted(object)
-  w <- object@resp$weights
-  control <- list(maxit=20,trace=0)
-  theta.ml(Y, mu, sum(w), w, limit = control$maxit,
-           trace = control$trace > 2)
+  theta.ml(Y, mu, weights = object@resp$weights,
+           limit = limit, eps = eps, trace = trace)
 }
 
-## FIXME: really should document glmer.nb() on the same help page as glmer()
-## I (MM) don't know how to use roxygen for that..
-
+## -------> ../man/glmer.Rd
 ##' glmer() for Negative Binomial
 ##' @param ... formula, data, etc: the arguments for
 ##' \code{\link{glmer}(..)} (apart from \code{family}!).
-##' @param interval interval in which to start the optimization
-##' @param verbose logical indicating how much progress information
-##' should be printed.
-##' @export
-glmer.nb <- function(..., interval = log(th)+c(-3,3), verbose=FALSE)
+glmer.nb <- function(..., interval = log(th) + c(-3,3),
+                     tol = 5e-5, verbose = FALSE, nb.control = NULL,
+                     initCtrl = list(limit = 20, eps = 2*tol, trace = verbose))
 {
-    control <- list(...)$control
-    g0 <- glmer(..., family = poisson)
-    th <- est_theta(g0)
+    dotE <- as.list(substitute(E(...))[-1])
+    ## nE <- names(dotE <- as.list(substitute(E(...))[-1]))
+    ## i <- match(c("formula",""), nE)
+    ## i.frml <- i[!is.na(i)][[1]] # the index of "formula" in '...'
+    ## dots <- list(...)
+    g0 <- glmer(..., family = poisson, verbose = verbose >= 2)
+    th <- est_theta(g0, limit = initCtrl$limit,
+		    eps = initCtrl$eps, trace = initCtrl$trace)
     if(verbose) cat("th := est_theta(glmer(..)) =", format(th),"\n")
     g1 <- update(g0, family = negative.binomial(theta=th))
-    ## if (is.null(interval)) interval <- log(th)+c(-3,3)
-    optTheta(g1, interval = interval, verbose = verbose, control = control)
+    ## fix the 'data' part (only now!)
+    if("data" %in% names(g1@call))
+	g1@call[["data"]] <- dotE[["data"]]
+    else
+        warning("no 'data = *' in glmer.nb() call.. Not much is guaranteed")
+    optTheta(g1, interval=interval, tol=tol, verbose=verbose,
+	     control = nb.control)
 }
 
 ## do we want to facilitate profiling on theta??

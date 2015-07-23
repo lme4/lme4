@@ -23,27 +23,12 @@ allVarsRec <- function(object)
     }
 }
 
-## crippled version of getData.gnls from nlme
+## simple version of getData.gnls from nlme
+## but we *should* and *can* work with environment(formula(.))
 getData <-  function(object)
 {
     mCall <- object@call
-    data <- eval(mCall$data,environment(formula(object)))
-    ## if (is.null(data)) return(data)
-    ## FIXME: deal with NAs, subset appropriately
-    ## naPat <- eval(mCall$naPattern)
-    ## if (!is.null(naPat)) {
-    ##   data <- data[eval(naPat[[2]], data), , drop = FALSE]
-    ## }
-    ## naAct <- eval(mCall$na.action)
-    ## if (!is.null(naAct)) {
-    ##   data <- naAct(data)
-    ## }
-    ## subset <- mCall@subset
-    ## if (!is.null(subset)) {
-    ##   subset <- eval(asOneSidedFormula(subset)[[2]], data)
-    ##   data <- data[subset, ]
-    ## }
-    return(data)
+    eval(mCall$data, environment(formula(object)))
 }
 
 asOneFormula <-

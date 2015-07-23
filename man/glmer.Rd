@@ -4,7 +4,7 @@
 \concept{ GLMM }
 \description{
   Fit a generalized linear mixed-effects model (GLMM).  Both fixed
-  effects and random effects are specified via the model \code{formula}
+  effects and random effects are specified via the model \code{formula}.
 }
 \usage{
 glmer(formula, data = NULL, family = gaussian, control = glmerControl(),
@@ -116,7 +116,7 @@ glmer(formula, data = NULL, family = gaussian, control = glmerControl(),
   integral over the random effects space.  For a linear mixed-effects
   model (LMM), as fit by \code{\link{lmer}}, this integral can be
   evaluated exactly.  For a GLMM the integral must be approximated.  The
-  most reliable approximation for GLMMs 
+  most reliable approximation for GLMMs
   is adaptive Gauss-Hermite quadrature,
   at present implemented only for models with
   a single scalar random effect.  The
@@ -131,7 +131,7 @@ glmer(formula, data = NULL, family = gaussian, control = glmerControl(),
 %  deviance.  For 20-dimensional evaluations of the GLM deviance per
 %  evaluation of the approximate GLMM deviance.
 %  The default approximation is the Laplace approximation,
-%  corresponding to \code{nAGQ=1}.  
+%  corresponding to \code{nAGQ=1}.
 
 }
 \seealso{
@@ -139,6 +139,8 @@ glmer(formula, data = NULL, family = gaussian, control = glmerControl(),
   parameterization); \code{\link[stats]{glm}} for Generalized Linear
   Models (\emph{without} random effects).
   \code{\link{nlmer}} for nonlinear mixed-effects models.
+
+  \code{\link{glmer.nb}} to fit negative binomial GLMMs.
 }
 \examples{
 ## generalized linear mixed model
