@@ -38,6 +38,7 @@ importFrom("lattice",
            splom, strip.custom, strip.default, trellis.par.get,
            xyplot)
 importFrom("MASS", negative.binomial, theta.ml)
+
 ## generics we provide methods for and re-export:
 importFrom("nlme", fixef,ranef, VarCorr, getGroups)
 
@@ -49,6 +50,11 @@ importMethodsFrom("Matrix", coerce, "%*%",crossprod,tcrossprod,
 importFrom("minqa", bobyqa)
 importFrom("nloptr", nloptr)
 
+## Re-Exports :
+export(negative.binomial)
+## currently needed for some eval()ing methods for glmer.nb() objects
+
+## Our Exports:
 export(bootMer)
 export(devcomp)
 export(dummy)
