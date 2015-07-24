@@ -89,8 +89,10 @@ glmer.nb <- function(..., interval = log(th) + c(-3,3),
     g0 <- glmer(..., family = poisson, verbose = verbose >= 2)
     th <- est_theta(g0, limit = initCtrl$limit,
 		    eps = initCtrl$eps, trace = initCtrl$trace)
-    if(verbose) cat("th := est_theta(glmer(..)) =", format(th),"\n")
+    ## using format() on purpose, influenced by options(digits = *) :
+    if(verbose) cat("th := est_theta(glmer(..)) =", format(th))
     g1 <- update(g0, family = negative.binomial(theta=th))
+    if(verbose) cat(" --> dev.= -2*logLik(.) =", format(-2*logLik(g1)),"\n")
     ## fix the 'data' part (only now!)
     if("data" %in% names(g1@call))
 	g1@call[["data"]] <- dotE[["data"]]
