@@ -717,14 +717,15 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
               length(rcl <- class(resp)) == 1)
     n    <- nrow(pp$V)
     p    <- ncol(pp$V)
-    dims <- c(N=nrow(pp$X), n=n, p=p, nmp=n-p,
-              nth=length(pp$theta), q=nrow(pp$Zt),
-              nAGQ=rho$nAGQ,
+    dims <- c(N = nrow(pp$X), n=n, p=p, nmp = n-p,
+              nth = length(pp$theta), q = nrow(pp$Zt),
+              nAGQ= rho$nAGQ,
               compDev=rho$compDev,
               ## 'use scale' in the sense of whether dispersion parameter should
               ##  be reported/used (*not* whether theta should be scaled by sigma)
               useSc=(rcl != "glmResp" ||
-                     !resp$family$family %in% c("poisson","binomial")),
+                     !any(substr(m.nb@resp$family$family, 1L, 12L)
+                          == c("poisson", "binomial", "Negative Bin"))),
               reTrms=length(reTrms$cnms),
               spFe=0L,
               REML=if (rcl=="lmerResp") resp$REML else 0L,
