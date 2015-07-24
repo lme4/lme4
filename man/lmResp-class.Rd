@@ -1,10 +1,9 @@
 \name{lmResp-class}
+\title{Reference Classes for Response Modules, \code{"(lm|glm|nls|lmer)Resp"}}
 \alias{glmResp-class}
 \alias{lmerResp-class}
 \alias{lmResp-class}
 \alias{nlsResp-class}
-\title{Classes \code{"lmResp"}, \code{"glmResp"}, \code{"nlsResp"} and
-\code{"lmerResp"}}
 \description{
   Reference classes for response modules, including linear
   models, \code{"lmResp"}, generalized linear models,
@@ -13,6 +12,12 @@
   reference class is associated with a C++ class of the
   same name.  As is customary, the generator object for
   each class has the same name as the class.
+}
+\section{Extends}{
+  All reference classes extend and inherit methods from
+  \code{"\linkS4class{envRefClass}"}.  Furthermore,
+  \code{"glmResp"}, \code{"nlsResp"} and \code{"lmerResp"}
+  all extend the \code{"lmResp"} class.
 }
 \note{
   Objects from these reference classes correspond to
@@ -27,12 +32,6 @@
   field whose name begins with the lower-case letter is a
   method.  Access to the external pointer should be through
   the method, not through the field.
-}
-\section{Extends}{
-  All reference classes extend and inherit methods from
-  \code{"\linkS4class{envRefClass}"}.  Furthermore,
-  \code{"glmResp"}, \code{"nlsResp"} and \code{"lmerResp"}
-  all extend the \code{"lmResp"} class.
 }
 \examples{
 showClass("lmResp")
