@@ -1134,10 +1134,10 @@ print.ranef.mer <- function(x, ...) {
 refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, maxit = 100L, ...)
 {
 
-    newControl <- NULL
+    ctrl.arg <- NULL
     if (ll <- length(l... <- list(...)) > 0) {
         if ((ll == 1L) &&  (names(l...)[1] == "control")) {
-            newControl <- l...$control
+            ctrl.arg <- l...$control
         }
         else {
             warning("additional arguments to refit.merMod ignored")
@@ -1168,17 +1168,21 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, maxit = 10
     ## somewhat repeated from profile.merMod, but sufficiently
     ##  different that refactoring is slightly non-trivial
     ## "three minutes' thought would suffice ..."
-    ignore.pars <- c("xst", "xt")
-    control.internal <- object@optinfo$control
-    if (length(ign <- which(names(control.internal) %in% ignore.pars)) > 0)
-        control.internal <- control.internal[-ign]
-    if (!is.null(newControl)) {
-        control <- newControl
-        if (length(control$optCtrl)==0)
-            control$optCtrl <- control.internal
-    } else {
-        control <- if (isGLMM(object)) glmerControl() else lmerControl()
-    }
+    control <-
+	if (!is.null(ctrl.arg)) {
+	    if (length(ctrl.arg$optCtrl) == 0) { ## use object's version:
+		obj.control <- object@optinfo$control
+		ignore.pars <- c("xst", "xt")
+		if (any(ign <- names(obj.control) %in% ignore.pars))
+		    obj.control <- obj.control[!ign]
+		ctrl.arg$optCtrl <- obj.control
+	    }
+	    ctrl.arg
+	}
+	else if (isGLMM(object))
+	    glmerControl()
+	else
+	    lmerControl()
 
     ## we need this stuff defined before we call .glmerLaplace below ...
     pp      <- object@pp$copy()
@@ -1802,7 +1806,9 @@ getME <- function(object,
                   "p_i", "l_i", "q_i", "k", "m_i", "m",
                   "cnms",
                   "devcomp", "offset", "lower",
-                  "devfun"))
+                  "devfun",
+                  "glmer.nb.theta"
+                  ))
 {
     if(missing(name)) stop("'name' must not be missing")
     stopifnot(is(object,"merMod"))
@@ -1834,17 +1840,17 @@ getME <- function(object,
 	   "Z" = t(PR$Zt),
 	   "Zt" = PR$Zt,
            "Ztlist" =
-       {
-           getInds <- function(i) {
-               n <- diff(object@Gp)[i]      ## number of elements in this block
-               nt <- length(cnms[[i]]) ## number of REs
-               inds <- lapply(seq(nt),seq,to = n,by = nt)  ## pull out individual RE indices
-               inds <- lapply(inds,function(x) x + object@Gp[i])  ## add group offset
-           }
-           inds <- do.call(c,lapply(seq_along(cnms),getInds))
-           setNames(lapply(inds,function(i) PR$Zt[i,]),
-                    tnames(object,diag.only = TRUE))
-       },
+           {
+               getInds <- function(i) {
+                   n <- diff(object@Gp)[i] ## number of elements in this block
+                   nt <- length(cnms[[i]]) ## number of REs
+                   inds <- lapply(seq(nt), seq, to = n, by = nt)  ## pull out individual RE indices
+                   inds <- lapply(inds,function(x) x + object@Gp[i])  ## add group offset
+               }
+               inds <- do.call(c,lapply(seq_along(cnms),getInds))
+               setNames(lapply(inds,function(i) PR$Zt[i,]),
+                        tnames(object,diag.only = TRUE))
+           },
 	   "mmList" = mmList.merMod(object),
            "y" = rsp$y,
            "mu" = rsp$mu,
@@ -1904,33 +1910,36 @@ getME <- function(object,
            "devcomp" = dc,
            "offset" = rsp$offset,
            "lower" = object@lower,
-           "devfun" =
-       {
-           ## copied from refit ... DRY ...
-	   verbose <- getCall(object)$verbose; if (is.null(verbose)) verbose <- 0L
-	   devlist <-
-	       if (isGLMM(object)) {
-		   stop("getME('devfun') not yet working for GLMMs")## FIXME
-		   baseOffset <- rsp$offset
-		   nAGQ <- unname(dc$dims["nAGQ"])
-		   list(tolPwrss= dc$cmp ["tolPwrss"],
-			compDev = dc$dims["compDev"],
-			nAGQ = nAGQ,
-			lp0  = rsp$eta - baseOffset,
-			baseOffset  = baseOffset,
-			pwrssUpdate = glmerPwrssUpdate,
-			GQmat = GHrule(nAGQ),
-			fac = object@flist[[1]],
-			pp=PR, resp=rsp, u0=PR$u0, dpars=seq_along(PR$theta),
-			verbose=verbose)
-	       }
-	       else
-		   list(pp=PR, resp=rsp, u0=PR$u0, dpars=seq_along(PR$theta), verbose=verbose)
-           mkdevfun(rho=list2env(devlist),
-                    ## FIXME: fragile ...
-		    verbose=verbose, control=object@optinfo$control)
-       },
-           ## FIXME: current version gives lower bounds for theta parameters only -- these must be extended for [GN]LMMs -- give extended value including -Inf values for beta values?
+           "devfun" = {
+               ## copied from refit ... DRY ...
+               verbose <- getCall(object)$verbose; if (is.null(verbose)) verbose <- 0L
+               devlist <-
+                   if (isGLMM(object)) {
+                       stop("getME('devfun') not yet working for GLMMs")## FIXME
+                       baseOffset <- rsp$offset
+                       nAGQ <- unname(dc$dims["nAGQ"])
+                       list(tolPwrss= dc$cmp ["tolPwrss"],
+                            compDev = dc$dims["compDev"],
+                            nAGQ = nAGQ,
+                            lp0  = rsp$eta - baseOffset,
+                            baseOffset  = baseOffset,
+                            pwrssUpdate = glmerPwrssUpdate,
+                            GQmat = GHrule(nAGQ),
+                            fac = object@flist[[1]],
+                            pp=PR, resp=rsp, u0=PR$u0, dpars=seq_along(PR$theta),
+                            verbose=verbose)
+                   }
+                   else
+                       list(pp=PR, resp=rsp, u0=PR$u0, dpars=seq_along(PR$theta), verbose=verbose)
+               mkdevfun(rho=list2env(devlist),
+                        ## FIXME: fragile ...
+                        verbose=verbose, control=object@optinfo$control)
+           },
+           ## FIXME: current version gives lower bounds for theta parameters only:
+           ## -- these must be extended for [GN]LMMs -- give extended value including -Inf values for beta values?
+
+           "glmer.nb.theta" = getNBdisp(object),
+
 	   "..foo.." = # placeholder!
 	   stop(gettextf("'%s' is not implemented yet",
 			 sprintf("getME(*, \"%s\")", name))),
@@ -2291,7 +2300,7 @@ dotplot.ranef.mer <- function(x, data, main = TRUE, ...)
 		prepanel = prepanel.ci, panel = panel.ci,
 		xlab = NULL, main = mtit, ...)
     }
-    setNames(lapply(names(x), f, ...),names(x))
+    setNames(lapply(names(x), f, ...), names(x))
 }
 
 ##' @importFrom graphics plot
@@ -2556,17 +2565,19 @@ as.data.frame.VarCorr.merMod <- function(x,row.names = NULL,
             m <- matrix(NA,n,n)
             diag(m) <- seq(n)
             m[lower.tri(m)] <- (n+1):(n*(n+1)/2)
-            dd <- dd[m[lower.tri(m,diag=TRUE)],]
+            dd <- dd[m[lower.tri(m, diag=TRUE)],]
         }
         dd
     }
     r <- do.call(rbind,
-                 mapply(tmpf,x,names(x),SIMPLIFY = FALSE))
+                 c(mapply(tmpf, x,names(x), SIMPLIFY = FALSE),
+                   deparse.level = 0))
     if (attr(x,"useSc")) {
         ss <- attr(x,"sc")
         r <- rbind(r,data.frame(grp = "Residual",var1 = NA,var2 = NA,
                                 vcov = ss^2,
-                                sdcor = ss))
+                                sdcor = ss),
+		   deparse.level = 0)
     }
     rownames(r) <- NULL
     r

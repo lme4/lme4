@@ -1,16 +1,18 @@
 ##' @importFrom MASS negative.binomial
 ##' @importFrom MASS theta.ml
 
-## should be getME(object,"NBdisp") ?
-## MM: should the *user* use it?  if yes, consider method sigma() or AIC() ?
-getNBdisp <- function(object) {
-  get(".Theta",envir=environment(object@resp$family$aic))
-}
+## ==> user should use  getME(object, "glmer.nb.theta")
+getNBdisp <- function(object) environment(object@resp$family$aic)[[".Theta"]]
 
+## Hidden, originally used at least once, well tested (!), but
+if(FALSE) # not needed anymore currently
+getNBdisp.fam <- function(familyString)
+    as.numeric(sub(".*([-+]?\\d+(\\.\\d*)?([Ee][-+]?\\d+)?){1}.*",
+                   "\\1", familyString))
 
 ## Package "constants" {only on depending the glmResp definition in ./AllClass.R}:
 glmResp.f.nms <- names(glmResp$fields())
-glmNB.to.change <- setdiff(glmResp.f.nms, c("Ptr","family"))
+glmNB.to.change <- setdiff(glmResp.f.nms, c("Ptr", "family"))
 
 ##' setNBdisp(object,theta) :=
 ##' NB-object with changed [DISP]ersion parameter 'theta' (and all that entails)
