@@ -194,9 +194,8 @@ test_that("confint", {
                               c("2.5 %", "97.5 %")))
     expect_equal(dimnames(ci1.p.n),dimnames(ci1.w.n))
     expect_equal(dimnames(ci1.p.n),dimnames(ci1.b.n))
-
-
 })
+
 
 context("refit")
 test_that("refit", {
@@ -339,11 +338,11 @@ test_that("simulate", {
     expect_equal(fivenum(sp1[,1]),
 		 c(20.9412, 22.5805, 23.5575, 24.6095, 27.6997), tol=1e-5)
     ## Pixel example
-    expect_true(all(dim(simulate(fmPixS)) == c(nPix,1)))
-    expect_true(all(dim(simulate(fmPix )) == c(nPix,1)))
+    expect_identical(dim(simulate(fmPixS)), c(nPix, 1L))
+    expect_identical(dim(simulate(fmPix )), c(nPix, 1L))
 
     ## simulation with newdata smaller/larger different from original
-    fm <- lmer(diameter ~ 1 + (1|plate) + (1|sample),Penicillin)
+    fm <- lmer(diameter ~ 1 + (1|plate) + (1|sample), Penicillin)
     expect_is(simulate(fm,newdata=Penicillin[1:10,],allow.new.levels=TRUE),"data.frame")
     expect_is(simulate(fm,newdata=do.call(rbind,replicate(4,Penicillin,simplify=FALSE))),"data.frame")
 
@@ -362,9 +361,9 @@ test_that("simulate", {
 
     ## Simulate with newdata with *new* RE levels:
     d <- sleepstudy[-1] # droping the response ("Reaction")
-    d$Subject <- factor(rep(1:18, each=10))
+    ## d$Subject <- factor(rep(1:18, each=10))
     ## Add 18 new subjects:
-    d <- rbind(sleepstudy, sleepstudy)
+    d <- rbind(d, d)
     d$Subject <- factor(rep(1:36, each=10))
     d$simulated <- simulate(fm1, seed=1, newdata = d,
                             re.form=NULL,
