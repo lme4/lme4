@@ -551,12 +551,8 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         ## GLMM
         ## n.b. DON'T scale random-effects (???)
         etasim <- etapred+sim.reff
-        family <- object@resp$family
-        ## hack (NB families have weird names) from @aosmith16
-        if(gsub("[^[:alpha:]]", "", family$family) == "NegativeBinomial") {
-            family$family <- "negative.binomial"
-        }
-        musim <- family$linkinv(etasim)
+        family <- normalizeFamilyName(object@resp$family)
+        musim <- family$linkinv(etasim) #-> family$family == "negative.binomial" if(NB)
         ## ntot <- length(musim) ## FIXME: or could be dims["n"]?
         ## FIXME: is it possible to leverage family$simulate ... ???
         ##
@@ -741,15 +737,14 @@ gamma.shape.merMod <- function(object, ...) {
 ## in the original MASS version, .Theta is assigned into the environment
 ## (triggers a NOTE in R CMD check)
 ## modified from @aosmith16 GH contribution
-negative.binomial_simfun <- function (object, nsim, ftd=fitted(object))
+
+negative.binomial_simfun <- function (object, nsim, ftd = fitted(object))
 {
     wts <- weights(object)
     if (any(wts != 1))
         warning("ignoring prior weights")
-    theta <- as.numeric(gsub("[[:alpha:][:blank:]+?&/\\()]", "",
-                             object@resp$family$family))
-    rnbinom(nsim * length(ftd), mu = ftd,
-            size = theta)
+    theta <- getNBdisp(object)
+    rnbinom(nsim * length(ftd), mu = ftd, size = theta)
 }
 
 
