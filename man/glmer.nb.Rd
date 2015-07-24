@@ -55,7 +55,7 @@ getME(object, "glmer.nb.theta")
   \code{\link[MASS]{theta.ml}}, the latter for initialization of
   optimization.
 
-  The \sQuode{Details} of \code{\link{pnbinom}} for the definition of
+  The \sQuote{Details} of \code{\link{pnbinom}} for the definition of
   the negative binomial distribution.
 }
 \examples{
