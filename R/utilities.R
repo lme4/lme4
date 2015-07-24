@@ -702,6 +702,19 @@ nlformula <- function(mc) {
              lme4 = list(messages = character(0))))
 }
 
+##' Potentically needed in more than one place, be sure to keep consistency!
+normalizeFamilyName <- function(family) { # such as  object@resp$family
+    ## hack (NB families have weird names) from @aosmith16; then corrected
+    if(grepl("^Negative ?Binomial", family$family, ignore.case=TRUE))
+        family$family <- "negative.binomial"
+    family
+}
+
+##' Is it a family with no scale parameter
+hasNoScale <- function(family)
+    any(substr(family$family, 1L, 12L)
+        == c("poisson", "binomial", "negative.bin", "Negative Bin"))
+
 ##--> ../man/mkMerMod.Rd ---Create a merMod object
 ##' @param rho the environment of the objective function
 ##' @param opt the value returned by the optimizer
@@ -717,20 +730,19 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
               length(rcl <- class(resp)) == 1)
     n    <- nrow(pp$V)
     p    <- ncol(pp$V)
-    dims <- c(N = nrow(pp$X), n=n, p=p, nmp = n-p,
-              nth = length(pp$theta), q = nrow(pp$Zt),
+    isGLMM <- (rcl == "glmResp")
+    dims <- c(N = nrow(pp$X), n=n, p=p, nmp = n-p, q = nrow(pp$Zt),
+              nth = length(pp$theta),
               nAGQ= rho$nAGQ,
               compDev=rho$compDev,
               ## 'use scale' in the sense of whether dispersion parameter should
               ##  be reported/used (*not* whether theta should be scaled by sigma)
-              useSc=(rcl != "glmResp" ||
-                     !any(substr(m.nb@resp$family$family, 1L, 12L)
-                          == c("poisson", "binomial", "Negative Bin"))),
+              useSc = !(isGLMM && hasNoScale(resp$family)),
               reTrms=length(reTrms$cnms),
-              spFe=0L,
-              REML=if (rcl=="lmerResp") resp$REML else 0L,
-              GLMM=(rcl=="glmResp"),
-              NLMM=(rcl=="nlsResp"))
+              spFe= 0L,
+              REML = if (rcl=="lmerResp") resp$REML else 0L,
+              GLMM= isGLMM,
+              NLMM= (rcl=="nlsResp"))
     storage.mode(dims) <- "integer"
     fac     <- as.numeric(rcl != "nlsResp")
     if (trivial.y <- (length(resp$y)==0)) {
