@@ -406,7 +406,7 @@ profile.merMod <- function(fitted,
 ##' tn <- names(getME(fm1,"theta"))
 ##' nn <- c(tn,names(fixef(fm1)))
 ##' get.which("theta_",length(tn),length(nn),nn, verbose=TRUE)
-##' 
+##'
 get.which <- function(which, nvp, nptot, parnames, verbose=FALSE) {
     if (is.null(which))
         seq_len(nptot)
@@ -435,19 +435,20 @@ get.which <- function(which, nvp, nptot, parnames, verbose=FALSE) {
 ## classes
 .modelMatrixDrop <- function(mm, w) {
     if (isS4(mm)) {
-        ll <- list(Class = class(mm),
-                   assign = attr(mm,"assign")[-w],
-                   contrasts = NULL)
-        ## FIXME: where did the contrasts information go??
-        ## mm@contrasts)
-        X <- mm[, -w, drop = FALSE]
-        ll <- c(ll, lapply(structure(slotNames(X), .Names=slotNames(X)),
-                           function(nm) slot(X, nm)))
-        return(do.call(new, ll))
+	nX <- slotNames(X <- mm[, -w, drop = FALSE])
+	do.call(new,
+		c(list(Class = class(mm),
+		       assign = attr(mm,"assign")[-w],
+		       contrasts = NULL
+		       ## FIXME: where did the contrasts information go??
+		       ##      mm@contrasts
+		       ),
+		  lapply(structure(nX, .Names=nX),
+			 function(nm) slot(X, nm))))
+    } else {
+	structure(mm[, -w, drop=FALSE],
+		  assign = attr(mm, "assign")[-w])
     }
-    ans <- mm[, -w, drop=FALSE]
-    attr(ans, "assign") <- attr(mm, "assign")[-w]
-    ans
 }
 
 ## The deviance is profiled with respect to the fixed-effects
