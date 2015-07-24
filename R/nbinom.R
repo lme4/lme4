@@ -8,15 +8,16 @@ getNBdisp <- function(object) {
 }
 
 
+## Package "constants" {only on depending the glmResp definition in ./AllClass.R}:
 glmResp.f.nms <- names(glmResp$fields())
+glmNB.to.change <- setdiff(glmResp.f.nms, c("Ptr","family"))
 
-## should be setME(object,"NBdisp") ?
+##' setNBdisp(object,theta) :=
+##' NB-object with changed [DISP]ersion parameter 'theta' (and all that entails)
 setNBdisp <- function(object,theta) {
   ## assign(".Theta",theta,envir=environment(object@resp$family$aic))
-  ff <- setdiff(names(getRefClass("glmResp")$fields()),c("Ptr","family"))
   rr <- object@resp
-  arg1 <- lapply(ff,rr$field)
-  names(arg1) <- ff
+  arg1 <- lapply(setNames(nm=glmNB.to.change), rr$field)
   newresp <- do.call(glmResp$new,
                      c(arg1, list(family=negative.binomial(theta=theta))))
   newresp$setOffset(rr$offset)
