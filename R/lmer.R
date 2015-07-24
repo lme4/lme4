@@ -1938,7 +1938,8 @@ getME <- function(object,
            ## FIXME: current version gives lower bounds for theta parameters only:
            ## -- these must be extended for [GN]LMMs -- give extended value including -Inf values for beta values?
 
-           "glmer.nb.theta" = getNBdisp(object),
+	   "glmer.nb.theta" = if(isGLMM(object) && isNBfamily(rsp$family$family))
+	       getNBdisp(object) else NA,
 
 	   "..foo.." = # placeholder!
 	   stop(gettextf("'%s' is not implemented yet",

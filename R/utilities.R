@@ -703,10 +703,12 @@ nlformula <- function(mc) {
 }
 
 ##' Potentically needed in more than one place, be sure to keep consistency!
+##' hack (NB families have weird names) from @aosmith16; then corrected
+isNBfamily <- function(familyString)
+    grepl("^Negative ?Binomial", familyString, ignore.case=TRUE)
 normalizeFamilyName <- function(family) { # such as  object@resp$family
-    ## hack (NB families have weird names) from @aosmith16; then corrected
-    if(grepl("^Negative ?Binomial", family$family, ignore.case=TRUE))
-        family$family <- "negative.binomial"
+    if(isNBfamily(family$family))
+	family$family <- "negative.binomial"
     family
 }
 
