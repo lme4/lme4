@@ -11,7 +11,7 @@ getME(object,
                "fixef", "beta", "theta", "ST", "REML", "is_REML",
                "n_rtrms", "n_rfacs", "N", "n", "p", "q",
                "p_i", "l_i", "q_i", "k", "m_i", "m",
-               "cnms", "devcomp", "offset", "lower", "devfun"))
+               "cnms", "devcomp", "offset", "lower", "devfun", "glmer.nb.theta"))
 }
 \arguments{
   \item{object}{a fitted mixed-effects model of class
@@ -54,7 +54,7 @@ getME(object,
       \item{Lambdat}{transpose \eqn{\Lambda'}{Lambda'} of \eqn{\Lambda}{Lambda} above.}
       \item{Lind}{index vector for inserting elements of
 	\eqn{\theta}{theta} into the nonzeros of \eqn{\Lambda}{Lambda}.}
-      \item{Tlist}{vector of template matrices from which the blocks of 
+      \item{Tlist}{vector of template matrices from which the blocks of
 	\eqn{\Lambda}{Lambda} are generated.}
       \item{A}{Scaled sparse model matrix (class
 	\code{"\link[Matrix:dgCMatrix-class]{dgCMatrix}"}) for
@@ -92,7 +92,7 @@ getME(object,
       \item{m}{total number of covariance parameters}
       \item{cnms}{the \dQuote{component names}, a \code{\link{list}}.}
       \item{REML}{\code{0} indicates the model was fitted by maximum
-	likelihood, any other positive integer indicates fitting by 
+	likelihood, any other positive integer indicates fitting by
 	restricted maximum likelihood}
       \item{is_REML}{same as the result of \code{\link{isREML}(.)}}
       \item{devcomp}{a list consisting of a named numeric vector,
@@ -127,7 +127,7 @@ getME(object,
           \item{useSc}{\code{TRUE} if model has a scale parameter}
 	  \item{reTrms}{number of random effects terms}
           \item{REML}{\code{0} indicates the model was fitted by maximum
-	    likelihood, any other positive integer indicates fitting by 
+	    likelihood, any other positive integer indicates fitting by
 	    restricted maximum likelihood}
           \item{GLMM}{\code{TRUE} if a GLMM}
 	  \item{NLMM}{\code{TRUE} if an NLMM}
@@ -137,6 +137,8 @@ getME(object,
       \item{lower}{lower bounds on model parameters (random effects
 	parameters only).}
       \item{devfun}{deviance function (so far only available for LMMs)}
+      \item{glmer.nb.theta}{negative binomial \eqn{\theta} parameter,
+	only for \code{\link{glmer.nb}}.}
     }
   }
 }
