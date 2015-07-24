@@ -776,10 +776,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
              tolPwrss=rho$tolPwrss)
     ## TODO:  improve this hack to get something in frame slot (maybe need weights, etc...)
     if(missing(fr)) fr <- data.frame(resp$y)
-    new(switch(rcl,
-	       "lmerResp" = lmerMod,
-	       "glmResp" = glmerMod,
-	       "nlsResp" = nlmerMod),
+    new(switch(rcl, lmerResp = "lmerMod", glmResp = "glmerMod", nlsResp = "nlmerMod"),
         call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
         Gp=reTrms$Gp, theta=pp$theta, beta=beta,
         u=if (trivial.y) rep(NA_real_,nrow(pp$Zt)) else pp$u(fac),
