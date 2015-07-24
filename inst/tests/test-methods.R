@@ -313,22 +313,31 @@ test_that("simulate", {
     p9 <- simulate(gm2, re.form = NA, seed = 101)
     p10 <- simulate(gm2,use.u = FALSE, seed = 101)
     p11 <- simulate(gm2,use.u = TRUE, seed = 101)
+    ## minimal check of content:
+    expect_identical(colSums(p1[,1]), c(incidence =  95, 747))
+    expect_identical(colSums(p2[,1]), c(incidence = 109, 733))
+    ## equivalences:
+    ## group ~0:
     expect_equal(p2,p3)
     expect_equal(p2,p5)
     expect_equal(p2,p6)
     expect_equal(p2,p8)
     expect_equal(p2,p9)
     expect_equal(p2,p10)
+    ## group 1:
     expect_equal(p1,p4)
     expect_equal(p1,p7)
     expect_equal(p1,p11)
     expect_error(simulate(gm2,use.u = TRUE, re.form = NA), "should specify only one")
+    ##
     ## hack: test with three REs
     p1 <- lmer(diameter ~ (1|plate) + (1|plate) + (1|sample), Penicillin,
                control = lmerControl(check.conv.hess = "ignore",
                                      check.conv.grad = "ignore"))
-    expect_is(sp1 <- simulate(p1), "data.frame")
-    expect_true(all(dim(sp1) == c(nrow(Penicillin), 1)))
+    expect_is(sp1 <- simulate(p1, seed=123), "data.frame")
+    expect_identical(dim(sp1), c(nrow(Penicillin), 1L))
+    expect_equal(fivenum(sp1[,1]),
+		 c(20.9412, 22.5805, 23.5575, 24.6095, 27.6997), tol=1e-5)
     ## Pixel example
     expect_true(all(dim(simulate(fmPixS)) == c(nPix,1)))
     expect_true(all(dim(simulate(fmPix )) == c(nPix,1)))
@@ -344,22 +353,23 @@ test_that("simulate", {
                      x=runif(200),
                      y=rnbinom(200,size=2,mu=2))
     g1 <- glmer.nb(y ~ x + (1|f), data=dd)
-    expect_equal(fixef(g1), c("(Intercept)" = 0.687274, x = -0.0822692), tol = 1e-4)
+    expect_equal(fixef(g1), c("(Intercept)" = 0.630067, x = -0.0167248), tol = 1e-5)
     s1 <- simulate(g1)[,1]
-    expect_identical(sum(s1), 470)
+    expect_identical(sum(s1), 403)
     ts1 <- table(s1)
     expect_identical(as.vector(ts1[as.character(0:5)]),
-                     c(138L, 17L, 9L, 7L, 5L, 1L))
+                     c(51L, 54L, 36L, 21L, 14L, 9L))
 
-    d <- sleepstudy
+    ## Simulate with newdata with *new* RE levels:
+    d <- sleepstudy[-1] # droping the response ("Reaction")
     d$Subject <- factor(rep(1:18, each=10))
     ## Add 18 new subjects:
     d <- rbind(sleepstudy, sleepstudy)
     d$Subject <- factor(rep(1:36, each=10))
-    d$simulated <- simulate(fm1, seed=1, newdata=d[-1],
+    d$simulated <- simulate(fm1, seed=1, newdata = d,
                             re.form=NULL,
-                            allow.new.levels=TRUE)[[1]]
-    expect_equal(mean(d$simulated),299.9384608)
+                            allow.new.levels = TRUE)[,1]
+    expect_equal(mean(d$simulated), 299.9384608)
 })
 
 context("misc")

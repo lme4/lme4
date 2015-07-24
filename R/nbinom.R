@@ -8,6 +8,8 @@ getNBdisp <- function(object) {
 }
 
 
+glmResp.f.nms <- names(glmResp$fields())
+
 ## should be setME(object,"NBdisp") ?
 setNBdisp <- function(object,theta) {
   ## assign(".Theta",theta,envir=environment(object@resp$family$aic))
@@ -44,9 +46,9 @@ optTheta <- function(object,
   it <- 0L
   optval <- optimize(function(t) {
       ## Kluge to retain last value and evaluation count {good enough for ..}
-      dev <- deviance(lastfit <<- refitNB(lastfit,
-                                          theta = exp(t),
-                                          control = control))
+      dev <- -2*logLik(lastfit <<- refitNB(lastfit,
+                                           theta = exp(t),
+                                           control = control))
       it <<- it+1L
       if (verbose) cat(sprintf("%2d: th=%#15.10g, dev=%#14.8f\n", it, exp(t), dev))
       dev
