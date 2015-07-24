@@ -24,24 +24,6 @@ forceCopy <- function(x) .Call(deepcopy, x)
 ##
 ## MM: _Or_ have "merPred" with X  of class  "mMatrix" := classUnion {matrix, Matrix}
 
-##' Class \code{"merPredD"} - a dense predictor reference class
-##'
-##' A reference class for a mixed-effects model predictor module with a dense
-##' model matrix for the fixed-effects parameters.  The reference class is
-##' associated with a C++ class of the same name.  As is customary, the
-##' generator object, \code{\link{merPredD}}, for the class has the same name as
-##' the class.
-##' @name merPredD-class
-##' @note Objects from this reference class correspond to objects in a C++
-##'     class.  Methods are invoked on the C++ class object using the external
-##'     pointer in the \code{Ptr} field.  When saving such an object the external
-##'     pointer is converted to a null pointer, which is why there are redundant
-##'     fields containing enough information as R objects to be able to regenerate
-##'     the C++ object.  The convention is that a field whose name begins with an
-##'     upper-case letter is an R object and the corresponding field, whose name
-##'     begins with the lower-case letter is a method.  References to the
-##'     external pointer should be through the method, not directly through the
-##'     \code{Ptr} field.
 merPredD <-
     setRefClass("merPredD", # Predictor class for mixed-effects models with dense X
                 fields =
@@ -262,38 +244,8 @@ merPredD$lock("Lambdat", "LamtUt", "Lind", "RZX", "Ut", "Utr", "V", "VtV", "Vtr"
               "X", "Xwts", "Zt", "beta0", "delb", "delu", "theta", "u0")
 
 
-##' Generator objects for the response classes
-##'
-##' The generator objects for the \code{\linkS4class{lmResp}},
-##' \code{\linkS4class{lmerResp}}, \code{\linkS4class{glmResp}} and
-##' \code{\linkS4class{nlsResp}} reference classes. Such objects are
-##' primarily used through their \code{new} methods.
-##'
-##' @aliases lmResp lmerResp glmResp nlsResp
-##' @param ... List of arguments (see Note).
-##' @note Arguments to the \code{new} methods must be named arguments.
-##' \itemize{
-##' \item{y}{ the numeric response vector}
-##' \item{family}{ a \code{\link{family}} object}
-##' \item{nlmod}{ the nonlinear model function}
-##' \item{nlenv}{ an environment holding data objects for evaluation of \code{nlmod}}
-##' \item{pnames}{ a character vector of parameter names}
-##' \item{gam}{ a numeric vector - the initial linear predictor}
-##'}
-##' @section Methods:
-##' \describe{
-##'     \item{\code{new(y=y)}:}{Create a new
-##'          \code{\linkS4class{lmResp}} or \code{\linkS4class{lmerResp}} object.}
-##'     \item{\code{new(family=family, y=y)}:}{Create a new
-##'          \code{\linkS4class{glmResp}} object.}
-##'     \item{\code{new(y=y, nlmod=nlmod, nlenv=nlenv, pnames=pnames,
-##'                     gam=gam)}:}{Create a new
-##'           \code{\linkS4class{nlsResp}} object.}
-##' }
-##' @seealso \code{\linkS4class{lmResp}}, \code{\linkS4class{lmerResp}},
-##' \code{\linkS4class{glmResp}}, \code{\linkS4class{nlsResp}}
-##' @keywords classes
-##' @export
+## -> ../man/lmResp-class.Rd
+##    ~~~~~~~~~~~~~~~~~~~~~~
 lmResp <-                               # base class for response modules
     setRefClass("lmResp",
                 fields =
@@ -383,49 +335,9 @@ lmResp <-                               # base class for response modules
 
 lmResp$lock("mu", "offset", "sqrtXwt", "sqrtrwt", "weights", "wtres")#, "y")
 
-##' Classes \code{"lmResp"}, \code{"glmResp"}, \code{"nlsResp"} and
-##' \code{"lmerResp"}
-##'
-##' Reference classes for response modules, including linear models,
-##' \code{"lmResp"}, generalized linear models, \code{"glmResp"}, nonlinear
-##' models, \code{"nlsResp"} and linear mixed-effects models, \code{"lmerResp"}.
-##' Each reference class is associated with a C++ class of the same name.  As is
-##' customary, the generator object for each class has the same name as the
-##' class.
-##' @name lmResp-class
-##' @aliases lmResp-class glmResp-class lmerResp-class nlsResp-class
-##' @note Objects from these reference classes correspond to objects in C++
-##'     classes.  Methods are invoked on the C++ classes using the external pointer
-##'     in the \code{ptr} field.  When saving such an object the external pointer is
-##'     converted to a null pointer, which is why there are redundant fields
-##'     containing enough information as R objects to be able to regenerate the C++
-##'     object.  The convention is that a field whose name begins with an upper-case
-##'     letter is an R object and the corresponding field whose name begins with the
-##'     lower-case letter is a method.  Access to the external pointer should be
-##'     through the method, not through the field.
-##' @section Extends: All reference classes extend and inherit methods from
-##'     \code{"\linkS4class{envRefClass}"}.  Furthermore, \code{"glmResp"},
-##'     \code{"nlsResp"} and \code{"lmerResp"} all extend the \code{"lmResp"} class.
-##' @seealso \code{\link{lmer}}, \code{\link{glmer}}, \code{\link{nlmer}},
-##'     \code{\linkS4class{merMod}}.
-##' @examples
-##'
-##' showClass("lmResp")
-##' str(lmResp$new(y=1:4))
-##' showClass("glmResp")
-##' str(glmResp$new(family=poisson(), y=1:4))
-##' showClass("nlsResp")
-##' showClass("lmerResp")
-##' str(lmerResp$new(y=1:4))
-##' @keywords classes
-NULL
-
-##' @export
 lmerResp <-
-    setRefClass("lmerResp",
-                fields=
-                list(REML="integer"),
-                contains="lmResp",
+    setRefClass("lmerResp", contains = "lmResp",
+                fields = list(REML = "integer"),
                 methods=
                 list(initialize = function(...) {
                          REML <<- as.integer(list(...)$REML)
@@ -454,10 +366,8 @@ setOldClass("family")
 
 ##' @export
 glmResp <-
-    setRefClass("glmResp",
-                fields=
-                list(eta="numeric", family="family", n="numeric"),
-                contains="lmResp",
+    setRefClass("glmResp", contains = "lmResp",
+                fields = list(eta = "numeric", family = "family", n = "numeric"),
                 methods=
                 list(initialize = function(...) {
                          callSuper(...)
@@ -556,14 +466,11 @@ glmResp$lock("family", "n", "eta")
 
 ##' @export
 nlsResp <-
-    setRefClass("nlsResp",
-                fields=
-                list(gam="numeric",
-                     nlmod="formula",
-                     nlenv="environment",
-                     pnames="character"
-                     ),
-                contains="lmResp",
+    setRefClass("nlsResp", contains = "lmResp",
+                fields= list(gam   = "numeric",
+                             nlmod = "formula",
+                             nlenv = "environment",
+                             pnames= "character"),
                 methods=
                 list(initialize = function(...) {
                          callSuper(...)
@@ -600,6 +507,7 @@ nlsResp <-
                 )
 
 nlsResp$lock("nlmod", "nlenv", "pnames")
+
 
 ##' Generator object for the \code{\linkS4class{glmFamily}} class
 ##'
