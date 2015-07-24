@@ -3,9 +3,6 @@ library("lme4")
 L <- load(system.file("testdata", "lme-tst-fits.rda",
                       package="lme4", mustWork=TRUE))
 
-if (getRversion() > "3.0.0") {
-    ## saved fits are not safe with old R versions
-
 fm0 <- fit_sleepstudy_0
 fm1 <- fit_sleepstudy_1
 fm2 <- fit_sleepstudy_2
@@ -374,7 +371,6 @@ test_that("misc", {
     }
     expect_is(as.data.frame(VarCorr(fm1)), "data.frame")
 })
-}# R >= 3.0.0
 
 context("plot")
 test_that("plot", {
