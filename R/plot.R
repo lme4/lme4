@@ -7,7 +7,7 @@ splitFormula <-
         mode(form) == "call" && form[[1]] == as.name("~"))
         return(splitFormula(form[[length(form)]], sep = sep))
     if (mode(form) == "call" && form[[1]] == as.name(sep))
-        return(do.call("c", lapply(as.list(form[-1]), splitFormula, sep = sep)))
+        return(do.call(c, lapply(as.list(form[-1]), splitFormula, sep = sep)))
     if (mode(form) == "(") return(splitFormula(form[[2]], sep = sep))
     if (length(form) < 1) return(NULL)
     list(asOneSidedFormula(form))
@@ -205,10 +205,10 @@ getResponseFormula <-
 ##' }
 ##' @S3method plot merMod
 ##' @method plot merMod
-##' @export 
+##' @export
 plot.merMod <-
     function(x, form = resid(., type = "pearson") ~ fitted(.), abline,
-             id = NULL, idLabels = NULL, 
+             id = NULL, idLabels = NULL,
              grid, ...)
         ## Diagnostic plots based on residuals and/or fitted values
 {

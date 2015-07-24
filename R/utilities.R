@@ -286,7 +286,7 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
         if (length(y)>0) eval(family$initialize, rho)
         ## family$initialize <- NULL     # remove clutter from str output
         ll <- as.list(rho)
-        ans <- do.call("new", c(list(Class="glmResp", family=family),
+        ans <- do.call(new, c(list(Class="glmResp", family=family),
                               ll[setdiff(names(ll), c("m", "nobs", "mustart"))]))
         if (length(y)>0) ans$updateMu(if (!is.null(es <- etastart_update)) es else
                                       family$linkfun(get("mustart", rho)))
@@ -776,7 +776,10 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
              tolPwrss=rho$tolPwrss)
     ## TODO:  improve this hack to get something in frame slot (maybe need weights, etc...)
     if(missing(fr)) fr <- data.frame(resp$y)
-    new(switch(rcl, lmerResp="lmerMod", glmResp="glmerMod", nlsResp="nlmerMod"),
+    new(switch(rcl,
+	       "lmerResp" = lmerMod,
+	       "glmResp" = glmerMod,
+	       "nlsResp" = nlmerMod),
         call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
         Gp=reTrms$Gp, theta=pp$theta, beta=beta,
         u=if (trivial.y) rep(NA_real_,nrow(pp$Zt)) else pp$u(fac),
@@ -787,7 +790,8 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
 			derivs	 = attr(opt,"derivs"),
 			conv  = list(opt=opt$conv, lme4=lme4conv),
 			feval = if (is.null(opt$feval)) NA else opt$feval,
-			warnings = attr(opt,"warnings"), val = opt$par)
+			warnings = attr(opt,"warnings"),
+			val = opt$par)
         )
 }## {mkMerMod}
 

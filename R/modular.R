@@ -331,7 +331,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     ignoreArgs <- c("start","verbose","devFunOnly","control")
     l... <- list(...)
     l... <- l...[!names(l...) %in% ignoreArgs]
-    do.call("checkArgs", c(list("lmer"),l...))
+    do.call(checkArgs, c(list("lmer"), l...))
     if (!is.null(list(...)[["family"]])) {
         ## lmer(...,family=...); warning issued within checkArgs
         mc[[1]] <- quote(lme4::glFormula)
@@ -404,7 +404,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     ranfr <- eval(mf, parent.frame())
     attr(attr(fr,"terms"), "predvars.random") <-
         attr(terms(ranfr), "predvars")
-    
+
     ## FIXME: shouldn't we have this already in the full-frame predvars?
     X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     ## backward compatibility (keep no longer than ~2015):
@@ -621,7 +621,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     ignoreArgs <- c("start","verbose","devFunOnly","optimizer", "control", "nAGQ")
     l... <- list(...)
     l... <- l...[!names(l...) %in% ignoreArgs]
-    do.call("checkArgs", c(list("glmer"), l...))
+    do.call(checkArgs, c(list("glmer"), l...))
 
     cstr <- "check.formula.LHS"
     checkCtrlLevels(cstr, control[[cstr]])
@@ -683,7 +683,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     ranfr <- eval(mf, parent.frame())
     attr(attr(fr,"terms"), "predvars.random") <-
         attr(terms(ranfr), "predvars")
-    
+
     X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     ## backward compatibility (keep no longer than ~2015):
     if(is.null(rankX.chk <- control[["check.rankX"]]))

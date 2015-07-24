@@ -345,7 +345,7 @@ lmResp <-                               # base class for response modules
                                 assign(field, forceCopy(current), envir = vEnv)
                             }
                         }
-                        do.call("new", c(as.list(vEnv), Class=def))
+                        do.call(new, c(as.list(vEnv), Class=def))
                     },
                     initializePtr = function() {
                         Ptr <<- .Call(lm_Create, y, weights, offset, mu, sqrtXwt,
@@ -551,8 +551,8 @@ glmResp <-
                      )
                 )
 
-
 glmResp$lock("family", "n", "eta")
+
 
 ##' @export
 nlsResp <-

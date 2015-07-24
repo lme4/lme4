@@ -443,7 +443,7 @@ get.which <- function(which, nvp, nptot, parnames, verbose=FALSE) {
         X <- mm[, -w, drop = FALSE]
         ll <- c(ll, lapply(structure(slotNames(X), .Names=slotNames(X)),
                            function(nm) slot(X, nm)))
-        return(do.call("new", ll))
+        return(do.call(new, ll))
     }
     ans <- mm[, -w, drop=FALSE]
     attr(ans, "assign") <- attr(mm, "assign")[-w]

@@ -2157,7 +2157,7 @@ formatVC <- function(varc, digits = max(3, getOption("digits") - 2),
 	maxlen <- max(reLens)
 	recorr <- lapply(varc, attr, "correlation")
 	corr <-
-	    do.call("rBind",
+	    do.call(rBind,
 		    lapply(recorr,
 			   function(x) {
 			       x <- as(x, "matrix")
