@@ -17,9 +17,9 @@ glmNB.to.change <- setdiff(glmResp.f.nms, c("Ptr","family"))
 setNBdisp <- function(object,theta) {
   ## assign(".Theta",theta,envir=environment(object@resp$family$aic))
   rr <- object@resp
-  arg1 <- lapply(setNames(nm=glmNB.to.change), rr$field)
   newresp <- do.call(glmResp$new,
-                     c(arg1, list(family=negative.binomial(theta=theta))))
+                     c(lapply(setNames(nm=glmNB.to.change), rr$field),
+                       list(family = negative.binomial(theta=theta))))
   newresp$setOffset(rr$offset)
   newresp$updateMu(rr$eta - rr$offset)
   object@resp <- newresp
