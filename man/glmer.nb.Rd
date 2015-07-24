@@ -12,7 +12,6 @@
 glmer.nb(\dots, interval = log(th) + c(-3, 3),
          tol = 5e-5, verbose = FALSE, nb.control = NULL,
          initCtrl = list(limit = 20, eps = 2*tol, trace = verbose))
-getME(object, "glmer.nb.theta")
 }
 \arguments{
   \item{\dots}{arguments as for \code{glmer(.)} such as \code{formula},
@@ -42,7 +41,7 @@ getME(object, "glmer.nb.theta")
   both called \code{theta} (\eqn{\theta}), but are unrelated here.
 
   The negative binomial \eqn{\theta} can be extracted from a fit
-  \code{g <- glmer.nb()} by \code{getME(g, "glmer.nb.theta")}.
+  \code{g <- glmer.nb()} by \code{\link{getME}(g, "glmer.nb.theta")}.
 
 
   Parts of \code{glmer.nb()} are still experimental and methods are
