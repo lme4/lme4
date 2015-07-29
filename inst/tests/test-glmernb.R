@@ -13,5 +13,6 @@ test_that("basic", {
    m.glm <- glm.nb(y ~ f1*f2, data=dd)
    library(lme4)
    m.nb <- glmer.nb(y ~ f1*f2 + (1|g), data=dd)
+   expect_null(m.nb@call$verbose)  ## check: GH #321
    expect_equal(fixef(m.nb),coef(m.glm),tol=1e-5)
 })

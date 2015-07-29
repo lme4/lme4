@@ -100,6 +100,9 @@ glmer.nb <- function(..., interval = log(th) + c(-3,3),
 	g1@call[["data"]] <- dotE[["data"]]
     else
         warning("no 'data = *' in glmer.nb() call.. Not much is guaranteed")
+    if ("verbose" %in% names(g1@call)) {
+        g1@call[["verbose"]] <- dotE[["verbose"]]
+    }
     optTheta(g1, interval=interval, tol=tol, verbose=verbose,
 	     control = nb.control)
 }
