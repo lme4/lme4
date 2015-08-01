@@ -139,3 +139,18 @@ str(errs4 <- lapply(evs4[!isok4], conditionMessage))
 ## $ logLik : chr "log-likelihood not available with NULL fits"
 ## $ summary: chr "subscript out of bounds"
 stopifnot(length(errs4) <= 2)
+
+## from GH #320
+x <- c(1,2,3,4,5,6,7,8)
+y <- c(2,2,5,4,3,1,2,1)
+g <- c(1,1,1,2,2,3,3,3)
+dat <- data.frame(x=x, y=y, g=g)
+m1 <- lmList(y ~ x | g, data=dat)
+stopifnot(!any(is.na(coef(m1))))
+m2 <- lmList(Reaction ~ Days | Subject,
+             weights=runif(nrow(sleepstudy)), sleepstudy)
+m3 <- lmList(Reaction ~ Days | Subject, sleepstudy)
+m4 <- lmList(Reaction ~ Days | Subject,
+             offset=runif(nrow(sleepstudy)), sleepstudy)
+stopifnot(!identical(m2,m3))
+stopifnot(!identical(m4,m3))

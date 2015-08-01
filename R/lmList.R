@@ -53,25 +53,35 @@ lmList <- function(formula, data, family, subset, weights,
     ## FIXME: catch errors and pass them on as warnings?
     ## (simply passing them along silently gives confusing output)
     groups <- eval(mform$groups, frm)
-    val <- lapply(split(frm, groups),
-		  if (!isGLM) ## lm(.)
-		      function(dat, formula) {
-			  tryCatch({
-				       data <- as.data.frame(dat)
-				       lm(formula, data)
-				   }, error = errorH)
-		      }
-		  else ## family ==> glm(.)
-		      function(dat, formula) {
-			  tryCatch({
-				       data <- as.data.frame(dat)
-				       glm(formula, family=family, data)
-				   }, error = errorH)
-		      },
-		  formula = as.formula(mform$model))
+    if (!is.factor(groups)) groups <- factor(groups)
+    ## FIXME: this splitting of data, weights, offset is really
+    ## ugly/brute force.  I feel like there ought to be a way
+    ## to leverage the fact that 'weights' and 'offset' have
+    ## automatically been incorporated into the model frame ...
+    fit <- if (isGLM) glm else lm
+    mf2 <- if (missing(family)) NULL else list(family=family)
+    fitfun <- function(dat,formula) {
+        tryCatch({
+            data <- as.data.frame(dat)
+            do.call(fit,c(list(formula, data,
+                               weights=dat[["(weights)"]],
+                               offset=dat[["(offset)"]]),
+                          mf2))
+        }, error=errorH)
+    }
+    frm.split <- split(frm, groups)
+    ## NB:  levels() is only  OK if grouping variable is a factor
+    nms <- names(frm.split)
+    ## null.split <- replicate(length(nms),NULL)
+    ## weights.split <- if (missing(weights)) null.split else split(weights, groups)
+    ## offset.split <- if (missing(offset)) null.split else split(offset, groups)
+    val <- ## mapply(fitfun,
+        lapply(
+            frm.split,fitfun,
+                  ## weights.split,
+                  ## offset.split,
+               formula = as.formula(mform$model))
 
-    ## NB:  identical(levels(groups), names(split(frm, groups))):
-    nms <- levels(groups)
     ## Contrary to nlme, we keep the erronous ones as well
     pool <- !isGLM || .hasScale(family2char(family))
     new("lmList4", setNames(val, nms),
