@@ -2,8 +2,8 @@ library(lme4)
 cat("lme4 testing level: ", testLevel <- lme4:::testLevel(), "\n")
 
 
+getNBdisp <- function(x) getME(x,"glmer.nb.theta")
 ## for now, use hidden functions [MM: this is a sign, we should *export* them]
-getNBdisp <- lme4:::getNBdisp
 refitNB   <- lme4:::refitNB
 
 simfun <- function(sd.u=1, NBtheta=0.5,
@@ -24,17 +24,15 @@ if (testLevel > 1) {
     set.seed(102)
     d.1 <- simfun()
     t1 <- system.time(g1 <- glmer.nb(z ~ x + (1|f), data=d.1, verbose=TRUE))
-    ## no longer: Model failed to converge with max|grad| = 0.00378242 (tol = 0.001)
-
     g1
-    ## ^^ FIXME: 'Data:' shows '..2' ![eval.parent() etc.?]
-
+    
     d1 <- getNBdisp(g1)
     (g1B <- refitNB(g1, theta = d1))
     (ddev <- deviance(g1) - deviance(g1B))
     (reld <- (fixef(g1) - fixef(g1B)) / fixef(g1))
     stopifnot(abs(ddev) < 1e-4,   # was 6.18e-7 now 1.045e-6, now -6.367e-5 (!)
               abs(reld) < 1e-4)# 0, then 4.63e-6
+    ## 2 Aug 2015: ddev==reld==0 on 32-bit Ubuntu 12.04
 
 
 ## library(glmmADMB)
@@ -60,9 +58,12 @@ stopifnot(
     ## no more at all ??!
     ## no all.equal(   d1,          glmmADMB_vals$theta, tolerance=0.0016)
     ## ,
-          all.equal(fixef(g1B),     glmmADMB_vals$ fixef, tolerance=0.1)# was 0.01 !
+          all.equal(fixef(g1B),     glmmADMB_vals$fixef, tolerance=0.1)# was 0.01 !
+    ## Ubuntu 12.04/32-bit: 0.0094
           ,
-          all.equal(logLik.m(g1B), -glmmADMB_vals$ NLL, tolerance=0.4)# was 0.001 (!!)
+          all.equal(c(logLik.m(g1B)), c(-glmmADMB_vals$NLL), tolerance=0.4)# was 0.001 (!!)
+    ## Ubuntu 12.04/32-bit: 1.61e-5
+    ## except that df=3 vs 4
           )
 }## end if( testLevel > 1 )
 
@@ -134,6 +135,7 @@ if (testLevel > 3) {
 ##              ,
               all.equal(fixef    (g4),   glmmADMB_epil_vals$ fixef, tolerance= 0.03)#was 0.004
 ## ,
+### still 0.00374 on Ubuntu 12.04        
 ## FIXME: even df differ !
 ##              all.equal(logLik.m (g4), - glmmADMB_epil_vals$ NLL,	tolerance= 0.0) ## was 0.0002
               )
