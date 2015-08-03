@@ -892,8 +892,19 @@ isLMM.merMod <- function(x,...) {
 }
 
 npar.merMod <- function(object) {
-    length(object@beta) + length(object@theta) +
+    n <- length(object@beta) + length(object@theta) +
         object@devcomp[["dims"]][["useSc"]]
+    ## FIXME: this is a bit of a hack: a user *might* have specified
+    ## negative binomial family with a known theta, in which case we
+    ## shouldn't count it as extra.  Either glmer.nb needs to set a
+    ## flag somewhere, or we need class 'nbglmerMod' to extend 'glmerMod' ...
+    ## We do *not* want to use the 'useSc' slot (as above), because
+    ## although theta is in some sense a scale parameter, it's not
+    ## one in the formal sense (and isn't stored in the 'sigma' slot)
+    if (grepl("Negative Binomial",family(object)$family)) {
+        n <- n+1
+    }
+    return(n)
     ## TODO: how do we feel about counting the scale parameter ???
 }
 
@@ -1244,12 +1255,7 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, maxit = 10
                   length(rr$y))
 
     }
-    ## hacking around to try to get internals properly set up
-    ##  for refitting.  This helps, but not all the way ...
-    ## oldresp <- rr$y # set this above from before copy
-    ## rr$setResp(newresp)
-    ## rr$setResp(oldresp)
-    ## rr$setResp(newresp)
+
     if (isGLMM(object)) {
         GQmat <- GHrule(nAGQ)
         if (nAGQ <= 1) {
@@ -1259,12 +1265,6 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, maxit = 10
                              grpFac = object@flist[[1]])
         }
     }
-    ## .Call(glmerLaplace, pp$ptr(), rr$ptr(), nAGQ,
-    ## control$tolPwrss, as.integer(30), verbose)
-    ##              nAGQ,
-    ##              control$tolPwrss, as.integer(30), # maxit = 30
-    ##              verbose)
-    ##        lp0         <- pp$linPred(1) # each pwrss opt begins at this eta
 
     devlist <-
 	if (isGLMM(object)) {

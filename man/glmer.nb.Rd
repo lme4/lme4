@@ -72,7 +72,10 @@ m.nb <- glmer.nb(y ~ f1*f2 + (1|g), data=dd, verbose=TRUE)
 m.nb
 ## The neg.binomial theta parameter:
 getME(m.nb, "glmer.nb.theta")
-
+LL <- logLik(m.nb)
+## mixed model has 1 additional parameter (RE variance)
+stopifnot(attr(LL,"df")==attr(logLik(m.glm),"df")+1)
+          
 plot(m.nb, resid(.) ~ g)# works, as long as data 'dd' is found
 }
 \keyword{models}
