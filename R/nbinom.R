@@ -47,15 +47,18 @@ optTheta <- function(object,
 {
   lastfit <- object
   it <- 0L
-  optval <- optimize(function(t) {
+  NBfun <- function(t) {
       ## Kluge to retain last value and evaluation count {good enough for ..}
       dev <- -2*logLik(lastfit <<- refitNB(lastfit,
                                            theta = exp(t),
                                            control = control))
       it <<- it+1L
-      if (verbose) cat(sprintf("%2d: th=%#15.10g, dev=%#14.8f\n", it, exp(t), dev))
+      if (verbose)
+          cat(sprintf("%2d: th=%#15.10g, dev=%#14.8f, beta[1]=%#14.8f\n",
+                      it, exp(t), dev, lastfit@beta[1]))
       dev
-  }, interval=interval, tol=tol)
+  }
+  optval <- optimize(NBfun, interval=interval, tol=tol)
   stopifnot(all.equal(optval$minimum, log(getNBdisp(lastfit))))
   ## FIXME: return eval count info somewhere else? MM: new slot there, why not?
   attr(lastfit,"nevals") <- it
