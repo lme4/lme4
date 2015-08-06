@@ -251,7 +251,7 @@ test_that("predict", {
     expect_equal(predict(fmPix,  newdata = Pixel[ii,]), fitted(fmPix )[ii])
     expect_equal(predict(fmPixS, newdata = Pixel[ii,]), fitted(fmPixS)[ii])
 
-    oset.seed(7); n <- 100; y <- rnorm(n)
+    set.seed(7); n <- 100; y <- rnorm(n)
     dd <- data.frame(id = factor(sample(10, n, replace = TRUE)),
                      x1 = 1, y = y, x2 = rnorm(n, mean = sign(y)))
     expect_message(m <- lmer(y ~ x1 + x2 + (1 | id), data = dd),
