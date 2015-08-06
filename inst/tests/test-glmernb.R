@@ -11,8 +11,8 @@ test_that("basic", {
    dd$y <- rnbinom(nrow(dd), mu = mu, size = 0.5)
    require("MASS")
    m.glm <- glm.nb(y ~ f1*f2, data=dd)
-   library(lme4)
-   m.nb <- glmer.nb(y ~ f1*f2 + (1|g), data=dd)
+   m.nb <- glmer.nb(y ~ f1*f2 + (1|g), data=dd, verbose=TRUE)
    expect_null(m.nb@call$verbose)  ## check: GH #321
-   expect_equal(fixef(m.nb),coef(m.glm),tol=1e-5)
+   expect_equal(fixef(m.nb),
+                coef (m.glm), tol=1e-5)
 })
