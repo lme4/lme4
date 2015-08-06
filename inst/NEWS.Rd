@@ -9,15 +9,34 @@
     \itemize{
       \item \code{terms} and \code{formula} methods now have
       \code{random.only} options
+      \item \code{getME} gains a \code{glmer.nb.theta} option
+      \item \code{simulate} now works for \code{glmer.nb} models
+      (Github #284: idea from @aosmith16)
     }
+  }
+  \subsection{USER-VISIBLE CHANGES}
+  \itemize{
+    \item explicit \code{maxit} arguments for various functions
+    (\code{refit}, \code{mkGlmerDevfun}, ...)
   }
   \subsection{BUG FIXES}{
     \itemize{
       \item prediction and simulation now work when random-effects
       terms have data-dependent bases (e.g., \code{poly(.)} or
       \code{ns(.)} terms) (Github #313, Edgar Gonzalez)
+      \item \code{logLik} for \code{glmer.nb} models now
+      includes the overdispersion parameter in the
+      parameter count (\code{df} attribute)
+      \item \code{lmList} handles offsets and weights better
+      \item lots of fixes to \code{glmer.nb} (Github #176, #266, #287, #318)
     }
   }
+  \subsection{CRAN-COMPATIBILITY UPDATES}
+  \itemize{
+    \item import functions from base packages to pass CRAN checks
+    }
+  }
+
 }
 \section{CHANGES IN VERSION 1.1-8}{
   \subsection{NEW FEATURES}{
@@ -87,7 +106,7 @@
       \item As with \code{lm()}, users now get an error for non-finite
       (\code{Inf}, \code{NA}, or \code{NaN})
       values in the response unless \code{na.action} is set to
-      exclude or omit them. Github #310
+      exclude or omit them (Github #310)
 
     }
   }
