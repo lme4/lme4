@@ -137,8 +137,8 @@ if(FALSE) { ## Hadley broke this
     mod <- glmer(presabs~predictor+(1|species),family=binomial,
                  radinger_dat)
     expect_is(mod,"merMod")
-    ## TODO: is this reliable across platforms or do we have to loosen?
-    expect_equal(unname(fixef(mod)),c(0.5425528,6.4289962))
+    ## tolerance: 32-bit Windows (CRAN) reported ave.diff of 5.33e-8
+    expect_equal(unname(fixef(mod)), c(0.5425528,6.4289962), tolerance = 4e-7)
     set.seed(101)
     ## complete separation case
     d <- data.frame(y=rbinom(1000,size=1,p=0.5),
