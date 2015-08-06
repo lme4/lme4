@@ -35,8 +35,6 @@
   \itemize{
     \item import functions from base packages to pass CRAN checks
     }
-  }
-
 }
 \section{CHANGES IN VERSION 1.1-8}{
   \subsection{NEW FEATURES}{
