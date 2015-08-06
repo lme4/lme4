@@ -237,19 +237,21 @@ test_that("predict", {
         silly <- glmer(Sex ~ distance + (1|Subject),
                        data = Orthodont, family = binomial)
         sillypred <- data.frame(distance = c(20, 25))
-        options(warn = 2) # no warnings!
+        op <- options(warn = 2) # no warnings!
         ps <- predict(silly, sillypred, re.form=NA, type = "response")
         expect_is(ps, "numeric")
         expect_equal(unname(ps), c(0.999989632, 0.999997201))
         ## a case with interactions (failed in one temporary version):
-        expect_warning(fmPixS <<- update(fmPix, .~. + Side), "nearly unidentifiable")
+	expect_warning(fmPixS <<- update(fmPix, .~. + Side),
+		       "nearly unidentifiable|unable to evaluate scaled gradient|failed to converge")
+	## (1|2|3); 2 and 3 seen (as Error??) on CRAN's Windows 32bit
+	options(op)
     }
     set.seed(1); ii <- sample(nrow(Pixel), 16)
     expect_equal(predict(fmPix,  newdata = Pixel[ii,]), fitted(fmPix )[ii])
     expect_equal(predict(fmPixS, newdata = Pixel[ii,]), fitted(fmPixS)[ii])
-    options(warn = 0)
 
-    set.seed(7); n <- 100; y <- rnorm(n)
+    oset.seed(7); n <- 100; y <- rnorm(n)
     dd <- data.frame(id = factor(sample(10, n, replace = TRUE)),
                      x1 = 1, y = y, x2 = rnorm(n, mean = sign(y)))
     expect_message(m <- lmer(y ~ x1 + x2 + (1 | id), data = dd),
