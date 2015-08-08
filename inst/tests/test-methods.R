@@ -236,17 +236,18 @@ test_that("predict", {
         data("Orthodont", package = "MEMSS") # (differently "coded" from the 'default' "nlme" one)
         silly <- glmer(Sex ~ distance + (1|Subject),
                        data = Orthodont, family = binomial)
-        sillypred <- data.frame(distance = c(20, 25))
-        op <- options(warn = 2) # no warnings!
-        ps <- predict(silly, sillypred, re.form=NA, type = "response")
-        expect_is(ps, "numeric")
-        expect_equal(unname(ps), c(0.999989632, 0.999997201))
-        ## a case with interactions (failed in one temporary version):
-	expect_warning(fmPixS <<- update(fmPix, .~. + Side),
-		       "nearly unidentifiable|unable to evaluate scaled gradient|failed to converge")
-	## (1|2|3); 2 and 3 seen (as Error??) on CRAN's Windows 32bit
-	options(op)
     }
+    sillypred <- data.frame(distance = c(20, 25))
+    op <- options(warn = 2) # no warnings!
+    ps <- predict(silly, sillypred, re.form=NA, type = "response")
+    expect_is(ps, "numeric")
+    expect_equal(unname(ps), c(0.999989632, 0.999997201))
+    ## a case with interactions (failed in one temporary version):
+    expect_warning(fmPixS <<- update(fmPix, .~. + Side),
+                   "nearly unidentifiable|unable to evaluate scaled gradient|failed to converge")
+	## (1|2|3); 2 and 3 seen (as Error??) on CRAN's Windows 32bit
+    options(op)
+    
     set.seed(1); ii <- sample(nrow(Pixel), 16)
     expect_equal(predict(fmPix,  newdata = Pixel[ii,]), fitted(fmPix )[ii])
     expect_equal(predict(fmPixS, newdata = Pixel[ii,]), fitted(fmPixS)[ii])
@@ -340,6 +341,7 @@ test_that("simulate", {
     expect_equal(fivenum(sp1[,1]),
 		 c(20.9412, 22.5805, 23.5575, 24.6095, 27.6997), tol=1e-5)
     ## Pixel example
+    
     expect_identical(dim(simulate(fmPixS)), c(nPix, 1L))
     expect_identical(dim(simulate(fmPix )), c(nPix, 1L))
 
