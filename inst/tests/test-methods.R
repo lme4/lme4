@@ -195,7 +195,8 @@ test_that("confint", {
     expect_equal(dimnames(ci1.p.n),dimnames(ci1.w.n))
     expect_equal(dimnames(ci1.p.n),dimnames(ci1.b.n))
 
-    ## test case of slightly wonky (spline fit fails) but monotonic profiles
+    ## test case of slightly wonky (spline fit fails) but monotonic profiles:
+    ## 
     simfun <- function(J,n_j,g00,g10,g01,g11,sig2_0,sig01,sig2_1){
         N <- sum(rep(n_j,J))  
         x <- rnorm(N)         
@@ -215,7 +216,8 @@ test_that("confint", {
     expect_warning(pp <- profile(fit,"theta_",quiet=TRUE),
                    "non-monotonic profile")
     expect_warning(cc <- confint(pp),"falling back to linear interpolation")
-    expect_equal(unname(cc[2,]),c(0,0.5427609),tolerance=1e-5)
+    ## very small/unstable problem, needs large tolerance
+    expect_equal(unname(cc[2,]),c(0,0.5427609),tolerance=1e-2)
 
 })
 
