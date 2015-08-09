@@ -294,7 +294,7 @@ profile.merMod <- function(fitted,
 		forspl <- interpSpline(form, bres, na.action=na.omit)),
 		     error=function(e)e)
         if (inherits(bakspl, "error"))
-            warning("non-monotonic profile")
+            warning("non-monotonic profile for ",pname)
         ## return:
         namedList(bres,bakspl,forspl) # namedList() -> lmerControl.R
 
@@ -693,7 +693,11 @@ format.perc <- function (probs, digits) {
 
 ##' confint() method for  our profile() results 'thpr'
 ##' @importFrom stats confint
-confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
+confint.thpr <- function(object, parm, level = 0.95, zeta,
+                         ## tolerance for non-monotonic profiles
+                         ## (raw values, not splines)
+                         non.mono.tol=1e-2, 
+                         ...)
 {
     bak <- attr(object, "backward")
     ## fallback strategy for old profiles that don't have a lower/upper
@@ -720,12 +724,24 @@ confint.thpr <- function(object, parm, level = 0.95, zeta, ...)
         ## predy is used in many places and it's much harder to
         ## tell in general whether an NA indicates a lower or an
         ## upper bound ...
+        badprof <- FALSE
+        p <- rep(NA,2)
 	if (!inherits(b <- bak[[parm[i]]], "error")) {
             p <- predy(b, zeta)
-            if (is.na(p[1])) p[1] <- lower[i]
-            if (is.na(p[2])) p[2] <- upper[i]
-            ci[i,] <- p
+        } else {
+            obj1 <- object[object$.par==parm[[i]],c(parm[[i]],".zeta")]
+            if (min(diff(obj1[,2])<(-non.mono.tol))) {
+                badprof <- TRUE
+                warning("non-monotonic profile for ",parm[i])
+            } else {
+                warning("bad spline fit for ",parm[i],": falling back to linear interpolation")
+                p <- approxfun(obj1[,2],obj1[,1])(zeta)
+            }
         }
+        if (is.na(p[1])) p[1] <- lower[i]
+        if (is.na(p[2])) p[2] <- upper[i]
+        ci[i,] <- p
+        ## spline is not there
     }
     ci
 }

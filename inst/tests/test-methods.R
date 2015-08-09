@@ -194,6 +194,29 @@ test_that("confint", {
                               c("2.5 %", "97.5 %")))
     expect_equal(dimnames(ci1.p.n),dimnames(ci1.w.n))
     expect_equal(dimnames(ci1.p.n),dimnames(ci1.b.n))
+
+    ## test case of slightly wonky (spline fit fails) but monotonic profiles
+    simfun <- function(J,n_j,g00,g10,g01,g11,sig2_0,sig01,sig2_1){
+        N <- sum(rep(n_j,J))  
+        x <- rnorm(N)         
+        z <- rnorm(J)         
+        mu <- c(0,0)
+        sig <- matrix(c(sig2_0,sig01,sig01,sig2_1),ncol=2)
+        u   <- MASS::mvrnorm(J,mu=mu,Sigma=sig)
+        b_0j <- g00 + g01*z + u[,1]
+        b_1j <- g10 + g11*z + u[,2]
+        y <- rep(b_0j,each=n_j)+rep(b_1j,each=n_j)*x + rnorm(N,0,sqrt(0.5))
+        sim_data <- data.frame(Y=y,X=x,Z=rep(z,each=n_j),
+                               group=rep(1:J,each=n_j))
+    } 
+    set.seed(102)
+    dat <- simfun(10,5,1,.3,.3,.3,(1/18),0,(1/18))
+    fit <- lmer(Y~X+Z+X:Z+(X||group),data=dat)
+    expect_warning(pp <- profile(fit,"theta_",quiet=TRUE),
+                   "non-monotonic profile")
+    expect_warning(cc <- confint(pp),"falling back to linear interpolation")
+    expect_equal(unname(cc[2,]),c(0,0.5427609),tolerance=1e-5)
+
 })
 
 
