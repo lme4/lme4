@@ -3,6 +3,8 @@ library("lme4")
 L <- load(system.file("testdata", "lme-tst-fits.rda",
                       package="lme4", mustWork=TRUE))
 
+## FIXME: should test for old R versions, skip reloading test data in that
+## case?
 fm0 <- fit_sleepstudy_0
 fm1 <- fit_sleepstudy_1
 fm2 <- fit_sleepstudy_2
@@ -219,6 +221,18 @@ test_that("confint", {
     ## very small/unstable problem, needs large tolerance
     expect_equal(unname(cc[2,]),c(0,0.5427609),tolerance=1e-2)
 
+    badprof <- readRDS(system.file("testdata","badprof.rds",
+                                   package="lme4"))
+    expect_warning(cc <- confint(badprof), "falling back to linear")
+    expect_equal(cc,
+        structure(c(0, -1, 2.50856219044636, 48.8305727797906, NA, NA, 
+                    33.1204478717389, 1, 7.33374326592662, 68.7254711217912,
+                    -6.90462047196017, 
+                    NA), .Dim = c(6L, 2L),
+                  .Dimnames = list(c(".sig01", ".sig02", 
+                  ".sig03", ".sigma", "(Intercept)", "cYear"),
+                  c("2.5 %", "97.5 %"))),
+                 tol=1e-3)
 })
 
 

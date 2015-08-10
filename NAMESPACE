@@ -6,7 +6,8 @@ importFrom("grid", gpar, viewport)
 importFrom("splines", backSpline, interpSpline, periodicSpline)
 importFrom("methods", as, getDataPart, is, new, rbind2, show, slot, slotNames)
 importFrom("stats",
-           AIC, BIC, anova, approx, as.formula, asOneSidedFormula, ave,
+           AIC, BIC, anova, approx, approxfun,
+           as.formula, asOneSidedFormula, ave,
            coef, confint, cov2cor, delete.response,
            deviance, df.residual, dnorm, drop.scope, drop1, extractAIC,
            family, fitted, formula, gaussian, getCall, glm,

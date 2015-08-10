@@ -706,6 +706,8 @@ confint.thpr <- function(object, parm, level = 0.95, zeta,
         lower <- rep(NA,length(parm))
     if (is.null(upper <- attr(object,"upper")))
         upper <- rep(NA,length(parm))
+    ## FIXME: work a little harder to add -Inf/Inf for fixed effect
+    ##  parameters?  (Should only matter for really messed-up profiles)
     bnms <- names(bak)
     if (missing(parm)) parm <- bnms
     else if (is.numeric(parm)) parm <- bnms[parm]
@@ -730,7 +732,10 @@ confint.thpr <- function(object, parm, level = 0.95, zeta,
             p <- predy(b, zeta)
         } else {
             obj1 <- object[object$.par==parm[[i]],c(parm[[i]],".zeta")]
-            if (min(diff(obj1[,2])<(-non.mono.tol))) {
+            if (all(is.na(obj1[,2]))) {
+                badprof <- TRUE
+                warning("bad profile for ",parm[i])
+            } else if (min(diff(obj1[,2])<(-non.mono.tol),na.rm=TRUE)) {
                 badprof <- TRUE
                 warning("non-monotonic profile for ",parm[i])
             } else {
@@ -738,10 +743,11 @@ confint.thpr <- function(object, parm, level = 0.95, zeta,
                 p <- approxfun(obj1[,2],obj1[,1])(zeta)
             }
         }
-        if (is.na(p[1])) p[1] <- lower[i]
-        if (is.na(p[2])) p[2] <- upper[i]
+        if (!badprof) {
+            if (is.na(p[1])) p[1] <- lower[i]
+            if (is.na(p[2])) p[2] <- upper[i]
+        }
         ci[i,] <- p
-        ## spline is not there
     }
     ci
 }
