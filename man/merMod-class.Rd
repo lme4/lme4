@@ -90,7 +90,7 @@ use.hessian = NULL, \dots)
     anova table.}
   \item{scale}{Not currently used (see \code{\link{extractAIC}}).}
   \item{k}{see \code{\link{extractAIC}}.}
-  \item{REML}{Logical. If \code{TRUE}, return the restricted log-likelihood 
+  \item{REML}{Logical. If \code{TRUE}, return the restricted log-likelihood
     rather than the log-likelihood.  If \code{NULL} (the default),
     set \code{REML} to \code{isREML(object)} (see \code{\link{isREML}}).}
   \item{fixed.only}{logical indicating if only the fixed effects
@@ -100,11 +100,16 @@ use.hessian = NULL, \dots)
     whether random components only are sought. (Trying to specify
     \code{fixed.only} and \code{random.only} at the same time
     will produce an error.)}
-  \item{correlation}{(logical) for \code{vcov}, indicates whether the
-    correlation matrix as well as the variance-covariance matrix is
-    desired; for \code{print.summary.merMod}, indicates whether the
-    correlation matrix of the fixed-effects parameters should be
-    printed.}
+  \item{correlation}{(logical)
+    for \code{vcov}, indicates whether the correlation matrix as well as
+    the variance-covariance matrix is desired;
+    for \code{summary.merMod}, indicates whether the correlation matrix
+    should be computed and stored along with the covariance;
+    for \code{print.summary.merMod}, indicates whether the correlation
+    matrix of the fixed-effects parameters should be printed.  In the
+    latter case, when \code{NULL} (the default), the correlation matrix
+    is printed when it has been computed by \code{summary(.)}, and when
+    \eqn{p <= 20}.}% and '20' can be changed by  options(lme4.summary.cor.max = <n>)
   \item{use.hessian}{(logical) indicates whether to use the
     finite-difference Hessian of the deviance function to compute
     standard errors of the fixed effects, rather estimating
@@ -188,7 +193,7 @@ The following S3 methods with arguments given above exist (this list is currentl
       }
 }
 \section{Deviance and log-likelihood of GLMMs}{
-  
+
   One must be careful when defining the deviance of a GLM.  For example,
   should the deviance be defined as minus twice the log-likelihood or
   does it involve subtracting the deviance for a saturated model?  To
@@ -231,19 +236,19 @@ The following S3 methods with arguments given above exist (this list is currentl
   %% We define the conditional likelihood as the density of the response
   %% variable, \eqn{y}, conditional on the spherical random effects,
   %% \eqn{u}:
-  
+
   %% \deqn{f_{\theta,\beta}(y|u)}{f(y|u)}
-  
+
   %% which depends on the fixed effect and covariance parameters,
   %% \eqn{\beta} and \eqn{\theta}.  We define the likelihood itself as:
-  
+
   %% \deqn{f_{\theta,\beta}(y) = \int f_{\theta,\beta}(y|u) f(u)}{f(y) = integral(f(y|u)f(u))}
-  
+
   %% where \eqn{f(u)} is an independent multivariate normal.  It is not
   %% typically possible to evaluate this integral for GLMMs.  In
   %% \code{lme4} we approximate it using the Laplace approximation and
   %% adaptive Gauss-Hermite quadrature.
-  
+
   %% For canonical links, the Laplace approximation to the log-likelihood
   %% is:
 
@@ -268,7 +273,7 @@ The following S3 methods with arguments given above exist (this list is currentl
   %% quadrature node (\code{\link{GHrule}}), and \eqn{u_{jk}} is the value
   %% of the spherical random effect coefficient associated with the
   %% \eqn{j}th level of the grouping factor and \eqn{k}th quadrature node.
-  
+
 }
 \section{Slots}{
   \describe{
