@@ -1634,7 +1634,9 @@ getLlikAIC <- function(object, cmp = object@devcomp$cmp) {
     }
 }
 
-.summary.cor.max <- 20
+##  options(lme4.summary.cor.max = 20)  --> ./hooks.R
+##                                           ~~~~~~~~
+## was      .summary.cor.max <- 20    a lme4-namespace hidden global variable
 
 ## This is modeled a bit after	print.summary.lm :
 ## Prints *both*  'mer' and 'merenv' - as it uses summary(x) mainly
@@ -1662,26 +1664,29 @@ print.summary.merMod <- function(x, digits = max(3, getOption("digits") - 3),
 	cat("\nFixed effects:\n")
 	printCoefmat(x$coefficients, zap.ind = 3, #, tst.ind = 4
 		     digits = digits, signif.stars = signif.stars)
+        ## do not show correlation when   summary(*, correlation=FALSE)  was used:
+        hasCor <- !is.null(VC <- x$vcov) && !is.null(VC@factors$correlation)
 	if(is.null(correlation)) { # default
-	    correlation <- p <= .summary.cor.max
-	    if(!correlation) {
+	    cor.max <- getOption("lme4.summary.cor.max")
+	    correlation <- hasCor && p <= cor.max
+	    if(!correlation && p > cor.max) {
 		nam <- deparse(substitute(x))
 		if(length(nam) > 1 || nchar(nam) >= 32) nam <- "...."
 		message(sprintf(paste(
 		    "\nCorrelation matrix not shown by default, as p = %d > %d.",
 		    "Use print(%s, correlation=TRUE)  or",
 		    "	 vcov(%s)	 if you need it\n", sep = "\n"),
-				p, .summary.cor.max, nam, nam))
+				p, cor.max, nam, nam))
 	    }
 	}
 	else if(!is.logical(correlation)) stop("'correlation' must be NULL or logical")
 	if(correlation) {
-	    if(is.null(VC <- x$vcov)) VC <- vcov(x, correlation = TRUE)
+	    if(is.null(VC)) VC <- vcov(x, correlation = TRUE)
 	    corF <- VC@factors$correlation
-	    if (is.null(corF)) {
+	    if (is.null(corF)) { # can this still happen?
 		message("\nCorrelation of fixed effects could have been required in summary()")
 		corF <- cov2cor(VC)
-	    } ## else {
+	    }
 	    p <- ncol(corF)
 	    if (p > 1) {
 		rn <- rownames(x$coefficients)
@@ -2188,7 +2193,7 @@ formatVC <- function(varc, digits = max(3, getOption("digits") - 2),
 
 ##' @S3method summary merMod
 summary.merMod <- function(object,
-                           correlation = (p <= .summary.cor.max),
+                           correlation = (p <= getOption("lme4.summary.cor.max")),
                            use.hessian = NULL,
                            ...)
 {
