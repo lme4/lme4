@@ -17,28 +17,45 @@
 \value{
   a \code{\link{list}} with components
   \item{Zt}{transpose of the sparse model matrix for the random effects}
-  \item{Lambdat}{transpose of the sparse relative covariance factor}
+  \item{theta}{initial values of the covariance parameters}
   \item{Lind}{an integer vector of indices determining the mapping of
     the elements of the \code{theta} vector to the \code{"x"} slot of
     \code{Lambdat}}
-  \item{theta}{initial values of the covariance parameters}
+  \item{Gp}{}
   \item{lower}{lower bounds on the covariance parameters}
+  \item{Lambdat}{transpose of the sparse relative covariance factor}
   \item{flist}{list of grouping factors used in the
     random-effects terms}
   \item{cnms}{a list of column names
     of the random effects according to the grouping factors}
+  \item{Ztlist}{list of components of the transpose of the
+    random-effects model matrix, separated by random-effects term}
 }
 \seealso{
   Other utilities: \code{\link{findbars}},
   \code{\link{mkRespMod}}, \code{\link{nlformula}},
-  \code{\link{nobars}}, \code{\link{subbars}}
+  \code{\link{nobars}}, \code{\link{subbars}}.
+  \code{\link{getME}} can retrieve these components
+  from a fitted model, although their values and/or forms
+  may be slightly different in the final fitted model from
+  their original values as returned from \code{mkReTrms}.
 }
 \examples{
 data("Pixel", package="nlme")
 mform <- pixel ~ day + I(day^2) + (day | Dog) + (1 | Side/Dog)
 (bar.f <- findbars(mform)) # list with 3 terms
-%% >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> FIXME
-## Unfinished _FIXME_
-## Pfrm <- model.frame(bar.f, data = Pixel)
+mf <- model.frame(subbars(mform),data=Pixel)
+rt <- mkReTrms(bar.f,mf)
+names(rt)
 }
+%fm1 <- lmer(mform,Pixel)
+%rt2 <- getME(fm1,names(rt))
+%for (i in seq_along(rt))
+%    cat(names(rt)[[i]],
+%        isTRUE(all.equal(rt[[i]],rt2[[i]])),
+%        "\n")
+% ## theta and Lambda components have the same structure, but have
+% ## been updated in the fitting; flist is a data frame in reTrms
+% ## but converted to a list; Ztlist is quite different (has been
+% ## decomposed in getME()
 \keyword{utilities}
