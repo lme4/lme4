@@ -50,7 +50,7 @@ all.equal(m.symth5@beta,(m.symth5.r <- refit(m.symth5))@beta)  ## fails
 ## Surprised by difference between specifying as variable vs.
 ##  number; could it be a deep-copying problem?
 
-if (FALSE) {  ## slow
+## if (FALSE) {  ## slow
     mfun <- function(x) isTRUE(all.equal(x,m.symth@beta))
     rmat <- matrix(ncol=10,nrow=length(fixef(m.symth)))
     for (i in 1:10) {
@@ -63,14 +63,17 @@ if (FALSE) {  ## slow
     ## results highly unstable:
     ##
     apply(rmat,2,mfun)
+    ##  Ubuntu 14.04 64-bit:
     ##  [1]  TRUE  TRUE  TRUE  TRUE  TRUE FALSE FALSE  TRUE FALSE FALSE
+    ##  Ubuntu 12.04 32-bit:
+    ##  [1]  TRUE  TRUE  TRUE FALSE FALSE FALSE FALSE  TRUE FALSE FALSE
     ##
     ## bad fits take longer (>30 seconds vs ~4 seconds on slow machine)
     ## pattern is repeatable (so probably not memory corruption??)
     ## numeric instability is surprising; does it happen on all platforms
     ## but in slightly different places on each?
 
-}
+## }
 ## try with different optimizer (red herring??)
 ## 
 ##  m4 <- update(m1,family=negative.binomial(theta=th),
