@@ -1,15 +1,67 @@
-## private data: request access from Alex Whitworth for debugging purposes
-load("PXX_BenBolkerExDat.Rdata")  
 
 library(lme4)
 ## source("./F01_predict_funcs.R")
+
+## private data: request access from Alex Whitworth for debugging purposes
+(load("PXX_BenBolkerExDat.Rdata")  )
+## ".Random.seed" "dat1" "dat2" "mod1" "mod2"
+
+## __but__ missing  'dat' which was the data used to *fit*  'mod1'.
+##
+## ==> not lme4-reproducible from data
+mod1
+## From looking at the above
+## using the data from the above load(..)
+## using 'dat1'  gives quite a different result
+mod1. <- lmer(log(physical + 2000) ~ 0 + geography:format2 + geography:yr_since_rel +
+                  geography:xmas + (1 | geography/title),
+              data=dat1)
+##
+## fixed-effect model matrix is rank deficient so dropping 13 columns / coefficients
+## Warning messages:
+## 1: In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
+##   unable to evaluate scaled gradient
+## 2: In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
+##   Model failed to converge: degenerate  Hessian with 1 negative eigenvalues
+
+
+## {MM: the above model does what we teach you should **not** do:
+##      no intercept, no main effects, but 2-way interactions...}
+
+## ----------- Very basic  Data Analysis ---------------------------------------
+dat1 <- transform(dat1,
+                  title   = factor(title),
+                  format2 = factor(format2))
+summary(dat1)
+## leave away the non-sense columns
+dat1 <- dat1[, !(names(dat1) %in% c("digital","licensing","streaming", "NA."))]
+str(dat1 $ title_format2)
+## Factor w/ 78 levels "At The Movies.CD",..: 17 19 5 4 16 22 10 2 15 26 ...
+str(with(dat1, title:format2))
+## Factor w/ 78 levels "At The Movies:CD",..: 49 55 13 10 46 64 28 4 43 76 ...
+##==> ok, don't need that either
+dat1 <- dat1[, names(dat1) != "title_format2"]
+
+summary(dat1) # geography has a level that does *not* appear in the data
+head(sort(table(dat1 $ title)))# title has 4 levels that appear only once
+
+(T01 <- 0 != xtabs(~ albumid + title, data = dat1, sparse=TRUE))
+## there are  three titles which come under two different albumid's ...
+which(colSums(T01) != 1)
+## ----------------------------END {very basic Data Analysis} ------------------
+
+
 
 ## this is the problematic statement:
 predict(mod1, dat1, allow.new.levels=TRUE)
 ## -> Error in X %*% fixef(object) : non-conformable arguments
 
+## but this works fine
+predict(mod1., dat1, allow.new.levels=TRUE)
+
+
 (form1 <- formula(mod1))
-## log(physical + 2000) ~ 0 + geography:format2 + geography:yr_since_rel + 
+## log(physical + 2000) ~ 0 + geography:format2 + geography:yr_since_rel +
 ##     geography:xmas + (1 | geography/title)
 
 ## count levels ...
@@ -59,7 +111,7 @@ setdiff(c1,c0)
 
 ## this could fix it, but we shouldn't have to?
 X <- X[,colnames(X0)]
-       
+
 ## attempt at a reproducible example
 dd <- expand.grid(f=LETTERS[1:3],g=letters[1:3],h=1:3,rep=1:10)
 dd <- subset(dd,!(f=="A" & g=="a"))
@@ -74,7 +126,7 @@ predict(m1,newdd)  ## works fine without hack because X has col.dropped
 ## refit with extracted data
 dat2 <- model.frame(mod1)
 names(dat2)[1] <- "y"  ## response has an awkward name
-form2 <- y ~ 0 + geography:format2 + geography:yr_since_rel + 
+form2 <- y ~ 0 + geography:format2 + geography:yr_since_rel +
     geography:xmas + (1 | geography/title)
 m2 <- lmer(form2,data=dat2)
 ## fixed-effect model matrix is rank deficient
