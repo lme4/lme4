@@ -696,11 +696,18 @@ nlformula <- function(mc) {
 ## }
 ################################################################################
 
-.minimalOptinfo <- function() {
-    list(conv = list(
-             opt = 0L,
-             lme4 = list(messages = character(0))))
-}
+.minimalOptinfo <- function()
+    list(conv = list(opt = 0L,
+                     lme4 = list(messages = character(0))))
+
+.optinfo <- function(opt, lme4conv=NULL)
+    list(optimizer = attr(opt, "optimizer"),
+	 control   = attr(opt, "control"),
+	 derivs    = attr(opt, "derivs"),
+	 conv      = list(opt = opt$conv, lme4 = lme4conv),
+	 feval     = if (is.null(opt$feval)) NA else opt$feval,
+	 warnings  = attr(opt, "warnings"),
+	 val       = opt$par)
 
 ##' Potentically needed in more than one place, be sure to keep consistency!
 ##' hack (NB families have weird names) from @aosmith16; then corrected
@@ -717,6 +724,8 @@ hasNoScale <- function(family)
     any(substr(family$family, 1L, 12L)
         == c("poisson", "binomial", "negative.bin", "Negative Bin"))
 
+
+
 ##--> ../man/mkMerMod.Rd ---Create a merMod object
 ##' @param rho the environment of the objective function
 ##' @param opt the value returned by the optimizer
@@ -727,7 +736,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
               is(pp <- rho$pp, "merPredD"),
               is(resp <- rho$resp, "lmResp"),
               is.list(opt), "par" %in% names(opt),
-              c("conv","fval") %in% substr(names(opt),1,4), ## "conv[ergence]", "fval[ues]"
+              c("conv", "fval") %in% substr(names(opt),1,4), ## "conv[ergence]", "fval[ues]"
               is.list(reTrms), c("flist", "cnms", "Gp", "lower") %in% names(reTrms),
               length(rcl <- class(resp)) == 1)
     n    <- nrow(pp$V)
@@ -758,7 +767,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
     ## weights <- resp$weights
     beta    <- pp$beta(fac)
     ## rescale
-    if (!is.null(sc <- attr(pp$X,"scaled:scale"))) {
+    if (!is.null(sc <- attr(pp$X, "scaled:scale"))) {
         warning("auto(un)scaling not yet finished/tested")
         ## FIXME: test/handle no-intercept models
         ##   (only need to worry if we do centering as well as scaling)
@@ -769,7 +778,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
         beta2[names(sc)] <- sc*beta2[names(sc)]
         beta <- beta2
     }
-    if (!is.null(attr(pp$X,"scaled:center"))) {
+    if (!is.null(attr(pp$X, "scaled:center"))) {
         warning("auto(un)centering not yet implemented")
     }
     #sigmaML <- pwrss/sum(weights)
@@ -797,14 +806,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
         u=if (trivial.y) rep(NA_real_,nrow(pp$Zt)) else pp$u(fac),
         lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims),
         pp=pp, resp=resp,
-	optinfo = list (optimizer= attr(opt,"optimizer"),
-			control	 = attr(opt,"control"),
-			derivs	 = attr(opt,"derivs"),
-			conv  = list(opt=opt$conv, lme4=lme4conv),
-			feval = if (is.null(opt$feval)) NA else opt$feval,
-			warnings = attr(opt,"warnings"),
-			val = opt$par)
-        )
+	optinfo = .optinfo(opt, lme4conv))
 }## {mkMerMod}
 
 ## generic argument checking
@@ -824,9 +826,11 @@ checkArgs <- function(type,...) {
         ## (different meanings/hints depending on glmer vs lmer)
 	if (!is.null(l...[["method"]])) {
             msg <- paste("Argument", sQuote("method"), "is deprecated.")
-            if (type=="lmer") msg <- paste(msg,"Use the REML argument to specify ML or REML estimation.")
-            if (type=="glmer") msg <- paste(msg,"Use the nAGQ argument to specify Laplace (nAGQ=1) or adaptive",
-                "Gauss-Hermite quadrature (nAGQ>1).  PQL is no longer available.")
+	    if (type == "lmer")
+		msg <- paste(msg, "Use the REML argument to specify ML or REML estimation.")
+	    else if (type == "glmer")
+		msg <- paste(msg, "Use the nAGQ argument to specify Laplace (nAGQ=1) or adaptive",
+			     "Gauss-Hermite quadrature (nAGQ>1).  PQL is no longer available.")
             warning(msg,call.=FALSE)
             l... <- l...[names(l...) != "method"]
         }
@@ -908,7 +912,7 @@ checkFormulaData <- function(formula, data, checkLHS=TRUE, debug=FALSE) {
             OK <- allvarex(parent.frame(i))
             cat("vars exist in parent frame ", i)
             if (i == glEnv) cat(" (global)")
-            cat(" ",OK,"\n")
+            cat(" ",OK, "\n")
         }
         cat("vars exist in env of formula ", allvarex(denv), "\n")
     } ## if (debug)
@@ -957,8 +961,8 @@ testLevel <- function()
 ##' @return Sparse covariance matrix
 condVar <- function(object) {
   s2 <- sigma(object)^2
-  Lamt <- getME(object,"Lambdat")
-  L <- getME(object,"L")
+  Lamt <- getME(object, "Lambdat")
+  L <- getME(object, "L")
 
   ## never do it this way! fortune("SOOOO")
   #V <- solve(L, system = "A")
