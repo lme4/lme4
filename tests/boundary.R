@@ -9,15 +9,15 @@ library(testthat)
 if(!dev.interactive(orNone=TRUE)) pdf("boundary_plots.pdf")
 
 ## Stephane Laurent:
-dat <- read.csv(system.file("testdata","dat20101314.csv",package="lme4"))
+dat <- read.csv(system.file("testdata","dat20101314.csv", package="lme4"))
 
-fit <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat,
-              control=lmerControl(optimizer="Nelder_Mead"))
+fit   <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat,
+	      control= lmerControl(optimizer="Nelder_Mead"))
 fit_b <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat,
-              control=lmerControl(optimizer="bobyqa",restart_edge=FALSE))
+	      control= lmerControl(optimizer="bobyqa", restart_edge=FALSE))
 fit_c <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat,
-              control=lmerControl(optimizer="Nelder_Mead", restart_edge=FALSE,
-              check.conv.hess="ignore"))
+	      control= lmerControl(optimizer="Nelder_Mead", restart_edge=FALSE,
+				   check.conv.hess="ignore"))
 ## final fit gives degenerate-Hessian warning
 ## FIXME: use fit_c with expect_warning() as a check on convergence tests
 ## tolerance=1e-5 seems OK in interactive use but not in R CMD check ... ??
