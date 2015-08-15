@@ -1329,26 +1329,30 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
     rho$pp <- new(class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat,
                   Lind=xpp$Lind, theta=xpp$theta, n=nrow(xpp$X))
     devfun <- mkdevfun(rho, 0L) # also pass ?? (verbose, maxit, control)
-    opt <- optwrap(optimizer, devfun, x@theta, lower=x@lower,
-                   calc.derivs=TRUE)
-    ## FIXME: smarter calc.derivs rules
-    ##  opt <- bobyqa(x@theta, devfun, x@lower)
+    opt <- ## "smart" calc.derivs rules
+	if(optimizer == "bobyqa" && !any("calc.derivs" == names(list(...))))
+	    optwrap(optimizer, devfun, x@theta, lower=x@lower, calc.derivs=TRUE, ...)
+	else
+	    optwrap(optimizer, devfun, x@theta, lower=x@lower, ...)
+    ## FIXME: Should be able to call mkMerMod() here, and be done
     n <- length(rr$y)
     pp <- rho$pp
     p <- ncol(pp$X)
-    dims <- c(N=n, n=n, nmp=n-p, nth=length(pp$theta), p=p, q=nrow(pp$Zt),
-	      nAGQ=NA_integer_, useSc=1L, reTrms=length(x@cnms),
-	      spFe=0L, REML=0L, GLMM=0L, NLMM=0L)
+    dims <- c(N=n, n=n, p=p, nmp=n-p, q=nrow(pp$Zt), nth=length(pp$theta),
+	      useSc=1L, reTrms=length(x@cnms),
+	      spFe=0L, REML=0L, GLMM=0L, NLMM=0L)#, nAGQ=NA_integer_)
     wrss <- rho$resp$wrss()
     ussq <- pp$sqrL(1)
     pwrss <- wrss + ussq
     cmp <- c(ldL2=pp$ldL2(), ldRX2=pp$ldRX2(), wrss=wrss, ussq=ussq,
 	     pwrss=pwrss, drsum=NA, dev=opt$fval, REML=NA,
 	     sigmaML=sqrt(pwrss/n), sigmaREML=sqrt(pwrss/(n-p)))
-### FIXME: Should modify the call slot to set REML=FALSE.  It is
-### tricky to do so without causing the call to be evaluated
-    new("lmerMod", call=x@call, frame=x@frame, flist=x@flist,
+    ## modify the call  to have REML=FALSE. (without evaluating the call!)
+    cl <- x@call
+    cl[["REML"]] <- FALSE
+    new("lmerMod", call = cl, frame=x@frame, flist=x@flist,
 	cnms=x@cnms, theta=pp$theta, beta=pp$delb, u=pp$delu,
+	optinfo = .optinfo(opt),
 	lower=x@lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=rho$resp)
 }
 
@@ -1612,6 +1616,7 @@ getLlikAIC <- function(object, cmp = object@devcomp$cmp) {
 ## FIXME: print header ("Warnings:\n") ?
 ##  change position in output? comes at the very end, could get lost ...
 .prt.warn <- function(optinfo, summary=FALSE, ...) {
+    if(length(optinfo) == 0) return() # currently, e.g., from refitML()
     ## check all warning slots: print numbers of warnings (if any)
     cc <- optinfo$conv$opt
     msgs <- unlist(optinfo$conv$lme4$messages)
@@ -1620,12 +1625,12 @@ getLlikAIC <- function(object, cmp = object@devcomp$cmp) {
     nmsgs <- length(msgs)
     warnings <- optinfo$warnings
     nwarnings <- length(warnings)
-    if (cc>0 || nmsgs>0 || nwarnings>0) {
+    if (cc > 0 || nmsgs > 0 || nwarnings > 0) {
         if (summary) {
             cat(sprintf("convergence code %d; %d optimizer warnings; %d lme4 warnings",
                 cc,nmsgs,nwarnings),"\n")
         } else {
-            cat(sprintf("convergence code: %d",cc),
+            cat(sprintf("convergence code: %d", cc),
                 msgs,
                 unlist(warnings),
                 sep="\n")
