@@ -333,7 +333,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
 	fit.na.action <- NULL
         ## flow jumps to end for na.predict
     } else { ## newdata and/or re.form and/or newparams specified
-        X0 <- getME(object, "X")
+        X <- X0 <- getME(object, "X")
         X.col.dropped <- attr(X0, "col.dropped")
         ## modified from predict.glm ...
         if (is.null(newdata)) {
