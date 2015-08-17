@@ -333,8 +333,8 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
 	fit.na.action <- NULL
         ## flow jumps to end for na.predict
     } else { ## newdata and/or re.form and/or newparams specified
-        X <- X0 <- getME(object, "X")
-        X.col.dropped <- attr(X0, "col.dropped")
+        X <- getME(object, "X")
+        X.col.dropped <- attr(X, "col.dropped")
         ## modified from predict.glm ...
         if (is.null(newdata)) {
             ## Use original model 'X' matrix and offset
@@ -358,7 +358,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
                                  na.action=na.action,
                                  xlev=orig_levs)
             X <- model.matrix(RHS, data=mfnew,
-                              contrasts.arg=attr(X0,"contrasts"))
+                              contrasts.arg=attr(X,"contrasts"))
             ## hack to remove unused interaction levels?
             ## X <- X[,colnames(X0)]
             
