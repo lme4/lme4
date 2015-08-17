@@ -54,7 +54,7 @@ all.equal(m.symth5@beta,(m.symth5.r <- refit(m.symth5))@beta)  ## fails
     mfun <- function(x) isTRUE(all.equal(x,m.symth@beta))
     rmat <- matrix(ncol=10,nrow=length(fixef(m.symth)))
     for (i in 1:10) {
-        cat("*")
+        cat("*",i)
         m.numthXX <- update(m.base,family=negative.binomial(theta=0.4826813+i*1e-10))
         tt <- system.time(rmat[,i] <- refit(m.numthXX)@beta)
         cat(" ",mfun(rmat[,i]),tt["elapsed"],"\n")
@@ -86,3 +86,45 @@ refit.all <- mget(refit.all)
 
 sessionInfo()
 
+#### diagnosing:
+cmpFields <- function(x,y,comp=identical,...) {
+    if (is.list(x)) {
+        fields <- names(x)
+    } else {
+        fields <- names(x$getRefClass()$fields())
+    } ## also need one for S4: have I done this already somewhere?
+    res <- setNames(logical(length(fields)),fields)
+    for (i in fields) {
+        res[i] <- comp(x[[i]],y[[i]],...)
+    }
+    return(res)
+} 
+    
+rr_i3 <- readRDS("respmod_i3.rds")
+rr_i4 <- readRDS("respmod_i4.rds")
+cmpFields(rr_i3,rr_i4)  ## only family is FALSE
+all.equal(rr_i3$family,rr_i4$family)
+cmpFields(rr_i3$family,rr_i4$family)
+## variance, dev.resids, aic, validmu, simulate have different envs
+cmpFields(rr_i3$family,rr_i4$family,ignore.environment=TRUE)
+
+## don't think we've hit the problem yet
+getRDA <- function(f,suffix) {
+    L <- load(f)
+    for (i in L) 
+        assign(paste(i,suffix,sep="_"),
+               get(i),.GlobalEnv)
+}
+newL <- new("dgCMatrix",i=pp$Lambdat@i,p=pp$Lambdat@p,
+    x = rep(0,length(pp$Lambdat@x)), Dim=c(9L,9L))
+pp$Lambdat <- newL
+getRDA("after_GPU_i3.rda","i3")
+getRDA("after_GPU_i4.rda","i4")
+cmpFields(rr_i3,rr_i4)
+cmpFields(rr_i3,rr_i4,comp=all.equal)
+cmpFields(pp_i3,pp_i4,comp=all.equal)
+cmpFields(pp_i3,pp_i4,comp=all.equal,tol=1e-3)
+pp_i3$Lambdat  ## all zero -- does this collapse to nothing somewhere??
+pp_i4$Lambdat  ## tiny but not zero
+## would substituting one Lambdat for the other make a difference?
+## but ... i3 works, i4 *doesn't*.  Should Lambdat, LamtUt really be all-zero?
