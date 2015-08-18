@@ -591,9 +591,9 @@ coef.merMod <- coefMer
 ##  and vice versa) be computed and stored in the object in the first place?
 ##' @importFrom stats deviance
 ##' @S3method deviance merMod
-deviance.merMod <- function(object, REML = NULL,
-                            type = c("conditional", "unconditional", "penalized"),
-                            relative = TRUE, ...) {
+deviance.merMod <- function(object, REML = NULL, ...) {
+                            ## type = c("conditional", "unconditional", "penalized"),
+                            ## relative = TRUE, ...) {
     if (isGLMM(object)) {
         return(sum(residuals(object,type="deviance")^2))
         ## ------------------------------------------------------------
