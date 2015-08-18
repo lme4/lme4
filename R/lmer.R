@@ -591,9 +591,46 @@ coef.merMod <- coefMer
 ##  and vice versa) be computed and stored in the object in the first place?
 ##' @importFrom stats deviance
 ##' @S3method deviance merMod
-deviance.merMod <- function(object, REML = NULL, ...) {
+deviance.merMod <- function(object, REML = NULL,
+                            type = c("conditional", "unconditional", "penalized"),
+                            relative = TRUE, ...) {
     if (isGLMM(object)) {
-        return(sum(residuals(object,type="deviance")^2))
+        ## return(sum(residuals(object,type="deviance")^2))
+        ## ------------------------------------------------------------
+        ## proposed change to deviance function for GLMMs
+        ## ------------------------------------------------------------
+        ## @param type Type of deviance (can be unconditional,
+        ## penalized, conditional)
+        ## @param relative Should deviance be shifted relative to a
+        ## saturated model? (only available with type == penalized or
+        ## conditional)
+        ## ------------------------------------------------------------
+        ans <- switch(type[1],
+                      unconditional = {
+                          if (relative) {
+                              stop("unconditional and relative deviance is undefined")
+                          }
+                          c(-2 * logLik(object))
+                      },
+                      penalized = {
+                          sqrL <- object@pp$sqrL(1)
+                          if (relative) {
+                              object@resp$resDev() + sqrL
+                          } else {
+                              useSc <- unname(getME(gm1, "devcomp")$dims["useSc"])
+                              qLog2Pi <- unname(getME(object, "q")) * log(2 * pi)
+                              object@resp$aic() - (2 * useSc) + sqrL + qLog2Pi
+                          }
+                      },
+                      conditional = {
+                          if (relative) {
+                              object@resp$resDev()
+                          } else {
+                              useSc <- unname(getME(gm1, "devcomp")$dims["useSc"])
+                              object@resp$aic() - (2 * useSc)
+                          }
+                      })
+        return(ans)
     }
     if (isREML(object) && is.null(REML)) {
         warning("deviance() is deprecated for REML fits; use REMLcrit for the REML criterion or deviance(.,REML=FALSE) for deviance calculated at the REML fit")
