@@ -9,55 +9,58 @@ library(testthat)
 if(!dev.interactive(orNone=TRUE)) pdf("boundary_plots.pdf")
 
 ## Stephane Laurent:
-dat <- read.csv(system.file("testdata","dat20101314.csv",package="lme4"))
+dat <- read.csv(system.file("testdata","dat20101314.csv", package="lme4"))
 
-fit <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat,
-              control=lmerControl(optimizer="Nelder_Mead"))
+fit   <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat,
+	      control= lmerControl(optimizer="Nelder_Mead"))
 fit_b <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat,
-              control=lmerControl(optimizer="bobyqa",restart_edge=FALSE))
+	      control= lmerControl(optimizer="bobyqa", restart_edge=FALSE))
 fit_c <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat,
-              control=lmerControl(optimizer="Nelder_Mead", restart_edge=FALSE,
-              check.conv.hess="ignore"))
+	      control= lmerControl(optimizer="Nelder_Mead", restart_edge=FALSE,
+				   check.conv.hess="ignore"))
 ## final fit gives degenerate-Hessian warning
 ## FIXME: use fit_c with expect_warning() as a check on convergence tests
 ## tolerance=1e-5 seems OK in interactive use but not in R CMD check ... ??
-stopifnot(all.equal(getME(fit,"theta"),getME(fit_b,"theta"), tolerance=2e-5))
-stopifnot(all(getME(fit,"theta")>0))
+stopifnot(all.equal(getME(fit,  "theta") -> th.f,
+		    getME(fit_b,"theta"), tolerance=2e-5),
+	  all(th.f > 0))
 
 ## Manuel Koller
 
-source(system.file("testdata","koller-data.R",package="lme4"))
+source(system.file("testdata", "koller-data.R", package="lme4"))
 ldata <- getData(13)
 ## old (backward compatible/buggy)
 fm4  <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="Nelder_Mead",
                                   use.last.params=TRUE),
              start=list(theta=1))
 
-fm4b <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="Nelder_Mead",
-                                  use.last.params=TRUE, restart_edge=FALSE,
-                                  check.conv.hess="ignore",
-                                  check.conv.grad="ignore"),
-             start=list(theta=1))
+fm4b <- lmer(y ~ (1|Var2), ldata,
+             control = lmerControl(optimizer="Nelder_Mead", use.last.params=TRUE,
+                                   restart_edge = FALSE,
+                                   check.conv.hess="ignore", check.conv.grad="ignore"),
+             start = list(theta=1))
 ## FIXME: use as convergence test check
-stopifnot(getME(fm4b,"theta")==0)
+stopifnot(getME(fm4b,"theta") == 0)
 fm4c <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="bobyqa",
-                                  use.last.params=TRUE),
+                                                      use.last.params=TRUE),
              start=list(theta=1))
-stopifnot(all.equal(getME(fm4,"theta"),getME(fm4c,"theta"),tolerance=1e-4))
-stopifnot(getME(fm4,"theta") > 0)
+stopifnot(all.equal(getME(fm4, "theta") -> th4,
+		    getME(fm4c,"theta"), tolerance=1e-4),
+	  th4 > 0)
+
 
 ## new: doesn't get stuck at edge any more,  but gets stuck somewhere else ...
 fm5 <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="Nelder_Mead",
-				  check.conv.hess="ignore",
-				  check.conv.grad="ignore"),
-            start=list(theta=1))
+						     check.conv.hess="ignore",
+						     check.conv.grad="ignore"),
+	    start=list(theta=1))
 fm5b <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="Nelder_Mead",
-                                  restart_edge=FALSE,
-                                  check.conv.hess="ignore",
-                                  check.conv.grad="ignore"),
-             start=list(theta=1))
+						      restart_edge=FALSE,
+						      check.conv.hess="ignore",
+						      check.conv.grad="ignore"),
+	     start = list(theta = 1))
 fm5c <- lmer(y ~ (1|Var2), ldata, control=lmerControl(optimizer="bobyqa"),
-             start=list(theta=1))
+	     start = list(theta = 1))
 stopifnot(all.equal(unname(getME(fm5c,"theta")), 0.21067645, tolerance = 1e-7))
 					#	 0.21067644264 [64-bit, lynne]
 

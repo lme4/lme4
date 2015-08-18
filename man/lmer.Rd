@@ -140,7 +140,7 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
 \examples{
 ## linear mixed models - reference values from older code
 (fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy))
-summary(fm1)# (with its own print method)
+summary(fm1)# (with its own print method; see class?merMod % ./merMod-class.Rd
 
 str(terms(fm1))
 stopifnot(identical(terms(fm1, fixed.only=FALSE),

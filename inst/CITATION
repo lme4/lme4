@@ -9,7 +9,7 @@ bibentry(bibtype = "Manual",
 	     person("Steven", "Walker")),
 	 year = year,
 	 note = note,
-	 url = "http://CRAN.R-project.org/package=lme4")
+	 url = "https://CRAN.R-project.org/package=lme4")
 
 bibentry(bibtype = "Misc",
 	 title = "Fitting Linear Mixed-Effects Models using {lme4}",

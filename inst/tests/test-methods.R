@@ -40,9 +40,27 @@ fmPix <- lmer(pixel ~ day + I(day^2) + (day | Dog) + (1 | Side/Dog), data = Pixe
 
 context("summary")
 test_that("summary", {
-    ## test for multiple-correlation-warning bug
-    cc <- capture.output(print(summary(fit_agridat_archbold),correlation=FALSE))
-    expect_true(length(g <- grep("not shown by default",cc))==0 || g<=1)
+    ## test for multiple-correlation-warning bug and other 'correlation = *' variants
+    ## Have 2 summary() versions, each with 3 print(.) ==> 6 x capture.output(.)
+    sf.aa <- summary(fit_agridat_archbold)
+    msg1 <- "Correlation.* not shown by default"
+    ## message => *not* part of capture.*(.)
+    expect_message(c1 <- capture.output(sf.aa), msg1)
+                                        # correlation = NULL - default
+    cF <- capture.output(print(sf.aa, correlation=FALSE))
+    ## TODO? ensure the above gives *no* message/warning/error
+    expect_identical(c1, cF)
+    expect_message(
+    cT <- capture.output(print(sf.aa, correlation=TRUE))
+    , "Correlation.* could have been required in summary()")
+    expect_identical(cF, cT[seq_along(cF)])
+    sfT.aa <- summary(fit_agridat_archbold, correlation=TRUE)
+    expect_message(cT2 <- capture.output(sfT.aa), msg1)
+    expect_identical(cF, cT2)
+    cT3 <- capture.output(print(sfT.aa, correlation=TRUE))
+    expect_identical(cT, cT3)
+    cF2 <- capture.output(print(sfT.aa, correlation=FALSE))
+    expect_identical(cF, cF2)
 })
 
 context("anova")
@@ -198,11 +216,11 @@ test_that("confint", {
     expect_equal(dimnames(ci1.p.n),dimnames(ci1.b.n))
 
     ## test case of slightly wonky (spline fit fails) but monotonic profiles:
-    ## 
+    ##
     simfun <- function(J,n_j,g00,g10,g01,g11,sig2_0,sig01,sig2_1){
-        N <- sum(rep(n_j,J))  
-        x <- rnorm(N)         
-        z <- rnorm(J)         
+        N <- sum(rep(n_j,J))
+        x <- rnorm(N)
+        z <- rnorm(J)
         mu <- c(0,0)
         sig <- matrix(c(sig2_0,sig01,sig01,sig2_1),ncol=2)
         u   <- MASS::mvrnorm(J,mu=mu,Sigma=sig)
@@ -211,7 +229,7 @@ test_that("confint", {
         y <- rep(b_0j,each=n_j)+rep(b_1j,each=n_j)*x + rnorm(N,0,sqrt(0.5))
         sim_data <- data.frame(Y=y,X=x,Z=rep(z,each=n_j),
                                group=rep(1:J,each=n_j))
-    } 
+    }
     set.seed(102)
     dat <- simfun(10,5,1,.3,.3,.3,(1/18),0,(1/18))
     fit <- lmer(Y~X+Z+X:Z+(X||group),data=dat)
@@ -225,11 +243,11 @@ test_that("confint", {
                                    package="lme4"))
     expect_warning(cc <- confint(badprof), "falling back to linear")
     expect_equal(cc,
-        structure(c(0, -1, 2.50856219044636, 48.8305727797906, NA, NA, 
+        structure(c(0, -1, 2.50856219044636, 48.8305727797906, NA, NA,
                     33.1204478717389, 1, 7.33374326592662, 68.7254711217912,
-                    -6.90462047196017, 
+                    -6.90462047196017,
                     NA), .Dim = c(6L, 2L),
-                  .Dimnames = list(c(".sig01", ".sig02", 
+                  .Dimnames = list(c(".sig01", ".sig02",
                   ".sig03", ".sigma", "(Intercept)", "cYear"),
                   c("2.5 %", "97.5 %"))),
                  tol=1e-3)
@@ -286,7 +304,7 @@ test_that("predict", {
                    "nearly unidentifiable|unable to evaluate scaled gradient|failed to converge")
 	## (1|2|3); 2 and 3 seen (as Error??) on CRAN's Windows 32bit
     options(op)
-    
+
     set.seed(1); ii <- sample(nrow(Pixel), 16)
     expect_equal(predict(fmPix,  newdata = Pixel[ii,]), fitted(fmPix )[ii])
     expect_equal(predict(fmPixS, newdata = Pixel[ii,]), fitted(fmPixS)[ii])
@@ -380,7 +398,7 @@ test_that("simulate", {
     expect_equal(fivenum(sp1[,1]),
 		 c(20.9412, 22.5805, 23.5575, 24.6095, 27.6997), tol=1e-5)
     ## Pixel example
-    
+
     expect_identical(dim(simulate(fmPixS)), c(nPix, 1L))
     expect_identical(dim(simulate(fmPix )), c(nPix, 1L))
 

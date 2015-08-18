@@ -29,12 +29,15 @@
       includes the overdispersion parameter in the
       parameter count (\code{df} attribute)
       \item \code{lmList} handles offsets and weights better
-      \item lots of fixes to \code{glmer.nb} (Github #176, #266, #287, #318)
+      \item lots of fixes to \code{glmer.nb} (Github #176, #266, #287,
+      #318). \strong{Please note that glmer.nb is still somewhat
+	unstable/under construction.}
     }
   }
   \subsection{CRAN-COMPATIBILITY UPDATES}{
     \itemize{
       \item import functions from base packages to pass CRAN checks
+      \item tweak to failing tests on Windows
     }
   }
 }
@@ -107,7 +110,6 @@
       (\code{Inf}, \code{NA}, or \code{NaN})
       values in the response unless \code{na.action} is set to
       exclude or omit them (Github #310)
-
     }
   }
 }

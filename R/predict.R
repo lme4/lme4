@@ -359,6 +359,9 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
                                  xlev=orig_levs)
             X <- model.matrix(RHS, data=mfnew,
                               contrasts.arg=attr(X,"contrasts"))
+            ## hack to remove unused interaction levels?
+            ## X <- X[,colnames(X0)]
+            
             offset <- 0 # rep(0, nrow(X))
             tt <- terms(object)
             if (!is.null(off.num <- attr(tt, "offset"))) {

@@ -19,7 +19,7 @@ before_install:
 install:
   - ./travis-tool.sh aptget_install texlive-latex-extra
   - ./travis-tool.sh install_deps
-script: ./travis-tool.sh run_tests
+script: LME4_TEST_LEVEL=2 ./travis-tool.sh run_tests
 
 after_failure:
   - ./travis-tool.sh dump_logs
