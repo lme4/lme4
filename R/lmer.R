@@ -1116,7 +1116,7 @@ ranef.merMod <- function(object, condVar = FALSE, drop = FALSE,
                 sQuote("condVar")," instead")
         condVar <- postVar
     }
-    ans <- c(matrix(unlist(getME(object,"b")))) ## == object@pp$b(1.)
+    ans <- object@pp$b(1) ## not always == c(matrix(unlist(getME(object,"b"))))
     if (!is.null(object@flist)) {
 	## evaluate the list of matrices
 	levs <- lapply(fl <- object@flist, levels)
