@@ -9,7 +9,11 @@
     \itemize{
       \item \code{terms} and \code{formula} methods now have
       \code{random.only} options
-      \item \code{getME} gains a \code{glmer.nb.theta} option
+
+      \item \code{getME} gains a \code{glmer.nb.theta} option.
+      It is now (an S3) generic with an \code{"merMod"} method in
+      \pkg{lme4} and potentially other methods in dependent packages.
+
       \item \code{simulate} now works for \code{glmer.nb} models
       (Github #284: idea from @aosmith16)
     }

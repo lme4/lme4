@@ -1838,8 +1838,11 @@ tnames <- function(object,diag.only = FALSE,old = TRUE,prefix = NULL) {
 }
 
 ## -> ../man/getME.Rd
+getME <- function(object, name, ...) UseMethod("getME")
+
+
 ##' Extract or Get Generalize Components from a Fitted Mixed Effects Model
-getME <- function(object,
+getME.merMod <- function(object,
 		  name = c("X", "Z","Zt", "Ztlist", "mmList",
                   "y", "mu", "u", "b",
 		  "Gp", "Tp",
@@ -1855,15 +1858,19 @@ getME <- function(object,
                   "devcomp", "offset", "lower",
                   "devfun",
                   "glmer.nb.theta"
-                  ))
+                  ), ...)
 {
     if(missing(name)) stop("'name' must not be missing")
-    stopifnot(is(object,"merMod"))
     ## Deal with multiple names -- "FIXME" is inefficiently redoing things
     if (length(name <- as.character(name)) > 1) {
         names(name) <- name
         return(lapply(name, getME, object = object))
     }
+    if(name == "ALL") ## recursively get all provided components
+        return(sapply(eval(formals()$name),
+                      getME.merMod, object=object, simplify=FALSE))
+
+    stopifnot(is(object,"merMod"))
     name <- match.arg(name)
     rsp  <- object@resp
     PR   <- object@pp

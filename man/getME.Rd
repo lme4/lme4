@@ -1,17 +1,21 @@
 \name{getME}
+\title{Extract or Get Generalized Components from a Fitted Mixed Effects Model}
 \alias{getL}
 \alias{getL,merMod-method}
 \alias{getME}
-\title{Extract or Get Generalized Components from a Fitted Mixed Effects Model}
+\alias{getME.merMod}
 \usage{
-getME(object,
+getME(object, name, ...)
+
+\S3method{getME}{merMod}(object,
       name = c("X", "Z", "Zt", "Ztlist", "mmList", "y", "mu", "u", "b",
                "Gp", "Tp", "L", "Lambda", "Lambdat", "Lind", "Tlist",
                "A", "RX", "RZX", "sigma", "flist",
                "fixef", "beta", "theta", "ST", "REML", "is_REML",
                "n_rtrms", "n_rfacs", "N", "n", "p", "q",
                "p_i", "l_i", "q_i", "k", "m_i", "m",
-               "cnms", "devcomp", "offset", "lower", "devfun", "glmer.nb.theta"))
+               "cnms", "devcomp", "offset", "lower", "devfun", "glmer.nb.theta"),
+      \dots)
 }
 \arguments{
   \item{object}{a fitted mixed-effects model of class
@@ -19,83 +23,82 @@ getME(object,
     \code{\link{lmer}()}, \code{\link{glmer}()} or \code{\link{nlmer}()}.}
 
   \item{name}{a character vector specifying the name(s) of
-    the \dQuote{component}.  If \code{length(name)}>1, a named
-    list of components will be returned.  Possible values are:\cr
+    the \dQuote{component}.  If \code{length(name) > 1} or if \code{name
+    = "ALL"}, a named \code{\link{list}} of components will be returned.  Possible values are:\cr
     \describe{
-      \item{X}{fixed-effects model matrix}
-      \item{Z}{random-effects model matrix}
-      \item{Zt}{transpose
+      \item{\code{"X"}:}{fixed-effects model matrix}
+      \item{\code{"Z"}:}{random-effects model matrix}
+      \item{\code{"Zt"}:}{transpose
 	of random-effects model matrix.  Note that the structure
 	of \code{Zt} has changed since \code{lme4.0}; to get a
 	backward-compatible structure, use
 	\code{do.call(Matrix::rBind,getME(.,"Ztlist"))}}
-      \item{Ztlist}{list of components of the transpose of the
+      \item{\code{"Ztlist"}:}{list of components of the transpose of the
 	random-effects model matrix, separated by individual
 	variance component}
-      \item{mmList}{list of raw model matrices associated with random
+      \item{\code{"mmList"}:}{list of raw model matrices associated with random
 	effects terms}
-      \item{y}{response vector}
-      \item{mu}{conditional mean of the response}
-      \item{u}{conditional mode of the \dQuote{spherical}
+      \item{\code{"y"}:}{response vector}
+      \item{\code{"mu"}:}{conditional mean of the response}
+      \item{\code{"u"}:}{conditional mode of the \dQuote{spherical}
 	random effects variable}
-      \item{b}{conditional mode of the
+      \item{\code{"b"}:}{conditional mode of the
 	random effects variable}
-      \item{Gp}{groups pointer vector.
+      \item{\code{"Gp"}:}{groups pointer vector.
 	A pointer to the beginning of each group of random
 	effects corresponding to the random-effects terms,
 	beginning with 0 and including a final element giving the
 	total number of random effects}
-      \item{Tp}{theta pointer vector.  A pointer to the beginning of the theta
+      \item{\code{"Tp"}:}{theta pointer vector.  A pointer to the beginning of the theta
 	sub-vectors corresponding to the random-effects terms,
 	beginning with 0 and including a final element giving the
 	number of thetas.}
-      \item{L}{sparse Cholesky factor of the penalized random-effects model.}
-      \item{Lambda}{relative covariance factor \eqn{\Lambda}{Lambda} of the random effects.}
-      \item{Lambdat}{transpose \eqn{\Lambda'}{Lambda'} of \eqn{\Lambda}{Lambda} above.}
-      \item{Lind}{index vector for inserting elements of
+      \item{\code{"L"}:}{sparse Cholesky factor of the penalized random-effects model.}
+      \item{\code{"Lambda"}:}{relative covariance factor \eqn{\Lambda}{Lambda} of the random effects.}
+      \item{\code{"Lambdat"}:}{transpose \eqn{\Lambda'}{Lambda'} of \eqn{\Lambda}{Lambda} above.}
+      \item{\code{"Lind"}:}{index vector for inserting elements of
 	\eqn{\theta}{theta} into the nonzeros of \eqn{\Lambda}{Lambda}.}
-      \item{Tlist}{vector of template matrices from which the blocks of
+      \item{\code{"Tlist"}:}{vector of template matrices from which the blocks of
 	\eqn{\Lambda}{Lambda} are generated.}
-      \item{A}{Scaled sparse model matrix (class
+      \item{\code{"A"}:}{Scaled sparse model matrix (class
 	\code{"\link[Matrix:dgCMatrix-class]{dgCMatrix}"}) for
 	the unit, orthogonal random effects, \eqn{U}, equal to
 	\code{getME(.,"Zt") \%*\% getME(.,"Lambdat")}}
-      \item{RX}{Cholesky factor for the fixed-effects parameters}
-      \item{RZX}{cross-term in the full Cholesky factor}
-      \item{sigma}{residual standard error; note that \code{sigma(object)} is preferred.}
-      \item{flist}{a list of the grouping variables (factors)
+      \item{\code{"RX"}:}{Cholesky factor for the fixed-effects parameters}
+      \item{\code{"RZX"}:}{cross-term in the full Cholesky factor}
+      \item{\code{"sigma"}:}{residual standard error; note that \code{sigma(object)} is preferred.}
+      \item{\code{"flist"}:}{a list of the grouping variables (factors)
 	involved in the random effect terms}
-      \item{fixef}{fixed-effects parameter estimates}
-      \item{beta}{fixed-effects parameter estimates (identical
+      \item{\code{"fixef"}:}{fixed-effects parameter estimates}
+      \item{\code{"beta"}:}{fixed-effects parameter estimates (identical
 	to the result of \code{\link{fixef}}, but without names)}
-      \item{theta}{random-effects parameter estimates: these
+      \item{\code{"theta"}:}{random-effects parameter estimates: these
 	are parameterized as the relative Cholesky factors of
 	each random effect term}
-      \item{ST}{A list of S and T factors in the TSST' Cholesky
+      \item{\code{"ST"}:}{A list of S and T factors in the TSST' Cholesky
       factorization of the relative variance matrices of the random
       effects associated with each random-effects term.  The unit lower
       triangular matrix, \eqn{T}, and the diagonal matrix, \eqn{S}, for
       each term are stored as a single matrix with diagonal elements
       from \eqn{S} and off-diagonal elements from \eqn{T}.}
-      \item{n_rtrms}{number of random-effects terms}
-      \item{n_rfacs}{number of distinct random-effects grouping factors}
-      \item{N}{number of rows of \code{X}}
-      \item{n}{length of the response vector, \code{y}}
-      \item{p}{number of columns of the fixed effects model matrix, \code{X}}
-      \item{q}{number of columns of the random effects model matrix, \code{Z}}
-      \item{p_i}{numbers of columns of the raw model matrices,
-    \code{mmList}}
-      \item{l_i}{numbers of levels of the grouping factors}
-      \item{q_i}{numbers of columns of the term-wise model matrices, \code{ZtList}}
-      \item{k}{number of random effects terms}
-      \item{m_i}{numbers of covariance parameters in each term}
-      \item{m}{total number of covariance parameters}
-      \item{cnms}{the \dQuote{component names}, a \code{\link{list}}.}
-      \item{REML}{\code{0} indicates the model was fitted by maximum
+      \item{\code{"n_rtrms"}:}{number of random-effects terms}
+      \item{\code{"n_rfacs"}:}{number of distinct random-effects grouping factors}
+      \item{\code{"N"}:}{number of rows of \code{X}}
+      \item{\code{"n"}:}{length of the response vector, \code{y}}
+      \item{\code{"p"}:}{number of columns of the fixed effects model matrix, \code{X}}
+      \item{\code{"q"}:}{number of columns of the random effects model matrix, \code{Z}}
+      \item{\code{"p_i"}:}{numbers of columns of the raw model matrices, \code{mmList}}
+      \item{\code{"l_i"}:}{numbers of levels of the grouping factors}
+      \item{\code{"q_i"}:}{numbers of columns of the term-wise model matrices, \code{ZtList}}
+      \item{\code{"k"}:}{number of random effects terms}
+      \item{\code{"m_i"}:}{numbers of covariance parameters in each term}
+      \item{\code{"m"}:}{total number of covariance parameters}
+      \item{\code{"cnms"}:}{the \dQuote{component names}, a \code{\link{list}}.}
+      \item{\code{"REML"}:}{\code{0} indicates the model was fitted by maximum
 	likelihood, any other positive integer indicates fitting by
 	restricted maximum likelihood}
-      \item{is_REML}{same as the result of \code{\link{isREML}(.)}}
-      \item{devcomp}{a list consisting of a named numeric vector,
+      \item{\code{"is_REML"}:}{same as the result of \code{\link{isREML}(.)}}
+      \item{\code{"devcomp"}:}{a list consisting of a named numeric vector,
         \code{cmp}, and a named integer vector, \code{dims}, describing
         the fitted model.  The elements of \code{cmp} are:\cr
 	\describe{
@@ -133,14 +136,19 @@ getME(object,
 	  \item{NLMM}{\code{TRUE} if an NLMM}
 	}
       }
-      \item{offset}{model offset}
-      \item{lower}{lower bounds on model parameters (random effects
+      \item{\code{"offset"}:}{model offset}
+      \item{\code{"lower"}:}{lower bounds on model parameters (random effects
 	parameters only).}
-      \item{devfun}{deviance function (so far only available for LMMs)}
-      \item{glmer.nb.theta}{negative binomial \eqn{\theta} parameter,
+      \item{\code{"devfun"}:}{deviance function (so far only available for LMMs)}
+      \item{\code{"glmer.nb.theta"}:}{negative binomial \eqn{\theta} parameter,
 	only for \code{\link{glmer.nb}}.}
+
+      %% -- keep at the very end:
+      \item{\code{"ALL"}:}{get all of the above as a \code{\link{list}}.}
     }
   }
+  \item{\dots}{currently unused in \pkg{lme4}, potentially further
+    arguments in methods.}
 }
 \value{
   Unspecified, as very much depending on the \code{\link{name}}.
@@ -171,16 +179,15 @@ methods(class = "merMod")
 Z <- getME(fm1, "Z")
 stopifnot(is(Z, "CsparseMatrix"),
           c(180,36) == dim(Z),
-	  all.equal(fixef(fm1), getME(fm1, "beta"),
+	  all.equal(fixef(fm1), b1 <- getME(fm1, "beta"),
 		    check.attributes=FALSE, tolerance = 0))
 
 ## A way to get *all* getME()s :
-getME.all <- function(obj) {
-    sapply(eval(formals(getME)$name), getME, object=obj, simplify=FALSE)
-}
 ## internal consistency check ensuring that all work:
-parts <- getME.all(fm1)
+parts <- getME(fm1, "ALL")
 str(parts, max=2)
+stopifnot(identical(Z,  parts $ Z),
+          identical(b1, parts $ beta))
 }
 \keyword{utilities}
 

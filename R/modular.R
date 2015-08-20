@@ -587,10 +587,10 @@ optimizeLmer <- function(devfun,
             }
         }
     }
-    if (boundary.tol > 0) {
-        opt <- check.boundary(rho,opt,devfun,boundary.tol)
-    }
-    return(opt)
+    if (boundary.tol > 0)
+	check.boundary(rho, opt, devfun, boundary.tol)
+    else
+	opt
 }
 
 ## TODO: remove any arguments that aren't actually used by glFormula (same for lFormula)
@@ -713,9 +713,9 @@ mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L, maxit 
                       c(reTrms[c("Zt","theta","Lambdat","Lind")],
                         n=nrow(X), list(X=X)))
     rho$resp <- if (missing(fr))
-        mkRespMod(family=family, ...)
+	mkRespMod(family=family, ...)
     else
-        mkRespMod(fr, family=family)
+	mkRespMod(fr, family=family)
     nAGQinit <- if(control$nAGQ0initStep) 0L else 1L
     ## allow trivial y
     if (length(y <- rho$resp$y) > 0) {
