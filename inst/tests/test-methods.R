@@ -34,8 +34,7 @@ rSimple <- function(rep = 2, m.u = 2, kinds = c('fun', 'boring', 'meh')) {
 d12 <- rSimple()
 
 data("Pixel", package="nlme")
-nPix <- nrow(Pixel)
-fmPix <- lmer(pixel ~ day + I(day^2) + (day | Dog) + (1 | Side/Dog), data = Pixel)
+fmPix <- glmmTMB(pixel ~ day + I(day^2) + (day | Dog) + (1 | Side/Dog), data = Pixel)
 
 
 context("summary")

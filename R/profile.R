@@ -361,7 +361,7 @@ profile.merMod <- function(fitted,
                 fv <- ores$fval
                 sig <- sqrt((rr$wrss() + pp1$sqrL(1))/n)
                 c(sign(fw - est) * sqrt(fv - base),
-                  Cv_to_Sv(ores$par, vapply(fitted@cnms,length, 1), s=sig),
+                  Cv_to_Sv(ores$par, lengths(fitted@cnms), s=sig),
                   ## ores$par * sig, sig,
                   mkpar(p, j, fw, pp1$beta(1)))
             }
@@ -469,7 +469,7 @@ devfun2 <- function(fm, useSc, signames)
     stopifnot(is(fm, "merMod"))
     fm <- refitML(fm)
     basedev <- -2*c(logLik(fm))  ## no longer deviance()
-    vlist <- sapply(fm@cnms,length)
+    vlist <- lengths(fm@cnms)
     sig <- sigma(fm)  ## only if useSc=TRUE?
     stdErr <- unname(coef(summary(fm))[,2])
     pp <- fm@pp$copy()
@@ -696,7 +696,7 @@ format.perc <- function (probs, digits) {
 confint.thpr <- function(object, parm, level = 0.95, zeta,
                          ## tolerance for non-monotonic profiles
                          ## (raw values, not splines)
-                         non.mono.tol=1e-2, 
+                         non.mono.tol=1e-2,
                          ...)
 {
     bak <- attr(object, "backward")
@@ -821,7 +821,7 @@ confint.merMod <- function(object, parm, level = 0.95,
            {
                bootFun <- function(x) {
 		   th <- x@theta
-		   nvec <- vapply(x@cnms, length, 1L)
+		   nvec <- lengths(x@cnms)
                    scaleTh <- (isLMM(x) || isNLMM(x))
                    useSc <- as.logical(x@devcomp$dims[["useSc"]])
 		   ## FIXME: still ugly.  Best cleanup via Cv_to_Sv ...

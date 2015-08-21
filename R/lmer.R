@@ -502,9 +502,9 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
 	class(val) <- c("anova", class(val))
 	forms <- lapply(lapply(calls, `[[`, "formula"), deparse)
 	structure(val,
-                  heading = c(header, "Models:",
-                      paste(rep(names(mods), times = vapply(forms, length, 1)),
-                            unlist(forms), sep = ": ")))
+		  heading = c(header, "Models:",
+			      paste(rep(names(mods), times = lengths(forms)),
+				    unlist(forms), sep = ": ")))
     }
     else { ## ------ single model ---------------------
 	dc <- getME(object, "devcomp")
@@ -518,7 +518,7 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
 	    nmeffects <- c("(Intercept)", nmeffects)
 	ss <- unlist(lapply(split(ss, asgn), sum))
 	stopifnot(length(ss) == length(nmeffects))
-	df <- vapply(split(asgn, asgn), length, 1L)
+	df <- lengths(split(asgn, asgn))
 	## dfr <- unlist(lapply(split(dfr, asgn), function(x) x[1]))
 	ms <- ss/df
 	f <- ms/(sigma(object)^2)
@@ -1122,8 +1122,8 @@ ranef.merMod <- function(object, condVar = FALSE, drop = FALSE,
 	levs <- lapply(fl <- object@flist, levels)
 	asgn <- attr(fl, "assign")
 	cnms <- object@cnms
-	nc <- vapply(cnms, length, 1L)
-	nb <- nc * vapply(levs, length, 1L)[asgn]
+	nc <- lengths(cnms)
+	nb <- nc * lengths(levs)[asgn]
 	nbseq <- rep.int(seq_along(nb), nb)
 	ml <- split(ans, nbseq)
 	for (i in seq_along(ml))
@@ -1144,7 +1144,7 @@ ranef.merMod <- function(object, condVar = FALSE, drop = FALSE,
 	if (condVar) {
             sigsqr <- sigma(object)^2
             rp <- rePos$new(object)
-            if(any(sapply(rp$terms, length) > 1)){
+            if(any(lengths(rp$terms) > 1L)) {
                 # TODO: actually use condVar and then convert back to array format
                 warning("conditional variances not currently available via ",
                         "ranef when there are multiple terms per factor")
@@ -1881,7 +1881,7 @@ getME.merMod <- function(object,
     dims <- dc $ dims
     Tpfun <- function(cnms) {
 	ltsize <- function(n) n*(n+1)/2 # lower triangle size
-	cLen <- cumsum(ltsize(vapply(cnms, length, 1L)))
+	cLen <- cumsum(ltsize(lengths(cnms)))
 	setNames(c(0, cLen),
 		 c("beg__", names(cnms))) ## such that diff( Tp ) is well-named
     }
@@ -1924,11 +1924,11 @@ getME.merMod <- function(object,
            "fixef" = fixef(object),
 	   "beta"  = object@beta,
 	   "theta" = setNames(th, tnames(object)),
-	   "ST" = setNames(vec2STlist(object@theta, n = vapply(cnms, length, 0L)),
+	   "ST" = setNames(vec2STlist(object@theta, n = lengths(cnms)),
 			   names(cnms)),
            "Tlist" = {
-               nc <- vapply(cnms, length, 1L) # number of columns per term
-               nt <- length(nc)         # number of random-effects terms
+               nc <- lengths(cnms) # number of columns per term
+               nt <- length(nc)    # number of random-effects terms
                ans <- vector("list",nt)
                names(ans) <- names(nc)
                pos <- 0L
@@ -2152,7 +2152,7 @@ VarCorr.merMod <- function(x, sigma = 1, rdig = 3)# <- 3 args from nlme
 	stop("VarCorr methods require reTrms, not just reModule")
     if(missing(sigma))
 	sigma <- sigma(x)
-    nc <- vapply(cnms, length, 1L) # no. of columns per term
+    nc <- lengths(cnms) # no. of columns per term
     structure(mkVarCorr(sigma, cnms = cnms, nc = nc, theta = x@theta,
 			nms = { fl <- x@flist; names(fl)[attr(fl, "assign")]}),
 	      useSc = as.logical(x@devcomp$dims[["useSc"]]),
@@ -2208,7 +2208,7 @@ formatVC <- function(varc, digits = max(3, getOption("digits") - 2),
     useScale <- attr(varc, "useSc")
     reStdDev <- c(lapply(varc, attr, "stddev"),
 		  if(useScale) list(Residual = unname(attr(varc, "sc"))))
-    reLens <- vapply(reStdDev, length, 1L)
+    reLens <- lengths(reStdDev)
     nr <- sum(reLens)
     reMat <- array('', c(nr, nc), list(rep.int('', nr), colnms))
     reMat[1+cumsum(reLens)-reLens, "Groups"] <- names(reLens)

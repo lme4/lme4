@@ -1,11 +1,15 @@
-if((Rv <- getRversion()) < "3.1.0") {
-  anyNA <- function(x) any(is.na(x))
-  if(Rv < "3.0.0") {
-      rep_len <- function(x, length.out) rep(x, length.out=length.out)
-      if(Rv < "2.15")
-          paste0 <- function(...) paste(..., sep = '')
-  }
-}; rm(Rv)
+if((Rv <- getRversion()) < "3.2.0") {
+    lengths <- function (x, use.names = TRUE) lengths(x, use.names = use.names)
+    if(Rv < "3.1.0") {
+        anyNA <- function(x) any(is.na(x))
+        if(Rv < "3.0.0") {
+            rep_len <- function(x, length.out) rep(x, length.out=length.out)
+            if(Rv < "2.15")
+                paste0 <- function(...) paste(..., sep = '')
+        }
+    }
+} ## R < 3.2.0
+rm(Rv)
 
 ## From Matrix package  isDiagonal(.) :
 all0 <- function(x) !anyNA(x) && all(!x)
@@ -134,7 +138,7 @@ mkReTrms <- function(bars, fr, drop.unused.levels=TRUE) {
   ## any potential reordering of the terms.
   cnms <- lapply(blist, `[[`, "cnms")   # list of column names of the
                                         # model matrix per term
-  nc <- vapply(cnms, length, 0L)	# no. of columns per term
+  nc <- lengths(cnms)	                # no. of columns per term
                                         # (in lmer jss:  p_i)
   nth <- as.integer((nc * (nc+1))/2)	# no. of parameters per term
                                         # (in lmer jss:  ??)
@@ -602,7 +606,7 @@ nlformula <- function(mc) {
   start <- eval(mc$start, parent.frame(2L))
   if (is.numeric(start)) start <- list(nlpars = start)
   stopifnot(is.numeric(nlpars <- start$nlpars),
-            vapply(nlpars, length, 0L) == 1L,
+            lengths(nlpars) == 1L,
             length(pnames <- names(nlpars)) == length(nlpars),
             length(form <- as.formula(mc$formula)) == 3L,
             is(nlform <- eval(form[[2]]), "formula"),

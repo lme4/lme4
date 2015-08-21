@@ -827,7 +827,7 @@ rePos <-
                                    length(asgn  <- as.integer(attr(Flist, "assign"))) == ntrms)
                          cnms    <<- Cnms
                          flist   <<- Flist
-                         ncols   <<- unname(vapply(cnms, length, 0L))
+                         ncols   <<- unname(lengths(cnms))
                          nctot   <<- unname(as.vector(tapply(ncols, asgn, sum)))
                          nlevs   <<- unname(vapply(flist, function(el) length(levels(el)), 0L))
                          # why not replace the sapply with ncols*nlevs[asgn] ??
@@ -887,7 +887,7 @@ vcRep <-
                          Gp      <<- getME(mer, "Gp")
                          cnms    <<- Cnms
                          flist   <<- Flist
-                         ncols   <<- unname(vapply(cnms, length, 0L))
+                         ncols   <<- unname(lengths(cnms))
                          nctot   <<- unname(as.vector(tapply(ncols, asgn, sum)))
                          nlevs   <<- unname(vapply(flist, function(el) length(levels(el)), 0L))
                          offsets <<- c(0L, cumsum(sapply(seq_along(asgn),
@@ -937,7 +937,7 @@ vcRep <-
                                    all(names(CV) == names(covar)),
                                    all(sapply(CV, isSymmetric)),
                                    all(sapply(CV, ncol) == covsiz))
-                         if (!all(vapply(cnms, length, 1L) == covsiz))
+                         if (!all(lengths(cnms) == covsiz))
                              error("setRECovar currently requires distinct grouping factors")
                          theta <<- sapply(CV, function(mm)
                                       {
