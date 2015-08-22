@@ -48,7 +48,7 @@ all.equal(dev0,d0)   ## 'deviance function' matches -2L
 all.equal(residuals(gmb),residuals(gm0),tol=1e-3)
 ```
 
-I'm sure this has been gone over a million times before, but let's review the relationships between the deviance and the log-likelihood as defined in base R (i.e. `glm`): 
+I'm sure this has been gone over a million times before, but let's review the relationships between the deviance and the log-likelihood as defined in base R (i.e. `glm`):
 
 * within `glm.fit`, the deviance is defined as the sum of the deviance residuals (i.e. `sum(dev.resids(y, mu, weights))`), which in turn are defined in `binomial()` (or the other results from `family()`) as the *squared* deviance residuals ... it is then stored in the `$deviance` element of the list.
 ```{r devrescomp2}
@@ -62,12 +62,12 @@ all.equal(devres2,unname(residuals(gm0,"deviance")^2))
 
 In `logLik.glm`, the log-likelihood is retrieved (weirdly, as has been pointed out before) from the `$aic` component of the fitted object (by computing ${\cal L}=p-\mbox{AIC}/2$), which is in turn computed directly, e.g. for binomial it is
 ```{r binomAIC,eval=FALSE}
-    -2 * sum(ifelse(m > 0, (wt/m), 0) * dbinom(round(m * y), 
+    -2 * sum(ifelse(m > 0, (wt/m), 0) * dbinom(round(m * y),
         round(m), mu, log = TRUE))
 ```
 (that is, the `$aic` function really computes -2*the log likelihood --
 `AIC.default` uses `-2 * val$ll + k * val$df`)  However, it gets worse
-for families with a scale parameter, for which the `$aic` component returns $-2{\cal L} + 2$. 
+for families with a scale parameter, for which the `$aic` component returns $-2{\cal L} + 2$.
 The additional $2$ presumably accounts for the scale parameter,
 e.g. for the `gaussian` family we have
 ```{r gaussianAIC}
@@ -126,12 +126,12 @@ to the marginal log-likelihood is $\log (p_{\theta, \beta}(y | u)) -
 \frac{1}{2}\|u\|^2 - |L_{\theta}|$ (nb that this is technically an
 approximate Laplace approximation in the non-canonical link case).
 Here are several ways to compute this approximate marginal
-log-likelihood: 
+log-likelihood:
 ```{r}
 logLik(gm1) # which calls ...
--0.5 * lme4:::devCritFun(gm1) # which calls ...
+-0.5 * lme4:::devCrit(gm1)    # which calls ...
 -0.5 * gm1@devcomp$cmp["dev"] # which is computed from something like ...
--0.5 * dd(gm1@optinfo$val) # which is computed from something like ...
+-0.5 * dd(gm1@optinfo$val)    # which is computed from something like ...
 -0.5 * (gm1@resp$aic() + gm1@pp$sqrL(1) + gm1@pp$ldL2()) # which is wrapped into ...
 lme4ord:::laplace(gm1) # which by the family$aic property discussed above is also given by ...
 sum(with(cbpp, dbinom(incidence, size, fitted(gm1), log = TRUE))) - 0.5 * (gm1@pp$sqrL(1) + gm1@pp$ldL2())

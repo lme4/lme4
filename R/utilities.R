@@ -580,16 +580,16 @@ subnms <- function(form, nms) {
     sbnm(form)
 }
 
-## Check for a constant term (a literal 1) in an expression
+##' Check for a constant term (a literal 1) in an expression
 ##
-## In the mixed-effects part of a nonlinear model formula, a constant
-## term is not meaningful because every term must be relative to a
-## nonlinear model parameter.  This function recursively checks the
-## expressions in the formula for a a constant, calling stop() if
-## such a term is encountered.
-## @title Check for constant terms.
-## @param expr an expression
-## @return NULL.  The function is executed for its side effect.
+##' In the mixed-effects part of a nonlinear model formula, a constant
+##' term is not meaningful because every term must be relative to a
+##' nonlinear model parameter.  This function recursively checks the
+##' expressions in the formula for a a constant, calling stop() if
+##' such a term is encountered.
+##' @title Check for constant terms.
+##' @param expr an expression
+##' @return NULL.  The function is executed for its side effect.
 chck1 <- function(expr) {
     if ((le <- length(expr)) == 1) {
         if (is.numeric(expr) && expr == 1)

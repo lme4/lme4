@@ -634,13 +634,13 @@ deviance.merMod <- function(object, REML = NULL, ...) {
     }
     if (isREML(object) && is.null(REML)) {
         warning("deviance() is deprecated for REML fits; use REMLcrit for the REML criterion or deviance(.,REML=FALSE) for deviance calculated at the REML fit")
-        return(devCritFun(object, REML=TRUE))
+        return(devCrit(object, REML=TRUE))
     }
-    devCritFun(object, REML=FALSE)
+    devCrit(object, REML=FALSE)
 }
 
 REMLcrit <- function(object) {
-    devCritFun(object, REML=TRUE)
+    devCrit(object, REML=TRUE)
 }
 
 ## original deviance.merMod -- now wrapped by REMLcrit
@@ -654,7 +654,7 @@ REMLcrit <- function(object) {
 ## REML=FALSE:
 ##    if ML fit, return deviance
 ##    if REML fit, compute and return deviance
-devCritFun <- function(object, REML = NULL) {
+devCrit <- function(object, REML = NULL) {
     ## cf. (1) lmerResp::Laplace in respModule.cpp
     ##     (2) section 5.6 of lMMwR, listing lines 34-42
     if (isTRUE(REML) && !isLMM(object))
@@ -950,7 +950,7 @@ npar.merMod <- function(object) {
 logLik.merMod <- function(object, REML = NULL, ...) {
     if (is.null(REML) || is.na(REML[1]))
         REML <- isREML(object)
-    val <- -devCritFun(object, REML = REML)/2
+    val <- -devCrit(object, REML = REML)/2
     ## dc <- object@devcomp
     nobs <- nobs.merMod(object)
     structure(val,
@@ -1538,13 +1538,14 @@ update.merMod <- function(object, formula., ..., evaluate = TRUE) {
 ## 'Generalized linear mixed model fit by the adaptive Gaussian Hermite approximation'
 ## so did *not* mention  "maximum likelihood" at all in the GLMM case
 
-methTitle <- function(object, dims = object@devcomp$dims) {
+
+methTitle <- function(dims) { # dims == object@devcomp$dims
     GLMM <- dims[["GLMM"]]
     kind <- switch(1L + GLMM * 2L + dims[["NLMM"]],
 		   "Linear", "Nonlinear",
 		   "Generalized linear", "Generalized nonlinear")
     paste(kind, "mixed model fit by",
-	  if(isREML(object)) "REML"
+	  if(dims[["REML"]]) "REML"
 	  else paste("maximum likelihood",
 		     if(GLMM) {
 			 ## TODO? Use shorter wording here, for (new) 'long = FALSE' argument
@@ -1608,15 +1609,22 @@ famlink <- function(object, resp = object@resp) {
 	cat.f("Control:", dc)
     if (!is.null(cc <- call$subset))
 	cat.f(" Subset:", deparse(cc))
-    }
+}
 
-getLlikAIC <- function(object, cmp = object@devcomp$cmp) {
+##' @title Extract Log Likelihood, AIC, and related statics from a Fitted LMM
+##' @param object a LMM model fit
+##' @param devianceFUN the function to be used for computing the deviance; should not be changed for  \pkg{lme4} created objects.
+##' @param chkREML optional logical indicating \code{object} maybe a REML fit.
+##' @param devcomp
+##' @return a list with components \item{logLik} and \code{AICtab} where the first is \code{\link{logLik(object)}} and \code{AICtab} is a "table" of AIC, BIC, logLik, deviance, df.residual() values.
+llikAIC <- function(object, devianceFUN = devCrit, chkREML = TRUE, devcomp = object@devcomp) {
     llik <- logLik(object)   # returns NA for a REML fit - maybe change?
     AICstats <- {
-	if(isREML(object)) cmp["REML"] # *no* likelihood stats here
+	if(chkREML && devcomp$dims[["REML"]])
+            devcomp$cmp["REML"] # *no* likelihood stats here
 	else {
 	    c(AIC = AIC(llik), BIC = BIC(llik), logLik = c(llik),
-	      deviance = devCritFun(object),
+	      deviance = devianceFUN(object),
               df.resid = df.residual(object))
 	}
     }
@@ -1765,12 +1773,12 @@ print.merMod <- function(x, digits = max(3, getOption("digits") - 3),
 			 ranef.comp = "Std.Dev.", ...)
 {
     dims <- x@devcomp$dims
-    .prt.methTit(methTitle(x, dims = dims), class(x))
+    .prt.methTit(methTitle(dims), class(x))
     .prt.family(famlink(x, resp = x@resp))
     .prt.call(x@call, long = FALSE)
     ## useScale <- as.logical(dims[["useSc"]])
 
-    llAIC <- getLlikAIC(x)
+    llAIC <- llikAIC(x)
     .prt.aictab(llAIC$AICtab, 4)
     varcor <- VarCorr(x)
     .prt.VC(varcor, digits = digits, comp = ranef.comp, ...)
@@ -2254,10 +2262,8 @@ summary.merMod <- function(object,
     hess.avail <- (!is.null(h <- object@optinfo$derivs$Hessian) &&
                    nrow(h) > length(getME(object,"theta")))
     if (is.null(use.hessian)) use.hessian <- hess.avail
-    if (use.hessian && !hess.avail) stop(shQuote("use.hessian"),
-                                         "=TRUE specified, ",
-                                         "but Hessian is unavailable")
-
+    if (use.hessian && !hess.avail)
+	stop("'use.hessian=TRUE' specified, but Hessian is unavailable")
     resp <- object@resp
     devC <- object@devcomp
     dd <- devC$dims
@@ -2280,12 +2286,12 @@ summary.merMod <- function(object,
                            2*pnorm(abs(cf3), lower.tail = FALSE))
     }
 
-    llAIC <- getLlikAIC(object)
+    llAIC <- llikAIC(object)
     ## FIXME: You can't count on object@re@flist,
     ##	      nor compute VarCorr() unless is(re, "reTrms"):
     varcor <- VarCorr(object)
 					# use S3 class for now
-    structure(list(methTitle = methTitle(object, dims = dd),
+    structure(list(methTitle = methTitle(dd),
                    objClass = class(object),
                    devcomp = devC,
                    isLmer = is(resp, "lmerResp"), useScale = useSc,

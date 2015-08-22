@@ -21,7 +21,7 @@
   \code{devcomp} slot as described in the value section.
 }
 \note{
-  This function is deprecated, use \code{getME(.,
-  "devcomp")}
+  This function is deprecated, use \code{\link{getME}(., "devcomp")}
+  %%               ----------
 }
 

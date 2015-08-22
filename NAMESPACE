@@ -1,4 +1,4 @@
-useDynLib(lme4,.registration=TRUE)
+useDynLib(lme4, .registration=TRUE)
 
 ## base packages
 importFrom("graphics", par, plot)
@@ -125,17 +125,27 @@ if(getRversion() >= "3.3.0") {
 }
 export(.simulateFun)
 export(subbars)
-## export(tnames)
 export(updateGlmerDevfun)
 export(VarCorr)
 export(varianceProf)
-exportClasses(glmerMod)
-exportClasses(lmerMod)
+
+## print() and print.summary() utilities -- other [NG]LMM packages can import
+export(.prt.VC,		.prt.aictab,	.prt.call,	.prt.family,
+       .prt.grps,	.prt.methTit,	.prt.resids,	.prt.warn,
+       llikAIC,	methTitle)
+## export(tnames)
+
+
+##------ Our S4 Classes ------------------------
+exportClasses(glmerMod, lmerMod, nlmerMod, merMod)
 exportClasses(lmList4)
-exportClasses(merMod)
-exportClasses(nlmerMod)
+
+##------ Our S4 Generics / Methods --------------
 exportMethods(getL)
 exportMethods(show)
+
+
+##------ Our S3 Methods -------------------------
 S3method(anova,merMod)
 S3method(as.data.frame,boot)
 S3method(as.data.frame,thpr)
