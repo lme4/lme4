@@ -4,7 +4,26 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-9}{
+\section{CHANGES IN VERSION 1.1-10}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item We export set of about a dozen printing utility functions
+      which are used in our \code{print} methods.
+    }
+  }
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item ... [Ben has found one in Zurich, Aug. 21, right?]
+    }
+  }
+}
+\section{CHANGES IN VERSION 1.1-9 (2015-08-20)}{
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item explicit \code{maxit} arguments for various functions
+      (\code{refit}, \code{mkGlmerDevfun}, ...)
+    }
+  }
   \subsection{NEW FEATURES}{
     \itemize{
       \item \code{terms} and \code{formula} methods now have
@@ -16,12 +35,6 @@
 
       \item \code{simulate} now works for \code{glmer.nb} models
       (Github #284: idea from @aosmith16)
-    }
-  }
-  \subsection{USER-VISIBLE CHANGES}{
-    \itemize{
-      \item explicit \code{maxit} arguments for various functions
-      (\code{refit}, \code{mkGlmerDevfun}, ...)
     }
   }
   \subsection{BUG FIXES}{
@@ -45,7 +58,7 @@
     }
   }
 }
-\section{CHANGES IN VERSION 1.1-8}{
+\section{CHANGES IN VERSION 1.1-8 (2015-06-22)}{
   \subsection{NEW FEATURES}{
     \itemize{
       \item \code{getME} gains a \code{"Tlist"} option
@@ -118,7 +131,7 @@
   }
 }
 
-\section{CHANGES IN VERSION 1.1-7}{
+\section{CHANGES IN VERSION 1.1-7 (2014-07-19)}{
   \subsection{NEW FEATURES}{
     \itemize{
       \item the \code{nloptr} package is now imported;
@@ -160,7 +173,8 @@
     }
   }
 }
-\section{CHANGES IN VERSION 1.1-6}{
+
+\section{CHANGES IN VERSION 1.1-6 (2014-04-13)}{
   This version incorporates no changes in functionality, just
   modifications to testing and dependencies for CRAN/backward compatibility.
   \subsection{BUG FIXES}{
@@ -174,7 +188,8 @@
     }
   }
 }
-\section{CHANGES IN VERSION 1.1-5}{
+
+\section{CHANGES IN VERSION 1.1-5 (2014-03-14)}{
   \subsection{BUG FIXES}{
     \itemize{
       \item improved NA handling in \code{simulate} and \code{refit}
@@ -196,6 +211,7 @@
     }
   }
 }
+
 \section{CHANGES IN VERSION 1.1-4}{
   \subsection{BUG FIXES}{
     \itemize{
@@ -337,14 +353,15 @@
   }
 }
 
-\section{CHANGES IN VERSION 1.0-6 (2013-10-27)}{
+\section{CHANGES IN VERSION 1.0-6 (2014-02-02)}{
   \subsection{BUG FIXES}{
     \itemize{
       \item prediction now works when new data have fewer factor
       levels than are present in the original data (Github issue #143,
       reported by Rune Haubo)
       \item the existence of a variable "new" in the global environment
-      would mess \code{lme4} up: reported at http://stackoverflow.com/questions/19801070/error-message-glmer-using-r-what-must-be-a-character-string-or-a-function
+      would mess \code{lme4} up: reported at
+      \url{http://stackoverflow.com/questions/19801070/error-message-glmer-using-r-what-must-be-a-character-string-or-a-function}
     }
   }
 }
