@@ -128,6 +128,7 @@ mkReTrms <- function(bars, fr, drop.unused.levels=TRUE) {
     ord <- rev(order(nl))
     blist <- blist[ord]
     nl <- nl[ord]
+    term.names <- term.names[ord]
   }
   Ztlist <- lapply(blist, `[[`, "sm")
   Zt <- do.call(rBind, Ztlist)  ## eq. 7, JSS lmer paper

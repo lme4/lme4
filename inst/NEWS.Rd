@@ -13,7 +13,10 @@
   }
   \subsection{BUG FIXES}{
     \itemize{
-      \item ... [Ben has found one in Zurich, Aug. 21, right?]
+      \item fixed reordering bug in names of \code{getME(.,"Ztlist")}
+      (terms are reordered in decreasing order of the number of
+      levels of the grouping variable, but names were not being
+      reordered)
     }
   }
 }

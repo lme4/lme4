@@ -205,6 +205,24 @@ test_that("lmer", {
                      coefs=c(1,1),
                      ctrl=lmerControl()$checkConv,lbound=0),
                    "Problem with Hessian check")
+
+    ## test ordering of Ztlist names
+    ## this is a silly model, just using it for a case
+    ## where nlevs(RE term 1) < nlevs(RE term 2)x
+    data(cbpp)
+    cbpp <- transform(cbpp,obs=factor(1:nrow(cbpp)))
+    fm0 <- lmer(incidence~1+(1|herd)+(1|obs),cbpp,
+         control=lmerControl(check.nobs.vs.nlev="ignore",
+                             check.nobs.vs.rankZ="ignore",
+                             check.nobs.vs.nRE="ignore",
+                             check.conv.grad="ignore",
+                             check.conv.singular="ignore",
+                             check.conv.hess="ignore"))
+    fm0B <- update(fm0, .~1+(1|obs)+(1|herd))
+    expect_equal(names(getME(fm0,"Ztlist")),
+                 c("obs.(Intercept)", "herd.(Intercept)"))
+    ## stable regardless of order in formula
+    expect_equal(getME(fm0,"Ztlist"),getME(fm0B,"Ztlist"))
 }) ## test_that(..)
 
 
