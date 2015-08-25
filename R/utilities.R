@@ -1,5 +1,5 @@
 if((Rv <- getRversion()) < "3.2.0") {
-    lengths <- function (x, use.names = TRUE) lengths(x, use.names = use.names)
+    lengths <- function (x, use.names = TRUE) vapply(x, length, 1L, USE.NAMES = use.names)
     if(Rv < "3.1.0") {
         anyNA <- function(x) any(is.na(x))
         if(Rv < "3.0.0") {
