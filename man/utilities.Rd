@@ -9,6 +9,7 @@
 \alias{.prt.methTit}
 \alias{.prt.resids}
 \alias{.prt.warn}
+\alias{formatVC}
 \alias{llikAIC}
 \alias{methTitle}
 \description{
@@ -40,6 +41,11 @@ methTitle(dims)
 .prt.VC     (varcor, digits, comp, formatter = format, \dots)
 .prt.grps   (ngrps, nobs)
 .prt.warn   (optinfo, summary = FALSE, \dots)
+formatVC    (varcor, digits = max(3, getOption("digits") - 2),
+		     comp = "Std.Dev.", formatter = format,
+                     useScale = attr(varcor, "useSc"),
+                     ...)
+
 }
 \arguments{
   %% llikAIC() :
@@ -97,7 +103,12 @@ methTitle(dims)
   %% .prt.warn   (optinfo, summary = FALSE, \dots)
   \item{optinfo}{typically \code{object @ optinfo}, the optimization
   infos, including warnings if there were.}
-  \item{summary}{logical}
+\item{summary}{logical}
+
+%% formatVC
+\item{useScale}{(logical) whether the parent model estimates a scale
+  parameter}
+
 }
 \value{
   \code{llikAIC()} returns a \code{\link{list}} with components

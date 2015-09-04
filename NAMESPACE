@@ -132,6 +132,7 @@ export(varianceProf)
 ## print() and print.summary() utilities -- other [NG]LMM packages can import
 export(.prt.VC,		.prt.aictab,	.prt.call,	.prt.family,
        .prt.grps,	.prt.methTit,	.prt.resids,	.prt.warn,
+       formatVC,
        llikAIC,	methTitle)
 ## export(tnames)
 

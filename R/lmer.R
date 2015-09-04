@@ -2203,8 +2203,10 @@ print.VarCorr.merMod <- function(x, digits = max(3, getOption("digits") - 2),
 ##' @param ... optional arguments for \code{formatter(*)} in addition
 ##' to the first (numeric vector) and \code{digits}.
 ##' @return a character matrix of formatted VarCorr entries from \code{varc}.
-formatVC <- function(varc, digits = max(3, getOption("digits") - 2),
-		     comp = "Std.Dev.", formatter = format, ...)
+formatVC <- function(varcor, digits = max(3, getOption("digits") - 2),
+		     comp = "Std.Dev.", formatter = format,
+                     useScale = attr(varcor, "useSc"),
+                     ...)
 {
     c.nms <- c("Groups", "Name", "Variance", "Std.Dev.")
     avail.c <- c.nms[-(1:2)]
@@ -2213,21 +2215,20 @@ formatVC <- function(varc, digits = max(3, getOption("digits") - 2),
     nc <- length(colnms <- c(c.nms[1:2], (use.c <- avail.c[mcc])))
     if(length(use.c) == 0)
 	stop("Must *either* show variances or standard deviations")
-    useScale <- attr(varc, "useSc")
-    reStdDev <- c(lapply(varc, attr, "stddev"),
-		  if(useScale) list(Residual = unname(attr(varc, "sc"))))
+    reStdDev <- c(lapply(varcor, attr, "stddev"),
+		  if(useScale) list(Residual = unname(attr(varcor, "sc"))))
     reLens <- lengths(reStdDev)
     nr <- sum(reLens)
     reMat <- array('', c(nr, nc), list(rep.int('', nr), colnms))
     reMat[1+cumsum(reLens)-reLens, "Groups"] <- names(reLens)
-    reMat[,"Name"] <- c(unlist(lapply(varc, colnames)), if(useScale) "")
+    reMat[,"Name"] <- c(unlist(lapply(varcor, colnames)), if(useScale) "")
     if(any("Variance" == use.c))
     reMat[,"Variance"] <- formatter(unlist(reStdDev)^2, digits = digits, ...)
     if(any("Std.Dev." == use.c))
     reMat[,"Std.Dev."] <- formatter(unlist(reStdDev),   digits = digits, ...)
     if (any(reLens > 1)) {
 	maxlen <- max(reLens)
-	recorr <- lapply(varc, attr, "correlation")
+	recorr <- lapply(varcor, attr, "correlation")
 	corr <-
 	    do.call(rBind,
 		    lapply(recorr,
