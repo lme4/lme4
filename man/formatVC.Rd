@@ -13,13 +13,12 @@ formatVC(varc, digits = max(3, getOption("digits") - 2),
   \item{varc}{a \code{\link{VarCorr}}(-like) matrix with
     \code{\link{attributes}}.}
   \item{digits}{the number of significant digits.}
-  \item{comp}{character vector of length one
-    or two indicating which columns out of "Variance" and
-    "Std.Dev." should be shown in the formatted output.}
-  \item{formatter}{the \code{\link{function}} to be used
-    for formatting the standard deviations and or variances
-    (but \emph{not} the correlations which (currently) are
-    always formatted as "0.nnn").}
+  \item{comp}{character vector of length one or two indicating which
+    columns out of \code{"Variance"} and \code{"Std.Dev."} should be
+    shown in the formatted output.}
+  \item{formatter}{the \code{\link{function}} to be used for formatting
+    the standard deviations and or variances (but \emph{not} the
+    correlations which (currently) are always formatted as \code{"0.nnn"}).}
   \item{\dots}{optional arguments for \code{formatter(*)} in addition to
     the first (numeric vector) and \code{digits}.}
 }
