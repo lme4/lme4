@@ -25,7 +25,6 @@ importFrom("utils", flush.console, packageVersion, stack, str)
 
 
 ## Recommended packages
-importClassesFrom("Matrix", corMatrix, dgCMatrix, dpoMatrix, dCHMsimpl)
 importFrom("lattice",
            bwplot,
            current.panel.limits,
@@ -45,6 +44,7 @@ importFrom("nlme", fixef,ranef, VarCorr, getGroups)
 
 importFrom("Matrix", drop0, rankMatrix, sparseMatrix, cBind,rBind,
            forceSymmetric, fac2sparse, KhatriRao, Diagonal)
+importClassesFrom("Matrix", corMatrix, dgCMatrix, dpoMatrix, dCHMsimpl)
 ## methods incl. S4 generics:
 importMethodsFrom("Matrix", coerce, cov2cor, "%*%", crossprod,tcrossprod,
                   t, diag, chol2inv, solve, colSums,rowSums)
@@ -100,7 +100,7 @@ export(mkLmerDevfun)
 export(mkMerMod)
 export(mkRespMod)
 export(mkReTrms)
-export(mkVarCorr)
+export(mkVarCorr, formatVC)
 export(mkParsTemplate)
 export(mkDataTemplate)
 export(Nelder_Mead)
