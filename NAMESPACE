@@ -100,7 +100,7 @@ export(mkLmerDevfun)
 export(mkMerMod)
 export(mkRespMod)
 export(mkReTrms)
-export(mkVarCorr, formatVC)
+export(mkVarCorr)
 export(mkParsTemplate)
 export(mkDataTemplate)
 export(Nelder_Mead)
@@ -131,7 +131,7 @@ export(varianceProf)
 
 ## print() and print.summary() utilities -- other [NG]LMM packages can import
 export(.prt.VC,		.prt.aictab,	.prt.call,	.prt.family,
-       .prt.grps,	.prt.methTit,	.prt.resids,	.prt.warn,
+       .prt.grps,	.prt.methTit,	.prt.resids,	.prt.warn,  formatVC,
        llikAIC,	methTitle)
 ## export(tnames)
 
