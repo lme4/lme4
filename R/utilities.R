@@ -126,8 +126,8 @@ mkReTrms <- function(bars, fr, drop.unused.levels=TRUE) {
   ## order terms stably by decreasing number of levels in the factor
   if (any(diff(nl) > 0)) {
     ord <- rev(order(nl))
-    blist <- blist[ord]
-    nl <- nl[ord]
+    blist      <- blist     [ord]
+    nl         <- nl        [ord]
     term.names <- term.names[ord]
   }
   Ztlist <- lapply(blist, `[[`, "sm")
@@ -166,7 +166,7 @@ mkReTrms <- function(bars, fr, drop.unused.levels=TRUE) {
                         ltri <- lower.tri(dd, diag = TRUE)
                         ii <- row(dd)[ltri]
                         jj <- col(dd)[ltri]
-                        dd[cbind(ii, jj)] <- seq_along(ii) # FIXME: this line unnecessary?
+                        ## unused: dd[cbind(ii, jj)] <- seq_along(ii)
                         data.frame(i = as.vector(mm[, ii]) + boff[i],
                                    j = as.vector(mm[, jj]) + boff[i],
                                    x = as.double(rep.int(seq_along(ii),
@@ -174,8 +174,8 @@ mkReTrms <- function(bars, fr, drop.unused.levels=TRUE) {
                                                    thoff[i]))
                       }))))
   thet <- numeric(sum(nth))
-  ll <- list(Zt=Matrix::drop0(Zt), theta=thet, Lind=as.integer(Lambdat@x),
-             Gp=unname(c(0L, cumsum(nb))))
+  ll <- list(Zt = drop0(Zt), theta = thet, Lind = as.integer(Lambdat@x),
+             Gp = unname(c(0L, cumsum(nb))))
   ## lower bounds on theta elements are 0 if on diagonal, else -Inf
   ll$lower <- -Inf * (thet + 1)
   ll$lower[unique(diag(Lambdat))] <- 0

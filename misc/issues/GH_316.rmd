@@ -103,4 +103,23 @@ refit2 <- function(object,y) {
 }
 ```
 
+    From: pacodea <notifications@github.com>
+    Date: Mon, 7 Sep 2015 04:44:46 -0700
 
+I think I have a related problem. The same data issues a warning with
+`refit` but works fine with `update` and `glmer`.  You can run the
+following code:
+
+```{r, pacodea}
+library(lme4)
+
+datos <- data.frame(x = c(1L, 1L, 1L, 2L, 2L, 1L, 2L, 2L, 1L, 1L),
+                    y = c(0L, 2L, 1L, 4L, 5L, 1L, 9L, 10L, 3L, 2L),
+                    falla =c(2L, 3L, 3L, 5L, 6L, 2L, 8L, 7L, 1L, 1L))
+
+modelo0 <- glmer(   y ~ 1 + (1 | x), data=datos, family=poisson)
+
+mod.1  <- glmer(falla ~ 1 + (1 | x), data=datos, family=poisson) # No problem
+mod.1b <- update(modelo0, formula = falla ~ 1 + (1 | x)) # No problem
+mod.1c <- refit (modelo0, datos$falla) # Issues warning
+```
