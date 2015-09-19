@@ -179,6 +179,19 @@ test_that("bootMer", {
         suppressWarnings(confint(fm1, method="boot", FUN=testFun, nsim=10,
                                  quiet=TRUE)))),
                  c(243.7551,256.9104),tol=1e-3)
+
+    ## passing re.form to bootMer
+    FUN <- function(.){
+        predict(., type="response")
+    }
+    fm2 <- lmer(strength ~ (1|batch/cask), Pastes)
+    expect_is(bootMer(fm2, predict, nsim=3),"boot")
+    ## FAILS
+    ## b2 <- bootMer(fm2, predict, re.form=NULL, nsim=3)
+    expect_is(bootMer(fm2, predict, re.form=~(1|batch)+(1|cask:batch), nsim=3),
+              "boot")
+    ## FAILS
+    ## b3 <- bootMer(fm2, predict, re.form=~(1|batch), nsim=3)
 })
 context("confint_other")
 test_that("confint", {

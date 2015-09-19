@@ -522,6 +522,9 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     ## compre.form <- noLHSform(formula(object))
     ## construct RE formula ONLY: leave out fixed terms,
     ##   which might have loose terms like offsets in them ...
+
+    ## this fails for complex RE terms such as (1|f/g):
+    ## findbars() is longer than the number of RE forms
     fb <- findbars(formula(object))
     compReForm <- reformulate(vapply(fb, function(x)
                                          paste("(",safeDeparse(x),")"), ""))

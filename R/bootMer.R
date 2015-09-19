@@ -28,7 +28,8 @@
 ##'
 ##' The semi-parametric variant is not yet implemented, and we only
 ##' provide a method for \code{\link{lmer}}  and \code{\link{glmer}} results.
-bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
+bootMer <- function(x, FUN, nsim = 1, seed = NULL,
+                    use.u = FALSE, re.form = NA,
                     type = c("parametric","semiparametric"),
 		    verbose = FALSE,
                     .progress = "none", PBargs=list(),
@@ -71,8 +72,17 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
     ## FIXME: remove prefix when incorporated in package
 
     if (type=="parametric") {
-        ss <- simulate(x, nsim=nsim, use.u=use.u, na.action=na.exclude)
+        argList <- list(x, nsim=nsim, na.action=na.exclude)
+        if (!missing(re.form)) {
+            argList <- c(argList,list(re.form=re.form))
+        } else {
+            argList <- c(argList,list(use.u=use.u))
+        }
+        ss <- do.call(simulate,argList)
     } else {
+        if (!missing(re.form))
+            stop(paste(sQuote("re.form")),
+                 "cannot be used with semiparametric bootstrapping")
         if (use.u) {
             if (isGLMM(x)) warning("semiparametric bootstrapping is questionable for GLMMs")
             ss <- replicate(nsim,fitted(x)+sample(residuals(x,"response"),
