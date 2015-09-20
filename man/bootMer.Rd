@@ -2,7 +2,7 @@
 \alias{bootMer}
 \title{Model-based (Semi-)Parametric Bootstrap for Mixed Models}
 \usage{
-bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
+bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE, re.form=NA,
 	type = c("parametric", "semiparametric"),
 	verbose = FALSE, .progress = "none", PBargs = list(),
 	parallel = c("no", "multicore", "snow"),
@@ -24,6 +24,11 @@ bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE,
     inference is conditional on these values. If
     \code{FALSE}, new normal deviates are drawn (see
     Details).}
+  \item{re.form}{formula, \code{NA} (equivalent to \code{use.u=FALSE}),
+    or \code{NULL} (equivalent to \code{use.u=TRUE}):
+    alternative to \code{use.u} for
+    specifying which random effects to incorporate.
+    See \code{\link{simulate.merMod}} for details.}
   \item{type}{character string specifying the type of
     bootstrap, \code{"parametric"} or
     \code{"semiparametric"}; partial matching is allowed.}

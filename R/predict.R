@@ -523,15 +523,21 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     ## construct RE formula ONLY: leave out fixed terms,
     ##   which might have loose terms like offsets in them ...
 
+    ##' combine unary or binary operator + arguments (sugar for 'substitute')
+    makeOp <- function(x,y,op=NULL) {
+        if (is.null(op)) {  ## unary
+            substitute(OP(X),list(X=x,OP=y))
+        } else substitute(OP(X,Y), list(X=x,OP=op,Y=y))
+    }
+
     ## this fails for complex RE terms such as (1|f/g):
     ## findbars() is longer than the number of RE forms
-    fb <- findbars(formula(object))
-    compReForm <- reformulate(vapply(fb, function(x)
-                                         paste("(",safeDeparse(x),")"), ""))
+    compReForm <- reOnly(formula(object))
     if (!noReForm(re.form)) {
-        rr <- re.form[[length(re.form)]] ## RHS of formula
+        rr <- reOnly(re.form)[[2]] ## expand RE and strip ~
         ftemplate <- substitute(.~.-XX, list(XX=rr))
-        compReForm <- update.formula(compReForm,ftemplate)
+        compReForm <- update.formula(compReForm,ftemplate)[-2]
+        ## update, then delete LHS
     }
 
     ## (1) random effect(s)
@@ -539,9 +545,12 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 	newRE <- mkNewReTrms(object, newdata, compReForm,
 			     na.action=na.action,
 			     allow.new.levels=allow.new.levels)
-        ## paranoia ...
-        stopifnot(!is.null(newdata) ||
-                  isTRUE(all.equal(newRE$Lambdat,getME(object,"Lambdat"))))
+        ## this *can* justifiably happen, if we are using mkNewReTrms
+        ## in the context of predicting/simulating with a non-trivial
+        ## re.form ...
+        ## <obsolete> paranoia ...
+        ## <obsolete> stopifnot(!is.null(newdata) ||
+        ##       isTRUE(all.equal(newRE$Lambdat,getME(object,"Lambdat"))))
 	U <- t(newRE$Lambdat %*% newRE$Zt) # == Z Lambda
 	u <- rnorm(ncol(U)*nsim)
 	## UNSCALED random-effects contribution:
