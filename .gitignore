@@ -4,6 +4,7 @@ src/*.o
 src/*.so
 src/*.dll
 vignettes/cache/*
+misc/cache/*
 .Rproj.user
 lme4.Rproj
 .Rhistory
