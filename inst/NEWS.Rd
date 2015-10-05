@@ -4,11 +4,19 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-10}{
+\section{CHANGES IN VERSION 1.1-10 (2015-10-05)}{
+  This release is primarily a version bump for the release of
+  the paper in J. Stat. Software.
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item updated CITATION file.
+    }
+  }    
   \subsection{NEW FEATURES}{
     \itemize{
       \item We export set of about a dozen printing utility functions
       which are used in our \code{print} methods.
+      \item \code{bootMer} now allows the use of \code{re.form}.
     }
   }
   \subsection{BUG FIXES}{
@@ -17,6 +25,9 @@
       (terms are reordered in decreasing order of the number of
       levels of the grouping variable, but names were not being
       reordered)
+      \item fixed issue with simulation when complex forms (such
+      as nested random effects terms) are included in the model
+      (Github #335)
     }
   }
 }

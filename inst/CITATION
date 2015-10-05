@@ -1,23 +1,25 @@
-year <- sub("-.*", "", meta$Date)
-note <- sprintf("R package version %s", meta$Version)
+bibentry(bibtype = "Article",
+  title        = "Fitting Linear Mixed-Effects Models Using {lme4}",
+  author       = c(person(given = "Douglas",
+                          family = "Bates"),
+                   person(given = "Martin",
+                          family = "M{\\\"a}chler"),
+                   person(given = "Ben",
+                          family = "Bolker"),
+                   person(given = "Steve",
+                          family = "Walker")),
+  journal      = "Journal of Statistical Software",
+  year         = "2015",
+  volume       = "67",
+  number       = "1",
+  pages        = "1--48",
+  doi          = "10.18637/jss.v067.i01",
 
-bibentry(bibtype = "Manual",
-	 title = "{lme4}: Linear mixed-effects models using {Eigen} and {S4}",
-	 author = c(person("Douglas", "Bates"),
-	     person("Martin", "Maechler"),
-	     person("Ben", "Bolker"),
-	     person("Steven", "Walker")),
-	 year = year,
-	 note = note,
-	 url = "https://CRAN.R-project.org/package=lme4")
-
-bibentry(bibtype = "Misc",
-	 title = "Fitting Linear Mixed-Effects Models using {lme4}",
-	 year = "2015",
-	 author = c(person("Douglas", "Bates"),
-	   person("Martin", "Maechler"),
-	   person(c("Benjamin", "M."), "Bolker"),
-	   person("Steven", "Walker")),
-	 note = "ArXiv e-print; in press, \\emph{Journal of Statistical Software}",
-	 url = "http://arxiv.org/abs/1406.5823")
+  header       = "To cite lme4 in publications use:",
+  textVersion  =
+  paste("Douglas Bates, Martin Maechler, Ben Bolker, Steve Walker (2015).",
+        "Fitting Linear Mixed-Effects Models Using lme4.",
+        "Journal of Statistical Software, 67(1), 1-48.",
+        "doi:10.18637/jss.v067.i01.")
+)
 
