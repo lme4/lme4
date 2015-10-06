@@ -1,5 +1,5 @@
 \name{glmer.nb}
-\title{Fitting GLMM's for Negative Binomial}
+\title{Fitting Negative Binomial GLMMs}
 \alias{glmer.nb}
 \alias{negative.binomial}% re-exported, needed e.g. in update()
 \concept{GLMM}
@@ -66,6 +66,7 @@ summary(mu <- 5*(-4 + with(dd, as.integer(f1) + 4*as.numeric(f2))))
 dd$y <- rnbinom(nrow(dd), mu = mu, size = 0.5)
 str(dd)
 require("MASS")## and use its glm.nb() - as indeed we have zero random effect:
+\dontrun{
 m.glm <- glm.nb(y ~ f1*f2, data=dd, trace=TRUE)
 summary(m.glm)
 m.nb <- glmer.nb(y ~ f1*f2 + (1|g), data=dd, verbose=TRUE)
@@ -75,7 +76,7 @@ getME(m.nb, "glmer.nb.theta")
 LL <- logLik(m.nb)
 ## mixed model has 1 additional parameter (RE variance)
 stopifnot(attr(LL,"df")==attr(logLik(m.glm),"df")+1)
-          
 plot(m.nb, resid(.) ~ g)# works, as long as data 'dd' is found
+}
 }
 \keyword{models}
