@@ -2,15 +2,18 @@ lme4: Mixed-effects models in R.
 ====
 
 [![Build Status](https://travis-ci.org/lme4/lme4.svg?branch=master)](https://travis-ci.org/lme4/lme4)
-[![downloads](http://cranlogs.r-pkg.org/badges/lme4)](http://cranlogs.r-pkg.org/badges/lme4)
 [![cran version](http://www.r-pkg.org/badges/version/lme4)](http://cran.rstudio.com/web/packages/lme4)
+[![downloads](http://cranlogs.r-pkg.org/badges/lme4)](http://cranlogs.r-pkg.org/badges/lme4)
+[![total downloads](http://cranlogs.r-pkg.org/badges/grand-total/lme4)](http://cranlogs.r-pkg.org/badges/grand-total/lme4)
 
 ## Recent/release notes
 
-* Release 1.1-9 is on CRAN now. There are no major user-visible changes.
-   * Some improvements to \code{glmer.nb}, including the ability to simulate; note that \code{glmer.nb} is still somewhat unstable, e.g. for models with additional arguments such as \code{offset} or \code{contrasts}.
-   * Bug fixes to \code{predict} for models with orthogonal polynomial/spline bases, and to \code{lmList} models with offsets and weights
-* Otherwise, see the [NEWS file](https://github.com/lme4/lme4/blob/master/inst/NEWS.Rd) (or  `news(Version=="1.1.9",package="lme4")`).
+* Release 1.1-10 is on CRAN now. There are no major user-visible changes; this version was released to coordinate with the publication of the [J. Stat. Software paper describing lmer](http://www.jstatsoft.org/index.php/jss/article/view/v067i01)
+   * `bootMer` now allows the use of `re.form`.
+   * exported printing utilities
+   * fixed bug in the naming of `getME(.,"Ztlist")` results
+   * fixed bug in simulations with complex random effects
+* See the [NEWS file](https://github.com/lme4/lme4/blob/master/inst/NEWS.Rd) (or  `news(Version=="1.1.10",package="lme4")`).
 
 ## Features
 
