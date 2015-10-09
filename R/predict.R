@@ -434,6 +434,11 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                          offset=NULL,
                          allow.new.levels=FALSE, na.action=na.pass, ...) {
 
+    if (is.null(weights)) {
+        if (is.null(newdata))
+            weights <- weights(object)
+        else weights <- rep(1,nrow(newdata))
+    }
     if (missing(object)) {
         if (is.null(formula) || is.null(newdata) || is.null(newparams)) {
             stop("if ",sQuote("object")," is missing, must specify all of ",
@@ -441,7 +446,6 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                  sQuote("newparams"))
         }
 
-        if (is.null(weights)) weights <- rep(1,nrow(newdata))
         ## construct fake-fitted object from data, params
         ## copied from glm(): DRY; this all stems from the
         ## original sin of handling family=gaussian as a special
@@ -530,8 +534,6 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         } else substitute(OP(X,Y), list(X=x,OP=op,Y=y))
     }
 
-    ## this fails for complex RE terms such as (1|f/g):
-    ## findbars() is longer than the number of RE forms
     compReForm <- reOnly(formula(object))
     if (!noReForm(re.form)) {
         rr <- reOnly(re.form)[[2]] ## expand RE and strip ~
@@ -576,7 +578,8 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
             stop("simulation not implemented for family",
                  family$family)
         ## don't rely on automatic recycling
-        val <- sfun(object, nsim=1, ftd = rep_len(musim, n*nsim))
+        val <- sfun(object, nsim=1, ftd = rep_len(musim, n*nsim),
+                    wts = weights)
         ## split results into nsims: need special case for binomial matrix/factor responses
         if (family$family=="binomial" && is.matrix(r <- model.response(object@frame))) {
             lapply(split(val[[1]], gl(nsim, n, 2 * nsim * n)), matrix,
@@ -660,24 +663,26 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 ##     from the fitted objects -- this allows simulation with new
 ##     parameters or new predictor variables
 ## (2) modifying wts from object$prior.weights to weights(object)
+## (3) adding wts as an argument
 ##
 ##
 ## these can be incorporated by overwriting the simulate()
 ## components, or calling them
 ##
-gaussian_simfun <- function(object, nsim, ftd=fitted(object)) {
-    wts <- weights(object)
+gaussian_simfun <- function(object, nsim, ftd=fitted(object),
+                            wts=weights(object)) {
+    
     if (any(wts != 1)) warning("ignoring prior weights")
     rnorm(nsim*length(ftd), ftd, sd=sigma(object))
 }
 
-binomial_simfun <- function(object, nsim, ftd=fitted(object)) {
+binomial_simfun <- function(object, nsim, ftd=fitted(object),
+                            wts=weights(object)) {
     n <- length(ftd)
     ntot <- n*nsim
-    wts <- weights(object)
     if (any(wts %% 1 != 0))
         stop("cannot simulate from non-integer prior.weights")
-    ## Try to fathom out if the original data were
+    ## Try to figure out if the original data were
     ## proportions, a factor or a two-column matrix
     if (!is.null(m <- model.frame(object))) {
         y <- model.response(m)
@@ -700,7 +705,8 @@ binomial_simfun <- function(object, nsim, ftd=fitted(object)) {
     } else rbinom(ntot, size = wts, prob = ftd)/wts
 }
 
-poisson_simfun <- function(object, nsim, ftd=fitted(object)) {
+poisson_simfun <- function(object, nsim, ftd=fitted(object),
+                           wts=weights(object)) {
         ## A Poisson GLM has dispersion fixed at 1, so prior weights
         ## do not have a simple unambiguous interpretation:
         ## they might be frequency weights or indicate averages.
@@ -712,8 +718,8 @@ poisson_simfun <- function(object, nsim, ftd=fitted(object)) {
 
 ##' FIXME: need a gamma.shape.merMod method in order for this to work.
 ##'        (see initial shot at gamma.shape.merMod below)
-Gamma_simfun <- function(object, nsim, ftd=fitted(object)) {
-    wts <- weights(object)
+Gamma_simfun <- function(object, nsim, ftd=fitted(object),
+                         wts=weights(object)) {
     if (any(wts != 1)) message("using weights as shape parameters")
     ## ftd <- fitted(object)
     shape <- MASS::gamma.shape(object)$alpha * wts
