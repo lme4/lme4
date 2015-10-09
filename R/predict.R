@@ -759,9 +759,10 @@ gamma.shape.merMod <- function(object, ...) {
 ## (triggers a NOTE in R CMD check)
 ## modified from @aosmith16 GH contribution
 
-negative.binomial_simfun <- function (object, nsim, ftd = fitted(object))
+negative.binomial_simfun <- function (object, nsim, ftd = fitted(object),
+                                          wts=weights(object))
 {
-    wts <- weights(object)
+
     if (any(wts != 1))
         warning("ignoring prior weights")
     theta <- getNBdisp(object)
