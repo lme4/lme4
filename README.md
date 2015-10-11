@@ -8,7 +8,7 @@ lme4: Mixed-effects models in R.
 
 ## Recent/release notes
 
-* Release 1.1-10 is on CRAN now. There are no major user-visible changes; this version was released to coordinate with the publication of the [J. Stat. Software paper describing lmer](http://www.jstatsoft.org/index.php/jss/article/view/v067i01)
+* Release 1.1-10 is [on CRAN](https://cran.r-project.org/package=lme4) now. There are no major user-visible changes; this version was released to coordinate with the publication of the [J. Stat. Software paper describing lmer](http://www.jstatsoft.org/index.php/jss/article/view/v067i01).
    * `bootMer` now allows the use of `re.form`.
    * exported printing utilities
    * fixed bug in the naming of `getME(.,"Ztlist")` results
