@@ -619,11 +619,14 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         }
     }
 
+    nafun <- function(x) { x[] <- apply(x,
+                                        2L,
+                                        napredict,
+                                        omit = fit.na.action); x }
     val <- if (is.matrix(val[[1]])) {
 	## have to handle binomial response matrices differently --
 	## fill in NAs as appropriate in *both* columns
-	structure(lapply(val, function(x) apply(x, 2L, napredict,
-						omit = fit.na.action)),
+	structure(lapply(val, nafun),
 		  ## have to put this back into a (weird) data frame again,
 		  ## carefully (should do the napredict stuff
 		  ## earlier, so we don't have to redo this transformation!)

@@ -10,6 +10,7 @@ fm1 <- fit_sleepstudy_1
 fm2 <- fit_sleepstudy_2
 gm1 <- fit_cbpp_1
 gm2 <- fit_cbpp_2
+gm3 <- fit_cbpp_3
 ## More objects to use in all contexts :
 set.seed(101)
 dNA <- data.frame(
@@ -447,6 +448,21 @@ test_that("simulate", {
                             re.form=NULL,
                             allow.new.levels = TRUE)[,1]
     expect_equal(mean(d$simulated), 299.9384608)
+
+    ## Simulate with weights:
+    newdata <- with(cbpp, expand.grid(period=unique(period),
+                                      herd=unique(herd)))
+    ss <- simulate(gm1, newdata=newdata[1:3,],
+                               weights=20, seed=101)[[1]]
+    expect_equal(ss,
+                 matrix(c(4,2,0,16,18,20),nrow=3,
+                        dimnames=list(NULL,c("incidence",""))))
+    ss <- simulate(gm3, newdata=newdata[1:3,],
+                               weights=20, seed=101)[[1]]
+    expect_equal(ss,c(0.2,0.1,0.0))
+    ss <- simulate(gm1, newdata=newdata[1,],
+                               weights=20, seed=101)[[1]]
+    expect_equal(unname(ss),matrix(c(4,16),nrow=1))
 })
 
 context("misc")
