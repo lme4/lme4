@@ -1,4 +1,4 @@
-if((Rv <- getRversion()) < "3.2.0") {
+if((Rv <- getRversion()) < "3.2.1") {
     lengths <- function (x, use.names = TRUE) vapply(x, length, 1L, USE.NAMES = use.names)
     if(Rv < "3.1.0") {
         anyNA <- function(x) any(is.na(x))
@@ -8,7 +8,7 @@ if((Rv <- getRversion()) < "3.2.0") {
                 paste0 <- function(...) paste(..., sep = '')
         }
     }
-} ## R < 3.2.0
+} ## R < 3.2.1
 rm(Rv)
 
 ## From Matrix package  isDiagonal(.) :
