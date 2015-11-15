@@ -13,8 +13,9 @@ test_that("basic", {
    m.glm <- glm.nb(y ~ f1*f2, data=dd)
    m.nb <- glmer.nb(y ~ f1*f2 + (1|g), data=dd)
    expect_equal(unname(fixef(m.nb)),
-                c(1.040144, -0.101874, 0.148151, 0.205183,
-                  0.189596, -0.481643),tol=1e-5)
+                c(1.65008, 0.76715, 1.01147, 1.51241, -0.61506, -0.6104),
+                tol=1e-5)
+
    
    expect_is(m.nb,"glmerMod")
    ## 'family' properly quoted/not expanded in call?
