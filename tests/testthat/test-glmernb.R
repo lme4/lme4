@@ -12,6 +12,10 @@ test_that("basic", {
    require("MASS")
    m.glm <- glm.nb(y ~ f1*f2, data=dd)
    m.nb <- glmer.nb(y ~ f1*f2 + (1|g), data=dd)
+   expect_equal(unname(fixef(m.nb)),
+                c(1.040144, -0.101874, 0.148151, 0.205183,
+                  0.189596, -0.481643),tol=1e-5)
+   
    expect_is(m.nb,"glmerMod")
    ## 'family' properly quoted/not expanded in call?
    expect_equal(gsub("[0-9]+\\.[0-9]+","NUM",deparse(m.nb@call$family)),
@@ -46,22 +50,23 @@ test_that("basic", {
                      KEEP.OUT.ATTRS=FALSE)
    dd$y <- rnbinom(nrow(dd),mu=3,size=1)
    mu <- 5*(-4 + with(dd, as.integer(f1) + 4*as.numeric(f2)))
-   m.nb2 <- glmer.nb(y~f1+(1|g),
+   m.nb3 <- glmer.nb(y~f1+(1|g),
                        data=dd,
-                       ## offset is broken:
-                       ## offset=rep(0,nrow(dd)),
-                       ## offset=rep(log(2),nrow(dd)),
-                       ##  -> Downdated VtV is not positive definite
                        contrasts=list(f1=contr.sum))
+   ## make sure *different* fixed effects from previous fit ... 
+   expect_equal(fixef(m.nb3),
+                structure(c(1.12087, 0.02713, 0.03415),
+                          .Names = c("(Intercept)", "f11", "f12")),
+                tol=1e-5)
 
-   m.nb2 <- glmer.nb(y~f1+(1|g), dd)
-   expect_equal(names(m.nb2@call),c("","formula","data","family"))
+   m.nb4 <- glmer.nb(y~f1+(1|g), dd)
+   expect_equal(names(m.nb4@call),c("","formula","data","family"))
 
    if (FALSE) {
        m.nb2 <- glmer.nb(y~f1+(1|g),
-                       data=dd,
+                         data=dd,
                          offset=rep(0,nrow(dd)))
+   }
 
-}
 }
 )
