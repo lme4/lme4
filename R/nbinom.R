@@ -91,23 +91,42 @@ glmer.nb <- function(..., interval = log(th) + c(-3,3),
     ## i <- match(c("formula",""), nE)
     ## i.frml <- i[!is.na(i)][[1]] # the index of "formula" in '...'
     ## dots <- list(...)
-    g0 <- glmer(..., family = poisson, verbose = verbose >= 2)
+
+    mc <- match.call()
+    mc[[1]] <- quote(glmer)
+    mc$family <- quote(poisson)
+    mc$verbose <- (verbose>=2)
+    g0 <- eval(mc, parent.frame(1L))
+
     th <- est_theta(g0, limit = initCtrl$limit,
 		    eps = initCtrl$eps, trace = initCtrl$trace)
+    
     ## using format() on purpose, influenced by options(digits = *) :
     if(verbose) cat("th := est_theta(glmer(..)) =", format(th))
-    g1 <- update(g0, family = negative.binomial(theta=th))
+
+    mc$family <- bquote(negative.binomial(theta=.(th)))
+    g1 <- eval(mc, parent.frame(1L))
+
     if(verbose) cat(" --> dev.= -2*logLik(.) =", format(-2*logLik(g1)),"\n")
     ## fix the 'data' part (only now!)
-    if("data" %in% names(g1@call))
-	g1@call[["data"]] <- dotE[["data"]]
-    else
-        warning("no 'data = *' in glmer.nb() call.. Not much is guaranteed")
-    if ("verbose" %in% names(g1@call)) {
-        g1@call[["verbose"]] <- dotE[["verbose"]]
+    if("data" %in% names(g1@call)) {
+        if (!is.null(dotE[["data"]])) {
+            g1@call[["data"]] <- dotE[["data"]]
+        }
+    } else
+        warning("no 'data = *' in glmer.nb() call ... Not much is guaranteed")
+    other.args <- c("verbose","control")
+    for (a in other.args) {
+        if (a %in% names(g1@call)) {
+            g1@call[[a]] <- dotE[[a]]
+        }
     }
+
+    ## FIXME: optTheta should also work by modifying mc directly,
+    ##  then re-evaluating, not via refit() ...
+    
     optTheta(g1, interval=interval, tol=tol, verbose=verbose,
-	     control = nb.control)
+	     control = c(eval.parent(g1@call$control),nb.control))
 }
 
 ## do we want to facilitate profiling on theta??

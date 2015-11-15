@@ -244,8 +244,9 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
                 (is.factor(y) || is.logical(y))))) {
 	    if (is.binom)
 		stop("response must be numeric or factor")
-	    else
+	    else {
 		stop("response must be numeric")
+            }
 	}
 	if(!all(is.finite(y)))
 	    stop("NA/NaN/Inf in 'y'") # same msg as from lm.fit()
@@ -856,35 +857,47 @@ checkArgs <- function(type,...) {
 ## if #3 is true *and* the user is doing something tricky with nested functions,
 ## this may fail ...
 
+## from http://stackoverflow.com/questions/14945274/determine-whether-evaluation-of-an-argument-will-fail-due-to-non-existence
+missDataFun <- function(d) {
+    ## test here
+    ff <- sys.frames()
+    ex <- substitute(d)
+    ii <- rev(seq_along(ff))
+    for(i in ii) {
+        ex <- eval(substitute(substitute(x, env=sys.frames()[[n]]),
+                              env = list(x = ex, n=i)))
+    }
+    return(is.symbol(ex) && !exists(deparse(ex)))
+}
+
 checkFormulaData <- function(formula, data, checkLHS=TRUE, debug=FALSE) {
-    dataName <- deparse(substitute(data))
-    wrongData <- isTRUE(tryCatch(eval(data), error = function(e)TRUE))
+    nonexist.data <- missDataFun(data)
+    wd <- tryCatch(eval(data), error = identity)
+    if (wrong.data <- inherits(wd,"simpleError")) {
+        wrong.data.msg <- wd$message
+    }
+    bad.data <- nonexist.data || wrong.data
+
     ## data not found (this *should* only happen with garbage input,
     ## OR when strings used as formulae -> drop1/update/etc.)
     ##
-    ## alternate attempt (fails)
-    ##
-    ## ff <- sys.frames()
-    ## ex <- substitute(data)
-    ## ii <- rev(seq_along(ff))
-    ## for(i in ii) {
-    ##     ex <- eval(substitute(substitute(x, env=sys.frames()[[n]]),
-    ##                           env = list(x = ex, n=i)))
-    ## }
-    ## origName <- deparse(ex)
-    ## wrongData <- !exists(origName)
-    ## (!dataName=="NULL" && !exists(dataName))
-    if (wrongData || debug) {
+    if (bad.data || debug) {
         varex <- function(v, env) exists(v, envir=env, inherits=FALSE)
         allvars <- all.vars(as.formula(formula))
         allvarex <- function(env, vvec=allvars) all(vapply(vvec, varex, NA, env))
     }
-    if (wrongData) { ## Choose helpful error message:
+    if (bad.data) { ## Choose helpful error message:
         if (allvarex(environment(formula))) {
-            stop("'data' not found, but variables found in environment of formula: ",
+            stop("bad 'data', but variables found in environment of formula: ",
                  "try specifying 'formula' as a formula rather ",
                  "than a string in the original model",call.=FALSE)
-        } else stop("'data' not found, and some variables missing from formula environment",call.=FALSE)
+        } else {
+            if (nonexist.data) {
+                stop("'data' not found, and some variables missing from formula environment",call.=FALSE)
+            } else {
+                stop("bad 'data': ",wrong.data.msg)
+            }
+        }
     } else {
         denv <- ## The data as environment
             if (is.null(data)) {

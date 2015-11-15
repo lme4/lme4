@@ -28,8 +28,8 @@ test_that("glmerFormX", {
     ## expect_equal(drop1(m_data.3)$AIC,AICvec)
     ## expect_equal(drop1(m_data.4)$AIC,AICvec)
     ## in test environment:
-    expect_error(drop1(m_data.3),"'data' not found")
-    expect_error(drop1(m_data.4),"'data' not found")
+    expect_error(drop1(m_data.3),"bad 'data'")
+    expect_error(drop1(m_data.4),"bad 'data'")
 
 })
 
@@ -101,8 +101,8 @@ test_that("glmerForm", {
 
     ## these do NOT fail if there is a variable 'd' living in the global environment --
     ## they DO fail in the testthat context
-    expect_error(drop1(m_data.3),"'data' not found")
-    expect_error(drop1(m_data.4),"'data' not found")
+    expect_error(drop1(m_data.3),"bad 'data'")
+    expect_error(drop1(m_data.4),"bad 'data'")
 
     ## expect_error(lapply(m_data_List[4],drop1))
     ## expect_error(lapply(m_data_List[5],drop1))

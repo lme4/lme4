@@ -207,7 +207,7 @@ The following S3 methods with arguments given above exist (this list is currentl
   whereas the likelihood itself (i.e. the unconditional likelihood)
   involves integrating out these coefficients. The following table
   summarizes how to extract the various types of deviance for a
-  \code{glmerMod} object.
+  \code{glmerMod} object:
 
   \tabular{lrr}{
              \tab conditional              \tab unconditional \cr
@@ -215,7 +215,7 @@ The following S3 methods with arguments given above exist (this list is currentl
     absolute \tab \code{object@resp$aic()} \tab \code{-2*logLik(object)}
   }
 
-  This table requires two caveat:
+  This table requires two caveats:
 
   \itemize{
 
@@ -223,7 +223,6 @@ The following S3 methods with arguments given above exist (this list is currentl
     (e.g. \code{Gamma}) then \code{object@resp$aic() - 2 * getME(object,
     "devcomp")$dims["useSc"]} is required for the absolute-conditional
     case.
-
     \item If adaptive Gauss-Hermite quadrature is used, then
     \code{logLik(object)} is currently only proportional to the
     absolute-unconditional log-likelihood.
