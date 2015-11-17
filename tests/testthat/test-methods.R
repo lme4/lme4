@@ -281,6 +281,16 @@ test_that("refit", {
                          data = Orthodont)
     expect_equal(s1 <- simulate(fm,newdata = Orthodont,seed = 101),
                  s2 <- simulate(fm,seed = 101))
+
+    
+   if (FALSE) {
+       
+       m5 <- glmer(round(Reaction) ~ Days + (1|Subject),
+                   data = sleepstudy, family=poisson,
+                   offset=rep(0,nrow(sleepstudy)))
+       refit(m5)
+   }
+
 })
 
 context("predict")

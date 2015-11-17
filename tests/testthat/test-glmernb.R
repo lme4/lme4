@@ -69,17 +69,6 @@ test_that("basic", {
                          offset=rep(0,nrow(dd)))
    }
 
-   ## more generic problem with refit():   
-
-   m5A <- glmer(round(Reaction) ~ Days + (1|Subject),
-               data = sleepstudy, family=poisson)
-   refit(m5A)
-   
-   m5 <- glmer(round(Reaction) ~ Days + (1|Subject),
-               data = sleepstudy, family=poisson,
-               offset=rep(0,nrow(sleepstudy)))
-   refit(m5)
-
 }
 )
 
