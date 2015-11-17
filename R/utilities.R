@@ -245,7 +245,9 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
 	    if (is.binom)
 		stop("response must be numeric or factor")
 	    else {
-		stop("response must be numeric")
+                if (is.logical(y))
+                    y <- as.integer(y)
+                else stop("response must be numeric")
             }
 	}
 	if(!all(is.finite(y)))
