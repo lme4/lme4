@@ -25,9 +25,9 @@ test_that("basic", {
    expect_equal(fixef(m.nb), coef (m.glm), tol=1e-5)    ## GH #319
 
    ## GH #285
-   expect_error(glmer(Reaction > 250 ~ Days + (1|Subject),
-                         data = sleepstudy, family=poisson),
-                "must be numeric")
+   m.nb1 <- glmer(Reaction > 250 ~ Days + (1|Subject),
+                  data = sleepstudy, family=poisson)
+   
 
    ## failing on Travis-CI???
    if (FALSE) {
@@ -49,21 +49,16 @@ test_that("basic", {
    expect_is(m.nb2,"glmerMod")
    options(old.opts)
 
-   set.seed(101)
-   dd <- expand.grid(f1 = factor(1:3),
-                  f2 = LETTERS[1:2], g=1:9, rep=1:15,
-                     KEEP.OUT.ATTRS=FALSE)
-   dd$y <- rnbinom(nrow(dd),mu=3,size=1)
-   mu <- 5*(-4 + with(dd, as.integer(f1) + 4*as.numeric(f2)))
    m.nb3 <- glmer.nb(y~f1+(1|g),
                        data=dd,
                        contrasts=list(f1=contr.sum))
    ## make sure *different* fixed effects from previous fit ... 
    expect_equal(fixef(m.nb3),
-                structure(c(1.12087, 0.02713, 0.03415),
-                          .Names = c("(Intercept)", "f11", "f12")),
-                tol=1e-5)
-
+                structure(c(2.93061, -0.29779, 0.02586),
+                          .Names = c("(Intercept)", 
+                          "f11", "f12")),tol=1e-5)
+   
+   ## make sure 'data' is in call even if unnamed
    m.nb4 <- glmer.nb(y~f1+(1|g), dd)
    expect_equal(names(m.nb4@call),c("","formula","data","family"))
 
@@ -74,5 +69,17 @@ test_that("basic", {
                          offset=rep(0,nrow(dd)))
    }
 
+   ## more generic problem with refit():   
+
+   m5A <- glmer(round(Reaction) ~ Days + (1|Subject),
+               data = sleepstudy, family=poisson)
+   refit(m5A)
+   
+   m5 <- glmer(round(Reaction) ~ Days + (1|Subject),
+               data = sleepstudy, family=poisson,
+               offset=rep(0,nrow(sleepstudy)))
+   refit(m5)
+
 }
 )
+
