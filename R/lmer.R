@@ -2276,7 +2276,8 @@ summary.merMod <- function(object,
     famL <- famlink(resp = resp)
     p <- length(coefs <- fixef(object))
 
-    stdError <- sqrt(diag(vcov(object, use.hessian = use.hessian)))
+    vc <- vcov(object, use.hessian = use.hessian)
+    stdError <- sqrt(diag(vc))
     coefs <- cbind("Estimate" = coefs,
                    "Std. Error" = stdError)
     if (p > 0) {
