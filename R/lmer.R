@@ -1183,8 +1183,8 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, maxit = 10
 {
 
     ctrl.arg <- NULL
-    if (ll <- length(l... <- list(...)) > 0) {
-        if ((ll == 1L) &&  (names(l...)[1] == "control")) {
+    if ((ll <- length(l... <- list(...))) > 0) {
+        if (ll == 1L && names(l...)[1] == "control") {
             ctrl.arg <- l...$control
         }
         else {
@@ -2223,9 +2223,9 @@ formatVC <- function(varcor, digits = max(3, getOption("digits") - 2),
     reMat[1+cumsum(reLens)-reLens, "Groups"] <- names(reLens)
     reMat[,"Name"] <- c(unlist(lapply(varcor, colnames)), if(useScale) "")
     if(any("Variance" == use.c))
-    reMat[,"Variance"] <- formatter(unlist(reStdDev)^2, digits = digits, ...)
+	reMat[,"Variance"] <- formatter(unlist(reStdDev)^2, digits = digits, ...)
     if(any("Std.Dev." == use.c))
-    reMat[,"Std.Dev."] <- formatter(unlist(reStdDev),   digits = digits, ...)
+	reMat[,"Std.Dev."] <- formatter(unlist(reStdDev),   digits = digits, ...)
     if (any(reLens > 1)) {
 	maxlen <- max(reLens)
 	recorr <- lapply(varcor, attr, "correlation")
