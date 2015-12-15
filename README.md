@@ -1,7 +1,7 @@
 lme4: Mixed-effects models in R.
 ====
 
-[![Build Status](https://travis-ci.org/lme4/lme4.svg?branch=master)](https://travis-ci.org/lme4/lme4)
+[![Build Status](https://travis-ci.org/lme4/lme4.svg?branch=master)](https://travis-ci.org/pitakakariki/lme4)
 [![cran version](http://www.r-pkg.org/badges/version/lme4)](http://cran.rstudio.com/web/packages/lme4)
 [![downloads](http://cranlogs.r-pkg.org/badges/lme4)](http://cranlogs.r-pkg.org/badges/lme4)
 [![total downloads](http://cranlogs.r-pkg.org/badges/grand-total/lme4)](http://cranlogs.r-pkg.org/badges/grand-total/lme4)
