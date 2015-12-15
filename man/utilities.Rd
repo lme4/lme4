@@ -45,19 +45,11 @@ methTitle(dims)
 .prt.aictab (aictab, digits = 1)
 .prt.grps   (ngrps, nobs)
 .prt.warn   (optinfo, summary = FALSE, \dots)
-<<<<<<< HEAD
-formatVC    (varcor, digits = max(3, getOption("digits") - 2),
-		     comp = "Std.Dev.", formatter = format,
-                     useScale = attr(varcor, "useSc"),
-                     ...)
-
-=======
 
 .prt.VC (varcor, digits, comp, formatter = format, \dots)
 formatVC(varcor, digits = max(3, getOption("digits") - 2),
          comp = "Std.Dev.", formatter = format,
          useScale = attr(varcor, "useSc"), \dots)
->>>>>>> mm
 }
 \arguments{
   %% llikAIC() :
@@ -114,22 +106,12 @@ formatVC(varcor, digits = max(3, getOption("digits") - 2),
 
   %% .prt.warn   (optinfo, summary = FALSE, \dots)
   \item{optinfo}{typically \code{object @ optinfo}, the optimization
-<<<<<<< HEAD
-  infos, including warnings if there were.}
-\item{summary}{logical}
-
-%% formatVC
-\item{useScale}{(logical) whether the parent model estimates a scale
-  parameter}
-
-=======
     infos, including warnings if there were.}
   \item{summary}{logical}
 
   %% formatVC
   \item{useScale}{(logical) whether the parent model estimates a scale
     parameter}
->>>>>>> mm
 }
 \value{
   \code{llikAIC()} returns a \code{\link{list}} with components

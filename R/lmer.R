@@ -2205,13 +2205,8 @@ print.VarCorr.merMod <- function(x, digits = max(3, getOption("digits") - 2),
 ##' @return a character matrix of formatted VarCorr entries from \code{varc}.
 formatVC <- function(varcor, digits = max(3, getOption("digits") - 2),
 		     comp = "Std.Dev.", formatter = format,
-<<<<<<< HEAD
                      useScale = attr(varcor, "useSc"),
                      ...)
-=======
-		     useScale = attr(varcor, "useSc"),
-		     ...)
->>>>>>> mm
 {
     c.nms <- c("Groups", "Name", "Variance", "Std.Dev.")
     avail.c <- c.nms[-(1:2)]
