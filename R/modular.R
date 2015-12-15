@@ -771,10 +771,13 @@ optimizeGlmer <- function(devfun,
     }
     if (restart_edge) ## FIXME: implement this ...
         stop("restart_edge not implemented for optimizeGlmer yet")
-    if (boundary.tol > 0)
-        check.boundary(rho, opt, devfun, boundary.tol)
-    else
-        opt
+
+    if (boundary.tol > 0) {
+        opt <- check.boundary(rho, opt, devfun, boundary.tol)
+        if(stage != 1) rho$resp$setOffset(rho$baseOffset)
+    }
+
+    return(opt)
 }
 
 check.boundary <- function(rho,opt,devfun,boundary.tol) {
