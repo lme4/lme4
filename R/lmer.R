@@ -1183,8 +1183,8 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, maxit = 10
 {
 
     ctrl.arg <- NULL
-    if (ll <- length(l... <- list(...)) > 0) {
-        if ((ll == 1L) &&  (names(l...)[1] == "control")) {
+    if ((ll <- length(l... <- list(...))) > 0) {
+        if (ll == 1L && names(l...)[1] == "control") {
             ctrl.arg <- l...$control
         }
         else {
@@ -2205,8 +2205,13 @@ print.VarCorr.merMod <- function(x, digits = max(3, getOption("digits") - 2),
 ##' @return a character matrix of formatted VarCorr entries from \code{varc}.
 formatVC <- function(varcor, digits = max(3, getOption("digits") - 2),
 		     comp = "Std.Dev.", formatter = format,
+<<<<<<< HEAD
                      useScale = attr(varcor, "useSc"),
                      ...)
+=======
+		     useScale = attr(varcor, "useSc"),
+		     ...)
+>>>>>>> mm
 {
     c.nms <- c("Groups", "Name", "Variance", "Std.Dev.")
     avail.c <- c.nms[-(1:2)]
@@ -2223,9 +2228,9 @@ formatVC <- function(varcor, digits = max(3, getOption("digits") - 2),
     reMat[1+cumsum(reLens)-reLens, "Groups"] <- names(reLens)
     reMat[,"Name"] <- c(unlist(lapply(varcor, colnames)), if(useScale) "")
     if(any("Variance" == use.c))
-    reMat[,"Variance"] <- formatter(unlist(reStdDev)^2, digits = digits, ...)
+	reMat[,"Variance"] <- formatter(unlist(reStdDev)^2, digits = digits, ...)
     if(any("Std.Dev." == use.c))
-    reMat[,"Std.Dev."] <- formatter(unlist(reStdDev),   digits = digits, ...)
+	reMat[,"Std.Dev."] <- formatter(unlist(reStdDev),   digits = digits, ...)
     if (any(reLens > 1)) {
 	maxlen <- max(reLens)
 	recorr <- lapply(varcor, attr, "correlation")
