@@ -1183,8 +1183,8 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, maxit = 10
 {
 
     ctrl.arg <- NULL
-    if (ll <- length(l... <- list(...)) > 0) {
-        if ((ll == 1L) &&  (names(l...)[1] == "control")) {
+    if ((ll <- length(l... <- list(...))) > 0) {
+        if (ll == 1L && names(l...)[1] == "control") {
             ctrl.arg <- l...$control
         }
         else {
@@ -2205,7 +2205,8 @@ print.VarCorr.merMod <- function(x, digits = max(3, getOption("digits") - 2),
 ##' @return a character matrix of formatted VarCorr entries from \code{varc}.
 formatVC <- function(varcor, digits = max(3, getOption("digits") - 2),
 		     comp = "Std.Dev.", formatter = format,
-		     useScale = attr(varcor, "useSc"), ...)
+		     useScale = attr(varcor, "useSc"),
+		     ...)
 {
     c.nms <- c("Groups", "Name", "Variance", "Std.Dev.")
     avail.c <- c.nms[-(1:2)]
