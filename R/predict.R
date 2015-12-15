@@ -370,9 +370,10 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
             }
             ## FIXME?: simplify(no need for 'mfnew'): can this be different from 'na.action'?
             fit.na.action <- attr(mfnew,"na.action")
-        }
-	if(is.numeric(X.col.dropped) && length(X.col.dropped) > 0)
+            ## only need to drop if new data specified ...
+            if(is.numeric(X.col.dropped) && length(X.col.dropped) > 0)
 	    X <- X[, -X.col.dropped, drop=FALSE]
+        }
         pred <- drop(X %*% fixef(object))
         ## FIXME:: need to unname()  ?
         ## FIXME: is this redundant??

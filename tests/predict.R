@@ -142,4 +142,17 @@ if (getRversion() > "3.0.0") {
     p3 <- predict(fm1,newdata=nd)
     stopifnot(all.equal(p2,p3))
     stopifnot(all.equal(p2,p0[1]))
+
+    ## Stack Overflow 34221564:
+    ##  should only drop columns from model matrix when using *new* data
+    library(splines)
+    sleep <- sleepstudy  #get the sleep data
+    set.seed(1234567)
+    sleep$age <- as.factor(sample(1:3,length(sleep),rep=TRUE))
+    form1 <- Reaction ~ Days + ns(Days, df=4) +
+        age + Days:age + (Days | Subject)
+    m4 <- lmer(form1, sleep)
+    expect_equal(unname(head(predict(m4,re.form=NA))),
+                 c(255.645493, 262.3263, 268.86947, 279.0608,
+                   293.9390, 304.4721),tol=1e-4)
 }
