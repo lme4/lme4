@@ -2276,9 +2276,10 @@ summary.merMod <- function(object,
     famL <- famlink(resp = resp)
     p <- length(coefs <- fixef(object))
 
+    vc <- vcov(object, use.hessian = use.hessian)
+    stdError <- sqrt(diag(vc))
     coefs <- cbind("Estimate" = coefs,
-                   "Std. Error" = sqrt(diag(vcov(object,
-                   use.hessian = use.hessian))))
+                   "Std. Error" = stdError)
     if (p > 0) {
 	coefs <- cbind(coefs, (cf3 <- coefs[,1]/coefs[,2]), deparse.level = 0)
 	colnames(coefs)[3] <- paste(if(useSc) "t" else "z", "value")
