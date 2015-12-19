@@ -1195,7 +1195,8 @@ refit2.merMod <- function(object,
 
 ## FIXME DRY: much of copy'n'paste from lmer() etc .. ==> become more modular (?)
 refit.merMod <- function(object,
-                         newresp=NULL, formula=NULL, weights=NULL,
+                         newresp=NULL,
+                         ## formula=NULL, weights=NULL,
                          rename.response=FALSE,
                          maxit = 100L,
                          debug=FALSE, ...)
