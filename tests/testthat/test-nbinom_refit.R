@@ -10,7 +10,9 @@ dd$y <- rnbinom(nrow(dd), mu = mu, size = 0.5)
 
 ## mimic glmer.nb protocol
 
-context("testing glmer refit", {
+context("testing glmer refit")
+
+test_that("glmer refit", {
             ## basic Poisson fit
             m.base <- glmer(y ~ f1*f2 + (1|g), data=dd, family=poisson)
             expect_equal(m.base@beta,(m.base.r <- refit(m.base))@beta)
