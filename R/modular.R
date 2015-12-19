@@ -813,7 +813,7 @@ updateGlmerDevfun <- function(devfun, reTrms, nAGQ = 1L){
     rho$lower      <- c(rho$lower, rep.int(-Inf, length(rho$pp$beta0)))
     rho$lp0        <- rho$pp$linPred(1)
     rho$dpars      <- seq_along(rho$pp$theta)
-    rho$baseOffset <- rho$resp$offset + 0 # forcing a copy (!)
+    rho$baseOffset <- forceCopy(rho$resp$offset) # forcing a copy (!)
     rho$GQmat      <- GHrule(nAGQ)
     rho$fac        <- reTrms$flist[[1]]
     mkdevfun(rho, nAGQ)  # does this attach rho to devfun??

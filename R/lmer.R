@@ -1178,8 +1178,27 @@ print.ranef.mer <- function(x, ...) {
     invisible(x)
 }
 
+## try to redo refit by calling modular structure ...
+refit2.merMod <- function(object,
+                          newresp=NULL) {
+    ## the idea is to steal as much structure as we can from the
+    ## previous fit, including
+    ##  * starting parameter values
+    ##  * random-effects structure
+    ##  * fixed-effects structure
+    ##  * model frame
+    ## and jump into the modular structure at an appropriate place;
+    ##  essentially, this should merge with a smart-as-possible
+    ##  version of 'update' ...
+
+}
+
 ## FIXME DRY: much of copy'n'paste from lmer() etc .. ==> become more modular (?)
-refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, maxit = 100L, ...)
+refit.merMod <- function(object,
+                         newresp=NULL, formula=NULL, weights=NULL,
+                         ## rename.response=FALSE,
+                         maxit = 100L,
+                         debug=FALSE, ...)
 {
 
     ctrl.arg <- NULL
@@ -1263,9 +1282,9 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, maxit = 10
 
     rr <- if(isLMM(object))
         mkRespMod(model.frame(object), REML = isREML(object))
-    else if(isGLMM(object))
+    else if(isGLMM(object)) {
         mkRespMod(model.frame(object), family = family(object))
-    else
+    } else
         stop("refit.merMod not working for nonlinear mixed models.\n",
              "try update.merMod instead.")
 
@@ -1293,8 +1312,10 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, maxit = 10
 
     }
 
+    
     if (isGLMM(object)) {
         GQmat <- GHrule(nAGQ)
+    
         if (nAGQ <= 1) {
             glmerPwrssUpdate(pp,rr, control$tolPwrss, GQmat, maxit=maxit)
         } else {
@@ -1305,7 +1326,7 @@ refit.merMod <- function(object, newresp=NULL, rename.response=FALSE, maxit = 10
 
     devlist <-
 	if (isGLMM(object)) {
-	    baseOffset <- object@resp$offset
+	    baseOffset <- forceCopy(object@resp$offset)
 
 	    list(tolPwrss= dc$cmp [["tolPwrss"]],
 		 compDev = dc$dims[["compDev"]],

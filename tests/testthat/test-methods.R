@@ -283,14 +283,15 @@ test_that("refit", {
                  s2 <- simulate(fm,seed = 101))
 
     
-   if (FALSE) {
-       
-       m5 <- glmer(round(Reaction) ~ Days + (1|Subject),
-                   data = sleepstudy, family=poisson,
-                   offset=rep(0,nrow(sleepstudy)))
-       refit(m5)
-   }
-
+    ## works *without* offset ...
+    m5 <- glmer(round(Reaction) ~ Days + (1|Subject),
+                data = sleepstudy, family=poisson,
+                offset=rep(0,nrow(sleepstudy)))
+    m5R <- refit(m5)
+    ## lots of fussy details make expect_equal() on the whole object difficult
+    expect_equal(coef(m5),coef(m5R))
+    expect_equal(VarCorr(m5),VarCorr(m5R))
+    expect_equal(logLik(m5),logLik(m5R))
 })
 
 context("predict")
