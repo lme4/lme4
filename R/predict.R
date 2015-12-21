@@ -340,8 +340,9 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
             ## Use original model 'X' matrix and offset
             fit.na.action <- attr(object@frame,"na.action")  ## original NA action
             ## orig. offset: will be zero if there are no matches ...
-            offset <- rowSums(object@frame[grepl("offset\\(.*\\)",
-                                                 names(object@frame))])
+            offset <- model.offset(model.frame(object))
+            if (is.null(offset)) offset <- 0
+            
         } else {  ## new data specified
             ## evaluate new fixed effect
             RHS <- formula(substitute(~R,
