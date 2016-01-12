@@ -1198,8 +1198,7 @@ refit.merMod <- function(object,
                          newresp=NULL,
                          ## formula=NULL, weights=NULL,
                          rename.response=FALSE,
-                         maxit = 100L,
-                         debug=FALSE, ...)
+                         maxit = 100L, ...)
 {
 
     ctrl.arg <- NULL
@@ -1313,10 +1312,10 @@ refit.merMod <- function(object,
 
     }
 
-    
+
     if (isGLMM(object)) {
         GQmat <- GHrule(nAGQ)
-    
+
         if (nAGQ <= 1) {
             glmerPwrssUpdate(pp,rr, control$tolPwrss, GQmat, maxit=maxit)
         } else {
