@@ -1201,14 +1201,13 @@ refit.merMod <- function(object,
                          maxit = 100L, ...)
 {
 
+    l... <- list(...)
+
     ctrl.arg <- NULL
-    if ((ll <- length(l... <- list(...))) > 0) {
-        if (ll == 1L && names(l...)[1] == "control") {
-            ctrl.arg <- l...$control
-        }
-        else {
-            warning("additional arguments to refit.merMod ignored")
-        }
+    if("control" %in% names(l...)) ctrl.arg <- l...$control
+
+    if(!all(names(l...) %in% c("control", "verbose"))) {
+        warning("additional arguments to refit.merMod ignored")
     }
     ## TODO: not clear whether we should reset the names
     ##       to the new response variable.  Maybe not.
