@@ -56,9 +56,9 @@ str(p3 <- predict(gm1,newdata,re.form=NA)) # new data, level-0
 str(p4 <- predict(gm1,newdata,re.form= ~(1|herd))) # explicitly specify RE
 stopifnot(identical(p2, p4))
 \dontshow{%back compatibility - as long as we have it: ReForm, REForm, REform,
-stopifnot(identical(p1, predict(gm1,ReForm=NA)))
-stopifnot(identical(p3, predict(gm1,newdata,REForm=NA)))
-stopifnot(identical(p4, predict(gm1,newdata,REform=~(1|herd))))
+suppressWarning(stopifnot(identical(p1, predict(gm1,ReForm=NA))))
+suppressWarnings(stopifnot(identical(p3, predict(gm1,newdata,REForm=NA))))
+suppressWarnings(stopifnot(identical(p4, predict(gm1,newdata,REform=~(1|herd)))))
 
 ## predict() should work with variable names with spaces [as lm() does]:
 dd <- expand.grid(y=1:3, "Animal ID" = 1:9)
