@@ -56,7 +56,7 @@ str(p3 <- predict(gm1,newdata,re.form=NA)) # new data, level-0
 str(p4 <- predict(gm1,newdata,re.form= ~(1|herd))) # explicitly specify RE
 stopifnot(identical(p2, p4))
 \dontshow{%back compatibility - as long as we have it: ReForm, REForm, REform,
-suppressWarning(stopifnot(identical(p1, predict(gm1,ReForm=NA))))
+suppressWarnings(stopifnot(identical(p1, predict(gm1,ReForm=NA))))
 suppressWarnings(stopifnot(identical(p3, predict(gm1,newdata,REForm=NA))))
 suppressWarnings(stopifnot(identical(p4, predict(gm1,newdata,REform=~(1|herd)))))
 
