@@ -5,7 +5,7 @@
 \alias{as.data.frame.VarCorr.merMod}
 \alias{print.VarCorr.merMod}
 \usage{
-\method{VarCorr}{merMod}(x, sigma=1, rdig=3)
+\method{VarCorr}{merMod}(x, sigma=1, \dots)
 
 %% documented because of "surprising arguments":
 \method{as.data.frame}{VarCorr.merMod}(x, row.names = NULL,
@@ -19,14 +19,13 @@
     \code{VarCorr.merMod} object returned from \code{VarCorr}.}
   \item{sigma}{an optional numeric value used as a multiplier for the
     standard deviations.}
-  \item{rdig, digits}{an optional integer value specifying the number of
-    digits; for \code{VarCorr()} to represent correlation estimates.}
+  \item{digits}{an optional integer value specifying the number of digits}
   \item{order}{arrange data frame with variances/standard deviations
     first and covariances/correlations last for each random effects
     term (\code{"cov.last"}), or in the order of the lower triangle of the
     variance-covariance matrix (\code{"lower.tri"})?}
-  \item{row.names}{Ignored: necessary for the \code{as.data.frame} method.}
-  \item{optional}{Ignored: necessary for the \code{as.data.frame} method.}
+  \item{row.names, optional}{Ignored: necessary for the
+    \code{as.data.frame} method.}
   \item{\dots}{Ignored for the \code{as.data.frame} method; passed to
     other \code{\link{print}()} methods for the \code{print()} method.}
   %% print():
