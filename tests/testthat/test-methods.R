@@ -161,7 +161,7 @@ test_that("bootMer", {
     ## previously set 'Sample' (sic) -- no effect!
     m2 <- update(m1, data=PastesNA)
     ci3 <- CI.boot(m2)
-    expect_equal(ci, ci3, tol=0.2)
+    expect_equal(ci, ci3, tolerance=0.2)
     sleepstudyNA <- sleepstudy
     sleepstudyNA$Days[1:3] <- NA
     m4 <- update(fm2, data = sleepstudyNA)
@@ -173,13 +173,13 @@ test_that("bootMer", {
     suppressPackageStartupMessages(require(boot))
     boo01.sp <- bootMer(m5, fixef, nsim = 100, use.u = TRUE,
                         type = "semiparametric")
-    expect_equal(sd(boo01.sp$t), 8.215586, tol = 1e-4)
+    expect_equal(sd(boo01.sp$t), 8.215586, tolerance = 1e-4)
     ## passing FUN to confint: Torbjørn Håkan Ergon
     testFun <- function(fit) fixef(fit)[1]
     expect_equal(c(unclass(
         suppressWarnings(confint(fm1, method="boot", FUN=testFun, nsim=10,
                                  quiet=TRUE)))),
-                 c(243.7551,256.9104),tol=1e-3)
+                 c(243.7551,256.9104),tolerance=1e-3)
 
     ## passing re.form to bootMer
     FUN <- function(.){
@@ -206,7 +206,7 @@ test_that("confint", {
     ## FIXME: should add tests for {-1,1} bounds on correlations as well
     expect_equal(c(confint(fm1,method="Wald",parm="beta_")),
                  c(232.301892,8.891041,270.508318,12.043531),
-                 tol=1e-5)
+                 tolerance=1e-5)
     ## Wald gives NA for theta values
     expect_true(all(is.na(confint(fm1,method="Wald",parm="theta_"))))
 
@@ -266,7 +266,7 @@ test_that("confint", {
                   .Dimnames = list(c(".sig01", ".sig02",
                   ".sig03", ".sigma", "(Intercept)", "cYear"),
                   c("2.5 %", "97.5 %"))),
-                 tol=1e-3)
+                 tolerance=1e-3)
 })
 
 
@@ -289,8 +289,8 @@ test_that("refit", {
                 offset=rep(0,nrow(sleepstudy)))
     m5R <- refit(m5)
     ## lots of fussy details make expect_equal() on the whole object difficult
-    expect_equal(coef(m5),coef(m5R))
-    expect_equal(VarCorr(m5),VarCorr(m5R))
+    expect_equal(coef(m5),coef(m5R),tolerance=3e-6)
+    expect_equal(VarCorr(m5),VarCorr(m5R),tolerance=1e-6)
     expect_equal(logLik(m5),logLik(m5R))
 })
 
@@ -360,8 +360,8 @@ test_that("predict", {
                data=Orthodont,
                control=lmerControl(check.conv.hess="ignore"))
     m4 <- lmer(distance ~ age + (age|Subject) + (0 + nsex|Subject), data=Orthodont)
-    expect_equal(p3 <- predict(m3, Orthodont), fitted(m3), tol=1e-14)
-    expect_equal(p4 <- predict(m4, Orthodont), fitted(m4), tol=1e-14)
+    expect_equal(p3 <- predict(m3, Orthodont), fitted(m3), tolerance=1e-14)
+    expect_equal(p4 <- predict(m4, Orthodont), fitted(m4), tolerance=1e-14)
 
     ## related to GH #275 (*passes*),
     ss <- sleepstudy
@@ -423,7 +423,7 @@ test_that("simulate", {
     expect_is(sp1 <- simulate(p1, seed=123), "data.frame")
     expect_identical(dim(sp1), c(nrow(Penicillin), 1L))
     expect_equal(fivenum(sp1[,1]),
-		 c(20.9412, 22.5805, 23.5575, 24.6095, 27.6997), tol=1e-5)
+		 c(20.9412, 22.5805, 23.5575, 24.6095, 27.6997), tolerance=1e-5)
     ## Pixel example
 
     expect_identical(dim(simulate(fmPixS)), c(nPix, 1L))
@@ -442,8 +442,10 @@ test_that("simulate", {
     g1 <- glmer.nb(y ~ x + (1|f), data=dd)
     th.g1 <- getME(g1, "glmer.nb.theta")
     ts1 <- table(s1 <- simulate(g1)[,1])
-    expect_equal(fixef(g1), c("(Intercept)" = 0.630067, x = -0.0167248), tol = 1e-5)
-    expect_equal(th.g1, 2.013, tol = 1e-4)
+    expect_equal(fixef(g1),
+                 c("(Intercept)" = 0.630067, x = -0.0167248),
+                 tolerance = 1e-5)
+    expect_equal(th.g1, 2.013, tolerance = 1e-4)
     expect_equal(th.g1, g1@call$family[["theta"]])# <- important for pkg{effects} eval(<call>)
     expect_identical(sum(s1), 403)
     expect_identical(as.vector(ts1[as.character(0:5)]),
