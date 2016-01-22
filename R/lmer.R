@@ -2172,10 +2172,9 @@ mkVarCorr <- function(sc, cnms, nc, theta, nms) {
 
 ##' Extract variance and correlation components
 ##'
-VarCorr.merMod <- function(x, sigma = 1, rdig = 3)# <- 3 args from nlme
+VarCorr.merMod <- function(x, sigma = 1, ...)
 {
-  ## FIXME:: would like to fix nlme to add ...
-  ## FIXME:: add type=c("varcov","sdcorr","logs" ?)
+  ## TODO: now that we have '...', add  type=c("varcov","sdcorr","logs" ?
     if (is.null(cnms <- x@cnms))
 	stop("VarCorr methods require reTrms, not just reModule")
     if(missing(sigma))
