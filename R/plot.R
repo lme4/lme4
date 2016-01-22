@@ -52,7 +52,7 @@ getIDLabels <- function(object, form=formula(object)) {
     } else {
         grps <- form[[2]]
     }
-    if (as.character(grps)==".obs") return(seq(fitted(object)))
+    if (identical(grps,quote(.obs))) return(seq(fitted(object)))
     fList <- lapply(grps,function(x) eval(x,mf))
     do.call(interaction,fList)
 }
