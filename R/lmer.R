@@ -2152,7 +2152,7 @@ mkVarCorr <- function(sc, cnms, nc, theta, nms) {
 
 ##' Extract variance and correlation components
 ##'
-VarCorr.merMod <- function(x, sigma = 1, rdig = 3, ...)# <- 3 args+'...' from nlme
+VarCorr.merMod <- function(x, sigma = 1, ...)
 {
   ## TODO: now that we have '...', add  type=c("varcov","sdcorr","logs" ?
     if (is.null(cnms <- x@cnms))
