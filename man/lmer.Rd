@@ -95,7 +95,8 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
     replaced by the \code{REML} argument.}
 }
 \value{
-  An object of class \code{merMod}, for which many methods
+  An object of class \code{merMod} (more specifically,
+  an object of \emph{subclass} \code{lmerMod}), for which many methods
   are available (e.g. \code{methods(class="merMod")})
 }
 \details{
