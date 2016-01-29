@@ -5,6 +5,7 @@ lme4: Mixed-effects models in R.
 [![cran version](http://www.r-pkg.org/badges/version/lme4)](http://cran.rstudio.com/web/packages/lme4)
 [![downloads](http://cranlogs.r-pkg.org/badges/lme4)](http://cranlogs.r-pkg.org/badges/lme4)
 [![total downloads](http://cranlogs.r-pkg.org/badges/grand-total/lme4)](http://cranlogs.r-pkg.org/badges/grand-total/lme4)
+[![Research software impact](http://depsy.org/api/package/cran/lme4/badge.svg)](http://depsy.org/package/r/lme4)
 
 ## Recent/release notes
 
