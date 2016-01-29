@@ -4,6 +4,16 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
+\section{CHANGES IN VERSION 1.1-11 (2016-24-01)}{
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item several \code{glmer.nb} bugs fixed (generally not
+      changing results, but causing warnings and errors e.g.
+      during bootstrapping)
+    }
+  }
+}
+
 \section{CHANGES IN VERSION 1.1-10 (2015-10-05)}{
   This release is primarily a version bump for the release of
   the paper in J. Stat. Software.
