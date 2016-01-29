@@ -95,7 +95,7 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
     replaced by the \code{REML} argument.}
 }
 \value{
-  An object of class \code{merMod} (more specifically,
+  An object of class \code{\link[=merMod-class]{merMod}} (more specifically,
   an object of \emph{subclass} \code{lmerMod}), for which many methods
   are available (e.g. \code{methods(class="merMod")})
 }
@@ -109,15 +109,19 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
       will work but subsequent methods such as \code{\link{drop1}},
       \code{\link{update}} may fail.}
 
-    \item{Unlike some simpler modeling frameworks such as
-      \code{\link{lm}} and \code{\link{glm}} which automatically detect
-      perfectly collinear predictor variables, \code{[gn]lmer} cannot
-      handle design matrices of less than full rank.  For example, in
-      cases of models with interactions that have unobserved
-      combinations of levels, it is up to the user to define a new
-      variable (for example creating \code{ab} within the data from the
-      results of \code{interaction(a,b,drop=TRUE)}).}
-
+    \item{When handling perfectly collinear predictor variables
+      (i.e. design matrices of less than full rank),
+      \code{[gn]lmer} is not quite as sophisticated
+      as some simpler modeling frameworks such as
+      \code{\link{lm}} and \code{\link{glm}}. While it does
+      automatically drop collinear variables (with a message
+      rather than a warning), it does not automatically fill
+      in \code{NA} values for the dropped coefficients;
+      these can be added via
+      \code{fixef(fitted.model,add.dropped=TRUE)}.
+      This information can also be retrieved via
+      \code{attr(getME(fitted.model,"X"),"col.dropped")}.
+      }
     \item{the deviance function returned when \code{devFunOnly} is
       \code{TRUE} takes a single numeric vector argument, representing
       the \code{theta} vector.  This vector defines the scaled
@@ -135,7 +139,7 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
 }
 \seealso{
   \code{\link[stats]{lm}} for linear models;
-  \code{\link{glmer}} for generalized linear and
+  \code{\link{glmer}} for generalized linear; and
   \code{\link{nlmer}} for nonlinear mixed models.
 }
 \examples{

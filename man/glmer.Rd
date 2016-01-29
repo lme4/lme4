@@ -102,8 +102,9 @@ glmer(formula, data = NULL, family = gaussian, control = glmerControl(),
     replaced by the \code{nAGQ} argument.}
 }
 \value{
-  An object of class \code{glmerMod}, for which many
-  methods are available (e.g. \code{methods(class="glmerMod")}).
+  An object of class \code{\link[=merMod-class]{merMod}} (more specifically,
+  an object of \emph{subclass} \code{glmerMod}) for which many
+  methods are available (e.g. \code{methods(class="merMod")})
 }
 \details{
   Fit a generalized linear mixed model, which incorporates both
