@@ -2366,6 +2366,7 @@ plot(fm1, sqrt(abs(resid(.))) ~ fitted(.),
 @
 and quantile-quantile plots, (from \pkg{lattice})
 <<diagplot3,fig.keep="none">>=
+require("lattice")
 qqmath(fm1, id = 0.05)
 @
 In contrast to \code{plot.lm}, these scale-location and Q-Q plots
