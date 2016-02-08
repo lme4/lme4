@@ -3,7 +3,7 @@ library(lme4)
 set.seed(17)
 fm1. <- lmList(Reaction ~ Days | Subject, sleepstudy, pool=FALSE)
 fm1  <- lmList(Reaction ~ Days | Subject, sleepstudy)
-coef(fm1)
+## coef(fm1)
 cf.fm1 <- data.frame(
     `(Intercept)` =
         c(244.19267, 205.05495, 203.48423, 289.68509, 285.73897, 264.25161,
@@ -20,9 +20,9 @@ stopifnot(all.equal(signif(coef(fm1), 8), cf.fm1,
 	  )
 
 sm1. <- summary(fm1.)
-(sm1 <- summary(fm1))
+sm1 <- summary(fm1)
 stopifnot(all.equal(sm1$RSE, 25.5918156267, tolerance = 1e-10))
-(cf1 <- confint(fm1))
+cf1 <- confint(fm1)
 
 if(!dev.interactive(orNone=TRUE)) pdf("lmList_plots.pdf")
 
@@ -70,8 +70,21 @@ fm4 # no pooled SD for glm
 stopifnot(dim(cf4) == c(15,4),
           identical(which(is.na(cf4)),
                     sort(as.integer(c(8+15*(0:3), 47)))))
-if(FALSE)## FIXME
-summary(fm4)
+
+fm5 <- lmList(incidence ~ period | herd, data=cbpp)
+fm6 <- nlme::lmList(incidence ~ period | herd, data=cbpp)
+
+if(FALSE) {## FIXME: but I (BMB) think this is actually an nlme bug ...
+    summary(fm4)
+
+    library(nlme)
+    data("cbpp",package="lme4")
+    fm6 <- nlme::lmList(incidence ~ period | herd, data=cbpp)
+    ## Warning message:
+    ## In lmList.formula(incidence ~ period | herd, data = cbpp) :
+    ##   An lm fit failed, probably because a factor only had one level
+    summary(fm6)
+}
 
 ## this is a slightly odd example because the residual df from
 ##  these fits are in fact zero ...  so pooled.SD fails, as it should
@@ -154,3 +167,12 @@ m4 <- lmList(Reaction ~ Days | Subject,
              offset=runif(nrow(sleepstudy)), sleepstudy)
 stopifnot(!identical(m2,m3))
 stopifnot(!identical(m4,m3))
+
+## more from GH 320
+
+dat2 <- data.frame(dat,xx=c(NA,NA,NA,1:4,NA))
+m5 <- lmList(y ~ x | g, data=dat2)
+stopifnot(all.equal(unlist(coef(m5)[1,]),
+          coef(lm(y~x,subset=(g==1)))))
+stopifnot(all.equal(unlist(coef(m5)[3,]),
+          coef(lm(y~x,subset=(g==3)))))

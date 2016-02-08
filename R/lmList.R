@@ -36,17 +36,26 @@ lmList <- function(formula, data, family, subset, weights,
     ## data <- as.data.frame(data)
     if (is(data,"groupedData"))
         warning("lmList does not (yet) work correctly on groupedData objects")
+
     mCall <- mf <- match.call()
-    m <- match(c("family", "data", "subset", "weights",
-                 "na.action", "offset"), names(mf), 0)
+
+    ## in contrast to the usual R model-fitting idiom, we do **not**
+    ## want to evaluate the model frame here; it will mess up any derived
+    ## variables we have when we go to fit the sub-models.  We were previously
+    ## using model.frame() on the entire data set, but that does not
+    ## exclude unused columns ... and hence screws us up when there are
+    ## NA values in unused columns.  All we need the model frame for
+    ## is evaluating the groups.
+
+    ## keep weights and offsets in case we have NAs there??
+    m <- match(c("formula", "data", "subset", "na.action",
+                 "weights", "offset"), names(mf), 0)
     mf <- mf[c(1, m)]
     ## substitute `+' for `|' in the formula
-### FIXME: Figure out what to do here instead of subbars
-    ##          mf$formula <- subbars(formula)
-    mf$x <- mf$model <- mf$y <- mf$family <- NULL
+    mf$formula <- subbars(formula)
     mf$drop.unused.levels <- TRUE
     mf[[1]] <- as.name("model.frame")
-    frm <- eval(mf, parent.frame())## <- including "..."
+    frm <- eval.parent(mf) ## <- including "..."
     mform <- modelFormula(formula)
     isGLM <- !missing(family) ## TODO in future, consider isNLM / isNLS
     errorH <- function(e) NULL # => NULL iff an error happened
@@ -60,16 +69,14 @@ lmList <- function(formula, data, family, subset, weights,
     ## automatically been incorporated into the model frame ...
     fit <- if (isGLM) glm else lm
     mf2 <- if (missing(family)) NULL else list(family=family)
-    fitfun <- function(dat,formula) {
+    fitfun <- function(data,formula) {
         tryCatch({
-            data <- as.data.frame(dat)
-            do.call(fit,c(list(formula, data,
-                               weights=dat[["(weights)"]],
-                               offset=dat[["(offset)"]]),
+            do.call(fit,c(list(formula, data, ...),
                           mf2))
         }, error=errorH)
     }
-    frm.split <- split(frm, groups)
+    ## split *original data*, not model frame, on groups
+    frm.split <- split(data, groups)
     ## NB:  levels() is only  OK if grouping variable is a factor
     nms <- names(frm.split)
     ## null.split <- replicate(length(nms),NULL)
