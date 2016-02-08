@@ -63,10 +63,6 @@ lmList <- function(formula, data, family, subset, weights,
     ## (simply passing them along silently gives confusing output)
     groups <- eval(mform$groups, frm)
     if (!is.factor(groups)) groups <- factor(groups)
-    ## FIXME: this splitting of data, weights, offset is really
-    ## ugly/brute force.  I feel like there ought to be a way
-    ## to leverage the fact that 'weights' and 'offset' have
-    ## automatically been incorporated into the model frame ...
     fit <- if (isGLM) glm else lm
     mf2 <- if (missing(family)) NULL else list(family=family)
     fitfun <- function(data,formula) {
@@ -79,15 +75,14 @@ lmList <- function(formula, data, family, subset, weights,
     frm.split <- split(data, groups)
     ## NB:  levels() is only  OK if grouping variable is a factor
     nms <- names(frm.split)
-    ## null.split <- replicate(length(nms),NULL)
-    ## weights.split <- if (missing(weights)) null.split else split(weights, groups)
-    ## offset.split <- if (missing(offset)) null.split else split(offset, groups)
     val <- ## mapply(fitfun,
         lapply(
             frm.split,fitfun,
-                  ## weights.split,
-                  ## offset.split,
-               formula = as.formula(mform$model))
+            formula = as.formula(mform$model))
+
+    use <- !sapply(val, is.null)
+    if (nbad <- sum(!use))
+        warning("Fitting failed for ",nbad," group(s), probably because a factor only had one level")
 
     ## Contrary to nlme, we keep the erronous ones as well
     pool <- !isGLM || .hasScale(family2char(family))

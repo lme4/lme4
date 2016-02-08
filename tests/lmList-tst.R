@@ -1,4 +1,5 @@
 library(lme4)
+library(testthat)
 
 set.seed(17)
 fm1. <- lmList(Reaction ~ Days | Subject, sleepstudy, pool=FALSE)
@@ -63,16 +64,33 @@ stopifnot(identical(dim(cf32), c(5L,2:1)),
 
 
 ## "glmList" (2) -- here,  herd == 8 has only one observation => not estimable
-fm4 <- lmList(cbind(incidence, size - incidence) ~ period | herd,
-             family=binomial, data=cbpp)
+expect_warning(fm4 <- lmList(cbind(incidence, size - incidence) ~ period | herd,
+             family=binomial, data=cbpp),
+             "Fitting failed for ")
+
 fm4 # no pooled SD for glm
 (cf4 <- coef(fm4)) # with some 5 NA's
+## match NA locations
 stopifnot(dim(cf4) == c(15,4),
           identical(which(is.na(cf4)),
                     sort(as.integer(c(8+15*(0:3), 47)))))
 
 fm5 <- lmList(incidence ~ period | herd, data=cbpp)
 fm6 <- nlme::lmList(incidence ~ period | herd, data=cbpp)
+
+## for this example coef() *does* work ...
+ctab <- t(sapply(split(cbpp,cbpp$herd),
+                 function(x) {
+    if (nrow(x)==1) {
+        rep(NA,4)
+    } else {
+        g <- glm(cbind(incidence, size-incidence) ~ period, data=x,
+                 family=binomial)
+        cc <- coef(g)
+        length(cc) <- 4  ## pad with NAs
+        cc
+    }}))
+stopifnot(all.equal(c(ctab),c(as.matrix(coef(fm4)))))
 
 if(FALSE) {## FIXME: but I (BMB) think this is actually an nlme bug ...
     summary(fm4)
@@ -83,7 +101,8 @@ if(FALSE) {## FIXME: but I (BMB) think this is actually an nlme bug ...
     ## Warning message:
     ## In lmList.formula(incidence ~ period | herd, data = cbpp) :
     ##   An lm fit failed, probably because a factor only had one level
-    summary(fm6)
+    try(coef(fm6))  ## coef does *not* work here
+    try(summary(fm6))
 }
 
 ## this is a slightly odd example because the residual df from
