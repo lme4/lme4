@@ -55,10 +55,6 @@ lmList(formula, data, family, subset, weights, na.action,
 }
 \details{
   \itemize{
-    \item \code{data} should be a data frame (not, e.g.
-    a \code{groupedData} object from the \pkg{nlme} package);
-    use \code{\link{as.data.frame}} first to convert the data.
-
     \item While \code{data} is optional, the package authors
     \emph{strongly} recommend its use, especially when later applying
     methods such as \code{update} and \code{drop1} to the fitted model

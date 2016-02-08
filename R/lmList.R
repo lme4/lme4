@@ -9,8 +9,39 @@ modelFormula <- function(form)
     if (!inherits(rhs, "call") || rhs[[1]] != as.symbol('|'))
         stop("rhs of formula must be a conditioning expression")
     form[[3]] <- rhs[[2]]
-    list(model = form, groups = rhs[[3]])
+    list(model = dropOffset(form), groups = rhs[[3]])
 }
+
+dropOffset <- function(form) {
+    ## atomic 
+    if (is.symbol(form) || is.numeric(form)) return(form)
+    ## binary
+    if (identical(form[[1]],quote(offset))) {
+        NULL
+    } else {
+        ## unary operator
+        if (length(form)==2) {
+            form[[2]] <- dropOffset(form[[2]])
+            return(form)
+        }
+        nb2 <- dropOffset(form[[2]])
+        nb3 <- dropOffset(form[[3]])
+        if (is.null(nb2))
+            nb3
+        else if (is.null(nb3))
+            nb2
+        else {
+            form[[2]] <- nb2
+            form[[3]] <- nb3
+            return(form)
+        }
+    }
+}
+
+## dropOffset(y~x)
+## dropOffset(y~x+offset(stuff))
+## dropOffset(y~-x+offset(stuff))
+## dropOffset(~-x+offset(stuff))
 
 ##' @title List of lm Objects with a Common Model
 ##' @param formula a linear formula object of the form
@@ -29,13 +60,9 @@ modelFormula <- function(form)
 lmList <- function(formula, data, family, subset, weights,
                    na.action, offset, pool = TRUE, ...) {
     stopifnot(inherits(formula, "formula"))
-    ## FIXME: converting data to data.frame here doesn't help
-    ##  because model.frame is accessed through eval(...,parent.frame())
-    ##  below, so it picks up the *original* value of data
-    ## model.frame(groupedData) is problematic ...
-    ## data <- as.data.frame(data)
-    if (is(data,"groupedData"))
-        warning("lmList does not (yet) work correctly on groupedData objects")
+
+    ## model.frame(groupedData) was problematic ... but not as we
+    ## are currently using it.
 
     mCall <- mf <- match.call()
 
@@ -54,8 +81,12 @@ lmList <- function(formula, data, family, subset, weights,
     ## substitute `+' for `|' in the formula
     mf$formula <- subbars(formula)
     mf$drop.unused.levels <- TRUE
+    ## pass NAs for now -- want *all* groups, weights, offsets recovered
+    mf$na.action <- na.pass
     mf[[1]] <- as.name("model.frame")
     frm <- eval.parent(mf) ## <- including "..."
+    data[["(weights)"]] <- model.weights(frm)
+    data[["(offset)"]] <- model.offset(frm)
     mform <- modelFormula(formula)
     isGLM <- !missing(family) ## TODO in future, consider isNLM / isNLS
     errorH <- function(e) NULL # => NULL iff an error happened
@@ -67,7 +98,9 @@ lmList <- function(formula, data, family, subset, weights,
     mf2 <- if (missing(family)) NULL else list(family=family)
     fitfun <- function(data,formula) {
         tryCatch({
-            do.call(fit,c(list(formula, data, ...),
+            do.call(fit,c(list(formula, data,
+                               weights = model.weights(data),
+                               offset = model.offset(data), ...),
                           mf2))
         }, error=errorH)
     }
