@@ -260,8 +260,8 @@ profile.merMod <- function(fitted,
         ## intermediate storage for pos. and neg. increments
         pres <- nres <- res
         ## assign one row, determined by inc. sign, from a small shift
-        ## FIXME:: do something if pw==0 ???
-        shiftpar <- if (pw==0) 1e-3 else pw*1.01
+        ## FIXME: make this 'epsilon' and scale a settable parameter?
+        shiftpar <- if (pw<1e-3) 1e-3 else pw*1.01
         ## Since both the pos- and neg-increment matrices are already
         ## filled with the opt. par. results, this sets the first
         ## two rows of the positive-increment matrix
@@ -351,6 +351,10 @@ profile.merMod <- function(fitted,
                 ## (start parameter ignored)
                 rr$setOffset(Xw * fw + offset.orig)
 		rho <- list2env(list(pp=pp1, resp=rr), parent = parent.frame())
+                ## get past *slight* violations of bounds
+                if (any(thopt-fitted@lower<0) &
+                    all(thopt-fitted@lower>(-1e-6)))
+                    thopt <- pmax(fitted@lower,thopt)
 		ores <- optwrap(optimizer, par = thopt, fn = mkdevfun(rho, 0L),
 				lower = fitted@lower)
                 ## this optimization is done on the ORIGINAL
