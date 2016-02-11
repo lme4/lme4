@@ -9,12 +9,13 @@ lme4: Mixed-effects models in R.
 
 ## Recent/release notes
 
-* Release 1.1-10 is [on CRAN](https://cran.r-project.org/package=lme4) now. There are no major user-visible changes; this version was released to coordinate with the publication of the [J. Stat. Software paper describing lmer](http://www.jstatsoft.org/index.php/jss/article/view/v067i01).
-   * `bootMer` now allows the use of `re.form`.
-   * exported printing utilities
-   * fixed bug in the naming of `getME(.,"Ztlist")` results
-   * fixed bug in simulations with complex random effects
-* See the [NEWS file](https://github.com/lme4/lme4/blob/master/inst/NEWS.Rd) (or  `news(Version=="1.1.10",package="lme4")`).
+* We will shortly (Feb 2016) be sending version 1.1-11 to CRAN.
+    * several `glmer.nb` bugs fixed (generally not changing results, but causing warnings and errors e.g. during bootstrapping)
+    * fixes to some `lmList` bugs (Github #320)
+    * minor documentation, vignette updates
+    * minor fix to `plot.merMod` with `id` specified
+    * `bootMer` now handles separate offset term properly (Github #250)
+* See the [NEWS file](https://github.com/lme4/lme4/blob/master/inst/NEWS.Rd) (or  `news(Version=="1.1.11",package="lme4")`).
 
 ## Features
 
