@@ -3,11 +3,14 @@
 
 language: r
 r: devel
-sudo: false
+sudo: true
 cache: packages
 
-apt_packages:
-  - texlive-latex-extra
+## https://docs.travis-ci.com/user/installing-dependencies/
+addons:
+  apt:
+    packages:
+    - texlive-latex-extra
 
 r_github_packages:
   - jimhester/covr
