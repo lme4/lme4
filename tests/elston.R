@@ -22,7 +22,7 @@
 
 ## save("grouseticks","grouseticks_agg",file="grouseticks.rda")
 
-library(lme4)
+library("lme4")
 data(grouseticks)
 do.plots <- FALSE
 form <- TICKS~YEAR+HEIGHT+(1|BROOD)+(1|INDEX)+(1|LOCATION)
@@ -55,16 +55,37 @@ allcoefs1 <- structure(c(0.541509425632023, 0.750034415832756,
                        .Names = c("", "", "", "(Intercept)",
                          "YEAR96", "YEAR97",  "HEIGHT"))
 
-if (lme4:::testLevel() > 1) {
-    t2 <- system.time(full_mod2  <- glmer(form, family="poisson",data=grouseticks))
-    c2 <- c(fixef(full_mod2),unlist(VarCorr(full_mod2)),
-            logLik=logLik(full_mod2),time=t2["elapsed"])
-    ## refit
-    ## FIXME: eventually would like to get _exactly_ identical answers on refit()
-    full_mod3 <- refit(full_mod2,grouseticks$TICKS)
-    all.equal(full_mod2,full_mod3,tolerance=1e-5)
+sfun <- function(x,time) {
+    res <- c(fixef(x),unlist(VarCorr(x)),logLik=logLik(x),time=NA)
+    if (!missing(time)) res["time"] <- time["elapsed"]
+    res
 }
+
 allcoefs <- function(x) c(getME(x,"theta"),getME(x,"beta"))
+    
+if (lme4:::testLevel() > 1) {
+    t2 <- system.time(full_mod2  <- glmer(form, family="poisson",
+                                          data=grouseticks,
+                control=glmerControl(optCtrl=list(maxfun=60000))))
+    ## back-compatible
+    t3 <- system.time(full_mod3  <- glmer(form, family="poisson",
+                                          data=grouseticks,
+                control=glmerControl(optimizer=c("bobyqa","Nelder_Mead"))))
+    
+    c2 <- sfun(full_mod2)
+    c3 <- sfun(full_mod3)
+    ## refit
+
+    ## FIXME: with bobyqa, *fails* with non-pos-def Cholmod ...
+    full_mod4 <- try(refit(full_mod2,grouseticks$TICKS))
+
+    full_mod5 <- refit(full_mod3,grouseticks$TICKS)
+    stopifnot(all.equal(c2,c3,tolerance=1e-6))
+    stopifnot(all.equal(c3,sfun(full_mod5),tolerance=1e-6))
+    stopifnot(all.equal(unname(allcoefs(full_mod3)),unname(allcoefs1),
+              tolerance=1e-5))
+}
+
 
 ## deviance function
 ## FIXME: does compDev do _anything_ any more?
