@@ -1,5 +1,9 @@
 library("testthat")
 library("lme4")
+
+testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL")))
+                 as.numeric(s) else 1
+
 L <- load(system.file("testdata", "lme-tst-fits.rda",
                       package="lme4", mustWork=TRUE))
 
@@ -287,7 +291,9 @@ test_that("refit", {
     ## works *without* offset ...
     m5 <- glmer(round(Reaction) ~ Days + (1|Subject),
                 data = sleepstudy, family=poisson,
-                offset=rep(0,nrow(sleepstudy)))
+                offset=rep(0,nrow(sleepstudy)),
+                ## backward compatibility ...
+                control=glmerControl(optimizer=c("bobyqa","Nelder_Mead")))
     m5R <- refit(m5)
     ## lots of fussy details make expect_equal() on the whole object difficult
     expect_equal(coef(m5),coef(m5R),tolerance=3e-6)
@@ -321,17 +327,18 @@ test_that("predict", {
         data("Orthodont", package = "MEMSS") # (differently "coded" from the 'default' "nlme" one)
         silly <- glmer(Sex ~ distance + (1|Subject),
                        data = Orthodont, family = binomial)
+        sillypred <- data.frame(distance = c(20, 25))
+        op <- options(warn = 2) # no warnings!
+        ps <- predict(silly, sillypred, re.form=NA, type = "response")
+        options(op)
+        expect_is(ps, "numeric")
+        expect_equal(unname(ps), c(0.999989632, 0.999997201), tolerance=1e-6)
     }
-    sillypred <- data.frame(distance = c(20, 25))
-    op <- options(warn = 2) # no warnings!
-    ps <- predict(silly, sillypred, re.form=NA, type = "response")
-    expect_is(ps, "numeric")
-    expect_equal(unname(ps), c(0.999989632, 0.999997201), tolerance=1e-6)
+    
     ## a case with interactions (failed in one temporary version):
     expect_warning(fmPixS <<- update(fmPix, .~. + Side),
                    "nearly unidentifiable|unable to evaluate scaled gradient|failed to converge")
 	## (1|2|3); 2 and 3 seen (as Error??) on CRAN's Windows 32bit
-    options(op)
 
     set.seed(1); ii <- sample(nrow(Pixel), 16)
     expect_equal(predict(fmPix,  newdata = Pixel[ii,]), fitted(fmPix )[ii])
