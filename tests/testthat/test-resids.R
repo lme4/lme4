@@ -24,11 +24,15 @@ test_that("lmer", {
     expect_true(!any(is.na(resid(fm1NA_exclude)[-na_ind])))
 })
 test_that("glmer", {
+    ## glmerControl(optimizer ...) for back-compat
     gm1 <- glmer(incidence/size ~ period + (1|herd), cbpp,
-                 family=binomial, weights=size)
-    gm2 <- update(gm1,control=glmerControl(calc.derivs=FALSE))
+                 family=binomial, weights=size,
+                 control=glmerControl(optimizer=c("bobyqa","Nelder_Mead")))
+    gm2 <- update(gm1,control=glmerControl(calc.derivs=FALSE,
+                                           optimizer=c("bobyqa","Nelder_Mead")))
     gm1.old <- update(gm1,control=glmerControl(calc.derivs=FALSE,
-                          use.last.params=TRUE))
+                          use.last.params=TRUE,
+                          optimizer=c("bobyqa","Nelder_Mead")))
     expect_equal(resid(gm1),resid(gm2))
     ## y, wtres, mu change ??
     ## FIX ME:: why does turning on derivative calculation make these tests fail???
