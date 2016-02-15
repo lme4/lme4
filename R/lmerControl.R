@@ -61,8 +61,7 @@ chk.cconv <- function(copt, callingFn) {
 
 
 merControl <-
-    function(type="lmer",  ## specify lmer vs glmer
-             optimizer="bobyqa",
+    function(optimizer="bobyqa",
 	     restart_edge=TRUE,
 	     ## don't call this "check." -- will fail
 	     ## automatic check-option-checking in
@@ -91,8 +90,12 @@ merControl <-
 	     check.conv.grad	 = .makeCC("warning", tol = 0.01, relTol = NULL),
 	     check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
 	     check.conv.hess	 = .makeCC(action = "warning", tol = 1e-6),
-	     optCtrl = list()
-	     )
+	     optCtrl = list(),
+             ## specify lmer vs glmer: LAST to avoid screwing up
+             ##   positional matching
+             type="lmer"  
+             )
+
 {
 
     ## FIXME: is there a better idiom?  match.call() ?
@@ -177,8 +180,8 @@ lmerControl <- function(...) {
 ## hack formals so that lmerControl matches documentation
 ## (at present we don't export merControl())
 ff <- formals(merControl)
-## drop glmer-specific controls
-ff <- ff[!names(ff) %in% c("tolPwrss","compDev","nAGQ0initStep","check.response.not.const")]
+## drop glmer-specific controls and "type"
+ff <- ff[!names(ff) %in% c("tolPwrss","compDev","nAGQ0initStep","check.response.not.const","type")]
 formals(lmerControl) <- ff
 
 ## almost the same body but need to set 'type="glmer"' in arguments
@@ -191,9 +194,10 @@ glmerControl <- function(...) {
 }
 
 ff <- formals(merControl)
+## drop "type" (no LMM-specific controls at present)
+ff <- ff[!names(ff) %in% "type"]
+
 formals(glmerControl) <- ff
-
-
 
 ##' @rdname lmerControl
 ##' @export
