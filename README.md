@@ -9,7 +9,7 @@ lme4: Mixed-effects models in R.
 
 ## Recent/release notes
 
-* We will shortly (Feb 2016) be sending version 1.1-11 to CRAN.
+* Version 1.1-11 is now (Feb 2016) on CRAN.
     * several `glmer.nb` bugs fixed (generally not changing results, but causing warnings and errors e.g. during bootstrapping)
     * fixes to some `lmList` bugs (Github #320)
     * minor documentation, vignette updates
