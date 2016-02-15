@@ -2,21 +2,21 @@ library("testthat")
 library("lme4")
 context("specifying starting values")
 
-## is "Nelder_Mead" default optimizer?
-isNM <- formals(lmerControl)$optimizer == "Nelder_Mead"
+## is "Nelder_Mead" default optimizer? (back-compatibility)
+isNM <<- identical(formals(lmerControl)$optimizer,"Nelder_Mead")
 
 test_that("lmer", {
     frm <- as.formula("Reaction ~ Days + (Days|Subject)")
     ctrl <- lmerControl(optCtrl=list(maxfun= if(isNM) 50 else 100))
-    x <- suppressWarnings(lmer(frm, data=sleepstudy, control=ctrl, REML=FALSE))
-    x2 <- suppressWarnings(update(x,start=c(1,0,1)))
-    x3 <- suppressWarnings(update(x,start=list(theta=c(1,0,1))))
+    x <- lmer(frm, data=sleepstudy, control=ctrl, REML=FALSE)
+    x2 <- update(x,start=c(1,0,1))
+    x3 <- update(x,start=list(theta=c(1,0,1)))
     ff <- update(x,devFunOnly=TRUE)
     x2@call <- x3@call <- x@call  ## hack call component
     expect_equal(x,x2)
     expect_equal(x,x3)
     expect_error(update(x,start=c("a")),"start must be a list or a numeric vector")
-    ## misspelled
+    ## misspelled ("Theta", not "theta")
     expect_error(update(x,start=list(Theta=c(1,0,1))),"incorrect components")
     th0 <- getME(x,"theta")
     y <- suppressWarnings(update(x,start=th0))
@@ -36,7 +36,7 @@ test_that("lmer", {
                  unname(deviance(y)))
 })
 test_that("glmer", {
-    ctrl <- glmerControl(optCtrl=list(maxfun=50))
+    ctrl <- glmerControl(optCtrl=list(maxfun=50),optimizer=c("bobyqa","Nelder_Mead"))
     x <- suppressWarnings(glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                    data = cbpp, family = binomial, control=ctrl))
     ## theta only
@@ -56,8 +56,14 @@ test_that("glmer", {
     x4 <- suppressWarnings(update(x,start=list(theta=1,fixef=fixef(x0))))
     x4@call <- x@call
     expect_equal(x,x4)
-    x5 <- suppressWarnings(update(x,start=list(theta=1,fixef=rep(0,4))))
-    expect_equal(AIC(x5),221.5823,tolerance=1e-6)
+
+    ## used to get stuck at a *different* suboptimal point ...
+    x5 <- suppressWarnings(update(x,start=list(theta=1.2,
+                                               fixef=c(-1,-0.6,-1.4,-0.08))))
+    expect_equal(AIC(x5),199.1375,tolerance=1e-6)
+    ## x5 <- suppressWarnings(update(x,start=list(theta=1,fixef=rep(0,4)))
+    ## expect_equal(AIC(x5),221.5823,tolerance=1e-6)
+    ##
     x6 <- expect_error(update(x,start=list(theta=1,fixef=rep(0,5))),
                        "incorrect number of fixef components")
     ## beta only
@@ -66,5 +72,5 @@ test_that("glmer", {
     expect_equal(x,x7)
     x8 <- suppressWarnings(update(x,start=list(fixef=rep(0,4))))
     x8@call <- x5@call
-    expect_equal(x5,x8)
+    expect_equal(AIC(x8),221.5823,tolerance=1e-6)
 })

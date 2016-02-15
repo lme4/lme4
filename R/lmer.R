@@ -24,6 +24,7 @@ lmer <- function(formula, data=NULL, REML = TRUE,
        if(missCtrl) mc$control <- glmerControl()
        return(eval(mc, parent.frame(1L)))
     }
+    
     mc$control <- control ## update for  back-compatibility kluge
 
     ## https://github.com/lme4/lme4/issues/50
@@ -65,19 +66,22 @@ glmer <- function(formula, data=NULL, family = gaussian,
                   subset, weights, na.action, offset,
                   contrasts = NULL, mustart, etastart, devFunOnly = FALSE, ...)
 {
+    mc <- mcout <- match.call()
+    
     if (!inherits(control, "glmerControl")) {
 	if(!is.list(control)) stop("'control' is not a list; use glmerControl()")
 	## back-compatibility kluge
 	msg <- "Use control=glmerControl(..) instead of passing a list"
 	if(length(cl <- class(control))) msg <- paste(msg, "of class", dQuote(cl[1]))
 	warning(msg, immediate.=TRUE)
-	control <- do.call(glmerControl, control)
+	mc$control <- control <- do.call(glmerControl, control)
     }
-    mc <- mcout <- match.call()
+
 
     ## family-checking code duplicated here and in glFormula (for now) since
     ## we really need to redirect at this point; eventually deprecate formally
     ## and clean up
+
     if (is.character(family))
         family <- get(family, mode = "function", envir = parent.frame(2))
     if( is.function(family)) family <- family()

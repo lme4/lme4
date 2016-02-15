@@ -60,9 +60,9 @@ chk.cconv <- function(copt, callingFn) {
 }
 
 
-## DOC: ../man/lmerControl.Rd
-lmerControl <-
-    function(optimizer="bobyqa",#instead of "Nelder_Mead",
+merControl <-
+    function(type="lmer",  ## specify lmer vs glmer
+             optimizer="bobyqa",
 	     restart_edge=TRUE,
 	     ## don't call this "check." -- will fail
 	     ## automatic check-option-checking in
@@ -71,6 +71,9 @@ lmerControl <-
 	     calc.derivs=TRUE,
 	     use.last.params=FALSE,
 	     sparseX=FALSE,
+             tolPwrss = 1e-7,       ## GLMM only
+             compDev = TRUE,        ## GLMM only
+             nAGQ0initStep = TRUE,  ## GLMM only
 	     ## input checking options:
 	     check.nobs.vs.rankZ="ignore", ## "warningSmall",
 	     check.nobs.vs.nlev="stop",
@@ -83,29 +86,32 @@ lmerControl <-
 	     check.scaleX = c("warning","stop","silent.rescale",
                               "message+rescale","warn+rescale","ignore"),
 	     check.formula.LHS = "stop",
+             check.response.not.const = "stop",  ## GLMM only
 	     ## convergence options
-	     check.conv.grad	 = .makeCC("warning", tol = 2e-3, relTol = NULL),
+	     check.conv.grad	 = .makeCC("warning", tol = 0.01, relTol = NULL),
 	     check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
 	     check.conv.hess	 = .makeCC(action = "warning", tol = 1e-6),
 	     optCtrl = list()
 	     )
 {
+
     ## FIXME: is there a better idiom?  match.call() ?
     ## fill in values from options, but **only if not specified explicitly in arguments**
     ##  (ugh ... is there a better way to do this?  mapply() is clunky:
     ##  http://stackoverflow.com/questions/16276667/using-apply-with-assign-in-r
     stopifnot(is.list(optCtrl))
 
-    if (!is.null(lmerOpts <- getOption("lmerControl"))) {
-        nn <- names(lmerOpts)
-        nn.ok <- .get.checkingOpts(names(lmerOpts))
+    merControl <- paste0(type,"Control")
+    if (!is.null(merOpts <- getOption(merControl))) {
+        nn <- names(merOpts)
+        nn.ok <- .get.checkingOpts(names(merOpts))
         if (length(nn.ignored <- setdiff(nn,nn.ok))>0) {
-            warning("some options in ",shQuote("getOption('lmerControl')"),
+            warning("some options in ",shQuote(paste0("getOption('",merControl,"')")),
                     " ignored : ",paste(nn.ignored,collapse=", "))
         }
         for (arg in nn.ok) {
             if (do.call(missing,list(arg))) ## only if missing from explicit arguments
-                assign(arg,lmerOpts[[arg]])
+                assign(arg,merOpts[[arg]])
         }
     }
     check.rankX <- match.arg(check.rankX)# ==> can abbreviate
@@ -117,117 +123,76 @@ lmerControl <-
     chk.cconv(check.conv.singular, me)
     chk.cconv(check.conv.hess	 , me)
 
-    structure(namedList(optimizer,
-                        restart_edge,
-                        boundary.tol,
-                        calc.derivs,
-                        use.last.params,
-                        checkControl =
-                        namedList(check.nobs.vs.rankZ,
-                                  check.nobs.vs.nlev,
-                                  check.nlev.gtreq.5,
-                                  check.nlev.gtr.1,
-                                  check.nobs.vs.nRE,
-				  check.rankX,
-                                  check.scaleX,
-                                  check.formula.LHS),
-                        checkConv=
-                        namedList(check.conv.grad,
-                                  check.conv.singular,
-                                  check.conv.hess),
-                        optCtrl=optCtrl),
-              class = c("lmerControl", "merControl"))
-}
-
-glmerControl <-
-    function(optimizer=c("bobyqa","Nelder_Mead"),
-	     restart_edge=FALSE,
-	     boundary.tol=1e-5,
-	     calc.derivs=TRUE,
-	     use.last.params=FALSE,
-	     sparseX=FALSE,
-	     tolPwrss = 1e-7,
-	     compDev = TRUE,
-             nAGQ0initStep = TRUE,
-	     ## input checking options
-	     check.nobs.vs.rankZ="ignore", ## "warningSmall",
-	     check.nobs.vs.nlev="stop",
-	     check.nlev.gtreq.5="ignore",
-	     check.nlev.gtr.1="stop",
-	     check.nobs.vs.nRE="stop",
-	     check.rankX = c("message+drop.cols",
-	     "silent.drop.cols", "warn+drop.cols",
-	     "stop.deficient", "ignore"),
-	     check.scaleX = "warning",
-	     check.formula.LHS="stop",
-	     check.response.not.const = "stop",
-	     ## convergence checking options
-	     check.conv.grad	 = .makeCC("warning", tol = 1e-3, relTol = NULL),
-	     check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
-	     check.conv.hess	 = .makeCC(action = "warning", tol = 1e-6),
-	     optCtrl = list())
-{
-    ## FIXME: should try to modularize/refactor/combine with lmerControl if possible
-    ## but note different defaults
-    ##                lmer        glmer
-    ## optimizer    Nelder_Mead  c(Nelder_Mead,bobyqa)
-    ## tolPwrss     N/A          1e-7
-    ## compDev      N/A          TRUE
-    ##
-    ## (and possible future divergence)
-    stopifnot(is.list(optCtrl))
-    if (length(optimizer)==1) {
-	optimizer <- replicate(2,optimizer) # works evevn when optimizer is function
-    }
-    if (!is.null(glmerOpts <- getOption("glmerControl"))) {
-        nn <- names(glmerOpts)
-        nn.ok <- .get.checkingOpts(names(glmerOpts))
-        if (length(nn.ignored <- setdiff(nn,nn.ok))>0) {
-            warning("some options in ",shQuote("getOption('glmerControl')"),
-                    " ignored : ",paste(nn.ignored,collapse=", "))
-        }
-        for (arg in nn.ok) {
-            if (do.call(missing,list(arg))) ## only if missing from explicit arguments
-                assign(arg, glmerOpts[[arg]])
-        }
-    }
-    check.rankX <- match.arg(check.rankX)# ==> can abbreviate
-
-    ## compatibility and convenience, caller can specify action string only:
-    me <- sys.function()
-    chk.cconv(check.conv.grad,	   me)
-    chk.cconv(check.conv.singular, me)
-    chk.cconv(check.conv.hess	 , me)
-
-    if (use.last.params && calc.derivs)
+    if (type=="glmer" && use.last.params && calc.derivs)
         warning("using ",shQuote("use.last.params"),"=TRUE and ",
                 shQuote("calc.derivs"),"=TRUE with ",shQuote("glmer"),
                 " will not give backward-compatible results")
-    structure(namedList(optimizer,
-                        calc.derivs,
-                        use.last.params,
-			restart_edge,
-                        boundary.tol,
-			tolPwrss,
-			compDev,
-                        nAGQ0initStep,
-			checkControl=
-			namedList(check.nobs.vs.rankZ,
-                                  check.nobs.vs.nlev,
-				  check.nlev.gtreq.5,
-				  check.nlev.gtr.1,
-                                  check.nobs.vs.nRE,
-				  check.rankX,
-                                  check.scaleX,
-                                  check.formula.LHS,
-				                          check.response.not.const),
-                        checkConv=
-                        namedList(check.conv.grad,
-                                  check.conv.singular,
-                                  check.conv.hess),
-                        optCtrl=optCtrl),
-	      class = c("glmerControl", "merControl"))
+
+    res <- namedList(optimizer,
+                     calc.derivs,
+                     use.last.params,
+                     restart_edge,
+                     boundary.tol)
+
+    checkControl <- namedList(check.nobs.vs.rankZ,
+                              check.nobs.vs.nlev,
+                              check.nlev.gtreq.5,
+                              check.nlev.gtr.1,
+                              check.nobs.vs.nRE,
+                              check.rankX,
+                              check.scaleX,
+                              check.formula.LHS)
+    
+    if (type=="glmer") {
+        if (length(res$optimizer)==1) {
+            res$optimizer <- replicate(2,res$optimizer) # works even when optimizer is function
+        }
+
+        res <- c(res, namedList(tolPwrss,
+                                compDev,
+                                nAGQ0initStep))
+
+        checkControl <- c(checkControl, namedList(check.response.not.const))
+    }
+
+    res <- c(res, namedList(checkControl,
+                            checkConv=
+                                namedList(check.conv.grad,
+                                          check.conv.singular,
+                                          check.conv.hess),
+                            optCtrl))
+
+    structure(res,class = c(merControl, "merControl"))
 }
+
+
+## DOC: ../man/lmerControl.Rd
+lmerControl <- function(...) {
+    mc <- match.call()
+    mc[[1]] <- quote(merControl)
+    ## eval.parent(mc)
+    eval(mc)
+}
+
+## hack formals so that lmerControl matches documentation
+## (at present we don't export merControl())
+ff <- formals(merControl)
+## drop glmer-specific controls
+ff <- ff[!names(ff) %in% c("tolPwrss","compDev","nAGQ0initStep","check.response.not.const")]
+formals(lmerControl) <- ff
+
+## almost the same body but need to set 'type="glmer"' in arguments
+glmerControl <- function(...) {
+    mc <- match.call()
+    mc[[1]] <- quote(merControl)
+    mc[["type"]] <- "glmer"
+    ## eval.parent(mc)
+    eval(mc)
+}
+
+ff <- formals(merControl)
+formals(glmerControl) <- ff
+
 
 
 ##' @rdname lmerControl

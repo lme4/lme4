@@ -122,20 +122,26 @@ test_that("glmer", {
     expect_warning(glmer(prop ~ period + (1 | herd),
                       data = cbppX, family = binomial, weights=size, junkArg=TRUE),
                    "extra argument.*disregarded")
-if(FALSE) { ## Hadley broke this
-    expect_warning(glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+
+    expect_warning(
+        glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                          data = cbpp, family = binomial,
-                         control=list()),
-                   "instead of passing a list of class")
-    expect_warning(glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-                         data = cbpp, family = binomial,
-                         control=lmerControl()),
-                   "instead of passing a list of class")
-}
-    ##
+                         control=list())
+       ,
+        "instead of passing a list of class")
+
+    ## error plus warning
+    expect_warning(
+        try(glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+                  data = cbpp, family = binomial,
+                  control=lmerControl()),silent=TRUE),
+        "instead of passing a list of class")
+
     load(system.file("testdata","radinger_dat.RData",package="lme4"))
     mod <- glmer(presabs~predictor+(1|species),family=binomial,
-                 radinger_dat)
+                 radinger_dat,
+                 ## glmer control for back-compatibility
+                 control=glmerControl(optimizer=c("bobyqa","Nelder_Mead")))
     expect_is(mod,"merMod")
     ## tolerance: 32-bit Windows (CRAN) reported ave.diff of 5.33e-8
     expect_equal(unname(fixef(mod)), c(0.5425528,6.4289962), tolerance = 4e-7)
@@ -179,7 +185,9 @@ if(FALSE) { ## Hadley broke this
                           glmer(NCM ~ birth + calvingYear + (1|sire) + (1|herd),
                                 mastitis, poisson,
                                 ## current (2014-04-24) default:
-                                control=glmerControl(optimizer=c("bobyqa","Nelder_Mead"))))
+                                control=glmerControl(optimizer=c("bobyqa","Nelder_Mead"),
+                                                     check.conv.grad="ignore",
+                                                     check.conv.hess="ignore")))
         t2 <- system.time(g2 <- update(g1,
                          control=glmerControl(optimizer="bobyqa")))
         ## 20 (then 13.0) seconds N-M vs 8 (then 4.8) seconds bobyqa ...
@@ -208,7 +216,9 @@ if(FALSE) { ## Hadley broke this
     event <- c(rbind(ai,ci))
     group <- rep(c(1,0), times=n)
     id    <- rep(1:n, each=2)
-    gm3 <- glmer(event ~ group + (1 | id), family=binomial, nAGQ=21)
+    gm3 <- glmer(event ~ group + (1 | id), family=binomial, nAGQ=21,
+                 ## back compatibility
+                 control=glmerControl(optimizer=c("bobyqa","Nelder_Mead")))
     sd3 <- sqrt(diag(vcov(gm3)))
     expect_equal(sd3, c(0.4254254, 0.424922), tolerance=1e-5)
     expect_warning(vcov(gm3,use.hessian=FALSE), "finite-difference Hessian")
