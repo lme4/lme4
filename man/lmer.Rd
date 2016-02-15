@@ -16,10 +16,16 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
     fixed-effects and random-effects part of the model, with the
     response on the left of a \code{~} operator and the terms, separated
     by \code{+} operators, on the right.  Random-effects terms are
-    distinguished by vertical bars (\code{"|"}) separating expressions
+    distinguished by vertical bars (\code{|}) separating expressions
     for design matrices from grouping factors.  Two vertical bars
-    (\code{"||"}) can be used to specify multiple uncorrelated random
-    effects for the same grouping variable.}
+    (\code{||}) can be used to specify multiple uncorrelated random
+    effects for the same grouping variable. (Because of the way it is
+    implemented, the \code{||}-syntax \emph{works
+    only for design matrices containing
+    numeric (continuous) predictors}; to fit models with independent
+  categorical effects, see \code{\link{dummy}} or the \code{lmer_alt}
+  function from the \code{afex} package.) 
+}
 
   \item{data}{an optional data frame containing the variables named in
     \code{formula}.  By default the variables are taken from the
