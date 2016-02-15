@@ -3,7 +3,7 @@
 
 language: r
 r: devel
-sudo: true
+sudo: false
 cache: packages
 
 ## https://docs.travis-ci.com/user/installing-dependencies/
