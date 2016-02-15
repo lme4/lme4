@@ -21,13 +21,11 @@ install:
   - ./travis-tool.sh install_deps
 script: LME4_TEST_LEVEL=2 ./travis-tool.sh run_tests
 
+after_success:
+  - Rscript -e 'library(covr); codecov()'
+
 after_failure:
   - ./travis-tool.sh dump_logs
-
-r_github_packages:
-  - jimhester/covr
-after_success:
-  - Rscript -e 'library(covr);codecov()'
 
 notifications:
   email:
@@ -37,3 +35,4 @@ notifications:
 branches:
   only:
     - master
+    - test_mods
