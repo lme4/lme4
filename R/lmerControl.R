@@ -61,8 +61,7 @@ chk.cconv <- function(copt, callingFn) {
 
 
 merControl <-
-    function(type="lmer",  ## specify lmer vs glmer
-             optimizer="bobyqa",
+    function(optimizer="bobyqa",
 	     restart_edge=TRUE,
 	     ## don't call this "check." -- will fail
 	     ## automatic check-option-checking in
