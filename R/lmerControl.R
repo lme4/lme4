@@ -61,7 +61,8 @@ chk.cconv <- function(copt, callingFn) {
 
 
 merControl <-
-    function(optimizer="bobyqa",
+    function(type="lmer",  ## specify lmer vs glmer
+             optimizer="bobyqa",
 	     restart_edge=TRUE,
 	     ## don't call this "check." -- will fail
 	     ## automatic check-option-checking in
@@ -180,6 +181,7 @@ lmerControl <- function(...) {
 ## hack formals so that lmerControl matches documentation
 ## (at present we don't export merControl())
 ff <- formals(merControl)
+
 ## drop glmer-specific controls and "type"
 ff <- ff[!names(ff) %in% c("tolPwrss","compDev","nAGQ0initStep","check.response.not.const","type")]
 formals(lmerControl) <- ff
