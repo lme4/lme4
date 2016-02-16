@@ -7,6 +7,8 @@ sudo: false
 cache: packages
 
 ## https://docs.travis-ci.com/user/installing-dependencies/
+## this is the only extra package we need, and it's whitelisted,
+## so we can leave 'sudo: false' above and get a big speed boost
 addons:
   apt:
     packages:
@@ -19,7 +21,7 @@ env:
  - LME4_TEST_LEVEL=2
 
 after_success:
-  - Rscript -e 'library(covr); codecov()'
+  - Rscript -e 'library(covr); codecov(quiet=FALSE)'
 
 notifications:
   email:
