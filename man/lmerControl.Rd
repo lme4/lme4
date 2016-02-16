@@ -37,14 +37,14 @@ lmerControl(optimizer = "bobyqa",% was "Nelder_Mead" till Dec.2013
                               "message+rescale","warn+rescale","ignore"),
     check.formula.LHS = "stop",
     ## convergence checking options
-    check.conv.grad     = .makeCC("warning", tol = 2e-3, relTol = NULL),
+    check.conv.grad     = .makeCC("warning", tol = 0.01, relTol = NULL),
     check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
     check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
     ## optimizer args
     optCtrl = list())
 
-glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
-    restart_edge = FALSE,
+glmerControl(optimizer = "bobyqa",
+    restart_edge = TRUE,
     boundary.tol = 1e-5,
     calc.derivs=TRUE,
     use.last.params=FALSE,
@@ -60,11 +60,12 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     check.nobs.vs.nRE="stop",
     check.rankX = c("message+drop.cols", "silent.drop.cols", "warn+drop.cols",
                     "stop.deficient", "ignore"),
-    check.scaleX  = "warning",
+    check.scaleX = c("warning","stop","silent.rescale",
+                       "message+rescale","warn+rescale","ignore"),
     check.formula.LHS = "stop",
     check.response.not.const = "stop",
     ## convergence checking options
-    check.conv.grad     = .makeCC("warning", tol = 1e-3, relTol = NULL),
+    check.conv.grad     = .makeCC("warning", tol = 0.01, relTol = NULL),
     check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
     check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
     ## optimizer args
