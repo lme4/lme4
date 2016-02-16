@@ -172,9 +172,13 @@ merControl <-
 ## DOC: ../man/lmerControl.Rd
 lmerControl <- function(...) {
     mc <- match.call()
-    mc[[1]] <- quote(merControl)
+    ## FIXME: we need eval.parent(), but merControl isn't currently
+    ## exported.  If we export it we need to document it (ugh).
+    ## ::: triggers NOTEs
+    ##  defined
+    mc[[1]] <- quote(lme4:::merControl)
     ## eval.parent(mc)
-    eval(mc)
+    eval.parent(mc)
 }
 
 ## hack formals so that lmerControl matches documentation
@@ -187,10 +191,10 @@ formals(lmerControl) <- ff
 ## almost the same body but need to set 'type="glmer"' in arguments
 glmerControl <- function(...) {
     mc <- match.call()
-    mc[[1]] <- quote(merControl)
+    mc[[1]] <- quote(lme4:::merControl)
     mc[["type"]] <- "glmer"
     ## eval.parent(mc)
-    eval(mc)
+    eval.parent(mc)
 }
 
 ff <- formals(merControl)
