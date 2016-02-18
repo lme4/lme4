@@ -28,7 +28,7 @@
   those marked (+) support GLMMs as well as LMMs.
 
   \itemize{
-    \item likelihood ratio tests via \code{anova} (MC,+)
+    \item likelihood ratio tests via \code{anova} or \code{drop1} (MC,+) 
     \item{profile confidence intervals via \code{\link{profile.merMod}} and
       \code{\link{confint.merMod}} (CI,+)
     }
@@ -36,17 +36,17 @@
       \code{\link{bootMer}} (or \code{PBmodcomp} in the
       \code{pbkrtest} package) (MC/CI,*,+)
     }
-    \item{for random
-      effects, simulation tests via the \code{RLRsim} package
+    \item{for random effects, simulation tests via the \code{RLRsim} package
       (MC,*)
     }
     \item{for fixed effects, F tests via Kenward-Roger
       approximation using \code{KRmodcomp} from the
-      \code{pbkrtest} package (MC)
+      \code{pbkrtest} package (MC,*)
     }
     \item{\code{car::Anova} and
       \code{lmerTest::anova} provide wrappers for
-      \code{pbkrtest}: \code{lmerTest::anova} also provides t tests via the
+      Kenward-Roger-corrected tests using \code{pbkrtest}:
+      \code{lmerTest::anova} also provides t tests via the
       Satterthwaite approximation (P,*)
     }
     \item{\code{afex::mixed} is another wrapper for
