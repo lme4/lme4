@@ -83,7 +83,7 @@ export(isNested)
 export(isREML)
 export(lFormula)
 export(lmer)
-export(lmerControl, glmerControl, nlmerControl,
+export(merControl, lmerControl, glmerControl, nlmerControl,
        .makeCC)
 export(lmerResp)
 export(lmList)

@@ -176,7 +176,7 @@ lmerControl <- function(...) {
     ## exported.  If we export it we need to document it (ugh).
     ## ::: triggers NOTEs
     ##  defined
-    mc[[1]] <- quote(lme4:::merControl)
+    mc[[1]] <- quote(merControl)
     ## eval.parent(mc)
     eval.parent(mc)
 }
@@ -192,7 +192,7 @@ formals(lmerControl) <- ff
 ## almost the same body but need to set 'type="glmer"' in arguments
 glmerControl <- function(...) {
     mc <- match.call()
-    mc[[1]] <- quote(lme4:::merControl)
+    mc[[1]] <- quote(merControl)
     mc[["type"]] <- "glmer"
     ## eval.parent(mc)
     eval.parent(mc)
