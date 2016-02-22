@@ -1,5 +1,6 @@
 \name{lmerControl}
 \title{Control of Mixed Model Fitting}
+\alias{merControl}
 \alias{glmerControl}
 \alias{lmerControl}
 \alias{nlmerControl}
@@ -17,6 +18,9 @@
     maximal number of iterations, passed via the \code{optCtrl} list
     argument.
   }
+  \code{merControl} is a template that includes all of the options
+  for linear and generalized linear mixed models; it is called
+  internally by both \code{lmerControl} and \code{glmerControl}.
 }
 \usage{
 lmerControl(optimizer = "bobyqa",% was "Nelder_Mead" till Dec.2013
@@ -70,6 +74,36 @@ glmerControl(optimizer = "bobyqa",
     check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
     ## optimizer args
     optCtrl = list())
+
+merControl(optimizer = "bobyqa",
+    restart_edge = TRUE,
+    boundary.tol = 1e-5,
+    calc.derivs=TRUE,
+    use.last.params=FALSE,
+    sparseX = FALSE,
+    ## GLMM-specific
+    tolPwrss=1e-7,
+    compDev=TRUE,
+    nAGQ0initStep=TRUE,
+    ## input checking options
+    check.nobs.vs.rankZ = "ignore",
+    check.nobs.vs.nlev = "stop",
+    check.nlev.gtreq.5 = "ignore",
+    check.nlev.gtr.1 = "stop",
+    check.nobs.vs.nRE="stop",
+    check.rankX = c("message+drop.cols", "silent.drop.cols", "warn+drop.cols",
+                    "stop.deficient", "ignore"),
+    check.scaleX = c("warning","stop","silent.rescale",
+                       "message+rescale","warn+rescale","ignore"),
+    check.formula.LHS = "stop",
+    check.response.not.const = "stop",
+    ## convergence checking options
+    check.conv.grad     = .makeCC("warning", tol = 0.01, relTol = NULL),
+    check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
+    check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
+    ## optimizer args
+    optCtrl = list(),
+    type = "lmer")
 
 nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
              optCtrl = list())
@@ -210,6 +244,9 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     "stop": throw an error if test fails.}
   \item{tol}{numeric - tolerance for check }
   \item{relTol}{numeric - tolerance for checking relative variation}
+  \item{type}{whether \code{merControl} is being called for a
+    linear (\code{"lmer"}) or generalized linear (\code{"glmer"})
+    mixed model specification}
   \item{\dots}{other elements to include in check specification}
 }
 \value{
