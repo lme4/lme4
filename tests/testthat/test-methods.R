@@ -442,7 +442,8 @@ test_that("simulate", {
                      y=rnbinom(200,size=2,mu=2))
     g1 <- glmer.nb(y ~ x + (1|f), data=dd)
     th.g1 <- getME(g1, "glmer.nb.theta")
-    ts1 <- table(s1 <- simulate(g1)[,1])
+    ## changed to setting seed internally
+    ts1 <- table(s1 <- simulate(g1,seed=101)[,1])
     ## ts1B <- table(s1 <- simulate(g1,seed=101)[,1])
     expect_equal(fixef(g1),
                  c("(Intercept)" = 0.630067, x = -0.0167248),
@@ -450,9 +451,10 @@ test_that("simulate", {
     ## ?? Travis is getting hung up here/ignoring tolerance spec??
     expect_equal(th.g1, 2.013, tolerance = 1e-4)
     expect_equal(th.g1, g1@call$family[["theta"]])# <- important for pkg{effects} eval(<call>)
-    expect_identical(sum(s1), 403)
+    expect_identical(sum(s1), 413)
     expect_identical(as.vector(ts1[as.character(0:5)]),
-                     c(51L, 54L, 36L, 21L, 14L, 9L))
+                     ##                     c(51L, 54L, 36L, 21L, 14L, 9L))
+                     c(49L,56L,32L,25L,11L,9L))
 
     ## de novo NB simulation ...
     s2 <- simulate(~x + (1|f),seed=101,
