@@ -443,6 +443,7 @@ test_that("simulate", {
     g1 <- glmer.nb(y ~ x + (1|f), data=dd)
     th.g1 <- getME(g1, "glmer.nb.theta")
     ts1 <- table(s1 <- simulate(g1)[,1])
+    ## ts1B <- table(s1 <- simulate(g1,seed=101)[,1])
     expect_equal(fixef(g1),
                  c("(Intercept)" = 0.630067, x = -0.0167248),
                  tolerance = 1e-4)
@@ -453,6 +454,13 @@ test_that("simulate", {
     expect_identical(as.vector(ts1[as.character(0:5)]),
                      c(51L, 54L, 36L, 21L, 14L, 9L))
 
+    ## de novo NB simulation ...
+    s2 <- simulate(~x + (1|f),seed=101,
+             family=MASS::negative.binomial(theta=th.g1),
+             newparams=getME(g1,c("theta","beta")),
+             newdata=dd)[,1]
+    expect_equal(s1,s2)
+    
     ## Simulate with newdata with *new* RE levels:
     d <- sleepstudy[-1] # droping the response ("Reaction")
     ## d$Subject <- factor(rep(1:18, each=10))
@@ -478,6 +486,27 @@ test_that("simulate", {
     ss <- simulate(gm1, newdata=newdata[1,],
                                weights=20, seed=101)[[1]]
     expect_equal(unname(ss),matrix(c(4,16),nrow=1))
+
+    ## simulate Gamma, from function and de novo
+    set.seed(102)
+    dd <- data.frame(x=rep(seq(-2,2,length=15),10),
+                     f=factor(rep(1:10,each=15)))
+    u <- rnorm(10)
+    dd$y <- with(dd,
+                 rgamma(nrow(dd),shape=2,
+                        scale=exp(2+1*x+u[as.numeric(f)])/2))
+    g1 <- glmer(y~x+(1|f),family=Gamma(link="log"),dd)
+    s1 <- simulate(g1,seed=101)
+    s2 <- suppressMessages(simulate(~x+(1|f), family=Gamma(link="log"),
+                   seed=101,
+                   newdata=dd,
+                   newparams=getME(g1,c("theta","beta","sigma"))))
+    expect_equal(s1,s2)
+    dd$y2 <- s2[[1]]
+    g2 <- glmer(y2~x+(1|f),family=Gamma(link="log"),dd)
+    expect_equal(fixef(g2),
+                 c("(Intercept)"=2.81887136759369,
+                   "x"=1.06543222163626))
 })
 
 context("misc")

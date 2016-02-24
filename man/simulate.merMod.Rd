@@ -92,6 +92,13 @@
       random effects.
 
     }
+    \item{For Gaussian fits, \code{sigma} specifies the residual
+      standard deviation; for Gamma fits, it specifies the shape
+      parameter (the rate parameter for each observation i
+      is calculated as shape/mean(i)).  For negative binomial fits,
+      the overdispersion parameter is specified via the family,
+      e.g. \code{simulate(..., family=negative.binomial(theta=1.5))}.
+    }
   }
 }
 \examples{

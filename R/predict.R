@@ -725,9 +725,10 @@ poisson_simfun <- function(object, nsim, ftd=fitted(object),
 ##'        (see initial shot at gamma.shape.merMod below)
 Gamma_simfun <- function(object, nsim, ftd=fitted(object),
                          wts=weights(object)) {
-    if (any(wts != 1)) message("using weights as shape parameters")
-    ## ftd <- fitted(object)
-    shape <- MASS::gamma.shape(object)$alpha * wts
+    if (any(wts != 1)) message("using weights to scale shape parameter")
+    ## used to use gamma.shape(), but sigma() is more general
+    ## (wouldn't work *outside* of the merMod context though)
+    shape <- sigma(object)*wts
     rgamma(nsim*length(ftd), shape = shape, rate = shape/ftd)
 }
 
