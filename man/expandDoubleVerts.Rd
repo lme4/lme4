@@ -1,5 +1,6 @@
 \name{expandDoubleVerts}
 \alias{expandDoubleVerts}
+\alias{||}
 \title{Expand terms with \code{'||'} notation into separate \code{'|'} terms}
 \usage{
   expandDoubleVerts(term)
@@ -16,21 +17,35 @@
   into separate, independent random effect terms.
 }
 \note{
-  Note that \code{||} works at the level of formula parsing.  This fact
-  can lead to results that may be confusing when factors occur to the
-  left of the \code{||} sign
-  (more info at \url{https://github.com/lme4/lme4/issues/229}).
+  Because \code{||} works at the level of formula parsing, it
+  has no way of knowing whether a variable is a factor. It
+  just takes the terms within a random-effects term and literally splits them
+  into the intercept and separate no-intercept terms,
+  e.g. \code{(1+x+y|f)} would be split into \code{(1|f) + (0+x|f) + (0+y|f)}.
+  However, \code{||} will fail to break up factors into separate terms;
+  the \code{\link{dummy}} function can be useful in this case, although
+  it is not as convenient as \code{||}.
 }
 \examples{
-  f <- y ~ x + (x || g)
-  # the right-hand side of f is,
-  f[[3]]
-  # the expanded right-hand side,
-  expandDoubleVerts(f[[3]])
+  m <- ~ x + (x || g)
+  expandDoubleVerts(m)
+  set.seed(101)
+  dd <- expand.grid(f=factor(letters[1:3]),g=factor(1:200),rep=1:3)
+  dd$y <- simulate(~f + (1|g) + (0+dummy(f,"b")|g) + (0+dummy(f,"c")|g),
+          newdata=dd,
+          newparams=list(beta=rep(0,3),
+                         theta=c(1,2,1),
+                         sigma=1),
+          family=gaussian)[[1]]
+  m1 <- lmer(y~f+(f|g),data=dd)
+  VarCorr(m1)
+  m2 <- lmer(y~f+(1|g) + (0+dummy(f,"b")|g) + (0+dummy(f,"c")|g),
+               data=dd)
+  VarCorr(m2)
 }
 \seealso{
   \code{\link{formula}}, \code{\link{model.frame}},
-  \code{\link{model.matrix}}.
+  \code{\link{model.matrix}}, \code{\link{dummy}}.
 
   Other utilities: \code{\link{mkRespMod}},
   \code{\link{mkReTrms}}, \code{\link{nlformula}},
