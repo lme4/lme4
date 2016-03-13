@@ -865,11 +865,21 @@ missDataFun <- function(d) {
     ff <- sys.frames()
     ex <- substitute(d)
     ii <- rev(seq_along(ff))
+    foundAnon <- FALSE
     for(i in ii) {
+        ## trying to find where the original symbol is defined ...
         ex <- eval(substitute(substitute(x, env=sys.frames()[[n]]),
                               env = list(x = ex, n=i)))
+        if (grepl("^\\.\\.[0-9]+$",safeDeparse(ex))) {
+            ## might be better to check against quote(..1), quote(..2),
+            ## ... but ugh ...
+            ## stuck in an anonymous function somewhere ...
+            ## won't be able to see whether data are nonexistent
+            foundAnon <- TRUE
+            break
+        }
     }
-    return(is.symbol(ex) && !exists(deparse(ex)))
+    return(!foundAnon && is.symbol(ex) && !exists(deparse(ex)))
 }
 
 checkFormulaData <- function(formula, data, checkLHS=TRUE, debug=FALSE) {
