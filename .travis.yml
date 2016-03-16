@@ -20,8 +20,9 @@ r_github_packages:
 env:
  - LME4_TEST_LEVEL=2
 
-## after_success:
-##  - Rscript -e 'library(covr); codecov(quiet=FALSE)'
+## need travis_wait because checks take 10+ minutes ...
+after_success:
+  - travis_wait Rscript -e 'library(covr); codecov()'
 
 notifications:
   email:
