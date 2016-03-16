@@ -515,7 +515,8 @@ test_that("simulate", {
     g2 <- glmer(y2~x+(1|f),family=Gamma(link="log"),dd)
     expect_equal(fixef(g2),
                  c("(Intercept)"=2.81887136759369,
-                   "x"=1.06543222163626))
+                   "x"=1.06543222163626),
+                 tolerance=1e-5)
 })
 
 context("misc")
