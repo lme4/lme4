@@ -157,7 +157,7 @@ test_that("other_NA", {
     expect_equal(sum(is.na(predict(fm2))),nNA)
     expect_equal(sum(is.na(residuals(fm2))),nNA)
     expect_error(fm3 <- lmer(y~x+(1|f), data=d, na.action="na.pass"),
-                 "Error in qr.default")
+                 "(Error in qr.default|NA/NaN/Inf in foreign function call)")
     expect_is(refit(fm0),"merMod")
     expect_is(refit(fm1),"merMod")
     expect_is(refit(fm2),"merMod")
