@@ -45,7 +45,7 @@ lmList <- function(formula, data, family, subset, weights,
     ##          mf$formula <- subbars(formula)
     mf$x <- mf$model <- mf$y <- mf$family <- NULL
     mf$drop.unused.levels <- TRUE
-    mf[[1]] <- as.name("model.frame")
+    mf[[1L]] <- quote(stats::model.frame)
     frm <- eval(mf, parent.frame())## <- including "..."
     mform <- modelFormula(formula)
     isGLM <- !missing(family) ## TODO in future, consider isNLM / isNLS

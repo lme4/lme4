@@ -622,7 +622,7 @@ nlformula <- function(mc) {
                names(mc), 0)
     mc <- mc[c(1, m)]
     mc$drop.unused.levels <- TRUE
-    mc[[1]] <- as.name("model.frame")
+    mc[[1L]] <- quote(stats::model.frame)
     mc$formula <- nlform
     fr <- eval(mc, parent.frame(2L))
     n <- nrow(fr)
