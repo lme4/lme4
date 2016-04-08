@@ -22,7 +22,7 @@ fit_c <- lmer(y ~ (1|Operator)+(1|Part)+(1|Part:Operator), data=dat,
 ## FIXME: use fit_c with expect_warning() as a check on convergence tests
 ## tolerance=1e-5 seems OK in interactive use but not in R CMD check ... ??
 stopifnot(all.equal(getME(fit,  "theta") -> th.f,
-		    getME(fit_b,"theta"), tolerance=2e-5),
+		    getME(fit_b,"theta"), tolerance=5e-5),
 	  all(th.f > 0))
 
 ## Manuel Koller
