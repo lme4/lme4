@@ -356,7 +356,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
                names(mf), 0L)
     mf <- mf[c(1L, m)]
     mf$drop.unused.levels <- TRUE
-    mf[[1]] <- as.name("model.frame")
+    mf[[1L]] <- quote(stats::model.frame)
     fr.form <- subbars(formula) # substitute "|" by "+"
     environment(fr.form) <- environment(formula)
     ## model.frame.default looks for these objects in the environment
@@ -635,7 +635,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
                  "mustart", "etastart"), names(mf), 0L)
     mf <- mf[c(1L, m)]
     mf$drop.unused.levels <- TRUE
-    mf[[1]] <- as.name("model.frame")
+    mf[[1L]] <- quote(stats::model.frame)
     fr.form <- subbars(formula) # substitute "|" by "+"
     environment(fr.form) <- environment(formula)
     ## model.frame.default looks for these objects in the environment

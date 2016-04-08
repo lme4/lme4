@@ -13,7 +13,7 @@ modelFormula <- function(form)
 }
 
 dropOffset <- function(form) {
-    ## atomic 
+    ## atomic
     if (is.symbol(form) || is.numeric(form)) return(form)
     ## binary
     if (identical(form[[1]],quote(offset))) {
@@ -83,7 +83,7 @@ lmList <- function(formula, data, family, subset, weights,
     mf$drop.unused.levels <- TRUE
     ## pass NAs for now -- want *all* groups, weights, offsets recovered
     mf$na.action <- na.pass
-    mf[[1]] <- as.name("model.frame")
+    mf[[1L]] <- quote(stats::model.frame)
     frm <- eval.parent(mf) ## <- including "..."
     data[["(weights)"]] <- model.weights(frm)
     data[["(offset)"]] <- model.offset(frm)
