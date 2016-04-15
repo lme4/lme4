@@ -13,8 +13,10 @@
       matrix in \code{summary.merMod} (related to GH #300)
     }
   }
-  \itemize{BUG FIXES}{
-    \item fixed bug \emph{de novo} Gamma-response simulations
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item fixed bug \emph{de novo} Gamma-response simulations
+    }
   }
 }
 \section{CHANGES IN VERSION 1.1-11 (2016-02-11)}{

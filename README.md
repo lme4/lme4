@@ -21,7 +21,7 @@ lme4: Mixed-effects models in R.
 
 * Efficient for large data sets, using algorithms from the
 [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page)
-linear algebra package via the [RcppEigen](http://cran.r-project.org/package=RcppEigen)
+linear algebra package via the [RcppEigen](https://cran.r-project.org/package=RcppEigen)
 interface layer.
 * Allows arbitrarily many nested and crossed random effects.
 * Fits generalized linear mixed models (GLMMs) and nonlinear mixed models (NLMMs) via Laplace approximation
