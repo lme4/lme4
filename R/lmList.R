@@ -275,7 +275,7 @@ confint.lmList4 <- function(object, parm, level = 0.95, ...)
     if (length(pool) > 0 && pool[1]) { ## do our own
         sd <- pooledSD(object)
         a <- (1 - level)/2
-        fac <- sd * qt(c(a, 1 - a)/2, attr(sd, "df"))
+        fac <- sd * qt(c(a, 1 - a), attr(sd, "df"))
         parm <- dimnames(template)[[1]]
 	for (i in seq_along(object))
 	    if(!is.null(ob.i <- object[[i]]))
