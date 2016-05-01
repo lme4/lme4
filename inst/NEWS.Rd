@@ -4,6 +4,14 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
+\section{CHANGES IN VERSION 1.1-13}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item fixed bug in \code{confint.lmList4} (GH #26)
+    }
+  }
+}
+
 \section{CHANGES IN VERSION 1.1-12 (2016-04-15)}{
   This release is primarily a bump for compatibility with the new
   Windows toolchain. Some small documentation and test changes.
