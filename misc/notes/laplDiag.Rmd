@@ -118,12 +118,16 @@ dnorm2d2 <- function(z1,z2) {
 }
 
 plot.laplaceDiag <- function(x,scaled=FALSE,
+                             id=NULL,
                              type=c("g","l"),
                              aspect=0.6,
                              xlab="z",ylab="density",
                              ...) {
     nvar <- length(dim(x$devarr))-1
     mm <- melt(x)
+    if (!is.null(id)) {
+        mm <- mm[mm$id %in% as.character(id),]
+    }
     mm <- transform(mm,
                     y = if (nvar==1) {
                         if (!scaled) {
@@ -200,6 +204,10 @@ m2.z <- zeta(m2,grps=1:36)
 
 ```{r toenail_1d}
 plot(m2.z)
+```
+
+```{r misc,echo=FALSE,eval=FALSE}
+plot(m2.z,id=1:9,as.table=TRUE)
 ```
 
 ```{r toenail_1d_scaled}
