@@ -246,10 +246,11 @@ test_that("confint", {
     set.seed(102)
     dat <- simfun(10,5,1,.3,.3,.3,(1/18),0,(1/18))
     fit <- lmer(Y~X+Z+X:Z+(X||group),data=dat)
+    
     if (Sys.info()["sysname"] != "SunOS" &&
         .Platform$OS.type != "windows") {
         ## doesn't produce warnings on Solaris, or win-builder ...
-        expect_warning(pp <- profile(fit,"theta_",quiet=TRUE),
+        expect_warning(pp <- profile(fit,"theta_"),
                        "non-monotonic profile")
         expect_warning(cc <- confint(pp),"falling back to linear interpolation")
         ## very small/unstable problem, needs large tolerance
