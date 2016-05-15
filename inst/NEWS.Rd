@@ -5,11 +5,12 @@
 \encoding{UTF-8}
 
 \section{CHANGES IN VERSION 1.1-13}{
-  \subsection{NEW FEATURE}
-  \itemize{
-    \item added \code{prof.scale} argument to \code{profile.merMod},
-    documented caveats about using \code{varianceProf}/\code{logProf}
-    transformation methods for correlation parameters
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item added \code{prof.scale} argument to \code{profile.merMod},
+      documented caveats about using \code{varianceProf}/\code{logProf}
+      transformation methods for correlation parameters
+    }
   }
   \subsection{BUG FIXES}{
     \itemize{
