@@ -131,3 +131,26 @@ test_that("NA,weights,offsets", {
     expect_equal(unlist(coef(m5)[3,]),
                  coef(lm(y~x,subset=(g==3))))
 })
+
+test_that("pooled",
+{
+    ## GH #26
+    fm_lme4 <- lme4:::lmList(Reaction ~ Days | Subject, sleepstudy)
+    fm_nlme <- nlme:::lmList(Reaction ~ Days | Subject, sleepstudy)
+    fm_nlme_nopool <- nlme:::lmList(Reaction ~ Days | Subject, sleepstudy, pool=FALSE)
+    ci_lme4_pooled <- confint(fm_lme4,pool=TRUE) #get low and high CI estimates and pooled sd
+    ci_nlme_pooled <- nlme:::intervals(fm_nlme,pool=TRUE)
+    expect_equal(unname(ci_lme4_pooled[,,1]),unname(ci_nlme_pooled[,c(1,3),1]))
+    ci_lme4_nopool1 <- confint(fm_lme4,pool=FALSE)
+    ci_lme4_nopool2 <- confint(fm_lme4)
+    expect_identical(ci_lme4_nopool1,ci_lme4_nopool2)
+    ## BUG in nlme::intervals ... ? can't get CIs on unpooled fits
+    ## nlme::intervals(fm_nlme,pool=FALSE)
+    ## nlme::intervals(fm_nlme_nopool)
+    expect_equal(ci_lme4_nopool1[1:3,,1],
+                 structure(c(179.433862895996, 193.026448122379, 186.785722998616, 
+                             308.951475285822, 217.083442786712, 220.182727910474),
+                           .Dim = c(3L, 2L), .Dimnames = list(c("308", "309", "310"),
+                                                              c("2.5 %", "97.5 %"))))
+})
+

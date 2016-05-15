@@ -13,7 +13,7 @@ modelFormula <- function(form)
 }
 
 dropOffset <- function(form) {
-    ## atomic 
+    ## atomic
     if (is.symbol(form) || is.numeric(form)) return(form)
     ## binary
     if (identical(form[[1]],quote(offset))) {
@@ -83,7 +83,7 @@ lmList <- function(formula, data, family, subset, weights,
     mf$drop.unused.levels <- TRUE
     ## pass NAs for now -- want *all* groups, weights, offsets recovered
     mf$na.action <- na.pass
-    mf[[1]] <- as.name("model.frame")
+    mf[[1L]] <- quote(stats::model.frame)
     frm <- eval.parent(mf) ## <- including "..."
     data[["(weights)"]] <- model.weights(frm)
     data[["(offset)"]] <- model.offset(frm)
@@ -275,7 +275,7 @@ confint.lmList4 <- function(object, parm, level = 0.95, ...)
     if (length(pool) > 0 && pool[1]) { ## do our own
         sd <- pooledSD(object)
         a <- (1 - level)/2
-        fac <- sd * qt(c(a, 1 - a)/2, attr(sd, "df"))
+        fac <- sd * qt(c(a, 1 - a), attr(sd, "df"))
         parm <- dimnames(template)[[1]]
 	for (i in seq_along(object))
 	    if(!is.null(ob.i <- object[[i]]))

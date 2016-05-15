@@ -2,26 +2,20 @@ lme4: Mixed-effects models in R.
 ====
 
 [![Build Status](https://travis-ci.org/lme4/lme4.svg?branch=master)](https://travis-ci.org/lme4/lme4)
-[![cran version](http://www.r-pkg.org/badges/version/lme4)](http://cran.rstudio.com/web/packages/lme4)
+[![cran version](http://www.r-pkg.org/badges/version/lme4)](https://cran.r-project.org/web/packages/lme4)
 [![downloads](http://cranlogs.r-pkg.org/badges/lme4)](http://cranlogs.r-pkg.org/badges/lme4)
 [![total downloads](http://cranlogs.r-pkg.org/badges/grand-total/lme4)](http://cranlogs.r-pkg.org/badges/grand-total/lme4)
 [![Research software impact](http://depsy.org/api/package/cran/lme4/badge.svg)](http://depsy.org/package/r/lme4)
 
 ## Recent/release notes
 
-* Version 1.1-11 is now (Feb 2016) on CRAN.
-    * several `glmer.nb` bugs fixed (generally not changing results, but causing warnings and errors e.g. during bootstrapping)
-    * fixes to some `lmList` bugs (Github #320)
-    * minor documentation, vignette updates
-    * minor fix to `plot.merMod` with `id` specified
-    * `bootMer` now handles separate offset term properly (Github #250)
-* See the [NEWS file](https://github.com/lme4/lme4/blob/master/inst/NEWS.Rd) (or  `news(Version=="1.1.11",package="lme4")`).
+* Version 1.1-12 is on CRAN (as of April 2016). Changes in this release are very minor, for compatibility with a new Windows toolchain. See the [NEWS file](https://github.com/lme4/lme4/blob/master/inst/NEWS.Rd) (or  `news(Version=="1.1.12",package="lme4")`).
 
 ## Features
 
 * Efficient for large data sets, using algorithms from the
 [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page)
-linear algebra package via the [RcppEigen](http://cran.r-project.org/package=RcppEigen)
+linear algebra package via the [RcppEigen](https://cran.r-project.org/package=RcppEigen)
 interface layer.
 * Allows arbitrarily many nested and crossed random effects.
 * Fits generalized linear mixed models (GLMMs) and nonlinear mixed models (NLMMs) via Laplace approximation

@@ -4,6 +4,38 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
+\section{CHANGES IN VERSION 1.1-13}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item added \code{prof.scale} argument to \code{profile.merMod},
+      documented caveats about using \code{varianceProf}/\code{logProf}
+      transformation methods for correlation parameters
+    }
+  }
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item fixed bug in \code{confint.lmList4} (GH #26)
+      \item fixed bug when \code{FUN} returned an unnamed
+      vector in \code{confint(.,FUN=FUN,method="boot")}
+    }
+  }
+}
+
+\section{CHANGES IN VERSION 1.1-12 (2016-04-15)}{
+  This release is primarily a bump for compatibility with the new
+  Windows toolchain. Some small documentation and test changes.
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item reduced default print precision of fixed-effect correlation
+      matrix in \code{summary.merMod} (related to GH #300)
+    }
+  }
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item fixed bug \emph{de novo} Gamma-response simulations
+    }
+  }
+}
 \section{CHANGES IN VERSION 1.1-11 (2016-02-11)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{

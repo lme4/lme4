@@ -1,12 +1,12 @@
 ## --> ../man/profile-methods.Rd
 
-profnames <- function(object,signames) {
+profnames <- function(object,signames=TRUE,prefix=c("sd","cor")) {
     useSc <- as.logical(object@devcomp$dims[["useSc"]])
     ntp <- length(getME(object,"theta"))
     nn <- if (signames) {
         sprintf(".sig%02d",seq(ntp))
     } else {
-        tnames(object,old=FALSE,prefix=c("sd","cor"))
+        tnames(object,old=FALSE,prefix=prefix)
     }
     if (useSc) {
         nn <- c(nn,if (signames) ".sigma" else "sigma")
@@ -31,13 +31,17 @@ profile.merMod <- function(fitted,
                            control = NULL,
                            signames = TRUE,
                            parallel = c("no", "multicore", "snow"),
-                           ncpus = getOption("profile.ncpus", 1L), cl = NULL, ...)
+                           ncpus = getOption("profile.ncpus", 1L),
+                           cl = NULL,
+                           prof.scale = c("sdcor","varcov"),
+                           ...)
 {
 
     ## FIXME: allow choice of nextstep/nextstart algorithm?
     ## FIXME: allow selection of individual variables to profile by name?
     ## FIXME: allow for failure of bounds (non-pos-definite correlation matrices) when >1 cor parameter
 
+    prof.scale <- match.arg(prof.scale)
     if (missing(parallel)) parallel <- getOption("profile.parallel", "no")
     parallel <- match.arg(parallel)
     have_mc <- have_snow <- FALSE
@@ -71,7 +75,19 @@ profile.merMod <- function(fitted,
         if (!have_mc && !have_snow) ncpus <- 1L
     }
     useSc <- isLMM(fitted) || isNLMM(fitted)
-    dd <- devfun2(fitted,useSc,signames)
+    if (prof.scale=="sdcor") {
+        transfuns <- list(from.chol=Cv_to_Sv,
+                         to.chol=Sv_to_Cv,
+                         to.sd=identity)
+        prof.prefix = c("sd","cor")
+    } else if (prof.scale=="varcov") {
+        transfuns <- list(from.chol=Cv_to_Vv,
+                          to.chol=Vv_to_Cv,
+                          to.sd=sqrt)
+        prof.prefix = c("var","cov")
+    }
+    dd <- devfun2(fitted,useSc,signames=signames,
+                  transfuns=transfuns, prefix=prof.prefix, ...)
     ## FIXME: figure out to what do here ...
     if (isGLMM(fitted) && fitted@devcomp$dims[["useSc"]])
         stop("can't (yet) profile GLMMs with non-fixed scale parameters")
@@ -182,10 +198,16 @@ profile.merMod <- function(fitted,
         mat
     }
 
-    ## bounds on Cholesky: [0,Inf) for diag, (-Inf,Inf) for off-diag
+    ## bounds on Cholesky (== fitted@lower): [0,Inf) for diag, (-Inf,Inf) for off-diag
     ## bounds on sd-corr:  [0,Inf) for diag, (-1.0,1.0) for off-diag
-    lower <- pmax(fitted@lower, -1.)
-    upper <- 1/(fitted@lower != 0)## = ifelse(fitted@lower==0, Inf, 1.0)
+    ## bounds on var-corr: [0,Inf) for diag, (-Inf,Inf) for off-diag
+    if (prof.scale=="sdcor") {
+        lower <- pmax(fitted@lower, -1.)
+        upper <- ifelse(fitted@lower==0, Inf, 1.0)
+    } else {
+        lower <- fitted@lower
+        upper <- rep(Inf,length.out=length(fitted@lower))
+    }
     if (useSc) { # bounds for sigma
         lower <- c(lower,0)
         upper <- c(upper,Inf)
@@ -457,10 +479,18 @@ get.which <- function(which, nvp, nptot, parnames, verbose=FALSE) {
 ##
 ## @title Return a function for evaluation of the deviance.
 ## @param fm a fitted model of class merMod
+## @param useSc (logical) whether a scale parameter is used
+## @param \dots arguments passed to profnames (\code{signames=TRUE}
+## to use old-style .sigxx names, FALSE uses (sd_cor|xx);
+## also \code{prefix=c("sd","cor")})
 ## @return a function for evaluating the deviance in the extended
 ##     parameterization.  This is profiled with respect to the
 ##     variance-covariance parameters (fixed-effects done separately).
-devfun2 <- function(fm, useSc, signames)
+devfun2 <- function(fm, useSc, 
+                    transfuns = list(from.chol=Cv_to_Sv,
+                                     to.chol=Sv_to_Cv,
+                                     to.sd=identity),
+                    ...)
 {
     ## FIXME: have to distinguish between
     ## 'useSc' (GLMM: report profiled scale parameter) and
@@ -475,11 +505,11 @@ devfun2 <- function(fm, useSc, signames)
     pp <- fm@pp$copy()
     ## opt <- c(pp$theta*sig, sig)
     if (useSc) {
-        opt <- Cv_to_Sv(pp$theta, n=vlist, s=sig)
+        opt <- transfuns$from.chol(pp$theta, n=vlist, s=sig)
     } else {
-        opt <- Cv_to_Sv(pp$theta, n=vlist)
+        opt <- transfuns$from.chol(pp$theta, n=vlist)
     }
-    names(opt) <- profnames(fm, signames)
+    names(opt) <- profnames(fm, ...)
     opt <- c(opt, fixef(fm))
     resp <- fm@resp$copy()
     np <- length(pp$theta)
@@ -490,11 +520,12 @@ devfun2 <- function(fm, useSc, signames)
         ans <- function(pars)
         {
             stopifnot(is.numeric(pars), length(pars) == np)
-            ## Assumption:  all parameters, including the residual SD on SD-scale
-            sigma <- pars[np]
+            ## Assumption:  we can translate the last parameter back
+            ##   to sigma (SD) scale ...
+            sigma <- transfuns$to.sd(pars[np])
             ## .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pars[-np]/sigma)
             ## convert from sdcor vector back to 'unscaled theta'
-            thpars <- Sv_to_Cv(pars,n=vlist,s=sigma)
+            thpars <- transfuns$to.chol(pars,n=vlist,s=sigma)
             .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)
             sigsq <- sigma^2
             pp$ldL2() - ldW + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
@@ -512,9 +543,9 @@ devfun2 <- function(fm, useSc, signames)
             stopifnot(is.numeric(pars), length(pars) == np+nf)
             ## FIXME: allow useSc (i.e. NLMMs)
             if (!useSc) {
-                thpars <- Sv_to_Cv(pars[seq(np)],n=vlist)
+                thpars <- transfuns$to.chol(pars[seq(np)],n=vlist)
             } else {
-                thpars <- Sv_to_Cv(pars[seq(np)],n=vlist,s=pars[np])
+                thpars <- transfuns$to.chol(pars[seq(np)],n=vlist,s=pars[np])
             }
             fixpars <- pars[-seq(np)]
             d0(c(thpars,fixpars))
@@ -848,7 +879,9 @@ confint.merMod <- function(object, parm, level = 0.95,
                dimnames(citab) <- list(names(bb[["t0"]]), format.perc(a, 3))
                if (missing(parm)) {
                    ## only happens if we have custom boot method
-                   parm <- rownames(citab)
+                   if (is.null(parm <- rownames(citab))) {
+                       parm <- seq(nrow(citab))
+                   }
                }
                citab[parm, , drop=FALSE]
            },

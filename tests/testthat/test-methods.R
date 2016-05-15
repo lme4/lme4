@@ -196,7 +196,20 @@ test_that("bootMer", {
               "boot")
     expect_is(b3 <- bootMer(fm2, predict, re.form=~(1|batch), nsim=3),
               "boot")
+
+    FUN_name <- function(.) getME(.,"theta")
+    FUN_noname <- function(.) unname(getME(.,"theta"))
+
+    c_name <- suppressWarnings(
+        confint(fm2, method="boot", FUN=FUN_name, nsim=3, seed=101))
+
+    c_noname <- suppressWarnings(
+        confint(fm2, method="boot", FUN=FUN_noname, nsim=3, seed=101))
+
+    expect_equal(unname(c_name),unname(c_noname))
+        
 })
+
 context("confint_other")
 test_that("confint", {
     load(system.file("testdata", "gotway_hessianfly.rda", package = "lme4"))
@@ -250,10 +263,11 @@ test_that("confint", {
     set.seed(102)
     dat <- simfun(10,5,1,.3,.3,.3,(1/18),0,(1/18))
     fit <- lmer(Y~X+Z+X:Z+(X||group),data=dat)
+    
     if (Sys.info()["sysname"] != "SunOS" &&
         .Platform$OS.type != "windows") {
         ## doesn't produce warnings on Solaris, or win-builder ...
-        expect_warning(pp <- profile(fit,"theta_",quiet=TRUE),
+        expect_warning(pp <- profile(fit,"theta_"),
                        "non-monotonic profile")
         expect_warning(cc <- confint(pp),"falling back to linear interpolation")
         ## very small/unstable problem, needs large tolerance
@@ -513,10 +527,8 @@ test_that("simulate", {
     expect_equal(s1,s2)
     dd$y2 <- s2[[1]]
     g2 <- glmer(y2~x+(1|f),family=Gamma(link="log"),dd)
-    expect_equal(fixef(g2),
-                 c("(Intercept)"=2.81887136759369,
-                   "x"=1.06543222163626),
-                 tolerance=1e-5)
+    expect_equal(fixef(g2), tolerance = 4e-7, # 32-bit windows showed 1.34e-7
+                 c("(Intercept)" = 2.81887136759369, x= 1.06543222163626))
 })
 
 context("misc")
@@ -566,3 +578,34 @@ test_that("summary", {
        expect_is(family(gnb),"family")
    })
 
+
+context("profile")
+test_that("profile", {
+    ## FIXME: can we deal with convergence warning messages here ... ?
+    ## fit profile on default sd/cor scale ...
+    p1 <- suppressWarnings(profile(fm1,which="theta_"))
+    ## and now on var/cov scale ...
+    p2 <- suppressWarnings(profile(fm1,which="theta_",
+                                   prof.scale="varcov"))
+    ## because there are no correlations, squaring the sd results
+    ## gives the same result as profiling on the variance scale
+    ## in the first place
+    expect_equal(confint(p1)^2,confint(p2),
+              tolerance=1e-5)
+    ## or via built-in varianceProf() function
+    expect_equal(unname(confint(varianceProf(p1))),
+                 unname(confint(p2)),
+              tolerance=1e-5)
+    p3 <- profile(fm2,which=c(1,3,4))
+    p4 <- suppressWarnings(profile(fm2,which="theta_",prof.scale="varcov",
+                                   signames=FALSE))
+    ## warning: In zetafun(np, ns) : NAs detected in profiling
+    ## compare only for sd/var components, not corr component
+    expect_equal(unname(confint(p3)^2),
+                 unname(confint(p4)[c(1,3,4),]),
+              tolerance=1e-3)
+    ## check naming convention properly adjusted
+    expect_equal(as.character(unique(p4$.par)),
+                 c("var_(Intercept)|Subject", "cov_Days.(Intercept)|Subject", 
+                   "var_Days|Subject", "sigma"))
+})

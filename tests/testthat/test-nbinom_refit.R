@@ -15,8 +15,9 @@ context("testing glmer refit")
 test_that("glmer refit", {
             ## basic Poisson fit
             m.base <- glmer(y ~ f1*f2 + (1|g), data=dd, family=poisson,
-                            control=glmerControl(optimizer=c("bobyqa","Nelder_Mead")))
-            expect_equal(m.base@beta,(m.base.r <- refit(m.base))@beta)
+                   control=glmerControl(optimizer=c("bobyqa","Nelder_Mead")))
+            expect_equal(m.base@beta,(m.base.r <- refit(m.base))@beta,
+                         tolerance = 1e-5)
 
             th <- lme4:::est_theta(m.base,limit=20,eps=1e-4,trace=FALSE)
             th0 <- structure(0.482681268108477, SE = 0.0244825021248148)

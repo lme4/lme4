@@ -4,6 +4,7 @@
 \alias{as.data.frame.thpr}
 \alias{log.thpr}
 \alias{logProf}
+\alias{varianceProf}
 \alias{profile-methods}
 \alias{profile.merMod}
 \description{
@@ -11,8 +12,9 @@
   models.
 
   The \code{log()} method and the more flexible \code{logProf()}
-  utility transform a lmer profile into one where logarithms of standard deviations
-  are used; see Details.
+  utility transform a \code{lmer} profile into one where logarithms of standard deviations
+  are used, while \code{varianceProf} converts from the
+  standard-deviation to the variance scale; see Details.
 }
 \usage{
 \method{profile}{merMod}(fitted, which = NULL, alphamax = 0.01,
@@ -21,11 +23,14 @@
         maxmult = 10, startmethod = "prev", optimizer = NULL,
         control=NULL, signames = TRUE,
         parallel = c("no", "multicore", "snow"),
-        ncpus = getOption("profile.ncpus", 1L), cl = NULL, \dots)
+        ncpus = getOption("profile.ncpus", 1L), cl = NULL,
+        prof.scale = c("sdcor","varcov"),
+        \dots)
 \method{as.data.frame}{thpr} (x, ...)
 \method{log}{thpr}(x, base = exp(1))
 logProf(x, base = exp(1), ranef = TRUE,
            sigIni = if(ranef) "sig" else "sigma")
+varianceProf(x, ranef = TRUE)
 }
 \arguments{
   \item{fitted}{a fitted model, e.g., the result of \code{\link{lmer}(..)}.}
@@ -101,7 +106,13 @@ logProf(x, base = exp(1), ranef = TRUE,
     typically one would choose this to be the number of available CPUs.}
   \item{cl}{An optional \pkg{parallel} or \pkg{snow} cluster for use if
     \code{parallel = "snow"}.  If not supplied, a cluster on the
-    local machine is created for the duration of the \code{profile} call.}
+    local machine is created for the duration of the \code{profile}
+    call.}
+  \item{prof.scale}{whether to profile on the standard
+    deviation-correlation scale (\code{"sdcor"}) or on
+    the variance-covariance scale (\code{"varcov"})
+  }
+    
 }
 \value{
   \code{profile(<merMod>)} returns an object of S3 class
@@ -133,6 +144,19 @@ logProf(x, base = exp(1), ranef = TRUE,
   \cr
   The forward and backward splines for the log-transformed parameters
   are recalculated.
+  Note that correlation parameters are not handled sensibly at present
+  (i.e., they are logged rather than taking a more applicable
+  transformation such as an arc-hyperbolic tangent,
+  \code{atanh(x)}=\eqn{\log((1+x)/(1-x))/2}{log((1+x)/(1-x))/2}).
+  
+  The \code{varianceProf} function works similarly, including
+  non-sensibility for correlation parameters, by squaring all
+  parameter values, changing the names by appending \code{sq}
+  appropriately (e.g. \code{.sigNN} to \code{.sigsqNN}).
+  Setting \code{prof.scale="varcov"} in the original
+  \code{profile()} call is a more computationally
+  intensive, but more correct, way to compute confidence
+  intervals for covariance parameters.
 
   Methods for function \code{\link{profile}} (package
   \pkg{stats}), here for profiling (fitted) mixed effect models.
@@ -142,8 +166,7 @@ logProf(x, base = exp(1), ranef = TRUE,
 }
 \seealso{
   The plotting methods \code{\link[=xyplot.thpr]{xyplot}} etc, for class
-  \code{"thpr"}; \code{\link{varianceProf}} for transformation (from
-  st.dev.) to variance scale.
+  \code{"thpr"}.
 
   For (more expensive) alternative confidence intervals:
   \code{\link{bootMer}}.
