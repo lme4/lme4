@@ -558,3 +558,34 @@ test_that("summary", {
        expect_is(family(gnb),"family")
    })
 
+
+context("profile")
+test_that("profile", {
+    ## FIXME: can we deal with convergence warning messages here ... ?
+    ## fit profile on default sd/cor scale ...
+    p1 <- suppressWarnings(profile(fm1,which="theta_"))
+    ## and now on var/cov scale ...
+    p2 <- suppressWarnings(profile(fm1,which="theta_",
+                                   prof.scale="varcov"))
+    ## because there are no correlations, squaring the sd results
+    ## gives the same result as profiling on the variance scale
+    ## in the first place
+    expect_equal(confint(p1)^2,confint(p2),
+              tolerance=1e-5)
+    ## or via built-in varianceProf() function
+    expect_equal(unname(confint(varianceProf(p1))),
+                 unname(confint(p2)),
+              tolerance=1e-5)
+    p3 <- profile(fm2,which=c(1,3,4))
+    p4 <- suppressWarnings(profile(fm2,which="theta_",prof.scale="varcov",
+                                   signames=FALSE))
+    ## warning: In zetafun(np, ns) : NAs detected in profiling
+    ## compare only for sd/var components, not corr component
+    expect_equal(unname(confint(p3)^2),
+                 unname(confint(p4)[c(1,3,4),]),
+              tolerance=1e-3)
+    ## check naming convention properly adjusted
+    expect_equal(as.character(unique(p4$.par)),
+                 c("var_(Intercept)|Subject", "cov_Days.(Intercept)|Subject", 
+                   "var_Days|Subject", "sigma"))
+})

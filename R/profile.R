@@ -33,6 +33,7 @@ profile.merMod <- function(fitted,
                            parallel = c("no", "multicore", "snow"),
                            ncpus = getOption("profile.ncpus", 1L),
                            cl = NULL,
+                           prof.scale = c("sdcor","varcov"),
                            ...)
 {
 
@@ -40,6 +41,7 @@ profile.merMod <- function(fitted,
     ## FIXME: allow selection of individual variables to profile by name?
     ## FIXME: allow for failure of bounds (non-pos-definite correlation matrices) when >1 cor parameter
 
+    prof.scale <- match.arg(prof.scale)
     if (missing(parallel)) parallel <- getOption("profile.parallel", "no")
     parallel <- match.arg(parallel)
     have_mc <- have_snow <- FALSE
@@ -73,7 +75,19 @@ profile.merMod <- function(fitted,
         if (!have_mc && !have_snow) ncpus <- 1L
     }
     useSc <- isLMM(fitted) || isNLMM(fitted)
-    dd <- devfun2(fitted,useSc,signames=signames,...)
+    if (prof.scale=="sdcor") {
+        transfuns <- list(from.chol=Cv_to_Sv,
+                         to.chol=Sv_to_Cv,
+                         to.sd=identity)
+        prof.prefix = c("sd","cor")
+    } else if (prof.scale=="varcov") {
+        transfuns <- list(from.chol=Cv_to_Vv,
+                          to.chol=Vv_to_Cv,
+                          to.sd=sqrt)
+        prof.prefix = c("var","cov")
+    }
+    dd <- devfun2(fitted,useSc,signames=signames,
+                  transfuns=transfuns, prefix=prof.prefix, ...)
     ## FIXME: figure out to what do here ...
     if (isGLMM(fitted) && fitted@devcomp$dims[["useSc"]])
         stop("can't (yet) profile GLMMs with non-fixed scale parameters")
@@ -184,10 +198,16 @@ profile.merMod <- function(fitted,
         mat
     }
 
-    ## bounds on Cholesky: [0,Inf) for diag, (-Inf,Inf) for off-diag
+    ## bounds on Cholesky (== fitted@lower): [0,Inf) for diag, (-Inf,Inf) for off-diag
     ## bounds on sd-corr:  [0,Inf) for diag, (-1.0,1.0) for off-diag
-    lower <- pmax(fitted@lower, -1.)
-    upper <- 1/(fitted@lower != 0)## = ifelse(fitted@lower==0, Inf, 1.0)
+    ## bounds on var-corr: [0,Inf) for diag, (-Inf,Inf) for off-diag
+    if (prof.scale=="sdcor") {
+        lower <- pmax(fitted@lower, -1.)
+        upper <- ifelse(fitted@lower==0, Inf, 1.0)
+    } else {
+        lower <- fitted@lower
+        upper <- rep(Inf,length.out=length(fitted@lower))
+    }
     if (useSc) { # bounds for sigma
         lower <- c(lower,0)
         upper <- c(upper,Inf)
@@ -460,14 +480,16 @@ get.which <- function(which, nvp, nptot, parnames, verbose=FALSE) {
 ## @title Return a function for evaluation of the deviance.
 ## @param fm a fitted model of class merMod
 ## @param useSc (logical) whether a scale parameter is used
-## @param \dots passed to profnames
-## to use old-style .sigxx names, FALSE uses (sd_cor|xx)
+## @param \dots arguments passed to profnames (\code{signames=TRUE}
+## to use old-style .sigxx names, FALSE uses (sd_cor|xx);
+## also \code{prefix=c("sd","cor")})
 ## @return a function for evaluating the deviance in the extended
 ##     parameterization.  This is profiled with respect to the
 ##     variance-covariance parameters (fixed-effects done separately).
 devfun2 <- function(fm, useSc, 
                     transfuns = list(from.chol=Cv_to_Sv,
-                                     to.chol=Sv_to_Cv),
+                                     to.chol=Sv_to_Cv,
+                                     to.sd=identity),
                     ...)
 {
     ## FIXME: have to distinguish between
@@ -498,8 +520,9 @@ devfun2 <- function(fm, useSc,
         ans <- function(pars)
         {
             stopifnot(is.numeric(pars), length(pars) == np)
-            ## Assumption:  all parameters, including the residual SD on SD-scale
-            sigma <- pars[np]
+            ## Assumption:  we can translate the last parameter back
+            ##   to sigma (SD) scale ...
+            sigma <- transfuns$to.sd(pars[np])
             ## .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pars[-np]/sigma)
             ## convert from sdcor vector back to 'unscaled theta'
             thpars <- transfuns$to.chol(pars,n=vlist,s=sigma)

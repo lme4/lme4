@@ -8,6 +8,9 @@
   \subsection{BUG FIXES}{
     \itemize{
       \item fixed bug in \code{confint.lmList4} (GH #26)
+      \item added \code{prof.scale} argument to \code{profile.merMod},
+      better documentation for \code{varianceProf} (including caveats
+      about transformations of correlation parameters)
     }
   }
 }
