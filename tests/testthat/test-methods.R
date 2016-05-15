@@ -192,7 +192,20 @@ test_that("bootMer", {
               "boot")
     expect_is(b3 <- bootMer(fm2, predict, re.form=~(1|batch), nsim=3),
               "boot")
+
+    FUN_name <- function(.) getME(.,"theta")
+    FUN_noname <- function(.) unname(getME(.,"theta"))
+
+    c_name <- suppressWarnings(
+        confint(fm2, method="boot", FUN=FUN_name, nsim=3, seed=101))
+
+    c_noname <- suppressWarnings(
+        confint(fm2, method="boot", FUN=FUN_noname, nsim=3, seed=101))
+
+    expect_equal(unname(c_name),unname(c_noname))
+        
 })
+
 context("confint_other")
 test_that("confint", {
     load(system.file("testdata", "gotway_hessianfly.rda", package = "lme4"))

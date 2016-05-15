@@ -5,12 +5,17 @@
 \encoding{UTF-8}
 
 \section{CHANGES IN VERSION 1.1-13}{
+  \subsection{NEW FEATURE}
+  \itemize{
+    \item added \code{prof.scale} argument to \code{profile.merMod},
+    documented caveats about using \code{varianceProf}/\code{logProf}
+    transformation methods for correlation parameters
+  }
   \subsection{BUG FIXES}{
     \itemize{
       \item fixed bug in \code{confint.lmList4} (GH #26)
-      \item added \code{prof.scale} argument to \code{profile.merMod},
-      documented caveats about using \code{varianceProf}/\code{logProf}
-      transformation methods for correlation parameters
+      \item fixed bug when \code{FUN} returned an unnamed
+      vector in \code{confint(.,FUN=FUN,method="boot")}
     }
   }
 }

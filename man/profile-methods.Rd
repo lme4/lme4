@@ -166,8 +166,7 @@ varianceProf(x, ranef = TRUE)
 }
 \seealso{
   The plotting methods \code{\link[=xyplot.thpr]{xyplot}} etc, for class
-  \code{"thpr"}; \code{\link{varianceProf}} for transformation (from
-  st.dev.) to variance scale.
+  \code{"thpr"}.
 
   For (more expensive) alternative confidence intervals:
   \code{\link{bootMer}}.

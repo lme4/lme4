@@ -879,7 +879,9 @@ confint.merMod <- function(object, parm, level = 0.95,
                dimnames(citab) <- list(names(bb[["t0"]]), format.perc(a, 3))
                if (missing(parm)) {
                    ## only happens if we have custom boot method
-                   parm <- rownames(citab)
+                   if (is.null(parm <- rownames(citab))) {
+                       parm <- seq(nrow(citab))
+                   }
                }
                citab[parm, , drop=FALSE]
            },
