@@ -8,22 +8,21 @@
   see \link{convergence} for a more detailed discussion.
 }
 \usage{
-checkConv(x)
+checkConv(derivs, coefs, ctrl, lbound, debug = FALSE)
 }
 
 \arguments{
-  \item{derivs}{typically the "derivs" attribute of optimizeLmer(); with
-   "gradients" and possibly "Hessian" component}
+  \item{derivs}{typically the "derivs" attribute of \code{optimizeLmer()}; with
+    "gradients" and possibly "Hessian" component}
   \item{coefs}{ current coefficient estimates}
   \item{ctrl}{list of lists, each with \code{action} character strings specifying
-        what should happen when a check triggers, and \code{tol} numerical tolerances,
-        as is the result of \code{\link{lmerControl}()$checkConv}.}
+    what should happen when a check triggers, and \code{tol} numerical tolerances,
+    as is the result of \code{\link{lmerControl}()$checkConv}.}
   \item{lbound}{vector of lower bounds \emph{for random-effects parameters only}
-        (length is taken to determine number of RE parameters)}
+    (length is taken to determine number of RE parameters)}
   \item{debug}{enable debugging output, useful if some checks are on 
-        "ignore", but would "trigger"}
+    "ignore", but would "trigger"}
 }
-
 \value{
   A result list containing
   \item{code }{The return code for the check}
