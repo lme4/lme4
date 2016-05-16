@@ -58,6 +58,7 @@ export(negative.binomial)
 
 ## Our Exports:
 export(bootMer)
+export(checkConv)
 export(devcomp)
 export(dummy)
 export(factorize)  ## needed for qqmath???
