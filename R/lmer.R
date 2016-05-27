@@ -2040,43 +2040,35 @@ NULL
 vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
                         use.hessian = NULL, ...)
 {
-    hess.avail <- (!is.null(h <- object@optinfo$derivs$Hessian) &&
-                   nrow(h) > (ntheta <- length(getME(object,"theta"))))
+    
+    hess.avail <-
+         ## (1) numerical Hessian computed?
+        (!is.null(h <- object@optinfo$derivs$Hessian) &&
+         ## (2) does Hessian include fixed-effect parameters?
+         nrow(h) > (ntheta <- length(getME(object,"theta"))))
     if (is.null(use.hessian)) use.hessian <- hess.avail
     if (use.hessian && !hess.avail) stop(shQuote("use.hessian"),
                                          "=TRUE specified, ",
                                          "but Hessian is unavailable")
     calc.vcov.hess <- function(h) {
+        ## invert 2*Hessian, catching errors and forcing symmetric result
 	## ~= forceSymmetric(solve(h/2)[i,i]) : solve(h/2) = 2*solve(h)
         h <- tryCatch(solve(h),
                       error=function(e) matrix(NA,nrow=nrow(h),ncol=ncol(h)))
-        i <- -seq_len(ntheta)
+        i <- -seq_len(ntheta)  ## drop var-cov parameters
 	h <- h[i,i]
 	forceSymmetric(h + t(h))
     }
 
-    ## OBSOLETE??  checks for symmetry, but symmetry is now forced
-    ## within calc.vcov.hess anyway
-    ## symmetrize <-  function(v,warnTol = 0,stopTol = sqrt(.Machine$double.eps)) {
-    ##     if(nrow(v) == 1L) return(v)       # 1-by-1 matrices are always symmetrical
-    ##     nonSymm <- max(abs(v[lower.tri(v)]-t(v)[lower.tri(v)]))
-    ##     warnTol <- max(warnTol,stopTol)
-    ##     if (nonSymm > stopTol) stop(sprintf(
-    ##         "calculated variance-covariance matrix is non-symmetric (tol=%f)",
-    ##                                       stopTol))
-    ##     if (nonSymm > warnTol) stop(sprintf(
-    ##         "calculated variance-covariance matrix is non-symmetric (tol=%f)",
-    ##                                       warnTol))
-    ##     v[upper.tri(v)] <- t(v)[upper.tri(v)]
-    ##     v
-    ## }
-
+    ## alternately: calculate var-cov from implicit (RX) information
+    ## provided by fit (always the case for lmerMods)
     V <- sigm^2 * object@pp$unsc()
 
     if (hess.avail) {
         V.hess <- calc.vcov.hess(h)
         bad.V.hess <- any(is.na(V.hess))
         if (!bad.V.hess) {
+            ## another 'bad var-cov' check: positive definite?
             e.hess <- eigen(V.hess,symmetric = TRUE,only.values = TRUE)$values
             if (min(e.hess) <= 0) bad.V.hess <- TRUE
         }
@@ -2084,7 +2076,6 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
     if (!use.hessian && hess.avail) {
         ## if hessian is available, go ahead and check
         ## for similarity with the RX-based estimate
-        ## (inverting the hessian isn't *too* expensive)
         var.hess.tol <- 1e-4 # FIXME: should var.hess.tol be user controlled?
         if (!bad.V.hess && any(abs(V-V.hess) > var.hess.tol * V.hess))
             warning("variance-covariance matrix computed ",

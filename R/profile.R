@@ -1,7 +1,7 @@
 ## --> ../man/profile-methods.Rd
 
-profnames <- function(object,signames=TRUE,prefix=c("sd","cor")) {
-    useSc <- as.logical(object@devcomp$dims[["useSc"]])
+profnames <- function(object,signames=TRUE,
+                      useSc=isLMM(object),prefix=c("sd","cor")) {
     ntp <- length(getME(object,"theta"))
     nn <- if (signames) {
         sprintf(".sig%02d",seq(ntp))
@@ -810,7 +810,10 @@ confint.merMod <- function(object, parm, level = 0.95,
     if (method=="boot" && !is.null(FUN)) {
         ## custom boot function, don't expand parameter names
     } else {
-        vn <- profnames(object,oldNames)
+        ## "use scale" = GLMM with scale parameter *or* LMM ...
+        useSc <- as.logical(object@devcomp$dims[["useSc"]])
+        vn <- profnames(object,oldNames,
+                        useSc=useSc)
         an <- c(vn,names(fixef(object)))
         if (missing(parm)) {
             parm <- seq(length(an))
@@ -854,7 +857,6 @@ confint.merMod <- function(object, parm, level = 0.95,
 		   th <- x@theta
 		   nvec <- lengths(x@cnms)
                    scaleTh <- (isLMM(x) || isNLMM(x))
-                   useSc <- as.logical(x@devcomp$dims[["useSc"]])
 		   ## FIXME: still ugly.  Best cleanup via Cv_to_Sv ...
 		   ss <- if (scaleTh) {	 ## scale variances by sigma and include it
 		       setNames(Cv_to_Sv(th,n=nvec,s=sigma(x)), vn)
