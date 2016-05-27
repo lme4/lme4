@@ -203,7 +203,35 @@ test_that("bootMer", {
         confint(fm2, method="boot", FUN=FUN_noname, nsim=3, seed=101))
 
     expect_equal(unname(c_name),unname(c_noname))
-        
+
+    ## example from
+    df2 <- data.frame(
+    prop1 = c(0.46, 0.471, 0.458, 0.764, 0.742, 0.746,
+              0.569, 0.45,    0.491,    0.467, 0.464, 
+              0.556, 0.584, 0.478, 0.456, 0.46, 0.493, 0.704, 0.693, 0.651), 
+    prop2 = c(0.458, 0.438, 0.453, 0.731, 0.738, 0.722, 0.613,
+              0.498, 0.452, 0.451, 0.447,
+              0.48, 0.576, 0.484, 0.473, 0.467, 0.467, 0.722, 0.707, 0.709),
+    site = factor(rep(1:8,c(2,1,3,5,3,2,1,3))))
+
+    ## from SO 37466771: bootstrapping etc. on GLMMs with scale
+    ## parameters
+    gaussmodel <- glmer(prop2 ~ prop1 + (1|site), 
+                   data=df2, family=gaussian(link="logit"))
+    set.seed(101)
+    bci <- suppressWarnings(confint(gaussmodel,method="boot",nsim=10))
+    expect_equal(bci,
+                 structure(c(16.0861072699207, 0.0367496156026639,
+                             -4.21025090053564, 
+                             3.1483596407467, 31.3318861915707,
+                             0.0564761126030204, -1.00593089841924, 
+                             4.7064432268919), .Dim = c(4L, 2L),
+                           .Dimnames = list(c(".sig01", 
+                                              ".sigma", "(Intercept)",
+                                              "prop1"), c("2.5 %", "97.5 %"))),
+                 tolerance=1e-5)
+
+
 })
 
 context("confint_other")
