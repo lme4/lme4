@@ -17,6 +17,7 @@
       \item fixed bug in \code{confint.lmList4} (GH #26)
       \item fixed bug when \code{FUN} returned an unnamed
       vector in \code{confint(.,FUN=FUN,method="boot")}
+      \item fixed small bug relating to \code{nAGQ0initStep=FALSE}
     }
   }
 }

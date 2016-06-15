@@ -133,7 +133,14 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
   \item{compDev}{logical scalar - should compiled code be
     used for the deviance evaluation during the optimization
     of the parameter estimates?}
-  \item{nAGQ0initStep}{do one initial run with \code{nAGQ = 0}.}
+  \item{nAGQ0initStep}{Run an initial optimization phase with
+    \code{nAGQ = 0}. While the initial optimization usually
+    provides a good starting point for subsequent fitting
+    (thus increasing overall computational speed),
+    setting this option to \code{FALSE} can be useful in cases
+    where the initial phase results in bad fixed-effect estimates
+    (seen most often in binomial models with \code{link="cloglog"}
+    and offsets).}
   \item{check.nlev.gtreq.5}{character - rules for
     checking whether all random effects have >= 5 levels.
     See \code{action}.}
