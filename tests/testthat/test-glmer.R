@@ -294,4 +294,18 @@ if(FALSE) { ## Hadley broke this
             expect_equal(gm1@resp[[i]],rr[[i]])
         }
     }
+
+    ## bad start case
+    load(system.file("testdata","fakesim.RData",package="lme4"))
+    rfit <- glmer(Inew/S ~ R0-1 + offset(log(I/N)) + (1|R0:trial) 
+        , family=binomial(link=cloglog)
+	, data=dat
+	, weight=S
+	, control=glmerControl(optimizer="bobyqa",
+                               nAGQ0initStep=FALSE)
+	, start = list(fixef=c(0,0,0),theta=1))
+    expect_equal(exp(fixef(rfit)),
+          structure(c(1.27350509791919, 2.03306352889742, 2.97640884475551),
+                    .Names = c("R01", "R02", "R03")),
+          tolerance=1e-5)
 })

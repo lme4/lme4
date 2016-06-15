@@ -135,10 +135,16 @@ glmer <- function(formula, data=NULL, family = gaussian,
 
     if(nAGQ > 0L) {
 
-        start <- updateStart(start,theta=opt$par)
-
+        
         ## update deviance function to include fixed effects as inputs
         devfun <- updateGlmerDevfun(devfun, glmod$reTrms, nAGQ = nAGQ)
+
+        if (control$nAGQ0initStep) {
+            start <- updateStart(start,theta=opt$par)
+        }
+        ## if nAGQ0 was skipped
+        ## we don't actually need to do anything here, it seems --
+        ## getStart gets called again in optimizeGlmer ...
 
         if (devFunOnly) return(devfun)
         ## reoptimize deviance function over covariance parameters and fixed effects
