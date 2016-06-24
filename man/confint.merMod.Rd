@@ -32,7 +32,7 @@
     random-effect parameters on the standard deviation/correlation scale
     will be used. See \code{\link{bootMer}} for details.}
   \item{boot.type}{bootstrap confidence interval type, as described
-    in \code{\link{boot.ci}}. (Methods \sQuote{stud} and \sQuote{bca}
+    in \code{\link[boot]{boot.ci}}. (Methods \sQuote{stud} and \sQuote{bca}
     are unavailable because they require additional components to be
     calculated.)}
   \item{quiet}{(logical) suppress messages about computationally intensive profiling?}
