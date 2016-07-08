@@ -20,7 +20,8 @@
              re.form = NA, ReForm, REForm, REform,
              newdata=NULL, newparams=NULL,
              formula=NULL, family=NULL, weights=NULL, offset=NULL,
-             allow.new.levels = FALSE, na.action = na.pass, \dots)
+             allow.new.levels = FALSE, na.action = na.pass,
+             cond.sim = TRUE, \dots)
 }
 \arguments{
   \item{object}{(for \code{simulate.merMod}) a fitted model object or
@@ -60,6 +61,10 @@
     (or \code{NA}s).}
   \item{na.action}{what to do with \code{NA} values in new data: see
     \code{\link{na.fail}}}
+  \item{cond.sim}{(experimental) simulate the conditional
+    distribution?  if \code{FALSE}, simulate only random effects; do not
+    simulate from the conditional distribution, rather return the
+    predicted group-level values}
   \item{\dots}{optional additional arguments: none are used at present.}
 }
 \seealso{

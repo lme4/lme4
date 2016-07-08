@@ -434,7 +434,10 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                          formula=NULL,family=NULL,
                          weights=NULL,
                          offset=NULL,
-                         allow.new.levels=FALSE, na.action=na.pass, ...) {
+                         allow.new.levels=FALSE,
+                         na.action=na.pass,
+                         cond.sim=TRUE,
+                         ...) {
 
     if (is.null(weights)) {
         if (is.null(newdata))
@@ -562,10 +565,12 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     } else 0
 
     val <- if (isLMM(object)) {
-        ## result will be matrix  n x nsim :
-        etapred + sigma * (sim.reff +
+          ## result will be matrix  n x nsim :
+          etapred + sigma * (sim.reff +
                                ## residual contribution:
-                               matrix(rnorm(n * nsim), ncol = nsim))
+                               if (cond.sim) 
+                                   matrix(rnorm(n * nsim), ncol = nsim)
+                               else 0)
     } else if (isGLMM(object)) {
         ## GLMM
         ## n.b. DON'T scale random-effects (???)
@@ -573,15 +578,18 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         family <- normalizeFamilyName(object@resp$family)
         musim <- family$linkinv(etasim) #-> family$family == "negative.binomial" if(NB)
         ## ntot <- length(musim) ## FIXME: or could be dims["n"]?
-        ## FIXME: is it possible to leverage family$simulate ... ???
         ##
         if (is.null(sfun <- simfunList[[family$family]]) &&
             is.null(family$simulate))
             stop("simulation not implemented for family",
                  family$family)
         ## don't rely on automatic recycling
-        val <- sfun(object, nsim=1, ftd = rep_len(musim, n*nsim),
-                    wts = weights)
+        if (cond.sim) {
+             val <- sfun(object, nsim=1, ftd = rep_len(musim, n*nsim),
+                         wts = weights)
+        } else {
+             val  <- rep_len(musim, n*sim)
+        }
         ## split results into nsims: need special case for binomial matrix/factor responses
         if (family$family=="binomial" && is.matrix(r <- model.response(object@frame))) {
             lapply(split(val[[1]], gl(nsim, n, 2 * nsim * n)), matrix,
