@@ -459,7 +459,8 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
             family <- get(family, mode = "function", envir = parent.frame())
         if (is.function(family))
             family <- family()
-        if (is.null(family) || family$family=="gaussian") {
+        if (is.null(family) ||
+            (family$family=="gaussian" && family$link=="identity")) {
             lmod <- lFormula(formula,newdata,
                              weights=weights,
                              offset=offset,
@@ -588,7 +589,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
              val <- sfun(object, nsim=1, ftd = rep_len(musim, n*nsim),
                          wts = weights)
         } else {
-             val  <- rep_len(musim, n*sim)
+             val  <- rep_len(musim, n*nsim)
         }
         ## split results into nsims: need special case for binomial matrix/factor responses
         if (family$family=="binomial" && is.matrix(r <- model.response(object@frame))) {

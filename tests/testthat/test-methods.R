@@ -363,12 +363,12 @@ test_that("predict", {
         data("Orthodont", package = "MEMSS") # (differently "coded" from the 'default' "nlme" one)
         silly <- glmer(Sex ~ distance + (1|Subject),
                        data = Orthodont, family = binomial)
+        sillypred <- data.frame(distance = c(20, 25))
+        op <- options(warn = 2) # no warnings!
+        ps <- predict(silly, sillypred, re.form=NA, type = "response")
+        expect_is(ps, "numeric")
+        expect_equal(unname(ps), c(0.999989632, 0.999997201), tolerance=1e-6)
     }
-    sillypred <- data.frame(distance = c(20, 25))
-    op <- options(warn = 2) # no warnings!
-    ps <- predict(silly, sillypred, re.form=NA, type = "response")
-    expect_is(ps, "numeric")
-    expect_equal(unname(ps), c(0.999989632, 0.999997201), tolerance=1e-6)
     ## a case with interactions (failed in one temporary version):
     expect_warning(fmPixS <<- update(fmPix, .~. + Side),
                    "nearly unidentifiable|unable to evaluate scaled gradient|failed to converge")
@@ -401,7 +401,8 @@ test_that("predict", {
     Orthodont <- within(Orthodont, nsex <- as.numeric(Sex == "Male"))
     m3 <- lmer(distance ~ age + (age|Subject) + (0 + Sex |Subject),
                data=Orthodont,
-               control=lmerControl(check.conv.hess="ignore"))
+               control=lmerControl(check.conv.hess="ignore",
+                                   check.conv.grad="ignore"))
     m4 <- lmer(distance ~ age + (age|Subject) + (0 + nsex|Subject), data=Orthodont)
     expect_equal(p3 <- predict(m3, Orthodont), fitted(m3), tolerance=1e-14)
     expect_equal(p4 <- predict(m4, Orthodont), fitted(m4), tolerance=1e-14)

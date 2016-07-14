@@ -28,9 +28,11 @@ test_that("lmer", {
         expect_equal(AIC(x), AIC(y))
     }
     if(isNM)
-    expect_equal(suppressWarnings(optimizeLmer(ff,control=list(maxfun=50),start=c(1,0,1))$fval),
+        expect_equal(suppressWarnings(optimizeLmer(ff,control=list(maxfun=50),
+                                                   start=c(1,0,1))$fval),
                  unname(deviance(x)))
-    expect_equal(suppressWarnings(optimizeLmer(ff,control=list(maxfun=50),start=th0)$fval),
+    expect_equal(suppressWarnings(optimizeLmer(ff,control=list(maxfun=50),
+                                               start=th0)$fval),
                  unname(deviance(y)))
 })
 test_that("glmer", {

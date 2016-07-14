@@ -308,4 +308,30 @@ if(FALSE) { ## Hadley broke this
           structure(c(1.27350509791919, 2.03306352889742, 2.97640884475551),
                     .Names = c("R01", "R02", "R03")),
           tolerance=1e-5)
+
+    ## gaussian with log link and zero values in response ...
+    ##  fixed simulation code, passing mustart properly
+    dd <- expand.grid(x=seq(-2,3,length.out=10),
+                  f=factor(1:10))
+    dd$y <- simulate(~x+(1|f),
+                 family=gaussian(link="log"),
+                 newdata=dd,
+                 newparams=list(beta=c(0,1),theta=1,sigma=1),
+                 seed=101)[[1]]
+    dd$y <- pmax(dd$y,0)
+    expect_error(glmer (y ~ x + (1|f),
+                        family = gaussian(link="log"),
+                        data=dd),"cannot find valid starting values")
+    g1 <- glmer (y ~ x + (1|f),
+                 family = gaussian(link="log"),
+                 data=dd,
+                 mustart=pmax(dd$y,0.1))
+    msum <- c(fixef(g1),unlist(c(VarCorr(g1))),c(logLik(g1)))
+    expect_equal(msum,
+                 structure(c(0.233894052550647, 1.00174364960381,
+                             0.24602991778166, 
+                             -156.777303793966),
+                           .Names = c("(Intercept)", "x", "f", "")),
+                 tolerance=1e-5)
+
 })

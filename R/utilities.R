@@ -221,6 +221,7 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
         weights <- model.weights(fr)
         N <- n <- nrow(fr)
         etastart_update <- model.extract(fr, "etastart")
+        mustart_update <- model.extract(fr, "mustart")
     } else {
         fr <- list(...)
         y <- fr$y
@@ -228,6 +229,7 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
         offset <- fr$offset
         weights <- fr$weights
         etastart_update <- fr$etastart
+        mustart_update <- fr$mustart
     }
     if(length(dim(y)) == 1L)
 	y <- drop(y) ## avoid problems with 1D arrays and keep names
@@ -257,9 +259,9 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
     rho <- new.env()
     rho$y <- if (is.null(y)) numeric(0) else y
     if (!is.null(REML)) rho$REML <- REML
-    rho$etastart <- fr$etastart
-    rho$mustart <- fr$mustart
-    rho$start <- NULL
+    rho$etastart <- etastart_update
+    rho$mustart <- mustart_update
+    rho$start <- attr(fr,"start")
     if (!is.null(nlenv)) {
         stopifnot(is.language(nlmod),
                   is.environment(nlenv),
@@ -292,12 +294,17 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
         rho$nobs <- n
         ## allow trivial objects, e.g. for simulation
         if (length(y)>0) eval(family$initialize, rho)
+        ## ugh. this *is* necessary;
+        ##  family$initialize *ignores* mustart in env, overwrites!
+        ## see ll 180-182 of src/library/stats/R/glm.R
+        ## https://github.com/wch/r-source/search?utf8=%E2%9C%93&q=mukeep
+        if (!is.null(mustart_update)) rho$mustart <- mustart_update
         ## family$initialize <- NULL     # remove clutter from str output
         ll <- as.list(rho)
         ans <- do.call(new, c(list(Class="glmResp", family=family),
                               ll[setdiff(names(ll), c("m", "nobs", "mustart"))]))
-        if (length(y)>0) ans$updateMu(if (!is.null(es <- etastart_update)) es else
-                                      family$linkfun(get("mustart", rho)))
+        if (length(y)>0)
+            ans$updateMu(if (!is.null(es <- etastart_update)) es else                                       family$linkfun(rho$mustart))
         ans
     } else if (is.null(nlenv)) ## lmer
         do.call(lmerResp$new, as.list(rho))

@@ -600,7 +600,7 @@ optimizeLmer <- function(devfun,
 ##' @export
 glFormula <- function(formula, data=NULL, family = gaussian,
                       subset, weights, na.action, offset,
-                      contrasts = NULL, mustart, etastart,
+                      contrasts = NULL, start, mustart, etastart,
                       control = glmerControl(), ...) {
     ## FIXME: does start= do anything? test & fix
 
@@ -652,6 +652,11 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     ## store full, original formula & offset
     attr(fr,"formula") <- formula
     attr(fr,"offset") <- mf$offset
+    ## attach starting coefficients to model frame so we can
+    ##  pass them through to mkRespMod -> family()$initialize ...
+    if (!missing(start) && is.list(start)) {
+        attr(fr,"start") <- start$fixef
+    }
     n <- nrow(fr)
     ## random effects and terms modules
     reTrms <- mkReTrms(findbars(RHSForm(formula)), fr)
