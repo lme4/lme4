@@ -306,17 +306,20 @@ extern "C" {
 	double pdev;
 	int maxstephalfit = 10;
 	bool   cvgd = false, verb = verbose > 2, moreverb = verbose > 10;
+	int debug=0;
 
 	pdev = oldpdev; // define so debugging statements work on first step
 	for (int i = 0; i < maxit; i++) {
 	    if (verb) {
 		Rcpp::Rcout << "*** pwrssUpdate step " << i << std::endl;
-		// Rcpp::Rcout << "\nmin delu at iteration " << i << ": " << pp->delu().minCoeff() << std::endl;
-		// Rcpp::Rcout << "\nmax delu at iteration " << i << ": " << pp->delu().maxCoeff() << std::endl;
-		// Rcpp::Rcout << "\nresDev before dels, iter:  " << i << ",  " << rp->resDev() << std::endl;
+		if (debug) {
+		    Rcpp::Rcout << "\nmin delu at iteration " << i << ": " << pp->delu().minCoeff() << std::endl;
+		    Rcpp::Rcout << "\nmax delu at iteration " << i << ": " << pp->delu().maxCoeff() << std::endl;
+		    Rcpp::Rcout << "\nresDev before dels, iter:  " << i << ",  " << rp->resDev() << std::endl;
 		// FIXME: would like to print this in row, not column, format
 		// 
-		// Rcpp::Rcout << "before update:" << "pdev = " << pdev << std::endl; // if (verb) 
+		    Rcpp::Rcout << "before update:" << "pdev = " << pdev << std::endl; // if (verb) 
+		}
 	    }
 	    Vec   olddelu(pp->delu()), olddelb(pp->delb());
 	    pdev = internal_glmerWrkIter(pp, rp, uOnly);

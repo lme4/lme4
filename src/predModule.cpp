@@ -260,7 +260,7 @@ namespace lme4 {
 	if (debug) Rcpp::Rcout << "start updateDecomp" << std::endl;
         updateL();
 	if (debug) {
-	    Rcpp::Rcout << "updateDecomp 2: " << 
+	    Rcpp::Rcout << "updateDecomp 2: dimensions (RZX, LamtUt,V)" << 
 		d_RZX.cols() << " " << d_RZX.rows() << " " <<
 		d_LamtUt.cols() << " " << d_LamtUt.rows() << " " <<
 		d_V.cols() << " " << d_V.rows() << " " <<

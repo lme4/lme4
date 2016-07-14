@@ -244,7 +244,7 @@ namespace glm {
 	return -2. * ans + 2.;
     }
     const ArrayXd            gammaDist::devResid(const ArrayXd& y, const ArrayXd& mu, const ArrayXd& wt) const {
-	int debug=1;
+	int debug=0;
 	if (debug) {
 	    for (int i=0; i < mu.size(); ++i) {
 		double r;
@@ -274,6 +274,14 @@ namespace glm {
 	return nn * (std::log(2. * M_PI * dev/nn) + 1.) + 2. - wt.log().sum();
     }
     const ArrayXd         GaussianDist::devResid(const ArrayXd& y, const ArrayXd& mu, const ArrayXd& wt) const {
+	int debug=0;	
+        if (debug) {
+	    Rcpp::Rcout << "gaussian devResid: " <<
+	    "  y.max=" << y.maxCoeff() << ", y.min=" << y.minCoeff() <<
+	    "  mu.max=" << mu.maxCoeff() << ", mu.min=" << mu.minCoeff() <<
+	    "  diff.max=" << (y-mu).maxCoeff() << ", diff.min=" << (y-mu).minCoeff() <<
+		std::endl;
+	}
 	return wt * (y - mu).square();
     }
     const ArrayXd         GaussianDist::variance(const ArrayXd& mu) const {return ArrayXd::Ones(mu.size());}
