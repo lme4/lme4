@@ -184,6 +184,40 @@ lmerControl <- function(...) {
 ## hack formals so that lmerControl matches documentation
 ## (at present we don't export merControl())
 ff <- formals(merControl)
+## drop glmer-specific controls and "type"
+ff <- ff[!names(ff) %in% c("tolPwrss","compDev","nAGQ0initStep","check.response.not.const","type")]
+formals(lmerControl) <- ff
+
+## almost the same body but need to set 'type="glmer"' in arguments
+glmerControl <- function(...) {
+    mc <- match.call()
+    mc[[1]] <- quote(merControl)
+    mc[["type"]] <- "glmer"
+    ## eval.parent(mc)
+    eval.parent(mc)
+}
+
+ff <- formals(merControl)
+## drop "type" (no LMM-specific controls at present)
+ff <- ff[!names(ff) %in% "type"]
+
+formals(glmerControl) <- ff
+
+## DOC: ../man/lmerControl.Rd
+lmerControl <- function(...) {
+    mc <- match.call()
+    ## FIXME: we need eval.parent(), but merControl isn't currently
+    ## exported.  If we export it we need to document it (ugh).
+    ## ::: triggers NOTEs
+    ##  defined
+    mc[[1]] <- quote(merControl)
+    ## eval.parent(mc)
+    eval.parent(mc)
+}
+
+## hack formals so that lmerControl matches documentation
+## (at present we don't export merControl())
+ff <- formals(merControl)
 
 ## drop glmer-specific controls and "type"
 ff <- ff[!names(ff) %in% c("tolPwrss","compDev","nAGQ0initStep","check.response.not.const","type")]

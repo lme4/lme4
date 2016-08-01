@@ -15,8 +15,7 @@ context("testing glmer refit")
 test_that("glmer refit", {
             ## basic Poisson fit
             m.base <- glmer(y ~ f1*f2 + (1|g), data=dd, family=poisson,
-                            control=glmerControl(optimizer=c("bobyqa","Nelder_Mead")))
-
+                   control=glmerControl(optimizer=c("bobyqa","Nelder_Mead")))
             expect_equal(m.base@beta,(m.base.r <- refit(m.base))@beta,
                          tolerance = 1e-5)
 
