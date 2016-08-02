@@ -10,5 +10,5 @@ test_that("storewarning", {
                                 data=cbpp, family=binomial, control=gCtrl),
                    "failure to converge in 3")
     expect_equal(gm1@optinfo$warnings[[1]],"failure to converge in 3 evaluations")
-    ## FIXME: why is conv==0 here?
+    ## conv==0 here because Nelder_Mead doesn't set conv ...
 })

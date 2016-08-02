@@ -43,6 +43,7 @@ lmerControl(optimizer = "bobyqa",% was "Nelder_Mead" till Dec.2013
     check.formula.LHS = "stop",
     ## convergence checking options
     check.conv.grad     = .makeCC("warning", tol = 0.01, relTol = NULL),
+    check.conv.absgrad  = .makeCC("warning", tol = 0.05, relTol = NULL),
     check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
     check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
     ## optimizer args
@@ -72,6 +73,7 @@ glmerControl(optimizer = "bobyqa",
     check.response.not.const = "stop",
     ## convergence checking options
     check.conv.grad     = .makeCC("warning", tol = 0.01, relTol = NULL),
+    check.conv.absgrad  = .makeCC("warning", tol = 0.05, relTol = NULL),
     check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
     check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
     ## optimizer args
@@ -102,6 +104,7 @@ merControl(optimizer = "bobyqa",
     check.response.not.const = "stop",
     ## convergence checking options
     check.conv.grad     = .makeCC("warning", tol = 0.01, relTol = NULL),
+    check.conv.absgrad  = .makeCC("warning", tol = 0.05, relTol = NULL),
     check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
     check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
     ## optimizer args
@@ -223,6 +226,13 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
   \item{check.conv.grad}{rules for checking the gradient of the deviance
     function for convergence.  A list as returned
     by \code{.makeCC}, or a character string with only the action.}
+  \item{check.conv.absgrad}{rules for checking the \emph{absolute}
+    gradient of the deviance
+    function for convergence.  A list as returned
+    by \code{.makeCC}, or a character string with only the action.
+    (This test only comes into play if the Hessian has not
+    been computed cannot be inverted.)
+  }
   \item{check.conv.singular}{rules for checking for a singular fit,
     i.e. one where some parameters are on the boundary of the feasible
     space (for example, random effects variances equal to 0 or

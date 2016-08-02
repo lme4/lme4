@@ -5,19 +5,36 @@
 \encoding{UTF-8}
 
 \section{CHANGES IN VERSION 1.1-13}{
-  \subsection{NEW FEATURES}{
+  \subsection{USER-VISIBLE CHANGES}{
     \itemize{
-      \item added \code{prof.scale} argument to \code{profile.merMod},
-      documented caveats about using \code{varianceProf}/\code{logProf}
-      transformation methods for correlation parameters
+      \item changed default optimizer for \code{glmer} to \code{bobyqa}
+      \item increased default gradient-checking tolerance to 0.01, or
+      0.05 if only absolute gradients are checked
+
     }
-  }
-  \subsection{BUG FIXES}{
-    \itemize{
-      \item fixed bug in \code{confint.lmList4} (GH #26)
-      \item fixed bug when \code{FUN} returned an unnamed
-      vector in \code{confint(.,FUN=FUN,method="boot")}
-      \item fixed small bug relating to \code{nAGQ0initStep=FALSE}
+    \subsection{NEW FEATURES}{
+      \itemize{
+	\item added \code{prof.scale} argument to \code{profile.merMod},
+	documented caveats about using \code{varianceProf}/\code{logProf}
+	transformation methods for correlation parameters
+	\item small \code{(g)lmerControl} additions:
+	\itemize{
+	  \item \code{calc.derivs} can now be length 2; first element
+	  controls gradient computation, second Hessian computation
+	  \item \code{deriv.method} can be set to allow
+	  Richardson-extrapolation computation
+	  \item \code{check.conv.absgrad} checks absolute gradient when
+	  scaled gradient is unavailable
+	}
+      }
+    }
+    \subsection{BUG FIXES}{
+      \itemize{
+	\item fixed bug in \code{confint.lmList4} (GH #26)
+	\item fixed bug when \code{FUN} returned an unnamed
+	vector in \code{confint(.,FUN=FUN,method="boot")}
+	\item fixed small bug relating to \code{nAGQ0initStep=FALSE}
+      }
     }
   }
 }

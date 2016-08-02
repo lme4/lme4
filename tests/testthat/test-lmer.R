@@ -255,3 +255,18 @@ test_that("coef_lmer", {
                             0.49497978, 0.12227105, 0.087020934,-0.28564318,-0.015968354),
                           nn), tolerance= 7e-7)# 64-bit:  6.73e-9
 })
+
+test_that("gradcheck_lmer", {
+    fm0 <- lmer(Yield ~ 1|Batch, Dyestuff)
+    fm1 <- update(fm0,control=lmerControl(deriv.method="Richardson"))
+    expect_equal(fm0@optinfo$derivs$Hessian,
+                 structure(14.0837364196777, .Dim = c(1L, 1L)))
+    expect_equal(fm1@optinfo$derivs$Hessian,
+                 new("dsyMatrix"
+                   , x = 14.082397020532
+                   , Dim = c(1L, 1L)
+                   , Dimnames = list(NULL, NULL)
+                   , uplo = "L"
+                   , factors = list()))
+})
+

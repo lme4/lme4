@@ -59,7 +59,6 @@ chk.cconv <- function(copt, callingFn) {
     } else chk.convOpt(copt)
 }
 
-
 merControl <-
     function(optimizer="bobyqa",
 	     restart_edge=TRUE,
@@ -89,6 +88,7 @@ merControl <-
              check.response.not.const = "stop",  ## GLMM only
 	     ## convergence options
 	     check.conv.grad	 = .makeCC("warning", tol = 0.01, relTol = NULL),
+             check.conv.absgrad	 = .makeCC("warning", tol = 0.05, relTol = NULL),
 	     check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
 	     check.conv.hess	 = .makeCC(action = "warning", tol = 1e-6),
 	     optCtrl = list(),
@@ -124,6 +124,7 @@ merControl <-
     ## compatibility and convenience, caller can specify action string only:
     me <- sys.function()
     chk.cconv(check.conv.grad,	   me)
+    chk.cconv(check.conv.absgrad,  me)
     chk.cconv(check.conv.singular, me)
     chk.cconv(check.conv.hess	 , me)
 
@@ -163,6 +164,7 @@ merControl <-
     res <- c(res, namedList(checkControl,
                             checkConv=
                                 namedList(check.conv.grad,
+                                          check.conv.absgrad,
                                           check.conv.singular,
                                           check.conv.hess),
                             optCtrl))

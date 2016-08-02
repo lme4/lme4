@@ -2624,8 +2624,8 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
                 m[lower.tri(m,diag=TRUE)] <- gD$D[-(1:n)]
                 forceSymmetric(m,uplo="L")
             }
-            derivs <- list(grad=gD$D[1:n],
-                           hessian=mktri(gD$D[-(1:n)]))
+            derivs <- list(gradient=gD$D[1:n],
+                           Hessian=mktri(gD$D[-(1:n)]))
         }
         if (use.last.params) {
             ## run one more evaluation of the function at the optimized

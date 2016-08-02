@@ -266,7 +266,8 @@ test_that("glmer", {
     ##     expect_error(update(g0, .~. +year), "pwrssUpdate did not converge in")
     ## }
     ## OK if we scale & center it
-    expect_is(update(g0,.~. + scale(year), control=gc), "glmerMod")
+    expect_is(suppressWarnings(update(g0,.~. + scale(year), control=gc)),
+              "glmerMod")
     ## not OK if we scale and don't center
     expect_warning(update(g0,.~. + scale(year,center=FALSE)),
                    "failed to converge with max|grad|")

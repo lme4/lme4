@@ -23,6 +23,8 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
     ## gradients:
     ## check absolute gradient (default)
     ccl <- ctrl[[cstr <- "check.conv.grad"]] ; checkCtrlLevels(cstr, cc <- ccl[["action"]])
+    cclabs <- ctrl[[cstr <- "check.conv.absgrad"]] ; checkCtrlLevels(cstr, ccabs <- cclabs[["action"]])
+
     if (doCheck(cc)) {
         wstr <- NULL
         if (!noHess) {
@@ -36,21 +38,23 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
         }
         if (!noHess && !badScGrad) {
             ## find parallel *minimum* of scaled and absolute gradient
-            ## the logic here is that we can sometimes get large
+            ## check both because we can sometimes get large
             ##  *scaled* gradients even when the *absolute* gradient
-            ##  is small because the curvature is very flat as well ...
+            ##  is small because the curvature is very small as well ...
             mingrad <- pmin(abs(scgrad),abs(derivs$gradient))
             maxmingrad <- max(mingrad)
             gradtype <- if (maxmingrad==max(abs(scgrad))) "scaled" else "absolute"
+            tol <- ccl$tol
         } else {
             maxmingrad <- max(abs(derivs$gradient))
             gradtype <- "absolute"
+            tol <- cclabs$tol
         }
-        if (maxmingrad > ccl$tol) {
+        if (maxmingrad > tol) {
             w <- which.max(maxmingrad)
             res$code <- -1L
             wstr <- gettextf("Model failed to converge with max (%s) |grad| = %g (tol = %g, component %d)",
-                             gradtype,maxmingrad, ccl$tol,w)
+                             gradtype,maxmingrad, tol,w)
         }
         if (!is.null(wstr)) {
             res$messages <- wstr
