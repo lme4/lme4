@@ -1364,6 +1364,10 @@ refit.merMod <- function(object,
     ## FIX ME: allow use.last.params to be passed through
     calc.derivs <- object@optinfo$calc.derivs
     deriv.method <- object@optinfo$deriv.method
+    if (is.null(calc.derivs) || is.null(deriv.method)) {
+        warning("calc.derivs and/or calc.method not stored in @optinfo slot from lme4 <1.1-13")
+    }
+  
     ## if(isGLMM(object)) {
     ##     rho$resp$updateWts()
     ##     rho$pp$updateDecomp()

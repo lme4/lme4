@@ -10,7 +10,7 @@ clean
 .git
 .gitignore
 .Rproj.user
-^.RData
+^.*/\.RData
 \.aux$
 \.dvi$
 \.log$

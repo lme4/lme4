@@ -33,7 +33,7 @@ if (getRversion() >= "3.0.0") {
     ## include fixed effect of period
     fit_cbpp_1 <- update(fit_cbpp_0, . ~ . + period)
     if(FALSE) ## include observation-level RE
-    fit_cbpp_2 <- update(fit_cbpp_1, . ~ . + (1|obs))
+        fit_cbpp_2 <- update(fit_cbpp_1, . ~ . + (1|obs))
     ## specify formula by proportion/weights instead
     fit_cbpp_3 <- update(fit_cbpp_1, incidence/size ~ period + (1 | herd), weights = size)
 }
@@ -51,13 +51,22 @@ stopifnot(all.equal(getinfo(fm1 ),
           )
 
 if(FALSE) ## show all differences
-sapply(slotNames(fm1), function(.)
-    all.equal( slot(fm1,.), slot(fm1R,.), tolerance=0))
+    sapply(slotNames(fm1), function(.)
+        all.equal( slot(fm1,.), slot(fm1R,.), tolerance=0))
 
-sapply(slotNames(fm1),
-       function(.) isTRUE(all.equal( slot(fm1,.), slot(fm1R,.), tolerance= 1.5e-5)))
+## should work, but seems to be some problem with
+##  comparing RC's after load&restore ...
+## https://stat.ethz.ch/pipermail/r-devel/2016-August/072944.html ?
+if (FALSE)
+    sapply(slotNames(fm1R),
+           function(.) { cat(.,"\n")
+        isTRUE(all.equal( slot(fm1,.), slot(fm1R,.), tolerance= 1.5e-5)) }
+        )
+## all.equal(fm1@pp,fm1R@pp)
+## trace("all.equal",sig="refclass",browser)
 str(fm1 @ optinfo)
 str(fm1R@ optinfo)
+
 
 fm1ML <- refitML(fm1)
 stopifnot(
@@ -73,7 +82,7 @@ gm1R <- refit(gm1, with(cbpp, cbind(incidence,size-incidence)))
  sim1Z[4,] <- c(0,0)
  (gm1. <- refit(gm1, sim1Z)) # earlier gave Error:  ... PIRLS ... failed ...
 
-all.equal(getinfo(gm1), getinfo(gm1R), tolerance=0) # to see it --> 5.52e-4
+stopifnot(all.equal(getinfo(gm1), getinfo(gm1R), tolerance=1e-3)) # to see it --> 5.52e-4
 # because glmer() uses Laplace approx. (? -- still, have *same* y !)
 stopifnot(all.equal(getinfo(gm1), getinfo(gm1R), tolerance = 1e-4))
 
