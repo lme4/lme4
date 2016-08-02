@@ -614,6 +614,7 @@ test_that("summary", {
 context("profile")
 test_that("profile", {
     ## FIXME: can we deal with convergence warning messages here ... ?
+    ## FIXME: these are a little slow; condition on testLevel?
     ## fit profile on default sd/cor scale ...
     p1 <- suppressWarnings(profile(fm1,which="theta_"))
     ## and now on var/cov scale ...

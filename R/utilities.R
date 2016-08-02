@@ -715,19 +715,18 @@ nlformula <- function(mc) {
     list(conv = list(opt = 0L,
                      lme4 = list(messages = character(0))))
 
-.optinfo <- function(opt, lme4conv=NULL)
-    list(optimizer = attr(opt, "optimizer"),
-	 control   = attr(opt, "control"),
-	 derivs    = attr(opt, "derivs"),
-	 conv      = list(opt = opt$conv, lme4 = lme4conv),
-	 feval     = if (is.null(opt$feval)) NA else opt$feval,
-	 warnings  = attr(opt, "warnings"),
-	 val       = opt$par)
+.optinfo <- function(opt, lme4conv=NULL) {
+    c(attributes(opt)[c("optimizer","control","derivs","calc.derivs","deriv.method","warnings")],
+      list(conv      = list(opt = opt$conv, lme4 = lme4conv),
+           feval     = if (is.null(opt$feval)) NA else opt$feval,
+           val       = opt$par))
+}
 
-##' Potentically needed in more than one place, be sure to keep consistency!
+##' Potentially needed in more than one place, be sure to keep consistency!
 ##' hack (NB families have weird names) from @aosmith16; then corrected
 isNBfamily <- function(familyString)
     grepl("^Negative ?Binomial", familyString, ignore.case=TRUE)
+
 normalizeFamilyName <- function(family) { # such as  object@resp$family
     if(isNBfamily(family$family))
 	family$family <- "negative.binomial"

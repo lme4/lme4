@@ -112,6 +112,8 @@ test_that("lmer", {
     expect_is(lmer(Yield ~ 1|Batch, Dyestuff, devFunOnly=FALSE), "lmerMod")
     expect_is(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl(optimizer="Nelder_Mead")), "lmerMod")
     expect_is(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl()), "lmerMod")
+    ## in interactive settings may have loaded this already ...
+    if ("package:optimx" %in% search()) detach("package:optimx")
     expect_error(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl(optimizer="optimx",optCtrl=list(method="BFGS"))),"must be loaded")
     library("optimx")
     expect_error(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl(optimizer="optimx")),"must specify")

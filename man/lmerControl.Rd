@@ -26,7 +26,8 @@
 lmerControl(optimizer = "bobyqa",% was "Nelder_Mead" till Dec.2013
     restart_edge = TRUE,
     boundary.tol = 1e-5,
-    calc.derivs=TRUE,
+    calc.derivs=NULL,
+    deriv.method="simple",
     use.last.params=FALSE,
     sparseX = FALSE,
     ## input checking options
@@ -50,7 +51,8 @@ lmerControl(optimizer = "bobyqa",% was "Nelder_Mead" till Dec.2013
 glmerControl(optimizer = "bobyqa",
     restart_edge = TRUE,
     boundary.tol = 1e-5,
-    calc.derivs=TRUE,
+    calc.derivs=NULL,
+    deriv.method="simple",
     use.last.params=FALSE,
     sparseX = FALSE,
     tolPwrss=1e-7,
@@ -78,7 +80,8 @@ glmerControl(optimizer = "bobyqa",
 merControl(optimizer = "bobyqa",
     restart_edge = TRUE,
     boundary.tol = 1e-5,
-    calc.derivs=TRUE,
+    calc.derivs=NULL,
+    deriv.method="simple",
     use.last.params=FALSE,
     sparseX = FALSE,
     ## GLMM-specific
@@ -144,8 +147,18 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     effects plus fixed effect parameters) phase.  See
     \code{\link{modular}} for more information on these two phases.
   }
-  \item{calc.derivs}{logical - compute gradient and Hessian of nonlinear
-    optimization solution?}
+  \item{calc.derivs}{logical vector of length 1 or 2 - compute gradient and Hessian of nonlinear
+    optimization solution, for convergence checking and (for GLMMs)
+    estimation of variance-covariance matrix of fixed-effect parameters?
+    Set to \code{NULL} by default, which
+    corresponds to \code{c(TRUE,TRUE)}, i.e. compute both gradient and
+    Hessian. If length 1, replicated automatically to length 2.
+  }
+  \item{deriv.method}{method for computing derivatives for convergence checking. \code{"simple"}
+    means (less accurate but faster) naive finite differencing,
+    \code{"Richardson"} uses Richardson extrapolation as implemented in
+    the \code{numDeriv} package
+  }
   \item{use.last.params}{logical - should the last value of the
     parameters evaluated (\code{TRUE}), rather than the value of the
     parameters corresponding to the minimum deviance, be returned?

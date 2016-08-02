@@ -67,7 +67,8 @@ merControl <-
 	     ## automatic check-option-checking in
 	     ## inst/tests/test-lmer.R
 	     boundary.tol=1e-5,
-	     calc.derivs=TRUE,
+	     calc.derivs=NULL,
+             deriv.method="simple",
 	     use.last.params=FALSE,
 	     sparseX=FALSE,
              tolPwrss = 1e-7,       ## GLMM only
@@ -133,6 +134,7 @@ merControl <-
 
     res <- namedList(optimizer,
                      calc.derivs,
+                     deriv.method,
                      use.last.params,
                      restart_edge,
                      boundary.tol)

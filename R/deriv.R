@@ -26,9 +26,9 @@
 ##' \item{Hessian}{the second derivative matrix}
 ##' @author Rune Haubo Bojesen Christensen
 deriv12 <- function(fun, x, delta=1e-4, fx=NULL,
-                    lower=rep(NA,length(x)), upper=rep(NA,length(x)), ...) {
-### Compute gradient and Hessian at the same time (to save computing
-### time)
+                    lower=rep(NA,length(x)), upper=rep(NA,length(x)),
+                    calc.hess=TRUE, ...) {
+    ## Compute gradient and Hessian at the same time (to save computing time)
     nx <- length(x)
     fx <- if(!is.null(fx)) fx else fun(x, ...)
     stopifnot(length(fx) == 1)
@@ -61,22 +61,25 @@ deriv12 <- function(fun, x, delta=1e-4, fx=NULL,
         ## Diagonal elements:
         fadd <- fun(spos(x,xadd,j), ...)
         fsub <- fun(spos(x,xsub,j), ...)
-        H[j, j] <- fadd/udelta[j]^2 - 2 * fx/(udelta[j]*ldelta[j]) +
-            fsub/ldelta[j]^2
+        if (calc.hess) 
+            H[j, j] <- fadd/udelta[j]^2 - 2 * fx/(udelta[j]*ldelta[j]) +
+                                          fsub/ldelta[j]^2
         g[j] <- (fadd - fsub) / Delta[j]
         ## Off diagonal elements:
-        for(i in 1:nx) {
-            if(i >= j) break
-            ## Compute upper triangular elements:
-            xaa <- spos(x,list(xadd,xadd),c(i,j))
-            xas <- spos(x,list(xadd,xsub),c(i,j))
-            xsa <- spos(x,list(xsub,xadd),c(i,j))
-            xss <- spos(x,list(xsub,xsub),c(i,j))
-            H[i, j] <- H[j, i] <-
-                fun(xaa, ...)/(udelta[i]+udelta[j])^2 -
+        if (calc.hess) {
+            for(i in 1:nx) {
+                if(i >= j) break
+                ## Compute upper triangular elements:
+                xaa <- spos(x,list(xadd,xadd),c(i,j))
+                xas <- spos(x,list(xadd,xsub),c(i,j))
+                xsa <- spos(x,list(xsub,xadd),c(i,j))
+                xss <- spos(x,list(xsub,xsub),c(i,j))
+                H[i, j] <- H[j, i] <-
+                    fun(xaa, ...)/(udelta[i]+udelta[j])^2 -
                     fun(xas, ...)/(udelta[i]+ldelta[j])^2 -
                         fun(xsa, ...)/(ldelta[i]+udelta[j])^2 +
                             fun(xss, ...)/(ldelta[i]+ldelta[j])^2
+            }
         }
     }
     list(gradient = g, Hessian = H)

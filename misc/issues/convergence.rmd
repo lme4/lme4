@@ -78,16 +78,17 @@ print(gg1)
 * the straight lines are the best-fit slope-1 lines (i.e. gradient strictly proportional to sample size); the dashed lines are the usual loess fits
 * the horizontal dashed line shows our current checking cutoff of 0.001
 The `nloptr_bobyqa` results are using a slightly different implementation of the same algorithm used in the built-in (`minqa`-packaged) BOBYQA, but using looser tolerance settings, so they perform worse (in terms of gradients) at small sample sizes, but compare reasonably well to other methods 
-* the scaled-gradient points are largely invisible because in this case, the scaled gradient is almost smaller than the absolute gradient, so the maxmingrad point (which is drawn later) covers the scaled-gradient point except in a few cases.
+* the scaled-gradient points are largely invisible because in this case, the scaled gradient is almost always smaller than the absolute gradient, so the `maxmingrad` point (which is drawn later) covers the scaled-gradient point except in a few cases.
 * As explored in more detail below, the highest points for the `nlminb` optimizer (i.e. the cases where the absolute gradient goes up to about 1) probably do represent problematic fits.
-
+* I use log10 of the gradients throughout below, even where I forget to label them as such (perhaps obvious because they're negative ...)
 
 Proportion of bad fits under current rules:
 ```{r badplot,echo=FALSE,warning=FALSE}
 gg_bad <-
     ggplot(badvals,aes(x=log10size,y=propbad,colour=optimizer))+geom_point()+
     scale_colour_brewer(palette="Dark2")+
-        geom_smooth(method="gam",family="binomial",aes(weight=n),se=FALSE)+
+        geom_smooth(method="gam",aes(weight=n),se=FALSE,
+                    method.args=list(family=binomial))+
             labs(x="log10(# obs)",
                  y="proportion flagged as bad\n(grad>0.001 or neg. Hessian eigenvalue)")
 print(gg_bad)
@@ -166,7 +167,9 @@ bad_ests <- m %>% filter(grepl("theta",as.character(var))) %>%
 gg_bad2 <-
     ggplot(bad_ests,aes(x=log10size,y=propbad,colour=optimizer))+geom_point()+
     scale_colour_brewer(palette="Dark2")+
-        geom_smooth(method="gam",family="binomial",aes(weight=n),se=FALSE)+
+        geom_smooth(method="gam",
+                    method.args=list(family=binomial),
+                    aes(weight=n),se=FALSE)+
             labs(x="log10(# obs)",
                  y="proportion bad\n(differ from agreement by >1%)")
 gg_bad2
@@ -186,12 +189,12 @@ red2 <- m %>% filter(var=="maxmingrad") %>%
         rename(grad=val)
 bad_ests3 <- full_join(bad_ests2,red2) %>% ungroup() %>%
     mutate(sfac=factor(floor(log10size)))
-ggplot(bad_ests3,aes(x=grad,y=bad,colour=optimizer))+
+(gg_bad3 <- ggplot(bad_ests3,aes(x=grad,y=bad,colour=optimizer))+
     geom_point(aes(shape=sfac))+
         scale_y_log10()+
             scale_colour_brewer(palette="Dark2")+
                 labs(x="max(abs(grad))",y="mean difference from consensus")+
-                    scale_shape(name="floor(log10(obs))")
+                    scale_shape(name="floor(log10(obs))"))
 ```
 
 Unfortunately there's no threshold we can draw with respect to the 
@@ -217,6 +220,20 @@ $\log_{10}(\max(|\textrm{grad}|))+\log_{10}(\textrm{nobs})<2.5$,
 we would get most (but not all) of the cases with error >1%, but
 we would still catch a variety of cases (with large data sets)
 with error <0.1% ...
+
+If we turn off Hessian computations for large data we don't have
+access to the scaled gradient; then we could set the gradient criterion
+to 0.5 (for this *particular* example; presumably it would be a bit different
+for other cases ...)
+
+```{r}
+red3 <- m %>% filter(var=="maxgrad") %>%
+    select(-c(data,var)) %>%
+        rename(grad=val)
+bad_ests4 <- full_join(bad_ests2,red3) %>% ungroup() %>%
+    mutate(sfac=factor(floor(log10size)))
+gg_bad3 %+% bad_ests4+ geom_vline(xintercept=log(0.5),lty=2)
+```
 
 ### To do
 

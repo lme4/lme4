@@ -19,29 +19,38 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
 		    messages = gettextf("Gradient contains NAs")))
     ntheta <- length(lbound)
     res <- list()
+    noHess <- all(is.na(derivs$Hessian))
     ## gradients:
     ## check absolute gradient (default)
     ccl <- ctrl[[cstr <- "check.conv.grad"]] ; checkCtrlLevels(cstr, cc <- ccl[["action"]])
-    wstr <- NULL
     if (doCheck(cc)) {
-        scgrad <- tryCatch(with(derivs,solve(chol(Hessian),gradient)),
-                           error=function(e)e)
-        if (inherits(scgrad, "error")) {
-            wstr <- "unable to evaluate scaled gradient"
-            res$code <- -1L
-        } else {
+        wstr <- NULL
+        if (!noHess) {
+            scgrad <- tryCatch(with(derivs,solve(chol(Hessian),gradient)),
+                               error=function(e)e)
+            badScGrad <- inherits(scgrad,"error")
+            if (badScGrad) {
+                wstr <- "unable to evaluate scaled gradient"
+                res$code <- -1L
+            }                            
+        }
+        if (!noHess && !badScGrad) {
             ## find parallel *minimum* of scaled and absolute gradient
             ## the logic here is that we can sometimes get large
             ##  *scaled* gradients even when the *absolute* gradient
             ##  is small because the curvature is very flat as well ...
             mingrad <- pmin(abs(scgrad),abs(derivs$gradient))
             maxmingrad <- max(mingrad)
-            if (maxmingrad > ccl$tol) {
-                w <- which.max(maxmingrad)
-                res$code <- -1L
-                wstr <- gettextf("Model failed to converge with max|grad| = %g (tol = %g, component %d)",
-                                 maxmingrad, ccl$tol,w)
-            }
+            gradtype <- if (maxmingrad==max(abs(scgrad))) "scaled" else "absolute"
+        } else {
+            maxmingrad <- max(abs(derivs$gradient))
+            gradtype <- "absolute"
+        }
+        if (maxmingrad > ccl$tol) {
+            w <- which.max(maxmingrad)
+            res$code <- -1L
+            wstr <- gettextf("Model failed to converge with max (%s) |grad| = %g (tol = %g, component %d)",
+                             gradtype,maxmingrad, ccl$tol,w)
         }
         if (!is.null(wstr)) {
             res$messages <- wstr
@@ -83,7 +92,7 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
     }
 
     ccl <- ctrl[[cstr <- "check.conv.hess"]] ; checkCtrlLevels(cstr, cc <- ccl[["action"]])
-    if (doCheck(cc)) {
+    if (doCheck(cc) && !noHess) {
         if (length(coefs) > ntheta) {
             ## GLMM, check for issues with beta parameters
             H.beta <- derivs$Hessian[-seq(ntheta),-seq(ntheta)]
