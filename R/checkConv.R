@@ -11,8 +11,7 @@
 ##' @param lbound vector of lower bounds \emph{for random-effects parameters only}
 ##'   (length is taken to determine number of RE parameters)
 ##' @param debug useful if some checks are on "ignore", but would "trigger"
-checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
-{
+checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE) {
     if (is.null(derivs)) return(NULL)  ## bail out
     if (anyNA(derivs$gradient))
 	return(list(code = -5L,

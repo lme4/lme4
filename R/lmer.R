@@ -2621,8 +2621,9 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
             gD <- numDeriv::genD(fn,opt$par,method.args=list(side=c(+1,+1)))
             mktri <- function(x) {
                 m <- matrix(0,n,n)
-                m[lower.tri(m,diag=TRUE)] <- gD$D[-(1:n)]
-                forceSymmetric(m,uplo="L")
+                m[upper.tri(m,diag=TRUE)] <- gD$D[-(1:n)]
+                ## more convenient as plain-old-base matrix
+                as.matrix(forceSymmetric(m,uplo="U"))
             }
             derivs <- list(gradient=gD$D[1:n],
                            Hessian=mktri(gD$D[-(1:n)]))

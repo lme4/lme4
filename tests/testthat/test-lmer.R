@@ -262,11 +262,7 @@ test_that("gradcheck_lmer", {
     expect_equal(fm0@optinfo$derivs$Hessian,
                  structure(14.0837364196777, .Dim = c(1L, 1L)))
     expect_equal(fm1@optinfo$derivs$Hessian,
-                 new("dsyMatrix"
-                   , x = 14.082397020532
-                   , Dim = c(1L, 1L)
-                   , Dimnames = list(NULL, NULL)
-                   , uplo = "L"
-                   , factors = list()))
+                 structure(14.082397020532, .Dim = c(1L, 1L),
+                           .Dimnames = list(NULL, NULL)))
 })
 
