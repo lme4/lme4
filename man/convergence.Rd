@@ -89,12 +89,13 @@ fm1@optinfo$derivs
 
 ## 4. restart the fit from the original value (or
 ## a slightly perturbed value):
+pars <- getME(fm1,"theta")
 fm1.restart <- update(fm1, start=pars)
 
 ## 5. try all available optimizers
 
-  source(system.file("utils", "allFit.R", package="lme4"))
-  fm1.all <- allFit(fm1)
+source(system.file("utils", "allFit.R", package="lme4"))
+fm1.all <- allFit(fm1)
   ss <- summary(fm1.all)
   ss$ fixef               ## extract fixed effects
   ss$ llik                ## log-likelihoods
