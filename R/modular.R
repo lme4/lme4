@@ -159,7 +159,7 @@ checkScaleX <- function(X,  kind="warning", tol=1e3) {
 checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
 {
     stopifnot(is.list(ctrl), is.numeric(n))
-    nlevelVec <- unlist(lapply(flist, function(x) nlevels(droplevels(x)) ))
+    nlevelVec <- vapply(flist, function(x) nlevels(factor(x, exclude=NA)), 1)
     ## Part 1 ----------------
     cstr <- "check.nlev.gtr.1"
     checkCtrlLevels(cstr, cc <- ctrl[[cstr]])
