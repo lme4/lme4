@@ -1,12 +1,12 @@
 \name{plot.merMod}
+\title{Diagnostic Plots for 'merMod' Fits}
 \alias{plot.merMod}
 \alias{qqmath.merMod}
-\title{diagnostic plots for merMod fits}
 \usage{
-  \method{plot}{merMod} (x,
-    form = resid(., type = "pearson") ~ fitted(.), abline,
-    id = NULL, idLabels = NULL, grid, \dots)
-\method{qqmath}{merMod}( x, id = NULL, idLabels = NULL, \dots)
+\method{plot}{merMod}(x,
+     form = resid(., type = "pearson") ~ fitted(.), abline,
+     id = NULL, idLabels = NULL, grid, \dots)
+\method{qqmath}{merMod}(x, id = NULL, idLabels = NULL, \dots)
 }
 \arguments{
   \item{x}{a fitted [ng]lmer model}
@@ -84,7 +84,7 @@
   (the lattice function \code{bwplot} is used).
 
   \code{qqmath} produces a Q-Q plot of the residuals
-  (see \code{link{qqmath.ranef.mer}} for Q-Q plots of the
+  (see \code{\link{qqmath.ranef.mer}} for Q-Q plots of the
   conditional mode values).
 }
 \examples{
