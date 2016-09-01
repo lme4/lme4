@@ -20,6 +20,15 @@ r_github_packages:
 env:
  - LME4_TEST_LEVEL=2
 
+
+script :
+
+## https://github.com/travis-ci/travis-ci/issues/3849
+## https://github.com/travis-ci/travis-ci/issues/5469
+## https://github.com/dbailleul/RClone/blob/9d63bcf5be8113b789f562c39dc7ca2ca7600cd5/.travis.yml
+ - travis_wait 30 R CMD build --no-build-vignettes --no-manual
+ - travis_wait 30 R CMD check lme4_1.1-13.tar.gz --no-build-vignettes --no-manual
+    
 ## need travis_wait because checks take 10+ minutes ...
 after_success:
   - travis_wait Rscript -e 'library(covr); codecov()'

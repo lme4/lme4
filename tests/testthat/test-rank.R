@@ -92,5 +92,14 @@ test_that("nlmerRank", {
 
 })
 
-
+test_that("ranksim", {
+    set.seed(101)
+    x <- data.frame(id = factor(sample(10, 100, replace = TRUE)))
+    x$y <- rnorm(nrow(x))
+    x$x1 <- 1
+    x$x2 <- ifelse(x$y<0, rnorm(nrow(x), mean=1), rnorm(nrow(x), mean=-1))
+    m <- suppressMessages(lmer(y ~ x1 + x2 + (1 | id), data=x))
+    expect_equal(simulate(m, nsim = 1, use.u = FALSE, newdata=x, seed=101),
+                 simulate(m, nsim = 1, use.u = FALSE, seed=101))
+})                 
 

@@ -66,7 +66,9 @@ mkBlist <- function(x,frloc, drop.unused.levels=TRUE) {
     if (all(is.na(ff)))
         stop("Invalid grouping factor specification, ",
              deparse(x[[3]]),call.=FALSE)
-    if (drop.unused.levels) ff <- droplevels(ff)
+    ## NB: *also* silently drops <NA> levels - and mkReTrms() and hence
+    ##     predict.merMod() have relied on that property  :
+    if (drop.unused.levels) ff <- factor(ff, exclude=NA)
     nl <- length(levels(ff))
     ## this section implements eq. 6 of the JSS lmer paper
     ## (but not by explicit Khatri-Rao products)
