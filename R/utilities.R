@@ -880,10 +880,13 @@ missDataFun <- function(d) {
         ex <- eval(substitute(substitute(x, env=sys.frames()[[n]]),
                               env = list(x = ex, n=i)))
         if (grepl("^\\.\\.[0-9]+$",safeDeparse(ex))) {
+            ## testing for the dreaded "..1", "..2" pattern; this means
+            ## we are stuck in an anonymous function somewhere ...
+            ## won't be able to see whether data exist or not,
+            ## but we should not flag them as missing -- definitely
+            ## causes false positives
             ## might be better to check against quote(..1), quote(..2),
             ## ... but ugh ...
-            ## stuck in an anonymous function somewhere ...
-            ## won't be able to see whether data are nonexistent
             foundAnon <- TRUE
             break
         }

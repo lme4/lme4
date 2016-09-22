@@ -176,3 +176,24 @@ test_that("lmerForm", {
      ~(varname_aa + varname_ba + varname_ca + varname_da + varname_ea +
        varname_fa + varname_ga + varname_ha + varname_ia | f))
 })
+
+test_that("lapply etc.", {
+    ## copied from dplyr
+    failwith <- function (default = NULL, f, quiet = FALSE) {
+        function(...) {
+            out <- default
+            try(out <- f(...), silent = quiet)
+            out
+        }
+    }
+    lmer_fw    <- failwith(NULL,function(...) lmer(...)   ,quiet=TRUE)
+    expect_is(lmer_fw(Yield ~ 1|Batch, Dyestuff, REML = FALSE),
+              "merMod")
+    ## GH 369
+    listOfFormulas <- list(
+        cbind(incidence, size - incidence) ~ 1 +  (1 | herd),
+        cbind(incidence, size - incidence) ~ period +  (1 | herd))
+    expect_is(lapply(listOfFormulas,glmer,family=binomial,data=cbpp),"list")
+})
+
+          
