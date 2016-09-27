@@ -10,6 +10,13 @@ dd$y <- rnbinom(nrow(dd), mu = mu, size = 0.5)
 
 ## mimic glmer.nb protocol
 
+test_that("ok with Poisson masking", {
+    poisson <- NA
+    ## use shortened version of data for speed ...
+    m.base <- glmer.nb(y ~ f1 + (1|g), data=dd[1:200,])
+    expect_is(m.base,"merMod")
+})
+
 context("testing glmer refit")
 
 test_that("glmer refit", {

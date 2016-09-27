@@ -94,7 +94,7 @@ glmer.nb <- function(..., interval = log(th) + c(-3,3),
 
     mc <- match.call()
     mc[[1]] <- quote(glmer)
-    mc$family <- quote(poisson)
+    mc$family <- quote(stats::poisson)
     mc$verbose <- (verbose>=2)
     g0 <- eval(mc, parent.frame(1L))
 
