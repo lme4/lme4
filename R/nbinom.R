@@ -73,7 +73,8 @@ est_theta <- function(object, limit = 20,
                       eps = .Machine$double.eps^0.25, trace = 0)
 {
   Y <- model.response(model.frame(object))
-  mu <- fitted(object)
+  ## may have NA values if na.exclude was used ...
+  mu <- na.omit(fitted(object))
   theta.ml(Y, mu, weights = object@resp$weights,
            limit = limit, eps = eps, trace = trace)
 }
