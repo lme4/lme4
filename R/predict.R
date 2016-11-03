@@ -708,6 +708,7 @@ binomial_simfun <- function(object, nsim, ftd=fitted(object),
         } else if(is.matrix(y) && ncol(y) == 2) {
             yy <- vector("list", nsim)
             for (i in seq_len(nsim)) {
+		# to-do get size from response matrix
                 Y <- rbinom(n, size = wts, prob = ftd)
                 YY <- cbind(Y, wts - Y)
                 colnames(YY) <- colnames(y)
