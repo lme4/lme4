@@ -439,14 +439,14 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                          cond.sim=TRUE,
                          ...) {
 
-    binWtsHack <- FALSE
+    nullWts <- FALSE
 
     if (is.null(weights)) {
         if (is.null(newdata))
             weights <- weights(object)
         else {
 
-            binWtsHack <- TRUE # this flags that 'weights' wasn't supplied by the user
+            nullWts <- TRUE # this flags that 'weights' wasn't supplied by the user
             weights <- rep(1,nrow(newdata))
         }
     }
@@ -591,7 +591,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 
             # unless the user passed in new weights, take them from the response matrix
             # e.g. cbind(incidence, size-incidence) ~ ...
-            if(binWtsHack) weights <- rowSums(r)
+            if(nullWts) weights <- rowSums(r)
         }
 
         if (is.null(sfun <- simfunList[[family$family]]) &&
