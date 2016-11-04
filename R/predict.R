@@ -342,7 +342,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
             ## orig. offset: will be zero if there are no matches ...
             offset <- model.offset(model.frame(object))
             if (is.null(offset)) offset <- 0
-            
+
         } else {  ## new data specified
             ## evaluate new fixed effect
             RHS <- formula(substitute(~R,
@@ -362,7 +362,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
                               contrasts.arg=attr(X,"contrasts"))
             ## hack to remove unused interaction levels?
             ## X <- X[,colnames(X0)]
-            
+
             offset <- 0 # rep(0, nrow(X))
             tt <- terms(object)
             if (!is.null(off.num <- attr(tt, "offset"))) {
@@ -439,10 +439,16 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                          cond.sim=TRUE,
                          ...) {
 
+    binWtsHack <- FALSE
+
     if (is.null(weights)) {
         if (is.null(newdata))
             weights <- weights(object)
-        else weights <- rep(1,nrow(newdata))
+        else {
+
+            binWtsHack <- TRUE
+            weights <- rep(1,nrow(newdata))
+        }
     }
     if (missing(object)) {
         if (is.null(formula) || is.null(newdata) || is.null(newparams)) {
@@ -569,7 +575,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
           ## result will be matrix  n x nsim :
           etapred + sigma * (sim.reff +
                                ## residual contribution:
-                               if (cond.sim) 
+                               if (cond.sim)
                                    matrix(rnorm(n * nsim), ncol = nsim)
                                else 0)
     } else if (isGLMM(object)) {
@@ -580,6 +586,12 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         musim <- family$linkinv(etasim) #-> family$family == "negative.binomial" if(NB)
         ## ntot <- length(musim) ## FIXME: or could be dims["n"]?
         ##
+
+        if (family$family=="binomial" && is.matrix(r <- model.response(object@frame))) {
+
+            if(binWtsHack) weights <- rowSums(r)
+        }
+
         if (is.null(sfun <- simfunList[[family$family]]) &&
             is.null(family$simulate))
             stop("simulation not implemented for family",
@@ -685,7 +697,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 ##
 gaussian_simfun <- function(object, nsim, ftd=fitted(object),
                             wts=weights(object)) {
-    
+
     if (any(wts != 1)) warning("ignoring prior weights")
     rnorm(nsim*length(ftd), ftd, sd=sigma(object))
 }

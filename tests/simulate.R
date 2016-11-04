@@ -112,6 +112,12 @@ gm1_s4 <- simulate(form,newdata=model.frame(gm1),
                seed=101)[[1]]
 stopifnot(all.equal(gm1_s2,gm1_s4))
 
+gm1_s5 <- simulate(formula(gm1),newdata=cbpp,
+               newparams=list(theta=getME(gm1,"theta"),
+               beta=fixef(gm1)),
+               family=binomial,
+               seed=101)[[1]]
+stopifnot(all.equal(gm1_s1,gm1_s5))
 
 tt <- getME(gm1,"theta")
 bb <- fixef(gm1)
