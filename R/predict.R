@@ -446,7 +446,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
             weights <- weights(object)
         else {
 
-            binWtsHack <- TRUE
+            binWtsHack <- TRUE # this flags that 'weights' wasn't supplied by the user
             weights <- rep(1,nrow(newdata))
         }
     }
@@ -589,6 +589,8 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 
         if (family$family=="binomial" && is.matrix(r <- model.response(object@frame))) {
 
+            # unless the user passed in new weights, take them from the response matrix
+            # e.g. cbind(incidence, size-incidence) ~ ...
             if(binWtsHack) weights <- rowSums(r)
         }
 
