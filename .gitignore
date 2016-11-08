@@ -5,6 +5,7 @@ src/*.so
 src/*.dll
 vignettes/cache/*
 misc/cache/*
+misc/issues/*
 .Rproj.user
 lme4.Rproj
 .Rhistory
