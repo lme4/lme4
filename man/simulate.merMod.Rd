@@ -78,7 +78,7 @@
       however, if \code{formula}, \code{newdata}, and \code{newparams} are
       specified, \code{simulate} generates the appropriate model
       structure to simulate from.}
-    
+
     \item{The \code{re.form} argument allows the user to specify how the
       random effects are incorporated in the simulation.  All of the
       random effects terms included in \code{re.form} will be
@@ -103,6 +103,15 @@
       is calculated as shape/mean(i)).  For negative binomial fits,
       the overdispersion parameter is specified via the family,
       e.g. \code{simulate(..., family=negative.binomial(theta=1.5))}.
+    }
+    \item{For binomial models, \code{simulate.formula} looks for the
+      binomial size first in the \code{weights} argument (if it's supplied),
+      second from the left-hand side of the formula (if the formula has been
+      specified in success/failure form), and defaults to 1 if neither of
+      those have been supplied.
+      Simulated responses will be in matrix form if the supplied formula has
+      a matrix-valued left-hand side, otherwise they will be given as
+      proportions.
     }
   }
 }

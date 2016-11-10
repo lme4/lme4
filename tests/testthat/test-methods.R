@@ -207,8 +207,8 @@ test_that("bootMer", {
     ## example from
     df2 <- data.frame(
     prop1 = c(0.46, 0.471, 0.458, 0.764, 0.742, 0.746,
-              0.569, 0.45,    0.491,    0.467, 0.464, 
-              0.556, 0.584, 0.478, 0.456, 0.46, 0.493, 0.704, 0.693, 0.651), 
+              0.569, 0.45,    0.491,    0.467, 0.464,
+              0.556, 0.584, 0.478, 0.456, 0.46, 0.493, 0.704, 0.693, 0.651),
     prop2 = c(0.458, 0.438, 0.453, 0.731, 0.738, 0.722, 0.613,
               0.498, 0.452, 0.451, 0.447,
               0.48, 0.576, 0.484, 0.473, 0.467, 0.467, 0.722, 0.707, 0.709),
@@ -216,17 +216,17 @@ test_that("bootMer", {
 
     ## from SO 37466771: bootstrapping etc. on GLMMs with scale
     ## parameters
-    gaussmodel <- glmer(prop2 ~ prop1 + (1|site), 
+    gaussmodel <- glmer(prop2 ~ prop1 + (1|site),
                    data=df2, family=gaussian(link="logit"))
     set.seed(101)
     bci <- suppressWarnings(confint(gaussmodel,method="boot",nsim=10))
     expect_equal(bci,
                  structure(c(16.0861072699207, 0.0367496156026639,
-                             -4.21025090053564, 
+                             -4.21025090053564,
                              3.1483596407467, 31.3318861915707,
-                             0.0564761126030204, -1.00593089841924, 
+                             0.0564761126030204, -1.00593089841924,
                              4.7064432268919), .Dim = c(4L, 2L),
-                           .Dimnames = list(c(".sig01", 
+                           .Dimnames = list(c(".sig01",
                                               ".sigma", "(Intercept)",
                                               "prop1"), c("2.5 %", "97.5 %"))),
                  tolerance=1e-5)
@@ -287,7 +287,7 @@ test_that("confint", {
     set.seed(102)
     dat <- simfun(10,5,1,.3,.3,.3,(1/18),0,(1/18))
     fit <- lmer(Y~X+Z+X:Z+(X||group),data=dat)
-    
+
     if (Sys.info()["sysname"] != "SunOS" &&
         .Platform$OS.type != "windows") {
         ## doesn't produce warnings on Solaris, or win-builder ...
@@ -325,7 +325,7 @@ test_that("refit", {
     expect_equal(s1 <- simulate(fm,newdata = Orthodont,seed = 101),
                  s2 <- simulate(fm,seed = 101))
 
-    
+
     ## works *without* offset ...
     m5 <- glmer(round(Reaction) ~ Days + (1|Subject),
                 data = sleepstudy, family=poisson,
@@ -358,13 +358,13 @@ test_that("predict", {
     expect_is(pm, "numeric")
     expect_equal(quantile(pm, names = FALSE),
                  c(211.006525, 260.948978, 296.87331, 328.638297, 458.155583))
+    op <- options(warn = 2) # no warnings!
     if (require("MEMSS",quietly=TRUE)) {
         ## test spurious warning with factor as response variable
         data("Orthodont", package = "MEMSS") # (differently "coded" from the 'default' "nlme" one)
         silly <- glmer(Sex ~ distance + (1|Subject),
                        data = Orthodont, family = binomial)
         sillypred <- data.frame(distance = c(20, 25))
-        op <- options(warn = 2) # no warnings!
         ps <- predict(silly, sillypred, re.form=NA, type = "response")
         expect_is(ps, "numeric")
         expect_equal(unname(ps), c(0.999989632, 0.999997201), tolerance=1e-6)
@@ -505,7 +505,7 @@ test_that("simulate", {
              newparams=getME(g1,c("theta","beta")),
              newdata=dd)[,1]
     expect_equal(s1,s2)
-    
+
     ## Simulate with newdata with *new* RE levels:
     d <- sleepstudy[-1] # droping the response ("Reaction")
     ## d$Subject <- factor(rep(1:18, each=10))
@@ -628,6 +628,6 @@ test_that("profile", {
               tolerance=1e-3)
     ## check naming convention properly adjusted
     expect_equal(as.character(unique(p4$.par)),
-                 c("var_(Intercept)|Subject", "cov_Days.(Intercept)|Subject", 
+                 c("var_(Intercept)|Subject", "cov_Days.(Intercept)|Subject",
                    "var_Days|Subject", "sigma"))
 })
