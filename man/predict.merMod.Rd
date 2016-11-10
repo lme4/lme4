@@ -13,14 +13,15 @@
 }
 \arguments{
   \item{object}{a fitted model object}
-  \item{newdata}{data frame of for which to evaluate predictions.}
+  \item{newdata}{data frame for which to evaluate
+    predictions.}
   \item{newparams}{new parameters to use in evaluating predictions,
     specified as in the \code{start} parameter for \code{\link{lmer}}
     or \code{\link{glmer}} -- a list with components \code{theta} and/or
     (for GLMMs) \code{beta}.}
   \item{re.form}{formula for random effects to condition on.  If \code{NULL},
     include all random effects; if \code{NA} or \code{~0},
-    include no random effects}
+    include no random effects.}
   \item{ReForm, REForm, REform}{allowed for backward compatibility: \code{re.form} is
     now the preferred argument name.}
   \item{terms}{a \code{\link{terms}} object - unused at present.}
@@ -39,12 +40,20 @@
 \value{
   a numeric vector of predicted values
 }
-\note{
-  There is no option for computing standard errors of
-  predictions because it is difficult to define an
-  efficient method that incorporates uncertainty in the
-  variance parameters; we recommend \code{\link{bootMer}}
-  for this task.
+\details{
+  \itemize{
+    \item If any random effects are included in \code{re.form}
+    (see below), \code{newdata} \emph{must} contain columns
+    corresponding to all of the grouping variables and
+    random effects used in the original model, even if not all
+    are used in prediction; however, they can be safely set to \code{NA}
+    in this case.
+    \item There is no option for computing standard errors of
+    predictions because it is difficult to define an
+    efficient method that incorporates uncertainty in the
+    variance parameters; we recommend \code{\link{bootMer}}
+    for this task.
+  }
 }
 \examples{
 (gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 |herd), cbpp, binomial))
