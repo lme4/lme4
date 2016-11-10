@@ -425,6 +425,27 @@ test_that("predict", {
     ## complex-basis functions in FIXED effect are fine
     fm6 <- lmer(Reaction~poly(Days,2)+(1|Subject),sleepstudy)
     expect_equal(predict(fm6,sleepstudy[1,]),fitted(fm6)[1])
+
+    cakemult <- lmer(angle ~ temp + (1|replicate) + (1|recipe), cake)
+    ## Gives "Error ...  object is not a matrix" because replicate is
+    ##  a base-R function ...
+
+    ## trying to figure out what goes into predvars ...
+    ## mm <- model.frame(data = cake, drop.unused.levels = TRUE,
+    ##                   formula = angle ~ temp + (1 + replicate) + (1 + recipe))
+    ## attr(terms(mm),"predvars")
+    ## mm <- model.frame(data = cake, formula = angle ~ 1)
+    ## attr(terms(mm),"predvars")
+    
+    expect_warning(try(predict(cakemult,newdata=cake[c("temp","recipe")],
+                           re.form=NULL),silent=TRUE),
+                   "missing variables in newdata: replicate")
+    expect_equal(head(predict(cakemult,newdata=cake[c("temp","recipe")]),
+            re.form=~(1|recipe)),
+            structure(c(28.8285074571598, 30.4088249174774, 31.989142377795, 
+                        33.5694598381126, 35.1497772984302, 36.7300947587478),
+                      .Names = c("1", "2", "3", "4", "5", "6")),
+            tolerance=1e-5)
 })
 
 context("simulate")

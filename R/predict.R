@@ -1,3 +1,21 @@
+## turn quote(list(x,y,z)) into list(quote(x),quote(y),quote(z))
+unqlist <- function(x) {
+    z <- vector(length(x)-1,mode="list")
+    for (i in 2:length(x)) {
+        z[[i-1]] <- x[[i]]
+    }
+    return(z)
+}
+
+## turn list(quote(x),quote(y),quote(z)) into quote(list(x,y,z))
+reqlist <- function(x) {
+    z <- quote(list())
+    for (i in seq_along(x)) {
+        z[[i+1]] <- x[[i]]
+    }
+    return(z)
+}
+
 ##' test for no-random-effect specification: TRUE if NA or ~0, other
 ##' possibilities are NULL or a non-trivial formula
 noReForm <- function(re.form) {
@@ -163,9 +181,43 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
             if (!is.null(fixed.na.action <- attr(mfnew,"na.action"))) {
                 newdata.NA <- newdata.NA[-fixed.na.action,]
             }
-            tt <- delete.response(terms(object,random.only=TRUE))
+            browser()
+            tt0 <- delete.response(terms(object,random.only=TRUE))
+            tt <- terms(subbars(re.form))
             ## need to let NAs in RE components go through -- they're handled downstream
-            rfd <- model.frame(tt,newdata.NA,na.action=na.pass)
+            ## do our own check for bogus variables
+            ##  (variable name=function case)
+            if (length(missvars <- setdiff(all.vars(tt),
+                                           names(newdata.NA)))>0) {
+                warning("missing variables in newdata: ",missvars,call.=FALSE)
+            }
+
+            ## hack to exclude missing variables from predvars
+            ## need to remove individual terms from a language object
+            ## matching by deparse/grep is *not* optimal but I don't see
+            ##   a better way to do it ...
+            ## predvars <- attr(tt0,"predvars")
+            ## misspredvars <- setdiff(all.vars(predvars),names(newdata.NA))
+            ## if (length(misspredvars)>0) {
+            ##     browser()
+            ##     pp <- unqlist(predvars)
+            ##     ss <- lapply(pp,deparse)
+            ##     for (mv in misspredvars) {
+            ##         w <- grep(paste0("\\b",mv,"\\b"),ss)
+            ##         pp[[w]] <- NULL
+            ##     }
+            ##     predvars <- reqlist(pp)
+            ## }
+
+            missoldvars <- setdiff(all.vars(tt0),names(newdata.NA))
+            if (length(missoldvars)>0) {
+                for (mv in missoldvars) newdata.NA[[mv]] <- NA
+            }
+
+            ## https://stat.ethz.ch/pipermail/r-devel/2016-November/073357.html
+            rfd <- model.frame(tt0,newdata.NA,na.action=na.pass)
+            rfd <- rfd[names(rfd) %in% attr(tt0,"term.labels")]
+
             if (!is.null(fixed.na.action))
                 attr(rfd,"na.action") <- fixed.na.action
         }
@@ -346,7 +398,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
         } else {  ## new data specified
             ## evaluate new fixed effect
             RHS <- formula(substitute(~R,
-                                      list(R=RHSForm(formula(object,fixed.only=TRUE)))))
+                      list(R=RHSForm(formula(object,fixed.only=TRUE)))))
             Terms <- terms(object,fixed.only=TRUE)
             mf <- model.frame(object, fixed.only=TRUE)
             isFac <- vapply(mf, is.factor, FUN.VALUE=TRUE)
