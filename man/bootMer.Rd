@@ -169,9 +169,9 @@ head(as.data.frame(boo01))
 
 ## Copy of unexported stats:::format.perc helper function
 format.perc <- function(probs, digits) {
-       paste(format(100 * probs, trim = TRUE, 
-                    scientific = FALSE, digits = digits), 
-             "%")
+    paste(format(100 * probs, trim = TRUE,
+                 scientific = FALSE, digits = digits),
+          "\%")
 }
 
 ## Extract all CIs (somewhat awkward)
@@ -193,10 +193,9 @@ bCI.tab(boo01)
 plot(boo01,index=3)
 
 ## Check stored values from a longer (1000-replicate) run:
-load(system.file("testdata","boo01L.RData",package="lme4"))
-plot(boo01L,index=3)
+(load(system.file("testdata","boo01L.RData", package="lme4")))# "boo01L"
+plot(boo01L, index=3)
 mean(boo01L$t[,"sig01"]==0) ## note point mass at zero!
 }
 \keyword{htest}
 \keyword{models}
-
