@@ -3150,5 +3150,4 @@ lines(xNew, yHat)
 lines(x[order(x)], (Bsimulation %*% beta)[order(x)],lty = 2)
 legend("topright", bty = "n", c("fitted", "generating"), lty = 1:2,col = 1)
 @
-
 \end{document}
