@@ -39,10 +39,16 @@ lmer <- function(formula, data=NULL, REML = TRUE,
 			list(start=start, verbose=verbose, control=control)))
     if (devFunOnly) return(devfun)
     ## optimize deviance function over covariance parameters
-    opt <- if (control$optimizer=="none")
-        list(par=NA,fval=NA,conv=1000,message="no optimization")
-    else {
-        optimizeLmer(devfun, optimizer = control$optimizer,
+    if (identical(control$optimizer,"none")) 
+        stop("deprecated use of optimizer=='none'; use NULL instead")
+    opt <- if (length(control$optimizer)==0) {
+               browser()
+               s <- getStart(start,environment(devfun)$lower,
+                             environment(devfun)$pp)
+               list(par=s,fval=devfun(s),
+                    conv=1000,message="no optimization")
+           }  else {
+               optimizeLmer(devfun, optimizer = control$optimizer,
                      restart_edge = control$restart_edge,
                      boundary.tol = control$boundary.tol,
                      control = control$optCtrl,

@@ -226,6 +226,11 @@ test_that("lmer", {
                  c("obs.(Intercept)", "herd.(Intercept)"))
     ## stable regardless of order in formula
     expect_equal(getME(fm0,"Ztlist"),getME(fm0B,"Ztlist"))
+    ## no optimization
+    fm_noopt <- lmer(z~1|f,d,
+                     control=lmerControl(optimizer=NULL))
+    expect_equal(unname(unlist(getME(fm_noopt,c("theta","beta")))),
+                 c(0.244179074357121, -0.0336616441209862))
 }) ## test_that(..)
 
 

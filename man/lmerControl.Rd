@@ -108,6 +108,10 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     optimization, while the second will be used for the final (random
     effects plus fixed effect parameters) phase.  See
     \code{\link{modular}} for more information on these two phases.
+
+    If \code{optimizer} is \code{NULL} (at present for \code{lmer} only),
+    all of the model structures will be set up, but no optimization will
+    be done (e.g. parameters will all be returned as \code{NA}).
   }
   \item{calc.derivs}{logical - compute gradient and Hessian of nonlinear
     optimization solution?}
