@@ -14,7 +14,7 @@ glmer(formula, data = NULL, family = gaussian, control = glmerControl(),
 }
 \arguments{
   \item{formula}{a two-sided linear formula object describing both the
-    fixed-effects and fixed-effects part of the model, with the response
+    fixed-effects and random-effects part of the model, with the response
     on the left of a \code{~} operator and the terms, separated by
     \code{+} operators, on the right.  Random-effects terms are
     distinguished by vertical bars (\code{"|"}) separating expressions
