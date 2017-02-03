@@ -42,7 +42,6 @@ lmer <- function(formula, data=NULL, REML = TRUE,
     if (identical(control$optimizer,"none")) 
         stop("deprecated use of optimizer=='none'; use NULL instead")
     opt <- if (length(control$optimizer)==0) {
-               browser()
                s <- getStart(start,environment(devfun)$lower,
                              environment(devfun)$pp)
                list(par=s,fval=devfun(s),
