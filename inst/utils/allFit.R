@@ -139,8 +139,9 @@ summary.allfit <- function(object, ...) {
         as.data.frame(VarCorr(x))[, "sdcor"]))
     theta <- do.call(rbind, lapply(objOK,
                                    function(x) getME(x, "theta")))
-    colnames(sdcor) <- unname(c(lme4:::tnames(objOK[[1]]),
-                                if(isLMM(object[[1]])) "sigma"))
+    cnm <- lme4:::tnames(objOK[[1]])
+    if (sigma(object[[1]])!=1) cnm <- c(cnm,"sigma")
+    colnames(sdcor) <- unname(cnm)
     sdcor <- as.data.frame(sdcor)
     namedList(which.OK, msgs, fixef, llik, sdcor, theta, times, feval)
 }
