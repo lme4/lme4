@@ -14,11 +14,15 @@
   }
   \subsection{BUG FIXES}{
     \itemize{
+      \item suppressed spurious contrast-dropping warning (GH #414)
       \item fixed bug in \code{confint.lmList4} (GH #26)
       \item fixed bug when \code{FUN} returned an unnamed
       vector in \code{confint(.,FUN=FUN,method="boot")}
       \item fixed small bug relating to \code{nAGQ0initStep=FALSE}
     }
+  }
+  \subsection{CRAN-COMPATIBILITY UPDATES}{
+    \item fixed time stamps on vignette source/compiled versions
   }
 }
 
