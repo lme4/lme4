@@ -86,7 +86,8 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     \describe{
       \item{(1)}{takes input parameters \code{fn} (function to be
         optimized), \code{par} (starting parameter values), \code{lower}
-        (lower bounds) and \code{control} (control parameters, passed
+        and \code{upper} (parameter bounds)
+	and \code{control} (control parameters, passed
         through from the \code{control} argument) and}
       \item{(2)}{returns a list with (at least) elements \code{par}
         (best-fit parameters), \code{fval} (best-fit function value),
