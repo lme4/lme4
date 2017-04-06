@@ -486,7 +486,7 @@ get.which <- function(which, nvp, nptot, parnames, verbose=FALSE) {
 ## @return a function for evaluating the deviance in the extended
 ##     parameterization.  This is profiled with respect to the
 ##     variance-covariance parameters (fixed-effects done separately).
-devfun2 <- function(fm, useSc, 
+devfun2 <- function(fm, useSc,
                     transfuns = list(from.chol=Cv_to_Sv,
                                      to.chol=Sv_to_Cv,
                                      to.sd=identity),
@@ -815,12 +815,9 @@ confint.merMod <- function(object, parm, level = 0.95,
         vn <- profnames(object,oldNames,
                         useSc=useSc)
         an <- c(vn,names(fixef(object)))
-        if (missing(parm)) {
-            parm <- seq(length(an))
-        } else {
-            parm <- get.which(parm, nvp=length(vn), nptot=length(an),
-                              parnames=an)
-        }
+        parm <- if(missing(parm)) seq_along(an)
+                else
+                    get.which(parm, nvp=length(vn), nptot=length(an), parnames=an)
         if (!quiet && method %in% c("profile","boot")) {
             mtype <- switch(method, profile="profile", boot="bootstrap")
             message("Computing ",mtype," confidence intervals ...")
