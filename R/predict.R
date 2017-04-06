@@ -369,7 +369,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
             ##    attr(newdata[[j]], "contrasts") <- NULL
             ## }
             
-            mfnew <- suppressWarning(
+            mfnew <- suppressWarnings(
                 model.frame(delete.response(Terms),
                             newdata,
                             na.action = na.action, xlev = orig_levs))
