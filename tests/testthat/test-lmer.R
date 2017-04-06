@@ -226,11 +226,21 @@ test_that("lmer", {
                  c("obs.(Intercept)", "herd.(Intercept)"))
     ## stable regardless of order in formula
     expect_equal(getME(fm0,"Ztlist"),getME(fm0B,"Ztlist"))
-    ## no optimization
+    ## no optimization  (GH #408)
     fm_noopt <- lmer(z~1|f,d,
                      control=lmerControl(optimizer=NULL))
     expect_equal(unname(unlist(getME(fm_noopt,c("theta","beta")))),
                  c(0.244179074357121, -0.0336616441209862))
+    expect_error(lmer(z~1|f,d,
+                     control=lmerControl(optimizer="none")),
+                 "deprecated use")
+    my_opt <- function(fn,par,lower,upper,control) {
+        opt <- optim(fn=fn,par=par,lower=lower,
+              upper=upper,control=control,,method="L-BFGS-B")
+        return(list(par=opt$par,fval=opt$value,conv=opt$convergence))
+    }
+    expect_is(fm_noopt <- lmer(z~1|f,d,
+                     control=lmerControl(optimizer=my_opt)),"merMod")
 }) ## test_that(..)
 
 
