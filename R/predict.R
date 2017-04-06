@@ -353,11 +353,27 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
             ## ignore response variable
             isFac[attr(Terms,"response")] <- FALSE
             orig_levs <- if (length(isFac)==0) NULL else lapply(mf[isFac],levels)
+            ## https://github.com/lme4/lme4/issues/414
+            ## contrasts are not relevant in random effects;
+            ##  model.frame.default warns about dropping contrasts
+            ##  if (1) xlev is specified and (2) any factors in
+            ##  original data frame had contrasts set
 
-            mfnew <- model.frame(delete.response(Terms),
-                                 newdata,
-                                 na.action=na.action,
-                                 xlev=orig_levs)
+            ## alternative solution: drop contrasts manually
+            ## (could assign to a new variable newdata2 for safety,
+            ## but I don't think newdata
+            ##  is used downstream in this function?)
+            
+            ## isFacND <- which(vapply(newdata, is.factor, FUN.VALUE = TRUE))
+            ## for (j in isFacND) {
+            ##    attr(newdata[[j]], "contrasts") <- NULL
+            ## }
+            
+            mfnew <- suppressWarning(
+                model.frame(delete.response(Terms),
+                            newdata,
+                            na.action = na.action, xlev = orig_levs))
+            
             X <- model.matrix(RHS, data=mfnew,
                               contrasts.arg=attr(X,"contrasts"))
             ## hack to remove unused interaction levels?

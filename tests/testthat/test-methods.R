@@ -358,7 +358,7 @@ test_that("predict", {
     expect_is(pm, "numeric")
     expect_equal(quantile(pm, names = FALSE),
                  c(211.006525, 260.948978, 296.87331, 328.638297, 458.155583))
-    op <- options(warn = 2) # no warnings!
+    op <- options(warn = 2) # there should be no warnings!
     if (require("MEMSS",quietly=TRUE)) {
         ## test spurious warning with factor as response variable
         data("Orthodont", package = "MEMSS") # (differently "coded" from the 'default' "nlme" one)
@@ -425,6 +425,22 @@ test_that("predict", {
     ## complex-basis functions in FIXED effect are fine
     fm6 <- lmer(Reaction~poly(Days,2)+(1|Subject),sleepstudy)
     expect_equal(predict(fm6,sleepstudy[1,]),fitted(fm6)[1])
+
+    ## GH #414: no warning about dropping contrasts on random effects
+    op <- options(warn = 2) # there should be no warnings!
+    set.seed(1)
+    dat <- data.frame(
+        fac = rep(c("a", "b"), 100),
+        grp = rep(1:25, each = 4))
+    dat$y <- 0
+    contr <- 0.5 * contr.sum(2)
+    rownames(contr) <- c("a", "b")
+    colnames(contr) <- "a"
+    contrasts(dat$fac) <- contr
+    m1_contr <- lmer(y~fac+(fac|grp),dat)
+    pp <- predict(m1_contr,newdata=dat)
+    options(op)
+    
 })
 
 context("simulate")
