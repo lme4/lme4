@@ -894,7 +894,8 @@ missDataFun <- function(d) {
     return(!foundAnon && is.symbol(ex) && !exists(deparse(ex)))
 }
 
-checkFormulaData <- function(formula, data, checkLHS=TRUE, debug=FALSE) {
+checkFormulaData <- function(formula, data, checkLHS=TRUE,
+                             checkData=TRUE, debug=FALSE) {
     nonexist.data <- missDataFun(data)
     wd <- tryCatch(eval(data), error = identity)
     if (wrong.data <- inherits(wd,"simpleError")) {
