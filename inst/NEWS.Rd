@@ -4,6 +4,16 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
+\section{CHANGES IN VERSION 1.1-14}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item added \code{transf} argument to \code{dotplot.ranef.mer}
+      to allow back-transformation (Ferenci Tamás, GH #134)
+      \item added \code{as.data.frame.ranef.mer} convenience method
+    }
+  }
+}
+
 \section{CHANGES IN VERSION 1.1-13 (2017-04-18) }{
   \subsection{NEW FEATURES}{
     \itemize{
