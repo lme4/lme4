@@ -4,7 +4,7 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-13}{
+\section{CHANGES IN VERSION 1.1-13 (2017-04-18) }{
   \subsection{NEW FEATURES}{
     \itemize{
       \item added \code{prof.scale} argument to \code{profile.merMod},
@@ -22,8 +22,10 @@
     }
   }
   \subsection{CRAN-COMPATIBILITY UPDATES}{
-    \item fixed time stamps on vignette source/compiled versions
-  }
+        \itemize{
+	  \item fixed time stamps on compiled versions of vignettes
+	}
+      }
 }
 
 \section{CHANGES IN VERSION 1.1-12 (2016-04-15)}{
