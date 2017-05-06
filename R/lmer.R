@@ -1122,6 +1122,11 @@ NULL
 ranef.merMod <- function(object, condVar = FALSE, drop = FALSE,
 			 whichel = names(ans), postVar = FALSE, ...)
 {
+
+    if (length(L <- list(...))>0) {
+        warning(paste("additional arguments to ranef.merMod ignored:",
+                      paste(names(L),collapse=", ")))
+    }
     if (!missing(postVar) && missing(condVar)) {
         warning(sQuote("postVar")," is deprecated: please use ",
                 sQuote("condVar")," instead")
@@ -2343,13 +2348,13 @@ summary.summary.merMod <- function(object, varcov = TRUE, ...) {
 
 ##' @importFrom lattice dotplot
 ##' @S3method  dotplot ranef.mer
-dotplot.ranef.mer <- function(x, data, main = TRUE, ...)
+dotplot.ranef.mer <- function(x, data, main = TRUE, transf=I, ...)
 {
     prepanel.ci <- function(x, y, se, subscripts, ...) {
 	if (is.null(se)) return(list())
 	x <- as.numeric(x)
 	hw <- 1.96 * as.numeric(se[subscripts])
-	list(xlim = range(x - hw, x + hw, finite = TRUE))
+	list(xlim = range(transf(x - hw), transf(x + hw), finite = TRUE))
     }
     panel.ci <- function(x, y, se, subscripts, pch = 16,
 			 horizontal = TRUE, col = dot.symbol$col,
@@ -2366,21 +2371,15 @@ dotplot.ranef.mer <- function(x, data, main = TRUE, ...)
 	panel.abline(v = 0, col = col.line, lty = lty, lwd = lwd)
 	if (!is.null(se)) {
 	    se <- as.numeric(se[subscripts])
-	    panel.segments( x - 1.96 * se, y, x + 1.96 * se, y, col = 'black')
+	    panel.segments( transf(x - 1.96 * se), y,
+                            transf(x + 1.96 * se), y, col = 'black')
 	}
-	panel.xyplot(x, y, pch = pch, ...)
+	panel.xyplot(transf(x), y, pch = pch, ...)
     }
     f <- function(nx, ...) {
-        xt <- x[[nx]]
-	ss <- stack(xt)
+        ss <- asDf0(x,nx)
         mtit <- if(main) nx # else NULL
-	ss$ind <- factor(as.character(ss$ind), levels = colnames(xt))
-	ss$.nn <- rep.int(reorder(factor(rownames(xt)), xt[[1]],
-                                  FUN = mean,sort = sort), ncol(xt))
-	se <- NULL
-	if (!is.null(pv <- attr(xt, "postVar")))
-	    se <- unlist(lapply(1:(dim(pv)[1]), function(i) sqrt(pv[i, i, ])))
-	dotplot(.nn ~ values | ind, ss, se = se,
+	dotplot(.nn ~ values | ind, ss, se = ss$se,
 		prepanel = prepanel.ci, panel = panel.ci,
 		xlab = NULL, main = mtit, ...)
     }
@@ -2488,6 +2487,34 @@ weights.merMod <- function(object, type = c("prior","working"), ...) {
     ## FIXME:  what to do about missing values (see stats:::weights.glm)?
     ## FIXME:  add unit tests
     return(res)
+}
+
+## utility function: x is a ranef.mer object, nx is the name of an element
+asDf0 <- function(x,nx,id=FALSE) {
+    xt <- x[[nx]]
+    ss <- stack(xt)
+    ss$ind <- factor(as.character(ss$ind), levels = colnames(xt))
+    ss$.nn <- rep.int(reorder(factor(rownames(xt)), xt[[1]],
+                              FUN = mean,sort = sort), ncol(xt))
+    if (!is.null(pv <- attr(xt, "postVar")))
+        ss$se <- unlist(lapply(1:(dim(pv)[1]), function(i) sqrt(pv[i, i, ])))
+    if (id) ss$id <- nx
+    return(ss)
+}
+
+## convert ranef object to a long-format data frame, e.g. suitable
+##  for ggplot2 (or homemade lattice plots)
+## FIXME: have some gymnastics to do if terms, levels are different
+##  for different grouping variables - want to maintain ordering
+##  but still allow rbind()ing
+as.data.frame.ranef.mer <- function(x,
+                ...,
+                stringsAsFactors = default.stringsAsFactors()) {
+    xL <- lapply(names(x),asDf0,x=x,id=TRUE)
+    ## combine and reorder
+    xD <- do.call(rbind,xL)[c("id","ind",".nn","values","se")]
+    names(xD) <- c("grpvar","term","grp","condval","condsd")
+    return(xD)
 }
 
 dim.merMod <- function(x) {

@@ -7,7 +7,7 @@
 \usage{
   \method{ranef}{merMod} (object, condVar = FALSE,
     drop = FALSE, whichel = names(ans), postVar=FALSE, ...)
-\method{dotplot}{ranef.mer} (x, data, main=TRUE, ...)
+\method{dotplot}{ranef.mer} (x, data, main=TRUE, transf=I, ...)
 \method{qqmath}{ranef.mer} (x, data, main=TRUE, ...)
 }
 \arguments{
@@ -29,6 +29,9 @@
     produced by \code{ranef}}
   \item{main}{include a main title, indicating the grouping factor,
     on each sub-plot?}
+  \item{transf}{transformation for random effects: for example,
+    \code{exp} for plotting parameters from a (generalized)
+    logistic regression on the odds rather than log-odds scale}
   \item{data}{This argument is required by the \code{dotplot}
     and \code{qqmath} generic methods, but is not actually used.}
   \item{\dots}{some methods for these generic functions
@@ -95,11 +98,19 @@ dotplot(rr1)  ## default
 ## specify free scales in order to make Day effects more visible
 dotplot(rr1,scales = list(x = list(relation = 'free')))[["Subject"]]
 if(FALSE) { ##-- condVar=TRUE is not yet implemented for multiple terms -- FIXME
-str(ranef(fm2, condVar = TRUE))
+    str(ranef(fm2, condVar = TRUE))
 }
 op <- options(digits = 4)
 ranef(fm3, drop = TRUE)
 options(op)
+## extracting random effects and conditional standard deviations
+dd <- as.data.frame(rr1)
+if (require(ggplot2)) {
+    ggplot(dd,aes(y=grp,x=condval))+
+        geom_point()+facet_wrap(~term,scales="free_x")+
+        geom_errorbarh(aes(xmin=condval-2*condsd,xmax=condval+2*condsd),
+                       height=0)
+}
 }
 \keyword{methods}
 \keyword{models}
