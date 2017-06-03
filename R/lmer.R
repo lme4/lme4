@@ -1265,7 +1265,9 @@ refit.merMod <- function(object,
 	    glmerControl()
 	else
 	    lmerControl()
-
+  if (object@optinfo$optimizer == "optimx") {
+   control$optCtrl <- object@optinfo$control
+  }
     ## we need this stuff defined before we call .glmerLaplace below ...
     pp      <- object@pp$copy()
     dc      <- object@devcomp
