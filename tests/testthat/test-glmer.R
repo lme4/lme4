@@ -334,4 +334,11 @@ if(FALSE) { ## Hadley broke this
                            .Names = c("(Intercept)", "x", "f", "")),
                  tolerance=1e-5)
 
+    ## GH 415
+    expect_warning(glmer (round(Reaction) ~ Days + (1|Subject),
+                          data=sleepstudy[1:100,],
+                          family=poisson,
+                          control=lmerControl()),
+                   "please use glmerControl")
+
 })

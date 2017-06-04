@@ -161,5 +161,12 @@ test_that("other_NA", {
     expect_is(refit(fm0),"merMod")
     expect_is(refit(fm1),"merMod")
     expect_is(refit(fm2),"merMod")
+
+    ## GH 420: NAs in training data should *not* get
+    ##  carried over into predictions!
+    fm4 <- lmer(Reaction~Days+(1|Subject),sleepstudyNA2)
+    pp4 <- predict(fm4,newdata=sleepstudy)
+    expect_equal(length(pp4),nrow(sleepstudy))
+    expect_equal(sum(is.na(pp4),0))
 })
 

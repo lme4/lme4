@@ -410,18 +410,18 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
         }
     }  ## newdata/newparams/re.form
 
-    ## fill in NAs as appropriate: if NAs were detected in
-    ## original model fit, OR in updated model frame construction
+    ## fill in NAs as appropriate:
+    ##   if NAs were detected in original model fit, OR in updated model frame construction
     ## but DON'T double-NA if raw prediction in the first place
-    old.fit.na.action <- attr(model.frame(object),"na.action")
-    if (!is.null(fit.na.action) ||  ## NA used in new construction
-        (!is.null(fit.na.action <- old.fit.na.action))) {
+    if (is.null(newdata)) {
+        fit.na.action <- attr(model.frame(object),"na.action")
         if (!missing(na.action)) {
             ## hack to override action where explicitly specified
-            class(fit.na.action) <- class(attr(na.action(NA),"na.action"))
+            if (!is.null(fit.na.action))
+                class(fit.na.action) <- class(attr(na.action(NA),"na.action"))
         }
-        pred <- napredict(fit.na.action,pred)
     }
+    pred <- napredict(fit.na.action,pred)
     pred
 }
 

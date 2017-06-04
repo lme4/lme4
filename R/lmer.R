@@ -73,9 +73,22 @@ glmer <- function(formula, data=NULL, family = gaussian,
     if (!inherits(control, "glmerControl")) {
 	if(!is.list(control)) stop("'control' is not a list; use glmerControl()")
 	## back-compatibility kluge
-	msg <- "Use control=glmerControl(..) instead of passing a list"
-	if(length(cl <- class(control))) msg <- paste(msg, "of class", dQuote(cl[1]))
-	warning(msg, immediate.=TRUE)
+        if (class(control)[1]=="lmerControl") {
+            warning("please use glmerControl() instead of lmerControl()",
+                    immediate.=TRUE)
+            control <-
+                ## unpack sub-lists
+                c(control[!names(control) %in% c("checkConv","checkControl")],
+                  control$checkControl,control$checkConv)
+            control["restart_edge"] <- NULL ## not implemented for glmer
+        } else {
+            msg <- "Use control=glmerControl(..) instead of passing a list"
+            if(length(cl <- class(control))) {
+                msg <- paste(msg, "of class", dQuote(cl[1]))
+            }
+            warning(msg, immediate.=TRUE)
+        }
+        
 	control <- do.call(glmerControl, control)
     }
     mc <- mcout <- match.call()
