@@ -12,12 +12,16 @@
       \item added \code{as.data.frame.ranef.mer} convenience method
     }
     \subsection{BUG FIXES}{
-      \item fix bug where NAs in fitting data were carried over into
-      predictions on new data (!) (lmwang9527, GH #420)
+      \itemize{
+	\item fix bug where NAs in fitting data were carried over into
+	predictions on new data (!) (lmwang9527, GH #420)
+      }
     }
     \subsection{USER-VISIBLE CHANGES}{
-      \item improved warning message when using
-      \code{lmerControl()} with \code{glmer} (GH #415)
+      \itemize{
+	\item improved warning message when using
+	\code{lmerControl()} with \code{glmer} (GH #415)
+      }
     }
   }
 }
