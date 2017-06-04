@@ -167,6 +167,6 @@ test_that("other_NA", {
     fm4 <- lmer(Reaction~Days+(1|Subject),sleepstudyNA2)
     pp4 <- predict(fm4,newdata=sleepstudy)
     expect_equal(length(pp4),nrow(sleepstudy))
-    expect_equal(sum(is.na(pp4),0))
+    expect_equal(sum(is.na(pp4)),0)
 })
 
