@@ -5,6 +5,8 @@ sudo: false
 r: devel
 cache: packages
 
+r_build_args: "--no-build-vignettes"
+
 env:
  - LME4_TEST_LEVEL=2
 
