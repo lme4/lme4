@@ -5,6 +5,9 @@ sudo: false
 r: devel
 cache: packages
 
+## this saves time; it also stops us from getting R CMD check warnings
+## (which get promoted to errors/build failures unless we specify
+## "warnings_are_errors: false" here ...)
 r_build_args: "--no-build-vignettes"
 
 env:
