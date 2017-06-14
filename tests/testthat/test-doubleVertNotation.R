@@ -58,3 +58,30 @@ test_that("update works as expected", {
                           fitted(lmer(Reaction ~ Days + (1|Subject), sleepstudy)))
 })
 
+
+test_that("long formulas work",{
+    form <- log.corti~z.n.fert.females*z.n.males+
+        is.alpha2*(z.infanticide.susceptibility+z.min.co.res+
+                   z.co.res+z.log.tenure)+
+        z.xtime+z.age.at.sample+sin.season+cos.season+
+        (1  +z.n.fert.females
+            +z.n.males
+            +is.alpha2.subordinate
+            +z.infanticide.susceptibility
+            +z.min.co.res
+            +z.log.tenure
+            +z.co.res
+            +z.xtime
+            +z.age.at.sample
+            +sin.season
+            +cos.season
+            +I(z.n.fert.females*z.n.males)
+            +I(is.alpha2.subordinate*z.min.co.res)
+            +I(z.co.res*is.alpha2.subordinate)
+            +I(is.alpha2.subordinate*z.co.res)
+            +int.is.a.log.ten
+            ||monkeyid)
+    expStr <- paste(deparse(expandDoubleVerts(form),width=500),collapse="")
+    ## check: no spurious ~ induced
+    expect_equal(1,sum(grepl("~",strsplit(expStr,"")[[1]])))
+})

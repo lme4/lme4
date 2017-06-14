@@ -15,7 +15,9 @@
       \itemize{
 	\item fix bug where NAs in fitting data were carried over into
 	predictions on new data (!) (lmwang9527, GH #420)
+	\item fix bug with long terms in models with || notation
       }
+
     }
     \subsection{USER-VISIBLE CHANGES}{
       \itemize{

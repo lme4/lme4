@@ -193,7 +193,8 @@ mkReTrms <- function(bars, fr, drop.unused.levels=TRUE) {
     asgn <- match(fnms, ufn)
   } else asgn <- seq_along(fl)
   names(fl) <- ufn
-  fl <- do.call(data.frame, c(fl, check.names = FALSE))
+  ## DON'T need fl to be a data.frame ... 
+  ## fl <- do.call(data.frame, c(fl, check.names = FALSE))
   attr(fl, "assign") <- asgn
   ll$flist <- fl
   ll$cnms <- cnms
@@ -409,11 +410,13 @@ findbars <- function(term)
 expandDoubleVerts <- function(term)
 {
     expandDoubleVert <- function(term) {
-	frml <- formula(paste0("~", deparse(term[[2]])))
+        frml <- formula(substitute(~x,list(x=term[[2]])))
+        ## FIXME: do this without paste and deparse if possible!
 	## need term.labels not all.vars to capture interactions too:
 	newtrms <- paste0("0+", attr(terms(frml), "term.labels"))
 	if(attr(terms(frml), "intercept")!=0)
 	    newtrms <- c("1", newtrms)
+
 	as.formula(paste("~(",
 			 paste(vapply(newtrms, function(trm)
 				      paste0(trm, "|", deparse(term[[3]])), ""),
