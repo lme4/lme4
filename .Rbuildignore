@@ -26,4 +26,5 @@ a4wide.sty
 figure/.*
 cache/.*
 README.md
+TODO.md
 R/TAGS
