@@ -23,6 +23,7 @@
       \itemize{
 	\item improved warning message when using
 	\code{lmerControl()} with \code{glmer} (GH #415)
+	\item avoid deparsing big data frames when checking data (GH #410) 
       }
     }
   }

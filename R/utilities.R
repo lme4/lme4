@@ -882,7 +882,7 @@ missDataFun <- function(d) {
         ## trying to find where the original symbol is defined ...
         ex <- eval(substitute(substitute(x, env=sys.frames()[[n]]),
                               env = list(x = ex, n=i)))
-        if (grepl("^\\.\\.[0-9]+$",safeDeparse(ex))) {
+        if (is.symbol(ex) && grepl("^\\.\\.[0-9]+$",safeDeparse(ex))) {
             ## testing for the dreaded "..1", "..2" pattern; this means
             ## we are stuck in an anonymous function somewhere ...
             ## won't be able to see whether data exist or not,

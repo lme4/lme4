@@ -197,3 +197,15 @@ test_that("lapply etc.", {
 })
 
           
+test_that("missDataFun", {
+    X <- expand.grid(x1=1:10, x2=1:10, x3=1:10, x4=1:10, g=letters[1:20])
+    X$y <- X$x1 + rnorm(10)[X$g] + rnorm(200000)
+    system.time(lmer(y ~ x1 + x2 + x3 + x4 + (1|g), data=X,
+                     control=lmerControl(optimizer=NULL)))
+    g <- function(X) {
+        X$y <- X$x1 + rnorm(10)[X$g] + rnorm(200000)
+        lme4:::missDataFun(X)
+    }
+    ## should take < 0.5 seconds since deparsing is now skipped
+    expect_lt(system.time(g(X))["elapsed"],0.5)
+})
