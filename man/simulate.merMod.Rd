@@ -109,9 +109,10 @@
       second from the left-hand side of the formula (if the formula has been
       specified in success/failure form), and defaults to 1 if neither of
       those have been supplied.
-      Simulated responses will be in matrix form if the supplied formula has
-      a matrix-valued left-hand side, otherwise they will be given as
-      proportions.
+      Simulated responses will be given as proportions, unless the supplied
+      formula has a matrix-valued left-hand side, in which case they will be
+      given in matrix form. If a left-hand side is given, variables in that
+      expression must be available in \code{newdata}.
     }
   }
 }
