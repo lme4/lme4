@@ -23,7 +23,10 @@
       \itemize{
 	\item improved warning message when using
 	\code{lmerControl()} with \code{glmer} (GH #415)
-	\item avoid deparsing big data frames when checking data (GH #410) 
+	\item avoid deparsing big data frames when checking data (GH
+	#410) 
+	\item pass \code{verbose} options to nloptr optimizers when
+	using \code{nloptwrap} (previously ignored, with a warning)
       }
     }
   }

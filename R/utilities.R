@@ -1132,8 +1132,10 @@ smmm <- lme4:::mmList.merMod(sm)
 }
 
 nloptwrap <- local({
+    ## define default control values in environment of function ...
     defaultControl <- list(algorithm="NLOPT_LN_BOBYQA",
                            xtol_abs=1e-6, ftol_abs=1e-6, maxeval=1e5)
+    ##
     function(par,fn,lower,upper,control=list(),...) {
         for (n in names(defaultControl))
             if (is.null(control[[n]])) control[[n]] <- defaultControl[[n]]

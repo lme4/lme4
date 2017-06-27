@@ -241,8 +241,15 @@ test_that("lmer", {
     }
     expect_is(fm_noopt <- lmer(z~1|f,d,
                      control=lmerControl(optimizer=my_opt)),"merMod")
-}) ## test_that(..)
 
+    ## test verbose option for nloptwrap
+    cc <- capture.output(lmer(Reaction~1+(1|Subject),
+         data=sleepstudy,
+         control=lmerControl(optimizer="nloptwrap"),
+         verbose=5))
+    expect_equal(sum(grepl("^iteration:",cc)),14)
+    
+}) ## test_that(..)
 
 test_that("coef_lmer", {
     ## test coefficient extraction in the case where RE contain

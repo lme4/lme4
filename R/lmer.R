@@ -2595,6 +2595,7 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
 	       if(!is.numeric(control$iprint)) control$iprint <- min(verbose, 3L)
 	   },
 	   "Nelder_Mead" = control$verbose <- verbose,
+           "nloptwrap" = control$print_level <- max(as.numeric(verbose),3),
 	   ## otherwise:
 	   if(verbose) warning(gettextf(
 	       "'verbose' not yet passed to optimizer '%s'; consider fixing optwrap()",
