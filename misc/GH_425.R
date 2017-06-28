@@ -1,7 +1,5 @@
 library(lme4)
 library(optimx)
-library(stringi)
-library(data.table)
 library(glmmTMB)
 
 N <- 910000
@@ -14,16 +12,18 @@ y <- sample.int(2L, size= N, replace=TRUE, prob= c(0.98, 0.02)) - 1L
 # product biases
 prod <- sample(letters, size= N, replace=TRUE)
 #  user biases
-my_grps <- stringi::stri_rand_strings(n= round(N/26), length= 10)
+nc <- 10
+ns <- round(N/26)
+my_grps <- apply(matrix(sample(LETTERS,size=nc*ns,replace=TRUE),ncol=nc),
+                 1,paste0,collapse="")
+## my_grps <- stringi::stri_rand_strings(n= round(N/26), length= 10)
 grps <- rep(my_grps, each= 26)
 x1 <- sample.int(2L, size= N, replace=TRUE, prob= c(0.9, 0.1)) - 1L
 x2 <- sample.int(2L, size= N, replace=TRUE, prob= c(0.9, 0.1)) - 1L
 x3 <- sample.int(2L, size= N, replace=TRUE, prob= c(0.9, 0.1)) - 1L
 x4 <- sample(LETTERS[1:5], size= N, replace=TRUE)
 
-dt <- data.table(y= y,
-             prod= prod, grps= grps,
-             x1= x1, x2= x2, x3= x3, x4= x4)
+dt <- data.frame(y, prod, grps, x1, x2, x3, x4)
 
 ## FIXME: may have to add an intercept to make the model match exactly?
 t1 <- system.time({
