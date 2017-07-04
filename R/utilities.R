@@ -720,11 +720,17 @@ nlformula <- function(mc) {
     list(conv = list(opt = 0L,
                      lme4 = list(messages = character(0))))
 
+getConv <- function(x) {
+    if (!is.null(x[["conv"]])) {
+        x[["conv"]]
+    } else x[["convergence"]]
+}
+
 .optinfo <- function(opt, lme4conv=NULL)
     list(optimizer = attr(opt, "optimizer"),
 	 control   = attr(opt, "control"),
 	 derivs    = attr(opt, "derivs"),
-	 conv      = list(opt = opt$conv, lme4 = lme4conv),
+	 conv      = list(opt = getConv(opt), lme4 = lme4conv),
 	 feval     = if (is.null(opt$feval)) NA else opt$feval,
 	 warnings  = attr(opt, "warnings"),
 	 val       = opt$par)

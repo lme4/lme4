@@ -2339,7 +2339,7 @@ summary.merMod <- function(object,
                    devcomp = devC,
                    isLmer = is(resp, "lmerResp"), useScale = useSc,
                    logLik = llAIC[["logLik"]],
-                   family = famL$fami, link = famL$link,
+                   family = famL$family, link = famL$link,
 		   ngrps = ngrps(object),
 		   coefficients = coefs, sigma = sig,
 		   vcov = vcov(object, correlation = correlation, sigm = sig),
@@ -2631,8 +2631,8 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
 		    feval = opt$fevals + opt$gevals,
 		    message = attr(opt,"details")[,"message"][[1]])
     }
-    if (opt$conv != 0) {
-        wmsg <- paste("convergence code",opt$conv,"from",optName)
+    if ((optconv <- getConv(opt)) != 0) {
+        wmsg <- paste("convergence code",optconv,"from",optName)
         if (!is.null(opt$msg)) wmsg <- paste0(wmsg,": ",opt$msg)
         warning(wmsg)
         curWarnings <<- append(curWarnings,list(wmsg))
