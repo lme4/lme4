@@ -85,7 +85,8 @@ est_theta <- function(object, limit = 20,
 ##' \code{\link{glmer}(..)} (apart from \code{family}!).
 glmer.nb <- function(..., interval = log(th) + c(-3,3),
                      tol = 5e-5, verbose = FALSE, nb.control = NULL,
-                     initCtrl = list(limit = 20, eps = 2*tol, trace = verbose))
+                     initCtrl = list(limit = 20, eps = 2*tol, trace = verbose,
+                                     theta = NULL))
 {
     dotE <- as.list(substitute(E(...))[-1])
     ## nE <- names(dotE <- as.list(substitute(E(...))[-1]))
@@ -94,17 +95,22 @@ glmer.nb <- function(..., interval = log(th) + c(-3,3),
     ## dots <- list(...)
 
     mc <- match.call()
-    mc[[1]] <- quote(glmer)
-    mc$family <- quote(stats::poisson)
-    mc$verbose <- (verbose>=2)
-    g0 <- eval(mc, parent.frame(1L))
 
-    th <- est_theta(g0, limit = initCtrl$limit,
-		    eps = initCtrl$eps, trace = initCtrl$trace)
+    if (is.null(th <- initCtrl$theta)) {
+        mc[[1]] <- quote(glmer)
+        mc$family <- quote(stats::poisson)
+        mc$verbose <- (verbose>=2)
+        g0 <- eval(mc, parent.frame(1L))
+
+        th <- est_theta(g0, limit = initCtrl$limit,
+                        eps = initCtrl$eps, trace = initCtrl$trace)
     
-    ## using format() on purpose, influenced by options(digits = *) :
-    if(verbose) cat("th := est_theta(glmer(..)) =", format(th))
+        ## using format() on purpose, influenced by options(digits = *) :
+        if(verbose) cat("th := est_theta(glmer(..)) =", format(th))
+    }
 
+    mc$initCtrl <- NULL ## clear to prevent infinite recursion
+                        ##  in initCtrl$theta reference above ...
     mc$family <- bquote(negative.binomial(theta=.(th)))
     g1 <- eval(mc, parent.frame(1L))
 

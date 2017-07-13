@@ -70,3 +70,12 @@ test_that("na_exclude", {
     expect_equal(fixef(m1),fixef(m1))
     expect_equal(length(predict(m2))-length(predict(m1)),5)
 })
+
+## GH 423
+test_that("start_vals", {
+    dd1 <- dd[1:200,]
+    g1 <- glmer.nb(y ~ f1 + (1|g), data=dd1)
+    g2 <- glmer.nb(y ~ f1 + (1|g), data=dd1,
+                   initCtrl=list(theta=getME(g1,"glmer.nb.theta")))
+    expect_equal(fixef(g1),fixef(g2),tol=1e-5)
+})

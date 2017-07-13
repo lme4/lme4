@@ -11,7 +11,8 @@
 \usage{
 glmer.nb(\dots, interval = log(th) + c(-3, 3),
          tol = 5e-5, verbose = FALSE, nb.control = NULL,
-         initCtrl = list(limit = 20, eps = 2*tol, trace = verbose))
+         initCtrl = list(limit = 20, eps = 2*tol, trace = verbose,
+                         theta = NULL))
 }
 \arguments{
   \item{\dots}{arguments as for \code{glmer(.)} such as \code{formula},
@@ -29,7 +30,9 @@ glmer.nb(\dots, interval = log(th) + c(-3, 3),
   \item{initCtrl}{(\emph{\bold{experimental}, do not rely on this}:) a
     \code{\link{list}} with named components as in the default, passed to
     \code{\link[MASS]{theta.ml}} (package \pkg{MASS}) for the initial
-    value of the negative binomial parameter \code{theta}.}
+    value of the negative binomial parameter \code{theta}.
+    May also include a \code{theta} component, in which case the
+    initial estimation step is skipped}
 }
 \value{
   An object of class \code{glmerMod}, for which many
@@ -43,10 +46,16 @@ glmer.nb(\dots, interval = log(th) + c(-3, 3),
   The negative binomial \eqn{\theta} can be extracted from a fit
   \code{g <- glmer.nb()} by \code{\link{getME}(g, "glmer.nb.theta")}.
 
-
   Parts of \code{glmer.nb()} are still experimental and methods are
   still missing or suboptimal.  In particular, there is no inference
   available for the dispersion parameter \eqn{\theta}, yet.
+
+  To fit a negative binomial model with \emph{known} overdispersion
+  parameter (e.g. as part of a model comparison exercise, use
+  \code{glmer} with the \code{\link[MASS]{negative.binomial}} family from the
+  \code{MASS} package, e.g.
+  \code{glmer(...,family=MASS::negative.binomial(theta=1.75))}.
+  
 }
 \seealso{
   \code{\link{glmer}}; from package \pkg{MASS},
