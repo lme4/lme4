@@ -10,24 +10,25 @@
       \item added \code{transf} argument to \code{dotplot.ranef.mer}
       to allow back-transformation (Ferenci Tamás, GH #134)
       \item added \code{as.data.frame.ranef.mer} convenience method
+      \item user can specify initial value for overdispersion parameter
+      in \code{glmer.nb} (Timothy Lau, GH #423)
     }
-    \subsection{BUG FIXES}{
-      \itemize{
-	\item fix bug where NAs in fitting data were carried over into
-	predictions on new data (!) (lmwang9527, GH #420)
-	\item fix bug with long terms in models with || notation
-      }
-
+  }
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item fix bug where NAs in fitting data were carried over into
+      predictions on new data (!) (lmwang9527, GH #420)
+      \item fix bug with long terms in models with || notation
     }
-    \subsection{USER-VISIBLE CHANGES}{
-      \itemize{
-	\item improved warning message when using
-	\code{lmerControl()} with \code{glmer} (GH #415)
-	\item avoid deparsing big data frames when checking data (GH
-	#410) 
-	\item pass \code{verbose} options to nloptr optimizers when
-	using \code{nloptwrap} (previously ignored, with a warning)
-      }
+  }
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item improved warning message when using
+      \code{lmerControl()} with \code{glmer} (GH #415)
+      \item avoid deparsing big data frames when checking data (GH
+      #410) 
+      \item pass \code{verbose} options to nloptr optimizers when
+      using \code{nloptwrap} (previously ignored, with a warning)
     }
   }
 }
