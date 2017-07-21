@@ -2528,10 +2528,14 @@ as.data.frame.ranef.mer <- function(x,
     xL <- lapply(names(x),asDf0,x=x,id=TRUE)
     ## combine
     xD <- do.call(rbind,xL)
-    ## reorder (an additional se column may be present or not)
-    xD[,1:4] <- xD[c("id","ind",".nn","values")]
-    names(xD) <- c("grpvar","term","grp","condval","condsd")
-    return(xD)
+    ## rename ...
+    oldnames <- c("values","ind",".nn","se","id")
+    newnames <- c("condval","term","grp","condsd","grpvar")
+    names(xD) <- newnames[match(names(xD),oldnames)]
+    ## reorder ...
+    neworder <- c("grpvar","term","grp","condval")
+    if ("condsd" %in% names(xD)) neworder <- c(neworder,"condsd")
+    return(xD[neworder])
 }
 
 dim.merMod <- function(x) {
