@@ -24,4 +24,6 @@ test_that("dotplot_ranef", {
                      scales=list(x = list(relation = 'free')))$g,
               "trellis")
     expect_is(as.data.frame(rr),"data.frame")
+    rr0 <- ranef(fm1)
+    expect_is(as.data.frame(rr0),"data.frame")
 })

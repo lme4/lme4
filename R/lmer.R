@@ -2526,8 +2526,10 @@ as.data.frame.ranef.mer <- function(x,
                 ...,
                 stringsAsFactors = default.stringsAsFactors()) {
     xL <- lapply(names(x),asDf0,x=x,id=TRUE)
-    ## combine and reorder
-    xD <- do.call(rbind,xL)[c("id","ind",".nn","values","se")]
+    ## combine
+    xD <- do.call(rbind,xL)
+    ## reorder (an additional se column may be present or not)
+    xD[,1:4] <- xD[c("id","ind",".nn","values")]
     names(xD) <- c("grpvar","term","grp","condval","condsd")
     return(xD)
 }
