@@ -160,7 +160,7 @@ The following S3 methods with arguments given above exist (this list is currentl
     \item{\code{anova}:}{returns the sequential decomposition of the contributions of
       fixed-effects terms or, for multiple arguments, model comparison statistics.
       For objects of class \code{lmerMod} the default behavior is to refit the models
-      with LM if fitted with \code{REML = TRUE}, this can be controlled via the
+      with ML if fitted with \code{REML = TRUE}, this can be controlled via the
       \code{refit} argument. See also \code{\link{anova}}.}
   \item{\code{coef}:}{Computes the sum of the random and fixed effects
     coefficients for each explanatory variable for each level of each
