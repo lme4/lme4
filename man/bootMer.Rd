@@ -155,16 +155,16 @@ if (requireNamespace("boot")) {
     ##   for larger bootstrap samples, e.g. nsim=500
 
     ## intercept
-    (bCI.1 <- boot.ci(boo01, index=1, type=c("norm", "basic", "perc")))# beta
+    (bCI.1 <- boot::boot.ci(boo01, index=1, type=c("norm", "basic", "perc")))# beta
 
     ## Residual standard deviation - original scale:
-    (bCI.2  <- boot.ci(boo01, index=2, type=c("norm", "basic", "perc")))
+    (bCI.2  <- boot::boot.ci(boo01, index=2, type=c("norm", "basic", "perc")))
     ## Residual SD - transform to log scale:
-    (bCI.2L <- boot.ci(boo01, index=2, type=c("norm", "basic", "perc"),
+    (bCI.2L <- boot::boot.ci(boo01, index=2, type=c("norm", "basic", "perc"),
                        h = log, hdot = function(.) 1/., hinv = exp))
 
     ## Among-batch variance:
-    (bCI.3 <- boot.ci(boo01, index=3, type=c("norm", "basic", "perc"))) # sig01
+    (bCI.3 <- boot::boot.ci(boo01, index=3, type=c("norm", "basic", "perc"))) # sig01
 
 
     ## Copy of unexported stats:::format.perc helper function
@@ -178,7 +178,7 @@ if (requireNamespace("boot")) {
     bCI.tab <- function(b,ind=length(b$t0), type="perc", conf=0.95) {
         btab0 <- t(sapply(as.list(seq(ind)),
                           function(i)
-            boot.ci(b,index=i,conf=conf, type=type)$percent))
+            boot::boot.ci(b,index=i,conf=conf, type=type)$percent))
         btab <- btab0[,4:5]
         rownames(btab) <- names(b$t0)
         a <- (1 - conf)/2
