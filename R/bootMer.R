@@ -153,6 +153,7 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
 	      class = "boot")
     attr(s,"bootFail") <- numFail
     attr(s,"boot.fail.msgs") <- fail.msgs
+    attr(s,"boot_type") <- "boot"
     s
 } ## {bootMer}
 
