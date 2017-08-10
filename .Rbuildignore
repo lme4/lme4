@@ -23,6 +23,7 @@ clean
 jss\.cls
 framed.sty
 a4wide.sty
+vignettes/blkarray.sty
 figure/.*
 cache/.*
 README.md
