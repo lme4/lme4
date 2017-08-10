@@ -771,7 +771,7 @@ confint.thpr <- function(object, parm, level = 0.95, zeta,
                 warning("non-monotonic profile for ",parm[i])
             } else {
                 warning("bad spline fit for ",parm[i],": falling back to linear interpolation")
-                p <- approxfun(obj1[,2],obj1[,1])(zeta)
+                p <- sort(approxfun(obj1[,2],obj1[,1])(zeta))
             }
         }
         if (!badprof) {
