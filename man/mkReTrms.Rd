@@ -21,7 +21,12 @@
   \item{Lind}{an integer vector of indices determining the mapping of
     the elements of the \code{theta} vector to the \code{"x"} slot of
     \code{Lambdat}}
-  \item{Gp}{}
+  \item{Gp}{a vector indexing the association of
+    elements of the conditional mode vector
+    with random-effect terms; if \code{nb} is the vector of numbers
+    of conditional modes per term (i.e. number of groups times number
+    of effects per group), \code{Gp} is \code{c(0,cumsum(nb))}
+    (and conversely \code{nb} is \code{diff(Gp)})}
   \item{lower}{lower bounds on the covariance parameters}
   \item{Lambdat}{transpose of the sparse relative covariance factor}
   \item{flist}{list of grouping factors used in the
