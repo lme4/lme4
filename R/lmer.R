@@ -39,7 +39,7 @@ lmer <- function(formula, data=NULL, REML = TRUE,
 			list(start=start, verbose=verbose, control=control)))
     if (devFunOnly) return(devfun)
     ## optimize deviance function over covariance parameters
-    if (identical(control$optimizer,"none")) 
+    if (identical(control$optimizer,"none"))
         stop("deprecated use of optimizer=='none'; use NULL instead")
     opt <- if (length(control$optimizer)==0) {
                s <- getStart(start,environment(devfun)$lower,
@@ -88,7 +88,7 @@ glmer <- function(formula, data=NULL, family = gaussian,
             }
             warning(msg, immediate.=TRUE)
         }
-        
+
 	control <- do.call(glmerControl, control)
     }
     mc <- mcout <- match.call()
@@ -153,7 +153,7 @@ glmer <- function(formula, data=NULL, family = gaussian,
 
     if(nAGQ > 0L) {
 
-        
+
         ## update deviance function to include fixed effects as inputs
         devfun <- updateGlmerDevfun(devfun, glmod$reTrms, nAGQ = nAGQ)
 
@@ -475,8 +475,10 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
         ##     depth <- depth-1
         ## }
         ## if (depth < maxdepth) {
-        if (any(duplicated(mNms))) {
-            warning("failed to find unique model names, assigning generic names")
+        if (any(substr(mNms, 1,4) == "new(") ||
+            any(duplicated(mNms)) || ## <- only if S4 objects are *not* properly deparsed
+            max(nchar(mNms)) > 200) {
+            warning("failed to find model names, assigning generic names")
             mNms <- paste0("MODEL",seq_along(mNms))
         }
         if (length(mNms) != length(mods))
@@ -2071,7 +2073,7 @@ NULL
 vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
                         use.hessian = NULL, ...)
 {
-    
+
     hess.avail <-
          ## (1) numerical Hessian computed?
         (!is.null(h <- object@optinfo$derivs$Hessian) &&
