@@ -65,11 +65,12 @@ bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE, re.form=NA,
 }
 \note{
   If you are using \code{parallel="snow"}, you will need to run
-\code{clusterEvalQ(cl,library("lme4"))} to make sure that the
-\code{lme4} package is loaded on all of the workers; you may
-additionally need to use \code{\link[parallel]{clusterExport}}
-if you are using a summary function that calls any objects
-from the environment.
+  \code{clusterEvalQ(cl,library("lme4"))} before calling
+  \code{bootMer} to make sure that the
+  \code{lme4} package is loaded on all of the workers; you may
+  additionally need to use \code{\link[parallel]{clusterExport}}
+  if you are using a summary function that calls any objects
+  from the environment.
 }
 \details{
   The semi-parametric variant is only partially implemented, and
