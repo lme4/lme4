@@ -222,15 +222,46 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
     rho$beta0 <- rho$pp$beta0
     rho$tolPwrss <- control$tolPwrss # Reset control parameter (the initial optimization is coarse)
 
-    opt <- optwrap(control$optimizer[[1]], devfun, rho$pp$theta, lower=rho$lower,
-                   control=control$optCtrl, adj=FALSE)
+
+    ## set lower and upper bounds: if user-specified, select
+    ##  only the ones corresponding to random effects
+    if (!is.null(lwr <- control$optCtrl$lower)) {
+        rho$lower <- lwr[seq_along(rho$lower)]
+        control$optCtrl$lower <- NULL
+    }
+    upper <- rep(Inf, length(rho$lower))
+    if (!is.null(upr <- control$optCtrl$upper)) {
+        upper <- upr[seq_along(rho$lower)]
+        control$optCtrl$upper <- NULL
+    }
+    
+    opt <- optwrap(control$optimizer[[1]], devfun, rho$pp$theta,
+                   lower=rho$lower,
+                   upper=upper,
+                   control=control$optCtrl,
+                   adj=FALSE)
+    
     rho$control <- attr(opt,"control")
 
     if (nAGQ > 0L) {
-        rho$lower <- c(rho$lower, rep.int(-Inf, length(rho$beta0)))
+
+        ## set lower/upper to values already harvested from control$optCtrl$upper
+        if (!is.null(lwr)) {
+            rho$lower <- lwr
+        } else {
+            rho$lower <- c(rho$lower, rep.int(-Inf, length(rho$beta0)))
+        }
+        if (!is.null(upr)) {
+            upper <- upr
+        } else {
+            upper <- c(upper, rep.int(Inf, length(rho$beta0)))
+        }
         rho$u0    <- rho$pp$u0
-        rho$beta0 <- rho$pp$beta0
         rho$dpars <- seq_along(rho$pp$theta)
+        ## fixed-effect parameters
+        rho$beta0 <- pmin(upper[-rho$dpars],
+                          pmax(rho$pp$beta0,rho$lower[-rho$dpars]))
+
         if (nAGQ > 1L) {
             if (length(vals$reTrms$flist) != 1L || length(vals$reTrms$cnms[[1]]) != 1L)
                 stop("nAGQ > 1 is only available for models with a single, scalar random-effects term")
@@ -241,7 +272,9 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
 
         opt <- optwrap(control$optimizer[[2]], devfun,
                        par = c(rho$pp$theta, rho$beta0),
-                       lower = rho$lower, control = control$optCtrl,
+                       lower = rho$lower,
+                       upper = upper,
+                       control = control$optCtrl,
                        adj = TRUE, verbose=verbose)
 
     }
