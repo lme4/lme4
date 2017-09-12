@@ -741,7 +741,13 @@ confint.thpr <- function(object, parm, level = 0.95, zeta,
     ##  parameters?  (Should only matter for really messed-up profiles)
     bnms <- names(bak)
     if (missing(parm)) parm <- bnms
-    else if (is.numeric(parm)) parm <- bnms[parm]
+    if (is.numeric(parm)) parm <- bnms[parm]
+    if (parm=="theta_") {
+        parm <- grep("^(sd_|cor_|.sig|sigma$)",bnms,value=TRUE)
+    }
+    if (parm=="beta_") {
+        parm <- grep("^(sd_|cor_|.sig|sigma$)",bnms,value=TRUE,invert=TRUE)
+    }
     parm <- intersect(as.character(parm), bnms)
     cn <- NULL
     if (missing(zeta)) {
