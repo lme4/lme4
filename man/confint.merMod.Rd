@@ -1,5 +1,6 @@
 \name{confint.merMod}
 \alias{confint.merMod}
+\alias{confint.thpr}
 \title{Compute Confidence Intervals for Parameters of a [ng]lmer Fit}
 \description{
   Compute confidence intervals on the parameters of a \code{*lmer()}
@@ -12,9 +13,13 @@
         boot.type = c("perc","basic","norm"),
         FUN = NULL, quiet = FALSE,
 	oldNames = TRUE, ...)
+\method{confint}{thpr}(object, parm, level = 0.95,
+        zeta, non.mono.tol=1e-2,
+	...)
 }
+
 \arguments{
-  \item{object}{a fitted [ng]lmer model}
+  \item{object}{a fitted [ng]lmer model or profile}
   \item{parm}{parameters for which intervals are sought. Specified by an
     integer vector of positions, \code{\link{character}} vector of
     parameter names, or (unless doing parametric bootstrapping with a
@@ -38,7 +43,10 @@
   \item{quiet}{(logical) suppress messages about computationally intensive profiling?}
   \item{oldNames}{(logical) use old-style names for variance-covariance
     parameters, e.g. \code{".sig01"}, rather than newer (more informative) names such as
-    \code{"sd_(Intercept)|Subject"}? (See \code{signames} argument to \code{\link{profile}}).}
+    \code{"sd_(Intercept)|Subject"}? (See \code{signames} argument to
+    \code{\link{profile}}).}
+  \item{non.mono.tol}{tolerance for detecting a non-monotonic profile
+    and warning/falling back to linear interpolation}
   \item{\dots}{additional parameters to be passed to
     \code{\link{profile.merMod}} or \code{\link{bootMer}}, respectively.}
 }
