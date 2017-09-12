@@ -206,6 +206,6 @@ test_that("missDataFun", {
         X$y <- X$x1 + rnorm(10)[X$g] + rnorm(200000)
         lme4:::missDataFun(X)
     }
-    ## should take < 0.5 seconds since deparsing is now skipped
-    expect_lt(system.time(g(X))["elapsed"],0.5)
+    ## should take < 1 second since deparsing is now skipped
+    expect_lt(system.time(g(X))["elapsed"],1)
 })
