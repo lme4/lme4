@@ -742,11 +742,12 @@ confint.thpr <- function(object, parm, level = 0.95, zeta,
     bnms <- names(bak)
     if (missing(parm)) parm <- bnms
     if (is.numeric(parm)) parm <- bnms[parm]
-    if (parm=="theta_") {
-        parm <- grep("^(sd_|cor_|.sig|sigma$)",bnms,value=TRUE)
-    }
-    if (parm=="beta_") {
-        parm <- grep("^(sd_|cor_|.sig|sigma$)",bnms,value=TRUE,invert=TRUE)
+    if (length(parm)==1) {
+        if (parm=="theta_") {
+            parm <- grep("^(sd_|cor_|.sig|sigma$)",bnms,value=TRUE)
+        } else if (parm=="beta_") {
+            parm <- grep("^(sd_|cor_|.sig|sigma$)",bnms,value=TRUE,invert=TRUE)
+        }
     }
     parm <- intersect(as.character(parm), bnms)
     cn <- NULL
