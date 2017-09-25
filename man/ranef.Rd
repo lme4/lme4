@@ -5,10 +5,10 @@
 \alias{qqmath.ranef.mer}
 \title{Extract the modes of the random effects}
 \usage{
-  \method{ranef}{merMod} (object, condVar = FALSE,
-    drop = FALSE, whichel = names(ans), postVar=FALSE, ...)
-\method{dotplot}{ranef.mer} (x, data, main=TRUE, transf=I, ...)
-\method{qqmath}{ranef.mer} (x, data, main=TRUE, ...)
+\method{ranef}{merMod} (object, condVar = FALSE,
+      drop = FALSE, whichel = names(ans), postVar = FALSE, ...)
+\method{dotplot}{ranef.mer} (x, data, main = TRUE, transf = I, ...)
+\method{qqmath}{ranef.mer} (x, data, main = TRUE, ...)
 }
 \arguments{
   \item{object}{an object of a class of fitted models with
