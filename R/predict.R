@@ -398,11 +398,18 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
         ##     offset <- offset + eval(frOffset, newdata)
         pred <- pred+offset
         if (!noReForm(re.form)) {
-            if (is.null(re.form))
-		re.form <- reOnly(formula(object)) # RE formula only
-            newRE <- mkNewReTrms(object,
-                                 newdata, re.form, na.action=na.action,
-                                 allow.new.levels=allow.new.levels)
+            ## if *not* new data and *not* modified RE, don't need
+            ##  to remake ...
+            if (is.null(newdata) && is.null(re.form))  {
+                if (is.null(re.form))
+                    re.form <- reOnly(formula(object)) # RE formula only
+                newRE <- mkNewReTrms(object,
+                                     newdata, re.form, na.action=na.action,
+                                     allow.new.levels=allow.new.levels)
+            } else {
+                ## retrieve b and Zt from old object
+                newRE <- getME(object,c("b","Zt"))
+            }
             pred <- pred + base::drop(as(newRE$b %*% newRE$Zt, "matrix"))
         }
         if (isGLMM(object) && type=="response") {
@@ -572,15 +579,14 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 
     ## (1) random effect(s)
     sim.reff <- if (!is.null(findbars(compReForm))) {
-	newRE <- mkNewReTrms(object, newdata, compReForm,
-			     na.action=na.action,
-			     allow.new.levels=allow.new.levels)
-        ## this *can* justifiably happen, if we are using mkNewReTrms
-        ## in the context of predicting/simulating with a non-trivial
-        ## re.form ...
-        ## <obsolete> paranoia ...
-        ## <obsolete> stopifnot(!is.null(newdata) ||
-        ##       isTRUE(all.equal(newRE$Lambdat,getME(object,"Lambdat"))))
+        if (is.null(newdata) && is.null(re.form)) {
+            newRE <- mkNewReTrms(object, newdata, compReForm,
+                                 na.action=na.action,
+                                 allow.new.levels=allow.new.levels)
+        } else {
+            cat("using old REs\n")
+            newRE <- getME(object,c("Lambdat","Zt"))
+        }
 	U <- t(newRE$Lambdat %*% newRE$Zt) # == Z Lambda
 	u <- rnorm(ncol(U)*nsim)
 	## UNSCALED random-effects contribution:
