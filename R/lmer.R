@@ -1038,7 +1038,9 @@ model.frame.merMod <- function(formula, fixed.only=FALSE, ...) {
     if (fixed.only) {
         ff <- formula(formula,fixed.only=TRUE)
         ## thanks to Thomas Leeper and Roman Lustrik, Stack Overflow
+        ## https://stackoverflow.com/questions/18017765/extract-variables-in-formula-from-a-data-frame
         vars <- rownames(attr(terms.formula(ff), "factors"))
+        vars <- gsub("`","",vars) ## hack to solve GH #441
         fr <- fr[vars]
     }
     fr
