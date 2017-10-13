@@ -1030,18 +1030,12 @@ df.residual.merMod <- function(object, ...) {
     nobs(object)-npar.merMod(object)
 }
 
-stripwhite <- function(x) gsub("(^ +| +$)","",x) # FIXME: never used ?
 ##' @importFrom stats logLik
 ##' @S3method model.frame merMod
 model.frame.merMod <- function(formula, fixed.only=FALSE, ...) {
     fr <- formula@frame
     if (fixed.only) {
-        ff <- formula(formula,fixed.only=TRUE)
-        ## thanks to Thomas Leeper and Roman Lustrik, Stack Overflow
-        ## https://stackoverflow.com/questions/18017765/extract-variables-in-formula-from-a-data-frame
-        vars <- rownames(attr(terms.formula(ff), "factors"))
-        vars <- gsub("`","",vars) ## hack to solve GH #441
-        fr <- fr[vars]
+        fr <- fr[attr(terms(fr),"varnames.fixed")]
     }
     fr
 }

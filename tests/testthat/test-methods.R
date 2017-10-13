@@ -653,26 +653,15 @@ test_that("model.frame", {
     ## non-syntactic names
     d <- sleepstudy
     names(d)[1] <- "Reaction Time"
-    if (FALSE) {
-        tf <- function(f,d) {
-            return(rownames(attr(terms(f,data=d),"factor")))
-        }
-        tf(Reaction~1,sleepstudy) ## NULL
-        tf(Reaction~Days,sleepstudy) ## "Reaction" "Days"
-        tf(`Reaction Time`~Days,sleepstudy) ## "`Reaction Time`" "Days"
-        tf(Reaction~log(1+Days),sleepstudy) ## "Reaction" "log(1 + Days)"
+    ee <- function(m,nm) {
+        expect_equal(names(model.frame(m, fixed.only=TRUE)),nm)
     }
-    ## m <- lmer(Reaction ~ 1 + (1 | Subject), sleepstudy)
-    ## should this be non-empty???
-    ## model.frame(m, fixed.only=TRUE)
+    m <- lmer(Reaction ~ 1 + (1 | Subject), sleepstudy)
+    ee(m,"Reaction")
     m2 <- lmer(Reaction ~ Days + (1 | Subject), sleepstudy)
-    expect_equal(names(model.frame(m2, fixed.only=TRUE)),
-                 c("Reaction","Days"))
+    ee(m2,c("Reaction","Days"))
     m3 <- lmer(`Reaction Time` ~ Days + (1 | Subject), d)
-    expect_equal(names(model.frame(m3, fixed.only=TRUE)),
-                 c("Reaction Time","Days"))
+    ee(m3, c("Reaction Time","Days"))
     m4 <- lmer(Reaction ~ log(1+Days) + (1 | Subject), sleepstudy)
-    expect_equal(names(model.frame(m4, fixed.only=TRUE)),
-                 c("Reaction","log(1 + Days)"))
-
+    ee(m4, c("Reaction","log(1 + Days)"))
 })

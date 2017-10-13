@@ -395,6 +395,9 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     fixedfr <- eval(mf, parent.frame())
     attr(attr(fr,"terms"), "predvars.fixed") <-
         attr(attr(fixedfr,"terms"), "predvars")
+    ## so we don't have to fart around retrieving which vars we need
+    ##  in model.frame(.,fixed.only=TRUE)
+    attr(attr(fr,"terms"), "varnames.fixed") <- names(fixedfr)
 
     ## ran-effects model frame (for predvars)
     ## important to COPY formula (and its environment)?
