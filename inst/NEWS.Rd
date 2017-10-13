@@ -4,7 +4,11 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-14}{
+\section{CHANGES IN VERSION 1.1-15}{
+  None yet.
+}
+
+\section{CHANGES IN VERSION 1.1-14 (2017-09-27)}{
   Primarily an R-devel/CRAN-compatibility release.
   
   \subsection{NEW FEATURES}{
@@ -43,9 +47,12 @@
       #410) 
       \item pass \code{verbose} options to nloptr optimizers when
       using \code{nloptwrap} (previously ignored, with a warning)
+      \item the \code{fl} (factor list) component of \code{mkReTrms}
+      objects is now returned as a list rather than a data frame
     }
   }
 }
+
 
 \section{CHANGES IN VERSION 1.1-13 (2017-04-18) }{
   \subsection{NEW FEATURES}{
@@ -82,7 +89,7 @@
   }
   \subsection{BUG FIXES}{
     \itemize{
-      \item fixed bug \emph{de novo} Gamma-response simulations
+      \item fixed bug in \emph{de novo} Gamma-response simulations
     }
   }
 }
