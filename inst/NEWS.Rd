@@ -6,6 +6,8 @@
 
 \section{CHANGES IN VERSION 1.1-15}{
   None yet.
+  \itemize{
+  }
 }
 
 \section{CHANGES IN VERSION 1.1-14 (2017-09-27)}{
