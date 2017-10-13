@@ -5,9 +5,13 @@
 \encoding{UTF-8}
 
 \section{CHANGES IN VERSION 1.1-15}{
-  None yet.
-  \itemize{
-  }
+  \subsection{BUG FIXES}{
+     \itemize{
+	\item \code{model.frame(.,fixed.only=TRUE)} now handles models with
+	"non-syntactic" (e.g. space-containing/backtick-delimited)
+        variables in the formula
+     }
+   }
 }
 
 \section{CHANGES IN VERSION 1.1-14 (2017-09-27)}{
