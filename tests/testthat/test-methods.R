@@ -368,6 +368,7 @@ test_that("predict", {
         ps <- predict(silly, sillypred, re.form=NA, type = "response")
         expect_is(ps, "numeric")
         expect_equal(unname(ps), c(0.999989632, 0.999997201), tolerance=1e-6)
+        detach("package:MEMSS")
     }
     ## a case with interactions (failed in one temporary version):
     expect_warning(fmPixS <<- update(fmPix, .~. + Side),
