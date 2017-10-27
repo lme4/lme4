@@ -8,6 +8,7 @@ Authors@R: c(person("Douglas","Bates", role="aut"),
     person("Rune Haubo Bojesen","Christensen", role="ctb"),
     person("Henrik","Singmann", role="ctb"),
     person("Bin", "Dai", role="ctb"),
+    person("Fabian", "Scheipl", role="ctb"),
     person("Gabor", "Grothendieck", role="ctb"),
     person("Peter", "Green", role="ctb"))
 Contact: LME4 Authors <lme4-authors@lists.r-forge.r-project.org>
