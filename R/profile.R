@@ -740,25 +740,25 @@ confint.thpr <- function(object, parm, level = 0.95, zeta,
     ## FIXME: work a little harder to add -Inf/Inf for fixed effect
     ##  parameters?  (Should only matter for really messed-up profiles)
     bnms <- names(bak)
-    if (missing(parm)) parm <- bnms
-    if (is.numeric(parm)) parm <- bnms[parm]
-    if (length(parm)==1) {
-        if (parm=="theta_") {
-            parm <- grep("^(sd_|cor_|.sig|sigma$)",bnms,value=TRUE)
-        } else if (parm=="beta_") {
-            parm <- grep("^(sd_|cor_|.sig|sigma$)",bnms,value=TRUE,invert=TRUE)
-        }
-    }
-    parm <- intersect(as.character(parm), bnms)
-    cn <- NULL
-    if (missing(zeta)) {
-        a <- (1 - level)/2
-        a <- c(a, 1 - a)
-        zeta <- qnorm(a)
-        cn <- format.perc(a, 3)
-    }
-    ci <- matrix(NA,nrow=length(parm),ncol=2,
-                 dimnames=list(parm,cn))
+    parm <- if (missing(parm))
+                bnms
+            else if(is.numeric(parm)) # e.g., when called from confint.merMod()
+                bnms[parm]
+            else if (length(parm <- as.character(parm)) == 1) {
+                if (parm == "theta_")
+                    grep("^(sd_|cor_|.sig|sigma$)", bnms, value=TRUE)
+                else if (parm == "beta_")
+                    grep("^(sd_|cor_|.sig|sigma$)", bnms, value=TRUE, invert=TRUE)
+            } else
+                intersect(parm, bnms)
+    cn <-
+        if (missing(zeta)) {
+            a <- (1 - level)/2
+            a <- c(a, 1 - a)
+            zeta <- qnorm(a)
+            format.perc(a, 3)
+        } ## else NULL
+    ci <- matrix(NA_real_, nrow=length(parm), ncol=2L, dimnames = list(parm,cn))
     for (i in seq_along(parm)) {
         ## would like to build this machinery into predy, but
         ## predy is used in many places and it's much harder to
@@ -817,7 +817,7 @@ confint.merMod <- function(object, parm, level = 0.95,
     if (method=="boot" && !is.null(FUN)) {
         ## custom boot function, don't expand parameter names
     } else {
-        ## "use scale" = GLMM with scale parameter *or* LMM ...
+        ## "use scale" = GLMM with scale parameter *or* LMM ..
         useSc <- as.logical(object@devcomp$dims[["useSc"]])
         vn <- profnames(object,oldNames,
                         useSc=useSc)
@@ -832,13 +832,12 @@ confint.merMod <- function(object, parm, level = 0.95,
         }
     }
     switch(method,
-	   "profile" =
-           {
+	   "profile" = {
                pp <- profile(object, which=parm, signames=oldNames, ...)
+               ## confint.thpr() with missing(parm) using all names:
                confint(pp, level=level, zeta=zeta)
            },
-	   "Wald" =
-           {
+	   "Wald" = {
                a <- (1 - level)/2
                a <- c(a, 1 - a)
                ci.vcov <- array(NA,dim = c(length(vn), 2L),
@@ -855,21 +854,20 @@ confint.merMod <- function(object, parm, level = 0.95,
                ci.all <- rbind(ci.vcov,ci.fixed)
                ci.all[parm,,drop=FALSE]
            },
-	   "boot" =
-           {
+	   "boot" = {
                bootFun <- function(x) {
 		   th <- x@theta
 		   nvec <- lengths(x@cnms)
                    scaleTh <- (isLMM(x) || isNLMM(x))
 		   ## FIXME: still ugly.  Best cleanup via Cv_to_Sv ...
 		   ss <- if (scaleTh) {	 ## scale variances by sigma and include it
-		       setNames(Cv_to_Sv(th,n=nvec,s=sigma(x)), vn)
+		       Cv_to_Sv(th, n=nvec, s=sigma(x))
 		   } else if (useSc) { ## don't scale variances but do include sigma
-		       setNames(c(Cv_to_Sv(th,n=nvec),sigma(x)), vn)
+		       c(Cv_to_Sv(th, n=nvec), sigma(x))
 		   } else {  ## no scaling, no sigma
-		       setNames(Cv_to_Sv(th,n=nvec), vn)
+		       Cv_to_Sv(th, n=nvec)
 		   }
-                   c(ss, fixef(x))
+                   c(setNames(ss, vn), fixef(x))
                }
                if (is.null(FUN)) FUN <- bootFun
                bb <- bootMer(object, FUN=FUN, nsim=nsim,...)

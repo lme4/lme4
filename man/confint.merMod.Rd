@@ -88,13 +88,19 @@
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 fm1W <- confint(fm1, method="Wald")# very fast, but ....
 fm1W
+(fm2 <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy))
+(CI2 <- confint(fm2)) # default: method = "profile"
+\dontshow{ stopifnot(all.equal(tol = 1e-6, signif(unname(CI2), 7),
+               array(c(15.25865, 3.964074, 22.88055, 237.5721,  7.334067,
+                       37.78647, 8.769159, 28.7876,  265.2381, 13.60051), c(5L, 2L))))
+}
 testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
 if(interactive() || testLevel >= 3) {
  ## ~20 seconds, MacBook Pro laptop
  system.time(fm1P <- confint(fm1, method="profile", ## default
                              oldNames = FALSE))
  ## ~ 40 seconds
- system.time(fm1B <- confint(fm1,method="boot",
+ system.time(fm1B <- confint(fm1, method="boot",
                              .progress="txt", PBargs=list(style=3)))
 } else
   load(system.file("testdata","confint_ex.rda",package="lme4"))
