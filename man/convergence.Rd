@@ -79,7 +79,8 @@
     perturbed slightly away from the optimum
     \item try all available optimizers (e.g. several different implementations
     of BOBYQA and Nelder-Mead, L-BFGS-B from \code{optim}, \code{nlminb},
-    \dots)  While this will of course be slow for large fits, we consider
+    \dots) via the \code{allFit()} function, see \sQuote{5.} in the
+    examples.  While this will of course be slow for large fits, we consider
     it the gold standard; if all optimizers converge to values that
     are practically equivalent, then we would consider the convergence
     warnings to be false positives.
