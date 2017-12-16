@@ -71,12 +71,13 @@ mkBlist <- function(x,frloc, drop.unused.levels=TRUE) {
     if (drop.unused.levels) ff <- factor(ff, exclude=NA)
     nl <- length(levels(ff))
     ## this section implements eq. 6 of the JSS lmer paper
-    ## (but not by explicit Khatri-Rao products)
-    ## model matrix based on LHS of random effect term
+    ## model matrix based on LHS of random effect term (X_i)
+    ##    x[[2]] is the LHS (terms) of the a|b formula
     mm <- model.matrix(eval(substitute( ~ foo, list(foo = x[[2]]))), frloc)
     ## nc <- ncol(mm)
     ## nseq <- seq_len(nc)
     ## this is J^T (see p. 9 of JSS lmer paper)
+    ## construct indicator matrix for groups by observations
     ## use fac2sparse() rather than as() to allow *not* dropping
     ## unused levels where desired
     sm <- fac2sparse(ff, to = "d",
