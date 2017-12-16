@@ -167,6 +167,8 @@ S3method(df.residual,merMod)
 ## S3method(dim,merMod) ???
 S3method(dotplot,coef.mer)
 S3method(dotplot,ranef.mer)
+## helpful to allow direct access for glmmTMB
+export(dotplot.ranef.mer) 
 S3method(drop1,merMod)
 S3method(extractAIC,merMod)
 S3method(family,glmResp)
