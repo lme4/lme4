@@ -13,8 +13,13 @@
 
 	\item \code{confint(<merMod>)} now works again for the default
 	method \code{"profile"}.
-     }
-   }
+      }
+    }
+    \subsection{USER-VISIBLE CHANGES}{
+      \itemize{
+	\item exported \code{dotplot.ranef.mer}
+      }
+    }
 }
 
 \section{CHANGES IN VERSION 1.1-14 (2017-09-27)}{

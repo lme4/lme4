@@ -19,6 +19,21 @@ test_that("lmer", {
        x.2 * (beta[3] + u[g,3]) +
        rnorm(N)
 
-  summary(lmer(y ~ x.1 + x.2 + (1 + x.1 | g)))
-  summary(lmer(y ~ x.1 + x.2 + (1 + x.1 + x.2 | g)))
+  tmpf <- function(x) capture.output(print(summary(x),digits=1))
+  cc1 <- tmpf(lmer(y ~ x.1 + x.2 + (1 + x.1 | g)))
+  cc2 <- tmpf(lmer(y ~ x.1 + x.2 + (1 + x.1 + x.2 | g)))
+  expect_equal(tail(cc1,10),
+               c("Fixed effects:", "            Estimate Std. Error t value", 
+                 "(Intercept)      5.4        0.5      12", "x.1              1.9        0.4       5", 
+                 "x.2              4.0        0.1      28", "", "Correlation of Fixed Effects:", 
+                 "    (Intr) x.1   ", "x.1 -0.019       ", "x.2  0.029 -0.043"
+))
+  expect_equal(tail(cc2,10),
+               c("Fixed effects:", "            Estimate Std. Error t value", 
+"(Intercept)      5.4        0.4      12", "x.1              2.0        0.4       5", 
+"x.2              4.0        0.3      15", "", "Correlation of Fixed Effects:", 
+"    (Intr) x.1   ", "x.1 -0.070       ", "x.2  0.136 -0.103"
+))
+
+
 })
