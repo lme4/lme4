@@ -39,3 +39,4 @@ License: GPL (>=2)
 URL: https://github.com/lme4/lme4/
      http://lme4.r-forge.r-project.org/
 BugReports: https://github.com/lme4/lme4/issues
+Encoding: UTF-8
