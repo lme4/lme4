@@ -104,7 +104,16 @@ lmList <- function(formula, data, family, subset, weights,
                           mf2))
         }, error=errorH)
     }
-    ## split *original data*, not model frame, on groups
+    ## split *original data*, not frm (derived model frame), on groups
+    ## we have to do this because we need raw, not derived variables
+    ##  when evaluating linear regression
+    ## but do need to apply subset
+    ## (hope there aren't tricky interactions with NAs in subset ... ??)
+    
+    if (!missing(subset)) {
+        data <- eval(substitute(data[subset,]),list2env(data))
+    }
+    
     frm.split <- split(data, groups)
     ## NB:  levels() is only  OK if grouping variable is a factor
     nms <- names(frm.split)

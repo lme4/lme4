@@ -154,3 +154,25 @@ test_that("pooled",
                                                               c("2.5 %", "97.5 %"))))
 })
 
+test_that("derived variables",
+          {
+              fm_lme4 <- lme4:::lmList(log(Reaction) ~ Days | Subject, sleepstudy)
+              fm_nlme <- nlme:::lmList(log(Reaction) ~ Days | Subject, sleepstudy)
+              expect_equal(c(coef(fm_lme4)),c(coef(fm_nlme)),tolerance=1e-5)
+          })
+          
+test_that("subset", {
+    data(MathAchieve, package="nlme")
+    data(MathAchSchool, package="nlme")
+    RB <- merge(MathAchieve, MathAchSchool[, c("School", "Sector")],
+                by="School")
+    names(RB) <- tolower(names(RB))
+    RB$cses <- with(RB, ses - meanses)
+    cat.list.nlme <- nlme::lmList(mathach ~ cses | school,
+                  subset = sector=="Catholic", 
+                  data=RB)
+    cat.list.lme4 <- lme4::lmList(mathach ~ cses | school,
+                                  subset = sector=="Catholic", data=RB)
+    expect_equal(c(coef(cat.list.lme4)),
+                 c(coef(cat.list.nlme)),tolerance=1e-5)
+})
