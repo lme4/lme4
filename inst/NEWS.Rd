@@ -4,7 +4,16 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-15}{
+\section{CHANGES IN VERSION 1.1-16}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{lmList} no longer ignores the \code{subset} argument
+      (John Fox)
+    }
+  }
+}
+
+\section{CHANGES IN VERSION 1.1-15 (2017-12-21)}{
   \subsection{BUG FIXES}{
      \itemize{
 	\item \code{model.frame(., fixed.only=TRUE)} now handles models with
