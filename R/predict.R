@@ -12,6 +12,16 @@ reOnly <- function(f,response=FALSE) {
                 response=response)
 }
 
+get_orig_levels <- function(object,fixed.only=TRUE) {
+    Terms <- terms(object,fixed.only=fixed.only)
+    mf <- model.frame(object, fixed.only=fixed.only)
+    isFac <- vapply(mf, is.factor, FUN.VALUE=TRUE)
+    ## ignore response variable
+    isFac[attr(Terms,"response")] <- FALSE
+    orig_levs <- if (length(isFac)==0) NULL else lapply(mf[isFac],levels)
+    orig_levs
+}
+
 reFormHack <- function(re.form,ReForm,REForm,REform) {
     warnDeprec <- function(name)
         warning(gettextf("'%s' is deprecated; use '%s' instead", name, "re.form"),
@@ -145,8 +155,10 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
     if (is.null(newdata)) {
         rfd <- mfnew <- model.frame(object)
     } else {
-        mfnew <- model.frame(delete.response(terms(object,fixed.only=TRUE)),
-                             newdata, na.action=na.action)
+        orig_levs <- get_orig_levels(object)
+        mfnew <- model.frame(delete.response(terms(object)),
+                             newdata, na.action=na.action,
+                             xlev = orig_levs)
         ## make sure we pass na.action with new data
         ## it would be nice to do something more principled like
         ## rfd <- model.frame(~.,newdata,na.action=na.action)
@@ -165,7 +177,8 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
             }
             tt <- delete.response(terms(object,random.only=TRUE))
             ## need to let NAs in RE components go through -- they're handled downstream
-            rfd <- model.frame(tt,newdata.NA,na.action=na.pass)
+            rfd <- model.frame(tt,newdata.NA,na.action=na.pass,
+                               xlev=orig_levs)
             if (!is.null(fixed.na.action))
                 attr(rfd,"na.action") <- fixed.na.action
         }
@@ -347,12 +360,6 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
             ## evaluate new fixed effect
             RHS <- formula(substitute(~R,
                                       list(R=RHSForm(formula(object,fixed.only=TRUE)))))
-            Terms <- terms(object,fixed.only=TRUE)
-            mf <- model.frame(object, fixed.only=TRUE)
-            isFac <- vapply(mf, is.factor, FUN.VALUE=TRUE)
-            ## ignore response variable
-            isFac[attr(Terms,"response")] <- FALSE
-            orig_levs <- if (length(isFac)==0) NULL else lapply(mf[isFac],levels)
             ## https://github.com/lme4/lme4/issues/414
             ## contrasts are not relevant in random effects;
             ##  model.frame.default warns about dropping contrasts
@@ -368,12 +375,13 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
             ## for (j in isFacND) {
             ##    attr(newdata[[j]], "contrasts") <- NULL
             ## }
-            
+
+            Terms <- terms(object,fixed.only=TRUE)
+            orig_levs <- get_orig_levels(object)
             mfnew <- suppressWarnings(
                 model.frame(delete.response(Terms),
                             newdata,
                             na.action = na.action, xlev = orig_levs))
-            
             X <- model.matrix(RHS, data=mfnew,
                               contrasts.arg=attr(X,"contrasts"))
             ## hack to remove unused interaction levels?

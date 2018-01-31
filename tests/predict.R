@@ -155,4 +155,25 @@ if (getRversion() > "3.0.0") {
     expect_equal(unname(head(predict(m4,re.form=NA))),
                  c(255.645493, 262.3263, 268.86947, 279.0608,
                    293.9390, 304.4721),tol=1e-4)
+
+    ## GH
+
+    set.seed(101)
+    n = 300
+    xx<-c("r1","r2","r3","r4","r5")
+    xxx<-c("e1","e2","e3")
+    p=0.3
+    df1 <- data.frame(
+        xx1 = runif(n, min = 0, max = 10),
+        xx2 = runif(n, min = 0, max = 10),
+        xx3 = runif(n, min = 0, max = 10),
+        School = factor(sample(xxx, n,re=TRUE)),
+        Rank = factor(sample(xx, n,re=TRUE)),
+        yx = as.factor(rbinom(n, size = 1, prob = p))
+    )
+    n11 <- data.frame(School="e3",Rank="r2",xx1=8.58,xx2=8.75,xx3=7.92)
+    mm2 <- glmer(yx ~ xx1 + xx2 + xx3 + Rank +  (Rank | School), data = df1, 
+                 family = "binomial",
+                 control = glmerControl(calc.derivs = FALSE))
+    predict(mm2, n11, type="response") #No meu caso especifico
 }
