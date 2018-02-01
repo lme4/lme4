@@ -321,7 +321,7 @@ checkResponse <- function(y, ctrl) {
 ##' \item{REML}{(lFormula only): logical flag: use restricted maximum likelihood? (Copy of argument.)}
 ##' @importFrom Matrix rankMatrix
 ##' @export
-lFormula <- function(formula, data=NULL, REML = TRUE,
+lFormula <- function(formula, data=NULL, REML = TRUE, expand_re = FALSE,
                      subset, weights, na.action, offset, contrasts = NULL,
                      control=lmerControl(), ...)
 {
@@ -345,10 +345,20 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
                              checkLHS = control$check.formula.LHS == "stop")
     #mc$formula <- formula <- as.formula(formula,env=denv) ## substitute evaluated call
     formula <- as.formula(formula, env=denv)
-    ## as.formula ONLY sets environment if not already explicitly set ...
-    ## ?? environment(formula) <- denv
-    # get rid of || terms so update() works as expected
-    RHSForm(formula) <- expandDoubleVerts(RHSForm(formula))
+    
+    if (expand_re) {
+      expand_re_out <- expand_re_fun(formula = formula, data = data)
+      formula <- as.formula(expand_re_out$formula)
+      assign(as.character(mf[["data"]]), 
+             cbind(get(as.character(mf[["data"]]), parent.frame()), 
+                   expand_re_out$new_col), parent.frame())
+    } else {
+      ## as.formula ONLY sets environment if not already explicitly set ...
+      ## ?? environment(formula) <- denv
+      # get rid of || terms so update() works as expected
+      RHSForm(formula) <- expandDoubleVerts(RHSForm(formula))
+    }
+    
     mc$formula <- formula
 
     ## (DRY! copied from glFormula)

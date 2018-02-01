@@ -397,6 +397,51 @@ findbars <- function(term)
     expandSlash(fb(modterm))
 }
 
+## expand random effects sructure to allow for uncorrelated random effects
+## parameters for factors.
+expand_re_fun <- function(formula, data) {
+    all.terms <- attr(terms(formula), "term.labels")
+    random_parts <- paste(all.terms[grepl("\\|", all.terms)])
+    which_random_double_bars <- grepl("\\|\\|", random_parts)
+    random_units <- sub("^.+\\|\\s+", "", random_parts)
+    tmp_random <- lapply(sub("\\|.+$", "", random_parts), 
+                         function(x) as.formula(paste("~", x)))
+    
+    tmp_model.matrix <- vector("list", length(random_parts))
+    re_contains_intercept <- rep(FALSE, length(random_parts))
+    new_random <- vector("character", length(random_parts))
+    
+    for (i in seq_along(random_parts)) {
+      tmp_model.matrix[[i]] <- model.matrix(tmp_random[[i]], data = data)
+      if (ncol(tmp_model.matrix[[i]]) == 0) 
+        stop("Invalid random effects term, e.g., (0|id)")
+      if (colnames(tmp_model.matrix[[i]])[1] == "(Intercept)") {
+        tmp_model.matrix[[i]] <- tmp_model.matrix[[i]][,-1, drop = FALSE]
+        re_contains_intercept[i] <- TRUE
+      }
+      if (ncol(tmp_model.matrix[[i]]) > 0) {
+        colnames(tmp_model.matrix[[i]]) <- 
+          paste0("re", i, ".", 
+                gsub(":", "_by_", colnames(tmp_model.matrix[[i]])))
+        new_random[i] <- 
+          paste0("(", as.numeric(re_contains_intercept[i]), "+", 
+                paste0(colnames(tmp_model.matrix[[i]]), collapse = "+"), 
+                if (which_random_double_bars[i]) "||" else "|", 
+                random_units[i], ")")
+      } else {
+        new_random[i] <- paste("(", 
+                               as.numeric(re_contains_intercept[i]), 
+                               if (which_random_double_bars[i]) "||" else "|", 
+                               random_units[i], ")")
+      }
+    }
+    new_col <- as.data.frame(do.call(cbind, tmp_model.matrix))
+    formula <- as.formula(paste(deparse(nobars(formula), width.cutoff = 500L),
+                                "+", paste(new_random, collapse = "+")))
+    return(list(new_col = new_col,
+                formula = formula))
+}
+
 ##' From the right hand side of a formula for a mixed-effects model,
 ##' expand terms with the double vertical bar operator
 ##' into separate, independent random effect terms.
