@@ -234,13 +234,13 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
         upper <- upr[seq_along(rho$lower)]
         control$optCtrl$upper <- NULL
     }
-    
+
     opt <- optwrap(control$optimizer[[1]], devfun, rho$pp$theta,
                    lower=rho$lower,
                    upper=upper,
                    control=control$optCtrl,
                    adj=FALSE)
-    
+
     rho$control <- attr(opt,"control")
 
     if (nAGQ > 0L) {
@@ -285,6 +285,8 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
 if(getRversion() >= "3.1.0") utils::suppressForeignCheck("nlmerAGQ")
 if(getRversion() < "3.1.0") dontCheck <- identity
 
+## FIXME have help page ../man/mkdevfun.Rd, but do *NOT* export (yet):
+## -> issue #92: -> also look at devfun2() in  ./profile.R (which returns class!)
 ##' Create a deviance evaluation function from a predictor and a response module
 mkdevfun <- function(rho, nAGQ=1L, maxit=100L, verbose=0, control=list()) {
     ## FIXME: should nAGQ be automatically embedded in rho?
@@ -609,7 +611,7 @@ as.function.merMod <- function(x, ...) {
                          u0   =  x@u),
                     parent=as.environment("package:lme4"))
     ## FIXME: extract verbose [, maxit] and control
-    mkdevfun(rho, getME(x, "devcomp")$dims[["nAGQ"]])
+    mkdevfun(rho, getME(x, "devcomp")$dims[["nAGQ"]], ...)
 }
 
 ## coef() method for all kinds of "mer", "*merMod", ... objects
@@ -1455,7 +1457,7 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
     xpp <- x@pp$copy()
     rho$pp <- new(class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat,
                   Lind=xpp$Lind, theta=xpp$theta, n=nrow(xpp$X))
-    devfun <- mkdevfun(rho, 0L) # also pass ?? (verbose, maxit, control)
+    devfun <- mkdevfun(rho, 0L) # FIXME? also pass {verbose, maxit, control}
     opt <- ## "smart" calc.derivs rules
 	if(optimizer == "bobyqa" && !any("calc.derivs" == names(list(...))))
 	    optwrap(optimizer, devfun, x@theta, lower=x@lower, calc.derivs=TRUE, ...)
@@ -2084,7 +2086,7 @@ getME.merMod <- function(object,
                    else
                        list(pp=PR, resp=rsp, u0=PR$u0, dpars=seq_along(PR$theta), verbose=verbose)
                mkdevfun(rho=list2env(devlist),
-                        ## FIXME: fragile ...
+                        ## FIXME: fragile ... // also pass 'maxit' ?
                         verbose=verbose, control=object@optinfo$control)
            },
            ## FIXME: current version gives lower bounds for theta parameters only:
