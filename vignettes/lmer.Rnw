@@ -93,19 +93,20 @@
 \newcommand*{\eq}[1]{eqn.~\ref{#1}}% or just {(\ref{#1})}
 <<preliminaries,include=FALSE,cache=FALSE,message=FALSE>>=
 options(width=70, show.signif.stars=FALSE,
-             str=strOptions(strict.width="cut"),
-             prompt = "R> ", continue = "+  ",
-             useFancyQuotes = FALSE)
+        str=strOptions(strict.width="cut"),
+        ## prefer empty continuation for reader's cut'n'paste:
+        continue = "   ", #JSS: prompt = "R> ", continue = "+  ",
+        useFancyQuotes = FALSE)
 library("knitr")
 library("lme4")
-library("ggplot2")
-theme_set(theme_bw())
+library("ggplot2")# Keeping default theme, nicer "on line":
+#JSS theme_set(theme_bw())
 library("grid")
-zmargin <- theme(panel.margin=unit(0,"lines"))
+zmargin <- theme(panel.spacing=unit(0,"lines"))
 library("lattice")
 library("minqa")
-opts_chunk$set(engine='R',dev='pdf',fig.width=9,prompt=TRUE,
-               fig.height=5.5,cache=TRUE,tidy=FALSE,comment=NA)
+opts_chunk$set(engine='R',dev='pdf', fig.width=9, fig.height=5.5,
+               prompt=TRUE, cache=TRUE, tidy=FALSE, comment=NA)
 render_sweave()
 @
 \setkeys{Gin}{width=\textwidth}
@@ -113,8 +114,9 @@ render_sweave()
 
 \begin{document}
 
-Published in the (online) \emph{Journal of Statistical Software},
-on Oct.\ 2015, with DOI \texttt{10.18637/jss.v067.i01},
+A version of this manuscript has been published online in the
+\emph{Journal of Statistical Software}, on Oct.\ 2015, with DOI \linebreak[3]
+\texttt{10.18637/jss.v067.i01},
 see \url{https://www.jstatsoft.org/article/view/v067i01/}.
 
 \section{Introduction}
@@ -131,8 +133,23 @@ mixed models.  The techniques used for generalized linear and
 nonlinear mixed models will be described separately, in a future
 paper.
 
-%% The  JSS(2015) paper has here a paragraph about \pkg{nlme}
-%% "the main alternative"
+At present, the main alternative to \pkg{lme4} for mixed modeling in
+\proglang{R} is the \pkg{nlme} package \citep{nlme_pkg}.  The main features
+distinguishing \pkg{lme4} from \pkg{nlme} are (1) more efficient
+linear algebra tools, giving improved performance on large problems;
+(2) simpler syntax and more efficient implementation for fitting
+models with crossed random effects; (3) the implementation of profile
+likelihood confidence intervals on random-effects parameters; and (4)
+the ability to fit generalized linear mixed models (although in this
+paper we restrict ourselves to linear mixed models).  The main
+advantage of \pkg{nlme} relative to \pkg{lme4} is a user interface for
+fitting models with structure in the residuals (various forms of
+heteroscedasticity and autocorrelation) and in the random-effects
+covariance matrices (e.g., compound symmetric models).  With some extra
+effort, the computational machinery of \pkg{lme4} can be used to fit
+structured models that the basic \code{lmer} function cannot handle
+(see Appendix~\ref{sec:modularExamples}).
+
 
 The development of general software for fitting mixed models remains
 an active area of research with many open problems.  Consequently, the
@@ -263,7 +280,7 @@ represents average reaction times in milliseconds (ms) on a series of tests give
 str(sleepstudy)
 @
 
-<<sleepPlot,echo=FALSE,fig.scap="Reaction time versus days by subject",fig.cap="Average reaction time versus days of sleep deprivation by subject.  Subjects ordered (from left to right starting on the top row) by increasing slope of subject-specific linear regressions.",fig.align='center',fig.pos='tb'>>=
+<<sleepPlot, echo=FALSE, fig.scap="Reaction time versus days by subject", fig.cap="Average reaction time versus days of sleep deprivation by subject.  Subjects ordered (from left to right starting on the top row) by increasing slope of subject-specific linear regressions.", fig.align='center', fig.pos='tb'>>=
 ## BMB: seemed more pleasing to arrange by increasing slope rather than
 ## intercept ...
 xyplot(Reaction ~ Days | Subject, sleepstudy, aspect = "xy",
@@ -1738,6 +1755,7 @@ arranged as a dense matrix of size $\left(\sum_{i=1}^n
   p_i\right)\times n$.  Matrices like $\bm Z\trans$, with the property
 that there are the same number of nonzeros in each column, are
 sometimes called \emph{regular sparse column-oriented} (RSC) matrices.
+
 \section{Nonlinear optimization module}
 \label{sec:optimizeLmer}
 
@@ -2736,341 +2754,193 @@ an NSERC Discovery grant and NSERC postdoctoral fellowship for funding.
 
 \bibliography{lmer}
 
+\bigskip
+
+\pagebreak[3]
+
 \begin{appendix}
 
 \section{Modularization examples}
 \label{sec:modularExamples}
 
-\subsection{Homogeneous covariance among random effects terms}
-\label{sec:homoLmer}
+The modularized functions in \pkg{lme4} allow for finer control of the
+various steps in fitting mixed models (Table~\ref{tab:modular}).  The
+main advantage of these functions is the ability to extend the class
+of models that \code{lmer} is capable of fitting.  In general there
+are three steps to this process.
+\begin{itemize}
+\item Construct a mixed-model formula that is similar to the intended
+  model.
+\item Using the modular functions, hook into and modify the fitting
+  process so that the desired model is estimated.
+\item Use the estimated parameter values to make inferences.
+\end{itemize}
+Note that the many tools of the output module become unavailable for
+sufficiently extensive departures from the class of models fitted by
+\code{lmer}.  Therefore, this last inference step may be more involved
+in the modular approach than with inference from models fitted by
+\code{lmer}.  Here we provide two examples that illustrate this
+process.
+
+\subsection{Zero slope-slope covariance models}
+\label{sec:zeroSlopeSlope}
 
 Consider the following mixed-model formula,
 <<modularSimulationFormula>>=
-form <- respVar ~ 1 + (explVar1 | groupFac1) + (explVar2 | groupFac2)
-@
-in which we have a fixed intercept and two random effects terms, each
-with a random slope and intercept.  The \code{lmer}  function would
-fit this formula to data by estimating two $2 \times 2$ covariance
-matrices---one for each random effects term.  It is not possible to
-use the current version of
-\code{lmer} to fit a model in which both terms share the same
-$2 \times 2$ covariance matrix.  We illustrate the use of the modular
-functions in \pkg{lme4} to fit such a model.
+form <- respVar ~ 1 + (explVar1 + explVar2 | groupFac)
+@ %
+in which we have a fixed intercept and two random-effects terms, each
+with a random slope and intercept.  The \code{lmer} function would fit
+this formula to data by estimating an unstructured $3 \times 3$
+covariance matrix giving the variances and covariances among the
+intercept and the two slopes.  It is not possible to use the current
+version of \code{lmer} to fit a model with the following two
+properties: (1) the slopes are uncorrelated and (2) the intercept is
+correlated with both of the slopes.  We illustrate the use of the
+modular functions in \pkg{lme4} to fit such a model.
 
-We simulate data from this homogeneous covariance model using a
-balanced design that crosses both grouping factors.  We first set the
-seed and number of groups per grouping factor,
-<<modularSimulationInit>>=
+\subsubsection{Simulate from a zero slope-slope covariance model}
+
+We simulate data from such a model using a balanced design with a
+single grouping factor.  We use \pkg{lme4}'s utilities for
+constructing a template from the model formula, with which to conduct
+these simulations.  We simulate a balanced design with 500 levels to
+the grouping factor and 20 observations per group,
+<<dataTemplate>>=
 set.seed(1)
-nGrps <- 50
-@
-We next simulate two explanatory variables,
-<<modularSimulationExpl>>=
-explVar <- data.frame(explVar1 = rnorm(nGrps^2),
-                      explVar2 = rnorm(nGrps^2))
-@
-two grouping factors,
-<<modularSimulationGroup>>=
-groupFac <- expand.grid(groupFac1 = as.factor(1:nGrps),
-                        groupFac2 = as.factor(1:nGrps))
-@
-random intercepts and slopes that are negatively correlated,
-<<modularSimulationInterSlope>>=
-randomIntercept <- expand.grid(randomIntercept1 = rnorm(nGrps),
-                               randomIntercept2 = rnorm(nGrps))
-rnmdSlope <- expand.grid(randomSlope1 = rnorm(nGrps),
-                         randomSlope2 = rnorm(nGrps)) - randomIntercept
-@
-and finally a linear predictor, residual error, and response variable,
-<<modularSimulationPredictor>>=
-linearPredictor <- apply(randomIntercept + rnmdSlope * explVar, 1, sum)
-residError <- rnorm(nGrps^2)
-respVar <- residError + linearPredictor
-@
-We then combine these data into a single object,
-<<modularSimulationDataFrame>>=
-dat <- data.frame(respVar, explVar, groupFac)
+dat <- mkDataTemplate(form,
+  nGrps = 500,
+  nPerGrp = 20,
+  rfunc = rnorm)
 head(dat)
-@
+@ %
+The initial parameters for this model may be obtained using
+\code{mkParsTemplate}.
+<<parsTemplate>>=
+(pars <- mkParsTemplate(form, dat))
+@ %
+We wish to simulate random effects from the following covariance
+matrix,
+<<simCorr>>=
+vc <- matrix(c(1.0, 0.5, 0.5,
+  0.5, 1.0, 0.0,
+  0.5, 0.0, 1.0), 3, 3)
+@ %
+Here the intercept is correlated with each of the two slopes, but the
+slopes are uncorrelated.  The \code{theta} vector that corresponds to
+this covariance matrix can be computed using \pkg{lme4}'s facilities
+for converting between various representations of (co-)variance
+structures (see \code{?vcconv}).
+<<vcTheta>>=
+pars$theta[] <- Vv_to_Cv(mlist2vec(vc))
+@ %
+With these new parameters installed, we simulate a response variable.
+<<varCorrStructure>>=
+dat$respVar <- simulate(form,
+  newdata = dat,
+  newparams = pars,
+  family = "gaussian")[[1]]
+@ %
+Indeed this data set appears to contain intercept-slope correlations,
+but not slope-slope correlations, as we see using the \code{lmList}
+function.
+<<graphSims>>=
+formLm <- form
+formLm[[3]] <- findbars(form)[[1]]
+print(formLm)
+cor(t(sapply(lmList(formLm, dat), coef)))
+@ %
+This \code{lmList} function computes ordinary linear models for each
+level of the grouping factor.  Next we show how to fit a proper mixed
+model to these data.
 
-<<homoLmer, echo=FALSE>>=
-homoLmer <- function(formula, data, use.mkMerMod = FALSE) {
-    mc <- match.call()
+\subsubsection{Fitting a zero slope-slope covariance model}
 
-                                        # parse the formula and make
-                                        # two copies
-    lfHetero <- lfHomo <- lFormula(formula = formula, data = data, REML = FALSE)
-                                        # get pRE (number of random
-                                        # effects coefficients per
-                                        # term)...
-    if(length(pRE <- unique(sapply(cnms <- lfHomo$reTrms$cnms, length))) > 1L) {
-        stop("each random effects term must have the same number\n",
-             "of model matrix columns for a homogeneous structure")
-    }
-                                        # and p (number of fixed
-                                        # effects coefficients)
-    p <- ncol(lfHomo$X)
-    nth <- choose(pRE + 1, 2)
-    n_trms <- length(cnms)
-                                        # modify one copy (lfHomo) of the
-                                        # parsed formula
-    lfHomo$reTrms <- within(lfHomo$reTrms, {
-                                        # take only the first three
-                                        # (of six) elements of the
-                                        # covariance parameters,
-                                        # theta, because these will be
-                                        # repeated (to get common
-                                        # covariance structure across
-                                        # random effects terms)
-        theta <- theta[1:nth]
-                                        # match the lower bounds to
-                                        # the new theta
-        lower <- lower[1:nth]
-                                        # adjust the mapping from the
-                                        # new theta to the elements of
-                                        # the relative covariance
-                                        # factor, Lambda
-        Lind <- rep(1:nth, length = length(lfHomo$reTrms$Lambdat@x))
-    })
-
-                                        # fit the modified model
-    devf <- do.call(mkLmerDevfun, lfHomo)
-    opt <- optimizeLmer(devf)
-
-                                        # how to process the output?
-    if(!use.mkMerMod) {
-        return(list(lf = lfHomo, devf = devf, opt = opt))
-    } else {
-
-                                        # distinguish between theta
-                                        # with only the unique
-                                        # elements (thetaUnique) and
-                                        # theta with the unique
-                                        # elements repeated over each
-                                        # term (thetaExpand)
-        thetaUnique <- opt$par
-        thetaExpand <- rep(opt$par, n_trms)
-                                        # construct deviance a
-                                        # function for the heterogeneous
-                                        # model...
-        devfHetero <- do.call(mkLmerDevfun, lfHetero)
-                                        # ...and install the expanded
-                                        # covariance parameters from
-                                        # the optimized homogeneous
-                                        # model, into the opt object
-                                        # and the environment of the
-                                        # heterogeneous model deviance
-                                        # function...
-        devfHetero(opt$par <- thetaExpand)
-                                        # ...and creating the final
-                                        # merMod object with identical
-                                        # random effects parameters
-                                        # for both random effects
-                                        # terms
-        mod <- mkMerMod(environment(devfHetero), opt, lfHetero$reTrms, lfHetero$fr)
-
-                                        # extend the glmerMod class
-                                        # and return
-        modList <- setNames(lapply(slotNames(mod), slot, object = mod), slotNames(mod))
-        makeFakeCall <- function() return(match.call()) # hack to keep
-                                                    # "new" from
-                                                    # trying to
-                                                    # evaluate the
-                                                    # call...
-        modList$call <- makeFakeCall()
-        modCallList <- c(list(Class = "homoLmerMod"),
-                         list(thetaUnique = thetaUnique),
-                         modList)
-        modOut <- do.call("new", modCallList)
-                                        # ... complete the "call" hack
-                                        # by putting the real matched
-                                        # call back before returning
-        modOut@call <- mc
-        return(modOut)
-    }
+The main challenge with fitting a zero slope-slope model is the need
+to figure out which Cholesky decompositions correspond to
+variance-covariance matrices with structural zeros between the slopes.
+There are two general approaches to solving this problem.  The first
+is to reorder the rows and columns of the covariance matrix so that
+the intercept column comes last.  In this case, setting the second
+component of the covariance parameter vector, $\bm\theta$, to zero will
+achieve the desired covariance structure.  However, we consider a
+second approach, which retains the ordering produced by the
+\code{lFormula} function: (1) intercept, (2) first slope, and (3)
+second slope. The covariance structure for the random effects in this
+model is given by the following covariance matrix and its associated
+Cholesky decomposition.
+\begin{equation}
+  \label{eq:1}
+  \begin{bmatrix}
+    \sigma_1^2 & \sigma_{12} & \sigma_{13} \\
+    \sigma_{21} & \sigma_2^2 & 0 \\
+    \sigma_{31} & 0 & \sigma_3^2 \\
+  \end{bmatrix} =
+  \begin{bmatrix}
+    \theta_1 & 0 & 0 \\
+    \theta_2 & \theta_4 & 0 \\
+    \theta_3 & \theta_5 & \theta_6 \\
+  \end{bmatrix}
+  \begin{bmatrix}
+    \theta_1 & \theta_2 & \theta_3 \\
+    0 & \theta_4 & \theta_5 \\
+    0 & 0 & \theta_6 \\
+  \end{bmatrix}
+\end{equation}
+where the $\sigma$ parameters give the standard deviations and
+covariances, and the $\theta$ parameters are the elements of the
+Cholesky decomposition.  The key feature of this covariance matrix is
+the structural zero indicating no covariance between the two
+slopes.  Therefore, in order to ensure the structural zero, we must
+have,
+\begin{equation}
+  \label{eq:2}
+  \theta_5 = -\frac{\theta_2\theta_3}{\theta_4}.
+\end{equation}
+To represent this restriction in \proglang{R} we introduce a length
+five vector, \code{phi}, which we convert into an appropriate
+\code{theta} vector using the following function.
+<<phiToTheta, cache = FALSE>>=
+phiToTheta <- function(phi) {
+    theta5 <- -(phi[2]*phi[3])/phi[4]
+    c(phi[1:4], theta5, phi[5])
 }
-@
-
-To fit \code{form} to \code{dat} using a homogeneous covariance model,
-we construct the \code{homoLmer} function, which we describe in
-sections.  To simplify the problem, we only allow the specification of
-three arguments: \code{formula}, \code{data}, and \code{use.mkMerMod}.
-This last argument specifies how to process the fitted model, which we
-discuss below.  All other relevant parameters are set to \code{lmer}
-defaults, unless otherwise noted below.  Here is the argument list for
-\code{homoLmer},
-<<homoLmerArguments, eval=FALSE>>=
-homoLmer <- function(formula, data, use.mkMerMod = FALSE) {}
-@
-After saving the \code{call}, the next step is to parse the formula
-and data using the \code{lFormula} modular function (setting
-\code{REML} to \code{FALSE} for simplicity),
-<<homoLmerMatchCallAndParseFormula, eval=FALSE>>=
-mc <- match.call()
-lfHetero <- lfHomo <- lFormula(formula = formula, data = data, REML = FALSE)
-@
-We then check to make sure that this \code{formula} is a candidate for
-a homogeneous covariance model.  In particular, a homogeneous
-covariance model only makes sense if each random effects term has the
-same number of random effects coefficients,
-<<homoLmerCheck, eval=FALSE>>=
-if(length(pRE <- unique(sapply(cnms <- lfHomo$reTrms$cnms, length))) > 1L) {
-    stop("each random effects term must have the same number\n",
-         "of model matrix columns for a homogeneous structure")
-}
-@
-We save the number of fixed effects coefficients, \code{p}, number of
-covariance parameters per term, \code{nth}, and number random effects
-terms, \code{n_trms},
-<<homoLmerDimensions, eval=FALSE>>=
-p <- ncol(lfHomo$X)
-nth <- choose(pRE + 1, 2)
-n_trms <- length(cnms)
-@ % $
-We now modify the parsed random effects terms to have homogeneous
-covariance structure, which requires three lines.  First, use only the
-first \code{nth} elements of the covariance parameters, \code{theta},
-as these will be repeated to generate common covariance structure
-across random effects terms.  Second, match the lower bounds of the
-covariance parameters to the new \code{theta}.  Third, adjust the
-mapping from the new \code{theta} to the nonzero elements of the
-transposed relative covariance factor, \code{Lambdat}.
-<<homoLmerAdjust, eval=FALSE>>=
-lfHomo$reTrms <- within(lfHomo$reTrms, {
-    theta <- theta[1:nth]
-    lower <- lower[1:nth]
-    Lind <- rep(1:nth, length = length(lfHomo$reTrms$Lambdat@x))
-})
-@
-Then we construct and minimize a deviance function for the homogeneous
-model,
-<<homoLmerFitModifiedModel, eval=FALSE>>=
-devf <- do.call(mkLmerDevfun, lfHomo)
-opt <- optimizeLmer(devf)
-@
-The object \code{opt} contains the optimized values of the homogeneous
-covariance parameters.  However, in order to interpret and make
-inferences about this model, we need to do more work.  We highlight
-two general approaches to doing this, which in this example are
-selected with the \code{use.mkMerMod} logical argument.  If
-\code{use.mkMerMod} is set to \code{FALSE}, then the parsed data and
-formula object, \code{lfHomo}, deviance function, \code{devf}, and
-optimization results, \code{opt}, are returned,
-<<homoLmerReturnRaw, eval=FALSE>>=
-if(!use.mkMerMod) {
-    return(list(lf = lfHomo, devf = devf, opt = opt))
-}
-@
-This option means that the convenience functions of the \code{lme4}
-output module (Section~\ref{sec:mkMerMod}) are not available because the resulting
-object is not a \code{merMod} object.  However, constructing a
-\code{merMod} object that will be treated appropriately by the
-convenience functions of the output module is rather difficult, and
-sometimes impossible, and should therefore always be done with
-caution.  In particular, \code{mkMerMod} should be used to work with
-specific functions from the output module; users should never
-assume that because some aspects of the output module give appropriate
-results with a \code{merMod} object constructed from a modular fit,
-all aspects will work.  It will sometimes be
-necessary, as we next illustrate, to extend the \code{merMod} class
-and rewrite some methods from the output module that are specialized
-for this new class.
-
-Next we update the unmodified model by capturing the modified model
-estimates of the covariance parameters,
-<<homoLmerReExpandTheta, eval=FALSE>>=
-th <- rep(opt$par, n_trms)
-@
-constructing a deviance function for the unmodified model,
-<<unmodDevfun, eval=FALSE>>=
-devf0 <- do.call(mkLmerDevfun, lfHetero)
-@
-and installing the parameters in the environment of the unmodified
-deviance function,
-<<installDevfun, eval=FALSE>>=
-devf0(opt$par <- th)
-@
-
-Finally, we need to extend the \code{merMod} class,
-<<extendMerMod>>=
-setClass("homoLmerMod", representation(thetaUnique = "numeric"),
-         contains = "lmerMod")
-@
-and redefine some methods for this extension,
-<<redefineOutputModuleMethods>>=
-logLik.homoLmerMod <- function(object, ...) {
-    ll <- lme4:::logLik.merMod(object, ...)
-    attr(ll, "df") <- length(object@beta) +
-        length(object@thetaUnique) +
-            object@devcomp[["dims"]][["useSc"]]
-    return(ll)
-}
-refitML.homoLmerMod <- function(object, newresp, ...) {
-    if(!isREML(object) && missing(newresp)) return(object)
-    stop("can't refit homoLmerMod objects yet")
-}
-@
-<<homoLmerFit>>=
-mod <- homoLmer(form, dat, use.mkMerMod = TRUE)
-summary(mod)
-@
-
-\subsection{Homogeneous variance over all random effects}
-\label{sec:homoVar}
-
-We modify the \code{sleepstudy} example,
-<<homoParse>>=
-parsedFormula <- lFormula(formula = Reaction ~ Days + (Days | Subject),
-                          data = sleepstudy)
-@
-such that the random slope and intercept are uncorrelated and have
-identical variance (because the slope and intercept have different
-units, this example is not entirely sensible --- it is offered for
-technical illustration only).  The \code{reTrms} component of
-\code{parsedFormula} contains the relevant information, and can be
-modified using the \code{within} function by (1) altering the mapping
-(\code{Lind}) from \code{theta} to the non-zero elements of
-\code{Lambda}, and force a diagonal \code{Lambda},
-<<homoWithin>>=
-parsedFormula$reTrms <- within(parsedFormula$reTrms, {
-    q <- nrow(Lambdat)
-    Lind <- rep(1, q)
-    Lambdat <- sparseMatrix(1:q, 1:q, x = Lind)
-    theta <- 1
-})
-@
-We fit this modified model using the modularised functions,
-<<homoFitting>>=
-devianceFunction <- do.call(mkLmerDevfun, parsedFormula)
-optimizerOutput <- optimizeLmer(devianceFunction)
-@
-Because \code{lme4} is not designed for post-processing of such
-models, \code{mkMerMod} cannot be expected to give sensible results.
-To illustrate this point, we use it anyway and point out where it
-makes mistakes,
-<<homoMkMerMod>>=
-mkMerMod(   rho = environment(devianceFunction),
-            opt = optimizerOutput,
-         reTrms = parsedFormula$reTrms,
-             fr = parsedFormula$fr)
-@
-Note that \code{mkMerMod} is attempting to estimate a correlation
-between the slope and intercept, which makes no sense within the
-current model.  When using modular functions, the user is responsible
-for producing interpretable output.  For example, to find the residual
-and random-effects standard deviation, we may use,
-<<homoModifiedProcessing>>=
-with(environment(devianceFunction), {
-    n <- length(resp$y)
-    p <- length(pp$beta0)
-    pwrss <- resp$wrss() + pp$sqrL(1)
-    sig <- sqrt(pwrss/(n-p))
-    c(Residual = sig, Subject = sig*pp$theta)
-})
-@
-Note that the random effects variance requires no matrix algebra in
-this case because the covariance matrix of the random effects is
-proportional to the identity matrix
+@ %
+We may therefore optimize the structured model by optimizing over
+\code{phi} instead of \code{theta}.  We begin to construct an
+appropriate objective function for such an optimization by taking the
+first two modular steps, resulting in a deviance function of
+\code{theta}.
+<<compute deviance function modular, cache = FALSE>>=
+lf <- lFormula(formula = form, data = dat, REML = TRUE)
+devf <- do.call(mkLmerDevfun, lf)
+@ %
+This deviance function is a function of the unconstrained \code{theta}
+vector, but we require a deviance function of the constrained
+\code{phi} vector.  We therefore construct a wrapper around the
+deviance function as follows.
+<<wrapper modular, cache = FALSE>>=
+devfWrap <- function(phi) devf(phiToTheta(phi))
+@ %
+Finally, we optimize the deviance function,
+<<opt modular, cache = FALSE>>=
+opt <- bobyqa(par = lf$reTrms$theta[-5],
+  fn = devfWrap,
+  lower = lf$reTrms$lower[-5])
+@ %
+To extract and label the estimated covariance matrix of the random
+effects, we may use the conversion functions (\code{?vcconv}) and the
+column names of the random-effects model matrix (\code{cnms}).  We
+construct this estimated matrix and compare it with the true matrix
+used to simulate the data.
+<<varCorr modular, cache = FALSE>>=
+vcEst <- vec2mlist(Cv_to_Vv(phiToTheta(opt$par)))[[1]]
+dimnames(vcEst) <- rep(lf$reTrms$cnms, 2)
+round(vcEst, 2)
+vc
+@ %
+We see that the estimated covariance matrix provides a good estimate
+of the true matrix.
 
 \subsection{Additive models}
 \label{sec:additive}
