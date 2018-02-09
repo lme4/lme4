@@ -298,7 +298,7 @@ mkdevfun <- function(rho, nAGQ=1L, maxit=100L, verbose=0, control=list()) {
 	pwrssUpdate <- ## <-- even though it's a function below
 	GQmat <- nlmerAGQ <- NULL
 
-    ## The deviance function (to be returned):
+    ## The deviance function (to be returned, with 'rho' as its environment):
     ff <-
     if (is(rho$resp, "lmerResp")) {
 	rho$lmer_Deviance <- lmer_Deviance

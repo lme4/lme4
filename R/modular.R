@@ -514,9 +514,13 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL,
     ## consequence of this double duty is that it is impossible to fit
     ## a model with no fixed effects using REML (MM: ==> FIXME)
     ## devfun <- mkdevfun(rho, 0L, verbose=verbose, control=control)
+
+    ## prevent R CMD check false pos. warnings (in this function only):
+    pp <- resp <- NULL
     rho$lmer_Deviance <- lmer_Deviance
     devfun <- function(theta)
         .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))
+    environment(devfun) <- rho
 
     # if all random effects are of the form 1|f and starting values not
     # otherwise provided (and response variable is present, i.e. not doing
@@ -712,8 +716,8 @@ glFormula <- function(formula, data=NULL, family = gaussian,
 
 ##' @rdname modular
 ##' @export
-mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L, maxit = 100L,
-                          control=glmerControl(), ...) {
+mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L,
+                          maxit = 100L, control = glmerControl(), ...) {
     stopifnot(length(nAGQ <- as.integer(nAGQ)) == 1L,
               0L <= nAGQ, nAGQ <= 25L)
     verbose <- as.integer(verbose)

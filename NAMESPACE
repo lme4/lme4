@@ -121,6 +121,8 @@ export(refitML)
 export(rePos)
 export(REMLcrit)
 if(getRversion() >= "3.3.0") {
+    if(getRversion() >= "3.5.0")
+        importFrom("utils", warnErrList)
     importFrom("stats", sigma)
 } else {
     export(sigma)
@@ -168,7 +170,7 @@ S3method(df.residual,merMod)
 S3method(dotplot,coef.mer)
 S3method(dotplot,ranef.mer)
 ## helpful to allow direct access for glmmTMB
-export(dotplot.ranef.mer) 
+export(dotplot.ranef.mer)
 S3method(drop1,merMod)
 S3method(extractAIC,merMod)
 S3method(family,glmResp)
