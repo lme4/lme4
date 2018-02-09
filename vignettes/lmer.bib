@@ -2,72 +2,79 @@
 %% http://bibdesk.sourceforge.net/
 
 
-%% Created for Steven Walker at 2014-02-14 16:07:20 -0500 
+%% Created for Steven Walker at 2014-02-14 16:07:20 -0500
 
 
-%% Saved with string encoding Unicode (UTF-8) 
+%% Saved with string encoding Unicode (UTF-8)
 
 
 
 @InCollection{Chambers:1993,
   author = 	 {John M. Chambers},
   title = 	 {Linear Models},
-  booktitle = 	 {Statistical Models in S},
+  booktitle = 	 {Statistical Models in \proglang{S}},
   publisher =	 {Chapman \& Hall},
   year =	 1993,
   editor = 	 {John M. Chambers and Trevor J. Hastie},
-  chapter =	 {4},
-pages = {95--144}}
+  chapter =	 4,
+  pages = {95--144},
+}
 
-                  
 @book{Rauden:Bryk:2002,
 	Author = {Stephen W. Raudenbush and Anthony S. Bryk},
 	Edition = {2nd},
 	Isbn = {0-7619-1904-X},
 	Publisher = {Sage},
 	Title = {Hierarchical Linear Models: Applications and Data Analysis Methods},
-	Year = 2002}
+	Year = 2002
+}
 
 @book{MLwiNUser:2000,
 	Address = {London},
 	Author = {J. Rasbash and W. Browne and H. Goldstein and M. Yang and I. Plewis},
 	Publisher = {Multilevel Models Project, Institute of Education, University of London},
-	Title = {A User's Guide to {MLwiN}},
+	Title = {A User's Guide to \pkg{MLwiN}},
 	Year = 2000}
 
-@book{davis06:csparse_book,
-	Address = {Philadelphia, PA},
-	Author = {Tim Davis},
-	Publisher = {SIAM},
-	Title = {Direct Methods for Sparse Linear Systems},
-	Year = 2006}
+                  @Book{davis06:csparse_book,
+  address =	 {Philadelphia, PA},
+  author =	 {Tim Davis},
+  publisher =	 {SIAM},
+  title =	 {Direct Methods for Sparse Linear Systems},
+  year =	 2006,
+  doi =		 {10.1137/1.9780898718881},
+}
 
-@article{laird_ware_1982,
-	Author = {Nan M. Laird and James H. Ware},
-	Journal = {Biometrics},
-	Pages = {963--974},
-	Title = {Random-Effects Models for Longitudinal Data},
-	Volume = 38,
-	Year = 1982}
+@Article{laird_ware_1982,
+  author =	 {Nan M. Laird and James H. Ware},
+  journal =	 {Biometrics},
+  pages =	 {963--974},
+  title =	 {Random-Effects Models for Longitudinal Data},
+  volume =	 38,
+  number =	 4,
+  year =	 1982,
+  doi =		 {10.2307/2529876},
+}
 
-@book{bateswatts88:_nonlin,
-	Address = {Hoboken, NJ},
-	Author = {Douglas M. Bates and Donald G. Watts},
-	Isbn = {0-471-81643-4},
-	Publisher = {Wiley},
-	Title = {Nonlinear Regression Analysis and Its Applications},
-	Year = 1988}
+@Book{bateswatts88:_nonlin,
+  address =	 {Hoboken, NJ},
+  author =	 {Douglas M. Bates and Donald G. Watts},
+  publisher =	 {John Wiley \& Sons},
+  title =	 {Nonlinear Regression Analysis and Its Applications},
+  year =	 1988,
+  doi =		 {10.1002/9780470316757},
+}
 
 @book{R:Pinheiro+Bates:2000,
-	Abstract = {A comprehensive guide to the use of the `nlme' package
+  Author =	 {Jose C. Pinheiro and Douglas M. Bates},
+  Title =	 {Mixed-Effects Models in \proglang{S} and \proglang{S-PLUS}},
+  Year =	 2000,
+  Orderinfo =	 {springer.txt},
+  ISBN =	 {0-387-98957-0},
+  Publisher =	 {Springer-Verlag},
+  Abstract =	 {A comprehensive guide to the use of the `nlme' package
                   for linear and nonlinear mixed-effects models.},
-	Author = {Jose C. Pinheiro and Douglas M. Bates},
-	Isbn = {0-387-98957-0},
-	Orderinfo = {springer.txt},
-	Publisher = {Springer},
-	Publisherurl = {http://www.springeronline.com/sgw/cda/frontpage/0,11855,4-10129-22-2102822-0,00.html?changeHeader=true},
-	Title = {Mixed-Effects Models in {S} and {S-Plus}},
-	Year = 2000}
+}
 
 @article{bates04:_linear,
 	Author = {Douglas M. Bates and Saikat DebRoy},
@@ -75,19 +82,20 @@ pages = {95--144}}
 	doi = {10.1016/j.jmva.2004.04.013},
 	Number = 1,
 	Pages = {1--17},
-	Title = {Linear mixed models and penalized least squares},
+	Title = {Linear Mixed Models and Penalized Least Squares},
 	Volume = 91,
 	Year = 2004}
 
 @article{gelman2005analysis,
-  title={Analysis of variance --- why it is more important than ever},
-  author={Gelman, Andrew},
-  journal={The Annals of Statistics},
-  volume={33},
-  number={1},
-  pages={1--53},
-  year={2005},
-  publisher={Institute of Mathematical Statistics}
+  title = {Analysis of Variance --- Why it is More Important than Ever},
+  author = {Gelman, Andrew},
+  journal = {The Annals of Statistics},
+  volume = 33,
+  number = 1,
+  pages = {1--53},
+  year = 2005,
+  doi = {10.1214/009053604000001048},
+  publisher =	 {Institute of Mathematical Statistics}
 }
 
 @ARTICLE{1977EfronAndMorris,
@@ -104,126 +112,130 @@ pages = {95--144}}
 }
 
 @article{henderson_1982,
-	Abstract = {The model generally considered in analysis of covariance has all levels of classification factors and interactions fixed, and also covariate regression coefficients fixed. Mixed models are more appropriate in most applications. A summary of estimation and hypothesis testing for analysis of covariance in the mixed model, including the case of random regression coefficients, is presented. Higher-level covariate regressions (i.e., regressions in which, for all levels of a factor or interaction, all observations on the same level have a common covariate value) are discussed. Nonestimability problems that result from defining such covariates at the levels of fixed effects are illustrated. The case of nonhomogeneous covariate regressions in the mixed model is considered in the context of interpreting predicted future differences among levels of a given factor or interaction. Nonhomogeneous regressions complicate interpretations only when they are associated with the contrast(s) of interest among fixed effects in the model. The question of whether the regressions are homogeneous is itself often of substantive interest. Different random regression coefficients associated with the levels of a random effect are also examined.},
-	Author = {Henderson, Jr., Charles R.},
-	Copyright = {Copyright {\copyright} 1982 International Biometric Society},
-	Issn = {0006341X},
-	Journal = {Biometrics},
-	Jstor_Articletype = {research-article},
-	Jstor_Formatteddate = {Sep., 1982},
-	Jstor_Issuetitle = {Special Issue: Analysis of Covariance},
-	Language = {English},
-	Number = {3},
-	Pages = {623--640},
-	Publisher = {International Biometric Society},
-	Title = {Analysis of Covariance in the Mixed Model: Higher-Level, Nonhomogeneous, and Random Regressions},
-	Url = {http://www.jstor.org/stable/2530044},
-	Volume = {38},
-	Year = {1982},
-	Bdsk-Url-1 = {http://www.jstor.org/stable/2530044}}
+  author =	 {Charles R. {Henderson Jr.}},
+  Title =	 {Analysis of Covariance in the Mixed Model: Higher-Level,
+                  Nonhomogeneous, and Random Regressions},
+  Journal =	 {Biometrics},
+  Year =	 1982,
+  Volume =	 38,
+  Number =	 3,
+  Pages =	 {623--640},
+  Language =	 {English},
+  Publisher =	 {International Biometric Society},
+  Url =		 {http://www.jstor.org/stable/2530044},
+}
 
 @article{golub_pereyra_1973,
-	Abstract = {For given data (ti, yi), i = 1, ⋯, m, we consider the least squares fit of nonlinear models of the form $\eta(\mathbf{a, \alpha};t) = \sum^n_{j = 1} a_j \varphi_j(\mathbf{\alpha};t),\quad \mathbf{a} \in \mathscr{R}^n, \mathbf{\alpha} \in \mathscr{R}^k.$ For this purpose we study the minimization of the nonlinear functional r(a, α) = ∑m i = 1 (yi - η(a, α, ti))2. It is shown that by defining the matrix {Φ(α)}i,j = φj(α; ti), and the modified functional r2(α) = |y - Φ(α)Φ+ (α)y|2 2, it is possible to optimize first with respect to the parameters α, and then to obtain, a posteriori, the optimal parameters $\hat{\mathbf{a}}$ . The matrix Φ+(α) is the Moore-Penrose generalized inverse of Φ(α). We develop formulas for the Frechet derivative of orthogonal projectors associated with Φ(α) and also for Φ+(α), under the hypothesis that Φ(α) is of constant (though not necessarily full) rank. Detailed algorithms are presented which make extensive use of well-known reliable linear least squares techniques, and numerical results and comparisons are given. These results are generalizations of those of H. D. Scolnik [20] and Guttman, Pereyra and Scolnik [9].},
-	Author = {Golub, G. H. and Pereyra, V.},
-	Copyright = {Copyright {\copyright} 1973 Society for Industrial and Applied Mathematics},
-	Issn = {00361429},
-	Journal = {SIAM Journal on Numerical Analysis},
-	Jstor_Articletype = {research-article},
-	Jstor_Formatteddate = {Apr., 1973},
-	Language = {English},
-	Number = {2},
-	Pages = {pp. 413-432},
-	Publisher = {Society for Industrial and Applied Mathematics},
-	Title = {The Differentiation of Pseudo-Inverses and Nonlinear Least Squares Problems Whose Variables Separate},
-	Url = {http://www.jstor.org/stable/2156365},
-	Volume = {10},
-	Year = {1973},
-	Bdsk-Url-1 = {http://www.jstor.org/stable/2156365}}
+  Author =	 {Golub, G. H. and Pereyra, V.},
+  Title =	 {The Differentiation of Pseudo-Inverses and Nonlinear
+                  Least Squares Problems Whose Variables Separate},
+  Year =	 1973,
+  Journal =	 {SIAM Journal on Numerical Analysis},
+  Volume =	 10,
+  Number =	 2,
+  Pages =	 {413--432},
+  doi =		 {10.1137/0710036},
+}
 
 @article{sleepstudy,
 	Author = {Gregory Belenky and Nancy J. Wesensten and David R. Thorne and Maria L. Thomas and Helen C. Sing and Daniel P. Redmond and Michael B. Russo and Thomas J. Balkin},
 	Date-Modified = {2014-02-14 21:07:17 +0000},
 	Journal = {Journal of Sleep Research},
-	Pages = {pp. 1-12},
-	Title = {Patterns of performance degradation and restoration during sleep restriction and subsequent recovery: a sleep dose-response study},
-	Volume = {12},
-	Year = {2003}}
+	Pages = {1--12},
+	Title = {Patterns of Performance Degradation and Restoration During Sleep Restriction and Subsequent Recovery: A Sleep Dose-Response Study},
+	Volume = 12,
+	Year = 2003,
+ doi = {10.1046/j.1365-2869.2003.00337.x},
+}
 
 @article{Chen:2008:ACS:1391989.1391995,
  author = {Chen, Yanqing and Davis, Timothy A. and Hager, William W. and Rajamanickam, Sivasankaran},
  title = {Algorithm 887: CHOLMOD, Supernodal Sparse Cholesky Factorization and Update/Downdate},
  journal = {ACM Trans. Math. Softw.},
- issue_date = {October 2008},
- volume = {35},
- number = {3},
+ year = 2008,
+ volume = 35,
+ number = 3,
  month = oct,
- year = {2008},
  issn = {0098-3500},
  pages = {22:1--22:14},
- articleno = {22},
- numpages = {14},
- url = {http://doi.acm.org/10.1145/1391989.1391995},
+ articleno = 22,
  doi = {10.1145/1391989.1391995},
- acmid = {1391995},
  publisher = {ACM},
  address = {New York, NY, USA},
  keywords = {Cholesky factorization, linear equations, sparse matrices},
-} 
+}
 
 
 @article{kenward_small_1997,
-	title = {Small sample inference for fixed effects from restricted maximum likelihood},
-	volume = {53},
-	abstract = {Restricted maximum likelihood {(REML)} is now well established as a method for estimating the parameters of the general Gaussian linear model with a structured covariance matrix, in particular for mixed linear models. Conventionally, estimates of precision and inference for fixed effects are based on their asymptotic distribution, which is known to be inadequate for some small-sample problems. In this paper, we present a scaled Wald statistic, together with an F approximation to its sampling distribution, that is shown to perform well in a range of small sample settings. The statistic uses an adjusted estimator of the covariance matrix that has reduced small sample bias. This approach has the advantage that it reproduces both the statistics and F distributions in those settings where the latter is exact, namely for Hotelling T\${\textasciicircum}2\$ type statistics and for analysis of variance F-ratios. The performance of the modified statistics is assessed through simulation studies of four different {REML} analyses and the methods are illustrated using three examples.},
-	number = {3},
-	journal = {Biometrics},
 	author = {M. G Kenward and J. H Roger},
+	title = {Small Sample Inference for Fixed Effects from Restricted
+                  Maximum Likelihood},
 	year = {1997},
-	pages = {983--997}
+	journal = {Biometrics},
+	volume = {53},
+	number = {3},
+	pages = {983--997},
+	abstract = {Restricted maximum likelihood {(REML)} is now well established as a method for estimating the parameters of the general Gaussian linear model with a structured covariance matrix, in particular for mixed linear models. Conventionally, estimates of precision and inference for fixed effects are based on their asymptotic distribution, which is known to be inadequate for some small-sample problems. In this paper, we present a scaled Wald statistic, together with an F approximation to its sampling distribution, that is shown to perform well in a range of small sample settings. The statistic uses an adjusted estimator of the covariance matrix that has reduced small sample bias. This approach has the advantage that it reproduces both the statistics and F distributions in those settings where the latter is exact, namely for Hotelling T\${\textasciicircum}2\$ type statistics and for analysis of variance F-ratios. The performance of the modified statistics is assessed through simulation studies of four different {REML} analyses and the methods are illustrated using three examples.},
+  doi =		 {10.2307/2533558},
 }
 
 @Article{Satterthwaite_1946,
   author = 	 {F. E. Satterthwaite},
   title = 	 {An Approximate Distribution of Estimates of Variance Components},
   journal = 	 {Biometrics Bulletin},
-  year = 	 {1946},
-  volume =	 {2},
-  number =	 {6},
-  pages =	 {110-114}
+  year = 	 1946,
+  volume =	 2,
+  number =	 6,
+  pages =	 {110-114},
+ doi =		 {10.2307/3002019},
+
 }
 
 @Manual{gamm4,
-    title = {gamm4: Generalized additive mixed models using mgcv and lme4},
-    author = {Simon Wood and Fabian Scheipl},
-    year = {2013},
-    note = {R package version 0.2-2},
-    url = {http://CRAN.R-project.org/package=gamm4},
-  }
+  title =	 {\pkg{gamm4}: Generalized Additive Mixed Models Using
+                  \pkg{mgcv} and \pkg{lme4}},
+  author =	 {Simon Wood and Fabian Scheipl},
+  year =	 2014,
+  note =	 {\proglang{R} package version 0.2-3},
+  url =		 {http://CRAN.R-project.org/package=gamm4},
+}
 
 @Manual{blme,
-    title = {blme: {Bayesian} Linear Mixed-Effects Models},
+    title = {\pkg{blme}: {Bayesian} Linear Mixed-Effects Models},
     author = {Vincent Dorie},
-    year = {2013},
-    note = {R package version 1.0-1},
+    year = 2015,
+    note = {R package version 1.0-4},
     url = {http://CRAN.R-project.org/package=blme},
   }
 
-@article{doran2007estimating,
-  title={Estimating the multilevel {Rasch} model: With the lme4 package},
-  author={Doran, Harold and Bates, Douglas and Bliese, Paul and Dowling, Maritza},
-  journal={Journal of Statistical Software},
-  volume={20},
-  number={2},
-  pages={1--18},
-  year={2007},
-  publisher={American Statistical Association}
+@Article{blme2,
+  title =	 {A Nondegenerate Penalized Likelihood Estimator for
+                  Variance Parameters in Multilevel Models},
+  author =	 {Yeojin Chung and Sophia Rabe-Hesketh and Vincent
+                  Dorie and Andrew Gelman and Jingchen Liu},
+  year =	 2013,
+  journal =	 {Psychometrika},
+  volume =	 78,
+  number =	 4,
+  pages =	 {685--709},
 }
 
+@article{doran2007estimating,
+  author={Doran, Harold and Bates, Douglas and Bliese, Paul and Dowling, Maritza},
+  title={Estimating the Multilevel {Rasch} Model: With the \pkg{lme4} Package},
+  year=2007,
+  journal={Journal of Statistical Software},
+  volume=20,
+  number=2,
+  pages={1--18},
+  doi =		 {10.18637/jss.v020.i02},
+  publisher={American Statistical Association},
+}
 
 
 @TechReport{Powell_bobyqa,
   author = 	 {M. J. D. Powell},
-  title = 	 {The {BOBYQA} algorithm for bound constrained optimization without derivatives},
+  title = 	 {The {BOBYQA} Algorithm for Bound Constrained Optimization without Derivatives},
   institution =  {Centre for Mathematical Sciences, University of Cambridge},
   year = 	 {2009},
   number =	 {DAMTP 2009/NA06},
@@ -233,7 +245,7 @@ pages = {95--144}}
 
 
 @article{pinheiro_unconstrained_1996,
-	title = {Unconstrained parametrizations for variance-covariance matrices},
+	title = {Unconstrained Parametrizations for Variance-Covariance Matrices},
 	volume = {6},
 	doi = {10.1007/BF00140873},
 	abstract = {The estimation of variance-covariance matrices through optimization of an objective function, such as a log-likelihood function, is usually a difficult numerical problem. Since the estimates should be positive semi-definite matrices, we must use constrained optimization, or employ a parametrization that enforces this condition. We describe here five different parametrizations for variance-covariance matrices that ensure positive definiteness, thus leaving the estimation problem unconstrained. We compare the parametrizations based on their computational efficiency and statistical interpretability. The results described here are particularly useful in maximum likelihood and restricted maximum likelihood estimation in linear and non-linear mixed-effects models, but are also applicable to other areas of statistics.},
@@ -246,18 +258,18 @@ pages = {95--144}}
 }
 
 @article{bolker_strategies_2013,
-	title = {Strategies for fitting nonlinear ecological models in {R}, {AD} {Model} {Builder}, and {BUGS}},
-	volume = {4},
-	issn = {{2041210X}},
-	url = {http://doi.wiley.com/10.1111/2041-210X.12044},
+  title =	 {Strategies for Fitting Nonlinear Ecological Models
+                  in \proglang{R}, \pkg{AD Model Builder}, and
+                  \proglang{BUGS}},
+	volume = 4,
 	doi = {10.1111/2041-210X.12044},
-	number = {6},
+	number = 6,
 	urldate = {2013-06-11},
 	journal = {Methods in Ecology and Evolution},
 	author = {Bolker, Benjamin M. and Gardner, Beth and Maunder, Mark and Berg, Casper W. and Brooks, Mollie and Comita, Liza and Crone, Elizabeth and Cubaynes, Sarah and Davies, Trevor and de Valpine, Perry and Ford, Jessica and Gimenez, Olivier and Kéry, Marc and Kim, Eun Jung and Lennert-Cody, Cleridy and Magnusson, Arni and Martell, Steve and Nash, John and Nielsen, Anders and Regetz, Jim and Skaug, Hans and Zipkin, Elise},
 	editor = {Ramula, Satu},
 	month = jun,
-	year = {2013},
+	year = 2013,
 	pages = {501--512},
         pdf={bbpapers/bolker_strategies_2013.pdf}
 }
@@ -267,13 +279,13 @@ pages = {95--144}}
   author = 	 {Kyle Klein and Julian Neira},
   title = 	 {{Nelder-Mead} Simplex Optimization Routine for Large-Scale Problems: A Distributed Memory Implementation},
   journal = 	 {Computational Economics},
-  year = 	 {2013},
+  year = 	 2013,
 doi =  {10.1007/s10614-013-9377-8}
 }
 
 @Misc{merBoot,
   author =	 {José A. Sánchez-Espigares and Jordi Ocaña},
-  title =	 {An {R} implementation of bootstrap procedures for mixed models},
+  title =	 {An \proglang{R} Implementation of Bootstrap Procedures for Mixed Models},
   howpublished = {Conference presentation, useR!},
   month =	 {July},
   year =	 {2009},
@@ -294,134 +306,213 @@ doi =  {10.1007/s10614-013-9377-8}
 }
 
 @article{khatri1968solutions,
-  title={Solutions to some functional equations and their applications to characterization of probability distributions},
+  title={Solutions to Some Functional Equations and their Applications to Characterization of Probability Distributions},
   author={Khatri, CG and Rao, C Radhakrishna},
-  journal={Sankhy{\=a}: The Indian Journal of Statistics, Series A},
+  journal={Sankhy{\=a}: The Indian Journal of Statistics A},
   pages={167--180},
-  year={1968},
-  publisher={JSTOR}
+  volume =	 30,
+  number =	 2,
+  year =	 1968,
 }
 
 @incollection{zhang2006schur,
    year={2005},
-   booktitle={The Schur Complement and Its Applications},
+   booktitle={The Schur Complement and its Applications},
    volume={4},
    series={Numerical Methods and Algorithms},
    editor={Zhang, Fuzhen},
    title={Basic Properties of the Schur Complement},
-   url={http://dx.doi.org/10.1007/0-387-24273-2_2},
-   publisher={Springer US},
+  doi =		 {10.1007/0-387-24273-2_2},
+   publisher={Springer-Verlag},
    author={Horn, RogerA. and Zhang, Fuzhen},
-   pages={17-46}
+   pages={17--46}
 }
 
 @book{gelman2013bayesian,
-  title={Bayesian data analysis},
+  title={Bayesian Data Analysis},
   author={Gelman, Andrew and Carlin, John B and Stern, Hal S and Dunson, David B and Vehtari, Aki and Rubin, Donald B},
   year={2013},
   publisher={CRC press}
 }
 
 @Manual{Matrix_pkg,
-    title = {Matrix: Sparse and Dense Matrix Classes and Methods},
+    title = {\pkg{Matrix}: Sparse and Dense Matrix Classes and Methods},
     author = {Douglas Bates and Martin Maechler},
-    year = {2014},
-    note = {R package version 1.1-3},
+    year = 2015,
+    note = {\proglang{R} package version 1.2-2},
     url = {http://CRAN.R-project.org/package=Matrix},
   }
 
-  @Manual{minqa_pkg,
-    title = {minqa: Derivative-free optimization algorithms by quadratic
-approximation},
+@Manual{minqa_pkg,
+    title = {\pkg{minqa}: Derivative-Free Optimization Algorithms by
+                  Quadratic Approximation},
     author = {Douglas Bates and Katharine M. Mullen and John C. Nash and Ravi Varadhan},
     year = {2014},
-    note = {R package version 1.2.3},
+    note = {\proglang{R} package version 1.2.4},
     url = {http://CRAN.R-project.org/package=minqa},
   }
 
-  @Article{optimx_pkg,
-    title = {Unifying Optimization Algorithms to Aid Software System Users: {optimx} for {R}},
+@Article{optimx_pkg,
     author = {John C. Nash and Ravi Varadhan},
+    title = {Unifying Optimization Algorithms to Aid Software System Users: \pkg{optimx} for \proglang{R}},
     journal = {Journal of Statistical Software},
-    year = {2011},
-    volume = {43},
-    number = {9},
+    year = 2011,
+    volume = 43,
+    number = 9,
     pages = {1--14},
+    doi = {10.18637/jss.v043.i09},
     url = {http://www.jstatsoft.org/v43/i09/},
   }
 
 
 @Misc{NLopt,
   author =	 {Steven G. Johnson},
-  title =	 {The \code{NLopt} nonlinear-optimization package},
+  title =	 {The \pkg{NLopt} Nonlinear-Optimization Package},
   year = {2014},
   url = {http://ab-initio.mit.edu/nlopt}
 }
 
-  @Manual{nlme_pkg,
-    title = {{nlme}: Linear and Nonlinear Mixed Effects Models},
-    author = {Jose Pinheiro and Douglas Bates and Saikat DebRoy and Deepayan Sarkar and {R Core Team}},
-    year = {2014},
-    note = {R package version 3.1-117},
-    url = {http://CRAN.R-project.org/package=nlme},
-  }
+@Manual{nlme_pkg,
+  title =	 {\pkg{nlme}: Linear and Nonlinear Mixed Effects Models},
+  author =	 {Jose Pinheiro and Douglas Bates and Saikat DebRoy and
+                  Deepayan Sarkar and {\proglang{R} Core Team}},
+  year =	 2014,
+  note =	 {\proglang{R} package version 3.1-117},
+  url =		 {http://CRAN.R-project.org/package=nlme},
+}
 
-
-
-  @Article{HLMdiag_pkg,
-    title = {{HLMdiag}: A Suite of Diagnostics for Hierarchical Linear Models in {R}},
+@Article{HLMdiag_pkg,
+    title = {\pkg{HLMdiag}: A Suite of Diagnostics for Hierarchical Linear Models in \proglang{R}},
     author = {Adam Loy and Heike Hofmann},
     journal = {Journal of Statistical Software},
-    year = {2014},
-    volume = {56},
-    number = {5},
+    year = 2014,
+    volume = 56,
+    number = 5,
     pages = {1--28},
+    doi = {10.18637/jss.v056.i05},
     url = {http://www.jstatsoft.org/v56/i05/},
-  }
+}
 
-  @Article{influenceME_pkg,
-    title = {Influence.ME: Tools for Detecting Influential Data in Mixed Effects Models},
+@Article{influenceME_pkg,
+    title = {\proglang{Influence.ME}: Tools for Detecting Influential Data in Mixed Effects Models},
     author = {Rense Nieuwenhuis and Manfred {Te Grotenhuis} and Ben Pelzer},
-    year = {2012},
+    year = 2012,
     journal = {R Journal},
-    volume = {4},
-    number = {2},
+    volume = 4,
+    number = 2,
     pages = {38-47},
   }
 
 
 @Manual{boot_pkg,
-  author = {  Angelo Canty and Brian Ripley},
-   year = 2013,
-   title = { boot: Bootstrap R (S-Plus) Functions},
-    note = {R package version 1.3-9},
+  author = {Angelo Canty and Brian Ripley},
+   year = 2015,
+   title = { \pkg{boot}: Bootstrap \proglang{R} (\proglang{S-PLUS}) Functions},
+    note = {\proglang{R} package version 1.3-17},
     url = {http://CRAN.R-project.org/package=boot}
 }
 
 
-  @Book{DavisonHinkley1997,
+@Book{DavisonHinkley1997,
   author = 	 {A. C. Davison and D. V. Hinkley},
-  title = 	 { Bootstrap Methods and Their Applications},
+  title = 	 {Bootstrap Methods and Their Applications},
+  year = 	 1997,
   publisher = 	 {Cambridge University Press},
-  year = 	 {1997},
   ISBN = {0-521-57391-2},
   address = {Cambridge, England}
 }
-  
+
 @article{vaida2005conditional,
-  title={Conditional Akaike information for mixed-effects models},
+  title={Conditional Akaike Information for Mixed-Effects Models},
   author={Vaida, Florin and Blanchard, Suzette},
   journal={Biometrika},
   volume={92},
   number={2},
   pages={351--370},
   year={2005},
+  doi =		 {10.1093/biomet/92.2.351},
   publisher={Biometrika Trust}
 }
 
 @book{cook1982residuals,
-  title={Residuals and influence in regression},
+  title={Residuals and Influence in Regression},
   author={Cook, R Dennis and Weisberg, Sanford},
   year={1982},
   publisher={New York: Chapman and Hall}
+}
+
+@comment -------- Software manuals, mostly R and R packages ---------
+
+
+@Manual{lme4,
+  title =	 {\pkg{lme4}: Linear Mixed-Effects Models Using
+                  \pkg{Eigen} and \proglang{S}4},
+  author =	 {Douglas Bates and Martin Maechler and Ben Bolker and
+                  Steven Walker},
+  year =	 2014,
+  note =	 {\proglang{R} package version 1.1-7},
+  url =		 {http://CRAN.R-project.org/package=lme4},
+}
+
+@Manual{R,
+  title =	 {\proglang{R}: A Language and Environment for
+                  Statistical Computing},
+  author =	 {{\proglang{R} Core Team}},
+  organization = {\proglang{R} Foundation for Statistical Computing},
+  address =	 {Vienna, Austria},
+  year =	 2015,
+  url =		 {http://www.R-project.org/},
+}
+
+@Unpublished{Julia,
+  title =	 {\proglang{Julia}: A Fast Dynamic Language for
+                  Technical Computing},
+  author =	 {Jeff Bezanson and Stefan Karpinski and Viral B. Shah
+                  and Alan Edelman},
+  year =	 2012,
+  url =		 {http://arxiv.org/abs/1209.5145},
+  note =	 {{arXiv}:1209.5145 [cs.PL]},
+}
+
+@Manual{MixedModels,
+  title =	 {\pkg{MixedModels}: A \proglang{Julia} Package for
+                  Fitting (Statistical) Mixed-Effects Models},
+  author =	 {Douglas Bates},
+  year =	 2015,
+  note =	 {\proglang{Julia} package version 0.3-22},
+  url =		 {https://github.com/dmbates/MixedModels.jl},
+}
+
+@Manual{lme4pureR,
+  title =	 {\pkg{lme4pureR}: \pkg{lme4} in Pure \proglang{R}},
+  author =	 {Douglas Bates and Steven Walker},
+  year =	 2013,
+  note =	 {\proglang{R} package version 0.1-0},
+  url =		 {https://github.com/lme4/lme4pureR},
+}
+
+@Manual{Eigen,
+  title =	 {\pkg{Eigen}3},
+  author =	 {G Guennebaud and B Jacob and {and others}},
+  year =	 2015,
+  url =		 {http://eigen.tuxfamily.org/},
+}
+
+@Manual{SuiteSparse,
+  title =	 {\pkg{SuiteSparse}: A Suite of Sparse Matrix
+                  Software},
+  author =	 {Timothy A. Davis and others},
+  year =	 2015,
+  note =	 {Version 4.4-5},
+  url =		 {http://www.suitesparse.com/},
+}
+
+@Book{lattice,
+  title =	 {\pkg{lattice}: Multivariate Data Visualization with
+                  \proglang{R}},
+  author =	 {Deepayan Sarkar},
+  publisher =	 {Springer-Verlag},
+  address =	 {New York},
+  year =	 2008,
+  url =		 {http://lmdvr.R-Forge.R-project.org},
 }
