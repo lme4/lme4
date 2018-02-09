@@ -542,7 +542,7 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL,
     ## MM: commenting it did not break any of our checks
     if (length(rho$resp$y) > 0)  ## only if non-trivial y
         devfun(rho$pp$theta) # one evaluation to ensure all values are set
-    rho$lower <- reTrms$lower # SCW:  in order to be more consistent with mkLmerDevfun
+    rho$lower <- reTrms$lower # to be more consistent with mkGlmerDevfun
     devfun # this should pass the rho environment implicitly
 }
 
