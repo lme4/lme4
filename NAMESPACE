@@ -22,6 +22,11 @@ importFrom("stats",
            update, update.formula, var, vcov, weights)
 
 importFrom("utils", flush.console, packageVersion, stack, str)
+if(getRversion() >= "3.5.0") {
+    importFrom("utils", warnErrList)
+} else {
+    importFrom("utils", capture.output) # for "our" warnErrList()
+}
 
 
 ## Recommended packages
@@ -121,8 +126,6 @@ export(refitML)
 export(rePos)
 export(REMLcrit)
 if(getRversion() >= "3.3.0") {
-    if(getRversion() >= "3.5.0")
-        importFrom("utils", warnErrList)
     importFrom("stats", sigma)
 } else {
     export(sigma)
