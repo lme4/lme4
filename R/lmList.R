@@ -43,6 +43,38 @@ dropOffset <- function(form) {
 ## dropOffset(y~-x+offset(stuff))
 ## dropOffset(~-x+offset(stuff))
 
+if(getRversion() < "3.5.0") {
+##' Utility for lmList(), ...: Collect errors from a list \code{x},
+##' produce a "summary warning" and keep that message as "warningMsg" attribute
+warnErrList <- function(x, warn = TRUE) {
+  errs <- vapply(x, inherits, NA, what = "error")
+  if (any(errs)) {
+    v.err <- x[errs]
+    e.call <- paste(deparse(conditionCall(v.err[[1]])), collapse = "\n")
+    tt <- table(vapply(v.err, conditionMessage, ""))
+    msg <-
+      if(length(tt) == 1)
+        sprintf(ngettext(tt[[1]],
+                         "%d error caught in %s: %s",
+                         "%d times caught the same error in %s: %s"),
+                tt[[1]], e.call, names(tt)[[1]])
+      else ## at least two different errors caught
+        paste(gettextf(
+          "%d errors caught in %s.  The error messages and their frequencies are",
+          sum(tt), e.call),
+          paste(capture.output(sort(tt)), collapse="\n"), sep="\n")
+
+    if(warn)
+	warning(msg, call. = FALSE, domain = NA)
+    x[errs] <- list(NULL)
+    attr(x, "warningMsg") <- msg
+  }
+  x
+}
+}# R <= 3.4.x
+
+
+
 ##' @title List of lm Objects with a Common Model
 ##' @param formula a linear formula object of the form
 ##'     \code{y ~ x1+...+xn | g}. In the formula object, \code{y} represents
@@ -58,7 +90,7 @@ dropOffset <- function(form) {
 ##'     model function or family evaluation.
 ##' @export
 lmList <- function(formula, data, family, subset, weights,
-                   na.action, offset, pool = TRUE, ...) {
+                   na.action, offset, pool = TRUE, warn = TRUE, ...) {
     stopifnot(inherits(formula, "formula"))
 
     ## model.frame(groupedData) was problematic ... but not as we
@@ -89,43 +121,43 @@ lmList <- function(formula, data, family, subset, weights,
     data[["(offset)"]] <- model.offset(frm)
     mform <- modelFormula(formula)
     isGLM <- !missing(family) ## TODO in future, consider isNLM / isNLS
-    errorH <- function(e) NULL # => NULL iff an error happened
-    ## FIXME: catch errors and pass them on as warnings?
-    ## (simply passing them along silently gives confusing output)
     groups <- eval(mform$groups, frm)
     if (!is.factor(groups)) groups <- factor(groups)
     fit <- if (isGLM) glm else lm
     mf2 <- if (missing(family)) NULL else list(family=family)
-    fitfun <- function(data,formula) {
+    fitfun <- function(data, formula) {
         tryCatch({
             do.call(fit,c(list(formula, data,
                                weights = model.weights(data),
                                offset = model.offset(data), ...),
                           mf2))
-        }, error=errorH)
+        }, error = function(x) x)
     }
     ## split *original data*, not frm (derived model frame), on groups
     ## we have to do this because we need raw, not derived variables
     ##  when evaluating linear regression
     ## but do need to apply subset
     ## (hope there aren't tricky interactions with NAs in subset ... ??)
-    
+
     if (!missing(subset)) {
-        data <- eval(substitute(data[subset,]),list2env(data))
+        data <- eval(substitute(data[subset,]), list2env(data))
     }
-    
+
     frm.split <- split(data, groups)
     ## NB:  levels() is only  OK if grouping variable is a factor
     nms <- names(frm.split)
     val <- ## mapply(fitfun,
-        lapply(
-            frm.split,fitfun,
-            formula = as.formula(mform$model))
-
-    use <- !sapply(val, is.null)
-    if (nbad <- sum(!use))
-        warning("Fitting failed for ",nbad," group(s), probably because a factor only had one level")
-
+        lapply(frm.split, fitfun, formula = as.formula(mform$model))
+    ## use warnErrList(), but expand msg for back compatibility and user-friendliness:
+    val <- warnErrList(val, warn = FALSE)
+    if(warn && length(wMsg <- attr(val,"warningMsg"))) {
+	if(grepl("contrasts.* factors? .* 2 ", wMsg)){ # try to match translated msg, too
+	    warning("Fitting failed for ", sum(vapply(val, is.null, NA)),
+		    " group(s), probably because a factor only had one level",
+		    sub(".*:", ":\n ", wMsg), domain=NA)
+	} else
+	    warning(wMsg, domain=NA)
+    }
     ## Contrary to nlme, we keep the erronous ones as well
     pool <- !isGLM || .hasScale(family2char(family))
     new("lmList4", setNames(val, nms),

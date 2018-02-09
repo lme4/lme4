@@ -1,14 +1,14 @@
 \name{lmList}
 \alias{lmList}
 \alias{plot.lmList}
-\title{Fit List of lm Objects with a Common Model}
+\title{Fit List of lm or glm Objects with a Common Model}
 \description{
-  Fit a list of \code{\link{lm}} objects with a common model for
-  different subgroups of the data.
+  Fit a list of \code{\link{lm}} or \code{\link{glm}} objects with a
+  common model for different subgroups of the data.
 }
 \usage{
 lmList(formula, data, family, subset, weights, na.action,
-       offset, pool = TRUE, ...)
+       offset, pool = TRUE, warn = TRUE, \dots)
 }
 \arguments{
   \item{formula}{a linear \code{\link{formula}} object of the form
@@ -17,12 +17,8 @@ lmList(formula, data, family, subset, weights, na.action,
     and \code{g} the grouping factor specifying the
     partitioning of the data according to which different
     \code{lm} fits should be performed.}
-  \item{family}{an optional family specification for a
-    generalized linear model.}
-  \item{pool}{logical scalar, should the variance estimate
-    pool the residual sums of squares}
-  \item{...}{additional, optional arguments to be passed to
-    the model function or family evaluation.}
+  \item{family}{an optional \code{\link{family}} specification for a
+    generalized linear model (\code{\link{glm}}).}
   \item{data}{an optional data frame containing the
     variables named in \code{formula}.  By default the
     variables are taken from the environment from which
@@ -49,6 +45,12 @@ lmList(formula, data, family, subset, weights, na.action,
     the formula instead or as well, and if more than one is
     specified their sum is used.  See
     \code{\link{model.offset}}.}
+  \item{pool}{logical scalar, should the variance estimate
+    pool the residual sums of squares}
+  \item{warn}{indicating if errors in the single fits should signal a
+    \dQuote{summary} \code{\link{warning}}.}
+  \item{\dots}{additional, optional arguments to be passed to
+    the model function or family evaluation.}
 }
 \value{an object of \code{\link{class}} \code{\linkS4class{lmList4}} (see
   there, notably for the \code{\link{methods}} defined).
@@ -62,6 +64,15 @@ lmList(formula, data, family, subset, weights, na.action,
       \code{data} is omitted}).  If \code{data} is omitted, variables will
     be taken from the environment of \code{formula} (if specified as a
     formula) or from the parent frame (if specified as a character vector).
+
+    \item Since \pkg{lme4} version 1.1-16, if there are errors (see
+    \code{\link{stop}}) in the single (\code{lm()} or \code{glm()})
+    fits, they are summarized to a warning message which is returned as
+    attribute \code{"warnMessage"} and signalled as \code{\link{warning}()}
+    when the \code{warn} argument is true.
+
+    In previous \pkg{lme4} versions, a general (different) warning had
+    been signalled in this case.
   }
 }
 \examples{
