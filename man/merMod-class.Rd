@@ -45,6 +45,7 @@
 }
 \usage{
 \S3method{anova}{merMod}(object, ..., refit = TRUE, model.names=NULL)
+\S3method{as.function}{merMod}(x, ...)
 \S3method{coef}{merMod}(object, ...)
 \S3method{deviance}{merMod}(object, REML = NULL, ...)
 REMLcrit(object)
@@ -57,7 +58,7 @@ REMLcrit(object)
 \S3method{ngrps}{merMod}(object, ...)
 \S3method{terms}{merMod}(x, fixed.only = TRUE, random.only = FALSE, \dots)
 \S3method{vcov}{merMod}(object, correlation = TRUE, sigm = sigma(object),
-use.hessian = NULL, \dots)
+     use.hessian = NULL, \dots)
 \S3method{model.frame}{merMod}(formula, fixed.only = FALSE, ...)
 \S3method{model.matrix}{merMod}(object, type = c("fixed", "random", "randomListRaw"), ...)
 \S3method{print}{merMod}(x, digits = max(3, getOption("digits") - 3),
@@ -157,11 +158,14 @@ use.hessian = NULL, \dots)
 The following S3 methods with arguments given above exist (this list is currently not complete):
 \describe{
   %% TODO:  document differences between update and update.merMod
-    \item{\code{anova}:}{returns the sequential decomposition of the contributions of
-      fixed-effects terms or, for multiple arguments, model comparison statistics.
-      For objects of class \code{lmerMod} the default behavior is to refit the models
-      with ML if fitted with \code{REML = TRUE}, this can be controlled via the
-      \code{refit} argument. See also \code{\link{anova}}.}
+  \item{\code{anova}:}{returns the sequential decomposition of the contributions of
+    fixed-effects terms or, for multiple arguments, model comparison statistics.
+    For objects of class \code{lmerMod} the default behavior is to refit the models
+    with ML if fitted with \code{REML = TRUE}, this can be controlled via the
+    \code{refit} argument. See also \code{\link{anova}}.}
+  \item{\code{as.function}:}{returns the deviance function, the same as
+    \code{\link{lmer}(*, devFunOnly=TRUE)}, and \code{\link{mkLmerDevfun}()}
+    or \code{\link{mkGlmerDevfun}()}, respectively.}
   \item{\code{coef}:}{Computes the sum of the random and fixed effects
     coefficients for each explanatory variable for each level of each
     grouping factor.}
