@@ -54,6 +54,9 @@ test_that("predict with newdata", {
     p3 <- predict(gm1,newdata, re.form=NA)
     p3R <- predict(gm1,newdata, random.only=TRUE)
     expect_equal(p3+p3R,p2)
+    
+    if (do.plots) matplot(cbind(p2,p3),col=1:2,type="b")
+
 })
 
 test_that("predict on response scale", {
@@ -70,7 +73,6 @@ test_that("predict with newdata and RE", {
     p4 <- predict(gm1,newdata, re.form=~(1|herd))
     expect_equal(p2, p4)
 
-    if (do.plots) matplot(cbind(p2,p3),col=1:2,type="b")
 })
 
 test_that("effects of new RE levels", {
