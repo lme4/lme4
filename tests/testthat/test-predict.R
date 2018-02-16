@@ -64,6 +64,7 @@ test_that("predict on response scale", {
 
 test_that("predict with newdata and RE", {
 
+    newdata <- with(cbpp,expand.grid(period=unique(period),herd=unique(herd)))
     ## explicitly specify RE
     p4 <- predict(gm1,newdata, re.form=~(1|herd))
     expect_equal(p2, p4)
@@ -73,6 +74,7 @@ test_that("predict with newdata and RE", {
 
 test_that("effects of new RE levels", {
     
+    newdata <- with(cbpp,expand.grid(period=unique(period),herd=unique(herd)))
     newdata2 <- rbind(newdata,
                       data.frame(period=as.character(1:4),herd=rep("new",4)))
     expect_error(predict(gm1,newdata2), "new levels detected")
