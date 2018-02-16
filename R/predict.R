@@ -278,6 +278,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
                            ReForm,
                            REForm,
                            REform,
+                           random.only=FALSE,
                            terms=NULL, type=c("link","response"),
                            allow.new.levels=FALSE, na.action=na.pass, ...) {
     ## FIXME: appropriate names for result vector?
@@ -317,7 +318,8 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
     if (!is.null(newparams))
         object <- setParams(object,newparams)
 
-    if ((is.null(newdata) && is.null(re.form) && is.null(newparams))) {
+    if (is.null(newdata) && is.null(re.form) &&
+        is.null(newparams) && !random.only) {
         ## raw predict() call, just return fitted values
         ##   (inverse-link if appropriate)
         if (isLMM(object) || isNLMM(object)) {
@@ -332,78 +334,87 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
         }
 	fit.na.action <- NULL
         ## flow jumps to end for na.predict
-    } else { ## newdata and/or re.form and/or newparams specified
-        X <- getME(object, "X")
-        X.col.dropped <- attr(X, "col.dropped")
-        ## modified from predict.glm ...
-        if (is.null(newdata)) {
-            ## Use original model 'X' matrix and offset
-            fit.na.action <- attr(object@frame,"na.action")  ## original NA action
-            ## orig. offset: will be zero if there are no matches ...
-            offset <- model.offset(model.frame(object))
-            if (is.null(offset)) offset <- 0
+    } else { ## newdata and/or re.form and/or newparams and/or random.only specified
+        fit.na.action <- attr(object@frame,"na.action")  ## original NA action
 
-        } else {  ## new data specified
-            ## evaluate new fixed effect
-            RHS <- formula(substitute(~R,
-                                      list(R=RHSForm(formula(object,fixed.only=TRUE)))))
-            Terms <- terms(object,fixed.only=TRUE)
-            mf <- model.frame(object, fixed.only=TRUE)
-            isFac <- vapply(mf, is.factor, FUN.VALUE=TRUE)
-            ## ignore response variable
-            isFac[attr(Terms,"response")] <- FALSE
-            orig_levs <- if (length(isFac)==0) NULL else lapply(mf[isFac],levels)
-            ## https://github.com/lme4/lme4/issues/414
-            ## contrasts are not relevant in random effects;
-            ##  model.frame.default warns about dropping contrasts
-            ##  if (1) xlev is specified and (2) any factors in
-            ##  original data frame had contrasts set
+        nobs <- if (is.null(newdata)) nrow(object@frame) else nrow(newdata)
+        pred <- rep(0,nobs)
+        
+        if (!random.only) {
+            X <- getME(object, "X")
+            X.col.dropped <- attr(X, "col.dropped")
+            ## modified from predict.glm ...
+            if (is.null(newdata)) {
+                ## Use original model 'X' matrix and offset
+                ## orig. offset: will be zero if there are no matches ...
+                offset <- model.offset(model.frame(object))
+                if (is.null(offset)) offset <- 0
+            } else {  ## new data specified
+                ## evaluate new fixed effect
+                RHS <- formula(substitute(~R,
+                         list(R=RHSForm(formula(object,fixed.only=TRUE)))))
+                Terms <- terms(object,fixed.only=TRUE)
+                mf <- model.frame(object, fixed.only=TRUE)
+                isFac <- vapply(mf, is.factor, FUN.VALUE=TRUE)
+                ## ignore response variable
+                isFac[attr(Terms,"response")] <- FALSE
+                orig_levs <- if (length(isFac)==0) NULL else lapply(mf[isFac],levels)
+                ## https://github.com/lme4/lme4/issues/414
+                ## contrasts are not relevant in random effects;
+                ##  model.frame.default warns about dropping contrasts
+                ##  if (1) xlev is specified and (2) any factors in
+                ##  original data frame had contrasts set
 
-            ## alternative solution: drop contrasts manually
-            ## (could assign to a new variable newdata2 for safety,
-            ## but I don't think newdata
-            ##  is used downstream in this function?)
+                ## alternative solution: drop contrasts manually
+                ## (could assign to a new variable newdata2 for safety,
+                ## but I don't think newdata
+                ##  is used downstream in this function?)
             
-            ## isFacND <- which(vapply(newdata, is.factor, FUN.VALUE = TRUE))
-            ## for (j in isFacND) {
-            ##    attr(newdata[[j]], "contrasts") <- NULL
-            ## }
+                ## isFacND <- which(vapply(newdata, is.factor, FUN.VALUE = TRUE))
+                ## for (j in isFacND) {
+                ##    attr(newdata[[j]], "contrasts") <- NULL
+                ## }
             
-            mfnew <- suppressWarnings(
-                model.frame(delete.response(Terms),
-                            newdata,
-                            na.action = na.action, xlev = orig_levs))
+                mfnew <- suppressWarnings(
+                    model.frame(delete.response(Terms),
+                                newdata,
+                                na.action = na.action, xlev = orig_levs))
             
-            X <- model.matrix(RHS, data=mfnew,
-                              contrasts.arg=attr(X,"contrasts"))
-            ## hack to remove unused interaction levels?
-            ## X <- X[,colnames(X0)]
+                X <- model.matrix(RHS, data=mfnew,
+                                  contrasts.arg=attr(X,"contrasts"))
+                ## hack to remove unused interaction levels?
+                ## X <- X[,colnames(X0)]
 
-            offset <- 0 # rep(0, nrow(X))
-            tt <- terms(object)
-            if (!is.null(off.num <- attr(tt, "offset"))) {
-                for (i in off.num)
-                    offset <- offset + eval(attr(tt,"variables")[[i + 1]], newdata)
-            }
+                offset <- 0 # rep(0, nrow(X))
+                tt <- terms(object)
+                if (!is.null(off.num <- attr(tt, "offset"))) {
+                    for (i in off.num)
+                        offset <- offset + eval(attr(tt,"variables")[[i + 1]], newdata)
+                }
             ## FIXME?: simplify(no need for 'mfnew'): can this be different from 'na.action'?
-            fit.na.action <- attr(mfnew,"na.action")
-            ## only need to drop if new data specified ...
-            if(is.numeric(X.col.dropped) && length(X.col.dropped) > 0)
-	    X <- X[, -X.col.dropped, drop=FALSE]
-        }
-        pred <- drop(X %*% fixef(object))
-        ## FIXME:: need to unname()  ?
-        ## FIXME: is this redundant??
-        ## if (!is.null(frOffset <- attr(object@frame,"offset")))
-        ##     offset <- offset + eval(frOffset, newdata)
-        pred <- pred+offset
+                fit.na.action <- attr(mfnew,"na.action")
+                ## only need to drop if new data specified ...
+                if(is.numeric(X.col.dropped) && length(X.col.dropped) > 0)
+                    X <- X[, -X.col.dropped, drop=FALSE]
+            }
+            pred <- drop(X %*% fixef(object))
+            
+            ## FIXME:: need to unname()  ?
+            ## FIXME: is this redundant??
+            ## if (!is.null(frOffset <- attr(object@frame,"offset")))
+            ##     offset <- offset + eval(frOffset, newdata)
+            pred <- pred+offset
+            
+        }   
+        
         if (!noReForm(re.form)) {
             if (is.null(re.form))
 		re.form <- reOnly(formula(object)) # RE formula only
-            newRE <- mkNewReTrms(object,
-                                 newdata, re.form, na.action=na.action,
+            rfd <- if (is.null(newdata)) object@frame else newdata
+            newRE <- mkNewReTrms(object, rfd, re.form, na.action=na.action,
                                  allow.new.levels=allow.new.levels)
-            pred <- pred + base::drop(as(newRE$b %*% newRE$Zt, "matrix"))
+            REvals <- base::drop(as(newRE$b %*% newRE$Zt, "matrix"))
+            pred <- pred + REvals
         }
         if (isGLMM(object) && type=="response") {
             pred <- object@resp$family$linkinv(pred)

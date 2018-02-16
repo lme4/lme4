@@ -2,6 +2,9 @@
 ####  ----------------------------------
 fn <- system.file("testdata", (fn0 <- "lme-tst-fits.rda"),
                   package="lme4", mustWork=TRUE)
+
+run_Pix_prof <- FALSE
+
 if(FALSE) ### "Load" these by  load(fn)
     ## or "better"
     attach(fn)
@@ -29,6 +32,9 @@ fit_cbpp_2 <- update(fit_cbpp_1, . ~ . + (1|obs))
 ## specify formula by proportion/weights instead
 fit_cbpp_3 <- update(fit_cbpp_1, incidence/size ~ period + (1 | herd), weights = size)
 
+fit_penicillin_1 <- lmer(diameter ~ (1|plate) + (1|sample), Penicillin)
+fit_cake_1 <- lmer(angle ~ temp + recipe + (1 | replicate), data=cake)
+
 ## an example with >20 fixed effects (for testing print.summary.merMod)
 if (require(agridat)) {
     ## Define main plot and subplot
@@ -52,28 +58,31 @@ anova(fit_Pix.full,
       fit_Pix.1Dog,
       fit_Pix.noD)
 
-## Warnings about non-monotonic profile (and more):
-options(warn=1) # print as they happen {interspersed in verbose profile() msgs}:
-system.time(prof.fit_Pix.f <- profile(fit_Pix.full, verbose=1))
-## ~ 90 sec on nb-mm4 [i7-5600U, 2015]
+if (run_Pix_prof) {
+    ## Warnings about non-monotonic profile (and more):
+    options(warn=1) # print as they happen {interspersed in verbose profile() msgs}:
+    system.time(prof.fit_Pix.f <- profile(fit_Pix.full, verbose=1))
+    ## ~ 90 sec on nb-mm4 [i7-5600U, 2015]
 
-signif(confint(prof.fit_Pix.f), digits=3)
-## Results in Nov.2014: -- now .sig03 now shows [-1, 1]
-##              2.5 % 97.5 %
-## .sig01      10.449 28.909
-## .sig02      12.951 48.203
-## .sig03          NA     NA <<
-## .sig04       1.073  3.066
-## .sig05       0.000 27.794
-## .sigma       7.651 10.592
-## (Intercept)     NA     NA <<
-## day             NA     NA <<
-## I(day^2)    -0.434 -0.298
-
-try( ## FIXME --> ../../R/profile.R  [FIXME: show plots for the *valid* parts!]
-lattice::xyplot(prof.fit_Pix.f)
-) ## FIXME: Error is ok, but error *message* is unhelpful
-## Error in approx(bspl$x, bspl$y, xout = zeta) :
-##   need at least two non-NA values to interpolate
+    signif(confint(prof.fit_Pix.f), digits=3)
+    ## Results in Nov.2014: -- now .sig03 now shows [-1, 1]
+    ##              2.5 % 97.5 %
+    ## .sig01      10.449 28.909
+    ## .sig02      12.951 48.203
+    ## .sig03          NA     NA <<
+    ## .sig04       1.073  3.066
+    ## .sig05       0.000 27.794
+    ## .sigma       7.651 10.592
+    ## (Intercept)     NA     NA <<
+    ## day             NA     NA <<
+    ## I(day^2)    -0.434 -0.298
+    
+    try( ## FIXME --> ../../R/profile.R  [FIXME: show plots for the *valid* parts!]
+        lattice::xyplot(prof.fit_Pix.f)
+    )
+    ## FIXME: Error is ok, but error *message* is unhelpful
+    ## Error in approx(bspl$x, bspl$y, xout = zeta) :
+    ##   need at least two non-NA values to interpolate
+}
 
 save(list=c(to.save, ls(pattern="fit_")), file=fn0)
