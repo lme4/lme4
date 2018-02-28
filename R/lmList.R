@@ -97,6 +97,9 @@ lmList <- function(formula, data, family, subset, weights,
     ## are currently using it.
 
     mCall <- mf <- match.call()
+    ## MM: I had this (instead of below  (inherited from nlme?)):
+    ## if(!missing(subset))
+    ##     data <- data[eval(asOneSidedFormula(mf[["subset"]])[[2]], data),, drop = FALSE]
 
     ## in contrast to the usual R model-fitting idiom, we do **not**
     ## want to evaluate the model frame here; it will mess up any derived
@@ -135,10 +138,10 @@ lmList <- function(formula, data, family, subset, weights,
     }
     ## split *original data*, not frm (derived model frame), on groups
     ## we have to do this because we need raw, not derived variables
-    ##  when evaluating linear regression
-    ## but do need to apply subset
-    ## (hope there aren't tricky interactions with NAs in subset ... ??)
+    ## when evaluating linear regression.
 
+    ## need to apply subset first ((or even much earlier ??))
+    ## (hope there aren't tricky interactions with NAs in subset ... ??)
     if (!missing(subset)) {
         data <- eval(substitute(data[subset,]), list2env(data))
     }
