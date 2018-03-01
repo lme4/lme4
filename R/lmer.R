@@ -1804,7 +1804,7 @@ print.summary.merMod <- function(x, digits = max(3, getOption("digits") - 3),
     p <- nrow(x$coefficients)
     if (p > 0) {
 	cat("\nFixed effects:\n")
-	printCoefmat(x$coefficients, zap.ind = 3, #, tst.ind = 4
+	printCoefmat(x$coefficients, # too radical: zap.ind = 3, #, tst.ind = 4
 		     digits = digits, signif.stars = signif.stars)
         ## do not show correlation when   summary(*, correlation=FALSE)  was used:
         hasCor <- !is.null(VC <- x$vcov) && !is.null(VC@factors$correlation)
