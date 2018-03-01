@@ -7,7 +7,8 @@
 }
 \usage{
 \method{predict}{merMod}(object, newdata = NULL, newparams = NULL,
-	re.form = NULL, ReForm, REForm, REform,	terms = NULL,
+	re.form = NULL, ReForm, REForm, REform,
+        random.only=FALSE, terms = NULL,
 	type = c("link", "response"), allow.new.levels = FALSE,
 	na.action = na.pass, \dots)
 }
@@ -24,6 +25,8 @@
     include no random effects.}
   \item{ReForm, REForm, REform}{allowed for backward compatibility: \code{re.form} is
     now the preferred argument name.}
+  \item{random.only}{(logical) ignore fixed effects, making predictions
+    only using random effects?}
   \item{terms}{a \code{\link{terms}} object - unused at present.}
   \item{type}{character string - either \code{"link"}, the default, or
     \code{"response"} indicating the type of prediction object returned.}
