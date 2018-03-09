@@ -215,6 +215,7 @@ test_that("only drop columns when using new data", {
 })
 
 test_that("only look for columns that exist in re.form", {
+    ## GH 457
     set.seed(101)
     n <- 200
     dd <- data.frame(x=1:n,
