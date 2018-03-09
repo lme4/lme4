@@ -197,7 +197,7 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
             ##  Fill them in as necessary. Filling in NA is OK - these vars won't actually
             ##  be used later ...
             pv <- attr(tt,"predvars")
-            for (i in 1:(length(pv)-1)) {
+            for (i in 2:(length(pv))) {
                 missvars <- setdiff(all.vars(pv[[i]]),all.vars(re.form))
                 for (mv in missvars) {
                     newdata.NA[[mv]] <- NA
