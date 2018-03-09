@@ -185,22 +185,22 @@ test_that("bootMer", {
     FUN <- function(.){
         predict(., type="response")
     }
-    fm2 <- lmer(strength ~ (1|batch/cask), Pastes)
-    expect_is(bootMer(fm2, predict, nsim=3),"boot")
-    expect_is(bootMer(fm2, predict, re.form=NULL, nsim=3),"boot")
-    expect_is(bootMer(fm2, predict, re.form=~(1|batch)+(1|cask:batch), nsim=3),
+    fm3 <- lmer(strength ~ (1|batch/cask), Pastes)
+    expect_is(bootMer(fm3, predict, nsim=3),"boot")
+    expect_is(bootMer(fm3, predict, re.form=NULL, nsim=3),"boot")
+    expect_is(bootMer(fm3, predict, re.form=~(1|batch)+(1|cask:batch), nsim=3),
               "boot")
-    expect_is(b3 <- bootMer(fm2, predict, re.form=~(1|batch), nsim=3),
+    expect_is(b3 <- bootMer(fm3, predict, re.form=~(1|batch), nsim=3),
               "boot")
 
     FUN_name <- function(.) getME(.,"theta")
     FUN_noname <- function(.) unname(getME(.,"theta"))
 
     c_name <- suppressWarnings(
-        confint(fm2, method="boot", FUN=FUN_name, nsim=3, seed=101))
+        confint(fm3, method="boot", FUN=FUN_name, nsim=3, seed=101))
 
     c_noname <- suppressWarnings(
-        confint(fm2, method="boot", FUN=FUN_noname, nsim=3, seed=101))
+        confint(fm3, method="boot", FUN=FUN_noname, nsim=3, seed=101))
 
     expect_equal(unname(c_name),unname(c_noname))
 
@@ -413,17 +413,17 @@ test_that("predict", {
     set.seed(1)
     ss$noiseChar <- ifelse(runif(nrow(sleepstudy)) > 0.8, "Yes", "No")
     ss$noiseFactor <- factor(ss$noiseChar)
-    fm2 <- lmer(Reaction ~ Days + noiseChar + (Days | Subject), ss)
-    expect_equal(predict(fm2, newdata = model.frame(fm2)[2:3, ])[2],
-                 predict(fm2, newdata = model.frame(fm2)[3, ]))
+    fm4 <- lmer(Reaction ~ Days + noiseChar + (Days | Subject), ss)
+    expect_equal(predict(fm4, newdata = model.frame(fm4)[2:3, ])[2],
+                 predict(fm4, newdata = model.frame(fm4)[3, ]))
     fm3 <- lmer(Reaction ~ Days + noiseFactor + (Days | Subject), ss)
     expect_equal(predict(fm3, newdata = model.frame(fm3)[2:3, ])[2],
                  predict(fm3, newdata = model.frame(fm3)[3, ]))
 
-    ## complex-basis functions in RANDOM effect: (currently)
+    ## complex-basis functions in RANDOM effect
     fm5 <- lmer(Reaction~Days+(poly(Days,2)|Subject),sleepstudy)
     expect_equal(predict(fm5,sleepstudy[1,]),fitted(fm5)[1])
-    ## complex-basis functions in FIXED effect are fine
+    ## complex-basis functions in FIXED effect
     fm6 <- lmer(Reaction~poly(Days,2)+(1|Subject),sleepstudy)
     expect_equal(predict(fm6,sleepstudy[1,]),fitted(fm6)[1])
 
