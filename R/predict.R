@@ -47,6 +47,8 @@ get.orig.levs <- function(object,FUN=levels,
                                 setdiff(unique(as.character(newdata[[n]])),orig_levs[[n]]))
         }
     }
+    ## more clues about factor-ness of terms
+    attr(orig_levs,"isFac") <- isFac
     return(orig_levs)
 }
 
@@ -206,10 +208,12 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
         ## see comments about why suppressWarnings() is needed below ...
         rfd <- suppressWarnings(model.frame(tt,newdata.NA,na.action=na.pass, xlev=orig.random.levs))
         ## restore contrasts (why???)
-        ## find variables involved in TERMS (left-hand side of RE formula): reset their contrasts
-        termvars <- unlist(lapply(findbars(formula(object,random.only=TRUE)),
-                                  function(x) all.vars(x[[2]])))
-        for (fn in intersect(names(orig.random.contrasts),termvars)) {
+        ## find *factor* variables involved in terms (left-hand side of RE formula): reset their contrasts
+        termvars <- unique(unlist(lapply(findbars(formula(object,random.only=TRUE)),
+                                  function(x) all.vars(x[[2]]))))
+        for (fn in Reduce(intersect,list(names(orig.random.contrasts),termvars,names(rfd)))) {
+            ## a non-factor grouping variable *may* sneak in here via simulate(...)
+            if (!is.factor(rfd[[fn]])) rfd[[fn]] <- factor(rfd[[fn]])
             contrasts(rfd[[fn]]) <- orig.random.contrasts[[fn]]
         }
         
