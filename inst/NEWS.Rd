@@ -9,6 +9,12 @@
     \itemize{
       \item \code{lmList} no longer ignores the \code{subset} argument
       (John Fox)
+      \item fixed several minor issues with predicting when (1) grouping
+      variables have different levels from original model (e.g. missing
+      levels/factor levels not explicitly specified in \code{newdata}) or (2)
+      \code{re.form} is a subset of the original RE formula and some
+      (unused) grouping variables are omitted from \code{newdata} (GH
+      #452, #457)
     }
   }
 }

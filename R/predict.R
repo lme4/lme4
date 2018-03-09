@@ -31,6 +31,25 @@ reFormHack <- function(re.form,ReForm,REForm,REform) {
     re.form
 }
 
+## ... may contain fixed.only=TRUE, random.only=TRUE ...
+get.orig.levs <- function(object,FUN=levels,
+                          newdata=NULL,...) {
+    Terms <- terms(object,...)
+    mf <- model.frame(object, ...)
+    isFac <- vapply(mf, is.factor, FUN.VALUE=TRUE)
+    ## ignore response variable
+    isFac[attr(Terms,"response")] <- FALSE
+    orig_levs <- if (length(isFac)==0) NULL else lapply(mf[isFac],FUN)
+    ## if necessary (allow.new.levels ...) add in new levels
+    if (!is.null(newdata)) {
+        for (n in names(mf[isFac])) {
+            orig_levs[[n]] <- c(orig_levs[[n]],
+                                setdiff(unique(as.character(newdata[[n]])),orig_levs[[n]]))
+        }
+    }
+    return(orig_levs)
+}
+
 ## noReForm(NA)   ## TRUE
 ## noReForm(~0)   ## TRUE
 ## noReForm(~y+x)
@@ -164,6 +183,8 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
             newdata.NA <- newdata.NA[-fixed.na.action,]
         }
         tt <- delete.response(terms(object,random.only=TRUE))
+        orig.random.levs <- get.orig.levs(object, random.only=TRUE, newdata=newdata.NA)
+        orig.random.contrasts <- get.orig.levs(object, random.only=TRUE, FUN=contrasts)
         ## need to let NAs in RE components go through -- they're handled downstream
         if (inherits(re.form,"formula")) {
             ## We use the RE terms *from the original model fit* to construct
@@ -181,7 +202,17 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
                 }
             }
         }
-        rfd <- model.frame(tt,newdata.NA,na.action=na.pass)
+
+        ## see comments about why suppressWarnings() is needed below ...
+        rfd <- suppressWarnings(model.frame(tt,newdata.NA,na.action=na.pass, xlev=orig.random.levs))
+        ## restore contrasts (why???)
+        ## find variables involved in TERMS (left-hand side of RE formula): reset their contrasts
+        termvars <- unlist(lapply(findbars(formula(object,random.only=TRUE)),
+                                  function(x) all.vars(x[[2]])))
+        for (fn in intersect(names(orig.random.contrasts),termvars)) {
+            contrasts(rfd[[fn]]) <- orig.random.contrasts[[fn]]
+        }
+        
         if (!is.null(fixed.na.action))
             attr(rfd,"na.action") <- fixed.na.action
         ##
@@ -368,12 +399,6 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
                 ## evaluate new fixed effect
                 RHS <- formula(substitute(~R,
                          list(R=RHSForm(formula(object,fixed.only=TRUE)))))
-                Terms <- terms(object,fixed.only=TRUE)
-                mf <- model.frame(object, fixed.only=TRUE)
-                isFac <- vapply(mf, is.factor, FUN.VALUE=TRUE)
-                ## ignore response variable
-                isFac[attr(Terms,"response")] <- FALSE
-                orig_levs <- if (length(isFac)==0) NULL else lapply(mf[isFac],levels)
                 ## https://github.com/lme4/lme4/issues/414
                 ## contrasts are not relevant in random effects;
                 ##  model.frame.default warns about dropping contrasts
@@ -389,11 +414,12 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
                 ## for (j in isFacND) {
                 ##    attr(newdata[[j]], "contrasts") <- NULL
                 ## }
-            
+
+                orig.fixed.levs <- get.orig.levs(object, fixed.only=TRUE)
                 mfnew <- suppressWarnings(
-                    model.frame(delete.response(Terms),
+                    model.frame(delete.response(terms(object,fixed.only=TRUE)),
                                 newdata,
-                                na.action = na.action, xlev = orig_levs))
+                                na.action = na.action, xlev = orig.fixed.levs))
             
                 X <- model.matrix(RHS, data=mfnew,
                                   contrasts.arg=attr(X,"contrasts"))

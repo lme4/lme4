@@ -253,4 +253,28 @@ test_that("only look for columns that exist in re.form", {
 
     expect_equal(unname(predict(mm2, n11, type="response",re.form= ~(1 | School / Rank))),
                  0.1174628,tolerance=1e-5)
+
+    ## bad factor levels
+    mm3 <- update(mm2, . ~ . - (1|ID))
+    n12 = data.frame(School="e3",Rank="r2",xx1=8.58,xx2=8.75,xx3=7.92)
+    expect_equal(unname(predict(mm3, n12, type="response")),0.1832894,tolerance=1e-5)
+
+    ## GH #452
+    ## FIXME: would like to find a smaller/faster example that would test the same warning (10+ seconds)
+    set.seed(101)
+    n <- 300
+    df2 <- data.frame(
+        xx1 = runif(n, min = 0, max = 10),
+        xx2 = runif(n, min = 0, max = 10),
+        xx3 = runif(n, min = 0, max = 10),
+        School = factor(sample(xxx, n,replace=TRUE)),
+        Rank = factor(sample(xx, n, replace=TRUE)),
+        yx = as.factor(rbinom(n, size = 1, prob = p))
+    )
+    mm4 <- suppressWarnings(glmer(yx ~ xx1 + xx2 + xx3 + Rank +  (Rank|School),
+                 data = df2,
+                 family = "binomial",control = glmerControl(calc.derivs =FALSE)))
+
+    expect_equal(unname(predict(mm4, n11, type="response")), 0.2675081, tolerance=1e-5)
+
 })
