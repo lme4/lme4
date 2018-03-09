@@ -9,10 +9,27 @@
     \itemize{
       \item \code{lmList} no longer ignores the \code{subset} argument
       (John Fox)
+      \item fixed several minor issues with predicting when (1) grouping
+      variables have different levels from original model (e.g. missing
+      levels/factor levels not explicitly specified in \code{newdata}) or (2)
+      \code{re.form} is a subset of the original RE formula and some
+      (unused) grouping variables are omitted from \code{newdata} (GH
+      #452, #457)
+    }
+  }
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item \code{lmList} tries harder to collect errors and pass them
+      on as warnings
+      \item documented \code{as.function} method (given a \code{merMod}
+      object, returns a function that computes the deviance/REML criterion for
+      specified parameters)
+      \item \code{print} method for \code{summary.merMod} objects
+      no longer collapses small values of the t-statistic to zero
     }
   }
 }
-
+    
 \section{CHANGES IN VERSION 1.1-15 (2017-12-21)}{
   \subsection{BUG FIXES}{
      \itemize{

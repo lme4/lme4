@@ -1172,3 +1172,5 @@ glmerLaplaceHandle <- function(pp, resp, nAGQ, tol, maxit, verbose) {
 }
 
 isFlexLambda <- function() FALSE
+
+

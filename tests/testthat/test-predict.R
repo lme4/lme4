@@ -113,7 +113,7 @@ test_that("multi-group model with new data", {
     p3 <- predict(fm3,newdata, re.form=NA)
     ## explicitly specify RE
     p4 <- predict(fm3,newdata, re.form=~(1|plate)+(~1|sample))
-    p4B <- predict(fm3,newdata, re.form=~(1|sample)+(~1|plate))
+    p4B <- predict(fm3,newdata, re.form=~(1|sample)+(~1|plate)) ## ****
     expect_equal(p2,p4,p4B)
 
     p5 <- predict(fm3,newdata, re.form=~(1|sample))
@@ -211,5 +211,70 @@ test_that("only drop columns when using new data", {
     expect_equal(unname(head(predict(m4,re.form=NA))),
                  c(255.645493, 262.3263, 268.86947, 279.0608,
                    293.9390, 304.4721),tol=1e-4)
+
+})
+
+test_that("only look for columns that exist in re.form", {
+    ## GH 457
+    set.seed(101)
+    n <- 200
+    dd <- data.frame(x=1:n,
+                     f=factor(rep(1:10,n/10)),
+                     g=factor(rep(1:20,each=n/20)),
+                     h=factor(rep(1:5,n/5)),
+                     y=rnorm(n))
+    m1 <- lmer(y~1 + f + (1|h/f) + (poly(x,2)|g), data=dd, control=lmerControl(calc.derivs=FALSE))
+    expect_equal(unname(predict(m1,re.form=~1|h/f,newdata=dd[1,])),0.1478426,tolerance=1e-5)
+    expect_equal(unname(predict(m1,re.form=~poly(x,2)|g,newdata=dd[1,])),0.1530278,tolerance=1e-5)
+    ##
+    set.seed(101)
+    n <- 100
+    xx <- c("r1", "r2", "r3", "r4", "r5")
+    xxx <- c("e1", "e2", "e3")
+    p <- 0.3
+    School <- factor(sample(xxx, n, replace=TRUE), levels=xxx, ordered=FALSE)
+    Rank <- factor(sample(xx, n, replace=TRUE), levels=xx, ordered=FALSE)
+    df1 <- data.frame(
+        ID = as.integer(runif(n, min = 1, max = n/7)),
+        xx1 = runif(n, min = 0, max = 10),
+        xx2 = runif(n, min = 0, max = 10),
+        xx3 = runif(n, min = 0, max = 10),
+        School,
+        Rank,
+        yx = as.factor(rbinom(n, size = 1, prob = p))
+    )
+    df1 <- df1[order(df1$ID, decreasing=FALSE),]
+    mm2 <- glmer(yx ~ xx1 + xx2 + xx3 + Rank +  (1 | ID) + (1 | School / Rank),
+                 data = df1,
+                 family = "binomial",control = glmerControl(calc.derivs =FALSE))
+    n11 <-  data.frame(School=factor("e1", levels = levels(df1$School),ordered=FALSE),
+                       Rank=factor("r1", levels =levels(df1$Rank),ordered=FALSE),
+                       xx1=8.58, xx2=8.75, xx3=7.92)
+
+    expect_equal(unname(predict(mm2, n11, type="response",re.form= ~(1 | School / Rank))),
+                 0.1174628,tolerance=1e-5)
+
+    ## bad factor levels
+    mm3 <- update(mm2, . ~ . - (1|ID))
+    n12 = data.frame(School="e3",Rank="r2",xx1=8.58,xx2=8.75,xx3=7.92)
+    expect_equal(unname(predict(mm3, n12, type="response")),0.1832894,tolerance=1e-5)
+
+    ## GH #452
+    ## FIXME: would like to find a smaller/faster example that would test the same warning (10+ seconds)
+    set.seed(101)
+    n <- 300
+    df2 <- data.frame(
+        xx1 = runif(n, min = 0, max = 10),
+        xx2 = runif(n, min = 0, max = 10),
+        xx3 = runif(n, min = 0, max = 10),
+        School = factor(sample(xxx, n,replace=TRUE)),
+        Rank = factor(sample(xx, n, replace=TRUE)),
+        yx = as.factor(rbinom(n, size = 1, prob = p))
+    )
+    mm4 <- suppressWarnings(glmer(yx ~ xx1 + xx2 + xx3 + Rank +  (Rank|School),
+                 data = df2,
+                 family = "binomial",control = glmerControl(calc.derivs =FALSE)))
+
+    expect_equal(unname(predict(mm4, n11, type="response")), 0.2675081, tolerance=1e-5)
 
 })
