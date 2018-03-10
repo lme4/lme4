@@ -170,3 +170,16 @@ test_that("other_NA", {
     expect_equal(sum(is.na(pp4)),0)
 })
 
+test_that("NAs in fitting data ignored in newdata with random.only=TRUE",
+          {
+              set.seed(101)
+              dd <- data.frame(x=c(rnorm(199),NA),y=rnorm(200),
+                               f=factor(rep(1:10,each=20)),
+                               g=factor(rep(1:20,each=10)))
+              m1 <- lmer(y~x+(1|f)+(1|g),data=dd,na.action=na.exclude)
+              expect_equal(length(predict(m1,newdata=dd[1:5,],random.only=TRUE)),5)
+              nd.NA <- dd[1:5,]
+              nd.NA$x[5] <- NA
+              ## ?? not *quite* sure what should happen here ...
+              predict(m1,newdata=nd.NA,random.only=TRUE)
+          })

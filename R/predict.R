@@ -436,7 +436,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
                     for (i in off.num)
                         offset <- offset + eval(attr(tt,"variables")[[i + 1]], newdata)
                 }
-            ## FIXME?: simplify(no need for 'mfnew'): can this be different from 'na.action'?
+                ## FIXME?: simplify(no need for 'mfnew'): can this be different from 'na.action'?
                 fit.na.action <- attr(mfnew,"na.action")
                 ## only need to drop if new data specified ...
                 if(is.numeric(X.col.dropped) && length(X.col.dropped) > 0)
@@ -450,7 +450,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
             ##     offset <- offset + eval(frOffset, newdata)
             pred <- pred+offset
             
-        }   
+        } ## end !(random.only)   
         
         if (!noReForm(re.form)) {
             if (is.null(re.form))
@@ -460,6 +460,9 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
                                  allow.new.levels=allow.new.levels)
             REvals <- base::drop(as(newRE$b %*% newRE$Zt, "matrix"))
             pred <- pred + REvals
+            if (random.only) {
+                fit.na.action <- attr(newRE$Zt,"na.action")
+            }
         }
         if (isGLMM(object) && type=="response") {
             pred <- object@resp$family$linkinv(pred)
