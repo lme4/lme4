@@ -48,7 +48,9 @@ get.orig.levs <- function(object,FUN=levels,
         }
     }
     ## more clues about factor-ness of terms
-    attr(orig_levs,"isFac") <- isFac
+    if (!is.null(orig_levs)) {
+        attr(orig_levs,"isFac") <- isFac
+    }
     return(orig_levs)
 }
 

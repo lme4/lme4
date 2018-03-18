@@ -278,5 +278,15 @@ test_that("only look for columns that exist in re.form", {
                  family = "binomial",control = glmerControl(calc.derivs =FALSE)))
 
     expect_equal(unname(predict(mm4, n11, type="response")), 0.2675081, tolerance=1e-5)
-
 })
+
+test_that("simulation works with non-factor", {
+    
+    set.seed(12345)
+    dd <- data.frame(a=gl(10,100), b = rnorm(1000))
+    test2 <- suppressMessages(simulate(~1+(b|a), newdata=dd, family=poisson,
+                                       newparams= list(beta = c("(Intercept)" = 1),
+                                                       theta = c(1,1,1))))
+    expect_is(test2,"data.frame")
+})
+
