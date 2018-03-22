@@ -2752,11 +2752,12 @@ We would like to thank the Banff International Research Station
 for hosting a working group on \pkg{lme4}, and
 an NSERC Discovery grant and NSERC postdoctoral fellowship for funding.
 
+\clearpage
+
 \bibliography{lmer}
 
-\bigskip
-
-\pagebreak[3]
+\clearpage
+% \bigskip \par \pagebreak[3]
 
 \begin{appendix}
 

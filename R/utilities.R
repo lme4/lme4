@@ -110,7 +110,7 @@ mkBlist <- function(x,frloc, drop.unused.levels=TRUE) {
 ##' \item{flist}{list of grouping factors used in the random-effects terms}
 ##' \item{cnms}{a list of column names of the random effects according to
 ##'     the grouping factors}
-##' @importFrom Matrix sparseMatrix rBind drop0
+##' @importFrom Matrix sparseMatrix rbind drop0
 ##' @importMethodsFrom Matrix coerce
 ##' @family utilities
 ##' @export
@@ -134,7 +134,7 @@ mkReTrms <- function(bars, fr, drop.unused.levels=TRUE) {
     term.names <- term.names[ord]
   }
   Ztlist <- lapply(blist, `[[`, "sm")
-  Zt <- do.call(rBind, Ztlist)  ## eq. 7, JSS lmer paper
+  Zt <- do.call(rbind, Ztlist)  ## eq. 7, JSS lmer paper
   names(Ztlist) <- term.names
   q <- nrow(Zt)
 
@@ -160,7 +160,7 @@ mkReTrms <- function(bars, fr, drop.unused.levels=TRUE) {
   ### instead of generating Lambda first then transposing?
   Lambdat <-
     t(do.call(sparseMatrix,
-              do.call(rBind,
+              do.call(rbind,
                       lapply(seq_along(blist), function(i)
                       {
                         mm <- matrix(seq_len(nb[i]), ncol = nc[i],
@@ -194,7 +194,7 @@ mkReTrms <- function(bars, fr, drop.unused.levels=TRUE) {
     asgn <- match(fnms, ufn)
   } else asgn <- seq_along(fl)
   names(fl) <- ufn
-  ## DON'T need fl to be a data.frame ... 
+  ## DON'T need fl to be a data.frame ...
   ## fl <- do.call(data.frame, c(fl, check.names = FALSE))
   attr(fl, "assign") <- asgn
   ll$flist <- fl

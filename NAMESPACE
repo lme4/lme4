@@ -4,7 +4,7 @@ useDynLib(lme4, .registration=TRUE)
 importFrom("graphics", par, plot)
 importFrom("grid", gpar, viewport)
 importFrom("splines", backSpline, interpSpline, periodicSpline)
-importFrom("methods", as, getDataPart, is, new, rbind2, show, slot, slotNames)
+importFrom("methods", as, getDataPart, is, new, cbind2, rbind2, show, slot, slotNames)
 importFrom("stats",
            AIC, BIC, anova, approx, approxfun,
            as.formula, asOneSidedFormula, ave,
@@ -49,7 +49,7 @@ importFrom("MASS", negative.binomial, theta.ml)
 ## generics we provide methods for and re-export:
 importFrom("nlme", fixef,ranef, VarCorr, getGroups)
 
-importFrom("Matrix", drop0, rankMatrix, sparseMatrix, cBind,rBind,
+importFrom("Matrix", drop0, rankMatrix, sparseMatrix,
            forceSymmetric, fac2sparse, KhatriRao, Diagonal)
 importClassesFrom("Matrix", corMatrix, dgCMatrix, dpoMatrix, dCHMsimpl)
 ## methods incl. S4 generics:

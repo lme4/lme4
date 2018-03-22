@@ -2312,10 +2312,10 @@ formatVC <- function(varcor, digits = max(3, getOption("digits") - 2),
 	maxlen <- max(reLens)
 	recorr <- lapply(varcor, attr, "correlation")
 	corr <-
-	    do.call(rBind,
+	    do.call(rbind,
 		    lapply(recorr,
 			   function(x) {
-			       x <- as(x, "matrix")
+			       x <- as.matrix(x)
 			       dig <- max(2, digits - 2) # use 'digits' !
                                ## not using formatter() for correlations
 			       cc <- format(round(x, dig), nsmall = dig)
