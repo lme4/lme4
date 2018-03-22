@@ -110,8 +110,8 @@ mkBlist <- function(x,frloc, drop.unused.levels=TRUE) {
 ##' \item{flist}{list of grouping factors used in the random-effects terms}
 ##' \item{cnms}{a list of column names of the random effects according to
 ##'     the grouping factors}
-##' @importFrom Matrix sparseMatrix rbind drop0
-##' @importMethodsFrom Matrix coerce
+##' @importFrom Matrix sparseMatrix drop0
+##' @importMethodsFrom Matrix coerce rbind
 ##' @family utilities
 ##' @export
 mkReTrms <- function(bars, fr, drop.unused.levels=TRUE) {
