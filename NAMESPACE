@@ -50,7 +50,7 @@ importFrom("MASS", negative.binomial, theta.ml)
 importFrom("nlme", fixef,ranef, VarCorr, getGroups)
 
 importFrom("Matrix", drop0, rankMatrix, sparseMatrix,
-           forceSymmetric, fac2sparse, KhatriRao, Diagonal)
+           forceSymmetric, fac2sparse, KhatriRao, Diagonal, .bdiag)
 importClassesFrom("Matrix", corMatrix, dgCMatrix, dpoMatrix, dCHMsimpl)
 ## methods incl. S4 generics:
 importMethodsFrom("Matrix", coerce, cov2cor, "%*%", crossprod,tcrossprod,

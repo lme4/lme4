@@ -26,7 +26,7 @@ test_that("dotplot_ranef", {
     expect_is(as.data.frame(rr),"data.frame")
     rr0 <- ranef(fm1)
     expect_is(as.data.frame(rr0),"data.frame")
-}
+})
 
 test_that("Dyestuff consistent with lme4.0", {
     lme4.0condVarDyestuff <- c(362.3583, 362.3583, 362.3583, 362.3583, 362.3583, 362.3583)

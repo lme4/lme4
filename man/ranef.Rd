@@ -10,7 +10,7 @@
       drop = FALSE, whichel = names(ans), postVar = FALSE, ...)
 \method{dotplot}{ranef.mer} (x, data, main = TRUE, transf = I, ...)
 \method{qqmath}{ranef.mer} (x, data, main = TRUE, ...)
-\method{as.data.frame}{ranef.mer} (x, ..., stringsAsFactors = default.stringAsFactors)
+\method{as.data.frame}{ranef.mer} (x, ..., stringsAsFactors = default.stringAsFactors())
 }
 \arguments{
   \item{object}{an object of a class of fitted models with

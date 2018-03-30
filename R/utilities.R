@@ -1223,7 +1223,7 @@ array_to_bdiag <- function(a) {
 
 
 augment.RE <- function(object,rr=ranef(object)) {
-    alist <- arrange.condVar(object,myCondVar(object))
+    alist <- arrange.condVar(object,condVar(object))
     for (i in seq_along(rr)) {
         attr(rr[[i]],"postVar") <- alist[[i]]
     }
