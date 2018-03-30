@@ -1001,19 +1001,16 @@ testLevel <- function()
 ##' Not exported.
 ##'
 ##' TODO:
-##' (1) Write up quick note on theory (e.g. Laplace approximation).
-##' (2) Figure out how to convert between full q-by-q matrix, and
-##'     the format currently in the postVar attributes of the
-##'     elements of the output of ranef.
-##' (3) Test.
-##' (4) Do we need to think carefully about the differences
+##' - Write up quick note on theory (e.g. Laplace approximation).
+##' - Test.  Speed? Correctness?
+##' - Do we need to think carefully about the differences
 ##'     between REML and ML, beyond just multiplying by a different
 ##'     sigma^2 estimate?
+##' - is it better to do this term-by-term as in C++ code?
 ##'
 ##' @param object \code{merMod} object
 ##' @return Sparse covariance matrix
-condVar <- function(object) {
-  s2 <- sigma(object)^2
+condVar <- function(object, scaled=TRUE) {
   Lamt <- getME(object, "Lambdat")
   L <- getME(object, "L")
 
@@ -1023,8 +1020,15 @@ condVar <- function(object) {
   #s2*crossprod(Lamt, V) %*% Lamt
 
   LL <- solve(L, Lamt, system = "A")
-  s2 * crossprod(Lamt, LL)
+  ## From ?Matrix::solve, The default, ‘"A"’, is to solve Ax = b for x
+  ##   where ‘A’ is sparse, positive-definite matrix that was
+  ##   factored to produce ‘a’.
+
+  cc <- crossprod(Lamt, LL)
+  if (scaled) cc <- sigma(object)^2*cc
+  cc
 }
+
 
 mkMinimalData <- function(formula) {
     vars <- all.vars(formula)
@@ -1125,17 +1129,19 @@ mmList.formula <- function(object, frame, ...) {
 }
 ##' examples  ---FIXME?--- put in tests // or export + 'real examples'
 if(FALSE) {
-library(lme4)
-m <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
-gm <- glmer(cbind(incidence, size-incidence) ~ period + (1|herd), cbpp, binomial)
-simForm <- y ~ x + z + (x | f) + (z | g)
-simDat <- lme4:::quickSimulate(simForm, 10, 5)
-simDat <- simDat[simDat$f != "10", ] # unbalancedish design requiring
-                                     # a flip in the order of terms
-sm <- lmer(simForm, simDat)
-lme4:::mmList.merMod(m)
-lme4:::mmList.merMod(gm)
-smmm <- lme4:::mmList.merMod(sm)
+    library(lme4)
+    m <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+    gm <- glmer(cbind(incidence, size-incidence) ~ period + (1|herd), cbpp, binomial)
+    simForm <- y ~ x + z + (x | f) + (z | g)
+    ## ::: triggers R CMD check NOTE
+    ## simDat <- lme4:::quickSimulate(simForm, 10, 5)
+    simDat <- simDat[simDat$f != "10", ] # unbalancedish design requiring
+                                        # a flip in the order of terms
+    sm <- lmer(simForm, simDat)
+    ## ::: triggers R CMD check NOTE
+    ## lme4:::mmList.merMod(m)
+    ## lme4:::mmList.merMod(gm)
+    ## smmm <- lme4:::mmList.merMod(sm)
 }
 
 nloptwrap <- local({
@@ -1173,4 +1179,80 @@ glmerLaplaceHandle <- function(pp, resp, nAGQ, tol, maxit, verbose) {
 
 isFlexLambda <- function() FALSE
 
+
+#' convert a list of matrices (n, pxp blocks) to 
+#' a pxpxn array
+mlist_to_array <- function(m) {
+    p <- nrow(m[[1]])
+    n <- length(m)
+    array(unlist(lapply(m,as.matrix)),dim=c(p,p,n))
+}
+#' @inheritParams bdiag_to_array
+bdiag_to_mlist <- function(m,n) {
+    if (length(n)==1 && n<nrow(m)) {
+        n <- rep(n,nrow(m)%/%n)
+    }
+    mm <- list()
+    k <- 1
+    for (i in seq_along(n)) {
+        mm[[i]] <- m[k:(k+n[i]-1),k:(k+n[i]-1),drop=FALSE]
+        k <- k + n[i]
+    }
+    return(mm)
+}
+##' convert a block-diagonal matrix to a pxpxn array
+##' @param m a block-diagonal matrix (typically sparse)
+##' @param n vector of block sizes (if length-1, will be replicated to be consistent
+##' with the matrix dimensions)
+##' @examples
+##' mm <- Matrix::bdiag(matrix(1:4,2,2),matrix(2:5,2,2),matrix(3:6,2,2))
+##' mm2 <- blkmatrix_to_matrixlist(mm,2)
+##' bdiag_to_array(mm,2)
+##' array_to_bdiag(bdiag_to_array(mm,2))
+bdiag_to_array <- function(m,n) {
+    mlist_to_array(
+        bdiag_to_mlist(m,n))
+}
+array_to_bdiag <- function(a) {
+    stopifnot(length(dim(a))==3,dim(a)[1]==dim(a)[2])
+    p <- dim(a)[1]
+    mlist <- split(a,slice.index(a,3))
+    mlist <- lapply(mlist,matrix,nrow=p,ncol=p)
+    return(.bdiag(mlist))
+}
+
+
+augment.RE <- function(object,rr=ranef(object)) {
+    alist <- arrange.condVar(object,myCondVar(object))
+    for (i in seq_along(rr)) {
+        attr(rr[[i]],"postVar") <- alist[[i]]
+    }
+    class(rr) <- "ranef.mer"
+    rr
+}
+       
+## reorganize condVar matrix into appropriate list of arrays/lists of arrays
+arrange.condVar <- function(object,cv) {
+    rp <- rePos$new(object)
+    trms <- rp$terms      ## mapping between grouping vars and RE terms
+    n <- diff(rp$offsets) ## total number of modes per term
+    cv2 <- bdiag_to_mlist(cv,n)
+    cv3 <- Map(bdiag_to_array,cv2,rp$ncols)
+    names(cv3) <- rp$cnms
+    res <- list()
+    for (i in seq_along(trms)) {
+        tt <- trms[[i]]
+        if (length(tt)==1) {
+            ## keep single-term-per-factor condVar structures
+            ## as naked arrays (not list containing a single array)
+            ## for back-compatibility
+            res[[i]] <- cv3[[tt]]
+        } else {
+            ## list of arrays
+            res[[i]] <- cv3[tt]
+        }
+    }
+    names(res) <- names(rp$flist)
+    return(res)
+}
 

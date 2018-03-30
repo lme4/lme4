@@ -1215,13 +1215,14 @@ ranef.merMod <- function(object, condVar = FALSE, drop = FALSE,
             sigsqr <- sigma(object)^2
             rp <- rePos$new(object)
             if(any(lengths(rp$terms) > 1L)) {
-                # TODO: actually use condVar and then convert back to array format
-                warning("conditional variances not currently available via ",
-                        "ranef when there are multiple terms per factor")
-            } else{
+                ## use R machinery here ...
+                vv <- arrange.condVar(object,condVar(object, scaled=TRUE))
+            } else {
                 vv <- .Call(merPredDcondVar, object@pp$ptr(), as.environment(rp))
-                for (i in names(ans)) ## seq_along(ans))
-                    attr(ans[[i]], "postVar") <- vv[[i]] * sigsqr
+                vv <- lapply(vv, "*", sigsqr)
+            }
+            for (i in names(ans)) {
+                attr(ans[[i]], "postVar") <- vv[[i]]
             }
 	}
 	if (drop)
@@ -2552,8 +2553,17 @@ asDf0 <- function(x,nx,id=FALSE) {
     ss$ind <- factor(as.character(ss$ind), levels = colnames(xt))
     ss$.nn <- rep.int(reorder(factor(rownames(xt)), xt[[1]],
                               FUN = mean,sort = sort), ncol(xt))
-    if (!is.null(pv <- attr(xt, "postVar")))
-        ss$se <- unlist(lapply(1:(dim(pv)[1]), function(i) sqrt(pv[i, i, ])))
+    if (!is.null(pv <- attr(xt, "postVar"))) {
+        tmpfun <- function(pvi) {
+            unlist(lapply(1:nrow(pvi), function(i) sqrt(pvi[i, i, ])))
+        }
+        if (!is.list(pv)) {
+            ss$se <- tmpfun(pv)
+        } else {
+            ## rely on ordering when unpacking!
+            ss$se <- unlist(lapply(pv,tmpfun))
+        }
+    }
     if (id) ss$id <- nx
     return(ss)
 }
