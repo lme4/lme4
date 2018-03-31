@@ -50,14 +50,19 @@ stopifnot(all.equal(getinfo(fm1 ),
                     getinfo(fm1S), tolerance = 0.5) # <- simulate()
           )
 
-if(FALSE) ## show all differences
-sapply(slotNames(fm1), function(.)
-    all.equal( slot(fm1,.), slot(fm1R,.), tolerance=0))
+if(FALSE) { ## show all differences
+    sapply(slotNames(fm1), function(.)
+        all.equal( slot(fm1,.), slot(fm1R,.), tolerance=0))
+}
 
-sapply(slotNames(fm1),
-       function(.) isTRUE(all.equal( slot(fm1,.), slot(fm1R,.), tolerance= 1.5e-5)))
-str(fm1 @ optinfo)
-str(fm1R@ optinfo)
+if (getRversion() >= "3.4.0") {
+    ## differences: FALSE for resp, theta, u, devcomp, pp, optinfo?
+    ## FIXME: this isn't actually tested in any way ...
+    sapply(slotNames(fm1),
+           function(.) isTRUE(all.equal( slot(fm1,.), slot(fm1R,.), tolerance= 1.5e-5)))
+    str(fm1 @ optinfo)
+    str(fm1R@ optinfo)
+}
 
 fm1ML <- refitML(fm1)
 stopifnot(
@@ -77,11 +82,9 @@ all.equal(getinfo(gm1), getinfo(gm1R), tolerance=0) # to see it --> 5.52e-4
 # because glmer() uses Laplace approx. (? -- still, have *same* y !)
 stopifnot(all.equal(getinfo(gm1), getinfo(gm1R), tolerance = 1e-4))
 
-## if(FALSE) {## FIXME: still failing on Windows (SW: how about now?)
 gm1S <- refit(gm1, simulate(gm1)[[1]])
           all.equal(getinfo(gm1), getinfo(gm1S), tolerance=0) # to see:
 stopifnot(all.equal(getinfo(gm1), getinfo(gm1S), tolerance = 0.4))
-## }
 
 ## binomial GLMM (prob/weights)
 formula(gm2 <- fit_cbpp_3)
