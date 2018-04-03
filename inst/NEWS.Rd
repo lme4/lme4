@@ -4,7 +4,13 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-16}{
+\section{CHANGES IN VERSION 1.1-17 (2018-04-03)}{
+  \itemize{
+    This is a maintenance release only (fixes CRAN problems with
+    cross-platform tests and examples)
+  }
+}
+\section{CHANGES IN VERSION 1.1-16 (2018-03-28)}{
   \subsection{BUG FIXES}{
     \itemize{
       \item \code{lmList} no longer ignores the \code{subset} argument
