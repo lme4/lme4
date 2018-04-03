@@ -9,6 +9,7 @@
     \itemize{
       \item \code{ranef(.,condVar=TRUE)} now works when there
       are multiple random effects terms per factor
+    }
   }
 }
 
