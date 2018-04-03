@@ -9,7 +9,7 @@ lme4: Mixed-effects models in R.
 
 ## Recent/release notes
 
-* Version 1.1-16 is on CRAN (March 2018). Changes in this release are minor, bugfixes and R-devel/CRAN-compatibility tweaks. See the [NEWS file](https://github.com/lme4/lme4/blob/master/inst/NEWS.Rd) (or  `news(Version=="1.1.16",package="lme4")`).
+* Version 1.1-17 is on CRAN (April 2018). Changes in this release are minor, bugfixes and R-devel/CRAN-compatibility tweaks. See the [NEWS file](https://github.com/lme4/lme4/blob/master/inst/NEWS.Rd) (or  `news(Version=="1.1.17",package="lme4")`).
 
 ## Features
 
