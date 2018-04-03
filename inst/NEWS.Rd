@@ -4,6 +4,14 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
+\section{CHANGES IN VERSION 1.1-18}{
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item \code{ranef(.,condVar=TRUE)} now works when there
+      are multiple random effects terms per factor
+  }
+}
+
 \section{CHANGES IN VERSION 1.1-17 (2018-04-03)}{
   \itemize{
     This is a maintenance release only (fixes CRAN problems with
