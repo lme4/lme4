@@ -1567,6 +1567,12 @@ hatvalues.merMod <- function(model, fullHatMatrix = FALSE, ...) {
     })
 }
 
+## minimal "influence" function (to make broom::augment_columns work)
+influence.merMod <- function(model, ...) {
+    if (length(list(...))>0) warning("disregarded additional arguments")
+    list(hat=hatvalues(model))
+}
+
 
 ##' @S3method sigma merMod
 sigma.merMod <- function(object, ...) {
