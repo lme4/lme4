@@ -1,6 +1,6 @@
 // external.cpp: externally .Call'able functions in lme4
 //
-// Copyright (C)       2011-2012 Douglas Bates, Martin Maechler and Ben Bolker
+// Copyright (C)       2011-2018 Douglas Bates, Martin Maechler and Ben Bolker
 //
 // This file is part of lme4.
 
@@ -459,14 +459,13 @@ extern "C" {
         END_RCPP;
     }
 
-    void nstepFac(nlsResp *rp, merPredD *pp, int verb) {
-        double prss0(pwrss(rp, pp, 0.));
-
+    // called only from prssUpdate() :
+    static void nstepFac(nlsResp *rp, merPredD *pp, double prss0, int verb) {
         for (double fac = 1.; fac > 0.001; fac /= 2.) {
             double prss1 = rp->updateMu(pp->linPred(fac)) + pp->sqrL(fac);
             if (verb > 3)
-                ::Rprintf("prss0=%10g, diff=%10g, fac=%6.4f\n",
-                          prss0, prss0 - prss1, fac);
+                ::Rprintf("   nstepFac(), fac=%6.4f, prss0-prss1=%10g\n",
+                          fac, prss0 - prss1);
             if (prss1 < prss0) {
                 pp->installPars(fac);
                 return;
@@ -475,37 +474,39 @@ extern "C" {
         throw runtime_error("step factor reduced below 0.001 without reducing pwrss");
     }
 
-#define NMAXITER 300
-    static void prssUpdate(nlsResp *rp, merPredD *pp, int verb, bool uOnly, double tol) {
+    static void prssUpdate(nlsResp *rp, merPredD *pp, int verb, bool uOnly,
+			   double tol, int maxit) {
         bool cvgd(false);
-        for (int it=0; it < NMAXITER; ++it) {
+        for (int it=0; it < maxit; ++it) {
             rp->updateMu(pp->linPred(0.));
             pp->updateXwts(rp->sqrtXwt());
             pp->updateDecomp();
             pp->updateRes(rp->wtres());
-            double ccrit((uOnly ? pp->solveU() : pp->solve())/pwrss(rp, pp, 0.));
+            double pwrs0(pwrss(rp, pp, 0.)),
+		ccrit((uOnly ? pp->solveU() : pp->solve())/pwrs0);
             if (verb > 3)
-                ::Rprintf("ccrit=%10g, tol=%10g\n", ccrit, tol);
+                ::Rprintf(" it=%d, pwrs0=%10g, ccrit=%10g, tol=%10g\n",
+			  it, pwrs0, ccrit, tol);
             if (ccrit < tol) {
                 cvgd = true;
                 break;
             }
-            nstepFac(rp, pp, verb);
+            nstepFac(rp, pp, pwrs0, verb);
         }
-        if (!cvgd) throw runtime_error("prss failed to converge in 300 iterations");
+        if (!cvgd) throw runtime_error("prss{Update} failed to converge in 'maxit' iterations");
     }
 
     SEXP nlmerLaplace(SEXP pp_, SEXP rp_, SEXP theta_, SEXP u0_, SEXP beta0_,
-                      SEXP verbose_, SEXP uOnly_, SEXP tol_) {
+                      SEXP verbose_, SEXP uOnly_, SEXP tol_, SEXP maxit_) {
         BEGIN_RCPP;
 
         XPtr<nlsResp>     rp(rp_);
         XPtr<merPredD>    pp(pp_);
         pp->setTheta(as<MVec>(theta_));
-        pp->setU0(as<MVec>(u0_));
+        pp->setU0   (as<MVec>(u0_));
         pp->setBeta0(as<MVec>(beta0_));
         prssUpdate(rp, pp, ::Rf_asInteger(verbose_), ::Rf_asLogical(uOnly_),
-                    ::Rf_asReal(tol_));
+		   ::Rf_asReal(tol_), ::Rf_asInteger(maxit_));
         return ::Rf_ScalarReal(rp->Laplace(pp->ldL2(), pp->ldRX2(), pp->sqrL(1.)));
 
         END_RCPP;
@@ -1125,7 +1126,7 @@ static R_CallMethodDef CallEntries[] = {
     CALLDEF(NelderMead_xeval,   1),
     CALLDEF(NelderMead_xpos,    1),
 
-    CALLDEF(nlmerLaplace,       8),
+    CALLDEF(nlmerLaplace,       9),
 
     CALLDEF(nls_Create,        11), // generate external pointer
 

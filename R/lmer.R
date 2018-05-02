@@ -222,7 +222,6 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
     rho$beta0 <- rho$pp$beta0
     rho$tolPwrss <- control$tolPwrss # Reset control parameter (the initial optimization is coarse)
 
-
     ## set lower and upper bounds: if user-specified, select
     ##  only the ones corresponding to random effects
     if (!is.null(lwr <- control$optCtrl$lower)) {
@@ -244,24 +243,14 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
     rho$control <- attr(opt,"control")
 
     if (nAGQ > 0L) {
-
         ## set lower/upper to values already harvested from control$optCtrl$upper
-        if (!is.null(lwr)) {
-            rho$lower <- lwr
-        } else {
-            rho$lower <- c(rho$lower, rep.int(-Inf, length(rho$beta0)))
-        }
-        if (!is.null(upr)) {
-            upper <- upr
-        } else {
-            upper <- c(upper, rep.int(Inf, length(rho$beta0)))
-        }
+        rho$lower <- if(!is.null(lwr)) lwr else c(rho$lower, rep.int(-Inf, length(rho$beta0)))
+        upper     <- if(!is.null(upr)) upr else c(    upper, rep.int( Inf, length(rho$beta0)))
         rho$u0    <- rho$pp$u0
         rho$dpars <- seq_along(rho$pp$theta)
         ## fixed-effect parameters
         rho$beta0 <- pmin(upper[-rho$dpars],
                           pmax(rho$pp$beta0,rho$lower[-rho$dpars]))
-
         if (nAGQ > 1L) {
             if (length(vals$reTrms$flist) != 1L || length(vals$reTrms$cnms[[1]]) != 1L)
                 stop("nAGQ > 1 is only available for models with a single, scalar random-effects term")
@@ -285,12 +274,19 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
 if(getRversion() >= "3.1.0") utils::suppressForeignCheck("nlmerAGQ")
 if(getRversion() < "3.1.0") dontCheck <- identity
 
-## FIXME have help page ../man/mkdevfun.Rd, but do *NOT* export (yet):
+## *not* exported (had help page till early 2018)
 ## -> issue #92: -> also look at devfun2() in  ./profile.R (which returns class!)
 ##' Create a deviance evaluation function from a predictor and a response module
-mkdevfun <- function(rho, nAGQ=1L, maxit=100L, verbose=0, control=list()) {
+##' @param rho an `environment` already containing `verbose` and tolPwrss
+##' @param nAGQ for glmer/nlmer: #{AGQ steps}; 0 <==> Laplace
+##' @param maxit maximal number of PIRLS iterations
+##' @param verbose integer specifying if outputs should be produced
+##' @param control a list as from lmerControl() etc
+mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L else 100L,
+                     verbose=0, control=list()) {
     ## FIXME: should nAGQ be automatically embedded in rho?
-    stopifnot(is.environment(rho), is(rho$resp, "lmResp"))
+    stopifnot(is.environment(rho), ## class definition, compute and save :
+              extends(rho.cld <- getClass(class(rho$resp)), "lmResp"))
 
     ## silence R CMD check warnings *locally* in this function
     ## (clearly preferred to using globalVariables() !]
@@ -300,10 +296,10 @@ mkdevfun <- function(rho, nAGQ=1L, maxit=100L, verbose=0, control=list()) {
 
     ## The deviance function (to be returned, with 'rho' as its environment):
     ff <-
-    if (is(rho$resp, "lmerResp")) {
+    if (extends(rho.cld, "lmerResp")) {
 	rho$lmer_Deviance <- lmer_Deviance
 	function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))
-    } else if (is(rho$resp, "glmResp")) {
+    } else if (extends(rho.cld, "glmResp")) {
         ## control values will override rho values *if present*
         if (!is.null(tp <- control$tolPwrss)) rho$tolPwrss <- tp
         if (!is.null(cd <- control$ compDev)) rho$compDev <- cd
@@ -330,19 +326,20 @@ mkdevfun <- function(rho, nAGQ=1L, maxit=100L, verbose=0, control=list()) {
                 resp$updateWts()
                 p
 	    }
-    } else if (is(rho$resp, "nlsResp")) {
-	if (nAGQ < 2L) {
+    } else if (extends(rho.cld, "nlsResp")) {
+	if (nAGQ <= 1L) {
 	    rho$nlmerLaplace <- nlmerLaplace
             rho$tolPwrss <- control$tolPwrss
+            rho$maxit <- maxit
 	    switch(nAGQ + 1L,
                    function(theta)
                        .Call(nlmerLaplace, pp$ptr(), resp$ptr(), as.double(theta),
-                             as.double(u0), beta0, verbose, FALSE, tolPwrss),
+                             as.double(u0), beta0, verbose, FALSE, tolPwrss, maxit),
                    function(pars)
                        .Call(nlmerLaplace, pp$ptr(), resp$ptr(), pars[dpars],
-                             u0,  pars[-dpars], verbose, TRUE, tolPwrss))
+                             u0,  pars[-dpars], verbose, TRUE, tolPwrss, maxit))
 	} else {
-            stop("AGQ>1 not yet implemented for nlmer models")
+            stop("nAGQ > 1  not yet implemented for nlmer models")
 	    rho$nlmerAGQ <- nlmerAGQ
 	    rho$GQmat	 <- GHrule(nAGQ)
 	    ## function(pars) {
@@ -564,7 +561,7 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
 	forms <- lapply(lapply(calls, `[[`, "formula"), deparse)
 	structure(val,
 		  heading = c(header, "Models:",
-			      paste(rep(names(mods), times = lengths(forms)),
+			      paste(rep.int(names(mods), lengths(forms)),
 				    unlist(forms), sep = ": ")))
     }
     else { ## ------ single model ---------------------
@@ -1413,7 +1410,7 @@ refit.merMod <- function(object,
 	} else
 	    list(pp=pp, resp=rr, u0=pp$u0, verbose=verbose, dpars=seq_len(nth))
     ff <- mkdevfun(list2env(devlist), nAGQ=nAGQ, maxit=maxit, verbose=verbose)
-    ## rho <- environment(ff)
+    ## rho <- environment(ff) == list2env(devlist)
     xst       <- rep.int(0.1, nth)
     x0        <- pp$theta
     lower     <- object@lower
@@ -2632,8 +2629,8 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
     else ## "good try":
         deparse(substitute(optimizer))[[1L]]
 
-    lower <- rep(lower, length.out = length(par))
-    upper <- rep(upper, length.out = length(par))
+    lower <- rep_len(lower, length(par))
+    upper <- rep_len(upper, length(par))
 
     if (adj)
         ## control parameter tweaks: only for second round in nlmer, glmer
