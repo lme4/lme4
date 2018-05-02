@@ -58,7 +58,7 @@ if(testLevel > 2) {
 
     ## 2D profiles
     fm2ML <- lmer(diameter ~ 1 + (1|plate) + (1|sample), Penicillin, REML=0)
-    system.time(pr2 <- profile(fm2ML)) # 5.2 sec
+    system.time(pr2 <- profile(fm2ML)) # 5.2 sec, 2018-05: 2.1"
     (confint(pr2) -> CIpr2)
 
     lme4a_CIpr2 <-
@@ -87,7 +87,7 @@ if(testLevel > 2) {
     nm1 <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~ Asym|Tree,
                  Orange, start = c(Asym = 200, xmid = 725, scal = 350))
     if (FALSE) {
-        ## not working yet
+        ## not working yet: detecting (slightly) lower deviance; not converging in 10k
         pr5 <- profile(nm1,which=1,verbose=1,maxmult=1.2)
         xyplot(.zeta~.focal|.par,type=c("l","p"),data=lme4:::as.data.frame.thpr(pr5),
                scale=list(x=list(relation="free")),
@@ -97,19 +97,20 @@ if(testLevel > 2) {
 
 if (testLevel > 3) {
     fm3ML <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, REML=FALSE)
-    ## ~ 4 theta-variables (+ 2 fixed), 19 seconds :
+    ## ~ 4 theta-variables (+ 2 fixed), 19 seconds | 2018-05: 7.4"
     print(system.time(pr3 <- profile(fm3ML)))
     print(xyplot(pr3))
     print(splom(pr3))
 
     if (testLevel > 4) {
-        if(require("mlmRev")) {
-            ## takes much longer
-            data("Contraception", package="mlmRev")
-            fm2 <- glmer(use ~ urban+age+livch+(urban|district), Contraception, binomial)
-            print(system.time(pr5 <- profile(fm2,verbose=10)))
-            print(xyplot(pr5))
-        }
+      if(requireNamespace("mlmRev")) {
+        data("Contraception", package="mlmRev")
+        ## fit already takes ~ 3 sec (2018-05)
+        fm2 <- glmer(use ~ urban+age+livch + (urban|district), Contraception, binomial)
+        print(system.time(pr5 <- profile(fm2,verbose=10))) # 2018-05: 462 sec = 7'42"
+        ## -> 5 warnings notably "non-monotonic profile for .sig02" (the RE's corr.)
+        print(xyplot(pr5))
+      }
     }  ## testLevel > 4
 
 }  ## testLevel > 3
@@ -119,7 +120,7 @@ if (detectCores()>1) {
 
     p0 <- profile(fm1, which="theta_")
     ## http://stackoverflow.com/questions/12983137/how-do-detect-if-travis-ci-or-not
-    travis <- nchar(Sys.getenv("TRAVIS"))>0
+    travis <- nchar(Sys.getenv("TRAVIS")) > 0
     if(.Platform$OS.type != "windows" && !travis) {
         prof01P <- profile(fm1, which="theta_", parallel="multicore", ncpus=2)
         stopifnot(all.equal(p0,prof01P))
@@ -136,10 +137,9 @@ if (detectCores()>1) {
 
 ## test profile/update from within functions
 foo <- function() {
-    df <- cbpp
     gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-                   data = cbpp, family = binomial)
-    pp <- profile(gm1,which="theta_")
-    return(pp)
+                 data = cbpp, family = binomial)
+    ## return
+    profile(gm1, which="theta_")
 }
-stopifnot(is(foo(),"thpr"))
+stopifnot(inherits(foo(), "thpr"))
