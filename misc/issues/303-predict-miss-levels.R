@@ -24,9 +24,9 @@ Oats.lmer <-  lmer(yield ~ Variety * factor(nitro) + (1|Block/Variety),
 ## "message":
 ## fixed-effect model matrix is rank deficient so dropping 1 column / coefficient
 
-## Get a summary showing estimability issue via `lsmeans`
-library("lsmeans")
-rg <- ref.grid(Oats.lmer)
+## Get a summary showing estimability issue via `emmeans` (was "lsmeans"):
+library("emmeans")
+rg <- ref_grid(Oats.lmer)
 (nd <- summary(rg))
 ## Variety     nitro prediction  SE       df
 ## Golden Rain   0.0  80.00000    8.839195 16.24
@@ -42,20 +42,20 @@ rg <- ref.grid(Oats.lmer)
 ## Marvellous    0.6 126.83333    8.839195 16.24
 ## Victory       0.6 118.50000    8.839195 16.24
 
-
 ## The `nd` result is a data frame with values of the fixed-effects
 try(
 predict(Oats.lmer, newdata = nd)
 )## Error in X %*% fixef(object) : non-conformable arguments
-
 ## MM: error above no longer happens, but rather -- a NEW ERROR:
 ##----  Error in eval(expr, envir, enclos) : object 'Block' not found
-## and
-## and this error msg is correct :
-
-## ===> Fix our "newdata":
+##
+## and this error msg is correct  ===> Fix our "newdata":
 nd2 <- rbind(cbind(nd, Block = as.factor("III")),
              cbind(nd, Block = as.factor("IV" )))
 
 p2 <- predict(Oats.lmer, newdata = nd2)
 ## no problem here anymore
+stopifnot(all.equal(head(p2),
+                    c(`1` = 65.56777, `2` = 86.18276, `3` = 58.79386,
+                      `4` = 84.06777, `5` = 104.6828, `6` = 76.96052),
+                    tolerance = 7e-7)) # 9.827e-8
