@@ -53,8 +53,8 @@ glmer(formula, data = NULL, family = gaussian, control = glmerControl(),
     \code{\link{modular}}.}
   \item{verbose}{integer scalar.  If \code{> 0} verbose output is
     generated during the optimization of the parameter estimates.  If
-    \code{> 1} verbose output is generated during the individual PIRLS
-    steps.}
+    \code{> 1} verbose output is generated during the individual
+    penalized iteratively reweighted least squares (PIRLS) steps.}
   \item{nAGQ}{integer scalar - the number of points per axis for
     evaluating the adaptive Gauss-Hermite approximation to the
     log-likelihood.  Defaults to 1, corresponding to the Laplace

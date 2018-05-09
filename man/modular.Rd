@@ -30,7 +30,8 @@ glFormula(formula, data = NULL, family = gaussian,
 mkGlmerDevfun(fr, X, reTrms, family, nAGQ = 1L,
               verbose = 0L, maxit = 100L, control = glmerControl(), ...)
 
-optimizeGlmer(devfun, optimizer = "bobyqa",
+optimizeGlmer(devfun, 
+    optimizer = if (stage == 1) "bobyqa" else "Nelder_Mead", 
     restart_edge = FALSE,
     boundary.tol = formals(glmerControl)$boundary.tol,
     verbose = 0L, control = list(),

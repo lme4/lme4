@@ -757,7 +757,7 @@ mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L,
 ##' @param stage optimization stage (1: nAGQ=0, optimize over theta only; 2: nAGQ possibly >0, optimize over theta and beta)
 ##' @export
 optimizeGlmer <- function(devfun,
-                          optimizer="bobyqa",
+                          optimizer = if(stage == 1) "bobyqa" else "Nelder_Mead",
                           restart_edge=FALSE,
                           boundary.tol = formals(glmerControl)$boundary.tol,
                           verbose = 0L,
@@ -775,7 +775,6 @@ optimizeGlmer <- function(devfun,
     } else { ## stage == 2
         start <- getStart(start, lower=rho$lower, pred=rho$pp, returnVal="all")
         adj <- TRUE
-        if (missing(optimizer)) optimizer <- "Nelder_Mead"  ## BMB: too clever?
     }
     opt <- optwrap(optimizer, devfun, start, rho$lower,
                    control=control, adj=adj, verbose=verbose,

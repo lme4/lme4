@@ -49,8 +49,8 @@ nlmer(formula, data = NULL, control = nlmerControl(),
   }
   \item{verbose}{integer scalar.  If \code{> 0} verbose output is
     generated during the optimization of the parameter estimates.  If
-    \code{> 1} verbose output is generated during the individual PIRLS
-    steps.}
+    \code{> 1} verbose output is generated during the individual PIRLS steps
+    (PIRLS aka PRSS, e.g. in the C++ sources).}
   \item{nAGQ}{integer scalar - the number of points per axis for
     evaluating the adaptive Gauss-Hermite approximation to the
     log-likelihood.  Defaults to 1, corresponding to the Laplace
@@ -59,7 +59,7 @@ nlmer(formula, data = NULL, control = nlmerControl(),
     value of zero uses a faster but less exact form of parameter
     estimation for GLMMs by optimizing the random effects and the
     fixed-effects coefficients in the penalized iteratively reweighted
-    least squares step.}
+    least squares (PIRLS) step.}
 
   \item{subset}{an optional expression indicating the subset of the rows
     of \code{data} that should be used in the fit.  This can be a

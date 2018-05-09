@@ -54,8 +54,8 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
 
   \item{verbose}{integer scalar.  If \code{> 0} verbose output is
     generated during the optimization of the parameter estimates.  If
-    \code{> 1} verbose output is generated during the individual PIRLS
-    steps.}
+    \code{> 1} verbose output is generated during the individual
+    penalized iteratively reweighted least squares (PIRLS) steps.}
 
   \item{subset}{an optional expression indicating the subset of the rows
     of \code{data} that should be used in the fit. This can be a logical
