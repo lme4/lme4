@@ -1573,6 +1573,34 @@ influence.merMod <- function(model, ...) {
     list(hat=hatvalues(model))
 }
 
+cooks.distance.merMod <- function(model, ...) {
+    p <- Matrix::rankMatrix(getME(model,"X"))
+    hat <- hatvalues(model)
+    ## FIXME: check dispersion
+    dispersion <- sigma(model)^2
+    res <- residuals(model,type="pearson")
+    res <-  (res/(1 - hat))^2 * hat/(dispersion * p)
+    res[is.infinite(res)] <- NaN
+    res
+}
+
+## from ?lm.influence:
+##  wt.res: a vector of _weighted_ (or for class ‘glm’ rather _deviance_)
+##          residuals.
+##
+## residuals.lm gives r*sqrt(object$weights) (if non-NULL weights)
+##   for type %in% c("deviance","pearson")
+##
+## residuals.glm gives  (y - mu) * sqrt(wts)/sqrt(object$family$variance(mu))
+##
+rstudent.merMod <- function (model, ...) {
+    r <- residuals(model, type="deviance")
+    hat <- hatvalues(model)
+    pr <- residuals(model, type="pearson")
+    r <- sign(r) * sqrt(r^2 + (hat * pr^2)/(1 - hat))
+    r[is.infinite(r)] <- NaN
+    r/sigma(model)
+}
 
 ##' @S3method sigma merMod
 sigma.merMod <- function(object, ...) {

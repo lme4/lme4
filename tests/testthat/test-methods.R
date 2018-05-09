@@ -673,3 +673,26 @@ test_that("model.frame", {
     m4 <- lmer(Reaction ~ log(1+Days) + (1 | Subject), sleepstudy)
     ee(m4, c("Reaction","log(1 + Days)"))
 })
+
+## FIXME: test against zero-variance example to compare with
+##  glm/lm results ...
+context("influence measures")
+test_that("influence works",
+          expect_equal(unname(head(influence(fm1)$hat)),
+          c(0.107483311203734, 0.102096105816528,
+            0.0980557017761242, 0.0953620990825215, 
+            0.0940152977357202, 0.0940152977357202),
+          tolerance=1e-6))
+
+test_that("rstudent",
+          expect_equal(unname(head(rstudent(fm1))),
+                       c(-1.45598270922089, -1.49664543508657, -2.11747425025103,
+                         -0.0729690066951975, 0.772716397142335, 2.37859408861768),
+          tolerance=1e-6))
+
+test_that("cooks distance",
+          expect_equal(
+              unname(head(cooks.distance(fm1))),
+              c(0.127645976734753, 0.127346548123793, 0.243724627125036, 0.000280638917214881, 
+                0.0309804642689636, 0.293554225380831),
+              tolerance=1e-6))
