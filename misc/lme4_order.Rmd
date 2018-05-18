@@ -1,0 +1,140 @@
+---
+title: "diagnosing/understanding order dependence in `lme4` models"
+date: "`r Sys.time()`"
+---
+
+This example was sent by Laura Chihara.
+Construct combined data set: this uses `MathAchSchool` and `MathAchieve` from the `nlme` package, dropping some variables and renaming others in the combined data set.
+
+```{r pkgs_utils,message=FALSE}
+library(lme4)
+library(GGally)
+library(glmmTMB)
+th <- function(obj) getME(obj,"theta")
+singParams <- function(obj) {
+    gg <- th(obj)
+    names(gg)[abs(gg)<1e-5]
+}
+```
+
+```{r make_data}
+data("MathAchSchool", package="nlme")
+data("MathAchieve",package="nlme")
+MathScoresAll <- merge(MathAchSchool,MathAchieve,
+                       by="School")
+## rename
+names(MathScoresAll) <- c("School","Size","Type","Academic",
+                          "D","H","AveSES","Minority","Gender","SES",
+                          "Math","X")
+MathScoresAll$sizeScaled <- scale(MathScoresAll$Size)
+## reorder
+MathScoresAll <- subset(MathScoresAll,
+                        select=c(School,Math,Gender,Minority,
+                                 SES,Size,Type,Academic,AveSES,
+                                 sizeScaled))
+```
+
+Set up formulas: the only difference between these is that they put the *terms* in the random effect in a different order.
+```{r forms}
+fixedpars <- c("Gender","SES","Minority","sizeScaled",
+               "Type","Academic","AveSES")
+ranterms <- c("Gender","Minority","SES")
+tmpf <- function(rord=1:3) {
+    reformulate(c(fixedpars,
+                  sprintf("(%s|School)",
+                          paste(ranterms[rord],collapse="+"))),
+                response="Math")
+}
+(form.A <- tmpf())
+(form.B <- tmpf(c(1,3,2)))
+```
+
+Fit both models:
+
+```{r lme4_fit_REML,cache=TRUE}
+math.lmerA <- lmer(form.A, data = MathScoresAll, REML=TRUE)
+math.lmerB <- lmer(form.B, data = MathScoresAll, REML=TRUE)
+```
+
+Model A works (apparently), Model B gives warnings. They both give singular fits, but different components are singular ...
+
+```{r diagnose}
+## different log likelihoods (A is better)
+logLik(math.lmerA)-logLik(math.lmerB)
+singParams(math.lmerA)
+singParams(math.lmerB)
+```
+
+## Refit with ML instead of REML
+
+For comparison with `glmmTMB` fits (`glmmTMB` doesn't (yet) do REML), and out of curiosity.
+
+```{r lme4_fit_ML,cache=TRUE}
+math.lmerA.ML <- update(math.lmerA,REML=FALSE)
+math.lmerB.ML <- update(math.lmerB,REML=FALSE)
+```
+Both models give warnings, although slightly different (3 vs 1 negative eigenvalues)
+
+Now the log-likelihoods, singular parameters, and `VarCorr()` results are all the same (up to order) ...
+
+```{r loglik_comp_ml}
+logLik(math.lmerA.ML)-logLik(math.lmerB.ML) ## -2e-11
+singParams(math.lmerA.ML)
+singParams(math.lmerB.ML)
+VarCorr(math.lmerA.ML)
+VarCorr(math.lmerB.ML)
+```
+
+But the theta parameters themselves are **not** the same:
+```{r compare_theta}
+all.equal(sort(unname(th(math.lmerA.ML))),
+          sort(unname(th(math.lmerB.ML))))
+```
+(Is this as expected? I thought there was a one-to-one mapping between $\theta$ and $\Sigma$?? FWIW the eigenvalues/vectors (`eigen(VarCorr(math.lmerA.ML)[[1]])`) are also identical (of course).)
+
+
+More comparison:
+```{r lFormula}
+ff.A <- lFormula(form.A, data=MathScoresAll)
+ff.B <- lFormula(form.B, data=MathScoresAll)
+```
+
+Z matrices are rearranged: model frames and fixed-effect X matrices are identical (except for attributes):
+
+```{r show_Z}
+gridExtra::grid.arrange(image(ff.A$reTrms$Zt[1:10,1:50]),
+                        image(ff.B$reTrms$Zt[1:10,1:50]))
+all.equal(c(ff.A$fr),c(ff.B$fr))
+all.equal(c(ff.A$X),c(ff.B$X))
+```
+
+
+## comparing glmmTMB
+
+```{r glmmTMB_fit,cache=TRUE}
+math.tmbA <- glmmTMB(form.A, data = MathScoresAll)
+math.tmbB <- glmmTMB(form.B, data = MathScoresAll)
+```
+Different warnings in each case ..
+
+```{r glmmTMB_comp}
+logLik(math.tmbA)-logLik(math.tmbB)
+VarCorr(math.tmbA)
+VarCorr(math.tmbB)
+```
+
+Nothing obviously fishy about the data ...
+
+```{r ggpairs,cache=TRUE,warning=FALSE}
+nm0 <- subset(MathScoresAll,select=-c(School,sizeScaled))
+ggpairs(nm0,
+        lower = list(continuous = wrap("points", size = 0.1)),
+        progress=FALSE)
+```
+
+## To do
+
+- Could instrument optimization functions, see the paths the optimization is taking (need a function to reorder theta parameters for consistency across models)
+
+
+
