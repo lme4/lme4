@@ -11,7 +11,14 @@
       are multiple random effects terms per factor
     }
   }
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item \code{rstudent} and \code{influence} methods are available
+      for \code{merMod} objects
+    }
+  }
 }
+
 
 \section{CHANGES IN VERSION 1.1-17 (2018-04-03)}{
   \itemize{

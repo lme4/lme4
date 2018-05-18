@@ -674,8 +674,7 @@ test_that("model.frame", {
     ee(m4, c("Reaction","log(1 + Days)"))
 })
 
-## FIXME: test against zero-variance example to compare with
-##  glm/lm results ...
+
 context("influence measures")
 test_that("influence works",
           expect_equal(unname(head(influence(fm1)$hat)),
@@ -696,3 +695,33 @@ test_that("cooks distance",
               c(0.127645976734753, 0.127346548123793, 0.243724627125036, 0.000280638917214881, 
                 0.0309804642689636, 0.293554225380831),
               tolerance=1e-6))
+
+## tweaked example so estimated var = 0
+zerodat <- data.frame(x=seq(0,1,length.out=120),
+                      f=rep(1:3,each=40))
+zerodat$y1 <- simulate(~x+(1|f),
+                      family=gaussian,
+                      seed=102,
+                      newparams=list(beta=c(1,1),
+                                     theta=c(0.001),
+                                     sigma=1),
+                      newdata=zerodat)[[1]]
+zerodat$y2 <- simulate(~x+(1|f),
+                      family=poisson,
+                      seed=102,
+                      newparams=list(beta=c(1,1),
+                                     theta=c(0.001)),
+                      newdata=zerodat)[[1]]
+
+test_that("rstudent matches for zero-var cases",
+{
+    lmer_zero <- lmer(y1~x+(1|f), data=zerodat)
+    glmer_zero <- glmer(y2~x+(1|f),family=poisson, data=zerodat)
+    lm_zero <- lm(y1~x, data=zerodat)
+    glm_zero <- glm(y2~x,family=poisson, data=zerodat)
+    expect_equal(suppressWarnings(rstudent(glmer_zero)),
+                 rstudent(glm_zero),
+                 tolerance=0.01)
+    expect_equal(suppressWarnings(rstudent(lmer_zero)),
+                 rstudent(lm_zero),tolerance=0.01)
+})
