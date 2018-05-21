@@ -2,25 +2,25 @@
   paste0(toupper(substr(x, 1,1)), substr(x, 2, 1000000L), collapse=" ")
 }
 
-### bootMer() --- <==>	(TODO: semi-*)parametric bootstrap
+### bootMer() --- <==>  (TODO: semi-*)parametric bootstrap
 ### -------------------------------------------------------
 ## Doc: show how  this is equivalent - but faster than
-##		boot(*, R = nsim, sim = "parametric", ran.gen = simulate(.,1,.), mle = x)
+##              boot(*, R = nsim, sim = "parametric", ran.gen = simulate(.,1,.), mle = x)
 ## --> return a "boot" object -- so we could use boot.ci() etc
 ## TODO: also allow "semi-parametric" model-based bootstrap:
 ##    resampling the (centered!) residuals (for use.u=TRUE) or for use.u=FALSE,
 ##    *both* the centered u's + centered residuals
-##    instead of using	rnorm()
+##    instead of using  rnorm()
 ##  BUT see:
 ## @article{morris_blups_2002,
-##	title = {The {BLUPs} are not "best" when it comes to bootstrapping},
-##	volume = {56},
-##	issn = {0167-7152},
-##	url = {http://www.sciencedirect.com/science/article/pii/S016771520200041X},
-##	doi = {10.1016/S0167-7152(02)00041-X},
-##	journal = {Statistics \& Probability Letters},
-##	author = {Morris, Jeffrey S},
-##	year = {2002},
+##      title = {The {BLUPs} are not "best" when it comes to bootstrapping},
+##      volume = {56},
+##      issn = {0167-7152},
+##      url = {http://www.sciencedirect.com/science/article/pii/S016771520200041X},
+##      doi = {10.1016/S0167-7152(02)00041-X},
+##      journal = {Statistics \& Probability Letters},
+##      author = {Morris, Jeffrey S},
+##      year = {2002},
 ## }
 ## for an indication of why this is not necessarily a good idea!
 
@@ -31,7 +31,7 @@
 bootMer <- function(x, FUN, nsim = 1, seed = NULL,
                     use.u = FALSE, re.form = NA,
                     type = c("parametric","semiparametric"),
-		    verbose = FALSE,
+                    verbose = FALSE,
                     .progress = "none", PBargs=list(),
                     parallel = c("no", "multicore", "snow"),
                     ncpus = getOption("boot.ncpus", 1L), cl = NULL)
@@ -49,8 +49,8 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
     if (do_parallel) {
         if (parallel == "multicore") have_mc <- .Platform$OS.type != "windows"
         else if (parallel == "snow") have_snow <- TRUE
-	if (!(have_mc || have_snow))
-	    do_parallel <- FALSE # (only for "windows")
+        if (!(have_mc || have_snow))
+            do_parallel <- FALSE # (only for "windows")
     }
     if (do_parallel && .progress != "none")
         message("progress bar disabled for parallel operations")
@@ -59,12 +59,12 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
     type <- match.arg(type)
     if(!is.null(seed)) set.seed(seed)
     else if(!exists(".Random.seed", envir = .GlobalEnv))
-	runif(1) # initialize the RNG if necessary
+        runif(1) # initialize the RNG if necessary
 
     mc <- match.call()
     t0 <- FUN(x)
     if (!is.numeric(t0))
-	stop("bootMer currently only handles functions that return numeric vectors")
+        stop("bootMer currently only handles functions that return numeric vectors")
 
     mle <- list(beta = getME(x,"beta"), theta = getME(x,"theta"))
     if (isLMM(x)) mle <- c(mle,list(sigma = sigma(x)))
@@ -142,15 +142,15 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
     } else fail.msgs <- NULL
     ## boot() ends with the equivalent of
     ## structure(list(t0 = t0, t = t.star, R = R, data = data, seed = seed,
-    ##		      statistic = statistic, sim = sim, call = call,
-    ##		      ran.gen = ran.gen, mle = mle),
-    ##		 class = "boot")
+    ##                statistic = statistic, sim = sim, call = call,
+    ##                ran.gen = ran.gen, mle = mle),
+    ##           class = "boot")
     s <- structure(list(t0 = t0, t = t(t.star), R = nsim, data = x@frame,
-		   seed = .Random.seed,
-		   statistic = FUN, sim = "parametric", call = mc,
-		   ## these two are dummies
-		   ran.gen = "simulate(<lmerMod>, 1, *)", mle = mle),
-	      class = "boot")
+                   seed = .Random.seed,
+                   statistic = FUN, sim = "parametric", call = mc,
+                   ## these two are dummies
+                   ran.gen = "simulate(<lmerMod>, 1, *)", mle = mle),
+              class = "boot")
     attr(s,"bootFail") <- numFail
     attr(s,"boot.fail.msgs") <- fail.msgs
     attr(s,"boot_type") <- "boot"

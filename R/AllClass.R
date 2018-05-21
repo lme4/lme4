@@ -6,11 +6,11 @@
 ##' @keywords classes
 ##' @export
 setClass("lmList4",
-	 representation(call = "call", pool = "logical",
-			groups = "ordered", # or "factor"?  nlme does use ordered()
-			origOrder = "integer" # a permutation
-			),
-	 contains = "list")
+         representation(call = "call", pool = "logical",
+                        groups = "ordered", # or "factor"?  nlme does use ordered()
+                        origOrder = "integer" # a permutation
+                        ),
+         contains = "list")
 
 ## TODO?: export
 setClass("lmList4.confint", contains = "array")
@@ -53,7 +53,7 @@ merPredD <-
                      initialize = function(X, Zt, Lambdat, Lind, theta,
                                            n, # = sample size, usually = nrow(X)
                                            ...) {
-			 if (!nargs()) return()
+                         if (!nargs()) return()
                          ll <- list(...)
                          X <<- as(X, "matrix")
                          Zt <<- as(Zt, "dgCMatrix")

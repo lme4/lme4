@@ -241,12 +241,12 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
             newdata <- newdata[-fixed.na.action,]
         }
         ## note: mkReTrms automatically *drops* unused levels
-	ReTrms <- mkReTrms(findbars(re.form[[2]]), rfd)
+        ReTrms <- mkReTrms(findbars(re.form[[2]]), rfd)
         ## update Lambdat (ugh, better way to do this?)
         ReTrms <- within(ReTrms,Lambdat@x <- unname(getME(object,"theta")[Lind]))
-	if (!allow.new.levels && any(vapply(ReTrms$flist, anyNA, NA)))
-	    stop("NAs are not allowed in prediction data",
-		 " for grouping variables unless allow.new.levels is TRUE")
+        if (!allow.new.levels && any(vapply(ReTrms$flist, anyNA, NA)))
+            stop("NAs are not allowed in prediction data",
+                 " for grouping variables unless allow.new.levels is TRUE")
         ns.re <- names(re <- ranef(object))
         nRnms <- names(Rcnms <- ReTrms$cnms)
         if (!all(nRnms %in% ns.re))
@@ -258,12 +258,12 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
         ## pick out random effects values that correspond to
         ##  random effects incorporated in re.form ...
         ## NB: Need integer indexing, as nRnms can be duplicated: (age|Subj) + (sex|Subj) :
-	re_new <- lapply(seq_along(nRnms), function(i) {
+        re_new <- lapply(seq_along(nRnms), function(i) {
             rname <- nRnms[i]
-	    if (!all(Rcnms[[i]] %in% names(re[[rname]])))
-		stop("random effects specified in re.form that were not present in original model")
-	    re_x[[rname]][,Rcnms[[i]]]
-	})
+            if (!all(Rcnms[[i]] %in% names(re[[rname]])))
+                stop("random effects specified in re.form that were not present in original model")
+            re_x[[rname]][,Rcnms[[i]]]
+        })
         re_new <- unlist(lapply(re_new, t))  ## must TRANSPOSE RE matrices before unlisting
         ## FIXME? use vapply(re_new, t, FUN_VALUE=????)
     }
@@ -384,7 +384,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
                 nm <- seq_along(pred)
             names(pred) <- nm
         }
-	fit.na.action <- NULL
+        fit.na.action <- NULL
         ## flow jumps to end for na.predict
     } else { ## newdata and/or re.form and/or newparams and/or random.only specified
         fit.na.action <- attr(object@frame,"na.action")  ## original NA action
@@ -456,7 +456,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
         
         if (!noReForm(re.form)) {
             if (is.null(re.form))
-		re.form <- reOnly(formula(object)) # RE formula only
+                re.form <- reOnly(formula(object)) # RE formula only
             rfd <- if (is.null(newdata)) object@frame else newdata
             newRE <- mkNewReTrms(object, rfd, re.form, na.action=na.action,
                                  allow.new.levels=allow.new.levels)
@@ -587,7 +587,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         re.form <- if (use.u) NULL else ~0
     }
     if (is.null(re.form)) { # formula w/o response
-	re.form <- noLHSform(formula(object))
+        re.form <- noLHSform(formula(object))
     }
     if(!is.null(seed)) set.seed(seed)
     if(!exists(".Random.seed", envir = .GlobalEnv))
@@ -633,19 +633,19 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 
     ## (1) random effect(s)
     sim.reff <- if (!is.null(findbars(compReForm))) {
-	newRE <- mkNewReTrms(object, newdata, compReForm,
-			     na.action=na.action,
-			     allow.new.levels=allow.new.levels)
+        newRE <- mkNewReTrms(object, newdata, compReForm,
+                             na.action=na.action,
+                             allow.new.levels=allow.new.levels)
         ## this *can* justifiably happen, if we are using mkNewReTrms
         ## in the context of predicting/simulating with a non-trivial
         ## re.form ...
         ## <obsolete> paranoia ...
         ## <obsolete> stopifnot(!is.null(newdata) ||
         ##       isTRUE(all.equal(newRE$Lambdat,getME(object,"Lambdat"))))
-	U <- t(newRE$Lambdat %*% newRE$Zt) # == Z Lambda
-	u <- rnorm(ncol(U)*nsim)
-	## UNSCALED random-effects contribution:
-	as(U %*% matrix(u, ncol = nsim), "matrix")
+        U <- t(newRE$Lambdat %*% newRE$Zt) # == Z Lambda
+        u <- rnorm(ncol(U)*nsim)
+        ## UNSCALED random-effects contribution:
+        as(U %*% matrix(u, ncol = nsim), "matrix")
     } else 0
 
     val <- if (isLMM(object)) {
@@ -726,13 +726,13 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                                         napredict,
                                         omit = fit.na.action); x }
     val <- if (is.matrix(val[[1]])) {
-	## have to handle binomial response matrices differently --
-	## fill in NAs as appropriate in *both* columns
-	structure(lapply(val, nafun),
-		  ## have to put this back into a (weird) data frame again,
-		  ## carefully (should do the napredict stuff
-		  ## earlier, so we don't have to redo this transformation!)
-		  class = "data.frame")
+        ## have to handle binomial response matrices differently --
+        ## fill in NAs as appropriate in *both* columns
+        structure(lapply(val, nafun),
+                  ## have to put this back into a (weird) data frame again,
+                  ## carefully (should do the napredict stuff
+                  ## earlier, so we don't have to redo this transformation!)
+                  class = "data.frame")
     } else {
         as.data.frame(lapply(val, napredict, omit=fit.na.action))
     }
@@ -741,10 +741,10 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     ## as appropriate based on fit.na.action (which may be different
     ## from the original model's na.action spec)
     nm2 <-
-	if (is.null(newdata))
-	    names(napredict(na.omit(f), omit=fit.na.action))
-	else
-	    rownames(napredict(newdata, omit=fit.na.action))
+        if (is.null(newdata))
+            names(napredict(na.omit(f), omit=fit.na.action))
+        else
+            rownames(napredict(newdata, omit=fit.na.action))
     if (length(nm2) > 0)
         row.names(val) <- nm2
 
@@ -834,7 +834,7 @@ Gamma_simfun <- function(object, nsim, ftd=fitted(object),
 
 gamma.shape.merMod <- function(object, ...) {
     if(family(object)$family != "Gamma")
-	stop("Can not fit gamma shape parameter because Gamma family not used")
+        stop("Can not fit gamma shape parameter because Gamma family not used")
 
     y <- getME(object, "y")
     mu <- getME(object, "mu")
@@ -845,8 +845,8 @@ gamma.shape.merMod <- function(object, ...) {
                                         # Eqs. between 8.2 & 8.3 (MN)
     Dbar <- dev/length(y)
     structure(list(alpha = (6+2*Dbar)/(Dbar*(6+Dbar)),
-		   SE = NA), # FIXME: obtain standard error
-	      class = "gamma.shape")
+                   SE = NA), # FIXME: obtain standard error
+              class = "gamma.shape")
 }
 
 
@@ -877,7 +877,7 @@ negative.binomial_simfun <- function (object, nsim, ftd = fitted(object),
 
 
 simfunList <- list(gaussian = gaussian_simfun,
-		   binomial = binomial_simfun,
-		   poisson  = poisson_simfun,
-		   Gamma    = Gamma_simfun,
-		   negative.binomial = negative.binomial_simfun)
+                   binomial = binomial_simfun,
+                   poisson  = poisson_simfun,
+                   Gamma    = Gamma_simfun,
+                   negative.binomial = negative.binomial_simfun)

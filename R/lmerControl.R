@@ -23,13 +23,13 @@ chk.convOpt <- function(opt) {
     cnm <- deparse(nm <- substitute(opt))[[1]]
     if(!is.list(opt)) stop("check.conv* option ", cnm, " must be a list")
     if(!is.character(opt$action))
-	stop("check.conv* option ", cnm, " has no 'action' string")
+        stop("check.conv* option ", cnm, " has no 'action' string")
     if(!is.numeric(tol <- opt$tol))
-	stop("check.conv* option ", cnm, " must have a numeric 'tol' component")
+        stop("check.conv* option ", cnm, " must have a numeric 'tol' component")
     if(length(tol) != 1 || tol < 0)
-	stop("check.conv* option ", cnm, "$tol must be number >= 0")
+        stop("check.conv* option ", cnm, "$tol must be number >= 0")
     if(!is.null(relTol <- opt$relTol))
-	stopifnot(is.numeric(relTol), length(relTol) == 1, relTol >= 0)
+        stopifnot(is.numeric(relTol), length(relTol) == 1, relTol >= 0)
     invisible()
 }
 
@@ -37,25 +37,25 @@ chk.convOpt <- function(opt) {
 .makeCC <- function(action, tol, relTol, ...) {
     stopifnot(is.character(action), length(action) == 1)
     if(!is.numeric(tol))
-	stop("must have a numeric 'tol' component")
+        stop("must have a numeric 'tol' component")
     if(length(tol) != 1 || tol < 0)
-	stop("'tol' must be number >= 0")
+        stop("'tol' must be number >= 0")
     mis.rt <- missing(relTol)
     if(!mis.rt && !is.null(relTol))
-	stopifnot(is.numeric(relTol), length(relTol) == 1, relTol >= 0)
+        stopifnot(is.numeric(relTol), length(relTol) == 1, relTol >= 0)
     ## and return the list,  the  "..." just being appended unchecked
     c(list(action = action, tol = tol),
       if(!mis.rt) list(relTol = relTol),
       list(...))
 }
 
-##' Internal utility :	Allow check.conv.* to be a string
+##' Internal utility :  Allow check.conv.* to be a string
 chk.cconv <- function(copt, callingFn) {
     cnm <- deparse(substitute(copt))
     if(is.character(copt)) {
-	def <- eval(formals(callingFn)[[cnm]])
-	def$action <- copt
-	assign(cnm, def, envir=sys.frame(sys.parent()))
+        def <- eval(formals(callingFn)[[cnm]])
+        def$action <- copt
+        assign(cnm, def, envir=sys.frame(sys.parent()))
     } else chk.convOpt(copt)
 }
 
@@ -63,32 +63,32 @@ chk.cconv <- function(copt, callingFn) {
 ## DOC: ../man/lmerControl.Rd
 lmerControl <-
     function(optimizer="bobyqa",#instead of "Nelder_Mead",
-	     restart_edge=TRUE,
-	     ## don't call this "check." -- will fail
-	     ## automatic check-option-checking in
-	     ## inst/tests/test-lmer.R
-	     boundary.tol=1e-5,
-	     calc.derivs=TRUE,
-	     use.last.params=FALSE,
-	     sparseX=FALSE,
-	     ## input checking options:
-	     check.nobs.vs.rankZ="ignore", ## "warningSmall",
-	     check.nobs.vs.nlev="stop",
-	     check.nlev.gtreq.5="ignore",
-	     check.nlev.gtr.1="stop",
-	     check.nobs.vs.nRE="stop",
-	     check.rankX = c("message+drop.cols",
+             restart_edge=TRUE,
+             ## don't call this "check." -- will fail
+             ## automatic check-option-checking in
+             ## inst/tests/test-lmer.R
+             boundary.tol=1e-5,
+             calc.derivs=TRUE,
+             use.last.params=FALSE,
+             sparseX=FALSE,
+             ## input checking options:
+             check.nobs.vs.rankZ="ignore", ## "warningSmall",
+             check.nobs.vs.nlev="stop",
+             check.nlev.gtreq.5="ignore",
+             check.nlev.gtr.1="stop",
+             check.nobs.vs.nRE="stop",
+             check.rankX = c("message+drop.cols",
                              "silent.drop.cols", "warn+drop.cols",
-                 	     "stop.deficient", "ignore"),
-	     check.scaleX = c("warning","stop","silent.rescale",
+                             "stop.deficient", "ignore"),
+             check.scaleX = c("warning","stop","silent.rescale",
                               "message+rescale","warn+rescale","ignore"),
-	     check.formula.LHS = "stop",
-	     ## convergence options
-	     check.conv.grad	 = .makeCC("warning", tol = 2e-3, relTol = NULL),
-	     check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
-	     check.conv.hess	 = .makeCC(action = "warning", tol = 1e-6),
-	     optCtrl = list()
-	     )
+             check.formula.LHS = "stop",
+             ## convergence options
+             check.conv.grad     = .makeCC("warning", tol = 2e-3, relTol = NULL),
+             check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
+             check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
+             optCtrl = list()
+             )
 {
     ## FIXME: is there a better idiom?  match.call() ?
     ## fill in values from options, but **only if not specified explicitly in arguments**
@@ -113,9 +113,9 @@ lmerControl <-
 
     ## compatibility and convenience, caller can specify action string only:
     me <- sys.function()
-    chk.cconv(check.conv.grad,	   me)
+    chk.cconv(check.conv.grad,     me)
     chk.cconv(check.conv.singular, me)
-    chk.cconv(check.conv.hess	 , me)
+    chk.cconv(check.conv.hess    , me)
 
     structure(namedList(optimizer,
                         restart_edge,
@@ -128,7 +128,7 @@ lmerControl <-
                                   check.nlev.gtreq.5,
                                   check.nlev.gtr.1,
                                   check.nobs.vs.nRE,
-				  check.rankX,
+                                  check.rankX,
                                   check.scaleX,
                                   check.formula.LHS),
                         checkConv=
@@ -141,31 +141,31 @@ lmerControl <-
 
 glmerControl <-
     function(optimizer=c("bobyqa","Nelder_Mead"),
-	     restart_edge=FALSE,
-	     boundary.tol=1e-5,
-	     calc.derivs=TRUE,
-	     use.last.params=FALSE,
-	     sparseX=FALSE,
-	     tolPwrss = 1e-7,
-	     compDev = TRUE,
+             restart_edge=FALSE,
+             boundary.tol=1e-5,
+             calc.derivs=TRUE,
+             use.last.params=FALSE,
+             sparseX=FALSE,
+             tolPwrss = 1e-7,
+             compDev = TRUE,
              nAGQ0initStep = TRUE,
-	     ## input checking options
-	     check.nobs.vs.rankZ="ignore", ## "warningSmall",
-	     check.nobs.vs.nlev="stop",
-	     check.nlev.gtreq.5="ignore",
-	     check.nlev.gtr.1="stop",
-	     check.nobs.vs.nRE="stop",
-	     check.rankX = c("message+drop.cols",
-	     "silent.drop.cols", "warn+drop.cols",
-	     "stop.deficient", "ignore"),
-	     check.scaleX = "warning",
-	     check.formula.LHS="stop",
-	     check.response.not.const = "stop",
-	     ## convergence checking options
-	     check.conv.grad	 = .makeCC("warning", tol = 1e-3, relTol = NULL),
-	     check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
-	     check.conv.hess	 = .makeCC(action = "warning", tol = 1e-6),
-	     optCtrl = list())
+             ## input checking options
+             check.nobs.vs.rankZ="ignore", ## "warningSmall",
+             check.nobs.vs.nlev="stop",
+             check.nlev.gtreq.5="ignore",
+             check.nlev.gtr.1="stop",
+             check.nobs.vs.nRE="stop",
+             check.rankX = c("message+drop.cols",
+             "silent.drop.cols", "warn+drop.cols",
+             "stop.deficient", "ignore"),
+             check.scaleX = "warning",
+             check.formula.LHS="stop",
+             check.response.not.const = "stop",
+             ## convergence checking options
+             check.conv.grad     = .makeCC("warning", tol = 1e-3, relTol = NULL),
+             check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
+             check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
+             optCtrl = list())
 {
     ## FIXME: should try to modularize/refactor/combine with lmerControl if possible
     ## but note different defaults
@@ -177,7 +177,7 @@ glmerControl <-
     ## (and possible future divergence)
     stopifnot(is.list(optCtrl))
     if (length(optimizer)==1) {
-	optimizer <- replicate(2,optimizer) # works evevn when optimizer is function
+        optimizer <- replicate(2,optimizer) # works evevn when optimizer is function
     }
     if (!is.null(glmerOpts <- getOption("glmerControl"))) {
         nn <- names(glmerOpts)
@@ -195,9 +195,9 @@ glmerControl <-
 
     ## compatibility and convenience, caller can specify action string only:
     me <- sys.function()
-    chk.cconv(check.conv.grad,	   me)
+    chk.cconv(check.conv.grad,     me)
     chk.cconv(check.conv.singular, me)
-    chk.cconv(check.conv.hess	 , me)
+    chk.cconv(check.conv.hess    , me)
 
     if (use.last.params && calc.derivs)
         warning("using ",shQuote("use.last.params"),"=TRUE and ",
@@ -206,27 +206,27 @@ glmerControl <-
     structure(namedList(optimizer,
                         calc.derivs,
                         use.last.params,
-			restart_edge,
+                        restart_edge,
                         boundary.tol,
-			tolPwrss,
-			compDev,
+                        tolPwrss,
+                        compDev,
                         nAGQ0initStep,
-			checkControl=
-			namedList(check.nobs.vs.rankZ,
+                        checkControl=
+                        namedList(check.nobs.vs.rankZ,
                                   check.nobs.vs.nlev,
-				  check.nlev.gtreq.5,
-				  check.nlev.gtr.1,
+                                  check.nlev.gtreq.5,
+                                  check.nlev.gtr.1,
                                   check.nobs.vs.nRE,
-				  check.rankX,
+                                  check.rankX,
                                   check.scaleX,
                                   check.formula.LHS,
-				                          check.response.not.const),
+                                                          check.response.not.const),
                         checkConv=
                         namedList(check.conv.grad,
                                   check.conv.singular,
                                   check.conv.hess),
                         optCtrl=optCtrl),
-	      class = c("glmerControl", "merControl"))
+              class = c("glmerControl", "merControl"))
 }
 
 
@@ -241,7 +241,7 @@ nlmerControl <- function(optimizer="Nelder_Mead",
         optimizer <- replicate(2,optimizer)
     }
     structure(namedList(optimizer,
-			tolPwrss,
-			optCtrl=optCtrl),
-	      class = c("nlmerControl", "merControl"))
+                        tolPwrss,
+                        optCtrl=optCtrl),
+              class = c("nlmerControl", "merControl"))
 }

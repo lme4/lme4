@@ -133,7 +133,7 @@ glmer.nb <- function(..., interval = log(th) + c(-3,3),
     ##  then re-evaluating, not via refit() ...
     
     optTheta(g1, interval=interval, tol=tol, verbose=verbose,
-	     control = c(eval.parent(g1@call$control),nb.control))
+             control = c(eval.parent(g1@call$control),nb.control))
 }
 
 ## do we want to facilitate profiling on theta??

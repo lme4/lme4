@@ -44,7 +44,7 @@ mlist2vec <- function(L) {
     ## in either case, read off in "lower-triangular" order
     ## (column-wise)
     ff <- function(x) {
-	if (all(x[iu <- upper.tri(x)] == 0)) t(x[!iu]) else t(x)[!iu]
+        if (all(x[iu <- upper.tri(x)] == 0)) t(x[!iu]) else t(x)[!iu]
     }
     structure(unlist(lapply(L,ff)), clen = n)
 }
@@ -145,7 +145,7 @@ safe_chol <- function(m) {
 
     ## attempt regular Chol. decomp
     if (!is.null(cc <- tryCatch(chol(m), error=function(e) NULL)))
-	return(cc)
+        return(cc)
     ## ... pivot if necessary ...
     cc <- suppressWarnings(chol(m,pivot=TRUE))
     oo <- order(attr(cc,"pivot"))
