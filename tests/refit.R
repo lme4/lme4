@@ -124,7 +124,7 @@ stopifnot(all.equal(getinfo(d1), getinfo(d2),  tolerance = 0.005))
 
 
 ## Bernoulli GLMM (specified as factor)
-if (require("mlmRev")) {
+if (requireNamespace("mlmRev")) {
     data(Contraception, package="mlmRev")
     gm3 <- glmer(use ~ urban + age + livch + (1|district),
                  Contraception, binomial)

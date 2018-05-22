@@ -92,7 +92,7 @@ s1B <- simulate(g1B,seed=102)[[1]]
 stopifnot(all.equal(gm_s5,as.numeric(s1B)-1))
 
 ## another Bernoulli
-if(require("mlmRev")) {
+if(requireNamespace("mlmRev")) {
     data(Contraception,package="mlmRev")
     gm5 <- glmer(use ~ urban+age+livch+(1|district), Contraception, binomial)
     s3 <- simulate(gm5)
