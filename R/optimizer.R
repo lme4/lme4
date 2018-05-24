@@ -64,7 +64,7 @@ Nelder_Mead <- function(fn, par, lower=rep.int(-Inf, n),
     }
 
     list(fval = nM$value(), par = nM$xpos(),
-	 convergence = pmin(0, nMres), # positive nMres is also 'convergence'
-	 NM.result = nMres, `message` = msgvec[nMres+4],
-	 control = c(cc, xst=xst, xt=xt), feval = it)
+         convergence = pmin(0, nMres), # positive nMres is also 'convergence'
+         NM.result = nMres, `message` = msgvec[nMres+4],
+         control = c(cc, xst=xst, xt=xt), feval = it)
 }

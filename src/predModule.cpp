@@ -95,12 +95,12 @@ namespace lme4 {
         const int nf(ll.size());
         const MiVec nl(as<MiVec>(rho["nlevs"])),
             nct(as<MiVec>(rho["nctot"])), off(as<MiVec>(rho["offsets"]));
-	// ll : flist
-	// trmlst : terms : list with one element per factor, indicating corresponding term
+        // ll : flist
+        // trmlst : terms : list with one element per factor, indicating corresponding term
         // nf : : number of unique factors
-	// nl : nlevs : number of levels for each unique factor
-	// nct : nctot : total number of components per factor
-	// off : offsets : points to where each term starts
+        // nl : nlevs : number of levels for each unique factor
+        // nct : nctot : total number of components per factor
+        // off : offsets : points to where each term starts
         Rcpp::List ans(nf);
         ans.names() = clone(as<Rcpp::CharacterVector>(ll.names()));
         const SpMatrixd d_Lambda(d_Lambdat.adjoint());
@@ -110,18 +110,18 @@ namespace lme4 {
             ansi.attr("dim") = Rcpp::IntegerVector::create(ncti, ncti, nli);
             ans[i] = ansi;
             const MiVec trms(as<MiVec>(trmlst(i)));
-	    // ncti : total number of components in factor i
-	    // nli : number of levels in factor i
-	    // ansi : array in which to store condVar's for factor i
-	    // trms : pointers to terms corresponding to factor i
+            // ncti : total number of components in factor i
+            // nli : number of levels in factor i
+            // ansi : array in which to store condVar's for factor i
+            // trms : pointers to terms corresponding to factor i
             if (trms.size() == 1) { // simple case
                 int offset = off[trms[0] - 1];
                 for (int j = 0; j < nli; ++j) {
-		    MatrixXd LvT(d_Lambdat.innerVectors(offset + j * ncti, ncti));
-		    MatrixXd Lv(LvT.adjoint());
-		    d_L.solveInPlace(LvT, CHOLMOD_A);
-		    MatrixXd rr(Lv * LvT);
-		    std::copy(rr.data(), rr.data() + rr.size(), &ansi[j * ncti * ncti]);
+                    MatrixXd LvT(d_Lambdat.innerVectors(offset + j * ncti, ncti));
+                    MatrixXd Lv(LvT.adjoint());
+                    d_L.solveInPlace(LvT, CHOLMOD_A);
+                    MatrixXd rr(Lv * LvT);
+                    std::copy(rr.data(), rr.data() + rr.size(), &ansi[j * ncti * ncti]);
                 }
             } else {
                 throw std::runtime_error("multiple terms per factor not yet written");
@@ -157,22 +157,22 @@ namespace lme4 {
     void merPredD::setTheta(const VectorXd& theta) {
 
         if (theta.size() != d_theta.size()) {
-	    Rcpp::Rcout << "(" << theta.size() << "!=" <<
-		d_theta.size() << ")" << std::endl;
-	    // char errstr[100];
-	    // sprintf(errstr,"theta size mismatch (%d != %d)",
-	    //	    theta.size(),d_theta.size());
-	    throw invalid_argument("theta size mismatch");
-	}
-	// update theta
-	std::copy(theta.data(), theta.data() + theta.size(), 
-		  d_theta.data());
-	// update Lambdat
-	int    *lipt = d_Lind.data();
-	double *LamX = d_Lambdat.valuePtr(), *thpt = d_theta.data();
-	for (int i = 0; i < d_Lind.size(); ++i) {
-	    LamX[i] = thpt[lipt[i] - 1];
-	}
+            Rcpp::Rcout << "(" << theta.size() << "!=" <<
+                d_theta.size() << ")" << std::endl;
+            // char errstr[100];
+            // sprintf(errstr,"theta size mismatch (%d != %d)",
+            //      theta.size(),d_theta.size());
+            throw invalid_argument("theta size mismatch");
+        }
+        // update theta
+        std::copy(theta.data(), theta.data() + theta.size(), 
+                  d_theta.data());
+        // update Lambdat
+        int    *lipt = d_Lind.data();
+        double *LamX = d_Lambdat.valuePtr(), *thpt = d_theta.data();
+        for (int i = 0; i < d_Lind.size(); ++i) {
+            LamX[i] = thpt[lipt[i] - 1];
+        }
     }
 
     void merPredD::setZt(const VectorXd& ZtNonZero) {
@@ -255,30 +255,30 @@ namespace lme4 {
     
     // using a point so as to detect NULL
     void merPredD::updateDecomp(const MatrixXd* xPenalty) {  // update L, RZX and RX
-	int debug=0;
-	
-	if (debug) Rcpp::Rcout << "start updateDecomp" << std::endl;
+        int debug=0;
+        
+        if (debug) Rcpp::Rcout << "start updateDecomp" << std::endl;
         updateL();
-	if (debug) {
-	    Rcpp::Rcout << "updateDecomp 2: dimensions (RZX, LamtUt,V)" << 
-		d_RZX.cols() << " " << d_RZX.rows() << " " <<
-		d_LamtUt.cols() << " " << d_LamtUt.rows() << " " <<
-		d_V.cols() << " " << d_V.rows() << " " <<
-		std::endl;
-	}
-	if (d_LamtUt.cols() != d_V.rows()) {
-	    ::Rf_warning("dimension mismatch in updateDecomp()");
-	    // Rcpp::Rcout << "WARNING: dimension mismatch in updateDecomp(): " <<
-	    // " LamtUt=" << d_LamtUt.rows() << "x" << d_LamtUt.cols() << 
-	    // "; V=" << d_V.rows() << "x" << d_V.cols() << " " <<
-	    // std::endl;
-	}
+        if (debug) {
+            Rcpp::Rcout << "updateDecomp 2: dimensions (RZX, LamtUt,V)" << 
+                d_RZX.cols() << " " << d_RZX.rows() << " " <<
+                d_LamtUt.cols() << " " << d_LamtUt.rows() << " " <<
+                d_V.cols() << " " << d_V.rows() << " " <<
+                std::endl;
+        }
+        if (d_LamtUt.cols() != d_V.rows()) {
+            ::Rf_warning("dimension mismatch in updateDecomp()");
+            // Rcpp::Rcout << "WARNING: dimension mismatch in updateDecomp(): " <<
+            // " LamtUt=" << d_LamtUt.rows() << "x" << d_LamtUt.cols() << 
+            // "; V=" << d_V.rows() << "x" << d_V.cols() << " " <<
+            // std::endl;
+        }
         d_RZX         = d_LamtUt * d_V;
-	if (debug) Rcpp::Rcout << "updateDecomp 3" << std::endl;
+        if (debug) Rcpp::Rcout << "updateDecomp 3" << std::endl;
         if (d_p > 0) {
             d_L.solveInPlace(d_RZX, CHOLMOD_P);
             d_L.solveInPlace(d_RZX, CHOLMOD_L);
-	    if (debug) Rcpp::Rcout << "updateDecomp 4" << std::endl;
+            if (debug) Rcpp::Rcout << "updateDecomp 4" << std::endl;
             MatrixXd      VtVdown(d_VtV);
             
             if (xPenalty == NULL)
@@ -286,11 +286,11 @@ namespace lme4 {
             else {
                 d_RX.compute(VtVdown.selfadjointView<Eigen::Upper>().rankUpdate(d_RZX.adjoint(), -1).rankUpdate(*xPenalty, 1));
             }
-	    if (debug) Rcpp::Rcout << "updateDecomp 5" << std::endl;
+            if (debug) Rcpp::Rcout << "updateDecomp 5" << std::endl;
             if (d_RX.info() != Eigen::Success)
                 ::Rf_error("Downdated VtV is not positive definite");
             d_ldRX2         = 2. * d_RX.matrixLLT().diagonal().array().abs().log().sum();
-	    if (debug) Rcpp::Rcout << "updateDecomp 6" << std::endl;
+            if (debug) Rcpp::Rcout << "updateDecomp 6" << std::endl;
         }
     }
 

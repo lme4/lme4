@@ -31,16 +31,16 @@ namespace lme4 {
         cholmod_factor* factor() const { return Base::m_cholmodFactor; }
 
         void factorize_p(const typename Base::MatrixType& matrix, Eigen::ArrayXi fset, double beta=0.) {
-	    // FIXME: add forceRectangular flag to allow backward compatibility;
-	    // restore an appropriate version of the square/rectangular test
+            // FIXME: add forceRectangular flag to allow backward compatibility;
+            // restore an appropriate version of the square/rectangular test
             eigen_assert(m_analysisIsOk && "You must first call analyzePattern()");
             cholmod_sparse    A = 
-		// **SKIP square test because we only call this function
-		//   in lme4 when we want to treat the input as a rectangular
-		//   matrix
-		// (!forceRectangularmatrix.rows() == matrix.cols()) ?
-		// viewAsCholmod(matrix.template selfadjointView<_UpLo>()) :
-		viewAsCholmod(matrix);
+                // **SKIP square test because we only call this function
+                //   in lme4 when we want to treat the input as a rectangular
+                //   matrix
+                // (!forceRectangularmatrix.rows() == matrix.cols()) ?
+                // viewAsCholmod(matrix.template selfadjointView<_UpLo>()) :
+                viewAsCholmod(matrix);
 
             cholmod_factorize_p(&A, &beta, fset.data(), fset.size(),
                                 factor(), &cholmod());
@@ -64,8 +64,8 @@ namespace lme4 {
             if(!x_cd) {
                 this->m_info = Eigen::NumericalIssue;
             }
-	    typename Base::Scalar* xpt =
-		reinterpret_cast<typename Base::Scalar*>(x_cd->x);
+            typename Base::Scalar* xpt =
+                reinterpret_cast<typename Base::Scalar*>(x_cd->x);
             std::copy(xpt, xpt + other.rows() * other.cols(), other.data());
             cholmod_free_dense(&x_cd, &cholmod());
         }

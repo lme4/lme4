@@ -4,16 +4,16 @@
 splitFormula <- function(form, sep = "/")
 {
     if (inherits(form, "formula") ||
-	mode(form) == "call" && form[[1]] == as.name("~"))
-	splitFormula(form[[length(form)]], sep = sep)
+        mode(form) == "call" && form[[1]] == as.name("~"))
+        splitFormula(form[[length(form)]], sep = sep)
     else if (mode(form) == "call" && form[[1]] == as.name(sep))
-	do.call(c, lapply(as.list(form[-1]), splitFormula, sep = sep))
+        do.call(c, lapply(as.list(form[-1]), splitFormula, sep = sep))
     else if (mode(form) == "(")
-	splitFormula(form[[2]], sep = sep)
+        splitFormula(form[[2]], sep = sep)
     else if (length(form))
-	list(asOneSidedFormula(form))
+        list(asOneSidedFormula(form))
     ## else
-    ##	NULL
+    ##  NULL
 }
 
 ## Recursive version of all.vars
@@ -224,7 +224,7 @@ plot.merMod <-
     allV <- allV[is.na(match(allV,c("T","F","TRUE","FALSE",".obs")))]
     if (length(allV) > 0) {
         data <- getData(object)
-        if (is.null(data)) {		# try to construct data
+        if (is.null(data)) {            # try to construct data
             alist <- lapply(as.list(allV), as.name)
             names(alist) <- allV
             alist <- c(list(as.name("data.frame")), alist)
@@ -294,7 +294,7 @@ plot.merMod <-
     if (is.null(args$cex)) args$cex <- par("cex")
     if (is.null(args$adj)) args$adj <- par("adj")
 
-    if (!is.null(id)) {	      ## identify points in plot
+    if (!is.null(id)) {       ## identify points in plot
         idResType <- "pearson"  ## diff from plot.lme: 'normalized' not available
         id <- switch(mode(id),
                      numeric = {
@@ -334,7 +334,7 @@ plot.merMod <-
 
     ## defining the type of plot
     if (length(argForm) == 3) {
-        if (is.numeric(.y)) {		# xyplot
+        if (is.numeric(.y)) {           # xyplot
             plotFun <- "xyplot"
             if (is.null(args$panel)) {
                 args <- c(args,
@@ -354,7 +354,7 @@ plot.merMod <-
                               }
                           }))
             }
-        } else {				# assume factor or character
+        } else {                                # assume factor or character
             plotFun <- "bwplot"
             if (is.null(args$panel)) {
                 args <- c(args,
@@ -445,7 +445,7 @@ qqmath.merMod <- function(x, id=NULL, idLabels=NULL, ...) {
     values <- residuals(x,type="pearson",scaled=TRUE)
     data <- getData(x)
     ## DRY: copied from plot.merMod, should modularize/refactor
-    if (!is.null(id)) {	      ## identify points in plot
+    if (!is.null(id)) {       ## identify points in plot
         id <- switch(mode(id),
                      numeric = {
                          if (id <= 0 || id >= 1)
