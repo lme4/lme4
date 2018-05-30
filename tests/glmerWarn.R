@@ -43,7 +43,7 @@ if (requireNamespace("mlmRev")) {
     ## actually even more compactly now ("drawback": 'ageQ' at end):
     (mm2. <- model.matrix( ~ ageL*ch + ageQ, d2))
     cn2 <- colnames(mm2)
-    stopifnto(identical(mm2[,cn2], mm2.[,cn2]))
+    stopifnot(identical(mm2[,cn2], mm2.[,cn2]))
 
 
 
