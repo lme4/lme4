@@ -1189,8 +1189,9 @@ ranef.merMod <- function(object, condVar = FALSE, drop = FALSE,
         levs <- lapply(fl <- object@flist, levels)
         asgn <- attr(fl, "assign")
         cnms <- object@cnms
-        nc <- lengths(cnms)
-        nb <- nc * lengths(levs)[asgn]
+        nc <- lengths(cnms) ## number of terms
+        ## nb <- nc * lengths(levs)[asgn] ## number of cond modes per term
+        nb <- diff(object@Gp)
         nbseq <- rep.int(seq_along(nb), nb)
         ml <- split(ans, nbseq)
         for (i in seq_along(ml))
@@ -1198,10 +1199,15 @@ ranef.merMod <- function(object, condVar = FALSE, drop = FALSE,
                               dimnames = list(NULL, cnms[[i]]))
         ## create a list of data frames corresponding to factors
         ans <- lapply(seq_along(fl),
-                      function(i)
-                      data.frame(do.call(cbind, ml[asgn == i]),
-                                 row.names = levs[[i]],
-                                 check.names = FALSE))
+                      function(i) {
+                         m <- ml[asgn == i]
+                         ## if number of sets of modes != number of levels (e.g. Gaussian process/phyloglmm),
+                         ##   generate numeric sequence for names
+                         rnms <- if (nb[i]==length(levs[[i]])) levs[[i]] else seq(nb[i]/nc[i])
+                         data.frame(do.call(cbind, m),
+                                    row.names = rnms,
+                                    check.names = FALSE)
+        })
         names(ans) <- names(fl)
                                         # process whichel
         stopifnot(is(whichel, "character"))
