@@ -696,7 +696,7 @@ test_that("influence/hatvalues works", {
 
 test_that("rstudent", {
     rfm1 <- rstudent(fm1)
-    expect_equal(unname(head(rfm1)))
+    expect_equal(unname(head(rfm1)),
                  c(-1.45598270922089, -1.49664543508657, -2.11747425025103,
                    -0.0729690066951975, 0.772716397142335, 2.37859408861768),
                  tolerance=1e-6)

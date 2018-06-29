@@ -33,7 +33,7 @@ if (getRversion() >= "3.0.0") {
     ## include fixed effect of period
     fit_cbpp_1 <- update(fit_cbpp_0, . ~ . + period)
     if(FALSE) ## include observation-level RE
-    fit_cbpp_2 <- update(fit_cbpp_1, . ~ . + (1|obs))
+        fit_cbpp_2 <- update(fit_cbpp_1, . ~ . + (1|obs))
     ## specify formula by proportion/weights instead
     fit_cbpp_3 <- update(fit_cbpp_1, incidence/size ~ period + (1 | herd), weights = size)
 }

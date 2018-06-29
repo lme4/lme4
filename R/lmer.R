@@ -1200,10 +1200,15 @@ ranef.merMod <- function(object, condVar = FALSE, drop = FALSE,
         ## create a list of data frames corresponding to factors
         ans <- lapply(seq_along(fl),
                       function(i) {
-                         m <- ml[asgn == i]
+                                     m <- ml[asgn == i]
+                                     b2 <- vapply(m,nrow,numeric(1))
+                                     ub2 <- unique(b2)
+                                     if (length(ub2)>1)
+                                         stop("differing numbers of b per group")
                          ## if number of sets of modes != number of levels (e.g. Gaussian process/phyloglmm),
                          ##   generate numeric sequence for names
-                         rnms <- if (nb[i]==length(levs[[i]])) levs[[i]] else seq(nb[i]/nc[i])
+
+                         rnms <- if (ub2==length(levs[[i]])) levs[[i]] else seq(ub2)
                          data.frame(do.call(cbind, m),
                                     row.names = rnms,
                                     check.names = FALSE)
@@ -1486,7 +1491,8 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
     new("lmerMod", call = cl, frame=x@frame, flist=x@flist,
         cnms=x@cnms, theta=pp$theta, beta=pp$delb, u=pp$delu,
         optinfo = .optinfo(opt),
-        lower=x@lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=rho$resp)
+        lower=x@lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=rho$resp,
+        Gp=x@Gp)
 }
 
 ##' residuals of merMod objects                 --> ../man/residuals.merMod.Rd

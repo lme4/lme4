@@ -258,8 +258,10 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
             stop("grouping factors specified in re.form that were not present in original model")
         new_levels <- lapply(ReTrms$flist, function(x) levels(factor(x)))
         ## fill in/delete levels as appropriate
-        re_x <- Map(function(r,n) levelfun(r,n,allow.new.levels=allow.new.levels),
-                    re[names(new_levels)], new_levels)
+        re_x <- Map(function(r,n) levelfun(r,n,
+                                           allow.new.levels=allow.new.levels),
+                    re[names(new_levels)],
+                    new_levels)
         ## pick out random effects values that correspond to
         ##  random effects incorporated in re.form ...
         ## NB: Need integer indexing, as nRnms can be duplicated: (age|Subj) + (sex|Subj) :
