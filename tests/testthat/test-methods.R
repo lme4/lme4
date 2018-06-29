@@ -676,25 +676,41 @@ test_that("model.frame", {
 
 
 context("influence measures")
-test_that("influence works",
-          expect_equal(unname(head(influence(fm1)$hat)),
-          c(0.107483311203734, 0.102096105816528,
-            0.0980557017761242, 0.0953620990825215, 
-            0.0940152977357202, 0.0940152977357202),
-          tolerance=1e-6))
 
-test_that("rstudent",
-          expect_equal(unname(head(rstudent(fm1))),
-                       c(-1.45598270922089, -1.49664543508657, -2.11747425025103,
-                         -0.0729690066951975, 0.772716397142335, 2.37859408861768),
-          tolerance=1e-6))
+d <- as.data.frame(ChickWeight)
+colnames(d) <- c("y", "x", "subj", "tx")
+dNAs <- d
+dNAs$y[c(1, 3, 5)] <- NA
+fitNAs <- lmer(y ~ tx*x + (x | subj), data = dNAs,
+               na.action=na.exclude)
 
-test_that("cooks distance",
-          expect_equal(
-              unname(head(cooks.distance(fm1))),
-              c(0.127645976734753, 0.127346548123793, 0.243724627125036, 0.000280638917214881, 
-                0.0309804642689636, 0.293554225380831),
-              tolerance=1e-6))
+test_that("influence/hatvalues works", {
+    ifm1 <- influence(fm1)
+    expect_equal(unname(head(ifm1$hat)),
+                 c(0.107483311203734, 0.102096105816528,
+                   0.0980557017761242, 0.0953620990825215, 
+                   0.0940152977357202, 0.0940152977357202),
+                 tolerance=1e-6)
+    expect_equal(nrow(dNAs),length(hatvalues(fitNAs)))
+})
+
+test_that("rstudent", {
+    rfm1 <- rstudent(fm1)
+    expect_equal(unname(head(rfm1)))
+                 c(-1.45598270922089, -1.49664543508657, -2.11747425025103,
+                   -0.0729690066951975, 0.772716397142335, 2.37859408861768),
+                 tolerance=1e-6)
+    expect_equal(nrow(dNAs),length(rstudent(fitNAs)))
+})
+
+test_that("cooks distance", {
+    expect_equal(
+        unname(head(cooks.distance(fm1))),
+        c(0.127645976734753, 0.127346548123793, 0.243724627125036, 0.000280638917214881, 
+          0.0309804642689636, 0.293554225380831),
+        tolerance=1e-6)
+        expect_equal(nrow(dNAs),length(cooks.distance(fitNAs)))
+})
 
 ## tweaked example so estimated var = 0
 zerodat <- data.frame(x=seq(0,1,length.out=120),

@@ -1556,7 +1556,7 @@ hatvalues.merMod <- function(model, fullHatMatrix = FALSE, ...) {
 
     ## prior weights, W ^ {1/2} :
     sqrtW <- Diagonal(x = sqrt(weights(model, type = "prior")))
-    with(getME(model, c("L", "Lambdat", "Zt", "RX", "X", "RZX")), {
+    res <- with(getME(model, c("L", "Lambdat", "Zt", "RX", "X", "RZX")), {
         ## CL:= right factor of the random-effects component of the hat matrix  (64)
         CL <- solve(L, solve(L, Lambdat %*% Zt %*% sqrtW,
                              system = "P"), system = "L")
@@ -1568,6 +1568,7 @@ hatvalues.merMod <- function(model, fullHatMatrix = FALSE, ...) {
         else ## diagonal of the hat matrix, diag(H) :
             colSums(CR^2) + colSums(CL^2)
     })
+    napredict(attr(model.frame(model),"na.action"),res)
 }
 
 ## minimal "influence" function (to make broom::augment_columns work)
