@@ -145,7 +145,7 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
     ##                statistic = statistic, sim = sim, call = call,
     ##                ran.gen = ran.gen, mle = mle),
     ##           class = "boot")
-    s <- structure(list(t0 = t0, t = t(t.star), R = nsim, data = x@frame,
+    s <- structure(list(t0 = t0, t = t(t.star), R = nsim, data = model.frame(x),
                    seed = .Random.seed,
                    statistic = FUN, sim = "parametric", call = mc,
                    ## these two are dummies
