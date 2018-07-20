@@ -22,7 +22,7 @@
 
 \section{CHANGES IN VERSION 1.1-17 (2018-04-03)}{
   \itemize{
-    This is a maintenance release only (fixes CRAN problems with
+    \item This is a maintenance release only (fixes CRAN problems with
     cross-platform tests and examples)
   }
 }
