@@ -85,7 +85,12 @@ allFit <- function(m, meth.tab = meth.tab.0,
     res <- setNames(as.list(fit.names), fit.names)
     for (i in seq_along(fit.names)) {
         if (verbose) cat(fit.names[i],": ")
-        ctrl <- list(optimizer=optimizer[i])
+        ctrl <- getCall(m)$control
+        if (is.null(ctrl)) {
+            ctrl <- list(optimizer=optimizer[i])
+        } else {
+            ctrl$optimizer <- optimizer[i]
+        }
         ctrl$optCtrl <- switch(optimizer[i],
                                optimx    = list(method   = method[i]),
                                nloptWrap = list(algorithm= method[i]),
