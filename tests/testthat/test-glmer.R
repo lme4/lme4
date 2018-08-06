@@ -185,9 +185,10 @@ if(FALSE) { ## Hadley broke this
 
         t2 <- system.time(g2 <- update(g1,
                          control=glmerControl(optimizer="bobyqa")))
+        rbind(t1,t2)[,"elapsed"]
         ## 20 (then 13.0) seconds N-M vs 8 (then 4.8) seconds bobyqa ...
         print(t1[3] / t2[3]) # 0.37; => 1.25 should be on the safe side
-        expect_lte(t1[3], 1.25 * t2[3])
+        expect_lte(t2[3], 1.25 * t1[3])
         ## problem is fairly ill-conditioned so parameters
         ##  are relatively far apart even though likelihoods are OK
         expect_equal(logLik(g1),logLik(g2),tolerance=1e-7)
