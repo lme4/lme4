@@ -63,7 +63,7 @@ test_that("glmerForm", {
     d_nodata_List <- lapply(m_nodata_List,drop1)
 
     rm(list=c("x","y","z","r"))
-    
+
     ## data argument specified
     expect_that(m_data.0 <- glmer( x ~ y + z + (1|r) , data=d, family="binomial"), is_a("glmerMod"))
     expect_that(m_data.1 <- glmer( as.formula(modStr) , data=d, family="binomial"), is_a("glmerMod"))
@@ -196,16 +196,18 @@ test_that("lapply etc.", {
     expect_is(lapply(listOfFormulas,glmer,family=binomial,data=cbpp),"list")
 })
 
-          
+
 test_that("missDataFun", {
     X <- expand.grid(x1=1:10, x2=1:10, x3=1:10, x4=1:10, g=letters[1:20])
     X$y <- X$x1 + rnorm(10)[X$g] + rnorm(200000)
-    system.time(lmer(y ~ x1 + x2 + x3 + x4 + (1|g), data=X,
-                     control=lmerControl(optimizer=NULL)))
+    (t1 <- system.time(lmer(y ~ x1 + x2 + x3 + x4 + (1|g), data=X,
+                            control=lmerControl(optimizer=NULL))))
     g <- function(X) {
         X$y <- X$x1 + rnorm(10)[X$g] + rnorm(200000)
         lme4:::missDataFun(X)
     }
     ## should take < 1 second since deparsing is now skipped
-    expect_lt(system.time(g(X))["elapsed"],1)
+    (t2 <- system.time(g(X)))
+    ## Timing comparisons should be on a *relative* scale.
+    expect_lte(t2[["elapsed"]], 1/4 * t1[["elapsed"]]) # typical ratio: 0.03
 })
