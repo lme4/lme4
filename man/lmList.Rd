@@ -46,9 +46,9 @@ lmList(formula, data, family, subset, weights, na.action,
     the formula instead or as well, and if more than one is
     specified their sum is used.  See
     \code{\link{model.offset}}.}
-  \item{pool}{logical scalar, should the variance estimate
+  \item{pool}{logical scalar indicating if the variance estimate should
     pool the residual sums of squares.  By default true if the model has
-    a scale parameter (which includes all linear, \code{\link{lmer}}, ones).}
+    a scale parameter (which includes all linear, \code{\link{lmer}()}, ones).}
   \item{warn}{indicating if errors in the single fits should signal a
     \dQuote{summary} \code{\link{warning}}.}
   \item{\dots}{additional, optional arguments to be passed to

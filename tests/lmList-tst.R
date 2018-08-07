@@ -1,5 +1,6 @@
 library(lme4)
 
+options(nwarnings = 1000)
 set.seed(17)
 fm1. <- lmList(Reaction ~ Days | Subject, sleepstudy, pool=FALSE)
 fm1  <- lmList(Reaction ~ Days | Subject, sleepstudy)
@@ -21,8 +22,12 @@ stopifnot(all.equal(signif(coef(fm1), 8), cf.fm1,
 
 sm1. <- summary(fm1.)
 sm1 <- summary(fm1)
-iC <- which(names(sm1) == "call")
+iC <- which(names(sm1) %in% c("call", "pool"       # << differ
+                            , "coefficients"       # << SE, z, P differ
+                            , "df.residual", "RSE" # << exist only when pooled
+            ))
 stopifnot(all.equal(sm1$RSE, 25.5918156267, tolerance = 1e-10),
+          sm1$df.residual == 144,
           all.equal(sm1[-iC], sm1.[-iC],    tolerance = 1e-10))
 cf1 <- confint(fm1)
 
@@ -158,7 +163,7 @@ evs3.2
 evs4 <- sapply(s3fn, function(fn)
     tryCatch(do.call(fn, list(fm4)), error=function(e) e))
 length(warnings())
-unique(warnings()) ##  glm.fit: fitted probabilities numerically 0 or 1 occurred
+summary(warnings()) ##  4 kinds;  glm.fit: fitted probabilities numerically 0 or 1 occurred
 
 str(sapply(evs4, class)) # more errors than above
 isok4 <- !sapply(evs4, is, class2="error")
