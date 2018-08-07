@@ -17,6 +17,12 @@
       for \code{merMod} objects
     }
   }
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{lmList} now obeys its \code{pool} argument (instead of
+      always using what currently is the default, GH #476)
+    }
+  }
 }
 
 
@@ -51,7 +57,7 @@
     }
   }
 }
-    
+
 \section{CHANGES IN VERSION 1.1-15 (2017-12-21)}{
   \subsection{BUG FIXES}{
      \itemize{

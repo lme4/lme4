@@ -90,7 +90,9 @@ warnErrList <- function(x, warn = TRUE) {
 ##'     model function or family evaluation.
 ##' @export
 lmList <- function(formula, data, family, subset, weights,
-                   na.action, offset, pool = TRUE, warn = TRUE, ...) {
+                   na.action, offset,
+                   pool = !isGLM || .hasScale(family2char(family)),
+                   warn = TRUE, ...) {
     stopifnot(inherits(formula, "formula"))
 
     ## model.frame(groupedData) was problematic ... but not as we
@@ -153,6 +155,7 @@ lmList <- function(formula, data, family, subset, weights,
         lapply(frm.split, fitfun, formula = as.formula(mform$model))
     ## use warnErrList(), but expand msg for back compatibility and user-friendliness:
     val <- warnErrList(val, warn = FALSE)
+    ## Contrary to nlme, we keep the erronous ones as well (with a warning):
     if(warn && length(wMsg <- attr(val,"warningMsg"))) {
         if(grepl("contrasts.* factors? .* 2 ", wMsg)){ # try to match translated msg, too
             warning("Fitting failed for ", sum(vapply(val, is.null, NA)),
@@ -161,8 +164,6 @@ lmList <- function(formula, data, family, subset, weights,
         } else
             warning(wMsg, domain=NA)
     }
-    ## Contrary to nlme, we keep the erronous ones as well
-    pool <- !isGLM || .hasScale(family2char(family))
     new("lmList4", setNames(val, nms),
         call = mCall, pool = pool,
         groups = ordered(groups),
