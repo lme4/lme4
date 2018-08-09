@@ -70,6 +70,7 @@ export(negative.binomial)
 export(bootMer)
 export(checkConv)
 export(devcomp)
+export(devfun2)
 export(dummy)
 export(factorize)  ## needed for qqmath???
 export(expandDoubleVerts)
