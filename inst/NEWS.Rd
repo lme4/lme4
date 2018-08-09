@@ -15,6 +15,9 @@
     \itemize{
       \item \code{rstudent} and \code{influence} methods are available
       for \code{merMod} objects
+    \item \code{devfun2} function (for generating a deviance
+      function that works on the standard deviation/correlation scale)
+      is now exported
     }
   }
   \subsection{BUG FIXES}{
@@ -77,7 +80,9 @@
 }
 
 \section{CHANGES IN VERSION 1.1-14 (2017-09-27)}{
-  Primarily an R-devel/CRAN-compatibility release.
+  \itemize{
+     \item Primarily an R-devel/CRAN-compatibility release.
+  }
 
   \subsection{NEW FEATURES}{
     \itemize{
