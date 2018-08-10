@@ -13,9 +13,10 @@ are on the standard deviation/correlation scale, not the theta (Cholesky factor)
 scale.
 }
 \usage{
-devfun2(fm, useSc, transfuns = list(from.chol = Cv_to_Sv, to.chol = Sv_to_Cv, to.sd = identity), ...)
+devfun2(fm, useSc,
+   transfuns = list(from.chol = Cv_to_Sv,
+                    to.chol = Sv_to_Cv, to.sd = identity), ...)
 }
-%- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{fm}{a fitted model of class \sQuote{merMod}}
   \item{useSc}{
@@ -52,7 +53,7 @@ m1 <- lmer(Reaction~Days+(Days|Subject),sleepstudy)
 dd <- devfun2(m1,useSc=TRUE)
 pp <- attr(dd,"optimum")
 ## extract variance-covariance and residual std dev parameters
-sigpars <- pp[grepl("^\\.sig",names(pp))]
+sigpars <- pp[grepl("^\\\\.sig",names(pp))]
 all.equal(unname(dd(sigpars)),deviance(refitML(m1)))
 }
 \keyword{utilities}
