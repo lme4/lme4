@@ -152,6 +152,9 @@ checkHess <- function(H, tol, hesstype="") {
                     res$code <- c(res$code, 3L)
                     ## consider skipping warning message if we've
                     ## already hit the previous flag?
+                    ## FIXME: change from !5L to !2L ???
+                    ##  can't see where 5L would have come from,
+                    ##  2L makes sense as "very large eigenvalue already discovered"
                     if(!5L %in% res$code) {
                         res$messages <-
                             c(res$messages,
