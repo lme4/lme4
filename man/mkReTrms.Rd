@@ -7,12 +7,19 @@
   \code{Zt}, etc, associated with the random-effects terms.
 }
 \usage{
-  mkReTrms(bars, fr, drop.unused.levels=TRUE)
+  mkReTrms(bars, fr, drop.unused.levels=TRUE,
+                     reorder.terms=TRUE,
+                     reorder.vars=FALSE) 
 }
 \arguments{
   \item{bars}{a list of parsed random-effects terms}
   \item{fr}{a model frame in which to evaluate these terms}
-  \item{drop.unused.levels}{(logical) drop unused factor levels? (experimental)}
+  \item{drop.unused.levels}{(logical) drop unused factor levels?
+    (experimental)}
+  \item{reorder.terms}{arrange random effects terms in decreasing order
+    of number of groups (factor levels)?}
+  \item{reorder.vars}{arrange columns of individual random effects terms
+    in alphabetical order?}
 }
 \value{
   a \code{\link{list}} with components
