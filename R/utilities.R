@@ -49,11 +49,24 @@ factorize <- function(x,frloc,char.only=FALSE) {
     return(frloc)
 }
 
+colSort <- function(x) {
+    termlev <- vapply(strsplit(x,":"),length,integer(1))
+    iterms <- split(x,termlev)
+    iterms <- sapply(iterms,sort,simplify=FALSE)
+    ## make sure intercept term is first
+    ilab <- "(Intercept)"
+    if (ilab %in% iterms[[1]]) {
+        iterms[[1]] <- c(ilab,setdiff(iterms[[1]],ilab))
+    }
+    unlist(iterms)
+}
+
 ##' @param x a language object of the form  effect | groupvar
 ##' @param frloc model frame
 ##' @param drop.unused.levels (logical)
 ##' @return list containing grouping factor, sparse model matrix, number of levels, names
-mkBlist <- function(x,frloc, drop.unused.levels=TRUE) {
+mkBlist <- function(x,frloc, drop.unused.levels=TRUE,
+                    reorder.vars=FALSE) {
     frloc <- factorize(x,frloc)
     ## try to evaluate grouping factor within model frame ...
     if (is.null(ff <- tryCatch(eval(substitute(makeFac(fac),
@@ -74,17 +87,15 @@ mkBlist <- function(x,frloc, drop.unused.levels=TRUE) {
     ## model matrix based on LHS of random effect term (X_i)
     ##    x[[2]] is the LHS (terms) of the a|b formula
     mm <- model.matrix(eval(substitute( ~ foo, list(foo = x[[2]]))), frloc)
-    ## nc <- ncol(mm)
-    ## nseq <- seq_len(nc)
+    if (reorder.vars) {
+        mm <- mm[colSort(colnames(mm)),]
+    }
     ## this is J^T (see p. 9 of JSS lmer paper)
     ## construct indicator matrix for groups by observations
     ## use fac2sparse() rather than as() to allow *not* dropping
     ## unused levels where desired
     sm <- fac2sparse(ff, to = "d",
                      drop.unused.levels = drop.unused.levels)
-    ## looks like we don't have to filter NAs explicitly any more ...
-    ## sm <- as(ff,"sparseMatrix")
-    ## sm <- KhatriRao(sm[,!is.na(ff),drop=FALSE],t(mm[!is.na(ff),,drop=FALSE]))
     sm <- KhatriRao(sm, t(mm))
     dimnames(sm) <- list(
         rep(levels(ff),each=ncol(mm)),
@@ -114,7 +125,9 @@ mkBlist <- function(x,frloc, drop.unused.levels=TRUE) {
 ##' @importMethodsFrom Matrix coerce rbind
 ##' @family utilities
 ##' @export
-mkReTrms <- function(bars, fr, drop.unused.levels=TRUE) {
+mkReTrms <- function(bars, fr, drop.unused.levels=TRUE,
+                     reorder.terms=TRUE,
+                     reorder.vars=FALSE) {
   if (!length(bars))
     stop("No random effects terms specified in formula",call.=FALSE)
   stopifnot(is.list(bars), vapply(bars, is.language, NA),
@@ -122,16 +135,19 @@ mkReTrms <- function(bars, fr, drop.unused.levels=TRUE) {
   names(bars) <- barnames(bars)
   term.names <- vapply(bars, safeDeparse, "")
   ## get component blocks
-  blist <- lapply(bars, mkBlist, fr, drop.unused.levels)
+  blist <- lapply(bars, mkBlist, fr, drop.unused.levels,
+                  reorder.vars = reorder.vars)
   nl <- vapply(blist, `[[`, 0L, "nl")   # no. of levels per term
                                         # (in lmer jss:  \ell_i)
 
   ## order terms stably by decreasing number of levels in the factor
-  if (any(diff(nl) > 0)) {
-    ord <- rev(order(nl))
-    blist      <- blist     [ord]
-    nl         <- nl        [ord]
-    term.names <- term.names[ord]
+  if (reorder.terms) {
+      if (any(diff(nl) > 0)) {
+          ord <- rev(order(nl))
+          blist      <- blist     [ord]
+          nl         <- nl        [ord]
+          term.names <- term.names[ord]
+      }
   }
   Ztlist <- lapply(blist, `[[`, "sm")
   Zt <- do.call(rbind, Ztlist)  ## eq. 7, JSS lmer paper
