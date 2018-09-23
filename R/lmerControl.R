@@ -62,7 +62,7 @@ chk.cconv <- function(copt, callingFn) {
 
 ## DOC: ../man/lmerControl.Rd
 lmerControl <-
-    function(optimizer="bobyqa",#instead of "Nelder_Mead",
+    function(optimizer="nloptwrap",#instead of "Nelder_Mead",
              restart_edge=TRUE,
              ## don't call this "check." -- will fail
              ## automatic check-option-checking in

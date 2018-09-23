@@ -248,7 +248,7 @@ test_that("lmer", {
          control=lmerControl(optimizer="nloptwrap"),
          verbose=5))
     expect_equal(sum(grepl("^iteration:",cc)),14)
-    
+
 }) ## test_that(..)
 
 test_that("coef_lmer", {
@@ -269,7 +269,7 @@ test_that("coef_lmer", {
     nn <- c(n1, paste(n1, "var2", sep=":"))
     expect_identical(names(cd1), c("(Intercept)", nn))
     expect_equal(fixef(mix1),
-                 setNames(c(0.27039541, 0.38329083, 0.45127874,  0.65288384, 0.61098249,
-                            0.49497978, 0.12227105, 0.087020934,-0.28564318,-0.015968354),
-                          nn), tolerance= 7e-7)# 64-bit:  6.73e-9
+                 setNames(c(0.2703951, 0.3832911, 0.451279, 0.6528842, 0.6109819,
+                            0.4949802, 0.1222705, 0.08702069, -0.2856431, -0.01596725),
+                          nn), tolerance= 6e-6)# 64-bit:  6.73e-9
 })
