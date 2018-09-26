@@ -3031,3 +3031,10 @@ legend("topright", bty = "n", c("fitted", "generating"), lty = 1:2,col = 1)
 \end{appendix}
 
 \end{document}
+
+%
+
+%%% Local Variables:
+%%% ess-swv-processor: knitr
+%%% TeX-master: t
+%%% End:
