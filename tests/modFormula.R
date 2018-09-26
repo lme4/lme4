@@ -20,14 +20,14 @@ fm2 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 fm1C <- fm1
 fm1C@call <- fm2@call
 expect_equal(fm2,fm1C)
-expect_equal(range(residuals(fm1)),c(-101.1789,132.5466),tolerance=1e-6)
+expect_equal(range(residuals(fm1)), c(-101.18, 132.547), tolerance = 1e-5) # these are "outliers"!
 expect_is(model.frame(fm1),"data.frame")
 ## formulae
 expect_equal(formula(model.frame(fm1)),Reaction ~ Days + Subject) ## fixed only
 expect_equal(formula(fm1),Reaction~Days+(Days|Subject))
 ## predictions
-expect_equal(predict(fm1,newdata=sleepstudy[1:10,],ReForm=NULL),
-             predict(fm2,newdata=sleepstudy[1:10,],ReForm=NULL))
+expect_equal(predict(fm1,newdata=sleepstudy[1:10,],re.form=NULL),
+             predict(fm2,newdata=sleepstudy[1:10,],re.form=NULL))
 expect_equal(predict(fm1,newdata=sleepstudy),
              predict(fm1))
 
@@ -37,8 +37,8 @@ devfunOff <- do.call(mkLmerDevfun, lmodOff)
 opt <- optimizeLmer(devfunOff)
 fm1Off <- mkMerMod(environment(devfunOff), opt, lmodOff$reTrms, fr = lmodOff$fr)
 fm2Off <- lmer(Reaction ~ Days + (Days|Subject) + offset(0.5*Days), sleepstudy)
-expect_equal(predict(fm1Off,newdata=sleepstudy[1:10,],ReForm=NULL),
-             predict(fm2Off,newdata=sleepstudy[1:10,],ReForm=NULL))
+expect_equal(predict(fm1Off,newdata=sleepstudy[1:10,],re.form=NULL),
+             predict(fm2Off,newdata=sleepstudy[1:10,],re.form=NULL))
 
 ## FIXME: need more torture tests with offset specified, in different environments ...
 

@@ -2,15 +2,16 @@ library(lme4)
 library(testthat)
 library(lattice)
 
+options(nwarnings = 5000)# instead of 50, and then use  summary(warnings())
+
 ### __ was ./profile_plots.R ___
 fm1 <- lmer(Reaction~ Days + (Days|Subject), sleepstudy)
 pfile <- system.file("testdata","tprfm1.RData", package="lme4")
-if(file.exists(pfile)) print(load(pfile)) else {
- system.time( tpr.fm1 <- profile(fm1, optimizer="Nelder_Mead") )  ## 20 seconds
- save(tpr.fm1, file= "../../inst/testdata/tprfm1.RData")
-}
-oo <- options(warn = 1) # {warnings are errors from here on}
-                        # FIXME: switched warnings back to get through checks
+if(file.exists(pfile)) print(load(pfile)) else withAutoprint({
+    system.time( tpr.fm1 <- profile(fm1, optimizer="Nelder_Mead") ) ## 5 sec (2018); >= 50 warnings !?
+    save(tpr.fm1, file= "../../inst/testdata/tprfm1.RData")
+})
+oo <- options(warn = 2) # {warnings are errors from here on}
 
 if(!dev.interactive(orNone=TRUE)) pdf("profile_plots.pdf")
 xyplot(tpr.fm1)
@@ -49,9 +50,23 @@ options(oo)# warnings allowed ..
 
 ## fixed-effect profiling with vector RE
 data(Pastes)
-fm <- lmer(strength ~ 1 + (cask | batch), data=Pastes)
-pfm <- profile(fm, which = "beta_", alphamax=.001)
-xyplot(pfm)
+fmoB <- lmer(strength ~ 1 + (cask | batch), data=Pastes,
+             control = lmerControl(optimizer = "bobyqa"))
+(pfmoB <- profile(fmoB, which = "beta_", alphamax=.001))
+xyplot(pfmoB)# nice and easy ..
+
+summary(
+    fm <- lmer(strength ~ 1 + (cask | batch), data=Pastes,
+               control = lmerControl(optimizer = "nloptwrap",
+                                     calc.derivs= FALSE))
+)
+
+ls.str(environment(nloptwrap))# showing *its* defaults
+
+pfm <- profile(fm, which = "beta_", alphamax=.001) # 197 warnings for "nloptwrap"
+summary(warnings())
+str(pfm) # only 3 rows, .zeta = c(0, NaN, Inf) !!!
+try( xyplot(pfm) ) ## FIXME or rather the profiling or rather the "wrap on nloptr"
 
 (testLevel <- lme4:::testLevel())
 if(testLevel > 2) {

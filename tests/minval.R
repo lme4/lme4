@@ -17,6 +17,10 @@ dat <- sims(I, J, sigmab0, sigmaw0)
 library(lme4)
 fm3 <- lmer(y ~ (1|group), data=dat)
 stopifnot(all.equal(unname(unlist(VarCorr(fm3))),
-		    if(fm3@optinfo$optimizer == "Nelder_Mead")
-		    0.029662844057 else
-		    0.02966269809, tolerance = 1e-7))
+		    switch(fm3@optinfo$optimizer,
+                           "Nelder_Mead" = 0.029662844,
+                           "bobyqa"      = 0.029662698,
+                           "nloptwrap"   = 0.029679755,
+                           stop("need new case here: value is ",unname(unlist(VarCorr(fm3))))
+                           ),
+                    tolerance = 1e-7))
