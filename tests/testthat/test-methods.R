@@ -143,7 +143,9 @@ context("bootMer confint()")
 set.seed(47)
 test_that("bootMer", {
     ## testing bug-fix for ordering of sd/cor components in sd/cor matrix with >2 rows
-    m1 <- lmer(strength~1+(cask|batch),Pastes)
+    ## FIXME: This model makes no sense [and CI.boot() fails for "nloptwrap"!]
+    m1 <- lmer(strength ~ 1 + (cask|batch), Pastes,
+               control = lmerControl(optimizer="bobyqa"))
     ci <- CI.boot(m1)
     corvals <- ci[grep("^cor_",rownames(ci)),]
     expect_true(all(abs(corvals) <= 1))
