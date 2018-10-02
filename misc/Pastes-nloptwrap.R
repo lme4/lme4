@@ -34,6 +34,10 @@ try( xyplot(pfm) ) ## FIXME or rather the profiling or rather the "wrap on nlopt
 ## m1 <- lmer(strength ~ 1 + (cask|batch), Pastes)
 ## ----  but we reuse models fit above
 
+CI.boot <- function(fm, nsim=10, seed=101, ...)
+    suppressWarnings(confint(fm, method="boot", nsim=nsim,
+                             quiet=TRUE, seed=seed, ...))
+
 ## 1) "bobyqa" : "fine"
 set.seed(47); cioB <- CI.boot(fmoB)
 cioB # fine (all 6+1 = 7 "sigma"s are significant on 5% level)
@@ -51,6 +55,4 @@ try(ci <- confint(fm,  method="boot", nsim=10, seed=101))
 (lme4:::confint.merMod) # shows that bootMer() is used,
 ## then boot::boot.ci() [which gives the message "All ... t are equal .." + the error]
 
-
-
-
+sessionInfo()
