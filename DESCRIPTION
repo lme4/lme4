@@ -2,13 +2,19 @@ Package: lme4
 Version: 1.1-18.9000
 Title: Linear Mixed-Effects Models using 'Eigen' and S4
 Authors@R: c(person("Douglas","Bates", role="aut"),
-    person("Martin","Maechler", role="aut"),
-    person("Ben","Bolker",email="bbolker+lme4@gmail.com", role=c("aut","cre")),
-    person("Steven","Walker",role="aut"),
-    person("Rune Haubo Bojesen","Christensen", role="ctb"),
-    person("Henrik","Singmann", role="ctb"),
+    person("Martin","Maechler", role="aut",
+    comment=c(ORCID="0000-0002-8685-9910")),
+    person("Ben","Bolker",email="bbolker+lme4@gmail.com", role=c("aut","cre"),
+    comment=c(ORCID="0000-0002-2127-0443")),
+    person("Steven","Walker",role="aut",
+    comment=c(ORCID="0000-0002-4394-9078")),
+    person("Rune Haubo Bojesen","Christensen", role="ctb",
+    comment=c(ORCID="0000-0002-4494-3399")),
+    person("Henrik","Singmann", role="ctb",
+    comment=c(ORCID="0000-0002-4842-3657")),
     person("Bin", "Dai", role="ctb"),
-    person("Fabian", "Scheipl", role="ctb"),
+    person("Fabian", "Scheipl", role="ctb",
+    comment=c(ORCID="0000-0001-8172-3603")),
     person("Gabor", "Grothendieck", role="ctb"),
     person("Peter", "Green", role="ctb"))
 Contact: LME4 Authors <lme4-authors@lists.r-forge.r-project.org>
