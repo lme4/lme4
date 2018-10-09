@@ -76,6 +76,7 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
             wstr <- "singular fit"
             res$messages <- c(res$messages,wstr)
             switch(cc,
+                   "message" = message(wstr),
                    "warning" = warning(wstr),
                    "stop" = stop(wstr),
                    stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
