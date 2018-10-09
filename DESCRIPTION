@@ -16,7 +16,8 @@ Authors@R: c(person("Douglas","Bates", role="aut"),
     person("Fabian", "Scheipl", role="ctb",
     comment=c(ORCID="0000-0001-8172-3603")),
     person("Gabor", "Grothendieck", role="ctb"),
-    person("Peter", "Green", role="ctb"))
+    person("Peter", "Green", role="ctb",
+    comment=c(ORCID="0000-0002-0238-9852")))
 Contact: LME4 Authors <lme4-authors@lists.r-forge.r-project.org>
 Description: Fit linear and generalized linear mixed-effects models.
     The models and their components are represented using S4 classes and
