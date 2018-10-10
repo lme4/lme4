@@ -4,7 +4,17 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-18}{
+\section{CHANGES IN VERSION 1.1-18.9000}{
+
+}
+
+\section{CHANGES IN VERSION 1.1-18-1 (2018-08-17)}{
+ \itemize{  
+ \item This is a minor release; the only change is to roll back (unexport) the \code{influence.merMod} method, pending resolution of conflicts with the car package
+ }
+}     
+
+\section{CHANGES IN VERSION 1.1-18 ((2018-08-16)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item \code{ranef(.,condVar=TRUE)} now works when there

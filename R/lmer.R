@@ -2597,7 +2597,12 @@ asDf0 <- function(x,nx,id=FALSE) {
     ss$ind <- factor(as.character(ss$ind), levels = colnames(xt))
     ss$.nn <- rep.int(reorder(factor(rownames(xt)), xt[[1]],
                               FUN = mean,sort = sort), ncol(xt))
-    if (!is.null(pv <- attr(xt, "postVar"))) {
+    ## allow 'postVar' *or* 'condVar' names
+    pv <- attr(xt,"postVar")
+    if (is.null(pv)) {
+        pv <- attr(xt,"condVar")
+    }
+    if (!is.null(pv)) {
         tmpfun <- function(pvi) {
             unlist(lapply(1:nrow(pvi), function(i) sqrt(pvi[i, i, ])))
         }
