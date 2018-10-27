@@ -286,8 +286,9 @@ levelfun <- function(x,nl.n,allow.new.levels=FALSE) {
     if (!all(nl.n %in% rownames(x))) {
         if (!allow.new.levels) stop("new levels detected in newdata")
         ## create an all-zero data frame corresponding to the new set of levels ...
-        newx <- as.data.frame(matrix(0, nrow=length(nl.n), ncol=ncol(x),
-                                     dimnames=list(nl.n, names(x))))
+        nl.n.comb <- union(nl.n, rownames(x))
+        newx <- as.data.frame(matrix(0, nrow=length(nl.n.comb), ncol=ncol(x),
+                                     dimnames=list(nl.n.comb, names(x))))
         ## then paste in the matching RE values from the original fit/set of levels
         newx[rownames(x),] <- x
         x <- newx
