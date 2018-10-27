@@ -244,7 +244,7 @@ S3method(xyplot,thpr)
 
 
 S3method(sigma,lmList4)
-
+S3method(dfbeta,influence.merMod)
 ## Re-using S3 methods from nlme (for 'lmList') as methods for our 'lmList4':
 S3method(fitted,lmList4)
 S3method(fixef,lmList4)

@@ -685,7 +685,7 @@ fitNAs <- lmer(y ~ tx*x + (x | subj), data = dNAs,
                na.action=na.exclude)
 
 test_that("influence/hatvalues works", {
-    ifm1 <- influence(fm1)
+    ifm1 <- influence(fm1, do.coef=FALSE)
     expect_equal(unname(head(ifm1$hat)),
                  c(0.107483311203734, 0.102096105816528,
                    0.0980557017761242, 0.0953620990825215, 

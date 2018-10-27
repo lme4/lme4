@@ -1,6 +1,10 @@
+
 ## minimal "influence" function (to make broom::augment_columns work)
 influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
                              ...) {
+
+    .groups <- NULL  ## avoid false-positive code checks
+    
     if (length(list(...))>0) warning("disregarded additional arguments")
     if (!do.coef) {
         ## simple/quick/trivial results
@@ -23,14 +27,14 @@ influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
         groups <- del.var
     }
     unique.del <- unique(data[, groups])
-    data$.groups <- data[, groups]
+    data[[".groups"]] <- data[, groups]
     par <- list(theta=getME(model, "theta"))
     if (inherits(model, "glmerMod")) par$fixef <- fixef(model)
     fixed <- fixef(model)
     fixed.1 <- matrix(0, length(unique.del), length(fixed))
     rownames(fixed.1) <- unique.del
     colnames(fixed.1) <- names(fixed)
-    Vs <- lme4::VarCorr(model)
+    Vs <- VarCorr(model)
     nms <- names(Vs)
     sep <- ":"
     if (length(nms) == 1) {
@@ -56,24 +60,26 @@ influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
     vcov.1 <- vector(length(unique.del), mode="list")
     names(vcov.1) <- names(feval) <- names(converged) <- unique.del
     # control <- if (one.step){
-    #     if (inherits(model, "lmerMod")) lme4::lmerControl(optimizer="optimx", optCtrl=list(method="L-BFGS-B", maxit=1))
-    #     else if (inherits(model, "glmerMod")) lme4::glmerControl(optimizer="optimx", optCtrl=list(method="L-BFGS-B", maxit=1))
+    #     if (inherits(model, "lmerMod")) lmerControl(optimizer="optimx", optCtrl=list(method="L-BFGS-B", maxit=1))
+    #     else if (inherits(model, "glmerMod")) glmerControl(optimizer="optimx", optCtrl=list(method="L-BFGS-B", maxit=1))
     # } else {
     control <- if (inherits(model, "lmerMod")) lmerControl(optCtrl=list(maxfun=maxfun))
         else if (inherits(model, "glmerMod")) glmerControl(optCtrl=list(maxfun=maxfun))
-    # }
+                                        # }
+    ## FIXME: parallelize?
     for (del in unique.del){
         data$del <- del
         mod.1 <- suppressWarnings(update(model, data=data,
-                                         subset=.groups != del, start=par,
+                                         subset=(.groups != del),
+                                         start=par,
                                          control=control))
 
         opt <- mod.1@optinfo
         feval[del] <- opt$feval
         converged[del] <- opt$conv$opt == 0 && length(opt$warnings) == 0
         fixed.1[del, ] <- fixef(mod.1)
-        Vs.1 <- lme4::VarCorr(mod.1)
-        vc.0 <- lme4::getME(mod.1, "sigma")^2
+        Vs.1 <- VarCorr(mod.1)
+        vc.0 <- getME(mod.1, "sigma")^2
         for (V in Vs.1){
             vc.0 <- c(vc.0, V[lower.tri(V, diag=TRUE)])
         }
@@ -93,6 +99,22 @@ influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
     names(result) <- nms
     class(result) <- "influence.merMod"
     result
+}
+
+## lookup table for influence.merMod elements
+ipos <- c("fixed"=1, "fixed.sub"=2,
+          "var.cov"=3, "var.cov.sub"=4,
+          "vcov"=5, "vcov.sub"=6)
+
+dfbeta.influence.merMod <- function(model, which=c("fixed", "var.cov"), ...){
+    which <- match.arg(which)
+    b <- model[[ipos[sprintf("%s.sub",which)]]]
+    b0 <- model[[ipos[which]]]
+    b - matrix(b0, nrow=nrow(b), ncol=ncol(b), byrow=TRUE)
+}
+
+dfbetas.influence.merMod <- function(model, ...){
+    dfbeta(model)/t(sapply(model[[ipos["vcov.sub"]]], function(x) sqrt(diag(x))))
 }
 
 cooks.distance.merMod <- function(model, ...) {
