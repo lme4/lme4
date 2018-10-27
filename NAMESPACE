@@ -54,7 +54,8 @@ importFrom("MASS", negative.binomial, theta.ml)
 importFrom("nlme", fixef,ranef, VarCorr, getGroups)
 
 importFrom("Matrix", drop0, rankMatrix, sparseMatrix,
-           forceSymmetric, fac2sparse, KhatriRao, Diagonal, .bdiag)
+           forceSymmetric, fac2sparse, KhatriRao, Diagonal, .bdiag,
+           as.matrix)
 importClassesFrom("Matrix", corMatrix, dgCMatrix, dpoMatrix, dCHMsimpl)
 ## methods incl. S4 generics:
 importMethodsFrom("Matrix", coerce, cov2cor, "%*%", crossprod,tcrossprod,
@@ -174,6 +175,7 @@ S3method(confint,merMod)# but don't hide:
 export(confint.merMod)
 S3method(confint,thpr)
 S3method(cooks.distance,merMod)
+S3method(cooks.distance,influence.merMod)
 S3method(densityplot,thpr)
 S3method(deviance,merMod)
 S3method(df.residual,merMod)
@@ -246,6 +248,7 @@ S3method(xyplot,thpr)
 
 S3method(sigma,lmList4)
 S3method(dfbeta,influence.merMod)
+S3method(dfbetas,influence.merMod)
 ## Re-using S3 methods from nlme (for 'lmList') as methods for our 'lmList4':
 S3method(fitted,lmList4)
 S3method(fixef,lmList4)

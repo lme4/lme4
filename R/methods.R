@@ -1,3 +1,5 @@
+## convert vcov from dpoMatrix to regular matrix (protect against car methods)
+vv <- function(x) Matrix::as.matrix(vcov(x))
 
 ## minimal "influence" function (to make broom::augment_columns work)
 influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
@@ -84,7 +86,8 @@ influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
             vc.0 <- c(vc.0, V[lower.tri(V, diag=TRUE)])
         }
         vc.1[del, ] <- vc.0
-        vcov.1[[del]] <- vcov(mod.1)
+
+        vcov.1[[del]] <- vv(mod.1)
     }
     left <- "[-"
     right <- "]"
@@ -95,7 +98,8 @@ influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
              "var.cov.comps", paste0("var.cov.comps", left, groups, right),
              "vcov", paste0("vcov", left, groups, right),
              "groups", "deleted", "converged", "function.evals")
-    result <- list(fixed, fixed.1, vc, vc.1, vcov(model), vcov.1, groups, unique.del, converged, feval)
+    result <- list(fixed, fixed.1, vc, vc.1,
+                   vv(model), vcov.1, groups, unique.del, converged, feval)
     names(result) <- nms
     class(result) <- "influence.merMod"
     result
@@ -114,7 +118,11 @@ dfbeta.influence.merMod <- function(model, which=c("fixed", "var.cov"), ...){
 }
 
 dfbetas.influence.merMod <- function(model, ...){
-    dfbeta(model)/t(sapply(model[[ipos["vcov.sub"]]], function(x) sqrt(diag(x))))
+    vList <- model[[ipos["vcov.sub"]]]
+    n <- nrow(vList[[1]])
+    vmat <- t(vapply(vList, function(x) sqrt(diag(x)),
+                     numeric(n)))
+    dfbeta(model)/vmat
 }
 
 cooks.distance.merMod <- function(model, ...) {
@@ -126,6 +134,19 @@ cooks.distance.merMod <- function(model, ...) {
     res <-  (res/(1 - hat))^2 * hat/(dispersion * p)
     res[is.infinite(res)] <- NaN
     res
+}
+
+cooks.distance.influence.merMod <- function(model, ...) { 
+    db <- dfbeta(model)
+    n <- nrow(db)
+    p <- ncol(db)
+    d <- numeric(n)
+    vcovs <- model[["vcov.sub"]]
+    sig.sq <- model[["var.cov.sub"]][, 1]
+    for (i in 1:n){
+        d[i] <- (db[i, ] %*% solve(vcovs[[i]]) %*% db[i, ])/(p*sig.sq[i])
+    }
+    d
 }
 
 ## from ?lm.influence:

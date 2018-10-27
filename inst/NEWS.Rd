@@ -4,8 +4,23 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-18.9000}{
-
+\section{CHANGES IN VERSION 1.1-19}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item influence measure code from \code{car} rolled in (see
+      \code{?influence.merMod})
+      \item \code{mkReTrm} gets new arguments \code{reorder.terms},
+      \code{reorder.vars} to control arrangement of RE terms and
+      individual effects with RE terms within model structures
+    }
+  }
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item \code{as.data.frame.merMod} finds conditional variance
+      information stored either as \code{attr(.,"postVar")} or
+      \code{attr(.,"condVar")} (for \code{glmmTMB} compatibility)
+    }
+  }
 }
 
 \section{CHANGES IN VERSION 1.1-18-1 (2018-08-17)}{

@@ -1,6 +1,9 @@
 \name{influence.merMod}
-\alias{cooks.distance.influence.merMod}
+\alias{influence.merMod}
 \alias{dfbeta.influence.merMod}
+\alias{dfbetas.influence.merMod}
+\alias{cooks.distance.influence.merMod}
+\alias{cooks.distance.merMod}
 \title{
   Influence Diagnostics for Mixed-Effects Models
 }
@@ -99,6 +102,10 @@ if (require("car")) {
     infIndexPlot(inf_gm1)
     compareCoefs(gm1, gm1.11)
 }
+## FIXME: dfbetas will fail at present *if* car is available, because
+##  influence.merMod and dfbetas.influence.merMod methods are being
+##  gotten from car, which has a sqrt(diag(x)) applied to a dpoMatrix ...
+## dfbeta(inf_gm1)
+## dfbetas(inf_gm1)
 }
-
 \keyword{models}
