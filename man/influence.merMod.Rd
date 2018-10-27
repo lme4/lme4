@@ -100,6 +100,5 @@ if (require("car")) {
     compareCoefs(gm1, gm1.11)
 }
 }
-\author{John Fox}
 
 \keyword{models}
