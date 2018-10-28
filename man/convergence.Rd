@@ -79,7 +79,7 @@
     perturbed slightly away from the optimum
     \item try all available optimizers (e.g. several different implementations
     of BOBYQA and Nelder-Mead, L-BFGS-B from \code{optim}, \code{nlminb},
-    \dots) via the \code{allFit()} function, see \sQuote{5.} in the
+    \dots) via the \code{\link{allFit}} function, see \sQuote{5.} in the
     examples.  While this will of course be slow for large fits, we consider
     it the gold standard; if all optimizers converge to values that
     are practically equivalent, then we would consider the convergence
@@ -124,7 +124,6 @@ fm1.restart <- update(fm1, start=pars)
 
 ## 5. try all available optimizers
 
-  source(system.file("utils", "allFit.R", package="lme4"))
   fm1.all <- allFit(fm1)
   ss <- summary(fm1.all)
   ss$ fixef               ## extract fixed effects

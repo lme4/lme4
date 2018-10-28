@@ -19,7 +19,7 @@ importFrom("stats",
            hatvalues, influence, lm, logLik, model.extract, model.frame,
            model.matrix, model.offset, model.response, model.weights,
            na.exclude, na.omit, na.pass, napredict, naresid, nlminb,
-           nobs, optimize, pchisq, pnorm, poisson, ppoints,
+           nobs, optim, optimize, pchisq, pnorm, poisson, ppoints,
            predict, printCoefmat, profile, pt, qchisq, qnorm,
            qqnorm, qt, quantile, rbinom, reformulate, reorder,
            resid, residuals, rgamma, rnbinom, rnorm, rpois,
@@ -27,7 +27,7 @@ importFrom("stats",
            runif, sd, setNames, simulate, symnum, terms, terms.formula,
            update, update.formula, var, vcov, weights)
 
-importFrom("utils", flush.console, packageVersion, stack, str)
+importFrom("utils", flush.console, packageVersion, sessionInfo, stack, str)
 if(getRversion() >= "3.5.0") {
     importFrom("utils", warnErrList)
 } else {
@@ -69,6 +69,7 @@ export(negative.binomial)
 ## currently needed for some eval()ing methods for glmer.nb() objects
 
 ## Our Exports:
+export(allFit)
 export(bootMer)
 export(checkConv)
 export(devcomp)
@@ -215,6 +216,7 @@ S3method(plot,lmList4.confint)
 S3method(plot,merMod)
 S3method(plot,ranef.mer)
 S3method(predict,merMod)
+S3method(print,allfit)
 S3method(print,merMod)
 S3method(print,ranef.mer)
 S3method(print,summary.merMod)
@@ -233,6 +235,7 @@ S3method(sigma,merMod)
 S3method(simulate,merMod)
 S3method(simulate,formula)
 S3method(splom,thpr)
+S3method(summary,allfit)
 S3method(summary,merMod)
 S3method(summary,summary.merMod)
 S3method(terms,merMod)

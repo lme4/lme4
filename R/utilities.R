@@ -1272,3 +1272,16 @@ arrange.condVar <- function(object,cv) {
     return(res)
 }
 
+## generic machinery for setting parallel options
+## uses eval() (as in family()$initialize) to avoid
+##  too much list 
+initialize.parallel <- expression({
+    have_mc <- have_snow <- FALSE
+    do_parallel <- (parallel != "no" && ncpus > 1L)
+    if (do_parallel) {
+        if (parallel == "multicore") have_mc <- .Platform$OS.type != "windows"
+        else if (parallel == "snow") have_snow <- TRUE
+        if (!(have_mc || have_snow))
+            do_parallel <- FALSE # (only for "windows")
+    }
+})

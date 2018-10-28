@@ -14,6 +14,7 @@ profnames <- function(object,signames=TRUE,
     return(nn)
 }
 
+
 ##' @importFrom splines backSpline interpSpline periodicSpline
 ##' @importFrom stats profile
 ##' @method profile merMod
@@ -42,16 +43,9 @@ profile.merMod <- function(fitted,
     ## FIXME: allow for failure of bounds (non-pos-definite correlation matrices) when >1 cor parameter
 
     prof.scale <- match.arg(prof.scale)
-    if (missing(parallel)) parallel <- getOption("profile.parallel", "no")
-    parallel <- match.arg(parallel)
-    have_mc <- have_snow <- FALSE
-    do_parallel <- (parallel != "no" && ncpus > 1L)
-    if (do_parallel) {
-        if (parallel == "multicore") have_mc <- .Platform$OS.type != "windows"
-        else if (parallel == "snow") have_snow <- TRUE
-        if (!(have_mc || have_snow))
-            do_parallel <- FALSE # (only for "windows")
-    }
+
+    do_parallel <- have_mc <- have_snow <- NULL
+    eval(initialize.parallel)
 
     if (is.null(optimizer)) optimizer <- fitted@optinfo$optimizer
     ## hack: doesn't work to set bobyqa parameters to *ending* values stored
@@ -65,15 +59,6 @@ profile.merMod <- function(fitted,
         control.internal[[i]] <- control[[i]]
     }
     control <- control.internal
-    ## parallel stuff copied from bootMer ...
-    if (missing(parallel)) parallel <- getOption("profile.parallel", "no")
-    parallel <- match.arg(parallel)
-    have_mc <- have_snow <- FALSE
-    if (parallel != "no" && ncpus > 1L) {
-        if (parallel == "multicore") have_mc <- .Platform$OS.type != "windows"
-        else if (parallel == "snow") have_snow <- TRUE
-        if (!have_mc && !have_snow) ncpus <- 1L
-    }
     useSc <- isLMM(fitted) || isNLMM(fitted)
     if (prof.scale=="sdcor") {
         transfuns <- list(from.chol=Cv_to_Sv,
