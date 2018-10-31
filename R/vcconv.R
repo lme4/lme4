@@ -128,6 +128,10 @@ cov2sdcor  <- function(V) {
     r <- V
     r[] <- Is * V * rep(Is, each = p)
     diag(r) <- sd
+    if (any(is.na(r))) {
+        warning("NA values in sdcor matrix converted to 0")
+        r[is.na(r)] <- 0
+    }
     r
 }
 
