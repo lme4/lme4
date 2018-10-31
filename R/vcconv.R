@@ -44,7 +44,7 @@ mlist2vec <- function(L) {
     ## in either case, read off in "lower-triangular" order
     ## (column-wise)
     ff <- function(x) {
-        if (all(x[iu <- upper.tri(x)] == 0)) t(x[!iu]) else t(x)[!iu]
+        if (all(na.omit(x[iu <- upper.tri(x)] == 0))) t(x[!iu]) else t(x)[!iu]
     }
     structure(unlist(lapply(L,ff)), clen = n)
 }
