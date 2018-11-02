@@ -78,7 +78,8 @@ profile.merMod <- function(fitted,
         stop("can't (yet) profile GLMMs with non-fixed scale parameters")
     stopifnot(devtol >= 0)
     base <- attr(dd, "basedev")
-    thopt <- attr(dd, "thopt")
+    ## protect against accidental tampering by later devfun calls
+    thopt <- forceCopy(attr(dd, "thopt"))
     stderr <- attr(dd, "stderr")
     pp <- environment(dd)$pp
     X.orig <- pp$X
