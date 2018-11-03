@@ -39,6 +39,7 @@ Loading required package: tools
 > 
 > oldOpts <- options(digits=2)
 > (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
+singular fit
 Linear mixed model fit by REML ['lmerMod']
 Formula: Reaction ~ Days + (Days | Subject)
    Data: sleepstudy
@@ -52,7 +53,9 @@ Number of obs: 180, groups:  Subject, 18
 Fixed Effects:
 (Intercept)         Days  
       251.4         10.5  
+convergence code 0; 1 optimizer warnings; 0 lme4 warnings 
 > (fm1a <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, REML = FALSE))
+singular fit
 Linear mixed model fit by maximum likelihood  ['lmerMod']
 Formula: Reaction ~ Days + (Days | Subject)
    Data: sleepstudy
@@ -67,7 +70,9 @@ Number of obs: 180, groups:  Subject, 18
 Fixed Effects:
 (Intercept)         Days  
       251.4         10.5  
+convergence code 0; 1 optimizer warnings; 0 lme4 warnings 
 > (fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
+singular fit
 Linear mixed model fit by REML ['lmerMod']
 Formula: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject)
    Data: sleepstudy
@@ -81,6 +86,7 @@ Number of obs: 180, groups:  Subject, 18
 Fixed Effects:
 (Intercept)         Days  
       251.4         10.5  
+convergence code 0; 1 optimizer warnings; 0 lme4 warnings 
 > anova(fm1, fm2)
 refitting model(s) with ML (instead of REML)
 Data: sleepstudy
@@ -93,6 +99,7 @@ fm1  6 1764 1783   -876     1752  0.06      1        0.8
 > 
 > ## Now works for glmer
 > fm1. <- suppressWarnings(glmer(Reaction ~ Days + (Days|Subject), sleepstudy))
+singular fit
 > ## default family=gaussian/identity link -> automatically calls  lmer()  (but with a warning)
 > ## hack call -- comes out unimportantly different
 > fm1.@call[[1]] <- quote(lmer)
@@ -148,10 +155,11 @@ convergence code 0; 1 optimizer warnings; 0 lme4 warnings
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.55 0.048 0.64 
+Time elapsed:  0.62 0.044 0.7 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
+singular fit
 Linear mixed model fit by REML ['lmerMod']
 Formula: Reaction ~ Days + (Days | Subject)
    Data: sleepstudy
@@ -165,7 +173,9 @@ Number of obs: 180, groups:  Subject, 18
 Fixed Effects:
 (Intercept)         Days  
       251.4         10.5  
+convergence code 0; 1 optimizer warnings; 0 lme4 warnings 
 > (fm.1 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
+singular fit
 Linear mixed model fit by REML ['lmerMod']
 Formula: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject)
    Data: sleepstudy
@@ -179,14 +189,17 @@ Number of obs: 180, groups:  Subject, 18
 Fixed Effects:
 (Intercept)         Days  
       251.4         10.5  
+convergence code 0; 1 optimizer warnings; 0 lme4 warnings 
 > 
 > #(fmX2 <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy))
 > #(fm.2 <- lmer2(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy))
 > ## check update(<mer>, <formula>):
 > fm.3 <- update(fmX1, . ~ Days + (1|Subject) + (0+Days|Subject))
+singular fit
 > stopifnot(all.equal(fm.1, fm.3))
 > 
 > fmX1s <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
+singular fit
 Warning messages:
 1: sparseX = TRUE has no effect at present 
 2: extra argument(s) 'sparseX' disregarded 
@@ -194,7 +207,7 @@ Warning messages:
 > options(oldOpts)  ## restore digits
 > 
 > showProc.time() #
-Time elapsed:  0.176 0.02 0.207 
+Time elapsed:  0.204 0.012 0.229 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -235,6 +248,7 @@ Time elapsed:  0.176 0.02 0.207
 > ## transformed vars should work[even if non-sensical as here;failed in 0.995-1]
 > fm2l <- lmer(log(Reaction) ~ log(Days+1) + (log(Days+1)|Subject),
 +              data = sleepstudy, REML = FALSE)
+singular fit
 > ## no need for an expand method now : xfm2 <- expand(fm2)
 > 
 > stopifnot(dim(ranef(fm2l)[[1]]) == c(18, 2),
@@ -253,6 +267,7 @@ Time elapsed:  0.176 0.02 0.207
 > y <- rnorm (n, a.group[group.id], 1)
 > ## fit and summarize the model
 > fit.1 <- lmer (y ~ 1 + (1 | group.id))
+singular fit
 > oldOpts <- options(digits=3)
 > coef (fit.1)
 $group.id
@@ -291,6 +306,9 @@ Number of obs: 20, groups:  group.id, 10
 Fixed effects:
             Estimate Std. Error t value
 (Intercept)   1.5713     0.6994   2.247
+convergence code: 0
+singular fit
+
 > 
 > stopifnot(all.equal(fixef(fit.1), c("(Intercept)" = 1.571312129)),
 + 	  all.equal(unname(ranef(fit.1, drop=TRUE)[["group.id"]]),
@@ -323,7 +341,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.372 0.016 0.43 
+Time elapsed:  0.376 0.02 0.447 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -344,9 +362,11 @@ Error : Invalid grouping factor specification, habitat * lagoon
 > r1  <- lmer(y ~ 0+habitat + (1|habitat:lagoon), data = dat,
 +             control=lmerControl(check.conv.hess="ignore",
 +                                 check.conv.grad="ignore")) # ok, but senseless
+singular fit
 > r1b <- lmer(y ~ 0+habitat + (1|habitat), data = dat,
 +             control=lmerControl(check.conv.hess="ignore",
 +                                 check.conv.grad="ignore")) # same model, clearly unidentifiable
+singular fit
 > ## "TODO" :  summary(r1)  should ideally warn the user
 > stopifnot(all.equal(fixef(r1), fixef(r1b), tolerance= 1e-15),
 +           all.equal(ranef(r1), ranef(r1b), tolerance= 1e-15, check.attributes=FALSE))
@@ -450,7 +470,7 @@ convergence code 0; 1 optimizer warnings; 0 lme4 warnings
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.268 0.016 0.309 
+Time elapsed:  0.244 0.02 0.301 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -473,7 +493,7 @@ singular fit
 +                    "error")))
 > 
 > showProc.time() #
-Time elapsed:  0.524 0.004 0.556 
+Time elapsed:  0.472 0 0.492 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -496,6 +516,7 @@ Time elapsed:  0.524 0.004 0.556
 > d$y[2] <- NA
 > d$f[3:4] <- NA
 > lmer(y~(1|f),data=d)
+singular fit
 Linear mixed model fit by REML ['lmerMod']
 Formula: y ~ (1 | f)
    Data: d
@@ -508,7 +529,9 @@ Number of obs: 57, groups:  f, 6
 Fixed Effects:
 (Intercept)  
       30.68  
+convergence code 0; 1 optimizer warnings; 0 lme4 warnings 
 > glmer(y~(1|f),data=d,family=poisson)
+singular fit
 Generalized linear mixed model fit by maximum likelihood (Laplace
   Approximation) [glmerMod]
  Family: poisson  ( log )
@@ -523,6 +546,7 @@ Number of obs: 57, groups:  f, 6
 Fixed Effects:
 (Intercept)  
       3.217  
+convergence code 0; 1 optimizer warnings; 0 lme4 warnings 
 > 
 > ## we originally thought that these examples should be
 > ## estimating non-zero variances, but they shouldn't ...
@@ -550,4 +574,4 @@ singular fit
 > 
 > proc.time()
    user  system elapsed 
-  4.032   0.256   4.710 
+  4.132   0.256   4.630 
