@@ -126,13 +126,13 @@ allFit <- function(m, meth.tab = NULL,
             } else parallel::parLapply(cl, seq_along(fit.names), ffun)
         }
     } else lapply(seq_along(fit.names), ffun)
-
-    structure(res, class = "allfit", fit = m, sessionInfo =  sessionInfo(),
+    names(res) <- fit.names
+    structure(res, class = "allFit", fit = m, sessionInfo =  sessionInfo(),
               data = data # is dropped if NULL
               )
 }
 
-print.allfit <- function(x, width=80, ...) {
+print.allFit <- function(x, width=80, ...) {
     cat("original model:\n")
     f <- attr(x,"fit")
     ss <- function(x) {
@@ -146,29 +146,56 @@ print.allfit <- function(x, width=80, ...) {
     cat("optimizers (",length(x),"): ",
         ss(paste(names(x),collapse=", ")),"\n",
         sep="")
-    which.bad <- sapply(x,is,"error")
+    which.bad <- vapply(x,is,"error",logical(1))
     if ((nbad <- sum(which.bad))>0) {
-        cat(nbad,"optimizers failed\n")
+        cat(nbad,"optimizer(s) failed\n")
     }
     cat("differences in negative log-likelihoods:\n")
-    nllvec <- -sapply(x[!which.bad],logLik)
-    print(summary(nllvec-min(nllvec)))
+    nllvec <- -vapply(x[!which.bad],logLik,numeric(1))
+    cat("max=",signif(max(nllvec-min(nllvec)),3),
+        "; std dev=",signif(sd(nllvec),3), "\n")
+    cat("differences in parameters:\n")
+    ss <- summary(x)
+    allpars <- cbind(ss$fixef, ss$sdcor)
+    par_max <- 
+    invisible(x)
 }
 
-summary.allfit <- function(object, ...) {
-    which.OK <- !sapply(object, is, "error")
+summary.allFit <- function(object, ...) {
+    namefun <- function(x) {
+        if (!is.null(dim(x))) {
+            rownames(x) <- names(objOK)
+        } else {
+            names(x) <- names(objOK)
+        }
+        x
+    }
+    afun <- function(x, FUN) {
+        f1 <- FUN(x[[1]])
+        nm <- names(f1)
+        n <- length(f1)
+        res <- vapply(x, FUN, numeric(n))
+        if (!is.null(dim(res))) {
+            res <- t(res)
+        } else {
+            res <- as.matrix(res)
+            colnames(res) <- nm
+        } 
+        res
+    }
+    which.OK <- !vapply(object, is, "error", FUN.VALUE=logical(1))
     objOK <- object[which.OK]
     msgs <- lapply(objOK, function(x) x@optinfo$conv$lme4$messages)
-    fixef <- do.call(rbind, lapply(objOK, fixef))
-    llik <- sapply(objOK, logLik)
-    times <- t(sapply(objOK, attr, "time"))
-    feval <- sapply(objOK, function(x) x@optinfo$feval)
-    sdcor <- do.call(rbind, lapply(objOK, function(x)
-        as.data.frame(VarCorr(x))[, "sdcor"]))
-    theta <- do.call(rbind, lapply(objOK,
-                                   function(x) getME(x, "theta")))
+    nfix <- length(fixef(objOK[[1]]))
+    fixef <- afun(objOK, fixef)
+    llik <- vapply(objOK, logLik, numeric(1))
+    times <- afun(objOK, function(x) attr(x, "time"))
+    feval <- vapply(objOK, function(x) x@optinfo$feval, numeric(1))
+    vfun <- function(x) as.data.frame(VarCorr(x))[["sdcor"]]
+    sdcor <- afun(objOK, vfun)
+    theta <- afun(objOK, function(x) getME(x, name="theta"))
     cnm <- tnames(objOK[[1]])
-    if (sigma(object[[1]])!=1) cnm <- c(cnm,"sigma")
+    if (sigma(objOK[[1]])!=1) cnm <- c(cnm,"sigma")
     colnames(sdcor) <- unname(cnm)
     sdcor <- as.data.frame(sdcor)
     res <- namedList(which.OK, msgs, fixef, llik, sdcor, theta, times, feval)
@@ -178,3 +205,11 @@ summary.allfit <- function(object, ...) {
 
 ## should add a print method for summary:
 ##  * fixed effects, random effects: summary of differences?
+
+## not yet ...
+## plot.allFit <- function(x, ...) {
+##     if (! (require(ggalt) && require(ggplot2))) {
+##         stop("ggalt and ggplot2 packages must be installed to plot allFit objects")
+##     }
+##     ss <- summary(x)
+## }    
