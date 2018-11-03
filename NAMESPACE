@@ -95,6 +95,7 @@ export(GQN)
 export(isLMM, isGLMM, isNLMM)
 export(isNested)
 export(isREML)
+export(isSingular)
 export(lFormula)
 export(lmer)
 export(lmerControl, glmerControl, nlmerControl,

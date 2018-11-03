@@ -1285,3 +1285,12 @@ initialize.parallel <- expression({
             do_parallel <- FALSE # (only for "windows")
     }
 })
+
+isSingular <- function(x, tol=1e-5) {
+    lwr <- getME(x, "lower")
+    theta <- getME(x, "theta")
+    any(theta[lwr==0] < tol)
+}
+    
+    
+    

@@ -98,8 +98,7 @@ ss.CS <- transform(sleepstudy, Days=scale(Days))
 fm1.CS <- update(fm1, data=ss.CS)
 
 ## 2. check singularity
-diag.vals <- getME(fm1,"theta")[getME(fm1,"lower") == 0]
-any(diag.vals < 1e-6) # FALSE
+isSingular(fm1)
 
 ## 3. recompute gradient and Hessian with Richardson extrapolation
 devfun <- update(fm1, devFunOnly=TRUE)
@@ -134,4 +133,4 @@ fm1.restart <- update(fm1, start=pars)
 
 }
 
-\seealso{\code{\link{lmerControl}}}
+\seealso{\code{\link{lmerControl}}, \code{\link{isSingular}}}

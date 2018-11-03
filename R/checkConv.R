@@ -13,12 +13,36 @@
 ##' @param debug useful if some checks are on "ignore", but would "trigger"
 checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
 {
+
     if (is.null(derivs)) return(NULL)  ## bail out
     if (anyNA(derivs$gradient))
         return(list(code = -5L,
                     messages = gettextf("Gradient contains NAs")))
     ntheta <- length(lbound)
     res <- list()
+
+    ## check singularity first, and unconditionally
+    ## (ignore "ignore")
+    ccl <- ctrl[[cstr <- "check.conv.singular"]] ; checkCtrlLevels(cstr, cc <- ccl[["action"]])
+    ## similar logic to isSingular, but we don't have the fitted object to test
+    bcoefs <- seq(ntheta)[lbound==0]
+    is.singular <- any(coefs[bcoefs] < ccl$tol)
+    
+    if (doCheck(cc)) {
+        ## singular fit
+        ## are there other circumstances where we can get a singular fit?
+        wstr <- "singular fit"
+        res$messages <- c(res$messages,wstr)
+        switch(cc,
+               "message" = message(wstr),
+               "warning" = warning(wstr),
+               "stop" = stop(wstr),
+               stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
+    }
+
+    ## DON'T check remaining gradient issues
+    if (is.singular) return(res)
+    
     ## gradients:
     ## check absolute gradient (default)
     ccl <- ctrl[[cstr <- "check.conv.grad"]] ; checkCtrlLevels(cstr, cc <- ccl[["action"]])
@@ -67,21 +91,6 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
         }
     }
 
-    ccl <- ctrl[[cstr <- "check.conv.singular"]] ; checkCtrlLevels(cstr, cc <- ccl[["action"]])
-    if (doCheck(cc)) {
-        bcoefs <- seq(ntheta)[lbound==0]
-        if (any(coefs[bcoefs] < ccl$tol)) {
-            ## singular fit
-            ## are there other circumstances where we can get a singular fit?
-            wstr <- "singular fit"
-            res$messages <- c(res$messages,wstr)
-            switch(cc,
-                   "message" = message(wstr),
-                   "warning" = warning(wstr),
-                   "stop" = stop(wstr),
-                   stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
-        }
-    }
 
     ccl <- ctrl[[cstr <- "check.conv.hess"]] ; checkCtrlLevels(cstr, cc <- ccl[["action"]])
     if (doCheck(cc)) {

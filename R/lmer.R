@@ -55,10 +55,10 @@ lmer <- function(formula, data=NULL, REML = TRUE,
                      start=start,
                      calc.derivs=control$calc.derivs,
                      use.last.params=control$use.last.params)
-    }
+           }
     cc <- checkConv(attr(opt,"derivs"), opt$par,
-                    ctrl = control$checkConv,
-                    lbound=environment(devfun)$lower)
+                        ctrl = control$checkConv,
+                        lbound=environment(devfun)$lower)
     mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr,
              mc = mcout, lme4conv=cc) ## prepare output
 }## { lmer }
