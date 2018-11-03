@@ -25,7 +25,7 @@ noLHSform <- function(formula) {
 ##' @param cstr name of control being set
 ##' @param val value of control being set
 checkCtrlLevels <- function(cstr, val, smallOK=FALSE) {
-    bvals <- c("stop","warning","ignore")
+    bvals <- c("message","warning","stop","ignore")
     if (smallOK) bvals <- outer(bvals, c("","Small"), paste0)
     if (!is.null(val) && !val %in% bvals)
         stop("invalid control level ",sQuote(val)," in ",cstr,": valid options are {",

@@ -38,7 +38,7 @@ lmerControl(optimizer = "bobyqa",% was "Nelder_Mead" till Dec.2013
     check.formula.LHS = "stop",
     ## convergence checking options
     check.conv.grad     = .makeCC("warning", tol = 2e-3, relTol = NULL),
-    check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
+    check.conv.singular = .makeCC(action = "message",  tol = 1e-4),
     check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
     ## optimizer args
     optCtrl = list())
@@ -65,7 +65,7 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     check.response.not.const = "stop",
     ## convergence checking options
     check.conv.grad     = .makeCC("warning", tol = 1e-3, relTol = NULL),
-    check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
+    check.conv.singular = .makeCC(action = "message",  tol = 1e-4),
     check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
     ## optimizer args
     optCtrl = list())

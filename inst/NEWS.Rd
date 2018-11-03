@@ -19,6 +19,7 @@
       \item \code{as.data.frame.merMod} finds conditional variance
       information stored either as \code{attr(.,"postVar")} or
       \code{attr(.,"condVar")} (for \code{glmmTMB} compatibility)
+      \item change to defaults of \code{[g]lmerControl} to print a message when fits are singular
     }
   }
 }
