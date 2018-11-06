@@ -23,7 +23,7 @@ rePCA.merMod <- function(x) {
         class(vv) <- "prcomp"
         vv
     }
-    structure(lapply(unms,function(m) svals(bdiag(chfs[which(nms == m)]))),
+    structure(lapply(unms,function(m) svals(Matrix::bdiag(chfs[which(nms == m)]))),
               class="prcomplist")
 }
 #' @export
