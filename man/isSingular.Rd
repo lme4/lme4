@@ -35,6 +35,14 @@ isSingular(x, tol = 1e-05)
   without any of their individual variances or correlations being close
   to zero.
 
+  This function performs a simple test to determine whether any of the
+  random effects covariance matrices of a fitted model are singular.
+  The \code{\link{rePCA}} method provides more detail about the
+  singularity pattern, showing the standard deviations
+  of orthogonal variance components and the mapping from
+  variance terms in the model to orthogonal components
+  (i.e., eigenvector/rotation matrices).
+  
   While singular models are statistically well defined (it is
   theoretically sensible for the true maximum likelihood estimate
   to correspond to a singular fit), there are real concerns
@@ -75,7 +83,7 @@ isSingular(x, tol = 1e-05)
 \value{
   a logical value 
 }
-\seealso{\code{\link{getME}}}
+\seealso{\code{\link{getME}}, \code{\link{rePCA}}}
 \references{
   \itemize{
     \item Dale J. Barr, Roger Levy, Christoph Scheepers, and Harry J. Tily. Random effects structure for confirmatory hypothesis testing: Keep it maximal.

@@ -12,6 +12,9 @@
       \item \code{mkReTrm} gets new arguments \code{reorder.terms},
       \code{reorder.vars} to control arrangement of RE terms and
       individual effects with RE terms within model structures
+      \item adding material from the \pkg{RePsychLing} package
+      (on GitHub; see Bates et al 2015 arXiv:1506.04967) to
+      show orthogonal variance components.
     }
   }
   \subsection{USER-VISIBLE CHANGES}{
