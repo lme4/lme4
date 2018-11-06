@@ -31,13 +31,15 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
     if (doCheck(cc)) {
         ## singular fit
         ## are there other circumstances where we can get a singular fit?
-        wstr <- "singular fit"
-        res$messages <- c(res$messages,wstr)
-        switch(cc,
-               "message" = message(wstr),
-               "warning" = warning(wstr),
-               "stop" = stop(wstr),
-               stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
+        if (is.singular) {
+            wstr <- "singular fit"
+            res$messages <- c(res$messages,wstr)
+            switch(cc,
+                   "message" = message(wstr),
+                   "warning" = warning(wstr),
+                   "stop" = stop(wstr),
+                   stop(gettextf("unknown check level for '%s'", cstr), domain=NA))
+        }
     }
 
     ## DON'T check remaining gradient issues
