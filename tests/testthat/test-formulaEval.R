@@ -3,6 +3,12 @@ library("lme4")
 
 context("data= argument and formula evaluation")
 
+## intercept context-dependent errors ... it's too bad that
+##  these errors differ between devtools::test() and
+##  R CMD check, but finding the difference is too much
+##  of a nightmare
+data_RE <- "(bad 'data'|variable lengths differ)"
+
 test_that("glmerFormX", {
     set.seed(101)
 
@@ -28,8 +34,8 @@ test_that("glmerFormX", {
     ## expect_equal(drop1(m_data.3)$AIC,AICvec)
     ## expect_equal(drop1(m_data.4)$AIC,AICvec)
     ## in test environment:
-    expect_error(drop1(m_data.3),"bad 'data'")
-    expect_error(drop1(m_data.4),"bad 'data'")
+    expect_error(drop1(m_data.3),data_RE)
+    expect_error(drop1(m_data.4),data_RE)
 
 })
 
@@ -101,8 +107,8 @@ test_that("glmerForm", {
 
     ## these do NOT fail if there is a variable 'd' living in the global environment --
     ## they DO fail in the testthat context
-    expect_error(drop1(m_data.3),"bad 'data'")
-    expect_error(drop1(m_data.4),"bad 'data'")
+    expect_error(drop1(m_data.3),data_RE)
+    expect_error(drop1(m_data.4),data_RE)
 
     ## expect_error(lapply(m_data_List[4],drop1))
     ## expect_error(lapply(m_data_List[5],drop1))
