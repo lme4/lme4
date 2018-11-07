@@ -15,20 +15,23 @@
       \item adding material from the \pkg{RePsychLing} package
       (on GitHub; see Bates et al 2015 arXiv:1506.04967) to
       show orthogonal variance components.
+      \item new utility \code{isSingular()} function for
+      detecting singular fits
+      \item \code{allFit} function/methods have been moved to the main
+      package, rather than being included in an auxiliary source file;
+      computations can (in principle) be done in parallel
     }
   }
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
+      \item by default a message is now printed for singular fits
+      (i.e., fits with linear combinations of variance components
+      that are exactly zero)
       \item \code{as.data.frame.merMod} finds conditional variance
       information stored either as \code{attr(.,"postVar")} or
       \code{attr(.,"condVar")} (for \code{glmmTMB} compatibility)
       \item change to defaults of \code{[g]lmerControl} to print a
       message when fits are singular
-      \item new utility \code{isSingular()} function for
-      detecting singular fits; by default a message is printed
-      for singular fits
-      \item \code{allFit} function/methods have been moved to the main
-      package, rather than being included in an auxiliary source file
       \item post-fitting convergence checks based on estimated gradient
       and Hessian (see \code{\link{troubleshooting}}) are no longer
       performed for (nearly-)singular fits (see \code{\link{isSingular}})
