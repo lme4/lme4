@@ -113,11 +113,15 @@ fm1  6 1764 1783   -876     1752  0.06      1        0.8
 > ##           all.equal(fm1@re@theta, fm1.@re@theta, tolerance = 1.e-7),
 > ##           all.equal(ranef(fm1), ranef(fm1.), tolerance = 1.e-7))
 > 
-> stopifnot(all.equal(fixef(fm1), fixef(fm2), tolerance = 1.e-13),
-+           all.equal(unname(fixef(fm1)),
-+                     c(251.405104848485, 10.467285959595), tolerance = 1e-13),
-+ 	  all.equal(Matrix::cov2cor(vcov(fm1))["(Intercept)", "Days"],
-+ 		    -0.13755, tolerance=1e-4))
+> stopifnot(
++     all.equal(fixef(fm1), fixef(fm2), tolerance = 1.e-13)
++    ,
++     all.equal(unname(fixef(fm1)),
++               c(251.405104848485, 10.467285959595), tolerance = 1e-13)
++    ,
++     all.equal(Matrix::cov2cor(vcov(fm1))["(Intercept)", "Days"],
++               -0.1375, tolerance = 4e-4)
++ )
 > 
 > fm1ML <- refitML(fm1)
 > fm2ML <- refitML(fm2)
@@ -148,7 +152,7 @@ convergence code 0; 1 optimizer warnings; 0 lme4 warnings
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.58 0.02 0.85 
+Time elapsed:  0.49 0.024 0.58 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -194,7 +198,7 @@ Warning messages:
 > options(oldOpts)  ## restore digits
 > 
 > showProc.time() #
-Time elapsed:  0.188 0.004 0.258 
+Time elapsed:  0.152 0.012 0.169 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -323,7 +327,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.344 0.024 0.514 
+Time elapsed:  0.312 0.024 0.363 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -367,9 +371,24 @@ singular fit
 > ## (only gives a warning now -- sparseX disregarded)
 > r2.  <- lmer(y ~ 0+lagoon + (1|habitat), data = dat,
 +              sparseX = TRUE, verbose = TRUE)
-start par. =  13.3722 fn =  805.5555 
-At return
-eval:  16 fn:      709.74472 par:  0.00000
+iteration: 1
+	f(x) = 805.555549
+iteration: 2
+	f(x) = 823.440780
+iteration: 3
+	f(x) = 761.688086
+iteration: 4
+	f(x) = 709.744716
+iteration: 5
+	f(x) = 727.808636
+iteration: 6
+	f(x) = 709.947736
+iteration: 7
+	f(x) = 709.746669
+iteration: 8
+	f(x) = 709.744736
+iteration: 9
+	f(x) = 709.744716
 singular fit
 Warning messages:
 1: sparseX = TRUE has no effect at present 
@@ -450,7 +469,7 @@ convergence code 0; 1 optimizer warnings; 0 lme4 warnings
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.276 0.016 0.386 
+Time elapsed:  0.236 0.012 0.291 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -460,9 +479,7 @@ Time elapsed:  0.276 0.016 0.386
 > ## --> do need CPU
 > ## suppressWarnings() for warning about too-few random effects levels
 > m0 <- suppressWarnings(lmer(y ~ (x1 + x2)|ff, data = D))
-singular fit
 > m1 <- suppressWarnings(lmer(y ~ x1 + x2|ff  , data = D))
-singular fit
 > m2 <- suppressWarnings(lmer(y ~ x1 + (x2|ff), data = D))
 singular fit
 > m3 <- suppressWarnings(lmer(y ~ (x2|ff) + x1, data = D))
@@ -473,7 +490,7 @@ singular fit
 +                    "error")))
 > 
 > showProc.time() #
-Time elapsed:  0.492 0.004 0.706 
+Time elapsed:  0.22 0.004 0.229 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -550,4 +567,4 @@ singular fit
 > 
 > proc.time()
    user  system elapsed 
-  4.060   0.200   5.941 
+  3.288   0.216   3.813 

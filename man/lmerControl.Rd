@@ -19,7 +19,8 @@
   }
 }
 \usage{
-lmerControl(optimizer = "bobyqa",% was "Nelder_Mead" till Dec.2013
+lmerControl(optimizer = "nloptwrap",% was "Nelder_Mead" till Dec.2013,
+				    % then "bobyqa" till  Sep/Oct 2018
     restart_edge = TRUE,
     boundary.tol = 1e-5,
     calc.derivs=TRUE,

@@ -93,7 +93,6 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
         }
     }
 
-
     ccl <- ctrl[[cstr <- "check.conv.hess"]] ; checkCtrlLevels(cstr, cc <- ccl[["action"]])
     if (doCheck(cc)) {
         if (length(coefs) > ntheta) {

@@ -121,7 +121,7 @@ test_that("lmer", {
     options(op)
 
     ## anova() of glmer+glm models:
-    gm1 <- glmer(y~(1|u),data=dat[1:4,],family=poisson)
+    gm1 <- glmer(y~(1|u), data=dat[1:4,], family=poisson)
     gm0 <- glm(y~1,data=dat[1:4,],family=poisson)
     gm2 <- glmer(y~(1|u),data=dat[1:4,],family=poisson,nAGQ=2)
     aa <- anova(gm1,gm0)
@@ -143,7 +143,9 @@ context("bootMer confint()")
 set.seed(47)
 test_that("bootMer", {
     ## testing bug-fix for ordering of sd/cor components in sd/cor matrix with >2 rows
-    m1 <- lmer(strength~1+(cask|batch),Pastes)
+    ## FIXME: This model makes no sense [and CI.boot() fails for "nloptwrap"!]
+    m1 <- lmer(strength ~ 1 + (cask|batch), Pastes,
+               control = lmerControl(optimizer="bobyqa"))
     ci <- CI.boot(m1)
     corvals <- ci[grep("^cor_",rownames(ci)),]
     expect_true(all(abs(corvals) <= 1))
@@ -295,20 +297,18 @@ test_that("confint", {
                        "non-monotonic profile")
         expect_warning(cc <- confint(pp),"falling back to linear interpolation")
         ## very small/unstable problem, needs large tolerance
-        expect_equal(unname(cc[2,]),c(0,0.5427609),tolerance=1e-2)
+        expect_equal(unname(cc[2,]), c(0, 0.509), tolerance=0.09) # "bobyqa" had 0.54276
     }
 
     badprof <- readRDS(system.file("testdata","badprof.rds",
                                    package="lme4"))
     expect_warning(cc <- confint(badprof), "falling back to linear")
     expect_equal(cc,
-        structure(c(0, -1, 2.50856219044636, 48.8305727797906, NA, NA,
-                    33.1204478717389, 1, 7.33374326592662, 68.7254711217912,
-                    -6.90462047196017,
-                    NA), .Dim = c(6L, 2L),
-                  .Dimnames = list(c(".sig01", ".sig02",
-                  ".sig03", ".sigma", "(Intercept)", "cYear"),
-                  c("2.5 %", "97.5 %"))),
+        array(c(0, -1, 2.50856219044636, 48.8305727797906, NA, NA,
+                33.1204478717389, 1, 7.33374326592662, 68.7254711217912, -6.90462047196017, NA),
+              dim = c(6L, 2L),
+              dimnames = list(c(".sig01", ".sig02", ".sig03", ".sigma", "(Intercept)", "cYear"),
+                              c("2.5 %", "97.5 %"))),
                  tolerance=1e-3)
 })
 
@@ -357,7 +357,7 @@ test_that("predict", {
     pm <- predict(m, newdata=sleepstudy)
     expect_is(pm, "numeric")
     expect_equal(quantile(pm, names = FALSE),
-                 c(211.006525, 260.948978, 296.87331, 328.638297, 458.155583))
+                 c(211.0108, 260.9496, 296.873, 328.6378, 458.1584), tol=1e-5)
     op <- options(warn = 2) # there should be no warnings!
     if (require("MEMSS",quietly=TRUE)) {
         ## test spurious warning with factor as response variable
@@ -441,7 +441,7 @@ test_that("predict", {
     m1_contr <- lmer(y~fac+(fac|grp),dat)
     pp <- predict(m1_contr,newdata=dat)
     options(op)
-    
+
 })
 
 context("simulate")
@@ -484,8 +484,8 @@ test_that("simulate", {
     expect_is(sp1 <- simulate(p1, seed=123), "data.frame")
     expect_identical(dim(sp1), c(nrow(Penicillin), 1L))
     expect_equal(fivenum(sp1[,1]),
-		 c(20.9412, 22.5805, 23.5575, 24.6095, 27.6997), tolerance=1e-5)
-    ## Pixel example
+                 c(20.864, 22.587, 23.616, 24.756, 28.599), tolerance=0.01)
+## Pixel example
 
     expect_identical(dim(simulate(fmPixS)), c(nPix, 1L))
     expect_identical(dim(simulate(fmPix )), c(nPix, 1L))
@@ -643,13 +643,13 @@ test_that("profile", {
     ##    2/6 mismatches (average diff: 4.62)
     ##    [1] 207 - 216 == -9.23697
     ##    [4] 1422 - 1422 == -0.00301
-    
+
     if (Sys.info()["sysname"] != "SunOS") {
         expect_equal(unname(confint(p3)^2),
                      unname(confint(p4)[c(1,3,4),]),
                      tolerance=1e-3)
     }
-    
+
     ## check naming convention properly adjusted
     expect_equal(as.character(unique(p4$.par)),
                  c("var_(Intercept)|Subject", "cov_Days.(Intercept)|Subject",
@@ -688,7 +688,7 @@ test_that("influence/hatvalues works", {
     ifm1 <- influence(fm1, do.coef=FALSE)
     expect_equal(unname(head(ifm1$hat)),
                  c(0.107483311203734, 0.102096105816528,
-                   0.0980557017761242, 0.0953620990825215, 
+                   0.0980557017761242, 0.0953620990825215,
                    0.0940152977357202, 0.0940152977357202),
                  tolerance=1e-6)
     expect_equal(nrow(dNAs),length(hatvalues(fitNAs)))
@@ -706,7 +706,7 @@ test_that("rstudent", {
 test_that("cooks distance", {
     expect_equal(
         unname(head(cooks.distance(fm1))),
-        c(0.127645976734753, 0.127346548123793, 0.243724627125036, 0.000280638917214881, 
+        c(0.127645976734753, 0.127346548123793, 0.243724627125036, 0.000280638917214881,
           0.0309804642689636, 0.293554225380831),
         tolerance=1e-6)
         expect_equal(nrow(dNAs),length(cooks.distance(fitNAs)))

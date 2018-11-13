@@ -18,8 +18,8 @@ fm <- lmer(log(y) ~ x | z, data=X)  ## ignore grouping factors with
 stopifnot(all.equal(unname(fixef(fm)), -0.8345, tolerance=.01))
 
 ## is "Nelder_Mead" default optimizer?
-isNM <- formals(lmerControl)$optimizer == "Nelder_Mead"
-
+isNM   <- formals(lmerControl)$optimizer == "Nelder_Mead"
+isOldB <- formals(lmerControl)$optimizer == "bobyqa"
 ## check working of Matrix methods on  vcov(.) etc ----------------------
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 V  <- vcov(fm)
@@ -27,17 +27,21 @@ V1 <- vcov(fm1)
 TOL <- 0 # to show the differences below
 TOL <- 1e-5 # for the check
 stopifnot(
-	  all.equal(diag(V), if(isNM) 0.176076 else 0.176068575, tolerance = TOL) # 64b: 2.4e-8
-	  ,
-	  all.equal(as.numeric(chol(V)), if(isNM) 0.4196165 else 0.41960526, tolerance=TOL)# 64b: 3.2e-8
-	  ,
-	  all.equal(diag(V1), c(46.574978, 2.389469), tolerance = TOL)# 64b: 9.8e-9
-	  , dim(C1 <- chol(V1)) == c(2,2) ,
-	  all.equal(as.numeric(C1),
-		    c(6.82458627, 0, -0.2126260, 1.5310973), tolerance=TOL)# 64b: 1.6e-9
-          ,
-          dim(chol(crossprod(getME(fm1, "Z")))) == 36
-	  , TRUE)
+    all.equal(diag(V), if(isNM) 0.176076 else if(isOldB) 0.176068575 else 0.1761714,
+              tolerance = TOL)
+   ,
+    all.equal(as.numeric(chol(V)), if(isNM) 0.4196165 else if(isOldB) 0.41960526 else 0.4197278,
+              tolerance=TOL)
+   ,
+    all.equal(diag(V1), c(46.5639, 2.39), tolerance = 40*TOL)# (for "all" algos)
+   ,
+    dim(C1 <- chol(V1)) == c(2,2)
+   ,
+    all.equal(as.numeric(C1),
+              c(6.82377, 0, -0.212575, 1.53127), tolerance=20*TOL)# ("all" algos)
+   ,
+    dim(chol(crossprod(getME(fm1, "Z")))) == 36
+  , TRUE)
 ## printing
 signif(chol(crossprod(getME(fm,"Z"))), 4)# -> simple 4 x 4 sparse
 
@@ -76,13 +80,14 @@ lsD29 <- lsDat[1:29, ]
 
 ## FIXME: rank-Z test should probably not happen in this case:
 (sm3 <- summary(m3 <- lm(y ~ Part*Operator, data=lsDat)))# ok: some interactions not estimable
-nrow(coef(sm3))# 21 *are* estimable
-sm4  <- summary(m4 <- lm(y ~ Part*Operator, data=lsD29)) # ok: 20 *are* estimable
+stopifnot(21 == nrow(coef(sm3)))# 21 *are* estimable
+sm4  <- summary(m4 <- lm(y ~ Part*Operator, data=lsD29))
+stopifnot(20 == nrow(coef(sm4)))# 20 *are* estimable
 lf <- lFormula(y ~ (1|Part) + (1|Operator) + (1|Part:Operator), data = lsDat)
 dim(Zt <- lf$reTrms$Zt)## 31 x 31
 c(rankMatrix(Zt)) ## 21
-c(rankMatrix(Zt,method="qr")) ## 31 ||  29 (64 bit Lnx)
-c(rankMatrix(t(Zt),method="qr")) ## 30
+c(rankMatrix(Zt,method="qr")) ## 31 ||  29 (64 bit Lnx), then 21 (!)
+c(rankMatrix(t(Zt),method="qr")) ## 30, then 21 !
 nrow(lsDat)
 fm3 <- lmer(y ~ (1|Part) + (1|Operator) + (1|Part:Operator), data = lsDat,
             control=lmerControl(check.nobs.vs.rankZ="warningSmall"))
@@ -91,6 +96,11 @@ lf29 <- lFormula(y ~ (1|Part) + (1|Operator) + (1|Part:Operator), data = lsD29)
 (fm4 <- update(fm3, data=lsD29))
 fm4. <- update(fm4, REML=FALSE)
 summary(fm4.)
+stopifnot(
+    all.equal(as.numeric(formatVC(VarCorr(fm4.))[,"Std.Dev."]),
+              c(1.04066, 0.63592, 0.52914, 0.48248), tol = 1e-4)
+)
+
 
 showProc.time()
 cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
