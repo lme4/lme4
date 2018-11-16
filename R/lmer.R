@@ -1170,7 +1170,7 @@ NULL
 ##' @keywords models methods
 ##' @method ranef merMod
 ##' @export
-ranef.merMod <- function(object, condVar = FALSE, drop = FALSE,
+ranef.merMod <- function(object, condVar = TRUE, drop = FALSE,
                          whichel = names(ans), postVar = FALSE, ...)
 {
 
