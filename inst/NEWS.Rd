@@ -4,6 +4,14 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
+\section{CHANGES IN VERSION 1.1-19.9000}{
+  \subsection{USER-VISIBLE CHANGES}{
+  \itemize{
+     \item default value for \code{condVar} (return conditional variances
+     as part of the \code{ranef.merMod} object) is now \code{TRUE}
+  }
+}
+
 \section{CHANGES IN VERSION 1.1-19}{
   \subsection{NEW FEATURES}{
     \itemize{
