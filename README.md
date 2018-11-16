@@ -9,7 +9,7 @@ lme4: Mixed-effects models in R.
 
 ## Recent/release notes
 
-* Version 1.1-19 is shortly being submitted to CRAN (April 2019). Changes in this release are fairly minor: the biggest changes are that a message is now printed for singular fits. See the [NEWS file](https://github.com/lme4/lme4/blob/master/inst/NEWS.Rd) (or  `news(Version=="1.1.19",package="lme4")`).
+* Version 1.1-19 is on CRAN (November 2019). Changes in this release are fairly minor: the biggest changes are that a message is now printed for singular fits. See the [NEWS file](https://github.com/lme4/lme4/blob/master/inst/NEWS.Rd) (or  `news(Version=="1.1.19",package="lme4")`).
 
 ## Where to get help
 
