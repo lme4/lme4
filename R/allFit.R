@@ -146,7 +146,7 @@ print.allFit <- function(x, width=80, ...) {
     cat("optimizers (",length(x),"): ",
         ss(paste(names(x),collapse=", ")),"\n",
         sep="")
-    which.bad <- vapply(x,is,"error",logical(1))
+    which.bad <- vapply(x,FUN=is,"error",FUN.VALUE=logical(1))
     if ((nbad <- sum(which.bad))>0) {
         cat(nbad,"optimizer(s) failed\n")
     }
@@ -154,10 +154,11 @@ print.allFit <- function(x, width=80, ...) {
     nllvec <- -vapply(x[!which.bad],logLik,numeric(1))
     cat("max=",signif(max(nllvec-min(nllvec)),3),
         "; std dev=",signif(sd(nllvec),3), "\n")
-    cat("differences in parameters:\n")
-    ss <- summary(x)
-    allpars <- cbind(ss$fixef, ss$sdcor)
-    par_max <- 
+    ## FIXME: print magnitudes of parameter diffs
+    ## cat("differences in parameters:\n")
+    ## ss <- summary(x)
+    ## allpars <- cbind(ss$fixef, ss$sdcor)
+    ## par_max <- 
     invisible(x)
 }
 
