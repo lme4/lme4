@@ -1,13 +1,11 @@
 
-R Under development (unstable) (2018-10-21 r75476) -- "Unsuffered Consequences"
+R version 3.5.2 Patched (2018-12-23 r75891) -- "Eggshell Igloo"
 Copyright (C) 2018 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -152,7 +150,7 @@ convergence code 0; 1 optimizer warnings; 0 lme4 warnings
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.49 0.024 0.58 
+Time elapsed:  0.3 0.009 0.31 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -198,7 +196,7 @@ Warning messages:
 > options(oldOpts)  ## restore digits
 > 
 > showProc.time() #
-Time elapsed:  0.152 0.012 0.169 
+Time elapsed:  0.083 0 0.083 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -297,9 +295,10 @@ Fixed effects:
 (Intercept)   1.5713     0.6994   2.247
 > 
 > stopifnot(all.equal(fixef(fit.1), c("(Intercept)" = 1.571312129)),
-+ 	  all.equal(unname(ranef(fit.1, drop=TRUE)[["group.id"]]),
++ 	  all.equal(unname(ranef(fit.1, drop=TRUE)[["group.id"]]), structure(
 + 		   c(1.8046888, -1.8097665, 1.6146451, 1.5408268, -0.1331995,
 +                      -3.3306655, -1.8259277, -0.8735145, -0.3591311,  3.3720441),
++                    postVar = rep.int(0.311091076, 10)),
 + 		    tolerance = 1e-5)
 + 	  )
 > 
@@ -327,7 +326,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.312 0.024 0.363 
+Time elapsed:  0.229 0.013 0.243 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -469,7 +468,7 @@ convergence code 0; 1 optimizer warnings; 0 lme4 warnings
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.236 0.012 0.291 
+Time elapsed:  0.143 0.017 0.161 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -490,7 +489,7 @@ singular fit
 +                    "error")))
 > 
 > showProc.time() #
-Time elapsed:  0.22 0.004 0.229 
+Time elapsed:  0.101 0.017 0.119 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -562,9 +561,6 @@ singular fit
 > stopifnot(VarCorr(m5)[["DA"]] == 0,
 + 	  VarCorr(m6)[["DA"]] == 0)
 > 
-> 
-> 
-> 
 > proc.time()
    user  system elapsed 
-  3.288   0.216   3.813 
+  1.766   0.178   1.941 
