@@ -43,9 +43,9 @@ profile.merMod <- function(fitted,
     ## FIXME: allow for failure of bounds (non-pos-definite correlation matrices) when >1 cor parameter
 
     prof.scale <- match.arg(prof.scale)
-
-    do_parallel <- have_mc <- have_snow <- NULL
-    eval(initialize.parallel)
+    parallel   <- match.arg(parallel)
+    do_parallel <- have_mc <- have_snow <- NULL # "-Wall" are set here:
+    eval(initialize.parallel)# (parallel, ncpus)
 
     if (is.null(optimizer)) optimizer <- fitted@optinfo$optimizer
     ## hack: doesn't work to set bobyqa parameters to *ending* values stored
