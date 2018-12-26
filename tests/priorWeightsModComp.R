@@ -42,8 +42,10 @@ lapply(setNames(,0:99), function(seed) {
     ano12... <- dropA(anova(fm1,    fm2   ))
     ano12.10 <- dropA(anova(fm1.10, fm2.10))
     print(aEQ <- all.eqL(ano12..., ano12.10)) # showing differences
-    notChisq <- local({ n <- names(ano12...)
-        grep("Chisq", n, value=TRUE, fixed=TRUE, invert=TRUE) })
+    if(!exists("notChisq"))
+	notChisq <<-
+	    local({ n <- names(ano12...)
+		grep("Chisq", n, value=TRUE, fixed=TRUE, invert=TRUE) })
     stopifnot(
         all.equal(ano12...$Chisq,
                   ano12.10$Chisq, tol = 1e-6 * seedF(seed))
