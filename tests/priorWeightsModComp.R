@@ -27,7 +27,11 @@ seedF <- function(s) {
     else ## seeds 22, 20, and better
         0.25
 }
-lapply(setNames(,0:99), function(seed) {
+## be fast, running only 10 seeds by default:
+sMax <- if(lme4:::testLevel() > 1) 99L else 9L
+mySeeds <- 0L:sMax
+
+lapply(setNames(,mySeeds), function(seed) {
     cat("\n------ random seed =", seed, "---------\n")
     set.seed(seed)
     v <- rpois(n,1) + 1
@@ -67,7 +71,7 @@ saveRDS(srallEQ, "priorWeightsMod_relerr.rds")
 
 if(!dev.interactive(orNone=TRUE)) pdf("priorWeightsMod_relerr.pdf")
 
-matplot(0:99, log10(srallEQ), type="l", xlab=NA) ; grid()
+matplot(mySeeds, log10(srallEQ), type="l", xlab=NA) ; grid()
 legend("topleft", ncol=3, bty="n",
        paste(1:6, colnames(srallEQ), sep = ": "), col=1:6, lty=1:6)
 tolD <- sqrt(.Machine$double.eps) # sqrt(eps_C)
@@ -77,6 +81,6 @@ LRG <- which(srallEQ[,"AIC"] > tolD)
 text(LRG, log10(srallEQ[LRG, "AIC"]), names(LRG), cex = .8)
 
 ## how close are we ..
-str(tF <- sapply(0:99, seedF))
+str(tF <- sapply(mySeeds, seedF))
 round(sort(      rallEQ[, "Chisq"] / (tF * 1e-6  ),          decreasing=TRUE), 1)
 round(sort(apply(rallEQ[,notChisq] / (tF * 1.5e-8), 1, max), decreasing=TRUE), 1)
