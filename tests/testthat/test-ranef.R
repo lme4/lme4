@@ -13,7 +13,8 @@ d$y <- suppressMessages(simulate(~1+x+(1|f)+(x|g),family=binomial,
                                                 theta=c(1,1,2,1)))[[1]])
 fm1 <- glmer(y~(1|f)+(x|g),family=binomial,data=d)
 
-test_that("ranef", {
+context("ranef")
+test_that("warn extra args", {
     expect_warning(ranef(fm1,transf=exp),"additional arguments")
 })
 test_that("dotplot_ranef", {
@@ -31,19 +32,19 @@ test_that("dotplot_ranef", {
 test_that("Dyestuff consistent with lme4.0", {
     lme4.0condVarDyestuff <- c(362.3583, 362.3583, 362.3583, 362.3583, 362.3583, 362.3583)
     fm <- lmer(Yield ~ 1|Batch, Dyestuff, REML=FALSE)
-    lme4condVarDyestuff <- as.numeric(attr(ranef(fm,condVar=TRUE)$Batch,"postVar"))
+    lme4condVarDyestuff <- drop(attr(ranef(fm,condVar=TRUE)$Batch,"postVar"))
     expect_equal(lme4.0condVarDyestuff, lme4condVarDyestuff, tolerance = 1e-3)
 })
-          
+
 
 test_that("sleepstudy consistent with lme4.0", {
         lme4.0condVarsleepstudy <- matrix(c(145.71273, -21.440414,
                                             -21.44041,   5.310927), 2, 2)
         fm <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
         lme4condVarsleepstudy <- attr(ranef(fm,condVar=TRUE)$Subject,"postVar")[,,1]
-        expect_equal(lme4.0condVarsleepstudy, lme4condVarsleepstudy, tolerance = 1e-4)
+        expect_equal(lme4.0condVarsleepstudy, lme4condVarsleepstudy, tolerance = 2e-4)
 })
-      
+
 
 test_that("cbpp consistent with lme4.0", {
     lme4.0condVarcbpp <- c(0.12128867, 0.13363275, 0.08839850, 0.17337928, 0.12277914, 0.14436663,
@@ -55,21 +56,23 @@ test_that("cbpp consistent with lme4.0", {
     expect_equal(lme4.0condVarcbpp, lme4condVarcbpp, tolerance = 1e-3)
 })
 
-test_that("multiple terms per factor", {
+context("multiple terms per factor")
+test_that("multiple terms work", {
     fm <- lmer(Reaction ~ Days + (1|Subject)+ (0+Days | Subject), sleepstudy)
-    rr <- ranef(fm,condVar=TRUE)
-    cv <- attr(rr$Subject,"postVar")
-    expect_is(cv,"list")
+    rr <- ranef(fm, condVar=TRUE)
     expect_equal(as.data.frame(rr)[c(1,19),],
-                 structure(list(grpvar = c("Subject", "Subject"), term = structure(1:2,
-                                         .Label = c("(Intercept)", "Days"), class = "factor"),
-                                grp = structure(c(9L, 9L),
-               .Label = c("309", "310", "370", "349", "350", "334", "335", "371", "308", "369",
-                          "351", "332", "372", "333", "352", "331", "330", "337"), class = "factor"), 
-               condval = c(1.51269607269461, 9.32348934636638),
-               condsd = c(12.238940331211, 2.33546343116991)), row.names = c(1L, 19L), class = "data.frame"),
-               tolerance=1e-5)
-
+                 structure(
+                     list(grpvar = c("Subject", "Subject"),
+                          term = structure(1:2, .Label = c("(Intercept)", "Days"), class = "factor"),
+                          grp = structure(c(9L, 9L),
+                                          .Label = c("309", "310", "370", "349", "350", "334", "335", "371", "308", "369",
+                                                     "351", "332", "372", "333", "352", "331", "330", "337"), class = "factor"),
+                          condval = c(1.5116973008, 9.32373076098),
+                          condsd  = c(12.238845590, 2.33546851406)),
+                     row.names = c(1L, 19L), class = "data.frame"),
+                 tolerance = 1e-5)
+    cv <- attr(rr$Subject, "postVar")
+    expect_equal(lapply(cv, drop),
+                 list(`(Intercept)` = rep(149.79166, 18),
+                      Days          = rep(5.4543894, 18)), tolerance = 1e-4)
 })
-
-
