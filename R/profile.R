@@ -60,17 +60,21 @@ profile.merMod <- function(fitted,
     }
     control <- control.internal
     useSc <- isLMM(fitted) || isNLMM(fitted)
-    if (prof.scale=="sdcor") {
-        transfuns <- list(from.chol=Cv_to_Sv,
-                         to.chol=Sv_to_Cv,
-                         to.sd=identity)
-        prof.prefix = c("sd","cor")
-    } else if (prof.scale=="varcov") {
-        transfuns <- list(from.chol=Cv_to_Vv,
-                          to.chol=Vv_to_Cv,
-                          to.sd=sqrt)
-        prof.prefix = c("var","cov")
-    }
+    prof.prefix <-
+        switch(prof.scale,
+               "sdcor" = {
+                   transfuns <- list(from.chol= Cv_to_Sv,
+                                     to.chol  = Sv_to_Cv,
+                                     to.sd    = identity)
+                   c("sd", "cor")
+               },
+               "varcov" = {
+                   transfuns <- list(from.chol= Cv_to_Vv,
+                                     to.chol  = Vv_to_Cv,
+                                     to.sd    = sqrt)
+                   c("var", "cov")
+               },
+               stop("internal error, prof.scale=", prof.scale))
     dd <- devfun2(fitted,useSc,signames=signames,
                   transfuns=transfuns, prefix=prof.prefix, ...)
     ## FIXME: figure out to what do here ...
