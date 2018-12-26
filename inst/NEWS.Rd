@@ -6,9 +6,16 @@
 
 \section{CHANGES IN VERSION 1.1-19.9000}{
   \subsection{USER-VISIBLE CHANGES}{
-  \itemize{
-     \item default value for \code{condVar} (return conditional variances
-     as part of the \code{ranef.merMod} object) is now \code{TRUE}
+    \itemize{
+      \item default value for \code{condVar} (return conditional variances
+      as part of the \code{ranef.merMod} object) is now \code{TRUE}
+    }
+  }
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item adapted tests to work with R-devel's more consistent
+      \code{formula(model.frame(.))} behavior.
+    }
   }
 }
 
@@ -48,10 +55,10 @@
 }
 
 \section{CHANGES IN VERSION 1.1-18-1 (2018-08-17)}{
- \itemize{  
+ \itemize{
  \item This is a minor release; the only change is to roll back (unexport) the \code{influence.merMod} method, pending resolution of conflicts with the car package
  }
-}     
+}
 
 \section{CHANGES IN VERSION 1.1-18 ((2018-08-16)}{
   \subsection{USER-VISIBLE CHANGES}{
