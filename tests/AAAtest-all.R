@@ -4,13 +4,14 @@ if(require("testthat", quietly = TRUE)) {
     if(getRversion() < "3.5.0") { withAutoprint <- identity ; prt <- print } else { prt <- identity }
     if(Sys.getenv("USER") %in% c("maechler", "bbolker")) withAutoprint({
         ## for developers' sake:
-        lP <- .libPaths()
-        cat(".libPaths():\n"); prt(lP)
-        cat("entries in .libPaths()[1] :\n"); prt(list.files(lP[1], include.dirs=TRUE))
+        lP <- .libPaths() # ---- .libPaths() : ----
+        prt(lP)
+        ## ---- Entries in .libPaths()[1] : ----
+        prt(list.files(lP[1], include.dirs=TRUE))
         prt(sessionInfo())
         prt(packageDescription("Matrix"))
-        cat(sprintf("lme4 from packageDescription \"file\"\n '%s'\n",
-                    attr(packageDescription("lme4"), "file")))
+        ## 'lme4' from packageDescription "file" :
+        prt(attr(packageDescription("lme4"), "file"))
     })
     test_check(pkg)
     ##======== ^^^
