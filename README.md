@@ -9,7 +9,18 @@ lme4: Mixed-effects models in R.
 
 ## Recent/release notes
 
-* Version 1.1-17 is on CRAN (April 2018). Changes in this release are minor, bugfixes and R-devel/CRAN-compatibility tweaks. See the [NEWS file](https://github.com/lme4/lme4/blob/master/inst/NEWS.Rd) (or  `news(Version=="1.1.17",package="lme4")`).
+* Version 1.1-19 is on CRAN (November 2019). Changes in this release are fairly minor: the biggest changes are that a message is now printed for singular fits. See the [NEWS file](https://github.com/lme4/lme4/blob/master/inst/NEWS.Rd) (or  `news(Version=="1.1.19",package="lme4")`).
+
+## Where to get help
+
+- `r-sig-mixed-models@r-project.org` for questions about `lme4` usage and more general mixed model questions
+- https://github.com/lme4/lme4/issues for bug, infelicity, and wishlist reporting
+- The [lme4 tag on StackOverflow](https://stackoverflow.com/questions/tagged/lme4) for programming-related or the [lme4-nlme tag on CrossValidated](https://stats.stackexchange.com/questions/tagged/lme4-nlme) for statistics-related questions
+- maintainer e-mail only for urgent/private communications
+
+## Support
+
+If you choose to support `lme4` development financially, you can contribute to a fund at McMaster University (home institution of one of the developers) [here](https://secureca.imodules.com/s/1439/17/giving/form.aspx?sid=1439&gid=1&pgid=770&cid=1618&dids=2413&bledit=1&appealcode=18C9). The form will say that you are donating to the "Global Coding Fund"; this fund is available for use by the developers, under McMaster's research spending rules. We plan to use the funds, as available, to pay students to do maintenance and development work. There is no way to earmark funds or set up a bounty to direct funding toward particular features, but you can e-mail the maintainers and suggest priorities for your donation.
 
 ## Features
 

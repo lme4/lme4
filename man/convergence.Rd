@@ -79,7 +79,7 @@
     perturbed slightly away from the optimum
     \item try all available optimizers (e.g. several different implementations
     of BOBYQA and Nelder-Mead, L-BFGS-B from \code{optim}, \code{nlminb},
-    \dots) via the \code{allFit()} function, see \sQuote{5.} in the
+    \dots) via the \code{\link{allFit}} function, see \sQuote{5.} in the
     examples.  While this will of course be slow for large fits, we consider
     it the gold standard; if all optimizers converge to values that
     are practically equivalent, then we would consider the convergence
@@ -98,8 +98,7 @@ ss.CS <- transform(sleepstudy, Days=scale(Days))
 fm1.CS <- update(fm1, data=ss.CS)
 
 ## 2. check singularity
-diag.vals <- getME(fm1,"theta")[getME(fm1,"lower") == 0]
-any(diag.vals < 1e-6) # FALSE
+isSingular(fm1)
 
 ## 3. recompute gradient and Hessian with Richardson extrapolation
 devfun <- update(fm1, devFunOnly=TRUE)
@@ -124,7 +123,6 @@ fm1.restart <- update(fm1, start=pars)
 
 ## 5. try all available optimizers
 
-  source(system.file("utils", "allFit.R", package="lme4"))
   fm1.all <- allFit(fm1)
   ss <- summary(fm1.all)
   ss$ fixef               ## extract fixed effects
@@ -135,4 +133,4 @@ fm1.restart <- update(fm1, start=pars)
 
 }
 
-\seealso{\code{\link{lmerControl}}}
+\seealso{\code{\link{lmerControl}}, \code{\link{isSingular}}}

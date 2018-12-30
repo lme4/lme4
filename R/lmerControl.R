@@ -163,7 +163,7 @@ glmerControl <-
              check.response.not.const = "stop",
              ## convergence checking options
              check.conv.grad     = .makeCC("warning", tol = 1e-3, relTol = NULL),
-             check.conv.singular = .makeCC(action = "ignore",  tol = 1e-4),
+             check.conv.singular = .makeCC(action = "message",  tol = 1e-4),
              check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
              optCtrl = list())
 {

@@ -14,6 +14,7 @@ profnames <- function(object,signames=TRUE,
     return(nn)
 }
 
+
 ##' @importFrom splines backSpline interpSpline periodicSpline
 ##' @importFrom stats profile
 ##' @method profile merMod
@@ -42,16 +43,9 @@ profile.merMod <- function(fitted,
     ## FIXME: allow for failure of bounds (non-pos-definite correlation matrices) when >1 cor parameter
 
     prof.scale <- match.arg(prof.scale)
-    if (missing(parallel)) parallel <- getOption("profile.parallel", "no")
-    parallel <- match.arg(parallel)
-    have_mc <- have_snow <- FALSE
-    do_parallel <- (parallel != "no" && ncpus > 1L)
-    if (do_parallel) {
-        if (parallel == "multicore") have_mc <- .Platform$OS.type != "windows"
-        else if (parallel == "snow") have_snow <- TRUE
-        if (!(have_mc || have_snow))
-            do_parallel <- FALSE # (only for "windows")
-    }
+    parallel   <- match.arg(parallel)
+    do_parallel <- have_mc <- have_snow <- NULL # "-Wall" are set here:
+    eval(initialize.parallel)# (parallel, ncpus)
 
     if (is.null(optimizer)) optimizer <- fitted@optinfo$optimizer
     ## hack: doesn't work to set bobyqa parameters to *ending* values stored
@@ -65,27 +59,22 @@ profile.merMod <- function(fitted,
         control.internal[[i]] <- control[[i]]
     }
     control <- control.internal
-    ## parallel stuff copied from bootMer ...
-    if (missing(parallel)) parallel <- getOption("profile.parallel", "no")
-    parallel <- match.arg(parallel)
-    have_mc <- have_snow <- FALSE
-    if (parallel != "no" && ncpus > 1L) {
-        if (parallel == "multicore") have_mc <- .Platform$OS.type != "windows"
-        else if (parallel == "snow") have_snow <- TRUE
-        if (!have_mc && !have_snow) ncpus <- 1L
-    }
     useSc <- isLMM(fitted) || isNLMM(fitted)
-    if (prof.scale=="sdcor") {
-        transfuns <- list(from.chol=Cv_to_Sv,
-                         to.chol=Sv_to_Cv,
-                         to.sd=identity)
-        prof.prefix = c("sd","cor")
-    } else if (prof.scale=="varcov") {
-        transfuns <- list(from.chol=Cv_to_Vv,
-                          to.chol=Vv_to_Cv,
-                          to.sd=sqrt)
-        prof.prefix = c("var","cov")
-    }
+    prof.prefix <-
+        switch(prof.scale,
+               "sdcor" = {
+                   transfuns <- list(from.chol= Cv_to_Sv,
+                                     to.chol  = Sv_to_Cv,
+                                     to.sd    = identity)
+                   c("sd", "cor")
+               },
+               "varcov" = {
+                   transfuns <- list(from.chol= Cv_to_Vv,
+                                     to.chol  = Vv_to_Cv,
+                                     to.sd    = sqrt)
+                   c("var", "cov")
+               },
+               stop("internal error, prof.scale=", prof.scale))
     dd <- devfun2(fitted,useSc,signames=signames,
                   transfuns=transfuns, prefix=prof.prefix, ...)
     ## FIXME: figure out to what do here ...
@@ -93,7 +82,8 @@ profile.merMod <- function(fitted,
         stop("can't (yet) profile GLMMs with non-fixed scale parameters")
     stopifnot(devtol >= 0)
     base <- attr(dd, "basedev")
-    thopt <- attr(dd, "thopt")
+    ## protect against accidental tampering by later devfun calls
+    thopt <- forceCopy(attr(dd, "thopt"))
     stderr <- attr(dd, "stderr")
     pp <- environment(dd)$pp
     X.orig <- pp$X

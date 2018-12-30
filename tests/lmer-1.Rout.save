@@ -1,5 +1,5 @@
 
-R version 3.5.1 Patched (2018-09-25 r75358) -- "Feather Spray"
+R version 3.5.2 Patched (2018-12-23 r75891) -- "Eggshell Igloo"
 Copyright (C) 2018 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
@@ -131,6 +131,7 @@ fm1  6 1764 1783   -876     1752  0.06      1        0.8
 [1] 1778
 > 
 > (fm3 <- lmer(Yield ~ 1|Batch, Dyestuff2))
+singular fit
 Linear mixed model fit by REML ['lmerMod']
 Formula: Yield ~ 1 | Batch
    Data: Dyestuff2
@@ -143,12 +144,13 @@ Number of obs: 30, groups:  Batch, 6
 Fixed Effects:
 (Intercept)  
        5.67  
+convergence code 0; 1 optimizer warnings; 0 lme4 warnings 
 > stopifnot(all.equal(coef(summary(fm3)),
 + 		    array(c(5.6656, 0.67838803150, 8.3515624346),
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.4 0.002 0.41 
+Time elapsed:  0.3 0.009 0.31 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -194,7 +196,7 @@ Warning messages:
 > options(oldOpts)  ## restore digits
 > 
 > showProc.time() #
-Time elapsed:  0.059 0.016 0.076 
+Time elapsed:  0.083 0 0.083 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -293,9 +295,10 @@ Fixed effects:
 (Intercept)   1.5713     0.6994   2.247
 > 
 > stopifnot(all.equal(fixef(fit.1), c("(Intercept)" = 1.571312129)),
-+ 	  all.equal(unname(ranef(fit.1, drop=TRUE)[["group.id"]]),
++ 	  all.equal(unname(ranef(fit.1, drop=TRUE)[["group.id"]]), structure(
 + 		   c(1.8046888, -1.8097665, 1.6146451, 1.5408268, -0.1331995,
 +                      -3.3306655, -1.8259277, -0.8735145, -0.3591311,  3.3720441),
++                    postVar = rep.int(0.311091076, 10)),
 + 		    tolerance = 1e-5)
 + 	  )
 > 
@@ -323,7 +326,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.167 0.019 0.212 
+Time elapsed:  0.229 0.013 0.243 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -353,7 +356,9 @@ Error : Invalid grouping factor specification, habitat * lagoon
 > 
 > ## Use a more sensible model:
 > r2.0 <- lmer(y ~ 0+lagoon + (1|habitat:lagoon), data = dat) # ok
+singular fit
 > r2   <- lmer(y ~ 0+lagoon + (1|habitat), data = dat) # ok, and more clear
+singular fit
 > stopifnot(all.equal(fixef(r2), fixef(r2.0), tolerance= 1e-15),
 +           all.equal(ranef(r2), ranef(r2.0), tolerance= 1e-15, check.attributes=FALSE))
 > V2 <- vcov(r2)
@@ -383,6 +388,7 @@ iteration: 8
 	f(x) = 709.744736
 iteration: 9
 	f(x) = 709.744716
+singular fit
 Warning messages:
 1: sparseX = TRUE has no effect at present 
 2: extra argument(s) 'sparseX' disregarded 
@@ -412,6 +418,7 @@ Number of obs: 100, groups:  habitat, 20
 Fixed Effects:
 lagoon1  lagoon2  lagoon3  lagoon4  
   101.7    200.3    301.8    400.8  
+convergence code 0; 1 optimizer warnings; 0 lme4 warnings 
 > 
 > 
 > ### mcmcsamp() :
@@ -461,7 +468,7 @@ lagoon1  lagoon2  lagoon3  lagoon4
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.179 0.002 0.18 
+Time elapsed:  0.143 0.017 0.161 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -473,14 +480,16 @@ Time elapsed:  0.179 0.002 0.18
 > m0 <- suppressWarnings(lmer(y ~ (x1 + x2)|ff, data = D))
 > m1 <- suppressWarnings(lmer(y ~ x1 + x2|ff  , data = D))
 > m2 <- suppressWarnings(lmer(y ~ x1 + (x2|ff), data = D))
+singular fit
 > m3 <- suppressWarnings(lmer(y ~ (x2|ff) + x1, data = D))
+singular fit
 > suppressWarnings(stopifnot(all.equal(ranef(m0), ranef(m1), tolerance = 1e-5),
 +           all.equal(ranef(m2), ranef(m3), tolerance = 1e-5),
 +           inherits(tryCatch(lmer(y ~ x2|ff + x1, data = D), error = function(e)e),
 +                    "error")))
 > 
 > showProc.time() #
-Time elapsed:  0.079 0.013 0.094 
+Time elapsed:  0.101 0.017 0.119 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -546,13 +555,12 @@ Fixed Effects:
 > 
 > m5 <- lmer(zbmi ~ (1|DA) , data = fakedat,
 + 	   control=lmerControl(check.nobs.vs.rankZ="ignore"))
+singular fit
 > m6 <- update(m5, data=na.omit(fakedat))
+singular fit
 > stopifnot(VarCorr(m5)[["DA"]] == 0,
 + 	  VarCorr(m6)[["DA"]] == 0)
 > 
-> 
-> 
-> 
 > proc.time()
    user  system elapsed 
-  1.625   0.201   2.102 
+  1.766   0.178   1.941 

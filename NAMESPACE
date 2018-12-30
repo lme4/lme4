@@ -13,12 +13,13 @@ importFrom("stats",
            contrasts, "contrasts<-",
            cooks.distance,
            delete.response,
-           deviance, df.residual, dnorm, drop.scope, drop1, extractAIC,
+           deviance, dfbeta, dfbetas,
+           df.residual, dnorm, drop.scope, drop1, extractAIC,
            family, fitted, formula, gaussian, getCall, glm,
            hatvalues, influence, lm, logLik, model.extract, model.frame,
            model.matrix, model.offset, model.response, model.weights,
            na.exclude, na.omit, na.pass, napredict, naresid, nlminb,
-           nobs, optimize, pchisq, pnorm, poisson, ppoints,
+           nobs, optim, optimize, pchisq, pnorm, poisson, ppoints,
            predict, printCoefmat, profile, pt, qchisq, qnorm,
            qqnorm, qt, quantile, rbinom, reformulate, reorder,
            resid, residuals, rgamma, rnbinom, rnorm, rpois,
@@ -26,7 +27,7 @@ importFrom("stats",
            runif, sd, setNames, simulate, symnum, terms, terms.formula,
            update, update.formula, var, vcov, weights)
 
-importFrom("utils", flush.console, packageVersion, stack, str)
+importFrom("utils", flush.console, packageVersion, sessionInfo, stack, str)
 if(getRversion() >= "3.5.0") {
     importFrom("utils", warnErrList)
 } else {
@@ -53,7 +54,8 @@ importFrom("MASS", negative.binomial, theta.ml)
 importFrom("nlme", fixef,ranef, VarCorr, getGroups)
 
 importFrom("Matrix", drop0, rankMatrix, sparseMatrix,
-           forceSymmetric, fac2sparse, KhatriRao, Diagonal, .bdiag)
+           forceSymmetric, fac2sparse, KhatriRao, Diagonal, .bdiag,
+           as.matrix, bdiag)
 importClassesFrom("Matrix", corMatrix, dgCMatrix, dpoMatrix, dCHMsimpl)
 ## methods incl. S4 generics:
 importMethodsFrom("Matrix", coerce, cov2cor, "%*%", crossprod,tcrossprod,
@@ -67,6 +69,7 @@ export(negative.binomial)
 ## currently needed for some eval()ing methods for glmer.nb() objects
 
 ## Our Exports:
+export(allFit)
 export(bootMer)
 export(checkConv)
 export(devcomp)
@@ -92,6 +95,7 @@ export(GQN)
 export(isLMM, isGLMM, isNLMM)
 export(isNested)
 export(isREML)
+export(isSingular)
 export(lFormula)
 export(lmer)
 export(lmerControl, glmerControl, nlmerControl,
@@ -173,6 +177,7 @@ S3method(confint,merMod)# but don't hide:
 export(confint.merMod)
 S3method(confint,thpr)
 S3method(cooks.distance,merMod)
+S3method(cooks.distance,influence.merMod)
 S3method(densityplot,thpr)
 S3method(deviance,merMod)
 S3method(df.residual,merMod)
@@ -212,6 +217,7 @@ S3method(plot,lmList4.confint)
 S3method(plot,merMod)
 S3method(plot,ranef.mer)
 S3method(predict,merMod)
+S3method(print,allFit)
 S3method(print,merMod)
 S3method(print,ranef.mer)
 S3method(print,summary.merMod)
@@ -230,6 +236,7 @@ S3method(sigma,merMod)
 S3method(simulate,merMod)
 S3method(simulate,formula)
 S3method(splom,thpr)
+S3method(summary,allFit)
 S3method(summary,merMod)
 S3method(summary,summary.merMod)
 S3method(terms,merMod)
@@ -244,7 +251,8 @@ S3method(xyplot,thpr)
 
 
 S3method(sigma,lmList4)
-
+S3method(dfbeta,influence.merMod)
+S3method(dfbetas,influence.merMod)
 ## Re-using S3 methods from nlme (for 'lmList') as methods for our 'lmList4':
 S3method(fitted,lmList4)
 S3method(fixef,lmList4)
@@ -259,3 +267,7 @@ S3method(summary,lmList4)
 ## Auxiliaries:
 S3method(getGroups,lmList4)
 
+## RePsychLing stuff
+S3method(rePCA,merMod)
+S3method(summary,prcomplist)
+export(rePCA)

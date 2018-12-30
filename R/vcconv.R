@@ -44,7 +44,7 @@ mlist2vec <- function(L) {
     ## in either case, read off in "lower-triangular" order
     ## (column-wise)
     ff <- function(x) {
-        if (all(x[iu <- upper.tri(x)] == 0)) t(x[!iu]) else t(x)[!iu]
+        if (all(na.omit(x[iu <- upper.tri(x)] == 0))) t(x[!iu]) else t(x)[!iu]
     }
     structure(unlist(lapply(L,ff)), clen = n)
 }
@@ -128,6 +128,10 @@ cov2sdcor  <- function(V) {
     r <- V
     r[] <- Is * V * rep(Is, each = p)
     diag(r) <- sd
+    if (any(is.na(r))) {
+        warning("NA values in sdcor matrix converted to 0")
+        r[is.na(r)] <- 0
+    }
     r
 }
 

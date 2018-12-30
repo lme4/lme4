@@ -16,7 +16,7 @@
 ##      title = {The {BLUPs} are not "best" when it comes to bootstrapping},
 ##      volume = {56},
 ##      issn = {0167-7152},
-##      url = {http://www.sciencedirect.com/science/article/pii/S016771520200041X},
+##      url = {http://www.sciencedirect.com/science/article/S016771520200041X},
 ##      doi = {10.1016/S0167-7152(02)00041-X},
 ##      journal = {Statistics \& Probability Letters},
 ##      author = {Morris, Jeffrey S},
@@ -42,16 +42,10 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
         setpbfun <- get(paste0("set",.simpleCap(.progress),"ProgressBar"))
         pb <- do.call(pbfun,PBargs)
     }
-    if (missing(parallel)) parallel <- getOption("boot.parallel", "no")
-    parallel <- match.arg(parallel)
-    have_mc <- have_snow <- FALSE
-    do_parallel <- (parallel != "no" && ncpus > 1L)
-    if (do_parallel) {
-        if (parallel == "multicore") have_mc <- .Platform$OS.type != "windows"
-        else if (parallel == "snow") have_snow <- TRUE
-        if (!(have_mc || have_snow))
-            do_parallel <- FALSE # (only for "windows")
-    }
+
+    do_parallel <- have_mc <- have_snow <- NULL
+    eval(initialize.parallel)
+    
     if (do_parallel && .progress != "none")
         message("progress bar disabled for parallel operations")
 
@@ -115,7 +109,7 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
     }})
 
     simvec <- seq_len(nsim)
-     res <- if (do_parallel) {
+    res <- if (do_parallel) {
         if (have_mc) {
             parallel::mclapply(simvec, ffun, mc.cores = ncpus)
         } else if (have_snow) {

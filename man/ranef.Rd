@@ -6,7 +6,7 @@
 \alias{as.data.frame.ranef.mer}
 \title{Extract the modes of the random effects}
 \usage{
-\method{ranef}{merMod} (object, condVar = FALSE,
+\method{ranef}{merMod} (object, condVar = TRUE,
       drop = FALSE, whichel = names(ans), postVar = FALSE, ...)
 \method{dotplot}{ranef.mer} (x, data, main = TRUE, transf = I, ...)
 \method{qqmath}{ranef.mer} (x, data, main = TRUE, ...)
@@ -16,7 +16,7 @@
   \item{object}{an object of a class of fitted models with
     random effects, typically a
     \code{\linkS4class{merMod}} object.}
-  \item{condVar}{an optional logical argument indicating if
+  \item{condVar}{a logical argument indicating if
     the conditional variance-covariance matrices of the random effects
     should be added as an attribute.}
   \item{drop}{should components of the return value that would be data frames
@@ -126,12 +126,11 @@ fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy)
 fm3 <- lmer(diameter ~ (1|plate) + (1|sample), Penicillin)
 ranef(fm1)
-str(rr1 <- ranef(fm1, condVar = TRUE))
+str(rr1 <- ranef(fm1))
 dotplot(rr1)  ## default
 ## specify free scales in order to make Day effects more visible
 dotplot(rr1,scales = list(x = list(relation = 'free')))[["Subject"]]
-##-- condVar=TRUE is not yet implemented for multiple terms --> Warning:
-  str(ranef(fm2, condVar = TRUE))
+ranef(fm2)
 op <- options(digits = 4)
 ranef(fm3, drop = TRUE)
 options(op)

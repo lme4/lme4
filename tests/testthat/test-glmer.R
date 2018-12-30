@@ -146,19 +146,21 @@ if(FALSE) { ## Hadley broke this
                     x=runif(1000),
                     f=factor(rep(1:20,each=50)),
                     x2=rep(0:1,c(999,1)))
-    mod2 <- glmer(y~x+x2+(1|f),data=d,family=binomial,
-                                   control=glmerControl(check.conv.hess="ignore",
-                                                        check.conv.grad="ignore"))
+    expect_message(mod2 <- glmer(y~x+x2+(1|f),data=d,family=binomial,
+                                 control=glmerControl(check.conv.hess="ignore",
+                                                      check.conv.grad="ignore")),
+                   "singular fit")
     expect_equal(unname(fixef(mod2))[1:2],
                  c(-0.10036244,0.03548523), tolerance=1e-4)
     expect_true(unname(fixef(mod2)[3] < -10))
-    mod3 <- update(mod2, family=binomial(link="probit"))
+    expect_message(mod3 <- update(mod2, family=binomial(link="probit")),
+                   "singular fit")
     # singular Hessian warning
     expect_equal(unname(fixef(mod3))[1:2], c(-0.062889, 0.022241), tolerance=1e-4)
     expect_true(fixef(mod3)[3] < -4)
-    mod4 <- update(mod2, family=binomial(link="cauchit"),
+    expect_message(mod4 <- update(mod2, family=binomial(link="cauchit"),
                    control=glmerControl(check.conv.hess="ignore",
-                                        check.conv.grad="ignore"))#--> singular Hessian warning
+                                        check.conv.grad="ignore")))#--> singular Hessian warning
 
     ## on-the-fly creation of index variables
     if (FALSE) {

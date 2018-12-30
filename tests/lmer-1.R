@@ -140,9 +140,10 @@ options(oldOpts)
 (sf1 <- summary(fit.1)) # --> now looks as for fit.1
 
 stopifnot(all.equal(fixef(fit.1), c("(Intercept)" = 1.571312129)),
-	  all.equal(unname(ranef(fit.1, drop=TRUE)[["group.id"]]),
+	  all.equal(unname(ranef(fit.1, drop=TRUE)[["group.id"]]), structure(
 		   c(1.8046888, -1.8097665, 1.6146451, 1.5408268, -0.1331995,
                      -3.3306655, -1.8259277, -0.8735145, -0.3591311,  3.3720441),
+                   postVar = rep.int(0.311091076, 10)),
 		    tolerance = 1e-5)
 	  )
 
@@ -325,6 +326,3 @@ m5 <- lmer(zbmi ~ (1|DA) , data = fakedat,
 m6 <- update(m5, data=na.omit(fakedat))
 stopifnot(VarCorr(m5)[["DA"]] == 0,
 	  VarCorr(m6)[["DA"]] == 0)
-
-
-

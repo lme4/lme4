@@ -3,11 +3,11 @@ library("lme4")
 context("residuals")
 test_that("lmer", {
     fm1 <- lmer(Reaction ~ Days + (Days|Subject),sleepstudy)
-    ## fm2 <- lmer(Reaction ~ Days + (Days|Subject),sleepstudy,
-    ## control=lmerControl(calc.derivs=FALSE))
-    ## all.equal(resid(fm1),resid(fm2))
-    expect_equal(range(resid(fm1)), c(-101.1789,132.5466), tolerance=1e-6)
-    expect_equal(range(resid(fm1, scaled=TRUE)), c(-3.953567,5.179260), tolerance=1e-6)
+    fm2 <- lmer(Reaction ~ Days + (Days|Subject),sleepstudy,
+                control=lmerControl(calc.derivs=FALSE))
+    expect_equal(resid(fm1), resid(fm2))
+    expect_equal(range(resid(fm1)),              c(-101.17996, 132.54664), tolerance=1e-6)
+    expect_equal(range(resid(fm1, scaled=TRUE)), c(-3.9536067, 5.1792598), tolerance=1e-6)
     expect_equal(resid(fm1,"response"),resid(fm1))
     expect_equal(resid(fm1,"response"),resid(fm1,type="working"))
     expect_equal(resid(fm1,"deviance"),resid(fm1,type="pearson"))
@@ -41,7 +41,7 @@ test_that("glmer", {
     expect_equal(range(resid(gm1.old, "working")),  c(-1.241733,5.410587),tolerance=1e-5)
     expect_equal(range(resid(gm1, "working")),    c(-1.24173431447365, 5.41064465283686))
     expect_equal(resid(gm1),resid(gm1,scaled=TRUE))  ## since sigma==1
-    
+
     expect_error(resid(gm1,"partial"),
                  "partial residuals are not implemented yet")
 
