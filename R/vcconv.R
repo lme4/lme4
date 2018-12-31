@@ -143,7 +143,7 @@ cov2sdcor  <- function(V) {
 ## attempt to compute Cholesky, allow for positive semi-definite cases
 ##  (hackish)
 safe_chol <- function(m) {
-    if (all(m==0)) return(m)
+    if (any(is.na(m)) || all(m==0)) return(m)
     if (nrow(m)==1) return(sqrt(m))
     if (.isDiagonal.sq.matrix(m)) return(diag(sqrt(diag(m))))
 
