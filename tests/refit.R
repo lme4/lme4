@@ -165,9 +165,10 @@ gmGrouse <- glmer(formGrouse, family = "poisson", data = grouseticks)
 set.seed(105)
 simTICKS <- simulate(gmGrouse)[[1]]
 newdata <- transform(grouseticks, TICKS = simTICKS)
-gmGrouseUpdate <- update(gmGrouse, data = newdata)
+gmGrouseUpdate <-  update(gmGrouse, data = newdata)
 gmGrouseRefit  <-  refit(gmGrouse, newresp = simTICKS)
 
+## compute and print tolerances
 all.equal(bet.U <- fixef(gmGrouseUpdate),
           bet.R <- fixef(gmGrouseRefit), tolerance = 0)
 all.equal(th.U <- getME(gmGrouseUpdate, "theta"),
@@ -175,15 +176,6 @@ all.equal(th.U <- getME(gmGrouseUpdate, "theta"),
 all.equal(dev.U <- deviance(gmGrouseUpdate),
           dev.R <- deviance(gmGrouseRefit),	tolerance = 0)
 stopifnot(
-    all.equal(bet.U, bet.R, tolerance = 4e-5), # saw 1.0e-5
+    all.equal(bet.U, bet.R, tolerance = 6e-5), # saw 1.0e-5
     all.equal( th.U,  th.R, tolerance = 4e-5), # saw 1.2e-5
     all.equal(dev.U, dev.R, tolerance = 2e-5)) # saw 4.6e-6
-all.equal(fixef(gmGrouseUpdate),
-          fixef(gmGrouseRefit),
-          tolerance = 1e-5)
-all.equal(getME(gmGrouseUpdate, "theta"),
-          getME(gmGrouseRefit,  "theta"),
-          tolerance = 1e-5)
-all.equal(deviance(gmGrouseUpdate),
-          deviance(gmGrouseRefit),
-          tolerance = 1e-5)
