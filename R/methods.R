@@ -48,8 +48,8 @@ influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
     for (i in 1:length(Vs)){
         V <- Vs[[i]]
         c.names <- colnames(V)
-        e.names <- outer(c.names, c.names, function(a, b) paste0(a, ".", b))
-        diag(e.names) <- c.names
+        e.names <- outer(c.names, c.names, function(a, b) paste0("C[", a, ",", b, "]"))
+        diag(e.names) <- paste0("v[", c.names, "]")
         v <- V[lower.tri(V, diag=TRUE)]
         names(v) <- paste0(nms[i], sep, e.names[lower.tri(e.names, diag=TRUE)])
         vc <- c(vc, v)
