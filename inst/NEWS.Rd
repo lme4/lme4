@@ -4,11 +4,13 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-19.9000}{
+\section{CHANGES IN VERSION 1.1-20}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
-      \item default value for \code{condVar} (return conditional variances
+      \item default value for \code{condVar} (whether to return conditional variances
       as part of the \code{ranef.merMod} object) is now \code{TRUE}
+      \item changed default optimizer to "nloptwrap" (BOBYQA
+      implementation from the \code{nloptr} package) for \code{lmer} models
     }
   }
   \subsection{BUG FIXES}{
