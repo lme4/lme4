@@ -1277,6 +1277,7 @@ arrange.condVar <- function(object,cv) {
 ##  too much list 
 initialize.parallel <- expression({
     have_mc <- have_snow <- FALSE
+    if (length(parallel)>1) parallel <- match.arg(parallel)
     do_parallel <- (parallel != "no" && ncpus > 1L)
     if (do_parallel) {
         if (parallel == "multicore") have_mc <- .Platform$OS.type != "windows"

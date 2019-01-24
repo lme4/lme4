@@ -202,7 +202,7 @@ stopifnot(all.equal(unname(fixef(r2)) - (1:4)*100,
 ## sparseX version should give same numbers:
 ## (only gives a warning now -- sparseX disregarded)
 r2.  <- lmer(y ~ 0+lagoon + (1|habitat), data = dat,
-             sparseX = TRUE, verbose = TRUE)
+             sparseX = TRUE)
 
 ## the summary() components we do want to compare 'dense X' vs 'sparse X':
 nmsSumm <- c("methTitle", "devcomp", "logLik", "ngrps", "coefficients",

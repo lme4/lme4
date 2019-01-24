@@ -1,11 +1,13 @@
 
-R version 3.5.2 Patched (2018-12-23 r75891) -- "Eggshell Igloo"
-Copyright (C) 2018 The R Foundation for Statistical Computing
+R Under development (unstable) (2019-01-08 r75959) -- "Unsuffered Consequences"
+Copyright (C) 2019 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -150,7 +152,7 @@ convergence code 0; 1 optimizer warnings; 0 lme4 warnings
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.3 0.009 0.31 
+Time elapsed:  0.41 0.044 0.53 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -196,7 +198,7 @@ Warning messages:
 > options(oldOpts)  ## restore digits
 > 
 > showProc.time() #
-Time elapsed:  0.083 0 0.083 
+Time elapsed:  0.12 0.02 0.158 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -326,7 +328,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.229 0.013 0.243 
+Time elapsed:  0.368 0.036 0.494 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -369,25 +371,7 @@ singular fit
 > ## sparseX version should give same numbers:
 > ## (only gives a warning now -- sparseX disregarded)
 > r2.  <- lmer(y ~ 0+lagoon + (1|habitat), data = dat,
-+              sparseX = TRUE, verbose = TRUE)
-iteration: 1
-	f(x) = 805.555549
-iteration: 2
-	f(x) = 823.440780
-iteration: 3
-	f(x) = 761.688086
-iteration: 4
-	f(x) = 709.744716
-iteration: 5
-	f(x) = 727.808636
-iteration: 6
-	f(x) = 709.947736
-iteration: 7
-	f(x) = 709.746669
-iteration: 8
-	f(x) = 709.744736
-iteration: 9
-	f(x) = 709.744716
++              sparseX = TRUE)
 singular fit
 Warning messages:
 1: sparseX = TRUE has no effect at present 
@@ -468,7 +452,7 @@ convergence code 0; 1 optimizer warnings; 0 lme4 warnings
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.143 0.017 0.161 
+Time elapsed:  0.196 0.028 0.278 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -489,7 +473,7 @@ singular fit
 +                    "error")))
 > 
 > showProc.time() #
-Time elapsed:  0.101 0.017 0.119 
+Time elapsed:  0.164 0.008 0.179 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -563,4 +547,4 @@ singular fit
 > 
 > proc.time()
    user  system elapsed 
-  1.766   0.178   1.941 
+  2.768   0.296   3.548 

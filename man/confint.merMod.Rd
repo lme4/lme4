@@ -90,7 +90,7 @@ fm1W <- confint(fm1, method="Wald")# very fast, but ....
 fm1W
 (fm2 <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy))
 (CI2 <- confint(fm2, maxpts = 8)) # method = "profile"; 8: to be much faster
-\dontshow{ stopifnot(all.equal(tol = 1e-6, signif(unname(CI2), 7),
+\dontshow{ stopifnot(all.equal(tolerance = 2e-6, signif(unname(CI2), 7),
                array(c(15.25847, 3.964157, 22.88062, 237.5732,  7.33431,
                        37.78184, 8.768238, 28.78768, 265.2383, 13.60057),
                      dim = c(5L, 2L))))

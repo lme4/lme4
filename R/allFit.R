@@ -75,6 +75,8 @@ allFit <- function(m, meth.tab = NULL,
         return(meth.tab)
     }
 
+    parallel <- match.arg(parallel)
+    
     do_parallel <- have_mc <- have_snow <- NULL
     eval(initialize.parallel)
 
