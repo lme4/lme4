@@ -44,7 +44,8 @@ lmerControl(optimizer = "nloptwrap",% was "Nelder_Mead" till Dec.2013,
     ## optimizer args
     optCtrl = list())
 
-glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
+glmerControl(optimizer = "nloptwrap" % c("bobyqa", "Nelder_Mead") until
+				     % Jan 2019
     restart_edge = FALSE,
     boundary.tol = 1e-5,
     calc.derivs=TRUE,

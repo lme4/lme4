@@ -140,7 +140,7 @@ lmerControl <-
 }
 
 glmerControl <-
-    function(optimizer=c("bobyqa","Nelder_Mead"),
+    function(optimizer="nloptwrap", ## was c("bobyqa","Nelder_Mead"),
              restart_edge=FALSE,
              boundary.tol=1e-5,
              calc.derivs=TRUE,
