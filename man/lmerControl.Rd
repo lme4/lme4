@@ -26,6 +26,7 @@ lmerControl(optimizer = "nloptwrap",% was "Nelder_Mead" till Dec.2013,
     calc.derivs=TRUE,
     use.last.params=FALSE,
     sparseX = FALSE,
+    standardize.X = FALSE,
     ## input checking options
     check.nobs.vs.rankZ = "ignore",
     check.nobs.vs.nlev = "stop",
@@ -42,7 +43,9 @@ lmerControl(optimizer = "nloptwrap",% was "Nelder_Mead" till Dec.2013,
     check.conv.singular = .makeCC(action = "message",  tol = 1e-4),
     check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
     ## optimizer args
-    optCtrl = list())
+    optCtrl = list(),
+    mod.type="lmer"
+)
 
 glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     restart_edge = FALSE,
@@ -50,9 +53,7 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     calc.derivs=TRUE,
     use.last.params=FALSE,
     sparseX = FALSE,
-    tolPwrss=1e-7,
-    compDev=TRUE,
-    nAGQ0initStep=TRUE,
+    standardize.X = FALSE,
     ## input checking options
     check.nobs.vs.rankZ = "ignore",
     check.nobs.vs.nlev = "stop",
@@ -69,7 +70,13 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     check.conv.singular = .makeCC(action = "message",  tol = 1e-4),
     check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
     ## optimizer args
-    optCtrl = list())
+    optCtrl = list(),
+    mod.type="glmer",
+    tolPwrss=1e-7,
+    compDev=TRUE,
+    nAGQ0initStep=TRUE,
+    check.response.not.const="stop"
+ )
 
 nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
              optCtrl = list())
