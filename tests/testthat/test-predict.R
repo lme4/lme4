@@ -225,7 +225,7 @@ test_that("only look for columns that exist in re.form", {
                      h=factor(rep(1:5,n/5)),
                      y=rnorm(n))
     m1 <- lmer(y~1 + f + (1|h/f) + (poly(x,2)|g), data=dd, control=lmerControl(calc.derivs=FALSE))
-    expect_equal(unname(predict(m1,re.form= ~1 | h/f,       newdata=dd[1,])), 0.14786, tolerance=5e-5)
+    expect_equal(unname(predict(m1,re.form= ~1 | h/f,       newdata=dd[1,])), 0.14786, tolerance=1e-4)
     expect_equal(unname(predict(m1,re.form= ~poly(x,2) | g, newdata=dd[1,])), 0.1533, tolerance=.0005)
     ## *last* RE not included (off-by-one error)
     m1B <- lmer(y~1 + f + (1|g) + (1|h), data=dd, control=lmerControl(calc.derivs=FALSE))
