@@ -55,6 +55,10 @@ library(lme4)
 fm1 <- lmer(Reaction~Days+(Days|Subject),sleepstudy)
 ## BOBYQA (default)
 fm1_nloptr <- update(fm1,control=lmerControl(optimizer="nloptwrap"))
+## tighten tolerances
+fm1C_nloptr <- update(fm1,control=lmerControl(optimizer="nloptwrap",
+                                optCtrl=list(xtol_abs=1e-8,ftol_abs=1e-8)))
+logLik(fm1C_nloptr)-logLik(fm1_nloptr)
 ## Nelder-Mead
 fm1_nloptr_NM <- update(fm1,control=lmerControl(optimizer="nloptwrap",
                             optCtrl=list(algorithm="NLOPT_LN_NELDERMEAD")))
