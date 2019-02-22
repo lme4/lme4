@@ -98,15 +98,13 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
       verbose
       do_parallel
       length.t0 <- length(t0)
+      f1 <- factory(function(i) FUN(refit(x,ss[[i]])), errval = rep(NA, length.t0))
       function(i) {
-        ret <- tryCatch(FUN(refit(x,ss[[i]])), error=function(e)e)
-        if(verbose) { cat(sprintf("%5d :",i)); str(ret) }
-        if (!do_parallel && .progress!="none") { setpbfun(pb,i/nsim) }
-        if (inherits(ret, "error"))
-            structure(rep(NA, length.t0), "fail.msgs" = ret$message)
-        else
-            ret
-    }})
+          ret <- f1(i)
+          if (verbose) { cat(sprintf("%5d :",i)); str(ret) }
+          if (!do_parallel && .progress!="none") { setpbfun(pb,i/nsim) }
+          ret
+      }})
 
     simvec <- seq_len(nsim)
     res <- if (do_parallel) {
@@ -129,24 +127,27 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
 
     t.star <- do.call(cbind,res)
     rownames(t.star) <- names(t0)
-    if ((numFail <- sum(bad.runs <- apply(is.na(t.star),2,all)))>0) {
+    msgs <- list()
+    for (mtype in paste0("factory-",c("message","warning","error"))) {
+        msgs[[mtype]] <- trimws(unlist(lapply(res, attr, mtype)))
+        msgs[[mtype]] <- table(msgs[[mtype]])
+    }
+    if ((numFail <- sum(msgs[["factory-error"]])) > 0) {
         warning("some bootstrap runs failed (",numFail,"/",nsim,")")
-        fail.msgs <- vapply(res[bad.runs],FUN=attr,FUN.VALUE=character(1),
-                            "fail.msgs")
-    } else fail.msgs <- NULL
-    ## boot() ends with the equivalent of
-    ## structure(list(t0 = t0, t = t.star, R = R, data = data, seed = seed,
-    ##                statistic = statistic, sim = sim, call = call,
-    ##                ran.gen = ran.gen, mle = mle),
-    ##           class = "boot")
+    }
+    fail.msgs <- if (numFail==0) NULL else msgs[["factory-error"]]
+
+    ## mimic ending of boot() construction
     s <- structure(list(t0 = t0, t = t(t.star), R = nsim, data = model.frame(x),
                    seed = .Random.seed,
                    statistic = FUN, sim = "parametric", call = mc,
                    ## these two are dummies
                    ran.gen = "simulate(<lmerMod>, 1, *)", mle = mle),
-              class = "boot")
+                   class = "boot")
+    ## leave these for back-compat
     attr(s,"bootFail") <- numFail
     attr(s,"boot.fail.msgs") <- fail.msgs
+    attr(s,"boot.all.msgs") <- msgs ## store all messages (tabulated)
     attr(s,"boot_type") <- "boot"
     s
 } ## {bootMer}
