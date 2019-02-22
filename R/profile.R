@@ -861,6 +861,7 @@ confint.merMod <- function(object, parm, level = 0.95,
                }
                if (is.null(FUN)) FUN <- bootFun
                bb <- bootMer(object, FUN=FUN, nsim=nsim,...)
+               if (all(is.na(bb$t))) stop("*all* bootstrap runs failed!")
                bci <- lapply(seq_along(bb$t0),
                              boot.out=bb,
                              boot::boot.ci, type=boot.type, conf=level)
