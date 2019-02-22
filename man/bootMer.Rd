@@ -175,28 +175,32 @@ if (requireNamespace("boot")) {
     ## Among-batch variance:
     (bCI.3 <- boot::boot.ci(boo01, index=3, type=c("norm", "basic", "perc"))) # sig01
 
-
-    ## Copy of unexported stats:::format.perc helper function
-    format.perc <- function(probs, digits) {
-        paste(format(100 * probs, trim = TRUE,
-                     scientific = FALSE, digits = digits),
-              "\%")
-    }
-
-    ## Extract all CIs (somewhat awkward)
-    bCI.tab <- function(b,ind=length(b$t0), type="perc", conf=0.95) {
-        btab0 <- t(sapply(as.list(seq(ind)),
+    ## boot.ci() is awkward: make up our own confint()
+    confint.boot <- function(object, parm=seq(length(object$t0)), level=0.95,
+                             type=c("perc","norm","basic")) {
+        type <- match.arg(type)
+        bnms <- c(norm="normal",basic="basic",perc="percent")
+        blens <- c(norm=3,basic=5,perc=5)
+        bnm <- bnms[[type]]
+        blen <- blens[[type]]
+        btab0 <- t(vapply(parm,
                           function(i)
-            boot::boot.ci(b,index=i,conf=conf, type=type)$percent))
-        btab <- btab0[,4:5]
-        rownames(btab) <- names(b$t0)
-        a <- (1 - conf)/2
+            boot::boot.ci(object,index=i,conf=level, type=type)[[bnm]],
+            FUN.VALUE=numeric(blen)))
+        btab <- btab0[,(blen-1):blen]
+        rownames(btab) <- names(object$t0)
+        a <- (1 - level)/2
         a <- c(a, 1 - a)
-        pct <- format.perc(a, 3)
+        ## replicate stats::format.perc
+        pct <- paste(format(100 * a, trim = TRUE,
+                     scientific = FALSE, digits = 3), "\%")
         colnames(btab) <- pct
         return(btab)
     }
-    bCI.tab(boo01)
+    
+    confint(boo01)
+    confint(boo01,type="norm")
+    confint(boo01,type="basic")
 
     ## Graphical examination:
     plot(boo01,index=3)
