@@ -24,8 +24,8 @@
 #' f.as.numeric <- factory(as.numeric)
 #' f.as.numeric(c("a","b",1))
 factory <- function (fun, debug=FALSE, errval="An error occurred in the factory function") {
-  errorOccurred <- FALSE
-  function(...) {
+    function(...) {
+    errorOccurred <- FALSE
     warn <- err <- msg <- NULL
     res <- withCallingHandlers(tryCatch(fun(...),
                                         error = function(e) {
