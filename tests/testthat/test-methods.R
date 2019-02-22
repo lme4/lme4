@@ -166,7 +166,8 @@ test_that("bootMer", {
     expect_equal(ci, ci3, tolerance=0.2)
     sleepstudyNA <- sleepstudy
     sleepstudyNA$Days[1:3] <- NA
-    m4 <- update(fm2, data = sleepstudyNA)
+    m4 <- update(fm2, data = sleepstudyNA,
+                 control=lmerControl(check.conv.grad = .makeCC("warning",tol=4e-3)))
     expect_true(nrow(ci4 <- CI.boot(m4)) == 6) # could check more
     ##
     ## semipar bootstrapping
@@ -206,7 +207,10 @@ test_that("bootMer", {
 
     expect_equal(unname(c_name),unname(c_noname))
 
-    ## example from
+    ## example from @Mark
+    ## bootstrapping etc. on GLMMs with scale
+    ## SO 37466771:
+    ## https://stackoverflow.com/questions/37466771/using-profile-and-boot-method-within-confint-option-with-glmer-model
     df2 <- data.frame(
     prop1 = c(0.46, 0.471, 0.458, 0.764, 0.742, 0.746,
               0.569, 0.45,    0.491,    0.467, 0.464,
@@ -216,12 +220,11 @@ test_that("bootMer", {
               0.48, 0.576, 0.484, 0.473, 0.467, 0.467, 0.722, 0.707, 0.709),
     site = factor(rep(1:8,c(2,1,3,5,3,2,1,3))))
 
-    ## from SO 37466771: bootstrapping etc. on GLMMs with scale
-    ## parameters
     gaussmodel <- glmer(prop2 ~ prop1 + (1|site),
-                   data=df2, family=gaussian(link="logit"))
+                        data=df2, family=gaussian(link="logit"))
+
     set.seed(101)
-    bci <- suppressWarnings(confint(gaussmodel,method="boot",nsim=10))
+    bci <- suppressWarnings(confint(gaussmodel,method="boot",nsim=10,quiet=TRUE))
     expect_equal(bci,
                  structure(c(16.0861072699207, 0.0367496156026639,
                              -4.21025090053564,
