@@ -157,6 +157,8 @@ as.data.frame.bootMer <- function(x,...) {
   as.data.frame(x$t)
 }
 
+## FIXME: collapse convergence warnings (ignore numeric values
+## when tabulating) ?
 print.bootWarnings <- function(x,verbose=FALSE) {
     msgs <- attr(x,"boot.all.msgs")
     if (is.null(msgs) || all(lengths(msgs)==0)) {
@@ -202,7 +204,7 @@ confint.bootMer <- function(object, parm=seq(length(object$t0)), level=0.95,
                       function(i)
         boot::boot.ci(object,index=i,conf=level, type=type)[[bnm]],
         FUN.VALUE=numeric(blen)))
-    btab <- btab0[,(blen-1):blen]
+    btab <- btab0[,(blen-1):blen,drop=FALSE]
     rownames(btab) <- names(object$t0)
     a <- (1 - level)/2
     a <- c(a, 1 - a)
