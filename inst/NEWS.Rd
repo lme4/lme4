@@ -4,6 +4,14 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
+\section{CHANGES IN VERSION 1.1-21}{
+    \subsection{USER-VISIBLE CHANGES}{
+      \itemize{
+	\item \code{bootMer} now stores messages, warnings, and errors
+	more consistently
+      }
+    }
+}
 \section{CHANGES IN VERSION 1.1-20}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{

@@ -175,28 +175,6 @@ if (requireNamespace("boot")) {
     ## Among-batch variance:
     (bCI.3 <- boot::boot.ci(boo01, index=3, type=c("norm", "basic", "perc"))) # sig01
 
-    ## boot.ci() is awkward: make up our own confint()
-    confint.boot <- function(object, parm=seq(length(object$t0)), level=0.95,
-                             type=c("perc","norm","basic")) {
-        type <- match.arg(type)
-        bnms <- c(norm="normal",basic="basic",perc="percent")
-        blens <- c(norm=3,basic=5,perc=5)
-        bnm <- bnms[[type]]
-        blen <- blens[[type]]
-        btab0 <- t(vapply(parm,
-                          function(i)
-            boot::boot.ci(object,index=i,conf=level, type=type)[[bnm]],
-            FUN.VALUE=numeric(blen)))
-        btab <- btab0[,(blen-1):blen]
-        rownames(btab) <- names(object$t0)
-        a <- (1 - level)/2
-        a <- c(a, 1 - a)
-        ## replicate stats::format.perc
-        pct <- paste(format(100 * a, trim = TRUE,
-                     scientific = FALSE, digits = 3), "\%")
-        colnames(btab) <- pct
-        return(btab)
-    }
     
     confint(boo01)
     confint(boo01,type="norm")

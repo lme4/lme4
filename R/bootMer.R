@@ -143,7 +143,7 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
                    statistic = FUN, sim = "parametric", call = mc,
                    ## these two are dummies
                    ran.gen = "simulate(<lmerMod>, 1, *)", mle = mle),
-                   class = "boot")
+                   class = c("bootMer", "boot"))
     ## leave these for back-compat
     attr(s,"bootFail") <- numFail
     attr(s,"boot.fail.msgs") <- fail.msgs
@@ -153,7 +153,62 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
 } ## {bootMer}
 
 ##' @S3method as.data.frame boot
-as.data.frame.boot <- function(x,...) {
+as.data.frame.bootMer <- function(x,...) {
   as.data.frame(x$t)
 }
 
+print.bootWarnings <- function(x,verbose=FALSE) {
+    msgs <- attr(x,"boot.all.msgs")
+    if (is.null(msgs) || all(lengths(msgs)==0)) {
+        return(invisible(NULL))
+    }
+    wstr <- "\n"
+    for (i in c("message","warning","error")) {
+        f <- paste0("factory-",i)
+        m <- sort(msgs[[f]])
+        if (length(m)>0) {
+            if (!verbose) {
+                wstr <- c(wstr,
+                          paste0(sum(m)," ",i,"(s): ",names(m)[1]))
+                if (length(m)>1) {
+                    wstr <- c(wstr," (and others)")
+                }
+                wstr <- c(wstr,"\n")
+            } else {
+                wstr <- paste0(i,"(s):\n")
+                wstr <- c(wstr,capture.output(cat(cbind("  ",m,names(m)),sep="\n")))
+                wstr <- c(wstr,"\n")
+            }     
+        }            
+    }
+    message(wstr)
+    return(invisible(NULL))
+}
+    
+print.bootMer <- function(x,...) {
+    NextMethod(x,...)
+    print.bootWarnings(x,verbose=FALSE)
+    return(invisible(x))
+}
+
+confint.bootMer <- function(object, parm=seq(length(object$t0)), level=0.95,
+                             type=c("perc","norm","basic"), ...) {
+    type <- match.arg(type)
+    bnms <- c(norm="normal",basic="basic",perc="percent")
+    blens <- c(norm=3,basic=5,perc=5)
+    bnm <- bnms[[type]]
+    blen <- blens[[type]]
+    btab0 <- t(vapply(parm,
+                      function(i)
+        boot::boot.ci(object,index=i,conf=level, type=type)[[bnm]],
+        FUN.VALUE=numeric(blen)))
+    btab <- btab0[,(blen-1):blen]
+    rownames(btab) <- names(object$t0)
+    a <- (1 - level)/2
+    a <- c(a, 1 - a)
+    ## replicate stats::format.perc
+    pct <- paste(format(100 * a, trim = TRUE,
+                        scientific = FALSE, digits = 3), "%")
+    colnames(btab) <- pct
+    return(btab)
+}
