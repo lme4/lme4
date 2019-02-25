@@ -150,7 +150,7 @@ test_that("bootMer", {
     corvals <- ci[grep("^cor_",rownames(ci)),]
     expect_true(all(abs(corvals) <= 1))
     ## test bootMer with GLMM, multiple RE
-    expect_message(ci1 <- CI.boot(gm2, nsim=5), "singular fit")
+    expect_message(ci1 <- CI.boot(gm2, nsim=5), "singular")
     ci2 <- CI.boot(gm2, nsim=5, parm=3:6)
     ci2B <- CI.boot(gm2, nsim=5, parm="beta_")
     ## previously tested with nsim=5 vs nsim=3
