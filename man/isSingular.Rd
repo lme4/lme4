@@ -6,7 +6,8 @@
 }
 \description{
   Evaluates whether a fitted mixed model is singular, i.e.
-  whether variances of one or more linear combinations of effects
+  the parameters are on the boundary of the feasible
+  parameter space: variances of one or more linear combinations of effects
   are (close to) zero.
 }
 \usage{
