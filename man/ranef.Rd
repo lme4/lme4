@@ -126,7 +126,7 @@ fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy)
 fm3 <- lmer(diameter ~ (1|plate) + (1|sample), Penicillin)
 ranef(fm1)
-str(rr1 <- ranef(fm1,condVar = TRUE))
+str(rr1 <- ranef(fm1))
 dotplot(rr1)  ## default
 ## specify free scales in order to make Day effects more visible
 dotplot(rr1,scales = list(x = list(relation = 'free')))[["Subject"]]
