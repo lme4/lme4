@@ -3,6 +3,11 @@
 library(lme4)
 do.plot <- FALSE
 
+## use old (<=3.5.2) sample() algorithm if necessary
+if ("sample.kind" %in% names(formals(RNGkind))) {
+    suppressWarnings(RNGkind("Mersenne-Twister", "Inversion", "Rounding"))
+}
+
 fm1 <- lmer(Reaction~Days+(1|Subject),sleepstudy)
 set.seed(101)
 pp <- predict(fm1)

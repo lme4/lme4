@@ -1,7 +1,11 @@
-
 library("testthat")
 library("lme4")
 library("lattice")
+
+## use old (<=3.5.2) sample() algorithm if necessary
+if ("sample.kind" %in% names(formals(RNGkind))) {
+    suppressWarnings(RNGkind("Mersenne-Twister", "Inversion", "Rounding"))
+}
 
 do.plots <- TRUE
 

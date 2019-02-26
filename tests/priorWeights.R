@@ -1,3 +1,9 @@
+## use old (<=3.5.2) sample() algorithm if necessary
+if ("sample.kind" %in% names(formals(RNGkind))) {
+    suppressWarnings(RNGkind("Mersenne-Twister", "Inversion", "Rounding"))
+}
+
+
 compFunc <- function(lmeMod, lmerMod, tol = 1e-2){
     lmeVarCorr <- nlme:::VarCorr(lmeMod)[,"StdDev"]
     lmeCoef <- summary(lmeMod)$tTable[,-c(3,5)]

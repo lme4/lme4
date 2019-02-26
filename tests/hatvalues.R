@@ -6,9 +6,9 @@ bruteForceHat <- function(object) {
         W <- Diagonal(x = weights(object))
         I <- Diagonal(q)
         A.21 <- t(X) %*% W %*% Z %*% Lambda
-        cp <- rBind(cBind(Lambdat %*% Zt %*% W %*% Z %*% Lambda + I, t(A.21)),
-                    cBind(A.21, t(X) %*% W %*% X))
-        mm <- cBind(Z %*% Lambda, X)
+        cp <- rbind(cbind(Lambdat %*% Zt %*% W %*% Z %*% Lambda + I, t(A.21)),
+                    cbind(A.21, t(X) %*% W %*% X))
+        mm <- cbind(Z %*% Lambda, X)
         ## a bit efficient: both cp and mm are typically quite sparse
         ## mm %*% solve(as.matrix(cp)) %*% t(mm)
         mm %*% solve(cp, t(mm), sparse=FALSE)

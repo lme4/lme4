@@ -1,6 +1,11 @@
 require(lme4)
 source(system.file("test-tools-1.R", package = "Matrix"))# identical3() etc
 
+## use old (<=3.5.2) sample() algorithm if necessary
+if ("sample.kind" %in% names(formals(RNGkind))) {
+    suppressWarnings(RNGkind("Mersenne-Twister", "Inversion", "Rounding"))
+}
+
 ## Check that quasi families throw an error
 assertError(lmer(cbind(incidence, size - incidence) ~ period + (1|herd),
 		 data = cbpp, family = quasibinomial))
