@@ -19,7 +19,8 @@
       \item default value for \code{condVar} (whether to return conditional variances
       as part of the \code{ranef.merMod} object) is now \code{TRUE}
       \item changed default optimizer to "nloptwrap" (BOBYQA
-      implementation from the \code{nloptr} package) for \code{lmer} models
+      implementation from the \code{nloptr} package) for \code{lmer}
+    models. To revert to the old default, use \code{control=lmerControl(optimizer="bobyqa")}
     }
   }
   \subsection{BUG FIXES}{
