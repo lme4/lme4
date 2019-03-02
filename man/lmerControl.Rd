@@ -101,9 +101,9 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     \pkg{optimx} package; to use the \pkg{optimx} optimizers (including
     \code{L-BFGS-B} from base \code{\link{optim}} and
     \code{\link{nlminb}}), pass the \code{method} argument to
-    \code{optim} in the \code{optCtrl} argument (you may also
+    \code{optim} in the \code{optCtrl} argument (you may
     need to load the \code{optimx} package manually using
-    \code{\link{library}(optimx)} or \code{\link{require}(optimx)}).
+    \code{\link{library}(optimx)}).
 
     For \code{glmer}, if \code{length(optimizer)==2}, the first element
     will be used for the preliminary (random effects parameters only)
@@ -216,9 +216,11 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     specify the maximum number of function evaluations they
     will try before giving up - in contrast to
     \code{\link{optim}} and \code{optimx}-wrapped optimizers,
-    which use \code{maxit}.}
+    which use \code{maxit}. (Also see \code{\link{convergence}}
+    for details of stopping tolerances for different optimizers.)}
   \item{action}{character - generic choices for the severity level
     of any test. "ignore": skip the test. "warning": warn if test fails.
+    "message": print a message if test fails.
     "stop": throw an error if test fails.}
   \item{tol}{numeric - tolerance for check }
   \item{relTol}{numeric - tolerance for checking relative variation}
