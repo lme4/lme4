@@ -118,8 +118,8 @@
 fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 
 ## 1. decrease stopping tolerances
+strict_tol <- lmerControl(optCtrl=list(xtol_abs=1e-8, ftol_abs=1e-8))
 if (all(fm1@optinfo$optimizer=="nloptwrap")) {
-    strict_tol <- lmerControl(optCtrl=list(xtol_abs=1e-8, ftol_abs=1e-8))
     fm1.tol <- update(fm1, control=strict_tol)
 }
 
@@ -150,7 +150,8 @@ fm1.restart <- update(fm1, start=pars)
 set.seed(101)
 pars_x <- runif(length(pars),pars/1.01,pars*1.01)
 fm1.restart2 <- update(fm1, start=pars_x,
-                       control=ctrl)
+                       control=strict_tol)
+
 ## 5. try all available optimizers
 
   fm1.all <- allFit(fm1)
