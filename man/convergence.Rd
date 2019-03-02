@@ -25,9 +25,9 @@
     it the gold standard; if all optimizers converge to values that
     are practically equivalent, then we would consider the convergence
     warnings to be false positives.
-  } % end description
-
-  \section{Convergence controls}{
+  } % end itemize
+}  % end description
+\section{Convergence controls}{
     \itemize{
       \item the controls for the \code{nloptwrap} optimizer (the default
   for \code{lmer}) are
@@ -112,7 +112,8 @@
     \eqn{10^{5}}{1e5}); (2) the magnitude of the scaled
     gradient increases with sample size, so that warnings will occur
     even for apparently well-behaved fits with large data sets.
-  }
+  } % itemize
+} % convergence controls
 \examples{
 fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 
@@ -160,6 +161,6 @@ fm1.restart2 <- update(fm1, start=pars_x,
   ss$ theta               ## Cholesky factors
   ss$ which.OK            ## which fits worked
 
-}
+} % examples
 
 \seealso{\code{\link{lmerControl}}, \code{\link{isSingular}}}
