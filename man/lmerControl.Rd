@@ -222,8 +222,11 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     of any test. "ignore": skip the test. "warning": warn if test fails.
     "message": print a message if test fails.
     "stop": throw an error if test fails.}
-  \item{tol}{numeric - tolerance for check }
-  \item{relTol}{numeric - tolerance for checking relative variation}
+  \item{tol}{(numeric) tolerance for checking the gradient, scaled
+    relative to the curvature (i.e., testing the gradient on a scale
+    defined by its Wald standard deviation)}
+  \item{relTol}{(numeric) tolerance for the gradient, scaled
+    relative to the magnitude of the estimated coefficient}
   \item{\dots}{other elements to include in check specification}
 }
 \value{
