@@ -54,7 +54,9 @@ environment(nloptwrap)$defaultControl
 library(lme4)
 ## BOBYQA (default): note "nloptwrap" is now the default optimizer
 ## for lmer
-fm1 <- update(fm1,control=lmerControl(optimizer="nloptwrap"))
+fm1 <- lmer(Reaction~Days+(Days|Subject),
+            sleepstudy,
+            control=lmerControl(optimizer="nloptwrap"))
 ## tighten tolerances
 fm1B <- update(fm1,control=lmerControl(optimizer="nloptwrap",
                             optCtrl=list(xtol_abs=1e-8,ftol_abs=1e-8)))
