@@ -179,12 +179,16 @@ tt <- suppressWarnings(try(reg <- lmer(y ~ habitat + (1|habitat*lagoon), data = 
 ## suppress warning that uses different quoting conventions on
 ## R-release vs. R-devel
 
+## ignore singular fits as well as hess/grad problems
+## (Windows gets singular fits, other platforms don't ...)
+ctrl0 <- lmerControl(
+    check.conv.singular="ignore",
+    check.conv.hess="ignore",
+    check.conv.grad="ignore")
 r1  <- lmer(y ~ 0+habitat + (1|habitat:lagoon), data = dat,
-            control=lmerControl(check.conv.hess="ignore",
-                                check.conv.grad="ignore")) # ok, but senseless
+            control=ctrl0) # ok, but senseless
 r1b <- lmer(y ~ 0+habitat + (1|habitat), data = dat,
-            control=lmerControl(check.conv.hess="ignore",
-                                check.conv.grad="ignore")) # same model, clearly unidentifiable
+            control=ctrl0) # same model, clearly unidentifiable
 ## "TODO" :  summary(r1)  should ideally warn the user
 stopifnot(all.equal(fixef(r1), fixef(r1b), tolerance= 1e-15),
           all.equal(ranef(r1), ranef(r1b), tolerance= 1e-15, check.attributes=FALSE))
