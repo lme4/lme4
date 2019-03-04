@@ -5,7 +5,7 @@
 \description{
   \code{[g]lmer} fits may produce convergence warnings;
   these do \strong{not} necessarily mean the fit is incorrect (see
-  \dQuote{Details} below). The following steps are recommended
+  \dQuote{Theoretical details} below). The following steps are recommended
   assessing and resolving convergence warnings
   (also see examples below):
 
@@ -32,31 +32,38 @@
       \item the controls for the \code{nloptwrap} optimizer (the default
   for \code{lmer}) are
       \describe{
-	\item{ftol_abs}{(default 1e-6) stop on small change of function value}
-	\item{ftol_rel}{(default 0) stop on small relative change of function value}
+	\item{ftol_abs}{(default 1e-6) stop on small change in deviance}
+	\item{ftol_rel}{(default 0) stop on small relative change in deviance}
 	\item{xtol_abs}{(default 1e-6) stop on small change of parameter values}
 	\item{xtol_rel}{(default 0) stop on small relative change of
-  parameter values}
+	  parameter values}
+	\item{maxeval}{(default 1000) maximum number of function evaluations}
       }
+      Changing \code{ftol_abs} and \code{xtol_abs} to stricter values
+      (e.g. 1e-8) is a good first step for resolving convergence
+      problems, at the cost of slowing down model fits.
       \item the controls for \code{minqa::bobyqa} (default for
       \code{glmer} first-stage optimization) are
       \describe{
 	\item{rhobeg}{(default 2e-3) initial radius of the trust region}
 	\item{rhoend}{(default 2e-7) final radius of the trust region}
+	\item{maxfun}{(default 10000) maximum number of function evaluations}
       }
       \code{rhoend}, which describes the scale of parameter uncertainty
       on convergence, is approximately analogous to \code{xtol_abs}.
       \item the controls for \code{Nelder_Mead} (default for
       \code{glmer} second-stage optimization) are
       \describe{
-        \item{FtolAbs}{(default 1e-5) stop on small change of function value}
-	\item{FtolRel}{(default 1e-15) stop on small relative change of function value}
-        \item{XtolRel}{(default 1e-7) stop on small change of parameter values}
+        \item{FtolAbs}{(default 1e-5) stop on small change in deviance}
+	\item{FtolRel}{(default 1e-15) stop on small relative change in deviance}
+        \item{XtolRel}{(default 1e-7) stop on small change of parameter
+	  values}
+	\item{maxfun}{(default 10000) maximum number of function evaluations}
      } % Nelder_Mead controls
    } % list of optimizers
  } % convergence controls
  
-\details{\pkg{lme4} uses general-purpose nonlinear optimizers
+\section{Theoretical details}{\pkg{lme4} uses general-purpose nonlinear optimizers
   (e.g. Nelder-Mead or Powell's BOBYQA method) to estimate the
   variance-covariance matrices of the random effects.  Assessing
   the convergence of such algorithms reliably is difficult.  For
