@@ -27,7 +27,8 @@
     warnings to be false positives.
   } % end itemize
 }  % end description
-\section{Convergence controls}{
+\details{
+  \subsection{Convergence controls}{
     \itemize{
       \item the controls for the \code{nloptwrap} optimizer (the default
   for \code{lmer}) are
@@ -63,7 +64,7 @@
    } % list of optimizers
  } % convergence controls
  
-\section{Theoretical details}{\pkg{lme4} uses general-purpose nonlinear optimizers
+\subsection{Theoretical issues}{\pkg{lme4} uses general-purpose nonlinear optimizers
   (e.g. Nelder-Mead or Powell's BOBYQA method) to estimate the
   variance-covariance matrices of the random effects.  Assessing
   the convergence of such algorithms reliably is difficult.  For
@@ -120,7 +121,8 @@
     gradient increases with sample size, so that warnings will occur
     even for apparently well-behaved fits with large data sets.
   } % itemize
-} % convergence controls
+} % theoretical issues
+} % details
 \examples{
 fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 
