@@ -1036,9 +1036,9 @@ condVar <- function(object, scaled=TRUE) {
   #s2*crossprod(Lamt, V) %*% Lamt
 
   LL <- solve(L, Lamt, system = "A")
-  ## From ?Matrix::solve, The default, ‘"A"’, is to solve Ax = b for x
-  ##   where ‘A’ is sparse, positive-definite matrix that was
-  ##   factored to produce ‘a’.
+  ## From ?Matrix::solve, The default, '"A"', is to solve Ax = b for x
+  ##   where 'A' is sparse, positive-definite matrix that was
+  ##   factored to produce 'a'.
 
   cc <- crossprod(Lamt, LL)
   if (scaled) cc <- sigma(object)^2*cc
