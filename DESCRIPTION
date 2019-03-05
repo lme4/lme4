@@ -33,6 +33,7 @@ Imports: graphics, grid, splines, utils, parallel, MASS, lattice, boot,
     nlme (>= 3.1-123), minqa (>= 1.1.15), nloptr (>= 1.0.4)
 Suggests:
     knitr,
+    rmarkdown,
     PKPDmodels,
     MEMSS,
     testthat (>= 0.8.1),
