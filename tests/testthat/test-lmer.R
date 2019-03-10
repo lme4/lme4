@@ -1,5 +1,10 @@
 stopifnot(require("testthat"), require("lme4"))
 
+## use old (<=3.5.2) sample() algorithm if necessary
+if ("sample.kind" %in% names(formals(RNGkind))) {
+    suppressWarnings(RNGkind("Mersenne-Twister", "Inversion", "Rounding"))
+}
+
 context("fitting lmer models")
 ## is "Nelder_Mead" default optimizer? -- no longer
 (isNM <- formals(lmerControl)$optimizer == "Nelder_Mead")

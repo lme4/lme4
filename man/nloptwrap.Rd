@@ -52,9 +52,20 @@ or the parameter values (\code{ftol_rel}, \code{ftol_abs},
 \examples{
 environment(nloptwrap)$defaultControl
 library(lme4)
-fm1 <- lmer(Reaction~Days+(Days|Subject),sleepstudy)
-## BOBYQA (default)
-fm1_nloptr <- update(fm1,control=lmerControl(optimizer="nloptwrap"))
+## BOBYQA (default): note "nloptwrap" is now the default optimizer
+## for lmer
+fm1 <- lmer(Reaction~Days+(Days|Subject),
+            sleepstudy,
+            control=lmerControl(optimizer="nloptwrap"))
+## tighten tolerances
+fm1B <- update(fm1,control=lmerControl(optimizer="nloptwrap",
+                            optCtrl=list(xtol_abs=1e-8,ftol_abs=1e-8)))
+## run for longer (no effect in this case)
+fm1C <- update(fm1,control=lmerControl(optimizer="nloptwrap",
+                                optCtrl=list(maxeval=10000)))
+
+logLik(fm1B)-logLik(fm1)  ## small difference in log likelihood
+logLik(fm1C)-logLik(fm1)  ## no difference in LL
 ## Nelder-Mead
 fm1_nloptr_NM <- update(fm1,control=lmerControl(optimizer="nloptwrap",
                             optCtrl=list(algorithm="NLOPT_LN_NELDERMEAD")))

@@ -98,15 +98,13 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
       verbose
       do_parallel
       length.t0 <- length(t0)
+      f1 <- factory(function(i) FUN(refit(x,ss[[i]])), errval = rep(NA, length.t0))
       function(i) {
-        ret <- tryCatch(FUN(refit(x,ss[[i]])), error=function(e)e)
-        if(verbose) { cat(sprintf("%5d :",i)); str(ret) }
-        if (!do_parallel && .progress!="none") { setpbfun(pb,i/nsim) }
-        if (inherits(ret, "error"))
-            structure(rep(NA, length.t0), "fail.msgs" = ret$message)
-        else
-            ret
-    }})
+          ret <- f1(i)
+          if (verbose) { cat(sprintf("%5d :",i)); str(ret) }
+          if (!do_parallel && .progress!="none") { setpbfun(pb,i/nsim) }
+          ret
+      }})
 
     simvec <- seq_len(nsim)
     res <- if (do_parallel) {
@@ -129,30 +127,90 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
 
     t.star <- do.call(cbind,res)
     rownames(t.star) <- names(t0)
-    if ((numFail <- sum(bad.runs <- apply(is.na(t.star),2,all)))>0) {
+    msgs <- list()
+    for (mtype in paste0("factory-",c("message","warning","error"))) {
+        msgs[[mtype]] <- trimws(unlist(lapply(res, attr, mtype)))
+        msgs[[mtype]] <- table(msgs[[mtype]])
+    }
+    if ((numFail <- sum(msgs[["factory-error"]])) > 0) {
         warning("some bootstrap runs failed (",numFail,"/",nsim,")")
-        fail.msgs <- vapply(res[bad.runs],FUN=attr,FUN.VALUE=character(1),
-                            "fail.msgs")
-    } else fail.msgs <- NULL
-    ## boot() ends with the equivalent of
-    ## structure(list(t0 = t0, t = t.star, R = R, data = data, seed = seed,
-    ##                statistic = statistic, sim = sim, call = call,
-    ##                ran.gen = ran.gen, mle = mle),
-    ##           class = "boot")
+    }
+    fail.msgs <- if (numFail==0) NULL else msgs[["factory-error"]]
+
+    ## mimic ending of boot() construction
     s <- structure(list(t0 = t0, t = t(t.star), R = nsim, data = model.frame(x),
                    seed = .Random.seed,
                    statistic = FUN, sim = "parametric", call = mc,
                    ## these two are dummies
                    ran.gen = "simulate(<lmerMod>, 1, *)", mle = mle),
-              class = "boot")
+                   class = c("bootMer", "boot"))
+    ## leave these for back-compat
     attr(s,"bootFail") <- numFail
     attr(s,"boot.fail.msgs") <- fail.msgs
+    attr(s,"boot.all.msgs") <- msgs ## store all messages (tabulated)
     attr(s,"boot_type") <- "boot"
     s
 } ## {bootMer}
 
 ##' @S3method as.data.frame boot
-as.data.frame.boot <- function(x,...) {
+as.data.frame.bootMer <- function(x,...) {
   as.data.frame(x$t)
 }
 
+## FIXME: collapse convergence warnings (ignore numeric values
+## when tabulating) ?
+print.bootWarnings <- function(x,verbose=FALSE) {
+    msgs <- attr(x,"boot.all.msgs")
+    if (is.null(msgs) || all(lengths(msgs)==0)) {
+        return(invisible(NULL))
+    }
+    wstr <- "\n"
+    for (i in c("message","warning","error")) {
+        f <- paste0("factory-",i)
+        m <- sort(msgs[[f]])
+        if (length(m)>0) {
+            if (!verbose) {
+                wstr <- c(wstr,
+                          paste0(sum(m)," ",i,"(s): ",names(m)[1]))
+                if (length(m)>1) {
+                    wstr <- c(wstr," (and others)")
+                }
+                wstr <- c(wstr,"\n")
+            } else {
+                wstr <- paste0(i,"(s):\n")
+                wstr <- c(wstr,capture.output(cat(cbind("  ",m,names(m)),sep="\n")))
+                wstr <- c(wstr,"\n")
+            }     
+        }            
+    }
+    message(wstr)
+    return(invisible(NULL))
+}
+    
+print.bootMer <- function(x,...) {
+    NextMethod(x,...)
+    print.bootWarnings(x,verbose=FALSE)
+    return(invisible(x))
+}
+
+confint.bootMer <- function(object, parm=seq(length(object$t0)), level=0.95,
+                             type=c("perc","norm","basic"), ...) {
+    type <- match.arg(type)
+    bnms <- c(norm="normal",basic="basic",perc="percent")
+    blens <- c(norm=3,basic=5,perc=5)
+    bnm <- bnms[[type]]
+    blen <- blens[[type]]
+    btab0 <- t(vapply(parm,
+                      function(i)
+        boot::boot.ci(object,index=i,conf=level, type=type)[[bnm]],
+        FUN.VALUE=numeric(blen)))
+    btab <- btab0[,(blen-1):blen,drop=FALSE]
+    rownames(btab) <- names(object$t0)
+    a <- (1 - level)/2
+    a <- c(a, 1 - a)
+    ## replicate stats::format.perc
+    pct <- paste(format(100 * a, trim = TRUE,
+                        scientific = FALSE, digits = 3), "%")
+    colnames(btab) <- pct
+    return(btab)
+}

@@ -861,16 +861,9 @@ confint.merMod <- function(object, parm, level = 0.95,
                }
                if (is.null(FUN)) FUN <- bootFun
                bb <- bootMer(object, FUN=FUN, nsim=nsim,...)
-               bci <- lapply(seq_along(bb$t0),
-                             boot.out=bb,
-                             boot::boot.ci, type=boot.type, conf=level)
-               cpos <- grep(boot.type, names(bci[[1]]))
-               ## get _last_ two columns
-               ccol <- ncol(bci[[1]][[cpos]])+(-1:0)
-               citab <- t(sapply(bci,function(x) x[[cpos]][ccol]))
-               a <- (1 - level)/2
-               a <- c(a, 1 - a)
-               dimnames(citab) <- list(names(bb[["t0"]]), format.perc(a, 3))
+               if (all(is.na(bb$t))) stop("*all* bootstrap runs failed!")
+               print.bootWarnings(bb, verbose=FALSE)
+               citab <- confint(bb)
                if (missing(parm)) {
                    ## only happens if we have custom boot method
                    if (is.null(parm <- rownames(citab))) {

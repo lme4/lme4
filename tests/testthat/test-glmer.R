@@ -149,12 +149,12 @@ if(FALSE) { ## Hadley broke this
     expect_message(mod2 <- glmer(y~x+x2+(1|f),data=d,family=binomial,
                                  control=glmerControl(check.conv.hess="ignore",
                                                       check.conv.grad="ignore")),
-                   "singular fit")
+                   "singular")
     expect_equal(unname(fixef(mod2))[1:2],
                  c(-0.10036244,0.03548523), tolerance=1e-4)
     expect_true(unname(fixef(mod2)[3] < -10))
     expect_message(mod3 <- update(mod2, family=binomial(link="probit")),
-                   "singular fit")
+                   "singular")
     # singular Hessian warning
     expect_equal(unname(fixef(mod3))[1:2], c(-0.062889, 0.022241), tolerance=1e-4)
     expect_true(fixef(mod3)[3] < -4)

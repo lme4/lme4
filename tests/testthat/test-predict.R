@@ -1,7 +1,11 @@
-
 library("testthat")
 library("lme4")
 library("lattice")
+
+## use old (<=3.5.2) sample() algorithm if necessary
+if ("sample.kind" %in% names(formals(RNGkind))) {
+    suppressWarnings(RNGkind("Mersenne-Twister", "Inversion", "Rounding"))
+}
 
 do.plots <- TRUE
 
@@ -225,8 +229,9 @@ test_that("only look for columns that exist in re.form", {
                      h=factor(rep(1:5,n/5)),
                      y=rnorm(n))
     m1 <- lmer(y~1 + f + (1|h/f) + (poly(x,2)|g), data=dd, control=lmerControl(calc.derivs=FALSE))
-    expect_equal(unname(predict(m1,re.form= ~1 | h/f,       newdata=dd[1,])), 0.14786, tolerance=5e-5)
-    expect_equal(unname(predict(m1,re.form= ~poly(x,2) | g, newdata=dd[1,])), 0.1533, tolerance=.0005)
+    expect_equal(unname(predict(m1,re.form= ~1 | h/f,       newdata=dd[1,])), 0.14786, tolerance=1e-4)
+    expect_equal(unname(predict(m1,re.form= ~poly(x,2) | g, newdata=dd[1,])),
+                 0.1533, tolerance=.001)
     ## *last* RE not included (off-by-one error)
     m1B <- lmer(y~1 + f + (1|g) + (1|h), data=dd, control=lmerControl(calc.derivs=FALSE))
     expect_equal(unname(predict(m1B,re.form=~(1|g),newdata=data.frame(f="1",g="2"))),0.1512895,tolerance=1e-5)

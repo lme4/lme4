@@ -1,11 +1,13 @@
 \name{isSingular}
 \alias{isSingular}
+\alias{boundary}
 \title{
   Test fitted model for (near) singularity
 }
 \description{
   Evaluates whether a fitted mixed model is singular, i.e.
-  whether variances of one or more linear combinations of effects
+  the parameters are on the boundary of the feasible
+  parameter space: variances of one or more linear combinations of effects
   are (close to) zero.
 }
 \usage{
@@ -30,10 +32,10 @@ isSingular(x, tol = 1e-05)
   singularity is relatively easy to detect because it leads to
   random-effect variance estimates of (nearly) zero, or estimates of
   correlations that are (almost) exactly -1 or 1. However, for more
-  complex models (variance-covariance matrices of dimension 3 and
-  greater) singularity can be hard to detect; models can be singular
-  without any of their individual variances or correlations being close
-  to zero.
+  complex models (variance-covariance matrices of dimension >=3)
+  singularity can be hard to detect; models can often be singular
+  without any of their individual variances being close to zero
+  or correlations being close to +/-1.
 
   This function performs a simple test to determine whether any of the
   random effects covariance matrices of a fitted model are singular.
@@ -68,13 +70,16 @@ isSingular(x, tol = 1e-05)
     (Bates et al 2015, Matuschek et al 2017)
     \item \dQuote{keep it maximal}, i.e. fit the most complex
     model consistent with the experimental design, removing only
-    terms required to allow a non-singular fit (Barr et al. 2013)
-    \item use some form of \emph{regularization} that forces
-    the model fit away from singularity (Chung et al 2013, \pkg{blme}
-    package)
+    terms required to allow a non-singular fit (Barr et al. 2013),
+    or removing further terms based on p-values or AIC
+    \item use a partially Bayesian method
+    that produces maximum \emph{a posteriori} (MAP)
+    estimates using \emph{regularizing} priors to force
+    the estimated random-effects variance-covariance matrices
+    away from singularity (Chung et al 2013, \pkg{blme} package)
     \item use a fully Bayesian method that both regularizes the
     model via informative priors and gives estimates
-    and credible intervals for all parameters that averages
+    and credible intervals for all parameters that average
     over the uncertainty in the random effects parameters
     (Gelman and Hill 2006, McElreath 2015;
     \pkg{MCMCglmm}, \pkg{rstanarm} and \pkg{brms} packages)

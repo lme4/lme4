@@ -150,7 +150,7 @@ cooks.distance.influence.merMod <- function(model, ...) {
 }
 
 ## from ?lm.influence:
-##  wt.res: a vector of _weighted_ (or for class ‘glm’ rather _deviance_)
+##  wt.res: a vector of _weighted_ (or for class 'glm' rather _deviance_)
 ##          residuals.
 ##
 ## residuals.lm gives r*sqrt(object$weights) (if non-NULL weights)

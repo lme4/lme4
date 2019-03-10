@@ -27,7 +27,7 @@ importFrom("stats",
            runif, sd, setNames, simulate, symnum, terms, terms.formula,
            update, update.formula, var, vcov, weights)
 
-importFrom("utils", flush.console, packageVersion, sessionInfo, stack, str)
+importFrom("utils", flush.console, packageVersion, sessionInfo, stack, str, capture.output)
 if(getRversion() >= "3.5.0") {
     importFrom("utils", warnErrList)
 } else {
@@ -49,6 +49,7 @@ importFrom("lattice",
            splom, strip.custom, strip.default, trellis.par.get,
            xyplot)
 importFrom("MASS", negative.binomial, theta.ml)
+importFrom("boot", boot.ci)
 
 ## generics we provide methods for and re-export:
 importFrom("nlme", fixef,ranef, VarCorr, getGroups)
@@ -165,13 +166,14 @@ exportMethods(show)
 
 ##------ Our S3 Methods -------------------------
 S3method(anova,merMod)
-S3method(as.data.frame,boot)
+S3method(as.data.frame,bootMer)
 S3method(as.data.frame,thpr)
 S3method(as.data.frame,ranef.mer)
 S3method(as.data.frame,VarCorr.merMod)
 S3method(as.function,merMod)
 S3method(coef,lmList4)
 S3method(coef,merMod)
+S3method(confint,bootMer)
 S3method(confint,lmList4)
 S3method(confint,merMod)# but don't hide:
 export(confint.merMod)
@@ -218,6 +220,7 @@ S3method(plot,merMod)
 S3method(plot,ranef.mer)
 S3method(predict,merMod)
 S3method(print,allFit)
+S3method(print,bootMer)
 S3method(print,merMod)
 S3method(print,ranef.mer)
 S3method(print,summary.merMod)

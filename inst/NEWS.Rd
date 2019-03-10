@@ -4,13 +4,23 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-20}{
+\section{CHANGES IN VERSION 1.1-21}{
+    \subsection{USER-VISIBLE CHANGES}{
+      \itemize{
+	\item \code{bootMer} now traps and stores messages, warnings, and errors
+	\item \code{bootMer} returns an object of class \code{c("bootMer","boot")}; new \code{print} and \code{confint} methods for class \code{bootMer}
+	\item small changes to wording of singular-fit messages
+      }
+    }
+}
+\section{CHANGES IN VERSION 1.1-20 (2019-02-04)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item default value for \code{condVar} (whether to return conditional variances
       as part of the \code{ranef.merMod} object) is now \code{TRUE}
       \item changed default optimizer to "nloptwrap" (BOBYQA
-      implementation from the \code{nloptr} package) for \code{lmer} models
+      implementation from the \code{nloptr} package) for \code{lmer}
+    models. To revert to the old default, use \code{control=lmerControl(optimizer="bobyqa")}
     }
   }
   \subsection{BUG FIXES}{
@@ -21,7 +31,7 @@
   }
 }
 
-\section{CHANGES IN VERSION 1.1-19}{
+\section{CHANGES IN VERSION 1.1-19 (2018-11-10)}{
   \subsection{NEW FEATURES}{
     \itemize{
       \item influence measure code from \code{car} rolled in (see

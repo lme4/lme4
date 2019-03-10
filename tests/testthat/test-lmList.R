@@ -1,6 +1,11 @@
 library(lme4)
 library(testthat)
 
+## use old (<=3.5.2) sample() algorithm if necessary
+if ("sample.kind" %in% names(formals(RNGkind))) {
+    suppressWarnings(RNGkind("Mersenne-Twister", "Inversion", "Rounding"))
+}
+
 context("lmList")
 test_that("basic lmList", {
     set.seed(17)
@@ -85,14 +90,27 @@ test_that("cbpp", {
     expect_identical(which(is.na(cf4)),
                      sort(as.integer(c(8+15*(0:3), 47))))
 
-    if(FALSE) {## FIXME: but I (BMB) think this is actually an nlme bug ...
-        summary(fm4)
+    expect_warning(fm4B <- lme4::lmList(incidence ~ period | herd,
+                                        data=cbpp),
+                   "Fitting failed")
+    
+    
 
+if(FALSE) {
+        ## FIXME: this is actually an nlme bug ...
+        ## https://bugs.r-project.org/bugzilla/show_bug.cgi?id=16542
+        try(summary(fm4))
+        ## Error in `[<-`(`*tmp*`, use, use, ii, value = lst[[ii]]) : 
+        ##   subscript out of bounds
         library(nlme)
         data("cbpp",package="lme4")
         fm6 <- nlme::lmList(incidence ~ period | herd, data=cbpp)
         try(coef(fm6))  ## coef does *not* work here
         try(summary(fm6))
+
+        ## this is a slightly odd example because the residual df from
+        ##  these fits are in fact zero ...  so pooled.SD fails, as it should
+
     }
 })
 
@@ -176,3 +194,4 @@ test_that("subset", {
     expect_equal(c(coef(cat.list.lme4)),
                  c(coef(cat.list.nlme)),tolerance=1e-5)
 })
+

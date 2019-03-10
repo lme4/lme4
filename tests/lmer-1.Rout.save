@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2019-01-08 r75959) -- "Unsuffered Consequences"
+R Under development (unstable) (2019-03-04 r76196) -- "Unsuffered Consequences"
 Copyright (C) 2019 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
@@ -133,7 +133,7 @@ fm1  6 1764 1783   -876     1752  0.06      1        0.8
 [1] 1778
 > 
 > (fm3 <- lmer(Yield ~ 1|Batch, Dyestuff2))
-singular fit
+boundary (singular) fit: see ?isSingular
 Linear mixed model fit by REML ['lmerMod']
 Formula: Yield ~ 1 | Batch
    Data: Dyestuff2
@@ -152,7 +152,7 @@ convergence code 0; 1 optimizer warnings; 0 lme4 warnings
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.41 0.044 0.53 
+Time elapsed:  0.44 0.032 0.53 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -198,7 +198,7 @@ Warning messages:
 > options(oldOpts)  ## restore digits
 > 
 > showProc.time() #
-Time elapsed:  0.12 0.02 0.158 
+Time elapsed:  0.124 0.008 0.149 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -328,7 +328,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.368 0.036 0.494 
+Time elapsed:  0.332 0.024 0.388 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -346,21 +346,25 @@ Error : Invalid grouping factor specification, habitat * lagoon
 > ## suppress warning that uses different quoting conventions on
 > ## R-release vs. R-devel
 > 
+> ## ignore singular fits as well as hess/grad problems
+> ## (Windows gets singular fits, other platforms don't ...)
+> ctrl0 <- lmerControl(
++     check.conv.singular="ignore",
++     check.conv.hess="ignore",
++     check.conv.grad="ignore")
 > r1  <- lmer(y ~ 0+habitat + (1|habitat:lagoon), data = dat,
-+             control=lmerControl(check.conv.hess="ignore",
-+                                 check.conv.grad="ignore")) # ok, but senseless
++             control=ctrl0) # ok, but senseless
 > r1b <- lmer(y ~ 0+habitat + (1|habitat), data = dat,
-+             control=lmerControl(check.conv.hess="ignore",
-+                                 check.conv.grad="ignore")) # same model, clearly unidentifiable
++             control=ctrl0) # same model, clearly unidentifiable
 > ## "TODO" :  summary(r1)  should ideally warn the user
 > stopifnot(all.equal(fixef(r1), fixef(r1b), tolerance= 1e-15),
 +           all.equal(ranef(r1), ranef(r1b), tolerance= 1e-15, check.attributes=FALSE))
 > 
 > ## Use a more sensible model:
 > r2.0 <- lmer(y ~ 0+lagoon + (1|habitat:lagoon), data = dat) # ok
-singular fit
+boundary (singular) fit: see ?isSingular
 > r2   <- lmer(y ~ 0+lagoon + (1|habitat), data = dat) # ok, and more clear
-singular fit
+boundary (singular) fit: see ?isSingular
 > stopifnot(all.equal(fixef(r2), fixef(r2.0), tolerance= 1e-15),
 +           all.equal(ranef(r2), ranef(r2.0), tolerance= 1e-15, check.attributes=FALSE))
 > V2 <- vcov(r2)
@@ -372,7 +376,7 @@ singular fit
 > ## (only gives a warning now -- sparseX disregarded)
 > r2.  <- lmer(y ~ 0+lagoon + (1|habitat), data = dat,
 +              sparseX = TRUE)
-singular fit
+boundary (singular) fit: see ?isSingular
 Warning messages:
 1: sparseX = TRUE has no effect at present 
 2: extra argument(s) 'sparseX' disregarded 
@@ -452,7 +456,7 @@ convergence code 0; 1 optimizer warnings; 0 lme4 warnings
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.196 0.028 0.278 
+Time elapsed:  0.2 0.024 0.234 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -464,16 +468,16 @@ Time elapsed:  0.196 0.028 0.278
 > m0 <- suppressWarnings(lmer(y ~ (x1 + x2)|ff, data = D))
 > m1 <- suppressWarnings(lmer(y ~ x1 + x2|ff  , data = D))
 > m2 <- suppressWarnings(lmer(y ~ x1 + (x2|ff), data = D))
-singular fit
+boundary (singular) fit: see ?isSingular
 > m3 <- suppressWarnings(lmer(y ~ (x2|ff) + x1, data = D))
-singular fit
+boundary (singular) fit: see ?isSingular
 > suppressWarnings(stopifnot(all.equal(ranef(m0), ranef(m1), tolerance = 1e-5),
 +           all.equal(ranef(m2), ranef(m3), tolerance = 1e-5),
 +           inherits(tryCatch(lmer(y ~ x2|ff + x1, data = D), error = function(e)e),
 +                    "error")))
 > 
 > showProc.time() #
-Time elapsed:  0.164 0.008 0.179 
+Time elapsed:  0.16 0.004 0.168 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -539,12 +543,12 @@ Fixed Effects:
 > 
 > m5 <- lmer(zbmi ~ (1|DA) , data = fakedat,
 + 	   control=lmerControl(check.nobs.vs.rankZ="ignore"))
-singular fit
+boundary (singular) fit: see ?isSingular
 > m6 <- update(m5, data=na.omit(fakedat))
-singular fit
+boundary (singular) fit: see ?isSingular
 > stopifnot(VarCorr(m5)[["DA"]] == 0,
 + 	  VarCorr(m6)[["DA"]] == 0)
 > 
 > proc.time()
    user  system elapsed 
-  2.768   0.296   3.548 
+  2.704   0.196   3.140 
