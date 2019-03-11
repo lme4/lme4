@@ -4,7 +4,14 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-21}{
+\section{CHANGES IN VERSION 1.1-21.9000}{
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item minor changes to argument order in \code{[g]lmerControl}
+    }
+  }
+}
+\section{CHANGES IN VERSION 1.1-21 (2019-03-05)}{
     \subsection{USER-VISIBLE CHANGES}{
       \itemize{
 	\item \code{bootMer} now traps and stores messages, warnings, and errors
