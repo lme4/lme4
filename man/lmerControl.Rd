@@ -36,7 +36,7 @@ lmerControl(optimizer = "nloptwrap",% was "Nelder_Mead" till Dec.2013,
     check.rankX = c("message+drop.cols", "silent.drop.cols", "warn+drop.cols",
                     "stop.deficient", "ignore"),
     check.scaleX = c("warning","stop","silent.rescale",
-                              "message+rescale","warn+rescale","ignore"),
+                     "message+rescale","warn+rescale","ignore"),
     check.formula.LHS = "stop",
     ## convergence checking options
     check.conv.grad     = .makeCC("warning", tol = 2e-3, relTol = NULL),
@@ -62,11 +62,11 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     check.nobs.vs.nRE="stop",
     check.rankX = c("message+drop.cols", "silent.drop.cols", "warn+drop.cols",
                     "stop.deficient", "ignore"),
-    check.scaleX  = "warning",
+    check.scaleX = c("warning","stop","silent.rescale",
+                     "message+rescale","warn+rescale","ignore"),
     check.formula.LHS = "stop",
-    check.response.not.const = "stop",
     ## convergence checking options
-    check.conv.grad     = .makeCC("warning", tol = 1e-3, relTol = NULL),
+    check.conv.grad     = .makeCC("warning", tol = 2e-3, relTol = NULL),
     check.conv.singular = .makeCC(action = "message",  tol = 1e-4),
     check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
     ## optimizer args
@@ -233,7 +233,9 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     relative to the curvature (i.e., testing the gradient on a scale
     defined by its Wald standard deviation)}
   \item{relTol}{(numeric) tolerance for the gradient, scaled
-    relative to the magnitude of the estimated coefficient}
+  relative to the magnitude of the estimated coefficient}
+  \item{mod.type}{model type (for internal use)}
+  \item{standardize.X}{scale columns of X matrix? (not yet implemented)}
   \item{\dots}{other elements to include in check specification}
 }
 \value{
