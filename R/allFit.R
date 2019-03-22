@@ -222,6 +222,6 @@ plot.allFit <- function(x, abbr=16, ...) {
      (ggplot2::ggplot(ff, aes(values, opt, colour=opt))
          + ggplot2::geom_point()
          + ggplot2::facet_wrap(~ind,scale="free")
-         + theme(legend.position="none")
+         + ggplot2::theme(legend.position="none")
      )
 }    
