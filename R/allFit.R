@@ -210,9 +210,18 @@ summary.allFit <- function(object, ...) {
 ##  * fixed effects, random effects: summary of differences?
 
 ## not yet ...
-## plot.allFit <- function(x, ...) {
-##     if (! (require(ggalt) && require(ggplot2))) {
-##         stop("ggalt and ggplot2 packages must be installed to plot allFit objects")
-##     }
-##     ss <- summary(x)
-## }    
+plot.allFit <- function(x, abbr=16, ...) {
+     if (! (require(ggplot2))) {
+         stop("ggplot2 package must be installed to plot allFit objects")
+     }
+     aes <- NULL ## code check
+     ss <- summary(x)
+     ff <- stack(as.data.frame(ss$fixef))
+     ff$opt <- rep(rownames(ss$fixef),length.out=nrow(ff))
+     if (!is.null(abbr)) ff$opt <- abbreviate(ff$opt, minlength=abbr)
+     (ggplot2::ggplot(ff, aes(values, opt, colour=opt))
+         + ggplot2::geom_point()
+         + ggplot2::facet_wrap(~ind,scale="free")
+         + theme(legend.position="none")
+     )
+}    
