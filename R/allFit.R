@@ -103,7 +103,7 @@ allFit <- function(m, meth.tab = NULL,
             }
             ctrl$optCtrl <- switch(optimizer[i],
                                    optimx    = list(method   = method[i]),
-                                   nloptWrap = list(algorithm= method[i]),
+                                   nloptwrap = list(algorithm= method[i]),
                                    list(maxfun=maxfun))
             ctrl <- do.call(if(isGLMM(m)) glmerControl else lmerControl, ctrl)
             tt <- system.time(rr <- tryCatch(update(m, control = ctrl),
