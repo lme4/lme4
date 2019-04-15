@@ -20,7 +20,7 @@
 }
 \usage{
 lmerControl(optimizer = "nloptwrap",% was "Nelder_Mead" till Dec.2013,
-				    % then "bobyqa" till  Sep/Oct 2018
+				    % then "bobyqa" till Oct 2018; CRAN till 1.1-20 (2019-02-04)
     restart_edge = TRUE,
     boundary.tol = 1e-5,
     calc.derivs=TRUE,
@@ -84,11 +84,13 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
 .makeCC(action, tol, relTol, \dots)
 }
 \arguments{
-  \item{optimizer}{character - name of optimizing
-    function(s).  A character vector or list of functions: length 1 for
+  \item{optimizer}{character - name of optimizing function(s).  A
+    \code{\link{character}} vector or list of functions: length 1 for
     \code{lmer} or \code{glmer}, possibly length 2 for \code{glmer}).
-    The built-in optimizers are \code{\link{Nelder_Mead}} and
-    \code{\link[minqa]{bobyqa}} (from the \pkg{minqa} package). Any
+    Built-in optimizers are \code{"\link{Nelder_Mead}"},
+    \code{"\link[minqa]{bobyqa}"} (from the \CRANpkg{minqa} package),
+    \code{"\link{nlminwrap}"} (using base \R's \code{\link{nlminb}}) and the
+    default for \code{lmerControl()}, \code{"\link{nloptwrap}"}.  Any
     minimizing function that allows box constraints can be used provided
     that it
     \describe{
@@ -105,11 +107,11 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     }
     Special provisions are made for \code{\link{bobyqa}},
     \code{\link{Nelder_Mead}}, and optimizers wrapped in the
-    \pkg{optimx} package; to use the \pkg{optimx} optimizers (including
+    \CRANpkg{optimx} package; to use the \pkg{optimx} optimizers (including
     \code{L-BFGS-B} from base \code{\link{optim}} and
     \code{\link{nlminb}}), pass the \code{method} argument to
     \code{optim} in the \code{optCtrl} argument (you may
-    need to load the \code{optimx} package manually using
+    need to load the \pkg{optimx} package manually using
     \code{\link{library}(optimx)}).
 
     For \code{glmer}, if \code{length(optimizer)==2}, the first element
@@ -268,15 +270,18 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
   will suppress warnings that the number of observations is less than
   the rank of the random effects model matrix \code{Z}.
 }
-\seealso{\link{convergence}}
+\seealso{\link{convergence} and \code{\link{allFit}()} which fits
+  for a couple of optimizers.}
 \examples{
 str(lmerControl())
 str(glmerControl())
-## fit with default "bobyqa" algorithm ...
+## fit with default algorithm [nloptr version of BOBYQA] ...
 fm0 <- lmer(Reaction ~ Days +   ( 1 | Subject), sleepstudy)
 fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
-## or with "Nelder_Mead" (the previous default) ...
-fm1_bobyqa <- update(fm1, control = lmerControl(optimizer="Nelder_Mead"))
+## or with "bobyqa" (default 2013 - 2019-02) ...
+fm1_bobyqa <- update(fm1, control = lmerControl(optimizer="bobyqa"))
+## or with "Nelder_Mead" (the default till 2013) ...
+fm1_NMead <- update(fm1, control = lmerControl(optimizer="Nelder_Mead"))
 ## or with the nlminb function used in older (<1.0) versions of lme4;
 ## this will usually replicate older results
 if (require(optimx)) {
@@ -306,7 +311,9 @@ optimwrap <- function(fn,par,lower,upper,control=list(),
 fm0_brent <- update(fm0,
                     control = lmerControl(optimizer = "optimwrap",
                                           optCtrl = list(method="Brent")))
-## You can also use functions from the nloptr package.
+
+## You can also use functions (in addition to the lmerControl() default "NLOPT_BOBYQA")
+## from the 'nloptr' package, see also  '?nloptwrap' :
 if (require(nloptr)) {
     fm1_nloptr_NM <- update(fm1, control=lmerControl(optimizer="nloptwrap",
                                       optCtrl=list(algorithm="NLOPT_LN_NELDERMEAD")))
