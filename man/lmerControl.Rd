@@ -89,7 +89,7 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     \code{lmer} or \code{glmer}, possibly length 2 for \code{glmer}).
     Built-in optimizers are \code{"\link{Nelder_Mead}"},
     \code{"\link[minqa]{bobyqa}"} (from the \CRANpkg{minqa} package),
-    \code{"\link{nlminwrap}"} (using base \R's \code{\link{nlminb}}) and the
+    \code{"\link{nlminbwrap}"} (using base \R's \code{\link{nlminb}}) and the
     default for \code{lmerControl()}, \code{"\link{nloptwrap}"}.  Any
     minimizing function that allows box constraints can be used provided
     that it
