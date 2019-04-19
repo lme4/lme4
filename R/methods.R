@@ -195,7 +195,9 @@ terms.merMod <- function(x, fixed.only=TRUE, random.only=FALSE, ...) {
 
 ##' @importFrom stats update
 ##' @S3method update merMod
-update.merMod <- function(object, formula., ..., evaluate = TRUE) {
+update.merMod <- function(object, formula., ..., evaluate = TRUE,
+                          eval.order=c("form.env","current","parent.frame")) {
+    ## more documentation to tackle GH #514 ...
     if (is.null(call <- getCall(object)))
         stop("object should contain a 'call' component")
     extras <- match.call(expand.dots = FALSE)$...
@@ -209,16 +211,18 @@ update.merMod <- function(object, formula., ..., evaluate = TRUE) {
             call <- as.call(call)
         }
     }
-    if (evaluate) {
-        ff <- environment(formula(object))
-        pf <- parent.frame()  ## save parent frame in case we need it
-        sf <- sys.frames()[[1]]
-        tryCatch(eval(call, envir=ff),
-                 error=function(e) {
-                     tryCatch(eval(call, envir=sf),
-                              error=function(e) {
-                                  eval(call, pf)
-                              })
-                 })
-    } else call
+    if (!evaluate) return(call)
+    envlist <- list(form.env=environment(formula(object)),
+                    current=sys.frames()[[1]],
+                    parent.frame=parent.frame())
+    ## reorder as specified in arguments
+    envlist <- envlist[eval.order]
+    tryCatch(eval(call, envir=envlist[[1]]),
+                  error=function(e) {
+                      tryCatch(eval(call, envir=envlist[[2]]),
+                               error=function(e) {
+                                   eval(call, envlist[[3]])
+                               })
+                  })
+
 }
