@@ -1277,7 +1277,8 @@ refit.merMod <- function(object,
                          newresp=NULL,
                          ## formula=NULL, weights=NULL,
                          rename.response=FALSE,
-                         maxit = 100L, ...)
+                         maxit = 100L,
+                         devFunOnly=FALSE, ...)
 {
 
     l... <- list(...)
@@ -1421,6 +1422,9 @@ refit.merMod <- function(object,
         } else
             list(pp=pp, resp=rr, u0=pp$u0, verbose=verbose, dpars=seq_len(nth))
     ff <- mkdevfun(list2env(devlist), nAGQ=nAGQ, maxit=maxit, verbose=verbose)
+
+    if (devFunOnly) return(ff)
+    
     ## rho <- environment(ff) == list2env(devlist)
     xst       <- rep.int(0.1, nth)
     x0        <- pp$theta

@@ -11,7 +11,7 @@
 refit(object, newresp, \dots)
 
 \method{refit}{merMod}(object, newresp = NULL, rename.response = FALSE,
-      maxit = 100, \dots)
+      maxit = 100, devFunOnly = FALSE, \dots)
 }
 \arguments{
   \item{object}{a fitted model, usually of class
@@ -26,6 +26,8 @@ refit(object, newresp, \dots)
     the name of \code{newresp}?}
   \item{maxit}{scalar integer, currently only for GLMMs: the maximal
     number of Pwrss update iterations.}
+  \item{devFunOnly}{(logical) return updated deviance function rather
+than re-fitting the model?}
   \item{\dots}{optional additional parameters.  For the \code{merMod}
     method, \code{control}.}
 }
