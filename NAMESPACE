@@ -126,7 +126,7 @@ export(NelderMead)
 export(ngrps)
 export(nlformula)
 export(nlmer)
-## export(nloptwrap, nlminbwrap)# export | hide both
+export(nloptwrap, nlminbwrap)# export both (1st has been there "forever")
 export(nlsResp)
 export(nobars)
 export(optimizeGlmer)
