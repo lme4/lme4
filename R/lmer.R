@@ -1887,8 +1887,8 @@ mkPfun <- function(diag.only = FALSE, old = TRUE, prefix = NULL){
 ##' @param old (logical) give backward-compatible results?
 ##' @param prefix a character vector with two elements giving the prefix
 ##' for diagonal (e.g. "sd") and off-diagonal (e.g. "cor") elements
-tnames <- function(object,diag.only = FALSE,old = TRUE,prefix = NULL) {
-    pfun <- mkPfun(diag.only = diag.only, old = old, prefix = prefix)
+tnames <- function(object, diag.only = FALSE, old = TRUE, prefix = NULL) {
+    pfun <- mkPfun(diag.only=diag.only, old=old, prefix=prefix)
     c(unlist(mapply(pfun, names(object@cnms), object@cnms)))
 }
 
@@ -1896,7 +1896,7 @@ tnames <- function(object,diag.only = FALSE,old = TRUE,prefix = NULL) {
 getME <- function(object, name, ...) UseMethod("getME")
 
 
-##' Extract or Get Generalize Components from a Fitted Mixed Effects Model
+##' Extract or Get Generalized Components from a Fitted Mixed Effects Model
 getME.merMod <- function(object,
                   name = c("X", "Z","Zt", "Ztlist", "mmList",
                   "y", "mu", "u", "b",
@@ -1931,7 +1931,6 @@ getME.merMod <- function(object,
     PR   <- object@pp
     dc   <- object@devcomp
     th   <- object@theta
-    ## cmp  <- dc $ cmp
     cnms <- object@cnms
     dims <- dc $ dims
     Tpfun <- function(cnms) {
@@ -1943,7 +1942,8 @@ getME.merMod <- function(object,
     ## mmList. <- mmList(object)
     if(any(name == c("p_i", "q_i", "m_i")))
         p_i <- vapply(mmList(object), ncol, 1L)
-    ## l_i <- vapply(object@flist, nlevels, 1L)
+    if(any(name == c("l_i", "q_i")))
+        l_i <- vapply(object@flist, nlevels, 1L)
     switch(name,
            "X" = PR$X, ## ok ? - check -- use model.matrix() method instead?
            "Z" = t(PR$Zt),
@@ -1990,9 +1990,9 @@ getME.merMod <- function(object,
                for (i in 1:nt) { # will need modification for more general Lambda
                    nci <- nc[i]
                    tt <- matrix(0., nci, nci)
-                   inds <- lower.tri(tt,diag=TRUE)
+                   inds <- lower.tri(tt, diag=TRUE)
                    nthi <- sum(inds)
-                   tt[lower.tri(tt, diag=TRUE)] <- th[pos + (1L:nthi)]
+                   tt[inds] <- th[pos + seq_len(nthi)]
                    pos <- pos + nthi
                    ans[[i]] <- tt
                }
@@ -2004,17 +2004,16 @@ getME.merMod <- function(object,
            "n_rtrms" = length(cnms),
            ## number of random-effects grouping factors
            "n_rfacs" = length(object@flist),
-           "N" = dims["N"],
-           "n" = dims["n"],
-           "p" = dims["p"],
-           "q" = dims["q"],
+           "N" = dims[["N"]],
+           "n" = dims[["n"]],
+           "p" = dims[["p"]],
+           "q" = dims[["q"]],
            "p_i" = p_i,
-           "l_i" = vapply(object@flist, nlevels, 1L),
-           "q_i" = ## == p_i * l_i
-               p_i*vapply(object@flist, nlevels, 1L),
+           "l_i" = l_i,
+           "q_i" = p_i * l_i,
            "k" = length(cnms),
            "m_i" = choose(p_i + 1, 2),
-           "m" = dc$dims[["nth"]],
+           "m" = dims[["nth"]],
            "cnms" = cnms,
            "devcomp" = dc,
            "offset" = rsp$offset,
@@ -2026,9 +2025,9 @@ getME.merMod <- function(object,
                    if (isGLMM(object)) {
                        stop("getME('devfun') not yet working for GLMMs")## FIXME
                        baseOffset <- rsp$offset
-                       nAGQ <- unname(dc$dims["nAGQ"])
+                       nAGQ <- dims[["nAGQ"]]
                        list(tolPwrss= dc$cmp ["tolPwrss"],
-                            compDev = dc$dims["compDev"],
+                            compDev = dims[["compDev"]],
                             nAGQ = nAGQ,
                             lp0  = rsp$eta - baseOffset,
                             baseOffset  = baseOffset,
