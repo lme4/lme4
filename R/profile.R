@@ -1,17 +1,12 @@
 ## --> ../man/profile-methods.Rd
 
-profnames <- function(object,signames=TRUE,
-                      useSc=isLMM(object),prefix=c("sd","cor")) {
+profnames <- function(object, signames=TRUE,
+                      useSc=isLMM(object), prefix=c("sd","cor")) {
     ntp <- length(getME(object,"theta"))
-    nn <- if (signames) {
-        sprintf(".sig%02d",seq(ntp))
-    } else {
-        tnames(object,old=FALSE,prefix=prefix)
-    }
-    if (useSc) {
-        nn <- c(nn,if (signames) ".sigma" else "sigma")
-    }
-    return(nn)
+    ## return
+    c(if(signames) sprintf(".sig%02d", seq(ntp))
+      else tnames(object, old=FALSE, prefix=prefix),
+      if(useSc) if (signames) ".sigma" else "sigma")
 }
 
 
@@ -75,7 +70,7 @@ profile.merMod <- function(fitted,
                    c("var", "cov")
                },
                stop("internal error, prof.scale=", prof.scale))
-    dd <- devfun2(fitted,useSc,signames=signames,
+    dd <- devfun2(fitted, useSc=useSc, signames=signames,
                   transfuns=transfuns, prefix=prof.prefix, ...)
     ## FIXME: figure out to what do here ...
     if (isGLMM(fitted) && fitted@devcomp$dims[["useSc"]])
@@ -331,9 +326,9 @@ profile.merMod <- function(fitted,
         }
     } else lapply(seqnvp, FUN)
     nn <- names(opt[seqnvp])
-    ans <-    setNames(lapply(L,`[[`,"bres"),nn)
-    bakspl <- setNames(lapply(L,`[[`,"bakspl"),nn)
-    forspl <- setNames(lapply(L,`[[`,"forspl"),nn)
+    ans <-    setNames(lapply(L, `[[`,  "bres"), nn)
+    bakspl <- setNames(lapply(L, `[[`,"bakspl"), nn)
+    forspl <- setNames(lapply(L, `[[`,"forspl"), nn)
 
     ## profile fixed effects separately (for LMMs)
     if (isLMM(fitted)) {
@@ -476,54 +471,55 @@ get.which <- function(which, nvp, nptot, parnames, verbose=FALSE) {
 ## @return a function for evaluating the deviance in the extended
 ##     parameterization.  This is profiled with respect to the
 ##     variance-covariance parameters (fixed-effects done separately).
-devfun2 <- function(fm, useSc,
-                    transfuns = list(from.chol=Cv_to_Sv,
-                                     to.chol=Sv_to_Cv,
-                                     to.sd=identity),
+devfun2 <- function(fm, useSc = if(isLMM(fm)) TRUE else NA,
+                    transfuns = list(from.chol = Cv_to_Sv,
+                                       to.chol = Sv_to_Cv, to.sd = identity),
                     ...)
 {
     ## FIXME: have to distinguish between
     ## 'useSc' (GLMM: report profiled scale parameter) and
     ## 'useSc' (NLMM/LMM: scale theta by sigma)
-    ## GLMMuseSc <- fm@devcomp$dims["useSc"]
+    ## hasSc := GLMMuseSc <- fm@devcomp$dims["useSc"]
     stopifnot(is(fm, "merMod"))
     fm <- refitML(fm)
     basedev <- -2*c(logLik(fm))  ## no longer deviance()
     vlist <- lengths(fm@cnms)
-    sig <- sigma(fm)  ## only if useSc=TRUE?
+    ## "has scale" := isLMM  or  GLMM with scale parameter
+    hasSc <- as.logical(fm@devcomp$dims[["useSc"]])
     stdErr <- unname(coef(summary(fm))[,2])
     pp <- fm@pp$copy()
-    ## opt <- c(pp$theta*sig, sig)
     if (useSc) {
+        sig <- sigma(fm)  ## only if hasSc is TRUE?
+        ## opt <- c(pp$theta*sig, sig)
         opt <- transfuns$from.chol(pp$theta, n=vlist, s=sig)
     } else {
         opt <- transfuns$from.chol(pp$theta, n=vlist)
     }
-    names(opt) <- profnames(fm, ...)
+    names(opt) <- profnames(fm, useSc=useSc, ...)
     opt <- c(opt, fixef(fm))
     resp <- fm@resp$copy()
     np <- length(pp$theta)
     nf <- length(fixef(fm))
-    if (!isGLMM(fm)) np <- np + 1L
-    n <- nrow(pp$V)                   # use V, not X so it works with nlmer
-    if (isLMM(fm)) {
+    if(hasSc) np <- np + 1L # was  if(!isGLMM(fm)) np <- np + 1L
+    n <- nrow(pp$V) # use V, not X so it works with nlmer
+    if (isLMM(fm)) { # ==> hasSc
         ans <- function(pars)
         {
             stopifnot(is.numeric(pars), length(pars) == np)
-            ## Assumption:  we can translate the last parameter back
+            ## Assumption:  we can translate the *last* parameter back
             ##   to sigma (SD) scale ...
             sigma <- transfuns$to.sd(pars[np])
             ## .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pars[-np]/sigma)
             ## convert from sdcor vector back to 'unscaled theta'
-            thpars <- transfuns$to.chol(pars,n=vlist,s=sigma)
+            thpars <- transfuns$to.chol(pars, n=vlist, s=sigma)
             .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)
             sigsq <- sigma^2
             pp$ldL2() - ldW + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
         }
         ldW <- sum(log(environment(ans)$resp$weights))
         assign("ldW", ldW, envir = environment(ans))
-    } else {
-        d0 <- update(fm,devFunOnly=TRUE)
+    } else { # GLMM *and* NLMMs
+        d0 <- update(fm, devFunOnly=TRUE)
         ## from glmer:
         ## rho <- new.env(parent=parent.env(environment()))
         ## rho$pp <- do.call(merPredD$new, c(reTrms[c("Zt","theta","Lambdat","Lind")], n=nrow(X), list(X=X)))
@@ -531,12 +527,10 @@ devfun2 <- function(fm, useSc,
         ans <- function(pars)
         {
             stopifnot(is.numeric(pars), length(pars) == np+nf)
-            ## FIXME: allow useSc (i.e. NLMMs)
-            if (!useSc) {
-                thpars <- transfuns$to.chol(pars[seq(np)],n=vlist)
-            } else {
-                thpars <- transfuns$to.chol(pars[seq(np)],n=vlist,s=pars[np])
-            }
+            thpars <- if(!useSc)
+                          transfuns$to.chol(pars[seq(np)], n=vlist)
+                      else
+                          transfuns$to.chol(pars[seq(np)], n=vlist, s=pars[np])
             fixpars <- pars[-seq(np)]
             d0(c(thpars,fixpars))
         }
@@ -551,7 +545,7 @@ devfun2 <- function(fm, useSc,
 
 ## extract only the y component from a prediction
 predy <- function(sp, vv) {
-    if (inherits(sp,"error")) rep(NA,length(vv))
+    if(inherits(sp,"error")) rep(NA_real_, length(vv))
     else predict(sp, vv)$y
 }
 
@@ -573,17 +567,13 @@ stripExpr <- function(ll, nms) {
     fLevs[sig2Nms] <- lapply(sig2sub, function(i) bquote(   {sigma[.(i)]}^2))
     ## result of using { .. }^2  is easier to understand    ==          ==
     levsExpr <- substitute(strip.custom(factor.levels=foo), list(foo=fLevs))
-    llNms <- names(ll)
     snames <- c("strip", "strip.left")
-    if (all(!(snames %in% llNms))) {
+    if(!any(.in <- snames %in% names(ll))) {
         ll$strip <- levsExpr
     } else {
-        lapply(snames, function(nm) {
-            if (nm %in% llNms) {
-                vv <- ll[[nm]]
-                if (is.logical(vv) && vv) ll[[nm]] <<- levsExpr
-            }
-        })
+        for(nm in snames[.in])
+            if(is.logical(v <- ll[[nm]]) && v)
+                ll[[nm]] <- levsExpr
     }
     ll
 }
@@ -809,8 +799,7 @@ confint.merMod <- function(object, parm, level = 0.95,
     } else {
         ## "use scale" = GLMM with scale parameter *or* LMM ..
         useSc <- as.logical(object@devcomp$dims[["useSc"]])
-        vn <- profnames(object,oldNames,
-                        useSc=useSc)
+        vn <- profnames(object, oldNames, useSc=useSc)
         an <- c(vn,names(fixef(object)))
         parm <- if(missing(parm)) seq_along(an)
                 else
@@ -913,9 +902,9 @@ sacos <- function(x) acos(pmax.int(-0.999, pmin.int(0.999, x)))
 ##' \item{pts}{an array of dimension (length(levels), nseg, 2) containing the points on the contours}
 cont <- function(sij, sji, levels, nseg = 101)
 {
-    ada <- array(0, c(length(levels), 2, 4))
-    ada[, , 1] <- ad(0, sacos(predy(sij,  levels)/levels))
-    ada[, , 2] <- ad(sacos(predy(sji, levels)/levels), 0)
+    ada <- array(0, c(length(levels), 2L, 4L))
+    ada[, , 1] <- ad(0,  sacos(predy(sij,  levels)/levels))
+    ada[, , 2] <- ad(    sacos(predy(sji,  levels)/levels), 0)
     ada[, , 3] <- ad(pi, sacos(predy(sij, -levels)/levels))
     ada[, , 4] <- ad(sacos(predy(sji, -levels)/levels), pi)
     pts <- array(0, c(length(levels), nseg + 1, 2))
@@ -980,12 +969,12 @@ splom.thpr <- function (x, data,
     fr1 <- fr[1, nms]
     ## create a list of lists with the names of the parameters
     traces <- lapply(fr1, function(el) lapply(fr1, function(el1) list()))
+    .par <- NULL  ## =>  no R CMD check warning
     for (j in seq_along(nms)[-1]) {
-        for (i in seq_len(j - 1)) {
-            .par <- NULL  ## suppress R CMD check warning
+        frj <- subset(fr, .par == nms[j])
+        for (i in seq_len(j - 1L)) {
             fri <- subset(fr, .par == nms[i])
             sij <- interpSpline(fri[ , i], fri[ , j])
-            frj <- subset(fr, .par == nms[j])
             sji <- interpSpline(frj[ , j], frj[ , i])
             ll <- cont(sij, sji, levels)
             traces[[j]][[i]] <- list(sij = sij, sji = sji, ll = ll)
@@ -1062,8 +1051,7 @@ splom.thpr <- function (x, data,
                                 gpar(col = varname.col,
                                      cex = varname.cex,
                                      lineheight = varname.lineheight,
-                                     fontface = chooseFace(varname.fontface,
-                                     varname.font),
+                                     fontface = chooseFace(varname.fontface, varname.font),
                                      fontfamily = varname.fontfamily))
         if (draw)
         {
