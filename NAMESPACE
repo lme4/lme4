@@ -126,7 +126,7 @@ export(NelderMead)
 export(ngrps)
 export(nlformula)
 export(nlmer)
-export(nloptwrap)
+## export(nloptwrap, nlminbwrap)# export | hide both
 export(nlsResp)
 export(nobars)
 export(optimizeGlmer)
