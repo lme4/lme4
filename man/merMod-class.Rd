@@ -131,23 +131,25 @@ REMLcrit(object)
   \item{sigm}{the residual standard error; by default \code{\link{sigma}(object)}.}
   \item{digits}{number of significant digits for printing}
   \item{symbolic.cor}{should a symbolic encoding of the fixed-effects correlation
-    matrix be printed? If so, the \code{\link{symnum}} function is used.}
+    matrix be printed?  If so, the \code{\link{symnum}} function is used.}
   \item{signif.stars}{(logical) should significance stars be used?}
   \item{ranef.comp}{character vector of length one or two, indicating
     if random-effects parameters should be reported on the variance and/or
     standard deviation scale.}
-  \item{show.resids}{should the quantiles of the scaled residuals be
-    printed?}
+  \item{show.resids}{should the quantiles of the scaled residuals be printed?}
   \item{formula.}{see \code{\link{update.formula}}.}
   \item{evaluate}{see \code{\link{update}}.}
-  \item{type}{For \code{weights}, type of weights to be returned; either \code{"prior"} for
-    the initially supplied weights or \code{"working"} for the weights
-    at the final iteration of the penalized iteratively reweighted least
-    squares algorithm. For \code{model.matrix}, type of model matrix to
-    return (one of \code{fixed} giving the fixed effects model matrix,
-    \code{random} giving the random effects model matrix, or
-    \code{randomListRaw} giving a list of the raw random effects model
-    matrices associated with each random effects term).}
+  \item{type}{For \describe{
+      \item{\code{weights()}, }{type of weights to be returned; either \code{"prior"} for
+	the initially supplied weights or \code{"working"} for the weights
+	at the final iteration of the penalized iteratively reweighted least
+	squares algorithm (PIRLS).}
+      \item{\code{model.matrix()}, }{type of model matrix to
+	return: one of \code{"fixed"} giving the fixed effects model matrix,
+	\code{"random"} giving the random effects model matrix, or
+	\code{"randomListRaw"} giving a list of the raw random effects model
+	matrices associated with each random effects term.}
+     }}
   \item{\dots}{potentially further arguments passed from other methods.}
 }
 \section{Objects from the Class}{
@@ -204,12 +206,13 @@ The following S3 methods with arguments given above exist (this list is currentl
   distinguish these two possibilities we refer to absolute deviance
   (minus twice the log-likelihood) and relative deviance (relative to a
   saturated model, e.g. Section 2.3.1 in McCullagh and Nelder 1989).
+
   With GLMMs however, there is an additional complication involving the
   distinction between the likelihood and the conditional likelihood.
   The latter is the likelihood obtained by conditioning on the estimates
   of the conditional modes of the spherical random effects coefficients,
   whereas the likelihood itself (i.e. the unconditional likelihood)
-  involves integrating out these coefficients. The following table
+  involves integrating out these coefficients.  The following table
   summarizes how to extract the various types of deviance for a
   \code{glmerMod} object:
 
@@ -222,7 +225,6 @@ The following S3 methods with arguments given above exist (this list is currentl
   This table requires two caveats:
 
   \itemize{
-
     \item If the link function involves a scale parameter
     (e.g. \code{Gamma}) then \code{object@resp$aic() - 2 * getME(object,
     "devcomp")$dims["useSc"]} is required for the absolute-conditional
@@ -230,10 +232,9 @@ The following S3 methods with arguments given above exist (this list is currentl
     \item If adaptive Gauss-Hermite quadrature is used, then
     \code{logLik(object)} is currently only proportional to the
     absolute-unconditional log-likelihood.
-
   }
 
-  For more information about this topic see the \code{misc/logLikGLMM}
+  For more information about this topic see the \code{misc/logLikGLMM}% ../misc/logLikGLMM/
   directory in the package source.
 
   %% We define the conditional likelihood as the density of the response
