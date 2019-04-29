@@ -43,9 +43,9 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
         pb <- do.call(pbfun,PBargs)
     }
 
-    do_parallel <- have_mc <- have_snow <- NULL
+    do_parallel <- have_mc <- have_snow <- NULL # '-Wall', set here:
     eval(initialize.parallel)
-    
+
     if (do_parallel && .progress != "none")
         message("progress bar disabled for parallel operations")
 
@@ -180,13 +180,13 @@ print.bootWarnings <- function(x,verbose=FALSE) {
                 wstr <- paste0(i,"(s):\n")
                 wstr <- c(wstr,capture.output(cat(cbind("  ",m,names(m)),sep="\n")))
                 wstr <- c(wstr,"\n")
-            }     
-        }            
+            }
+        }
     }
     message(wstr)
     return(invisible(NULL))
 }
-    
+
 print.bootMer <- function(x,...) {
     NextMethod(x,...)
     print.bootWarnings(x,verbose=FALSE)
