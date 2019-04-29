@@ -1165,15 +1165,15 @@ nloptwrap <- local({
     defaultControl <- list(algorithm="NLOPT_LN_BOBYQA",
                            xtol_abs=1e-6, ftol_abs=1e-6, maxeval=1e5)
     ##
-    function(par,fn,lower,upper,control=list(),...) {
+    function(par, fn, lower, upper, control=list(),...) {
         for (n in names(defaultControl))
             if (is.null(control[[n]])) control[[n]] <- defaultControl[[n]]
-        res <- nloptr(x0=par, eval_f=fn, lb=lower,ub=upper, opts=control, ...)
-        with(res,list(par=solution,
-                      fval=objective,
-                      feval=iterations,
-                      conv=if (status>0) 0 else status,
-                      message=message))
+        res <- nloptr(x0=par, eval_f=fn, lb=lower, ub=upper, opts=control, ...)
+        with(res, list(par   = solution,
+                       fval  = objective,
+                       feval = iterations,
+                       conv  = if(status > 0) 0 else status,
+                       message = message))
     }
 })
 
