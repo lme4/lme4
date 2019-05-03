@@ -34,8 +34,8 @@ checkCtrlLevels <- function(cstr, val, smallOK=FALSE) {
 }
 
 ## general identifiability checker, used both in checkZdim and checkZrank
-wmsg <- function(n,cmp.val,allow.n,msg1="",msg2="",msg3="") {
-    if (allow.n) {
+wmsg <- function(n, cmp.val, allow.n, msg1="", msg2="", msg3="") {
+    if (allow.n) { ## allow  n == cmp.val
         unident <- n < cmp.val
         cmp <- "<"
         rstr <- ""
@@ -47,7 +47,7 @@ wmsg <- function(n,cmp.val,allow.n,msg1="",msg2="",msg3="") {
     ## %s without spaces intentional (don't want an extra space if the
     ## message component is empty)
     wstr <- sprintf("%s (=%d) %s %s (=%d)%s; the random-effects parameters%s are probably unidentifiable",
-                    msg1, n, cmp,msg2,cmp.val, msg3, rstr)
+                    msg1, n, cmp,msg2, cmp.val,msg3,                    rstr)
     list(unident=unident, wstr=wstr)
 }
 
@@ -84,7 +84,7 @@ checkZdims <- function(Ztlist, n, ctrl, allow.n=FALSE) {
     } else character()
 }
 
-
+##' @importFrom Matrix rankMatrix
 checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
 {
     stopifnot(is.list(ctrl), is.numeric(n), is.numeric(nonSmall))
@@ -94,9 +94,16 @@ checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
         d <- dim(Zt)
         doTr <- d[1L] < d[2L] # Zt is "wide" => qr needs transpose(Zt)
         if(!(grepl("Small",cc) && prod(d) > nonSmall)) {
-            rankZ <- rankMatrix(if(doTr) t(Zt) else Zt, method="qr",
-                                sval = numeric(min(d)))
-            ww <- wmsg(n,rankZ,allow.n,"number of observations","rank(Z)")
+            rankZ <- rankMatrix(if(doTr) t(Zt) else Zt, method="qr")
+            ww <- wmsg(n, rankZ, allow.n, "number of observations", "rank(Z)")
+            if(is.na(rankZ)) {
+                cc <- "stop"
+                ww <-
+                    list(unident = TRUE,
+                         wstr = sub("^.*;",
+                                    "rank(Z) is NA: invalid random effect factors?",
+                                    ww$wstr))
+            }
             if (ww$unident) {
                 switch(cc,
                        "warningSmall" =, "warning" = warning(ww$wstr,call.=FALSE),
@@ -218,6 +225,7 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
 ##' deficient?
 ##' @return The design matrix \code{X} without redundant columns.
 ##' @seealso \code{\link{qr}} and \code{\link{lm}}
+##' @importFrom Matrix rankMatrix
 ##' @author Rune Haubo Bojesen Christensen (drop.coef()); Martin Maechler
 chkRank.drop.cols <- function(X, kind, tol = 1e-7, method = "qr.R") {
     ## Test and match arguments:
@@ -319,7 +327,6 @@ checkResponse <- function(y, ctrl) {
 ##' \item{X}{fixed-effect design matrix}
 ##' \item{reTrms}{list containing information on random effects structure: result of \code{\link{mkReTrms}}}
 ##' \item{REML}{(lFormula only): logical flag: use restricted maximum likelihood? (Copy of argument.)}
-##' @importFrom Matrix rankMatrix
 ##' @export
 lFormula <- function(formula, data=NULL, REML = TRUE,
                      subset, weights, na.action, offset, contrasts = NULL,
