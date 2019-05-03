@@ -2,7 +2,7 @@
 ## FIXME: need to document S3 methods better (can we pull from r-forge version?)
 
 ##' Fit a linear mixed model (LMM)
-lmer <- function(formula, data=NULL, REML = TRUE,
+lmer <- function(formula, data=NULL, REML = TRUE, expand_re = FALSE,
                  control = lmerControl(), start = NULL,
                  verbose = 0L, subset, weights, na.action, offset,
                  contrasts = NULL, devFunOnly=FALSE,
