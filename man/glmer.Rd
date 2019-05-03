@@ -161,8 +161,9 @@ xyplot(incidence/size ~ period|herd, cbpp, type=c('g','p','l'),
 ## using  nAGQ = 9  provides a better evaluation of the deviance
 ## Currently the internal calculations use the sum of deviance residuals,
 ## which is not directly comparable with the nAGQ=0 or nAGQ=1 result.
+## 'verbose = 1' monitors iteratin a bit; (verbose = 2 does more):
 (gm1a <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-               cbpp, binomial, nAGQ = 9))
+               cbpp, binomial, verbose = 1, nAGQ = 9))
 
 ## GLMM with individual-level variability (accounting for overdispersion)
 ## For this data set the model is the same as one allowing for a period:herd

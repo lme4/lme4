@@ -161,7 +161,8 @@ stopifnot(identical(terms(fm1, fixed.only=FALSE),
                     terms(model.frame(fm1))))
 attr(terms(fm1, FALSE), "dataClasses") # fixed.only=FALSE needed for dataCl.
 
-fm1_ML <- update(fm1,REML=FALSE)
+## Maximum Likelihood (ML), and "monitor" iterations via 'verbose':
+fm1_ML <- update(fm1, REML=FALSE, verbose = 1)
 (fm2 <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy))
 anova(fm1, fm2)
 sm2 <- summary(fm2)
