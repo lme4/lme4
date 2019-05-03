@@ -38,9 +38,10 @@ test_that("glmer", {
     set.seed(101)
     d <- data.frame(z=rbinom(200,size=1,prob=0.5),
                     f=factor(sample(1:10,200,replace=TRUE)))
-    expect_warning(glmer(z~ 1|f, d, family=binomial, method="abc"),"Use the nAGQ argument")
-    expect_warning(glmer(z~ 1|f, d, family=binomial, method="Laplace"),"Use the nAGQ argument")
-    expect_warning(glmer(z~ 1|f, d, sparseX=TRUE),"has no effect at present")
+    ## Using 'method=*' defunct in 2019-05 (after 6 years of deprecation)
+    ## expect_warning(glmer(z~ 1|f, d, family=binomial, method="abc"),"Use the nAGQ argument")
+    ## expect_warning(glmer(z~ 1|f, d, family=binomial, method="Laplace"),"Use the nAGQ argument")
+    ##sp expect_warning(glmer(z~ 1|f, d, sparseX=TRUE),"has no effect at present")
     expect_that(gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                              data = cbpp, family = binomial), is_a("glmerMod"))
     expect_that(gm1@resp,                               is_a("glmResp"))
@@ -119,9 +120,9 @@ test_that("glmer", {
 		      data = cbppX, family = binomial, weights=size, control=glmerControl()),
 	      "glmerMod")
     options(warn=0)
-    expect_warning(glmer(prop ~ period + (1 | herd),
-                      data = cbppX, family = binomial, weights=size, junkArg=TRUE),
-                   "extra argument.*disregarded")
+    expect_error(glmer(prop ~ period + (1 | herd),
+                       data = cbppX, family = binomial, weights=size, junkArg=TRUE),
+                 "unused argument")
 if(FALSE) { ## Hadley broke this
     expect_warning(glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                          data = cbpp, family = binomial,
@@ -305,7 +306,7 @@ if(FALSE) { ## Hadley broke this
 
     ## bad start case
     load(system.file("testdata","fakesim.RData",package="lme4"))
-    rfit <- glmer(Inew/S ~ R0-1 + offset(log(I/N)) + (1|R0:trial) 
+    rfit <- glmer(Inew/S ~ R0-1 + offset(log(I/N)) + (1|R0:trial)
         , family=binomial(link=cloglog)
 	, data=dat
 	, weight=S
@@ -337,7 +338,7 @@ if(FALSE) { ## Hadley broke this
     msum <- c(fixef(g1),unlist(c(VarCorr(g1))),c(logLik(g1)))
     expect_equal(msum,
                  structure(c(0.233894052550647, 1.00174364960381,
-                             0.24602991778166, 
+                             0.24602991778166,
                              -156.777303793966),
                            .Names = c("(Intercept)", "x", "f", "")),
                  tolerance=1e-5)

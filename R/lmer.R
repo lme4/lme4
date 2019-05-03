@@ -3,14 +3,17 @@
 
 ##' Fit a linear mixed model (LMM)
 lmer <- function(formula, data=NULL, REML = TRUE,
-                 control = lmerControl(), start = NULL,
-                 verbose = 0L, subset, weights, na.action, offset,
-                 contrasts = NULL, devFunOnly=FALSE,
-                 ...)
+                 control = lmerControl(), start = NULL
+               , verbose = 0L
+               , subset, weights, na.action, offset
+               , contrasts = NULL
+               , devFunOnly=FALSE
+                )
+    ## , ...)
 {
     mc <- mcout <- match.call()
     missCtrl <- missing(control)
-    ## see functions in modular.R for the body ...
+    ## see functions in modular.R for the body ..
     if (!missCtrl && !inherits(control, "lmerControl")) {
         if(!is.list(control)) stop("'control' is not a list; use lmerControl()")
         ## back-compatibility kluge
@@ -18,12 +21,12 @@ lmer <- function(formula, data=NULL, REML = TRUE,
                 immediate.=TRUE)
         control <- do.call(lmerControl, control)
     }
-    if (!is.null(list(...)[["family"]])) {
-       warning("calling lmer with 'family' is deprecated; please use glmer() instead")
-       mc[[1]] <- quote(lme4::glmer)
-       if(missCtrl) mc$control <- glmerControl()
-       return(eval(mc, parent.frame(1L)))
-    }
+    ## if (!is.null(list(...)[["family"]])) {
+    ##    warning("calling lmer with 'family' is deprecated; please use glmer() instead")
+    ##    mc[[1]] <- quote(lme4::glmer)
+    ##    if(missCtrl) mc$control <- glmerControl()
+    ##    return(eval(mc, parent.frame(1L)))
+    ## }
     mc$control <- control ## update for  back-compatibility kluge
 
     ## https://github.com/lme4/lme4/issues/50
@@ -65,10 +68,15 @@ lmer <- function(formula, data=NULL, REML = TRUE,
 
 
 ##' Fit a generalized linear mixed model (GLMM)
-glmer <- function(formula, data=NULL, family = gaussian,
-                  control = glmerControl(), start = NULL, verbose = 0L, nAGQ = 1L,
-                  subset, weights, na.action, offset,
-                  contrasts = NULL, mustart, etastart, devFunOnly = FALSE, ...)
+glmer <- function(formula, data=NULL
+                , family = gaussian
+                , control = glmerControl()
+                , start = NULL
+                , verbose = 0L
+                , nAGQ = 1L
+                , subset, weights, na.action, offset, contrasts = NULL
+                , mustart, etastart
+                , devFunOnly = FALSE)
 {
     if (!inherits(control, "glmerControl")) {
         if(!is.list(control)) stop("'control' is not a list; use glmerControl()")
@@ -162,7 +170,7 @@ glmer <- function(formula, data=NULL, family = gaussian,
         }
         ## if nAGQ0 was skipped
         ## we don't actually need to do anything here, it seems --
-        ## getStart gets called again in optimizeGlmer ...
+        ## getStart gets called again in optimizeGlmer
 
         if (devFunOnly) return(devfun)
         ## reoptimize deviance function over covariance parameters and fixed effects
@@ -194,7 +202,7 @@ glmer <- function(formula, data=NULL, family = gaussian,
 ##' Fit a nonlinear mixed-effects model
 nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, verbose = 0L,
                   nAGQ = 1L, subset, weights, na.action, offset,
-                  contrasts = NULL, devFunOnly = FALSE, ...)
+                  contrasts = NULL, devFunOnly = FALSE)
 {
 
     vals <- nlformula(mc <- match.call())
@@ -399,7 +407,7 @@ RglmerWrkIter <- function(pp, resp, uOnly=FALSE) {
 ##' @param tol numeric tolerance
 ##' @param GQmat matrix of Gauss-Hermite quad info
 ##' @param compDev compute in C++ (as opposed to doing as much as possible in R)
-##' @param grpFac grouping factor (normally found in environment ...)
+##' @param grpFac grouping factor (normally found in environment ..)
 ##' @param verbose verbosity, of course
 glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, maxit = 70L, verbose=0) {
     nAGQ <- nrow(GQmat)
@@ -1380,7 +1388,7 @@ refit.merMod <- function(object,
             }
             if (is.factor(newresp)) {
                 ## FIXME: would be better to do this consistently with
-                ## whatever machinery is used in glm/glm.fit/glmer ... ??
+                ## whatever machinery is used in glm/glm.fit/glmer  ??
                 newresp <- as.numeric(newresp)-1
             }
         }

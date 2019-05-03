@@ -50,7 +50,7 @@
   \item{draw.upper}{(logical) draw upper-triangle (standard dev/cor scale) panels?}
   \item{\dots}{further arguments passed to \code{\link{xyplot}},
     \code{\link{densityplot}}, or \code{\link{splom}} from package
-    \pkg{lattice}, respectively.}
+    \CRANpkg{lattice}, respectively.}
 }
 \seealso{ \code{\link[=profile-methods]{profile}}, notably for an
   example.

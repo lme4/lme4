@@ -9,8 +9,8 @@
 \alias{optimizeLmer}
 \alias{updateGlmerDevfun}
 \usage{
-lFormula(formula, data = NULL, REML = TRUE, subset,
-    weights, na.action, offset, contrasts = NULL,
+lFormula(formula, data = NULL, REML = TRUE,
+    subset, weights, na.action, offset, contrasts = NULL,
     control = lmerControl(), ...)
 
 mkLmerDevfun(fr, X, reTrms, REML = TRUE, start = NULL,
@@ -122,7 +122,7 @@ updateGlmerDevfun(devfun, reTrms, nAGQ = 1L)
     length 1 for \code{lmer} or \code{glmer}, possibly length
     2 for \code{glmer}.  The built-in optimizers are
     \code{"\link{Nelder_Mead}"} and \code{"\link[minqa]{bobyqa}"}
-    (from the \pkg{minqa} package).  Any minimizing function
+    (from the \CRANpkg{minqa} package).  Any minimizing function
     that allows box constraints can be used provided that it
     \enumerate{
       \item{takes input parameters \code{fn} (function to be
@@ -138,7 +138,7 @@ updateGlmerDevfun(devfun, reTrms, nAGQ = 1L)
     }
     Special provisions are made for \code{\link{bobyqa}},
     \code{\link{Nelder_Mead}}, and optimizers wrapped in the
-    \pkg{optimx} package; to use \pkg{optimx} optimizers
+    \CRANpkg{optimx} package; to use \pkg{optimx} optimizers
     (including \code{L-BFGS-B} from base \code{\link{optim}}
     and \code{\link{nlminb}}), pass the \code{method}
     argument to \code{optim} in the \code{control} argument.

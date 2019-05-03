@@ -3,38 +3,37 @@ stopifnot(require(lme4))
 (testLevel <- lme4:::testLevel())
 
 ## "MEMSS" is just 'Suggest' -- must still work, when it's missing:
-if (suppressWarnings(!require(MEMSS,quietly=TRUE)) ||
+if (suppressWarnings(!require(MEMSS, quietly=TRUE)) ||
     (data(ergoStool, package="MEMSS") != "ergoStool")) {
 
     cat("'ergoStool' data from package 'MEMSS' is not available --> skipping test\n")
 } else {
 
 fm1   <-  lmer (effort ~ Type + (1|Subject), data = ergoStool)
-fm1.s  <- lmer (effort ~ Type + (1|Subject), data = ergoStool, sparseX=TRUE)
+##sp no longer supported since ~ 2012-3:
+##sp fm1.s  <- lmer (effort ~ Type + (1|Subject), data = ergoStool, sparseX=TRUE)
 ## was segfaulting with sparseX (a while upto 2010-04-06)
 
 fe1   <- fixef(fm1)
-fe1.s <- fixef(fm1.s)
+##sp fe1.s <- fixef(fm1.s)
 
 print(s1.d <- summary(fm1))
-print(s1.s <- summary(fm1.s))
-stopifnot(
-	  all.equal(fe1, fe1.s, tolerance= 1e-12)
-	  ,
-	  all.equal(se1.d <- coef(s1.d)[,"Std. Error"],
-		    se1.s <- coef(s1.s)[,"Std. Error"])#, tol = 1e-10
-	  ,
-	  all.equal(V.d <- vcov(fm1),
-		    V.s <- vcov(fm1.s))#, tol = 1e-9
-	  ,
-	  all.equal(Matrix::diag(V.d), unname(se1.d)^2, tolerance= 1e-12)
-	  ,
-	  all.equal(unname(se1.d),
-		    if(fm1@optinfo$optimizer == "Nelder_Mead")
-		    c(0.57601196, rep(0.51868399, 3)) else ## "bobyqa"
-		    c(0.57601226, rep(0.51868384, 3)),
-		    tolerance = 1e-6) ## std.err.: no extreme accuracy needed
-          )
+##sp print(s1.s <- summary(fm1.s))
+stopifnot(exprs = {
+    ##sp all.equal(fe1, fe1.s, tolerance= 1e-12)
+    all.equal(unname(se1.d <- coef(s1.d)[,"Std. Error"]),
+              c(0.57601291, rep(0.51868351, 3)))
+    is(V.d <- vcov(fm1), "symmetricMatrix")
+    ##sp all.equal(se1.d, coef(s1.s)[,"Std. Error"])#, tol = 1e-10
+    ##sp all.equal(  V.d, vcov(fm1.s))#, tol = 1e-9
+    all.equal(Matrix::diag(V.d), unname(se1.d)^2, tolerance= 1e-12)
+    all.equal(unname(se1.d),
+              if(fm1@optinfo$optimizer == "Nelder_Mead")
+                  c(0.57601196, rep(0.51868399, 3))
+              else ## "bobyqa"
+                  c(0.57601226, rep(0.51868384, 3)),
+              tolerance = 1e-6) ## std.err.: no extreme accuracy needed
+})
 
 }## if( ergoStool is available from pkg MEMSS )
 

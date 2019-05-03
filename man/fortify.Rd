@@ -16,7 +16,7 @@
 }
 \details{
   \code{fortify} is a function defined in the
-  \pkg{ggplot2} package, q.v. for more details.
+  \CRANpkg{ggplot2} package, q.v. for more details.
   \code{fortify} is \emph{not} defined here,
   and \code{fortify.merMod} is defined as a function
   rather than an S3 method, to avoid (1) inducing

@@ -855,6 +855,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
 ## generic argument checking
 ## 'type': name of calling function ("glmer", "lmer", "nlmer")
 ##
+## NB: called from  lFormula() and glFormula()
 checkArgs <- function(type,...) {
     l... <- list(...)
     if (isTRUE(l...[["sparseX"]])) warning("sparseX = TRUE has no effect at present",call.=FALSE)
@@ -1292,6 +1293,3 @@ isSingular <- function(x, tol=1e-5) {
     theta <- getME(x, "theta")
     any(theta[lwr==0] < tol)
 }
-    
-    
-    

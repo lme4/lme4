@@ -77,7 +77,7 @@ showProc.time() #
 fm.3 <- update(fmX1, . ~ Days + (1|Subject) + (0+Days|Subject))
 stopifnot(all.equal(fm.1, fm.3))
 
-fmX1s <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
+fmX1s <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy )# no longer:, sparseX=TRUE)
 #fmX2s <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
 options(oldOpts)  ## restore digits
 
@@ -205,6 +205,7 @@ stopifnot(all.equal(unname(fixef(r2)) - (1:4)*100,
 
 ## sparseX version should give same numbers:
 ## (only gives a warning now -- sparseX disregarded)
+if(FALSE) { ## no longer
 r2.  <- lmer(y ~ 0+lagoon + (1|habitat), data = dat,
              sparseX = TRUE)
 
@@ -221,7 +222,7 @@ stopifnot(all.equal(sr2[nmsSumm], sr2.[nmsSumm], tolerance= 1e-14)
 #          , all(vcov(r2.)@factors$correlation == diag(4))  # not sure why this fails
           , TRUE)
 r2.
-
+}
 
 ### mcmcsamp() :
 ## From: Andrew Gelman <gelman@stat.columbia.edu>

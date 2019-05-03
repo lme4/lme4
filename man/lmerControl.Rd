@@ -10,9 +10,11 @@
   \itemize{
     \item general control parameters, most importantly \code{optimizer},
     further \code{restart_edge}, etc;
+
     \item model- or data-checking specifications, in short
     \dQuote{checking options}, such as \code{check.nobs.vs.rankZ}, or
     \code{check.rankX} (currently not for \code{nlmerControl});
+
     \item all the parameters to be passed to the optimizer, e.g.,
     maximal number of iterations, passed via the \code{optCtrl} list
     argument.
@@ -23,8 +25,8 @@ lmerControl(optimizer = "nloptwrap",% was "Nelder_Mead" till Dec.2013,
 				    % then "bobyqa" till Oct 2018; CRAN till 1.1-20 (2019-02-04)
     restart_edge = TRUE,
     boundary.tol = 1e-5,
-    calc.derivs=TRUE,
-    use.last.params=FALSE,
+    calc.derivs = TRUE,
+    use.last.params = FALSE,
     sparseX = FALSE,
     standardize.X = FALSE,
     ## input checking options
@@ -32,7 +34,7 @@ lmerControl(optimizer = "nloptwrap",% was "Nelder_Mead" till Dec.2013,
     check.nobs.vs.nlev = "stop",
     check.nlev.gtreq.5 = "ignore",
     check.nlev.gtr.1 = "stop",
-    check.nobs.vs.nRE="stop",
+    check.nobs.vs.nRE= "stop",
     check.rankX = c("message+drop.cols", "silent.drop.cols", "warn+drop.cols",
                     "stop.deficient", "ignore"),
     check.scaleX = c("warning","stop","silent.rescale",
@@ -44,14 +46,14 @@ lmerControl(optimizer = "nloptwrap",% was "Nelder_Mead" till Dec.2013,
     check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
     ## optimizer args
     optCtrl = list(),
-    mod.type="lmer"
+    mod.type = "lmer"
 )
 
 glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     restart_edge = FALSE,
     boundary.tol = 1e-5,
-    calc.derivs=TRUE,
-    use.last.params=FALSE,
+    calc.derivs = TRUE,
+    use.last.params = FALSE,
     sparseX = FALSE,
     standardize.X = FALSE,
     ## input checking options
@@ -59,7 +61,7 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     check.nobs.vs.nlev = "stop",
     check.nlev.gtreq.5 = "ignore",
     check.nlev.gtr.1 = "stop",
-    check.nobs.vs.nRE="stop",
+    check.nobs.vs.nRE= "stop",
     check.rankX = c("message+drop.cols", "silent.drop.cols", "warn+drop.cols",
                     "stop.deficient", "ignore"),
     check.scaleX = c("warning","stop","silent.rescale",
@@ -71,11 +73,11 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
     ## optimizer args
     optCtrl = list(),
-    mod.type="glmer",
-    tolPwrss=1e-7,
-    compDev=TRUE,
-    nAGQ0initStep=TRUE,
-    check.response.not.const="stop"
+    mod.type = "glmer",
+    tolPwrss = 1e-7,
+    compDev = TRUE,
+    nAGQ0initStep = TRUE,
+    check.response.not.const = "stop"
  )
 
 nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
@@ -226,16 +228,26 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     will try before giving up - in contrast to
     \code{\link{optim}} and \code{optimx}-wrapped optimizers,
     which use \code{maxit}. (Also see \code{\link{convergence}}
-    for details of stopping tolerances for different optimizers.)}
+    for details of stopping tolerances for different optimizers.)
+
+    \emph{Note:} All of \code{\link{lmer}()}, \code{\link{glmer}()} and
+    \code{\link{nlmer}()} have an optional integer argument \code{verbose}
+    which you should raise (to a positive value) in order to get diagnostic
+    console output about the optimization progress.
+  }
   \item{action}{character - generic choices for the severity level
-    of any test. "ignore": skip the test. "warning": warn if test fails.
-    "message": print a message if test fails.
-    "stop": throw an error if test fails.}
+    of any test, with possible values \describe{
+      \item{"ignore":}{skip the test.}
+      \item{"warning":}{warn if test fails.}
+      \item{"message":}{print a message if test fails.}
+      \item{"stop":}{throw an error if test fails.}
+    }
+  }
   \item{tol}{(numeric) tolerance for checking the gradient, scaled
     relative to the curvature (i.e., testing the gradient on a scale
     defined by its Wald standard deviation)}
   \item{relTol}{(numeric) tolerance for the gradient, scaled
-  relative to the magnitude of the estimated coefficient}
+    relative to the magnitude of the estimated coefficient}
   \item{mod.type}{model type (for internal use)}
   \item{standardize.X}{scale columns of X matrix? (not yet implemented)}
   \item{\dots}{other elements to include in check specification}

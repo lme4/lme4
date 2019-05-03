@@ -335,11 +335,10 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     control <- control$checkControl ## this is all we really need
     mf <- mc <- match.call()
 
-    ignoreArgs <- c("start","verbose","devFunOnly","control")
-    l... <- list(...)
-    l... <- l...[!names(l...) %in% ignoreArgs]
-    do.call(checkArgs, c(list("lmer"), l...))
-    if (!is.null(list(...)[["family"]])) {
+    dontChk <- c("start", "verbose", "devFunOnly")
+    dots <- list(...)
+    do.call(checkArgs, c(list("lmer"), dots[!names(dots) %in% dontChk]))
+    if (!is.null(dots[["family"]])) {
         ## lmer(...,family=...); warning issued within checkArgs
         mc[[1]] <- quote(lme4::glFormula)
         if (missing(control)) mc[["control"]] <- glmerControl()
@@ -352,7 +351,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
                              checkLHS = control$check.formula.LHS == "stop")
     #mc$formula <- formula <- as.formula(formula,env=denv) ## substitute evaluated call
     formula <- as.formula(formula, env=denv)
-    ## as.formula ONLY sets environment if not already explicitly set ...
+    ## as.formula ONLY sets environment if not already explicitly set.
     ## ?? environment(formula) <- denv
     # get rid of || terms so update() works as expected
     RHSForm(formula) <- expandDoubleVerts(RHSForm(formula))
@@ -367,8 +366,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     fr.form <- subbars(formula) # substitute "|" by "+"
     environment(fr.form) <- environment(formula)
     ## model.frame.default looks for these objects in the environment
-    ## of the *formula* (see 'extras', which is anything passed in ...),
-    ## so they have to be put there ...
+    ## of the *formula* (see 'extras', which is anything passed in '...'),
+    ## so they have to be put there:
     for (i in c("weights", "offset")) {
         if (!eval(bquote(missing(x=.(i)))))
             assign(i,get(i,parent.frame()),environment(fr.form))
@@ -468,7 +467,7 @@ getStart <- function(start,lower,pred,returnVal=c("theta","all")) {
 
 ## update start
 ## should refactor this to
-##  turn numeric start into start=list(theta=start) immediately ... ??
+##  turn numeric start into start=list(theta=start) immediately ??
 updateStart <- function(start,theta) {
     if (is.null(start)) return(NULL)
     if (is.numeric(start)) {
@@ -582,7 +581,7 @@ optimizeLmer <- function(devfun,
         if (length(bvals <- which(rho$pp$theta==rho$lower)) > 0) {
             ## *don't* use numDeriv -- cruder but fewer dependencies, no worries
             ##  about keeping to the interior of the allowed space
-            theta0 <- new("numeric",rho$pp$theta) ## 'deep' copy ...
+            theta0 <- new("numeric",rho$pp$theta) ## 'deep' copy:
             d0 <- devfun(theta0)
             btol <- 1e-5  ## FIXME: make user-settable?
             bgrad <- sapply(bvals,
@@ -637,10 +636,9 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     if (family$family %in% c("quasibinomial", "quasipoisson", "quasi"))
         stop('"quasi" families cannot be used in glmer')
 
-    ignoreArgs <- c("start","verbose","devFunOnly","optimizer", "control", "nAGQ")
-    l... <- list(...)
-    l... <- l...[!names(l...) %in% ignoreArgs]
-    do.call(checkArgs, c(list("glmer"), l...))
+    dontChk <- c("verbose", "devFunOnly", "optimizer", "nAGQ")
+    dots <- list(...)
+    do.call(checkArgs, c(list("glmer"), dots[!names(dots) %in% dontChk]))
 
     cstr <- "check.formula.LHS"
     checkCtrlLevels(cstr, control[[cstr]])
@@ -658,8 +656,8 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     fr.form <- subbars(formula) # substitute "|" by "+"
     environment(fr.form) <- environment(formula)
     ## model.frame.default looks for these objects in the environment
-    ## of the *formula* (see 'extras', which is anything passed in ...),
-    ## so they have to be put there ...
+    ## of the *formula* (see 'extras', which is anything passed in '...'),
+    ## so they have to be put there:
     for (i in c("weights", "offset")) {
         if (!eval(bquote(missing(x=.(i)))))
             assign(i, get(i, parent.frame()), environment(fr.form))

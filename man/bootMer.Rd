@@ -56,7 +56,7 @@ bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE, re.form=NA,
 }
 \value{
   an object of S3 \code{\link{class}} \code{"boot"},
-  compatible with \pkg{boot} package's
+  compatible with \CRANpkg{boot} package's
   \code{\link[boot]{boot}()} result.
 }
 \description{
@@ -123,7 +123,7 @@ bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE, re.form=NA,
     for a more specific approach to bootstrap confidence
     intervals on parameters.
     \item \code{\link{refit}()}, or \code{\link[pbkrtest]{PBmodcomp}()}
-    from the \pkg{pbkrtest} package, for parametric bootstrap comparison
+    from the \CRANpkg{pbkrtest} package, for parametric bootstrap comparison
     of models.
     \item \code{\link[boot]{boot}()}, and then
     \code{\link[boot]{boot.ci}}, from the \pkg{boot} package.

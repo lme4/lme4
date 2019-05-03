@@ -8,9 +8,24 @@
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item minor changes to argument order in \code{[g]lmerControl}
+
+      \item \code{lmer(*, family="<fam>")} is no longer valid; it had been
+      deprecated since 2013-06.
+
+      \item \code{lmer()}, \code{glmer()}, and \code{nlmer()} no longer
+      have a formal \code{...} argument.  This defunctifies the use of a
+      \code{sparseX = .} argument and will reveal some user errors, where
+      previously extraneous arguments have been disregarded.
+    }
+  }
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item internal \code{checkZrank()} should be able to deal with
+      (\code{Matrix} package) \code{rankMatrix()} returning \code{NA}.
     }
   }
 }
+
 \section{CHANGES IN VERSION 1.1-21 (2019-03-05)}{
     \subsection{USER-VISIBLE CHANGES}{
       \itemize{
@@ -20,6 +35,7 @@
       }
     }
 }
+
 \section{CHANGES IN VERSION 1.1-20 (2019-02-04)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{

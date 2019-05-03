@@ -41,6 +41,7 @@ stopifnot(all.equal(oldres, newres, tolerance=1.5e-3))
 system.time(mmodB <- glmer(modForm, data = trees513B, family = binomial()))
 ## 10.4 seconds
 ##
+if(FALSE) { ## defuncted in 2019-05 [been deprecated since 2013-06]
 ## lmer( + family) -> diverts to glmer() with a warning [TODO: use assertWarning(.) eventually]
 system.time(lmodB <-
             lmer(modForm, data = trees513B, family = binomial()))
@@ -48,6 +49,6 @@ stopifnot(all.equal(.not.call(summary(mmodB)),
                     .not.call(summary(lmodB))))
 newresB <- c(fixef(mmodB),getME(mmodB,"theta"))
 stopifnot(length(newresB) == length(oldres) + 1)# extra: species[ash/maple/elm/lime]
-## (unfinished)
+}
 
 
