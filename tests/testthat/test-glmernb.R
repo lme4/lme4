@@ -19,8 +19,8 @@ test_that("basic", {
    
    expect_is(m.nb,"glmerMod")
    ## 'family' properly quoted/not expanded in call?
-   expect_equal(gsub("[0-9]+\\.[0-9]+","NUM",deparse(m.nb@call$family)),
-          "negative.binomial(theta = NUM)")
+   expect_true(grepl("negative\\.binomial\\(theta *= *[0-9]*\\.[0-9]+\\)",
+                     deparse(m.nb@call$family)))
    expect_null(m.nb@call$verbose)  ## check: GH #321
    expect_equal(fixef(m.nb), coef (m.glm), tol=1e-5)    ## GH #319
 
