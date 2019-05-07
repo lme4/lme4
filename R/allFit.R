@@ -218,7 +218,8 @@ summary.allFit <- function(object, ...) {
 
 ## not yet ...
 plot.allFit <- function(x, abbr=16, ...) {
-     if (! (require(ggplot2))) {
+    values <- opt <- NULL ## R code check/non-standard evaluation
+     if (! (requireNamespace("ggplot2"))) {
          stop("ggplot2 package must be installed to plot allFit objects")
      }
      aes <- NULL ## code check
