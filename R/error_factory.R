@@ -46,29 +46,22 @@ factory <- function (fun, debug=FALSE, errval="An error occurred in the factory 
       res <- errval
     }
 
-    if (is.character(msg)) {
-        res <- setattr(res,"factory-message",msg)
-    } else {
-        res <- setattr(res,"factory-message",NULL) 
+    setattr <- function(x, attrib, value) {
+        attr(x,attrib) <- value
+        x
     }
 
-    if (is.character(warn)) {
-        res <- setattr(res,"factory-warning",warn)
-    } else {
-        res <- setattr(res,"factory-warning",NULL) 
+    attr_fun <- function(x,str,val) {
+        setattr(x,paste0("factory-",str), if(is.character(x)) x else NULL)
     }
 
-    if (is.character(err)) {
-      res <- setattr(res,"factory-error",err)
-    } else {
-      res <- setattr(res, "factory-error", NULL)
-    }  
+    res <- attr_fun(res, "message", msg)
+    res <- attr_fun(res, "warning", warn)
+    res <- attr_fun(res, "error", err)
+
     return(res)
   }
 }
 
-setattr <- function(x, attrib, value) {
-    attr(x,attrib) <- value
-    x
-}
+
     
