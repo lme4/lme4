@@ -21,7 +21,7 @@ setNBdisp <- function(object,theta) {
   rr <- object@resp
   newresp <- do.call(glmResp$new,
                      c(lapply(setNames(nm=glmNB.to.change), rr$field),
-                       list(family = negative.binomial(theta=theta))))
+                       list(family = MASS::negative.binomial(theta=theta))))
   newresp$setOffset(rr$offset)
   newresp$updateMu(rr$eta - rr$offset)
   object@resp <- newresp
@@ -111,7 +111,7 @@ glmer.nb <- function(..., interval = log(th) + c(-3,3),
 
     mc$initCtrl <- NULL ## clear to prevent infinite recursion
                         ##  in initCtrl$theta reference above ...
-    mc$family <- bquote(negative.binomial(theta=.(th)))
+    mc$family <- bquote(MASS::negative.binomial(theta=.(th)))
     g1 <- eval(mc, parent.frame(1L))
 
     if(verbose) cat(" --> dev.= -2*logLik(.) =", format(-2*logLik(g1)),"\n")
