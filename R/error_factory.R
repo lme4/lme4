@@ -52,7 +52,7 @@ factory <- function (fun, debug=FALSE, errval="An error occurred in the factory 
     }
 
     attr_fun <- function(x,str,val) {
-        setattr(x,paste0("factory-",str), if(is.character(x)) x else NULL)
+        setattr(x,paste0("factory-",str), if(is.character(msg)) msg else NULL)
     }
 
     res <- attr_fun(res, "message", msg)
