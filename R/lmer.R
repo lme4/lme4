@@ -1728,7 +1728,7 @@ llikAIC <- function(object, devianceFUN = devCrit, chkREML = TRUE, devcomp = obj
     if (cc > 0 || nmsgs > 0 || nwarnings > 0) {
         if (summary) {
             cat(sprintf("convergence code %d; %d optimizer warnings; %d lme4 warnings",
-                cc,nmsgs,nwarnings),"\n")
+                cc,nwarnings,nmsgs),"\n")
         } else {
             cat(sprintf("convergence code: %d", cc),
                 msgs,
