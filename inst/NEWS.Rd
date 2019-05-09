@@ -16,6 +16,10 @@
       have a formal \code{...} argument.  This defunctifies the use of a
       \code{sparseX = .} argument and will reveal some user errors, where
       previously extraneous arguments have been disregarded.
+
+      \item In \code{isSingular(x, tol)}, the default tolerance (\code{tol}) has
+      been increased from 1e-5 to \code{1e-4}, the default of
+      \code{check.conv.singular} in \code{g?lmerControl()}.
     }
   }
   \subsection{BUG FIXES}{

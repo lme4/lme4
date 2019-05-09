@@ -42,7 +42,7 @@ lmerControl(optimizer = "nloptwrap",% was "Nelder_Mead" till Dec.2013,
     check.formula.LHS = "stop",
     ## convergence checking options
     check.conv.grad     = .makeCC("warning", tol = 2e-3, relTol = NULL),
-    check.conv.singular = .makeCC(action = "message",  tol = 1e-4),
+    check.conv.singular = .makeCC(action = "message", tol = formals(isSingular)$tol),
     check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
     ## optimizer args
     optCtrl = list(),
@@ -69,7 +69,7 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     check.formula.LHS = "stop",
     ## convergence checking options
     check.conv.grad     = .makeCC("warning", tol = 2e-3, relTol = NULL),
-    check.conv.singular = .makeCC(action = "message",  tol = 1e-4),
+    check.conv.singular = .makeCC(action = "message", tol = formals(isSingular)$tol),
     check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
     ## optimizer args
     optCtrl = list(),
@@ -196,7 +196,8 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     i.e. one where some parameters are on the boundary of the feasible
     space (for example, random effects variances equal to 0 or
     correlations between random effects equal to +/- 1.0);
-    as for \code{check.conv.grad} above.}
+    as for \code{check.conv.grad} above.  The default is to use
+    \code{\link{isSingular}(.., tol = *)}'s default.}
   \item{check.conv.hess}{rules for checking the Hessian of the deviance
     function for convergence.; as for \code{check.conv.grad}
     above.}

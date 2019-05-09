@@ -1,25 +1,19 @@
 \name{isSingular}
+\title{Test Fitted Model for (Near) Singularity}
 \alias{isSingular}
-\alias{boundary}
-\title{
-  Test fitted model for (near) singularity
-}
+\concept{boundary}
 \description{
-  Evaluates whether a fitted mixed model is singular, i.e.
+  Evaluates whether a fitted mixed model is (almost / near) singular, i.e.,
   the parameters are on the boundary of the feasible
   parameter space: variances of one or more linear combinations of effects
   are (close to) zero.
 }
 \usage{
-isSingular(x, tol = 1e-05)
+isSingular(x, tol = 1e-4)
 }
 \arguments{
-  \item{x}{
-    a fitted \code{merMod} object (result of \code{lmer} or \code{glmer})
-}
-  \item{tol}{
-    numerical tolerance for detecting singularity
-}
+  \item{x}{a fitted \code{merMod} object (result of \code{lmer} or \code{glmer}).}
+  \item{tol}{numerical tolerance for detecting singularity.}
 }
 \details{
   Complex mixed-effect models (i.e., those with a

@@ -1197,8 +1197,7 @@ glmerLaplaceHandle <- function(pp, resp, nAGQ, tol, maxit, verbose) {
 isFlexLambda <- function() FALSE
 
 
-#' convert a list of matrices (n, pxp blocks) to 
-#' a pxpxn array
+#' convert a list of matrices (n, pxp blocks) to a  p x p x n  array
 mlist_to_array <- function(m) {
     p <- nrow(m[[1]])
     n <- length(m)
@@ -1247,7 +1246,7 @@ augment.RE <- function(object,rr=ranef(object)) {
     class(rr) <- "ranef.mer"
     rr
 }
-       
+
 ## reorganize condVar matrix into appropriate list of arrays/lists of arrays
 arrange.condVar <- function(object,cv) {
     rp <- rePos$new(object)
@@ -1274,8 +1273,7 @@ arrange.condVar <- function(object,cv) {
 }
 
 ## generic machinery for setting parallel options
-## uses eval() (as in family()$initialize) to avoid
-##  too much list 
+## uses eval() (as in family()$initialize) to avoid too much list
 initialize.parallel <- expression({
     have_mc <- have_snow <- FALSE
     if (length(parallel)>1) parallel <- match.arg(parallel)
@@ -1288,7 +1286,7 @@ initialize.parallel <- expression({
     }
 })
 
-isSingular <- function(x, tol=1e-5) {
+isSingular <- function(x, tol = 1e-4) {
     lwr <- getME(x, "lower")
     theta <- getME(x, "theta")
     any(theta[lwr==0] < tol)
