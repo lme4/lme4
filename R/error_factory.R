@@ -12,6 +12,7 @@
 #' @param fun The function to be turned into a factory
 #' @param debug print debugging statements?
 #' @param errval the value to be returned from the function if an error is thrown
+#' @param types which types to catch?
 #' @return The result of the function given to turn into a factory.  If this function was in error "An error as occurred" as a character element.  factory-error and factory-warning attributes may also be set as appropriate.
 #' @references
 #' \url{http://stackoverflow.com/questions/4948361/how-do-i-save-warnings-and-errors-as-output-from-a-function}
@@ -23,7 +24,9 @@
 #' f.log.NA("a")
 #' f.as.numeric <- factory(as.numeric)
 #' f.as.numeric(c("a","b",1))
-factory <- function (fun, debug=FALSE, errval="An error occurred in the factory function") {
+factory <- function (fun, debug=FALSE,
+                     errval="An error occurred in the factory function",
+                     types=c("message","warning","error")) {
     function(...) {
     errorOccurred <- FALSE
     warn <- err <- msg <- NULL
@@ -34,16 +37,25 @@ factory <- function (fun, debug=FALSE, errval="An error occurred in the factory 
         errorOccurred <<- TRUE
         NULL
     }), warning = function(w) {
-      warn <<- append(warn, conditionMessage(w))
-      invokeRestart("muffleWarning")
+        if (!"warning" %in% types) {
+            warning(conditionMessage(w))
+        } else {
+            warn <<- append(warn, conditionMessage(w))
+            invokeRestart("muffleWarning")
+        }
     },
     message = function(m) {
-      if (debug) cat("message: ",conditionMessage(m),"\n")
-      msg <<- append(msg, conditionMessage(m))
-      invokeRestart("muffleMessage")
+        if (debug) cat("message: ",conditionMessage(m),"\n")
+        if (!"message" %in% types) {
+            message(conditionMessage(m))
+        } else {
+            msg <<- append(msg, conditionMessage(m))
+            invokeRestart("muffleMessage")
+        }
     })
     if (errorOccurred) {
-      res <- errval
+        if (!"error" %in% types) stop(err)
+        res <- errval
     }
 
     setattr <- function(x, attrib, value) {
@@ -51,7 +63,7 @@ factory <- function (fun, debug=FALSE, errval="An error occurred in the factory 
         x
     }
 
-    attr_fun <- function(x,str,val) {
+    attr_fun <- function(x,str,msg) {
         setattr(x,paste0("factory-",str), if(is.character(msg)) msg else NULL)
     }
 
