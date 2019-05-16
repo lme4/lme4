@@ -172,14 +172,6 @@ print.allFit <- function(x, width=80, ...) {
 }
 
 summary.allFit <- function(object, ...) {
-    namefun <- function(x) {
-        if (!is.null(dim(x))) {
-            rownames(x) <- names(objOK)
-        } else {
-            names(x) <- names(objOK)
-        }
-        x
-    }
     afun <- function(x, FUN, ...) {
         f1 <- FUN(x[[1]], ...)
         nm <- names(f1)
@@ -196,7 +188,6 @@ summary.allFit <- function(object, ...) {
     which.OK <- !vapply(object, is, "error", FUN.VALUE=logical(1))
     objOK <- object[which.OK]
     msgs <- lapply(objOK, function(x) x@optinfo$conv$lme4$messages)
-    nfix <- length(fixef(objOK[[1]]))
     fixef <- afun(objOK, fixef)
     llik <- vapply(objOK, logLik, numeric(1))
     times <- afun(objOK, attr, "time")
