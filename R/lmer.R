@@ -45,8 +45,7 @@ lmer <- function(formula, data=NULL, REML = TRUE,
     if (identical(control$optimizer,"none"))
         stop("deprecated use of optimizer=='none'; use NULL instead")
     opt <- if (length(control$optimizer)==0) {
-               s <- getStart(start,environment(devfun)$lower,
-                             environment(devfun)$pp)
+               s <- getStart(start, environment(devfun)$pp)
                list(par=s,fval=devfun(s),
                     conv=1000,message="no optimization")
            }  else {
@@ -60,8 +59,8 @@ lmer <- function(formula, data=NULL, REML = TRUE,
                      use.last.params=control$use.last.params)
            }
     cc <- checkConv(attr(opt,"derivs"), opt$par,
-                        ctrl = control$checkConv,
-                        lbound=environment(devfun)$lower)
+                    ctrl = control$checkConv,
+                    lbound = environment(devfun)$lower)
     mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr,
              mc = mcout, lme4conv=cc) ## prepare output
 }## { lmer }

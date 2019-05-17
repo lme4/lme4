@@ -429,7 +429,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 }
 
 ## utility f'n for checking starting values
-getStart <- function(start,lower,pred,returnVal=c("theta","all")) {
+getStart <- function(start, pred, returnVal = c("theta","all")) {
     returnVal <- match.arg(returnVal)
     ## default values
     theta <- pred$theta
@@ -439,10 +439,10 @@ getStart <- function(start,lower,pred,returnVal=c("theta","all")) {
             theta <- start
         } else {
             if (!is.list(start)) stop("start must be a list or a numeric vector")
-            if (!all(sapply(start,is.numeric))) stop("all elements of start must be numeric")
-            if (length((badComp <- setdiff(names(start),c("theta","fixef")))) > 0) {
-                stop("incorrect components in start list: ",badComp)
-            }
+            if (!all(vapply(start, is.numeric, NA)))
+                 stop("all elements of start must be numeric")
+            if (length((badComp <- setdiff(names(start), c("theta","fixef")))) > 0)
+                stop("incorrect components in start list: ", badComp)
             if (!is.null(start$theta)) theta <- start$theta
             noFixef <- is.null(start$fixef)
             noBeta <- is.null(start$beta)
@@ -456,24 +456,27 @@ getStart <- function(start,lower,pred,returnVal=c("theta","all")) {
             } else if(!noBeta) {
                 fixef <- start$beta
             }
+            if (length(fixef)!=length(pred$delb))
+                stop("incorrect number of fixef components (!=",length(pred$delb),")")
         }
+        if (length(theta) != length(pred$theta))
+            stop("incorrect number of theta components (!=",length(pred$theta),")")
     }
-    if (length(theta)!=length(pred$theta))
-        stop("incorrect number of theta components (!=",length(pred$theta),")")
-    if (length(fixef)!=length(pred$delb))
-        stop("incorrect number of fixef components (!=",length(pred$delb),")")
     if (returnVal=="theta") theta else c(theta,fixef)
 }
 
 ## update start
 ## should refactor this to
 ##  turn numeric start into start=list(theta=start) immediately ??
-updateStart <- function(start,theta) {
-    if (is.null(start)) return(NULL)
-    if (is.numeric(start)) {
-        start <- theta
-    } else if (!is.null(start$theta)) start$theta <- theta
-    start
+updateStart <- function(start, theta) {
+    if (is.null(start))
+        NULL
+    else if (is.numeric(start)) {
+        theta
+    } else if (!is.null(start$theta)) {
+        start$theta <- theta
+        start
+    }
 }
 
 ##' @rdname modular
@@ -543,7 +546,7 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL,
         }
     }
 
-    ## theta <- getStart(start, reTrms$lower, rho$pp)
+    ## theta <- getStart(start, rho$pp)
     ## ^^^^^ unused / obfuscation? should the above be rho$pp$setTheta(.) ?
     ## MM: commenting it did not break any of our checks
     if (length(rho$resp$y) > 0)  ## only if non-trivial y
@@ -567,7 +570,7 @@ optimizeLmer <- function(devfun,
     rho <- environment(devfun)
     opt <- optwrap(optimizer,
                    devfun,
-                   getStart(start,rho$lower,rho$pp),
+                   getStart(start, rho$pp),
                    lower=rho$lower,
                    control=control,
                    adj=FALSE, verbose=verbose,
@@ -774,17 +777,17 @@ optimizeGlmer <- function(devfun,
     ## FIXME: do we need nAGQ here?? or can we clean up?
     verbose <- as.integer(verbose)
     rho <- environment(devfun)
-    if (stage==1) {
-        start <- getStart(start, lower=rho$lower, pred=rho$pp, "theta")
+    if (stage == 1) {
+        start <- getStart(start, rho$pp, "theta")
         adj <- FALSE
     } else { ## stage == 2
-        start <- getStart(start, lower=rho$lower, pred=rho$pp, returnVal="all")
+        start <- getStart(start, rho$pp, "all")
         adj <- TRUE
     }
     opt <- optwrap(optimizer, devfun, start, rho$lower,
                    control=control, adj=adj, verbose=verbose,
                    ...)
-    if (stage==1) {
+    if (stage == 1) {
         rho$control <- attr(opt,"control")
         rho$nAGQ <- nAGQ
     } else {  ## stage == 2
@@ -797,12 +800,11 @@ optimizeGlmer <- function(devfun,
         opt <- check.boundary(rho, opt, devfun, boundary.tol)
         if(stage != 1) rho$resp$setOffset(rho$baseOffset)
     }
-
-    return(opt)
+    opt
 }
 
 check.boundary <- function(rho,opt,devfun,boundary.tol) {
-    bdiff <- rho$pp$theta-rho$lower[seq_along(rho$pp$theta)]
+    bdiff <- rho$pp$theta - rho$lower[seq_along(rho$pp$theta)]
     if (any(edgevals <- 0 < bdiff & bdiff < boundary.tol)) {
         ## try sucessive "close-to-edge parameters" to see
         ## if we can improve by setting them equal to the boundary
