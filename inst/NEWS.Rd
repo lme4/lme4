@@ -26,6 +26,9 @@
     \itemize{
       \item internal \code{checkZrank()} should be able to deal with
       (\code{Matrix} package) \code{rankMatrix()} returning \code{NA}.
+
+      \item \code{allFit(fm)} also works for a model that had an explicit
+      \code{control = lmerControl(..)} call.
     }
   }
 }

@@ -96,9 +96,12 @@ allFit <- function(m, meth.tab = NULL,
         function(i) {
             if (verbose) cat(fit.names[i],": ")
             ctrl <- getCall(m)$control
-            if (is.null(ctrl)) {
+            ## NB:  'ctrl' must become a correct *argument* list for g?lmerControl()
+            if(is.null(ctrl)) {
                 ctrl <- list(optimizer=optimizer[i])
             } else {
+                if(is.call(ctrl)) # typically true
+                    ctrl <- lapply(as.list(ctrl)[-1], eval)
                 ctrl$optimizer <- optimizer[i]
             }
             ctrl$optCtrl <- switch(optimizer[i],
@@ -167,7 +170,7 @@ print.allFit <- function(x, width=80, ...) {
     ## cat("differences in parameters:\n")
     ## ss <- summary(x)
     ## allpars <- cbind(ss$fixef, ss$sdcor)
-    ## par_max <- 
+    ## par_max <-
     invisible(x)
 }
 
@@ -182,7 +185,7 @@ summary.allFit <- function(object, ...) {
         } else {
             res <- as.matrix(res)
             colnames(res) <- nm
-        } 
+        }
         res
     }
     which.OK <- !vapply(object, is, "error", FUN.VALUE=logical(1))
