@@ -469,12 +469,11 @@ getStart <- function(start, pred, returnVal = c("theta","all")) {
 ## should refactor this to
 ##  turn numeric start into start=list(theta=start) immediately ??
 updateStart <- function(start, theta) {
-    if (is.null(start))
-        NULL
-    else if (is.numeric(start)) {
+    if (is.numeric(start)) {
         theta
-    } else if (!is.null(start$theta)) {
-        start$theta <- theta
+    } else {
+        if (!is.null(start$theta))
+            start$theta <- theta
         start
     }
 }
