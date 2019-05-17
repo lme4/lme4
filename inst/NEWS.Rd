@@ -29,6 +29,10 @@
 
       \item \code{allFit(fm)} also works for a model that had an explicit
       \code{control = lmerControl(..)} call.
+
+      \item internal \code{getStart()} now also works when model's
+      \code{start} has been a list, and when called from \code{drop1()} on
+      a submodel, fixing GH #521.
     }
   }
 }

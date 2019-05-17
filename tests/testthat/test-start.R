@@ -6,8 +6,7 @@ context("specifying starting values")
 copysome <- function(mod, from) {
     stopifnot(all.equal(class(mod), class(from)), isS4(mod))
     mod@call <- from@call
-    ## not needed, currently:
-    ## attr(mod@frame, "start") <- attr(from@frame, "start")
+    attr(mod@frame, "start") <- attr(from@frame, "start")
     mod
 }
 
@@ -15,8 +14,8 @@ copysome <- function(mod, from) {
 isNM <- formals(lmerControl)$optimizer == "Nelder_Mead"
 
 test_that("lmer", {
-    frm <- as.formula("Reaction ~ Days + (Days|Subject)")
-    ctrl <- lmerControl(optCtrl=list(maxfun= if(isNM) 50 else 100))
+    frm <- Reaction ~ Days + (Days|Subject)
+    ctrl <- lmerControl(optCtrl = list(maxfun= if(isNM) 50 else 100))
     x <- suppressWarnings(lmer(frm, data=sleepstudy, control=ctrl, REML=FALSE))
     x2 <- suppressWarnings(update(x,start=c(1,0,1)))
     x3 <- suppressWarnings(update(x,start=list(theta=c(1,0,1))))
@@ -24,7 +23,7 @@ test_that("lmer", {
     x2@call <- x3@call <- x@call  ## hack call component
     expect_equal(x,x2)
     expect_equal(x,x3)
-    expect_error(update(x,start=c("a")),"start must be a list or a numeric vector")
+    expect_error(update(x, start = "a"), "'start' must be .* a numeric vector .* list")
     ## misspelled
     expect_error(update(x,start=list(Theta=c(1,0,1))),"incorrect components")
     th0 <- getME(x,"theta")
@@ -55,14 +54,14 @@ test_that("glmer", {
     x2@call <- x3@call <- x@call  ## hack call component
     expect_equal(x,x2)
     expect_equal(x,x3)
-    expect_error(update(x, start="a"), "start must be a list or a numeric vector")
+    expect_error(update(x, start="a"),)
     expect_error(update(x, start=list(Theta=1)), "bad name\\(s\\)")
     th0 <- getME(x,"theta")
     y <- suppressWarnings(update(x, start=th0)) # expect_equal() fails: optinfo -> derivs -> Hessian
 
     ## theta and beta
     x0 <- update(x,nAGQ=0)
-    x4 <- suppressWarnings(update(x,start=list(theta=1,fixef=fixef(x0))))
+    x4 <- suppressWarnings(update(x, start = list(theta=1, fixef=fixef(x0))))
     expect_equal(x, copysome(x4, from=x))
     x5 <- suppressWarnings(update(x, start = list(theta=1, fixef=rep(0,4))))
     expect_equal(AIC(x5), 221.5823, tolerance=1e-6)

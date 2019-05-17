@@ -1454,7 +1454,6 @@ refit.merMod <- function(object,
                     ## when optTheta called refit (github issue #173)
                     # ctrl = eval(object@call$control)$checkConv,
                     ctrl = control$checkConv,
-                    # ctrl = cntrl$checkConv,
                     lbound=lower)
     if (isGLMM(object)) rr$setOffset(baseOffset)
     mkMerMod(environment(ff), opt,

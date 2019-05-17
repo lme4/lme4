@@ -8,8 +8,8 @@
 }
 \usage{
 \method{drop1}{merMod}(object, scope, scale = 0,
-    test = c("none", "Chisq", "user"),
-    k = 2, trace = FALSE, sumFun, ...)
+      test = c("none", "Chisq", "user"),
+      k = 2, trace = FALSE, sumFun, \dots)
 }
 \arguments{
   \item{object}{a fitted \code{merMod} object.}
@@ -23,12 +23,13 @@
   }
   \item{k}{the penalty constant in AIC}
   \item{trace}{print tracing information?}
-  \item{sumFun}{a summary function to be used when
-    \code{test=="user"}. It must allow arguments \code{scale} and
-    \code{k}, but these may be ignored (e.g. specified in \code{dots}).
+  \item{sumFun}{a summary \code{\link{function}} to be used when
+    \code{test=="user"}.  It must allow arguments \code{scale} and
+    \code{k}, but these may be ignored (e.g. swallowed by \code{\dots},
+    see the examples).
     The first two arguments must be \code{object}, the full model fit,
     and \code{objectDrop}, a reduced model.  If \code{objectDrop} is missing,
-    \code{sumFun} should return a vector of with the appropriate
+    \code{sumFun(*)} should return a vector with the appropriate
     length and names (the actual contents are ignored).
   }
   \item{\dots}{other arguments (ignored)}
@@ -47,7 +48,7 @@
   manually specify an appropriate environment for the formula.
 }
 \examples{
-fm1 <- lmer(Reaction~Days+(Days|Subject),sleepstudy)
+fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 ## likelihood ratio tests
 drop1(fm1,test="Chisq")
 ## use Kenward-Roger corrected F test, or parametric bootstrap,
@@ -64,7 +65,7 @@ if (require(pbkrtest) && packageVersion("pbkrtest")>="0.3.8") {
       attr(r,"method") <- c("Kenward-Roger via pbkrtest package")
       r
    }
-   drop1(fm1,test="user",sumFun=KRSumFun)
+   drop1(fm1, test="user", sumFun=KRSumFun)
 
    if(lme4:::testLevel() >= 3) { ## takes about 16 sec
      nsim <- 100
@@ -79,7 +80,7 @@ if (require(pbkrtest) && packageVersion("pbkrtest")>="0.3.8") {
 	attr(r,"method") <- c("Parametric bootstrap via pbkrtest package")
 	r
      }
-     system.time(drop1(fm1,test="user",sumFun=PBSumFun))
+     system.time(drop1(fm1, test="user", sumFun=PBSumFun))
    }
 }
 ## workaround for creating a formula in a separate environment

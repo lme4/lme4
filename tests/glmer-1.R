@@ -39,6 +39,9 @@ chkFixed <- function(fm, true.coef, conf.level = 0.95,
 
 m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
              family = binomial, data = cbpp)
+m1. <- update(m1, start = getME(m1, c("theta", "fixef")))
+dm1 <- drop1(m1)
+stopifnot(all.equal(drop1(m1.), dm1, tol = 1e-10))# Lnx(F28) 64b: 4e-12
 ## response as a vector of probabilities and usage of argument "weights"
 m1p <- glmer(incidence / size ~ period + (1 | herd), weights = size,
              family = binomial, data = cbpp)

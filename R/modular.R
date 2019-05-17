@@ -431,38 +431,49 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 ## utility f'n for checking starting values
 getStart <- function(start, pred, returnVal = c("theta","all")) {
     returnVal <- match.arg(returnVal)
+    doFixef <- returnVal == "all"
     ## default values
     theta <- pred$theta
     fixef <- pred$delb
-    if (!is.null(start)) {
-        if (is.numeric(start)) {
-            theta <- start
-        } else {
-            if (!is.list(start)) stop("start must be a list or a numeric vector")
-            if (!all(vapply(start, is.numeric, NA)))
-                 stop("all elements of start must be numeric")
-            if (length((badComp <- setdiff(names(start), c("theta","fixef")))) > 0)
-                stop("incorrect components in start list: ", badComp)
-            if (!is.null(start$theta)) theta <- start$theta
-            noFixef <- is.null(start$fixef)
+    if (is.numeric(start)) {
+        theta <- start
+    } else if (is.list(start)) {
+        if (!all(vapply(start, is.numeric, NA)))
+            stop("all elements of start must be numeric")
+        if (length((badComp <- setdiff(names(start), c("theta","fixef")))) > 0)
+            stop("incorrect components in start list: ", badComp)
+        if (!is.null(start$theta)) theta <- start$theta
+        if (doFixef) {
             noBeta <- is.null(start$beta)
-            if (!noFixef) {
-                fixef <- start$fixef
-                if (!noBeta) {
-                    message("Starting values for fixed effects coefficients",
-                            "specified through both 'fixef' and 'beta',",
-                            "only 'fixef' used")
-                }
-            } else if(!noBeta) {
-                fixef <- start$beta
+            if(!is.null(sFE <- start$fixef) || !noBeta) {
+                fixef <-
+                    if(!is.null(sFE)) {
+                        if(!noBeta)
+                            message("Starting values for fixed effects coefficients",
+                                    "specified through both 'fixef' and 'beta',",
+                                    "only 'fixef' used")
+                        ## FIXME? accumulating heuristic evidence for drop1()-like case
+                        if((p <- length(fixef)) < length(sFE) && p == ncol(pred$X) &&
+                           is.character(ns <- names(sFE)) &&
+                           all((cnX <- dimnames(pred$X)[[2L]]) %in% ns))
+                            ## take "matching" fixef[] only
+                            sFE[cnX]
+                        else
+                            sFE
+                    }
+                    else if(!noBeta)
+                        start$beta
             }
             if (length(fixef)!=length(pred$delb))
                 stop("incorrect number of fixef components (!=",length(pred$delb),")")
         }
-        if (length(theta) != length(pred$theta))
-            stop("incorrect number of theta components (!=",length(pred$theta),")")
     }
-    if (returnVal=="theta") theta else c(theta,fixef)
+    else if (!is.null(start))
+        stop("'start' must be NULL, a numeric vector or named list of such vectors")
+    if (!is.null(start) && length(theta) != length(pred$theta))
+        stop("incorrect number of theta components (!=",length(pred$theta),")")
+
+    if(doFixef) c(theta, fixef) else theta
 }
 
 ## update start

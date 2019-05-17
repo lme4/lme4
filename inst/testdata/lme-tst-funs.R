@@ -19,8 +19,9 @@ rSim.11 <- function(n, k, sigma=1, beta=2) {
 }
 
 ##' General GLMM simulation  for the model   y ~ x + (1|block)
-##' i.e. (2-way notation)   Y_{ij} = \beta_1 + \beta_2 x_{ij} +  B_j,
-##'                                  i = 1..nperblk,  j = 1..nblk
+##' i.e. (2-way notation)
+##'   g( E[Y_{ij}|*] ) = \beta_1 + \beta_2 x_{ij} + B_j,
+##'                                            j = 1..nblk, i = 1..nperblk.
 gSim <- function(nblk=26,
                  nperblk=100,
                  sigma=1,    ## st.dev. of ran.eff  B
@@ -91,3 +92,12 @@ all.equal.merMod <- function(target, current, incl.t=FALSE, ...) {
 ##' some optimizer info
 isOptimized <- function(mod) mod@optinfo[["conv"]][["opt"]] == 0
 baseOpti <- function(mod) mod@optinfo[c("optimizer", "conv","feval")]
+
+## use case:  all.equal(emptyCall(mod1), emptyCall(mod2))
+emptyCall <- function(mod, arg = quote(`.....`)) {
+    cl <- mod@call[1:2]
+    names(cl) <- NULL
+    cl[[2]] <- arg
+    mod@call <- cl
+    mod
+}
