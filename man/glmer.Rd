@@ -7,10 +7,14 @@
   effects and random effects are specified via the model \code{formula}.
 }
 \usage{
-glmer(formula, data = NULL, family = gaussian, control = glmerControl(),
-      start = NULL, verbose = 0L, nAGQ = 1L, subset, weights, na.action,
-      offset, contrasts = NULL, mustart, etastart,
-      devFunOnly = FALSE, \dots)
+glmer(formula, data = NULL, family = gaussian
+    , control = glmerControl()
+    , start = NULL
+    , verbose = 0L
+    , nAGQ = 1L
+    , subset, weights, na.action, offset, contrasts = NULL
+    , mustart, etastart
+    , devFunOnly = FALSE)
 }
 \arguments{
   \item{formula}{a two-sided linear formula object describing both the
@@ -97,14 +101,15 @@ glmer(formula, data = NULL, family = gaussian, control = glmerControl(),
     variables stored in its environment, it may not return
     \emph{exactly} the same values on subsequent calls (but the results
     should always be within machine tolerance).}
-  \item{\dots}{other potential arguments.  A \code{method} argument was
-    used in earlier versions of the package.  Its functionality has been
-    replaced by the \code{nAGQ} argument.}
 }
 \value{
   An object of class \code{\link[=merMod-class]{merMod}} (more specifically,
   an object of \emph{subclass} \code{glmerMod}) for which many
   methods are available (e.g. \code{methods(class="merMod")})
+}
+\note{
+  In earlier version of the \pkg{lme4} package, a \code{method} argument was
+  used.  Its functionality has been replaced by the \code{nAGQ} argument.
 }
 \details{
   Fit a generalized linear mixed model, which incorporates both
@@ -156,8 +161,9 @@ xyplot(incidence/size ~ period|herd, cbpp, type=c('g','p','l'),
 ## using  nAGQ = 9  provides a better evaluation of the deviance
 ## Currently the internal calculations use the sum of deviance residuals,
 ## which is not directly comparable with the nAGQ=0 or nAGQ=1 result.
+## 'verbose = 1' monitors iteratin a bit; (verbose = 2 does more):
 (gm1a <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-               cbpp, binomial, nAGQ = 9))
+               cbpp, binomial, verbose = 1, nAGQ = 9))
 
 ## GLMM with individual-level variability (accounting for overdispersion)
 ## For this data set the model is the same as one allowing for a period:herd

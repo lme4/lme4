@@ -29,7 +29,7 @@ glmer.nb(\dots, interval = log(th) + c(-3, 3),
     optimization.}
   \item{initCtrl}{(\emph{\bold{experimental}, do not rely on this}:) a
     \code{\link{list}} with named components as in the default, passed to
-    \code{\link[MASS]{theta.ml}} (package \pkg{MASS}) for the initial
+    \code{\link[MASS]{theta.ml}} (package \CRANpkg{MASS}) for the initial
     value of the negative binomial parameter \code{theta}.
     May also include a \code{theta} component, in which case the
     initial estimation step is skipped}
@@ -55,10 +55,10 @@ glmer.nb(\dots, interval = log(th) + c(-3, 3),
   \code{glmer} with the \code{\link[MASS]{negative.binomial}} family from the
   \code{MASS} package, e.g.
   \code{glmer(...,family=MASS::negative.binomial(theta=1.75))}.
-  
+
 }
 \seealso{
-  \code{\link{glmer}}; from package \pkg{MASS},
+  \code{\link{glmer}}; from package \CRANpkg{MASS},
   \code{\link[MASS]{negative.binomial}} (which we re-export currently) and
   \code{\link[MASS]{theta.ml}}, the latter for initialization of
   optimization.

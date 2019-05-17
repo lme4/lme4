@@ -5,13 +5,12 @@
   devcomp(x)
 }
 \arguments{
-  \item{x}{a fitted model of class
-  \code{\linkS4class{merMod}}}
+  \item{x}{a fitted model of class \code{\linkS4class{merMod}}}
 }
 \value{
-  a list with components \item{dims}{a named integer vector
-  of various dimensions} \item{cmp}{a named numeric vector
-  of components of the deviance}
+  a list with components
+  \item{dims}{a named integer vector of various dimensions}
+  \item{cmp}{a named numeric vector of components of the deviance}
 }
 \description{
   Return the deviance component list

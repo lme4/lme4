@@ -116,7 +116,7 @@ if (require("ggplot2")) {
 }
 }
 \author{
-  original version in \code{nlme} package by Jose Pinheiro
+  original version in \CRANpkg{nlme} package by Jose Pinheiro
   and Douglas Bates
 }
 

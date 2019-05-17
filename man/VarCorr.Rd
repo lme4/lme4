@@ -75,7 +75,7 @@ residual error term where applicable) and the following columns:
 }
 \author{
   This is modeled after \code{\link[nlme]{VarCorr}} from
-  package \pkg{nlme}, by Jose Pinheiro and Douglas Bates.
+  package \CRANpkg{nlme}, by Jose Pinheiro and Douglas Bates.
 }
 \seealso{
   \code{\link{lmer}}, \code{\link{nlmer}}

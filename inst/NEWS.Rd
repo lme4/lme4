@@ -8,9 +8,35 @@
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item minor changes to argument order in \code{[g]lmerControl}
+
+      \item \code{lmer(*, family="<fam>")} is no longer valid; it had been
+      deprecated since 2013-06.
+
+      \item \code{lmer()}, \code{glmer()}, and \code{nlmer()} no longer
+      have a formal \code{...} argument.  This defunctifies the use of a
+      \code{sparseX = .} argument and will reveal some user errors, where
+      previously extraneous arguments have been disregarded.
+
+      \item In \code{isSingular(x, tol)}, the default tolerance (\code{tol}) has
+      been increased from 1e-5 to \code{1e-4}, the default of
+      \code{check.conv.singular} in \code{g?lmerControl()}.
+    }
+  }
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item internal \code{checkZrank()} should be able to deal with
+      (\code{Matrix} package) \code{rankMatrix()} returning \code{NA}.
+
+      \item \code{allFit(fm)} also works for a model that had an explicit
+      \code{control = lmerControl(..)} call.
+
+      \item internal \code{getStart()} now also works when model's
+      \code{start} has been a list, and when called from \code{drop1()} on
+      a submodel, fixing GH #521.
     }
   }
 }
+
 \section{CHANGES IN VERSION 1.1-21 (2019-03-05)}{
     \subsection{USER-VISIBLE CHANGES}{
       \itemize{
@@ -20,6 +46,7 @@
       }
     }
 }
+
 \section{CHANGES IN VERSION 1.1-20 (2019-02-04)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{

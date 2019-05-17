@@ -855,6 +855,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
 ## generic argument checking
 ## 'type': name of calling function ("glmer", "lmer", "nlmer")
 ##
+## NB: called from  lFormula() and glFormula()
 checkArgs <- function(type,...) {
     l... <- list(...)
     if (isTRUE(l...[["sparseX"]])) warning("sparseX = TRUE has no effect at present",call.=FALSE)
@@ -1165,15 +1166,15 @@ nloptwrap <- local({
     defaultControl <- list(algorithm="NLOPT_LN_BOBYQA",
                            xtol_abs=1e-6, ftol_abs=1e-6, maxeval=1e5)
     ##
-    function(par,fn,lower,upper,control=list(),...) {
+    function(par, fn, lower, upper, control=list(),...) {
         for (n in names(defaultControl))
             if (is.null(control[[n]])) control[[n]] <- defaultControl[[n]]
-        res <- nloptr(x0=par, eval_f=fn, lb=lower,ub=upper, opts=control, ...)
-        with(res,list(par=solution,
-                      fval=objective,
-                      feval=iterations,
-                      conv=if (status>0) 0 else status,
-                      message=message))
+        res <- nloptr(x0=par, eval_f=fn, lb=lower, ub=upper, opts=control, ...)
+        with(res, list(par   = solution,
+                       fval  = objective,
+                       feval = iterations,
+                       conv  = if(status > 0) 0 else status,
+                       message = message))
     }
 })
 
@@ -1196,8 +1197,7 @@ glmerLaplaceHandle <- function(pp, resp, nAGQ, tol, maxit, verbose) {
 isFlexLambda <- function() FALSE
 
 
-#' convert a list of matrices (n, pxp blocks) to 
-#' a pxpxn array
+#' convert a list of matrices (n, pxp blocks) to a  p x p x n  array
 mlist_to_array <- function(m) {
     p <- nrow(m[[1]])
     n <- length(m)
@@ -1246,7 +1246,7 @@ augment.RE <- function(object,rr=ranef(object)) {
     class(rr) <- "ranef.mer"
     rr
 }
-       
+
 ## reorganize condVar matrix into appropriate list of arrays/lists of arrays
 arrange.condVar <- function(object,cv) {
     rp <- rePos$new(object)
@@ -1273,8 +1273,7 @@ arrange.condVar <- function(object,cv) {
 }
 
 ## generic machinery for setting parallel options
-## uses eval() (as in family()$initialize) to avoid
-##  too much list 
+## uses eval() (as in family()$initialize) to avoid too much list
 initialize.parallel <- expression({
     have_mc <- have_snow <- FALSE
     if (length(parallel)>1) parallel <- match.arg(parallel)
@@ -1287,11 +1286,8 @@ initialize.parallel <- expression({
     }
 })
 
-isSingular <- function(x, tol=1e-5) {
+isSingular <- function(x, tol = 1e-4) {
     lwr <- getME(x, "lower")
     theta <- getME(x, "theta")
     any(theta[lwr==0] < tol)
 }
-    
-    
-    

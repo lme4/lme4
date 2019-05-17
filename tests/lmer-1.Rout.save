@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2019-03-04 r76196) -- "Unsuffered Consequences"
+R Under development (unstable) (2019-05-06 r76460) -- "Unsuffered Consequences"
 Copyright (C) 2019 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
@@ -146,13 +146,13 @@ Number of obs: 30, groups:  Batch, 6
 Fixed Effects:
 (Intercept)  
        5.67  
-convergence code 0; 1 optimizer warnings; 0 lme4 warnings 
+convergence code 0; 0 optimizer warnings; 1 lme4 warnings 
 > stopifnot(all.equal(coef(summary(fm3)),
 + 		    array(c(5.6656, 0.67838803150, 8.3515624346),
 + 			  c(1,3), dimnames = list("(Intercept)",
 + 				  c("Estimate", "Std. Error", "t value")))))
 > showProc.time() #
-Time elapsed:  0.44 0.032 0.53 
+Time elapsed:  0.43 0.02 0.47 
 > 
 > ### {from ../man/lmer.Rd } --- compare lmer & lmer1 ---------------
 > (fmX1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
@@ -190,15 +190,12 @@ Fixed Effects:
 > fm.3 <- update(fmX1, . ~ Days + (1|Subject) + (0+Days|Subject))
 > stopifnot(all.equal(fm.1, fm.3))
 > 
-> fmX1s <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
-Warning messages:
-1: sparseX = TRUE has no effect at present 
-2: extra argument(s) 'sparseX' disregarded 
+> fmX1s <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy )# no longer:, sparseX=TRUE)
 > #fmX2s <- lmer2(Reaction ~ Days + (Days|Subject), sleepstudy, sparseX=TRUE)
 > options(oldOpts)  ## restore digits
 > 
 > showProc.time() #
-Time elapsed:  0.124 0.008 0.149 
+Time elapsed:  0.124 0.008 0.146 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -328,7 +325,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.332 0.024 0.388 
+Time elapsed:  0.344 0.016 0.41 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -374,40 +371,24 @@ boundary (singular) fit: see ?isSingular
 > 
 > ## sparseX version should give same numbers:
 > ## (only gives a warning now -- sparseX disregarded)
-> r2.  <- lmer(y ~ 0+lagoon + (1|habitat), data = dat,
+> if(FALSE) { ## no longer
++ r2.  <- lmer(y ~ 0+lagoon + (1|habitat), data = dat,
 +              sparseX = TRUE)
-boundary (singular) fit: see ?isSingular
-Warning messages:
-1: sparseX = TRUE has no effect at present 
-2: extra argument(s) 'sparseX' disregarded 
-> 
-> ## the summary() components we do want to compare 'dense X' vs 'sparse X':
-> nmsSumm <- c("methTitle", "devcomp", "logLik", "ngrps", "coefficients",
++ 
++ ## the summary() components we do want to compare 'dense X' vs 'sparse X':
++ nmsSumm <- c("methTitle", "devcomp", "logLik", "ngrps", "coefficients",
 +              "sigma", "REmat", "AICtab")
-> sr2  <- summary(r2)
-> sr2. <- summary(r2.)
-> sr2.$devcomp$dims['spFe'] <- 0L       # to allow for comparisons below
-> stopifnot(all.equal(sr2[nmsSumm], sr2.[nmsSumm], tolerance= 1e-14)
++ sr2  <- summary(r2)
++ sr2. <- summary(r2.)
++ sr2.$devcomp$dims['spFe'] <- 0L       # to allow for comparisons below
++ stopifnot(all.equal(sr2[nmsSumm], sr2.[nmsSumm], tolerance= 1e-14)
 +           , all.equal(ranef(r2), ranef(r2.), tolerance= 1e-14)
 +           , Matrix:::isDiagonal(vcov(r2.)) # ok
 +           , all.equal(Matrix::diag(vcov(r2.)), rep.int(V2[1,1], 4), tolerance= 1e-13)
 + #          , all(vcov(r2.)@factors$correlation == diag(4))  # not sure why this fails
 +           , TRUE)
-> r2.
-Linear mixed model fit by REML ['lmerMod']
-Formula: y ~ 0 + lagoon + (1 | habitat)
-   Data: dat
-REML criterion at convergence: 709.7447
-Random effects:
- Groups   Name        Std.Dev.
- habitat  (Intercept) 0.000   
- Residual             9.121   
-Number of obs: 100, groups:  habitat, 20
-Fixed Effects:
-lagoon1  lagoon2  lagoon3  lagoon4  
-  101.7    200.3    301.8    400.8  
-convergence code 0; 1 optimizer warnings; 0 lme4 warnings 
-> 
++ r2.
++ }
 > 
 > ### mcmcsamp() :
 > ## From: Andrew Gelman <gelman@stat.columbia.edu>
@@ -456,7 +437,7 @@ convergence code 0; 1 optimizer warnings; 0 lme4 warnings
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.2 0.024 0.234 
+Time elapsed:  0.112 0.028 0.157 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -477,7 +458,7 @@ boundary (singular) fit: see ?isSingular
 +                    "error")))
 > 
 > showProc.time() #
-Time elapsed:  0.16 0.004 0.168 
+Time elapsed:  0.156 0 0.159 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -551,4 +532,4 @@ boundary (singular) fit: see ?isSingular
 > 
 > proc.time()
    user  system elapsed 
-  2.704   0.196   3.140 
+  2.824   0.176   3.196 

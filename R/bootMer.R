@@ -43,9 +43,9 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
         pb <- do.call(pbfun,PBargs)
     }
 
-    do_parallel <- have_mc <- have_snow <- NULL
+    do_parallel <- have_mc <- have_snow <- NULL # '-Wall', set here:
     eval(initialize.parallel)
-    
+
     if (do_parallel && .progress != "none")
         message("progress bar disabled for parallel operations")
 
@@ -159,8 +159,8 @@ as.data.frame.bootMer <- function(x,...) {
 
 ## FIXME: collapse convergence warnings (ignore numeric values
 ## when tabulating) ?
-print.bootWarnings <- function(x,verbose=FALSE) {
-    msgs <- attr(x,"boot.all.msgs")
+print.bootWarnings <- function(x, verbose=FALSE) {
+    msgs <- attr(x, "boot.all.msgs")
     if (is.null(msgs) || all(lengths(msgs)==0)) {
         return(invisible(NULL))
     }
@@ -180,16 +180,16 @@ print.bootWarnings <- function(x,verbose=FALSE) {
                 wstr <- paste0(i,"(s):\n")
                 wstr <- c(wstr,capture.output(cat(cbind("  ",m,names(m)),sep="\n")))
                 wstr <- c(wstr,"\n")
-            }     
-        }            
+            }
+        }
     }
     message(wstr)
     return(invisible(NULL))
 }
-    
+
 print.bootMer <- function(x,...) {
     NextMethod(x,...)
-    print.bootWarnings(x,verbose=FALSE)
+    print.bootWarnings(x, verbose=FALSE)
     return(invisible(x))
 }
 

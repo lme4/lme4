@@ -21,7 +21,7 @@ setNBdisp <- function(object,theta) {
   rr <- object@resp
   newresp <- do.call(glmResp$new,
                      c(lapply(setNames(nm=glmNB.to.change), rr$field),
-                       list(family = negative.binomial(theta=theta))))
+                       list(family = MASS::negative.binomial(theta=theta))))
   newresp$setOffset(rr$offset)
   newresp$updateMu(rr$eta - rr$offset)
   object@resp <- newresp
@@ -29,7 +29,7 @@ setNBdisp <- function(object,theta) {
 }
 
 refitNB <- function(object, theta, control = NULL) {
-  refit(setNBdisp(object, theta), control = control)
+    refit(setNBdisp(object, theta), control = control)
 }
 
 ##' @title Optimize over the Negative Binomial Parameter Theta
@@ -49,9 +49,11 @@ optTheta <- function(object,
   it <- 0L
   NBfun <- function(t) {
       ## Kluge to retain last value and evaluation count {good enough for ..}
-      dev <- -2*logLik(lastfit <<- refitNB(lastfit,
-                                           theta = exp(t),
-                                           control = control))
+      dev <- -2*logLik(lastfit <<- factory(refitNB,
+                                           types=c("message","warning"))(
+                                               lastfit,
+                                               theta = exp(t),
+                                               control = control))
       it <<- it+1L
       if (verbose)
           cat(sprintf("%2d: th=%#15.10g, dev=%#14.8f, beta[1]=%#14.8f\n",
@@ -65,6 +67,15 @@ optTheta <- function(object,
   ## fix up the 'th' expression, replacing it by the real number,
   ## so effects:::mer.to.glm() can eval() it:
   lastfit@call$family[["theta"]] <- exp(optval$minimum)
+  ## output warnings/messages from last fit
+  for (m in c("warning","message")) {
+      if (!is.null(x <- attr(lastfit,paste0("factory-",m)))) {
+          for (i in x) {
+              get(m,pos="package:base")(i)
+          }
+      }
+  }
+          
   lastfit
 }
 
@@ -100,7 +111,11 @@ glmer.nb <- function(..., interval = log(th) + c(-3,3),
         mc[[1]] <- quote(glmer)
         mc$family <- quote(stats::poisson)
         mc$verbose <- (verbose>=2)
-        g0 <- eval(mc, parent.frame(1L))
+        ## ** FIXME: specifically add check.conv.singular="ignore"?
+        ##  suppress other warnings unless explicitly specified?
+        g0 <- suppressMessages(
+            eval(mc, parent.frame(1L))
+        )
 
         th <- est_theta(g0, limit = initCtrl$limit,
                         eps = initCtrl$eps, trace = initCtrl$trace)
@@ -111,8 +126,11 @@ glmer.nb <- function(..., interval = log(th) + c(-3,3),
 
     mc$initCtrl <- NULL ## clear to prevent infinite recursion
                         ##  in initCtrl$theta reference above ...
-    mc$family <- bquote(negative.binomial(theta=.(th)))
-    g1 <- eval(mc, parent.frame(1L))
+    mc$family <- bquote(MASS::negative.binomial(theta=.(th)))
+    ## ** see FIXME above
+    g1 <- suppressMessages(
+        eval(mc, parent.frame(1L))
+    )
 
     if(verbose) cat(" --> dev.= -2*logLik(.) =", format(-2*logLik(g1)),"\n")
     ## fix the 'data' part (only now!)
@@ -132,8 +150,10 @@ glmer.nb <- function(..., interval = log(th) + c(-3,3),
     ## FIXME: optTheta should also work by modifying mc directly,
     ##  then re-evaluating, not via refit() ...
     
-    optTheta(g1, interval=interval, tol=tol, verbose=verbose,
-             control = c(eval.parent(g1@call$control),nb.control))
+    res <- optTheta(g1, interval=interval, tol=tol, verbose=verbose,
+                    control = c(eval.parent(g1@call$control),nb.control))
+
+    res
 }
 
 ## do we want to facilitate profiling on theta??

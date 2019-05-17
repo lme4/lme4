@@ -75,16 +75,16 @@ allFit <- function(m, meth.tab = NULL,
         return(meth.tab)
     }
 
-    parallel <- match.arg(parallel)
-    
-    do_parallel <- have_mc <- have_snow <- NULL
-    eval(initialize.parallel)
-
     stopifnot(length(dm <- dim(meth.tab)) == 2, dm[1] >= 1, dm[2] >= 2,
 	      is.character(optimizer <- meth.tab[,"optimizer"]),
 	      is.character(method    <- meth.tab[,"method"]))
-    fit.names <- gsub("\\.$","",paste(optimizer, method, sep="."))
-    res <- setNames(as.list(fit.names), fit.names)
+
+    parallel <- match.arg(parallel)
+    do_parallel <- have_mc <- have_snow <- NULL # "-Wall"
+    eval(initialize.parallel) # (parallel, ncpus)   --> ./utilities.R
+    ## |--> (do_parallel, have_mc, have_snow)
+
+    fit.names <- gsub("\\.$", "", paste(optimizer, method, sep="."))
     ffun <- local({
         ## required local vars
         m
@@ -96,9 +96,12 @@ allFit <- function(m, meth.tab = NULL,
         function(i) {
             if (verbose) cat(fit.names[i],": ")
             ctrl <- getCall(m)$control
-            if (is.null(ctrl)) {
+            ## NB:  'ctrl' must become a correct *argument* list for g?lmerControl()
+            if(is.null(ctrl)) {
                 ctrl <- list(optimizer=optimizer[i])
             } else {
+                if(is.call(ctrl)) # typically true
+                    ctrl <- lapply(as.list(ctrl)[-1], eval)
                 ctrl$optimizer <- optimizer[i]
             }
             ctrl$optCtrl <- switch(optimizer[i],
@@ -115,19 +118,26 @@ allFit <- function(m, meth.tab = NULL,
         }
     })
 
+    seq_fit <- seq_along(fit.names)
     res <- if (do_parallel) {
                if (have_mc) {
-                   parallel::mclapply(seq_along(fit.names),
-                                                ffun, mc.cores = ncpus)
-        } else if (have_snow) {
-            if (is.null(cl)) {
-                cl <- parallel::makePSOCKcluster(rep("localhost", ncpus))
-                res <- parallel::parLapply(cl, seq_along(fit.names), ffun)
-                parallel::stopCluster(cl)
-                res
-            } else parallel::parLapply(cl, seq_along(fit.names), ffun)
-        }
-    } else lapply(seq_along(fit.names), ffun)
+                   parallel::mclapply(seq_fit,
+                                      ffun, mc.cores = ncpus)
+               } else if(have_snow) {
+                   if(is.null(cl)) {
+                       cl <- parallel::makePSOCKcluster(rep("localhost", ncpus))
+                       res <- parallel::parLapply(cl, seq_fit, ffun)
+                       parallel::stopCluster(cl)
+                       res
+                   } else parallel::parLapply(cl, seq_fit, ffun)
+               } else {
+                   warning("'do_parallel' is true, but 'have_mc' and 'have_snow' are not.  Should not happen!")
+                   ## or stop()  or  we could silently use lapply(..)
+                   setNames(as.list(fit.names), fit.names)
+               }
+           } else
+               lapply(seq_fit, ffun)
+
     names(res) <- fit.names
     structure(res, class = "allFit", fit = m, sessionInfo =  sessionInfo(),
               data = data # is dropped if NULL
@@ -160,43 +170,34 @@ print.allFit <- function(x, width=80, ...) {
     ## cat("differences in parameters:\n")
     ## ss <- summary(x)
     ## allpars <- cbind(ss$fixef, ss$sdcor)
-    ## par_max <- 
+    ## par_max <-
     invisible(x)
 }
 
 summary.allFit <- function(object, ...) {
-    namefun <- function(x) {
-        if (!is.null(dim(x))) {
-            rownames(x) <- names(objOK)
-        } else {
-            names(x) <- names(objOK)
-        }
-        x
-    }
-    afun <- function(x, FUN) {
-        f1 <- FUN(x[[1]])
+    afun <- function(x, FUN, ...) {
+        f1 <- FUN(x[[1]], ...)
         nm <- names(f1)
         n <- length(f1)
-        res <- vapply(x, FUN, numeric(n))
+        res <- vapply(x, FUN, numeric(n), ...)
         if (!is.null(dim(res))) {
             res <- t(res)
         } else {
             res <- as.matrix(res)
             colnames(res) <- nm
-        } 
+        }
         res
     }
     which.OK <- !vapply(object, is, "error", FUN.VALUE=logical(1))
     objOK <- object[which.OK]
     msgs <- lapply(objOK, function(x) x@optinfo$conv$lme4$messages)
-    nfix <- length(fixef(objOK[[1]]))
     fixef <- afun(objOK, fixef)
     llik <- vapply(objOK, logLik, numeric(1))
-    times <- afun(objOK, function(x) attr(x, "time"))
+    times <- afun(objOK, attr, "time")
     feval <- vapply(objOK, function(x) x@optinfo$feval, numeric(1))
     vfun <- function(x) as.data.frame(VarCorr(x))[["sdcor"]]
     sdcor <- afun(objOK, vfun)
-    theta <- afun(objOK, function(x) getME(x, name="theta"))
+    theta <- afun(objOK, getME, name="theta")
     cnm <- tnames(objOK[[1]])
     if (sigma(objOK[[1]])!=1) cnm <- c(cnm,"sigma")
     colnames(sdcor) <- unname(cnm)
@@ -211,7 +212,8 @@ summary.allFit <- function(object, ...) {
 
 ## not yet ...
 plot.allFit <- function(x, abbr=16, ...) {
-     if (! (require(ggplot2))) {
+    values <- opt <- NULL ## R code check/non-standard evaluation
+     if (! (requireNamespace("ggplot2"))) {
          stop("ggplot2 package must be installed to plot allFit objects")
      }
      aes <- NULL ## code check
@@ -224,4 +226,4 @@ plot.allFit <- function(x, abbr=16, ...) {
          + ggplot2::facet_wrap(~ind,scale="free")
          + ggplot2::theme(legend.position="none")
      )
-}    
+}

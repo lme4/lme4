@@ -92,7 +92,8 @@ getME(object, name, ...)
       \item{\code{"q_i"}:}{numbers of columns of the term-wise model matrices, \code{ZtList}}
       \item{\code{"k"}:}{number of random effects terms}
       \item{\code{"m_i"}:}{numbers of covariance parameters in each term}
-      \item{\code{"m"}:}{total number of covariance parameters}
+      \item{\code{"m"}:}{total number of covariance parameters, i.e., the
+	same as \code{dims@nth} below.}
       \item{\code{"cnms"}:}{the \dQuote{component names}, a \code{\link{list}}.}
       \item{\code{"REML"}:}{\code{0} indicates the model was fitted by maximum
 	likelihood, any other positive integer indicates fitting by

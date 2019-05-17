@@ -115,7 +115,7 @@
       expression must be available in \code{newdata}.
     }
     \item{For negative binomial models, use the \code{negative.binomial}
-      family (from the \code{MASS} package)
+      family (from the \CRANpkg{MASS} package)
       and specify the overdispersion parameter via the
       \code{theta} (sic) parameter of the family function, e.g.
       \code{simulate(...,family=negative.binomial(theta=1))} to simulate

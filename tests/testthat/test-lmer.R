@@ -12,11 +12,13 @@ context("fitting lmer models")
 test_that("lmer", {
     set.seed(101)
     d <- data.frame(z=rnorm(200),
-                    f=factor(sample(1:10,200,replace=TRUE)))
+                    f=factor(sample(1:10,200, replace=TRUE)))
 
-    expect_warning(lmer(z~ 1|f, d, method="abc"),"Use the REML argument")
-    expect_warning(lmer(z~ 1|f, d, method="Laplace"),"Use the REML argument")
-    expect_warning(lmer(z~ 1|f, d, sparseX=TRUE),"has no effect at present")
+    ## Using 'method=*' defunct in 2019-05 (after 6 years of deprecation)
+    ## expect_warning(lmer(z~ 1|f, d, method="abc"),"Use the REML argument")
+    ## expect_warning(lmer(z~ 1|f, d, method="Laplace"),"Use the REML argument")
+    ##sp No '...' anymore
+    ##sp expect_warning(lmer(z~ 1|f, d, sparseX=TRUE),"has no effect at present")
     expect_error(lmer(z~ 1|f, ddd), "'data' not found")
     expect_error(lmer(z~ 1|f), "object 'z' not found")
     expect_error(lmer(z~ 1|f, d[,1:1000]), "bad 'data': undefined columns selected")
@@ -167,7 +169,7 @@ test_that("lmer", {
                    "some options")
     options(lmerControl=NULL)
     options(warn=0)
-    expect_warning(lmer(Yield ~ 1|Batch, Dyestuff, junkArg=TRUE),"extra argument.*disregarded")
+    expect_error(lmer(Yield ~ 1|Batch, Dyestuff, junkArg=TRUE), "unused argument")
     expect_warning(lmer(Yield ~ 1|Batch, Dyestuff, control=list()),
                     "passing control as list is deprecated")
     if(FALSE) ## Hadley broke this

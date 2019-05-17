@@ -34,8 +34,8 @@ checkCtrlLevels <- function(cstr, val, smallOK=FALSE) {
 }
 
 ## general identifiability checker, used both in checkZdim and checkZrank
-wmsg <- function(n,cmp.val,allow.n,msg1="",msg2="",msg3="") {
-    if (allow.n) {
+wmsg <- function(n, cmp.val, allow.n, msg1="", msg2="", msg3="") {
+    if (allow.n) { ## allow  n == cmp.val
         unident <- n < cmp.val
         cmp <- "<"
         rstr <- ""
@@ -47,7 +47,7 @@ wmsg <- function(n,cmp.val,allow.n,msg1="",msg2="",msg3="") {
     ## %s without spaces intentional (don't want an extra space if the
     ## message component is empty)
     wstr <- sprintf("%s (=%d) %s %s (=%d)%s; the random-effects parameters%s are probably unidentifiable",
-                    msg1, n, cmp,msg2,cmp.val, msg3, rstr)
+                    msg1, n, cmp,msg2, cmp.val,msg3,                    rstr)
     list(unident=unident, wstr=wstr)
 }
 
@@ -84,7 +84,7 @@ checkZdims <- function(Ztlist, n, ctrl, allow.n=FALSE) {
     } else character()
 }
 
-
+##' @importFrom Matrix rankMatrix
 checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
 {
     stopifnot(is.list(ctrl), is.numeric(n), is.numeric(nonSmall))
@@ -94,9 +94,16 @@ checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
         d <- dim(Zt)
         doTr <- d[1L] < d[2L] # Zt is "wide" => qr needs transpose(Zt)
         if(!(grepl("Small",cc) && prod(d) > nonSmall)) {
-            rankZ <- rankMatrix(if(doTr) t(Zt) else Zt, method="qr",
-                                sval = numeric(min(d)))
-            ww <- wmsg(n,rankZ,allow.n,"number of observations","rank(Z)")
+            rankZ <- rankMatrix(if(doTr) t(Zt) else Zt, method="qr")
+            ww <- wmsg(n, rankZ, allow.n, "number of observations", "rank(Z)")
+            if(is.na(rankZ)) {
+                cc <- "stop"
+                ww <-
+                    list(unident = TRUE,
+                         wstr = sub("^.*;",
+                                    "rank(Z) is NA: invalid random effect factors?",
+                                    ww$wstr))
+            }
             if (ww$unident) {
                 switch(cc,
                        "warningSmall" =, "warning" = warning(ww$wstr,call.=FALSE),
@@ -218,6 +225,7 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
 ##' deficient?
 ##' @return The design matrix \code{X} without redundant columns.
 ##' @seealso \code{\link{qr}} and \code{\link{lm}}
+##' @importFrom Matrix rankMatrix
 ##' @author Rune Haubo Bojesen Christensen (drop.coef()); Martin Maechler
 chkRank.drop.cols <- function(X, kind, tol = 1e-7, method = "qr.R") {
     ## Test and match arguments:
@@ -319,7 +327,6 @@ checkResponse <- function(y, ctrl) {
 ##' \item{X}{fixed-effect design matrix}
 ##' \item{reTrms}{list containing information on random effects structure: result of \code{\link{mkReTrms}}}
 ##' \item{REML}{(lFormula only): logical flag: use restricted maximum likelihood? (Copy of argument.)}
-##' @importFrom Matrix rankMatrix
 ##' @export
 lFormula <- function(formula, data=NULL, REML = TRUE,
                      subset, weights, na.action, offset, contrasts = NULL,
@@ -328,11 +335,10 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     control <- control$checkControl ## this is all we really need
     mf <- mc <- match.call()
 
-    ignoreArgs <- c("start","verbose","devFunOnly","control")
-    l... <- list(...)
-    l... <- l...[!names(l...) %in% ignoreArgs]
-    do.call(checkArgs, c(list("lmer"), l...))
-    if (!is.null(list(...)[["family"]])) {
+    dontChk <- c("start", "verbose", "devFunOnly")
+    dots <- list(...)
+    do.call(checkArgs, c(list("lmer"), dots[!names(dots) %in% dontChk]))
+    if (!is.null(dots[["family"]])) {
         ## lmer(...,family=...); warning issued within checkArgs
         mc[[1]] <- quote(lme4::glFormula)
         if (missing(control)) mc[["control"]] <- glmerControl()
@@ -345,7 +351,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
                              checkLHS = control$check.formula.LHS == "stop")
     #mc$formula <- formula <- as.formula(formula,env=denv) ## substitute evaluated call
     formula <- as.formula(formula, env=denv)
-    ## as.formula ONLY sets environment if not already explicitly set ...
+    ## as.formula ONLY sets environment if not already explicitly set.
     ## ?? environment(formula) <- denv
     # get rid of || terms so update() works as expected
     RHSForm(formula) <- expandDoubleVerts(RHSForm(formula))
@@ -360,8 +366,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     fr.form <- subbars(formula) # substitute "|" by "+"
     environment(fr.form) <- environment(formula)
     ## model.frame.default looks for these objects in the environment
-    ## of the *formula* (see 'extras', which is anything passed in ...),
-    ## so they have to be put there ...
+    ## of the *formula* (see 'extras', which is anything passed in '...'),
+    ## so they have to be put there:
     for (i in c("weights", "offset")) {
         if (!eval(bquote(missing(x=.(i)))))
             assign(i,get(i,parent.frame()),environment(fr.form))
@@ -423,51 +429,64 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 }
 
 ## utility f'n for checking starting values
-getStart <- function(start,lower,pred,returnVal=c("theta","all")) {
+getStart <- function(start, pred, returnVal = c("theta","all")) {
     returnVal <- match.arg(returnVal)
+    doFixef <- returnVal == "all"
     ## default values
     theta <- pred$theta
     fixef <- pred$delb
-    if (!is.null(start)) {
-        if (is.numeric(start)) {
-            theta <- start
-        } else {
-            if (!is.list(start)) stop("start must be a list or a numeric vector")
-            if (!all(sapply(start,is.numeric))) stop("all elements of start must be numeric")
-            if (length((badComp <- setdiff(names(start),c("theta","fixef")))) > 0) {
-                stop("incorrect components in start list: ",badComp)
-            }
-            if (!is.null(start$theta)) theta <- start$theta
-            noFixef <- is.null(start$fixef)
+    if (is.numeric(start)) {
+        theta <- start
+    } else if (is.list(start)) {
+        if (!all(vapply(start, is.numeric, NA)))
+            stop("all elements of start must be numeric")
+        if (length((badComp <- setdiff(names(start), c("theta","fixef")))) > 0)
+            stop("incorrect components in start list: ", badComp)
+        if (!is.null(start$theta)) theta <- start$theta
+        if (doFixef) {
             noBeta <- is.null(start$beta)
-            if (!noFixef) {
-                fixef <- start$fixef
-                if (!noBeta) {
-                    message("Starting values for fixed effects coefficients",
-                            "specified through both 'fixef' and 'beta',",
-                            "only 'fixef' used")
-                }
-            } else if(!noBeta) {
-                fixef <- start$beta
+            if(!is.null(sFE <- start$fixef) || !noBeta) {
+                fixef <-
+                    if(!is.null(sFE)) {
+                        if(!noBeta)
+                            message("Starting values for fixed effects coefficients",
+                                    "specified through both 'fixef' and 'beta',",
+                                    "only 'fixef' used")
+                        ## FIXME? accumulating heuristic evidence for drop1()-like case
+                        if((p <- length(fixef)) < length(sFE) && p == ncol(pred$X) &&
+                           is.character(ns <- names(sFE)) &&
+                           all((cnX <- dimnames(pred$X)[[2L]]) %in% ns))
+                            ## take "matching" fixef[] only
+                            sFE[cnX]
+                        else
+                            sFE
+                    }
+                    else if(!noBeta)
+                        start$beta
             }
+            if (length(fixef)!=length(pred$delb))
+                stop("incorrect number of fixef components (!=",length(pred$delb),")")
         }
     }
-    if (length(theta)!=length(pred$theta))
+    else if (!is.null(start))
+        stop("'start' must be NULL, a numeric vector or named list of such vectors")
+    if (!is.null(start) && length(theta) != length(pred$theta))
         stop("incorrect number of theta components (!=",length(pred$theta),")")
-    if (length(fixef)!=length(pred$delb))
-        stop("incorrect number of fixef components (!=",length(pred$delb),")")
-    if (returnVal=="theta") theta else c(theta,fixef)
+
+    if(doFixef) c(theta, fixef) else theta
 }
 
 ## update start
 ## should refactor this to
-##  turn numeric start into start=list(theta=start) immediately ... ??
-updateStart <- function(start,theta) {
-    if (is.null(start)) return(NULL)
+##  turn numeric start into start=list(theta=start) immediately ??
+updateStart <- function(start, theta) {
     if (is.numeric(start)) {
-        start <- theta
-    } else if (!is.null(start$theta)) start$theta <- theta
-    start
+        theta
+    } else {
+        if (!is.null(start$theta))
+            start$theta <- theta
+        start
+    }
 }
 
 ##' @rdname modular
@@ -537,7 +556,7 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL,
         }
     }
 
-    ## theta <- getStart(start, reTrms$lower, rho$pp)
+    ## theta <- getStart(start, rho$pp)
     ## ^^^^^ unused / obfuscation? should the above be rho$pp$setTheta(.) ?
     ## MM: commenting it did not break any of our checks
     if (length(rho$resp$y) > 0)  ## only if non-trivial y
@@ -561,7 +580,7 @@ optimizeLmer <- function(devfun,
     rho <- environment(devfun)
     opt <- optwrap(optimizer,
                    devfun,
-                   getStart(start,rho$lower,rho$pp),
+                   getStart(start, rho$pp),
                    lower=rho$lower,
                    control=control,
                    adj=FALSE, verbose=verbose,
@@ -575,7 +594,7 @@ optimizeLmer <- function(devfun,
         if (length(bvals <- which(rho$pp$theta==rho$lower)) > 0) {
             ## *don't* use numDeriv -- cruder but fewer dependencies, no worries
             ##  about keeping to the interior of the allowed space
-            theta0 <- new("numeric",rho$pp$theta) ## 'deep' copy ...
+            theta0 <- new("numeric",rho$pp$theta) ## 'deep' copy:
             d0 <- devfun(theta0)
             btol <- 1e-5  ## FIXME: make user-settable?
             bgrad <- sapply(bvals,
@@ -630,10 +649,9 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     if (family$family %in% c("quasibinomial", "quasipoisson", "quasi"))
         stop('"quasi" families cannot be used in glmer')
 
-    ignoreArgs <- c("start","verbose","devFunOnly","optimizer", "control", "nAGQ")
-    l... <- list(...)
-    l... <- l...[!names(l...) %in% ignoreArgs]
-    do.call(checkArgs, c(list("glmer"), l...))
+    dontChk <- c("verbose", "devFunOnly", "optimizer", "nAGQ")
+    dots <- list(...)
+    do.call(checkArgs, c(list("glmer"), dots[!names(dots) %in% dontChk]))
 
     cstr <- "check.formula.LHS"
     checkCtrlLevels(cstr, control[[cstr]])
@@ -651,8 +669,8 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     fr.form <- subbars(formula) # substitute "|" by "+"
     environment(fr.form) <- environment(formula)
     ## model.frame.default looks for these objects in the environment
-    ## of the *formula* (see 'extras', which is anything passed in ...),
-    ## so they have to be put there ...
+    ## of the *formula* (see 'extras', which is anything passed in '...'),
+    ## so they have to be put there:
     for (i in c("weights", "offset")) {
         if (!eval(bquote(missing(x=.(i)))))
             assign(i, get(i, parent.frame()), environment(fr.form))
@@ -769,17 +787,17 @@ optimizeGlmer <- function(devfun,
     ## FIXME: do we need nAGQ here?? or can we clean up?
     verbose <- as.integer(verbose)
     rho <- environment(devfun)
-    if (stage==1) {
-        start <- getStart(start, lower=rho$lower, pred=rho$pp, "theta")
+    if (stage == 1) {
+        start <- getStart(start, rho$pp, "theta")
         adj <- FALSE
     } else { ## stage == 2
-        start <- getStart(start, lower=rho$lower, pred=rho$pp, returnVal="all")
+        start <- getStart(start, rho$pp, "all")
         adj <- TRUE
     }
     opt <- optwrap(optimizer, devfun, start, rho$lower,
                    control=control, adj=adj, verbose=verbose,
                    ...)
-    if (stage==1) {
+    if (stage == 1) {
         rho$control <- attr(opt,"control")
         rho$nAGQ <- nAGQ
     } else {  ## stage == 2
@@ -792,12 +810,11 @@ optimizeGlmer <- function(devfun,
         opt <- check.boundary(rho, opt, devfun, boundary.tol)
         if(stage != 1) rho$resp$setOffset(rho$baseOffset)
     }
-
-    return(opt)
+    opt
 }
 
 check.boundary <- function(rho,opt,devfun,boundary.tol) {
-    bdiff <- rho$pp$theta-rho$lower[seq_along(rho$pp$theta)]
+    bdiff <- rho$pp$theta - rho$lower[seq_along(rho$pp$theta)]
     if (any(edgevals <- 0 < bdiff & bdiff < boundary.tol)) {
         ## try sucessive "close-to-edge parameters" to see
         ## if we can improve by setting them equal to the boundary

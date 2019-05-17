@@ -89,12 +89,12 @@
     a difficult tradeoff between computational expense and
     accuracy.  At present the Hessian computations used
     for convergence checking (and for estimating standard errors
-    of fixed-effect parameters for GLMMs) follow the \pkg{ordinal} package
+    of fixed-effect parameters for GLMMs) follow the \CRANpkg{ordinal} package
     in using a naive but computationally cheap centered finite difference
     computation (with a fixed step size of \eqn{10^{-4}}{1e-4}).  A more
     reliable but more expensive approach is to use
     \href{http://en.wikipedia.org/wiki/Richardson_extrapolation}{Richardson extrapolation},
-    as implemented in the \pkg{numDeriv} package.
+    as implemented in the \CRANpkg{numDeriv} package.
 
     \item it is important to scale the estimated gradient at
     the estimate appropriately; two reasonable approaches are

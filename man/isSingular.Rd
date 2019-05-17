@@ -1,25 +1,19 @@
 \name{isSingular}
+\title{Test Fitted Model for (Near) Singularity}
 \alias{isSingular}
-\alias{boundary}
-\title{
-  Test fitted model for (near) singularity
-}
+\concept{boundary}
 \description{
-  Evaluates whether a fitted mixed model is singular, i.e.
+  Evaluates whether a fitted mixed model is (almost / near) singular, i.e.,
   the parameters are on the boundary of the feasible
   parameter space: variances of one or more linear combinations of effects
   are (close to) zero.
 }
 \usage{
-isSingular(x, tol = 1e-05)
+isSingular(x, tol = 1e-4)
 }
 \arguments{
-  \item{x}{
-    a fitted \code{merMod} object (result of \code{lmer} or \code{glmer})
-}
-  \item{tol}{
-    numerical tolerance for detecting singularity
-}
+  \item{x}{a fitted \code{merMod} object (result of \code{lmer} or \code{glmer}).}
+  \item{tol}{numerical tolerance for detecting singularity.}
 }
 \details{
   Complex mixed-effect models (i.e., those with a
@@ -44,7 +38,7 @@ isSingular(x, tol = 1e-05)
   of orthogonal variance components and the mapping from
   variance terms in the model to orthogonal components
   (i.e., eigenvector/rotation matrices).
-  
+
   While singular models are statistically well defined (it is
   theoretically sensible for the true maximum likelihood estimate
   to correspond to a singular fit), there are real concerns
@@ -54,7 +48,7 @@ isSingular(x, tol = 1e-05)
   difficult to compute profile confidence intervals for such
   models); (3) standard inferential procedures such as Wald statistics
   and likelihood ratio tests may be inappropriate.
-  
+
   There is not yet consensus about how to deal with singularity, or
   more generally to choose which random-effects specification (from
   a range of choices of varying complexity) to use.  Some proposals
@@ -76,37 +70,41 @@ isSingular(x, tol = 1e-05)
     that produces maximum \emph{a posteriori} (MAP)
     estimates using \emph{regularizing} priors to force
     the estimated random-effects variance-covariance matrices
-    away from singularity (Chung et al 2013, \pkg{blme} package)
+    away from singularity (Chung et al 2013, \CRANpkg{blme} package)
     \item use a fully Bayesian method that both regularizes the
     model via informative priors and gives estimates
     and credible intervals for all parameters that average
     over the uncertainty in the random effects parameters
     (Gelman and Hill 2006, McElreath 2015;
-    \pkg{MCMCglmm}, \pkg{rstanarm} and \pkg{brms} packages)
-  }  
+    \CRANpkg{MCMCglmm}, \CRANpkg{rstanarm} and \CRANpkg{brms} packages)
+  }
 }
 \value{
-  a logical value 
+  a logical value
 }
 \seealso{\code{\link{getME}}, \code{\link{rePCA}}}
 \references{
-  \itemize{
-    \item Dale J. Barr, Roger Levy, Christoph Scheepers, and Harry J. Tily. Random effects structure for confirmatory hypothesis testing: Keep it maximal.
-    Journal of Memory and Language, 68(3):255–278, April 2013.
-    \item Douglas Bates, Reinhold Kliegl, Shravan Vasishth, and Harald Baayen.
-    Parsimonious Mixed Models. arXiv:1506.04967 [stat], June 2015. arXiv:
-    1506.04967.
-    \item Yeojin Chung, Sophia Rabe-Hesketh, Vincent Dorie, Andrew Gelman, and
-    Jingchen Liu. A nondegenerate penalized likelihood estimator for variance
-    parameters in multilevel models. Psychometrika, pages 1–25, 2013.
-    \item Andrew Gelman and Jennifer Hill. Data Analysis Using Regression and
-    Multilevel/Hierarchical Models. Cambridge University Press, Cambridge,
-    England, 2006.
-    \item Hannes Matuschek, Reinhold Kliegl, Shravan Vasishth, Harald Baayen, and
-    Douglas Bates. Balancing type I error and power in linear mixed models.
-    Journal of Memory and Language, 94:305–315, 2017.
-    \item Richard McElreath. Statistical Rethinking: A Bayesian Course with Examples in R and Stan. Chapman and Hall/CRC, Boca Raton, December
-    2015
-  }
+  Dale J. Barr, Roger Levy, Christoph Scheepers, and Harry J. Tily (2013).
+  Random effects structure for confirmatory hypothesis testing: Keep it maximal;
+  \emph{Journal of Memory and Language} \bold{68}(3), 255--278.
+
+  Douglas Bates, Reinhold Kliegl, Shravan Vasishth, and Harald Baayen (2015).
+  \emph{Parsimonious Mixed Models}; preprint (\url{https://arxiv.org/abs/1506.04967}).
+
+  Yeojin Chung, Sophia Rabe-Hesketh, Vincent Dorie, Andrew Gelman, and Jingchen Liu (2013).
+  A nondegenerate penalized likelihood estimator for variance parameters in multilevel models;
+  \emph{Psychometrika} \bold{78}, 685--709; \doi{10.1007/S11336-013-9328-2}.
+
+  Andrew Gelman and Jennifer Hill (2006).
+  \emph{Data Analysis Using Regression and Multilevel/Hierarchical Models}.
+  Cambridge University Press.
+
+  Hannes Matuschek, Reinhold Kliegl, Shravan Vasishth, Harald Baayen, and Douglas Bates (2017).
+  Balancing type I error and power in linear mixed models.
+  \emph{Journal of Memory and Language} \bold{94}, 305–315.
+
+  Richard McElreath (2015)
+  \emph{Statistical Rethinking: A Bayesian Course with Examples in R and Stan}.
+  Chapman and Hall/CRC.
 }
 \keyword{utilities}

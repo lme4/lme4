@@ -53,7 +53,7 @@ here are really base R functions that can be accessed via optimx,
   \code{allFit} to make sure that the
   \code{lme4} package is loaded on all of the workers
 }
-\seealso{\code{slice},\code{slice2D} from the \code{bbmle} package}
+\seealso{\code{slice},\code{slice2D} from the \CRANpkg{bbmle} package}
 \examples{
 library(lme4)
 gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),

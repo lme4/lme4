@@ -10,9 +10,11 @@
   \itemize{
     \item general control parameters, most importantly \code{optimizer},
     further \code{restart_edge}, etc;
+
     \item model- or data-checking specifications, in short
     \dQuote{checking options}, such as \code{check.nobs.vs.rankZ}, or
     \code{check.rankX} (currently not for \code{nlmerControl});
+
     \item all the parameters to be passed to the optimizer, e.g.,
     maximal number of iterations, passed via the \code{optCtrl} list
     argument.
@@ -20,11 +22,11 @@
 }
 \usage{
 lmerControl(optimizer = "nloptwrap",% was "Nelder_Mead" till Dec.2013,
-				    % then "bobyqa" till  Sep/Oct 2018
+				    % then "bobyqa" till Oct 2018; CRAN till 1.1-20 (2019-02-04)
     restart_edge = TRUE,
     boundary.tol = 1e-5,
-    calc.derivs=TRUE,
-    use.last.params=FALSE,
+    calc.derivs = TRUE,
+    use.last.params = FALSE,
     sparseX = FALSE,
     standardize.X = FALSE,
     ## input checking options
@@ -32,7 +34,7 @@ lmerControl(optimizer = "nloptwrap",% was "Nelder_Mead" till Dec.2013,
     check.nobs.vs.nlev = "stop",
     check.nlev.gtreq.5 = "ignore",
     check.nlev.gtr.1 = "stop",
-    check.nobs.vs.nRE="stop",
+    check.nobs.vs.nRE= "stop",
     check.rankX = c("message+drop.cols", "silent.drop.cols", "warn+drop.cols",
                     "stop.deficient", "ignore"),
     check.scaleX = c("warning","stop","silent.rescale",
@@ -40,18 +42,18 @@ lmerControl(optimizer = "nloptwrap",% was "Nelder_Mead" till Dec.2013,
     check.formula.LHS = "stop",
     ## convergence checking options
     check.conv.grad     = .makeCC("warning", tol = 2e-3, relTol = NULL),
-    check.conv.singular = .makeCC(action = "message",  tol = 1e-4),
+    check.conv.singular = .makeCC(action = "message", tol = formals(isSingular)$tol),
     check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
     ## optimizer args
     optCtrl = list(),
-    mod.type="lmer"
+    mod.type = "lmer"
 )
 
 glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     restart_edge = FALSE,
     boundary.tol = 1e-5,
-    calc.derivs=TRUE,
-    use.last.params=FALSE,
+    calc.derivs = TRUE,
+    use.last.params = FALSE,
     sparseX = FALSE,
     standardize.X = FALSE,
     ## input checking options
@@ -59,7 +61,7 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     check.nobs.vs.nlev = "stop",
     check.nlev.gtreq.5 = "ignore",
     check.nlev.gtr.1 = "stop",
-    check.nobs.vs.nRE="stop",
+    check.nobs.vs.nRE= "stop",
     check.rankX = c("message+drop.cols", "silent.drop.cols", "warn+drop.cols",
                     "stop.deficient", "ignore"),
     check.scaleX = c("warning","stop","silent.rescale",
@@ -67,15 +69,15 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     check.formula.LHS = "stop",
     ## convergence checking options
     check.conv.grad     = .makeCC("warning", tol = 2e-3, relTol = NULL),
-    check.conv.singular = .makeCC(action = "message",  tol = 1e-4),
+    check.conv.singular = .makeCC(action = "message", tol = formals(isSingular)$tol),
     check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
     ## optimizer args
     optCtrl = list(),
-    mod.type="glmer",
-    tolPwrss=1e-7,
-    compDev=TRUE,
-    nAGQ0initStep=TRUE,
-    check.response.not.const="stop"
+    mod.type = "glmer",
+    tolPwrss = 1e-7,
+    compDev = TRUE,
+    nAGQ0initStep = TRUE,
+    check.response.not.const = "stop"
  )
 
 nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
@@ -84,11 +86,13 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
 .makeCC(action, tol, relTol, \dots)
 }
 \arguments{
-  \item{optimizer}{character - name of optimizing
-    function(s).  A character vector or list of functions: length 1 for
+  \item{optimizer}{character - name of optimizing function(s).  A
+    \code{\link{character}} vector or list of functions: length 1 for
     \code{lmer} or \code{glmer}, possibly length 2 for \code{glmer}).
-    The built-in optimizers are \code{\link{Nelder_Mead}} and
-    \code{\link[minqa]{bobyqa}} (from the \pkg{minqa} package). Any
+    Built-in optimizers are \code{"\link{Nelder_Mead}"},
+    \code{"\link[minqa]{bobyqa}"} (from the \CRANpkg{minqa} package),
+    \code{"\link{nlminbwrap}"} (using base \R's \code{\link{nlminb}}) and the
+    default for \code{lmerControl()}, \code{"\link{nloptwrap}"}.  Any
     minimizing function that allows box constraints can be used provided
     that it
     \describe{
@@ -105,11 +109,11 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     }
     Special provisions are made for \code{\link{bobyqa}},
     \code{\link{Nelder_Mead}}, and optimizers wrapped in the
-    \pkg{optimx} package; to use the \pkg{optimx} optimizers (including
+    \CRANpkg{optimx} package; to use the \pkg{optimx} optimizers (including
     \code{L-BFGS-B} from base \code{\link{optim}} and
     \code{\link{nlminb}}), pass the \code{method} argument to
     \code{optim} in the \code{optCtrl} argument (you may
-    need to load the \code{optimx} package manually using
+    need to load the \pkg{optimx} package manually using
     \code{\link{library}(optimx)}).
 
     For \code{glmer}, if \code{length(optimizer)==2}, the first element
@@ -192,7 +196,8 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     i.e. one where some parameters are on the boundary of the feasible
     space (for example, random effects variances equal to 0 or
     correlations between random effects equal to +/- 1.0);
-    as for \code{check.conv.grad} above.}
+    as for \code{check.conv.grad} above.  The default is to use
+    \code{\link{isSingular}(.., tol = *)}'s default.}
   \item{check.conv.hess}{rules for checking the Hessian of the deviance
     function for convergence.; as for \code{check.conv.grad}
     above.}
@@ -224,16 +229,26 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     will try before giving up - in contrast to
     \code{\link{optim}} and \code{optimx}-wrapped optimizers,
     which use \code{maxit}. (Also see \code{\link{convergence}}
-    for details of stopping tolerances for different optimizers.)}
+    for details of stopping tolerances for different optimizers.)
+
+    \emph{Note:} All of \code{\link{lmer}()}, \code{\link{glmer}()} and
+    \code{\link{nlmer}()} have an optional integer argument \code{verbose}
+    which you should raise (to a positive value) in order to get diagnostic
+    console output about the optimization progress.
+  }
   \item{action}{character - generic choices for the severity level
-    of any test. "ignore": skip the test. "warning": warn if test fails.
-    "message": print a message if test fails.
-    "stop": throw an error if test fails.}
+    of any test, with possible values \describe{
+      \item{"ignore":}{skip the test.}
+      \item{"warning":}{warn if test fails.}
+      \item{"message":}{print a message if test fails.}
+      \item{"stop":}{throw an error if test fails.}
+    }
+  }
   \item{tol}{(numeric) tolerance for checking the gradient, scaled
     relative to the curvature (i.e., testing the gradient on a scale
     defined by its Wald standard deviation)}
   \item{relTol}{(numeric) tolerance for the gradient, scaled
-  relative to the magnitude of the estimated coefficient}
+    relative to the magnitude of the estimated coefficient}
   \item{mod.type}{model type (for internal use)}
   \item{standardize.X}{scale columns of X matrix? (not yet implemented)}
   \item{\dots}{other elements to include in check specification}
@@ -268,15 +283,18 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
   will suppress warnings that the number of observations is less than
   the rank of the random effects model matrix \code{Z}.
 }
-\seealso{\link{convergence}}
+\seealso{\link{convergence} and \code{\link{allFit}()} which fits
+  for a couple of optimizers.}
 \examples{
 str(lmerControl())
 str(glmerControl())
-## fit with default "bobyqa" algorithm ...
+## fit with default algorithm [nloptr version of BOBYQA] ...
 fm0 <- lmer(Reaction ~ Days +   ( 1 | Subject), sleepstudy)
 fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
-## or with "Nelder_Mead" (the previous default) ...
-fm1_bobyqa <- update(fm1, control = lmerControl(optimizer="Nelder_Mead"))
+## or with "bobyqa" (default 2013 - 2019-02) ...
+fm1_bobyqa <- update(fm1, control = lmerControl(optimizer="bobyqa"))
+## or with "Nelder_Mead" (the default till 2013) ...
+fm1_NMead <- update(fm1, control = lmerControl(optimizer="Nelder_Mead"))
 ## or with the nlminb function used in older (<1.0) versions of lme4;
 ## this will usually replicate older results
 if (require(optimx)) {
@@ -306,7 +324,9 @@ optimwrap <- function(fn,par,lower,upper,control=list(),
 fm0_brent <- update(fm0,
                     control = lmerControl(optimizer = "optimwrap",
                                           optCtrl = list(method="Brent")))
-## You can also use functions from the nloptr package.
+
+## You can also use functions (in addition to the lmerControl() default "NLOPT_BOBYQA")
+## from the 'nloptr' package, see also  '?nloptwrap' :
 if (require(nloptr)) {
     fm1_nloptr_NM <- update(fm1, control=lmerControl(optimizer="nloptwrap",
                                       optCtrl=list(algorithm="NLOPT_LN_NELDERMEAD")))

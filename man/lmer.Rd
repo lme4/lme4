@@ -9,7 +9,7 @@
 \usage{
 lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
      start = NULL, verbose = 0L, subset, weights, na.action,
-     offset, contrasts = NULL, devFunOnly = FALSE, \dots)
+     offset, contrasts = NULL, devFunOnly = FALSE)
 }
 \arguments{
   \item{formula}{a two-sided linear formula object describing both the
@@ -19,12 +19,11 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
     distinguished by vertical bars (\code{|}) separating expressions
     for design matrices from grouping factors.  Two vertical bars
     (\code{||}) can be used to specify multiple uncorrelated random
-    effects for the same grouping variable. (Because of the way it is
-    implemented, the \code{||}-syntax \emph{works
-    only for design matrices containing
-    numeric (continuous) predictors}; to fit models with independent
-  categorical effects, see \code{\link{dummy}} or the \code{lmer_alt}
-  function from the \code{afex} package.) 
+    effects for the same grouping variable. %----------
+    (Because of the way it is implemented, the \code{||}-syntax \emph{works
+       only for design matrices containing numeric (continuous) predictors};
+     to fit models with independent categorical effects, see \code{\link{dummy}}
+     or the \code{lmer_alt} function from the \CRANpkg{afex} package.)
 }
 
   \item{data}{an optional data frame containing the variables named in
@@ -95,15 +94,19 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
     variables stored in its environment, it may not return
     \emph{exactly} the same values on subsequent calls (but the results
     should always be within machine tolerance).}
-
-  \item{\dots}{other potential arguments.  A \code{method} argument was
-    used in earlier versions of the package.  Its functionality has been
-    replaced by the \code{REML} argument.}
 }
 \value{
   An object of class \code{\link[=merMod-class]{merMod}} (more specifically,
   an object of \emph{subclass} \code{lmerMod}), for which many methods
   are available (e.g. \code{methods(class="merMod")})
+}
+\note{
+  In earlier version of the \pkg{lme4} package, a \code{method} argument was
+  used.  Its functionality has been replaced by the \code{REML} argument.
+
+  Also, \code{lmer(.)} allowed a \code{family} argument (to effectively
+  switch to \code{glmer(.)}).  This has been deprecated in summer 2013,
+  and been disabled in spring 2019.
 }
 \details{
   \itemize{
@@ -158,7 +161,8 @@ stopifnot(identical(terms(fm1, fixed.only=FALSE),
                     terms(model.frame(fm1))))
 attr(terms(fm1, FALSE), "dataClasses") # fixed.only=FALSE needed for dataCl.
 
-fm1_ML <- update(fm1,REML=FALSE)
+## Maximum Likelihood (ML), and "monitor" iterations via 'verbose':
+fm1_ML <- update(fm1, REML=FALSE, verbose = 1)
 (fm2 <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy))
 anova(fm1, fm2)
 sm2 <- summary(fm2)

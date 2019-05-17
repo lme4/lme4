@@ -9,7 +9,7 @@
 \usage{
 nlmer(formula, data = NULL, control = nlmerControl(),
       start = NULL, verbose = 0L, nAGQ = 1L, subset, weights, na.action,
-      offset, contrasts = NULL, devFunOnly = FALSE, \dots)
+      offset, contrasts = NULL, devFunOnly = FALSE)
 }
 \arguments{
   \item{formula}{a three-part \dQuote{nonlinear mixed model} formula, of
@@ -87,19 +87,19 @@ nlmer(formula, data = NULL, control = nlmerControl(),
     variables stored in its environment, it may not return
     \emph{exactly} the same values on subsequent calls (but the results
     should always be within machine tolerance).}
-  \item{\dots}{other potential arguments.  A \code{method} argument was
-    used in earlier versions of the package.  Its functionality has been
-    replaced by the \code{nAGQ} argument.}
 }
 \details{
   Fit nonlinear mixed-effects models, such as those used in
   population pharmacokinetics.
 }
 \note{
-  Adaptive Gauss-Hermite quadrature (\code{nAGQ}>1) is not
+  Adaptive Gauss-Hermite quadrature (\code{nAGQ > 1}) is not
   currently implemented for \code{nlmer}.  Several other
   methods, such as simulation or prediction with new data,
   are unimplemented or very lightly tested.
+
+  A \code{method} argument was used in earlier versions of the \pkg{lme4}
+  package.  Its functionality has been replaced by the \code{nAGQ} argument.
 }
 \examples{
 ## nonlinear mixed models --- 3-part formulas ---
