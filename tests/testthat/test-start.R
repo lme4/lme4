@@ -13,6 +13,7 @@ copysome <- function(mod, from) {
 ## is "Nelder_Mead" default optimizer?
 isNM <- formals(lmerControl)$optimizer == "Nelder_Mead"
 
+stMsg <- "'start' must be .* a numeric vector .* list"
 test_that("lmer", {
     frm <- Reaction ~ Days + (Days|Subject)
     ctrl <- lmerControl(optCtrl = list(maxfun= if(isNM) 50 else 100))
@@ -23,7 +24,7 @@ test_that("lmer", {
     x2@call <- x3@call <- x@call  ## hack call component
     expect_equal(x,x2)
     expect_equal(x,x3)
-    expect_error(update(x, start = "a"), "'start' must be .* a numeric vector .* list")
+    expect_error(update(x, start = "a"), stMsg)
     ## misspelled
     expect_error(update(x,start=list(Theta=c(1,0,1))),"incorrect components")
     th0 <- getME(x,"theta")
@@ -54,7 +55,7 @@ test_that("glmer", {
     x2@call <- x3@call <- x@call  ## hack call component
     expect_equal(x,x2)
     expect_equal(x,x3)
-    expect_error(update(x, start="a"),)
+    expect_error(update(x, start="a"), stMsg)
     expect_error(update(x, start=list(Theta=1)), "bad name\\(s\\)")
     th0 <- getME(x,"theta")
     y <- suppressWarnings(update(x, start=th0)) # expect_equal() fails: optinfo -> derivs -> Hessian
