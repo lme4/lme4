@@ -24,9 +24,9 @@ test_that("lmerControl() arg works too", {
     fm0 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
     fm  <- update(fm0, control = lmerControl(optCtrl = list(xtol_rel = 1e-8,
                                                             ftol_rel = 1e-12)))
-    afm0 <- allFit(fm0)
-    afm  <- allFit(fm) # used to fail
-    print(all.equal(summary(afm0), summary(afm), tolerance = 0))
+    afm0 <- allFit(fm0,verbose=FALSE)
+    afm  <- allFit(fm, verbose=FALSE) # used to fail
+    ## print(all.equal(summary(afm0), summary(afm), tolerance = 0))
     expect_equal(summary(afm0),
                  summary(afm), tolerance = 0.08)# see 0.0578
 })
