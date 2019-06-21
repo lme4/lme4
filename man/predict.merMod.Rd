@@ -20,7 +20,7 @@
     specified as in the \code{start} parameter for \code{\link{lmer}}
     or \code{\link{glmer}} -- a list with components \code{theta} and/or
     (for GLMMs) \code{beta}.}
-  \item{re.form}{formula for random effects to condition on.  If \code{NULL},
+  \item{re.form}{(formula, \code{NULL}, or \code{NA}) specify which random effects to condition on when predicting.  If \code{NULL},
     include all random effects; if \code{NA} or \code{~0},
     include no random effects.}
   \item{ReForm, REForm, REform}{allowed for backward compatibility: \code{re.form} is
@@ -46,7 +46,8 @@
 \details{
   \itemize{
     \item If any random effects are included in \code{re.form}
-    (see below), \code{newdata} \emph{must} contain columns
+    (i.e. it is not \code{~0} or \code{NA}),
+    \code{newdata} \emph{must} contain columns
     corresponding to all of the grouping variables and
     random effects used in the original model, even if not all
     are used in prediction; however, they can be safely set to \code{NA}
