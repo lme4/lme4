@@ -252,7 +252,7 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
         if (!allow.new.levels && any(vapply(ReTrms$flist, anyNA, NA)))
             stop("NAs are not allowed in prediction data",
                  " for grouping variables unless allow.new.levels is TRUE")
-        ns.re <- names(re <- ranef(object))
+        ns.re <- names(re <- ranef(object, condVar = FALSE))
         nRnms <- names(Rcnms <- ReTrms$cnms)
         if (!all(nRnms %in% ns.re))
             stop("grouping factors specified in re.form that were not present in original model")
