@@ -102,7 +102,7 @@ plot(fm1, Subject ~ resid(., scaled=TRUE))
 plot(fm1, distance ~ fitted(.) | Subject, abline = c(0,1))
 ## residuals by age, separated by Subject
 plot(fm1, resid(., scaled=TRUE) ~ age | Sex, abline = 0)
-require("lattice")
+library(lattice) ## needed for qqmath
 qqmath(fm1, id=0.05)
 ggp.there <- "package:ggplot2" \%in\% search()
 if (ggp.there || require("ggplot2")) {
