@@ -234,7 +234,7 @@ if(lme4:::testLevel() > 1) {
                     m1 <- glmer(y~x + (1|f) + (1|obs), family="poisson", data=dd)
                     a01 <- anova(m0, m1)
                     stopifnot(a01$ npar == 3:4,
-                              a01$ Df == 1)
+                              na.omit(a01$ Df) == 1)
                     list(chk0 = chkFixed(m0, true.coef = c(1,2)),
                          chk1 = chkFixed(m1, true.coef = c(1,2)),
                          chisq= a01$Chisq[2],
