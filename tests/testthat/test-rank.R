@@ -43,7 +43,7 @@ test_that("lmerRank", {
     ## should work:
     expect_is(fm2 <- lmer( z ~ ab + (1|r), data=d2), "lmerMod")
     expect_equal(logLik(fm), logLik(fm2))
-    expect_equal(sum(anova(fm)[, "Df"]), anova(fm2)[, "Df"])
+    expect_equal(sum(anova(fm)[, "npar"]), anova(fm2)[, "npar"])
     expect_equal(sum(anova(fm)[, "Sum Sq"]), anova(fm2)[, "Sum Sq"])
 })
 

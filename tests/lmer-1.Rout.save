@@ -87,7 +87,7 @@ Data: sleepstudy
 Models:
 fm2: Reaction ~ Days + (1 | Subject) + (0 + Days | Subject)
 fm1: Reaction ~ Days + (Days | Subject)
-    Df  AIC  BIC logLik deviance Chisq Chi Df Pr(>Chisq)
+    npar  AIC  BIC logLik deviance Chisq Df Pr(>Chisq)
 fm2  5 1762 1778   -876     1752                        
 fm1  6 1764 1783   -876     1752  0.06      1        0.8
 > 

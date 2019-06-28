@@ -538,10 +538,10 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
         ## devs <- sapply(mods, deviance)
         llks <- lapply(mods, logLik)
         ## Order models by increasing degrees of freedom:
-        ii <- order(Df <- vapply(llks, attr, FUN.VALUE=numeric(1), "df"))
+        ii <- order(npar <- vapply(llks, attr, FUN.VALUE=numeric(1), "df"))
         mods <- mods[ii]
         llks <- llks[ii]
-        Df   <- Df  [ii]
+        npar   <- npar  [ii]
         calls <- lapply(mods, getCall)
         data <- lapply(calls, `[[`, "data")
         if(!all(vapply(data, identical, NA, data[[1]])))
@@ -554,14 +554,16 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
             header <- c(header, paste("Subset:", abbrDeparse(subset[[1]])))
         llk <- unlist(llks)
         chisq <- 2 * pmax(0, c(NA, diff(llk)))
-        dfChisq <- c(NA, diff(Df))
-        val <- data.frame(Df = Df,
+        dfChisq <- c(NA, diff(npar))
+        val <- data.frame(npar = npar,
+                          ## afraid to swap in vapply here; wondering
+                          ##   why .sapply was needed in the first place ...
                           AIC = .sapply(llks, AIC), # FIXME? vapply()
                           BIC = .sapply(llks, BIC), #  "       "
                           logLik = llk,
                           deviance = -2*llk,
                           Chisq = chisq,
-                          "Chi Df" = dfChisq,
+                          Df = dfChisq,
                           "Pr(>Chisq)" = pchisq(chisq, dfChisq, lower.tail = FALSE),
                           row.names = names(mods), check.names = FALSE)
         class(val) <- c("anova", class(val))
@@ -594,8 +596,8 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
         table <- data.frame(df, ss, ms, f)
         dimnames(table) <-
             list(nmeffects,
-                 ## c("Df", "Sum Sq", "Mean Sq", "Denom", "F value", "Pr(>F)"))
-                 c("Df", "Sum Sq", "Mean Sq", "F value"))
+                 ## c("npar", "Sum Sq", "Mean Sq", "Denom", "F value", "Pr(>F)"))
+                 c("npar", "Sum Sq", "Mean Sq", "F value"))
         if ("(Intercept)" %in% nmeffects)
             table <- table[-match("(Intercept)", nmeffects), ]
         structure(table, heading = "Analysis of Variance Table",
@@ -832,7 +834,7 @@ drop1.merMod <- function(object, scope, scale = 0, test = c("none", "Chisq", "us
     } else {
         dfs <- ans[1L, 1L] - ans[, 1L]
         dfs[1L] <- NA
-        aod <- data.frame(Df = dfs, AIC = ans[,2])
+        aod <- data.frame(npar = dfs, AIC = ans[,2])
         if(test == "Chisq") {
             ## reconstruct deviance from AIC (ugh)
             dev <- ans[, 2L] - k*ans[, 1L]

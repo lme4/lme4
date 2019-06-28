@@ -20,6 +20,11 @@
       \item In \code{isSingular(x, tol)}, the default tolerance (\code{tol}) has
       been increased from 1e-5 to \code{1e-4}, the default of
       \code{check.conv.singular} in \code{g?lmerControl()}.
+
+      \item for clarity and consistency with base R methods,
+      changes in some column names of \code{anova()} output:
+      "Df" becomes "npar", "Chi Df" becomes "Df" (GH #528)
+      
     }
   }
   \subsection{BUG FIXES}{
