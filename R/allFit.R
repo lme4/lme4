@@ -104,10 +104,17 @@ allFit <- function(m, meth.tab = NULL,
                     ctrl <- lapply(as.list(ctrl)[-1], eval)
                 ctrl$optimizer <- optimizer[i]
             }
+            mkOptCtrl <- function(...) {
+                x <- list(...)
+                if (is.null(ctrl$optCtrl)) return(x)
+                for (n in names(x)) {
+                    ctrl$optCtrl[[n]] <<- x[[n]]
+                }
+            }
             ctrl$optCtrl <- switch(optimizer[i],
-                                   optimx    = list(method   = method[i]),
-                                   nloptwrap = list(algorithm= method[i]),
-                                   list(maxfun=maxfun))
+                                   optimx    = mkOptCtrl(method   = method[i]),
+                                   nloptwrap = mkOptCtrl(algorithm= method[i]),
+                                   mkOptCtrl(maxfun=maxfun))
             ctrl <- do.call(if(isGLMM(m)) glmerControl else lmerControl, ctrl)
             tt <- system.time(rr <- tryCatch(update(m, control = ctrl),
                                              error = function(e) e))

@@ -30,3 +30,12 @@ test_that("lmerControl() arg works too", {
     expect_equal(summary(afm0),
                  summary(afm), tolerance = 0.08)# see 0.0578
 })
+
+test_that("glmerControl() arg + optimizer", {
+    ## GH #523?
+    fit_cbpp_1u <- update(fit_cbpp_1,
+                          control=glmerControl(optimizer="nloptwrap",
+                         optCtrl=list(xtol_abs=1e-10, ftol_abs=1e-10)))
+    af2 <- allFit(fit_cbpp_1u, verbose=FALSE)
+    expect_equal(class(af2),"allFit")
+})
