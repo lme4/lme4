@@ -38,6 +38,10 @@
       \item internal \code{getStart()} now also works when model's
       \code{start} has been a list, and when called from \code{drop1()} on
       a submodel, fixing GH #521.
+
+      \item internal function \code{mkdevfun} now works even if there is
+      an extraneous \code{getCall} function defined in the global
+      environment (GH #535)
     }
   }
 }

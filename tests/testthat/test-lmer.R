@@ -280,3 +280,11 @@ test_that("coef_lmer", {
                             0.4949802, 0.1222705, 0.08702069, -0.2856431, -0.01596725),
                           nn), tolerance= 6e-6)# 64-bit:  6.73e-9
 })
+
+test_that("getCall", {
+    ## GH #535
+    getClass <- function() "foo"
+    expect_is(glmer(round(Reaction) ~ 1 + (1|Subject), sleepstudy,
+        family=poisson), "glmerMod")
+    rm(getClass)
+})
