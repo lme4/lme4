@@ -2564,13 +2564,15 @@ dim.merMod <- function(x) {
 ##' @param optimizer character string ( = function name) *or* function
 getOptfun <- function(optimizer) {
     if (((is.character(optimizer) && optimizer == "optimx") ||
-         deparse(substitute(optimizer)) == "optimx") &&
-        !"package:optimx" %in% search())
-        stop(shQuote("optimx")," package must be loaded in order to ",
-             "use ",shQuote('optimizer="optimx"'))
-    optfun <- if (is.character(optimizer)) {
-        tryCatch(get(optimizer), error = function(e) NULL)
-    } else optimizer
+         deparse(substitute(optimizer)) == "optimx")) {
+        if (!requireNamespace("optimx")) {
+            stop(shQuote("optimx")," package must be installed order to ",
+                 "use ",shQuote('optimizer="optimx"'))
+        }
+        optfun <- optimx::optimx
+    } else if (is.character(optimizer)) {
+        optfun <- tryCatch(get(optimizer), error = function(e) NULL)
+    } else optfun <- optimizer
     if (is.null(optfun)) stop("couldn't find optimizer function ",optimizer)
     if (!is.function(optfun)) stop("non-function specified as optimizer")
     needArgs <- c("fn","par","lower","control")

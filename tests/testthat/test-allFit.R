@@ -22,16 +22,22 @@ test_that("nloptwrap switches optimizer correctly", {
 
 test_that("lmerControl() arg works too", {
     fm0 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
-    fm  <- update(fm0, control = lmerControl(optCtrl = list(xtol_rel = 1e-8,
-                                                            ftol_rel = 1e-12)))
+    fm  <- update(fm0,
+                  control = lmerControl(optCtrl = list(xtol_rel = 1e-8,
+                                                       ftol_rel = 1e-8),
+                                        calc.derivs=FALSE))
     afm0 <- allFit(fm0,verbose=FALSE)
     afm  <- allFit(fm,verbose=FALSE) # used to fail
     drop_ <- function(x) {
         x[setdiff(names(x), c("times","feval"))]
     }
-    ## print(all.equal(drop_(summary(afm0)), drop_(summary(afm)), tolerance = 0))
+    ## should be approximately the same
     expect_equal(drop_(summary(afm0)),
-                 drop_(summary(afm)), tolerance = 1e-3)
+                 drop_(summary(afm)), tolerance = 1e-2)
+    ## should NOT be the same!
+    expect_false(isTRUE(all.equal(drop_(summary(afm0)),
+                           drop_(summary(afm)), tolerance=1e-10)))
+
 })
 
 test_that("glmerControl() arg + optimizer", {

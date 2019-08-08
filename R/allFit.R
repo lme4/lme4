@@ -6,8 +6,27 @@ meth.tab.0 <- cbind(optimizer=
                             "optimx",
                             "nloptwrap" ),
                           c(rep(1,5),2)),
-                  method= c(rep("",4), "L-BFGS-B",
-                  "NLOPT_LN_NELDERMEAD", "NLOPT_LN_BOBYQA"))
+                    method= c(rep("",4), "L-BFGS-B",
+                            "NLOPT_LN_NELDERMEAD", "NLOPT_LN_BOBYQA"))
+
+## ugh: hardcoded list (incomplete?) of allowable *control* options by optimizer
+## could make more of an effort to match max-iterations/evals,
+## (x|f)*(abs|rel) tolerance, ...
+opt.ctrls <- list(bobyqa=c("npt","rhobeg","rhoend","iprint","maxfun"),
+                  Nelder_Mead=c("iprint","maxfun","FtolAbs",
+                                "FtolRel","XtolRel","MinfMax",
+                                "xst","xt","verbose","warnOnly"),
+                  nlminbwrap=c("eval.max","iter.max","trace","abs.tol",
+                               "rel.tol","x.tol","xf.tol","step.min",
+                               "step.max","sing.tol","scale.init",
+                               "diff.g"),
+                  optimx=c("trace","fnscale","parscale","ndeps",
+                          "maxit","abstol","reltol","method"),
+                  nloptwrap=c("minf_max","ftol_rel","ftol_abs",
+                              "xtol_rel", "xtol_abs", "maxeval", "maxtime",
+                              "algorithm"),
+                  nmkbw=c("tol","maxfeval","regsimp","maximize",
+                          "restarts.max","trace","maxfun"))
 
 nmkbw <- function(fn,par,lower,upper,control) {
     if (length(par)==1) {
@@ -36,7 +55,7 @@ nmkbw <- function(fn,par,lower,upper,control) {
 ##' here are really base R functions that can be accessed via optimx,
 ##' (iii) wrapped via nloptr; (iv)
 ##'
-##' @param m a fitted model
+##' @param object a fitted model
 ##' @param meth.tab a matrix (or data.frame) with columns
 ##' - method  the name of a specific optimization method to pass to the optimizer
 ##'           (leave blank for built-in optimizers)
@@ -56,7 +75,7 @@ nmkbw <- function(fn,par,lower,upper,control) {
 ##' ss$theta               ## Cholesky factors
 ##' ss$which.OK            ## which fits worked
 
-allFit <- function(m, meth.tab = NULL,
+allFit <- function(object, meth.tab = NULL,
                    data=NULL,
                    verbose=TRUE,
                    show.meth.tab = FALSE,
@@ -71,10 +90,12 @@ allFit <- function(m, meth.tab = NULL,
     if (!requireNamespace("dfoptim")) {
         meth.tab <- meth.tab[meth.tab.0[,"optimizer"] != "nmkbw",]
     }
+    if (!requireNamespace("optimx")) {
+        meth.tab <- meth.tab[meth.tab.0[,"optimizer"] != "optimx",]
+    }
     if (show.meth.tab) {
         return(meth.tab)
     }
-
     stopifnot(length(dm <- dim(meth.tab)) == 2, dm[1] >= 1, dm[2] >= 2,
 	      is.character(optimizer <- meth.tab[,"optimizer"]),
 	      is.character(method    <- meth.tab[,"method"]))
@@ -87,7 +108,7 @@ allFit <- function(m, meth.tab = NULL,
     fit.names <- gsub("\\.$", "", paste(optimizer, method, sep="."))
     ffun <- local({
         ## required local vars
-        m
+        object
         verbose
         fit.names
         optimizer
@@ -95,7 +116,7 @@ allFit <- function(m, meth.tab = NULL,
         maxfun
         function(i) {
             if (verbose) cat(fit.names[i],": ")
-            ctrl <- getCall(m)$control
+            ctrl <- getCall(object)$control
             ## NB:  'ctrl' must become a correct *argument* list for g?lmerControl()
             if(is.null(ctrl)) {
                 ctrl <- list(optimizer=optimizer[i])
@@ -104,19 +125,33 @@ allFit <- function(m, meth.tab = NULL,
                     ctrl <- lapply(as.list(ctrl)[-1], eval)
                 ctrl$optimizer <- optimizer[i]
             }
+            ## add method/algorithm to optCtrl as necessary
             mkOptCtrl <- function(...) {
                 x <- list(...)
-                if (is.null(ctrl$optCtrl)) return(x)
-                for (n in names(x)) {
-                    ctrl$optCtrl[[n]] <<- x[[n]]
+                cc <- ctrl$optCtrl
+                if (is.null(cc)) return(x)  ## easy! no controls specified
+                for (n in names(x)) { ## replace existing values
+                    cc[[n]] <- x[[n]]
                 }
+                cc
+            }
+            sanitize <- function(x,okvals) {
+                if (is.null(x)) return(NULL)
+                if (is.null(okvals)) return(x)
+                x <- x[intersect(names(x),okvals)]
+                ## ?? having names(control) be character(0)
+                ##  screws up nmkbw ... ??
+                if (length(names(x))==0) names(x) <- NULL
+                x
             }
             ctrl$optCtrl <- switch(optimizer[i],
                                    optimx    = mkOptCtrl(method   = method[i]),
                                    nloptwrap = mkOptCtrl(algorithm= method[i]),
-                                   mkOptCtrl(maxfun=maxfun))
-            ctrl <- do.call(if(isGLMM(m)) glmerControl else lmerControl, ctrl)
-            tt <- system.time(rr <- tryCatch(update(m, control = ctrl),
+                                   mkOptCtrl("maxfun"=maxfun))
+            ctrl$optCtrl <- sanitize(ctrl$optCtrl,
+                                     opt.ctrls[[optimizer[i]]])
+            ctrl <- do.call(if(isGLMM(object)) glmerControl else lmerControl, ctrl)
+            tt <- system.time(rr <- tryCatch(update(object, control = ctrl),
                                              error = function(e) e))
             attr(rr, "optCtrl") <- ctrl$optCtrl # contains crucial info here
             attr(rr, "time") <- tt  # store timing info
@@ -146,7 +181,7 @@ allFit <- function(m, meth.tab = NULL,
                lapply(seq_fit, ffun)
 
     names(res) <- fit.names
-    structure(res, class = "allFit", fit = m, sessionInfo =  sessionInfo(),
+    structure(res, class = "allFit", fit = object, sessionInfo =  sessionInfo(),
               data = data # is dropped if NULL
               )
 }
