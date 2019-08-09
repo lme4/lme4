@@ -167,7 +167,7 @@ merControl <-
 
 lmerControl <- merControl
 glmerControl <- merControl
-formals(glmerControl)[["optimizer"]] <- c("bobyqa","Nelder_Mead")
+## formals(glmerControl)[["optimizer"]] <- c("bobyqa","Nelder_Mead")
 formals(glmerControl)[["mod.type"]] <- "glmer"
 formals(glmerControl)[["restart_edge"]] <- FALSE
 formals(glmerControl) <- c(formals(glmerControl),

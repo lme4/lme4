@@ -513,7 +513,13 @@ test_that("simulate", {
     dd <- data.frame(f=factor(rep(1:10,each=20)),
                      x=runif(200),
                      y=rnbinom(200,size=2,mu=2))
-    g1 <- glmer.nb(y ~ x + (1|f), data=dd)
+    g1 <- glmer.nb(y ~ x + (1|f), data=dd,
+                   control=glmerControl(optimizer=c("bobyqa","Nelder_Mead")))
+    ## slightly *higher* log-likelihood (very unstable fit!)
+    ## g1B <- update(g1,
+    ## control=glmerControl(optimizer="nloptwrap",
+    ## optCtrl=list(xtol_rel=1e-10,
+    ## ftol_rel=1e-10)))
     th.g1 <- getME(g1, "glmer.nb.theta")
     ## changed to setting seed internally
     ts1 <- table(s1 <- simulate(g1,seed=101)[,1])
