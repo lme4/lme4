@@ -50,11 +50,13 @@ test_that("glmerControl() arg + optimizer", {
 })
 
 test_that("i in model call is OK", {
+    ## GH #538
     nr <- nrow(sleepstudy)
-    d <- list(sleepstudy[1:nr,],
+    ## ugh, testthat scoping is incomprehensible to me ... use <<-
+    d <<- list(sleepstudy[1:nr,],
               sleepstudy[-(1:nr)])
-    i <- 1
+    i <<- 1
     fm0 <- lmer(Reaction ~ Days + (1 | Subject), data=d[[i]])
-    aa <- allFit(fm0)
+    aa <- allFit(fm0, verbose=FALSE)
     expect_true(all(summary(aa)$which.OK))
 })
