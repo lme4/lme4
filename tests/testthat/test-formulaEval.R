@@ -7,11 +7,11 @@ context("data= argument and formula evaluation")
 ##  these errors differ between devtools::test() and
 ##  R CMD check, but finding the difference is too much
 ##  of a nightmare
+## n.b. could break in other locales *if* we ever do internationalization ...
 data_RE <- "(bad 'data'|variable lengths differ)"
 
 test_that("glmerFormX", {
     set.seed(101)
-
     n <- 50
     x <- rbinom(n, 1, 1/2)
     y <- rnorm(n)
