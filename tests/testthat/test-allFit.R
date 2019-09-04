@@ -53,10 +53,12 @@ test_that("i in model call is OK", {
     ## GH #538
     nr <- nrow(sleepstudy)
     ## ugh, testthat scoping is incomprehensible to me ... use <<-
-    d <<- list(sleepstudy[1:nr,],
-              sleepstudy[-(1:nr)])
-    i <<- 1
-    fm0 <- lmer(Reaction ~ Days + (1 | Subject), data=d[[i]])
+    ddd <<- list(sleepstudy[1:nr,],
+               sleepstudy[-(1:nr)])
+    ## BUT global assignment of 'd' breaks downstream tests in
+    ##  'data= argument and formula evaluation' ??
+    i <- 1
+    fm0 <- lmer(Reaction ~ Days + (1 | Subject), data=ddd[[i]])
     aa <- allFit(fm0, verbose=FALSE)
     expect_true(all(summary(aa)$which.OK))
 })
