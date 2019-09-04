@@ -42,6 +42,10 @@
       \item internal function \code{mkdevfun} now works even if there is
       an extraneous \code{getCall} function defined in the global
       environment (GH #535)
+
+      \item \code{allFit()} works even if a variable with symbol
+      \code{i} is used somewhere in the original model call (GH #538,
+      reported by Don Cohen)
     }
   }
 }

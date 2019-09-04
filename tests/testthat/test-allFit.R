@@ -48,3 +48,13 @@ test_that("glmerControl() arg + optimizer", {
     af2 <- allFit(fit_cbpp_1u, verbose=FALSE)
     expect_equal(class(af2),"allFit")
 })
+
+test_that("i in model call is OK", {
+    nr <- nrow(sleepstudy)
+    d <- list(sleepstudy[1:nr,],
+              sleepstudy[-(1:nr)])
+    i <- 1
+    fm0 <- lmer(Reaction ~ Days + (1 | Subject), data=d[[i]])
+    aa <- allFit(fm0)
+    expect_true(all(summary(aa)$which.OK))
+})

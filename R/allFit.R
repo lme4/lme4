@@ -114,16 +114,16 @@ allFit <- function(object, meth.tab = NULL,
         optimizer
         method
         maxfun
-        function(i) {
-            if (verbose) cat(fit.names[i],": ")
+        function(..i) {
+            if (verbose) cat(fit.names[..i],": ")
             ctrl <- getCall(object)$control
             ## NB:  'ctrl' must become a correct *argument* list for g?lmerControl()
             if(is.null(ctrl)) {
-                ctrl <- list(optimizer=optimizer[i])
+                ctrl <- list(optimizer=optimizer[..i])
             } else {
                 if(is.call(ctrl)) # typically true
                     ctrl <- lapply(as.list(ctrl)[-1], eval)
-                ctrl$optimizer <- optimizer[i]
+                ctrl$optimizer <- optimizer[..i]
             }
             ## add method/algorithm to optCtrl as necessary
             mkOptCtrl <- function(...) {
@@ -144,12 +144,12 @@ allFit <- function(object, meth.tab = NULL,
                 if (length(names(x))==0) names(x) <- NULL
                 x
             }
-            ctrl$optCtrl <- switch(optimizer[i],
-                                   optimx    = mkOptCtrl(method   = method[i]),
-                                   nloptwrap = mkOptCtrl(algorithm= method[i]),
+            ctrl$optCtrl <- switch(optimizer[..i],
+                                   optimx    = mkOptCtrl(method   = method[..i]),
+                                   nloptwrap = mkOptCtrl(algorithm= method[..i]),
                                    mkOptCtrl("maxfun"=maxfun))
             ctrl$optCtrl <- sanitize(ctrl$optCtrl,
-                                     opt.ctrls[[optimizer[i]]])
+                                     opt.ctrls[[optimizer[..i]]])
             ctrl <- do.call(if(isGLMM(object)) glmerControl else lmerControl, ctrl)
             tt <- system.time(rr <- tryCatch(update(object, control = ctrl),
                                              error = function(e) e))
