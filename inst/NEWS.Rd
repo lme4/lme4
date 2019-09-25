@@ -22,9 +22,11 @@
       \code{check.conv.singular} in \code{g?lmerControl()}.
 
       \item for clarity and consistency with base R methods,
-      changes in some column names of \code{anova()} output:
+      some column names of \code{anova()} output are changed:
       "Df" becomes "npar", "Chi Df" becomes "Df" (GH #528)
-      
+
+      \item \code{simulate()} now works with inverse-Gaussian models
+      (GH #284 revisited, @nahorp/Florian Hartig)
     }
   }
   \subsection{BUG FIXES}{
@@ -32,11 +34,12 @@
       \item internal \code{checkZrank()} should be able to deal with
       (\code{Matrix} package) \code{rankMatrix()} returning \code{NA}.
 
-      \item \code{allFit(fm)} also works for a model that had an explicit
+      \item \code{allFit(fm)} now works for a model that had an explicit
       \code{control = lmerControl(..)} call.
 
-      \item internal \code{getStart()} now also works when model's
-      \code{start} has been a list, and when called from \code{drop1()} on
+      \item internal \code{getStart()} now works when model's
+      \code{start} was specified as a list,
+      and when called from \code{drop1()} on
       a submodel, fixing GH #521.
 
       \item internal function \code{mkdevfun} now works even if there is
@@ -46,9 +49,14 @@
       \item \code{allFit()} works even if a variable with symbol
       \code{i} is used somewhere in the original model call (GH #538,
       reported by Don Cohen)
+
+      \item \code{glmer.nb} works even if an alternative version
+      of \code{negative.binomial} (other than the one from \code{MASS})
+      is loaded in the workspace
+      (e.g. by the \code{GLMMadaptive} package) (GH#516)
     }
-  }
-}
+  } % bug fixes
+} % version 1.1-21.9000
 
 \section{CHANGES IN VERSION 1.1-21 (2019-03-05)}{
     \subsection{USER-VISIBLE CHANGES}{

@@ -679,10 +679,13 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
             if(nullWts) weights <- rowSums(r)
         }
 
-        if (is.null(sfun <- simfunList[[family$family]]) &&
-            is.null(family$simulate))
-            stop("simulation not implemented for family",
-                 family$family)
+        if (is.null(sfun <- simfunList[[family$family]])) {
+            ## family$simulate just won't work ...
+            ## sim funs must be hard-coded, see below
+            stop("simulation not implemented for family ",
+                 sQuote(family$family))
+        }
+
         ## don't rely on automatic recycling
         if (cond.sim) {
              val <- sfun(object, nsim=1, ftd = rep_len(musim, n*nsim),
@@ -778,7 +781,6 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 ## (2) modifying wts from object$prior.weights to weights(object)
 ## (3) adding wts as an argument
 ##
-##
 ## these can be incorporated by overwriting the simulate()
 ## components, or calling them
 ##
@@ -857,24 +859,20 @@ gamma.shape.merMod <- function(object, ...) {
               class = "gamma.shape")
 }
 
-
-## FIXME: include without inducing SuppDists dependency?
-## inverse.gaussian_simfun <- function(object, nsim, ftd=fitted(object)) {
-##     if(is.null(tryCatch(loadNamespace("SuppDists"),
-##                         error = function(e) NULL)))
-##         stop("need CRAN package 'SuppDists' for the 'inverse.gaussian' family")
-##     wts <- weights(object)
-##     if (any(wts != 1)) message("using weights as inverse variances")
-##     SuppDists::rinvGauss(nsim * length(ftd), nu = ftd,
-##                          lambda = wts/summary(object)$dispersion)
-## }
+inverse.gaussian_simfun <- function(object, nsim, ftd=fitted(object),
+                                    wts = weights(object)) {
+    if (any(wts != 1)) message("using weights as inverse variances")
+    statmod::rinvgauss(nsim * length(ftd), mean = ftd,
+                       shape= wts/sigma(object))
+}
 
 ## in the original MASS version, .Theta is assigned into the environment
 ## (triggers a NOTE in R CMD check)
 ## modified from @aosmith16 GH contribution
 
-negative.binomial_simfun <- function (object, nsim, ftd = fitted(object),
-                                          wts=weights(object))
+negative.binomial_simfun <- function (object, nsim,
+                                      ftd = fitted(object),
+                                      wts=weights(object))
 {
 
     if (any(wts != 1))
@@ -883,9 +881,9 @@ negative.binomial_simfun <- function (object, nsim, ftd = fitted(object),
     rnbinom(nsim * length(ftd), mu = ftd, size = theta)
 }
 
-
 simfunList <- list(gaussian = gaussian_simfun,
                    binomial = binomial_simfun,
                    poisson  = poisson_simfun,
                    Gamma    = Gamma_simfun,
-                   negative.binomial = negative.binomial_simfun)
+                   negative.binomial = negative.binomial_simfun,
+                   inverse.gaussian = inverse.gaussian_simfun)

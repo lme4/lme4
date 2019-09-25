@@ -298,3 +298,28 @@ test_that("simulation works with non-factor", {
     expect_is(test2,"data.frame")
 })
 
+
+set.seed(666)
+n <- 500
+df <- data.frame(y=statmod::rinvgauss(n, mean=1, shape=2),
+                 id=factor(1:20))
+model_fit <- glmer(y ~ 1 + (1|id),
+                   family = inverse.gaussian(link = "inverse"),
+                   data = df,
+                   control=glmerControl(check.conv.singular="ignore"))
+
+test_that("simulation works for inverse gaussian", {
+    expect_equal(mean(simulate(model_fit)[[1]]), 1.02704392575914,
+                 tolerance=1e-5)
+})
+
+test_that("simulation complains appropriately about bad family", {
+    ig <- inverse.gaussian()
+    ig$family <- "junk"
+    model_fit2 <- glmer(y ~ 1 + (1|id),
+                        family = ig,
+                        data = df,
+                        control=glmerControl(check.conv.singular="ignore"))
+    expect_error(simulate(model_fit2),"simulation not implemented for family")
+})
+
