@@ -15,10 +15,10 @@
       \item \code{lmer()}, \code{glmer()}, and \code{nlmer()} no longer
       have a formal \code{...} argument.  This defunctifies the use of a
       \code{sparseX = .} argument and will reveal some user errors, where
-      previously extraneous arguments have been disregarded.
+      extraneous arguments were previously disregarded.
 
       \item In \code{isSingular(x, tol)}, the default tolerance (\code{tol}) has
-      been increased from 1e-5 to \code{1e-4}, the default of
+      been increased from \code{1e-5} to \code{1e-4}, the default of
       \code{check.conv.singular} in \code{g?lmerControl()}.
 
       \item for clarity and consistency with base R methods,
@@ -48,7 +48,7 @@
 
       \item \code{allFit()} works even if a variable with symbol
       \code{i} is used somewhere in the original model call (GH #538,
-      reported by Don Cohen)
+      reported by Don Cohen); generally more robust
 
       \item \code{glmer.nb} works even if an alternative version
       of \code{negative.binomial} (other than the one from \code{MASS})
