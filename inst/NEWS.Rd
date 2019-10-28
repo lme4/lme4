@@ -27,6 +27,10 @@
 
       \item \code{simulate()} now works with inverse-Gaussian models
       (GH #284 revisited, @nahorp/Florian Hartig)
+
+      \item single-model mode of \code{anova()}
+      now warns about unused arguments in \dots
+      (e.g. \code{type="III"})
     }
   }
   \subsection{BUG FIXES}{

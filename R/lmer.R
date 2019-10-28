@@ -490,7 +490,7 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
     .sapply <- function(L, FUN, ...) unlist(lapply(L, FUN, ...))
     modp <- (as.logical(vapply(dots, is, NA, "merMod")) |
              as.logical(vapply(dots, is, NA, "lm")))
-    if (any(modp)) {                    # multiple models - form table
+    if (any(modp)) {   ## multiple models - form table
         ## opts <- dots[!modp]
         mods <- c(list(object), dots[modp])
         nobs.vec <- vapply(mods, nobs, 1L)
@@ -574,6 +574,16 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
                                     unlist(forms), sep = ": ")))
     }
     else { ## ------ single model ---------------------
+        if (length(dots)>0) {
+            warnmsg <- "additional arguments ignored"
+            nd <- names(dots)
+            nd <- nd[nzchar(nd)]
+            if (length(nd)>0) {
+                warnmsg <- paste0(warnmsg,": ",
+                                  paste(sQuote(nd),collapse=", "))
+            }
+            warning(warnmsg)
+        }
         dc <- getME(object, "devcomp")
         X <- getME(object, "X")
         stopifnot(length(asgn <- attr(X, "assign")) == dc$dims[["p"]])
