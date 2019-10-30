@@ -58,6 +58,8 @@
       of \code{negative.binomial} (other than the one from \code{MASS})
       is loaded in the workspace
       (e.g. by the \code{GLMMadaptive} package) (GH#516)
+
+      \item \code{level} argument is now honoured by \code{confint(..., type="boot", level=...)} (GH #543)
     }
   } % bug fixes
 } % version 1.1-21.9000
