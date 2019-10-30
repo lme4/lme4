@@ -852,7 +852,7 @@ confint.merMod <- function(object, parm, level = 0.95,
                bb <- bootMer(object, FUN=FUN, nsim=nsim,...)
                if (all(is.na(bb$t))) stop("*all* bootstrap runs failed!")
                print.bootWarnings(bb, verbose=FALSE)
-               citab <- confint(bb)
+               citab <- confint(bb,level=level,type=boot.type)
                if (missing(parm)) {
                    ## only happens if we have custom boot method
                    if (is.null(parm <- rownames(citab))) {

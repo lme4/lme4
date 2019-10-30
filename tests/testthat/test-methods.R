@@ -155,9 +155,20 @@ set.seed(47)
 test_that("bootMer", {
     ## testing bug-fix for ordering of sd/cor components in sd/cor matrix with >2 rows
     ## FIXME: This model makes no sense [and CI.boot() fails for "nloptwrap"!]
-    m1 <- lmer(strength ~ 1 + (cask|batch), Pastes,
-               control = lmerControl(optimizer="bobyqa"))
-    ci <- CI.boot(m1)
+    dd <- expand.grid(A=factor(1:3),B=factor(1:10),rep=1:10)
+    dd$y <- suppressMessages(simulate(~1 + (A|B),
+                     newdata=dd,
+                     newparams=list(beta=1,theta=rep(1,6),
+                                    sigma=1),
+                     family=gaussian,
+                     seed=101))[[1]]
+    m1 <- lmer(y ~ 1 + (A|B), data=dd, control=lmerControl(calc.deriv=FALSE))
+    ci <- CI.boot(m1,seed=101)
+    ci2 <- CI.boot(m1,seed=101)
+    expect_equal(ci,ci2)
+    ci_50 <- CI.boot(m1,level=0.5,seed=101)
+    expect_true(all(ci_50[,"25 %"]>ci[,"2.5 %"]))
+    expect_true(all(ci_50[,"75 %"]<ci[,"97.5 %"]))
     corvals <- ci[grep("^cor_",rownames(ci)),]
     expect_true(all(abs(corvals) <= 1))
     ## test bootMer with GLMM, multiple RE
@@ -169,10 +180,9 @@ test_that("bootMer", {
     expect_equal(ci2,ci2B)
     expect_equal(ci1[3:6,], ci2) ## , tolerance = 0.4)# 0.361
     ## bootMer with NA values
-    PastesNA <- Pastes
-    PastesNA$cask[1:3] <- NA
-    ## previously set 'Sample' (sic) -- no effect!
-    m2 <- update(m1, data=PastesNA)
+    ddNA <- dd
+    ddNA$A[1:3] <- NA
+    m2 <- update(m1, data=ddNA)
     ci3 <- CI.boot(m2)
     expect_equal(ci, ci3, tolerance=0.2)
     sleepstudyNA <- sleepstudy
@@ -588,8 +598,8 @@ context("misc")
 test_that("misc", {
     expect_equal(df.residual(fm1),176)
     if (require(ggplot2)) {
-        expect_is(fortify(fm1), "data.frame")
-        expect_is(fortify(gm1), "data.frame")
+        expect_is(fortify.merMod(fm1), "data.frame")
+        expect_is(fortify.merMod(gm1), "data.frame")
     }
     expect_is(as.data.frame(VarCorr(fm1)), "data.frame")
 })
