@@ -256,7 +256,8 @@ test_that("lmer", {
     ## test verbose option for nloptwrap
     cc <- capture.output(lmer(Reaction~1+(1|Subject),
          data=sleepstudy,
-         control=lmerControl(optimizer="nloptwrap"),
+         control=lmerControl(optimizer="nloptwrap",
+                 optCtrl=list(xtol_abs=1e-6, ftol_abs=1e-6)),
          verbose=5))
     expect_equal(sum(grepl("^iteration:",cc)),14)
 

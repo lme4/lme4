@@ -24,8 +24,10 @@ test_that("lmer", {
       w <- grep("Fixed effects:",cc)
       cc[w:length(cc)]
   }
-  cc1 <- tmpf(lmer(y ~ x.1 + x.2 + (1 + x.1 | g)))
-  cc2 <- tmpf(lmer(y ~ x.1 + x.2 + (1 + x.1 + x.2 | g)))
+  C1 <- lmerControl(optimizer="nloptwrap",
+                    optCtrl=list(xtol_abs=1e-6, ftol_abs=1e-6))
+  cc1 <- tmpf(lmer(y ~ x.1 + x.2 + (1 + x.1 | g), control=C1))
+  cc2 <- tmpf(lmer(y ~ x.1 + x.2 + (1 + x.1 + x.2 | g), control=C1))
   expect_equal(tfun(cc1),
                c("Fixed effects:",
                  "            Estimate Std. Error t value", 

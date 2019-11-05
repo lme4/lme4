@@ -2,9 +2,14 @@ library("testthat")
 library("lme4")
 context("residuals")
 test_that("lmer", {
-    fm1 <- lmer(Reaction ~ Days + (Days|Subject),sleepstudy)
+    C1 <- lmerControl(optimizer="nloptwrap",
+                      optCtrl=list(xtol_abs=1e-6, ftol_abs=1e-6))
+    fm1 <- lmer(Reaction ~ Days + (Days|Subject),sleepstudy,
+                control=C1)
     fm2 <- lmer(Reaction ~ Days + (Days|Subject),sleepstudy,
-                control=lmerControl(calc.derivs=FALSE))
+                control=lmerControl(calc.derivs=FALSE,
+                                    optimizer="nloptwrap",
+                                    optCtrl=list(xtol_abs=1e-6, ftol_abs=1e-6)))
     expect_equal(resid(fm1), resid(fm2))
     expect_equal(range(resid(fm1)),              c(-101.17996, 132.54664), tolerance=1e-6)
     expect_equal(range(resid(fm1, scaled=TRUE)), c(-3.9536067, 5.1792598), tolerance=1e-6)

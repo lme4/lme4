@@ -58,7 +58,9 @@ test_that("cbpp consistent with lme4.0", {
 
 context("multiple terms per factor")
 test_that("multiple terms work", {
-    fm <- lmer(Reaction ~ Days + (1|Subject)+ (0+Days | Subject), sleepstudy)
+    fm <- lmer(Reaction ~ Days + (1|Subject)+ (0+Days | Subject), sleepstudy,
+               control=lmerControl(optimizer="nloptwrap",
+                                   optCtrl=list(xtol_abs=1e-6, ftol_abs=1e-6)))
     rr <- ranef(fm, condVar=TRUE)
     expect_equal(as.data.frame(rr)[c(1,19),],
                  structure(

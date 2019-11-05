@@ -34,7 +34,9 @@
 
       \item default tolerances for \code{nloptwrap}/BOBYQA optimizer
       tightened (\code{xtol_abs} and \code{ftol_abs} were 1e-6,
-      now 1e-8)
+      now 1e-8). (To revert to former tolerances, use
+      \code{control=lmerControl(optimizer="nloptwrap",
+	optCtrl=list(xtol_abs=1e-6, ftol_abs=1e-6))}.)
     }
   }
   \subsection{BUG FIXES}{
