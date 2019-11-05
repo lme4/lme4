@@ -62,7 +62,9 @@ if (lme4:::testLevel() > 1) {
     ## refit
     ## FIXME: eventually would like to get _exactly_ identical answers on refit()
     full_mod3 <- refit(full_mod2,grouseticks$TICKS)
-    all.equal(full_mod2,full_mod3,tolerance=1e-5)
+
+    tmpf <- function(x) unlist(getME(x,c("theta","beta")))
+    all.equal(tmpf(full_mod2),tmpf(full_mod3),tolerance=1e-5)
 }
 allcoefs <- function(x) c(getME(x,"theta"),getME(x,"beta"))
 

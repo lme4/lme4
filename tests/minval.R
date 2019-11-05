@@ -14,13 +14,16 @@ sigmaw0 <- 0.15  # within standard deviation
 
 dat <- sims(I, J, sigmab0, sigmaw0)
 
+isOldTol <- environment(nloptwrap)$defaultControl$xtol_abs == 1e-6
+
 library(lme4)
 fm3 <- lmer(y ~ (1|group), data=dat)
 stopifnot(all.equal(unname(unlist(VarCorr(fm3))),
 		    switch(fm3@optinfo$optimizer,
                            "Nelder_Mead" = 0.029662844,
                            "bobyqa"      = 0.029662698,
-                           "nloptwrap"   = 0.029679755,
+                           "nloptwrap"   =
+                               if (isOldTol) 0.029679755 else 0.029662699,
                            stop("need new case here: value is ",unname(unlist(VarCorr(fm3))))
                            ),
                     tolerance = 1e-7))

@@ -78,7 +78,9 @@ tolD <- sqrt(.Machine$double.eps) # sqrt(eps_C)
 abline(h = log10(tolD), col = "forest green", lty=3)
 axis(4, at=log10(tolD), label=quote(sqrt(epsilon[c])), las=1)
 LRG <- which(srallEQ[,"AIC"] > tolD)
-text(LRG, log10(srallEQ[LRG, "AIC"]), names(LRG), cex = .8)
+if (length(LRG)>0) {
+    text(LRG, log10(srallEQ[LRG, "AIC"]), names(LRG), cex = .8)
+}
 
 ## how close are we ..
 str(tF <- sapply(mySeeds, seedF))

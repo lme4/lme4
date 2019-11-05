@@ -22,7 +22,7 @@ print(s1.d <- summary(fm1))
 stopifnot(exprs = {
     ##sp all.equal(fe1, fe1.s, tolerance= 1e-12)
     all.equal(unname(se1.d <- coef(s1.d)[,"Std. Error"]),
-              c(0.57601291, rep(0.51868351, 3)))
+              c(0.57601291, rep(0.51868351, 3)), tolerance = 1e-6)
     is(V.d <- vcov(fm1), "symmetricMatrix")
     ##sp all.equal(se1.d, coef(s1.s)[,"Std. Error"])#, tol = 1e-10
     ##sp all.equal(  V.d, vcov(fm1.s))#, tol = 1e-9
