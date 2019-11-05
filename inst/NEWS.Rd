@@ -31,6 +31,10 @@
       \item single-model mode of \code{anova()}
       now warns about unused arguments in \dots
       (e.g. \code{type="III"})
+
+      \item default tolerances for \code{nloptwrap}/BOBYQA optimizer
+      tightened (\code{xtol_abs} and \code{ftol_abs} were 1e-6,
+      now 1e-8)
     }
   }
   \subsection{BUG FIXES}{
