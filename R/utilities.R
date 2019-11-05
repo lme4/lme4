@@ -921,6 +921,7 @@ missDataFun <- function(d) {
     return(!foundAnon && is.symbol(ex) && !exists(deparse(ex)))
 }
 
+## try to diagnose missing/bad data
 checkFormulaData <- function(formula, data, checkLHS=TRUE,
                              checkData=TRUE, debug=FALSE) {
     nonexist.data <- missDataFun(data)
@@ -969,6 +970,7 @@ checkFormulaData <- function(formula, data, checkLHS=TRUE,
         } else ## data specified
             list2env(data)
     }
+    ## 
     ## FIXME: set enclosing environment of denv to environment(formula), or parent.frame(2L) ?
     if (debug) {
         cat("Debugging parent frames in checkFormulaData:\n")
