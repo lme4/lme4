@@ -100,8 +100,11 @@ fm3 <- lmer(y ~ (1|Part) + (1|Operator) + (1|Part:Operator), data = lsDat,
 
 lf29 <- lFormula(y ~ (1|Part) + (1|Operator) + (1|Part:Operator), data = lsD29)
 (fm4 <- update(fm3, data=lsD29))
-fm4. <- update(fm4, REML=FALSE)
-summary(fm4.)
+fm4. <- update(fm4, REML=FALSE,
+               control=lmerControl(optimizer="nloptwrap",
+                                   optCtrl=list(ftol_abs=1e-6,
+                                                xtol_abs=1e-6)))
+## summary(fm4.)
 stopifnot(
     all.equal(as.numeric(formatVC(VarCorr(fm4.))[,"Std.Dev."]),
               c(1.04066, 0.63592, 0.52914, 0.48248), tol = 1e-4)

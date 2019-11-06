@@ -14,9 +14,9 @@ sigmaw0 <- 0.15  # within standard deviation
 
 dat <- sims(I, J, sigmab0, sigmaw0)
 
+library(lme4)
 isOldTol <- environment(nloptwrap)$defaultControl$xtol_abs == 1e-6
 
-library(lme4)
 fm3 <- lmer(y ~ (1|group), data=dat)
 stopifnot(all.equal(unname(unlist(VarCorr(fm3))),
 		    switch(fm3@optinfo$optimizer,
