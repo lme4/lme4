@@ -28,7 +28,7 @@ allVarsRec <- function(object)
 
 ## simple version of getData.gnls from nlme
 ## but we *should* and *can* work with environment(formula(.))
-getData <-  function(object)
+getData.merMod <-  function(object)
 {
     mCall <- object@call
     eval(mCall$data, environment(formula(object)))

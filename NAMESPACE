@@ -52,7 +52,7 @@ importFrom("MASS", negative.binomial, theta.ml)
 importFrom("boot", boot.ci)
 
 ## generics we provide methods for and re-export:
-importFrom("nlme", fixef,ranef, VarCorr, getGroups)
+importFrom("nlme", fixef,ranef, VarCorr, getGroups, getData)
 
 importFrom("Matrix", drop0, rankMatrix, sparseMatrix,
            forceSymmetric, fac2sparse, KhatriRao, Diagonal, .bdiag,
@@ -145,6 +145,7 @@ export(.simulateFun)
 export(subbars)
 export(updateGlmerDevfun)
 export(VarCorr)
+export(getData)
 export(varianceProf)
 
 ## print() and print.summary() utilities -- other [NG]LMM packages can import
@@ -198,6 +199,7 @@ S3method(fitted,merMod)
 S3method(fixef,merMod)
 S3method(formula,lmList4)
 S3method(formula,merMod)
+S3method(getData,merMod)
 ## S3method(fortify,merMod)# but don't hide:
 export(fortify.merMod)
 S3method(getME, merMod)
