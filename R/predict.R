@@ -722,11 +722,10 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     row.names(val) <- nm
 
     fit.na.action <- attr(model.frame(object), "na.action")
-
     if (!missing(na.action) &&  !is.null(fit.na.action)) {
         ## retrieve name of na.action type ("omit", "exclude", "pass")
         class.na.action <- class(attr(na.action(NA), "na.action"))
-        if (class.na.action != class(fit.na.action)) {
+        if (!identical(class.na.action, class(fit.na.action))) {
             ## hack to override action where explicitly specified
             class(fit.na.action) <- class.na.action
         }
