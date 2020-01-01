@@ -168,6 +168,10 @@ allFit <- function(object, meth.tab = NULL,
                } else if(have_snow) {
                    if(is.null(cl)) {
                        cl <- parallel::makePSOCKcluster(rep("localhost", ncpus))
+                       ## consider exporting data/package ?
+                       ## parallel::clusterEvalQ(cl,library("lme4"))
+                       ## try to get data and export it?
+                       ## parallel::clusterExport(cl,??)
                        res <- parallel::parLapply(cl, seq_fit, ffun)
                        parallel::stopCluster(cl)
                        res

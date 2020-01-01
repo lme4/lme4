@@ -58,7 +58,8 @@ this appears as \sQuote{nmkbw} in \code{meth.tab})
 \details{
 \itemize{
 \item Needs packages \code{optimx}, and \code{dfoptim} to use all optimizers
-\item If you are using \code{parallel="snow"}, you will need to run
+\item If you are using \code{parallel="snow"} (e.g. when running in
+parallel on Windows), you will need to set up a cluster yourself and run
 \code{clusterEvalQ(cl,library("lme4"))} before calling
 \code{allFit} to make sure that the
 \code{lme4} package is loaded on all of the workers
@@ -81,5 +82,17 @@ ss$llik                ## vector of log-likelihoods
 ss$fixef               ## table of fixed effects
 ss$sdcor               ## table of random effect SDs and correlations
 ss$theta               ## table of random effects parameters, Cholesky scale
+\dontrun{
+## Parallel examples for Windows
+nc <- detectCores()-1
+optCls <- makeCluster(nc, type = "SOCK")
+clusterEvalQ(optCls,library("lme4"))
+### not necessary here because using a built-in
+## data set, but in general you should clusterExport() your data
+clusterExport(optCls, "cbpp")
+system.time(af1 <- allFit(m0, parallel = 'snow', 
+                          ncpus = nc, cl=optCls))
+stopCluster(optCls)
+}
 }
 \keyword{models}
