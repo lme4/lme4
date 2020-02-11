@@ -1,3 +1,7 @@
+---
+title: "lmer Performance tips"
+---
+
 <!--
 %\VignetteEngine{knitr::rmarkdown}
 %\VignetteIndexEntry{lmer Performance Tips}
