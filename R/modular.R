@@ -182,9 +182,13 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
     cstr <- "check.nobs.vs.nlev"
     checkCtrlLevels(cstr, cc <- ctrl[[cstr]])
     if (doCheck(cc) && any(if(allow.n) nlevelVec > n else nlevelVec >= n)) {
+        ## figure out which factors are the problem?
+        w <- if (allow.n) which(nlevelVec>n) else which(nlevelVec>=n)
+        bad_facs <- names(nlevelVec)[w]
         wst2 <- gettextf(
             "number of levels of each grouping factor must be %s number of observations",
             if(allow.n) "<=" else "<")
+        wst2 <- paste0(wst2," (problems: ",paste(bad_facs,collapse=", "),")")
         switch(cc,
                "warning" = warning(wst2, call.=FALSE),
                "stop"    =    stop(wst2, call.=FALSE)
