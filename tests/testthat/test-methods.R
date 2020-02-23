@@ -455,7 +455,7 @@ test_that("predict", {
     op <- options(warn = 2) # there should be no warnings!
     set.seed(1)
     dat <- data.frame(
-        fac = rep(c("a", "b"), 100),
+        fac = factor(rep(c("a", "b"), 100)),
         grp = rep(1:25, each = 4))
     dat$y <- 0
     contr <- 0.5 * contr.sum(2)
