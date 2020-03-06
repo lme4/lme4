@@ -63,11 +63,12 @@ if (testLevel > 2) {
         ## In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
         ##    Model failed to converge with max|grad| = 0.326795 (tol = 0.002, component 1)
         sg1 <- simulate(g1i)
-        if(FALSE) ## similar: not relevant relly
-        if(require("glmmTMB")) {
+        if(FALSE) { ## similar: not relevant here {comment out for 'R CMD check'}:
+        ## if(require("glmmTMB")) {
             g2 <- glmmTMB(immun ~ kid2p+mom25p+ord+ethn+momEd+husEd+momWork+rural+pcInd81+
                           (1|comm/mom), family="binomial", data=guImmun)
             sg2 <- simulate(g2)
+        ## }
         }
     }
 }
@@ -77,7 +78,7 @@ d <- data.frame(f = factor(rep(LETTERS[1:10],each=10)))
 d$x <- runif(nrow(d))
 u <- rnorm(10)
 d$eta <- with(d, 1 + 2*x + u[f])
-d$y <- rbinom(nrow(d),plogis(d$eta), size=1)
+d$y <- rbinom(nrow(d), size=1, prob = plogis(d$eta))
 
 g1 <- glmer(y ~ x + (1|f), data=d, family="binomial")
 ## tolPwrss=1e-5: no longer necessary
