@@ -10,11 +10,11 @@ simfun <- function(sd.u=1, NBtheta=0.5,
                    nblock=25,
                    fform=~x,
                    beta=c(1,2),
-                   nrep=40,seed) {
+                   nrep=40, seed) {
     if (!missing(seed)) set.seed(seed)
     ntot <- nblock*nrep
     d1 <- data.frame(x = runif(ntot),
-                     f = factor(LETTERS[1:nblock], each=nrep))
+                     f = factor(rep(LETTERS[1:nblock], each=nrep)))
     u_f <- rnorm(nblock, sd=sd.u)
     X <- model.matrix(fform, data=d1)
     transform(d1, z = rnbinom(ntot, mu = exp(X %*% beta + u_f[f]), size = NBtheta))
