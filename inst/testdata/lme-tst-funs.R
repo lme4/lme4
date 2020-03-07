@@ -22,36 +22,38 @@ rSim.11 <- function(n, k, sigma=1, beta=2) {
 ##' i.e. (2-way notation)
 ##'   g( E[Y_{ij}|*] ) = \beta_1 + \beta_2 x_{ij} + B_j,
 ##'                                            j = 1..nblk, i = 1..nperblk.
-gSim <- function(nblk=26,
-                 nperblk=100,
-                 sigma=1,    ## st.dev. of ran.eff  B
-                 beta=c(4,3),
+gSim <- function(nblk   =  26,
+                 nperblk= 100,
+                 sigma_B = 1, ## st.dev. of random effect  B
+                 beta = c(4,3),
                  x = runif(n),## sd = sqrt(1/12) = 0.2887; allow also x=c(0,1)
-                 shape=2,    ## shape parameter for Gamma
-                 nbinom=10,  ## N for binomial trials
-                 family=Gamma())
+                 shape = 2,   ## shape parameter for Gamma
+                 nbinom = 10, ## N for binomial trials
+                 family = Gamma())
 {
-    stopifnot(nblk <= 1e7, nblk * nperblk <= 5e7) # some sanity ..
-    ## ch.set: a large enough set of "letters", as level-labels for 'block':
+    stopifnot(1 <= nblk, nblk <= 1e7, 1 <= nperblk,
+              nblk * nperblk <= 5e7) # some sanity ..
+    ## ch.set := a large enough set of "letters", as level-labels for 'block':
     nc <- length(ch.set <- c(LETTERS, letters,
                              paste0(LETTERS,LETTERS), paste0(LETTERS,letters)))
     while(nblk > nc) nc <-
 	length(ch.set <- c(paste0(ch.set, LETTERS),
 			   paste0(ch.set, letters)))
-    stopifnot(1 <= nblk, nblk <= length(ch.set))
+    stopifnot(nblk <= length(ch.set))
     d <- expand.grid(block = ch.set[1:nblk],
                      rep= 1:nperblk, KEEP.OUT.ATTRS=FALSE)
     stopifnot(nblk == length(levels(d$block)),
               (n <- nrow(d)) == nblk * nperblk, length(x) == n, length(beta) == 2)
     d$ x <- x
-    reff_f <- rnorm(nblk, sd=sigma)
+    reff_f <- rnorm(nblk, sd = sigma_B)
     ## need intercept large enough to avoid negative values
     d$ eta0 <- beta[1] + beta[2]*x  ## fixed effects only
     d$ eta  <- d$eta0 + reff_f[d$block]
     d$ mu   <- family$linkinv(d$eta)
     d$ y <- switch(family$family,
-                   "Gamma" = rgamma(n,scale=d$mu/shape,shape=shape),
-                   "poisson" = rpois(n,d$mu),
+                   "Gamma" = rgamma(n, scale = d$mu/shape, shape=shape),
+                   "gaussian" = rnorm(n, d$mu), ## sigma == 1  always
+                   "poisson" = rpois(n, d$mu),
 		   "binomial"= {
 		       z <- rbinom(n, prob=d$mu, size=nbinom)
 		       if (nbinom==1) z else cbind(succ = z, fail = nbinom-z)
