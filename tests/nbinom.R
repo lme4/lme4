@@ -65,6 +65,8 @@ stopifnot(exprs = {
     all.equal(fixef(g1B),    glmmADMB_vals$ fixef, tolerance=0.02)# was 0.009387 !
     ## Ubuntu 12.04/32-bit: 0.0094
     all.equal(logLik.m(g1B), glmmADMB_vals$ LL,    tolerance=1e-4)# 1.681e-5; Ubuntu 12.04/32-b: 1.61e-5
+    })
+
 })## end if( testLevel > 1 )
 
 if(FALSE) { ## simulation study --------------------
