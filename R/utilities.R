@@ -970,7 +970,7 @@ checkFormulaData <- function(formula, data, checkLHS=TRUE,
         } else ## data specified
             list2env(data)
     }
-    ## 
+    ##
     ## FIXME: set enclosing environment of denv to environment(formula), or parent.frame(2L) ?
     if (debug) {
         cat("Debugging parent frames in checkFormulaData:\n")
@@ -1005,7 +1005,7 @@ checkFormulaData <- function(formula, data, checkLHS=TRUE,
 
 
 ##' Not exported; for tests (and examples) that can be slow;
-##' Use   if(lme4:::testLevel() >= 1.) .....  see ../README.md
+##' Use   if(lme4:::testLevel() >= 1.) .....  see ../tests/README.md
 testLevel <- function()
     if(nzchar(s <- Sys.getenv("LME4_TEST_LEVEL")) &&
        is.finite(s <- as.numeric(s))) s else 1

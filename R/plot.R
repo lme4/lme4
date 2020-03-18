@@ -391,22 +391,14 @@ plot.merMod <-
     do.call(plotFun, as.list(args))
 }
 
-##' add information to data based on a fitted model
-##' @param model fitted model
-##' @param data original data set, if needed
-##' @param \dots additional arguments
-##' @details \code{fortify} is a function defined in the \code{ggplot2} package, q.v. for more details; the
-##' S3 generic is just defined here to avoid inducing an additional \code{Imports:} dependency.
-##' This is currently an experimental feature.
-##' @export
-fortify <- function(model, data, ...) UseMethod("fortify")
+## no longer defining `fortify` S3 generic
 
 ##' @rdname fortify
 ##' @S3method fortify lmerMod
 ##' @method fortify lmerMod
 ##' @export
+##'   as function, not as S3 method, see ../man/fortify.Rd  :
 fortify.merMod <- function(model, data=getData(model), ...) {
-    ## FIXME:
 
     ## FIXME: get influence measures via influence.ME?
     ##   (expensive, induces dependency ...)
@@ -418,11 +410,6 @@ fortify.merMod <- function(model, data=getData(model), ...) {
     data
 }
 
-## FIXME: can we do without this??
-## S3method fortify lmerMod
-## S3method fortify glmerMod
-## S3method fortify nlmerMod
-## fortify.lmerMod <- fortify.nlmerMod <- fortify.glmerMod <- fortify.merMod
 
 ## autoplot???
 

@@ -7,45 +7,20 @@ getNBdisp <- function(x) getME(x,"glmer.nb.theta")
 refitNB   <- lme4:::refitNB
 
 simfun <- function(sd.u=1, NBtheta=0.5,
-                   nblock=25,
-                   fform=~x,
-                   beta=c(1,2),
-                   nrep=40,seed) {
+                   nblock = 25,
+                   fform = ~x,
+                   beta = c(1,2),
+                   nrep = 40, seed) {
+    levelset <- c(LETTERS,letters)
+    stopifnot(2 <= nblock, nblock <= length(levelset))
     if (!missing(seed)) set.seed(seed)
     ntot <- nblock*nrep
-    d1 <- data.frame(x=runif(ntot),f=rep(LETTERS[1:nblock],each=nrep))
-    u_f <- rnorm(nblock,sd=sd.u)
-    X <- model.matrix(fform,data=d1)
-    transform(d1,z=rnbinom(ntot,
-                 mu=exp(X %*% beta +u_f[f]),size=NBtheta))
+    d1 <- data.frame(x = runif(ntot),
+                     f = factor(rep(levelset[1:nblock], each=nrep)))
+    u_f <- rnorm(nblock, sd=sd.u)
+    X <- model.matrix(fform, data=d1)
+    transform(d1, z = rnbinom(ntot, mu = exp(X %*% beta + u_f[f]), size = NBtheta))
 }
-
-if (testLevel > 1) {
-    set.seed(102)
-    d.1 <- simfun()
-    t1 <- system.time(g1 <- glmer.nb(z ~ x + (1|f), data=d.1, verbose=TRUE))
-    g1
-    
-    d1 <- getNBdisp(g1)
-    (g1B <- refitNB(g1, theta = d1))
-    (ddev <- deviance(g1) - deviance(g1B))
-    (reld <- (fixef(g1) - fixef(g1B)) / fixef(g1))
-    stopifnot(abs(ddev) < 1e-4,   # was 6.18e-7 now 1.045e-6, now -6.367e-5 (!)
-              abs(reld) < 1e-4)# 0, then 4.63e-6
-    ## 2 Aug 2015: ddev==reld==0 on 32-bit Ubuntu 12.04
-
-
-## library(glmmADMB)
-## t2 <- system.time(g2 <- glmmadmb(z~x+(1|f),
-##                                  data=d1,family="nbinom"))
-## glmmADMB_vals <- list(fixef=fixef(g2),
-##                       NLL=-logLik(g2),
-##                       theta=g2$alpha)
-## 0.4487
-glmmADMB_vals <-
-    list(fixef = c("(Intercept)"=0.92871, x=2.0507),
-         NLL = structure(2944.62, class = "logLik", df= 4, nobs= 1000L),
-         theta = 0.4487)
 
 ##' simplified logLik() so we can compare with "glmmADMB" (and other) results
 logLik.m <- function(x) {
@@ -54,18 +29,45 @@ logLik.m <- function(x) {
     L
 }
 
-stopifnot(
-    ## no more at all ??!
-    ## no all.equal(   d1,          glmmADMB_vals$theta, tolerance=0.0016)
-    ## ,
-          all.equal(fixef(g1B),     glmmADMB_vals$fixef, tolerance=0.1)# was 0.01 !
+if (testLevel > 1) withAutoprint({
+    set.seed(102)
+    d.1 <- simfun()
+    t1 <- system.time(g1 <- glmer.nb(z ~ x + (1|f), data=d.1, verbose=TRUE))
+    g1
+    d1 <- getNBdisp(g1)
+    (g1B <- refitNB(g1, theta = d1))
+    (ddev <- deviance(g1) - deviance(g1B))
+    (reld <- (fixef(g1) - fixef(g1B)) / fixef(g1))
+    stopifnot(abs(ddev) < 1e-6,   # was 6.18e-7, 1.045e-6, -6.367e-5, now 0
+              abs(reld) < 1e-6)# 0, then 4.63e-6,  now 0
+    ## 2 Aug 2015: ddev==reld==0 on 32-bit Ubuntu 12.04
+
+if(FALSE) {
+    ## comment out to avoid R CMD check warning :
+    ## library(glmmADMB)
+    t2 <- system.time(g2 <- glmmadmb(z~x+(1|f),
+                                     data = d.1, family="nbinom"))
+    ## matrix not pos definite in sparse choleski
+    t2 # 17.1 sec elapsed
+    glmmADMB_vals <- list(fixef= fixef(g2),
+                          LL   = logLik(g2),
+                          theta= g2$alpha)
+} else {
+glmmADMB_vals <-
+    list(fixef = c("(Intercept)" = 0.928710, x = 2.05072),
+         LL = structure(-2944.62, class = "logLik", df = 4, nobs = 1000L),
+         theta = 0.4487)
+}
+
+
+stopifnot(exprs = {
+    all.equal(   d1,         glmmADMB_vals$ theta, tolerance=0.003) #   0.0015907
+    all.equal(fixef(g1B),    glmmADMB_vals$ fixef, tolerance=0.02)# was 0.009387 !
     ## Ubuntu 12.04/32-bit: 0.0094
-          ,
-          all.equal(c(logLik.m(g1B)), c(-glmmADMB_vals$NLL), tolerance=0.4)# was 0.001 (!!)
-    ## Ubuntu 12.04/32-bit: 1.61e-5
-    ## except that df=3 vs 4
-          )
-}## end if( testLevel > 1 )
+    all.equal(logLik.m(g1B), glmmADMB_vals$ LL,    tolerance=1e-4)# 1.681e-5; Ubuntu 12.04/32-b: 1.61e-5
+    })
+
+})## end if( testLevel > 1 )
 
 if(FALSE) { ## simulation study --------------------
 
@@ -103,42 +105,46 @@ if(FALSE) { ## simulation study --------------------
 }## end{simulation study}-------------------------
 
 ### epilepsy example:
-data(epil,package="MASS")
-epil2 <- transform(epil,Visit=(period-2.5)/5,
-                   Base=log(base/4),Age=log(age),
-                   subject=factor(subject))
+data(epil, package="MASS")
+epil2 <- transform(epil,
+                   Visit  = (period-2.5)/5,
+                   Base   = log(base/4),
+                   Age    = log(age),
+                   subject= factor(subject))
 
-## t3 <- system.time(g3  <- glmmadmb(y~Base*trt+Age+Visit+(Visit|subject),
-##                                   data=epil2, family="nbinom"))
-## glmmADMB_epil_vals <- list(fixef=fixef(g3),
-##                            NLL=-logLik(g3),
-##                            theta=g3$alpha)
-
+if(FALSE) {
+    ## comment out to avoid R CMD check warning :
+    ## library(glmmADMB)
+    t3 <- system.time(g3  <- glmmadmb(y~Base*trt+Age+Visit+(Visit|subject),
+                                      data=epil2, family="nbinom")) # t3 : 8.67 sec
+    glmmADMB_epil_vals <- list(fixef= fixef(g3),
+                               LL   = logLik(g3),
+                               theta= g3$alpha)
+} else {
 glmmADMB_epil_vals <-
     list(fixef =
-         c("(Intercept)"= -1.33, "Base"=0.88392, "trtprogabide"=-0.92997,
-           "Age"=0.47514, "Visit"=-0.27016, "Base:trtprogabide"=0.33724),
-         NLL = structure(624.551, class = "logLik", df = 9, nobs = 236L),
+         c("(Intercept)"= -1.33, "Base"=0.8839167, "trtprogabide"= -0.9299658,
+           "Age"= 0.4751434, "Visit"=-0.2701603, "Base:trtprogabide"=0.3372421),
+         LL = structure(-624.551, class = "logLik", df = 9, nobs = 236L),
          theta = 7.4702)
-
-if (testLevel > 3) {
-    ## "too slow" for regular testing -- 49 (MM@lynne: 33, then 26) seconds:
-    (t4 <- system.time(g4 <- glmer.nb(y~ Base*trt + Age + Visit + (Visit|subject),
-                                      data=epil2, verbose=TRUE)))
-    ## 1.1-7: Warning in checkConv().. failed .. with max|grad| = 0.0089 (tol = 0.001, comp. 4)
-
-    (Lg4 <- logLik(g4))## logLik() --> ML instead of REML: refitting the model
-    attributes(Lg4) <- attributes(Lg4)[c("class","df","nobs")]
-    stopifnot(
-## FIXME: not at all!!
-##           all.equal(getNBdisp(g4),   glmmADMB_epil_vals$ theta, tolerance= 0.0022)# was 0.002
-##              ,
-              all.equal(fixef    (g4),   glmmADMB_epil_vals$ fixef, tolerance= 0.03)#was 0.004
-## ,
-### still 0.00374 on Ubuntu 12.04        
-## FIXME: even df differ !
-##              all.equal(logLik.m (g4), - glmmADMB_epil_vals$ NLL,	tolerance= 0.0) ## was 0.0002
-              )
 }
+
+if (testLevel > 2) withAutoprint({
+    ## "too slow" for regular testing -- 49 (MM@lynne: 33, then 26, then 14) seconds:
+    (t4 <- system.time(g4 <- glmer.nb(y ~ Base*trt + Age + Visit + (Visit|subject),
+                                      data = epil2, verbose=TRUE)))
+    ## 1.1-7 : Warning in checkConv().. failed .. with max|grad| = 0.0089 (tol = 0.001, comp. 4)
+    ## 1.1-21: 2 Warnings:  max|grad| = 0.00859, then 0.1176 (0.002, comp. 1)
+
+    stopifnot(exprs = {
+        all.equal(getNBdisp(g4),   glmmADMB_epil_vals$ theta, tolerance= 0.03) # 0.0019777
+        all.equal(fixef    (g4),   glmmADMB_epil_vals$ fixef, tolerance= 0.04) # 0.003731 (0.00374 on U 12.04)
+## FIXME: even df differ (10 vs 9) !
+##      all.equal(logLik.m(g4), - glmmADMB_epil_vals$ LL,	tolerance= 0.0) ## was 0.0002
+        all.equal(logLik.m(g4), # for now {this is not *the* truth, just our current approximation of it}:
+                  structure(-624.48418, class = "logLik", df = 10, nobs = 236L))
+    })
+})
+
 
 cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''

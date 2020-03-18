@@ -52,48 +52,60 @@ s6 <- simulate(gm4,seed=101,use.u=TRUE)[[1]]
 
 ## Bernoulli
 ## works, but too slow
-if (testLevel>2) {
+if (testLevel > 2) {
     if(require("mlmRev")) {
-        data(guImmun,package="mlmRev")
-        g1 <- glmer(immun~kid2p+mom25p+ord+ethn+momEd+husEd+momWork+rural+pcInd81+
-                    (1|comm/mom),family="binomial",data=guImmun)
-        s2 <- simulate(g1)
+        data(guImmun, package="mlmRev")
+        table(guImmun$immun)
+        ##    N    Y
+        ## 1195  964
+        g1i <- glmer(immun ~ kid2p+mom25p+ord+ethn+momEd+husEd+momWork+rural+pcInd81+
+                         (1|comm/mom), family="binomial", data=guImmun)
+        ## In checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv,  :
+        ##    Model failed to converge with max|grad| = 0.326795 (tol = 0.002, component 1)
+        sg1 <- simulate(g1i)
+        if(FALSE) { ## similar: not relevant here {comment out for 'R CMD check'}:
+        ## if(require("glmmTMB")) {
+            g2 <- glmmTMB(immun ~ kid2p+mom25p+ord+ethn+momEd+husEd+momWork+rural+pcInd81+
+                          (1|comm/mom), family="binomial", data=guImmun)
+            sg2 <- simulate(g2)
+        ## }
+        }
     }
 }
 
 set.seed(101)
-d <- data.frame(f=rep(LETTERS[1:10],each=10))
+d <- data.frame(f = factor(rep(LETTERS[1:10],each=10)))
 d$x <- runif(nrow(d))
 u <- rnorm(10)
-d$eta <- with(d,1+2*x+u[f])
-d$y <- rbinom(nrow(d),plogis(d$eta),size=1)
+d$eta <- with(d, 1 + 2*x + u[f])
+d$y <- rbinom(nrow(d), size=1, prob = plogis(d$eta))
 
-g1 <- glmer(y~x+(1|f),data=d,family="binomial")
+g1 <- glmer(y ~ x + (1|f), data=d, family="binomial")
 ## tolPwrss=1e-5: no longer necessary
 
-if (FALSE) {
-  allcoef <- function(x) {
-    c(deviance(x),getME(x,"theta"),getME(x,"beta"))
-  }
+if (testLevel > 2) { ## trying a set of  glmerControl(tolPwrss = 10^t) :
+  allcoef <- function(x) c(dev = deviance(x), th = getME(x,"theta"), beta = getME(x,"beta"))
   tfun <- function(t) {
-    gg <- try(glmer(y~x+(1|f),data=d,family="binomial",
-                    control=glmerControl(tolPwrss=10^t)))
+      gg <- try( ## << errors (too small tolPwrss) are still printed :
+          glmer(y~x+(1|f),data=d,family="binomial",
+                    control = glmerControl(tolPwrss = 10^t)))
     if (inherits(gg,"try-error")) rep(NA,4) else allcoef(gg)
   }
   tvec <- seq(-4,-16,by=-0.25)
-  tres <- cbind(tvec,t(sapply(tvec,tfun)))
+  tres <- cbind(t = tvec, t(sapply(tvec, tfun)))
+  print(tres)
 }
 
-gm_s5 <- simulate(g1,seed=102)[[1]]
+gm_s5 <- simulate(g1, seed=102)[[1]]
 
 d$y <- factor(c("N","Y")[d$y+1])
-g1B <- glmer(y~x+(1|f),data=d,family="binomial") ## ,tolPwrss=1e-5)
-s1B <- simulate(g1B,seed=102)[[1]]
+g1B <- glmer(y ~ x + (1|f), data=d, family="binomial") ## ,tolPwrss=1e-5)
+s1B <- simulate(g1B, seed=102)[[1]]
 stopifnot(all.equal(gm_s5,as.numeric(s1B)-1))
 
 ## another Bernoulli
 if(requireNamespace("mlmRev")) {
-    data(Contraception,package="mlmRev")
+    data(Contraception, package="mlmRev")
     gm5 <- glmer(use ~ urban+age+livch+(1|district), Contraception, binomial)
     s3 <- simulate(gm5)
 }
