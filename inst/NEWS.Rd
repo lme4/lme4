@@ -4,7 +4,7 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-21.9000}{
+\section{CHANGES IN VERSION 1.1-22}{
   \subsection{USER-VISIBLE CHANGES}{
   \itemize{
   
@@ -71,7 +71,7 @@
       \item \code{level} argument is now honoured by \code{confint(..., type="boot", level=...)} (GH #543)
     }
   } % bug fixes
-} % version 1.1-21.9000
+} % version 1.1-22
 
 \section{CHANGES IN VERSION 1.1-21 (2019-03-05)}{
     \subsection{USER-VISIBLE CHANGES}{
