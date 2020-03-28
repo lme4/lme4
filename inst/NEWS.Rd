@@ -4,6 +4,13 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
+\section{CHANGES IN VERSION 1.1-23}{
+  This is primarily for CRAN compliance (previous submission was
+  retracted to allow time for downstream package adjustments).
+  \itemize{
+    \item Some PROTECT/UNPROTECT fixes
+  }
+}
 \section{CHANGES IN VERSION 1.1-22}{
   \subsection{USER-VISIBLE CHANGES}{
   \itemize{

@@ -9,6 +9,8 @@
 #include <Rmath.h>
 #include <limits>
 #include <cmath>
+#include <R.h>
+#include <Rinternals.h>
 
 using namespace Rcpp;
 
@@ -426,53 +428,75 @@ namespace glm {
     }
 
     const ArrayXd glmLink::linkFun(const ArrayXd& mu) const {
-        return as<ArrayXd>(::Rf_eval(::Rf_lang2(as<SEXP>(d_linkFun),
-                                                as<SEXP>(Rcpp::NumericVector(mu.data(),
-                                                                             mu.data() + mu.size()))
-                                         ), d_rho));
+      ArrayXd res = as<ArrayXd>(
+		PROTECT(::Rf_eval(
+		   PROTECT(::Rf_lang2(as<SEXP>(d_linkFun),
+		      as<SEXP>(Rcpp::NumericVector(mu.data(),
+						   mu.data() + mu.size())))),
+		   d_rho)));
+      UNPROTECT(2);
+      return res;
     }
 
     const ArrayXd glmLink::linkInv(const ArrayXd& eta) const {
-        return as<ArrayXd>(::Rf_eval(::Rf_lang2(as<SEXP>(d_linkInv),
-                                                as<SEXP>(Rcpp::NumericVector(eta.data(),
-                                                                             eta.data() + eta.size()))
-                                         ), d_rho));
+        ArrayXd res = as<ArrayXd>(
+                PROTECT(::Rf_eval(
+		  PROTECT(::Rf_lang2(as<SEXP>(d_linkInv),
+                       as<SEXP>(Rcpp::NumericVector(eta.data(),
+                                                    eta.data() + eta.size())))),
+		  d_rho)));
+	UNPROTECT(2);
+	return res;
     }
 
     const ArrayXd glmLink::muEta(const ArrayXd &eta) const {
-        return as<ArrayXd>(::Rf_eval(::Rf_lang2(as<SEXP>(d_muEta),
-                                                as<SEXP>(Rcpp::NumericVector(eta.data(),
-                                                                             eta.data() + eta.size()))
-                                         ), d_rho));
+      ArrayXd res = as<ArrayXd>(
+		PROTECT(::Rf_eval(
+  		  PROTECT(::Rf_lang2(as<SEXP>(d_muEta),
+                       as<SEXP>(Rcpp::NumericVector(eta.data(),
+                                                   eta.data() + eta.size())))),
+		  d_rho)));
+      UNPROTECT(2);
+      return(res);
     }
     
     const ArrayXd glmDist::variance(const ArrayXd &mu) const {
-        return as<ArrayXd>(::Rf_eval(::Rf_lang2(as<SEXP>(d_variance),
-                                                as<SEXP>(Rcpp::NumericVector(mu.data(),
-                                                                             mu.data() + mu.size()))
-                                         ), d_rho));
+      ArrayXd res = as<ArrayXd>(
+		PROTECT(::Rf_eval(
+		  PROTECT(::Rf_lang2(as<SEXP>(d_variance),
+		     as<SEXP>(Rcpp::NumericVector(mu.data(),
+						  mu.data() + mu.size())))),
+		  d_rho)));
+      UNPROTECT(2);
     }
     
     const ArrayXd glmDist::devResid(const ArrayXd &y, const ArrayXd &mu, const ArrayXd &wt) const {
         int n = mu.size();
-        return as<ArrayXd>(::Rf_eval(::Rf_lang4(as<SEXP>(d_devRes),
-                                                as<SEXP>(NumericVector(y.data(), y.data() + n)),
-                                                as<SEXP>(NumericVector(mu.data(), mu.data() + n)),
-                                                as<SEXP>(NumericVector(wt.data(), wt.data() + n))
-                                         ), d_rho));
+        ArrayXd res = as<ArrayXd>(
+		  PROTECT(::Rf_eval(
+		    PROTECT(::Rf_lang4(as<SEXP>(d_devRes),
+			 as<SEXP>(NumericVector(y.data(), y.data() + n)),
+			 as<SEXP>(NumericVector(mu.data(), mu.data() + n)),
+				       as<SEXP>(NumericVector(wt.data(), wt.data() + n)))),
+		    d_rho)));
+	UNPROTECT(2);
     }
 
     double glmDist::aic(const ArrayXd& y, const ArrayXd& n, const ArrayXd& mu,
                         const ArrayXd& wt, double dev) const {
         int nn = mu.size();
         double ans =
-            ::Rf_asReal(::Rf_eval(::Rf_lang6(as<SEXP>(d_aic),
-                                             as<SEXP>(NumericVector(y.data(), y.data() + nn)),
-                                             as<SEXP>(NumericVector(n.data(), n.data() + nn)),
-                                             as<SEXP>(NumericVector(mu.data(), mu.data() + nn)),
-                                             as<SEXP>(NumericVector(wt.data(), wt.data() + nn)),
-                                             PROTECT(::Rf_ScalarReal(dev))), d_rho));
-        UNPROTECT(1);
+	  // do we need another PROTECT here?
+	  ::Rf_asReal(
+            PROTECT(::Rf_eval(
+	      PROTECT(::Rf_lang6(
+		  as<SEXP>(d_aic),
+		  as<SEXP>(NumericVector(y.data(), y.data() + nn)),
+                  as<SEXP>(NumericVector(n.data(), n.data() + nn)),
+                  as<SEXP>(NumericVector(mu.data(), mu.data() + nn)),
+ 		  as<SEXP>(NumericVector(wt.data(), wt.data() + nn)),
+		  PROTECT(::Rf_ScalarReal(dev)))), d_rho)));
+        UNPROTECT(3);
         return ans;
     }
     
