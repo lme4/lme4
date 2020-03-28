@@ -429,64 +429,63 @@ namespace glm {
 
     const ArrayXd glmLink::linkFun(const ArrayXd& mu) const {
       ArrayXd res = as<ArrayXd>(
-		PROTECT(::Rf_eval(
+	        ::Rf_eval(
 		   PROTECT(::Rf_lang2(as<SEXP>(d_linkFun),
 		      as<SEXP>(Rcpp::NumericVector(mu.data(),
 						   mu.data() + mu.size())))),
-		   d_rho)));
-      UNPROTECT(2);
+		   d_rho));
+      UNPROTECT(1);
       return res;
     }
 
     const ArrayXd glmLink::linkInv(const ArrayXd& eta) const {
         ArrayXd res = as<ArrayXd>(
-                PROTECT(::Rf_eval(
+                ::Rf_eval(
 		  PROTECT(::Rf_lang2(as<SEXP>(d_linkInv),
                        as<SEXP>(Rcpp::NumericVector(eta.data(),
                                                     eta.data() + eta.size())))),
-		  d_rho)));
-	UNPROTECT(2);
+		  d_rho));
+	UNPROTECT(1);
 	return res;
     }
 
     const ArrayXd glmLink::muEta(const ArrayXd &eta) const {
       ArrayXd res = as<ArrayXd>(
-		PROTECT(::Rf_eval(
+		::Rf_eval(
   		  PROTECT(::Rf_lang2(as<SEXP>(d_muEta),
                        as<SEXP>(Rcpp::NumericVector(eta.data(),
                                                    eta.data() + eta.size())))),
-		  d_rho)));
-      UNPROTECT(2);
+		  d_rho));
+      UNPROTECT(1);
       return(res);
     }
     
     const ArrayXd glmDist::variance(const ArrayXd &mu) const {
       ArrayXd res = as<ArrayXd>(
-		PROTECT(::Rf_eval(
+		::Rf_eval(
 		  PROTECT(::Rf_lang2(as<SEXP>(d_variance),
 		     as<SEXP>(Rcpp::NumericVector(mu.data(),
 						  mu.data() + mu.size())))),
-		  d_rho)));
-      UNPROTECT(2);
+		  d_rho));
+      UNPROTECT(1);
     }
     
     const ArrayXd glmDist::devResid(const ArrayXd &y, const ArrayXd &mu, const ArrayXd &wt) const {
         int n = mu.size();
         ArrayXd res = as<ArrayXd>(
-		  PROTECT(::Rf_eval(
+		  ::Rf_eval(
 		    PROTECT(::Rf_lang4(as<SEXP>(d_devRes),
 			 as<SEXP>(NumericVector(y.data(), y.data() + n)),
 			 as<SEXP>(NumericVector(mu.data(), mu.data() + n)),
 				       as<SEXP>(NumericVector(wt.data(), wt.data() + n)))),
-		    d_rho)));
-	UNPROTECT(2);
+		    d_rho));
+	UNPROTECT(1);
     }
 
     double glmDist::aic(const ArrayXd& y, const ArrayXd& n, const ArrayXd& mu,
                         const ArrayXd& wt, double dev) const {
         int nn = mu.size();
         double ans =
-	  // do we need another PROTECT here?
 	  ::Rf_asReal(
             PROTECT(::Rf_eval(
 	      PROTECT(::Rf_lang6(
