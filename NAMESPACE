@@ -142,6 +142,7 @@ if(getRversion() >= "3.3.0") {
     export(sigma)
 }
 export(.simulateFun)
+export(simulate.formula)
 export(subbars)
 export(updateGlmerDevfun)
 export(VarCorr)
