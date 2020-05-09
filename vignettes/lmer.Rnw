@@ -1296,7 +1296,7 @@ is $\sigma^2\bm I_n$ in our formulation of the model.
   \begin{bmatrix}
      \bm\mu_{\mc B|\mc Y=\yobs}\\\widehat{\bm\beta}_\theta
   \end{bmatrix}=
-  \begin{bmatrix}\bm X\trans\yobs\\\bm Z\trans\yobs\end{bmatrix} .
+  \begin{bmatrix}\bm Z\trans\yobs\\\bm X\trans\yobs\end{bmatrix} \quad .
 \end{equation}
 where
 $\bm\Omega_\theta=\left(\bLt\trans\bLt\right)^{-1}=\sigma^2\bm\Sigma^{-1}$
