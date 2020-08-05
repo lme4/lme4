@@ -638,7 +638,7 @@ coefMer <- function(object, ...)
         warning('arguments named "', paste(names(list(...)), collapse = ", "),
                 '" ignored')
     fef <- data.frame(rbind(fixef(object)), check.names = FALSE)
-    ref <- ranef(object)
+    ref <- ranef(object, condVar = FALSE)
     ## check for variables in RE but missing from FE, fill in zeros in FE accordingly
     refnames <- unlist(lapply(ref,colnames))
     nmiss <- length(missnames <- setdiff(refnames,names(fef)))
