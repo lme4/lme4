@@ -13,7 +13,7 @@ lme4: Mixed-effects models in R.
 
 ## Where to get help
 
-- `r-sig-mixed-models@r-project.org` for questions about `lme4` usage and more general mixed model questions
+- [r-sig-mixed-models@r-project.org](https://stat.ethz.ch/mailman/listinfo/r-sig-mixed-models) for questions about `lme4` usage and more general mixed model questions; please read the info page, and subscribe, before posting ...
 - https://github.com/lme4/lme4/issues for bug, infelicity, and wishlist reporting
 - The [lme4 tag on StackOverflow](https://stackoverflow.com/questions/tagged/lme4) for programming-related or the [lme4-nlme tag on CrossValidated](https://stats.stackexchange.com/questions/tagged/lme4-nlme) for statistics-related questions
 - maintainer e-mail only for urgent/private communications
