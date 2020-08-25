@@ -202,18 +202,22 @@ test_that("lapply etc.", {
     expect_is(lapply(listOfFormulas,glmer,family=binomial,data=cbpp),"list")
 })
 
+test_that("formula and data validation work with do.call() in artificial environment", {
+    ## This ensures compatibility of lmer when it's called from the
+    ## C-level Rf_eval() with an environment that doesn't exist on the
+    ## stack (i.e. C implementation in magrittr 2.0)
+    e <- new.env()
+    e$. <- mtcars
+    expect_is(
+        do.call(lme4::lmer, list("disp ~ (1 | cyl)", quote(.)), envir = e),
+        "merMod"
+    )
 
-test_that("missDataFun", {
-    X <- expand.grid(x1=1:10, x2=1:10, x3=1:10, x4=1:10, g=letters[1:20])
-    X$y <- X$x1 + rnorm(10)[X$g] + rnorm(200000)
-    (t1 <- system.time(lmer(y ~ x1 + x2 + x3 + x4 + (1|g), data=X,
-                            control=lmerControl(optimizer=NULL))))
-    g <- function(X) {
-        X$y <- X$x1 + rnorm(10)[X$g] + rnorm(200000)
-        lme4:::missDataFun(X)
+    fn <- function(data) {
+        lme4::lmer("disp ~ (1 | cyl)", data = data)
     }
-    ## should take < 1 second since deparsing is now skipped
-    (t2 <- system.time(g(X)))
-    ## Timing comparisons should be on a *relative* scale.
-    expect_lte(t2[["elapsed"]], 1/4 * t1[["elapsed"]]) # typical ratio: 0.03
+    expect_is(
+        do.call(fn, list(quote(.)), envir = e),
+        "merMod"
+    )
 })
