@@ -304,7 +304,7 @@ extern "C" {
                             double tol, int maxit, int verbose) {
         double oldpdev=std::numeric_limits<double>::max();
         double pdev;
-        int maxstephalfit = 10;
+        int maxstephalfit = 20;
         bool   cvgd = false, verb = verbose > 2, moreverb = verbose > 10;
         int debug=0;
 

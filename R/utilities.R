@@ -899,7 +899,7 @@ checkArgs <- function(type,...) {
 checkFormulaData <- function(formula, data, checkLHS=TRUE,
                              checkData=TRUE, debug=FALSE) {
     wd <- tryCatch(force(data), error = identity)
-    if (bad.data <- inherits(wd,"simpleError")) {
+    if (bad.data <- inherits(wd,"error")) {
         bad.data.msg <- wd$message
     }
 

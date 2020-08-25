@@ -27,16 +27,18 @@ test_that("glmerFormX", {
     ## WARNING: these drop/environment tests are extremely sensitive to environment
     ## they may fail/not fail, or fail differently, within a "testthat" environment vs.
     ##   when run interactively
-    ## AICvec <- c(77.0516381151634, 75.0819116367084, 75.1915023640827)
     expect_that(m_data.3 <- glmer( modStr , data=d, family="binomial"), is_a("glmerMod"))
     expect_that(m_data.4 <- glmer( "x ~ y + z + (1|r)" , data=d, family="binomial"), is_a("glmerMod"))
-    ## interactively:
+    ## interactively: (interactive() is TRUE {i.e. doesn't behave as I would expect} within testing environment ...
+    ## if (interactive()) {
+    ## AICvec <- c(77.0516381151634, 75.0819116367084, 75.1915023640827)
     ## expect_equal(drop1(m_data.3)$AIC,AICvec)
     ## expect_equal(drop1(m_data.4)$AIC,AICvec)
-    ## in test environment:
-    expect_error(drop1(m_data.3),data_RE)
-    expect_error(drop1(m_data.4),data_RE)
-
+    ## } else {
+        ## in test environment [NOT test_
+        expect_error(drop1(m_data.3),data_RE)
+        expect_error(drop1(m_data.4),data_RE)
+    ##}
 })
 
 test_that("glmerForm", {

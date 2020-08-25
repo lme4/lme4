@@ -148,6 +148,8 @@ test_that("lmer", {
     expect_equal(aa2[2,"Chisq"],0)
 
     expect_warning(anova(fm1,type="III"),"additional arguments ignored")
+
+    aa <- suppressMessages(anova(fm0,fm0))
 })
 
 context("bootMer confint()")
