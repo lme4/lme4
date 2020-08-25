@@ -149,7 +149,10 @@ test_that("lmer", {
 
     expect_warning(anova(fm1,type="III"),"additional arguments ignored")
 
-    aa <- suppressMessages(anova(fm0,fm0))
+    ## set p-values to NA for equivalent models: #583
+    fm0B <- fm0
+    aa <- suppressMessages(anova(fm0B,fm0))
+    expect_true(all(is.na(aa[["Pr(>Chisq)"]])))
 })
 
 context("bootMer confint()")
