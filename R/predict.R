@@ -40,14 +40,15 @@ reFormHack <- function(re.form,ReForm,REForm,REform) {
 }
 
 ## '...' may contain fixed.only=TRUE, random.only=TRUE, ..
-get.orig.levs <- function(object, FUN=levels, newdata=NULL, ...) {
+get.orig.levs <- function(object, FUN=levels, newdata=NULL, sparse = FALSE, ...) {
     Terms <- terms(object,...)
     mf <- model.frame(object, ...)
     isFac <- vapply(mf, is.factor, FUN.VALUE=TRUE)
     ## ignore response variable
     isFac[attr(Terms,"response")] <- FALSE
     mf <- mf[isFac]
-    orig_levs <- if(any(isFac)) lapply(mf, FUN) # else NULL
+    hasSparse <- any(grepl("sparse", names(formals(FUN))))   # check if FUN has sparse argument
+    orig_levs <- if (any(isFac) && hasSparse) lapply(mf, FUN, sparse = sparse) else if(any(isFac) && !hasSparse) lapply(mf, FUN) # else NULL
     ## if necessary (allow.new.levels ...) add in new levels
     if (!is.null(newdata)) {
         for (n in names(mf)) {

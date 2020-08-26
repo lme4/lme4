@@ -25,10 +25,13 @@
 \section{CHANGES IN VERSION 1.1-22 (never on CRAN)}{
   \subsection{USER-VISIBLE CHANGES}{
   \itemize{
-  
-      \item minor changes to argument order in \code{[g]lmerControl};
-      default tolerance for convergence checks increased from 0.001 to 0.002
-      for \code{glmerControl} (now consistent with \code{lmerControl})
+
+    \item prediction now works better for factors with many levels
+    (GH#467, solution by @sihoward)
+    
+    \item minor changes to argument order in \code{[g]lmerControl};
+    default tolerance for convergence checks increased from 0.001 to 0.002
+    for \code{glmerControl} (now consistent with \code{lmerControl})
 
       \item \code{lmer(*, family="<fam>")} is no longer valid; it had been
       deprecated since 2013-06.
@@ -62,6 +65,9 @@
   }
   \subsection{BUG FIXES}{
     \itemize{
+
+      \item improved checking for missing data (@lionel-)
+      
       \item internal \code{checkZrank()} should be able to deal with
       (\code{Matrix} package) \code{rankMatrix()} returning \code{NA}.
 
