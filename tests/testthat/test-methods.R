@@ -456,7 +456,8 @@ test_that("predict", {
     set.seed(1)
     dat <- data.frame(
         fac = rep(c("a", "b"), 100),
-        grp = rep(1:25, each = 4))
+        grp = rep(1:25, each = 4),
+        stringsAsFactors=TRUE)
     dat$y <- 0
     contr <- 0.5 * contr.sum(2)
     rownames(contr) <- c("a", "b")
