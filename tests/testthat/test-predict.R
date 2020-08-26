@@ -323,3 +323,15 @@ test_that("simulation complains appropriately about bad family", {
     expect_error(simulate(model_fit2),"simulation not implemented for family")
 })
 
+test_that("prediction from large factors", {
+    set.seed(101)
+    N <- 50000
+    X <- data.frame(y=rpois(N, 5), obs=as.factor(1:N))
+    fm <- glmer(y ~ (1|obs), family="poisson", data=X,
+                control=glmerControl(check.conv.singular="ignore"))
+    ## FIXME: weak tests.  The main issue here is that these should
+    ##  be reasonably speedy and non-memory-hogging, but those are
+    ## hard to test portably ...
+    expect_is(predict(fm, re.form=~(1|obs)), "numeric")
+    expect_is(predict(fm, newdata=X), "numeric")
+})
