@@ -564,7 +564,7 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
                           deviance = -2*llk,
                           Chisq = chisq,
                           Df = dfChisq,
-                          "Pr(>Chisq)" = pchisq(chisq, dfChisq, lower.tail = FALSE),
+                          "Pr(>Chisq)" = ifelse(dfChisq==0,NA,pchisq(chisq, dfChisq, lower.tail = FALSE)),
                           row.names = names(mods), check.names = FALSE)
         class(val) <- c("anova", class(val))
         forms <- lapply(lapply(calls, `[[`, "formula"), deparse)

@@ -4,7 +4,18 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-23 (2020-03-06}{
+\section{CHANGES IN VERSION 1.1-23.9000 (unreleased)}{
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item \code{anova()} now returns a p-value of \code{NA} if the df
+      difference between two models is 0 (implying they are equivalent
+      models) (GH#583, @MetaEntropy)
+      \item speedup in \code{coef()} for large models, by skipping
+      conditional variance calculation (Alexander Bauer)
+    }
+  }
+}
+\section{CHANGES IN VERSION 1.1-23 (2020-03-06)}{
   This is primarily for CRAN compliance (previous submission was
   retracted to allow time for downstream package adjustments).
   \itemize{

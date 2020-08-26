@@ -19,7 +19,7 @@ test_that("lmer", {
     ## expect_warning(lmer(z~ 1|f, d, method="Laplace"),"Use the REML argument")
     ##sp No '...' anymore
     ##sp expect_warning(lmer(z~ 1|f, d, sparseX=TRUE),"has no effect at present")
-    expect_error(lmer(z~ 1|f, ddd), "'data' not found")
+    expect_error(lmer(z~ 1|f, ddd), "bad 'data': object 'ddd' not found")
     expect_error(lmer(z~ 1|f), "object 'z' not found")
     expect_error(lmer(z~ 1|f, d[,1:1000]), "bad 'data': undefined columns selected")
     expect_is(fm1 <- lmer(Yield ~ 1|Batch, Dyestuff), "lmerMod")

@@ -895,41 +895,13 @@ checkArgs <- function(type,...) {
 ## if #3 is true *and* the user is doing something tricky with nested functions,
 ## this may fail ...
 
-## from http://stackoverflow.com/questions/14945274/determine-whether-evaluation-of-an-argument-will-fail-due-to-non-existence
-missDataFun <- function(d) {
-    ## test here
-    ff <- sys.frames()
-    ex <- substitute(d)
-    ii <- rev(seq_along(ff))
-    foundAnon <- FALSE
-    for(i in ii) {
-        ## trying to find where the original symbol is defined ...
-        ex <- eval(substitute(substitute(x, env=sys.frames()[[n]]),
-                              env = list(x = ex, n=i)))
-        if (is.symbol(ex) && grepl("^\\.\\.[0-9]+$",safeDeparse(ex))) {
-            ## testing for the dreaded "..1", "..2" pattern; this means
-            ## we are stuck in an anonymous function somewhere ...
-            ## won't be able to see whether data exist or not,
-            ## but we should not flag them as missing -- definitely
-            ## causes false positives
-            ## might be better to check against quote(..1), quote(..2),
-            ## ... but ugh ...
-            foundAnon <- TRUE
-            break
-        }
-    }
-    return(!foundAnon && is.symbol(ex) && !exists(deparse(ex)))
-}
-
 ## try to diagnose missing/bad data
 checkFormulaData <- function(formula, data, checkLHS=TRUE,
                              checkData=TRUE, debug=FALSE) {
-    nonexist.data <- missDataFun(data)
-    wd <- tryCatch(eval(data), error = identity)
-    if (wrong.data <- inherits(wd,"simpleError")) {
-        wrong.data.msg <- wd$message
+    wd <- tryCatch(force(data), error = identity)
+    if (bad.data <- inherits(wd,"error")) {
+        bad.data.msg <- wd$message
     }
-    bad.data <- nonexist.data || wrong.data
 
     ## data not found (this *should* only happen with garbage input,
     ## OR when strings used as formulae -> drop1/update/etc.)
@@ -945,11 +917,7 @@ checkFormulaData <- function(formula, data, checkLHS=TRUE,
                  "try specifying 'formula' as a formula rather ",
                  "than a string in the original model",call.=FALSE)
         } else {
-            if (nonexist.data) {
-                stop("'data' not found, and some variables missing from formula environment",call.=FALSE)
-            } else {
-                stop("bad 'data': ",wrong.data.msg)
-            }
+            stop("bad 'data': ", bad.data.msg, call. = FALSE)
         }
     } else {
         denv <- ## The data as environment
