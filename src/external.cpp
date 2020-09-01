@@ -49,6 +49,8 @@ extern "C" {
 
     // utilities
 
+    // FIXME: as pointed out here <https://github.com/lme4/lme4/issues/588>, this is potentially
+    //   dangerous when v_ is long ...
     SEXP allPerm_int(SEXP v_) {
         BEGIN_RCPP;
         iVec     v(as<iVec>(v_));   // forces a copy
