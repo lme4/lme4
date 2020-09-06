@@ -28,7 +28,7 @@ if (FALSE) {
 (testLevel <- lme4:::testLevel())
 if (testLevel > 2) {
     glmer(formula.poisson,data=data.poisson,family=poisson,
-          control=glmerControl(compDev=FALSE),optimizer="bobyqa")
+          control=glmerControl(compDev=FALSE,optimizer="bobyqa"))
     ## caught warning: maxfun < 10 * length(par)^2 is not recommended.
     ## but runs to completion
 }
