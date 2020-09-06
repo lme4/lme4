@@ -13,8 +13,18 @@
       \item speedup in \code{coef()} for large models, by skipping
       conditional variance calculation (Alexander Bauer)
     }
-  }
-}
+  } % user-visible changes
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item \code{getME(.,"devfun")} now works for \code{glmer} objects.
+      Additionally, \code{profile}/\code{confint} for GLMMs
+      no longer depend on objects in the fitting environment
+      remaining unchanged (GH #589). This change also affects likelihood
+      profiling machinery; results of \code{glmer} profiling/CIs  may
+      not match results from previous versions exactly.
+    }
+  } % new features
+} % version 1.1-23.9000
 \section{CHANGES IN VERSION 1.1-23 (2020-03-06)}{
   This is primarily for CRAN compliance (previous submission was
   retracted to allow time for downstream package adjustments).
