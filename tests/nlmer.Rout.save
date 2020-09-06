@@ -1,7 +1,7 @@
 
-R Under development (unstable) (2013-12-06 r64406) -- "Unsuffered Consequences"
-Copyright (C) 2013 The R Foundation for Statistical Computing
-Platform: i686-pc-linux-gnu (32-bit)
+R Under development (unstable) (2020-08-25 r79080) -- "Unsuffered Consequences"
+Copyright (C) 2020 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -25,16 +25,16 @@ Loading required package: Matrix
 > 
 > (nm1 <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~ (Asym|Tree),
 +               Orange, start = c(Asym = 200, xmid = 725, scal = 350)))
-Nonlinear mixed model fit by maximum likelihood ['nlmerMod']
-Formula: circumference ~ SSlogis(age, Asym, xmid, scal) ~ (Asym | Tree) 
-   Data: Orange 
+Nonlinear mixed model fit by maximum likelihood  ['nlmerMod']
+Formula: circumference ~ SSlogis(age, Asym, xmid, scal) ~ (Asym | Tree)
+   Data: Orange
       AIC       BIC    logLik  deviance  df.resid 
  273.1438  280.9205 -131.5719  263.1438        30 
 Random effects:
  Groups   Name Std.Dev.
  Tree     Asym 31.646  
  Residual       7.843  
-Number of obs: 35, groups: Tree, 5
+Number of obs: 35, groups:  Tree, 5
 Fixed Effects:
  Asym   xmid   scal  
 192.1  727.9  348.1  
@@ -48,7 +48,8 @@ Fixed Effects:
 + 
 + system.time(nm2 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
 +                          (lKe+lKa+lCl|Subject),
-+                          Theoph, start = Th.start, tolPwrss=1e-8))
++                          Theoph, start = Th.start,
++                          control=nlmerControl(tolPwrss=1e-8)))
 + print(nm2, corr=FALSE)
 + 
 + system.time(nm3 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
@@ -58,13 +59,15 @@ Fixed Effects:
 + 
 + ## dropping   lKe  from random effects:
 + system.time(nm4 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~ (lKa+lCl|Subject),
-+                          Theoph, start = Th.start, tolPwrss=1e-8))
++                          Theoph, start = Th.start,
++                          control=nlmerControl(tolPwrss=1e-8)))
 + print(nm4, corr=FALSE)
 + 
 + system.time(nm5 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
 +                          (lKa|Subject) + (lCl|Subject),
 +                          Theoph,
-+                          start = Th.start, tolPwrss=1e-8))
++                          start = Th.start,
++                          control=nlmerControl(tolPwrss=1e-8)))
 + print(nm5, corr=FALSE)
 + 
 +     if (require("PKPDmodels")) {
@@ -88,4 +91,4 @@ Fixed Effects:
 > 
 > proc.time()
    user  system elapsed 
-  3.984   2.708   6.840 
+  1.232   0.067   1.270 
