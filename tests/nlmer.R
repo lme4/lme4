@@ -13,7 +13,8 @@ if (lme4:::testLevel() > 2) {
 
 system.time(nm2 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
                          (lKe+lKa+lCl|Subject),
-                         Theoph, start = Th.start, tolPwrss=1e-8))
+                         Theoph, start = Th.start,
+                         control=nlmerControl(tolPwrss=1e-8)))
 print(nm2, corr=FALSE)
 
 system.time(nm3 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
@@ -23,13 +24,15 @@ print(nm3, corr=FALSE)
 
 ## dropping   lKe  from random effects:
 system.time(nm4 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~ (lKa+lCl|Subject),
-                         Theoph, start = Th.start, tolPwrss=1e-8))
+                         Theoph, start = Th.start,
+                         control=nlmerControl(tolPwrss=1e-8)))
 print(nm4, corr=FALSE)
 
 system.time(nm5 <- nlmer(conc ~ SSfol(Dose, Time,lKe, lKa, lCl) ~
                          (lKa|Subject) + (lCl|Subject),
                          Theoph,
-                         start = Th.start, tolPwrss=1e-8))
+                         start = Th.start,
+                         control=nlmerControl(tolPwrss=1e-8)))
 print(nm5, corr=FALSE)
 
     if (require("PKPDmodels")) {
