@@ -2037,29 +2037,21 @@ getME.merMod <- function(object,
            "offset" = rsp$offset,
            "lower" = object@lower,
            "devfun" = {
-               ## copied from refit ... DRY ...
                verbose <- getCall(object)$verbose; if (is.null(verbose)) verbose <- 0L
-               devlist <-
-                   if (isGLMM(object)) {
-                       stop("getME('devfun') not yet working for GLMMs")## FIXME
-                       baseOffset <- rsp$offset
-                       nAGQ <- dims[["nAGQ"]]
-                       list(tolPwrss= dc$cmp ["tolPwrss"],
-                            compDev = dims[["compDev"]],
-                            nAGQ = nAGQ,
-                            lp0  = rsp$eta - baseOffset,
-                            baseOffset  = baseOffset,
-                            pwrssUpdate = glmerPwrssUpdate,
-                            GQmat = GHrule(nAGQ),
-                            fac = object@flist[[1]],
-                            pp=PR, resp=rsp, u0=PR$u0, dpars=seq_along(PR$theta),
-                            verbose=verbose)
-                   }
-                   else
-                       list(pp=PR, resp=rsp, u0=PR$u0, dpars=seq_along(PR$theta), verbose=verbose)
-               mkdevfun(rho=list2env(devlist),
-                        ## FIXME: fragile ... // also pass 'maxit' ?
-                        verbose=verbose, control=object@optinfo$control)
+               if (isGLMM(object)) {
+                   reTrms <- getME(object,c("Zt","theta","Lambdat","Lind","flist","cnms"))
+                   d1 <- mkGlmerDevfun(object@frame, getME(object,"X"),
+                                       reTrms=reTrms, family(object),
+                                       verbose=verbose)
+                   nAGQ <- object@devcomp$dims[["nAGQ"]]
+                   updateGlmerDevfun(d1, reTrms, nAGQ=nAGQ)
+               } else {
+                   ## copied from refit ... DRY ...
+                   devlist <- list(pp=PR, resp=rsp, u0=PR$u0, dpars=seq_along(PR$theta), verbose=verbose)
+                   mkdevfun(rho=list2env(devlist),
+                            ## FIXME: fragile ... // also pass 'maxit' ?
+                            verbose=verbose, control=object@optinfo$control)
+               }
            },
            ## FIXME: current version gives lower bounds for theta parameters only:
            ## -- these must be extended for [GN]LMMs -- give extended value including -Inf values for beta values?

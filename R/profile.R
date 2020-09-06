@@ -519,7 +519,7 @@ devfun2 <- function(fm, useSc = if(isLMM(fm)) TRUE else NA,
         ldW <- sum(log(environment(ans)$resp$weights))
         assign("ldW", ldW, envir = environment(ans))
     } else { # GLMM *and* NLMMs
-        d0 <- update(fm, devFunOnly=TRUE)
+        d0 <- getME(fm, "devfun")
         ## from glmer:
         ## rho <- new.env(parent=parent.env(environment()))
         ## rho$pp <- do.call(merPredD$new, c(reTrms[c("Zt","theta","Lambdat","Lind")], n=nrow(X), list(X=X)))
