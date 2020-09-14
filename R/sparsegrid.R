@@ -17,7 +17,13 @@ GQdk <- function(d=1L, k=1L) {
     rperms <- lapply(perms, function(v) c(1L, v))
 
     dd <- unname(as.matrix(do.call(expand.grid, c(rep.int(list(c(-1,1)), d), KEEP.OUT.ATTRS=FALSE))))
-    unname(unique(t(do.call(cbind,
-                            lapply(as.data.frame(t(cbind(1, dd))),
-                                   "*", e2=do.call(cbind, lapply(rperms, function(ind) tmat[ind,])))))))
+    #unname(unique(t(do.call(cbind,
+    #                        lapply(as.data.frame(t(cbind(1, dd))),
+    #                               "*", e2=do.call(cbind, lapply(rperms, function(ind) tmat[ind,])))))))
+    e2 <- do.call(cbind, lapply(rperms, function(ind) tmat[ind,]))
+    ddf <- as.data.frame(t(cbind(1,dd)))
+    res <- NULL
+    for (i in 1:ncol(ddf))
+        res <- unique(rbind(res, t(ddf[, i] * e2)))
+    return(res)
 }
