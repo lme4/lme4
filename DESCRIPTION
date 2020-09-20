@@ -43,7 +43,7 @@ Suggests:
     optimx (>= 2013.8.6),
     gamm4,
     pbkrtest,
-    HSAUR2,
+    HSAUR3,
     numDeriv,
     car,
     dfoptim
