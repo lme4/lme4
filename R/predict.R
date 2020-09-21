@@ -497,12 +497,49 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
 
 ##' Simulate responses from the model represented by a fitted model object
 ##'
-simulate.formula <- function(object, nsim = 1, seed = NULL, family,
-                             weights=NULL, offset=NULL, ...) {
-    ## N.B. *must* name all arguments so that 'object' is missing in .simulateFun()
-    .simulateFun(formula=object, nsim=nsim, seed=seed,
-                 family=family, weights=weights, offset=offset, ...)
+simulate.formula <- function(object, nsim=1, seed=NULL, ...){
+    visited <- attr(object, ".simulate.formula_visited") ## anti-recursion flag
+    if(is.null(visited)){
+        attr(object, ".simulate.formula_visited") <- TRUE
+        ## utility fun for generating new class
+        cfun <- function(cc) {
+            c(paste0("formula_lhs_", cc), "formula_lhs", class(object))
+        }
+
+        if (length(object)==3) {  ## two-sided formula
+            lhs <- object[[2L]]
+            .Basis <-  try(eval(lhs, envir=environment(object),
+                                enclos=parent.frame()), silent=TRUE)
+            if (inherits(.Basis,"try-error")) {
+                ## can't evaluate LHS: either a mistake, or
+                ##  a weird environment chain, or a symbol without a referent?
+                attr(object, ".Basis") <- lhs
+                class(object) <- cfun(class(lhs))
+            } else {
+                attr(object,".Basis") <- .Basis
+                class(object) <- cfun(class(.Basis))
+            }
+        } else {  ## one-sided
+            class(object) <- cfun("")
+        }
+        simulate(object, nsim=nsim, seed=seed, ...)
+    } else {
+        stop("No applicable method for LHS of type ", paste0(sQuote(class(attr(object, ".Basis"))), collapse=", "), ".")
+    }
 }
+
+simulate.formula_lhs_ <- function(object, nsim = 1, seed = NULL, 
+                                   ...) {
+    ## N.B. *must* name all arguments so that 'object' is missing in .simulateFun()
+    .simulateFun(formula=object, nsim=nsim, seed=seed, ...)
+}
+
+## catch two-sided formulae ...
+simulate.formula_lhs_name <- function(object, nsim=1, seed=NULL, ...) {
+    warning("simulate(formula) is intended for one-sided formulas; dropping response term")
+    simulate.formula(object[-2], nsim=nsim, seed=seed, ...)
+}
+
 
 simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                             re.form=NA, ReForm, REForm, REform,
@@ -521,27 +558,27 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                          weights=NULL,
                          offset=NULL,
                          allow.new.levels=FALSE,
-                         na.action=na.pass,
+                        na.action=na.pass,
                          cond.sim=TRUE,
                          ...) {
 
+    if (missing(object) && (is.null(formula) || is.null(newdata) || is.null(newparams))) {
+        stop("if ",sQuote("object")," is missing, must specify all of ",
+             sQuote("formula"),", ",sQuote("newdata"),", and ",
+             sQuote("newparams"))
+    }
+
     nullWts <- FALSE
-
     if (is.null(weights)) {
-        if (is.null(newdata))
+        if (is.null(newdata)) {
             weights <- weights(object)
-        else {
-
+        } else {
             nullWts <- TRUE # this flags that 'weights' wasn't supplied by the user
             weights <- rep(1,nrow(newdata))
         }
     }
+
     if (missing(object)) {
-        if (is.null(formula) || is.null(newdata) || is.null(newparams)) {
-            stop("if ",sQuote("object")," is missing, must specify all of ",
-                 sQuote("formula"),", ",sQuote("newdata"),", and ",
-                 sQuote("newparams"))
-        }
 
         ## construct fake-fitted object from data, params
         ## copied from glm(): DRY; this all stems from the
@@ -563,6 +600,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                                opt = list(par=NA,fval=NA,conv=NA),
                                lmod$reTrms, fr = lmod$fr)
         } else {
+
             glmod <- glFormula(formula,newdata,family=family,
                                weights=weights,
                                offset=offset,
@@ -578,6 +616,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         ## instead we have a special case in fitted()
         ## object@resp$mu <- rep(NA_real_,nrow(model.frame(object)))
     }
+    
     stopifnot((nsim <- as.integer(nsim[1])) > 0,
               is(object, "merMod"))
     if (!is.null(newparams)) {
