@@ -497,41 +497,39 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
 
 ##' Simulate responses from the model represented by a fitted model object
 ##'
-simulate.formula <- function(object, nsim=1, seed=NULL, ...){
-    visited <- attr(object, ".simulate.formula_visited") ## anti-recursion flag
-    if(is.null(visited)){
-        attr(object, ".simulate.formula_visited") <- TRUE
-        ## utility fun for generating new class
-        cfun <- function(cc) {
-            c(paste0("formula_lhs_", cc), "formula_lhs", class(object))
-        }
-
-        if (length(object)==3) {  ## two-sided formula
-            lhs <- object[[2L]]
-            .Basis <-  try(eval(lhs, envir=environment(object),
-                                enclos=parent.frame()), silent=TRUE)
-            if (inherits(.Basis,"try-error")) {
-                ## can't evaluate LHS: either a mistake, or
-                ##  a weird environment chain, or a symbol without a referent?
-                attr(object, ".Basis") <- lhs
-                class(object) <- cfun(class(lhs))
-            } else {
-                attr(object,".Basis") <- .Basis
-                class(object) <- cfun(class(.Basis))
-            }
-        } else {  ## one-sided
-            class(object) <- cfun("")
-        }
-        simulate(object, nsim=nsim, seed=seed, ...)
-    } else {
-        stop("No applicable method for LHS of type ", paste0(sQuote(class(attr(object, ".Basis"))), collapse=", "), ".")
+simulate.formula <- function(object, nsim=1, seed=NULL, ...) {
+    ## utility fun for generating new class
+    cfun <- function(cc) {
+        c(paste0("formula_lhs_", cc), "formula_lhs", class(object))
     }
+    
+    if (length(object)==3) {  ## two-sided formula
+        lhs <- object[[2L]]
+        .Basis <-  try(eval(lhs, envir=environment(object),
+                            enclos=parent.frame()), silent=TRUE)
+        if (inherits(.Basis,"try-error")) {
+            ## can't evaluate LHS: either a mistake, or
+            ##  a weird environment chain, or a symbol without a referent?
+            stop("can't evaluate left-hand side of formula ",
+                 "(LHS of formula must be an object, or empty)")
+        } else {
+            attr(object,".Basis") <- .Basis
+            class(object) <- cfun(class(.Basis))
+        }
+    } else {  ## one-sided
+        class(object) <- cfun("")
+    }
+    simulate(object, nsim=nsim, seed=seed, ...)
 }
 
 simulate.formula_lhs_ <- function(object, nsim = 1, seed = NULL, 
                                    ...) {
     ## N.B. *must* name all arguments so that 'object' is missing in .simulateFun()
     .simulateFun(formula=object, nsim=nsim, seed=seed, ...)
+}
+
+simulate.formula_lhs <- function(object, nsim=1, seed=NULL, ...){
+    stop("No applicable method for LHS of type ", paste0(sQuote(class(attr(object, ".Basis"))), collapse=", "), ".")
 }
 
 ## catch two-sided formulae ...

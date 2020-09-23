@@ -32,7 +32,7 @@ test_that("simple numerics", {
 
 test_that("raw formulas", {
     expect_error(simulate(~.), "must specify all of")
-    expect_error(suppressWarnings(simulate(x~.)), "must specify all of")
+    expect_error(suppressWarnings(simulate(x~.)), "can't evaluate")
 })
 
 test_that("multielement classes", {
@@ -45,7 +45,7 @@ test_that("multielement classes", {
 
 simulate.formula_lhs_character <- function(object, nsim=1, seed=NULL, ...) {
         message("simulate.formula_lhs_character() called.")
-        print(ls(all.names=TRUE))
+        if (!quietly) print(ls(all.names=TRUE))
         NextMethod() # Calls simulate.formula(), resulting in an infinite recursion.
 }
 
@@ -53,14 +53,13 @@ test_that("prevent recursion", {
     expect_error(simulate("a"~.), "No applicable method")
 })
 
-
 dd <- expand.grid(A=factor(1:3),B=factor(1:10),rep=1:10)
 test_that("two-sided formula warning", {
-    expect_warning(suppressMessages(simulate(.~1 + (A|B),
+    expect_error(suppressMessages(simulate(.~1 + (A|B),
                                              newdata=dd,
                                              newparams=list(beta=1,theta=rep(1,6),
                                                             sigma=1),
                                              family=gaussian,
                                              seed=101))[[1]],
-                   "dropping response term")
+                   "can't evaluate left-hand side")
 })
