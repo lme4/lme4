@@ -13,8 +13,7 @@
 	 newdata=NULL, newparams=NULL, family=NULL,
 	 allow.new.levels = FALSE, na.action = na.pass, \dots)
 
-\method{simulate}{formula}(object, nsim = 1 , seed = NULL,
-         family, weights=NULL, offset=NULL, \dots)
+\method{simulate}{formula}(object, nsim = 1 , seed = NULL, \dots)
 
 .simulateFun(object, nsim = 1, seed = NULL, use.u = FALSE,
              re.form = NA, ReForm, REForm, REform,
@@ -77,7 +76,10 @@
       values from an existing, fitted model (\code{merMod} object):
       however, if \code{formula}, \code{newdata}, and \code{newparams} are
       specified, \code{simulate} generates the appropriate model
-      structure to simulate from.}
+      structure to simulate from. \code{formula} must be a
+      \emph{one-sided} formula (i.e. with an empty left-hand side);
+      in general, if \code{f} is a two-sided
+      formula, \code{f[-2]} can be used to drop the LHS.}
 
     \item{The \code{re.form} argument allows the user to specify how the
       random effects are incorporated in the simulation.  All of the
