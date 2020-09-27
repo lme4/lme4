@@ -13,7 +13,7 @@
 	 newdata=NULL, newparams=NULL, family=NULL,
 	 allow.new.levels = FALSE, na.action = na.pass, \dots)
 
-\method{simulate}{formula}(object, nsim = 1 , seed = NULL, \dots)
+\method{simulate}{formula}(object, nsim = 1 , seed = NULL, \dots, basis)
 
 .simulateFun(object, nsim = 1, seed = NULL, use.u = FALSE,
              re.form = NA, ReForm, REForm, REform,
@@ -64,7 +64,11 @@
     distribution?  if \code{FALSE}, simulate only random effects; do not
     simulate from the conditional distribution, rather return the
     predicted group-level values}
-  \item{\dots}{optional additional arguments: none are used at present.}
+  \item{basis}{an optional object to use in place of the left-hand side
+    of the formula (this argument is only relevant for use of
+    \code{simulate.formula} in other packages such as \code{ergm})}
+  \item{\dots}{optional additional arguments (none are used in
+    \code{.simulateFormula} or \code{simulate.merMod})
 }
 \seealso{
   \code{\link{bootMer}} for \dQuote{simulestimate}, i.e., where each

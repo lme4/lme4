@@ -497,29 +497,33 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
 
 ##' Simulate responses from the model represented by a fitted model object
 ##'
-simulate.formula <- function(object, nsim=1, seed=NULL, ...) {
-    ## utility fun for generating new class
-    cfun <- function(cc) {
-        c(paste0("formula_lhs_", cc), "formula_lhs", class(object))
+simulate.formula <- function(object, nsim=1, seed=NULL, ..., basis) {
+  ## utility fun for generating new class
+  cfun <- function(cc) {
+    c(paste0("formula_lhs_", cc), "formula_lhs", class(object))
+  }
+  
+  if (length(object)==3 || !missing(basis)) {  ## two-sided formula or basis given
+    if (missing(basis)) { # If basis is not passed, evaluate LHS.
+      lhs <- object[[2L]]
+      .Basis <-  try(eval(lhs, envir=environment(object),
+                          enclos=parent.frame()), silent=TRUE)
+      if (inherits(.Basis,"try-error")) {
+        ## can't evaluate LHS
+        stop(simpleError(paste("Error evaluating the left-hand side of the formula:", .Basis)))
+      }
+    } else { # Otherwise, override LHS.
+      .Basis <- basis
     }
-    
-    if (length(object)==3) {  ## two-sided formula
-        lhs <- object[[2L]]
-        .Basis <-  try(eval(lhs, envir=environment(object),
-                            enclos=parent.frame()), silent=TRUE)
-        if (inherits(.Basis,"try-error")) {
-            ## can't evaluate LHS: either a mistake, or
-            ##  a weird environment chain, or a symbol without a referent?
-            stop(simpleError(paste("Error evaluating the left-hand side of the formula:", .Basis)))
-        } else {
-            attr(object,".Basis") <- .Basis
-            class(object) <- cfun(class(.Basis))
-        }
-    } else {  ## one-sided
-        class(object) <- cfun("")
-    }
-    simulate(object, nsim=nsim, seed=seed, ...)
+    ## Set the basis object and class.
+    attr(object,".Basis") <- .Basis
+    class(object) <- cfun(class(.Basis))
+  } else {  ## one-sided
+    class(object) <- cfun("")
+  }
+  simulate(object, nsim=nsim, seed=seed, ..., basis=basis)
 }
+
 
 simulate.formula_lhs_ <- function(object, nsim = 1, seed = NULL, 
                                    ...) {
@@ -543,6 +547,9 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                             newdata=NULL, newparams=NULL,
                             family=NULL,
                             allow.new.levels=FALSE, na.action=na.pass, ...) {
+
+    ## if (length(list(...)) > 0) warning("unused arguments ignored")
+    
     mc <- match.call()
     mc[[1]] <- quote(lme4::.simulateFun)
     eval(mc, parent.frame(1L))
@@ -559,6 +566,8 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                          cond.sim=TRUE,
                          ...) {
 
+    ## if (length(list(...)) > 0) warning("unused arguments ignored")
+    
     if (missing(object) && (is.null(formula) || is.null(newdata) || is.null(newparams))) {
         stop("if ",sQuote("object")," is missing, must specify all of ",
              sQuote("formula"),", ",sQuote("newdata"),", and ",
