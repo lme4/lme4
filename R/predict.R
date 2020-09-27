@@ -510,8 +510,7 @@ simulate.formula <- function(object, nsim=1, seed=NULL, ...) {
         if (inherits(.Basis,"try-error")) {
             ## can't evaluate LHS: either a mistake, or
             ##  a weird environment chain, or a symbol without a referent?
-            stop("can't evaluate left-hand side of formula ",
-                 "(LHS of formula must be an object, or empty)")
+            stop(simpleError(paste("Error evaluating the left-hand side of the formula:", .Basis)))
         } else {
             attr(object,".Basis") <- .Basis
             class(object) <- cfun(class(.Basis))

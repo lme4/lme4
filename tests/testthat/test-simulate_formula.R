@@ -7,7 +7,7 @@ quietly <- TRUE
 mk_method <- function(class, print_dims=FALSE) {
     method <- sprintf("simulate.formula_lhs_%s",class)
     sim_generic <- function(object, nsim=1, seed=NULL, ...) {
-        message(sprintf("%s called",method))
+        if (!quietly) message(sprintf("%s called",method))
         if (!quietly) cat(".Basis from attributes:\n")
         if (!quietly) print(attr(object,".Basis")) # NULL
         if (print_dims) {
@@ -32,7 +32,7 @@ test_that("simple numerics", {
 
 test_that("raw formulas", {
     expect_error(simulate(~.), "must specify all of")
-    expect_error(suppressWarnings(simulate(x~.)), "can't evaluate")
+    expect_error(suppressWarnings(simulate(x~.)), "Error evaluating")
 })
 
 test_that("multielement classes", {
@@ -44,9 +44,9 @@ test_that("multielement classes", {
 })
 
 simulate.formula_lhs_character <- function(object, nsim=1, seed=NULL, ...) {
-        message("simulate.formula_lhs_character() called.")
-        if (!quietly) print(ls(all.names=TRUE))
-        NextMethod() # Calls simulate.formula(), resulting in an infinite recursion.
+    if (!quietly) message("simulate.formula_lhs_character() called.")
+    if (!quietly) print(ls(all.names=TRUE))
+    NextMethod() # Calls simulate.formula(), resulting in an infinite recursion.
 }
 
 test_that("prevent recursion", {
@@ -61,5 +61,5 @@ test_that("two-sided formula warning", {
                                                             sigma=1),
                                              family=gaussian,
                                              seed=101))[[1]],
-                   "can't evaluate left-hand side")
+                   "Error evaluating the left-hand side")
 })
