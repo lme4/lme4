@@ -521,7 +521,7 @@ simulate.formula <- function(object, nsim=1, seed=NULL, ..., basis) {
   } else {  ## one-sided
     class(object) <- cfun("")
   }
-  simulate(object, nsim=nsim, seed=seed, ..., basis=basis)
+  simulate(object, nsim=nsim, seed=seed, ...)
 }
 
 
@@ -548,8 +548,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                             family=NULL,
                             allow.new.levels=FALSE, na.action=na.pass, ...) {
 
-    ## if (length(list(...)) > 0) warning("unused arguments ignored")
-    
+    ## FIXME: is there a reason this can't be a copy of .simulateFun ... ?
     mc <- match.call()
     mc[[1]] <- quote(lme4::.simulateFun)
     eval(mc, parent.frame(1L))
@@ -562,11 +561,11 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                          weights=NULL,
                          offset=NULL,
                          allow.new.levels=FALSE,
-                        na.action=na.pass,
+                         na.action=na.pass,
                          cond.sim=TRUE,
                          ...) {
 
-    ## if (length(list(...)) > 0) warning("unused arguments ignored")
+    if (length(list(...)) > 0) warning("unused arguments ignored")
     
     if (missing(object) && (is.null(formula) || is.null(newdata) || is.null(newparams))) {
         stop("if ",sQuote("object")," is missing, must specify all of ",
