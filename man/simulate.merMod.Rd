@@ -13,7 +13,8 @@
 	 newdata=NULL, newparams=NULL, family=NULL,
 	 allow.new.levels = FALSE, na.action = na.pass, \dots)
 
-\method{simulate}{formula}(object, nsim = 1 , seed = NULL, \dots, newdata, basis)
+\method{simulate}{formula}(object, nsim = 1 , seed = NULL, \dots,
+basis, newdata, data)
 
 .simulateFun(object, nsim = 1, seed = NULL, use.u = FALSE,
              re.form = NA, ReForm, REForm, REform,
@@ -42,6 +43,7 @@
   \item{ReForm, REForm, REform}{deprecated: \code{re.form} is
     now the preferred argument name.}
   \item{newdata}{data frame for which to evaluate predictions.}
+  \item{newdata}{data for simulate.formula (unused here)}
   \item{newparams}{new parameters to use in evaluating predictions,
     specified as in the \code{start} parameter for \code{\link{lmer}} or
     \code{\link{glmer}} -- a list with components \code{theta} and
