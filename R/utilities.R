@@ -752,7 +752,7 @@ getConv <- function(x) {
          warnings  = attr(opt, "warnings"),
          val       = opt$par)
 
-##' Potentically needed in more than one place, be sure to keep consistency!
+##' Potentially needed in more than one place, be sure to keep consistency!
 ##' hack (NB families have weird names) from @aosmith16; then corrected
 isNBfamily <- function(familyString)
     grepl("^Negative ?Binomial", familyString, ignore.case=TRUE)

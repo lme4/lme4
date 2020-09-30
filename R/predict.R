@@ -497,38 +497,52 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
 
 ##' Simulate responses from the model represented by a fitted model object
 ##'
-simulate.formula <- function(object, nsim=1, seed=NULL, ..., basis) {
-  ## utility fun for generating new class
-  cfun <- function(cc) {
-    c(paste0("formula_lhs_", cc), "formula_lhs", class(object))
-  }
-  
-  if (length(object)==3 || !missing(basis)) {  ## two-sided formula or basis given
-    if (missing(basis)) { # If basis is not passed, evaluate LHS.
-      lhs <- object[[2L]]
-      .Basis <-  try(eval(lhs, envir=environment(object),
-                          enclos=parent.frame()), silent=TRUE)
-      if (inherits(.Basis,"try-error")) {
-        ## can't evaluate LHS
-        stop(simpleError(paste("Error evaluating the left-hand side of the formula:", .Basis)))
-      }
-    } else { # Otherwise, override LHS.
-      .Basis <- basis
+simulate.formula <- function(object, nsim=1, seed=NULL, ..., newdata,  basis) {
+    ## utility fun for generating new class
+    cfun <- function(cc) {
+        c(paste0("formula_lhs_", cc), "formula_lhs", class(object))
     }
-    ## Set the basis object and class.
-    attr(object,".Basis") <- .Basis
-    class(object) <- cfun(class(.Basis))
-  } else {  ## one-sided
-    class(object) <- cfun("")
-  }
-  simulate(object, nsim=nsim, seed=seed, ...)
+
+    .Basis <- NA ## fail-safe
+    if (length(object)==3)  {  ## two-sided formula
+        if (missing(basis) && missing(newdata)) {
+            ## evaluate LHS if we need to (basis wasn't specified *and* we
+            ## don't have 'newdata' [which indicates an lme4-context
+            ## request]
+            lhs <- object[[2L]]
+            .Basis <-  try(eval(lhs, envir=environment(object),
+                                enclos=parent.frame()), silent=TRUE)
+            if (inherits(.Basis,"try-error")) {
+                ## can't evaluate LHS
+                stop(simpleError(paste("Error evaluating the left-hand side of the formula:", .Basis)))
+            }
+        }
+        if (!missing(basis)) { # Override LHS.
+            .Basis <- basis
+        }
+        ## Set the basis object and class.
+        attr(object,".Basis") <- .Basis
+        if (!identical(.Basis,NA)) {
+            class(object) <- cfun(class(.Basis))
+        } else {
+            class(object) <- cfun("")
+        }
+    } else {  ## one-sided
+        class(object) <- cfun("")
+    }
+    if (!missing(newdata)) {
+        ## only pass newdata through if necessary ...
+        simulate(object, nsim=nsim, seed=seed, newdata=newdata,...)
+    } else {
+        simulate(object, nsim=nsim, seed=seed, ...)
+    }
 }
 
-
-simulate.formula_lhs_ <- function(object, nsim = 1, seed = NULL, 
+simulate.formula_lhs_ <- function(object, nsim = 1, seed = NULL,
+                                  newdata,
                                    ...) {
     ## N.B. *must* name all arguments so that 'object' is missing in .simulateFun()
-    .simulateFun(formula=object, nsim=nsim, seed=seed, ...)
+    .simulateFun(formula=object, nsim=nsim, seed=seed, newdata=newdata, ...)
 }
 
 simulate.formula_lhs <- function(object, nsim=1, seed=NULL, ...){

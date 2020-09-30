@@ -31,7 +31,7 @@ test_that("simple numerics", {
 })
 
 test_that("raw formulas", {
-    expect_error(simulate(~.), "must specify all of")
+    expect_error(simulate(~.), '"newdata" is missing')
     expect_error(suppressWarnings(simulate(x~.)), "Error evaluating")
 })
 
@@ -61,5 +61,5 @@ test_that("two-sided formula warning", {
                                                             sigma=1),
                                              family=gaussian,
                                              seed=101))[[1]],
-                   "Error evaluating the left-hand side")
+                   "object '.' not found")
 })
