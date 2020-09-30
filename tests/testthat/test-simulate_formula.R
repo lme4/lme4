@@ -37,9 +37,10 @@ test_that("raw formulas", {
 
 test_that("multielement classes", {
     expect_equal(simulate(diag(5)~.), diag(5))
-    M <- diag(5)
+    ## ugh, don't know why the <<- is needed, testthat scoping stuff
+    M <<- diag(5)
     expect_equal(simulate(M~.), diag(5))
-    A <- array(1,c(2,2,2))
+    A <<- array(1,c(2,2,2))
     expect_equal(simulate(A~.), A)
 })
 

@@ -1736,11 +1736,13 @@ llikAIC <- function(object, devianceFUN = devCrit, chkREML = TRUE, devcomp = obj
     warnings <- optinfo$warnings
     nwarnings <- length(warnings)
     if (cc > 0 || nmsgs > 0 || nwarnings > 0) {
+        convmsg <- sprintf("optimizer (%s) convergence code: %d",
+                           optinfo$optimizer, cc)
         if (summary) {
-            cat(sprintf("convergence code %d; %d optimizer warnings; %d lme4 warnings",
-                cc,nwarnings,nmsgs),"\n")
+            cat(convmsg,sprintf("; %d optimizer warnings; %d lme4 warnings",
+                nwarnings,nmsgs),"\n")
         } else {
-            cat(sprintf("convergence code: %d", cc),
+            cat(convmsg,
                 msgs,
                 unlist(warnings),
                 sep="\n")

@@ -561,13 +561,6 @@ simulate.formula_lhs <- function(object, nsim=1, seed=NULL, ...){
     stop("No applicable method for LHS of type ", paste0(sQuote(class(attr(object, ".Basis"))), collapse=", "), ".")
 }
 
-## catch two-sided formulae ...
-simulate.formula_lhs_name <- function(object, nsim=1, seed=NULL, ...) {
-    warning("simulate(formula) is intended for one-sided formulas; dropping response term")
-    simulate.formula(object[-2], nsim=nsim, seed=seed, ...)
-}
-
-
 simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                             re.form=NA, ReForm, REForm, REform,
                             newdata=NULL, newparams=NULL,
