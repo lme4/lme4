@@ -550,20 +550,16 @@ simulate.formula <- function(object, nsim=1, seed=NULL, ..., basis, newdata, dat
     
 }
 
-## we end up here if using a two-sided (binomial) matrix as response ...
-simulate.formula_lhs_matrix <- function(object, nsim = 1, seed = NULL,
-                                  newdata,
-                                   ...) {
-    ## N.B. *must* name all arguments so that 'object' is missing in .simulateFun()
-    .simulateFun(formula=object, nsim=nsim, seed=seed, newdata=newdata, ...)
-}
-
-simulate.formula_lhs_ <- function(object, nsim = 1, seed = NULL,
-                                  newdata,
-                                   ...) {
-    ## N.B. *must* name all arguments so that 'object' is missing in .simulateFun()
-    .simulateFun(formula=object, nsim=nsim, seed=seed, newdata=newdata, ...)
-}
+## all possible LHS evaluated values ...
+simulate.formula_lhs_matrix <- simulate.formula_lhs_numeric <-
+    simulate.formula_lhs_integer <- simulate.formula_lhs_factor <-
+        simulate.formula_lhs_ <-
+        function(object, nsim = 1, seed = NULL,
+                 newdata,
+                 ...) {
+            ## N.B. *must* name all arguments so that 'object' is missing in .simulateFun()
+            .simulateFun(formula=object, nsim=nsim, seed=seed, newdata=newdata, ...)
+        }
 
 simulate.formula_lhs <- function(object, nsim=1, seed=NULL, ...){
     stop("No applicable method for LHS of type ", paste0(sQuote(class(attr(object, ".Basis"))), collapse=", "), ".")
