@@ -31,17 +31,7 @@ test_that("simple numerics", {
 })
 
 test_that("raw formulas", {
-    expect_equal(simulate(~.), NULL)
     expect_error(suppressWarnings(simulate(x~.)), "Error evaluating")
-})
-
-test_that("multielement classes", {
-    expect_equal(simulate(diag(5)~.), diag(5))
-    ## ugh, don't know why the <<- is needed, testthat scoping stuff
-    M <<- diag(5)
-    expect_equal(simulate(M~.), diag(5))
-    A <<- array(1,c(2,2,2))
-    expect_equal(simulate(A~.), A)
 })
 
 simulate.formula_lhs_character <- function(object, nsim=1, seed=NULL, ...) {
@@ -50,9 +40,9 @@ simulate.formula_lhs_character <- function(object, nsim=1, seed=NULL, ...) {
     NextMethod() # Calls simulate.formula(), resulting in an infinite recursion.
 }
 
-## test_that("prevent recursion", {
-##     expect_error(simulate("a"~.), "No applicable method")
-## })
+test_that("prevent recursion", {
+     expect_error(simulate("a"~.), "No applicable method")
+})
 
 dd <- expand.grid(A=factor(1:3),B=factor(1:10),rep=1:10)
 test_that("two-sided formula warning", {

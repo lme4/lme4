@@ -43,7 +43,7 @@ basis, newdata, data)
   \item{ReForm, REForm, REform}{deprecated: \code{re.form} is
     now the preferred argument name.}
   \item{newdata}{data frame for which to evaluate predictions.}
-  \item{newdata}{data for simulate.formula (unused here)}
+  \item{data}{data for simulate.formula (unused here)}
   \item{newparams}{new parameters to use in evaluating predictions,
     specified as in the \code{start} parameter for \code{\link{lmer}} or
     \code{\link{glmer}} -- a list with components \code{theta} and

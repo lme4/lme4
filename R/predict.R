@@ -550,6 +550,14 @@ simulate.formula <- function(object, nsim=1, seed=NULL, ..., basis, newdata, dat
     
 }
 
+## we end up here if using a two-sided (binomial) matrix as response ...
+simulate.formula_lhs_matrix <- function(object, nsim = 1, seed = NULL,
+                                  newdata,
+                                   ...) {
+    ## N.B. *must* name all arguments so that 'object' is missing in .simulateFun()
+    .simulateFun(formula=object, nsim=nsim, seed=seed, newdata=newdata, ...)
+}
+
 simulate.formula_lhs_ <- function(object, nsim = 1, seed = NULL,
                                   newdata,
                                    ...) {
