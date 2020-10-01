@@ -69,7 +69,7 @@
   variance-covariance matrices of the random effects.  Assessing
   the convergence of such algorithms reliably is difficult.  For
   example, evaluating the
-  \href{https://en.wikipedia.org/wiki/Karush%E2%80%93Kuhn%E2%80%93Tucker_conditions}{Karush-Kuhn-Tucker conditions} (convergence criteria which
+  \href{https://en.wikipedia.org/wiki/Karush\%E2\%80\%93Kuhn\%E2\%80\%93Tucker_conditions}{Karush-Kuhn-Tucker conditions} (convergence criteria which
   reduce in simple cases to showing that
   the gradient is zero and the Hessian is positive definite) is
   challenging because of the difficulty of evaluating the gradient and
@@ -92,7 +92,7 @@
     in using a naive but computationally cheap centered finite difference
     computation (with a fixed step size of \eqn{10^{-4}}{1e-4}).  A more
     reliable but more expensive approach is to use
-    \href{http://en.wikipedia.org/wiki/Richardson_extrapolation}{Richardson extrapolation},
+    \href{https://en.wikipedia.org/wiki/Richardson_extrapolation}{Richardson extrapolation},
     as implemented in the \CRANpkg{numDeriv} package.
 
     \item it is important to scale the estimated gradient at

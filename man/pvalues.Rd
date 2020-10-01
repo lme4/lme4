@@ -66,6 +66,5 @@
   
   When all else fails, don't forget to keep p-values in
   perspective:
-  \url{http://www.phdcomics.com/comics/archive.php?comicid=905}
+  \url{http://phdcomics.com/comics/archive.php?comicid=905}
 }
-
