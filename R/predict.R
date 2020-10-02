@@ -495,61 +495,6 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
 } # end {predict.merMod}
 
 
-##' Simulate responses from the model represented by a fitted model object
-##' See https://github.com/lme4/lme4/issues/566
-simulate.formula <- function(object, nsim=1, seed=NULL, ..., basis, newdata, data) {
-  ## utility fun for generating new class
-  cfun <- function(cc) {
-    c(paste0("formula_lhs_", cc), "formula_lhs", class(object))
-  }
-
-  ## grab the arguments and the call and replace the function to be called with stats::simulate
-  cl <- match.call() ## match.call(expand.dots=FALSE)
-  cl[[1L]] <- quote(stats::simulate)
-  
-  if (length(object)==3 || !missing(basis)) {  ## two-sided formula or basis given
-    if (missing(basis)) { # If basis is not passed, evaluate LHS.
-      if (!missing(data) && !missing(newdata)) stop("At most one of ", sQuote("data"), " or ", sQuote("newdata"), " can be specified.")
-
-      evaldata <- if (!missing(data)) data
-                  else if(!missing(newdata)) newdata
-                  else environment(formula)
-
-      lhs <- object[[2L]]
-      .Basis <-  try(eval(lhs, envir=evaldata,
-                          enclos=environment(formula)), silent=TRUE)
-
-      if (inherits(.Basis,"try-error")) {
-        ## can't evaluate LHS
-        stop(simpleError(paste("Error evaluating the left-hand side of the formula:", .Basis)))
-      }
-
-    } else { # Otherwise, override LHS.
-      .Basis <- basis
-    }
-
-    ## Set the basis object and class.
-    attr(object,".Basis") <- .Basis
-    class(object) <- cfun(class(.Basis))
-
-  } else {  ## one-sided
-    class(object) <- cfun("")
-  }
-
-  ## Replace the dispatched-on argument (object) with the updated formula.
-  cl[["object"]] <- object
-  ## If data argument was not actually passed, remove it from the call.
-  if(missing(data)) cl <- cl[names(cl)!="data"]
-  ## If newdata argument was not actually passed, remove it from the call.
-  if(missing(newdata)) cl <- cl[names(cl)!="newdata"]
-  ## Always remove basis from the call (since it's an attribute of object now).
-  cl <- cl[names(cl)!="basis"]
-
-  # Evaluate the modified call as if in the environment from which simulate.formula() was called. (A poor man's NextMethod().)
-  eval(cl, parent.frame())
-    
-}
-
 ## all possible LHS evaluated values ...
 simulate.formula_lhs_matrix <- simulate.formula_lhs_numeric <-
     simulate.formula_lhs_integer <- simulate.formula_lhs_factor <-
@@ -560,10 +505,6 @@ simulate.formula_lhs_matrix <- simulate.formula_lhs_numeric <-
             ## N.B. *must* name all arguments so that 'object' is missing in .simulateFun()
             .simulateFun(formula=object, nsim=nsim, seed=seed, newdata=newdata, ...)
         }
-
-simulate.formula_lhs <- function(object, nsim=1, seed=NULL, ...){
-    stop("No applicable method for LHS of type ", paste0(sQuote(class(attr(object, ".Basis"))), collapse=", "), ".")
-}
 
 simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                             re.form=NA, ReForm, REForm, REform,

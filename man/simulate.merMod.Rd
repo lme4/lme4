@@ -1,7 +1,6 @@
 \name{simulate.merMod}
 \title{Simulate Responses From \code{\linkS4class{merMod}} Object}
 \alias{simulate.merMod}
-\alias{simulate.formula}
 \alias{.simulateFun}
 \description{
   Simulate responses from a \code{"merMod"} fitted model object, i.e.,
@@ -12,9 +11,6 @@
 	 use.u = FALSE, re.form = NA, ReForm, REForm, REform,
 	 newdata=NULL, newparams=NULL, family=NULL,
 	 allow.new.levels = FALSE, na.action = na.pass, \dots)
-
-\method{simulate}{formula}(object, nsim = 1 , seed = NULL, \dots,
-basis, newdata, data)
 
 .simulateFun(object, nsim = 1, seed = NULL, use.u = FALSE,
              re.form = NA, ReForm, REForm, REform,
@@ -43,7 +39,6 @@ basis, newdata, data)
   \item{ReForm, REForm, REform}{deprecated: \code{re.form} is
     now the preferred argument name.}
   \item{newdata}{data frame for which to evaluate predictions.}
-  \item{data}{data for simulate.formula (unused here)}
   \item{newparams}{new parameters to use in evaluating predictions,
     specified as in the \code{start} parameter for \code{\link{lmer}} or
     \code{\link{glmer}} -- a list with components \code{theta} and
@@ -66,9 +61,6 @@ basis, newdata, data)
     distribution?  if \code{FALSE}, simulate only random effects; do not
     simulate from the conditional distribution, rather return the
     predicted group-level values}
-  \item{basis}{an optional object to use in place of the left-hand side
-    of the formula (this argument is only relevant for use of
-    \code{simulate.formula} in other packages such as \code{ergm})}
   \item{\dots}{optional additional arguments (none are used in
     \code{.simulateFormula})}
 }

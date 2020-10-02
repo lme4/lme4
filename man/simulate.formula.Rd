@@ -37,7 +37,7 @@ The dispatching works as follows:
    classes, they are all prepended; if there is no LHS or \code{basis},
    \code{c("formula_lhs_", "formula_lhs")} is.
 
-\item \code{\link{simulate()}} generic is evaluated on the new \code{object}, with all
+\item \code{\link{simulate}} generic is evaluated on the new \code{object}, with all
    arguments passed on, excluding \code{basis}; if \code{newdata} or \code{data}
    are missing, they too are not passed on. The evaluation takes
    place in the parent's environment.
