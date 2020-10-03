@@ -181,7 +181,7 @@ system.time(
 system.time( tpr  <- profile(fm01ML))
 ## ~1s, + possible warning about bobyqa convergence
 (confint(tpr) -> CIpr)
-\donttest{% too much precision (etc). but just FYI:
+\dontrun{% too much precision (etc). but just FYI:
 stopifnot(all.equal(unname(CIpr),
   array(c(12.1985292, 38.2299848, 1486.4515,
           84.0630513, 67.6576964, 1568.54849), dim = 3:2),

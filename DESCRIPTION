@@ -21,7 +21,9 @@ Authors@R: c(
     person("Peter", "Green", role="ctb",
 	comment=c(ORCID="0000-0002-0238-9852")),
     person("John", "Fox", role="ctb"),
-    person("Alexander", "Bauer", role="ctb")
+    person("Alexander", "Bauer", role="ctb"),
+    person("Pavel N.", "Krivitsky", role=c("ctb","cph"), comment=c(ORCID="0000-0002-9101-3362",
+    "shared copyright on simulate.formula"))
     )
 Contact: LME4 Authors <lme4-authors@lists.r-forge.r-project.org>
 Description: Fit linear and generalized linear mixed-effects models.

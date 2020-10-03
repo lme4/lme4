@@ -296,3 +296,23 @@ test_that("getCall", {
         family=poisson), "glmerMod")
     rm(getClass)
 })
+
+test_that("better info about optimizer convergence",
+{
+    set.seed(14)
+    cbpp$var <- rnorm(nrow(cbpp), 10, 10)
+
+    suppressWarnings(gm2 <-
+                         glmer(cbind(incidence, size - incidence) ~ period * var + (1 | herd),
+                               data = cbpp, family = binomial,
+                               control=glmerControl(optimizer=c("bobyqa","Nelder_Mead")))
+                     )
+
+    gm3 <- update(gm2,
+           control=glmerControl(optimizer="bobyqa",
+                                optCtrl=list(maxfun=2)))
+
+    cc <-capture.output(print(summary(gm2)))
+    expect_equal(tail(cc,3)[1],
+                 "optimizer (Nelder_Mead) convergence code: 0")
+})

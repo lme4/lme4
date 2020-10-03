@@ -115,7 +115,8 @@ s4 <- simulate(gm6)
 
 ## simulation 'from scratch' with formulas:
 ## binomial
-form <- formula(gm1)[-2]
+## form <- formula(gm1)[-2]
+form <- ~ (1|herd) + period
 gm1_s4 <- simulate(form,newdata=model.frame(gm1),
                newparams=list(theta=getME(gm1,"theta"),
                beta=fixef(gm1)),

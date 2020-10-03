@@ -462,7 +462,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
             pred <- pred+offset
 
         } ## end !(random.only)
-
+        
         if (isRE(re.form)) {
             if (is.null(re.form))
                 re.form <- reOnly(formula(object)) # RE formula only
@@ -495,20 +495,24 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
 } # end {predict.merMod}
 
 
-##' Simulate responses from the model represented by a fitted model object
-##'
-simulate.formula <- function(object, nsim = 1, seed = NULL, family,
-                             weights=NULL, offset=NULL, ...) {
-    ## N.B. *must* name all arguments so that 'object' is missing in .simulateFun()
-    .simulateFun(formula=object, nsim=nsim, seed=seed,
-                 family=family, weights=weights, offset=offset, ...)
-}
+## all possible LHS evaluated values ...
+simulate.formula_lhs_matrix <- simulate.formula_lhs_numeric <-
+    simulate.formula_lhs_integer <- simulate.formula_lhs_factor <-
+        simulate.formula_lhs_ <-
+        function(object, nsim = 1, seed = NULL,
+                 newdata,
+                 ...) {
+            ## N.B. *must* name all arguments so that 'object' is missing in .simulateFun()
+            .simulateFun(formula=object, nsim=nsim, seed=seed, newdata=newdata, ...)
+        }
 
 simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                             re.form=NA, ReForm, REForm, REform,
                             newdata=NULL, newparams=NULL,
                             family=NULL,
                             allow.new.levels=FALSE, na.action=na.pass, ...) {
+
+    ## FIXME: is there a reason this can't be a copy of .simulateFun ... ?
     mc <- match.call()
     mc[[1]] <- quote(lme4::.simulateFun)
     eval(mc, parent.frame(1L))
@@ -525,23 +529,25 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                          cond.sim=TRUE,
                          ...) {
 
+    if (length(list(...)) > 0) warning("unused arguments ignored")
+    
+    if (missing(object) && (is.null(formula) || is.null(newdata) || is.null(newparams))) {
+        stop("if ",sQuote("object")," is missing, must specify all of ",
+             sQuote("formula"),", ",sQuote("newdata"),", and ",
+             sQuote("newparams"))
+    }
+
     nullWts <- FALSE
-
     if (is.null(weights)) {
-        if (is.null(newdata))
+        if (is.null(newdata)) {
             weights <- weights(object)
-        else {
-
+        } else {
             nullWts <- TRUE # this flags that 'weights' wasn't supplied by the user
             weights <- rep(1,nrow(newdata))
         }
     }
+
     if (missing(object)) {
-        if (is.null(formula) || is.null(newdata) || is.null(newparams)) {
-            stop("if ",sQuote("object")," is missing, must specify all of ",
-                 sQuote("formula"),", ",sQuote("newdata"),", and ",
-                 sQuote("newparams"))
-        }
 
         ## construct fake-fitted object from data, params
         ## copied from glm(): DRY; this all stems from the
@@ -563,6 +569,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                                opt = list(par=NA,fval=NA,conv=NA),
                                lmod$reTrms, fr = lmod$fr)
         } else {
+
             glmod <- glFormula(formula,newdata,family=family,
                                weights=weights,
                                offset=offset,
@@ -578,6 +585,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         ## instead we have a special case in fitted()
         ## object@resp$mu <- rep(NA_real_,nrow(model.frame(object)))
     }
+    
     stopifnot((nsim <- as.integer(nsim[1])) > 0,
               is(object, "merMod"))
     if (!is.null(newparams)) {

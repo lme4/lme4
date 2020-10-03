@@ -1,7 +1,6 @@
 \name{simulate.merMod}
 \title{Simulate Responses From \code{\linkS4class{merMod}} Object}
 \alias{simulate.merMod}
-\alias{simulate.formula}
 \alias{.simulateFun}
 \description{
   Simulate responses from a \code{"merMod"} fitted model object, i.e.,
@@ -12,9 +11,6 @@
 	 use.u = FALSE, re.form = NA, ReForm, REForm, REform,
 	 newdata=NULL, newparams=NULL, family=NULL,
 	 allow.new.levels = FALSE, na.action = na.pass, \dots)
-
-\method{simulate}{formula}(object, nsim = 1 , seed = NULL,
-         family, weights=NULL, offset=NULL, \dots)
 
 .simulateFun(object, nsim = 1, seed = NULL, use.u = FALSE,
              re.form = NA, ReForm, REForm, REform,
@@ -65,7 +61,8 @@
     distribution?  if \code{FALSE}, simulate only random effects; do not
     simulate from the conditional distribution, rather return the
     predicted group-level values}
-  \item{\dots}{optional additional arguments: none are used at present.}
+  \item{\dots}{optional additional arguments (none are used in
+    \code{.simulateFormula})}
 }
 \seealso{
   \code{\link{bootMer}} for \dQuote{simulestimate}, i.e., where each
@@ -77,7 +74,10 @@
       values from an existing, fitted model (\code{merMod} object):
       however, if \code{formula}, \code{newdata}, and \code{newparams} are
       specified, \code{simulate} generates the appropriate model
-      structure to simulate from.}
+      structure to simulate from. \code{formula} must be a
+      \emph{one-sided} formula (i.e. with an empty left-hand side);
+      in general, if \code{f} is a two-sided
+      formula, \code{f[-2]} can be used to drop the LHS.}
 
     \item{The \code{re.form} argument allows the user to specify how the
       random effects are incorporated in the simulation.  All of the
