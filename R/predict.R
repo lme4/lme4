@@ -266,14 +266,24 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
         ## pick out random effects values that correspond to
         ##  random effects incorporated in re.form ...
         ## NB: Need integer indexing, as nRnms can be duplicated: (age|Subj) + (sex|Subj) :
-        re_new <- lapply(seq_along(nRnms), function(i) {
-            rname <- nRnms[i]
-            if (!all(Rcnms[[i]] %in% names(re[[rname]])))
-                stop("random effects specified in re.form that were not present in original model")
-            re_x[[rname]][,Rcnms[[i]]]
-        })
-        re_new <- unlist(lapply(re_new, t))  ## must TRANSPOSE RE matrices before unlisting
-        ## FIXME? use vapply(re_new, t, FUN_VALUE=????)
+        hacked_names <- FALSE
+        get_re <- function(rname, cnms) {
+            nms <- names(re[[rname]])
+            if (identical(cnms,"(Intercept)") && length(nms)==1 && grepl("^s(.*)$",nms)) {
+                ## HACK to allow gamm4 prediction
+                hacked_names <<- TRUE
+                cnms <- nms
+            }
+            miss_names <- setdiff(cnms, nms)
+            if (length(miss_names)>0) {
+                stop("random effects specified in re.form that were not present in original model ",
+                     paste(miss_names, collapse=", "))
+            }
+            t(re_x[[rname]][,cnms]) ## transpose to make sure unlisting works
+        }
+        re_new <- unlist(Map(get_re, nRnms, Rcnms))
+        ## only issue warning once per prediction ...
+        if (hacked_names) warning("modified RE names for gamm4 prediction")
     }
     Zt <- ReTrms$Zt
     attr(Zt, "na.action") <- attr(re_new, "na.action") <- fixed.na.action

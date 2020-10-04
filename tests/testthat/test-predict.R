@@ -333,3 +333,18 @@ test_that("prediction from large factors", {
     expect_is(predict(fm, re.form=~(1|obs)), "numeric")
     expect_is(predict(fm, newdata=X), "numeric")
 })
+
+
+test_that("prediction with gamm4", {
+    if (requireNamespace("gamm4")) {
+        ## from ?gamm4
+        set.seed(0) 
+        dat <- mgcv::gamSim(1,n=400,scale=2) ## simulate 4 term additive truth
+        ## Now add 20 level random effect `fac'...
+        dat$fac <- fac <- as.factor(sample(1:20,400,replace=TRUE))
+        dat$y <- dat$y + model.matrix(~fac-1)%*%rnorm(20)*.5
+        br <- gamm4::gamm4(y~s(x0)+x1+s(x2),data=dat,random=~(1|fac))
+        expect_warning(ss <- simulate(br$mer), "modified RE names")
+        expect_equal(dim(ss), c(400,1))
+    }
+})
