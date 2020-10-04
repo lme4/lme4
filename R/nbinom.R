@@ -49,11 +49,10 @@ optTheta <- function(object,
   it <- 0L
   NBfun <- function(t) {
       ## Kluge to retain last value and evaluation count {good enough for ..}
-      dev <- -2*logLik(lastfit <<- factory(refitNB,
-                                           types=c("message","warning"))(
-                                               lastfit,
-                                               theta = exp(t),
-                                               control = control))
+      f_refitNB <- factory(refitNB,types=c("message","warning"))
+      lastfit <<- f_refitNB(lastfit, theta = exp(t),
+                            control = control)
+      dev <- -2*logLik(lastfit)
       it <<- it+1L
       if (verbose)
           cat(sprintf("%2d: th=%#15.10g, dev=%#14.8f, beta[1]=%#14.8f\n",
@@ -99,6 +98,8 @@ glmer.nb <- function(..., interval = log(th) + c(-3,3),
                      initCtrl = list(limit = 20, eps = 2*tol, trace = verbose,
                                      theta = NULL))
 {
+    ## ?? E() is a placeholder; [-1] removes it
+    ## left with a 'headless' list of elements in ...
     dotE <- as.list(substitute(E(...))[-1])
     ## nE <- names(dotE <- as.list(substitute(E(...))[-1]))
     ## i <- match(c("formula",""), nE)
@@ -111,6 +112,7 @@ glmer.nb <- function(..., interval = log(th) + c(-3,3),
         mc[[1]] <- quote(glmer)
         mc$family <- quote(stats::poisson)
         mc$verbose <- (verbose>=2)
+        mc$nb.control <- NULL
         ## ** FIXME: specifically add check.conv.singular="ignore"?
         ##  suppress other warnings unless explicitly specified?
         g0 <- suppressMessages(
@@ -149,10 +151,10 @@ glmer.nb <- function(..., interval = log(th) + c(-3,3),
 
     ## FIXME: optTheta should also work by modifying mc directly,
     ##  then re-evaluating, not via refit() ...
-    
-    res <- optTheta(g1, interval=interval, tol=tol, verbose=verbose,
-                    control = c(eval.parent(g1@call$control),nb.control))
 
+    control <- eval.parent(g1@call$control)
+    res <- optTheta(g1, interval=interval, tol=tol, verbose=verbose,
+                    control = c(control, nb.control))
     res
 }
 

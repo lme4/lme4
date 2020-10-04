@@ -1457,7 +1457,13 @@ refit.merMod <- function(object,
     ##     rho$pp$updateDecomp()
     ##     rho$lp0 <- rho$pp$linPred(1)
     ## }
-    opt <- optwrap(object@optinfo$optimizer,
+    optimizer <- object@optinfo$optimizer
+    if (!is.null(newopt <- ctrl.arg$optimizer)) {
+        ## we might end up with a length-2 optimizer vector ...
+        ##  use the *last* element
+        optimizer <- newopt[length(newopt)]
+    }
+    opt <- optwrap(optimizer,
                    ff, x0, lower=lower, control=control$optCtrl,
                    calc.derivs=calc.derivs)
     cc <- checkConv(attr(opt,"derivs"),opt$par,

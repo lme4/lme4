@@ -24,10 +24,12 @@ glmer.nb(\dots, interval = log(th) + c(-3, 3),
     progress information should be printed during the optimization.  Use
     \code{verbose = 2} (or larger) to enable \code{verbose=TRUE} in the
     \code{\link{glmer}()} calls.}
-  \item{nb.control}{optional \code{\link{list}}, like \code{\link{glmerControl}()},
+  \item{nb.control}{optional \code{\link{list}}, like the output of \code{\link{glmerControl}()},
     used in \code{\link{refit}(*, control = control.nb)} during the
-    optimization.}
-  \item{initCtrl}{(\emph{\bold{experimental}, do not rely on this}:) a
+    optimization (\code{control}, if included in \code{\dots},
+    will be used in the initial-stage \code{glmer(...,family=poisson)}
+    fit, and passed on to the later optimization stages as well)}
+    \item{initCtrl}{(\emph{\bold{experimental}, do not rely on this}:) a
     \code{\link{list}} with named components as in the default, passed to
     \code{\link[MASS]{theta.ml}} (package \CRANpkg{MASS}) for the initial
     value of the negative binomial parameter \code{theta}.
