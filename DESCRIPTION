@@ -48,7 +48,8 @@ Suggests:
     HSAUR3,
     numDeriv,
     car,
-    dfoptim
+    dfoptim,
+    mgcv
 VignetteBuilder: knitr
 LazyData: yes
 License: GPL (>=2)
