@@ -1742,8 +1742,13 @@ llikAIC <- function(object, devianceFUN = devCrit, chkREML = TRUE, devcomp = obj
     warnings <- optinfo$warnings
     nwarnings <- length(warnings)
     if (cc > 0 || nmsgs > 0 || nwarnings > 0) {
-        convmsg <- sprintf("optimizer (%s) convergence code: %d",
-                           optinfo$optimizer, cc)
+        m <- if (cc==0) {
+                 "(OK)"
+             } else if (!is.null(optinfo$message)) {
+                 sprintf("(%s)",optinfo$message)
+             } else ""
+        convmsg <- sprintf("optimizer (%s) convergence code: %d %s",
+                           optinfo$optimizer, cc, m)
         if (summary) {
             cat(convmsg,sprintf("; %d optimizer warnings; %d lme4 warnings",
                 nwarnings,nmsgs),"\n")
@@ -2657,8 +2662,10 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
     ## post-fit tweaking
     if (optName == "bobyqa") {
         opt$convergence <- opt$ierr
-    }
-    else if (optName == "optimx") {
+    } else if (optName == "Nelder_Mead") {
+        ## fix-up: Nelder_Mead treats running out of iterations as "convergence" (!?)
+        if (opt$NM.result==4) opt$convergence <- 4
+    } else if (optName == "optimx") {
         opt <- list(par = coef(opt)[1,],
                     fvalues = opt$value[1],
                     method = method,
@@ -2668,7 +2675,7 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
     }
     if ((optconv <- getConv(opt)) != 0) {
         wmsg <- paste("convergence code",optconv,"from",optName)
-        if (!is.null(opt$msg)) wmsg <- paste0(wmsg,": ",opt$msg)
+        if (!is.null(getMsg(opt))) wmsg <- paste0(wmsg,": ",getMsg(opt))
         warning(wmsg)
         curWarnings <<- append(curWarnings,list(wmsg))
     }

@@ -743,12 +743,21 @@ getConv <- function(x) {
     } else x[["convergence"]]
 }
 
+getMsg <- function(x) {
+    if (!is.null(x[["msg"]])) {
+        x[["msg"]]
+    } else if (!is.null(x[["message"]])) {
+        x[["message"]]
+    } else ""
+}
+
 .optinfo <- function(opt, lme4conv=NULL)
     list(optimizer = attr(opt, "optimizer"),
          control   = attr(opt, "control"),
          derivs    = attr(opt, "derivs"),
          conv      = list(opt = getConv(opt), lme4 = lme4conv),
          feval     = if (is.null(opt$feval)) NA else opt$feval,
+         message   = getMsg(opt),
          warnings  = attr(opt, "warnings"),
          val       = opt$par)
 
@@ -1143,7 +1152,10 @@ nloptwrap <- local({
         with(res, list(par   = solution,
                        fval  = objective,
                        feval = iterations,
-                       conv  = if(status > 0) 0 else status,
+                       ## ?nloptr: "integer value with the status of the optimization (0 is success)"
+                       ## most status>0 are fine (e.g. 4 "stopped because xtol_rel was reached"
+                       ## but status 5 is "ran out of evaluations"
+                       conv  = if (status<0 || status==5) status else 0,
                        message = message))
     }
 })

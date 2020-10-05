@@ -4,7 +4,7 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-23.9000 (unreleased)}{
+\section{CHANGES IN VERSION 1.1-24}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item \code{anova()} now returns a p-value of \code{NA} if the df
@@ -12,6 +12,9 @@
       models) (GH#583, @MetaEntropy)
       \item speedup in \code{coef()} for large models, by skipping
       conditional variance calculation (Alexander Bauer)
+      \item \code{simulate.formula} machinery has changed slightly,
+      for compatibility with the \code{ergm} package (Pavel Krivitsky)
+      \item informational messages about (non-)convergence improved (GH #599)
     }
   } % user-visible changes
   \subsection{NEW FEATURES}{
@@ -24,6 +27,13 @@
       not match results from previous versions exactly.
     }
   } % new features
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item improved handling/documentation of \code{glmer.nb} controls
+      (GH #556)
+      \item \code{predict} works better for \code{gamm4} objects (GH #575)
+    }
+  } % bug fixes
 } % version 1.1-23.9000
 \section{CHANGES IN VERSION 1.1-23 (2020-03-06)}{
   This is primarily for CRAN compliance (previous submission was

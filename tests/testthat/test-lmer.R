@@ -314,5 +314,34 @@ test_that("better info about optimizer convergence",
 
     cc <-capture.output(print(summary(gm2)))
     expect_equal(tail(cc,3)[1],
-                 "optimizer (Nelder_Mead) convergence code: 0")
+                 "optimizer (Nelder_Mead) convergence code: 0 (OK)")
+})
+
+context("convergence warnings etc.")
+
+fm1 <- lmer(Reaction~ Days + (Days|Subject), sleepstudy)
+suppressMessages(fm0 <- lmer(Reaction~ Days + (Days|Subject), sleepstudy[1:20,]))
+
+msg_in_output <- function(x, str) {
+    cc <- capture.output(.prt.warn(x))
+    any(grepl(str , cc))
+}
+
+test_that("convergence warnings from limited evals", {
+    expect_warning(fm1B <- update(fm1, control=lmerControl(optCtrl=list(maxeval=3))),
+                   "convergence code 5")
+    expect_true(msg_in_output(fm1B@optinfo, "convergence code: 5"))
+    expect_warning(fm1C <- update(fm1, control=lmerControl(optimizer="bobyqa",optCtrl=list(maxfun=3))),
+                   "maximum number of function evaluations exceeded")
+    expect_true(msg_in_output(fm1C@optinfo,
+                              "maximum number of function evaluations exceeded"))
+    ## one extra (spurious) warning here ...
+    expect_warning(fm1D <- update(fm1, control=lmerControl(optimizer="Nelder_Mead",optCtrl=list(maxfun=3))),
+                   "failure to converge in 3 evaluations")
+    expect_true(msg_in_output(fm1D@optinfo,
+                              "failure to converge in 3 evaluations"))
+    expect_message(fm0D <- update(fm0, control=lmerControl(optimizer="Nelder_Mead")),
+                   "boundary")
+    expect_true(msg_in_output(fm0D@optinfo,
+                              "(OK)"))
 })
