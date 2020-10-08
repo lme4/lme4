@@ -209,16 +209,13 @@ update.merMod <- function(object, formula., ..., evaluate = TRUE) {
             call <- as.call(call)
         }
     }
-    if (evaluate) {
-        ff <- environment(formula(object))
-        pf <- parent.frame()  ## save parent frame in case we need it
-        sf <- sys.frames()[[1]]
-        tryCatch(eval(call, envir=ff),
-                 error=function(e) {
-                     tryCatch(eval(call, envir=sf),
-                              error=function(e) {
-                                  eval(call, pf)
-                              })
-                 })
-    } else call
+    if (!evaluate) return(call)
+    ff <- environment(formula(object))
+    pf <- parent.frame()
+    sf <- sys.frames()[[1]]
+    ## should be able to find model components somewhere in (1) formula env; (2) calling env;
+    ##  (3) parent frame [plus its parent frames]
+    ## see discusion at https://stackoverflow.com/questions/64268994/evaluate-call-when-components-may-be-scattered-among-environments 
+    combf <- do.call("c", lapply(list(ff, sf), as.list))
+    eval(call,combf, enclos=pf)
 }
