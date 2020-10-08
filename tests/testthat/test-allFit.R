@@ -74,3 +74,17 @@ test_that("i in model call is OK", {
     )
 })
 
+test_that("allFit/update scoping", {
+    ## GH #601
+    fit_func <- function(dataset) {
+        gm1 <- glmer(
+            cbind(incidence, size - incidence) ~ period + (1 | herd),
+            data = dataset, family = binomial
+        )
+        allFit(gm1)
+    }
+    
+    cc <- capture.output(ff <- fit_func(cbpp))
+    expect_true(all(summary(ff)$which.OK))
+})
+
