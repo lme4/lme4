@@ -64,7 +64,7 @@ namespace optimizer {
     inline bool nl_stop::relstop(const Scalar& vold, const Scalar& vnew,
                           const Scalar& reltol, const Scalar& abstol) const {
         int debug=0;
-        bool result;
+        bool result=false;
 
         if (std::abs(vold) == std::numeric_limits<Scalar>::infinity()) return false;
 
