@@ -215,7 +215,10 @@ update.merMod <- function(object, formula., ..., evaluate = TRUE) {
     sf <- sys.frames()[[1]]
     ## should be able to find model components somewhere in (1) formula env; (2) calling env;
     ##  (3) parent frame [plus its parent frames]
-    ## see discusion at https://stackoverflow.com/questions/64268994/evaluate-call-when-components-may-be-scattered-among-environments 
+    ## see discusion at https://stackoverflow.com/questions/64268994/evaluate-call-when-components-may-be-scattered-among-environments
+    ## FIXME: suppressWarnings(update(model)) will give
+    ## Error in as.list.environment(X[[i]], ...) : 
+    ## promise already under evaluation: recursive default argument reference or earlier problems?
     combf <- do.call("c", lapply(list(ff, sf), as.list))
     eval(call,combf, enclos=pf)
 }
