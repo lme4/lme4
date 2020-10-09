@@ -336,10 +336,12 @@ test_that("prediction from large factors", {
 
 
 test_that("prediction with gamm4", {
-    if (requireNamespace("gamm4")) {
+    if (suppressWarnings(requireNamespace("gamm4"))) {
+        ## loading gamm4 warngs "replacing previous import 'Matrix::update' by 'lme4::update' when loading 'gamm4'"
         ## from ?gamm4
-        set.seed(0) 
-        dat <- mgcv::gamSim(1,n=400,scale=2) ## simulate 4 term additive truth
+        set.seed(0)
+         ## simulate 4 term additive truth
+        dat <- mgcv::gamSim(1,n=400,scale=2,verbose=FALSE)
         ## Now add 20 level random effect `fac'...
         dat$fac <- fac <- as.factor(sample(1:20,400,replace=TRUE))
         dat$y <- dat$y + model.matrix(~fac-1)%*%rnorm(20)*.5
