@@ -14,7 +14,9 @@
       conditional variance calculation (Alexander Bauer)
       \item \code{simulate.formula} machinery has changed slightly,
       for compatibility with the \code{ergm} package (Pavel Krivitsky)
-      \item informational messages about (non-)convergence improved (GH #599)
+      \item informational messages about (non-)convergence improved (GH
+      #599)
+      \item improved error messages for 0 non-NA cases in data (GH #533)
     }
   } % user-visible changes
   \subsection{NEW FEATURES}{
@@ -31,7 +33,9 @@
     \itemize{
       \item improved handling/documentation of \code{glmer.nb} controls
       (GH #556)
-      \item \code{predict} works better for \code{gamm4} objects (GH #575)
+      \item \code{predict} works better for \code{gamm4} objects (GH
+      #575)
+      \item resolved some long-standing UBSAN issues (GH #561)
     }
   } % bug fixes
 } % version 1.1-23.9000

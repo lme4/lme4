@@ -350,3 +350,11 @@ test_that("convergence warnings from limited evals", {
     expect_true(msg_in_output(fm0D@optinfo,
                               "(OK)"))
 })
+
+## GH 533
+test_that("test for zero non-NA cases", {
+    data_bad <- sleepstudy
+    data_bad$Days <- NA_real_
+    expect_error(lmer(Reaction ~ Days + (1| Subject), data_bad),
+                 "0 \\(non-NA\\) cases")
+})
