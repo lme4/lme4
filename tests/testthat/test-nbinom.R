@@ -1,5 +1,6 @@
 library("lme4")
 library("testthat")
+testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
 
 set.seed(101)
 dd <- expand.grid(f1 = factor(1:3),
@@ -30,6 +31,7 @@ test_that("ok with Poisson masking", {
     rm(poisson)
 })
 
+if (testLevel>1) {
 context("testing glmer refit")
 
 test_that("glmer refit", {
@@ -104,3 +106,4 @@ test_that("control arguments", {
                                     nb.control=glmerControl(optCtrl=list(maxfun=2))))
     expect_equal(g1@optinfo$feval,3)
 })
+} ## testLevel>1

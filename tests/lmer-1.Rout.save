@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2020-09-12 r79193) -- "Unsuffered Consequences"
+R Under development (unstable) (2020-10-11 r79327) -- "Unsuffered Consequences"
 Copyright (C) 2020 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
@@ -195,7 +195,7 @@ Fixed Effects:
 > options(oldOpts)  ## restore digits
 > 
 > showProc.time() #
-Time elapsed:  0.081 0 0.08 
+Time elapsed:  0.081 0 0.081 
 > 
 > for(nm in c("coef", "fixef", "ranef", "sigma",
 + 	     "model.matrix", "model.frame" , "terms")) {
@@ -325,7 +325,7 @@ $Subject
 
 > 
 > showProc.time() #
-Time elapsed:  0.216 0 0.216 
+Time elapsed:  0.209 0 0.209 
 > 
 > ## Invalid factor specification -- used to seg.fault:
 > set.seed(1)
@@ -437,7 +437,7 @@ boundary (singular) fit: see ?isSingular
 +             )
 > 
 > showProc.time() #
-Time elapsed:  0.087 0 0.088 
+Time elapsed:  0.086 0 0.086 
 > 
 > ## Wrong formula gave a seg.fault at times:
 > set.seed(2)# !
@@ -446,19 +446,20 @@ Time elapsed:  0.087 0 0.088
 > ## NB: The first two are the same, having a length-3 R.E. with 3 x 3 vcov-matrix:
 > ## --> do need CPU
 > ## suppressWarnings() for warning about too-few random effects levels
-> m0 <- suppressWarnings(lmer(y ~ (x1 + x2)|ff, data = D))
-> m1 <- suppressWarnings(lmer(y ~ x1 + x2|ff  , data = D))
-> m2 <- suppressWarnings(lmer(y ~ x1 + (x2|ff), data = D))
-boundary (singular) fit: see ?isSingular
-> m3 <- suppressWarnings(lmer(y ~ (x2|ff) + x1, data = D))
-boundary (singular) fit: see ?isSingular
+> tmpf <- function(form) lmer(form, data = D , control=lmerControl(check.conv.singular="ignore",
++                                                                  check.nobs.vs.nRE="ignore",
++                                                                  calc.derivs=FALSE))
+> m0 <- tmpf(y ~ (x1 + x2)|ff)
+> m1 <- tmpf(y ~ x1 + x2|ff)
+> m2 <- tmpf(y ~ x1 + (x2|ff))
+> m3 <- tmpf(y ~ (x2|ff) + x1)
 > suppressWarnings(stopifnot(all.equal(ranef(m0), ranef(m1), tolerance = 1e-5),
 +           all.equal(ranef(m2), ranef(m3), tolerance = 1e-5),
 +           inherits(tryCatch(lmer(y ~ x2|ff + x1, data = D), error = function(e)e),
 +                    "error")))
 > 
 > showProc.time() #
-Time elapsed:  0.102 0 0.102 
+Time elapsed:  0.092 0 0.092 
 > 
 > ## Reordering of grouping factors should not change the internal structure
 > #Pm1  <- lmer1(strength ~ (1|batch) + (1|sample), Pastes, doFit = FALSE)
@@ -532,4 +533,4 @@ boundary (singular) fit: see ?isSingular
 > 
 > proc.time()
    user  system elapsed 
-  1.991   0.073   2.032 
+  1.979   0.045   1.993 

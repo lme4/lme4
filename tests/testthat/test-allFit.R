@@ -1,11 +1,13 @@
 library("testthat")
 library("lme4")
+testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
 
 L <- load(system.file("testdata", "lme-tst-fits.rda",
                       package="lme4", mustWork=TRUE))
 
 gm_all <- allFit(fit_cbpp_1, verbose=FALSE)
 
+if (testLevel>1) {
 context("Show basic allFit results")
 test_that("allFit print/summary is fine", {
     expect_is(gm_all, "allFit")
@@ -74,3 +76,4 @@ test_that("i in model call is OK", {
     )
 })
 
+}  ## testLevel

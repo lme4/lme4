@@ -1,5 +1,6 @@
 library("testthat")
 library("lme4")
+testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
 
 ## use old (<=3.5.2) sample() algorithm if necessary
 if ("sample.kind" %in% names(formals(RNGkind))) {
@@ -155,6 +156,7 @@ test_that("lmer", {
     expect_true(all(is.na(aa[["Pr(>Chisq)"]])))
 })
 
+if (testLevel>1) {
 context("bootMer confint()")
 set.seed(47)
 test_that("bootMer", {
@@ -264,6 +266,7 @@ test_that("bootMer", {
 
 
 })
+} ## testLevel>1
 
 context("confint_other")
 test_that("confint", {
@@ -366,7 +369,8 @@ test_that("refit", {
     expect_equal(logLik(m5),logLik(m5R))
 })
 
-context("predict")
+if (testLevel>1) {
+context("predict method")
 test_that("predict", {
     d1 <- with(cbpp, expand.grid(period = unique(period), herd = unique(herd)))
     d2 <- data.frame(period = "1", herd = unique(cbpp$herd))
@@ -473,6 +477,7 @@ test_that("predict", {
 
 })
 
+## testLevel>1
 context("simulate")
 test_that("simulate", {
     expect_is(simulate(gm2), "data.frame")
@@ -608,6 +613,7 @@ test_that("misc", {
     }
     expect_is(as.data.frame(VarCorr(fm1)), "data.frame")
 })
+} ## testLevel>1
 
 context("plot")
 test_that("plot", {
@@ -647,6 +653,7 @@ test_that("summary", {
    })
 
 
+if (testLevel>1) {
 context("profile")
 test_that("profile", {
     ## FIXME: can we deal with convergence warning messages here ... ?
@@ -684,6 +691,7 @@ test_that("profile", {
                  c("var_(Intercept)|Subject", "cov_Days.(Intercept)|Subject",
                    "var_Days|Subject", "sigma"))
 })
+} ## testLevel>1
 
 context("model.frame")
 test_that("model.frame", {
