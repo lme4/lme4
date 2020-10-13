@@ -3,6 +3,7 @@
 
 library(lme4)
 set.seed(101)
+testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
 
 ## for each type of model, should be able to
 ##  (1) refit with same data and get the same answer,
@@ -10,6 +11,7 @@ set.seed(101)
 ##     are probably unavoidable)
 ##  (2) refit with simulate()d data
 
+if (testLevel>1) {
 getinfo <- function(x) {
   c(fixef(x), logLik(x), unlist(ranef(x)), unlist(VarCorr(x)))
 }
@@ -179,3 +181,4 @@ stopifnot(
     all.equal(bet.U, bet.R, tolerance = 6e-5), # saw 1.0e-5
     all.equal( th.U,  th.R, tolerance = 4e-5), # saw 1.2e-5
     all.equal(dev.U, dev.R, tolerance = 2e-5)) # saw 4.6e-6
+} ## testLevel>1

@@ -1,9 +1,11 @@
 library(lme4)
 library(testthat)
 library(lattice)
+testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
 
 options(nwarnings = 5000)# instead of 50, and then use  summary(warnings())
 
+if (testLevel>1) {
 ### __ was ./profile_plots.R ___
 fm1 <- lmer(Reaction~ Days + (Days|Subject), sleepstudy)
 pfile <- system.file("testdata","tprfm1.RData", package="lme4")
@@ -158,3 +160,4 @@ foo <- function() {
     profile(gm1, which="theta_")
 }
 stopifnot(inherits(foo(), "thpr"))
+} ## testLevel>1

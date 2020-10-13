@@ -4,7 +4,13 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-24}{
+\section{CHANGES IN VERSION 1.1-25}{
+  \itemize{
+    \item   Set more tests to run only if environment variable
+    \code{LME4_TEST_LEVEL}>1
+  }
+}
+\section{CHANGES IN VERSION 1.1-24 (never on CRAN)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item \code{anova()} now returns a p-value of \code{NA} if the df
