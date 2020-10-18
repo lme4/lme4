@@ -508,6 +508,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
 ## all possible LHS evaluated values ...
 simulate.formula_lhs_matrix <- simulate.formula_lhs_numeric <-
     simulate.formula_lhs_integer <- simulate.formula_lhs_factor <-
+        simulate.formula_lhs_logical <- 
         simulate.formula_lhs_ <-
         function(object, nsim = 1, seed = NULL,
                  newdata,
