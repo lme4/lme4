@@ -37,6 +37,7 @@ Ticks on Red Grouse Chicks." Parasitology 122 (05):
 \url{http://journals.cambridge.org/action/displayAbstract?fromPage=online&aid=82701}.
 }
 \examples{
+if (lme4_testlevel()>1) {
 data(grouseticks)
 ## Figure 1a from Elston et al
 par(las=1,bty="l")
@@ -60,5 +61,6 @@ curve(1*x,from=0,to=70,add=TRUE)
 ## Model fitting
 form <- TICKS~YEAR+HEIGHT+(1|BROOD)+(1|INDEX)+(1|LOCATION)
 (full_mod1  <- glmer(form, family="poisson",data=grouseticks))
+}
 }
 \keyword{datasets}

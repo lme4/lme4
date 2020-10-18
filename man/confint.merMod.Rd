@@ -85,6 +85,7 @@
   }
 }
 \examples{
+if (lme4_testlevel()>1) {
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 fm1W <- confint(fm1, method="Wald")# very fast, but ....
 fm1W
@@ -95,8 +96,8 @@ fm1W
                        37.78184, 8.768238, 28.78768, 265.2383, 13.60057),
                      dim = c(5L, 2L))))
 }
-testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
-if(interactive() || testLevel >= 3) {
+} %% testlevel>1
+if(interactive() || lme4_testlevel() >= 3) {
  ## ~20 seconds, MacBook Pro laptop
  system.time(fm1P <- confint(fm1, method="profile", ## default
                              oldNames = FALSE))

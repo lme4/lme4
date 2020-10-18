@@ -135,6 +135,7 @@ bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE, re.form=NA,
   }
 }
 \examples{
+if (lme4_testlevel()>1) {
 fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
 ## see ?"profile-methods"
 mySumm <- function(.) { s <- sigma(.)
@@ -187,7 +188,8 @@ if (requireNamespace("boot")) {
     (load(system.file("testdata","boo01L.RData", package="lme4")))# "boo01L"
     plot(boo01L, index=3)
     mean(boo01L$t[,"sig01"]==0) ## note point mass at zero!
-} ## if boot package available
-} 
+} %% if boot package available
+} %% testlevel > 1
+}
 \keyword{htest}
 \keyword{models}

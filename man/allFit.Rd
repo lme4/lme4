@@ -69,30 +69,32 @@ parallel on Windows), you will need to set up a cluster yourself and run
 }
 \seealso{\code{slice},\code{slice2D} from the \CRANpkg{bbmle} package}
 \examples{
+if (lme4_testlevel()>1) {
 library(lme4)
-gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+  gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
              data = cbpp, family = binomial)
-## show available methods
-allFit(show.meth.tab=TRUE) 
-gm_all <- allFit(gm1)
-ss <- summary(gm_all)
-ss$which.OK            ## logical vector: which optimizers worked?
-## the other components only contain values for the optimizers that worked
-ss$llik                ## vector of log-likelihoods
-ss$fixef               ## table of fixed effects
-ss$sdcor               ## table of random effect SDs and correlations
-ss$theta               ## table of random effects parameters, Cholesky scale
+  ## show available methods
+  allFit(show.meth.tab=TRUE) 
+  gm_all <- allFit(gm1)
+  ss <- summary(gm_all)
+  ss$which.OK            ## logical vector: which optimizers worked?
+  ## the other components only contain values for the optimizers that worked
+  ss$llik                ## vector of log-likelihoods
+  ss$fixef               ## table of fixed effects
+  ss$sdcor               ## table of random effect SDs and correlations
+  ss$theta               ## table of random effects parameters, Cholesky scale
+} %% lme4_testlevel > 1
 \dontrun{
-## Parallel examples for Windows
-nc <- detectCores()-1
-optCls <- makeCluster(nc, type = "SOCK")
-clusterEvalQ(optCls,library("lme4"))
-### not necessary here because using a built-in
-## data set, but in general you should clusterExport() your data
-clusterExport(optCls, "cbpp")
-system.time(af1 <- allFit(m0, parallel = 'snow', 
+  ## Parallel examples for Windows
+  nc <- detectCores()-1
+  optCls <- makeCluster(nc, type = "SOCK")
+  clusterEvalQ(optCls,library("lme4"))
+  ### not necessary here because using a built-in
+  ## data set, but in general you should clusterExport() your data
+  clusterExport(optCls, "cbpp")
+  system.time(af1 <- allFit(m0, parallel = 'snow', 
                           ncpus = nc, cl=optCls))
-stopCluster(optCls)
-}
-}
+  stopCluster(optCls)
+} %% dontrun
+} %% examples
 \keyword{models}
