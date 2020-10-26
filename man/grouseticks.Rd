@@ -37,7 +37,7 @@ Ticks on Red Grouse Chicks." Parasitology 122 (05):
 \url{http://journals.cambridge.org/action/displayAbstract?fromPage=online&aid=82701}.
 }
 \examples{
-if (lme4_testlevel()>1) {
+if (interactive()) {
 data(grouseticks)
 ## Figure 1a from Elston et al
 par(las=1,bty="l")

@@ -172,7 +172,7 @@ varianceProf(x, ranef = TRUE)
   \code{\link{bootMer}}.
 }
 \examples{
-if (lme4_testlevel() > 1) {
+if (interactive()) {
 fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
 system.time(
   tpr  <- profile(fm01ML, optimizer="Nelder_Mead", which="beta_")
@@ -223,6 +223,6 @@ if(doMore) { ## not typically, for time constraint reasons
      pr4.hr <- profile(gm1, which="theta_", delta.cutoff=1/16)))
  print( xyplot(pr4.hr) )
 } %% doMore
-} %% lme4_testlevel() > 1
+} %% interactive()
 }
 \keyword{methods}

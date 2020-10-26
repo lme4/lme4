@@ -123,7 +123,7 @@
 } % theoretical issues
 } % details
 \examples{
-if (lme4_testlevel()>1) {
+if (interactive()) {
 fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 
 ## 1. decrease stopping tolerances
@@ -171,7 +171,7 @@ fm1.restart2 <- update(fm1, start=pars_x,
   ss$ theta               ## Cholesky factors
   ss$ which.OK            ## which fits worked
 
-} %% lme4_testlevel > 1
+} %% interactive()
 } % examples
 
 \seealso{\code{\link{lmerControl}}, \code{\link{isSingular}}}

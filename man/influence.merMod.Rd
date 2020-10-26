@@ -87,7 +87,7 @@ J. Fox \email{jfox@mcmaster.ca}
 }
 
 \examples{
-if (lme4_testlevel()>1) {
+if (interactive()) {
   fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
   inf_fm1 <- influence(fm1, "Subject")
   if (require("car")) {
@@ -107,6 +107,6 @@ if (lme4_testlevel()>1) {
     dfbeta(inf_gm1)
     dfbetas(inf_gm1)
   }
- } %% lme4_testlevel()>1
+ } %% interactive()
 } %% examples
 \keyword{models}

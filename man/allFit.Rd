@@ -69,7 +69,7 @@ parallel on Windows), you will need to set up a cluster yourself and run
 }
 \seealso{\code{slice},\code{slice2D} from the \CRANpkg{bbmle} package}
 \examples{
-if (lme4_testlevel()>1) {
+if (interactive()) {
 library(lme4)
   gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
              data = cbpp, family = binomial)
@@ -83,7 +83,7 @@ library(lme4)
   ss$fixef               ## table of fixed effects
   ss$sdcor               ## table of random effect SDs and correlations
   ss$theta               ## table of random effects parameters, Cholesky scale
-} %% lme4_testlevel > 1
+} %% interactive()
 \dontrun{
   ## Parallel examples for Windows
   nc <- detectCores()-1
