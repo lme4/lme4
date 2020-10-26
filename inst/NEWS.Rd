@@ -4,6 +4,17 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
+\section{CHANGES IN VERSION 1.1-26}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{predict}, \code{model.frame(.,fixed.only=TRUE)} work
+      with variable names containing spaces (GH #605)
+      \item \code{simulate} works when original response variable was
+      logical
+    }
+  }
+}
+
 \section{CHANGES IN VERSION 1.1-25}{
   \itemize{
     \item   Set more tests to run only if environment variable
