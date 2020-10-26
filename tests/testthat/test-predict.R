@@ -351,4 +351,14 @@ test_that("prediction with gamm4", {
         expect_equal(dim(ss), c(400,1))
     }
 })
+
+test_that("prediction with spaces in variable names", {
+    cbpp$`silly period` <- cbpp$period
+    m <- glmer(cbind(incidence,size-incidence) ~ `silly period` + (1|herd),
+               family=binomial, data=cbpp)
+    expect_equal(round(head(predict(m)),3),
+                 c(`1` = -0.809, `2` = -1.801,
+                   `3` = -1.937, `4` = -2.388, `5` = -1.697, `6` = -2.689))
+})
+
 } ## testLevel>1

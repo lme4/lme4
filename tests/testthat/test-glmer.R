@@ -178,17 +178,17 @@ if(FALSE) { ## Hadley broke this
     if(testLevel > 1) {
         load(system.file("testdata","mastitis.rda",package="lme4"))
         t1 <- system.time(g1 <-
-                          glmer(NCM ~ birth + calvingYear + (1|sire) + (1|herd),
+                              suppressWarnings(glmer(NCM ~ birth + calvingYear + (1|sire) + (1|herd),
                                 mastitis, poisson,
                                 ## current (2014-04-24) default: --> Warning
                                 control=glmerControl(  # max|grad| = 0.021 ..
-                                    optimizer=c("bobyqa","Nelder_Mead"))))
+                                    optimizer=c("bobyqa","Nelder_Mead")))))
 
         t2 <- system.time(g2 <- update(g1,
                          control=glmerControl(optimizer="bobyqa")))
-        rbind(t1,t2)[,"elapsed"]
+        ## rbind(t1,t2)[,"elapsed"]
         ## 20 (then 13.0) seconds N-M vs 8 (then 4.8) seconds bobyqa ...
-        print(t1[3] / t2[3]) # 0.37; => 1.25 should be on the safe side
+        ## print(t1[3] / t2[3]) # 0.37; => 1.25 should be on the safe side
         expect_lte(t2[3], 1.25 * t1[3])
         ## problem is fairly ill-conditioned so parameters
         ##  are relatively far apart even though likelihoods are OK
