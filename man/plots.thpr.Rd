@@ -22,7 +22,7 @@
        absVal = FALSE, scales=NULL,
        which = 1:nptot, \dots)
 
-\method{densityplot}{thpr}(x, data, \dots)
+\method{densityplot}{thpr}(x, data, npts = 201, upper = 0.999, \dots)
 
 \method{splom}{thpr}(x, data,
       levels = sqrt(qchisq(pmax.int(0, pmin.int(1, conf)), 2)),
@@ -34,6 +34,9 @@
     typically resulting from \code{\link{profile}(fm)} where \code{fm}
     is a fitted model from \code{\link{lmer}} (or its generalizations).}
   \item{data}{unused - only for compatibility with generic.}
+  \item{npts}{the number of points to use for the \code{densityplot()}.}
+  \item{upper}{a number in \eqn{(0,1)} to specify upper (and lower)
+      boundaries as \code{+/- qnorm(upper)}.}
   \item{levels}{the contour levels to be shown; usually
     derived from \code{conf}.}
   \item{conf}{numeric vector of confidence levels to be

@@ -1131,11 +1131,11 @@ logProf <- function (x, base = exp(1), ranef=TRUE,
             x[[nm]] <- log(x[[nm]], base = base)
             fr <- x[x[[".par"]] == nm & is.finite(x[[nm]]), TRUE, drop=FALSE]
             form <- eval(substitute(.zeta ~ nm, list(nm = as.name(nm))))
-            attr(x, "forward")[[nm]] <- isp <- interpSpline(form, fr)
+            attr(x,  "forward")[[nm]] <- isp <- interpSpline(form, fr)
             attr(x, "backward")[[nm]] <- backSpline(isp)
         }
         ## eliminate rows that produced non-finite logs
-        x <- x[apply(is.finite(as.matrix(x[, sigs])), 1, all),]
+        x <- x[apply(is.finite(as.matrix(x[, sigs])), 1, all), , drop=FALSE]
     }
     x
 }
@@ -1145,7 +1145,7 @@ log.thpr <- function (x, base = exp(1)) logProf(x, base=base)
 
 
 
-##' Create an approximating density from a profile object
+##' Create an approximating density from a profile object  -- called only from densityplot.thpr()
 ##'
 ##' @title Approximate densities from profiles
 ##' @param pr a profile object
@@ -1153,58 +1153,54 @@ log.thpr <- function (x, base = exp(1)) logProf(x, base=base)
 ##' @param upper upper bound on cumulative for a cutoff
 ##' @return a data frame
 dens <- function(pr, npts=201, upper=0.999) {
-    bad_vars <- character(0)
-    stopifnot(inherits(pr, "thpr"))
     npts <- as.integer(npts)
-    stopifnot(inherits(pr, "thpr"), npts > 0,
-              is.numeric(upper), 0.5 < upper, upper < 1)
-    spl <- attr(pr, "forward")
+    spl  <- attr(pr, "forward")
     bspl <- attr(pr, "backward")
-    zeta <- c(qnorm(1-upper), qnorm(upper))
+    stopifnot(inherits(pr, "thpr"), npts > 0,
+              is.numeric(upper), 0.5 < upper, upper < 1,
+              identical((vNms <- names(spl)), names(bspl)))
+    bad_vars <- character(0)
+    zeta <- c(-1,1) * qnorm(upper)
     rng <- vector(mode="list", length=length(bspl))
-    names(rng) <- names(bspl)
+    names(rng) <- vNms
+    dd <- rng # empty named list to be filled
     for (i in seq_along(bspl)) {
-        if (is(bspl[[i]], "error")) {
+        if (inherits(bspl[[i]], "error")) {
             rng[[i]] <- rep(NA,npts)
-            bad_vars <- c(bad_vars, names(rng)[i])
+            bad_vars <- c(bad_vars, vNms[i])
             next
         }
         rng0 <- predy(bspl[[i]], zeta)
         if (is.na(rng0[1])) rng0[1] <- 0
         if (is.na(rng0[2])) {
             ## try harder to pick an upper bound
-            upper <- 1-10^seq(-4,-1,length=21)
-            j <- 1
-            while (is.na(rng0[2]) && j<=length(upper)) {
-                rng[2] <- predy(bspl[[i]],qnorm(upper[j]))
-                j <- j + 1
+            for(upp in 1 - 10^seq(-4,-1, length=21)) { # <<-- TODO: should be related to 'upper'
+                if(!is.na(rng0[2L] <- predy(bspl[[i]], qnorm(upp))))
+                    break
             }
             if (is.na(rng0[2])) {
                 warning("can't find an upper bound for the profile")
-                return(rep(NA_real_,npts))
-                if (!names(rng[i]) %in% bad_vars[i]) {
-                    bad_vars <- c(bad_vars, names(rng)[i])
-                }
+                bad_vars <- c(bad_vars, vNms[i])
+                next
             }
         }
         rng[[i]] <- seq(rng0[1], rng0[2], len=npts)
     }
-    fr <- data.frame(pval=unlist(rng),
-                     pnm=gl(length(rng), npts, labels=names(bspl)))
-    dd <- list()
-    for (nm in names(rng)) {
-        if (!is(spl[[nm]],"spline")) {
-            dd[[nm]] <- rep(NA_real_, npts)
-            next
-        }
-        zz <- predy(spl[[nm]], rng[[nm]])
-        dd[[nm]] <- dnorm(zz) * predict(spl[[nm]], rng[[nm]], deriv=1)$y
+    fr <- data.frame(pval = unlist(rng),
+                     pnm = gl(length(rng), npts, labels=vNms))
+    for (nm in vNms) {
+        dd[[nm]] <-
+            if (!inherits(spl[[nm]], "spline")) {
+                rep(NA_real_, npts)
+            } else {
+                zz <- predy(spl[[nm]], rng[[nm]])
+                dnorm(zz) * predict(spl[[nm]], rng[[nm]], deriv = 1L)$y
+            }
     }
     fr$density <- unlist(dd)
-    if (length(bad_vars)>0) {
+    if (length(bad_vars))
         warning("unreliable profiles for some variables skipped: ",
                 paste(bad_vars, collapse=", "))
-    }
     fr
 }
 
@@ -1220,8 +1216,8 @@ dens <- function(pr, npts=201, upper=0.999) {
 ##' @importFrom lattice densityplot
 ##' @method densityplot thpr
 ##' @export
-densityplot.thpr <- function(x, data, ...) {
-    dd <- dens(x)
+densityplot.thpr <- function(x, data, npts=201, upper=0.999, ...) {
+    dd <- dens(x, npts=npts, upper=upper)
     ll <- c(list(...),
             list(x=density ~ pval|pnm,
                  data=dd,
