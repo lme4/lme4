@@ -6,7 +6,7 @@ if ("sample.kind" %in% names(formals(RNGkind))) {
     suppressWarnings(RNGkind("Mersenne-Twister", "Inversion", "Rounding"))
 }
 
-context("Utilities (including *non*-exported ones")
+context("Utilities (including *non*-exported ones)")
 
 test_that("namedList", {
     nList <- lme4:::namedList

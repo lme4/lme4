@@ -691,6 +691,14 @@ test_that("profile", {
                  c("var_(Intercept)|Subject", "cov_Days.(Intercept)|Subject",
                    "var_Days|Subject", "sigma"))
 })
+
+test_that("densityplot is robust", {
+    p <- readRDS(system.file("testdata","harmel_profile.rds",
+                             package="lme4"))
+    expect_warning(lattice::densityplot(p),
+                   "unreliable profiles for some variables")
+})
+
 } ## testLevel>1
 
 context("model.frame")

@@ -11,6 +11,7 @@
       with variable names containing spaces (GH #605)
       \item \code{simulate} works when original response variable was
       logical
+      \item \code{densityplot} handles partly broken profiles more robustly
     }
   }
 }
