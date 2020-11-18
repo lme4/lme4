@@ -14,6 +14,11 @@
       \item \code{densityplot} handles partly broken profiles more robustly
     }
   }
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item \code{thpr} method for \code{densityplot()} (for plotting
+  profiles scaled as densities) gets new arguments 
+  }
 }
 
 \section{CHANGES IN VERSION 1.1-25}{
