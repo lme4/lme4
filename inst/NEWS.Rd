@@ -18,10 +18,11 @@
     \itemize{
       \item \code{thpr} method for \code{densityplot()} (for plotting
   profiles scaled as densities) gets new arguments 
+    }
   }
 }
 
-\section{CHANGES IN VERSION 1.1-25}{
+\section{CHANGES IN VERSION 1.1-25 (2020-10-23)}{
   \itemize{
     \item   Set more tests to run only if environment variable
     \code{LME4_TEST_LEVEL}>1
