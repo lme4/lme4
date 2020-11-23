@@ -2,6 +2,7 @@
 ## and transformed (center, id -> factor, idctr created, levels labeled)
 library(lme4)
 
+if (.Platform$OS.type != "windows") {
 load(system.file("testdata","respiratory.RData",package="lme4"))
 m_glmer_4.L <- glmer(outcome~center+treat+sex+age+baseline+(1|idctr),
                      family=binomial,data=respiratory)
@@ -14,3 +15,4 @@ m_glmer_4.GHQ8 <- glmer(outcome~center+treat+sex+age+baseline+(1|idctr),
 
 m_glmer_4.GHQ16 <- glmer(outcome~center+treat+sex+age+baseline+(1|idctr),
                         family=binomial,data=respiratory,nAGQ=16)
+} ## skip on windows (for speed)

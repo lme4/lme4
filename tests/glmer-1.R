@@ -37,6 +37,7 @@ chkFixed <- function(fm, true.coef, conf.level = 0.95,
 ## now
 #bobyqa(m1e, control = list(iprint = 2L))
 
+if (lme4:::testLevel() > 1 || .Platform$OS.type!="windows") {
 m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
              family = binomial, data = cbpp)
 m1. <- update(m1, start = getME(m1, c("theta", "fixef")))
@@ -258,3 +259,4 @@ if(lme4:::testLevel() > 1) {
 }
 
 showProc.time()
+}  ## skip if windows and testLevel<1

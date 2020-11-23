@@ -6,6 +6,7 @@ library("testthat")
 ## data("trees513", package = "multcomp")
 load(system.file("testdata","trees513.RData",package="lme4"))
 
+if (.Platform$OS.type != "windows") {
 expect_is(mmod1 <- glmer(damage ~ species - 1 + (1 | lattice / plot),
    data = trees513B, family = binomial()),"glmerMod")
 if(FALSE) { ## Now (2019-05) defunct; was deprecated since 2013-06:
@@ -15,3 +16,4 @@ if(FALSE) { ## Now (2019-05) defunct; was deprecated since 2013-06:
  mmod2@call <- mmod1@call ## hack calls to equality
  expect_equal(mmod1,mmod2)
 }
+} ## skip on windows (for speed)

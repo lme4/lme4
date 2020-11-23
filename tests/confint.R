@@ -4,6 +4,7 @@ library("testthat")
 L <- load(system.file("testdata", "lme-tst-fits.rda",
                       package="lme4", mustWork=TRUE))
 
+if (lme4:::testLevel() > 1 || .Platform$OS.type!="windows") {
 fm1 <- fit_sleepstudy_2
 c0  <- confint(fm1, method="Wald")
 c0B <- confint(fm1, method="Wald",parm="Days")
@@ -34,3 +35,4 @@ if (testLevel > 10) {
     print(c2B <- confint(fm1, method="boot"))
     expect_equal(unname(c1B), unname(c2B), tolerance=2e-2)
 }
+} ## skip if windows/testLevel<1

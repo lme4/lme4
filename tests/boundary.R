@@ -6,6 +6,7 @@
 library(lme4)
 library(testthat)
 
+if (.Platform$OS.type != "windows") {
 if(!dev.interactive(orNone=TRUE)) pdf("boundary_plots.pdf")
 
 ## Stephane Laurent:
@@ -201,3 +202,4 @@ p1 <- profile(m1)
 xyplot(p1)
 expect_warning(splom(p1),"splom is unreliable")
 
+} ## skip on windows (for speed)

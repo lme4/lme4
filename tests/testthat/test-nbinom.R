@@ -10,7 +10,7 @@ mu <- 5*(-4 + with(dd, as.integer(f1) + 4*as.numeric(f2)))
 dd$y <- rnbinom(nrow(dd), mu = mu, size = 0.5)
 
 ## mimic glmer.nb protocol
-
+if (testLevel>1) {
 test_that("most messages suppressed", {
     expect_message(glmer.nb(y ~ f1 + (1|g), data=dd[1:10,]),
                    "singular")
@@ -31,7 +31,7 @@ test_that("ok with Poisson masking", {
     rm(poisson)
 })
 
-if (testLevel>1) {
+if (testLevel>2) {
 context("testing glmer refit")
 
 test_that("glmer refit", {
@@ -106,4 +106,5 @@ test_that("control arguments", {
                                     nb.control=glmerControl(optCtrl=list(maxfun=2))))
     expect_equal(g1@optinfo$feval,3)
 })
+} ## testLevel>2
 } ## testLevel>1

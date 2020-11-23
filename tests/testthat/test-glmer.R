@@ -31,6 +31,7 @@ gives_error_or_warning <- function (regexp = NULL, all = FALSE, ...)
     ## expect_that(stop("bar"),gives_error_or_warning("foo"))
     ## expect_that(warning("bar"),gives_error_or_warning("foo"))
 
+if(testLevel > 1) {
 context("fitting glmer models")
 test_that("glmer", {
     set.seed(101)
@@ -175,7 +176,7 @@ if(FALSE) { ## Hadley broke this
     }
 
     ##
-    if(testLevel > 1) {
+    if(testLevel > 2) {
         load(system.file("testdata","mastitis.rda",package="lme4"))
         t1 <- system.time(g1 <-
                               suppressWarnings(glmer(NCM ~ birth + calvingYear + (1|sire) + (1|herd),
@@ -349,3 +350,4 @@ if(FALSE) { ## Hadley broke this
                    "please use glmerControl")
 
 })
+} ## testlevel>1

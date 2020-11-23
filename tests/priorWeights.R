@@ -33,6 +33,7 @@ compFunc <- function(lmeMod, lmerMod, tol = 1e-2){
     return(list(target = lmeOut, current = lmerOut, tolerance = tol))
 }
 
+if (.Platform$OS.type != "windows") {
 set.seed(1)
 nGroups <- 100
 nObs <- 1000
@@ -158,3 +159,4 @@ stopifnot(all.equal(unname(fixef(m)), fixef_lme4.0, tolerance = 1e-3))
 fm <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy,REML=FALSE)
 fm_wt <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, weights = rep(5, nrow(sleepstudy)),REML=FALSE)
 all.equal(deviance(fm), deviance(fm_wt))
+} ## skip on windows (for speed)

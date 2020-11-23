@@ -7,6 +7,7 @@ mySumm <- function(.) {
     sig01 = unname(s * getME(., "theta")))
 }
 
+if (.Platform$OS.type != "windows") {
 fm1 <- lmer(Yield ~ 1|Batch, Dyestuff)
 boo01 <- bootMer(fm1, mySumm, nsim = 10)
 boo02 <- bootMer(fm1, mySumm, nsim = 10, use.u = TRUE)
@@ -82,3 +83,4 @@ bb <- bootMer(fm3,mySumm2,nsim=10)
 attr(bb,"boot.fail.msgs")
 bb2 <- bootMer(fm4,mySumm2,nsim=10)
 
+} ## skip on windows (for speed)

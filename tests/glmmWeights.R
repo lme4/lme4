@@ -25,6 +25,7 @@ sumFun <- function(m) {
 ## The relative "error"/differences of the weights w[] entries
 rel.diff <- function(w) abs(1 - w[-1]/w[1])
 
+if (.Platform$OS.type != "windows") {
 set.seed(101)
 
 ## GAMMA
@@ -104,3 +105,4 @@ expect_equal(var(sumFun(g3)),0)
 ## (lowered tolerance to pass checks on my machine -- SCW)
 expect_equal(sigma(g0)^2, 0.4888248, tolerance=1e-4)
 
+} ## skip on windows (for speed)

@@ -17,6 +17,7 @@ S4_2list <- function(obj) {   # no longer used
 ##     }
 ## })
 
+if (lme4:::testLevel() > 1) {
 oldOpts <- options(digits=2)
 (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 (fm1a <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, REML = FALSE))
@@ -334,3 +335,4 @@ m5 <- lmer(zbmi ~ (1|DA) , data = fakedat,
 m6 <- update(m5, data=na.omit(fakedat))
 stopifnot(VarCorr(m5)[["DA"]] == 0,
 	  VarCorr(m6)[["DA"]] == 0)
+} ## skip level<1
