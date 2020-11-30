@@ -2,6 +2,8 @@
 
 tmpdir <- "1yqHv23qSIGU"
 tmpdir <- "JJVaXb6jq9AR"
+tmpdir <- "47Cy3DHqc8lY"
+tmpdir <- "v4ubd59nYhED"
 head_url <- sprintf("https://win-builder.r-project.org/%s/",tmpdir)
 
 ## extract times listed in square brackets
@@ -21,7 +23,9 @@ r[order(-n)]
 print(full_time <- sum(n)/60)
 print(test_time <- sum(get_brackets(r2))/60)
 
+## full time: 658 seconds
 ## full time: 664 seconds
+## full time: 667 seconds
 ## need to drop another 90 seconds or so?
 ## offset (9)  + hatvalues (4) + optimizer (8) + predsim (8)
 ##  + priorWeightsModComp (8)  + testcolonizer (4) + varcorr(4) +
