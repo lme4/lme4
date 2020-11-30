@@ -13,6 +13,7 @@ d$eta <- d$eta0+reff_f[d$block]
 d$mu <- 1/d$eta
 d$y <- rgamma(nrow(d), scale=d$mu/2, shape=2)
 
+if (.Platform$OS.type != "windows") {
 gm0     <- glmer(y ~      1|block,  d, Gamma)
 gm0.A25 <- glmer(y ~      1|block,  d, Gamma, nAGQ=25L)
 gm1     <- glmer(y ~ x + (1|block), d, Gamma)
@@ -26,3 +27,4 @@ anova(gm1, gm1.A25)
 summary(gm1) # "fine"
 summary(gm1.A25) # Inf logLik etc ?
 
+}
