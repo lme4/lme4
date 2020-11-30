@@ -1,4 +1,7 @@
 library(lme4)
+
+if (.Platform$OS.type != "windows") {
+
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 
 ## slightly weird model but plausible --- not that
@@ -21,3 +24,4 @@ gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
 
 drop1(gm1, test="Chisq")
 
+} ## skip on windows (for speed)

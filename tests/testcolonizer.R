@@ -13,6 +13,9 @@ load(system.file("testdata","colonizer_rand.rda",package="lme4"))
 library("lme4")
 packageVersion("lme4")
 
+if (.Platform$OS.type != "windows") {
 m1 <- glmer(form1,data=randdat, family=poisson)  ## PIRLS step failed
 m2 <- glmer(form1,data=randdat, family=poisson, nAGQ=0)  ## OK
 m3 <- glmer(form2,data=randdat, family=poisson)  ## ditto
+
+} ## skip on windows (for speed)

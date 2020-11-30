@@ -1,4 +1,6 @@
 library(lme4)
+
+if (.Platform$OS.type != "windows") {
 data(Orthodont, package="nlme")
 fm1 <- lmer(distance ~ age + (age|Subject), data = Orthodont)
 VarCorr(fm1)
@@ -20,3 +22,4 @@ if (FALSE) {
   VarCorr(fm1)
   lme4:::VarCorr.merMod(fm1) ## OK
 }
+} ## skip on windows (for speed)

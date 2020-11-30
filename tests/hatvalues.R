@@ -15,6 +15,8 @@ bruteForceHat <- function(object) {
     })
 }
 
+if (.Platform$OS.type != "windows") {
+
 str(H <- bruteForceHat(m))
 
 set.seed(7)
@@ -26,3 +28,4 @@ stopifnot(all.equal(diag(H),
           all.equal(diag(bruteForceHat(m2)),
                     unname(lme4:::hatvalues.merMod(m2)), tol= 1e-14)
           )
+} ## skip on windows (for speed)

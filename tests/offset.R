@@ -1,6 +1,8 @@
 ## simple examples with offsets, to exercise methods etc.
 
 library(lme4)
+
+if (.Platform$OS.type != "windows") {
 ## generate a basic Gamma/random effects sim
 set.seed(101)
 d <- expand.grid(block=LETTERS[1:26],rep=1:100)
@@ -44,3 +46,4 @@ p2 <- predict(gm1off,newdata=d)
 stopifnot(all.equal(p0,p1,p2))
 
 ## FIXME: should also test simulations
+} ## skip on windows (for speed)
