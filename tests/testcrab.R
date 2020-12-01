@@ -24,6 +24,7 @@ g1 <- ggplot(randdata0,aes(x=snail.size,y=surv,colour=snail.size,fill=snail.size
     scale_size_discrete("# obs",range=c(2,5))
 }
 
+if (.Platform$OS.type != "windows") {
 t1 <- system.time(glmer1 <- glmer(fr2,weights=initial.snail.density,
                                   family ="binomial", data=randdata))
 t1B <- system.time(glmer1B <- glmer(fr,family ="binomial", data=randdata))
@@ -84,3 +85,4 @@ glmmADMB_res <- structure(c(2.7773101267224, 0.609026276823218, -1.6005570463471
 "crab.speciesS:crab.sizeM:snail.sizeS", "", "", "", ""))
 
 stopifnot(all.equal(res1B,glmmADMB_res,tolerance=0.015))
+} ## skip on windows (for speed)

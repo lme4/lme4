@@ -4,11 +4,14 @@ library(testthat)
 (testLevel <- lme4:::testLevel())
 L <- load(system.file("testdata/lme-tst-fits.rda",
                       package="lme4", mustWork=TRUE))
+
+if (testLevel>1) {
 if (getRversion() > "3.0.0") {
     ## saved fits are not safe with old R versions
 
 fm1 <- fit_sleepstudy_1
 
+    
 s1 <- simulate(fm1,seed=101)[[1]]
 s2 <- simulate(fm1,seed=101,use.u=TRUE)
 s3 <- simulate(fm1,seed=101,nsim=10)
@@ -172,3 +175,4 @@ stopifnot(all.equal(s7,s1))
 ## TO DO: wider range of tests, including offsets ...
 
 }# R >= 3.0.0
+} ## testLevel>1

@@ -1,6 +1,7 @@
 library("testthat")
 library("lme4")
 library("lattice")
+testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
 
 ## use old (<=3.5.2) sample() algorithm if necessary
 if ("sample.kind" %in% names(formals(RNGkind))) {
@@ -28,6 +29,7 @@ if (getRversion() > "3.0.0") {
     fm4 <- lmer(angle ~ temp + recipe + (1 | replicate), data=cake)
 }
 
+if (testLevel>1) {
 context("predict")
 test_that("fitted values", {
     p0 <- predict(gm1)
@@ -334,12 +336,13 @@ test_that("prediction from large factors", {
     expect_is(predict(fm, newdata=X), "numeric")
 })
 
-
 test_that("prediction with gamm4", {
-    if (requireNamespace("gamm4")) {
+    if (suppressWarnings(requireNamespace("gamm4"))) {
+        ## loading gamm4 warngs "replacing previous import 'Matrix::update' by 'lme4::update' when loading 'gamm4'"
         ## from ?gamm4
-        set.seed(0) 
-        dat <- mgcv::gamSim(1,n=400,scale=2) ## simulate 4 term additive truth
+        set.seed(0)
+         ## simulate 4 term additive truth
+        dat <- mgcv::gamSim(1,n=400,scale=2,verbose=FALSE)
         ## Now add 20 level random effect `fac'...
         dat$fac <- fac <- as.factor(sample(1:20,400,replace=TRUE))
         dat$y <- dat$y + model.matrix(~fac-1)%*%rnorm(20)*.5
@@ -348,3 +351,14 @@ test_that("prediction with gamm4", {
         expect_equal(dim(ss), c(400,1))
     }
 })
+
+test_that("prediction with spaces in variable names", {
+    cbpp$`silly period` <- cbpp$period
+    m <- glmer(cbind(incidence,size-incidence) ~ `silly period` + (1|herd),
+               family=binomial, data=cbpp)
+    expect_equal(round(head(predict(m)),3),
+                 c(`1` = -0.809, `2` = -1.801,
+                   `3` = -1.937, `4` = -2.388, `5` = -1.697, `6` = -2.689))
+})
+
+} ## testLevel>1

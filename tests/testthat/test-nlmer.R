@@ -1,8 +1,6 @@
 library("testthat")
 library("lme4")
-
-testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL")))
-                 as.numeric(s) else 1
+testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
 
 context("lower/upper bounds on nlmer models")
 test_that("nlmer", {

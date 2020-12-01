@@ -3,6 +3,7 @@
 library(lme4)
 do.plot <- FALSE
 
+if (.Platform$OS.type != "windows") {
 ## use old (<=3.5.2) sample() algorithm if necessary
 if ("sample.kind" %in% names(formals(RNGkind))) {
     suppressWarnings(RNGkind("Mersenne-Twister", "Inversion", "Rounding"))
@@ -84,3 +85,4 @@ d <- data.frame(y=rpois(100,5),x=rlnorm(100,1,1),
 gm1 <- glmer(y~offset(log(x))+(1|f),data=d,
              family=poisson)
 s1 <- simulate(gm1)
+} ## skip on windows (for speed)

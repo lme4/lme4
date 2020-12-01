@@ -1,23 +1,26 @@
-library(lme4)
-fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+if (.Platform$OS.type != "windows") {
+    library(lme4)
 
-## slightly weird model but plausible --- not that
-##   one would want to try drop1() on this model ...
-fm2 <- lmer(Reaction ~ 1+ (Days|Subject), sleepstudy)
-drop1(fm2)  ## empty
-update(fm1, . ~ . - Days)
-anova(fm2) ## empty
+    fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 
-terms(fm1)
-terms(fm1,fixed.only=FALSE)
+    ## slightly weird model but plausible --- not that
+    ##   one would want to try drop1() on this model ...
+    fm2 <- lmer(Reaction ~ 1+ (Days|Subject), sleepstudy)
+    drop1(fm2)  ## empty
+    update(fm1, . ~ . - Days)
+    anova(fm2) ## empty
 
-extractAIC(fm1)
+    terms(fm1)
+    terms(fm1,fixed.only=FALSE)
 
-drop1(fm1)
-drop1(fm1, test="Chisq")
+    extractAIC(fm1)
 
-gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-             family = binomial, data = cbpp, nAGQ=25L)
+    drop1(fm1)
+    drop1(fm1, test="Chisq")
 
-drop1(gm1, test="Chisq")
+    gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+                 family = binomial, data = cbpp, nAGQ=25L)
 
+    drop1(gm1, test="Chisq")
+
+} ## skip on windows (for speed)

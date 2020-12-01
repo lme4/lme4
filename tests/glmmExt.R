@@ -12,6 +12,7 @@ str(gSim)
 ## function (nblk = 26, nperblk = 100, sigma = 1, beta = c(4, 3),
 ##           x = runif(n), shape = 2, nbinom = 10, family = Gamma())
 
+if (.Platform$OS.type != "windows") {
 set.seed(101)
 ## Gamma, inverse link (= default) :
 d <- gSim()
@@ -129,3 +130,4 @@ gBi2 <- glmer(y ~ x + (1|block), data=dBi, family=binomial(link="identity"))
 
 ## FIXME: should test more of the *results* of these efforts, not
 ##  just that they run without crashing ...
+} ## skip on windows (for speed)

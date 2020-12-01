@@ -1,6 +1,7 @@
 ## require(agridat)
 ## dat <- gotway.hessianfly
 
+if (.Platform$OS.type != "windows") {
 ## don't actually use gotway_hessianfly_fit or gotway_hessianfly_prof,
 ## so we should be OK even with R< 3.0.1
 load(system.file("testdata","gotway_hessianfly.rda",package="lme4"))
@@ -52,3 +53,4 @@ stopifnot(all.equal(lme4fit, lme4.0fit, tolerance = 5e-4))
 ## dat$obs <- factor(seq(nrow(dat)))
 ## m2 <- glmer(cbind(y, n-y) ~ block+ (1|gen) + (1|obs), data=dat, family=binomial)
 
+}  ## not on windows/CRAN

@@ -56,3 +56,15 @@ test_that("two-sided formula warning", {
                                              seed=101))[[1]],
                    "object '.' not found")
 })
+
+## cleanup
+
+## I can't figure out what environments these things actually live in so I'm going to
+## give up and try() to remove them ...
+
+## rmx <- function(s) if (exists(s, parent.frame())) rm(list=s, envir=parent.frame())
+## rmx("simulate.formula_lhs_character")
+## rmx("simulate.formula_lhs_")
+## rmx("simulate.formula_lhs_numeric")
+
+suppressWarnings(try(rm(list = c("simulate.formula_lhs_", "simulate.formula_lhs_numeric")),silent=TRUE))

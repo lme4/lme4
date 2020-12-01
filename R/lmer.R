@@ -1061,6 +1061,7 @@ model.frame.merMod <- function(formula, fixed.only=FALSE, ...) {
             ## https://stackoverflow.com/questions/18017765/extract-variables-in-formula-from-a-data-frame
             vars <- rownames(attr(terms.formula(ff), "factors"))
         }
+        vars <- gsub("`","",vars) ## weirdness in deparsing variable names with spaces
         fr <- fr[vars]
     }
     fr

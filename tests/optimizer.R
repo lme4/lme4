@@ -7,6 +7,7 @@ source(system.file("test-tools-1.R", package = "Matrix"), keep.source = FALSE)
 ##  Nelder_Mead, bobyqa built in; optimx/nlminb, optimx/L-BFGS-B
 ##  optimx/Rcgmin will require a bit more wrapping/interface work (requires gradient)
 
+if (.Platform$OS.type != "windows") {
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)  ## Nelder_Mead
 fm1B <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy,
              control=lmerControl(optimizer="bobyqa"))
@@ -52,3 +53,4 @@ if (testLevel > 1) {
     gm1E@optinfo <- gm1C@optinfo
     assert.EQ(gm1E,gm1C, tol=1e-5, giveRE=TRUE)# prints unless tol=0--equality
 }
+} ## skip on windows (for speed)

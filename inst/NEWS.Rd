@@ -4,7 +4,31 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-24}{
+\section{CHANGES IN VERSION 1.1-26}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{predict}, \code{model.frame(.,fixed.only=TRUE)} work
+      with variable names containing spaces (GH #605)
+      \item \code{simulate} works when original response variable was
+      logical
+      \item \code{densityplot} handles partly broken profiles more robustly
+    }
+  }
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item \code{thpr} method for \code{densityplot()} (for plotting
+  profiles scaled as densities) gets new arguments 
+    }
+  }
+}
+
+\section{CHANGES IN VERSION 1.1-25 (2020-10-23)}{
+  \itemize{
+    \item   Set more tests to run only if environment variable
+    \code{LME4_TEST_LEVEL}>1
+  }
+}
+\section{CHANGES IN VERSION 1.1-24 (never on CRAN)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item \code{anova()} now returns a p-value of \code{NA} if the df
@@ -14,7 +38,9 @@
       conditional variance calculation (Alexander Bauer)
       \item \code{simulate.formula} machinery has changed slightly,
       for compatibility with the \code{ergm} package (Pavel Krivitsky)
-      \item informational messages about (non-)convergence improved (GH #599)
+      \item informational messages about (non-)convergence improved (GH
+      #599)
+      \item improved error messages for 0 non-NA cases in data (GH #533)
     }
   } % user-visible changes
   \subsection{NEW FEATURES}{
@@ -31,7 +57,9 @@
     \itemize{
       \item improved handling/documentation of \code{glmer.nb} controls
       (GH #556)
-      \item \code{predict} works better for \code{gamm4} objects (GH #575)
+      \item \code{predict} works better for \code{gamm4} objects (GH
+      #575)
+      \item resolved some long-standing UBSAN issues (GH #561)
     }
   } % bug fixes
 } % version 1.1-23.9000

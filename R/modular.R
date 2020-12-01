@@ -378,6 +378,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     }
     mf$formula <- fr.form
     fr <- eval(mf, parent.frame())
+    if (nrow(fr) == 0L) stop("0 (non-NA) cases")
     ## convert character vectors to factor (defensive)
     fr <- factorize(fr.form, fr, char.only=TRUE)
     ## store full, original formula & offset

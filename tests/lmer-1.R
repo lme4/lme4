@@ -17,6 +17,7 @@ S4_2list <- function(obj) {   # no longer used
 ##     }
 ## })
 
+if (lme4:::testLevel() > 1) {
 oldOpts <- options(digits=2)
 (fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy))
 (fm1a <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy, REML = FALSE))
@@ -279,10 +280,13 @@ D <-  data.frame(y= rnorm(12,10), ff = gl(3,2,12),
 ## NB: The first two are the same, having a length-3 R.E. with 3 x 3 vcov-matrix:
 ## --> do need CPU
 ## suppressWarnings() for warning about too-few random effects levels
-m0 <- suppressWarnings(lmer(y ~ (x1 + x2)|ff, data = D))
-m1 <- suppressWarnings(lmer(y ~ x1 + x2|ff  , data = D))
-m2 <- suppressWarnings(lmer(y ~ x1 + (x2|ff), data = D))
-m3 <- suppressWarnings(lmer(y ~ (x2|ff) + x1, data = D))
+tmpf <- function(form) lmer(form, data = D , control=lmerControl(check.conv.singular="ignore",
+                                                                 check.nobs.vs.nRE="ignore",
+                                                                 calc.derivs=FALSE))
+m0 <- tmpf(y ~ (x1 + x2)|ff)
+m1 <- tmpf(y ~ x1 + x2|ff)
+m2 <- tmpf(y ~ x1 + (x2|ff))
+m3 <- tmpf(y ~ (x2|ff) + x1)
 suppressWarnings(stopifnot(all.equal(ranef(m0), ranef(m1), tolerance = 1e-5),
           all.equal(ranef(m2), ranef(m3), tolerance = 1e-5),
           inherits(tryCatch(lmer(y ~ x2|ff + x1, data = D), error = function(e)e),
@@ -331,3 +335,4 @@ m5 <- lmer(zbmi ~ (1|DA) , data = fakedat,
 m6 <- update(m5, data=na.omit(fakedat))
 stopifnot(VarCorr(m5)[["DA"]] == 0,
 	  VarCorr(m6)[["DA"]] == 0)
+} ## skip level<1

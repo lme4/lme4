@@ -1,7 +1,9 @@
 library(lme4)
 n <- nrow(sleepstudy)
-options(warn = 1, # show as they happen ("false" convergence warnings)
-        useFancyQuotes = FALSE)
+op <- options(warn = 1, # show as they happen ("false" convergence warnings)
+              useFancyQuotes = FALSE)
+
+if (.Platform$OS.type != "windows") {
 ##' remove all attributes but names
 dropA <- function(x) `attributes<-`(x, list(names = names(x)))
 ##' transform result of "numeric" all.equal.list() to a named vector
@@ -86,3 +88,5 @@ if (length(LRG)>0) {
 str(tF <- sapply(mySeeds, seedF))
 round(sort(      rallEQ[, "Chisq"] / (tF * 1e-6  ),          decreasing=TRUE), 1)
 round(sort(apply(rallEQ[,notChisq] / (tF * 1.5e-8), 1, max), decreasing=TRUE), 1)
+} ## skip on windows (for speed)
+options(op)

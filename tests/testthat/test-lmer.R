@@ -308,9 +308,14 @@ test_that("better info about optimizer convergence",
                                control=glmerControl(optimizer=c("bobyqa","Nelder_Mead")))
                      )
 
+    ## FIXME: with new update, suppressWarnings(update(gm2)) will give
+    ## Error in as.list.environment(X[[i]], ...) : 
+    ## promise already under evaluation: recursive default argument reference or earlier problems?
+    op <- options(warn=-1)
     gm3 <- update(gm2,
-           control=glmerControl(optimizer="bobyqa",
-                                optCtrl=list(maxfun=2)))
+                  control=glmerControl(optimizer="bobyqa",
+                                       optCtrl=list(maxfun=2)))
+    options(op)
 
     cc <-capture.output(print(summary(gm2)))
     expect_equal(tail(cc,3)[1],
@@ -344,4 +349,12 @@ test_that("convergence warnings from limited evals", {
                    "boundary")
     expect_true(msg_in_output(fm0D@optinfo,
                               "(OK)"))
+})
+
+## GH 533
+test_that("test for zero non-NA cases", {
+    data_bad <- sleepstudy
+    data_bad$Days <- NA_real_
+    expect_error(lmer(Reaction ~ Days + (1| Subject), data_bad),
+                 "0 \\(non-NA\\) cases")
 })
