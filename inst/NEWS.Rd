@@ -4,7 +4,17 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-26}{
+\section{CHANGES IN VERSION 1.1-26.9000}{
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item improvements from Lionel Henry (via
+      https://github.com/lme4/lme4/pull/587) to fix corner cases in
+      data checking; also resolves #601 (allFit scoping)
+    }
+  }
+}
+
+\section{CHANGES IN VERSION 1.1-26 (2020-11-30)}{
   \subsection{BUG FIXES}{
     \itemize{
       \item \code{predict}, \code{model.frame(.,fixed.only=TRUE)} work
