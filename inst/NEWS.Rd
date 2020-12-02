@@ -9,7 +9,8 @@
     \itemize{
       \item improvements from Lionel Henry (via
       https://github.com/lme4/lme4/pull/587) to fix corner cases in
-      data checking; also resolves #601 (allFit scoping)
+      data checking; also resolves GH #601 (allFit scoping)
+      \item \code{getME(., "lower")} now has names (request of GH #609)
     }
   }
 }

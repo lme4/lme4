@@ -2049,7 +2049,7 @@ getME.merMod <- function(object,
            "cnms" = cnms,
            "devcomp" = dc,
            "offset" = rsp$offset,
-           "lower" = object@lower,
+           "lower" = setNames(object@lower, tnames(object)),
            "devfun" = {
                verbose <- getCall(object)$verbose; if (is.null(verbose)) verbose <- 0L
                if (isGLMM(object)) {

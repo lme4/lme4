@@ -76,6 +76,9 @@ test_that("lmer", {
               					"lmerMod")
     expect_that(getME(fm3,"n_rtrms"),                   equals(2L))
     expect_that(getME(fm3,"n_rfacs"),                   equals(1L))
+
+    expect_equal(getME(fm3, "lower"), c(`Subject.(Intercept)` = 0, Subject.Days = 0))
+    
     expect_error(fm4 <- lmer(Reaction ~ Days + (1|Subject),
                             subset(sleepstudy,Subject==levels(Subject)[1])), "must have > 1")
     expect_warning(fm4 <- lFormula(Reaction ~ Days + (1|Subject),

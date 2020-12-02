@@ -138,8 +138,15 @@ getME(object, name, ...)
 	}
       }
       \item{\code{"offset"}:}{model offset}
-      \item{\code{"lower"}:}{lower bounds on model parameters (random effects
-	parameters only).}
+      \item{\code{"lower"}:}{lower bounds on random-effects model
+	parameters (i.e, "theta" parameters). In order to constrain
+	random effects covariance matrices to be semi-positive-definite,
+	this vector is equal to 0 for elements of
+	the \code{theta} vector corresponding to diagonal elements of
+	the Cholesky factor, \code{-Inf}
+	otherwise. (\code{getME(.,"lower")==0} can be used as a test to
+	identify diagonal elements, as in \code{isSingular}.)
+      }
       \item{\code{"devfun"}:}{deviance function (so far only available for LMMs)}
       \item{\code{"glmer.nb.theta"}:}{negative binomial \eqn{\theta} parameter,
 	only for \code{\link{glmer.nb}}.}
