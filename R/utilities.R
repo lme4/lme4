@@ -1275,3 +1275,59 @@ isSingular <- function(x, tol = 1e-4) {
 }
 
 lme4_testlevel <- function() if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
+
+
+# stolen from car package
+# the following unexported function is useful for combining results of parallel computations
+combineLists <- function(..., fmatrix="list", flist="c", fvector="rbind", 
+                         fdf="rbind", recurse=FALSE){
+    # combine lists of the same structure elementwise
+    
+    # ...: a list of lists, or several lists, each of the same structure
+    # fmatrix: name of function to apply to matrix elements
+    # flist: name of function to apply to list elements
+    # fvector: name of function to apply to data frame elements
+    # recurse: process list element recursively
+    
+    frecurse <- function(...){
+        combineLists(..., fmatrix=fmatrix, fvector=fvector, fdf=fdf, 
+                     recurse=TRUE)
+    }
+    
+    if (recurse) flist="frecurse"
+    list.of.lists <- list(...)
+    if (length(list.of.lists) == 1){
+        list.of.lists <- list.of.lists[[1]]
+        list.of.lists[c("fmatrix", "flist", "fvector", "fdf")] <- 
+            c(fmatrix, flist, fvector, fdf)
+        return(do.call("combineLists", list.of.lists))
+    }
+    if (any(!sapply(list.of.lists, is.list))) 
+        stop("arguments are not all lists")
+    len <- sapply(list.of.lists, length)
+    if (any(len[1] != len)) stop("lists are not all of the same length")
+    nms <- lapply(list.of.lists, names)
+    if (any(unlist(lapply(nms, "!=", nms[[1]])))) 
+        stop("lists do not all have elements of the same names")
+    nms <- nms[[1]]
+    result <- vector(len[1], mode="list")
+    names(result) <- nms
+    for(element in nms){
+        element.list <- lapply(list.of.lists, "[[", element)
+#        clss <- sapply(element.list, class)
+        clss <- lapply(element.list, class)
+#        if (any(clss[1] != clss)) stop("list elements named '", element,
+        if (!all(vapply(clss, function(e) all(e == clss[[1L]]), NA)))
+          stop("list elements named '", element, "' are not all of the same class")
+        
+        is.df <- is.data.frame(element.list[[1]])
+        fn <- if (is.matrix(element.list[[1]])) fmatrix 
+        else if (is.list(element.list[[1]]) && !is.df) flist 
+        else if (is.vector(element.list[[1]])) fvector
+        else if (is.df) fdf
+        else stop("list elements named '", element, 
+                  "' are not matrices, lists, vectors, or data frames")
+        result[[element]] <- do.call(fn, element.list)
+    }
+    result
+}

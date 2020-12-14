@@ -68,27 +68,46 @@ influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
     control <- if (inherits(model, "lmerMod")) lmerControl(optCtrl=list(maxfun=maxfun))
         else if (inherits(model, "glmerMod")) glmerControl(optCtrl=list(maxfun=maxfun))
                                         # }
-    ## FIXME: parallelize?
-    for (del in unique.del){
+    deleteGroup <- function(del) {
         data$del <- del
         mod.1 <- suppressWarnings(update(model, data=data,
                                          subset=(.groups != del),
                                          start=par,
                                          control=control))
-
+        
         opt <- mod.1@optinfo
-        feval[del] <- opt$feval
-        converged[del] <- opt$conv$opt == 0 && length(opt$warnings) == 0
-        fixed.1[del, ] <- fixef(mod.1)
+        feval <- opt$feval
+        converged <- opt$conv$opt == 0 && length(opt$warnings) == 0
+        fixed.1 <- fixef(mod.1)
         Vs.1 <- VarCorr(mod.1)
         vc.0 <- getME(mod.1, "sigma")^2
         for (V in Vs.1){
             vc.0 <- c(vc.0, V[lower.tri(V, diag=TRUE)])
         }
-        vc.1[del, ] <- vc.0
-
-        vcov.1[[del]] <- vv(mod.1)
+        vc.1 <- vc.0
+        vcov.1 <<- .vcov(mod.1)
+        namedList(fixed.1, vc.1, vcov.1, converged, feval)
     }
+    result <- if(ncores >= 2) {
+        message("Note: using a cluster of ", ncores, " cores")
+        cl <- parallel::makeCluster(ncores)
+        on.exit(parallel::stopCluster(cl))
+        parallel::clusterEvalQ(cl, require("lme4"))
+        parallel::clusterApply(cl, unique.del, deleteGroup)
+    } else {
+        lapply(unique.del, deleteGroup)
+    }
+    result <- combineLists(result)
+    fixed.1 <- result$fixed.1
+    rownames(fixed.1) <- unique.del
+    colnames(fixed.1) <- names(fixed)
+    vc.1 <- result$vc.1
+    rownames(vc.1) <- unique.del
+    colnames(vc.1) <- names(vc)
+    feval <- as.vector(result$feval)
+    converged <- as.vector(result$converged)
+    vcov.1 <- result$vcov.1
+    names(vcov.1) <- names(feval) <- names(converged) <- unique.del
     left <- "[-"
     right <- "]"
     if (groups == ".case") {
