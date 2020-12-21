@@ -1,8 +1,8 @@
 ## convert vcov from dpoMatrix to regular matrix (protect against car methods)
 vv <- function(x) Matrix::as.matrix(vcov(x))
 
-## minimal "influence" function (to make broom::augment_columns work)
 influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
+                             ncores,
                              ...) {
 
     .groups <- NULL  ## avoid false-positive code checks
@@ -14,7 +14,7 @@ influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
         class(result) <- "influence.merMod"
         return(result)
     }
-    if (missing(data)){
+    if (missing(data)) {
         data <- getCall(model)$data
         data <- if (!is.null(data)) eval(data, parent.frame())
                 else stop("model did not use the data argument")
