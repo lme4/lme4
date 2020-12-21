@@ -11,3 +11,5 @@ misc/issues/*
 lme4.Rproj
 .Rhistory
 misc/
+\#*
+.#*
