@@ -18,7 +18,7 @@ on the objects computed by \code{influence.merMod}
 
 \usage{
 \method{influence}{merMod}(model, groups, data, maxfun=1000, do.coef =
-TRUE, ...)
+TRUE, ncores=getOption("mc.cores",1), ...)
 \method{cooks.distance}{influence.merMod}(model, ...)
 \method{dfbeta}{influence.merMod}(model, which = c("fixed", "var.cov"), ...)
 \method{dfbetas}{influence.merMod}(model, ...)

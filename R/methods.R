@@ -2,10 +2,11 @@
 vv <- function(x) Matrix::as.matrix(vcov(x))
 
 influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
-                             ncores,
+                             ncores=getOption("mc.cores",1),
                              ...) {
 
     .groups <- NULL  ## avoid false-positive code checks
+    .vcov <- function(x) Matrix::as.matrix(vcov(x))
     
     if (length(list(...))>0) warning("disregarded additional arguments")
     if (!do.coef) {

@@ -786,3 +786,34 @@ test_that("rstudent matches for zero-var cases",
     expect_equal(suppressWarnings(rstudent(lmer_zero)),
                  rstudent(lm_zero),tolerance=0.01)
 })
+
+if (testLevel>1) {
+    ## n.b. influence() doesn't work under system.time();
+    ##  weird evaluation stuff ?
+    ## FIXME: work on timing some more
+    i1 <- influence(fm1, ncores=1)
+    test_that("full version of influence", {
+              expect_equal(c(head(i1[["fixed.effects[-case]"]],1)),
+                           c(252.323536264131, 10.3222704729148))
+    })
+    if (parallel::detectCores()>1) {
+        test_that("parallel influence", {
+            i2 <- suppressMessages(influence(fm1,ncores=2))
+
+        })
+    }
+}
+
+## car method testing: influence timing with ncores > 1 ...
+##  car version 3.0.10.
+## L <- load(system.file("testdata", "lme-tst-fits.rda",
+##                       package="lme4", mustWork=TRUE))
+## data("sleepstudy", package="lme4")
+## library(lme4)
+## library(car) ## WANT warning about S3 method overwrite ...
+## fm1 <- fit_sleepstudy_1
+## library(pracma)  ## because system.time() is weird
+## tic(); i1 <- influence(fm1); toc()  ## 2+ seconds
+## tic(); i2 <- influence(fm1, ncores=8); toc() ## 3.4 seconds
+        
+
