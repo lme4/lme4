@@ -567,7 +567,7 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
                           "Pr(>Chisq)" = ifelse(dfChisq==0,NA,pchisq(chisq, dfChisq, lower.tail = FALSE)),
                           row.names = names(mods), check.names = FALSE)
         class(val) <- c("anova", class(val))
-        forms <- lapply(lapply(calls, `[[`, "formula"), deparse)
+        forms <- lapply(lapply(calls, `[[`, "formula"), safeDeparse)
         structure(val,
                   heading = c(header, "Models:",
                               paste(rep.int(names(mods), lengths(forms)),

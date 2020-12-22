@@ -78,7 +78,7 @@ test_that("lmer", {
     expect_equal(names(aa),
                  c("npar", "AIC", "BIC", "logLik", "deviance", "Chisq", "Df", 
                    "Pr(>Chisq)"))
-    expect_warning(do.call(anova,list(fm0,fm1)), "assigning generic names")
+    expect_warning(suppressMessages(do.call(anova,list(fm0,fm1))), "assigning generic names")
     ##
     dat <- data.frame(y = 1:5,
                       u = c(rep("A",2), rep("B",3)),
@@ -98,15 +98,18 @@ test_that("lmer", {
      dat = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,
                                             REML=FALSE),
                                        model.names=c("a","b"))),
-                 c("b","a"))
-    expect_error(rownames(stats::anova(lmer(y ~ u + (1 | t),
-                                            dat = dat, REML=FALSE),
-                                       lmer(y ~ 1 + (1 | t),
-                                            dat = dat, REML=FALSE),
+     c("b","a"))
+    ff <- function(form) {
+        lmer(form, dat=dat, REML=FALSE,
+             control=lmerControl(check.conv.singular="ignore"))
+    }
+    expect_error(rownames(stats::anova(ff(y ~ u + (1 | t)),
+                                       ff(y ~ 1 + (1 | t)),
                                        model.names=c("a","b","c"))),
                  "different lengths")
     z <- 1
-    stats::anova(lmer(y ~ u + (1 | t), data = datfun(z), REML=FALSE),
+    ## output not tested (but shouldn't fail)
+    ss <- stats::anova(lmer(y ~ u + (1 | t), data = datfun(z), REML=FALSE),
                  lmer(y ~ 1 + (1 | t), data = datfun(z), REML=FALSE))
     ##
     ## from Roger Mundry via Roman Lustrik
@@ -154,6 +157,12 @@ test_that("lmer", {
     fm0B <- fm0
     aa <- suppressMessages(anova(fm0B,fm0))
     expect_true(all(is.na(aa[["Pr(>Chisq)"]])))
+
+    ## GH
+    names(sleepstudy) <- c("Reaction", "Days", "Subject_xxxxxxxxxxxxxxxxxxxxxxxxxxx")
+    fm1 <- lmer(Reaction ~ Days + (Days | Subject_xxxxxxxxxxxxxxxxxxxxxxxxxxx), sleepstudy)
+    fm2 <- lmer(Reaction ~ Days + (Days || Subject_xxxxxxxxxxxxxxxxxxxxxxxxxxx), sleepstudy)
+    expect_equal(length(attributes(suppressMessages(anova(fm1,fm2)))$heading),4)
 })
 
 if (testLevel>1) {
