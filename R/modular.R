@@ -231,9 +231,9 @@ checkNlevels <- function(flist, n, ctrl, allow.n=FALSE)
 ##' @seealso \code{\link{qr}} and \code{\link{lm}}
 ##' @importFrom Matrix rankMatrix
 ##' @author Rune Haubo Bojesen Christensen (drop.coef()); Martin Maechler
-chkRank.drop.cols <- function(X, kind, tol = 1e-7, method = "qr.R") {
+chkRank.drop.cols <- function(X, kind, tol = 1e-7, method = "qr") {
     ## Test and match arguments:
-    stopifnot(is.matrix(X))
+    stopifnot(is.matrix(X)) # i.e., *not* sparse
     kinds <- eval(formals(lmerControl)[["check.rankX"]])
     if (!kind %in% kinds) stop(gettextf("undefined option for 'kind': %s", kind))
     ## c("message+drop.cols", "ignore",
@@ -254,7 +254,7 @@ chkRank.drop.cols <- function(X, kind, tol = 1e-7, method = "qr.R") {
 
         ## Perform the qr-decomposition of X using LINPACK method,
         ## as we need the "good" pivots (and the same as lm()):
-        ## FIXME: strongly prefer rankMatrix(X, method= "qr.R")
+        ## this rankMatrix(X, method="qrLINPACK"):  FIXME?  rankMatrix(X, method= "qr.R")
         qr.X <- qr(X, tol = tol, LAPACK = FALSE)
         rnkX <- qr.X$rank
         if (rnkX == p)

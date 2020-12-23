@@ -16,7 +16,7 @@ isRE(~0+x) ##  "
 
 ##' Random Effects formula only
 reOnly <- function(f, response=FALSE) {
-    reformulate(paste0("(", vapply(findbars(f), safeDeparse, ""), ")"),
+    reformulate(paste0("(", vapply(findbars(f), deparse1, ""), ")"),
                 response = if(response && length(f)==3L) f[[2]])
 }
 
@@ -381,7 +381,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
 
     re.form <- reFormHack(re.form,ReForm,REForm,REform)
 
-    if (length(list(...)) > 0) warning("unused arguments ignored")
+    if (...length() > 0) warning("unused arguments ignored")
 
     type <- match.arg(type)
     if (!is.null(terms))
@@ -540,7 +540,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                          cond.sim=TRUE,
                          ...) {
 
-    if (length(list(...)) > 0) warning("unused arguments ignored")
+    if (...length() > 0) warning("unused arguments ignored")
     
     if (missing(object) && (is.null(formula) || is.null(newdata) || is.null(newparams))) {
         stop("if ",sQuote("object")," is missing, must specify all of ",

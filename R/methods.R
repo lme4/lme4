@@ -8,7 +8,7 @@ influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
     .groups <- NULL  ## avoid false-positive code checks
     .vcov <- function(x) Matrix::as.matrix(vcov(x))
     
-    if (length(list(...))>0) warning("disregarded additional arguments")
+    if (...length()>0) warning("disregarded additional arguments")
     if (!do.coef) {
         ## simple/quick/trivial results
         result <- list(hat=hatvalues(model))

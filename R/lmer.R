@@ -499,7 +499,7 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
 
         ## model names
         if (is.null(mNms <- model.names))
-            mNms <- vapply(as.list(mCall)[c(FALSE, TRUE, modp)], safeDeparse, "")
+            mNms <- vapply(as.list(mCall)[c(FALSE, TRUE, modp)], deparse1, "")
 
         ## HACK to try to identify model names in situations such as
         ## 'do.call(anova,list(model1,model2))' where the model names
@@ -567,7 +567,7 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
                           "Pr(>Chisq)" = ifelse(dfChisq==0,NA,pchisq(chisq, dfChisq, lower.tail = FALSE)),
                           row.names = names(mods), check.names = FALSE)
         class(val) <- c("anova", class(val))
-        forms <- lapply(lapply(calls, `[[`, "formula"), safeDeparse)
+        forms <- lapply(lapply(calls, `[[`, "formula"), deparse1)
         structure(val,
                   heading = c(header, "Models:",
                               paste(rep.int(names(mods), lengths(forms)),
@@ -634,9 +634,9 @@ as.function.merMod <- function(x, ...) {
 ## ------  should work with fixef() + ranef()  alone
 coefMer <- function(object, ...)
 {
-    if (length(list(...)))
-        warning('arguments named "', paste(names(list(...)), collapse = ", "),
-                '" ignored')
+    if(...length())
+        warning('arguments named ', paste(sQuote(...names()), collapse = ", "),
+                ' ignored')
     fef <- data.frame(rbind(fixef(object)), check.names = FALSE)
     ref <- ranef(object, condVar = FALSE)
     ## check for variables in RE but missing from FE, fill in zeros in FE accordingly
@@ -648,7 +648,7 @@ coefMer <- function(object, ...)
     }
     val <- lapply(ref, function(x)
                   fef[rep.int(1L, nrow(x)),,drop = FALSE])
-    for (i in seq(a = val)) {
+    for (i in seq_along(val)) {
         refi <- ref[[i]]
         row.names(val[[i]]) <- row.names(refi)
         nmsi <- colnames(refi)
@@ -1493,7 +1493,7 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
                   Lind=xpp$Lind, theta=xpp$theta, n=nrow(xpp$X))
     devfun <- mkdevfun(rho, 0L) # FIXME? also pass {verbose, maxit, control}
     opt <- ## "smart" calc.derivs rules
-        if(optimizer == "bobyqa" && !any("calc.derivs" == names(list(...))))
+        if(optimizer == "bobyqa" && !any("calc.derivs" == ...names()))
             optwrap(optimizer, devfun, x@theta, lower=x@lower, calc.derivs=TRUE, ...)
         else
             optwrap(optimizer, devfun, x@theta, lower=x@lower, ...)
@@ -2315,7 +2315,7 @@ summary.merMod <- function(object,
                            use.hessian = NULL,
                            ...)
 {
-    if (length(list(...)) > 0) {
+    if (...length() > 0) {
         ## FIXME: need testing code
         warning("additional arguments ignored")
     }

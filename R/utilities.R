@@ -1,4 +1,13 @@
-if((Rv <- getRversion()) < "3.2.1") {
+if((Rv <- getRversion()) < "4.1.0") {
+ ## not equivalent; this *forces* ... entries whereas true ...length()  aint...
+ ...names <- function() names(list(...))
+ if(Rv < "4.0.0") {
+  ## NB: R >= 4.0.0's deparse1() is a generalization of our previous safeDeparse()
+  deparse1 <- function (expr, collapse = " ", width.cutoff = 500L, ...)
+      paste(deparse(expr, width.cutoff, ...), collapse = collapse)
+  ## not equivalent ...
+  ...length <- function() length(list(...))
+  if(Rv < "3.2.1") {
     lengths <- function (x, use.names = TRUE) vapply(x, length, 1L, USE.NAMES = use.names)
     if(Rv < "3.1.0") {
         anyNA <- function(x) any(is.na(x))
@@ -8,7 +17,9 @@ if((Rv <- getRversion()) < "3.2.1") {
                 paste0 <- function(...) paste(..., sep = '')
         }
     }
-} ## R < 3.2.1
+  } ## R < 3.2.1
+ } ## R < 4.0.0
+} ## R < 4.1.0
 rm(Rv)
 
 ## From Matrix package  isDiagonal(.) :
@@ -22,14 +33,15 @@ all0 <- function(x) !anyNA(x) && all(!x)
 ##' deparse(.) returning \bold{one} string
 ##' @note Protects against the possibility that results from deparse() will be
 ##'       split after 'width.cutoff' (by default 60, maximally 500)
-safeDeparse <- function(x, collapse=" ") paste(deparse(x, 500L), collapse=collapse)
+## use deparse1() now:
+## safeDeparse <- function(x, collapse=" ") paste(deparse(x, 500L), collapse=collapse)
 abbrDeparse <- function(x, width=60) {
     r <- deparse(x, width)
     if(length(r) > 1) paste(r[1], "...") else r
 }
 
 ##' @param bars result of findbars
-barnames <- function(bars) vapply(bars, function(x) safeDeparse(x[[3]]), "")
+barnames <- function(bars) vapply(bars, function(x) deparse1(x[[3]]), "")
 
 makeFac <- function(x,char.only=FALSE) {
     if (!is.factor(x) && (!char.only || is.character(x))) factor(x) else x
@@ -133,7 +145,7 @@ mkReTrms <- function(bars, fr, drop.unused.levels=TRUE,
   stopifnot(is.list(bars), vapply(bars, is.language, NA),
             inherits(fr, "data.frame"))
   names(bars) <- barnames(bars)
-  term.names <- vapply(bars, safeDeparse, "")
+  term.names <- vapply(bars, deparse1, "")
   ## get component blocks
   blist <- lapply(bars, mkBlist, fr, drop.unused.levels,
                   reorder.vars = reorder.vars)
@@ -1106,7 +1118,7 @@ quickSimulate <- function(formula, nGrps, nPerGrp, family = gaussian) {
 ##' the names of the random effects terms.
 reexpr <- function(REtrm) substitute( ~ foo, list(foo = REtrm[[2]]))
 grpfact <- function(REtrm) substitute(factor(fac), list(fac = REtrm[[3]]))
-termnms <- function(REtrms) vapply(REtrms, safeDeparse, "")
+termnms <- function(REtrms) vapply(REtrms, deparse1, "")
 
 ##' mmList(): list of model matrices
 ##' ------    called from getME() & model.matrix(*, "randomListRaw")

@@ -27,7 +27,7 @@ Nelder_Mead <- function(fn, par, lower=rep.int(-Inf, n),
     cc <- do.call(function(iprint = 0L, maxfun = 10000L, FtolAbs = 1e-5,
                            FtolRel = 1e-15, XtolRel = 1e-7,
                            MinfMax= -.Machine$double.xmax, warnOnly=FALSE, ...) {
-        if(length(list(...)) > 0) warning("unused control arguments ignored")
+        if(...length() > 0) warning("unused control arguments ignored")
         list(iprint=iprint, maxfun=maxfun, FtolAbs=FtolAbs, FtolRel=FtolRel,
              XtolRel=XtolRel, MinfMax=MinfMax, warnOnly=warnOnly)
     }, control)

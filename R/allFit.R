@@ -198,7 +198,7 @@ print.allFit <- function(x, width=80, ...) {
             strwrap(paste0(substr(x,1,width-3),"..."))
         } else x
     }
-    ff <- ss(safeDeparse(formula(f)))
+    ff <- ss(deparse1(formula(f)))
     cat(ff,"\n")
     cat("data: ",deparse(getCall(f)$data),"\n")
     cat("optimizers (",length(x),"): ",
