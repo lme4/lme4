@@ -30,8 +30,8 @@ glFormula(formula, data = NULL, family = gaussian,
 mkGlmerDevfun(fr, X, reTrms, family, nAGQ = 1L,
               verbose = 0L, maxit = 100L, control = glmerControl(), ...)
 
-optimizeGlmer(devfun, 
-    optimizer = if (stage == 1) "bobyqa" else "Nelder_Mead", 
+optimizeGlmer(devfun,
+    optimizer = if(stage == 1) "bobyqa" else "Nelder_Mead",
     restart_edge = FALSE,
     boundary.tol = formals(glmerControl)$boundary.tol,
     verbose = 0L, control = list(),
@@ -246,8 +246,9 @@ lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 
 ## 1.  Parse the data and formula:
 glmod <- glFormula(cbind(incidence, size - incidence) ~ period + (1 | herd),
-data = cbpp, family = binomial)
-names(glmod)
+                   data = cbpp, family = binomial)
+    #.... see what've got :
+str(glmod, max=1, give.attr=FALSE)
 ## 2.  Create the deviance function for optimizing over theta:
 (devfun <- do.call(mkGlmerDevfun, glmod))
 ls(environment(devfun)) # the environment of devfun contains lots of info
@@ -257,13 +258,15 @@ ls(environment(devfun)) # the environment of devfun contains lots of info
 (devfun <- updateGlmerDevfun(devfun, glmod$reTrms))
 ## 5.  Optimize over theta and beta:
 opt <- optimizeGlmer(devfun, stage=2)
-opt[1:3]
+str(opt, max=1) # seeing what we'got
 ## 6.  Package up the results:
-mkMerMod(environment(devfun), opt, glmod$reTrms, fr = glmod$fr)
+(fMod <- mkMerMod(environment(devfun), opt, glmod$reTrms, fr = glmod$fr))
 
 ### Same model in one line
-glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-      data = cbpp, family = binomial)
+fM <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+            data = cbpp, family = binomial)
+all.equal(fMod, fM, check.attributes=FALSE, tolerance = 1e-12)
+        # ----  --  even tolerance = 0  may work
 }
 \keyword{models}
 
