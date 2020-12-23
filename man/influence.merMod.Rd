@@ -1,24 +1,23 @@
 \name{influence.merMod}
+\title{Influence Diagnostics for Mixed-Effects Models}
 \alias{influence.merMod}
 \alias{dfbeta.influence.merMod}
 \alias{dfbetas.influence.merMod}
 \alias{cooks.distance.influence.merMod}
 \alias{cooks.distance.merMod}
-\title{
-  Influence Diagnostics for Mixed-Effects Models
-}
 \description{
   These functions compute deletion influence diagnostics for linear
-  (fit by \code{\link{lmer}} and generalized linear mixed-effects models
-  (fit by \code{\link[lme4]{glmer}}). The main functions are methods for the \code{\link{influence}} generic function. Other functions are provided for
-computing \code{\link{dfbeta}}, \code{\link{dfbetas}}, \code{\link{cooks.distance}}, and influence on variance-covariance components based
-on the objects computed by \code{influence.merMod}
+  (fit by \code{\link{lmer}}) and generalized linear mixed-effects models
+  (fit by \code{\link[lme4]{glmer}}).  The main functions are methods for
+  the \code{\link{influence}} generic function.  Other functions are
+  provided for computing \code{\link{dfbeta}}, \code{\link{dfbetas}},
+  \code{\link{cooks.distance}}, and influence on variance-covariance
+  components based on the objects computed by \code{influence.merMod}
 }
 
-
 \usage{
-\method{influence}{merMod}(model, groups, data, maxfun=1000, do.coef =
-TRUE, ncores=getOption("mc.cores",1), ...)
+\method{influence}{merMod}(model, groups, data, maxfun = 1000,
+          do.coef = TRUE, ncores = getOption("mc.cores",1), ...)
 \method{cooks.distance}{influence.merMod}(model, ...)
 \method{dfbeta}{influence.merMod}(model, which = c("fixed", "var.cov"), ...)
 \method{dfbetas}{influence.merMod}(model, ...)
@@ -26,23 +25,26 @@ TRUE, ncores=getOption("mc.cores",1), ...)
 
 \arguments{
   \item{model}{in the case of \code{influence.merMod}, a model of class \code{"merMod"};
-  in the case of \code{cooks.distance}, \code{dfbeta}, or \code{dfbetas}, an object returned by
-  \code{influence.merMod}}
+    in the case of \code{cooks.distance}, \code{dfbeta}, or \code{dfbetas},
+    an object returned by \code{influence.merMod}}
   \item{groups}{a character vector containing the name of a grouping factor or names of grouping factors; if more than one name
-  is supplied, then groups are defined by all combinations of levels of the grouping factors that appear in
-  the data. If omitted, then each individual row of the data matrix is treated as a "group" to be deleted in turn.}
+    is supplied, then groups are defined by all combinations of levels of the grouping factors that appear in
+    the data. If omitted, then each individual row of the data matrix is treated as a "group" to be deleted in turn.}
   \item{data}{an optional data frame with the data to which \code{model}
-  was fit; \code{influence.merMod} can usually retrieve the data used to
-  fit the model, unless it can't be found in the current environment, so it's usually unnecessary to supply this argument.}
+    was fit; \code{influence.merMod} can usually retrieve the data used to
+    fit the model, unless it can't be found in the current environment, so it's usually unnecessary to supply this argument.}
   \item{maxfun}{The maximum number of function evaluations (for \code{influence.merMod})
-  to perform after deleting each group; the defaults are large enough so that the iterations will typically continue to convergence.
-  Setting to \code{maxfun=20} for an \code{lmer} model or \code{100} for a \code{glmer} model will typically produce a faster reasonable approximation. 
-  An even smaller value can be used if interest is only in influence on the fixed effects.}
+    to perform after deleting each group; the defaults are large enough so that the iterations will typically continue to convergence.
+    Setting to \code{maxfun=20} for an \code{lmer} model or \code{100} for a \code{glmer} model will typically produce a faster reasonable approximation.
+    An even smaller value can be used if interest is only in influence on the fixed effects.}
   \item{which}{if \code{"fixed.effects"} (the default), return influence
-  on the fixed effects; if \code{"var.cov"}, return influence on the
-  variance-covariance components.}
-\item{do.coef}{if \code{FALSE}, skip potentially time-consuming
-  computations; return just a list containing hat values}
+    on the fixed effects; if \code{"var.cov"}, return influence on the
+    variance-covariance components.}
+  \item{do.coef}{if \code{FALSE}, skip potentially time-consuming
+    computations, returning just a list containing hat values.}
+  \item{ncores}{number of computational cores to use if run in parallel;
+    directly passed to \code{\link[parallel]{makeCluster}()} from \R's
+    \pkg{parallel} package.}
   \item{\dots}{ignored.}
 }
 
@@ -74,7 +76,7 @@ influence on the variance-covariance components.
 For plotting \code{"influence.merMod"} objects, see \code{\link[car]{infIndexPlot}}.
 }
 \references{
-  Fox, J. and Weisberg, S. (2019) 
+  Fox, J. and Weisberg, S. (2019)
   \emph{An R Companion to Applied Regression}, Third Edition, Sage.
 }
 
@@ -96,14 +98,14 @@ if (interactive()) {
   dfbeta(inf_fm1)
   dfbetas(inf_fm1)
   gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-             data = cbpp, family = binomial)
+               data = cbpp, family = binomial)
   inf_gm1 <- influence(gm1, "herd", maxfun=100)
   gm1.11 <- update(gm1, subset = herd != 11) # check deleting herd 11
   if (require("car")) {
     infIndexPlot(inf_gm1)
     compareCoefs(gm1, gm1.11)
   }
-  if (packageVersion("car")>="3.0.10") {
+  if(packageVersion("car") >= "3.0.10") {
     dfbeta(inf_gm1)
     dfbetas(inf_gm1)
   }
