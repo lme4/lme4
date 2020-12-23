@@ -36,7 +36,7 @@
   A comprehensive test of the 'limiting resources' framework applied to
   plant tolerance to apical meristem damage.
   \emph{Oikos} \bold{119}(2), 359--369;
-  \url{http://dx.doi.org/10.1111/j.1600-0706.2009.17726.x}
+  \doi{10.1111/j.1600-0706.2009.17726.x}
 }
 \examples{
 data(Arabidopsis)
