@@ -1,12 +1,12 @@
 if((Rv <- getRversion()) < "4.1.0") {
  ## not equivalent; this *forces* ... entries whereas true ...length()  aint...
- ...names <- function() names(list(...))
+ ...names <- function() eval(quote(names(list(...))), sys.frame(-1L))
  if(Rv < "4.0.0") {
   ## NB: R >= 4.0.0's deparse1() is a generalization of our previous safeDeparse()
   deparse1 <- function (expr, collapse = " ", width.cutoff = 500L, ...)
       paste(deparse(expr, width.cutoff, ...), collapse = collapse)
   ## not equivalent ...
-  ...length <- function() length(list(...))
+  ...length <- function() eval(quote(length(list(...))), sys.frame(-1L))
   if(Rv < "3.2.1") {
     lengths <- function (x, use.names = TRUE) vapply(x, length, 1L, USE.NAMES = use.names)
     if(Rv < "3.1.0") {
