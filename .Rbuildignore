@@ -31,3 +31,4 @@ README.md
 TODO.md
 R/TAGS
 src/mcmcsamp.cpp
+^\.github$

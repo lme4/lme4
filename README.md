@@ -1,11 +1,13 @@
 lme4: Mixed-effects models in R.
 ====
 
-[![Build Status](https://travis-ci.org/lme4/lme4.svg?branch=master)](https://travis-ci.org/lme4/lme4)
+
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/lme4/lme4/workflows/R-CMD-check/badge.svg)](https://github.com/lme4/lme4/actions)
 [![cran version](http://www.r-pkg.org/badges/version/lme4)](https://cran.r-project.org/package=lme4)
 [![downloads](http://cranlogs.r-pkg.org/badges/lme4)](http://cranlogs.r-pkg.org/badges/lme4)
 [![total downloads](http://cranlogs.r-pkg.org/badges/grand-total/lme4)](http://cranlogs.r-pkg.org/badges/grand-total/lme4)
-[![Research software impact](http://depsy.org/api/package/cran/lme4/badge.svg)](http://depsy.org/package/r/lme4)
+<!-- badges: start -->
 
 ## Recent/release notes
 
