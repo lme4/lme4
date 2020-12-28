@@ -67,7 +67,7 @@ jobs:
 
       - name: Install LaTeX etc.
         run: |
-          sudo apt-get install texlive texlive-latex-base
+          sudo apt-get install texlive texlive-latex-base texlive-latex-extra
 
       - name: Install dependencies
         run: |
