@@ -1,4 +1,4 @@
-if(require("testthat", quietly = TRUE)) {
+if (base::require("testthat", quietly = TRUE)) {
     pkg   <- "lme4"
     require(pkg, character.only=TRUE, quietly=TRUE)
     if(getRversion() < "3.5.0") { withAutoprint <- identity ; prt <- print } else { prt <- identity }
