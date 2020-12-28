@@ -15,6 +15,8 @@ name: R-CMD-check
 
 jobs:
   R-CMD-check:
+    if: "contains(github.event.head_commit.message, '[run ci]')"
+
     runs-on: ${{ matrix.config.os }}
 
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})
