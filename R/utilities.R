@@ -30,11 +30,7 @@ all0 <- function(x) !anyNA(x) && all(!x)
 
 ### Utilities for parsing and manipulating mixed-model formulas
 
-##' deparse(.) returning \bold{one} string
-##' @note Protects against the possibility that results from deparse() will be
-##'       split after 'width.cutoff' (by default 60, maximally 500)
-## use deparse1() now:
-## safeDeparse <- function(x, collapse=" ") paste(deparse(x, 500L), collapse=collapse)
+## abbreviated parse for long strings: deparse1() pastes w/ collapse instead
 abbrDeparse <- function(x, width=60) {
     r <- deparse(x, width)
     if(length(r) > 1) paste(r[1], "...") else r
