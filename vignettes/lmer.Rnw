@@ -707,7 +707,7 @@ model matrix is,
 @
 <<sanityCheck, include=FALSE>>=
 ## alternative formulation of Zi (eq:Zi)
-rBind(
+rbind(
   Ji[1,] %x% Xi[1,],
   Ji[2,] %x% Xi[2,],
   Ji[3,] %x% Xi[3,],
