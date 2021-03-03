@@ -76,5 +76,5 @@ nlopt <- function(par, fn, lower, upper, control) {
     )
 }
 lmer(y ~ service * dept + (1|s) + (1|d), InstEval,
-    control = lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+    control = lmerControl(optimizer = "nlopt", calc.derivs = FALSE))
 ```
