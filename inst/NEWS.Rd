@@ -11,6 +11,16 @@
       https://github.com/lme4/lme4/pull/587) to fix corner cases in
       data checking; also resolves GH #601 (allFit scoping)
       \item \code{getME(., "lower")} now has names (request of GH #609)
+      \item improved detection of \code{NaN} in internal calculations
+  (typically due to underflow/overflow or out-of-bounds linear
+  predictors from non-constraining link functions such as identity-link
+  Gamma models)
+  \item \code{influence.merMod} allows parallel computation
+    }
+  }
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item long formulas work better in \code{anova} headings (GH #611)
     }
   }
 }
