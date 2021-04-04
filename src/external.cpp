@@ -288,6 +288,7 @@ extern "C" {
                 std::endl; // if (verb) 
         }
         rp->updateMu(pp->linPred(1.));
+	// FIXME: warn/error/clamp/penalize here if value is out of bounds
         if (debug) Rcpp::Rcout << "(igWI) mu: min: " << rp->mu().minCoeff() << 
                        " max: " << rp->mu().maxCoeff() << std::endl;
         return rp->resDev() + pp->sqrL(1.);
@@ -337,22 +338,13 @@ extern "C" {
             }
             if (std::abs((oldpdev - pdev) / pdev) < tol) {cvgd = true; break;}
 
-            // if (pdev != pdev) Rcpp::Rcout << "nan detected" << std::endl;
-            // if (isnan(pdev)) Rcpp::Rcout << "nan detected" << std::endl;
-
-            // trying to detect nan; may be hard to do it completely portably,
-            // and hard to detect in advance (i.e. what conditions lead to
-            // nan from internal_glmerWrkIter ... ?)
-            // http://stackoverflow.com/questions/570669/checking-if-a-double-or-float-is-nan-in-c
-            // check use of isnan() in base R code, or other Rcpp code??
-#define isNAN(a)  (a!=a)
-            if (isNAN(pdev) || (pdev > oldpdev)) { 
+            if (ISNAN(pdev) || (pdev > oldpdev)) { 
                 // PWRSS step led to _larger_ deviation, or nan; try step halving
                 if (verb) Rcpp::Rcout << 
                               "\npwrssUpdate: Entering step halving loop" 
                                       << std::endl;
                 for (int k = 0; k < maxstephalfit && 
-                         (isNAN(pdev) || (pdev > oldpdev)); k++) {
+                         (ISNAN(pdev) || (pdev > oldpdev)); k++) {
                     pp->setDelu((olddelu + pp->delu())/2.);
                     if (!uOnly) pp->setDelb((olddelb + pp->delb())/2.);
                     rp->updateMu(pp->linPred(1.));
@@ -367,9 +359,13 @@ extern "C" {
                             std::endl; 
                     } // if (moreverb) 
                 }
-                if (isNAN(pdev) || ((pdev - oldpdev) > tol) )
-                    // FIXME: fill in max halfsetp iters in error statement
+                if (ISNAN(pdev)) {
+		    throw runtime_error("PIRLS loop resulted in NaN value");
+		}
+		if ((pdev - oldpdev) > tol) {
+                    // FIXME: fill in max halfstep iters in error statement
                     throw runtime_error("(maxstephalfit) PIRLS step-halvings failed to reduce deviance in pwrssUpdate");
+		}    
             } // step-halving
             oldpdev = pdev;
         } // pwrss loop
