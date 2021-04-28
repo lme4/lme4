@@ -4,7 +4,7 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-26.9000}{
+\section{CHANGES IN VERSION 1.1-27 (2021-04-28)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item improvements from Lionel Henry (via
@@ -12,10 +12,10 @@
       data checking; also resolves GH #601 (allFit scoping)
       \item \code{getME(., "lower")} now has names (request of GH #609)
       \item improved detection of \code{NaN} in internal calculations
-  (typically due to underflow/overflow or out-of-bounds linear
-  predictors from non-constraining link functions such as identity-link
-  Gamma models)
-  \item \code{influence.merMod} allows parallel computation
+      (typically due to underflow/overflow or out-of-bounds linear
+      predictors from non-constraining link functions such as identity-link
+      Gamma models)
+      \item \code{influence.merMod} allows parallel computation
     }
   }
   \subsection{BUG FIXES}{
