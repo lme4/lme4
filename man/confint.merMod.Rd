@@ -85,7 +85,7 @@
   }
 }
 \examples{
-if (interactive()) {
+if (interactive() || lme4_testlevel() >= 3) {
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 fm1W <- confint(fm1, method="Wald")# very fast, but ....
 fm1W
@@ -96,17 +96,18 @@ fm1W
                        37.78184, 8.768238, 28.78768, 265.2383, 13.60057),
                      dim = c(5L, 2L))))
 }
-} %% interactive
-if(interactive() || lme4_testlevel() >= 3) {
+if (lme4_testlevel() >= 3) {
  ## ~20 seconds, MacBook Pro laptop
  system.time(fm1P <- confint(fm1, method="profile", ## default
                              oldNames = FALSE))
  ## ~ 40 seconds
  system.time(fm1B <- confint(fm1, method="boot",
                              .progress="txt", PBargs=list(style=3)))
-} else
-  load(system.file("testdata","confint_ex.rda",package="lme4"))
+} else {
+    load(system.file("testdata","confint_ex.rda",package="lme4"))
+}
 fm1P
 fm1B
-}
+} ## if interactive && testlevel>=3
+} 
 
