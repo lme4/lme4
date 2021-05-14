@@ -61,6 +61,7 @@ nmkbw <- function(fn,par,lower,upper,control) {
 ##'           (leave blank for built-in optimizers)
 ##' - optimizer  the \code{optimizer} function to use
 ##' @param verbose print progress messages?
+##' @param catch.err catch errors?
 ##' @return a list of fitted \code{merMod} objects
 ##' @seealso slice, slice2D in the bbmle package
 ##' @examples
@@ -82,7 +83,8 @@ allFit <- function(object, meth.tab = NULL,
                    maxfun=1e5,
                    parallel = c("no", "multicore", "snow"),
                    ncpus = getOption("allFit.ncpus", 1L),
-                   cl = NULL) {
+                   cl = NULL,
+                   catch.errs = TRUE) {
 
     if (is.null(meth.tab)) {
         meth.tab <- meth.tab.0
@@ -151,11 +153,23 @@ allFit <- function(object, meth.tab = NULL,
             ctrl$optCtrl <- sanitize(ctrl$optCtrl,
                                      opt.ctrls[[optimizer[..i]]])
             ctrl <- do.call(if(isGLMM(object)) glmerControl else lmerControl, ctrl)
-            tt <- system.time(rr <- tryCatch(update(object, control = ctrl),
-                                             error = function(e) e))
+            ## need to stick ctrl in formula env so it can be found ...
+            assign("ctrl", ctrl, environment(formula(object)))
+            if (catch.errs) {
+              tt <- system.time(rr <- tryCatch(update(object, control = ctrl),
+                                               error = function(e) e))
+            } else {
+              tt <- system.time(rr <- update(object, control = ctrl))
+            }
             attr(rr, "optCtrl") <- ctrl$optCtrl # contains crucial info here
             attr(rr, "time") <- tt  # store timing info
-            if (verbose) cat("[OK]\n")
+            if (verbose) {
+              if (inherits(rr,"error")) {
+                cat("[failed]\n")
+              } else {
+                cat("[OK]\n")
+              }
+            }
             return(rr)
         }
     })

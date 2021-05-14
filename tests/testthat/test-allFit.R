@@ -84,9 +84,9 @@ if (testLevel>1) {
                 cbind(incidence, size - incidence) ~ period + (1 | herd),
                 data = dataset, family = binomial
             )
-            allFit(gm1)
+            allFit(gm1, catch.errs=FALSE)
         }
-        
+
         cc <- capture.output(ff <- fit_func(cbpp))
         expect_true(all(summary(ff)$which.OK))
     })

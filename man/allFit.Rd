@@ -3,11 +3,12 @@
 \title{Refit a fitted model with all available optimizers}
 \usage{
 allFit(object, meth.tab = NULL, data=NULL,
-        verbose = TRUE,
-        show.meth.tab = FALSE,
-        maxfun = 1e5,
-	parallel = c("no", "multicore", "snow"),
-	ncpus = getOption("allFit.ncpus", 1L), cl = NULL)
+       verbose = TRUE,
+       show.meth.tab = FALSE,
+       maxfun = 1e5,
+       parallel = c("no", "multicore", "snow"),
+       ncpus = getOption("allFit.ncpus", 1L), cl = NULL,
+       catch.errs = TRUE)
 }
 \arguments{
   \item{object}{a fitted model}
@@ -33,6 +34,9 @@ allFit(object, meth.tab = NULL, data=NULL,
   \item{cl}{An optional \pkg{parallel} or \pkg{snow} cluster for use if
     \code{parallel = "snow"}.  If not supplied, a cluster on the
     local machine is created for the duration of the \code{boot} call.}
+  \item{catch.errs}{(logical) Wrap model fits in \code{tryCatch} clause
+    to skip over errors? (\code{catch.errs=FALSE} is probably only
+    useful for debugging)}
 }
 \value{
   an object of type \code{allFit}, which is a list of fitted \code{merMod} objects (unless \code{show.meth.tab} is
