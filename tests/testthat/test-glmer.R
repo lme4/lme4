@@ -306,7 +306,7 @@ if(FALSE) { ## Hadley broke this
     ## bad start case
     load(system.file("testdata","fakesim.RData",package="lme4"))
     rfit <- glmer(Inew/S ~ R0-1 + offset(log(I/N)) + (1|R0:trial)
-        , family=binomial(link=cloglog)
+        , family=binomial(link="cloglog")
 	, data=dat
 	, weight=S
 	, control=glmerControl(optimizer="bobyqa",

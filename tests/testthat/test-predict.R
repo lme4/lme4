@@ -361,4 +361,25 @@ test_that("prediction with spaces in variable names", {
                    `3` = -1.937, `4` = -2.388, `5` = -1.697, `6` = -2.689))
 })
 
+if (requireNamespace("statmod")) {
+  test_that("simulate with rinvgauss", {
+    dd <- data.frame(f=factor(rep(1:20,each=10)))
+    dd$y <- simulate(~1+(1|f),
+                     seed=101,
+                     family=inverse.gaussian,
+                     newdata=dd,
+                     ## ?? gives NaN (sqrt(eta)) for low beta ?
+                     newparams=list(beta=5,theta=1,sigma=1))[[1]]
+    suppressMessages(m <- glmer(y~1+(1|f),
+                                family=inverse.gaussian,
+                                data=dd))
+    set.seed(101)
+    expect_equal(head(unlist(simulate(m))),
+                 c(sim_11 = 0.451329390087728, sim_12 = 0.629516371309772,
+                   sim_13 = 0.481236633500098,
+                   sim_14 = 0.170060386109077, sim_15 = 0.258742371516342,
+                   sim_16 = 0.949617440586848))
+  })
+}
+
 } ## testLevel>1
