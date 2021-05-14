@@ -4,14 +4,6 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-27.9000}{
-  \subsection{USER-VISIBLE CHANGES}{
-    \itemize{
-      \item nothing yet
-    }
-  }
-}
-
 \section{CHANGES IN VERSION 1.1-27 (2021-05-14)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
