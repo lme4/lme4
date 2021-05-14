@@ -12,7 +12,7 @@
   }
 }
 
-\section{CHANGES IN VERSION 1.1-27 (2021-04-28)}{
+\section{CHANGES IN VERSION 1.1-27 (2021-05-14)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item improvements from Lionel Henry (via
@@ -24,6 +24,8 @@
       predictors from non-constraining link functions such as identity-link
       Gamma models)
       \item \code{influence.merMod} allows parallel computation
+      \item \code{statmod} package no longer required unless attempting
+      to simulate results from a model with an inverse Gaussian response
     }
   }
   \subsection{BUG FIXES}{

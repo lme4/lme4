@@ -33,7 +33,7 @@ Description: Fit linear and generalized linear mixed-effects models.
 Depends: R (>= 3.2.0), Matrix (>= 1.2-1), methods, stats
 LinkingTo: Rcpp (>= 0.10.5), RcppEigen
 Imports: graphics, grid, splines, utils, parallel, MASS, lattice, boot,
-    nlme (>= 3.1-123), minqa (>= 1.1.15), nloptr (>= 1.0.4), statmod
+    nlme (>= 3.1-123), minqa (>= 1.1.15), nloptr (>= 1.0.4)
 Suggests:
     knitr,
     rmarkdown,
@@ -49,7 +49,10 @@ Suggests:
     numDeriv,
     car,
     dfoptim,
-    mgcv
+    mgcv,
+    statmod,
+    rr2,
+    semEff
 VignetteBuilder: knitr
 LazyData: yes
 License: GPL (>=2)

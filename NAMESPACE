@@ -26,7 +26,6 @@ importFrom("stats",
            rstudent,
            runif, sd, setNames, simulate, symnum, terms, terms.formula,
            update, update.formula, var, vcov, weights)
-importFrom("statmod", rinvgauss)
 importFrom("utils", flush.console, packageVersion, sessionInfo, stack, str, capture.output)
 if(getRversion() >= "3.5.0") {
     importFrom("utils", warnErrList)
