@@ -7,7 +7,7 @@ influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
 
     .groups <- NULL  ## avoid false-positive code checks
     .vcov <- function(x) Matrix::as.matrix(vcov(x))
-    
+
     if (...length()>0) warning("disregarded additional arguments")
     if (!do.coef) {
         ## simple/quick/trivial results
@@ -75,7 +75,7 @@ influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
                                          subset=(.groups != del),
                                          start=par,
                                          control=control))
-        
+
         opt <- mod.1@optinfo
         feval <- opt$feval
         converged <- opt$conv$opt == 0 && length(opt$warnings) == 0
@@ -156,7 +156,7 @@ cooks.distance.merMod <- function(model, ...) {
     res
 }
 
-cooks.distance.influence.merMod <- function(model, ...) { 
+cooks.distance.influence.merMod <- function(model, ...) {
     db <- dfbeta(model)
     n <- nrow(db)
     p <- ncol(db)
@@ -230,15 +230,28 @@ update.merMod <- function(object, formula., ..., evaluate = TRUE) {
         }
     }
     if (!evaluate) return(call)
-    ff <- environment(formula(object))
-    pf <- parent.frame()
-    sf <- sys.frames()[[1]]
     ## should be able to find model components somewhere in (1) formula env; (2) calling env;
     ##  (3) parent frame [plus its parent frames]
     ## see discusion at https://stackoverflow.com/questions/64268994/evaluate-call-when-components-may-be-scattered-among-environments
     ## FIXME: suppressWarnings(update(model)) will give
-    ## Error in as.list.environment(X[[i]], ...) : 
+    ## Error in as.list.environment(X[[i]], ...) :
     ## promise already under evaluation: recursive default argument reference or earlier problems?
-    combf <- do.call("c", lapply(list(ff, sf), as.list))
-    eval(call,combf, enclos=pf)
+
+    ff <- environment(formula(object))
+    pf <- parent.frame()
+    sf <- sys.frames()[[1]]
+    tryCatch(eval(call,  envir = ff),  ## try formula environment
+             error = function(e) {
+               tryCatch(eval(call, envir = sf),  ## try stack frame
+                        error = function(e) {
+                          eval(call, envir=pf) ## try parent frame
+                        })
+             })
+
+    ##
+    ## combf <- tryCatch(
+    ##     do.call("c", lapply(list(ff, sf), as.list)),
+    ##     error=function(e) as.list(ff)
+    ## )
+    ## eval(call,combf, enclos=pf)
 }
