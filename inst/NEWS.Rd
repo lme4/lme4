@@ -4,7 +4,15 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-27 (2021-05-14)}{
+\section{CHANGES IN VERSION 1.1-27.9000}{
+ \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{cooks.distance} now works with objects computed
+      by \code{influence} method
+    }
+ }
+}
+\section{CHANGES IN VERSION 1.1-27 (2021-05-15)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item improvements from Lionel Henry (via
@@ -23,8 +31,6 @@
   \subsection{BUG FIXES}{
     \itemize{
       \item long formulas work better in \code{anova} headings (GH #611)
-      \item \code{cooks.distance} now works with objects computed
-      by \code{influence} method
     }
   }
 }
