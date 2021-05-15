@@ -76,7 +76,7 @@ test_that("lmer", {
     aa <- suppressMessages(anova(fm0,fm1))
     expect_that(aa, is_a("anova"))
     expect_equal(names(aa),
-                 c("npar", "AIC", "BIC", "logLik", "deviance", "Chisq", "Df", 
+                 c("npar", "AIC", "BIC", "logLik", "deviance", "Chisq", "Df",
                    "Pr(>Chisq)"))
     expect_warning(suppressMessages(do.call(anova,list(fm0,fm1))), "assigning generic names")
     ##
@@ -616,9 +616,11 @@ test_that("simulate", {
 context("misc")
 test_that("misc", {
     expect_equal(df.residual(fm1),176)
-    if (require(ggplot2)) {
-        expect_is(fortify.merMod(fm1), "data.frame")
-        expect_is(fortify.merMod(gm1), "data.frame")
+    if (suppressWarnings(require(ggplot2))) {
+      ## ggplot calls sample() [for silly start-up messages
+      ## throws warning because we're using backward-compatible RNGkind
+      expect_is(fortify.merMod(fm1), "data.frame")
+      expect_is(fortify.merMod(gm1), "data.frame")
     }
     expect_is(as.data.frame(VarCorr(fm1)), "data.frame")
 })
@@ -797,18 +799,19 @@ test_that("rstudent matches for zero-var cases",
 })
 
 if (testLevel>1) {
-    ## n.b. influence() doesn't work under system.time();
-    ##  weird evaluation stuff ?
-    ## FIXME: work on timing some more
-    i1 <- influence(fm1, ncores=1)
-    test_that("full version of influence", {
-              expect_equal(c(head(i1[["fixed.effects[-case]"]],1)),
-                           c(252.323536264131, 10.3222704729148))
-    })
-    if (parallel::detectCores()>1) {
+  ## n.b. influence() doesn't work under system.time();
+  ##  weird evaluation stuff ?
+  ## FIXME: work on timing some more
+  i1 <- influence(fm1, ncores=1)
+  test_that("full version of influence", {
+    expect_equal(c(head(i1[["fixed.effects[-case]"]],1)),
+                 c(252.323536264131, 10.3222704729148))
+  })
+  cooks.distance(i1)
+  if (parallel::detectCores()>1) {
         test_that("parallel influence", {
             i2 <- suppressMessages(influence(fm1,ncores=2))
-
+            expect_equal(i1,i2)
         })
     }
 }
@@ -824,5 +827,5 @@ if (testLevel>1) {
 ## library(pracma)  ## because system.time() is weird
 ## tic(); i1 <- influence(fm1); toc()  ## 2+ seconds
 ## tic(); i2 <- influence(fm1, ncores=8); toc() ## 3.4 seconds
-        
+
 

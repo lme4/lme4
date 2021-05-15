@@ -33,12 +33,15 @@ if (require(rr2)) {
       rnorm(n = n)
 
     z.f2 <- lme4::lmer(y_re_intercept ~ x1 + x2 + (1 | u1) + (1 | u2), data = d, REML = T)
+    ## NOTE, fails to produce warnings on second run of devtools::test()
+    ## (possible interference from lmerTest methods being loaded ...?)
     expect_warning(R2(z.f2), "mod updated with REML = F")
 })
 }
 
 
-if (require(semEff)) {
+if (suppressWarnings(require(semEff))) {
+  ## suppress warning about 'cov2cor' import replacement
   test_that("semEff env lookup OK", {
     ##   Error in as.list.environment(X[[i]], ...) :
     ##     promise already under evaluation: recursive default argument reference or earlier problems?

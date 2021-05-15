@@ -24,9 +24,12 @@ test_that("lmer", {
     x2@call <- x3@call <- x@call  ## hack call component
     expect_equal(x,x2)
     expect_equal(x,x3)
-    expect_error(update(x, start = "a"), stMsg)
+    ## warning on deprecated list ...
+    suppressWarnings(expect_error(update(x, start = "a"), stMsg))
     ## misspelled
-    expect_error(update(x,start=list(Theta=c(1,0,1))),"incorrect components")
+    suppressWarnings(
+        expect_error(update(x,start=list(Theta=c(1,0,1))),"incorrect components")
+    )
     th0 <- getME(x,"theta")
     y <- suppressWarnings(update(x,start=th0))
     if(isNM) {

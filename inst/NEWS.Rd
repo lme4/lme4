@@ -16,13 +16,15 @@
       predictors from non-constraining link functions such as identity-link
       Gamma models)
       \item \code{influence.merMod} allows parallel computation
-      \item \code{statmod} package no longer required unless attempting
+      \item the \code{statmod} package is no longer required unless attempting
       to simulate results from a model with an inverse Gaussian response
     }
   }
   \subsection{BUG FIXES}{
     \itemize{
       \item long formulas work better in \code{anova} headings (GH #611)
+      \item \code{cooks.distance} now works with objects computed
+      by \code{influence} method
     }
   }
 }
