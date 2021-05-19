@@ -17,7 +17,7 @@
 
 \usage{
 \method{influence}{merMod}(model, groups, data, maxfun = 1000,
-          do.coef = TRUE, ncores = getOption("mc.cores",1), ...)
+          do.coef = TRUE, ncores = getOption("mc.cores",1), start, ...)
 \method{cooks.distance}{influence.merMod}(model, ...)
 \method{dfbeta}{influence.merMod}(model, which = c("fixed", "var.cov"), ...)
 \method{dfbetas}{influence.merMod}(model, ...)
@@ -45,6 +45,8 @@
   \item{ncores}{number of computational cores to use if run in parallel;
     directly passed to \code{\link[parallel]{makeCluster}()} from \R's
     \pkg{parallel} package.}
+  \item{start}{starting value for new fits (set to optimal values from
+    original fit by default)}
   \item{\dots}{ignored.}
 }
 

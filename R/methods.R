@@ -1,8 +1,6 @@
-## convert vcov from dpoMatrix to regular matrix (protect against car methods)
-vv <- function(x) Matrix::as.matrix(vcov(x))
-
 influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
                              ncores=getOption("mc.cores",1),
+                             start=NULL,
                              ...) {
 
     .groups <- NULL  ## avoid false-positive code checks
@@ -31,8 +29,15 @@ influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
     }
     unique.del <- unique(data[, groups])
     data[[".groups"]] <- data[, groups]
-    par <- list(theta=getME(model, "theta"))
-    if (inherits(model, "glmerMod")) par$fixef <- fixef(model)
+    if (!is.null(start)) {
+      par <- start
+    } else {
+      par <- list(theta=getME(model, "theta"))
+      if (inherits(model, "glmerMod") &&
+          getME(model, "devcomp")$dims[["nAGQ"]]>0) {
+        par$fixef <- fixef(model)
+      }
+    }
     fixed <- fixef(model)
     fixed.1 <- matrix(0, length(unique.del), length(fixed))
     rownames(fixed.1) <- unique.del
@@ -119,7 +124,8 @@ influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
              "vcov", paste0("vcov", left, groups, right),
              "groups", "deleted", "converged", "function.evals")
     result <- list(fixed, fixed.1, vc, vc.1,
-                   vv(model), vcov.1, groups, unique.del, converged, feval)
+                   .vcov(model),
+                   vcov.1, groups, unique.del, converged, feval)
     names(result) <- nms
     class(result) <- "influence.merMod"
     result
