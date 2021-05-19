@@ -9,8 +9,15 @@
     \itemize{
       \item \code{cooks.distance} now works with objects computed
       by \code{influence} method
+      \item \code{influence.merMod} now works with \code{glmer} models
+      using \code{nAGQ=0}
     }
- }
+  }
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item \code{influence.merMod} allows user-specified starting parameters
+    }
+  }    
 }
 \section{CHANGES IN VERSION 1.1-27 (2021-05-15)}{
   \subsection{USER-VISIBLE CHANGES}{
