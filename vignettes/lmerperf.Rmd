@@ -66,7 +66,7 @@ lmer(y ~ service * dept + (1|s) + (1|d), InstEval,
 
 ```{r nlopt,eval=FALSE}
 nlopt <- function(par, fn, lower, upper, control) {
-    .nloptr <<- res <- nloptr(par, fn, lb = lower, ub = upper, 
+    res <- nloptr(par, fn, lb = lower, ub = upper, 
         opts = list(algorithm = "NLOPT_LN_BOBYQA", print_level = 1,
         maxeval = 1000, xtol_abs = 1e-6, ftol_abs = 1e-6))
     list(par = res$solution,
