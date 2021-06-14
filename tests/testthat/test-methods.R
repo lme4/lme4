@@ -781,6 +781,21 @@ test_that("cooks distance on subject-level influence", {
       tolerance = 1e-6)
 })
 
+test_that("cooks distance on glmer models", {
+  inf <- influence(gm1)
+  inf.h <- influence(gm1, "herd", ncores=1)
+  cook <- cooks.distance(inf)
+  expect_equal(unname(head(cook, 3)),
+               c(0.0533565328359536, 0.0371799913466958, 0.205950448747651),
+               )
+  cook.h <- cooks.distance(inf.h)
+  expect_equal(unname(head(cook.h, 3)),
+               c(0.276877818905867, 0.0064606582914577, 0.127335873462638),
+               tolerance = 1e-6)
+})
+
+})
+
 ## tweaked example so estimated var = 0
 zerodat <- data.frame(x=seq(0,1,length.out=120),
                       f=rep(1:3,each=40))
