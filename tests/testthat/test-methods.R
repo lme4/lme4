@@ -131,18 +131,22 @@ test_that("Two models with subset() within lmer()", {
     expect_is(ano3s <- anova(full3s, null3s), "anova")
     expect_equal(ano3, ano3s, check.attributes=FALSE)
     options(op)
-  })
+})
 
 
 
-  test_that("anova() of glmer+glm models", {
-    gm1 <- glmer(y~(1|u), data=dat[1:4,], family=poisson)
-    gm0 <- glm(y~1,data=dat[1:4,],family=poisson)
-    gm2 <- glmer(y~(1|u),data=dat[1:4,],family=poisson,nAGQ=2)
-    aa <- anova(gm1,gm0)
-    expect_equal(aa[2,"Chisq"],0)
-    expect_error(anova(gm2,gm0),"incommensurate")
-  })
+test_that("anova() of glmer+glm models", {
+  dat <<- data.frame(y = 1:5,
+                    u = c(rep("A",2), rep("B",3)),
+                    t = c(rep("A",3), rep("B",2)))
+  cs <- glmerControl(check.conv.singular = "ignore") ## ignore singular fits
+  gm1 <- glmer(y~(1|u), data=dat[1:4,], family=poisson, control = cs)
+  gm0 <- glm(y~1, data=dat[1:4,], family=poisson)
+  gm2 <- glmer(y~(1|u), data=dat[1:4,], family=poisson,nAGQ=2, control = cs)
+  aa <- anova(gm1,gm0)
+  expect_equal(aa[2,"Chisq"],0)
+  expect_error(anova(gm2,gm0),"incommensurate")
+})
 
   test_that("anova() of lmer+glm models", {
     dat2 <- dat
@@ -792,8 +796,6 @@ test_that("cooks distance on glmer models", {
   expect_equal(unname(head(cook.h, 3)),
                c(0.276877818905867, 0.0064606582914577, 0.127335873462638),
                tolerance = 1e-6)
-})
-
 })
 
 ## tweaked example so estimated var = 0
