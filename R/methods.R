@@ -167,8 +167,10 @@ cooks.distance.influence.merMod <- function(model, ...) {
     n <- nrow(db)
     p <- ncol(db)
     d <- numeric(n)
-    vcovs <- model[["vcov[-case]"]]
-    sig.sq <- model[["var.cov.comps[-case]"]][, 1]
+    vcovs.ind <- which(startsWith(names(model), "vcov[-"))
+    vcovs <- model[[vcovs.ind]] ## was: 6
+    sig.sq.ind <- which(startsWith(names(model), "var.cov.comps[-"))
+    sig.sq <- model[[sig.sq.ind]][, 1]  ## was: [[4]]
     for (i in 1:n){
         d[i] <- (db[i, ] %*% solve(vcovs[[i]]) %*% db[i, ])/(p*sig.sq[i])
     }

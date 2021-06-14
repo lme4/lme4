@@ -772,6 +772,15 @@ test_that("cooks distance", {
   expect_equal(nrow(dNAs),length(cooks.distance(fitNAs)))
 })
 
+test_that("cooks distance on subject-level influence", {
+  ifm1S <- influence(fm1, "Subject", ncores=1)
+  expect_equal(
+      unname(head(cooks.distance(ifm1S))),
+      c(0.000503486560509076, 0.000361036591569186, 0.000152245842071491,
+        0.000147177769821806, 7.16702770634741e-05, 4.68752602437635e-06),
+      tolerance = 1e-6)
+})
+
 ## tweaked example so estimated var = 0
 zerodat <- data.frame(x=seq(0,1,length.out=120),
                       f=rep(1:3,each=40))
