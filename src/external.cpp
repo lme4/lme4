@@ -405,7 +405,7 @@ extern "C" {
         return ans;
     }
 
-    static double sqrt2pi = std::sqrt(2. * PI);
+    static double sqrt2pi = std::sqrt(2. * M_PI);
 
     // tol: tolerance for pirls
     // maxit: maximum number of pirls iterations
