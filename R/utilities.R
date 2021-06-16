@@ -76,6 +76,12 @@ colSort <- function(x) {
 mkBlist <- function(x,frloc, drop.unused.levels=TRUE,
                     reorder.vars=FALSE) {
     frloc <- factorize(x,frloc)
+    ## correct any sparse matrices in factor contrasts
+    frloc[] <- lapply(frloc, function(x)
+      if (is.null(attr(x, "contrasts"))) return(x) else {
+        attributes(x)$contrasts <- as.matrix(attributes(x)$contrasts)
+        return(x)
+      })
     ## try to evaluate grouping factor within model frame ...
     if (is.null(ff <- tryCatch(eval(substitute(makeFac(fac),
                                                list(fac = x[[3]])), frloc),
