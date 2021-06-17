@@ -199,7 +199,7 @@ namespace lme4 {
     }
 
     double nlsResp::Laplace(double ldL2, double ldRX2, double sqrL) const {
-        double lnum = 2.* PI * (d_wrss + sqrL), n = d_y.size();
+        double lnum = 2.* M_PI * (d_wrss + sqrL), n = d_y.size();
         return ldL2 + n * (1 + std::log(lnum / n));
     }
 
