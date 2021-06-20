@@ -4,7 +4,111 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-21.9000}{
+\section{CHANGES IN VERSION 1.1-27.1}{
+ \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{cooks.distance} now works with objects computed
+      by \code{influence} method
+      \item \code{influence.merMod} now works with \code{glmer} models
+      using \code{nAGQ=0}
+    }
+  }
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item \code{influence.merMod} allows user-specified starting parameters
+    }
+  }    
+}
+\section{CHANGES IN VERSION 1.1-27 (2021-05-15)}{
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item improvements from Lionel Henry (via
+      https://github.com/lme4/lme4/pull/587) to fix corner cases in
+      data checking; also resolves GH #601 (allFit scoping)
+      \item \code{getME(., "lower")} now has names (request of GH #609)
+      \item improved detection of \code{NaN} in internal calculations
+      (typically due to underflow/overflow or out-of-bounds linear
+      predictors from non-constraining link functions such as identity-link
+      Gamma models)
+      \item \code{influence.merMod} allows parallel computation
+      \item the \code{statmod} package is no longer required unless attempting
+      to simulate results from a model with an inverse Gaussian response
+    }
+  }
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item long formulas work better in \code{anova} headings (GH #611)
+    }
+  }
+}
+
+\section{CHANGES IN VERSION 1.1-26 (2020-11-30)}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{predict}, \code{model.frame(.,fixed.only=TRUE)} work
+      with variable names containing spaces (GH #605)
+      \item \code{simulate} works when original response variable was
+      logical
+      \item \code{densityplot} handles partly broken profiles more robustly
+    }
+  }
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item \code{thpr} method for \code{densityplot()} (for plotting
+  profiles scaled as densities) gets new arguments 
+    }
+  }
+}
+
+\section{CHANGES IN VERSION 1.1-25 (2020-10-23)}{
+  \itemize{
+    \item   Set more tests to run only if environment variable
+    \code{LME4_TEST_LEVEL}>1
+  }
+}
+\section{CHANGES IN VERSION 1.1-24 (never on CRAN)}{
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item \code{anova()} now returns a p-value of \code{NA} if the df
+      difference between two models is 0 (implying they are equivalent
+      models) (GH#583, @MetaEntropy)
+      \item speedup in \code{coef()} for large models, by skipping
+      conditional variance calculation (Alexander Bauer)
+      \item \code{simulate.formula} machinery has changed slightly,
+      for compatibility with the \code{ergm} package (Pavel Krivitsky)
+      \item informational messages about (non-)convergence improved (GH
+      #599)
+      \item improved error messages for 0 non-NA cases in data (GH #533)
+    }
+  } % user-visible changes
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item \code{getME(.,"devfun")} now works for \code{glmer} objects.
+      Additionally, \code{profile}/\code{confint} for GLMMs
+      no longer depend on objects in the fitting environment
+      remaining unchanged (GH #589). This change also affects likelihood
+      profiling machinery; results of \code{glmer} profiling/CIs  may
+      not match results from previous versions exactly.
+    }
+  } % new features
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item improved handling/documentation of \code{glmer.nb} controls
+      (GH #556)
+      \item \code{predict} works better for \code{gamm4} objects (GH
+      #575)
+      \item resolved some long-standing UBSAN issues (GH #561)
+    }
+  } % bug fixes
+} % version 1.1-23.9000
+\section{CHANGES IN VERSION 1.1-23 (2020-03-06)}{
+  This is primarily for CRAN compliance (previous submission was
+  retracted to allow time for downstream package adjustments).
+  \itemize{
+    \item Some PROTECT/UNPROTECT fixes
+  }
+}
+\section{CHANGES IN VERSION 1.1-22 (never on CRAN)}{
   \subsection{USER-VISIBLE CHANGES}{
   \itemize{
   
