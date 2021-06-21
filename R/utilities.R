@@ -94,7 +94,13 @@ mkBlist <- function(x,frloc, drop.unused.levels=TRUE,
     ## this section implements eq. 6 of the JSS lmer paper
     ## model matrix based on LHS of random effect term (X_i)
     ##    x[[2]] is the LHS (terms) of the a|b formula
-    mm <- model.matrix(eval(substitute( ~ foo, list(foo = x[[2]]))), frloc)
+    has.sparse.contrasts <- function(x) {
+      cc <- attr(x, "contrasts")
+      !is.null(cc) && inherits(cc, "Matrix")
+    }
+    any.sparse.contrasts <- any(vapply(frloc, has.sparse.contrasts, FUN.VALUE = TRUE))
+    mm.fun <- if (!any.sparse.contrasts) model.matrix else Matrix::sparse.model.matrix
+    mm <- mm.fun(eval(substitute( ~ foo, list(foo = x[[2]]))), frloc)
     if (reorder.vars) {
         mm <- mm[colSort(colnames(mm)),]
     }

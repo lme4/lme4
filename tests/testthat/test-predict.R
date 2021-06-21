@@ -382,4 +382,20 @@ if (requireNamespace("statmod")) {
   })
 }
 
+## GH 631
+
+test_that("sparse contrasts don't mess up predict()", {
+  dd <- expand.grid(f = factor(1:101), rep1 = factor(1:2), rep2 = 1:2)
+  dd$y <- suppressMessages(simulate(~1 + (rep1|f),
+                   seed = 101,
+                   newdata = dd,
+                   newparams = list(beta = 1,
+                                    theta = rep(1,3),
+                                    sigma = 1),
+                   family = gaussian)[[1]])
+  m1 <- lmer( y ~ 1 + (1|f), data = dd)
+  p1 <- predict(m1)
+  p2 <- predict(m1, newdata = dd)
+})
+
 } ## testLevel>1
