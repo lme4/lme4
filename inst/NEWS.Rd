@@ -17,6 +17,9 @@
       by \code{influence} method
       \item \code{influence.merMod} now works with \code{glmer} models
       using \code{nAGQ=0}
+      \item \code{predict} (with new data) and \code{simulate} methods
+      now work for models with >100 levels in a random effect grouping
+      variable (GH #631)
     }
   }    
 }
