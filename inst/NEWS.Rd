@@ -4,7 +4,13 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-27.9000}{
+\section{CHANGES IN VERSION 1.1-27.1}{
+ \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item \code{influence.merMod} allows user-specified starting parameters
+      \item cleaned up performance vignette
+    }
+ }
  \subsection{BUG FIXES}{
     \itemize{
       \item \code{cooks.distance} now works with objects computed
@@ -12,13 +18,9 @@
       \item \code{influence.merMod} now works with \code{glmer} models
       using \code{nAGQ=0}
     }
-  }
-  \subsection{USER-VISIBLE CHANGES}{
-    \itemize{
-      \item \code{influence.merMod} allows user-specified starting parameters
-    }
   }    
 }
+
 \section{CHANGES IN VERSION 1.1-27 (2021-05-15)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
