@@ -96,11 +96,11 @@ mkBlist <- function(x,frloc, drop.unused.levels=TRUE,
     ##    x[[2]] is the LHS (terms) of the a|b formula
     has.sparse.contrasts <- function(x) {
       cc <- attr(x, "contrasts")
-      !is.null(cc) && inherits(cc, "Matrix")
+      !is.null(cc) && is(cc, "sparseMatrix")
     }
     any.sparse.contrasts <- any(vapply(frloc, has.sparse.contrasts, FUN.VALUE = TRUE))
-    mm.fun <- if (!any.sparse.contrasts) model.matrix else Matrix::sparse.model.matrix
-    mm <- mm.fun(eval(substitute( ~ foo, list(foo = x[[2]]))), frloc)
+    mMatrix <- if (!any.sparse.contrasts) model.matrix else sparse.model.matrix
+    mm <- mMatrix(eval(substitute( ~ foo, list(foo = x[[2]]))), frloc)
     if (reorder.vars) {
         mm <- mm[colSort(colnames(mm)),]
     }

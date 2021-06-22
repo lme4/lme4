@@ -53,7 +53,7 @@ importFrom("boot", boot.ci)
 ## generics we provide methods for and re-export:
 importFrom("nlme", fixef,ranef, VarCorr, getGroups, getData)
 
-importFrom("Matrix", drop0, rankMatrix, sparseMatrix,
+importFrom("Matrix", drop0, rankMatrix, sparseMatrix, sparse.model.matrix
            forceSymmetric, fac2sparse, KhatriRao, Diagonal, .bdiag,
            as.matrix, bdiag)
 importClassesFrom("Matrix", corMatrix, dgCMatrix, dpoMatrix, dCHMsimpl)
