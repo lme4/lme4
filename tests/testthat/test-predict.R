@@ -396,6 +396,7 @@ test_that("sparse contrasts don't mess up predict()", {
   m1 <- lmer( y ~ 1 + (1|f), data = dd)
   p1 <- predict(m1)
   p2 <- predict(m1, newdata = dd)
+  expect_identical(p1, p2)
 })
 
 } ## testLevel>1

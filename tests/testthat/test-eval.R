@@ -1,7 +1,7 @@
 ## examples for eval lookup
 testthat::skip_on_cran()
 
-if (require(car)) {
+if (require(car, quietly = TRUE)) {
   test_that("infIndexPlot env lookup OK", {
     fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
     ## silly test; the point is to see if this errors out with
@@ -12,7 +12,7 @@ if (require(car)) {
   })
 }
 
-if (require(rr2)) {
+if (require(rr2, quietly = TRUE)) {
   test_that("rr2 env lookup OK", {
     ## Error under alternate eval lookup
     ##     Error: bad 'data': object 'd' not found

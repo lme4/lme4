@@ -4,7 +4,17 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-27.1}{
+\section{CHANGES IN VERSION 1.1-27.9000}{
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item construction of interacting factors (e.g. when \code{f1:f2} or
+      \code{f1/f2} occur in random effects terms) is now more efficient
+      for partially crossed designs
+      (doesn't try to create all combinations of \code{f1} and \code{f2}) (GH #635 and #636)
+    }
+  }
+}
+\section{CHANGES IN VERSION 1.1-27.1 (2021-06-22)}{
  \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item \code{influence.merMod} allows user-specified starting parameters

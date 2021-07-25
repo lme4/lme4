@@ -69,6 +69,49 @@ colSort <- function(x) {
     unlist(iterms)
 }
 
+## copied from glmmTMB, replace by upstream utility package?
+## test formula: does it contain a particular element?
+## inForm(z~.,quote(.))
+## inForm(z~y,quote(.))
+## inForm(z~a+b+c,quote(c))
+## inForm(z~a+b+(d+e),quote(c))
+## f <- ~ a + offset(x)
+## f2 <- z ~ a
+## inForm(f,quote(offset))
+## inForm(f2,quote(offset))
+## @export
+## @keywords internal
+inForm <- function(form,value) {
+    if (any(sapply(form,identical,value))) return(TRUE)
+    if (all(sapply(form,length)==1)) return(FALSE)
+    return(any(vapply(form,inForm,value,FUN.VALUE=logical(1))))
+}
+
+## was called "replaceForm" there but replaceTerm is better
+## (decide on camelCase vs snake_case!)
+replaceTerm <- function(term,target,repl) {
+    if (identical(term,target)) return(repl)
+    if (!inForm(term,target)) return(term)
+    if (length(term) == 2) {
+        return(substitute(OP(x),list(OP=replaceTerm(term[[1]],target,repl),
+                                     x=replaceTerm(term[[2]],target,repl))))
+    }
+    return(substitute(OP(x,y),list(OP=replaceTerm(term[[1]],target,repl),
+                                   x=replaceTerm(term[[2]],target,repl),
+                                   y=replaceTerm(term[[3]],target,repl))))
+}
+
+`%i%` <- function(f1, f2, fix.order = TRUE) {
+    if (!is.factor(f1) || !is.factor(f2)) stop("both inputs must be factors")
+    f12 <- paste(f1, f2, sep = ":")
+    ## explicitly specifying levels is faster in any case ...
+    u <- which(!duplicated(f12))
+    if (!fix.order) return(factor(f12, levels = f12[u]))
+    ## deal with order of factor levels
+    levs_rank <- length(levels(f2))*as.numeric(f1[u])+as.numeric(f2[u])
+    return(factor(f12, levels = (f12[u])[order(levs_rank)]))
+}
+
 ##' @param x a language object of the form  effect | groupvar
 ##' @param frloc model frame
 ##' @param drop.unused.levels (logical)
@@ -77,16 +120,21 @@ mkBlist <- function(x,frloc, drop.unused.levels=TRUE,
                     reorder.vars=FALSE) {
     frloc <- factorize(x,frloc)
     ## try to evaluate grouping factor within model frame ...
-    if (is.null(ff <- tryCatch(eval(substitute(makeFac(fac),
-                                               list(fac = x[[3]])), frloc),
-                error=function(e) NULL)))
+    ff0 <- replaceTerm(x[[3]], quote(`:`), quote(`%i%`))
+    ff <- try(eval(substitute(makeFac(fac),
+                              list(fac = ff0)),
+                   frloc), silent = TRUE)
+    if (inherits(ff, "try-error")) {
         stop("couldn't evaluate grouping factor ",
-             deparse(x[[3]])," within model frame:",
-             " try adding grouping factor to data ",
+             deparse1(x[[3]])," within model frame:",
+             "error =",
+             c(ff),
+             " Try adding grouping factor to data ",
              "frame explicitly if possible",call.=FALSE)
+    }
     if (all(is.na(ff)))
         stop("Invalid grouping factor specification, ",
-             deparse(x[[3]]),call.=FALSE)
+             deparse1(x[[3]]),call.=FALSE)
     ## NB: *also* silently drops <NA> levels - and mkReTrms() and hence
     ##     predict.merMod() have relied on that property  :
     if (drop.unused.levels) ff <- factor(ff, exclude=NA)
