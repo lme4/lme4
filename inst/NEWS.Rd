@@ -14,6 +14,7 @@
     }
   }
 }
+
 \section{CHANGES IN VERSION 1.1-27.1 (2021-06-22)}{
  \subsection{USER-VISIBLE CHANGES}{
     \itemize{
