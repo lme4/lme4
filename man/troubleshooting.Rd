@@ -4,6 +4,17 @@
 \description{
   This page attempts to summarize some of the common problems with
   fitting \code{[gn]lmer} models and how to troubleshoot them.
+
+  Most of the symptoms/diagnoses/workarounds listed below are due to
+  various issues in the actual mixed model fitting process. You may
+  run into problems due to multicollinearity or variables that are
+  incorrectly typed (e.g. a variable is accidentally coded as character
+  or factor rather than numeric). These problems can often be isolated
+  by trying a \code{lm} or \code{glm} fit or attempting to construct the
+  design matrix via \code{model.matrix()} (in each case with the random
+  effects in your model excluded). If these tests fail then the problem
+  is likely not specifically an \code{lme4} issue.
+  
   \itemize{
     \item \code{failure to converge in (xxxx) evaluations} The
     optimizer hit its maximum limit of function evaluations.  To
