@@ -10,7 +10,9 @@
       \item construction of interacting factors (e.g. when \code{f1:f2} or
       \code{f1/f2} occur in random effects terms) is now more efficient
       for partially crossed designs
-      (doesn't try to create all combinations of \code{f1} and \code{f2}) (GH #635 and #636)
+      (doesn't try to create all combinations of \code{f1} and
+      \code{f2}) (GH #635 and #636)
+      \item \code{mkNewReTrms} is exported
     }
   }
 }

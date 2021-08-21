@@ -1,5 +1,6 @@
 \name{mkReTrms}
 \alias{mkReTrms}
+\alias{mkNewReTrms}
 \title{Make Random Effect Terms: Create Z, Lambda, Lind, etc.}
 \description{
   From the result of \code{\link{findbars}} applied to a model formula
@@ -9,17 +10,34 @@
 \usage{
   mkReTrms(bars, fr, drop.unused.levels=TRUE,
                      reorder.terms=TRUE,
-                     reorder.vars=FALSE) 
+                     reorder.vars=FALSE)
+  mkNewReTrms(object, newdata, re.form=NULL,
+                     na.action=na.pass,
+                     allow.new.levels=FALSE,
+                     sparse = max(lengths(orig.random.levs)) > 100)
 }
 \arguments{
   \item{bars}{a list of parsed random-effects terms}
   \item{fr}{a model frame in which to evaluate these terms}
-  \item{drop.unused.levels}{(logical) drop unused factor levels?
-    (experimental)}
+  \item{drop.unused.levels}{(logical) drop unused factor levels?}
   \item{reorder.terms}{arrange random effects terms in decreasing order
     of number of groups (factor levels)?}
   \item{reorder.vars}{arrange columns of individual random effects terms
     in alphabetical order?}
+  \item{object}{a fitted \code{merMod} object}
+  \item{newdata}{data frame for which to create
+    new RE terms object}
+  \item{re.form}{(formula, \code{NULL}, or \code{NA}) specify which random effects to condition on when predicting.  If \code{NULL},
+    include all random effects; if \code{NA} or \code{~0},
+    include no random effects}
+  \item{na.action}{function determining what should be done
+    with missing values for fixed effects in \code{newdata}}
+  \item{allow.new.levels}{(logical) if new levels (or NA values) in
+    \code{newdata} are allowed. If FALSE (default), such new values in
+    \code{newdata} will trigger an error; if TRUE, then the prediction
+    will use the unconditional (population-level) values for data with
+    previously unobserved levels (or NAs)}
+  \item{sparse}{generate sparse contrast matrices?}
 }
 \value{
   a \code{\link{list}} with components
@@ -43,6 +61,9 @@
   \item{Ztlist}{list of components of the transpose of the
     random-effects model matrix, separated by random-effects term}
 }
+\note{\code{mkNewReTrms} is used in the context of prediction, to
+  generate a new "random effects terms" object from an already fitted
+  model}
 \seealso{
   Other utilities: \code{\link{findbars}},
   \code{\link{mkRespMod}}, \code{\link{nlformula}},
