@@ -336,7 +336,6 @@ plot.fixef.allFit = function(allFit_output,
   require(ggplot2)
   require(patchwork)
   
-  
   # Tidy allFit output
   
   # Extract fixed effects from the allFit results
