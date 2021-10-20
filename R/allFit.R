@@ -287,3 +287,161 @@ plot.allFit <- function(x, abbr=16, ...) {
          + ggplot2::theme(legend.position="none")
      )
 }
+
+# Plot the results from the fixed effects produced by different optimizers. This function 
+# takes the output from lme4::allFit(), tidies it, selects fixed effects and plots them.
+
+
+# Plot the results from the fixed effects produced by different optimizers. This function 
+# takes the output from lme4::allFit(), tidies it, selects fixed effects and plots them.
+
+plot.fixef.allFit = function(allFit_output, 
+                             # Set the same Y axis limits in every plot
+                             shared_y_axis_limits = TRUE,
+                             # Multiply Y axis limits by a factor 
+                             # (available if `shared_y_axis_limits` = TRUE)
+                             multiply_y_axis_limits = 1, 
+                             # Select predictors
+                             selected_predictors = NULL, 
+                             # Number of rows for predictors other than intercept
+                             nrow = NULL, 
+                             # Y axis title
+                             y_title = 'Fixed effect',
+                             # Align Y axis title horizontally
+                             y_title_hjust = .75,
+                             # Add number to the names of optimizers
+                             number_optimizers = TRUE,
+                             # Replace colon in interactions with x
+                             interaction_symbol_x = TRUE) {
+  
+  if (!requireNamespace('dplyr')) {    # data wrangling
+    install.packages('dplyr')
+  }
+  
+  if (!requireNamespace('reshape2')) {   # data wrangling
+    install.packages('reshape2')
+  }
+  
+  if (!requireNamespace('stringr')) {    # text processing
+    install.packages('stringr')
+  }
+  
+  if (!requireNamespace('ggplot2')) {    # plotting
+    install.packages('ggplot2')
+  }
+  
+  if (!requireNamespace('patchwork')) {    # matrix of plots
+    install.packages('patchwork')
+  }
+  
+  require(dplyr)
+  require(reshape2)
+  require(stringr)
+  require(ggplot2)
+  require(patchwork)
+  
+  
+  # Tidy allFit output
+  
+  # Extract fixed effects from the allFit results
+  allFit_fixef = summary(allFit_output)$fixef %>%  # Select fixed effects in the allFit results
+    reshape2::melt() %>%  # Structure the output as a data frame
+    rename('Optimizer' = 'Var1', 'fixed_effect' = 'Var2')  # set informative names
+  
+  # If `number_optimizers` = TRUE, assign number to each optimizer and place it before its name
+  if(number_optimizers == TRUE) {
+    allFit_fixef$Optimizer = paste0(as.numeric(allFit_fixef$Optimizer), '. ', allFit_fixef$Optimizer)
+  }
+  
+  # If `selected_predictors` were specified, select them along with the intercept (the latter required).
+  if(!is.null(selected_predictors)) {
+    allFit_fixef = allFit_fixef %>% filter(fixed_effect %in% c('(Intercept)', selected_predictors))
+  }
+  
+  # Order variables
+  allFit_fixef = allFit_fixef[, c('Optimizer', 'fixed_effect', 'value')]
+  
+  # PLOT. The overall plot is formed of a first row containing the intercept and the legend 
+  # (`intercept_plot`), and a second row containing the predictors (`predictors_plot`), 
+  # which may in turn occupy several rows.
+  
+  # If `multiply_y_axis_limits` has been specified but `shared_y_axis_limits` = FALSE,
+  # warn that `shared_y_axis_limits` is required.
+  if(!multiply_y_axis_limits == 1 & shared_y_axis_limits == FALSE) {
+    warning('The argument `multiply_y_axis_limits` has not been used because it requires `shared_y_axis_limits` set to TRUE.')
+  }
+  
+  # First row: intercept_plot
+  
+  # Select intercept data only
+  intercept = allFit_fixef %>% filter(fixed_effect == '(Intercept)')
+  
+  intercept_plot = intercept %>%
+    ggplot(., aes(fixed_effect, value, colour = Optimizer)) +
+    geom_point(position = position_dodge(1)) +
+    facet_wrap(~fixed_effect, scale = 'free') +
+    guides(colour = guide_legend(title.position = 'left')) +
+    theme_bw() + theme(axis.title = element_blank(), axis.ticks.x = element_blank(),
+                       axis.text.x = element_blank(), 
+                       strip.background = element_rect(fill = 'grey96'), 
+                       legend.margin = margin(0.5, 0, 0.8, 1, 'cm'), 
+                       legend.title = element_text(size = unit(15, 'pt'), angle = 90, hjust = 0.5))
+  
+  # If `shared_y_axis_limits` = TRUE, set the same limits in every plot. In this case, also 
+  # expand limits by a factor of 1.3 and allow further multiplication of limits through 
+  # `multiply_y_axis_limits` (default by 1). In contrast, if `shared_y_axis_limits` = FALSE, 
+  # no action is taken, and the default, plot-specific Y axis limits are used. 
+  if(shared_y_axis_limits == TRUE) {
+    intercept_plot = intercept_plot + ylim(range(allFit_fixef$value) * 1.3 * multiply_y_axis_limits)
+  }
+  
+  # Second row: predictors_plot
+  
+  # If any `selected_predictors` were entered, select those; otherwise, select all except intercept
+  if(!is.null(selected_predictors)) {
+    predictors = allFit_fixef %>% filter(fixed_effect %in% selected_predictors)
+  } else predictors = allFit_fixef %>% filter(!fixed_effect == '(Intercept)')
+  
+  # If any `selected_predictors` were entered, select those; otherwise, select all except intercept
+  if(interaction_symbol_x == TRUE) {
+    # Replace colon in interactions with \u00D7, i.e., x; then set factor class
+    predictors$fixed_effect = predictors$fixed_effect %>% str_replace_all(':', ' \u00D7 ') %>% factor()
+  }
+  
+  # Order fixed effects as they were in the lme4::allFit output
+  predictors$fixed_effect = factor(predictors$fixed_effect, levels = unique(predictors$fixed_effect))
+  
+  predictors_plot = ggplot(predictors, aes(fixed_effect, value, colour = Optimizer)) +
+    geom_point(position = position_dodge(1)) +
+    facet_wrap(~fixed_effect, scale = 'free', 
+               # If nrow argument specified, use it
+               if(!is.null(nrow)) nrow = nrow - 1  # Subtract 1 as intercept row not considered
+    ) +
+    labs(y = y_title) +
+    theme_bw() + theme(axis.title.x = element_blank(), axis.text.x = element_blank(), 
+                       axis.ticks.x = element_blank(),
+                       axis.title.y = element_text(size = 14, margin = margin(0, 15, 0, 5, 'pt'), 
+                                                   hjust = y_title_hjust),  # Move up axis title
+                       strip.background = element_rect(fill = 'grey96'), legend.position = 'none')
+  
+  # If `shared_y_axis_limits` = TRUE, set the same limits in every plot. In this case, also 
+  # expand limits by a factor of 1.3 and allow further multiplication of limits through 
+  # `multiply_y_axis_limits` (default by 1). In contrast, if `shared_y_axis_limits` = FALSE, 
+  # no action is taken, and the default, plot-specific Y axis limits are used. 
+  if(shared_y_axis_limits == TRUE) {
+    predictors_plot = predictors_plot + ylim(range(allFit_fixef$value) * 1.3 * multiply_y_axis_limits)
+  }
+  
+  # Plot matrix: assign space to 
+  layout = c(
+    area(t = 1.5, r = 8.9, b = 5.5, l = 0),  # intercept row
+    area(t = 6, r = 9, b = 26, l = 0)        # predictors row(s)
+  )
+  
+  # Return matrix of plots
+  wrap_plots(intercept_plot, predictors_plot, design = layout, 
+             # The `nrow` below corresponds to intercept row (no. 1)
+             # followed by any other rows
+             nrow = 2)
+  
+}
