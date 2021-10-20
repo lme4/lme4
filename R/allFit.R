@@ -287,11 +287,7 @@ plot.allFit <- function(x, abbr=16, ...) {
          + ggplot2::theme(legend.position="none")
      )
 }
-
-# Plot the results from the fixed effects produced by different optimizers. This function 
-# takes the output from lme4::allFit(), tidies it, selects fixed effects and plots them.
-
-
+		    
 # Plot the results from the fixed effects produced by different optimizers. This function 
 # takes the output from lme4::allFit(), tidies it, selects fixed effects and plots them.
 
