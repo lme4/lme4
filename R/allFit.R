@@ -299,11 +299,11 @@ plot.fixef.allFit = function(allFit_output,
                              multiply_y_axis_limits = 1, 
                              # Select predictors
                              selected_predictors = NULL, 
-                             # Number of rows for predictors other than intercept
+                             # Number of rows
                              nrow = NULL, 
                              # Y axis title
                              y_title = 'Fixed effect',
-                             # Align Y axis title horizontally
+                             # Alignment of the Y axis title
                              y_title_hjust = .75,
                              # Add number to the names of optimizers
                              number_optimizers = TRUE,
