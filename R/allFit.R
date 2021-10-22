@@ -420,8 +420,14 @@ plot.fixef.allFit = function(allFit_output,
   # `multiply_y_axis_limits` (default by 1). In contrast, if `shared_y_axis_limits` = FALSE,
   # no action is taken, and the default, plot-specific Y axis limits are used.
   if(shared_y_axis_limits == TRUE) {
-    intercept_plot = intercept_plot + ylim(range(allFit_fixef$value) * 1.3 * multiply_y_axis_limits)
-    predictors_plot = predictors_plot + ylim(range(allFit_fixef$value) * 1.3 * multiply_y_axis_limits)
+    
+    intercept_plot = intercept_plot + 
+      ylim(min(allFit_fixef$value) - allFit_fixef$value %>% abs %>% max / 10,
+           max(allFit_fixef$value) + allFit_fixef$value %>% abs %>% max / 10)
+    
+    predictors_plot = predictors_plot + 
+      ylim(min(allFit_fixef$value) - allFit_fixef$value %>% abs %>% max / 10,
+           max(allFit_fixef$value) + allFit_fixef$value %>% abs %>% max / 10)
   }
   
   # Plot matrix: assign space to `intercept_plot` and `predictors_plot`
