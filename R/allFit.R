@@ -434,8 +434,7 @@ plot.fixef.allFit = function(allFit_output,
   
   # Return matrix of plots
   wrap_plots(intercept_plot, predictors_plot, design = layout,
-             # The `nrow` below corresponds to intercept row (no. 1)
-             # followed by any other rows
+             # The 2 below corresponds to intercept_plot and predictors_plot
              nrow = 2)
   
 }
