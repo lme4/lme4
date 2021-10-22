@@ -312,7 +312,6 @@ plot.fixef.allFit = function(allFit_output,
   
   # data wrangling
   if (!requireNamespace('dplyr')) install.packages('dplyr')
-  # data wrangling
   if (!requireNamespace('reshape2')) install.packages('reshape2')
   # text processing
   if (!requireNamespace('stringr')) install.packages('stringr')
