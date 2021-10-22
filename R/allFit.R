@@ -310,25 +310,20 @@ plot.fixef.allFit = function(allFit_output,
                              # Replace colon in interactions with x
                              interaction_symbol_x = TRUE) {
   
-  if (!requireNamespace('dplyr')) {    # data wrangling
-    install.packages('dplyr')
-  }
+  # data wrangling
+  if (!requireNamespace('dplyr')) install.packages('dplyr')
   
-  if (!requireNamespace('reshape2')) {   # data wrangling
-    install.packages('reshape2')
-  }
+  # data wrangling
+  if (!requireNamespace('reshape2')) install.packages('reshape2')
   
-  if (!requireNamespace('stringr')) {    # text processing
-    install.packages('stringr')
-  }
+  # text processing
+  if (!requireNamespace('stringr')) install.packages('stringr')
   
-  if (!requireNamespace('ggplot2')) {    # plotting
-    install.packages('ggplot2')
-  }
+  # plotting
+  if (!requireNamespace('ggplot2')) install.packages('ggplot2')
   
-  if (!requireNamespace('patchwork')) {    # matrix of plots
-    install.packages('patchwork')
-  }
+  # matrix of plots
+  if (!requireNamespace('patchwork')) install.packages('patchwork')
   
   require(dplyr)
   require(reshape2)
