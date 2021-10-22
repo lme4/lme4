@@ -422,12 +422,12 @@ plot.fixef.allFit = function(allFit_output,
   if(shared_y_axis_limits == TRUE) {
     
     intercept_plot = intercept_plot + 
-      ylim(min(allFit_fixef$value) - allFit_fixef$value %>% abs %>% max / 10,
-           max(allFit_fixef$value) + allFit_fixef$value %>% abs %>% max / 10)
+      ylim(min(allFit_fixef$value) - allFit_fixef$value %>% abs %>% max / 10 * multiply_y_axis_limits,
+           max(allFit_fixef$value) + allFit_fixef$value %>% abs %>% max / 10 * multiply_y_axis_limits)
     
     predictors_plot = predictors_plot + 
-      ylim(min(allFit_fixef$value) - allFit_fixef$value %>% abs %>% max / 10,
-           max(allFit_fixef$value) + allFit_fixef$value %>% abs %>% max / 10)
+      ylim(min(allFit_fixef$value) - allFit_fixef$value %>% abs %>% max / 10 * multiply_y_axis_limits,
+           max(allFit_fixef$value) + allFit_fixef$value %>% abs %>% max / 10 * multiply_y_axis_limits)
   }
   
   # Plot matrix: assign space to `intercept_plot` and `predictors_plot`
