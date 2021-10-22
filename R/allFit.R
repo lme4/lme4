@@ -339,7 +339,7 @@ plot.fixef.allFit = function(allFit_output,
     allFit_fixef$Optimizer = paste0(as.numeric(allFit_fixef$Optimizer), '. ', allFit_fixef$Optimizer)
   }
   
-  # If `select_predictors` were specified, select them along with the intercept (the latter required).
+  # If `select_predictors` were specified, select them along with the intercept (the latter required)
   if(!is.null(select_predictors)) {
     allFit_fixef = allFit_fixef %>% filter(fixed_effect %in% c('(Intercept)', select_predictors))
   }
@@ -376,10 +376,8 @@ plot.fixef.allFit = function(allFit_output,
   
   # Second row: predictors_plot
   
-  # If any `select_predictors` were entered, select those; otherwise, select all except intercept
-  if(!is.null(select_predictors)) {
-    predictors = allFit_fixef %>% filter(fixed_effect %in% select_predictors)
-  } else predictors = allFit_fixef %>% filter(!fixed_effect == '(Intercept)')
+  # Select all predictors except intercept
+  predictors = allFit_fixef %>% filter(!fixed_effect == '(Intercept)')
   
   # If `interaction_symbol_x` = TRUE (default), replace colon with times symbol x between spaces
   if(interaction_symbol_x == TRUE) {
