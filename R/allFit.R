@@ -312,16 +312,12 @@ plot.fixef.allFit = function(allFit_output,
   
   # data wrangling
   if (!requireNamespace('dplyr')) install.packages('dplyr')
-  
   # data wrangling
   if (!requireNamespace('reshape2')) install.packages('reshape2')
-  
   # text processing
   if (!requireNamespace('stringr')) install.packages('stringr')
-  
   # plotting
   if (!requireNamespace('ggplot2')) install.packages('ggplot2')
-  
   # matrix of plots
   if (!requireNamespace('patchwork')) install.packages('patchwork')
   
