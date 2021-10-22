@@ -294,17 +294,17 @@ plot.allFit <- function(x, abbr=16, ...) {
 plot.fixef.allFit = function(allFit_output, 
                              # Set the same Y axis limits in every plot
                              shared_y_axis_limits = TRUE,
-                             # Multiply Y axis limits by a factor 
-                             # (available if `shared_y_axis_limits` = TRUE)
+                             # Multiply Y axis limits by a factor (only 
+                             # available if `shared_y_axis_limits` = TRUE)
                              multiply_y_axis_limits = 1, 
                              # Select predictors
-                             selected_predictors = NULL, 
+                             select_predictors = NULL, 
                              # Number of rows
                              nrow = NULL, 
                              # Y axis title
                              y_title = 'Fixed effect',
                              # Alignment of the Y axis title
-                             y_title_hjust = .75,
+                             y_title_hjust = 0.81,
                              # Add number to the names of optimizers
                              number_optimizers = TRUE,
                              # Replace colon in interactions with x
@@ -338,7 +338,7 @@ plot.fixef.allFit = function(allFit_output,
   
   # Tidy allFit output
   
-  # Extract fixed effects from the allFit results
+  # Extract fixed effects from the allFit() output
   allFit_fixef = summary(allFit_output)$fixef %>%  # Select fixed effects in the allFit results
     reshape2::melt() %>%  # Structure the output as a data frame
     rename('Optimizer' = 'Var1', 'fixed_effect' = 'Var2')  # set informative names
@@ -348,9 +348,9 @@ plot.fixef.allFit = function(allFit_output,
     allFit_fixef$Optimizer = paste0(as.numeric(allFit_fixef$Optimizer), '. ', allFit_fixef$Optimizer)
   }
   
-  # If `selected_predictors` were specified, select them along with the intercept (the latter required).
-  if(!is.null(selected_predictors)) {
-    allFit_fixef = allFit_fixef %>% filter(fixed_effect %in% c('(Intercept)', selected_predictors))
+  # If `select_predictors` were specified, select them along with the intercept (the latter required).
+  if(!is.null(select_predictors)) {
+    allFit_fixef = allFit_fixef %>% filter(fixed_effect %in% c('(Intercept)', select_predictors))
   }
   
   # Order variables
@@ -363,7 +363,7 @@ plot.fixef.allFit = function(allFit_output,
   # If `multiply_y_axis_limits` has been specified but `shared_y_axis_limits` = FALSE,
   # warn that `shared_y_axis_limits` is required.
   if(!multiply_y_axis_limits == 1 & shared_y_axis_limits == FALSE) {
-    warning('The argument `multiply_y_axis_limits` has not been used because it requires `shared_y_axis_limits` set to TRUE.')
+    message('The argument `multiply_y_axis_limits` has not been used because it requires `shared_y_axis_limits` set to TRUE.')
   }
   
   # First row: intercept_plot
@@ -378,59 +378,69 @@ plot.fixef.allFit = function(allFit_output,
     guides(colour = guide_legend(title.position = 'left')) +
     theme_bw() + theme(axis.title = element_blank(), axis.ticks.x = element_blank(),
                        axis.text.x = element_blank(), 
-                       strip.background = element_rect(fill = 'grey96'), 
-                       legend.margin = margin(0.5, 0, 0.8, 1, 'cm'), 
+                       strip.text = element_text(size = 10, margin = margin(t = 4, b = 6)),
+                       strip.background = element_rect(fill = 'grey96'),
+                       legend.margin = margin(0.3, 0, 0.8, 1, 'cm'), 
                        legend.title = element_text(size = unit(15, 'pt'), angle = 90, hjust = 0.5))
-  
-  # If `shared_y_axis_limits` = TRUE, set the same limits in every plot. In this case, also 
-  # expand limits by a factor of 1.3 and allow further multiplication of limits through 
-  # `multiply_y_axis_limits` (default by 1). In contrast, if `shared_y_axis_limits` = FALSE, 
-  # no action is taken, and the default, plot-specific Y axis limits are used. 
-  if(shared_y_axis_limits == TRUE) {
-    intercept_plot = intercept_plot + ylim(range(allFit_fixef$value) * 1.3 * multiply_y_axis_limits)
-  }
   
   # Second row: predictors_plot
   
-  # If any `selected_predictors` were entered, select those; otherwise, select all except intercept
-  if(!is.null(selected_predictors)) {
-    predictors = allFit_fixef %>% filter(fixed_effect %in% selected_predictors)
+  # Order predictors as in the original output from lme4::allFit()
+  predictors$fixed_effect = factor(predictors$fixed_effect, levels = unique(predictors$fixed_effect))
+  
+  # If any `select_predictors` were entered, select those; otherwise, select all except intercept
+  if(!is.null(select_predictors)) {
+    predictors = allFit_fixef %>% filter(fixed_effect %in% select_predictors)
   } else predictors = allFit_fixef %>% filter(!fixed_effect == '(Intercept)')
   
-  # If any `selected_predictors` were entered, select those; otherwise, select all except intercept
+  # If `interaction_symbol_x` = TRUE (default), replace colon with times symbol x between spaces
   if(interaction_symbol_x == TRUE) {
     # Replace colon in interactions with \u00D7, i.e., x; then set factor class
     predictors$fixed_effect = predictors$fixed_effect %>% str_replace_all(':', ' \u00D7 ') %>% factor()
   }
   
-  # Order fixed effects as they were in the lme4::allFit output
-  predictors$fixed_effect = factor(predictors$fixed_effect, levels = unique(predictors$fixed_effect))
+  # Set number of rows for the predictors excluding the intercept. 
+  # First, if `nrow` argument specified, use it
+  if(!is.null(nrow)) {
+    predictors_plot_nrow = nrow - 1  # Subtract 1 as intercept row not considered
+    
+    # Also, if more than 5 rows in predictors_plot_nrow, advise user to consider distributing predictors 
+    # into several plots
+    if(!is.null(nrow) & nrow > 5) {
+      message('Many rows! Consider distributing predictors into several plots using argument `select_predictors`')
+    }
+    
+    # Else, if `nrow` argument not specified, calculate sensible number of rows: i.e., divide number of 
+    # predictors (exc. intercept) by 2 and round up the result. For instance, 7 predictors --> 3 rows
+  } else predictors_plot_nrow = (length(unique(predictors$fixed_effect)) / 2) %>% ceiling()
   
   predictors_plot = ggplot(predictors, aes(fixed_effect, value, colour = Optimizer)) +
     geom_point(position = position_dodge(1)) +
     facet_wrap(~fixed_effect, scale = 'free', 
-               # If nrow argument specified, use it
-               if(!is.null(nrow)) nrow = nrow - 1  # Subtract 1 as intercept row not considered
-    ) +
+               # Note that predictors_plot_nrow was defined a few lines above
+               nrow = predictors_plot_nrow) +
     labs(y = y_title) +
     theme_bw() + theme(axis.title.x = element_blank(), axis.text.x = element_blank(), 
                        axis.ticks.x = element_blank(),
                        axis.title.y = element_text(size = 14, margin = margin(0, 15, 0, 5, 'pt'), 
                                                    hjust = y_title_hjust),  # Move up axis title
+                       strip.text = element_text(size = 10, margin = margin(t = 4, b = 6)),
                        strip.background = element_rect(fill = 'grey96'), legend.position = 'none')
   
-  # If `shared_y_axis_limits` = TRUE, set the same limits in every plot. In this case, also 
+  # If `shared_y_axis_limits` = TRUE, set the same Y axis limits in every plot. In this case, also 
   # expand limits by a factor of 1.3 and allow further multiplication of limits through 
   # `multiply_y_axis_limits` (default by 1). In contrast, if `shared_y_axis_limits` = FALSE, 
   # no action is taken, and the default, plot-specific Y axis limits are used. 
   if(shared_y_axis_limits == TRUE) {
+    intercept_plot = intercept_plot + ylim(range(allFit_fixef$value) * 1.3 * multiply_y_axis_limits)
     predictors_plot = predictors_plot + ylim(range(allFit_fixef$value) * 1.3 * multiply_y_axis_limits)
   }
   
-  # Plot matrix: assign space to 
+  # Plot matrix: assign space to `intercept_plot` and `predictors_plot` 
+  # depending on `predictors_plot_nrow`
   layout = c(
-    area(t = 1.5, r = 8.9, b = 5.5, l = 0),  # intercept row
-    area(t = 6, r = 9, b = 26, l = 0)        # predictors row(s)
+    area(t = 1.5, r = 8.9, b = 6.8, l = 0),  # intercept row
+    area(t = 7.3, r = 9, b = 26, l = 0)        # predictors row(s)
   )
   
   # Return matrix of plots
