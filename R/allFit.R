@@ -355,13 +355,18 @@ plot.fixef.allFit = function(allFit_output,
   # (intercept_plot), and a second row containing the predictors (predictors_plot), 
   # which may in turn occupy several rows.
   
-  # If multiply_y_axis_limits has been specified but shared_y_axis_limits = FALSE,
+  # If multiply_y_axis_limits was specified but shared_y_axis_limits = FALSE,
   # warn that shared_y_axis_limits is required.
   if(!multiply_y_axis_limits == 1 & shared_y_axis_limits == FALSE) {
     message('The argument `multiply_y_axis_limits` has not been used because it requires `shared_y_axis_limits` set to TRUE.')
   }
   
-  # If decimal_points has been specified, convert number to the format used in 'scales' package
+  # If extreme values were entered in y_title_hjust, show warning
+  if(!is.null(y_title_hjust) & (y_title_hjust < 0.5 | y_title_hjust > 6)) {
+    message('NOTE: For y_title_hjust, a working range of values is between 0.6 and 6.')
+  }
+  
+  # If decimal_points were specified, convert number to the format used in 'scales' package
   if(!is.null(decimal_points)) {
     decimal_points = 
       ifelse(decimal_points == 1, 0.1, 
@@ -436,9 +441,9 @@ plot.fixef.allFit = function(allFit_output,
                        strip.background = element_rect(fill = 'grey96'), legend.position = 'none')
   
   # Below, the function scale_y_continuous is applied conditionally to avoid overriding settings. First, 
-  # if shared_y_axis_limits = TRUE and decimal_points has been specified, set the same Y axis 
-  # limits in every plot and set decimal_points. By default, also expand limits by a seventh of its 
-  # original limit, and allow further multiplication of limits through multiply_y_axis_limits.
+  # if shared_y_axis_limits = TRUE and decimal_points were specified, set the same Y axis limits in 
+  # every plot and set decimal_points. By default, also expand limits by a seventh of its original limit, 
+  # and allow further multiplication of limits through multiply_y_axis_limits.
   if(shared_y_axis_limits == TRUE & !is.null(decimal_points)) {
     
     intercept_plot = intercept_plot +
@@ -453,7 +458,7 @@ plot.fixef.allFit = function(allFit_output,
                          # Set number of decimal points
                          labels = scales::label_number(accuracy = decimal_points))
     
-    # Else, if shared_y_axis_limits = TRUE but decimal_points has not been specified, do as above but without
+    # Else, if shared_y_axis_limits = TRUE but decimal_points were not specified, do as above but without
     # setting decimal_points.
   } else if(shared_y_axis_limits == TRUE & is.null(decimal_points)) {
     
@@ -465,7 +470,7 @@ plot.fixef.allFit = function(allFit_output,
       scale_y_continuous(limits = c(min(allFit_fixef$value) - allFit_fixef$value %>% abs %>% max / 7 * multiply_y_axis_limits,
                                     max(allFit_fixef$value) + allFit_fixef$value %>% abs %>% max / 7 * multiply_y_axis_limits))
     
-    # Else, if shared_y_axis_limits = FALSE and decimal_points has been specified, set decimal_points. 
+    # Else, if shared_y_axis_limits = FALSE and decimal_points were specified, set decimal_points. 
   } else if(shared_y_axis_limits == FALSE & !is.null(decimal_points)) {
     
     intercept_plot = intercept_plot +
@@ -482,9 +487,6 @@ plot.fixef.allFit = function(allFit_output,
     # If y_title_hjust specified by user, use it
     if(!is.null(y_title_hjust)) {
       predictors_plot = predictors_plot + theme(axis.title.y = element_text(hjust = y_title_hjust))
-      # Also, inform user about the working range of values for y_title_hjust
-      message('NOTE: A working range of values for `y_title_hjust` is between 0.6 and 5.')
-      
       # Otherwise, set a sensible height
     } else predictors_plot = predictors_plot + theme(axis.title.y = element_text(hjust = 3.6))
     
