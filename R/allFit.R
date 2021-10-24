@@ -482,6 +482,9 @@ plot.fixef.allFit = function(allFit_output,
     # If y_title_hjust specified by user, use it
     if(!is.null(y_title_hjust)) {
       predictors_plot = predictors_plot + theme(axis.title.y = element_text(hjust = y_title_hjust))
+      # Also, inform user about the working range of values for y_title_hjust
+      message('NOTE: A working range of values for `y_title_hjust` is between 0.6 and 5.')
+      
       # Otherwise, set a sensible height
     } else predictors_plot = predictors_plot + theme(axis.title.y = element_text(hjust = 3.6))
     
