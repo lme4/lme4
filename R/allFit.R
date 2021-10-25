@@ -362,8 +362,10 @@ plot.fixef.allFit = function(allFit_output,
   }
   
   # If extreme values were entered in y_title_hjust, show warning
-  if(!is.null(y_title_hjust) & (y_title_hjust < 0.5 | y_title_hjust > 6)) {
-    message('NOTE: For y_title_hjust, a working range of values is between 0.6 and 6.')
+  if(!is.null(y_title_hjust)) {
+    if(y_title_hjust < 0.5 | y_title_hjust > 6) {
+      message('NOTE: For y_title_hjust, a working range of values is between 0.6 and 6.')
+    }
   }
   
   # If decimal_points were specified, convert number to the format used in 'scales' package
