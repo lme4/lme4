@@ -193,7 +193,7 @@ if(FALSE) { ## Hadley broke this
         expect_lte(t2[3], 1.25 * t1[3])
         ## problem is fairly ill-conditioned so parameters
         ##  are relatively far apart even though likelihoods are OK
-        expect_equal(logLik(g1),logLik(g2),tolerance=1e-7)
+        expect_equal(logLik(g1),logLik(g2),tolerance=2e-7)
     }
     ## test bootstrap/refit with nAGQ>1
     gm1AGQ <- update(gm1,nAGQ=2)
