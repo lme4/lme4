@@ -1204,14 +1204,14 @@ ranef.merMod <- function(object, condVar = TRUE, drop = FALSE,
         condVar <- postVar
     }
     ans <- object@pp$b(1) ## not always == c(matrix(unlist(getME(object,"b"))))
-    if (!is.null(object@flist)) {
+    if (!is.null(fl <- object@flist)) {
         ## evaluate the list of matrices
-        levs <- lapply(fl <- object@flist, levels)
+        levs <- lapply(fl, levels)
         asgn <- attr(fl, "assign")
         cnms <- object@cnms
         nc <- lengths(cnms) ## number of terms
         ## nb <- nc * lengths(levs)[asgn] ## number of cond modes per term
-        nb <- diff(object@Gp)
+        nb <- diff(object@Gp)  ## differencing group index is more robust
         nbseq <- rep.int(seq_along(nb), nb)
         ml <- split(ans, nbseq)
         for (i in seq_along(ml))
