@@ -4,7 +4,7 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-27.9000}{
+\section{CHANGES IN VERSION 1.1-28}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item construction of interacting factors (e.g. when \code{f1:f2} or
