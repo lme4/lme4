@@ -1181,9 +1181,7 @@ NULL
 ##' dotplot(rr1)  ## default
 ##' ## specify free scales in order to make Day effects more visible
 ##' dotplot(rr1,scales = list(x = list(relation = 'free')))[["Subject"]]
-##' if(FALSE) { ##-- condVar=TRUE is not yet implemented for multiple terms -- FIXME
 ##' str(ranef(fm2, condVar = TRUE))
-##' }
 ##' op <- options(digits = 4)
 ##' ranef(fm3, drop = TRUE)
 ##' options(op)
