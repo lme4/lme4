@@ -87,6 +87,7 @@
   (see \code{\link{qqmath.ranef.mer}} for Q-Q plots of the
   conditional mode values).
 }
+\seealso{\code{influencePlot} in the \code{car} package}
 \author{
   original version in \CRANpkg{nlme} package by Jose Pinheiro
   and Douglas Bates.
@@ -102,14 +103,24 @@ plot(fm1, Subject ~ resid(., scaled=TRUE))
 plot(fm1, distance ~ fitted(.) | Subject, abline = c(0,1))
 ## residuals by age, separated by Subject
 plot(fm1, resid(., scaled=TRUE) ~ age | Sex, abline = 0)
-library(lattice) ## needed for qqmath
-qqmath(fm1, id=0.05)
+## scale-location plot, with red smoothed line
+scale_loc_plot <- function(m, line.col = "red", line.lty = 1,
+                           line.lwd = 2) {
+  plot(fm1, sqrt(abs(resid(.))) ~ fitted(.),
+       type = c("p", "smooth"),
+       par.settings = list(plot.line =
+                             list(alpha=1, col = line.col,
+                                  lty = line.lty, lwd = line.lwd)))
+}
+scale_loc_plot(fm1)
+## Q-Q plot
+lattice::qqmath(fm1, id=0.05)
 ggp.there <- "package:ggplot2" \%in\% search()
 if (ggp.there || require("ggplot2")) {
     ## we can create the same plots using ggplot2 and the fortify() function
     fm1F <- fortify.merMod(fm1)
-    ggplot(fm1F, aes(.fitted,.resid)) + geom_point(colour="blue") +
-           facet_grid(.~Sex) + geom_hline(yintercept=0)
+    ggplot(fm1F, aes(.fitted, .resid)) + geom_point(colour="blue") +
+           facet_grid(. ~ Sex) + geom_hline(yintercept=0)
     ## note: Subjects are ordered by mean distance
     ggplot(fm1F, aes(Subject,.resid)) + geom_boxplot() + coord_flip()
     ggplot(fm1F, aes(.fitted,distance)) + geom_point(colour="blue") +
