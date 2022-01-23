@@ -43,7 +43,8 @@ stopifnot(all.equal(fixef(gm1)[2]-3,fixef(gm1off)[2],tolerance=3e-4))
 p0 <- predict(gm1)
 p1 <- predict(gm1,newdata=d)
 p2 <- predict(gm1off,newdata=d)
-stopifnot(all.equal(p0,p1,p2))
+stopifnot(all.equal(p0,p1))
+stopifnot(all.equal(p1,p2))
 
 ## FIXME: should also test simulations
 } ## skip on windows (for speed)
