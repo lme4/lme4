@@ -17,7 +17,8 @@ isRE(~0+x) ##  "
 ##' Random Effects formula only
 reOnly <- function(f, response=FALSE) {
     reformulate(paste0("(", vapply(findbars(f), deparse1, ""), ")"),
-                response = if(response && length(f)==3L) f[[2]])
+                response = if(response && length(f)==3L) f[[2]],
+                env = environment(f))
 }
 
 reFormHack <- function(re.form,ReForm,REForm,REform) {
