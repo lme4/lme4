@@ -14,8 +14,15 @@
       \code{f2}) (GH #635 and #636)
       \item \code{mkNewReTrms} is exported
     }
-  }
-}
+  } %% user-visible changes
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{reOnly} preserves environment (GH #654, Mikael Jagan)
+      \item backward-compatibility hooks changed to evaluate at run-time
+      (i.e., in \code{.onLoad()}) rather than at build time (GH #649)
+    }
+  } %% bug fixes
+} %% version 1.1-28
 
 \section{CHANGES IN VERSION 1.1-27.1 (2021-06-22)}{
  \subsection{USER-VISIBLE CHANGES}{
