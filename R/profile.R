@@ -225,7 +225,6 @@ profile.merMod <- function(fitted,
         if (verbose) cat(if(isLMM(fitted)) "var-cov " else "",
                              "parameter ",w,":\n",sep="")
         wp1 <- w + 1L
-        start <- opt[seqpar1][-w]
         pw <- opt[w]
         lowcut <- lower[w]
         upcut <- upper[w]
