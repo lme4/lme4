@@ -223,3 +223,13 @@ test_that("formula and data validation work with do.call() in artificial environ
         "merMod"
     )
 })
+
+test_that("correct environment on reOnly()", {
+  ## GH 654
+  f <- Reaction ~ Days + (1 | Subject)
+  e <- environment(f)
+  m <- lmer(f, data = sleepstudy)
+  expect_identical(environment(formula(m)), e) # TRUE
+  expect_identical(environment(formula(m, fixed.only = TRUE)), e) # TRUE
+  expect_identical(ee <- environment(formula(m, random.only = TRUE)), e) # FALSE
+})

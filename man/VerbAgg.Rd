@@ -22,13 +22,15 @@
       levels \code{N} and \code{Y}}
   }}
 \source{
-  \url{https://bearcenter.berkeley.edu/EIRM/}
+    Data (previously) available from the 
+    UC Berkeley BEAR Center (web page at
+    \url{https://bearcenter.berkeley.edu/EIRM/}
+    currently [January 2022] undergoing maintenance)
 }
 \description{
   These are the item responses to a questionaire on verbal
   aggression.  These data are used throughout De Boeck and
-  Wilson, \emph{Explanatory Item Response Models}
-  (Springer, 2004) to illustrate various forms of item
+  Wilson (2004) to illustrate various forms of item
   response models.
 }
 \examples{
