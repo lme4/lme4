@@ -20,12 +20,12 @@
       and \code{do}}
     \item{\code{r2}}{dichotomous version of the response - a factor with
       levels \code{N} and \code{Y}}
-  }}
+  }
+}
 \source{
-    Data (previously) available from the 
-    UC Berkeley BEAR Center (web page at
-    \url{https://bearcenter.berkeley.edu/EIRM/}
-    currently [January 2022] undergoing maintenance)
+  Data (previously) available from the UC Berkeley BEAR Center (web page at
+  \url{https://bearcenter.berkeley.edu/EIRM/}
+  currently [January 2022] undergoing maintenance)
 }
 \description{
   These are the item responses to a questionaire on verbal
