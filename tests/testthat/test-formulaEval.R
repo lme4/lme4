@@ -224,7 +224,7 @@ test_that("formula and data validation work with do.call() in artificial environ
     )
 })
 
-testthat("correct environment on reOnly()", {
+test_that("correct environment on reOnly()", {
   ## GH 654
   f <- Reaction ~ Days + (1 | Subject)
   e <- environment(f)

@@ -25,7 +25,8 @@ stopifnot(all.equal(fixef(fm1)[2]-3,fixef(fm1off)[2]))
 p0 <- predict(fm1)
 p1 <- predict(fm1,newdata=d)
 p2 <- predict(fm1off,newdata=d)
-stopifnot(all.equal(p0,p1,p2))
+  stopifnot(all.equal(p0,p1))
+  stopifnot(all.equal(p1,p2))
 
 
 ## glmer() test:
