@@ -22,7 +22,7 @@
       levels \code{N} and \code{Y}}
   }}
 \source{
-  \url{http://bear.soe.berkeley.edu/EIRM/}
+  \url{https://bearcenter.berkeley.edu/EIRM/}
 }
 \description{
   These are the item responses to a questionaire on verbal
