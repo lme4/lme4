@@ -28,14 +28,6 @@ Loading required package: tools
 +    sn <- slotNames(obj)
 +    structure(lapply(sn, slot, object = obj), .Names = sn)
 + }
-> ## Is now (2010-09-03) in Matrix' test-tools.R above
-> ## showProc.time <- local({
-> ##     pct <- proc.time()
-> ##     function() { ## CPU elapsed __since last called__
-> ## 	ot <- pct ; pct <<- proc.time()
-> ## 	cat('Time elapsed: ', (pct - ot)[1:3],'\n')
-> ##     }
-> ## })
 > 
 > if (lme4:::testLevel() > 1) {
 + oldOpts <- options(digits=2)
