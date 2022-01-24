@@ -21,14 +21,16 @@
     \item{\code{r2}}{dichotomous version of the response - a factor with
       levels \code{N} and \code{Y}}
   }}
-\source{
-  \url{http://bear.soe.berkeley.edu/EIRM/}
-}
-\description{
+  \source{
+    Data (previously) available from the 
+    UC Berkeley BEAR Center (web page at
+    \code{http://bear.soe.berkeley.edu/EIRM/},
+    currently [January 2022] undergoing maintenance)
+  }
+  \description{
   These are the item responses to a questionaire on verbal
   aggression.  These data are used throughout De Boeck and
-  Wilson, \emph{Explanatory Item Response Models}
-  (Springer, 2004) to illustrate various forms of item
+  Wilson (2004) to illustrate various forms of item
   response models.
 }
 \examples{
