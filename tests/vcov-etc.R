@@ -1,6 +1,8 @@
 stopifnot(require(lme4))
 
 (testLevel <- lme4:::testLevel())
+source(system.file("testdata", "lme-tst-funs.R", package="lme4", mustWork=TRUE))# -> unn()
+
 
 ## "MEMSS" is just 'Suggest' -- must still work, when it's missing:
 if (suppressWarnings(!require(MEMSS, quietly=TRUE)) ||
@@ -19,20 +21,15 @@ fe1   <- fixef(fm1)
 
 print(s1.d <- summary(fm1))
 ##sp print(s1.s <- summary(fm1.s))
+Tse1.d <- c(0.57601226, rep(0.51868384, 3))
 stopifnot(exprs = {
     ##sp all.equal(fe1, fe1.s, tolerance= 1e-12)
-    all.equal(unname(se1.d <- coef(s1.d)[,"Std. Error"]),
-              c(0.57601291, rep(0.51868351, 3)), tolerance = 1e-6)
+    all.equal(Tse1.d, unname(se1.d <- coef(s1.d)[,"Std. Error"]),
+              tolerance = 1e-6) # std.err.: no too much accuracy
     is(V.d <- vcov(fm1), "symmetricMatrix")
     ##sp all.equal(se1.d, coef(s1.s)[,"Std. Error"])#, tol = 1e-10
     ##sp all.equal(  V.d, vcov(fm1.s))#, tol = 1e-9
-    all.equal(Matrix::diag(V.d), unname(se1.d)^2, tolerance= 1e-12)
-    all.equal(unname(se1.d),
-              if(fm1@optinfo$optimizer == "Nelder_Mead")
-                  c(0.57601196, rep(0.51868399, 3))
-              else ## "bobyqa"
-                  c(0.57601226, rep(0.51868384, 3)),
-              tolerance = 1e-6) ## std.err.: no extreme accuracy needed
+    all.equal(Matrix::diag(V.d), unn(se1.d)^2, tolerance= 1e-12)
 })
 
 }## if( ergoStool is available from pkg MEMSS )

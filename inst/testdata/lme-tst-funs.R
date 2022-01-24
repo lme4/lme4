@@ -135,3 +135,10 @@ emptyCall <- function(mod, arg = quote(`.....`)) {
     mod@call <- cl
     mod
 }
+
+## Matrix >= 1.4.1  keeps names in  diag(.)
+Mge141 <- packageVersion("Matrix") >= "1.4.1"
+uc <- if(Mge141) c else function(...) c(..., use.names = FALSE)
+## uc(a = 1.234, b = 4...)  has names for Matrix >= 1.4.1
+unn <- if(Mge141) identity else unname
+## unn(vec)  # keeps names for Matrix >= 1.4.1
