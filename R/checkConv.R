@@ -32,7 +32,7 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
         ## singular fit
         ## are there other circumstances where we can get a singular fit?
         if (is.singular) {
-            wstr <- "boundary (singular) fit: see ?isSingular"
+            wstr <- "boundary (singular) fit: see help('isSingular')"
             res$messages <- c(res$messages,wstr)
             switch(cc,
                    "message" = message(wstr),
