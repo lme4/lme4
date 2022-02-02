@@ -24,7 +24,7 @@ test_that("basic lmList", {
 		    tolerance = 1e-7, check.attributes=FALSE)
     expect_equal(coef(fm1.), coef(fm1))
     expect_true(inherits(formula(fm1), "formula")) ## <- had been wrong till 2015-04-09
-    
+
     sm1. <- summary(fm1.)
     sm1 <- summary(fm1)
     expect_equal(sm1$RSE, 25.5918156267, tolerance = 1e-10)
@@ -54,11 +54,11 @@ test_that("simulated", {
     )
 
     fm3.1 <- lmList(y1 ~ 1 | g, data=d)
-    expect_equal(coef(fm3.1),    
-    structure(list(`(Intercept)` = c(45.8945525606396, 50.1127995110841, 
+    expect_equal(coef(fm3.1),
+    structure(list(`(Intercept)` = c(45.8945525606396, 50.1127995110841,
                  49.5320538515225, 52.4286874305165, 48.7716343882989)),
               .Names = "(Intercept)",
-              row.names = c("A", 
+              row.names = c("A",
                             "B", "C", "D", "E"), class = "data.frame",
               label = "Coefficients", effectNames = "(Intercept)",
               standardized = FALSE))
@@ -93,14 +93,14 @@ test_that("cbpp", {
     expect_warning(fm4B <- lme4::lmList(incidence ~ period | herd,
                                         data=cbpp),
                    "Fitting failed")
-    
-    
+
+
 
 if(FALSE) {
         ## FIXME: this is actually an nlme bug ...
         ## https://bugs.r-project.org/bugzilla/show_bug.cgi?id=16542
         try(summary(fm4))
-        ## Error in `[<-`(`*tmp*`, use, use, ii, value = lst[[ii]]) : 
+        ## Error in `[<-`(`*tmp*`, use, use, ii, value = lst[[ii]]) :
         ##   subscript out of bounds
         library(nlme)
         data("cbpp",package="lme4")
@@ -115,7 +115,7 @@ if(FALSE) {
 })
 
 test_that("NA,weights,offsets", {
- 
+
     ## from GH #320
     set.seed(101)
     x <- 1:8
@@ -166,7 +166,7 @@ test_that("pooled",
     ## nlme::intervals(fm_nlme,pool=FALSE)
     ## nlme::intervals(fm_nlme_nopool)
     expect_equal(ci_lme4_nopool1[1:3,,1],
-                 structure(c(179.433862895996, 193.026448122379, 186.785722998616, 
+                 structure(c(179.433862895996, 193.026448122379, 186.785722998616,
                              308.951475285822, 217.083442786712, 220.182727910474),
                            .Dim = c(3L, 2L), .Dimnames = list(c("308", "309", "310"),
                                                               c("2.5 %", "97.5 %"))))
@@ -178,7 +178,7 @@ test_that("derived variables",
               fm_nlme <- nlme:::lmList(log(Reaction) ~ Days | Subject, sleepstudy)
               expect_equal(c(coef(fm_lme4)),c(coef(fm_nlme)),tolerance=1e-5)
           })
-          
+
 test_that("subset", {
     data(MathAchieve, package="nlme")
     data(MathAchSchool, package="nlme")
@@ -187,7 +187,7 @@ test_that("subset", {
     names(RB) <- tolower(names(RB))
     RB$cses <- with(RB, ses - meanses)
     cat.list.nlme <- nlme::lmList(mathach ~ cses | school,
-                  subset = sector=="Catholic", 
+                  subset = sector=="Catholic",
                   data=RB)
     cat.list.lme4 <- lme4::lmList(mathach ~ cses | school,
                                   subset = sector=="Catholic", data=RB)
@@ -195,3 +195,13 @@ test_that("subset", {
                  c(coef(cat.list.nlme)),tolerance=1e-5)
 })
 
+if (requireNamespace("tibble")) {
+  test_that("avoid tibble warnings", {
+    ## GH 645
+    op <- options(warn = 2)
+    m1 <- lmList(Reaction ~ Days | Subject, data = sleepstudy)
+    m2 <- lmList(Reaction ~ Days | Subject, data = tibble::as_tibble(sleepstudy))
+    expect_identical(coef(m1), coef(m2))
+    options(op)
+  })
+}

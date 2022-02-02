@@ -132,9 +132,10 @@ lmList <- function(formula, data, family, subset, weights,
     mf2 <- if (missing(family)) NULL else list(family=family)
     fitfun <- function(data, formula) {
         tryCatch({
-            do.call(fit,c(list(formula, data,
-                               weights = model.weights(data),
-                               offset = model.offset(data), ...),
+          do.call(fit, c(list(formula, data,
+                              ## don't use model.offset()/model.weights from stats() - warning with tibbles
+                               weights = data[["(weights)"]],
+                               offset = data[["(offset)"]], ...),
                           mf2))
         }, error = function(x) x)
     }
