@@ -52,7 +52,8 @@ Suggests:
     mgcv,
     statmod,
     rr2,
-    semEff
+    semEff,
+    tibble
 VignetteBuilder: knitr
 LazyData: yes
 License: GPL (>=2)
