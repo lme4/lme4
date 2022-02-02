@@ -4,7 +4,7 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-28 (2022-01-24)}{
+\section{CHANGES IN VERSION 1.1-28 (2022-02-02)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item construction of interacting factors (e.g. when \code{f1:f2} or
@@ -13,6 +13,8 @@
       (doesn't try to create all combinations of \code{f1} and
       \code{f2}) (GH #635 and #636)
       \item \code{mkNewReTrms} is exported
+      \item singular-fit message now refers to \code{help("isSingular")}
+  rather than \code{?isSingular}
     }
   } %% user-visible changes
   \subsection{TESTS}{
@@ -27,6 +29,8 @@
       \item \code{reOnly} preserves environment (GH #654, Mikael Jagan)
       \item backward-compatibility hooks changed to evaluate at run-time
       (i.e., in \code{.onLoad()}) rather than at build time (GH #649)
+      \item \code{lmList} no longer warns when \code{data} is a tibble
+  (GH #645)
     }
   } %% bug fixes
 } %% version 1.1-28
