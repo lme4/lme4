@@ -71,7 +71,11 @@ jobs:
         run: |
           sudo apt-get install texlive texlive-latex-base texlive-latex-extra
 
-      - name: Install dependencies
+      - name: Install curl (for rcmdcheck)
+        run: |
+          sudo apt-get install libcurl4-openssl-dev
+
+- name: Install dependencies
         run: |
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
