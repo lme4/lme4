@@ -74,7 +74,7 @@ optTheta <- function(object,
           }
       }
   }
-          
+
   lastfit
 }
 
@@ -109,7 +109,7 @@ glmer.nb <- function(..., interval = log(th) + c(-3,3),
     mc <- match.call()
 
     if (is.null(th <- initCtrl$theta)) {
-        mc[[1]] <- quote(glmer)
+        mc[[1]] <- quote(lme4::glmer)
         mc$family <- quote(stats::poisson)
         mc$verbose <- (verbose>=2)
         mc$nb.control <- NULL
@@ -121,7 +121,7 @@ glmer.nb <- function(..., interval = log(th) + c(-3,3),
 
         th <- est_theta(g0, limit = initCtrl$limit,
                         eps = initCtrl$eps, trace = initCtrl$trace)
-    
+
         ## using format() on purpose, influenced by options(digits = *) :
         if(verbose) cat("th := est_theta(glmer(..)) =", format(th))
     }
