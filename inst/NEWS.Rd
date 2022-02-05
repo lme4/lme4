@@ -4,7 +4,15 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-28 (2022-02-02)}{
+\section{CHANGES IN VERSION 1.1-28.9000}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{glmer.nb} now works when \code{lme4} is not loaded (GH #658, @brgew)
+    } % itemize
+  } % bug fixes
+} % 1.1-28.9000
+
+\section{CHANGES IN VERSION 1.1-28 (2022-02-04)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item construction of interacting factors (e.g. when \code{f1:f2} or
