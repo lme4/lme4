@@ -78,7 +78,7 @@ test_that("lmer", {
     expect_that(getME(fm3,"n_rfacs"),                   equals(1L))
 
     expect_equal(getME(fm3, "lower"), c(`Subject.(Intercept)` = 0, Subject.Days = 0))
-    
+
     expect_error(fm4 <- lmer(Reaction ~ Days + (1|Subject),
                             subset(sleepstudy,Subject==levels(Subject)[1])), "must have > 1")
     expect_warning(fm4 <- lFormula(Reaction ~ Days + (1|Subject),
@@ -312,7 +312,7 @@ test_that("better info about optimizer convergence",
                      )
 
     ## FIXME: with new update, suppressWarnings(update(gm2)) will give
-    ## Error in as.list.environment(X[[i]], ...) : 
+    ## Error in as.list.environment(X[[i]], ...) :
     ## promise already under evaluation: recursive default argument reference or earlier problems?
     op <- options(warn=-1)
     gm3 <- update(gm2,
@@ -348,7 +348,7 @@ test_that("convergence warnings from limited evals", {
                    "failure to converge in 3 evaluations")
     expect_true(msg_in_output(fm1D@optinfo,
                               "failure to converge in 3 evaluations"))
-    expect_message(fm0D <- update(fm0, control=lmerControl(optimizer="Nelder_Mead")),
+    expect_message(fm0D <- update(fm0, control=lmerControl(optimizer="Nelder_Mead",calc.derivs=FALSE)),
                    "boundary")
     expect_true(msg_in_output(fm0D@optinfo,
                               "(OK)"))
