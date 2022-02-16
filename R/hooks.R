@@ -18,7 +18,7 @@
       if (Rv < "3.6.0") {
         assign('reformulate', envir = topenv(),
                function(..., env = parent.env) {
-                   f <- base::reformulate(...)
+                   f <- stats::reformulate(...)
                    environment(f) <- env
                    return(f)
                })
