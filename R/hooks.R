@@ -15,7 +15,15 @@
       assign('...length', envir = topenv(),
              function() eval(quote(length(list(...))), sys.frame(-1L))
              )
-      if(Rv < "3.2.1") {
+      if (Rv < "3.6.0") {
+        assign('reformulate', envir = topenv(),
+               function(..., env = parent.env) {
+                   f <- base::reformulate(...)
+                   environment(f) <- env
+                   return(f)
+               })
+      }
+        if (Rv < "3.2.1") {
         assign('lengths', envir = topenv(),
                function (x, use.names = TRUE) vapply(x, length, 1L, USE.NAMES = use.names)
                )
