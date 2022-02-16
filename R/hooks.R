@@ -22,7 +22,6 @@
                    environment(f) <- env
                    return(f)
                })
-      }
         if (Rv < "3.2.1") {
         assign('lengths', envir = topenv(),
                function (x, use.names = TRUE) vapply(x, length, 1L, USE.NAMES = use.names)
@@ -42,7 +41,8 @@
             } ## R < 2.15
           } ## R < 3.0.0
         } ## R < 3.1.0
-      } ## R < 3.2.1
+        } ## R < 3.2.1
+      } ## R < 3.6.0
     } ## R < 4.0.0
   } ## R < 4.1.0
   rm(Rv)
