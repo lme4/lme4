@@ -446,7 +446,9 @@ getGroups.lmList4 <- function(object, ...) object@groups
 ##
 ## which we avoid via
 for(fn in c("gsummary", "c_deparse")) {
+  if (exists(fn, envir = .ns.nlme)) {
     assign(fn, get(fn, envir = .ns.nlme, inherits=FALSE))
+  }
 }
 
 for(fn in c("fitted", "fixef", "logLik", "pairs", "plot", "predict",
