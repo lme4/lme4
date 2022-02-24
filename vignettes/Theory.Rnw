@@ -1126,7 +1126,7 @@ from which $\tilde{\bm\beta}$ can be determined as the
 solution to dense system
 \begin{equation}
   \label{eq:tildebeta}
-  \bm L_{\bm X}\bm L_{\bm X}\tilde{\bm\beta}=\bm X\trans\bm y
+  \bm L_{\bm X}\bm L_{\bm X}\trans \tilde{\bm\beta}=\bm X\trans\bm y
 \end{equation}
 and $\tilde{\bm u}$ as the solution to the sparse system
 \begin{equation}
