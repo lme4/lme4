@@ -1083,7 +1083,7 @@ The CHOLMOD package allows for $\bm L_{\bm Z}$ to be calculated
 directly from $\bm\Lambda\trans(\bm\theta)\bm Z\trans$ or from
 $\bm\Lambda\trans(\bm\theta)\bm Z\trans\bm Z\bm\Lambda(\theta)$.  The
 choice in implementation is whether to store $\bm Z\trans$ and update
-it to $\bm\Lambda\trans(\bm\theta)\bm Z$ or to store $\bm Z\trans\bm
+it to $\bm\Lambda\trans(\bm\theta)\bm Z\trans$ or to store $\bm Z\trans\bm
 Z$ and use it to form $\bm\Lambda\trans(\bm\theta)\bm Z\trans\bm
 Z\bm\Lambda(\theta)$ at each evaluation.
 
