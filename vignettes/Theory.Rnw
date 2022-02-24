@@ -1120,7 +1120,7 @@ Finally $\bm L_{\bm X}$ is evaluated as the (dense) solution to
 \begin{equation}
   \label{eq:LX}
   \bm L_{\bm X}\bm L_{\bm X}\trans=
-  \bm X\trans\bm X-\bm L_{\bm X\bm Z}\bm L_{\bm X\bm Z} .
+  \bm X\trans\bm X-\bm L_{\bm X\bm Z}\bm L_{\bm X\bm Z}\trans .
 \end{equation}
 from which $\tilde{\bm\beta}$ can be determined as the
 solution to dense system
