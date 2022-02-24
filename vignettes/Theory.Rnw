@@ -897,7 +897,7 @@ triangular, Cholesky factor, $\bm L^{(i)}$, satisfying
 \end{equation}
 After each successful iteration, determining new values of the
 coefficients, $\bm u^{(i+1)}$ and $\bm\beta^{(i+1)}$, that reduce the
-penalized, weighted residual sum of squqres, we update the weights
+penalized, weighted residual sum of squares, we update the weights
 matrix to $\bm W(\bm\mu^{(i+1)})$ and the weighted Jacobians,
 $\bm U^{(i+1)}$ and $\bm V^{(i+1)}$, then iterate.  Convergence is
 determined according to the orthogonality convergence
