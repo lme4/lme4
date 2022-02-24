@@ -59,7 +59,7 @@ of the parameters given the observed data, for maximum likelihood
 criterion.  Because this objective function must be evaluated at many
 different values of the model parameters during the optimization
 process, we focus on the evaluation of the objective function and a
-critical computation in this evalution --- determining the solution to a
+critical computation in this evaluation --- determining the solution to a
 penalized, weighted least squares (PWLS) problem.
 
 The dimension of the solution of the PWLS problem can be very large,
