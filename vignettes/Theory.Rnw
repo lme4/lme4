@@ -1091,7 +1091,7 @@ In the \package{lme4} package we store $\bm Z\trans$ and use it to
 form $\bm\Lambda\trans(\bm\theta)\bm Z\trans$ from which $\bm L_{\bm
   Z}$ is evaluated.  There are two reasons for this choice.  First,
 the calculations for the more general forms of mixed models cannot be
-reduced to calculations involving $\bm  \trans\bm Z $ and by expressing
+reduced to calculations involving $\bm Z\trans\bm Z $ and by expressing
 these calculations in terms of $\bm\Lambda(\bm\theta)\trans \bm Z\trans$ for
 linear mixed models we can reuse the code for the more general
 models.  Second, the calculation of $\bm\Lambda(\bm\theta)\trans\left(\bm
