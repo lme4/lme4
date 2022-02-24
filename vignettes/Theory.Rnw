@@ -1131,7 +1131,7 @@ solution to dense system
 and $\tilde{\bm u}$ as the solution to the sparse system
 \begin{equation}
   \label{eq:tildeu}
-  \bm L_{\bm Z}\bm L_{\bm Z}\tilde{u}=\bm\Lambda\trans\bm Z\trans\bm y
+  \bm L_{\bm Z}\bm L_{\bm Z}\trans \tilde{u}=\bm\Lambda\trans\bm Z\trans\bm y
 \end{equation}
 
 For many models, in particular models with scalar random effects,
