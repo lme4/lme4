@@ -624,7 +624,7 @@ estimate of $\bm\beta$.
 Note that the profiled REML criterion can be evaluated from a sparse
 Cholesky decomposition like that in (\ref{eq:16}) but without the
 requirement that the permutation can be applied to the columns of $\bm
-Z\bm\Lambda(\bm\theta)$ separately from the columnns of $\bm X$.  That
+Z\bm\Lambda(\bm\theta)$ separately from the columns of $\bm X$.  That
 is, we can use a general fill-reducing permutation rather than the
 specific form (\ref{eq:15}) with separate permutations represented by
 $\bm P_{\bm Z}$ and $\bm P_{\bm X}$. This can be useful in cases where
