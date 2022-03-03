@@ -2553,10 +2553,8 @@ asDf0 <- function(x,nx,id=FALSE) {
 ## FIXME: have some gymnastics to do if terms, levels are different
 ##  for different grouping variables - want to maintain ordering
 ##  but still allow rbind()ing
-as.data.frame.ranef.mer <- function(x,
-                ...,
-                stringsAsFactors = default.stringsAsFactors()) {
-    xL <- lapply(names(x),asDf0,x=x,id=TRUE)
+as.data.frame.ranef.mer <- function(x, ...) {
+    xL <- lapply(names(x), asDf0, x=x, id=TRUE)
     ## combine
     xD <- do.call(rbind,xL)
     ## rename ...
