@@ -33,7 +33,7 @@ if (testLevel>1) {
 context("predict")
 test_that("fitted values", {
     p0 <- predict(gm1)
-    p0B <- predict(gm1,newdata=cbpp)
+    p0B <- predict(gm1, newdata=cbpp)
     expect_equal(p0, p0B, tolerance=2e-5) ## ? not sure why high tolerance necessary ? works OK on Linux/R 3.5.0
 
     ## fitted values, unconditional (level-0)
@@ -53,7 +53,7 @@ test_that("fitted values", {
 
 test_that("predict with newdata", {
 
-    newdata <- with(cbpp,expand.grid(period=unique(period),herd=unique(herd)))
+    newdata <- with(cbpp, expand.grid(period=unique(period),herd=unique(herd)))
     ## new data, all RE
     p2 <- predict(gm1,newdata)
     ## new data, level-0
@@ -83,13 +83,21 @@ test_that("predict with newdata and RE", {
 
 test_that("effects of new RE levels", {
 
-    newdata <- with(cbpp,expand.grid(period=unique(period),herd=unique(herd)))
+    newdata <- with(cbpp, expand.grid(period=unique(period), herd=unique(herd)))
     newdata2 <- rbind(newdata,
-                      data.frame(period=as.character(1:4),herd=rep("new",4)))
-    expect_error(predict(gm1,newdata2), "new levels detected")
+                      data.frame(period=as.character(1:4), herd=rep("new",4)))
+    expect_error(predict(gm1, newdata2), "new levels detected in newdata: new")
 
-    p2 <- predict(gm1,newdata)
-    p6 <- predict(gm1,newdata2,allow.new.levels=TRUE)
+    newdata3 <- rbind(newdata,
+                      data.frame(period=as.character(1),
+                                 herd = paste0("new", 1:50)))
+
+    expect_error(predict(gm1, newdata3),
+                 "new levels detected in newdata: new1, new2,")
+
+
+    p2 <- predict(gm1, newdata)
+    p6 <- predict(gm1, newdata2, allow.new.levels=TRUE)
     expect_equal(p2, p6[1:length(p2)])  ## original values should match
     ## last 4 values should match unconditional values
     expect_true(all(tail(p6,4) ==
@@ -114,12 +122,12 @@ test_that("multi-group model with new data", {
 
     newdata <- with(Penicillin,expand.grid(plate=unique(plate),sample=unique(sample)))
     ## new data, all RE
-    p2 <- predict(fm3,newdata)
+    p2 <- predict(fm3, newdata)
     ## new data, level-0
-    p3 <- predict(fm3,newdata, re.form=NA)
+    p3 <- predict(fm3, newdata, re.form=NA)
     ## explicitly specify RE
-    p4 <-  predict(fm3,newdata, re.form= ~(1|plate)+(~1|sample))
-    p4B <- predict(fm3,newdata, re.form= ~(1|sample)+(~1|plate)) ## ****
+    p4 <-  predict(fm3, newdata, re.form= ~(1|plate)+(~1|sample))
+    p4B <- predict(fm3, newdata, re.form= ~(1|sample)+(~1|plate)) ## ****
     expect_equal(p2,p4)
     expect_equal(p4,p4B)
 

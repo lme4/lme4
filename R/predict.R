@@ -293,10 +293,20 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
 
 ##' @param x a random effect (i.e., data frame with rows equal to levels, columns equal to terms
 ##' @param n vector of new levels
-levelfun <- function(x,nl.n,allow.new.levels=FALSE) {
+levelfun <- function(x, nl.n, allow.new.levels=FALSE) {
     ## 1. find and deal with new levels
-    if (!all(nl.n %in% rownames(x))) {
-        if (!allow.new.levels) stop("new levels detected in newdata")
+
+    new.levels <- setdiff(nl.n, rownames(x))
+    if (length(new.levels)>0) {
+        if (!allow.new.levels) {
+            max.err.len <- 60
+            err.str <- paste(new.levels, collapse = ", ")
+            if (nchar(err.str) > max.err.len) {
+                err.str <- substr(err.str, 1, max.err.len)
+                err.str <- gsub(",[^,]*$", ", ...", err.str)
+            }
+            stop("new levels detected in newdata: ", err.str)
+        }
         ## create an all-zero data frame corresponding to the new set of levels ...
         nl.n.comb <- union(nl.n, rownames(x))
         newx <- as.data.frame(matrix(0, nrow=length(nl.n.comb), ncol=ncol(x),

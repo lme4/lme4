@@ -5,10 +5,16 @@
 \encoding{UTF-8}
 
 \section{CHANGES IN VERSION 1.1-28.9000}{
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item prediction with new levels (when not allowed) returns a more
+  informative error message (displays a list of unobserved levels)
+    }
+  }
   \subsection{BUG FIXES}{
     \itemize{
       \item \code{glmer.nb} now works when \code{lme4} is not loaded (GH #658, @brgew)
-      \item tests for singularity (\code{check.conv.singular}) now run independently of derivaritve computation (e.g., when \code{calc.derivs=FALSE}) (GH #660, @palday)
+      \item tests for singularity (\code{check.conv.singular}) now run independently of derivative computation (e.g., when \code{calc.derivs=FALSE}) (GH #660, @palday)
     } % itemize
   } % bug fixes
 } % 1.1-28.9000
