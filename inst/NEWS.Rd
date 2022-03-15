@@ -4,7 +4,7 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-28.9000}{
+\section{CHANGES IN VERSION 1.1-29}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item prediction with new levels (when not allowed) returns a more
@@ -17,7 +17,7 @@
       \item tests for singularity (\code{check.conv.singular}) now run independently of derivative computation (e.g., when \code{calc.derivs=FALSE}) (GH #660, @palday)
     } % itemize
   } % bug fixes
-} % 1.1-28.9000
+} % 1.1-29
 
 \section{CHANGES IN VERSION 1.1-28 (2022-02-04)}{
   \subsection{USER-VISIBLE CHANGES}{

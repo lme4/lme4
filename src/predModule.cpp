@@ -331,7 +331,7 @@ namespace lme4 {
     }
 
     template <typename T>
-    struct Norm_Rand : std::unary_function<T, T> {
+    struct Norm_Rand : std::function<T(T)> {
         const T operator()(const T& x) const {return ::norm_rand();}
     };
 
