@@ -10,7 +10,7 @@
       drop = FALSE, whichel = names(ans), postVar = FALSE, ...)
 \method{dotplot}{ranef.mer} (x, data, main = TRUE, transf = I, ...)
 \method{qqmath}{ranef.mer} (x, data, main = TRUE, ...)
-\method{as.data.frame}{ranef.mer} (x, ..., stringsAsFactors = default.stringsAsFactors())
+\method{as.data.frame}{ranef.mer} (x, ...)
 }
 \arguments{
   \item{object}{an object of a class of fitted models with
@@ -36,7 +36,6 @@
     logistic regression on the odds rather than log-odds scale}
   \item{data}{This argument is required by the \code{dotplot}
     and \code{qqmath} generic methods, but is not actually used.}
-  \item{stringsAsFactors}{see \code{\link{data.frame}}}
   \item{\dots}{some methods for these generic functions
     require additional arguments.}
 }
