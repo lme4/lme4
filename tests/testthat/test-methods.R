@@ -758,6 +758,14 @@ test_that("influence/hatvalues works", {
   expect_equal(nrow(dNAs),length(hatvalues(fitNAs)))
 })
 
+test_that("influence OK with tibbles", {
+  if (requireNamespace("tibble")) {
+    fitNAs <- lmer(y ~ tx*x + (x | subj), data = tibble::as_tibble(dNAs),
+                   na.action=na.exclude)
+    ## now try influence(fitNAs)
+  }
+})
+
 test_that("rstudent", {
   rfm1 <- rstudent(fm1)
   expect_equal(unname(head(rfm1)),
