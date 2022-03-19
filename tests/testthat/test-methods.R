@@ -760,9 +760,19 @@ test_that("influence/hatvalues works", {
 
 test_that("influence OK with tibbles", {
   if (requireNamespace("tibble")) {
-    fitNAs <- lmer(y ~ tx*x + (x | subj), data = tibble::as_tibble(dNAs),
-                   na.action=na.exclude)
-    ## now try influence(fitNAs)
+    ## make small data set/example so influence() isn't too slow ...
+    ss <- tibble::as_tibble(sleepstudy[1:60,])
+    smallfit <- lmer(Reaction ~ 1 + (1 | Subject),
+                     data = ss)
+    i1 <- influence(smallfit, ncores = 1)
+    expect_equal(head(i1[["fixed.effects[-case]"]]),
+                 structure(c(286.35044481665, 286.179896199062,
+                             286.327301507498, 285.014692121823,
+                             284.36060419176, 283.297551183126),
+                           dim = c(6L, 1L),
+                           dimnames = list(c("1", "2", "3", "4", "5", "6"),
+                                           "(Intercept)")),
+                 tolerance = 1e-6)
   }
 })
 

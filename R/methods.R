@@ -18,6 +18,7 @@ influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
         data <- if (!is.null(data)) eval(data, parent.frame())
                 else stop("model did not use the data argument")
     }
+    data <- as.data.frame(data) ## prevent tibble trouble
     if (missing(groups)) {
         groups <- ".case"
         data$.case <- rownames(data)
