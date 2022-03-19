@@ -14,7 +14,11 @@
   \subsection{BUG FIXES}{
     \itemize{
       \item \code{glmer.nb} now works when \code{lme4} is not loaded (GH #658, @brgew)
-      \item tests for singularity (\code{check.conv.singular}) now run independently of derivative computation (e.g., when \code{calc.derivs=FALSE}) (GH #660, @palday)
+      \item tests for singularity (\code{check.conv.singular}) now run
+  independently of derivative computation (e.g., when
+  \code{calc.derivs=FALSE}) (GH #660, @palday)
+  \item \code{influence.merMod} now works when data were originally
+  specified as a tibble
     } % itemize
   } % bug fixes
 } % 1.1-29
