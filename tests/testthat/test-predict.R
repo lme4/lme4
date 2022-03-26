@@ -407,5 +407,21 @@ test_that("sparse contrasts don't mess up predict()", {
   p2 <- predict(m1, newdata = dd)
   expect_identical(p1, p2)
 })
-
-} ## testLevel>1
+} ## testLevel > 1
+test_that("prediction with . in formula + newdata",
+{
+  set.seed(101)
+  mydata <- data.frame(
+      groups = rep(1:3, each = 100),
+      x = rnorm(300),
+      dv = rnorm(300)
+  )
+  train_subset <- sample(1:300, 300 * .8)
+  train <- mydata[train_subset,]
+  test <- mydata[-train_subset,]
+  mod <- lmer(dv ~ . - groups + (1 | groups), data = train)
+  p1 <- predict(mod, newdata = test)
+  mod2 <- lmer(dv ~ x + (1 | groups), data = train)
+  p2 <- predict(mod2, newdata = test)
+  expect_identical(p1, p2)
+})

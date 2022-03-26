@@ -19,6 +19,11 @@
   \code{calc.derivs=FALSE}) (GH #660, @palday)
   \item \code{influence.merMod} now works when data were originally
   specified as a tibble
+  \item fixed bug in \code{cooks.distance} method for
+  \code{influence.merMod} (i.e., objects created via
+  \code{influence(fitted_model)}) (John Fox) (GH #672)
+  \item \code{predict} works for formulas containing . when
+  \code{newdata} is specified (GH #653)
     } % itemize
   } % bug fixes
 } % 1.1-29
