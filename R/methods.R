@@ -155,7 +155,6 @@ dfbetas.influence.merMod <- function(model, ...){
 cooks.distance.merMod <- function(model, ...) {
     p <- Matrix::rankMatrix(getME(model,"X"))
     hat <- hatvalues(model)
-    ## FIXME: check dispersion
     dispersion <- sigma(model)^2
     res <- residuals(model,type="pearson")
     res <-  (res/(1 - hat))^2 * hat/(dispersion * p)
@@ -168,6 +167,7 @@ cooks.distance.influence.merMod <- function(model, ...) {
     n <- nrow(db)
     p <- ncol(db)
     d <- numeric(n)
+    names(d) <- names(model[["vcov[-case]"]])
     vcov.inv <- (n - p)/(n*p)*solve(model$vcov)
     for (i in 1:n) {
         d[i] <- db[i, ] %*% vcov.inv %*% db[i, ]
@@ -208,7 +208,8 @@ terms.merMod <- function(x, fixed.only=TRUE, random.only=FALSE, ...) {
     if (fixed.only && random.only) stop("can't specify 'only fixed' and 'only random' terms")
     tt <- attr(x@frame,"terms")
     if (fixed.only) {
-        tt <- terms.formula(formula(x,fixed.only=TRUE))
+        ## ... may contain 'data' (needed when formula contains .)
+        tt <- terms.formula(formula(x,fixed.only=TRUE), ...)
         attr(tt,"predvars") <- attr(terms(x@frame),"predvars.fixed")
     }
     if (random.only) {

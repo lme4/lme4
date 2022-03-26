@@ -42,7 +42,7 @@ reFormHack <- function(re.form,ReForm,REForm,REform) {
 
 ## '...' may contain fixed.only=TRUE, random.only=TRUE, ..
 get.orig.levs <- function(object, FUN=levels, newdata=NULL, sparse = FALSE, ...) {
-    Terms <- terms(object,...)
+    Terms <- terms(object, data = newdata, ...)
     mf <- model.frame(object, ...)
     isFac <- vapply(mf, is.factor, FUN.VALUE=TRUE)
     ## ignore response variable
@@ -451,9 +451,11 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
                 ##    attr(newdata[[j]], "contrasts") <- NULL
                 ## }
 
-                orig.fixed.levs <- get.orig.levs(object, fixed.only=TRUE)
+              orig.fixed.levs <- get.orig.levs(object, fixed.only=TRUE,
+                                               newdata = newdata)
                 mfnew <- suppressWarnings(
-                    model.frame(delete.response(terms(object,fixed.only=TRUE)),
+                    model.frame(delete.response(terms(object, fixed.only=TRUE,
+                                                      data = newdata)),
                                 newdata,
                                 na.action = na.action, xlev = orig.fixed.levs))
 
@@ -463,7 +465,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
                 ## X <- X[,colnames(X0)]
 
                 offset <- 0 # rep(0, nrow(X))
-                tt <- terms(object)
+                tt <- terms(object, data  = newdata)
                 if (!is.null(off.num <- attr(tt, "offset"))) {
                     for (i in off.num)
                         offset <- offset + eval(attr(tt,"variables")[[i + 1]], newdata)
