@@ -16,7 +16,7 @@
 ##      title = {The {BLUPs} are not "best" when it comes to bootstrapping},
 ##      volume = {56},
 ##      issn = {0167-7152},
-##      url = {http://www.sciencedirect.com/science/article/S016771520200041X},
+##      url = {https://www.sciencedirect.com/science/article/pii/S016771520200041X},
 ##      doi = {10.1016/S0167-7152(02)00041-X},
 ##      journal = {Statistics \& Probability Letters},
 ##      author = {Morris, Jeffrey S},
