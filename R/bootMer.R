@@ -87,6 +87,8 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
         }
     }
 
+    control <- eval.parent(x@call$control)
+
     # define ffun as a closure containing the referenced variables
     # in its scope to avoid explicit clusterExport statement
     # in the PSOCKcluster case
@@ -97,8 +99,10 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
       ss
       verbose
       do_parallel
+      control
       length.t0 <- length(t0)
-      f1 <- factory(function(i) FUN(refit(x,ss[[i]])), errval = rep(NA, length.t0))
+      f1 <- factory(function(i) FUN(refit(x, ss[[i]],
+                                          control = control)), errval = rep(NA, length.t0))
       function(i) {
           ret <- f1(i)
           if (verbose) { cat(sprintf("%5d :",i)); str(ret) }

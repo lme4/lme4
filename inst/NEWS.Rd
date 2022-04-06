@@ -24,6 +24,7 @@
   \code{influence(fitted_model)}) (John Fox) (GH #672)
   \item \code{predict} works for formulas containing . when
   \code{newdata} is specified (GH #653)
+  \item \code{bootMer} now correctly inherits control settings from original fit
     } % itemize
   } % bug fixes
 } % 1.1-29
