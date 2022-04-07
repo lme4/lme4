@@ -10,6 +10,10 @@
 \usepackage{bm,amsmath,thumbpdf,amsfonts}%,minted}
 \usepackage{blkarray}
 \usepackage{array}
+%% huxtable-ish stuff
+%% \usepackage{adjustbox}
+%% \usepackage{threeparttable}
+%%
 \newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
 \newcommand{\matindex}[1]{\mbox{\scriptsize#1}}% Matrix index
 \newcommand{\github}{Github}
@@ -107,7 +111,7 @@ library("lattice")
 library("minqa")
 opts_chunk$set(engine='R',dev='pdf', fig.width=9, fig.height=5.5,
                prompt=TRUE, cache=TRUE, tidy=FALSE, comment=NA)
-render_sweave()
+knitr::render_sweave()
 @
 \setkeys{Gin}{width=\textwidth}
 \setkeys{Gin}{height=3.5in}
@@ -418,7 +422,7 @@ mixed-model formula may contain arbitrarily many random-effects terms,
 but in practice the number of such terms is typically low.
 
 \subsection{Understanding mixed-model formulas}
-\label{sec:intuitiveFormulas}\label{sec:uncor}
+\label{sec:intuitiveFormulas}
 
 Before describing the details of how \pkg{lme4} parses mixed-model
 formulas (Section~\ref{sec:LMMmatrix}), we provide an informal
@@ -786,7 +790,7 @@ this sparsity, for example by using sparse matrix methods, when
 fitting mixed models (Section~\ref{sec:CSCmats}).
 
 \subsubsection{Constructing the relative covariance factor}
-\label{sec:mkLambdat} \label{sec:mkZ}
+\label{sec:mkLambdat}
 
 The $q\times q$ covariance factor, $\bLt$, is a block diagonal matrix
 whose $i$th diagonal block, $\bm\Lambda_i$, is of size
@@ -1858,7 +1862,7 @@ begin by describing the theory underlying these methods
 to illustrate these ideas in practice.
 
 \subsection{Theory underlying the output module}
-\label{sec:outputTheory} \label{sec:vcov}\label{sec:profile}\label{sec:pb}\label{sec:condVar}\label{sec:hat}\label{sec:update}
+\label{sec:outputTheory}
 
 \subsubsection{Covariance matrix of the fixed-effect coefficients}
 \label{sec:vcov}
@@ -2196,7 +2200,7 @@ $\bm H$ may be expressed as,
 \end{equation}
 
 \subsection{Using the output module}
-\label{sec:outputPractice}\label{sec:update}\label{sec:summary}\label{sec:diagnostics}\label{sec:modComp}\label{sec:pvalues}\label{sec:CI}\label{sec:profzeta}\label{sec:predict}
+\label{sec:outputPractice}
 
 \begin{table}
   \begin{tabular}{ll}
