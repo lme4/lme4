@@ -4,7 +4,15 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-29}{
+\section{CHANGES IN VERSION 1.1-29.9000}{
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item nothing yet.
+    }
+  }
+}
+
+\section{CHANGES IN VERSION 1.1-29 (2022-04-07)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item prediction with new levels (when not allowed) returns a more
