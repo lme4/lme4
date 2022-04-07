@@ -87,7 +87,7 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
         }
     }
 
-    control <- eval.parent(x@call$control)
+    control <- if (!is(x, "merMod")) NULL else eval.parent(x@call$control)
 
     # define ffun as a closure containing the referenced variables
     # in its scope to avoid explicit clusterExport statement
