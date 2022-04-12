@@ -37,15 +37,34 @@ expect_warning(lme4:::checkConv(fm1@optinfo\$derivs,
                "Problem with Hessian check")
 EOF
 
+## more direct check
+cat >test2.R <<EOF
+dd <- list(gradient = c(0.00132136676711525, 0.00898197413334856, 0
+), Hessian = structure(c(195.253128051758, 962.483270645142, 
+0, 962.483270645142, NA, 0, 0, 0, 6542.44775390625), dim = c(3L, 
+3L)))
+with(dd, solve(chol(Hessian),gradient))
+EOF
+
+## report BLAS/LAPACK info
 cat >check_lapack.R <<EOF
 s <- sessionInfo()
 cat(s\$BLAS, s\$LAPACK, sep = "\n")
 EOF
 ```
 
+Simplified?
+
+```r
+m <- matrix(c(14, 0, 0, 69, NA, 0, 0, NA, NA), 3, 3)
+d <- c(0.001, 0.009, 0)
+solve(m, d)
+```
+
 ```
 R --vanilla <check_lapack.R
-R CMD BATCH --vanilla test.R; cat test.Rout
+R CMD BATCH --vanilla test.R; cat test.Rout ## expect OK
+R CMD BATCH --vanilla test2.R ## expect 'system is computationally singular'
 ```
 
 Now investigate/try to recreate the problem. From Kurt Hornik ...
