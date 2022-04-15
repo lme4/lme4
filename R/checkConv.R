@@ -52,7 +52,11 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
     if (doCheck(cc)) {
         scgrad <- tryCatch(with(derivs,solve(chol(Hessian),gradient)),
                            error=function(e)e)
-        if (inherits(scgrad, "error")) {
+        if (inherits(scgrad, "error") ||
+            ## some BLAS versions return NA rather than throwing an error?
+            ##  GH #677
+            any(is.na(scgrad)))
+        {
             wstr <- "unable to evaluate scaled gradient"
             res$code <- -1L
         } else {
