@@ -2,6 +2,8 @@
 title: "trying to make sense of LAPACK/troubleshoot CRAN problems"
 ---
 
+See also https://stat.ethz.ch/pipermail/r-package-devel/2022q2/007936.html
+
 Rocker notes [here](https://www.rocker-project.org/), [here](https://github.com/rocker-org/rocker/issues/134), [here](https://github.com/r-lib/remotes/issues/371)
 
 It's useful to use the `rocker/verse` image (has more stuff we need) rather than the `r-base` image.
@@ -11,11 +13,26 @@ docker pull rocker/verse ## fails intermittently?
 docker run -ti rocker/verse bash
 ```
 
+Maybe we need the `r-devel` container instead, which is built on Debian testing/unstable rather than stable, so that we can get a sufficiently recent OpenBLAS version?
+
+```
+docker pull rocker/r-devel
+docker run -ti rocker/r-devel bash
+```
+
 From bash shell within rocker:
 
 ```
 apt-get update ## maybe unnecessary (but doesn't take long)
 install2.r --deps TRUE lme4
+```
+
+Needed to set up network by hand to get connectivity for installing packages etc. ???
+
+from [here](https://docs.docker.com/engine/reference/commandline/network_connect/) etc.:
+```
+docker network create my-net
+docker run -it --network=my-net rocker/r-devel bash
 ```
 
 test:
@@ -37,34 +54,16 @@ expect_warning(lme4:::checkConv(fm1@optinfo\$derivs,
                "Problem with Hessian check")
 EOF
 
-## more direct check
-cat >test2.R <<EOF
-dd <- list(gradient = c(0.00132136676711525, 0.00898197413334856, 0
-), Hessian = structure(c(195.253128051758, 962.483270645142, 
-0, 962.483270645142, NA, 0, 0, 0, 6542.44775390625), dim = c(3L, 
-3L)))
-with(dd, solve(chol(Hessian),gradient))
-EOF
 
-## report BLAS/LAPACK info
 cat >check_lapack.R <<EOF
 s <- sessionInfo()
 cat(s\$BLAS, s\$LAPACK, sep = "\n")
 EOF
 ```
 
-Simplified?
-
-```r
-m <- matrix(c(14, 0, 0, 69, NA, 0, 0, NA, NA), 3, 3)
-d <- c(0.001, 0.009, 0)
-solve(m, d)
-```
-
 ```
 R --vanilla <check_lapack.R
-R CMD BATCH --vanilla test.R; cat test.Rout ## expect OK
-R CMD BATCH --vanilla test2.R ## expect 'system is computationally singular'
+R CMD BATCH --vanilla test.R; cat test.Rout
 ```
 
 Now investigate/try to recreate the problem. From Kurt Hornik ...
@@ -117,6 +116,17 @@ wget https://cran.r-project.org/src/contrib/lme4_1.1-29.tar.gz
 R CMD check --as-cran lme4_1.1-29.tar.gz
 ```
 
+## more minimal tests
+
+```r
+dd <- list(gradient = c(0.00132136676711525, 0.00898197413334856, 0
+), Hessian = structure(c(195.253128051758, 962.483270645142,
+0, 962.483270645142, NA, 0, 0, 0, 6542.44775390625), dim = c(3L,
+3L)))
+with(dd, solve(chol(Hessian),gradient))
+```
+
+
 ## junk
 
 ### attempt to get all the bits we need for LaTeX
@@ -162,3 +172,4 @@ apt install cmake  ## for nloptr from source
 apt install qpdf
 apt install libgsl-dev ## for gsl from source -> semEff (lme4 dep)
 ```
+
