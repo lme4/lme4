@@ -60,6 +60,8 @@
     of the random effects according to the grouping factors}
   \item{Ztlist}{list of components of the transpose of the
     random-effects model matrix, separated by random-effects term}
+  \item{nl}{names of the terms (in the same order as \code{Zt},
+    i.e. reflecting the \code{reorder.terms} argument)}
 }
 \note{\code{mkNewReTrms} is used in the context of prediction, to
   generate a new "random effects terms" object from an already fitted

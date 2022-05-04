@@ -7,7 +7,8 @@
 \section{CHANGES IN VERSION 1.1-29.9000}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
-      \item nothing yet.
+      \item \code{nl} (term names) component added to output list of
+  \code{mkReTrms (GH #679)}
     }
   }
 }

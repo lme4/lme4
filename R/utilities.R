@@ -255,6 +255,7 @@ mkReTrms <- function(bars, fr, drop.unused.levels=TRUE,
   ll$flist <- fl
   ll$cnms <- cnms
   ll$Ztlist <- Ztlist
+  ll$nl <- nl
   ll
 } ## {mkReTrms}
 
