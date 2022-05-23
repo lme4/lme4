@@ -362,7 +362,6 @@ test_that("confint", {
 })
 
 
-context("refit")
 test_that("refit", {
   s1 <- simulate(fm1)
   expect_is(refit(fm1,s1), "merMod")
@@ -495,7 +494,6 @@ if (testLevel>1) {
   })
 
   ## testLevel>1
-  context("simulate")
   test_that("simulate", {
     expect_is(simulate(gm2), "data.frame")
     expect_warning(simulate(gm2, ReForm = NA), "is deprecated")
@@ -619,6 +617,18 @@ if (testLevel>1) {
     g2 <- glmer(y2~x+(1|f),family=Gamma(link="log"),dd)
     expect_equal(fixef(g2), tolerance = 4e-7, # 32-bit windows showed 1.34e-7
                  c("(Intercept)" = 2.81887136759369, x= 1.06543222163626))
+
+    ## simulate with re.form = NULL and derived/offset components in formula
+    fm7 <- lmer(Reaction ~ Days + offset(Days) + (1|Subject), sleepstudy)
+    s7 <- simulate(fm7, seed = 101, re.form = NULL)
+    ## thought this would break but it doesn't ???
+    f_wrap <- function() { Reaction ~ Days + offset(Days) + (1|Subject) }
+    fm8 <- lmer(f_wrap(), sleepstudy)
+    s8 <- simulate(fm8, seed = 101, re.form = NULL)
+    expect_identical(s7, s8)
+
+    ## harder: insert NA values in the offset and see if it handles this OK??
+    
   })
 
   context("misc")

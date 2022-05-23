@@ -176,7 +176,7 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
     } else {
         if (!identical(na.action,na.pass)) {
             ## only need to re-evaluate for NAs if na.action != na.pass
-            mfnew <- model.frame(delete.response(terms(object,fixed.only=TRUE)),
+            mfnew <- model.frame(delete.response(terms(object, fixed.only=TRUE)),
                                  newdata, na.action=na.action)
             fixed.na.action <- attr(mfnew,"na.action")
         }
@@ -489,7 +489,14 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
         if (isRE(re.form)) {
             if (is.null(re.form))
                 re.form <- reOnly(formula(object)) # RE formula only
-            rfd <- if (is.null(newdata)) object@frame else newdata
+            rfd <- if (is.null(newdata)) {
+                       ## try to retrieve original data ... fall back to model frame if necessary
+                       ## FIXME: this doesn't solve the problem if columns of model frame and data
+                       ## diverge (e.g. transformed objects [log(x)], offsets [offset(x)] ... will
+                       ## fail farther along
+                       tryCatch(getData(object),
+                                error = function(e) object@frame)
+                   } else newdata
             newRE <- mkNewReTrms(object, rfd, re.form, na.action=na.action,
                                  allow.new.levels=allow.new.levels)
             REvals <- base::drop(as(newRE$b %*% newRE$Zt, "matrix"))
@@ -628,7 +635,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         re.form <- if (use.u) NULL else ~0
     }
     if (is.null(re.form)) { # formula w/o response
-        re.form <- noLHSform(formula(object))
+        re.form <- reOnly(formula(object))
     }
     if(!is.null(seed)) set.seed(seed)
     if(!exists(".Random.seed", envir = .GlobalEnv))
