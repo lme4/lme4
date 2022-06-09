@@ -9,15 +9,19 @@
     \itemize{
       \item \code{nl} (term names) component added to output list of
       \code{mkReTrms (GH #679)}
+      \item eliminate partial-matching of \code{eta} (for
+      \code{etastart}) (GH #686: not actually "user-visible" unless
+      \code{getOption("warnPartialMatchDollar")} is \code{TRUE})
     }
   } % user-visible changes
   \subsection{BUG FIXES}{
     \itemize{
       \item better handling of \code{simulate(., re.form = NULL)} when
       model frame contains derived components (e.g. \code{offset()},
-      \code{log(x)}) (\url{https://github.com/florianhartig/DHARMa/issues/335})
+      \code{log(x)})
+      (\url{https://github.com/florianhartig/DHARMa/issues/335})
     }
-  } % bug fixex
+  } % bug fixes
 } % version 1.1-29.9000
 
 \section{CHANGES IN VERSION 1.1-29 (2022-04-07)}{

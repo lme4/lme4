@@ -348,3 +348,15 @@ if(FALSE) { ## Hadley broke this
 
 })
 } ## testlevel>1
+
+test_that("glmer with etastart",
+{
+    ## make sure etastart is passed through
+    ## (fixed in commit b6fb1ac83885ff06 but never tested?)
+    m1 <- glmer(incidence/size ~ period + (1|herd),
+                weights = size,
+                family = binomial,
+                data = cbpp)
+    m1E <- update(m1, etastart = rep(1, nrow(cbpp)))
+    expect_true(!identical(fixef(m1), fixef(m1E)))
+})
