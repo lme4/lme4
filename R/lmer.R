@@ -2334,6 +2334,11 @@ summary.merMod <- function(object,
     famL <- famlink(resp = resp)
     p <- length(coefs <- fixef(object))
 
+    ## protect against merDeriv's vcov.glmerMod(), which only
+    ## handles binomial and Poisson values
+    if (is(object, "glmerMod") && !family(object)$family %in% c("binomial", "poisson")) {
+        vcov <- vcov.merMod
+    }
     vc <- vcov(object, use.hessian = use.hessian)
     stdError <- sqrt(diag(vc))
     coefs <- cbind("Estimate" = coefs,

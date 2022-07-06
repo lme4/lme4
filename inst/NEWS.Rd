@@ -12,7 +12,10 @@
       \item eliminate partial-matching of \code{eta} (for
       \code{etastart}) (GH #686: not actually "user-visible" unless
       \code{getOption("warnPartialMatchDollar")} is \code{TRUE})
-    }
+      \item \code{summary} method doesn't break for GLMMs other than
+  binomial/Poisson when \code{merDeriv}'s \code{vcov.glmerMod} method is
+  attached (GH #688)
+}
   } % user-visible changes
   \subsection{BUG FIXES}{
     \itemize{

@@ -68,4 +68,16 @@ test_that("basic", {
                          offset=rep(0,nrow(dd)))
 })
 
+if (requireNamespace("merDeriv")) {
+    testthat("summary not broken by merDeriv", {
+        library(merDeriv)
+        data(Arabidopsis)
+        mod <- glmer.nb(total.fruits~status+nutrient+(1|gen), data=Arabidopsis)
+        ## trivial test of existence/non-failure ...
+        expect_is(summary(mod), "summary.merMod")
+        ## may? expose other problems as S3 methods won't be unloaded properly ...
+        detach("package:merMod")
+    })
+}
+
 } ## testLevel > 1
