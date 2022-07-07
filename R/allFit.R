@@ -28,15 +28,20 @@ opt.ctrls <- list(bobyqa=c("npt","rhobeg","rhoend","iprint","maxfun"),
                   nmkbw=c("tol","maxfeval","regsimp","maximize",
                           "restarts.max","trace","maxfun"))
 
-nmkbw <- function(fn,par,lower,upper,control) {
+## name of 'max function evaluations' for each optimizer
+maxfun_arg <- c(bobyqa = "maxfun",
+                Nelder_Mead = "maxfun",
+                nlminbwrap = "eval.max",
+                optimx = "maxit",
+                nloptwrap = "maxeval",
+                nmkbw = "maxfeval")
+                           
+                
+nmkbw <- function(fn, par, lower, upper, control) {
     if (length(par)==1) {
         res <- optim(fn=fn,par=par,lower=lower,upper=100*par,
                      method="Brent")
     } else {
-        if (!is.null(control$maxfun)) {
-            control$maxfeval <- control$maxfun
-            control$maxfun <- NULL
-        }
         res <- dfoptim::nmkb(fn=fn,par=par,
                              lower=lower,upper=upper,control=control)
     }
@@ -80,7 +85,7 @@ allFit <- function(object, meth.tab = NULL,
                    data=NULL,
                    verbose=TRUE,
                    show.meth.tab = FALSE,
-                   maxfun=1e5,
+                   maxfun = 1e5,
                    parallel = c("no", "multicore", "snow"),
                    ncpus = getOption("allFit.ncpus", 1L),
                    cl = NULL,
@@ -131,7 +136,8 @@ allFit <- function(object, meth.tab = NULL,
             mkOptCtrl <- function(...) {
                 x <- list(...)
                 cc <- ctrl$optCtrl
-                if (is.null(cc)) return(x)  ## easy! no controls specified
+                if (is.null(cc)) cc <- list()
+                cc[[maxfun_arg[[optimizer[[..i]]]]]] <- maxfun
                 for (n in names(x)) { ## replace existing values
                     cc[[n]] <- x[[n]]
                 }
@@ -149,7 +155,8 @@ allFit <- function(object, meth.tab = NULL,
             ctrl$optCtrl <- switch(optimizer[..i],
                                    optimx    = mkOptCtrl(method   = method[..i]),
                                    nloptwrap = mkOptCtrl(algorithm= method[..i]),
-                                   mkOptCtrl("maxfun"=maxfun))
+                                   mkOptCtrl())
+                                       
             ctrl$optCtrl <- sanitize(ctrl$optCtrl,
                                      opt.ctrls[[optimizer[..i]]])
             ctrl <- do.call(if(isGLMM(object)) glmerControl else lmerControl, ctrl)

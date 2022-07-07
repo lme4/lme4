@@ -23,7 +23,10 @@
       model frame contains derived components (e.g. \code{offset()},
       \code{log(x)})
       (\url{https://github.com/florianhartig/DHARMa/issues/335})
-      \item \code{bootMer} works with \code{glmmTMB} again (broken in 1.1-29)
+      \item \code{bootMer} works with \code{glmmTMB} again (broken in
+      1.1-29)
+      \item \code{maxfun} argument to \code{allFit} controls max
+      function evaluations for every optimizer type (GH#685)
     }
   } % bug fixes
 } % version 1.1-30

@@ -22,7 +22,10 @@ allFit(object, meth.tab = NULL, data=NULL,
   \item{data}{data to be included with result (for later debugging etc.)}
   \item{verbose}{logical: report progress in detail?}
   \item{show.meth.tab}{logical: return table of methods?}
-  \item{maxfun}{passed as part of \code{optCtrl} (see \code{\link{lmeControl}})}
+  \item{maxfun}{passed as part of \code{optCtrl} to set the maximum
+    number of function evaluations: this is \emph{automatically}
+    converted to the correct specification (e.g. \code{maxfun},
+    \code{maxfeval}, \code{maxit}, etc.) for each optimizer}
   \item{parallel}{The type of parallel operation to be used (if any).
     If missing, the
     default is taken from the option \code{"boot.parallel"} (and if that
