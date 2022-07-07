@@ -36,7 +36,6 @@ Imports: graphics, grid, splines, utils, parallel, MASS, lattice, boot,
 Suggests:
     knitr,
     rmarkdown,
-    PKPDmodels,
     MEMSS,
     testthat (>= 0.8.1),
     ggplot2,
