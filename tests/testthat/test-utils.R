@@ -56,3 +56,17 @@ test_that("nobar", {
     expect_equal(nobars(rr(y~(1|g))),                      1)
 })
 
+
+test_that("getData", {
+    ## test what happens when wrong version of 'data' is found in environment of formula ...
+    f <- round(Reaction) ~ 1 + (1|Subject)
+    g <- function() {
+        data <- sleepstudy
+        m1 <- glmer(f, data = data, family = poisson)
+    }
+    m1 <- g()
+    expect_error(getData(m1), "object found is not a data frame or matrix")
+    p1 <- suppressMessages(predict(m1, newparams = list(beta = 5, theta = 1), type = "response",
+            re.form = ~ 1|Subject))
+    expect_equal(unname(head(p1, 2)), c(444.407382298401, 444.407382298401))
+})

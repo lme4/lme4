@@ -28,10 +28,11 @@ allVarsRec <- function(object)
 
 ## simple version of getData.gnls from nlme
 ## but we *should* and *can* work with environment(formula(.))
-getData.merMod <-  function(object)
-{
-    mCall <- object@call
-    eval(mCall$data, environment(formula(object)))
+getData.merMod <-  function(object) {
+    mCall <- getCall(object)
+    data <- eval(mCall$data, environment(formula(object)))
+    if (!is.data.frame(data) && !is.matrix(data)) stop(paste(sQuote("data"),"object found is not a data frame or matrix"))
+    return(data)
 }
 
 asOneFormula <-
