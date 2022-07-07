@@ -87,6 +87,8 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
         }
     }
 
+    ## FIXME:: use getCall(x) ? check for existence of slot?
+    ##  is control used except for merMod?
     control <- if (!is(x, "merMod")) NULL else eval.parent(x@call$control)
 
     # define ffun as a closure containing the referenced variables
