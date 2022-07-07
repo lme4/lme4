@@ -4,7 +4,7 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-29.9000}{
+\section{CHANGES IN VERSION 1.1-30}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item \code{nl} (term names) component added to output list of
@@ -23,9 +23,10 @@
       model frame contains derived components (e.g. \code{offset()},
       \code{log(x)})
       (\url{https://github.com/florianhartig/DHARMa/issues/335})
+      \item \code{bootMer} works with \code{glmmTMB} again (broken in 1.1-29)
     }
   } % bug fixes
-} % version 1.1-29.9000
+} % version 1.1-30
 
 \section{CHANGES IN VERSION 1.1-29 (2022-04-07)}{
   \subsection{USER-VISIBLE CHANGES}{
