@@ -65,7 +65,7 @@ if (.Platform$OS.type != "windows") {
     stopifnot(all.equal(unname(getME(fm5c,"theta")), 0.21067645, tolerance = 1e-7))
 					#	 0.21067644264 [64-bit, lynne]
 
-    ##{
+    if (require("optimx")) {
     ## additional stuff for diagnosing Nelder-Mead problems.
 
     library(optimx)
@@ -90,7 +90,7 @@ if (.Platform$OS.type != "windows") {
                  loglik = sapply(mList, logLik))
     res
     print(sessionInfo(), locale=FALSE)
-    ##}
+    }
 
 ######################
     library(lattice)
