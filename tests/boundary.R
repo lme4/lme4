@@ -68,7 +68,6 @@ if (.Platform$OS.type != "windows") {
     if (require("optimx")) {
     ## additional stuff for diagnosing Nelder-Mead problems.
 
-    library(optimx)
     fm5d <- update(fm5,control=lmerControl(optimizer="optimx",
                                            optCtrl=list(method="L-BFGS-B")))
 
