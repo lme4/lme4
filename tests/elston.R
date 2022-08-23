@@ -55,24 +55,25 @@ if (.Platform$OS.type != "windows") {
                            .Names = c("", "", "", "(Intercept)",
                                       "YEAR96", "YEAR97",  "HEIGHT"))
 
+    pars <- function(x) unlist(getME(x,c("theta","beta")))
+
     if (lme4:::testLevel() > 1) {
         t2 <- system.time(full_mod2  <- glmer(form, family="poisson",data=grouseticks))
-        c2 <- c(fixef(full_mod2),unlist(VarCorr(full_mod2)),
-                logLik=logLik(full_mod2),time=t2["elapsed"])
+        ##>> 2 x checkConv(.. "derivs") warning: 1. failed to conv.  2. nearly unidentifiable
+        c2 <- c(fixef(full_mod2), unlist(VarCorr(full_mod2)),
+                logLik = logLik(full_mod2), time= t2["elapsed"])
         ## refit
         ## FIXME: eventually would like to get _exactly_ identical answers on refit()
-        full_mod3 <- refit(full_mod2,grouseticks$TICKS)
+        full_mod3 <- refit(full_mod2, grouseticks$TICKS)
 
-        tmpf <- function(x) unlist(getME(x,c("theta","beta")))
-        all.equal(tmpf(full_mod2),tmpf(full_mod3),tolerance=1e-5)
+        print(    all.equal(pars(full_mod2), pars(full_mod3), tolerance=0))# -> 1.2e-5
+        stopifnot(all.equal(pars(full_mod2), pars(full_mod3), tolerance=8e-5))
     }
-    allcoefs <- function(x) c(getME(x,"theta"),getME(x,"beta"))
 
     ## deviance function
     ## FIXME: does compDev do _anything_ any more?
-    mm <- glmer(form, family="poisson",data=grouseticks,devFunOnly=TRUE)
-    mm2 <- glmer(form, family="poisson",data=grouseticks,
+    mm  <- glmer(form, family="poisson", data=grouseticks, devFunOnly=TRUE)
+    mm2 <- glmer(form, family="poisson", data=grouseticks,
                  devFunOnly=TRUE,control=glmerControl(compDev=TRUE))
-    stopifnot(all.equal(mm(allcoefs1),mm2(allcoefs1)))
-
+    stopifnot(all.equal(1780.5427072, mm(allcoefs1), tol = 1e-7))
 } ## skip on windows (for speed)

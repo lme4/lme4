@@ -7,6 +7,7 @@
 \section{CHANGES IN VERSION 1.1-31}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
+      \item .
     }
   } % user-visible changes
   \subsection{BUG FIXES}{

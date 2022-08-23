@@ -11,7 +11,7 @@
   \item{ord}{scalar integer between 1 and 100 - the order,
     or number of nodes and weights, in the rule.  When the
     function being multiplied by the standard normal density
-    is a polynomial of order 2k-1 the rule of order k
+    is a polynomial of order \eqn{2k-1} the rule of order \eqn{k}
     integrates the product exactly.}
 
   \item{asMatrix}{logical scalar - should the result be
