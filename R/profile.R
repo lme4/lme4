@@ -728,6 +728,9 @@ confint.thpr <- function(object, parm, level = 0.95, zeta,
                     grep("^(sd_|cor_|.sig|sigma$)", bnms, value=TRUE)
                 else if (parm == "beta_")
                     grep("^(sd_|cor_|.sig|sigma$)", bnms, value=TRUE, invert=TRUE)
+                else if(parm %in% bnms) # just that one
+                    parm
+                ## else NULL : will return 0-row matrix
             } else
                 intersect(parm, bnms)
     cn <-
