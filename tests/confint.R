@@ -28,7 +28,7 @@ if (lme4:::testLevel() > 1 || .Platform$OS.type != "windows") {
         print(c1,digits=3)
         ##
         c6 <- confint(pr1.56, "Days")
-        expect_equal(c1[2,], c6)
+        expect_equal(c1[2, , drop=FALSE], c6)
         c2  <- confint(fm1,method="boot",nsim=50,parm=5:6)
         ## expect_error(confint(fm1,method="boot",nsim=50,parm="Days"),
         ##  "must be specified as an integer")
