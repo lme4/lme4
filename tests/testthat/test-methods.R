@@ -17,6 +17,9 @@ fm1 <- fit_sleepstudy_1
 fm2 <- fit_sleepstudy_2
 gm1 <- fit_cbpp_1
 gm2 <- fit_cbpp_2
+## simulate() will look for data in environment of formula, find
+##   unmodified version of cbpp -- need to re-add observation-level factor
+cbpp$obs <- factor(seq(nrow(cbpp)))
 gm3 <- fit_cbpp_3
 ## More objects to use in all contexts :
 set.seed(101)
@@ -869,8 +872,8 @@ if (testLevel>1) {
                c(0.016503344184025, 0.0106634053477361))
   if (parallel::detectCores()>1) {
     test_that("parallel influence", {
-      i2 <- suppressMessages(influence(fm1,ncores=2))
-      expect_equal(i1,i2)
+      i2 <- suppressMessages(influence(fm1, ncores=2))
+      expect_equal(i1, i2)
     })
   }
 }

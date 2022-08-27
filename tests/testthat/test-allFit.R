@@ -17,9 +17,9 @@ if (testLevel>1) {
 
     test_that("nloptwrap switches optimizer correctly", {
         expect_equal(attr(gm_all[["nloptwrap.NLOPT_LN_BOBYQA"]],"optCtrl"),
-                     list(algorithm = "NLOPT_LN_BOBYQA"))
+                     list(maxeval = 1e5, algorithm = "NLOPT_LN_BOBYQA"))
         expect_equal(attr(gm_all[["nloptwrap.NLOPT_LN_NELDERMEAD"]],"optCtrl"),
-                     list(algorithm = "NLOPT_LN_NELDERMEAD"))
+                     list(maxeval = 1e5, algorithm = "NLOPT_LN_NELDERMEAD"))
 
     })
 

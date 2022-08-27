@@ -12,7 +12,7 @@
   } % user-visible changes
   \subsection{BUG FIXES}{
     \itemize{
-      \item \code{confint(fm, <single string>)} now works (after a years of
+      \item \code{confint(fm, <single string>)} now works (after years of
       being broken) again.
     }
   }

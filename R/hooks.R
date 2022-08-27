@@ -1,4 +1,5 @@
 .onLoad <- function(libname, pkgname) {
+  options(Matrix.warnDeprecatedCoerce = 3)
   options(lme4.summary.cor.max = 12)
   if((Rv <- getRversion()) < "4.1.0") {
     ## https://stackoverflow.com/questions/49056642/how-to-make-variable-available-to-namespace-at-loading-time/67664852#67664852
