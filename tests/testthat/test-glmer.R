@@ -186,8 +186,8 @@ if(FALSE) { ## Hadley broke this
                                 control=glmerControl(  # max|grad| = 0.021 ..
                                     optimizer=c("bobyqa","Nelder_Mead")))))
 
-        t2 <- system.time(g2 <- update(g1,
-                         control=glmerControl(optimizer="bobyqa")))
+        t2 <- system.time(g2 <- suppressWarnings(update(g1,
+                         control=glmerControl(optimizer="bobyqa"))))
         ## rbind(t1,t2)[,"elapsed"]
         ## 20 (then 13.0) seconds N-M vs 8 (then 4.8) seconds bobyqa ...
         ## print(t1[3] / t2[3]) # 0.37; => 1.25 should be on the safe side
