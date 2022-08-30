@@ -21,13 +21,15 @@ test_that("lmer", {
 
   tmpf <- function(x) capture.output(print(summary(x),digits=1))
   tfun <- function(cc) {
-      w <- grep("Fixed effects:",cc)
+      w <- grep("Fixed effects:", cc)
       cc[w:length(cc)]
   }
   C1 <- lmerControl(optimizer="nloptwrap",
                     optCtrl=list(xtol_abs=1e-6, ftol_abs=1e-6))
-  cc1 <- tmpf(lmer(y ~ x.1 + x.2 + (1 + x.1 | g), control=C1))
-  cc2 <- tmpf(lmer(y ~ x.1 + x.2 + (1 + x.1 + x.2 | g), control=C1))
+  m1 <- lmer(y ~ x.1 + x.2 + (1 + x.1 | g), control=C1)
+  m2 <- lmer(y ~ x.1 + x.2 + (1 + x.1 + x.2 | g), control=C1)
+  cc1 <- tmpf(m1)
+  cc2 <- tmpf(m2)
   expect_equal(tfun(cc1),
                c("Fixed effects:",
                  "            Estimate Std. Error t value", 
