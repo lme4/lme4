@@ -37,7 +37,7 @@ Suggests:
     knitr,
     rmarkdown,
     MEMSS,
-    testthat (>= 0.8.1),
+    tinytest,
     ggplot2,
     mlmRev,
     optimx (>= 2013.8.6),
