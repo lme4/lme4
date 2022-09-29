@@ -842,8 +842,8 @@ binomial_simfun <- function(object, nsim, ftd=fitted(object),
         y <- model.response(m)
         if(is.factor(y)) {
             ## ignore weights
-            yy <- factor(1+rbinom(ntot, size = 1, prob = ftd),
-                         labels = levels(y))
+            yy <- factor(levels(y)[1 + rbinom(ntot, size = 1, prob = ftd)],
+                         levels = levels(y))
             split(yy, rep(seq_len(nsim), each = n))
         } else if(is.matrix(y) && ncol(y) == 2) {
             yy <- vector("list", nsim)
