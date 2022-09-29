@@ -425,3 +425,14 @@ test_that("prediction with . in formula + newdata",
   p2 <- predict(mod2, newdata = test)
   expect_identical(p1, p2)
 })
+
+test_that("simulate with a factor with one level", {
+    set.seed(1241)
+    y <- factor(c(rep(0,1000), 1, rep(0,1000), 1), levels = c("0","1"))
+    x <- rep(c("A","B"),each = 1001)
+    mod <- glmer(y ~ 1 + (1|x),family = binomial,
+                 control = glmerControl(check.conv.singular = "ignore"))
+    s <- simulate(mod,newdata = data.frame(x = "A"), nsim = 10)
+    ## very low mean, all simulated values zero
+    expect_true(all(s == 0))
+})
