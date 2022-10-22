@@ -4,7 +4,7 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-31 (unreleased)}{
+\section{CHANGES IN VERSION 1.1-31}{
   \subsection{BUG FIXES}{
     \itemize{
       \item \code{confint(fm, <single string>)} now works (after years of
