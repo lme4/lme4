@@ -1585,19 +1585,28 @@ hatvalues.merMod <- function(model, fullHatMatrix = FALSE, ...) {
 
     ## prior weights, W ^ {1/2} :
     sqrtW <- Diagonal(x = sqrt(weights(model, type = "prior")))
-    res <- with(getME(model, c("L", "Lambdat", "Zt", "RX", "X", "RZX")), {
-        ## CL:= right factor of the random-effects component of the hat matrix  (64)
-        CL <- solve(L, solve(L, Lambdat %*% Zt %*% sqrtW,
-                             system = "P"), system = "L")
-        ## CR:= right factor of the fixed-effects component of the hat matrix   (65)
-        ##      {MM (FIXME Matrix):  t(.) %*% here faster than crossprod()}
-        CR <- solve(t(RX), t(X) %*% sqrtW - crossprod(RZX, CL))
-        if(fullHatMatrix) ## H = (C_L^T C_L + C_R^T C_R)                        (63)
-            crossprod(CL) + crossprod(CR)
-        else ## diagonal of the hat matrix, diag(H) :
-            colSums(CR^2) + colSums(CL^2)
-    })
-    napredict(attr(model.frame(model),"na.action"),res)
+    vList <- getME(model, c("L", "Lambdat", "Zt", "RX", "X", "RZX"))
+    ## CL:= right factor of the random-effects component of the hat matrix  (64)
+    CL <- with(vList,
+               solve(L, solve(L,
+                              Lambdat %*% Zt %*% sqrtW,
+                              system = "P"), system = "L"))
+    ## restore dimnames (needed since Matrix 1.5.2)
+    dimnames(CL) <- dimnames(vList$Zt)
+    ## CR:= right factor of the fixed-effects component of the hat matrix   (65)
+    ##      {MM (FIXME Matrix):  t(.) %*% here faster than crossprod()}
+    CR <- with(vList,
+               solve(t(RX),
+                     ## colScale(t(X), sqrtW) - crossprod(RZX, CL)
+                     t(X) %*% sqrtW - crossprod(RZX, CL))
+                     )
+    res <- if(fullHatMatrix) { ## H = (C_L^T C_L + C_R^T C_R)             (63)
+               crossprod(CL) + crossprod(CR)
+           } else {
+               ## diagonal of the hat matrix, diag(H) :
+               colSums(CR^2) + colSums(CL^2)
+           }
+    napredict(attr(model.frame(model),"na.action"), res)
 }
 
 
