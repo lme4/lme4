@@ -1,4 +1,5 @@
 library("testthat")
+try(detach("package:lmerTest"), silent = TRUE)
 library("lme4")
 
 context("summarizing/printing models")
@@ -30,6 +31,14 @@ test_that("lmer", {
   m2 <- lmer(y ~ x.1 + x.2 + (1 + x.1 + x.2 | g), control=C1)
   cc1 <- tmpf(m1)
   cc2 <- tmpf(m2)
+  ## FIXME: correlation of fixed effects printed inconsistently.
+  ## If (1) LME4_TEST_LEVEL == 100 *and* after running all of prior
+  ##   tests, something (package load? options setting?) changes
+  ##   so that the fixed-effect correlations are no longer printed
+  ##   out, and this test fails
+  ## would like to sort this out but realistically not sure it's worth it?
+  print(tfun(cc1))
+  print(tfun(cc2))
   expect_equal(tfun(cc1),
                c("Fixed effects:",
                  "            Estimate Std. Error t value", 

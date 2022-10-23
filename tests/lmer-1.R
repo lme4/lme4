@@ -41,13 +41,17 @@ stopifnot(all.equal(fm1, fm1.))
 ##           all.equal(fm1@re@theta, fm1.@re@theta, tolerance = 1.e-7),
 ##           all.equal(ranef(fm1), ranef(fm1.), tolerance = 1.e-7))
 
+vv <- vcov(fm1)
+cc <- Matrix::cov2cor(vv)
+dimnames(cc) <- dimnames(vv) ## work around Matrix 1.5.2 buglet
+
 stopifnot(
     all.equal(fixef(fm1), fixef(fm2), tolerance = 1.e-13)
    ,
     all.equal(unname(fixef(fm1)),
               c(251.405104848485, 10.467285959595), tolerance = 1e-13)
    ,
-    all.equal(Matrix::cov2cor(vcov(fm1))["(Intercept)", "Days"],
+    all.equal(cc["(Intercept)", "Days"],
               -0.1375, tolerance = 4e-4)
 )
 
