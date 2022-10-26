@@ -2,6 +2,8 @@ library("testthat")
 try(detach("package:lmerTest"), silent = TRUE)
 library("lme4")
 
+testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
+
 context("summarizing/printing models")
 test_that("lmer", {
   set.seed(0)
@@ -37,9 +39,11 @@ test_that("lmer", {
   ##   so that the fixed-effect correlations are no longer printed
   ##   out, and this test fails
   ## would like to sort this out but realistically not sure it's worth it?
-  print(tfun(cc1))
-  print(tfun(cc2))
-  expect_equal(tfun(cc1),
+  t1 <- tfun(cc1)
+  vv <- vcov(m1)
+  ss <- sessionInfo()
+  save(m1, vv, ss, file = sprintf("test-summary_testlevel_%d.rda", testLevel))
+  expect_equal(t1,
                c("Fixed effects:",
                  "            Estimate Std. Error t value", 
                  "(Intercept)      5.4        0.5      12",
@@ -52,7 +56,7 @@ test_that("lmer", {
                  "x.2  0.029 -0.043"
                  ))
 
-  expect_equal(tfun(cc2),
+  expect_equal(t2,
                c("Fixed effects:",
                  "            Estimate Std. Error t value", 
                  "(Intercept)      5.4        0.4      12",
