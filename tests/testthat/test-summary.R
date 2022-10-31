@@ -56,7 +56,7 @@ test_that("lmer", {
                  "x.2  0.029 -0.043"
                  ))
 
-  expect_equal(t2,
+  expect_equal(tfun(cc2),
                c("Fixed effects:",
                  "            Estimate Std. Error t value", 
                  "(Intercept)      5.4        0.4      12",

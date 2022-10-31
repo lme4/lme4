@@ -1,3 +1,23 @@
+Sys.setenv("LME4_TEST_LEVEL" = 100)
+devtools::test()
+
+library(lme4)
+m1 <- lmer(Reaction ~ Days+(Days|Subject), sleepstudy)
+debug(lme4:::summary.merMod)
+summary(m1)
+cc <- capture.output(print(summary(m1)))
+any(grepl("Correlation of Fixed Effects", cc))
+
+library(merDeriv)
+cc <- capture.output(print(summary(m1)))
+any(grepl("Correlation of Fixed Effects", cc))
+
+debug(lme4:::print.summary.merMod)
+debug(lme4:::vcov.merMod)
+length(vcov(m1)@factors)
+s1 <- summary(m1)
+str(s1$vcov)  ## no factors when run AFTER test() at testLevel 100
+           
 f <- function(L) {
     load(sprintf("test-summary_testlevel_%d.rda", L))
     return(mget(ls()))

@@ -1802,6 +1802,19 @@ print.summary.merMod <- function(x, digits = max(3, getOption("digits") - 3),
                      digits = digits, signif.stars = signif.stars)
         ## do not show correlation when   summary(*, correlation=FALSE)  was used:
         hasCor <- !is.null(VC <- x$vcov) && !is.null(VC@factors$correlation)
+        ## FIXME: don't understand the logic here. We can easily
+        ## defend against the problem of missing pre-computed correlation
+        ## function by reconstituting it if necessary
+        ## (e.g. if using merDeriv::vcov.lmerMod), as in commented code below.
+        ## However, we currently have a test (using fit_agridat_archbold,
+        ## see test-methods.R) that fails if we 'fix' this problem ...
+        ## 
+        ## if (hasCor && is.null(VC@factors$correlation)) {
+        ##     ## defend against merDeriv definition of vcov.lmerMod; reconstruct
+        ##     cc <- cov2cor(VC)
+        ##     dimnames(cc) <- dimnames(VC) ## Matrix 1.5.2 bug
+        ##     VC@factors <- c(VC@factors, list(correlation = cc))
+        ## }
         if(is.null(correlation)) { # default
             cor.max <- getOption("lme4.summary.cor.max")
             correlation <- hasCor && p <= cor.max
@@ -2373,7 +2386,11 @@ summary.merMod <- function(object,
                    family = famL$family, link = famL$link,
                    ngrps = ngrps(object),
                    coefficients = coefs, sigma = sig,
-                   vcov = vcov(object, correlation = correlation, sigm = sig),
+                   ## explicitly call method to avoid getting m
+                   ## essed up by merDeriv's vcov method
+                   ##  (which doesn't assign a VC attribute)
+
+                   vcov = vcov.merMod(object, correlation = correlation, sigm = sig),
                    varcor = varcor, # and use formatVC(.) for printing.
                    AICtab = llAIC[["AICtab"]], call = object@call,
                    residuals = residuals(object,"pearson",scaled = TRUE),
@@ -2382,11 +2399,11 @@ summary.merMod <- function(object,
                    ), class = "summary.merMod")
 }
 
-## TODO: refactor?
+## TODO: refactor? Why the hell do we need a summary method for summary.merMod?
 ##' @S3method summary summary.merMod
 summary.summary.merMod <- function(object, varcov = TRUE, ...) {
     if(varcov && is.null(object$vcov))
-        object$vcov <- vcov(object, correlation = TRUE, sigm = object$sigma)
+        object$vcov <- vcov.merMod(object, correlation = TRUE, sigm = object$sigma)
     object
 }
 

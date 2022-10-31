@@ -34,3 +34,4 @@ R/TAGS
 src/mcmcsamp.cpp
 ^\.github$
 revdep/
+Rplots.pdf
