@@ -57,7 +57,7 @@
 }
 \note{
   The default method \code{"profile"} amounts to \preformatted{
-    confint(profile(object, which=parm), signames=oldNames, ...),
+    confint(profile(object, which=parm, signames=oldNames, ...),
             level, zeta)}
   where the \code{\link{profile}} method \code{\link{profile.merMod}}
   does almost all the computations.  Therefore it is typically
@@ -87,7 +87,7 @@
 \examples{
 if (interactive() || lme4_testlevel() >= 3) {
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
-fm1W <- confint(fm1, method="Wald")# very fast, but ....
+fm1W <- confint(fm1, method="Wald")# very fast, but not useful for "sigmas" = var-cov pars
 fm1W
 (fm2 <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy))
 (CI2 <- confint(fm2, maxpts = 8)) # method = "profile"; 8: to be much faster
@@ -97,12 +97,13 @@ fm1W
                      dim = c(5L, 2L))))
 }
 if (lme4_testlevel() >= 3) {
- ## ~20 seconds, MacBook Pro laptop
- system.time(fm1P <- confint(fm1, method="profile", ## default
-                             oldNames = FALSE))
- ## ~ 40 seconds
- system.time(fm1B <- confint(fm1, method="boot",
-                             .progress="txt", PBargs=list(style=3)))
+  system.time(fm1P <- confint(fm1, method="profile", ## <- default
+                              oldNames = FALSE))
+  ## --> ~ 2.2 seconds (2022)
+  set.seed(123) # (reproducibility when using bootstrap)
+  system.time(fm1B <- confint(fm1, method="boot", oldNames=FALSE,
+                              .progress="txt", PBargs= list(style=3)))
+  ## --> ~ 6.2 seconds (2022) and warning, messages
 } else {
     load(system.file("testdata","confint_ex.rda",package="lme4"))
 }

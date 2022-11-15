@@ -112,7 +112,7 @@ varianceProf(x, ranef = TRUE)
     deviation-correlation scale (\code{"sdcor"}) or on
     the variance-covariance scale (\code{"varcov"})
   }
-    
+
 }
 \value{
   \code{profile(<merMod>)} returns an object of S3 class
@@ -148,7 +148,7 @@ varianceProf(x, ranef = TRUE)
   (i.e., they are logged rather than taking a more applicable
   transformation such as an arc-hyperbolic tangent,
   \code{atanh(x)}=\eqn{\log((1+x)/(1-x))/2}{log((1+x)/(1-x))/2}).
-  
+
   The \code{varianceProf} function works similarly, including
   non-sensibility for correlation parameters, by squaring all
   parameter values, changing the names by appending \code{sq}
@@ -172,57 +172,56 @@ varianceProf(x, ranef = TRUE)
   \code{\link{bootMer}}.
 }
 \examples{
-if (interactive()) {
 fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML = FALSE)
 system.time(
   tpr  <- profile(fm01ML, optimizer="Nelder_Mead", which="beta_")
-)## fast; as only *one* beta parameter is profiled over
-## full profiling (default which means 'all) needs
-## ~2.6s (on a 2010 Macbook Pro)
-system.time( tpr  <- profile(fm01ML))
-## ~1s, + possible warning about bobyqa convergence
-(confint(tpr) -> CIpr)
-\dontrun{% too much precision (etc). but just FYI:
-stopifnot(all.equal(unname(CIpr),
-  array(c(12.1985292, 38.2299848, 1486.4515,
-          84.0630513, 67.6576964, 1568.54849), dim = 3:2),
-                    tol= 1e-07))# 1.37e-9 {64b}
-}
-library("lattice")
-xyplot(tpr)
-xyplot(tpr, absVal=TRUE) # easier to see conf.int.s (and check symmetry)
-xyplot(tpr, conf = c(0.95, 0.99), # (instead of all five 50, 80,...)
-       main = "95\% and 99\% profile() intervals")
-xyplot(logProf(tpr, ranef=FALSE),
-       main = expression("lmer profile()s"~~ log(sigma)*" (only log)"))
-densityplot(tpr, main="densityplot( profile(lmer(..)) )")
-densityplot(varianceProf(tpr), main=" varianceProf( profile(lmer(..)) )")
-splom(tpr)
-splom(logProf(tpr, ranef=FALSE))
-doMore <- lme4:::testLevel() > 2 %% even more --> ../tests/profile.R
-if(doMore) { ## not typically, for time constraint reasons
- ## Batch and residual variance only
- system.time(tpr2 <- profile(fm01ML, which=1:2, optimizer="Nelder_Mead"))
- print( xyplot(tpr2) )
- print( xyplot(log(tpr2)) )# log(sigma) is better
- print( xyplot(logProf(tpr2, ranef=FALSE)) )
+)## fast; as only *one* beta parameter is profiled over -> 0.09s (2022)
 
- ## GLMM example
- gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
-	     data = cbpp, family = binomial)
- ## running ~ 10-12 seconds on a modern machine {-> "verbose" while you wait}:
- print( system.time(pr4 <- profile(gm1, verbose=TRUE)) )
- print( xyplot(pr4, layout=c(5,1), as.table=TRUE) )
- print( xyplot(log(pr4), absVal=TRUE) ) # log(sigma_1)
- print( splom(pr4) )
- print( system.time( # quicker: only sig01 and one fixed effect
-     pr2 <- profile(gm1, which=c("theta_", "period2"))))
- print( confint(pr2) )
- ## delta..: higher underlying resolution, only for 'sigma_1':
- print( system.time(
-     pr4.hr <- profile(gm1, which="theta_", delta.cutoff=1/16)))
- print( xyplot(pr4.hr) )
-} %% doMore
-} %% interactive()
+## full profiling (default which means 'all') needs longer:
+system.time( tpr  <- profile(fm01ML, signames=FALSE))
+## ~ 0.26s (2022) + possible warning about convergence
+(confint(tpr) -> CIpr)
+\donttest{# too much precision (etc). but just FYI:
+ trgt <- array(c(12.19854, 38.22998, 1486.451,
+                 84.06305, 67.6577,  1568.548), dim = 3:2)
+ stopifnot(all.equal(trgt, unname(CIpr), tol = .0001)) # had 3.1e-7
+}
+if (interactive()) {
+ library("lattice")
+ xyplot(tpr)
+ xyplot(tpr, absVal=TRUE) # easier to see conf.int.s (and check symmetry)
+ xyplot(tpr, conf = c(0.95, 0.99), # (instead of all five 50, 80,...)
+        main = "95\% and 99\% profile() intervals")
+ xyplot(logProf(tpr, ranef=FALSE),
+        main = expression("lmer profile()s"~~ log(sigma)*" (only log)"))
+ densityplot(tpr, main="densityplot( profile(lmer(..)) )")
+ densityplot(varianceProf(tpr), main=" varianceProf( profile(lmer(..)) )")
+ splom(tpr)
+ splom(logProf(tpr, ranef=FALSE))
+ doMore <- lme4:::testLevel() > 2 %% even more --> ../tests/profile.R
+ if(doMore) { ## not typically, for time constraint reasons
+   ## Batch and residual variance only
+   system.time(tpr2 <- profile(fm01ML, which=1:2)) # , optimizer="Nelder_Mead" gives warning
+   print( xyplot(tpr2) )
+   print( xyplot(log(tpr2)) )# log(sigma) is better
+   print( xyplot(logProf(tpr2, ranef=FALSE)) )
+
+   ## GLMM example
+   gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+               data = cbpp, family = binomial)
+   ## running ~ 10 seconds on a modern machine {-> "verbose" while you wait}:
+   print( system.time(pr4 <- profile(gm1, verbose=TRUE)) )
+   print( xyplot(pr4, layout=c(5,1), as.table=TRUE) )
+   print( xyplot(log(pr4), absVal=TRUE) ) # log(sigma_1)
+   print( splom(pr4) )
+   print( system.time( # quicker: only sig01 and one fixed effect
+       pr2 <- profile(gm1, which=c("theta_", "period2"))))
+   print( confint(pr2) )
+   ## delta..: higher underlying resolution, only for 'sigma_1':
+   print( system.time(
+       pr4.hr <- profile(gm1, which="theta_", delta.cutoff=1/16)))
+   print( xyplot(pr4.hr) )
+ }
+} # only if interactive()
 }
 \keyword{methods}
