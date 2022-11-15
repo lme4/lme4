@@ -63,13 +63,16 @@ REMLcrit(object)
 \S3method{model.matrix}{merMod}(object, type = c("fixed", "random", "randomListRaw"), ...)
 \S3method{print}{merMod}(x, digits = max(3, getOption("digits") - 3),
       correlation = NULL, symbolic.cor = FALSE,
-      signif.stars = getOption("show.signif.stars"), ranef.comp = "Std.Dev.", ...)
+      signif.stars = getOption("show.signif.stars"), 
+      ranef.comp = "Std.Dev.",
+      ranef.corr = any(ranef.comp == "Std.Dev."), ...)
 
 \S3method{summary}{merMod}(object, correlation = , use.hessian = NULL, \dots)
 \S3method{print}{summary.merMod}(x, digits = max(3, getOption("digits") - 3),
       correlation = NULL, symbolic.cor = FALSE,
       signif.stars = getOption("show.signif.stars"),
-      ranef.comp = c("Variance", "Std.Dev."), show.resids = TRUE, ...)
+      ranef.comp = c("Variance", "Std.Dev."),
+      ranef.corr = any(ranef.comp == "Std.Dev."), show.resids = TRUE, ...)
 \S3method{update}{merMod}(object, formula., ..., evaluate = TRUE)
 \S3method{weights}{merMod}(object, type = c("prior", "working"), ...)
 }

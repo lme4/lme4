@@ -419,6 +419,8 @@ glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, ma
                      tol, as.integer(maxit),
                      GQmat, grpFac, verbose))
     }
+ ### does this show anywhere ??? [i.e. is it ever used in our checks/examples/scripts/vignettes ?
+ ### message("glmerPwrssUpdate(*, compDev=FALSE)  --> using more R, no direct .Call() to C.") # [DBG] only
     oldpdev <- .Machine$double.xmax
     uOnly   <- nAGQ == 0L
     i <- 0
@@ -1722,12 +1724,11 @@ llikAIC <- function(object, devianceFUN = devCrit, chkREML = TRUE, devcomp = obj
     }
 }
 
-.prt.VC <- function(varcor, digits, comp, formatter = format, ...) {
+.prt.VC <- function(varcor, digits,
+                    comp = "Std.Dev.", corr = any(comp == "Std.Dev."),
+                    formatter = format, ...) { # '...' *only* passed to print()
     cat("Random effects:\n")
-    fVC <- if(missing(comp))
-        formatVC(varcor, digits = digits, formatter = formatter)
-    else
-        formatVC(varcor, digits = digits, formatter = formatter, comp = comp)
+    fVC <- formatVC(varcor, digits=digits, formatter=formatter, comp=comp, corr=corr)
     print(fVC, quote = FALSE, digits = digits, ...)
 }
 
@@ -1781,6 +1782,7 @@ print.summary.merMod <- function(x, digits = max(3, getOption("digits") - 3),
                                  correlation = NULL, symbolic.cor = FALSE,
                                  signif.stars = getOption("show.signif.stars"),
                                  ranef.comp = c("Variance", "Std.Dev."),
+                                 ranef.corr = any(ranef.comp == "Std.Dev."),
                                  show.resids = TRUE, ...)
 {
     .prt.methTit(x$methTitle, x$objClass)
@@ -1792,7 +1794,8 @@ print.summary.merMod <- function(x, digits = max(3, getOption("digits") - 3),
         ##  summary.merMod has no residuals method
         .prt.resids(x$residuals, digits = digits)
     .prt.VC(x$varcor, digits = digits, useScale = x$useScale,
-            comp = ranef.comp, ...)
+            comp = ranef.comp,
+            corr = ranef.corr, ...)
     .prt.grps(x$ngrps, nobs = x$devcomp$dims[["n"]])
 
     p <- nrow(x$coefficients)
@@ -1808,7 +1811,7 @@ print.summary.merMod <- function(x, digits = max(3, getOption("digits") - 3),
         ## (e.g. if using merDeriv::vcov.lmerMod), as in commented code below.
         ## However, we currently have a test (using fit_agridat_archbold,
         ## see test-methods.R) that fails if we 'fix' this problem ...
-        ## 
+        ##
         ## if (hasCor && is.null(VC@factors$correlation)) {
         ##     ## defend against merDeriv definition of vcov.lmerMod; reconstruct
         ##     cc <- cov2cor(VC)
@@ -1869,7 +1872,8 @@ print.summary.merMod <- function(x, digits = max(3, getOption("digits") - 3),
 print.merMod <- function(x, digits = max(3, getOption("digits") - 3),
                          correlation = NULL, symbolic.cor = FALSE,
                          signif.stars = getOption("show.signif.stars"),
-                         ranef.comp = "Std.Dev.", ...)
+                         ranef.comp = "Std.Dev.",
+                         ranef.corr = any(ranef.comp == "Std.Dev."), ...)
 {
     dims <- x@devcomp$dims
     .prt.methTit(methTitle(dims), class(x))
@@ -1880,7 +1884,7 @@ print.merMod <- function(x, digits = max(3, getOption("digits") - 3),
     llAIC <- llikAIC(x)
     .prt.aictab(llAIC$AICtab, 4)
     varcor <- VarCorr(x)
-    .prt.VC(varcor, digits = digits, comp = ranef.comp, ...)
+    .prt.VC(varcor, digits = digits, comp = ranef.comp, corr = ranef.corr, ...)
     ngrps <- vapply(x@flist, nlevels, 0L)
     .prt.grps(ngrps, nobs = dims[["n"]])
     if(length(cf <- fixef(x)) > 0) {
@@ -2261,12 +2265,12 @@ unscaledVar <- function(object, ...) {
 
 ##' @S3method print VarCorr.merMod
 print.VarCorr.merMod <- function(x, digits = max(3, getOption("digits") - 2),
-                   comp = "Std.Dev.", formatter = format, ...) {
-    print(formatVC(x, digits = digits, comp = comp, formatter = formatter), quote = FALSE, ...)
+	comp = "Std.Dev.", corr = any(comp == "Std.Dev."), formatter = format, ...) {
+    print(formatVC(x, digits=digits, comp=comp, corr=corr, formatter=formatter),
+          quote = FALSE, ...)
     invisible(x)
 }
 
-##' __NOT YET EXPORTED__
 ##' "format()" the 'VarCorr' matrix of the random effects -- for
 ##' print()ing and show()ing
 ##'
@@ -2284,7 +2288,8 @@ print.VarCorr.merMod <- function(x, digits = max(3, getOption("digits") - 2),
 ##' to the first (numeric vector) and \code{digits}.
 ##' @return a character matrix of formatted VarCorr entries from \code{varc}.
 formatVC <- function(varcor, digits = max(3, getOption("digits") - 2),
-                     comp = "Std.Dev.", formatter = format,
+                     comp = "Std.Dev.", corr = any(comp == "Std.Dev."),
+                     formatter = format,
                      useScale = attr(varcor, "useSc"),
                      ...)
 {
@@ -2294,7 +2299,7 @@ formatVC <- function(varcor, digits = max(3, getOption("digits") - 2),
         stop("Illegal 'comp': ", comp[is.na(mcc)])
     nc <- length(colnms <- c(c.nms[1:2], (use.c <- avail.c[mcc])))
     if(length(use.c) == 0)
-        stop("Must *either* show variances or standard deviations")
+        stop("Must show variances and/or standard deviations")
     reStdDev <- c(lapply(varcor, attr, "stddev"),
                   if(useScale) list(Residual = unname(attr(varcor, "sc"))))
     reLens <- lengths(reStdDev)
@@ -2306,12 +2311,16 @@ formatVC <- function(varcor, digits = max(3, getOption("digits") - 2),
         reMat[,"Variance"] <- formatter(unlist(reStdDev)^2, digits = digits, ...)
     if(any("Std.Dev." == use.c))
         reMat[,"Std.Dev."] <- formatter(unlist(reStdDev),   digits = digits, ...)
-    if (any(reLens > 1)) {
+    if (any(reLens > 1L)) { ## append lower triangular matrix of correlations / covariances
         maxlen <- max(reLens)
-        recorr <- lapply(varcor, attr, "correlation")
-        corr <-
+        Lcomat <- if(corr)
+                      lapply(varcor, attr, "correlation")
+                  else # just the matrix, i.e. {dim,dimnames}
+                      lapply(varcor, identity)
+				## function(v) `attributes<-`(v, attributes(v)[c("dim","dimnames")])
+        co <- # corr or cov
             do.call(rbind,
-                    lapply(recorr,
+                    lapply(Lcomat,
                            function(x) {
                                x <- as.matrix(x)
                                dig <- max(2, digits - 2) # use 'digits' !
@@ -2322,10 +2331,10 @@ formatVC <- function(varcor, digits = max(3, getOption("digits") - 2),
                                if (nr >= maxlen) return(cc)
                                cbind(cc, matrix("", nr, maxlen-nr))
                            }))[, -maxlen, drop = FALSE]
-        if (nrow(corr) < nrow(reMat))
-            corr <- rbind(corr, matrix("", nrow(reMat) - nrow(corr), ncol(corr)))
-        colnames(corr) <- c("Corr", rep.int("", max(0L, ncol(corr)-1L)))
-        cbind(reMat, corr)
+        if (nrow(co) < nrow(reMat))
+            co <- rbind(co, matrix("", nrow(reMat) - nrow(co), ncol(co)))
+        colnames(co) <- c(if(corr) "Corr" else "Cov", rep.int("", max(0L, ncol(co)-1L)))
+        cbind(reMat, co, deparse.level=0L)
     } else reMat
 }
 
@@ -2589,13 +2598,13 @@ as.data.frame.ranef.mer <- function(x, ...) {
     ## combine
     xD <- do.call(rbind,xL)
     ## rename ...
-    oldnames <- c("values","ind",".nn","se","id")
-    newnames <- c("condval","term","grp","condsd","grpvar")
+    oldnames <- c("values", "ind", ".nn", "se",    "id")
+    newnames <- c("condval","term","grp", "condsd","grpvar")
     names(xD) <- newnames[match(names(xD),oldnames)]
     ## reorder ...
     neworder <- c("grpvar","term","grp","condval")
     if ("condsd" %in% names(xD)) neworder <- c(neworder,"condsd")
-    return(xD[neworder])
+    xD[neworder]
 }
 
 dim.merMod <- function(x) {
@@ -2720,7 +2729,7 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
             orig_pars[seq_along(orig_theta)] <- orig_theta
         }
         if (verbose > 10) cat("computing derivatives\n")
-        derivs <- deriv12(fn,opt$par,fx = opt$value)
+        derivs <- deriv12(fn, opt$par, fx = opt$value)
         if (use.last.params) {
             ## run one more evaluation of the function at the optimized
             ##  value, to reset the internal/environment variables in devfun ...
@@ -2779,4 +2788,3 @@ as.data.frame.VarCorr.merMod <- function(x,row.names = NULL,
     rownames(r) <- NULL
     r
 }
-

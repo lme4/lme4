@@ -4,16 +4,27 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
+\section{CHANGES IN VERSION 1.1-32}{
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item \code{formatVC()} and hence \code{print(<merMod>)} get a new
+      optional argument \code{corr} indicating if correlations or
+      covariances should be used for vector random effects.  By default, it
+      is false for \code{comp = "Variance"}, fixing (GH #707).
+    }
+  }
+} % 1.1-32
+
 \section{CHANGES IN VERSION 1.1-31}{
   \subsection{BUG FIXES}{
     \itemize{
       \item \code{confint(fm, <single string>)} now works (after years of
       being broken) again.
       \item simulating from binomial model with a factor response, when
-  the simulated response contains only a single factor level, now works
-  (Daniel Kennedy)
-} % itemize
- } % bug fixes
+      the simulated response contains only a single factor level, now works
+      (Daniel Kennedy)
+    }
+  } % bug fixes
 } % version 1.1-31
 
 \section{CHANGES IN VERSION 1.1-30 (2022-07-08)}{
