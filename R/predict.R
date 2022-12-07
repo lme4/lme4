@@ -588,12 +588,16 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
             family <- get(family, mode = "function", envir = parent.frame())
         if (is.function(family))
             family <- family()
+        checkArgs <- list(check.formula.LHS="ignore",
+                          check.nobs.vs.nRE="warning",
+                          check.nobs.vs.nlev="warning")
         if (is.null(family) ||
             (family$family=="gaussian" && family$link=="identity")) {
             lmod <- lFormula(formula,newdata,
                              weights=weights,
                              offset=offset,
-                             control=lmerControl(check.formula.LHS="ignore"))
+                             control=do.call(lmerControl, checkArgs)
+                             )
             devfun <- do.call(mkLmerDevfun, lmod)
             object <- mkMerMod(environment(devfun),
                                ## (real parameters will be filled in later)
@@ -604,7 +608,8 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
             glmod <- glFormula(formula,newdata,family=family,
                                weights=weights,
                                offset=offset,
-                               control=glmerControl(check.formula.LHS="ignore"))
+                               control=do.call(glmerControl, checkArgs)
+                               )
             devfun <- do.call(mkGlmerDevfun, glmod)
             object <- mkMerMod(environment(devfun),
                                ## (real parameters will be filled in later)

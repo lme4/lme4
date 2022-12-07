@@ -13,6 +13,13 @@
       is false for \code{comp = "Variance"}, fixing (GH #707).
     }
   }
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{simulate} with a formula now allows simulations of
+      unidentifiable cases (e.g. number of RE == number of obs), with
+      a warning
+    }
+  } % bug fixes
 } % 1.1-32
 
 \section{CHANGES IN VERSION 1.1-31}{
