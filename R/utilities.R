@@ -515,16 +515,18 @@ expandDoubleVerts <- function(term)
 ##' @keywords models utilities
 ##' @export
 nobars <- function(term) {
+    e <- environment(term)
     nb <- nobars_(term)  ## call recursive version
     if (is(term,"formula") && length(term)==3 && is.symbol(nb)) {
         ## called with two-sided RE-only formula:
         ##    construct response~1 formula
-        nb <- reformulate("1",response=deparse(nb))
+        nb <- reformulate("1", response=deparse(nb))
     }
     ## called with one-sided RE-only formula, or RHS alone
     if (is.null(nb)) {
         nb <- if (is(term,"formula")) ~1 else 1
     }
+    environment(nb) <- e
     nb
 }
 
