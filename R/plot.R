@@ -430,16 +430,27 @@ plot.summary.mer <- function(object, type="fixef", ...) {
 qqmath.merMod <- function(x, data = NULL, id=NULL, idLabels=NULL, ...) {
     ## klugey attempt to detect whether user forgot to specify argument
     ## names explicitly (after addition of required 'data' argument)
-    if (!is.null(data) &&
-        (is.null(id) ||      ## id but not idLabels specified
-         (is.null(idLabels) || !(is.vector(idLabels) || is.formula(idLabels))))) {
-        idLabels <- id
-        id <- data
+    ## NOT completely tested!
+    if (!is.null(data)) {
+        if (is.null(idLabels) && (!is.null(id))) {
+            ## (x, id = id, idLabels)
+            idLabels <- data
+        }
+        if (is.null(id)) {
+            if (is.null(idLabels)) {
+                ## (x, id, idLabels)
+                idLabels <- id
+            }
+            ## (x, id, idLabels = idLabels)
+            id <- data
+        }
         warning("qqmath.merMod takes ", sQuote("data"), "as its ",
                 "first argument for S3 method compatibility: ",
                 "in the future, please ",
-                "specify the ", sQuote("id"), " argument explicitly ",
-                "i.e. ", sQuote("qqmath(fitted_model, id = ..., ...)"))
+                "specify the ", sQuote("id"), " and ",
+                sQuote("idLabels"), " arguments explicitly ",
+                "i.e. ",
+                sQuote("qqmath(fitted_model, id = ..., [idLabels = ...], ...)"))
     }
    
     values <- residuals(x, type="pearson", scaled=TRUE)
