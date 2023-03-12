@@ -427,10 +427,22 @@ plot.summary.mer <- function(object, type="fixef", ...) {
 ## TO DO: allow faceting formula
 ## TO DO: allow qqline to be optional
 ## TO DO (harder): steal machinery from qq.gam for better GLMM Q-Q plots
-qqmath.merMod <- function(x, id=NULL, idLabels=NULL, ...) {
-    ## if (!is.null(id) || !is.null(idLabels))
-    ##  stop("id and idLabels options not yet implemented")
-    values <- residuals(x,type="pearson",scaled=TRUE)
+qqmath.merMod <- function(x, data = NULL, id=NULL, idLabels=NULL, ...) {
+    ## klugey attempt to detect whether user forgot to specify argument
+    ## names explicitly (after addition of required 'data' argument)
+    if (!is.null(data) &&
+        (is.null(id) ||      ## id but not idLabels specified
+         (is.null(idLabels) || !(is.vector(idLabels) || is.formula(idLabels))))) {
+        idLabels <- id
+        id <- data
+        warning("qqmath.merMod takes ", sQuote("data"), "as its ",
+                "first argument for S3 method compatibility: ",
+                "in the future, please ",
+                "specify the ", sQuote("id"), " argument explicitly ",
+                "i.e. ", sQuote("qqmath(fitted_model, id = ..., ...)"))
+    }
+   
+    values <- residuals(x, type="pearson", scaled=TRUE)
     data <- getData(x)
     ## DRY: copied from plot.merMod, should modularize/refactor
     if (!is.null(id)) {       ## identify points in plot

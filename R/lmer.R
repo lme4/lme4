@@ -2511,7 +2511,8 @@ qqmath.ranef.mer <- function(x, data, main = TRUE, ...)
                    ylab = "Standard normal quantiles",
                    xlab = NULL, main = mtit, ...)
         } else {
-            qqmath(~values|ind, stack(xt),
+            qqmath(~values|ind,
+                   data = stack(xt),
                    scales = list(y = list(relation = "free")),
                    xlab = "Standard normal quantiles",
                    ylab = NULL, main = mtit, ...)

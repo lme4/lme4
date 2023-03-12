@@ -6,7 +6,7 @@
 \method{plot}{merMod}(x,
      form = resid(., type = "pearson") ~ fitted(.), abline,
      id = NULL, idLabels = NULL, grid, \dots)
-\method{qqmath}{merMod}(x, id = NULL, idLabels = NULL, \dots)
+\method{qqmath}{merMod}(x, data = NULL, id = NULL, idLabels = NULL, \dots)
 }
 \arguments{
   \item{x}{a fitted [ng]lmer model}
@@ -53,6 +53,7 @@
   formula \code{idLabels=~.obs} will label the observations
   according to observation number.}
 
+  \item{data}{ignored: required for S3 method compatibility}
   \item{grid}{an optional logical value indicating whether
   a grid should be added to plot. Default depends on the
   type of lattice plot used: if \code{xyplot} defaults to
