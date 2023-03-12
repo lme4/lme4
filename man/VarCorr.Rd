@@ -9,9 +9,10 @@
 
 %% documented because of "surprising arguments":
 \method{as.data.frame}{VarCorr.merMod}(x, row.names = NULL,
-              optional = FALSE, order = c("cov.last", "lower.tri"), \dots)
+    optional = FALSE, order = c("cov.last", "lower.tri"), \dots)
 \method{print}{VarCorr.merMod}(x, digits = max(3, getOption("digits") - 2),
-      comp = "Std.Dev.", formatter = format, \dots)
+    comp = "Std.Dev.", corr = any(comp == "Std.Dev."),
+    formatter = format, \dots)
 }
 \arguments{
   \item{x}{for \code{VarCorr}: a fitted model object, usually an object inheriting from
@@ -33,6 +34,9 @@
     to be printed; simply passed to \code{\link{formatVC}()}.}
   \item{formatter}{a \code{\link{function}} for formatting the numbers;
     simply passed to \code{\link{formatVC}()}.}
+  \item{corr}{(logical) print correlations (rather than covariances) of
+    random effects?}
+
 }
 \description{
   This function calculates the estimated variances,
@@ -83,13 +87,15 @@ residual error term where applicable) and the following columns:
 \examples{
 data(Orthodont, package="nlme")
 fm1 <- lmer(distance ~ age + (age|Subject), data = Orthodont)
-(vc <- VarCorr(fm1))  ## default print method: standard dev and corr
+print(vc <- VarCorr(fm1))  ## default print method: standard dev and corr
 ## both variance and std.dev.
-print(vc,comp=c("Variance","Std.Dev."),digits=2)
+print(vc,comp=c("Variance","Std.Dev."), digits=2)
 ## variance only
-print(vc,comp=c("Variance"))
+print(vc, comp=c("Variance"))
+## standard deviations only, but covariances rather than correlations
+print(vc, corr = FALSE)
 as.data.frame(vc)
-as.data.frame(vc,order="lower.tri")
+as.data.frame(vc, order="lower.tri")
 }
 \keyword{models}
 

@@ -152,7 +152,9 @@ REMLcrit(object)
 	\code{"random"} giving the random effects model matrix, or
 	\code{"randomListRaw"} giving a list of the raw random effects model
 	matrices associated with each random effects term.}
-     }}
+  }}
+  \item{ranef.corr}{(logical) print correlations (rather than covariances) of
+    random effects?}
   \item{\dots}{potentially further arguments passed from other methods.}
 }
 \section{Objects from the Class}{
@@ -324,6 +326,10 @@ The following S3 methods with arguments given above exist (this list is currentl
 \examples{
 showClass("merMod")
 methods(class="merMod")## over 30  (S3) methods available
+
+m1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+print(m1, ranef.corr = TRUE)   ## print correlations of REs
+print(m1, ranef.corr = FALSE)  ## print covariances of REs
 
 ## -> example(lmer)  for an example of vcov.merMod()
 }
