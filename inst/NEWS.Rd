@@ -17,6 +17,12 @@
       We have added code to try to detect/warn when this is not done.
     }
   }
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{nobars} now retains the environment of its formula
+  argument (GH #713, Mikael Jagan)
+    }
+  }
 } % 1.1-32
 
 \section{CHANGES IN VERSION 1.1-31}{
