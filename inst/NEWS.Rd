@@ -7,10 +7,11 @@
 \section{CHANGES IN VERSION 1.1-32}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
-      \item \code{formatVC()} and hence \code{print(<merMod>)} get a new
+      \item \code{formatVC()} gets a new
       optional argument \code{corr} indicating if correlations or
-      covariances should be used for vector random effects.  By default, it
-      is false for \code{comp = "Variance"}, fixing (GH #707).
+      covariances should be used for vector random effects;
+      this corresponds to \code{print(<merMod>, ranef.corr = ...)} .
+      By default, it is FALSE for \code{comp = "Variance"}, fixing (GH #707).
       \item \code{qqmath.merMod} adds a (useless) \code{data} argument
       for S3 compatibility. Going forward, the \code{id} and
       \code{idLabels} arguments should always be specified by name.
