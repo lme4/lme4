@@ -432,18 +432,10 @@ qqmath.merMod <- function(x, data = NULL, id=NULL, idLabels=NULL, ...) {
     ## names explicitly (after addition of required 'data' argument)
     ## NOT completely tested!
     if (!is.null(data)) {
-        if (is.null(idLabels) && (!is.null(id))) {
-            ## (x, id = id, idLabels)
-            idLabels <- data
-        }
-        if (is.null(id)) {
-            if (is.null(idLabels)) {
-                ## (x, id, idLabels)
-                idLabels <- id
-            }
-            ## (x, id, idLabels = idLabels)
-            id <- data
-        }
+        idLabels <- id
+        id <- data
+        print(id)
+        print(idLabels)
         warning("qqmath.merMod takes ", sQuote("data"), "as its ",
                 "first argument for S3 method compatibility: ",
                 "in the future, please ",

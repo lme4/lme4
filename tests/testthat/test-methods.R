@@ -683,10 +683,10 @@ test_that("plot", {
                      recipe=as.numeric(recipe))
   fm2 <- lmer(angle ~ recipe + temp        +
                 (1|recipe:replicate), cake2, REML= FALSE)
-  expect_is(lattice::qqmath(fm2,id=0.05), "trellis")
-  expect_is(lattice::qqmath(fm2,id=0.05, idLabels=~recipe), "trellis")
-  expect_warning(lattice::qqmath(fm2,0.05, ~recipe))
-  expect_warning(lattice::qqmath(fm2,0.05))
+  expect_is(lattice::qqmath(fm2, id=0.05), "trellis")
+  expect_is(lattice::qqmath(fm2, id=0.05, idLabels=~recipe), "trellis")
+  expect_warning(lattice::qqmath(fm2, 0.05, ~recipe))
+  expect_warning(lattice::qqmath(fm2, 0.05))
 })
 
 context("misc")
