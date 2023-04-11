@@ -1,4 +1,4 @@
-if (lme4:::testLevel() > 1 || .Platform$OS.type!="windows") {
+if (lme4:::testLevel() > 1 || .Platform$OS.type!="windows") withAutoprint({
 
     ## generalized linear mixed model
     stopifnot(suppressPackageStartupMessages(require(lme4)))
@@ -260,4 +260,4 @@ if (lme4:::testLevel() > 1 || .Platform$OS.type!="windows") {
     }
 
     showProc.time()
-}  ## skip if windows and testLevel<1
+})  ## skip if windows and testLevel<1
