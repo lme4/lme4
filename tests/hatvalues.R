@@ -1,4 +1,4 @@
-if (.Platform$OS.type != "windows") {
+if (.Platform$OS.type != "windows") withAutoprint({
 
     library(lme4)
     source(system.file("testdata", "lme-tst-funs.R", package="lme4", mustWork=TRUE))# -> unn()
@@ -32,4 +32,4 @@ if (.Platform$OS.type != "windows") {
               all.equal(diag(bruteForceHat(m2)),
                         unn(hatvalues(m2)), tol= 1e-14)
               )
-} ## skip on windows (for speed)
+}) ## skip on windows (for speed)

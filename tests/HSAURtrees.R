@@ -1,4 +1,4 @@
-if (.Platform$OS.type != "windows") {
+if (.Platform$OS.type != "windows") withAutoprint({
     library("lme4")
 
     ## example from HSAUR2 package; data from 'multcomp'; see ../inst/testdata/trees513.R
@@ -14,8 +14,6 @@ if (.Platform$OS.type != "windows") {
     .not.call <- function(x) x[names(x) != "call"]
 
     if(lme4:::testLevel() < 2) q("no")
-    ## {{advantage to  if(. >= 2) { ........} : autoprint of system.time() etc
-
     ## else  (testLevel >= 2) : --------------------------------------------------
 
     ## Generate oldres:
@@ -53,4 +51,4 @@ if (.Platform$OS.type != "windows") {
     }
 
 
-} ## skip on windows (for speed)
+}) ## skip on windows (for speed)

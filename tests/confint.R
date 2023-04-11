@@ -1,4 +1,4 @@
-if (lme4:::testLevel() > 1 || .Platform$OS.type != "windows") {
+if (lme4:::testLevel() > 1 || .Platform$OS.type != "windows") withAutoprint({
     library("lme4")
     library("testthat")
 
@@ -40,4 +40,4 @@ if (lme4:::testLevel() > 1 || .Platform$OS.type != "windows") {
         print(c2B <- confint(fm1, method="boot"))
         expect_equal(unname(c1B), unname(c2B), tolerance=2e-2)
     }
-} ## skip if windows/testLevel<1
+}) ## skip if windows/testLevel<1

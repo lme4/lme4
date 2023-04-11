@@ -1,4 +1,10 @@
 library(lme4)
+## show important current settings {for reference, etc} -- [early, and also on Windows !]:
+str( lmerControl())
+str(glmerControl())
+str(nlmerControl())
+ls.str(environment(nloptwrap))
+##
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 fm1ML <- refitML(fm1)
 REMLcrit(fm1)
