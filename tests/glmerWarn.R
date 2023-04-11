@@ -46,4 +46,4 @@ if (.Platform$OS.type != "windows") {
         cn2 <- colnames(mm2)
         stopifnot(identical(mm2[,cn2], mm2.[,cn2]))
     })
-) ## skip on windows (for speed)
+} ## skip on windows (for speed)
