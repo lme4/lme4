@@ -23,9 +23,9 @@ fm <- lmer(log(y) ~ x | z, data=X)  ## ignore grouping factors with
 stopifnot(all.equal(c(`(Intercept)` = -0.834544), fixef(fm), tolerance=.01))
 
 ## is "Nelder_Mead" default optimizer?
-isNM   <- formals(lmerControl)$optimizer == "Nelder_Mead"
-isOldB <- formals(lmerControl)$optimizer == "bobyqa"
-isOldTol <- environment(nloptwrap)$defaultControl$xtol_abs == 1e-6
+(isNM   <- formals(lmerControl)$optimizer == "Nelder_Mead")
+(isOldB <- formals(lmerControl)$optimizer == "bobyqa")
+(isOldTol <- environment(nloptwrap)$defaultControl$xtol_abs == 1e-6)
 
 if (.Platform$OS.type != "windows") withAutoprint({
 
@@ -40,7 +40,7 @@ if (.Platform$OS.type != "windows") withAutoprint({
     stopifnot(exprs = {
         all.equal(diag(V), uc("(Intercept)" = if(isNM) 0.176076 else if(isOldB) 0.176068575
                                              else if (isOldTol) 0.1761714 else 0.1760782
-                             ), tolerance = TOL) # seen 7.8e-8
+                             ), tolerance = 9*TOL) # seen 7.8e-8; Apple clang 14.0.3 had 6.3783e-5
         all.equal(as.numeric(chol(V)), if(isNM) 0.4196165 else if(isOldB) 0.41960526
                                        else if(isOldTol) 0.4197278 else 0.4196167,
                   tolerance=TOL) # 3.2e-8
