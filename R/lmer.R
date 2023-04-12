@@ -1385,10 +1385,14 @@ refit.merMod <- function(object,
             newweights <- newweights[-na.act]
         }
         object@frame[["(weights)"]] <- newweights
+        oc <- attr(attr(object@frame, "terms"), "dataClasses")
+        attr(attr(object@frame, "terms"), "dataClasses") <- c(oc, `(weights)` = "numeric")
+        
+        object@call$weights <- substitute(newweights)
     }
 
     rr <- if(isLMM(object))
-        mkRespMod(model.frame(object), REML = isREML(object))
+        mkRespMod(model.frame(object), REML = object@resp$REML)
     else if(isGLMM(object)) {
         mkRespMod(model.frame(object), family = family(object))
     } else
