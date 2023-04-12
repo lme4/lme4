@@ -4,7 +4,10 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-32}{
+\section{CHANGES IN VERSION 1.1-33}{
+}
+
+\section{CHANGES IN VERSION 1.1-32 (2023-03-14)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item \code{formatVC()} gets a new
@@ -26,7 +29,7 @@
   }
 } % 1.1-32
 
-\section{CHANGES IN VERSION 1.1-31}{
+\section{CHANGES IN VERSION 1.1-31 (2022-11-01)}{
   \subsection{BUG FIXES}{
     \itemize{
       \item \code{confint(fm, <single string>)} now works (after years of
