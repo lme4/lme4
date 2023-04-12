@@ -2,12 +2,13 @@
 
 ##' @importFrom lattice dotplot
 ##' @S3method  dotplot ranef.mer
-dotplot.ranef.mer <- function(x, data, main = TRUE, transf=I, ...)
+dotplot.ranef.mer <- function(x, data, main = TRUE, transf=I, level = 0.95, ...)
 {
+    rng <- qnorm((1+level)/2)
     prepanel.ci <- function(x, y, se, subscripts, ...) {
         if (is.null(se)) return(list())
         x <- as.numeric(x)
-        hw <- 1.96 * as.numeric(se[subscripts])
+        hw <- rng * as.numeric(se[subscripts])
         list(xlim = range(transf(x - hw), transf(x + hw), finite = TRUE))
     }
     panel.ci <- function(x, y, se, subscripts, pch = 16,
@@ -27,8 +28,8 @@ dotplot.ranef.mer <- function(x, data, main = TRUE, transf=I, ...)
         panel.abline(v = 0, col = col.line.v, lty = lty.v, lwd = lwd.v)
         if (!is.null(se)) {
             se <- as.numeric(se[subscripts])
-            panel.segments( transf(x - 1.96 * se), y,
-                            transf(x + 1.96 * se), y, col = 'black')
+            panel.segments( transf(x - rng * se), y,
+                            transf(x + rng * se), y, col = 'black')
         }
         panel.xyplot(transf(x), y, pch = pch, col = col, ...)
     }
@@ -59,12 +60,13 @@ plot.ranef.mer <- function(x, y, ...)
 
 ##' @importFrom lattice qqmath
 ##' @S3method qqmath ranef.mer
-qqmath.ranef.mer <- function(x, data, main = TRUE, ...)
+qqmath.ranef.mer <- function(x, data, main = TRUE, level = 0.95, ...)
 {
+    rng <- qnorm((1+level)/2)
     prepanel.ci <- function(x, y, se, subscripts, ...) {
         x <- as.numeric(x)
         se <- as.numeric(se[subscripts])
-        hw <- 1.96 * se
+        hw <- rng * se
         list(xlim = range(x - hw, x + hw, finite = TRUE))
     }
     panel.ci <- function(x, y, se, subscripts, pch = 16, ...)  {
@@ -73,7 +75,7 @@ qqmath.ranef.mer <- function(x, data, main = TRUE, ...)
         x <- as.numeric(x)
         y <- as.numeric(y)
         se <- as.numeric(se[subscripts])
-        panel.segments(x - 1.96 * se, y, x + 1.96 * se, y, col = 'black')
+        panel.segments(x - rng * se, y, x + rng * se, y, col = 'black')
         panel.xyplot(x, y, pch = pch, ...)
     }
     f <- function(nx) {

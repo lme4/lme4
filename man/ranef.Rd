@@ -8,8 +8,8 @@
 \usage{
 \method{ranef}{merMod} (object, condVar = TRUE,
       drop = FALSE, whichel = names(ans), postVar = FALSE, ...)
-\method{dotplot}{ranef.mer} (x, data, main = TRUE, transf = I, ...)
-\method{qqmath}{ranef.mer} (x, data, main = TRUE, ...)
+\method{dotplot}{ranef.mer} (x, data, main = TRUE, transf = I, level = 0.95, ...)
+\method{qqmath}{ranef.mer} (x, data, main = TRUE, level = 0.95, ...)
 \method{as.data.frame}{ranef.mer} (x, ...)
 }
 \arguments{
@@ -36,6 +36,7 @@
     logistic regression on the odds rather than log-odds scale}
   \item{data}{This argument is required by the \code{dotplot}
     and \code{qqmath} generic methods, but is not actually used.}
+  \item{level}{confidence level for confidence intervals}
   \item{\dots}{some methods for these generic functions
     require additional arguments.}
 }
@@ -130,6 +131,10 @@ dotplot(rr1)  ## default
 qqmath(rr1)
 ## specify free scales in order to make Day effects more visible
 dotplot(rr1,scales = list(x = list(relation = 'free')))[["Subject"]]
+## plot options: ... can specify appearance of vertical lines with
+## lty.v, col.line.v, lwd.v, etc..
+dotplot(rr1, lty = 3, lty.v = 2, col.line.v = "purple",
+        col = "red", col.line.h = "gray")
 ranef(fm2)
 op <- options(digits = 4)
 ranef(fm3, drop = TRUE)
