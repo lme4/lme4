@@ -23,8 +23,10 @@
   }
 }
 \source{
-  Data available from the UC Berkeley BEAR Center at
-  \url{https://old.bear.berkeley.edu/page/materials-explanatory-item-response-models}
+  Data originally from the UC Berkeley BEAR Center; original link is
+  available at
+  \url{https://web.archive.org/web/20221128003829/https://old.bear.berkeley.edu/page/materials-explanatory-item-response-models},
+  but the data are no longer accessible there.
 }
 \description{
   These are the item responses to a questionaire on verbal

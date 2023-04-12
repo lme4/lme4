@@ -4,7 +4,26 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-32}{
+\section{CHANGES IN VERSION 1.1-33}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item a boundary check could fail occasionally when large data
+      produced an NA value in a computed gradient; now warns instead
+      (GH #719, Mathias Ambuehl) 
+    }
+  } % bug fixes
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item \code{dotplot} and \code{qqmath} methods gain a \code{level}
+      argument to set the width of confidence intervals
+      \item \code{dotplot} method is now more flexible, using ".v"
+      options (\code{lty.v}, \code{col.line.v}, \code{lwd.v}) to set
+      appearance of vertical lines (Iago Giné Vázquez)
+    }
+  } % new features
+} % 1.1-33
+
+\section{CHANGES IN VERSION 1.1-32 (2023-03-14)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item \code{formatVC()} gets a new
@@ -26,7 +45,7 @@
   }
 } % 1.1-32
 
-\section{CHANGES IN VERSION 1.1-31}{
+\section{CHANGES IN VERSION 1.1-31 (2022-11-01)}{
   \subsection{BUG FIXES}{
     \itemize{
       \item \code{confint(fm, <single string>)} now works (after years of

@@ -7,6 +7,7 @@ vignettes/cache/*
 misc/cache/*
 inst/doc/cache/*
 misc/issues/*
+tests/*.Rout*
 .Rproj.user
 lme4.Rproj
 .Rhistory
