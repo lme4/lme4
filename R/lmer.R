@@ -1376,12 +1376,14 @@ refit.merMod <- function(object,
             else newresp[-na.act]
         }
         object@frame[[rcol]] <- newresp
-
-        ## modFrame <- model.frame(object)
-        ## modFrame[, attr(terms(modFrame), "response")] <- newresp
     }
 
     if (!is.null(newweights)) {
+        ## DRY ...
+        if (!is.null(na.act <- attr(object@frame,"na.action")) &&
+            is.null(attr(newweights, "na.action"))) {
+            newweights <- newweights[-na.act]
+        }
         object@frame[["(weights)"]] <- newweights
     }
 
