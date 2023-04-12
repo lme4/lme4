@@ -33,7 +33,7 @@ dotplot.ranef.mer <- function(x, data, main = TRUE, transf=I, ...)
         panel.xyplot(transf(x), y, pch = pch, col = col, ...)
     }
     f <- function(nx, ...) {
-        ss <- lme4:::asDf0(x,nx)
+        ss <- asDf0(x,nx)
         mtit <- if(main) nx 
         dotplot(.nn ~ values | ind, ss, se = ss$se,
                 prepanel = prepanel.ci, panel = panel.ci,
