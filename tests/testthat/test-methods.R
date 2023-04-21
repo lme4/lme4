@@ -230,7 +230,7 @@ if (testLevel>1) {
     ##
     ## semipar bootstrapping
     cm5 <- lmer(Yield ~ 1|Batch, Dyestuff)
-    scet.seed(1)
+    set.seed(1)
     suppressPackageStartupMessages(require(boot))
     boo01.sp <- bootMer(m5, fixef, nsim = 100, use.u = TRUE,
                         type = "semiparametric")
