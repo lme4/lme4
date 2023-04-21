@@ -59,4 +59,5 @@ jobs:
           _R_CHECK_FORCE_SUGGESTS_: false
           NOT_CRAN: true
         with:
+          build_args: 'c("--compact-vignettes=both")'
           upload-snapshots: true
