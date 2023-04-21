@@ -229,7 +229,7 @@ if (testLevel>1) {
     expect_true(nrow(ci4 <- CI.boot(m4)) == 6) # could check more
     ##
     ## semipar bootstrapping
-    cm5 <- lmer(Yield ~ 1|Batch, Dyestuff)
+    m5 <- lmer(Yield ~ 1|Batch, Dyestuff)
     set.seed(1)
     suppressPackageStartupMessages(require(boot))
     boo01.sp <- bootMer(m5, fixef, nsim = 100, use.u = TRUE,
