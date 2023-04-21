@@ -165,7 +165,8 @@ as.data.frame.bootMer <- function(x,...) {
 
 ## FIXME: collapse convergence warnings (ignore numeric values
 ## when tabulating) ?
-print.bootWarnings <- function(x, verbose=FALSE) {
+print.bootWarnings <- function(x, verbose=FALSE, ...) {
+    checkDots(..., .action = "warning")
     msgs <- attr(x, "boot.all.msgs")
     if (is.null(msgs) || all(lengths(msgs)==0)) {
         return(invisible(NULL))

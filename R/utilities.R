@@ -1373,3 +1373,17 @@ combineLists <- function(..., fmatrix="list", flist="c", fvector="rbind",
     }
     result
 }
+
+## copied from glmmTMB::check_dots
+checkDots <- function (..., .ignore = NULL, .action = "stop") 
+{
+    L <- list(...)
+    if (length(.ignore) > 0) {
+        L <- L[!names(L) %in% .ignore]
+    }
+    if (length(L) > 0) {
+        FUN <- get(.action)
+        FUN("unknown arguments: ", paste(names(L), collapse = ","))
+    }
+    return(NULL)
+}
