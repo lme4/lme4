@@ -94,11 +94,14 @@ allFit <- function(object, meth.tab = NULL,
     if (is.null(meth.tab)) {
         meth.tab <- meth.tab.0
     }
-    if (!requireNamespace("dfoptim")) {
-        meth.tab <- meth.tab[meth.tab.0[,"optimizer"] != "nmkbw",]
+    optvec <- meth.tab.0[,"optimizer"]
+    if (!requireNamespace("dfoptim", quietly = TRUE)) {
+        optvec <- setdiff(optvec, "nmkbw")
+        meth.tab <- meth.tab[meth.tab[,"optimizer"] %in% optvec, ]
     }
-    if (!requireNamespace("optimx")) {
-        meth.tab <- meth.tab[meth.tab.0[,"optimizer"] != "optimx",]
+    if (!requireNamespace("optimx", quietly = TRUE)) {
+        optvec <- setdiff(optvec, "optimx")
+        meth.tab <- meth.tab[meth.tab[,"optimizer"] %in% optvec,]
     }
     if (show.meth.tab) {
         return(meth.tab)

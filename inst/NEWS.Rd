@@ -9,7 +9,9 @@
     \itemize{
       \item a boundary check could fail occasionally when large data
       produced an NA value in a computed gradient; now warns instead
-      (GH #719, Mathias Ambuehl) 
+      (GH #719, Mathias Ambuehl)
+      \item \code{allFit} now works properly when \code{optimx} and
+  \code{dfoptim} packages are not installed (GH #724)
     }
   } % bug fixes
   \subsection{NEW FEATURES}{

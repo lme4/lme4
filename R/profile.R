@@ -695,8 +695,8 @@ xyplot.thpr <-
 }
 
 ## copy of stats:::format.perc (not exported, and ":::" being forbidden nowadays):
-format.perc <- function (probs, digits) {
-    paste(format(100 * probs, trim = TRUE,
+format.perc <- function (x, digits, ...) {
+    paste(format(100 * x, trim = TRUE,
                  scientific = FALSE, digits = digits),
           "%")
 }

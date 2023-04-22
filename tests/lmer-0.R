@@ -33,20 +33,21 @@ if (.Platform$OS.type != "windows") withAutoprint({
 
     ## check working of Matrix methods on  vcov(.) etc ----------------------
     fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
-    V  <- vcov(fm)
-    V1 <- vcov(fm1)
+     V  <- vcov(fm)
+    (V1 <- vcov(fm1))
+    (C1 <- chol(V1))
+    dput(dV <- as.numeric(diag(V))) # 0.17607818634.. [x86_64, F Lnx 36]
     TOL <- 0 # to show the differences below
     TOL <- 1e-5 # for the check
     stopifnot(exprs = {
-        all.equal(diag(V), uc("(Intercept)" = if(isNM) 0.176076 else if(isOldB) 0.176068575
-                                             else if (isOldTol) 0.1761714 else 0.1760782
-                             ), tolerance = 9*TOL) # seen 7.8e-8; Apple clang 14.0.3 had 6.3783e-5
-        all.equal(as.numeric(chol(V)), if(isNM) 0.4196165 else if(isOldB) 0.41960526
-                                       else if(isOldTol) 0.4197278 else 0.4196167,
-                  tolerance=TOL) # 3.2e-8
+        all.equal(dV, uc(if(isNM)     0.176076 else if(isOldB) 0.176068575 else
+                         if(isOldTol) 0.1761714 else           0.1760782),
+                  tolerance = 9*TOL) # seen 7.8e-8; Apple clang 14.0.3 had 6.3783e-5
+        all.equal(sqrt(dV), as.numeric(chol(V)), tol = 1e-12)
         all.equal(diag(V1), uc(`(Intercept)` = 46.5751, Days = 2.38947), tolerance = 40*TOL)# 5e-7 (for "all" algos)
-        dim(C1 <- chol(V1)) == c(2,2)
-        all.equal(as.numeric(C1),
+        inherits(C1, "Cholesky")
+        dim(C1) == c(2,2)
+        all.equal(as.numeric(C1), # 6.8245967  0. -0.2126263  1.5310962 [x86_64, F Lnx 36]
                   c(6.82377, 0, -0.212575, 1.53127), tolerance=20*TOL)# 1.2e-4  ("all" algos)
         dim(chol(crossprod(getME(fm1, "Z")))) == 36
     })
