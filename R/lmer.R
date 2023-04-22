@@ -1389,6 +1389,11 @@ refit.merMod <- function(object,
         attr(attr(object@frame, "terms"), "dataClasses") <- c(oc, `(weights)` = "numeric")
         
         object@call$weights <- substitute(newweights)
+
+        ## try to make sure new weights are findable later
+        assign(deparse(substitute(newweights)),
+               newweights,
+               environment(formula(object)))
     }
 
     rr <- if(isLMM(object))
