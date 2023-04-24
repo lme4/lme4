@@ -1294,9 +1294,10 @@ refit2.merMod <- function(object,
 
 ## FIXME DRY: much of copy'n'paste from lmer() etc .. ==> become more modular (?)
 refit.merMod <- function(object,
-                         newresp=NULL,
+                         newresp = NULL,
+                         newweights = NULL,
                          ## formula=NULL, weights=NULL,
-                         rename.response=FALSE,
+                         rename.response = FALSE,
                          maxit = 100L, ...)
 {
 
@@ -1348,9 +1349,9 @@ refit.merMod <- function(object,
             glmerControl()
         else
             lmerControl()
-  if (object@optinfo$optimizer == "optimx") {
-   control$optCtrl <- object@optinfo$control
-  }
+    if (object@optinfo$optimizer == "optimx") {
+        control$optCtrl <- object@optinfo$control
+    }
     ## we need this stuff defined before we call .glmerLaplace below ...
     pp      <- object@pp$copy()
     dc      <- object@devcomp
@@ -1374,14 +1375,29 @@ refit.merMod <- function(object,
                 newresp[-na.act, ]
             else newresp[-na.act]
         }
-        object@frame[,rcol] <- newresp
+        object@frame[[rcol]] <- newresp
+    }
 
-        ## modFrame <- model.frame(object)
-        ## modFrame[, attr(terms(modFrame), "response")] <- newresp
+    if (!is.null(newweights)) {
+        ## DRY ...
+        if (!is.null(na.act <- attr(object@frame,"na.action")) &&
+            is.null(attr(newweights, "na.action"))) {
+            newweights <- newweights[-na.act]
+        }
+        object@frame[["(weights)"]] <- newweights
+        oc <- attr(attr(object@frame, "terms"), "dataClasses")
+        attr(attr(object@frame, "terms"), "dataClasses") <- c(oc, `(weights)` = "numeric")
+        
+        object@call$weights <- substitute(newweights)
+
+        ## try to make sure new weights are findable later
+        assign(deparse(substitute(newweights)),
+               newweights,
+               environment(formula(object)))
     }
 
     rr <- if(isLMM(object))
-        mkRespMod(model.frame(object), REML = isREML(object))
+        mkRespMod(model.frame(object), REML = object@resp$REML)
     else if(isGLMM(object)) {
         mkRespMod(model.frame(object), family = family(object))
     } else
@@ -1411,7 +1427,6 @@ refit.merMod <- function(object,
                   length(rr$y))
 
     }
-
 
     if (isGLMM(object)) {
         GQmat <- GHrule(nAGQ)
