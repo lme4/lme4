@@ -10,8 +10,11 @@
       \item a boundary check could fail occasionally when large data
       produced an NA value in a computed gradient; now warns instead
       (GH #719, Mathias Ambuehl)
-      \item \code{allFit} now works properly when \code{optimx} and
-  \code{dfoptim} packages are not installed (GH #724)
+      \item \code{allFit} now works better when \code{optimx} and
+      \code{dfoptim} packages are not installed (GH #724)
+      \item \code{refit} reset internal degrees of freedom component
+      incorrectly for REML fits (resulted in incorrect reported REML criteria,
+      but otherwise harmless: side effect of GH #678)
     }
   } % bug fixes
   \subsection{NEW FEATURES}{
@@ -21,6 +24,7 @@
       \item \code{dotplot} method is now more flexible, using ".v"
       options (\code{lty.v}, \code{col.line.v}, \code{lwd.v}) to set
       appearance of vertical lines (Iago Giné Vázquez)
+      \item \code{refit} gains a \code{newweights} argument (GH #678)
     }
   } % new features
 } % 1.1-33
