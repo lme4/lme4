@@ -10,7 +10,8 @@
 \usage{
 refit(object, newresp, \dots)
 
-\method{refit}{merMod}(object, newresp = NULL, rename.response = FALSE,
+\method{refit}{merMod}(object, newresp = NULL, newweights = NULL,
+      rename.response = FALSE,
       maxit = 100, \dots)
 }
 \arguments{
@@ -21,6 +22,7 @@ refit(object, newresp, \dots)
     \code{Details} for information on NA handling).  May also be a data
     frame with a single numeric column, e.g. as produced by
     \code{simulate(object)}.}
+  \item{newweights}{an (optional) numeric vector of new weights}
   \item{rename.response}{when refitting the model, should the name of
     the response variable in the formula and model frame be replaced with
     the name of \code{newresp}?}
