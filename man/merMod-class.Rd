@@ -113,7 +113,8 @@ REMLcrit(object)
     matrix of the fixed-effects parameters should be printed.  In the
     latter case, when \code{NULL} (the default), the correlation matrix
     is printed when it has been computed by \code{summary(.)}, and when
-    \eqn{p <= 20}.}% and '20' can be changed by  options(lme4.summary.cor.max = <n>)
+    \eqn{p <= 12}, and the cutoff \code{12} may be modified by
+    \code{options(lme4.summary.cor.max = <n>)}.
   \item{use.hessian}{(logical) indicates whether to use the
     finite-difference Hessian of the deviance function to compute
     standard errors of the fixed effects, rather estimating
