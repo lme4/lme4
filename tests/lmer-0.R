@@ -45,7 +45,7 @@ if (.Platform$OS.type != "windows") withAutoprint({
                   tolerance = 9*TOL) # seen 7.8e-8; Apple clang 14.0.3 had 6.3783e-5
         all.equal(sqrt(dV), as.numeric(chol(V)), tol = 1e-12)
         all.equal(diag(V1), uc(`(Intercept)` = 46.5751, Days = 2.38947), tolerance = 40*TOL)# 5e-7 (for "all" algos)
-        inherits(C1, "Cholesky")
+        is(C1, "dtrMatrix") # was inherits(C1, "Cholesky")
         dim(C1) == c(2,2)
         all.equal(as.numeric(C1), # 6.8245967  0. -0.2126263  1.5310962 [x86_64, F Lnx 36]
                   c(6.82377, 0, -0.212575, 1.53127), tolerance=20*TOL)# 1.2e-4  ("all" algos)
