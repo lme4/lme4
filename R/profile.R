@@ -251,8 +251,12 @@ profile.merMod <- function(fitted,
                         "new params ",
                         paste(mkpar(npar1,w,xx,ores$par),
                               collapse=","),"\n")
+                
                 if (devdiff < (-devtol))
-                    stop("profiling detected new, lower deviance")
+                    stop("profiling detected new, lower deviance ",
+                         sprintf("(deviance diff = %1.3g, tolerance = %1.3g)",
+                                 abs(devdiff), devtol))
+                             
                 if(devdiff < 0)
                     warning(gettextf("slightly lower deviances (diff=%g) detected",
                                      devdiff), domain=NA)
