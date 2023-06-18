@@ -114,7 +114,8 @@ REMLcrit(object)
     latter case, when \code{NULL} (the default), the correlation matrix
     is printed when it has been computed by \code{summary(.)}, and when
     \eqn{p <= 12}, and the cutoff \code{12} may be modified by
-    \code{options(lme4.summary.cor.max = <n>)}.
+    \code{options(lme4.summary.cor.max = <n>)}
+  }
   \item{use.hessian}{(logical) indicates whether to use the
     finite-difference Hessian of the deviance function to compute
     standard errors of the fixed effects, rather estimating
