@@ -1,0 +1,21 @@
+# profiling
+
+Trying to do some profiling on very basic examples: why are they hard/what's going wrong?  (Should we try some monotonic splines via `scam`?)
+
+```{r}
+library(lme4)
+library(lattice)
+m0 <- lmer(Reaction ~ Days + (1|Subject), sleepstudy)
+pp <- profile(m0, "theta_")
+xyplot(pp) ## labels??
+pp_all <- profile(m0)
+xyplot(pp_all) ## labels??
+```
+
+**buglet 1**: what happened to the labels?
+
+```{r}
+pp1 <- profile(m0, "theta_", signames = FALSE)
+xyplot(pp1)
+(logProf(pp1))
+```
