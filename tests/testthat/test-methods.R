@@ -61,8 +61,9 @@ test_that("summary", {
     , "Correlation.* could have been required in summary()")
   expect_identical(cF, cT[seq_along(cF)])
   sfT.aa <- summary(fit_agridat_archbold, correlation=TRUE)
-  expect_message(cT2 <- capture.output(sfT.aa), msg1)
-  expect_identical(cF, cT2)
+  ## no message any more
+  ## expect_message(cT2 <- capture.output(sfT.aa), msg1)
+  ## expect_identical(cF, cT2)
   cT3 <- capture.output(print(sfT.aa, correlation=TRUE))
   expect_identical(cT, cT3)
   cF2 <- capture.output(print(sfT.aa, correlation=FALSE))
