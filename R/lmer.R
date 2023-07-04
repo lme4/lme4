@@ -2416,12 +2416,14 @@ summary.merMod <- function(object,
                    ##  (which doesn't assign a VC attribute)
 
                    vcov = vcov.merMod(object, correlation = correlation, sigm = sig),
-                   corrSet = if(!missing(correlation)) correlation else NA, # TRUE/FALSE (when set) / NA
                    varcor = varcor, # and use formatVC(.) for printing.
                    AICtab = llAIC[["AICtab"]], call = object@call,
                    residuals = residuals(object,"pearson",scaled = TRUE),
                    fitMsgs = .merMod.msgs(object),
-                   optinfo = object@optinfo
+                   optinfo = object@optinfo,
+                   ## put corrSet **last** so we don't mess up people relying on numeric indexing
+                   ##  of elements (!!)
+                   corrSet = if(!missing(correlation)) correlation else NA, # TRUE/FALSE (when set) / NA
                    ), class = "summary.merMod")
 }
 
