@@ -121,7 +121,7 @@ REMLcrit(object)
     standard errors of the fixed effects, rather estimating
     based on internal information about the inverse of
     the model matrix (see \code{\link{getME}(.,"RX")}).
-    The default is to to use the Hessian whenever the
+    The default is to use the Hessian whenever the
     fixed effect parameters are arguments to the deviance
     function (i.e. for GLMMs with \code{nAGQ>0}), and to use
     \code{\link{getME}(.,"RX")} whenever the fixed effect parameters are
