@@ -286,3 +286,5 @@ S3method(getGroups,lmList4)
 S3method(rePCA,merMod)
 S3method(summary,prcomplist)
 export(rePCA)
+
+export(namedList)
