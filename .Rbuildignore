@@ -35,3 +35,5 @@ src/mcmcsamp.cpp
 ^\.github$
 revdep/
 Rplots.pdf
+R/scaleX.R
+
