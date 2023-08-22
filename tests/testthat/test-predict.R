@@ -436,3 +436,38 @@ test_that("simulate with a factor with one level", {
     ## very low mean, all simulated values zero
     expect_true(all(s == 0))
 })
+
+
+test_that("prediction standard error", {
+  # note that predict.lm returns a list with 
+  # fit, se.fit, df, residual.scale
+  
+  mod1 <- lmer(Petal.Width ~ Sepal.Length + (1 | Species), iris)
+  p1 <- predict(mod1, se.fit = TRUE)
+  p2 <- predict(mod1, se.fit = TRUE, newdata = iris)
+  p3 <- predict(mod1, se.fit = TRUE, re.form = NA, newdata = iris)
+  p4 <- predict(mod1, se.fit = TRUE, re.form = NA)
+  p5 <- predict(mod1, se.fit = TRUE, re.form = ~(1 | Species))
+  p6 <- predict(mod1, se.fit = TRUE, re.form = ~(1 | Species), newdata = iris)
+  p7 <- predict(mod1, se.fit = TRUE, newdata = iris, random.only = TRUE)
+  p8 <- predict(mod1, se.fit = TRUE, re.form = ~(1 | Species), random.only = TRUE)
+  p9 <- predict(mod1, se.fit = TRUE, re.form = ~(1 | Species), newdata = iris, random.only = TRUE)
+
+  expect_equal(unname(head(p1$se.fit)), 
+               c(0.0271816400250223, 0.0272298862268211, 0.0286188379907626, 
+                 0.0297645467444413, 0.0270330515271627, 0.0295876265523127))
+  # re.form = NA
+  expect_equal(unname(head(p3$se.fit)), 
+               c(0.451147865048879, 0.451497971849052, 0.451930732595154, 0.452178035807842, 
+                 0.451312573619068, 0.450778089845166))
+  # random.only may need checking -- tolerance maybe too high for this?
+  expect_equal(unname(p8$se.fit),
+               rep(0.451569712647126, 150), tolerance = 0.001)
+  expect_equal(p1, p2)  
+  expect_equal(p3, p4)  
+  expect_equal(p1, p5)  
+  expect_equal(p1, p6)  
+  expect_equal(p7, p8)  
+  expect_equal(p7, p9)  
+  
+})

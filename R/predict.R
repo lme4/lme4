@@ -342,6 +342,7 @@ levelfun <- function(x, nl.n, allow.new.levels=FALSE) {
 ##'    the prediction will use the unconditional (population-level)
 ##'    values for data with previously unobserved levels (or \code{NA}s)
 ##' @param na.action function determining what should be done with missing values for fixed effects in \code{newdata}. The default is to predict \code{NA}: see \code{\link{na.pass}}.
+##' @param se.fit A logical value indicating whether the standard errors should be included or not. Default is FALSE.
 ##' @param ... optional additional parameters.  None are used at present.
 ##' @return a numeric vector of predicted values
 ##' @note There is no option for computing standard errors of predictions because it is difficult to define an efficient method that incorporates uncertainty in the variance parameters; we recommend \code{\link{bootMer}} for this task.
@@ -362,7 +363,8 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
                            REform,
                            random.only=FALSE,
                            terms=NULL, type=c("link","response"),
-                           allow.new.levels=FALSE, na.action=na.pass, ...) {
+                           allow.new.levels=FALSE, na.action=na.pass,
+                           se.fit = FALSE, ...) {
     ## FIXME: appropriate names for result vector?
     ## FIXME: make sure behaviour is entirely well-defined for NA in grouping factors
 
@@ -521,7 +523,64 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
                 class(fit.na.action) <- class(attr(na.action(NA),"na.action"))
         }
     }
-    napredict(fit.na.action, pred)
+    pred <- napredict(fit.na.action, pred)
+    
+    if (se.fit) {
+      # se.fit currently only for LMM
+      if(isLMM(object)) {
+        # MEobj <- getME(object, c("Lambdat", "L", "RXZ", "RX"))
+        Lambdat <- getME(object, "Lambdat")
+        L <- getME(object, "L") 
+        RZX <- getME(object, "RZX")
+        RX <- getME(object, "RX")
+        s <- sigma(object)
+        RXtinv <- solve(t(RX))
+        Linv <- solve(L)
+        Minv <- s * rbind(
+          cbind(solve(L, Lambdat, system = "L"),  # Linv %*% Lambdat, 
+                Matrix(0, nrow = nrow(L), ncol = ncol(RX))),
+          cbind(-RXtinv %*% t(RZX) %*% solve(L, Lambdat, system = "L"), RXtinv)
+        )
+        Cmat <- crossprod(Minv)
+        
+        
+        # FIXME: these need to be fixed
+        if(is.null(newdata)) {
+          X <- getME(object, "X")
+          if(is.null(re.form)) {
+            Z <- getME(object, "Z")
+          } else {
+            if(isRE(re.form)) {
+              # FIXME: newRE is not computed here
+              Z <- t(newRE$Zt)
+            } else {
+              Z <- Matrix(0, nrow = nrow(X), ncol = ncol(L))
+            }
+          }
+        } else {
+          if(isRE(re.form)) {
+            Z <- t(newRE$Zt)
+          } else {
+            # this is inefficient and we could just calculate 
+            # X %*% Cmat[X part only] t(X) instead
+            Z <- Matrix(0, nrow = nrow(X), ncol = ncol(L))
+          }
+        }
+        
+        if(random.only) X <- Matrix(0, nrow = nrow(Z), ncol = nrow(RX))
+        
+        ZX <- cbind(Z, X)
+        list(fit = pred,
+             # TODO: change to more efficient form using colSums?
+             se.fit = sqrt(diag(ZX %*% Cmat %*% t(ZX)))) 
+      } else {
+        # if se.fit = TRUE but object is not LMM
+        warning("`se.fit` currently is only computed for LMM.")
+        pred
+      }
+    } else {
+      pred
+    }
 } # end {predict.merMod}
 
 
