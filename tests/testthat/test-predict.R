@@ -436,3 +436,28 @@ test_that("simulate with a factor with one level", {
     ## very low mean, all simulated values zero
     expect_true(all(s == 0))
 })
+
+
+test_that("prediction standard error", {
+  # note that predict.lm returns a list with 
+  # fit, se.fit, df, residual.scale
+  
+  mod1 <- lmer(Petal.Width ~ Sepal.Length + (1 | Species), iris)
+  p1 <- predict(mod1, se.fit = TRUE)
+  p2 <- predict(mod1, se.fit = TRUE, newdata = iris)
+  p3 <- predict(mod1, se.fit = TRUE, re.form = NA, newdata = iris)
+  p4 <- predict(mod1, se.fit = TRUE, re.form = NA)
+  p5 <- predict(mod1, se.fit = TRUE, re.form = ~(1 | Species))
+  p6 <- predict(mod1, se.fit = TRUE, re.form = ~(1 | Species), newdata = iris)
+  p7 <- predict(mod1, se.fit = TRUE, newdata = iris, random.only = TRUE)
+  p8 <- predict(mod1, se.fit = TRUE, re.form = ~(1 | Species), random.only = TRUE)
+  p9 <- predict(mod1, se.fit = TRUE, re.form = ~(1 | Species), newdata = iris, random.only = TRUE)
+
+  expect_equal(p1, p2)  
+  expect_equal(p3, p4)  
+  expect_equal(p1, p5)  
+  expect_equal(p1, p6)  
+  expect_equal(p7, p8)  
+  expect_equal(p7, p9)  
+  
+})
