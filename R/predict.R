@@ -524,65 +524,58 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
         }
     }
     pred <- napredict(fit.na.action, pred)
-    
-    if (se.fit) {
-      # se.fit currently only for LMM
-        if(isLMM(object)) {
-            s <- sigma(object)
-            ## need these below so can't getME(...) all at once
-            L <- getME(object, "L")
-            RX <- getME(object, "RX")
-            RZX <- getME(object, "RZX")
-            Lambdat <- getME(object, "Lambdat")
 
-            RXtinv <- solve(t(RX))
-            LinvLambdat <- solve(L, Lambdat, system = "L")
-            Minv <- s * rbind(
-                        cbind(LinvLambdat,
-                              Matrix(0, nrow = nrow(L), ncol = ncol(RX))),
-                        cbind(-RXtinv %*% t(RZX) %*% LinvLambdat, RXtinv)
-                    )
-            Cmat <- crossprod(Minv)
+    if (!se.fit) return(pred)
+
+    if (!isLMM(object)) warning("se.fit computation uses an approximation to estimate the sampling distribution of the parameters")
+    
+    s <- sigma(object)
+    ## need these below so can't getME(...) all at once
+    L <- getME(object, "L")
+    RX <- getME(object, "RX")
+    RZX <- getME(object, "RZX")
+    Lambdat <- getME(object, "Lambdat")
+
+    RXtinv <- solve(t(RX))
+    LinvLambdat <- solve(L, Lambdat, system = "L")
+    Minv <- s * rbind(
+                    cbind(LinvLambdat,
+                          Matrix(0, nrow = nrow(L), ncol = ncol(RX))),
+                    cbind(-RXtinv %*% t(RZX) %*% LinvLambdat, RXtinv)
+                )
+    Cmat <- crossprod(Minv)
         
         
-        # FIXME: these need to be fixed
-        if(is.null(newdata)) {
-          X <- getME(object, "X")
-          if(is.null(re.form)) {
+    ## FIXME: these need to be fixed
+    if(is.null(newdata)) {
+        X <- getME(object, "X")
+        if(is.null(re.form)) {
             Z <- getME(object, "Z")
-          } else {
-            if(isRE(re.form)) {
-              # FIXME: newRE is not computed here
-              Z <- t(newRE$Zt)
-            } else {
-              Z <- Matrix(0, nrow = nrow(X), ncol = ncol(L))
-            }
-          }
         } else {
-          if(isRE(re.form)) {
-            Z <- t(newRE$Zt)
-          } else {
-            # this is inefficient and we could just calculate 
-            # X %*% Cmat[X part only] t(X) instead
-            Z <- Matrix(0, nrow = nrow(X), ncol = ncol(L))
-          }
+            if(isRE(re.form)) {
+                ## FIXME: newRE is not computed here
+                Z <- t(newRE$Zt)
+            } else {
+                Z <- Matrix(0, nrow = nrow(X), ncol = ncol(L))
+            }
         }
-        
-        if(random.only) X <- Matrix(0, nrow = nrow(Z), ncol = nrow(RX))
-        
-        ZX <- cbind(Z, X)
-        list(fit = pred,
-             # TODO: change to more efficient form using colSums?
-             se.fit = sqrt(quad.tdiag(Cmat, ZX))
-             )
-      } else {
-        # if se.fit = TRUE but object is not LMM
-        warning("`se.fit` currently is only computed for LMM.")
-        pred
-      }
     } else {
-      pred
+        if(isRE(re.form)) {
+            Z <- t(newRE$Zt)
+        } else {
+            ## this is inefficient and we could just calculate 
+            ## X %*% Cmat[X part only] t(X) instead
+            Z <- Matrix(0, nrow = nrow(X), ncol = ncol(L))
+        }
     }
+        
+    if(random.only) X <- Matrix(0, nrow = nrow(Z), ncol = nrow(RX))
+        
+    ZX <- cbind(Z, X)
+    list(fit = pred,
+         se.fit = sqrt(quad.tdiag(Cmat, ZX))
+         )
+    
 } # end {predict.merMod}
 
 
