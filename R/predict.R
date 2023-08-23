@@ -527,21 +527,22 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
     
     if (se.fit) {
       # se.fit currently only for LMM
-      if(isLMM(object)) {
-        # MEobj <- getME(object, c("Lambdat", "L", "RXZ", "RX"))
-        Lambdat <- getME(object, "Lambdat")
-        L <- getME(object, "L") 
-        RZX <- getME(object, "RZX")
-        RX <- getME(object, "RX")
-        s <- sigma(object)
-        RXtinv <- solve(t(RX))
-        Linv <- solve(L)
-        Minv <- s * rbind(
-          cbind(solve(L, Lambdat, system = "L"),  # Linv %*% Lambdat, 
-                Matrix(0, nrow = nrow(L), ncol = ncol(RX))),
-          cbind(-RXtinv %*% t(RZX) %*% solve(L, Lambdat, system = "L"), RXtinv)
-        )
-        Cmat <- crossprod(Minv)
+        if(isLMM(object)) {
+            s <- sigma(object)
+            ## need these below so can't getME(...) all at once
+            L <- getME(object, "L")
+            RX <- getME(object, "RX")
+            RZX <- getME(object, "RZX")
+            Lambdat <- getME(object, "Lambdat")
+
+            RXtinv <- solve(t(RX))
+            LinvLambdat <- solve(L, Lambdat, system = "L")
+            Minv <- s * rbind(
+                        cbind(LinvLambdat,
+                              Matrix(0, nrow = nrow(L), ncol = ncol(RX))),
+                        cbind(-RXtinv %*% t(RZX) %*% LinvLambdat, RXtinv)
+                    )
+            Cmat <- crossprod(Minv)
         
         
         # FIXME: these need to be fixed
@@ -572,7 +573,8 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
         ZX <- cbind(Z, X)
         list(fit = pred,
              # TODO: change to more efficient form using colSums?
-             se.fit = sqrt(diag(ZX %*% Cmat %*% t(ZX)))) 
+             se.fit = sqrt(quad.tdiag(Cmat, ZX))
+             )
       } else {
         # if se.fit = TRUE but object is not LMM
         warning("`se.fit` currently is only computed for LMM.")

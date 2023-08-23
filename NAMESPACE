@@ -55,7 +55,7 @@ importFrom("nlme", fixef,ranef, VarCorr, getGroups, getData)
 
 importFrom("Matrix", drop0, rankMatrix, sparseMatrix, sparse.model.matrix,
            forceSymmetric, fac2sparse, KhatriRao, Diagonal, .bdiag,
-           as.matrix, bdiag)
+           as.matrix, bdiag, Matrix)
 importClassesFrom("Matrix", corMatrix, dgCMatrix, dpoMatrix, dCHMsimpl)
 ## methods incl. S4 generics:
 importMethodsFrom("Matrix", coerce, cov2cor, "%*%", crossprod,tcrossprod,

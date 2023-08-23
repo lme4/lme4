@@ -1387,3 +1387,12 @@ checkDots <- function (..., .ignore = NULL, .action = "stop")
     }
     return(NULL)
 }
+
+## quadratic form from emulator package:
+## quad.tform == x %*% M %*% t(x)
+## quad.tdiag == diag(quad.tform(M, x)
+## rowSums(tcrossprod(Conj(x), M) * x)
+quad.tdiag <- function(M, x) {
+    ## only real-valued, so drop Conj
+    rowSums(tcrossprod(x, M) * x)
+}
