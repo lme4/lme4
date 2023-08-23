@@ -1,4 +1,5 @@
 \name{namedList}
+\alias{namedList}
 \title{Self-naming list function}
 \description{this function takes a list of arguments and combines them
   into a list; any \emph{unnamed} arguments are automatically named
