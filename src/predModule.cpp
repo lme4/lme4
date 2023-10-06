@@ -6,6 +6,7 @@
 // This file is part of lme4.
 
 #include "predModule.h"
+#include <RcppEigenStubs.cpp>
 
 namespace lme4 {
     using    Rcpp::as;

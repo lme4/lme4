@@ -31,7 +31,8 @@ cache/.*
 README.md
 TODO.md
 R/TAGS
-src/mcmcsamp.cpp
+src/mcmcsamp\.h$
+src/mcmcsamp\.cpp$
 ^\.github$
 revdep/
 Rplots.pdf
