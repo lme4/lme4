@@ -6,6 +6,9 @@
 
 \section{CHANGES IN VERSION 1.1-35 (2023-07-04}{
   \subsection{NEW FEATURES}{
+    \item \code{predict.merMod} now has a \code{se.fit} method, which
+    computes the standard errors of the predictions, conditional on the
+    estimated \code{theta} (variance-covariance) parameters
   }
 } % 1.1-35
 

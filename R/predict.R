@@ -344,7 +344,7 @@ levelfun <- function(x, nl.n, allow.new.levels=FALSE) {
 ##' @param na.action function determining what should be done with missing values for fixed effects in \code{newdata}. The default is to predict \code{NA}: see \code{\link{na.pass}}.
 ##' @param se.fit A logical value indicating whether the standard errors should be included or not. Default is FALSE.
 ##' @param ... optional additional parameters.  None are used at present.
-##' @return a numeric vector of predicted values
+##' @return a numeric vector of predicted values, unless \code{se.fit=TRUE} (in which case a list with elements \code{fit} (predicted values) and \code{se.fit} is returned)
 ##' @note There is no option for computing standard errors of predictions because it is difficult to define an efficient method that incorporates uncertainty in the variance parameters; we recommend \code{\link{bootMer}} for this task.
 ##' @examples
 ##' (gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 |herd), cbpp, binomial))
