@@ -361,3 +361,10 @@ test_that("test for zero non-NA cases", {
     expect_error(lmer(Reaction ~ Days + (1| Subject), data_bad),
                  "0 \\(non-NA\\) cases")
 })
+
+##
+test_that("catch matrix-valued responses", {
+    dd <- data.frame(x = rnorm(1000), batch = factor(rep(1:20, each=50)))
+    dd$y <- matrix(rnorm(1e4), ncol = 10)
+    expect_error(lmer(y ~ x + (1|batch), dd), "matrix-valued")
+})

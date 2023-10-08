@@ -73,7 +73,7 @@ fit1 <- lmer(y ~ x+(1|f), data = d,
              control= lmerControl(check.conv.grad="ignore",
                                   check.conv.hess="ignore"))
 ## combine fit to first response with fits to remaining responses
-res <- c(fit1,lapply(as.data.frame(Y[,-1]), refit, object=fit1))
+res <- c(fit1, lapply(as.data.frame(Y[,-1]), refit, object=fit1))
 
 ## Ex. 2: refitting simulated data using data that contain NA values ------
 sleepstudyNA <- sleepstudy

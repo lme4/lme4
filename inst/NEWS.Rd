@@ -4,15 +4,24 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-35 (2023-07-04}{
+\section{CHANGES IN VERSION 1.1-35}{
   \subsection{NEW FEATURES}{
-    \item \code{predict.merMod} now has a \code{se.fit} method, which
-    computes the standard errors of the predictions, conditional on the
-    estimated \code{theta} (variance-covariance) parameters
-  }
+    \itemize{
+      \item \code{predict.merMod} now has a \code{se.fit} method, which
+      computes the standard errors of the predictions, conditional on the
+      estimated \code{theta} (variance-covariance) parameters
+    }
+  } % new features
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item using \code{lmer} with a matrix-valued response now throws
+      a more informative error message, directing the user to
+      \code{?refit}
+    }
+  } % user-visible changes
 } % 1.1-35
 
-\section{CHANGES IN VERSION 1.1-34 (2023-07-04}{
+\section{CHANGES IN VERSION 1.1-34 (2023-07-04)}{
   \subsection{BUG FIXES}{
     \itemize{
       \item \code{summary(<merMod>)} now records if \code{correlation} was
