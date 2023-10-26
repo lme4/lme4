@@ -10,7 +10,6 @@
 #define LME4_CHOLMODDECOMPOSITION_H
 
 #include <RcppEigen.h>
-#include <RcppEigenCholmod.h>
 
 namespace lme4 {
 
@@ -43,8 +42,8 @@ namespace lme4 {
                 // viewAsCholmod(matrix.template selfadjointView<_UpLo>()) :
                 viewAsCholmod(matrix);
 
-            R_MATRIX_CHOLMOD(factorize_p)(
-                &A, &beta, fset.data(), fset.size(), factor(), &cholmod());
+            cholmod_factorize_p(&A, &beta, fset.data(), fset.size(),
+                                factor(), &cholmod());
 
             this->m_info = Eigen::Success;
             m_factorizationIsOk = true;
@@ -60,15 +59,15 @@ namespace lme4 {
             // note: cd stands for Cholmod Dense
             cholmod_dense b_cd = viewAsCholmod(other.const_cast_derived());
             // m_cholmodFactor
-            cholmod_dense* x_cd = R_MATRIX_CHOLMOD(solve)(
-                type, factor(), &b_cd, &cholmod());
+            cholmod_dense* x_cd = cholmod_solve(type, factor(), &b_cd,
+                                                &cholmod());
             if(!x_cd) {
                 this->m_info = Eigen::NumericalIssue;
             }
             typename Base::Scalar* xpt =
                 reinterpret_cast<typename Base::Scalar*>(x_cd->x);
             std::copy(xpt, xpt + other.rows() * other.cols(), other.data());
-            R_MATRIX_CHOLMOD(free_dense)(&x_cd, &cholmod());
+            cholmod_free_dense(&x_cd, &cholmod());
         }
     };
 
