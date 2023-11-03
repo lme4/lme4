@@ -36,6 +36,10 @@ lmer <- function(formula, data=NULL, REML = TRUE,
     mcout$formula <- lmod$formula
     lmod$formula <- NULL
 
+    if (is.matrix(y <- model.response(lmod$fr)) && ncol(y) > 1) {
+        stop("can't handle matrix-valued responses: consider using refit()")
+    }
+
     ## create deviance function for covariance parameters (theta)
     devfun <- do.call(mkLmerDevfun,
                       c(lmod,
@@ -121,6 +125,10 @@ glmer <- function(formula, data=NULL
     glmod <- eval(mc, parent.frame(1L))
     mcout$formula <- glmod$formula
     glmod$formula <- NULL
+
+    if (is.matrix(y <- model.response(glmod$fr)) && ncol(y) > 1) {
+        stop("can't handle matrix-valued responses: consider using refit()")
+    }
 
     ## create deviance function for covariance parameters (theta)
 

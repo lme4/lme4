@@ -378,9 +378,6 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     }
     mf$formula <- fr.form
     fr <- eval(mf, parent.frame())
-    if (is.matrix(y <- model.response(fr)) && ncol(y) > 1) {
-        stop("can't handle matrix-valued responses: consider using refit()")
-    }
     if (nrow(fr) == 0L) stop("0 (non-NA) cases")
     ## convert character vectors to factor (defensive)
     fr <- factorize(fr.form, fr, char.only=TRUE)

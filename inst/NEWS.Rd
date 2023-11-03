@@ -4,7 +4,16 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-35}{
+\section{CHANGES IN VERSION 1.1-35.1}{
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item \code{lFormula} and \code{glFormula} once again \emph{do}
+      allow matrix-valued responses (for use in downstream packages like \code{galamm})
+    }
+  }
+}
+
+\section{CHANGES IN VERSION 1.1-35 (2023-11-03)}{
   \subsection{NEW FEATURES}{
     \itemize{
       \item \code{predict.merMod} now has a \code{se.fit} method, which
