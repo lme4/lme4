@@ -34,8 +34,10 @@ NelderMead(...)
   }
 }
 \section{Methods}{
-  \describe{\code{NelderMead$new(lower, upper, xst, x0, xt)}}{Create a
-    new \code{\linkS4class{NelderMead}} object}
+  \describe{
+    \item{\code{NelderMead$new(lower, upper, xst, x0, xt)}}{Create a
+      new \code{\linkS4class{NelderMead}} object}
+  }
 }
 \section{Extends}{
   All reference classes extend and inherit methods from
