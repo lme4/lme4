@@ -126,7 +126,9 @@ glmer <- function(formula, data=NULL
     mcout$formula <- glmod$formula
     glmod$formula <- NULL
 
-    if (is.matrix(y <- model.response(glmod$fr)) && ncol(y) > 1) {
+    if (is.matrix(y <- model.response(glmod$fr))
+        && ((family$family != "binomial" && ncol(y) > 1) ||
+            (ncol(y) >2))) {
         stop("can't handle matrix-valued responses: consider using refit()")
     }
 
