@@ -565,7 +565,10 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
             Znew <- t(newRE$Zt)
             Z <- Matrix(0, nrow = nrow(X), ncol = ncol(L))
             # FIXME: this will likely trip up for complex forms of re.form
-            Z[, which(colnames(Zoriginal) %in% colnames(Znew))] <- Znew
+            ind <- which(colnames(Zoriginal) %in% colnames(Znew))
+            if(length(ind)) {
+              Z[, ind] <- Znew
+            }
         } else {
             ## this is inefficient and we could just calculate 
             ## X %*% Cmat[X part only] t(X) instead
