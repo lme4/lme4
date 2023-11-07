@@ -471,3 +471,13 @@ test_that("prediction standard error", {
   expect_equal(p7, p9)  
   
 })
+
+test_that("NA + re.form = NULL + simulate OK", {
+    d <- lme4::sleepstudy
+    d$Reaction[1] <- NA
+    fm1 <- lmer(Reaction ~ Days + (Days | Subject), d)
+    expect_equal(c(head(simulate(fm1, seed = 101, re.form = NULL)[[1]])),
+                 c(266.139101412856, 308.148180398426,
+                   296.081377893883, 338.367909016478, 
+                   360.294339946214, 401.91050930589))
+})
