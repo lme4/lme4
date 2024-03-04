@@ -1,5 +1,5 @@
 .onLoad <- function(libname, pkgname) {
-  ## don't do this; also flags problems in downstream packages
+  ## don't do this in production; also flags problems in downstream packages
   ## options(Matrix.warnDeprecatedCoerce = 3)
   options(lme4.summary.cor.max = 12)
   if((Rv <- getRversion()) < "4.1.0") {
@@ -48,6 +48,37 @@
     } ## R < 4.0.0
   } ## R < 4.1.0
   rm(Rv)
+  ## check 
+  check_dep_version()  
+}
+
+## https://github.com/lme4/lme4/issues/768
+## https://github.com/kaskr/adcomp/issues/387
+get_abi_version <- function() {
+    if (utils::packageVersion("Matrix") < "1.6-2") return(numeric_version("0"))
+    Matrix.Version()[["abi"]]
+}
+
+.Matrix.abi.build.version <- get_abi_version()
+
+## simplified version of glmmTMB package checking
+check_dep_version <- function(warn=TRUE, this_pkg = "lme4",  dep_pkg = "Matrix", dep_type = "ABI",
+                              built_version = .Matrix.abi.build.version) {
+    cur_version <- get_abi_version()
+    result_ok <- cur_version >= built_version
+    if(warn && !result_ok) {
+        warning(
+            sprintf("%s version mismatch: \n", dep_type),
+            sprintf("%s was built with %s %s version %s\n",
+                    this_pkg, dep_pkg, dep_type, built_version),
+            sprintf("Current %s %s version is %s\n",
+                    dep_pkg, dep_type, cur_version),
+            sprintf("Please re-install %s from source ", this_pkg),
+            "or restore original ",
+            sQuote(dep_pkg), " package"
+        )
+    }
+    return(result_ok)
 }
 
 .onUnload <- function(libpath) {
@@ -56,3 +87,4 @@
     library.dynam.unload("lme4", libpath)
   }
 }
+
