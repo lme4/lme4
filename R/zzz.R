@@ -48,7 +48,7 @@
     } ## R < 4.0.0
   } ## R < 4.1.0
   rm(Rv)
-  ## check 
+  ## check Matrix ABI version
   check_dep_version()  
 }
 
@@ -62,11 +62,18 @@ get_abi_version <- function() {
 .Matrix.abi.build.version <- get_abi_version()
 
 ## simplified version of glmmTMB package checking
-check_dep_version <- function(warn=TRUE, this_pkg = "lme4",  dep_pkg = "Matrix", dep_type = "ABI",
-                              built_version = .Matrix.abi.build.version) {
+##' @param this_pkg downstream package being tested
+##' @param dep_pkg upstream package on which \code{this_pkg} depends
+##' @param dep_type "ABI" or "package"
+##' @param built_version a \code{numeric_version} object indicating what version of \code{dep_pkg} was used to  build \code{this_pkg}
+##' @param warn (logical) warn if condition not met?
+##' @noRd
+check_dep_version <- function(this_pkg = "lme4",  dep_pkg = "Matrix", dep_type = "ABI",
+                              built_version = .Matrix.abi.build.version,
+                              warn = TRUE) {
     cur_version <- get_abi_version()
-    result_ok <- cur_version >= built_version
-    if(warn && !result_ok) {
+    result_ok <- cur_version == built_version
+    if (!result_ok) {
         warning(
             sprintf("%s version mismatch: \n", dep_type),
             sprintf("%s was built with %s %s version %s\n",
@@ -87,4 +94,3 @@ check_dep_version <- function(warn=TRUE, this_pkg = "lme4",  dep_pkg = "Matrix",
     library.dynam.unload("lme4", libpath)
   }
 }
-
