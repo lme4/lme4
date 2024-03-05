@@ -56,7 +56,7 @@
 ## https://github.com/kaskr/adcomp/issues/387
 get_abi_version <- function() {
     if (utils::packageVersion("Matrix") < "1.6-2") return(numeric_version("0"))
-    Matrix.Version()[["abi"]]
+    Matrix::Matrix.Version()[["abi"]]
 }
 
 .Matrix.abi.build.version <- get_abi_version()
