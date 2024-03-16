@@ -9,9 +9,15 @@
     \itemize{
       \item \code{lFormula} and \code{glFormula} once again \emph{do}
       allow matrix-valued responses (for use in downstream packages like \code{galamm})
-    }
-  }
-}
+    } % itemize
+  } % user-visible changes
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{simulate} works (again) with \code{re.form=NULL} when
+      \code{NA} values are present in the data (GH #737, @frousseu)
+    } % itemize
+  } % bug fixes
+} % 1.1-35.1
 
 \section{CHANGES IN VERSION 1.1-35 (2023-11-03)}{
   \subsection{NEW FEATURES}{

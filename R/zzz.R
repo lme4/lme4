@@ -1,5 +1,5 @@
 .onLoad <- function(libname, pkgname) {
-  ## don't do this; also flags problems in downstream packages
+  ## don't do this in production; also flags problems in downstream packages
   ## options(Matrix.warnDeprecatedCoerce = 3)
   options(lme4.summary.cor.max = 12)
   if((Rv <- getRversion()) < "4.1.0") {
@@ -48,6 +48,44 @@
     } ## R < 4.0.0
   } ## R < 4.1.0
   rm(Rv)
+  ## check Matrix ABI version
+  check_dep_version()  
+}
+
+## https://github.com/lme4/lme4/issues/768
+## https://github.com/kaskr/adcomp/issues/387
+get_abi_version <- function() {
+    if (utils::packageVersion("Matrix") < "1.6-2") return(numeric_version("0"))
+    Matrix::Matrix.Version()[["abi"]]
+}
+
+.Matrix.abi.build.version <- get_abi_version()
+
+## simplified version of glmmTMB package checking
+##' @param this_pkg downstream package being tested
+##' @param dep_pkg upstream package on which \code{this_pkg} depends
+##' @param dep_type "ABI" or "package"
+##' @param built_version a \code{numeric_version} object indicating what version of \code{dep_pkg} was used to  build \code{this_pkg}
+##' @param warn (logical) warn if condition not met?
+##' @noRd
+check_dep_version <- function(this_pkg = "lme4",  dep_pkg = "Matrix", dep_type = "ABI",
+                              built_version = .Matrix.abi.build.version,
+                              warn = TRUE) {
+    cur_version <- get_abi_version()
+    result_ok <- cur_version == built_version
+    if (!result_ok) {
+        warning(
+            sprintf("%s version mismatch: \n", dep_type),
+            sprintf("%s was built with %s %s version %s\n",
+                    this_pkg, dep_pkg, dep_type, built_version),
+            sprintf("Current %s %s version is %s\n",
+                    dep_pkg, dep_type, cur_version),
+            sprintf("Please re-install %s from source ", this_pkg),
+            "or restore original ",
+            sQuote(dep_pkg), " package"
+        )
+    }
+    return(result_ok)
 }
 
 .onUnload <- function(libpath) {
