@@ -4,19 +4,34 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-35.1}{
-  \subsection{USER-VISIBLE CHANGES}{
-    \itemize{
-      \item \code{lFormula} and \code{glFormula} once again \emph{do}
-      allow matrix-valued responses (for use in downstream packages like \code{galamm})
-    } % itemize
-  } % user-visible changes
+\section{CHANGES IN VERSION 1.1-35.2}{
+  \itemize{
+    \item This is primarily a 'bump' release to ensure that package
+    repositories rebuild binaries with the latest version of the
+    \code{Matrix} package.
+  } % general
   \subsection{BUG FIXES}{
     \itemize{
       \item \code{simulate} works (again) with \code{re.form=NULL} when
       \code{NA} values are present in the data (GH #737, @frousseu)
     } % itemize
   } % bug fixes
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item{updated tests of upstream \code{Matrix} version; should
+	now warn only on ABI incompatibility, not on package version
+	mismatch alone}
+    } % itemize
+  } % user-visible changes
+} % 1.1-35.2
+
+\section{CHANGES IN VERSION 1.1-35.1 (2023-11-05)}{
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item \code{lFormula} and \code{glFormula} once again \emph{do}
+      allow matrix-valued responses (for use in downstream packages like \code{galamm})
+    } % itemize
+  } % user-visible changes
 } % 1.1-35.1
 
 \section{CHANGES IN VERSION 1.1-35 (2023-11-03)}{
