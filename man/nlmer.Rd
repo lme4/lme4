@@ -122,7 +122,7 @@ nfun <- deriv(nform,namevec=c("Asym","xmid","scal"),
               function.arg=c("input","Asym","xmid","scal"))
 nm1b <- update(nm1,circumference ~ nfun(age, Asym, xmid, scal)  ~ Asym | Tree)
 
-## 4. User-built function without using derivs():
+## 4. User-built function without using deriv():
 ##    derivatives could be computed more efficiently
 ##    by pre-computing components, but these are essentially
 ##    the gradients as one would derive them by hand
