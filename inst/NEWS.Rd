@@ -4,7 +4,17 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-35.2}{
+\section{CHANGES IN VERSION 1.1-35.3}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      bug-fix for ASAN/memory access problem in CholmodDecomposition,
+      (Mikael Jagan)
+    }
+  } % bug fixes
+} % 1.1-35.3
+    
+
+\section{CHANGES IN VERSION 1.1-35.2 (2024-03-28)}{
   \itemize{
     \item This is primarily a 'bump' release to ensure that package
     repositories rebuild binaries with the latest version of the
