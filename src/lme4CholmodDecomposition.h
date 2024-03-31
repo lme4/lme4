@@ -42,9 +42,10 @@ namespace lme4 {
                 // (!forceRectangularmatrix.rows() == matrix.cols()) ?
                 // viewAsCholmod(matrix.template selfadjointView<_UpLo>()) :
                 viewAsCholmod(matrix);
+            double beta_[2]; beta_[0] = beta; beta_[1] = 0.0;
 
             R_MATRIX_CHOLMOD(factorize_p)(
-                &A, &beta, fset.data(), fset.size(), factor(), &cholmod());
+                &A, beta_, fset.data(), fset.size(), factor(), &cholmod());
 
             this->m_info = Eigen::Success;
             m_factorizationIsOk = true;
