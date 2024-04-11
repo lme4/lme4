@@ -75,38 +75,7 @@ namespace lme4 {
 
     template<typename T>
     SEXP Eigen_cholmod_wrap(const lme4CholmodDecomposition<Eigen::SparseMatrix<T> >& obj) {
-        typedef T* Tpt;
-        const cholmod_factor* f = obj.factor();
-        if (f->minor < f->n)
-            throw std::runtime_error("CHOLMOD factorization was unsuccessful");
-
-        //FIXME: Should extend this selection according to T
-        ::Rcpp::S4 ans(std::string(f->is_super ? "dCHMsuper" : "dCHMsimpl"));
-        ::Rcpp::IntegerVector  dd(2);
-        dd[0] = dd[1] = f->n;
-        ans.slot("Dim") = dd;
-        ans.slot("perm") = ::Rcpp::wrap((int*)f->Perm, (int*)f->Perm + f->n);
-        ans.slot("colcount") = ::Rcpp::wrap((int*)f->ColCount, (int*)f->ColCount + f->n);
-        ::Rcpp::IntegerVector tt(f->is_super ? 6 : 4);
-        tt[0] = f->ordering; tt[1] = f->is_ll;
-        tt[2] = f->is_super; tt[3] = f->is_monotonic;
-        ans.slot("type") = tt;
-        if (f->is_super) {
-            tt[4] = f->maxcsize; tt[5] = f->maxesize;
-            ans.slot("super") = ::Rcpp::wrap((int*)f->super, ((int*)f->super) + f->nsuper + 1);
-            ans.slot("pi")    = ::Rcpp::wrap((int*)f->pi, ((int*)f->pi) + f->nsuper + 1);
-            ans.slot("px")    = ::Rcpp::wrap((int*)f->px, ((int*)f->px) + f->nsuper + 1);
-            ans.slot("s")     = ::Rcpp::wrap((int*)f->s, ((int*)f->s) + f->ssize);
-            ans.slot("x")     = ::Rcpp::wrap((Tpt)f->x, ((T*)f->x) + f->xsize);
-        } else {
-            ans.slot("i")     = ::Rcpp::wrap((int*)f->i, ((int*)f->i) + f->nzmax);
-            ans.slot("p")     = ::Rcpp::wrap((int*)f->p, ((int*)f->p) + f->n + 1);
-            ans.slot("x")     = ::Rcpp::wrap((Tpt)f->x, ((T*)f->x) + f->nzmax);
-            ans.slot("nz")    = ::Rcpp::wrap((int*)f->nz, ((int*)f->nz) + f->n);
-            ans.slot("nxt")   = ::Rcpp::wrap((int*)f->next, ((int*)f->next) + f->n + 2);
-            ans.slot("prv")   = ::Rcpp::wrap((int*)f->prev, ((int*)f->prev) + f->n + 2);
-        }
-        return ::Rcpp::wrap(ans);
+        return M_chm_factor_to_SEXP(obj.factor(), 0);
     }
 
 } // namespace lme4
