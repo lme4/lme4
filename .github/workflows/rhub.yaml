@@ -89,6 +89,8 @@ jobs:
         with:
           token: ${{ secrets.RHUB_TOKEN }}
           job-config: ${{ matrix.config.job-config }}
+          build_args: 'c("--compact-vignettes=both")'
+
 
   other-platforms:
     needs: setup
@@ -143,3 +145,4 @@ jobs:
         with:
           job-config: ${{ matrix.config.job-config }}
           token: ${{ secrets.RHUB_TOKEN }}
+          build_args: 'c("--compact-vignettes=both")'
