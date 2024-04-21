@@ -4,7 +4,16 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-35.3}{
+\section{CHANGES IN VERSION 1.1-35.9000}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{predict(., re.form=...)} works in a wider range of
+      cases (GH #691)
+    }
+  } % bug fixes
+} % 1.1-35.3
+  
+\section{CHANGES IN VERSION 1.1-35.3 (2024-04-16)}{
   \subsection{BUG FIXES}{
     \itemize{
       \item bug-fix for ASAN/memory access problem in CholmodDecomposition,
