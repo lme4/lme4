@@ -37,4 +37,4 @@ src/mcmcsamp\.cpp$
 revdep/
 Rplots.pdf
 R/scaleX.R
-
+\.Rout

@@ -60,10 +60,37 @@ jobs:
         with:
           token: ${{ secrets.RHUB_TOKEN }}
           job-config: ${{ matrix.config.job-config }}
+      - uses: teatimeguest/setup-texlive-action@v3
+        with:
+          packages: >-
+             scheme-basic
+             inputenc
+             graphicx
+             array
+             colortbl
+             multirow
+             hhline
+             calc
+             tabularx
+             threeparttable
+             wrapfig
+             url
+             hyperref
+             fancyvrb
+             natbib
+             xcolor
+             etoolbox
+             caption
+             adjustbox
+             thumbpdf
+             framed
+             blkarray
       - uses: r-hub/rhub2/actions/rhub-run-check@v1
         with:
           token: ${{ secrets.RHUB_TOKEN }}
           job-config: ${{ matrix.config.job-config }}
+          build_args: 'c("--compact-vignettes=both")'
+
 
   other-platforms:
     needs: setup
@@ -90,7 +117,6 @@ jobs:
           job-config: ${{ matrix.config.job-config }}
           token: ${{ secrets.RHUB_TOKEN }}
       - uses: teatimeguest/setup-texlive-action@v3
-        if: runner.os != 'Linux'
         with:
           packages: >-
              scheme-basic
@@ -115,11 +141,8 @@ jobs:
              thumbpdf
              framed
              blkarray
-      - name: Install LaTeX etc.
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get install texlive texlive-science texlive-latex-base texlive-latex-extra texlive-bibtex-extra
       - uses: r-hub/rhub2/actions/rhub-run-check@v1
         with:
           job-config: ${{ matrix.config.job-config }}
           token: ${{ secrets.RHUB_TOKEN }}
+          build_args: 'c("--compact-vignettes=both")'

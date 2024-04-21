@@ -7,7 +7,7 @@
 \section{CHANGES IN VERSION 1.1-35.3}{
   \subsection{BUG FIXES}{
     \itemize{
-      bug-fix for ASAN/memory access problem in CholmodDecomposition,
+      \item bug-fix for ASAN/memory access problem in CholmodDecomposition,
       (Mikael Jagan)
     }
   } % bug fixes
