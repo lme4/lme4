@@ -217,8 +217,9 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
             model.frame(tt, newdata.NA, na.action=na.pass, xlev=orig.random.levs))
         ## restore contrasts (why???)
         ## find *factor* variables involved in terms (left-hand side of RE formula): reset their contrasts
-        termvars <- unique(unlist(lapply(findbars(formula(object,random.only=TRUE)),
-                                  function(x) all.vars(x[[2]]))))
+        ## only interested
+        ff <- re.form  ## was: formula(object,random.only=TRUE)
+        termvars <- unique(unlist(lapply(findbars(ff), function(x) all.vars(x[[2]]))))
         for (fn in Reduce(intersect, list(
                               names(orig.random.cntr), termvars, names(rfd)))) {
             ## a non-factor grouping variable *may* sneak in here via simulate(...)
