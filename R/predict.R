@@ -935,7 +935,7 @@ Gamma_simfun <- function(object, nsim, ftd=fitted(object),
     if (any(wts != 1)) message("using weights to scale shape parameter")
     ## used to use gamma.shape(), but sigma() is more general
     ## (wouldn't work *outside* of the merMod context though)
-    shape <- sigma(object)*wts
+    shape <- 1/sigma(object)^2*wts
     rgamma(nsim*length(ftd), shape = shape, rate = shape/ftd)
 }
 
