@@ -205,7 +205,7 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
             ##  be used later ...
             pv <- attr(tt,"predvars")
             for (i in 2:(length(pv))) {
-                missvars <- setdiff(all.vars(pv[[i]]),all.vars(re.form))
+                missvars <- setdiff(all.vars(pv[[i]]), all.vars(re.form))
                 for (mv in missvars) {
                     newdata.NA[[mv]] <- NA
                 }
@@ -217,7 +217,7 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
             model.frame(tt, newdata.NA, na.action=na.pass, xlev=orig.random.levs))
         ## restore contrasts (why???)
         ## find *factor* variables involved in terms (left-hand side of RE formula): reset their contrasts
-        ## only interested
+        ## only interested in components in re.form, not al REs
         ff <- re.form  ## was: formula(object,random.only=TRUE)
         termvars <- unique(unlist(lapply(findbars(ff), function(x) all.vars(x[[2]]))))
         for (fn in Reduce(intersect, list(

@@ -1097,6 +1097,7 @@ model.matrix.merMod <-
 ##' matrix with \code{nlevels(f)-1} columns.
 dummy <- function(f, levelsToKeep){
   f <- as.factor(f)
+  if (all(is.na(f))) return(rep(NA_real_, length(f)))
   mm <- model.matrix(~ 0 + f)
   colnames(mm) <- levels(f)
 

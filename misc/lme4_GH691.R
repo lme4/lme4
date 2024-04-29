@@ -1,5 +1,5 @@
 library(lme4)
-devtools::load_all()
+devtools::load_all("~/R/pkgs/lme4")
 dfo <- read.csv("misc/lme4_GH691_test.csv")
 table(dfo$lc)
 m1 <- lmer(
