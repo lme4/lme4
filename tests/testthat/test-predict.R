@@ -490,3 +490,28 @@ test_that("NA + re.form = NULL + simulate OK (GH #737)", {
     expect_equal(length(ss2), nrow(d))
     expect_equal(length(ss3), nrow(d))
 })
+
+## GH 691 parts 1 and 2
+test_that("predict works with factors in left-out REs", {
+    set.seed(101)
+    df2 <- data.frame(yield = rnorm(100),
+                      lc = factor(rep(1:2, 50)),
+                      g1 = factor(rep(1:10, 10)),
+                      g3 = factor(rep(1:10, each = 10)))
+    m1B <- lmer(yield ~ 1 + ( 1 | g1) + (lc |g3), data  = df2)
+    expect_equal(head(predict(m1B, re.form = ~(1|g1)),1),
+                 c(`1` = 0.146787496519465))
+})
+
+test_that("predict works with dummy() in left-out REs", {
+    df3 <- data.frame(v1 = rnorm(100),
+       		  v3 = factor(rep(1:10, each = 10)),
+		  v4 = factor(rep(1:2, each = 50)),
+		  v5 = factor(rep(1:10, 10)))
+    m1C  <- lmer(v1~(1|v3) + (0+dummy(v4,"1")|v5),
+                 data = df3,
+                 control=lmerControl(check.nobs.vs.nlev="ignore",
+                                     check.nobs.vs.nRE="ignore"))
+    expect_equal(head(predict(m1C, re.form = ~1|v3), 1),
+                 c(`1` = 0.0354183724049692))
+})
