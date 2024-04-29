@@ -434,8 +434,6 @@ qqmath.merMod <- function(x, data = NULL, id=NULL, idLabels=NULL, ...) {
     if (!is.null(data)) {
         idLabels <- id
         id <- data
-        print(id)
-        print(idLabels)
         warning("qqmath.merMod takes ", sQuote("data"), "as its ",
                 "first argument for S3 method compatibility: ",
                 "in the future, please ",

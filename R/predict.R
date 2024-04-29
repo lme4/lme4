@@ -503,8 +503,12 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
             newRE <- mkNewReTrms(object, rfd, re.form, na.action=na.action,
                                  allow.new.levels=allow.new.levels)
             REvals <- base::drop(as(newRE$b %*% newRE$Zt, "matrix"))
-            if (class(fit.na.action) %in% c("omit", "exclude") && length(fit.na.action)>0) {
-                REvals <- REvals[-fit.na.action]
+            ## only needed if called as simulation? NAs sometimes excluded within mkNewReTrms ...
+            if (length(pred) != length(REvals)) {
+                if (!class(fit.na.action) %in% c("omit", "exclude") && length(fit.na.action)>0) {
+                    stop("fixed/RE pred length mismatch")
+                }                    
+                 REvals <- REvals[-fit.na.action]
             }
             pred <- pred + REvals
             if (random.only) {

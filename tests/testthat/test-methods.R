@@ -685,8 +685,8 @@ test_that("plot", {
                 (1|recipe:replicate), cake2, REML= FALSE)
   expect_is(lattice::qqmath(fm2, id=0.05), "trellis")
   expect_is(lattice::qqmath(fm2, id=0.05, idLabels=~recipe), "trellis")
-  expect_is(lattice::qqmath(fm2, 0.05, ~recipe), "trellis") # was expect_warning()
-  expect_is(lattice::qqmath(fm2, 0.05),          "trellis") # was expect_warning()
+  expect_warning(lattice::qqmath(fm2, 0.05, ~recipe), "please specify")
+  expect_warning(lattice::qqmath(fm2, 0.05),          "please specify")
 })
 
 context("misc")
