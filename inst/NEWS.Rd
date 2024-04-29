@@ -9,9 +9,10 @@
     \itemize{
       \item \code{predict(., re.form=...)} works in a wider range of
       cases (GH #691)
+      \item Gamma simulation now uses correct shape parameter (GH #782)
     }
   } % bug fixes
-} % 1.1-35.3
+} % 1.1-35.9000
   
 \section{CHANGES IN VERSION 1.1-35.3 (2024-04-16)}{
   \subsection{BUG FIXES}{
