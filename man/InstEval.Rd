@@ -41,7 +41,7 @@
   The present data set has been anonymized and slightly
   simplified on purpose.
 }
-\examples{
+\examples{%% lots in ../tests/vcov-etc.R
 str(InstEval)
 
 head(InstEval, 16)

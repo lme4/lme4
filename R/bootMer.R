@@ -87,6 +87,8 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
         }
     }
 
+    ## FIXME:: use getCall(x) ? check for existence of slot?
+    ##  is control used except for merMod?
     control <- if (!is(x, "merMod")) NULL else eval.parent(x@call$control)
 
     # define ffun as a closure containing the referenced variables
@@ -163,7 +165,8 @@ as.data.frame.bootMer <- function(x,...) {
 
 ## FIXME: collapse convergence warnings (ignore numeric values
 ## when tabulating) ?
-print.bootWarnings <- function(x, verbose=FALSE) {
+print.bootWarnings <- function(x, verbose=FALSE, ...) {
+    checkDots(..., .action = "warning")
     msgs <- attr(x, "boot.all.msgs")
     if (is.null(msgs) || all(lengths(msgs)==0)) {
         return(invisible(NULL))

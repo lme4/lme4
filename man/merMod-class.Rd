@@ -63,13 +63,16 @@ REMLcrit(object)
 \S3method{model.matrix}{merMod}(object, type = c("fixed", "random", "randomListRaw"), ...)
 \S3method{print}{merMod}(x, digits = max(3, getOption("digits") - 3),
       correlation = NULL, symbolic.cor = FALSE,
-      signif.stars = getOption("show.signif.stars"), ranef.comp = "Std.Dev.", ...)
+      signif.stars = getOption("show.signif.stars"), 
+      ranef.comp = "Std.Dev.",
+      ranef.corr = any(ranef.comp == "Std.Dev."), ...)
 
 \S3method{summary}{merMod}(object, correlation = , use.hessian = NULL, \dots)
 \S3method{print}{summary.merMod}(x, digits = max(3, getOption("digits") - 3),
       correlation = NULL, symbolic.cor = FALSE,
       signif.stars = getOption("show.signif.stars"),
-      ranef.comp = c("Variance", "Std.Dev."), show.resids = TRUE, ...)
+      ranef.comp = c("Variance", "Std.Dev."),
+      ranef.corr = any(ranef.comp == "Std.Dev."), show.resids = TRUE, ...)
 \S3method{update}{merMod}(object, formula., ..., evaluate = TRUE)
 \S3method{weights}{merMod}(object, type = c("prior", "working"), ...)
 }
@@ -110,13 +113,15 @@ REMLcrit(object)
     matrix of the fixed-effects parameters should be printed.  In the
     latter case, when \code{NULL} (the default), the correlation matrix
     is printed when it has been computed by \code{summary(.)}, and when
-    \eqn{p <= 20}.}% and '20' can be changed by  options(lme4.summary.cor.max = <n>)
+    \eqn{p <= 12}, and the cutoff \code{12} may be modified by
+    \code{options(lme4.summary.cor.max = <n>)}
+  }
   \item{use.hessian}{(logical) indicates whether to use the
     finite-difference Hessian of the deviance function to compute
     standard errors of the fixed effects, rather estimating
     based on internal information about the inverse of
     the model matrix (see \code{\link{getME}(.,"RX")}).
-    The default is to to use the Hessian whenever the
+    The default is to use the Hessian whenever the
     fixed effect parameters are arguments to the deviance
     function (i.e. for GLMMs with \code{nAGQ>0}), and to use
     \code{\link{getME}(.,"RX")} whenever the fixed effect parameters are
@@ -149,7 +154,9 @@ REMLcrit(object)
 	\code{"random"} giving the random effects model matrix, or
 	\code{"randomListRaw"} giving a list of the raw random effects model
 	matrices associated with each random effects term.}
-     }}
+  }}
+  \item{ranef.corr}{(logical) print correlations (rather than covariances) of
+    random effects?}
   \item{\dots}{potentially further arguments passed from other methods.}
 }
 \section{Objects from the Class}{
@@ -321,6 +328,10 @@ The following S3 methods with arguments given above exist (this list is currentl
 \examples{
 showClass("merMod")
 methods(class="merMod")## over 30  (S3) methods available
+
+m1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+print(m1, ranef.corr = TRUE)   ## print correlations of REs
+print(m1, ranef.corr = FALSE)  ## print covariances of REs
 
 ## -> example(lmer)  for an example of vcov.merMod()
 }

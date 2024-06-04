@@ -14,14 +14,12 @@ if (.Platform$OS.type != "windows") {
     expect_equal(m3,m5)
 
     ## would like m3==m5 != m4 ??
-    V4 <- VarCorr(m4)
-    V5 <- VarCorr(m5)
-    expect_equal(V4, V5, tolerance = 1e-14)
-    th4 <- getME(m4,"theta")
+    expect_equal(VarCorr(m4), VarCorr(m5), tolerance = 1e-14)
+    print(th4 <- getME(m4,"theta"))
     expect_equal(th4, getME(m5,"theta"), tolerance = 1e-14)
 
     ## glmer() - poly() + interaction
-    if (requireNamespace("mlmRev")) {
+    if (requireNamespace("mlmRev")) withAutoprint({
         data(Contraception, package="mlmRev")
         ## ch := with child
         Contraception <- within(Contraception, ch <- livch != "0")
@@ -47,5 +45,5 @@ if (.Platform$OS.type != "windows") {
         (mm2. <- model.matrix( ~ ageL*ch + ageQ, d2))
         cn2 <- colnames(mm2)
         stopifnot(identical(mm2[,cn2], mm2.[,cn2]))
-    }
+    })
 } ## skip on windows (for speed)

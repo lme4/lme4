@@ -1,4 +1,4 @@
-if (lme4:::testLevel() > 1 || .Platform$OS.type!="windows") {
+if (lme4:::testLevel() > 1 || .Platform$OS.type != "windows") withAutoprint({
 
     ## testing whether lme4 and nlme play nicely.  Only known issue
     ## is lmList-masking ...
@@ -34,4 +34,4 @@ if (lme4:::testLevel() > 1 || .Platform$OS.type!="windows") {
     )
 
     ## FIXME: test opposite order
-}
+})

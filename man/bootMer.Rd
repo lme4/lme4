@@ -57,7 +57,8 @@ bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE, re.form=NA,
 \value{
   an object of S3 \code{\link{class}} \code{"boot"},
   compatible with \CRANpkg{boot} package's
-  \code{\link[boot]{boot}()} result.
+  \code{\link[boot]{boot}()} result. (See Details for information on how
+  to retrieve information about errors during bootstrapping.)
 }
 \description{
   Perform model-based (Semi-)parametric bootstrap for mixed
@@ -76,6 +77,15 @@ bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE, re.form=NA,
   The semi-parametric variant is only partially implemented, and
   we only provide a method for \code{\link{lmer}} and
   \code{\link{glmer}} results.
+  
+  Information about warning and error messages incurred during the
+  bootstrap returns can be retrieved via the attributes
+  \describe{
+  \item{bootFail}{number of failures (errors)}
+  \item{boot.fail.msgs}{error messages}
+  \item{boot.all.msgs}{messages, warnings, and error messages}
+}
+  e.g. \code{attr("boot.fail.msgs")} to retrieve error messages
 
   The working name for bootMer() was
   \dQuote{simulestimate()}, as it is an extension of \code{simulate}

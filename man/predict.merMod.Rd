@@ -7,10 +7,12 @@
 }
 \usage{
 \method{predict}{merMod}(object, newdata = NULL, newparams = NULL,
-	re.form = NULL, ReForm, REForm, REform,
-        random.only=FALSE, terms = NULL,
-	type = c("link", "response"), allow.new.levels = FALSE,
-	na.action = na.pass, \dots)
+    re.form = NULL, ReForm, REForm, REform,
+    random.only=FALSE, terms = NULL,
+    type = c("link", "response"), allow.new.levels = FALSE,
+    na.action = na.pass,
+    se.fit = FALSE,
+    \dots)
 }
 \arguments{
   \item{object}{a fitted model object}
@@ -38,6 +40,7 @@
   \item{na.action}{\code{\link{function}} determining what should be done
     with missing values for fixed effects in \code{newdata}.
     The default is to predict \code{NA}: see \code{\link{na.pass}}.}
+  \item{se.fit}{(Experimental) A logical value indicating whether the standard errors should be included or not. Default is FALSE.}
   \item{...}{optional additional parameters.  None are used at present.}
 }
 \value{

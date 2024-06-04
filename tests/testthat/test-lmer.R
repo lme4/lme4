@@ -123,7 +123,7 @@ test_that("lmer", {
     expect_is(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl(optimizer="Nelder_Mead")), "lmerMod")
     expect_is(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl()), "lmerMod")
     ## avoid _R_CHECK_LENGTH_1_LOGIC2_ errors ...
-    if (getRversion() < "3.6.0" || !requireNamespace("optimx", quietly = TRUE) || packageVersion("optimx")>"2018.7.10") {
+    if (getRversion() < "3.6.0" || (requireNamespace("optimx", quietly = TRUE) && packageVersion("optimx")>"2018.7.10")) {
         expect_error(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl(optimizer="optimx")),"must specify")
         expect_is(lmer(Yield ~ 1|Batch, Dyestuff,
                        control=lmerControl(optimizer="optimx",
@@ -361,3 +361,16 @@ test_that("test for zero non-NA cases", {
     expect_error(lmer(Reaction ~ Days + (1| Subject), data_bad),
                  "0 \\(non-NA\\) cases")
 })
+
+##
+test_that("catch matrix-valued responses in lmer/glmer but not in formulas", {
+    dd <- data.frame(x = rnorm(1000), batch = factor(rep(1:20, each=50)))
+    dd$y <- matrix(rnorm(1e4), ncol = 10)
+    dd$y2 <- matrix(rpois(1e4, lambda = 1), ncol = 10)
+    expect_error(lmer(y ~ x + (1|batch), dd), "matrix-valued")
+    fr <- lFormula(y ~ x + (1|batch), dd)$fr
+    expect_true(is.matrix(model.response(fr)))
+    expect_error(glmer(y ~ x + (1|batch), dd, family = poisson), "matrix-valued")
+    fr <- glFormula(y ~ x + (1|batch), dd, family = poisson)$fr
+})
+

@@ -205,7 +205,7 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
             ##  be used later ...
             pv <- attr(tt,"predvars")
             for (i in 2:(length(pv))) {
-                missvars <- setdiff(all.vars(pv[[i]]),all.vars(re.form))
+                missvars <- setdiff(all.vars(pv[[i]]), all.vars(re.form))
                 for (mv in missvars) {
                     newdata.NA[[mv]] <- NA
                 }
@@ -217,8 +217,9 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
             model.frame(tt, newdata.NA, na.action=na.pass, xlev=orig.random.levs))
         ## restore contrasts (why???)
         ## find *factor* variables involved in terms (left-hand side of RE formula): reset their contrasts
-        termvars <- unique(unlist(lapply(findbars(formula(object,random.only=TRUE)),
-                                  function(x) all.vars(x[[2]]))))
+        ## only interested in components in re.form, not al REs
+        ff <- re.form  ## was: formula(object,random.only=TRUE)
+        termvars <- unique(unlist(lapply(findbars(ff), function(x) all.vars(x[[2]]))))
         for (fn in Reduce(intersect, list(
                               names(orig.random.cntr), termvars, names(rfd)))) {
             ## a non-factor grouping variable *may* sneak in here via simulate(...)
@@ -342,8 +343,9 @@ levelfun <- function(x, nl.n, allow.new.levels=FALSE) {
 ##'    the prediction will use the unconditional (population-level)
 ##'    values for data with previously unobserved levels (or \code{NA}s)
 ##' @param na.action function determining what should be done with missing values for fixed effects in \code{newdata}. The default is to predict \code{NA}: see \code{\link{na.pass}}.
+##' @param se.fit A logical value indicating whether the standard errors should be included or not. Default is FALSE.
 ##' @param ... optional additional parameters.  None are used at present.
-##' @return a numeric vector of predicted values
+##' @return a numeric vector of predicted values, unless \code{se.fit=TRUE} (in which case a list with elements \code{fit} (predicted values) and \code{se.fit} is returned)
 ##' @note There is no option for computing standard errors of predictions because it is difficult to define an efficient method that incorporates uncertainty in the variance parameters; we recommend \code{\link{bootMer}} for this task.
 ##' @examples
 ##' (gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 |herd), cbpp, binomial))
@@ -362,7 +364,8 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
                            REform,
                            random.only=FALSE,
                            terms=NULL, type=c("link","response"),
-                           allow.new.levels=FALSE, na.action=na.pass, ...) {
+                           allow.new.levels=FALSE, na.action=na.pass,
+                           se.fit = FALSE, ...) {
     ## FIXME: appropriate names for result vector?
     ## FIXME: make sure behaviour is entirely well-defined for NA in grouping factors
 
@@ -500,6 +503,13 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
             newRE <- mkNewReTrms(object, rfd, re.form, na.action=na.action,
                                  allow.new.levels=allow.new.levels)
             REvals <- base::drop(as(newRE$b %*% newRE$Zt, "matrix"))
+            ## only needed if called as simulation? NAs sometimes excluded within mkNewReTrms ...
+            if (length(pred) != length(REvals)) {
+                if (!class(fit.na.action) %in% c("omit", "exclude") && length(fit.na.action)>0) {
+                    stop("fixed/RE pred length mismatch")
+                }                    
+                 REvals <- REvals[-fit.na.action]
+            }
             pred <- pred + REvals
             if (random.only) {
                 fit.na.action <- attr(newRE$Zt,"na.action")
@@ -521,7 +531,59 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
                 class(fit.na.action) <- class(attr(na.action(NA),"na.action"))
         }
     }
-    napredict(fit.na.action, pred)
+    pred <- napredict(fit.na.action, pred)
+
+    if (!se.fit) return(pred)
+
+    if (!isLMM(object)) warning("se.fit computation uses an approximation to estimate the sampling distribution of the parameters")
+    
+    s <- sigma(object)
+    ## need these below so can't getME(...) all at once
+    L <- getME(object, "L")
+    RX <- getME(object, "RX")
+    RZX <- getME(object, "RZX")
+    Lambdat <- getME(object, "Lambdat")
+
+    RXtinv <- solve(t(RX))
+    LinvLambdat <- solve(L, Lambdat, system = "L")
+    Minv <- s * rbind(
+                    cbind(LinvLambdat,
+                          Matrix(0, nrow = nrow(L), ncol = ncol(RX))),
+                    cbind(-RXtinv %*% t(RZX) %*% LinvLambdat, RXtinv)
+                )
+    Cmat <- crossprod(Minv)
+        
+        
+    ## FIXME: these need to be fixed
+    if(is.null(newdata)) {
+        X <- getME(object, "X")
+        if(is.null(re.form)) {
+            Z <- getME(object, "Z")
+        } else {
+            if(isRE(re.form)) {
+                ## FIXME: newRE is not computed here
+                Z <- t(newRE$Zt)
+            } else {
+                Z <- Matrix(0, nrow = nrow(X), ncol = ncol(L))
+            }
+        }
+    } else {
+        if(isRE(re.form)) {
+            Z <- t(newRE$Zt)
+        } else {
+            ## this is inefficient and we could just calculate 
+            ## X %*% Cmat[X part only] t(X) instead
+            Z <- Matrix(0, nrow = nrow(X), ncol = ncol(L))
+        }
+    }
+        
+    if(random.only) X <- Matrix(0, nrow = nrow(Z), ncol = nrow(RX))
+        
+    ZX <- cbind(Z, X)
+    list(fit = pred,
+         se.fit = sqrt(quad.tdiag(Cmat, ZX))
+         )
+    
 } # end {predict.merMod}
 
 
@@ -842,8 +904,8 @@ binomial_simfun <- function(object, nsim, ftd=fitted(object),
         y <- model.response(m)
         if(is.factor(y)) {
             ## ignore weights
-            yy <- factor(1+rbinom(ntot, size = 1, prob = ftd),
-                         labels = levels(y))
+            yy <- factor(levels(y)[1 + rbinom(ntot, size = 1, prob = ftd)],
+                         levels = levels(y))
             split(yy, rep(seq_len(nsim), each = n))
         } else if(is.matrix(y) && ncol(y) == 2) {
             yy <- vector("list", nsim)
@@ -877,7 +939,7 @@ Gamma_simfun <- function(object, nsim, ftd=fitted(object),
     if (any(wts != 1)) message("using weights to scale shape parameter")
     ## used to use gamma.shape(), but sigma() is more general
     ## (wouldn't work *outside* of the merMod context though)
-    shape <- sigma(object)*wts
+    shape <- 1/sigma(object)^2*wts
     rgamma(nsim*length(ftd), shape = shape, rate = shape/ftd)
 }
 

@@ -375,8 +375,6 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
                        pnames=pnames), as.list(rho)))
 }
 
-
-
 subnms <- function(form, nms) {
     ## Recursive function applied to individual terms
     sbnm <- function(term)
@@ -1120,3 +1118,26 @@ combineLists <- function(..., fmatrix="list", flist="c", fvector="rbind",
 ## re-export from reformulas
 expandDoubleVerts <- reformulas::expandDoubleVerts
 isNexted <- reformulas::isNested
+
+## copied from glmmTMB::check_dots
+checkDots <- function (..., .ignore = NULL, .action = "stop") 
+{
+    L <- list(...)
+    if (length(.ignore) > 0) {
+        L <- L[!names(L) %in% .ignore]
+    }
+    if (length(L) > 0) {
+        FUN <- get(.action)
+        FUN("unknown arguments: ", paste(names(L), collapse = ","))
+    }
+    return(NULL)
+}
+
+## quadratic form from emulator package:
+## quad.tform == x %*% M %*% t(x)
+## quad.tdiag == diag(quad.tform(M, x)
+## rowSums(tcrossprod(Conj(x), M) * x)
+quad.tdiag <- function(M, x) {
+    ## only real-valued, so drop Conj
+    rowSums(tcrossprod(x, M) * x)
+}

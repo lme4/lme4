@@ -46,9 +46,11 @@ methTitle(dims)
 .prt.grps   (ngrps, nobs)
 .prt.warn   (optinfo, summary = FALSE, \dots)
 
-.prt.VC (varcor, digits, comp, formatter = format, \dots)
+.prt.VC (varcor, digits, comp = "Std.Dev.", corr = any(comp == "Std.Dev."),
+         formatter = format, \dots)
 formatVC(varcor, digits = max(3, getOption("digits") - 2),
-         comp = "Std.Dev.", formatter = format,
+         comp = "Std.Dev.", corr = any(comp == "Std.Dev."),
+         formatter = format,
          useScale = attr(varcor, "useSc"), \dots)
 }
 \arguments{
@@ -95,7 +97,11 @@ formatVC(varcor, digits = max(3, getOption("digits") - 2),
 
   %% .prt.VC     (varcor, digits, comp, formatter = format, \dots)
   \item{varcor}{typically the result of \code{\link{VarCorr}()}.}
-  \item{comp}{optional ...}% ... FIXME
+  \item{comp}{optional \code{\link{character}} vector of length 1 or 2,
+    containing \code{"Std.Dev."} and/or \code{"Variance"}, indicating the
+    columns to use.}
+  \item{corr}{\code{\link{logical}} indicating if correlations or
+    covariances should be used for vector random effects.}
   \item{formatter}{a \code{\link{function}} used for formatting the numbers.}
 
   %% .prt.grps   (ngrps, nobs)
@@ -109,9 +115,8 @@ formatVC(varcor, digits = max(3, getOption("digits") - 2),
     infos, including warnings if there were.}
   \item{summary}{logical}
 
-  %% formatVC
-  \item{useScale}{(logical) whether the parent model estimates a scale
-    parameter}
+  %% formatVC {additional to .prt.VC() etc above}
+  \item{useScale}{(logical) whether the parent model estimates a scale parameter.}
 }
 \value{
   \code{llikAIC()} returns a \code{\link{list}} with components
@@ -124,6 +129,7 @@ formatVC(varcor, digits = max(3, getOption("digits") - 2),
 ## Create a few "lme4 standard" models ------------------------------
 fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 fmM <- update(fm1, REML=FALSE) # -> Maximum Likelihood
+fmQ <- update(fm1, . ~ Days + (Days | Subject))
 
 gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
              data = cbpp, family = binomial)
@@ -159,23 +165,28 @@ V1 <- VarCorr(fm1)
 m <- formatVC(V1)
 stopifnot(is.matrix(m), is.character(m), ncol(m) == 4)
 print(m, quote = FALSE) ## prints all but the first line of .prt.VC() below:
-.prt.VC( V1, digits = 4, formatter = format)
+.prt.VC( V1, digits = 4)
 ## Random effects:
 ##  Groups   Name        Std.Dev. Corr
 ##  Subject  (Intercept) 24.740
 ##           Days         5.922   0.07
 ##  Residual             25.592
-
 p1 <- capture.output(V1)
 p2 <- capture.output( print(m, quote=FALSE) )
 pX <- capture.output( .prt.VC(V1, digits = max(3, getOption("digits")-2)) )
 stopifnot(identical(p1, p2),
           identical(p1, pX[-1])) # [-1] : dropping 1st line
 
+(Vq <- VarCorr(fmQ)) # default print()
+print(Vq, comp = c("Std.Dev.", "Variance"))
+print(Vq, comp = c("Std.Dev.", "Variance"), corr=FALSE)
+print(Vq, comp = "Variance")
+
 .prt.grps(ngrps = ngrps(fm1),
           nobs  = nobs (fm1))
 ## --> Number of obs: 180, groups:  Subject, 18
 
 .prt.warn(fm1 @ optinfo) # nothing .. had no warnings
+.prt.warn(fmQ @ optinfo) # (ditto)
 }
 \keyword{utilities}

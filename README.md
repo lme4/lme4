@@ -1,7 +1,6 @@
 lme4: Mixed-effects models in R.
 ====
 
-
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/lme4/lme4/workflows/R-CMD-check/badge.svg)](https://github.com/lme4/lme4/actions)
 [![cran version](http://www.r-pkg.org/badges/version/lme4)](https://cran.r-project.org/package=lme4)

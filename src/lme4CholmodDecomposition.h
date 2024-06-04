@@ -10,6 +10,7 @@
 #define LME4_CHOLMODDECOMPOSITION_H
 
 #include <RcppEigen.h>
+#include <RcppEigenCholmod.h>
 
 namespace lme4 {
 
@@ -41,9 +42,10 @@ namespace lme4 {
                 // (!forceRectangularmatrix.rows() == matrix.cols()) ?
                 // viewAsCholmod(matrix.template selfadjointView<_UpLo>()) :
                 viewAsCholmod(matrix);
+            double beta_[2]; beta_[0] = beta; beta_[1] = 0.0;
 
-            cholmod_factorize_p(&A, &beta, fset.data(), fset.size(),
-                                factor(), &cholmod());
+            R_MATRIX_CHOLMOD(factorize_p)(
+                &A, beta_, fset.data(), fset.size(), factor(), &cholmod());
 
             this->m_info = Eigen::Success;
             m_factorizationIsOk = true;
@@ -59,52 +61,21 @@ namespace lme4 {
             // note: cd stands for Cholmod Dense
             cholmod_dense b_cd = viewAsCholmod(other.const_cast_derived());
             // m_cholmodFactor
-            cholmod_dense* x_cd = cholmod_solve(type, factor(), &b_cd,
-                                                &cholmod());
+            cholmod_dense* x_cd = R_MATRIX_CHOLMOD(solve)(
+                type, factor(), &b_cd, &cholmod());
             if(!x_cd) {
                 this->m_info = Eigen::NumericalIssue;
             }
             typename Base::Scalar* xpt =
                 reinterpret_cast<typename Base::Scalar*>(x_cd->x);
             std::copy(xpt, xpt + other.rows() * other.cols(), other.data());
-            cholmod_free_dense(&x_cd, &cholmod());
+            R_MATRIX_CHOLMOD(free_dense)(&x_cd, &cholmod());
         }
     };
 
     template<typename T>
     SEXP Eigen_cholmod_wrap(const lme4CholmodDecomposition<Eigen::SparseMatrix<T> >& obj) {
-        typedef T* Tpt;
-        const cholmod_factor* f = obj.factor();
-        if (f->minor < f->n)
-            throw std::runtime_error("CHOLMOD factorization was unsuccessful");
-
-        //FIXME: Should extend this selection according to T
-        ::Rcpp::S4 ans(std::string(f->is_super ? "dCHMsuper" : "dCHMsimpl"));
-        ::Rcpp::IntegerVector  dd(2);
-        dd[0] = dd[1] = f->n;
-        ans.slot("Dim") = dd;
-        ans.slot("perm") = ::Rcpp::wrap((int*)f->Perm, (int*)f->Perm + f->n);
-        ans.slot("colcount") = ::Rcpp::wrap((int*)f->ColCount, (int*)f->ColCount + f->n);
-        ::Rcpp::IntegerVector tt(f->is_super ? 6 : 4);
-        tt[0] = f->ordering; tt[1] = f->is_ll;
-        tt[2] = f->is_super; tt[3] = f->is_monotonic;
-        ans.slot("type") = tt;
-        if (f->is_super) {
-            tt[4] = f->maxcsize; tt[5] = f->maxesize;
-            ans.slot("super") = ::Rcpp::wrap((int*)f->super, ((int*)f->super) + f->nsuper + 1);
-            ans.slot("pi")    = ::Rcpp::wrap((int*)f->pi, ((int*)f->pi) + f->nsuper + 1);
-            ans.slot("px")    = ::Rcpp::wrap((int*)f->px, ((int*)f->px) + f->nsuper + 1);
-            ans.slot("s")     = ::Rcpp::wrap((int*)f->s, ((int*)f->s) + f->ssize);
-            ans.slot("x")     = ::Rcpp::wrap((Tpt)f->x, ((T*)f->x) + f->xsize);
-        } else {
-            ans.slot("i")     = ::Rcpp::wrap((int*)f->i, ((int*)f->i) + f->nzmax);
-            ans.slot("p")     = ::Rcpp::wrap((int*)f->p, ((int*)f->p) + f->n + 1);
-            ans.slot("x")     = ::Rcpp::wrap((Tpt)f->x, ((T*)f->x) + f->nzmax);
-            ans.slot("nz")    = ::Rcpp::wrap((int*)f->nz, ((int*)f->nz) + f->n);
-            ans.slot("nxt")   = ::Rcpp::wrap((int*)f->next, ((int*)f->next) + f->n + 2);
-            ans.slot("prv")   = ::Rcpp::wrap((int*)f->prev, ((int*)f->prev) + f->n + 2);
-        }
-        return ::Rcpp::wrap(ans);
+        return M_chm_factor_to_SEXP(obj.factor(), 0);
     }
 
 } // namespace lme4

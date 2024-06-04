@@ -42,7 +42,7 @@
   (Co-)variance structure
 }
 \details{
-  \itemize{
+  \describe{
     \item{\code{mlist2vec}}{Convert list of matrices to concatenated
       vector of lower triangles with an attribute that gives the
       dimension of each matrix in the original list. This attribute may

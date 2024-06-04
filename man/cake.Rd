@@ -36,7 +36,7 @@
   baking temperature}. Master's Thesis, Iowa State College.
 
   Cochran, W. G., and Cox, G. M. (1957) \emph{Experimental
-  designs}, 2nd Ed.  New York, John Wiley \& Sons.
+  designs}, 2nd Ed.  New York, John Wiley & Sons.
 
   Lee, Y., Nelder, J. A., and Pawitan, Y. (2006)
   \emph{Generalized linear models with random effects.

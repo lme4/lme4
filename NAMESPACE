@@ -55,7 +55,7 @@ importFrom("nlme", fixef,ranef, VarCorr, getGroups, getData)
 
 importFrom("Matrix", drop0, rankMatrix, sparseMatrix, sparse.model.matrix,
            forceSymmetric, fac2sparse, KhatriRao, Diagonal, .bdiag,
-           as.matrix, bdiag)
+           as.matrix, bdiag, Matrix)
 importClassesFrom("Matrix", corMatrix, dgCMatrix, dpoMatrix, dCHMsimpl)
 ## methods incl. S4 generics:
 importMethodsFrom("Matrix", coerce, cov2cor, "%*%", crossprod,tcrossprod,
@@ -215,6 +215,7 @@ S3method(log,thpr)
 S3method(logLik,merMod)
 S3method(model.frame,merMod)
 S3method(model.matrix,merMod)
+S3method(ngrps, default)
 S3method(ngrps,factor)
 S3method(ngrps,merMod)
 S3method(nobs,merMod)
@@ -301,3 +302,4 @@ importFrom(reformulas,nobars)
 importFrom(reformulas,reOnly)
 importFrom(reformulas,splitForm)
 importFrom(reformulas,subbars)
+export(namedList)

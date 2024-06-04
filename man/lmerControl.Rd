@@ -284,7 +284,9 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
   the rank of the random effects model matrix \code{Z}.
 }
 \seealso{\link{convergence} and \code{\link{allFit}()} which fits
-  for a couple of optimizers.}
+  for a couple of optimizers;
+  \code{\link{nloptwrap}} for the \code{lmerControl()} default optimizer.
+}
 \examples{
 str(lmerControl())
 str(glmerControl())

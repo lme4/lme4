@@ -69,8 +69,8 @@ test_that("glmer", {
     expect_equal(x, copysome(x4, from=x))
     x5 <- suppressWarnings(update(x, start = list(theta=1, fixef=rep(0,4))))
     expect_equal(AIC(x5), 221.5823, tolerance=1e-6)
-    x6 <- expect_error(update(x, start = list(theta=1, fixef=rep(0,5))),
-                       "incorrect number of fixef components")
+    x6 <- expect_error(suppressWarnings(update(x, start = list(theta=1, fixef=rep(0,5))),
+                       "incorrect number of fixef components"))
     ## beta only
     x7 <- suppressWarnings(update(x,start=list(fixef=fixef(x0))))
     expect_equal(x, copysome(x7, from=x))

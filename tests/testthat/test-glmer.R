@@ -186,8 +186,8 @@ if(FALSE) { ## Hadley broke this
                                 control=glmerControl(  # max|grad| = 0.021 ..
                                     optimizer=c("bobyqa","Nelder_Mead")))))
 
-        t2 <- system.time(g2 <- update(g1,
-                         control=glmerControl(optimizer="bobyqa")))
+        t2 <- system.time(g2 <- suppressWarnings(update(g1,
+                         control=glmerControl(optimizer="bobyqa"))))
         ## rbind(t1,t2)[,"elapsed"]
         ## 20 (then 13.0) seconds N-M vs 8 (then 4.8) seconds bobyqa ...
         ## print(t1[3] / t2[3]) # 0.37; => 1.25 should be on the safe side
@@ -348,3 +348,15 @@ if(FALSE) { ## Hadley broke this
 
 })
 } ## testlevel>1
+
+test_that("glmer with etastart",
+{
+    ## make sure etastart is passed through
+    ## (fixed in commit b6fb1ac83885ff06 but never tested?)
+    m1 <- glmer(incidence/size ~ period + (1|herd),
+                weights = size,
+                family = binomial,
+                data = cbpp)
+    m1E <- update(m1, etastart = rep(1, nrow(cbpp)))
+    expect_true(!identical(fixef(m1), fixef(m1E)))
+})

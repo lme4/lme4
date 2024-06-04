@@ -1,0 +1,95 @@
+# For help debugging build failures open an issue on the RStudio community with the 'github-actions' tag.
+# https://community.rstudio.com/new-topic?category=Package%20development&tags=github-actions
+# code generated according to https://deanattali.com/blog/migrating-travis-to-github/
+# via usethis::use_github_action_check_standard()
+# run in subdirectory:
+#    https://stackoverflow.com/questions/57806624/github-actions-how-to-build-project-in-sub-directory
+#  https://stackoverflow.com/questions/58139175/running-actions-in-another-directory
+# https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#jobsjob_idstepsworking-directory
+# https://github.community/t/github-actions-working-directory-incorrectly-documented-unexpected-value-working-directory/16076
+on:
+  workflow_dispatch
+
+name: R-CMD-check-allOS
+
+jobs:
+  R-CMD-check:
+    runs-on: ${{ matrix.config.os }}
+
+    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: ubuntu-latest, r: 'release'}
+          - {os: ubuntu-latest, r: 'devel'}
+          - {os: windows-latest, r: 'oldrel'}
+          - {os: windows-latest, r: 'release'}
+          - {os: windows-latest, r: 'devel'}
+          - {os: macOS-latest, r: 'release'}
+
+    env:
+      R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+      RSPM: ${{ matrix.config.rspm }}
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      ## attempt to control over-parallelization
+      OPENBLAS_NUM_THREADS: 1
+      OMP_NUM_THREADS: 1
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: teatimeguest/setup-texlive-action@v3
+        if: runner.os != 'Linux'
+        with:
+          packages: >-
+             scheme-basic
+             inputenc
+             graphicx
+             array
+             colortbl
+             multirow
+             hhline
+             calc
+             tabularx
+             threeparttable
+             wrapfig
+             url
+             hyperref
+             fancyvrb
+             natbib
+             xcolor
+             etoolbox
+             caption
+             adjustbox
+             thumbpdf
+             framed
+             blkarray
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+          http-user-agent: ${{ matrix.config.http-user-agent }}
+          use-public-rspm: true
+
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
+
+      - name: Install extra LaTeX packages
+        if: runner.os == 'Linux'
+        run: sudo apt-get install texlive-science texlive-latex-extra texlive-bibtex-extra
+
+      - uses: r-lib/actions/check-r-package@v2
+        env:
+          _R_CHECK_CRAN_INCOMING_REMOTE_: false
+          NOT_CRAN: true
+        with:
+          build_args: 'c("--compact-vignettes=both")'
+          upload-snapshots: true

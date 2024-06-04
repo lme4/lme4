@@ -612,17 +612,22 @@ optimizeLmer <- function(devfun,
             ## what do I need to do to reset rho$pp$theta to original value???
             devfun(theta0) ## reset rho$pp$theta after tests
             ## FIXME: allow user to specify ALWAYS restart if on boundary?
-            if (any(bgrad < 0)) {
-                if (verbose) message("some theta parameters on the boundary, restarting")
-                opt <- optwrap(optimizer,
-                               devfun,
-                               opt$par,
-                               lower=rho$lower, control=control,
-                               adj=FALSE, verbose=verbose,
-                               ...)
-            }
+            if (any(is.na(bgrad))) {
+                warning("some gradient components are NA near boundaries, skipping boundary check")
+                return(opt)
+            } else {
+                if (any(bgrad < 0)) {
+                    if (verbose) message("some theta parameters on the boundary, restarting")
+                    opt <- optwrap(optimizer,
+                                   devfun,
+                                   opt$par,
+                                   lower=rho$lower, control=control,
+                                   adj=FALSE, verbose=verbose,
+                                   ...)
+                }
+            } ## bgrad not NA
         }
-    }
+    } ## if restart.edge
     if (boundary.tol > 0)
         check.boundary(rho, opt, devfun, boundary.tol)
     else

@@ -1,4 +1,4 @@
-if (.Platform$OS.type != "windows") {
+if (.Platform$OS.type != "windows") withAutoprint({
     library(lme4)
 
     fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
@@ -23,4 +23,4 @@ if (.Platform$OS.type != "windows") {
 
     drop1(gm1, test="Chisq")
 
-} ## skip on windows (for speed)
+}) ## skip on windows (for speed)
