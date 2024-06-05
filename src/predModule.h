@@ -29,7 +29,7 @@ namespace lme4 {
         typedef MatrixXd::Index                           Index;
         typedef Eigen::SparseMatrix<double>               SpMatrixd;
         typedef lme4CholmodDecomposition<SpMatrixd>       ChmDecomp;
-        typedef Eigen::MappedSparseMatrix<double>         MSpMatrixd;
+        typedef Eigen::Map<Eigen::SparseMatrix<double>>         MSpMatrixd;
     protected:
         MMap          d_X, d_RZX, d_V, d_VtV;
         MSpMatrixd    d_Zt, d_Ut, d_LamtUt, d_Lambdat;

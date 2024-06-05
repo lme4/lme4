@@ -34,7 +34,7 @@ Description: Fit linear and generalized linear mixed-effects models.
     methods.  The core computational algorithms are implemented using the
     'Eigen' C++ library for numerical linear algebra and 'RcppEigen' "glue".
 Depends: R (>= 3.5.0), Matrix (>= 1.2-1), methods, stats
-LinkingTo: Rcpp (>= 0.10.5), RcppEigen (>= 0.3.3.9.4), Matrix
+LinkingTo: Rcpp (>= 0.10.5), RcppEigen (>= 0.3.3.9.4), Matrix (>= 1.6.2)
 Imports: graphics, grid, splines, utils, parallel, MASS, lattice, boot,
     nlme (>= 3.1-123), minqa (>= 1.1.15), nloptr (>= 1.0.4)
 Suggests:
