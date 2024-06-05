@@ -1,4 +1,4 @@
-stopifnot(require("testthat"), require("lme4"))
+stopifnot(require("testthat"))
 
 ## use old (<=3.5.2) sample() algorithm if necessary
 if ("sample.kind" %in% names(formals(RNGkind))) {

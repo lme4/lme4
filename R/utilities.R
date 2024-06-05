@@ -1117,7 +1117,7 @@ combineLists <- function(..., fmatrix="list", flist="c", fvector="rbind",
 
 ## re-export from reformulas
 expandDoubleVerts <- reformulas::expandDoubleVerts
-isNexted <- reformulas::isNested
+isNested <- reformulas::isNested
 
 ## copied from glmmTMB::check_dots
 checkDots <- function (..., .ignore = NULL, .action = "stop") 
