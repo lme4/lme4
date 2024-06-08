@@ -52,12 +52,13 @@ namespace lme4 {
             throw invalid_argument("size of Lind does not match nonzeros in Lambda");
         // checking of the range of Lind is now done in R code for reference class
 	// initialize beta0, u0, delb, delu and VtV
-	// printf("   REAL(V): %p\n", (void *)    REAL(V));
-	//  printf("d_V.data(): %p\n", (void *) d_V.data());
+	printf("   REAL(V): %p\n", (void *)    REAL(V));
+	printf("d_V.data(): %p\n", (void *) d_V.data());
 	if (d_V.cols() > 0) {
-            // GH #794
-            d_VtV.setZero();
-            if (d_V.rows() > 0)
+	    printf("updating VtV");
+	    // GH #794
+	    d_VtV.setZero();
+	    if (d_V.rows() > 0)
                 d_VtV.selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
 	}
         d_RX.compute(d_VtV);    // ensure d_RX is initialized even in the 0-column X case
