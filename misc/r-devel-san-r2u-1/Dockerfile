@@ -11,12 +11,13 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys     67C2D66C4B1D433
 RUN apt update -qq
 ## RUN ## Then install bspm (as root) and enable it, and enable a speed optimization
 RUN install2.r bspm
-RUN RHOME=$(R RHOME)
+RUN RHOME=$(RD RHOME)
 RUN echo "suppressMessages(bspm::enable())" >> ${RHOME}/etc/Rprofile.site
 RUN echo "options(bspm.version.check=FALSE)" >> ${RHOME}/etc/Rprofile.site
 RUN echo "suppressMessages(bspm::enable())" >> ${HOME}/.Rprofile
-RUN install2.r -d lme4
+RUN apt -y install r-cran-minqa r-cran-nloptr r-cran-rcpp r-cran-rcppeigen cmake
+RUN echo "install.packages('lme4', dependencies = TRUE)" | RD --slave
 RUN apt -y install git
 RUN git clone https://github.com/eddelbuettel/sanitizers.git
-RUN R CMD INSTALL sanitizers
+RUN RD CMD INSTALL sanitizers
 RUN wget https://cran.r-project.org/src/contrib/lme4_1.1-35.3.tar.gz

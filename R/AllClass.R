@@ -69,7 +69,7 @@ merPredD <-
                          RZX <<- if (!is.null(ll$RZX))
                              array(ll$RZX, c(q, p)) else array(0, c(q, p))
                          Utr <<- if (!is.null(ll$Utr))
-                             as.numeric(ll$Utr) else numeric(q)
+                                     as.numeric(ll$Utr) else numeric(q)
                          V <<- if (!is.null(ll$V))
                              array(ll$V, c(n, p)) else array(0, c(n, p))
                          VtV <<- if (!is.null(ll$VtV))

@@ -1,4 +1,36 @@
+**Bottom line**: still having a very hard time getting a docker container that combines
+
+* `r-devel-san`
+* installation of dependent packages via `r2u`
+
+## References
+
+* https://dirk.eddelbuettel.com/code/sanitizers.html
+
+## Run DE sanitizer example
+
 ```
+docker pull rocker/r-devel-san
+docker run --rm -ti rocker/r-devel-san bash
+wget https://cran.r-project.org/src/contrib/sanitizers_0.1.1.tar.gz
+RD CMD INSTALL sanitizers_0.1.1.tar.gz
+RD -e 'library(sanitizers); print(stackAddressSanitize(42))'
+```
+
+Fails, properly.
+
+
+
+```
+git clone --depth=1 https://github.com/eddelbuettel/r2u.git
+cp -r r2u/docker/jammy/build r-devel-san-r2u
+cd r-devel-san-r2u 
+sed -i -e 's#rocker/r-ubuntu:22.04#rocker/r-devel-san#' Dockerfile
+## fart around with Dockerfile.  *Still* can't get r2u enabled on top of r-devel-san;
+##   wait for lme4 dependent packages to get installed instead
+docker build .
+```
+
 docker pull ghcr.io/r-hub/containers/clang-asan
 docker run --rm -ti ghcr.io/r-hub/containers/clang-asan
 ```
@@ -41,8 +73,13 @@ RD CMD check --as-cran lme4_1.1-35.3.tar.gz
 ```
 
 ```
-https://dirk.eddelbuettel.com/code/sanitizers.html
-
+docker run --rm -ti r-devel-san-r2u-lme4 bash
+wget https://cran.r-project.org/src/contrib/sanitizers_0.1.1.tar.gz
+RD CMD INSTALL sanitizers_0.1.1.tar.gz
+Rscript -e 'sanitizers::stackAddressSanitize()'
+wget https://cran.r-project.org/src/contrib/lme4_1.1-35.3.tar.gz
+RD CMD INSTALL lme4_1.1-35.3.tar.gz
+```
 
 ```
 ## Install key and setup r2u repo, also set 'pin preference'
