@@ -1,4 +1,4 @@
-**Bottom line**: still having a very hard time getting a docker container that combines
+**Bottom line**: still having a very hard time getting a docker container that combines r-devel-san and r2u
 
 * `r-devel-san`
 * installation of dependent packages via `r2u`
@@ -28,9 +28,12 @@ cd r-devel-san-r2u
 sed -i -e 's#rocker/r-ubuntu:22.04#rocker/r-devel-san#' Dockerfile
 ## fart around with Dockerfile.  *Still* can't get r2u enabled on top of r-devel-san;
 ##   wait for lme4 dependent packages to get installed instead
-docker build .
+docker build -t r-devel-san-r2u-lme4 .
 ```
 
+
+
+```
 docker pull ghcr.io/r-hub/containers/clang-asan
 docker run --rm -ti ghcr.io/r-hub/containers/clang-asan
 ```
@@ -96,3 +99,40 @@ RD CMD INSTALL lme4_1.1-35.3.tar.gz
 	&& locale-gen en_US.utf8 \
 	&& /usr/sbin/update-locale LANG=en_US.UTF-8
 ```
+
+
+###
+https://superuser.com/questions/1130898/no-internet-connection-inside-docker-containers
+
+```
+docker network create --driver bridge common
+docker run -it --network common ubuntu:latest bash
+docker run --rm -ti --network common r-devel-san-r2u-lme4 bash
+```
+
+```r
+install.packages("Rcpp")
+remotes::install_github("RcppCore/Rcpp", ref = "bugfix/r-vector-start-specializations")
+```
+
+##
+
+```
+docker run --rm -ti --network common rocker/r-devel-san bash
+apt update
+apt upgrade -y
+apt install -y cmake
+echo "install.packages('nloptr')" | RD --slave
+echo "install.packages('remotes')" | RD --slave
+echo "remotes::install_github('astamm/nloptr')" | RD --slave
+```
+
+
+```r
+library(nloptr)
+ fr <- function(x) {   ## Rosenbrock Banana function
+         100 * (x[2] - x[1]^2)^2 + (1 - x[1])^2
+     }
+(S <- bobyqa(c(0, 0, 0), fr, lower = c(0, 0, 0), upper = c(0.5, 0.5, 0.5)))
+```
+
