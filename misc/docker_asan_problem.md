@@ -216,3 +216,11 @@ remotes::install_github("astamm/nloptr")
 but now we have https://github.com/wch/r-debug/issues/37 (can't install packages!)
 
 How about using R-devel (which presumably doesn't have any `-fsanitize`) and using that in `PKG_CXXFLAGS`) ?
+
+## trying again with r-hub checkers
+
+non-interactive, but ... ?
+
+```
+cat ~/admin/github_token_rhub
+```
