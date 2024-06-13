@@ -1,7 +1,7 @@
 ## Emacs, make this -*- mode: sh; -*-
 
-## start with the Docker 'base R' Debian-based image
-FROM r-base:latest
+## start with the Docker 'base R' Debian-based image + r2u
+FROM rocker/r2u:latest
 
 ## This handle reaches Carl and Dirk
 MAINTAINER "Carl Boettiger and Dirk Eddelbuettel" rocker-maintainers@eddelbuettel.com
@@ -12,7 +12,8 @@ RUN apt-get update -qq \
 
 ## From the Build-Depends of the Debian R package, plus subversion
 RUN apt-get update -qq \
-	&& apt-get install -t unstable -y --no-install-recommends \
+    ## removed -t unstable in modifying from Debian to Ubuntu base
+	&& apt-get install -y --no-install-recommends \
 		bash-completion \
 		bison \
 		debhelper \
