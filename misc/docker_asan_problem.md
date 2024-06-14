@@ -224,3 +224,16 @@ non-interactive, but ... ?
 ```
 cat ~/admin/github_token_rhub
 ```
+
+set credentials wih `gitcreds::gitcreds_set()`, run `rhub::rhub_check()` with the `clang-asan` platform. 
+
+
+## 
+```
+cd r-san-devel
+docker build -t r-devel-san-r2u:latest .
+docker run --rm -ti --network common r-devel-san-r2u:latest bash
+RD -e "install.packages('lme4')"
+wget https://cran.r-project.org/src/contrib/lme4_1.1-35.3.tar.gz
+RD CMD INSTALL lme4_1.1-35.3.tar.gz
+```
