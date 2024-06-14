@@ -224,3 +224,5 @@ non-interactive, but ... ?
 ```
 cat ~/admin/github_token_rhub
 ```
+
+https://reside-ic.github.io/blog/debugging-and-fixing-crans-additional-checks-errors/
