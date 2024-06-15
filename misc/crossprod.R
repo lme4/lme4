@@ -10,5 +10,6 @@ M <- matrix(nrow = 0, ncol = 0)
 storage.mode(M) <- "numeric"
 fcprd(M)
 
+## cat(dput(crossprodCpp))
 ## d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
 
