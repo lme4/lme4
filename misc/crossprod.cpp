@@ -2,10 +2,13 @@ using Eigen::MatrixXd;
 using Eigen::Upper;
 typedef Eigen::Map<MatrixXd>  MMat;
 
-MMat A(as<MMat> (AA));
-const int m(A.rows()), n(A.cols());
-MatrixXd firstMat(n,n);
-printf("firstMat.data(): %p\n", (void *) firstMat.data());
-printf("firstMat dims: %ld, %ld\n", firstMat.rows(), firstMat.cols());
-MatrixXd AtA(firstMat.setZero().selfadjointView<Upper>().rankUpdate(A.adjoint()));
-return wrap(AtA);
+MMat V(as<MMat> (RV));
+MMat VtV(as<MMat> (RVtV));
+printf("V.data(): %p\n", (void *) V.data());
+printf("V dims: %ld, %ld\n", V.rows(), V.cols());
+printf("VtV.data(): %p\n", (void *) VtV.data());
+printf("VtV dims: %ld, %ld\n", VtV.rows(), VtV.cols());
+
+VtV.setZero().selfadjointView<Upper>().rankUpdate(V.adjoint());
+
+return wrap(VtV);

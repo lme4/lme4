@@ -54,8 +54,13 @@ namespace lme4 {
 	// initialize beta0, u0, delb, delu and VtV
 	printf("   REAL(V): %p\n", (void *)    REAL(V));
 	printf("d_V.data(): %p\n", (void *) d_V.data());
+	printf("d_V.dims(): %ld, %ld\n", d_V.rows(), d_V.cols());
+	printf("   REAL(VtV): %p\n", (void *)    REAL(VtV));
+	printf("d_VtV.data(): %p\n", (void *) d_VtV.data());
+	printf("d_VtV.dims(): %ld, %ld\n", d_VtV.rows(), d_VtV.cols());
+
 	if (d_V.cols() > 0) {
-	    printf("updating VtV");
+	  // printf("updating VtV");
 	    // GH #794
 	    d_VtV.setZero();
 	    if (d_V.rows() > 0)
