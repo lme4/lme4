@@ -225,6 +225,7 @@ non-interactive, but ... ?
 cat ~/admin/github_token_rhub
 ```
 
+
 set credentials wih `gitcreds::gitcreds_set()`, run `rhub::rhub_check()` with the `clang-asan` platform. 
 
 
@@ -237,3 +238,6 @@ RD -e "install.packages('lme4')"
 wget https://cran.r-project.org/src/contrib/lme4_1.1-35.3.tar.gz
 RD CMD INSTALL lme4_1.1-35.3.tar.gz
 ```
+
+https://reside-ic.github.io/blog/debugging-and-fixing-crans-additional-checks-errors/
+
