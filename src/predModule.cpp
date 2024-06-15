@@ -52,19 +52,10 @@ namespace lme4 {
             throw invalid_argument("size of Lind does not match nonzeros in Lambda");
         // checking of the range of Lind is now done in R code for reference class
 	// initialize beta0, u0, delb, delu and VtV
-	printf("   REAL(V): %p\n", (void *)    REAL(V));
-	printf("d_V.data(): %p\n", (void *) d_V.data());
-	printf("d_V.dims(): %ld, %ld\n", d_V.rows(), d_V.cols());
-	printf("   REAL(VtV): %p\n", (void *)    REAL(VtV));
-	printf("d_VtV.data(): %p\n", (void *) d_VtV.data());
-	printf("d_VtV.dims(): %ld, %ld\n", d_VtV.rows(), d_VtV.cols());
 
 	if (d_V.cols() > 0) {
-	  // printf("updating VtV");
-	    // GH #794
 	    d_VtV.setZero();
-	    if (d_V.rows() > 0)
-                d_VtV.selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
+	    d_VtV.selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
 	}
         d_RX.compute(d_VtV);    // ensure d_RX is initialized even in the 0-column X case
 
@@ -259,7 +250,8 @@ namespace lme4 {
                 }
             }
         }
-        d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
+	// avoid crossprod of n-by-0 matrix: GH #794
+        if (d_V.cols() > 0) d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
         updateL();
     }
 
