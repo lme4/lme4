@@ -1,6 +1,5 @@
-using Eigen::MatrixXd;
 using Eigen::Upper;
-typedef Eigen::Map<MatrixXd>  MMat;
+typedef Eigen::Map<Eigen::MatrixXd>  MMat;
 
 MMat V(as<MMat> (RV));
 MMat VtV(as<MMat> (RVtV));
