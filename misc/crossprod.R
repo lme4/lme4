@@ -10,7 +10,7 @@ fcprd <- cxxfunction(signature(RV = "matrix", RVtV = "matrix"), crossprodCpp, pl
 result <- matrix(NA_real_, 3, 3)
 fcprd(matrix(9, 3, 3), result)
 result
-M <- matrix(nrow = 0, ncol = 0)
+M <- matrix(nrow = 30, ncol = 0)
 storage.mode(M) <- "numeric"
 result <- matrix(0.0, 0, 0)
 fcprd(M, result)
