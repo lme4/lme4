@@ -10,7 +10,7 @@
       \item \code{predict(., re.form=...)} works in a wider range of
       cases (GH #691)
       \item Gamma simulation now uses correct shape parameter (GH #782)
-      \item Avoid triggering RcppEigen ASAN bug(?) in the case of
+      \item Avoid triggering RcppEigen UBSAN bug(?) in the case of
       profiling fixed effects in  a \code{merMod} object with
       a single fixed effect parameter (GH #794: lots of help from
       Dirk Eddelbuettel and Mikael Jagan)
