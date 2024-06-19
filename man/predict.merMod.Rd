@@ -7,7 +7,7 @@
 }
 \usage{
 \method{predict}{merMod}(object, newdata = NULL, newparams = NULL,
-    re.form = NULL, ReForm, REForm, REform,
+    re.form = NULL,
     random.only=FALSE, terms = NULL,
     type = c("link", "response"), allow.new.levels = FALSE,
     na.action = na.pass,
@@ -25,8 +25,6 @@
   \item{re.form}{(formula, \code{NULL}, or \code{NA}) specify which random effects to condition on when predicting.  If \code{NULL},
     include all random effects; if \code{NA} or \code{~0},
     include no random effects.}
-  \item{ReForm, REForm, REform}{allowed for backward compatibility: \code{re.form} is
-    now the preferred argument name.}
   \item{random.only}{(logical) ignore fixed effects, making predictions
     only using random effects?}
   \item{terms}{a \code{\link{terms}} object - unused at present.}
@@ -71,10 +69,7 @@ str(p2 <- predict(gm1,newdata))    # new data, all RE
 str(p3 <- predict(gm1,newdata,re.form=NA)) # new data, level-0
 str(p4 <- predict(gm1,newdata,re.form= ~(1|herd))) # explicitly specify RE
 stopifnot(identical(p2, p4))
-\dontshow{%back compatibility - as long as we have it: ReForm, REForm, REform,
-suppressWarnings(stopifnot(identical(p1, predict(gm1,ReForm=NA))))
-suppressWarnings(stopifnot(identical(p3, predict(gm1,newdata,REForm=NA))))
-suppressWarnings(stopifnot(identical(p4, predict(gm1,newdata,REform=~(1|herd)))))
+\dontshow{
 
 ## predict() should work with variable names with spaces [as lm() does]:
 dd <- expand.grid(y=1:3, "Animal ID" = 1:9)
@@ -84,6 +79,6 @@ isel <- c(7, 9, 11, 13:17, 20:22)
 stopifnot(all.equal(vcov(fm)[1,1], 0.02564102564),
 	  all.equal(unname(predict(fm, newdata = dd[isel,])),
 		    unname( fitted(fm) [isel])))
-}%dont
-}
+} % dontshow
+} % examples
 

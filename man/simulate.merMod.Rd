@@ -8,12 +8,12 @@
 }
 \usage{
 \method{simulate}{merMod}(object, nsim = 1, seed = NULL,
-	 use.u = FALSE, re.form = NA, ReForm, REForm, REform,
+	 use.u = FALSE, re.form = NA,
 	 newdata=NULL, newparams=NULL, family=NULL,
 	 allow.new.levels = FALSE, na.action = na.pass, \dots)
 
 .simulateFun(object, nsim = 1, seed = NULL, use.u = FALSE,
-             re.form = NA, ReForm, REForm, REform,
+             re.form = NA,
              newdata=NULL, newparams=NULL,
              formula=NULL, family=NULL, weights=NULL, offset=NULL,
              allow.new.levels = FALSE, na.action = na.pass,
@@ -36,8 +36,6 @@
   \item{re.form}{formula for random effects to condition on.  If
     \code{NULL}, condition on all random effects; if \code{NA} or \code{~0},
     condition on no random effects.  See Details.}
-  \item{ReForm, REForm, REform}{deprecated: \code{re.form} is
-    now the preferred argument name.}
   \item{newdata}{data frame for which to evaluate predictions.}
   \item{newparams}{new parameters to use in evaluating predictions,
     specified as in the \code{start} parameter for \code{\link{lmer}} or

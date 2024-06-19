@@ -5,6 +5,13 @@
 \encoding{UTF-8}
 
 \section{CHANGES IN VERSION 1.1-35.9000}{
+    \subsection{USER-VISIBLE CHANGES}{
+      \itemize{
+	\item in \code{predict}, the synonyms \code{ReForm}, \code{REForm}, and
+	\code{REform} of \code{re.form} are now hard-deprecated,
+	giving an error (after 10 years of soft deprecation)
+      } % itemize
+    } % user-visible changes
 }
 
 \section{CHANGES IN VERSION 1.1-35.4 (2024-06-19)}{
