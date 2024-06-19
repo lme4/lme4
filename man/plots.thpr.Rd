@@ -44,15 +44,15 @@
   \item{absVal}{logical indicating if \code{\link{abs}(.)}olute values
       should be plotted, often preferred for confidence interval
       visualization.}
-    \item{scales}{plotting options to be passed to \code{\link{xyplot}}}
+    \item{scales}{plotting options to be passed to \code{\link[lattice]{xyplot}}}
     \item{which}{integer or character vector indicating which parameters
     to profile: default is all parameters (see
     \code{\link{profile-methods}}
     for details).}
   \item{draw.lower}{(logical) draw lower-triangle (zeta scale) panels?}
   \item{draw.upper}{(logical) draw upper-triangle (standard dev/cor scale) panels?}
-  \item{\dots}{further arguments passed to \code{\link{xyplot}},
-    \code{\link{densityplot}}, or \code{\link{splom}} from package
+  \item{\dots}{further arguments passed to \code{\link[lattice]{xyplot}},
+    \code{\link[lattice]{densityplot}}, or \code{\link[lattice]{splom}} from package
     \CRANpkg{lattice}, respectively.}
 }
 \seealso{ \code{\link[=profile-methods]{profile}}, notably for an

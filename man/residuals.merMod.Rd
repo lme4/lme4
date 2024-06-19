@@ -41,7 +41,7 @@
   \code{type="partial"} is not yet implemented for either
   type. \item Note that the meaning of \code{"pearson"}
   residuals differs between \code{\link{residuals.lm}} and
-  \code{\link{residuals.lme}}.  The former returns values
+  \code{\link[nlme]{residuals.lme}}.  The former returns values
   scaled by the square root of user-specified weights (if
   any), but \emph{not} by the residual standard deviation,
   while the latter returns values scaled by the estimated

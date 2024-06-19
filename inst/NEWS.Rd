@@ -4,7 +4,10 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-35.4}{
+\section{CHANGES IN VERSION 1.1-35.9000}{
+}
+
+\section{CHANGES IN VERSION 1.1-35.4 (2024-06-19)}{
   \subsection{BUG FIXES}{
     \itemize{
       \item \code{predict(., re.form=...)} works in a wider range of

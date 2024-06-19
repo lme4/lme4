@@ -136,7 +136,7 @@ updateGlmerDevfun(devfun, reTrms, nAGQ = 1L)
 	(optionally) \code{message} (informational message, or
 	explanation of convergence failure)}.
     }
-    Special provisions are made for \code{\link{bobyqa}},
+    Special provisions are made for \code{\link[minqa]{bobyqa}},
     \code{\link{Nelder_Mead}}, and optimizers wrapped in the
     \CRANpkg{optimx} package; to use \pkg{optimx} optimizers
     (including \code{L-BFGS-B} from base \code{\link{optim}}
