@@ -5,19 +5,34 @@
 \encoding{UTF-8}
 
 \section{CHANGES IN VERSION 1.1-35.9000}{
+    \subsection{USER-VISIBLE CHANGES}{
+      \itemize{
+	\item in \code{predict}, the synonyms \code{ReForm}, \code{REForm}, and
+	\code{REform} of \code{re.form} are now hard-deprecated,
+	giving an error (after 10 years of soft deprecation)
+      } % itemize
+    } % user-visible changes
+}
+
+\section{CHANGES IN VERSION 1.1-35.4 (2024-06-19)}{
   \subsection{BUG FIXES}{
     \itemize{
       \item \code{predict(., re.form=...)} works in a wider range of
       cases (GH #691)
       \item Gamma simulation now uses correct shape parameter (GH #782)
+      \item Avoid triggering RcppEigen UBSAN bug(?) in the case of
+      profiling fixed effects in  a \code{merMod} object with
+      a single fixed effect parameter (GH #794: lots of help from
+      Dirk Eddelbuettel and Mikael Jagan)
+      \item fix bug in plot methods (cbind'ing zero-length objects)
     }
   } % bug fixes
-} % 1.1-35.9000
-  
+} % 1.1-35.4
+
 \section{CHANGES IN VERSION 1.1-35.3 (2024-04-16)}{
   \subsection{BUG FIXES}{
     \itemize{
-      \item bug-fix for ASAN/memory access problem in CholmodDecomposition,
+      \item bug-fix for ASAN/memory access problem in CholmodDecomposition
       (Mikael Jagan)
     }
   } % bug fixes

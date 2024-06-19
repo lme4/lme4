@@ -51,8 +51,12 @@ namespace lme4 {
         if (d_Lind.size() != d_Lambdat.nonZeros())
             throw invalid_argument("size of Lind does not match nonzeros in Lambda");
         // checking of the range of Lind is now done in R code for reference class
-                                // initialize beta0, u0, delb, delu and VtV
-        d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
+	// initialize beta0, u0, delb, delu and VtV
+
+	if (d_V.cols() > 0) {
+	    d_VtV.setZero();
+	    d_VtV.selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
+	}
         d_RX.compute(d_VtV);    // ensure d_RX is initialized even in the 0-column X case
 
         setTheta(d_theta);          // starting values into Lambda
@@ -246,7 +250,8 @@ namespace lme4 {
                 }
             }
         }
-        d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
+	// avoid crossprod of n-by-0 matrix: GH #794
+        if (d_V.cols() > 0) d_VtV.setZero().selfadjointView<Eigen::Upper>().rankUpdate(d_V.adjoint());
         updateL();
     }
 

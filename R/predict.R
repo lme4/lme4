@@ -21,25 +21,6 @@ reOnly <- function(f, response=FALSE) {
                 env = environment(f))
 }
 
-reFormHack <- function(re.form,ReForm,REForm,REform) {
-    warnDeprec <- function(name)
-        warning(gettextf("'%s' is deprecated; use '%s' instead", name, "re.form"),
-                call.=FALSE, domain=NA)
-    if (!missing(ReForm)) {
-        warnDeprec("ReForm")
-        return(ReForm)
-    }
-    if (!missing(REForm)) {
-        warnDeprec("REForm")
-        return(REForm)
-    }
-    if (!missing(REform)) {
-        warnDeprec("REform")
-        return(REform)
-    }
-    re.form
-}
-
 ## '...' may contain fixed.only=TRUE, random.only=TRUE, ..
 get.orig.levs <- function(object, FUN=levels, newdata=NULL, sparse = FALSE, ...) {
     Terms <- terms(object, data = newdata, ...)
@@ -359,9 +340,6 @@ levelfun <- function(x, nl.n, allow.new.levels=FALSE) {
 ##' @export
 predict.merMod <- function(object, newdata=NULL, newparams=NULL,
                            re.form=NULL,
-                           ReForm,
-                           REForm,
-                           REform,
                            random.only=FALSE,
                            terms=NULL, type=c("link","response"),
                            allow.new.levels=FALSE, na.action=na.pass,
@@ -393,8 +371,10 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
     ## an error (although it could be argued that in that case they
     ## should follow 'na.action' instead ...)
 
-    re.form <- reFormHack(re.form,ReForm,REForm,REform)
-
+    if (any(names(list(...)) %in% c("ReForm", "REForm", "REform"))) {
+        stop("synonyms 'ReForm', 'REForm', 'REform' are deprecated: please use 're.form' instead")
+    }
+    
     if (...length() > 0) warning("unused arguments ignored")
 
     type <- match.arg(type)
@@ -600,7 +580,7 @@ simulate.formula_lhs_matrix <- simulate.formula_lhs_numeric <-
         }
 
 simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
-                            re.form=NA, ReForm, REForm, REform,
+                            re.form=NA,
                             newdata=NULL, newparams=NULL,
                             family=NULL,
                             allow.new.levels=FALSE, na.action=na.pass, ...) {
@@ -612,7 +592,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 }
 
 .simulateFun <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
-                         re.form=NA, ReForm, REForm, REform,
+                         re.form=NA,
                          newdata=NULL, newparams=NULL,
                          formula=NULL,family=NULL,
                          weights=NULL,
@@ -685,20 +665,18 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         object <- setParams(object,newparams)
     }
 
-    ## need to save this before we reset re.form
-    re.form.miss <- missing(re.form)
-    re.form <- reFormHack(re.form,ReForm,REForm,REform)
-
     if (!missing(use.u)) {
-        if (!re.form.miss) {
+        if (!missing(re.form)) {
             stop("should specify only one of ",sQuote("use.u"),
                  " and ",sQuote("re.form"))
         }
         re.form <- if (use.u) NULL else ~0
     }
+    
     if (is.null(re.form)) { # formula w/o response
         re.form <- reOnly(formula(object))
     }
+    
     if(!is.null(seed)) set.seed(seed)
     if(!exists(".Random.seed", envir = .GlobalEnv))
         runif(1) # initialize the RNG if necessary

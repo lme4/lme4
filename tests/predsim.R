@@ -31,7 +31,7 @@ matlines(ss_sum,col=c(1,2,1),lty=c(2,1,2))
 stopifnot(all.equal(ss_sum[,2],pp,tolerance=5e-3))
 
 ## population-level prediction
-pp2 <- predict(fm1,ReForm=NA)
+pp2 <- predict(fm1, re.form=NA)
 ss2 <- simulate(fm1,1000,use.u=FALSE)
 ss_sum2 <- t(apply(ss2,1,quantile,c(0.025,0.5,0.975)))
 
