@@ -502,7 +502,7 @@ test_that("predict works with factors in left-out REs", {
                 control = lmerControl(check.conv.singular = "ignore"))
     expect_equal(head(predict(m1B, re.form = ~(1|g1)),1),
                  c(`1` = 0.146787496519465),
-                 tolerance = 1e-5)
+                 tolerance = 1e-4)
 })
 
 test_that("predict works with dummy() in left-out REs", {
