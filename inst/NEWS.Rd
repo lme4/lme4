@@ -4,7 +4,7 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-35.9000}{
+\section{CHANGES IN VERSION 1.1-35.5}{
     \subsection{USER-VISIBLE CHANGES}{
       \itemize{
 	\item in \code{predict}, the synonyms \code{ReForm}, \code{REForm}, and
@@ -12,7 +12,13 @@
 	giving an error (after 10 years of soft deprecation)
       } % itemize
     } % user-visible changes
-}
+    \subsection{OTHER CHANGES}{
+      \itemize{
+	\item minor adjustments in test tolerances
+	\item correct Matrix dependency to >= 1.2-3
+      } % itemize
+    } % other changes
+  } % 1.1-35.5
 
 \section{CHANGES IN VERSION 1.1-35.4 (2024-06-19)}{
   \subsection{BUG FIXES}{
