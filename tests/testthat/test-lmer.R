@@ -123,14 +123,16 @@ test_that("lmer", {
     expect_is(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl(optimizer="Nelder_Mead")), "lmerMod")
     expect_is(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl()), "lmerMod")
     ## avoid _R_CHECK_LENGTH_1_LOGIC2_ errors ...
-    if (getRversion() < "3.6.0" || (requireNamespace("optimx", quietly = TRUE) && packageVersion("optimx")>"2018.7.10")) {
+    if (getRversion() < "3.6.0" || (requireNamespace("optimx", quietly = TRUE) &&
+                                    packageVersion("optimx") > "2018.7.10")) {
         expect_error(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl(optimizer="optimx")),"must specify")
         expect_is(lmer(Yield ~ 1|Batch, Dyestuff,
                        control=lmerControl(optimizer="optimx",
                                            optCtrl=list(method="L-BFGS-B"))),
                   "lmerMod")
     }
-    expect_error(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl(optimizer="junk")), "couldn't find optimizer function")
+    expect_error(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl(optimizer="junk")),
+                 "couldn't find optimizer function")
     ## disable test ... should be no warning
     expect_is(lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
                    data = sleepstudy, subset = (Days == 1 | Days == 9),
@@ -374,3 +376,8 @@ test_that("catch matrix-valued responses in lmer/glmer but not in formulas", {
     fr <- glFormula(y ~ x + (1|batch), dd, family = poisson)$fr
 })
 
+test_that("catch matrix-valued responses", {
+    dd <- data.frame(x = rnorm(1000), batch = factor(rep(1:20, each=50)))
+    dd$y <- matrix(rnorm(1e4), ncol = 10)
+    expect_error(lmer(y ~ x + (1|batch), dd), "matrix-valued")
+})
