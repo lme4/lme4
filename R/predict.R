@@ -583,6 +583,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                             re.form=NA,
                             newdata=NULL, newparams=NULL,
                             family=NULL,
+                            cluster.rand=rnorm,
                             allow.new.levels=FALSE, na.action=na.pass, ...) {
 
     ## FIXME: is there a reason this can't be a copy of .simulateFun ... ?
@@ -595,6 +596,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
                          re.form=NA,
                          newdata=NULL, newparams=NULL,
                          formula=NULL,family=NULL,
+                         cluster.rand=rnorm,
                          weights=NULL,
                          offset=NULL,
                          allow.new.levels=FALSE,
@@ -731,7 +733,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         ## <obsolete> stopifnot(!is.null(newdata) ||
         ##       isTRUE(all.equal(newRE$Lambdat,getME(object,"Lambdat"))))
         U <- t(newRE$Lambdat %*% newRE$Zt) # == Z Lambda
-        u <- rnorm(ncol(U)*nsim)
+        u <- cluster.rand(ncol(U)*nsim)
         ## UNSCALED random-effects contribution:
         as(U %*% matrix(u, ncol = nsim), "matrix")
     } else 0
@@ -741,6 +743,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
           etapred + sigma * (sim.reff +
                                ## residual contribution:
                                if (cond.sim)
+                                   # always rnorm regardless of cluster.rand
                                    matrix(rnorm(n * nsim), ncol = nsim)
                                else 0)
     } else if (isGLMM(object)) {
