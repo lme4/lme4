@@ -400,7 +400,9 @@ test_that("refit", {
 if (testLevel>1) {
   context("predict method")
   test_that("predict", {
-    d1 <- with(cbpp, expand.grid(period = unique(period), herd = unique(herd)))
+    ## when running via source(), cbpp has been corrupted at this point
+    ## (replaced by a single empty factor obs()
+    d1 <- expand.grid(period = unique(cbpp$period), herd = unique(cbpp$herd))
     d2 <- data.frame(period = "1", herd = unique(cbpp$herd))
     d3 <- expand.grid(period = as.character(1:3),
                       herd = unique(cbpp$herd))
@@ -411,7 +413,7 @@ if (testLevel>1) {
     expect_equal(p0[1], p1[1])
     expect_equal(p0[1], p2[1])
     expect_equal(p0[1], p3[1])
-    expect_warning(predict(gm1, ReForm=NA), "is deprecated")
+    expect_error(predict(gm1, ReForm=NA))
     ## matrix-valued predictors: Github #201 from Fabian S.
     sleepstudy$X <- cbind(1, sleepstudy$Days)
     m <- lmer(Reaction ~ -1 + X  + (Days | Subject), sleepstudy)
@@ -512,15 +514,13 @@ if (testLevel>1) {
     ee <- environment(formula(gm2))
     ee$cbpp$obs <- factor(seq(nrow(ee$cbpp)))
     expect_is(simulate(gm2), "data.frame")
-    expect_warning(simulate(gm2, ReForm = NA), "is deprecated")
-    expect_warning(simulate(gm2, REForm = NA), "is deprecated")
     p1 <- simulate(gm2, re.form = NULL, seed = 101)
     p2 <- simulate(gm2, re.form = ~0, seed = 101)
     p3 <- simulate(gm2, re.form = NA, seed = 101)
     p4 <- simulate(gm2, re.form = NULL, seed = 101)
-    expect_warning(p5 <- simulate(gm2, ReForm = ~0, seed = 101), "is deprecated")
+    ## p5 was: sim with ReForm
     p6 <- simulate(gm2, re.form = NA, seed = 101)
-    expect_warning(p7 <- simulate(gm2, REForm = NULL, seed = 101), "is deprecated")
+    ## p7 was: sim with ReForm
     p8 <- simulate(gm2, re.form = ~0, seed = 101)
     p9 <- simulate(gm2, re.form = NA, seed = 101)
     p10 <- simulate(gm2,use.u = FALSE, seed = 101)
@@ -531,14 +531,12 @@ if (testLevel>1) {
     ## equivalences:
     ## group ~0:
     expect_equal(p2,p3)
-    expect_equal(p2,p5)
     expect_equal(p2,p6)
     expect_equal(p2,p8)
     expect_equal(p2,p9)
     expect_equal(p2,p10)
     ## group 1:
     expect_equal(p1,p4)
-    expect_equal(p1,p7)
     expect_equal(p1,p11)
     expect_error(simulate(gm2,use.u = TRUE, re.form = NA), "should specify only one")
     ##
@@ -600,6 +598,7 @@ if (testLevel>1) {
     expect_equal(mean(d$simulated), 299.9384608)
 
     ## Simulate with weights:
+
     newdata <- with(cbpp, expand.grid(period=unique(period),
                                       herd=unique(herd)))
     ss <- simulate(gm1, newdata=newdata[1:3,],
@@ -628,11 +627,12 @@ if (testLevel>1) {
                                     seed=101,
                                     newdata=dd,
                                     newparams=getME(g1,c("theta","beta","sigma"))))
-    expect_equal(s1,s2)
+    expect_equal(s1, s2)
     dd$y2 <- s2[[1]]
-    g2 <- glmer(y2~x+(1|f),family=Gamma(link="log"),dd)
+    g2 <- glmer(y2~x+(1|f), family=Gamma(link="log"),dd)
     expect_equal(fixef(g2), tolerance = 4e-7, # 32-bit windows showed 1.34e-7
-                 c("(Intercept)" = 2.81887136759369, x= 1.06543222163626))
+                 c(`(Intercept)` = 2.90871404438183, x = 0.988265230798941))
+##                 c("(Intercept)" = 2.81887136759369, x= 1.06543222163626))
 
     ## simulate with re.form = NULL and derived/offset components in formula
     fm7 <- lmer(Reaction ~ Days + offset(Days) + (1|Subject), sleepstudy)

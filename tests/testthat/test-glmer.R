@@ -1,6 +1,6 @@
 library("testthat")
 library("lme4")
-source(system.file("testdata", "lme-tst-funs.R", package="lme4", mustWork=TRUE))# -> uc()
+source(system.file("testdata", "lme-tst-funs.R", package="lme4", mustWork=TRUE))# -> uc() [back-compatible c()]
 testLevel <- lme4:::testLevel()
 
 gives_error_or_warning <- function (regexp = NULL, all = FALSE, ...)
@@ -220,7 +220,8 @@ if(FALSE) { ## Hadley broke this
     gm3 <- glmer(event ~ group + (1 | id), family=binomial, nAGQ=21)
     sd3 <- sqrt(diag(vcov(gm3)))
     expect_equal(uc(`(Intercept)` = 0.42542855, group = 0.42492581), sd3, tolerance=1e-5) # 7e-9 {Lnx}
-    expect_warning(vcov(gm3,use.hessian=FALSE), "finite-difference Hessian")
+    ## unfortunately these answers aren't reliably "wrong" any more (2024-07-02 Pop!OS Linux)
+    expect_warning(vcov(gm3, use.hessian=FALSE), "finite-difference Hessian")
     expect_equal(suppressWarnings(sqrt(diag(vcov(gm3,use.hessian=FALSE)))),
                  uc(`(Intercept)` = 0.3840921, group = 0.3768747), tolerance=1e-7) # 6.5e-8
     expect_equal(sd3, unn(coef(summary(gm3))[,"Std. Error"]))
