@@ -4,7 +4,7 @@ Testing protocols
 At present `lme4` uses two different testing protocols:
 
 * "vanilla" R testing -- every `.R` file gets run during `R CMD check` and compared with its corresponding `.Rout.save` file (if it exists)
-* `testthat` testing: tests in `inst/tests` can be run in the framework of the `testthat` package, specifically via `tests/test-all.R`
+* `testthat` testing: tests in `inst/tests` can be run in the framework of the `testthat` package, specifically via `tests/AAAtest-all.R`
 
 There are some unique challenges in testing a package like `lme4` that does numerical computations:
 
