@@ -92,10 +92,9 @@ setParams <- function(object, params, inplace=FALSE, subset=FALSE) {
                      paste(tn,collapse=","),")")
             }
             x <- x[tn]  ## reorder
-        } else {
-            message(vecname," parameter vector not named: assuming same order as internal vector")
         }
-        x
+        ## no longer issue warning if unnamed ...
+        return(x)
     }
     theta <- matchNames(theta,tnames(object),"theta")
     beta <- matchNames(beta,colnames(getME(object,"X")),"beta")
