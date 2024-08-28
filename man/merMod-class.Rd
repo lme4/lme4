@@ -30,8 +30,6 @@
 \alias{summary.summary.merMod}
 \alias{terms.merMod}
 \alias{update.merMod}
-\alias{vcov.merMod}
-\alias{vcov.summary.merMod}
 \alias{weights.merMod}
 \alias{REMLcrit}
 \description{
@@ -57,8 +55,6 @@ REMLcrit(object)
 \S3method{nobs}{merMod}(object, ...)
 \S3method{ngrps}{merMod}(object, ...)
 \S3method{terms}{merMod}(x, fixed.only = TRUE, random.only = FALSE, \dots)
-\S3method{vcov}{merMod}(object, correlation = TRUE, sigm = sigma(object),
-     use.hessian = NULL, \dots)
 \S3method{model.frame}{merMod}(formula, fixed.only = FALSE, ...)
 \S3method{model.matrix}{merMod}(object, type = c("fixed", "random", "randomListRaw"), ...)
 \S3method{print}{merMod}(x, digits = max(3, getOption("digits") - 3),
@@ -105,8 +101,6 @@ REMLcrit(object)
     \code{fixed.only} and \code{random.only} at the same time
     will produce an error.)}
   \item{correlation}{(logical)
-    for \code{vcov}, indicates whether the correlation matrix as well as
-    the variance-covariance matrix is desired;
     for \code{summary.merMod}, indicates whether the correlation matrix
     should be computed and stored along with the covariance;
     for \code{print.summary.merMod}, indicates whether the correlation
@@ -118,23 +112,10 @@ REMLcrit(object)
   }
   \item{use.hessian}{(logical) indicates whether to use the
     finite-difference Hessian of the deviance function to compute
-    standard errors of the fixed effects, rather estimating
-    based on internal information about the inverse of
-    the model matrix (see \code{\link{getME}(.,"RX")}).
-    The default is to use the Hessian whenever the
-    fixed effect parameters are arguments to the deviance
-    function (i.e. for GLMMs with \code{nAGQ>0}), and to use
-    \code{\link{getME}(.,"RX")} whenever the fixed effect parameters are
-    profiled out (i.e. for GLMMs with \code{nAGQ==0} or LMMs).
-
-    \code{use.hessian=FALSE} is backward-compatible with older versions
-    of \code{lme4}, but may give less accurate SE estimates when the
-    estimates of the fixed-effect (see \code{\link{getME}(.,"beta")})
-    and random-effect (see \code{\link{getME}(.,"theta")}) parameters
-    are correlated.
-    }
-  \item{sigm}{the residual standard error; by default \code{\link{sigma}(object)}.}
-  \item{digits}{number of significant digits for printing}
+    standard errors of the fixed effects; see \code{\link{vcov.merMod}}
+  for details
+}
+\item{digits}{number of significant digits for printing}
   \item{symbolic.cor}{should a symbolic encoding of the fixed-effects correlation
     matrix be printed?  If so, the \code{\link{symnum}} function is used.}
   \item{signif.stars}{(logical) should significance stars be used?}
@@ -158,7 +139,7 @@ REMLcrit(object)
   \item{ranef.corr}{(logical) print correlations (rather than covariances) of
     random effects?}
   \item{\dots}{potentially further arguments passed from other methods.}
-}
+} %% arguments
 \section{Objects from the Class}{
   Objects of class \code{merMod} are created by calls to
   \code{\link{lmer}}, \code{\link{glmer}} or \code{\link{nlmer}}.
@@ -200,10 +181,8 @@ The following S3 methods with arguments given above exist (this list is currentl
       see also \code{\link{summary}}.}
    \item{\code{print.summary}:}{Controls the output for the summary
      method.}
-  \item{\code{vcov}:}{Calculate variance-covariance matrix of the \emph{fixed}
-     effect terms, see also \code{\link{vcov}}.}
-  \item{\code{update}:}{See \code{\link{update}}.}
-      }
+   \item{\code{update}:}{See \code{\link{update}}.}
+ }
 }
 \section{Deviance and log-likelihood of GLMMs}{
 
@@ -333,6 +312,5 @@ m1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 print(m1, ranef.corr = TRUE)   ## print correlations of REs
 print(m1, ranef.corr = FALSE)  ## print covariances of REs
 
-## -> example(lmer)  for an example of vcov.merMod()
 }
 \keyword{classes}

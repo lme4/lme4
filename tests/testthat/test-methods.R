@@ -892,7 +892,8 @@ if (testLevel>1) {
         ## fow now,as they differ
         str(i1)
         str(i2)
-        print(all.equal(i2, i2)) # to see diff
+        print(all.equal(i1, i2)) # to see diff
+        print(identical(i1, i2))
         # expect_equal(i1, i2) ## <<<<-------------- FAILS (4 MM)
     })
   }

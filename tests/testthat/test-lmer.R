@@ -1,4 +1,5 @@
-stopifnot(require("testthat"), require("lme4"))
+stopifnot(require("testthat"))
+data("Dyestuff", package = "lme4")
 
 ## use old (<=3.5.2) sample() algorithm if necessary
 if ("sample.kind" %in% names(formals(RNGkind))) {

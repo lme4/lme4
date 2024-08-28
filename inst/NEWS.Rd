@@ -4,16 +4,31 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.2}{
+\section{CHANGES IN VERSION 1.1-35.6}{
   \subsection{NEW FEATURES}{
     \itemize{
-      \item \code{simulate.merMod} and \code{.simulateFun} gain the \code{cluster.rand} argument to allow specifying non-Normal cluster random effects in simulations.
-      \item \code{simulation} vignette traces the flow of the simulation just before this change.  Likely of interest only to those working on the code of this package.
+      \item The full (joint) conditional covariance matrix of fixed
+      effects and conditional modes is now available via
+      \code{vcov(fitted_model, full = TRUE)}
+      \item Random effects formulas are now processed by code from
+      the \code{reformulas} package, meaning that some
+      extended random effects formulas (such as \code{(1|f*g)} for
+      crossed random effects) will now work
+      \item \code{simulate.merMod} and \code{.simulateFun} gain the \code{cluster.rand} argument 
+                                        to allow specifying non-Normal cluster random effects in simulations.
+      \item \code{simulation} vignette traces the flow of the simulation just before this change.  (Likely of interest 
+                                        only to developers.)
     }
-  }
-}
+  }  % new features
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item \code{simulate} with \code{newparams} no longer prints
+      a message if the individual parameter vectors are unnamed
+    }
+  } % user-visible changes
+} % version 1.1-35.6
 
-\section{CHANGES IN VERSION 1.1-35.5}{
+\section{CHANGES IN VERSION 1.1-35.5 (2024-07-03)}{
     \subsection{USER-VISIBLE CHANGES}{
       \itemize{
 	\item in \code{predict}, the synonyms \code{ReForm}, \code{REForm}, and
@@ -52,7 +67,7 @@
     }
   } % bug fixes
 } % 1.1-35.3
-
+    
 
 \section{CHANGES IN VERSION 1.1-35.2 (2024-03-28)}{
   \itemize{
