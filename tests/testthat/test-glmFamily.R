@@ -1,5 +1,5 @@
 library("testthat")
-library("lme4")
+## library("lme4")
 
 eps <- .Machine$double.eps
 oneMeps <- 1 - eps

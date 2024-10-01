@@ -1,5 +1,4 @@
 
-
 * `r-devel-san`
 * installation of dependent packages via `r2u`
 
@@ -30,8 +29,6 @@ sed -i -e 's#rocker/r-ubuntu:22.04#rocker/r-devel-san#' Dockerfile
 ##   wait for lme4 dependent packages to get installed instead
 docker build -t r-devel-san-r2u-lme4 .
 ```
-
-
 
 ```
 docker pull ghcr.io/r-hub/containers/clang-asan
@@ -76,6 +73,9 @@ RD CMD check --as-cran lme4_1.1-35.3.tar.gz
 ```
 
 ```
+https://dirk.eddelbuettel.com/code/sanitizers.html
+
+=======
 docker run --rm -ti r-devel-san-r2u-lme4 bash
 wget https://cran.r-project.org/src/contrib/sanitizers_0.1.1.tar.gz
 RD CMD INSTALL sanitizers_0.1.1.tar.gz
@@ -100,8 +100,6 @@ RD CMD INSTALL lme4_1.1-35.3.tar.gz
 	&& /usr/sbin/update-locale LANG=en_US.UTF-8
 ```
 
-
-###
 https://superuser.com/questions/1130898/no-internet-connection-inside-docker-containers
 
 ```

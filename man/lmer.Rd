@@ -169,9 +169,6 @@ sm2 <- summary(fm2)
 print(fm2, digits=7, ranef.comp="Var") # the print.merMod()         method
 print(sm2, digits=3, corr=FALSE)       # the print.summary.merMod() method
 
-(vv <- vcov.merMod(fm2, corr=TRUE))
-as(vv, "corMatrix")# extracts the ("hidden") 'correlation' entry in @factors
-
 ## Fit sex-specific variances by constructing numeric dummy variables
 ## for sex and sex:age; in this case the estimated variance differences
 ## between groups in both intercept and slope are zero ...

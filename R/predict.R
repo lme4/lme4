@@ -92,10 +92,9 @@ setParams <- function(object, params, inplace=FALSE, subset=FALSE) {
                      paste(tn,collapse=","),")")
             }
             x <- x[tn]  ## reorder
-        } else {
-            message(vecname," parameter vector not named: assuming same order as internal vector")
         }
-        x
+        ## no longer issue warning if unnamed ...
+        return(x)
     }
     theta <- matchNames(theta,tnames(object),"theta")
     beta <- matchNames(beta,colnames(getME(object,"X")),"beta")
@@ -516,25 +515,12 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
     if (!se.fit) return(pred)
 
     if (!isLMM(object)) warning("se.fit computation uses an approximation to estimate the sampling distribution of the parameters")
-    
-    s <- sigma(object)
-    ## need these below so can't getME(...) all at once
-    L <- getME(object, "L")
-    RX <- getME(object, "RX")
-    RZX <- getME(object, "RZX")
-    Lambdat <- getME(object, "Lambdat")
 
-    RXtinv <- solve(t(RX))
-    LinvLambdat <- solve(L, Lambdat, system = "L")
-    Minv <- s * rbind(
-                    cbind(LinvLambdat,
-                          Matrix(0, nrow = nrow(L), ncol = ncol(RX))),
-                    cbind(-RXtinv %*% t(RZX) %*% LinvLambdat, RXtinv)
-                )
-    Cmat <- crossprod(Minv)
-        
-        
-    ## FIXME: these need to be fixed
+    Cmat <- vcov.full(object)
+
+    n_u <- length(getME(object, "u"))
+    n_beta <- length(getME(object, "beta"))
+    ## FIXME: these need to be fixed (????)
     if(is.null(newdata)) {
         X <- getME(object, "X")
         if(is.null(re.form)) {
@@ -544,7 +530,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
                 ## FIXME: newRE is not computed here
                 Z <- t(newRE$Zt)
             } else {
-                Z <- Matrix(0, nrow = nrow(X), ncol = ncol(L))
+                Z <- Matrix(0, nrow = nrow(X), ncol = n_u)
             }
         }
     } else {
@@ -553,11 +539,11 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
         } else {
             ## this is inefficient and we could just calculate 
             ## X %*% Cmat[X part only] t(X) instead
-            Z <- Matrix(0, nrow = nrow(X), ncol = ncol(L))
+            Z <- Matrix(0, nrow = nrow(X), ncol = n_u)
         }
     }
         
-    if(random.only) X <- Matrix(0, nrow = nrow(Z), ncol = nrow(RX))
+    if(random.only) X <- Matrix(0, nrow = nrow(Z), ncol = n_beta)
         
     ZX <- cbind(Z, X)
     list(fit = pred,

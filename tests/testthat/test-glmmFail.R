@@ -1,5 +1,6 @@
 library("testthat")
-library("lme4")
+## library("lme4")
+data("sleepstudy", package = "lme4")
 
 source(system.file("testdata/lme-tst-funs.R", package="lme4", mustWork=TRUE))
 ##-> gSim(), a general simulation function ...
