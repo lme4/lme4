@@ -4,6 +4,20 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
+\section{CHANGES IN VERSION 1.1-36}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item \code{simulate.merMod} and \code{.simulateFun} gain the
+       \code{cluster.rand} argument to allow specifying non-Normal
+       cluster random effects in simulations.
+      \item \code{simulation} vignette traces the flow of the
+        simulation just before this change.  Likely of interest only
+        to those working on the code of this package.
+    }
+  }  % new features
+} % version 1.1-36
+
+
 \section{CHANGES IN VERSION 1.1-35.6}{
   \subsection{NEW FEATURES}{
     \itemize{
@@ -14,12 +28,6 @@
       the \code{reformulas} package, meaning that some
       extended random effects formulas (such as \code{(1|f*g)} for
       crossed random effects) will now work
-      \item \code{simulate.merMod} and \code{.simulateFun} gain the
-       \code{cluster.rand} argument to allow specifying non-Normal
-       cluster random effects in simulations.
-      \item \code{simulation} vignette traces the flow of the
-        simulation just before this change.  Likely of interest only
-        to those working on the code of this package.
     }
   }  % new features
   \subsection{USER-VISIBLE CHANGES}{
