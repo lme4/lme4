@@ -4,7 +4,7 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-36}{
+\section{CHANGES IN VERSION 1.1.36}{
   \subsection{NEW FEATURES}{
     \itemize{
       \item \code{simulate.merMod} and \code{.simulateFun} gain the
