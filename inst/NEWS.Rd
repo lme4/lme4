@@ -10,9 +10,10 @@
       \item \code{simulate.merMod} and \code{.simulateFun} gain the
        \code{cluster.rand} argument to allow specifying non-Normal
        cluster random effects in simulations.
-      \item \code{simulation} vignette traces the flow of the
-        simulation just before this change.  Likely of interest only
-        to those working on the code of this package.
+      \item \code{simulation.Rmd}, and derived .md and .html files in
+       \code{misc/notes/} traces the flow of the simulation just before
+       this change.  Likely of interest only to those working on the code
+       of this package.
     }
   }  % new features
 } % version 1.1-36
