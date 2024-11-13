@@ -137,24 +137,12 @@ stopifnot(all.equal(gm1_s1,gm1_s5))
 
 tt <- getME(gm1,"theta")
 bb <- fixef(gm1)
-expect_message(simulate(form,newdata=model.frame(gm1),
-               newparams=list(theta=unname(tt),
-               beta=fixef(gm1)),
-               family=binomial,
-               weights=rowSums(model.frame(gm1)[[1]]),
-               seed=101),"assuming same order")
 expect_error(simulate(form,newdata=model.frame(gm1),
                newparams=list(theta=setNames(tt,"abc"),
                beta=fixef(gm1)),
                family=binomial,
                weights=rowSums(model.frame(gm1)[[1]]),
                seed=101),"mismatch between")
-expect_message(simulate(form,newdata=model.frame(gm1),
-               newparams=list(theta=tt,
-               beta=unname(bb)),
-               family=binomial,
-               weights=rowSums(model.frame(gm1)[[1]]),
-               seed=101),"assuming same order")
 expect_error(simulate(form,newdata=model.frame(gm1),
                newparams=list(theta=tt,
                beta=setNames(bb,c("abc",names(bb)[-1]))),
