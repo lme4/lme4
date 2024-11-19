@@ -59,3 +59,11 @@ test_that("glmer", {
     expect_true(all(is.na(resid(gm1NA_exclude)[na_ind])))
     expect_true(!any(is.na(resid(gm1NA_exclude)[-na_ind])))
 })
+
+test_that("floating-point issues -> NaN dev resids", {
+    dat <- data.frame(x=1:5, n=100, id=1:5)
+    res <- glmer(cbind(x,n-x) ~ 1 + (1 | id), data=dat, family=binomial,
+                 control = glmerControl(check.conv.singular = "ignore"))
+    r <- residuals(res, type="deviance")
+    expect_equal(unname(r[3]), 0)
+})
