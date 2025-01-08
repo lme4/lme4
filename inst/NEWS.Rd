@@ -22,6 +22,13 @@
       a message if the individual parameter vectors are unnamed
     }
   } % user-visible changes
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item floating-point errors leading to slightly negative deviances
+      could lead to NaN deviance residuals (Wolfgang Viechtbauer, GH #812)
+    }
+  } % bug fixes
+
 } % version 1.1-35.6
 
 \section{CHANGES IN VERSION 1.1-35.5 (2024-07-03)}{

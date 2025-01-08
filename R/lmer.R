@@ -1595,7 +1595,9 @@ residuals.glmResp <- function(object, type = c("deviance", "pearson",
     mu <- object$mu
     switch(type,
            deviance = {
-               d.res <- sqrt(object$devResid())
+               ## protect against slightly negative resids
+               ## (GH 812)
+               d.res <- sqrt(pmax(0,object$devResid()))
                ifelse(y > mu, d.res, -d.res)
            },
            pearson = object$wtres,
