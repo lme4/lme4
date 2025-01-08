@@ -1,4 +1,6 @@
 stopifnot(require("testthat"))
+library(lme4) ## make sure package is attached
+##  (as.function.merMod() assumes it)
 data("Dyestuff", package = "lme4")
 
 ## use old (<=3.5.2) sample() algorithm if necessary
