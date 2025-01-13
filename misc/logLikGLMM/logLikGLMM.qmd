@@ -1,0 +1,136 @@
+---
+title: "defining/computing deviances for (G)LMMs"
+filters:
+  - search-replace
+search-replace:
+  +ghissue: "https://github.com/lme4/lme4/issues"    
+---
+
+<!-- need 'quarto add ute/search-replace' in order to render ... -->
+
+Related `lme4` GitHub issues [#161](+ghissue/161), [#211](+ghissue/211), [#375](+ghissue/375), [#567](+ghissue/567), [#576](+ghissue/576)
+
+See also [here](https://github.com/lme4/lme4/blob/master/misc/notes/deviance.rmd)
+
+There's a lot to think about here.
+
+We have to do different things based on:
+
+* For LMMs (only): ML or REML? Do we always return `NA` for `deviance(REML_fit)` and a warning to use `REMLcrit()` instead? (If we are thinking about `glmmTMB` as well this could also be relevant to GLMMs ...). *Maybe eliminate the `REML` argument for `deviance()` and expose `devCrit` for people who really want it?*
+* For GLMMs (only): Laplace (`nAGQ` == 1 or > 1)? (no conceptual issues here, just a matter of computation)
+* Is the deviance measured relative to a saturated model (most easily done as sum of squared deviance residuals) or as just -2 $\log L$ (absolute)?
+* Is the deviance 
+    * conditional (i.e. conditional on predictions of latent variables)
+    * unconditional (integrating over distribution of REs, as in 'marginal likelihood')
+    * penalized: including the penalty term but not integrating (does anyone want this?)
+
+From `help("merMod-class", package="lme4")`:
+
+> One must be careful when defining the deviance of a GLM.  For example, should the deviance be defined as minus twice the log-likelihood or does it involve subtracting the deviance for a saturated model?  To distinguish these two possibilities we refer to absolute deviance (minus twice the log-likelihood) and relative deviance (relative to a saturated model, e.g. Section 2.3.1 in McCullagh and Nelder 1989).
+
+>  With GLMMs however, there is an additional complication involving the distinction between the likelihood and the conditional likelihood. The latter is the likelihood obtained by conditioning on the estimates of the conditional modes of the spherical random effects coefficients, whereas the likelihood itself (i.e. the unconditional likelihood) involves integrating out these coefficients.  The following table summarizes how to extract the various types of deviance for a `glmerMod` object:
+
+
+|            |        conditional  |       unconditional |
+|:----------:|:-------------------:|:-------------------:|
+| relative   | `deviance(object)`  |       `NA`          |
+| absolute   | `object@resp$aic()` |  `-2*logLik(object)`|
+
+DOes "unconditional/relative" actually mean anything? (e.g. integrate deviance residuals over conditional distributions?)
+
+## when/why do these distinctions matter? (i.e., what are we using deviance for?)
+
+* comparing to other mixed models: relative vs absolute doesn't matter. Do we want conditional or unconditional?
+* comparing to GLMs; need relative. Conditional vs unconditional doesn't matter because in the GLM limit (RE variance to zero) they should be the same
+* computing pseudo-$R^2$; may need relative?
+* evaluating overdispersion: need relative ...
+
+At present `deviance.merMod` always returns the sum of squared deviance residuals for GLMMs. For LMMs it calls `lme4:::devCrit`, which returns
+
+* `REML` argument TRUE:
+    * REML fit (`isREML(object)`: `object@devcomp$cmp[["REML"]]` (which is just the REML criterion as returned by the optimizer); 
+    * ML fit (`!isREML(object)`): adjust ML results to REML criterion
+* `REML` arg FALSE:
+    * ML fit: `cmp[["dev"]]` (-2*logL from optimizer)
+    * REML fit: adjust REML to ML
+    
+There is code by Steve Walker [here](https://github.com/lme4/lme4/blob/master/misc/logLikGLMM/logLikGLMM.R) that exercises a bunch of stuff.
+
+
+```{r pkgs, message = FALSE}
+library(lme4)
+```
+
+```{r test_lik}
+set.seed(101)
+## aiming for a singular fit
+dd <- data.frame(x = rnorm(100), g = rep(factor(1:5), each = 20))
+dd$y <- simulate( ~ 1 + x + (1|g),
+                 newdata = dd,
+                 newparams = list(theta = 0, beta = c(0, 0.5)),
+                 family = poisson)[[1]]
+m1A <- glmer(y ~ 1 + (1|g), family = poisson, data = dd)  ## singular
+m2A <- update(m1A, nAGQ = 10)
+m3A <- glm(y ~ 1, family = poisson, data =  dd)
+m1B <- update(m1A, . ~ . + x)
+m2B <- update(m2A, . ~ . + x)
+m3B <- update(m3A, . ~ . + x)
+## all deviances match ...
+stopifnot(all.equal(deviance(m1A), deviance(m2A)))
+stopifnot(all.equal(deviance(m1A), deviance(m3A)))
+stopifnot(all.equal(c(logLik(m1A)), c(logLik(m3A))))
+## raw log-likelihoods for Laplace/nAGQ>1 are *not* commensurate ...
+c(logLik(m1A), logLik(m2A))
+
+chk_devdiff <- function(m1A, m1B, m2A, m2B) {
+    all.equal(c(logLik(m1A) - logLik(m1B)),
+              c(logLik(m2A) - logLik(m2B)))
+}
+## logLik *differences* are all the same
+stopifnot(chk_devdiff(m1A, m1B, m2A, m2B))
+stopifnot(chk_devdiff(m1A, m1B, m3A, m3B))
+stopifnot(chk_devdiff(m2A, m2B, m3A, m3B))
+```
+
+## Investigate proposed solution from [#161](+ghissue/161) ...
+
+```{r loglik_cmp}
+library(lme4)
+simfun <- function(family = binomial,n = 100, csize = 2) {
+    d <- data.frame(x = rnorm(n),
+                    f = gl(csize, n/csize))
+    d$y <- simulate( ~ x  + (1|f), newdata = d,
+                    newparams = list(beta = c(0, 1), theta = 2),
+                    family = family)[[1]]
+    return(d)
+}
+
+fitfun <- function(family = binomial, data = simfun(family),  nagq = c(0, 1, 5, 10, 20, 50)) {
+    mlist <- lapply(nagq,
+                    function(a) glmer(y ~ x + (1|f), data = data, family = family, nAGQ = a))
+    return(mlist)
+}
+
+## Steve Walker's hacked attempt, GH #161
+llhack <- function (m) {
+    ll <- logLik(m)
+    nAGQ <- m@devcomp$dims[["nAGQ"]]
+    if (nAGQ <= 1) return(ll)
+    ## the same?
+    c(ll - 0.5 * (sum(m@resp$devResid()) + sum(getME(m, "u")^2)))
+    ## should be the same ...
+    ## ll - 0.5* (deviance(m) + crossprod(getME(m, "u")))
+}
+
+## Bernoulli case
+mlist_binom <- fitfun()
+sapply(mlist_binom, llhack)
+sapply(mlist_binom, logLik) ## logLik is OK here
+
+## neither approach works here although llhack is closer?
+mlist_pois <- fitfun(family = poisson)
+sapply(mlist_pois, llhack)
+sapply(mlist_pois, logLik)
+```
+
+?? for this example it seems as though `logLik` is doing what we want?
