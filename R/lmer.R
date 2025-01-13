@@ -2146,7 +2146,7 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
 
     ## FIXME: warn/message if GLMM (RX-computation is approximate),
     ## if other vars are specified?
-    if (full) return(vcov.full(object, sigm))
+    if (full) return(vcov_full(object, sigm))
     
     hess.avail <-
          ## (1) numerical Hessian computed?
@@ -2218,7 +2218,7 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
     rr
 }
 
-vcov.full <- function(object, s = sigma(object)) {
+vcov_full <- function(object, s = sigma(object)) {
 
     L <- getME(object, "L")
     RX <- getME(object, "RX")
