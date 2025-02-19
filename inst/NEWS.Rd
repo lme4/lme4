@@ -4,7 +4,18 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-36}{
+\section{CHANGES IN VERSION 1.1-37}{
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item headline of \code{print} and \code{summary} output for
+      \code{glmer} fits now labels the minimum of the objective function
+      (correctly) as "-2*log(L)" rather than "deviance" (inspired by
+      \code{glmmTMB} GH #1156)
+    } % itemize
+  } % user-visible changes
+} % 1.1-37
+
+\section{CHANGES IN VERSION 1.1-36 (2025-1-11)}{
   \subsection{NEW FEATURES}{
     \itemize{
       \item The full (joint) conditional covariance matrix of fixed
