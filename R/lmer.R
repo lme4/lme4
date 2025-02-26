@@ -1595,7 +1595,9 @@ residuals.glmResp <- function(object, type = c("deviance", "pearson",
     mu <- object$mu
     switch(type,
            deviance = {
-               d.res <- sqrt(object$devResid())
+               ## protect against slightly negative resids
+               ## (GH 812)
+               d.res <- sqrt(pmax(0,object$devResid()))
                ifelse(y > mu, d.res, -d.res)
            },
            pearson = object$wtres,
@@ -1731,7 +1733,7 @@ llikAIC <- function(object, devianceFUN = devCrit, chkREML = TRUE, devcomp = obj
             devcomp$cmp["REML"] # *no* likelihood stats here
         else {
             c(AIC = AIC(llik), BIC = BIC(llik), logLik = c(llik),
-              deviance = devianceFUN(object),
+              `-2*log(L)` = devianceFUN(object),
               df.resid = df.residual(object))
         }
     }
@@ -2144,7 +2146,7 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
 
     ## FIXME: warn/message if GLMM (RX-computation is approximate),
     ## if other vars are specified?
-    if (full) return(vcov.full(object, sigm))
+    if (full) return(vcov_full(object, sigm))
     
     hess.avail <-
          ## (1) numerical Hessian computed?
@@ -2216,7 +2218,7 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
     rr
 }
 
-vcov.full <- function(object, s = sigma(object)) {
+vcov_full <- function(object, s = sigma(object)) {
 
     L <- getME(object, "L")
     RX <- getME(object, "RX")

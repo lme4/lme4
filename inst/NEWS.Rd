@@ -4,7 +4,7 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1.37}{
+\section{CHANGES IN VERSION 1.1-38}{
   \subsection{NEW FEATURES}{
     \itemize{
       \item \code{simulate.merMod} and \code{.simulateFun} gain the
@@ -16,10 +16,20 @@
        of this package.
     }
   }  % new features
-} % version 1.1.37
+} % version 1.1-38
 
+\section{CHANGES IN VERSION 1.1-37}{
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item headline of \code{print} and \code{summary} output for
+      \code{glmer} fits now labels the minimum of the objective function
+      (correctly) as "-2*log(L)" rather than "deviance" (inspired by
+      \code{glmmTMB} GH #1156)
+    } % itemize
+  } % user-visible changes
+} % 1.1-37
 
-\section{CHANGES IN VERSION 1.1-35.6}{
+\section{CHANGES IN VERSION 1.1-36 (2025-1-11)}{
   \subsection{NEW FEATURES}{
     \itemize{
       \item The full (joint) conditional covariance matrix of fixed
@@ -37,6 +47,13 @@
       a message if the individual parameter vectors are unnamed
     }
   } % user-visible changes
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item floating-point errors leading to slightly negative deviances
+      could lead to NaN deviance residuals (Wolfgang Viechtbauer, GH #812)
+    }
+  } % bug fixes
+
 } % version 1.1-35.6
 
 \section{CHANGES IN VERSION 1.1-35.5 (2024-07-03)}{

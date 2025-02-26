@@ -1214,7 +1214,7 @@ random-effects design matrix, $\bm U = \bm A^{1/2}\bm V^{-1/2}\bm M
     \bm I_n - 
     \bm V \bm M^{-1}\left[ \frac{d \bm V^{-1}\bm M}{d \bm\mu} \right] \bm R
   \right) \bm U + \bm I_q \quad .
-\label{eq:betaHessian}
+\label{eq:betaHessiansimp}
 \end{equation}
 
 \subsection{Fisher-like scoring}
@@ -1245,7 +1245,7 @@ the Hessian via $\bm R$, we have that,
     \bm I_n - 
     \bm U \bm M^{-1}\left[ \frac{d \bm V^{-1}\bm M}{d\mu} \right] E(\bm R)
   \right) \bm U + \bm I_q = \bm U^\top \bm U + \bm I_q
-\label{eq:betaHessian}
+\label{eq:simphesstwo}
 \end{equation}
 
 \subsection{Gauss-Markov}

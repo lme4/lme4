@@ -516,7 +516,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
 
     if (!isLMM(object)) warning("se.fit computation uses an approximation to estimate the sampling distribution of the parameters")
 
-    Cmat <- vcov.full(object)
+    Cmat <- vcov_full(object)
 
     n_u <- length(getME(object, "u"))
     n_beta <- length(getME(object, "beta"))
