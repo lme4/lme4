@@ -38,3 +38,4 @@ revdep/
 Rplots.pdf
 R/scaleX.R
 \.Rout
+.vscode
