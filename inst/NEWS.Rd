@@ -4,21 +4,17 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-38}{
-  \subsection{NEW FEATURES}{
+\section{CHANGES IN VERSION 1.1-37}{
+    \subsection{NEW FEATURES}{
     \itemize{
       \item \code{simulate.merMod} and \code{.simulateFun} gain the
        \code{cluster.rand} argument to allow specifying non-Normal
        cluster random effects in simulations.
       \item \code{simulation.Rmd}, and derived .md and .html files in
-       \code{misc/notes/} traces the flow of the simulation just before
-       this change.  Likely of interest only to those working on the code
-       of this package.
+       \code{misc/notes/}, trace the flow of the simulation just before
+       this change.  Likely of interest only to developers.
     }
   }  % new features
-} % version 1.1-38
-
-\section{CHANGES IN VERSION 1.1-37}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item headline of \code{print} and \code{summary} output for
