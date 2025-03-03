@@ -11,13 +11,29 @@ if (getRversion() > "3.0.0") {
 
 fm1 <- fit_sleepstudy_1
 
-    
+
 s1 <- simulate(fm1,seed=101)[[1]]
 s2 <- simulate(fm1,seed=101,use.u=TRUE)
 s3 <- simulate(fm1,seed=101,nsim=10)
 s4 <- simulate(fm1,seed=101,use.u=TRUE,nsim=10)
 stopifnot(length(s3)==10,all(sapply(s3,length)==180),
           length(s4)==10,all(sapply(s4,length)==180))
+
+# test hook for cluster random effects
+fakerand <- function(n) seq(from=1.0, by=0.4, length.out=n)
+# In fact there are 10 observations/subject for each, but more robustly
+ns <- tabulate(model.frame(fm1)$Subject)
+s5 <- simulate(fm1, nsim=1, seed=12345, cluster.rand=fakerand)
+su <- as.data.frame(VarCorr(fm1))[1, "sdcor"] # sd if cluster effects
+y1 <- predict(fm1, re.form = ~0, se.fit=FALSE) # fixed effect
+y2 <- su*rep(fakerand(length(ns)), times = ns) # cluster effect, per individual
+set.seed(12345)
+y3 <- sigma(fm1)*rnorm(length(y1)) # individual error terms
+y <- y1+y2+y3
+# testthat::expect_equal automatically incorporates the tolerance *if*
+# it is in 3rd edition mode.  Currently, this package does not use that mode.
+stopifnot(all(abs(s5-y)< testthat_tolerance()))
+
 
 ## binomial (2-column and prob/weights)
 gm1 <- fit_cbpp_1
