@@ -1,14 +1,21 @@
 library(lme4)
 ## show important current settings {for reference, etc} -- [early, and also on Windows !]:
+
+source(system.file("test-tools-1.R", package = "Matrix"), keep.source = FALSE)
+## N.B. is.all.equal[34]() and assert.EQ() use 'tol', not 'tolerance'
+
 str( lmerControl())
 str(glmerControl())
 str(nlmerControl())
 ls.str(environment(nloptwrap))
-##
+
+
+## see Details under ?deviance.merMod:
+
 fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 fm1ML <- refitML(fm1)
-REMLcrit(fm1)
-deviance(fm1ML)
+REMLcrit(fm1)   ## 1743.628
+deviance(fm1ML) ## 1751.939
 deviance(fm1,REML=FALSE)  ## FIXME: not working yet (NA)
 deviance(fm1,REML=TRUE)
 
@@ -16,7 +23,7 @@ deviance(fm1,REML=TRUE)
 oldvals <- c(REML=1743.6282722424, ML=1751.98581103058)
 ## leave out ML values for REML fits for now ...
 stopifnot(
-          all.equal(REMLcrit(fm1),deviance(fm1,REML=TRUE),deviance(fm1ML,REML=TRUE),oldvals["REML"]),
+          is.all.equal3(REMLcrit(fm1), deviance(fm1,REML=TRUE), deviance(fm1ML,REML=TRUE),oldvals["REML"]),
           all.equal(deviance(fm1ML),deviance(fm1ML,REML=FALSE),oldvals["ML"]),
           all.equal(REMLcrit(fm1)/-2,c(logLik(fm1)),c(logLik(fm1ML,REML=TRUE)),c(logLik(fm1,REML=TRUE))),
           all.equal(deviance(fm1ML)/-2,c(logLik(fm1ML,REML=FALSE)),

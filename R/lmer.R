@@ -1733,7 +1733,7 @@ llikAIC <- function(object, devianceFUN = devCrit, chkREML = TRUE, devcomp = obj
             devcomp$cmp["REML"] # *no* likelihood stats here
         else {
             c(AIC = AIC(llik), BIC = BIC(llik), logLik = c(llik),
-              deviance = devianceFUN(object),
+              `-2*log(L)` = devianceFUN(object),
               df.resid = df.residual(object))
         }
     }
