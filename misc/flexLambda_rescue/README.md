@@ -1,6 +1,9 @@
 
-https://hackmd.io/W_7WkzZ_RRW249WHMlZ43Q
+## references
 
+- https://hackmd.io/W_7WkzZ_RRW249WHMlZ43Q
+- https://bbolker.github.io/mixedmodels-misc/notes/varmats.html; https://github.com/bbolker/mixedmodels-misc/blob/master/notes/varmats.rmd
+- https://github.com/rstats-gsoc/gsoc2025/wiki/Structured-covariance-matrices-for-lme4
 
 There is nothing in the design of `lme4` that precludes us from implementing structured correlation matrices, by adding an additional step in the translation from $\theta$ parameters to $\Lambda$ (scaled Cholesky factor of the RE covariance matrix). We sketched out an approach years ago, but never brought it to completion.
 
@@ -25,3 +28,4 @@ There is nothing in the design of `lme4` that precludes us from implementing str
 
 * allow alternative ways to construct `Lambda`
 * hook for non-trivial functions to transform `theta` parameters to entries for `Lambda`
+
