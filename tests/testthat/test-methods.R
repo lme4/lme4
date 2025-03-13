@@ -297,7 +297,6 @@ if (testLevel>1) {
   })
 } ## testLevel>1
 
-context("confint_other")
 test_that("confint", {
   load(system.file("testdata", "gotway_hessianfly.rda", package = "lme4"))
   ## generated via:
@@ -331,7 +330,14 @@ test_that("confint", {
                     c("2.5 %", "97.5 %")))
   expect_equal(dimnames(ci1.p.n),dimnames(ci1.w.n))
   expect_equal(dimnames(ci1.p.n),dimnames(ci1.b.n))
+})
 
+test_that("monotonic profile but bad spline",
+{
+  ## doesn't produce warnings on Solaris, or win-builder, or M1mac ...
+  skip_on_os("windows")
+  skip_on_os("solaris")
+  skip_on_os("mac", arch = "aarch64")
   ## test case of slightly wonky (spline fit fails) but monotonic profiles:
   ##
   simfun <- function(J,n_j,g00,g10,g01,g11,sig2_0,sig01,sig2_1){
@@ -351,16 +357,13 @@ test_that("confint", {
   dat <- simfun(10,5,1,.3,.3,.3,(1/18),0,(1/18))
   fit <- lmer(Y~X+Z+X:Z+(X||group),data=dat)
 
-  if (Sys.info()["sysname"] != "SunOS" &&
-      .Platform$OS.type != "windows") {
-    ## doesn't produce warnings on Solaris, or win-builder ...
-    expect_warning(pp <- profile(fit,"theta_"),
-                   "non-monotonic profile")
+    expect_warning(pp <- profile(fit,"theta_"), "non-monotonic profile")
     expect_warning(cc <- confint(pp),"falling back to linear interpolation")
     ## very small/unstable problem, needs large tolerance
     expect_equal(unname(cc[2,]), c(0, 0.509), tolerance=0.09) # "bobyqa" had 0.54276
-  }
+})
 
+test_that("confint with bad profile", {
   badprof <- readRDS(system.file("testdata","badprof.rds",
                                  package="lme4"))
   expect_warning(cc <- confint(badprof), "falling back to linear")
@@ -372,7 +375,6 @@ test_that("confint", {
                                      c("2.5 %", "97.5 %"))),
                tolerance=1e-3)
 })
-
 
 test_that("refit", {
   s1 <- simulate(fm1)
