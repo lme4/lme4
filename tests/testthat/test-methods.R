@@ -297,7 +297,12 @@ if (testLevel>1) {
   })
 } ## testLevel>1
 
-context("confint_other")
+test_that("change in deviance name for anova", {
+    cc <- suppressMessages(capture.output(anova(fm0,fm1)))
+    expect_identical(sum(grepl("deviance", cc)), 0L)
+    expect_identical(sum(grepl("-2*log(L)", cc, fixed = TRUE)), 1L)
+})
+
 test_that("confint", {
   load(system.file("testdata", "gotway_hessianfly.rda", package = "lme4"))
   ## generated via:
