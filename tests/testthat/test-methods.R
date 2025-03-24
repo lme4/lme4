@@ -74,7 +74,7 @@ test_that("lmer anova", {
   aa <- suppressMessages(anova(fm0,fm1))
   expect_that(aa, is_a("anova"))
   expect_equal(names(aa),
-               c("npar", "AIC", "BIC", "logLik", "deviance", "Chisq", "Df",
+               c("npar", "AIC", "BIC", "logLik", "-2*log(L)", "Chisq", "Df",
                  "Pr(>Chisq)"))
   expect_warning(suppressMessages(do.call(anova,list(fm0,fm1))), "assigning generic names")
   ##
