@@ -140,23 +140,63 @@ cov2sdcor  <- function(V) {
 ##     m
 ## }
 
-## attempt to compute Cholesky, allow for positive semi-definite cases
-##  (hackish)
-safe_chol <- function(m) {
-    if (any(is.na(m)) || all(m==0)) return(m)
-    if (nrow(m)==1) return(sqrt(m))
-    if (.isDiagonal.sq.matrix(m)) return(diag(sqrt(diag(m))))
-
-    ## attempt regular Chol. decomp
-    if (!is.null(cc <- tryCatch(chol(m), error=function(e) NULL)))
-        return(cc)
-    ## ... pivot if necessary ...
-    cc <- suppressWarnings(chol(m,pivot=TRUE))
-    oo <- order(attr(cc,"pivot"))
-    cc[,oo]
-    ## FIXME: pivot is here to deal with semidefinite cases,
-    ## but results might be returned in a strange format: TEST
+safe_chol <- function(m, tol = 1e-8) {
+  
+  if (any(is.na(m)) || all(m == 0)) return(m)
+  if (nrow(m) == 1) return(sqrt(m))
+  if (.isDiagonal.sq.matrix(m)) {
+    if (any(diag(m) < 0))
+      stop("chol: Matrix is not positive semi-definite")
+    return(diag(sqrt(diag(m))))
+  }
+  
+  ## Attempt standard Cholesky decomposition
+  cc <- tryCatch(chol(m), error = function(e) NULL)
+  if (!is.null(cc)) return(cc)
+  
+  ## Fallback: m is PSD (or nearly so); use an LDL^T decomposition
+  ldl <- function(A, tol = tol) {
+    n <- nrow(A)
+    L <- diag(1, n)
+    D <- numeric(n)
+    for (i in 1:n) {
+      if (i == 1) {
+        D[i] <- A[i, i]
+      } else {
+        D[i] <- A[i, i] - sum(L[i, 1:(i - 1)]^2 * D[1:(i - 1)])
+      }
+      ## If a pivot is significantly negative, the matrix is indefinite
+      if (D[i] < -tol) stop("chol: Matrix is not positive semi-definite")
+      if (abs(D[i]) < tol) {
+        D[i] <- 0
+        if (i < n) L[(i + 1):n, i] <- 0
+      } else {
+        if (i < n) {
+          for (j in (i + 1):n) {
+            L[j, i] <- (A[j, i] - sum(L[j, 1:(i - 1)] * L[i, 1:(i - 1)] * D[1:(i - 1)])) / D[i]
+          }
+        }
+      }
+    }
+    list(L = L, D = D)
+  }
+  
+  ld <- ldl(m, tol)
+  L_mat <- ld$L
+  D_vec <- ld$D
+  
+  ## Form an upper triangular factor U such that U^T U = L D L^T = A.
+  ## Note: Since L is unit lower-triangular, t(L) is unit upper-triangular.
+  U <- diag(sqrt(D_vec)) %*% t(L_mat)
+  
+  if (!isTRUE(all.equal(crossprod(U), m, tolerance = tol))) {
+    warning("safe_chol: reconstruction does not match within tolerance.")
+  }
+  
+  return(U)
 }
+
+
 
 ##' Variance-covariance to relative covariance factor
 ##'
