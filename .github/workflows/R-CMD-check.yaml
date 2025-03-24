@@ -28,6 +28,7 @@ jobs:
 ##          - {os: windows-latest, r: 'release'}
 ##          - {os: macOS-latest, r: 'release'}
 ##          - {os: ubuntu-20.04, r: 'release', rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"}
+          - {os: macos-14, r: 'devel'}
           - {os: ubuntu-latest, r: 'devel'}
 
     env:
@@ -50,8 +51,33 @@ jobs:
           needs: check
 
       - name: Install LaTeX etc.
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get install texlive texlive-latex-base texlive-latex-extra
+
+      - uses: teatimeguest/setup-texlive-action@v3
+        if: runner.os != 'Linux'
+        with:
+          packages: >-
+             scheme-basic
+             inputenc
+             graphicx
+             array
+             colortbl
+             multirow
+             hhline
+             calc
+             tabularx
+             threeparttable
+             wrapfig
+             url
+             hyperref
+             fancyvrb
+             natbib
+             xcolor
+             etoolbox
+             caption
+             adjustbox
 
       - uses: r-lib/actions/check-r-package@v2
         env:
