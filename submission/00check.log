@@ -1,0 +1,137 @@
+* using log directory ‘/Users/SenseiGregory/Documents/R/lme4/lme4.Rcheck’
+* using R version 4.4.0 (2024-04-24)
+* using platform: aarch64-apple-darwin20
+* R was compiled by
+    Apple clang version 14.0.0 (clang-1400.0.29.202)
+    GNU Fortran (GCC) 12.2.0
+* running under: macOS 15.3.2
+* using session charset: UTF-8
+* checking for file ‘lme4/DESCRIPTION’ ... OK
+* this is package ‘lme4’ version ‘1.1-37’
+* package encoding: UTF-8
+* checking package namespace information ... OK
+* checking package dependencies ... OK
+* checking if this is a source package ... OK
+* checking if there is a namespace ... OK
+* checking for executable files ... OK
+* checking for hidden files and directories ... OK
+* checking for portable file names ... OK
+* checking for sufficient/correct file permissions ... OK
+* checking whether package ‘lme4’ can be installed ... OK
+* used C++ compiler: ‘Apple clang version 16.0.0 (clang-1600.0.26.6)’
+* used SDK: ‘’
+* checking installed package size ... NOTE
+  installed size is  6.5Mb
+  sub-directories of 1Mb or more:
+    R          1.6Mb
+    doc        2.2Mb
+    testdata   1.3Mb
+* checking package directory ... OK
+* checking ‘build’ directory ... OK
+* checking DESCRIPTION meta-information ... OK
+* checking top-level files ... OK
+* checking for left-over files ... OK
+* checking index information ... OK
+* checking package subdirectories ... OK
+* checking code files for non-ASCII characters ... OK
+* checking R files for syntax errors ... OK
+* checking whether the package can be loaded ... OK
+* checking whether the package can be loaded with stated dependencies ... OK
+* checking whether the package can be unloaded cleanly ... OK
+* checking whether the namespace can be loaded with stated dependencies ... OK
+* checking whether the namespace can be unloaded cleanly ... OK
+* checking whether startup messages can be suppressed ... OK
+* checking dependencies in R code ... OK
+* checking S3 generic/method consistency ... OK
+* checking replacement functions ... OK
+* checking foreign function calls ... OK
+* checking R code for possible problems ... OK
+* checking Rd files ... OK
+* checking Rd metadata ... OK
+* checking Rd cross-references ... OK
+* checking for missing documentation entries ... OK
+* checking for code/documentation mismatches ... OK
+* checking Rd \usage sections ... OK
+* checking Rd contents ... OK
+* checking for unstated dependencies in examples ... OK
+* checking contents of ‘data’ directory ... OK
+* checking data for non-ASCII characters ... OK
+* checking LazyData ... OK
+* checking data for ASCII and uncompressed saves ... OK
+* checking R/sysdata.rda ... OK
+* checking line endings in C/C++/Fortran sources/headers ... OK
+* checking line endings in Makefiles ... OK
+* checking compilation flags in Makevars ... OK
+* checking for GNU extensions in Makefiles ... OK
+* checking for portable use of $(BLAS_LIBS) and $(LAPACK_LIBS) ... OK
+* checking use of PKG_*FLAGS in Makefiles ... OK
+* checking compiled code ... OK
+* checking sizes of PDF files under ‘inst/doc’ ... OK
+* checking installed files from ‘inst/doc’ ... OK
+* checking files in ‘vignettes’ ... OK
+* checking examples ... OK
+* checking for unstated dependencies in ‘tests’ ... OK
+* checking tests ... OK
+  Running ‘AAAtest-all.R’
+  Running ‘HSAURtrees.R’
+  Running ‘REMLdev.R’
+  Running ‘ST.R’
+  Running ‘agridat_gotway.R’
+  Running ‘bootMer.R’
+  Running ‘boundary.R’
+  Running ‘confint.R’
+  Running ‘devCritFun.R’
+  Running ‘drop.R’
+  Running ‘drop1contrasts.R’
+  Running ‘dynload.R’
+  Running ‘elston.R’
+  Running ‘evalCall.R’
+  Running ‘extras.R’
+  Running ‘falsezero_dorie.R’
+  Running ‘fewlevels.R’
+  Running ‘getME.R’
+  Running ‘glmer-1.R’
+  Running ‘glmerControlPass.R’
+  Running ‘glmerWarn.R’
+  Running ‘glmmExt.R’
+  Running ‘glmmWeights.R’
+  Running ‘hatvalues.R’
+  Running ‘is.R’
+  Running ‘lmList-tst.R’
+  Running ‘lme4_nlme.R’
+  Running ‘lmer-0.R’
+  Running ‘lmer-1.R’
+  Running ‘lmer-conv.R’
+  Running ‘lmer2_ex.R’
+  Running ‘methods.R’
+  Running ‘minval.R’
+  Running ‘modFormula.R’
+  Running ‘nbinom.R’
+  Running ‘nlmer-conv.R’
+  Running ‘nlmer.R’
+  Running ‘offset.R’
+  Running ‘optimizer.R’
+  Running ‘polytomous.R’
+  Running ‘prLogistic.R’
+  Running ‘predict_basis.R’
+  Running ‘predsim.R’
+  Running ‘priorWeights.R’
+  Running ‘priorWeightsModComp.R’
+  Running ‘profile-tst.R’
+  Running ‘refit.R’
+  Running ‘resids.R’
+  Running ‘respiratory.R’
+  Running ‘simulate.R’
+  Running ‘test-glmernbref.R’
+  Running ‘testOptControl.R’
+  Running ‘testcolonizer.R’
+  Running ‘testcrab.R’
+  Running ‘throw.R’
+  Running ‘varcorr.R’
+  Running ‘vcov-etc.R’
+* checking for unstated dependencies in vignettes ... OK
+* checking package vignettes ... OK
+* checking re-building of vignette outputs ... OK
+* checking PDF version of manual ... OK
+* DONE
+Status: 1 NOTE
