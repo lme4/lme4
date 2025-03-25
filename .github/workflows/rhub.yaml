@@ -118,4 +118,4 @@ jobs:
         with:
           job-config: ${{ matrix.config.job-config }}
           token: ${{ secrets.RHUB_TOKEN }}
-          build_args: 'c("--compact-vignettes=both")'
+
