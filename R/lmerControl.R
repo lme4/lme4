@@ -84,7 +84,7 @@ merControl <-
                              "silent.drop.cols", "warn+drop.cols",
                              "stop.deficient", "ignore"),
              check.scaleX = c("warning","stop","silent.rescale",
-                              "message+rescale","warn+rescale","ignore"),
+                              "message+rescale","warn+rescale","ignore","zscale"),
              check.formula.LHS = "stop",
              ## convergence options
              check.conv.grad     = .makeCC("warning", tol = 2e-3, relTol = NULL),
