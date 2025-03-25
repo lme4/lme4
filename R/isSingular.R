@@ -1,4 +1,4 @@
-#' Check for singular fit
+# Check for singular fit
 #' @param object A fitted model.
 #' @param ... Passed to methods
 #' @export
@@ -12,7 +12,7 @@ isSingular.merMod <- function(object, tol = 1e-6, method = c("eigen", "cholesky"
   
   if (method == "cholesky") {
     cc <- getME(object, "ST")
-    diagvals <- lapply(cc, function(x) diag(x))
+    diagvals <- lapply(cc, diag)
     min_diag <- min(unlist(diagvals))
     return(min_diag < tol)
   }
