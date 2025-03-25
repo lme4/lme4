@@ -4,6 +4,17 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
+
+\section{Development version}{
+  \itemize{
+    \item \code{isSingular()} is now an S3 generic. The method 
+    \code{isSingular.merMod()} supports both the original Cholesky-based check 
+    and a new eigenvalue-based check via the \code{method = c("cholesky", 
+    "eigen")} argument. The default remains \code{"cholesky"} for backward 
+    compatibility.
+  }
+}
+
 \section{CHANGES IN VERSION 1.1-37}{
     \subsection{NEW FEATURES}{
     \itemize{
