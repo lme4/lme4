@@ -1,4 +1,5 @@
 \name{mkNewReTrms}
+\alias{mkNewReTrms}
 \title{Make new random effect terms for prediction}
 \description{
   Rebuilds the random effect terms
@@ -53,13 +54,13 @@
   generate a new "random effects terms" object from an already fitted
   model}
 \seealso{
-  Other utilities: \code{\link{findbars}},
+  Other utilities: \code{\link[reformulas]{findbars}},
   \code{\link{mkRespMod}}, \code{\link{nlformula}},
-  \code{\link{nobars}}, \code{\link{subbars}}.
+  \code{\link[reformulas]{nobars}}, \code{\link[reformulas]{subbars}}.
   \code{\link{getME}} can retrieve these components
   from a fitted model, although their values and/or forms
   may be slightly different in the final fitted model from
-  their original values as returned from \code{mkReTrms}.
+  their original values as returned from \code{\link[reformulas]{mkReTrms}}.
 }
 \examples{
 fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
