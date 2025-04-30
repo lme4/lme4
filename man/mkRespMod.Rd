@@ -30,8 +30,8 @@
   Create an lmerResp, glmResp or nlsResp instance
 }
 \seealso{
-  Other utilities: \code{\link{findbars}},
-  \code{\link{mkReTrms}}, \code{\link{nlformula}},
-  \code{\link{nobars}}, \code{\link{subbars}}
+  Other utilities: \code{\link[reformulas]{findbars}},
+  \code{\link[reformulas]{mkReTrms}}, \code{\link{nlformula}},
+  \code{\link[reformulas]{nobars}}, \code{\link[reformulas]{subbars}}
 }
 
