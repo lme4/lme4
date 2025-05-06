@@ -70,8 +70,8 @@ jobs:
         shell: Rscript {0}
       - name: Convert NEWS
         run: |
-          shell: Rscript {0}
           xfun::news2md("lme4", output = "NEWS.md", category = TRUE)
+        shell: Rscript {0}
       - name: Rebuild site 
         run: |
           pkgdown.extras::build_site(preview=FALSE)
