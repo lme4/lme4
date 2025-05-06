@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: '0'
-      - uses: actions/checkout@master
+n      - uses: actions/checkout@master
       - uses: r-lib/actions/setup-pandoc@v2
       - uses: r-lib/actions/setup-r@v2
 #      - name: textshaping dependencies for MacOS
@@ -45,30 +45,34 @@ jobs:
         shell: Rscript {0}
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck, any::Matrix, pkgdown.extras=?ignore
+          extra-packages: any::rcmdcheck, any::Matrix, any::xfun, pkgdown.extras=?ignore
           needs: check
           upgrade: 'TRUE'
 
-      - name: Install extra LaTeX dependencies
-        run: |  # I know remotes is duplicated, but takes little time and better if we want to copy-paste workflows..
-          install.packages(c("remotes", "devtools"))
-          remotes::install_deps(pkgdir="lme4", dependencies = TRUE)
-          install.packages('tinytex')
-          tinytex::install_tinytex(force=TRUE) ## force = TRUE?
-          tinytex::tlmgr_install("koma-script") # for scrtime.sty
-          tinytex::tlmgr_install("amscls")      # for amsthm.sty
-          tinytex::tlmgr_install(c("multirow","colortbl","siunitx","setspace"))
-          tinytex::tlmgr_install(c("lineno","fancyhdr","ulem","caption"))
-          tinytex::tlmgr_install("babel-english")
-          tinytex::tlmgr_install("pgf") # tikz
-          tinytex::tlmgr_install(c("placeins","lastpage","cleveref","listings","threeparttable","wrapfig","adjustbox","hyperref","tabularx","collectbox"))
-        shell: Rscript {0}
+      # - name: Install extra LaTeX dependencies
+      #   run: |  # I know remotes is duplicated, but takes little time and better if we want to copy-paste workflows..
+      #     install.packages(c("remotes", "devtools"))
+      #     remotes::install_deps(dependencies = TRUE)
+      #     install.packages('tinytex')
+      #     tinytex::install_tinytex(force=TRUE) ## force = TRUE?
+      #     tinytex::tlmgr_install("koma-script") # for scrtime.sty
+      #     tinytex::tlmgr_install("amscls")      # for amsthm.sty
+      #     tinytex::tlmgr_install(c("multirow","colortbl","siunitx","setspace"))
+      #     tinytex::tlmgr_install(c("lineno","fancyhdr","ulem","caption"))
+      #     tinytex::tlmgr_install("babel-english")
+      #     tinytex::tlmgr_install("pgf") # tikz
+      #     tinytex::tlmgr_install(c("placeins","lastpage","cleveref","listings","threeparttable","wrapfig","adjustbox","hyperref","tabularx","collectbox"))
+      #   shell: Rscript {0}
       - name: Install lme4
-        run: devtools::install(pkg="lme4")
+        run: devtools::install()
         shell: Rscript {0}
+      - name: Convert NEWS
+        run: |
+          shell: Rscript {0}
+          xfun::news2md("lme4", output = "NEWS.md", category = TRUE)
       - name: Rebuild site 
         run: |
-          pkgdown.extras::build_site(pkg="lme4", preview=FALSE)
+          pkgdown.extras::build_site(preview=FALSE)
         shell: Rscript {0}
       - name: Commit site
         run: |
