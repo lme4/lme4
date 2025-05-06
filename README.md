@@ -62,7 +62,7 @@ install.packages('lme4', repos = c('https://lme4.r-universe.dev', getOption("rep
    * some Sweave (`knitr`)/`Rnw`-format vignette, especially `vignettes/lmer.Rnw`
 * 'tidyverse'-style tools, as documented in [R Packages](https://r-pkgs.org/) (Wickham and Bryan)
    * `testthat` tests, in `tests/testthat`
-   * `pkgdown` web site (via [pkgdown.extras](https://github.com/HenrikBengtsson/pkgdown.extras), extensions to allow PDF vignettes)
+   * `pkgdown` web site (via [pkgdown.extras](https://github.com/HenrikBengtsson/pkgdown.extras), extensions to allow PDF vignettes); trigger manual builds [here](https://github.com/lme4/lme4/actions/workflows/pkgdown.yaml)
 * GitHub 
    * primary development repository
    * [issues](https://github.com/lme4/lme4/issues)
