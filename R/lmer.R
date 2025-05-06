@@ -573,7 +573,7 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
                           AIC = .sapply(llks, AIC), # FIXME? vapply()
                           BIC = .sapply(llks, BIC), #  "       "
                           logLik = llk,
-                          deviance = -2*llk,
+                          "-2*log(L)" = -2*llk,
                           Chisq = chisq,
                           Df = dfChisq,
                           "Pr(>Chisq)" = ifelse(dfChisq==0,NA,pchisq(chisq, dfChisq, lower.tail = FALSE)),

@@ -74,7 +74,7 @@ test_that("lmer anova", {
   aa <- suppressMessages(anova(fm0,fm1))
   expect_that(aa, is_a("anova"))
   expect_equal(names(aa),
-               c("npar", "AIC", "BIC", "logLik", "deviance", "Chisq", "Df",
+               c("npar", "AIC", "BIC", "logLik", "-2*log(L)", "Chisq", "Df",
                  "Pr(>Chisq)"))
   expect_warning(suppressMessages(do.call(anova,list(fm0,fm1))), "assigning generic names")
   ##
@@ -296,6 +296,12 @@ if (testLevel>1) {
 
   })
 } ## testLevel>1
+
+test_that("change in deviance name for anova", {
+    cc <- suppressMessages(capture.output(anova(fm0,fm1)))
+    expect_identical(sum(grepl("deviance", cc)), 0L)
+    expect_identical(sum(grepl("-2*log(L)", cc, fixed = TRUE)), 1L)
+})
 
 test_that("confint", {
   load(system.file("testdata", "gotway_hessianfly.rda", package = "lme4"))
