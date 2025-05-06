@@ -66,5 +66,4 @@ install.packages('lme4', repos = c('https://lme4.r-universe.dev', getOption("rep
    * primary development repository
    * [issues](https://github.com/lme4/lme4/issues)
    * testing on [GitHub actions](https://github.com/lme4/lme4/actions) (activated by specifying "[run ci]" at the end of a commit message)
-   *
-   * pull requests are welcome
+   * [pull requests](https://github.com/lme4/lme4/pulls) are welcome, but please open a discussion as an issue first
