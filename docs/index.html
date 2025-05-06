@@ -105,8 +105,12 @@
 <li>From CRAN (stable release 1.+)</li>
 <li>Development version from Github:</li>
 </ul>
-<pre><code><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://devtools.r-lib.org/" class="external-link">"devtools"</a></span><span class="op">)</span>; <span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"lme4/lme4"</span>,dependencies<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span></code></pre>
-<p>(This requires <code>devtools</code> &gt;= 1.6.1, and installs the “master” (development) branch.) This approach builds the package from source, i.e. <code>make</code> and compilers must be installed on your system – see the R FAQ for your operating system; you may also need to install dependencies manually. Specify <code>build_vignettes=FALSE</code> if you have trouble because your system is missing some of the <code>LaTeX/texi2dvi</code> tools. * Development binaries from r-universe:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="st"><a href="https://devtools.r-lib.org/" class="external-link">"devtools"</a></span><span class="op">)</span>; <span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"lme4/lme4"</span>,dependencies<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p>(This requires <code>devtools</code> &gt;= 1.6.1, and installs the “master” (development) branch.) This approach builds the package from source, i.e. <code>make</code> and compilers must be installed on your system – see the R FAQ for your operating system; you may also need to install dependencies manually. Specify <code>build_vignettes=FALSE</code> if you have trouble because your system is missing some of the <code>LaTeX/texi2dvi</code> tools.</p>
+<ul>
+<li>Development binaries from r-universe:</li>
+</ul>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'lme4'</span>, repos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'https://lme4.r-universe.dev'</span>, <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"repos"</span><span class="op">)</span><span class="op">[[</span><span class="st">"CRAN"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -131,7 +135,8 @@
 <code>testthat</code> tests, in <code>tests/testthat</code>
 </li>
 <li>
-<code>pkgdown</code> web site (via <a href="https://github.com/HenrikBengtsson/pkgdown.extras" class="external-link">pkgdown.extras</a>, extensions to allow PDF vignettes)</li>
+<code>pkgdown</code> web site (via <a href="https://github.com/HenrikBengtsson/pkgdown.extras" class="external-link">pkgdown.extras</a>, extensions to allow PDF vignettes); trigger manual builds <a href="https://github.com/lme4/lme4/actions/workflows/pkgdown.yaml" class="external-link">here</a>
+</li>
 </ul>
 </li>
 <li>GitHub

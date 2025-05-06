@@ -278,12 +278,12 @@ The log() method and the more flexible logProf()
 <span class="r-in"><span>  <span class="va">tpr</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/profile.html" class="external-link">profile</a></span><span class="op">(</span><span class="va">fm01ML</span>, optimizer<span class="op">=</span><span class="st">"Nelder_Mead"</span>, which<span class="op">=</span><span class="st">"beta_"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span><span class="co">## fast; as only *one* beta parameter is profiled over -&gt; 0.09s (2022)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    user  system elapsed </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   0.097   0.000   0.097 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   0.099   0.000   0.099 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## full profiling (default which means 'all') needs longer:</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/system.time.html" class="external-link">system.time</a></span><span class="op">(</span> <span class="va">tpr</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/profile.html" class="external-link">profile</a></span><span class="op">(</span><span class="va">fm01ML</span>, signames<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    user  system elapsed </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   0.245   0.005   0.251 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   0.250   0.002   0.252 </span>
 <span class="r-in"><span><span class="co">## ~ 0.26s (2022) + possible warning about convergence</span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">tpr</span><span class="op">)</span> <span class="op">-&gt;</span> <span class="va">CIpr</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                           2.5 %     97.5 %</span>

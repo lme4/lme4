@@ -323,7 +323,7 @@
 <span class="r-in"><span><span class="op">(</span><span class="va">devfun</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">mkLmerDevfun</span>, <span class="va">lmod</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> function (theta) </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x561f75574178&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x55f0a0b16990&gt;</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/ls.html" class="external-link">ls</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">environment</a></span><span class="op">(</span><span class="va">devfun</span><span class="op">)</span><span class="op">)</span> <span class="co"># the environment of 'devfun' contains objects</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "lmer_Deviance" "lower"         "pp"            "resp"         </span>
 <span class="r-in"><span>                        <span class="co"># required for its evaluation</span></span></span>
@@ -396,7 +396,7 @@
 <span class="r-out co"><span class="r-pr">#&gt;</span>     resp$updateWts()</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     p</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x561f705aad28&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x55f09bfb5e18&gt;</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/ls.html" class="external-link">ls</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">environment</a></span><span class="op">(</span><span class="va">devfun</span><span class="op">)</span><span class="op">)</span> <span class="co"># the environment of devfun contains lots of info</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "compDev"     "lower"       "lp0"         "maxit"       "pp"         </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [6] "pwrssUpdate" "resp"        "tolPwrss"    "verbose"    </span>
@@ -422,7 +422,7 @@
 <span class="r-out co"><span class="r-pr">#&gt;</span>     resp$updateWts()</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     p</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x561f705aad28&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: 0x55f09bfb5e18&gt;</span>
 <span class="r-in"><span><span class="co">## 5.  Optimize over theta and beta:</span></span></span>
 <span class="r-in"><span><span class="va">opt</span> <span class="op">&lt;-</span> <span class="fu">optimizeGlmer</span><span class="op">(</span><span class="va">devfun</span>, stage<span class="op">=</span><span class="fl">2</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">opt</span>, max<span class="op">=</span><span class="fl">1</span><span class="op">)</span> <span class="co"># seeing what we'got</span></span></span>
