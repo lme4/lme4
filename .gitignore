@@ -23,4 +23,6 @@ revdep/
 .gitsum/
 Rplots.pdf
 *.rds
-docs/
+## docs/
+## built on GH from inst/NEWS.Rd
+NEWS.md
