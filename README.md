@@ -40,11 +40,12 @@ or adaptive Gauss-Hermite quadrature; GLMMs allow user-defined families and link
 
 * From CRAN (stable release 1.+)
 * Development version from Github:
-```
+```r
 library("devtools"); install_github("lme4/lme4",dependencies=TRUE)
 ```
 (This requires `devtools` >= 1.6.1, and installs the "master" (development) branch.)
 This approach builds the package from source, i.e. `make` and compilers must be installed on your system -- see the R FAQ for your operating system; you may also need to install dependencies manually. Specify `build_vignettes=FALSE` if you have trouble because your system is missing some of the `LaTeX/texi2dvi` tools.
+
 * Development binaries from r-universe:
 ```r
 install.packages('lme4', repos = c('https://lme4.r-universe.dev', getOption("repos")[["CRAN"]]))
