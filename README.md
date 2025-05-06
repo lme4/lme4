@@ -50,3 +50,16 @@ This approach builds the package from source, i.e. `make` and compilers must be 
 install.packages('lme4', repos = c('https://lme4.r-universe.dev', getOption("repos")[["CRAN"]]))
 ```
 
+## Development notes
+
+`lme4` is developed in a mixture of
+
+* traditional R package building tools, as documented in [Writing R Extensions](cran.r-project.org/doc/manuals/r-devel/R-exts.html#Documenting-functions)
+   * NEWS in `inst/NEWS.Rd` (not a top-level `NEWS.md` file)
+   * documentation as `.Rd` files (*not* `roxygen2`, although some functions have internal roxygen-style documentation [not used])
+   * 'classic' tests in the `tests/` directory
+   * some Sweave (`knitr`)/`Rnw`-format vignette, especially `vignettes/lmer.Rnw`
+* 'tidyverse'-style tools, as documented in [R Packages](https://r-pkgs.org/) (Wickham and Bryan)
+   * `testthat` tests, in `tests/testthat`
+   * `pkgdown` web site (via [pkgdown.extras](https://github.com/HenrikBengtsson/pkgdown.extras), extensions to allow PDF vignettes)
+* testing on [GitHub actions](https://github.com/lme4/lme4/actions) (activated by specifying "[run ci]" at the end of a commit message)
