@@ -41,7 +41,7 @@ jobs:
       - name: Install pkgdown.extras and remotes
         run: |
           ## (ragg install fails downstream, missing these packages ...??)
-          install.packages(c("systemfonts", "textshaping","pkgdown","ragg"))
+          install.packages(c("systemfonts", "textshaping","pkgdown","ragg","devtools"))
           install.packages('remotes')
           remotes::install_github("HenrikBengtsson/pkgdown.extras")
         shell: Rscript {0}
