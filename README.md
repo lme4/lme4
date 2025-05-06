@@ -62,4 +62,9 @@ install.packages('lme4', repos = c('https://lme4.r-universe.dev', getOption("rep
 * 'tidyverse'-style tools, as documented in [R Packages](https://r-pkgs.org/) (Wickham and Bryan)
    * `testthat` tests, in `tests/testthat`
    * `pkgdown` web site (via [pkgdown.extras](https://github.com/HenrikBengtsson/pkgdown.extras), extensions to allow PDF vignettes)
-* testing on [GitHub actions](https://github.com/lme4/lme4/actions) (activated by specifying "[run ci]" at the end of a commit message)
+* GitHub 
+   * primary development repository
+   * [issues](https://github.com/lme4/lme4/issues)
+   * testing on [GitHub actions](https://github.com/lme4/lme4/actions) (activated by specifying "[run ci]" at the end of a commit message)
+   *
+   * pull requests are welcome
