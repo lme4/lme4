@@ -4,7 +4,7 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-37.9000}{
+\section{CHANGES IN VERSION 1.1-37.9000 (2025-05-06)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item \code{lme4} now depends completely on the \code{reformulas}
