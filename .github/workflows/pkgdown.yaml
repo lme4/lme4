@@ -51,6 +51,10 @@ jobs:
           needs: check
           upgrade: 'TRUE'
 
+      - name: Install LaTeX and extras
+        if: runner.os == 'Linux'
+        run: sudo apt-get install texlive texlive-science texlive-latex-extra texlive-bibtex-extra
+
       # - name: Install extra LaTeX dependencies
       #   run: |  # I know remotes is duplicated, but takes little time and better if we want to copy-paste workflows..
       #     install.packages(c("remotes", "devtools"))
