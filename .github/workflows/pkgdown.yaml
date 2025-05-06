@@ -40,10 +40,10 @@ jobs:
           sudo apt-get -y install libcurl4-openssl-dev libharfbuzz-dev libfribidi-dev
       - name: Install pkgdown.extras and remotes
         run: |
+          ## (ragg install fails downstream, missing these packages ...??)
+          install.packages(c("systemfonts", "textshaping","pkgdown","ragg"))
           install.packages('remotes')
           remotes::install_github("HenrikBengtsson/pkgdown.extras")
-          ## (ragg install fails downstream, missing these packages ...??)
-          install.packages("systemfonts", "textshaping","pkgdown",)
         shell: Rscript {0}
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
