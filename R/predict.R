@@ -135,7 +135,9 @@ setParams <- function(object, params, inplace=FALSE, subset=FALSE) {
 ##' @param na.action
 ##'
 ##' @note Hidden; _only_ used (twice) in this file
-mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
+mkNewReTrms <- function(object, newdata,
+                        re.form=NULL,
+                        na.action=na.pass,
                         allow.new.levels=FALSE,
                         sparse = max(lengths(orig.random.levs)) > 100)
 {
@@ -150,6 +152,7 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
     ##        mfnew is *only* used for its na.action attribute (!) [fixed only]
     ##        using model.frame would mess up matrix-valued predictors (GH #201)
     fixed.na.action <- NULL
+    re.form <- re.form %||% reOnly(formula(object))
     if (is.null(newdata)) {
         rfd <- mfnew <- model.frame(object)
         fixed.na.action <- attr(mfnew,"na.action")
