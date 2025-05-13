@@ -149,7 +149,8 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
 \seealso{
   \code{\link[stats]{lm}} for linear models;
   \code{\link{glmer}} for generalized linear; and
-  \code{\link{nlmer}} for nonlinear mixed models. \cr
+  \code{\link{nlmer}} for nonlinear mixed models.
+  
   \code{\link{plot.merMod}} for plot diagnostics.
 }
 \examples{

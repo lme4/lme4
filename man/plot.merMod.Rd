@@ -6,12 +6,7 @@
 \alias{diagnostic.plots}
 \alias{diagnosticPlots}
 \alias{diagnostic_plots}
-\alias{plot.diagnostics}
-\alias{plotDiagnostics}
-\alias{plot_diagnodtics}
-\alias{model.diagnostics}
-\alias{modelDiagnostics}
-\alias{model_diagnostics}
+\alias{qqplot}
 \usage{
 \method{plot}{merMod}(x,
      form = resid(., type = "pearson") ~ fitted(.), abline,
@@ -73,10 +68,9 @@
   plot function.}
 }
 \description{
-  diagnostic plots for merMod fits. Some of these plots are basic 
-  and may be supplemented or superseded by functions from other 
-  packages. See the \emph{See Also} section below for recommended 
-  alternatives.
+  diagnostic plots for merMod fits.  Some of these plots may be supplemented or 
+  superseded by functions from other packages.  See the \emph{See Also} section 
+  below for recommended alternatives.
 }
 \details{
   Diagnostic plots for the linear mixed-effects fit are
@@ -102,11 +96,13 @@
   conditional mode values).
 }
 \seealso{
-  \code{\link[performance]{check_model}} in the \code{performance} package. \cr
-  \code{DHARMa} package, which evaluates model diagnostics through 
-  simulating residuals (see: \code{\link[DHARMa]{simulateResiduals}}). \cr
-  \code{\link[lattice]{qqmath}} in the \code{lattice} package. \cr
-  \code{\link[car]{influencePlot}} in the \code{car} package. \cr
+  \itemize{
+    \item \code{\link[performance]{check_model}} in the \CRANpkg{performance} package.
+    \item \CRANpkg{DHARMa} package, which evaluates model diagnostics through 
+    simulating residuals (see: \code{\link[DHARMa]{simulateResiduals}}).
+    \item \code{\link[lattice]{qqmath}} in the \CRANpkg{lattice} package.
+    \item \code{\link[car]{influencePlot}} in the \CRANpkg{car} package.
+  }
 }
 \author{
   original version in \CRANpkg{nlme} package by Jose Pinheiro
