@@ -703,9 +703,9 @@ mkMinimalData <- function(formula) {
 ##' Make template for mixed model parameters
 mkParsTemplate <- function(formula, data){
     if(missing(data)) data <- mkMinimalData(formula)
-    mfRanef <- model.frame( subbars(formula), data)
-    mmFixef <- model.matrix(nobars(formula) , data)
-    reTrms <- mkReTrms(findbars(formula), mfRanef)
+    mfRanef <- model.frame( reformulas::subbars(formula), data)
+    mmFixef <- model.matrix( reformulas::nobars(formula) , data)
+    reTrms <- reformulas::mkReTrms( reformulas::findbars(formula), mfRanef)
     cnms <- reTrms$cnms
     thetaNamesList <- mapply(mkPfun(), names(cnms), cnms)
     thetaNames <- unlist(thetaNamesList)
@@ -997,10 +997,6 @@ combineLists <- function(..., fmatrix="list", flist="c", fvector="rbind",
     }
     result
 }
-
-## re-export from reformulas
-expandDoubleVerts <- reformulas::expandDoubleVerts
-isNested <- reformulas::isNested
 
 ## copied from glmmTMB::check_dots
 checkDots <- function (..., .ignore = NULL, .action = "stop") 
