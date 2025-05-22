@@ -339,7 +339,7 @@ nlformula <- function(mc) {
     X <- model.matrix(fe, frE)
     rownames(X) <- NULL
 
-    reTrms <- mkReTrms(lapply(findbars(meform),
+    reTrms <- reformulas::mkReTrms(lapply(reformulas::findbars(meform),
                               function(expr) {
                                   expr[[2]] <- substitute(0+foo, list(foo=expr[[2]]))
                                   expr
@@ -729,7 +729,7 @@ mkDataTemplate <- function(formula, data,
                            nGrps = 2, nPerGrp = 1,
                            rfunc = NULL, ...){
     if(missing(data)) data <- mkMinimalData(formula)
-    grpFacNames <- unique(barnames(findbars(formula)))
+    grpFacNames <- unique(barnames(reformulas::findbars(formula)))
     varNames <- all.vars(formula)
     covariateNames <- setdiff(varNames, grpFacNames)
     nGrpFac <- length(grpFacNames)
@@ -779,7 +779,7 @@ termnms <- function(REtrms) vapply(REtrms, deparse1, "")
 mmList <- function(object, ...) UseMethod("mmList")
 mmList.merMod <- function(object, ...) mmList(formula(object), model.frame(object))
 mmList.formula <- function(object, frame, ...) {
-    bars <- findbars(object)
+    bars <- reformulas::findbars(object)
     mm <- setNames(lapply(bars, function(b) model.matrix(eval(reexpr(b), frame), frame)),
                    termnms(bars))
     grp <- lapply(lapply(bars, grpfact), eval, frame)
