@@ -16,7 +16,7 @@ isRE(~0+x) ##  "
 
 ##' Random Effects formula only
 reOnly <- function(f, response=FALSE) {
-    reformulate(paste0("(", vapply(reformulate::findbars(f), deparse1, ""), ")"),
+    reformulate(paste0("(", vapply(reformulas::findbars(f), deparse1, ""), ")"),
                 response = if(response && length(f)==3L) f[[2]],
                 env = environment(f))
 }
@@ -202,7 +202,7 @@ mkNewReTrms <- function(object, newdata,
         ## find *factor* variables involved in terms (left-hand side of RE formula): reset their contrasts
         ## only interested in components in re.form, not al REs
         ff <- re.form  ## was: formula(object,random.only=TRUE)
-        termvars <- unique(unlist(lapply(reformulate::findbars(ff), function(x) all.vars(x[[2]]))))
+        termvars <- unique(unlist(lapply(reformulas::findbars(ff), function(x) all.vars(x[[2]]))))
         for (fn in Reduce(intersect, list(
                               names(orig.random.cntr), termvars, names(rfd)))) {
             ## a non-factor grouping variable *may* sneak in here via simulate(...)

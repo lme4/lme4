@@ -2852,7 +2852,7 @@ but not slope-slope correlations, as we see using the \code{lmList}
 function.
 <<graphSims>>=
 formLm <- form
-formLm[[3]] <- findbars(form)[[1]]
+formLm[[3]] <- reformulas::findbars(form)[[1]]
 print(formLm)
 cor(t(sapply(lmList(formLm, dat), coef)))
 @ %
