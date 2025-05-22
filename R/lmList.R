@@ -116,7 +116,7 @@ lmList <- function(formula, data, family, subset, weights,
                  "weights", "offset"), names(mf), 0)
     mf <- mf[c(1, m)]
     ## substitute `+' for `|' in the formula
-    mf$formula <- subbars(formula)
+    mf$formula <- reformulas::subbars(formula)
     mf$drop.unused.levels <- TRUE
     ## pass NAs for now -- want *all* groups, weights, offsets recovered
     mf$na.action <- na.pass

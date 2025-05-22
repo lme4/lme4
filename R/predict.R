@@ -16,7 +16,7 @@ isRE(~0+x) ##  "
 
 ##' Random Effects formula only
 reOnly <- function(f, response=FALSE) {
-    reformulate(paste0("(", vapply(findbars(f), deparse1, ""), ")"),
+    reformulate(paste0("(", vapply(reformulate::findbars(f), deparse1, ""), ")"),
                 response = if(response && length(f)==3L) f[[2]],
                 env = environment(f))
 }
@@ -202,7 +202,7 @@ mkNewReTrms <- function(object, newdata,
         ## find *factor* variables involved in terms (left-hand side of RE formula): reset their contrasts
         ## only interested in components in re.form, not al REs
         ff <- re.form  ## was: formula(object,random.only=TRUE)
-        termvars <- unique(unlist(lapply(findbars(ff), function(x) all.vars(x[[2]]))))
+        termvars <- unique(unlist(lapply(reformulate::findbars(ff), function(x) all.vars(x[[2]]))))
         for (fn in Reduce(intersect, list(
                               names(orig.random.cntr), termvars, names(rfd)))) {
             ## a non-factor grouping variable *may* sneak in here via simulate(...)
@@ -232,7 +232,7 @@ mkNewReTrms <- function(object, newdata,
             newdata <- newdata[-fixed.na.action,]
         }
         ## note: mkReTrms automatically *drops* unused levels
-        ReTrms <- mkReTrms(findbars(re.form[[2]]), rfd)
+        ReTrms <- reformulas::mkReTrms(reformulas::findbars(re.form[[2]]), rfd)
         ## update Lambdat (ugh, better way to do this?)
         ReTrms <- within(ReTrms,Lambdat@x <- unname(getME(object,"theta")[Lind]))
         if (!allow.new.levels && any(vapply(ReTrms$flist, anyNA, NA)))
@@ -711,7 +711,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     }
 
     ## (1) random effect(s)
-    sim.reff <- if (!is.null(findbars(compReForm))) {
+    sim.reff <- if (!is.null(reformulas::findbars(compReForm))) {
         newRE <- mkNewReTrms(object, newdata, compReForm,
                              na.action=na.action,
                              allow.new.levels=allow.new.levels)

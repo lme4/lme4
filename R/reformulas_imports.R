@@ -19,3 +19,8 @@ mkReTrms <- function(...) {
   reformulas::mkReTrms(...)
 }
 
+expandDoubleVerts <- function(...) {
+  rlang::warn("the expandDoubleVerts() function has moved to the reformulas package. Please update your imports, or ask an upstream package maintainter to do so.", .frequency = "once", .frequency_id = "expandDoubleVerts")
+  reformulas::expandDoubleVerts(...)
+}
+
