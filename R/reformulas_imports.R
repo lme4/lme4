@@ -1,4 +1,4 @@
-## transient patches for moving formula manipultion machinery to lme4 without breaking downstream packages
+## transient patches for moving formula manipulation machinery to lme4 without breaking downstream packages
 subbars <- function(...) {
   rlang::warn("the subbars() function has moved to the reformulas package. Please update your imports, or ask an upstream package maintainter to do so.", .frequency = "once", .frequency_id = "subbars")
   eval.parent(reformulas::subbars(...))

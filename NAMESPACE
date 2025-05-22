@@ -307,3 +307,4 @@ importFrom(reformulas,mkReTrms)
 export(mkReTrms)
 ## 
 export(namedList)
+importFrom(rlang, warn)
