@@ -1,5 +1,5 @@
 Package: lme4
-Version: 1.1-37
+Version: 1.1-37.9000
 Title: Linear Mixed-Effects Models using 'Eigen' and S4
 Authors@R: c(
     person("Douglas","Bates", role="aut",
@@ -38,7 +38,7 @@ Description: Fit linear and generalized linear mixed-effects models.
 Depends: R (>= 3.6.0), Matrix, methods, stats
 LinkingTo: Rcpp (>= 0.10.5), RcppEigen (>= 0.3.3.9.4), Matrix (>= 1.2-3)
 Imports: graphics, grid, splines, utils, parallel, MASS, lattice, boot,
-    nlme (>= 3.1-123), minqa (>= 1.1.15), nloptr (>= 1.0.4), reformulas (>= 0.3.0)
+    nlme (>= 3.1-123), minqa (>= 1.1.15), nloptr (>= 1.0.4), reformulas (>= 0.3.0), rlang
 Suggests:
     knitr,
     rmarkdown,

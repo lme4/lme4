@@ -384,3 +384,9 @@ test_that("catch matrix-valued responses", {
     dd$y <- matrix(rnorm(1e4), ncol = 10)
     expect_error(lmer(y ~ x + (1|batch), dd), "matrix-valued")
 })
+
+test_that("update works as expected", {
+	m <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy)
+	expect_equivalent(fitted(update(m, .~.-(0 + Days | Subject))), 
+                          fitted(lmer(Reaction ~ Days + (1|Subject), sleepstudy)))
+})

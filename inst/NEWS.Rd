@@ -4,7 +4,20 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-37}{
+\section{CHANGES IN VERSION 1.1-37.9000 (2025-05-23)}{
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item \code{lme4} now depends on the \code{reformulas}
+      package for formula processing etc.; the corresponding functions
+      (\code{expandDoubleVerts}, \code{subbars}, \code{findbars},
+      \code{nobars}, etc.) are still (re-)exported from the package,
+      but throw a warning if called directly
+      (use e.g. \code{reformulas::findbars(...)} to avoid the warning)
+    } % itemize
+  } % user-visible changes
+} % devel
+
+\section{CHANGES IN VERSION 1.1-37 (2025-03-26)}{
     \subsection{NEW FEATURES}{
     \itemize{
       \item \code{simulate.merMod} and \code{.simulateFun} gain the

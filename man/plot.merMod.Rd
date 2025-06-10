@@ -2,6 +2,11 @@
 \title{Diagnostic Plots for 'merMod' Fits}
 \alias{plot.merMod}
 \alias{qqmath.merMod}
+\alias{diagnostics}
+\alias{diagnostic.plots}
+\alias{diagnosticPlots}
+\alias{diagnostic_plots}
+\alias{qqplot}
 \usage{
 \method{plot}{merMod}(x,
      form = resid(., type = "pearson") ~ fitted(.), abline,
@@ -9,7 +14,7 @@
 \method{qqmath}{merMod}(x, data = NULL, id = NULL, idLabels = NULL, \dots)
 }
 \arguments{
-  \item{x}{a fitted [ng]lmer model}
+  \item{x}{a fitted [ng]lmer model.}
   \item{form}{an optional formula specifying the desired
   type of plot. Any variable present in the original data
   frame used to obtain \code{x} can be referenced. In
@@ -53,7 +58,7 @@
   formula \code{idLabels=~.obs} will label the observations
   according to observation number.}
 
-  \item{data}{ignored: required for S3 method compatibility}
+  \item{data}{ignored: required for S3 method compatibility.}
   \item{grid}{an optional logical value indicating whether
   a grid should be added to plot. Default depends on the
   type of lattice plot used: if \code{xyplot} defaults to
@@ -63,7 +68,9 @@
   plot function.}
 }
 \description{
-  diagnostic plots for merMod fits
+  diagnostic plots for merMod fits.  Some of these plots may be supplemented or 
+  superseded by functions from other packages.  See the \emph{See Also} section 
+  below for recommended alternatives.
 }
 \details{
   Diagnostic plots for the linear mixed-effects fit are
@@ -88,7 +95,15 @@
   (see \code{\link{qqmath.ranef.mer}} for Q-Q plots of the
   conditional mode values).
 }
-\seealso{\code{influencePlot} in the \code{car} package}
+\seealso{
+  \itemize{
+    \item \code{\link[performance]{check_model}} in the \CRANpkg{performance} package.
+    \item \CRANpkg{DHARMa} package, which evaluates model diagnostics through 
+    simulating residuals (see: \code{\link[DHARMa]{simulateResiduals}}).
+    \item \code{\link[lattice]{qqmath}} in the \CRANpkg{lattice} package.
+    \item \code{\link[car]{influencePlot}} in the \CRANpkg{car} package.
+  }
+}
 \author{
   original version in \CRANpkg{nlme} package by Jose Pinheiro
   and Douglas Bates.

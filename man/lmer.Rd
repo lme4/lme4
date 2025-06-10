@@ -150,11 +150,14 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
   \code{\link[stats]{lm}} for linear models;
   \code{\link{glmer}} for generalized linear; and
   \code{\link{nlmer}} for nonlinear mixed models.
+  
+  \code{\link{plot.merMod}} for plot diagnostics.
 }
 \examples{
 ## linear mixed models - reference values from older code
 (fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy))
-summary(fm1)# (with its own print method; see class?merMod % ./merMod-class.Rd
+summary(fm1) # (with its own print method; see class?merMod % ./merMod-class.Rd
+plot(fm1) # plotting the model diagnostics; see ?plot.merMod
 
 str(terms(fm1))
 stopifnot(identical(terms(fm1, fixed.only=FALSE),

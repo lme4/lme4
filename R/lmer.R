@@ -972,7 +972,7 @@ fixef.merMod <- function(object, add.dropped=FALSE, ...) {
 
 
 getFixedFormula <- function(form) {
-    RHSForm(form) <- nobars(RHSForm(form))
+    RHSForm(form) <- reformulas::nobars(RHSForm(form))
     form
 }
 
