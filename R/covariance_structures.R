@@ -12,13 +12,9 @@
 ##' @slot parameters A numeric vector storing the unconstrained parameters used by the optimizer.
 ##' @export
 setClass("VirtualCovariance", contains = "VIRTUAL",
-    slots = c(
-        dimension = "integer",
-        parameters = "numeric"
-    ),
-    prototype = list(
-        dimension = 0L,
-        parameters = numeric(0)
+	slots = c(
+        	dimension = "integer",
+        	parameters = "numeric"
     )
 )
 
@@ -94,15 +90,6 @@ setGeneric("get_cholesky_factor", function(object, data_context = NULL) standard
 ##' @export
 setGeneric("get_start_values", function(object) standardGeneric("get_start_values"))
 
-##' Validate Parameters
-##' 
-##' Generic function to validate if the current parameters lead to a valid
-##' covariance matrix (e.g., positive definite). 
-##' @param object An S4 object inheriting from `VirtualCovariance`. 
-##' @return 'TRUE' if parameters are valid, otherwise throws an error. 
-##' @export
-setGeneric("validate_parameters", function(object) standardGeneric("validate_parameters"))
-
 ##' Get Interpretable Parameters
 ##' 
 ##' Generic function to return interpretable parameters (e.g., variance, correlation,
@@ -160,14 +147,15 @@ setClass("VirtualParameterizationLogScaleBoundedCor", contains = "VIRTUAL")
 ##' diagonal variance values. 
 ##' @export
 setClass("DiagonalCov",
-	contains = c("VirtualCovariance", "VirtualParameterizationLogScaleBoundedCor"),
-	slots = c(
-		internal_diag_values = "numeric"
-	),
-	prototype = list(
-		internal_diag_values = numeric(0)
-	)
-)		
+	contains = c("VirtualCovariance", "VirtualParameterizationLogScaleBoundedCor")
+)
+
+setValidity("DiagonalCov", function(object) {
+	if (length(object@parameters) != object@dimension) {
+        return(sprintf("Expected %d parameters, but slot has %d.", object@dimension, length(object@parameters)))
+	}
+	TRUE
+})
 
 # Method for DiagonalCov 
 
@@ -178,7 +166,7 @@ setMethod("n_parameters", "DiagonalCov", function(object) {
 
 ##' @rdname get_parameters
 setMethod("get_parameters", "DiagonalCov", function(object) {
-	log(object@internal_diag_values)
+	object@parameters
 })
 
 ##' @rdname set_parameters
@@ -186,30 +174,32 @@ setMethod("set_parameters", "DiagonalCov", function(object, value) {
 	if (length(value) != object@dimension) {
 		stop("Incorrect number of parameters for DiagonalCov. Expected ", object@dimension)
 	}
-	object@internal_diag_values <- exp(value)
 	object@parameters <- value 
 	object
 })
 
 ##' @rdname compute_covariance_matrix
 setMethod("compute_covariance_matrix", "DiagonalCov", function (object, data_context = NULL) {
-	Matrix::Diagonal(x = object@internal_diag_values)
+	variances <- exp(object@parameters)
+	Matrix::Diagonal(x = variances)
 })
 					   
 
 ##' @rdname compute_log_det_covariance_matrix
 setMethod("compute_log_det_covariance_matrix", "DiagonalCov", function(object, data_context = NULL) {
-	sum(log(object@internal_diag_values))
+	sum(object@parameters)
 })
 
 ##' @rdname compute_inverse_covariance_matrix
 setMethod("compute_inverse_covariance_matrix", "DiagonalCov", function(object, data_context = NULL) {
-	Matrix::Diagonal(x = 1 / object@internal_diag_values)
+	inv_variances <- exp(-object@parameters)
+	Matrix::Diagonal(x = inv_variances)
 })
 
 ##' @rdname get_cholesky_factor
 setMethod("get_cholesky_factor", "DiagonalCov", function(object, data_context = NULL) {
-	Matrix::Diagonal(x = sqrt(object@internal_diag_values))
+	std_devs <- exp(0.5 * object@parameters)
+	Matrix::Diagonal(x = std_devs)
 })
 
 ##' @rdname get_start_values
@@ -217,17 +207,9 @@ setMethod("get_start_values", "DiagonalCov", function(object) {
 	rep(log(1), object@dimension) # Start with log(1) for all variances
 })
 
-##' @rdname validate_parameters
-setMethod("validate_parameters", "DiagonalCov", function(object) {
-	if (any(object@internal_diag_values <= 0)) {
-        	stop("DiagonalCov: All variances must be positive.")
-	}
-    	TRUE
-})
-
 ##' @rdname get_interpretable_parameters
 setMethod("get_interpretable_parameters", "DiagonalCov", function(object) {
-	list(variances = object@internal_diag_values)
+	list(variances = exp(object@parameters))
 })
 
 ##' @rdname is_diagonal
@@ -235,17 +217,23 @@ setMethod("is_diagonal", "DiagonalCov", function(object) {
 	TRUE
 })
 
+##' @rdname get_lower_bounds
+setMethod("get_lower_bounds", "DiagonalCov", function(object) {
+	rep(-Inf, n_parameters(object))
+})
+
 ##' Show Method for DiagonalCov
 ##' 
 ##' Prints a summary of the DiagonalCov Object.
 ##' @param object A `DiagonalCov` object. 
 ##' @export
-setMethod("show", "DiagonalCov", function(object) { 
-    	cat(class(object), "object(dimension:", object@dimension, ")\n")
-	cat(" Variances:", round(object@internal_diag_values, 4), "\n")
-	cat(" Unconstrained parameters:", round(object@parameters, 4), "\n")
+setMethod("show", "DiagonalCov", function(object) {
+	cat(class(object), " object (dimension:", object@dimension, ")\n")
+	try({
+        	variances <- exp(object@parameters)
+        	cat("  Variances:", round(variances, 4), "\n")
+	}, silent = TRUE)
 })
-
 
 ##' Unstructured Covariance Structure
 ##'
@@ -256,18 +244,20 @@ setMethod("show", "DiagonalCov", function(object) {
 ##' such that Sigma = L %*% t(L).
 ##' @export
 setClass("UnstructuredCov",
-	contains = c("VirtualCovariance", "VirtualParameterizationLogChol"),
-	slots = c(
-		dimension = "integer",
-        	internal_L = "dtrMatrix",
-		parameters = "numeric"
-    	),
-    	prototype = list( 
-        	dimension = 0L,
-          	internal_L = new("dtrMatrix", uplo = "L", Dim = c(0L, 0L)),
- 	        parameters = numeric(0)
- 	) 
+	contains = c("VirtualCovariance", "VirtualParameterizationLogChol")
 )
+
+setValidity("UnstructuredCov", function(object) {
+	expected_len <- (object@dimension * (object@dimension + 1)) / 2
+	if (length(object@parameters) != expected_len) {
+        	return(sprintf("Expected %d parameters, but slot has %d.",
+			       expected_len,
+			       length(object@parameters)
+    			)
+		)
+	} 
+	TRUE
+})
     
 
 # Method for UnstructuredCov
@@ -280,56 +270,60 @@ setMethod("n_parameters", "UnstructuredCov", function(object) {
 
 ##' @rdname get_parameters
 setMethod("get_parameters", "UnstructuredCov", function(object) {
-	# First we want to extract elements column-wise from lower triangle
-	L_vec <- as.numeric(object@internal_L[lower.tri(object@internal_L, diag = TRUE)])
-	# Then we get the diagonal indices within the vech-vector.
-	diag_indices <- vech_diag_indices(object@dimension)
-	# Last we apply log transform to diagonal elements. 
-	L_vec[diag_indices] <- log(L_vec[diag_indices])
-	L_vec
+	object@parameters
 })
 
-##' @rdname  set_parameters
-setMethod("set_parameters", "UnstructuredCov", function(object, value) {
-	if (length(value) != n_parameters(object)) {
-		stop("Incorrect number of parameters for UnstructuredCov.")
+##' @rdname set_parameters
+setMethod("set_parameters",
+	signature(object = "UnstructuredCov", value = "numeric"),
+	function(object, value) {
+        	if (length(value) != n_parameters(object)) {
+            stop("Incorrect number of parameters for UnstructuredCov.")
+        }
+        object@parameters <- value
+        object
 	}
-	d <- object@dimension
+)
 
-	L_temp_vec <- value
-	diag_indices <- vech_diag_indices(d)
-	L_temp_vec[diag_indices] <- exp(L_temp_vec[diag_indices])
+##' @rdname set_parameters
+setMethod("set_parameters",
+    signature(object = "UnstructuredCov", value = "matrix"),
+    function(object, value) {
+        d <- object@dimension
+        if (!all(dim(value) == d)) {
+          stop(sprintf("Input matrix must have dimension %d x %d.", d, d))
+        }
+        L_vec <- value[lower.tri(value, diag = TRUE)]
+        diag_indices <- vech_diag_indices(d)
+        L_vec[diag_indices] <- log(L_vec[diag_indices])
 
-	L <- matrix(0, nrow = d, ncol = d)
-	vech_indices <- get_vech_indices(d)
-	L[cbind(vech_indices$i, vech_indices$j)] <- L_temp_vec
-			
-	# Coerce to dense triangular matrix
-	object@internal_L <- as(L, "dtrMatrix")
-    	object@parameters <- value
-    	object
-})
+        object@parameters <- L_vec
+        object
+    }
+)
 
 ##' @rdname compute_covariance_matrix
 setMethod("compute_covariance_matrix", "UnstructuredCov", function(object, data_context = NULL) {
-	object@internal_L %*% t(object@internal_L)
+	L <- get_chol_from_params(object)
+	tcrossprod(L)
 })
-
 
 ##' @rdname compute_log_det_covariance_matrix
 setMethod("compute_log_det_covariance_matrix", "UnstructuredCov", function(object, data_context = NULL) {
-	2 * sum(log(diag(object@internal_L)))
+	diag_indices <- vech_diag_indices(object@dimension)
+	2 * sum(diag(object@parameters)[diag_indices])
 })
 
 #' @rdname compute_inverse_covariance_matrix
 setMethod("compute_inverse_covariance_matrix", "UnstructuredCov", function(object, data_context = NULL) {
-	inv_L <- solve(object@internal_L)
-	t(inv_L) %*% inv_L
+	L <- get_chol_from_params(object)
+	inv_L <- solve(L)
+	crossprod(inv_L)
 })
 
 ##' @rdname get_cholesky_factor
 setMethod("get_cholesky_factor", "UnstructuredCov", function(object, data_context = NULL) {
-	object@internal_L
+	get_chol_from_params(object)
 })
 
 ##' @rdname get_start_values
@@ -338,26 +332,15 @@ setMethod("get_start_values", "UnstructuredCov", function(object) {
 	rep(0, n_parameters(object)) # Assuming 0 for off-diagonals and 0 for log(1) diagonals
 })
 
-##' @rdname validate_parameters
-setMethod("validate_parameters", "UnstructuredCov", function(object) {
-
-	# Check if the matrix is positive definite (implied by valid Cholesky factor L)
-	# The construction from L %*% t(L) guarantees positive semi-definiteness.
-	# If any diagonal element of L (before log transform) was 0, it would not be invertible.
-	# The exp() transformation from log-params ensures positive diagonals.
-	# No explicit check needed if L is constructed correctly from unconstrained parameters.
-TRUE
-})
-
 ##' @rdname get_interpretable_parameters
 setMethod("get_interpretable_parameters", "UnstructuredCov", function(object) {
 	Sigma <- compute_covariance_matrix(object)
+	st_devs <- sqrt(diag(Sigma))
 
 	list(
-		covariance_matrix = Sigma,
-		correlation_matrix = cov2cor(Sigma)
+		st_devs = st_devs,
+		covariance_matrix = Sigma	
 	)
-
 })
 
 ##' @rdname is_diagonal
@@ -368,7 +351,7 @@ setMethod("is_diagonal", "UnstructuredCov", function(object) {
 
 ##' @rdname get_lower_bounds
 setMethod("get_lower_bounds", "UnstructuredCov", function(object) {
-    	# The log-Cholesky parameterization is unconstrained.
+    	# The log-Cholesky parameterization is unconstrained.	
     	rep(-Inf, n_parameters(object))
 })
 
@@ -377,12 +360,14 @@ setMethod("get_lower_bounds", "UnstructuredCov", function(object) {
 ##' Prints a summary of the UnstructuredCov object.
 ##' @param object A `UnstructuredCov` object.
 ##' @export
-setMethod("show", "UnstructuredCov", function(object) {
+    setMethod("show", "UnstructuredCov", function(object) {
     cat(class(object), " object (dimension:", object@dimension, ")\n")
-    # Use try() in case matrix is 0-dimensional
     try({
-        cat("  Covariance Matrix (top-left 3x3 if larger):\n")
-        print(round(compute_covariance_matrix(object)[1:min(3, object@dimension), 1:min(3, object@dimension)], 4))
-        cat("  Unconstrained parameters (first 5 if more):", round(head(object@parameters, 5), 4), "\n")
+        params <- get_interpretable_parameters(object)
+        cat("  Standard Deviations:", round(params$st_devs, 4), "\n")
+        if (object@dimension > 1) {
+            cat("  Covariance Matrix:\n")
+            print(round(params$covariance_matrix, 4))
+        }
     }, silent = TRUE)
-})
+})    
