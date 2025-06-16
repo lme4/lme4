@@ -11,9 +11,9 @@
 ##' @return A numeric vector of integer indices for the diagonal elements.
 ##' @keywords internal
 vech_diag_indices <- function(d) {
-	if (d == 0) {
-		return(integer(0))
-  }
+	if (d == 0) return(integer(0))
+	if (d == 1) return(1L)
+  
 	# The position of the k-th diagonal is 1 + the number of elements
 	# in all preceding columns (d, d-1, ..., d-k+2).
 	1L + c(0, cumsum(d:2))
@@ -28,9 +28,9 @@ vech_diag_indices <- function(d) {
 ##' @return A list with components 'i' (row indices) and 'j' (column indices).
 ##' @keywords internal
 get_vech_indices <- function(d) {
-	if (d == 0) {
-		return(list(i = integer(0), j = integer(0)))
-	}
+   	if (d == 0) return(integer(0))
+    	if (d == 1) return(1L) 
+
 	list(
 		i = unlist(lapply(1:d, function(j) j:d)),
 		j = unlist(lapply(1:d, function(j) rep(j, d - j + 1)))
@@ -56,8 +56,12 @@ get_chol_from_params <- function(object) {
 	L_vec[diag_indices] <- exp(L_vec[diag_indices])
 
 	L <- matrix(0, nrow = d, ncol = d)
+	if (d == 1) {
+		L[1,1] <- L_vec
+	} else {
 	vech_indices <- get_vech_indices(d)
 	L[cbind(vech_indices$i, vech_indices$j)] <- L_vec
+	}
 
 	as(L, "dtrMatrix")
 }
