@@ -311,7 +311,7 @@ setMethod("compute_covariance_matrix", "UnstructuredCov", function(object, data_
 ##' @rdname compute_log_det_covariance_matrix
 setMethod("compute_log_det_covariance_matrix", "UnstructuredCov", function(object, data_context = NULL) {
 	diag_indices <- vech_diag_indices(object@dimension)
-	2 * sum(diag(object@parameters)[diag_indices])
+	2 * sum(object@parameters[diag_indices])
 })
 
 #' @rdname compute_inverse_covariance_matrix
@@ -361,7 +361,7 @@ setMethod("get_lower_bounds", "UnstructuredCov", function(object) {
 ##' @param object A `UnstructuredCov` object.
 ##' @export
     setMethod("show", "UnstructuredCov", function(object) {
-    cat(class(object), " object (dimension:", object@dimension, ")\n")
+    cat(sprintf("%s object (dimension: %d)\n", class(object), object@dimension))
     try({
         params <- get_interpretable_parameters(object)
         cat("  Standard Deviations:", round(params$st_devs, 4), "\n")
