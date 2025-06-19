@@ -65,3 +65,19 @@ get_chol_from_params <- function(object) {
 
 	as(L, "dtrMatrix")
 }
+
+##' @title Get Interpretable Parameters for Compound Symmetry
+##'
+##' @description Internal helper function to back-transform the unconstrained
+##' parameters of a `CompoundSymmetryCov` object into their interpretable
+##' form (variance and correlation).
+##'
+##' @param object A `CompoundSymmetryCov` object.
+##' @return A named list with two components: `variance` and `correlation`.
+##' @keywords internal
+get_cs_interpretable_params <- function(object) {
+    list(
+        variance = exp(object@parameters[1]),
+        correlation = tanh(object@parameters[2])
+    )
+}
