@@ -370,4 +370,101 @@ setMethod("get_lower_bounds", "UnstructuredCov", function(object) {
             print(round(params$covariance_matrix, 4))
         }
     }, silent = TRUE)
-})    
+})  
+
+
+# Compound Symmetry Covariance Structure 
+
+##' Compound Symmetry Covariance Structure
+##'
+##' Represents a compound symmetric (or exchangeable) covariance matrix,
+##' characterized by a single common variance and a single common correlation
+##' for all pairs of elements. This structure is parameterized by two
+##' unconstrained values: the log of the variance and the inverse hyperbolic
+##' tangent (`atanh`) of the correlation.
+##'
+##' @export
+setClass("CompoundSymmetryCov",
+    contains = c("VirtualCovariance", "VirtualParameterizationLogScaleBoundedCor")
+)
+setValidity("CompoundSymmetryCov", function(object) {
+    if(length(object@parameters) != 2) {
+        return("Expected 2 parameters (log-variance, atanh-correlation).")
+    }
+
+    d <- object@dimension
+    if (d > 1) {
+        rho <- tanh(object@parameters[2])
+        if (rho <= -1 / (d - 1)) {
+            return(sprintf("Implied correlation (rho) of %f is not valid for dimension %d. Must be >%f.", 
+                           rho, d, -1 / (d - 1)))
+        }
+    }
+    TRUE
+})
+
+
+##' @rdname n_parameters 
+setMethod("n_parameters", "CompoundSymmetryCov", function(object) {
+    2L 
+})
+
+##' @rdname get_parameters
+setMethod("get_parameters", "CompoundSymmetryCov", function(object) {
+    object@parameters
+})
+
+##' @rdname set_parameters
+setMethod("set_parameters", "CompoundSymmetryCov", function(object,value) {
+    if (length(value) != 2) {
+        stop("Incorrect number of parameters for CompoundSymmetryCov. Expected 2.")
+    }
+    object@parameters <- value 
+    validObject(object)
+    object
+})
+
+##' @rdname get_interpretable_parameters
+setMethod("get_interpretable_parameters", "CompoundSymmetryCov", function(object, data_context = NULL) {
+    get_cs_interpretable_params(object)
+})
+
+##' @rdname compute_covariance_matrix
+setMethod("compute_covariance_matrix", "CompoundSymmetryCov", function(object, data_context = NULL) {    
+    d <- object@dimension
+    if (d == 0) return (new("dsyMatrix", Dim = c(0L, 0L)))
+
+    params <- get_cs_interpretable_params(object)
+    sigma_sq <- params$variance
+    rho <- params$correlation 
+
+    I <- Diagonal(d)
+    J <- Matrix(1, nrow = d, ncol = d)
+    
+    Sigma <- sigma_sq * ((1 - rho) * I + rho * J)
+    Sigma 
+  })
+
+##' @rdname get_cholesky_factor
+setMethod("get_cholesky_factor", "CompoundSymmetryCov", function(object, data_context = NULL) {
+    chol(compute_covariance_matrix(object))
+})
+
+
+##' @rdname compute_log_det_covariance_matrix 
+setMethod("compute_log_det_covariance_matrix", "CompoundSymmetryCov", function(object, data_context = NULL) {
+    d <- object@dimension
+    if (d == 0) return(0)
+
+    params <- get_cs_interpretable_params(object)
+
+    # See: Searle, S. R. (1982). Matrix Algebra Useful for Statistics. Wiley. (Specifically, in sections on patterned matrices).
+    # det(Sigma) = [sigma^2(1 - rho)]^(d-1) * [sigma^2(1 + (d - 1)rho)]
+    # Formula: log((sigma_sq*(1-rho))^(d-1) * (sigma_sq*(1+(d-1)*rho)))
+
+    (d - 1) * log(params$variance * (1 - params$correlation)) + log(params$variance * (1 + (d - 1) * params$correlation))
+})
+
+##' @rdname compute_inverse_covariance_matrix 
+
+
