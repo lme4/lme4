@@ -387,6 +387,6 @@ test_that("catch matrix-valued responses", {
 
 test_that("update works as expected", {
 	m <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy)
-	expect_equivalent(fitted(update(m, .~.-(0 + Days | Subject))), 
+	expect_equivalent(fitted(update(m, .~.-(0 + Days | Subject))),
                           fitted(lmer(Reaction ~ Days + (1|Subject), sleepstudy)))
 })
