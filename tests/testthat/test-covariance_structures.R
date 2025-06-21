@@ -47,6 +47,16 @@ test_that("DiagonalCov computations are correct", {
   	expect_equal(compute_log_det_covariance_matrix(diag_cov_obj), sum(log_variances))
 })
 
+test_that("show method for DiagonalCov works", {
+    d <- 3L
+    st_devs <- c(2, 3.5, 4)
+    params <- log(st_devs^2)
+    obj <- new("DiagonalCov", dimension = d, parameters = params)
+
+    expect_output(show(obj), "DiagonalCov\\s+object \\(dimension: 3\\)")
+    expect_output(show(obj), "  Standard Deviations: 2\\.0000 3\\.5000 4\\.0000")
+})
+
 context("Testing DiagonalCov Edge Cases")
 
 test_that("DiagonalCov works correctly for dimension = 1", {
@@ -56,7 +66,7 @@ test_that("DiagonalCov works correctly for dimension = 1", {
   	expect_equal(compute_log_det_covariance_matrix(obj), log(4))
 })
 
-test_that("DiagonalCov handles dimension = 0 gracefully", {
+test_that("DiagonalCov handles dimension = 0", {
   	d <- 0L
   	obj <- new("DiagonalCov", dimension = d, parameters = numeric(0))
   	expect_true(validObject(obj))
@@ -113,7 +123,7 @@ test_that("UnstructuredCov matrix computations are correct", {
     expect_equal(as.matrix(compute_inverse_covariance_matrix(obj)), solve(Sigma))
 })
 
-test_that("UnstructuredCov metadata and show method work", {
+test_that("UnstructuredCov metadata methods work", {
   	d <- 3L
   	n_params <- d * (d + 1) / 2
   	obj <- new("UnstructuredCov", dimension = d, parameters = rep(0, n_params))
@@ -125,11 +135,17 @@ test_that("UnstructuredCov metadata and show method work", {
    	params <- get_interpretable_parameters(obj)
   	expect_equal(params$st_devs, c(1, 1, 1))
   	expect_equal(as.matrix(params$covariance_matrix), diag(3))
-
-    	expect_output(show(obj), "UnstructuredCov object \\(dimension: 3\\)")
-  	expect_output(show(obj), "Standard Deviations: 1 1 1")
 })
 
+test_that("show method for UnstructuredCov works", {
+    d <- 2L
+    # Corresponds to L = matrix(c(2, 0.5, 0, 3), 2)
+    params <- c(log(2), 0.5, log(3))
+    obj <- new("UnstructuredCov", dimension = d, parameters = params)
+
+    expect_output(show(obj), "UnstructuredCov\\s+object \\(dimension: 2\\)")
+    expect_output(show(obj), "  Standard Deviations: 2\\.0000 3\\.0414")
+})
 
 context("Testing UnstructuredCov Edge Cases")
 
@@ -179,30 +195,30 @@ test_that("UnstructuredCov handles singular matrices", {
   	expect_error(compute_inverse_covariance_matrix(obj_singular), "singular")
 })
 
-# Tests for CompoundSymmetryCov
+# Tests for HomogeneousCSCov
 
-    context("Testing CompoundSymmetryCov Class and Methods")
+    context("Testing HomogeneousCSCov Class and Methods")
 
-    test_that("CompoundSymmetryCov object creation and validity works", {
+    test_that("HomogeneousCSCov object creation and validity works", {
 
     d <- 3L 
     params <- c(log(4), atanh(0.5))
-    obj <- new("CompoundSymmetryCov", dimension = d, parameters = params)
+    obj <- new("HomogeneousCSCov", dimension = d, parameters = params)
 
-    expect_s4_class(obj, "CompoundSymmetryCov")
+    expect_s4_class(obj, "HomogeneousCSCov")
     expect_true(validObject(obj))
     expect_equal(obj@dimension, d)
     expect_equal(get_parameters(obj), params)
 
-    expect_error(new("CompoundSymmetryCov", dimension = d, parameters = rep(0, 3)))
+    expect_error(new("HomogeneousCSCov", dimension = d, parameters = rep(0, 3)))
 
     invalid_rho_params <- c(log(4), atanh(-0.6))
-    expect_error(new("CompoundSymmetryCov", dimension = d, paramters = invalid_rho_params))
+    expect_error(new("HomogeneousCSCov", dimension = d, paramters = invalid_rho_params))
 })
 
-test_that("CompoundSymmetryCov parameter setting and metadata work", {
+test_that("HomogeneousCSCov parameter setting and metadata work", {
     d <- 4L 
-    obj <- new("CompoundSymmetryCov", dimension = d, parameters = c(0,0))
+    obj <- new("HomogeneousCSCov", dimension = d, parameters = c(0,0))
 
     new_params <- c(log(10), atanh(0.25))
     obj <- set_parameters(obj, new_params)
@@ -218,53 +234,167 @@ test_that("CompoundSymmetryCov parameter setting and metadata work", {
     expect_true(is_diagonal(obj_diag))
 })
 
-test_that("CompoundSymmetryCov computations are correct", {
+test_that("HomogeneousCSCov computations are correct", {
     d <- 3L
-    variance <- 4
+    st_dev <- 2
     rho <- 0.5
-    params <- c(log(variance), atanh(rho))
-    obj <- new("CompoundSymmetryCov", dimension = d, parameters = params)
+    params <- c(log(st_dev^2), atanh(rho))
+    obj <- new("HomogeneousCSCov", dimension = d, parameters = params)
 
     interp_params <- get_interpretable_parameters(obj)
-    expect_equal(interp_params$variance, variance)
+    expect_equal(interp_params$st_dev, st_dev)
     expect_equal(interp_params$correlation, rho)
 
-    Sigma_expected <- matrix(rho * variance, d, d)
-    diag(Sigma_expected) <- variance 
+    Sigma_expected <- matrix(rho * st_dev^2, d, d)
+    diag(Sigma_expected) <- st_dev^2
 
     computed_sigma <- compute_covariance_matrix(obj)
     expect_equal(as.matrix(computed_sigma), Sigma_expected)
+    expect_equal(as.matrix(compute_inverse_covariance_matrix(obj)), solve(Sigma_expected))
+    expect_equal(compute_log_det_covariance_matrix(obj), as.numeric(determinant(Sigma_expected)$modulus))
 })
 
-context("Testing CompoundSymmetryCov Edge Cases")
+test_that("show method for HomogeneousCSCov works", {
+    d <- 2L
+    st_dev <- 2
+    rho <- 0.5
+    params <- c(log(st_dev^2), atanh(rho))
+    obj <- new("HomogeneousCSCov", dimension = d, parameters = params)
 
-test_that("CompoundSymmetryCov works correctly for dimension = 1", {
+    expect_output(show(obj), "HomogeneousCSCov\\s+object \\(dimension: 2\\)")
+    expect_output(show(obj), "  Standard Deviation \\(sigma\\): 2\\.0000")
+    expect_output(show(obj), "  Correlation \\(rho\\): 0\\.5000")
+})
+context("Testing HomogeneousCSCov Edge Cases")
+
+test_that("HomogeneousCSCov works correctly for dimension = 1", {
     d <- 1L 
-    obj <- new("CompoundSymmetryCov", dimension = d, parameters = c(log(9), atanh(0.5)))
+    obj <- new("HomogeneousCSCov", dimension = d, parameters = c(log(9), atanh(0.5)))
     expect_true(validObject(obj))
 
     expect_equal(as.matrix(compute_covariance_matrix(obj)), matrix(9))
     expect_equal(compute_log_det_covariance_matrix(obj), log(9))
 })
 
-test_that("CompoundSymmetryCov handles dimension = 0", {
+test_that("HomogeneousCSCov handles dimension = 0", {
     d <- 0L 
-    obj <- new("CompoundSymmetryCov", dimension = d, parameters = c(0,0))
+    obj <- new("HomogeneousCSCov", dimension = d, parameters = c(0,0))
     expect_true(validObject(obj))
     expect_equal(nrow(compute_covariance_matrix(obj)), 0)
     expect_equal(compute_log_det_covariance_matrix(obj), 0)
 })
 
-test_that("CompoundSymmetryCov validation catches invalid rho", {
+test_that("HomogeneousCSCov validation catches invalid rho", {
     d <- 4L 
     invalid_rho <- -1 / (d - 1) # matrix becomes positive semi-definite here. 
     invalid_params <- c(log(1), atanh(invalid_rho)) 
 
-    obj <- new("CompoundSymmetryCov", dimension = d, parameters = c(0, 0))
+    obj <- new("HomogeneousCSCov", dimension = d, parameters = c(0, 0))
     expect_error(set_parameters(obj, invalid_params))
 })
 
+# Tests for HeterogeneousCSCov
+
+context("Testing HeterogeneousCSCov Class and Methods")
+
+test_that("HeterogeneousCSCov object creation and validity works", {
+    d <- 3L
+    params <- c(log(c(2, 4, 9)), atanh(0.5)) # 3 variances, 1 correlation
+    obj <- new("HeterogeneousCSCov", dimension = d, parameters = params)
+
+    expect_s4_class(obj, "HeterogeneousCSCov")
+    expect_true(validObject(obj))
+    expect_equal(n_parameters(obj), d + 1)
+  
+    expect_error(new("HeterogeneousCSCov", dimension = d, parameters = rep(0, d)))
+    expect_error(new("HeterogeneousCSCov", dimension = d, parameters = rep(0, d + 2))) 
+
+    invalid_rho_params <- c(log(c(2, 4, 9)), atanh(-0.6))
+    expect_error(new("HeterogeneousCSCov", dimension = d, parameters = invalid_rho_params))
+})
+
+test_that("HeterogeneousCSCov parameter setting and metadata work", {
+    d <- 4L
+    obj <- new("HeterogeneousCSCov", dimension = d, parameters = rep(0, d + 1))
+
+    new_params <- c(log(c(1, 2, 3, 4)), atanh(0.25))
+    obj <- set_parameters(obj, new_params)
+    expect_equal(get_parameters(obj), new_params)
+    expect_error(set_parameters(obj, c(1, 2, 3))) # Incorrect length
+
+    expect_equal(n_parameters(obj), d + 1)
+    expect_equal(get_start_values(obj), c(rep(0, d), 0.1))
+    expect_false(is_diagonal(obj))
+    expect_equal(get_lower_bounds(obj), rep(-Inf, d + 1))
+
+    obj_diag <- set_parameters(obj, c(log(c(1, 2, 3, 4)), 0))
+    expect_true(is_diagonal(obj_diag))
+})
 
 
-    
+test_that("HeterogeneousCSCov computations are correct", {
+    d <- 3L
+    st_devs <- c(2, 3, 4)
+    rho <- 0.5
+    params <- c(log(st_devs^2), atanh(rho))
+    obj <- new("HeterogeneousCSCov", dimension = d, parameters = params)
 
+    interp_params <- get_interpretable_parameters(obj)
+    expect_equal(interp_params$st_devs, st_devs)
+    expect_equal(interp_params$correlation, rho)
+
+    # Expected matrix from formula: Sigma = D * R * D
+    D <- diag(st_devs)
+    R <- matrix(rho, d, d); diag(R) <- 1
+    Sigma_expected <- D %*% R %*% D
+
+    expect_equal(as.matrix(compute_covariance_matrix(obj)), Sigma_expected)
+    expect_equal(as.matrix(get_cholesky_factor(obj)), chol(Sigma_expected))
+    expect_equal(as.matrix(compute_inverse_covariance_matrix(obj)), solve(Sigma_expected))
+    expect_equal(compute_log_det_covariance_matrix(obj), as.numeric(determinant(Sigma_expected)$modulus))
+})
+
+test_that("show method for HeterogeneousCSCov works", {
+    d <- 2L
+    st_devs <- c(1, 2)
+    rho <- 0.5
+    params <- c(log(st_devs^2), atanh(rho))
+    obj <- new("HeterogeneousCSCov", dimension = d, parameters = params)
+
+    expect_output(show(obj), "HeterogeneousCSCov\\s+object \\(dimension: 2\\)")
+    expect_output(show(obj), "  Standard Deviations: 1\\.0000 2\\.0000")
+    expect_output(show(obj), "  Correlation \\(rho\\): 0\\.5000")
+})
+
+context("Testing HeterogeneousCSCov Edge Cases")
+
+test_that("HeterogeneousCSCov works correctly for dimension = 1", {
+    d <- 1L
+    obj <- new("HeterogeneousCSCov", dimension = d, parameters = c(log(9), atanh(0.5)))
+    expect_true(validObject(obj))
+
+    expect_equal(as.matrix(compute_covariance_matrix(obj)), matrix(9))
+    expect_equal(compute_log_det_covariance_matrix(obj), log(9))
+})
+
+test_that("HeterogeneousCSCov handles dimension = 0", {
+    d <- 0L
+    obj <- new("HeterogeneousCSCov", dimension = d, parameters = numeric(0))
+    obj <- new("HeterogeneousCSCov", dimension = d)
+    obj@parameters <- numeric(0)
+
+    expect_true(validObject(obj))
+    expect_equal(nrow(compute_covariance_matrix(obj)), 0)
+    expect_equal(compute_log_det_covariance_matrix(obj), 0)
+    expect_equal(nrow(compute_inverse_covariance_matrix(obj)), 0)
+})
+
+test_that("HeterogeneousCSCov validation catches invalid rho", {
+    d <- 4L
+    # Matrix is singular if rho = -1/(d-1)
+    invalid_rho <- -1 / (d - 1)
+    invalid_params <- c(rep(log(1), d), atanh(invalid_rho))
+
+    obj <- new("HeterogeneousCSCov", dimension = d, parameters = rep(0, d + 1)) 
+    expect_error(set_parameters(obj, invalid_params))
+})
