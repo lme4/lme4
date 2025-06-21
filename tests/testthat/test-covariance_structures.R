@@ -108,12 +108,9 @@ test_that("UnstructuredCov matrix computations are correct", {
 	Sigma <- L_expected %*% t(L_expected)
 
    	expect_equal(as.matrix(get_cholesky_factor(obj)), L_expected)
-
-    	expect_equal(as.matrix(compute_covariance_matrix(obj)), Sigma)
-
-      	expect_equal(compute_log_det_covariance_matrix(obj), 2 * (log(2) + log(3)))
-
-    	expect_equal(as.matrix(compute_inverse_covariance_matrix(obj)), solve(Sigma))
+    expect_equal(as.matrix(compute_covariance_matrix(obj)), Sigma)
+    expect_equal(compute_log_det_covariance_matrix(obj), 2 * (log(2) + log(3)))
+    expect_equal(as.matrix(compute_inverse_covariance_matrix(obj)), solve(Sigma))
 })
 
 test_that("UnstructuredCov metadata and show method work", {
@@ -181,4 +178,93 @@ test_that("UnstructuredCov handles singular matrices", {
   	# Inverse should not be computable
   	expect_error(compute_inverse_covariance_matrix(obj_singular), "singular")
 })
+
+# Tests for CompoundSymmetryCov
+
+    context("Testing CompoundSymmetryCov Class and Methods")
+
+    test_that("CompoundSymmetryCov object creation and validity works", {
+
+    d <- 3L 
+    params <- c(log(4), atanh(0.5))
+    obj <- new("CompoundSymmetryCov", dimension = d, parameters = params)
+
+    expect_s4_class(obj, "CompoundSymmetryCov")
+    expect_true(validObject(obj))
+    expect_equal(obj@dimension, d)
+    expect_equal(get_parameters(obj), params)
+
+    expect_error(new("CompoundSymmetryCov", dimension = d, parameters = rep(0, 3)))
+
+    invalid_rho_params <- c(log(4), atanh(-0.6))
+    expect_error(new("CompoundSymmetryCov", dimension = d, paramters = invalid_rho_params))
+})
+
+test_that("CompoundSymmetryCov parameter setting and metadata work", {
+    d <- 4L 
+    obj <- new("CompoundSymmetryCov", dimension = d, parameters = c(0,0))
+
+    new_params <- c(log(10), atanh(0.25))
+    obj <- set_parameters(obj, new_params)
+    expect_error(set_parameters(obj, c(1,2,3)))
+    expect_equal(get_parameters(obj), new_params)
+
+    expect_equal(n_parameters(obj), 2)
+    expect_equal(get_start_values(obj), c(0, 0.1))
+    expect_false(is_diagonal(obj))
+    expect_equal(get_lower_bounds(obj), rep(-Inf, 2))
+
+    obj_diag <- set_parameters(obj, c(1, 0))
+    expect_true(is_diagonal(obj_diag))
+})
+
+test_that("CompoundSymmetryCov computations are correct", {
+    d <- 3L
+    variance <- 4
+    rho <- 0.5
+    params <- c(log(variance), atanh(rho))
+    obj <- new("CompoundSymmetryCov", dimension = d, parameters = params)
+
+    interp_params <- get_interpretable_parameters(obj)
+    expect_equal(interp_params$variance, variance)
+    expect_equal(interp_params$correlation, rho)
+
+    Sigma_expected <- matrix(rho * variance, d, d)
+    diag(Sigma_expected) <- variance 
+
+    computed_sigma <- compute_covariance_matrix(obj)
+    expect_equal(as.matrix(computed_sigma), Sigma_expected)
+})
+
+context("Testing CompoundSymmetryCov Edge Cases")
+
+test_that("CompoundSymmetryCov works correctly for dimension = 1", {
+    d <- 1L 
+    obj <- new("CompoundSymmetryCov", dimension = d, parameters = c(log(9), atanh(0.5)))
+    expect_true(validObject(obj))
+
+    expect_equal(as.matrix(compute_covariance_matrix(obj)), matrix(9))
+    expect_equal(compute_log_det_covariance_matrix(obj), log(9))
+})
+
+test_that("CompoundSymmetryCov handles dimension = 0", {
+    d <- 0L 
+    obj <- new("CompoundSymmetryCov", dimension = d, parameters = c(0,0))
+    expect_true(validObject(obj))
+    expect_equal(nrow(compute_covariance_matrix(obj)), 0)
+    expect_equal(compute_log_det_covariance_matrix(obj), 0)
+})
+
+test_that("CompoundSymmetryCov validation catches invalid rho", {
+    d <- 4L 
+    invalid_rho <- -1 / (d - 1) # matrix becomes positive semi-definite here. 
+    invalid_params <- c(log(1), atanh(invalid_rho)) 
+
+    obj <- new("CompoundSymmetryCov", dimension = d, parameters = c(0, 0))
+    expect_error(set_parameters(obj, invalid_params))
+})
+
+
+
+    
 
