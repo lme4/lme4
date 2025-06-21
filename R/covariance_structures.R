@@ -228,10 +228,12 @@ setMethod("get_lower_bounds", "DiagonalCov", function(object) {
 ##' @param object A `DiagonalCov` object. 
 ##' @export
 setMethod("show", "DiagonalCov", function(object) {
-	cat(class(object), " object (dimension:", object@dimension, ")\n")
+	line1 <- sprintf("%s object (dimension: %d)", class(object), object@dimension)
+    cat(line1, "\n")
 	try({
-        	variances <- exp(object@parameters)
-        	cat("  Variances:", round(variances, 4), "\n")
+            std_devs <- exp(0.5 * object@parameters)
+            formatted_std_devs <- paste(sprintf("%.4f", std_devs), collapse = " ")
+        	cat("  Standard Deviations:", formatted_std_devs, "\n")
 	}, silent = TRUE)
 })
 
@@ -345,14 +347,12 @@ setMethod("get_interpretable_parameters", "UnstructuredCov", function(object) {
 
 ##' @rdname is_diagonal
 setMethod("is_diagonal", "UnstructuredCov", function(object) {
-
 	FALSE # By definition
 })
 
 ##' @rdname get_lower_bounds
 setMethod("get_lower_bounds", "UnstructuredCov", function(object) {
-    	# The log-Cholesky parameterization is unconstrained.	
-    	rep(-Inf, n_parameters(object))
+    rep(-Inf, n_parameters(object))
 })
 
 ##' Show Method for UnstructuredCov
@@ -360,22 +360,25 @@ setMethod("get_lower_bounds", "UnstructuredCov", function(object) {
 ##' Prints a summary of the UnstructuredCov object.
 ##' @param object A `UnstructuredCov` object.
 ##' @export
-    setMethod("show", "UnstructuredCov", function(object) {
-    cat(sprintf("%s object (dimension: %d)\n", class(object), object@dimension))
+setMethod("show", "UnstructuredCov", function(object) {
+    line1 <- sprintf("%s object (dimension: %d)", class(object), object@dimension)
+    cat(line1, "\n")
     try({
         params <- get_interpretable_parameters(object)
-        cat("  Standard Deviations:", round(params$st_devs, 4), "\n")
-        if (object@dimension > 1) {
-            cat("  Covariance Matrix:\n")
-            print(round(params$covariance_matrix, 4))
-        }
+        st_devs_formatted <- paste(sprintf("%.4f", params$st_devs), collapse = " ")
+        cat("  Standard Deviations:", st_devs_formatted, "\n")
     }, silent = TRUE)
-})  
+})
 
+# Compound Symmetry Covariance structure 
 
-# Compound Symmetry Covariance Structure 
+##' Virtual Class for Compound Symmetry Structure 
+##' @export 
+setClass("VirtualCompoundSymmetry",
+    contains = c("VirtualCovariance", "VirtualParameterizationLogScaleBoundedCor")
+)
 
-##' Compound Symmetry Covariance Structure
+##' Homegeneous Compound Symmetry Covariance Structure
 ##'
 ##' Represents a compound symmetric covariance matrix,
 ##' characterized by a single common variance and a single common correlation
@@ -384,10 +387,11 @@ setMethod("get_lower_bounds", "UnstructuredCov", function(object) {
 ##' tangent (`atanh`) of the correlation.
 ##'
 ##' @export
-setClass("CompoundSymmetryCov",
+setClass("HomogeneousCSCov",
     contains = c("VirtualCovariance", "VirtualParameterizationLogScaleBoundedCor")
 )
-setValidity("CompoundSymmetryCov", function(object) {
+
+setValidity("HomogeneousCSCov", function(object) {
     if(length(object@parameters) != 2) {
         return("Expected 2 parameters (log-variance, atanh-correlation).")
     }
@@ -405,19 +409,19 @@ setValidity("CompoundSymmetryCov", function(object) {
 
 
 ##' @rdname n_parameters 
-setMethod("n_parameters", "CompoundSymmetryCov", function(object) {
+setMethod("n_parameters", "HomogeneousCSCov", function(object) {
     2L 
 })
 
 ##' @rdname get_parameters
-setMethod("get_parameters", "CompoundSymmetryCov", function(object) {
+setMethod("get_parameters", "HomogeneousCSCov", function(object) {
     object@parameters
 })
 
 ##' @rdname set_parameters
-setMethod("set_parameters", "CompoundSymmetryCov", function(object,value) {
+setMethod("set_parameters", "HomogeneousCSCov", function(object,value) {
     if (length(value) != 2) {
-        stop("Incorrect number of parameters for CompoundSymmetryCov. Expected 2.")
+        stop("Incorrect number of parameters for HomogeneousCSCov. Expected 2.")
     }
     object@parameters <- value 
     validObject(object)
@@ -425,17 +429,17 @@ setMethod("set_parameters", "CompoundSymmetryCov", function(object,value) {
 })
 
 ##' @rdname get_interpretable_parameters
-setMethod("get_interpretable_parameters", "CompoundSymmetryCov", function(object) {
-    get_cs_interpretable_params(object)
+setMethod("get_interpretable_parameters", "HomogeneousCSCov", function(object) {
+    get_cs_interpretable_parameters(object)
 })
 
 ##' @rdname compute_covariance_matrix
-setMethod("compute_covariance_matrix", "CompoundSymmetryCov", function(object, data_context = NULL) {    
+setMethod("compute_covariance_matrix", "HomogeneousCSCov", function(object, data_context = NULL) {    
     d <- object@dimension
     if (d == 0) return (new("dsyMatrix", Dim = c(0L, 0L)))
 
-    params <- get_cs_interpretable_params(object)
-    sigma_sq <- params$variance
+    params <- get_cs_interpretable_parameters(object)
+    sigma_sq <- params$st_dev^2
     rho <- params$correlation 
 
     I <- Diagonal(d)
@@ -446,23 +450,24 @@ setMethod("compute_covariance_matrix", "CompoundSymmetryCov", function(object, d
   })
 
 ##' @rdname get_cholesky_factor
-setMethod("get_cholesky_factor", "CompoundSymmetryCov", function(object, data_context = NULL) {
+setMethod("get_cholesky_factor", "HomogeneousCSCov", function(object, data_context = NULL) {
     chol(compute_covariance_matrix(object))
 })
 
 
 ##' @rdname compute_log_det_covariance_matrix 
-setMethod("compute_log_det_covariance_matrix", "CompoundSymmetryCov", function(object, data_context = NULL) {
+setMethod("compute_log_det_covariance_matrix", "HomogeneousCSCov", function(object, data_context = NULL) {
     d <- object@dimension
     if (d == 0) return(0)
 
-    params <- get_cs_interpretable_params(object)
-
+    params <- get_cs_interpretable_parameters(object)
+    sigma_sq <- params$st_dev^2
+    rho <- params$correlation
     # See: Searle, S. R. (1982). Matrix Algebra Useful for Statistics. Wiley. (Specifically, in sections on patterned matrices).
     # det(Sigma) = [sigma^2(1 - rho)]^(d-1) * [sigma^2(1 + (d - 1)rho)]
     # Formula: log((sigma_sq*(1-rho))^(d-1) * (sigma_sq*(1+(d-1)*rho)))
 
-    (d - 1) * log(params$variance * (1 - params$correlation)) + log(params$variance * (1 + (d - 1) * params$correlation))
+    (d - 1) * log(sigma_sq * (1 - rho)) + log(sigma_sq * (1 + (d - 1) * rho))
 })
 
 ##' @rdname compute_inverse_covariance_matrix 
@@ -479,56 +484,195 @@ setMethod("compute_log_det_covariance_matrix", "CompoundSymmetryCov", function(o
 ##' symmetric matrix is also a compound symmetric matrix with new diagonal and
 ##' off-diagonal elements, which are calculated here as `val_A` and `val_B`.
 ##' The final inverse is then computed as `(1/variance) * R^-1`.
-setMethod("compute_inverse_covariance_matrix", "CompoundSymmetryCov", function(object, data_context = NULL) {
+setMethod("compute_inverse_covariance_matrix", "HomogeneousCSCov", function(object, data_context = NULL) {
     d <- object@dimension 
     if (d == 0) return(new("dsyMatrix", Dim = c(0L, 0L)))
 
-    params <- get_cs_interpretable_params(object)
-    sigma_sq <- params$variance
+    params <- get_cs_interpretable_parameters(object)
+    sigma_sq <- params$st_dev^2
     rho <- params$correlation
 
     common_divisor <- (1 - rho) * (1 + (d - 1) * rho)
     Val_A <- (1 + (d - 2) * rho) / common_divisor
-    Val_B <- rho/ common_divisor
+    Val_B <- -rho / common_divisor
    
-    Inv_R <- Matrix(val_B, nrow = d, ncol = d)
+    Inv_R <- Matrix(Val_B, nrow = d, ncol = d)
     diag(Inv_R) <- Val_A 
 
-    Sigma_Inv <- (1/sigma_sq) * Inv_R
+    Sigma_Inv <- (1 / sigma_sq) * Inv_R
     Sigma_Inv 
-
 })
 
 ##' @rdname get_start_values
-setMethod("get_start_values", "CompoundSymmetryCov", function(object) {
+setMethod("get_start_values", "HomogeneousCSCov", function(object) {
     # variance = 1 -> log(1) = 0
     # correlation = 0.1 -> atanh(0.1) approx 0.1
     c(0, 0.1)
 })
 
 ##' @rdname get_lower_bounds
-setMethod("get_lower_bounds", "CompoundSymmetryCov", function(object) {
+setMethod("get_lower_bounds", "HomogeneousCSCov", function(object) {
     rep(-Inf, 2)
 })
 
 ##' @rdname is_diagonal 
-setMethod("is_diagonal", "CompoundSymmetryCov", function(object) {
+setMethod("is_diagonal", "HomogeneousCSCov", function(object) {
     object@parameters[2] == 0 # only diagonal if rho is exactly 0. 
 })
 
-##' Show Method for CompoundSymmetryCov
+##' Show Method for  HomogeneousCSCov 
 ##'
-##' Prints a summary of the CompoundSymmetryCov object.
-##' @param object A `CompoundSymmetryCov` object.
+##' Prints a summary of the  HomogeneousCSCov  object.
+##' @param object A ` HomogeneousCSCov ` object.
 ##' @export
-setMethod("show", "CompoundSymmetryCov", function(object) {
-    cat(class(object), " object (dimension:", object@dimension, ")\n")
+setMethod("show", "HomogeneousCSCov", function(object) {
+    line1 <- sprintf("%s object (dimension: %d)", class(object), object@dimension)
+    cat(line1, "\n")
     try({
-        params <- get_cs_interpretable_params(object)
-        cat(" Variance (sigma^2):", round(params$variance, 4), "\n")
-        cat(" Correlation (rho):", round(params$correlation, 4), "\n")
+        params <- get_cs_interpretable_parameters(object)
+        st_dev_formatted <- sprintf("%.4f", params$st_dev)
+        correlation_formatted <- sprintf("%.4f", params$correlation)
+        cat("  Standard Deviation (sigma):", st_dev_formatted, "\n")
+        cat("  Correlation (rho):", correlation_formatted, "\n")
     }, silent = TRUE)
 })
 
+##' Heterogeneous Compound Symmetry Covariance Structure
+##' @export 
+setClass("HeterogeneousCSCov",
+    contains = "VirtualCompoundSymmetry"
+)
 
+setValidity("HeterogeneousCSCov", function(object) {
+    d <- object@dimension
+
+    if (d == 0) {
+        return(if (length(object@parameters) == 0) TRUE 
+               else "Expected 0 parameters for a 0-dimension object.")
+    }
+
+    if (length(object@parameters) != d + 1) {
+        return(sprintf("Expected %d parameters (%d for variances, 1 for correlation).", d + 1, d))
+    }
+    if (d > 1) {
+        rho <- tanh(object@parameters[d + 1])
+        if (rho <= -1 / (d - 1)) {
+            return(sprintf("Implied correlation (rho) of %f is not valid for dimension %d", rho, d))
+        }
+    }
+    TRUE
+})
+
+
+##' @rdname n_parameters 
+setMethod("n_parameters", "HeterogeneousCSCov", function(object) {
+    object@dimension + 1L
+})
+
+##' @rdname get_parameters
+setMethod("get_parameters", "HeterogeneousCSCov", function(object) {
+    object@parameters
+})
+
+##' @rdname set_parameters
+setMethod("set_parameters", "HeterogeneousCSCov", function(object, value) {
+    if(length(value) != n_parameters(object)) {
+        stop("Incorrect number of parameters for HeterogeneousCSCov.")
+    }
+    object@parameters <- value
+    validObject(object)
+    object 
+})
+
+##' @rdname get_interpretable_parameters
+setMethod("get_interpretable_parameters", "HeterogeneousCSCov", function(object) {
+    get_hcs_interpretable_parameters(object)
+})
+
+##' @rdname compute_covariance_matrix
+setMethod("compute_covariance_matrix", "HeterogeneousCSCov", function(object, data_context = NULL) {
+    d <- object@dimension
+    if (d == 0) return(new("dsyMatrix", Dim = c(0L, 0L)))
+    params <- get_hcs_interpretable_parameters(object)
+
+    D <- Diagonal(d, x = params$st_devs)
+    R <- Matrix(params$correlation, nrow = d, ncol = d)
+    diag(R) <- 1 
+
+    Sigma <- D %*% R %*% D 
+    Sigma 
+})
+##' @rdname get_cholesky_factor
+setMethod("get_cholesky_factor", "HeterogeneousCSCov", function(object, data_context = NULL) {
+    chol(compute_covariance_matrix(object)) 
+})
+
+##' @rdname compute_log_det_covariance_matrix
+setMethod("compute_log_det_covariance_matrix", "HeterogeneousCSCov", function(object, data_context = NULL) {
+    d <- object@dimension
+    if (d == 0) return(0)
+    params <- get_hcs_interpretable_parameters(object)
+    rho <- params$correlation
+
+    # log(det(Sigma)) 
+    # = log(det(D*R*D))  
+    # = 2*log(det(D)) + log(det(R))
+    # = 2*sum(log(sds)) + log_det_R
+    # = 2*sum(0.5*log_vars) = sum(log_vars)
+    log_det_R <- (d - 1) * log(1 - rho) + log(1 + (d - 1) * rho)
+    sum(object@parameters[1:d]) + log_det_R
+})
+
+
+
+##' @rdname compute_inverse_covariance_matrix
+setMethod("compute_inverse_covariance_matrix", "HeterogeneousCSCov", function(object, data_context = NULL) {
+    d <- object@dimension
+    if (d == 0) return(new("dsyMatrix", Dim = c(0L, 0L)))
+
+    params <- get_hcs_interpretable_parameters(object)
+    st_devs <- params$st_devs
+
+    # Sigma^-1 = (D %*% R %*% D)^-1 = D^-1 %*% R^-1 %*% D^-1
+    inv_D <- Diagonal(d, x = 1 / st_devs)
+
+    rho <- params$correlation
+    common_divisor <- (1 - rho) * (1 + (d - 1) * rho)
+    val_A <- (1 + (d - 2) * rho) / common_divisor
+    val_B <- -rho / common_divisor
+    inv_R <- Matrix(val_B, nrow = d, ncol = d)
+    diag(inv_R) <- val_A
+
+    Sigma_Inv <- inv_D %*% inv_R %*% inv_D
+})
+
+
+setMethod("get_start_values", "HeterogeneousCSCov", function(object) {
+    c(rep(0, object@dimension), 0.1) 
+})
+setMethod("get_lower_bounds", "HeterogeneousCSCov", function(object) {
+    rep(-Inf, n_parameters(object)) 
+})
+setMethod("is_diagonal", "HeterogeneousCSCov", function(object) {
+    object@parameters[object@dimension + 1] == 0 
+})
+
+##' Show Method for  HeterogeneousCSCov 
+##'
+##' Prints a summary of the  HeterogeneousCSCov  object.
+##' @param object A ` HeterogeneousCSCov ` object.
+##' @export
+setMethod("show", "HeterogeneousCSCov", function(object) {
+  
+    line1 <- sprintf("%s object (dimension: %d)", class(object), object@dimension)
+    cat(line1, "\n")
+    try({
+        params <- get_hcs_interpretable_parameters(object)
+        st_devs_formatted <- paste(sprintf("%.4f", params$st_devs), collapse = " ")
+        correlation_formatted <- sprintf("%.4f", params$correlation)
+
+        cat("  Standard Deviations:", st_devs_formatted, "\n")
+        cat("  Correlation (rho):", correlation_formatted, "\n")
+    }, silent = TRUE)
+})
 
