@@ -63,21 +63,41 @@ get_chol_from_params <- function(object) {
 	L[cbind(vech_indices$i, vech_indices$j)] <- L_vec
 	}
 
-	as(L, "dtrMatrix")
+	as(as(as(L, "dMatrix"), "triangularMatrix"), "unpackedMatrix")
 }
 
-##' @title Get Interpretable Parameters for Compound Symmetry
+##' @title Get Interpretable Parameters for Homogeneous Compound Symmetry
 ##'
 ##' @description Internal helper function to back-transform the unconstrained
-##' parameters of a `CompoundSymmetryCov` object into their interpretable
-##' form (variance and correlation).
+##' parameters of a `HomogeneousCSCov` object into their interpretable
+##' form (standard deviation and correlation).
 ##'
-##' @param object A `CompoundSymmetryCov` object.
-##' @return A named list with two components: `variance` and `correlation`.
+##' @param object A `HomogeneousCSCov` object.
+##' @return A named list with two components: `standard deviation` and `correlation`.
 ##' @keywords internal
-get_cs_interpretable_params <- function(object) {
+get_cs_interpretable_parameters <- function(object) {
     list(
-        variance = exp(object@parameters[1]),
+        st_dev = exp(0.5 * object@parameters[1]),
         correlation = tanh(object@parameters[2])
+    )
+}
+
+##' @title Get Interpreable Parameters for Heterogeneous Compound Symmetry 
+##' 
+##' @description Internal helper function to back-transform the unconstrained 
+##' parameters of a `HeterogeneousCSCov` object into their interpretable form 
+##' (standard deviations vector and correlation). 
+##' 
+##' @param object A `HeterogeneousCSCov` object. 
+##' @return A named list with object@dimension + 1 components: a `d`-dimensional vector of 
+##' standard deviations and a `correlation` parameter. 
+##' @keywords internal 
+get_hcs_interpretable_parameters <- function(object) {
+    d <- object@dimension
+    log_variances <- object@parameters[1:d]
+    atanh_rho <- object@parameters[d + 1]
+    list(
+        st_devs = exp(0.5 * log_variances),
+        correlation = tanh(atanh_rho)
     )
 }
