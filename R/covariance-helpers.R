@@ -55,3 +55,19 @@ get_chol_from_params <- function(param_vec, d) {
 
 	as(as(as(L, "dMatrix"), "triangularMatrix"), "unpackedMatrix")
 }
+
+##' @title Get Lower-Triangular Indices
+##' @description Internal helper function computes the 1-based row and column
+##'   indices for elements in the lower triangle (including the diagonal) of a
+##'   square matrix. The indices are returned in column-major order.
+##' @param d An integer, the dimension of the square matrix.
+##' @return A list with two integer vector components: `i` (row indices)
+##'   and `j` (column indices).
+##' @keywords internal
+get_lower_tri_indices <- function(d) {
+    if (d == 0) return(list(i = integer(0), j = integer(0)))
+    list(
+        i = unlist(lapply(1:d, function(j) j:d)),
+        j = unlist(lapply(1:d, function(j) rep(j, d - j + 1)))
+    )
+}
