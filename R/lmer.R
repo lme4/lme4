@@ -12,6 +12,17 @@ lmer <- function(formula, data=NULL, REML = TRUE,
     ## , ...)
 {
     mc <- mcout <- match.call()
+# ---------- New code --------------
+##' We want to use reformulas::findbars() to find the random effects terms 
+    parsed formula <- reformulas::findbars(formulas)
+    if (!is.null(parsed_formula)) {
+        s4_object_list <- lapply(
+            parsed_formula, 
+            create_covariance_object_from_term, # factory function to build s4 objects 
+            data = data 
+        )
+    }
+# ----------End of New code --------
     missCtrl <- missing(control)
     ## see functions in modular.R for the body ..
     if (!missCtrl && !inherits(control, "lmerControl")) {
