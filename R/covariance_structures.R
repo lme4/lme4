@@ -69,7 +69,6 @@ setGeneric("compute_inverse_covariance_matrix", function(object, data_context = 
 ##' @rdname CovarianceMethods
 ##' @export
 setGeneric("compute_log_det_covariance_matrix", function(object, data_context = NULL) standardGeneric("compute_log_det_covariance_matrix"))
-
 ##' @name InternalCovarianceMethods
 ##' @title Internal S4 Generics for Covariance Objects
 ##' @description These generic functions are intended for internal package use
@@ -90,6 +89,9 @@ setGeneric("get_lambda", function(object) standardGeneric("get_lambda"))
 setGeneric("get_lind", function(object) standardGeneric("get_lind"))
 ##' @rdname InternalCovarianceMethods
 setGeneric("build_correlation_matrix", function(object) standardGeneric("build_correlation_matrix"))
+##' @rdname InternalCovarianceMethods
+setGeneric("compute_lambdat_x", function(object, theta) standardGeneric("compute_lambdat_x"))
+
 
 # SECTION 2: COMPONENT CLASS HIERARCHY & VALIDITY
 
@@ -265,15 +267,14 @@ setMethod("is_diagonal", "DiagonalCovariance", function(object) TRUE)
 ##' @rdname InternalCovarianceMethods
 setMethod("is_diagonal", "VirtualCovariance", function(object) FALSE)
 
-# SECTION 4: MODEL FITTING INTEGRATION METHODS (GET_LAMBDA, GET_LIND)
+# SECTION 4: MODEL FITTING INTEGRATION METHODS (GET_LAMBDA, GET_LIND, COMPUTE_LAMBDAT_X)
 
 ##' @rdname InternalCovarianceMethods
 setMethod("get_lambda", "UnstructuredCovariance", function(object) {
     d <- object@dimension
     if (d == 0) return(new("dgTMatrix"))
     indices <- get_lower_tri_indices(d)
-    x <- as.numeric(indices$i == indices$j)
-    sparseMatrix(i = indices$i, j = indices$j, x = x, dims = c(d, d))
+    sparseMatrix(i = indices$i, j = indices$j, x = 1.0, dims = c(d, d))
 })
 
 ##' @rdname InternalCovarianceMethods
@@ -286,8 +287,7 @@ setMethod("get_lambda", "CSCovariance", function(object) {
     d <- object@dimension
     if (d == 0) return(new("dgTMatrix"))
     indices <- get_lower_tri_indices(d)
-    x <- as.numeric(indices$i == indices$j)
-    sparseMatrix(i = indices$i, j = indices$j, x = x, dims = c(d, d))
+    sparseMatrix(i = indices$i, j = indices$j, x = 1.0, dims = c(d, d))
 })
 
 ##' @rdname InternalCovarianceMethods
@@ -295,8 +295,7 @@ setMethod("get_lambda", "AR1Covariance", function(object) {
     d <- object@dimension
     if (d == 0) return(new("dgTMatrix"))
     indices <- get_lower_tri_indices(d)
-    x <- as.numeric(indices$i == indices$j)
-    sparseMatrix(i = indices$i, j = indices$j, x = x, dims = c(d, d))
+    sparseMatrix(i = indices$i, j = indices$j, x = 1.0, dims = c(d, d))
 })
 
 ##' @rdname InternalCovarianceMethods
@@ -330,6 +329,20 @@ setMethod("get_lind", "AR1Covariance", function(object) {
     lag <- indices$i - indices$j
     n_v_params + lag + 1
 })
+
+##' @rdname InternalCovarianceMethods
+setMethod("compute_lambdat_x", "UnstructuredCovariance", function(object, theta) {
+    d <- object@dimension
+    if (d == 0) return(numeric(0))
+    n_v_params <- if (is(object, "HomogeneousVariance")) 1L else d 
+    c_params <- theta[-(1:n_v_params)]
+    L <- get_chol_from_params(c_params, d)
+    
+    return(L[lower.tri(L, diag = TRUE)])
+})
+          
+
+
 
 # SECTION 5: POST-HOC COMPUTATION & INTERPRETATION METHODS
 
