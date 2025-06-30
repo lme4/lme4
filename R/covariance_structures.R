@@ -1,8 +1,5 @@
 # S4 Class and Method Definition for Covariance Structures
 
-library(Matrix)
-
-
 # SECTION 1. TOP-LEVEL VIRTUAL CLASSES AND GENERICS
 
 ##' @title Virtual Class for All Covariance Structures
@@ -475,9 +472,9 @@ setMethod("compute_lambdat_x", "HeterogeneousAR1Covariance", function(object, th
 
 ##' @rdname VirtualComponentClasses
 setClass("VirtualStructuredCovariance", contains = c("VIRTUAL", "VirtualCovariance"))
-setIs("DiagonalCovariance", "VirtualStructuredCovariance")
-setIs("CSCovariance", "VirtualStructuredCovariance")
-setIs("AR1Covariance", "VirtualStructuredCovariance")
+setClass("DiagonalCovariance", contains = c("VIRTUAL", "VirtualCovariance", "VirtualStructuredCovariance"))
+setClass("CSCovariance", contains = c("VIRTUAL", "VirtualCovariance", "VirtualStructuredCovariance"))
+setClass("AR1Covariance", contains = c("VIRTUAL", "VirtualCovariance", "VirtualStructuredCovariance"))
 
 ##' @rdname InternalCovarianceMethods
 setMethod("build_correlation_matrix", "DiagonalCovariance", function(object) Diagonal(object@dimension))
