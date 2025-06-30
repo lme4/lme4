@@ -606,21 +606,7 @@ setMethod("compute_inverse_covariance_matrix", "VirtualStructuredCovariance", fu
     }
 })
 
-##' @rdname CovarianceMethods
-setMethod("get_interpretable_parameters", "VirtualStructuredCovariance", function(object) {
-    params <- list()
-    if (is(object, "HomogeneousVariance")) {
-        params$st_dev <- exp(0.5 * object@vparameters[1])
-    } else {
-        params$st_devs <- exp(0.5 * object@vparameters)
-    }
-    if (is(object, "CSCovariance") && object@dimension > 1) {
-        params$correlation <- tanh(object@cparameters[1])
-    } else if (is(object, "AR1Covariance") && object@dimension > 1) {
-        params$correlation_lag1 <- tanh(object@cparameters[1])
-    }
-    return(params)
-})
+
 
 ##' @rdname CovarianceMethods
 setMethod("get_interpretable_parameters", "UnstructuredCovariance", function(object) {
@@ -629,6 +615,45 @@ setMethod("get_interpretable_parameters", "UnstructuredCovariance", function(obj
     cor_matrix <- cov2cor(Sigma)
     
     params <- list(st_devs = st_devs, correlation = cor_matrix)
+    return(params)
+})
+
+##' @rdname CovarianceMethods
+setMethod("get_interpretable_parameters", "DiagonalCovariance", function(object) {
+    params <- list()
+    if (is(object, "HomogeneousVariance")) {
+        params$st_dev <- exp(0.5 * object@vparameters[1])
+    } else {
+        params$st_devs <- exp(0.5 * object@vparameters)
+    }
+    return(params)
+})
+
+##' @rdname CovarianceMethods
+setMethod("get_interpretable_parameters", "CSCovariance", function(object) {
+    params <- list()
+    if (is(object, "HomogeneousVariance")) {
+        params$st_dev <- exp(0.5 * object@vparameters[1])
+    } else {
+        params$st_devs <- exp(0.5 * object@vparameters)
+    }
+    if (object@dimension > 1) {
+        params$correlation <- tanh(object@cparameters[1])
+    }
+    return(params)
+})
+
+##' @rdname CovarianceMethods
+setMethod("get_interpretable_parameters", "AR1Covariance", function(object) {
+    params <- list()
+    if (is(object, "HomogeneousVariance")) {
+        params$st_dev <- exp(0.5 * object@vparameters[1])
+    } else {
+        params$st_devs <- exp(0.5 * object@vparameters)
+    }
+    if (object@dimension > 1) {
+        params$correlation <- tanh(object@cparameters[1])
+    }
     return(params)
 })
 
@@ -650,8 +675,8 @@ setMethod("show", "VirtualCovariance", function(object) {
             }
             if (!is.null(params$correlation)) {
                 cat(sprintf("    Correlation (rho): %.4f\n", params$correlation))
-            } else if (!is.null(params$correlation_lag1)) {
-                cat(sprintf("    Lag-1 Correlation (rho): %.4f\n", params$correlation_lag1))
+            } else if (!is.null(params$correlation)) {
+                cat(sprintf("    Lag-1 Correlation (rho): %.4f\n", params$correlation))
             }
         }
     }, silent = TRUE)
