@@ -202,13 +202,13 @@ setMethod("n_parameters", "UnstructuredCovariance", function(object) {
     d <- object@dimension
     n_v_params <- if (is(object, "HomogeneousVariance")) 1L else d
     n_c_params <- d * (d + 1) / 2
-    n_v_params + n_c_params
+    as.integer(n_v_params + n_c_params)
 })
 
 ##' @rdname CovarianceMethods
 setMethod("n_parameters", "DiagonalCovariance", function(object) {
     n_v_params <- if (is(object, "HomogeneousVariance")) 1L else object@dimension
-    n_v_params # No correlation parameters
+    as.integer(n_v_params) # No correlation parameters
 })
 
 ##' @rdname CovarianceMethods
@@ -216,7 +216,7 @@ setMethod("n_parameters", "CSCovariance", function(object) {
     d <- object@dimension
     n_v_params <- if (is(object, "HomogeneousVariance")) 1L else d
     n_c_params <- if (d > 0) 1L else 0L
-    n_v_params + n_c_params
+    as.integer(n_v_params + n_c_params)
 })
 
 ##' @rdname CovarianceMethods
@@ -224,7 +224,7 @@ setMethod("n_parameters", "AR1Covariance", function(object) {
     d <- object@dimension
     n_v_params <- if (is(object, "HomogeneousVariance")) 1L else d
     n_c_params <- if (d > 1) 1L else 0L
-    n_v_params + n_c_params
+    as.integer(n_v_params + n_c_params)
 })
 
 #' @rdname CovarianceMethods
@@ -645,7 +645,7 @@ setMethod("get_interpretable_parameters", "CSCovariance", function(object) {
 
 ##' @rdname CovarianceMethods
 setMethod("get_interpretable_parameters", "AR1Covariance", function(object) {
-    params <- list()
+    params <- list(
     if (is(object, "HomogeneousVariance")) {
         params$st_dev <- exp(0.5 * object@vparameters[1])
     } else {
