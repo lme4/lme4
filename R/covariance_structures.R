@@ -188,13 +188,19 @@ setMethod("initialize", "VirtualCovariance",
       temp_obj <- .Object 
       temp_obj@dimension <- as.integer(args$dimension)
 
-      start_params <- get_start_values(temp_obj)
-      n_v_params <- if (is(temp_obj, "HomogeneousVariance")) 1L else temp_obj@dimension
-      
-      args$vparameters <- start_params[seq_len(n_v_params)]
-      args$cparameters <- start_params[-seq_len(n_v_params)]
-    }
-        do.call(callNextMethod, c(list(.Object), args))
+      if (is(temp_obj, "UnstructuredCovariance")) {  
+          args$vparameters <- numeric(0)
+          args$cparameters <- get_start_values(temp_obj)
+      } else {
+          start_params <- get_start_values(temp_obj)
+          n_v_params <- if (is(temp_obj, "HomogeneousVariance")) 1L else temp_obj@dimension
+          
+          args$vparameters <- start_params[seq_len(n_v_params)]
+          args$cparameters <- start_params[-(seq_len(n_v_params))]
+      }
+    } 
+
+    do.call(callNextMethod, c(list(.Object), args))
 })
 
 # The number of parameters for a given covariance structure is defined as the number
