@@ -362,7 +362,9 @@ setMethod("get_lambda", "UnstructuredCovariance", function(object) {
 
 ##' @rdname InternalCovarianceMethods
 setMethod("get_lambda", "DiagonalCovariance", function(object) {
-    Matrix::Diagonal(n = object@dimension)
+    d <- object@dimension
+    if (d == 0) return(new("dgTMatrix"))
+    sparseMatrix(i = 1:d, j = 1:d, x = 1.0, dims = c(d, d))
 })
 
 ##' @rdname InternalCovarianceMethods
