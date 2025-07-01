@@ -229,15 +229,22 @@ setMethod("n_parameters", "AR1Covariance", function(object) {
     as.integer(n_v_params + n_c_params)
 })
 
-#' @rdname CovarianceMethods
+##' @rdname CovarianceMethods
 setMethod("set_parameters", "VirtualCovariance", function(object, value) {
     n_total <- n_parameters(object)
     if (length(value) != n_total) {
         stop(sprintf("Incorrect number of parameters. Expected %d, got %d.", n_total, length(value)))
     }
-    n_v_params <- if (is(object, "HomogeneousVariance")) 1L else object@dimension
-    object@vparameters <- value[seq_len(n_v_params)]
-    object@cparameters <- value[-seq_len(n_v_params)]
+    
+    if (is(object, "UnstructuredCovariance")) {
+        object@vparameters <- numeric(0)
+        object@cparameters <- value
+    } else {
+        n_v_params <- if (is(object, "HomogeneousVariance")) 1L else object@dimension
+        object@vparameters <- value[seq_len(n_v_params)]
+        object@cparameters <- value[-seq_len(n_v_params)]
+    }
+
     validObject(object)
     return(object)
 })
