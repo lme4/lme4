@@ -739,7 +739,7 @@ setMethod("get_interpretable_parameters", "CSCovariance", function(object) {
 
 ##' @rdname CovarianceMethods
 setMethod("get_interpretable_parameters", "AR1Covariance", function(object) {
-    params <- list(
+    params <- list()
     if (is(object, "HomogeneousVariance")) {
         params$st_dev <- exp(0.5 * object@vparameters[1])
     } else {
