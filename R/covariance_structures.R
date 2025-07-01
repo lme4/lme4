@@ -383,17 +383,22 @@ setMethod("get_lambda", "AR1Covariance", function(object) {
     sparseMatrix(i = indices$i, j = indices$j, x = 1.0, dims = c(d, d))
 })
 
-##' @rdname InternalCovarianceMethods
+###' @rdname InternalCovarianceMethods
 setMethod("get_lind", "UnstructuredCovariance", function(object) {
-    d <- object@dimension
-    n_v_params <- if (is(object, "HomogeneousVariance")) 1L else d
-    n_c_params <- d * (d + 1) / 2
-    seq.int(from = n_v_params + 1, length.out = n_c_params)
+    num_params <- n_parameters(object)
+    if (num_params == 0) return(integer(0))
+    
+    seq_len(num_params)
 })
 
 ##' @rdname InternalCovarianceMethods
-setMethod("get_lind", "DiagonalCovariance", function(object) {
-    integer(0)
+setMethod("get_lind", "HomogeneousDiagonalCovariance", function(object) {
+    rep(1L, object@dimension)
+})
+
+##' @rdname InternalCovarianceMethods
+setMethod("get_lind", "HeterogeneousDiagonalCovariance", function(object) {
+    seq_len(object@dimension)
 })
 
 setMethod("get_lind", "HomogeneousCSCovariance", function(object) {
