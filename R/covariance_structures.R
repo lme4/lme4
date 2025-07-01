@@ -197,12 +197,13 @@ setMethod("initialize", "VirtualCovariance",
         do.call(callNextMethod, c(list(.Object), args))
 })
 
+# The number of parameters for a given covariance structure is defined as the number
+# of unique, estimated values needed to define its cholesky factor Lambda. 
+
 ##' @rdname CovarianceMethods
 setMethod("n_parameters", "UnstructuredCovariance", function(object) {
-    d <- object@dimension
-    n_v_params <- if (is(object, "HomogeneousVariance")) 1L else d
-    n_c_params <- d * (d + 1) / 2
-    as.integer(n_v_params + n_c_params)
+    d <- object@dimension 
+    as.integer(d * (d + 1) / 2)
 })
 
 ##' @rdname CovarianceMethods
@@ -214,6 +215,7 @@ setMethod("n_parameters", "DiagonalCovariance", function(object) {
 ##' @rdname CovarianceMethods
 setMethod("n_parameters", "CSCovariance", function(object) {
     d <- object@dimension
+    if (d == 0) return(0L)
     n_v_params <- if (is(object, "HomogeneousVariance")) 1L else d
     n_c_params <- if (d > 0) 1L else 0L
     as.integer(n_v_params + n_c_params)
