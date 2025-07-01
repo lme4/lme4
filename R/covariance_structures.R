@@ -249,19 +249,49 @@ setMethod("set_parameters", "VirtualCovariance", function(object, value) {
     return(object)
 })
 
-##' @rdname InternalCovarianceMethods
-setMethod("get_start_values", "VirtualCovariance", function(object) {
-    d <- object@dimension
-    v_starts <- if (is(object, "HomogeneousVariance")) 0 else rep(0, d)
-    c_starts <- if (is(object, "UnstructuredCovariance")) {
-        rep(0, d * (d + 1) / 2)
-    } else if (is(object, "DiagonalCovariance")) {
-        numeric(0)
-    } else if (is(object, "CSCovariance") || is(object, "AR1Covariance")) {
-        if (d > 1) 0.1 else numeric(0)
+##' @rdname CovarianceMethods
+setMethod("get_start_values", "UnstructuredCovariance", function(object) {
+    num_params <- n_parameters(object)
+    start_vals <- numeric(num_params)
+
+    if (object@dimension > 0) {
+        diag_indices <- vech_diag_indices(object@dimension)
+        start_vals[diag_indices] <- 1.0
     }
+
+    return(start_vals)
+})
+
+##' @rdname CovarianceMethods
+setMethod("get_start_values", "DiagonalCovariance", function(object) {
+    num_params <- n_parameters(object)
+    rep(1.0, num_params) # All params are variance related. 
+})
+
+##' @rdname CovarianceMethods
+setMethod("get_start_values", "CSCovariance", function(object) {
+    num_params <- n_parameters(object)
+    if (num_params == 0) return(numeric(0))
+
+    n_v_params <- if (is(object, "HomogeneousVariance")) 1L else object@dimension
+    v_starts <- rep(1.0, n_v_params)
+    c_starts <- if(num_params > n_v_params) 0.0 else numeric(0)
+    
     c(v_starts, c_starts)
 })
+
+##' @rdname CovarianceMethods
+setMethod("get_start_values", "AR1Covariance", function(object) {
+    num_params <- n_parameters(object)
+    if (num_params == 0) return(numeric(0))
+
+    n_v_params <- if (is(object, "HomogeneousVariance")) 1L else object@dimension 
+    v_starts <- rep(1.0, n_v_params)
+    c_starts <- if(num_params > n_v_params) 0.0 else numeric(0)
+
+    c(v_starts, c_starts)
+})
+
 
 ##' @rdname CovarianceMethods
 setMethod("get_parameters", "VirtualCovariance", function(object) c(object@vparameters, object@cparameters))
