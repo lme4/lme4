@@ -296,8 +296,6 @@ setMethod("get_start_values", "AR1Covariance", function(object) {
 ##' @rdname CovarianceMethods
 setMethod("get_parameters", "VirtualCovariance", function(object) c(object@vparameters, object@cparameters))
 ##' @rdname InternalCovarianceMethods
-setMethod("get_lower_bounds", "VirtualCovariance", function(object) rep(-Inf, n_parameters(object)))
-##' @rdname InternalCovarianceMethods
 setMethod("is_diagonal", "DiagonalCovariance", function(object) TRUE)
 ##' @rdname InternalCovarianceMethods
 setMethod("is_diagonal", "VirtualCovariance", function(object) FALSE)
