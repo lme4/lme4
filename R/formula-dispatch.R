@@ -4,13 +4,12 @@
 #' random effect term into the corresponding S4 covariance object.
 #'
 #' @param type A character string for the covariance structure type (e.g., "ar1", "us").
-#' @param bar_formula The core `term | group` formula for this random effect.
 #' @param add_args_call The language object of the wrapper function call (e.g., quote(ar1(d = 2))).
-#' @param data The model data frame, used to determine the term's dimension.
+#' @param cnms_for_term A character vector of column names for a single random effect term; its length determines the dimension of the covariance structure.
 #'
 #' @return An S4 object inheriting from `VirtualCovariance`.
 #' @keywords internal
-create_covariance_object_from_term <- function(type, bar_formula, add_args_call, data) {
+create_covariance_object_from_term <- function(type, cnms_for_term, add_args_call) {
 
     # Define the lookup table 
     cov_struct_table <- list(
@@ -33,8 +32,8 @@ create_covariance_object_from_term <- function(type, bar_formula, add_args_call,
 
     full_class_name <- paste0(variance_prefix, structure_prefix, "Covariance")
 
-    term_formula <- as.formula(paste("~", deparse(bar_formula[[2]])))
-    dimension <- ncol(model.matrix(term_formula, data))
+    dimension <- length(cnms_for_term)
+
 
     return(new(full_class_name, dimension = dimension))
 }
@@ -53,14 +52,13 @@ create_covariance_object_from_term <- function(type, bar_formula, add_args_call,
 #'   random effects are found.
 #' @keywords internal
 parse_model_formula <- function(formula, data) {
-    browser()
-    specials_list <- c("ar1", "cs", "us", "rr", "diag")
+     specials_list <- c("ar1", "cs", "us", "rr", "diag")
     split_formula <- reformulas::splitForm(formula, specials = specials_list)
 
     s4_object_list <- list() 
 
     if (!is.null(split_formula$reTrmFormulas)) {
-        for (i in seq_along(split_formula$reTrmClasses)) {
+        for (i in seq_along(split_formula$reTrmClasses)) {t
     
             s4_object_list[[i]] <- create_covariance_object_from_term(
             type = split_formula$reTrmClasses[i],
@@ -73,4 +71,18 @@ parse_model_formula <- function(formula, data) {
     return(s4_object_list)
 }
 
+#' Create Lambda related components using S4 Covriance Objects
+#' 
+#' This function replaces the legacy logic for building Lambdat, Lind, theta,
+#' and lower by dispatching to methods of the S4 covariance objects.
+#'
+#' @param reTrms A list object returned by `reformulas::mkReTrms` (with calc.lambdat=FALSE).
+#' It must contain components: cnms, nl, and Gp.
+#' @param s4_object_list A list of S4 covariance objects, one for each RE term.
+#' @return A list with components: Lambdat, Lind, theta, and lower.
+#' @keywords internal
+mkReLambdat <- function(reTrms, s4_object_list) {
+    
+   }
 
+    
