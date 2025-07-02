@@ -298,287 +298,158 @@ plot.allFit <- function(x, abbr=16, ...) {
      )
 }
 
-# Plot the results from the fixed effects produced by different optimizers. This function 
+# Plot the results from the fixed effects produced by different optimizers. This function
 # takes the output from lme4::allFit(), tidies it, selects fixed effects and plots them.
+plot.fixef.allFit <- function(allFit_output,
+                              # Set the same Y axis limits in every plot
+                              shared_y_axis_limits = TRUE,
+                              # Multiply Y axis limits by a factor (only
+                              # available if shared_y_axis_limits = TRUE)
+                              multiply_y_axis_limits = 1,
+                              # Number of decimal points
+                              decimal_points = NULL,
+                              # Select predictors
+                              select_predictors = NULL,
+                              # Number of rows
+                              nrow = NULL,
+                              # Y axis title
+                              y_title = 'Fixed effect',
+                              # Alignment of the Y axis title
+                              y_title_hjust = NULL,
+                              # Add number to the names of optimizers
+                              number_optimizers = TRUE,
+                              # Plot height (useful for many predictors)
+                              height = NULL) {
 
-plot.fixef.allFit = function(allFit_output, 
-                             # Set the same Y axis limits in every plot
-                             shared_y_axis_limits = TRUE,
-                             # Multiply Y axis limits by a factor (only 
-                             # available if shared_y_axis_limits = TRUE)
-                             multiply_y_axis_limits = 1, 
-                             # Number of decimal points
-                             decimal_points = NULL,
-                             # Select predictors
-                             select_predictors = NULL, 
-                             # Number of rows
-                             nrow = NULL, 
-                             # Y axis title
-                             y_title = 'Fixed effect',
-                             # Alignment of the Y axis title
-                             y_title_hjust = NULL,
-                             # Add number to the names of optimizers
-                             number_optimizers = TRUE,
-                             # Replace colon in interactions with x
-                             interaction_symbol_x = TRUE) {
-  
-  # Data wrangling
-  if (!requireNamespace('dplyr')) install.packages('dplyr')
-  if (!requireNamespace('reshape2')) install.packages('reshape2')
-  # Text processing
-  if (!requireNamespace('stringr')) install.packages('stringr')
-  # Set number of decimal points
-  if (!requireNamespace('scales')) install.packages('scales')
-  # Plotting
-  if (!requireNamespace('ggplot2')) install.packages('ggplot2')
-  # Matrix of plots
-  if (!requireNamespace('patchwork')) install.packages('patchwork')
-  
-  require(dplyr)
-  require(reshape2)
-  require(stringr)
-  require(scales)
-  require(ggplot2)
-  require(patchwork)
-  
-  # Tidy allFit output
-  
-  # Extract fixed effects from the allFit() output
-  allFit_fixef = summary(allFit_output)$fixef %>%  # Select fixed effects in the allFit results
-    reshape2::melt() %>%  # Structure the output as a data frame
-    rename('Optimizer' = 'Var1', 'fixed_effect' = 'Var2')  # set informative names
-  
-  # If number_optimizers = TRUE, assign number to each optimizer and place it before its name
-  if(number_optimizers == TRUE) {
-    allFit_fixef$Optimizer = paste0(as.numeric(allFit_fixef$Optimizer), '. ', allFit_fixef$Optimizer)
-  }
-  
-  # If select_predictors were specified, select them along with the intercept (the latter required)
-  if(!is.null(select_predictors)) {
-    allFit_fixef = allFit_fixef %>% filter(fixed_effect %in% c('(Intercept)', select_predictors))
-  }
-  
-  # Order variables
-  allFit_fixef = allFit_fixef[, c('Optimizer', 'fixed_effect', 'value')]
-  
-  # PLOT. The overall plot is formed of a first row containing the intercept and the legend 
-  # (intercept_plot), and a second row containing the predictors (predictors_plot), 
-  # which may in turn occupy several rows.
-  
-  # If multiply_y_axis_limits was specified but shared_y_axis_limits = FALSE,
-  # warn that shared_y_axis_limits is required.
-  if(!multiply_y_axis_limits == 1 & shared_y_axis_limits == FALSE) {
-    message('The argument `multiply_y_axis_limits` has not been used because it requires `shared_y_axis_limits` set to TRUE.')
-  }
-  
-  # If extreme values were entered in y_title_hjust, show warning
-  if(!is.null(y_title_hjust)) {
-    if(y_title_hjust < 0.5 | y_title_hjust > 6) {
-      message('NOTE: For y_title_hjust, a working range of values is between 0.6 and 6.')
+    # Check for required packages
+    pkgs <- c("ggplot2", "patchwork")
+    missing_pkgs <- pkgs[!vapply(pkgs, requireNamespace, quietly = TRUE, FUN.VALUE = logical(1))]
+    if (length(missing_pkgs) > 0) {
+        stop("The following packages are required: ",
+             paste(missing_pkgs, collapse = ", "),
+             ". Please install them.", call. = FALSE)
     }
-  }
-  
-  # If decimal_points were specified, convert number to the format used in 'scales' package
-  if(!is.null(decimal_points)) {
-    decimal_points = 
-      ifelse(decimal_points == 1, 0.1, 
-             ifelse(decimal_points == 2, 0.01, 
-                    ifelse(decimal_points == 3, 0.001, 
-                           ifelse(decimal_points == 4, 0.0001, 
-                                  ifelse(decimal_points == 5, 0.00001, 
-                                         ifelse(decimal_points == 6, 0.000001, 
-                                                ifelse(decimal_points == 7, 0.0000001, 
-                                                       ifelse(decimal_points == 8, 0.00000001, 
-                                                              ifelse(decimal_points == 9, 0.000000001, 
-                                                                     ifelse(decimal_points == 10, 0.0000000001,
-                                                                            ifelse(decimal_points == 11, 0.00000000001,
-                                                                                   ifelse(decimal_points == 12, 0.000000000001,
-                                                                                          ifelse(decimal_points == 13, 0.0000000000001,
-                                                                                                 ifelse(decimal_points == 14, 0.00000000000001,
-                                                                                                        ifelse(decimal_points > 15, 0.000000000000001, 
-                                                                                                               0.001
-                                                                                                        )))))))))))))))
-  }
-  
-  # First row: intercept_plot
-  
-  # Select intercept data only
-  intercept = allFit_fixef %>% filter(fixed_effect == '(Intercept)')
-  
-  intercept_plot = intercept %>%
-    ggplot(., aes(fixed_effect, value, colour = Optimizer)) +
-    geom_point(position = position_dodge(1)) +
-    facet_wrap(~fixed_effect, scale = 'free') +
-    guides(colour = guide_legend(title.position = 'left')) +
-    theme_bw() + theme(axis.title = element_blank(), axis.ticks.x = element_blank(),
-                       axis.text.x = element_blank(), 
-                       strip.text = element_text(size = 10, margin = margin(t = 4, b = 6)),
-                       strip.background = element_rect(fill = 'grey96'),
-                       legend.margin = margin(0.3, 0, 0.8, 1, 'cm'), 
-                       legend.title = element_text(size = unit(15, 'pt'), angle = 90, hjust = 0.5))
-  
-  # Second row: predictors_plot
-  
-  # Select all predictors except intercept
-  predictors = allFit_fixef %>% filter(!fixed_effect == '(Intercept)')
-  
-  # If interaction_symbol_x = TRUE (default), replace colon with times symbol x between spaces
-  if(interaction_symbol_x == TRUE) {
-    # Replace colon in interactions with \u00D7, i.e., x; then set factor class
-    predictors$fixed_effect = predictors$fixed_effect %>% str_replace_all(':', ' \u00D7 ') %>% factor()
-  }
-  
-  # Order predictors as in the original output from lme4::allFit()
-  predictors$fixed_effect = factor(predictors$fixed_effect, levels = unique(predictors$fixed_effect))
-  
-  # Set number of rows for the predictors excluding the intercept.
-  # First, if nrow argument specified, use it
-  if(!is.null(nrow)) {
-    predictors_plot_nrow = nrow - 1  # Subtract 1 as intercept row not considered
-    
-    # Else, if nrow argument not specified, calculate sensible number of rows: i.e., divide number of
-    # predictors (exc. intercept) by 2 and round up the result. For instance, 7 predictors --> 3 rows
-  } else predictors_plot_nrow = (length(unique(predictors$fixed_effect)) / 2) %>% ceiling()
-  
-  predictors_plot = ggplot(predictors, aes(fixed_effect, value, colour = Optimizer)) +
-    geom_point(position = position_dodge(1)) +
-    facet_wrap(~fixed_effect, scale = 'free',
-               # Note that predictors_plot_nrow was defined a few lines above
-               nrow = predictors_plot_nrow) +
-    labs(y = y_title) +
-    theme_bw() + theme(axis.title.x = element_blank(), axis.text.x = element_blank(),
-                       axis.ticks.x = element_blank(),
-                       axis.title.y = element_text(size = 14, margin = margin(0, 15, 0, 5, 'pt')),
-                       strip.text = element_text(size = 10, margin = margin(t = 4, b = 6)),
-                       strip.background = element_rect(fill = 'grey96'), legend.position = 'none')
-  
-  # Below, the function scale_y_continuous is applied conditionally to avoid overriding settings. First, 
-  # if shared_y_axis_limits = TRUE and decimal_points were specified, set the same Y axis limits in 
-  # every plot and set decimal_points. By default, also expand limits by a seventh of its original limit, 
-  # and allow further multiplication of limits through multiply_y_axis_limits.
-  if(shared_y_axis_limits == TRUE & !is.null(decimal_points)) {
-    
-    intercept_plot = intercept_plot +
-      scale_y_continuous(limits = c(min(allFit_fixef$value) - allFit_fixef$value %>% abs %>% max / 7 * multiply_y_axis_limits,
-                                    max(allFit_fixef$value) + allFit_fixef$value %>% abs %>% max / 7 * multiply_y_axis_limits), 
-                         # Set number of decimal points
-                         labels = scales::label_number(accuracy = decimal_points))
-    
-    predictors_plot = predictors_plot + 
-      scale_y_continuous(limits = c(min(allFit_fixef$value) - allFit_fixef$value %>% abs %>% max / 7 * multiply_y_axis_limits,
-                                    max(allFit_fixef$value) + allFit_fixef$value %>% abs %>% max / 7 * multiply_y_axis_limits), 
-                         # Set number of decimal points
-                         labels = scales::label_number(accuracy = decimal_points))
-    
-    # Else, if shared_y_axis_limits = TRUE but decimal_points were not specified, do as above but without
-    # setting decimal_points.
-  } else if(shared_y_axis_limits == TRUE & is.null(decimal_points)) {
-    
-    intercept_plot = intercept_plot +
-      scale_y_continuous(limits = c(min(allFit_fixef$value) - allFit_fixef$value %>% abs %>% max / 7 * multiply_y_axis_limits,
-                                    max(allFit_fixef$value) + allFit_fixef$value %>% abs %>% max / 7 * multiply_y_axis_limits))
-    
-    predictors_plot = predictors_plot + 
-      scale_y_continuous(limits = c(min(allFit_fixef$value) - allFit_fixef$value %>% abs %>% max / 7 * multiply_y_axis_limits,
-                                    max(allFit_fixef$value) + allFit_fixef$value %>% abs %>% max / 7 * multiply_y_axis_limits))
-    
-    # Else, if shared_y_axis_limits = FALSE and decimal_points were specified, set decimal_points. 
-  } else if(shared_y_axis_limits == FALSE & !is.null(decimal_points)) {
-    
-    intercept_plot = intercept_plot +
-      scale_y_continuous(labels = scales::label_number(accuracy = decimal_points))
-    
-    predictors_plot = predictors_plot + 
-      scale_y_continuous(labels = scales::label_number(accuracy = decimal_points))
-  }
-  
-  # Plot matrix: based on number of predictors_plot_nrow, adjust height of Y axis title
-  # (unless specified by user), and assign space to intercept_plot and predictors_plot
-  if(predictors_plot_nrow == 1) {
-    
-    # If y_title_hjust specified by user, use it
-    if(!is.null(y_title_hjust)) {
-      predictors_plot = predictors_plot + theme(axis.title.y = element_text(hjust = y_title_hjust))
-      # Otherwise, set a sensible height
-    } else predictors_plot = predictors_plot + theme(axis.title.y = element_text(hjust = 3.6))
-    
-    layout = c(
-      area(t = 1.5, r = 8.9, b = 6.8, l = 0),  # intercept row
-      area(t = 7.3, r = 9, b = 11, l = 0)      # predictors row(s)
+
+    # Extract fixed effects from the allFit() output
+    allFit_fixef_mat <- summary(allFit_output)$fixef
+    allFit_fixef <- data.frame(
+        Optimizer = rownames(allFit_fixef_mat),
+        allFit_fixef_mat,
+        check.names = FALSE
     )
-    
-  } else if(predictors_plot_nrow == 2) {
-    
-    # If y_title_hjust specified by user, use it
-    if(!is.null(y_title_hjust)) {
-      predictors_plot = predictors_plot + theme(axis.title.y = element_text(hjust = y_title_hjust))
-      # Otherwise, set a sensible height
-    } else predictors_plot = predictors_plot + theme(axis.title.y = element_text(hjust = 1.4))
-    
-    layout = c(
-      area(t = 1.5, r = 8.9, b = 6.8, l = 0),  # intercept row
-      area(t = 7.3, r = 9, b = 16, l = 0)      # predictors row(s)
+    allFit_fixef <- stats::reshape(allFit_fixef,
+                                   varying = colnames(allFit_fixef_mat),
+                                   v.names = "value",
+                                   timevar = "fixed_effect",
+                                   times = colnames(allFit_fixef_mat),
+                                   direction = "long",
+                                   idvar = "Optimizer",
+                                   ids = allFit_fixef$Optimizer)
+    rownames(allFit_fixef) <- NULL # remove row names
+
+    # If number_optimizers, assign number to each optimizer and place it before its name
+    if (number_optimizers) {
+        allFit_fixef$Optimizer <- paste0(as.numeric(factor(allFit_fixef$Optimizer)), '. ', allFit_fixef$Optimizer)
+    }
+
+    # If select_predictors were specified, select them along with the intercept
+    if (!is.null(select_predictors)) {
+        allFit_fixef <- allFit_fixef[allFit_fixef$fixed_effect %in% c('(Intercept)', select_predictors), ]
+    }
+
+    # Order variables
+    allFit_fixef <- allFit_fixef[, c('Optimizer', 'fixed_effect', 'value')]
+
+    # Warn if multiply_y_axis_limits is set without shared_y_axis_limits
+    if (multiply_y_axis_limits != 1 && !shared_y_axis_limits) {
+        message('The argument `multiply_y_axis_limits` has not been used because it requires `shared_y_axis_limits` set to TRUE.')
+    }
+
+    # Warn for extreme y_title_hjust values
+    if (!is.null(y_title_hjust) && (y_title_hjust < 0.5 || y_title_hjust > 6)) {
+        message('NOTE: For y_title_hjust, a working range of values is between 0.6 and 6.')
+    }
+
+    # Convert decimal_points to accuracy for scales::label_number
+    accuracy <- if (!is.null(decimal_points)) 10^(-decimal_points) else NULL
+
+    # Define common theme elements
+    strip_style <- ggplot2::element_text(size = 10, margin = ggplot2::margin(t = 4, b = 6))
+    strip_background_style <- ggplot2::element_rect(fill = 'grey96')
+    blank_x_axis <- list(
+        ggplot2::theme(axis.title.x = ggplot2::element_blank(),
+                       axis.text.x = ggplot2::element_blank(),
+                       axis.ticks.x = ggplot2::element_blank())
     )
-    
-  } else if(predictors_plot_nrow == 3) {
-    
-    # If y_title_hjust specified by user, use it
-    if(!is.null(y_title_hjust)) {
-      predictors_plot = predictors_plot + theme(axis.title.y = element_text(hjust = y_title_hjust))
-      # Otherwise, set a sensible height
-    } else predictors_plot = predictors_plot + theme(axis.title.y = element_text(hjust = 0.92))
-    
-    layout = c(
-      area(t = 1.5, r = 8.9, b = 6.8, l = 0),  # intercept row
-      area(t = 7.3, r = 9, b = 21, l = 0)      # predictors row(s)
+
+    # First row: intercept_plot
+    intercept <- allFit_fixef[allFit_fixef$fixed_effect == '(Intercept)', ]
+    intercept_plot <- ggplot2::ggplot(intercept, ggplot2::aes(fixed_effect, value, colour = Optimizer)) +
+        ggplot2::geom_point(position = ggplot2::position_dodge(1)) +
+        ggplot2::facet_wrap(~fixed_effect, scale = 'free') +
+        ggplot2::guides(colour = ggplot2::guide_legend(title.position = 'left')) +
+        blank_x_axis +
+        ggplot2::theme(axis.title.y = ggplot2::element_blank(),
+                       strip.text = strip_style,
+                       strip.background = strip_background_style,
+                       legend.margin = ggplot2::margin(0.3, 0, 0.8, 1, 'cm'),
+                       legend.title = ggplot2::element_text(size = ggplot2::unit(15, 'pt'), angle = 90, hjust = 0.5))
+
+    # Second row: predictors_plot
+    predictors <- allFit_fixef[allFit_fixef$fixed_effect != '(Intercept)', ]
+    predictors$fixed_effect <- factor(predictors$fixed_effect, levels = unique(predictors$fixed_effect))
+
+    # Set number of rows for predictors
+    n_predictors <- length(unique(predictors$fixed_effect))
+    predictors_plot_nrow <- if (!is.null(nrow)) nrow - 1 else ceiling(n_predictors / 2)
+
+    predictors_plot <- ggplot2::ggplot(predictors, ggplot2::aes(fixed_effect, value, colour = Optimizer)) +
+        ggplot2::geom_point(position = ggplot2::position_dodge(1)) +
+        ggplot2::facet_wrap(~fixed_effect, scale = 'free', nrow = predictors_plot_nrow) +
+        ggplot2::labs(y = y_title) +
+        blank_x_axis +
+        ggplot2::theme(axis.title.y = ggplot2::element_text(size = 14, margin = ggplot2::margin(0, 15, 0, 5, 'pt')),
+                       strip.text = strip_style,
+                       strip.background = strip_background_style,
+                       legend.position = 'none')
+
+    # Apply y-axis scaling
+    y_scale <- NULL
+    if (shared_y_axis_limits) {
+        y_range <- range(allFit_fixef$value)
+        y_abs_max <- max(abs(allFit_fixef$value))
+        y_limits <- c(y_range[1] - y_abs_max / 7 * multiply_y_axis_limits,
+                      y_range[2] + y_abs_max / 7 * multiply_y_axis_limits)
+        y_scale <- ggplot2::scale_y_continuous(limits = y_limits, labels = if (!is.null(accuracy)) scales::label_number(accuracy = accuracy) else ggplot2::waiver())
+    } else if (!is.null(accuracy)) {
+        y_scale <- ggplot2::scale_y_continuous(labels = scales::label_number(accuracy = accuracy))
+    }
+
+    if (!is.null(y_scale)) {
+        intercept_plot <- intercept_plot + y_scale
+        predictors_plot <- predictors_plot + y_scale
+    }
+
+    # Adjust y-axis title justification
+    if (is.null(y_title_hjust)) {
+        # Automatic adjustment based on number of rows
+        y_title_hjust <- 5 / (predictors_plot_nrow + 1.5)
+    }
+    predictors_plot <- predictors_plot + ggplot2::theme(axis.title.y = ggplot2::element_text(hjust = y_title_hjust))
+
+    if (predictors_plot_nrow > 5) {
+        message('Many rows! Consider distributing predictors into several plots using argument `select_predictors`')
+    }
+
+    # Define layout based on number of rows
+    intercept_height <- 5.3
+    row_height <- if (!is.null(height)) height / (predictors_plot_nrow + 1.2) else 5
+    predictors_height <- intercept_height + 0.5 + predictors_plot_nrow * row_height
+    layout <- c(
+      patchwork::area(t = 1.5, r = 8.9, b = 1.5 + intercept_height, l = 0),  # intercept row
+      patchwork::area(t = 1.5 + intercept_height + 0.5, r = 9, b = predictors_height, l = 0) # predictors row(s)
     )
-    
-  } else if(predictors_plot_nrow == 4) {
-    
-    # If y_title_hjust specified by user, use it
-    if(!is.null(y_title_hjust)) {
-      predictors_plot = predictors_plot + theme(axis.title.y = element_text(hjust = y_title_hjust))
-      # Otherwise, set a sensible height
-    } else predictors_plot = predictors_plot + theme(axis.title.y = element_text(hjust = 0.8))
-    
-    layout = c(
-      area(t = 1.5, r = 8.9, b = 6.8, l = 0),  # intercept row
-      area(t = 7.3, r = 9, b = 26, l = 0)      # predictors row(s)
-    )
-    
-  } else if(predictors_plot_nrow == 5) {
-    
-    # If y_title_hjust specified by user, use it
-    if(!is.null(y_title_hjust)) {
-      predictors_plot = predictors_plot + theme(axis.title.y = element_text(hjust = y_title_hjust))
-      # Otherwise, set a sensible height
-    } else predictors_plot = predictors_plot + theme(axis.title.y = element_text(hjust = 0.73))
-    
-    layout = c(
-      area(t = 1.5, r = 8.9, b = 6.8, l = 0),  # intercept row
-      area(t = 7.3, r = 9, b = 31, l = 0)      # predictors row(s)
-    )
-    
-  } else if(predictors_plot_nrow > 5) {
-    
-    # If y_title_hjust specified by user, use it
-    if(!is.null(y_title_hjust)) {
-      predictors_plot = predictors_plot + theme(axis.title.y = element_text(hjust = y_title_hjust))
-      # Otherwise, set a sensible height
-    } else predictors_plot = predictors_plot + theme(axis.title.y = element_text(hjust = 0.65))
-    
-    layout = c(
-      area(t = 1.5, r = 8.9, b = 6.8, l = 0),  # intercept row
-      area(t = 7.3, r = 9, b = 36, l = 0)      # predictors row(s)
-    )
-    
-    # Also, advise user to consider distributing predictors into several plots
-    message('Many rows! Consider distributing predictors into several plots using argument `select_predictors`')
-  } 
-  
-  # Return matrix of plots
-  wrap_plots(intercept_plot, predictors_plot, design = layout,
-             # The 2 below corresponds to intercept_plot and predictors_plot
-             nrow = 2)
-  
+
+    # Return matrix of plots
+    patchwork::wrap_plots(intercept_plot, predictors_plot, design = layout, nrow = 2)
 }

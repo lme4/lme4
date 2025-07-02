@@ -1,5 +1,6 @@
 \name{allFit}
 \alias{allFit}
+\alias{plot.fixef.allFit}
 \title{Refit a fitted model with all available optimizers}
 \usage{
 allFit(object, meth.tab = NULL, data=NULL,
@@ -9,6 +10,12 @@ allFit(object, meth.tab = NULL, data=NULL,
        parallel = c("no", "multicore", "snow"),
        ncpus = getOption("allFit.ncpus", 1L), cl = NULL,
        catch.errs = TRUE)
+
+plot.fixef.allFit(allFit_output, shared_y_axis_limits = TRUE,
+                  multiply_y_axis_limits = 1, decimal_points = NULL,
+                  select_predictors = NULL, nrow = NULL,
+                  y_title = "Fixed effect", y_title_hjust = NULL,
+                  number_optimizers = TRUE, height = NULL)
 }
 \arguments{
   \item{object}{a fitted model}
@@ -40,6 +47,16 @@ allFit(object, meth.tab = NULL, data=NULL,
   \item{catch.errs}{(logical) Wrap model fits in \code{tryCatch} clause
     to skip over errors? (\code{catch.errs=FALSE} is probably only
     useful for debugging)}
+  \item{allFit_output}{An object of class \code{allFit}, typically produced by \code{allFit()}}
+  \item{shared_y_axis_limits}{logical: should all panels have the same y-axis limits?}
+  \item{multiply_y_axis_limits}{numeric: factor to expand y-axis limits (only used when \code{shared_y_axis_limits=TRUE})}
+  \item{decimal_points}{integer: number of decimal points to display on y-axis labels}
+  \item{select_predictors}{character vector: names of specific predictors to plot (in addition to intercept)}
+  \item{nrow}{integer: number of rows for arranging predictor panels}
+  \item{y_title}{character: title for the y-axis}
+  \item{y_title_hjust}{numeric: horizontal justification for y-axis title}
+  \item{number_optimizers}{logical: should optimizers be numbered in the legend?}
+  \item{height}{numeric: total height for the plot layout}
 }
 \value{
   an object of type \code{allFit}, which is a list of fitted \code{merMod} objects (unless \code{show.meth.tab} is
@@ -90,6 +107,9 @@ library(lme4)
   ss$fixef               ## table of fixed effects
   ss$sdcor               ## table of random effect SDs and correlations
   ss$theta               ## table of random effects parameters, Cholesky scale
+
+  ## Plot fixed effects from all optimizers
+  plot.fixef.allFit(gm_all)
 } %% interactive()
 \dontrun{
   ## Parallel examples for Windows
