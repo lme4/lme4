@@ -52,12 +52,12 @@ namespace glm {
 
     //@{ Templated scalar functors used in links, inverse links, etc.
     template <typename T>
-    struct logN0 : public std::unary_function<T, T> {
+    struct logN0 : public std::function<T(T)> {
         const T operator()(const T& x) const {return x ? std::log(x) : T();}
     };
 
     template <typename T>
-    struct safemult : public std::binary_function<T, T, T> {
+    struct safemult : public std::function<T(T,T)> {
         const T operator()(const T& x, const T& y) const {return x ? (x*y) : T();}
     };
 
@@ -72,26 +72,26 @@ namespace glm {
     }
 
     template<typename T>
-    struct Round : public std::unary_function<T, T> {
+    struct Round : public std::function<T(T)> {
         const T operator()(const T& x) const {return nearbyint(x);}
     };
 
     template<typename T>
-    struct x1mx : public std::unary_function<T, T> {
+    struct x1mx : public std::function<T(T)> {
         const T operator() (const T& x) const {
             return T(std::max(std::numeric_limits<T>::epsilon(), x * (1 - x)));
         }
     };
 
     template<typename T>
-    struct Lgamma : public std::unary_function<T, T> {
+    struct Lgamma : public std::function<T(T)> {
         const T operator() (const T& x) const {
             return lgamma(x);
         }
     };
 
     template<typename T>
-    struct cauchitinv : public std::unary_function<T, T> {
+    struct cauchitinv : public std::function<T(T)> {
         const T operator() (const T& x) const {
             return T(std::min(1.-std::numeric_limits<T>::epsilon(),
                               ::Rf_pcauchy(double(x), 0., 1., 1, 0)));
@@ -99,14 +99,14 @@ namespace glm {
     };
 
     template<typename T>
-    struct cauchit : public std::unary_function<T, T> {
+    struct cauchit : public std::function<T(T)> {
         const T operator() (const T& x) const {
             return T(::Rf_qcauchy(double(x), 0., 1., 1, 0));
         }
     };
 
     template<typename T>
-    struct cauchitmueta : public std::unary_function<T, T> {
+    struct cauchitmueta : public std::function<T(T)> {
         const T operator() (const T& x) const {
             return T(::Rf_dcauchy(double(x), 0., 1., 0));
         }
@@ -119,7 +119,7 @@ namespace glm {
     // * allow toggling of clamp activity by user?
     // (applies to logitmueta too)
     template<typename T>
-    struct logitinv : public std::unary_function<T, T> {
+    struct logitinv : public std::function<T(T)> {
         const T operator() (const T& x) const {
             return T(std::max(std::numeric_limits<T>::epsilon(),
                               std::min(1.-std::numeric_limits<T>::epsilon(),
@@ -128,14 +128,14 @@ namespace glm {
     };
 
     template<typename T>
-    struct logit : public std::unary_function<T, T> {
+    struct logit : public std::function<T(T)> {
         const T operator() (const T& x) const {
             return T(::Rf_qlogis(double(x), 0., 1., 1, 0));
         }
     };
 
     template<typename T>
-    struct logitmueta : public std::unary_function<T, T> {
+    struct logitmueta : public std::function<T(T)> {
         const T operator() (const T& x) const {
             return T(std::max(std::numeric_limits<T>::epsilon(),
                               Rf_dlogis(double(x), 0., 1., 0)));
@@ -143,7 +143,7 @@ namespace glm {
     };
 
     template<typename T>
-    struct probitinv : public std::unary_function<T, T> {
+    struct probitinv : public std::function<T(T)> {
         const T operator() (const T& x) const {
             return T(std::min(1.-std::numeric_limits<T>::epsilon(),
                               ::Rf_pnorm5(double(x), 0., 1., 1, 0)));
@@ -151,21 +151,21 @@ namespace glm {
     };
 
     template<typename T>
-    struct probit : public std::unary_function<T, T> {
+    struct probit : public std::function<T(T)> {
         const T operator() (const T& x) const {
             return T(::Rf_qnorm5(double(x), 0., 1., 1, 0));
         }
     };
 
     template<typename T>
-    struct probitmueta : public std::unary_function<T, T> {
+    struct probitmueta : public std::function<T(T)> {
         const T operator() (const T& x) const {
             return T(::Rf_dnorm4(double(x), 0., 1., 0));
         }
     };
 
     template<typename T>
-    struct clogloginv : public std::unary_function<T, T> {
+    struct clogloginv : public std::function<T(T)> {
         const T operator() (const T& x) const {
             return T(std::max(std::numeric_limits<T>::epsilon(),
                               std::min(1.-std::numeric_limits<T>::epsilon(),
@@ -174,7 +174,7 @@ namespace glm {
     };
 
     template<typename T>
-    struct cloglogmueta : public std::unary_function<T, T> {
+    struct cloglogmueta : public std::function<T(T)> {
         const T operator() (const T& x) const {
             return T(std::max(std::numeric_limits<T>::epsilon(),
                               dgumbel2(double(x), 0., 1., 0)));
@@ -183,7 +183,7 @@ namespace glm {
     //@}
 
     template<typename T>
-    struct boundexp : public std::unary_function<T, T> {
+    struct boundexp : public std::function<T(T)> {
         const T operator() (const T& x) const {
             return T(std::max(std::numeric_limits<T>::epsilon(),
                               exp(double(x))));
@@ -192,7 +192,7 @@ namespace glm {
 
 
     template<typename T>
-    struct inverse : public std::unary_function<T, T> {
+    struct inverse : public std::function<T(T)> {
         const T operator() (const T& x) const {
           return T(std::max(std::numeric_limits<T>::epsilon(),
                             pow(double(x), -1)));

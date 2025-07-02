@@ -8,14 +8,16 @@
 }
 \usage{
 \method{simulate}{merMod}(object, nsim = 1, seed = NULL,
-	 use.u = FALSE, re.form = NA, ReForm, REForm, REform,
-	 newdata=NULL, newparams=NULL, family=NULL,
+	 use.u = FALSE, re.form = NA,
+	 newdata=NULL, newparams=NULL, family=NULL, cluster.rand=rnorm,
 	 allow.new.levels = FALSE, na.action = na.pass, \dots)
 
 .simulateFun(object, nsim = 1, seed = NULL, use.u = FALSE,
-             re.form = NA, ReForm, REForm, REform,
+             re.form = NA,
              newdata=NULL, newparams=NULL,
-             formula=NULL, family=NULL, weights=NULL, offset=NULL,
+             formula=NULL, family=NULL, 
+             cluster.rand=rnorm,
+             weights=NULL, offset=NULL,
              allow.new.levels = FALSE, na.action = na.pass,
              cond.sim = TRUE, \dots)
 }
@@ -36,8 +38,6 @@
   \item{re.form}{formula for random effects to condition on.  If
     \code{NULL}, condition on all random effects; if \code{NA} or \code{~0},
     condition on no random effects.  See Details.}
-  \item{ReForm, REForm, REform}{deprecated: \code{re.form} is
-    now the preferred argument name.}
   \item{newdata}{data frame for which to evaluate predictions.}
   \item{newparams}{new parameters to use in evaluating predictions,
     specified as in the \code{start} parameter for \code{\link{lmer}} or
@@ -47,6 +47,8 @@
   \item{formula}{a (one-sided) mixed model formula, as described for
     \code{\link{lmer}}.}
   \item{family}{a GLM family, as in \code{\link{glmer}}.}
+  \item{cluster.rand}{Function that generates \emph{standardized} random cluster effects.  The function takes one
+    argument, the number of random values to generate.}
   \item{weights}{prior weights, as in \code{\link{lmer}} or
     \code{\link{glmer}}.}
   \item{offset}{offset, as in \code{\link{glmer}}.}
@@ -122,6 +124,7 @@
       from a geometric distribution (negative binomial with
       overdispersion parameter 1).
     }
+    \item{\code{cluster.rand} allows one to test effects of departures from normality for the distribution of cluster random effects, for example by using a heavy-tailed distribution or a mixture distribution.  One can also use a truncated normal to investigate true or false flagging rates; in that case the generated effects will not have a mean of 0 and standard deviation of 1; they are still considered standardized in that the simulation will multiply them by the estimated standard deviation of the cluster random effects.}
 }
 }
 \examples{

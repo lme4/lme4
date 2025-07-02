@@ -1,5 +1,8 @@
 library("testthat")
+try(detach("package:lmerTest"), silent = TRUE)
 library("lme4")
+
+testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
 
 context("summarizing/printing models")
 test_that("lmer", {
@@ -21,14 +24,26 @@ test_that("lmer", {
 
   tmpf <- function(x) capture.output(print(summary(x),digits=1))
   tfun <- function(cc) {
-      w <- grep("Fixed effects:",cc)
+      w <- grep("Fixed effects:", cc)
       cc[w:length(cc)]
   }
   C1 <- lmerControl(optimizer="nloptwrap",
                     optCtrl=list(xtol_abs=1e-6, ftol_abs=1e-6))
-  cc1 <- tmpf(lmer(y ~ x.1 + x.2 + (1 + x.1 | g), control=C1))
-  cc2 <- tmpf(lmer(y ~ x.1 + x.2 + (1 + x.1 + x.2 | g), control=C1))
-  expect_equal(tfun(cc1),
+  m1 <- lmer(y ~ x.1 + x.2 + (1 + x.1 | g), control=C1)
+  m2 <- lmer(y ~ x.1 + x.2 + (1 + x.1 + x.2 | g), control=C1)
+  cc1 <- tmpf(m1)
+  cc2 <- tmpf(m2)
+  ## FIXME: correlation of fixed effects printed inconsistently.
+  ## If (1) LME4_TEST_LEVEL == 100 *and* after running all of prior
+  ##   tests, something (package load? options setting?) changes
+  ##   so that the fixed-effect correlations are no longer printed
+  ##   out, and this test fails
+  ## would like to sort this out but realistically not sure it's worth it?
+  t1 <- tfun(cc1)
+  vv <- vcov(m1)
+  ss <- sessionInfo()
+  save(m1, vv, ss, file = sprintf("test-summary_testlevel_%d.rda", testLevel))
+  expect_equal(t1,
                c("Fixed effects:",
                  "            Estimate Std. Error t value", 
                  "(Intercept)      5.4        0.5      12",

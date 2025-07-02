@@ -1,6 +1,8 @@
-if (.Platform$OS.type != "windows") {
+if (.Platform$OS.type != "windows") withAutoprint({
 
     library(lme4)
+    source(system.file("testdata", "lme-tst-funs.R", package="lme4", mustWork=TRUE))# -> unn()
+
     m <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
     bruteForceHat <- function(object) {
         with(getME(object, c("Lambdat", "Lambda", "Zt", "Z", "q", "X")), {
@@ -24,9 +26,10 @@ if (.Platform$OS.type != "windows") {
     ii <- sample(nrow(sleepstudy), 500, replace=TRUE)
     m2 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy[ii, ])
 
+    
     stopifnot(all.equal(diag(H),
-                        unname(lme4:::hatvalues.merMod(m)), tol= 1e-14),
+                        unn(hatvalues(m)),  tol= 1e-14),
               all.equal(diag(bruteForceHat(m2)),
-                        unname(lme4:::hatvalues.merMod(m2)), tol= 1e-14)
+                        unn(hatvalues(m2)), tol= 1e-14)
               )
-} ## skip on windows (for speed)
+}) ## skip on windows (for speed)

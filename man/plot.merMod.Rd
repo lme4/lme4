@@ -2,14 +2,19 @@
 \title{Diagnostic Plots for 'merMod' Fits}
 \alias{plot.merMod}
 \alias{qqmath.merMod}
+\alias{diagnostics}
+\alias{diagnostic.plots}
+\alias{diagnosticPlots}
+\alias{diagnostic_plots}
+\alias{qqplot}
 \usage{
 \method{plot}{merMod}(x,
      form = resid(., type = "pearson") ~ fitted(.), abline,
      id = NULL, idLabels = NULL, grid, \dots)
-\method{qqmath}{merMod}(x, id = NULL, idLabels = NULL, \dots)
+\method{qqmath}{merMod}(x, data = NULL, id = NULL, idLabels = NULL, \dots)
 }
 \arguments{
-  \item{x}{a fitted [ng]lmer model}
+  \item{x}{a fitted [ng]lmer model.}
   \item{form}{an optional formula specifying the desired
   type of plot. Any variable present in the original data
   frame used to obtain \code{x} can be referenced. In
@@ -53,6 +58,7 @@
   formula \code{idLabels=~.obs} will label the observations
   according to observation number.}
 
+  \item{data}{ignored: required for S3 method compatibility.}
   \item{grid}{an optional logical value indicating whether
   a grid should be added to plot. Default depends on the
   type of lattice plot used: if \code{xyplot} defaults to
@@ -62,7 +68,9 @@
   plot function.}
 }
 \description{
-  diagnostic plots for merMod fits
+  diagnostic plots for merMod fits.  Some of these plots may be supplemented or 
+  superseded by functions from other packages.  See the \emph{See Also} section 
+  below for recommended alternatives.
 }
 \details{
   Diagnostic plots for the linear mixed-effects fit are
@@ -87,6 +95,15 @@
   (see \code{\link{qqmath.ranef.mer}} for Q-Q plots of the
   conditional mode values).
 }
+\seealso{
+  \itemize{
+    \item \code{\link[performance]{check_model}} in the \CRANpkg{performance} package.
+    \item \CRANpkg{DHARMa} package, which evaluates model diagnostics through 
+    simulating residuals (see: \code{\link[DHARMa]{simulateResiduals}}).
+    \item \code{\link[lattice]{qqmath}} in the \CRANpkg{lattice} package.
+    \item \code{\link[car]{influencePlot}} in the \CRANpkg{car} package.
+  }
+}
 \author{
   original version in \CRANpkg{nlme} package by Jose Pinheiro
   and Douglas Bates.
@@ -102,14 +119,24 @@ plot(fm1, Subject ~ resid(., scaled=TRUE))
 plot(fm1, distance ~ fitted(.) | Subject, abline = c(0,1))
 ## residuals by age, separated by Subject
 plot(fm1, resid(., scaled=TRUE) ~ age | Sex, abline = 0)
-library(lattice) ## needed for qqmath
-qqmath(fm1, id=0.05)
+## scale-location plot, with red smoothed line
+scale_loc_plot <- function(m, line.col = "red", line.lty = 1,
+                           line.lwd = 2) {
+  plot(fm1, sqrt(abs(resid(.))) ~ fitted(.),
+       type = c("p", "smooth"),
+       par.settings = list(plot.line =
+                             list(alpha=1, col = line.col,
+                                  lty = line.lty, lwd = line.lwd)))
+}
+scale_loc_plot(fm1)
+## Q-Q plot
+lattice::qqmath(fm1, id=0.05)
 ggp.there <- "package:ggplot2" \%in\% search()
 if (ggp.there || require("ggplot2")) {
     ## we can create the same plots using ggplot2 and the fortify() function
     fm1F <- fortify.merMod(fm1)
-    ggplot(fm1F, aes(.fitted,.resid)) + geom_point(colour="blue") +
-           facet_grid(.~Sex) + geom_hline(yintercept=0)
+    ggplot(fm1F, aes(.fitted, .resid)) + geom_point(colour="blue") +
+           facet_grid(. ~ Sex) + geom_hline(yintercept=0)
     ## note: Subjects are ordered by mean distance
     ggplot(fm1F, aes(Subject,.resid)) + geom_boxplot() + coord_flip()
     ggplot(fm1F, aes(.fitted,distance)) + geom_point(colour="blue") +

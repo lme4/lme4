@@ -153,6 +153,10 @@ if (require("numDeriv")) {
 ## compare with internal calculations:
 fm1@optinfo$derivs
 
+## compute reciprocal condition number of Hessian
+H <- fm1@optinfo$derivs$Hessian
+Matrix::rcond(H)
+
 ## 4. restart the fit from the original value (or
 ## a slightly perturbed value):
 fm1.restart <- update(fm1, start=pars)

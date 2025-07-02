@@ -13,6 +13,7 @@ clean
 ^.RData
 .*/.RData
 \.aux$
+auto/
 \.dvi$
 \.log$
 \.bst$
@@ -30,5 +31,12 @@ cache/.*
 README.md
 TODO.md
 R/TAGS
-src/mcmcsamp.cpp
+src/mcmcsamp\.h$
+src/mcmcsamp\.cpp$
 ^\.github$
+revdep/
+Rplots.pdf
+R/scaleX.R
+\.Rout
+.vscode
+docs/

@@ -69,7 +69,7 @@ merPredD <-
                          RZX <<- if (!is.null(ll$RZX))
                              array(ll$RZX, c(q, p)) else array(0, c(q, p))
                          Utr <<- if (!is.null(ll$Utr))
-                             as.numeric(ll$Utr) else numeric(q)
+                                     as.numeric(ll$Utr) else numeric(q)
                          V <<- if (!is.null(ll$V))
                              array(ll$V, c(n, p)) else array(0, c(n, p))
                          VtV <<- if (!is.null(ll$VtV))
@@ -375,7 +375,7 @@ glmResp <-
                          if (is.null(ll$family)) stop("family must be specified")
                          family <<- ll$family
                          n <<- if (!is.null(ll$n)) as.numeric(ll$n) else rep.int(1,length(y))
-                         eta <<- if (!is.null(ll$eta)) as.numeric(ll$eta) else numeric(length(y))
+                         eta <<- if (!is.null(e <- ll[["etastart"]])) as.numeric(e) else numeric(length(y))
                      },
                      aic          = function() {
                          .Call(glm_aic, ptr())

@@ -28,10 +28,11 @@ allVarsRec <- function(object)
 
 ## simple version of getData.gnls from nlme
 ## but we *should* and *can* work with environment(formula(.))
-getData.merMod <-  function(object)
-{
-    mCall <- object@call
-    eval(mCall$data, environment(formula(object)))
+getData.merMod <-  function(object) {
+    mCall <- getCall(object)
+    data <- eval(mCall$data, environment(formula(object)))
+    if (!is.data.frame(data) && !is.matrix(data)) stop(paste(sQuote("data"),"object found is not a data frame or matrix"))
+    return(data)
 }
 
 asOneFormula <-
@@ -47,7 +48,7 @@ asOneFormula <-
 
 getIDLabels <- function(object, form=formula(object)) {
     mf <- factorize(form,model.frame(object))
-    if (length(ff <- findbars(form))>0) {
+    if (length(ff <- reformulas::findbars(form))>0) {
         grps <- lapply(ff,"[[",3)
     } else {
         grps <- form[[2]]
@@ -243,7 +244,10 @@ plot.merMod <-
     dots <- list(...)
     args <- if (length(dots) > 0) dots else list()
     ## appending object to data, and adding observation-number variable
-    data <- as.list(c(as.list(cbind(data,.obs=seq(nrow(data)))), . = list(object)))
+    if (length(data) > 0) {
+        data <- cbind(data, .obs = seq(nrow(data)))
+    }
+    data <- as.list(c(as.list(data), . = list(object)))
     ## covariate - must always be present
     covF <- getCovariateFormula(form)
     .x <- eval(covF[[2]], data)
@@ -426,10 +430,23 @@ plot.summary.mer <- function(object, type="fixef", ...) {
 ## TO DO: allow faceting formula
 ## TO DO: allow qqline to be optional
 ## TO DO (harder): steal machinery from qq.gam for better GLMM Q-Q plots
-qqmath.merMod <- function(x, id=NULL, idLabels=NULL, ...) {
-    ## if (!is.null(id) || !is.null(idLabels))
-    ##  stop("id and idLabels options not yet implemented")
-    values <- residuals(x,type="pearson",scaled=TRUE)
+qqmath.merMod <- function(x, data = NULL, id=NULL, idLabels=NULL, ...) {
+    ## klugey attempt to detect whether user forgot to specify argument
+    ## names explicitly (after addition of required 'data' argument)
+    ## NOT completely tested!
+    if (!is.null(data)) {
+        idLabels <- id
+        id <- data
+        warning("qqmath.merMod takes ", sQuote("data"), "as its ",
+                "first argument for S3 method compatibility: ",
+                "in the future, please ",
+                "specify the ", sQuote("id"), " and ",
+                sQuote("idLabels"), " arguments explicitly ",
+                "i.e. ",
+                sQuote("qqmath(fitted_model, id = ..., [idLabels = ...], ...)"))
+    }
+   
+    values <- residuals(x, type="pearson", scaled=TRUE)
     data <- getData(x)
     ## DRY: copied from plot.merMod, should modularize/refactor
     if (!is.null(id)) {       ## identify points in plot

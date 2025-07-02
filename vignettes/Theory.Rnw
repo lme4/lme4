@@ -59,7 +59,7 @@ of the parameters given the observed data, for maximum likelihood
 criterion.  Because this objective function must be evaluated at many
 different values of the model parameters during the optimization
 process, we focus on the evaluation of the objective function and a
-critical computation in this evalution --- determining the solution to a
+critical computation in this evaluation --- determining the solution to a
 penalized, weighted least squares (PWLS) problem.
 
 The dimension of the solution of the PWLS problem can be very large,
@@ -624,7 +624,7 @@ estimate of $\bm\beta$.
 Note that the profiled REML criterion can be evaluated from a sparse
 Cholesky decomposition like that in (\ref{eq:16}) but without the
 requirement that the permutation can be applied to the columns of $\bm
-Z\bm\Lambda(\bm\theta)$ separately from the columnns of $\bm X$.  That
+Z\bm\Lambda(\bm\theta)$ separately from the columns of $\bm X$.  That
 is, we can use a general fill-reducing permutation rather than the
 specific form (\ref{eq:15}) with separate permutations represented by
 $\bm P_{\bm Z}$ and $\bm P_{\bm X}$. This can be useful in cases where
@@ -897,7 +897,7 @@ triangular, Cholesky factor, $\bm L^{(i)}$, satisfying
 \end{equation}
 After each successful iteration, determining new values of the
 coefficients, $\bm u^{(i+1)}$ and $\bm\beta^{(i+1)}$, that reduce the
-penalized, weighted residual sum of squqres, we update the weights
+penalized, weighted residual sum of squares, we update the weights
 matrix to $\bm W(\bm\mu^{(i+1)})$ and the weighted Jacobians,
 $\bm U^{(i+1)}$ and $\bm V^{(i+1)}$, then iterate.  Convergence is
 determined according to the orthogonality convergence
@@ -1083,7 +1083,7 @@ The CHOLMOD package allows for $\bm L_{\bm Z}$ to be calculated
 directly from $\bm\Lambda\trans(\bm\theta)\bm Z\trans$ or from
 $\bm\Lambda\trans(\bm\theta)\bm Z\trans\bm Z\bm\Lambda(\theta)$.  The
 choice in implementation is whether to store $\bm Z\trans$ and update
-it to $\bm\Lambda\trans(\bm\theta)\bm Z$ or to store $\bm Z\trans\bm
+it to $\bm\Lambda\trans(\bm\theta)\bm Z\trans$ or to store $\bm Z\trans\bm
 Z$ and use it to form $\bm\Lambda\trans(\bm\theta)\bm Z\trans\bm
 Z\bm\Lambda(\theta)$ at each evaluation.
 
@@ -1091,8 +1091,8 @@ In the \package{lme4} package we store $\bm Z\trans$ and use it to
 form $\bm\Lambda\trans(\bm\theta)\bm Z\trans$ from which $\bm L_{\bm
   Z}$ is evaluated.  There are two reasons for this choice.  First,
 the calculations for the more general forms of mixed models cannot be
-reduced to calculations involving $\bm Z\trans\bm Z$ and by expressing
-these calculations in terms of $\bm\Lambda(\bm\theta)\bm Z\trans$ for
+reduced to calculations involving $\bm Z\trans\bm Z $ and by expressing
+these calculations in terms of $\bm\Lambda(\bm\theta)\trans \bm Z\trans$ for
 linear mixed models we can reuse the code for the more general
 models.  Second, the calculation of $\bm\Lambda(\bm\theta)\trans\left(\bm
   Z\trans\bm Z\right)\bm\Lambda(\bm\theta)$ from $\bm Z\trans\bm Z$ is
@@ -1120,18 +1120,18 @@ Finally $\bm L_{\bm X}$ is evaluated as the (dense) solution to
 \begin{equation}
   \label{eq:LX}
   \bm L_{\bm X}\bm L_{\bm X}\trans=
-  \bm X\trans\bm X-\bm L_{\bm X\bm Z}\bm L_{\bm X\bm Z} .
+  \bm X\trans\bm X-\bm L_{\bm X\bm Z}\bm L_{\bm X\bm Z}\trans .
 \end{equation}
 from which $\tilde{\bm\beta}$ can be determined as the
 solution to dense system
 \begin{equation}
   \label{eq:tildebeta}
-  \bm L_{\bm X}\bm L_{\bm X}\tilde{\bm\beta}=\bm X\trans\bm y
+  \bm L_{\bm X}\bm L_{\bm X}\trans \tilde{\bm\beta}=\bm X\trans\bm y
 \end{equation}
 and $\tilde{\bm u}$ as the solution to the sparse system
 \begin{equation}
   \label{eq:tildeu}
-  \bm L_{\bm Z}\bm L_{\bm Z}\tilde{u}=\bm\Lambda\trans\bm Z\trans\bm y
+  \bm L_{\bm Z}\bm L_{\bm Z}\trans \tilde{u}=\bm\Lambda\trans\bm Z\trans\bm y
 \end{equation}
 
 For many models, in particular models with scalar random effects,

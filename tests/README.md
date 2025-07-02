@@ -4,9 +4,11 @@ Testing protocols
 At present `lme4` uses two different testing protocols:
 
 * "vanilla" R testing -- every `.R` file gets run during `R CMD check` and compared with its corresponding `.Rout.save` file (if it exists)
-* `testthat` testing: tests in `inst/tests` can be run in the framework of the `testthat` package, specifically via `tests/test-all.R`
+* `testthat` testing: tests in `tests/testthat` can be run in the framework of the `testthat` package, specifically via `tests/AAAtest-all.R`
 
-There are some unique challenges in testing a package like `lme4` that does numerical computations:
+`R CMD check` will run both sets of tests: `devtools::test()` will run only the tests in `tests/testthat` (with one failure due to the weird way that `devtools` sets up the testing environment ...)
+
+There are some particular challenges in testing a package like `lme4` that does numerical computations:
 
 * because of floating-point precision issues, detailed numerical results will differ across platforms, compilers, etc.: this can be handled e.g. by setting an appropriate tolerance in `all.equal`, but we do have to decide on an appropriate tolerance.  Also, this means that we should *not* typically print out full results of fits to the output file, because these will lead to `Rout`/`Rout.save` comparisons being flagged.
 * detailed numerical results will also change if we change the details (order etc.) of the internal algorithms (including changes to the underlying computational algorithms in `RcppEigen`); the same tolerance issues arise

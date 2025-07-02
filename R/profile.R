@@ -20,7 +20,9 @@ profile.merMod <- function(fitted,
                            maxpts = 100,
                            delta = NULL,
                            delta.cutoff = 1/8,
-                           verbose=0, devtol=1e-9,
+                           verbose=0,
+                           devtol=1e-9,
+                           devmatchtol=1e-5,
                            maxmult = 10,
                            startmethod = "prev",
                            optimizer = NULL,
@@ -203,10 +205,15 @@ profile.merMod <- function(fitted,
     npar1 <- if (isLMM(fitted)) nvp else nptot
     ## check that devfun2() computation for the base parameters is (approx.) the
     ##  same as the original devfun() computation
-    if(!isTRUE(all.equal(unname(dd(opt[seq(npar1)])), base, tolerance=1e-5))){
-        stop("Profiling over both the residual variance and\n",
-             "fixed effects is not numerically consistent with\n",
-             "profiling over the fixed effects only")}
+    basecheck <- all.equal(unname(dd(opt[seq(npar1)])), base, tolerance=devmatchtol)
+    if(!isTRUE(basecheck)) {
+        basediff <- abs(dd(opt[seq(npar1)])/base - 1)
+        stop(sprintf(paste0("Profiling over both the residual variance and\n",
+                            "fixed effects is not numerically consistent with\n",
+                            "profiling over the fixed effects only (relative difference: %1.4g);\n",
+                            "consider adjusting devmatchtol"),
+                     basediff))
+    }
 
     ## sequence of variance parameters to profile
     seqnvp <- intersect(seq_len(npar1), which)
@@ -225,7 +232,6 @@ profile.merMod <- function(fitted,
         if (verbose) cat(if(isLMM(fitted)) "var-cov " else "",
                              "parameter ",w,":\n",sep="")
         wp1 <- w + 1L
-        start <- opt[seqpar1][-w]
         pw <- opt[w]
         lowcut <- lower[w]
         upcut <- upper[w]
@@ -252,8 +258,12 @@ profile.merMod <- function(fitted,
                         "new params ",
                         paste(mkpar(npar1,w,xx,ores$par),
                               collapse=","),"\n")
+                
                 if (devdiff < (-devtol))
-                    stop("profiling detected new, lower deviance")
+                    stop("profiling detected new, lower deviance ",
+                         sprintf("(deviance diff = %1.3g, tolerance = %1.3g)",
+                                 abs(devdiff), devtol))
+                             
                 if(devdiff < 0)
                     warning(gettextf("slightly lower deviances (diff=%g) detected",
                                      devdiff), domain=NA)
@@ -696,8 +706,8 @@ xyplot.thpr <-
 }
 
 ## copy of stats:::format.perc (not exported, and ":::" being forbidden nowadays):
-format.perc <- function (probs, digits) {
-    paste(format(100 * probs, trim = TRUE,
+format.perc <- function (x, digits, ...) {
+    paste(format(100 * x, trim = TRUE,
                  scientific = FALSE, digits = digits),
           "%")
 }
@@ -729,6 +739,9 @@ confint.thpr <- function(object, parm, level = 0.95, zeta,
                     grep("^(sd_|cor_|.sig|sigma$)", bnms, value=TRUE)
                 else if (parm == "beta_")
                     grep("^(sd_|cor_|.sig|sigma$)", bnms, value=TRUE, invert=TRUE)
+                else if(parm %in% bnms) # just that one
+                    parm
+                ## else NULL : will return 0-row matrix
             } else
                 intersect(parm, bnms)
     cn <-

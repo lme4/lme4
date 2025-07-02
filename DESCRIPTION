@@ -1,5 +1,5 @@
 Package: lme4
-Version: 1.1-27.9000
+Version: 1.1-37.9000
 Title: Linear Mixed-Effects Models using 'Eigen' and S4
 Authors@R: c(
     person("Douglas","Bates", role="aut",
@@ -23,21 +23,25 @@ Authors@R: c(
     person("John", "Fox", role="ctb"),
     person("Alexander", "Bauer", role="ctb"),
     person("Pavel N.", "Krivitsky", role=c("ctb","cph"), comment=c(ORCID="0000-0002-9101-3362",
-    "shared copyright on simulate.formula"))
-    )
-Contact: LME4 Authors <lme4-authors@lists.r-forge.r-project.org>
+    "shared copyright on simulate.formula")),
+    person("Emi", "Tanaka", role = "ctb",
+      comment = c(ORCID="0000-0002-1455-259X")),
+      person("Mikael", "Jagan", role = "ctb",
+      comment = c(ORCID="0000-0002-3542-2938")),
+    person("Ross D.", "Boylan", email="ross.boylan@ucsf.edu", role=("ctb"),
+        comment = c(ORCID="0009-0003-4123-8090"))
+      )
 Description: Fit linear and generalized linear mixed-effects models.
     The models and their components are represented using S4 classes and
     methods.  The core computational algorithms are implemented using the
     'Eigen' C++ library for numerical linear algebra and 'RcppEigen' "glue".
-Depends: R (>= 3.2.0), Matrix (>= 1.2-1), methods, stats
-LinkingTo: Rcpp (>= 0.10.5), RcppEigen
+Depends: R (>= 3.6.0), Matrix, methods, stats
+LinkingTo: Rcpp (>= 0.10.5), RcppEigen (>= 0.3.3.9.4), Matrix (>= 1.2-3)
 Imports: graphics, grid, splines, utils, parallel, MASS, lattice, boot,
-    nlme (>= 3.1-123), minqa (>= 1.1.15), nloptr (>= 1.0.4)
+    nlme (>= 3.1-123), minqa (>= 1.1.15), nloptr (>= 1.0.4), reformulas (>= 0.3.0), rlang
 Suggests:
     knitr,
     rmarkdown,
-    PKPDmodels,
     MEMSS,
     testthat (>= 0.8.1),
     ggplot2,
@@ -52,7 +56,9 @@ Suggests:
     mgcv,
     statmod,
     rr2,
-    semEff
+    semEff,
+    tibble,
+    merDeriv
 VignetteBuilder: knitr
 LazyData: yes
 License: GPL (>=2)

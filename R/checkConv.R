@@ -13,13 +13,8 @@
 ##' @param debug useful if some checks are on "ignore", but would "trigger"
 checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
 {
-
-    if (is.null(derivs)) return(NULL)  ## bail out
-    if (anyNA(derivs$gradient))
-        return(list(code = -5L,
-                    messages = gettextf("Gradient contains NAs")))
-    ntheta <- length(lbound)
     res <- list()
+    ntheta <- length(lbound)
 
     ## check singularity first, and unconditionally
     ## (ignore "ignore")
@@ -27,12 +22,12 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
     ## similar logic to isSingular, but we don't have the fitted object to test
     bcoefs <- seq(ntheta)[lbound==0]
     is.singular <- any(coefs[bcoefs] < ccl$tol)
-    
+
     if (doCheck(cc)) {
         ## singular fit
         ## are there other circumstances where we can get a singular fit?
         if (is.singular) {
-            wstr <- "boundary (singular) fit: see ?isSingular"
+            wstr <- "boundary (singular) fit: see help('isSingular')"
             res$messages <- c(res$messages,wstr)
             switch(cc,
                    "message" = message(wstr),
@@ -44,7 +39,12 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
 
     ## DON'T check remaining gradient issues
     if (is.singular) return(res)
-    
+
+    if (is.null(derivs)) return(NULL)  ## bail out
+    if (anyNA(derivs$gradient))
+        return(list(code = -5L,
+                    messages = gettextf("Gradient contains NAs")))
+
     ## gradients:
     ## check absolute gradient (default)
     ccl <- ctrl[[cstr <- "check.conv.grad"]] ; checkCtrlLevels(cstr, cc <- ccl[["action"]])
@@ -52,7 +52,11 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
     if (doCheck(cc)) {
         scgrad <- tryCatch(with(derivs,solve(chol(Hessian),gradient)),
                            error=function(e)e)
-        if (inherits(scgrad, "error")) {
+        if (inherits(scgrad, "error") ||
+            ## some BLAS versions return NA rather than throwing an error?
+            ##  GH #677
+            any(is.na(scgrad)))
+        {
             wstr <- "unable to evaluate scaled gradient"
             res$code <- -1L
         } else {

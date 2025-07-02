@@ -116,7 +116,7 @@ lmList <- function(formula, data, family, subset, weights,
                  "weights", "offset"), names(mf), 0)
     mf <- mf[c(1, m)]
     ## substitute `+' for `|' in the formula
-    mf$formula <- subbars(formula)
+    mf$formula <- reformulas::subbars(formula)
     mf$drop.unused.levels <- TRUE
     ## pass NAs for now -- want *all* groups, weights, offsets recovered
     mf$na.action <- na.pass
@@ -132,9 +132,10 @@ lmList <- function(formula, data, family, subset, weights,
     mf2 <- if (missing(family)) NULL else list(family=family)
     fitfun <- function(data, formula) {
         tryCatch({
-            do.call(fit,c(list(formula, data,
-                               weights = model.weights(data),
-                               offset = model.offset(data), ...),
+          do.call(fit, c(list(formula, data,
+                              ## don't use model.offset()/model.weights from stats() - warning with tibbles
+                               weights = data[["(weights)"]],
+                               offset = data[["(offset)"]], ...),
                           mf2))
         }, error = function(x) x)
     }
@@ -445,7 +446,9 @@ getGroups.lmList4 <- function(object, ...) object@groups
 ##
 ## which we avoid via
 for(fn in c("gsummary", "c_deparse")) {
+  if (exists(fn, envir = .ns.nlme)) {
     assign(fn, get(fn, envir = .ns.nlme, inherits=FALSE))
+  }
 }
 
 for(fn in c("fitted", "fixef", "logLik", "pairs", "plot", "predict",

@@ -1,15 +1,29 @@
 TAGS
 *~
+\#*
+.#*
+*.gz
 src/*.o
 src/*.so
 src/*.dll
+R/*.R+*
+vignettes/*.R
+vignettes/*.tex
 vignettes/cache/*
-misc/cache/*
 inst/doc/cache/*
-misc/issues/*
+inst/testdata/lme-tst-fits.Rout*
+inst/testdata/*testdata*
+tests/*.Rout*
+tests/*.R+*
+tests/testthat/*.R+*
 .Rproj.user
 lme4.Rproj
 .Rhistory
 misc/
-\#*
-.#*
+revdep/
+.gitsum/
+Rplots.pdf
+*.rds
+## docs/
+## built on GH from inst/NEWS.Rd
+## NEWS.md

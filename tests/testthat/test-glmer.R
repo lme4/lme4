@@ -1,6 +1,7 @@
 library("testthat")
 library("lme4")
-testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
+source(system.file("testdata", "lme-tst-funs.R", package="lme4", mustWork=TRUE))# -> uc() [back-compatible c()]
+testLevel <- lme4:::testLevel()
 
 gives_error_or_warning <- function (regexp = NULL, all = FALSE, ...)
 {
@@ -185,15 +186,15 @@ if(FALSE) { ## Hadley broke this
                                 control=glmerControl(  # max|grad| = 0.021 ..
                                     optimizer=c("bobyqa","Nelder_Mead")))))
 
-        t2 <- system.time(g2 <- update(g1,
-                         control=glmerControl(optimizer="bobyqa")))
+        t2 <- system.time(g2 <- suppressWarnings(update(g1,
+                         control=glmerControl(optimizer="bobyqa"))))
         ## rbind(t1,t2)[,"elapsed"]
         ## 20 (then 13.0) seconds N-M vs 8 (then 4.8) seconds bobyqa ...
         ## print(t1[3] / t2[3]) # 0.37; => 1.25 should be on the safe side
         expect_lte(t2[3], 1.25 * t1[3])
         ## problem is fairly ill-conditioned so parameters
         ##  are relatively far apart even though likelihoods are OK
-        expect_equal(logLik(g1),logLik(g2),tolerance=1e-7)
+        expect_equal(logLik(g1),logLik(g2),tolerance=2e-7)
     }
     ## test bootstrap/refit with nAGQ>1
     gm1AGQ <- update(gm1,nAGQ=2)
@@ -218,11 +219,12 @@ if(FALSE) { ## Hadley broke this
     id    <- rep(1:n, each=2)
     gm3 <- glmer(event ~ group + (1 | id), family=binomial, nAGQ=21)
     sd3 <- sqrt(diag(vcov(gm3)))
-    expect_equal(sd3, c(0.4254254, 0.424922), tolerance=1e-5)
-    expect_warning(vcov(gm3,use.hessian=FALSE), "finite-difference Hessian")
+    expect_equal(uc(`(Intercept)` = 0.42542855, group = 0.42492581), sd3, tolerance=1e-5) # 7e-9 {Lnx}
+    ## unfortunately these answers aren't reliably "wrong" any more (2024-07-02 Pop!OS Linux)
+    expect_warning(vcov(gm3, use.hessian=FALSE), "finite-difference Hessian")
     expect_equal(suppressWarnings(sqrt(diag(vcov(gm3,use.hessian=FALSE)))),
-                 c(0.3840921, 0.3768747), tolerance=1e-7)
-    expect_equal(sd3, unname(coef(summary(gm3))[,"Std. Error"]))
+                 uc(`(Intercept)` = 0.3840921, group = 0.3768747), tolerance=1e-7) # 6.5e-8
+    expect_equal(sd3, unn(coef(summary(gm3))[,"Std. Error"]))
     ## test non-pos-def finite-difference Hessian ...
     if(getRversion() > "3.0.0") {
         ## saved fits are not safe with old R versions
@@ -274,7 +276,7 @@ if(FALSE) { ## Hadley broke this
               "glmerMod")
 
     ## try higher-order AGQ
-    expect_is(update(gm1,nAGQ=90),"glmerMod")
+    expect_is   (update(gm1,nAGQ=90), "glmerMod")
     expect_error(update(gm1,nAGQ=101),"ord < 101L")
 
     ## non-numeric response variables
@@ -313,14 +315,13 @@ if(FALSE) { ## Hadley broke this
                                nAGQ0initStep=FALSE)
 	, start = list(fixef=c(0,0,0),theta=1))
     expect_equal(exp(fixef(rfit)),
-          structure(c(1.27350509791919, 2.03306352889742, 2.97640884475551),
-                    .Names = c("R01", "R02", "R03")),
-          tolerance=1e-5)
+                 c(R01 = 1.2735051, R02 = 2.0330635, R03 = 2.9764088),
+                 tolerance=1e-5)
 
     ## gaussian with log link and zero values in response ...
     ##  fixed simulation code, passing mustart properly
-    dd <- expand.grid(x=seq(-2,3,length.out=10),
-                  f=factor(1:10))
+    dd <- expand.grid(x = seq(-2,3,length.out=10),
+                      f = factor(1:10))
     dd$y <- simulate(~x+(1|f),
                  family=gaussian(link="log"),
                  newdata=dd,
@@ -336,10 +337,7 @@ if(FALSE) { ## Hadley broke this
                  mustart=pmax(dd$y,0.1))
     msum <- c(fixef(g1),unlist(c(VarCorr(g1))),c(logLik(g1)))
     expect_equal(msum,
-                 structure(c(0.233894052550647, 1.00174364960381,
-                             0.24602991778166,
-                             -156.777303793966),
-                           .Names = c("(Intercept)", "x", "f", "")),
+                 c(`(Intercept)` = 0.23389405, x = 1.0017436, f = 0.24602992, -156.7773),
                  tolerance=1e-5)
 
     ## GH 415
@@ -351,3 +349,15 @@ if(FALSE) { ## Hadley broke this
 
 })
 } ## testlevel>1
+
+test_that("glmer with etastart",
+{
+    ## make sure etastart is passed through
+    ## (fixed in commit b6fb1ac83885ff06 but never tested?)
+    m1 <- glmer(incidence/size ~ period + (1|herd),
+                weights = size,
+                family = binomial,
+                data = cbpp)
+    m1E <- update(m1, etastart = rep(1, nrow(cbpp)))
+    expect_true(!identical(fixef(m1), fixef(m1E)))
+})

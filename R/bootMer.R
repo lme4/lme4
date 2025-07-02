@@ -16,7 +16,7 @@
 ##      title = {The {BLUPs} are not "best" when it comes to bootstrapping},
 ##      volume = {56},
 ##      issn = {0167-7152},
-##      url = {http://www.sciencedirect.com/science/article/S016771520200041X},
+##      url = {https://www.sciencedirect.com/science/article/pii/S016771520200041X},
 ##      doi = {10.1016/S0167-7152(02)00041-X},
 ##      journal = {Statistics \& Probability Letters},
 ##      author = {Morris, Jeffrey S},
@@ -87,6 +87,10 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
         }
     }
 
+    ## FIXME:: use getCall(x) ? check for existence of slot?
+    ##  is control used except for merMod?
+    control <- if (!is(x, "merMod")) NULL else eval.parent(x@call$control)
+
     # define ffun as a closure containing the referenced variables
     # in its scope to avoid explicit clusterExport statement
     # in the PSOCKcluster case
@@ -97,8 +101,10 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
       ss
       verbose
       do_parallel
+      control
       length.t0 <- length(t0)
-      f1 <- factory(function(i) FUN(refit(x,ss[[i]])), errval = rep(NA, length.t0))
+      f1 <- factory(function(i) FUN(refit(x, ss[[i]],
+                                          control = control)), errval = rep(NA, length.t0))
       function(i) {
           ret <- f1(i)
           if (verbose) { cat(sprintf("%5d :",i)); str(ret) }
@@ -159,7 +165,8 @@ as.data.frame.bootMer <- function(x,...) {
 
 ## FIXME: collapse convergence warnings (ignore numeric values
 ## when tabulating) ?
-print.bootWarnings <- function(x, verbose=FALSE) {
+print.bootWarnings <- function(x, verbose=FALSE, ...) {
+    checkDots(..., .action = "warning")
     msgs <- attr(x, "boot.all.msgs")
     if (is.null(msgs) || all(lengths(msgs)==0)) {
         return(invisible(NULL))

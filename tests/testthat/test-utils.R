@@ -40,19 +40,19 @@ test_that("Var-Cov factor conversions", { ## from ../../R/vcconv.R
     expect_equivalent(Sv_to_Cv(cvec3, n=rep(1,3), s=2), cvec3[-n3]/cvec3[n3])
 })
 
-test_that("nobar", {
-    rr <- lme4:::RHSForm
-    expect_equal(nobars(y~1+(1|g)),                      y~1)
-    expect_equal(nobars(y~1|g),                          y~1)
-    expect_equal(nobars(y~1+(1||g)),                     y~1)
-    expect_equal(nobars(y~1||g),                         y~1)
-    expect_equal(nobars(y~1+(x:z|g)),                    y~1)
-    expect_equal(nobars(y~1+(x*z|g/h)),                  y~1)
-    expect_equal(nobars(y~(1|g)+x+(x|h)),                y~x)
-    expect_equal(nobars(y~(1|g)+x+(x+z|h)),              y~x)
-    expect_equal(nobars(~1+(1|g)),                        ~1)
-    expect_equal(nobars(~(1|g)),                          ~1)
-    expect_equal(nobars(rr(y~1+(1|g))),                    1)
-    expect_equal(nobars(rr(y~(1|g))),                      1)
-})
+## moved to lme4
 
+
+test_that("getData", {
+    ## test what happens when wrong version of 'data' is found in environment of formula ...
+    f <- round(Reaction) ~ 1 + (1|Subject)
+    g <- function() {
+        data <- sleepstudy
+        m1 <- glmer(f, data = data, family = poisson)
+    }
+    m1 <- g()
+    expect_error(getData(m1), "object found is not a data frame or matrix")
+    p1 <- suppressMessages(predict(m1, newparams = list(beta = 5, theta = 1), type = "response",
+            re.form = ~ 1|Subject))
+    expect_equal(unname(head(p1, 2)), c(444.407382298401, 444.407382298401))
+})

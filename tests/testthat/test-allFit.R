@@ -17,9 +17,9 @@ if (testLevel>1) {
 
     test_that("nloptwrap switches optimizer correctly", {
         expect_equal(attr(gm_all[["nloptwrap.NLOPT_LN_BOBYQA"]],"optCtrl"),
-                     list(algorithm = "NLOPT_LN_BOBYQA"))
+                     list(maxeval = 1e5, algorithm = "NLOPT_LN_BOBYQA"))
         expect_equal(attr(gm_all[["nloptwrap.NLOPT_LN_NELDERMEAD"]],"optCtrl"),
-                     list(algorithm = "NLOPT_LN_NELDERMEAD"))
+                     list(maxeval = 1e5, algorithm = "NLOPT_LN_NELDERMEAD"))
 
     })
 
@@ -89,6 +89,14 @@ if (testLevel>1) {
 
         cc <- capture.output(ff <- fit_func(cbpp))
         expect_true(all(summary(ff)$which.OK))
+    })
+
+    test_that("maxfun works", {
+        gm_it10 <- suppressWarnings(allFit(fit_cbpp_1, verbose=FALSE, maxfun = 10))
+        v <- vapply(gm_it10, function(x) as.integer(x@optinfo$feval), FUN.VALUE=1L)
+        ## function values are sometimes off a bit (due to initialization or Hessian calculation)
+        ##  but close enough ...
+        expect_true(all(v %in% c(10, 11, NA, 18)))
     })
 
 

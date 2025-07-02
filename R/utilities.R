@@ -1,26 +1,3 @@
-if((Rv <- getRversion()) < "4.1.0") {
- ## not equivalent; this *forces* ... entries whereas true ...length()  aint...
- ...names <- function() eval(quote(names(list(...))), sys.frame(-1L))
- if(Rv < "4.0.0") {
-  ## NB: R >= 4.0.0's deparse1() is a generalization of our previous safeDeparse()
-  deparse1 <- function (expr, collapse = " ", width.cutoff = 500L, ...)
-      paste(deparse(expr, width.cutoff, ...), collapse = collapse)
-  ## not equivalent ...
-  ...length <- function() eval(quote(length(list(...))), sys.frame(-1L))
-  if(Rv < "3.2.1") {
-    lengths <- function (x, use.names = TRUE) vapply(x, length, 1L, USE.NAMES = use.names)
-    if(Rv < "3.1.0") {
-        anyNA <- function(x) any(is.na(x))
-        if(Rv < "3.0.0") {
-            rep_len <- function(x, length.out) rep(x, length.out=length.out)
-            if(Rv < "2.15")
-                paste0 <- function(...) paste(..., sep = '')
-        }
-    }
-  } ## R < 3.2.1
- } ## R < 4.0.0
-} ## R < 4.1.0
-rm(Rv)
 
 ## From Matrix package  isDiagonal(.) :
 all0 <- function(x) !anyNA(x) && all(!x)
@@ -165,122 +142,6 @@ mkBlist <- function(x,frloc, drop.unused.levels=TRUE,
     list(ff = ff, sm = sm, nl = nl, cnms = colnames(mm))
 }
 
-##' From the result of \code{\link{findbars}} applied to a model formula and
-##' and the evaluation frame, create the model matrix, etc. associated with
-##' random-effects terms.  See the description of the returned value for a
-##' detailed list.
-##'
-##' @title Create Z, Lambda, Lind, etc.
-##' @param bars a list of parsed random-effects terms
-##' @param fr a model frame in which to evaluate these terms
-##' @return a list with components
-##' \item{Zt}{transpose of the sparse model matrix for the random effects}
-##' \item{Lambdat}{transpose of the sparse relative covariance factor}
-##' \item{Lind}{an integer vector of indices determining the mapping of the
-##'     elements of the \code{theta} to the \code{"x"} slot of \code{Lambdat}}
-##' \item{theta}{initial values of the covariance parameters}
-##' \item{lower}{lower bounds on the covariance parameters}
-##' \item{flist}{list of grouping factors used in the random-effects terms}
-##' \item{cnms}{a list of column names of the random effects according to
-##'     the grouping factors}
-##' @importFrom Matrix sparseMatrix drop0
-##' @importMethodsFrom Matrix coerce rbind
-##' @family utilities
-##' @export
-mkReTrms <- function(bars, fr, drop.unused.levels=TRUE,
-                     reorder.terms=TRUE,
-                     reorder.vars=FALSE) {
-  if (!length(bars))
-    stop("No random effects terms specified in formula",call.=FALSE)
-  stopifnot(is.list(bars), vapply(bars, is.language, NA),
-            inherits(fr, "data.frame"))
-  names(bars) <- barnames(bars)
-  term.names <- vapply(bars, deparse1, "")
-  ## get component blocks
-  blist <- lapply(bars, mkBlist, fr, drop.unused.levels,
-                  reorder.vars = reorder.vars)
-  nl <- vapply(blist, `[[`, 0L, "nl")   # no. of levels per term
-                                        # (in lmer jss:  \ell_i)
-
-  ## order terms stably by decreasing number of levels in the factor
-  if (reorder.terms) {
-      if (any(diff(nl) > 0)) {
-          ord <- rev(order(nl))
-          blist      <- blist     [ord]
-          nl         <- nl        [ord]
-          term.names <- term.names[ord]
-      }
-  }
-  Ztlist <- lapply(blist, `[[`, "sm")
-  Zt <- do.call(rbind, Ztlist)  ## eq. 7, JSS lmer paper
-  names(Ztlist) <- term.names
-  q <- nrow(Zt)
-
-  ## Create and install Lambdat, Lind, etc.  This must be done after
-  ## any potential reordering of the terms.
-  cnms <- lapply(blist, `[[`, "cnms")   # list of column names of the
-                                        # model matrix per term
-  nc <- lengths(cnms)                   # no. of columns per term
-                                        # (in lmer jss:  p_i)
-  nth <- as.integer((nc * (nc+1))/2)    # no. of parameters per term
-                                        # (in lmer jss:  ??)
-  nb <- nc * nl                         # no. of random effects per term
-                                        # (in lmer jss:  q_i)
-  ## eq. 5, JSS lmer paper
-  if (sum(nb) != q) {
-      stop(sprintf("total number of RE (%d) not equal to nrow(Zt) (%d)",
-                   sum(nb),q))
-  }
-  boff <- cumsum(c(0L, nb))             # offsets into b
-  thoff <- cumsum(c(0L, nth))           # offsets into theta
-  ### FIXME: should this be done with cBind and avoid the transpose
-  ### operator?  In other words should Lambdat be generated directly
-  ### instead of generating Lambda first then transposing?
-  Lambdat <-
-    t(do.call(sparseMatrix,
-              do.call(rbind,
-                      lapply(seq_along(blist), function(i)
-                      {
-                        mm <- matrix(seq_len(nb[i]), ncol = nc[i],
-                                     byrow = TRUE)
-                        dd <- diag(nc[i])
-                        ltri <- lower.tri(dd, diag = TRUE)
-                        ii <- row(dd)[ltri]
-                        jj <- col(dd)[ltri]
-                        ## unused: dd[cbind(ii, jj)] <- seq_along(ii)
-                        data.frame(i = as.vector(mm[, ii]) + boff[i],
-                                   j = as.vector(mm[, jj]) + boff[i],
-                                   x = as.double(rep.int(seq_along(ii),
-                                                         rep.int(nl[i], length(ii))) +
-                                                   thoff[i]))
-                      }))))
-  thet <- numeric(sum(nth))
-  ll <- list(Zt = drop0(Zt), theta = thet, Lind = as.integer(Lambdat@x),
-             Gp = unname(c(0L, cumsum(nb))))
-  ## lower bounds on theta elements are 0 if on diagonal, else -Inf
-  ll$lower <- -Inf * (thet + 1)
-  ll$lower[unique(diag(Lambdat))] <- 0
-  ll$theta[] <- is.finite(ll$lower) # initial values of theta are 0 off-diagonal, 1 on
-  Lambdat@x[] <- ll$theta[ll$Lind]  # initialize elements of Lambdat
-  ll$Lambdat <- Lambdat
-  # massage the factor list
-  fl <- lapply(blist, `[[`, "ff")
-  # check for repeated factors
-  fnms <- names(fl)
-  if (length(fnms) > length(ufn <- unique(fnms))) {
-    fl <- fl[match(ufn, fnms)]
-    asgn <- match(fnms, ufn)
-  } else asgn <- seq_along(fl)
-  names(fl) <- ufn
-  ## DON'T need fl to be a data.frame ...
-  ## fl <- do.call(data.frame, c(fl, check.names = FALSE))
-  attr(fl, "assign") <- asgn
-  ll$flist <- fl
-  ll$cnms <- cnms
-  ll$Ztlist <- Ztlist
-  ll
-} ## {mkReTrms}
-
 ##' Create an lmerResp, glmResp or nlsResp instance
 ##'
 ##' @title Create an lmerResp, glmResp or nlsResp instance
@@ -397,263 +258,6 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
                        pnames=pnames), as.list(rho)))
 }
 
-##' From the right hand side of a formula for a mixed-effects model,
-##' determine the pairs of expressions that are separated by the
-##' vertical bar operator.  Also expand the slash operator in grouping
-##' factor expressions and expand terms with the double vertical bar operator
-##' into separate, independent random effect terms.
-##'
-##' @title Determine random-effects expressions from a formula
-##' @seealso \code{\link{formula}}, \code{\link{model.frame}}, \code{\link{model.matrix}}.
-##' @param term a mixed-model formula
-##' @return pairs of expressions that were separated by vertical bars
-##' @section Note: This function is called recursively on individual
-##' terms in the model, which is why the argument is called \code{term} and not
-##' a name like \code{form}, indicating a formula.
-##' @example
-##' findbars(f1 <- Reaction ~ Days + (Days|Subject))
-##' ## => list( Days | Subject )
-##' findbars(y ~ Days + (1|Subject) + (0+Days|Subject))
-##' ## => list of length 2:  list ( 1 | Subject ,  0+Days|Subject)
-##' findbars(~ 1 + (1|batch/cask))
-##' ## => list of length 2:  list ( 1 | cask:batch ,  1 | batch)
-##' identical(findbars(~ 1 + (Days || Subject)),
-##'     findbars(~ 1 + (1|Subject) + (0+Days|Subject)))
-##' \dontshow{
-##' stopifnot(identical(findbars(f1),
-##'                     list(expression(Days | Subject)[[1]])))
-##' }
-##' @family utilities
-##' @keywords models utilities
-##' @export
-findbars <- function(term)
-{
-    ## Recursive function applied to individual terms
-    fb <- function(term)
-    {
-        if (is.name(term) || !is.language(term)) return(NULL)
-        if (term[[1]] == as.name("(")) return(fb(term[[2]]))
-        stopifnot(is.call(term))
-        if (term[[1]] == as.name('|')) return(term)
-        if (length(term) == 2) return(fb(term[[2]]))
-        c(fb(term[[2]]), fb(term[[3]]))
-    }
-    ## Expand any slashes in the grouping factors returned by fb
-    expandSlash <- function(bb)
-    {
-        ## Create the interaction terms for nested effects
-        makeInteraction <- function(x)
-        {
-            if (length(x) < 2) return(x)
-            trm1 <- makeInteraction(x[[1]])
-            trm11 <- if(is.list(trm1)) trm1[[1]] else trm1
-            list(substitute(foo:bar, list(foo=x[[2]], bar = trm11)), trm1)
-        }
-        ## Return the list of '/'-separated terms
-        slashTerms <- function(x)
-        {
-            if (!("/" %in% all.names(x))) return(x)
-            if (x[[1]] != as.name("/"))
-                stop("unparseable formula for grouping factor",call.=FALSE)
-            list(slashTerms(x[[2]]), slashTerms(x[[3]]))
-        }
-
-        if (!is.list(bb))
-            expandSlash(list(bb))
-        else
-            unlist(lapply(bb, function(x) {
-                if (length(x) > 2 && is.list(trms <- slashTerms(x[[3]])))
-                    ## lapply(unlist(...)) - unlist returns a flattened list
-                    lapply(unlist(makeInteraction(trms)),
-                           function(trm) substitute(foo|bar, list(foo = x[[2]], bar = trm)))
-                else x
-            }))
-    }## {expandSlash}
-
-    modterm <- expandDoubleVerts(
-        if(is(term, "formula")) term[[length(term)]] else term)
-    expandSlash(fb(modterm))
-}
-
-##' From the right hand side of a formula for a mixed-effects model,
-##' expand terms with the double vertical bar operator
-##' into separate, independent random effect terms.
-##'
-##' @title Expand terms with \code{'||'} notation into separate \code{'|'} terms
-##' @seealso \code{\link{formula}}, \code{\link{model.frame}}, \code{\link{model.matrix}}.
-##' @param term a mixed-model formula
-##' @return the modified term
-##' @family utilities
-##' @keywords models utilities
-##' @export
-expandDoubleVerts <- function(term)
-{
-    expandDoubleVert <- function(term) {
-        frml <- formula(substitute(~x,list(x=term[[2]])))
-        ## FIXME: do this without paste and deparse if possible!
-        ## need term.labels not all.vars to capture interactions too:
-        newtrms <- paste0("0+", attr(terms(frml), "term.labels"))
-        if(attr(terms(frml), "intercept")!=0)
-            newtrms <- c("1", newtrms)
-
-        as.formula(paste("~(",
-                         paste(vapply(newtrms, function(trm)
-                                      paste0(trm, "|", deparse(term[[3]])), ""),
-                               collapse=")+("), ")"))[[2]]
-    }
-
-    if (!is.name(term) && is.language(term)) {
-        if (term[[1]] == as.name("(")) {
-            term[[2]] <- expandDoubleVerts(term[[2]])
-        }
-        stopifnot(is.call(term))
-        if (term[[1]] == as.name('||'))
-            return( expandDoubleVert(term) )
-        ## else :
-        term[[2]] <- expandDoubleVerts(term[[2]])
-        if (length(term) != 2) {
-            if(length(term) == 3)
-                term[[3]] <- expandDoubleVerts(term[[3]])
-        }
-    }
-    term
-}
-
-
-
-##' Remove the random-effects terms from a mixed-effects formula,
-##' thereby producing the fixed-effects formula.
-##'
-##' @title Omit terms separated by vertical bars in a formula
-##' @param term the right-hand side of a mixed-model formula
-##' @return the fixed-effects part of the formula
-##' @section Note: This function is called recursively on individual
-##' terms in the model, which is why the argument is called \code{term} and not
-##' a name like \code{form}, indicating a formula.
-##' @examples
-##' nobars(Reaction ~ Days + (Days|Subject)) ## => Reaction ~ Days
-##' @seealso \code{\link{formula}}, \code{\link{model.frame}}, \code{\link{model.matrix}}.
-##' @family utilities
-##' @keywords models utilities
-##' @export
-nobars <- function(term) {
-    nb <- nobars_(term)  ## call recursive version
-    if (is(term,"formula") && length(term)==3 && is.symbol(nb)) {
-        ## called with two-sided RE-only formula:
-        ##    construct response~1 formula
-        nb <- reformulate("1",response=deparse(nb))
-    }
-    ## called with one-sided RE-only formula, or RHS alone
-    if (is.null(nb)) {
-        nb <- if (is(term,"formula")) ~1 else 1
-    }
-    nb
-}
-
-nobars_ <- function(term)
-{
-    if (!anyBars(term)) return(term)
-    if (isBar(term)) return(NULL)
-    if (isAnyArgBar(term)) return(NULL)
-    if (length(term) == 2) {
-        nb <- nobars_(term[[2]])
-        if(is.null(nb)) return(NULL)
-        term[[2]] <- nb
-        return(term)
-    }
-    nb2 <- nobars_(term[[2]])
-    nb3 <- nobars_(term[[3]])
-    if (is.null(nb2)) return(nb3)
-    if (is.null(nb3)) return(nb2)
-    term[[2]] <- nb2
-    term[[3]] <- nb3
-    term
-}
-
-isBar <- function(term) {
-    if(is.call(term)) {
-        if((term[[1]] == as.name("|")) || (term[[1]] == as.name("||"))) {
-            return(TRUE)
-        }
-    }
-    FALSE
-}
-
-isAnyArgBar <- function(term) {
-    if ((term[[1]] != as.name("~")) && (term[[1]] != as.name("("))) {
-        for(i in seq_along(term)) {
-            if(isBar(term[[i]])) return(TRUE)
-        }
-    }
-    FALSE
-}
-
-anyBars <- function(term) {
-    any(c('|','||') %in% all.names(term))
-}
-
-
-##' Substitute the '+' function for the '|' and '||' function in a mixed-model
-##' formula.  This provides a formula suitable for the current
-##' model.frame function.
-##'
-##' @title "Sub[stitute] Bars"
-##' @param term a mixed-model formula
-##' @return the formula with all |  and || operators replaced by +
-##' @section Note: This function is called recursively on individual
-##' terms in the model, which is why the argument is called \code{term} and not
-##' a name like \code{form}, indicating a formula.
-##' @examples
-##' subbars(Reaction ~ Days + (Days|Subject)) ## => Reaction ~ Days + (Days + Subject)
-##' @seealso \code{\link{formula}}, \code{\link{model.frame}}, \code{\link{model.matrix}}.
-##' @family utilities
-##' @keywords models utilities
-##' @export
-subbars <- function(term)
-{
-    if (is.name(term) || !is.language(term)) return(term)
-    if (length(term) == 2) {
-        term[[2]] <- subbars(term[[2]])
-        return(term)
-    }
-    stopifnot(length(term) >= 3)
-    if (is.call(term) && term[[1]] == as.name('|'))
-        term[[1]] <- as.name('+')
-    if (is.call(term) && term[[1]] == as.name('||'))
-        term[[1]] <- as.name('+')
-    for (j in 2:length(term)) term[[j]] <- subbars(term[[j]])
-    term
-}
-
-##' Does every level of f1 occur in conjunction with exactly one level
-##' of f2? The function is based on converting a triplet sparse matrix
-##' to a compressed column-oriented form in which the nesting can be
-##' quickly evaluated.
-##'
-##' @title Is f1 nested within f2?
-##'
-##' @param f1 factor 1
-##' @param f2 factor 2
-##'
-##' @return TRUE if factor 1 is nested within factor 2
-##' @examples
-##' with(Pastes, isNested(cask, batch))   ## => FALSE
-##' with(Pastes, isNested(sample, batch))  ## => TRUE
-##' @export
-isNested <- function(f1, f2)
-{
-    f1 <- as.factor(f1)
-    f2 <- as.factor(f2)
-    stopifnot(length(f1) == length(f2))
-    k <- length(levels(f1))
-    sm <- as(new("ngTMatrix",
-                 i = as.integer(f2) - 1L,
-                 j = as.integer(f1) - 1L,
-                 Dim = c(length(levels(f2)), k)),
-             "CsparseMatrix")
-    all(sm@p[2:(k+1L)] - sm@p[1:k] <= 1L)
-}
-
 subnms <- function(form, nms) {
     ## Recursive function applied to individual terms
     sbnm <- function(term)
@@ -735,7 +339,7 @@ nlformula <- function(mc) {
     X <- model.matrix(fe, frE)
     rownames(X) <- NULL
 
-    reTrms <- mkReTrms(lapply(findbars(meform),
+    reTrms <- reformulas::mkReTrms(lapply(reformulas::findbars(meform),
                               function(expr) {
                                   expr[[2]] <- substitute(0+foo, list(foo=expr[[2]]))
                                   expr
@@ -1099,9 +703,9 @@ mkMinimalData <- function(formula) {
 ##' Make template for mixed model parameters
 mkParsTemplate <- function(formula, data){
     if(missing(data)) data <- mkMinimalData(formula)
-    mfRanef <- model.frame( subbars(formula), data)
-    mmFixef <- model.matrix(nobars(formula) , data)
-    reTrms <- mkReTrms(findbars(formula), mfRanef)
+    mfRanef <- model.frame( reformulas::subbars(formula), data)
+    mmFixef <- model.matrix( reformulas::nobars(formula) , data)
+    reTrms <- reformulas::mkReTrms( reformulas::findbars(formula), mfRanef)
     cnms <- reTrms$cnms
     thetaNamesList <- mapply(mkPfun(), names(cnms), cnms)
     thetaNames <- unlist(thetaNamesList)
@@ -1125,7 +729,7 @@ mkDataTemplate <- function(formula, data,
                            nGrps = 2, nPerGrp = 1,
                            rfunc = NULL, ...){
     if(missing(data)) data <- mkMinimalData(formula)
-    grpFacNames <- unique(barnames(findbars(formula)))
+    grpFacNames <- unique(barnames(reformulas::findbars(formula)))
     varNames <- all.vars(formula)
     covariateNames <- setdiff(varNames, grpFacNames)
     nGrpFac <- length(grpFacNames)
@@ -1175,7 +779,7 @@ termnms <- function(REtrms) vapply(REtrms, deparse1, "")
 mmList <- function(object, ...) UseMethod("mmList")
 mmList.merMod <- function(object, ...) mmList(formula(object), model.frame(object))
 mmList.formula <- function(object, frame, ...) {
-    bars <- findbars(object)
+    bars <- reformulas::findbars(object)
     mm <- setNames(lapply(bars, function(b) model.matrix(eval(reexpr(b), frame), frame)),
                    termnms(bars))
     grp <- lapply(lapply(bars, grpfact), eval, frame)
@@ -1392,4 +996,27 @@ combineLists <- function(..., fmatrix="list", flist="c", fvector="rbind",
         result[[element]] <- do.call(fn, element.list)
     }
     result
+}
+
+## copied from glmmTMB::check_dots
+checkDots <- function (..., .ignore = NULL, .action = "stop") 
+{
+    L <- list(...)
+    if (length(.ignore) > 0) {
+        L <- L[!names(L) %in% .ignore]
+    }
+    if (length(L) > 0) {
+        FUN <- get(.action)
+        FUN("unknown arguments: ", paste(names(L), collapse = ","))
+    }
+    return(NULL)
+}
+
+## quadratic form from emulator package:
+## quad.tform == x %*% M %*% t(x)
+## quad.tdiag == diag(quad.tform(M, x)
+## rowSums(tcrossprod(Conj(x), M) * x)
+quad.tdiag <- function(M, x) {
+    ## only real-valued, so drop Conj
+    rowSums(tcrossprod(x, M) * x)
 }

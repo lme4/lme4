@@ -358,7 +358,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     ## as.formula ONLY sets environment if not already explicitly set.
     ## ?? environment(formula) <- denv
     # get rid of || terms so update() works as expected
-    RHSForm(formula) <- expandDoubleVerts(RHSForm(formula))
+    RHSForm(formula) <- reformulas::expandDoubleVerts(RHSForm(formula))
     mc$formula <- formula
 
     ## (DRY! copied from glFormula)
@@ -367,7 +367,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     mf <- mf[c(1L, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- quote(stats::model.frame)
-    fr.form <- subbars(formula) # substitute "|" by "+"
+    fr.form <- reformulas::subbars(formula) # substitute "|" by "+"
     environment(fr.form) <- environment(formula)
     ## model.frame.default looks for these objects in the environment
     ## of the *formula* (see 'extras', which is anything passed in '...'),
@@ -386,7 +386,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     attr(fr,"offset") <- mf$offset
     n <- nrow(fr)
     ## random effects and terms modules
-    reTrms <- mkReTrms(findbars(RHSForm(formula)), fr)
+    reTrms <- reformulas::mkReTrms(reformulas::findbars(RHSForm(formula)), fr)
     wmsgNlev <- checkNlevels(reTrms$flist, n=n, control)
     wmsgZdims <- checkZdims(reTrms$Ztlist, n=n, control, allow.n=FALSE)
     if (anyNA(reTrms$Zt)) {
@@ -400,7 +400,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 
     ## fixed-effects model matrix X - remove random effect parts from formula:
     fixedform <- formula
-    RHSForm(fixedform) <- nobars(RHSForm(fixedform))
+    RHSForm(fixedform) <- reformulas::nobars(RHSForm(fixedform))
     mf$formula <- fixedform
     ## re-evaluate model frame to extract predvars component
     fixedfr <- eval(mf, parent.frame())
@@ -413,7 +413,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     ## ran-effects model frame (for predvars)
     ## important to COPY formula (and its environment)?
     ranform <- formula
-    RHSForm(ranform) <- subbars(RHSForm(reOnly(formula)))
+    RHSForm(ranform) <- reformulas::subbars(RHSForm(reOnly(formula)))
     mf$formula <- ranform
     ranfr <- eval(mf, parent.frame())
     attr(attr(fr,"terms"), "predvars.random") <-
@@ -612,17 +612,22 @@ optimizeLmer <- function(devfun,
             ## what do I need to do to reset rho$pp$theta to original value???
             devfun(theta0) ## reset rho$pp$theta after tests
             ## FIXME: allow user to specify ALWAYS restart if on boundary?
-            if (any(bgrad < 0)) {
-                if (verbose) message("some theta parameters on the boundary, restarting")
-                opt <- optwrap(optimizer,
-                               devfun,
-                               opt$par,
-                               lower=rho$lower, control=control,
-                               adj=FALSE, verbose=verbose,
-                               ...)
-            }
+            if (any(is.na(bgrad))) {
+                warning("some gradient components are NA near boundaries, skipping boundary check")
+                return(opt)
+            } else {
+                if (any(bgrad < 0)) {
+                    if (verbose) message("some theta parameters on the boundary, restarting")
+                    opt <- optwrap(optimizer,
+                                   devfun,
+                                   opt$par,
+                                   lower=rho$lower, control=control,
+                                   adj=FALSE, verbose=verbose,
+                                   ...)
+                }
+            } ## bgrad not NA
         }
-    }
+    } ## if restart.edge
     if (boundary.tol > 0)
         check.boundary(rho, opt, devfun, boundary.tol)
     else
@@ -671,7 +676,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     mf <- mf[c(1L, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- quote(stats::model.frame)
-    fr.form <- subbars(formula) # substitute "|" by "+"
+    fr.form <- reformulas::subbars(formula) # substitute "|" by "+"
     environment(fr.form) <- environment(formula)
     ## model.frame.default looks for these objects in the environment
     ## of the *formula* (see 'extras', which is anything passed in '...'),
@@ -694,7 +699,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     }
     n <- nrow(fr)
     ## random effects and terms modules
-    reTrms <- mkReTrms(findbars(RHSForm(formula)), fr)
+    reTrms <- reformulas::mkReTrms(reformulas::findbars(RHSForm(formula)), fr)
     ## TODO: allow.n = !useSc {see FIXME below}
     wmsgNlev <- checkNlevels(reTrms$ flist, n = n, control, allow.n = TRUE)
     wmsgZdims <- checkZdims(reTrms$Ztlist, n = n, control, allow.n = TRUE)
@@ -708,7 +713,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
 
     ## fixed-effects model matrix X - remove random effect parts from formula:
     fixedform <- formula
-    RHSForm(fixedform) <- nobars(RHSForm(fixedform))
+    RHSForm(fixedform) <- reformulas::nobars(RHSForm(fixedform))
     mf$formula <- fixedform
     ## re-evaluate model frame to extract predvars component
     fixedfr <- eval(mf, parent.frame())
@@ -718,7 +723,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     ## ran-effects model frame (for predvars)
     ## important to COPY formula (and its environment)?
     ranform <- formula
-    RHSForm(ranform) <- subbars(RHSForm(reOnly(formula)))
+    RHSForm(ranform) <- reformulas::subbars(RHSForm(reOnly(formula)))
     mf$formula <- ranform
     ranfr <- eval(mf, parent.frame())
     attr(attr(fr,"terms"), "predvars.random") <-

@@ -150,11 +150,14 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
   \code{\link[stats]{lm}} for linear models;
   \code{\link{glmer}} for generalized linear; and
   \code{\link{nlmer}} for nonlinear mixed models.
+  
+  \code{\link{plot.merMod}} for plot diagnostics.
 }
 \examples{
 ## linear mixed models - reference values from older code
 (fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy))
-summary(fm1)# (with its own print method; see class?merMod % ./merMod-class.Rd
+summary(fm1) # (with its own print method; see class?merMod % ./merMod-class.Rd
+plot(fm1) # plotting the model diagnostics; see ?plot.merMod
 
 str(terms(fm1))
 stopifnot(identical(terms(fm1, fixed.only=FALSE),
@@ -168,9 +171,6 @@ anova(fm1, fm2)
 sm2 <- summary(fm2)
 print(fm2, digits=7, ranef.comp="Var") # the print.merMod()         method
 print(sm2, digits=3, corr=FALSE)       # the print.summary.merMod() method
-
-(vv <- vcov.merMod(fm2, corr=TRUE))
-as(vv, "corMatrix")# extracts the ("hidden") 'correlation' entry in @factors
 
 ## Fit sex-specific variances by constructing numeric dummy variables
 ## for sex and sex:age; in this case the estimated variance differences

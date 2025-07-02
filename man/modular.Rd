@@ -107,7 +107,7 @@ updateGlmerDevfun(devfun, reTrms, nAGQ = 1L)
     \code{\link{lmerResp}} or \code{\link{glmResp}} instance.}
   \item{X}{fixed-effects design matrix}
   \item{reTrms}{information on random effects structure (see
-    \code{\link{mkReTrms}}).}
+    \code{\link[reformulas]{mkReTrms}}).}
   \item{start}{starting values (see \code{\link{lmer}};
     for \code{glFormula}, should be just a numeric vector of
     fixed-effect coefficients)}
@@ -136,7 +136,7 @@ updateGlmerDevfun(devfun, reTrms, nAGQ = 1L)
 	(optionally) \code{message} (informational message, or
 	explanation of convergence failure)}.
     }
-    Special provisions are made for \code{\link{bobyqa}},
+    Special provisions are made for \code{\link[minqa]{bobyqa}},
     \code{\link{Nelder_Mead}}, and optimizers wrapped in the
     \CRANpkg{optimx} package; to use \pkg{optimx} optimizers
     (including \code{L-BFGS-B} from base \code{\link{optim}}
@@ -171,7 +171,7 @@ updateGlmerDevfun(devfun, reTrms, nAGQ = 1L)
     \item{fr}{model frame}
      \item{X}{fixed-effect design matrix}
      \item{reTrms}{list containing information on random effects structure:
-     result of \code{\link{mkReTrms}}}
+     result of \code{\link[reformulas]{mkReTrms}}}
      \item{REML}{(lFormula only): logical indicating if restricted maximum
      likelihood was used (Copy of argument.)}
   }

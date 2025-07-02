@@ -1,7 +1,6 @@
 lme4: Mixed-effects models in R.
 ====
 
-
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/lme4/lme4/workflows/R-CMD-check/badge.svg)](https://github.com/lme4/lme4/actions)
 [![cran version](http://www.r-pkg.org/badges/version/lme4)](https://cran.r-project.org/package=lme4)
@@ -15,7 +14,7 @@ lme4: Mixed-effects models in R.
 
 ## Where to get help
 
-- [r-sig-mixed-models@r-project.org](https://stat.ethz.ch/mailman/listinfo/r-sig-mixed-models) for questions about `lme4` usage and more general mixed model questions; please read the info page, and subscribe, before posting ...
+- [r-sig-mixed-models@r-project.org](https://stat.ethz.ch/mailman/listinfo/r-sig-mixed-models) for questions about `lme4` usage and more general mixed model questions; please read the info page, and subscribe, before posting ... (note that the mailing list does not support images or large/non-text attachments)
 - https://github.com/lme4/lme4/issues for bug, infelicity, and wishlist reporting
 - The [lme4 tag on StackOverflow](https://stackoverflow.com/questions/tagged/lme4) for programming-related or the [lme4-nlme tag on CrossValidated](https://stats.stackexchange.com/questions/tagged/lme4-nlme) for statistics-related questions
 - maintainer e-mail only for urgent/private communications
@@ -37,42 +36,35 @@ or adaptive Gauss-Hermite quadrature; GLMMs allow user-defined families and link
 
 ## Installation
 
-### On current R (>= 3.0.0)
+### On current R (>= 3.6.0)
 
-* From CRAN (stable release 1.0.+)
+* From CRAN (stable release 1.+)
 * Development version from Github:
-```
+```r
 library("devtools"); install_github("lme4/lme4",dependencies=TRUE)
 ```
 (This requires `devtools` >= 1.6.1, and installs the "master" (development) branch.)
 This approach builds the package from source, i.e. `make` and compilers must be installed on your system -- see the R FAQ for your operating system; you may also need to install dependencies manually. Specify `build_vignettes=FALSE` if you have trouble because your system is missing some of the `LaTeX/texi2dvi` tools.
-* Development binaries from `lme4` r-forge repository:
+
+* Development binaries from r-universe:
+```r
+install.packages('lme4', repos = c('https://lme4.r-universe.dev', getOption("repos")[["CRAN"]]))
 ```
-install.packages("lme4",
-   repos=c("http://lme4.r-forge.r-project.org/repos",
-          getOption("repos")[["CRAN"]]))
-```
-(these source and binary versions are updated manually, so may be out of date; if you believe they are, please contact the maintainers).
 
-### On old R (pre-3.0.0)
+## Development notes
 
-It is possible to install (but not easily to check) `lme4` at least as recently as 1.1-7.
+`lme4` is developed in a mixture of
 
-* make sure you have *exactly* these package versions: `Rcpp` 0.10.5, `RcppEigen` 3.2.0.2
-* for installation, use `--no-inst`; this is necessary in order to prevent R from getting hung up by the `knitr`-based vignettes
-* running `R CMD check` is difficult, but possible if you hand-copy the contents of the `inst` directory into the installed package directory ...
-
-### Of `lme4.0`
-
-* `lme4.0` is a maintained version of lme4 back compatible to CRAN versions of lme4 0.99xy,
-  mainly for the purpose of  *reproducible research and data analysis* which was done with 0.99xy versions of lme4.
-* there have been [some](http://stackoverflow.com/questions/23662589/r-reverting-to-lme4-0-and-still-getting-inconsistent-results) [reports](http://hlplab.wordpress.com/2014/06/24/more-on-old-and-new-lme4/) of problems with `lme4.0` on R version 3.1; if someone has a specific reproducible example they'd like to donate, please contact the maintainers.
-* Notably, `lme4.0` features  `getME(<mod>, "..")` which is compatible (as much as sensibly possible) with the current `lme4`'s version of `getME()`.
-* You can use the `convert_old_lme4()` function to take a fitted object created with `lme4` <1.0 and convert it for use with `lme4.0`.
-* It currently resides on R-forge, and you should be able to install it with
-```
-install.packages("lme4.0",
-                 repos=c("http://lme4.r-forge.r-project.org/repos",
-                         getOption("repos")[["CRAN"]]))
-```
-(if the binary versions are out of date or unavailable for your system, please contact the maintainers).
+* traditional R package building tools, as documented in [Writing R Extensions](cran.r-project.org/doc/manuals/r-devel/R-exts.html#Documenting-functions)
+   * NEWS in `inst/NEWS.Rd` (not a top-level `NEWS.md` file)
+   * documentation as `.Rd` files (*not* `roxygen2`, although some functions have internal roxygen-style documentation [not used])
+   * 'classic' tests in the `tests/` directory
+   * some Sweave (`knitr`)/`Rnw`-format vignette, especially `vignettes/lmer.Rnw`
+* 'tidyverse'-style tools, as documented in [R Packages](https://r-pkgs.org/) (Wickham and Bryan)
+   * `testthat` tests, in `tests/testthat`
+   * `pkgdown` web site (via [pkgdown.extras](https://github.com/HenrikBengtsson/pkgdown.extras), extensions to allow PDF vignettes); trigger manual builds [here](https://github.com/lme4/lme4/actions/workflows/pkgdown.yaml)
+* GitHub 
+   * primary development repository
+   * [issues](https://github.com/lme4/lme4/issues)
+   * testing on [GitHub actions](https://github.com/lme4/lme4/actions) (activated by specifying "[run ci]" at the end of a commit message)
+   * [pull requests](https://github.com/lme4/lme4/pulls) are welcome, but please open a discussion as an issue first

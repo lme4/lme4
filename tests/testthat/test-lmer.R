@@ -1,4 +1,7 @@
-stopifnot(require("testthat"), require("lme4"))
+stopifnot(require("testthat"))
+library(lme4) ## make sure package is attached
+##  (as.function.merMod() assumes it)
+data("Dyestuff", package = "lme4")
 
 ## use old (<=3.5.2) sample() algorithm if necessary
 if ("sample.kind" %in% names(formals(RNGkind))) {
@@ -78,7 +81,7 @@ test_that("lmer", {
     expect_that(getME(fm3,"n_rfacs"),                   equals(1L))
 
     expect_equal(getME(fm3, "lower"), c(`Subject.(Intercept)` = 0, Subject.Days = 0))
-    
+
     expect_error(fm4 <- lmer(Reaction ~ Days + (1|Subject),
                             subset(sleepstudy,Subject==levels(Subject)[1])), "must have > 1")
     expect_warning(fm4 <- lFormula(Reaction ~ Days + (1|Subject),
@@ -123,14 +126,16 @@ test_that("lmer", {
     expect_is(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl(optimizer="Nelder_Mead")), "lmerMod")
     expect_is(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl()), "lmerMod")
     ## avoid _R_CHECK_LENGTH_1_LOGIC2_ errors ...
-    if (getRversion() < "3.6.0" || packageVersion("optimx")>"2018.7.10") {
+    if (getRversion() < "3.6.0" || (requireNamespace("optimx", quietly = TRUE) &&
+                                    packageVersion("optimx") > "2018.7.10")) {
         expect_error(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl(optimizer="optimx")),"must specify")
         expect_is(lmer(Yield ~ 1|Batch, Dyestuff,
                        control=lmerControl(optimizer="optimx",
                                            optCtrl=list(method="L-BFGS-B"))),
                   "lmerMod")
     }
-    expect_error(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl(optimizer="junk")), "couldn't find optimizer function")
+    expect_error(lmer(Yield ~ 1|Batch, Dyestuff, control=lmerControl(optimizer="junk")),
+                 "couldn't find optimizer function")
     ## disable test ... should be no warning
     expect_is(lmer(Reaction ~ 1 + Days + (1 + Days | Subject),
                    data = sleepstudy, subset = (Days == 1 | Days == 9),
@@ -312,7 +317,7 @@ test_that("better info about optimizer convergence",
                      )
 
     ## FIXME: with new update, suppressWarnings(update(gm2)) will give
-    ## Error in as.list.environment(X[[i]], ...) : 
+    ## Error in as.list.environment(X[[i]], ...) :
     ## promise already under evaluation: recursive default argument reference or earlier problems?
     op <- options(warn=-1)
     gm3 <- update(gm2,
@@ -348,7 +353,7 @@ test_that("convergence warnings from limited evals", {
                    "failure to converge in 3 evaluations")
     expect_true(msg_in_output(fm1D@optinfo,
                               "failure to converge in 3 evaluations"))
-    expect_message(fm0D <- update(fm0, control=lmerControl(optimizer="Nelder_Mead")),
+    expect_message(fm0D <- update(fm0, control=lmerControl(optimizer="Nelder_Mead",calc.derivs=FALSE)),
                    "boundary")
     expect_true(msg_in_output(fm0D@optinfo,
                               "(OK)"))
@@ -360,4 +365,28 @@ test_that("test for zero non-NA cases", {
     data_bad$Days <- NA_real_
     expect_error(lmer(Reaction ~ Days + (1| Subject), data_bad),
                  "0 \\(non-NA\\) cases")
+})
+
+##
+test_that("catch matrix-valued responses in lmer/glmer but not in formulas", {
+    dd <- data.frame(x = rnorm(1000), batch = factor(rep(1:20, each=50)))
+    dd$y <- matrix(rnorm(1e4), ncol = 10)
+    dd$y2 <- matrix(rpois(1e4, lambda = 1), ncol = 10)
+    expect_error(lmer(y ~ x + (1|batch), dd), "matrix-valued")
+    fr <- lFormula(y ~ x + (1|batch), dd)$fr
+    expect_true(is.matrix(model.response(fr)))
+    expect_error(glmer(y ~ x + (1|batch), dd, family = poisson), "matrix-valued")
+    fr <- glFormula(y ~ x + (1|batch), dd, family = poisson)$fr
+})
+
+test_that("catch matrix-valued responses", {
+    dd <- data.frame(x = rnorm(1000), batch = factor(rep(1:20, each=50)))
+    dd$y <- matrix(rnorm(1e4), ncol = 10)
+    expect_error(lmer(y ~ x + (1|batch), dd), "matrix-valued")
+})
+
+test_that("update works as expected", {
+	m <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy)
+	expect_equivalent(fitted(update(m, .~.-(0 + Days | Subject))),
+                          fitted(lmer(Reaction ~ Days + (1|Subject), sleepstudy)))
 })

@@ -12,7 +12,7 @@ str(gSim)
 ## function (nblk = 26, nperblk = 100, sigma = 1, beta = c(4, 3),
 ##           x = runif(n), shape = 2, nbinom = 10, family = Gamma())
 
-if (.Platform$OS.type != "windows") {
+if (.Platform$OS.type != "windows") withAutoprint({
 set.seed(101)
 ## Gamma, inverse link (= default) :
 d <- gSim()
@@ -74,7 +74,7 @@ ggl2 <- glmer(y ~ x + (1|block), data=dgl, family=Gamma(link="log"))# true model
 stopifnot(
     all.equal(unlist(h.1.2[2,]),
               c(npar = 4, AIC = 34216.014, BIC = 34239.467, logLik = -17104.007,
-                deviance = 34208.014, Chisq = 2458.5792, Df = 1, `Pr(>Chisq)` = 0))
+                "-2*log(L)" = 34208.014, Chisq = 2458.5792, Df = 1, `Pr(>Chisq)` = 0))
 )
 ## "true" model :
 summary(ggl2)
@@ -130,4 +130,4 @@ gBi2 <- glmer(y ~ x + (1|block), data=dBi, family=binomial(link="identity"))
 
 ## FIXME: should test more of the *results* of these efforts, not
 ##  just that they run without crashing ...
-} ## skip on windows (for speed)
+}) ## skip on windows (for speed)

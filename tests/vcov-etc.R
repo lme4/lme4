@@ -1,6 +1,8 @@
 stopifnot(require(lme4))
 
 (testLevel <- lme4:::testLevel())
+source(system.file("testdata", "lme-tst-funs.R", package="lme4", mustWork=TRUE))# -> unn()
+
 
 ## "MEMSS" is just 'Suggest' -- must still work, when it's missing:
 if (suppressWarnings(!require(MEMSS, quietly=TRUE)) ||
@@ -19,20 +21,15 @@ fe1   <- fixef(fm1)
 
 print(s1.d <- summary(fm1))
 ##sp print(s1.s <- summary(fm1.s))
+Tse1.d <- c(0.57601226, rep(0.51868384, 3))
 stopifnot(exprs = {
     ##sp all.equal(fe1, fe1.s, tolerance= 1e-12)
-    all.equal(unname(se1.d <- coef(s1.d)[,"Std. Error"]),
-              c(0.57601291, rep(0.51868351, 3)), tolerance = 1e-6)
+    all.equal(Tse1.d, unname(se1.d <- coef(s1.d)[,"Std. Error"]),
+              tolerance = 1e-6) # std.err.: no too much accuracy
     is(V.d <- vcov(fm1), "symmetricMatrix")
     ##sp all.equal(se1.d, coef(s1.s)[,"Std. Error"])#, tol = 1e-10
     ##sp all.equal(  V.d, vcov(fm1.s))#, tol = 1e-9
-    all.equal(Matrix::diag(V.d), unname(se1.d)^2, tolerance= 1e-12)
-    all.equal(unname(se1.d),
-              if(fm1@optinfo$optimizer == "Nelder_Mead")
-                  c(0.57601196, rep(0.51868399, 3))
-              else ## "bobyqa"
-                  c(0.57601226, rep(0.51868384, 3)),
-              tolerance = 1e-6) ## std.err.: no extreme accuracy needed
+    all.equal(Matrix::diag(V.d), unn(se1.d)^2, tolerance= 1e-12)
 })
 
 }## if( ergoStool is available from pkg MEMSS )
@@ -71,25 +68,36 @@ system.time(
     fm8.N <- lmer(y ~ service * dept + studage + lectage +
                   (1|s) + (1|d), InstEval, REML=FALSE,
                   control=lmerControl("Nelder_Mead"), verbose = 1L)
-    ) ## 62   sec [MM@lynne; 2013-11]
+    ) ## 14   sec [MM@lynne; 2022-11]
+      ## 62   sec [MM@lynne; 2013-11]
       ## 59.5 sec [nb-mm3;   2013-12-31]
 system.time(
     fm8.B <- lmer(y ~ service * dept + studage + lectage +
                   (1|s) + (1|d), InstEval, REML=FALSE,
                   control=lmerControl("bobyqa"), verbose = 2L)
     )
+      ##  7.8 sec [MM@lynne; 2022-11]
       ## 34.1 sec [nb-mm3; 2013-12-31]
 
-stopifnot(isOptimized(fm8.N), isOptimized(fm8.B))
+system.time(
+    fm8 <- lmer(y ~ service * dept + studage + lectage +
+                    (1|s) + (1|d), InstEval, REML=FALSE,
+                verbose = 1L)
+) ## 7.8 sec [MM@lynne; 2022-11]
+
+stopifnot(isOptimized(fm8.N), isOptimized(fm8.B), isOptimized(fm8))
+all.equal(fm8.B, fm8,   tolerance=0)# 9.78e-9 (2022-11); both versions of bobyqa
 all.equal(fm8.B, fm8.N, tolerance=0)
 ## "Mean relative difference: 3.31 e-06"   [nb-mm3; 2013-12-31]
+stopifnot(isOptimized(fm8.N), isOptimized(fm8.B), isOptimized(fm8))
 
+str(baseOpti(fm8))
 str(baseOpti(fm8.N))
 str(baseOpti(fm8.B))
 
 (sm8 <- summary(fm8.B))
 str(r8 <- ranef(fm8.B))
-sapply(r8, summary)
+noquote(sapply(r8, summary))
 r.m8 <- cov2cor(vcov(sm8))
 Matrix::image(r.m8, main="cor(<fixed eff[ lmer(*,InstEval) ]>)")
 
@@ -102,17 +110,20 @@ if(testLevel <= 2) { cat('Time elapsed: ', proc.time(),'\n'); q("no") }
 
 system.time(
     fm9 <-
-    lmer(y ~ studage + lectage +
-         (1|s) + (1|d) + (1|dept:service) + (1|dept),
-         InstEval, verbose = 1L, REML=FALSE)
-    ) ## 410 secs [MM@lynne; 2013-11]
+        lmer(y ~ studage + lectage +
+                 (1|s) + (1|d) + (1|dept:service) + (1|dept),
+             InstEval, verbose = 1L, REML=FALSE)
+)
+##  25.6 secs [MM@lynne; 2022-11]
+## 410   secs [MM@lynne; 2013-11]
 
 fm9
 (sm9 <- summary(fm9))
-rr <- ranef(fm9, condVar = TRUE) ## ~ 10 secs
+rr <- ranef(fm9, condVar = TRUE) ## ~ 6 secs
 
-sapply(rr, summary)
+noquote(sapply(rr, summary))
 qqr <- qqmath(rr, strip=FALSE)
+## NB: x-axis range <==> scale of RE <==> "importance" of effect
 qqr$d
 qqr$s
 dotplot(rr,strip=FALSE)$`dept:service`

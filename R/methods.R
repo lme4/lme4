@@ -18,6 +18,7 @@ influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
         data <- if (!is.null(data)) eval(data, parent.frame())
                 else stop("model did not use the data argument")
     }
+    data <- as.data.frame(data) ## prevent tibble trouble
     if (missing(groups)) {
         groups <- ".case"
         data$.case <- rownames(data)
@@ -154,7 +155,6 @@ dfbetas.influence.merMod <- function(model, ...){
 cooks.distance.merMod <- function(model, ...) {
     p <- Matrix::rankMatrix(getME(model,"X"))
     hat <- hatvalues(model)
-    ## FIXME: check dispersion
     dispersion <- sigma(model)^2
     res <- residuals(model,type="pearson")
     res <-  (res/(1 - hat))^2 * hat/(dispersion * p)
@@ -167,12 +167,10 @@ cooks.distance.influence.merMod <- function(model, ...) {
     n <- nrow(db)
     p <- ncol(db)
     d <- numeric(n)
-    vcovs.ind <- which(startsWith(names(model), "vcov[-"))
-    vcovs <- model[[vcovs.ind]] ## was: 6
-    sig.sq.ind <- which(startsWith(names(model), "var.cov.comps[-"))
-    sig.sq <- model[[sig.sq.ind]][, 1]  ## was: [[4]]
-    for (i in 1:n){
-        d[i] <- (db[i, ] %*% solve(vcovs[[i]]) %*% db[i, ])/(p*sig.sq[i])
+    names(d) <- names(model[["vcov[-case]"]])
+    vcov.inv <- (n - p)/(n*p)*solve(model$vcov)
+    for (i in 1:n) {
+        d[i] <- db[i, ] %*% vcov.inv %*% db[i, ]
     }
     d
 }
@@ -210,11 +208,12 @@ terms.merMod <- function(x, fixed.only=TRUE, random.only=FALSE, ...) {
     if (fixed.only && random.only) stop("can't specify 'only fixed' and 'only random' terms")
     tt <- attr(x@frame,"terms")
     if (fixed.only) {
-        tt <- terms.formula(formula(x,fixed.only=TRUE))
+        ## ... may contain 'data' (needed when formula contains .)
+        tt <- terms.formula(formula(x,fixed.only=TRUE), ...)
         attr(tt,"predvars") <- attr(terms(x@frame),"predvars.fixed")
     }
     if (random.only) {
-        tt <- terms.formula(subbars(formula(x,random.only=TRUE)))
+        tt <- terms.formula(reformulas::subbars(formula(x,random.only=TRUE)))
         ## FIXME: predvars should be random-only
         attr(tt,"predvars") <- attr(terms(x@frame),"predvars.random")
     }

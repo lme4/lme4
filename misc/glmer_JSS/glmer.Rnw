@@ -1,0 +1,1258 @@
+%\VignetteEngine{knitr::knitr}
+%\VignetteDepends{ggplot2}
+%\VignetteIndexEntry{Fitting Generalized Linear Mixed-Effects Models using lme4}
+\documentclass{jss}
+%% need no \usepackage{Sweave.sty}
+%\usepackage{lineno}
+\usepackage[T1]{fontenc}% for correct hyphenation and T1 encoding
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}% latin modern font
+\usepackage[american]{babel}  %% for texi2dvi ~ bug
+\usepackage{bm,amsmath,thumbpdf,amsfonts}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\VEC}{vec}
+\newcommand{\bmb}[1]{{\color{red} \emph{#1}}}
+\newcommand{\scw}[1]{{\color{blue} \emph{#1}}}
+
+\shortcites{lesnoff_within-herd_2004}
+%% BMB: what does JSS assume?
+%\bibliographystyle{chicago}
+\author{
+  Steven C. Walker\\McMaster University \And
+  Rune Haubo Bojesen Christensen\\Technical University of Denmark\AND
+  Douglas Bates\\University of Wisconsin - Madison \And
+  Benjamin M. Bolker\\McMaster University \AND
+  Martin M\"achler\\ETH Zurich
+}
+\Plainauthor{Steve Walker, Rune Haubo Bojesen Christensen, Douglas Bates, Martin M\"achler, Ben Bolker}
+\title{Fitting generalized linear mixed-effects models using \pkg{lme4}}
+\Plaintitle{Fitting generalized linear mixed models using lme4}
+\Shorttitle{GLMMs with lme4}
+\Abstract{%
+  The \pkg{lme4} \proglang{R} package can be used to fit generalized linear
+  mixed models (GLMMs), which extend the class of linear mixed models
+  (LMMs). The two main extensions provided by GLMMs are (1)
+  allowing for the conditional distribution of the response given the
+  random effects to be non-Gaussian (e.g. binomial,
+  Poisson) and (2) allowing the conditional mean to be
+  a nonlinear function of a linear combination of the fixed
+  and random effect coefficients, via an inverse link
+  function. The conditional mode of the random effects given the
+  observed data, the variance-covariance matrix of the random 
+  effects, and the fixed effect parameters
+  is determined through penalized iteratively reweighted
+  least squares (PIRLS). We compute an approximation of the integral
+  over the distributions of the conditional modes to compute
+  the MLE for a for given set of parameters (by default we use
+  Laplace approximation, or alternatively more computationally
+  expensive adaptive Gauss-Hermite quadrature). The package provides
+  all the standard features available for GLMs in base \proglang{R},
+  including the the standard set of accessor functions as
+  well as the possibility of user-specified distributions 
+  (within the exponential family) and link
+  functions.}
+
+\Keywords{%
+  sparse matrix methods,
+  generalized linear mixed models,
+  penalized least squares,
+  Cholesky decomposition}
+\Address{
+  Steven C. Walker\\
+  Department of Mathematics \& Statistics \\
+  McMaster University \\
+  1280 Main Street W \\
+  Hamilton, ON L8S 4K1, Canada \\
+  E-mail: \email{scwalker@math.mcmaster.ca}
+  \par\bigskip
+  Rune Haubo Bojesen Christensen \\
+  Technical University of Denmark \\
+  Matematiktorvet \\
+  Building 324, room 220 \\
+  2800 Kgs. Lyngby \\
+  E-mail: \email{rhbc@dtu.dk}
+  \par\bigskip
+  Douglas Bates\\
+  Department of Statistics, University of Wisconsin\\
+  1300 University Ave.\\
+  Madison, WI 53706, U.S.A.\\
+  E-mail: \email{bates@stat.wisc.edu}
+  \par\bigskip
+  Martin M\"achler\\
+  Seminar f\"ur Statistik, HG G~16\\
+  ETH Zurich\\
+  8092 Zurich, Switzerland\\
+  E-mail: \email{maechler@stat.math.ethz.ch}\\
+  % URL: \url{http://stat.ethz.ch/people/maechler}
+  \par\bigskip
+  Benjamin M. Bolker\\
+  Departments of Mathematics \& Statistics and Biology \\
+  McMaster University \\
+  1280 Main Street W \\
+  Hamilton, ON L8S 4K1, Canada \\
+  E-mail: \email{bolker@mcmaster.ca}
+}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\abs}{\operatorname{abs}}
+\newcommand{\bLt}{\ensuremath{\bm\Lambda_\theta}}
+\newcommand{\mc}[1]{\ensuremath{\mathcal{#1}}}
+\newcommand{\trans}{\ensuremath{^\prime}}
+\newcommand{\yobs}{\ensuremath{\bm y_{\mathrm{obs}}}}
+\newcommand*{\eq}[1]{eqn.~\ref{#1}}% or just {(\ref{#1})}
+%
+
+<<preliminaries,include=FALSE,cache=FALSE,message=FALSE>>=
+options(width=69, show.signif.stars=FALSE, str=strOptions(strict.width="cut"))
+library(knitr)
+library(lme4)
+library(ggplot2)
+theme_set(theme_bw())
+library(RColorBrewer)
+library(grid)
+library(gridExtra)
+zmargin <- theme(panel.margin=unit(0,"lines"))
+library(lattice)
+library(reshape2)
+library(plyr)
+opts_chunk$set(engine='R',dev='pdf',fig.width=10,
+               fig.height=6.5,prompt=TRUE,
+               ## strip.white=all,
+               error=FALSE, ## stop on error
+               cache=TRUE,tidy=FALSE,comment=NA)
+@ % $ <- for emacs ESS
+% \setkeys{Gin}{width=\textwidth} % obsolete?
+\begin{document}
+\section{Introduction}
+\label{sec:intro}
+%\bmb{equations are all defined in part~I \ldots}
+
+The \pkg{lme4} package for \proglang{R} can be used to fit a broad
+range of mixed-effects models.  One major advantage of
+\pkg{lme4} over its predecessor, \pkg{nlme}, is that it can be used to
+fit generalized linear mixed
+models (GLMMs), which combine the flexibility of
+linear mixed models (LMMs) and generalized
+linear models (GLMs). In a companion paper, we have described the
+facilities in \pkg{lme4} for fitting linear mixed models (LMMs). Here
+we describe the facilities for fitting GLMMs.
+
+\section{Generalized Linear Mixed Models}
+\label{sec:GLMMdef}
+
+Generalized linear mixed models extend the class of
+generalized linear models by allowing for both fixed and random
+effects. In a GLM, the length-$n$ vector-valued response variable,
+$\mc Y$, has a conditional distribution in the exponential family (e.g. Normal,
+binomial, Poisson). The mean, $\bm\mu_{\mc Y }$, of $\mc Y$ depends on
+a linear predictor,
+\begin{equation}
+  \label{eq:GLMlinpred}
+  \bm\eta=\bm X\bm\beta .
+\end{equation}
+where $\bm\beta$ is a $p$-dimensional coefficient vector and $\bm X$
+is an $n \times p$ model matrix. The mapping from $\bm\mu_{\mc Y }$ to
+$\bm\eta$, which is called the \emph{link function} and written,
+\begin{equation}
+  \label{eq:linkfun}
+  \bm X\bm\beta=\bm\eta=\bm g\left(\bm\mu_{\mc Y }\right) ,
+\end{equation}
+is a \emph{diagonal mapping} in the sense that there is a scalar
+function, $g$, such that the $i$th component of $\bm\eta$ is $g$
+applied to the $i$th component of $\bm\mu_{\mc Y }$.  (The name
+``diagonal'' reflects the fact that the Jacobian matrix,
+$\frac{d\eta}{d\mu\trans}$, of such a mapping will be diagonal.) The
+scalar link function must be invertible and differentiable over its range.  The
+vector-valued \emph{inverse link} function, $\bm g^{-1}$, will be the
+scalar inverse link, $g^{-1}$, applied component-wise to
+$\bm\eta$.
+% The scalar link function must be invertible over its range.
+% The vector-valued \emph{inverse link} function, $\bm g^{-1}$, will be
+% the scalar inverse link, $g^{-1}$, applied component-wise to
+% $\bm\eta$.  % commented out the repetition - DMB
+
+In the GLMM case, the vector of means of the exponential family distribution of
+$\mc Y$ depends on an unobserved random vector, $\mc B$, of length
+$q$, called the random-effects coefficient vector. In particular, the
+conditional mean of $\mc Y$ given that $\mc B = \bm b$, written
+$\bm\mu_{\mc Y|\mc B = \bm b}$, depends on the linear predictor,
+\begin{equation}
+  \label{eq:GLMMlinpred}
+  \bm\eta=\bm Z\bm b+\bm X\bm\beta .
+\end{equation}
+where $\bm Z$ is an $n \times q$ random-effects model matrix. Similar
+to the GLM case, the mapping from the conditional mean, $\bm\mu_{\mc
+  Y|\mc B = \bm b}$, to the linear predictor, $\bm\eta$, is
+\begin{equation}
+  \label{eq:linkfunii}
+  \bm Z\bm b + \bm X\bm\beta=
+  \bm\eta=
+  \bm g\left(\bm\mu_{\mc Y|\mc B =\bm b}\right) ,
+\end{equation}
+The random vector $\mc B$ is assumed to be distributed multivariate
+normally,
+\begin{equation}
+  \label{eq:2}
+  \mc B \sim \mc N(\bm 0, \bm\Sigma_\theta)
+\end{equation}
+where $\bm\Sigma_\theta$ is the covariance matrix of $\mc B$, which
+depends on a vector of covariance parameters, $\bm\theta$.
+
+The optimization routines of \pkg{lme4} never actually compute
+$\Sigma_\theta$ directly, and instead use the elements of the covariance factor,
+$\bm\Lambda_\theta$, which is a matrix square root of $\Sigma_\theta$,
+\begin{equation}
+  \label{eq:GLMMSigma}
+  \bm\Sigma_\theta=\bm\Lambda_\theta\bm\Lambda_\theta\trans .
+\end{equation}
+This characterization of the random-effects covariance structure
+allows us to write the linear predictor as
+\begin{equation}
+  \label{eq:GLMMlinpredii}
+  \bm\eta=\bm Z\bm\Lambda_\theta\bm u+\bm X\bm\beta ,
+\end{equation}
+where the spherical random effects vector, $\bm u$
+(see \cite{lmerJSS}) is a realization
+of the random vector, $\mc U$,
+\begin{equation}
+  \label{eq:UdistGLMM}
+  \mc U\sim\mc N(\bm0,\bm I_q)
+\end{equation}
+where $\bm I_q$ is the identity matrix.
+
+Common forms of the conditional distribution are Bernoulli, for binary
+responses, binomial for binary responses that are recorded as the
+number of trials and the number of successes, and Poisson, for count
+data.  The combination of a distributional form and a link function is
+called a \emph{family}.  For distributional forms in the exponential
+family there is a \emph{canonical link}.  For Bernoulli or binomial
+forms the canonical link is the \emph{logit} link function
+\begin{equation}
+  \label{eq:logitLink}
+  \eta_i=\log\left(\frac{\mu_i}{1-\mu_i}\right);
+\end{equation}
+for the Poisson distribution the canonical link is the natural
+logarithm.
+
+The form of the distribution determines the conditional variance,
+$\Var(\mc Y|\mc U=\bm u)$, as a function of the conditional mean and,
+possibly, a separate scale factor. (In the most common cases the conditional
+variance is completely determined by the conditional mean.) 
+
+\bmb{Discuss prior weights more thoroughly; mention offsets}
+Prior
+weights can also be incorporated in the sense \ldots
+
+\bmb{Scale factor??? We know that they're inconsistently
+incorporated in the code, but are there theoretical issues
+that we don't understand???}
+
+The likelihood of the parameters, given the observed data, is now
+\begin{equation}
+  \label{eq:GLMMlike}
+  L(\bm\beta,\bm\theta|\yobs)=\int_{\mathbb{R}^q}f_{\mc Y,\mc U}(\yobs,\bm u)\,d\bm u
+\end{equation}
+where, as in the case of linear mixed models, $f_{\mc Y,\mc
+  U}(\yobs,\bm u)$ is the unscaled conditional density of $\mc U$
+given $\mc Y=\yobs$.  The notation here is a bit blurred because,
+although the joint distribution of $\mc Y$ and $\mc U$ is always
+continuous with respect to $\mc U$, it can be (and often is) discrete
+with respect to $\mc Y$. However, when we condition on the observed
+value $\mc Y=\yobs$, the resulting function is continuous with respect
+to $\bm u$ so the unscaled conditional density is indeed well-defined
+as a density, up to a scale factor.
+
+To evaluate the integrand in (\ref{eq:GLMMlike})
+we use the value of
+the \code{dev.resids} function in the GLM family.  This vector,
+$\bm d(\yobs,\bm u)$, with elements, $d_i(\yobs,\bm u), i=1,\dots,n$,
+provides the deviance of a generalized linear model as
+\begin{displaymath}
+  \sum_{i=1}^n d_i(\yobs,\bm u) .
+\end{displaymath}
+(We note that there is
+some confusion in \proglang{R} (and in its predecessor,
+\proglang{S}) about the exact definition of the deviance residuals
+of a family.  As indicated above, we will use this name for the
+value of the \code{dev.resids} function for the family.  The signed
+square root of this vector, using the signs of $\yobs-\mu$, is returned
+when the \code{residuals} method is applied to a fitted model
+of class \code{"glm"} when \code{type="deviance"}, the
+default, is specified.  Both are called ``deviance residuals''
+at different points in the documentation.)
+One advantage of using the pre-existing GLM family structure is
+that models with any family and link function can be
+fitted (although common families and link functions are
+hard-coded in C++ for computational speed),
+in contrast to previous versions of \code{lme4} and other 
+\proglang{R} packages for GLMM fitting.
+
+The likelihood can now be expressed as
+\begin{equation}
+  \label{eq:GLMMlike1}
+  L(\bm\beta,\bm\theta|\yobs)=
+  \int_{\mathbb{R}^q}\exp\left(-\frac{\sum_{i=1}^nd_i(\yobs,\bm u)+\|\bm u\|^2}{2}\right)\,(2\pi)^{-q/2}\,d\bm u
+\end{equation}
+
+As for linear mixed models, we simplify evaluation of the integral
+(\ref{eq:GLMMlike}) by determining the value, $\tilde{\bm
+  u}_{\beta,\theta}$, that maximizes the integrand.  When the
+conditional density, $\mc U|\mc Y=\yobs$, is multivariate Gaussian,
+this conditional mode will also be the conditional mean.  However, for
+most families used in GLMMs, the mode and the mean need not coincide
+so we use the more general term and call $\tilde{\bm
+  u}_{\beta,\theta}$ the \emph{conditional mode}.  We first describe
+the numerical methods for determining the conditional mode using the
+Penalized Iteratively Reweighted Least Squares (PIRLS) algorithm then
+return to the question of evaluating the integral (\ref{eq:GLMMlike}).
+
+\subsection{Determining the conditional mode}
+\label{sec:conditionalMode}
+
+The iteratively reweighted least squares (IRLS) algorithm is an
+efficient method of determining the maximum likelihood
+estimates of the coefficients in a generalized linear model.  We
+extend it to a \emph{penalized iteratively reweighted least squares}
+(PIRLS) algorithm for determining the conditional mode, $\tilde{\bm
+  u}_{\beta,\theta}$.   This algorithm has the form
+\begin{enumerate}
+\item Given parameter values, $\bm\beta$ and $\bm\theta$, and starting
+  estimates, $\bm u_0$, evaluate the linear predictor, $\bm\eta$, the
+  corresponding conditional mean, $\bm\mu_{\mc Y|\mc U=\bm u}$, and
+  the conditional variance.  Establish the weights as the inverse of
+  the variance.  We write these weights in the form of a diagonal
+  weight matrix, $\bm W$, although they are stored and manipulated as
+  a vector.
+\item Solve the penalized, weighted, nonlinear least squares problem
+  \begin{equation}
+    \label{eq:weightedNLS}
+    \arg\min_{\bm u}\left(\left\|\bm W^{1/2}\left(\yobs-\bm\mu_{\mc
+            Y|\mc U=\bm u}\right)\right\|^2+\|\bm u\|^2\right)
+  \end{equation}
+\item Update the weights, $\bm W$, and check for convergence.  If not
+  converged, go to step 2.
+\end{enumerate}
+
+We use a Gauss-Newton algorithm with an orthogonality convergence
+criterion~\citep[\S 2.2.3]{bateswatts88:_nonlin} to solve the
+penalized, weighted, nonlinear least squares problem in step 2.  At
+the $i$th iteration we determine an increment, $\bm\delta_i$, as the
+solution to the penalized, weighted, linear least squares problem
+\begin{equation}
+  \label{eq:incr}
+  \bm\delta_i=\arg\min_{\bm\delta}\left\|
+    \begin{bmatrix}
+      \bm W^{1/2}\left(\yobs-\bm\mu_i\right)\\
+      \bm u_i
+    \end{bmatrix}-
+    \begin{bmatrix}
+      \bm W^{1/2}\bm M_i\bm Z\bm\Lambda_\theta\\
+      \bm I_q
+    \end{bmatrix}\bm u\right\|^2
+\end{equation}
+where $\bm u_i$ is current value of $\bm u$, $\bm\mu_i$ is the
+corresponding conditional mean of $\mc Y|\mc U=\bm u_i$ and $\bm M_i$ is
+the Jacobian matrix of the vector-valued inverse link, evaluated at
+$\bm\mu_i$.  That is
+\begin{equation}
+  \label{eq:Jacobian}
+  \bm M_i=\left.\frac{d\bm\mu}{d\bm\eta\trans}\right|_{\bm\eta_i},
+\end{equation}
+which will be a diagonal matrix so, as for the weights, we store and
+manipulate the Jacobian as a vector.
+
+\bmb{Need to describe step-halving here!}
+
+The minimizer, $\bm\delta_i$, of (\ref{eq:incr}) satisfies
+\begin{equation}
+  \label{eq:incrEq}
+  \bm P\left(\bLt\trans\bm Z\trans\bm M_i\bm W\bm M_i\bm Z\bLt+\bm I_q\right)\bm P\trans
+      \bm\delta_i=\bLt\trans\bm Z\trans\bm M_i\bm W(\yobs-\bm\mu_i) - \bm u_i
+\end{equation}
+which we solve using the sparse Cholesky factor.  At convergence, the
+factor, $\bm L_{\beta,\theta}$, satisfies
+\begin{equation}
+  \label{eq:CholFactorGLMM}
+  \bm L_{\beta,\theta}\bm L_{\beta,\theta}\trans =
+  \bm P\left(\bLt\trans\bm Z\trans\bm M\bm W\bm M\bm Z\bLt+\bm I_q\right)\bm P\trans
+\end{equation}
+As we show in the next section, the matrix $(\bm L_{\beta,\theta}\bm
+L_{\beta,\theta}\trans)^{-1}$ is a Laplace approximation of the
+covariance matrix for the spherized random effects, conditional on the
+observed data. This fact is useful for constructing a nonlinear
+objective function for finding the approximate maximum likelihood
+estimates of $\theta$ and $\beta$.
+
+
+\subsection{Evaluating the likelihood for GLMMs using the Laplace approximation}
+\label{sec:Laplace}
+
+A second-order Taylor series approximation to $-2\log[f_{\mc Y,\mc
+  U}(\yobs,\bm u)]$ based at $\tilde{\bm u}$ provides an approximation
+of the unscaled conditional density as a multiple of the density for
+the multivariate Gaussian $\mathcal{N}(\tilde{\bm u},\bm L\bm
+L\trans)$.  The change of variable
+\begin{equation}
+  \label{eq:LaplaceChg}
+  \bm u = \tilde{\bm u} + \bm L\bm z
+\end{equation}
+provides
+\begin{equation}
+  \label{eq:GLMMLaplace}
+  \begin{aligned}
+    L(\bm\beta,\bm\theta|\yobs)&=\int_{\mathbb{R}^q}f_{\mc Y,\mc U}(\yobs,\bm u)\,d\bm u\\
+    &\approx \tilde{f}\,|\bm L|\, \int_{\mathbb{R}^q}e^{-\|\bm z\|^2/2}\,(2\pi)^{-q/2}\,d\bm z\\
+    =\tilde{f}\, |\bm L|
+  \end{aligned}
+\end{equation}
+or, on the deviance scale,
+\begin{equation}
+  \label{eq:LaplaceDev}
+  -2\ell(\bm\beta,\bm\theta|\yobs)\approx\sum_{i=1}^nd_i(\yobs,\tilde{\bm u}) +
+    \|\tilde{\bm u}\|^2 + \log(|\bm L|^2)+\frac{q}{2}\log(2\pi)
+\end{equation}
+
+\subsubsection{Decomposing the deviance for simple models}
+\label{sec:simplescalar}
+
+A special, but not uncommon, case is that of scalar random effects
+associated with levels of a single grouping factor, $\bm h$.  In this
+case the dimension, $q$, of the random effects is the number of levels
+of $\bm h$ --- i.e.{} there is exactly one random effect associated
+with each level of $\bm h$.  We will write the vector of
+variance-covariance parameters, which is one-dimensional, as a scalar,
+$\theta$.  The matrix $\bm\Lambda_{\bm\theta}$ is a multiple of the
+identity, $\theta\bm I_q$, and $\bm Z$ is the $n\times q$ matrix of
+indicators of the levels of $\bm f$.  The permutation matrix, $\bm
+P$, can be set to the identity and $\bm L$ is diagonal, but not
+necessarily a multiple of the identity.
+
+Because each element of $\bm\mu$ depends on only one element of $\bm
+u$ and the elements of $\mc Y$ are conditionally independent, given
+$\mc U=\bm u$, the conditional densities of the $u_j,j=1,\dots,q$
+given $\mc Y=\yobs$ are independent.  We partition the indices
+$1,\dots,n$ as $\mathbb{I}_j,j=1,\dots,q$ according to the levels of
+$\bm h$.  That is, the index $i$ is in $\mathbb{I}_j$ if $h_i=j$.
+This partitioning also applies to the deviance residuals in that
+the $i$th deviance residual depends only on $u_j$ when $i\in\mathbb{I}_j$.
+
+Writing the univariate conditional densities as
+\begin{equation}
+  \label{eq:univariateCondDens}
+  f_j(\yobs,u_j)=\exp\left(-\frac{\sum_{i\in\mathbb{I}_j}d_i(\yobs, u_j)+u_j^2}{2}\right)(2\pi)^{-1/2}
+\end{equation}
+we have
+\begin{equation}
+  \label{eq:vectorCondDens}
+  f_{\mc Y,\mc U}(\yobs,\bm u)=\prod_{j=1}^q f_j(\yobs,u_j)
+\end{equation}
+and
+\begin{equation}
+  \label{eq:ssLike}
+  \begin{aligned}
+    L(\bm\beta,\bm\theta|\yobs)=\prod_{j=1}^q\int_{\mathbb{R}}f_j(\yobs,u)\,du
+  \end{aligned}
+\end{equation}
+
+We consider this special case both because it occurs frequently and
+because, for some software, it is the only type of GLMM that can be
+fit.  Also, in this particular case we can graphically assess the
+quality of the Laplace approximation by comparing the actual integrand
+to its approximation.
+
+Consider the \code{cbpp} data on contagious bovine pleuropneumonia
+(CBPP)
+incidence according to season and herd, available in the \pkg{lme4} package
+(see \ref{sec:cbpp} for more details).
+<<strcbpp,echo=FALSE,eval=FALSE>>=
+str(cbpp)
+@
+and the model
+<<m1>>=
+print(m1 <- glmer(cbind(incidence, size-incidence) ~ period + (1|herd),
+      cbpp, binomial), corr=FALSE)
+@
+This model has been fit by minimizing the Laplace approximation to the
+deviance.  We can assess the quality of this approximation by
+evaluating the unscaled conditional density at $u_j(z)=\tilde{u_j} +
+z/{\bm L_{j,j}}$ and comparing the ratio,
+$f_j(\yobs,u)/(\tilde{f_j}\sqrt{2\pi})$, to the standard normal
+density, $\phi(z)=e^{-z^2/2}/\sqrt{2\pi}$, as shown in Figure~\ref{fig:densities}.
+\begin{figure}[tbp]
+  \centering
+<<densities,echo=FALSE,fig.height=5>>=
+zeta <- function(m, zmin=-3, zmax=3, npts=301L) {
+    stopifnot (is(m, "glmerMod"),
+               length(m@flist) == 1L,    # single grouping factor
+              length(m@cnms[[1]]) == 1L) # single column for that grouping factor
+    pp <- m
+    rr <- m@resp
+    u0 <- getME(pp,"u")
+    sd <- 1/getME(pp,"L")@x
+    ff <- as.integer(getME(pp,"flist")[[1]])
+    fc <- getME(pp,"X") %*% getME(pp,"beta") # fixed-effects contribution to linear predictor
+    ZL <- t(getME(pp,"Lambdat") %*% getME(pp,"Zt"))
+    dc <- function(z) { # evaluate the unscaled conditional density on the deviance scale
+        uu <- u0 + z * sd
+        rr$updateMu(fc + ZL %*% uu)
+        unname(as.vector(tapply(rr$devResid(), ff, sum))) + uu * uu
+    }
+    zvals <- seq(zmin, zmax, length.out = npts)
+    d0 <- dc(0) # because this is the last evaluation, the model is restored to its incoming state
+    list(zvals=zvals,
+         sqrtmat=t(sqrt(vapply(zvals, dc, d0, USE.NAMES=FALSE) - d0)) * # signed square root
+         array(ifelse(zvals < 0, -1, 1), c(npts, length(u0))))
+}
+zm <- zeta(m1, -3.750440, 3.750440)
+dmat <- exp(-0.5*zm$sqrtmat^2)/sqrt(2*pi)
+xyplot(as.vector(dmat) ~ rep.int(zm$zvals, ncol(dmat))|gl(ncol(dmat), nrow(dmat)),
+       type=c("g","l"), aspect=0.6, layout=c(5,3),
+       xlab="z", ylab="density",
+       panel=function(...){
+           panel.lines(zm$zvals, dnorm(zm$zvals), lty=2)
+           panel.xyplot(...)}
+       )
+@
+  \caption{Comparison of univariate integrands (solid line) and standard normal density function (dashed line)}
+  \label{fig:densities}
+\end{figure}
+ \bmb{consider Q-Q plots to emphasize deviations from normality?}
+As we can see from this figure, the univariate integrands are very
+close to the standard normal density, indicating that the Laplace
+approximation to the deviance is a good approximation in this case.
+
+\section{Adaptive Gauss-Hermite quadrature for GLMMs}
+\label{sec:aGQ}
+When the integral (\ref{eq:GLMMlike}) can be expressed as a product of
+low-dimensional integrals, we can use Gauss-Hermite quadrature to
+provide a closer approximation to the integral.  Univariate
+Gauss-Hermite quadrature evaluates the integral of a function that is
+multiplied by a ``kernel'' where the kernel is a multiple of
+$e^{-z^2}$ or $e^{-z^2/2}$.  For statisticians the natural candidate
+is the standard normal density, $\phi(z)=e^{-z^2/2}/\sqrt(2\pi)$.
+A $k$th-order Gauss-Hermite formula provides knots, $z_i,i=1,...,k$,
+and weights, $w_i,i=1,\dots,k$, such that
+\begin{displaymath}
+  \int_{\mathbb{R}}t(z)\phi(z)\,dz\approx\sum_{i=1}^kw_it(z_i)
+\end{displaymath}
+The function \code{GHrule} in \pkg{lme4} (based on code in the
+\pkg{SparseGrid} package) provides knots and weights relative to the
+standard normal kernel for orders $k$ from 1 to 100.  For example,
+<<GHrule5>>=
+GHrule(5)
+@
+where \code{z} is the vector of knots, \code{w} is the vector
+of weights, and \code{dlnorm} is the log-density of the standard
+normal distribution at $z$.
+
+The choice of the value of $k$ depends on the behavior of the function
+$t(z)$.  If $t(z)$ is a polynomial of degree $k-1$ then the
+Gauss-Hermite formula for orders $k$ or greater provides an exact
+answer.  The fact that we want $t(z)$ to behave like a low-order
+polynomial is often neglected in the formulation of a Gauss-Hermite
+approximation to a quadrature.  The quadrature knots on the $u$ scale
+are chosen as
+\begin{equation}
+  \label{eq:quadraturepts}
+  u_{i,j}(z)=\tilde{u_j} + z_i/{\bm L_{j,j}},\quad i=1,\dots,k;\;j=1,\dots,q
+\end{equation}
+exactly so that the function $t(z)$ should behave like a low-order
+polynomial over the region of interest, which is to say the region
+where quadrature knots with large weights are located.  The term
+``adaptive Gauss-Hermite quadrature'' reflects the fact that the
+approximating Gaussian density is scaled and shifted to provide a
+second order approximation to the logarithm of the unscaled
+conditional density.
+
+Figure~\ref{fig:tfunc}
+\begin{figure}[tbp]
+  \centering
+<<tfunc,echo=FALSE>>=
+xyplot(as.vector(dmat/dnorm(zm$zvals)) ~ rep.int(zm$zvals, ncol(dmat))|gl(ncol(dmat), nrow(dmat)),
+       type=c("g","l"), aspect=0.6, layout=c(5,3),
+       xlab="z", ylab="t(z)")
+@
+  \caption{The function $t(z)$, which is the ratio of the normalized
+    unscaled conditional density to the standard normal density, for
+    each of the univariate integrals in the evaluation of the deviance
+    for model \code{m1}.  These functions should behave like low-order
+    polynomials.}
+  \label{fig:tfunc}
+\end{figure}
+shows $t(z)$ for each of the unidimensional integrals in the
+likelihood for the model \code{m1} at the parameter estimates.
+
+\section{Examples}
+
+\subsection{CBPP}
+\label{sec:cbpp}
+
+The \code{?cbpp} help page describes the CBPP data set
+\citep{lesnoff_within-herd_2004} as follows:
+\begin{quote}
+Contagious bovine pleuropneumonia (CBPP) is a major disease of
+cattle in Africa, caused by a mycoplasma.  This dataset describes
+the serological incidence of CBPP in zebu cattle during a
+follow-up survey implemented in 15 commercial herds located in the
+Boji district of Ethiopia.  The goal of the survey was to study
+the within-herd spread of CBPP in newly infected herds. Blood
+samples were quarterly collected from all animals of these herds
+to determine their CBPP status.  These data were used to compute
+the serological incidence of CBPP (new cases occurring during a
+given time period).  Some data are missing (lost to follow-up).
+\end{quote}
+\cite{lesnoff_within-herd_2004} estimated
+the effects of different treatments using (1) ordinary logistic regression
+incorporating a variance-inflation factor, also known as
+a quasi-binomial model (``logistic regression'' is sometimes
+used specifically to describe analyses of Bernoulli responses, but
+in this case there are multiple trials per observation [cows that
+could become seropositive], and so a dispersion or scale parameter
+can be estimated); (2) a GLMM implemented in \code{lme4}; and a
+(3) Markov chain Monte Carlo algorithm \bmb{[CITE Zeger and Karim 1991] as L+2004 do?}, which as they state allows
+for a non-parametric rather than a Normal model for the random effects.
+\bmb{I can't find any evidence of what they \emph{actually} did in 
+the paper: there is no code or description of the MCMC algorithm.
+Z\&K point out that you can use a Normal distribution for the
+random effects, or use rejection sampling to allow a non-Normal
+distribution, but we don't know what L+2004 actually used \ldots is
+it worth asking them?}
+The authors did not find any significant effects of treatment,
+ascribing the null results to 
+``a lack of power in the statistical analyses or to a quality problem for the medications used (and more generally, for health-care delivery in the Boji district).''
+
+<<newcbpp,echo=FALSE,warning=FALSE,message=FALSE,eval=FALSE>>=
+c2 <- read.csv("cbpp.csv",comment="#")
+m2 <- melt(c2,id.var=1:3)
+## now colsplit and get into appropriate format: *OR*
+## merge treatment info with existing cbpp data
+m3 <- data.frame(subset(m2,select=-variable),
+                 colsplit(m2$variable,"_",names=c("var","period")))
+m4 <- dcast(m3,herd+treatment+avg_size+period~var)
+tfun <- function(x) {
+    OK <- !is.na(x)
+    y <- numeric(length(x))
+    y[!OK] <- NA
+    y[OK] <- as.numeric(as.character(x[OK]))
+    y
+}
+m5 <- transform(rename(m4,c(N="size")),percent=prop/100)
+m6 <- transform(m5,incidence=round(percent*size))
+cbpp2 <- na.omit(subset(m6,select=c(herd,treatment,avg_size,
+                           period,size,incidence)))
+## write.csv(cbpp2,"cbpp2.csv",row.names=FALSE)
+cbpp2$herd <- with(cbpp2,reorder(factor(herd),incidence/size))
+## CHECK vs cbpp data set??
+@
+<<newcbpp2,echo=FALSE>>=
+cbpp2 <- read.csv("cbpp2.csv")
+cbpp2 <- transform(cbpp2,period=factor(period),
+                   treatment=factor(treatment,
+                   levels=c("Partial/null","Complete","Unknown")))
+@
+\bmb{There appears to be a typo in Table 1; herd 6
+in the table has \{N,INC\} pairs (i.e. initial size
+and percentage incidence of
+P1=\{14,14\}; P2=\{[blank],12\}; P3=\{25,[blank]\};
+P4=\{9,44\}).                                  
+Herd 1 in the \code{cbpp} data set, which seems
+to be the corresponding one, has
+\{size, incidence\} pairs:
+P1=\{2,14\}; P2=\{3,12\}; P3=\{4,9\};
+P4=\{0,5\}. This corresponds to incidences of
+14, 25, 44, 0  which would match the values in the
+table if we assume that there are a couple of spurious
+blanks in the table, \emph{and} that there was zero
+incidence in P4 for this herd.  We should check
+with (1) DMB (where did he originally get these data?)
+and (2) the authors (we want to ask them about their
+MCMC algorithm anyway  \ldots)
+}
+
+\bmb{This is the simple example.
+  \begin{itemize}
+  \item describe the problem in enough detail.
+  \item fit parameters; show effects of AGQ number;
+    describe accessors (prediction, simulation, confidence intervals)
+  \item use PB to address finite-size inference issues
+  \end{itemize}
+}
+
+<<cbppPlot,echo=FALSE,dependson="newcbpp",fig.cap="Incidence (proportion of cows becoming seropositive per observation period) vs. period. Colours show treatment category for each herd; point sizes reflect the number of seronegative cows at the start of each period.",fig.scap="Incidence">>=
+g0 <- ggplot(cbpp2,aes(period, incidence/size, colour=treatment)) +
+    ## scale_y_continuous(limits = c(0, 1))+
+    labs(x="Period",y="Proportional incidence")+
+    scale_colour_brewer(palette="Dark2")
+## faceted plot
+## g0 + 
+##     geom_point(aes(size = size)) +
+##     facet_wrap(~herd) +
+##     zmargin
+## 
+g0 +  geom_point(aes(size = size),alpha=0.4) +
+    geom_line(aes(group=herd),alpha=0.3)
+## geom_boxplot(fill="black",alpha=0.1,width=0.5,
+## aes(group=interaction(period,treatment)))
+## 
+## boxplot(incidence/size ~ period, data = cbpp, las = 1,
+##        xlab = 'Period', ylab = 'Probability of sero-positivity')
+@
+
+We model proportional incidence as a binomial response depending
+on the fixed effects of period, treatment and average herd size;
+to account for repeated measures we fit a model with a random effect
+of herd. In principle we might be curious about a treatment by period
+interaction, but a model incorporating
+such a treatment would clearly be overfitting the data set. With 
+56 observations, we should be fitting at most 5--6 parameters
+\citep{harrell_regression_2001};
+the model with period, treatment, and average herd size
+already has
+7 parameters, and adding a treatment $\times$ period interaction
+would bring the total to 13.
+
+Here we illustrate that, as in \code{glm}, we can specify 
+a binomial response by a proportion and use the \code{weights}
+argument to specify the sample size, instead of the slightly
+more typical \code{cbind(successes,failures)} format.
+We use the \code{bobyqa} optimizer instead of the default Nelder-Mead
+optimizer because \code{glmer} warns us that the gradients of the
+converged model are worryingly large. \bmb{We can get rid of this
+if we change the default to bobyqa before we submit the paper \ldots
+should we comment on how to check the gradient elements?}
+
+<<cbppModelI,dependson="newcbpp">>=
+gm1 <- glmer(incidence/size ~ period + treatment + avg_size + (1 | herd),
+             family = binomial,
+             data = cbpp2, weights = size,
+             control=glmerControl(optimizer="bobyqa"))
+@
+
+<<cbpp_diag,eval=FALSE,echo=FALSE>>=
+## diagnostic junk about N-M vs bobyqa differences
+tmpf <- function(x) c(deviance(x), unlist(getME(x,c("theta","beta"))))
+gm1 <- glmer(incidence/size ~ period + treatment + avg_size + (1 | herd),
+             family = binomial,
+             data = cbpp2, weights = size)
+gm1B <- update(gm1,control=glmerControl(optimizer="bobyqa"))
+cbind(tmpf(gm1),tmpf(gm1B))
+dd1 <- update(gm1,devFunOnly=TRUE)
+dd1B <- update(gm1B,devFunOnly=TRUE)
+gm1@optinfo$derivs$gradient
+gm1B@optinfo$derivs$gradient
+gm1@optinfo$derivs$gradient/gm1B@optinfo$derivs$gradient
+library(numDeriv)
+grad(dd1,tmpf(gm1)[-1])
+grad(dd1B,tmpf(gm1B)[-1])
+@
+
+It turns out that it will also be worthwhile to consider
+adding an observation-level random effect to the model,
+which we can do by creating a new factor based on observation
+number and using \code{update()} on the previous model:
+<<cbppModelII,cache=TRUE,dependson="newcbpp">>=
+cbpp2 <- transform(cbpp2,obs=factor(seq(nrow(cbpp2))))    
+gm2 <- update(gm1,.~.+(1|obs))  ## herd and observation-level REs
+gm3 <- update(gm1,.~.-(1|herd)+(1|obs))  ## observation-level REs only
+@
+\subsubsection{Model summary}
+
+The first part of the summary just reiterates
+the family and link function used,
+the model formula, and gives various summary statistics
+(log-likelihood etc.), as well as quantiles of the
+scaled (Pearson) residuals:
+<<summary1,echo=FALSE>>=
+ss <- summary(gm1)
+cc <- capture.output(print(summary(gm1)))
+reRow <- grep("^Random effects",cc)
+cat(cc[1:(reRow-2)],sep="\n")
+@
+Outside of \code{summary()}, these quantities are also
+accessible via standard accessors
+(\code{AIC()}, \code{BIC()}, \code{logLik()}, \code{deviance()}).
+\bmb{Do we want to take the opportunity to sort out the deviance-vs-likelihood
+mess, as in \url{https://github.com/lme4/lme4/issues/100}?}
+
+The next chunk of \code{summary()} describes the random effects
+and the number of levels associated with each grouping factor
+(the latter is useful for debugging random-effects formulae):
+<<summary2,echo=FALSE>>=
+feRow <- grep("^Fixed effects",cc)
+cat(cc[reRow:(feRow-2)],sep="\n")
+@
+This information is also accessible via \code{VarCorr()}, which returns
+a list of variance-covariance matrices (the \code{print} method
+for \code{VarCorr} objects allows control of whether the variance,
+or standard deviation, or both, are printed).
+
+Next come the estimates of the fixed effects, along with Wald
+estimates of the standard error, $Z$ statistic, and $p$-value:
+<<summary3,echo=FALSE>>=
+corRow <- grep("^Correlation",cc)
+cat(cc[feRow:(corRow-2)],sep="\n")
+@
+One can use \code{coef(summary())} to retrieve this information,
+and optionally format it with \code{printCoefmat()}.
+
+The last component of \code{summary()} gives the
+estimated correlations among the fixed-effect parameters,
+which can be useful for assessing multicollinearity
+(it can also be overwhelming: it is suppressed by default
+for models with more than 20 fixed-effect parameters, and
+can also be suppressed by using \code{print(summary(.),correlation=FALSE)}).
+<<summary4,echo=FALSE>>=
+cat(cc[corRow:length(cc)],sep="\n")
+@
+
+\subsubsection{Diagnostics}
+
+A reasonable range of graphical diagnostic tools is available
+for \code{merMod} objects, although not quite as wide as for
+simpler (non-mixed) models. The plot methods in the \code{lme4}
+package are inspired by those in the \code{nlme} package, using
+\code{lattice} plots to provide a reasonable blend
+of convenience and flexibility.
+
+The following code produces a standard range
+of plots (Figure~\ref{fig:glmerDiag}).
+At present, \code{lme4} does not offer other standard
+diagnostic tools such as influence measures or
+standardized residuals, due to technical difficulties
+in computing the hat matrix. \bmb{no longer true -- update
+(after checking that the \code{hatvalues} results actually make sense!)}
+<<glmerDiagFake,eval=FALSE>>=
+## basic residual plot
+plot(gm1)
+## scale-location plot
+plot(gm1,sqrt(abs(resid(.)))~fitted(.),type=c("p","smooth"))
+## boxplot of residuals grouped by a categorical predictor
+plot(gm1,period~resid(.))
+## Q-Q plot
+qqmath(gm1)
+@    
+
+<<glmerDiag,fig.cap="Graphical diagnostics \\bmb{needs work!}",warning=FALSE,echo=FALSE>>=
+p1 <- plot(gm1,type=c("p","smooth"),
+    main="Default (Pearson resid vs. fitted)")
+p2 <- plot(gm1,sqrt(abs(resid(.)))~fitted(.),type=c("p","smooth"),
+     main="Scale-location")
+p3 <- plot(gm1,period~resid(.),"Grouped residuals")
+p4 <- qqmath(gm1,main="Quantile-quantile plot",type=c("p","r"))
+grid.arrange(p1,p2,p3,p4,nrow=2)
+@    
+
+The \code{ranef()} accessor extracts the conditional modes; the argument
+\code{condVar=TRUE} additionally extracts the variances of
+the conditional modes, which are stored as an attribute
+labelled \code{"postVar"} --- a three-dimensional array that
+gives the variance-covariance matrix of the conditional modes
+for each level of the grouping variable. The plotting methods
+\code{dotplot()} and \code{qqmath()} return lists of graphical
+objects showing \emph{caterpillar plots} (ordered values of
+the random effects with confidence bars); in the case of
+the Q-Q plot (\code{qqmath}) the $y$-axis shows corresponding 
+values of the standard normal quantiles (Figure~\ref{fig:glmerRanefplot}).
+
+<<glmerRanefplot,fig.cap="Graphical display of random effects. \\emph{Left}: conditional modes $\\pm 1.96 \\times \\text{conditional mode}$, ordered by magnitude. \\emph{Right}: quantile-quantile plot, with linear regression line overlaid.",dependson="cbppModelII",echo=FALSE>>=
+rr <- ranef(gm1,condVar=TRUE)
+dd <- dotplot(rr)
+qq <- qqmath(rr,type=c("p","r"))
+grid.arrange(dd$herd,qq$herd,ncol=2)
+@
+
+Having checked the diagnostics, we would now like to compare
+the three models we have fitted.  Inspecting the \code{VarCorr}
+components, we see that when we fit both herd- and observation-level
+random effects, the among-herd variance is estimated as zero.
+The appropriate procedure
+at this point (e.g. whether one
+drops non-significant terms, or those with small scaled magnitudes,
+or those that worsen the AIC or BIC of the model)
+depends on the goals of the analysis and one's
+philosophy of model-building.
+One might either stick with the full model, or continue
+with the reduced model with observation-level random effects
+only (as it has exactly the same likelihood as the full
+model but uses an additional parameter, it would be chosen
+according to either an information-theoretic or a
+hypothesis-testing model selection framework).
+Here we will start by
+computing likelihood profiles and confidence intervals
+for the model incorporating both random effects;
+although it has the same point estimates and maximum likelihood
+as the reduced model, confidence intervals that incorporate
+non-local information (i.e. profile- or parametric bootstrap-based)
+will give different, more conservative results for the full model.
+\bmb{demonstrate?}
+
+<<AICtab,echo=FALSE,eval=FALSE>>=
+mnames <- c("herd","herd+obs","obs")
+mList <- setNames(list(gm1,gm2,gm3),mnames)
+## library(plyr)
+## print(ldply(mList,function(x) {
+##    as.data.frame(VarCorr(x))[,c("grp","sdcor")]}),digits=2)
+a1 <- bbmle::AICtab(gm1,gm2,gm3,mnames=mnames)
+@
+
+
+%% lme4 buglet: confint() has oldNames, profile has signames
+%% lme4 wishlist: allow [Ww]ald in confint.merMod?
+
+%% these two chunks are slow and should not be messed with unnecessarily
+%% (might be better to run them as batch files rather than relying on
+%% knitr caching ...)
+%% for the paper we will add fake unevaluated chunks to display the
+%% stuff we need ...     
+<<loadbatch,echo=FALSE>>=
+bootVars <- load("glmer_bootbatch.RData")
+profVars <- load("glmer_profbatch.RData")
+@
+
+The \code{profile} method computes profile likelihoods.
+The computation can be slow, since complete profiling for
+a model with $p$ random- and fixed-effect parameters requires fitting $p$
+profiles, each of which requires many $p-1$-dimensional optimizations.
+\bmb{say any more about internal computations/strategy for profiling? Or add
+to a vignette somewhere?} The \code{profile} method returns an
+object of class \code{thpr} --- a data frame
+containing the profiles, augmented with attributes containing
+interpolation splines for each parameter profile and their inverses
+(using \code{splines::interpSpline} and \code{splines::backSpline});
+the latter are used for plotting profiles and computing confidence
+intervals.  An \code{as.data.frame} method adds \code{.focal} and
+\code{.par} variables to the data frame, useful for customized
+plots.
+
+Profiles can be used for univariate (\code{xyplot}) and
+bivariate (\code{splom}) profile plots, and to compute
+profile confidence intervals (\code{confint}). (\code{confint}
+applied to a \code{glmer} fit will first fit the profile,
+then use it to compute profile confidence intervals.  Given
+the computational cost of profiling, it makes sense to compute
+and save the profile as an intermediate step if one plans to
+do anything other than computing confidence intervals.)
+
+<<cbppConfidenceCalc,eval=FALSE,echo=FALSE>>=
+profile.gm2 <- profile(gm2,signames=FALSE)
+profile.gm3 <- profile(gm3,signames=FALSE)
+confint.prof <- confint(profile.gm2)
+confint3.prof <- confint(profile.gm3)
+confint.wald <- confint(gm2,method="Wald")
+confint3.wald <- confint(gm3,method="Wald")
+confint.boot <- confint(gm2,method="boot",nsim=20,seed=101)
+@
+
+<<cbppConfidence,echo=FALSE>>=
+mfun <- function(x,type) {
+    m <- melt(rename(data.frame(var=rownames(x),x,check.names=FALSE),
+                     c("2.5 %"="lwr","97.5 %"="upr")),id="var")
+    data.frame(type=type,m)
+}
+combCI0 <- do.call(rbind,
+                  mapply(mfun,list(confint.prof,confint.boot,confint.wald),
+                         c("profile","boot","Wald"),SIMPLIFY=FALSE))
+v <- as.data.frame(VarCorr(gm2))
+vnames <- paste0("sd_",v$var1,"|",v$grp)
+combEst <- c(fixef(gm2),setNames(v$sdcor,vnames))
+combEst2 <- data.frame(var=names(combEst),est=combEst,row.names=NULL)
+combCI <- merge(dcast(combCI0,var+type~variable),combEst2,all.x=TRUE)
+combCI <- transform(combCI,var=factor(var,levels=as.character(combEst2$var)))
+combCI <- subset(combCI,var!="(Intercept)" & !grepl("^period",var))
+@
+
+<<confPlot,fig.cap="CBPP example: comparison of point and confidence interval estimation for different methods",fig.scap="CBPP comparison",echo=FALSE,fig.width=7,fig.height=3.5>>=
+ggplot(combCI,aes(var,est,colour=type))+
+    geom_pointrange(aes(ymin=lwr,ymax=upr),
+                    position=position_dodge(width=0.2))+
+    labs(x="",y="Estimate (log-odds of seropositivity)")+
+    geom_hline(yintercept=0,lty=2)+
+    coord_flip()+
+    scale_colour_brewer(palette="Dark2")
+@    
+
+<<drop1>>=
+drop1(gm2,scope=~treatment+avg_size,test="Chisq")
+@
+
+\subsection{Contraception}
+\bmb{This is the complex example. DB has used this example a lot,
+  e.g. slide set 4 in the recent Lawrence presentations.
+  \begin{itemize}
+  \item describe the problem in enough detail.
+  \item fit parameters; show effects of AGQ number;
+    describe accessors (prediction, simulation, confidence intervals)
+  \item use PB to address finite-size inference issues
+  \end{itemize}
+}
+
+\citet{steele_et_al_1996} use multilevel models to analyze data from a
+fertility survey of women in Bangladesh. These data are available as
+the \code{Contraception} object in the \pkg{mlmRev} package. The
+response variable is binary and indicates whether or not each woman
+was using contraception at the time of the survey. Covariates included
+the woman's age, the number of live children she had, whether she
+lived in an urban or rural setting, and the district in which she
+lived.
+
+
+
+<<loadContraception, echo=FALSE>>=
+library(mlmRev)
+data(Contraception)
+@ 
+
+<<graphContraception>>=
+xyplot(ifelse(use == "Y", 1, 0) ~ age|urban, Contraception,
+       groups = livch, type = c("g", "smooth"),
+       auto.key = list(space = "top", points = FALSE,
+       lines = TRUE, columns = 4),
+       ylab = "Proportion", xlab = "Centered age")
+Contraception <- within(Contraception, facet_urban<- ifelse(urban=="Y","Urban","Rural"))
+ggplot(Contraception) + 
+    geom_smooth(aes(age, ifelse(use == "Y",1,0), linetype = livch),
+                method = "gam", se = FALSE,
+                formula = y ~ s(x, bs = "cs")) +
+    facet_wrap(~facet_urban) +
+    scale_x_continuous("Centered age") + 
+    scale_y_continuous("Proportion", limits = c(0, 1)) + 
+    scale_linetype("Number\nof living\nchildren") 
+@ 
+
+<<>>=
+library(plyr)
+range(daply(Contraception, .(district), nrow))
+@ 
+
+<<ch,echo=FALSE>>=
+Contraception$ch <- factor(Contraception$livch != 0, labels = c("N","Y"))
+@  
+
+<<cm1,echo=FALSE,size='scriptsize'>>=
+print(summary(cm1 <- glmer(use ~ age + I(age^2) + urban + livch + (1|district), 
+                           Contraception, binomial, nAGQ=0L)), corr = FALSE)
+@
+
+<<cm2,echo=FALSE,size='scriptsize'>>=
+print(summary(cm2 <- glmer(use ~ age + I(age^2) + urban + ch + (1|district),
+                           Contraception, binomial, nAGQ=0L)), corr = FALSE)
+@
+
+<<cm3,echo=FALSE,size='scriptsize'>>=
+print(summary(cm3 <- glmer(use ~ age*ch + I(age^2) + urban + (1|district),
+                           Contraception, binomial)), corr = FALSE)
+@
+
+<<cm4,echo=FALSE,size='scriptsize'>>=
+print(summary(cm4 <- glmer(use ~ age*ch + I(age^2) + urban + (urban|district),
+              Contraception, binomial)),corr=FALSE)
+@
+
+<<cm5,echo=FALSE,size='scriptsize'>>=
+print(summary(cm5 <- glmer(use ~ age*ch + I(age^2) + urban + (1|urban:district) + (1|district),
+                           Contraception, binomial)), corr=FALSE)
+@
+
+<<cm6,echo=FALSE,size='scriptsize'>>=
+print(summary(cm6 <- glmer(use ~ age*ch + I(age^2) + urban + (1|urban:district),
+                   Contraception, binomial)), corr=FALSE)
+@
+
+<<anovaContraception>>=
+anova(cm1,cm2,cm3,cm4,cm5,cm6)
+@ 
+
+\section{Future directions}
+
+\bmb{Cute stuff at the end to make ourselves feel better/future plans:
+\begin{itemize}
+\item anything inherited from lmer framework: Julia, pureR? improved 
+  linear algebra? special-case optimizations?
+\item holes: AGQ for vector-valued (?) RE, condVar for vector-valued RE
+\item reinstating mcmcsamp?
+\item flexLambda
+\item NB, by nesting or by augmented parameter vector
+\item zero-inflation by E-M
+\end{itemize}}
+
+\bibliography{glmer}
+
+\section{Appendix: derivation of PIRLS}
+
+We seek to maximize the unscaled conditional log density for a GLMM
+over the conditional modes, $\bm u$. This problem is very similar to
+maximizing the log-likelihood for a GLM, which is a very
+thoroughly studied problem \citep[e.g.][]{McCullaghNelder1989}.
+The standard algorithm for dealing with this kind of
+problem is iteratively reweighted least squares (IRLS). Here we modify
+IRLS by incorporating a penalty term that accounts for variation in
+the random effects; we call the resulting algorithm
+penalized iteratively reweighted
+least squares (PIRLS).
+
+The unscaled conditional log-density takes the form,
+\begin{equation}
+  f(\bm u) = \log p(\bm y, \bm u | \bm\beta, \bm\theta) = 
+  \bm\psi^\top \bm A \bm y - 
+  \bm a^\top \bm \phi  + 
+  \bm c -
+  \frac{1}{2}\bm u^\top \bm u -
+  \frac{q}{2}\log{2\pi}
+\end{equation}
+where $\bm\psi$ is the $n$-by-$1$ canonical parameter of an
+exponential family, $\bm\phi$ is the $n$-by-$1$ vector of cumulant
+functions, $\bm c$ an $n$-by-$1$ vector of normalizing constants, and
+$\bm A$ is an $n$-by-$n$ diagonal matrix of prior weights, $\bm
+a$. Both $\bm a$ and $\bm c$ could depend on a dispersion parameter,
+although we ignore this possibility for now.
+
+The canonical parameter, $\bm\psi$, and vector of cumulant functions,
+$\bm\phi$, depend on a linear predictor,
+\begin{equation}
+  \bm\eta = \bm o + \bm X \bm\beta + \bm Z \bm\Lambda_\theta \bm u
+\end{equation}
+where $\bm o$ is an $n$-by-$1$ vector of \emph{a priori} offsets. The
+specific form of this dependency is specified by the choice of the
+exponential family (e.g. binomial). Furthermore, the mean, $\bm\mu$,
+of this distribution is a function of $\bm\eta$, where this function
+is generally referred to as the inverse link function.
+
+Our goal is to find the values of $\bm u$ that maximize the unscaled
+conditional density, for given $\bm\theta$ and $\bm\beta$
+vectors. These maximizers are the conditional modes, which we require
+for the Laplace approximation and adaptive Gauss-Hermite
+quadrature. To do this maximization we use a variant of the Fisher
+scoring method, which is the basis of the iteratively reweighted least
+squares algorithm for generalized linear models. Fisher scoring is
+itself based on Newton's method, which we apply first.
+
+\subsection{Newton's method}
+
+To apply Newton's method, we need the gradient and the Hessian of the
+unscaled conditional log-likelihood. Following standard GLM theory
+\citep{McCullaghNelder1989}, we use the chain rule,
+\begin{displaymath}
+  \frac{d L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u} = 
+  \frac{d L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm\psi}
+  \frac{d \bm\psi}{d \bm\mu}
+  \frac{d \bm\mu}{d \bm\eta}
+  \frac{d \bm\eta}{d \bm u}
+\end{displaymath}
+The first derivative in this chain follow from basic results in GLM
+theory,
+\begin{displaymath}
+  \frac{d L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm\psi} = 
+  (\bm y - \bm\mu)^\top \bm A
+\end{displaymath}
+Again from standard GLM theory, the next two derivatives define the
+inverse diagonal variance matrix,
+\begin{displaymath}
+  \frac{d \bm\psi}{d \bm\mu} = \bm V^{-1}
+\end{displaymath}
+and the diagonal Jacobian matrix,
+\begin{displaymath}
+\frac{d \bm\mu}{d \bm\eta} = \bm M \quad .
+\end{displaymath}
+Finally, because $\bm\beta$ affects $\bm\eta$ only linearly,
+\begin{displaymath}
+  \frac{d \bm\eta}{d \bm u} = \bm Z \bm\Lambda_\theta
+\end{displaymath}
+Therefore we have,
+\begin{equation}
+  \frac{d L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u} = 
+  (\bm y - \bm\mu)^\top \bm A
+  \bm V^{-1}
+  \bm M
+  \bm Z \bm\Lambda_\theta +
+  \bm u^\top \quad .
+\label{eq:dPDEVdu}
+\end{equation}
+This is very similar to the gradient for GLMs with respect to fixed
+effects coefficients, $\bm\beta$. The only difference induced by
+differentiating with respect to the random effects, $\bm u$, is the
+addition of the $\bm u^\top$ term.
+
+Again we apply the chain rule to take the Hessian,
+\begin{equation}
+  \frac{d^2 L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u \, d \bm u} = 
+  \frac{d^2 L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u \, d \bm\mu}
+  \frac{d \bm\mu}{d \bm\eta}
+  \frac{d \bm\eta}{d \bm u} + \bm I_q
+\end{equation}
+which leads to,
+\begin{equation}
+  \frac{d^2 L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u \, d \bm u} = 
+  \frac{d^2 L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u \, d \bm\mu}\bm
+  M \bm Z \bm\Lambda_\theta 
+  + \bm I_q
+\end{equation}
+The first derivative in this chain can be expressed as,
+\begin{equation}
+  \frac{d^2 L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u \, d \bm\mu} =
+  -\bm\Lambda_\theta^\top \bm Z^\top \bm M \bm V^{-1} \bm A  + 
+  \bm\Lambda_\theta^\top \bm Z^\top \left[ \frac{d \bm M \bm V^{-1}}{d \bm\mu} \right] \bm A \bm R
+\end{equation}
+where $\bm R$ is a diagonal residuals matrix with $\bm y-\bm\mu$ on
+the diagonal. The two terms arise from a type of product rule, where
+we first differentiate the residuals, $\bm y-\bm\mu$, and then the
+diagonal matrix, $\bm M \bm V^{-1}$, with respect to $\bm\mu$.
+
+The Hessian can therefore be expressed as,
+\begin{equation}
+  \frac{d^2 L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u d \bm u} = 
+  -\bm \Lambda_\theta^\top \bm Z^\top \bm M \bm A^{1/2}\bm V^{-1/2}\left( 
+    \bm I_n - 
+    \bm V \bm M^{-1}\left[ \frac{d \bm M \bm V^{-1}}{d \bm\mu} \right] \bm R
+  \right) \bm V^{-1/2}\bm A^{1/2} \bm M \bm Z \bm\Lambda_\theta + \bm I_q
+\label{eq:betaHessian}
+\end{equation}
+This result can be simplified by expressing it in terms of a weighted
+random-effects design matrix, $\bm U = \bm A^{1/2}\bm V^{-1/2}\bm M
+\bm Z \bm\Lambda_\theta$,
+\begin{equation}
+  \frac{d^2 L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u \, d \bm u} = 
+  -\bm U^\top\left( 
+    \bm I_n - 
+    \bm V \bm M^{-1}\left[ \frac{d \bm V^{-1}\bm M}{d \bm\mu} \right] \bm R
+  \right) \bm U + \bm I_q \quad .
+\label{eq:betaHessiansimp}
+\end{equation}
+
+\subsection{Fisher-like scoring}
+
+
+
+There are two ways to further simplify this expression for $\bm U^\top
+\bm U$. The first is to use the canonical link function for the family
+being used. Canonical links have the property that $\bm V = \bm M$,
+which means that for canonical links,
+\begin{equation}
+  \frac{d^2 L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u \, d \bm u} = 
+  -\bm U^\top\left( 
+    \bm I_n - 
+    \bm I_n \left[ \frac{d \bm I_n}{d \bm\mu} \right] \bm R
+  \right) \bm U + \bm I_q = \bm U^\top \bm U + \bm I_q
+\end{equation}
+The second way to simplify the Hessian is to take its expectation with
+respect to the distribution of the response, conditional on the
+current values of the spherized random effects coefficients, $\bm
+u$. The diagonal residual matrix, $\bm R$, has expectation
+0. Therefore, because the response only enters into the expression for
+the Hessian via $\bm R$, we have that,
+\begin{equation}
+  E\left(\frac{d^2 L(\bm\beta, \bm\theta | \bm y, \bm u)}{d \bm u \, d \bm
+      u} | \bm u \right) = 
+  -\bm U^\top\left( 
+    \bm I_n - 
+    \bm U \bm M^{-1}\left[ \frac{d \bm V^{-1}\bm M}{d\mu} \right] E(\bm R)
+  \right) \bm U + \bm I_q = \bm U^\top \bm U + \bm I_q
+\label{eq:simphesstwo}
+\end{equation}
+
+\subsection{Gauss-Markov}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

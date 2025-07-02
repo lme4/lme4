@@ -1,57 +1,58 @@
-if (.Platform$OS.type != "windows") {
+require(lme4)
+source(system.file("test-tools-1.R", package = "Matrix"))# identical3() etc
 
-    require(lme4)
-    source(system.file("test-tools-1.R", package = "Matrix"))# identical3() etc
+## use old (<=3.5.2) sample() algorithm if necessary
+if ("sample.kind" %in% names(formals(RNGkind))) {
+    suppressWarnings(RNGkind("Mersenne-Twister", "Inversion", "Rounding"))
+}
 
-    ## use old (<=3.5.2) sample() algorithm if necessary
-    if ("sample.kind" %in% names(formals(RNGkind))) {
-        suppressWarnings(RNGkind("Mersenne-Twister", "Inversion", "Rounding"))
-    }
+## Check that quasi families throw an error
+assertError(lmer(cbind(incidence, size - incidence) ~ period + (1|herd),
+                 data = cbpp, family = quasibinomial))
+assertError(lmer(incidence ~ period + (1|herd),
+                 data = cbpp, family = quasipoisson))
+assertError(lmer(incidence ~ period + (1|herd),
+                 data = cbpp, family = quasi))
 
-    ## Check that quasi families throw an error
-    assertError(lmer(cbind(incidence, size - incidence) ~ period + (1|herd),
-                     data = cbpp, family = quasibinomial))
-    assertError(lmer(incidence ~ period + (1|herd),
-                     data = cbpp, family = quasipoisson))
-    assertError(lmer(incidence ~ period + (1|herd),
-                     data = cbpp, family = quasi))
+## check bug found by Kevin Buhr
+set.seed(7)
+n <- 10
+X <- data.frame(y=runif(n), x=rnorm(n), z=sample(c("A","B"), n, TRUE))
+fm <- lmer(log(y) ~ x | z, data=X)  ## ignore grouping factors with
+## gave error inside  model.frame()
+stopifnot(all.equal(c(`(Intercept)` = -0.834544), fixef(fm), tolerance=.01))
 
-    ## check bug found by Kevin Buhr
-    set.seed(7)
-    n <- 10
-    X <- data.frame(y=runif(n), x=rnorm(n), z=sample(c("A","B"), n, TRUE))
-    fm <- lmer(log(y) ~ x | z, data=X)  ## ignore grouping factors with
-    ## gave error inside  model.frame()
-    stopifnot(all.equal(unname(fixef(fm)), -0.8345, tolerance=.01))
+## is "Nelder_Mead" default optimizer?
+(isNM   <- formals(lmerControl)$optimizer == "Nelder_Mead")
+(isOldB <- formals(lmerControl)$optimizer == "bobyqa")
+(isOldTol <- environment(nloptwrap)$defaultControl$xtol_abs == 1e-6)
 
-    ## is "Nelder_Mead" default optimizer?
-    isNM   <- formals(lmerControl)$optimizer == "Nelder_Mead"
-    isOldB <- formals(lmerControl)$optimizer == "bobyqa"
-    isOldTol <- environment(nloptwrap)$defaultControl$xtol_abs == 1e-6
+if (.Platform$OS.type != "windows") withAutoprint({
+
+    source(system.file("testdata", "lme-tst-funs.R", package="lme4", mustWork=TRUE))# -> uc()
+
     ## check working of Matrix methods on  vcov(.) etc ----------------------
     fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
-    V  <- vcov(fm)
-    V1 <- vcov(fm1)
+     V  <- vcov(fm)
+    (V1 <- vcov(fm1))
+    (C1 <- chol(V1))
+    dput(dV <- as.numeric(diag(V))) # 0.17607818634.. [x86_64, F Lnx 36]
     TOL <- 0 # to show the differences below
     TOL <- 1e-5 # for the check
-    stopifnot(
-        all.equal(diag(V), if(isNM) 0.176076 else if(isOldB) 0.176068575 else if (isOldTol) 0.1761714 else 0.1760782,
-                  tolerance = TOL)
-       ,
-        all.equal(as.numeric(chol(V)), if(isNM) 0.4196165 else if(isOldB) 0.41960526 else if(isOldTol) 0.4197278 else 0.4196167,
-                  tolerance=TOL)
-       ,
-        all.equal(diag(V1), c(46.5639, 2.39), tolerance = 40*TOL)# (for "all" algos)
-       ,
-        dim(C1 <- chol(V1)) == c(2,2)
-       ,
-        all.equal(as.numeric(C1),
-                  c(6.82377, 0, -0.212575, 1.53127), tolerance=20*TOL)# ("all" algos)
-       ,
+    stopifnot(exprs = {
+        all.equal(dV, uc(if(isNM)     0.176076 else if(isOldB) 0.176068575 else
+                         if(isOldTol) 0.1761714 else           0.1760782),
+                  tolerance = 9*TOL) # seen 7.8e-8; Apple clang 14.0.3 had 6.3783e-5
+        all.equal(sqrt(dV), as.numeric(chol(V)), tol = 1e-12)
+        all.equal(diag(V1), uc(`(Intercept)` = 46.5751, Days = 2.38947), tolerance = 40*TOL)# 5e-7 (for "all" algos)
+        is(C1, "dtrMatrix") # was inherits(C1, "Cholesky")
+        dim(C1) == c(2,2)
+        all.equal(as.numeric(C1), # 6.8245967  0. -0.2126263  1.5310962 [x86_64, F Lnx 36]
+                  c(6.82377, 0, -0.212575, 1.53127), tolerance=20*TOL)# 1.2e-4  ("all" algos)
         dim(chol(crossprod(getME(fm1, "Z")))) == 36
-      , TRUE)
+    })
     ## printing
-    signif(chol(crossprod(getME(fm,"Z"))), 4)# -> simple 4 x 4 sparse
+    signif(chol(crossprod(getME(fm, "Z"))), 5) # -> simple 4 x 4 sparse
 
     showProc.time() #
 
@@ -108,12 +109,14 @@ if (.Platform$OS.type != "windows") {
                                                     xtol_abs=1e-6)))
     ## summary(fm4.)
     stopifnot(
-        all.equal(as.numeric(formatVC(VarCorr(fm4.))[,"Std.Dev."]),
-                  c(1.04066, 0.63592, 0.52914, 0.48248), tol = 1e-4)
+        all.equal(as.numeric(formatVC(VarCorr(fm4.), digits = 7)[,"Std.Dev."]),
+                  c(1.040664, 0.6359187, 0.5291422, 0.4824796), tol = 1e-4)
     )
-
-
     showProc.time()
-    cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
 
-} ## skip on windows (for speed)
+}) ## skip on windows (for speed)
+
+
+cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
+
+

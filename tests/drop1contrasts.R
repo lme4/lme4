@@ -3,7 +3,7 @@
 ## drop1(fecpoiss_lm3,test="Chisq",scope=.~.)
 
 
-if (.Platform$OS.type != "windows") {
+if (.Platform$OS.type != "windows") withAutoprint({
     library(lme4)
     oldopts <- options(contrasts=c("contr.sum","contr.poly"))
     fm1 <- lmer(Reaction~Days+(Days|Subject),data=sleepstudy)
@@ -20,4 +20,4 @@ if (.Platform$OS.type != "windows") {
     }
     drop1(ff())  ## OK because sleepstudy is accessible!
 
-} ## skip on windows (for speed)
+}) ## skip on windows (for speed)

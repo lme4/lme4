@@ -1,15 +1,17 @@
 library("testthat")
-library("lme4")
+## library("lme4")
 
 eps <- .Machine$double.eps
 oneMeps <- 1 - eps
 set.seed(1)
 
 ## sample linear predictor values for the unconstrained families
-etas <- list(seq.int(-8, 8, by=1),  # equal spacing to asymptotic area
-             runif(17, -8, 8),  # random sample from wide uniform dist
-             rnorm(17, 0, 8),   # random sample from wide normal dist
-             c(-10^30, rnorm(15, 0, 4), 10^30))
+etas <- list(
+    seq.int(-8, 8, by=1),
+    runif(17, -8, 8),  # random sample from wide uniform dist
+    rnorm(17, 0, 8),   # random sample from wide normal dist
+    c(-10^30, rnorm(15, 0, 4), 10^30)
+)
 
 ## sample linear predictor values for the families in which eta must be positive
 etapos <- list(seq.int(1, 20, by=1),
@@ -27,12 +29,13 @@ context("glmFamily linkInv and muEta")
 test_that("inverse link and muEta functions", {
     tst.lnki <- function(fam, frm) {
         ff <- glmFamily$new(family=fam)
-        sapply(frm, function(x) expect_that(fam$linkinv(x), equals(ff$linkInv(x))))
+        ## as.numeric() needed for binomial()$linkinv breakage (also in muEta test)
+        sapply(frm, function(x) expect_that(fam$linkinv(as.numeric(x)), equals(ff$linkInv(x))))
     }
 
     tst.muEta <- function(fam, frm) {
         ff <- glmFamily$new(family=fam)
-        sapply(frm, function(x) expect_that(fam$mu.eta(x), equals(ff$muEta(x))))
+        sapply(frm, function(x) expect_that(fam$mu.eta(as.numeric(x)), equals(ff$muEta(x))))
     }
     
     tst.lnki(binomial(),           etas) # binomial with logit link

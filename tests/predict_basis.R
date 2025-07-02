@@ -27,12 +27,12 @@ tmpf <- function(fit) {
         plot  (Reaction~Days, xlim=c(0,12))
         points(Days, predict(fit), col=2)
     })
-    lines(newdat0$ Days, predict(fit,ReForm=NA,newdata=newdat0), col=4)
-    lines(newdat $ Days, predict(fit,ReForm=NA,newdata=newdat ), col=5)
+    lines(newdat0$ Days, predict(fit,re.form=NA,newdata=newdat0), col=4)
+    lines(newdat $ Days, predict(fit,re.form=NA,newdata=newdat ), col=5)
 }
 
-stopifnot(all.equal(predict(fm2,newdat,ReForm=NA),
-                    predict(fm3,newdat,ReForm=NA)))
+stopifnot(all.equal(predict(fm2,newdat,re.form=NA),
+                    predict(fm3,newdat,re.form=NA)))
 
 ## pictures
 tmpf(fm1)
@@ -48,6 +48,6 @@ gm1 <- glmer(y ~ poly(x,2) + (1|f), d, family=binomial)
 gm2 <- glmer(y ~ poly(x,2,raw=TRUE) + (1|f), d, family=binomial)
 
 newdat <- data.frame(x=c(1,4,6))
-stopifnot(all.equal(predict(gm1,newdat,ReForm=NA),
-                    predict(gm2,newdat,ReForm=NA),tolerance=3e-6))
+stopifnot(all.equal(predict(gm1,newdat,re.form=NA),
+                    predict(gm2,newdat,re.form=NA),tolerance=3e-6))
 

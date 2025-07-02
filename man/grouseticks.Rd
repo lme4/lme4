@@ -33,8 +33,7 @@
   Elston, D. A., R. Moss, T. Boulinier, C. Arrowsmith, and
 X. Lambin. 2001. "Analysis of Aggregation, a Worked Example: Numbers of
 Ticks on Red Grouse Chicks." Parasitology 122 (05):
-563-569. doi:10.1017/S0031182001007740.
-\url{http://journals.cambridge.org/action/displayAbstract?fromPage=online&aid=82701}.
+563-569. \doi{10.1017/S0031182001007740}
 }
 \examples{
 if (interactive()) {

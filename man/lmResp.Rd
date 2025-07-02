@@ -21,24 +21,27 @@
 }
 \note{
   Arguments to the \code{new} methods must be named
-  arguments. \itemize{ \item{y}{ the numeric response
-  vector} \item{family}{ a \code{\link{family}} object}
-  \item{nlmod}{ the nonlinear model function} \item{nlenv}{
-  an environment holding data objects for evaluation of
-  \code{nlmod}} \item{pnames}{ a character vector of
-  parameter names} \item{gam}{ a numeric vector - the
-  initial linear predictor} }
-}
+  arguments.
+  \describe{
+    \item{y}{ the numeric response vector}
+    \item{family}{ a \code{\link{family}} object}
+    \item{nlmod}{ the nonlinear model function}
+    \item{nlenv}{ an environment holding data objects for evaluation of
+      \code{nlmod}} 
+    \item{pnames}{ a character vector of parameter names}
+    \item{gam}{ a numeric vector - the initial linear predictor}
+  }
+} % note about named arguments
 \section{Methods}{
   \describe{ \item{\code{new(y=y)}:}{Create a new
-  \code{\linkS4class{lmResp}} or
-  \code{\linkS4class{lmerResp}} object.}
-  \item{\code{new(family=family, y=y)}:}{Create a new
-  \code{\linkS4class{glmResp}} object.}
-  \item{\code{new(y=y, nlmod=nlmod, nlenv=nlenv,
-  pnames=pnames, gam=gam)}:}{Create a new
-  \code{\linkS4class{nlsResp}} object.} }
-}
+      \code{\linkS4class{lmResp}} or
+      \code{\linkS4class{lmerResp}} object.}
+    \item{\code{new(family=family, y=y)}:}{Create a new
+      \code{\linkS4class{glmResp}} object.}
+    \item{\code{new(y=y, nlmod=nlmod, nlenv=nlenv,
+	pnames=pnames, gam=gam)}:}{Create a new
+      \code{\linkS4class{nlsResp}} object.} }
+} % Methods
 \seealso{
   \code{\linkS4class{lmResp}},
   \code{\linkS4class{lmerResp}},
