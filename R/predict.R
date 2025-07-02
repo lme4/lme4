@@ -373,10 +373,9 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
     ## an error (although it could be argued that in that case they
     ## should follow 'na.action' instead ...)
 
-    if (any(names(list(...)) %in% c("ReForm", "REForm", "REform"))) {
+    if (any(...names() %in% c("ReForm", "REForm", "REform")))
         stop("synonyms 'ReForm', 'REForm', 'REform' are deprecated: please use 're.form' instead")
-    }
-    
+
     if (...length() > 0) warning("unused arguments ignored")
 
     type <- match.arg(type)
@@ -489,7 +488,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
             if (length(pred) != length(REvals)) {
                 if (!class(fit.na.action) %in% c("omit", "exclude") && length(fit.na.action)>0) {
                     stop("fixed/RE pred length mismatch")
-                }                    
+                }
                  REvals <- REvals[-fit.na.action]
             }
             pred <- pred + REvals
@@ -540,19 +539,19 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
         if(isRE(re.form)) {
             Z <- t(newRE$Zt)
         } else {
-            ## this is inefficient and we could just calculate 
+            ## this is inefficient and we could just calculate
             ## X %*% Cmat[X part only] t(X) instead
             Z <- Matrix(0, nrow = nrow(X), ncol = n_u)
         }
     }
-        
+
     if(random.only) X <- Matrix(0, nrow = nrow(Z), ncol = n_beta)
-        
+
     ZX <- cbind(Z, X)
     list(fit = pred,
          se.fit = sqrt(quad.tdiag(Cmat, ZX))
          )
-    
+
 } # end {predict.merMod}
 
 
@@ -663,11 +662,11 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         }
         re.form <- if (use.u) NULL else ~0
     }
-    
+
     if (is.null(re.form)) { # formula w/o response
         re.form <- reOnly(formula(object))
     }
-    
+
     if(!is.null(seed)) set.seed(seed)
     if(!exists(".Random.seed", envir = .GlobalEnv))
         runif(1) # initialize the RNG if necessary

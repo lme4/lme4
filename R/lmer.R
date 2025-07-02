@@ -1398,7 +1398,7 @@ refit.merMod <- function(object,
         object@frame[["(weights)"]] <- newweights
         oc <- attr(attr(object@frame, "terms"), "dataClasses")
         attr(attr(object@frame, "terms"), "dataClasses") <- c(oc, `(weights)` = "numeric")
-        
+
         object@call$weights <- substitute(newweights)
 
         ## try to make sure new weights are findable later
@@ -2143,11 +2143,10 @@ NULL
 vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
                         use.hessian = NULL, full = FALSE, ...)
 {
-
     ## FIXME: warn/message if GLMM (RX-computation is approximate),
     ## if other vars are specified?
     if (full) return(vcov_full(object, sigm))
-    
+
     hess.avail <-
          ## (1) numerical Hessian computed?
         (!is.null(h <- object@optinfo$derivs$Hessian) &&
@@ -2219,7 +2218,6 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
 }
 
 vcov_full <- function(object, s = sigma(object)) {
-
     L <- getME(object, "L")
     RX <- getME(object, "RX")
     RZX <- getME(object, "RZX")

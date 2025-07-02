@@ -63,7 +63,7 @@
     }
   } % bug fixes
 
-} % version 1.1-35.6
+} % version 1.1-36
 
 \section{CHANGES IN VERSION 1.1-35.5 (2024-07-03)}{
     \subsection{USER-VISIBLE CHANGES}{
