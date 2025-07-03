@@ -41,9 +41,9 @@
     are unavailable because they require additional components to be
     calculated.)}
   \item{quiet}{(logical) suppress messages about computationally intensive profiling?}
-  \item{oldNames}{(logical) use old-style names for variance-covariance
-    parameters, e.g. \code{".sig01"}, rather than newer (more informative) names such as
-    \code{"sd_(Intercept)|Subject"}? (See \code{signames} argument to
+  \item{signames}{(logical) indicates if abbreviated names of the form
+    \code{.sigNN} rather than newer (more informative) names such as
+    \code{"sd_(Intercept)|Subject"}. (See \code{signames} argument to
     \code{\link{profile}}).}
   \item{non.mono.tol}{tolerance for detecting a non-monotonic profile
     and warning/falling back to linear interpolation}
