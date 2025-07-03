@@ -796,23 +796,27 @@ confint.thpr <- function(object, parm, level = 0.95, zeta,
 ##' @param nsim number of simulations for parametric bootstrap intervals
 ##' @param boot.type bootstrap confidence interval type
 ##' @param quiet (logical) suppress messages about computationally intensive profiling?
-##' @param oldNames (logical) use old-style names for \code{method="profile"}? (See \code{signames} argument to \code{\link{profile}}
+##' @param signames (logical) use old-style names for \code{method="profile"}? (See \code{signames} argument to \code{\link{profile}}
 ##' @param \dots additional parameters to be passed to  \code{\link{profile.merMod}} or \code{\link{bootMer}}
 ##' @return a numeric table of confidence intervals
 confint.merMod <- function(object, parm, level = 0.95,
                            method = c("profile","Wald","boot"),
                            zeta, nsim=500, boot.type = c("perc","basic","norm"),
-                           FUN = NULL, quiet=FALSE, oldNames=TRUE, ...)
+                           FUN = NULL, quiet=FALSE, oldNames=NULL, signames = TRUE, ...)
 {
     method <- match.arg(method)
     boot.type <- match.arg(boot.type)
+    if (!is.null(oldNames)) {
+      warning("'oldNames' will be deprecated. Please use 'signames' instead.", call. = FALSE)
+      signames <- oldNames
+    }
     ## 'parm' corresponds to 'which' in other contexts
     if (method=="boot" && !is.null(FUN)) {
         ## custom boot function, don't expand parameter names
     } else {
         ## "use scale" = GLMM with scale parameter *or* LMM ..
         useSc <- as.logical(object@devcomp$dims[["useSc"]])
-        vn <- profnames(object, oldNames, useSc=useSc)
+        vn <- profnames(object, signames, useSc=useSc)
         an <- c(vn,names(fixef(object)))
         parm <- if(missing(parm)) seq_along(an)
                 else
@@ -825,7 +829,7 @@ confint.merMod <- function(object, parm, level = 0.95,
     }
     switch(method,
            "profile" = {
-               pp <- profile(object, which=parm, signames=oldNames, ...)
+               pp <- profile(object, which=parm, signames=signames, ...)
                ## confint.thpr() with missing(parm) using all names:
                confint(pp, level=level, zeta=zeta)
            },
