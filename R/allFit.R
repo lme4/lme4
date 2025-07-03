@@ -326,8 +326,8 @@ plot.fixef.allFit <- function(allFit_output,
                               conf.level = 0.95,
                               # Decimal points for rounding
                               decimal_points = NULL,
-                              # Shared y-axis limits across subplots
-                              shared_y_axis_limits = FALSE,
+                              # Shared x-axis limits across subplots
+                              shared_x_axis_limits = FALSE,
                               # Additional arguments passed to tinyplot
                               ...) {
   
@@ -414,7 +414,7 @@ plot.fixef.allFit <- function(allFit_output,
     
     # Calculate shared x-axis limits if requested
     x_limits <- NULL
-    if (shared_y_axis_limits) {
+    if (shared_x_axis_limits) {
         if (point_ranges && "lwr" %in% colnames(allFit_fixef)) {
             # Use finite values only for axis limits
             finite_lwr <- allFit_fixef$lwr[is.finite(allFit_fixef$lwr)]

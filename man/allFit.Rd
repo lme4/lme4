@@ -17,7 +17,7 @@ plot.fixef.allFit(allFit_output, select_predictors = NULL, nrow = NULL,
                   inner_x_title = FALSE, inner_y_title = FALSE,
                   show_intercept = TRUE, point_ranges = TRUE,
                   conf.level = 0.95, decimal_points = NULL, 
-                  shared_y_axis_limits = FALSE, ...)
+                  shared_x_axis_limits = FALSE, ...)
 }
 \arguments{
   \item{object}{a fitted model}
@@ -62,7 +62,7 @@ plot.fixef.allFit(allFit_output, select_predictors = NULL, nrow = NULL,
   \item{point_ranges}{logical: should confidence intervals be displayed as point ranges?}
   \item{conf.level}{numeric: confidence level for point ranges (default: 0.95)}
   \item{decimal_points}{integer: number of decimal points for rounding estimates (default: NULL, no rounding)}
-  \item{shared_y_axis_limits}{logical: should all subplots share the same x-axis limits? (default: FALSE)}
+  \item{shared_x_axis_limits}{logical: should all subplots share the same x-axis limits? (default: FALSE)}
   \item{...}{additional arguments passed to \code{tinyplot()}}
 }
 \value{
@@ -117,6 +117,13 @@ library(lme4)
 
   ## Plot fixed effects from all optimizers
   plot.fixef.allFit(gm_all)
+  
+  ## Plot with shared x-axis limits for easier comparison
+  plot.fixef.allFit(gm_all, shared_x_axis_limits = TRUE)
+  
+  ## Plot without intercept and with custom styling
+  plot.fixef.allFit(gm_all, show_intercept = FALSE, 
+                    point_ranges = TRUE, conf.level = 0.99)
 } %% interactive()
 \dontrun{
   ## Parallel examples for Windows
