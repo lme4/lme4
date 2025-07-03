@@ -12,9 +12,12 @@ allFit(object, meth.tab = NULL, data=NULL,
        catch.errs = TRUE)
 
 plot.fixef.allFit(allFit_output, select_predictors = NULL, nrow = NULL,
-                  y_title = "Fixed effect", show_x_title = TRUE, show_intercept = TRUE, point_ranges = TRUE,
+                  x_title = "Estimate", y_title = "Optimizer", 
+                  show_x_title = TRUE, show_y_title = TRUE,
+                  inner_x_title = FALSE, inner_y_title = FALSE,
+                  show_intercept = TRUE, point_ranges = TRUE,
                   conf.level = 0.95, decimal_points = NULL, 
-                  shared_y_axis_limits = TRUE, ...)
+                  shared_y_axis_limits = FALSE, ...)
 }
 \arguments{
   \item{object}{a fitted model}
@@ -49,13 +52,17 @@ plot.fixef.allFit(allFit_output, select_predictors = NULL, nrow = NULL,
   \item{allFit_output}{An object of class \code{allFit}, typically produced by \code{allFit()}}
   \item{select_predictors}{character vector: names of specific predictors to plot (in addition to intercept)}
   \item{nrow}{integer: number of rows for arranging predictor panels}
-  \item{y_title}{character: title for the x-axis (parameter values)}
+  \item{x_title}{character: title for the x-axis (parameter values)}
+  \item{y_title}{character: title for the y-axis (optimizer names)}
   \item{show_x_title}{logical: should the x-axis title be displayed? (default: TRUE)}
+  \item{show_y_title}{logical: should the y-axis title be displayed? (default: TRUE)}
+  \item{inner_x_title}{logical: should x-axis titles be shown on all plots? If FALSE (default), only bottom-most plots in each column show x-axis titles}
+  \item{inner_y_title}{logical: should y-axis titles be shown on all plots? If FALSE (default), only leftmost plots show y-axis titles}
   \item{show_intercept}{logical: should the intercept term be included in the plot? (default: TRUE)}
   \item{point_ranges}{logical: should confidence intervals be displayed as point ranges?}
   \item{conf.level}{numeric: confidence level for point ranges (default: 0.95)}
   \item{decimal_points}{integer: number of decimal points for rounding estimates (default: NULL, no rounding)}
-  \item{shared_y_axis_limits}{logical: should all subplots share the same x-axis limits? (default: TRUE)}
+  \item{shared_y_axis_limits}{logical: should all subplots share the same x-axis limits? (default: FALSE)}
   \item{...}{additional arguments passed to \code{tinyplot()}}
 }
 \value{
