@@ -298,6 +298,7 @@ plot.allFit <- function(x, abbr=16, ...) {
      )
 }
 
+
 # Plot the results from the fixed effects produced by different optimizers. This function
 # takes the output from lme4::allFit(), tidies it, selects fixed effects and plots them.
 plot.fixef.allFit <- function(allFit_output,
@@ -364,6 +365,17 @@ plot.fixef.allFit <- function(allFit_output,
             dd <- transform(dd,
                            lwr = estimate - qq * sd,
                            upr = estimate + qq * sd)
+            
+            # Filter out extreme confidence intervals that might be due to convergence issues
+            # If CI width is more than 100 times the estimate, treat as suspect
+            ci_width <- dd$upr - dd$lwr
+            estimate_abs <- abs(dd$estimate)
+            extreme_ci <- ci_width > 100 * pmax(estimate_abs, 0.01)  # Use minimum threshold
+            
+            if (any(extreme_ci)) {
+                dd$lwr[extreme_ci] <- NA
+                dd$upr[extreme_ci] <- NA
+            }
         }
         rownames(dd) <- NULL
         dd
@@ -400,17 +412,24 @@ plot.fixef.allFit <- function(allFit_output,
     plot_nrow <- if (!is.null(nrow)) nrow else ceiling(sqrt(n_predictors))
     plot_ncol <- ceiling(n_predictors / plot_nrow)
     
-    # Calculate shared y-axis limits if requested
-    y_limits <- NULL
+    # Calculate shared x-axis limits if requested
+    x_limits <- NULL
     if (shared_y_axis_limits) {
         if (point_ranges && "lwr" %in% colnames(allFit_fixef)) {
-            y_limits <- range(c(allFit_fixef$lwr, allFit_fixef$upr), na.rm = TRUE)
+            # Use finite values only for axis limits
+            finite_lwr <- allFit_fixef$lwr[is.finite(allFit_fixef$lwr)]
+            finite_upr <- allFit_fixef$upr[is.finite(allFit_fixef$upr)]
+            if (length(finite_lwr) > 0 && length(finite_upr) > 0) {
+                x_limits <- range(c(finite_lwr, finite_upr), na.rm = TRUE)
+            } else {
+                x_limits <- range(allFit_fixef$estimate, na.rm = TRUE)
+            }
         } else {
-            y_limits <- range(allFit_fixef$estimate, na.rm = TRUE)
+            x_limits <- range(allFit_fixef$estimate, na.rm = TRUE)
         }
         # Add some padding
-        y_range <- diff(y_limits)
-        y_limits <- y_limits + c(-0.05 * y_range, 0.05 * y_range)
+        x_range <- diff(x_limits)
+        x_limits <- x_limits + c(-0.05 * x_range, 0.05 * x_range)
     }
     
     # Set up plotting layout with adjusted margins and spacing
@@ -455,9 +474,29 @@ plot.fixef.allFit <- function(allFit_output,
           yaxt = "n"
         )
         
-        # Add y-axis limits if shared
-        if (!is.null(y_limits)) {
-            default_args$xlim <- y_limits
+        # Add x-axis limits if shared
+        if (!is.null(x_limits)) {
+            default_args$xlim <- x_limits
+        } else if (point_ranges && "lwr" %in% colnames(effect_data)) {
+            # Calculate individual plot limits based on confidence intervals
+            # Use a more robust approach that excludes extreme outliers
+            finite_lwr <- effect_data$lwr[is.finite(effect_data$lwr) & !is.na(effect_data$lwr)]
+            finite_upr <- effect_data$upr[is.finite(effect_data$upr) & !is.na(effect_data$upr)]
+            
+            if (length(finite_lwr) > 0 && length(finite_upr) > 0) {
+                # Use quantiles to exclude extreme outliers
+                all_values <- c(finite_lwr, finite_upr, effect_data$estimate)
+                all_values <- all_values[is.finite(all_values)]
+                
+                if (length(all_values) > 0) {
+                    q01 <- quantile(all_values, 0.01, na.rm = TRUE)
+                    q99 <- quantile(all_values, 0.99, na.rm = TRUE)
+                    plot_xlim <- c(q01, q99)
+                    plot_range <- diff(plot_xlim)
+                    plot_xlim <- plot_xlim + c(-0.1 * plot_range, 0.1 * plot_range)
+                    default_args$xlim <- plot_xlim
+                }
+            }
         }
         
         # Merge with user arguments, giving precedence to user arguments
@@ -478,11 +517,19 @@ plot.fixef.allFit <- function(allFit_output,
         # Add point ranges if available and requested
         if (point_ranges && "lwr" %in% colnames(effect_data)) {
             for (j in seq_len(nrow(effect_data))) {
-                if (!is.na(effect_data$lwr[j]) && !is.na(effect_data$upr[j])) {
+                if (!is.na(effect_data$lwr[j]) && !is.na(effect_data$upr[j]) && 
+                    is.finite(effect_data$lwr[j]) && is.finite(effect_data$upr[j])) {
+                    # Add horizontal line for confidence interval
                     segments(x0 = effect_data$lwr[j],
                             x1 = effect_data$upr[j],
                             y0 = y_pos[j], 
-                            y1 = y_pos[j])
+                            y1 = y_pos[j],
+                            lwd = 1)
+                    # Add small vertical caps at the ends
+                    segments(x0 = effect_data$lwr[j], x1 = effect_data$lwr[j],
+                            y0 = y_pos[j] - 0.1, y1 = y_pos[j] + 0.1)
+                    segments(x0 = effect_data$upr[j], x1 = effect_data$upr[j],
+                            y0 = y_pos[j] - 0.1, y1 = y_pos[j] + 0.1)
                 }
             }
         }
