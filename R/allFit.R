@@ -301,28 +301,37 @@ plot.allFit <- function(x, abbr=16, ...) {
 # Plot the results from the fixed effects produced by different optimizers. This function
 # takes the output from lme4::allFit(), tidies it, selects fixed effects and plots them.
 plot.fixef.allFit <- function(allFit_output,
-                              # Set the same Y axis limits in every plot
-                              shared_y_axis_limits = TRUE,
-                              # Multiply Y axis limits by a factor (only
-                              # available if shared_y_axis_limits = TRUE)
-                              multiply_y_axis_limits = 1,
-                              # Number of decimal points
-                              decimal_points = NULL,
                               # Select predictors
                               select_predictors = NULL,
                               # Number of rows
                               nrow = NULL,
+                              # X axis title
+                              x_title = "Estimate",
                               # Y axis title
-                              y_title = 'Fixed effect',
-                              # Alignment of the Y axis title
-                              y_title_hjust = NULL,
-                              # Add number to the names of optimizers
-                              number_optimizers = TRUE,
-                              # Plot height (useful for many predictors)
-                              height = NULL) {
-
+                              y_title = "Optimizer",
+                              # Show x-axis title
+                              show_x_title = TRUE,
+                              # Show y-axis title
+                              show_y_title = TRUE,
+                              # Show x-axis title on inner plots
+                              inner_x_title = FALSE,
+                              # Show y-axis title on inner plots
+                              inner_y_title = FALSE,
+                              # Show intercept
+                              show_intercept = TRUE,
+                              # Add point ranges (confidence intervals)
+                              point_ranges = TRUE,
+                              # Confidence level for point ranges
+                              conf.level = 0.95,
+                              # Decimal points for rounding
+                              decimal_points = NULL,
+                              # Shared y-axis limits across subplots
+                              shared_y_axis_limits = FALSE,
+                              # Additional arguments passed to tinyplot
+                              ...) {
+  
     # Check for required packages
-    pkgs <- c("ggplot2", "patchwork")
+    pkgs <- c("tinyplot")
     missing_pkgs <- pkgs[!vapply(pkgs, requireNamespace, quietly = TRUE, FUN.VALUE = logical(1))]
     if (length(missing_pkgs) > 0) {
         stop("The following packages are required: ",
@@ -330,126 +339,158 @@ plot.fixef.allFit <- function(allFit_output,
              ". Please install them.", call. = FALSE)
     }
 
-    # Extract fixed effects from the allFit() output
-    allFit_fixef_mat <- summary(allFit_output)$fixef
-    allFit_fixef <- data.frame(
-        Optimizer = rownames(allFit_fixef_mat),
-        allFit_fixef_mat,
-        check.names = FALSE
-    )
-    allFit_fixef <- stats::reshape(allFit_fixef,
-                                   varying = colnames(allFit_fixef_mat),
-                                   v.names = "value",
-                                   timevar = "fixed_effect",
-                                   times = colnames(allFit_fixef_mat),
-                                   direction = "long",
-                                   idvar = "Optimizer",
-                                   ids = allFit_fixef$Optimizer)
-    rownames(allFit_fixef) <- NULL # remove row names
-
-    # If number_optimizers, assign number to each optimizer and place it before its name
-    if (number_optimizers) {
-        allFit_fixef$Optimizer <- paste0(as.numeric(factor(allFit_fixef$Optimizer)), '. ', allFit_fixef$Optimizer)
+    # Extract fixed effects from successful fits
+    ss <- summary(allFit_output)
+    successful_fits <- allFit_output[ss$which.OK]
+    
+    if (length(successful_fits) == 0) {
+        stop("No successful fits found in allFit output", call. = FALSE)
     }
-
-    # If select_predictors were specified, select them along with the intercept
+    
+    # Extract fixed effects and standard errors using approach similar to developer's draft
+    get_fe <- function(x, opt) {
+        cc <- coef(summary(x))
+        dd <- data.frame(
+            optimizer = opt, 
+            term = rownames(cc), 
+            estimate = cc[,"Estimate"], 
+            sd = cc[,"Std. Error"],
+            stringsAsFactors = FALSE
+        )
+        
+        # Add confidence intervals if requested
+        if (point_ranges && !is.null(conf.level) && !is.na(conf.level)) {
+            qq <- qnorm((1 + conf.level) / 2)
+            dd <- transform(dd,
+                           lwr = estimate - qq * sd,
+                           upr = estimate + qq * sd)
+        }
+        rownames(dd) <- NULL
+        dd
+    }
+    
+    # Get data for all successful fits
+    fe_list <- Map(get_fe, successful_fits, names(successful_fits))
+    allFit_fixef <- do.call(rbind, fe_list)
+    
+    # Apply rounding if specified
+    if (!is.null(decimal_points)) {
+        allFit_fixef$estimate <- round(allFit_fixef$estimate, decimal_points)
+        if ("lwr" %in% colnames(allFit_fixef)) {
+            allFit_fixef$lwr <- round(allFit_fixef$lwr, decimal_points)
+            allFit_fixef$upr <- round(allFit_fixef$upr, decimal_points)
+        }
+    }
+    
+    # Filter predictors if specified
     if (!is.null(select_predictors)) {
-        allFit_fixef <- allFit_fixef[allFit_fixef$fixed_effect %in% c('(Intercept)', select_predictors), ]
+        allFit_fixef <- allFit_fixef[allFit_fixef$term %in% select_predictors, ]
     }
 
-    # Order variables
-    allFit_fixef <- allFit_fixef[, c('Optimizer', 'fixed_effect', 'value')]
-
-    # Warn if multiply_y_axis_limits is set without shared_y_axis_limits
-    if (multiply_y_axis_limits != 1 && !shared_y_axis_limits) {
-        message('The argument `multiply_y_axis_limits` has not been used because it requires `shared_y_axis_limits` set to TRUE.')
+    # Remove intercept if requested
+    if (!show_intercept) {
+        allFit_fixef <- allFit_fixef[allFit_fixef$term != "(Intercept)", ]
     }
-
-    # Warn for extreme y_title_hjust values
-    if (!is.null(y_title_hjust) && (y_title_hjust < 0.5 || y_title_hjust > 6)) {
-        message('NOTE: For y_title_hjust, a working range of values is between 0.6 and 6.')
+    
+    # Calculate layout
+    n_predictors <- length(unique(allFit_fixef$term))
+    if (n_predictors == 0) {
+        stop("No predictors left to plot. Check select_predictors or show_intercept.", call. = FALSE)
     }
-
-    # Convert decimal_points to accuracy for scales::label_number
-    accuracy <- if (!is.null(decimal_points)) 10^(-decimal_points) else NULL
-
-    # Define common theme elements
-    strip_style <- ggplot2::element_text(size = 10, margin = ggplot2::margin(t = 4, b = 6))
-    strip_background_style <- ggplot2::element_rect(fill = 'grey96')
-    blank_x_axis <- list(
-        ggplot2::theme(axis.title.x = ggplot2::element_blank(),
-                       axis.text.x = ggplot2::element_blank(),
-                       axis.ticks.x = ggplot2::element_blank())
-    )
-
-    # First row: intercept_plot
-    intercept <- allFit_fixef[allFit_fixef$fixed_effect == '(Intercept)', ]
-    intercept_plot <- ggplot2::ggplot(intercept, ggplot2::aes(fixed_effect, value, colour = Optimizer)) +
-        ggplot2::geom_point(position = ggplot2::position_dodge(1)) +
-        ggplot2::facet_wrap(~fixed_effect, scale = 'free') +
-        ggplot2::guides(colour = ggplot2::guide_legend(title.position = 'left')) +
-        blank_x_axis +
-        ggplot2::theme(axis.title.y = ggplot2::element_blank(),
-                       strip.text = strip_style,
-                       strip.background = strip_background_style,
-                       legend.margin = ggplot2::margin(0.3, 0, 0.8, 1, 'cm'),
-                       legend.title = ggplot2::element_text(size = ggplot2::unit(15, 'pt'), angle = 90, hjust = 0.5))
-
-    # Second row: predictors_plot
-    predictors <- allFit_fixef[allFit_fixef$fixed_effect != '(Intercept)', ]
-    predictors$fixed_effect <- factor(predictors$fixed_effect, levels = unique(predictors$fixed_effect))
-
-    # Set number of rows for predictors
-    n_predictors <- length(unique(predictors$fixed_effect))
-    predictors_plot_nrow <- if (!is.null(nrow)) nrow - 1 else ceiling(n_predictors / 2)
-
-    predictors_plot <- ggplot2::ggplot(predictors, ggplot2::aes(fixed_effect, value, colour = Optimizer)) +
-        ggplot2::geom_point(position = ggplot2::position_dodge(1)) +
-        ggplot2::facet_wrap(~fixed_effect, scale = 'free', nrow = predictors_plot_nrow) +
-        ggplot2::labs(y = y_title) +
-        blank_x_axis +
-        ggplot2::theme(axis.title.y = ggplot2::element_text(size = 14, margin = ggplot2::margin(0, 15, 0, 5, 'pt')),
-                       strip.text = strip_style,
-                       strip.background = strip_background_style,
-                       legend.position = 'none')
-
-    # Apply y-axis scaling
-    y_scale <- NULL
+    plot_nrow <- if (!is.null(nrow)) nrow else ceiling(sqrt(n_predictors))
+    plot_ncol <- ceiling(n_predictors / plot_nrow)
+    
+    # Calculate shared y-axis limits if requested
+    y_limits <- NULL
     if (shared_y_axis_limits) {
-        y_range <- range(allFit_fixef$value)
-        y_abs_max <- max(abs(allFit_fixef$value))
-        y_limits <- c(y_range[1] - y_abs_max / 7 * multiply_y_axis_limits,
-                      y_range[2] + y_abs_max / 7 * multiply_y_axis_limits)
-        y_scale <- ggplot2::scale_y_continuous(limits = y_limits, labels = if (!is.null(accuracy)) scales::label_number(accuracy = accuracy) else ggplot2::waiver())
-    } else if (!is.null(accuracy)) {
-        y_scale <- ggplot2::scale_y_continuous(labels = scales::label_number(accuracy = accuracy))
+        if (point_ranges && "lwr" %in% colnames(allFit_fixef)) {
+            y_limits <- range(c(allFit_fixef$lwr, allFit_fixef$upr), na.rm = TRUE)
+        } else {
+            y_limits <- range(allFit_fixef$estimate, na.rm = TRUE)
+        }
+        # Add some padding
+        y_range <- diff(y_limits)
+        y_limits <- y_limits + c(-0.05 * y_range, 0.05 * y_range)
     }
-
-    if (!is.null(y_scale)) {
-        intercept_plot <- intercept_plot + y_scale
-        predictors_plot <- predictors_plot + y_scale
+    
+    # Set up plotting layout with adjusted margins and spacing
+    old_par <- par(mfrow = c(plot_nrow, plot_ncol), 
+                 mar = c(3, 12, 2, 2),    # Increased right margin for better column spacing
+                 oma = c(0, 0, 0, 0),
+                 mgp = c(2, 0.7, 0))      # Adjust axis label positioning
+    on.exit(par(old_par))
+  
+    # Get additional arguments from ...
+    extra_args <- list(...)
+    
+    # Plot each fixed effect in a separate panel
+    unique_effects <- unique(allFit_fixef$term)
+    for (i in seq_along(unique_effects)) {
+        effect <- unique_effects[i]
+        effect_data <- allFit_fixef[allFit_fixef$term == effect, ]
+        
+        # Calculate position in grid
+        current_row <- ceiling(i / plot_ncol)
+        current_col <- ((i - 1) %% plot_ncol) + 1
+        
+        # Determine if this is the bottom-most plot in its column
+        plots_in_this_col <- seq(current_col, n_predictors, by = plot_ncol)
+        is_bottom_in_col <- i == max(plots_in_this_col)
+        
+        # Determine if this plot should show axis titles
+        show_x_for_this_plot <- show_x_title && (inner_x_title || is_bottom_in_col)
+        show_y_for_this_plot <- show_y_title && (inner_y_title || current_col == 1)
+        
+        # Create y-axis positions for optimizers
+        y_pos <- seq_len(nrow(effect_data))
+        
+        # Prepare default plotting arguments
+        default_args <- list(
+          x = effect_data$estimate,
+          y = y_pos,
+          pch = 16,
+          xlab = if (show_x_for_this_plot) x_title else "",
+          ylab = "",  # Remove ylab from tinyplot, handle separately with mtext
+          main = effect,
+          yaxt = "n"
+        )
+        
+        # Add y-axis limits if shared
+        if (!is.null(y_limits)) {
+            default_args$xlim <- y_limits
+        }
+        
+        # Merge with user arguments, giving precedence to user arguments
+        plot_args <- utils::modifyList(default_args, extra_args)
+        
+        # Create the plot
+        tinyplot_fun <- get("tinyplot", envir = asNamespace("tinyplot"))
+        do.call(tinyplot_fun, plot_args)
+        
+        # Add y-axis labels to all plots by default
+        axis(2, at = y_pos, labels = effect_data$optimizer, las = 1, cex.axis = 0.7, tick = FALSE)
+        
+        # Add y-axis title with proper positioning (only for appropriate plots)
+        if (show_y_for_this_plot && y_title != "") {
+            mtext(y_title, side = 2, line = 11, cex = 0.8)
+        }
+        
+        # Add point ranges if available and requested
+        if (point_ranges && "lwr" %in% colnames(effect_data)) {
+            for (j in seq_len(nrow(effect_data))) {
+                if (!is.na(effect_data$lwr[j]) && !is.na(effect_data$upr[j])) {
+                    segments(x0 = effect_data$lwr[j],
+                            x1 = effect_data$upr[j],
+                            y0 = y_pos[j], 
+                            y1 = y_pos[j])
+                }
+            }
+        }
     }
-
-    # Adjust y-axis title justification
-    if (is.null(y_title_hjust)) {
-        # Automatic adjustment based on number of rows
-        y_title_hjust <- 5 / (predictors_plot_nrow + 1.5)
+    
+    if (plot_nrow > 3) {
+        message("Many rows! Consider distributing predictors into several plots using argument `select_predictors`")
     }
-    predictors_plot <- predictors_plot + ggplot2::theme(axis.title.y = ggplot2::element_text(hjust = y_title_hjust))
-
-    if (predictors_plot_nrow > 5) {
-        message('Many rows! Consider distributing predictors into several plots using argument `select_predictors`')
-    }
-
-    # Define layout based on number of rows
-    intercept_height <- 5.3
-    row_height <- if (!is.null(height)) height / (predictors_plot_nrow + 1.2) else 5
-    predictors_height <- intercept_height + 0.5 + predictors_plot_nrow * row_height
-    layout <- c(
-      patchwork::area(t = 1.5, r = 8.9, b = 1.5 + intercept_height, l = 0),  # intercept row
-      patchwork::area(t = 1.5 + intercept_height + 0.5, r = 9, b = predictors_height, l = 0) # predictors row(s)
-    )
-
-    # Return matrix of plots
-    patchwork::wrap_plots(intercept_plot, predictors_plot, design = layout, nrow = 2)
+    
+    invisible(allFit_fixef)
 }

@@ -11,11 +11,10 @@ allFit(object, meth.tab = NULL, data=NULL,
        ncpus = getOption("allFit.ncpus", 1L), cl = NULL,
        catch.errs = TRUE)
 
-plot.fixef.allFit(allFit_output, shared_y_axis_limits = TRUE,
-                  multiply_y_axis_limits = 1, decimal_points = NULL,
-                  select_predictors = NULL, nrow = NULL,
-                  y_title = "Fixed effect", y_title_hjust = NULL,
-                  number_optimizers = TRUE, height = NULL)
+plot.fixef.allFit(allFit_output, select_predictors = NULL, nrow = NULL,
+                  y_title = "Fixed effect", show_x_title = TRUE, show_intercept = TRUE, point_ranges = TRUE,
+                  conf.level = 0.95, decimal_points = NULL, 
+                  shared_y_axis_limits = TRUE, ...)
 }
 \arguments{
   \item{object}{a fitted model}
@@ -48,15 +47,16 @@ plot.fixef.allFit(allFit_output, shared_y_axis_limits = TRUE,
     to skip over errors? (\code{catch.errs=FALSE} is probably only
     useful for debugging)}
   \item{allFit_output}{An object of class \code{allFit}, typically produced by \code{allFit()}}
-  \item{shared_y_axis_limits}{logical: should all panels have the same y-axis limits?}
-  \item{multiply_y_axis_limits}{numeric: factor to expand y-axis limits (only used when \code{shared_y_axis_limits=TRUE})}
-  \item{decimal_points}{integer: number of decimal points to display on y-axis labels}
   \item{select_predictors}{character vector: names of specific predictors to plot (in addition to intercept)}
   \item{nrow}{integer: number of rows for arranging predictor panels}
-  \item{y_title}{character: title for the y-axis}
-  \item{y_title_hjust}{numeric: horizontal justification for y-axis title}
-  \item{number_optimizers}{logical: should optimizers be numbered in the legend?}
-  \item{height}{numeric: total height for the plot layout}
+  \item{y_title}{character: title for the x-axis (parameter values)}
+  \item{show_x_title}{logical: should the x-axis title be displayed? (default: TRUE)}
+  \item{show_intercept}{logical: should the intercept term be included in the plot? (default: TRUE)}
+  \item{point_ranges}{logical: should confidence intervals be displayed as point ranges?}
+  \item{conf.level}{numeric: confidence level for point ranges (default: 0.95)}
+  \item{decimal_points}{integer: number of decimal points for rounding estimates (default: NULL, no rounding)}
+  \item{shared_y_axis_limits}{logical: should all subplots share the same x-axis limits? (default: TRUE)}
+  \item{...}{additional arguments passed to \code{tinyplot()}}
 }
 \value{
   an object of type \code{allFit}, which is a list of fitted \code{merMod} objects (unless \code{show.meth.tab} is
