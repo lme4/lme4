@@ -339,6 +339,9 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     control <- control$checkControl ## this is all we really need
     mf <- mc <- match.call()
 
+    # save orginal formula before any modifications 
+    original_formula <- mc$formula
+
     dontChk <- c("start", "verbose", "devFunOnly")
     dots <- list(...)
     do.call(checkArgs, c(list("lmer"), dots[!names(dots) %in% dontChk]))
@@ -367,7 +370,16 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     mf <- mf[c(1L, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- quote(stats::model.frame)
-    fr.form <- reformulas::subbars(formula) # substitute "|" by "+"
+
+    # Create model frame formula that handles structured covaraince
+    # Use the fixed formula from splitForm + use subbars on JUST the RE terms
+    split_result <- reformulas::splitForm(original_formula, specials = c("ar1", "cs", "us", "rr", "diag"))
+    all_vars <- all.vars(original_formula) 
+
+    response <- deparse(original_formula[[2]])
+    predictors <- setdiff(all_vars, all.vars(original_formula[[2]]))  # Remove response from variables
+    fr.form <- as.formula(paste(response, "~", paste(predictors, collapse = " + ")))
+
     environment(fr.form) <- environment(formula)
     ## model.frame.default looks for these objects in the environment
     ## of the *formula* (see 'extras', which is anything passed in '...'),
@@ -399,9 +411,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     reTrms$Lambdat <- cov_components$Lambdat
     reTrms$Lind <- cov_components$Lind
     reTrms$theta <- cov_components$theta
-    reTrms$lower <- cov_components$lower
-
-    # end of random effects processing
+    reTrms$lower <- cov_components$lower 
                           
     wmsgNlev <- checkNlevels(reTrms$flist, n=n, control)
     wmsgZdims <- checkZdims(reTrms$Ztlist, n=n, control, allow.n=FALSE)
