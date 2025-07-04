@@ -5,11 +5,11 @@
 #'
 #' @param type A character string for the covariance structure type (e.g., "ar1", "us").
 #' @param add_args_call The language object of the wrapper function call (e.g., quote(ar1(d = 2))).
-#' @param cnms_for_term A character vector of column names for a single random effect term; its length determines the dimension of the covariance structure.
+#' @param cnms A character vector of column names for a single random effect term; its length determines the dimension of the covariance structure.
 #'
 #' @return An S4 object inheriting from `VirtualCovariance`.
 #' @keywords internal
-create_covariance_object_from_term <- function(type, cnms_for_term, add_args_call) {
+create_covariance_object_from_term <- function(type, cnms, add_args_call) {
 
     # Define the lookup table 
     cov_struct_table <- list(
@@ -32,7 +32,7 @@ create_covariance_object_from_term <- function(type, cnms_for_term, add_args_cal
 
     full_class_name <- paste0(variance_prefix, structure_prefix, "Covariance")
 
-    dimension <- length(cnms_for_term)
+    dimension <- length(cnms)
 
 
     return(new(full_class_name, dimension = dimension))
@@ -52,20 +52,26 @@ create_covariance_object_from_term <- function(type, cnms_for_term, add_args_cal
 #'   random effects are found.
 #' @keywords internal
 parse_model_formula <- function(formula, data) {
-     specials_list <- c("ar1", "cs", "us", "rr", "diag")
+    specials_list <- c("ar1", "cs", "us", "diag") 
     split_formula <- reformulas::splitForm(formula, specials = specials_list)
 
     s4_object_list <- list() 
 
     if (!is.null(split_formula$reTrmFormulas)) {
+
+        temp_reTrms <- reformulas::mkReTrms(split_formula$reTrmFormulas, data, calc.lambdat = FALSE)
+
         for (i in seq_along(split_formula$reTrmClasses)) {
-    
-            s4_object_list[[i]] <- create_covariance_object_from_term(
-            type = split_formula$reTrmClasses[i],
-            bar_formula = split_formula$reTrmFormulas[[i]],
-            add_args_call = split_formula$reTrmAddArgs[[i]],
-            data = data # 
-            )
+
+            type <- split_formula$reTrmClasses[i]
+            add_args_call <- split_formula$reTrmAddArgs[[i]]
+            cnms <- temp_reTrms$cnms[[i]]
+
+            s4_object_list[[length(s4_object_list) + 1]] <- create_covariance_object_from_term(
+                    type = type,
+                    cnms = cnms,
+                    add_args_call = add_args_call
+                )    
         }
     }
     return(s4_object_list)
@@ -96,8 +102,7 @@ mkReLambdat <- function(reTrms, s4_object_list) {
 
     for (i in seq_along(s4_object_list)) {
         s4_obj <- s4_object_list[[i]]
-        nl <- reTrms$nl[i] # no. of levels per term
-
+        nl <- reTrms$nl[i] # no. of levels for this term
         L_template <- get_lambda(s4_obj)
         
         # Create a sparse identity matrix of size nl x nl.
@@ -121,8 +126,9 @@ mkReLambdat <- function(reTrms, s4_object_list) {
     Lambdat <- do.call(Matrix::bdiag, lambdat_blocks)
     Lind <- unlist(lind_list)
     
-    if (length(Lambdat@x) != length(Lind)) {
-        stop("Internal error: Mismatch between Lambdat@x and Lind lengths.")
+   if (length(Lambdat@x) != length(Lind)) {
+        stop("Internal error: Mismatch between Lambdat@x length (", 
+             length(Lambdat@x), ") and Lind length (", length(Lind), ")")
     }
 
     # Use the Lind index vector to populate the non-zero elements of the
