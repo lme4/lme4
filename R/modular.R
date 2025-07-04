@@ -385,8 +385,24 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     attr(fr,"formula") <- formula
     attr(fr,"offset") <- mf$offset
     n <- nrow(fr)
-    ## random effects and terms modules
-    reTrms <- reformulas::mkReTrms(reformulas::findbars(RHSForm(formula)), fr)
+    
+    # Random effects processing with structured covariance support 
+    specials_list <- c("ar1", "cs", "us", "diag")
+
+    s4_object_list <- parse_model_formula(formula, fr)
+    split_result <- reformulas::splitForm(formula, specials = specials_list)
+
+    reTrms <- reformulas::mkReTrms(split_result$reTrmFormulas, fr, calc.lambdat = FALSE)
+
+    cov_components <- mkReLambdat(reTrms, s4_object_list)
+
+    reTrms$Lambdat <- cov_components$Lambdat
+    reTrms$Lind <- cov_components$Lind
+    reTrms$theta <- cov_components$theta
+    reTrms$lower <- cov_components$lower
+
+    # end of random effects processing
+                          
     wmsgNlev <- checkNlevels(reTrms$flist, n=n, control)
     wmsgZdims <- checkZdims(reTrms$Ztlist, n=n, control, allow.n=FALSE)
     if (anyNA(reTrms$Zt)) {
