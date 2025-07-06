@@ -85,7 +85,7 @@ setGeneric("get_lambda", function(object) standardGeneric("get_lambda"))
 ##' @rdname InternalCovarianceMethods
 setGeneric("get_lind", function(object) standardGeneric("get_lind"))
 ##' @rdname InternalCovarianceMethods
-setGeneric("build_correlation_matrix", function(object) standardGeneric("build_correlation_matrix"))
+setGeneric("compute_correlation_matrix", function(object) standardGeneric("compute_correlation_matrix"))
 ##' @rdname InternalCovarianceMethods
 setGeneric("compute_lambdat_x", function(object, theta) standardGeneric("compute_lambdat_x"))
 
@@ -571,17 +571,20 @@ setClass("CSCovariance", contains = c("VIRTUAL", "VirtualCovariance", "VirtualSt
 setClass("AR1Covariance", contains = c("VIRTUAL", "VirtualCovariance", "VirtualStructuredCovariance"))
 
 ##' @rdname InternalCovarianceMethods
-setMethod("build_correlation_matrix", "DiagonalCovariance", function(object) Diagonal(object@dimension))
+setMethod("compute_correlation_matrix", "DiagonalCovariance", function(object) {
+          Diagonal(object@dimension)
+})
 ##' @rdname InternalCovarianceMethods
-setMethod("build_correlation_matrix", "CSCovariance", function(object) {
+setMethod("compute_correlation_matrix", "CSCovariance", function(object) {
     d <- object@dimension
     if (d < 2) return(Diagonal(d))
     rho <- tanh(object@cparameters[1])
-    R <- Matrix(rho, nrow = d, ncol = d); diag(R) <- 1
+    R <- Matrix(rho, nrow = d, ncol = d)
+    diag(R) <- 1
     return(R)
 })
 ##' @rdname InternalCovarianceMethods
-setMethod("build_correlation_matrix", "AR1Covariance", function(object) {
+setMethod("compute_correlation_matrix", "AR1Covariance", function(object) {
     d <- object@dimension
     if (d < 2) return(Diagonal(d))
     rho <- tanh(object@cparameters[1])
@@ -589,7 +592,7 @@ setMethod("build_correlation_matrix", "AR1Covariance", function(object) {
     rho^time_diffs
 })
 ##' @rdname InternalCovarianceMethods
-setMethod("build_correlation_matrix", "UnstructuredCovariance", function(object) {
+setMethod("compute_correlation_matrix", "UnstructuredCovariance", function(object) {
     Sigma <- compute_covariance_matrix(object)
     cov2cor(Sigma)
 })
@@ -597,7 +600,7 @@ setMethod("build_correlation_matrix", "UnstructuredCovariance", function(object)
 ##' @rdname CovarianceMethods
 setMethod("compute_covariance_matrix", "VirtualStructuredCovariance", function(object, data_context = NULL) {
     if (object@dimension == 0) return(new("dsyMatrix", Dim = c(0L, 0L)))
-    R <- build_correlation_matrix(object)
+    R <- compute_correlation_matrix(object)
     if (is(object, "HomogeneousVariance")) {
         sigma_sq <- exp(object@vparameters[1])
         return(sigma_sq * R)
@@ -669,7 +672,7 @@ setMethod("compute_log_det_covariance_matrix", "UnstructuredCovariance", functio
 setMethod("compute_log_det_covariance_matrix", "VirtualStructuredCovariance", function(object, data_context = NULL) {
     d <- object@dimension
     if (d == 0) return(0)
-    R <- build_correlation_matrix(object)
+    R <- compute_correlation_matrix(object)
     log_det_R <- as.numeric(determinant(R, logarithm = TRUE)$modulus)
     log_det_V <- if (is(object, "HomogeneousVariance")) {
         d * object@vparameters[1]
@@ -689,7 +692,7 @@ setMethod("compute_inverse_covariance_matrix", "UnstructuredCovariance", functio
 setMethod("compute_inverse_covariance_matrix", "VirtualStructuredCovariance", function(object, data_context = NULL) {
     d <- object@dimension
     if (d == 0) return(new("dsyMatrix", Dim = c(0L, 0L)))
-    inv_R <- solve(build_correlation_matrix(object))
+    inv_R <- solve(compute_correlation_matrix(object))
     if (is(object, "HomogeneousVariance")) {
         inv_sigma_sq <- exp(-object@vparameters[1])
         return(inv_sigma_sq * inv_R)
