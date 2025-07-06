@@ -71,3 +71,14 @@ get_lower_tri_indices <- function(d) {
         j = unlist(lapply(1:d, function(j) rep(j, d - j + 1)))
     )
 }
+
+#' Force Matrix to Symmetric Dense Format
+#' 
+#' Internal helper to convert matrices to dsyMatrix class using modern Matrix package syntax.
+#'
+#' @param x A matrix-like object to convert
+#' @return A dsyMatrix object
+#' @keywords internal
+force_dsyMatrix <- function(x) {
+    as(as(as(x, "dMatrix"), "symmetricMatrix"), "unpackedMatrix")
+}
