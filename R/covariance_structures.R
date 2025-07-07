@@ -664,23 +664,9 @@ setMethod("compute_covariance_matrix", "UnstructuredCovariance", function(object
     d <- object@dimension
     if (d == 0) return(new("dsyMatrix", Dim = c(0L, 0L)))
     
-    L_corr <- get_chol_from_params(object@cparameters, d)
-    
-    if (is(object, "HomogeneousVariance")) {
-        sigma <- exp(0.5 * object@vparameters[1])
-        L <- sigma * L_corr
-    } else {
-        if (length(object@vparameters) > 0) {
-            st_devs <- exp(0.5 * object@vparameters)
-            D <- Diagonal(d, x = st_devs)
-            L <- D %*% L_corr
-        } else {
-            L <- L_corr
-        }
-    }
+    L <- get_chol_from_params(object@cparameters, d)
     
     Sigma <- tcrossprod(L)
-
     force_dsyMatrix(Sigma)
 })
 
@@ -689,74 +675,89 @@ setMethod("compute_covariance_matrix", "UnstructuredCovariance", function(object
 # and then reshape the resulting vector back into a matrix. 
 
 ##' @rdname CovarianceMethods
+##' @rdname CovarianceMethods
 setMethod("get_cholesky_factor", "VirtualCovariance", function(object, data_context = NULL) {
-    chol(compute_covariance_matrix(object, data_context))
+    Sigma <- compute_covariance_matrix(object, data_context)
+    t(chol(Sigma))
 })
 ##' @rdname CovarianceMethods
 setMethod("get_cholesky_factor", "UnstructuredCovariance", function(object, data_context = NULL) {
     d <- object@dimension
-    if (d == 0) return(new("dtrMatrix", Dim = c(0L, 0L)))
+    if (d == 0) return(new("dtrMatrix", Dim = c(0L, 0L))) 
+
+    t(get_chol_from_params(object@cparameters, d))
     
-    L_corr <- get_chol_from_params(object@cparameters, d)
+})
+
+##' @rdname CovarianceMethods
+setMethod("compute_log_det_covariance_matrix", "DiagonalCovariance", function(object, data_context = NULL) {
+    d <- object@dimension
+    if (d == 0) return(0)
     
-    st_devs <- if(is(object, "HomogeneousVariance")) {
-        rep(exp(0.5 * object@vparameters[1]), d)
+    if (is(object, "HomogeneousVariance")) {
+        d * object@vparameters[1]
     } else {
-        exp(0.5 * object@vparameters)
+        sum(object@vparameters)
     }
-    D <- Diagonal(x = st_devs)
-    return(D %*% L_corr)
+})
+
+##' @rdname CovarianceMethods
+setMethod("compute_log_det_covariance_matrix", "CSCovariance", function(object, data_context = NULL) {
+    compute_log_det_structured(object)
+})
+
+##' @rdname CovarianceMethods
+setMethod("compute_log_det_covariance_matrix", "AR1Covariance", function(object, data_context = NULL) {
+    compute_log_det_structured(object)
 })
 
 ##' @rdname CovarianceMethods
 setMethod("compute_log_det_covariance_matrix", "UnstructuredCovariance", function(object, data_context = NULL) {
     d <- object@dimension
     if (d == 0) return(0)
-    
-    diag_indices <- vech_diag_indices(d)
-    log_det_corr <- 2 * sum(object@cparameters[diag_indices])
-    
-    log_det_D2 <- if (is(object, "HomogeneousVariance")) {
-        d * object@vparameters[1]
-    } else {
-        sum(object@vparameters)
-    }
-    return(log_det_D2 + log_det_corr)
+
+    L <- get_cholesky_factor(object)
+    2 * sum(log(diag(L)))
 })
 
 ##' @rdname CovarianceMethods
-setMethod("compute_log_det_covariance_matrix", "VirtualStructuredCovariance", function(object, data_context = NULL) {
+setMethod("compute_inverse_covariance_matrix", "DiagonalCovariance", function(object, data_context = NULL) {
     d <- object@dimension
-    if (d == 0) return(0)
-    R <- compute_correlation_matrix(object)
-    log_det_R <- as.numeric(determinant(R, logarithm = TRUE)$modulus)
-    log_det_V <- if (is(object, "HomogeneousVariance")) {
-        d * object@vparameters[1]
+    if (d == 0) return(new("dsyMatrix", Dim = c(0L, 0L)))
+    
+    if (is(object, "HomogeneousVariance")) {
+        inv_sigma_sq <- exp(-object@vparameters[1])
+        inv_Sigma <- Diagonal(d, x = inv_sigma_sq)
     } else {
-        sum(object@vparameters)
+        inv_variances <- exp(-object@vparameters)
+        inv_Sigma <- Diagonal(d, x = inv_variances)
     }
-    return(log_det_V + log_det_R)
+    
+    # Ensure consistent matrix type
+    force_dsyMatrix(inv_Sigma)
+})
+
+##' @rdname CovarianceMethods
+setMethod("compute_inverse_covariance_matrix", "CSCovariance", function(object, data_context = NULL) {
+    compute_inverse_structured(object)
+})
+
+##' @rdname CovarianceMethods
+setMethod("compute_inverse_covariance_matrix", "AR1Covariance", function(object, data_context = NULL) {
+    compute_inverse_structured(object)
 })
 
 ##' @rdname CovarianceMethods
 setMethod("compute_inverse_covariance_matrix", "UnstructuredCovariance", function(object, data_context = NULL) {
-    L <- get_cholesky_factor(object)
-    inv_L <- solve(L)
-    crossprod(inv_L)
-})
-##' @rdname CovarianceMethods
-setMethod("compute_inverse_covariance_matrix", "VirtualStructuredCovariance", function(object, data_context = NULL) {
     d <- object@dimension
     if (d == 0) return(new("dsyMatrix", Dim = c(0L, 0L)))
-    inv_R <- solve(compute_correlation_matrix(object))
-    if (is(object, "HomogeneousVariance")) {
-        inv_sigma_sq <- exp(-object@vparameters[1])
-        return(inv_sigma_sq * inv_R)
-    } else {
-        inv_st_devs <- exp(-0.5 * object@vparameters)
-        inv_D <- Diagonal(d, x = inv_st_devs)
-        return(inv_D %*% inv_R %*% inv_D)
-    }
+    
+    # inv(Sigma) = inv(L * L') = crossprod(solve(L))
+    L <- get_cholesky_factor(object)
+    inv_L <- solve(L)
+    inv_Sigma <- crossprod(inv_L)
+    
+    force_dsyMatrix(inv_Sigma)
 })
 
 
