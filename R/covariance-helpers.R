@@ -137,3 +137,45 @@ compute_inverse_structured <- function(object) {
     
     force_dsyMatrix(inv_Sigma)
 }
+
+# Helper Functions for CS and AR1 Covariance Structures
+
+##' Get Start Values for Structured Covariance Models
+##' 
+##' @description Helper function to generate start values for CS and AR1 covariance structures.
+##' @param object A covariance structure object (CS or AR1).
+##' @return Numeric vector of start values: variance parameters (1.0) followed by 
+##'   correlation parameter (0.0) if dimension > 1.
+##' @keywords internal
+get_structured_start_values <- function(object) {
+    d <- object@dimension
+    n_v_params <- if (is(object, "HomogeneousVariance")) 1L else d
+    v_starts <- rep(1.0, n_v_params)
+    
+    if (d > 1) {
+        c_starts <- 0.0
+        return(c(v_starts, c_starts))
+    } else {
+        return(v_starts)
+    }
+}
+
+##' Get Lower Bounds for Structured Covariance Models
+##' 
+##' @description Helper function to generate parameter bounds for CS and AR1 covariance structures.
+##' @param object A covariance structure object (CS or AR1).
+##' @return Numeric vector of lower bounds: variance bounds (0) followed by 
+##'   correlation bound (-Inf) if dimension > 1.
+##' @keywords internal
+get_structured_lower_bounds <- function(object) {
+    d <- object@dimension
+    n_v_params <- if (is(object, "HomogeneousVariance")) 1L else d
+    v_low <- rep(0, n_v_params)  # Variance bounds (log scale)
+    
+    if (d > 1) {
+        c_low <- -Inf  # Correlation bound (atanh scale)
+        return(c(v_low, c_low))
+    } else {
+        return(v_low)
+    }
+}
