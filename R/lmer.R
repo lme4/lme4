@@ -64,7 +64,8 @@ lmer <- function(formula, data=NULL, REML = TRUE,
            }
     cc <- checkConv(attr(opt,"derivs"), opt$par,
                     ctrl = control$checkConv,
-                    lbound = environment(devfun)$lower)
+                    lbound = environment(devfun)$lower,
+                    nobs = nrow(lmod$fr))
     mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr,
              mc = mcout, lme4conv=cc) ## prepare output
 }## { lmer }
