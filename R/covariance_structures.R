@@ -35,7 +35,7 @@ setClass("VirtualCovariance",
 ##' - `get_interpretable_parameters()`: Get a list of human-readable parameters
 ##'   (e.g., standard deviations and correlations).
 ##' - `compute_covariance_matrix()`: Compute the final covariance matrix.
-##' - `get_cholesky_factor()`: Compute the Cholesky factor of the covariance matrix.
+##' - `compute_cholesky_factor()`: Compute the Cholesky factor of the covariance matrix.
 ##' - `compute_inverse_covariance_matrix()`: Compute the inverse of the
 ##'   covariance matrix.
 ##' - `compute_log_det_covariance_matrix()`: Compute the log-determinant of the
@@ -59,7 +59,7 @@ setGeneric("get_interpretable_parameters", function(object) standardGeneric("get
 setGeneric("compute_covariance_matrix", function(object, data_context = NULL) standardGeneric("compute_covariance_matrix"))
 ##' @rdname CovarianceMethods
 ##' @export
-setGeneric("get_cholesky_factor", function(object, data_context = NULL) standardGeneric("get_cholesky_factor"))
+setGeneric("compute_cholesky_factor", function(object, data_context = NULL) standardGeneric("compute_cholesky_factor"))
 ##' @rdname CovarianceMethods
 ##' @export
 setGeneric("compute_inverse_covariance_matrix", function(object, data_context = NULL) standardGeneric("compute_inverse_covariance_matrix"))
@@ -110,20 +110,24 @@ NULL
 setClass("HomogeneousVariance", contains = c("VIRTUAL", "VirtualCovariance"))
 ##' @rdname VirtualComponentClasses
 setClass("HeterogeneousVariance", contains = c("VIRTUAL", "VirtualCovariance"))
-##' @rdname VirtualComponentClasses
-setClass("UnstructuredCovariance", contains = c("VIRTUAL", "VirtualCovariance"))
+
 ##' @rdname VirtualComponentClasses
 setClass("DiagonalCovariance", contains = c("VIRTUAL", "VirtualCovariance"))
+setValidity("DiagonalCovariance", function(object) {
+    if (length(object@cparameters) == 0L) TRUE else "Diagonal models must have 0 cparameters."
+})
 
+##' @title Concrete Class for Unstructured Covariance
+##' @description Defines the Unstructured structure, which uses all elements
+##'   of the lower triangle as free parameters.
+##' @keywords internal
+setClass("UnstructuredCovariance", contains = "VirtualCovariance")
 setValidity("UnstructuredCovariance", function(object) {
     d <- object@dimension
     expected_len <- d * (d + 1) / 2
     if (length(object@cparameters) == expected_len) TRUE else "Incorrect number of cparameters for Unstructured."
 })
 
-setValidity("DiagonalCovariance", function(object) {
-    if (length(object@cparameters) == 0L) TRUE else "Diagonal models must have 0 cparameters."
-})
 
 ##' @title Virtual Class for Compound Symmetry (CS) Covariance
 ##' @description Defines the CS structure, which uses 2 `cparameters` for the
@@ -156,13 +160,12 @@ setValidity("AR1Covariance", function(object) {
 ##' @export HeterogeneousCSCovariance
 ##' @export HomogeneousAR1Covariance
 ##' @export HeterogeneousAR1Covariance
-##' @export HomogeneousUnstructuredCovariance
-##' @export HeterogeneousUnstructuredCovariance
+##' @export UnstructuredCovariance
 NULL
 
 # Create the Concrete Classes
 for (variance_type in c("Homogeneous", "Heterogeneous")) {
-    for (structure_type in c("Unstructured", "Diagonal", "CS", "AR1")) {
+    for (structure_type in c("Diagonal", "CS", "AR1")) {
         setClass(
             paste0(variance_type, structure_type, "Covariance"),
             contains = c(
@@ -463,18 +466,8 @@ setMethod("compute_lambdat_x", "DiagonalCovariance", function(object, theta) {
 setMethod("compute_lambdat_x", "UnstructuredCovariance", function(object, theta) {
     d <- object@dimension
     if (d == 0) return(numeric(0))
-    n_v_params <- if (is(object, "HomogeneousVariance")) 1L else d
-    c_params <- theta[-(1:n_v_params)]
-    L_corr <- get_chol_from_params(c_params, d)
     
-    v_params <- theta[1:n_v_params]
-    st_devs <- if(is(object, "HomogeneousVariance")) {
-        rep(exp(0.5 * v_params[1]), d)
-    } else {
-        exp(0.5 * v_params)
-    }
-    D <- Diagonal(x = st_devs)
-    L <- D %*% L_corr
+    L <- get_chol_from_params(theta, d)
     return(L[lower.tri(L, diag = TRUE)])
 })
 
@@ -573,9 +566,9 @@ setClass("AR1Covariance", contains = c("VIRTUAL", "VirtualCovariance", "VirtualS
 ##' @rdname InternalCovarianceMethods
 setMethod("compute_correlation_matrix", "DiagonalCovariance", function(object) {
     d <- object@dimension 
-    R <- Diagonal(D)
+    R <- Diagonal(d)
 
-    force_dsyMatrix(D)
+    force_dsyMatrix(R)
 })
 ##' @rdname InternalCovarianceMethods
 setMethod("compute_correlation_matrix", "CSCovariance", function(object) {
@@ -670,22 +663,17 @@ setMethod("compute_covariance_matrix", "UnstructuredCovariance", function(object
     force_dsyMatrix(Sigma)
 })
 
-# There is some redundancy between compute_lambdat_x and get_cholesky_factor.
-# I should rewrite get_cholesky_factor to call in the internal compute_lambdat_x 
-# and then reshape the resulting vector back into a matrix. 
-
 ##' @rdname CovarianceMethods
-##' @rdname CovarianceMethods
-setMethod("get_cholesky_factor", "VirtualCovariance", function(object, data_context = NULL) {
+setMethod("compute_cholesky_factor", "VirtualCovariance", function(object, data_context = NULL) {
     Sigma <- compute_covariance_matrix(object, data_context)
     t(chol(Sigma))
 })
 ##' @rdname CovarianceMethods
-setMethod("get_cholesky_factor", "UnstructuredCovariance", function(object, data_context = NULL) {
+setMethod("compute_cholesky_factor", "UnstructuredCovariance", function(object, data_context = NULL) {
     d <- object@dimension
     if (d == 0) return(new("dtrMatrix", Dim = c(0L, 0L))) 
 
-    t(get_chol_from_params(object@cparameters, d))
+    get_chol_from_params(object@cparameters, d)
     
 })
 
@@ -716,7 +704,7 @@ setMethod("compute_log_det_covariance_matrix", "UnstructuredCovariance", functio
     d <- object@dimension
     if (d == 0) return(0)
 
-    L <- get_cholesky_factor(object)
+    L <- compute_cholesky_factor(object)
     2 * sum(log(diag(L)))
 })
 
@@ -753,7 +741,7 @@ setMethod("compute_inverse_covariance_matrix", "UnstructuredCovariance", functio
     if (d == 0) return(new("dsyMatrix", Dim = c(0L, 0L)))
     
     # inv(Sigma) = inv(L * L') = crossprod(solve(L))
-    L <- get_cholesky_factor(object)
+    L <- compute_cholesky_factor(object)
     inv_L <- solve(L)
     inv_Sigma <- crossprod(inv_L)
     
