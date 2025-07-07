@@ -72,25 +72,25 @@ get_lower_tri_indices <- function(d) {
     )
 }
 
-#' Force Matrix to Symmetric Dense Format
-#' 
-#' Internal helper to convert matrices to dsyMatrix class using modern Matrix package syntax.
-#'
-#' @param x A matrix-like object to convert
-#' @return A dsyMatrix object
-#' @keywords internal
+##' Force Matrix to Symmetric Dense Format
+##' 
+##' Internal helper to convert matrices to dsyMatrix class using modern Matrix package syntax.
+##'
+##' @param x A matrix-like object to convert
+##' @return A dsyMatrix object
+##' @keywords internal
 force_dsyMatrix <- function(x) {
     as(as(as(x, "dMatrix"), "symmetricMatrix"), "unpackedMatrix")
 }
 
-# Helper function for log determinant computation of structured covariance matrices
-#
-# Computes log determinant using decomposition: log(det(D*R*D)) = log(det(D²)) + log(det(R))
-# where D is variance scaling and R is correlation matrix.
-#
-# @param object A structured covariance object
-# @return Numeric log determinant value
-# @keywords internal
+##' Helper function for log determinant computation of structured covariance matrices
+##'
+##' Computes log determinant using decomposition: log(det(D*R*D)) = log(det(D²)) + log(det(R))
+##' where D is variance scaling and R is correlation matrix.
+##'
+##' @param object A structured covariance object
+##' @return Numeric log determinant value
+##' @keywords internal
 compute_log_det_structured <- function(object) {
     d <- object@dimension
     if (d == 0) return(0)
@@ -107,4 +107,33 @@ compute_log_det_structured <- function(object) {
     }
     
     return(log_det_V + log_det_R)
+}
+
+##' Helper function for inverse computation of structured covariance matrices
+##'
+##' Computes inverse using decomposition: inv(D*R*D) = inv(D)*inv(R)*inv(D)
+##' where D is variance scaling and R is correlation matrix.
+##'
+##' @param object A structured covariance object
+##' @return Inverse covariance matrix as dsyMatrix
+##' @keywords internal
+compute_inverse_structured <- function(object) {
+    d <- object@dimension
+    if (d == 0) return(new("dsyMatrix", Dim = c(0L, 0L)))
+    
+    R <- compute_correlation_matrix(object)
+    inv_R <- solve(R)
+    
+    if (is(object, "HomogeneousVariance")) {
+        # inv(sigma^2 * R) = (1/sigma^2) * inv(R)
+        inv_sigma_sq <- exp(-object@vparameters[1])
+        inv_Sigma <- inv_sigma_sq * inv_R
+    } else {
+        # inv(D * R * D) = inv(D) * inv(R) * inv(D)
+        inv_st_devs <- exp(-0.5 * object@vparameters)
+        inv_D <- Diagonal(d, x = inv_st_devs)
+        inv_Sigma <- inv_D %*% inv_R %*% inv_D
+    }
+    
+    force_dsyMatrix(inv_Sigma)
 }
