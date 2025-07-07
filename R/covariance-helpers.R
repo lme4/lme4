@@ -82,3 +82,29 @@ get_lower_tri_indices <- function(d) {
 force_dsyMatrix <- function(x) {
     as(as(as(x, "dMatrix"), "symmetricMatrix"), "unpackedMatrix")
 }
+
+# Helper function for log determinant computation of structured covariance matrices
+#
+# Computes log determinant using decomposition: log(det(D*R*D)) = log(det(D²)) + log(det(R))
+# where D is variance scaling and R is correlation matrix.
+#
+# @param object A structured covariance object
+# @return Numeric log determinant value
+# @keywords internal
+compute_log_det_structured <- function(object) {
+    d <- object@dimension
+    if (d == 0) return(0)
+    
+    R <- compute_correlation_matrix(object)
+    log_det_R <- as.numeric(Matrix::determinant(R, logarithm = TRUE)$modulus)
+    
+    log_det_V <- if (is(object, "HomogeneousVariance")) {
+        # All variances equal: log(det(sigma^2 * I)) = d * log(sigma^2)
+        d * object@vparameters[1]
+    } else {
+        # Individual variances: log(det(D^2)) = sum(log(variances))
+        sum(object@vparameters)
+    }
+    
+    return(log_det_V + log_det_R)
+}
