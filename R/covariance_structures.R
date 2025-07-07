@@ -16,6 +16,13 @@ setClass("VirtualCovariance",
         cparameters = "numeric"
     )
 )
+##' @rdname VirtualComponentClasses
+setValidity("VirtualCovariance", function(object) {
+    if (object@dimension < 1L) {
+        return("Covariance dimension must be at least 1 (cannot have zero random effects)")
+    }
+    TRUE
+})
 
 ##' @name CovarianceMethods
 ##' @title Public S4 Methods for Covariance Objects
