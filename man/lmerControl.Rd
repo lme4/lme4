@@ -41,6 +41,7 @@ lmerControl(optimizer = "nloptwrap",% was "Nelder_Mead" till Dec.2013,
                      "message+rescale","warn+rescale","ignore"),
     check.formula.LHS = "stop",
     ## convergence checking options
+    check.conv.nobsmax  = 1e4,
     check.conv.grad     = .makeCC("warning", tol = 2e-3, relTol = NULL),
     check.conv.singular = .makeCC(action = "message", tol = formals(isSingular)$tol),
     check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
@@ -68,6 +69,7 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
                      "message+rescale","warn+rescale","ignore"),
     check.formula.LHS = "stop",
     ## convergence checking options
+    check.conv.nobsmax  = 1e4, 
     check.conv.grad     = .makeCC("warning", tol = 2e-3, relTol = NULL),
     check.conv.singular = .makeCC(action = "message", tol = formals(isSingular)$tol),
     check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
@@ -189,6 +191,8 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     than (or greater than or equal to) the number of random-effects
     levels for each term, usually necessary for identifiable variances.
     As for \code{check.nobs.vs.nlev}.}
+  \item{check.conv.nobsmax}{threshold for the number of observations 
+    above which convergence checks are skipped.}
   \item{check.conv.grad}{rules for checking the gradient of the deviance
     function for convergence.  A list as returned
     by \code{.makeCC}, or a character string with only the action.}
