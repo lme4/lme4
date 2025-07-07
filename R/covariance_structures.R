@@ -231,9 +231,8 @@ setMethod("n_parameters", "DiagonalCovariance", function(object) {
 ##' @rdname CovarianceMethods
 setMethod("n_parameters", "CSCovariance", function(object) {
     d <- object@dimension
-    if (d == 0) return(0L)
     n_v_params <- if (is(object, "HomogeneousVariance")) 1L else d
-    n_c_params <- if (d > 0) 1L else 0L
+    n_c_params <- if (d > 1) 1L else 0L
     as.integer(n_v_params + n_c_params)
 })
 
@@ -267,89 +266,62 @@ setMethod("set_parameters", "VirtualCovariance", function(object, value) {
 
 ##' @rdname CovarianceMethods
 setMethod("get_start_values", "UnstructuredCovariance", function(object) {
-    num_params <- n_parameters(object)
+    d <- object@dimension
+    num_params <- d * (d + 1) / 2
     start_vals <- numeric(num_params)
-
-    if (object@dimension > 0) {
-        diag_indices <- vech_diag_indices(object@dimension)
-        start_vals[diag_indices] <- 1.0
-    }
-
+    
+    diag_indices <- vech_diag_indices(d)
+    start_vals[diag_indices] <- 1.0
+    
     return(start_vals)
 })
 
 ##' @rdname CovarianceMethods
 setMethod("get_start_values", "DiagonalCovariance", function(object) {
     num_params <- n_parameters(object)
-    rep(1.0, num_params) # All params are variance related. 
+    rep(1.0, num_params) 
 })
 
 ##' @rdname CovarianceMethods
 setMethod("get_start_values", "CSCovariance", function(object) {
-    num_params <- n_parameters(object)
-    if (num_params == 0) return(numeric(0))
-
-    n_v_params <- if (is(object, "HomogeneousVariance")) 1L else object@dimension
-    v_starts <- rep(1.0, n_v_params)
-    c_starts <- if(num_params > n_v_params) 0.0 else numeric(0)
-    
-    c(v_starts, c_starts)
+    get_structured_start_values(object)
 })
 
 ##' @rdname CovarianceMethods
 setMethod("get_start_values", "AR1Covariance", function(object) {
-    num_params <- n_parameters(object)
-    if (num_params == 0) return(numeric(0))
-
-    n_v_params <- if (is(object, "HomogeneousVariance")) 1L else object@dimension 
-    v_starts <- rep(1.0, n_v_params)
-    c_starts <- if(num_params > n_v_params) 0.0 else numeric(0)
-
-    c(v_starts, c_starts)
+    get_structured_start_values(object)
 })
 
 ##' @rdname InternalCovarianceMethods
 setMethod("get_lower_bounds", "UnstructuredCovariance", function(object) {
-    num_params <- n_parameters(object)
+    d <- object@dimension
+    
+    num_params <- d * (d + 1) / 2
     lower_bounds <- rep(-Inf, num_params)
     
-    if (object@dimension > 0) {
-        diag_indices <- vech_diag_indices(object@dimension)
-        lower_bounds[diag_indices] <- 0
-    }
+    diag_indices <- vech_diag_indices(d)
+    lower_bounds[diag_indices] <- 0
     
     return(lower_bounds)
 })
 
-##' @rdname InternalCovarianceMethods
 setMethod("get_lower_bounds", "DiagonalCovariance", function(object) {
-    num_params <- n_parameters(object)
-
-    rep(0, num_params)
+    d <- object@dimension
+    if (is(object, "HomogeneousVariance")) {
+        return(0) 
+    } else {
+        return(rep(0, d))
+    }
 })
 
-##' @rdname CovarianceMethods
+##' @rdname InternalCovarianceMethods
 setMethod("get_lower_bounds", "CSCovariance", function(object) {
-    num_params <- n_parameters(object)
-    if (num_params == 0) return(numeric(0))
-
-    n_v_params <- if (is(object, "HomogeneousVariance")) 1L else object@dimension
-    v_low <- rep(0, n_v_params)
-    c_low <- if(num_params > n_v_params) -Inf else numeric(0)
-    
-    c(v_low, c_low)
+    get_structured_lower_bounds(object)
 })
 
 ##' @rdname InternalCovarianceMethods
 setMethod("get_lower_bounds", "AR1Covariance", function(object) {
-    num_params <- n_parameters(object)
-    if (num_params == 0) return(numeric(0))
-
-    n_v_params <- if (is(object, "HomogeneousVariance")) 1L else object@dimension
-    v_low <- rep(0, n_v_params)
-    c_low <- if(num_params > n_v_params) -Inf else numeric(0)
-
-    c(v_low, c_low)
+    get_structured_lower_bounds(object)
 })
 
 
