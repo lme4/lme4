@@ -155,6 +155,8 @@ checkHess <- function(H, tol, hesstype="") {
                 gettextf(paste("Model failed to converge:",
                                "degenerate",hesstype,"Hessian with %d negative eigenvalues"),
                          negative)
+            res$messages <- paste0(res$messages, "\n  Additional convergence checks can lead to false positives.", 
+                   "\n  See: ?lme4::convergence and ?lme4::troubleshooting.")
         } else {
             zero <- sum(abs(evd) < tol)
             if(zero || inherits(tryCatch(chol(H), error=function(e)e), "error")) {
