@@ -340,7 +340,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     mf <- mc <- match.call()
 
     # save orginal formula before any modifications 
-    original_formula <- mc$formula
+    formula <- as.formula(formula, env=denv)    # Convert to standard form
+    original_formula <- formula                 # Save BEFORE subbars() destroys it
 
     dontChk <- c("start", "verbose", "devFunOnly")
     dots <- list(...)
@@ -373,7 +374,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 
     # Create model frame formula that handles structured covaraince
     # Use the fixed formula from splitForm + use subbars on JUST the RE terms
-    split_result <- reformulas::splitForm(original_formula, specials = c("ar1", "cs", "us", "rr", "diag"))
+    split_result <- reformulas::splitForm(original_formula, specials = c("ar1", "cs", "us", "dcov"))
     all_vars <- all.vars(original_formula) 
 
     response <- deparse(original_formula[[2]])
@@ -399,7 +400,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     n <- nrow(fr)
     
     # Random effects processing with structured covariance support 
-    specials_list <- c("ar1", "cs", "us", "diag")
+    specials_list <- c("ar1", "cs", "us", "dcov")
 
     s4_object_list <- parse_model_formula(formula, fr)
     split_result <- reformulas::splitForm(formula, specials = specials_list)

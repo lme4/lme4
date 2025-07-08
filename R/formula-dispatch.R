@@ -15,7 +15,7 @@ create_covariance_object_from_term <- function(type, cnms, add_args_call) {
     cov_struct_table <- list(
         cs = list(prefix = "CS"), 
         ar1 = list(prefix = "AR1"), 
-        diag = list(prefix = "Diagonal"), 
+        dcov = list(prefix = "Diagonal"), 
         us = list(prefix = "Unstructured")
     )  
     
@@ -56,7 +56,8 @@ create_covariance_object_from_term <- function(type, cnms, add_args_call) {
 #'   random effects are found.
 #' @keywords internal
 parse_model_formula <- function(formula, data) {
-    specials_list <- c("ar1", "cs", "us", "diag") 
+    specials_list <- c("ar1", "cs", "us", "dcov") 
+
     split_formula <- reformulas::splitForm(formula, specials = specials_list)
 
     s4_object_list <- list() 

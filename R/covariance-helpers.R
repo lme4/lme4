@@ -11,10 +11,11 @@
 ##' @return A numeric vector of integer indices for the diagonal elements.
 ##' @keywords internal
 vech_diag_indices <- function(d) {
-	if (d == 0) return(integer(0))
-	if (d == 1) return(1L)
-	1L + c(0, cumsum(d:2))
+    if (d == 0) return(integer(0))
+    if (d == 1) return(1L)
+    1L + c(0, cumsum(d:2))
 }
+
 
 ##' @title Get Vech Indices
 ##'
@@ -25,7 +26,6 @@ vech_diag_indices <- function(d) {
 ##' @return A list with components 'i' (row indices) and 'j' (column indices).
 ##' @keywords internal
 get_vech_indices <- function(d) {
-	if (d == 0) return(list(i = integer(0), j = integer(0)))
 	if (d == 1) return(list(i = 1L, j = 1L))
 	list(
 		i = unlist(lapply(1:d, function(j) j:d)),
@@ -43,7 +43,6 @@ get_vech_indices <- function(d) {
 ##' @return A `dtrMatrix` object representing the Cholesky factor `L`.
 ##' @keywords internal
 get_chol_from_params <- function(param_vec, d) {
-	if (d == 0) return(new("dtrMatrix", uplo = "L", Dim = c(0L, 0L)))
 
 	L_vec <- param_vec
 	diag_indices <- vech_diag_indices(d)
@@ -65,7 +64,6 @@ get_chol_from_params <- function(param_vec, d) {
 ##'   and `j` (column indices).
 ##' @keywords internal
 get_lower_tri_indices <- function(d) {
-    if (d == 0) return(list(i = integer(0), j = integer(0)))
     list(
         i = unlist(lapply(1:d, function(j) j:d)),
         j = unlist(lapply(1:d, function(j) rep(j, d - j + 1)))
@@ -93,8 +91,7 @@ force_dsyMatrix <- function(x) {
 ##' @keywords internal
 compute_log_det_structured <- function(object) {
     d <- object@dimension
-    if (d == 0) return(0)
-    
+      
     R <- compute_correlation_matrix(object)
     log_det_R <- as.numeric(Matrix::determinant(R, logarithm = TRUE)$modulus)
     
@@ -119,7 +116,6 @@ compute_log_det_structured <- function(object) {
 ##' @keywords internal
 compute_inverse_structured <- function(object) {
     d <- object@dimension
-    if (d == 0) return(new("dsyMatrix", Dim = c(0L, 0L)))
     
     R <- compute_correlation_matrix(object)
     inv_R <- solve(R)
