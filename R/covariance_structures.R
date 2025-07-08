@@ -694,7 +694,7 @@ setMethod("compute_log_det_covariance_matrix", "UnstructuredCovariance", functio
     if (d == 0) return(0)
 
     L <- compute_cholesky_factor(object)
-    2 * sum(log(diag(L)))
+    2 * sum(log(base::diag(L)))
 })
 
 ##' @rdname CovarianceMethods
@@ -742,7 +742,7 @@ setMethod("compute_inverse_covariance_matrix", "UnstructuredCovariance", functio
 ##' @rdname CovarianceMethods
 setMethod("get_interpretable_parameters", "UnstructuredCovariance", function(object) {
     Sigma <- compute_covariance_matrix(object)
-    st_devs <- sqrt(diag(Sigma))
+    st_devs <- sqrt(diag(as.matrix(Sigma)))
     cor_matrix <- cov2cor(Sigma)
     
     params <- list(st_devs = st_devs, correlation = cor_matrix)
