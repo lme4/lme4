@@ -15,9 +15,7 @@
       x
     }
 
-    # We define our own `diag` to prevent a name collision with the base R
-    # `diag()` function during formula evaluation. Our version will be found
-    # first and will correctly handle the formula syntax.
-    diag <- function(x) {
+ dcov <- function(x) {
       x
     }
+ 
