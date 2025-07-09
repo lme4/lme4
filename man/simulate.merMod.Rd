@@ -100,11 +100,12 @@
 
     }
     \item{For Gaussian fits, \code{sigma} specifies the residual
-      standard deviation; for Gamma fits, it specifies the shape
-      parameter (the rate parameter for each observation i
-      is calculated as shape/mean(i)).  For negative binomial fits,
-      the overdispersion parameter is specified via the family,
-      e.g. \code{simulate(..., family=negative.binomial(theta=1.5))}.
+      standard deviation; for Gamma fits, it specifies the square 
+      root of the dispersion parameter. The shape
+      parameter can be calculated by \code{1//sigma(fitted_model)^2}.  
+      For negative binomial fits, the overdispersion parameter is 
+      specified via the family, e.g. 
+      \code{simulate(..., family=negative.binomial(theta=1.5))}.
     }
     \item{For binomial models, \code{simulate.formula} looks for the
       binomial size first in the \code{weights} argument (if it's supplied),
