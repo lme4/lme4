@@ -518,13 +518,23 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
              tolPwrss=rho$tolPwrss)
     ## TODO:  improve this hack to get something in frame slot (maybe need weights, etc...)
     if(missing(fr)) fr <- data.frame(resp$y)
-    new(switch(rcl, lmerResp = "lmerMod", glmResp = "glmerMod", nlsResp = "nlmerMod"),
+
+   ans <- new(switch(rcl, lmerResp = "lmerMod", glmResp = "glmerMod", nlsResp = "nlmerMod"),
         call=mc, frame=fr, flist=reTrms$flist, cnms=reTrms$cnms,
         Gp=reTrms$Gp, theta=pp$theta, beta=beta,
         u=if (trivial.y) rep(NA_real_,nrow(pp$Zt)) else pp$u(fac),
         lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims),
         pp=pp, resp=resp,
         optinfo = .optinfo(opt, lme4conv))
+
+## Transfer structure information from reTrms to final model object
+if (!is.null(attr(reTrms, "cov_structures"))) {
+    attr(ans, "cov_structures") <- attr(reTrms, "cov_structures")
+    attr(ans, "structure_types") <- attr(reTrms, "structure_types")
+    attr(ans, "param_sizes") <- attr(reTrms, "param_sizes")
+}
+
+ans
 }## {mkMerMod}
 
 ## generic argument checking
