@@ -91,9 +91,9 @@ setGeneric("is_diagonal", function(object) standardGeneric("is_diagonal"))
 setGeneric("get_lambda", function(object) standardGeneric("get_lambda"))
 ##' @rdname InternalCovarianceMethods
 setGeneric("get_lind", function(object) standardGeneric("get_lind"))
-##' @rdname Internal CovarianceMethods
+##' @rdname InternalCovarianceMethods
 setGeneric("needs_parameter_expansion", function(object) standardGeneric("needs_parameter_expansion"))
-##' @rdname Internal CovarianceMethods 
+##' @rdname InternalCovarianceMethods 
 setGeneric("expand_parameters_for_optimization", function(object, theta_subset) standardGeneric("expand_parameters_for_optimization"))
 ##' @rdname InternalCovarianceMethods
 setGeneric("compute_correlation_matrix", function(object) standardGeneric("compute_correlation_matrix"))
@@ -103,7 +103,12 @@ setGeneric("compute_lambdat_x", function(object, theta) standardGeneric("compute
 setGeneric("mkVarCorr_for_structure", function(object, theta_block, sc, term_cnms) standardGeneric("mkVarCorr_for_structure"))
 ##' @rdname InternalCovarianceMethods
 setGeneric("get_structure_block_code", function(object) standardGeneric("get_structure_block_code"))
-
+##' @rdname InternalCovarianceMethods 
+setGeneric("n_extended_parameters", function(object) standardGeneric("n_extended_parameters"))
+##' @rdname InternalCovarianceMethods
+setGeneric("get_structure_type", function(object) standardGeneric("get_structure_type"))
+##' @rdname InternalCovarianceMethods
+setGeneric("get_reporting_theta_slice", function(object, theta_slice) standardGeneric("get_reporting_theta_slice"))
 
 # SECTION 2: COMPONENT CLASS HIERARCHY & VALIDITY
 
@@ -222,6 +227,33 @@ setMethod("initialize", "VirtualCovariance",
 
     do.call(callNextMethod, c(list(.Object), args))
 })
+
+#' @rdname CovarianceMethods
+setMethod("get_structure_type", "UnstructuredCovariance", function(object) "us")
+
+##' @rdname CovarianceMethods
+setMethod("get_structure_type", "HomogeneousAR1Covariance",
+          function(object) "ar1")
+
+##' @rdname CovarianceMethods
+setMethod("get_structure_type", "HeterogeneousAR1Covariance",
+          function(object) "ar1")
+
+##' @rdname CovarianceMethods
+setMethod("get_structure_type", "HomogeneousCSCovariance",
+          function(object) "cs")
+
+##' @rdname CovarianceMethods
+setMethod("get_structure_type", "HeterogeneousCSCovariance",
+          function(object) "cs")
+
+##' @rdname CovarianceMethods
+setMethod("get_structure_type", "HomogeneousDiagonalCovariance",
+          function(object) "dcov")
+
+##' @rdname CovarianceMethods
+setMethod("get_structure_type", "HeterogeneousDiagonalCovariance",
+          function(object) "dcov")
 
 # The number of parameters for a given covariance structure is defined as the number
 # of unique, estimated values needed to define its cholesky factor Lambda. 
@@ -908,56 +940,90 @@ setMethod("show", "VirtualCovariance", function(object) {
  
 # SECTION 7: VarCorr METHODS
 
-#' @rdname mkVarCorr_for_structure
+##' @rdname InternalCovarianceMethods
 setMethod("mkVarCorr_for_structure", "VirtualCovariance", function(object, theta_block, sc, term_cnms) {
     
-        object <- set_parameters(object, theta_block)
+    object <- set_parameters(object, theta_block)
         
-        cov_matrix <- compute_covariance_matrix(object)
-        cor_matrix <- compute_correlation_matrix(object)
+    cov_matrix <- compute_covariance_matrix(object)
+    cor_matrix <- compute_correlation_matrix(object)
         
-        # Scale by residual standard deviation 
-        scaled_cov_matrix <- cov_matrix
+    # Scale by residual standard deviation 
+    scaled_cov_matrix <- cov_matrix
         
-        stddev <- sqrt(diag(scaled_cov_matrix))
+    stddev <- sqrt(diag(scaled_cov_matrix))
         
-        dimnames(scaled_cov_matrix) <- list(term_cnms, term_cnms)
-        dimnames(cor_matrix) <- list(term_cnms, term_cnms)
-        names(stddev) <- term_cnms
+    dimnames(scaled_cov_matrix) <- list(term_cnms, term_cnms)
+    dimnames(cor_matrix) <- list(term_cnms, term_cnms)
+    names(stddev) <- term_cnms
         
-        structure(scaled_cov_matrix, 
-                  stddev = stddev, 
-                  correlation = as.matrix(cor_matrix),
-                  blockCode = get_structure_block_code(object))
+    structure(scaled_cov_matrix, 
+        stddev = stddev, 
+        correlation = as.matrix(cor_matrix),
+        blockCode = get_structure_block_code(object))
 })
 
-#' @rdname get_structure_block_code  
-setMethod("get_structure_block_code", "UnstructuredCovariance",
-          function(object) {
-              c(us = 1)
-          })
+##' @rdname InternalCovarianceMethods
+ setMethod("get_structure_block_code", "UnstructuredCovariance", function(object) {
+    c(us = 1)
+})
 
-#' @rdname get_structure_block_code
-setMethod("get_structure_block_code", "CSCovariance", 
-          function(object) {
-              c(cs = 2)
-          })
+##' @rdname InternalCovarianceMethods
+setMethod("get_structure_block_code", "CSCovariance", function(object) {
+    c(cs = 2)
+})
 
-#' @rdname get_structure_block_code
-setMethod("get_structure_block_code", "AR1Covariance",
-          function(object) {
-              c(ar1 = 3)
-          })
+##' @rdname InternalCovarianceMethods
+setMethod("get_structure_block_code", "AR1Covariance", function(object) {
+    c(ar1 = 3)
+})
 
-#' @rdname get_structure_block_code
-setMethod("get_structure_block_code", "DiagonalCovariance",
-          function(object) {
-              c(diag = 0)
-          })
+##' @rdname InternalCovarianceMethods
+setMethod("get_structure_block_code", "DiagonalCovariance", function(object) {
+    c(diag = 0)
+})
 
-#' @rdname get_structure_block_code
-setMethod("get_structure_block_code", "VirtualCovariance",
-          function(object) {
-              # Fallback for unknown structure types
-              c(unknown = 999)
-          })
+##' @rdname InternalCovarianceMethods
+setMethod("get_structure_block_code", "VirtualCovariance", function(object) {
+    c(unknown = 999)
+})
+
+##' @rdname InternalCovarianceMethods
+setMethod("n_extended_parameters", "VirtualCovariance", function(object) {
+    n_parameters(object)
+})
+
+##' @rdname InternalCovarianceMethods
+setMethod("n_extended_parameters", "HomogeneousAR1Covariance", function(object) {
+    # AR1 uses extended theta: base + additional rho^k terms
+    base_params <- 2L  # sigma, rho
+    additional_rho_powers <- max(0L, object@dimension - 2L)
+    base_params + additional_rho_powers
+})
+
+##' @rdname CovarianceMethods
+setMethod("n_extended_parameters", "HeterogeneousAR1Covariance", function(object) {
+    # Heterogeneous AR1: d sigmas + 1 rho + additional rho^k terms
+    base_params <- object@dimension + 1L
+    additional_rho_powers <- max(0L, object@dimension - 2L)
+    base_params + additional_rho_powers
+})
+
+##' @rdname InternalCovarianceMethods  
+setMethod("get_reporting_theta_slice", "VirtualCovariance", function(object, theta_slice) {
+    # Default: no truncation needed
+    theta_slice
+})
+
+##' @rdname InternalCovarianceMethods
+setMethod("get_reporting_theta_slice", "HomogeneousAR1Covariance", function(object, theta_slice) {
+    # AR1: keep only first 2 parameters (sigma, rho)
+    theta_slice[1:2]
+})
+
+##' @rdname InternalCovarianceMethods  
+setMethod("get_reporting_theta_slice", "HeterogeneousAR1Covariance", function(object, theta_slice) {
+    # Heterogeneous AR1: keep d sigmas + 1 rho
+    n_base <- object@dimension + 1L
+    theta_slice[1:n_base]
+})

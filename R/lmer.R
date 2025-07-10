@@ -2255,6 +2255,57 @@ vcov.summary.merMod <- function(object, ...) {
     object$vcov
 }
 
+##' Truncate Extended Theta for Reporting
+##'
+##' Converts extended theta parameters used for model fitting to base parameters
+##' suitable for reporting in VarCorr output. AR1 structures use extended theta
+##' containing powers of rho (rho, rho^2, ...) for optimization, but only report
+##' base parameters (sigma, rho) to users. Can be used for other structures by 
+##' creating an S4 method.
+##'
+##' @param theta_extended Numeric vector of extended theta parameters from model fitting
+##' @param structures List of covariance structure objects
+##' @return List with components:
+##'   \item{theta}{Truncated theta vector with only base parameters}
+##'   \item{structure_info}{Updated structure information with corrected parameter sizes}
+##' @keywords internal
+truncate_theta <- function(theta_extended, structures) {
+    
+    if (is.null(structures) || length(structures) == 0) {
+        return(list(
+            theta = theta_extended,
+            structure_info = NULL
+        ))
+    }
+    
+    theta_truncated <- numeric(0)
+    param_sizes_truncated <- numeric(length(structures))
+    param_idx <- 1
+    
+    for (i in seq_along(structures)) {
+        structure <- structures[[i]]
+        
+        extended_params <- n_extended_parameters(structure)
+        reporting_params <- n_parameters(structure)
+        
+        theta_slice <- theta_extended[param_idx:(param_idx + extended_params - 1)]
+        reporting_slice <- get_reporting_theta_slice(structure, theta_slice)
+        
+        theta_truncated <- c(theta_truncated, reporting_slice)
+        param_sizes_truncated[i] <- reporting_params
+        param_idx <- param_idx + extended_params
+    }
+    
+    # Create structure info using clean method dispatch
+    structure_info <- create_structure_info_clean(structures, param_sizes_truncated)
+    
+    return(list(
+        theta = theta_truncated,
+        structure_info = structure_info
+    ))
+}
+
+
 ##' Make variance and correlation matrices from \code{theta}
 ##'
 ##' @param sc scale factor (residual standard deviation)
@@ -2366,27 +2417,31 @@ VarCorr.merMod <- function(x, sigma = 1, ...) {
  
     if (is.null(cnms <- x@cnms))
         stop("VarCorr methods require reTrms, not just reModule")
-
     if(missing(sigma))
         sigma <- sigma(x)
+    
+    structure_info <- extract_structure_info(x) 
 
-    # Extract structure information
-    structure_info <- extract_structure_info(x)
-
-    # Get required components
+    if (!is.null(structure_info)) {
+        truncated_result <- truncate_theta(x@theta, structure_info$structures)
+        theta_for_reporting <- truncated_result$theta
+        structure_info <- truncated_result$structure_info
+    } else {
+        theta_for_reporting <- x@theta
+    }
+    
     nc <- lengths(cnms)  # number of columns per term
     fl <- x@flist
     nms <- names(fl)[attr(fl, "assign")]
-
+    
     result <- mkVarCorr(
         sc = sigma,
         cnms = cnms,
         nc = nc, 
-        theta = x@theta,
+        theta = theta_for_reporting,  
         nms = nms,
         structure_info = structure_info
     )
-
     structure(result,
               useSc = as.logical(x@devcomp$dims[["useSc"]]),
               class = "VarCorr.merMod")
