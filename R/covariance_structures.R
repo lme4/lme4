@@ -917,7 +917,7 @@ setMethod("mkVarCorr_for_structure", "VirtualCovariance", function(object, theta
         cor_matrix <- compute_correlation_matrix(object)
         
         # Scale by residual standard deviation 
-        scaled_cov_matrix <- sc^2 * cov_matrix
+        scaled_cov_matrix <- cov_matrix
         
         stddev <- sqrt(diag(scaled_cov_matrix))
         
