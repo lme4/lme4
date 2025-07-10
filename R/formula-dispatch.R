@@ -226,4 +226,35 @@ extract_structure_info <- function(merMod) {
         n_terms = length(cov_structures)
     ))
 }
+
+
+##' Integrate Structure Information into lFormula
+##'
+##' This function should be called from lFormula to store structure information
+##' when covariance structures are detected in the formula.
+##'
+##' @param formula Model formula
+##' @param data Data frame
+##' @param reTrms Existing reTrms object from mkReTrms
+##' @return Modified reTrms object with structure information
+##' @keywords internal
+integrate_structures_into_reTrms <- function(formula, data, reTrms) {
     
+    # Parse formula for covariance structures using existing S4 infrastructure
+    tryCatch({
+        s4_object_list <- parse_model_formula(formula, data)
+        
+        if (length(s4_object_list) > 0) {
+            # Store structure information in reTrms
+            reTrms <- store_structure_info(reTrms, s4_object_list)
+        }
+        
+        return(reTrms)
+        
+    }, error = function(e) {
+        # If structure parsing fails, continue without structures (backward compatibility)
+        warning("Failed to parse covariance structures: ", e$message, 
+                ". Continuing with traditional unstructured covariance.")
+        return(reTrms)
+    })
+}

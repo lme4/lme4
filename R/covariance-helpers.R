@@ -203,3 +203,26 @@ get_vech_distance_mapping <- function(d) {
     
     return(mapping)
 }
+
+##' Check if merMod Object Has Structured Covariance
+##'
+##' Utility function to determine if a fitted merMod object contains
+##' structured covariance information.
+##'
+##' @param x A merMod object
+##' @return Logical indicating presence of structure information
+##' @export
+has_structured_covariance <- function(x) {
+    !is.null(attr(x, "cov_structures"))
+}
+
+##' Get Structure Types from merMod Object
+##'
+##' Utility function to extract the covariance structure types used in a model.
+##'
+##' @param x A merMod object  
+##' @return Character vector of structure types, or NULL if unstructured
+##' @export
+get_structure_types <- function(x) {
+    attr(x, "structure_types")
+}

@@ -406,6 +406,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     split_result <- reformulas::splitForm(formula, specials = specials_list)
 
     reTrms <- reformulas::mkReTrms(split_result$reTrmFormulas, fr, calc.lambdat = FALSE)
+    reTrms <- integrate_structures_into_reTrms(formula, fr, reTrms)
 
     cov_components <- mkReLambdat(reTrms, s4_object_list)
 

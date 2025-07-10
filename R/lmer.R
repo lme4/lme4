@@ -2362,19 +2362,36 @@ split_theta_by_structure <- function(theta, param_sizes) {
 
 ##' Extract variance and correlation components
 ##'
-VarCorr.merMod <- function(x, sigma = 1, ...)
-{
-  ## TODO: now that we have '...', add  type=c("varcov","sdcorr","logs" ?
+VarCorr.merMod <- function(x, sigma = 1, ...) {
+ 
     if (is.null(cnms <- x@cnms))
         stop("VarCorr methods require reTrms, not just reModule")
+
     if(missing(sigma))
         sigma <- sigma(x)
-    nc <- lengths(cnms) # no. of columns per term
-    structure(mkVarCorr(sigma, cnms = cnms, nc = nc, theta = x@theta,
-                        nms = { fl <- x@flist; names(fl)[attr(fl, "assign")]}),
+
+    # Extract structure information
+    structure_info <- extract_structure_info(x)
+
+    # Get required components
+    nc <- lengths(cnms)  # number of columns per term
+    fl <- x@flist
+    nms <- names(fl)[attr(fl, "assign")]
+
+    result <- mkVarCorr(
+        sc = sigma,
+        cnms = cnms,
+        nc = nc, 
+        theta = x@theta,
+        nms = nms,
+        structure_info = structure_info
+    )
+
+    structure(result,
               useSc = as.logical(x@devcomp$dims[["useSc"]]),
               class = "VarCorr.merMod")
 }
+
 
 if(FALSE)## *NOWHERE* used _FIXME_ ??
 ## Compute standard errors of fixed effects from an merMod object
