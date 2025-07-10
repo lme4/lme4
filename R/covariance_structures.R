@@ -91,6 +91,10 @@ setGeneric("is_diagonal", function(object) standardGeneric("is_diagonal"))
 setGeneric("get_lambda", function(object) standardGeneric("get_lambda"))
 ##' @rdname InternalCovarianceMethods
 setGeneric("get_lind", function(object) standardGeneric("get_lind"))
+##' @rdname Internal CovarianceMethods
+setGeneric("needs_parameter_expansion", function(object) standardGeneric("needs_parameter_expansion"))
+##' @rdname Internal CovarianceMethods 
+setGeneric("expand_parameters_for_optimization", function(object, theta_subset) standardGeneric("expand_parameters_for_optimization"))
 ##' @rdname InternalCovarianceMethods
 setGeneric("compute_correlation_matrix", function(object) standardGeneric("compute_correlation_matrix"))
 ##' @rdname InternalCovarianceMethods
@@ -450,6 +454,59 @@ setMethod("get_lind", "HeterogeneousAR1Covariance", function(object) {
     res[diag_indices] <- seq_len(n_v_params) 
     res[-diag_indices] <- n_v_params + 1L    
     return(res)
+})
+
+##' @rdname InternalCovarianceMethods
+setMethod("needs_parameter_expansion", "VirtualCovariance", function(object) {
+    FALSE
+})
+
+##' @rdname InternalCovarianceMethods
+setMethod("needs_parameter_expansion", "HomogeneousAR1Covariance", function(object) {
+    TRUE
+})
+
+##' @rdname InternalCovarianceMethods
+setMethod("needs_parameter_expansion", "HeterogeneousAR1Covariance", function(object) {
+    TRUE
+})
+
+##' @rdname InternalCovarianceMethods
+setMethod("expand_parameters_for_optimization", "VirtualCovariance", function(object, theta_subset) {
+    list(theta = theta_subset, lind_adjustment = NULL)
+})
+
+##' @rdname InternalCovarianceMethods
+setMethod("expand_parameters_for_optimization", "HomogeneousAR1Covariance", function(object, theta_subset) {
+    d <- object@dimension
+    sigma_param <- theta_subset[1]   # log(σ) - standard deviation parameter
+    rho_param <- theta_subset[2]     # atanh(ρ) - base correlation parameter
+    
+    # Convert to actual correlation value
+    rho <- tanh(rho_param)
+    
+    # Get distance mapping
+    distance_map <- get_vech_distance_mapping(d)
+    unique_distances <- unique(sapply(distance_map, function(x) x$distance))
+    max_distance <- max(unique_distances[unique_distances > 0])
+    
+    # Build expanded theta: [log(σ), atanh(ρ¹), atanh(ρ²), ...]
+    expanded_theta <- c(sigma_param)  # Keep variance parameter as-is
+    for (dist in 1:max_distance) {
+        # Transform correlation by distance: ρ^dist, then back to atanh scale
+        rho_dist <- rho^dist
+        expanded_theta <- c(expanded_theta, atanh(rho_dist))
+    }
+    
+    # Build Lind mapping using distance info
+    expanded_lind <- sapply(distance_map, function(pos_info) {
+        pos_info$param_index
+    })
+        
+    list(
+        expanded_theta = expanded_theta,
+        expanded_lind = as.integer(expanded_lind)
+    )
 })
 
 ##' @rdname InternalCovarianceMethods

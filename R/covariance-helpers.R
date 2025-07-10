@@ -175,3 +175,23 @@ get_structured_lower_bounds <- function(object) {
         return(v_low)
     }
 }
+##' Get 
+get_vech_distance_mapping <- function(d) {
+    # For dimension d, create mapping from vech position to matrix distance
+    mapping <- list()
+    vech_pos <- 1
+    
+    for (j in 1:d) {        # column
+        for (i in j:d) {    # row (lower triangle)
+            distance <- abs(i - j)
+            mapping[[vech_pos]] <- list(
+                matrix_pos = c(i, j),
+                distance = distance,
+                param_index = if (distance == 0) 1 else (1 + distance)  # 1=variance, 2+=correlations
+            )
+            vech_pos <- vech_pos + 1
+        }
+    }
+    
+    return(mapping)
+}
