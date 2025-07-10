@@ -339,7 +339,9 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     control <- control$checkControl ## this is all we really need
     mf <- mc <- match.call()
 
-    # save orginal formula before any modifications 
+    # save orginal formula before any modifications
+    denv <- checkFormulaData(formula, data,
+                             checkLHS = control$check.formula.LHS == "stop")
     formula <- as.formula(formula, env=denv)    # Convert to standard form
     original_formula <- formula                 # Save BEFORE subbars() destroys it
 
@@ -355,8 +357,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 
     cstr <- "check.formula.LHS"
     checkCtrlLevels(cstr,control[[cstr]])
-    denv <- checkFormulaData(formula, data,
-                             checkLHS = control$check.formula.LHS == "stop")
+
     #mc$formula <- formula <- as.formula(formula,env=denv) ## substitute evaluated call
     formula <- as.formula(formula, env=denv)
     ## as.formula ONLY sets environment if not already explicitly set.
