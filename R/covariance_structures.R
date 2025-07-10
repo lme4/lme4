@@ -99,6 +99,10 @@ setGeneric("expand_parameters_for_optimization", function(object, theta_subset) 
 setGeneric("compute_correlation_matrix", function(object) standardGeneric("compute_correlation_matrix"))
 ##' @rdname InternalCovarianceMethods
 setGeneric("compute_lambdat_x", function(object, theta) standardGeneric("compute_lambdat_x"))
+##' @rdname InternalCovarianceMethods
+setGeneric("mkVarCorr_for_structure", function(object, theta_block, sc, term_cnms) standardGeneric("mkVarCorr_for_structure"))
+##' @rdname InternalCovarianceMethods
+setGeneric("get_structure_block_code", function(object) standardGeneric("get_structure_block_code"))
 
 
 # SECTION 2: COMPONENT CLASS HIERARCHY & VALIDITY
@@ -479,26 +483,23 @@ setMethod("expand_parameters_for_optimization", "VirtualCovariance", function(ob
 ##' @rdname InternalCovarianceMethods
 setMethod("expand_parameters_for_optimization", "HomogeneousAR1Covariance", function(object, theta_subset) {
     d <- object@dimension
-    sigma_param <- theta_subset[1]   # log(σ) - standard deviation parameter
-    rho_param <- theta_subset[2]     # atanh(ρ) - base correlation parameter
+    sigma_param <- theta_subset[1]   # log(sigma)
+    rho_param <- theta_subset[2]     # atanh(rho) 
     
-    # Convert to actual correlation value
-    rho <- tanh(rho_param)
+    rho <- tanh(rho_param) # rho
     
-    # Get distance mapping
+    # Get distance from diagonal to element 
     distance_map <- get_vech_distance_mapping(d)
     unique_distances <- unique(sapply(distance_map, function(x) x$distance))
     max_distance <- max(unique_distances[unique_distances > 0])
     
-    # Build expanded theta: [log(σ), atanh(ρ¹), atanh(ρ²), ...]
-    expanded_theta <- c(sigma_param)  # Keep variance parameter as-is
+    # Build expanded theta: [log(sigma), atanh(rho^1), atanh(rho^2), ...]
+    expanded_theta <- c(sigma_param)  
     for (dist in 1:max_distance) {
-        # Transform correlation by distance: ρ^dist, then back to atanh scale
         rho_dist <- rho^dist
         expanded_theta <- c(expanded_theta, atanh(rho_dist))
     }
     
-    # Build Lind mapping using distance info
     expanded_lind <- sapply(distance_map, function(pos_info) {
         pos_info$param_index
     })
@@ -508,6 +509,41 @@ setMethod("expand_parameters_for_optimization", "HomogeneousAR1Covariance", func
         expanded_lind = as.integer(expanded_lind)
     )
 })
+
+##' @rdname InternalCovarianceMethods
+setMethod("expand_parameters_for_optimization", "HeterogeneousAR1Covariance", function(object, theta_subset) {
+    d <- object@dimension
+
+    sigma_params <- theta_subset[1:d]    # log(sigma_1), log(sigma_2), ..., log(sigma_d)
+    rho_param <- theta_subset[d + 1]     # atanh(rho)
+
+    rho <- tanh(rho_param)
+
+    distance_map <- get_vech_distance_mapping(d)
+    unique_distances <- unique(sapply(distance_map, function(x) x$distance))
+    max_distance <- max(unique_distances[unique_distances > 0])
+
+    expanded_theta <- sigma_params
+    for (dist in 1:max_distance) {
+        rho_dist <- rho^dist
+        expanded_theta <- c(expanded_theta, atanh(rho_dist))
+    }
+
+        # variances map to positions 1:d, correlations map to (d+1), (d+2), ...
+    expanded_lind <- sapply(distance_map, function(pos_info) {
+        if (pos_info$distance == 0) {
+                pos_info$matrix_pos[1] 
+        } else {
+             d + pos_info$distance
+        }
+    })
+    
+    list(
+        expanded_theta = expanded_theta,
+        expanded_lind = as.integer(expanded_lind)
+    )
+})
+    
 
 ##' @rdname InternalCovarianceMethods
 setMethod("compute_lambdat_x", "DiagonalCovariance", function(object, theta) {
@@ -869,4 +905,59 @@ setMethod("show", "VirtualCovariance", function(object) {
         }
     }, silent = TRUE)
 })
+ 
+# SECTION 7: VarCorr METHODS
 
+#' @rdname mkVarCorr_for_structure
+setMethod("mkVarCorr_for_structure", "VirtualCovariance", function(object, theta_block, sc, term_cnms) {
+    
+        object <- set_parameters(object, theta_block)
+        
+        cov_matrix <- compute_covariance_matrix(object)
+        cor_matrix <- compute_correlation_matrix(object)
+        
+        # Scale by residual standard deviation 
+        scaled_cov_matrix <- sc^2 * cov_matrix
+        
+        stddev <- sqrt(diag(scaled_cov_matrix))
+        
+        dimnames(scaled_cov_matrix) <- list(term_cnms, term_cnms)
+        dimnames(cor_matrix) <- list(term_cnms, term_cnms)
+        names(stddev) <- term_cnms
+        
+        structure(scaled_cov_matrix, 
+                  stddev = stddev, 
+                  correlation = as.matrix(cor_matrix),
+                  blockCode = get_structure_block_code(object))
+})
+
+#' @rdname get_structure_block_code  
+setMethod("get_structure_block_code", "UnstructuredCovariance",
+          function(object) {
+              c(us = 1)
+          })
+
+#' @rdname get_structure_block_code
+setMethod("get_structure_block_code", "CSCovariance", 
+          function(object) {
+              c(cs = 2)
+          })
+
+#' @rdname get_structure_block_code
+setMethod("get_structure_block_code", "AR1Covariance",
+          function(object) {
+              c(ar1 = 3)
+          })
+
+#' @rdname get_structure_block_code
+setMethod("get_structure_block_code", "DiagonalCovariance",
+          function(object) {
+              c(diag = 0)
+          })
+
+#' @rdname get_structure_block_code
+setMethod("get_structure_block_code", "VirtualCovariance",
+          function(object) {
+              # Fallback for unknown structure types
+              c(unknown = 999)
+          })

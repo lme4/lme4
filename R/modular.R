@@ -413,7 +413,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     reTrms$Lind <- cov_components$Lind
     reTrms$theta <- cov_components$theta
     reTrms$lower <- cov_components$lower 
-                          
+    
     wmsgNlev <- checkNlevels(reTrms$flist, n=n, control)
     wmsgZdims <- checkZdims(reTrms$Ztlist, n=n, control, allow.n=FALSE)
     if (anyNA(reTrms$Zt)) {

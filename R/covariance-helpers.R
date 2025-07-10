@@ -175,7 +175,15 @@ get_structured_lower_bounds <- function(object) {
         return(v_low)
     }
 }
-##' Get 
+
+##' Create vech position to matrix distance mapping for structured covariance
+##'
+##' Maps vectorized half positions to matrix coordinates and distances for 
+##' distance-based covariance structures like AR1.
+##'
+##' @param d Matrix dimension
+##' @return List mapping vech positions to matrix coordinates, distances, and parameter indices
+##' @keywords internal
 get_vech_distance_mapping <- function(d) {
     # For dimension d, create mapping from vech position to matrix distance
     mapping <- list()

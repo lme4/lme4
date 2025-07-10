@@ -2262,41 +2262,103 @@ vcov.summary.merMod <- function(object, ...) {
 ##' @param nc numeric vector: number of terms in each RE component
 ##' @param theta theta vector (lower-triangle of Cholesky factors)
 ##' @param nms component names (FIXME: nms/cnms redundant: nms=names(cnms)?)
+##' @param structure_info List containing structure information (from extract_structure_info), 
+##'   or NULL for traditional unstructured models
 ##' @seealso \code{\link{VarCorr}}
 ##' @return A matrix
 ##' @export
-mkVarCorr <- function(sc, cnms, nc, theta, nms) {
-    ncseq <- seq_along(nc)
-    thl <- split(theta, rep.int(ncseq, (nc * (nc + 1))/2))
-    if(!all(nms == names(cnms))) ## the above FIXME
-        warning("nms != names(cnms)  -- whereas lme4-authors thought they were --\n",
-                "Please report!", immediate. = TRUE)
-    ans <- lapply(ncseq, function(i)
-              {
-                  ## Li := \Lambda_i, the i-th block diagonal of \Lambda(\theta)
-                  Li <- diag(nrow = nc[i])
-                  Li[lower.tri(Li, diag = TRUE)] <- thl[[i]]
-                  rownames(Li) <- cnms[[i]]
-                  ## val := \Sigma_i = \sigma^2 \Lambda_i \Lambda_i', the
-                  val <- tcrossprod(sc * Li) # variance-covariance
-                  stddev <- sqrt(diag(val))
-                  corr <- t(val / stddev)/stddev
-                  diag(corr) <- 1
-                  structure(val, stddev = stddev, correlation = corr)
-              })
-    if(is.character(nms)) {
-        ## FIXME: do we want this?  Maybe not.
-        ## Potential problem: the names of the elements of the VarCorr() list
-        ##  are not necessarily unique (e.g. fm2 from example("lmer") has *two*
-        ##  Subject terms, so the names are "Subject", "Subject".  The print method
-        ##  for VarCorrs handles this just fine, but it's a little awkward if we
-        ##  want to dig out elements of the VarCorr list ... ???
-        if (anyDuplicated(nms))
-            nms <- make.names(nms, unique = TRUE)
-        names(ans) <- nms
-    }
+mkVarCorr <- function(sc, cnms, nc, theta, nms, structure_info = NULL) {
+
+    if(is.null(structure_info)) {
+        ncseq <- seq_along(nc)
+        thl <- split(theta, rep.int(ncseq, (nc * (nc + 1))/2))
+        if(!all(nms == names(cnms))) ## the above FIXME
+            warning("nms != names(cnms)  -- whereas lme4-authors thought they were --\n",
+                    "Please report!", immediate. = TRUE)
+        ans <- lapply(ncseq, function(i)
+                  {
+                      ## Li := \Lambda_i, the i-th block diagonal of \Lambda(\theta)
+                      Li <- diag(nrow = nc[i])
+                      Li[lower.tri(Li, diag = TRUE)] <- thl[[i]]
+                      rownames(Li) <- cnms[[i]]
+                      ## val := \Sigma_i = \sigma^2 \Lambda_i \Lambda_i', the
+                      val <- tcrossprod(sc * Li) # variance-covariance
+                      stddev <- sqrt(diag(val))
+                      corr <- t(val / stddev)/stddev
+                      diag(corr) <- 1
+                      structure(val, stddev = stddev, correlation = corr)
+                  })
+        if(is.character(nms)) {
+            ## FIXME: do we want this?  Maybe not.
+            ## Potential problem: the names of the elements of the VarCorr() list
+            ##  are not necessarily unique (e.g. fm2 from example("lmer") has *two*
+            ##  Subject terms, so the names are "Subject", "Subject".  The print method
+            ##  for VarCorrs handles this just fine, but it's a little awkward if we
+            ##  want to dig out elements of the VarCorr list ... ???
+            if (anyDuplicated(nms))
+                nms <- make.names(nms, unique = TRUE)
+            names(ans) <- nms
+        }
+        structure(ans, sc = sc)
+    
+    } else {
+        # This path is structure aware of S4 Covariance structures (!= us)
+
+        ncseq <- seq_along(nc)
+
+        param_sizes <- structure_info$param_sizes 
+        theta_splits <- split_theta_by_structure(theta, param_sizes)
+        
+        # Process each random effects term with its structure
+        ans <- lapply(ncseq, function(i) {
+            structure_obj <- structure_info$structures[[i]]
+            theta_block <- theta_splits[[i]]
+            term_cnms <- cnms[[i]]
+
+            # S4 method dispatch for structure specifc matrix construction
+            mkVarCorr_for_structure(structure_obj, theta_block, sc, term_cnms)
+        })
+
+        # Set names
+         if (is.character(nms)) {
+            if (anyDuplicated(nms))
+                nms <- make.names(nms, unique = TRUE)
+            names(ans) <- nms
+        }
+        
+    } 
     structure(ans, sc = sc)
 }
+
+##' Split theta Vector by Structure Parameter Sizes
+##'
+##' Helper function to partition the theta vector according to the parameter
+##' requirements of each covariance structure.
+##'
+##' @param theta Full theta parameter vector
+##' @param param_sizes Vector of parameter counts for each structure
+##' @return List of theta subvectors, one for each structure
+##' @keywords internal
+split_theta_by_structure <- function(theta, param_sizes) {
+    
+    if (sum(param_sizes) != length(theta)) {
+        stop("Parameter size mismatch: expected ", sum(param_sizes), 
+             " parameters, got ", length(theta))
+    }
+    
+    # Create cumulative indices for splitting
+    cumsum_sizes <- cumsum(c(0, param_sizes))
+    
+    # Split theta into blocks
+    theta_blocks <- lapply(seq_along(param_sizes), function(i) {
+        start_idx <- cumsum_sizes[i] + 1
+        end_idx <- cumsum_sizes[i + 1]
+        theta[start_idx:end_idx]
+    })
+    
+    return(theta_blocks)
+}
+
 
 ##' Extract variance and correlation components
 ##'

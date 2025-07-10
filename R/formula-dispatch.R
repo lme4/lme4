@@ -143,7 +143,6 @@ mkReLambdat <- function(reTrms, s4_object_list) {
             expanded_lind <- get_lind(s4_obj)
         }
         
-        # Add to lind_list with corrected offset
         if (length(expanded_lind) > 0) {
             lind_list[[i]] <- rep(expanded_lind, times = nl) + thoff[i]
         } else {
@@ -171,3 +170,60 @@ mkReLambdat <- function(reTrms, s4_object_list) {
         lower = lower
     )
 }
+
+#' Store Covariance Structure Information in reTrms
+#' 
+#' This function attaches S4 covariance structure object to reTrms as 
+#' attribute, following glmmTMB pattern of storing structure metadata. 
+#'
+#' @param reTrms The reTrms object from mkReTrms
+#' @param s4_object_list  of S4 covariance objects from parse_model_formula
+#' @return Modifed reTrms object with structure information attached 
+#' @keywords internal
+store_structure_info <- function(reTrms, s4_object_list) {
+
+     attr(reTrms, "cov_structures") <- s4_object_list
+
+    structure_types <- sapply(s4_object_list, function(obj) {
+        if (is(obj, "UnstructuredCovariance")) "us"
+        else if (is(obj, "CSCovariance")) "cs" 
+        else if (is(obj, "AR1Covariance")) "ar1"
+        else if (is(obj, "DiagonalCovariance")) "dcov"
+        else "unknown"
+    })
+
+    attr(reTrms, "structure_types") <- structure_types
+
+    param_sizes <- sapply(s4_object_list, function(obj) {
+        n_parameters(obj)
+    })
+    attr(reTrms, "param_sizes") <- param_sizes
+
+    return(reTrms)
+}
+
+#' Extract Structure Information from merMod Object
+#'
+#' Helper function to retrieve stored structure information from a fitted merMod object.
+#'
+#' @param merMod A fitted merMod object
+#' @return List containing structure objects, types, and parameter information
+#' @keywords internal
+extract_structure_info <- function(merMod) {
+    
+    cov_structures <- attr(merMod, "cov_structures")
+    structure_types <- attr(merMod, "structure_types") 
+    param_sizes <- attr(merMod, "param_sizes")
+    
+    if (is.null(cov_structures)) {
+         return(NULL)
+    }
+    
+    return(list(
+        structures = cov_structures,
+        types = structure_types,
+        param_sizes = param_sizes,
+        n_terms = length(cov_structures)
+    ))
+}
+    
