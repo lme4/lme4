@@ -408,17 +408,18 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 
     reTrms <- reformulas::mkReTrms(split_result$reTrmFormulas, fr, calc.lambdat = FALSE)
     
-    if (length(s4_object_list) > 0) {
-    reTrms <- store_structure_info(reTrms, s4_object_list)
-    }
-    
-    cov_components <- mkReLambdat(reTrms, s4_object_list)
-
-    reTrms$Lambdat <- cov_components$Lambdat
-    reTrms$Lind <- cov_components$Lind
-    reTrms$theta <- cov_components$theta
-    reTrms$lower <- cov_components$lower 
-    
+  if (length(s4_object_list) > 0) {
+        # Structured covariance path
+        reTrms <- store_structure_info(reTrms, s4_object_list)
+        cov_components <- mkReLambdat(reTrms, s4_object_list)
+        reTrms$Lambdat <- cov_components$Lambdat
+        reTrms$Lind <- cov_components$Lind
+        reTrms$theta <- cov_components$theta
+        reTrms$lower <- cov_components$lower
+    } else {
+        # Standard lme4 path - set calc.lambdat = TRUE to let lme4 handle it
+        reTrms <- reformulas::mkReTrms(split_result$reTrmFormulas, fr, calc.lambdat = TRUE)
+    }   
     wmsgNlev <- checkNlevels(reTrms$flist, n=n, control)
     wmsgZdims <- checkZdims(reTrms$Ztlist, n=n, control, allow.n=FALSE)
     if (anyNA(reTrms$Zt)) {

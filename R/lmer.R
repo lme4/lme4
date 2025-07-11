@@ -1965,14 +1965,14 @@ mkPfun <- function(diag.only = FALSE, old = TRUE, prefix = NULL){
     })
 }
 
-##' Construct names of individual theta/sd:cor components
-##'
-##' @param object a fitted model
-##' @param diag.only include only diagonal elements?
-##' @param old (logical) give backward-compatible results?
-##' @param prefix a character vector with two elements giving the prefix
-##' for diagonal (e.g. "sd") and off-diagonal (e.g. "cor") elements
-tnames <- function(object) {
+# Backwards compatible original implementation of tnames for us 
+tnames.default <- function(object, diag.only = FALSE, old = TRUE, prefix = NULL) {
+    pfun <- mkPfun(diag.only=diag.only, old=old, prefix=prefix)
+    c(unlist(mapply(pfun, names(object@cnms), object@cnms)))
+}
+
+# tnames for Structured Covariance Matrices  
+tnames.structured <- function(object) {
     structure_info <- extract_structure_info(object)
     param_names <- character(0)
     
@@ -1986,6 +1986,15 @@ tnames <- function(object) {
     }
     
     return(param_names)
+}
+
+# tnames to check whether to use backwards compatible or structured version
+tnames <- function(object, diag.only = FALSE, old = TRUE, prefix = NULL) {
+    if (has_structured_covariance(object)) {
+        return(tnames.structured(object))
+    } else {
+        return(tnames.default(object, diag.only, old, prefix))
+    }
 }
 
 ## -> ../man/getME.Rd

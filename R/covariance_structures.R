@@ -1080,7 +1080,6 @@ setMethod("generate_theta_names", "HeterogeneousDiagonalCovariance",
 ##' @rdname InternalCovarianceMethods
 setMethod("generate_theta_names", "UnstructuredCovariance",
          function(object, group_name, cnms) {
-             # Use standard lme4 naming for unstructured
              mm <- outer(cnms, cnms, paste, sep = ".")
              diag(mm) <- cnms
              mm <- mm[lower.tri(mm, diag = TRUE)]

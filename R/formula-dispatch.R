@@ -56,22 +56,31 @@ create_covariance_object_from_term <- function(type, cnms, add_args_call) {
 #'   random effects are found.
 #' @keywords internal
 parse_model_formula <- function(formula, data) {
-    specials_list <- c("ar1", "cs", "us", "dcov") 
-
+    specials_list <- c("ar1", "cs", "dcov")  # No "us" 
     split_formula <- reformulas::splitForm(formula, specials = specials_list)
-
     s4_object_list <- list() 
-
+    
     if (!is.null(split_formula$reTrmFormulas)) {
-
         temp_reTrms <- reformulas::mkReTrms(split_formula$reTrmFormulas, data, calc.lambdat = FALSE)
-
+        
+        # Convert formula to text to check for explicit function calls
+        formula_text <- deparse(formula)
+        
         for (i in seq_along(split_formula$reTrmClasses)) {
-
             type <- split_formula$reTrmClasses[i]
             add_args_call <- split_formula$reTrmAddArgs[[i]]
             cnms <- temp_reTrms$cnms[[i]]
-
+            
+            # FILTER: Check if this function was explicitly called in the formula
+            if (type == "us") {
+                # Check if "us(" appears in the original formula
+                if (!grepl("us\\s*\\(", formula_text)) {
+                    # This is implicit us assignment for standard syntax - skip it
+                    next
+                }
+            }
+            
+            # Only process explicitly specified special functions
             s4_object_list[[length(s4_object_list) + 1]] <- create_covariance_object_from_term(
                     type = type,
                     cnms = cnms,
