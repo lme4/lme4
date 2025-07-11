@@ -740,10 +740,10 @@ setMethod("compute_covariance_matrix", "CSCovariance", function(object, data_con
     R <- compute_correlation_matrix(object)
     
     if (is(object, "HomogeneousVariance")) {
-        sigma_sq <- exp(object@vparameters[1])
-        Sigma <- sigma_sq * R
+        sigma_sq <- object@vparameters[1]
+        Sigma <- sigma_sq^2 * R
     } else {
-        st_devs <- exp(0.5 * object@vparameters)
+        st_devs <- object@vparameters
         D <- Diagonal(d, x = st_devs)
         Sigma <- D %*% R %*% D
     }
@@ -949,7 +949,7 @@ setMethod("mkVarCorr_for_structure", "VirtualCovariance", function(object, theta
     cor_matrix <- compute_correlation_matrix(object)
         
     # Scale by residual standard deviation 
-    scaled_cov_matrix <- cov_matrix
+    scaled_cov_matrix <- sc^2 * cov_matrix
         
     stddev <- sqrt(diag(scaled_cov_matrix))
         
