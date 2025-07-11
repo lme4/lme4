@@ -2296,8 +2296,12 @@ truncate_theta <- function(theta_extended, structures) {
         param_idx <- param_idx + extended_params
     }
     
-    # Create structure info using clean method dispatch
-    structure_info <- create_structure_info_clean(structures, param_sizes_truncated)
+    # Create structure info directly 
+    structure_info <- list(
+        structures = structures,
+        types = sapply(structures, get_structure_type),   
+        param_sizes = param_sizes_truncated
+    )
     
     return(list(
         theta = theta_truncated,
