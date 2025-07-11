@@ -109,6 +109,9 @@ setGeneric("n_extended_parameters", function(object) standardGeneric("n_extended
 setGeneric("get_structure_type", function(object) standardGeneric("get_structure_type"))
 ##' @rdname InternalCovarianceMethods
 setGeneric("get_reporting_theta_slice", function(object, theta_slice) standardGeneric("get_reporting_theta_slice"))
+##' @rdname InternalCovarianceMethods
+setGeneric("generate_theta_names", function(object, group_name, cnms) standardGeneric("generate_theta_names"))
+
 
 # SECTION 2: COMPONENT CLASS HIERARCHY & VALIDITY
 
@@ -1027,3 +1030,69 @@ setMethod("get_reporting_theta_slice", "HeterogeneousAR1Covariance", function(ob
     n_base <- object@dimension + 1L
     theta_slice[1:n_base]
 })
+
+##' @rdname InternalCovarianceMethods
+setGeneric("generate_theta_names", 
+          function(object, group_name, cnms) standardGeneric("generate_theta_names"))
+
+##' @rdname InternalCovarianceMethods
+setMethod("generate_theta_names", "HomogeneousCSCovariance",
+         function(object, group_name, cnms) {
+             c(paste0(group_name, ".sigma"),
+               paste0(group_name, ".rho"))
+         })
+
+##' @rdname InternalCovarianceMethods
+setMethod("generate_theta_names", "HeterogeneousCSCovariance", 
+         function(object, group_name, cnms) {
+             c(paste0(group_name, ".", cnms[1]),
+               paste0(group_name, ".", cnms[2], ".", cnms[1]),
+               paste0(group_name, ".", cnms[2]))
+         })
+
+##' @rdname InternalCovarianceMethods
+setMethod("generate_theta_names", "HomogeneousAR1Covariance",
+         function(object, group_name, cnms) {
+             c(paste0(group_name, ".sigma"),
+               paste0(group_name, ".rho"))
+         })
+
+##' @rdname InternalCovarianceMethods
+setMethod("generate_theta_names", "HeterogeneousAR1Covariance",
+         function(object, group_name, cnms) {
+             c(paste0(group_name, ".", cnms[1]),
+               paste0(group_name, ".", cnms[2], ".", cnms[1]),
+               paste0(group_name, ".", cnms[2]))
+         })
+
+##' @rdname InternalCovarianceMethods
+setMethod("generate_theta_names", "HomogeneousDiagonalCovariance",
+         function(object, group_name, cnms) {
+             paste0(group_name, ".sigma")
+         })
+
+##' @rdname InternalCovarianceMethods
+setMethod("generate_theta_names", "HeterogeneousDiagonalCovariance",
+         function(object, group_name, cnms) {
+             paste0(group_name, ".", cnms)
+         })
+
+##' @rdname InternalCovarianceMethods
+setMethod("generate_theta_names", "UnstructuredCovariance",
+         function(object, group_name, cnms) {
+             # Use standard lme4 naming for unstructured
+             mm <- outer(cnms, cnms, paste, sep = ".")
+             diag(mm) <- cnms
+             mm <- mm[lower.tri(mm, diag = TRUE)]
+             paste(group_name, mm, sep = ".")
+         })
+
+##' @rdname InternalCovarianceMethods
+setMethod("generate_theta_names", "VirtualCovariance",
+         function(object, group_name, cnms) {
+             # Fallback method - use standard lme4 naming
+             mm <- outer(cnms, cnms, paste, sep = ".")
+             diag(mm) <- cnms
+             mm <- mm[lower.tri(mm, diag = TRUE)]
+             paste(group_name, mm, sep = ".")
+         })

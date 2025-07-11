@@ -1972,9 +1972,20 @@ mkPfun <- function(diag.only = FALSE, old = TRUE, prefix = NULL){
 ##' @param old (logical) give backward-compatible results?
 ##' @param prefix a character vector with two elements giving the prefix
 ##' for diagonal (e.g. "sd") and off-diagonal (e.g. "cor") elements
-tnames <- function(object, diag.only = FALSE, old = TRUE, prefix = NULL) {
-    pfun <- mkPfun(diag.only=diag.only, old=old, prefix=prefix)
-    c(unlist(mapply(pfun, names(object@cnms), object@cnms)))
+tnames <- function(object) {
+    structure_info <- extract_structure_info(object)
+    param_names <- character(0)
+    
+    for (i in seq_along(structure_info$structures)) {
+        structure_obj <- structure_info$structures[[i]]
+        group_name <- names(object@cnms)[i]
+        cnms_group <- object@cnms[[i]]
+        
+        param_names <- c(param_names, 
+                        generate_theta_names(structure_obj, group_name, cnms_group))
+    }
+    
+    return(param_names)
 }
 
 ## -> ../man/getME.Rd
