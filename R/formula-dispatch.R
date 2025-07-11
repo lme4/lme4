@@ -15,7 +15,7 @@ create_covariance_object_from_term <- function(type, cnms, add_args_call) {
     cov_struct_table <- list(
         cs = list(prefix = "CS"), 
         ar1 = list(prefix = "AR1"), 
-        diag = list(prefix = "Diagonal"), 
+        dcov = list(prefix = "Diagonal"), 
         us = list(prefix = "Unstructured")
     )  
     
@@ -26,6 +26,10 @@ create_covariance_object_from_term <- function(type, cnms, add_args_call) {
     structure_prefix <- spec$prefix 
 
     args <- as.list(add_args_call)[-1]
+
+    if (type == "us") {
+        return(new("UnstructuredCovariance", dimension = length(cnms)))
+    }
 
     is_hom <- (is.null(args$hom) || args$hom == TRUE)
     variance_prefix <- if(is_hom) "Homogeneous" else "Heterogeneous"
@@ -52,7 +56,8 @@ create_covariance_object_from_term <- function(type, cnms, add_args_call) {
 #'   random effects are found.
 #' @keywords internal
 parse_model_formula <- function(formula, data) {
-    specials_list <- c("ar1", "cs", "us", "diag") 
+    specials_list <- c("ar1", "cs", "us", "dcov") 
+
     split_formula <- reformulas::splitForm(formula, specials = specials_list)
 
     s4_object_list <- list() 
@@ -91,48 +96,72 @@ parse_model_formula <- function(formula, data) {
 #' @return A list with components: `Lambdat`, `Lind`, `theta`, and `lower`.
 #' @keywords internal
 mkReLambdat <- function(reTrms, s4_object_list) {
-    nth_per_term <- vapply(s4_object_list, n_parameters, integer(1))
-    thoff <- cumsum(c(0L, nth_per_term))
-    
-    theta <- unlist(lapply(s4_object_list, get_start_values))
-    lower <- unlist(lapply(s4_object_list, get_lower_bounds))
-
-    lambdat_blocks <- list()
+    # First pass: expand parameters and calculate actual parameter counts
+    theta_list <- list()
     lind_list <- list()
-
+    lower_list <- list()
+    actual_nth_per_term <- integer(length(s4_object_list))
+    
     for (i in seq_along(s4_object_list)) {
         s4_obj <- s4_object_list[[i]]
-        nl <- reTrms$nl[i] # no. of levels for this term
+        original_theta <- get_start_values(s4_obj)
+        
+        if (needs_parameter_expansion(s4_obj)) {
+            expansion <- expand_parameters_for_optimization(s4_obj, original_theta)
+            theta_list[[i]] <- expansion$expanded_theta
+            expanded_lind <- expansion$expanded_lind
+            # Extend lower bounds to match expanded parameters
+            original_lower <- get_lower_bounds(s4_obj)
+            lower_list[[i]] <- c(original_lower, rep(original_lower[2], length(expansion$expanded_theta) - 2))
+        } else {
+            theta_list[[i]] <- original_theta
+            expanded_lind <- get_lind(s4_obj)
+            lower_list[[i]] <- get_lower_bounds(s4_obj)
+        }
+        
+        actual_nth_per_term[i] <- length(theta_list[[i]])  # Use actual count after expansion
+    }
+    
+    # Recalculate thoff with actual parameter counts
+    thoff <- cumsum(c(0L, actual_nth_per_term))
+    
+    # Second pass: build Lind with correct offsets and Lambdat blocks
+    lambdat_blocks <- list()
+    for (i in seq_along(s4_object_list)) {
+        s4_obj <- s4_object_list[[i]]
+        nl <- reTrms$nl[i]
         L_template <- get_lambda(s4_obj)
         
-        # Create a sparse identity matrix of size nl x nl.
-        # The Kronecker product then tiles L_template along the diagonal,
-        # building the full sparse matrix for this term.
-        lambdat_blocks[[i]] <- kronecker(Diagonal(nl), L_template) 
-
-        lind_term <- get_lind(s4_obj)  
-
-        # Generate the full Lind mapping for this term by replicating the
-        # per-level index vector (lind_term) for each of the nl levels,
-        # then add the global theta offset (thoff).
-        if (length(lind_term) > 0) {
-            lind_list[[i]] <- rep(lind_term, times = nl) + thoff[i] 
+        # Build Lambdat block
+        lambdat_blocks[[i]] <- kronecker(Diagonal(nl), L_template)
+        
+        # Get the expanded Lind from first pass
+        if (needs_parameter_expansion(s4_obj)) {
+            expansion <- expand_parameters_for_optimization(s4_obj, get_start_values(s4_obj))
+            expanded_lind <- expansion$expanded_lind
+        } else {
+            expanded_lind <- get_lind(s4_obj)
+        }
+        
+        # Add to lind_list with corrected offset
+        if (length(expanded_lind) > 0) {
+            lind_list[[i]] <- rep(expanded_lind, times = nl) + thoff[i]
         } else {
             lind_list[[i]] <- integer(0)
         }
     }
-    # Combine all the individual matrix blocks from the lambdat_blocks list
-    # into the single, large block-diagonal Lambdat matrix for the entire model.
+    
+    # Combine results
+    theta <- unlist(theta_list)
+    lower <- unlist(lower_list)
     Lambdat <- do.call(Matrix::bdiag, lambdat_blocks)
     Lind <- unlist(lind_list)
     
-   if (length(Lambdat@x) != length(Lind)) {
+    if (length(Lambdat@x) != length(Lind)) {
         stop("Internal error: Mismatch between Lambdat@x length (", 
              length(Lambdat@x), ") and Lind length (", length(Lind), ")")
     }
-
-    # Use the Lind index vector to populate the non-zero elements of the
-    # Lambdat matrix with the corresponding values from the theta vector.
+    
     Lambdat@x[] <- theta[Lind]
     
     list(

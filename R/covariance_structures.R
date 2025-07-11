@@ -16,6 +16,13 @@ setClass("VirtualCovariance",
         cparameters = "numeric"
     )
 )
+##' @rdname VirtualComponentClasses
+setValidity("VirtualCovariance", function(object) {
+    if (object@dimension < 1L) {
+        return("Covariance dimension must be at least 1 (cannot have zero random effects)")
+    }
+    TRUE
+})
 
 ##' @name CovarianceMethods
 ##' @title Public S4 Methods for Covariance Objects
@@ -35,7 +42,7 @@ setClass("VirtualCovariance",
 ##' - `get_interpretable_parameters()`: Get a list of human-readable parameters
 ##'   (e.g., standard deviations and correlations).
 ##' - `compute_covariance_matrix()`: Compute the final covariance matrix.
-##' - `get_cholesky_factor()`: Compute the Cholesky factor of the covariance matrix.
+##' - `compute_cholesky_factor()`: Compute the Cholesky factor of the covariance matrix.
 ##' - `compute_inverse_covariance_matrix()`: Compute the inverse of the
 ##'   covariance matrix.
 ##' - `compute_log_det_covariance_matrix()`: Compute the log-determinant of the
@@ -59,7 +66,7 @@ setGeneric("get_interpretable_parameters", function(object) standardGeneric("get
 setGeneric("compute_covariance_matrix", function(object, data_context = NULL) standardGeneric("compute_covariance_matrix"))
 ##' @rdname CovarianceMethods
 ##' @export
-setGeneric("get_cholesky_factor", function(object, data_context = NULL) standardGeneric("get_cholesky_factor"))
+setGeneric("compute_cholesky_factor", function(object, data_context = NULL) standardGeneric("compute_cholesky_factor"))
 ##' @rdname CovarianceMethods
 ##' @export
 setGeneric("compute_inverse_covariance_matrix", function(object, data_context = NULL) standardGeneric("compute_inverse_covariance_matrix"))
@@ -84,8 +91,12 @@ setGeneric("is_diagonal", function(object) standardGeneric("is_diagonal"))
 setGeneric("get_lambda", function(object) standardGeneric("get_lambda"))
 ##' @rdname InternalCovarianceMethods
 setGeneric("get_lind", function(object) standardGeneric("get_lind"))
+##' @rdname Internal CovarianceMethods
+setGeneric("needs_parameter_expansion", function(object) standardGeneric("needs_parameter_expansion"))
+##' @rdname Internal CovarianceMethods 
+setGeneric("expand_parameters_for_optimization", function(object, theta_subset) standardGeneric("expand_parameters_for_optimization"))
 ##' @rdname InternalCovarianceMethods
-setGeneric("build_correlation_matrix", function(object) standardGeneric("build_correlation_matrix"))
+setGeneric("compute_correlation_matrix", function(object) standardGeneric("compute_correlation_matrix"))
 ##' @rdname InternalCovarianceMethods
 setGeneric("compute_lambdat_x", function(object, theta) standardGeneric("compute_lambdat_x"))
 
@@ -110,20 +121,24 @@ NULL
 setClass("HomogeneousVariance", contains = c("VIRTUAL", "VirtualCovariance"))
 ##' @rdname VirtualComponentClasses
 setClass("HeterogeneousVariance", contains = c("VIRTUAL", "VirtualCovariance"))
-##' @rdname VirtualComponentClasses
-setClass("UnstructuredCovariance", contains = c("VIRTUAL", "VirtualCovariance"))
+
 ##' @rdname VirtualComponentClasses
 setClass("DiagonalCovariance", contains = c("VIRTUAL", "VirtualCovariance"))
+setValidity("DiagonalCovariance", function(object) {
+    if (length(object@cparameters) == 0L) TRUE else "Diagonal models must have 0 cparameters."
+})
 
+##' @title Concrete Class for Unstructured Covariance
+##' @description Defines the Unstructured structure, which uses all elements
+##'   of the lower triangle as free parameters.
+##' @keywords internal
+setClass("UnstructuredCovariance", contains = "VirtualCovariance")
 setValidity("UnstructuredCovariance", function(object) {
     d <- object@dimension
     expected_len <- d * (d + 1) / 2
     if (length(object@cparameters) == expected_len) TRUE else "Incorrect number of cparameters for Unstructured."
 })
 
-setValidity("DiagonalCovariance", function(object) {
-    if (length(object@cparameters) == 0L) TRUE else "Diagonal models must have 0 cparameters."
-})
 
 ##' @title Virtual Class for Compound Symmetry (CS) Covariance
 ##' @description Defines the CS structure, which uses 2 `cparameters` for the
@@ -131,7 +146,8 @@ setValidity("DiagonalCovariance", function(object) {
 ##' @keywords internal
 setClass("CSCovariance", contains = c("VIRTUAL", "VirtualCovariance"))
 setValidity("CSCovariance", function(object) {
-    expected_len <- if (object@dimension > 0) 1L else 0L
+    d <- object@dimension
+    expected_len <- if (d > 1) 1L else 0L
     if (length(object@cparameters) == expected_len) TRUE else "CS models must have 1 cparameters (diag and off-diag)."
 })
 
@@ -141,7 +157,8 @@ setValidity("CSCovariance", function(object) {
 ##' @keywords internal
 setClass("AR1Covariance", contains = c("VIRTUAL", "VirtualCovariance"))
 setValidity("AR1Covariance", function(object) {
-    expected_len <- if (object@dimension > 1) 1L else 0L
+    d <- object@dimension 
+    expected_len <- if (d > 1) 1L else 0L
     if (length(object@cparameters) == expected_len) TRUE else "AR1 models must have 1 cparameter."
 })
 
@@ -156,13 +173,12 @@ setValidity("AR1Covariance", function(object) {
 ##' @export HeterogeneousCSCovariance
 ##' @export HomogeneousAR1Covariance
 ##' @export HeterogeneousAR1Covariance
-##' @export HomogeneousUnstructuredCovariance
-##' @export HeterogeneousUnstructuredCovariance
+##' @export UnstructuredCovariance
 NULL
 
 # Create the Concrete Classes
 for (variance_type in c("Homogeneous", "Heterogeneous")) {
-    for (structure_type in c("Unstructured", "Diagonal", "CS", "AR1")) {
+    for (structure_type in c("Diagonal", "CS", "AR1")) {
         setClass(
             paste0(variance_type, structure_type, "Covariance"),
             contains = c(
@@ -221,9 +237,8 @@ setMethod("n_parameters", "DiagonalCovariance", function(object) {
 ##' @rdname CovarianceMethods
 setMethod("n_parameters", "CSCovariance", function(object) {
     d <- object@dimension
-    if (d == 0) return(0L)
     n_v_params <- if (is(object, "HomogeneousVariance")) 1L else d
-    n_c_params <- if (d > 0) 1L else 0L
+    n_c_params <- if (d > 1) 1L else 0L
     as.integer(n_v_params + n_c_params)
 })
 
@@ -234,7 +249,6 @@ setMethod("n_parameters", "AR1Covariance", function(object) {
     n_c_params <- if (d > 1) 1L else 0L
     as.integer(n_v_params + n_c_params)
 })
-
 ##' @rdname CovarianceMethods
 setMethod("set_parameters", "VirtualCovariance", function(object, value) {
     n_total <- n_parameters(object)
@@ -246,9 +260,24 @@ setMethod("set_parameters", "VirtualCovariance", function(object, value) {
         object@vparameters <- numeric(0)
         object@cparameters <- value
     } else {
-        n_v_params <- if (is(object, "HomogeneousVariance")) 1L else object@dimension
-        object@vparameters <- value[seq_len(n_v_params)]
-        object@cparameters <- value[-seq_len(n_v_params)]
+        d <- object@dimension
+        if (is(object, "HomogeneousVariance")) {
+            n_v_params <- 1L
+        } else {
+            n_v_params <- max(d, 1L)
+        }
+        
+        if (n_v_params <= length(value)) {
+            object@vparameters <- value[seq_len(n_v_params)]
+            if (length(value) > n_v_params) {
+                object@cparameters <- value[-seq_len(n_v_params)]
+            } else {
+                object@cparameters <- numeric(0)
+            }
+        } else {
+            object@vparameters <- value
+            object@cparameters <- numeric(0)
+        }
     }
 
     validObject(object)
@@ -257,89 +286,62 @@ setMethod("set_parameters", "VirtualCovariance", function(object, value) {
 
 ##' @rdname CovarianceMethods
 setMethod("get_start_values", "UnstructuredCovariance", function(object) {
-    num_params <- n_parameters(object)
+    d <- object@dimension
+    num_params <- d * (d + 1) / 2
     start_vals <- numeric(num_params)
-
-    if (object@dimension > 0) {
-        diag_indices <- vech_diag_indices(object@dimension)
-        start_vals[diag_indices] <- 1.0
-    }
-
+    
+    diag_indices <- vech_diag_indices(d)
+    start_vals[diag_indices] <- 1.0
+    
     return(start_vals)
 })
 
 ##' @rdname CovarianceMethods
 setMethod("get_start_values", "DiagonalCovariance", function(object) {
     num_params <- n_parameters(object)
-    rep(1.0, num_params) # All params are variance related. 
+    rep(1.0, num_params) 
 })
 
 ##' @rdname CovarianceMethods
 setMethod("get_start_values", "CSCovariance", function(object) {
-    num_params <- n_parameters(object)
-    if (num_params == 0) return(numeric(0))
-
-    n_v_params <- if (is(object, "HomogeneousVariance")) 1L else object@dimension
-    v_starts <- rep(1.0, n_v_params)
-    c_starts <- if(num_params > n_v_params) 0.0 else numeric(0)
-    
-    c(v_starts, c_starts)
+    get_structured_start_values(object)
 })
 
 ##' @rdname CovarianceMethods
 setMethod("get_start_values", "AR1Covariance", function(object) {
-    num_params <- n_parameters(object)
-    if (num_params == 0) return(numeric(0))
-
-    n_v_params <- if (is(object, "HomogeneousVariance")) 1L else object@dimension 
-    v_starts <- rep(1.0, n_v_params)
-    c_starts <- if(num_params > n_v_params) 0.0 else numeric(0)
-
-    c(v_starts, c_starts)
+    get_structured_start_values(object)
 })
 
 ##' @rdname InternalCovarianceMethods
 setMethod("get_lower_bounds", "UnstructuredCovariance", function(object) {
-    num_params <- n_parameters(object)
+    d <- object@dimension
+    
+    num_params <- d * (d + 1) / 2
     lower_bounds <- rep(-Inf, num_params)
     
-    if (object@dimension > 0) {
-        diag_indices <- vech_diag_indices(object@dimension)
-        lower_bounds[diag_indices] <- 0
-    }
+    diag_indices <- vech_diag_indices(d)
+    lower_bounds[diag_indices] <- 0
     
     return(lower_bounds)
 })
 
-##' @rdname InternalCovarianceMethods
 setMethod("get_lower_bounds", "DiagonalCovariance", function(object) {
-    num_params <- n_parameters(object)
-
-    rep(0, num_params)
+    d <- object@dimension
+    if (is(object, "HomogeneousVariance")) {
+        return(0) 
+    } else {
+        return(rep(0, d))
+    }
 })
 
-##' @rdname CovarianceMethods
+##' @rdname InternalCovarianceMethods
 setMethod("get_lower_bounds", "CSCovariance", function(object) {
-    num_params <- n_parameters(object)
-    if (num_params == 0) return(numeric(0))
-
-    n_v_params <- if (is(object, "HomogeneousVariance")) 1L else object@dimension
-    v_low <- rep(0, n_v_params)
-    c_low <- if(num_params > n_v_params) -Inf else numeric(0)
-    
-    c(v_low, c_low)
+    get_structured_lower_bounds(object)
 })
 
 ##' @rdname InternalCovarianceMethods
 setMethod("get_lower_bounds", "AR1Covariance", function(object) {
-    num_params <- n_parameters(object)
-    if (num_params == 0) return(numeric(0))
-
-    n_v_params <- if (is(object, "HomogeneousVariance")) 1L else object@dimension
-    v_low <- rep(0, n_v_params)
-    c_low <- if(num_params > n_v_params) -Inf else numeric(0)
-
-    c(v_low, c_low)
+    get_structured_lower_bounds(object)
 })
 
 
@@ -455,6 +457,59 @@ setMethod("get_lind", "HeterogeneousAR1Covariance", function(object) {
 })
 
 ##' @rdname InternalCovarianceMethods
+setMethod("needs_parameter_expansion", "VirtualCovariance", function(object) {
+    FALSE
+})
+
+##' @rdname InternalCovarianceMethods
+setMethod("needs_parameter_expansion", "HomogeneousAR1Covariance", function(object) {
+    TRUE
+})
+
+##' @rdname InternalCovarianceMethods
+setMethod("needs_parameter_expansion", "HeterogeneousAR1Covariance", function(object) {
+    TRUE
+})
+
+##' @rdname InternalCovarianceMethods
+setMethod("expand_parameters_for_optimization", "VirtualCovariance", function(object, theta_subset) {
+    list(theta = theta_subset, lind_adjustment = NULL)
+})
+
+##' @rdname InternalCovarianceMethods
+setMethod("expand_parameters_for_optimization", "HomogeneousAR1Covariance", function(object, theta_subset) {
+    d <- object@dimension
+    sigma_param <- theta_subset[1]   # log(σ) - standard deviation parameter
+    rho_param <- theta_subset[2]     # atanh(ρ) - base correlation parameter
+    
+    # Convert to actual correlation value
+    rho <- tanh(rho_param)
+    
+    # Get distance mapping
+    distance_map <- get_vech_distance_mapping(d)
+    unique_distances <- unique(sapply(distance_map, function(x) x$distance))
+    max_distance <- max(unique_distances[unique_distances > 0])
+    
+    # Build expanded theta: [log(σ), atanh(ρ¹), atanh(ρ²), ...]
+    expanded_theta <- c(sigma_param)  # Keep variance parameter as-is
+    for (dist in 1:max_distance) {
+        # Transform correlation by distance: ρ^dist, then back to atanh scale
+        rho_dist <- rho^dist
+        expanded_theta <- c(expanded_theta, atanh(rho_dist))
+    }
+    
+    # Build Lind mapping using distance info
+    expanded_lind <- sapply(distance_map, function(pos_info) {
+        pos_info$param_index
+    })
+        
+    list(
+        expanded_theta = expanded_theta,
+        expanded_lind = as.integer(expanded_lind)
+    )
+})
+
+##' @rdname InternalCovarianceMethods
 setMethod("compute_lambdat_x", "DiagonalCovariance", function(object, theta) {
     return(exp(theta))
 })
@@ -463,18 +518,8 @@ setMethod("compute_lambdat_x", "DiagonalCovariance", function(object, theta) {
 setMethod("compute_lambdat_x", "UnstructuredCovariance", function(object, theta) {
     d <- object@dimension
     if (d == 0) return(numeric(0))
-    n_v_params <- if (is(object, "HomogeneousVariance")) 1L else d
-    c_params <- theta[-(1:n_v_params)]
-    L_corr <- get_chol_from_params(c_params, d)
     
-    v_params <- theta[1:n_v_params]
-    st_devs <- if(is(object, "HomogeneousVariance")) {
-        rep(exp(0.5 * v_params[1]), d)
-    } else {
-        exp(0.5 * v_params)
-    }
-    D <- Diagonal(x = st_devs)
-    L <- D %*% L_corr
+    L <- get_chol_from_params(theta, d)
     return(L[lower.tri(L, diag = TRUE)])
 })
 
@@ -571,133 +616,182 @@ setClass("CSCovariance", contains = c("VIRTUAL", "VirtualCovariance", "VirtualSt
 setClass("AR1Covariance", contains = c("VIRTUAL", "VirtualCovariance", "VirtualStructuredCovariance"))
 
 ##' @rdname InternalCovarianceMethods
-setMethod("build_correlation_matrix", "DiagonalCovariance", function(object) Diagonal(object@dimension))
-##' @rdname InternalCovarianceMethods
-setMethod("build_correlation_matrix", "CSCovariance", function(object) {
-    d <- object@dimension
-    if (d < 2) return(Diagonal(d))
-    rho <- tanh(object@cparameters[1])
-    R <- Matrix(rho, nrow = d, ncol = d); diag(R) <- 1
-    return(R)
+setMethod("compute_correlation_matrix", "DiagonalCovariance", function(object) {
+    d <- object@dimension 
+    R <- Diagonal(d)
+
+    force_dsyMatrix(R)
 })
 ##' @rdname InternalCovarianceMethods
-setMethod("build_correlation_matrix", "AR1Covariance", function(object) {
+setMethod("compute_correlation_matrix", "CSCovariance", function(object) {
     d <- object@dimension
-    if (d < 2) return(Diagonal(d))
+    if (d == 1) return(Diagonal(1))
+    rho <- tanh(object@cparameters[1])
+    R <- Matrix(rho, nrow = d, ncol = d)
+    diag(R) <- 1
+    
+    force_dsyMatrix(R)
+})
+##' @rdname InternalCovarianceMethods
+setMethod("compute_correlation_matrix", "AR1Covariance", function(object) {
+    d <- object@dimension
+    if (d == 1) return(Diagonal(d))
     rho <- tanh(object@cparameters[1])
     time_diffs <- abs(outer(1:d, 1:d, "-"))
-    rho^time_diffs
+    R <- rho^time_diffs
+
+    force_dsyMatrix(R)
 })
 ##' @rdname InternalCovarianceMethods
-setMethod("build_correlation_matrix", "UnstructuredCovariance", function(object) {
+setMethod("compute_correlation_matrix", "UnstructuredCovariance", function(object) {
     Sigma <- compute_covariance_matrix(object)
-    cov2cor(Sigma)
+    R <- cov2cor(Sigma)
+
+    force_dsyMatrix(R)
 })
 
 ##' @rdname CovarianceMethods
-setMethod("compute_covariance_matrix", "VirtualStructuredCovariance", function(object, data_context = NULL) {
-    if (object@dimension == 0) return(new("dsyMatrix", Dim = c(0L, 0L)))
-    R <- build_correlation_matrix(object)
+setMethod("compute_covariance_matrix", "DiagonalCovariance", function(object, data_context = NULL) {
+    d <- object@dimension
+    
     if (is(object, "HomogeneousVariance")) {
         sigma_sq <- exp(object@vparameters[1])
-        return(sigma_sq * R)
+        Sigma <- Diagonal(d, x = sigma_sq)
+    } else {
+        variances <- exp(object@vparameters)
+        Sigma <- Diagonal(d, x = variances)
+    }
+
+    force_dsyMatrix(Sigma)
+})
+
+##' @rdname CovarianceMethods
+setMethod("compute_covariance_matrix", "CSCovariance", function(object, data_context = NULL) {
+    d <- object@dimension
+    
+    R <- compute_correlation_matrix(object)
+    
+    if (is(object, "HomogeneousVariance")) {
+        sigma_sq <- exp(object@vparameters[1])
+        Sigma <- sigma_sq * R
     } else {
         st_devs <- exp(0.5 * object@vparameters)
-        D <- Diagonal(object@dimension, x = st_devs)
-        return(D %*% R %*% D)
+        D <- Diagonal(d, x = st_devs)
+        Sigma <- D %*% R %*% D
     }
+    
+    force_dsyMatrix(Sigma)
+})
+
+##' @rdname CovarianceMethods
+setMethod("compute_covariance_matrix", "AR1Covariance", function(object, data_context = NULL) {
+    d <- object@dimension
+    
+    R <- compute_correlation_matrix(object)
+
+    if (is(object, "HomogeneousVariance")) {
+        sigma_sq <- exp(object@vparameters[1])
+        Sigma <- sigma_sq * R
+    } else {
+        st_devs <- exp(0.5 * object@vparameters)
+        D <- Diagonal(d, x = st_devs)
+        Sigma <- D %*% R %*% D
+    }
+    
+    force_dsyMatrix(Sigma)
 })
 
 ##' @rdname CovarianceMethods
 setMethod("compute_covariance_matrix", "UnstructuredCovariance", function(object, data_context = NULL) {
     d <- object@dimension
-    if (d == 0) return(new("dsyMatrix", Dim = c(0L, 0L)))
     
-    L_corr <- get_chol_from_params(object@cparameters, d)
-    Sigma_corr <- tcrossprod(L_corr)
+    L <- get_chol_from_params(object@cparameters, d)
     
-    st_devs <- if(is(object, "HomogeneousVariance")) {
-        rep(exp(0.5 * object@vparameters[1]), d)
-    } else {
-        exp(0.5 * object@vparameters)
-    }
-    D <- Diagonal(x = st_devs)
-    return(D %*% Sigma_corr %*% D)
+    Sigma <- tcrossprod(L)
+    force_dsyMatrix(Sigma)
 })
 
-# There is some redundancy between compute_lambdat_x and get_cholesky_factor.
-# I should rewrite get_cholesky_factor to call in the internal compute_lambdat_x 
-# and then reshape the resulting vector back into a matrix. 
-
 ##' @rdname CovarianceMethods
-setMethod("get_cholesky_factor", "VirtualCovariance", function(object, data_context = NULL) {
-    chol(compute_covariance_matrix(object, data_context))
+setMethod("compute_cholesky_factor", "VirtualCovariance", function(object, data_context = NULL) {
+    Sigma <- compute_covariance_matrix(object, data_context)
+    t(chol(Sigma))
 })
 ##' @rdname CovarianceMethods
-setMethod("get_cholesky_factor", "UnstructuredCovariance", function(object, data_context = NULL) {
+setMethod("compute_cholesky_factor", "UnstructuredCovariance", function(object, data_context = NULL) {
     d <- object@dimension
-    if (d == 0) return(new("dtrMatrix", Dim = c(0L, 0L)))
+    L <- (get_chol_from_params(object@cparameters, d))
+    as.matrix(L)
+})
+
+##' @rdname CovarianceMethods
+setMethod("compute_log_det_covariance_matrix", "DiagonalCovariance", function(object, data_context = NULL) {
+    d <- object@dimension
+    if (d == 0) return(0)
     
-    L_corr <- get_chol_from_params(object@cparameters, d)
-    
-    st_devs <- if(is(object, "HomogeneousVariance")) {
-        rep(exp(0.5 * object@vparameters[1]), d)
+    if (is(object, "HomogeneousVariance")) {
+        d * object@vparameters[1]
     } else {
-        exp(0.5 * object@vparameters)
+        sum(object@vparameters)
     }
-    D <- Diagonal(x = st_devs)
-    return(D %*% L_corr)
+})
+
+##' @rdname CovarianceMethods
+setMethod("compute_log_det_covariance_matrix", "CSCovariance", function(object, data_context = NULL) {
+    compute_log_det_structured(object)
+})
+
+##' @rdname CovarianceMethods
+setMethod("compute_log_det_covariance_matrix", "AR1Covariance", function(object, data_context = NULL) {
+    compute_log_det_structured(object)
 })
 
 ##' @rdname CovarianceMethods
 setMethod("compute_log_det_covariance_matrix", "UnstructuredCovariance", function(object, data_context = NULL) {
     d <- object@dimension
     if (d == 0) return(0)
-    
-    diag_indices <- vech_diag_indices(d)
-    log_det_corr <- 2 * sum(object@cparameters[diag_indices])
-    
-    log_det_D2 <- if (is(object, "HomogeneousVariance")) {
-        d * object@vparameters[1]
-    } else {
-        sum(object@vparameters)
-    }
-    return(log_det_D2 + log_det_corr)
+
+    L <- compute_cholesky_factor(object)
+    2 * sum(log(base::diag(L)))
 })
 
 ##' @rdname CovarianceMethods
-setMethod("compute_log_det_covariance_matrix", "VirtualStructuredCovariance", function(object, data_context = NULL) {
+setMethod("compute_inverse_covariance_matrix", "DiagonalCovariance", function(object, data_context = NULL) {
     d <- object@dimension
-    if (d == 0) return(0)
-    R <- build_correlation_matrix(object)
-    log_det_R <- as.numeric(determinant(R, logarithm = TRUE)$modulus)
-    log_det_V <- if (is(object, "HomogeneousVariance")) {
-        d * object@vparameters[1]
+    if (d == 0) return(new("dsyMatrix", Dim = c(0L, 0L)))
+    
+    if (is(object, "HomogeneousVariance")) {
+        inv_sigma_sq <- exp(-object@vparameters[1])
+        inv_Sigma <- Diagonal(d, x = inv_sigma_sq)
     } else {
-        sum(object@vparameters)
+        inv_variances <- exp(-object@vparameters)
+        inv_Sigma <- Diagonal(d, x = inv_variances)
     }
-    return(log_det_V + log_det_R)
+    
+    # Ensure consistent matrix type
+    force_dsyMatrix(inv_Sigma)
+})
+
+##' @rdname CovarianceMethods
+setMethod("compute_inverse_covariance_matrix", "CSCovariance", function(object, data_context = NULL) {
+    compute_inverse_structured(object)
+})
+
+##' @rdname CovarianceMethods
+setMethod("compute_inverse_covariance_matrix", "AR1Covariance", function(object, data_context = NULL) {
+    compute_inverse_structured(object)
 })
 
 ##' @rdname CovarianceMethods
 setMethod("compute_inverse_covariance_matrix", "UnstructuredCovariance", function(object, data_context = NULL) {
-    L <- get_cholesky_factor(object)
-    inv_L <- solve(L)
-    crossprod(inv_L)
-})
-##' @rdname CovarianceMethods
-setMethod("compute_inverse_covariance_matrix", "VirtualStructuredCovariance", function(object, data_context = NULL) {
     d <- object@dimension
     if (d == 0) return(new("dsyMatrix", Dim = c(0L, 0L)))
-    inv_R <- solve(build_correlation_matrix(object))
-    if (is(object, "HomogeneousVariance")) {
-        inv_sigma_sq <- exp(-object@vparameters[1])
-        return(inv_sigma_sq * inv_R)
-    } else {
-        inv_st_devs <- exp(-0.5 * object@vparameters)
-        inv_D <- Diagonal(d, x = inv_st_devs)
-        return(inv_D %*% inv_R %*% inv_D)
-    }
+    
+    # inv(Sigma) = inv(L * L') = crossprod(solve(L))
+    L <- compute_cholesky_factor(object)
+    inv_L <- solve(L)
+    inv_Sigma <- crossprod(inv_L)
+    
+    force_dsyMatrix(inv_Sigma)
 })
 
 
@@ -705,7 +799,7 @@ setMethod("compute_inverse_covariance_matrix", "VirtualStructuredCovariance", fu
 ##' @rdname CovarianceMethods
 setMethod("get_interpretable_parameters", "UnstructuredCovariance", function(object) {
     Sigma <- compute_covariance_matrix(object)
-    st_devs <- sqrt(diag(Sigma))
+    st_devs <- sqrt(diag(as.matrix(Sigma)))
     cor_matrix <- cov2cor(Sigma)
     
     params <- list(st_devs = st_devs, correlation = cor_matrix)
@@ -731,12 +825,12 @@ setMethod("get_interpretable_parameters", "CSCovariance", function(object) {
     } else {
         params$st_devs <- exp(0.5 * object@vparameters)
     }
-    if (object@dimension > 1) {
+    if (length(object@cparameters) > 0) {
         params$correlation <- tanh(object@cparameters[1])
     }
+    
     return(params)
 })
-
 ##' @rdname CovarianceMethods
 setMethod("get_interpretable_parameters", "AR1Covariance", function(object) {
     params <- list()
@@ -744,13 +838,13 @@ setMethod("get_interpretable_parameters", "AR1Covariance", function(object) {
         params$st_dev <- exp(0.5 * object@vparameters[1])
     } else {
         params$st_devs <- exp(0.5 * object@vparameters)
-    }
-    if (object@dimension > 1) {
+    }    
+    if (length(object@cparameters) > 0) {
         params$correlation <- tanh(object@cparameters[1])
     }
+    
     return(params)
 })
-
 # SECTION 6: SHOW METHOD
 setMethod("show", "VirtualCovariance", function(object) {
     model_name <- class(object)

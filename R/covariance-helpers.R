@@ -11,10 +11,11 @@
 ##' @return A numeric vector of integer indices for the diagonal elements.
 ##' @keywords internal
 vech_diag_indices <- function(d) {
-	if (d == 0) return(integer(0))
-	if (d == 1) return(1L)
-	1L + c(0, cumsum(d:2))
+    if (d == 0) return(integer(0))
+    if (d == 1) return(1L)
+    1L + c(0, cumsum(d:2))
 }
+
 
 ##' @title Get Vech Indices
 ##'
@@ -25,7 +26,6 @@ vech_diag_indices <- function(d) {
 ##' @return A list with components 'i' (row indices) and 'j' (column indices).
 ##' @keywords internal
 get_vech_indices <- function(d) {
-	if (d == 0) return(list(i = integer(0), j = integer(0)))
 	if (d == 1) return(list(i = 1L, j = 1L))
 	list(
 		i = unlist(lapply(1:d, function(j) j:d)),
@@ -43,7 +43,6 @@ get_vech_indices <- function(d) {
 ##' @return A `dtrMatrix` object representing the Cholesky factor `L`.
 ##' @keywords internal
 get_chol_from_params <- function(param_vec, d) {
-	if (d == 0) return(new("dtrMatrix", uplo = "L", Dim = c(0L, 0L)))
 
 	L_vec <- param_vec
 	diag_indices <- vech_diag_indices(d)
@@ -65,9 +64,134 @@ get_chol_from_params <- function(param_vec, d) {
 ##'   and `j` (column indices).
 ##' @keywords internal
 get_lower_tri_indices <- function(d) {
-    if (d == 0) return(list(i = integer(0), j = integer(0)))
     list(
         i = unlist(lapply(1:d, function(j) j:d)),
         j = unlist(lapply(1:d, function(j) rep(j, d - j + 1)))
     )
+}
+
+##' Force Matrix to Symmetric Dense Format
+##' 
+##' Internal helper to convert matrices to dsyMatrix class using modern Matrix package syntax.
+##'
+##' @param x A matrix-like object to convert
+##' @return A dsyMatrix object
+##' @keywords internal
+force_dsyMatrix <- function(x) {
+    as(as(as(x, "dMatrix"), "symmetricMatrix"), "unpackedMatrix")
+}
+
+##' Helper function for log determinant computation of structured covariance matrices
+##'
+##' Computes log determinant using decomposition: log(det(D*R*D)) = log(det(D²)) + log(det(R))
+##' where D is variance scaling and R is correlation matrix.
+##'
+##' @param object A structured covariance object
+##' @return Numeric log determinant value
+##' @keywords internal
+compute_log_det_structured <- function(object) {
+    d <- object@dimension
+      
+    R <- compute_correlation_matrix(object)
+    log_det_R <- as.numeric(Matrix::determinant(R, logarithm = TRUE)$modulus)
+    
+    log_det_V <- if (is(object, "HomogeneousVariance")) {
+        # All variances equal: log(det(sigma^2 * I)) = d * log(sigma^2)
+        d * object@vparameters[1]
+    } else {
+        # Individual variances: log(det(D^2)) = sum(log(variances))
+        sum(object@vparameters)
+    }
+    
+    return(log_det_V + log_det_R)
+}
+
+##' Helper function for inverse computation of structured covariance matrices
+##'
+##' Computes inverse using decomposition: inv(D*R*D) = inv(D)*inv(R)*inv(D)
+##' where D is variance scaling and R is correlation matrix.
+##'
+##' @param object A structured covariance object
+##' @return Inverse covariance matrix as dsyMatrix
+##' @keywords internal
+compute_inverse_structured <- function(object) {
+    d <- object@dimension
+    
+    R <- compute_correlation_matrix(object)
+    inv_R <- solve(R)
+    
+    if (is(object, "HomogeneousVariance")) {
+        # inv(sigma^2 * R) = (1/sigma^2) * inv(R)
+        inv_sigma_sq <- exp(-object@vparameters[1])
+        inv_Sigma <- inv_sigma_sq * inv_R
+    } else {
+        # inv(D * R * D) = inv(D) * inv(R) * inv(D)
+        inv_st_devs <- exp(-0.5 * object@vparameters)
+        inv_D <- Diagonal(d, x = inv_st_devs)
+        inv_Sigma <- inv_D %*% inv_R %*% inv_D
+    }
+    
+    force_dsyMatrix(inv_Sigma)
+}
+
+# Helper Functions for CS and AR1 Covariance Structures
+
+##' Get Start Values for Structured Covariance Models
+##' 
+##' @description Helper function to generate start values for CS and AR1 covariance structures.
+##' @param object A covariance structure object (CS or AR1).
+##' @return Numeric vector of start values: variance parameters (1.0) followed by 
+##'   correlation parameter (0.0) if dimension > 1.
+##' @keywords internal
+get_structured_start_values <- function(object) {
+    d <- object@dimension
+    n_v_params <- if (is(object, "HomogeneousVariance")) 1L else d
+    v_starts <- rep(1.0, n_v_params)
+    
+    if (d > 1) {
+        c_starts <- 0.0
+        return(c(v_starts, c_starts))
+    } else {
+        return(v_starts)
+    }
+}
+
+##' Get Lower Bounds for Structured Covariance Models
+##' 
+##' @description Helper function to generate parameter bounds for CS and AR1 covariance structures.
+##' @param object A covariance structure object (CS or AR1).
+##' @return Numeric vector of lower bounds: variance bounds (0) followed by 
+##'   correlation bound (-Inf) if dimension > 1.
+##' @keywords internal
+get_structured_lower_bounds <- function(object) {
+    d <- object@dimension
+    n_v_params <- if (is(object, "HomogeneousVariance")) 1L else d
+    v_low <- rep(0, n_v_params)  # Variance bounds (log scale)
+    
+    if (d > 1) {
+        c_low <- -Inf  # Correlation bound (atanh scale)
+        return(c(v_low, c_low))
+    } else {
+        return(v_low)
+    }
+}
+##' Get 
+get_vech_distance_mapping <- function(d) {
+    # For dimension d, create mapping from vech position to matrix distance
+    mapping <- list()
+    vech_pos <- 1
+    
+    for (j in 1:d) {        # column
+        for (i in j:d) {    # row (lower triangle)
+            distance <- abs(i - j)
+            mapping[[vech_pos]] <- list(
+                matrix_pos = c(i, j),
+                distance = distance,
+                param_index = if (distance == 0) 1 else (1 + distance)  # 1=variance, 2+=correlations
+            )
+            vech_pos <- vech_pos + 1
+        }
+    }
+    
+    return(mapping)
 }
