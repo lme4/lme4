@@ -322,6 +322,44 @@ checkResponse <- function(y, ctrl) {
 ##     res <- napredict(x)
 ## }
 
+##' Helper function to detect structured covariance calls
+##' This is used in create_model_frame_formula
+has_explicit_structured_covariance <- function(formula) {
+    formula_text <- deparse(formula)
+    structured_functions <- c("ar1", "cs", "dcov", "us")
+    
+    for (func in structured_functions) {
+        pattern <- paste0(func, "\\s*\\(")
+        if (grepl(pattern, formula_text)) {
+            return(TRUE)
+        }
+    }
+    
+    return(FALSE)
+}
+
+##' Helper function for conditional model frame construction
+create_model_frame_formula <- function(original_formula) {
+    # Check if formula contains structured covariance calls
+    has_structured_calls <- has_explicit_structured_covariance(original_formula)
+    
+    if (has_structured_calls) {
+        # Use deparse/paste for structured calls (avoids + inside function calls)
+        # This is needed because subbars() breaks structured function calls. 
+        # String manipulation may not be robust to some edge case formulas but
+        # it is the only working solution I have. 
+        all_vars <- all.vars(original_formula)
+        response <- deparse(original_formula[[2]])
+        predictors <- setdiff(all_vars, all.vars(original_formula[[2]]))
+        fr.form <- as.formula(paste(response, "~", paste(predictors, collapse = " + ")))
+    } else {
+        # Use subbars for standard/us calls (preserves grouping variables)
+        fr.form <- reformulas::subbars(original_formula)
+    }
+    
+    return(fr.form)
+}
+
 ##' @rdname modular
 ##' @param control a list giving (for \code{[g]lFormula}) all options (see \code{\link{lmerControl}} for running the model;
 ##' (for \code{mkLmerDevfun,mkGlmerDevfun}) options for inner optimization step;
@@ -366,6 +404,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     RHSForm(formula) <- reformulas::expandDoubleVerts(RHSForm(formula))
     mc$formula <- formula
 
+    ## Standard Model frame setup
     ## (DRY! copied from glFormula)
     m <- match(c("data", "subset", "weights", "na.action", "offset"),
                names(mf), 0L)
@@ -373,14 +412,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- quote(stats::model.frame)
 
-    # Create model frame formula that handles structured covaraince
-    # Use the fixed formula from splitForm + use subbars on JUST the RE terms
-    split_result <- reformulas::splitForm(original_formula, specials = c("ar1", "cs", "us", "dcov"))
-    all_vars <- all.vars(original_formula) 
-
-    response <- deparse(original_formula[[2]])
-    predictors <- setdiff(all_vars, all.vars(original_formula[[2]]))  # Remove response from variables
-    fr.form <- as.formula(paste(response, "~", paste(predictors, collapse = " + ")))
+    ## Conditional model frame constuction 
+    fr.form <- create_model_frame_formula(original_formula)
 
     environment(fr.form) <- environment(formula)
     ## model.frame.default looks for these objects in the environment
@@ -401,10 +434,10 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     n <- nrow(fr)
     
     # Random effects processing with structured covariance support 
-    specials_list <- c("ar1", "cs", "us", "dcov")
+    s4_object_list <- parse_model_formula(original_formula, fr)
 
-    s4_object_list <- parse_model_formula(formula, fr)
-    split_result <- reformulas::splitForm(formula, specials = specials_list)
+    specials_list <- c("ar1", "cs", "us", "dcov")
+    split_result <- reformulas::splitForm(original_formula, specials = specials_list)
 
     reTrms <- reformulas::mkReTrms(split_result$reTrmFormulas, fr, calc.lambdat = FALSE)
     

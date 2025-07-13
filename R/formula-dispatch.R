@@ -42,6 +42,28 @@ create_covariance_object_from_term <- function(type, cnms, add_args_call) {
     return(new(full_class_name, dimension = dimension))
 }
 
+
+# helper
+is_explicit_function_call <- function(add_args_call, function_name) {
+    # Strategy: reformulas::splitForm() provides different metadata for 
+    # explicit vs implicit function calls in the add_args_call parameter
+    
+    if (is.null(add_args_call)) {
+        # NULL indicates implicit assignment (standard lme4 syntax)
+        # as in "(1 + time | group)"
+        return(FALSE)
+    }
+    
+    if (is.call(add_args_call)) {
+        # Language object indicates explicit function call
+        # as in "us(1 + time | group)"
+        call_name <- as.character(add_args_call[[1]])
+        return(call_name == function_name)
+    }
+    
+      return(FALSE)
+}
+
 #' Parse Covariance Structures from a Model Formula
 #'
 #' An internal function that uses `reformulas::splitForm` to parse a model
@@ -56,26 +78,22 @@ create_covariance_object_from_term <- function(type, cnms, add_args_call) {
 #'   random effects are found.
 #' @keywords internal
 parse_model_formula <- function(formula, data) {
-    specials_list <- c("ar1", "cs", "dcov")  # No "us" 
+    specials_list <- c("ar1", "cs","us", "dcov") 
+    
     split_formula <- reformulas::splitForm(formula, specials = specials_list)
     s4_object_list <- list() 
     
     if (!is.null(split_formula$reTrmFormulas)) {
         temp_reTrms <- reformulas::mkReTrms(split_formula$reTrmFormulas, data, calc.lambdat = FALSE)
-        
-        # Convert formula to text to check for explicit function calls
-        formula_text <- deparse(formula)
-        
+                
         for (i in seq_along(split_formula$reTrmClasses)) {
             type <- split_formula$reTrmClasses[i]
             add_args_call <- split_formula$reTrmAddArgs[[i]]
             cnms <- temp_reTrms$cnms[[i]]
             
-            # FILTER: Check if this function was explicitly called in the formula
+           # Check if this function was explicitly called in the formula
             if (type == "us") {
-                # Check if "us(" appears in the original formula
-                if (!grepl("us\\s*\\(", formula_text)) {
-                    # This is implicit us assignment for standard syntax - skip it
+                if (!is_explicit_function_call(add_args_call, "us")) {
                     next
                 }
             }
