@@ -63,7 +63,7 @@ parse_model_formula <- function(formula, data) {
     if (!is.null(split_formula$reTrmFormulas)) {
         temp_reTrms <- reformulas::mkReTrms(split_formula$reTrmFormulas, data, calc.lambdat = FALSE)
         
-        formula_text <- deparse(formula)
+        formula_text <- paste(deparse(formula), collapse = " ") 
         
         for (i in seq_along(split_formula$reTrmClasses)) {
             type <- split_formula$reTrmClasses[i]

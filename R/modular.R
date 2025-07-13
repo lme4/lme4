@@ -325,7 +325,7 @@ checkResponse <- function(y, ctrl) {
 ##' Helper function to detect structured covariance calls
 ##' This is used in create_model_frame_formula
 has_explicit_structured_covariance <- function(formula) {
-    formula_text <- deparse(formula)
+    formula_text <- paste(deparse(formula), collapse = " ") 
     structured_functions <- c("ar1", "cs", "dcov", "us")
     
     for (func in structured_functions) {
