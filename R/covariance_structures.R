@@ -987,11 +987,6 @@ setMethod("get_structure_block_code", "DiagonalCovariance", function(object) {
 })
 
 ##' @rdname InternalCovarianceMethods
-setMethod("get_structure_block_code", "VirtualCovariance", function(object) {
-    c(unknown = 999)
-})
-
-##' @rdname InternalCovarianceMethods
 setMethod("n_extended_parameters", "VirtualCovariance", function(object) {
     n_parameters(object)
 })
@@ -1031,9 +1026,6 @@ setMethod("get_reporting_theta_slice", "HeterogeneousAR1Covariance", function(ob
     theta_slice[1:n_base]
 })
 
-##' @rdname InternalCovarianceMethods
-setGeneric("generate_theta_names", 
-          function(object, group_name, cnms) standardGeneric("generate_theta_names"))
 
 ##' @rdname InternalCovarianceMethods
 setMethod("generate_theta_names", "HomogeneousCSCovariance",
@@ -1086,12 +1078,3 @@ setMethod("generate_theta_names", "UnstructuredCovariance",
              paste(group_name, mm, sep = ".")
          })
 
-##' @rdname InternalCovarianceMethods
-setMethod("generate_theta_names", "VirtualCovariance",
-         function(object, group_name, cnms) {
-             # Fallback method - use standard lme4 naming
-             mm <- outer(cnms, cnms, paste, sep = ".")
-             diag(mm) <- cnms
-             mm <- mm[lower.tri(mm, diag = TRUE)]
-             paste(group_name, mm, sep = ".")
-         })

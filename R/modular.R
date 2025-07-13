@@ -436,7 +436,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     # Random effects processing with structured covariance support 
     s4_object_list <- parse_model_formula(original_formula, fr)
 
-    specials_list <- c("ar1", "cs", "us", "dcov")
+    specials_list <- c("ar1", "cs", "dcov")
     split_result <- reformulas::splitForm(original_formula, specials = specials_list)
 
     reTrms <- reformulas::mkReTrms(split_result$reTrmFormulas, fr, calc.lambdat = FALSE)
