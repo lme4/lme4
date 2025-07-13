@@ -326,7 +326,7 @@ checkResponse <- function(y, ctrl) {
 ##' This is used in create_model_frame_formula
 has_explicit_structured_covariance <- function(formula) {
     formula_text <- paste(deparse(formula), collapse = " ") 
-    structured_functions <- c("ar1", "cs", "dcov", "us")
+    structured_functions <- c("ar1", "cs", "diag", "us")
     
     for (func in structured_functions) {
         pattern <- paste0(func, "\\s*\\(")
@@ -436,7 +436,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     # Random effects processing with structured covariance support 
     s4_object_list <- parse_model_formula(original_formula, fr)
 
-    specials_list <- c("ar1", "cs", "dcov")
+    specials_list <- c("ar1", "cs", "diag")
     split_result <- reformulas::splitForm(original_formula, specials = specials_list)
 
     reTrms <- reformulas::mkReTrms(split_result$reTrmFormulas, fr, calc.lambdat = FALSE)

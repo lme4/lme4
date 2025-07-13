@@ -252,11 +252,11 @@ setMethod("get_structure_type", "HeterogeneousCSCovariance",
 
 ##' @rdname CovarianceMethods
 setMethod("get_structure_type", "HomogeneousDiagonalCovariance",
-          function(object) "dcov")
+          function(object) "diag")
 
 ##' @rdname CovarianceMethods
 setMethod("get_structure_type", "HeterogeneousDiagonalCovariance",
-          function(object) "dcov")
+          function(object) "diag")
 
 # The number of parameters for a given covariance structure is defined as the number
 # of unique, estimated values needed to define its cholesky factor Lambda. 
