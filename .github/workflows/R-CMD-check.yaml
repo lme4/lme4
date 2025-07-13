@@ -1,11 +1,13 @@
 # For help debugging build failures open an issue on the RStudio community with the 'github-actions' tag.
 # https://community.rstudio.com/new-topic?category=Package%20development&tags=github-actions
 # originally from https://deanattali.com/blog/migrating-travis-to-github/
+# 
 on:
   push:
     branches:
       - main
       - master
+      - flexSigma
   pull_request:
     branches:
       - main
@@ -55,29 +57,29 @@ jobs:
         run: |
           sudo apt-get install texlive texlive-latex-base texlive-latex-extra
 
-      - uses: teatimeguest/setup-texlive-action@v3
-        if: runner.os != 'Linux'
-        with:
-          packages: >-
-             scheme-basic
-             inputenc
-             graphicx
-             array
-             colortbl
-             multirow
-             hhline
-             calc
-             tabularx
-             threeparttable
-             wrapfig
-             url
-             hyperref
-             fancyvrb
-             natbib
-             xcolor
-             etoolbox
-             caption
-             adjustbox
+      # - uses: teatimeguest/setup-texlive-action@v3
+      #   if: runner.os != 'Linux'
+      #   with:
+      #     packages: >-
+      #        scheme-basic
+      #        inputenc
+      #        graphicx
+      #        array
+      #        colortbl
+      #        multirow
+      #        hhline
+      #        calc
+      #        tabularx
+      #        threeparttable
+      #        wrapfig
+      #        url
+      #        hyperref
+      #        fancyvrb
+      #        natbib
+      #        xcolor
+      #        etoolbox
+      #        caption
+      #        adjustbox
 
       - uses: r-lib/actions/check-r-package@v2
         env:
