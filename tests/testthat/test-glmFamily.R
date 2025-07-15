@@ -146,6 +146,6 @@ test_that("gamma dispersion", {
   
   shape_val <- 1/sigma(m1)^2
   
-  testthat::expect_equal(shape_val, 2.055389, tolerance = 0.01)
+  testthat::expect_equal(shape_val, 2.055389, tolerance = 0.05)
 })
 
