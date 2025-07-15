@@ -102,7 +102,7 @@
     \item{For Gaussian fits, \code{sigma} specifies the residual
       standard deviation; for Gamma fits, it specifies the square 
       root of the dispersion parameter. The shape
-      parameter can be calculated by \code{1//sigma(fitted_model)^2}.  
+      parameter can be calculated by \code{1/sigma(fitted_model)^2}.  
       For negative binomial fits, the overdispersion parameter is 
       specified via the family, e.g. 
       \code{simulate(..., family=negative.binomial(theta=1.5))}.

@@ -1,5 +1,5 @@
 library("testthat")
-## library("lme4")
+library("lme4") # Needed for last test.
 
 eps <- .Machine$double.eps
 oneMeps <- 1 - eps
@@ -129,3 +129,23 @@ test_that("variance", {
       expect_error(bfam$setTheta(2))#, "setTheta applies only to negative binomial")
     }
     })
+
+context("Dispersion for Gamma")
+test_that("gamma dispersion", {
+  
+  set.seed(1)
+  
+  shape_gam <- 2
+  b <- rnorm(50)
+  eta <- 1 + b
+  mu <- exp(eta)
+  y <- rgamma(nrow(dd), shape = shape_gam, scale = mu/2)
+  dd2 <- data.frame(dd, y)
+  
+  m1 <- glmer(y ~ 1 + (1|group), family = Gamma(link = "log"), data = dd2)
+  
+  shape_val <- 1/sigma(m1)^2
+  
+  testthat::expect_equal(shape_val, 2.055389, tolerance = 0.01)
+})
+
