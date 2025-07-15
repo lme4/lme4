@@ -322,41 +322,23 @@ checkResponse <- function(y, ctrl) {
 ##     res <- napredict(x)
 ## }
 
-##' Helper function to detect structured covariance calls
-##' This is used in create_model_frame_formula
-has_explicit_structured_covariance <- function(formula) {
-    formula_text <- paste(deparse(formula), collapse = " ") 
-    structured_functions <- c("ar1", "cs", "diag", "us")
-    
-    for (func in structured_functions) {
-        pattern <- paste0(func, "\\s*\\(")
-        if (grepl(pattern, formula_text)) {
-            return(TRUE)
-        }
-    }
-    
-    return(FALSE)
-}
-
-##' Helper function for conditional model frame construction
+##' Helper function for model frame construction
+##'
+##' Step 1: sub_specials transforms cs(x|group) -> cs(x + group)
+##' Step 2: noSpecials with delete=FALSE removes wrapper but keeps terms -> (x + group)
+##'
+##' Uses reformulas::sub_specials + noSpecials 
+##'
+##' 
+##' @param original_formula The original model formula
+##' @return A formula safe for model.frame() that preserves term structure
 create_model_frame_formula <- function(original_formula) {
-    # Check if formula contains structured covariance calls
-    has_structured_calls <- has_explicit_structured_covariance(original_formula)
-    
-    if (has_structured_calls) {
-        # Use deparse/paste for structured calls (avoids + inside function calls)
-        # This is needed because subbars() breaks structured function calls. 
-        # String manipulation may not be robust to some edge case formulas but
-        # it is the only working solution I have. 
-        all_vars <- all.vars(original_formula)
-        response <- deparse(original_formula[[2]])
-        predictors <- setdiff(all_vars, all.vars(original_formula[[2]]))
-        fr.form <- as.formula(paste(response, "~", paste(predictors, collapse = " + ")))
-    } else {
-        # Use subbars for standard/us calls (preserves grouping variables)
-        fr.form <- reformulas::subbars(original_formula)
-    }
-    
+    specials_list <- c("ar1", "cs", "diag", "us")
+        fr.form <- reformulas::noSpecials(
+        reformulas::sub_specials(original_formula), 
+        delete = FALSE, 
+        specials = specials_list
+    )   
     return(fr.form)
 }
 
@@ -436,7 +418,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     # Random effects processing with structured covariance support 
     s4_object_list <- parse_model_formula(original_formula, fr)
 
-    specials_list <- c("ar1", "cs", "diag")
+    specials_list <- c("ar1", "cs", "diag", "us")
     split_result <- reformulas::splitForm(original_formula, specials = specials_list)
 
     reTrms <- reformulas::mkReTrms(split_result$reTrmFormulas, fr, calc.lambdat = FALSE)
