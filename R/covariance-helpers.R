@@ -1,6 +1,36 @@
 #
-# Helper Functions for Covariance Structures (Refactored)
+# Helper Functions for Covariance Structures
 
+
+##' Forward CS transformation: theta -> rho 
+cs_theta_to_rho <- function(theta,n) {
+    a <- 1 / (n-1)
+    rho <- plogis(theta) * (1 + a) - a 
+    
+    return(rho)
+} 
+
+##' Inverse CS transformation: rho -> theta 
+cs_rho_to_theta <- function(rho, n) {
+    a <- 1 / (n - 1)
+    theta <- qlogis((rho + a) / (1 + a))
+
+    return(theta)
+}
+
+##' Forward AR1 transformation: theta -> rho
+ar1_theta_to_rho <- function(theta) {
+    rho <- theta / sqrt(1 + theta^2
+    
+    return(rho)
+}
+
+##' Inverse AR1 transformation: rho -> theta
+ar1_rho_to_theta <- function(rho) {
+    theta <- rho / sqrt(1 - rho^2)
+
+    return(theta)
+}
 
 ##' @title Get Vech Diagonal Indices
 ##'
