@@ -502,12 +502,12 @@ setMethod("needs_parameter_expansion", "VirtualCovariance", function(object) {
 
 ##' @rdname InternalCovarianceMethods
 setMethod("needs_parameter_expansion", "HomogeneousAR1Covariance", function(object) {
-    TRUE
+    object@dimension > 2
 })
 
 ##' @rdname InternalCovarianceMethods
 setMethod("needs_parameter_expansion", "HeterogeneousAR1Covariance", function(object) {
-    TRUE
+    object@dimension > 2 
 })
 
 ##' @rdname InternalCovarianceMethods
