@@ -521,7 +521,8 @@ setMethod("expand_parameters_for_optimization", "HomogeneousAR1Covariance", func
     sigma_param <- theta_subset[1]   # log(sigma)
     rho_param <- theta_subset[2]     # atanh(rho) 
     
-    rho <- tanh(rho_param) # rho
+    
+    rho <- ar1_rho_to_theta(rho_param) # rho
     
     # Get distance from diagonal to element 
     distance_map <- get_vech_distance_mapping(d)
@@ -532,7 +533,7 @@ setMethod("expand_parameters_for_optimization", "HomogeneousAR1Covariance", func
     expanded_theta <- c(sigma_param)  
     for (dist in 1:max_distance) {
         rho_dist <- rho^dist
-        expanded_theta <- c(expanded_theta, atanh(rho_dist))
+        expanded_theta <- c(expanded_theta, ar1_rho_to_theta(rho_dist))
     }
     
     expanded_lind <- sapply(distance_map, function(pos_info) {
@@ -552,7 +553,7 @@ setMethod("expand_parameters_for_optimization", "HeterogeneousAR1Covariance", fu
     sigma_params <- theta_subset[1:d]    # log(sigma_1), log(sigma_2), ..., log(sigma_d)
     rho_param <- theta_subset[d + 1]     # atanh(rho)
 
-    rho <- tanh(rho_param)
+    rho <- ar1_rho_to_theta(rho_param)
 
     distance_map <- get_vech_distance_mapping(d)
     unique_distances <- unique(sapply(distance_map, function(x) x$distance))
@@ -561,7 +562,7 @@ setMethod("expand_parameters_for_optimization", "HeterogeneousAR1Covariance", fu
     expanded_theta <- sigma_params
     for (dist in 1:max_distance) {
         rho_dist <- rho^dist
-        expanded_theta <- c(expanded_theta, atanh(rho_dist))
+        expanded_theta <- c(expanded_theta, ar1_rho_to_theta(rho_dist))
     }
 
         # variances map to positions 1:d, correlations map to (d+1), (d+2), ...
@@ -600,7 +601,7 @@ setMethod("compute_lambdat_x", "HomogeneousCSCovariance", function(object, theta
     if (d == 0) return(numeric(0))
 
     sigma_re <- exp(0.5 * theta[1])
-    rho <- tanh(theta[2])
+    rho <- cs_theta_to_rho(theta[2], d)
 
     R <- matrix(rho, d, d)
     diag(R) <- 1.0
@@ -617,7 +618,7 @@ setMethod("compute_lambdat_x", "HeterogeneousCSCovariance", function(object, the
     if (d == 1) return(exp(0.5 * theta[1]))
 
     st_devs <- exp(0.5 * theta[1:d])
-    rho <- tanh(theta[d + 1])
+    rho <- cs_theta_to_rho(theta[d + 1], d)
 
     R <- matrix(rho, d, d)
     diag(R) <- 1.0
@@ -636,7 +637,7 @@ setMethod("compute_lambdat_x", "HomogeneousAR1Covariance", function(object, thet
     if (d == 0) return(numeric(0))
 
     sigma_re <- exp(0.5 * theta[1])
-    rho <- tanh(theta[2])
+    rho <- ar1_theta_to_rho(theta[2])
 
     L <- matrix(0, d, d)
     
@@ -660,7 +661,7 @@ setMethod("compute_lambdat_x", "HeterogeneousAR1Covariance", function(object, th
     if (d == 1) return(exp(0.5 * theta[1]))
 
     st_devs <- exp(0.5 * theta[1:d])
-    rho <- tanh(theta[d + 1])
+    rho <- ar1_theta_to_rho(theta[d + 1])
 
     L_corr <- matrix(0, d, d)
     first_col_corr <- rho^(0:(d - 1))
@@ -697,7 +698,7 @@ setMethod("compute_correlation_matrix", "DiagonalCovariance", function(object) {
 setMethod("compute_correlation_matrix", "CSCovariance", function(object) {
     d <- object@dimension
     if (d == 1) return(Diagonal(1))
-    rho <- tanh(object@cparameters[1])
+    rho <- cs_theta_to_rho(object@cparameters[1], d)
     R <- Matrix(rho, nrow = d, ncol = d)
     diag(R) <- 1
     
@@ -707,7 +708,7 @@ setMethod("compute_correlation_matrix", "CSCovariance", function(object) {
 setMethod("compute_correlation_matrix", "AR1Covariance", function(object) {
     d <- object@dimension
     if (d == 1) return(Diagonal(d))
-    rho <- tanh(object@cparameters[1])
+    rho <- ar1_theta_to_rho(object@cparameters[1])
     time_diffs <- abs(outer(1:d, 1:d, "-"))
     R <- rho^time_diffs
 
@@ -897,7 +898,7 @@ setMethod("get_interpretable_parameters", "CSCovariance", function(object) {
         params$st_devs <- exp(0.5 * object@vparameters)
     }
     if (length(object@cparameters) > 0) {
-        params$correlation <- tanh(object@cparameters[1])
+        params$correlation <- cs_theta_to_rho(object@cparameters[1], object@dimension)
     }
     
     return(params)

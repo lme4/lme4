@@ -4,9 +4,9 @@
 
 ##' Forward CS transformation: theta -> rho 
 cs_theta_to_rho <- function(theta,n) {
-    a <- 1 / (n-1)
+    a <- 1/(n-1)
     rho <- plogis(theta) * (1 + a) - a 
-    
+    cat("DEBUG: cs_theta_to_rho called with theta=", theta, ", n=", n, ", rho=", rho, "\n")
     return(rho)
 } 
 
@@ -20,7 +20,7 @@ cs_rho_to_theta <- function(rho, n) {
 
 ##' Forward AR1 transformation: theta -> rho
 ar1_theta_to_rho <- function(theta) {
-    rho <- theta / sqrt(1 + theta^2
+    rho <- theta / sqrt(1 + theta^2)
     
     return(rho)
 }
