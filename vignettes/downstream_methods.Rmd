@@ -1,0 +1,534 @@
+---
+title: "Downstream methods"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{Downstream methods}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+Many packages provide tools for downstream processing --- e.g.  plot diagnostics, model comparisons, visual plotting, and regression tables -- that are compatible with `merMod` objects. This vignette provides instructions on some recommended packages with examples. Rather than attempting an exhaustive survey, We aimed to include the more popular packages.
+
+## Diagnostic Plots
+
+While `plot(merMod_object)` provides some diagnostic plots (see `?lme4::plot.merMod`), other packages provide more complete functionality.
+
+This section emphasizes the `performance` and `DHARMa` package.
+
+```{r}
+#| message: false
+#| warning: false
+library(lme4)
+# Example of a linear mixed-effects model (LMM)
+mod_ss <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+# Assume a non-mixed model for comparison
+mod_ss2 <- lm(Reaction ~ Days, sleepstudy)
+
+# Another (LMM) example, and others for comparison
+mod_cw = lmer(weight ~ Time + Diet + (1|Chick), data = ChickWeight, REML = FALSE)
+mod_cw2 = lm(weight ~ Time + Diet, data = ChickWeight)
+mod_cw3 = lmer(weight ~ Time + (1|Chick), data = ChickWeight, REML = FALSE)
+
+# Example of a Poisson generalized linear mixed-effects model (GLMM)
+form <- TICKS~YEAR+HEIGHT+(1|BROOD)+(1|INDEX)+(1|LOCATION)
+mod_gt  <- glmer(form, family="poisson",data=grouseticks)
+```
+
+## Performance
+
+The [performance](https://easystats.github.io/performance/) package is excellent for evaluating the quality of model fit and works well with `merMod` objects (and many others). The first example we'll show is `performance::check_model()`, which does checks for classical assumptions used for most linear models: normality of residuals, linear relationship, homogeneity of variance, outliers. 
+
+For mixed-effect models, it also checks for normality of random effects. The uncommonly used posterior predictive checks is meant to see whether the distributional family used fits well to the data.
+
+```{r, eval = require('performance'), message=FALSE, warning=FALSE, fig.width=8, fig.height=6, dpi=96}
+performance::check_model(mod_ss)
+```
+
+For those working with mixed models, it may important to check whether some dimensions of the variance-covariance are estimated to be zero.
+
+```{r, eval = require('performance')}
+performance::check_singularity(mod_ss)
+```
+
+## `DHARMa`
+
+The [DHARMa](https://cran.r-project.org/web/packages/DHARMa/vignettes/DHARMa.html) package uses a simulation-based method for residual checks for generalized linear (mixed) models. 
+
+```{r, eval = require('DHARMa'), message=FALSE, warning=FALSE, fig.width=7, fig.height=5, dpi=96}
+simulationOutput <- DHARMa::simulateResiduals(fittedModel = mod_ss)
+plot(simulationOutput)
+```
+
+The left plot performs three tests, the Kolmogorov–Smirnov test, simulation-based dispersion tests (see `??DHARMa::testDispersion`), and simulation-based outlier tests (see `??DHARMa::testOutliers`).
+
+## `car` 
+
+The [car](https://CRAN.R-project.org/package=car) package was designed for "An R Companion to Applied Regression" to provide functions that are applied to a fitted regression model. The `car::influencePlot()` creates a diagnostic bubble plot that visualizes influential observations in a regression by plotting Studentized residuals against leverage (hat values), with bubble size representing Cook's distance.
+
+```{r, eval = require('car'), message=FALSE, warning=FALSE, fig.width=7, fig.height=5, dpi=96}
+car::influencePlot(mod_ss)
+```
+
+# Model Comparison & Performance
+
+Most model comparisons for `merMod` objects will focus on the fixed effects, and the ones shown will be just for fixed effects unless otherwise stated.
+
+## `performance`
+
+```{r, eval = require('performance')}
+performance::model_performance(mod_ss)
+```
+
+We can also use `performance::compare_performance()`.
+
+```{r, eval = require('performance')}
+performance::compare_performance(mod_ss, mod_ss2)
+```
+
+## `pbkrtest`
+
+The [pbkrtest](https://hojsgaard.github.io/pbkrtest/index.html) package implements three tests to examine fixed effects from linear mixed-effects models (LMM):
+- Parametric bootstrap test `pbkrtest::PBmodcomp()`
+- Kenward-Roger-type F-test `pbkrtest::KRmodcomp()`
+- Satterthwaite-type F-test `pbkrtest::SATmodcomp()`
+
+```{r, eval = require('pbkrtest')}
+fm0 <- lmer(weight ~ Time + (1|Chick), data = ChickWeight)
+fm1 <- update(fm0, .~.-Time)
+
+pbkrtest::PBmodcomp(fm0, fm1)
+pbkrtest::KRmodcomp(fm0, fm1)
+pbkrtest::SATmodcomp(fm0, fm1)
+```
+
+Note: the `pbkrtest::KRmodcomp()` function was package was intended for `lmerMod` objects only, as the Kenward-Roger-type F-test was designed for fitted linear mixed models.
+
+## MuMIn
+
+The [MuMIn](https://cran.r-universe.dev/MuMIn/doc/manual.html) package provides tools for model selection by automating the process through subsets of the maximum model.
+
+```{r, eval = require('MuMIn'), message = FALSE, warning = FALSE}
+options(na.action = "na.fail")
+
+mumin_compare = MuMIn::dredge(mod_cw)
+mumin_compare
+```
+
+`MuMIn::dredge()` doesn't print the fitted model object, so to find which the labelled models 1, 2, etc., correspond to, use `get.models(mumin_compare, subset = TRUE)`. The output tends to be long and is omitted for space reasons. 
+
+## RLRsim
+
+A common way to test the significance of random effects is through a likelihood ratio test. The [RLRsim](https://github.com/fabian-s/RLRsim) package includes fast simulation-based exact tests that is compatible with `lmerMod` objects.
+
+```{r, eval = require('RLRsim')}
+# First model is one with the random effects,
+# the second is must be a lm-object.
+RLRsim::exactLRT(m = mod_cw, m0 = mod_cw2)
+```
+
+## Multcomp
+
+The [multcomp](https://multcomp.r-forge.r-project.org/) package was designed for performing general linear hypotheses in parametric models.
+
+```{r, eval = require('multcomp')}
+glh_cw = multcomp::glht(mod_cw)
+summary(glh_cw)
+```
+
+We can also look at confidence intervals for the pairwise difference between groups:
+
+```{r, eval = require('multcomp'), fig.width=6.5, fig.height=4, dpi=100}
+plot(glh_cw)
+```
+
+## Car
+
+`car::Anova()` can be used traditional ANOVA-style tables using Wald $\chi^{2}$ statistics on the fixed effects only.
+
+```{r, eval = require('car')}
+car::Anova(mod_cw)
+```
+
+## Insight
+
+As its name suggests, the [insight](https://easystats.github.io/insight/index.html) package was designed to easily gather information from statistical models from a variety of different object types. Their documentation already covers examples of `merMod` objects [here](https://easystats.github.io/insight/articles/insight.html#examples).
+
+# Plotting & Prediction
+
+When interpreting results, we may be interested in seeing the coefficient plots or effect plots. Usually, the first step requires predicting the response and then fitting the model (using `plot()` or `ggplot()`).
+
+```{r, eval=require('ggplot2')}
+library(ggplot2)
+```
+
+## Dotwhisker
+
+The [dotwhisker](https://fsolt.org/dotwhisker/) package was designed to easily make dot-and-whisker plots from regression results. We recommend scaling by two standard deviations as recommended by [Gelman (2008).](https://doi.org/10.1002/sim.3107).
+
+```{r, eval=require('dotwhisker'), message=FALSE, warning=FALSE, fig.width=4, fig.height=2.4, dpi=150}
+
+effects_gt <- broom.mixed::tidy(mod_cw, effect = "fixed", conf.int = TRUE)
+
+dotwhisker::dwplot(effects_gt, by_2sd = TRUE)
+```
+
+Notice that we combined the usage of [broom.mixed](https://github.com/bbolker/broom.mixed) package to extract the fixed effects (for the dot-and-whisker plots). Details can be found by clicking the url for broom.mixed or see [this section.](#broom-and-broom.mixed)
+
+## Emmeans
+
+As its name implies, the [emmeans](https://rvlenth.github.io/emmeans/) package obtains the estimated marginal means.
+
+More details and examples for `lmerMod` objects can be found [here.](https://cran.r-project.org/web/packages/emmeans/vignettes/sophisticated.html)
+```{r, eval = require('emmeans'), message=FALSE, warning=FALSE, fig.width=4, fig.height=2.4, dpi=150}
+plot(emmeans::emmeans(mod_cw, "Diet"))
+```
+
+## SjPlot
+
+The [sjPlot](https://strengejacke.github.io/sjPlot/) package was built for easier plotting and table outputs. 
+
+```{r, eval = require('sjPlot'), message=FALSE, warning=FALSE, fig.width=4, fig.height=2.4, dpi=150}
+sjPlot::plot_model(mod_cw)
+```
+
+## ggEffects
+
+The [ggEffects](https://strengejacke.github.io/ggeffects/) package also computes the marginal effects, returning ready-to-graph results via the [ggplot2](https://ggplot2.tidyverse.org/) package.
+
+The [ggEffects documentation](https://strengejacke.github.io/ggeffects/articles/introduction_randomeffects.html) already includes more details and examples for `lmerMod` objects.
+
+```{r, eval = require('ggEffects'), message=FALSE, warning=FALSE, fig.width=4, fig.height=2.4, dpi=150}
+predict_ss <- ggeffects::predict_response(mod_ss, "Days [0:9]")
+ggplot(predict_ss, aes(x, predicted)) +
+  geom_line() + labs(x = "Days", y = "Predicted Reaction") +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.1)
+```
+
+The ggEffects package is supposed to be superseded by [modelbased](https://easystats.github.io/modelbased/), however, it may run errors when using `lmerMod` objects.
+
+## Marginaleffects
+
+As its package name implies, the goal of [marginaleffects](https://marginaleffects.com/) is to compute the marginal means as well as various other model comparisons for a lot of different classes, `merMod` objects being one of them.
+
+More details and examples for mixed models can be found [here.](https://marginaleffects.com/bonus/lme4.html)
+
+```{r, eval = require('marginaleffects'),message=FALSE, warning=FALSE, fig.width=4, fig.height=2.4, dpi=150}
+library(marginaleffects)
+# Note: datagrid depends on marginaleffects
+
+pred_ss <- predictions(mod_ss, newdata = datagrid(Days = 0:9))
+# Plot using ggplot2
+ggplot(pred_ss, aes(x = Days, y = estimate)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.1) +
+  labs(x = "Days", y = "Predicted Reaction")
+```
+
+# Formatted Regression Tables
+
+Although the output can easily be seen by applying `summary()` to the `merMod` object, it can be useful to use packages that automatically format the results nicely into $\LaTeX$, HTML, and text output. There are many such functions that appear to be compatiable with `merMod` objects.
+
+In this section, we display the code (though it is not executed) along with the resulting HTML output. The corresponding versions for $\LaTeX$ and plain text are equally straightforward.
+
+## SjPlot
+
+The [sjPlot](https://strengejacke.github.io/sjPlot/) package can be used for table outputs in HTML. There is a fantastic example written in their documentation [here.](https://strengejacke.github.io/sjPlot/articles/tab_model_robust.html?q=lme4#robust-covariance-matrix-estimation-for-mixed-models)
+
+## Parameters
+
+The [Parameters](https://easystats.github.io/parameters/index.html) package, as its name suggests, extracts parameters from a fitted model. Their own documentation also includes examples of mixed models from lme4 [here.](https://easystats.github.io/parameters/index.html) and exact table formatting can be found [here.](https://easystats.github.io/parameters/articles/model_parameters_formatting.html)
+
+## Huxtable
+
+The [Huxtable](https://hughjonesd.github.io/huxtable/) package can be used to create $\LaTeX$ (see `huxtable::print_latex()`) and HTML (see `huxtable::print_html()`) output.  
+
+```{r, eval = FALSE}
+h_tab = huxtable::huxreg(mod_ss)
+huxtable::print_html(h_tab) 
+```
+
+<table class="huxtable" data-quarto-disable-processing="true" style="border-collapse: collapse; border: 0px; margin-bottom: 2em; margin-top: 2em; ; margin-left: auto; margin-right: auto;  ">
+<col><col><tr>
+<th style="vertical-align: top; text-align: center; white-space: normal; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><th style="vertical-align: top; text-align: center; white-space: normal; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0.4pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(1)</th></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(Intercept)</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0.4pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">251.405&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(6.825)</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">Days</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">10.467&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(1.546)</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">sd__(Intercept)</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">24.741&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(NA)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">cor__(Intercept).Days</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">0.066&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(NA)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">sd__Days</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">5.922&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(NA)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">sd__Observation</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">25.592&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(NA)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">N</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0.4pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">180&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">logLik</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">-871.814&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">AIC</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">1755.628&nbsp;</td></tr>
+<tr>
+<th colspan="2" style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"> *** p &lt; 0.001;  ** p &lt; 0.01;  * p &lt; 0.05.</th></tr>
+</table>
+
+## Stargazer
+
+[Stargazer](https://cran.r-project.org/web/packages/stargazer/index.html) was intended to create well formatted regression tables in $\LaTeX$, HTML/CSS, and plain text. 
+
+```{r, eval = FALSE}
+stargazer::stargazer(mod_ss, type = "html") # use type = "latex" for LaTeX
+```
+
+<table style="text-align:center"><tr><td colspan="2" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left"></td><td><em>Dependent variable:</em></td></tr>
+<tr><td></td><td colspan="1" style="border-bottom: 1px solid black"></td></tr>
+<tr><td style="text-align:left"></td><td>Reaction</td></tr>
+<tr><td colspan="2" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">Days</td><td>10.467<sup>***</sup></td></tr>
+<tr><td style="text-align:left"></td><td>(1.546)</td></tr>
+<tr><td style="text-align:left"></td><td></td></tr>
+<tr><td style="text-align:left">Constant</td><td>251.405<sup>***</sup></td></tr>
+<tr><td style="text-align:left"></td><td>(6.825)</td></tr>
+<tr><td style="text-align:left"></td><td></td></tr>
+<tr><td colspan="2" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">Observations</td><td>180</td></tr>
+<tr><td style="text-align:left">Log Likelihood</td><td>-871.814</td></tr>
+<tr><td style="text-align:left">Akaike Inf. Crit.</td><td>1,755.628</td></tr>
+<tr><td style="text-align:left">Bayesian Inf. Crit.</td><td>1,774.786</td></tr>
+<tr><td colspan="2" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left"><em>Note:</em></td><td style="text-align:right"><sup>*</sup>p<0.1; <sup>**</sup>p<0.05; <sup>***</sup>p<0.01</td></tr>
+</table>
+
+## Texreg
+
+We could also use the [texreg](https://leifeld.r-universe.dev/texreg) package to create $\LaTeX$ `texreg::texreg()` and HTML `texreg::htmlreg()` tables.
+
+```{r, eval = FALSE}
+texreg::htmlreg(mod_ss)
+```
+
+<table class="texreg" style="margin: 10px auto;border-collapse: collapse;border-spacing: 0px;caption-side: bottom;color: #000000;border-top: 2px solid #000000;">
+<caption>Statistical models</caption>
+<thead>
+<tr>
+<th style="padding-left: 5px;padding-right: 5px;">&nbsp;</th>
+<th style="padding-left: 5px;padding-right: 5px;">Model 1</th>
+</tr>
+</thead>
+<tbody>
+<tr style="border-top: 1px solid #000000;">
+<td style="padding-left: 5px;padding-right: 5px;">(Intercept)</td>
+<td style="padding-left: 5px;padding-right: 5px;">251.41<sup>&#42;&#42;&#42;</sup></td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(6.82)</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Days</td>
+<td style="padding-left: 5px;padding-right: 5px;">10.47<sup>&#42;&#42;&#42;</sup></td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">&nbsp;</td>
+<td style="padding-left: 5px;padding-right: 5px;">(1.55)</td>
+</tr>
+<tr style="border-top: 1px solid #000000;">
+<td style="padding-left: 5px;padding-right: 5px;">AIC</td>
+<td style="padding-left: 5px;padding-right: 5px;">1755.63</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">BIC</td>
+<td style="padding-left: 5px;padding-right: 5px;">1774.79</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Log Likelihood</td>
+<td style="padding-left: 5px;padding-right: 5px;">-871.81</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Num. obs.</td>
+<td style="padding-left: 5px;padding-right: 5px;">180</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Num. groups: Subject</td>
+<td style="padding-left: 5px;padding-right: 5px;">18</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Var: Subject (Intercept)</td>
+<td style="padding-left: 5px;padding-right: 5px;">612.10</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Var: Subject Days</td>
+<td style="padding-left: 5px;padding-right: 5px;">35.07</td>
+</tr>
+<tr>
+<td style="padding-left: 5px;padding-right: 5px;">Cov: Subject (Intercept) Days</td>
+<td style="padding-left: 5px;padding-right: 5px;">9.60</td>
+</tr>
+<tr style="border-bottom: 2px solid #000000;">
+<td style="padding-left: 5px;padding-right: 5px;">Var: Residual</td>
+<td style="padding-left: 5px;padding-right: 5px;">654.94</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+<td style="font-size: 0.8em;" colspan="2"><sup>&#42;&#42;&#42;</sup>p &lt; 0.001; <sup>&#42;&#42;</sup>p &lt; 0.01; <sup>&#42;</sup>p &lt; 0.05</td>
+</tr>
+</tfoot>
+</table>
+
+## Memisc
+
+The goal of the [memisc](https://melff.github.io/memisc/) package is to make it easier to deal with survey data sets, such as table formatting in $\LaTeX$ (using `memisc::mtable_format_latex()`) and HTML (using `memisc::mtable_format_html()`).
+
+```{r, eval = FALSE}
+mem_tab <- memisc::mtable("Model 1"=mod_cw,"Model 2"=mod_cw2,
+                          "Model 3"=mod_cw3, summary.stats=c("sigma","R-squared","F","p","N"))
+
+memisc::mtable_format_html(mem_tab)
+```
+
+<style>
+      table#mtable-3 {
+         border-collapse: collapse; border-style: none; margin: 2ex auto;
+      } 
+      table#mtable-3 tr {
+          border-style: none;
+      } 
+      table#mtable-3 td {
+        padding-top: 1px; 
+        padding-bottom: 1px; 
+        padding-left: 0.5ex; 
+        padding-right: 0.5ex; 
+        margin: 0px; 
+        margin-top: 0px;
+        margin-bottom: 0px;
+        border-style: none; 
+        border-width: 0px; 
+      }
+table#mtable-3 tr:nth-child(1){
+     border-top: 2px solid;
+}
+
+table#mtable-3 tr:nth-child(1),
+table#mtable-3 tr:nth-child(11){
+     border-bottom: 1px solid;
+}
+table#mtable-3 tr:nth-child(16){
+     border-bottom: 2px solid;
+} table#mtable-3 td:nth-child(3),
+table#mtable-3 td:nth-child(6),
+table#mtable-3 td:nth-child(9){
+         padding-left: 0px;
+         padding-right: 0px;
+         text-align: center; 
+         /*background-color: blue;*/
+        } table#mtable-3 td:nth-child(2),
+table#mtable-3 td:nth-child(5),
+table#mtable-3 td:nth-child(8){
+         padding-left: 0.5ex;
+         padding-right: 0px;
+         text-align: right; 
+         /*background-color: red;*/
+        } table#mtable-3 td:nth-child(4),
+table#mtable-3 td:nth-child(7),
+table#mtable-3 td:nth-child(10){
+         padding-left: 0px;
+         padding-right: 0.5ex;
+         text-align: left; 
+         /*background-color: green;*/
+        } 
+table#mtable-3 td:nth-child(n of .header){
+         padding-left: 0.5ex;
+         padding-right: 0.5ex;
+         text-align: center; 
+         /*background-color: gray;*/
+        } 
+</style><table id="mtable-3">
+<tr><td colspan="1" class="header"></td><td colspan="3" class="header">Model 1</td><td colspan="3" class="header">Model 2</td><td colspan="3" class="header">Model 3</td></tr>
+<tr><td>(Intercept)</td><td>11</td><td>.</td><td>244</td><td>10</td><td>.</td><td>924<span class="signif.symbol">**</span></td><td>27</td><td>.</td><td>845<span class="signif.symbol">***</span></td></tr>
+<tr><td></td><td>(5</td><td>.</td><td>789)</td><td>(3</td><td>.</td><td>361)</td><td>(4</td><td>.</td><td>388)</td></tr>
+<tr><td>Time</td><td>8</td><td>.</td><td>717<span class="signif.symbol">***</span></td><td>8</td><td>.</td><td>750<span class="signif.symbol">***</span></td><td>8</td><td>.</td><td>726<span class="signif.symbol">***</span></td></tr>
+<tr><td></td><td>(0</td><td>.</td><td>175)</td><td>(0</td><td>.</td><td>222)</td><td>(0</td><td>.</td><td>176)</td></tr>
+<tr><td>Diet: 2/1</td><td>16</td><td>.</td><td>210</td><td>16</td><td>.</td><td>166<span class="signif.symbol">***</span></td><td></td><td></td><td></td></tr>
+<tr><td></td><td>(9</td><td>.</td><td>464)</td><td>(4</td><td>.</td><td>086)</td><td></td><td></td><td></td></tr>
+<tr><td>Diet: 3/1</td><td>36</td><td>.</td><td>543<span class="signif.symbol">***</span></td><td>36</td><td>.</td><td>499<span class="signif.symbol">***</span></td><td></td><td></td><td></td></tr>
+<tr><td></td><td>(9</td><td>.</td><td>464)</td><td>(4</td><td>.</td><td>086)</td><td></td><td></td><td></td></tr>
+<tr><td>Diet: 4/1</td><td>30</td><td>.</td><td>013<span class="signif.symbol">**</span></td><td>30</td><td>.</td><td>233<span class="signif.symbol">***</span></td><td></td><td></td><td></td></tr>
+<tr><td></td><td>(9</td><td>.</td><td>471)</td><td>(4</td><td>.</td><td>107)</td><td></td><td></td><td></td></tr>
+<tr><td>N</td><td>578</td><td></td><td></td><td>578</td><td></td><td></td><td>578</td><td></td><td></td></tr>
+<tr><td>R-squared</td><td></td><td></td><td></td><td>0</td><td>.</td><td>745</td><td></td><td></td><td></td></tr>
+<tr><td>sigma</td><td></td><td></td><td></td><td>35</td><td>.</td><td>993</td><td></td><td></td><td></td></tr>
+<tr><td>F</td><td></td><td></td><td></td><td>419</td><td>.</td><td>177</td><td></td><td></td><td></td></tr>
+<tr><td>p</td><td></td><td></td><td></td><td>0</td><td>.</td><td>000</td><td></td><td></td><td></td></tr>
+<tr><td colspan="10"><p>Significance: *** = p &lt; 0.001; ** = p &lt; 0.01; * = p &lt; 0.05</p>
+</td></tr>
+</table>
+
+# Other
+
+This section covers other external packages that may be useful but does not fall under the category of previous sections.
+
+## Broom.mixed
+
+The [broom](https://broom.tidymodels.org/) package takes output from built-in functions in R and converts them into a [tibble](https://tibble.tidyverse.org/), which is an alternative to R's built in `data.frame`.
+
+[Broom.mixed](https://cran.r-project.org/web/packages/broom.mixed/index.html) is a spin-off of broom where it takes outputs from outputs from specifically mixed models from various popular mixed model packages, and of course `lme4` is one of them.
+
+```{r, eval = require('broom.mixed')}
+broom.mixed::tidy(mod_ss)
+```
+
+## Equatiomatic
+
+The [equatiomatic](https://datalorax.github.io/equatiomatic/) package takes a fitted model and writes the equation for you, formatted in $\LaTeX$.
+
+```{r, eval = require('equatiomatic')}
+#| eval: false
+equatiomatic::extract_eq(mod_ss)
+```
+
+The output provides $\LaTeX$ code that outputs the following equation:
+$$
+\begin{aligned}
+  \operatorname{Reaction}_{i}  &\sim N \left(\alpha_{j[i]} + \beta_{1j[i]}(\operatorname{Days}), \sigma^2 \right) \\    
+\left(
+  \begin{array}{c} 
+    \begin{aligned}
+      &\alpha_{j} \\
+      &\beta_{1j}
+    \end{aligned}
+  \end{array}
+\right)
+  &\sim N \left(
+\left(
+  \begin{array}{c} 
+    \begin{aligned}
+      &\mu_{\alpha_{j}} \\
+      &\mu_{\beta_{1j}}
+    \end{aligned}
+  \end{array}
+\right)
+, 
+\left(
+  \begin{array}{cc}
+     \sigma^2_{\alpha_{j}} & \rho_{\alpha_{j}\beta_{1j}} \\ 
+     \rho_{\beta_{1j}\alpha_{j}} & \sigma^2_{\beta_{1j}}
+  \end{array}
+\right)
+ \right)
+    \text{, for Subject j = 1,} \dots \text{,J}
+\end{aligned}
+$$
+
+
