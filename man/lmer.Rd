@@ -54,7 +54,7 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
     For \code{glmer} it can include one or both of (1) \code{theta} and
     (2) \emph{either} \code{beta} or \code{fixef} (unless \code{nAGQ=0},
     in which case only \code{theta} can be specified). The \code{theta}
-    parameters are expressed in terms of the scaled Cholesky factor.
+    parameters are on the scale of the (scaled) Cholesky factor.}
 
   \item{verbose}{integer scalar.  If \code{> 0} verbose output is
     generated during the optimization of the parameter estimates.  If
