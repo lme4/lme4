@@ -9,15 +9,13 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-There are many methods from other packages that are compatible with `merMod` objects that others may find useful for plot diagnostics, model comparisons, visual plotting, and regression tables. This vignette provides instructions on some recommended packages with some examples, although this list is far from exhaustive. We aimed to include the more popular packages.
+Many packages provide tools for downstream processing --- e.g.  plot diagnostics, model comparisons, visual plotting, and regression tables -- that are compatible with `merMod` objects. This vignette provides instructions on some recommended packages with examples. Rather than attempting an exhaustive survey, We aimed to include the more popular packages.
 
-For questions regarding how to use (generalized) linear mixed models, see this [FAQ.](https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#introduction)
+## Diagnostic Plots
 
-# Diagnostic Plots
+While `plot(merMod_object)` provides some diagnostic plots (see `?lme4::plot.merMod`), other packages provide more complete functionality.
 
-While diagnostic plots can be evoked by using `plot(merMod_object)` (see `??lme4:plot.merMod`), some of these plots may be supplemented or superseded by functions from other packages. 
-
-This section emphasizes the `performance` and `DHARMa` package, although there are many other examples such as `lattice::qqmath()`.
+This section emphasizes the `performance` and `DHARMa` package.
 
 ```{r}
 #| message: false
@@ -54,7 +52,7 @@ For those working with mixed models, it may important to check whether some dime
 performance::check_singularity(mod_ss)
 ```
 
-## DHARMa
+## `DHARMa`
 
 The [DHARMa](https://cran.r-project.org/web/packages/DHARMa/vignettes/DHARMa.html) package uses a simulation-based method for residual checks for generalized linear (mixed) models. 
 
@@ -65,7 +63,7 @@ plot(simulationOutput)
 
 The left plot performs three tests, the Kolmogorov–Smirnov test, simulation-based dispersion tests (see `??DHARMa::testDispersion`), and simulation-based outlier tests (see `??DHARMa::testOutliers`).
 
-## Car 
+## `car` 
 
 The [car](https://CRAN.R-project.org/package=car) package was designed for "An R Companion to Applied Regression" to provide functions that are applied to a fitted regression model. The `car::influencePlot()` creates a diagnostic bubble plot that visualizes influential observations in a regression by plotting Studentized residuals against leverage (hat values), with bubble size representing Cook's distance.
 
@@ -77,7 +75,7 @@ car::influencePlot(mod_ss)
 
 Most model comparisons for `merMod` objects will focus on the fixed effects, and the ones shown will be just for fixed effects unless otherwise stated.
 
-## Performance
+## `performance`
 
 ```{r, eval = require('performance')}
 performance::model_performance(mod_ss)
@@ -89,7 +87,7 @@ We can also use `performance::compare_performance()`.
 performance::compare_performance(mod_ss, mod_ss2)
 ```
 
-## Pbkrtest
+## `pbkrtest`
 
 The [pbkrtest](https://hojsgaard.github.io/pbkrtest/index.html) package implements three tests to examine fixed effects from linear mixed-effects models (LMM):
 - Parametric bootstrap test `pbkrtest::PBmodcomp()`
