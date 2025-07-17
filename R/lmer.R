@@ -143,16 +143,23 @@ glmer <- function(formula, data=NULL
 
     ## FIXME: perhaps should be in glFormula instead??
     if (is.list(start)) {
-        start.bad <- setdiff(names(start),c("theta","fixef"))
-        if (length(start.bad)>0) {
-            stop(sprintf("bad name(s) for start vector (%s); should be %s and/or %s",
-                         paste(start.bad,collapse=", "),
-                         shQuote("theta"),
-                         shQuote("fixef")),call.=FALSE)
-        }
-        if (!is.null(start$fixef) && nAGQ==0)
-            stop("should not specify both start$fixef and nAGQ==0")
-    }
+      start.bad <- setdiff(names(start), c("theta","fixef", "beta"))
+      if (length(start.bad)>0) {
+        stop(sprintf("bad name(s) for start vector (%s); should be from {%s, %s, %s}",
+                     paste(start.bad,collapse=", "),
+                     shQuote("theta"),
+                     shQuote("fixef"),
+                     shQuote("beta")),
+             call.=FALSE)
+      }
+      ## rename beta -> fixef internally
+      if ("beta" %in% names(start)) {
+        names(start)[names(start) == "beta"] <- "fixef"
+      }
+      if (!is.null(start$fixef) && nAGQ==0) {
+        stop("should not specify both start$fixef (or $beta) and nAGQ==0")
+      }
+}
 
     ## FIX ME: allow calc.derivs, use.last.params etc. if nAGQ=0
     if(control$nAGQ0initStep) {
