@@ -13,6 +13,8 @@
       \code{nobars}, etc.) are still (re-)exported from the package,
       but throw a warning if called directly
       (use e.g. \code{reformulas::findbars(...)} to avoid the warning)
+      \item the \code{start} argument to \code{[g]lmer} now allows
+      'beta' as a synonym for 'fixef' 
     } % itemize
   } % user-visible changes
 } % devel
