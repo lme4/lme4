@@ -50,11 +50,11 @@
 }
 \examples{
 # Doing this directly, we will obtain a singularFit issue:
-gophermod <- glmer(shells ~ factor(year) + prev + offset(log(Area))
+gopher_glmer <- glmer(shells ~ factor(year) + prev + offset(log(Area))
                    + (1|Site), data = gopherdat2, family = "poisson")
 
 # Trying to ignore the singularFit portion:
-gophermod <- glmer(
+gopher_glmer <- glmer(
   shells ~ prev + offset(log(Area)) + factor(year) + (1 | Site), 
   family = poisson,                                               
   data = gopherdat2,                                              
@@ -64,7 +64,15 @@ gophermod <- glmer(
   )
 )
 # Inspecting for the value of the site-level variance                                          
-VarCorr(gophermod)
+VarCorr(gopher_glmer)
 # This suggests we could have obtained similar results from a Poisson GLM
+# Trying to create a simple Poisson GLM:
+gopher_glm <- glm(shells ~ factor(year) + prev + offset(log(Area)),
+                 data = gopherdat2, family = "poisson")
+# Comparing the fixed coefficients, which appear to be identical:
+mod_list = list("glm" = gopher_glm, "glmer" = gopher_glmer)
+purrr::map_dfr(mod_list, ~broom.mixed::tidy(., effects = "fixed"), 
+               .id ="model") |> dplyr::arrange(term)
+# As the table suggests, the estimates are similar.
 }
 \keyword{datasets}
