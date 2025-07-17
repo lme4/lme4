@@ -807,7 +807,7 @@ confint.merMod <- function(object, parm, level = 0.95,
     method <- match.arg(method)
     boot.type <- match.arg(boot.type)
     if (!is.null(oldNames)) {
-      warning("'oldNames' will be deprecated. Please use 'signames' instead.", call. = FALSE)
+      warning("'oldNames' is deprecated. Please use 'signames' instead.", call. = FALSE)
       signames <- oldNames
     }
     ## 'parm' corresponds to 'which' in other contexts
