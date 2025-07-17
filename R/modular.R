@@ -695,7 +695,8 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     ## attach starting coefficients to model frame so we can
     ##  pass them through to mkRespMod -> family()$initialize ...
     if (!missing(start) && is.list(start)) {
-        attr(fr,"start") <- start$fixef
+        fixef <- start$fixef %||% start$beta
+        attr(fr,"start") <- fixef
     }
     n <- nrow(fr)
     ## random effects and terms modules

@@ -49,7 +49,12 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
 
   \item{start}{a named \code{\link{list}} of starting values for the
     parameters in the model.  For \code{lmer} this can be a numeric
-    vector or a list with one component named \code{"theta"}.}
+    vector or a list with one component named \code{theta}, specifying
+    the covariance parameters for the model.
+    For \code{glmer} it can include one or both of (1) \code{theta} and
+    (2) \emph{either} \code{beta} or \code{fixef} (unless \code{nAGQ=0},
+    in which case only \code{theta} can be specified). The \code{theta}
+    parameters are on the scale of the (scaled) Cholesky factor.}
 
   \item{verbose}{integer scalar.  If \code{> 0} verbose output is
     generated during the optimization of the parameter estimates.  If
