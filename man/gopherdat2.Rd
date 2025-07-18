@@ -2,7 +2,7 @@
 \alias{gopherdat2}
 \docType{data}
 \title{
-  Gopher tortoises data
+  Data Counting Gopher tortoises Shell Remains
 }
 \description{
   Data of fresh Gopher tortoise shell remains from Ozgul et al.
@@ -17,7 +17,8 @@
           \item \code{BS} (Big Shoals State Park).
           \item \code{CB} (Camp Blanding Wildlife Management Area).
           \item \code{Cent} (privately-owned property in central Florida).
-          \item \code{CF} (Cecil Field/Branan Field Wildlife and Environmental Area).
+          \item \code{CF} (Cecil Field/Branan Field Wildlife and Environmental 
+            Area).
           \item \code{FC} (Fort Cooper State Park).
           \item \code{FE} (Flying Eagle Wildlife Management Area).
           \item \code{GH} (Gold Head Branch State Park).
@@ -31,7 +32,8 @@
     \item{\code{type}}{a factor determining whether the shell was \code{Fresh} 
       (\code{ <40} months) or \code{Old} (\code{ >40} months).  However,
       this data set only contains \code{Fresh} shells.}
-    \item{\code{Area}}{a numeric vector representing site area (units unknown...)}
+    \item{\code{Area}}{a numeric vector representing site area 
+      (units unknown...)}
     \item{\code{density}}{a numeric vector representing population density.}
     \item{\code{prev}}{a numeric vector representing the seroprevalence 
       (frequency of antibodies to disease) of \emph{M. agassizi}. }
@@ -41,12 +43,14 @@
 %%  ~~ If necessary, more details than the __description__ above ~~
 }
 \source{
-  From Arpat Ozgul, Madan K. Oli, Benjamin M. Bolker, and Carolina Perez-Heydrich.
+  From Arpat Ozgul, Madan K. Oli, Benjamin M. Bolker, and Carolina 
+  Perez-Heydrich.
 }
 \references{
-  Arpat Ozgul, Madan K. Oli, Benjamin M. Bolker, and Carolina Perez-Heydrich (2009)
-  Upper respiratory tract disease, force of infection, and effects on survival of gopher tortoises.
-  \emph{Ecological Applications} \textbf{19}(3), 786--798; \doi{10.1890/08-0219.1}
+  Arpat Ozgul, Madan K. Oli, Benjamin M. Bolker, and Carolina Perez-Heydrich 
+  (2009) Upper respiratory tract disease, force of infection, and effects on 
+  survival of gopher tortoises. \emph{Ecological Applications} \textbf{19}(3), 
+  786--798; \doi{10.1890/08-0219.1}
 }
 \examples{
 # Doing this directly, we will obtain a singularFit issue:
@@ -56,8 +60,8 @@ gopher_glmer <- glmer(shells ~ factor(year) + prev + offset(log(Area))
 # Trying to ignore the singularFit portion:
 gopher_glmer <- glmer(
   shells ~ prev + offset(log(Area)) + factor(year) + (1 | Site), 
+  data = gopherdat2,  
   family = poisson,                                               
-  data = gopherdat2,                                              
   control = glmerControl(                                        
     optimizer = "bobyqa",                                         
     check.conv.singular = .makeCC(action = "ignore", tol = 1e-4) 
