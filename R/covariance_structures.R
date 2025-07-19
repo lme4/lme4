@@ -522,7 +522,7 @@ setMethod("expand_parameters_for_optimization", "HomogeneousAR1Covariance", func
     rho_param <- theta_subset[2]     # atanh(rho) 
     
     
-    rho <- ar1_rho_to_theta(rho_param) # rho
+    rho <- ar1_theta_to_rho(rho_param) # rho
     
     # Get distance from diagonal to element 
     distance_map <- get_vech_distance_mapping(d)
@@ -553,7 +553,7 @@ setMethod("expand_parameters_for_optimization", "HeterogeneousAR1Covariance", fu
     sigma_params <- theta_subset[1:d]    # log(sigma_1), log(sigma_2), ..., log(sigma_d)
     rho_param <- theta_subset[d + 1]     # atanh(rho)
 
-    rho <- ar1_rho_to_theta(rho_param)
+    rho <- ar1_theta_to_rho(rho_param)
 
     distance_map <- get_vech_distance_mapping(d)
     unique_distances <- unique(sapply(distance_map, function(x) x$distance))
