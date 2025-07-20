@@ -744,8 +744,8 @@ setMethod("compute_covariance_matrix", "CSCovariance", function(object, data_con
     R <- compute_correlation_matrix(object)
     
     if (is(object, "HomogeneousVariance")) {
-        sigma_sq <- object@vparameters[1]
-        Sigma <- sigma_sq^2 * R
+        sigma_sq <- exp(object@vparameters[1])
+        Sigma <- sigma_sq * R
     } else {
         st_devs <- object@vparameters
         D <- Diagonal(d, x = st_devs)
@@ -912,7 +912,7 @@ setMethod("get_interpretable_parameters", "AR1Covariance", function(object) {
         params$st_devs <- exp(0.5 * object@vparameters)
     }    
     if (length(object@cparameters) > 0) {
-        params$correlation <- tanh(object@cparameters[1])
+        params$correlation <- ar1_theta_to_rho(object@cparameters[1])
     }
     
     return(params)
