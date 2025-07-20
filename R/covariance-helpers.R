@@ -176,7 +176,7 @@ compute_inverse_structured <- function(object) {
 get_structured_start_values <- function(object) {
     d <- object@dimension
     n_v_params <- if (is(object, "HomogeneousVariance")) 1L else d
-    v_starts <- rep(1.0, n_v_params)
+    v_starts <- rep(0.0, n_v_params)
     
     if (d > 1) {
         c_starts <- 0.0
