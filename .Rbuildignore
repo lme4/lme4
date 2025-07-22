@@ -2,7 +2,7 @@ misc
 testsx
 do-roxy*
 ^.*\.Rproj$
-\.travis\.yml
+\.yml$
 Makefile
 ^\.Rproj\.user$
 build-pkg*
@@ -28,7 +28,7 @@ a4wide.sty
 vignettes/blkarray.sty
 figure/.*
 cache/.*
-README.md
+README.*\.md$
 TODO.md
 R/TAGS
 src/mcmcsamp\.h$
