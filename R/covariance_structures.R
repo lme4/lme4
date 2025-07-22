@@ -747,7 +747,7 @@ setMethod("compute_covariance_matrix", "CSCovariance", function(object, data_con
         sigma_sq <- exp(object@vparameters[1])
         Sigma <- sigma_sq * R
     } else {
-        st_devs <- object@vparameters
+        st_devs <- exp(0.5*object@vparameters)
         D <- Diagonal(d, x = st_devs)
         Sigma <- D %*% R %*% D
     }
