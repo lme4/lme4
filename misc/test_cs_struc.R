@@ -30,6 +30,7 @@ gfit <- glmmTMB::glmmTMB(Reaction ~ Days + cs(Days | Subject), sleepstudy, REML 
 gfit_nll <- c(gfit$obj$fn()) ## 875.9697
 stopifnot(all.equal(gfit_nll, r1$nll))
 gp <- gfit$fit$par
+lme4:::cs_theta_to_rho(0.1629547, 2)
 gp_theta <- gp[names(gp) == "theta"]
 stopifnot(all.equal(unname(exp(gp_theta[1:2])),
                     unname(sqrt(diag(r1$vc$Subject))),
@@ -56,6 +57,7 @@ if (FALSE) {
   sdvec <- exp(0.5*th[1:2]) ## exp(0.5*th[1:2]) ## [1] 1.588954 1.118169
   cs_theta_to_rho(th[d + 1], d)  ## 0.0377 (not 0.08)
   sdvec * sigma(m)  ## replicates the scaled SDs: [1] 40.66421 28.61597
+  ## cs_theta_to_rho called with theta= 0.07556346
 }
 
 ## this doesn't do what we want (treats Days as a factor in random effect?)
