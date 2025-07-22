@@ -68,7 +68,7 @@ nmkbw <- function(fn, par, lower, upper, control) {
 ##' @param verbose print progress messages?
 ##' @param catch.err catch errors?
 ##' @param start_from_mle logical; determines whether to initialize the 
-##'   refitting process using starting values from the model’s mle.
+##'   refitting process using starting values from the model’s MLE.
 ##' @return a list of fitted \code{merMod} objects
 ##' @seealso slice, slice2D in the bbmle package
 ##' @examples
@@ -174,8 +174,10 @@ allFit <- function(object, meth.tab = NULL,
               if (isGLMM(object)) {
                 pars <- getME(object, c("theta", "fixef"))
               } else {
-                # TODO: may need support for nlme and other object types...
                 pars <- getME(object, "theta")
+                if(is.NLMM(object)){
+                  warning("results are not guaranteed when using nlmer")
+                }
               }
             }
             

@@ -18,6 +18,9 @@
       \item changed \code{confint.merMod} to use \code{signames} as an
       argument instead of \code{oldNames} to be consistent with
       \code{profile.merMod}
+      \item added a new argument \code{start_from_mle} to \code{allFit} so
+      the user may initialize the refitting process using starting values 
+      from the model’s MLE.
     } % itemize
   } % user-visible changes
 } % devel
