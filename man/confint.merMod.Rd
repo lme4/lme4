@@ -12,7 +12,7 @@
 	nsim = 500,
         boot.type = c("perc","basic","norm"),
         FUN = NULL, quiet = FALSE,
-	oldNames = TRUE, ...)
+	      oldNames = NULL, signames = TRUE ...)
 \method{confint}{thpr}(object, parm, level = 0.95,
         zeta, non.mono.tol=1e-2,
 	...)
@@ -57,7 +57,7 @@
 }
 \note{
   The default method \code{"profile"} amounts to \preformatted{
-    confint(profile(object, which=parm, signames=oldNames, ...),
+    confint(profile(object, which=parm, ...),
             level, zeta)}
   where the \code{\link{profile}} method \code{\link{profile.merMod}}
   does almost all the computations.  Therefore it is typically
@@ -98,7 +98,7 @@ fm1W
 }
 if (lme4_testlevel() >= 3) {
   system.time(fm1P <- confint(fm1, method="profile", ## <- default
-                              oldNames = FALSE))
+                              signames = FALSE))
   ## --> ~ 2.2 seconds (2022)
   set.seed(123) # (reproducibility when using bootstrap)
   system.time(fm1B <- confint(fm1, method="boot", oldNames=FALSE,

@@ -797,6 +797,7 @@ confint.thpr <- function(object, parm, level = 0.95, zeta,
 ##' @param boot.type bootstrap confidence interval type
 ##' @param quiet (logical) suppress messages about computationally intensive profiling?
 ##' @param signames (logical) use old-style names for \code{method="profile"}? (See \code{signames} argument to \code{\link{profile}}
+##' @param oldNames (logical) deprecated; has the same purpose as the \code{signames} argument.
 ##' @param \dots additional parameters to be passed to  \code{\link{profile.merMod}} or \code{\link{bootMer}}
 ##' @return a numeric table of confidence intervals
 confint.merMod <- function(object, parm, level = 0.95,
