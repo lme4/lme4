@@ -12,7 +12,7 @@
 	nsim = 500,
         boot.type = c("perc","basic","norm"),
         FUN = NULL, quiet = FALSE,
-	      oldNames = NULL, signames = TRUE ...)
+	      oldNames = NULL, signames = TRUE, ...)
 \method{confint}{thpr}(object, parm, level = 0.95,
         zeta, non.mono.tol=1e-2,
 	...)
@@ -45,6 +45,7 @@
     parameters, e.g. \code{.sigNN} rather than newer (more informative) names such as 
     \code{"sd_(Intercept)|Subject"}? (See \code{signames} argument to
     \code{\link{profile}}).}
+  \item{oldNames}{(logical) deprecated; has the same purpose as \code{signames}.}
   \item{non.mono.tol}{tolerance for detecting a non-monotonic profile
     and warning/falling back to linear interpolation}
   \item{\dots}{additional parameters to be passed to
