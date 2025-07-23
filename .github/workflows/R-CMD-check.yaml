@@ -15,8 +15,7 @@ name: R-CMD-check
 
 jobs:
   R-CMD-check:
-    if: |
-      github.event.name == "pull_request" ||
+    if: github.event.name == 'pull_request' ||
        contains(github.event.head_commit.message, '[run ci]')
 
     runs-on: ${{ matrix.config.os }}
