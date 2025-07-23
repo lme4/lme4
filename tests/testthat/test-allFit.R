@@ -1,16 +1,19 @@
 testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
 if (testLevel>1) {
 
-    library("testthat")
-    library("lme4")
-    L <- load(system.file("testdata", "lme-tst-fits.rda",
-                          package="lme4", mustWork=TRUE))
+  library("testthat")
+  library("lme4")
+  L <- load(system.file("testdata", "lme-tst-fits.rda",
+                        package="lme4", mustWork=TRUE))
+  
+  gm_all <- allFit(fit_cbpp_1, verbose=TRUE)
+  gm_all_nostart <- allFit(fit_cbpp_1, verbose=FALSE, start_from_mle = FALSE)
 
-    gm_all <- allFit(fit_cbpp_1, verbose=TRUE)
-    gm_all_nostart <- allFit(fit_cbpp_1, verbose=FALSE, start_from_mle = FALSE)
+  summary(gm_all)$times[,"elapsed"]
+  summary(gm_all_nostart)$times[,"elapsed"]
 
-    summary(gm_all)$times[,"elapsed"]
-    summary(gm_all_nostart)$times[,"elapsed"]
+  sapply(gm_all, function(x) x@optinfo$feval)
+  sapply(gm_all_nostart, function(x) x@optinfo$feval)
 
   ## library(microbenchmark)
   ##  mb1 <- microbenchmark(
