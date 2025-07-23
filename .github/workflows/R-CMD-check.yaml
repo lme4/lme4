@@ -15,7 +15,8 @@ name: R-CMD-check
 
 jobs:
   R-CMD-check:
-    if: "contains(github.event.head_commit.message, '[run ci]')"
+    if: github.event.name == 'pull_request' ||
+       contains(github.event.head_commit.message, '[run ci]')
 
     runs-on: ${{ matrix.config.os }}
 
@@ -35,6 +36,7 @@ jobs:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       RSPM: ${{ matrix.config.rspm }}
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      LME4_TEST_LEVEL: 2
 
     steps:
       - uses: actions/checkout@v3
