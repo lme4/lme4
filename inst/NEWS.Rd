@@ -18,6 +18,10 @@
       \item changed \code{confint.merMod} to use \code{signames} as an
       argument instead of \code{oldNames} to be consistent with
       \code{profile.merMod}
+      \item added a downstream methods vignette, which looks at other
+      methods from other compatiable packages for diagnostics, 
+      model comparison, plots, and regression tables for \code{merMod} 
+      objects
     } % itemize
   } % user-visible changes
 } % devel
