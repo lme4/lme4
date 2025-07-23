@@ -9,7 +9,7 @@ allFit(object, meth.tab = NULL, data = NULL,
        parallel = c("no", "multicore", "snow"),
        ncpus = getOption("allFit.ncpus", 1L), cl = NULL,
        catch.errs = TRUE,
-       start_from_mle = NULL)
+       start_from_mle = TRUE)
 }
 \arguments{
   \item{object}{a fitted model.}

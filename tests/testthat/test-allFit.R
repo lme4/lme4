@@ -6,10 +6,18 @@ if (testLevel>1) {
     L <- load(system.file("testdata", "lme-tst-fits.rda",
                           package="lme4", mustWork=TRUE))
 
-    gm_all <- allFit(fit_cbpp_1, verbose=FALSE)
+    gm_all <- allFit(fit_cbpp_1, verbose=TRUE)
+    gm_all_nostart <- allFit(fit_cbpp_1, verbose=FALSE, start_from_mle = FALSE)
 
+    summary(gm_all)$times[,"elapsed"]
+    summary(gm_all_nostart)$times[,"elapsed"]
 
-    context("Show basic allFit results")
+  ## library(microbenchmark)
+  ##  mb1 <- microbenchmark(
+  ##   start = allFit(fit_cbpp_1, verbose=FALSE),
+  ##   nostart = allFit(fit_cbpp_1, verbose=FALSE, start_from_mle = FALSE)
+  ##  )
+
     test_that("allFit print/summary is fine", {
         expect_is(gm_all, "allFit")
         expect_is(summary(gm_all), "summary.allFit")
@@ -96,7 +104,7 @@ if (testLevel>1) {
         v <- vapply(gm_it10, function(x) as.integer(x@optinfo$feval), FUN.VALUE=1L)
         ## function values are sometimes off a bit (due to initialization or Hessian calculation)
         ##  but close enough ...
-        expect_true(all(v %in% c(10, 11, NA, 18)))
+        expect_true(all(is.na(v) | v < 12))
     })
 
 
