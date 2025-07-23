@@ -67,3 +67,45 @@ lme(Reaction ~ Days,
     random = pdCompSymm( form = ~ Days),
     data = ss,
     method = "ML")
+
+## adapted from https://bbolker.github.io/bbmisc/rtmb_glmm.html
+## https://github.com/bbolker/bbmisc/blob/master/Rmisc/rtmb_glmm.qmd
+library(RTMB)
+library(reformulas)
+form <- Reaction ~ Days + (Days|Subject)
+fr <- model.frame(subbars(form), sleepstudy)
+lf <- mkReTrms(findbars(form), fr = fr, calc.lambdat = FALSE)
+ <- model.matrix(nobars(form), sleepstudy)
+nsubj <- length(unique(sleepstudy$Subject))
+## could start values at/close to glmmTMB cs() fit above ... but
+##  we can make it harder/closer to glmmTMB by starting from worse/
+##  more arbitrary params
+pars <- list(beta = c(0,0), ## fixef(gfit)$cond,
+             betadisp = 0,
+             b = matrix(0, ncol = 2, nrow = nsubj),
+             logsd_b = c(0,0),
+             corpars = 0)
+cdim <- 2 ## global, ugh
+
+nll <- function(pars) {
+  "[<-" <- ADoverload("[<-")
+  getAll(fr, lf, pars)
+  a <- 1/(cdim-1)
+  rho <- (1/(1+exp(-corpars[1])))*(1+a) - a
+  cc <- matrix(rho, cdim, cdim)
+  diag(cc) <- 1
+  sdvec_b <- exp(logsd_b)
+  Sigma <- outer(sdvec_b, sdvec_b, "*") * cc
+  pen <- -1*sum(dmvnorm(b, Sigma = Sigma, log = TRUE))
+  mu <- drop(X %*% beta + t(Zt) %*% c(t(b)))
+  rsd <- exp(betadisp)
+  nll <- -sum(dnorm(model.response(fr), mu, rsd, log = TRUE))
+  return(nll + pen)
+}
+
+## approx same fit as glmmTMB ...
+ff <- MakeADFun(nll, pars, random = "b", silent = TRUE)
+rfit <- with(ff, nlminb(par, fn, gr))
+rfit$par
+getME(gfit, c("beta", "theta"))
+
