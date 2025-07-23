@@ -1,6 +1,6 @@
 \name{allFit}
 \alias{allFit}
-\title{Refit a fitted model with all available optimizers}
+\title{Refit a fitted model with all available optimizers to check convergence}
 \usage{
 allFit(object, meth.tab = NULL, data = NULL,
        verbose = TRUE,
