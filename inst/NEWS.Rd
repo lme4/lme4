@@ -4,7 +4,7 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-37.9000 (2025-05-23)}{
+\section{CHANGES IN VERSION 1.1-37.9000 (2025-07-17)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item \code{lme4} now depends on the \code{reformulas}
@@ -13,6 +13,11 @@
       \code{nobars}, etc.) are still (re-)exported from the package,
       but throw a warning if called directly
       (use e.g. \code{reformulas::findbars(...)} to avoid the warning)
+      \item the \code{start} argument to \code{[g]lmer} now allows
+      'beta' as a synonym for 'fixef' 
+      \item changed \code{confint.merMod} to use \code{signames} as an
+      argument instead of \code{oldNames} to be consistent with
+      \code{profile.merMod}
     } % itemize
   } % user-visible changes
 } % devel
@@ -63,7 +68,7 @@
     }
   } % bug fixes
 
-} % version 1.1-35.6
+} % version 1.1-36
 
 \section{CHANGES IN VERSION 1.1-35.5 (2024-07-03)}{
     \subsection{USER-VISIBLE CHANGES}{

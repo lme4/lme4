@@ -60,6 +60,13 @@ test_that("glmer", {
     expect_equal(x,x3)
     expect_error(update(x, start="a"), stMsg)
     expect_error(update(x, start=list(Theta=1)), "bad name\\(s\\)")
+    ## test fixef/beta synonymy
+    x3B <- suppressWarnings(update(x, start=list(beta = rep(1,4))))
+    x3C <- suppressWarnings(update(x, start=list(fixef = rep(1,4))))
+    ## hack to set calls equal
+    x3B@call <- x3C@call
+    expect_equal(x3B, x3C)
+    ##
     th0 <- getME(x,"theta")
     y <- suppressWarnings(update(x, start=th0)) # expect_equal() fails: optinfo -> derivs -> Hessian
 

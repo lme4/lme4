@@ -57,6 +57,9 @@ jobs:
         run: |
           sudo apt-get install texlive texlive-latex-base texlive-latex-extra
 
+      # LaTeX setup for MacOS. Will need to replace if we ever want to
+      #   run Actions on MacOS again ...
+      #
       # - uses: teatimeguest/setup-texlive-action@v3
       #   if: runner.os != 'Linux'
       #   with:

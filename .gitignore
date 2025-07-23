@@ -15,6 +15,7 @@ inst/testdata/lme-tst-fits.Rout*
 inst/testdata/*testdata*
 tests/*.Rout*
 tests/*.R+*
+tests/testthat/*.R+*
 .Rproj.user
 lme4.Rproj
 .Rhistory
