@@ -21,8 +21,8 @@ allFit(object, meth.tab = NULL, data = NULL,
     }
   }
   \item{data}{data to be included with result (for later debugging etc.)}
-  \item{verbose}{logical: report progress in detail?}
-  \item{show.meth.tab}{logical: return table of methods?}
+  \item{verbose}{(logical) report progress in detail?}
+  \item{show.meth.tab}{(logical) return table of methods?}
   \item{maxfun}{passed as part of \code{optCtrl} to set the maximum
     number of function evaluations: this is \emph{automatically}
     converted to the correct specification (e.g. \code{maxfun},
@@ -38,10 +38,10 @@ allFit(object, meth.tab = NULL, data = NULL,
   \item{cl}{An optional \pkg{parallel} or \pkg{snow} cluster for use if
     \code{parallel = "snow"}.  If not supplied, a cluster on the
     local machine is created for the duration of the \code{boot} call.}
-  \item{catch.errs}{logical: wrap model fits in \code{tryCatch} clause
+  \item{catch.errs}{(logical) wrap model fits in \code{tryCatch} clause
     to skip over errors? (\code{catch.errs=FALSE} is probably only
     useful for debugging).}
-  \item{start_from_mle}{logical: if \code{TRUE}, initialize the 
+  \item{start_from_mle}{(logical) if \code{TRUE}, initialize the 
     refitting process using starting values from the model’s MLE.}
 }
 \value{
