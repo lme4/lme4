@@ -2,7 +2,7 @@
 \title{Make Variance and Correlation Matrices from \code{theta}}
 \alias{mkVarCorr}
 \usage{
-mkVarCorr(sc, cnms, nc, theta, nms)
+mkVarCorr(sc, cnms, nc, theta, nms, structure_info = NULL)
 }
 \description{
   Make variance and correlation matrices from \code{theta}
@@ -14,6 +14,9 @@ mkVarCorr(sc, cnms, nc, theta, nms)
   \item{theta}{theta vector (lower-triangle of Cholesky factors).}
   \item{nms}{component names (FIXME: nms/cnms redundant:
   nms=names(cnms)?)}
+  \item{structure_info}{list containing structure information (from
+    \code{extract_structure_info}), or \code{NULL} for traditional
+    unstructured models}
 }
 \value{
   A \code{\link{matrix}}

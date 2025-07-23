@@ -1,10 +1,3 @@
-library(testthat)
-library(Matrix)
-
-# Load the S4 class definitions and helper functions.
-# source("~/Documents/R/lme4/R/covariance_structures_refactored.R")
-# source("~/Documents/R/lme4/R/covariance-helpers.R")
-
 # Helper function to get a full suite of parameters for a given object
 get_all_test_params <- function(obj) {
     d <- obj@dimension

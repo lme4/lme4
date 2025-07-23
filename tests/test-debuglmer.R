@@ -1,3 +1,4 @@
+library(lme4)
 set.seed(123) # 
 n_subjects <- 20
 n_times <- 5

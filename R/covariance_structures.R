@@ -681,12 +681,6 @@ setMethod("compute_lambdat_x", "HeterogeneousAR1Covariance", function(object, th
           
 # SECTION 5: POST-HOC COMPUTATION & INTERPRETATION METHODS
 
-##' @rdname VirtualComponentClasses
-setClass("VirtualStructuredCovariance", contains = c("VIRTUAL", "VirtualCovariance"))
-setClass("DiagonalCovariance", contains = c("VIRTUAL", "VirtualCovariance", "VirtualStructuredCovariance"))
-setClass("CSCovariance", contains = c("VIRTUAL", "VirtualCovariance", "VirtualStructuredCovariance"))
-setClass("AR1Covariance", contains = c("VIRTUAL", "VirtualCovariance", "VirtualStructuredCovariance"))
-
 ##' @rdname InternalCovarianceMethods
 setMethod("compute_correlation_matrix", "DiagonalCovariance", function(object) {
     d <- object@dimension 

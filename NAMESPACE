@@ -5,7 +5,8 @@ importFrom("graphics", par, plot)
 importFrom("grid", gpar, viewport)
 importFrom("splines", backSpline, interpSpline, periodicSpline)
 importFrom("methods", as, getDataPart, extends, is, new, cbind2, rbind2,
-           show, slot, slotNames, setRefClass, getClass)
+           show, slot, slotNames, setRefClass, getClass,
+           callNextMethod, validObject)
 importFrom("stats",
            AIC, BIC, anova, approx, approxfun,
            as.formula, asOneSidedFormula, ave,
@@ -25,7 +26,8 @@ importFrom("stats",
            resid, residuals, rgamma, rnbinom, rnorm, rpois,
            rstudent,
            runif, sd, setNames, simulate, symnum, terms, terms.formula,
-           update, update.formula, var, vcov, weights)
+           update, update.formula, var, vcov, weights,
+           plogis, qlogis)
 importFrom("utils", flush.console, packageVersion, sessionInfo, stack, str, capture.output)
 if(getRversion() >= "3.5.0") {
     importFrom("utils", warnErrList)
@@ -153,8 +155,13 @@ export(.prt.VC,		.prt.aictab,	.prt.call,	.prt.family,
 
 
 ##------ Our S4 Classes ------------------------
-exportClasses(glmerMod, lmerMod, nlmerMod, merMod)
-exportClasses(lmList4)
+exportClasses(glmerMod, lmerMod, nlmerMod, merMod, lmList4,
+              VirtualCovariance, HomogeneousVariance, HeterogeneousVariance,
+              UnstructuredCovariance,
+              DiagonalCovariance, CSCovariance, AR1Covariance,
+              HomogeneousDiagonalCovariance, HeterogeneousDiagonalCovariance,
+              HomogeneousCSCovariance, HeterogeneousCSCovariance,
+              HomogeneousAR1Covariance, HeterogeneousAR1Covariance)
 
 ##------ Our S4 Generics / Methods --------------
 exportMethods(getL)
