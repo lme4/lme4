@@ -18,6 +18,9 @@
       \item changed \code{confint.merMod} to use \code{signames} as an
       argument instead of \code{oldNames} to be consistent with
       \code{profile.merMod}
+      \item added an argument \code{check.conv.nobsmax} to 
+      \code{merControl()} to denote the threshold for the convergence 
+      checks to be skipped; default is \code{check.conv.nobsmax = 1e4}
     } % itemize
   } % user-visible changes
 } % devel
