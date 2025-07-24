@@ -67,6 +67,7 @@ nmkbw <- function(fn, par, lower, upper, control) {
 ##' - optimizer  the \code{optimizer} function to use
 ##' @param verbose print progress messages?
 ##' @param catch.err catch errors?
+##' @param start_from_mle (logical) initialize the refitting process with starting values from the fitted model?
 ##' @return a list of fitted \code{merMod} objects
 ##' @seealso slice, slice2D in the bbmle package
 ##' @examples
@@ -89,7 +90,8 @@ allFit <- function(object, meth.tab = NULL,
                    parallel = c("no", "multicore", "snow"),
                    ncpus = getOption("allFit.ncpus", 1L),
                    cl = NULL,
-                   catch.errs = TRUE) {
+                   catch.errs = TRUE,
+                   start_from_mle = TRUE) {
 
     if (is.null(meth.tab)) {
         meth.tab <- meth.tab.0
@@ -165,12 +167,33 @@ allFit <- function(object, meth.tab = NULL,
             ctrl <- do.call(if(isGLMM(object)) glmerControl else lmerControl, ctrl)
             ## need to stick ctrl in formula env so it can be found ...
             assign("ctrl", ctrl, environment(formula(object)))
-            if (catch.errs) {
-              tt <- system.time(rr <- tryCatch(update(object, control = ctrl),
-                                               error = function(e) e))
-            } else {
-              tt <- system.time(rr <- update(object, control = ctrl))
+            # Using the MLE as a starting point
+            if (start_from_mle) {
+              if (isGLMM(object)) {
+                pars <- getME(object, c("theta", "fixef"))
+              } else {
+                pars <- getME(object, "theta")
+                if(isNLMM(object)){
+                  warning("results are not guaranteed when using nlmer")
+                }
+              }
+              assign("pars", pars, environment(formula(object)))
             }
+            
+            fit_call <- if (start_from_mle) {
+              quote(update(object, start = pars, control = ctrl))
+            } else {
+              quote(update(object, control = ctrl))
+            }
+            
+            tt <- system.time(
+              rr <- if (catch.errs) {
+                      tryCatch(eval(fit_call), error = function(e) e)
+                    } else {
+                      eval(fit_call)
+                    }
+            )
+
             attr(rr, "optCtrl") <- ctrl$optCtrl # contains crucial info here
             attr(rr, "time") <- tt  # store timing info
             if (verbose) {
