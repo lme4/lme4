@@ -18,19 +18,19 @@
 }
 \usage{
 \method{profile}{merMod}(fitted, which = NULL, alphamax = 0.01,
-	maxpts = 100, delta = NULL,
-    delta.cutoff = 1/8, verbose = 0, devtol = 1e-09,
-    devmatchtol = 1e-5,
-    maxmult = 10, startmethod = "prev", optimizer = NULL,
-    control=NULL, signames = TRUE,
-    parallel = c("no", "multicore", "snow"),
-    ncpus = getOption("profile.ncpus", 1L), cl = NULL,
-    prof.scale = c("sdcor","varcov"),
-    \dots)
-\method{as.data.frame}{thpr} (x, ...)
+        maxpts = 100, delta = NULL,
+        delta.cutoff = 1/8, verbose = 0, devtol = 1e-09,
+        devmatchtol = 1e-5,
+        maxmult = 10, startmethod = "prev", optimizer = NULL,
+        control = NULL, signames = TRUE,
+        parallel = c("no", "multicore", "snow"),
+        ncpus = getOption("profile.ncpus", 1L), cl = NULL,
+        prof.scale = c("sdcor","varcov"),
+        \dots)
+\method{as.data.frame}{thpr}(x, ...)
 \method{log}{thpr}(x, base = exp(1))
 logProf(x, base = exp(1), ranef = TRUE,
-           sigIni = if(ranef) "sig" else "sigma")
+        sigIni = if(ranef) "sig" else "sigma")
 varianceProf(x, ranef = TRUE)
 }
 \arguments{
