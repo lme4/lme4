@@ -40,11 +40,12 @@
     are unavailable because they require additional components to be
     calculated.)}
   \item{quiet}{(logical) suppress messages about computationally intensive profiling?}
-  \item{signames}{(logical) use abbreviated names for variance-covariance 
-    parameters, e.g. \code{.sigNN} rather than newer (more informative) names such as 
-    \code{"sd_(Intercept)|Subject"}? (See \code{signames} argument to
-    \code{\link{profile}}).}
   \item{oldNames}{(logical) deprecated; has the same purpose as \code{signames}.}
+  \item{signames}{(logical) use abbreviated names of the form
+    \code{.sigNN} for variance-covariance parameters rather than more
+    meaningful (but longer) names of the form
+    \code{sd_(Intercept)|Subject}?  See the \code{signames} argument of
+    \code{\link{profile.merMod}}.}
   \item{non.mono.tol}{tolerance for detecting a non-monotonic profile
     and warning/falling back to linear interpolation}
   \item{\dots}{additional parameters to be passed to
