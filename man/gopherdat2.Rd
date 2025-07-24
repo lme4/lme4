@@ -2,7 +2,7 @@
 \alias{gopherdat2}
 \docType{data}
 \title{
-  Data Counting Gopher tortoises Shell Remains
+  Gopher tortoises shell remains
 }
 \description{
   Data of fresh Gopher tortoise shell remains from Ozgul et al.

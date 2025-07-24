@@ -2,7 +2,7 @@
 \alias{culcitalogreg}
 \docType{data}
 \title{
- Coral-Eating Seastar Culcita novaeguineae Dataset
+ Coral-eating seastar Culcita novaeguineae data
 }
 \description{
   This data shows the results from a block design experiment to record the 
@@ -72,9 +72,9 @@
   McKeon, C.S., Stier, A.C., McIlroy, S.E. and Bolker, B.M.
 }
 \references{
-  McKeon, C.S., Stier, A.C., McIlroy, S.E. and Bolker, B.M. Multiple defender effects: 
-  synergistic coral defense by mutualist crustaceans. Oecologia 169, 1095–1103 
-  (2012); \doi{10.1007/s00442-012-2275-2}.
+  McKeon, C.S., Stier, A.C., McIlroy, S.E. and Bolker, B.M. Multiple defender 
+  effects: synergistic coral defense by mutualist crustaceans. Oecologia 169, 
+  1095–1103 (2012); \doi{10.1007/s00442-012-2275-2}.
 }
 \examples{
 cul_mod <- glmer(predation ~ ttt2 + (1|block), data=culcitalogreg,

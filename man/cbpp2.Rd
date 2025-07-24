@@ -1,7 +1,7 @@
 \docType{data}
 \name{cbpp2}
 \alias{cbpp2}
-\title{Contagious bovine pleuropneumonia (Extended Version)}
+\title{Contagious bovine pleuropneumonia (extended version)}
 \description{
   This dataset is an extension of \code{cbpp}, which describes the serological 
   incidence of CBPP (Contagious bovine pleuropneumonia) in zebu cattle during 

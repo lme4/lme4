@@ -18,6 +18,13 @@
       \item changed \code{confint.merMod} to use \code{signames} as an
       argument instead of \code{oldNames} to be consistent with
       \code{profile.merMod}
+      \item added six publically available datasets: \code{cbpp2} 
+      (contagious bovine pleuropneumonia (extended version)), 
+      \code{culcitalogreg} (coral-eating seastar \emph{Culcita novaeguineae}), 
+      \code{gopherdat2} (gopher tortoises shell remains), \code{salamander} 
+      (mountain dusky salamander mating), \code{schizophrenia} (National 
+      Institute of Mental Health schizophrenia collaborative study), and 
+      \code{toenail} (toenail onychomycosis data from dermatophyte infections).
     } % itemize
   } % user-visible changes
 } % devel

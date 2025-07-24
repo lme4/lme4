@@ -2,7 +2,7 @@
 \alias{toenail}
 \docType{data}
 \title{
-  Toenail Onychomycosis Data from Dermatophyte Infections
+  Toenail onychomycosis data from dermatophyte infections
 }
 \description{
   Results of a clinical trial by De Backer et al. (1998) to compare 

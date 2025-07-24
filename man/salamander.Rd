@@ -2,7 +2,7 @@
 \alias{salamander}
 \docType{data}
 \title{
-  Mountain Dusky Salamander Mating Data
+  Mountain dusky salamander mating
 }
 \description{
   S. Arnold and P. Verrell conducted an experiment at the University of 
