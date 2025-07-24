@@ -8,14 +8,13 @@
 }
 \usage{
 \method{confint}{merMod}(object, parm, level = 0.95,
-	method = c("profile", "Wald", "boot"), zeta,
-	nsim = 500,
-        boot.type = c("perc","basic","norm"),
+        method = c("profile", "Wald", "boot"), zeta,
+        nsim = 500,
+        boot.type = c("perc", "basic", "norm"),
         FUN = NULL, quiet = FALSE,
-	      oldNames = NULL, signames = TRUE, ...)
+        oldNames = NULL, signames = TRUE, \dots)
 \method{confint}{thpr}(object, parm, level = 0.95,
-        zeta, non.mono.tol=1e-2,
-	...)
+        zeta, non.mono.tol = 1e-2, \dots)
 }
 
 \arguments{
