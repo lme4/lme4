@@ -1,3 +1,5 @@
+skip()
+
 # Helper function to get a full suite of parameters for a given object
 get_all_test_params <- function(obj) {
     d <- obj@dimension

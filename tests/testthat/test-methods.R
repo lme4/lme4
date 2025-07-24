@@ -328,9 +328,9 @@ test_that("confint", {
                     c("2.5 %", "97.5 %")))
   expect_equal(dimnames(ci1.p),dimnames(ci1.w))
   expect_equal(dimnames(ci1.p),dimnames(ci1.b))
-  ci1.p.n <- suppressWarnings(confint(fm1,quiet=TRUE,oldNames=FALSE))
-  ci1.w.n <- confint(fm1,method="Wald", oldNames=FALSE)
-  ci1.b.n <- CI.boot(fm1, nsim=2, oldNames=FALSE)
+  ci1.p.n <- suppressWarnings(confint(fm1,quiet=TRUE,signames=FALSE))
+  ci1.w.n <- confint(fm1,method="Wald", signames=FALSE)
+  ci1.b.n <- CI.boot(fm1, nsim=2, signames=FALSE)
   expect_equal(dimnames(ci1.p.n),
                list(c("sd_(Intercept)|Subject", "sigma", "(Intercept)", "Days"),
                     c("2.5 %", "97.5 %")))
