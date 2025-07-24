@@ -70,7 +70,7 @@ merControl <-
              ## automatic check-option-checking in
              ## inst/tests/test-lmer.R
              boundary.tol=1e-5,
-             calc.derivs=TRUE,
+             calc.derivs=NULL,
              use.last.params=FALSE,
              sparseX=FALSE,
              standardize.X=FALSE,

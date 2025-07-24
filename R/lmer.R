@@ -47,7 +47,8 @@ lmer <- function(formula, data=NULL, REML = TRUE,
     if (devFunOnly) return(devfun)
     ## optimize deviance function over covariance parameters
     if (identical(control$optimizer,"none"))
-        stop("deprecated use of optimizer=='none'; use NULL instead")
+      stop("deprecated use of optimizer=='none'; use NULL instead")
+    calc.derivs <- control$calc.derivs %||% (nrow(lmod$fr) < control$checkConv$check.conv.nobsmax)
     opt <- if (length(control$optimizer)==0) {
                s <- getStart(start, environment(devfun)$pp)
                list(par=s,fval=devfun(s),
@@ -59,7 +60,7 @@ lmer <- function(formula, data=NULL, REML = TRUE,
                      control = control$optCtrl,
                      verbose=verbose,
                      start=start,
-                     calc.derivs=control$calc.derivs,
+                     calc.derivs=calc.derivs,
                      use.last.params=control$use.last.params)
            }
     cc <- checkConv(attr(opt,"derivs"), opt$par,
@@ -200,10 +201,10 @@ glmer <- function(formula, data=NULL
                              nAGQ=nAGQ,
                              verbose = verbose,
                              stage=2,
-                             calc.derivs=control$calc.derivs,
+                             calc.derivs=calc.derivs,
                              use.last.params=control$use.last.params)
     }
-    cc <- if (!control$calc.derivs) NULL else {
+    cc <- if (!calc.derivs) NULL else {
         if (verbose > 10) cat("checking convergence\n")
         checkConv(attr(opt,"derivs"),opt$par,
                   ctrl = control$checkConv,

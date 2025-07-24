@@ -53,6 +53,7 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE, nobs = NULL)
     ## check absolute gradient (default)
     ccl <- ctrl[[cstr <- "check.conv.grad"]] ; checkCtrlLevels(cstr, cc <- ccl[["action"]])
     wstr <- NULL
+    help_str <- "\n  See ?lme4::convergence and ?lme4::troubleshooting."
     if (doCheck(cc)) {
         scgrad <- tryCatch(with(derivs,solve(chol(Hessian),gradient)),
                            error=function(e)e)
@@ -75,8 +76,7 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE, nobs = NULL)
                 res$code <- -1L
                 wstr <- gettextf("Model failed to converge with max|grad| = %g (tol = %g, component %d)",
                                  maxmingrad, ccl$tol,w)
-                wstr <- paste0(wstr, "\n  Additional convergence checks can lead to false positives.", 
-                               "\n  See: ?lme4::convergence and ?lme4::troubleshooting.")
+                wstr <- paste0(wstr, help_str)
             }
         }
         if (!is.null(wstr)) {
@@ -95,8 +95,7 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE, nobs = NULL)
                 wstr <-
                     gettextf("Model failed to converge with max|relative grad| = %g (tol = %g)",
                              max.rel.grad, ccl$relTol)
-                wstr <- paste0(wstr, "\n  Additional convergence checks can lead to false positives.", 
-                               "\n  See: ?lme4::convergence and ?lme4::troubleshooting.")
+                wstr <- paste0(wstr, help_str)
                 res$messages <- wstr
                 switch(cc,
                        "warning" = warning(wstr),
@@ -155,8 +154,7 @@ checkHess <- function(H, tol, hesstype="") {
                 gettextf(paste("Model failed to converge:",
                                "degenerate",hesstype,"Hessian with %d negative eigenvalues"),
                          negative)
-            res$messages <- paste0(res$messages, "\n  Additional convergence checks can lead to false positives.", 
-                   "\n  See: ?lme4::convergence and ?lme4::troubleshooting.")
+            res$messages <- paste0(res$messages, help_str)
         } else {
             zero <- sum(abs(evd) < tol)
             if(zero || inherits(tryCatch(chol(H), error=function(e)e), "error")) {

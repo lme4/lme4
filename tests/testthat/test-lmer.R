@@ -390,3 +390,22 @@ test_that("update works as expected", {
 	expect_equivalent(fitted(update(m, .~.-(0 + Days | Subject))),
                           fitted(lmer(Reaction ~ Days + (1|Subject), sleepstudy)))
 })
+
+test_that("turn off conv checking for nobs > check.conv.nobsmax", {
+  ## calc derivs and check convergence
+  fm1 <- lmer(Reaction ~ 1 + (1|Days), sleepstudy)
+  nn <- nrow(sleepstudy)-1
+  ## neither derivs nor conv check
+  fm2 <- update(fm1,
+                control = lmerControl(check.conv.nobsmax = nn))
+  ## no conv check, do calc derivs
+  fm3 <- update(fm1, 
+                control = lmerControl(check.conv.nobsmax = nn,
+                                      calc.derivs = TRUE))
+  expect_null(fm2@optinfo$derivs)
+  expect_false(is.null(fm1@optinfo$derivs))
+  expect_false(is.null(fm3@optinfo$derivs))
+  expect_equal(fm1@optinfo$conv$lme4, list())
+  expect_null(fm2@optinfo$conv$lme4)
+  expect_null(fm3@optinfo$conv$lme4)
+})
