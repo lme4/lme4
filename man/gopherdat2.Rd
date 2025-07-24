@@ -29,11 +29,8 @@
       }
     \item{\code{year}}{a numeric vector of the sampling year.}  
     \item{\code{shells}}{a numeric vector of the number of shells found.}
-    \item{\code{type}}{a factor determining whether the shell was \code{Fresh} 
-      (\code{ <40} months) or \code{Old} (\code{ >40} months).  However,
-      this data set only contains \code{Fresh} shells.}
     \item{\code{Area}}{a numeric vector representing site area 
-      (units unknown...)}
+      (units unknown).}
     \item{\code{density}}{a numeric vector representing population density.}
     \item{\code{prev}}{a numeric vector representing the seroprevalence 
       (frequency of antibodies to disease) of \emph{M. agassizi}. }
@@ -49,7 +46,7 @@
 \references{
   Arpat Ozgul, Madan K. Oli, Benjamin M. Bolker, and Carolina Perez-Heydrich 
   (2009) Upper respiratory tract disease, force of infection, and effects on 
-  survival of gopher tortoises. \emph{Ecological Applications} \textbf{19}(3), 
+  survival of gopher tortoises. \emph{Ecological Applications} \strong{19}(3), 
   786--798; \doi{10.1890/08-0219.1}
 }
 \examples{
