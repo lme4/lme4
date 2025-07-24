@@ -2560,7 +2560,7 @@ only), likelihood profiling, or parametric bootstrapping (the
 \code{boot.type} argument selects the bootstrap confidence interval type).
 <<compareCI,echo=FALSE,cache=TRUE,message=FALSE,warning=FALSE>>=
 ccw <- confint(fm1, method = "Wald")
-ccp <- confint(fm1, method = "profile", oldNames = FALSE)
+ccp <- confint(fm1, method = "profile", signames = FALSE)
 ccb <- confint(fm1, method = "boot")
 @
 <<CIqcomp,echo=FALSE,eval=TRUE>>=
