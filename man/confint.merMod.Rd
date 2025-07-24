@@ -12,7 +12,7 @@
         nsim = 500,
         boot.type = c("perc", "basic", "norm"),
         FUN = NULL, quiet = FALSE,
-        oldNames = NULL, signames = TRUE, \dots)
+        oldNames, signames = TRUE, \dots)
 \method{confint}{thpr}(object, parm, level = 0.95,
         zeta, non.mono.tol = 1e-2, \dots)
 }

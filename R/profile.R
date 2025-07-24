@@ -803,11 +803,11 @@ confint.thpr <- function(object, parm, level = 0.95, zeta,
 confint.merMod <- function(object, parm, level = 0.95,
                            method = c("profile","Wald","boot"),
                            zeta, nsim=500, boot.type = c("perc","basic","norm"),
-                           FUN = NULL, quiet=FALSE, oldNames=NULL, signames = TRUE, ...)
+                           FUN = NULL, quiet=FALSE, oldNames, signames = TRUE, ...)
 {
     method <- match.arg(method)
     boot.type <- match.arg(boot.type)
-    if (!is.null(oldNames)) {
+    if (!missing(oldNames)) {
       warning("'oldNames' is deprecated. Please use 'signames' instead.", call. = FALSE)
       signames <- oldNames
     }
