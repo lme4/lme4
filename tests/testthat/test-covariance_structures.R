@@ -1,3 +1,4 @@
+
 skip()
 
 # Helper function to get a full suite of parameters for a given object
@@ -12,256 +13,295 @@ get_all_test_params <- function(obj) {
     )
 }
 
-# Testing Diagonal Covariance Models 
+context("Diagonal Covariance Models Testing")
 
-context("Testing Diagonal Covariance Models")
+# HETEROGENEOUS DIAGONAL COVARIANCE 
 
-test_that("HeterogeneousDiagonalCovariance: all methods work", {
+
+test_that("HeterogeneousDiagonalCovariance: object initialization", {
+    d <- 3L
+    obj <- new("HeterogeneousDiagonalCovariance", dimension = d)
+    
+    expect_s4_class(obj, "HeterogeneousDiagonalCovariance")
+    expect_true(validObject(obj))
+    expect_equal(obj@dimension, d)
+    
+    default_params <- get_parameters(obj)
+    expect_equal(default_params, rep(0, d))  
+
+    # test multiple dimensions
+    for (test_d in c(1L, 2L, 5L, 10L)) {
+        obj_multi <- new("HeterogeneousDiagonalCovariance", dimension = test_d)
+        expect_true(validObject(obj_multi))
+        expect_equal(n_parameters(obj_multi), test_d)
+        expect_equal(length(get_parameters(obj_multi)), test_d)
+    }
+})
+
+test_that("HeterogeneousDiagonalCovariance: method coverage", {
     d <- 3L
     obj <- new("HeterogeneousDiagonalCovariance", dimension = d)
     test_params <- get_all_test_params(obj)
 
-    # Creation & Parameters
+    # object creation and validation 
     expect_s4_class(obj, "HeterogeneousDiagonalCovariance")
     expect_true(validObject(obj))
     expect_equal(test_params$n_total, d)
+    expect_equal(test_params$n_v_params, d)
+    expect_equal(test_params$n_c_params, 0) 
     expect_equal(get_start_values(obj), rep(0, d))
+    expect_equal(get_lower_bounds(obj), rep(0, d))
+    expect_equal(n_parameters(obj), d)
 
-    # Set & Get
-    params <- log(c(2^2, 3^2, 4^2))
+    # set & get garameters
+    params <- log(c(4, 9, 16))  
     obj <- set_parameters(obj, params)
     expect_equal(get_parameters(obj), params)
-    expect_equal(get_interpretable_parameters(obj)$st_devs, c(2, 3, 4))
-    expect_true(is_diagonal(obj))
-    expect_equal(get_lower_bounds(obj), rep(-Inf, d))
-
-    # Computation
+    expect_true(validObject(obj))
+    interpretable <- get_interpretable_parameters(obj)
+    expect_equal(interpretable$st_devs, c(2, 3, 4))
     expect_equal(as.matrix(get_lambda(obj)), as.matrix(Diagonal(d)))
-    expect_equal(get_lind(obj), integer(0))
+    expect_equal(get_lind(obj), seq_len(d))
 
-    Sigma <- Diagonal(d, x = c(4, 9, 16))
-    expect_equal(as.matrix(compute_covariance_matrix(obj)), as.matrix(Sigma))
-    expect_equal(as.matrix(get_cholesky_factor(obj)), as.matrix(Diagonal(d, x = c(2, 3, 4))))
-    expect_equal(compute_log_det_covariance_matrix(obj), sum(params))
-    expect_equal(as.matrix(compute_inverse_covariance_matrix(obj)), as.matrix(Diagonal(d, x = 1 / c(4, 9, 16))))
 
-    # Show 
-    expect_output(show(obj), "HeterogeneousDiagonalCovariance object \\(dimension: 3, parameters: 3\\)")
-    expect_output(show(obj), "Standard Deviations: 2.0000 3.0000 4.0000")
+    # covariance matrix
+    expected_sigma <- Diagonal(d, x = c(4, 9, 16))
+    computed_sigma <- compute_covariance_matrix(obj)
+    expect_equal(as.matrix(computed_sigma), as.matrix(expected_sigma))
+    
+    # cholesky factor
+    expected_chol <- Diagonal(d, x = c(2, 3, 4))
+    computed_chol <- compute_cholesky_factor(obj)
+    expect_equal(as.matrix(computed_chol), as.matrix(expected_chol))
+    
+    # inverse covariance matrix
+    expected_inv <- Diagonal(d, x = 1 / c(4, 9, 16))
+    computed_inv <- compute_inverse_covariance_matrix(obj)
+    expect_equal(as.matrix(computed_inv), as.matrix(expected_inv))
+
+    # matrix type Consistency
+    expect_true(is(computed_sigma, "Matrix"))  
+    expect_true(is(computed_chol, "Matrix"))
+    expect_true(is(computed_inv, "Matrix"))
+ 
 })
 
-test_that("HomogeneousDiagonalCovariance: all methods work", {
+test_that("HeterogeneousDiagonalCovariance: compute_lambdat_x method", {
+    d <- 3L
+    obj <- new("HeterogeneousDiagonalCovariance", dimension = d)
+    
+    theta <- log(c(4, 9, 16))  # should this be log?
+    lambdat_x_result <- compute_lambdat_x(obj, theta)
+    
+    expected_variances <- exp(theta) 
+    expect_equal(lambdat_x_result, expected_variance)
+     
+    # edge case: dimension 1
+    obj1 <- new("HeterogeneousDiagonalCovariance", dimension = 1L)
+    lambdat_x1 <- compute_lambdat_x(obj1, log(9))
+    expect_equal(lambdat_x1, 9)   
+})
+
+test_that("HeterogeneousDiagonalCovariance: mathematical consistency", {
+    d <- 3L
+    obj <- new("HeterogeneousDiagonalCovariance", dimension = d)
+    obj <- set_parameters(obj, log(c(1, 4, 9)))  
+    
+    # computed matrices
+    cov_mat <- compute_covariance_matrix(obj)
+    chol_mat <- compute_cholesky_factor(obj)
+    inv_mat <- compute_inverse_covariance_matrix(obj)
+    expect_equal(dim(cov_mat), c(d, d))
+    expect_equal(dim(chol_mat), c(d, d))
+    expect_equal(dim(inv_mat), c(d, d))
+    
+    # L * L' = Sigma
+    reconstructed_sigma <- chol_mat %*% t(chol_mat)
+    expect_equal(as.matrix(reconstructed_sigma), as.matrix(cov_mat)) 
+    
+    # Sigma * Sigma^(-1) = I
+    identity_check <- cov_mat %*% inv_mat
+    expect_equal(as.matrix(identity_check), diag(d))   
+})
+
+test_that("HeterogeneousDiagonalCovariance: boundary behavior", {
+    d <- 2L
+    obj <- new("HeterogeneousDiagonalCovariance", dimension = d)
+    
+    # very small variances
+    small_params <- log(c(1e-6, 1e-5))
+    obj_small <- set_parameters(obj, small_params)
+    
+    expect_true(all(is.finite(as.matrix(compute_covariance_matrix(obj_small)))))
+    expect_true(all(is.finite(as.matrix(compute_cholesky_factor(obj_small)))))
+    expect_true(all(is.finite(as.matrix(compute_inverse_covariance_matrix(obj_small)))))
+    expect_true(is.finite(compute_log_det_covariance_matrix(obj_small)))
+    
+    # large variances
+    large_params <- log(c(1e6, 1e7))
+    obj_large <- set_parameters(obj, large_params) 
+
+    expect_true(all(is.finite(as.matrix(compute_covariance_matrix(obj_large)))))
+    expect_true(all(is.finite(as.matrix(compute_cholesky_factor(obj_large)))))
+    expect_true(all(is.finite(as.matrix(compute_inverse_covariance_matrix(obj_large)))))
+})
+
+# HOMOGENEOUS DIAGONAL COVARIANCE 
+
+test_that("HomogeneousDiagonalCovariance: object initialization", {
+    d <- 4L
+    obj <- new("HomogeneousDiagonalCovariance", dimension = d)
+    
+    expect_s4_class(obj, "HomogeneousDiagonalCovariance")
+    expect_true(validObject(obj))
+    expect_equal(obj@dimension, d)
+    
+    default_params <- get_parameters(obj)
+    expect_equal(default_params, 0)  
+
+    # test multiple dimensions
+    for (test_d in c(1L, 2L, 5L, 10L)) {
+        obj_multi <- new("HomogeneousDiagonalCovariance", dimension = test_d)
+        expect_true(validObject(obj_multi))
+        expect_equal(n_parameters(obj_multi), 1)  
+    }
+})
+
+test_that("HomogeneousDiagonalCovariance: method coverage", {
     d <- 4L
     obj <- new("HomogeneousDiagonalCovariance", dimension = d)
     test_params <- get_all_test_params(obj)
-
-    # Creation & Parameters
+    
+    # object creation and validation 
     expect_s4_class(obj, "HomogeneousDiagonalCovariance")
+    expect_true(validObject(obj))
     expect_equal(test_params$n_total, 1)
-    expect_equal(get_lower_bounds(obj), -Inf)
-
-    # Set & Get
-    obj <- set_parameters(obj, log(3^2))
-    expect_equal(get_interpretable_parameters(obj)$st_dev, 3)
-
-    # Computation
-    Sigma <- Diagonal(d, x = rep(9, d))
-    expect_equal(as.matrix(compute_covariance_matrix(obj)), as.matrix(Sigma))
-    expect_equal(compute_log_det_covariance_matrix(obj), 4 * log(3^2))
+    expect_equal(test_params$n_v_params, 1)
+    expect_equal(test_params$n_c_params, 0)  
     
-    # Show
-    output_lines <- capture.output(show(obj))
-    expect_match(output_lines[1], "HomogeneousDiagonalCovariance object \\(dimension: 4, parameters: 1\\)")
-    expect_match(output_lines[2], "Interpretable Parameters:")
-    expect_match(output_lines[3], "Standard Deviation \\(sigma\\): 3.0000")
-})
-
-
-# Testing Unstructured Covariance Models
-
-context("Testing Unstructured Covariance Models")
-
-test_that("HeterogeneousUnstructuredCovariance: all methods work", {
-    d <- 2L
-    obj <- new("HeterogeneousUnstructuredCovariance", dimension = d)
-    test_params <- get_all_test_params(obj)
-    expect_equal(test_params$n_total, d + d * (d + 1) / 2) # 2 + 3 = 5
-
-    # Set & Get
-    v_params <- log(c(2^2, 3^2))
-    c_params <- c(log(1.5), 0.5, log(2.5)) # L = [1.5, 0; 0.5, 2.5]
-     obj <- set_parameters(obj, c(v_params, c_params))
-    expect_false(is_diagonal(obj))
-    L <- matrix(c(1.5, 0.5, 0, 2.5), 2, 2)
-    Sigma <- tcrossprod(L)
-    expect_equal(get_interpretable_parameters(obj)$st_devs, sqrt(diag(Sigma)))
+    expect_equal(get_start_values(obj), 0)  
+    expect_equal(get_lower_bounds(obj), 0)  
+ 
+    # set & get parameters
+    param <- log(9)  
+    obj <- set_parameters(obj, param)
+    expect_equal(get_parameters(obj), param)
     
-    # Computation
-    expect_true(is(get_lambda(obj), "sparseMatrix"))
-    expect_equal(get_lind(obj), (test_params$n_v_params + 1):test_params$n_total)
+    interpretable <- get_interpretable_parameters(obj)
+    expect_equal(interpretable$st_dev, 3)
+    expect_true(is_diagonal(obj))
+ 
+    expect_equal(as.matrix(get_lambda(obj)), as.matrix(Diagonal(d)))
+    expect_equal(get_lind(obj), rep(1L, d))  
 
-    expect_equal(as.matrix(get_cholesky_factor(obj)), L)
-    expect_equal(as.matrix(compute_covariance_matrix(obj)), as.matrix(Sigma))
-    expect_equal(compute_log_det_covariance_matrix(obj), 2 * sum(c(log(1.5), log(2.5))))
-    expect_equal(as.matrix(compute_inverse_covariance_matrix(obj)), as.matrix(solve(Sigma)))
+    # covariance Matrix
+    expected_sigma <- Diagonal(d, x = rep(9, d))  
+    computed_sigma <- compute_covariance_matrix(obj)
+    expect_equal(as.matrix(computed_sigma), as.matrix(expected_sigma))
+
+    # cholesky Factor
+    expected_chol <- Diagonal(d, x = rep(3, d)) 
+    computed_chol <- compute_cholesky_factor(obj)
+    expect_equal(as.matrix(computed_chol), as.matrix(expected_chol))
+    
+    # inverse Covariance Matrix
+    expected_inv <- Diagonal(d, x = rep(1/9, d))  
+    computed_inv <- compute_inverse_covariance_matrix(obj)
+    expect_equal(as.matrix(computed_inv), as.matrix(expected_inv))
+    
+    # matrix type Consistency
+    expect_true(is(computed_sigma, "Matrix"))  
+    expect_true(is(computed_chol, "Matrix"))
+    expect_true(is(computed_inv, "Matrix"))
 })
 
-test_that("HomogeneousUnstructuredCovariance: all methods work", {
-    d <- 2L
-    obj <- new("HomogeneousUnstructuredCovariance", dimension = d)
-    test_params <- get_all_test_params(obj)
-    expect_equal(test_params$n_total, 1 + d * (d + 1) / 2) # 1 + 3 = 4
-
-    # Set & Get
-    v_param <- log(5^2)
-    c_params <- c(log(1.5), 0.5, log(2.5))
-    obj <- set_parameters(obj, c(v_param, c_params))
-    L <- matrix(c(1.5, 0.5, 0, 2.5), 2, 2)
-    Sigma <- tcrossprod(L)
-    expect_equal(get_interpretable_parameters(obj)$st_dev, mean(sqrt(diag(Sigma))))
-
-    expect_equal(get_lind(obj), (test_params$n_v_params + 1):test_params$n_total)
-
-    expect_equal(as.matrix(compute_covariance_matrix(obj)), as.matrix(Sigma))
-
-    expect_output(show(obj), "HomogeneousUnstructuredCovariance object \\(dimension: 2, parameters: 4\\)")
-})
-
-# Testing Compound Symmetry (CS) Covariance Models
-
-context("Testing CS Covariance Models")
-
-test_that("HeterogeneousCSCovariance: all methods work", {
+test_that("HomogeneousDiagonalCovariance: compute_lambdat_x method", {
     d <- 3L
-    obj <- new("HeterogeneousCSCovariance", dimension = d)
-    test_params <- get_all_test_params(obj)
-    expect_equal(test_params$n_total, d + 2) # 3 + 2 = 5
+    obj <- new("HomogeneousDiagonalCovariance", dimension = d)
+     
+    theta <- log(16)
+    lambdat_x_result <- compute_lambdat_x(obj, theta)
+    expected_variance <- exp(theta)  
+    expect_equal(lambdat_x_result, expected_variance) 
 
-    # Set & Get
-    v_params <- log(c(1.5^2, 2^2, 2.5^2))
-    c_params <- c(0.1, atanh(0.6))
-    obj <- set_parameters(obj, c(v_params, c_params))
-    expect_equal(get_interpretable_parameters(obj)$correlation, 0.6)
-    expect_equal(get_lower_bounds(obj), rep(-Inf, 5))
-
-    # Computation 
-    expect_equal(get_lind(obj), c(4, 5, 5, 4, 5, 4))
-    expect_true(is(get_lambda(obj), "sparseMatrix"))
-
-    D <- Diagonal(d, x = c(1.5, 2, 2.5))
-    R <- matrix(0.6, d, d); diag(R) <- 1
-    Sigma <- D %*% R %*% D
-    expect_equal(as.matrix(compute_covariance_matrix(obj)), as.matrix(Sigma))
-    expect_equal(compute_log_det_covariance_matrix(obj), as.numeric(determinant(Sigma)$modulus))
-    expect_equal(as.matrix(compute_inverse_covariance_matrix(obj)), as.matrix(solve(Sigma)))
-    expect_equal(as.matrix(get_cholesky_factor(obj)), as.matrix(chol(Sigma)))
-
-    # Show
-    expect_output(show(obj), "HeterogeneousCSCovariance object \\(dimension: 3, parameters: 5\\)")
-})
-
-test_that("HomogeneousCSCovariance: all methods work", {
-    d <- 2L
-    obj <- new("HomogeneousCSCovariance", dimension = d)
-    test_params <- get_all_test_params(obj)
-    expect_equal(test_params$n_total, 1 + 2) # 1 + 2 = 3
-
-    # Set & Get
-    obj <- set_parameters(obj, c(log(4^2), 0.1, atanh(0.5)))
-    expect_equal(get_interpretable_parameters(obj)$st_dev, 4)
-    expect_equal(get_interpretable_parameters(obj)$correlation, 0.5)
-
-    # Computation
-    R <- matrix(0.5, d, d); diag(R) <- 1
-    Sigma <- 4^2 * R
-    expect_equal(as.matrix(compute_covariance_matrix(obj)), as.matrix(Sigma))
-
-    # Show
-    expect_output(show(obj), "HomogeneousCSCovariance object \\(dimension: 2, parameters: 3\\)")
-    expect_output(show(obj), "Standard Deviation \\(sigma\\): 4.0000")
-    expect_output(show(obj), "Correlation \\(rho\\): 0.5000")
-})
-
-# Testing Autoregressive (AR1) Covariance Models 
-
-context("Testing AR1 Covariance Models")
-
-test_that("HeterogeneousAR1Covariance: all methods work", {
-    d <- 3L
-    obj <- new("HeterogeneousAR1Covariance", dimension = d)
-    test_params <- get_all_test_params(obj)
-    expect_equal(test_params$n_total, d + d) # 3 + 3 = 6
-
-    # Set & Get
-    v_params <- log(c(2^2, 3^2, 4^2))
-    c_params <- c(0, atanh(0.7), 0.1) # lag0, lag1(rho), lag2
-    obj <- set_parameters(obj, c(v_params, c_params))
-    expect_equal(get_interpretable_parameters(obj)$st_devs, c(2, 3, 4))
-    expect_equal(get_interpretable_parameters(obj)$correlation_lag1, 0.7)
-
-    # Computation 
-    expect_equal(get_lind(obj), c(4, 5, 6, 4, 5, 4))
-    expect_true(is(get_lambda(obj), "sparseMatrix"))
-
-    D <- Diagonal(d, x = c(2, 3, 4))
-    R <- 0.7^abs(outer(1:d, 1:d, "-"))
-    Sigma <- D %*% R %*% D
-    expect_equal(as.matrix(compute_covariance_matrix(obj)), as.matrix(Sigma))
-    expect_equal(as.matrix(get_cholesky_factor(obj)), as.matrix(chol(Sigma)))
-
-    # Show
-    expect_output(show(obj), "HeterogeneousAR1Covariance object \\(dimension: 3, parameters: 6\\)")
-})
-
-test_that("HomogeneousAR1Covariance: all methods work", {
-    d <- 4L
-    obj <- new("HomogeneousAR1Covariance", dimension = d)
-    test_params <- get_all_test_params(obj)
-    expect_equal(test_params$n_total, 1 + d) # 1 + 4 = 5
-
-    # Set & Get
-    v_param <- log(3^2)
-    c_params <- c(0, atanh(0.8), 0.1, 0.05)
-    obj <- set_parameters(obj, c(v_param, c_params))
-    expect_equal(get_interpretable_parameters(obj)$correlation_lag1, 0.8)
-
-    # Computation
-    indices <- get_lower_tri_indices(d)
-    lag <- indices$i - indices$j
-    expect_equal(get_lind(obj), test_params$n_v_params + lag + 1)
-    expect_true(is(get_lambda(obj), "sparseMatrix"))
-
+    lind_result <- get_lind(obj)
+    expect_equal(lind_result, rep(1L, d))
     
-    R <- 0.8^abs(outer(1:d, 1:d, "-"))
-    Sigma <- 3^2 * R
-    expect_equal(as.matrix(compute_covariance_matrix(obj)), as.matrix(Sigma))
-    expect_equal(compute_log_det_covariance_matrix(obj), as.numeric(determinant(Sigma)$modulus))
+    # edge case: dimension 1
+    obj1 <- new("HomogeneousDiagonalCovariance", dimension = 1L)
+    lambdat_x1 <- compute_lambdat_x(obj1, log(4))
+    expect_equal(lambdat_x1, 4)
+ })
+
+test_that("HomogeneousDiagonalCovariance: mathematical consistency", {
+    d <- 3L
+    obj <- new("HomogeneousDiagonalCovariance", dimension = d)
+    obj <- set_parameters(obj, log(2^2))  # variance = 4, std dev = 2
+    
+    cov_mat <- compute_covariance_matrix(obj)
+    chol_mat <- compute_cholesky_factor(obj)
+    inv_mat <- compute_inverse_covariance_matrix(obj)
+    
+    expect_equal(dim(cov_mat), c(d, d))
+    expect_equal(dim(chol_mat), c(d, d))
+    expect_equal(dim(inv_mat), c(d, d))
+    
+    # L * L' = Sigma
+    reconstructed_sigma <- chol_mat %*% t(chol_mat)
+    expect_equal(as.matrix(reconstructed_sigma), as.matrix(cov_mat))
+    
+    # Sigma * Sigma^(-1) = I
+    identity_check <- cov_mat %*% inv_mat
+    expect_equal(as.matrix(identity_check), diag(d))     
+})
+
+test_that("HomogeneousDiagonalCovariance: boundary behavior", {
+    d <- 2L
+    obj <- new("HomogeneousDiagonalCovariance", dimension = d)
+    
+    # very small variance 
+    small_param <- log(1e-6)
+    obj_small <- set_parameters(obj, small_param)
+    
+    expect_true(all(is.finite(as.matrix(compute_covariance_matrix(obj_small)))))
+    expect_true(all(is.finite(as.matrix(compute_cholesky_factor(obj_small)))))
+    expect_true(all(is.finite(as.matrix(compute_inverse_covariance_matrix(obj_small)))))
+    
+    # large variance
+    large_param <- log(1e6)
+    obj_large <- set_parameters(obj, large_param)
+    
+    expect_true(all(is.finite(as.matrix(compute_covariance_matrix(obj_large)))))
+    expect_true(all(is.finite(as.matrix(compute_cholesky_factor(obj_large)))))
+    expect_true(all(is.finite(as.matrix(compute_inverse_covariance_matrix(obj_large)))))
 })
 
 
-# --- Testing Edge Cases ---
+# UNSTRUCTURED COVARIANCE STRUCTURE TESTS
 
-context("Testing Edge Cases (Dimension 0 and 1)")
+context("Comprehensive Unstructured Covariance Models Testing")
 
-test_that("Dimension 0 objects are created correctly for all structures", {
-    classes <- c("Diagonal", "Unstructured", "CS", "AR1")
-    for (struct in classes) {
-        class_name <- paste0("Homogeneous", struct, "Covariance")
-        obj <- new(class_name, dimension = 0L)
-        expect_true(validObject(obj))
-        expect_equal(nrow(compute_covariance_matrix(obj)), 0)
-        expect_equal(n_parameters(obj), 1)
-  }
-})
-
-test_that("Dimension 1 objects are created correctly for all structures", {
-    classes <- c("Diagonal", "Unstructured", "CS", "AR1")
-    for (struct in classes) {
-        class_name <- paste0("Heterogeneous", struct, "Covariance")
-        obj <- new(class_name, dimension = 1L)
-        expect_true(validObject(obj))
-        obj <- set_parameters(obj, get_start_values(obj))
-        expect_equal(as.matrix(compute_covariance_matrix(obj)), matrix(1))
-        expect_true(Matrix::isDiagonal(build_correlation_matrix(obj)))
+test_that("UnstructuredCovariance: object initialization", {
+    d <- 3L
+    obj <- new("UnstructuredCovariance", dimension = d)
+    
+    expect_s4_class(obj, "UnstructuredCovariance")
+    expect_true(validObject(obj))
+    expect_equal(obj@dimension, d)
+    
+    expected_params <- d * (d + 1) / 2 
+    default_params <- get_parameters(obj)
+    expect_equal(length(default_params), expected_params)
+    expect_equal(default_params, get_start_values(obj)) 
+    
+    # test multiple dimensions
+    for (test_d in c(1L, 2L, 4L, 5L)) {
+        obj_multi <- new("UnstructuredCovariance", dimension = test_d)
+        expect_true(validObject(obj_multi))
+        expected_multi_params <- test_d * (test_d + 1) / 2
+        expect_equal(n_parameters(obj_multi), expected_multi_params)
+        expect_equal(length(get_parameters(obj_multi)), expected_multi_params)
     }
 })
+
+ 
