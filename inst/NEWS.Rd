@@ -18,9 +18,12 @@
       \item changed \code{confint.merMod} to use \code{signames} as an
       argument instead of \code{oldNames} to be consistent with
       \code{profile.merMod}
-      \item added an argument \code{check.conv.nobsmax} to 
-      \code{merControl()} to denote the threshold for the convergence 
-      checks to be skipped; default is \code{check.conv.nobsmax = 1e4}
+      \item derivative-based convergence checks are now skipped for
+      models with large data (number of observations greater than
+      the \code{check.conv.nobsmax} component of
+      \code{[g]lmerControl()}); default threshold is 1e4 observations.
+      If desired, derivatives can be calculated (but not checked)
+      by explicitly setting \code{calc.derivs} to TRUE.
     } % itemize
   } % user-visible changes
 } % devel

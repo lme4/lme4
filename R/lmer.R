@@ -134,6 +134,7 @@ glmer <- function(formula, data=NULL
         stop("can't handle matrix-valued responses: consider using refit()")
     }
 
+    calc.derivs <- control$calc.derivs %||% (nrow(glmod$fr) < control$checkConv$check.conv.nobsmax)
     ## create deviance function for covariance parameters (theta)
 
     nAGQinit <- if(control$nAGQ0initStep) 0L else 1L

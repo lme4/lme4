@@ -2,6 +2,10 @@
 ### extended convergence checking
 ### http://en.wikipedia.org/wiki/Karush%E2%80%93Kuhn%E2%80%93Tucker_conditions
 
+## global (for use in several functions)
+help_str <- "\n  See ?lme4::convergence and ?lme4::troubleshooting."
+
+
 ##' @param derivs typically the "derivs" attribute of optimizeLmer(); with
 ##' "gradients" and possibly "Hessian" component
 ##' @param coefs estimated function value
@@ -53,7 +57,6 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE, nobs = NULL)
     ## check absolute gradient (default)
     ccl <- ctrl[[cstr <- "check.conv.grad"]] ; checkCtrlLevels(cstr, cc <- ccl[["action"]])
     wstr <- NULL
-    help_str <- "\n  See ?lme4::convergence and ?lme4::troubleshooting."
     if (doCheck(cc)) {
         scgrad <- tryCatch(with(derivs,solve(chol(Hessian),gradient)),
                            error=function(e)e)
