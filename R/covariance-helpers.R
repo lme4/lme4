@@ -5,8 +5,7 @@
 ##' Forward CS transformation: theta -> rho 
 cs_theta_to_rho <- function(theta,n) {
     a <- 1/(n-1)
-    rho <- plogis(theta) * (1 + a) - a 
-    cat("DEBUG: cs_theta_to_rho called with theta=", theta, ", n=", n, ", rho=", rho, "\n")
+    rho <- plogis(theta) * (1 + a) - a  
     return(rho)
 } 
 
