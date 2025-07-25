@@ -322,6 +322,26 @@ checkResponse <- function(y, ctrl) {
 ##     res <- napredict(x)
 ## }
 
+##' Helper function for model frame construction
+##'
+##' Step 1: sub_specials transforms cs(x|group) -> cs(x + group)
+##' Step 2: noSpecials with delete=FALSE removes wrapper but keeps terms -> (x + group)
+##'
+##' Uses reformulas::sub_specials + noSpecials 
+##'
+##' 
+##' @param original_formula The original model formula
+##' @return A formula safe for model.frame() that preserves term structure
+create_model_frame_formula <- function(original_formula) {
+    specials_list <- c("ar1", "cs", "diag", "us")
+        fr.form <- reformulas::noSpecials(
+        reformulas::sub_specials(original_formula), 
+        delete = FALSE, 
+        specials = specials_list
+    )   
+    return(fr.form)
+}
+
 ##' @rdname modular
 ##' @param control a list giving (for \code{[g]lFormula}) all options (see \code{\link{lmerControl}} for running the model;
 ##' (for \code{mkLmerDevfun,mkGlmerDevfun}) options for inner optimization step;
@@ -339,6 +359,12 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     control <- control$checkControl ## this is all we really need
     mf <- mc <- match.call()
 
+    # save orginal formula before any modifications
+    denv <- checkFormulaData(formula, data,
+                             checkLHS = control$check.formula.LHS == "stop")
+    formula <- as.formula(formula, env=denv)    # Convert to standard form
+    original_formula <- formula                 # Save BEFORE subbars() destroys it
+
     dontChk <- c("start", "verbose", "devFunOnly")
     dots <- list(...)
     do.call(checkArgs, c(list("lmer"), dots[!names(dots) %in% dontChk]))
@@ -351,8 +377,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 
     cstr <- "check.formula.LHS"
     checkCtrlLevels(cstr,control[[cstr]])
-    denv <- checkFormulaData(formula, data,
-                             checkLHS = control$check.formula.LHS == "stop")
+
     #mc$formula <- formula <- as.formula(formula,env=denv) ## substitute evaluated call
     formula <- as.formula(formula, env=denv)
     ## as.formula ONLY sets environment if not already explicitly set.
@@ -361,13 +386,17 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     RHSForm(formula) <- reformulas::expandDoubleVerts(RHSForm(formula))
     mc$formula <- formula
 
+    ## Standard Model frame setup
     ## (DRY! copied from glFormula)
     m <- match(c("data", "subset", "weights", "na.action", "offset"),
                names(mf), 0L)
     mf <- mf[c(1L, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- quote(stats::model.frame)
-    fr.form <- reformulas::subbars(formula) # substitute "|" by "+"
+
+    ## Conditional model frame constuction 
+    fr.form <- create_model_frame_formula(original_formula)
+
     environment(fr.form) <- environment(formula)
     ## model.frame.default looks for these objects in the environment
     ## of the *formula* (see 'extras', which is anything passed in '...'),
@@ -385,8 +414,27 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     attr(fr,"formula") <- formula
     attr(fr,"offset") <- mf$offset
     n <- nrow(fr)
-    ## random effects and terms modules
-    reTrms <- reformulas::mkReTrms(reformulas::findbars(RHSForm(formula)), fr)
+    
+    # Random effects processing with structured covariance support 
+    s4_object_list <- parse_model_formula(original_formula, fr)
+
+    specials_list <- c("ar1", "cs", "diag", "us")
+    split_result <- reformulas::splitForm(original_formula, specials = specials_list)
+
+    reTrms <- reformulas::mkReTrms(split_result$reTrmFormulas, fr, calc.lambdat = FALSE)
+    
+  if (length(s4_object_list) > 0) {
+        # Structured covariance path
+        reTrms <- store_structure_info(reTrms, s4_object_list)
+        cov_components <- mkReLambdat(reTrms, s4_object_list)
+        reTrms$Lambdat <- cov_components$Lambdat
+        reTrms$Lind <- cov_components$Lind
+        reTrms$theta <- cov_components$theta
+        reTrms$lower <- cov_components$lower
+    } else {
+        # Standard lme4 path - set calc.lambdat = TRUE to let lme4 handle it
+        reTrms <- reformulas::mkReTrms(split_result$reTrmFormulas, fr, calc.lambdat = TRUE)
+    }   
     wmsgNlev <- checkNlevels(reTrms$flist, n=n, control)
     wmsgZdims <- checkZdims(reTrms$Ztlist, n=n, control, allow.n=FALSE)
     if (anyNA(reTrms$Zt)) {
