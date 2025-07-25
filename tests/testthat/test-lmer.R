@@ -326,7 +326,7 @@ test_that("better info about optimizer convergence",
     options(op)
 
     cc <-capture.output(print(summary(gm2)))
-    expect_equal(tail(cc,3)[1],
+    expect_equal(tail(cc,4)[1],
                  "optimizer (Nelder_Mead) convergence code: 0 (OK)")
 })
 

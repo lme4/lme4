@@ -102,7 +102,7 @@ if (lme4_testlevel() >= 3) {
                               signames = FALSE))
   ## --> ~ 2.2 seconds (2022)
   set.seed(123) # (reproducibility when using bootstrap)
-  system.time(fm1B <- confint(fm1, method="boot", sigames=FALSE,
+  system.time(fm1B <- confint(fm1, method="boot", signames=FALSE,
                               .progress="txt", PBargs= list(style=3)))
   ## --> ~ 6.2 seconds (2022) and warning, messages
 } else {
