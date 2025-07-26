@@ -24,6 +24,10 @@
       \code{[g]lmerControl()}); default threshold is 1e4 observations.
       If desired, derivatives can be calculated (but not checked)
       by explicitly setting \code{calc.derivs} to TRUE.
+      \item added a downstream methods vignette, which looks at other
+      methods from other compatiable packages for diagnostics, 
+      model comparison, plots, and regression tables for \code{merMod} 
+      objects
     } % itemize
   } % user-visible changes
 } % devel
