@@ -18,6 +18,12 @@
       \item changed \code{confint.merMod} to use \code{signames} as an
       argument instead of \code{oldNames} to be consistent with
       \code{profile.merMod}
+      \item derivative-based convergence checks are now skipped for
+      models with large data (number of observations greater than
+      the \code{check.conv.nobsmax} component of
+      \code{[g]lmerControl()}); default threshold is 1e4 observations.
+      If desired, derivatives can be calculated (but not checked)
+      by explicitly setting \code{calc.derivs} to TRUE.
       \item added a downstream methods vignette, which looks at other
       methods from other compatiable packages for diagnostics, 
       model comparison, plots, and regression tables for \code{merMod} 
