@@ -8,14 +8,13 @@
 }
 \usage{
 \method{confint}{merMod}(object, parm, level = 0.95,
-	method = c("profile", "Wald", "boot"), zeta,
-	nsim = 500,
-        boot.type = c("perc","basic","norm"),
+        method = c("profile", "Wald", "boot"), zeta,
+        nsim = 500,
+        boot.type = c("perc", "basic", "norm"),
         FUN = NULL, quiet = FALSE,
-	oldNames = TRUE, ...)
+        oldNames, signames = TRUE, \dots)
 \method{confint}{thpr}(object, parm, level = 0.95,
-        zeta, non.mono.tol=1e-2,
-	...)
+        zeta, non.mono.tol = 1e-2, \dots)
 }
 
 \arguments{
@@ -41,10 +40,12 @@
     are unavailable because they require additional components to be
     calculated.)}
   \item{quiet}{(logical) suppress messages about computationally intensive profiling?}
-  \item{signames}{(logical) use abbreviated names for variance-covariance 
-    parameters, e.g. \code{.sigNN} rather than newer (more informative) names such as 
-    \code{"sd_(Intercept)|Subject"}? (See \code{signames} argument to
-    \code{\link{profile}}).}
+  \item{oldNames}{(logical) deprecated; has the same purpose as \code{signames}.}
+  \item{signames}{(logical) use abbreviated names of the form
+    \code{.sigNN} for variance-covariance parameters rather than more
+    meaningful (but longer) names of the form
+    \code{sd_(Intercept)|Subject}?  See the \code{signames} argument of
+    \code{\link{profile.merMod}}.}
   \item{non.mono.tol}{tolerance for detecting a non-monotonic profile
     and warning/falling back to linear interpolation}
   \item{\dots}{additional parameters to be passed to
@@ -57,7 +58,7 @@
 }
 \note{
   The default method \code{"profile"} amounts to \preformatted{
-    confint(profile(object, which=parm, signames=oldNames, ...),
+    confint(profile(object, which=parm, ...),
             level, zeta)}
   where the \code{\link{profile}} method \code{\link{profile.merMod}}
   does almost all the computations.  Therefore it is typically
@@ -98,10 +99,10 @@ fm1W
 }
 if (lme4_testlevel() >= 3) {
   system.time(fm1P <- confint(fm1, method="profile", ## <- default
-                              oldNames = FALSE))
+                              signames = FALSE))
   ## --> ~ 2.2 seconds (2022)
   set.seed(123) # (reproducibility when using bootstrap)
-  system.time(fm1B <- confint(fm1, method="boot", oldNames=FALSE,
+  system.time(fm1B <- confint(fm1, method="boot", signames=FALSE,
                               .progress="txt", PBargs= list(style=3)))
   ## --> ~ 6.2 seconds (2022) and warning, messages
 } else {
