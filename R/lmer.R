@@ -47,7 +47,8 @@ lmer <- function(formula, data=NULL, REML = TRUE,
     if (devFunOnly) return(devfun)
     ## optimize deviance function over covariance parameters
     if (identical(control$optimizer,"none"))
-        stop("deprecated use of optimizer=='none'; use NULL instead")
+      stop("deprecated use of optimizer=='none'; use NULL instead")
+    calc.derivs <- control$calc.derivs %||% (nrow(lmod$fr) < control$checkConv$check.conv.nobsmax)
     opt <- if (length(control$optimizer)==0) {
                s <- getStart(start, environment(devfun)$pp)
                list(par=s,fval=devfun(s),
@@ -59,12 +60,13 @@ lmer <- function(formula, data=NULL, REML = TRUE,
                      control = control$optCtrl,
                      verbose=verbose,
                      start=start,
-                     calc.derivs=control$calc.derivs,
+                     calc.derivs=calc.derivs,
                      use.last.params=control$use.last.params)
            }
     cc <- checkConv(attr(opt,"derivs"), opt$par,
                     ctrl = control$checkConv,
-                    lbound = environment(devfun)$lower)
+                    lbound = environment(devfun)$lower,
+                    nobs = nrow(lmod$fr))
     mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr,
              mc = mcout, lme4conv=cc) ## prepare output
 }## { lmer }
@@ -132,6 +134,7 @@ glmer <- function(formula, data=NULL
         stop("can't handle matrix-valued responses: consider using refit()")
     }
 
+    calc.derivs <- control$calc.derivs %||% (nrow(glmod$fr) < control$checkConv$check.conv.nobsmax)
     ## create deviance function for covariance parameters (theta)
 
     nAGQinit <- if(control$nAGQ0initStep) 0L else 1L
@@ -143,16 +146,23 @@ glmer <- function(formula, data=NULL
 
     ## FIXME: perhaps should be in glFormula instead??
     if (is.list(start)) {
-        start.bad <- setdiff(names(start),c("theta","fixef"))
-        if (length(start.bad)>0) {
-            stop(sprintf("bad name(s) for start vector (%s); should be %s and/or %s",
-                         paste(start.bad,collapse=", "),
-                         shQuote("theta"),
-                         shQuote("fixef")),call.=FALSE)
-        }
-        if (!is.null(start$fixef) && nAGQ==0)
-            stop("should not specify both start$fixef and nAGQ==0")
-    }
+      start.bad <- setdiff(names(start), c("theta","fixef", "beta"))
+      if (length(start.bad)>0) {
+        stop(sprintf("bad name(s) for start vector (%s); should be from {%s, %s, %s}",
+                     paste(start.bad,collapse=", "),
+                     shQuote("theta"),
+                     shQuote("fixef"),
+                     shQuote("beta")),
+             call.=FALSE)
+      }
+      ## rename beta -> fixef internally
+      if ("beta" %in% names(start)) {
+        names(start)[names(start) == "beta"] <- "fixef"
+      }
+      if (!is.null(start$fixef) && nAGQ==0) {
+        stop("should not specify both start$fixef (or $beta) and nAGQ==0")
+      }
+}
 
     ## FIX ME: allow calc.derivs, use.last.params etc. if nAGQ=0
     if(control$nAGQ0initStep) {
@@ -192,10 +202,10 @@ glmer <- function(formula, data=NULL
                              nAGQ=nAGQ,
                              verbose = verbose,
                              stage=2,
-                             calc.derivs=control$calc.derivs,
+                             calc.derivs=calc.derivs,
                              use.last.params=control$use.last.params)
     }
-    cc <- if (!control$calc.derivs) NULL else {
+    cc <- if (!calc.derivs) NULL else {
         if (verbose > 10) cat("checking convergence\n")
         checkConv(attr(opt,"derivs"),opt$par,
                   ctrl = control$checkConv,

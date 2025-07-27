@@ -15,7 +15,8 @@ name: R-CMD-check
 
 jobs:
   R-CMD-check:
-    if: "contains(github.event.head_commit.message, '[run ci]')"
+    if: github.event.name == 'pull_request' ||
+       contains(github.event.head_commit.message, '[run ci]')
 
     runs-on: ${{ matrix.config.os }}
 
@@ -35,6 +36,7 @@ jobs:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       RSPM: ${{ matrix.config.rspm }}
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      LME4_TEST_LEVEL: 2
 
     steps:
       - uses: actions/checkout@v3
@@ -55,29 +57,32 @@ jobs:
         run: |
           sudo apt-get install texlive texlive-latex-base texlive-latex-extra
 
-      - uses: teatimeguest/setup-texlive-action@v3
-        if: runner.os != 'Linux'
-        with:
-          packages: >-
-             scheme-basic
-             inputenc
-             graphicx
-             array
-             colortbl
-             multirow
-             hhline
-             calc
-             tabularx
-             threeparttable
-             wrapfig
-             url
-             hyperref
-             fancyvrb
-             natbib
-             xcolor
-             etoolbox
-             caption
-             adjustbox
+      # LaTeX setup for MacOS. Will need to replace if we ever want to
+      #   run Actions on MacOS again ...
+      #
+      # - uses: teatimeguest/setup-texlive-action@v3
+      #   if: runner.os != 'Linux'
+      #   with:
+      #     packages: >-
+      #        scheme-basic
+      #        inputenc
+      #        graphicx
+      #        array
+      #        colortbl
+      #        multirow
+      #        hhline
+      #        calc
+      #        tabularx
+      #        threeparttable
+      #        wrapfig
+      #        url
+      #        hyperref
+      #        fancyvrb
+      #        natbib
+      #        xcolor
+      #        etoolbox
+      #        caption
+      #        adjustbox
 
       - uses: r-lib/actions/check-r-package@v2
         env:

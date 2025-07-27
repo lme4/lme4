@@ -70,7 +70,7 @@ merControl <-
              ## automatic check-option-checking in
              ## inst/tests/test-lmer.R
              boundary.tol=1e-5,
-             calc.derivs=TRUE,
+             calc.derivs=NULL,
              use.last.params=FALSE,
              sparseX=FALSE,
              standardize.X=FALSE,
@@ -87,6 +87,7 @@ merControl <-
                               "message+rescale","warn+rescale","ignore"),
              check.formula.LHS = "stop",
              ## convergence options
+             check.conv.nobsmax = 1e4,
              check.conv.grad     = .makeCC("warning", tol = 2e-3, relTol = NULL),
              check.conv.singular = .makeCC(action = "message", tol = formals(isSingular)$tol),
              check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
@@ -150,7 +151,8 @@ merControl <-
                                        check.scaleX,
                                        check.formula.LHS),
                          checkConv=
-                             namedList(check.conv.grad,
+                             namedList(check.conv.nobsmax,
+                                       check.conv.grad,
                                        check.conv.singular,
                                        check.conv.hess),
                          optCtrl=optCtrl)

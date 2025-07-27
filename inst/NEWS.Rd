@@ -4,7 +4,7 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-37.9000 (2025-05-23)}{
+\section{CHANGES IN VERSION 1.1-37.9000 (2025-07-17)}{
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item \code{lme4} now depends on the \code{reformulas}
@@ -13,6 +13,21 @@
       \code{nobars}, etc.) are still (re-)exported from the package,
       but throw a warning if called directly
       (use e.g. \code{reformulas::findbars(...)} to avoid the warning)
+      \item the \code{start} argument to \code{[g]lmer} now allows
+      'beta' as a synonym for 'fixef' 
+      \item changed \code{confint.merMod} to use \code{signames} as an
+      argument instead of \code{oldNames} to be consistent with
+      \code{profile.merMod}
+      \item added a new argument \code{start_from_mle} to \code{allFit}
+      (default TRUE) which
+      specifies that models should be refitted using starting values 
+      from the model’s MLE.
+      \item derivative-based convergence checks are now skipped for
+      models with large data (number of observations greater than
+      the \code{check.conv.nobsmax} component of
+      \code{[g]lmerControl()}); default threshold is 1e4 observations.
+      If desired, derivatives can be calculated (but not checked)
+      by explicitly setting \code{calc.derivs} to TRUE.
     } % itemize
   } % user-visible changes
 } % devel
