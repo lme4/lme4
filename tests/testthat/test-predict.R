@@ -519,3 +519,14 @@ test_that("predict works with dummy() in left-out REs", {
     expect_equal(head(predict(m1C, re.form = ~1|v3), 1),
                  c(`1` = -0.035719520719991))
 })
+
+test_that("predict se.fit on response scale", {
+  p1 <- suppressWarnings(
+    predict(fit_cbpp_1, type = "link", se.fit = TRUE))
+  p2 <- suppressWarnings(
+    predict(fit_cbpp_1, type = "response", se.fit = TRUE))
+  p3 <- suppressWarnings(
+    predict(fit_cbpp_1, type = "response", newdata = cbpp, se.fit = TRUE))
+  expect_identical(p2$se.fit, p3$se.fit)
+  expect_equal(p1$se.fit*binomial()$mu.eta(p1$fit), p2$se.fit)
+})
