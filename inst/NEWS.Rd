@@ -18,6 +18,10 @@
       \item changed \code{confint.merMod} to use \code{signames} as an
       argument instead of \code{oldNames} to be consistent with
       \code{profile.merMod}
+      \item added a new argument \code{start_from_mle} to \code{allFit}
+      (default TRUE) which
+      specifies that models should be refitted using starting values 
+      from the model’s MLE.
       \item derivative-based convergence checks are now skipped for
       models with large data (number of observations greater than
       the \code{check.conv.nobsmax} component of
