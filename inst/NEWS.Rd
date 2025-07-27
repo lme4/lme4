@@ -5,6 +5,13 @@
 \encoding{UTF-8}
 
 \section{CHANGES IN VERSION 1.1-37.9000 (2025-07-17)}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{$se.fit} component of predictions from GLMMs when
+      \code{type = "response"} is now transformed from the link scale to
+      the response scale (GH #847, @leorjorge)
+    }
+  } % bug fixes
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item \code{lme4} now depends on the \code{reformulas}
@@ -15,13 +22,12 @@
       (use e.g. \code{reformulas::findbars(...)} to avoid the warning)
       \item the \code{start} argument to \code{[g]lmer} now allows
       'beta' as a synonym for 'fixef' 
-      \item changed \code{confint.merMod} to use \code{signames} as an
+      \item \code{confint.merMod} now allows \code{signames} as an
       argument instead of \code{oldNames} to be consistent with
-      \code{profile.merMod}
+      \code{profile.merMod}; \code{oldNames} is deprecated
       \item added a new argument \code{start_from_mle} to \code{allFit}
-      (default TRUE) which
-      specifies that models should be refitted using starting values 
-      from the model’s MLE.
+      (default TRUE) which specifies that models should be refitted
+      using starting values from the model’s MLE.
       \item derivative-based convergence checks are now skipped for
       models with large data (number of observations greater than
       the \code{check.conv.nobsmax} component of
