@@ -44,7 +44,7 @@
   random-effects terms in a mixed-effects model, of class
   \code{\linkS4class{merMod}} (linear, generalized or
   nonlinear).  The within-group error variance and standard
-  deviation are also calculated.
+  deviation are also calculated. 
 }
 \value{
   An object of class \code{VarCorr.merMod}. The internal
@@ -70,12 +70,17 @@ residual error term where applicable) and the following columns:
   }
 }
 \details{
-  The \code{print} method for \code{VarCorr.merMod} objects
-  has optional arguments \code{digits} (specify digits of
-  precision for printing) and \code{comp}: the latter is
-  a character vector with any combination of \code{"Variance"}
-  and \code{"Std.Dev."}, to specify whether variances,
-  standard deviations, or both should be printed.
+  \itemize{
+    \item The \code{print} method for \code{VarCorr.merMod} objects
+    has optional arguments \code{digits} (specify digits of
+    precision for printing) and \code{comp}: the latter is
+    a character vector with any combination of \code{"Variance"}
+    and \code{"Std.Dev."}, to specify whether variances,
+    standard deviations, or both should be printed. 
+    \item For Gamma GLMMs, the \code{"Residual Std.Dev."} corresponds to the 
+    square root of the dispersion parameter rather than a residual standard 
+    deviation.
+  }
 }
 \author{
   This is modeled after \code{\link[nlme]{VarCorr}} from

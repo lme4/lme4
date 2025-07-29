@@ -18,9 +18,14 @@
 }
 \value{
   Typically a number, the estimated standard deviation of the
-  errors (\dQuote{residual standard deviation}) for Gaussian
-  models, and - less interpretably - the square root of the residual
-  deviance per degree of freedom in more general models.
+  errors. 
+  \itemize{
+    \item (\dQuote{residual standard deviation}) for Gaussian models.
+    \item For Gamma fits, it specifies the square root of the dispersion 
+    parameter.
+    \item Less interpretably, the square root of the residual deviance per 
+    degree of freedom in more general models.
+  }
 }
 \details{
   Package \pkg{lme4} provides methods for mixed-effects models of class
