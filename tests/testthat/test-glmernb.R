@@ -1,9 +1,7 @@
-library("testthat")
-library("lme4")
 testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
 
 if (testLevel>1) {
-context("glmer.nb")
+#context("glmer.nb")
 test_that("basic", {
    set.seed(101)
    dd <- expand.grid(f1 = factor(1:3),

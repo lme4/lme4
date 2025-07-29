@@ -1,7 +1,4 @@
-library("testthat")
-library("lme4")
-
-context("data= argument and formula evaluation")
+#context("data= argument and formula evaluation")
 
 ## intercept context-dependent errors ... it's too bad that
 ##  these errors differ between devtools::test() and

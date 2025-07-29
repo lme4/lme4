@@ -1,6 +1,3 @@
-library("testthat")
-library("lme4") # Needed for last test.
-
 eps <- .Machine$double.eps
 oneMeps <- 1 - eps
 set.seed(1)
@@ -149,13 +146,13 @@ dd1 <- simfun_gam(seed = 101)
 dd2 <- simfun_gam(seed = 101, use_simulate = TRUE)
 
 test_that("simulated Gamma data matches with simulate()", {
-  testthat::expect_equal(dd1$y, dd2$y)
+  expect_equal(dd1$y, dd2$y)
 })
 
 test_that("estimated Gamma dispersion (shape) is correct", {
   m1 <- glmer(y ~ 1 + (1|group), family = Gamma(link = "log"), data = dd2)
   shape_val <- 1/sigma(m1)^2
-  testthat::expect_equal(shape_val, 2.0, tolerance = 0.05)
-  testthat::expect_equal(1/sigma(m1)^2, 1.94511502080571, tolerance = 1e-6)
+  expect_equal(shape_val, 2.0, tolerance = 0.05)
+  expect_equal(1/sigma(m1)^2, 1.94511502080571, tolerance = 1e-6)
 })
 
