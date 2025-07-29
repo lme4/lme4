@@ -876,10 +876,10 @@ setMethod("get_interpretable_parameters", "UnstructuredCovariance", function(obj
 setMethod("get_interpretable_parameters", "DiagonalCovariance", function(object) {
     params <- list()
     if (is(object, "HomogeneousVariance")) {
-        params$st_dev <- exp(0.5 * object@vparameters[1])
+        params$st_dev <- object@vparameters[1]
     } else {
-        params$st_devs <- exp(0.5 * object@vparameters)
-    }
+        params$st_devs <- object@vparameters
+    
     return(params)
 })
 
@@ -887,9 +887,9 @@ setMethod("get_interpretable_parameters", "DiagonalCovariance", function(object)
 setMethod("get_interpretable_parameters", "CSCovariance", function(object) {
     params <- list()
     if (is(object, "HomogeneousVariance")) {
-        params$st_dev <- exp(0.5 * object@vparameters[1])
+        params$st_dev <- object@vparameters[1]
     } else {
-        params$st_devs <- exp(0.5 * object@vparameters)
+        params$st_devs <- object@vparameters
     }
     if (length(object@cparameters) > 0) {
         params$correlation <- cs_theta_to_rho(object@cparameters[1], object@dimension)
@@ -901,9 +901,9 @@ setMethod("get_interpretable_parameters", "CSCovariance", function(object) {
 setMethod("get_interpretable_parameters", "AR1Covariance", function(object) {
     params <- list()
     if (is(object, "HomogeneousVariance")) {
-        params$st_dev <- exp(0.5 * object@vparameters[1])
+        params$st_dev <- object@vparameters[1]
     } else {
-        params$st_devs <- exp(0.5 * object@vparameters)
+        params$st_devs <- object@vparameters
     }    
     if (length(object@cparameters) > 0) {
         params$correlation <- ar1_theta_to_rho(object@cparameters[1])
