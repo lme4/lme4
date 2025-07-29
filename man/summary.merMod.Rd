@@ -1,64 +1,44 @@
 \name{summary.merMod}
 \alias{summary.merMod}
 \title{
-  Summary of merMod Objects
+  Summary for a [ng]lmer Fit
 }
 \description{
-%%  ~~ A concise (1-5 lines) description of what the function does. ~~
+  Summarizes the results of a fitted mixed-effects model of class 
+  \code{merMod}, as produced by [ng]lmer fits. The summary includes estimates
+  for the fixed and random effects. 
 }
 \usage{
 \method{summary}{merMod}(object,
        correlation = (p <= getOption("lme4.summary.cor.max")),
        use.hessian = NULL, \dots)
-                           
 }
-%- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{x}{
-%%     ~~Describe \code{x} here~~
+  \item{object}{a fitted [ng]lmer model.}
+  \item{correlation}{(logical) if \code{TRUE}, the correlation matrix of the 
+    fixed effects is included in the output.}
+  \item{use.hessian}{(logical) if \code{TRUE}, uses the Hessian to compute the 
+  variance-covariance matrix of the fixed effects.}
 }
 }
 \details{
-%%  ~~ If necessary, more details than the description above ~~
-}
-\value{
-%%  ~Describe the value returned
-%%  If it is a LIST, use
-%%  \item{comp1 }{Description of 'comp1'}
-%%  \item{comp2 }{Description of 'comp2'}
-%% ...
-}
-\references{
-%% ~put references to the literature/web site here ~
-}
-\author{
-%%  ~~who you are~~
-}
-\note{
-%%  ~~further notes~~
-}
-
-%% ~Make other sections like Warning with \section{Warning }{....} ~
-
-\seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
-}
-\examples{
-##---- Should be DIRECTLY executable !! ----
-##-- ==>  Define data, use random,
-##--	or standard data sets, see data().
-
-## The function is currently defined as
-function (x) 
-{
+  \itemize{
+    \item For Gamma GLMMs, the \code{"Residual Std.Dev."} corresponds to the 
+    square root of the dispersion parameter rather than a residual standard 
+    deviation.
+    \item TODO: add info for other GLMMs....
   }
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory (show via RShowDoc("KEYWORDS")):
-% \keyword{ ~kwd1 }
-% \keyword{ ~kwd2 }
-% Use only one keyword per line.
-% For non-standard keywords, use \concept instead of \keyword:
-% \concept{ ~cpt1 }
-% \concept{ ~cpt2 }
-% Use only one concept per line.
+\value{
+  An S3 object of class \code{"summary.merMod"}, which is a list containing 
+  fixed and random effect estimates along with other standard model summary 
+  information.
+}
+\examples{
+fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+smry <- summary(fm1)
+# Obtaining the variance-covariance matrix of the fixed effects
+smry$vcov
+# Obtaining the correlation matrix of fixed effects
+smry$vcov@factors$correlation
+}
