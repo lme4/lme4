@@ -1,5 +1,3 @@
-library("testthat")
-library("lme4")
 (testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
 
 ## use old (<=3.5.2) sample() algorithm if necessary

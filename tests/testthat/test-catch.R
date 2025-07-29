@@ -1,7 +1,4 @@
-library("testthat")
-library("lme4")
-
-context("storing warnings, convergence status, etc.")
+#context("storing warnings, convergence status, etc.")
 
 test_that("storewarning", {
     gCtrl <- glmerControl(optimizer = "Nelder_Mead",

@@ -1,5 +1,3 @@
-library("lme4")
-library("testthat")
 
 data(Dyestuff, package="lme4")
 n     <- nrow(Dyestuff)
@@ -8,7 +6,7 @@ zeros <- rep.int(0, n)
 YY    <- Dyestuff$Yield
 mYY   <- mean(YY)
 
-context("lmerResp objects")
+#context("lmerResp objects")
 test_that("lmerResp", {
     mres  <- YY - mYY
     rr    <- lmerResp$new(y=YY)
