@@ -944,3 +944,8 @@ if (testLevel > 1) withAutoprint({
   expect_equal(cooks.distance(fm2), cooks.distance(fm2L), tolerance = 1e-2)
   })
 }) ## testLevel > 1
+
+test_that("oldNames warning in confint", {
+  fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+  expect_warning(confint(fm1, oldNames = TRUE))
+})
