@@ -20,7 +20,6 @@
   \item{use.hessian}{(logical) if \code{TRUE}, uses the Hessian to compute the 
   variance-covariance matrix of the fixed effects.}
 }
-}
 \details{
   \itemize{
     \item For Gamma GLMMs, the \code{"Residual Std.Dev."} corresponds to the 
