@@ -583,7 +583,7 @@ setMethod("expand_parameters_for_optimization", "HeterogeneousAR1Covariance", fu
 
 ##' @rdname InternalCovarianceMethods
 setMethod("compute_lambdat_x", "DiagonalCovariance", function(object, theta) {
-    return(exp(theta))
+    return(theta)
 })
 
 ##' @rdname InternalCovarianceMethods
@@ -600,7 +600,7 @@ setMethod("compute_lambdat_x", "HomogeneousCSCovariance", function(object, theta
     d <- object@dimension
     if (d == 0) return(numeric(0))
 
-    sigma_re <- exp(0.5 * theta[1])
+    sigma_re <- theta[1]
     rho <- cs_theta_to_rho(theta[2], d)
 
     R <- matrix(rho, d, d)
@@ -617,7 +617,7 @@ setMethod("compute_lambdat_x", "HeterogeneousCSCovariance", function(object, the
     if (d == 0) return(numeric(0))
     if (d == 1) return(exp(0.5 * theta[1]))
 
-    st_devs <- exp(0.5 * theta[1:d])
+    st_devs <- theta[1:d]
     rho <- cs_theta_to_rho(theta[d + 1], d)
 
     R <- matrix(rho, d, d)
@@ -636,7 +636,7 @@ setMethod("compute_lambdat_x", "HomogeneousAR1Covariance", function(object, thet
     d <- object@dimension
     if (d == 0) return(numeric(0))
 
-    sigma_re <- exp(0.5 * theta[1])
+    sigma_re <- theta[1]
     rho <- ar1_theta_to_rho(theta[2])
 
     L <- matrix(0, d, d)
@@ -660,7 +660,7 @@ setMethod("compute_lambdat_x", "HeterogeneousAR1Covariance", function(object, th
     if (d == 0) return(numeric(0))
     if (d == 1) return(exp(0.5 * theta[1]))
 
-    st_devs <- exp(0.5 * theta[1:d])
+    st_devs <- theta[1:d]
     rho <- ar1_theta_to_rho(theta[d + 1])
 
     L_corr <- matrix(0, d, d)
