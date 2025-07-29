@@ -151,11 +151,11 @@ compute_inverse_structured <- function(object) {
     
     if (is(object, "HomogeneousVariance")) {
         # inv(sigma^2 * R) = (1/sigma^2) * inv(R)
-        inv_sigma_sq <- exp(-object@vparameters[1])
+        inv_sigma_sq <- 1 / object@vparameters[1]^2
         inv_Sigma <- inv_sigma_sq * inv_R
     } else {
         # inv(D * R * D) = inv(D) * inv(R) * inv(D)
-        inv_st_devs <- exp(-0.5 * object@vparameters)
+        inv_st_devs <- 1 / object@vparameters    
         inv_D <- Diagonal(d, x = inv_st_devs)
         inv_Sigma <- inv_D %*% inv_R %*% inv_D
     }
