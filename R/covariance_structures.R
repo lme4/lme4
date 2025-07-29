@@ -338,7 +338,7 @@ setMethod("get_start_values", "UnstructuredCovariance", function(object) {
 ##' @rdname CovarianceMethods
 setMethod("get_start_values", "DiagonalCovariance", function(object) {
     num_params <- n_parameters(object)
-    rep(0.0, num_params) 
+    rep(1.0, num_params) 
 })
 
 ##' @rdname CovarianceMethods
@@ -879,7 +879,7 @@ setMethod("get_interpretable_parameters", "DiagonalCovariance", function(object)
         params$st_dev <- object@vparameters[1]
     } else {
         params$st_devs <- object@vparameters
-    
+    } 
     return(params)
 })
 
