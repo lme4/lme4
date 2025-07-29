@@ -721,10 +721,10 @@ setMethod("compute_covariance_matrix", "DiagonalCovariance", function(object, da
     d <- object@dimension
     
     if (is(object, "HomogeneousVariance")) {
-        sigma_sq <- exp(object@vparameters[1])
+        sigma_sq <- object@vparameters[1]^2
         Sigma <- Diagonal(d, x = sigma_sq)
     } else {
-        variances <- exp(object@vparameters)
+        variances <- object@vparameters^2
         Sigma <- Diagonal(d, x = variances)
     }
 
@@ -738,7 +738,7 @@ setMethod("compute_covariance_matrix", "CSCovariance", function(object, data_con
     R <- compute_correlation_matrix(object)
     
     if (is(object, "HomogeneousVariance")) {
-        sigma_sq <- exp(object@vparameters[1])
+        sigma_sq <- object@vparameters[1]^2
         Sigma <- sigma_sq * R
     } else {
         st_devs <- object@vparameters
@@ -756,10 +756,10 @@ setMethod("compute_covariance_matrix", "AR1Covariance", function(object, data_co
     R <- compute_correlation_matrix(object)
 
     if (is(object, "HomogeneousVariance")) {
-        sigma_sq <- exp(object@vparameters[1])
+        sigma_sq <- object@vparameters[1]^2
         Sigma <- sigma_sq * R
     } else {
-        st_devs <- exp(0.5 * object@vparameters)
+        st_devs <- object@vparameters
         D <- Diagonal(d, x = st_devs)
         Sigma <- D %*% R %*% D
     }
