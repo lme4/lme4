@@ -31,7 +31,7 @@ create_covariance_object_from_term <- function(type, cnms, add_args_call) {
         return(new("UnstructuredCovariance", dimension = length(cnms)))
     }
 
-    is_hom <- (is.null(args$hom) || args$hom == TRUE)
+    is_hom <- args$hom %||% FALSE
     variance_prefix <- if(is_hom) "Homogeneous" else "Heterogeneous"
 
     full_class_name <- paste0(variance_prefix, structure_prefix, "Covariance")
