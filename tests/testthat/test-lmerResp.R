@@ -28,7 +28,7 @@ test_that("lmerResp", {
 mlYY <- mean(log(YY))
 gmeanYY <- exp(mlYY)                    # geometric mean
 
-context("glmResp objects")
+#context("glmResp objects")
 test_that("glmResp", {
     mres  <- YY - gmeanYY
     gmean <- rep.int(gmeanYY, n)

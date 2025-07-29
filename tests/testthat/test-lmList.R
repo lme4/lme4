@@ -3,7 +3,7 @@ if ("sample.kind" %in% names(formals(RNGkind))) {
     suppressWarnings(RNGkind("Mersenne-Twister", "Inversion", "Rounding"))
 }
 
-context("lmList")
+#context("lmList")
 test_that("basic lmList", {
     set.seed(17)
     fm1. <- lmList(Reaction ~ Days | Subject, sleepstudy, pool=FALSE)

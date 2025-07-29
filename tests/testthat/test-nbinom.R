@@ -30,7 +30,7 @@ test_that("ok with Poisson masking", {
 })
 
 if (testLevel>2) {
-context("testing glmer refit")
+#context("testing glmer refit")
 
 test_that("glmer refit", {
             ## basic Poisson fit

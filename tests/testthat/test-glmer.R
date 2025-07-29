@@ -1,5 +1,3 @@
-library("testthat")
-library("lme4")
 source(system.file("testdata", "lme-tst-funs.R", package="lme4", mustWork=TRUE))# -> uc() [back-compatible c()]
 testLevel <- lme4:::testLevel()
 
@@ -33,7 +31,7 @@ gives_error_or_warning <- function (regexp = NULL, all = FALSE, ...)
     ## expect_that(warning("bar"),gives_error_or_warning("foo"))
 
 if(testLevel > 1) {
-context("fitting glmer models")
+#context("fitting glmer models")
 test_that("glmer", {
     set.seed(101)
     d <- data.frame(z=rbinom(200,size=1,prob=0.5),

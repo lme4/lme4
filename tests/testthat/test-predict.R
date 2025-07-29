@@ -28,7 +28,7 @@ if (getRversion() > "3.0.0") {
 }
 
 if (testLevel>1) {
-context("predict")
+#context("predict")
 test_that("fitted values", {
     p0 <- predict(gm1)
     p0B <- predict(gm1, newdata=cbpp)
