@@ -1,7 +1,4 @@
-library("lme4")
-library("testthat")
-
-context("testing '||' notation for independent ranefs")
+#context("testing '||' notation for independent ranefs")
 
 test_that("basic intercept + slope '||' works", {
 	expect_equivalent(

@@ -1,5 +1,3 @@
-library("testthat")
-## library("lme4")
 data("sleepstudy", package = "lme4")
 
 source(system.file("testdata/lme-tst-funs.R", package="lme4", mustWork=TRUE))
@@ -10,7 +8,7 @@ dBc <- gSim(family=binomial(link="cloglog"), nbinom = 1) # {0,1} Binomial
 
 ## m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
 ##             family = binomial, data = cbpp)
-context("Errors and warnings from glmer")
+#context("Errors and warnings from glmer")
 test_that("glmer", {
     expect_error(glmer(y ~ 1 + (1|block), data=dBc, family=binomial(link="cloglog")),
                  "Response is constant")

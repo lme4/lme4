@@ -1,6 +1,4 @@
-library("testthat")
-library("lme4")
-context("specifying starting values")
+#context("specifying starting values")
 
 ##' Update 'mod', copying .@call and attr(.@frame, "start")  from 'from'
 copysome <- function(mod, from) {

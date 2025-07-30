@@ -1,8 +1,6 @@
 testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
 if (testLevel>1) {
 
-  library("testthat")
-  library("lme4")
   L <- load(system.file("testdata", "lme-tst-fits.rda",
                         package="lme4", mustWork=TRUE))
   

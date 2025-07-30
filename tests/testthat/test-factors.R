@@ -1,7 +1,3 @@
-library("testthat")
-library("lme4")
-
-
 test_that("factors", {
 
     set.seed(101)
