@@ -2,6 +2,10 @@
 ### extended convergence checking
 ### http://en.wikipedia.org/wiki/Karush%E2%80%93Kuhn%E2%80%93Tucker_conditions
 
+## global (for use in several functions)
+help_str <- "\n  See ?lme4::convergence and ?lme4::troubleshooting."
+
+
 ##' @param derivs typically the "derivs" attribute of optimizeLmer(); with
 ##' "gradients" and possibly "Hessian" component
 ##' @param coefs estimated function value
@@ -11,7 +15,8 @@
 ##' @param lbound vector of lower bounds \emph{for random-effects parameters only}
 ##'   (length is taken to determine number of RE parameters)
 ##' @param debug useful if some checks are on "ignore", but would "trigger"
-checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
+##' @param nobs the number of observations from the dataset
+checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE, nobs = NULL)
 {
     res <- list()
     ntheta <- length(lbound)
@@ -39,8 +44,11 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
 
     ## DON'T check remaining gradient issues
     if (is.singular) return(res)
-
-    if (is.null(derivs)) return(NULL)  ## bail out
+    
+    ## bail out
+    if (is.null(derivs) || (!is.null(nobs) && nobs >
+                            ctrl$check.conv.nobsmax)) return(NULL)
+    
     if (anyNA(derivs$gradient))
         return(list(code = -5L,
                     messages = gettextf("Gradient contains NAs")))
@@ -71,6 +79,7 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
                 res$code <- -1L
                 wstr <- gettextf("Model failed to converge with max|grad| = %g (tol = %g, component %d)",
                                  maxmingrad, ccl$tol,w)
+                wstr <- paste0(wstr, help_str)
             }
         }
         if (!is.null(wstr)) {
@@ -89,6 +98,7 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE)
                 wstr <-
                     gettextf("Model failed to converge with max|relative grad| = %g (tol = %g)",
                              max.rel.grad, ccl$relTol)
+                wstr <- paste0(wstr, help_str)
                 res$messages <- wstr
                 switch(cc,
                        "warning" = warning(wstr),
@@ -147,6 +157,7 @@ checkHess <- function(H, tol, hesstype="") {
                 gettextf(paste("Model failed to converge:",
                                "degenerate",hesstype,"Hessian with %d negative eigenvalues"),
                          negative)
+            res$messages <- paste0(res$messages, help_str)
         } else {
             zero <- sum(abs(evd) < tol)
             if(zero || inherits(tryCatch(chol(H), error=function(e)e), "error")) {

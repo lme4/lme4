@@ -1,5 +1,3 @@
-library("lme4")
-library("testthat")
 testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
 
 set.seed(101)
@@ -32,7 +30,7 @@ test_that("ok with Poisson masking", {
 })
 
 if (testLevel>2) {
-context("testing glmer refit")
+#context("testing glmer refit")
 
 test_that("glmer refit", {
             ## basic Poisson fit

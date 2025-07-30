@@ -1,6 +1,6 @@
 stopifnot(require("testthat"), require("lme4"))
 
-context("NA (and Inf) handling")
+#context("NA (and Inf) handling")
 
 ## Modified sleepstudy data :
 sleepst.a <- sleepstudy

@@ -1,6 +1,3 @@
-library("testthat")
-## library("lme4")
-
 eps <- .Machine$double.eps
 oneMeps <- 1 - eps
 set.seed(1)
@@ -25,7 +22,6 @@ mubinom <- list(runif(100, 0, 1),
                 pmin(pmax(eps, rbeta(100, 0.1, 3)), oneMeps),
                 pmin(pmax(eps, rbeta(100, 3, 0.1)), oneMeps))
 
-context("glmFamily linkInv and muEta")
 test_that("inverse link and muEta functions", {
     tst.lnki <- function(fam, frm) {
         ff <- glmFamily$new(family=fam)
@@ -56,7 +52,6 @@ test_that("inverse link and muEta functions", {
     tst.muEta(inverse.gaussian(),  etapos)    
 })
 
-context("glmFamily linkFun and variance")
 test_that("link and variance functions", {
     tst.link <- function(fam, frm) {
         ff <- glmFamily$new(family=fam)
@@ -84,7 +79,6 @@ test_that("link and variance functions", {
     tst.variance(poisson(),                    etapos)
 })
 
-context("glmFamily devResid and aic")
 test_that("devResid and aic", {
     tst.devres <- function(fam, frm) {
         ff <- glmFamily$new(family=fam)
@@ -109,7 +103,6 @@ test_that("devResid and aic", {
     tst.devres(poisson(),  etapos)
 })
 
-context("negative binomial")
 test_that("variance", {
     tst.variance <- function(fam, frm) {
         ff <- glmFamily$new(family=fam)
@@ -129,3 +122,37 @@ test_that("variance", {
       expect_error(bfam$setTheta(2))#, "setTheta applies only to negative binomial")
     }
     })
+
+simfun_gam <- function(ngrp = 50, nrep = 50, shape_gam = 2, intercept = 1, 
+                       use_simulate = FALSE, seed = NULL) {
+  if (!is.null(seed)) set.seed(seed)
+  dd <- expand.grid(group = 1:ngrp, rep = 1:nrep)
+  if (use_simulate) {
+    dd$y <- simulate(~ 1 + (1 | group), newdata = dd, 
+                     family = Gamma(link = "log"), 
+                     newparams = list(
+                       theta = 1, beta = 1, sigma = 1/sqrt(shape_gam)))[[1]]
+    return(dd) 
+  }
+  b <- rnorm(ngrp)
+  eta <- intercept + b  
+  mu <- exp(eta)
+  y <- rgamma(nrow(dd), shape = shape_gam, scale = mu/shape_gam)
+  data.frame(dd, y)
+}
+
+set.seed(1)
+dd1 <- simfun_gam(seed = 101)
+dd2 <- simfun_gam(seed = 101, use_simulate = TRUE)
+
+test_that("simulated Gamma data matches with simulate()", {
+  expect_equal(dd1$y, dd2$y)
+})
+
+test_that("estimated Gamma dispersion (shape) is correct", {
+  m1 <- glmer(y ~ 1 + (1|group), family = Gamma(link = "log"), data = dd2)
+  shape_val <- 1/sigma(m1)^2
+  expect_equal(shape_val, 2.0, tolerance = 0.05)
+  expect_equal(1/sigma(m1)^2, 1.94511502080571, tolerance = 1e-6)
+})
+

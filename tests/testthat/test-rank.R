@@ -1,7 +1,4 @@
-library("testthat")
-library("lme4")
-
-context("testing fixed-effect design matrices for full rank")
+#context("testing fixed-effect design matrices for full rank")
 
 test_that("lmerRank", {
     set.seed(101)

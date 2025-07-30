@@ -18,6 +18,16 @@
       \item changed \code{confint.merMod} to use \code{signames} as an
       argument instead of \code{oldNames} to be consistent with
       \code{profile.merMod}
+      \item added a new argument \code{start_from_mle} to \code{allFit}
+      (default TRUE) which
+      specifies that models should be refitted using starting values 
+      from the model’s MLE.
+      \item derivative-based convergence checks are now skipped for
+      models with large data (number of observations greater than
+      the \code{check.conv.nobsmax} component of
+      \code{[g]lmerControl()}); default threshold is 1e4 observations.
+      If desired, derivatives can be calculated (but not checked)
+      by explicitly setting \code{calc.derivs} to TRUE.
       \item added six publically available datasets: \code{cbpp2} 
       (contagious bovine pleuropneumonia (extended version)), 
       \code{culcitalogreg} (coral-eating seastar \emph{Culcita novaeguineae}), 

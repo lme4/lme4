@@ -1,5 +1,3 @@
-stopifnot(require("testthat"))
-library(lme4) ## make sure package is attached
 ##  (as.function.merMod() assumes it)
 data("Dyestuff", package = "lme4")
 
@@ -8,7 +6,7 @@ if ("sample.kind" %in% names(formals(RNGkind))) {
     suppressWarnings(RNGkind("Mersenne-Twister", "Inversion", "Rounding"))
 }
 
-context("fitting lmer models")
+#context("fitting lmer models")
 ## is "Nelder_Mead" default optimizer? -- no longer
 (isNM <- formals(lmerControl)$optimizer == "Nelder_Mead")
 
@@ -282,7 +280,6 @@ test_that("coef_lmer", {
                     var1=factor(sample(1:5,size=100,replace=TRUE)),
                     var2=runif(100),
                     var3=factor(sample(1:5,size=100,replace=TRUE)))
-    library(lme4)
     mix1 <- lmer(resp ~ 0 + var1 + var1:var2 + (1|var3), data=d)
     c1 <- coef(mix1)
     expect_is(c1, "coef.mer")
@@ -326,11 +323,11 @@ test_that("better info about optimizer convergence",
     options(op)
 
     cc <-capture.output(print(summary(gm2)))
-    expect_equal(tail(cc,3)[1],
+    expect_equal(tail(cc,4)[1],
                  "optimizer (Nelder_Mead) convergence code: 0 (OK)")
 })
 
-context("convergence warnings etc.")
+#context("convergence warnings etc.")
 
 fm1 <- lmer(Reaction~ Days + (Days|Subject), sleepstudy)
 suppressMessages(fm0 <- lmer(Reaction~ Days + (Days|Subject), sleepstudy[1:20,]))
@@ -389,4 +386,23 @@ test_that("update works as expected", {
 	m <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy)
 	expect_equivalent(fitted(update(m, .~.-(0 + Days | Subject))),
                           fitted(lmer(Reaction ~ Days + (1|Subject), sleepstudy)))
+})
+
+test_that("turn off conv checking for nobs > check.conv.nobsmax", {
+  ## calc derivs and check convergence
+  fm1 <- lmer(Reaction ~ 1 + (1|Days), sleepstudy)
+  nn <- nrow(sleepstudy)-1
+  ## neither derivs nor conv check
+  fm2 <- update(fm1,
+                control = lmerControl(check.conv.nobsmax = nn))
+  ## no conv check, do calc derivs
+  fm3 <- update(fm1, 
+                control = lmerControl(check.conv.nobsmax = nn,
+                                      calc.derivs = TRUE))
+  expect_null(fm2@optinfo$derivs)
+  expect_false(is.null(fm1@optinfo$derivs))
+  expect_false(is.null(fm3@optinfo$derivs))
+  expect_equal(fm1@optinfo$conv$lme4, list())
+  expect_null(fm2@optinfo$conv$lme4)
+  expect_null(fm3@optinfo$conv$lme4)
 })
