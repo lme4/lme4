@@ -57,11 +57,11 @@
   Section 14.5, Chapman and Hall/CRC.
 }
 \examples{
-# Making sure Male, Female, and CRoss are treated as factors
+## Making sure Male, Female, and CRoss are treated as factors
 salamander$Male <- factor(salamander$Male)
 salamander$Female <- factor(salamander$Female)
 salamander$Cross <- factor(salamander$Cross)
-# Fitting the model described in 14.5.3 from McCullagh and Nelder
+## Fitting the model described in 14.5.3 from McCullagh and Nelder
 sal_mod <- glmer(Mate ~ (1|Female) + (1 | Male) + Cross, data = salamander,
                  family = binomial(link = "logit"))
 }

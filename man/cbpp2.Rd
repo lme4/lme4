@@ -3,11 +3,11 @@
 \alias{cbpp2}
 \title{Contagious bovine pleuropneumonia (extended version)}
 \description{
-  This dataset is an extension of \code{cbpp}, which describes the serological 
-  incidence of CBPP (Contagious bovine pleuropneumonia) in zebu cattle during 
-  a follow-up survey implemented in 15 commercial herds located in the Boji 
-  district of Ethiopia. There are two extra covariates: \code{treatment} and 
-  \code{avg_size}.
+  This dataset is an extension of \code{\link[lme4]{cbpp}}, which describes the 
+  serological incidence of CBPP (Contagious bovine pleuropneumonia) in zebu 
+  cattle during a follow-up survey implemented in 15 commercial herds located in 
+  the Boji district of Ethiopia. There are two extra covariates: \code{treatment} 
+  and \code{avg_size}.
 }
 \format{A data frame with 56 observations on the following 6 variables.
   \describe{
@@ -47,17 +47,20 @@
   (lost to follow-up). Serological status was determined using a competitive
   enzyme-linked immuno-sorbent assay (cELISA).
 }
+\seealso{
+  The shorter version, \code{\link[lme4]{cbpp}}.
+}
 \examples{
-# Fitting the model 
+## Fitting the model 
 gm1 <- glmer(incidence/size ~ period + treatment + avg_size + (1 | herd),
              family = binomial,
              data = cbpp2, weights = size,
              control = glmerControl(optimizer="bobyqa"))
-# Adding an observation-level random effect
+## Adding an observation-level random effect
 cbpp2 <- transform(cbpp2,obs=factor(seq(nrow(cbpp2))))
-# Herd and observation-level REs (below causes singular fit issues)
+## Herd and observation-level REs (below causes singular fit issues)
 gm2 <- update(gm1,.~.+(1|obs)) 
-# observation-level REs only (no singular fit issue)
+## observation-level REs only (no singular fit issue)
 gm3 <- update(gm1,.~.-(1|herd)+(1|obs)) 
 }
 \keyword{datasets}

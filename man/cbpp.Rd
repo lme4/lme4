@@ -36,6 +36,9 @@
   Serological status was determined using a competitive
   enzyme-linked immuno-sorbent assay (cELISA).
 }
+\seealso{
+  The extended version with more covariates, \code{\link[lme4]{cbpp2}}.
+}
 \examples{
 ## response as a matrix
 (m1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),

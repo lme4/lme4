@@ -50,11 +50,11 @@
   786--798; \doi{10.1890/08-0219.1}
 }
 \examples{
-# Doing this directly, we will obtain a singularFit issue:
+## Doing this directly will obtain a singularFit issue:
 gopher_glmer <- glmer(shells ~ factor(year) + prev + offset(log(Area))
                    + (1|Site), data = gopherdat2, family = "poisson")
 
-# Trying to ignore the singularFit portion:
+## Trying to ignore the singularFit portion:
 gopher_glmer <- glmer(
   shells ~ prev + offset(log(Area)) + factor(year) + (1 | Site), 
   data = gopherdat2,  
@@ -64,16 +64,16 @@ gopher_glmer <- glmer(
     check.conv.singular = .makeCC(action = "ignore", tol = 1e-4) 
   )
 )
-# Inspecting for the value of the site-level variance                                          
+## Inspecting for the value of the site-level variance                                          
 VarCorr(gopher_glmer)
-# This suggests we could have obtained similar results from a Poisson GLM
-# Trying to create a simple Poisson GLM:
+## This suggests we could have obtained similar results from a Poisson GLM
+## Trying to create a simple Poisson GLM:
 gopher_glm <- glm(shells ~ factor(year) + prev + offset(log(Area)),
                  data = gopherdat2, family = "poisson")
-# Comparing the fixed coefficients, which appear to be identical:
+## Comparing the fixed coefficients, which appear to be identical:
 mod_list = list("glm" = gopher_glm, "glmer" = gopher_glmer)
 purrr::map_dfr(mod_list, ~broom.mixed::tidy(., effects = "fixed"), 
                .id ="model") |> dplyr::arrange(term)
-# As the table suggests, the estimates are similar.
+## As the table suggests, the estimates are similar.
 }
 \keyword{datasets}

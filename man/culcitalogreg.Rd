@@ -2,7 +2,7 @@
 \alias{culcitalogreg}
 \docType{data}
 \title{
- Coral-eating seastar Culcita novaeguineae data
+ Coral-eating seastar Culcita novaeguineae data (binary predation version)
 }
 \description{
   This data shows the results from a block design experiment to record the 
@@ -36,7 +36,8 @@
             \emph{Trapezia serenei} (‘Alpheus and Trapezia’).
         }
       }
-    \item{\code{predation}}{(binary) }
+    \item{\code{predation}}{(binary) indicates whether the seastar predator 
+      consumed the coral. \code{0} = did not eat; \code{1} = ate.}
     \item{\code{ttt.1}}{a relabelled version of \code{ttt} that explicitly 
       indicates the corresponding treatment condition in plain language.}
     \item{\code{crab}}{describes whether the crab was present in the 
@@ -66,7 +67,12 @@
   variation driven by search time, a single Culcita was placed directly on top 
   of the coral colony. The following morning, we measured the coral size 
   (length, width, height) and the feeding scars left by the Culcita (length, 
-  width, depth).
+  width, depth)."
+}
+\seealso{
+  The version which only contains predation counts but includes the amount of 
+  volume of the coral and the amount of volume lost, 
+  \code{\link[lme4]{culcitalvolume}}.
 }
 \source{
   McKeon, C.S., Stier, A.C., McIlroy, S.E. and Bolker, B.M.
