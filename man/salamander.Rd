@@ -7,8 +7,8 @@
 \description{
   S. Arnold and P. Verrell conducted an experiment at the University of 
   Chicago to study breeding behaviours of mountain dusky salamanders. This
-  mating data was used as an example from McCullagh and Nelder's (1989) book 
-  on GLMs.
+  mating data was used as an example in the "Generalized Linear Models" 
+  textbook \insertCite{mccullagh1989generalized}{lme4}.
 }
 \usage{data("salamander")}
 \format{
@@ -50,11 +50,10 @@
   and female salamanders in the experiment.
 }
 \source{
-  McCullagh P. and Nelder, J. A.
+  \insertCite{mccullagh1989generalized}{lme4}
 }
 \references{
-  McCullagh P. and Nelder, J. A. 1989. \emph{Generalized Linear Models}, 
-  Section 14.5, Chapman and Hall/CRC.
+  \insertRef{mccullagh1989generalized}{lme4}
 }
 \examples{
 ## Making sure Male, Female, and CRoss are treated as factors

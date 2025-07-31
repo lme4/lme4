@@ -44,16 +44,15 @@
 }
 
 \source{
-  This data and most of this documentation was taken from the \code{mixor} 
+  This data and most of this documentation was taken from the \CRANpkg{mixor} 
   package, which is no longer from CRAN. The references below mostly reference 
-  the deprecated \code{mixor} program.
+  the deprecated \CRANpkg{mixor} program.
 }
 \references{
-  Hedeker D. and Gibbons R.D. (1996) A computer program for mixed-effects 
-  ordinal regression analysis. \emph{Computer Methods and Programs in 
-  Biomedicine} 49, 157-176.
-  Hedeker D and Gibbons R.D. (2006) \emph{Longitudinal Data Analysis}, Wiley, 
-  Hoboken, New Jesery.
+  \itemize{
+    \item \insertRef{hedeker1996mixor}{lme4}
+    \item \insertRef{hedeker2006longitudinal}{lme4}
+  }
 }
 \examples{
 schmod <- glmer(imps79 ~ TxDrug * Week + (1 | id),

@@ -9,7 +9,8 @@
   interactions of ‘guard’ crustaceans, shrimp (\emph{Alpheus lottini}) and crab 
   (\emph{Trapezia serenei}), that defend their coral host 
   (\emph{Pocillopora cf. meandrina}) from seastar predators 
-  (\emph{Culcita novaeguineae}). The coral and their seastar predator were 
+  (\emph{Culcita novaeguineae}) \insertCite{mckeon2012multiple}{lme4}. 
+  The coral and their seastar predator were 
   placed in large, octagonal, flow-through seawater tanks measuring 
   approximately 0.5m deep and 2m in diameter. There were 10 tanks in total, 
   each serving as an experimental block. Four treatment groups were tested: 
@@ -56,7 +57,8 @@
   }
 }
 \details{
-  Full details of the experiment, as outlined by McKeon et al., is quoted below:
+  Full details of the experiment \insertCite{mckeon2012multiple}{lme4}, is 
+  quoted below:
   "Twenty replicates in total were conducted for each exosymbiont treatment in 
   a temporally blocked design with two replicates in each of ten temporal 
   blocks. Trials were conducted in a large octagonal flow-through seawater tank
@@ -75,12 +77,10 @@
   \code{\link[lme4]{culcitalvolume}}.
 }
 \source{
-  McKeon, C.S., Stier, A.C., McIlroy, S.E. and Bolker, B.M.
+  \insertCite{mckeon2012multiple}{lme4}
 }
 \references{
-  McKeon, C.S., Stier, A.C., McIlroy, S.E. and Bolker, B.M. Multiple defender 
-  effects: synergistic coral defense by mutualist crustaceans. Oecologia 169, 
-  1095–1103 (2012); \doi{10.1007/s00442-012-2275-2}.
+  \insertRef{mckeon2012multiple}{lme4}
 }
 \examples{
 cul_mod <- glmer(predation ~ ttt2 + (1|block), data=culcitalogreg,

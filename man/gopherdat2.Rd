@@ -5,7 +5,7 @@
   Gopher tortoises shell remains
 }
 \description{
-  Data of fresh Gopher tortoise shell remains from Ozgul et al.
+  Data of fresh Gopher tortoise shell remains \insertCite{ozgul2009upper}{lme4}.
 }
 \usage{data("gopherdat2")}
 \format{
@@ -40,14 +40,10 @@
 %%  ~~ If necessary, more details than the __description__ above ~~
 }
 \source{
-  From Arpat Ozgul, Madan K. Oli, Benjamin M. Bolker, and Carolina 
-  Perez-Heydrich.
+  \insertCite{ozgul2009upper}{lme4}
 }
 \references{
-  Arpat Ozgul, Madan K. Oli, Benjamin M. Bolker, and Carolina Perez-Heydrich 
-  (2009) Upper respiratory tract disease, force of infection, and effects on 
-  survival of gopher tortoises. \emph{Ecological Applications} \strong{19}(3), 
-  786--798; \doi{10.1890/08-0219.1}
+  \insertRef{ozgul2009upper}{lme4}
 }
 \examples{
 ## Doing this directly will obtain a singularFit issue:

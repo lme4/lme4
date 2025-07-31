@@ -45,12 +45,10 @@
   \code{\link[lme4]{culcitalogreg}}.
 }
 \source{
-  McKeon, C.S., Stier, A.C., McIlroy, S.E. and Bolker, B.M.
+  \insertCite{mckeon2012multiple}{lme4}
 }
 \references{
-  McKeon, C.S., Stier, A.C., McIlroy, S.E. and Bolker, B.M. Multiple defender 
-  effects: synergistic coral defense by mutualist crustaceans. Oecologia 169, 
-  1095–1103 (2012); \doi{10.1007/s00442-012-2275-2}.
+  \insertRef{mckeon2012multiple}{lme4}
 }
 \examples{
 ## Modifying to create a new response variable

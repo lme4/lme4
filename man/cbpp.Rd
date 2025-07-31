@@ -11,13 +11,6 @@
       beginning of a given time period.}
     \item{\code{period}}{A factor with levels \code{1} to \code{4}.}
   }}
-\source{
-  Lesnoff, M., Laval, G., Bonnet, P., Abdicho, S.,
-  Workalemahu, A., Kifle, D., Peyraud, A., Lancelot, R.,
-  Thiaucourt, F. (2004) Within-herd spread of contagious
-  bovine pleuropneumonia in Ethiopian highlands.
-  \emph{Preventive Veterinary Medicine} \bold{64}, 27--40.
-}
 \description{
   Contagious bovine pleuropneumonia (CBPP) is a major
   disease of cattle in Africa, caused by a mycoplasma.
@@ -35,6 +28,12 @@
 \details{
   Serological status was determined using a competitive
   enzyme-linked immuno-sorbent assay (cELISA).
+}
+\source{
+  \insertCite{lesnoff2004within}{lme4}
+}
+\references{
+  \insertRef{lesnoff2004within}{lme4}
 }
 \seealso{
   The extended version with more covariates, \code{\link[lme4]{cbpp2}}.

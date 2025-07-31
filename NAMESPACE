@@ -49,6 +49,7 @@ importFrom("lattice",
            xyplot)
 importFrom("MASS", negative.binomial, theta.ml)
 importFrom("boot", boot.ci)
+importFrom(Rdpack, reprompt)
 
 ## generics we provide methods for and re-export:
 importFrom("nlme", fixef,ranef, VarCorr, getGroups, getData)

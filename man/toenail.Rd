@@ -5,7 +5,7 @@
   Toenail onychomycosis data from dermatophyte infections
 }
 \description{
-  Results of a clinical trial by De Backer et al. (1998) to compare 
+  Results of a clinical trial \insertCite{de1998twelve}{lme4} to compare 
   two oral antifungal treatments: itraconazole and terbinafine to treat
   toenail onychomycosis causes by dermatophytes.
 }
@@ -25,11 +25,12 @@
   }
 }
 \details{
-  The data in \code{lme4} was copied from the toenail data found in the 
-  \code{HSAUR3} package. From the dataset documentation from the 
-  \code{HSAUR3} package: De Backer et al. (1998) describe a clinical trial to 
-  compare two competing oral antifungal treatments for toenail infection 
-  (dermatophyte onychomycosis). A total of 378 patients were randomly allocated 
+  The data in \CRANpkg{lme4} was copied from the toenail data found in the 
+  \CRANpkg{HSAUR3} package. From the dataset documentation from the 
+  \CRANpkg{HSAUR3} package: There is a clinical trial 
+  \insertCite{de1998twelve}{lme4} to compare two competing oral antifungal 
+  treatments for toenail infection (dermatophyte onychomycosis). 
+  A total of 378 patients were randomly allocated 
   into two treatment groups, one group receiving 250mg per day of terbinafine 
   and the other group 200mg per day of itraconazole. Patients were evaluated at 
   seven visits, intended to be at weeks 0, 4, 8, 12, 24, 36, and 48 for the 
@@ -40,15 +41,10 @@
   since not all patients attended for all seven planned visits.
 }
 \source{
-  M. D. Backer and C. D. Vroey and E. Lesaffre and I. Scheys and P. D. Keyser. 
+  \insertCite{de1998twelve}{lme4}
 }
 \references{
-  M. D. Backer and C. D. Vroey and E. Lesaffre and I. Scheys and P. D. Keyser 
-  (1998), Twelve weeks of continuous oral therapy for toenail onychomycosis 
-  caused by dermatophytes: A double-blind comparative trial of terbinafine 
-  250 mg/day versus itraconazole 200 mg/day. \emph{Journal of the American 
-  Academy of Dermatology}, \bold{38}, S57--S63; 
-  \doi{https://doi.org/10.1016/S0190-9622(98)70486-4}
+  \insertRef{de1998twelve}{lme4}
 }
 \examples{
 toemod <- glmer(outcome ~ time*treatment + (1 | patientID), 
