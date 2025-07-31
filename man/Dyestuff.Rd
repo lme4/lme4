@@ -10,14 +10,11 @@
     \item{\code{Yield}}{the yield of dyestuff from the preparation
       (grams of standard color).}
   }}
-\source{
-  O.L. Davies and P.L. Goldsmith (eds), \emph{Statistical
-  Methods in Research and Production, 4th ed.}, Oliver and
-  Boyd, (1972), section 6.4
-
-  G.E.P. Box and G.C. Tiao, \emph{Bayesian Inference in
-  Statistical Analysis}, Addison-Wesley, (1973), section
-  5.1.2
+\references{
+  \itemize{
+    \item \insertRef{davies1972statistical_pt3}{lme4}
+    \item \insertRef{box1973bayesian}{lme4}
+  }
 }
 \description{
   The \code{Dyestuff} data frame provides the yield of
