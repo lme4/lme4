@@ -6,7 +6,7 @@
 }
 \description{
   Summarizes the results of a fitted mixed-effects model of class 
-  \code{\linkS4class{merMod}}., as produced by [ng]lmer fits. The summary 
+  \code{\linkS4class{merMod}}, as produced by [ng]lmer fits. The summary 
   includes estimates for the fixed and random effects. 
 }
 \usage{

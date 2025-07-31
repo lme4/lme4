@@ -20,7 +20,7 @@
     \code{VarCorr.merMod} object returned from \code{VarCorr}.}
   \item{sigma}{an optional numeric value used as a multiplier for the
     standard deviations.}
-  \item{digits}{an optional integer value specifying the number of digits}
+  \item{digits}{an optional integer value specifying the number of digits.}
   \item{order}{arrange data frame with variances/standard deviations
     first and covariances/correlations last for each random effects
     term (\code{"cov.last"}), or in the order of the lower triangle of the
