@@ -5,7 +5,8 @@
 \description{
   Extract the estimated standard deviation of the errors, the
   \dQuote{residual standard deviation} (also misnamed the
-  \dQuote{residual standard error}), from a fitted model.
+  \dQuote{residual standard error}), from a fitted model of class
+  \code{\linkS4class{merMod}}.
 }
 \usage{
 \S3method{sigma}{merMod}(object, \dots)
@@ -22,9 +23,11 @@
   \itemize{
     \item (\dQuote{residual standard deviation}) for Gaussian models.
     \item For Gamma fits, it specifies the square root of the dispersion 
-    parameter.
-    \item Less interpretably, the square root of the residual deviance per 
-    degree of freedom in more general models.
+      parameter.
+    \item For Binomial and Poisson fits, it is always reported as \code{1} 
+      as the variance is a function of the mean alone (no scale parameter.)
+    %\item Less interpretably, the square root of the residual deviance per 
+    %degree of freedom in more general models.
   }
 }
 \details{

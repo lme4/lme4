@@ -1,12 +1,13 @@
-\name{summary.merMod}
+\name{summary}
+\alias{summary}
 \alias{summary.merMod}
 \title{
   Summary for a [ng]lmer Fit
 }
 \description{
   Summarizes the results of a fitted mixed-effects model of class 
-  \code{merMod}, as produced by [ng]lmer fits. The summary includes estimates
-  for the fixed and random effects. 
+  \code{\linkS4class{merMod}}., as produced by [ng]lmer fits. The summary 
+  includes estimates for the fixed and random effects. 
 }
 \usage{
 \method{summary}{merMod}(object,
@@ -20,12 +21,15 @@
   \item{use.hessian}{(logical) if \code{TRUE}, uses the Hessian to compute the 
   variance-covariance matrix of the fixed effects.}
 }
-\details{
+\seealso{
   \itemize{
-    \item For Gamma GLMMs, the \code{"Residual Std.Dev."} corresponds to the 
-    square root of the dispersion parameter rather than a residual standard 
-    deviation.
-    \item TODO: add info for other GLMMs....
+    \item\code{\link[base]{summary}} for the original function in base \code{R},
+    \item\code{\link[lme4]{lmer}}, and \code{\link[lme4]{glmer}} for model
+      fitting,
+    \item\code{\link[lme4]{sigma.merMod}} documents the result obtained in
+      \code{"Residual Std.Dev"}; the name "Residual Std.Dev" is mostly 
+      applicable for \code{\link[lme4]{lmer}} fits, but the meaning differs for
+      \code{\link[lme4]{glmer}} fits.
   }
 }
 \value{
