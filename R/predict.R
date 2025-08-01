@@ -394,6 +394,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
         } else { ## inverse-link
             pred <-  switch(type,response=object@resp$mu, ## == fitted(object),
                             link=object@resp$eta)
+            eta <- object@resp$eta
             if (is.null(nm <- rownames(model.frame(object))))
                 nm <- seq_along(pred)
             names(pred) <- nm
@@ -497,6 +498,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
             }
         }
         if (isGLMM(object) && type=="response") {
+            eta <- pred
             pred <- object@resp$family$linkinv(pred)
         }
     }  ## newdata/newparams/re.form
@@ -548,9 +550,14 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
     if(random.only) X <- Matrix(0, nrow = nrow(Z), ncol = n_beta)
 
     ZX <- cbind(Z, X)
-    list(fit = pred,
+    res <- list(fit = pred,
          se.fit = sqrt(quad.tdiag(Cmat, ZX))
          )
+    if (isGLMM(object) && type=="response") {
+      ## pred0 (linear predictor) will have been stored previously in this case ...  
+      res$se.fit <- res$se.fit*abs(family(object)$mu.eta(eta))
+    }
+    res
 
 } # end {predict.merMod}
 
