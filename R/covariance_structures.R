@@ -12,7 +12,7 @@ setClass("VirtualCovariance",
     contains = "VIRTUAL",
     slots = c(
         dimension = "integer",
-        vparameters = "numeric",
+        vparameters = "numeric",  # Std dev parameters
         cparameters = "numeric"
     )
 )
@@ -562,7 +562,7 @@ setMethod("expand_parameters_for_optimization", "HeterogeneousAR1Covariance", fu
     expanded_theta <- sigma_params
     for (dist in 1:max_distance) {
         rho_dist <- rho^dist
-        expanded_theta <- c(expanded_theta, ar1_rho_to_theta(rho_dist))
+    expanded_theta <- c(expanded_theta, ar1_rho_to_theta(rho_dist))
     }
 
         # variances map to positions 1:d, correlations map to (d+1), (d+2), ...
@@ -826,10 +826,10 @@ setMethod("compute_inverse_covariance_matrix", "DiagonalCovariance", function(ob
     if (d == 0) return(new("dsyMatrix", Dim = c(0L, 0L)))
     
     if (is(object, "HomogeneousVariance")) {
-        inv_sigma_sq <- exp(-object@vparameters[1])
+        inv_sigma_sq <- 1 / (object@vparameters[1]^2)
         inv_Sigma <- Diagonal(d, x = inv_sigma_sq)
     } else {
-        inv_variances <- exp(-object@vparameters)
+        inv_variances <- 1 / (object@vparameters^2)
         inv_Sigma <- Diagonal(d, x = inv_variances)
     }
     

@@ -169,7 +169,7 @@ compute_inverse_structured <- function(object) {
 ##' 
 ##' @description Helper function to generate start values for CS and AR1 covariance structures.
 ##' @param object A covariance structure object (CS or AR1).
-##' @return Numeric vector of start values: variance parameters (1.0) followed by 
+##' @return Numeric vector of start values: std dev parameters (1.0) followed by 
 ##'   correlation parameter (0.0) if dimension > 1.
 ##' @keywords internal
 get_structured_start_values <- function(object) {
@@ -189,16 +189,16 @@ get_structured_start_values <- function(object) {
 ##' 
 ##' @description Helper function to generate parameter bounds for CS and AR1 covariance structures.
 ##' @param object A covariance structure object (CS or AR1).
-##' @return Numeric vector of lower bounds: variance bounds (0) followed by 
+##' @return Numeric vector of lower bounds: st devs bounds (0) followed by 
 ##'   correlation bound (-Inf) if dimension > 1.
 ##' @keywords internal
 get_structured_lower_bounds <- function(object) {
     d <- object@dimension
     n_v_params <- if (is(object, "HomogeneousVariance")) 1L else d
-    v_low <- rep(0, n_v_params)  # Variance bounds (log scale)
+    v_low <- rep(0, n_v_params)  
     
     if (d > 1) {
-        c_low <- -Inf  # Correlation bound (atanh scale)
+        c_low <- -Inf  
         return(c(v_low, c_low))
     } else {
         return(v_low)
@@ -224,7 +224,7 @@ get_vech_distance_mapping <- function(d) {
             mapping[[vech_pos]] <- list(
                 matrix_pos = c(i, j),
                 distance = distance,
-                param_index = if (distance == 0) 1 else (1 + distance)  # 1=variance, 2+=correlations
+                param_index = if (distance == 0) 1 else (1 + distance)  # 1=st_dev, 2+=correlations
             )
             vech_pos <- vech_pos + 1
         }
