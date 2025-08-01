@@ -1,5 +1,6 @@
 ## examples for eval lookup
 testthat::skip_on_cran()
+data("cbpp", package = "lme4")
 
 if (require(car, quietly = TRUE)) {
   test_that("infIndexPlot env lookup OK", {
