@@ -19,7 +19,7 @@
       \code{none or mild} and \code{moderate or severe}.}
     \item{\code{treatment}}{a factor indicating the treatment used with levels
       \code{itraconazole} and \code{terbinafine}.}
-    \item{\code{month}}{exact timing of visit in months.}
+    \item{\code{time}}{exact timing of visit in months.}
     \item{\code{visit}}{An integer represent the sequential visit number for
       each subject.}
   }

@@ -37,7 +37,13 @@
   }
 }
 \details{
-%%  ~~ If necessary, more details than the __description__ above ~~
+  Details of the study is described in \insertCite{ozgul2009upper}{lme4} as
+  follows:
+  "The fieldwork was conducted between 2003 and 2006, during late spring/summer 
+  (May–September). Systematic surveys were conducted to locate tortoise burrows 
+  and shell remains from deceased tortoises at study sites and consisted of a 
+  line of four to eight observers spaced 10 m apart walking parallel transects 
+  across the study area."
 }
 \source{
   \insertCite{ozgul2009upper}{lme4}
