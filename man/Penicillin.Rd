@@ -11,10 +11,8 @@
     \item{\code{sample}}{penicillin sample.  A factor with levels
       \sQuote{A} to \sQuote{F}.}
   }}
-\source{
-  O.L. Davies and P.L. Goldsmith (eds), \emph{Statistical
-  Methods in Research and Production, 4th ed.}, Oliver and
-  Boyd, (1972), section 6.6
+\references{
+  \insertRef{davies1972statistical}{lme4}
 }
 \description{
   Six samples of penicillin were tested using the \emph{B.
