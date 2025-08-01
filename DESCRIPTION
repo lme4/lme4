@@ -62,10 +62,7 @@ Suggests:
     rr2,
     semEff,
     tibble,
-    merDeriv,
-    broom.mixed,
-    dplyr,
-    purrr
+    merDeriv
 VignetteBuilder: knitr
 LazyData: yes
 License: GPL (>=2)
