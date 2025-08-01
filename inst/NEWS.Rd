@@ -34,6 +34,22 @@
       \code{[g]lmerControl()}); default threshold is 1e4 observations.
       If desired, derivatives can be calculated (but not checked)
       by explicitly setting \code{calc.derivs} to TRUE.
+      \item added six publically available datasets: 
+      \itemize{
+        \item \code{cbpp2} (contagious bovine pleuropneumonia 
+          (extended version of \code{cbpp})), 
+        \item \code{culcitalogreg} (coral-eating seastar 
+          \emph{Culcita novaeguineae}). Also added the alternative version,
+          \code{culcitavolume},
+        \item \code{gopherdat2} (gopher tortoises shell remains), 
+        \item \code{salamander} (mountain dusky salamander mating), 
+        \item \code{schizophrenia} (National Institute of Mental Health 
+          schizophrenia collaborative study),
+        \item \code{toenail} (toenail onychomycosis data from dermatophyte 
+          infections).
+      }
+      
+      
     } % itemize
   } % user-visible changes
 } % devel

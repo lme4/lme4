@@ -29,14 +29,10 @@
   }
 }
 \source{
-  From Josh Banta
+  \insertCite{banta2010comprehensive}{lme4}
 }
 \references{
-  Joshua A. Banta, Martin H. H Stevens, and Massimo Pigliucci (2010)
-  A comprehensive test of the 'limiting resources' framework applied to
-  plant tolerance to apical meristem damage.
-  \emph{Oikos} \bold{119}(2), 359--369;
-  \doi{10.1111/j.1600-0706.2009.17726.x}
+  \insertRef{banta2010comprehensive}{lme4}
 }
 \examples{
 data(Arabidopsis)
