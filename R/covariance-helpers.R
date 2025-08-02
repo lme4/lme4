@@ -74,8 +74,6 @@ get_vech_indices <- function(d) {
 get_chol_from_params <- function(param_vec, d) {
 
 	L_vec <- param_vec
-	diag_indices <- vech_diag_indices(d)
-	L_vec[diag_indices] <- exp(L_vec[diag_indices])
 
 	L <- matrix(0, nrow = d, ncol = d)
 	vech_indices <- get_vech_indices(d)
