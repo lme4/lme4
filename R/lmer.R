@@ -1549,11 +1549,14 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
     ## modify the call  to have REML=FALSE. (without evaluating the call!)
     cl <- x@call
     cl[["REML"]] <- FALSE
-    new("lmerMod", call = cl, frame=x@frame, flist=x@flist,
+    aa <- attr(x, "cov_structures")
+    ret <- new("lmerMod", call = cl, frame=x@frame, flist=x@flist,
         cnms=x@cnms, theta=pp$theta, beta=pp$delb, u=pp$delu,
         optinfo = .optinfo(opt),
         lower=x@lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=rho$resp,
         Gp=x@Gp)
+    attr(ret, "cov_structures") <- aa
+    ret
 }
 
 ##' residuals of merMod objects                 --> ../man/residuals.merMod.Rd
