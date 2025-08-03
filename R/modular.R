@@ -421,6 +421,16 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 
     ## FIXME: shouldn't we have this already in the full-frame predvars?
     X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
+    
+    # Performing the scaling...
+    if (!is.null(control$autoscale) && control$autoscale) {
+      if("(Intercept)" %in% colnames(X)){
+        X[,-1] <- scale(X[, -1])
+      } else {
+        X <- scale(X)
+      }
+    }
+    
     ## backward compatibility (keep no longer than ~2015):
     if(is.null(rankX.chk <- control[["check.rankX"]]))
         rankX.chk <- eval(formals(lmerControl)[["check.rankX"]])[[1]]
