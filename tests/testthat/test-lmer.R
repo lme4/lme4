@@ -1,5 +1,7 @@
 ##  (as.function.merMod() assumes it)
 data("Dyestuff", package = "lme4")
+data("cbpp", package = "lme4")
+library(lme4)  ## this *is* necessary, for as.function.merMod() ...
 
 ## use old (<=3.5.2) sample() algorithm if necessary
 if ("sample.kind" %in% names(formals(RNGkind))) {
