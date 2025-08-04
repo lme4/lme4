@@ -2,7 +2,11 @@
 # Helper function to get a full suite of parameters for a given object
 get_all_test_params <- function(obj) {
     d <- obj@dimension
-    n_v_params <- if (is(obj, "HomogeneousVariance")) 1L else d
+    if (is(obj, "UnstructuredCovariance")) {
+        n_v_params <- 0L  
+    } else {
+        n_v_params <- if (is(obj, "HomogeneousVariance")) 1L else d
+    }
 
     list(
         n_v_params = n_v_params,
@@ -277,10 +281,10 @@ test_that("UnstructuredCovariance: object initialization", {
     expect_true(validObject(obj))
     expect_equal(obj@dimension, d)
     
-    expected_params <- d * (d + 1) / 2 
+    expected_params <- d * (d + 1) / 2
     default_params <- get_parameters(obj)
     expect_equal(length(default_params), expected_params)
-    expect_equal(default_params, get_start_values(obj)) 
+    expect_equal(default_params, get_start_values(obj))
     
     # test multiple dimensions
     for (test_d in c(1L, 2L, 4L, 5L)) {
@@ -292,4 +296,119 @@ test_that("UnstructuredCovariance: object initialization", {
     }
 })
 
- 
+test_that("UnstructuredCovariance: method coverage", {
+    d <- 2L
+    obj <- new("UnstructuredCovariance", dimension = d)
+    test_params <- get_all_test_params(obj)
+    
+    # object creation and validation
+    expect_s4_class(obj, "UnstructuredCovariance")
+    expect_true(validObject(obj))
+    expected_params <- d * (d + 1) / 2  
+    expect_equal(test_params$n_total, expected_params)
+    expect_equal(test_params$n_v_params, 0)  
+    expect_equal(test_params$n_c_params, expected_params)      
+    
+    # start values
+    expect_equal(get_start_values(obj), c(0, 0, 0))  
+
+    # lower bounds 
+    lower_bounds <- get_lower_bounds(obj)
+    expect_equal(lower_bounds, c(0, -Inf, 0))
+    
+    # set & get parameters 
+    params <- c(2, 0.5, sqrt(8.75))
+    obj <- set_parameters(obj, params)
+    expect_equal(get_parameters(obj), params)
+    
+    # interpretable parameters
+    interpretable <- get_interpretable_parameters(obj)
+    expect_equal(interpretable$st_devs, c(2, 3))
+    expect_equal(interpretable$correlation[1,2], 1/6)
+    
+    expect_true(is(get_lambda(obj), "sparseMatrix"))
+    expect_equal(get_lind(obj), seq_len(expected_params))
+
+    # covariance matrix
+    expected_sigma <- matrix(c(4, 1, 1, 9), 2, 2)
+    computed_sigma <- compute_covariance_matrix(obj)
+    expect_equal(as.matrix(computed_sigma), expected_sigma)
+    
+    # cholesky factor
+    computed_chol <- compute_cholesky_factor(obj)
+    expect_equal(as.matrix(computed_chol), matrix(c(2, 0.5, 0, sqrt(8.75)), 2, 2))
+    
+    # inverse covariance matrix
+    expected_inv <- solve(expected_sigma)
+    computed_inv <- compute_inverse_covariance_matrix(obj)
+    expect_equal(as.matrix(computed_inv), as.matrix(expected_inv))
+    
+})
+
+test_that("UnstructuredCovariance: compute_lambdat_x method", {
+    d <- 2L
+    obj <- new("UnstructuredCovariance", dimension = d)
+    
+    theta <- c(2, 0.5, 3)
+    lambdat_x_result <- compute_lambdat_x(obj, theta)
+    
+    expected_result <- c(2, 0.5, 3)
+    expect_equal(lambdat_x_result, expected_result)
+    
+    # edge case: dimension 1
+    obj1 <- new("UnstructuredCovariance", dimension = 1L)
+    lambdat_x1 <- compute_lambdat_x(obj1, 3)
+    expect_equal(lambdat_x1, 3)
+})
+
+test_that("UnstructuredCovariance: mathematical consistency", {
+    d <- 3L
+    obj <- new("UnstructuredCovariance", dimension = d)
+    params <- c(2, 0.3, 1.5, -0.2, 0.1, 1.8)
+    obj <- set_parameters(obj, params)
+    
+    # computed matrices
+    cov_mat <- compute_covariance_matrix(obj)
+    chol_mat <- compute_cholesky_factor(obj)
+    inv_mat <- compute_inverse_covariance_matrix(obj)
+    
+    # L * L' = Sigma
+    reconstructed_sigma <- chol_mat %*% t(chol_mat)
+    expect_equal(as.matrix(reconstructed_sigma), as.matrix(cov_mat))
+    
+    # Sigma * Sigma^(-1) = I
+    identity_check <- cov_mat %*% inv_mat
+    expect_equal(as.matrix(identity_check), diag(d))
+})
+
+test_that("UnstructuredCovariance: boundary behavior", {
+    d <- 2L
+    obj <- new("UnstructuredCovariance", dimension = d)
+    
+    # very small diagonal elements
+    small_params <- c(1e-3, 0.1, 1e-3)
+    obj_small <- set_parameters(obj, small_params)
+    
+    expect_true(all(is.finite(as.matrix(compute_covariance_matrix(obj_small)))))
+    expect_true(all(is.finite(as.matrix(compute_cholesky_factor(obj_small)))))
+    expect_true(all(is.finite(as.matrix(compute_inverse_covariance_matrix(obj_small)))))
+    
+    # large diagonal elements
+    large_params <- c(1e3, 0.1, 1e3)
+    obj_large <- set_parameters(obj, large_params)
+    
+    expect_true(all(is.finite(as.matrix(compute_covariance_matrix(obj_large)))))
+    expect_true(all(is.finite(as.matrix(compute_cholesky_factor(obj_large)))))
+    expect_true(all(is.finite(as.matrix(compute_inverse_covariance_matrix(obj_large)))))
+    
+    # near-singular case (small diagonal element)
+    singular_params <- c(2, 1.9, 1e-6)  # L21 close to L11, L22 very small
+    obj_singular <- set_parameters(obj, singular_params)
+    cov_singular <- compute_covariance_matrix(obj_singular)
+    
+    # Should have very small determinant but still be computable
+    expect_true(det(as.matrix(cov_singular)) < 1e-10)
+})
+
+
+
