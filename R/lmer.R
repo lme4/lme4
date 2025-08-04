@@ -963,6 +963,17 @@ fitted.merMod <- function(object, ...) {
 ##' @export
 fixef.merMod <- function(object, add.dropped=FALSE, ...) {
     X <- getME(object,"X")
+    # Returns back the auto-scaling
+    if (!is.null(sc <- attr(X, "scaled:scale"))) {
+      rescale_cols <- setdiff(colnames(X), "(Intercept)")
+      for(i in 1:length(rescale_cols)){
+        colnm <- rescale_cols[i]
+        x_scal <- attr(X, "scaled:scale")[colnm]
+        x_cent <- attr(X, "scaled:center")[colnm]
+        X[, colnm] <- X[, colnm]*x_scal + x_cent
+      }
+      X[abs(X) < 1e-10] <- 0 #minor numerical issue where value is close to 0...
+    }
     ff <- structure(object@beta, names = dimnames(X)[[2]])
     if (add.dropped) {
         if (!is.null(dd <- attr(X,"col.dropped"))) {

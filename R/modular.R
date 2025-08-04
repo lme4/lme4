@@ -425,10 +425,14 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     # Performing the scaling...
     if (!is.null(control$autoscale) && control$autoscale) {
       if("(Intercept)" %in% colnames(X)){
-        X[,-1] <- scale(X[, -1])
+        X_scaled <- scale(X[, -1])
+        X[,-1] <- X_scaled
       } else {
-        X <- scale(X)
+        X_scaled <- scale(X)
+        X <- X_scaled
       }
+      attr(X, "scaled:center") <- attr(X_scaled, "scaled:center")
+      attr(X, "scaled:scale") <- attr(X_scaled, "scaled:scale")
     }
     
     ## backward compatibility (keep no longer than ~2015):

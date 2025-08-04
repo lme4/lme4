@@ -492,9 +492,10 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
         ## FIXME: adjust Hessian/vcov
         ## FIXME: where else will these changes propagate?
         ##        profiling?
-        beta2 <- beta
-        beta2[names(sc)] <- sc*beta2[names(sc)]
-        beta <- beta2
+        # Anna: BELOW causes an issue...
+        #beta2 <- beta
+        #beta2[names(sc)] <- sc*beta2[names(sc)]
+        #beta <- beta2
     }
     if (!is.null(attr(pp$X, "scaled:center"))) {
         warning("auto(un)centering not yet implemented")
