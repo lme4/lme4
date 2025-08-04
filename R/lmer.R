@@ -2235,6 +2235,14 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
     if(correlation)
         rr@factors$correlation <-
             if(!is.na(sigm)) as(rr, "corMatrix") else rr # (is NA anyway)
+    
+    ## If auto-scaling is enabled
+    if (!is.null(X_scal <- attr(object@pp$X, "scaled:scale"))) {
+      if("(Intercept)" %in% colnames(object@pp$X)){
+        scal <- c("(Intercept)" = 1, X_scal)
+      }
+      rr <- rr * outer(scal, scal)
+    }
     rr
 }
 

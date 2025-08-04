@@ -484,22 +484,24 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
     }
     ## weights <- resp$weights
     beta    <- pp$beta(fac)
-    ## rescale
-    if (!is.null(sc <- attr(pp$X, "scaled:scale"))) {
-        warning("auto(un)scaling not yet finished/tested")
+    ## Anna: commenting out warning messages for re-scaling.
+    ## TODO: need to remove, or modify this for its original purpose?
+    ##if (!is.null(sc <- attr(pp$X, "scaled:scale"))) {
+        ##warning("auto(un)scaling not yet finished/tested")
         ## FIXME: test/handle no-intercept models
         ##   (only need to worry if we do centering as well as scaling)
         ## FIXME: adjust Hessian/vcov
         ## FIXME: where else will these changes propagate?
         ##        profiling?
-        # Anna: BELOW causes an issue...
-        #beta2 <- beta
-        #beta2[names(sc)] <- sc*beta2[names(sc)]
-        #beta <- beta2
-    }
-    if (!is.null(attr(pp$X, "scaled:center"))) {
-        warning("auto(un)centering not yet implemented")
-    }
+        ## Anna: commented out below; seems to accidentally add extra columns
+        ## when scaling.
+        ##beta2 <- beta
+        ##beta2[names(sc)] <- sc*beta2[names(sc)]
+        ##beta <- beta2
+    ##}
+    ##if (!is.null(attr(pp$X, "scaled:center"))) {
+    ##    warning("auto(un)centering not yet implemented")
+    ##}
     #sigmaML <- pwrss/sum(weights)
     sigmaML <- pwrss/n
     if (rcl != "lmerResp") {

@@ -74,7 +74,7 @@ merControl <-
              use.last.params=FALSE,
              sparseX=FALSE,
              standardize.X=FALSE,
-             autoscale=FALSE,
+             autoscale=NULL,
              ## input checking options:
              check.nobs.vs.rankZ="ignore", ## "warningSmall",
              check.nobs.vs.nlev="stop",

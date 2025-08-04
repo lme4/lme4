@@ -422,7 +422,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     ## FIXME: shouldn't we have this already in the full-frame predvars?
     X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
     
-    # Performing the scaling...
+    ## Scaling (if autoscale is on...)
     if (!is.null(control$autoscale) && control$autoscale) {
       if("(Intercept)" %in% colnames(X)){
         X_scaled <- scale(X[, -1])

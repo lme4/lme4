@@ -446,8 +446,8 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
 
                 X <- model.matrix(RHS, data=mfnew,
                                   contrasts.arg=attr(X,"contrasts"))
-                ## Need to ensure we scale the values based on the original
-                ## mean and variance
+                ## If autoscale was used for the model: need to ensure we scale 
+                ## values based on the og mean and variance
                 old_X <- object@pp$X
                 if(!is.null(x_scal <- attr(old_X, "scaled:scale"))){
                   x_cent <- attr(old_X, "scaled:center")
