@@ -3,6 +3,8 @@ if ("sample.kind" %in% names(formals(RNGkind))) {
     suppressWarnings(RNGkind("Mersenne-Twister", "Inversion", "Rounding"))
 }
 
+data("cbpp", package = "lme4")
+
 #context("lmList")
 test_that("basic lmList", {
     set.seed(17)
