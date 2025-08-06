@@ -78,8 +78,7 @@ influence on the variance-covariance components.
 For plotting \code{"influence.merMod"} objects, see \code{\link[car]{infIndexPlot}}.
 }
 \references{
-  Fox, J. and Weisberg, S. (2019)
-  \emph{An R Companion to Applied Regression}, Third Edition, Sage.
+  \insertRef{fox2019r}{lme4}
 }
 
 \author{

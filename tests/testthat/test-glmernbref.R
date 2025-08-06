@@ -1,4 +1,3 @@
-library(testthat)
 ## DON'T load lme4; test is to see if glmer.nb works when
 ## lme4 is not loaded
 ## this does *not* work properly in a devtools::test environment

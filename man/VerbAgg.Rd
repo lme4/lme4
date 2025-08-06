@@ -61,8 +61,7 @@ if (interactive()) {
 } ## interactive()
 }
 \references{
-  De Boeck and Wilson (2004), \emph{Explanatory Item
-  Response Models}, Springer.
+  \insertRef{de2004explanatory}{lme4}
 }
 \keyword{datasets}
 

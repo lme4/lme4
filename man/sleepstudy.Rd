@@ -35,13 +35,7 @@ xyplot(Reaction ~ Days | Subject, sleepstudy, type = c("g","p","r"),
 (fm2 <- lmer(Reaction ~ Days + (1|Subject) + (0+Days|Subject), sleepstudy, subset=Days>=2))
 }
 \references{
-  Gregory Belenky, Nancy J. Wesensten, David R. Thorne,
-  Maria L. Thomas, Helen C. Sing, Daniel P. Redmond,
-  Michael B. Russo and Thomas J. Balkin (2003) Patterns of
-  performance degradation and restoration during sleep
-  restriction and subsequent recovery: a sleep
-  dose-response study. \emph{Journal of Sleep Research}
-  \bold{12}, 1--12.
+  \insertRef{belenky2003patterns}{lme4}
 }
 \keyword{datasets}
 

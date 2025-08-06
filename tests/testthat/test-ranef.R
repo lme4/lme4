@@ -13,7 +13,7 @@ d$y <- suppressMessages(simulate(~1+x+(1|f)+(x|g),family=binomial,
                                                 theta=c(1,1,2,1)))[[1]])
 fm1 <- glmer(y~(1|f)+(x|g),family=binomial,data=d)
 
-context("ranef")
+#context("ranef")
 test_that("warn extra args", {
     expect_warning(ranef(fm1,transf=exp),"additional arguments")
 })
@@ -56,7 +56,7 @@ test_that("cbpp consistent with lme4.0", {
     expect_equal(lme4.0condVarcbpp, lme4condVarcbpp, tolerance = 1e-3)
 })
 
-context("multiple terms per factor")
+#context("multiple terms per factor")
 test_that("multiple terms work", {
     fm <- lmer(Reaction ~ Days + (1|Subject)+ (0+Days | Subject), sleepstudy,
                control=lmerControl(optimizer="nloptwrap",

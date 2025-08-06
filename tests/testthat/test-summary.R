@@ -1,10 +1,8 @@
-library("testthat")
 try(detach("package:lmerTest"), silent = TRUE)
-library("lme4")
 
 testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
 
-context("summarizing/printing models")
+#context("summarizing/printing models")
 test_that("lmer", {
   set.seed(0)
   J <- 8

@@ -32,16 +32,11 @@
   within \code{replicate}.
 }
 \references{
-  Cook, F. E. (1938) \emph{Chocolate cake, I. Optimum
-  baking temperature}. Master's Thesis, Iowa State College.
-
-  Cochran, W. G., and Cox, G. M. (1957) \emph{Experimental
-  designs}, 2nd Ed.  New York, John Wiley & Sons.
-
-  Lee, Y., Nelder, J. A., and Pawitan, Y. (2006)
-  \emph{Generalized linear models with random effects.
-  Unified analysis via H-likelihood}. Boca Raton, Chapman
-  and Hall/CRC.
+  \itemize{
+    \item \insertRef{cook1938chocolate}{lme4}
+    \item \insertRef{cochran1957experimental}{lme4}
+    \item \insertRef{lee2006generalized}{lme4}
+  }
 }
 \examples{
 str(cake)
