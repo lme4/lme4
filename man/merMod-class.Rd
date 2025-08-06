@@ -96,11 +96,6 @@ REMLcrit(object)
     \eqn{p <= 12}, and the cutoff \code{12} may be modified by
     \code{options(lme4.summary.cor.max = <n>)}
   }
-  \item{use.hessian}{(logical) indicates whether to use the
-    finite-difference Hessian of the deviance function to compute
-    standard errors of the fixed effects; see \code{\link{vcov.merMod}}
-  for details
-}
 \item{digits}{number of significant digits for printing}
   \item{symbolic.cor}{should a symbolic encoding of the fixed-effects correlation
     matrix be printed?  If so, the \code{\link{symnum}} function is used.}
@@ -108,7 +103,6 @@ REMLcrit(object)
   \item{ranef.comp}{character vector of length one or two, indicating
     if random-effects parameters should be reported on the variance and/or
     standard deviation scale.}
-  \item{show.resids}{should the quantiles of the scaled residuals be printed?}
   \item{formula.}{see \code{\link{update.formula}}.}
   \item{evaluate}{see \code{\link{update}}.}
   \item{type}{For \describe{
