@@ -963,18 +963,18 @@ fitted.merMod <- function(object, ...) {
 ##' @export
 fixef.merMod <- function(object, add.dropped=FALSE, ...) {
     X <- getME(object,"X")
-    # Returns back the auto-scaling
-    if (!is.null(sc <- attr(X, "scaled:scale"))) {
-      rescale_cols <- setdiff(colnames(X), "(Intercept)")
-      for(i in 1:length(rescale_cols)){
-        colnm <- rescale_cols[i]
-        x_scal <- attr(X, "scaled:scale")[colnm]
-        x_cent <- attr(X, "scaled:center")[colnm]
-        X[, colnm] <- X[, colnm]*x_scal + x_cent
-      }
-      X[abs(X) < 1e-10] <- 0 #minor numerical issue where value is close to 0...
-    }
     ff <- structure(object@beta, names = dimnames(X)[[2]])
+    
+    if (!is.null(sc <- attr(X, "scaled:scale"))) {
+      ce <- attr(X, "scaled:center")
+      ## modifying intercept
+      if ("(Intercept)" %in% names(ff)) {
+        intercept_shift <- sum((ff[names(sc)] * ce[names(sc)]) / sc[names(sc)])
+        ff[["(Intercept)"]] <- ff[["(Intercept)"]] - intercept_shift
+      }
+      # modifying beta coefficients
+      ff[names(sc)] <- ff[names(sc)] / sc[names(sc)]
+    }
     if (add.dropped) {
         if (!is.null(dd <- attr(X,"col.dropped"))) {
             ## restore positions dropped for rank deficiency
@@ -2237,12 +2237,31 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
             if(!is.na(sigm)) as(rr, "corMatrix") else rr # (is NA anyway)
     
     ## If auto-scaling is enabled
-    if (!is.null(X_scal <- attr(object@pp$X, "scaled:scale"))) {
-      if("(Intercept)" %in% colnames(object@pp$X)){
-        scal <- c("(Intercept)" = 1, X_scal)
+    if (!is.null(sc <- attr(object@pp$X, "scaled:scale"))) {
+      ce <- attr(object@pp$X, "scaled:center")
+      other_vars <- setdiff(colnames(rr), "(Intercept)")
+      
+      if("(Intercept)" %in% colnames(rr)){
+        ## 1. Modifying the intercept
+        sig_0sq <- rr["(Intercept)", "(Intercept)"]
+        
+        sig_0isq <- rr["(Intercept)", other_vars]
+        total1 <- -2 *sum((ce/sc) * sig_0isq)
+        
+        small_rr <- as.matrix(rr[other_vars, other_vars])
+        total2 <- crossprod(ce / sc, small_rr %*% (ce / sc))[[1]]
+        
+        rr["(Intercept)", "(Intercept)"] <- sig_0sq + total1 + total2
+        ## 2. Modifying the rest 
+        updated_2 <- sig_0isq - as.numeric((ce / sc) %*% small_rr)
+        ## symmetrically update
+        rr["(Intercept)", other_vars] <- updated_2
+        rr[other_vars, "(Intercept)"] <- updated_2
       }
-      rr <- rr * outer(scal, scal)
+      # Update the variables without the intercept.
+      rr[other_vars, other_vars] <- rr[other_vars, other_vars] * outer(1/sc, 1/sc)
     }
+    
     rr
 }
 
