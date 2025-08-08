@@ -48,7 +48,8 @@
         \item \code{toenail} (toenail onychomycosis data from dermatophyte 
           infections).
       }
-      
+      \item Added a new argument `autoscale` to \code{lmerControl()} to enable 
+      autoscaling.
       
     } % itemize
   } % user-visible changes
