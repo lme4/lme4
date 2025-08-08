@@ -446,19 +446,6 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
 
                 X <- model.matrix(RHS, data=mfnew,
                                   contrasts.arg=attr(X,"contrasts"))
-                ## If autoscale was used for the model: need to ensure we scale 
-                ## values based on the og mean and variance
-                old_X <- object@pp$X
-                if(!is.null(x_scal <- attr(old_X, "scaled:scale"))){
-                  x_cent <- attr(old_X, "scaled:center")
-                  if("(Intercept)" %in% colnames(old_X)){
-                    X[,-1] <- scale(X[,-1], center = x_cent, scale = x_scal)
-                  } else {
-                    X <- scale(X, center = x_cent, scale = x_scal)
-                  }
-                }
-                ## hack to remove unused interaction levels?
-                ## X <- X[,colnames(X0)]
 
                 offset <- 0 # rep(0, nrow(X))
                 tt <- terms(object, data  = newdata)
@@ -472,7 +459,6 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
                 if(is.numeric(X.col.dropped) && length(X.col.dropped) > 0)
                     X <- X[, -X.col.dropped, drop=FALSE]
             }
-            
             pred <- drop(X %*% fixef(object))
 
             ## FIXME:: need to unname()  ?
