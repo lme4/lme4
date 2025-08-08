@@ -5,7 +5,7 @@
 \alias{fixef.merMod}
 \title{Extract fixed-effects estimates}
 \usage{
-  \method{fixef}{merMod} (object, add.dropped=FALSE, ...)
+  \method{fixef}{merMod} (object, add.dropped=FALSE, noScale = NULL, \dots)
 }
 \arguments{
   \item{object}{any fitted model object from which fixed
@@ -13,7 +13,10 @@
 \item{add.dropped}{for models with rank-deficient design
   matrix, reconstitute the full-length parameter vector by
   adding \code{NA} values in appropriate locations?}
-  \item{\dots}{optional additional arguments. Currently
+\item{noScale}{(logical) some users may use autoscaling. If so, the default
+  returns the scaled parameters. If \code{noScale = TRUE}, then \code{fixef} 
+  returns the non-scaled parameters instead.}
+\item{\dots}{optional additional arguments. Currently
   none are used in any methods.}
 }
 \value{
