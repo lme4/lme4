@@ -1,6 +1,3 @@
-library("testthat")
-library("lme4") # Needed for last test.
-
 eps <- .Machine$double.eps
 oneMeps <- 1 - eps
 set.seed(1)
@@ -144,18 +141,51 @@ simfun_gam <- function(ngrp = 50, nrep = 50, shape_gam = 2, intercept = 1,
   data.frame(dd, y)
 }
 
-set.seed(1)
 dd1 <- simfun_gam(seed = 101)
 dd2 <- simfun_gam(seed = 101, use_simulate = TRUE)
 
 test_that("simulated Gamma data matches with simulate()", {
-  testthat::expect_equal(dd1$y, dd2$y)
+  expect_equal(dd1$y, dd2$y)
 })
 
-test_that("estimated Gamma dispersion (shape) is correct", {
+test_that("estimated Gamma shape is correct", {
   m1 <- glmer(y ~ 1 + (1|group), family = Gamma(link = "log"), data = dd2)
   shape_val <- 1/sigma(m1)^2
-  testthat::expect_equal(shape_val, 2.0, tolerance = 0.05)
-  testthat::expect_equal(1/sigma(m1)^2, 1.94511502080571, tolerance = 1e-6)
+  expect_equal(shape_val, 2.0, tolerance = 0.05)
+  expect_equal(shape_val, 1.94511502080571, tolerance = 1e-6)
 })
 
+simfun_invgauss <- function(ngrp = 50, nrep = 500, lambda = 1, 
+                            use_simulate = FALSE, seed = NULL) {
+  if (!is.null(seed)) set.seed(seed)
+  dd <- expand.grid(group = 1:ngrp, rep = 1:nrep)
+  if (use_simulate) {
+    dd$y <- simulate(~ 1 + (1 | group), newdata = dd, 
+                     family = inverse.gaussian(link = "1/mu^2"), 
+                     newparams = list(
+                       theta = c("group.(Intercept)" = 1), 
+                       beta = c("(Intercept)" = 4),
+                       sigma = 1/sqrt(lambda)))[[1]]
+    return(dd) 
+  }
+  b <- rnorm(ngrp)
+  eta <- 4 + b 
+  mu <- 1/sqrt(eta)
+  y <- statmod::rinvgauss(nrow(dd), mean = mu, shape = lambda)
+  data.frame(dd, y)
+}
+
+ddig1 <- simfun_invgauss(seed = 101, use_simulate = FALSE)
+ddig2 <- simfun_invgauss(seed = 101, use_simulate = TRUE)
+
+test_that("simulated Inverse Gaussian data matches with simulate()", {
+  expect_equal(ddig1$y, ddig2$y)
+})
+
+test_that("estimated Inverse Gaussian shape is correct", {
+  m1 <- glmer(y ~ 1 + (1 | group), family = inverse.gaussian(link = "1/mu^2"), 
+              data = ddig2)
+  shape_val <- 1/sigma(m1)^2
+  expect_equal(shape_val, 1, tolerance = 0.05)
+  expect_equal(shape_val, 1.032144112298057, tolerance = 1e-6)
+})

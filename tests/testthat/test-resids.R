@@ -1,6 +1,4 @@
-library("testthat")
-library("lme4")
-context("residuals")
+#context("residuals")
 test_that("lmer", {
     C1 <- lmerControl(optimizer="nloptwrap",
                       optCtrl=list(xtol_abs=1e-6, ftol_abs=1e-6))
@@ -28,6 +26,7 @@ test_that("lmer", {
     expect_true(all(is.na(resid(fm1NA_exclude)[na_ind])))
     expect_true(!any(is.na(resid(fm1NA_exclude)[-na_ind])))
 })
+
 test_that("glmer", {
     gm1 <- glmer(incidence/size ~ period + (1|herd), cbpp,
                  family=binomial, weights=size)

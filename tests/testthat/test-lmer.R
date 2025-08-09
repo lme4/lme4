@@ -1,14 +1,14 @@
-stopifnot(require("testthat"))
-library(lme4) ## make sure package is attached
 ##  (as.function.merMod() assumes it)
 data("Dyestuff", package = "lme4")
+data("cbpp", package = "lme4")
+library(lme4)  ## this *is* necessary, for as.function.merMod() ...
 
 ## use old (<=3.5.2) sample() algorithm if necessary
 if ("sample.kind" %in% names(formals(RNGkind))) {
     suppressWarnings(RNGkind("Mersenne-Twister", "Inversion", "Rounding"))
 }
 
-context("fitting lmer models")
+#context("fitting lmer models")
 ## is "Nelder_Mead" default optimizer? -- no longer
 (isNM <- formals(lmerControl)$optimizer == "Nelder_Mead")
 
@@ -282,7 +282,6 @@ test_that("coef_lmer", {
                     var1=factor(sample(1:5,size=100,replace=TRUE)),
                     var2=runif(100),
                     var3=factor(sample(1:5,size=100,replace=TRUE)))
-    library(lme4)
     mix1 <- lmer(resp ~ 0 + var1 + var1:var2 + (1|var3), data=d)
     c1 <- coef(mix1)
     expect_is(c1, "coef.mer")
@@ -330,7 +329,7 @@ test_that("better info about optimizer convergence",
                  "optimizer (Nelder_Mead) convergence code: 0 (OK)")
 })
 
-context("convergence warnings etc.")
+#context("convergence warnings etc.")
 
 fm1 <- lmer(Reaction~ Days + (Days|Subject), sleepstudy)
 suppressMessages(fm0 <- lmer(Reaction~ Days + (Days|Subject), sleepstudy[1:20,]))

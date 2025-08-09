@@ -1,5 +1,3 @@
-library(lme4)
-library(testthat)
 load(system.file("testdata","crabs_randdata00.Rda",package="lme4"))
 
 test_that('RZX is being calculated properly', {

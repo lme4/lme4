@@ -22,12 +22,8 @@
 \alias{nobs}
 \alias{nlmerMod-class}
 \alias{print.merMod}
-\alias{print.summary.merMod}
 \alias{show,merMod-method}
 \alias{show.merMod}
-\alias{show.summary.merMod}
-\alias{summary.merMod}
-\alias{summary.summary.merMod}
 \alias{terms.merMod}
 \alias{update.merMod}
 \alias{weights.merMod}
@@ -62,13 +58,6 @@ REMLcrit(object)
       signif.stars = getOption("show.signif.stars"), 
       ranef.comp = "Std.Dev.",
       ranef.corr = any(ranef.comp == "Std.Dev."), ...)
-
-\S3method{summary}{merMod}(object, correlation = , use.hessian = NULL, \dots)
-\S3method{print}{summary.merMod}(x, digits = max(3, getOption("digits") - 3),
-      correlation = NULL, symbolic.cor = FALSE,
-      signif.stars = getOption("show.signif.stars"),
-      ranef.comp = c("Variance", "Std.Dev."),
-      ranef.corr = any(ranef.comp == "Std.Dev."), show.resids = TRUE, ...)
 \S3method{update}{merMod}(object, formula., ..., evaluate = TRUE)
 \S3method{weights}{merMod}(object, type = c("prior", "working"), ...)
 }
@@ -76,8 +65,7 @@ REMLcrit(object)
   \item{object}{an \R object of class \code{\linkS4class{merMod}}, i.e.,
     as resulting from \code{\link{lmer}()}, or \code{\link{glmer}()},
     etc.}
-  \item{x}{an \R object of class \code{merMod} or \code{summary.merMod},
-    respectively, the latter resulting from \code{summary(<merMod>)}.}
+  \item{x}{an \R object of class \code{merMod} or \code{summary.merMod}.}
   \item{fit}{an \R object of class \code{\linkS4class{merMod}}.}
   \item{formula}{in the case of \code{model.frame}, a
     \code{\linkS4class{merMod}} object.}
@@ -101,8 +89,6 @@ REMLcrit(object)
     \code{fixed.only} and \code{random.only} at the same time
     will produce an error.)}
   \item{correlation}{(logical)
-    for \code{summary.merMod}, indicates whether the correlation matrix
-    should be computed and stored along with the covariance;
     for \code{print.summary.merMod}, indicates whether the correlation
     matrix of the fixed-effects parameters should be printed.  In the
     latter case, when \code{NULL} (the default), the correlation matrix
@@ -110,11 +96,6 @@ REMLcrit(object)
     \eqn{p <= 12}, and the cutoff \code{12} may be modified by
     \code{options(lme4.summary.cor.max = <n>)}
   }
-  \item{use.hessian}{(logical) indicates whether to use the
-    finite-difference Hessian of the deviance function to compute
-    standard errors of the fixed effects; see \code{\link{vcov.merMod}}
-  for details
-}
 \item{digits}{number of significant digits for printing}
   \item{symbolic.cor}{should a symbolic encoding of the fixed-effects correlation
     matrix be printed?  If so, the \code{\link{symnum}} function is used.}
@@ -122,7 +103,6 @@ REMLcrit(object)
   \item{ranef.comp}{character vector of length one or two, indicating
     if random-effects parameters should be reported on the variance and/or
     standard deviation scale.}
-  \item{show.resids}{should the quantiles of the scaled residuals be printed?}
   \item{formula.}{see \code{\link{update.formula}}.}
   \item{evaluate}{see \code{\link{update}}.}
   \item{type}{For \describe{
@@ -176,11 +156,6 @@ The following S3 methods with arguments given above exist (this list is currentl
   \item{\code{model.matrix}:}{returns the fixed effects model matrix.}
   \item{\code{nobs}, \code{ngrps}:}{Number of observations and vector of
     the numbers of levels in each grouping factor.  See \code{\link{ngrps}}.}
-  \item{\code{summary}:}{Computes and returns a list of summary statistics of the
-      fitted model, the amount of output can be controlled via the \code{print} method,
-      see also \code{\link{summary}}.}
-   \item{\code{print.summary}:}{Controls the output for the summary
-     method.}
    \item{\code{update}:}{See \code{\link{update}}.}
  }
 }

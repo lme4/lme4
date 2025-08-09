@@ -33,9 +33,7 @@
   then on \CRANpkg{fastGHQuad}'s \code{gaussHermiteData(.)}.% ==> in ../R/GHrule.R
 }
 \references{
-  Qing Liu and Donald A. Pierce (1994).
-  A Note on Gauss-Hermite Quadrature. \emph{Biometrika} \bold{81}(3), 624--629.
-  \doi{10.2307/2337136}
+  \insertRef{liu1994note}{lme4}
 }
 \seealso{a different interface is available via \code{\link{GQdk}()}.
 }

@@ -1,5 +1,3 @@
-library("testthat")
-library("lme4")
 library("lattice")
 testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
 
@@ -30,7 +28,7 @@ if (getRversion() > "3.0.0") {
 }
 
 if (testLevel>1) {
-context("predict")
+#context("predict")
 test_that("fitted values", {
     p0 <- predict(gm1)
     p0B <- predict(gm1, newdata=cbpp)
@@ -518,4 +516,15 @@ test_that("predict works with dummy() in left-out REs", {
                                      check.conv.singular = "ignore"))
     expect_equal(head(predict(m1C, re.form = ~1|v3), 1),
                  c(`1` = -0.035719520719991))
+})
+
+test_that("predict se.fit on response scale", {
+  p1 <- suppressWarnings(
+    predict(fit_cbpp_1, type = "link", se.fit = TRUE))
+  p2 <- suppressWarnings(
+    predict(fit_cbpp_1, type = "response", se.fit = TRUE))
+  p3 <- suppressWarnings(
+    predict(fit_cbpp_1, type = "response", newdata = cbpp, se.fit = TRUE))
+  expect_identical(p2$se.fit, p3$se.fit)
+  expect_equal(p1$se.fit*binomial()$mu.eta(p1$fit), p2$se.fit)
 })

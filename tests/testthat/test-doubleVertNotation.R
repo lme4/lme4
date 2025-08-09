@@ -1,7 +1,4 @@
-library("lme4")
-library("testthat")
-
-context("testing '||' notation for independent ranefs")
+#context("testing '||' notation for independent ranefs")
 
 form1 <- Reaction ~ Days + (Days||Subject)
 form2 <- Reaction ~ Days + (1|Subject) + (0 + Days|Subject)

@@ -29,9 +29,7 @@ PCA of random-effects variance-covariance estimates
 \seealso{\code{\link{isSingular}}}
 \references{
   \itemize{
-    \item Douglas Bates, Reinhold Kliegl, Shravan Vasishth, and Harald Baayen.
-    Parsimonious Mixed Models. arXiv:1506.04967 [stat], June 2015. arXiv:
-    1506.04967.
+    \item \insertRef{bates2015parsimonious}{lme4}
   }
 }
 

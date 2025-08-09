@@ -1,12 +1,9 @@
-library("testthat")
-library("lme4")
-
 ## use old (<=3.5.2) sample() algorithm if necessary
 if ("sample.kind" %in% names(formals(RNGkind))) {
     suppressWarnings(RNGkind("Mersenne-Twister", "Inversion", "Rounding"))
 }
 
-context("Utilities (including *non*-exported ones)")
+#context("Utilities (including *non*-exported ones)")
 
 test_that("namedList", {
     nList <- lme4:::namedList
@@ -41,7 +38,6 @@ test_that("Var-Cov factor conversions", { ## from ../../R/vcconv.R
 })
 
 ## moved to lme4
-
 
 test_that("getData", {
     ## test what happens when wrong version of 'data' is found in environment of formula ...

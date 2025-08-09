@@ -1,5 +1,3 @@
-library(lme4)
-library(testthat)
 load(system.file("testdata","survdat_reduced.Rda",package="lme4"))
 
 test_that('Step-halving works properly', {
