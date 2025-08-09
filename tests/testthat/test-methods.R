@@ -361,12 +361,16 @@ test_that("monotonic profile but bad spline",
   }
   set.seed(102)
   dat <- simfun(10,5,1,.3,.3,.3,(1/18),0,(1/18))
-  fit <- lmer(Y~X+Z+X:Z+(X||group),data=dat)
+  ## with flexSigma, double-bar is translated to diag(); non-standard cov structures
+  ##  don't work with profile (ultimately from devfun2)
+  ## expand double-bar explicitly ...
+  ## fit <- lmer(Y~X+Z+X:Z+(X||group),data=dat)
+  fit <- suppressMessages(lmer(Y~X+Z+X:Z+(1|group) + (0+X|group),data=dat))
 
-    expect_warning(pp <- profile(fit,"theta_"), "non-monotonic profile")
-    expect_warning(cc <- confint(pp),"falling back to linear interpolation")
-    ## very small/unstable problem, needs large tolerance
-    expect_equal(unname(cc[2,]), c(0, 0.509), tolerance=0.09) # "bobyqa" had 0.54276
+  expect_warning(pp <- profile(fit,"theta_"), "non-monotonic profile")
+  expect_warning(cc <- confint(pp),"falling back to linear interpolation")
+  ## very small/unstable problem, needs large tolerance
+  expect_equal(unname(cc[2,]), c(0, 0.509), tolerance=0.09) # "bobyqa" had 0.54276
 })
 
 test_that("confint with bad profile", {
