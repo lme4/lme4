@@ -67,3 +67,49 @@ test_that("lmer", {
                  "x.2  0.136 -0.103"
                  ))
 })
+
+## Tests with regards to auto-scaling; making sure we get expected behaviours.
+
+set.seed(1)
+sleepstudy$var1 = runif(nrow(sleepstudy), 1e6, 1e7)
+
+scf1 <- lmer(Reaction ~ var1 + Days + (Days | Subject), 
+              control = lmerControl(autoscale = TRUE), sleepstudy)
+
+test_that("Ensuring we get the internal scale for X with getME", {
+  res1 <- getME(scf1, "X")[180, ]
+  valtest1 <- c(1, 1.456867279040504, 1.562340900990911)
+  names(valtest1) <- c("(Intercept)", "var1", "Days")
+  testthat::expect_equal(res1, valtest1, tolerance =1e-10)
+})
+
+test_that("Ensuring we get the internal scale for beta with getME", {
+  res2 <- getME(scf1, "beta")
+  valtest2 <- c(298.507891666666751, 1.621716753196637, 30.161580776828778)
+  testthat::expect_equal(res2, valtest2, tolerance =1e-10)
+})
+
+test_that("model.matrix should provide unscaled version at default", {
+  res3 <- model.matrix.merMod(scf1)[180, ]
+  valtest3 <- c(1, 9127734.503475949, 9)
+  names(valtest3) <- c("(Intercept)", "var1", "Days")
+  testthat::expect_equal(res3, valtest3, tolerance =1e-6)
+  
+  res4 <- model.matrix.merMod(scf1, noScale = TRUE)[180, ]
+  valtest4 <- c(1, 1.45686727904050395, 1.5623409009909106)
+  names(valtest4) <- c("(Intercept)", "var1", "Days")
+  testthat::expect_equal(res4, valtest4, tolerance =1e-6)
+})
+
+test_that("fixef.merMod() should provide unscaled version at default", {
+  res5 <- fixef.merMod(scf1)
+  valtest5 <- c(2.475856034387913e+02, 6.751119911465461e-07, 
+                1.047170473026240e+01)
+  names(valtest5) <- c("(Intercept)", "var1", "Days")
+  testthat::expect_equal(res5, valtest5, tolerance =1e-10)
+  
+  res6 <- fixef.merMod(scf1, noScale = TRUE)
+  valtest6 <- c(298.507891666666751, 1.621716753196637, 30.161580776828778) 
+  names(valtest6) <- c("(Intercept)", "var1", "Days")
+  testthat::expect_equal(res6, valtest6, tolerance =1e-10)
+})
