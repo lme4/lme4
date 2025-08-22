@@ -1,6 +1,7 @@
 # VarCorr Workflow Test
 library(glmmTMB)
-
+library(lme4)
+data("sleepstudy", package = "lme4") ## redundant, but ...
 
 # Models
 fit_us <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)
@@ -13,8 +14,6 @@ fit_cs_glmm_hom <- glmmTMB(Reaction ~ Days + homcs(Days | Subject), sleepstudy, 
 
 # Manual mkVarCorr_for_structure Reconstruction Test
 
-library(lme4)
-data(sleepstudy)
 
 # STEP 1: GET MODEL COMPONENTS
 fit_cs <- lmer(Reaction ~ Days + cs(Days | Subject, hom = FALSE), sleepstudy, REML = FALSE)
@@ -22,7 +21,7 @@ fit_cs <- lmer(Reaction ~ Days + cs(Days | Subject, hom = FALSE), sleepstudy, RE
 # Set the model to test
 model <- fit_cs
 
-structure_info <- extract_structure_info(model)
+structure_info <- lme4:::extract_structure_info(model)
 cs_structure <- structure_info$structures[[1]]
 theta_values <- getME(model, "theta")
 sigma_value <- sigma(model)
@@ -62,7 +61,7 @@ manual_structure@vparameters <- manual_vparams
 manual_structure@cparameters <- manual_cparams
 
 comparison_structure <- new("HeterogeneousCSCovariance", dimension = 2L)
-comparison_structure <- set_parameters(comparison_structure, theta_values)
+comparison_structure <- lme4:::set_parameters(comparison_structure, theta_values)
 
 print(all.equal(manual_structure@vparameters, comparison_structure@vparameters) && 
       all.equal(manual_structure@cparameters, comparison_structure@cparameters))
@@ -75,12 +74,12 @@ a <- 1/(d-1)
 manual_rho <- plogis(theta_corr) * (1 + a) - a
 print(manual_rho)
 
-actual_rho <- cs_theta_to_rho(theta_corr, d)
+actual_rho <- lme4:::cs_theta_to_rho(theta_corr, d)
 print(actual_rho)
 print(all.equal(manual_rho, actual_rho))
 
 target_glmmTMB_rho <- 0.081
-required_theta_for_glmmTMB <- cs_rho_to_theta(target_glmmTMB_rho, d)
+required_theta_for_glmmTMB <- lme4:::cs_rho_to_theta(target_glmmTMB_rho, d)
 print(required_theta_for_glmmTMB)
 print(manual_rho)
 print(theta_corr - required_theta_for_glmmTMB)
@@ -98,7 +97,7 @@ manual_Sigma <- manual_D %*% manual_R %*% manual_D
 print(manual_Sigma)
 print(diag(manual_Sigma))
 
-actual_cov_matrix <- compute_covariance_matrix(manual_structure)
+actual_cov_matrix <- lme4:::compute_covariance_matrix(manual_structure)
 print(manual_Sigma)
 print(actual_cov_matrix)
 print(all.equal(as.matrix(manual_Sigma), as.matrix(actual_cov_matrix)))
@@ -111,7 +110,7 @@ manual_D_inv <- diag(1 / manual_stddevs_from_cov)
 manual_R_extracted <- manual_D_inv %*% manual_Sigma %*% manual_D_inv
 print(manual_R_extracted)
 
-actual_cor_matrix <- compute_correlation_matrix(manual_structure)
+actual_cor_matrix <- lme4:::compute_correlation_matrix(manual_structure)
 print(manual_R_extracted)
 print(actual_cor_matrix)
 print(all.equal(as.matrix(manual_R_extracted), as.matrix(actual_cor_matrix)))
@@ -141,26 +140,26 @@ print(attr(manual_final_result, "correlation"))
 param_sizes <- structure_info$param_sizes
 print(param_sizes)
 
-theta_splits <- split_theta_by_structure(theta_values, param_sizes)
+theta_splits <- lme4:::split_theta_by_structure(theta_values, param_sizes)
 actual_theta_block <- theta_splits[[1]]
 print(actual_theta_block)
 print(theta_values)
 print(all.equal(actual_theta_block, theta_values))
 
 manual_test_structure <- new("HeterogeneousCSCovariance", dimension = 2L)
-manual_test_structure <- set_parameters(manual_test_structure, theta_values)
+manual_test_structure <- lme4:::set_parameters(manual_test_structure, theta_values)
 print(manual_test_structure@vparameters)
 print(manual_test_structure@cparameters)
 
 actual_test_structure <- new("HeterogeneousCSCovariance", dimension = 2L)
-actual_test_structure <- set_parameters(actual_test_structure, actual_theta_block)
+actual_test_structure <- lme4:::set_parameters(actual_test_structure, actual_theta_block)
 print(actual_test_structure@vparameters)
 print(actual_test_structure@cparameters)
 print(all.equal(manual_test_structure@vparameters, actual_test_structure@vparameters) &&
       all.equal(manual_test_structure@cparameters, actual_test_structure@cparameters))
 
 # STEP 9: COMPARISON
-method_result <- mkVarCorr_for_structure(cs_structure, actual_theta_block, sigma_value, term_cnms)
+method_result <- lme4:::mkVarCorr_for_structure(cs_structure, actual_theta_block, sigma_value, term_cnms)
 print(attr(manual_final_result, "stddev"))
 print(attr(method_result, "stddev"))
 print(all.equal(attr(manual_final_result, "stddev"), attr(method_result, "stddev")))
@@ -201,7 +200,7 @@ print(manual_R_extracted[1, 2])
 model <- fit_cs
 
 # STEP 1: EXTRACT COMPONENTS
-structure_info <- extract_structure_info(model)
+structure_info <- lme4:::extract_structure_info(model)
 cs_structure <- structure_info$structures[[1]]
 theta_values <- getME(model, "theta")
 sigma_value <- sigma(model)
@@ -220,7 +219,7 @@ print(theta_block)
 print(sigma_value)
 print(term_cnms)
 
-varcorr_result <- mkVarCorr_for_structure(cs_structure, theta_block, sigma_value, term_cnms)
+varcorr_result <- lme4:::mkVarCorr_for_structure(cs_structure, theta_block, sigma_value, term_cnms)
 print(varcorr_result)
 print(attr(varcorr_result, "stddev"))
 print(attr(varcorr_result, "correlation"))
@@ -292,11 +291,11 @@ dev_default <- devfun(original_start)
 dev_glmm <- devfun(glmm_theta)
 print(dev_glmm)
 
-opt <- optimizeLmer(devfun, start = glmm_theta)
+opt_custom <- optimizeLmer(devfun, start = glmm_theta)
 print(opt_custom$par)
 print(opt_custom$fval)
  
-fit <- mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr, mc = match.call())
+fit <- mkMerMod(environment(devfun), opt_custom, lmod$reTrms, fr = lmod$fr, mc = match.call())
 print(logLik(fit))
 print(VarCorr(fit))
  
@@ -338,7 +337,7 @@ fit_cs_glmm <- glmmTMB(Reaction ~ Days + cs(Days | Subject, hom = FALSE), sleeps
 model <- fit_cs
 
 # STEP 1: EXTRACT COMPONENTS
-structure_info <- extract_structure_info(model)
+structure_info <- lme4:::extract_structure_info(model)
 cs_structure <- structure_info$structures[[1]]
 theta_values <- getME(model, "theta")
 sigma_value <- sigma(model)
@@ -357,7 +356,7 @@ print(theta_block)
 print(sigma_value)
 print(term_cnms)
 
-varcorr_result <- mkVarCorr_for_structure(cs_structure, theta_block, sigma_value, term_cnms)
+varcorr_result <- lme4:::mkVarCorr_for_structure(cs_structure, theta_block, sigma_value, term_cnms)
 print(varcorr_result)
 print(attr(varcorr_result, "stddev"))
 print(attr(varcorr_result, "correlation"))
@@ -450,7 +449,7 @@ print(fit_alt)
 # Test mkVarCorr_for_structure Pipeline
 
 # Extract key components
-structure_info <- extract_structure_info(fit_cs)
+structure_info <- lme4:::extract_structure_info(fit_cs)
 cs_structure <- structure_info$structures[[1]]
 theta_values <- getME(fit_cs, "theta")
 sigma_value <- sigma(fit_cs)
@@ -473,7 +472,7 @@ cat("sc:", sigma_value, "\n")
 cat("term_cnms:", term_cnms, "\n\n")
 
 # Call method directly
-varcorr_result <- mkVarCorr_for_structure(cs_structure, theta_block, sigma_value, term_cnms)
+varcorr_result <- lme4:::mkVarCorr_for_structure(cs_structure, theta_block, sigma_value, term_cnms)
 print(varcorr_result)
 cat("  Standard deviations:", attr(varcorr_result, "stddev"), "\n")
 print(attr(varcorr_result, "correlation"))
