@@ -48,8 +48,10 @@
         \item \code{toenail} (toenail onychomycosis data from dermatophyte 
           infections).
       }
-      
-      
+      \item added a downstream methods vignette, which looks at other
+      methods from other compatiable packages for diagnostics, 
+      model comparison, plots, and regression tables for \code{merMod} 
+      objects.
     } % itemize
   } % user-visible changes
 } % devel
