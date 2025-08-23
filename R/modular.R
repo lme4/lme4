@@ -125,36 +125,45 @@ checkZrank <- function(Zt, n, ctrl, nonSmall = 1e6, allow.n=FALSE)
 ##   and rescale them?  scale+center?  Just scale or scale+center
 ##   all numeric columns?
 ##
-checkScaleX <- function(X,  kind="warning", tol=1e3) {
-    ## cstr <- "check.scaleX"
-    kinds <- eval(formals(lmerControl)[["check.scaleX"]])
-    if (!kind %in% kinds) stop(gettextf("unknown check-scale option: %s",kind))
-    if (is.null(kind) || kind == "ignore") return(X)
-    ## else :
-    cont.cols <- apply(X,2,function(z) !all(z %in% c(0,1)))
-    col.sd <- apply(X[,cont.cols, drop=FALSE], 2L, sd)
-    sdcomp <- outer(col.sd,col.sd,"/")
-    logcomp <- abs(log(sdcomp[lower.tri(sdcomp)]))
-    logsd <- abs(log(col.sd))
-    if (any(c(logcomp,logsd) > log(tol))) {
-        wmsg <- "Some predictor variables are on very different scales:"
-        if (kind %in% c("warning","stop")) {
-            wmsg <- paste(wmsg, "consider rescaling")
-            switch(kind,
-                   "warning" = warning(wmsg, call.=FALSE),
-                   "stop" = stop(wmsg, call.=FALSE))
-        } else {
-            wmsg <- paste(wmsg, "auto-rescaled (results NOT adjusted)")
-            ## mimic scale() because we don't want to make a copy in
-            ##  order to retrieve the center/scale
-            X[,cont.cols] <- sweep(X[,cont.cols,drop=FALSE],2,col.sd,"/")
-            attr(X,"scaled:scale") <- setNames(col.sd,colnames(X)[cont.cols])
-            if (kind == "warn+rescale") warning(wmsg, call.=FALSE)
-        }
-    } else
-        wmsg <- character()
-    structure(X, msgScaleX = wmsg)
+checkScaleX <- function(X, kind = "warning", tol = 1e3) {
+  # Allowed kinds (update lmerControl defaults accordingly)
+  kinds <- eval(formals(lmerControl)[["check.scaleX"]])
+  if (!kind %in% kinds) 
+    stop(gettextf("unknown check-scale option: %s", kind))
+  if (is.null(kind) || kind == "ignore") 
+    return(X)
+  
+# Allow Z_scale
+  if (kind == "zscale") {
+    numcols <- sapply(X, is.numeric)
+    X[, numcols] <- scale(X[, numcols])
+    return(X)
+  }
+  
+  cont.cols <- apply(X, 2, function(z) !all(z %in% c(0, 1)))
+  col.sd <- apply(X[, cont.cols, drop = FALSE], 2L, sd)
+  sdcomp <- outer(col.sd, col.sd, "/")
+  logcomp <- abs(log(sdcomp[lower.tri(sdcomp)]))
+  logsd <- abs(log(col.sd))
+  if (any(c(logcomp, logsd) > log(tol))) {
+    wmsg <- "Some predictor variables are on very different scales:"
+    if (kind %in% c("warning", "stop")) {
+      wmsg <- paste(wmsg, "consider rescaling")
+      switch(kind,
+             "warning" = warning(wmsg, call. = FALSE),
+             "stop" = stop(wmsg, call. = FALSE))
+    } else {
+      wmsg <- paste(wmsg, "auto-rescaled (results NOT adjusted)")
+      X[, cont.cols] <- sweep(X[, cont.cols, drop = FALSE], 2, col.sd, "/")
+      attr(X, "scaled:scale") <- setNames(col.sd, colnames(X)[cont.cols])
+      if (kind == "warn+rescale") warning(wmsg, call. = FALSE)
+    }
+  } else {
+    wmsg <- character()
+  }
+  structure(X, msgScaleX = wmsg)
 }
+
 
 
 ##' @title Check that grouping factors have at least 2 and </<= nobs(.) levels
