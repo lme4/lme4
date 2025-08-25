@@ -417,11 +417,13 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     
     # Random effects processing with structured covariance support 
     s4_object_list <- parse_model_formula(original_formula, fr)
-
     specials_list <- c("ar1", "cs", "diag", "us")
     split_result <- reformulas::splitForm(original_formula, specials = specials_list)
-
     reTrms <- reformulas::mkReTrms(split_result$reTrmFormulas, fr, calc.lambdat = FALSE)
+
+    if (length(s4_object_list) > 0 && !is.null(reTrms$ord)) {
+        s4_object_list <- s4_object_list[reTrms$ord]
+    }
     
   if (length(s4_object_list) > 0) {
         # Structured covariance path
