@@ -617,6 +617,13 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL,
     if (length(rho$resp$y) > 0)  ## only if non-trivial y
         devfun(rho$pp$theta) # one evaluation to ensure all values are set
     rho$lower <- reTrms$lower # to be more consistent with mkGlmerDevfun
+    ## Store structured covariance information if present
+    if (!is.null(attr(reTrms, "cov_structures"))) {
+    rho$cov_structures <- attr(reTrms, "cov_structures")
+    rho$structure_types <- attr(reTrms, "structure_types") 
+    rho$param_sizes <- attr(reTrms, "param_sizes")
+    }
+
     devfun # this should pass the rho environment implicitly
 }
 
