@@ -301,6 +301,53 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
 if(getRversion() >= "3.1.0") utils::suppressForeignCheck("nlmerAGQ")
 if(getRversion() < "3.1.0") dontCheck <- identity
 
+##' Create Theta Parameter Transformer for Structured Covariance Models
+##'
+##' Creates a closure that transforms raw optimizer parameters into the Cholesky
+##' parameterization. The function uses calls to apply the appropriate 
+##' compute_lambdat_x_* method to each structured covariance segment.
+##'
+##' @param structure_info List containing:
+##'   - structures: List of S4 covariance objects
+##'   - structure_types: Character vector of structure type names
+##'   - param_sizes: Vector of parameter counts per structure
+##'
+##' @return A function that takes raw theta and returns transformed theta
+##'
+##' @details
+##' The returned transformer function:
+##' 1. Splits the concatenated theta vector by parameter counts
+##' 2. Applies compute_lambdat_x_*(dimension, theta_segment) for each segment
+##' 3. Concatenates the results into the final transformed theta vector
+##'
+##' @keywords internal
+create_theta_transformer <- function(structure_info) {
+
+}
+
+##' Split Theta Vector by Structure Parameter Sizes
+##'
+##' Helper function to partition the concatenated theta vector according to the
+##' parameter requirements of each covariance structure. Handles the case where
+##' some structures may use parameter expansion (currently only AR1 with powers of rho).
+##'
+##' @param theta Numeric vector of concatenated parameters 
+##' @param param_sizes Integer vector of parameter counts per structure
+##'
+##' @return List of theta segments, one per structure
+##'
+##' @details
+##' This function assumes that theta is ordered according to reTrms$ord
+##' (decreasing cluster size) 
+##'
+##' @keywords internal
+split_theta_by_structure <- function(theta, param_sizes) {
+
+}
+
+
+
+
 ## *not* exported (had help page till early 2018)
 ## -> issue #92: -> also look at devfun2() in  ./profile.R (which returns class!)
 ##' Create a deviance evaluation function from a predictor and a response module
@@ -320,31 +367,71 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
     fac <- pp <- resp <- lp0 <- compDev <- dpars <- baseOffset <- tolPwrss <-
         pwrssUpdate <- ## <-- even though it's a function below
         GQmat <- nlmerAGQ <- NULL
+    ## check if structured cov is present and extract structure inf
+    structure_info <- NULL
+    if(!is.null(rho$cov_structures)) {
+        structure_info <- list(
+            structures = rho$cov_structures,
+            structure_types = rho$structure_types,
+            param_sizes = rho$param_sizes
+            )
+    }
+
+    ## create theta transformation function if structures present 
+    transform_theta <- NULL
+    if (!is.null(structure_info) {
+        transform_theta <- create_theta_transformer(structure_info)
+    }
+
 
     ## The deviance function (to be returned, with 'rho' as its environment):
     ff <-
     if (extends(rho.cld, "lmerResp")) {
         rho$lmer_Deviance <- lmer_Deviance
-        function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))
+
+        if (is.null(transform_theta)) {
+            ## structured covariance path for lmerResp 
+            function(theta) {
+                transformed_theta <- transform_theta(theta)
+                .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(transformed_theta))
+            }
+        } else {
+             ## unstructured covariance path for lmerResp     
+            function(theta) {
+                .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))
+            }
+        }
     } else if (extends(rho.cld, "glmResp")) {
         ## control values will override rho values *if present*
         if (!is.null(tp <- control$tolPwrss)) rho$tolPwrss <- tp
         if (!is.null(cd <- control$ compDev)) rho$compDev <- cd
-        if (nAGQ == 0L)
-            function(theta) {
-                resp$updateMu(lp0)
-                pp$setTheta(theta)
-                p <- pwrssUpdate(pp, resp, tol=tolPwrss, GQmat=GHrule(0L),
-                                 compDev=compDev, maxit=maxit, verbose=verbose)
-                resp$updateWts()
-                p
+        if (nAGQ == 0L) {
+            if(is.null(transform_theta)) {
+            ## structured cov path for glmResp 
+
+
+            } else {
+            ## standrd lme4 path for glmResp
+                function(theta) {
+                    resp$updateMu(lp0)
+                    pp$setTheta(theta)
+                    p <- pwrssUpdate(pp, resp, tol=tolPwrss, GQmat=GHrule(0L),
+                                    compDev=compDev, maxit=maxit, verbose=verbose)
+                    resp$updateWts()
+                    p
+                }
             }
-        else  ## nAGQ > 0
+
+        } else {  ## nAGQ > 0
+        if(!is.null(transform_theta)) {
             function(pars) {
                 ## pp$setDelu(rep(0, length(pp$delu)))
                 resp$setOffset(baseOffset)
                 resp$updateMu(lp0)
-                pp$setTheta(as.double(pars[dpars])) # theta is first part of pars
+                ## transform theta parameters
+                raw_theta <- as.double(pars[dpars])
+                transformed_theta <- transform_theta(raw_theta)
+                pp$setTheta(transformed_theta) # theta is first part of pars
                 spars <- as.numeric(pars[-dpars])
                 offset <- if (length(spars)==0) baseOffset else baseOffset + pp$X %*% spars
                 resp$setOffset(offset)
@@ -353,6 +440,8 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
                 resp$updateWts()
                 p
             }
+
+        
     } else if (extends(rho.cld, "nlsResp")) {
         if (nAGQ <= 1L) {
             rho$nlmerLaplace <- nlmerLaplace
