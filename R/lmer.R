@@ -376,20 +376,16 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
             param_sizes = rho$param_sizes
             )
     }
-
     ## create theta transformation function if structures present 
     transform_theta <- NULL
-    if (!is.null(structure_info) {
+    if (!is.null(structure_info)) {
         transform_theta <- create_theta_transformer(structure_info)
     }
-
-
     ## The deviance function (to be returned, with 'rho' as its environment):
     ff <-
     if (extends(rho.cld, "lmerResp")) {
         rho$lmer_Deviance <- lmer_Deviance
-
-        if (is.null(transform_theta)) {
+        if (!is.null(transform_theta)) {
             ## structured covariance path for lmerResp 
             function(theta) {
                 transformed_theta <- transform_theta(theta)
@@ -405,33 +401,21 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
         ## control values will override rho values *if present*
         if (!is.null(tp <- control$tolPwrss)) rho$tolPwrss <- tp
         if (!is.null(cd <- control$ compDev)) rho$compDev <- cd
-        if (nAGQ == 0L) {
-            if(is.null(transform_theta)) {
-            ## structured cov path for glmResp 
-
-
-            } else {
-            ## standrd lme4 path for glmResp
-                function(theta) {
-                    resp$updateMu(lp0)
-                    pp$setTheta(theta)
-                    p <- pwrssUpdate(pp, resp, tol=tolPwrss, GQmat=GHrule(0L),
-                                    compDev=compDev, maxit=maxit, verbose=verbose)
-                    resp$updateWts()
-                    p
-                }
+        if (nAGQ == 0L)
+            function(theta) {
+                resp$updateMu(lp0)
+                pp$setTheta(theta)
+                p <- pwrssUpdate(pp, resp, tol=tolPwrss, GQmat=GHrule(0L),
+                                 compDev=compDev, maxit=maxit, verbose=verbose)
+                resp$updateWts()
+                p
             }
-
-        } else {  ## nAGQ > 0
-        if(!is.null(transform_theta)) {
+        else  ## nAGQ > 0
             function(pars) {
                 ## pp$setDelu(rep(0, length(pp$delu)))
                 resp$setOffset(baseOffset)
                 resp$updateMu(lp0)
-                ## transform theta parameters
-                raw_theta <- as.double(pars[dpars])
-                transformed_theta <- transform_theta(raw_theta)
-                pp$setTheta(transformed_theta) # theta is first part of pars
+                pp$setTheta(as.double(pars[dpars])) # theta is first part of pars
                 spars <- as.numeric(pars[-dpars])
                 offset <- if (length(spars)==0) baseOffset else baseOffset + pp$X %*% spars
                 resp$setOffset(offset)
@@ -439,9 +423,7 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
                                  compDev=compDev, grpFac=fac, maxit=maxit, verbose=verbose)
                 resp$updateWts()
                 p
-            }
-
-        
+            }   
     } else if (extends(rho.cld, "nlsResp")) {
         if (nAGQ <= 1L) {
             rho$nlmerLaplace <- nlmerLaplace
