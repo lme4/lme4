@@ -330,7 +330,7 @@ setMethod("get_start_values", "UnstructuredCovariance", function(object) {
     start_vals <- numeric(num_params)
     
     diag_indices <- vech_diag_indices(d)
-    start_vals[diag_indices] <- 0.0
+    start_vals[diag_indices] <- 1.0
     
     return(start_vals)
 })
