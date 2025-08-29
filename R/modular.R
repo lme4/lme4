@@ -592,9 +592,16 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL,
     ## prevent R CMD check false pos. warnings (in this function only):
     pp <- resp <- NULL
     rho$lmer_Deviance <- lmer_Deviance
-    devfun <- function(theta)
-        .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))
-    environment(devfun) <- rho
+
+    ## Store structured covariance information BEFORE creating devfun
+    if (!is.null(attr(reTrms, "cov_structures"))) {
+        rho$cov_structures <- attr(reTrms, "cov_structures")
+        rho$structure_types <- attr(reTrms, "structure_types") 
+        rho$param_sizes <- attr(reTrms, "param_sizes")
+    }
+    
+    devfun <- mkdevfun(rho, 0L,control=control)
+
 
     # if all random effects are of the form 1|f and starting values not
     # otherwise provided (and response variable is present, i.e. not doing
@@ -617,13 +624,7 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL,
     if (length(rho$resp$y) > 0)  ## only if non-trivial y
         devfun(rho$pp$theta) # one evaluation to ensure all values are set
     rho$lower <- reTrms$lower # to be more consistent with mkGlmerDevfun
-    ## Store structured covariance information if present
-    if (!is.null(attr(reTrms, "cov_structures"))) {
-    rho$cov_structures <- attr(reTrms, "cov_structures")
-    rho$structure_types <- attr(reTrms, "structure_types") 
-    rho$param_sizes <- attr(reTrms, "param_sizes")
-    }
-
+  
     devfun # this should pass the rho environment implicitly
 }
 

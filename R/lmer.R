@@ -322,9 +322,27 @@ if(getRversion() < "3.1.0") dontCheck <- identity
 ##'
 ##' @keywords internal
 create_theta_transformer <- function(structure_info) {
-
+    structures <- structure_info$structures
+    param_sizes <- structure_info$param_sizes
+    
+    function(raw_theta) {
+        if (length(raw_theta) == 0) return(numeric(0))
+        
+        # Split theta by parameter requirements
+        theta_segments <- split_theta_by_structure(raw_theta, param_sizes)
+        
+        # Apply S4 dispatch to each segment
+        transformed_segments <- vector("list", length(structures))
+        for (i in seq_along(structures)) {
+            structure_obj <- structures[[i]]
+            theta_segment <- theta_segments[[i]]
+            transformed_segments[[i]] <- compute_lambdat_x(structure_obj, theta_segment)
+        }
+        
+        # Concatenate results
+        unlist(transformed_segments)
+    }
 }
-
 ##' Split Theta Vector by Structure Parameter Sizes
 ##'
 ##' Helper function to partition the concatenated theta vector according to the
@@ -342,9 +360,23 @@ create_theta_transformer <- function(structure_info) {
 ##'
 ##' @keywords internal
 split_theta_by_structure <- function(theta, param_sizes) {
-
+    if (length(theta) == 0 || length(param_sizes) == 0) {
+        return(list())
+    }
+    
+    # Calculate cumulative offsets for splitting
+    thoff <- c(0, cumsum(param_sizes))
+    
+    # Split theta into segments
+    segments <- vector("list", length(param_sizes))
+    for (i in seq_along(param_sizes)) {
+        start_idx <- thoff[i] + 1
+        end_idx <- thoff[i + 1]
+        segments[[i]] <- theta[start_idx:end_idx]
+    }
+    
+    segments
 }
-
 
 
 
@@ -375,29 +407,35 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
             structure_types = rho$structure_types,
             param_sizes = rho$param_sizes
             )
+        transform_theta <- create_theta_transformer(structure_info)
     }
     ## create theta transformation function if structures present 
     transform_theta <- NULL
     if (!is.null(structure_info)) {
         transform_theta <- create_theta_transformer(structure_info)
+        rho$transform_theta <- transform_theta
     }
     ## The deviance function (to be returned, with 'rho' as its environment):
     ff <-
-    if (extends(rho.cld, "lmerResp")) {
-        rho$lmer_Deviance <- lmer_Deviance
-        if (!is.null(transform_theta)) {
-            ## structured covariance path for lmerResp 
-            function(theta) {
-                transformed_theta <- transform_theta(theta)
-                .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(transformed_theta))
-            }
-        } else {
-             ## unstructured covariance path for lmerResp     
-            function(theta) {
-                .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))
-            }
+if (extends(rho.cld, "lmerResp")) {
+    rho$lmer_Deviance <- lmer_Deviance
+    cat("Creating deviance function. transform_theta exists:", !is.null(transform_theta), "\n")
+    if (!is.null(transform_theta)) {
+        cat("TAKING STRUCTURED PATH\n")
+        ## structured covariance path for lmerResp 
+        function(theta) {
+            cat("DEVIANCE: Using structured path with theta:", theta, "\n")
+            transformed_theta <- transform_theta(theta)
+            cat("DEVIANCE: Transformed to:", transformed_theta, "\n")
+            .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(transformed_theta))
         }
-    } else if (extends(rho.cld, "glmResp")) {
+    } else {
+        cat("TAKING UNSTRUCTURED PATH\n")
+         ## unstructured covariance path for lmerResp     
+        function(theta) {
+            .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))
+        }
+    }    } else if (extends(rho.cld, "glmResp")) {
         ## control values will override rho values *if present*
         if (!is.null(tp <- control$tolPwrss)) rho$tolPwrss <- tp
         if (!is.null(cd <- control$ compDev)) rho$compDev <- cd
