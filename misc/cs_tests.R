@@ -4,6 +4,13 @@ library(lme4)
 devtools::load_all(".")
 data("sleepstudy", package = "lme4") ## redundant, but ...
 
+master_vc <- matrix(c(565.476966132419, 11.0551223919533, 11.0551223919533, 
+                      32.6817852488527), nrow=2,
+                    dimnames = list(c("(Intercept)", 
+                                      "Days"), c("(Intercept)", "Days"))
+                    )
+master_theta <- c(`Subject.(Intercept)` = 0.929190605278248, `Subject.Days.(Intercept)` = 0.018165754720412,  Subject.Days = 0.222643205612618)
+
 get_sigma <- function(env) {
   wrss <- env$resp$wrss()
   ussq <- env$pp$sqrL(1)
@@ -11,6 +18,13 @@ get_sigma <- function(env) {
   sqrt((wrss + ussq)/n)
 }
 
+fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)
+master_vc
+VarCorr(fm1)$Subject
+all.equal(getME(fm1, "theta"), master_theta) ## nope
+
+## NOT correct ...
+debug(lmer)
 
 #'
 test_lik <- function(cortype, par_lmer, par_glmmTMB) {
