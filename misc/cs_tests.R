@@ -1,10 +1,60 @@
 # VarCorr Workflow Test
 library(glmmTMB)
 library(lme4)
+devtools::load_all(".")
 data("sleepstudy", package = "lme4") ## redundant, but ...
+
+get_sigma <- function(env) {
+  wrss <- env$resp$wrss()
+  ussq <- env$pp$sqrL(1)
+  n <- length(env$resp$y)
+  sqrt((wrss + ussq)/n)
+}
+
+
+#'
+test_lik <- function(cortype, par_lmer, par_glmmTMB) {
+  form <- reformulate(c("Days",
+                        sprintf("%s(Days | Subject)", cortype)),
+                      response = "Reaction")
+  
+lmod <- lFormula(form, sleepstudy, REML=FALSE)
+  devfun_lmer <- do.call(mkLmerDevfun, lmod)
+  d_lmer <- devfun_lmer(par_lmer)
+  ss <- get_sigma(environment(devfun_lmer))  ## profiled residual SD
+  chol_val <- env$transform_theta(par_lmer)*ss
+  corpar <- chol_val[2]/sqrt(prod(chol_val[c(1,3)]))
+  ##
+  sd_vec <- log(chol_val[c(1,3)])
+  t0 <- chol_val[2]
+  cor_val <- switch(cortype,
+                    us =  corpar/sqrt(1+corpar^2),
+                    ## rho = plogis(t)*(1+a) - a
+                    ## t = qlogis((rho+a)/(1+a))
+                    cs = qlogis((rho+1)/2))
+
+  glmmTMB_theta <- c(sd_vec, cor_val)
+  tmpdev <- glmmTMB(form, doFit = FALSE, data = sleepstudy) |>
+    fitTMB(doOptim = FALSE)
+  devfun_glmmTMB <- tmpdev$fn
+  
+  print(table(names(tmpdev$par)))
+  d_glmmTMB <- c(devfun_glmmTMB(c(beta=rep(0,2), betadisp = log(ss),
+                             theta = glmmTMB_theta)))
+  ## need to extract profiled sigma from devfun object
+  all.equal(d_lmer, d_glmmTMB)
+}
+  
+
+debug(test_lik)
+test_lik("us", c(1,0,1))
+
+
+
 
 # Models
 fit_us <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)
+fit_us <- glmmTMB(Reaction ~ Days + (Days | Subject), sleepstudy)
 fit_cs_glmm <- glmmTMB(Reaction ~ Days + cs(Days | Subject), sleepstudy, REML = FALSE)
 fit_cs <- lmer(Reaction ~ Days + cs(Days | Subject), sleepstudy, REML = FALSE)
 fit_cs_hom <- lmer(Reaction ~ Days + cs(Days | Subject, hom = TRUE), sleepstudy, REML = FALSE)

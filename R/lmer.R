@@ -378,8 +378,6 @@ split_theta_by_structure <- function(theta, param_sizes) {
     segments
 }
 
-
-
 ## *not* exported (had help page till early 2018)
 ## -> issue #92: -> also look at devfun2() in  ./profile.R (which returns class!)
 ##' Create a deviance evaluation function from a predictor and a response module
@@ -401,7 +399,7 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
         GQmat <- nlmerAGQ <- NULL
     ## check if structured cov is present and extract structure inf
     structure_info <- NULL
-    if(!is.null(rho$cov_structures)) {
+    if (!is.null(rho$cov_structures)) {
         structure_info <- list(
             structures = rho$cov_structures,
             structure_types = rho$structure_types,
@@ -415,64 +413,70 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
         transform_theta <- create_theta_transformer(structure_info)
         rho$transform_theta <- transform_theta
     }
-    ## The deviance function (to be returned, with 'rho' as its environment):
-    ff <-
-if (extends(rho.cld, "lmerResp")) {
-    rho$lmer_Deviance <- lmer_Deviance
-    cat("Creating deviance function. transform_theta exists:", !is.null(transform_theta), "\n")
-    if (!is.null(transform_theta)) {
-        cat("TAKING STRUCTURED PATH\n")
+  debug <- rho$debug <- (verbose > 10)
+  ## The deviance function (to be returned, with 'rho' as its environment):
+  ff <-
+    if (extends(rho.cld, "lmerResp")) {
+      rho$lmer_Deviance <- lmer_Deviance
+      if (debug) cat("Creating deviance function. transform_theta exists:", !is.null(transform_theta), "\n")
+      if (!is.null(transform_theta)) {
+        if (debug) cat("TAKING STRUCTURED PATH\n")
         ## structured covariance path for lmerResp 
         function(theta) {
-            cat("DEVIANCE: Using structured path with theta:", theta, "\n")
-            transformed_theta <- transform_theta(theta)
-            cat("DEVIANCE: Transformed to:", transformed_theta, "\n")
-            .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(transformed_theta))
+          if (debug) cat("DEVIANCE: Using structured path with theta:", theta, "\n")
+          transformed_theta <- transform_theta(theta)
+          if (debug) cat("DEVIANCE: Transformed to:", transformed_theta, "\n")
+          .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(transformed_theta))
         }
-    } else {
-        cat("TAKING UNSTRUCTURED PATH\n")
-         ## unstructured covariance path for lmerResp     
+      } else {
+        ## BMB: do we need this? can we set an identity transformer as the default?
+        if (debug) cat("TAKING UNSTRUCTURED PATH\n")
+        ## unstructured covariance path for lmerResp     
         function(theta) {
-            .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))
+          .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))
         }
-    }    } else if (extends(rho.cld, "glmResp")) {
+      }
+    } else if (extends(rho.cld, "glmResp")) {
         ## control values will override rho values *if present*
         if (!is.null(tp <- control$tolPwrss)) rho$tolPwrss <- tp
         if (!is.null(cd <- control$ compDev)) rho$compDev <- cd
         if (nAGQ == 0L)
-            function(theta) {
-                resp$updateMu(lp0)
-                pp$setTheta(theta)
-                p <- pwrssUpdate(pp, resp, tol=tolPwrss, GQmat=GHrule(0L),
-                                 compDev=compDev, maxit=maxit, verbose=verbose)
-                resp$updateWts()
-                p
-            }
+          function(theta) {
+            transformed_theta <- transform_theta(theta)
+            resp$updateMu(lp0)
+            pp$setTheta(theta)
+            p <- pwrssUpdate(pp, resp, tol=tolPwrss, GQmat=GHrule(0L),
+                             compDev=compDev, maxit=maxit, verbose=verbose)
+            resp$updateWts()
+            p
+          }
         else  ## nAGQ > 0
             function(pars) {
-                ## pp$setDelu(rep(0, length(pp$delu)))
-                resp$setOffset(baseOffset)
-                resp$updateMu(lp0)
-                pp$setTheta(as.double(pars[dpars])) # theta is first part of pars
-                spars <- as.numeric(pars[-dpars])
-                offset <- if (length(spars)==0) baseOffset else baseOffset + pp$X %*% spars
-                resp$setOffset(offset)
-                p <- pwrssUpdate(pp, resp, tol=tolPwrss, GQmat=GQmat,
-                                 compDev=compDev, grpFac=fac, maxit=maxit, verbose=verbose)
-                resp$updateWts()
-                p
+              ## pp$setDelu(rep(0, length(pp$delu)))
+              resp$setOffset(baseOffset)
+              resp$updateMu(lp0)
+              transformed_theta <- transform_theta(pars[dpars])
+              pp$setTheta(transformed_theta) # theta is first part of pars
+              spars <- as.numeric(pars[-dpars])
+              offset <- if (length(spars)==0) baseOffset else baseOffset + pp$X %*% spars
+              resp$setOffset(offset)
+              p <- pwrssUpdate(pp, resp, tol=tolPwrss, GQmat=GQmat,
+                               compDev=compDev, grpFac=fac, maxit=maxit, verbose=verbose)
+              resp$updateWts()
+              p
             }   
     } else if (extends(rho.cld, "nlsResp")) {
         if (nAGQ <= 1L) {
             rho$nlmerLaplace <- nlmerLaplace
             rho$tolPwrss <- control$tolPwrss
             rho$maxit <- maxit
+            transformed_theta <- transform_theta(pars[dpars])
             switch(nAGQ + 1L,
                    function(theta)
                        .Call(nlmerLaplace, pp$ptr(), resp$ptr(), as.double(theta),
                              as.double(u0), beta0, verbose, FALSE, tolPwrss, maxit),
                    function(pars)
-                       .Call(nlmerLaplace, pp$ptr(), resp$ptr(), pars[dpars],
+                       .Call(nlmerLaplace, pp$ptr(), resp$ptr(), transformed_theta,
                              u0,  pars[-dpars], verbose, TRUE, tolPwrss, maxit))
         } else {
             stop("nAGQ > 1  not yet implemented for nlmer models")

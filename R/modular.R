@@ -600,7 +600,7 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL,
         rho$param_sizes <- attr(reTrms, "param_sizes")
     }
     
-    devfun <- mkdevfun(rho, 0L,control=control)
+    devfun <- mkdevfun(rho, 0L, control=control, verbose = verbose)
 
 
     # if all random effects are of the form 1|f and starting values not
