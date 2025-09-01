@@ -1,15 +1,41 @@
 # VarCorr Workflow Test
 library(glmmTMB)
-library(lme4)
+
+## we are fitting variants of this model:
+mk_form <- function(cortype="") {
+  reformulate(c("Days",
+                sprintf("%s(Days | Subject)", cortype)),
+              response = "Reaction")
+form0 <- mk_form()
+
+## machinery for loading different versions
+## can use this to install CRAN version in a separate
+## directory (to make switching between branches/versions slightly easier)
+if (FALSE) {
+  dir.create("misc/lme4_master", recursive = TRUE)
+  install.packages("lme4", lib= "misc/lme4_master")
+}
+
+library(lme4, lib = "misc/lme4_master")
+## to load current branch, whatever it is
 devtools::load_all(".")
 data("sleepstudy", package = "lme4") ## redundant, but ...
 
-master_vc <- matrix(c(565.476966132419, 11.0551223919533, 11.0551223919533, 
+## results from CRAN/master branch version (sleepstudy fit)
+master_vc <- matrix(c(565.476966132419,
+                      rep(11.0551223919533, 2),
                       32.6817852488527), nrow=2,
-                    dimnames = list(c("(Intercept)", 
-                                      "Days"), c("(Intercept)", "Days"))
+                    dimnames =
+                      replicate(2,
+                                c("(Intercept)", 
+                                  "Days"),
+                                FALSE))
                     )
 master_theta <- c(`Subject.(Intercept)` = 0.929190605278248, `Subject.Days.(Intercept)` = 0.018165754720412,  Subject.Days = 0.222643205612618)
+
+## flexSigma results
+fs_theta <- c(`Subject.(Intercept)` = 0.926180775839535, `Subject.Days.(Intercept)` = 0.0755755794896203, 
+              Subject.Days = 0.223374564239091)
 
 get_sigma <- function(env) {
   wrss <- env$resp$wrss()
@@ -19,24 +45,60 @@ get_sigma <- function(env) {
 }
 
 fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)
+all.equal(getME(fm1, "devfun") |> environment() |> get_sigma(),
+          sigma(fm1))
 master_vc
 VarCorr(fm1)$Subject
 all.equal(getME(fm1, "theta"), master_theta) ## nope
 
-## NOT correct ...
-debug(lmer)
+## lmer fit with only the initial evaluation: agrees with other hacks herein
+fm0 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE,
+            control = lmerControl(optCtrl=list(maxeval=1),
+                                  calc.derivs=FALSE),
+            verbose = 10)
+sigma(fm0)
+-2*c(logLik(fm0))
 
-#'
-test_lik <- function(cortype, par_lmer, par_glmmTMB) {
-  form <- reformulate(c("Days",
-                        sprintf("%s(Days | Subject)", cortype)),
-                      response = "Reaction")
-  
-lmod <- lFormula(form, sleepstudy, REML=FALSE)
+## master:
+##  Groups   Name        Std.Dev. Corr 
+##  Subject  (Intercept) 23.7798       
+##           Days         5.7168  0.081
+## Residual             25.5919       
+
+## flexSigma gets corr = 0.32 instead
+
+## first log-lik:
+## [1] 1784.642
+
+## NOT correct ...
+
+## flexSigma_exp
+## iteration: 50
+## 	x = (0.926183, 0.075567, 0.223375)
+##	f(x) = 1751.939345
+
+## 
+## iteration: 53
+##	x = (0.929254, 0.018168, 0.222650)
+##	f(x) = 1751.939344
+
+
+## comparison of master, flexSigma_exp
+## log-likelihoods are the same until
+## works until theta[2] != 0 ...
+## (more precisely when par = (1, 1, 1);
+##  don't know if theta[2] == 1 is special
+## or any time theta[2] != 0)
+
+cortype <- ""
+par_lmer <- c(1,0,1)
+test_lik <- function(cortype="us", par_lmer=c(1,0,1), par_glmmTMB) {
+  form <- 
+  lmod <- lFormula(form, sleepstudy, REML=FALSE)
   devfun_lmer <- do.call(mkLmerDevfun, lmod)
   d_lmer <- devfun_lmer(par_lmer)
   ss <- get_sigma(environment(devfun_lmer))  ## profiled residual SD
-  chol_val <- env$transform_theta(par_lmer)*ss
+  chol_val <- environment(devfun_lmer)$transform_theta(par_lmer)*ss
   corpar <- chol_val[2]/sqrt(prod(chol_val[c(1,3)]))
   ##
   sd_vec <- log(chol_val[c(1,3)])
@@ -46,24 +108,25 @@ lmod <- lFormula(form, sleepstudy, REML=FALSE)
                     ## rho = plogis(t)*(1+a) - a
                     ## t = qlogis((rho+a)/(1+a))
                     cs = qlogis((rho+1)/2))
-
+  ##
   glmmTMB_theta <- c(sd_vec, cor_val)
   tmpdev <- glmmTMB(form, doFit = FALSE, data = sleepstudy) |>
     fitTMB(doOptim = FALSE)
   devfun_glmmTMB <- tmpdev$fn
-  
+  ##
   print(table(names(tmpdev$par)))
+  ## is betadisp
   d_glmmTMB <- c(devfun_glmmTMB(c(beta=rep(0,2), betadisp = log(ss),
                              theta = glmmTMB_theta)))
   ## need to extract profiled sigma from devfun object
+  cat("lmer: ", d_lmer, "\n")
+  cat("glmmTMB: ", d_glmmTMB, "\n")
   all.equal(d_lmer, d_glmmTMB)
 }
   
-
+## 1784.642296
 debug(test_lik)
 test_lik("us", c(1,0,1))
-
-
 
 
 # Models
