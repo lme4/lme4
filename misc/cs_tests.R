@@ -1,11 +1,11 @@
 # VarCorr Workflow Test
-library(glmmTMB)
 
 ## we are fitting variants of this model:
 mk_form <- function(cortype="") {
   reformulate(c("Days",
                 sprintf("%s(Days | Subject)", cortype)),
               response = "Reaction")
+}
 form0 <- mk_form()
 
 ## machinery for loading different versions
@@ -17,6 +17,9 @@ if (FALSE) {
 }
 
 library(lme4, lib = "misc/lme4_master")
+
+library(glmmTMB)
+
 ## to load current branch, whatever it is
 devtools::load_all(".")
 data("sleepstudy", package = "lme4") ## redundant, but ...
@@ -44,7 +47,8 @@ get_sigma <- function(env) {
   sqrt((wrss + ussq)/n)
 }
 
-fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)
+fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE,
+            verbose = 10)
 all.equal(getME(fm1, "devfun") |> environment() |> get_sigma(),
           sigma(fm1))
 master_vc
@@ -55,6 +59,7 @@ all.equal(getME(fm1, "theta"), master_theta) ## nope
 fm0 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE,
             control = lmerControl(optCtrl=list(maxeval=1),
                                   calc.derivs=FALSE),
+            start = list(theta = c(1, 0.1, 1)),
             verbose = 10)
 sigma(fm0)
 -2*c(logLik(fm0))
