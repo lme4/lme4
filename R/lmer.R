@@ -408,12 +408,10 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
             param_sizes = rho$param_sizes
             )
         transform_theta <- create_theta_transformer(structure_info)
-    }
-    ## create theta transformation function if structures present 
-    transform_theta <- NULL
-    if (!is.null(structure_info)) {
-        transform_theta <- create_theta_transformer(structure_info)
         rho$transform_theta <- transform_theta
+    } else {
+      ## create theta transformation function if structures present 
+      transform_theta <- NULL
     }
     ## The deviance function (to be returned, with 'rho' as its environment):
     ff <-
