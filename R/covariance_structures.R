@@ -608,7 +608,14 @@ setMethod("compute_lambdat_x", "HomogeneousCSCovariance", function(object, theta
     L_corr <- t(chol(R))
     L <- sigma_re * L_corr
 
-    return(L[lower.tri(L, diag = TRUE)])
+    if (d == 1) {
+        return(L[1, 1]) 
+    } else {
+        diag_element <- L[1, 1]          
+        offdiag_element <- L[2, 1]       
+        return(c(diag_element, offdiag_element))
+    }
+
 })
 
 ##' @rdname InternalCovarianceMethods
@@ -627,7 +634,10 @@ setMethod("compute_lambdat_x", "HeterogeneousCSCovariance", function(object, the
     D <- Diagonal(x = st_devs)
     L <- D %*% L_corr
 
-    return(L[lower.tri(L, diag = TRUE)])
+    diag_elements <- diag(L)             
+    offdiag_element <- L[2, 1]            
+
+    return(c(diag_elements, offdiag_element))
 })
 
 
