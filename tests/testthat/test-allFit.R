@@ -7,6 +7,11 @@ if (testLevel>1) {
   gm_all <- allFit(fit_cbpp_1, verbose=TRUE)
   gm_all_nostart <- allFit(fit_cbpp_1, verbose=FALSE, start_from_mle = FALSE)
 
+  test_that("ensuring global environment is not contaminated", {
+    expect_equal(!("pars" %in% ls()), TRUE)
+    expect_equal(!("ctrl" %in% ls()), TRUE)
+  })
+  
   summary(gm_all)$times[,"elapsed"]
   summary(gm_all_nostart)$times[,"elapsed"]
 
