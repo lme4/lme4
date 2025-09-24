@@ -16,7 +16,9 @@ help_str <- "\n  See ?lme4::convergence and ?lme4::troubleshooting."
 ##'   (length is taken to determine number of RE parameters)
 ##' @param debug useful if some checks are on "ignore", but would "trigger"
 ##' @param nobs the number of observations from the dataset
-checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE, nobs = NULL)
+##' @param ndim the number of coefficients (dimension) from the model
+checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE, 
+                      nobs = NULL, ndim = NULL)
 {
     res <- list()
     ntheta <- length(lbound)
@@ -48,6 +50,8 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE, nobs = NULL)
     ## bail out
     if (is.null(derivs) || (!is.null(nobs) && nobs >
                             ctrl$check.conv.nobsmax)) return(NULL)
+    if (is.null(derivs) || (!is.null(ndim) && ndim >
+                            ctrl$check.conv.nparmax)) return(NULL)
     
     if (anyNA(derivs$gradient))
         return(list(code = -5L,

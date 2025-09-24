@@ -8,7 +8,7 @@
   see \link{convergence} for a more detailed discussion.
 }
 \usage{
-checkConv(derivs, coefs, ctrl, lbound, debug = FALSE, nobs = NULL)
+checkConv(derivs, coefs, ctrl, lbound, debug = FALSE, nobs = NULL, ndim = NULL)
 }
 
 \arguments{
@@ -24,6 +24,8 @@ checkConv(derivs, coefs, ctrl, lbound, debug = FALSE, nobs = NULL)
     "ignore", but would "trigger"}
   \item{nobs}{number of observations (needed to determine whether to do
   convergence checks for large data)}
+  \item{ndim}{number of dimensions (needed to determine whether to do the
+  gradient/hessian checks for large nonlinear optimization problems)}
 }
 \value{
   A result list containing
