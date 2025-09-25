@@ -16,7 +16,8 @@ help_str <- "\n  See ?lme4::convergence and ?lme4::troubleshooting."
 ##'   (length is taken to determine number of RE parameters)
 ##' @param debug useful if some checks are on "ignore", but would "trigger"
 ##' @param nobs the number of observations from the dataset
-##' @param ndim the number of coefficients (dimension) from the model
+##' @param ndim the number of dimensions for the variance-covariance matrix 
+##' of random effects
 checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE, 
                       nobs = NULL, ndim = NULL)
 {

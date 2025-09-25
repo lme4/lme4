@@ -408,3 +408,53 @@ test_that("turn off conv checking for nobs > check.conv.nobsmax", {
   expect_null(fm2@optinfo$conv$lme4)
   expect_null(fm3@optinfo$conv$lme4)
 })
+
+test_that("turn off conv checking for npara > check.conv.nparmax", {
+  ## This is taken from an example shown here:
+  ## https://github.com/lme4/lme4/issues/783#issue-2266130542
+  set.seed(4)
+  
+  data <- data.frame(row.names = 1:150)
+  data$class <- sample(1:25, 150, replace = TRUE)
+  data$grade <- pmin(7 + floor(runif(150,2,14) + rnorm(150)), 20)
+  data$emint <- rnorm(150, 100, 15)
+  data$group <- rep(c("training", "control", "school"), each=50)
+  
+  data$rater <- sample(1:10, 150, replace = TRUE)
+  rater_bias <- rnorm(10, 0, 2)
+  
+  training_effect <- list(training=2.5,school=2,control=0)
+  
+  class_bias <- rnorm(25, 0, 1)
+  
+  emint_effect <- 0.001
+  emint_sd <- 0
+  emint_bs <- rnorm(25, emint_effect, emint_sd)
+  
+  grade_effect <- 0.3
+  grade_sd <- 0.2
+  grade_bs <- rnorm(25, grade_effect, grade_sd)
+  
+  t_eff <- as.numeric(training_effect[data$group])
+  emint_b <- emint_bs[data$class]
+  grade_b <- grade_bs[data$class]
+  rater_b <- rater_bias[data$rater]
+  class_b <- class_bias[data$class]
+  
+  data$eval <- pmax(pmin(floor(4 + t_eff + class_b + rater_b + 
+                emint_b*data$emint + (grade_b*(data$grade-mean(data$grade)))
+                + 2*rnorm(150)), 10), 0)
+  
+  data$emint_n <- data$emint - mean(data$emint)
+  data$grade_n <- data$grade - mean(data$grade)
+  
+  mod1 <- suppressWarnings(
+    lmer(eval~group*emint_n + group*grade_n + (grade_n+emint_n|class), data=data))
+  mod2 <- lmer(eval~group*emint_n + group*grade_n + (grade_n+emint_n|class), 
+              control = lmerControl(check.conv.nparmax = 5), data=data)
+
+  ## First should give a warning
+  expect_false(is.null(mod1@optinfo$conv$lme4))
+  ## Second shouldn't be evaluated
+  expect_null(mod2@optinfo$conv$lme4)
+})

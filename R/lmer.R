@@ -46,11 +46,15 @@ lmer <- function(formula, data=NULL, REML = TRUE,
                         list(start=start, verbose=verbose, control=control)))
     if (devFunOnly) return(devfun)
     ## optimize deviance function over covariance parameters
+    s <- getStart(start, environment(devfun)$pp)
     if (identical(control$optimizer,"none"))
       stop("deprecated use of optimizer=='none'; use NULL instead")
-    calc.derivs <- control$calc.derivs %||% (nrow(lmod$fr) < control$checkConv$check.conv.nobsmax)
+    
+    calc.derivs <- control$calc.derivs %||% 
+      (nrow(lmod$fr) < control$checkConv$check.conv.nobsmax &
+        length(s)    < control$checkConv$check.conv.nparmax)
+    
     opt <- if (length(control$optimizer)==0) {
-               s <- getStart(start, environment(devfun)$pp)
                list(par=s,fval=devfun(s),
                     conv=1000,message="no optimization")
            }  else {
@@ -66,7 +70,8 @@ lmer <- function(formula, data=NULL, REML = TRUE,
     cc <- checkConv(attr(opt,"derivs"), opt$par,
                     ctrl = control$checkConv,
                     lbound = environment(devfun)$lower,
-                    nobs = nrow(lmod$fr))
+                    nobs = nrow(lmod$fr),
+                    ndim = length(s))
     mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr,
              mc = mcout, lme4conv=cc) ## prepare output
 }## { lmer }
