@@ -4,12 +4,17 @@ if (testLevel>1) {
   L <- load(system.file("testdata", "lme-tst-fits.rda",
                         package="lme4", mustWork=TRUE))
   
+  had_pars <- exists("pars", envir = globalenv(), inherits = FALSE)
+  had_ctrl <- exists("ctrl", envir = globalenv(), inherits = FALSE)
+  
   gm_all <- allFit(fit_cbpp_1, verbose=TRUE)
   gm_all_nostart <- allFit(fit_cbpp_1, verbose=FALSE, start_from_mle = FALSE)
 
-  test_that("ensuring global environment is not contaminated", {
-    expect_equal(!("pars" %in% ls()), TRUE)
-    expect_equal(!("ctrl" %in% ls()), TRUE)
+  test_that("pars and ctrl did not leak into the environment", {
+    expect_equal(exists("pars", envir = globalenv(), inherits = FALSE), 
+                 had_pars)
+    expect_equal(exists("ctrl", envir = globalenv(), inherits = FALSE), 
+                 had_ctrl)
   })
   
   summary(gm_all)$times[,"elapsed"]
@@ -98,6 +103,7 @@ if (testLevel>1) {
                 cbind(incidence, size - incidence) ~ period + (1 | herd),
                 data = dataset, family = binomial
             )
+            gm1@call$data <- dataset
             allFit(gm1, catch.errs=FALSE)
         }
 
@@ -112,6 +118,5 @@ if (testLevel>1) {
         ##  but close enough ...
         expect_true(all(is.na(v) | v < 12))
     })
-
 
 }  ## testLevel
