@@ -35,9 +35,10 @@
       If desired, derivatives can be calculated (but not checked)
       by explicitly setting \code{calc.derivs} to TRUE.
       \item similarly, gradient/hessian based check are now skipped
-      for models with high dimensions (number of dimensions greater 
-      than the \code{check.conv.nparmax}) component of
-      \code{[g]lmerControl()}); default threshold is XX observations.
+      for models whose the dimensions of the variance-covariance matrix 
+      of random effects is high (number of dimensions greater 
+      than the \code{check.conv.nparmax} component of
+      \code{[g]lmerControl()}); default threshold is 50 observations.
       \item added six publically available datasets: 
       \itemize{
         \item \code{cbpp2} (contagious bovine pleuropneumonia 
