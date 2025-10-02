@@ -412,7 +412,8 @@ test_that("turn off conv checking for nobs > check.conv.nobsmax", {
 test_that("turn off conv checking for npara > check.conv.nparmax", {
   ## This is taken from an example shown here:
   ## https://github.com/lme4/lme4/issues/783#issue-2266130542
-  set.seed(4)
+  ## This particular seed doesn't have singular fit issues
+  set.seed(6)
   
   data <- data.frame(row.names = 1:150)
   data$class <- sample(1:25, 150, replace = TRUE)
@@ -451,10 +452,11 @@ test_that("turn off conv checking for npara > check.conv.nparmax", {
   mod1 <- suppressWarnings(
     lmer(eval~group*emint_n + group*grade_n + (grade_n+emint_n|class), data=data))
   mod2 <- lmer(eval~group*emint_n + group*grade_n + (grade_n+emint_n|class), 
-              control = lmerControl(check.conv.nparmax = 5), data=data)
+              control = lmerControl(optimizer = "bobyqa", 
+                                    check.conv.nparmax = 5), data=data)
 
   ## First should give a warning
   expect_false(is.null(mod1@optinfo$conv$lme4))
   ## Second shouldn't be evaluated
-  expect_null(mod2@optinfo$conv$lme4)
+  expect_true(is.null(mod2@optinfo$conv$lme4))
 })
