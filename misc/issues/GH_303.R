@@ -140,12 +140,12 @@ set.seed(101)
 ## so slope can't be estimated for that level (induce rank-deficiency)
 d <- data.frame(y=rnorm(60),x=rnorm(60),f=factor(rep(1:3,c(1,29,30))),
                 g=factor(rep(1:6,each=10)))
+nd <- expand.grid(f=levels(d$f),g=levels(d$g),x=c(-1,1), y = c(-1, 1))
 m1 <- lm(y~f*x,data=d)
 coef(m1)
 ## f3:x is NA
-
+predict(m1, newdata = nd)
 library("lme4")
 m2 <- lmer(y~f*x+(1|g),d)
 predict(m2,re.form=~1|g)
-predict(m2)
-
+predict(m2, newdata = nd, re.form = NA)
