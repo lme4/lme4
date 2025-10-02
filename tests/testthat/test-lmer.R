@@ -458,5 +458,5 @@ test_that("turn off conv checking for npara > check.conv.nparmax", {
   ## First should give a warning
   expect_false(is.null(mod1@optinfo$conv$lme4))
   ## Second shouldn't be evaluated
-  expect_true(is.null(mod2@optinfo$conv$lme4))
+  expect_null(mod2@optinfo$conv$lme4)
 })
