@@ -167,7 +167,7 @@ glmer <- function(formula, data=NULL
       if (!is.null(start$fixef) && nAGQ==0) {
         stop("should not specify both start$fixef (or $beta) and nAGQ==0")
       }
-}
+    }
 
     ## FIX ME: allow calc.derivs, use.last.params etc. if nAGQ=0
     if(control$nAGQ0initStep) {
@@ -182,7 +182,9 @@ glmer <- function(formula, data=NULL
                              verbose=verbose,
                              calc.derivs=FALSE)
     }
-
+    
+    ## Note to self: length(opt) works for the theta parameters...
+    
     if(nAGQ > 0L) {
 
 

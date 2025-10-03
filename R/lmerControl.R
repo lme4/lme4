@@ -88,7 +88,7 @@ merControl <-
              check.formula.LHS = "stop",
              ## convergence options
              check.conv.nobsmax = 1e4,
-             check.conv.nparmax = 50,
+             check.conv.nparmax = 10,
              check.conv.grad     = .makeCC("warning", tol = 2e-3, relTol = NULL),
              check.conv.singular = .makeCC(action = "message", tol = formals(isSingular)$tol),
              check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
@@ -171,6 +171,7 @@ merControl <-
 
 lmerControl <- merControl
 glmerControl <- merControl
+formals(glmerControl)[["check.conv.nparmax"]] <- 20
 formals(glmerControl)[["optimizer"]] <- c("bobyqa","Nelder_Mead")
 formals(glmerControl)[["mod.type"]] <- "glmer"
 formals(glmerControl)[["restart_edge"]] <- FALSE

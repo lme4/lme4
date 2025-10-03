@@ -38,7 +38,8 @@
       for models whose the dimensions of the variance-covariance matrix 
       of random effects is high (number of dimensions greater 
       than the \code{check.conv.nparmax} component of
-      \code{[g]lmerControl()}); default threshold is 50 observations.
+      \code{[g]lmerControl()}). Default threshold is 10 for 
+      \code{lmerControl()} and 20 for \code{glmerControl()}.
       \item added six publically available datasets: 
       \itemize{
         \item \code{cbpp2} (contagious bovine pleuropneumonia 
