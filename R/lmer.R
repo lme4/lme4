@@ -2178,7 +2178,7 @@ NULL
 ## Extract the conditional variance-covariance matrix of the fixed-effects
 ## parameters
 vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
-                        use.hessian = NULL, full = FALSE, ...)
+                        use.hessian = NULL, full = FALSE, noScale = NULL, ...)
 {
     ## FIXME: warn/message if GLMM (RX-computation is approximate),
     ## if other vars are specified?
@@ -2253,31 +2253,33 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
             if(!is.na(sigm)) as(rr, "corMatrix") else rr # (is NA anyway)
     
     ## If auto-scaling is enabled
-    if (!is.null(sc <- attr(object@pp$X, "scaled:scale"))) {
-      ce <- attr(object@pp$X, "scaled:center")
-      other_vars <- setdiff(colnames(rr), "(Intercept)")
-      
-      if("(Intercept)" %in% colnames(rr)){
-        ## 1. Modifying the intercept
-        sig_0sq <- rr["(Intercept)", "(Intercept)"]
+    if(is.null(noScale) || (!is.null(noScale) && noScale == FALSE)){
+      if (!is.null(sc <- attr(object@pp$X, "scaled:scale"))) {
+        ce <- attr(object@pp$X, "scaled:center")
+        other_vars <- setdiff(colnames(rr), "(Intercept)")
         
-        sig_0isq <- rr["(Intercept)", other_vars]
-        total1 <- -2 *sum((ce/sc) * sig_0isq)
-        
-        small_rr <- as.matrix(rr[other_vars, other_vars])
-        total2 <- crossprod(ce / sc, small_rr %*% (ce / sc))[[1]]
-        
-        rr["(Intercept)", "(Intercept)"] <- sig_0sq + total1 + total2
-        ## 2. Modifying the rest 
-        updated_2 <- sig_0isq - as.numeric((ce / sc) %*% small_rr)
-        ## symmetrically update
-        rr["(Intercept)", other_vars] <- updated_2
-        rr[other_vars, "(Intercept)"] <- updated_2
+        if("(Intercept)" %in% colnames(rr)){
+          ## 1. Modifying the intercept
+          sig_0sq <- rr["(Intercept)", "(Intercept)"]
+          
+          sig_0isq <- rr["(Intercept)", other_vars]
+          total1 <- -2 *sum((ce/sc) * sig_0isq)
+          
+          small_rr <- as.matrix(rr[other_vars, other_vars])
+          total2 <- crossprod(ce / sc, small_rr %*% (ce / sc))[[1]]
+          
+          rr["(Intercept)", "(Intercept)"] <- sig_0sq + total1 + total2
+          ## 2. Modifying the rest 
+          updated_2 <- (sig_0isq)/sc - (small_rr %*% (ce/sc))/sc
+          ## symmetrically update
+          rr["(Intercept)", other_vars] <- updated_2
+          rr[other_vars, "(Intercept)"] <- updated_2
+        }
+        # Update the variables without the intercept.
+        rr[other_vars, other_vars] <- rr[other_vars, other_vars] * outer(1/sc, 1/sc)
+        rr <- as(rr, "dpoMatrix")
       }
-      # Update the variables without the intercept.
-      rr[other_vars, other_vars] <- rr[other_vars, other_vars] * outer(1/sc, 1/sc)
     }
-    
     rr
 }
 
