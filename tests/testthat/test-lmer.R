@@ -408,3 +408,17 @@ test_that("turn off conv checking for nobs > check.conv.nobsmax", {
   expect_null(fm2@optinfo$conv$lme4)
   expect_null(fm3@optinfo$conv$lme4)
 })
+
+test_that("gradient and Hessian checks are skipped when singular fit occurs",{
+  
+  group <- factor(rep(1:3, each = 20))
+  b <- rnorm(3, mean = 0, sd = 0.01)
+  x <- rnorm(60)
+  y <- x + b[group] + rnorm(60, sd = 1)
+  dat <- data.frame(y, x, group)
+  
+  fm1 <- lmer(y ~ x + (1 | group), data = dat)
+})
+
+
+
