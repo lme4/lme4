@@ -745,6 +745,20 @@ glFormula <- function(formula, data=NULL, family = gaussian,
         attr(terms(ranfr), "predvars")
 
     X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
+    
+    ## Scaling (if autoscale is on...)
+    if (!is.null(control$autoscale) && control$autoscale) {
+      if("(Intercept)" %in% colnames(X)){
+        X_scaled <- scale(X[, -1])
+        X[,-1] <- X_scaled
+      } else {
+        X_scaled <- scale(X)
+        X <- X_scaled
+      }
+      attr(X, "scaled:center") <- attr(X_scaled, "scaled:center")
+      attr(X, "scaled:scale") <- attr(X_scaled, "scaled:scale")
+    }
+    
     ## backward compatibility (keep no longer than ~2015):
     if(is.null(rankX.chk <- control[["check.rankX"]]))
         rankX.chk <- eval(formals(lmerControl)[["check.rankX"]])[[1]]
