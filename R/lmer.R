@@ -962,11 +962,11 @@ fitted.merMod <- function(object, ...) {
 ##' @export fixef
 ##' @method fixef merMod
 ##' @export
-fixef.merMod <- function(object, add.dropped=FALSE, noScale = NULL, ...) {
+fixef.merMod <- function(object, add.dropped = FALSE, noScale = NULL, ...) {
     X <- getME(object,"X")
     ff <- structure(object@beta, names = dimnames(X)[[2]])
     
-    if(is.null(noScale) || (!is.null(noScale) && noScale == FALSE)){
+    if(is.null(noScale) || (!is.null(noScale) && !noScale)){
       if (!is.null(sc <- attr(X, "scaled:scale"))) {
         ce <- attr(X, "scaled:center")
         ## modifying intercept
@@ -2253,7 +2253,7 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
             if(!is.na(sigm)) as(rr, "corMatrix") else rr # (is NA anyway)
     
     ## If auto-scaling is enabled
-    if(is.null(noScale) || (!is.null(noScale) && noScale == FALSE)){
+    if(is.null(noScale) || (!is.null(noScale) && !noScale)){
       if (!is.null(sc <- attr(object@pp$X, "scaled:scale"))) {
         ce <- attr(object@pp$X, "scaled:center")
         other_vars <- setdiff(colnames(rr), "(Intercept)")
