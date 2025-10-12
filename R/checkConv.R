@@ -49,10 +49,11 @@ checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE,
     if (is.singular) return(res)
     
     ## bail out
-    if (is.null(derivs) || (!is.null(nobs) && nobs >
-                            ctrl$check.conv.nobsmax)) return(NULL)
-    if (is.null(derivs) || (!is.null(ndim) && ndim >
-                            ctrl$check.conv.nparmax)) return(NULL)
+    if (is.null(derivs) ||
+        (!is.null(nobs) && nobs > ctrl$check.conv.nobsmax) ||
+        (!is.null(ndim) && ndim > ctrl$check.conv.nparmax)) {
+      return(NULL)
+    }
     
     if (anyNA(derivs$gradient))
         return(list(code = -5L,
