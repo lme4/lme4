@@ -132,7 +132,7 @@ glmer <- function(formula, data=NULL
     glmod <- eval(mc, parent.frame(1L))
     mcout$formula <- glmod$formula
     glmod$formula <- NULL
-
+    
     if (is.matrix(y <- model.response(glmod$fr))
         && ((family$family != "binomial" && ncol(y) > 1) ||
             (ncol(y) >2))) {
@@ -147,6 +147,9 @@ glmer <- function(formula, data=NULL
                                                    control = control,
                                                    nAGQ = nAGQinit)))
     if (nAGQ==0 && devFunOnly) return(devfun)
+    
+    pp <- environment(devfun)$pp
+    ppdim <- length(pp$theta) + length(pp$delb)
     ## optimize deviance function over covariance parameters
 
     ## FIXME: perhaps should be in glFormula instead??
@@ -216,7 +219,9 @@ glmer <- function(formula, data=NULL
         if (verbose > 10) cat("checking convergence\n")
         checkConv(attr(opt,"derivs"),opt$par,
                   ctrl = control$checkConv,
-                  lbound=environment(devfun)$lower)
+                  lbound=environment(devfun)$lower,
+                  nobs = nrow(glmod$fr),
+                  ndim = ppdim)
     }
 
     ## prepare output

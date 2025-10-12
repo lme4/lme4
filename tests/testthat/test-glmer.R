@@ -359,3 +359,65 @@ test_that("glmer with etastart",
     m1E <- update(m1, etastart = rep(1, nrow(cbpp)))
     expect_true(!identical(fixef(m1), fixef(m1E)))
 })
+
+
+test_that("turn off conv checking for nobs > check.conv.nobsmax", {
+  ## calc derivs and check convergence
+  gm1 <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+               data = cbpp, family = binomial)
+  nn <- nrow(cbpp)-1
+  ## neither derivs nor conv check
+  gm2 <- update(gm1,
+                control = glmerControl(check.conv.nobsmax = nn))
+  ## no conv check, do calc derivs
+  gm3 <- update(gm1, 
+                control = glmerControl(check.conv.nobsmax = nn,
+                                      calc.derivs = TRUE))
+  expect_null(gm2@optinfo$derivs)
+  expect_false(is.null(gm1@optinfo$derivs))
+  expect_false(is.null(gm3@optinfo$derivs))
+  expect_equal(gm1@optinfo$conv$lme4, list())
+  expect_null(gm2@optinfo$conv$lme4)
+  expect_null(gm3@optinfo$conv$lme4)
+})
+
+test_that("turn off conv checking for npara > check.conv.nparmax", {
+  ## Code suggestion from Claude ai:
+  ## https://claude.ai/share/06aa5947-f447-4e08-b65b-92f36c4b19a9
+  set.seed(1)
+  
+  n_groups <- 50
+  n_per_group <- 20
+  n <- n_groups * n_per_group
+  
+  data <- data.frame(
+    group = rep(1:n_groups, each = n_per_group),
+    x1 = rnorm(n),
+    x2 = rnorm(n)
+  )
+  
+  group_effects <- rnorm(n_groups, mean = 0, sd = 2.5)
+  data$group_effect <- group_effects[data$group]
+  
+  data$eta <- -3 + 2.5 * data$x1 + 3 * data$x2 + 
+    1.5 * data$x1 * data$x2 + data$group_effect
+  
+  data$y <- rbinom(n, 1, plogis(data$eta))
+  
+  # note: maxfun had to be artifically low for convergence warnings...
+  mod1 <- suppressWarnings(
+    glmer(y ~ x1 * x2 + (1 | group), data = data, family = binomial,
+    control = glmerControl(optCtrl = list(maxfun = 100)))
+  )
+  mod2 <- suppressWarnings(
+    glmer(y ~ x1 * x2 + (1 | group), data = data, family = binomial,
+          control = glmerControl(optCtrl = list(maxfun = 100),
+                                 check.conv.nparmax = 2))
+  )
+
+  ## First should give a warning
+  expect_false(is.null(mod1@optinfo$conv$lme4))
+  ## Second shouldn't be evaluated
+  expect_null(mod2@optinfo$conv$lme4)
+})
+
