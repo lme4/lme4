@@ -2256,28 +2256,8 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
     if(is.null(noScale) || (!is.null(noScale) && !noScale)){
       if (!is.null(sc <- attr(object@pp$X, "scaled:scale"))) {
         ce <- attr(object@pp$X, "scaled:center")
-        other_vars <- setdiff(colnames(rr), "(Intercept)")
         
-        if("(Intercept)" %in% colnames(rr)){
-          ## 1. Modifying the intercept
-          sig_0sq <- rr["(Intercept)", "(Intercept)"]
-          
-          sig_0isq <- rr["(Intercept)", other_vars]
-          total1 <- -2 *sum((ce/sc) * sig_0isq)
-          
-          small_rr <- as.matrix(rr[other_vars, other_vars])
-          total2 <- crossprod(ce / sc, small_rr %*% (ce / sc))[[1]]
-          
-          rr["(Intercept)", "(Intercept)"] <- sig_0sq + total1 + total2
-          ## 2. Modifying the rest 
-          updated_2 <- (sig_0isq)/sc - (small_rr %*% (ce/sc))/sc
-          ## symmetrically update
-          rr["(Intercept)", other_vars] <- updated_2
-          rr[other_vars, "(Intercept)"] <- updated_2
-        }
-        # Update the variables without the intercept.
-        rr[other_vars, other_vars] <- rr[other_vars, other_vars] * outer(1/sc, 1/sc)
-        rr <- as(rr, "dpoMatrix")
+        rr <- scale_vcov(rr, sc, ce)
       }
     }
     rr
