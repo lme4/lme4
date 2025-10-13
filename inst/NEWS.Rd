@@ -49,7 +49,7 @@
           infections).
       }
       \item Added a new argument `autoscale` to \code{(g)lmerControl()} to enable 
-      autoscaling.
+      autoscaling. An accompanying vignette was created for more details!
       
     } % itemize
   } % user-visible changes

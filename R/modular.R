@@ -139,7 +139,8 @@ checkScaleX <- function(X,  kind="warning", tol=1e3) {
     if (any(c(logcomp,logsd) > log(tol))) {
         wmsg <- "Some predictor variables are on very different scales:"
         if (kind %in% c("warning","stop")) {
-            wmsg <- paste(wmsg, "consider rescaling")
+            msg2 <- "\nYou may also use (g)lmerControl(autoscale = TRUE) to avoid numerical stability."
+            wmsg <- paste(wmsg, "consider rescaling.", msg2)
             switch(kind,
                    "warning" = warning(wmsg, call.=FALSE),
                    "stop" = stop(wmsg, call.=FALSE))

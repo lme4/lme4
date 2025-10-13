@@ -1,0 +1,93 @@
+---
+title: "Autoscaling"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{autoscale}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+bibliography: autoscale_ref.bib  
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+When working with linear regression, it is often advised to scale the predictors. Some researchers, like Gelman, recommend scaling regression coefficients by dividing by two standard deviations [@gelman2008scaling]. Of course, scaling may lose interpretability.
+
+When working with `lmer()` or `glmer()`, some users may receive a warning to consider re-scaling when the predictor variables are on very different scales. Details regarding issues relating to numerical stability are well explained in the "Remove eccentricity by scaling" section from [@bolker2013strategies].
+
+An example of a warning message can be shown below:
+
+```{r setup}
+library(lme4)
+
+set.seed(1)
+sleepstudy$var1 = runif(nrow(sleepstudy), 1e6, 1e7)
+
+fit1 <- lmer(Reaction ~ var1 + Days + (Days | Subject), sleepstudy)
+```
+
+We instead incorporate a new argument for `(g)lmerControl`, called `autoscale`, where `scale()` is automatically applied to the continuous covariates, but when delivered to the user, the coefficient estimates and the covariances are back-transformed. This maintains the original interpretation and minimizes user intervention.
+
+Hence, one may use the following command instead:
+
+```{r, eval = FALSE}
+fit2 <- lmer(Reaction ~ var1 + Days + (Days | Subject), 
+              control = lmerControl(autoscale = TRUE), sleepstudy)
+```
+
+## Autoscale Mechanism
+
+The base function `scale()` is applied to the model matrix `X` as found in `lFormula()` or `glFormula()` from `R/Modular.R`. 
+
+To back transform, we use the `scaled:center` and `scaled:scale` attributes to reverse the changes found in `fixef.merMod()`, `model.matrix.merMod()`, and `vcov.merMod()` such that the `summary()` output shows the coefficients according to the original scale.
+
+Reverting back the changes for `fixef.merMod()`, the $\beta$ coefficients, is not too difficult. However, reverting said changes for the variance-covariance matrix is a bit more involved. The exact modification can be found from the function `scale_vcov()` (found in `R/utilities.R`), and the derivation is explained below.
+
+
+Consider the following estimation of a simple linear model: 
+\[
+\widehat{Y} = \widehat{\beta}_{0} + \widehat{\beta}_{1} X^{*},
+\]
+where $X^{*}$ represents the scaled version of $X$. That is, if we let $C$ represent a vector that contains the values for centering and $S$ represent a vector that contains the values for scaling, we have:
+\[
+\widehat{Y} = \widehat{\beta}_{0} + \widehat{\beta}_{1} \left( \frac{X - C}{S} \right)
+\]
+\[
+\widehat{Y} = \widehat{\beta}_{0} - \sum_{i=1}^{p} \frac{\widehat{\beta}_{i}c_{i}}{s_{i}}
++ \sum_{i=1}^{p} \frac{\widehat{\beta}_{i} x_{i}}{s_{i}}.
+\]
+From the above, it is clear that the new intercept can be represented as:
+\[
+\widehat{\beta}_{0}' = \widehat{\beta}_{0} - \sum_{i=1}^{p} \frac{\widehat{\beta}_{i}c_{i}}{s_{i}}.
+\]
+Similarly, the new coefficients are represented as:
+\[
+\widehat{\beta}_{i}' =  \frac{\widehat{\beta}_{i}}{s_{i}}.
+\]
+Then, the new variance-covariance matrix can be derived using the following:
+\[
+Cov\left( \frac{\widehat{\beta}_{i}}{s_{i}}, \frac{\widehat{\beta}_{j}}{s_{j}} \right)
+= \frac{1}{s_{i}s_{j}} Cov(\widehat{\beta}_{i}, \widehat{\beta_{j}}) 
+= \frac{\sigma_{ij}^{2}}{s_{i}s_{j}}
+\]
+\begin{equation}
+    \begin{split}
+    Cov\left( \widehat{\beta}_{0} - \sum_{i=1}^{p} \frac{\widehat{\beta}_{i}c_{i}}{s_{i}}, \widehat{\beta}_{0} - \sum_{j=1}^{p} \frac{\widehat{\beta}_{i}c_{i}}{s_{i}} \right)
+    &= Cov(\widehat{\beta}_{0}, \widehat{\beta}_{0} ) - 2 \sum_{i=1}^{p} \frac{c_{i}}{s_{i}} Cov(\widehat{\beta}_{0} , \widehat{\beta}_{i}) + \sum_{i=1}^{p} \sum_{j=1}^{p} \frac{c_{i}c_{j}}{s_{i}s_{j}} Cov(\widehat{\beta}_{i}, \widehat{\beta}_{j}) \\
+    &= \sigma_{0}^{2} - 2 \sum_{i=1}^{p} \frac{c_{i}}{s_{i}} \sigma_{0i}^{2} + \sum_{i=1}^{p} \sum_{j=1}^{p} \frac{c_{i}c_{j}}{s_{i}s_{j}} \sigma_{ij}^{2}
+    \end{split}
+\end{equation}
+\begin{equation}   
+    \begin{split}
+    Cov\left( \widehat{\beta}_{0} - \sum_{i=1}^{p} \frac{\widehat{\beta}_{i}c_{i}}{s_{i}}, \frac{\widehat{\beta_{j}}}{s_{j}} \right)
+    &= Cov\left( \widehat{\beta}_{0}, \frac{\widehat{\beta}_{j}}{s_{j}} \right) - \sum_{i=1}^{p} \frac{c_{i}}{s_{i}s_{j}} Cov \left( \widehat{\beta}_{i}, \widehat{\beta}_{j} \right) \\
+    &= \frac{\sigma_{0j}^{2}}{s_{j}} - \sum_{i=1}^{p} \frac{c_{i}}{s_{i}s_{j}} \sigma_{ij}^{2},
+    \end{split}
+\end{equation}
+for $j = 1, 2, ..., p$.
+
+## References
