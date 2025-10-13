@@ -528,3 +528,31 @@ test_that("predict se.fit on response scale", {
   expect_identical(p2$se.fit, p3$se.fit)
   expect_equal(p1$se.fit*binomial()$mu.eta(p1$fit), p2$se.fit)
 })
+
+test_that("Predictions Valid After Subsetting Cmat", {
+  ## Idea: when predicting where the newdata has less groups than what
+  ## the full model accounted for, Cmat needs to be subsetted to match
+  ## the dimensions for cbind(Z, X)
+  ## Code inspired: https://github.com/lme4/lme4/issues/866#issue-3358828496
+  skip_if_not_installed("insight")
+  set.seed(123)
+  dat <- data.frame(
+    outcome = rbinom(n = 100, size = 1, prob = 0.35),
+    var_binom = as.factor(rbinom(n = 100, size = 1, prob = 0.7)),
+    var_cont = rnorm(n = 100, mean = 10, sd = 7),
+    grp = as.factor(sample(letters[1:4], size = 100, replace = TRUE))
+  )
+  m1 <- lme4::glmer(
+    outcome ~ var_binom + var_cont + (1 | grp),
+    data = dat,
+    family = binomial(link = "logit")
+  )
+  d <- insight::get_datagrid(m1, "var_binom", include_random = TRUE)
+  
+  expect_error(suppressWarnings(predict(m1, newdata = d, se.fit = TRUE)), NA)
+  
+  d2 <- dat[sample(1:nrow(dat), size = 20),]
+  d2 <- d2[!("c" == d2$grp), ]
+  
+  expect_error(suppressWarnings(predict(m1, newdata = d2, se.fit = TRUE)), NA)
+})

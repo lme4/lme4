@@ -550,6 +550,20 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
     if(random.only) X <- Matrix(0, nrow = nrow(Z), ncol = n_beta)
 
     ZX <- cbind(Z, X)
+    
+    ## Subsetting Cmat
+    if(dim(ZX)[2] != dim(Cmat)[1]){
+      Cmat_names <- rownames(Cmat)
+      Znames <- colnames(Z)
+      
+      grp_names <- sub("^(?:[^.]+\\.)?([^.]+)\\..*$", "\\1", Cmat_names)
+      
+      is_group_term <- grepl("\\.", Cmat_names)
+      keep_idx <- (!is_group_term) | (grp_names %in% Znames)
+      
+      Cmat <- as(Cmat[keep_idx, keep_idx], "dpoMatrix")
+    }
+
     res <- list(fit = pred,
          se.fit = sqrt(quad.tdiag(Cmat, ZX))
          )
