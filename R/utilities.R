@@ -934,7 +934,12 @@ initialize.parallel <- expression({
     }
 })
 
-isSingular <- function(x, tol = 1e-4) {
+
+singular_tol <- 1e-4
+getSingTol <- function() 
+  getOption("lme4.singular.tolerance", singular_tol)
+
+isSingular <- function(x, tol = getSingTol()) {
     lwr <- getME(x, "lower")
     theta <- getME(x, "theta")
     any(theta[lwr==0] < tol)

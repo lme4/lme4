@@ -89,7 +89,7 @@ merControl <-
              ## convergence options
              check.conv.nobsmax = 1e4,
              check.conv.grad     = .makeCC("warning", tol = 2e-3, relTol = NULL),
-             check.conv.singular = .makeCC(action = "message", tol = formals(isSingular)$tol),
+             check.conv.singular = .makeCC(action = "message", tol = getSingTol()),
              check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
              optCtrl = list(),
              mod.type="lmer"   ## glmer: "glmer"

@@ -418,7 +418,8 @@ test_that("gradient and Hessian checks are skipped when singular fit occurs",{
   dat <- data.frame(y, x, group)
   
   fm1 <- lmer(y ~ x + (1 | group), data = dat)
+  
+  #expect_null(summary(fm1)$optinfo$derivs$gradient)
+  #expect_null(summary(fm1)$optinfo$derivs$Hessian)
 })
-
-
 
