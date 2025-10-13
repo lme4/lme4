@@ -62,7 +62,26 @@ Suggests:
     rr2,
     semEff,
     tibble,
-    merDeriv
+    merDeriv,
+    performance,
+    DHARMa,
+    MuMIn,
+    RLRsim,
+    multcomp,
+    insight,
+    dotwhisker,
+    emmeans,
+    sjPlot,
+    ggeffects,
+    marginaleffects,
+    parameters,
+    huxtable,
+    stargazer,
+    texreg,
+    memisc,
+    broom.mixed,
+    equatiomatic,
+    ggplot2
 VignetteBuilder: knitr
 LazyData: yes
 License: GPL (>=2)
