@@ -1,8 +1,8 @@
 ---
-title: "Autoscaling"
+title: "Autoscaling in lme4"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{autoscale}
+  %\VignetteIndexEntry{Autoscaling in lme4}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 bibliography: autoscale_ref.bib  
@@ -15,11 +15,9 @@ knitr::opts_chunk$set(
 )
 ```
 
-When working with linear regression, it is often advised to scale the predictors. Some researchers, like Gelman, recommend scaling regression coefficients by dividing by two standard deviations [@gelman2008scaling]. Of course, scaling may lose interpretability.
+Scaling predictors in a linear model (or extended linear models, such as LMMs or GLMMs) so that all of the predictors are on a similar scale (and thus, in general, the estimated parameters should have a similar scale) can improve the behaviour of various computational methods (see e.g. the "Remove eccentricity by scaling" section of @bolker2013strategies). `lmer()` and `glmer()` issue warnings suggesting that users consider re-scaling predictors when the predictor variables are on very different scales. Re-scaling predictors can improve both computation and interpretation [@schielzethSimple2010] of (extended) linear models. However, in cases where researchers want to scale predictors for computational stability, but get parameter estimates on the scale of the original (unscaled) predictors, back-transforming the predictors, covariance matrix, etc., is tedious. `lme4` now allows this scaling to be done automatically, behind the scenes.
 
-When working with `lmer()` or `glmer()`, some users may receive a warning to consider re-scaling when the predictor variables are on very different scales. Details regarding issues relating to numerical stability are well explained in the "Remove eccentricity by scaling" section from [@bolker2013strategies].
-
-An example of a warning message can be shown below:
+An example of a warning message due to disparate predictor scales:
 
 ```{r setup}
 library(lme4)
@@ -30,14 +28,26 @@ sleepstudy$var1 = runif(nrow(sleepstudy), 1e6, 1e7)
 fit1 <- lmer(Reaction ~ var1 + Days + (Days | Subject), sleepstudy)
 ```
 
-We instead incorporate a new argument for `(g)lmerControl`, called `autoscale`, where `scale()` is automatically applied to the continuous covariates, but when delivered to the user, the coefficient estimates and the covariances are back-transformed. This maintains the original interpretation and minimizes user intervention.
+Instead of re-fitting with scaled predictors we can use a new (as of `lme4` version >= 1.1.37) argument for `(g)lmerControl`, called `autoscale`, where `scale()` is automatically applied to the continuous covariates, but when delivered to the user, the coefficient estimates and the covariances are back-transformed. This maintains the original interpretation and minimizes user intervention.
 
-Hence, one may use the following command instead:
+Hence:
 
-```{r, eval = FALSE}
+```{r fit}
 fit2 <- lmer(Reaction ~ var1 + Days + (Days | Subject), 
-              control = lmerControl(autoscale = TRUE), sleepstudy)
+             control = lmerControl(autoscale = TRUE), sleepstudy)
+all.equal(fixef(fit1), fixef(fit2))
+all.equal(vcov(fit2), vcov(fit2))
 ```
+
+```{r echo = FALSE}
+## https://stackoverflow.com/a/67456510/190277
+get_val <- function(x) as.numeric(gsub("^.*?(\\d+\\.?\\d+e?[+-]?\\d+).*$", "\\1", x))
+get_tol <- function(x,y, dig=1) signif(get_val(all.equal(x, y, tolerance = 0)), dig)
+ftol <- get_tol(fixef(fit1), fixef(fit2))
+vtol <- get_tol(vcov(fit1), vcov(fit2))
+```
+
+The parameters are in fact slightly different (relative difference in fixed effects of $`r vtol`$, and in covariance matrices of $`r ftol`$); these differences will be larger for less numerically stable models (i.e. more complicated or poorly data-constrained).
 
 ## Autoscale Mechanism
 
@@ -69,22 +79,23 @@ Similarly, the new coefficients are represented as:
 \widehat{\beta}_{i}' =  \frac{\widehat{\beta}_{i}}{s_{i}}.
 \]
 Then, the new variance-covariance matrix can be derived using the following:
+\newcommand{\cov}{\textrm{Cov}}}
 \[
-Cov\left( \frac{\widehat{\beta}_{i}}{s_{i}}, \frac{\widehat{\beta}_{j}}{s_{j}} \right)
-= \frac{1}{s_{i}s_{j}} Cov(\widehat{\beta}_{i}, \widehat{\beta_{j}}) 
+\cov\left( \frac{\widehat{\beta}_{i}}{s_{i}}, \frac{\widehat{\beta}_{j}}{s_{j}} \right)
+= \frac{1}{s_{i}s_{j}} \cov(\widehat{\beta}_{i}, \widehat{\beta_{j}}) 
 = \frac{\sigma_{ij}^{2}}{s_{i}s_{j}}
 \]
 \begin{equation}
     \begin{split}
-    Cov\left( \widehat{\beta}_{0} - \sum_{i=1}^{p} \frac{\widehat{\beta}_{i}c_{i}}{s_{i}}, \widehat{\beta}_{0} - \sum_{j=1}^{p} \frac{\widehat{\beta}_{i}c_{i}}{s_{i}} \right)
-    &= Cov(\widehat{\beta}_{0}, \widehat{\beta}_{0} ) - 2 \sum_{i=1}^{p} \frac{c_{i}}{s_{i}} Cov(\widehat{\beta}_{0} , \widehat{\beta}_{i}) + \sum_{i=1}^{p} \sum_{j=1}^{p} \frac{c_{i}c_{j}}{s_{i}s_{j}} Cov(\widehat{\beta}_{i}, \widehat{\beta}_{j}) \\
+    \cov\left( \widehat{\beta}_{0} - \sum_{i=1}^{p} \frac{\widehat{\beta}_{i}c_{i}}{s_{i}}, \widehat{\beta}_{0} - \sum_{j=1}^{p} \frac{\widehat{\beta}_{i}c_{i}}{s_{i}} \right)
+    &= \cov(\widehat{\beta}_{0}, \widehat{\beta}_{0} ) - 2 \sum_{i=1}^{p} \frac{c_{i}}{s_{i}} \cov(\widehat{\beta}_{0} , \widehat{\beta}_{i}) + \sum_{i=1}^{p} \sum_{j=1}^{p} \frac{c_{i}c_{j}}{s_{i}s_{j}} \cov(\widehat{\beta}_{i}, \widehat{\beta}_{j}) \\
     &= \sigma_{0}^{2} - 2 \sum_{i=1}^{p} \frac{c_{i}}{s_{i}} \sigma_{0i}^{2} + \sum_{i=1}^{p} \sum_{j=1}^{p} \frac{c_{i}c_{j}}{s_{i}s_{j}} \sigma_{ij}^{2}
     \end{split}
 \end{equation}
 \begin{equation}   
     \begin{split}
-    Cov\left( \widehat{\beta}_{0} - \sum_{i=1}^{p} \frac{\widehat{\beta}_{i}c_{i}}{s_{i}}, \frac{\widehat{\beta_{j}}}{s_{j}} \right)
-    &= Cov\left( \widehat{\beta}_{0}, \frac{\widehat{\beta}_{j}}{s_{j}} \right) - \sum_{i=1}^{p} \frac{c_{i}}{s_{i}s_{j}} Cov \left( \widehat{\beta}_{i}, \widehat{\beta}_{j} \right) \\
+    \cov\left( \widehat{\beta}_{0} - \sum_{i=1}^{p} \frac{\widehat{\beta}_{i}c_{i}}{s_{i}}, \frac{\widehat{\beta_{j}}}{s_{j}} \right)
+    &= \cov\left( \widehat{\beta}_{0}, \frac{\widehat{\beta}_{j}}{s_{j}} \right) - \sum_{i=1}^{p} \frac{c_{i}}{s_{i}s_{j}} \cov \left( \widehat{\beta}_{i}, \widehat{\beta}_{j} \right) \\
     &= \frac{\sigma_{0j}^{2}}{s_{j}} - \sum_{i=1}^{p} \frac{c_{i}}{s_{i}s_{j}} \sigma_{ij}^{2},
     \end{split}
 \end{equation}
