@@ -62,8 +62,7 @@ Suggests:
     rr2,
     semEff,
     tibble,
-    merDeriv,
-    insight
+    merDeriv
 VignetteBuilder: knitr
 LazyData: yes
 License: GPL (>=2)

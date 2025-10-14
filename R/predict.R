@@ -552,14 +552,19 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
     ZX <- cbind(Z, X)
     
     ## Subsetting Cmat
-    if(dim(ZX)[2] != dim(Cmat)[1]){
+    if (ncol(ZX) != nrow(Cmat)) {
       Cmat_names <- rownames(Cmat)
       Znames <- colnames(Z)
-      
-      grp_names <- sub("^(?:[^.]+\\.)?([^.]+)\\..*$", "\\1", Cmat_names)
-      
-      is_group_term <- grepl("\\.", Cmat_names)
-      keep_idx <- (!is_group_term) | (grp_names %in% Znames)
+
+      fix_nms <- colnames(object@pp$X)
+      is_group_term <- !Cmat_names %in% fix_nms
+
+      ## looking to compute the groups (factor levels) that are actually included in the Z matrix
+      ## was: grp_names <- sub("^(?:[^.]+\\.)?([^.]+)\\..*$", "\\1", Cmat_names)
+      grp_names <- unlist(lapply(object@flist, levels))
+      keep_idx <- !is_group_term
+      ## restore values that are group values matching Znames
+      keep_idx[!keep_idx] <- grp_names %in% Znames
       
       Cmat <- as(Cmat[keep_idx, keep_idx], "dpoMatrix")
     }

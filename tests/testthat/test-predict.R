@@ -534,7 +534,6 @@ test_that("Predictions Valid After Subsetting Cmat", {
   ## the full model accounted for, Cmat needs to be subsetted to match
   ## the dimensions for cbind(Z, X)
   ## Code inspired: https://github.com/lme4/lme4/issues/866#issue-3358828496
-  skip_if_not_installed("insight")
   set.seed(123)
   dat <- data.frame(
     outcome = rbinom(n = 100, size = 1, prob = 0.35),
@@ -547,12 +546,24 @@ test_that("Predictions Valid After Subsetting Cmat", {
     data = dat,
     family = binomial(link = "logit")
   )
-  d <- insight::get_datagrid(m1, "var_binom", include_random = TRUE)
+  ## d <- insight::get_datagrid(m1, "var_binom", include_random = TRUE)
+  d <- data.frame(var_binom = factor(0:1),
+                  var_cont = c(9.24717241397544, 9.24717241397544),
+                  grp = factor(c("a","b"), levels = letters[1:4]))
   
-  expect_error(suppressWarnings(predict(m1, newdata = d, se.fit = TRUE)), NA)
+  pp <- suppressWarnings(predict(m1, newdata = d, se.fit = TRUE))
+
+  expect_equal(pp, list(fit = c(`1` = -0.652876384058261, `2` = -0.780087791024429),
+                        se.fit = c(`1` = 0.484829918301978, `2` = 0.338081219517654)))
   
   d2 <- dat[sample(1:nrow(dat), size = 20),]
   d2 <- d2[!("c" == d2$grp), ]
   
-  expect_error(suppressWarnings(predict(m1, newdata = d2, se.fit = TRUE)), NA)
+  pp2 <- suppressWarnings(predict(m1, newdata = d2, se.fit = TRUE))
+  expect_identical(lengths(pp2), c(fit=18L, se.fit=18L))
+
+  expect_equal(lapply(pp2, head, 2),
+               list(fit = c(`55` = -0.277527917612113, `94` = -0.321887480517238),
+                    se.fit = c(`55` = 0.346149892077624, `94` = 0.390257197767288)))
 })
+
