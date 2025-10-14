@@ -29,6 +29,7 @@ lmerControl(optimizer = "nloptwrap",% was "Nelder_Mead" till Dec.2013,
     use.last.params = FALSE,
     sparseX = FALSE,
     standardize.X = FALSE,
+    autoscale = NULL,
     ## input checking options
     check.nobs.vs.rankZ = "ignore",
     check.nobs.vs.nlev = "stop",
@@ -57,6 +58,7 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     use.last.params = FALSE,
     sparseX = FALSE,
     standardize.X = FALSE,
+    autoscale = NULL,
     ## input checking options
     check.nobs.vs.rankZ = "ignore",
     check.nobs.vs.nlev = "stop",
@@ -260,6 +262,10 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     relative to the magnitude of the estimated coefficient}
   \item{mod.type}{model type (for internal use)}
   \item{standardize.X}{scale columns of X matrix? (not yet implemented)}
+  \item{autoscale}{if \code{TRUE}, automatically applies scaling for
+    the continuous covariates, and then back-transforms the estimates 
+    back to the original scale to prevent numeric stability without user
+    intervention. (NOTE: not compatiable with glmer yet!)}
   \item{\dots}{other elements to include in check specification}
 }
 \value{
