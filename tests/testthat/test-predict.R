@@ -529,7 +529,7 @@ test_that("predict se.fit on response scale", {
   expect_equal(p1$se.fit*binomial()$mu.eta(p1$fit), p2$se.fit)
 })
 
-test_that("Predictions Valid After Subsetting Cmat", {
+test_that("predictions work with se.fit and subset of grouping variable levels", {
   ## Idea: when predicting where the newdata has less groups than what
   ## the full model accounted for, Cmat needs to be subsetted to match
   ## the dimensions for cbind(Z, X)
@@ -565,5 +565,37 @@ test_that("Predictions Valid After Subsetting Cmat", {
   expect_equal(lapply(pp2, head, 2),
                list(fit = c(`55` = -0.277527917612113, `94` = -0.321887480517238),
                     se.fit = c(`55` = 0.346149892077624, `94` = 0.390257197767288)))
+
+
+  set.seed(123)
+  dat2 <- expand.grid(
+    grp.1 = factor(c("a.1", "b.1", "c.1", "d.1")),
+    grp.2 = factor(c("a.1", "b.1", "c.1", "d.1")),
+    rep = 1:10)
+  dat2$y <- simulate(~ 1 + (1|grp.1) + (1|grp.2),
+                     family = binomial,
+                     newdata = dat2,
+                     newparams = list(beta = 0, theta = c(1, 1)))[[1]]
+ 
+  m2 <- lme4::glmer(
+    y ~ 1 + (1|grp.1) + (1|grp.2),
+    data = dat2,
+    family = binomial(link = "logit")
+  )
+
+  dsub <- expand.grid(
+    grp.1 = c("a.1", "b.1"), 
+    grp.2 = c("a.1", "b.1"))
+
+  ## this does give answers, but are they correct?
+  p1 <- predict(m2, newdata = dsub, se.fit = TRUE)
+
+  p2 <- predict(m2, se.fit = TRUE)
+  ss <- subset(dat2, grp.1 %in% c("a.1", "b.1") & grp.2 %in% c("a.1", "b.1"))
+  w <- as.numeric(rownames(ss)[1:4])
+
+  expect_equal(lapply(p2, function(x) x[w]), p1,
+               check.attributes = FALSE)
+
 })
 
