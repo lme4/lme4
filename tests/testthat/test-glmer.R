@@ -406,14 +406,13 @@ test_that("turn off conv checking for npara > check.conv.nparmax", {
 
   # note: maxfun had to be artificially low for convergence warnings...
   mod1 <- suppressWarnings(
-    glmer(form, data = data, family = binomial,
+    glmer(form, data = dat, family = binomial,
     control = glmerControl(optCtrl = list(maxfun = 100)))
   )
   
   mod2 <- suppressWarnings(
     update(mod1, control = glmerControl(optCtrl = list(maxfun = 100),
-                                        check.conv.nparmax = 2)
-           )
+                                        check.conv.nparmax = 2))
   )
 
   ## First should give a warning
