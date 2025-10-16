@@ -963,6 +963,7 @@ fitted.merMod <- function(object, ...) {
 ##' @docType methods
 ##' @param object any fitted model object from which fixed effects estimates can
 ##' be extracted.
+##' @param noScale logical; if TRUE, returns the non-scaled parameters
 ##' @param \dots optional additional arguments. Currently none are used in any
 ##' methods.
 ##' @return a named, numeric vector of fixed-effects estimates.
@@ -973,9 +974,23 @@ fitted.merMod <- function(object, ...) {
 ##' @export fixef
 ##' @method fixef merMod
 ##' @export
-fixef.merMod <- function(object, add.dropped=FALSE, ...) {
+fixef.merMod <- function(object, add.dropped = FALSE, noScale = NULL, ...) {
     X <- getME(object,"X")
     ff <- structure(object@beta, names = dimnames(X)[[2]])
+    
+    if(is.null(noScale) || (!is.null(noScale) && !noScale)){
+      if (!is.null(sc <- attr(X, "scaled:scale"))) {
+        ce <- attr(X, "scaled:center")
+        ## modifying intercept
+        if ("(Intercept)" %in% names(ff)) {
+          intercept_shift <- sum((ff[names(sc)] * ce[names(sc)]) / sc[names(sc)])
+          ff[["(Intercept)"]] <- ff[["(Intercept)"]] - intercept_shift
+        }
+        # modifying beta coefficients
+        ff[names(sc)] <- ff[names(sc)] / sc[names(sc)]
+      }
+    }
+    
     if (add.dropped) {
         if (!is.null(dd <- attr(X,"col.dropped"))) {
             ## restore positions dropped for rank deficiency
@@ -1103,14 +1118,26 @@ model.frame.merMod <- function(formula, fixed.only=FALSE, ...) {
 
 ##' @importFrom stats model.matrix
 ##' @S3method model.matrix merMod
+##' @param noScale logical; if TRUE, returns the non-scaled parameters
 model.matrix.merMod <-
-    function(object,
-             type = c("fixed", "random", "randomListRaw"), ...) {
+  function(object, type = c("fixed", "random", "randomListRaw"), 
+           noScale = NULL,...) {
+    X <- object@pp$X
+    # Re-scales back the model matrix on command
+    if (!is.null(sc <- attr(object@pp$X, "scaled:scale"))){
+      if((is.null(noScale)) || (!is.null(noScale) && !noScale)){
+        unscale_cols <- setdiff(colnames(X), "(Intercept)")
+        ce <- attr(object@pp$X, "scaled:center")
+        X[, unscale_cols] <- sweep(X[, unscale_cols], 2, sc, `*`)
+        X[, unscale_cols] <- sweep(X[, unscale_cols], 2, ce, `+`)
+      }
+    }
+    
     switch(type[1],
-           "fixed" = object@pp$X,
+           "fixed" = X,
            "random" = getME(object, "Z"),
            "randomListRaw" = mmList(object))
-}
+  }
 
 ##' Dummy variables (experimental)
 ##'
@@ -2163,7 +2190,7 @@ NULL
 ## Extract the conditional variance-covariance matrix of the fixed-effects
 ## parameters
 vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
-                        use.hessian = NULL, full = FALSE, ...)
+                        use.hessian = NULL, full = FALSE, noScale = NULL, ...)
 {
     ## FIXME: warn/message if GLMM (RX-computation is approximate),
     ## if other vars are specified?
@@ -2236,6 +2263,15 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
     if(correlation)
         rr@factors$correlation <-
             if(!is.na(sigm)) as(rr, "corMatrix") else rr # (is NA anyway)
+    
+    ## If auto-scaling is enabled
+    if(is.null(noScale) || (!is.null(noScale) && !noScale)){
+      if (!is.null(sc <- attr(object@pp$X, "scaled:scale"))) {
+        ce <- attr(object@pp$X, "scaled:center")
+        
+        rr <- scale_vcov(rr, sc, ce)
+      }
+    }
     rr
 }
 
