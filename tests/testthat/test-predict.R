@@ -598,5 +598,38 @@ test_that("predictions work with se.fit and subset of grouping variable levels",
   expect_equal(lapply(p2, function(x) x[w]), p1,
                check.attributes = FALSE)
 
+  ## Example: we have grouping variables g1 and g2 which each have levels a, b, c, d. 
+  ## This safeguards cases if we ask for levels a, b in g1 and b, c in g2
+  set.seed(1)
+  
+  dat3 <- expand.grid(
+    g1 = factor(c("a", "b", "c", "d")),
+    g2 = factor(c("a", "b", "c", "d")),
+    rep = 1:10
+  )
+  
+  dat3$y <- simulate(~ 1 + (1|g1) + (1|g2),
+                     family = binomial,
+                     newdata = dat3,
+                     newparams = list(beta = 0, theta = c(1, 1)))[[1]]
+  
+  m3 <- lme4::glmer(
+    y ~ 1 + (1|g1) + (1|g2),
+    data = dat3,
+    family = binomial(link = "logit")
+  )
+  
+  dsub2 <- expand.grid(
+    g1 = c("a", "b"), 
+    g2 = c("c", "d"))
+  
+  tp1 <- suppressWarnings(predict(m3, se.fit = TRUE))
+  tp2 <- suppressWarnings(predict(m3, newdata = dsub2, se.fit = TRUE))
+  
+  ss2 <- subset(dat3, g1 %in% c("a", "b") & g2 %in% c("c", "d"))
+  w2 <- as.numeric(rownames(ss2)[1:4])
+  
+  expect_equal(lapply(tp1, function(x) x[w2]), tp2,
+               check.attributes = FALSE)
 })
 

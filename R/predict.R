@@ -554,19 +554,15 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
     ## Subsetting Cmat
     if (ncol(ZX) != nrow(Cmat)) {
       Cmat_names <- rownames(Cmat)
-      Znames <- colnames(Z)
       ## Subsetting appears to occur in the case we use newRE;
-      ## Need the flist from here
       Z_factors <- newRE$flist
 
       fix_nms <- colnames(object@pp$X)
       is_group_term <- !Cmat_names %in% fix_nms
 
-      ## looking to compute the groups (factor levels) that are actually included in the Z matrix
-      ## was: grp_names <- sub("^(?:[^.]+\\.)?([^.]+)\\..*$", "\\1", Cmat_names)
-      ## was: grp_names <- unlist(lapply(object@flist, levels))
+      ## looking to compute the groups (factor levels) that are actually 
+      ## included in the Z matrix
       keep_idx <- !is_group_term
-      ## was: keep_idx[!keep_idx] <- grp_names %in% Znames
       
       mask <- unlist(lapply(
         intersect(names(object@flist), names(Z_factors)),
