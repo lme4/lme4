@@ -46,11 +46,15 @@ lmer <- function(formula, data=NULL, REML = TRUE,
                         list(start=start, verbose=verbose, control=control)))
     if (devFunOnly) return(devfun)
     ## optimize deviance function over covariance parameters
+    s <- getStart(start, environment(devfun)$pp)
     if (identical(control$optimizer,"none"))
       stop("deprecated use of optimizer=='none'; use NULL instead")
-    calc.derivs <- control$calc.derivs %||% (nrow(lmod$fr) < control$checkConv$check.conv.nobsmax)
+    
+    calc.derivs <- control$calc.derivs %||% 
+      (nrow(lmod$fr) < control$checkConv$check.conv.nobsmax &
+        length(s)    < control$checkConv$check.conv.nparmax)
+    
     opt <- if (length(control$optimizer)==0) {
-               s <- getStart(start, environment(devfun)$pp)
                list(par=s,fval=devfun(s),
                     conv=1000,message="no optimization")
            }  else {
@@ -66,7 +70,8 @@ lmer <- function(formula, data=NULL, REML = TRUE,
     cc <- checkConv(attr(opt,"derivs"), opt$par,
                     ctrl = control$checkConv,
                     lbound = environment(devfun)$lower,
-                    nobs = nrow(lmod$fr))
+                    nobs = nrow(lmod$fr),
+                    ndim = length(s))
     mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr,
              mc = mcout, lme4conv=cc) ## prepare output
 }## { lmer }
@@ -127,7 +132,7 @@ glmer <- function(formula, data=NULL
     glmod <- eval(mc, parent.frame(1L))
     mcout$formula <- glmod$formula
     glmod$formula <- NULL
-
+    
     if (is.matrix(y <- model.response(glmod$fr))
         && ((family$family != "binomial" && ncol(y) > 1) ||
             (ncol(y) >2))) {
@@ -142,6 +147,9 @@ glmer <- function(formula, data=NULL
                                                    control = control,
                                                    nAGQ = nAGQinit)))
     if (nAGQ==0 && devFunOnly) return(devfun)
+    
+    pp <- environment(devfun)$pp
+    ppdim <- length(pp$theta) + length(pp$delb)
     ## optimize deviance function over covariance parameters
 
     ## FIXME: perhaps should be in glFormula instead??
@@ -162,7 +170,7 @@ glmer <- function(formula, data=NULL
       if (!is.null(start$fixef) && nAGQ==0) {
         stop("should not specify both start$fixef (or $beta) and nAGQ==0")
       }
-}
+    }
 
     ## FIX ME: allow calc.derivs, use.last.params etc. if nAGQ=0
     if(control$nAGQ0initStep) {
@@ -177,7 +185,9 @@ glmer <- function(formula, data=NULL
                              verbose=verbose,
                              calc.derivs=FALSE)
     }
-
+    
+    ## Note to self: length(opt) works for the theta parameters...
+    
     if(nAGQ > 0L) {
 
 
@@ -209,7 +219,9 @@ glmer <- function(formula, data=NULL
         if (verbose > 10) cat("checking convergence\n")
         checkConv(attr(opt,"derivs"),opt$par,
                   ctrl = control$checkConv,
-                  lbound=environment(devfun)$lower)
+                  lbound=environment(devfun)$lower,
+                  nobs = nrow(glmod$fr),
+                  ndim = ppdim)
     }
 
     ## prepare output
