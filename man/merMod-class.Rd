@@ -38,28 +38,29 @@
   \code{\linkS4class{nlsResp}} response has class \code{nlmerMod}.
 }
 \usage{
-\S3method{anova}{merMod}(object, ..., refit = TRUE, model.names=NULL)
-\S3method{as.function}{merMod}(x, ...)
-\S3method{coef}{merMod}(object, ...)
-\S3method{deviance}{merMod}(object, REML = NULL, ...)
+\S3method{anova}{merMod}(object, \dots, refit = TRUE, model.names=NULL)
+\S3method{as.function}{merMod}(x, \dots)
+\S3method{coef}{merMod}(object, \dots)
+\S3method{deviance}{merMod}(object, REML = NULL, \dots)
 REMLcrit(object)
-\S3method{extractAIC}{merMod}(fit, scale = 0, k = 2, ...)
-\S3method{family}{merMod}(object, ...)
-\S3method{formula}{merMod}(x, fixed.only = FALSE, random.only = FALSE, ...)
-\S3method{fitted}{merMod}(object, ...)
-\S3method{logLik}{merMod}(object, REML = NULL, ...)
-\S3method{nobs}{merMod}(object, ...)
-\S3method{ngrps}{merMod}(object, ...)
+\S3method{extractAIC}{merMod}(fit, scale = 0, k = 2, \dots)
+\S3method{family}{merMod}(object, \dots)
+\S3method{formula}{merMod}(x, fixed.only = FALSE, random.only = FALSE, \dots)
+\S3method{fitted}{merMod}(object, \dots)
+\S3method{logLik}{merMod}(object, REML = NULL, \dots)
+\S3method{nobs}{merMod}(object, \dots)
+\S3method{ngrps}{merMod}(object, \dots)
 \S3method{terms}{merMod}(x, fixed.only = TRUE, random.only = FALSE, \dots)
-\S3method{model.frame}{merMod}(formula, fixed.only = FALSE, ...)
-\S3method{model.matrix}{merMod}(object, type = c("fixed", "random", "randomListRaw"), ...)
+\S3method{model.frame}{merMod}(formula, fixed.only = FALSE, \dots)
+\S3method{model.matrix}{merMod}(object, 
+  type = c("fixed", "random", "randomListRaw"), noScale = NULL, \dots)
 \S3method{print}{merMod}(x, digits = max(3, getOption("digits") - 3),
       correlation = NULL, symbolic.cor = FALSE,
       signif.stars = getOption("show.signif.stars"), 
       ranef.comp = "Std.Dev.",
-      ranef.corr = any(ranef.comp == "Std.Dev."), ...)
-\S3method{update}{merMod}(object, formula., ..., evaluate = TRUE)
-\S3method{weights}{merMod}(object, type = c("prior", "working"), ...)
+      ranef.corr = any(ranef.comp == "Std.Dev."), \dots)
+\S3method{update}{merMod}(object, formula., \dots, evaluate = TRUE)
+\S3method{weights}{merMod}(object, type = c("prior", "working"), \dots)
 }
 \arguments{
   \item{object}{an \R object of class \code{\linkS4class{merMod}}, i.e.,
@@ -118,6 +119,9 @@ REMLcrit(object)
   }}
   \item{ranef.corr}{(logical) print correlations (rather than covariances) of
     random effects?}
+  \item{noScale}{(logical) some users may use autoscaling. If so, the default
+    returns the scaled parameters. If \code{noScale = TRUE}, then \code{fixef} 
+    returns the non-scaled parameters instead.}
   \item{\dots}{potentially further arguments passed from other methods.}
 } %% arguments
 \section{Objects from the Class}{

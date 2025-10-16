@@ -74,6 +74,7 @@ merControl <-
              use.last.params=FALSE,
              sparseX=FALSE,
              standardize.X=FALSE,
+             autoscale=NULL,
              ## input checking options:
              check.nobs.vs.rankZ="ignore", ## "warningSmall",
              check.nobs.vs.nlev="stop",
@@ -88,6 +89,7 @@ merControl <-
              check.formula.LHS = "stop",
              ## convergence options
              check.conv.nobsmax = 1e4,
+             check.conv.nparmax = 10,
              check.conv.grad     = .makeCC("warning", tol = 2e-3, relTol = NULL),
              check.conv.singular = .makeCC(action = "message", tol = formals(isSingular)$tol),
              check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
@@ -142,7 +144,8 @@ merControl <-
                          calc.derivs,
                          use.last.params,
                          checkControl =
-                             namedList(check.nobs.vs.rankZ,
+                             namedList(autoscale,
+                                       check.nobs.vs.rankZ,
                                        check.nobs.vs.nlev,
                                        check.nlev.gtreq.5,
                                        check.nlev.gtr.1,
@@ -152,6 +155,7 @@ merControl <-
                                        check.formula.LHS),
                          checkConv=
                              namedList(check.conv.nobsmax,
+                                       check.conv.nparmax,
                                        check.conv.grad,
                                        check.conv.singular,
                                        check.conv.hess),
@@ -169,6 +173,7 @@ merControl <-
 
 lmerControl <- merControl
 glmerControl <- merControl
+formals(glmerControl)[["check.conv.nparmax"]] <- 20
 formals(glmerControl)[["optimizer"]] <- c("bobyqa","Nelder_Mead")
 formals(glmerControl)[["mod.type"]] <- "glmer"
 formals(glmerControl)[["restart_edge"]] <- FALSE
