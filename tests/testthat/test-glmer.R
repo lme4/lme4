@@ -390,29 +390,30 @@ test_that("turn off conv checking for npara > check.conv.nparmax", {
   n_per_group <- 20
   n <- n_groups * n_per_group
   
-  data <- data.frame(
+  dat <- data.frame(
     group = rep(1:n_groups, each = n_per_group),
     x1 = rnorm(n),
     x2 = rnorm(n)
   )
-  
-  group_effects <- rnorm(n_groups, mean = 0, sd = 2.5)
-  data$group_effect <- group_effects[data$group]
-  
-  data$eta <- -3 + 2.5 * data$x1 + 3 * data$x2 + 
-    1.5 * data$x1 * data$x2 + data$group_effect
-  
-  data$y <- rbinom(n, 1, plogis(data$eta))
-  
-  # note: maxfun had to be artifically low for convergence warnings...
+
+  set.seed(101)
+  form <- y ~ 1 + x1 * x2 + (1|group)
+  dat$y <- simulate(form[-2], ## one-sided formula
+                  newdata = dat,
+                  family = binomial,
+                  newparams = list(beta = c(-3, 2.5, 3, 1.5),
+                                   theta = 2.5))[[1]]
+
+  # note: maxfun had to be artificially low for convergence warnings...
   mod1 <- suppressWarnings(
-    glmer(y ~ x1 * x2 + (1 | group), data = data, family = binomial,
+    glmer(form, data = data, family = binomial,
     control = glmerControl(optCtrl = list(maxfun = 100)))
   )
+  
   mod2 <- suppressWarnings(
-    glmer(y ~ x1 * x2 + (1 | group), data = data, family = binomial,
-          control = glmerControl(optCtrl = list(maxfun = 100),
-                                 check.conv.nparmax = 2))
+    update(mod1, control = glmerControl(optCtrl = list(maxfun = 100),
+                                        check.conv.nparmax = 2)
+           )
   )
 
   ## First should give a warning
