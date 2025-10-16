@@ -272,7 +272,7 @@ mkNewReTrms <- function(object, newdata,
     }
     Zt <- ReTrms$Zt
     attr(Zt, "na.action") <- attr(re_new, "na.action") <- fixed.na.action
-    list(Zt=Zt, b=re_new, Lambdat = ReTrms$Lambdat)
+    list(Zt=Zt, b=re_new, Lambdat = ReTrms$Lambdat, flist = ReTrms$flist)
 }
 
 ##' @param x a random effect (i.e., data frame with rows equal to levels, columns equal to terms
@@ -555,16 +555,27 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
     if (ncol(ZX) != nrow(Cmat)) {
       Cmat_names <- rownames(Cmat)
       Znames <- colnames(Z)
+      ## Subsetting appears to occur in the case we use newRE;
+      ## Need the flist from here
+      Z_factors <- newRE$flist
 
       fix_nms <- colnames(object@pp$X)
       is_group_term <- !Cmat_names %in% fix_nms
 
       ## looking to compute the groups (factor levels) that are actually included in the Z matrix
       ## was: grp_names <- sub("^(?:[^.]+\\.)?([^.]+)\\..*$", "\\1", Cmat_names)
-      grp_names <- unlist(lapply(object@flist, levels))
+      ## was: grp_names <- unlist(lapply(object@flist, levels))
       keep_idx <- !is_group_term
-      ## restore values that are group values matching Znames
-      keep_idx[!keep_idx] <- grp_names %in% Znames
+      ## was: keep_idx[!keep_idx] <- grp_names %in% Znames
+      
+      mask <- unlist(lapply(
+        intersect(names(object@flist), names(Z_factors)),
+        function(grp) {
+          levels(object@flist[[grp]]) %in% levels(Z_factors[[grp]])
+        }
+      ))
+      
+      keep_idx[seq_along(mask)] <- is_group_term[seq_along(mask)] & mask
       
       Cmat <- as(Cmat[keep_idx, keep_idx], "dpoMatrix")
     }
