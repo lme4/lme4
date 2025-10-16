@@ -67,3 +67,86 @@ test_that("lmer", {
                  "x.2  0.136 -0.103"
                  ))
 })
+
+## Tests with regards to auto-scaling; making sure we get expected behaviours.
+
+set.seed(1)
+sleepstudy$var1 = runif(nrow(sleepstudy), 1e6, 1e7)
+
+form <- Reaction ~ var1 + Days + (Days | Subject)
+
+scf1 <- lmer(form, control = lmerControl(autoscale = TRUE), sleepstudy)
+scf2 <- suppressWarnings(
+  update(scf1, control = lmerControl(autoscale = FALSE))
+  )
+
+test_that("lmer(): ensuring we get the internal scale for X with getME", {
+  res1 <- getME(scf1, "X")[180, ]
+  valtest1 <- c(1, 1.456867279040504, 1.562340900990911)
+  expect_equal(res1, valtest1, check.attributes = FALSE, tolerance =1e-10)
+})
+
+test_that("lmer(): ensuring we get the internal scale for beta with getME", {
+  res2 <- getME(scf1, "beta")
+  valtest2 <- c(298.507891666666751, 1.621716753196637, 30.161580776828778)
+  expect_equal(res2, valtest2, tolerance =1e-10)
+})
+
+test_that("lmer(): model.matrix should provide unscaled version at default", {
+  res3 <- model.matrix.merMod(scf1)[180, ]
+  valtest3 <- c(1, 9127734.503475949, 9)
+  expect_equal(res3, valtest3,  check.attributes = FALSE, tolerance =1e-6)
+  
+  res4 <- model.matrix.merMod(scf1, noScale = TRUE)[180, ]
+  valtest4 <- c(1, 1.45686727904050395, 1.5623409009909106)
+  expect_equal(res4, valtest4, check.attributes = FALSE, tolerance =1e-6)
+})
+
+test_that("lmer(): fixef.merMod() should provide unscaled version at default", {
+  res5 <- fixef.merMod(scf1)
+  valtest5 <- fixef.merMod(scf2)
+  expect_equal(res5, valtest5, check.attributes = FALSE, tolerance =1e-10)
+  
+  res6 <- fixef.merMod(scf1, noScale = TRUE)
+  valtest6 <- c(298.507891666666751, 1.621716753196637, 30.161580776828778) 
+  expect_equal(res6, valtest6, check.attributes = FALSE, tolerance =1e-10)
+})
+
+test_that("lmer(): vcov.merMod() should provide unscaled version at default", {
+  res7 <- vcov.merMod(scf1)
+  valtest7 <- vcov.merMod(scf2)
+  expect_true(all.equal(res7, valtest7, check.attributes = FALSE,
+                        tolerance =1e-6))
+  
+  res8 <- vcov.merMod(scf1, noScale = TRUE)
+  valtest8 <- as(
+    matrix(c(8.12278783645280e+01, -3.24525171154812e-15, 26.5884231100835215,
+            -3.24525171154812e-15, 4.39230297872591e+00, 0.0344711252408276,
+             2.65884231100835e+01, 3.44711252408276e-02, 19.7018459306493092), 
+           nrow = 3, byrow = TRUE), "dpoMatrix")
+  expect_true(all.equal(res8, valtest8, check.attributes = FALSE, 
+                        tolerance =1e-10))
+})
+
+## Doing autoscaling tests with glmer instead.
+
+set.seed(1)
+cbpp$var1 = runif(nrow(cbpp), 1e3, 1e5)
+form <- cbind(incidence, size - incidence) ~  var1 + period + (1 | herd)
+gfit1 <- glmer(form, control = glmerControl(autoscale = TRUE),
+               data = cbpp, family = binomial)
+gfit2 <- suppressWarnings(
+  update(gfit1, control = glmerControl(autoscale = FALSE))
+  )
+
+test_that("glmer(): back transform matches similar model", {
+  gres1 <- fixef.merMod(gfit1)
+  og1 <- fixef.merMod(gfit2)
+  expect_equal(gres1, og1, tolerance = 1e-5)
+  
+  gres2 <- vcov.merMod(gfit1)
+  og2 <- suppressWarnings(vcov.merMod(gfit2))
+  expect_true(all.equal(gres2, og2, check.attributes = FALSE, 
+                        tolerance = 0.04))
+})
+
