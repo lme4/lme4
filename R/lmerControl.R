@@ -74,6 +74,7 @@ merControl <-
              use.last.params=FALSE,
              sparseX=FALSE,
              standardize.X=FALSE,
+             autoscale=NULL,
              ## input checking options:
              check.nobs.vs.rankZ="ignore", ## "warningSmall",
              check.nobs.vs.nlev="stop",
@@ -142,7 +143,8 @@ merControl <-
                          calc.derivs,
                          use.last.params,
                          checkControl =
-                             namedList(check.nobs.vs.rankZ,
+                             namedList(autoscale,
+                                       check.nobs.vs.rankZ,
                                        check.nobs.vs.nlev,
                                        check.nlev.gtreq.5,
                                        check.nlev.gtr.1,
