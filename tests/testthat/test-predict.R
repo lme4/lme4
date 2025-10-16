@@ -590,9 +590,7 @@ test_that("predictions work with se.fit and subset of grouping variable levels",
     grp.1 = c("a.1", "b.1"), 
     grp.2 = c("a.1", "b.1"))
 
-  ## this does give answers, but are they correct?
   p1 <- suppressWarnings(predict(m2, newdata = dsub, se.fit = TRUE))
-
   p2 <- suppressWarnings(predict(m2, se.fit = TRUE))
   ss <- subset(dat2, grp.1 %in% c("a.1", "b.1") & grp.2 %in% c("a.1", "b.1"))
   w <- as.numeric(rownames(ss)[1:4])
