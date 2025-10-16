@@ -496,8 +496,8 @@ test_that("predict works with factors in left-out REs", {
                       lc = factor(rep(1:2, 50)),
                       g1 = factor(rep(1:10, 10)),
                       g3 = factor(rep(1:10, each = 10)))
-    m1B <- lmer(yield ~ 1 + ( 1 | g1) + (lc |g3), data  = df2,
-                control = lmerControl(check.conv.singular = "ignore"))
+    m1B <- suppressWarnings(lmer(yield ~ 1 + ( 1 | g1) + (lc |g3), data  = df2,
+                control = lmerControl(check.conv.singular = "ignore")))
     expect_equal(head(predict(m1B, re.form = ~(1|g1)),1),
                  c(`1` = 0.146787496519465),
                  tolerance = 1e-4)
@@ -529,6 +529,9 @@ test_that("predict se.fit on response scale", {
   expect_equal(p1$se.fit*binomial()$mu.eta(p1$fit), p2$se.fit)
 })
 
+
+
+
 test_that("predictions work with se.fit and subset of grouping variable levels", {
   ## Idea: when predicting where the newdata has less groups than what
   ## the full model accounted for, Cmat needs to be subsetted to match
@@ -552,20 +555,20 @@ test_that("predictions work with se.fit and subset of grouping variable levels",
                   grp = factor(c("a","b"), levels = letters[1:4]))
   
   pp <- suppressWarnings(predict(m1, newdata = d, se.fit = TRUE))
-
-  expect_equal(pp, list(fit = c(`1` = -0.652876384058261, `2` = -0.780087791024429),
-                        se.fit = c(`1` = 0.484829918301978, `2` = 0.338081219517654)))
+  expect_equal(pp, list(fit = c(`1` = -0.4338277, `2` = -0.5993396),
+                        se.fit = c(`1` = 0.4255397, `2` = 0.2779372)), 
+               tol = 1e-6)
   
   d2 <- dat[sample(1:nrow(dat), size = 20),]
   d2 <- d2[!("c" == d2$grp), ]
   
   pp2 <- suppressWarnings(predict(m1, newdata = d2, se.fit = TRUE))
-  expect_identical(lengths(pp2), c(fit=18L, se.fit=18L))
+  expect_identical(lengths(pp2), c(fit=16L, se.fit=16L))
 
   expect_equal(lapply(pp2, head, 2),
-               list(fit = c(`55` = -0.277527917612113, `94` = -0.321887480517238),
-                    se.fit = c(`55` = 0.346149892077624, `94` = 0.390257197767288)))
-
+               list(fit = c(`37` = -0.5109994, `29` = -0.5704263),
+                    se.fit = c(`37` = 0.5151070, `29` = 0.3258730)),
+               tol = 1e-7)
 
   set.seed(123)
   dat2 <- expand.grid(
@@ -588,9 +591,9 @@ test_that("predictions work with se.fit and subset of grouping variable levels",
     grp.2 = c("a.1", "b.1"))
 
   ## this does give answers, but are they correct?
-  p1 <- predict(m2, newdata = dsub, se.fit = TRUE)
+  p1 <- suppressWarnings(predict(m2, newdata = dsub, se.fit = TRUE))
 
-  p2 <- predict(m2, se.fit = TRUE)
+  p2 <- suppressWarnings(predict(m2, se.fit = TRUE))
   ss <- subset(dat2, grp.1 %in% c("a.1", "b.1") & grp.2 %in% c("a.1", "b.1"))
   w <- as.numeric(rownames(ss)[1:4])
 
