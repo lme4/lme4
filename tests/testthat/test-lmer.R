@@ -409,22 +409,6 @@ test_that("turn off conv checking for nobs > check.conv.nobsmax", {
   expect_null(fm3@optinfo$conv$lme4)
 })
 
-<<<<<<< HEAD
-test_that("gradient and Hessian checks are skipped when singular fit occurs",{
-  
-  group <- factor(rep(1:3, each = 20))
-  b <- rnorm(3, mean = 0, sd = 0.01)
-  x <- rnorm(60)
-  y <- x + b[group] + rnorm(60, sd = 1)
-  dat <- data.frame(y, x, group)
-  
-  fm1 <- lmer(y ~ x + (1 | group), data = dat)
-  
-  #expect_null(summary(fm1)$optinfo$derivs$gradient)
-  #expect_null(summary(fm1)$optinfo$derivs$Hessian)
-})
-
-=======
 test_that("turn off conv checking for npara > check.conv.nparmax", {
   ## This is taken from an example shown here:
   ## https://github.com/lme4/lme4/issues/783#issue-2266130542
@@ -473,4 +457,17 @@ test_that("turn off conv checking for npara > check.conv.nparmax", {
   ## Second shouldn't be evaluated
   expect_null(mod2@optinfo$conv$lme4)
 })
->>>>>>> upstream/master
+
+test_that("gradient and Hessian checks are skipped when singular fit occurs",{
+  
+  group <- factor(rep(1:3, each = 20))
+  b <- rnorm(3, mean = 0, sd = 0.01)
+  x <- rnorm(60)
+  y <- x + b[group] + rnorm(60, sd = 1)
+  dat <- data.frame(y, x, group)
+  
+  fm1 <- lmer(y ~ x + (1 | group), data = dat)
+  
+  #expect_null(summary(fm1)$optinfo$derivs$gradient)
+  #expect_null(summary(fm1)$optinfo$derivs$Hessian)
+})
