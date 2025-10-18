@@ -409,6 +409,7 @@ test_that("turn off conv checking for nobs > check.conv.nobsmax", {
   expect_null(fm3@optinfo$conv$lme4)
 })
 
+<<<<<<< HEAD
 test_that("gradient and Hessian checks are skipped when singular fit occurs",{
   
   group <- factor(rep(1:3, each = 20))
@@ -423,3 +424,53 @@ test_that("gradient and Hessian checks are skipped when singular fit occurs",{
   #expect_null(summary(fm1)$optinfo$derivs$Hessian)
 })
 
+=======
+test_that("turn off conv checking for npara > check.conv.nparmax", {
+  ## This is taken from an example shown here:
+  ## https://github.com/lme4/lme4/issues/783#issue-2266130542
+  ## This particular seed doesn't have singular fit issues
+  set.seed(6)
+  
+  n <- 150
+  n_classes <- 25
+  n_raters <- 10
+  
+  data <- data.frame(
+    class = sample.int(n_classes, n, replace = TRUE),
+    grade = pmin(7 + floor(runif(n, 2, 14) + rnorm(n)), 20),
+    emint = rnorm(n, 100, 15),
+    group = rep(c("training", "control", "school"), each = 50),
+    rater = sample.int(n_raters, n, replace = TRUE)
+  )
+  
+  training_effect <- c(training = 2.5, school = 2, control = 0)
+  
+  rater_bias <- rnorm(n_raters, 0, 2)
+  class_bias <- rnorm(n_classes, 0, 1)
+  emint_bs <- rnorm(n_classes, 0.001, 0)  
+  grade_bs <- rnorm(n_classes, 0.3, 0.2)
+  
+  data$emint_n <- data$emint - mean(data$emint)
+  data$grade_n <- data$grade - mean(data$grade)
+  
+  data$eval <- pmax(pmin(
+    floor(4 + training_effect[data$group] + 
+            class_bias[data$class] + 
+            rater_bias[data$rater] + 
+            emint_bs[data$class] * data$emint + 
+            grade_bs[data$class] * (data$grade_n) + 
+            2 * rnorm(n)
+    ), 10), 0)
+  
+  form <- eval~group*emint_n + group*grade_n + (grade_n+emint_n|class)
+  
+  mod1 <- suppressWarnings(lmer(form, data=data))
+  mod2 <- update(mod1, 
+                 control = lmerControl(optimizer = "bobyqa", 
+                                       check.conv.nparmax = 5))
+  ## First should give a warning
+  expect_false(is.null(mod1@optinfo$conv$lme4))
+  ## Second shouldn't be evaluated
+  expect_null(mod2@optinfo$conv$lme4)
+})
+>>>>>>> upstream/master

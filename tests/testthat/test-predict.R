@@ -496,8 +496,8 @@ test_that("predict works with factors in left-out REs", {
                       lc = factor(rep(1:2, 50)),
                       g1 = factor(rep(1:10, 10)),
                       g3 = factor(rep(1:10, each = 10)))
-    m1B <- lmer(yield ~ 1 + ( 1 | g1) + (lc |g3), data  = df2,
-                control = lmerControl(check.conv.singular = "ignore"))
+    m1B <- suppressWarnings(lmer(yield ~ 1 + ( 1 | g1) + (lc |g3), data  = df2,
+                control = lmerControl(check.conv.singular = "ignore")))
     expect_equal(head(predict(m1B, re.form = ~(1|g1)),1),
                  c(`1` = 0.146787496519465),
                  tolerance = 1e-4)
@@ -528,3 +528,108 @@ test_that("predict se.fit on response scale", {
   expect_identical(p2$se.fit, p3$se.fit)
   expect_equal(p1$se.fit*binomial()$mu.eta(p1$fit), p2$se.fit)
 })
+
+
+
+
+test_that("predictions work with se.fit and subset of grouping variable levels", {
+  ## Idea: when predicting where the newdata has less groups than what
+  ## the full model accounted for, Cmat needs to be subsetted to match
+  ## the dimensions for cbind(Z, X)
+  ## Code inspired: https://github.com/lme4/lme4/issues/866#issue-3358828496
+  set.seed(123)
+  dat <- data.frame(
+    outcome = rbinom(n = 100, size = 1, prob = 0.35),
+    var_binom = as.factor(rbinom(n = 100, size = 1, prob = 0.7)),
+    var_cont = rnorm(n = 100, mean = 10, sd = 7),
+    grp = as.factor(sample(letters[1:4], size = 100, replace = TRUE))
+  )
+  m1 <- lme4::glmer(
+    outcome ~ var_binom + var_cont + (1 | grp),
+    data = dat,
+    family = binomial(link = "logit")
+  )
+  ## d <- insight::get_datagrid(m1, "var_binom", include_random = TRUE)
+  d <- data.frame(var_binom = factor(0:1),
+                  var_cont = c(9.24717241397544, 9.24717241397544),
+                  grp = factor(c("a","b"), levels = letters[1:4]))
+  
+  pp <- suppressWarnings(predict(m1, newdata = d, se.fit = TRUE))
+  expect_equal(pp, list(fit = c(`1` = -0.4338277, `2` = -0.5993396),
+                        se.fit = c(`1` = 0.4255397, `2` = 0.2779372)), 
+               tol = 1e-6)
+  
+  d2 <- dat[sample(1:nrow(dat), size = 20),]
+  d2 <- d2[!("c" == d2$grp), ]
+  
+  pp2 <- suppressWarnings(predict(m1, newdata = d2, se.fit = TRUE))
+  expect_identical(lengths(pp2), c(fit=16L, se.fit=16L))
+
+  expect_equal(lapply(pp2, head, 2),
+               list(fit = c(`37` = -0.5109994, `29` = -0.5704263),
+                    se.fit = c(`37` = 0.5151070, `29` = 0.3258730)),
+               tol = 1e-7)
+
+  set.seed(123)
+  dat2 <- expand.grid(
+    grp.1 = factor(c("a.1", "b.1", "c.1", "d.1")),
+    grp.2 = factor(c("a.1", "b.1", "c.1", "d.1")),
+    rep = 1:10)
+  dat2$y <- simulate(~ 1 + (1|grp.1) + (1|grp.2),
+                     family = binomial,
+                     newdata = dat2,
+                     newparams = list(beta = 0, theta = c(1, 1)))[[1]]
+ 
+  m2 <- lme4::glmer(
+    y ~ 1 + (1|grp.1) + (1|grp.2),
+    data = dat2,
+    family = binomial(link = "logit")
+  )
+
+  dsub <- expand.grid(
+    grp.1 = c("a.1", "b.1"), 
+    grp.2 = c("a.1", "b.1"))
+
+  p1 <- suppressWarnings(predict(m2, newdata = dsub, se.fit = TRUE))
+  p2 <- suppressWarnings(predict(m2, se.fit = TRUE))
+  ss <- subset(dat2, grp.1 %in% c("a.1", "b.1") & grp.2 %in% c("a.1", "b.1"))
+  w <- as.numeric(rownames(ss)[1:4])
+
+  expect_equal(lapply(p2, function(x) x[w]), p1,
+               check.attributes = FALSE)
+
+  ## Example: we have grouping variables g1 and g2 which each have levels a, b, c, d. 
+  ## This safeguards cases if we ask for levels a, b in g1 and b, c in g2
+  set.seed(1)
+  
+  dat3 <- expand.grid(
+    g1 = factor(c("a", "b", "c", "d")),
+    g2 = factor(c("a", "b", "c", "d")),
+    rep = 1:10
+  )
+  
+  dat3$y <- simulate(~ 1 + (1|g1) + (1|g2),
+                     family = binomial,
+                     newdata = dat3,
+                     newparams = list(beta = 0, theta = c(1, 1)))[[1]]
+  
+  m3 <- lme4::glmer(
+    y ~ 1 + (1|g1) + (1|g2),
+    data = dat3,
+    family = binomial(link = "logit")
+  )
+  
+  dsub2 <- expand.grid(
+    g1 = c("a", "b"), 
+    g2 = c("c", "d"))
+  
+  tp1 <- suppressWarnings(predict(m3, se.fit = TRUE))
+  tp2 <- suppressWarnings(predict(m3, newdata = dsub2, se.fit = TRUE))
+  
+  ss2 <- subset(dat3, g1 %in% c("a", "b") & g2 %in% c("c", "d"))
+  w2 <- as.numeric(rownames(ss2)[1:4])
+  
+  expect_equal(lapply(tp1, function(x) x[w2]), tp2,
+               check.attributes = FALSE)
+})
+
