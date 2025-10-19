@@ -466,7 +466,7 @@ test_that("turn off conv checking for npara > check.conv.nparmax", {
 })
 
 test_that("gradient and Hessian checks are skipped when singular fit occurs",{
-  
+  set.seed(1)
   group <- factor(rep(1:3, each = 20))
   b <- rnorm(3, mean = 0, sd = 0.01)
   x <- rnorm(60)
@@ -477,9 +477,12 @@ test_that("gradient and Hessian checks are skipped when singular fit occurs",{
   
   expect_null(summary(fm1)$optinfo$derivs$gradient)
   expect_null(summary(fm1)$optinfo$derivs$Hessian)
+  
+  ## Always skipping derivative checks
+  options(lme4.singular.tolerance = 1)
+  fm2 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+  expect_null(summary(fm2)$optinfo$derivs$gradient)
+  expect_null(summary(fm2)$optinfo$derivs$Hessian)
+  ## Switching back (in case needed)
+  options(lme4.singular.tolerance = 1e-4)
 })
-
-
-
-
-
