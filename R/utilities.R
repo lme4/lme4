@@ -918,10 +918,8 @@ initialize.parallel <- expression({
     }
 })
 
-
-singular_tol <- 1e-4
 getSingTol <- function() 
-  getOption("lme4.singular.tolerance", singular_tol)
+  getOption("lme4.singular.tolerance", 1e-4)
 
 isSingular <- function(x, tol = getSingTol()) {
     lwr <- getME(x, "lower")

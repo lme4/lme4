@@ -56,7 +56,9 @@
       }
       \item Added a new argument `autoscale` to \code{(g)lmerControl()} to enable 
       autoscaling. An accompanying vignette was created for more details!
-      
+      \item Added a global option `lme4.singular.tolerance` to control the 
+      tolerance used for detecting singular fits. It can be set using
+      `options(lme4.singular.tolerance = 1e-5)`.
     } % itemize
   } % user-visible changes
 } % devel

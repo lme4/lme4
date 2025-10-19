@@ -224,12 +224,19 @@ test_that("lmer", {
     expect_equal(sum(grepl("Subset: \\(",capture.output(summary(fm1)))),1)
 
     ## test messed-up Hessian
+    ## UPDATE: modified this test since we now automatically ignore Hessian
+    ## checks when there is a singular fit
     fm1 <- lmer(z~ as.numeric(f) + 1|f, d)
-    fm1@optinfo$derivs$Hessian[2,2] <- NA
-    expect_warning(lme4:::checkConv(fm1@optinfo$derivs,
-                     coefs=c(1,1),
-                     ctrl=lmerControl()$checkConv,lbound=0),
-                   "Problem with Hessian check")
+    
+    expect_equal(summary(fm1)$optinfo$conv$lme4$messages,
+                  "boundary (singular) fit: see help('isSingular')")
+    expect_null(fm1@optinfo$derivs$Hessian)
+    ## Previous:
+    ##fm1@optinfo$derivs$Hessian[2,2] <- NA
+    ##expect_warning(lme4:::checkConv(fm1@optinfo$derivs,
+    ##                 coefs=c(1,1),
+    ##                 ctrl=lmerControl()$checkConv,lbound=0),
+    ##                 "Problem with Hessian check")
 
     ## test ordering of Ztlist names
     ## this is a silly model, just using it for a case
@@ -468,6 +475,11 @@ test_that("gradient and Hessian checks are skipped when singular fit occurs",{
   
   fm1 <- lmer(y ~ x + (1 | group), data = dat)
   
-  #expect_null(summary(fm1)$optinfo$derivs$gradient)
-  #expect_null(summary(fm1)$optinfo$derivs$Hessian)
+  expect_null(summary(fm1)$optinfo$derivs$gradient)
+  expect_null(summary(fm1)$optinfo$derivs$Hessian)
 })
+
+
+
+
+

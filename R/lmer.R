@@ -2724,7 +2724,7 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
     ## pp_before <- environment(fn)$pp
     ## save(pp_before,file="pp_before.RData")
 
-    singular <- any(opt$par < getSingTol())
+    singular <- any(opt$par[lower==0] < getSingTol())
     if (calc.derivs && !singular) {
         if (use.last.params) {
             ## +0 tricks R into doing a deep copy ...
