@@ -59,6 +59,8 @@
       \item Added a global option `lme4.singular.tolerance` to control the 
       tolerance used for detecting singular fits. It can be set using
       `options(lme4.singular.tolerance = 1e-5)`.
+      \item Derivative calculations are now skipped if there is a singular fit
+      issue.
     } % itemize
   } % user-visible changes
 } % devel
