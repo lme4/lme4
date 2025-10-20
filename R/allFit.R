@@ -166,7 +166,12 @@ allFit <- function(object, meth.tab = NULL,
                                      opt.ctrls[[optimizer[..i]]])
             ctrl <- do.call(if(isGLMM(object)) glmerControl else lmerControl, ctrl)
             ## need to stick ctrl in formula env so it can be found ...
-            assign("ctrl", ctrl, environment(formula(object)))
+            form <- formula(object)
+            env <- environment(form)
+            tmp_env <- new.env(parent = env)
+            # temporarily changing the environment
+            environment(form) <- tmp_env
+            assign("ctrl", ctrl, envir = tmp_env, inherits = FALSE)
             # Using the MLE as a starting point
             if (start_from_mle) {
               if (isGLMM(object)) {
@@ -177,7 +182,7 @@ allFit <- function(object, meth.tab = NULL,
                   warning("results are not guaranteed when using nlmer")
                 }
               }
-              assign("pars", pars, environment(formula(object)))
+              assign("pars", pars, envir = tmp_env, inherits = FALSE)
             }
             
             fit_call <- if (start_from_mle) {
@@ -196,6 +201,10 @@ allFit <- function(object, meth.tab = NULL,
 
             attr(rr, "optCtrl") <- ctrl$optCtrl # contains crucial info here
             attr(rr, "time") <- tt  # store timing info
+            
+            ## restore original values to environment of the object
+            on.exit({ environment(form) <- env }, add = TRUE)
+            
             if (verbose) {
               if (inherits(rr,"error")) {
                 cat("[failed]\n")

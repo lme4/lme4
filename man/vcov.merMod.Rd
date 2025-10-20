@@ -9,7 +9,7 @@
 \alias{vcov.summary.merMod}
 \usage{
 \S3method{vcov}{merMod}(object, correlation = TRUE, sigm = sigma(object),
-    use.hessian = NULL, full = FALSE, \dots)
+    use.hessian = NULL, full = FALSE, noScale = NULL, \dots)
 }
 \arguments{
   \item{object}{an \R object of class \code{\linkS4class{merMod}}, i.e.,
@@ -33,6 +33,9 @@
     Note that this option may be slow for models with large numbers of
   random-effect levels!
   }
+  \item{noScale}{(logical) some users may use autoscaling. If so, the default
+  returns the scaled parameters. If \code{noScale = TRUE}, then \code{vcov} 
+  returns the non-scaled parameters instead.}
   \item{\dots}{extra arguments for method compatibility (ignored)}
 }
 \details{

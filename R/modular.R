@@ -139,7 +139,8 @@ checkScaleX <- function(X,  kind="warning", tol=1e3) {
     if (any(c(logcomp,logsd) > log(tol))) {
         wmsg <- "Some predictor variables are on very different scales:"
         if (kind %in% c("warning","stop")) {
-            wmsg <- paste(wmsg, "consider rescaling")
+            msg2 <- "\nYou may also use (g)lmerControl(autoscale = TRUE) to improve numerical stability."
+            wmsg <- paste(wmsg, "consider rescaling.", msg2)
             switch(kind,
                    "warning" = warning(wmsg, call.=FALSE),
                    "stop" = stop(wmsg, call.=FALSE))
@@ -471,6 +472,20 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 
     ## FIXME: shouldn't we have this already in the full-frame predvars?
     X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
+    
+    ## Scaling (if autoscale is on...)
+    if (!is.null(control$autoscale) && control$autoscale) {
+      if("(Intercept)" %in% colnames(X)){
+        X_scaled <- scale(X[, -1])
+        X[,-1] <- X_scaled
+      } else {
+        X_scaled <- scale(X)
+        X <- X_scaled
+      }
+      attr(X, "scaled:center") <- attr(X_scaled, "scaled:center")
+      attr(X, "scaled:scale") <- attr(X_scaled, "scaled:scale")
+    }
+    
     ## backward compatibility (keep no longer than ~2015):
     if(is.null(rankX.chk <- control[["check.rankX"]]))
         rankX.chk <- eval(formals(lmerControl)[["check.rankX"]])[[1]]
@@ -789,6 +804,20 @@ glFormula <- function(formula, data=NULL, family = gaussian,
         attr(terms(ranfr), "predvars")
 
     X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
+    
+    ## Scaling (if autoscale is on...)
+    if (!is.null(control$autoscale) && control$autoscale) {
+      if("(Intercept)" %in% colnames(X)){
+        X_scaled <- scale(X[, -1])
+        X[,-1] <- X_scaled
+      } else {
+        X_scaled <- scale(X)
+        X <- X_scaled
+      }
+      attr(X, "scaled:center") <- attr(X_scaled, "scaled:center")
+      attr(X, "scaled:scale") <- attr(X_scaled, "scaled:scale")
+    }
+    
     ## backward compatibility (keep no longer than ~2015):
     if(is.null(rankX.chk <- control[["check.rankX"]]))
         rankX.chk <- eval(formals(lmerControl)[["check.rankX"]])[[1]]

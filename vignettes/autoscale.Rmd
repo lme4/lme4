@@ -1,0 +1,104 @@
+---
+title: "Autoscaling in lme4"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Autoscaling in lme4}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+bibliography: autoscale_ref.bib  
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+Scaling predictors in a linear model (or extended linear models, such as LMMs or GLMMs) so that all of the predictors are on a similar scale (and thus, in general, the estimated parameters should have a similar scale) can improve the behaviour of various computational methods (see e.g. the "Remove eccentricity by scaling" section of @bolker2013strategies). `lmer()` and `glmer()` issue warnings suggesting that users consider re-scaling predictors when the predictor variables are on very different scales. Re-scaling predictors can improve both computation and interpretation [@schielzethSimple2010] of (extended) linear models. However, in cases where researchers want to scale predictors for computational stability, but get parameter estimates on the scale of the original (unscaled) predictors, back-transforming the predictors, covariance matrix, etc., is tedious. `lme4` now allows this scaling to be done automatically, behind the scenes.
+
+An example of a warning message due to disparate predictor scales:
+
+```{r setup}
+library(lme4)
+
+set.seed(1)
+sleepstudy$var1 = runif(nrow(sleepstudy), 1e6, 1e7)
+
+fit1 <- lmer(Reaction ~ var1 + Days + (Days | Subject), sleepstudy)
+```
+
+Instead of re-fitting with scaled predictors we can use a new (as of `lme4` version >= 1.1.37) argument for `(g)lmerControl`, called `autoscale`, where `scale()` is automatically applied to the continuous covariates, but when delivered to the user, the coefficient estimates and the covariances are back-transformed. This maintains the original interpretation and minimizes user intervention.
+
+Hence:
+
+```{r fit}
+fit2 <- lmer(Reaction ~ var1 + Days + (Days | Subject), 
+             control = lmerControl(autoscale = TRUE), sleepstudy)
+all.equal(fixef(fit1), fixef(fit2))
+all.equal(vcov(fit2), vcov(fit2))
+```
+
+```{r echo = FALSE}
+## https://stackoverflow.com/a/67456510/190277
+get_val <- function(x) as.numeric(gsub("^.*?(\\d+\\.?\\d+e?[+-]?\\d+).*$", "\\1", x))
+get_tol <- function(x,y, dig=1) signif(get_val(all.equal(x, y, tolerance = 0)), dig)
+ftol <- get_tol(fixef(fit1), fixef(fit2))
+vtol <- get_tol(vcov(fit1), vcov(fit2))
+```
+
+The parameters are in fact slightly different (relative difference in fixed effects of $`r vtol`$, and in covariance matrices of $`r ftol`$); these differences will be larger for less numerically stable models (i.e. more complicated or poorly data-constrained).
+
+## Autoscale Mechanism
+
+The base function `scale()` is applied to the model matrix `X` as found in `lFormula()` or `glFormula()` from `R/Modular.R`. 
+
+To back transform, we use the `scaled:center` and `scaled:scale` attributes to reverse the changes found in `fixef.merMod()`, `model.matrix.merMod()`, and `vcov.merMod()` such that the `summary()` output shows the coefficients according to the original scale.
+
+Reverting back the changes for `fixef.merMod()`, the $\beta$ coefficients, is not too difficult. However, reverting said changes for the variance-covariance matrix is a bit more involved. The exact modification can be found from the function `scale_vcov()` (found in `R/utilities.R`), and the derivation is explained below.
+
+
+Consider the following estimation of a simple linear model: 
+\[
+\widehat{Y} = \widehat{\beta}_{0} + \widehat{\beta}_{1} X^{*},
+\]
+where $X^{*}$ represents the scaled version of $X$. That is, if we let $C$ represent a vector that contains the values for centering and $S$ represent a vector that contains the values for scaling, we have:
+\[
+\widehat{Y} = \widehat{\beta}_{0} + \widehat{\beta}_{1} \left( \frac{X - C}{S} \right)
+\]
+\[
+\widehat{Y} = \widehat{\beta}_{0} - \sum_{i=1}^{p} \frac{\widehat{\beta}_{i}c_{i}}{s_{i}}
++ \sum_{i=1}^{p} \frac{\widehat{\beta}_{i} x_{i}}{s_{i}}.
+\]
+From the above, it is clear that the new intercept can be represented as:
+\[
+\widehat{\beta}_{0}' = \widehat{\beta}_{0} - \sum_{i=1}^{p} \frac{\widehat{\beta}_{i}c_{i}}{s_{i}}.
+\]
+Similarly, the new coefficients are represented as:
+\[
+\widehat{\beta}_{i}' =  \frac{\widehat{\beta}_{i}}{s_{i}}.
+\]
+Then, the new variance-covariance matrix can be derived using the following:
+\newcommand{\cov}{\textrm{Cov}}}
+\[
+\cov\left( \frac{\widehat{\beta}_{i}}{s_{i}}, \frac{\widehat{\beta}_{j}}{s_{j}} \right)
+= \frac{1}{s_{i}s_{j}} \cov(\widehat{\beta}_{i}, \widehat{\beta_{j}}) 
+= \frac{\sigma_{ij}^{2}}{s_{i}s_{j}}
+\]
+\begin{equation}
+    \begin{split}
+    \cov\left( \widehat{\beta}_{0} - \sum_{i=1}^{p} \frac{\widehat{\beta}_{i}c_{i}}{s_{i}}, \widehat{\beta}_{0} - \sum_{j=1}^{p} \frac{\widehat{\beta}_{i}c_{i}}{s_{i}} \right)
+    &= \cov(\widehat{\beta}_{0}, \widehat{\beta}_{0} ) - 2 \sum_{i=1}^{p} \frac{c_{i}}{s_{i}} \cov(\widehat{\beta}_{0} , \widehat{\beta}_{i}) + \sum_{i=1}^{p} \sum_{j=1}^{p} \frac{c_{i}c_{j}}{s_{i}s_{j}} \cov(\widehat{\beta}_{i}, \widehat{\beta}_{j}) \\
+    &= \sigma_{0}^{2} - 2 \sum_{i=1}^{p} \frac{c_{i}}{s_{i}} \sigma_{0i}^{2} + \sum_{i=1}^{p} \sum_{j=1}^{p} \frac{c_{i}c_{j}}{s_{i}s_{j}} \sigma_{ij}^{2}
+    \end{split}
+\end{equation}
+\begin{equation}   
+    \begin{split}
+    \cov\left( \widehat{\beta}_{0} - \sum_{i=1}^{p} \frac{\widehat{\beta}_{i}c_{i}}{s_{i}}, \frac{\widehat{\beta_{j}}}{s_{j}} \right)
+    &= \cov\left( \widehat{\beta}_{0}, \frac{\widehat{\beta}_{j}}{s_{j}} \right) - \sum_{i=1}^{p} \frac{c_{i}}{s_{i}s_{j}} \cov \left( \widehat{\beta}_{i}, \widehat{\beta}_{j} \right) \\
+    &= \frac{\sigma_{0j}^{2}}{s_{j}} - \sum_{i=1}^{p} \frac{c_{i}}{s_{i}s_{j}} \sigma_{ij}^{2},
+    \end{split}
+\end{equation}
+for $j = 1, 2, ..., p$.
+
+## References

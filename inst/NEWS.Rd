@@ -34,6 +34,12 @@
       \code{[g]lmerControl()}); default threshold is 1e4 observations.
       If desired, derivatives can be calculated (but not checked)
       by explicitly setting \code{calc.derivs} to TRUE.
+      \item similarly, gradient/hessian based check are now skipped
+      for models whose the dimensions of the variance-covariance matrix 
+      of random effects is high (number of dimensions greater 
+      than the \code{check.conv.nparmax} component of
+      \code{[g]lmerControl()}). Default threshold is 10 for 
+      \code{lmerControl()} and 20 for \code{glmerControl()}.
       \item added six publically available datasets: 
       \itemize{
         \item \code{cbpp2} (contagious bovine pleuropneumonia 
@@ -48,8 +54,13 @@
         \item \code{toenail} (toenail onychomycosis data from dermatophyte 
           infections).
       }
-      
-      
+      \item Added a new argument `autoscale` to \code{(g)lmerControl()} to enable 
+      autoscaling. An accompanying vignette was created for more details!
+      \item Added a global option `lme4.singular.tolerance` to control the 
+      tolerance used for detecting singular fits. It can be set using
+      `options(lme4.singular.tolerance = 1e-5)`.
+      \item Derivative calculations are now skipped if there is a singular fit
+      issue.
     } % itemize
   } % user-visible changes
 } % devel
