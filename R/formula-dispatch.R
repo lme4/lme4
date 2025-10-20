@@ -125,7 +125,7 @@ mkReLambdat <- function(reTrms, s4_object_list) {
     for (i in seq_along(s4_object_list)) {
         s4_obj <- s4_object_list[[i]]
         nl <- reTrms$nl[i]
-        L_template <- get_lambda(s4_obj)
+        L_template <- t(get_lambda(s4_obj))
         
         # Build Lambdat block
         lambdat_blocks[[i]] <- kronecker(Diagonal(nl), L_template)
