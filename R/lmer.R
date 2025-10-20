@@ -400,8 +400,10 @@ split_theta_by_structure <- function(theta, param_sizes) {
 ##' @param maxit maximal number of PIRLS iterations
 ##' @param verbose integer specifying if outputs should be produced
 ##' @param control a list as from lmerControl() etc
-mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L else 100L,
-                     verbose=0, control=list()) {
+mkdevfun <- function(rho, nAGQ=1L,
+                     maxit = if(extends(rho.cld, "nlsResp")) 300L else 100L,
+                     verbose=0, control=list(),
+                     debug = FALSE) {
     ## FIXME: should nAGQ be automatically embedded in rho?
     stopifnot(is.environment(rho), ## class definition, compute and save :
               extends(rho.cld <- getClass(class(rho$resp)), "lmResp"))
@@ -429,18 +431,15 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
     ff <-
 if (extends(rho.cld, "lmerResp")) {
     rho$lmer_Deviance <- lmer_Deviance
-    cat("Creating deviance function. transform_theta exists:", !is.null(transform_theta), "\n")
+    ## cat("Creating deviance function. transform_theta exists:", !is.null(transform_theta), "\n")
     if (!is.null(transform_theta)) {
-        cat("TAKING STRUCTURED PATH\n")
+        if (debug) cat("TAKING STRUCTURED PATH\n")
         ## structured covariance path for lmerResp 
         function(theta) {
-            cat("DEVIANCE: Using structured path with theta:", theta, "\n")
             transformed_theta <- transform_theta(theta)
-            cat("DEVIANCE: Transformed to:", transformed_theta, "\n")
             .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(transformed_theta))
         }
     } else {
-        cat("TAKING UNSTRUCTURED PATH\n")
          ## unstructured covariance path for lmerResp     
         function(theta) {
             .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))
