@@ -484,22 +484,6 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
     }
     ## weights <- resp$weights
     beta    <- pp$beta(fac)
-    ## rescale
-    if (!is.null(sc <- attr(pp$X, "scaled:scale"))) {
-        warning("auto(un)scaling not yet finished/tested")
-        ## FIXME: test/handle no-intercept models
-        ##   (only need to worry if we do centering as well as scaling)
-        ## FIXME: adjust Hessian/vcov
-        ## FIXME: where else will these changes propagate?
-        ##        profiling?
-        beta2 <- beta
-        beta2[names(sc)] <- sc*beta2[names(sc)]
-        beta <- beta2
-    }
-    if (!is.null(attr(pp$X, "scaled:center"))) {
-        warning("auto(un)centering not yet implemented")
-    }
-    #sigmaML <- pwrss/sum(weights)
     sigmaML <- pwrss/n
     if (rcl != "lmerResp") {
         pars <- opt$par
@@ -944,7 +928,10 @@ initialize.parallel <- expression({
     }
 })
 
-isSingular <- function(x, tol = 1e-4) {
+getSingTol <- function() 
+  getOption("lme4.singular.tolerance", 1e-4)
+
+isSingular <- function(x, tol = getSingTol()) {
     lwr <- getME(x, "lower")
     theta <- getME(x, "theta")
     any(theta[lwr==0] < tol)
@@ -1029,4 +1016,22 @@ checkDots <- function (..., .ignore = NULL, .action = "stop")
 quad.tdiag <- function(M, x) {
     ## only real-valued, so drop Conj
     rowSums(tcrossprod(x, M) * x)
+}
+
+## attempt to modularize vcov scaling
+scale_vcov <- function(vv, sc, ce) {
+  other_vars <- setdiff(colnames(vv), "(Intercept)")
+  ## 1. Modifying the intercept
+  sig_0sq <- vv["(Intercept)", "(Intercept)"]
+  sig_0isq <- vv["(Intercept)", other_vars]
+  total1 <- -2 *sum((ce/sc) * sig_0isq)
+  small_vv <- as.matrix(vv[other_vars, other_vars])
+  total2 <- crossprod(ce / sc, small_vv %*% (ce / sc))[[1]]
+  vv["(Intercept)", "(Intercept)"] <- sig_0sq + total1 + total2
+  ## 2. Modifying without intercept
+  updated_2 <- (sig_0isq)/sc - (small_vv %*% (ce/sc))/sc
+  vv["(Intercept)", other_vars] <- updated_2
+  vv[other_vars, "(Intercept)"] <- updated_2
+  vv[other_vars, other_vars] <- vv[other_vars, other_vars] * outer(1/sc, 1/sc)
+  vv <- as(vv, "dpoMatrix")
 }

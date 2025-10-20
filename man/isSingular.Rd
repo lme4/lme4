@@ -9,7 +9,7 @@
   are (close to) zero.
 }
 \usage{
-isSingular(x, tol = 1e-4)
+isSingular(x, tol = getSingTol())
 }
 \arguments{
   \item{x}{a fitted \code{merMod} object (result of \code{lmer} or \code{glmer}).}
