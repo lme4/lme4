@@ -567,7 +567,8 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
       mask <- unlist(lapply(
         intersect(names(object@flist), names(Z_factors)),
         function(grp) {
-          levels(object@flist[[grp]]) %in% levels(Z_factors[[grp]])
+          level_mask <- levels(object@flist[[grp]]) %in% levels(Z_factors[[grp]])
+          rep(level_mask, each = length(object@cnms[[grp]]))
         }
       ))
       

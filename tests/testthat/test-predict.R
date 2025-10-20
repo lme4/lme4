@@ -631,5 +631,21 @@ test_that("predictions work with se.fit and subset of grouping variable levels",
   
   expect_equal(lapply(tp1, function(x) x[w2]), tp2,
                check.attributes = FALSE)
+  
+  ## Case where there are multiple grouping variables
+  set.seed(1)
+  sleepstudy$Subject2 <- rep(1:5, each = 36)
+  
+  m1 <- lmer(Reaction ~ Days + (1 + Days | Subject) +  
+               (1 | Subject2), data = sleepstudy)
+
+  d <- sleepstudy[sample(1:nrow(sleepstudy), size = 30), ]
+  
+  pms1 <- predict(m1, se.fit = TRUE, re.form = NULL, 
+          allow.new.levels = FALSE)
+  pms2 <- predict(m1, newdata = d, se.fit = TRUE, re.form = NULL, 
+          allow.new.levels = FALSE)
+  psw <- as.numeric(rownames(d))
+  expect_equal(lapply(pms1, function(x) x[psw]), pms2, check.attributes = FALSE)
 })
 
