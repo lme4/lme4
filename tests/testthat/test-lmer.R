@@ -224,12 +224,19 @@ test_that("lmer", {
     expect_equal(sum(grepl("Subset: \\(",capture.output(summary(fm1)))),1)
 
     ## test messed-up Hessian
+    ## UPDATE: modified this test since we now automatically ignore Hessian
+    ## checks when there is a singular fit
     fm1 <- lmer(z~ as.numeric(f) + 1|f, d)
-    fm1@optinfo$derivs$Hessian[2,2] <- NA
-    expect_warning(lme4:::checkConv(fm1@optinfo$derivs,
-                     coefs=c(1,1),
-                     ctrl=lmerControl()$checkConv,lbound=0),
-                   "Problem with Hessian check")
+    
+    expect_equal(summary(fm1)$optinfo$conv$lme4$messages,
+                  "boundary (singular) fit: see help('isSingular')")
+    expect_null(fm1@optinfo$derivs$Hessian)
+    ## Previous:
+    ##fm1@optinfo$derivs$Hessian[2,2] <- NA
+    ##expect_warning(lme4:::checkConv(fm1@optinfo$derivs,
+    ##                 coefs=c(1,1),
+    ##                 ctrl=lmerControl()$checkConv,lbound=0),
+    ##                 "Problem with Hessian check")
 
     ## test ordering of Ztlist names
     ## this is a silly model, just using it for a case
@@ -456,4 +463,26 @@ test_that("turn off conv checking for npara > check.conv.nparmax", {
   expect_false(is.null(mod1@optinfo$conv$lme4))
   ## Second shouldn't be evaluated
   expect_null(mod2@optinfo$conv$lme4)
+})
+
+test_that("gradient and Hessian checks are skipped when singular fit occurs",{
+  set.seed(1)
+  group <- factor(rep(1:3, each = 20))
+  b <- rnorm(3, mean = 0, sd = 0.01)
+  x <- rnorm(60)
+  y <- x + b[group] + rnorm(60, sd = 1)
+  dat <- data.frame(y, x, group)
+  
+  fm1 <- lmer(y ~ x + (1 | group), data = dat)
+  
+  expect_null(summary(fm1)$optinfo$derivs$gradient)
+  expect_null(summary(fm1)$optinfo$derivs$Hessian)
+  
+  ## Always skipping derivative checks
+  options(lme4.singular.tolerance = 1)
+  fm2 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+  expect_null(summary(fm2)$optinfo$derivs$gradient)
+  expect_null(summary(fm2)$optinfo$derivs$Hessian)
+  ## Switching back (in case needed)
+  options(lme4.singular.tolerance = 1e-4)
 })
