@@ -3,8 +3,21 @@ library(glmmTMB)
 library(lme4)
 data("sleepstudy", package = "lme4") ## redundant, but ...
 
-# Models
+## we think this broke at commit 3b617c610bfb4ae22 (Aug 25 "add us to specials list and remove seperate parsing pathway")
+## previous commit is 74391802f0115a932219f39402da1360 (Aug 22 "testing")
+
+## Minimal test of us() breakage:
 fit_us <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)
+fit_us_glmm <- glmmTMB(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)
+all.equal(c(as.matrix(VarCorr(fit_us)[[1]])),
+          c(VarCorr(fit_us_glmm)$cond[[1]]))
+## master: 2.656e-5
+## broken:  0.11
+
+## working through lFormula() etc. I still think there's something fishy with the way theta is being set ...
+## check ... ?
+
+## 
 fit_cs_glmm <- glmmTMB(Reaction ~ Days + cs(Days | Subject), sleepstudy, REML = FALSE)
 fit_cs <- lmer(Reaction ~ Days + cs(Days | Subject), sleepstudy, REML = FALSE)
 fit_cs_hom <- lmer(Reaction ~ Days + cs(Days | Subject, hom = TRUE), sleepstudy, REML = FALSE)
