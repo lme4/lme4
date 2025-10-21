@@ -4,36 +4,23 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-37.9000 (2025-07-17)}{
+\section{CHANGES IN VERSION 1.1-37.9000}{
   \subsection{BUG FIXES}{
     \itemize{
       \item \code{$se.fit} component of predictions from GLMMs when
       \code{type = "response"} is now transformed from the link scale to
       the response scale (GH #847, @leorjorge)
-    }
+      \item predictions with \code{se.fit=TRUE} work for a wider range
+      of cases (GH #691, GH #753)
+    } % itemize
   } % bug fixes
-  \subsection{USER-VISIBLE CHANGES}{
+  \subsection{NEW FEATURES}{
     \itemize{
-      \item \code{lme4} now depends on the \code{reformulas}
-      package for formula processing etc.; the corresponding functions
-      (\code{expandDoubleVerts}, \code{subbars}, \code{findbars},
-      \code{nobars}, etc.) are still (re-)exported from the package,
-      but throw a warning if called directly
-      (use e.g. \code{reformulas::findbars(...)} to avoid the warning)
-      \item the \code{start} argument to \code{[g]lmer} now allows
-      'beta' as a synonym for 'fixef' 
-      \item \code{confint.merMod} now allows \code{signames} as an
-      argument instead of \code{oldNames} to be consistent with
-      \code{profile.merMod}; \code{oldNames} is deprecated
-      \item added a new argument \code{start_from_mle} to \code{allFit}
-      (default TRUE) which specifies that models should be refitted
-      using starting values from the model’s MLE.
-      \item derivative-based convergence checks are now skipped for
-      models with large data (number of observations greater than
-      the \code{check.conv.nobsmax} component of
-      \code{[g]lmerControl()}); default threshold is 1e4 observations.
-      If desired, derivatives can be calculated (but not checked)
-      by explicitly setting \code{calc.derivs} to TRUE.
+       \item the \code{start} argument to \code{[g]lmer} now allows
+       'beta' as a synonym for 'fixef'
+       \item \code{confint.merMod} now allows \code{signames} as an
+       argument instead of \code{oldNames} to be consistent with
+       \code{profile.merMod}; \code{oldNames} is deprecated
       \item added six publically available datasets: 
       \itemize{
         \item \code{cbpp2} (contagious bovine pleuropneumonia 
@@ -47,9 +34,32 @@
           schizophrenia collaborative study),
         \item \code{toenail} (toenail onychomycosis data from dermatophyte 
           infections).
-      }
-      \item Added a new argument `autoscale` to \code{(g)lmerControl()} to enable 
-      autoscaling. An accompanying vignette was created for more details!
+	}
+	\item \code{allFit(..., start_from_mle = TRUE)} now specifies that models should be refitted
+	using starting parameter values from the original model fit,
+	which should increase efficiency
+	\item Predictor variables can be now automatically scaled and centered via
+	\code{(g)lmerControl(..., autoscale = TRUE)}, with results
+	reported on the original data scale. See
+	\code{vignette("autoscale", package = "lme4")}
+	for details (wish of GH #227, although at present only predictor
+	variables can be scaled)
+      } % itemize
+  } % new features
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item \code{lme4} now depends on the \code{reformulas}
+      package for formula processing etc.; the corresponding functions
+      (\code{expandDoubleVerts}, \code{subbars}, \code{findbars},
+      \code{nobars}, etc.) are still (re-)exported from the package,
+      but throw a warning if called directly
+      (use e.g. \code{reformulas::findbars(...)} to avoid the warning)
+      \item derivative-based convergence checks are now skipped for
+      models with large data (number of observations greater than
+      the \code{check.conv.nobsmax} component of
+      \code{[g]lmerControl()}); default threshold is 1e4 observations.
+      If desired, derivatives can be calculated (but not checked)
+      by explicitly setting \code{calc.derivs} to TRUE.
       
     } % itemize
   } % user-visible changes
