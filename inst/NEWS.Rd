@@ -19,22 +19,22 @@
        \item the \code{start} argument to \code{[g]lmer} now allows
        'beta' as a synonym for 'fixef'
        \item \code{confint.merMod} now allows \code{signames} as an
-       argument instead of \code{oldNames} to be consistent with
+       argument instead of \code{oldNames}, for consistency with
        \code{profile.merMod}; \code{oldNames} is deprecated
-      \item added six publically available datasets: 
-      \itemize{
-        \item \code{cbpp2} (contagious bovine pleuropneumonia 
+       \item added six publically available datasets: 
+       \itemize{
+         \item \code{cbpp2} (contagious bovine pleuropneumonia 
           (extended version of \code{cbpp})), 
-        \item \code{culcitalogreg} (coral-eating seastar 
+        \item \code{culcitalogreg} (coral-eating seastar
           \emph{Culcita novaeguineae}). Also added the alternative version,
           \code{culcitavolume},
-        \item \code{gopherdat2} (gopher tortoises shell remains), 
-        \item \code{salamander} (mountain dusky salamander mating), 
-        \item \code{schizophrenia} (National Institute of Mental Health 
+          \item \code{gopherdat2} (gopher tortoises shell remains), 
+          \item \code{salamander} (mountain dusky salamander mating), 
+          \item \code{schizophrenia} (National Institute of Mental Health 
           schizophrenia collaborative study),
-        \item \code{toenail} (toenail onychomycosis data from dermatophyte 
+          \item \code{toenail} (toenail onychomycosis data from dermatophyte 
           infections).
-	}
+	} % data sets
 	\item \code{allFit(..., start_from_mle = TRUE)} now specifies that models should be refitted
 	using starting parameter values from the original model fit,
 	which should increase efficiency
@@ -60,7 +60,8 @@
       \code{[g]lmerControl()}); default threshold is 1e4 observations.
       If desired, derivatives can be calculated (but not checked)
       by explicitly setting \code{calc.derivs} to TRUE.
-      
+      \item Derivative calculations are now skipped for models with
+      singular random effects components.
     } % itemize
   } % user-visible changes
 } % devel
