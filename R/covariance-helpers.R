@@ -45,23 +45,6 @@ vech_diag_indices <- function(d) {
     1L + c(0, cumsum(d:2))
 }
 
-
-##' @title Get Vech Indices
-##'
-##' @description Internal helper to get row and column indices for a 'vech'
-##' (column-major, lower-triangular) ordered vector.
-##'
-##' @param d An integer, the dimension of the square matrix.
-##' @return A list with components 'i' (row indices) and 'j' (column indices).
-##' @keywords internal
-get_vech_indices <- function(d) {
-	if (d == 1) return(list(i = 1L, j = 1L))
-	list(
-		i = unlist(lapply(1:d, function(j) j:d)),
-		j = unlist(lapply(1:d, function(j) rep(j, d - j + 1)))
-	)
-}
-
 ##' @title Reconstruct Cholesky Factor from Parameters
 ##'
 ##' @description Internal helper function that reconstructs the dense
@@ -69,17 +52,13 @@ get_vech_indices <- function(d) {
 ##'
 ##' @param param_vec The vector of unconstrained parameters.
 ##' @param d The dimension of the matrix.
-##' @return A `dtrMatrix` object representing the Cholesky factor `L`.
+##' @return A traditional matrix representing the Cholesky factor `L`.
 ##' @keywords internal
 get_chol_from_params <- function(param_vec, d) {
-
-	L_vec <- param_vec
-
-	L <- matrix(0, nrow = d, ncol = d)
-	vech_indices <- get_vech_indices(d)
-	L[cbind(vech_indices$i, vech_indices$j)] <- L_vec
-
-	as(as(as(L, "dMatrix"), "triangularMatrix"), "unpackedMatrix")
+    ## MJ: really, in what sense is 'param_vec' "unconstrained"??
+    L <- matrix(0, nrow = d, ncol = d)
+    L[lower.tri(L, diag = TRUE)] <- param_vec
+    L
 }
 
 ##' @title Get Lower-Triangular Indices
