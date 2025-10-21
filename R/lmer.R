@@ -2129,8 +2129,10 @@ tnames <- function(object, diag.only = FALSE, old = TRUE, prefix = NULL) {
         structure_obj <- structure_info$structures[[i]]
         group_name <- names(object@cnms)[i]
         cnms_group <- object@cnms[[i]]
-        param_names <- c(param_names,
-                         generate_theta_names(structure_obj, group_name, cnms_group))
+        tn <- generate_theta_names(structure_obj, group_name, cnms_group)
+        if (diag.only && (d <- structure_obj@dimension) > 0L)
+            tn <- tn[if (d > 1L) cumsum(c(1L, d:2L)) else 1L]
+        param_names <- c(param_names, tn)
     }
     param_names
 
