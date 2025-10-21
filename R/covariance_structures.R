@@ -695,8 +695,7 @@ setMethod("compute_lambdat_x", "HeterogeneousAR1Covariance", function(object, th
 setMethod("compute_correlation_matrix", "DiagonalCovariance", function(object) {
     d <- object@dimension 
     R <- Diagonal(d)
-
-    force_dsyMatrix(R)
+    R
 })
 ##' @rdname InternalCovarianceMethods
 setMethod("compute_correlation_matrix", "CSCovariance", function(object) {
@@ -705,8 +704,7 @@ setMethod("compute_correlation_matrix", "CSCovariance", function(object) {
     rho <- cs_theta_to_rho(object@cparameters[1], d)
     R <- Matrix(rho, nrow = d, ncol = d)
     diag(R) <- 1
-    
-    force_dsyMatrix(R)
+    R
 })
 ##' @rdname InternalCovarianceMethods
 setMethod("compute_correlation_matrix", "AR1Covariance", function(object) {
@@ -715,15 +713,13 @@ setMethod("compute_correlation_matrix", "AR1Covariance", function(object) {
     rho <- ar1_theta_to_rho(object@cparameters[1])
     time_diffs <- abs(outer(1:d, 1:d, "-"))
     R <- rho^time_diffs
-
-    force_dsyMatrix(R)
+    R
 })
 ##' @rdname InternalCovarianceMethods
 setMethod("compute_correlation_matrix", "UnstructuredCovariance", function(object) {
     Sigma <- compute_covariance_matrix(object)
     R <- cov2cor(Sigma)
-
-    force_dsyMatrix(R)
+    R
 })
 
 ##' @rdname CovarianceMethods
@@ -737,8 +733,7 @@ setMethod("compute_covariance_matrix", "DiagonalCovariance", function(object, da
         variances <- object@vparameters^2
         Sigma <- Diagonal(d, x = variances)
     }
-
-    force_dsyMatrix(Sigma)
+    Sigma
 })
 
 ##' @rdname CovarianceMethods
@@ -756,7 +751,7 @@ setMethod("compute_covariance_matrix", "CSCovariance", function(object, data_con
         Sigma <- D %*% R %*% D
     }
     
-    force_dsyMatrix(Sigma)
+    Sigma
 })
 
 ##' @rdname CovarianceMethods
@@ -774,7 +769,7 @@ setMethod("compute_covariance_matrix", "AR1Covariance", function(object, data_co
         Sigma <- D %*% R %*% D
     }
     
-    force_dsyMatrix(Sigma)
+    Sigma
 })
 
 ##' @rdname CovarianceMethods
@@ -784,7 +779,7 @@ setMethod("compute_covariance_matrix", "UnstructuredCovariance", function(object
     L <- get_chol_from_params(object@cparameters, d)
     
     Sigma <- tcrossprod(L)
-    force_dsyMatrix(Sigma)
+    Sigma
 })
 
 ##' @rdname CovarianceMethods
@@ -843,8 +838,7 @@ setMethod("compute_inverse_covariance_matrix", "DiagonalCovariance", function(ob
         inv_Sigma <- Diagonal(d, x = inv_variances)
     }
     
-    # Ensure consistent matrix type
-    force_dsyMatrix(inv_Sigma)
+    inv_Sigma
 })
 
 ##' @rdname CovarianceMethods
@@ -867,7 +861,7 @@ setMethod("compute_inverse_covariance_matrix", "UnstructuredCovariance", functio
     inv_L <- solve(L)
     inv_Sigma <- crossprod(inv_L)
     
-    force_dsyMatrix(inv_Sigma)
+    inv_Sigma
 })
 
 

@@ -41,7 +41,8 @@ d12 <- rSimple()
 data("Pixel", package="nlme")
 nPix <- nrow(Pixel)
 fmPix <- lmer(pixel ~ day + I(day^2) + (day | Dog) + (1 | Side/Dog), data = Pixel)
-
+## Lambdat is 52 x 52, Ut is 42 x 102 ... what should it be?
+## 10 dogs, day is numeric ... 10*2 (1 + day | Dog) + 2 (1|Side) + 20 (1 |Side:Dog)
 
 test_that("summary", {
   ## test for multiple-correlation-warning bug and other 'correlation = *' variants
