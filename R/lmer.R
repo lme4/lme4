@@ -313,6 +313,83 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
 if(getRversion() >= "3.1.0") utils::suppressForeignCheck("nlmerAGQ")
 if(getRversion() < "3.1.0") dontCheck <- identity
 
+##' Create Theta Parameter Transformer for Structured Covariance Models
+##'
+##' Creates a closure that transforms raw optimizer parameters into the Cholesky
+##' parameterization. The function uses calls to apply the appropriate
+##' compute_lambdat_x_* method to each structured covariance segment.
+##'
+##' @param structure_info List containing:
+##'   - structures: List of S4 covariance objects
+##'   - structure_types: Character vector of structure type names
+##'   - param_sizes: Vector of parameter counts per structure
+##'
+##' @return A function that takes raw theta and returns transformed theta
+##'
+##' @details
+##' The returned transformer function:
+##' 1. Splits the concatenated theta vector by parameter counts
+##' 2. Applies compute_lambdat_x_*(dimension, theta_segment) for each segment
+##' 3. Concatenates the results into the final transformed theta vector
+##'
+##' @keywords internal
+create_theta_transformer <- function(structure_info) {
+    structures <- structure_info$structures
+    param_sizes <- structure_info$param_sizes
+
+    function(raw_theta) {
+        if (length(raw_theta) == 0) return(numeric(0))
+
+        # Split theta by parameter requirements
+        theta_segments <- split_theta_by_structure(raw_theta, param_sizes)
+
+        # Apply S4 dispatch to each segment
+        transformed_segments <- vector("list", length(structures))
+        for (i in seq_along(structures)) {
+            structure_obj <- structures[[i]]
+            theta_segment <- theta_segments[[i]]
+            transformed_segments[[i]] <- compute_lambdat_x(structure_obj, theta_segment)
+        }
+
+        # Concatenate results
+        unlist(transformed_segments)
+    }
+}
+##' Split Theta Vector by Structure Parameter Sizes
+##'
+##' Helper function to partition the concatenated theta vector according to the
+##' parameter requirements of each covariance structure. Handles the case where
+##' some structures may use parameter expansion (currently only AR1 with powers of rho).
+##'
+##' @param theta Numeric vector of concatenated parameters
+##' @param param_sizes Integer vector of parameter counts per structure
+##'
+##' @return List of theta segments, one per structure
+##'
+##' @details
+##' This function assumes that theta is ordered according to reTrms$ord
+##' (decreasing cluster size)
+##'
+##' @keywords internal
+split_theta_by_structure <- function(theta, param_sizes) {
+    if (length(theta) == 0 || length(param_sizes) == 0) {
+        return(list())
+    }
+
+    # Calculate cumulative offsets for splitting
+    thoff <- c(0, cumsum(param_sizes))
+
+    # Split theta into segments
+    segments <- vector("list", length(param_sizes))
+    for (i in seq_along(param_sizes)) {
+        start_idx <- thoff[i] + 1
+        end_idx <- thoff[i + 1]
+        segments[[i]] <- theta[start_idx:end_idx]
+    }
+
+    segments
+}
+
 ## *not* exported (had help page till early 2018)
 ## -> issue #92: -> also look at devfun2() in  ./profile.R (which returns class!)
 ##' Create a deviance evaluation function from a predictor and a response module
@@ -321,8 +398,10 @@ if(getRversion() < "3.1.0") dontCheck <- identity
 ##' @param maxit maximal number of PIRLS iterations
 ##' @param verbose integer specifying if outputs should be produced
 ##' @param control a list as from lmerControl() etc
-mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L else 100L,
-                     verbose=0, control=list()) {
+mkdevfun <- function(rho, nAGQ=1L,
+                     maxit = if(extends(rho.cld, "nlsResp")) 300L else 100L,
+                     verbose=0, control=list(),
+                     debug = FALSE) {
     ## FIXME: should nAGQ be automatically embedded in rho?
     stopifnot(is.environment(rho), ## class definition, compute and save :
               extends(rho.cld <- getClass(class(rho$resp)), "lmResp"))
@@ -331,13 +410,30 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
     ## (clearly preferred to using globalVariables() !]
     fac <- pp <- resp <- lp0 <- compDev <- dpars <- baseOffset <- tolPwrss <-
         pwrssUpdate <- ## <-- even though it's a function below
-        GQmat <- nlmerAGQ <- NULL
+        GQmat <- nlmerAGQ <- transform_theta <- NULL
 
     ## The deviance function (to be returned, with 'rho' as its environment):
     ff <-
     if (extends(rho.cld, "lmerResp")) {
         rho$lmer_Deviance <- lmer_Deviance
-        function(theta) .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))
+        if (!is.null(rho$cov_structures)) {
+            if (debug) cat("TAKING STRUCTURED PATH\n")
+            structure_info <- list(
+                structures = rho$cov_structures,
+                structure_types = rho$structure_types,
+                param_sizes = rho$param_sizes)
+            rho$transform_theta <-
+                create_theta_transformer(structure_info)
+            function(theta) {
+                transformed_theta <- transform_theta(theta)
+                .Call(lmer_Deviance, pp$ptr(), resp$ptr(),
+                      as.double(transformed_theta))
+            }
+        } else {
+            function(theta)
+                .Call(lmer_Deviance, pp$ptr(), resp$ptr(),
+                      as.double(theta))
+        }
     } else if (extends(rho.cld, "glmResp")) {
         ## control values will override rho values *if present*
         if (!is.null(tp <- control$tolPwrss)) rho$tolPwrss <- tp
@@ -1588,11 +1684,14 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
     ## modify the call  to have REML=FALSE. (without evaluating the call!)
     cl <- x@call
     cl[["REML"]] <- FALSE
+    ret <-
     new("lmerMod", call = cl, frame=x@frame, flist=x@flist,
         cnms=x@cnms, theta=pp$theta, beta=pp$delb, u=pp$delu,
         optinfo = .optinfo(opt),
         lower=x@lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=rho$resp,
         Gp=x@Gp)
+    attr(ret, "cov_structures") <- attr(x, "cov_structures")
+    ret
 }
 
 ##' residuals of merMod objects                 --> ../man/residuals.merMod.Rd
@@ -2022,8 +2121,27 @@ mkPfun <- function(diag.only = FALSE, old = TRUE, prefix = NULL){
 ##' @param prefix a character vector with two elements giving the prefix
 ##' for diagonal (e.g. "sd") and off-diagonal (e.g. "cor") elements
 tnames <- function(object, diag.only = FALSE, old = TRUE, prefix = NULL) {
+    if (has_structured_covariance(object)) {
+
+    structure_info <- extract_structure_info(object)
+    param_names <- character(0)
+    for (i in seq_along(structure_info$structures)) {
+        structure_obj <- structure_info$structures[[i]]
+        group_name <- names(object@cnms)[i]
+        cnms_group <- object@cnms[[i]]
+        tn <- generate_theta_names(structure_obj, group_name, cnms_group)
+        if (diag.only && (d <- structure_obj@dimension) > 0L)
+            tn <- tn[if (d > 1L) cumsum(c(1L, d:2L)) else 1L]
+        param_names <- c(param_names, tn)
+    }
+    param_names
+
+    } else {
+
     pfun <- mkPfun(diag.only=diag.only, old=old, prefix=prefix)
     c(unlist(mapply(pfun, names(object@cnms), object@cnms)))
+
+    }
 }
 
 ## -> ../man/getME.Rd
@@ -2311,6 +2429,60 @@ vcov.summary.merMod <- function(object, ...) {
     object$vcov
 }
 
+##' Truncate Extended Theta for Reporting
+##'
+##' Converts extended theta parameters used for model fitting to base parameters
+##' suitable for reporting in VarCorr output. AR1 structures use extended theta
+##' containing powers of rho (rho, rho^2, ...) for optimization, but only report
+##' base parameters (sigma, rho) to users. Can be used for other structures by
+##' creating an S4 method.
+##'
+##' @param theta_extended Numeric vector of extended theta parameters from model fitting
+##' @param structures List of covariance structure objects
+##' @return List with components:
+##'   \item{theta}{Truncated theta vector with only base parameters}
+##'   \item{structure_info}{Updated structure information with corrected parameter sizes}
+##' @keywords internal
+truncate_theta <- function(theta_extended, structures) {
+
+    if (is.null(structures) || length(structures) == 0) {
+        return(list(
+            theta = theta_extended,
+            structure_info = NULL
+        ))
+    }
+
+    theta_truncated <- numeric(0)
+    param_sizes_truncated <- numeric(length(structures))
+    param_idx <- 1
+
+    for (i in seq_along(structures)) {
+        structure <- structures[[i]]
+
+        extended_params <- n_extended_parameters(structure)
+        reporting_params <- n_parameters(structure)
+
+        theta_slice <- theta_extended[param_idx:(param_idx + extended_params - 1)]
+        reporting_slice <- get_reporting_theta_slice(structure, theta_slice)
+
+        theta_truncated <- c(theta_truncated, reporting_slice)
+        param_sizes_truncated[i] <- reporting_params
+        param_idx <- param_idx + extended_params
+    }
+
+    # Create structure info directly
+    structure_info <- list(
+        structures = structures,
+        types = sapply(structures, get_structure_type),
+        param_sizes = param_sizes_truncated
+    )
+
+    return(list(
+        theta = theta_truncated,
+        structure_info = structure_info
+    ))
+}
+
 ##' Make variance and correlation matrices from \code{theta}
 ##'
 ##' @param sc scale factor (residual standard deviation)
@@ -2318,10 +2490,14 @@ vcov.summary.merMod <- function(object, ...) {
 ##' @param nc numeric vector: number of terms in each RE component
 ##' @param theta theta vector (lower-triangle of Cholesky factors)
 ##' @param nms component names (FIXME: nms/cnms redundant: nms=names(cnms)?)
+##' @param structure_info List containing structure information (from extract_structure_info),
+##'   or NULL for traditional unstructured models
 ##' @seealso \code{\link{VarCorr}}
 ##' @return A matrix
 ##' @export
-mkVarCorr <- function(sc, cnms, nc, theta, nms) {
+mkVarCorr <- function(sc, cnms, nc, theta, nms, structure_info = NULL) {
+    if (is.null(structure_info)) {
+
     ncseq <- seq_along(nc)
     thl <- split(theta, rep.int(ncseq, (nc * (nc + 1))/2))
     if(!all(nms == names(cnms))) ## the above FIXME
@@ -2340,6 +2516,23 @@ mkVarCorr <- function(sc, cnms, nc, theta, nms) {
                   diag(corr) <- 1
                   structure(val, stddev = stddev, correlation = corr)
               })
+
+    } else {
+
+    ## This path is aware of S4 covariance structures (!= us)
+    ncseq <- seq_along(nc)
+    param_sizes <- structure_info$param_sizes
+    theta_splits <- split_theta_by_structure(theta, param_sizes)
+    ## Process each random effects term with its structure
+    ans <- lapply(ncseq, function(i) {
+        structure_obj <- structure_info$structures[[i]]
+        theta_block <- theta_splits[[i]]
+        term_cnms <- cnms[[i]]
+        ## S4 method dispatch for structure specifc matrix construction
+        mkVarCorr_for_structure(structure_obj, theta_block, sc, term_cnms)
+    })
+
+    }
     if(is.character(nms)) {
         ## FIXME: do we want this?  Maybe not.
         ## Potential problem: the names of the elements of the VarCorr() list
@@ -2354,6 +2547,35 @@ mkVarCorr <- function(sc, cnms, nc, theta, nms) {
     structure(ans, sc = sc)
 }
 
+##' Split theta Vector by Structure Parameter Sizes
+##'
+##' Helper function to partition the theta vector according to the parameter
+##' requirements of each covariance structure.
+##'
+##' @param theta Full theta parameter vector
+##' @param param_sizes Vector of parameter counts for each structure
+##' @return List of theta subvectors, one for each structure
+##' @keywords internal
+split_theta_by_structure <- function(theta, param_sizes) {
+
+    if (sum(param_sizes) != length(theta)) {
+        stop("Parameter size mismatch: expected ", sum(param_sizes),
+             " parameters, got ", length(theta))
+    }
+
+    # Create cumulative indices for splitting
+    cumsum_sizes <- cumsum(c(0, param_sizes))
+
+    # Split theta into blocks
+    theta_blocks <- lapply(seq_along(param_sizes), function(i) {
+        start_idx <- cumsum_sizes[i] + 1
+        end_idx <- cumsum_sizes[i + 1]
+        theta[start_idx:end_idx]
+    })
+
+    return(theta_blocks)
+}
+
 ##' Extract variance and correlation components
 ##'
 VarCorr.merMod <- function(x, sigma = 1, ...)
@@ -2364,7 +2586,15 @@ VarCorr.merMod <- function(x, sigma = 1, ...)
     if(missing(sigma))
         sigma <- sigma(x)
     nc <- lengths(cnms) # no. of columns per term
-    structure(mkVarCorr(sigma, cnms = cnms, nc = nc, theta = x@theta,
+    theta <- x@theta
+    structure_info <- extract_structure_info(x)
+    if (!is.null(structure_info)) {
+        truncated_result <- truncate_theta(theta, structure_info$structures)
+        theta <- truncated_result$theta
+        structure_info <- truncated_result$structure_info
+    }
+    structure(mkVarCorr(sigma, cnms = cnms, nc = nc,
+                        theta = theta, structure_info = structure_info,
                         nms = { fl <- x@flist; names(fl)[attr(fl, "assign")]}),
               useSc = as.logical(x@devcomp$dims[["useSc"]]),
               class = "VarCorr.merMod")
