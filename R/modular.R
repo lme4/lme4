@@ -414,8 +414,9 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     if (length(s4_object_list) > 0) {
         ## Structured covariance path
         reTrms <- reformulas::mkReTrms(split_result$reTrmFormulas, fr, calc.lambdat = FALSE)
-        if (!is.null(reTrms$ord))
-            s4_object_list <- s4_object_list[reTrms$ord]
+        ## terms list has already been re-ordered, don't need this?
+        ## if (!is.null(reTrms$ord))
+        ##     s4_object_list <- s4_object_list[reTrms$ord]
         reTrms <- store_structure_info(reTrms, s4_object_list)
         cov_components <- mkReLambdat(reTrms, s4_object_list)
         reTrms$Lambdat <- cov_components$Lambdat
