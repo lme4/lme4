@@ -1,6 +1,7 @@
 ## Mikael for flexSigmaMinimum
 
 * mkMkTheta (done), upReTrms, upReCovs (done)
+* handle length(lower) == length(par) < length(theta)
 * check that existing tests pass
 * patch for reformulas::no_specials(quote(diag(1 | f, hom=TRUE))), etc.
 * man/*.Rd, tests/*.R

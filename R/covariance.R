@@ -84,6 +84,10 @@ setGeneric("setTheta",
            function (object, value, ...)
                standardGeneric("setTheta"))
 
+setGeneric("getLower",
+           function (object, ...)
+               standardGeneric("getLower"))
+
 
 ## .... METHODS ........................................................
 
@@ -130,6 +134,15 @@ setMethod("setTheta",
                   storage.mode(value) <- "double"
               object@par <- if (nt == length(value)) value else value[seq.int(from = pos + 1L, length.out = nt)]
               object
+          })
+
+setMethod("getLower",
+          c(object = "UnstructuredCovariance"),
+          function (object, ...) {
+              nc <- object@nc
+              `[<-`(rep(-Inf, (nc * (nc - 1L)) %/% 2L + nc),
+                    cumsum(c(if (nc > 0L) 1L, if (nc > 1L) nc:2L)),
+                    0)
           })
 
 
@@ -184,9 +197,16 @@ setMethod("setTheta",
               object
           })
 
+setMethod("getLower",
+          c(object = "DiagonalCovariance"),
+          function (object, ...)
+              double(length(object@par)))
+
 
 ## .... HELPERS ........................................................
 
+## return a function that maps
+##     c(par_1, ..., par_k) -> c(theta_1, ..., theta_k)
 mkMkTheta <-
 function (reCovs) {
     if (all(vapply(reCovs, is, FALSE, "UnstructuredCovariance")))
@@ -207,18 +227,38 @@ function (reCovs) {
     }
 }
 
-if (FALSE)
+## update mkReTrms(..., calc.lambda = FALSE) so that it has components
+## 'Lambdat', 'Lind', 'theta', 'lower', 'par', 'reCovs' where
+##
+##     length(lower) == length(par) <= length(theta)
+##
+## note that previously there was no 'par' and no 'reCovs' as 'par' and
+## 'theta' were identical by construction
 upReTrms <-
-function (reTrms, bb1) {
-    ## do stuff
-    reTrms$Lambdat <- .
-    reTrms$Lind <- .
-    reTrms$theta <- .
-    reTrms$lower <- .
-    reTrms$reCovs <- .
+function (reTrms, spCalls) {
+    spMap <- c(  "us" = "UnstructuredCovariance",
+               "diag" =     "DiagonalCovariance")
+    spNames <- as.character(lapply(spCalls, `[[`, 1L))
+    reCovs <- .mapply(new, list(Class = spMap[spNames], nc = nc), NULL)
+    nc <- lengths(reTrms$cnms, FALSE)
+    nl <- reTrms$nl
+    ncnl <- rep(nc, nl)
+    Lt.dp <- sequence.default(nvec = ncnl)
+    Lt.p <- cumsum(c(0L, Lt.dp))
+    Lt.i <- sequence.default(nvec = Lt.dp, from = rep(cumsum(c(0L, ncnl)), c(ncnl, 0L)))
+    Lind <- .
+    reTrms$Lambdat <- new("dtCMatrix", Dim = rep(length(Lt.dp), 2L),
+                          uplo = "U", diag = "N",
+                          p = Lt.p, i = Lt.i, x = as.double(Lind))
+    reTrms$Lind <- Lind
+    reTrms$theta <- unlist(lapply(reCovs, getTheta), FALSE, FALSE)
+    reTrms$lower <- unlist(lapply(reCovs, getLower), FALSE, FALSE)
+    reTrms$par   <- unlist(lapply(reCovs, getPar  ), FALSE, FALSE)
+    reTrms$reCovs <- reCovs
     reTrms
 }
 
+## use c(theta_1, ..., theta_k) to update par_1, ..., par_k
 upReCovs <-
 function (reCovs, theta) {
     ## FIXME?  function (reCovs, par) instead?
@@ -226,9 +266,9 @@ function (reCovs, theta) {
     for (i in seq_along(reCovs)) {
         elt <- reCovs[[i]]
         nc <- elt@nc
-        off <- (nc * (nc - 1L)) %/% 2L + nc
+        nt <- (nc * (nc - 1L)) %/% 2L + nc
         reCovs[[i]] <- setTheta(elt, theta, pos)
-        pos <- pos + off
+        pos <- pos + nt
     }
     reCovs
 }
