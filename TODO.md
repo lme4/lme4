@@ -1,10 +1,12 @@
 ## Mikael for flexSigmaMinimum
 
-* mkMkTheta, upReTrms, upReCovs
+* mkMkTheta (done), upReTrms, upReCovs (done)
 * check that existing tests pass
 * patch for reformulas::no_specials(quote(diag(1 | f, hom=TRUE))), etc.
 * man/*.Rd, tests/*.R
 * cs, ar1
+* address the TODO in devfun2
+* RC actually seems more natural than S4 as we repeatedly update things
 
 
 - "toast-scraping": improve and/or get rid of post-hoc convergence testing
