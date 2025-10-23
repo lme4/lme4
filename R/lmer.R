@@ -659,7 +659,7 @@ as.function.merMod <- function(x, ...) {
                          pp    = x@pp$copy(),
                          beta0 = x@beta,
                          u0   =  x@u,
-                         mkTheta = mkMkTheta(attr(x, "reCovs")),
+                         mkTheta = mkMkTheta(attr(x, "reCovs"))),
                     parent=as.environment("package:lme4"))
     ## FIXME: extract verbose [, maxit] and control
     mkdevfun(rho, getME(x, "devcomp")$dims[["nAGQ"]], ...)
@@ -1516,7 +1516,7 @@ refit.merMod <- function(object,
                  pp=pp, resp=rr, u0=pp$u0, verbose=verbose, dpars=seq_len(nth))
         } else
             list(pp=pp, resp=rr, u0=pp$u0, verbose=verbose, dpars=seq_len(nth),
-                 mkTheta = mkMkTheta(attr(object, "reCovs"))
+                 mkTheta = mkMkTheta(attr(object, "reCovs")))
     ff <- mkdevfun(list2env(devlist), nAGQ=nAGQ, maxit=maxit, verbose=verbose)
     ## rho <- environment(ff) == list2env(devlist)
     xst       <- rep.int(0.1, nth)

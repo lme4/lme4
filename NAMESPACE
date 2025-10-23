@@ -5,7 +5,7 @@ importFrom("graphics", par, plot)
 importFrom("grid", gpar, viewport)
 importFrom("splines", backSpline, interpSpline, periodicSpline)
 importFrom("methods", as, getDataPart, extends, is, new, cbind2, rbind2,
-           show, slot, slotNames, setRefClass, getClass)
+           show, slot, slotNames, setRefClass, getClass, callNextMethod)
 importFrom("stats",
            AIC, BIC, anova, approx, approxfun,
            as.formula, asOneSidedFormula, ave,
@@ -297,6 +297,7 @@ importFrom(reformulas,no_specials)
 importFrom(reformulas,nobars_)
 importFrom(reformulas,reOnly)
 importFrom(reformulas,splitForm)
+importFrom(reformulas,sub_specials)
 ##
 importFrom(reformulas,subbars)
 export(subbars)

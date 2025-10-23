@@ -394,8 +394,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
                       default.special = "us", target = "|",
                       expand_doublevert_method = "diag_special")
     bb0 <- no_specials(bb1, specials = specials) # FIXME: chokes on calls with more than one argument
-    reTrms <- reformulas::mkReTrms(bb0, fr, calc.lambda = FALSE)
-    reTrms <- upReTrms(reTrms, bb1) # local calc.lambda=TRUE step
+    reTrms <- reformulas::mkReTrms(bb0, fr, calc.lambdat = FALSE)
+    reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
     wmsgNlev <- checkNlevels(reTrms$flist, n=n, control)
     wmsgZdims <- checkZdims(reTrms$Ztlist, n=n, control, allow.n=FALSE)
     if (anyNA(reTrms$Zt)) {

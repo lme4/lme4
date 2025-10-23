@@ -99,6 +99,7 @@ setMethod("initialize",
           function (.Object, nc, ...) {
               if (nargs() == 2L && !missing(nc) && is.integer(nc) &&
                   length(nc) == 1L && !is.na(nc) && nc >= 0L) {
+                  .Object@nc <- nc
                   .Object@par <- `[<-`(double((nc * (nc - 1L)) %/% 2L + nc),
                                        cumsum(c(if (nc > 0L) 1L, if (nc > 1L) nc:2L)),
                                        1)
@@ -154,6 +155,7 @@ setMethod("initialize",
           function (.Object, nc, ...) {
               if (nargs() == 2L && !missing(nc) && is.integer(nc) &&
                   length(nc) == 1L && !is.na(nc) && nc >= 0L) {
+                  .Object@nc <- nc
                   .Object@par <- rep(1, nc)
                   .Object
               }
@@ -161,7 +163,7 @@ setMethod("initialize",
           })
 
 setMethod("setPar",
-          c(object = "DiagonalCovariance", value = "numeric")
+          c(object = "DiagonalCovariance", value = "numeric"),
           function (object, value, ...) {
               nc <- object@nc
               if (length(value) != 1L && length(value) != nc)
@@ -214,7 +216,7 @@ function (reCovs) {
         return(function (par) par)
     nc <- vapply(reCovs, slot, 0L, "nc")
     nt <- (nc * (nc - 1L)) %/% 2L + nc
-    np <- lengths(lapply(reCovs, slot, "param"))
+    np <- lengths(lapply(reCovs, slot, "par"))
     snt <- sum(nt)
     snp <- sum(np)
     jt <- split(seq_len(nt), rep(seq_along(nt), nt))
@@ -223,12 +225,13 @@ function (reCovs) {
     ii <- seq_along(reCovs)
     function (par) {
         for (i in ii)
-            theta[jt[[i]]] <<- getTheta(setPar(object, par[jp[[i]]]))
+            theta[jt[[i]]] <<-
+                getTheta(setPar(reCovs[[i]], par[jp[[i]]]))
         theta
     }
 }
 
-## update mkReTrms(..., calc.lambda = FALSE) so that it has components
+## update mkReTrms(..., calc.lambdat = FALSE) so that it has components
 ## 'Lambdat', 'Lind', 'theta', 'lower', 'par', 'reCovs' where
 ##
 ##     length(lower) == length(par) <= length(theta)
@@ -240,31 +243,32 @@ function (reTrms, spCalls) {
     spMap <- c(  "us" = "UnstructuredCovariance",
                "diag" =     "DiagonalCovariance")
     spNames <- as.character(lapply(spCalls, `[[`, 1L))
-    reCovs <- .mapply(new, list(Class = spMap[spNames], nc = nc), NULL)
     nc <- lengths(reTrms$cnms, FALSE)
     nl <- reTrms$nl
     ncnl <- rep(nc, nl)
     nt <- (nc * (nc - 1L)) %/% 2L + nc
-    hh <- seq_along(nt)
     ## Inhale ...
     Lt.dp <- sequence.default(from = 1L,
                               by = 1L,
                               nvec = ncnl)
     Lt.p <- cumsum(c(0L, Lt.dp))
-    Lt.i <- sequence.default(from = rep(cumsum(c(0L, ncnl)[hh]), ncnl),
+    Lt.i <- sequence.default(from = rep(cumsum(c(0L, ncnl)[seq_along(ncnl)]), ncnl),
                              by = 1L,
                              nvec = Lt.dp)
-    Lind <- sequence.default(
-        from = sequence.default(from = rep(cumsum(c(1L, nt))[hh], nl),
-                                by = ncnl + 1L,
-                                nvec = ncnl),
-        by = rep(nc, nc * nl),
-        nvec = sequence.default(from = ncnl,
-                                by = -1L,
-                                nvec = ncnl))
+    Lind1 <- function (from, nc)
+        rep(seq.int(from = from - nc, by = 1L, length.out = nc),
+            seq_len(nc)) +
+        cumsum(seq.int(from = nc, by = -1L, length.out = nc))[
+            sequence.default(from = 1L, by = 1L, nvec = seq_len(nc))]
+    Lind <- unlist(rep(.mapply(Lind1,
+                               list(from = cumsum(c(1L, nt)[seq_along(nt)]),
+                                    nc = nc),
+                               NULL),
+                       nl),
+                   FALSE, FALSE)
     ## Exhale ...
-    reTrms$Lambdat <- new("dtCMatrix", Dim = rep(length(Lt.dp), 2L),
-                          uplo = "U", diag = "N",
+    reCovs <- .mapply(new, list(Class = spMap[spNames], nc = nc), NULL)
+    reTrms$Lambdat <- new("dgCMatrix", Dim = rep(length(Lt.dp), 2L),
                           p = Lt.p, i = Lt.i, x = as.double(Lind))
     reTrms$Lind <- Lind
     reTrms$theta <- unlist(lapply(reCovs, getTheta), FALSE, FALSE)
