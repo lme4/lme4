@@ -47,6 +47,7 @@ setClass("DiagonalCovariance",
 
 ## .... GENERIC FUNCTIONS ..............................................
 
+## Unused and perhaps not needed
 getLambda <- getLambdat <-
 function (object) {
     ## stopifnot(is(object, "Covariance"))
@@ -243,10 +244,25 @@ function (reTrms, spCalls) {
     nc <- lengths(reTrms$cnms, FALSE)
     nl <- reTrms$nl
     ncnl <- rep(nc, nl)
-    Lt.dp <- sequence.default(nvec = ncnl)
+    nt <- (nc * (nc - 1L)) %/% 2L + nc
+    hh <- seq_along(nt)
+    ## Inhale ...
+    Lt.dp <- sequence.default(from = 1L,
+                              by = 1L,
+                              nvec = ncnl)
     Lt.p <- cumsum(c(0L, Lt.dp))
-    Lt.i <- sequence.default(nvec = Lt.dp, from = rep(cumsum(c(0L, ncnl)), c(ncnl, 0L)))
-    Lind <- .
+    Lt.i <- sequence.default(from = rep(cumsum(c(0L, ncnl)[hh]), ncnl),
+                             by = 1L,
+                             nvec = Lt.dp)
+    Lind <- sequence.default(
+        from = sequence.default(from = rep(cumsum(c(1L, nt))[hh], nl),
+                                by = ncnl + 1L,
+                                nvec = ncnl),
+        by = rep(nc, nc * nl),
+        nvec = sequence.default(from = ncnl,
+                                by = -1L,
+                                nvec = ncnl))
+    ## Exhale ...
     reTrms$Lambdat <- new("dtCMatrix", Dim = rep(length(Lt.dp), 2L),
                           uplo = "U", diag = "N",
                           p = Lt.p, i = Lt.i, x = as.double(Lind))
