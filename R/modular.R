@@ -354,13 +354,9 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     checkCtrlLevels(cstr,control[[cstr]])
     denv <- checkFormulaData(formula, data,
                              checkLHS = control$check.formula.LHS == "stop")
-    #mc$formula <- formula <- as.formula(formula,env=denv) ## substitute evaluated call
     formula <- as.formula(formula, env=denv)
     ## as.formula ONLY sets environment if not already explicitly set.
     ## ?? environment(formula) <- denv
-    # get rid of || terms so update() works as expected
-    RHSForm(formula) <- reformulas::expandDoubleVerts(RHSForm(formula))
-    mc$formula <- formula
 
     ## (DRY! copied from glFormula)
     m <- match(c("data", "subset", "weights", "na.action", "offset"),
@@ -368,8 +364,15 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     mf <- mf[c(1L, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- quote(stats::model.frame)
-    fr.form <- reformulas::subbars(formula) # substitute "|" by "+"
-    environment(fr.form) <- environment(formula)
+
+    specials <- c("us", "diag")
+    ## substitute  special(x | f)  with  (x | f)
+    fr.form. <- noSpecials(formula, specials = specials, delete = FALSE)
+    ## substitute  (x | f)  and  (x || f)  with  (x + f)
+    fr.form <- sub_specials(fr.form., specials = c("|", "||"),
+                            keep_args = c(2L, 2L))
+    environment(fr.form.) <- environment(fr.form) <-
+        environment(formula)
     ## model.frame.default looks for these objects in the environment
     ## of the *formula* (see 'extras', which is anything passed in '...'),
     ## so they have to be put there:
@@ -387,7 +390,12 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     attr(fr,"offset") <- mf$offset
     n <- nrow(fr)
     ## random effects and terms modules
-    reTrms <- reformulas::mkReTrms(reformulas::findbars(RHSForm(formula)), fr)
+    bb1 <- findbars_x(formula, specials = specials,
+                      default.special = "us", target = "|",
+                      expand_doublevert_method = "diag_special")
+    bb0 <- no_specials(bb1, specials = specials) # FIXME: chokes on calls with more than one argument
+    reTrms <- reformulas::mkReTrms(bb0, fr, calc.lambda = FALSE)
+    reTrms <- upReTrms(reTrms, bb1) # local calc.lambda=TRUE step
     wmsgNlev <- checkNlevels(reTrms$flist, n=n, control)
     wmsgZdims <- checkZdims(reTrms$Ztlist, n=n, control, allow.n=FALSE)
     if (anyNA(reTrms$Zt)) {
@@ -400,7 +408,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     wmsgZrank <- checkZrank(reTrms$Zt, n=n, control, nonSmall = 1e6)
 
     ## fixed-effects model matrix X - remove random effect parts from formula:
-    fixedform <- formula
+    fixedform <- fr.form.
     RHSForm(fixedform) <- reformulas::nobars(RHSForm(fixedform))
     mf$formula <- fixedform
     ## re-evaluate model frame to extract predvars component
@@ -413,8 +421,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 
     ## ran-effects model frame (for predvars)
     ## important to COPY formula (and its environment)?
-    ranform <- formula
-    RHSForm(ranform) <- reformulas::subbars(RHSForm(reOnly(formula)))
+    ranform <- fr.form.
+    RHSForm(ranform) <- reformulas::subbars(RHSForm(reOnly(ranform)))
     mf$formula <- ranform
     ranfr <- eval(mf, parent.frame())
     attr(attr(fr,"terms"), "predvars.random") <-
@@ -555,10 +563,11 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL,
     ## devfun <- mkdevfun(rho, 0L, verbose=verbose, control=control)
 
     ## prevent R CMD check false pos. warnings (in this function only):
-    pp <- resp <- NULL
+    pp <- resp <- mkTheta <- NULL
     rho$lmer_Deviance <- lmer_Deviance
-    devfun <- function(theta)
-        .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))
+    rho$mkTheta <- mkMkTheta(reTrms$reCovs)
+    devfun <- function(par)
+        .Call(lmer_Deviance, pp$ptr(), resp$ptr(), mkTheta(as.double(par)))
     environment(devfun) <- rho
 
     # if all random effects are of the form 1|f and starting values not

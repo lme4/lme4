@@ -342,6 +342,7 @@ profile.merMod <- function(fitted,
 
     ## profile fixed effects separately (for LMMs)
     if (isLMM(fitted)) {
+        mkTheta <- mkMkTheta(attr(fitted, "reCovs"))
         offset.orig <- fitted@resp$offset
         fp <- seq_len(p)
         fp <- fp[(fp+nvp) %in% which]
@@ -367,7 +368,7 @@ profile.merMod <- function(fitted,
             fe.zeta <- function(fw, start) {
                 ## (start parameter ignored)
                 rr$setOffset(Xw * fw + offset.orig)
-                rho <- list2env(list(pp=pp1, resp=rr), parent = parent.frame())
+                rho <- list2env(list(pp=pp1, resp=rr, mkTheta=mkTheta), parent = parent.frame())
                 ores <- optwrap(optimizer, par = thopt, fn = mkdevfun(rho, 0L),
                                 lower = fitted@lower)
                 ## this optimization is done on the ORIGINAL
@@ -486,6 +487,8 @@ devfun2 <- function(fm, useSc = if(isLMM(fm)) TRUE else NA,
                                        to.chol = Sv_to_Cv, to.sd = identity),
                     ...)
 {
+    ## TODO: 'transfuns' must take and use 'reCovs' where available
+
     ## FIXME: have to distinguish between
     ## 'useSc' (GLMM: report profiled scale parameter) and
     ## 'useSc' (NLMM/LMM: scale theta by sigma)

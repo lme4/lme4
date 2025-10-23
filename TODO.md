@@ -1,3 +1,10 @@
+## Mikael for flexSigmaMinimum
+
+* mkMkTheta, upReTrms, upReCovs
+* check that existing tests pass
+* patch for reformulas::no_specials(quote(diag(1 | f, hom=TRUE))), etc.
+* man/*.Rd, tests/*.R
+* cs, ar1
 
 
 - "toast-scraping": improve and/or get rid of post-hoc convergence testing
