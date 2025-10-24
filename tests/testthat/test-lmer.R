@@ -392,9 +392,14 @@ test_that("catch matrix-valued responses", {
 })
 
 test_that("update works as expected", {
-	m <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy)
-	expect_equivalent(fitted(update(m, .~.-(0 + Days | Subject))),
-                          fitted(lmer(Reaction ~ Days + (1|Subject), sleepstudy)))
+    m <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy)
+    m1 <- lmer(Reaction ~ Days + (1 | Subject), sleepstudy)
+    m2 <- update(m, . ~ . - (0 + Days | Subject))
+    if (FALSE) {
+    ## '||' is no longer expanded as two '|' ...
+    expect_equivalent(fitted(m1),
+                      fitted(m2))
+    }
 })
 
 test_that("turn off conv checking for nobs > check.conv.nobsmax", {
