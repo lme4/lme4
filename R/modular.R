@@ -565,6 +565,7 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL,
     ## prevent R CMD check false pos. warnings (in this function only):
     pp <- resp <- mkTheta <- NULL
     rho$lmer_Deviance <- lmer_Deviance
+    rho$mkPar <- mkMkPar(reTrms$reCovs)
     rho$mkTheta <- mkMkTheta(reTrms$reCovs)
     devfun <- function(par)
         .Call(lmer_Deviance, pp$ptr(), resp$ptr(), mkTheta(as.double(par)))
@@ -589,7 +590,7 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL,
     ## ^^^^^ unused / obfuscation? should the above be rho$pp$setTheta(.) ?
     ## MM: commenting it did not break any of our checks
     if (length(rho$resp$y) > 0)  ## only if non-trivial y
-        devfun(rho$pp$theta) # one evaluation to ensure all values are set
+        devfun(rho$mkPar(rho$pp$theta)) # one evaluation to ensure all values are set
     rho$lower <- reTrms$lower # to be more consistent with mkGlmerDevfun
     devfun # this should pass the rho environment implicitly
 }
@@ -609,7 +610,7 @@ optimizeLmer <- function(devfun,
     rho <- environment(devfun)
     opt <- optwrap(optimizer,
                    devfun,
-                   getStart(start, rho$pp),
+                   rho$mkPar(getStart(start, rho$pp)),
                    lower=rho$lower,
                    control=control,
                    adj=FALSE, verbose=verbose,
@@ -620,21 +621,21 @@ optimizeLmer <- function(devfun,
         ## FIXME: should we be looking at rho$pp$theta or opt$par
         ##  at this point???  in koller example (for getData(13)) we have
         ##   rho$pp$theta=0, opt$par=0.08
-        if (length(bvals <- which(rho$pp$theta==rho$lower)) > 0) {
+        par0 <- rho$mkPar(rho$pp$theta)
+        if (length(bvals <- which(par0==rho$lower)) > 0) {
             ## *don't* use numDeriv -- cruder but fewer dependencies, no worries
             ##  about keeping to the interior of the allowed space
-            theta0 <- new("numeric",rho$pp$theta) ## 'deep' copy:
-            d0 <- devfun(theta0)
+            d0 <- devfun(par0)
             btol <- 1e-5  ## FIXME: make user-settable?
             bgrad <- sapply(bvals,
                             function(i) {
                                 bndval <- rho$lower[i]
-                                theta <- theta0
-                                theta[i] <- bndval+btol
-                                (devfun(theta)-d0)/btol
+                                par <- par0
+                                par[i] <- bndval+btol
+                                (devfun(par)-d0)/btol
                             })
             ## what do I need to do to reset rho$pp$theta to original value???
-            devfun(theta0) ## reset rho$pp$theta after tests
+            devfun(par0) ## reset rho$pp$theta after tests
             ## FIXME: allow user to specify ALWAYS restart if on boundary?
             if (any(is.na(bgrad))) {
                 warning("some gradient components are NA near boundaries, skipping boundary check")
@@ -863,7 +864,7 @@ optimizeGlmer <- function(devfun,
 }
 
 check.boundary <- function(rho,opt,devfun,boundary.tol) {
-    bdiff <- rho$pp$theta - rho$lower[seq_along(rho$pp$theta)]
+    bdiff <- (rho$mkPar %||% identity)(rho$pp$theta) - rho$lower
     if (any(edgevals <- 0 < bdiff & bdiff < boundary.tol)) {
         ## try sucessive "close-to-edge parameters" to see
         ## if we can improve by setting them equal to the boundary

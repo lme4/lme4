@@ -655,11 +655,13 @@ anova.merMod <- anovaLmer
 
 ##' @S3method as.function merMod
 as.function.merMod <- function(x, ...) {
+    reCovs <- attr(x, "reCovs")
     rho <- list2env(list(resp  = x@resp$copy(),
                          pp    = x@pp$copy(),
                          beta0 = x@beta,
                          u0   =  x@u,
-                         mkTheta = mkMkTheta(attr(x, "reCovs"))),
+                         mkPar = mkMkPar(reCovs),
+                         mkTheta = mkMkTheta(reCovs)),
                     parent=as.environment("package:lme4"))
     ## FIXME: extract verbose [, maxit] and control
     mkdevfun(rho, getME(x, "devcomp")$dims[["nAGQ"]], ...)
@@ -1514,9 +1516,12 @@ refit.merMod <- function(object,
                  GQmat = GHrule(nAGQ),
                  fac = object@flist[[1]],
                  pp=pp, resp=rr, u0=pp$u0, verbose=verbose, dpars=seq_len(nth))
-        } else
+        } else {
+            reCovs <- attr(object, "reCovs")
             list(pp=pp, resp=rr, u0=pp$u0, verbose=verbose, dpars=seq_len(nth),
-                 mkTheta = mkMkTheta(attr(object, "reCovs")))
+                 mkPar = mkMkPar(reCovs),
+                 mkTheta = mkMkTheta(reCovs))
+        }
     ff <- mkdevfun(list2env(devlist), nAGQ=nAGQ, maxit=maxit, verbose=verbose)
     ## rho <- environment(ff) == list2env(devlist)
     xst       <- rep.int(0.1, nth)
@@ -1563,12 +1568,14 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
     ##  consistent with lmer (default NM).  Should be based on internally stored 'optimizer' value
     if (!isREML(x)) return(x)
     stopifnot(is(rr <- x@resp, "lmerResp"))
+    reCovs <- attr(x, "reCovs")
     rho <- new.env(parent=parent.env(environment()))
     rho$resp <- new(class(rr), y=rr$y, offset=rr$offset, weights=rr$weights, REML=0L)
     xpp <- x@pp$copy()
     rho$pp <- new(class(xpp), X=xpp$X, Zt=xpp$Zt, Lambdat=xpp$Lambdat,
                   Lind=xpp$Lind, theta=xpp$theta, n=nrow(xpp$X))
-    rho$mkTheta <- mkMkTheta(attr(x, "reCovs"))
+    rho$mkPar <- mkMkPar(reCovs)
+    rho$mkTheta <- mkMkTheta(reCovs)
     devfun <- mkdevfun(rho, 0L) # FIXME? also pass {verbose, maxit, control}
     opt <- ## "smart" calc.derivs rules
         if(optimizer == "bobyqa" && !any("calc.derivs" == ...names()))
@@ -2168,9 +2175,11 @@ getME.merMod <- function(object,
                    nAGQ <- object@devcomp$dims[["nAGQ"]]
                    updateGlmerDevfun(d1, reTrms, nAGQ=nAGQ)
                } else {
+                   reCovs <- attr(object, "reCovs")
                    ## copied from refit ... DRY ...
                    devlist <- list(pp=PR, resp=rsp, u0=PR$u0, dpars=seq_along(PR$theta), verbose=verbose,
-                                   mkTheta = mkMkTheta(attr(object, "reCovs")))
+                                   mkPar = mkMkPar(reCovs),
+                                   mkTheta = mkMkTheta(reCovs))
                    mkdevfun(rho=list2env(devlist),
                             ## FIXME: fragile ... // also pass 'maxit' ?
                             verbose=verbose, control=object@optinfo$control)

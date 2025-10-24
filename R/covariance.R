@@ -209,6 +209,29 @@ setMethod("getLower",
 ## .... HELPERS ........................................................
 
 ## return a function that maps
+##     c(theta_1, ..., theta_k) -> c(par_1, ..., par_k)
+mkMkPar <-
+function (reCovs) {
+    if (all(vapply(reCovs, is, FALSE, "UnstructuredCovariance")))
+        return(function (theta) theta)
+    nc <- vapply(reCovs, slot, 0L, "nc")
+    nt <- (nc * (nc - 1L)) %/% 2L + nc
+    np <- lengths(lapply(reCovs, getPar))
+    snt <- sum(nt)
+    snp <- sum(np)
+    jt <- split(seq_len(nt), rep(seq_along(nt), nt))
+    jp <- split(seq_len(np), rep(seq_along(np), np))
+    par <- double(snp)
+    ii <- seq_along(reCovs)
+    function (theta) {
+        for (i in ii)
+            par[jp[[i]]] <<-
+                getPar(setTheta(reCovs[[i]], theta[jt[[i]]]))
+        par
+    }
+}
+
+## return a function that maps
 ##     c(par_1, ..., par_k) -> c(theta_1, ..., theta_k)
 mkMkTheta <-
 function (reCovs) {
@@ -216,12 +239,12 @@ function (reCovs) {
         return(function (par) par)
     nc <- vapply(reCovs, slot, 0L, "nc")
     nt <- (nc * (nc - 1L)) %/% 2L + nc
-    np <- lengths(lapply(reCovs, slot, "par"))
+    np <- lengths(lapply(reCovs, getPar))
     snt <- sum(nt)
     snp <- sum(np)
     jt <- split(seq_len(nt), rep(seq_along(nt), nt))
     jp <- split(seq_len(np), rep(seq_along(np), np))
-    theta <- double(nt)
+    theta <- double(snt)
     ii <- seq_along(reCovs)
     function (par) {
         for (i in ii)

@@ -1,14 +1,14 @@
 ## Mikael for flexSigmaMinimum
 
-* mkMkTheta (done), upReTrms (done), upReCovs (done)
-* handle length(lower) == length(par) < length(theta);
-  at first glance, all of 'getStart', 'updateStart', and the
-  'restart_edge' branch of 'optimizeLmer' need to be revisited
-* check that existing tests pass, which may need
+* check that existing tests pass (or adapt them), which may need
+  - handling of length(lower) == length(par) < length(theta)
+    (done partially and maybe suboptimally via mkPar, mkTheta)
+  - handling of TODO in devfun2 (related to above)
+  - see git `diff master man tests`
+* hom=TRUE
   - patch for reformulas::no_specials(quote(diag(1 | f, hom = TRUE)))
-  - handling of TODO in devfun2
-* man/*.Rd, tests/*.R
 * cs, ar1
+* man/*.Rd, tests/*.R
 * RC actually seems more natural than S4 as we repeatedly update things
 
 
