@@ -18,31 +18,74 @@ setClass("Covariance",
          contains = "VIRTUAL",
          slots = c(nc = "integer", par = "numeric"),
          prototype = list(nc = 0L),
-         validity = function (object) {
+         validity =
+         function (object) {
              if (length(nc <- object@nc) != 1L || is.na(nc) || nc < 0L)
-                 "'nc' is not a non-negative integer"
+                 gettextf("'%s' is not a non-negative integer",
+                          "nc")
              else if (!is.double(object@par))
-                 "type of 'par' is not \"double\""
+                 gettextf("type of '%s' is not \"%s\"",
+                          "par", "double")
              else TRUE
          })
 
-setClass("UnstructuredCovariance",
+setClass("Covariance.us",
          contains = "Covariance",
-         validity = function (object) {
+         validity =
+         function (object) {
              nc <- object@nc
              if (length(object@par) != (nc * (nc - 1L)) %/% 2L + nc)
-                 "length of 'par' is not nc*(nc+1)/2"
+                 gettextf("length of '%s' is not %s",
+                          "par", "nc*(nc+1)/2")
              else TRUE
          })
 
-setClass("DiagonalCovariance",
+setClass("Covariance.diag",
          contains = "Covariance",
-         validity = function (object) {
+         slots = c(hom = "logical"),
+         prototype = list(hom = FALSE),
+         validity =
+         function (object) {
              nc <- object@nc
-             if (length(par <- object@par) != 1L && length(par) != nc)
-                 "length of 'par' is not 1 and not 'nc'"
+             if (length(hom <- object@hom) != 1L || is.na(hom))
+                 gettextf("'%s' is not %s or %s",
+                          "hom", "TRUE", "FALSE")
+             else if (length(par <- object@par) !=
+                      if (hom) nc > 0L else nc) {
+                 if (hom)
+                     gettextf("length of '%s' is not %d",
+                              "par", nc > 0L)
+                 else gettextf("length of '%s' is not '%s'",
+                               "par", "nc")
+             }
              else TRUE
          })
+
+setClass("Covariance.cs",
+         contains = "Covariance",
+         slots = c(hom = "logical"),
+         prototype = list(hom = FALSE),
+         validity =
+         .fn <-
+         function (object) {
+             nc <- object@nc
+             if (length(hom <- object@hom) != 1L || is.na(hom))
+                 gettextf("'%s' is not %s or %s",
+                          "hom", "TRUE", "FALSE")
+             else if (length(par <- object@par) !=
+                      (if (hom) nc > 0L else nc) + (nc > 1L))
+                 gettextf("length of '%s' is not %s",
+                          "par", if (hom) "(nc>0)+(nc>1)" else "nc+(nc>1)")
+             else TRUE
+         })
+
+setClass("Covariance.ar1",
+         contains = "Covariance",
+         slots = c(hom = "logical"),
+         prototype = list(hom = FALSE),
+         validity = .fn)
+
+rm(.fn)
 
 
 ## .... GENERIC FUNCTIONS ..............................................
@@ -68,14 +111,25 @@ body(getLambdat) <-
     do.call(substitute, list(body(getLambdat), list(.BY. = quote(nc))))
 
 getPar <-
-function (object, ...) {
+function (object) {
     ## stopifnot(is(object, "Covariance"))
     object@par
 }
 
-setGeneric("setPar",
-           function (object, value, ...)
-               standardGeneric("setPar"))
+setPar <-
+function (object, value) {
+    ## stopifnot(is(object, "Covariance"))
+    if (!is.double(value))
+        stop(gettextf("type of '%s' is not \"%s\"",
+                      "value", "double"),
+             domain = NA)
+    if (length(value) != length(object@par))
+        stop(gettextf("length of '%s' is not equal to length of '%s'",
+                      "value", "par"),
+             domain = NA)
+    object@par <- value
+    object
+}
 
 setGeneric("getTheta",
            function (object, ...)
@@ -92,13 +146,12 @@ setGeneric("getLower",
 
 ## .... METHODS ........................................................
 
-## For class "UnstructuredCovariance"
-
 setMethod("initialize",
-          c(.Object = "UnstructuredCovariance"),
-          function (.Object, nc, ...) {
-              if (nargs() == 2L && !missing(nc) && is.integer(nc) &&
-                  length(nc) == 1L && !is.na(nc) && nc >= 0L) {
+          c(.Object = "Covariance.us"),
+          function (.Object, nc, par, ...) {
+              if (missing(par) && !missing(nc) &&
+                  is.integer(nc) && length(nc) == 1L && !is.na(nc) &&
+                  nc >= 0L) {
                   .Object@nc <- nc
                   .Object@par <- `[<-`(double((nc * (nc - 1L)) %/% 2L + nc),
                                        cumsum(c(if (nc > 0L) 1L, if (nc > 1L) nc:2L)),
@@ -108,74 +161,51 @@ setMethod("initialize",
               else callNextMethod()
           })
 
-setMethod("setPar",
-          c(object = "UnstructuredCovariance", value = "numeric"),
-          function (object, value, ...) {
-              nc <- object@nc
-              if (length(value) != (nc * (nc - 1L)) %/% 2L + nc)
-                  stop("length of 'value' is not nc*(nc+1)/2")
-              if (!is.double(value))
-                  storage.mode(value) <- "double"
-              object@par <- value
-              object
-          })
-
-setMethod("getTheta",
-          c(object = "UnstructuredCovariance"),
-          function (object, ...)
-              object@par)
-
-setMethod("setTheta",
-          c(object = "UnstructuredCovariance", value = "numeric"),
-          function (object, value, pos = 0L, ...) {
-              nc <- object@nc
-              nt <- (nc * (nc - 1L)) %/% 2L + nc
-              if (nt > length(value) - pos)
-                  stop("attempt to read past end of 'value'")
-              if (!is.double(value))
-                  storage.mode(value) <- "double"
-              object@par <- if (nt == length(value)) value else value[seq.int(from = pos + 1L, length.out = nt)]
-              object
-          })
-
-setMethod("getLower",
-          c(object = "UnstructuredCovariance"),
-          function (object, ...) {
-              nc <- object@nc
-              `[<-`(rep(-Inf, (nc * (nc - 1L)) %/% 2L + nc),
-                    cumsum(c(if (nc > 0L) 1L, if (nc > 1L) nc:2L)),
-                    0)
-          })
-
-
-## For class "DiagonalCovariance"
-
 setMethod("initialize",
-          c(.Object = "DiagonalCovariance"),
-          function (.Object, nc, ...) {
-              if (nargs() == 2L && !missing(nc) && is.integer(nc) &&
-                  length(nc) == 1L && !is.na(nc) && nc >= 0L) {
+          c(.Object = "Covariance.diag"),
+          function (.Object, nc, par, hom = FALSE, ...) {
+              if (missing(par) && !missing(nc) &&
+                  is.integer(nc) && length(nc) == 1L && !is.na(nc) &&
+                  nc >= 0L &&
+                  is.logical(hom) && length(hom) == 1L && !is.na(hom)) {
                   .Object@nc <- nc
-                  .Object@par <- rep(1, nc)
+                  .Object@hom <- hom
+                  .Object@par <- rep(1, if (hom) nc > 0L else nc)
                   .Object
               }
               else callNextMethod()
           })
 
-setMethod("setPar",
-          c(object = "DiagonalCovariance", value = "numeric"),
-          function (object, value, ...) {
-              nc <- object@nc
-              if (length(value) != 1L && length(value) != nc)
-                  stop("length of 'value' is not 1 and not 'nc'")
-              if (!is.double(value))
-                  storage.mode(value) <- "double"
-              object@par <- value
-              object
+setMethod("initialize",
+          c(.Object = "Covariance.cs"),
+          .fn <-
+          function (.Object, nc, par, hom = FALSE, ...) {
+              if (!missing(par) && !missing(nc) &&
+                  is.integer(nc) && length(nc) == 1L && !is.na(nc) &&
+                  nc >= 0L &&
+                  is.logical(hom) && length(hom) == 1L && !is.na(hom)) {
+                  .Object@nc <- nc
+                  .Object@hom <- hom
+                  .Object@par <- c(rep(1, if (hom) nc > 0L else nc),
+                                   if (nc > 1L) 0)
+                  .Object
+              }
+              else callNextMethod()
           })
 
+setMethod("initialize",
+          c(.Object = "Covariance.ar1"),
+          .fn)
+
+rm(.fn)
+
 setMethod("getTheta",
-          c(object = "DiagonalCovariance"),
+          c(object = "Covariance.us"),
+          function (object, ...)
+              object@par)
+
+setMethod("getTheta",
+          c(object = "Covariance.diag"),
           function (object, ...) {
               nc <- object@nc
               `[<-`(double((nc * (nc - 1L)) %/% 2L + nc),
@@ -183,27 +213,103 @@ setMethod("getTheta",
                     object@par)
           })
 
+setMethod("getTheta",
+          c(object = "Covariance.cs"),
+          function (object, ...) {
+              .NotYetImplemented()
+          })
+
+setMethod("getTheta",
+          c(object = "Covariance.ar1"),
+          function (object, ...) {
+              .NotYetImplemented()
+          })
+
 setMethod("setTheta",
-          c(object = "DiagonalCovariance", value = "numeric"),
+          c(object = "Covariance.us", value = "numeric"),
           function (object, value, pos = 0L, ...) {
               nc <- object@nc
               nt <- (nc * (nc - 1L)) %/% 2L + nc
-              if (nt > length(value) - pos)
-                  stop("attempt to read past end of 'value'")
               if (!is.double(value))
-                  storage.mode(value) <- "double"
-              i <-
-              if (length(object@par) == 1L)
-                  (if (nc > 0L) pos + 1L)
-              else cumsum(c(if (nc > 0L) pos + 1L, if (nc > 1L) nc:2L))
+                  stop(gettextf("type of '%s' is not \"%s\"",
+                                "value", "double"),
+                       domain = NA)
+              if (nt > length(value) - pos)
+                  stop(gettextf("attempt to read past end of '%s'",
+                                "value"),
+                       domain = NA)
+              object@par <-
+              if (nt == length(value))
+                  value
+              else {
+                  i <- seq.int(from = pos + 1L, length.out = nt)
+                  value[i]
+              }
+              object
+          })
+
+setMethod("setTheta",
+          c(object = "Covariance.diag", value = "numeric"),
+          function (object, value, pos = 0L, ...) {
+              nc <- object@nc
+              nt <- (nc * (nc - 1L)) %/% 2L + nc
+              if (!is.double(value))
+                  stop(gettextf("type of '%s' is not \"%s\"",
+                                "value", "double"),
+                       domain = NA)
+              if (nt > length(value) - pos)
+                  stop(gettextf("attempt to read past end of '%s'",
+                                "value"),
+                       domain = NA)
+              hom <- object@hom
+              i <- if (hom) { if (nc > 0L) pos + 1L } else cumsum(c(if (nc > 0L) pos + 1L, if (nc > 1L) nc:2L))
               object@par <- value[i]
               object
           })
 
+setMethod("setTheta",
+          c(object = "Covariance.cs", value = "numeric"),
+          function (object, value, pos = 0L, ...) {
+              .NotYetImplemented()
+              object
+          })
+
+setMethod("setTheta",
+          c(object = "Covariance.ar1", value = "numeric"),
+          function (object, value, pos = 0L, ...) {
+              .NotYetImplemented()
+              object
+          })
+
 setMethod("getLower",
-          c(object = "DiagonalCovariance"),
+          c(object = "Covariance.us"),
+          function (object, ...) {
+              nc <- object@nc
+              `[<-`(rep(-Inf, (nc * (nc - 1L)) %/% 2L + nc),
+                    cumsum(c(if (nc > 0L) 1L, if (nc > 1L) nc:2L)),
+                    0)
+          })
+
+setMethod("getLower",
+          c(object = "Covariance.diag"),
           function (object, ...)
               double(length(object@par)))
+
+setMethod("getLower",
+          c(object = "Covariance.cs"),
+          .fn <-
+          function (object, ...) {
+              nc <- object@nc
+              hom <- object@hom
+              c(double(if (hom) nc > 0L else nc),
+                if (nc > 1L) -Inf)
+          })
+
+setMethod("getLower",
+          c(object = "Covariance.ar1"),
+          .fn)
+
+rm(.fn)
 
 
 ## .... HELPERS ........................................................
@@ -212,11 +318,11 @@ setMethod("getLower",
 ##     c(theta_1, ..., theta_k) -> c(par_1, ..., par_k)
 mkMkPar <-
 function (reCovs) {
-    if (all(vapply(reCovs, is, FALSE, "UnstructuredCovariance")))
+    if (all(vapply(reCovs, is, FALSE, "Covariance.us")))
         return(function (theta) theta)
     nc <- vapply(reCovs, slot, 0L, "nc")
     nt <- (nc * (nc - 1L)) %/% 2L + nc
-    np <- lengths(lapply(reCovs, getPar))
+    np <- lengths(lapply(reCovs, getPar), use.names = FALSE)
     snt <- sum(nt)
     snp <- sum(np)
     jt <- split(seq_len(nt), rep(seq_along(nt), nt))
@@ -235,7 +341,7 @@ function (reCovs) {
 ##     c(par_1, ..., par_k) -> c(theta_1, ..., theta_k)
 mkMkTheta <-
 function (reCovs) {
-    if (all(vapply(reCovs, is, FALSE, "UnstructuredCovariance")))
+    if (all(vapply(reCovs, is, FALSE, "Covariance.us")))
         return(function (par) par)
     nc <- vapply(reCovs, slot, 0L, "nc")
     nt <- (nc * (nc - 1L)) %/% 2L + nc
@@ -263,10 +369,20 @@ function (reCovs) {
 ## 'theta' were identical by construction
 upReTrms <-
 function (reTrms, spCalls) {
-    spMap <- c(  "us" = "UnstructuredCovariance",
-               "diag" =     "DiagonalCovariance")
     spNames <- as.character(lapply(spCalls, `[[`, 1L))
-    nc <- lengths(reTrms$cnms, FALSE)
+    hom1 <- function (spCall) {
+        ## FIXME? not evaluating 'hom' in environment of formula
+        hom <- spCall$hom
+        if (is.null(hom))
+            FALSE
+        else if (is.logical(hom) && length(hom) == 1L && !is.na(hom))
+            hom
+        else stop(gettextf("'%s' is not %s or %s in special call",
+                           "hom", "TRUE", "FALSE"),
+                  domain = NA)
+    }
+    hom <- vapply(spCalls, hom1, FALSE, USE.NAMES = FALSE)
+    nc <- lengths(reTrms$cnms, use.names = FALSE)
     nl <- reTrms$nl
     ncnl <- rep(nc, nl)
     nt <- (nc * (nc - 1L)) %/% 2L + nc
@@ -290,7 +406,11 @@ function (reTrms, spCalls) {
                        nl),
                    FALSE, FALSE)
     ## Exhale ...
-    reCovs <- .mapply(new, list(Class = spMap[spNames], nc = nc), NULL)
+    reCovs <- .mapply(new,
+                      list(Class = paste0("Covariance.", spNames),
+                           nc = nc,
+                           hom = hom),
+                      NULL)
     reTrms$Lambdat <- new("dgCMatrix", Dim = rep(length(Lt.dp), 2L),
                           p = Lt.p, i = Lt.i, x = as.double(Lind))
     reTrms$Lind <- Lind

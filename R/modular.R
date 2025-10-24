@@ -365,7 +365,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- quote(stats::model.frame)
 
-    specials <- c("us", "diag")
+    specials <- c("us", "diag", "cs", "ar1")
     ## substitute  special(x | f)  with  (x | f)
     fr.form. <- noSpecials(formula, specials = specials, delete = FALSE)
     ## substitute  (x | f)  and  (x || f)  with  (x + f)

@@ -1,13 +1,16 @@
 ## Mikael for flexSigmaMinimum
 
 * check that existing tests pass (or adapt them), which may need
-  - handling of length(lower) == length(par) < length(theta)
-    (done partially and maybe suboptimally via mkPar, mkTheta)
-  - handling of TODO in devfun2 (related to above)
-  - see git `diff master man tests`
-* hom=TRUE
-  - patch for reformulas::no_specials(quote(diag(1 | f, hom = TRUE)))
-* cs, ar1
+  - handling of `length(lower) == length(par) < length(theta)`
+    (done partially and maybe suboptimally via `mkPar`, `mkTheta`)
+  - handling of TODO in `devfun2` (related to above)
+  - see FIXME comments in `git diff master man tests`
+* `hom=`
+  - machinery is in place, but `reformulas::no_specials` chokes on calls
+    with more than one argument hence it needs a patch.  E.g.,
+	`reformulas::no_specials(quote(diag(1 | f, hom = TRUE)))`
+* `Covariance.cs`, `Covariance.ar1`
+  - machinery is in place except for `getTheta`, `setTheta` methods
 * man/*.Rd, tests/*.R
 * RC actually seems more natural than S4 as we repeatedly update things
 
