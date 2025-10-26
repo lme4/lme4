@@ -2,16 +2,22 @@
 
 ##
 ## Objects inheriting from virtual class "Covariance" represent
-## 'nc'-by-'nc' covariance matrices 'S' using 'par', a numeric vector
-## of length at most nc*(nc+1)/2 storing parameters.
+## 'nc'-by-'nc' covariance matrices 'S' using 'par', a vector storing
+## nc*(nc+1)/2 or fewer parameters.
 ##
-## Subclasses must define the mapping 'F' from 'par' to 'theta', the
-## numeric vector of length nc*(nc+1)/2 storing in column-major order
-## the lower triangular entries of the lower triangular Cholesky factor
-## of 'S'.
+## Subclasses must define a mapping
 ##
-##     F(par) = theta := L[lower.tri(L, diag = TRUE)]
-##                  L := t(chol(S))
+##     par [double]  ---->  ( theta [double] ,  thetaIndex [integer] )
+##
+## such that theta[thetaIndex] stores in column-major order the
+## structurally nonzero entries of Lambdat := chol(S).  By convention,
+## subclasses will define 'theta' as storing in *row-major* order only
+## the *independent* structurally nonzero entries of 'Lambdat', keeping
+## the length of 'theta' to a minimum.
+##
+## MJ:
+## Why do we change the storage order, when doing so greatly complicates
+## determination of 'thetaIndex'?
 ##
 
 setClass("Covariance",
@@ -90,25 +96,11 @@ rm(.fn)
 
 ## .... GENERIC FUNCTIONS ..............................................
 
-## Unused and perhaps not needed
-getLambda <- getLambdat <-
+getParLength <-
 function (object) {
     ## stopifnot(is(object, "Covariance"))
-    nc <- object@nc
-    ans <- matrix(0, nc, nc)
-    if (nc > 0L) {
-        i <- sequence.default(
-            from = seq.int(from = 1L, by = nc + 1L, length.out = nc),
-            by = .BY.,
-            nvec = nc:1L)
-        ans[i] <- getTheta(object)
-    }
-    ans
+    length(object@par)
 }
-body(getLambda ) <-
-    do.call(substitute, list(body(getLambda ), list(.BY. = 1L)))
-body(getLambdat) <-
-    do.call(substitute, list(body(getLambdat), list(.BY. = quote(nc))))
 
 getPar <-
 function (object) {
@@ -132,16 +124,45 @@ function (object, value) {
 }
 
 setGeneric("getTheta",
-           function (object, ...)
+           function (object)
                standardGeneric("getTheta"))
 
+setGeneric("getThetaLength",
+           function (object)
+               standardGeneric("getThetaLength"))
+
+setGeneric("getThetaIndex",
+           function (object)
+               standardGeneric("getThetaIndex"))
+
+setGeneric("getThetaIndexLength",
+           function (object)
+               standardGeneric("getThetaIndexLength"))
+
 setGeneric("setTheta",
-           function (object, value, ...)
-               standardGeneric("setTheta"))
+           function (object, value, pos = 0L)
+               standardGeneric("setTheta"),
+           signature = c("object", "value"))
 
 setGeneric("getLower",
-           function (object, ...)
+           function (object)
                standardGeneric("getLower"))
+
+setGeneric("getUpper",
+           function (object)
+               standardGeneric("getUpper"))
+
+setGeneric("getLambda",
+           function (object)
+               standardGeneric("getLambda"))
+
+setGeneric("getLambdat.dp",
+           function (object)
+               standardGeneric("getLambdat.dp"))
+
+setGeneric("getLambdat.i",
+           function (object)
+               standardGeneric("getLambdat.i"))
 
 
 ## .... METHODS ........................................................
@@ -201,35 +222,176 @@ rm(.fn)
 
 setMethod("getTheta",
           c(object = "Covariance.us"),
-          function (object, ...)
+          .fn <-
+          function (object)
               object@par)
 
+## L[i, j]/sigma[i] =
+##     if (i == j)
+##         1
+##     else 0
 setMethod("getTheta",
           c(object = "Covariance.diag"),
-          function (object, ...) {
-              nc <- object@nc
-              `[<-`(double((nc * (nc - 1L)) %/% 2L + nc),
-                    cumsum(c(if (nc > 0L) 1L, if (nc > 1L) nc:2L)),
-                    object@par)
-          })
+          .fn)
 
+rm(.fn)
+
+## L[i, j]/sigma[i] =
+##     if (i == j)
+##         sqrt(1 - rho^2 * a[j])
+##     else (rho - rho^2 * a[j])/sqrt(1 - rho^2 * a[j])
+## where
+##     a[    1] := 0
+##     a[j + 1] := a[j] + (1 - rho * a[j])^2/(1 - rho^2 * a[j])
 setMethod("getTheta",
           c(object = "Covariance.cs"),
-          function (object, ...) {
-              .NotYetImplemented()
+          function (object) {
+              nc <- object@nc
+              if (nc <= 1L)
+                  return(object@par)
+              rho2 <- (rho <- object@par[length(object@par)])^2
+              a <- double(nc); a. <- 0
+              for (j in 1L:nc) {
+                  a[j] <- a.
+                  a. <- a. + (1 - rho * a.)^2/(1 - rho2 * a.)
+              }
+              v. <- sqrt(1 - rho2 * a)
+              v <- rbind(v., (rho - rho2 * a)/v.)
+              if (object@hom)
+                  object@par[1L] *
+                      v[1L:(2L * nc - 1L)]
+              else
+                  object@par[sequence.default(from = 1L:nc, nvec = nc:1L)] *
+                      rep(v, rbind(1L, (nc - 1L):0L))
           })
 
+## L[i, j]/sigma[i] =
+##     if (j == 1L)
+##         rho^(i - 1)
+##     else rho^(i - j) * sqrt(1 - rho^2)
 setMethod("getTheta",
           c(object = "Covariance.ar1"),
-          function (object, ...) {
-              .NotYetImplemented()
+          function (object) {
+              nc <- object@nc
+              if (nc <= 1L)
+                  return(object@par)
+              rho2 <- (rho <- object@par[length(object@par)])^2
+              v1 <- rho^(0L:(nc - 1L))
+              v2 <- rho^(0L:(nc - 2L)) * sqrt(1 - rho2)
+              if (object@hom)
+                  object@par[1L] *
+                      c(v1, v2)
+              else
+                  object@par[sequence.default(from = 1L:nc, nvec = nc:1L)] *
+                      c(v1, v2[sequence.default(from = 1L, nvec = (nc - 1L):1L)])
+          })
+
+setMethod("getThetaLength",
+          c(object = "Covariance.us"),
+          .fn <-
+          function (object)
+              length(object@par))
+
+setMethod("getThetaLength",
+          c(object = "Covariance.diag"),
+          .fn)
+
+rm(.fn)
+
+setMethod("getThetaLength",
+          c(object = "Covariance.cs"),
+          .fn <-
+          function (object) {
+              nc <- object@nc
+              if (object@hom)
+                  2L * nc - 1L
+              else (nc * (nc - 1L)) %/% 2L + nc
+          })
+
+setMethod("getThetaLength",
+          c(object = "Covariance.ar1"),
+          .fn)
+
+rm(.fn)
+
+setMethod("getThetaIndex",
+          c(object = "Covariance.us"),
+          function (object) {
+              nc <- object@nc
+              rep(seq.int(from = 1L - nc, by = 1L, length.out = nc),
+                  seq_len(nc)) +
+              cumsum(seq.int(from = nc, by = -1L, length.out = nc))[
+                  sequence.default(from = 1L, by = 1L, nvec = seq_len(nc))]
+          })
+
+setMethod("getThetaIndex",
+          c(object = "Covariance.diag"),
+          function (object) {
+              nc <- object@nc
+              if (object@hom) rep(1L, nc) else seq_len(nc)
+          })
+
+setMethod("getThetaIndex",
+          c(object = "Covariance.cs"),
+          function (object) {
+              nc <- object@nc
+              if (object@hom)
+              `[<-`(sequence.default(from = 2L, by = 2L, nvec = seq_len(nc)),
+                    cumsum(seq_len(nc)),
+                    seq_len(nc))
+              else # same as "Covariance.us"
+              rep(seq.int(from = 1L - nc, by = 1L, length.out = nc),
+                  seq_len(nc)) +
+              cumsum(seq.int(from = nc, by = -1L, length.out = nc))[
+                  sequence.default(from = 1L, by = 1L, nvec = seq_len(nc))]
+          })
+
+setMethod("getThetaIndex",
+          c(object = "Covariance.ar1"),
+          function (object) {
+              nc <- object@nc
+              if (object@hom)
+              `[<-`(sequence.default(from = seq.int(from = nc + 1L, length.out = nc), by = -1L, nvec = seq_len(nc)),
+                    1L + cumsum(seq.int(from = 0L, length.out = nc)),
+                    seq_len(nc))
+              else # same as "Covariance.us"
+              rep(seq.int(from = 1L - nc, by = 1L, length.out = nc),
+                  seq_len(nc)) +
+              cumsum(seq.int(from = nc, by = -1L, length.out = nc))[
+                  sequence.default(from = 1L, by = 1L, nvec = seq_len(nc))]
+          })
+
+setMethod("getThetaIndexLength",
+          c(object = "Covariance.us"),
+          function (object) {
+              nc <- object@nc
+              (nc * (nc - 1L)) %/% 2L + nc
+          })
+
+setMethod("getThetaIndexLength",
+          c(object = "Covariance.diag"),
+          function (object)
+              object@nc)
+
+setMethod("getThetaIndexLength",
+          c(object = "Covariance.cs"),
+          function (object) {
+              nc <- object@nc
+              (nc * (nc - 1L)) %/% 2L + nc
+          })
+
+setMethod("getThetaIndexLength",
+          c(object = "Covariance.ar1"),
+          function (object) {
+              nc <- object@nc
+              (nc * (nc - 1L)) %/% 2L + nc
           })
 
 setMethod("setTheta",
           c(object = "Covariance.us", value = "numeric"),
-          function (object, value, pos = 0L, ...) {
-              nc <- object@nc
-              nt <- (nc * (nc - 1L)) %/% 2L + nc
+          .fn <-
+          function (object, value, pos = 0L) {
+              nt <- length(object@par)
               if (!is.double(value))
                   stop(gettextf("type of '%s' is not \"%s\"",
                                 "value", "double"),
@@ -241,18 +403,23 @@ setMethod("setTheta",
               object@par <-
               if (nt == length(value))
                   value
-              else {
-                  i <- seq.int(from = pos + 1L, length.out = nt)
-                  value[i]
-              }
+              else
+                  value[seq.int(from = pos + 1L, length.out = nt)]
               object
           })
 
 setMethod("setTheta",
           c(object = "Covariance.diag", value = "numeric"),
-          function (object, value, pos = 0L, ...) {
+          .fn)
+
+rm(.fn)
+
+setMethod("setTheta",
+          c(object = "Covariance.cs", value = "numeric"),
+          function (object, value, pos = 0L) {
               nc <- object@nc
-              nt <- (nc * (nc - 1L)) %/% 2L + nc
+              hom <- object@hom
+              nt <- if (hom) 2L * nc - (nc > 0L) else (nc * (nc - 1L)) %/% 2L + nc
               if (!is.double(value))
                   stop(gettextf("type of '%s' is not \"%s\"",
                                 "value", "double"),
@@ -261,55 +428,209 @@ setMethod("setTheta",
                   stop(gettextf("attempt to read past end of '%s'",
                                 "value"),
                        domain = NA)
-              hom <- object@hom
-              i <- if (hom) { if (nc > 0L) pos + 1L } else cumsum(c(if (nc > 0L) pos + 1L, if (nc > 1L) nc:2L))
-              object@par <- value[i]
-              object
-          })
-
-setMethod("setTheta",
-          c(object = "Covariance.cs", value = "numeric"),
-          function (object, value, pos = 0L, ...) {
-              .NotYetImplemented()
+              object@par <-
+              if (nc <= 1L)
+                  value[if (nc > 0L) 1L]
+              else {
+                  ## L[2, 1] = sigma[2] * rho
+                  l21 <- value[pos + 1L + 1L]
+                  ## L[2, 2] = sigma[2] * sqrt(1 - rho^2)
+                  l22 <- value[pos + 1L + if (hom) 2L else nc]
+                  if (l21 == 0 && l22 == 0) # FIXME
+                      stop(gettextf("boundary case not yet supported by method for '%s' with signature (%s=\"%s\", %s=\"%s\")",
+                                    c("setTheta", "object", "Covariance.cs", "value", "numeric")),
+                           domain = NA)
+                  rho <- sign(l21) * 1/sqrt(1 + (l22/l21)^2)
+                  sigma <-
+                  if (hom)
+                      value[pos + 1L]
+                  else if (rho == 0)
+                      value[cumsum(c(pos + 1L, nc:2L))]
+                  else
+                      value[seq.int(from = pos + 1L, length.out = nc)]/
+                          rep(c(1, rho), c(1L, nc - 1L))
+                  c(sigma, rho)
+              }
               object
           })
 
 setMethod("setTheta",
           c(object = "Covariance.ar1", value = "numeric"),
-          function (object, value, pos = 0L, ...) {
-              .NotYetImplemented()
+          function (object, value, pos = 0L) {
+              nc <- object@nc
+              hom <- object@hom
+              nt <- if (hom) 2L * nc - (nc > 0L) else (nc * (nc - 1L)) %/% 2L + nc
+              if (!is.double(value))
+                  stop(gettextf("type of '%s' is not \"%s\"",
+                                "value", "double"),
+                       domain = NA)
+              if (nt > length(value) - pos)
+                  stop(gettextf("attempt to read past end of '%s'",
+                                "value"),
+                       domain = NA)
+              object@par <-
+              if (nc <= 1L)
+                  value[if (nc > 0L) 1L]
+              else {
+                  ## L[2, 1] = sigma[2] * rho
+                  l21 <- value[pos + 1L + 1L]
+                  ## L[2, 2] = sigma[2] * sqrt(1 - rho^2)
+                  l22 <- value[pos + 1L + if (hom) 2L else nc]
+                  if (l21 == 0 && l22 == 0) # FIXME
+                      stop(gettextf("boundary case not yet supported by method for '%s' with signature (%s=\"%s\", %s=\"%s\")",
+                                    c("setTheta", "object", "Covariance.ar1", "value", "numeric")),
+                           domain = NA)
+                  rho <- sign(l21) * 1/sqrt(1 + (l22/l21)^2)
+                  sigma <-
+                  if (hom)
+                      value[pos + 1L]
+                  else if (rho == 0)
+                      value[cumsum(c(pos + 1L, nc:2L))]
+                  else # avoid underflow of powers of abs(rho)
+                      exp(log(abs(value[seq.int(from = pos + 1L, length.out = nc)])) - (0L:(nc - 1L)) * log(abs(rho)))
+                  c(sigma, rho)
+              }
               object
           })
 
 setMethod("getLower",
           c(object = "Covariance.us"),
-          function (object, ...) {
+          function (object) {
               nc <- object@nc
-              `[<-`(rep(-Inf, (nc * (nc - 1L)) %/% 2L + nc),
+              `[<-`(rep(-Inf, length(object@par)),
                     cumsum(c(if (nc > 0L) 1L, if (nc > 1L) nc:2L)),
                     0)
           })
 
 setMethod("getLower",
           c(object = "Covariance.diag"),
-          function (object, ...)
+          function (object)
               double(length(object@par)))
 
 setMethod("getLower",
           c(object = "Covariance.cs"),
-          .fn <-
-          function (object, ...) {
+          function (object) {
               nc <- object@nc
-              hom <- object@hom
-              c(double(if (hom) nc > 0L else nc),
-                if (nc > 1L) -Inf)
+              c(double(if (object@hom) nc > 0L else nc),
+                if (nc > 1L) -1/(nc - 1L))
           })
 
 setMethod("getLower",
           c(object = "Covariance.ar1"),
-          .fn)
+          function (object) {
+              nc <- object@nc
+              c(double(if (object@hom) nc > 0L else nc),
+                if (nc > 1L) -1)
+          })
 
-rm(.fn)
+setMethod("getUpper",
+          c(object = "Covariance.us"),
+          function (object)
+              rep(Inf, length(object@par)))
+
+setMethod("getUpper",
+          c(object = "Covariance.diag"),
+          function (object)
+              rep(Inf, length(object@par)))
+
+setMethod("getUpper",
+          c(object = "Covariance.cs"),
+          function (object) {
+              nc <- object@nc
+              c(rep(Inf, if (object@hom) nc > 0L else nc),
+                if (nc > 1L) 1)
+          })
+
+setMethod("getUpper",
+          c(object = "Covariance.ar1"),
+          function (object) {
+              nc <- object@nc
+              c(rep(Inf, if (object@hom) nc > 0L else nc),
+                if (nc > 1L) 1)
+          })
+
+setMethod("getLambda",
+          c(object = "Covariance.us"),
+          function (object) {
+              nc <- object@nc
+              ans <- matrix(0, nc, nc)
+              if (nc > 0L)
+              ans[lower.tri(ans, diag = TRUE)] <- object@par
+              ans
+          })
+
+setMethod("getLambda",
+          c(object = "Covariance.diag"),
+          function (object) {
+              nc <- object@nc
+              diag(object@par, nc, nc, FALSE)
+          })
+
+setMethod("getLambda",
+          c(object = "Covariance.cs"),
+          function (object) {
+              nc <- object@nc
+              ans <- matrix(0, nc, nc)
+              if (nc > 0L)
+              ans[lower.tri(ans, diag = TRUE)] <-
+                  if (object@hom)
+                      rep(getTheta(object), rbind(1L, (nc - 1L):0L)[2L * nc - 1L])
+                  else getTheta(object)
+              ans
+          })
+
+setMethod("getLambda",
+          c(object = "Covariance.ar1"),
+          function (object) {
+              nc <- object@nc
+              ans <- matrix(0, nc, nc)
+              if (nc > 0L)
+              ans[lower.tri(ans, diag = TRUE)] <-
+                  if (object@hom)
+                      getTheta(object)[sequence.default(from = rep(c(1L, nc + 1L), c(1L, nc - 1L)), nvec = nc:1L)]
+                  else getTheta(object)
+              ans
+          })
+
+setMethod("getLambdat.dp",
+          c(object = "Covariance.us"),
+          function (object)
+              seq_len(object@nc))
+
+setMethod("getLambdat.dp",
+          c(object = "Covariance.diag"),
+          function (object)
+              rep(1L, object@nc))
+
+setMethod("getLambdat.dp",
+          c(object = "Covariance.cs"),
+          function (object)
+              seq_len(object@nc))
+
+setMethod("getLambdat.dp",
+          c(object = "Covariance.ar1"),
+          function (object)
+              seq_len(object@nc))
+
+setMethod("getLambdat.i",
+          c(object = "Covariance.us"),
+          function (object)
+              sequence.default(from = 0L, nvec = seq_len(object@nc)))
+
+setMethod("getLambdat.i",
+          c(object = "Covariance.diag"),
+          function (object)
+              seq.int(from = 0L, length.out = object@nc))
+
+setMethod("getLambdat.i",
+          c(object = "Covariance.cs"),
+          function (object)
+              sequence.default(from = 0L, nvec = seq_len(object@nc)))
+
+setMethod("getLambdat.i",
+          c(object = "Covariance.ar1"),
+          function (object)
+              sequence.default(from = 0L, nvec = seq_len(object@nc)))
 
 
 ## .... HELPERS ........................................................
@@ -320,13 +641,12 @@ mkMkPar <-
 function (reCovs) {
     if (all(vapply(reCovs, is, FALSE, "Covariance.us")))
         return(function (theta) theta)
-    nc <- vapply(reCovs, slot, 0L, "nc")
-    nt <- (nc * (nc - 1L)) %/% 2L + nc
-    np <- lengths(lapply(reCovs, getPar), use.names = FALSE)
+    nt <- vapply(reCovs, getThetaLength, 0L, USE.NAMES = FALSE)
+    np <- vapply(reCovs, getParLength, 0L, USE.NAMES = FALSE)
     snt <- sum(nt)
     snp <- sum(np)
-    jt <- split(seq_len(nt), rep(seq_along(nt), nt))
-    jp <- split(seq_len(np), rep(seq_along(np), np))
+    jt <- split(seq_len(snt), rep(seq_along(nt), nt))
+    jp <- split(seq_len(snp), rep(seq_along(np), np))
     par <- double(snp)
     ii <- seq_along(reCovs)
     function (theta) {
@@ -343,13 +663,12 @@ mkMkTheta <-
 function (reCovs) {
     if (all(vapply(reCovs, is, FALSE, "Covariance.us")))
         return(function (par) par)
-    nc <- vapply(reCovs, slot, 0L, "nc")
-    nt <- (nc * (nc - 1L)) %/% 2L + nc
-    np <- lengths(lapply(reCovs, getPar))
+    nt <- vapply(reCovs, getThetaLength, 0L, USE.NAMES = FALSE)
+    np <- vapply(reCovs, getParLength, 0L, USE.NAMES = FALSE)
     snt <- sum(nt)
     snp <- sum(np)
-    jt <- split(seq_len(nt), rep(seq_along(nt), nt))
-    jp <- split(seq_len(np), rep(seq_along(np), np))
+    jt <- split(seq_len(snt), rep(seq_along(nt), nt))
+    jp <- split(seq_len(snp), rep(seq_along(np), np))
     theta <- double(snt)
     ii <- seq_along(reCovs)
     function (par) {
@@ -361,15 +680,14 @@ function (reCovs) {
 }
 
 ## update mkReTrms(..., calc.lambdat = FALSE) so that it has components
-## 'Lambdat', 'Lind', 'theta', 'lower', 'par', 'reCovs' where
+## 'Lambdat', 'Lind', 'theta', 'par', 'lower', 'upper', 'reCovs' where
 ##
-##     length(lower) == length(par) <= length(theta)
+##     length(theta) >= length(par) == length(lower) == length(upper)
 ##
-## note that previously there was no 'par' and no 'reCovs' as 'par' and
-## 'theta' were identical by construction
+## note that previously there were no 'par', 'upper', and 'reCovs' as
+## previously 'par' and 'theta' were identical by construction
 upReTrms <-
 function (reTrms, spCalls) {
-    spNames <- as.character(lapply(spCalls, `[[`, 1L))
     hom1 <- function (spCall) {
         ## FIXME? not evaluating 'hom' in environment of formula
         hom <- spCall$hom
@@ -381,43 +699,35 @@ function (reTrms, spCalls) {
                            "hom", "TRUE", "FALSE"),
                   domain = NA)
     }
-    hom <- vapply(spCalls, hom1, FALSE, USE.NAMES = FALSE)
+    spNames <- as.character(lapply(spCalls, `[[`, 1L))
     nc <- lengths(reTrms$cnms, use.names = FALSE)
-    nl <- reTrms$nl
-    ncnl <- rep(nc, nl)
-    nt <- (nc * (nc - 1L)) %/% 2L + nc
-    ## Inhale ...
-    Lt.dp <- sequence.default(from = 1L,
-                              by = 1L,
-                              nvec = ncnl)
-    Lt.p <- cumsum(c(0L, Lt.dp))
-    Lt.i <- sequence.default(from = rep(cumsum(c(0L, ncnl)[seq_along(ncnl)]), ncnl),
-                             by = 1L,
-                             nvec = Lt.dp)
-    Lind1 <- function (from, nc)
-        rep(seq.int(from = from - nc, by = 1L, length.out = nc),
-            seq_len(nc)) +
-        cumsum(seq.int(from = nc, by = -1L, length.out = nc))[
-            sequence.default(from = 1L, by = 1L, nvec = seq_len(nc))]
-    Lind <- unlist(rep(.mapply(Lind1,
-                               list(from = cumsum(c(1L, nt)[seq_along(nt)]),
-                                    nc = nc),
-                               NULL),
-                       nl),
-                   FALSE, FALSE)
-    ## Exhale ...
+    hom <- vapply(spCalls, hom1, FALSE, USE.NAMES = FALSE)
     reCovs <- .mapply(new,
                       list(Class = paste0("Covariance.", spNames),
                            nc = nc,
                            hom = hom),
                       NULL)
-    reTrms$Lambdat <- new("dgCMatrix", Dim = rep(length(Lt.dp), 2L),
-                          p = Lt.p, i = Lt.i, x = as.double(Lind))
-    reTrms$Lind <- Lind
-    reTrms$theta <- unlist(lapply(reCovs, getTheta), FALSE, FALSE)
-    reTrms$lower <- unlist(lapply(reCovs, getLower), FALSE, FALSE)
-    reTrms$par   <- unlist(lapply(reCovs, getPar  ), FALSE, FALSE)
-    reTrms$reCovs <- reCovs
+    theta <- lapply(reCovs, getTheta)
+    thetaIndex <- lapply(reCovs, getThetaIndex)
+    nt <- lengths(theta)
+    nti <- lengths(thetaIndex)
+    nl <- reTrms$nl
+    nc.nl <- rep(nc, nl)
+    nti.nl <- rep(nti, nl)
+    R.dp <- unlist(rep(lapply(reCovs, getLambdat.dp), nl), FALSE, FALSE)
+    R.p <- cumsum(c(0L, R.dp))
+    R.i <- rep(cumsum(c(0L, nc.nl)[seq_along(nc.nl)]), nti.nl) +
+        unlist(rep(lapply(reCovs, getLambdat.i), nl), FALSE, FALSE)
+    R.x <- rep(cumsum(c(0L, nt)[seq_along(nt)]), nti * nl) +
+        unlist(rep(thetaIndex, nl), FALSE, FALSE)
+    reTrms$Lambdat <- new("dgCMatrix", Dim = rep(length(R.dp), 2L),
+                          p = R.p, i = R.i, x = as.double(R.x))
+    reTrms$Lind    <- R.x
+    reTrms$theta   <- unlist(                   theta, FALSE, FALSE)
+    reTrms$par     <- unlist(lapply(reCovs, getPar  ), FALSE, FALSE)
+    reTrms$lower   <- unlist(lapply(reCovs, getLower), FALSE, FALSE)
+    reTrms$upper   <- unlist(lapply(reCovs, getUpper), FALSE, FALSE)
+    reTrms$reCovs  <- reCovs
     reTrms
 }
 
@@ -428,10 +738,8 @@ function (reCovs, theta) {
     pos <- 0L
     for (i in seq_along(reCovs)) {
         elt <- reCovs[[i]]
-        nc <- elt@nc
-        nt <- (nc * (nc - 1L)) %/% 2L + nc
         reCovs[[i]] <- setTheta(elt, theta, pos)
-        pos <- pos + nt
+        pos <- pos + getThetaLength(elt)
     }
     reCovs
 }

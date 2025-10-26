@@ -1,19 +1,27 @@
-## Mikael for flexSigmaMinimum
+## `flexSigmaMinimum`
 
 * check that existing tests pass (or adapt them), which may need
   - handling of `length(lower) == length(par) < length(theta)`
     (done partially and maybe suboptimally via `mkPar`, `mkTheta`)
   - handling of TODO in `devfun2` (related to above)
+  - adapting usage of (or generalizing) the *_to_* functions in vcconv.R
+    which do not work for 'theta' not of length nc*(nc+1)/2
   - see FIXME comments in `git diff master man tests`
 * `hom=`
   - machinery is in place, but `reformulas::no_specials` chokes on calls
     with more than one argument hence it needs a patch.  E.g.,
 	`reformulas::no_specials(quote(diag(1 | f, hom = TRUE)))`
-* `Covariance.cs`, `Covariance.ar1`
-  - machinery is in place except for `getTheta`, `setTheta` methods
+* cs, ar1
+  - machinery is in place, but we do not yet make use of reTrms$upper
+    which is 1, not Inf, for 'rho'.  Where should it be stored?
+    'merMod' has a slot for 'lower' but not one for 'upper' ...
+* adapt 'tnames' for structured covariance matrices, as 'theta' need not
+  have length nc*(nc+1)/2; needed for getME(., "theta"), maybe elsewhere
 * man/*.Rd, tests/*.R
 * RC actually seems more natural than S4 as we repeatedly update things
 
+
+## not `flexSigmaMinimum`
 
 - "toast-scraping": improve and/or get rid of post-hoc convergence testing
 - build reliable downstream-package-testing infrastructure

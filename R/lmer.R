@@ -2216,7 +2216,7 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
          ## (1) numerical Hessian computed?
         (!is.null(h <- object@optinfo$derivs$Hessian) &&
          ## (2) does Hessian include fixed-effect parameters?
-         nrow(h) > (ntheta <- length(getME(object,"theta"))))
+         nrow(h) > (ntheta <- length(object@theta)))
     if (is.null(use.hessian)) use.hessian <- hess.avail
     if (use.hessian && !hess.avail) stop(shQuote("use.hessian"),
                                          "=TRUE specified, ",
@@ -2337,17 +2337,25 @@ vcov.summary.merMod <- function(object, ...) {
 ##' @seealso \code{\link{VarCorr}}
 ##' @return A matrix
 ##' @export
-mkVarCorr <- function(sc, cnms, nc, theta, nms) {
+mkVarCorr <- function(sc, cnms, nc, theta, nms, reCovs = NULL) {
+    if (is.null(reCovs)) {
     ncseq <- seq_along(nc)
     thl <- split(theta, rep.int(ncseq, (nc * (nc + 1))/2))
+    }
+    else
+    ncseq <- seq_along(reCovs)
     if(!all(nms == names(cnms))) ## the above FIXME
         warning("nms != names(cnms)  -- whereas lme4-authors thought they were --\n",
                 "Please report!", immediate. = TRUE)
     ans <- lapply(ncseq, function(i)
               {
                   ## Li := \Lambda_i, the i-th block diagonal of \Lambda(\theta)
+                  if (is.null(reCovs)) {
                   Li <- diag(nrow = nc[i])
                   Li[lower.tri(Li, diag = TRUE)] <- thl[[i]]
+                  }
+                  else
+                  Li <- getLambda(reCovs[[i]])
                   rownames(Li) <- cnms[[i]]
                   ## val := \Sigma_i = \sigma^2 \Lambda_i \Lambda_i', the
                   val <- tcrossprod(sc * Li) # variance-covariance
@@ -2381,7 +2389,8 @@ VarCorr.merMod <- function(x, sigma = 1, ...)
         sigma <- sigma(x)
     nc <- lengths(cnms) # no. of columns per term
     structure(mkVarCorr(sigma, cnms = cnms, nc = nc, theta = x@theta,
-                        nms = { fl <- x@flist; names(fl)[attr(fl, "assign")]}),
+                        nms = { fl <- x@flist; names(fl)[attr(fl, "assign")]},
+                        reCovs = attr(x, "reCovs")),
               useSc = as.logical(x@devcomp$dims[["useSc"]]),
               class = "VarCorr.merMod")
 }
@@ -2485,7 +2494,7 @@ summary.merMod <- function(object,
     }
     ## se.calc:
     hess.avail <- (!is.null(h <- object@optinfo$derivs$Hessian) &&
-                   nrow(h) > length(getME(object,"theta")))
+                   nrow(h) > length(object@theta))
     if (is.null(use.hessian)) use.hessian <- hess.avail
     if (use.hessian && !hess.avail)
         stop("'use.hessian=TRUE' specified, but Hessian is unavailable")

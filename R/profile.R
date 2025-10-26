@@ -2,7 +2,7 @@
 
 profnames <- function(object, signames=TRUE,
                       useSc=isLMM(object), prefix=c("sd","cor")) {
-    ntp <- length(getME(object,"theta"))
+    ntp <- length(object@theta)
     ## return
     c(if(signames) sprintf(".sig%02d", seq(ntp))
       else tnames(object, old=FALSE, prefix=prefix),
