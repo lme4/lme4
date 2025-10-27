@@ -191,7 +191,7 @@ setMethod("initialize",
                   is.logical(hom) && length(hom) == 1L && !is.na(hom)) {
                   .Object@nc <- nc
                   .Object@hom <- hom
-                  .Object@par <- rep(1, if (hom) nc > 0L else nc)
+                  .Object@par <- rep(1, if (hom) 1L * (nc > 0L) else nc)
                   .Object
               }
               else callNextMethod()
@@ -207,7 +207,7 @@ setMethod("initialize",
                   is.logical(hom) && length(hom) == 1L && !is.na(hom)) {
                   .Object@nc <- nc
                   .Object@hom <- hom
-                  .Object@par <- c(rep(1, if (hom) nc > 0L else nc),
+                  .Object@par <- c(rep(1, if (hom) 1L * (nc > 0L) else nc),
                                    if (nc > 1L) 0)
                   .Object
               }
@@ -513,7 +513,7 @@ setMethod("getLower",
           c(object = "Covariance.cs"),
           function (object) {
               nc <- object@nc
-              c(double(if (object@hom) nc > 0L else nc),
+              c(double(if (object@hom) 1L * (nc > 0L) else nc),
                 if (nc > 1L) -1/(nc - 1L))
           })
 
@@ -521,7 +521,7 @@ setMethod("getLower",
           c(object = "Covariance.ar1"),
           function (object) {
               nc <- object@nc
-              c(double(if (object@hom) nc > 0L else nc),
+              c(double(if (object@hom) 1L * (nc > 0L) else nc),
                 if (nc > 1L) -1)
           })
 
@@ -539,7 +539,7 @@ setMethod("getUpper",
           c(object = "Covariance.cs"),
           function (object) {
               nc <- object@nc
-              c(rep(Inf, if (object@hom) nc > 0L else nc),
+              c(rep(Inf, if (object@hom) 1L * (nc > 0L) else nc),
                 if (nc > 1L) 1)
           })
 
@@ -547,7 +547,7 @@ setMethod("getUpper",
           c(object = "Covariance.ar1"),
           function (object) {
               nc <- object@nc
-              c(rep(Inf, if (object@hom) nc > 0L else nc),
+              c(rep(Inf, if (object@hom) 1L * (nc > 0L) else nc),
                 if (nc > 1L) 1)
           })
 
