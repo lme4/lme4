@@ -625,6 +625,14 @@ optimizeLmer <- function(devfun,
         if (length(bvals <- which(par0==rho$lower)) > 0) {
             ## *don't* use numDeriv -- cruder but fewer dependencies, no worries
             ##  about keeping to the interior of the allowed space
+
+            ## <MJ>
+            ## Removing the following line (hence *not* replacing 'par0'
+            ## with a copy) breaks several tests in ../tests/boundary.R
+            ## and ../tests/lmer-1.R.  OMG ...
+            par0 <- par0 + 0
+            ## </MJ>
+
             d0 <- devfun(par0)
             btol <- 1e-5  ## FIXME: make user-settable?
             bgrad <- sapply(bvals,

@@ -1,24 +1,29 @@
 ## `flexSigmaMinimum`
 
-* check that existing tests pass (or adapt them), which may need
-  - handling of `length(lower) == length(par) < length(theta)`
-    (done partially and maybe suboptimally via `mkPar`, `mkTheta`)
-  - handling of TODO in `devfun2` (related to above)
-  - adapting usage of (or generalizing) the *_to_* functions in vcconv.R
-    which do not work for 'theta' not of length nc*(nc+1)/2
-  - see FIXME comments in `git diff master man tests`
+* check that existing examples work and existing tests pass
+  - `git diff master tests` looks OK now: a few tests fail but those
+    particular failures are expected; these tests are skipped or adapted
+  - `git diff master man` shows that `profile` is broken when `theta`
+    is not composed of segments of length `nc*(nc+1)/2`
+    * hence TODO: adapt usage of (or generalize) the *_to_* functions
+      in `vcconv.R`; see, e.g., `devfun2` in `R/profile.R`
+  - otherwise looking good ... !
 * `hom=`
-  - machinery is in place, but `reformulas::no_specials` chokes on calls
-    with more than one argument hence it needs a patch.  E.g.,
+  - `reformulas::no_specials` chokes on calls with more than one
+    argument, e.g.,
 	`reformulas::no_specials(quote(diag(1 | f, hom = TRUE)))`
-* cs, ar1
-  - machinery is in place, but we do not yet make use of reTrms$upper
-    which is 1, not Inf, for 'rho'.  Where should it be stored?
-    'merMod' has a slot for 'lower' but not one for 'upper' ...
-* adapt 'tnames' for structured covariance matrices, as 'theta' need not
-  have length nc*(nc+1)/2; needed for getME(., "theta"), maybe elsewhere
-* man/*.Rd, tests/*.R
-* RC actually seems more natural than S4 as we repeatedly update things
+  - once that is patched, `hom=` should start to work
+* upper bounds on `par`
+  - How should `merMod` store upper bounds on `par`?  There is a `lower`
+    slot but no `upper` slot.  An attribute of the object?  An attribute
+    of the `lower` slot?
+  - They could be left out altogether and (re-)determined from `reCovs`
+    which is stored as an attribute.
+* adapt `tnames` for structured covariance matrices as `theta` need
+  not be composed of segments of length `nc*(nc+1)/2`; it is used in
+  `getME(., "theta")`, maybe elsewhere
+* `glmerMod` ... ?
+* new documentation and tests
 
 
 ## not `flexSigmaMinimum`
