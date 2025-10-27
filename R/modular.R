@@ -390,10 +390,14 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     attr(fr,"offset") <- mf$offset
     n <- nrow(fr)
     ## random effects and terms modules
+    ## get list of calls whose first argument is a call to '|'
+    ##                x | f  ->      us(x | f)
+    ##     nonspecial(x | f) ->      us(x | f)
+    ##        special(x | f) -> special(x | f)
     bb1 <- findbars_x(formula, specials = specials,
                       default.special = "us", target = "|",
                       expand_doublevert_method = "diag_special")
-    bb0 <- no_specials(bb1, specials = specials) # FIXME: chokes on calls with more than one argument
+    bb0 <- lapply(bb1, `[[`, 2L)
     reTrms <- reformulas::mkReTrms(bb0, fr, calc.lambdat = FALSE)
     reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
     wmsgNlev <- checkNlevels(reTrms$flist, n=n, control)
