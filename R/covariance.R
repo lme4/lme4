@@ -574,7 +574,7 @@ setMethod("getLambda",
               if (nc > 0L)
               ans[lower.tri(ans, diag = TRUE)] <-
                   if (object@hom)
-                      rep(getTheta(object), rbind(1L, (nc - 1L):0L)[2L * nc - 1L])
+                      rep(getTheta(object), rbind(1L, (nc - 1L):0L)[seq_len(2L * nc - 1L)])
                   else getTheta(object)
               ans
           })
