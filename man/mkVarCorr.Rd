@@ -13,7 +13,7 @@ mkVarCorr(sc, cnms, nc, theta, nms, reCovs = NULL)
   \item{nc}{numeric vector: number of terms in each RE component.}
   \item{theta}{theta vector (lower-triangle of Cholesky factors).}
   \item{nms}{component names (FIXME: nms/cnms redundant:
-    nms=names(cnms)?)}
+  nms=names(cnms)?)}
   \item{reCovs}{a list of \code{Covariance} objects.}
 }
 \value{
