@@ -167,11 +167,6 @@ setGeneric("getLambdat.i",
 
 ## .... METHODS ........................................................
 
-setMethod("dim",
-          c(x = "Covariance"),
-          function (x)
-              rep(object@nc, 2L))
-
 setMethod("initialize",
           c(.Object = "Covariance.us"),
           function (.Object, nc, par, ...) {
