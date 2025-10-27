@@ -338,7 +338,7 @@ setMethod("getThetaIndex",
               if (object@hom)
               `[<-`(sequence.default(from = 2L, by = 2L, nvec = snc),
                     cumsum(snc),
-                    snc)
+                    seq.int(from = 1L, by = 2L, length.out = nc))
               else # same as "Covariance.us"
               rep(seq.int(from = 1L - nc, by = 1L, length.out = nc),
                   snc) +
