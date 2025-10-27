@@ -201,7 +201,7 @@ setMethod("initialize",
           c(.Object = "Covariance.cs"),
           .fn <-
           function (.Object, nc, par, hom = FALSE, ...) {
-              if (!missing(par) && !missing(nc) &&
+              if (missing(par) && !missing(nc) &&
                   is.integer(nc) && length(nc) == 1L && !is.na(nc) &&
                   nc >= 0L &&
                   is.logical(hom) && length(hom) == 1L && !is.na(hom)) {
