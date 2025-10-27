@@ -8,11 +8,6 @@
     * hence TODO: adapt usage of (or generalize) the *_to_* functions
       in `vcconv.R`; see, e.g., `devfun2` in `R/profile.R`
   - otherwise looking good ... !
-* `hom=`
-  - `reformulas::no_specials` chokes on calls with more than one
-    argument, e.g.,
-	`reformulas::no_specials(quote(diag(1 | f, hom = TRUE)))`
-  - once that is patched, `hom=` should start to work
 * upper bounds on `par`
   - How should `merMod` store upper bounds on `par`?  There is a `lower`
     slot but no `upper` slot.  An attribute of the object?  An attribute
