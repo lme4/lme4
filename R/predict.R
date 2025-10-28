@@ -556,26 +556,63 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
       Cmat_names <- rownames(Cmat)
       ## Subsetting appears to occur in the case we use newRE;
       Z_factors <- newRE$flist
+      C_factors <- object@flist
 
       fix_nms <- colnames(object@pp$X)
+      
+      ## idea: we want to pad Cmat
+      if(allow.new.levels){
+        n_padded = 0
+        for (grp in intersect(names(C_factors), names(Z_factors))) {
+          n_lvl <- length(levels(C_factors[[grp]]))
+          added_levels <- setdiff(levels(Z_factors[[grp]]), 
+                                  levels(C_factors[[grp]]))
+          if ((n_add <- length(added_levels)) == 0) next
+          levels(C_factors[[grp]]) <- c(levels(C_factors[[grp]]), added_levels) 
+          
+          browser()
+          ## add names for clarity
+          added_nms <- as.vector(sapply(added_levels, function(lv)
+            paste0(grp, ".", lv, ".", object@cnms[[grp]])
+          ))
+          Cmat_names <- c(Cmat_names, added_nms)
+          
+          ## add padding
+          n_padded <- n_lvl * n_add
+          n_new <- n_add * length(object@cnms[[grp]])
+          Cmat <- NA_padding(Cmat, Cmat_names, insert_after = n_padded,
+                             n_add = n_new)
+        }
+      }
+      
+      browser()
+    
       is_group_term <- !Cmat_names %in% fix_nms
 
       ## looking to compute the groups (factor levels) that are actually 
       ## included in the Z matrix
       keep_idx <- !is_group_term
       
+      browser()
+      
       mask <- unlist(lapply(
-        intersect(names(object@flist), names(Z_factors)),
+        intersect(names(C_factors), names(Z_factors)),
         function(grp) {
-          level_mask <- levels(object@flist[[grp]]) %in% levels(Z_factors[[grp]])
+          level_mask <- levels(C_factors[[grp]]) %in% levels(Z_factors[[grp]])
           rep(level_mask, each = length(object@cnms[[grp]]))
         }
       ))
       
+      browser()
+      
       keep_idx[seq_along(mask)] <- is_group_term[seq_along(mask)] & mask
       
-      Cmat <- as(Cmat[keep_idx, keep_idx], "dpoMatrix")
+      # For now, don't worry about keeping it as dpo?
+      Cmat <- Cmat[keep_idx, keep_idx]
+      #Cmat <- as(Cmat[keep_idx, keep_idx], "dpoMatrix")
     }
+    
+    browser()
 
     res <- list(fit = pred,
          se.fit = sqrt(quad.tdiag(Cmat, ZX))

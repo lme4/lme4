@@ -1008,7 +1008,10 @@ quad.tdiag <- function(M, x) {
     rowSums(tcrossprod(x, M) * x)
 }
 
-## attempt to modularize vcov scaling
+##' attempt to modularize vcov scaling; more details in the autoscale vignette
+##' @param vv represents the variance-covariance matrix before modification
+##' @param sc represents the scale vector
+##' @param ce represents the center vector
 scale_vcov <- function(vv, sc, ce) {
   other_vars <- setdiff(colnames(vv), "(Intercept)")
   ## 1. Modifying the intercept
@@ -1024,4 +1027,37 @@ scale_vcov <- function(vv, sc, ce) {
   vv[other_vars, "(Intercept)"] <- updated_2
   vv[other_vars, other_vars] <- vv[other_vars, other_vars] * outer(1/sc, 1/sc)
   vv <- as(vv, "dpoMatrix")
+}
+
+##' Used for padding NAs to Cmat accordingly in predict.merMod
+##' @param mat represents the matrix that needs to be modified
+##' @param mat_names represents the names of the new modified matrix
+##' @param insert_after represents the placement before the NAs that need to 
+##' be added
+##' @param n_add represents the number rows/columns that will be padded with NAs
+NA_padding <- function(mat, mat_names, insert_after, n_add = 1) {
+  browser()
+  mat <- as.matrix(mat)
+  old_dim <- nrow(mat)
+  new_dim <- old_dim + n_add
+  m_pad <- matrix(0, new_dim, new_dim)
+  rownames(m_pad) <- mat_names
+  colnames(m_pad) <- mat_names
+  
+  ## Top right corner
+  m_pad[1:insert_after, 1:insert_after] <- mat[1:insert_after, 1:insert_after]
+  
+  ## Top left corner
+  m_pad[1:insert_after, (insert_after + n_add + 1):new_dim] <-
+    mat[1:insert_after, (insert_after + 1):old_dim]
+  
+  ## Bottom right corner
+  m_pad[(insert_after + n_add + 1):new_dim, 1:insert_after] <-
+    mat[(insert_after + 1):old_dim, 1:insert_after]
+  
+  ## Bottom left corner
+  m_pad[(insert_after + n_add + 1):new_dim, (insert_after + n_add + 1):new_dim] <-
+    mat[(insert_after + 1):old_dim, (insert_after + 1):old_dim]
+  
+  m_pad
 }
