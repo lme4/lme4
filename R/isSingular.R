@@ -1,3 +1,7 @@
+
+getSingTol <- function() 
+  getOption("lme4.singular.tolerance", 1e-4)
+
 # Check for singular fit
 #' @param object A fitted model.
 #' @param ... Passed to methods
@@ -7,7 +11,7 @@ isSingular <- function(object, ...) {
 }
 
 #' @export
-isSingular.merMod <- function(object, tol = 1e-6, method = c("eigen", "cholesky"), ...) {
+isSingular.merMod <- function(object, tol = getSingTol(), method = c("det", "cholesky"), ...) {
   method <- match.arg(method)
   
   if (method == "cholesky") {
@@ -15,15 +19,19 @@ isSingular.merMod <- function(object, tol = 1e-6, method = c("eigen", "cholesky"
     diagvals <- lapply(cc, diag)
     min_diag <- min(unlist(diagvals))
     return(min_diag < tol)
-  }
-  
-  vc_list <- VarCorr(object)
-  for (i in seq_along(vc_list)) {
-    Sigma <- as.matrix(vc_list[[i]])
-    if (length(Sigma) > 1) {
-      eigvals <- eigen(Sigma, symmetric = TRUE, only.values = TRUE)$values
-      if (any(eigvals < tol)) return(TRUE)
+  } else if (method == "det"){
+    vc_list <- VarCorr(object)
+    for (i in seq_along(vc_list)) {
+      Sigma <- as.matrix(vc_list[[i]])
+      if (length(Sigma) > 1) {
+        if(det(Sigma) < tol) return(TRUE)
+      }
     }
+  } else {
+    warning(paste(
+      "Did not suggest a valid method to check singularity for isSingular().",
+      "\nEither use `method = \"det\"` or `method = \"cholesky\"`."
+    ))
   }
   return(FALSE)
 }

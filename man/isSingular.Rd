@@ -9,7 +9,7 @@
   are (close to) zero.
 }
 \usage{
-isSingular(x, tol = 1e-4)
+isSingular(x, tol = getSingTol())
 }
 \arguments{
   \item{x}{a fitted \code{merMod} object (result of \code{lmer} or \code{glmer}).}
@@ -84,27 +84,13 @@ isSingular(x, tol = 1e-4)
 }
 \seealso{\code{\link{getME}}, \code{\link{rePCA}}}
 \references{
-  Dale J. Barr, Roger Levy, Christoph Scheepers, and Harry J. Tily (2013).
-  Random effects structure for confirmatory hypothesis testing: Keep it maximal;
-  \emph{Journal of Memory and Language} \bold{68}(3), 255--278.
-
-  Douglas Bates, Reinhold Kliegl, Shravan Vasishth, and Harald Baayen (2015).
-  \emph{Parsimonious Mixed Models}; preprint (\url{https://arxiv.org/abs/1506.04967}).
-
-  Yeojin Chung, Sophia Rabe-Hesketh, Vincent Dorie, Andrew Gelman, and Jingchen Liu (2013).
-  A nondegenerate penalized likelihood estimator for variance parameters in multilevel models;
-  \emph{Psychometrika} \bold{78}, 685--709; \doi{10.1007/S11336-013-9328-2}.
-
-  Andrew Gelman and Jennifer Hill (2006).
-  \emph{Data Analysis Using Regression and Multilevel/Hierarchical Models}.
-  Cambridge University Press.
-
-  Hannes Matuschek, Reinhold Kliegl, Shravan Vasishth, Harald Baayen, and Douglas Bates (2017).
-  Balancing type I error and power in linear mixed models.
-  \emph{Journal of Memory and Language} \bold{94}, 305–315.
-
-  Richard McElreath (2015)
-  \emph{Statistical Rethinking: A Bayesian Course with Examples in R and Stan}.
-  Chapman and Hall/CRC.
+  \itemize{
+    \item \insertRef{barr2013random}{lme4}
+    \item \insertRef{bates2015parsimonious}{lme4}
+    \item \insertRef{chung2013nondegenerate}{lme4}
+    \item \insertRef{gelman2007data}{lme4}
+    \item \insertRef{matuschek2017balancing}{lme4}
+    \item \insertRef{mcelreath2015statistical}{lme4}
+  }
 }
 \keyword{utilities}

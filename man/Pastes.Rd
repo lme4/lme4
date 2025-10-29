@@ -14,10 +14,8 @@
       two assays per sample. A factor with 30 levels: \sQuote{A:a} to
       \sQuote{J:c}.}
   }}
-\source{
-  O.L. Davies and P.L. Goldsmith (eds), \emph{Statistical
-  Methods in Research and Production, 4th ed.}, Oliver and
-  Boyd, (1972), section 6.5
+\references{
+  \insertRef{davies1972statistical_pt2}{lme4}
 }
 \description{
   Strength of a chemical paste product; its quality

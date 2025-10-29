@@ -20,7 +20,7 @@
     \code{VarCorr.merMod} object returned from \code{VarCorr}.}
   \item{sigma}{an optional numeric value used as a multiplier for the
     standard deviations.}
-  \item{digits}{an optional integer value specifying the number of digits}
+  \item{digits}{an optional integer value specifying the number of digits.}
   \item{order}{arrange data frame with variances/standard deviations
     first and covariances/correlations last for each random effects
     term (\code{"cov.last"}), or in the order of the lower triangle of the
@@ -44,7 +44,7 @@
   random-effects terms in a mixed-effects model, of class
   \code{\linkS4class{merMod}} (linear, generalized or
   nonlinear).  The within-group error variance and standard
-  deviation are also calculated.
+  deviation are also calculated. 
 }
 \value{
   An object of class \code{VarCorr.merMod}. The internal
@@ -70,19 +70,22 @@ residual error term where applicable) and the following columns:
   }
 }
 \details{
-  The \code{print} method for \code{VarCorr.merMod} objects
-  has optional arguments \code{digits} (specify digits of
-  precision for printing) and \code{comp}: the latter is
-  a character vector with any combination of \code{"Variance"}
-  and \code{"Std.Dev."}, to specify whether variances,
-  standard deviations, or both should be printed.
+  The \code{print} method for \code{VarCorr.merMod} objects has optional 
+  arguments \code{digits} (specify digits of precision for printing) and 
+  \code{comp}: the latter is a character vector with any combination of 
+  \code{"Variance"} and \code{"Std.Dev."}, to specify whether variances,
+  standard deviations, or both should be printed. 
 }
 \author{
   This is modeled after \code{\link[nlme]{VarCorr}} from
   package \CRANpkg{nlme}, by Jose Pinheiro and Douglas Bates.
 }
 \seealso{
-  \code{\link{lmer}}, \code{\link{nlmer}}
+  \itemize{
+    \item \code{\link[lme4]{lmer}}, \code{\link[lme4]{nlmer}},
+    \item The \code{"Residual Std.Dev."} output corresponds to 
+      \code{\link[lme4]{sigma.merMod}}.
+  }
 }
 \examples{
 data(Orthodont, package="nlme")

@@ -1,5 +1,3 @@
-library("testthat")
-library("lme4")
 (testLevel <- if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1)
 
 ## use old (<=3.5.2) sample() algorithm if necessary
@@ -186,7 +184,7 @@ test_that("anova() of glmer+glm models", {
   })
 
 if (testLevel>1) {
-  context("bootMer confint()")
+  #context("bootMer confint()")
   set.seed(47)
   test_that("bootMer", {
     ## testing bug-fix for ordering of sd/cor components in sd/cor matrix with >2 rows
@@ -328,9 +326,9 @@ test_that("confint", {
                     c("2.5 %", "97.5 %")))
   expect_equal(dimnames(ci1.p),dimnames(ci1.w))
   expect_equal(dimnames(ci1.p),dimnames(ci1.b))
-  ci1.p.n <- suppressWarnings(confint(fm1,quiet=TRUE,oldNames=FALSE))
-  ci1.w.n <- confint(fm1,method="Wald", oldNames=FALSE)
-  ci1.b.n <- CI.boot(fm1, nsim=2, oldNames=FALSE)
+  ci1.p.n <- suppressWarnings(confint(fm1, quiet=TRUE, signames=FALSE))
+  ci1.w.n <- confint(fm1, method="Wald", signames=FALSE)
+  ci1.b.n <- CI.boot(fm1, nsim=2, signames=FALSE)
   expect_equal(dimnames(ci1.p.n),
                list(c("sd_(Intercept)|Subject", "sigma", "(Intercept)", "Days"),
                     c("2.5 %", "97.5 %")))
@@ -406,7 +404,7 @@ test_that("refit", {
 })
 
 if (testLevel>1) {
-  context("predict method")
+  #context("predict method")
   test_that("predict", {
     ## when running via source(), cbpp has been corrupted at this point
     ## (replaced by a single empty factor obs()
@@ -655,7 +653,7 @@ if (testLevel>1) {
 
   })
 
-  context("misc")
+  #context("misc")
   test_that("misc", {
     expect_equal(df.residual(fm1),176)
     if (suppressWarnings(require(ggplot2))) {
@@ -668,7 +666,7 @@ if (testLevel>1) {
   })
 } ## testLevel>1
 
-context("plot")
+#context("plot")
 test_that("plot", {
   ## test getData() within plot function: reported by Dieter Menne
   doFit <- function(){
@@ -697,7 +695,7 @@ test_that("plot", {
   expect_warning(lattice::qqmath(fm2, 0.05),          "please specify")
 })
 
-context("misc")
+#context("misc")
 test_that("summary", {
   ## test that family() works when $family element is weird
   ## FIXME: is convergence warning here a false positive?
@@ -709,7 +707,7 @@ test_that("summary", {
 
 
 if (testLevel>1) {
-  context("profile")
+  #context("profile")
   test_that("profile", {
     ## FIXME: can we deal with convergence warning messages here ... ?
     ## fit profile on default sd/cor scale ...
@@ -756,7 +754,7 @@ if (testLevel>1) {
 
 } ## testLevel>1
 
-context("model.frame")
+#context("model.frame")
 test_that("model.frame", {
   ## non-syntactic names
   d <- sleepstudy
@@ -775,7 +773,7 @@ test_that("model.frame", {
 })
 
 
-context("influence measures")
+#context("influence measures")
 
 d <- as.data.frame(ChickWeight)
 colnames(d) <- c("y", "x", "subj", "tx")
@@ -946,3 +944,8 @@ if (testLevel > 1) withAutoprint({
   expect_equal(cooks.distance(fm2), cooks.distance(fm2L), tolerance = 1e-2)
   })
 }) ## testLevel > 1
+
+test_that("oldNames warning in confint", {
+  fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+  expect_warning(confint(fm1, oldNames = TRUE))
+})

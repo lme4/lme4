@@ -1,6 +1,3 @@
-library("testthat")
-library("lme4")
-
 quietly <- TRUE
 
 ## factory for making methods

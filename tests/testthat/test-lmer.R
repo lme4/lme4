@@ -1,14 +1,14 @@
-stopifnot(require("testthat"))
-library(lme4) ## make sure package is attached
 ##  (as.function.merMod() assumes it)
 data("Dyestuff", package = "lme4")
+data("cbpp", package = "lme4")
+library(lme4)  ## this *is* necessary, for as.function.merMod() ...
 
 ## use old (<=3.5.2) sample() algorithm if necessary
 if ("sample.kind" %in% names(formals(RNGkind))) {
     suppressWarnings(RNGkind("Mersenne-Twister", "Inversion", "Rounding"))
 }
 
-context("fitting lmer models")
+#context("fitting lmer models")
 ## is "Nelder_Mead" default optimizer? -- no longer
 (isNM <- formals(lmerControl)$optimizer == "Nelder_Mead")
 
@@ -224,12 +224,19 @@ test_that("lmer", {
     expect_equal(sum(grepl("Subset: \\(",capture.output(summary(fm1)))),1)
 
     ## test messed-up Hessian
+    ## UPDATE: modified this test since we now automatically ignore Hessian
+    ## checks when there is a singular fit
     fm1 <- lmer(z~ as.numeric(f) + 1|f, d)
-    fm1@optinfo$derivs$Hessian[2,2] <- NA
-    expect_warning(lme4:::checkConv(fm1@optinfo$derivs,
-                     coefs=c(1,1),
-                     ctrl=lmerControl()$checkConv,lbound=0),
-                   "Problem with Hessian check")
+    
+    expect_equal(summary(fm1)$optinfo$conv$lme4$messages,
+                  "boundary (singular) fit: see help('isSingular')")
+    expect_null(fm1@optinfo$derivs$Hessian)
+    ## Previous:
+    ##fm1@optinfo$derivs$Hessian[2,2] <- NA
+    ##expect_warning(lme4:::checkConv(fm1@optinfo$derivs,
+    ##                 coefs=c(1,1),
+    ##                 ctrl=lmerControl()$checkConv,lbound=0),
+    ##                 "Problem with Hessian check")
 
     ## test ordering of Ztlist names
     ## this is a silly model, just using it for a case
@@ -282,7 +289,6 @@ test_that("coef_lmer", {
                     var1=factor(sample(1:5,size=100,replace=TRUE)),
                     var2=runif(100),
                     var3=factor(sample(1:5,size=100,replace=TRUE)))
-    library(lme4)
     mix1 <- lmer(resp ~ 0 + var1 + var1:var2 + (1|var3), data=d)
     c1 <- coef(mix1)
     expect_is(c1, "coef.mer")
@@ -326,11 +332,11 @@ test_that("better info about optimizer convergence",
     options(op)
 
     cc <-capture.output(print(summary(gm2)))
-    expect_equal(tail(cc,3)[1],
+    expect_equal(tail(cc,4)[1],
                  "optimizer (Nelder_Mead) convergence code: 0 (OK)")
 })
 
-context("convergence warnings etc.")
+#context("convergence warnings etc.")
 
 fm1 <- lmer(Reaction~ Days + (Days|Subject), sleepstudy)
 suppressMessages(fm0 <- lmer(Reaction~ Days + (Days|Subject), sleepstudy[1:20,]))
@@ -383,4 +389,100 @@ test_that("catch matrix-valued responses", {
     dd <- data.frame(x = rnorm(1000), batch = factor(rep(1:20, each=50)))
     dd$y <- matrix(rnorm(1e4), ncol = 10)
     expect_error(lmer(y ~ x + (1|batch), dd), "matrix-valued")
+})
+
+test_that("update works as expected", {
+	m <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy)
+	expect_equivalent(fitted(update(m, .~.-(0 + Days | Subject))),
+                          fitted(lmer(Reaction ~ Days + (1|Subject), sleepstudy)))
+})
+
+test_that("turn off conv checking for nobs > check.conv.nobsmax", {
+  ## calc derivs and check convergence
+  fm1 <- lmer(Reaction ~ 1 + (1|Days), sleepstudy)
+  nn <- nrow(sleepstudy)-1
+  ## neither derivs nor conv check
+  fm2 <- update(fm1,
+                control = lmerControl(check.conv.nobsmax = nn))
+  ## no conv check, do calc derivs
+  fm3 <- update(fm1, 
+                control = lmerControl(check.conv.nobsmax = nn,
+                                      calc.derivs = TRUE))
+  expect_null(fm2@optinfo$derivs)
+  expect_false(is.null(fm1@optinfo$derivs))
+  expect_false(is.null(fm3@optinfo$derivs))
+  expect_equal(fm1@optinfo$conv$lme4, list())
+  expect_null(fm2@optinfo$conv$lme4)
+  expect_null(fm3@optinfo$conv$lme4)
+})
+
+test_that("turn off conv checking for npara > check.conv.nparmax", {
+  ## This is taken from an example shown here:
+  ## https://github.com/lme4/lme4/issues/783#issue-2266130542
+  ## This particular seed doesn't have singular fit issues
+  set.seed(6)
+  
+  n <- 150
+  n_classes <- 25
+  n_raters <- 10
+  
+  data <- data.frame(
+    class = sample.int(n_classes, n, replace = TRUE),
+    grade = pmin(7 + floor(runif(n, 2, 14) + rnorm(n)), 20),
+    emint = rnorm(n, 100, 15),
+    group = rep(c("training", "control", "school"), each = 50),
+    rater = sample.int(n_raters, n, replace = TRUE)
+  )
+  
+  training_effect <- c(training = 2.5, school = 2, control = 0)
+  
+  rater_bias <- rnorm(n_raters, 0, 2)
+  class_bias <- rnorm(n_classes, 0, 1)
+  emint_bs <- rnorm(n_classes, 0.001, 0)  
+  grade_bs <- rnorm(n_classes, 0.3, 0.2)
+  
+  data$emint_n <- data$emint - mean(data$emint)
+  data$grade_n <- data$grade - mean(data$grade)
+  
+  data$eval <- pmax(pmin(
+    floor(4 + training_effect[data$group] + 
+            class_bias[data$class] + 
+            rater_bias[data$rater] + 
+            emint_bs[data$class] * data$emint + 
+            grade_bs[data$class] * (data$grade_n) + 
+            2 * rnorm(n)
+    ), 10), 0)
+  
+  form <- eval~group*emint_n + group*grade_n + (grade_n+emint_n|class)
+  
+  mod1 <- suppressWarnings(lmer(form, data=data))
+  mod2 <- update(mod1, 
+                 control = lmerControl(optimizer = "bobyqa", 
+                                       check.conv.nparmax = 5))
+  ## First should give a warning
+  expect_false(is.null(mod1@optinfo$conv$lme4))
+  ## Second shouldn't be evaluated
+  expect_null(mod2@optinfo$conv$lme4)
+})
+
+test_that("gradient and Hessian checks are skipped when singular fit occurs",{
+  set.seed(1)
+  group <- factor(rep(1:3, each = 20))
+  b <- rnorm(3, mean = 0, sd = 0.01)
+  x <- rnorm(60)
+  y <- x + b[group] + rnorm(60, sd = 1)
+  dat <- data.frame(y, x, group)
+  
+  fm1 <- lmer(y ~ x + (1 | group), data = dat)
+  
+  expect_null(summary(fm1)$optinfo$derivs$gradient)
+  expect_null(summary(fm1)$optinfo$derivs$Hessian)
+  
+  ## Always skipping derivative checks
+  options(lme4.singular.tolerance = 1)
+  fm2 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+  expect_null(summary(fm2)$optinfo$derivs$gradient)
+  expect_null(summary(fm2)$optinfo$derivs$Hessian)
+  ## Switching back (in case needed)
+  options(lme4.singular.tolerance = 1e-4)
 })

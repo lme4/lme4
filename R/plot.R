@@ -48,7 +48,7 @@ asOneFormula <-
 
 getIDLabels <- function(object, form=formula(object)) {
     mf <- factorize(form,model.frame(object))
-    if (length(ff <- findbars(form))>0) {
+    if (length(ff <- reformulas::findbars(form))>0) {
         grps <- lapply(ff,"[[",3)
     } else {
         grps <- form[[2]]

@@ -109,6 +109,7 @@ library("grid")
 zmargin <- theme(panel.spacing=unit(0,"lines"))
 library("lattice")
 library("minqa")
+library("reformulas")
 opts_chunk$set(engine='R',dev='pdf', fig.width=9, fig.height=5.5,
                prompt=TRUE, cache=TRUE, tidy=FALSE, comment=NA, error = FALSE)
 knitr::render_sweave()
@@ -2559,7 +2560,7 @@ only), likelihood profiling, or parametric bootstrapping (the
 \code{boot.type} argument selects the bootstrap confidence interval type).
 <<compareCI,echo=FALSE,cache=TRUE,message=FALSE,warning=FALSE>>=
 ccw <- confint(fm1, method = "Wald")
-ccp <- confint(fm1, method = "profile", oldNames = FALSE)
+ccp <- confint(fm1, method = "profile", signames = FALSE)
 ccb <- confint(fm1, method = "boot")
 @
 <<CIqcomp,echo=FALSE,eval=TRUE>>=
@@ -2851,7 +2852,7 @@ but not slope-slope correlations, as we see using the \code{lmList}
 function.
 <<graphSims>>=
 formLm <- form
-formLm[[3]] <- findbars(form)[[1]]
+formLm[[3]] <- reformulas::findbars(form)[[1]]
 print(formLm)
 cor(t(sapply(lmList(formLm, dat), coef)))
 @ %

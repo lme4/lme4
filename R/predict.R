@@ -16,7 +16,7 @@ isRE(~0+x) ##  "
 
 ##' Random Effects formula only
 reOnly <- function(f, response=FALSE) {
-    reformulate(paste0("(", vapply(findbars(f), deparse1, ""), ")"),
+    reformulate(paste0("(", vapply(reformulas::findbars(f), deparse1, ""), ")"),
                 response = if(response && length(f)==3L) f[[2]],
                 env = environment(f))
 }
@@ -135,7 +135,9 @@ setParams <- function(object, params, inplace=FALSE, subset=FALSE) {
 ##' @param na.action
 ##'
 ##' @note Hidden; _only_ used (twice) in this file
-mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
+mkNewReTrms <- function(object, newdata,
+                        re.form=NULL,
+                        na.action=na.pass,
                         allow.new.levels=FALSE,
                         sparse = max(lengths(orig.random.levs)) > 100)
 {
@@ -150,6 +152,7 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
     ##        mfnew is *only* used for its na.action attribute (!) [fixed only]
     ##        using model.frame would mess up matrix-valued predictors (GH #201)
     fixed.na.action <- NULL
+    re.form <- re.form %||% reOnly(formula(object))
     if (is.null(newdata)) {
         rfd <- mfnew <- model.frame(object)
         fixed.na.action <- attr(mfnew,"na.action")
@@ -199,7 +202,7 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
         ## find *factor* variables involved in terms (left-hand side of RE formula): reset their contrasts
         ## only interested in components in re.form, not al REs
         ff <- re.form  ## was: formula(object,random.only=TRUE)
-        termvars <- unique(unlist(lapply(findbars(ff), function(x) all.vars(x[[2]]))))
+        termvars <- unique(unlist(lapply(reformulas::findbars(ff), function(x) all.vars(x[[2]]))))
         for (fn in Reduce(intersect, list(
                               names(orig.random.cntr), termvars, names(rfd)))) {
             ## a non-factor grouping variable *may* sneak in here via simulate(...)
@@ -229,7 +232,7 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
             newdata <- newdata[-fixed.na.action,]
         }
         ## note: mkReTrms automatically *drops* unused levels
-        ReTrms <- mkReTrms(findbars(re.form[[2]]), rfd)
+        ReTrms <- reformulas::mkReTrms(reformulas::findbars(re.form[[2]]), rfd)
         ## update Lambdat (ugh, better way to do this?)
         ReTrms <- within(ReTrms,Lambdat@x <- unname(getME(object,"theta")[Lind]))
         if (!allow.new.levels && any(vapply(ReTrms$flist, anyNA, NA)))
@@ -269,7 +272,7 @@ mkNewReTrms <- function(object, newdata, re.form=NULL, na.action=na.pass,
     }
     Zt <- ReTrms$Zt
     attr(Zt, "na.action") <- attr(re_new, "na.action") <- fixed.na.action
-    list(Zt=Zt, b=re_new, Lambdat = ReTrms$Lambdat)
+    list(Zt=Zt, b=re_new, Lambdat = ReTrms$Lambdat, flist = ReTrms$flist)
 }
 
 ##' @param x a random effect (i.e., data frame with rows equal to levels, columns equal to terms
@@ -370,10 +373,9 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
     ## an error (although it could be argued that in that case they
     ## should follow 'na.action' instead ...)
 
-    if (any(names(list(...)) %in% c("ReForm", "REForm", "REform"))) {
+    if (any(...names() %in% c("ReForm", "REForm", "REform")))
         stop("synonyms 'ReForm', 'REForm', 'REform' are deprecated: please use 're.form' instead")
-    }
-    
+
     if (...length() > 0) warning("unused arguments ignored")
 
     type <- match.arg(type)
@@ -392,6 +394,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
         } else { ## inverse-link
             pred <-  switch(type,response=object@resp$mu, ## == fitted(object),
                             link=object@resp$eta)
+            eta <- object@resp$eta
             if (is.null(nm <- rownames(model.frame(object))))
                 nm <- seq_along(pred)
             names(pred) <- nm
@@ -486,7 +489,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
             if (length(pred) != length(REvals)) {
                 if (!class(fit.na.action) %in% c("omit", "exclude") && length(fit.na.action)>0) {
                     stop("fixed/RE pred length mismatch")
-                }                    
+                }
                  REvals <- REvals[-fit.na.action]
             }
             pred <- pred + REvals
@@ -495,6 +498,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
             }
         }
         if (isGLMM(object) && type=="response") {
+            eta <- pred
             pred <- object@resp$family$linkinv(pred)
         }
     }  ## newdata/newparams/re.form
@@ -537,19 +541,51 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
         if(isRE(re.form)) {
             Z <- t(newRE$Zt)
         } else {
-            ## this is inefficient and we could just calculate 
+            ## this is inefficient and we could just calculate
             ## X %*% Cmat[X part only] t(X) instead
             Z <- Matrix(0, nrow = nrow(X), ncol = n_u)
         }
     }
-        
+
     if(random.only) X <- Matrix(0, nrow = nrow(Z), ncol = n_beta)
-        
+
     ZX <- cbind(Z, X)
-    list(fit = pred,
+    
+    ## Subsetting Cmat
+    if (ncol(ZX) != nrow(Cmat)) {
+      Cmat_names <- rownames(Cmat)
+      ## Subsetting appears to occur in the case we use newRE;
+      Z_factors <- newRE$flist
+
+      fix_nms <- colnames(object@pp$X)
+      is_group_term <- !Cmat_names %in% fix_nms
+
+      ## looking to compute the groups (factor levels) that are actually 
+      ## included in the Z matrix
+      keep_idx <- !is_group_term
+      
+      mask <- unlist(lapply(
+        intersect(names(object@flist), names(Z_factors)),
+        function(grp) {
+          level_mask <- levels(object@flist[[grp]]) %in% levels(Z_factors[[grp]])
+          rep(level_mask, each = length(object@cnms[[grp]]))
+        }
+      ))
+      
+      keep_idx[seq_along(mask)] <- is_group_term[seq_along(mask)] & mask
+      
+      Cmat <- as(Cmat[keep_idx, keep_idx], "dpoMatrix")
+    }
+
+    res <- list(fit = pred,
          se.fit = sqrt(quad.tdiag(Cmat, ZX))
          )
-    
+    if (isGLMM(object) && type=="response") {
+      ## pred0 (linear predictor) will have been stored previously in this case ...  
+      res$se.fit <- res$se.fit*abs(family(object)$mu.eta(eta))
+    }
+    res
+
 } # end {predict.merMod}
 
 
@@ -660,11 +696,11 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         }
         re.form <- if (use.u) NULL else ~0
     }
-    
+
     if (is.null(re.form)) { # formula w/o response
         re.form <- reOnly(formula(object))
     }
-    
+
     if(!is.null(seed)) set.seed(seed)
     if(!exists(".Random.seed", envir = .GlobalEnv))
         runif(1) # initialize the RNG if necessary
@@ -708,7 +744,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     }
 
     ## (1) random effect(s)
-    sim.reff <- if (!is.null(findbars(compReForm))) {
+    sim.reff <- if (!is.null(reformulas::findbars(compReForm))) {
         newRE <- mkNewReTrms(object, newdata, compReForm,
                              na.action=na.action,
                              allow.new.levels=allow.new.levels)

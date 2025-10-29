@@ -48,8 +48,8 @@
   designs, the \code{resp} part can be omitted.
 }
 \seealso{
-  Other utilities: \code{\link{findbars}},
-  \code{\link{mkRespMod}}, \code{\link{mkReTrms}},
-  \code{\link{nobars}}, \code{\link{subbars}}
+  Other utilities: \code{\link[reformulas]{findbars}},
+  \code{\link{mkRespMod}}, \code{\link[reformulas]{mkReTrms}},
+  \code{\link[reformulas]{nobars}}, \code{\link[reformulas]{subbars}}
 }
 

@@ -46,10 +46,15 @@ lmer <- function(formula, data=NULL, REML = TRUE,
                         list(start=start, verbose=verbose, control=control)))
     if (devFunOnly) return(devfun)
     ## optimize deviance function over covariance parameters
+    s <- getStart(start, environment(devfun)$pp)
     if (identical(control$optimizer,"none"))
-        stop("deprecated use of optimizer=='none'; use NULL instead")
+      stop("deprecated use of optimizer=='none'; use NULL instead")
+    
+    calc.derivs <- control$calc.derivs %||% 
+      (nrow(lmod$fr) < control$checkConv$check.conv.nobsmax &
+        length(s)    < control$checkConv$check.conv.nparmax)
+    
     opt <- if (length(control$optimizer)==0) {
-               s <- getStart(start, environment(devfun)$pp)
                list(par=s,fval=devfun(s),
                     conv=1000,message="no optimization")
            }  else {
@@ -59,12 +64,14 @@ lmer <- function(formula, data=NULL, REML = TRUE,
                      control = control$optCtrl,
                      verbose=verbose,
                      start=start,
-                     calc.derivs=control$calc.derivs,
+                     calc.derivs=calc.derivs,
                      use.last.params=control$use.last.params)
            }
     cc <- checkConv(attr(opt,"derivs"), opt$par,
                     ctrl = control$checkConv,
-                    lbound = environment(devfun)$lower)
+                    lbound = environment(devfun)$lower,
+                    nobs = nrow(lmod$fr),
+                    ndim = length(s))
     mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr,
              mc = mcout, lme4conv=cc) ## prepare output
 }## { lmer }
@@ -125,13 +132,14 @@ glmer <- function(formula, data=NULL
     glmod <- eval(mc, parent.frame(1L))
     mcout$formula <- glmod$formula
     glmod$formula <- NULL
-
+    
     if (is.matrix(y <- model.response(glmod$fr))
         && ((family$family != "binomial" && ncol(y) > 1) ||
             (ncol(y) >2))) {
         stop("can't handle matrix-valued responses: consider using refit()")
     }
 
+    calc.derivs <- control$calc.derivs %||% (nrow(glmod$fr) < control$checkConv$check.conv.nobsmax)
     ## create deviance function for covariance parameters (theta)
 
     nAGQinit <- if(control$nAGQ0initStep) 0L else 1L
@@ -139,19 +147,29 @@ glmer <- function(formula, data=NULL
                                                    control = control,
                                                    nAGQ = nAGQinit)))
     if (nAGQ==0 && devFunOnly) return(devfun)
+    
+    pp <- environment(devfun)$pp
+    ppdim <- length(pp$theta) + length(pp$delb)
     ## optimize deviance function over covariance parameters
 
     ## FIXME: perhaps should be in glFormula instead??
     if (is.list(start)) {
-        start.bad <- setdiff(names(start),c("theta","fixef"))
-        if (length(start.bad)>0) {
-            stop(sprintf("bad name(s) for start vector (%s); should be %s and/or %s",
-                         paste(start.bad,collapse=", "),
-                         shQuote("theta"),
-                         shQuote("fixef")),call.=FALSE)
-        }
-        if (!is.null(start$fixef) && nAGQ==0)
-            stop("should not specify both start$fixef and nAGQ==0")
+      start.bad <- setdiff(names(start), c("theta","fixef", "beta"))
+      if (length(start.bad)>0) {
+        stop(sprintf("bad name(s) for start vector (%s); should be from {%s, %s, %s}",
+                     paste(start.bad,collapse=", "),
+                     shQuote("theta"),
+                     shQuote("fixef"),
+                     shQuote("beta")),
+             call.=FALSE)
+      }
+      ## rename beta -> fixef internally
+      if ("beta" %in% names(start)) {
+        names(start)[names(start) == "beta"] <- "fixef"
+      }
+      if (!is.null(start$fixef) && nAGQ==0) {
+        stop("should not specify both start$fixef (or $beta) and nAGQ==0")
+      }
     }
 
     ## FIX ME: allow calc.derivs, use.last.params etc. if nAGQ=0
@@ -167,7 +185,9 @@ glmer <- function(formula, data=NULL
                              verbose=verbose,
                              calc.derivs=FALSE)
     }
-
+    
+    ## Note to self: length(opt) works for the theta parameters...
+    
     if(nAGQ > 0L) {
 
 
@@ -192,14 +212,16 @@ glmer <- function(formula, data=NULL
                              nAGQ=nAGQ,
                              verbose = verbose,
                              stage=2,
-                             calc.derivs=control$calc.derivs,
+                             calc.derivs=calc.derivs,
                              use.last.params=control$use.last.params)
     }
-    cc <- if (!control$calc.derivs) NULL else {
+    cc <- if (!calc.derivs) NULL else {
         if (verbose > 10) cat("checking convergence\n")
         checkConv(attr(opt,"derivs"),opt$par,
                   ctrl = control$checkConv,
-                  lbound=environment(devfun)$lower)
+                  lbound=environment(devfun)$lower,
+                  nobs = nrow(glmod$fr),
+                  ndim = ppdim)
     }
 
     ## prepare output
@@ -941,6 +963,7 @@ fitted.merMod <- function(object, ...) {
 ##' @docType methods
 ##' @param object any fitted model object from which fixed effects estimates can
 ##' be extracted.
+##' @param noScale logical; if TRUE, returns the non-scaled parameters
 ##' @param \dots optional additional arguments. Currently none are used in any
 ##' methods.
 ##' @return a named, numeric vector of fixed-effects estimates.
@@ -951,9 +974,23 @@ fitted.merMod <- function(object, ...) {
 ##' @export fixef
 ##' @method fixef merMod
 ##' @export
-fixef.merMod <- function(object, add.dropped=FALSE, ...) {
+fixef.merMod <- function(object, add.dropped = FALSE, noScale = NULL, ...) {
     X <- getME(object,"X")
     ff <- structure(object@beta, names = dimnames(X)[[2]])
+    
+    if(is.null(noScale) || (!is.null(noScale) && !noScale)){
+      if (!is.null(sc <- attr(X, "scaled:scale"))) {
+        ce <- attr(X, "scaled:center")
+        ## modifying intercept
+        if ("(Intercept)" %in% names(ff)) {
+          intercept_shift <- sum((ff[names(sc)] * ce[names(sc)]) / sc[names(sc)])
+          ff[["(Intercept)"]] <- ff[["(Intercept)"]] - intercept_shift
+        }
+        # modifying beta coefficients
+        ff[names(sc)] <- ff[names(sc)] / sc[names(sc)]
+      }
+    }
+    
     if (add.dropped) {
         if (!is.null(dd <- attr(X,"col.dropped"))) {
             ## restore positions dropped for rank deficiency
@@ -972,7 +1009,7 @@ fixef.merMod <- function(object, add.dropped=FALSE, ...) {
 
 
 getFixedFormula <- function(form) {
-    RHSForm(form) <- nobars(RHSForm(form))
+    RHSForm(form) <- reformulas::nobars(RHSForm(form))
     form
 }
 
@@ -1081,14 +1118,26 @@ model.frame.merMod <- function(formula, fixed.only=FALSE, ...) {
 
 ##' @importFrom stats model.matrix
 ##' @S3method model.matrix merMod
+##' @param noScale logical; if TRUE, returns the non-scaled parameters
 model.matrix.merMod <-
-    function(object,
-             type = c("fixed", "random", "randomListRaw"), ...) {
+  function(object, type = c("fixed", "random", "randomListRaw"), 
+           noScale = NULL,...) {
+    X <- object@pp$X
+    # Re-scales back the model matrix on command
+    if (!is.null(sc <- attr(object@pp$X, "scaled:scale"))){
+      if((is.null(noScale)) || (!is.null(noScale) && !noScale)){
+        unscale_cols <- setdiff(colnames(X), "(Intercept)")
+        ce <- attr(object@pp$X, "scaled:center")
+        X[, unscale_cols] <- sweep(X[, unscale_cols], 2, sc, `*`)
+        X[, unscale_cols] <- sweep(X[, unscale_cols], 2, ce, `+`)
+      }
+    }
+    
     switch(type[1],
-           "fixed" = object@pp$X,
+           "fixed" = X,
            "random" = getME(object, "Z"),
            "randomListRaw" = mmList(object))
-}
+  }
 
 ##' Dummy variables (experimental)
 ##'
@@ -1398,7 +1447,7 @@ refit.merMod <- function(object,
         object@frame[["(weights)"]] <- newweights
         oc <- attr(attr(object@frame, "terms"), "dataClasses")
         attr(attr(object@frame, "terms"), "dataClasses") <- c(oc, `(weights)` = "numeric")
-        
+
         object@call$weights <- substitute(newweights)
 
         ## try to make sure new weights are findable later
@@ -2141,13 +2190,12 @@ NULL
 ## Extract the conditional variance-covariance matrix of the fixed-effects
 ## parameters
 vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
-                        use.hessian = NULL, full = FALSE, ...)
+                        use.hessian = NULL, full = FALSE, noScale = NULL, ...)
 {
-
     ## FIXME: warn/message if GLMM (RX-computation is approximate),
     ## if other vars are specified?
     if (full) return(vcov_full(object, sigm))
-    
+
     hess.avail <-
          ## (1) numerical Hessian computed?
         (!is.null(h <- object@optinfo$derivs$Hessian) &&
@@ -2215,11 +2263,19 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
     if(correlation)
         rr@factors$correlation <-
             if(!is.na(sigm)) as(rr, "corMatrix") else rr # (is NA anyway)
+    
+    ## If auto-scaling is enabled
+    if(is.null(noScale) || (!is.null(noScale) && !noScale)){
+      if (!is.null(sc <- attr(object@pp$X, "scaled:scale"))) {
+        ce <- attr(object@pp$X, "scaled:center")
+        
+        rr <- scale_vcov(rr, sc, ce)
+      }
+    }
     rr
 }
 
 vcov_full <- function(object, s = sigma(object)) {
-
     L <- getME(object, "L")
     RX <- getME(object, "RX")
     RZX <- getME(object, "RZX")
@@ -2668,7 +2724,8 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
     ## pp_before <- environment(fn)$pp
     ## save(pp_before,file="pp_before.RData")
 
-    if (calc.derivs) {
+    singular <- any(opt$par[lower==0] < getSingTol())
+    if (calc.derivs && !singular) {
         if (use.last.params) {
             ## +0 tricks R into doing a deep copy ...
             ## otherwise element of ref class changes!

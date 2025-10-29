@@ -118,14 +118,10 @@ bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE, re.form=NA,
   } %% itemize
 } %% details
 \references{
-  Davison, A.C. and Hinkley, D.V. (1997)
-  \emph{Bootstrap Methods and Their Application}.
-  Cambridge University Press.
-
-  Morris, J. S. (2002).
-  The BLUPs Are Not \sQuote{best} When It Comes to Bootstrapping.
-  \emph{Statistics & Probability Letters} \bold{56}(4): 425--430.
-  doi:10.1016/S0167-7152(02)00041-X.
+  \itemize{
+    \item \insertRef{davison1997bootstrap}{lme4}
+    \item \insertRef{morris2002blups}{lme4}
+  }
 }
 \seealso{
   \itemize{

@@ -139,7 +139,8 @@ checkScaleX <- function(X,  kind="warning", tol=1e3) {
     if (any(c(logcomp,logsd) > log(tol))) {
         wmsg <- "Some predictor variables are on very different scales:"
         if (kind %in% c("warning","stop")) {
-            wmsg <- paste(wmsg, "consider rescaling")
+            msg2 <- "\nYou may also use (g)lmerControl(autoscale = TRUE) to improve numerical stability."
+            wmsg <- paste(wmsg, "consider rescaling.", msg2)
             switch(kind,
                    "warning" = warning(wmsg, call.=FALSE),
                    "stop" = stop(wmsg, call.=FALSE))
@@ -358,7 +359,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     ## as.formula ONLY sets environment if not already explicitly set.
     ## ?? environment(formula) <- denv
     # get rid of || terms so update() works as expected
-    RHSForm(formula) <- expandDoubleVerts(RHSForm(formula))
+    RHSForm(formula) <- reformulas::expandDoubleVerts(RHSForm(formula))
     mc$formula <- formula
 
     ## (DRY! copied from glFormula)
@@ -367,7 +368,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     mf <- mf[c(1L, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- quote(stats::model.frame)
-    fr.form <- subbars(formula) # substitute "|" by "+"
+    fr.form <- reformulas::subbars(formula) # substitute "|" by "+"
     environment(fr.form) <- environment(formula)
     ## model.frame.default looks for these objects in the environment
     ## of the *formula* (see 'extras', which is anything passed in '...'),
@@ -386,7 +387,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     attr(fr,"offset") <- mf$offset
     n <- nrow(fr)
     ## random effects and terms modules
-    reTrms <- mkReTrms(findbars(RHSForm(formula)), fr)
+    reTrms <- reformulas::mkReTrms(reformulas::findbars(RHSForm(formula)), fr)
     wmsgNlev <- checkNlevels(reTrms$flist, n=n, control)
     wmsgZdims <- checkZdims(reTrms$Ztlist, n=n, control, allow.n=FALSE)
     if (anyNA(reTrms$Zt)) {
@@ -400,7 +401,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 
     ## fixed-effects model matrix X - remove random effect parts from formula:
     fixedform <- formula
-    RHSForm(fixedform) <- nobars(RHSForm(fixedform))
+    RHSForm(fixedform) <- reformulas::nobars(RHSForm(fixedform))
     mf$formula <- fixedform
     ## re-evaluate model frame to extract predvars component
     fixedfr <- eval(mf, parent.frame())
@@ -413,7 +414,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     ## ran-effects model frame (for predvars)
     ## important to COPY formula (and its environment)?
     ranform <- formula
-    RHSForm(ranform) <- subbars(RHSForm(reOnly(formula)))
+    RHSForm(ranform) <- reformulas::subbars(RHSForm(reOnly(formula)))
     mf$formula <- ranform
     ranfr <- eval(mf, parent.frame())
     attr(attr(fr,"terms"), "predvars.random") <-
@@ -421,6 +422,20 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 
     ## FIXME: shouldn't we have this already in the full-frame predvars?
     X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
+    
+    ## Scaling (if autoscale is on...)
+    if (!is.null(control$autoscale) && control$autoscale) {
+      if("(Intercept)" %in% colnames(X)){
+        X_scaled <- scale(X[, -1])
+        X[,-1] <- X_scaled
+      } else {
+        X_scaled <- scale(X)
+        X <- X_scaled
+      }
+      attr(X, "scaled:center") <- attr(X_scaled, "scaled:center")
+      attr(X, "scaled:scale") <- attr(X_scaled, "scaled:scale")
+    }
+    
     ## backward compatibility (keep no longer than ~2015):
     if(is.null(rankX.chk <- control[["check.rankX"]]))
         rankX.chk <- eval(formals(lmerControl)[["check.rankX"]])[[1]]
@@ -676,7 +691,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     mf <- mf[c(1L, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- quote(stats::model.frame)
-    fr.form <- subbars(formula) # substitute "|" by "+"
+    fr.form <- reformulas::subbars(formula) # substitute "|" by "+"
     environment(fr.form) <- environment(formula)
     ## model.frame.default looks for these objects in the environment
     ## of the *formula* (see 'extras', which is anything passed in '...'),
@@ -695,11 +710,12 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     ## attach starting coefficients to model frame so we can
     ##  pass them through to mkRespMod -> family()$initialize ...
     if (!missing(start) && is.list(start)) {
-        attr(fr,"start") <- start$fixef
+        fixef <- start$fixef %||% start$beta
+        attr(fr,"start") <- fixef
     }
     n <- nrow(fr)
     ## random effects and terms modules
-    reTrms <- mkReTrms(findbars(RHSForm(formula)), fr)
+    reTrms <- reformulas::mkReTrms(reformulas::findbars(RHSForm(formula)), fr)
     ## TODO: allow.n = !useSc {see FIXME below}
     wmsgNlev <- checkNlevels(reTrms$ flist, n = n, control, allow.n = TRUE)
     wmsgZdims <- checkZdims(reTrms$Ztlist, n = n, control, allow.n = TRUE)
@@ -713,7 +729,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
 
     ## fixed-effects model matrix X - remove random effect parts from formula:
     fixedform <- formula
-    RHSForm(fixedform) <- nobars(RHSForm(fixedform))
+    RHSForm(fixedform) <- reformulas::nobars(RHSForm(fixedform))
     mf$formula <- fixedform
     ## re-evaluate model frame to extract predvars component
     fixedfr <- eval(mf, parent.frame())
@@ -723,13 +739,27 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     ## ran-effects model frame (for predvars)
     ## important to COPY formula (and its environment)?
     ranform <- formula
-    RHSForm(ranform) <- subbars(RHSForm(reOnly(formula)))
+    RHSForm(ranform) <- reformulas::subbars(RHSForm(reOnly(formula)))
     mf$formula <- ranform
     ranfr <- eval(mf, parent.frame())
     attr(attr(fr,"terms"), "predvars.random") <-
         attr(terms(ranfr), "predvars")
 
     X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
+    
+    ## Scaling (if autoscale is on...)
+    if (!is.null(control$autoscale) && control$autoscale) {
+      if("(Intercept)" %in% colnames(X)){
+        X_scaled <- scale(X[, -1])
+        X[,-1] <- X_scaled
+      } else {
+        X_scaled <- scale(X)
+        X <- X_scaled
+      }
+      attr(X, "scaled:center") <- attr(X_scaled, "scaled:center")
+      attr(X, "scaled:scale") <- attr(X_scaled, "scaled:scale")
+    }
+    
     ## backward compatibility (keep no longer than ~2015):
     if(is.null(rankX.chk <- control[["check.rankX"]]))
         rankX.chk <- eval(formals(lmerControl)[["check.rankX"]])[[1]]

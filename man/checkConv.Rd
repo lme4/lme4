@@ -8,7 +8,7 @@
   see \link{convergence} for a more detailed discussion.
 }
 \usage{
-checkConv(derivs, coefs, ctrl, lbound, debug = FALSE)
+checkConv(derivs, coefs, ctrl, lbound, debug = FALSE, nobs = NULL, ndim = NULL)
 }
 
 \arguments{
@@ -22,6 +22,11 @@ checkConv(derivs, coefs, ctrl, lbound, debug = FALSE)
     (length is taken to determine number of RE parameters)}
   \item{debug}{enable debugging output, useful if some checks are on 
     "ignore", but would "trigger"}
+  \item{nobs}{number of observations (needed to determine whether to do
+  convergence checks for large data)}
+  \item{ndim}{number of dimensions for the variance-covariance matrix 
+  of random effects (needed to determine whether to do the
+  gradient/hessian checks for large nonlinear optimization problems)}
 }
 \value{
   A result list containing

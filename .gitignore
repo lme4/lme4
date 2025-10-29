@@ -15,6 +15,7 @@ inst/testdata/lme-tst-fits.Rout*
 inst/testdata/*testdata*
 tests/*.Rout*
 tests/*.R+*
+tests/testthat/*.R+*
 .Rproj.user
 lme4.Rproj
 .Rhistory
@@ -23,3 +24,6 @@ revdep/
 .gitsum/
 Rplots.pdf
 *.rds
+## docs/
+## built on GH from inst/NEWS.Rd
+## NEWS.md

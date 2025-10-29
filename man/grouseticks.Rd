@@ -30,10 +30,7 @@
 \details{\code{grouseticks_agg} is just a brood-level
   aggregation of the data}
 \references{
-  Elston, D. A., R. Moss, T. Boulinier, C. Arrowsmith, and
-X. Lambin. 2001. "Analysis of Aggregation, a Worked Example: Numbers of
-Ticks on Red Grouse Chicks." Parasitology 122 (05):
-563-569. \doi{10.1017/S0031182001007740}
+  \insertRef{elston2001analysis}{lme4}
 }
 \examples{
 if (interactive()) {

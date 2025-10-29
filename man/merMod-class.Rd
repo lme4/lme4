@@ -22,12 +22,8 @@
 \alias{nobs}
 \alias{nlmerMod-class}
 \alias{print.merMod}
-\alias{print.summary.merMod}
 \alias{show,merMod-method}
 \alias{show.merMod}
-\alias{show.summary.merMod}
-\alias{summary.merMod}
-\alias{summary.summary.merMod}
 \alias{terms.merMod}
 \alias{update.merMod}
 \alias{weights.merMod}
@@ -42,42 +38,35 @@
   \code{\linkS4class{nlsResp}} response has class \code{nlmerMod}.
 }
 \usage{
-\S3method{anova}{merMod}(object, ..., refit = TRUE, model.names=NULL)
-\S3method{as.function}{merMod}(x, ...)
-\S3method{coef}{merMod}(object, ...)
-\S3method{deviance}{merMod}(object, REML = NULL, ...)
+\S3method{anova}{merMod}(object, \dots, refit = TRUE, model.names=NULL)
+\S3method{as.function}{merMod}(x, \dots)
+\S3method{coef}{merMod}(object, \dots)
+\S3method{deviance}{merMod}(object, REML = NULL, \dots)
 REMLcrit(object)
-\S3method{extractAIC}{merMod}(fit, scale = 0, k = 2, ...)
-\S3method{family}{merMod}(object, ...)
-\S3method{formula}{merMod}(x, fixed.only = FALSE, random.only = FALSE, ...)
-\S3method{fitted}{merMod}(object, ...)
-\S3method{logLik}{merMod}(object, REML = NULL, ...)
-\S3method{nobs}{merMod}(object, ...)
-\S3method{ngrps}{merMod}(object, ...)
+\S3method{extractAIC}{merMod}(fit, scale = 0, k = 2, \dots)
+\S3method{family}{merMod}(object, \dots)
+\S3method{formula}{merMod}(x, fixed.only = FALSE, random.only = FALSE, \dots)
+\S3method{fitted}{merMod}(object, \dots)
+\S3method{logLik}{merMod}(object, REML = NULL, \dots)
+\S3method{nobs}{merMod}(object, \dots)
+\S3method{ngrps}{merMod}(object, \dots)
 \S3method{terms}{merMod}(x, fixed.only = TRUE, random.only = FALSE, \dots)
-\S3method{model.frame}{merMod}(formula, fixed.only = FALSE, ...)
-\S3method{model.matrix}{merMod}(object, type = c("fixed", "random", "randomListRaw"), ...)
+\S3method{model.frame}{merMod}(formula, fixed.only = FALSE, \dots)
+\S3method{model.matrix}{merMod}(object, 
+  type = c("fixed", "random", "randomListRaw"), noScale = NULL, \dots)
 \S3method{print}{merMod}(x, digits = max(3, getOption("digits") - 3),
       correlation = NULL, symbolic.cor = FALSE,
       signif.stars = getOption("show.signif.stars"), 
       ranef.comp = "Std.Dev.",
-      ranef.corr = any(ranef.comp == "Std.Dev."), ...)
-
-\S3method{summary}{merMod}(object, correlation = , use.hessian = NULL, \dots)
-\S3method{print}{summary.merMod}(x, digits = max(3, getOption("digits") - 3),
-      correlation = NULL, symbolic.cor = FALSE,
-      signif.stars = getOption("show.signif.stars"),
-      ranef.comp = c("Variance", "Std.Dev."),
-      ranef.corr = any(ranef.comp == "Std.Dev."), show.resids = TRUE, ...)
-\S3method{update}{merMod}(object, formula., ..., evaluate = TRUE)
-\S3method{weights}{merMod}(object, type = c("prior", "working"), ...)
+      ranef.corr = any(ranef.comp == "Std.Dev."), \dots)
+\S3method{update}{merMod}(object, formula., \dots, evaluate = TRUE)
+\S3method{weights}{merMod}(object, type = c("prior", "working"), \dots)
 }
 \arguments{
   \item{object}{an \R object of class \code{\linkS4class{merMod}}, i.e.,
     as resulting from \code{\link{lmer}()}, or \code{\link{glmer}()},
     etc.}
-  \item{x}{an \R object of class \code{merMod} or \code{summary.merMod},
-    respectively, the latter resulting from \code{summary(<merMod>)}.}
+  \item{x}{an \R object of class \code{merMod} or \code{summary.merMod}.}
   \item{fit}{an \R object of class \code{\linkS4class{merMod}}.}
   \item{formula}{in the case of \code{model.frame}, a
     \code{\linkS4class{merMod}} object.}
@@ -101,8 +90,6 @@ REMLcrit(object)
     \code{fixed.only} and \code{random.only} at the same time
     will produce an error.)}
   \item{correlation}{(logical)
-    for \code{summary.merMod}, indicates whether the correlation matrix
-    should be computed and stored along with the covariance;
     for \code{print.summary.merMod}, indicates whether the correlation
     matrix of the fixed-effects parameters should be printed.  In the
     latter case, when \code{NULL} (the default), the correlation matrix
@@ -110,11 +97,6 @@ REMLcrit(object)
     \eqn{p <= 12}, and the cutoff \code{12} may be modified by
     \code{options(lme4.summary.cor.max = <n>)}
   }
-  \item{use.hessian}{(logical) indicates whether to use the
-    finite-difference Hessian of the deviance function to compute
-    standard errors of the fixed effects; see \code{\link{vcov.merMod}}
-  for details
-}
 \item{digits}{number of significant digits for printing}
   \item{symbolic.cor}{should a symbolic encoding of the fixed-effects correlation
     matrix be printed?  If so, the \code{\link{symnum}} function is used.}
@@ -122,7 +104,6 @@ REMLcrit(object)
   \item{ranef.comp}{character vector of length one or two, indicating
     if random-effects parameters should be reported on the variance and/or
     standard deviation scale.}
-  \item{show.resids}{should the quantiles of the scaled residuals be printed?}
   \item{formula.}{see \code{\link{update.formula}}.}
   \item{evaluate}{see \code{\link{update}}.}
   \item{type}{For \describe{
@@ -138,6 +119,9 @@ REMLcrit(object)
   }}
   \item{ranef.corr}{(logical) print correlations (rather than covariances) of
     random effects?}
+  \item{noScale}{(logical) some users may use autoscaling. If so, the default
+    returns the scaled parameters. If \code{noScale = TRUE}, then \code{fixef} 
+    returns the non-scaled parameters instead.}
   \item{\dots}{potentially further arguments passed from other methods.}
 } %% arguments
 \section{Objects from the Class}{
@@ -176,11 +160,6 @@ The following S3 methods with arguments given above exist (this list is currentl
   \item{\code{model.matrix}:}{returns the fixed effects model matrix.}
   \item{\code{nobs}, \code{ngrps}:}{Number of observations and vector of
     the numbers of levels in each grouping factor.  See \code{\link{ngrps}}.}
-  \item{\code{summary}:}{Computes and returns a list of summary statistics of the
-      fitted model, the amount of output can be controlled via the \code{print} method,
-      see also \code{\link{summary}}.}
-   \item{\code{print.summary}:}{Controls the output for the summary
-     method.}
    \item{\code{update}:}{See \code{\link{update}}.}
  }
 }

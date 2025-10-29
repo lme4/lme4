@@ -25,10 +25,11 @@ lmerControl(optimizer = "nloptwrap",% was "Nelder_Mead" till Dec.2013,
 				    % then "bobyqa" till Oct 2018; CRAN till 1.1-20 (2019-02-04)
     restart_edge = TRUE,
     boundary.tol = 1e-5,
-    calc.derivs = TRUE,
+    calc.derivs = NULL,
     use.last.params = FALSE,
     sparseX = FALSE,
     standardize.X = FALSE,
+    autoscale = NULL,
     ## input checking options
     check.nobs.vs.rankZ = "ignore",
     check.nobs.vs.nlev = "stop",
@@ -41,8 +42,10 @@ lmerControl(optimizer = "nloptwrap",% was "Nelder_Mead" till Dec.2013,
                      "message+rescale","warn+rescale","ignore"),
     check.formula.LHS = "stop",
     ## convergence checking options
+    check.conv.nobsmax  = 1e4,
+    check.conv.nparmax  = 10,
     check.conv.grad     = .makeCC("warning", tol = 2e-3, relTol = NULL),
-    check.conv.singular = .makeCC(action = "message", tol = formals(isSingular)$tol),
+    check.conv.singular = .makeCC(action = "message", tol = getSingTol()),
     check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
     ## optimizer args
     optCtrl = list(),
@@ -52,10 +55,11 @@ lmerControl(optimizer = "nloptwrap",% was "Nelder_Mead" till Dec.2013,
 glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
     restart_edge = FALSE,
     boundary.tol = 1e-5,
-    calc.derivs = TRUE,
+    calc.derivs = NULL,
     use.last.params = FALSE,
     sparseX = FALSE,
     standardize.X = FALSE,
+    autoscale = NULL,
     ## input checking options
     check.nobs.vs.rankZ = "ignore",
     check.nobs.vs.nlev = "stop",
@@ -68,8 +72,10 @@ glmerControl(optimizer = c("bobyqa", "Nelder_Mead"),
                      "message+rescale","warn+rescale","ignore"),
     check.formula.LHS = "stop",
     ## convergence checking options
+    check.conv.nobsmax  = 1e4, 
+    check.conv.nparmax  = 20,
     check.conv.grad     = .makeCC("warning", tol = 2e-3, relTol = NULL),
-    check.conv.singular = .makeCC(action = "message", tol = formals(isSingular)$tol),
+    check.conv.singular = .makeCC(action = "message", tol = getSingTol()),
     check.conv.hess     = .makeCC(action = "warning", tol = 1e-6),
     ## optimizer args
     optCtrl = list(),
@@ -126,17 +132,22 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     all of the model structures will be set up, but no optimization will
     be done (e.g. parameters will all be returned as \code{NA}).
   }
-  \item{calc.derivs}{logical - compute gradient and Hessian of nonlinear
-    optimization solution?}
-  \item{use.last.params}{logical - should the last value of the
+  \item{calc.derivs}{(logical) compute gradient and Hessian of nonlinear
+    optimization solution? Default NULL value says these derivatives
+    should be calculated if and only if
+    derivative-based convergence checks
+    are going to be done (i.e. when \code{nobs(model) < check.conv.nobsmax} and
+    \code{ndim(model) < check.conv.nparmax} where \code{ndim} refers to the
+    dimensions of the variance-covariance matrix)}
+  \item{use.last.params}{(logical) should the last value of the
     parameters evaluated (\code{TRUE}), rather than the value of the
     parameters corresponding to the minimum deviance, be returned?
     This is a "backward bug-compatibility" option; use \code{TRUE}
     only when trying to match previous results.}
-  \item{sparseX}{logical - should a sparse model matrix be
+  \item{sparseX}{(logical) should a sparse model matrix be
     used for the fixed-effects terms?
     Currently inactive.}
-  \item{restart_edge}{logical - should the optimizer
+  \item{restart_edge}{(logical) should the optimizer
     attempt a restart when it finds a solution at the
     boundary (i.e. zero random-effect variances or perfect
     +/-1 correlations)?  (Currently only implemented for
@@ -189,6 +200,14 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     than (or greater than or equal to) the number of random-effects
     levels for each term, usually necessary for identifiable variances.
     As for \code{check.nobs.vs.nlev}.}
+  \item{check.conv.nobsmax}{threshold for the number of observations 
+    above which derivative-based convergence checks are skipped.
+    (Set this argument to \code{Inf} to  restore previous behaviour
+    of always checking.)}
+  \item{check.conv.nparmax}{threshold for the number of dimensions of the
+    variance/covariance matrix above which derivative-based convergence checks 
+    are skipped. (Set this argument to \code{Inf} to  restore previous behaviour
+    of always checking.)}
   \item{check.conv.grad}{rules for checking the gradient of the deviance
     function for convergence.  A list as returned
     by \code{.makeCC}, or a character string with only the action.}
@@ -251,6 +270,10 @@ nlmerControl(optimizer = "Nelder_Mead", tolPwrss = 1e-10,
     relative to the magnitude of the estimated coefficient}
   \item{mod.type}{model type (for internal use)}
   \item{standardize.X}{scale columns of X matrix? (not yet implemented)}
+  \item{autoscale}{if \code{TRUE}, automatically applies scaling for
+    the continuous covariates, and then back-transforms the estimates 
+    back to the original scale to prevent numeric stability without user
+    intervention. (NOTE: not compatiable with glmer yet!)}
   \item{\dots}{other elements to include in check specification}
 }
 \value{
