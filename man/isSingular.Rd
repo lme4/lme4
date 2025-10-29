@@ -1,5 +1,6 @@
-\name{isSingular}
+\name{isSingular.merMod}
 \title{Test Fitted Model for (Near) Singularity}
+\alias{isSingular.merMod}
 \alias{isSingular}
 \concept{boundary}
 \description{
@@ -9,11 +10,16 @@
   are (close to) zero.
 }
 \usage{
-isSingular(x, tol = getSingTol())
+\method{isSingular}{merMod}(object, tol = getSingTol(), 
+           method = c("det", "cholesky"), \dots)
 }
 \arguments{
-  \item{x}{a fitted \code{merMod} object (result of \code{lmer} or \code{glmer}).}
+  \item{object}{a fitted \code{merMod} object (result of \code{lmer} or \code{glmer}).}
   \item{tol}{numerical tolerance for detecting singularity.}
+  \item{method}{determines which method to detect singularity; either using
+    the original Cholesky-based check via \code{cholesky} or the new determinant-based
+    check using \code{det}.}
+  \item{\dots}{additional arguments to methods}
 }
 \details{
   Complex mixed-effect models (i.e., those with a

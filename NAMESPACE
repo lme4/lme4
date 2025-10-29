@@ -308,11 +308,8 @@ importFrom(reformulas,mkReTrms)
 export(mkReTrms)
 ## 
 export(namedList)
-<<<<<<< HEAD
 
 export(isSingular)
 S3method(isSingular, merMod)
 
-=======
 importFrom(rlang, warn)
->>>>>>> master
