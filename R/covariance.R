@@ -738,7 +738,7 @@ setMethod("setVC",
           })
 
 setMethod("setVC",
-          c(object = "Covariance.ar1"),
+          c(object = "Covariance.ar1", vcomp = "numeric", ccomp = "numeric"),
           .fn)
 
 rm(.fn)
