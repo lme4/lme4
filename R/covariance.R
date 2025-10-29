@@ -573,7 +573,7 @@ setMethod("getLambda",
           c(object = "Covariance.diag"),
           function (object) {
               nc <- object@nc
-              diag(object@par, nc, nc, FALSE)
+              diag(object@par, nc, nc)
           })
 
 setMethod("getLambda",
@@ -706,7 +706,7 @@ setMethod("setVC",
                   i1 <- sequence.default(from = seq.int(from = 1L, by = nc + 1L, length.out = nc),
                                          by = nc,
                                          nvec = nc:1L)
-                  S <- diag(1, nc, nc, FALSE)
+                  S <- diag(1, nc, nc)
                   S[i0] <- ccomp
                   (chol(S) * rep(vcomp, each = nc))[i1]
               }
