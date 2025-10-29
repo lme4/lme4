@@ -164,6 +164,14 @@ setGeneric("getLambdat.i",
            function (object)
                standardGeneric("getLambdat.i"))
 
+setGeneric("getVC",
+           function (object)
+               standardGeneric("getVC"))
+
+setGeneric("setVC",
+           function (object, vcomp, ccomp)
+               standardGeneric("setVC"))
+
 
 ## .... METHODS ........................................................
 
@@ -633,6 +641,107 @@ setMethod("getLambdat.i",
           c(object = "Covariance.ar1"),
           function (object)
               sequence.default(from = 0L, nvec = seq_len(object@nc)))
+
+setMethod("getVC",
+          c(object = "Covariance.us"),
+          function (object) {
+              nc <- object@nc
+              if (nc <= 1L) {
+                  vcomp <- object@par
+                  ccomp <- double(0L)
+              } else {
+                  ii <- seq.int(from = 1L, by = nc + 1L, length.out = nc)
+                  i0 <- sequence.default(from = seq.int(from = 2L, by = nc + 1L, length.out = nc - 1L),
+                                         by = 1L,
+                                         nvec = (nc - 1L):1L)
+                  i1 <- sequence.default(from = ii,
+                                         by = 1L,
+                                         nvec = nc:1L)
+                  L <- matrix(0, nc, nc)
+                  L[i1] <- object@par
+                  S <- tcrossprod(L)
+                  vcomp <- sqrt(S[ii])
+                  ccomp <- (S/vcomp/rep(vcomp, each = nc))[i0]
+              }
+              list(vcomp = vcomp, ccomp = ccomp)
+          })
+
+setMethod("getVC",
+          c(object = "Covariance.diag"),
+          function (object)
+              list(vcomp = object@par, ccomp = double(0L)))
+
+setMethod("getVC",
+          c(object = "Covariance.cs"),
+          .fn <-
+          function (object) {
+              nc <- object@nc
+              par <- object@par
+              if (nc <= 1L)
+                  list(vcomp = par, ccomp = double(0L))
+              else list(vcomp = par[seq_len(length(par) - 1L)], ccomp = par[length(par)])
+          })
+
+setMethod("getVC",
+          c(object = "Covariance.ar1"),
+          .fn)
+
+rm(.fn)
+
+setMethod("setVC",
+          c(object = "Covariance.us", vcomp = "numeric", ccomp = "numeric"),
+          function (object, vcomp, ccomp) {
+              nc <- object@nc
+              stopifnot(is.double(vcomp),
+                        length(vcomp) == nc,
+                        is.double(ccomp),
+                        length(ccomp) == length(object@par) - nc)
+              object@par <-
+              if (nc <= 1L)
+                  vcomp
+              else {
+                  i0 <- sequence.default(from = seq.int(from = nc + 1L, by = nc + 1L, length.out = nc - 1L),
+                                         by = nc,
+                                         nvec = (nc - 1L):1L)
+                  i1 <- sequence.default(from = seq.int(from = 1L, by = nc + 1L, length.out = nc),
+                                         by = nc,
+                                         nvec = nc:1L)
+                  S <- diag(1, nc, nc, FALSE)
+                  S[i0] <- ccomp
+                  (chol(S) * rep(vcomp, each = nc))[i1]
+              }
+              object
+          })
+
+setMethod("setVC",
+          c(object = "Covariance.diag", vcomp = "numeric", ccomp = "numeric"),
+          function (object, vcomp, ccomp) {
+              stopifnot(is.double(vcomp),
+                        length(vcomp) == length(object@par),
+                        is.double(ccomp),
+                        length(ccomp) == 0L)
+              object@par <- vcomp
+              object
+          })
+
+setMethod("setVC",
+          c(object = "Covariance.cs", vcomp = "numeric", ccomp = "numeric"),
+          .fn <-
+          function (object, vcomp, ccomp) {
+              nc <- object@nc
+              stopifnot(is.double(vcomp),
+                        length(vcomp) == length(object@par) - (nc > 1L),
+                        is.double(ccomp),
+                        length(ccomp) == (nc > 1L))
+              object@par <- c(vcomp, ccomp)
+              object
+          })
+
+setMethod("setVC",
+          c(object = "Covariance.ar1"),
+          .fn)
+
+rm(.fn)
 
 
 ## .... HELPERS ........................................................
