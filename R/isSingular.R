@@ -11,7 +11,8 @@ isSingular <- function(object, ...) {
 }
 
 #' @export
-isSingular.merMod <- function(object, tol = getSingTol(), method = c("det", "cholesky"), ...) {
+isSingular.merMod <- function(object, tol = getSingTol(), 
+                              method = c("cholesky", "det"), ...) {
   method <- match.arg(method)
   
   if (method == "cholesky") {
@@ -27,11 +28,6 @@ isSingular.merMod <- function(object, tol = getSingTol(), method = c("det", "cho
         if(det(Sigma) < tol) return(TRUE)
       }
     }
-  } else {
-    warning(paste(
-      "Did not suggest a valid method to check singularity for isSingular().",
-      "\nEither use `method = \"det\"` or `method = \"cholesky\"`."
-    ))
   }
   return(FALSE)
 }

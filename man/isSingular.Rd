@@ -11,7 +11,7 @@
 }
 \usage{
 \method{isSingular}{merMod}(object, tol = getSingTol(), 
-           method = c("det", "cholesky"), \dots)
+           method = c("cholesky", "det"), \dots)
 }
 \arguments{
   \item{object}{a fitted \code{merMod} object (result of \code{lmer} or \code{glmer}).}
