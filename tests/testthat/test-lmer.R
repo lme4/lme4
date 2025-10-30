@@ -459,7 +459,7 @@ test_that("turn off conv checking for npara > check.conv.nparmax", {
             2 * rnorm(n)
     ), 10), 0)
   
-  form <- eval~group*emint_n + group*grade_n + (grade_n+emint_n|class)
+  form <- eval~group*emint_n + group*grade_n + (1 + grade_n+emint_n|class)
 
   ctrl1 <- lmerControl(optCtrl = list(maxeval = 50))
   ctrl2 <- lmerControl(optCtrl = list(maxeval = 50,
