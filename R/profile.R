@@ -486,11 +486,31 @@ get.which <- function(which, nvp, nptot, parnames, verbose=FALSE) {
 ## @return a function for evaluating the deviance in the extended
 ##     parameterization.  This is profiled with respect to the
 ##     variance-covariance parameters (fixed-effects done separately).
-devfun2 <- function(fm, useSc = if(isLMM(fm)) TRUE else NA,
+devfun2 <- function(fm,
+                    useSc = if(isLMM(fm)) TRUE else NA,
                     transfuns = list(from.chol = Cv_to_Sv,
-                                       to.chol = Sv_to_Cv, to.sd = identity),
+                                     to.chol = Sv_to_Cv, to.sd = identity),
+                    scale = c("sdcor", "vcov"),
                     ...)
 {
+
+  scale <- match.arg(scale)
+  getpars <- function(v) {
+    pp <- getVC(v)
+    if (useSc) {
+      resvar <- sigma(fm)^2
+      pp <- lapply(pp, \(x) x*resvar)
+      pp <- c(pp, list(scale = resvar))
+    }
+    if (scale == "sdcor") {
+      pp$vcomp <- sqrt(pp$vcomp)
+      ## cov to cor: does this need to be cov-class-specific?
+      covmat <- outer(pp$vcomp, pp$vcomp)
+      pp$ccomp <- pp$ccomp/covmat[lower.tri(covmat)]
+      if (useSc) pp$scale <- sqrt(pp$scale)
+    }
+    unlist(pp)   
+  }
     ## TODO: change to work with 'par' instead of 'theta'
 
     ## FIXME: have to distinguish between
@@ -509,6 +529,10 @@ devfun2 <- function(fm, useSc = if(isLMM(fm)) TRUE else NA,
         sig <- sigma(fm)  ## only if hasSc is TRUE?
         ## opt <- c(pp$theta*sig, sig)
         opt <- transfuns$from.chol(pp$theta, n=vlist, s=sig)
+        if (FALSE) {
+          ## testing
+          lapply(attr(fm, "reCov"), getpars)
+        }
     } else {
         opt <- transfuns$from.chol(pp$theta, n=vlist)
     }
