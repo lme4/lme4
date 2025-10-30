@@ -1008,7 +1008,10 @@ quad.tdiag <- function(M, x) {
     rowSums(tcrossprod(x, M) * x)
 }
 
-## attempt to modularize vcov scaling
+##' attempt to modularize vcov scaling; more details in the autoscale vignette
+##' @param vv represents the variance-covariance matrix before modification
+##' @param sc represents the scale vector
+##' @param ce represents the center vector
 scale_vcov <- function(vv, sc, ce) {
   other_vars <- setdiff(colnames(vv), "(Intercept)")
   ## 1. Modifying the intercept
@@ -1024,4 +1027,71 @@ scale_vcov <- function(vv, sc, ce) {
   vv[other_vars, "(Intercept)"] <- updated_2
   vv[other_vars, other_vars] <- vv[other_vars, other_vars] * outer(1/sc, 1/sc)
   vv <- as(vv, "dpoMatrix")
+}
+
+##' Used for padding NAs to Cmat accordingly in predict.merMod
+##' @param mat represents the matrix that needs to be modified
+##' @param mat_names represents the names of the new modified matrix
+##' @param insert_after represents the placement before the zeros that need to 
+##' be added
+##' @param n_add represents the number rows/columns that will be padded with zeros
+zero_padding <- function(mat, mat_names, insert_after, n_add = 1) {
+  mat <- as.matrix(mat)
+  old_dim <- nrow(mat)
+  new_dim <- old_dim + n_add
+  m_pad <- matrix(0, new_dim, new_dim)
+  rownames(m_pad) <- mat_names
+  colnames(m_pad) <- mat_names
+  
+  ## Top right corner
+  m_pad[1:insert_after, 1:insert_after] <- mat[1:insert_after, 1:insert_after]
+  
+  ## Top left corner
+  m_pad[1:insert_after, (insert_after + n_add + 1):new_dim] <-
+    mat[1:insert_after, (insert_after + 1):old_dim]
+  
+  ## Bottom right corner
+  m_pad[(insert_after + n_add + 1):new_dim, 1:insert_after] <-
+    mat[(insert_after + 1):old_dim, 1:insert_after]
+  
+  ## Bottom left corner
+  m_pad[(insert_after + n_add + 1):new_dim, (insert_after + n_add + 1):new_dim] <-
+    mat[(insert_after + 1):old_dim, (insert_after + 1):old_dim]
+  
+  m_pad
+}
+
+##' if allow.new.levels = TRUE, then adds 0 padding to Cmat for prediction
+##' @param Cmat represents Cmat that was computed prior to subsetting
+##' @param C_factors represents the factors explicitly shown in Cmat
+##' @param Z_factors represents the factors represented in the Z matrix, which
+##' includes only levels of groups that need to be predicted
+##' @param Cmat_names represents the names of the Cmat matrix
+##' @param cnms same as cnms from object
+pad_Cmat <- function(Cmat, C_factors, Z_factors, Cmat_names, cnms){
+  n_padded = 0
+  for (grp in intersect(names(C_factors), names(Z_factors))) {
+    n_lvl <- length(levels(C_factors[[grp]]))
+    added_levels <- setdiff(levels(Z_factors[[grp]]), 
+                            levels(C_factors[[grp]]))
+    if ((n_add <- length(added_levels)) == 0) next
+    levels(C_factors[[grp]]) <- c(levels(C_factors[[grp]]), added_levels) 
+    
+    ## add names for clarity
+    added_nms <- as.vector(sapply(added_levels, function(lv)
+      paste0(grp, ".", lv, ".", cnms[[grp]])
+    ))
+    ## add padding
+    n_padded <- n_padded + n_lvl * length(cnms[[grp]])
+    n_new <- n_add * length(cnms[[grp]])
+    
+    Cmat_names <- c(Cmat_names[1:n_padded], 
+                    added_nms, 
+                    Cmat_names[(n_padded+1):length(Cmat_names)])
+    ## alter Cmat
+    Cmat <- zero_padding(Cmat, Cmat_names, insert_after = n_padded,
+                         n_add = n_new)
+    n_padded <- n_padded + n_new
+  }
+  list("Cmat" = Cmat, "C_factors" = C_factors, "Cmat_names" = Cmat_names)
 }

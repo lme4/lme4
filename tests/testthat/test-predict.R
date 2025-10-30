@@ -530,8 +530,6 @@ test_that("predict se.fit on response scale", {
 })
 
 
-
-
 test_that("predictions work with se.fit and subset of grouping variable levels", {
   ## Idea: when predicting where the newdata has less groups than what
   ## the full model accounted for, Cmat needs to be subsetted to match
@@ -636,16 +634,44 @@ test_that("predictions work with se.fit and subset of grouping variable levels",
   set.seed(1)
   sleepstudy$Subject2 <- rep(1:5, each = 36)
   
-  m1 <- lmer(Reaction ~ Days + (1 + Days | Subject) +  
+  m5 <- lmer(Reaction ~ Days + (1 + Days | Subject) +  
                (1 | Subject2), data = sleepstudy)
 
   d <- sleepstudy[sample(1:nrow(sleepstudy), size = 30), ]
   
-  pms1 <- predict(m1, se.fit = TRUE, re.form = NULL, 
+  pms1 <- predict(m5, se.fit = TRUE, re.form = NULL, 
           allow.new.levels = FALSE)
-  pms2 <- predict(m1, newdata = d, se.fit = TRUE, re.form = NULL, 
+  pms2 <- predict(m5, newdata = d, se.fit = TRUE, re.form = NULL, 
           allow.new.levels = FALSE)
   psw <- as.numeric(rownames(d))
   expect_equal(lapply(pms1, function(x) x[psw]), pms2, check.attributes = FALSE)
+  
+  ## Case where we are adding new levels
+  lm1 <- lmer(Reaction ~ Days + (1 + Days | Subject), data = sleepstudy)
+  d373 <- data.frame(Days = 0, Subject = "373")
+  pred373 <- predict(lm1, newdata = d373, se.fit = TRUE, re.form = NULL, 
+          allow.new.levels = TRUE)
+  expected_373 <- fixef(lm1)["(Intercept)"] + fixef(lm1)["Days"] * d373$Days
+  expect_equal(pred373$fit, expected_373, check.attributes = FALSE, 
+               tol = 10e-16)
+  
+  ## Extending previous example: multiple new levels for different groups
+  dsub3 <- expand.grid(
+    g1 = c("k", "m"), 
+    g2 = c("k", "m"))
+  
+  tp3 <- suppressWarnings(predict(m3, newdata = dsub3, se.fit = TRUE, 
+                           allow.new.levels = TRUE))
+  expected_tp3 <- fixef(m3)["(Intercept)"]
+  
+  expect_true(all(tp3$fit == expected_tp3))
+  
+  ## Case where user specified allow.new.levels = TRUE but 
+  ## but no new levels were actually added
+  tp4 <- suppressWarnings(predict(m3, se.fit = TRUE,
+                                  allow.new.levels = TRUE))
+  ## Ideally: predictions should remain the same as before.
+  expect_equal(lapply(tp4, function(x) x[w2]), tp2,
+               check.attributes = FALSE)
 })
 

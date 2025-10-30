@@ -556,8 +556,19 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
       Cmat_names <- rownames(Cmat)
       ## Subsetting appears to occur in the case we use newRE;
       Z_factors <- newRE$flist
+      C_factors <- object@flist
+      cnms <- object@cnms
 
       fix_nms <- colnames(object@pp$X)
+      
+      ## Cmat is padded with zeros for new levels
+      if(allow.new.levels){
+        Cmat_mod <- pad_Cmat(Cmat, C_factors, Z_factors, Cmat_names, cnms)
+        Cmat <- Cmat_mod$Cmat
+        Cmat_names <- Cmat_mod$Cmat_names
+        C_factors <- Cmat_mod$C_factors
+      }
+    
       is_group_term <- !Cmat_names %in% fix_nms
 
       ## looking to compute the groups (factor levels) that are actually 
@@ -565,18 +576,20 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
       keep_idx <- !is_group_term
       
       mask <- unlist(lapply(
-        intersect(names(object@flist), names(Z_factors)),
+        intersect(names(C_factors), names(Z_factors)),
         function(grp) {
-          level_mask <- levels(object@flist[[grp]]) %in% levels(Z_factors[[grp]])
-          rep(level_mask, each = length(object@cnms[[grp]]))
+          level_mask <- levels(C_factors[[grp]]) %in% levels(Z_factors[[grp]])
+          rep(level_mask, each = length(cnms[[grp]]))
         }
       ))
       
       keep_idx[seq_along(mask)] <- is_group_term[seq_along(mask)] & mask
       
-      Cmat <- as(Cmat[keep_idx, keep_idx], "dpoMatrix")
+      # For now, don't worry about keeping it as dpoMatrix?
+      Cmat <- Cmat[keep_idx, keep_idx]
+      #Cmat <- as(Cmat[keep_idx, keep_idx], "dpoMatrix")
     }
-
+    
     res <- list(fit = pred,
          se.fit = sqrt(quad.tdiag(Cmat, ZX))
          )
