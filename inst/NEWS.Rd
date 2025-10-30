@@ -10,8 +10,8 @@
       \item \code{$se.fit} component of predictions from GLMMs when
       \code{type = "response"} is now transformed from the link scale to
       the response scale (GH #847, @leorjorge)
-      \item predictions with \code{se.fit=TRUE} work for a wider range
-      of cases (GH #691, GH #753)
+      \item predictions with
+      \code{se.fit=TRUE}/\code{allow.new.levels=TRUE} work for a wider range       of cases (GH #691, GH #753)
     } % itemize
   } % bug fixes
   \subsection{NEW FEATURES}{
