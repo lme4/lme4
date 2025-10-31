@@ -177,14 +177,16 @@ setGeneric("setVC",
 
 setMethod("initialize",
           c(.Object = "Covariance.us"),
-          function (.Object, nc, par, ...) {
+          function (.Object, nc, par, simulate = FALSE, ...) {
               if (missing(par) && !missing(nc) &&
                   is.integer(nc) && length(nc) == 1L && !is.na(nc) &&
                   nc >= 0L) {
                   .Object@nc <- nc
-                  .Object@par <- `[<-`(double((nc * (nc - 1L)) %/% 2L + nc),
-                                       cumsum(c(if (nc > 0L) 1L, if (nc > 1L) nc:2L)),
-                                       1)
+                  .Object@par <-
+                  `[<-`((if (simulate) rnorm else double)(
+                            (nc * (nc - 1L)) %/% 2L + nc),
+                        cumsum(c(if (nc > 0L) 1L, if (nc > 1L) nc:2L)),
+                        if (simulate) rlnorm(nc) else 1)
                   .Object
               }
               else callNextMethod()
@@ -192,14 +194,16 @@ setMethod("initialize",
 
 setMethod("initialize",
           c(.Object = "Covariance.diag"),
-          function (.Object, nc, par, hom = FALSE, ...) {
+          function (.Object, nc, par, hom = FALSE, simulate = FALSE, ...) {
               if (missing(par) && !missing(nc) &&
                   is.integer(nc) && length(nc) == 1L && !is.na(nc) &&
                   nc >= 0L &&
                   is.logical(hom) && length(hom) == 1L && !is.na(hom)) {
                   .Object@nc <- nc
                   .Object@hom <- hom
-                  .Object@par <- rep(1, if (hom) 1L * (nc > 0L) else nc)
+                  .Object@par <-
+                  (if (simulate) rlnorm else function (n) rep(1, n))(
+                      if (hom) 1L * (nc > 0L) else nc)
                   .Object
               }
               else callNextMethod()
@@ -207,16 +211,17 @@ setMethod("initialize",
 
 setMethod("initialize",
           c(.Object = "Covariance.cs"),
-          .fn <-
-          function (.Object, nc, par, hom = FALSE, ...) {
+          function (.Object, nc, par, hom = FALSE, simulate = FALSE, ...) {
               if (missing(par) && !missing(nc) &&
                   is.integer(nc) && length(nc) == 1L && !is.na(nc) &&
                   nc >= 0L &&
                   is.logical(hom) && length(hom) == 1L && !is.na(hom)) {
                   .Object@nc <- nc
                   .Object@hom <- hom
-                  .Object@par <- c(rep(1, if (hom) 1L * (nc > 0L) else nc),
-                                   if (nc > 1L) 0)
+                  .Object@par <-
+                  c((if (simulate) rlnorm else function (n) rep(1, n))(
+                        if (hom) 1L * (nc > 0L) else nc),
+                    if (nc > 1L) { if (simulate) runif(1L, -1/(nc - 1), 1) else 0 })
                   .Object
               }
               else callNextMethod()
@@ -224,9 +229,21 @@ setMethod("initialize",
 
 setMethod("initialize",
           c(.Object = "Covariance.ar1"),
-          .fn)
-
-rm(.fn)
+          function (.Object, nc, par, hom = FALSE, simulate = FALSE, ...) {
+              if (missing(par) && !missing(nc) &&
+                  is.integer(nc) && length(nc) == 1L && !is.na(nc) &&
+                  nc >= 0L &&
+                  is.logical(hom) && length(hom) == 1L && !is.na(hom)) {
+                  .Object@nc <- nc
+                  .Object@hom <- hom
+                  .Object@par <-
+                  c((if (simulate) rlnorm else function (n) rep(1, n))(
+                        if (hom) 1L * (nc > 0L) else nc),
+                    if (nc > 1L) { if (simulate) runif(1L, -1, 1) else 0 })
+                  .Object
+              }
+              else callNextMethod()
+          })
 
 setMethod("getTheta",
           c(object = "Covariance.us"),
