@@ -172,6 +172,10 @@ setGeneric("setVC",
            function (object, vcomp, ccomp)
                standardGeneric("setVC"))
 
+setGeneric("getCormat",
+           function (object)
+               standardGeneric("getCormat"))
+
 
 ## .... METHODS ........................................................
 
@@ -664,25 +668,36 @@ setMethod("getVC",
           function (object) {
               nc <- object@nc
               if (nc <= 1L) {
-                  vcomp <- object@par
-                  ccomp <- double(0L)
-              } else {
-                  ii <- seq.int(from = 1L, by = nc + 1L, length.out = nc)
-                  i0 <- sequence.default(from = seq.int(from = 2L, by = nc + 1L, length.out = nc - 1L),
-                                         by = 1L,
-                                         nvec = (nc - 1L):1L)
-                  i1 <- sequence.default(from = ii,
-                                         by = 1L,
-                                         nvec = nc:1L)
-                  L <- matrix(0, nc, nc)
-                  L[i1] <- object@par
-                  S <- tcrossprod(L)
-                  vcomp <- sqrt(S[ii])
-                  ccomp <- (S/vcomp/rep(vcomp, each = nc))[i0]
+                  return(vcomp = object@par, ccomp = double(0L))
               }
+              ii <- seq.int(from = 1L, by = nc + 1L, length.out = nc)
+              i0 <- sequence.default(from = seq.int(from = 2L, by = nc + 1L, length.out = nc - 1L),
+                                     by = 1L,
+                                     nvec = (nc - 1L):1L)
+              i1 <- sequence.default(from = ii,
+                                     by = 1L,
+                                     nvec = nc:1L)
+              L <- matrix(0, nc, nc)
+              L[i1] <- object@par
+              S <- tcrossprod(L)
+              vcomp <- sqrt(S[ii])
+              ccomp <- (S/vcomp/rep(vcomp, each = nc))[i0]
               list(vcomp = vcomp, ccomp = ccomp)
           })
 
+setMethod("getCormat",
+          c(object = "Covariance.us"),
+          function (object) {
+            nc <- object@nc
+            if (nc <= 1L) {
+              return(matrix(1))
+            }
+            L <- matrix(0, nc, nc)
+            L[lower.tri(L, diag = TRUE)] <- object@par
+            S <- tcrossprod(L)
+            cov2cor(S)
+          })
+          
 setMethod("getVC",
           c(object = "Covariance.diag"),
           function (object)

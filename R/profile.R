@@ -473,6 +473,41 @@ get.which <- function(which, nvp, nptot, parnames, verbose=FALSE) {
     }
 }
 
+  ## get user/profiling pars from deviance pars
+getpars <- function(v) {
+  pp <- getVC(v)
+  ## this part should be general
+  if (useSc) {
+    sig <- sigma(fm)
+    pp$vcomp <- pp$vcomp*sig
+    pp <- c(pp, list(scale = sig))
+  }
+  if (scale == "vcov") {
+      vmat <- outer(pp$vcomp, pp$vcomp)
+      vc <- getCormat(v)*vmat
+      pp$comp <- vc[lower.tri(vc)]
+    }
+    unlist(pp)   
+}
+
+## get deviance pars from user/profiling pars
+setpars <- function(v, p) {
+  split_p <- list(vcomp = p[grepl("^vcomp", names(p))],
+                  ccomp = p[grepl("^ccomp", names(p))],
+                  scale = p[grepl("scale", names(p))])
+  if (length(split_p$scale)>0) {
+    split_p$vcomp <- split_p$vcomp/split_p$scale
+  }
+  if (scale == "vcov") {
+    cc <- diag(split_p$vcomp)
+    cc[lower.tri(cc)] <- split_p$ccomp
+    cc <- Matrix::forceSymmetric(cc, "L")
+    split_p$ccomp <- cov2cor(cc)[lower.tri(cc)]
+    split_p$vcomp <- sqrt(split_p$vcomp)
+  }
+  setVC(v, split_p$vcomp, split_p$ccomp)
+}
+
 ## The deviance is profiled with respect to the fixed-effects
 ## parameters but not with respect to sigma. The other parameters
 ## are on the standard deviation scale, not the theta scale.
@@ -495,21 +530,9 @@ devfun2 <- function(fm,
 {
 
   scale <- match.arg(scale)
-  getpars <- function(v) {
-    pp <- getVC(v)
-    if (useSc) {
-      resvar <- sigma(fm)^2
-      pp <- lapply(pp, function(x) x*resvar)
-      pp <- c(pp, list(scale = resvar))
-    }
-    if (scale == "sdcor") {
-      pp$vcomp <- sqrt(pp$vcomp)
-      ## cov to cor: does this need to be cov-class-specific?
-      covmat <- outer(pp$vcomp, pp$vcomp)
-      pp$ccomp <- pp$ccomp/covmat[lower.tri(covmat)]
-      if (useSc) pp$scale <- sqrt(pp$scale)
-    }
-    unlist(pp)   
+  if (scale == "varcov" && 
+      !all(sapply(xx, inherits, "Covariance.us"))) {
+    stop("haven't thought about varcov scale for structured cov matrices")
   }
     ## TODO: change to work with 'par' instead of 'theta'
 
@@ -529,10 +552,8 @@ devfun2 <- function(fm,
         sig <- sigma(fm)  ## only if hasSc is TRUE?
         ## opt <- c(pp$theta*sig, sig)
         opt <- transfuns$from.chol(pp$theta, n=vlist, s=sig)
-        if (FALSE) {
-          ## testing
-          lapply(attr(fm, "reCov"), getpars)
-        }
+        opt2 <- sapply(attr(fm, "reCov"), getpars)
+        browser()
     } else {
         opt <- transfuns$from.chol(pp$theta, n=vlist)
     }
@@ -549,6 +570,7 @@ devfun2 <- function(fm,
             stopifnot(is.numeric(pars), length(pars) == np)
             ## Assumption:  we can translate the *last* parameter back
             ##   to sigma (SD) scale ...
+            browser()
             sigma <- transfuns$to.sd(pars[np])
             ## .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pars[-np]/sigma)
             ## convert from sdcor vector back to 'unscaled theta'
