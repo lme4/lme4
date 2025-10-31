@@ -22,7 +22,7 @@ importFrom("stats",
            nobs, optim, optimize, pchisq, pnorm, poisson, ppoints,
            predict, printCoefmat, profile, pt, qchisq, qnorm,
            qqnorm, qt, quantile, rbinom, reformulate, reorder,
-           resid, residuals, rgamma, rnbinom, rnorm, rpois,
+           resid, residuals, rgamma, rlnorm, rnbinom, rnorm, rpois,
            rstudent,
            runif, sd, setNames, simulate, symnum, terms, terms.formula,
            update, update.formula, var, vcov, weights)
