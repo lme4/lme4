@@ -56,7 +56,7 @@ namespace lme4 {
             OtherDerived& other = _other.const_cast_derived();
             eigen_assert(m_factorizationIsOk &&
                          "The decomposition is not in a valid state for solving, you must first call either compute() or symbolic()/numeric()");
-            eigen_assert((Base::Index)(factor()->n) == other.rows());
+            eigen_assert((Eigen::Index)(factor()->n) == other.rows());
 
             // note: cd stands for Cholmod Dense
             cholmod_dense b_cd = viewAsCholmod(other.const_cast_derived());
