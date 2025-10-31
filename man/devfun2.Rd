@@ -13,7 +13,8 @@
 devfun2(fm, useSc = if(isLMM(fm)) TRUE else NA,
         transfuns = list(from.chol = Cv_to_Sv,
                            to.chol = Sv_to_Cv,
-                             to.sd = identity), ...)
+                             to.sd = identity),
+        scale = c("sdcor", "varcov"), ...)
 }
 \arguments{
   \item{fm}{a fitted model inheriting from  class \code{"\linkS4class{merMod}"}.}
@@ -22,6 +23,8 @@ devfun2(fm, useSc = if(isLMM(fm)) TRUE else NA,
   \item{transfuns}{a \code{\link{list}} of \code{\link{function}}s
     for converting parameters to and from the Cholesky-factor scale
   }
+  \item{scale}{a character string indicating the scale of the argument
+    of the deviance function.}
   \item{\dots}{
     arguments passed to the internal \code{profnames} function
     (\code{signames=TRUE} to use old-style \code{.sigxx names},

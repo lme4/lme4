@@ -490,7 +490,7 @@ devfun2 <- function(fm,
                     useSc = if(isLMM(fm)) TRUE else NA,
                     transfuns = list(from.chol = Cv_to_Sv,
                                      to.chol = Sv_to_Cv, to.sd = identity),
-                    scale = c("sdcor", "vcov"),
+                    scale = c("sdcor", "varcov"),
                     ...)
 {
 
@@ -499,7 +499,7 @@ devfun2 <- function(fm,
     pp <- getVC(v)
     if (useSc) {
       resvar <- sigma(fm)^2
-      pp <- lapply(pp, \(x) x*resvar)
+      pp <- lapply(pp, function(x) x*resvar)
       pp <- c(pp, list(scale = resvar))
     }
     if (scale == "sdcor") {
