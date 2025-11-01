@@ -18,18 +18,20 @@ help_str <- "\n  See ?lme4::convergence and ?lme4::troubleshooting."
 ##' @param nobs the number of observations from the dataset
 ##' @param ndim the number of dimensions for the variance-covariance matrix 
 ##' of random effects
-checkConv <- function(derivs, coefs, ctrl, lbound, debug = FALSE, 
+checkConv <- function(derivs, coefs, ctrl, lbound, ubound, debug = FALSE,
                       nobs = NULL, ndim = NULL)
 {
     res <- list()
     ntheta <- length(lbound)
 
+    if (missing(ubound))
+        ubound <- rep(Inf, length(lbound))
+
     ## check singularity first, and unconditionally
     ## (ignore "ignore")
     ccl <- ctrl[[cstr <- "check.conv.singular"]] ; checkCtrlLevels(cstr, cc <- ccl[["action"]])
     ## similar logic to isSingular, but we don't have the fitted object to test
-    bcoefs <- seq(ntheta)[lbound==0]
-    is.singular <- any(coefs[bcoefs] < ccl$tol)
+    is.singular <- min(coefs - lbound, ubound - coefs) < ccl$tol
 
     if (doCheck(cc)) {
         ## singular fit
