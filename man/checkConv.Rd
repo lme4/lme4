@@ -8,7 +8,8 @@
   see \link{convergence} for a more detailed discussion.
 }
 \usage{
-checkConv(derivs, coefs, ctrl, lbound, debug = FALSE, nobs = NULL, ndim = NULL)
+checkConv(derivs, coefs, ctrl, lbound, ubound,
+          debug = FALSE, nobs = NULL, ndim = NULL)
 }
 
 \arguments{
@@ -18,7 +19,7 @@ checkConv(derivs, coefs, ctrl, lbound, debug = FALSE, nobs = NULL, ndim = NULL)
   \item{ctrl}{list of lists, each with \code{action} character strings specifying
     what should happen when a check triggers, and \code{tol} numerical tolerances,
     as is the result of \code{\link{lmerControl}()$checkConv}.}
-  \item{lbound}{vector of lower bounds \emph{for random-effects parameters only}
+  \item{lbound, ubound}{vectors of lower and upper bounds \emph{for random-effects parameters only}
     (length is taken to determine number of RE parameters)}
   \item{debug}{enable debugging output, useful if some checks are on 
     "ignore", but would "trigger"}

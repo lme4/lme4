@@ -612,6 +612,8 @@ optimizeLmer <- function(devfun,
                          ...) {
     verbose <- as.integer(verbose)
     rho <- environment(devfun)
+    lower <- rho$lower
+    upper <- rho$upper %||% rep(Inf, length(rho$lower))
     opt <- optwrap(optimizer,
                    devfun,
                    rho$mkPar(getStart(start, rho$pp)),
@@ -626,7 +628,8 @@ optimizeLmer <- function(devfun,
         ##  at this point???  in koller example (for getData(13)) we have
         ##   rho$pp$theta=0, opt$par=0.08
         par0 <- rho$mkPar(rho$pp$theta)
-        if (length(bvals <- which(par0==rho$lower)) > 0) {
+        if (length(wl <- which(par0 == lower)) > 0L |
+            length(wu <- which(par0 == upper)) > 0L) {
             ## *don't* use numDeriv -- cruder but fewer dependencies, no worries
             ##  about keeping to the interior of the allowed space
 
@@ -635,17 +638,19 @@ optimizeLmer <- function(devfun,
             ## with a copy) breaks several tests in ../tests/boundary.R
             ## and ../tests/lmer-1.R.  OMG ...
             par0 <- par0 + 0
+            ## [ same is seen in 'check.boundary' ]
             ## </MJ>
 
             d0 <- devfun(par0)
             btol <- 1e-5  ## FIXME: make user-settable?
-            bgrad <- sapply(bvals,
-                            function(i) {
-                                bndval <- rho$lower[i]
+            bgrad <- mapply(function(i, bval, btol) {
                                 par <- par0
-                                par[i] <- bndval+btol
-                                (devfun(par)-d0)/btol
-                            })
+                                par[i] <- bval + btol
+                                (devfun(par) - d0)/btol
+                            },
+                            i = c(wl, wu),
+                            bval = c(lower[wl], upper[wu]),
+                            btol = rep(c(btol, -btol), c(length(wl), length(wu))))
             ## what do I need to do to reset rho$pp$theta to original value???
             devfun(par0) ## reset rho$pp$theta after tests
             ## FIXME: allow user to specify ALWAYS restart if on boundary?
@@ -876,18 +881,31 @@ optimizeGlmer <- function(devfun,
 }
 
 check.boundary <- function(rho,opt,devfun,boundary.tol) {
-    bdiff <- (rho$mkPar %||% identity)(rho$pp$theta) - rho$lower
-    if (any(edgevals <- 0 < bdiff & bdiff < boundary.tol)) {
+    par0 <- opt$par
+    lower <- rho$lower
+    upper <- rho$upper %||% rep(Inf, length(rho$lower))
+    dl <- par0 - lower
+    du <- upper - par0
+    if (!is.null(rho$dpars)) {
+        dl <- dl[rho$dpars]
+        du <- du[rho$dpars]
+    }
+    if (length(wl <- which(0 < dl & dl < boundary.tol)) > 0L |
+        length(wu <- which(0 < du & du < boundary.tol)) > 0L) {
         ## try sucessive "close-to-edge parameters" to see
         ## if we can improve by setting them equal to the boundary
-        pp <- opt$par
-        for (i in which(edgevals)) {
-            tmppar <- pp
-            tmppar[i] <- rho$lower[i]
-            if (devfun(tmppar) < opt$fval) pp[i] <- tmppar[i]
+        for (i in wl) {
+            par <- par0
+            par[i] <- lower[i]
+            if (devfun(par) < opt$fval) par0[i] <- par[i]
         }
-        opt$par <- pp
-        opt$fval <- devfun(opt$par)
+        for (i in wu) {
+            par <- par0
+            par[i] <- upper[i]
+            if (devfun(par) < opt$fval) par0[i] <- par[i]
+        }
+        opt$par <- par0
+        opt$fval <- devfun(par0)
         ## re-run to reset (whether successful or not)
         ## FIXME: derivatives, Hessian etc. (and any other
         ## opt messages) *not* recomputed
