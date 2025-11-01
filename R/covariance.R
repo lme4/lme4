@@ -329,7 +329,7 @@ setMethod("getThetaLength",
           function (object) {
               nc <- object@nc
               if (object@hom)
-                  2L * nc - 1L
+                  2L * nc - (nc > 0L)
               else (nc * (nc - 1L)) %/% 2L + nc
           })
 
