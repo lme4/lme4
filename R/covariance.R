@@ -740,6 +740,7 @@ setMethod("setVC",
                                          nvec = nc:1L)
                   S <- diag(1, nc, nc)
                   S[i0] <- ccomp
+                  S <- Matrix::forceSymmetric(S, "U")
                   (chol(S) * rep(vcomp, each = nc))[i1]
               }
               object

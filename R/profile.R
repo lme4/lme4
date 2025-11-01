@@ -474,13 +474,12 @@ get.which <- function(which, nvp, nptot, parnames, verbose=FALSE) {
 }
 
   ## get user/profiling pars from deviance pars
-getpars <- function(v) {
+getpars <- function(v, scale, sc = NULL) {
   pp <- getVC(v)
   ## this part should be general
-  if (useSc) {
-    sig <- sigma(fm)
-    pp$vcomp <- pp$vcomp*sig
-    pp <- c(pp, list(scale = sig))
+  if (!is.null(sc)) {
+    pp$vcomp <- pp$vcomp*sc
+    pp <- c(pp, list(scale = sc))
   }
   if (scale == "vcov") {
       vmat <- outer(pp$vcomp, pp$vcomp)
@@ -491,7 +490,7 @@ getpars <- function(v) {
 }
 
 ## get deviance pars from user/profiling pars
-setpars <- function(v, p) {
+setpars <- function(v, p, scale) {
   split_p <- list(vcomp = p[grepl("^vcomp", names(p))],
                   ccomp = p[grepl("^ccomp", names(p))],
                   scale = p[grepl("scale", names(p))])
@@ -552,11 +551,14 @@ devfun2 <- function(fm,
         sig <- sigma(fm)  ## only if hasSc is TRUE?
         ## opt <- c(pp$theta*sig, sig)
         opt <- transfuns$from.chol(pp$theta, n=vlist, s=sig)
-        opt2 <- sapply(attr(fm, "reCov"), getpars)
+        opt_list <- lapply(attr(fm, "reCov"), getpars, scale = scale, sc = sigma(fm))
+        opt2 <- unlist(opt_list)
         browser()
     } else {
-        opt <- transfuns$from.chol(pp$theta, n=vlist)
+      opt <- transfuns$from.chol(pp$theta, n=vlist)
+      opt2 <- sapply(attr(fm, "reCov"), getpars, scale = scale)
     }
+    ## FIXME
     names(opt) <- profnames(fm, useSc=useSc, ...)
     opt <- c(opt, fixef(fm))
     resp <- fm@resp$copy()
@@ -570,11 +572,13 @@ devfun2 <- function(fm,
             stopifnot(is.numeric(pars), length(pars) == np)
             ## Assumption:  we can translate the *last* parameter back
             ##   to sigma (SD) scale ...
-            browser()
             sigma <- transfuns$to.sd(pars[np])
             ## .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pars[-np]/sigma)
             ## convert from sdcor vector back to 'unscaled theta'
             thpars <- transfuns$to.chol(pars, n=vlist, s=sigma)
+            browser()
+            mapply(setpars, attr(fm, "reCov"), relist(pars, opt_list),
+                   MoreArgs = list(scale = scale))
             .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)
             sigsq <- sigma^2
             pp$ldL2() - ldW + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
