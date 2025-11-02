@@ -176,6 +176,9 @@ setGeneric("getCormat",
            function (object)
                standardGeneric("getCormat"))
 
+setGeneric("getProfBounds",
+           function (object, bound, scale)
+               standardGeneric("getProfBounds"))
 
 ## .... METHODS ........................................................
 
@@ -697,7 +700,15 @@ setMethod("getCormat",
             S <- tcrossprod(L)
             cov2cor(S)
           })
-          
+
+setMethod("getProfBounds",
+          c(object = "Covariance.us"),
+          function (object, bound, scale) {
+            c_bound <- if (bound == "lower") -1 else 1
+            nc <- object@nc
+            c(rep(0, nc), rep(c_bound, nc*(nc-1)/2))
+          })
+
 setMethod("getVC",
           c(object = "Covariance.diag"),
           function (object)
@@ -728,11 +739,10 @@ setMethod("setVC",
                         length(vcomp) == nc,
                         is.double(ccomp),
                         length(ccomp) == length(object@par) - nc)
-              object@par <-
               if (nc <= 1L)
-                  vcomp
+                object@par <- vcomp
               else {
-                  i0 <- sequence.default(from = seq.int(from = nc + 1L, by = nc + 1L, length.out = nc - 1L),
+                i0 <- sequence.default(from = seq.int(from = nc + 1L, by = nc + 1L, length.out = nc - 1L),
                                          by = nc,
                                          nvec = (nc - 1L):1L)
                   i1 <- sequence.default(from = seq.int(from = 1L, by = nc + 1L, length.out = nc),
@@ -741,7 +751,8 @@ setMethod("setVC",
                   S <- diag(1, nc, nc)
                   S[i0] <- ccomp
                   S <- Matrix::forceSymmetric(S, "U")
-                  (chol(S) * rep(vcomp, each = nc))[i1]
+                object@par <- (chol(S) * rep(vcomp, each = nc))[i1]
+
               }
               object
           })

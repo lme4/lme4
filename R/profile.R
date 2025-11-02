@@ -1,5 +1,6 @@
 ## --> ../man/profile-methods.Rd
 
+## FIXME: make structure-aware (via tnames())
 profnames <- function(object, signames=TRUE,
                       useSc=isLMM(object), prefix=c("sd","cor")) {
     ntp <- length(object@theta)
@@ -167,7 +168,8 @@ profile.merMod <- function(fitted,
         nr <- nrow(mat)
         i <- 2L
         while (i < nr && mat[i, cc] > lowcut && mat[i,cc] < upcut &&
-                   (is.na(curzeta <- abs(mat[i, ".zeta"])) || curzeta <= cutoff)) {
+               (is.na(curzeta <- abs(mat[i, ".zeta"])) || curzeta <= cutoff)) {
+               browser()    
             np <- nextpar(mat, cc, i, delta, lowcut, upcut)
             ns <- nextstart(mat, pind = cc-1, r=i, method=startmethod)
             mat[i + 1L, ] <- zetafun(np,ns)
@@ -188,13 +190,10 @@ profile.merMod <- function(fitted,
     ## bounds on Cholesky (== fitted@lower): [0,Inf) for diag, (-Inf,Inf) for off-diag
     ## bounds on sd-corr:  [0,Inf) for diag, (-1.0,1.0) for off-diag
     ## bounds on var-corr: [0,Inf) for diag, (-Inf,Inf) for off-diag
-    if (prof.scale=="sdcor") {
-        lower <- pmax(fitted@lower, -1.)
-        upper <- ifelse(fitted@lower==0, Inf, 1.0)
-    } else {
-        lower <- fitted@lower
-        upper <- rep(Inf,length.out=length(fitted@lower))
-    }
+    browser()
+    covs <- attr(fitted, "reCov")
+    lower <- unlist(lapply(covs, getProfBounds, "lower", prof.scale))
+    upper <- unlist(lapply(covs, getProfBounds, "upper", prof.scale))
     if (useSc) { # bounds for sigma
         lower <- c(lower,0)
         upper <- c(upper,Inf)
@@ -287,6 +286,7 @@ profile.merMod <- function(fitted,
         ## which sets up two points going in the right direction
         ## for each matrix (since the profiling algorithm uses increments
         ## between rows to choose the next parameter increment)
+        browser()
         nres[1, ] <- pres[2, ] <- zeta(shiftpar, start=opt[seqpar1][-w])
         ## fill in the rest of the arrays and collapse them
         upperf <- fillmat(pres, lowcut, upcut, zeta, wp1)
@@ -491,6 +491,7 @@ getpars <- function(v, scale, sc = NULL) {
 
 ## get deviance pars from user/profiling pars
 setpars <- function(v, p, scale) {
+  ## fixme: split on gsub("[0-9]+$", "", names(p)) ?
   split_p <- list(vcomp = p[grepl("^vcomp", names(p))],
                   ccomp = p[grepl("^ccomp", names(p))],
                   scale = p[grepl("scale", names(p))])
@@ -528,11 +529,11 @@ devfun2 <- function(fm,
                     ...)
 {
 
-  scale <- match.arg(scale)
-  if (scale == "varcov" && 
-      !all(sapply(xx, inherits, "Covariance.us"))) {
-    stop("haven't thought about varcov scale for structured cov matrices")
-  }
+    scale <- match.arg(scale)
+    if (scale == "varcov" && 
+        !all(sapply(xx, inherits, "Covariance.us"))) {
+        stop("haven't thought about varcov scale for structured cov matrices")
+    }
     ## TODO: change to work with 'par' instead of 'theta'
 
     ## FIXME: have to distinguish between
@@ -547,18 +548,11 @@ devfun2 <- function(fm,
     hasSc <- as.logical(fm@devcomp$dims[["useSc"]])
     stdErr <- unname(coef(summary(fm))[,2])
     pp <- fm@pp$copy()
-    if (useSc) {
-        sig <- sigma(fm)  ## only if hasSc is TRUE?
-        ## opt <- c(pp$theta*sig, sig)
-        opt <- transfuns$from.chol(pp$theta, n=vlist, s=sig)
-        opt_list <- lapply(attr(fm, "reCov"), getpars, scale = scale, sc = sigma(fm))
-        opt2 <- unlist(opt_list)
-        browser()
-    } else {
-      opt <- transfuns$from.chol(pp$theta, n=vlist)
-      opt2 <- sapply(attr(fm, "reCov"), getpars, scale = scale)
-    }
-    ## FIXME
+    sig <- if (useSc) sigma(fm) else NULL
+    ## set to sigma(fm) only if hasSc is TRUE?
+    ## getVC (internal to getpars) extracts coeffs from the cov objects
+    opt_list <- lapply(attr(fm, "reCov"), getpars, scale = scale, sc = sigma(fm))
+    opt <- unlist(opt_list)
     names(opt) <- profnames(fm, useSc=useSc, ...)
     opt <- c(opt, fixef(fm))
     resp <- fm@resp$copy()
@@ -572,15 +566,15 @@ devfun2 <- function(fm,
             stopifnot(is.numeric(pars), length(pars) == np)
             ## Assumption:  we can translate the *last* parameter back
             ##   to sigma (SD) scale ...
-            sigma <- transfuns$to.sd(pars[np])
+            ## sigma <- transfuns$to.sd(pars[np])
             ## .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pars[-np]/sigma)
             ## convert from sdcor vector back to 'unscaled theta'
-            thpars <- transfuns$to.chol(pars, n=vlist, s=sigma)
-            browser()
-            mapply(setpars, attr(fm, "reCov"), relist(pars, opt_list),
-                   MoreArgs = list(scale = scale))
+            ## thpars <- transfuns$to.chol(pars, n=vlist, s=sigma)
+            thpars <- mapply(setpars, attr(fm, "reCov"), relist(pars, opt_list),
+                             MoreArgs = list(scale = scale))
+            thpars <- unlist(lapply(thpars, getElement, "par"))
             .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)
-            sigsq <- sigma^2
+            sigsq <- tail(pars, 1)^2
             pp$ldL2() - ldW + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
         }
         ldW <- sum(log(environment(ans)$resp$weights))
