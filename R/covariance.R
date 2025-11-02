@@ -704,9 +704,11 @@ setMethod("getCormat",
 setMethod("getProfBounds",
           c(object = "Covariance.us"),
           function (object, bound, scale) {
+            v_bound <- if (bound == "lower") 0 else Inf
             c_bound <- if (bound == "lower") -1 else 1
+            if (scale == "varcov") c_bound <- c_bound*Inf
             nc <- object@nc
-            c(rep(0, nc), rep(c_bound, nc*(nc-1)/2))
+            c(rep(v_bound, nc), rep(c_bound, nc*(nc-1)/2))
           })
 
 setMethod("getVC",

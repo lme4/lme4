@@ -169,9 +169,8 @@ profile.merMod <- function(fitted,
         i <- 2L
         while (i < nr && mat[i, cc] > lowcut && mat[i,cc] < upcut &&
                (is.na(curzeta <- abs(mat[i, ".zeta"])) || curzeta <= cutoff)) {
-               browser()    
-            np <- nextpar(mat, cc, i, delta, lowcut, upcut)
-            ns <- nextstart(mat, pind = cc-1, r=i, method=startmethod)
+                 np <- nextpar(mat, cc, i, delta, lowcut, upcut)
+                 ns <- nextstart(mat, pind = cc-1, r=i, method=startmethod)
             mat[i + 1L, ] <- zetafun(np,ns)
             if (verbose>0) {
                 cat(i,cc,mat[i+1L,],"\n")
@@ -189,8 +188,7 @@ profile.merMod <- function(fitted,
 
     ## bounds on Cholesky (== fitted@lower): [0,Inf) for diag, (-Inf,Inf) for off-diag
     ## bounds on sd-corr:  [0,Inf) for diag, (-1.0,1.0) for off-diag
-    ## bounds on var-corr: [0,Inf) for diag, (-Inf,Inf) for off-diag
-    browser()
+  ## bounds on var-corr: [0,Inf) for diag, (-Inf,Inf) for off-diag
     covs <- attr(fitted, "reCov")
     lower <- unlist(lapply(covs, getProfBounds, "lower", prof.scale))
     upper <- unlist(lapply(covs, getProfBounds, "upper", prof.scale))
@@ -286,7 +284,6 @@ profile.merMod <- function(fitted,
         ## which sets up two points going in the right direction
         ## for each matrix (since the profiling algorithm uses increments
         ## between rows to choose the next parameter increment)
-        browser()
         nres[1, ] <- pres[2, ] <- zeta(shiftpar, start=opt[seqpar1][-w])
         ## fill in the rest of the arrays and collapse them
         upperf <- fillmat(pres, lowcut, upcut, zeta, wp1)

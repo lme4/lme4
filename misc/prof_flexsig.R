@@ -3,18 +3,16 @@ devtools::load_all()
 data("sleepstudy", package = "lme4")
 m1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 d2 <- devfun2(m1)
-
 ## np == 4
 np <- environment(d2)$np
 p0 <- attr(d2, "optimum")[1:np]
 f <- function(x) d2(p0 - c(x, 0, 0,0))
-xvec <- seq(-3, 3, length = 51)
-sapply(xvec, f)
+xvec <- seq(-10, 10, length = 51)
+lvec <- sapply(xvec, f)
+plot(xvec, lvec)
 
 trace("setVC", sig = c("Covariance.us", "numeric", "numeric"), browser)
 untrace("setVC", sig = c("Covariance.us", "numeric", "numeric"))
-
-pp <- attr(d2, "optimum")[1:np]
 
 profile(m1, which = 1)
 
