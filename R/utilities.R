@@ -510,7 +510,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
         lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims),
         pp=pp, resp=resp,
         optinfo = .optinfo(opt, lme4conv))
-    attr(ans, "upper") <- reTrms$upper
+    attr(ans, "upper") <- reTrms$upper %||% rep(Inf, length(reTrms$lower))
     attr(ans, "reCovs") <- upReCovs(reTrms$reCovs, rho$pp$theta)
     ans
 }## {mkMerMod}

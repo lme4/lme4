@@ -668,8 +668,8 @@ as.function.merMod <- function(x, ...) {
     reCovs <- attr(x, "reCovs")
     rho <- list2env(list(resp  = x@resp$copy(),
                          pp    = x@pp$copy(),
-                         beta0 = x@beta,
-                         u0   =  x@u,
+                         lower = x@lower,
+                         upper = attr(x, "upper") %||% rep(Inf, length(x@lower)),
                          mkPar = mkMkPar(reCovs),
                          mkTheta = mkMkTheta(reCovs)),
                     parent=as.environment("package:lme4"))
@@ -1530,7 +1530,7 @@ refit.merMod <- function(object,
                  ## save GQmat in the object and use that instead of nAGQ
                  GQmat = GHrule(nAGQ),
                  fac = object@flist[[1]],
-                 u0=pp$u0, verbose=verbose,
+                 verbose=verbose,
                  dpars=seq_along(object@lower))
         }
         )
@@ -1622,7 +1622,7 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
         optinfo = .optinfo(opt),
         lower=x@lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=rho$resp,
         Gp=x@Gp)
-    attr(ans, "upper") <- attr(x, "upper")
+    attr(ans, "upper") <- attr(x, "upper") %||% rep(Inf, length(x@lower))
     attr(ans, "reCovs") <- upReCovs(attr(x, "reCovs"), rho$pp$theta)
     ans
 }
@@ -2204,6 +2204,8 @@ getME.merMod <- function(object,
                } else {
                    ## copied from refit ... DRY ...
                    devlist <- list(pp=PR, resp=rsp,
+                                   lower = object@lower,
+                                   upper = attr(object, "upper") %||% rep(Inf, length(object@lower)),
                                    mkPar = mkMkPar(reCovs),
                                    mkTheta = mkMkTheta(reCovs))
                    mkdevfun(rho=list2env(devlist),
