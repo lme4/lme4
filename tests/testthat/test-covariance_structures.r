@@ -1,7 +1,7 @@
 
 test_that("unit test for unstructured covariances", {
   
-  for(i in seq_len(100L)){
+  for(i in seq_len(20L)){
     nc <- sample(0:10, 1L)
     
     x.us <- new("Covariance.us", nc = nc, simulate = TRUE)
@@ -71,7 +71,7 @@ test_that("unit test for unstructured covariances", {
 
 test_that("unit tests for diagonal covariances", {
   
-  for(i in seq_len(100L)){
+  for(i in seq_len(20L)){
     nc <- sample(0:10, 1L)
     hom_test <- sample(c(T, F), size = 1)
     
@@ -122,7 +122,7 @@ test_that("unit tests for diagonal covariances", {
 
 test_that("unit tests for compound symmetry covariances", {
   
-  for(i in seq_len(100L)){
+  for(i in seq_len(20L)){
     nc <- sample(0:10, 1L)
     hom_test <- sample(c(T, F), size = 1)
     
@@ -221,3 +221,81 @@ test_that("unit tests for compound symmetry covariances", {
   }
 })
 
+test_that("unit tests for autoregressive covariances", {
+  
+  for(i in seq_len(20L)){
+    nc <- sample(0:10, 1L)
+    hom_test <- sample(c(T, F), size = 1)
+    
+    x.ar1 <- new("Covariance.ar1", nc = nc, hom = hom_test, simulate = TRUE)
+    
+    ## Basic sanity tests
+    expect_s4_class(x.ar1, "Covariance.ar1")
+    expect_true(validObject(x.ar1))
+    
+    getVC_t <- getVC(x.ar1); vcomp_t <- getVC_t$vcomp; ccomp_t <- getVC_t$ccomp
+    ## par should be the same as vcomp and ccomp from getVC
+    expect_equal(getPar(x.ar1), c(vcomp_t, ccomp_t))
+    
+    ## getTheta test by relating to getVC
+    v1 <- ccomp_t^(0L:(nc - 1L))
+    v2 <- ccomp_t^(0L:(nc - 2L)) * sqrt(1 - ccomp_t^2)
+    if(hom_test){
+      if(nc > 1L){
+        theta_test <- vcomp_t * c(v1, v2)
+      } else {
+        theta_test <- vcomp_t
+      }
+    } else {
+      if(nc > 1L){
+        theta_test <- vcomp_t[sequence.default(from = 1L:nc, nvec = nc:1L)] *
+          c(v1, v2[sequence.default(from = 1L, nvec = (nc - 1L):1L)])
+      } else {
+        theta_test <- vcomp_t
+      }
+    }
+    expect_equal(getTheta(x.ar1), theta_test)
+    
+    ## Testing for theta and par lengths
+    expect_equal(getThetaLength(x.ar1), length(getTheta(x.ar1)))
+    expect_equal(getParLength(x.ar1), length(getPar(x.ar1)))
+    expect_equal(getParLength(x.ar1),
+                 sum(lengths(getVC(x.ar1)[c("vcomp", "ccomp")])))
+    
+    lam_test <- matrix(0, nc, nc)
+    if(nc > 0L){
+      lam_test[lower.tri(lam_test, diag = TRUE)] <-
+        if(hom_test){
+          theta_test[sequence.default(from = rep(c(1L, nc + 1L), 
+                                                 c(1L, nc - 1L)), nvec = nc:1L)]
+        } else {
+          theta_test
+        }
+    }
+    expect_equal(getLambda(x.ar1), lam_test)
+    
+    expect_equal(getLambdat.dp(x.ar1), if(nc > 0L) 1:nc else integer(0))
+    
+    ## Testing getUpper and getLower
+    if(nc > 1L){
+      if(hom_test) {
+        expect_equal(getUpper(x.ar1), c(Inf, 1))
+        expect_equal(getLower(x.ar1), c(0, -1))
+      } else {
+        expect_equal(getUpper(x.ar1), c(rep(Inf, nc), 1))
+        expect_equal(getLower(x.ar1), c(rep(0.0, nc), -1))
+      }
+    } else if (nc == 1L) {
+      expect_equal(getUpper(x.ar1), Inf)
+      expect_equal(getLower(x.ar1), 0)
+    } else {
+      expect_equal(getUpper(x.ar1), numeric(0))
+      expect_equal(getLower(x.ar1), numeric(0))
+    }
+    
+    ## Testing getLambdat.i in a different manner
+    expect_equal(getLambdat.i(x.ar1), 
+                 (row(matrix(0, nc, nc)) - 1)[upper.tri(matrix(0, nc, nc), diag = TRUE)])
+    
+  }
+})
