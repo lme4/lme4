@@ -881,3 +881,37 @@ function (reCovs, theta) {
     }
     reCovs
 }
+
+
+## .... METHODS [for class "merMod"] ...................................
+
+setMethod("getPar",
+          c(object = "merMod"),
+          function (object)
+              `length<-`(object@optinfo[["val"]],
+                         length(object@lower)))
+
+setMethod("getParLength",
+          c(object = "merMod"),
+          function (object)
+              length(object@lower))
+
+setMethod("getTheta",
+          c(object = "merMod"),
+          function (object)
+              object@theta)
+
+setMethod("getThetaLength",
+          c(object = "merMod"),
+          function (object)
+              length(object@theta))
+
+setMethod("getLower",
+          c(object = "merMod"),
+          function (object)
+              object@lower)
+
+setMethod("getUpper",
+          c(object = "merMod"),
+          function (object)
+              attr(object, "upper") %||% rep(Inf, length(object@lower)))

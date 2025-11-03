@@ -667,8 +667,8 @@ as.function.merMod <- function(x, ...) {
     reCovs <- attr(x, "reCovs")
     rho <- list2env(list(resp  = x@resp$copy(),
                          pp    = x@pp$copy(),
-                         lower = x@lower,
-                         upper = attr(x, "upper") %||% rep(Inf, length(x@lower)),
+                         lower = getLower(x),
+                         upper = getUpper(x),
                          mkPar = mkMkPar(reCovs),
                          mkTheta = mkMkTheta(reCovs)),
                     parent=as.environment("package:lme4"))
@@ -1530,15 +1530,15 @@ refit.merMod <- function(object,
                  GQmat = GHrule(nAGQ),
                  fac = object@flist[[1]],
                  verbose=verbose,
-                 dpars=seq_along(object@lower))
+                 dpars=seq_len(getParLength(object)))
         }
         )
     rho <- list2env(devlist)
     ff <- mkdevfun(rho, nAGQ=nAGQ, maxit=maxit, verbose=verbose)
  ## xst       <- rep.int(0.1, nth)
     x0        <- rho$mkPar(rho$pp$theta)
-    lower     <- object@lower
-    upper     <- attr(object, "upper") %||% rep(Inf, length(object@lower))
+    lower     <- getLower(object)
+    upper     <- getUpper(object)
     if (!is.na(nAGQ) && nAGQ > 0L) {
      ## xst   <- c(xst, sqrt(diag(pp$unsc())))
         x0    <- c(x0, unname(fixef(object)))
@@ -1574,8 +1574,8 @@ refit.merMod <- function(object,
     mkMerMod(environment(ff), opt,
              list(flist=object@flist, cnms=object@cnms,
                   Gp=object@Gp,
-                  lower=object@lower,
-                  upper=attr(object, "upper") %||% rep(Inf, length(object@lower)),
+                  lower=getLower(object),
+                  upper=getUpper(object),
                   reCovs=reCovs),
              object@frame, getCall(object), cc)
 }
@@ -1596,9 +1596,9 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
     devfun <- mkdevfun(rho, 0L) # FIXME? also pass {verbose, maxit, control}
     opt <- ## "smart" calc.derivs rules
         if(optimizer == "bobyqa" && !any("calc.derivs" == ...names()))
-            optwrap(optimizer, devfun, x@theta, lower=x@lower, upper=attr(x, "upper") %||% rep(Inf, length(x@lower)), calc.derivs=TRUE, ...)
+            optwrap(optimizer, devfun, rho$mkPar(rho$pp$theta), lower=getLower(x), upper=getUpper(x), calc.derivs=TRUE, ...)
         else
-            optwrap(optimizer, devfun, x@theta, lower=x@lower, upper=attr(x, "upper") %||% rep(Inf, length(x@lower)), ...)
+            optwrap(optimizer, devfun, rho$mkPar(rho$pp$theta), lower=getLower(x), upper=getUpper(x), ...)
     ## FIXME: Should be able to call mkMerMod() here, and be done
     n <- length(rr$y)
     pp <- rho$pp
@@ -1619,9 +1619,9 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
     new("lmerMod", call = cl, frame=x@frame, flist=x@flist,
         cnms=x@cnms, theta=pp$theta, beta=pp$delb, u=pp$delu,
         optinfo = .optinfo(opt),
-        lower=x@lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=rho$resp,
+        lower=getLower(x), devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=rho$resp,
         Gp=x@Gp)
-    attr(ans, "upper") <- attr(x, "upper") %||% rep(Inf, length(x@lower))
+    attr(ans, "upper") <- getUpper(x)
     attr(ans, "reCovs") <- upReCovs(attr(x, "reCovs"), rho$pp$theta)
     ans
 }
@@ -2186,14 +2186,14 @@ getME.merMod <- function(object,
            "devcomp" = dc,
            "offset" = rsp$offset,
            ## FIXME
-           "lower" = setNames(object@lower, tnames(object)),
+           "lower" = setNames(getLower(object), tnames(object)),
            "devfun" = {
                verbose <- getCall(object)$verbose; if (is.null(verbose)) verbose <- 0L
                reCovs <- attr(object, "reCovs")
                if (isGLMM(object)) {
                    reTrms <- getME(object,c("Zt","theta","Lambdat","Lind","flist","cnms"))
-                   reTrms$lower <- object@lower
-                   reTrms$upper <- attr(object, "upper") %||% rep(Inf, length(object@lower))
+                   reTrms$lower <- getLower(object)
+                   reTrms$upper <- getUpper(object)
                    reTrms$reCovs <- reCovs
                    d1 <- mkGlmerDevfun(object@frame, getME(object,"X"),
                                        reTrms=reTrms, family(object),
@@ -2203,8 +2203,8 @@ getME.merMod <- function(object,
                } else {
                    ## copied from refit ... DRY ...
                    devlist <- list(pp=PR, resp=rsp,
-                                   lower = object@lower,
-                                   upper = attr(object, "upper") %||% rep(Inf, length(object@lower)),
+                                   lower = getLower(object),
+                                   upper = getUpper(object),
                                    mkPar = mkMkPar(reCovs),
                                    mkTheta = mkMkTheta(reCovs))
                    mkdevfun(rho=list2env(devlist),
