@@ -246,53 +246,53 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
 
     rho <- list2env(list(verbose=verbose,
                          tolPwrss=0.001, # this is reset to the tolPwrss argument's value later
-                         resp=vals$resp,
-                         lower=vals$reTrms$lower),
+                         resp=vals$respMod),
                     parent=parent.frame())
     rho$pp <- do.call(merPredD$new,
                       c(vals$reTrms[c("Zt","theta","Lambdat","Lind")],
                         list(X=X, n=length(vals$respMod$mu), Xwts=vals$respMod$sqrtXwt,
                              beta0=qr.coef(qr(X), unlist(lapply(vals$pnames, get,
-                             envir = rho$resp$nlenv))))))
+                             envir = vals$respMod$nlenv))))))
+    rho$mkPar <- mkMkPar(vals$reTrms$reCovs)
+    rho$mkTheta <- mkMkTheta(vals$reTrms$reCovs)
     rho$u0 <- rho$pp$u0
     rho$beta0 <- rho$pp$beta0
     ## deviance as a function of theta only :
     devfun <- mkdevfun(rho, 0L, verbose=verbose, control=control)
     if (devFunOnly && !nAGQ) return(devfun)
-    devfun(rho$pp$theta) # initial coarse evaluation to get u0 and beta0
+    devfun(rho$mkPar(rho$pp$theta)) # initial coarse evaluation to get u0 and beta0
     rho$u0 <- rho$pp$u0
     rho$beta0 <- rho$pp$beta0
     rho$tolPwrss <- control$tolPwrss # Reset control parameter (the initial optimization is coarse)
 
     ## set lower and upper bounds: if user-specified, select
     ##  only the ones corresponding to random effects
+    lower <- vals$reTrms$lower
     if (!is.null(lwr <- control$optCtrl$lower)) {
-        rho$lower <- lwr[seq_along(rho$lower)]
+        lower <- lwr[seq_along(lower)]
         control$optCtrl$lower <- NULL
     }
-    upper <- rep(Inf, length(rho$lower))
+    upper <- vals$reTrms$upper
     if (!is.null(upr <- control$optCtrl$upper)) {
-        upper <- upr[seq_along(rho$lower)]
+        upper <- upr[seq_along(upper)]
         control$optCtrl$upper <- NULL
     }
 
-    opt <- optwrap(control$optimizer[[1]], devfun, rho$pp$theta,
-                   lower=rho$lower,
+    opt <- optwrap(control$optimizer[[1]], devfun,
+                   rho$mkPar(rho$pp$theta),
+                   lower=lower,
                    upper=upper,
                    control=control$optCtrl,
                    adj=FALSE)
 
-    rho$control <- attr(opt,"control")
-
     if (nAGQ > 0L) {
         ## set lower/upper to values already harvested from control$optCtrl$upper
-        rho$lower <- if(!is.null(lwr)) lwr else c(rho$lower, rep.int(-Inf, length(rho$beta0)))
-        upper     <- if(!is.null(upr)) upr else c(    upper, rep.int( Inf, length(rho$beta0)))
+        lower <- lwr %||% c(lower, rep.int(-Inf, length(rho$pp$beta0)))
+        upper <- upr %||% c(upper, rep.int( Inf, length(rho$pp$beta0)))
+        rho$dpars <- seq_len(length(lower) - length(rho$pp$beta0))
         rho$u0    <- rho$pp$u0
-        rho$dpars <- seq_along(rho$pp$theta)
-        ## fixed-effect parameters
         rho$beta0 <- pmin(upper[-rho$dpars],
-                          pmax(rho$pp$beta0,rho$lower[-rho$dpars]))
+                          pmax(rho$pp$beta0, lower[-rho$dpars]))
         if (nAGQ > 1L) {
             if (length(vals$reTrms$flist) != 1L || length(vals$reTrms$cnms[[1]]) != 1L)
                 stop("nAGQ > 1 is only available for models with a single, scalar random-effects term")
@@ -302,14 +302,13 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
         if (devFunOnly) return(devfun)
 
         opt <- optwrap(control$optimizer[[2]], devfun,
-                       par = c(rho$pp$theta, rho$beta0),
-                       lower = rho$lower,
+                       par = c(rho$mkPar(rho$pp$theta), rho$beta0),
+                       lower = lower,
                        upper = upper,
                        control = control$optCtrl,
                        adj = TRUE, verbose=verbose)
 
     }
-    vals$reTrms[c("upper", "reCovs")] <- list(NULL)
     mkMerMod(environment(devfun), opt, vals$reTrms, fr = vals$frame, mc = mc)
 }## {nlmer}
 
@@ -383,10 +382,10 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
                              as.double(u0), as.double(beta0),
                              verbose, FALSE, tolPwrss, maxit),
                    function(pars)
-                        .Call(nlmerLaplace, pp$ptr(), resp$ptr(),
-                              as.double(pars[dpars]),
-                              u0, as.double(pars[-dpars]),
-                              verbose, TRUE, tolPwrss, maxit))
+                       .Call(nlmerLaplace, pp$ptr(), resp$ptr(),
+                             as.double(pars[dpars]),
+                             as.double(u0), as.double(pars[-dpars]),
+                             verbose, TRUE, tolPwrss, maxit))
         } else {
             stop("nAGQ > 1  not yet implemented for nlmer models")
             rho$nlmerAGQ <- nlmerAGQ
