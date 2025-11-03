@@ -330,20 +330,40 @@ nlformula <- function(mc) {
 
     chck1(meform <- form[[3L]])
     pnameexpr <- parse(text=paste(pnames, collapse='+'))[[1]]
-    nb <- nobars_(meform)  ## call ORIGINAL recursive form
-    fe <- eval(substitute(~ 0 + nb + pnameexpr))
-    environment(fe) <- environment(form)
+    formula <- as.formula(substitute(~0 + (pnameexpr) + (meform)),
+                          env = environment(form))
+
+    specials <- c("us", "diag", "cs", "ar1")
+    ## substitute  special(x | f)  with  (x | f)
+    fr.form. <- noSpecials(formula, specials = specials, delete = FALSE)
+    ## substitute  (x | f)  and  (x || f)  with  (x + f)
+    fr.form <- sub_specials(fr.form., specials = c("|", "||"),
+                            keep_args = c(2L, 2L))
+    environment(fr.form.) <- environment(fr.form) <-
+        environment(formula)
+
+    fixedform <- fr.form.
+    RHSForm(fixedform) <- reformulas::nobars(RHSForm(fixedform))
     frE <- do.call(rbind, lapply(seq_along(nlpars), function(i) fr)) # rbind s copies of the frame
     for (nm in pnames) # convert these variables in fr to indicators
         frE[[nm]] <- as.numeric(rep(nm == pnames, each = n))
-    X <- model.matrix(fe, frE)
+    X <- model.matrix(fixedform, frE)
     rownames(X) <- NULL
 
-    reTrms <- reformulas::mkReTrms(lapply(reformulas::findbars(meform),
-                              function(expr) {
-                                  expr[[2]] <- substitute(0+foo, list(foo=expr[[2]]))
-                                  expr
-                              }), frE)
+    ## get list of calls whose first argument is a call to '|'
+    ##                x | f  ->      us(x | f)
+    ##     nonspecial(x | f) ->      us(x | f)
+    ##        special(x | f) -> special(x | f)
+    bb1 <- findbars_x(formula, specials = specials,
+                      default.special = "us", target = "|",
+                      expand_doublevert_method = "diag_special")
+    bb0 <- lapply(bb1, function(call) {
+        call <- call[[2L]]
+        call[[2L]] <- substitute(0 + (foo), list(foo = call[[2L]]))
+        call
+    })
+    reTrms <- reformulas::mkReTrms(bb0, frE, calc.lambdat = FALSE)
+    reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
     list(respMod=respMod, frame=fr, X=X, reTrms=reTrms, pnames=pnames)
 } ## {nlformula}
 
@@ -455,7 +475,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
               is(resp <- rho$resp, "lmResp"),
               is.list(opt), "par" %in% names(opt),
               c("conv", "fval") %in% substr(names(opt),1,4), ## "conv[ergence]", "fval[ues]"
-              is.list(reTrms), c("flist", "cnms", "Gp", "lower") %in% names(reTrms),
+              is.list(reTrms), c("flist", "cnms", "Gp", "lower", "upper", "reCovs") %in% names(reTrms),
               length(rcl <- class(resp)) == 1)
     n    <- nrow(pp$V)
     p    <- ncol(pp$V)
@@ -510,7 +530,8 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
         lower=reTrms$lower, devcomp=list(cmp=cmp, dims=dims),
         pp=pp, resp=resp,
         optinfo = .optinfo(opt, lme4conv))
-    attr(ans, "reCovs") <- upReCovs(reTrms$reCovs, pp$theta)
+    attr(ans, "upper") <- reTrms$upper %||% rep(Inf, length(reTrms$lower))
+    attr(ans, "reCovs") <- upReCovs(reTrms$reCovs, rho$pp$theta)
     ans
 }## {mkMerMod}
 

@@ -596,6 +596,7 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL,
     if (length(rho$resp$y) > 0)  ## only if non-trivial y
         devfun(rho$mkPar(rho$pp$theta)) # one evaluation to ensure all values are set
     rho$lower <- reTrms$lower # to be more consistent with mkGlmerDevfun
+    rho$upper <- reTrms$upper
     devfun # this should pass the rho environment implicitly
 }
 
@@ -613,11 +614,12 @@ optimizeLmer <- function(devfun,
     verbose <- as.integer(verbose)
     rho <- environment(devfun)
     lower <- rho$lower
-    upper <- rho$upper %||% rep(Inf, length(rho$lower))
+    upper <- rho$upper
     opt <- optwrap(optimizer,
                    devfun,
                    rho$mkPar(getStart(start, rho$pp)),
-                   lower=rho$lower,
+                   lower=lower,
+                   upper=upper,
                    control=control,
                    adj=FALSE, verbose=verbose,
                    ...)
@@ -663,7 +665,9 @@ optimizeLmer <- function(devfun,
                     opt <- optwrap(optimizer,
                                    devfun,
                                    opt$par,
-                                   lower=rho$lower, control=control,
+                                   lower=lower,
+                                   upper=upper,
+                                   control=control,
                                    adj=FALSE, verbose=verbose,
                                    ...)
                 }
@@ -710,7 +714,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
 
     denv <- checkFormulaData(formula, data,
                              checkLHS = control$check.formula.LHS == "stop")
-    mc$formula <- formula <- as.formula(formula, env = denv)    ## substitute evaluated version
+    formula <- as.formula(formula, env = denv) # substitute evaluated version
 
     ## DRY ...
     m <- match(c("data", "subset", "weights", "na.action", "offset",
@@ -718,8 +722,15 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     mf <- mf[c(1L, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- quote(stats::model.frame)
-    fr.form <- reformulas::subbars(formula) # substitute "|" by "+"
-    environment(fr.form) <- environment(formula)
+
+    specials <- c("us", "diag", "cs", "ar1")
+    ## substitute  special(x | f)  with  (x | f)
+    fr.form. <- noSpecials(formula, specials = specials, delete = FALSE)
+    ## substitute  (x | f)  and  (x || f)  with  (x + f)
+    fr.form <- sub_specials(fr.form., specials = c("|", "||"),
+                            keep_args = c(2L, 2L))
+    environment(fr.form.) <- environment(fr.form) <-
+        environment(formula)
     ## model.frame.default looks for these objects in the environment
     ## of the *formula* (see 'extras', which is anything passed in '...'),
     ## so they have to be put there:
@@ -742,7 +753,16 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     }
     n <- nrow(fr)
     ## random effects and terms modules
-    reTrms <- reformulas::mkReTrms(reformulas::findbars(RHSForm(formula)), fr)
+    ## get list of calls whose first argument is a call to '|'
+    ##                x | f  ->      us(x | f)
+    ##     nonspecial(x | f) ->      us(x | f)
+    ##        special(x | f) -> special(x | f)
+    bb1 <- findbars_x(formula, specials = specials,
+                      default.special = "us", target = "|",
+                      expand_doublevert_method = "diag_special")
+    bb0 <- lapply(bb1, `[[`, 2L)
+    reTrms <- reformulas::mkReTrms(bb0, fr, calc.lambdat = FALSE)
+    reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
     ## TODO: allow.n = !useSc {see FIXME below}
     wmsgNlev <- checkNlevels(reTrms$ flist, n = n, control, allow.n = TRUE)
     wmsgZdims <- checkZdims(reTrms$Ztlist, n = n, control, allow.n = TRUE)
@@ -755,7 +775,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     ##                "greater than number of obs")
 
     ## fixed-effects model matrix X - remove random effect parts from formula:
-    fixedform <- formula
+    fixedform <- fr.form.
     RHSForm(fixedform) <- reformulas::nobars(RHSForm(fixedform))
     mf$formula <- fixedform
     ## re-evaluate model frame to extract predvars component
@@ -765,8 +785,8 @@ glFormula <- function(formula, data=NULL, family = gaussian,
 
     ## ran-effects model frame (for predvars)
     ## important to COPY formula (and its environment)?
-    ranform <- formula
-    RHSForm(ranform) <- reformulas::subbars(RHSForm(reOnly(formula)))
+    ranform <- fr.form.
+    RHSForm(ranform) <- reformulas::subbars(RHSForm(reOnly(ranform)))
     mf$formula <- ranform
     ranfr <- eval(mf, parent.frame())
     attr(attr(fr,"terms"), "predvars.random") <-
@@ -818,6 +838,8 @@ mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L,
         mkRespMod(family=family, ...)
     else
         mkRespMod(fr, family=family)
+    rho$mkPar <- mkMkPar(reTrms$reCovs)
+    rho$mkTheta <- mkMkTheta(reTrms$reCovs)
     nAGQinit <- if(control$nAGQ0initStep) 0L else 1L
     ## allow trivial y
     if (length(y <- rho$resp$y) > 0) {
@@ -831,6 +853,7 @@ mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L,
         rho$pwrssUpdate <- glmerPwrssUpdate
     }
     rho$lower <- reTrms$lower     # not needed in rho?
+    rho$upper <- reTrms$upper
     mkdevfun(rho, nAGQinit, maxit=maxit, verbose=verbose, control=control)
     ## this should pass the rho environment implicitly
 }
@@ -857,11 +880,15 @@ optimizeGlmer <- function(devfun,
     if (stage == 1) {
         start <- getStart(start, rho$pp, "theta")
         adj <- FALSE
+        par <- rho$mkPar(start)
     } else { ## stage == 2
         start <- getStart(start, rho$pp, "all")
         adj <- TRUE
+        theta <- start[seq_along(rho$pp$theta)]
+        beta0 <- start[length(theta) + seq_along(rho$pp$beta0)]
+        par <- c(rho$mkPar(theta), beta0)
     }
-    opt <- optwrap(optimizer, devfun, start, rho$lower,
+    opt <- optwrap(optimizer, devfun, par, lower=rho$lower, upper=rho$upper,
                    control=control, adj=adj, verbose=verbose,
                    ...)
     if (stage == 1) {
@@ -883,7 +910,7 @@ optimizeGlmer <- function(devfun,
 check.boundary <- function(rho,opt,devfun,boundary.tol) {
     par0 <- opt$par
     lower <- rho$lower
-    upper <- rho$upper %||% rep(Inf, length(rho$lower))
+    upper <- rho$upper
     dl <- par0 - lower
     du <- upper - par0
     if (!is.null(rho$dpars)) {
@@ -924,8 +951,9 @@ updateGlmerDevfun <- function(devfun, reTrms, nAGQ = 1L){
     rho <- environment(devfun)
     rho$nAGQ       <- nAGQ
     rho$lower      <- c(rho$lower, rep.int(-Inf, length(rho$pp$beta0)))
+    rho$upper      <- c(rho$upper, rep.int( Inf, length(rho$pp$beta0)))
     rho$lp0        <- rho$pp$linPred(1)
-    rho$dpars      <- seq_along(rho$pp$theta)
+    rho$dpars      <- seq_len(length(rho$lower) - length(rho$pp$beta0))
     rho$baseOffset <- forceCopy(rho$resp$offset) # forcing a copy (!)
     rho$GQmat      <- GHrule(nAGQ)
     rho$fac        <- reTrms$flist[[1]]
