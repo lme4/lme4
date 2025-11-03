@@ -104,6 +104,11 @@ setGeneric("getParLength",
            function (object)
                standardGeneric("getParLength"))
 
+setGeneric("getParNames",
+           function (object, cnm, gnm, prf = NULL, old = TRUE)
+               standardGeneric("getParNames"),
+           signature = c("object", "cnm", "gnm"))
+
 setGeneric("setPar",
            function (object, value)
                standardGeneric("setPar"))
@@ -115,6 +120,11 @@ setGeneric("getTheta",
 setGeneric("getThetaLength",
            function (object)
                standardGeneric("getThetaLength"))
+
+setGeneric("getThetaNames",
+           function (object, cnm, gnm, prf = NULL, old = TRUE)
+               standardGeneric("getThetaNames"),
+           signature = c("object", "cnm", "gnm"))
 
 setGeneric("getThetaIndex",
            function (object)
@@ -152,6 +162,11 @@ setGeneric("getLambdat.i",
 setGeneric("getVC",
            function (object)
                standardGeneric("getVC"))
+
+setGeneric("getVCNames",
+           function (object, cnm, gnm, prf = NULL, old = TRUE)
+               standardGeneric("getVCNames"),
+           signature = c("object", "cnm", "gnm"))
 
 setGeneric("setVC",
            function (object, vcomp, ccomp)
@@ -240,6 +255,68 @@ setMethod("getParLength",
           function (object)
               length(object@par))
 
+setMethod("getParNames",
+          c(object = "Covariance.us", cnm = "character", gnm = "character"),
+          getParNames.us <-
+          function (object, cnm, gnm, prf = NULL, old = TRUE) {
+              nc <- object@nc
+              stopifnot(length(cnm) == nc, length(gnm) == 1L)
+              inc <- seq_len(nc)
+              dec <- seq.int(from = nc, by = -1L, length.out = nc)
+              i <- sequence.default(from = inc, nvec = dec)
+              j <- rep(inc, dec)
+              ans <-
+                  if (old)
+                      paste0(gnm, ".", cnm[i], ".", cnm[j])
+                  else if (is.null(prf))
+                      paste0(cnm[i], ".", cnm[j], "|", gnm)
+                  else paste0(prf[[2L]], "_", cnm[i], ".", cnm[j], "|", gnm)
+              ans[cumsum(c(if (nc > 0L) 1L, if (nc > 1L) nc:2L))] <-
+                  if (old)
+                      paste0(gnm, ".", cnm)
+                  else if (is.null(prf))
+                      paste0(cnm, "|", gnm)
+                  else paste0(prf[[1L]], "_", cnm, "|", gnm)
+              ans
+          })
+
+setMethod("getParNames",
+          c(object = "Covariance.diag", cnm = "character", gnm = "character"),
+          getParNames.diag <-
+          function (object, cnm, gnm, prf = NULL, old = TRUE) {
+              nc <- object@nc
+              stopifnot(length(cnm) == nc, length(gnm) == 1L)
+              if (object@hom && nc > 0L)
+                  cnm <- "*"
+              if (old)
+                  paste0(gnm, ".", cnm)
+              else if (is.null(prf))
+                  paste0(cnm, "|", gnm)
+              else paste0(prf[[1L]], "_", cnm, "|", gnm)
+          })
+
+setMethod("getParNames",
+          c(object = "Covariance.cs", cnm = "character", gnm = "character"),
+          .fn <-
+          function (object, cnm, gnm, prf = NULL, old = TRUE) {
+              nc <- object@nc
+              stopifnot(length(cnm) == nc, length(gnm) == 1L)
+              if (object@hom && nc > 0L)
+                  cnm <- "*"
+              if (old)
+                  paste0(gnm, ".", c(cnm, if (nc > 1L) "rho"))
+              else if (is.null(prf))
+                  paste0(c(cnm, if (nc > 1L) "rho"), "|", gnm)
+              else c(paste0(prf[[1L]], "_", cnm, "|", gnm),
+                     paste0(prf[[2L]], "_", "rho", "|", gnm))
+          })
+
+setMethod("getParNames",
+          c(object = "Covariance.ar1", cnm = "character", gnm = "character"),
+          .fn)
+
+rm(.fn)
+
 setMethod("setPar",
           c(object = "Covariance", value = "numeric"),
           function (object, value) {
@@ -301,7 +378,7 @@ setMethod("getTheta",
           })
 
 ## L[i, j]/sigma[i] =
-##     if (j == 1L)
+##     if (j == 1)
 ##         rho^(i - 1)
 ##     else rho^(i - j) * sqrt(1 - rho^2)
 setMethod("getTheta",
@@ -349,8 +426,63 @@ setMethod("getThetaLength",
 
 rm(.fn)
 
+setMethod("getThetaNames",
+          c(object = "Covariance.us", cnm = "character", gnm = "character"),
+          function (object, cnm, gnm, prf = NULL, old = TRUE)
+              getParNames.us(object, cnm, gnm, prf, old))
+
+setMethod("getThetaNames",
+          c(object = "Covariance.diag", cnm = "character", gnm = "character"),
+          function (object, cnm, gnm, prf = NULL, old = TRUE)
+              getParNames.diag(object, cnm, gnm, prf, old))
+
+setMethod("getThetaNames",
+          c(object = "Covariance.cs", cnm = "character", gnm = "character"),
+          function (object, cnm, gnm, prf = NULL, old = TRUE) {
+              if (object@hom) {
+                  nc <- object@nc
+                  rbind(if (old)
+                            paste0(gnm, ".", cnm)
+                        else if (is.null(prf))
+                            paste0(cnm, "|", gnm)
+                        else paste0(prf[[1L]], "_", cnm, "|", gnm),
+                        if (old)
+                            paste0(gnm, ".", "*", ".", cnm)
+                        else if (is.null(prf))
+                            paste0("*", ".", cnm, "|", gnm)
+                        else paste0(prf[[2L]], "_", "*", ".", cnm, "|", gnm))[seq_len(2L * nc - 1L)]
+              }
+              else getParNames.us(object, cnm, gnm, prf, old)
+          })
+
+setMethod("getThetaNames",
+          c(object = "Covariance.ar1", cnm = "character", gnm = "character"),
+          function (object, cnm, gnm, prf = NULL, old = TRUE) {
+              if (object@hom) {
+                  nc <- object@nc
+                  i <- if (nc > 1L) c(1L:nc, 2L:nc) else nc
+                  j <- if (nc > 1L) rep(1L:2L, nc:(nc - 1L)) else nc
+                  k <- seq_len(min(2L, nc))
+                  ans <-
+                      if (old)
+                          paste0(gnm, ".", cnm[i], ".", cnm[j])
+                      else if (is.null(prf))
+                          paste0(cnm[i], ".", cnm[j], "|", gnm)
+                      else paste0(prf[[2L]], "_", cnm[i], ".", cnm[j], "|", gnm)
+                  ans[c(1L, nc + 1L)[k]] <-
+                      if (old)
+                          paste0(gnm, ".", cnm[k])
+                      else if (is.null(prf))
+                          paste0(cnm[k], "|", gnm)
+                      else paste0(prf[[2L]], "_", cnm[k], "|", gnm)
+                  ans
+              }
+              else getParNames.us(object, cnm, gnm, prf, old)
+          })
+
 setMethod("getThetaIndex",
           c(object = "Covariance.us"),
+          getThetaIndex.us <-
           function (object) {
               snc <- seq_len(nc <- object@nc)
               rep(seq.int(from = 1L - nc, by = 1L, length.out = nc),
@@ -369,33 +501,27 @@ setMethod("getThetaIndex",
 setMethod("getThetaIndex",
           c(object = "Covariance.cs"),
           function (object) {
-              snc <- seq_len(nc <- object@nc)
-              if (object@hom)
-              `[<-`(sequence.default(from = 2L, by = 2L, nvec = snc),
-                    cumsum(snc),
-                    seq.int(from = 1L, by = 2L, length.out = nc))
-              else # same as "Covariance.us"
-              rep(seq.int(from = 1L - nc, by = 1L, length.out = nc),
-                  snc) +
-              cumsum(seq.int(from = nc, by = -1L, length.out = nc))[
-                  sequence.default(from = 1L, by = 1L, nvec = snc)]
+              if (object@hom) {
+                  snc <- seq_len(nc <- object@nc)
+                  `[<-`(sequence.default(from = 2L, by = 2L, nvec = snc),
+                        cumsum(snc),
+                        seq.int(from = 1L, by = 2L, length.out = nc))
+              }
+              else getThetaIndex.us(object)
           })
 
 setMethod("getThetaIndex",
           c(object = "Covariance.ar1"),
           function (object) {
-              snc <- seq_len(nc <- object@nc)
-              if (object@hom)
-              `[<-`(sequence.default(from = seq.int(from = nc + 1L, length.out = nc),
-                                     by = -1L,
-                                     nvec = snc),
-                    1L + cumsum(seq.int(from = 0L, length.out = nc)),
-                    snc)
-              else # same as "Covariance.us"
-              rep(seq.int(from = 1L - nc, by = 1L, length.out = nc),
-                  snc) +
-              cumsum(seq.int(from = nc, by = -1L, length.out = nc))[
-                  sequence.default(from = 1L, by = 1L, nvec = snc)]
+              if (object@hom) {
+                  snc <- seq_len(nc <- object@nc)
+                  `[<-`(sequence.default(from = seq.int(from = nc + 1L, length.out = nc),
+                                         by = -1L,
+                                         nvec = snc),
+                        1L + cumsum(seq.int(from = 0L, length.out = nc)),
+                        snc)
+              }
+              else getThetaIndex.us(object)
           })
 
 setMethod("getThetaIndexLength",
@@ -715,6 +841,39 @@ setMethod("getVC",
 
 rm(.fn)
 
+setMethod("getVCNames",
+          c(object = "Covariance.us", cnm = "character", gnm = "character"),
+          function (object, cnm, gnm, prf = NULL, old = TRUE) {
+              nms <- getParNames(object, cnm, gnm, prf, old)
+              nc <- object@nc
+              ii <- cumsum(c(if (nc > 0L) 1L, if (nc > 1L) nc:2L))
+              list(vcomp = nms[ii], ccomp = nms[-ii])
+          })
+
+setMethod("getVCNames",
+          c(object = "Covariance.diag", cnm = "character", gnm = "character"),
+          function (object, cnm, gnm, prf = NULL, old = TRUE) {
+              nms <- getParNames(object, cnm, gnm, prf, old)
+              list(vcomp = nms, ccomp = character(0L))
+          })
+
+setMethod("getVCNames",
+          c(object = "Covariance.cs", cnm = "character", gnm = "character"),
+          .fn <-
+          function (object, cnm, gnm, prf = NULL, old = TRUE) {
+              nms <- getParNames(object, cnm, gnm, prf, old)
+              nc <- object@nc
+              if (nc <= 1L)
+                  list(vcomp = nms, ccomp = character(0L))
+              else list(vcomp = nms[seq_len(nc)], ccomp = nms[nc + 1L])
+          })
+
+setMethod("getVCNames",
+          c(object = "Covariance.ar1", cnm = "character", gnm = "character"),
+          .fn)
+
+rm(.fn)
+
 setMethod("setVC",
           c(object = "Covariance.us", vcomp = "numeric", ccomp = "numeric"),
           function (object, vcomp, ccomp) {
@@ -896,6 +1055,14 @@ setMethod("getParLength",
           function (object)
               length(object@lower))
 
+setMethod("getParNames",
+          c(object = "merMod", cnm = "missing", gnm = "missing"),
+          function (object, cnm, gnm, prf = NULL, old = TRUE) {
+              reCovs <- attr(object, "reCovs")
+              gnm <- names(cnm <- object@cnms)
+              unlist(.mapply(getParNames, list(object = reCovs, cnm = cnm, gnm = gnm), list(prf = prf, old = old)), FALSE, FALSE)
+          })
+
 setMethod("getTheta",
           c(object = "merMod"),
           function (object)
@@ -906,6 +1073,14 @@ setMethod("getThetaLength",
           function (object)
               length(object@theta))
 
+setMethod("getThetaNames",
+          c(object = "merMod", cnm = "missing", gnm = "missing"),
+          function (object, cnm, gnm, prf = NULL, old = TRUE) {
+              reCovs <- attr(object, "reCovs")
+              gnm <- names(cnm <- object@cnms)
+              unlist(.mapply(getThetaNames, list(object = reCovs, cnm = cnm, gnm = gnm), list(prf = prf, old = old)), FALSE, FALSE)
+          })
+
 setMethod("getLower",
           c(object = "merMod"),
           function (object)
@@ -915,3 +1090,13 @@ setMethod("getUpper",
           c(object = "merMod"),
           function (object)
               attr(object, "upper") %||% rep(Inf, length(object@lower)))
+
+setMethod("getVCNames",
+          c(object = "merMod", cnm = "missing", gnm = "missing"),
+          function (object, cnm, gnm, prf = NULL, old = TRUE) {
+              reCovs <- attr(object, "reCovs")
+              gnm <- names(cnm <- object@cnms)
+              L <- .mapply(getVCNames, list(object = reCovs, cnm = cnm, gnm = gnm), list(prf = prf, old = old))
+              list(vcomp = lapply(L, `[[`, 1L),
+                   ccomp = lapply(L, `[[`, 2L))
+          })
