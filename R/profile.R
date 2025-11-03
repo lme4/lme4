@@ -3,10 +3,9 @@
 ## FIXME: make structure-aware (via tnames())
 profnames <- function(object, signames=TRUE,
                       useSc=isLMM(object), prefix=c("sd","cor")) {
-    ntp <- length(object@theta)
     ## return
-    c(if(signames) sprintf(".sig%02d", seq(ntp))
-      else getThetaNames(object, prf=prefix, old=FALSE),
+    c(if(signames) sprintf(".sig%02d", seq(getParLength(object)))
+      else getParNames(object, prf=prefix, old=FALSE),
       if(useSc) if (signames) ".sigma" else "sigma")
 }
 
@@ -557,6 +556,8 @@ devfun2 <- function(fm,
     nf <- length(fixef(fm))
     if(hasSc) np <- np + 1L # was  if(!isGLMM(fm)) np <- np + 1L
     n <- nrow(pp$V) # use V, not X so it works with nlmer
+    reCovs <- getReCovs(fm)
+    mkTheta <- mkMkTheta(reCovs)
     if (isLMM(fm)) { # ==> hasSc
         ans <- function(pars)
         {
@@ -567,10 +568,10 @@ devfun2 <- function(fm,
             ## .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pars[-np]/sigma)
             ## convert from sdcor vector back to 'unscaled theta'
             ## thpars <- transfuns$to.chol(pars, n=vlist, s=sigma)
-            thpars <- mapply(setpars, attr(fm, "reCov"), relist(pars, opt_list),
+            thpars <- mapply(setpars, reCovs, relist(pars, opt_list),
                              MoreArgs = list(scale = scale))
             thpars <- unlist(lapply(thpars, getElement, "par"))
-            .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)
+            .Call(lmer_Deviance, pp$ptr(), resp$ptr(), mkTheta(thpars))
             sigsq <- tail(pars, 1)^2
             pp$ldL2() - ldW + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
         }
