@@ -5,7 +5,7 @@ profnames <- function(object, signames=TRUE,
     ntp <- length(object@theta)
     ## return
     c(if(signames) sprintf(".sig%02d", seq(ntp))
-      else tnames(object, old=FALSE, prefix=prefix),
+      else getThetaNames(object, prf=prefix, old=FALSE),
       if(useSc) if (signames) ".sigma" else "sigma")
 }
 
@@ -878,7 +878,6 @@ confint.merMod <- function(object, parm, level = 0.95,
                ci.fixed <- array(cf + ses %o% qnorm(a),
                                  dim = c(length(pnames), 2L),
                                  dimnames = list(pnames, format.perc(a, 3)))
-               vnames <- tnames(object)
                ci.all <- rbind(ci.vcov,ci.fixed)
                ci.all[parm,,drop=FALSE]
            },

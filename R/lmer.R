@@ -2045,17 +2045,6 @@ mkPfun <- function(diag.only = FALSE, old = TRUE, prefix = NULL){
     })
 }
 
-##' Construct names of individual theta/sd:cor components
-##'
-##' @param object a fitted model
-##' @param diag.only include only diagonal elements?
-##' @param old (logical) give backward-compatible results?
-##' @param prefix a character vector with two elements giving the prefix
-##' for diagonal (e.g. "sd") and off-diagonal (e.g. "cor") elements
-tnames <- function(object, diag.only = FALSE, old = TRUE, prefix = NULL) {
-    pfun <- mkPfun(diag.only=diag.only, old=old, prefix=prefix)
-    c(unlist(mapply(pfun, names(object@cnms), object@cnms)))
-}
 
 ## -> ../man/getME.Rd
 getME <- function(object, name, ...) UseMethod("getME")
@@ -2123,7 +2112,7 @@ getME.merMod <- function(object,
                }
                inds <- do.call(c,lapply(seq_along(cnms),getInds))
                setNames(lapply(inds,function(i) PR$Zt[i,]),
-                        tnames(object,diag.only = TRUE))
+                        unlist(getVCNames(object)$vcomp, FALSE, FALSE))
            },
            "mmList" = mmList.merMod(object),
            "y" = rsp$y,
@@ -2143,29 +2132,11 @@ getME.merMod <- function(object,
            "flist" = object@flist,
            "fixef" = fixef(object),
            "beta"  = object@beta,
-           ## FIXME
-           "theta" = setNames(th, tnames(object)),
-           ## FIXME
+           "theta" = setNames(th, getThetaNames(object)),
+           ## FIXME flexSigmaMinimum
            "ST" = setNames(vec2STlist(object@theta, n = lengths(cnms)),
                            names(cnms)),
-           ## FIXME
-           "Tlist" = {
-               nc <- lengths(cnms) # number of columns per term
-               nt <- length(nc)    # number of random-effects terms
-               ans <- vector("list",nt)
-               names(ans) <- names(nc)
-               pos <- 0L
-               for (i in 1:nt) { # will need modification for more general Lambda
-                   nci <- nc[i]
-                   tt <- matrix(0., nci, nci)
-                   inds <- lower.tri(tt, diag=TRUE)
-                   nthi <- sum(inds)
-                   tt[inds] <- th[pos + seq_len(nthi)]
-                   pos <- pos + nthi
-                   ans[[i]] <- tt
-               }
-               ans
-           },
+           "Tlist" = setNames(lapply(getReCovs(object), getLambda), names(object@cnms)),
            "REML" = dims[["REML"]],
            "is_REML" = isREML(object),
            ## number of random-effects terms
@@ -2185,8 +2156,7 @@ getME.merMod <- function(object,
            "cnms" = cnms,
            "devcomp" = dc,
            "offset" = rsp$offset,
-           ## FIXME
-           "lower" = setNames(getLower(object), tnames(object)),
+           "lower" = setNames(getLower(object), getParNames(object)),
            "devfun" = {
                verbose <- getCall(object)$verbose; if (is.null(verbose)) verbose <- 0L
                reCovs <- getReCovs(object)
