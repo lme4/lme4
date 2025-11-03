@@ -14,7 +14,20 @@ plot(xvec, lvec)
 trace("setVC", sig = c("Covariance.us", "numeric", "numeric"), browser)
 untrace("setVC", sig = c("Covariance.us", "numeric", "numeric"))
 
-profile(m1, which = 1)
+debug(profile.merMod)
+p1 <- profile(m1, which = 1, verbose = TRUE)
+## lots of warnings but ?? maybe there all along ???
+lattice::xyplot(p1)
+confint(p1)
+##         2.5 %   97.5 %
+## .sig01 14.3818 37.71583
+p2 <- profile(m1, which = 2, verbose = TRUE)
+lattice::xyplot(p2)
+p3 <- profile(m1, which = 3, verbose = TRUE)
+lattice::xyplot(p3)
+
+p_all <- profile(m1, verbose = TRUE)
+confint(p_all)
 
 v <- c(23.7805585271338, 5.71683789263024, 0.0813195978647574)
 s <- 25.59182
