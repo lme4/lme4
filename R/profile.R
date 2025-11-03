@@ -342,7 +342,7 @@ profile.merMod <- function(fitted,
 
     ## profile fixed effects separately (for LMMs)
     if (isLMM(fitted)) {
-        reCovs <- attr(fitted, "reCovs")
+        reCovs <- getReCovs(fitted)
         mkPar <- mkMkPar(reCovs)
         mkTheta <- mkMkTheta(reCovs)
         offset.orig <- fitted@resp$offset

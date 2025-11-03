@@ -1041,6 +1041,17 @@ function (reCovs, theta) {
     reCovs
 }
 
+## return 'reCovs' given 'object' of class "merMod", w/ or w/o attribute
+getReCovs <-
+function (object) {
+    ## stopifnot(is(object, "merMod"))
+    if (!is.null(ans <- attr(object, "reCovs")))
+        return(ans)
+    nc <- lengths(object@cnms, use.names = FALSE)
+    upReCovs(lapply(nc, function (nc) new("Covariance.us", nc = nc)),
+             object@theta)
+}
+
 
 ## .... METHODS [for class "merMod"] ...................................
 
@@ -1058,7 +1069,7 @@ setMethod("getParLength",
 setMethod("getParNames",
           c(object = "merMod", cnm = "missing", gnm = "missing"),
           function (object, cnm, gnm, prf = NULL, old = TRUE) {
-              reCovs <- attr(object, "reCovs")
+              reCovs <- getReCovs(object)
               gnm <- names(cnm <- object@cnms)
               unlist(.mapply(getParNames, list(object = reCovs, cnm = cnm, gnm = gnm), list(prf = prf, old = old)), FALSE, FALSE)
           })
@@ -1076,7 +1087,7 @@ setMethod("getThetaLength",
 setMethod("getThetaNames",
           c(object = "merMod", cnm = "missing", gnm = "missing"),
           function (object, cnm, gnm, prf = NULL, old = TRUE) {
-              reCovs <- attr(object, "reCovs")
+              reCovs <- getReCovs(object)
               gnm <- names(cnm <- object@cnms)
               unlist(.mapply(getThetaNames, list(object = reCovs, cnm = cnm, gnm = gnm), list(prf = prf, old = old)), FALSE, FALSE)
           })
@@ -1094,7 +1105,7 @@ setMethod("getUpper",
 setMethod("getVCNames",
           c(object = "merMod", cnm = "missing", gnm = "missing"),
           function (object, cnm, gnm, prf = NULL, old = TRUE) {
-              reCovs <- attr(object, "reCovs")
+              reCovs <- getReCovs(object)
               gnm <- names(cnm <- object@cnms)
               L <- .mapply(getVCNames, list(object = reCovs, cnm = cnm, gnm = gnm), list(prf = prf, old = old))
               list(vcomp = lapply(L, `[[`, 1L),

@@ -664,7 +664,7 @@ anova.merMod <- anovaLmer
 
 ##' @S3method as.function merMod
 as.function.merMod <- function(x, ...) {
-    reCovs <- attr(x, "reCovs")
+    reCovs <- getReCovs(x)
     rho <- list2env(list(resp  = x@resp$copy(),
                          pp    = x@pp$copy(),
                          lower = getLower(x),
@@ -1511,7 +1511,7 @@ refit.merMod <- function(object,
         }
     }
 
-    reCovs <- attr(object, "reCovs")
+    reCovs <- getReCovs(object)
     devlist <-
         c(list(pp = pp,
                resp = rr,
@@ -1585,7 +1585,7 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
     ##  consistent with lmer (default NM).  Should be based on internally stored 'optimizer' value
     if (!isREML(x)) return(x)
     stopifnot(is(rr <- x@resp, "lmerResp"))
-    reCovs <- attr(x, "reCovs")
+    reCovs <- getReCovs(x)
     rho <- new.env(parent=parent.env(environment()))
     rho$resp <- new(class(rr), y=rr$y, offset=rr$offset, weights=rr$weights, REML=0L)
     xpp <- x@pp$copy()
@@ -1622,7 +1622,7 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
         lower=getLower(x), devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=rho$resp,
         Gp=x@Gp)
     attr(ans, "upper") <- getUpper(x)
-    attr(ans, "reCovs") <- upReCovs(attr(x, "reCovs"), rho$pp$theta)
+    attr(ans, "reCovs") <- upReCovs(reCovs, rho$pp$theta)
     ans
 }
 
@@ -2189,7 +2189,7 @@ getME.merMod <- function(object,
            "lower" = setNames(getLower(object), tnames(object)),
            "devfun" = {
                verbose <- getCall(object)$verbose; if (is.null(verbose)) verbose <- 0L
-               reCovs <- attr(object, "reCovs")
+               reCovs <- getReCovs(object)
                if (isGLMM(object)) {
                    reTrms <- getME(object,c("Zt","theta","Lambdat","Lind","flist","cnms"))
                    reTrms$lower <- getLower(object)
@@ -2417,7 +2417,7 @@ VarCorr.merMod <- function(x, sigma = 1, ...)
     nc <- lengths(cnms) # no. of columns per term
     structure(mkVarCorr(sigma, cnms = cnms, nc = nc, theta = x@theta,
                         nms = { fl <- x@flist; names(fl)[attr(fl, "assign")]},
-                        reCovs = attr(x, "reCovs")),
+                        reCovs = getReCovs(x)),
               useSc = as.logical(x@devcomp$dims[["useSc"]]),
               class = "VarCorr.merMod")
 }
