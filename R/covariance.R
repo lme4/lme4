@@ -96,32 +96,17 @@ rm(.fn)
 
 ## .... GENERIC FUNCTIONS ..............................................
 
-getPar <-
-function (object) {
-    ## stopifnot(is(object, "Covariance"))
-    object@par
-}
+setGeneric("getPar",
+           function (object)
+               standardGeneric("getPar"))
 
-getParLength <-
-function (object) {
-    ## stopifnot(is(object, "Covariance"))
-    length(object@par)
-}
+setGeneric("getParLength",
+           function (object)
+               standardGeneric("getParLength"))
 
-setPar <-
-function (object, value) {
-    ## stopifnot(is(object, "Covariance"))
-    if (!is.double(value))
-        stop(gettextf("type of '%s' is not \"%s\"",
-                      "value", "double"),
-             domain = NA)
-    if (length(value) != length(object@par))
-        stop(gettextf("length of '%s' is not equal to length of '%s'",
-                      "value", "par"),
-             domain = NA)
-    object@par <- value
-    object
-}
+setGeneric("setPar",
+           function (object, value)
+               standardGeneric("setPar"))
 
 setGeneric("getTheta",
            function (object)
@@ -243,6 +228,31 @@ setMethod("initialize",
                   .Object
               }
               else callNextMethod()
+          })
+
+setMethod("getPar",
+          c(object = "Covariance"),
+          function (object)
+              object@par)
+
+setMethod("getParLength",
+          c(object = "Covariance"),
+          function (object)
+              length(object@par))
+
+setMethod("setPar",
+          c(object = "Covariance", value = "numeric"),
+          function (object, value) {
+              if (!is.double(value))
+                  stop(gettextf("type of '%s' is not \"%s\"",
+                                "value", "double"),
+                       domain = NA)
+              if (length(value) != length(object@par))
+                  stop(gettextf("length of '%s' is not equal to length of '%s'",
+                                "value", "par"),
+                       domain = NA)
+              object@par <- value
+              object
           })
 
 setMethod("getTheta",
