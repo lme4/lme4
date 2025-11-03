@@ -1,11 +1,12 @@
 ## `flexSigmaMinimum`
 
+* `grep -e "FIXME flexSigmaMinimum"`
 * check that existing examples work and existing tests pass
   - `git diff master tests` looks OK now: a few tests fail but those
     particular failures are expected; these tests are skipped or adapted
   - `git diff master man` shows that `profile` is broken when `theta`
     is not composed of segments of length `nc*(nc+1)/2`
-    * hence TODO: adapt usage of (or generalize) the *_to_* functions
+    * hence TODO: adapt usage of (or generalize) the `*_to_*` functions
       in `vcconv.R`; see, e.g., `devfun2` in `R/profile.R`
   - otherwise looking good ... !
 * check that reverse dependencies pass *their* checks
