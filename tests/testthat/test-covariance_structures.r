@@ -182,15 +182,13 @@ test_that("unit tests for compound symmetry covariances", {
     }
     
     expect_equal(getParLength(x.cs), length(getPar(x.cs)))
-    # TODO: the test below currently fails
-    #expect_equal(getThetaLength(x.cs), length(getTheta(x.cs)))
+    expect_equal(getThetaLength(x.cs), length(getTheta(x.cs)))
     
     ## Testing getThetaLength
     expect_equal(length(getThetaIndex(x.cs)), 
                  getThetaIndexLength(x.cs))
     if(hom_test){
-      # TODO: the test below currently fails
-      #expect_equal(getThetaLength(x.cs), if(nc > 0L) (nc*2 - 1) else 0)
+      expect_equal(getThetaLength(x.cs), if(nc > 0L) (nc*2 - 1) else 0)
     } else {
       expect_equal(getThetaLength(x.cs), (nc * (nc+1)/2))
     }
@@ -298,4 +296,15 @@ test_that("unit tests for autoregressive covariances", {
                  (row(matrix(0, nc, nc)) - 1)[upper.tri(matrix(0, nc, nc), diag = TRUE)])
     
   }
+})
+
+test_that("integration tests", {
+  fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)
+  fm1.us <- lmer(Reaction ~ Days + us(Days | Subject), sleepstudy, REML = FALSE)
+  
+  ## Ensuring fm1 gives the same result as fm1.us
+  expect_equal(c(as.matrix(VarCorr(fm1)[[1]])),
+            c(as.matrix(VarCorr(fm1.us)[[1]])))
+  
+  
 })
