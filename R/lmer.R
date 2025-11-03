@@ -664,11 +664,11 @@ anova.merMod <- anovaLmer
 
 ##' @S3method as.function merMod
 as.function.merMod <- function(x, ...) {
-    reCovs <- attr(x, "reCovs")
+    reCovs <- getReCovs(x)
     rho <- list2env(list(resp  = x@resp$copy(),
                          pp    = x@pp$copy(),
-                         lower = x@lower,
-                         upper = attr(x, "upper") %||% rep(Inf, length(x@lower)),
+                         lower = getLower(x),
+                         upper = getUpper(x),
                          mkPar = mkMkPar(reCovs),
                          mkTheta = mkMkTheta(reCovs)),
                     parent=as.environment("package:lme4"))
@@ -1511,7 +1511,7 @@ refit.merMod <- function(object,
         }
     }
 
-    reCovs <- attr(object, "reCovs")
+    reCovs <- getReCovs(object)
     devlist <-
         c(list(pp = pp,
                resp = rr,
@@ -1530,15 +1530,15 @@ refit.merMod <- function(object,
                  GQmat = GHrule(nAGQ),
                  fac = object@flist[[1]],
                  verbose=verbose,
-                 dpars=seq_along(object@lower))
+                 dpars=seq_len(getParLength(object)))
         }
         )
     rho <- list2env(devlist)
     ff <- mkdevfun(rho, nAGQ=nAGQ, maxit=maxit, verbose=verbose)
  ## xst       <- rep.int(0.1, nth)
     x0        <- rho$mkPar(rho$pp$theta)
-    lower     <- object@lower
-    upper     <- attr(object, "upper") %||% rep(Inf, length(object@lower))
+    lower     <- getLower(object)
+    upper     <- getUpper(object)
     if (!is.na(nAGQ) && nAGQ > 0L) {
      ## xst   <- c(xst, sqrt(diag(pp$unsc())))
         x0    <- c(x0, unname(fixef(object)))
@@ -1574,8 +1574,8 @@ refit.merMod <- function(object,
     mkMerMod(environment(ff), opt,
              list(flist=object@flist, cnms=object@cnms,
                   Gp=object@Gp,
-                  lower=object@lower,
-                  upper=attr(object, "upper") %||% rep(Inf, length(object@lower)),
+                  lower=getLower(object),
+                  upper=getUpper(object),
                   reCovs=reCovs),
              object@frame, getCall(object), cc)
 }
@@ -1585,7 +1585,7 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
     ##  consistent with lmer (default NM).  Should be based on internally stored 'optimizer' value
     if (!isREML(x)) return(x)
     stopifnot(is(rr <- x@resp, "lmerResp"))
-    reCovs <- attr(x, "reCovs")
+    reCovs <- getReCovs(x)
     rho <- new.env(parent=parent.env(environment()))
     rho$resp <- new(class(rr), y=rr$y, offset=rr$offset, weights=rr$weights, REML=0L)
     xpp <- x@pp$copy()
@@ -1596,9 +1596,9 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
     devfun <- mkdevfun(rho, 0L) # FIXME? also pass {verbose, maxit, control}
     opt <- ## "smart" calc.derivs rules
         if(optimizer == "bobyqa" && !any("calc.derivs" == ...names()))
-            optwrap(optimizer, devfun, x@theta, lower=x@lower, upper=attr(x, "upper") %||% rep(Inf, length(x@lower)), calc.derivs=TRUE, ...)
+            optwrap(optimizer, devfun, rho$mkPar(rho$pp$theta), lower=getLower(x), upper=getUpper(x), calc.derivs=TRUE, ...)
         else
-            optwrap(optimizer, devfun, x@theta, lower=x@lower, upper=attr(x, "upper") %||% rep(Inf, length(x@lower)), ...)
+            optwrap(optimizer, devfun, rho$mkPar(rho$pp$theta), lower=getLower(x), upper=getUpper(x), ...)
     ## FIXME: Should be able to call mkMerMod() here, and be done
     n <- length(rr$y)
     pp <- rho$pp
@@ -1619,10 +1619,10 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
     new("lmerMod", call = cl, frame=x@frame, flist=x@flist,
         cnms=x@cnms, theta=pp$theta, beta=pp$delb, u=pp$delu,
         optinfo = .optinfo(opt),
-        lower=x@lower, devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=rho$resp,
+        lower=getLower(x), devcomp=list(cmp=cmp, dims=dims), pp=pp, resp=rho$resp,
         Gp=x@Gp)
-    attr(ans, "upper") <- attr(x, "upper") %||% rep(Inf, length(x@lower))
-    attr(ans, "reCovs") <- upReCovs(attr(x, "reCovs"), rho$pp$theta)
+    attr(ans, "upper") <- getUpper(x)
+    attr(ans, "reCovs") <- upReCovs(reCovs, rho$pp$theta)
     ans
 }
 
@@ -2045,17 +2045,6 @@ mkPfun <- function(diag.only = FALSE, old = TRUE, prefix = NULL){
     })
 }
 
-##' Construct names of individual theta/sd:cor components
-##'
-##' @param object a fitted model
-##' @param diag.only include only diagonal elements?
-##' @param old (logical) give backward-compatible results?
-##' @param prefix a character vector with two elements giving the prefix
-##' for diagonal (e.g. "sd") and off-diagonal (e.g. "cor") elements
-tnames <- function(object, diag.only = FALSE, old = TRUE, prefix = NULL) {
-    pfun <- mkPfun(diag.only=diag.only, old=old, prefix=prefix)
-    c(unlist(mapply(pfun, names(object@cnms), object@cnms)))
-}
 
 ## -> ../man/getME.Rd
 getME <- function(object, name, ...) UseMethod("getME")
@@ -2123,7 +2112,7 @@ getME.merMod <- function(object,
                }
                inds <- do.call(c,lapply(seq_along(cnms),getInds))
                setNames(lapply(inds,function(i) PR$Zt[i,]),
-                        tnames(object,diag.only = TRUE))
+                        unlist(getVCNames(object)$vcomp, FALSE, FALSE))
            },
            "mmList" = mmList.merMod(object),
            "y" = rsp$y,
@@ -2143,29 +2132,11 @@ getME.merMod <- function(object,
            "flist" = object@flist,
            "fixef" = fixef(object),
            "beta"  = object@beta,
-           ## FIXME
-           "theta" = setNames(th, tnames(object)),
-           ## FIXME
+           "theta" = setNames(th, getThetaNames(object)),
+           ## FIXME flexSigmaMinimum
            "ST" = setNames(vec2STlist(object@theta, n = lengths(cnms)),
                            names(cnms)),
-           ## FIXME
-           "Tlist" = {
-               nc <- lengths(cnms) # number of columns per term
-               nt <- length(nc)    # number of random-effects terms
-               ans <- vector("list",nt)
-               names(ans) <- names(nc)
-               pos <- 0L
-               for (i in 1:nt) { # will need modification for more general Lambda
-                   nci <- nc[i]
-                   tt <- matrix(0., nci, nci)
-                   inds <- lower.tri(tt, diag=TRUE)
-                   nthi <- sum(inds)
-                   tt[inds] <- th[pos + seq_len(nthi)]
-                   pos <- pos + nthi
-                   ans[[i]] <- tt
-               }
-               ans
-           },
+           "Tlist" = setNames(lapply(getReCovs(object), getLambda), names(object@cnms)),
            "REML" = dims[["REML"]],
            "is_REML" = isREML(object),
            ## number of random-effects terms
@@ -2185,15 +2156,14 @@ getME.merMod <- function(object,
            "cnms" = cnms,
            "devcomp" = dc,
            "offset" = rsp$offset,
-           ## FIXME
-           "lower" = setNames(object@lower, tnames(object)),
+           "lower" = setNames(getLower(object), getParNames(object)),
            "devfun" = {
                verbose <- getCall(object)$verbose; if (is.null(verbose)) verbose <- 0L
-               reCovs <- attr(object, "reCovs")
+               reCovs <- getReCovs(object)
                if (isGLMM(object)) {
                    reTrms <- getME(object,c("Zt","theta","Lambdat","Lind","flist","cnms"))
-                   reTrms$lower <- object@lower
-                   reTrms$upper <- attr(object, "upper") %||% rep(Inf, length(object@lower))
+                   reTrms$lower <- getLower(object)
+                   reTrms$upper <- getUpper(object)
                    reTrms$reCovs <- reCovs
                    d1 <- mkGlmerDevfun(object@frame, getME(object,"X"),
                                        reTrms=reTrms, family(object),
@@ -2203,8 +2173,8 @@ getME.merMod <- function(object,
                } else {
                    ## copied from refit ... DRY ...
                    devlist <- list(pp=PR, resp=rsp,
-                                   lower = object@lower,
-                                   upper = attr(object, "upper") %||% rep(Inf, length(object@lower)),
+                                   lower = getLower(object),
+                                   upper = getUpper(object),
                                    mkPar = mkMkPar(reCovs),
                                    mkTheta = mkMkTheta(reCovs))
                    mkdevfun(rho=list2env(devlist),
@@ -2417,7 +2387,7 @@ VarCorr.merMod <- function(x, sigma = 1, ...)
     nc <- lengths(cnms) # no. of columns per term
     structure(mkVarCorr(sigma, cnms = cnms, nc = nc, theta = x@theta,
                         nms = { fl <- x@flist; names(fl)[attr(fl, "assign")]},
-                        reCovs = attr(x, "reCovs")),
+                        reCovs = getReCovs(x)),
               useSc = as.logical(x@devcomp$dims[["useSc"]]),
               class = "VarCorr.merMod")
 }

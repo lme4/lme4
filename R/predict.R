@@ -96,7 +96,7 @@ setParams <- function(object, params, inplace=FALSE, subset=FALSE) {
         ## no longer issue warning if unnamed ...
         return(x)
     }
-    theta <- matchNames(theta,tnames(object),"theta")
+    theta <- matchNames(theta, getThetaNames(object), "theta")
     beta <- matchNames(beta,colnames(getME(object,"X")),"beta")
     sigma <- params$sigma
     if(inplace) {

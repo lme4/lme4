@@ -300,7 +300,8 @@ summary.allFit <- function(object, ...) {
     vfun <- function(x) as.data.frame(VarCorr(x))[["sdcor"]]
     sdcor <- afun(objOK, vfun)
     theta <- afun(objOK, getME, name="theta")
-    cnm <- tnames(objOK[[1]])
+    vcnms <- getVCNames(objOK[[1]])
+    cnm <- unlist(rbind(vcnms$vcomp, vcnms$ccomp), FALSE, FALSE)
     if (sigma(objOK[[1]])!=1) cnm <- c(cnm,"sigma")
     colnames(sdcor) <- unname(cnm)
     sdcor <- as.data.frame(sdcor)

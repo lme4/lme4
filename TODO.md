@@ -1,24 +1,22 @@
 ## `flexSigmaMinimum`
 
+* `grep -e "FIXME flexSigmaMinimum"`
 * check that existing examples work and existing tests pass
   - `git diff master tests` looks OK now: a few tests fail but those
     particular failures are expected; these tests are skipped or adapted
   - `git diff master man` shows that `profile` is broken when `theta`
     is not composed of segments of length `nc*(nc+1)/2`
-    * hence TODO: adapt usage of (or generalize) the *_to_* functions
+    * hence TODO: adapt usage of (or generalize) the `*_to_*` functions
       in `vcconv.R`; see, e.g., `devfun2` in `R/profile.R`
   - otherwise looking good ... !
-* upper bounds on `par`
-  - How should `merMod` store upper bounds on `par`?  There is a `lower`
-    slot but no `upper` slot.  An attribute of the object?  An attribute
-    of the `lower` slot?
-  - They could be left out altogether and (re-)determined from `reCovs`
-    which is stored as an attribute.
-* adapt `tnames` for structured covariance matrices as `theta` need
-  not be composed of segments of length `nc*(nc+1)/2`; it is used in
-  `getME(., "theta")`, maybe elsewhere
-* `glmerMod` ... ?
-* new documentation and tests
+* check that reverse dependencies pass *their* checks
+* new tests
+  - unit tests for stuff in `R/covariance.R`
+  - integration tests for `lmer`, `glmer`, `nlmer`, and
+    methods for class `"merMod"`
+* new documentation
+  - update `vignette("lmer")` (or is that static ... ?)
+  - write a `vignette("covariance")` (or whatever)
 
 
 ## not `flexSigmaMinimum`
