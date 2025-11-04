@@ -180,6 +180,7 @@ setGeneric("getProfBounds",
            function (object, bound, scale)
                standardGeneric("getProfBounds"))
 
+
 ## .... METHODS ........................................................
 
 setMethod("initialize",
@@ -807,20 +808,22 @@ setMethod("getVC",
           function (object) {
               nc <- object@nc
               if (nc <= 1L) {
-                  return(vcomp = object@par, ccomp = double(0L))
+                  vcomp <- object@par
+                  ccomp <- double(0L)
+              } else {
+                  ii <- seq.int(from = 1L, by = nc + 1L, length.out = nc)
+                  i0 <- sequence.default(from = seq.int(from = 2L, by = nc + 1L, length.out = nc - 1L),
+                                         by = 1L,
+                                         nvec = (nc - 1L):1L)
+                  i1 <- sequence.default(from = ii,
+                                         by = 1L,
+                                         nvec = nc:1L)
+                  L <- matrix(0, nc, nc)
+                  L[i1] <- object@par
+                  S <- tcrossprod(L)
+                  vcomp <- sqrt(S[ii])
+                  ccomp <- (S/vcomp/rep(vcomp, each = nc))[i0]
               }
-              ii <- seq.int(from = 1L, by = nc + 1L, length.out = nc)
-              i0 <- sequence.default(from = seq.int(from = 2L, by = nc + 1L, length.out = nc - 1L),
-                                     by = 1L,
-                                     nvec = (nc - 1L):1L)
-              i1 <- sequence.default(from = ii,
-                                     by = 1L,
-                                     nvec = nc:1L)
-              L <- matrix(0, nc, nc)
-              L[i1] <- object@par
-              S <- tcrossprod(L)
-              vcomp <- sqrt(S[ii])
-              ccomp <- (S/vcomp/rep(vcomp, each = nc))[i0]
               list(vcomp = vcomp, ccomp = ccomp)
           })
 
@@ -910,10 +913,11 @@ setMethod("setVC",
                         length(vcomp) == nc,
                         is.double(ccomp),
                         length(ccomp) == length(object@par) - nc)
+              object@par <-
               if (nc <= 1L)
-                object@par <- vcomp
+                  vcomp
               else {
-                i0 <- sequence.default(from = seq.int(from = nc + 1L, by = nc + 1L, length.out = nc - 1L),
+                  i0 <- sequence.default(from = seq.int(from = nc + 1L, by = nc + 1L, length.out = nc - 1L),
                                          by = nc,
                                          nvec = (nc - 1L):1L)
                   i1 <- sequence.default(from = seq.int(from = 1L, by = nc + 1L, length.out = nc),
@@ -921,9 +925,7 @@ setMethod("setVC",
                                          nvec = nc:1L)
                   S <- diag(1, nc, nc)
                   S[i0] <- ccomp
-                  S <- Matrix::forceSymmetric(S, "U")
-                object@par <- (chol(S) * rep(vcomp, each = nc))[i1]
-
+                  (chol(S) * rep(vcomp, each = nc))[i1]
               }
               object
           })
