@@ -646,7 +646,7 @@ setMethod("setTheta",
                   ## L[2, 1] = sigma[2] * rho
                   l21 <- value[pos + 1L + 1L]
                   ## L[2, 2] = sigma[2] * sqrt(1 - rho^2)
-                  l22 <- value[pos + 1L + if (hom) 2L else nc]
+                  l22 <- value[pos + 1L + nc]
                   if (l21 == 0 && l22 == 0) # FIXME
                       stop(gettextf("boundary case not yet supported by method for '%s' with signature (%s=\"%s\", %s=\"%s\")",
                                     "setTheta", "object", "Covariance.ar1", "value", "numeric"),
