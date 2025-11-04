@@ -684,5 +684,3 @@ test_that("predictions work with se.fit and subset of grouping variable levels",
   expect_true(all(gp1$fit == expected_gp1))
 })
 
-
-
