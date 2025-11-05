@@ -52,7 +52,7 @@ lmer <- function(formula, data=NULL, REML = TRUE,
     
     calc.derivs <- control$calc.derivs %||% 
       (nrow(lmod$fr) < control$checkConv$check.conv.nobsmax &
-        length(s)    < control$checkConv$check.conv.nparmax)
+       length(s)    < control$checkConv$check.conv.nparmax)
     
     opt <- if (length(control$optimizer)==0) {
                list(par=s,fval=devfun(s),
@@ -2644,6 +2644,8 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
                     use.last.params = FALSE,
                     verbose = 0L)
 {
+    ## calc.derivs may be passed as NULL by some upstream pkgs ...
+    calc.derivs <- calc.derivs %||% TRUE
     ## control must be specified if adj==TRUE;
     ##  otherwise this is a fairly simple wrapper
     optfun <- getOptfun(optimizer)

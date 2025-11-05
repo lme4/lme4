@@ -305,6 +305,8 @@ importFrom(reformulas,findbars)
 export(findbars)
 importFrom(reformulas,mkReTrms)
 export(mkReTrms)
+importFrom(reformulas,isNested)
+export(isNested)
 ## 
 export(namedList)
 importFrom(rlang, warn)
