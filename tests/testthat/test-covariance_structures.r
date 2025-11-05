@@ -1,8 +1,7 @@
 
 test_that("unit test for unstructured covariances", {
   
-  for(i in seq_len(20L)){
-    nc <- sample(0:10, 1L)
+  for (nc in c(0:4, 16L, 64L, 256L)){
     
     x.us <- new("Covariance.us", nc = nc, simulate = TRUE)
     
@@ -71,8 +70,7 @@ test_that("unit test for unstructured covariances", {
 
 test_that("unit tests for diagonal covariances", {
   
-  for(i in seq_len(20L)){
-    nc <- sample(0:10, 1L)
+  for (nc in c(0:4, 16L, 64L, 256L)){
     hom_test <- sample(c(T, F), size = 1)
     
     x.di <- new("Covariance.diag", nc = nc, hom = hom_test, simulate = TRUE)
@@ -122,8 +120,7 @@ test_that("unit tests for diagonal covariances", {
 
 test_that("unit tests for compound symmetry covariances", {
   
-  for(i in seq_len(20L)){
-    nc <- sample(0:10, 1L)
+  for (nc in c(0:4, 16L, 64L, 256L)){
     hom_test <- sample(c(T, F), size = 1)
     
     x.cs <- new("Covariance.cs", nc = nc, hom = hom_test, simulate = TRUE)
@@ -221,8 +218,7 @@ test_that("unit tests for compound symmetry covariances", {
 
 test_that("unit tests for autoregressive covariances", {
   
-  for(i in seq_len(20L)){
-    nc <- sample(0:10, 1L)
+  for (nc in c(0:4, 16L, 64L, 256L)){
     hom_test <- sample(c(T, F), size = 1)
     
     x.ar1 <- new("Covariance.ar1", nc = nc, hom = hom_test, simulate = TRUE)
