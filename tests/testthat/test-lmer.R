@@ -422,55 +422,40 @@ test_that("turn off conv checking for nobs > check.conv.nobsmax", {
 })
 
 test_that("turn off conv checking for npara > check.conv.nparmax", {
-
-  skip()
-  ## FIXME: (1) hard to reliably guarantee non-singularity,
-  ##    tests should allow for that possibility; tried setting maxeval
-  ##    low instead
-  ## (2) still working out details
-  ## This is taken from an example shown here:
-  ## https://github.com/lme4/lme4/issues/783#issue-2266130542
-  ## This particular seed doesn't have singular fit issues
-  set.seed(6)
+  set.seed(1)
   
-  n <- 150
-  n_classes <- 25
-  n_raters <- 10
+  n_groups <- 20
+  n_per_group <- 20
+  n <- n_groups * n_per_group
   
-  data <- data.frame(
-    class = sample.int(n_classes, n, replace = TRUE),
-    grade = pmin(7 + floor(runif(n, 2, 14) + rnorm(n)), 20),
-    emint = rnorm(n, 100, 15),
-    group = rep(c("training", "control", "school"), each = 50),
-    rater = sample.int(n_raters, n, replace = TRUE)
+  dat <- data.frame(
+    group = rep(1:n_groups, each = n_per_group),
+    x1 = rnorm(n),
+    x2 = rnorm(n)
   )
   
-  training_effect <- c(training = 2.5, school = 2, control = 0)
+  set.seed(101)
+  form <- y ~ 1 + x1 * x2 + (1 + x1|group)
+  dat$y <- simulate(form[-2], ## one-sided formula
+                    newdata = dat,
+                    family = gaussian,
+                    newparams = list(beta = c(-7, 5, -100, 20),
+                                     theta = c(2.5, 1.4, 6.3),
+                                     sigma = 2))[[1]]
   
-  rater_bias <- rnorm(n_raters, 0, 2)
-  class_bias <- rnorm(n_classes, 0, 1)
-  emint_bs <- rnorm(n_classes, 0.001, 0)  
-  grade_bs <- rnorm(n_classes, 0.3, 0.2)
+  mod1 <- lmer(form, data = dat,
+               control = lmerControl(
+                 optimizer = "bobyqa",
+                 optCtrl = list(maxfun = 10)
+               ))
   
-  data$emint_n <- data$emint - mean(data$emint)
-  data$grade_n <- data$grade - mean(data$grade)
+  mod2 <- update(mod1, 
+                 control = lmerControl(
+                   optimizer = "bobyqa",
+                   optCtrl = list(maxfun = 10),
+                   check.conv.nparmax = 3)
+  )
   
-  data$eval <- pmax(pmin(
-    floor(4 + training_effect[data$group] + 
-            class_bias[data$class] + 
-            rater_bias[data$rater] + 
-            emint_bs[data$class] * data$emint + 
-            grade_bs[data$class] * (data$grade_n) + 
-            2 * rnorm(n)
-    ), 10), 0)
-  
-  form <- eval~group*emint_n + group*grade_n + (1 + grade_n+emint_n|class)
-
-  ctrl1 <- lmerControl(optCtrl = list(maxeval = 50))
-  ctrl2 <- lmerControl(optCtrl = list(maxeval = 50,
-                                      check.conv.nparmax = 5))
-  mod1 <- suppressWarnings(lmer(form, data=data, control =  ctrl1))
-  mod2 <- suppressWarnings(update(mod1, control = ctrl2))
   ## First should give a warning
   expect_false(is.null(mod1@optinfo$conv$lme4))
   ## Second shouldn't be evaluated

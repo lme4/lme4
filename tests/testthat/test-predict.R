@@ -673,5 +673,14 @@ test_that("predictions work with se.fit and subset of grouping variable levels",
   ## Ideally: predictions should remain the same as before.
   expect_equal(lapply(tp4, function(x) x[w2]), tp2,
                check.attributes = FALSE)
+  
+  ## Test that this also works under glmer.
+  gm1 <- glmer(round(Reaction) ~ Days + (1 + Days | Subject), 
+               data = sleepstudy, family = poisson)
+  d2 <- data.frame(Days = 0, Subject = "373")
+  gp1 <- suppressWarnings(predict(gm1, newdata = d2, se.fit = TRUE, 
+                                  re.form = NULL, allow.new.levels = TRUE))
+  expected_gp1 <- fixef(gm1)["(Intercept)"]
+  expect_true(all(gp1$fit == expected_gp1))
 })
 
