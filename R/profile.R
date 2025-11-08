@@ -190,8 +190,8 @@ profile.merMod <- function(fitted,
     ## bounds on sd-corr:  [0,Inf) for diag, (-1.0,1.0) for off-diag
   ## bounds on var-corr: [0,Inf) for diag, (-Inf,Inf) for off-diag
     covs <- attr(fitted, "reCov")
-    lower <- unlist(lapply(covs, getProfBounds, "lower", prof.scale))
-    upper <- unlist(lapply(covs, getProfBounds, "upper", prof.scale))
+    lower <- unlist(lapply(covs, getLowerProf, prof.scale))
+    upper <- unlist(lapply(covs, getUpperProf, prof.scale))
     if (useSc) { # bounds for sigma
         lower <- c(lower,0)
         upper <- c(upper,Inf)
@@ -470,41 +470,6 @@ get.which <- function(which, nvp, nptot, parnames, verbose=FALSE) {
     }
 }
 
-  ## get user/profiling pars from deviance pars
-getpars <- function(v, scale, sc = NULL) {
-  pp <- getVC(v)
-  ## this part should be general
-  if (!is.null(sc)) {
-    pp$vcomp <- pp$vcomp*sc
-    pp <- c(pp, list(scale = sc))
-  }
-  if (scale == "vcov") {
-      vmat <- outer(pp$vcomp, pp$vcomp)
-      vc <- getCormat(v)*vmat
-      pp$comp <- vc[lower.tri(vc)]
-    }
-    unlist(pp)   
-}
-
-## get deviance pars from user/profiling pars
-setpars <- function(v, p, scale) {
-  ## fixme: split on gsub("[0-9]+$", "", names(p)) ?
-  split_p <- list(vcomp = p[grepl("^vcomp", names(p))],
-                  ccomp = p[grepl("^ccomp", names(p))],
-                  scale = p[grepl("scale", names(p))])
-  if (length(split_p$scale)>0) {
-    split_p$vcomp <- split_p$vcomp/split_p$scale
-  }
-  if (scale == "vcov") {
-    cc <- diag(split_p$vcomp)
-    cc[lower.tri(cc)] <- split_p$ccomp
-    cc <- Matrix::forceSymmetric(cc, "L")
-    split_p$ccomp <- cov2cor(cc)[lower.tri(cc)]
-    split_p$vcomp <- sqrt(split_p$vcomp)
-  }
-  setVC(v, split_p$vcomp, split_p$ccomp)
-}
-
 ## The deviance is profiled with respect to the fixed-effects
 ## parameters but not with respect to sigma. The other parameters
 ## are on the standard deviation scale, not the theta scale.
@@ -546,9 +511,8 @@ devfun2 <- function(fm,
     stdErr <- unname(coef(summary(fm))[,2])
     pp <- fm@pp$copy()
     sig <- if (useSc) sigma(fm) else NULL
-    ## set to sigma(fm) only if hasSc is TRUE?
-    ## getVC (internal to getpars) extracts coeffs from the cov objects
-    opt_list <- lapply(attr(fm, "reCov"), getpars, scale = scale, sc = sigma(fm))
+    ## get full list for later relist()
+    opt_list <- getProfPars(fm, scale = scale, sc = sig)
     opt <- unlist(opt_list)
     names(opt) <- profnames(fm, useSc=useSc, ...)
     opt <- c(opt, fixef(fm))
@@ -561,15 +525,13 @@ devfun2 <- function(fm,
         ans <- function(pars)
         {
             stopifnot(is.numeric(pars), length(pars) == np)
-            ## Assumption:  we can translate the *last* parameter back
-            ##   to sigma (SD) scale ...
-            ## sigma <- transfuns$to.sd(pars[np])
-            ## .Call(lmer_Deviance, pp$ptr(), resp$ptr(), pars[-np]/sigma)
-            ## convert from sdcor vector back to 'unscaled theta'
-            ## thpars <- transfuns$to.chol(pars, n=vlist, s=sigma)
-            thpars <- mapply(setpars, attr(fm, "reCov"), relist(pars, opt_list),
+            par_list <- relist(pars, opt_list)
+            par_list <- par_list[names(par_list) != "scale"]
+            thpars <- mapply(setProfPars, attr(fm, "reCov"),
+                             par_list,
                              MoreArgs = list(scale = scale))
             thpars <- unlist(lapply(thpars, getElement, "par"))
+            ## update pp, resp components in-place
             .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)
             sigsq <- tail(pars, 1)^2
             pp$ldL2() - ldW + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)

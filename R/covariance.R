@@ -147,6 +147,15 @@ setGeneric("getUpper",
            function (object)
                standardGeneric("getUpper"))
 
+setGeneric("getLowerProf",
+           function (object, scale)
+               standardGeneric("getLowerProf"))
+
+setGeneric("getUpperProf",
+           function (object, scale)
+               standardGeneric("getUpperProf"))
+
+
 setGeneric("getLambda",
            function (object)
                standardGeneric("getLambda"))
@@ -176,10 +185,13 @@ setGeneric("getCormat",
            function (object)
                standardGeneric("getCormat"))
 
-setGeneric("getProfBounds",
-           function (object, bound, scale)
-               standardGeneric("getProfBounds"))
+setGeneric("getProfPars",
+           function(object, scale, sc = NULL)
+             standardGeneric("getProfPars"))
 
+setGeneric("setProfPars",
+           function(object, par, scale)
+             standardGeneric("setProfPars"))
 
 ## .... METHODS ........................................................
 
@@ -840,11 +852,22 @@ setMethod("getCormat",
             cov2cor(S)
           })
 
-setMethod("getProfBounds",
+## DRY?
+setMethod("getLowerProf",
           c(object = "Covariance.us"),
-          function (object, bound, scale) {
-            v_bound <- if (bound == "lower") 0 else Inf
-            c_bound <- if (bound == "lower") -1 else 1
+          function (object, scale) {
+            v_bound <- 0
+            c_bound <- -1
+            if (scale == "varcov") c_bound <- c_bound*Inf
+            nc <- object@nc
+            c(rep(v_bound, nc), rep(c_bound, nc*(nc-1)/2))
+          })
+
+setMethod("getUpperProf",
+          c(object = "Covariance.us"),
+          function (object, scale) {
+            v_bound <- Inf
+            c_bound <- 1
             if (scale == "varcov") c_bound <- c_bound*Inf
             nc <- object@nc
             c(rep(v_bound, nc), rep(c_bound, nc*(nc-1)/2))
@@ -1141,4 +1164,66 @@ setMethod("getVCNames",
               L <- .mapply(getVCNames, list(object = reCovs, cnm = cnm, gnm = gnm), list(prf = prf, old = old))
               list(vcomp = lapply(L, `[[`, 1L),
                    ccomp = lapply(L, `[[`, 2L))
+          })
+
+## get user/profiling pars from deviance pars
+setMethod("getProfPars",
+          c(object = "Covariance", scale = "ANY", sc = "ANY"),
+          function(object, scale, sc = NULL) {
+            pp <- getVC(object)
+            if (!is.null(sc)) {
+              pp$vcomp <- pp$vcomp*sc
+              pp <- c(pp, list(scale = sc))
+            }
+          })
+
+setMethod("getProfPars",
+          c(object = "Covariance.us", scale = "ANY", sc = "ANY"),
+          function(object, scale, sc = NULL) {
+            ## can I use NextMethod() here to DRY?
+            pp <- getVC(object)
+            if (!is.null(sc)) {
+              pp$vcomp <- pp$vcomp*sc
+            }
+            if (scale == "vcov") {
+              vmat <- outer(pp$vcomp, pp$vcomp)
+              vc <- getCormat(object)*vmat
+              pp$comp <- vc[lower.tri(vc)]
+            }
+            unlist(pp)   
+          })
+
+setMethod("getProfPars",
+          c(object = "merMod", scale = "ANY", sc = "ANY"),
+          function (object, scale, sc) {
+            reCovs <- getReCovs(object)
+            L <- .mapply(getProfPars, list(object = reCovs, scale = scale, sc = sc), MoreArgs = NULL)
+            res <- c(L, list(scale = sc))
+          })
+
+setMethod("setProfPars",
+          c(object = "Covariance.us", par = "ANY", scale = "ANY"),
+          function(object, par, scale) {
+            ## fixme: split on gsub("[0-9]+$", "", names(p)) ?
+            split_p <- list(vcomp = par[grepl("^vcomp", names(par))],
+                            ccomp = par[grepl("^ccomp", names(par))],
+                            scale = par[grepl("scale", names(par))])
+            if (length(split_p$scale)>0) {
+              split_p$vcomp <- split_p$vcomp/split_p$scale
+            }
+            if (scale == "vcov") {
+              ## FIXME: should be able to get cor values more directly?
+              cc <- diag(split_p$vcomp)
+              cc[lower.tri(cc)] <- split_p$ccomp
+              cc <- Matrix::forceSymmetric(cc, "L")
+              split_p$ccomp <- cov2cor(cc)[lower.tri(cc)]
+              split_p$vcomp <- sqrt(split_p$vcomp)
+            }
+            setVC(object, split_p$vcomp, split_p$ccomp)
+          })
+
+
+setMethod("setProfPars",
+          c(object = "merMod", par = "ANY", scale = "ANY"),
+          function(object, par, scale) {
           })
