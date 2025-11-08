@@ -512,7 +512,7 @@ devfun2 <- function(fm,
     pp <- fm@pp$copy()
     sig <- if (useSc) sigma(fm) else NULL
     ## get full list for later relist()
-    opt_list <- getProfPars(fm, scale = scale, sc = sig)
+    opt_list <- getProfPars(fm, profscale = scale, sc = sig)
     opt <- unlist(opt_list)
     names(opt) <- profnames(fm, useSc=useSc, ...)
     opt <- c(opt, fixef(fm))
@@ -524,12 +524,13 @@ devfun2 <- function(fm,
     if (isLMM(fm)) { # ==> hasSc
         ans <- function(pars)
         {
-            stopifnot(is.numeric(pars), length(pars) == np)
+            ## convert 'profPars' -> 'pars'
+            setProfPars(fm, pars, profscale = scale)
             par_list <- relist(pars, opt_list)
             par_list <- par_list[names(par_list) != "scale"]
             thpars <- mapply(setProfPars, attr(fm, "reCov"),
                              par_list,
-                             MoreArgs = list(scale = scale))
+                             MoreArgs = list(profscale = scale))
             thpars <- unlist(lapply(thpars, getElement, "par"))
             ## update pp, resp components in-place
             .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)

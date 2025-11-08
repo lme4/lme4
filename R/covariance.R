@@ -148,11 +148,11 @@ setGeneric("getUpper",
                standardGeneric("getUpper"))
 
 setGeneric("getLowerProf",
-           function (object, scale)
+           function (object, profscale)
                standardGeneric("getLowerProf"))
 
 setGeneric("getUpperProf",
-           function (object, scale)
+           function (object, profscale)
                standardGeneric("getUpperProf"))
 
 
@@ -186,11 +186,11 @@ setGeneric("getCormat",
                standardGeneric("getCormat"))
 
 setGeneric("getProfPars",
-           function(object, scale, sc = NULL)
+           function(object, profscale, sc = NULL)
              standardGeneric("getProfPars"))
 
 setGeneric("setProfPars",
-           function(object, par, scale)
+           function(object, par, profscale, sc = NULL)
              standardGeneric("setProfPars"))
 
 ## .... METHODS ........................................................
@@ -855,20 +855,20 @@ setMethod("getCormat",
 ## DRY?
 setMethod("getLowerProf",
           c(object = "Covariance.us"),
-          function (object, scale) {
+          function (object, profscale) {
             v_bound <- 0
             c_bound <- -1
-            if (scale == "varcov") c_bound <- c_bound*Inf
+            if (profscale == "varcov") c_bound <- c_bound*Inf
             nc <- object@nc
             c(rep(v_bound, nc), rep(c_bound, nc*(nc-1)/2))
           })
 
 setMethod("getUpperProf",
           c(object = "Covariance.us"),
-          function (object, scale) {
+          function (object, profscale) {
             v_bound <- Inf
             c_bound <- 1
-            if (scale == "varcov") c_bound <- c_bound*Inf
+            if (profscale == "varcov") c_bound <- c_bound*Inf
             nc <- object@nc
             c(rep(v_bound, nc), rep(c_bound, nc*(nc-1)/2))
           })
@@ -1168,8 +1168,8 @@ setMethod("getVCNames",
 
 ## get user/profiling pars from deviance pars
 setMethod("getProfPars",
-          c(object = "Covariance", scale = "ANY", sc = "ANY"),
-          function(object, scale, sc = NULL) {
+          c(object = "Covariance", profscale = "ANY", sc = "ANY"),
+          function(object, profscale, sc = NULL) {
             pp <- getVC(object)
             if (!is.null(sc)) {
               pp$vcomp <- pp$vcomp*sc
@@ -1178,14 +1178,14 @@ setMethod("getProfPars",
           })
 
 setMethod("getProfPars",
-          c(object = "Covariance.us", scale = "ANY", sc = "ANY"),
-          function(object, scale, sc = NULL) {
+          c(object = "Covariance.us", profscale = "ANY", sc = "ANY"),
+          function(object, profscale, sc = NULL) {
             ## can I use NextMethod() here to DRY?
             pp <- getVC(object)
             if (!is.null(sc)) {
               pp$vcomp <- pp$vcomp*sc
             }
-            if (scale == "vcov") {
+            if (profscale == "vcov") {
               vmat <- outer(pp$vcomp, pp$vcomp)
               vc <- getCormat(object)*vmat
               pp$comp <- vc[lower.tri(vc)]
@@ -1194,24 +1194,26 @@ setMethod("getProfPars",
           })
 
 setMethod("getProfPars",
-          c(object = "merMod", scale = "ANY", sc = "ANY"),
-          function (object, scale, sc) {
+          c(object = "merMod", profscale = "ANY", sc = "ANY"),
+          function (object, profscale, sc) {
             reCovs <- getReCovs(object)
-            L <- .mapply(getProfPars, list(object = reCovs, scale = scale, sc = sc), MoreArgs = NULL)
+            L <- .mapply(getProfPars, list(object = reCovs, profscale = profscale), MoreArgs = list(sc=sc))
             res <- c(L, list(scale = sc))
+            res
           })
 
 setMethod("setProfPars",
-          c(object = "Covariance.us", par = "ANY", scale = "ANY"),
-          function(object, par, scale) {
+          c(object = "Covariance.us", par = "ANY", profscale = "ANY", sc = "ANY"),
+          function(object, par, profscale, sc = NULL) {
+            browser()
+            setVC(object, getVC(object, par))@par
             ## fixme: split on gsub("[0-9]+$", "", names(p)) ?
             split_p <- list(vcomp = par[grepl("^vcomp", names(par))],
-                            ccomp = par[grepl("^ccomp", names(par))],
-                            scale = par[grepl("scale", names(par))])
-            if (length(split_p$scale)>0) {
-              split_p$vcomp <- split_p$vcomp/split_p$scale
+                            ccomp = par[grepl("^ccomp", names(par))])
+            if (!is.null(sc)) {
+              split_p$vcomp <- split_p$vcomp/sc
             }
-            if (scale == "vcov") {
+            if (profscale == "vcov") {
               ## FIXME: should be able to get cor values more directly?
               cc <- diag(split_p$vcomp)
               cc[lower.tri(cc)] <- split_p$ccomp
@@ -1223,7 +1225,25 @@ setMethod("setProfPars",
           })
 
 
+## FIXME: refactor with separate methods for LMM/NLMM vs GLMM?
 setMethod("setProfPars",
-          c(object = "merMod", par = "ANY", scale = "ANY"),
-          function(object, par, scale) {
+          c(object = "merMod", par = "ANY", profscale = "ANY", sc = "ANY"),
+          function(object, par, profscale, sc) {
+            browser()
+            covs <- getReCovs(object)
+            parlens <- vapply(covs, function(x) length(x@par), FUN.VALUE = 1L)
+            usesSc <- isLMM(object) || isNLMM(object)
+            if (usesSc) {
+              parlens <- c(parlens, 1)
+            }
+            parlist <- split(par, rep(seq_along(parlens), parlens))
+            sc <- NULL
+            if (usesSc) {
+              sc <- parlist[[length(parlist)]]
+              parlist <- parlist[1:(length(parlist)-1)]
+            }
+            vclist <- .mapply(setProfPars, list(covs, parlist),
+                             MoreArgs = list(profscale = profscale, sc  = sc))
+            browser()
+            print("hello")
           })

@@ -2,13 +2,18 @@ devtools::load_all()
 
 data("sleepstudy", package = "lme4")
 m1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+reCovs <- getReCovs(m1)
+getProfPars(reCovs[[1]], profscale = "sdcor")
+
+getProfPars(m1, profscale = "sdcor")
 d2 <- devfun2(m1)
 ## np == 4
 np <- environment(d2)$np
 p0 <- unlist(attr(d2, "optimum")[1:np])
+trace("setProfPars")
 d2(p0)
 f <- function(x) d2(p0 - c(x, 0, 0,0))
-xvec <- seq(-10, 10, length = 51)
+xvec <- seq(-30, 20, length = 51)
 lvec <- sapply(xvec, f)
 plot(xvec, lvec)
 
