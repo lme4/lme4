@@ -320,6 +320,23 @@ test_that("integration tests for coef and fixef", {
   expect_equal(coef(fm1.REML), coef(fm1.us.REML))
   expect_equal(fixef(fm1), fixef(fm1.us))
   expect_equal(fixef(fm1.REML), fixef(fm1.us.REML))
+  
+  ## One of the expected summaries
+  tmpf <- function(x) capture.output(print(summary(x),digits=1))
+  tfun <- function(cc) {
+    w <- grep("Fixed effects:", cc)
+    cc[w:length(cc)]
+  }
+  expected_summary <- c("Fixed effects:",                         
+                        "            Estimate Std. Error t value",
+                        "(Intercept)      251          7      38",
+                        "Days              10          2       7",
+                        "",                                       
+                        "Correlation of Fixed Effects:",          
+                        "     (Intr)",                            
+                        "Days -0.138")  
+  expect_equal(tfun(tmpf(fm1)), expected_summary)
+  
 })
 
 test_that("integration tests for sigma", {
