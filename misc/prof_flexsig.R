@@ -3,21 +3,32 @@ devtools::load_all()
 data("sleepstudy", package = "lme4")
 m1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 m0 <- lmer(Reaction ~ Days + (1 | Subject), sleepstudy)
-trace("setProfPars", sig = c("lmerMod", "ANY", "ANY", "ANY"), browser)
+m2 <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy)
 profile(m0)
-reCovs <- getReCovs(m1)
+trace("setProfPars", tracer = browser)
+profile(m0)
+reCovs <- getReCovs(m2)
 getProfPars(m1, profscale = "sdcor")
+getProfPars(m2, profscale = "sdcor")
+getProfPars(reCovs[[1]], profscale = "sdcor")
 p <- getProfPars(reCovs[[1]], profscale = "sdcor")
 setProfPars(reCovs[[1]], p, profscale = "sdcor")
 setProfPars(m1, c(p, sigma(m1)), profscale = "sdcor")
 
 d2 <- devfun2(m1)
+d3 <- devfun2(m2)
 ## np == 4
-np <- environment(d2)$np
+np <- environment(d3)$np
+p0 <- unlist(attr(d3, "optimum")[1:np])
+trace("setProfPars")
+d3(p0)
+
+np <- environment(d3)$np
 p0 <- unlist(attr(d2, "optimum")[1:np])
 trace("setProfPars")
 d2(p0)
-f <- function(x) d2(p0 - c(x, 0, 0,0))
+
+f <- function(x) d3(p0 - c(x, 0, 0,0))
 xvec <- seq(-30, 20, length = 51)
 lvec <- sapply(xvec, f)
 plot(xvec, lvec)
