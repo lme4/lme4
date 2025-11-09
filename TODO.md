@@ -1,21 +1,16 @@
 ## `flexSigmaMinimum`
 
-* merge flexSigmaMinimum_devfun2 soon!
-    * restructure getProfBounds into getLowerProf, getUpperProf
-    * document that theta != par != profPar (getVC)
-        * theta = unique scaled cholesky components
-        * par = optimization parameters
-        * profPar = profiling parameters
-        * getVC() gets scaled SDs and correlation parameters
-    * make getpar/setpar generic  = [gs]etProfPar [including a merMod method]
-    * document clearly that scale = "varcor" is only allowed for us() matrices
-    * getCormat might be unnecessary: in at least one place we go cov -> cor -> cov (!)
-    * check: is forceSymmetric() unnecessary?
-    * fix 'ccomp' typo in varcov branch [also reCov vs reCovs]
-    * DOCUMENT that internal order of profiling parameters has changed; was previously in Lambda-matrix order
+* document that theta != par != profPar (getVC)
+   * theta = unique scaled cholesky components
+   * par = optimization parameters
+   * profPar = profiling parameters
+   * getVC() gets scaled SDs and correlation parameters
+* document clearly that scale = "varcor" is only allowed for us() matrices
+* getCormat might be unnecessary: in at least one place we go cov -> cor -> cov (!)
+* DOCUMENT that internal order of profiling parameters has changed; was previously in Lambda-matrix order
       (i.e. sd1, cor12, sd2 for a 2x2), now in [more sensible, glmmTMB-matching] (sd1, sd2, cor12) [this is going to be a "user-visible change"]
     
-    current status: for the 'standard' model (~1 + Days + (1 + Days | Subject)), profiling one parameter at a time seems to work (although I get warnings, have to see whether these are also thrown with the master branch), profiling all parameters at once fails (don't know why yet ...)
+current status: unstructured may be working; need to add methods for other Covariance sub-types ...
 
 
 * check that existing examples work and existing tests pass

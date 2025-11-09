@@ -680,6 +680,7 @@ setMethod("getLower",
           c(object = "Covariance.us"),
           function (object) {
               nc <- object@nc
+              ## FIXME: make more scrutable!
               `[<-`(rep(-Inf, length(object@par)),
                     cumsum(c(if (nc > 0L) 1L, if (nc > 1L) nc:2L)),
                     0)
@@ -871,6 +872,22 @@ setMethod("getUpperProf",
             if (profscale == "varcov") c_bound <- c_bound*Inf
             nc <- object@nc
             c(rep(v_bound, nc), rep(c_bound, nc*(nc-1)/2))
+          })
+
+setMethod("getLowerProf",
+          c(object = "Covariance.diag"),
+          function (object, profscale) {
+              v_bound <- 0
+              nc <- object@nc
+              if (object@hom) 0 else rep(0, nc)
+          })
+
+setMethod("getUpperProf",
+          c(object = "Covariance.diag"),
+          function (object, profscale) {
+              v_bound <- 0
+              nc <- object@nc
+              if (object@hom) Inf else rep(Inf, nc)
           })
 
 setMethod("getVC",
@@ -1207,7 +1224,7 @@ setMethod("setProfPars",
           function(object, par, profscale, sc = NULL) {
             par_lens <- lengths(getVC(object))
             split_p <- list(vcomp = par[seq(par_lens[1])],
-                            ccomp = par[par_lens[1] + seq(par_lens[2])])
+                            ccomp = par[par_lens[1] + seq(length.out = par_lens[2])])
             if (!is.null(sc)) {
               split_p$vcomp <- split_p$vcomp/sc
             }

@@ -2,6 +2,7 @@ devtools::load_all()
 
 data("sleepstudy", package = "lme4")
 m1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+m0 <- lmer(Reaction ~ Days + (1 | Subject), sleepstudy)
 reCovs <- getReCovs(m1)
 getProfPars(m1, profscale = "sdcor")
 p <- getProfPars(reCovs[[1]], profscale = "sdcor")
