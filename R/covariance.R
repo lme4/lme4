@@ -1210,6 +1210,18 @@ setMethod("getProfPars",
             unlist(pp)   
           })
 
+## DRY: same as Covariance.us but without vcov scale stuff
+setMethod("getProfPars",
+          c(object = "Covariance.diag", profscale = "ANY", sc = "ANY"),
+          function(object, profscale, sc = NULL) {
+            ## can I use NextMethod() here to DRY?
+            pp <- getVC(object)
+            if (!is.null(sc)) {
+              pp$vcomp <- pp$vcomp*sc
+            }
+            unlist(pp)   
+          })
+
 setMethod("getProfPars",
           c(object = "merMod", profscale = "ANY", sc = "ANY"),
           function (object, profscale, sc) {
@@ -1235,6 +1247,19 @@ setMethod("setProfPars",
               cc <- Matrix::forceSymmetric(cc, "L")
               split_p$ccomp <- cov2cor(cc)[lower.tri(cc)]
               split_p$vcomp <- sqrt(split_p$vcomp)
+            }
+            setVC(object, split_p$vcomp, split_p$ccomp)
+          })
+
+## DRY: same as Covariance.us but without vcov scale stuff
+setMethod("setProfPars",
+          c(object = "Covariance.diag", par = "ANY", profscale = "ANY", sc = "ANY"),
+          function(object, par, profscale, sc = NULL) {
+            par_lens <- lengths(getVC(object))
+            split_p <- list(vcomp = par[seq(par_lens[1])],
+                            ccomp = par[par_lens[1] + seq(length.out = par_lens[2])])
+            if (!is.null(sc)) {
+              split_p$vcomp <- split_p$vcomp/sc
             }
             setVC(object, split_p$vcomp, split_p$ccomp)
           })
