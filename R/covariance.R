@@ -1205,11 +1205,9 @@ setMethod("getProfPars",
 setMethod("setProfPars",
           c(object = "Covariance.us", par = "ANY", profscale = "ANY", sc = "ANY"),
           function(object, par, profscale, sc = NULL) {
-            browser()
-            setVC(object, getVC(object, par))@par
-            ## fixme: split on gsub("[0-9]+$", "", names(p)) ?
-            split_p <- list(vcomp = par[grepl("^vcomp", names(par))],
-                            ccomp = par[grepl("^ccomp", names(par))])
+            par_lens <- lengths(getVC(object))
+            split_p <- list(vcomp = par[seq(par_lens[1])],
+                            ccomp = par[par_lens[1] + seq(par_lens[2])])
             if (!is.null(sc)) {
               split_p$vcomp <- split_p$vcomp/sc
             }
@@ -1229,7 +1227,6 @@ setMethod("setProfPars",
 setMethod("setProfPars",
           c(object = "merMod", par = "ANY", profscale = "ANY", sc = "ANY"),
           function(object, par, profscale, sc) {
-            browser()
             covs <- getReCovs(object)
             parlens <- vapply(covs, function(x) length(x@par), FUN.VALUE = 1L)
             usesSc <- isLMM(object) || isNLMM(object)
@@ -1243,7 +1240,6 @@ setMethod("setProfPars",
               parlist <- parlist[1:(length(parlist)-1)]
             }
             vclist <- .mapply(setProfPars, list(covs, parlist),
-                             MoreArgs = list(profscale = profscale, sc  = sc))
-            browser()
-            print("hello")
+                              MoreArgs = list(profscale = profscale, sc  = sc))
+            unlist(lapply(vclist, getElement, "par"))
           })

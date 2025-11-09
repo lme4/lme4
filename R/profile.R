@@ -525,17 +525,10 @@ devfun2 <- function(fm,
         ans <- function(pars)
         {
             ## convert 'profPars' -> 'pars'
-            setProfPars(fm, pars, profscale = scale)
-            par_list <- relist(pars, opt_list)
-            par_list <- par_list[names(par_list) != "scale"]
-            thpars <- mapply(setProfPars, attr(fm, "reCov"),
-                             par_list,
-                             MoreArgs = list(profscale = scale))
-            thpars <- unlist(lapply(thpars, getElement, "par"))
-            ## update pp, resp components in-place
-            .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)
-            sigsq <- tail(pars, 1)^2
-            pp$ldL2() - ldW + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
+          thpars <- setProfPars(fm, pars, profscale = scale)
+          .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)
+          sigsq <- tail(pars, 1)^2
+          pp$ldL2() - ldW + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
         }
         ldW <- sum(log(environment(ans)$resp$weights))
         assign("ldW", ldW, envir = environment(ans))

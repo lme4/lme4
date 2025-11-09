@@ -3,9 +3,11 @@ devtools::load_all()
 data("sleepstudy", package = "lme4")
 m1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 reCovs <- getReCovs(m1)
-getProfPars(reCovs[[1]], profscale = "sdcor")
-
 getProfPars(m1, profscale = "sdcor")
+p <- getProfPars(reCovs[[1]], profscale = "sdcor")
+setProfPars(reCovs[[1]], p, profscale = "sdcor")
+setProfPars(m1, c(p, sigma(m1)), profscale = "sdcor")
+
 d2 <- devfun2(m1)
 ## np == 4
 np <- environment(d2)$np
@@ -34,6 +36,7 @@ lattice::xyplot(p3)
 
 p_all <- profile(m1, verbose = TRUE)
 confint(p_all)
+xyplot(p_all)
 
 v <- c(23.7805585271338, 5.71683789263024, 0.0813195978647574)
 s <- 25.59182
