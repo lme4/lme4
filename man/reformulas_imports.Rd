@@ -7,6 +7,7 @@
 \alias{nobars}
 \alias{findbars}
 \alias{mkReTrms}
+\alias{isNested}
 \usage{
 subbars(...)
 
@@ -15,6 +16,8 @@ nobars(...)
 findbars(...)
 
 mkReTrms(...)
+
+isNested(...)
 
 }
 

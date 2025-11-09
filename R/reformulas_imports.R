@@ -1,26 +1,17 @@
 ## transient patches for moving formula manipulation machinery to lme4 without breaking downstream packages
-subbars <- function(...) {
-  rlang::warn("the subbars() function has moved to the reformulas package. Please update your imports, or ask an upstream package maintainter to do so.", .frequency = "once", .frequency_id = "subbars")
-  reformulas::subbars(...)
+
+mkWarnFun <- function(FUN) {
+  fn <- function(...) {
+    msg <- sprintf("the %s function has moved to the reformulas package. Please update your imports, or ask an upstream package maintainter to do so.", sQuote(FUN))
+    rlang::warn(msg, .frequency = "once", .frequency_id = FUN)
+    reformulas_fun <- getExportedValue("reformulas", FUN)
+    reformulas_fun(...)
+  }
+  assign(FUN, fn, envir = parent.frame())
 }
 
-nobars <- function(...) {
-  rlang::warn("the nobars() function has moved to the reformulas package. Please update your imports, or ask an upstream package maintainter to do so.", .frequency = "once", .frequency_id = "nobars")
-  reformulas::nobars(...)
-}
-
-findbars <- function(...) {
-  rlang::warn("the findbars() function has moved to the reformulas package. Please update your imports, or ask an upstream package maintainter to do so.", .frequency = "once", .frequency_id = "findbars")
-  reformulas::findbars(...)
-}
-
-mkReTrms <- function(...) {
-  rlang::warn("the mkReTrms() function has moved to the reformulas package. Please update your imports, or ask an upstream package maintainter to do so.", .frequency = "once", .frequency_id = "mkReTrms")
-  reformulas::mkReTrms(...)
-}
-
-expandDoubleVerts <- function(...) {
-  rlang::warn("the expandDoubleVerts() function has moved to the reformulas package. Please update your imports, or ask an upstream package maintainter to do so.", .frequency = "once", .frequency_id = "expandDoubleVerts")
-  reformulas::expandDoubleVerts(...)
+for (f in c("findbars","subbars", "nobars",
+            "mkReTrms", "expandDoubleVerts", "isNested")) {
+  mkWarnFun(f)
 }
 

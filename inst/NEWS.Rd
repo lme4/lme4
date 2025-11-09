@@ -4,7 +4,7 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 1.1-37.9000}{
+\section{CHANGES IN VERSION 1.1-38}{
   \subsection{BUG FIXES}{
     \itemize{
       \item \code{$se.fit} component of predictions from GLMMs when

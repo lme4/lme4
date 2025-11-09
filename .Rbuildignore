@@ -40,3 +40,4 @@ R/scaleX.R
 \.Rout
 .vscode
 docs/
+Sweave.sty
