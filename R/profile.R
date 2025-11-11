@@ -81,7 +81,7 @@ profile.merMod <- function(fitted,
     stopifnot(devtol >= 0)
     base <- attr(dd, "basedev")
     ## protect against accidental tampering by later devfun calls
-    thopt <- forceCopy(attr(dd, "thopt"))
+    paropt <- forceCopy(attr(dd, "paropt"))
     stderr <- attr(dd, "stderr")
     pp <- environment(dd)$pp
     X.orig <- pp$X
@@ -370,18 +370,17 @@ profile.merMod <- function(fitted,
                 rho <- list2env(list(pp=pp1, resp=rr,
                                      mkPar=mkPar, mkTheta=mkTheta),
                                 parent = parent.frame())
-                ores <- optwrap(optimizer, par = thopt, fn = mkdevfun(rho, 0L),
+                ## optimization on `par` scale (not `theta`)
+                ores <- optwrap(optimizer, par = paropt, fn = mkdevfun(rho, 0L),
+                                ## FIXME: do we need to extend this for GLMMs?
                                 lower = fitted@lower)
                 ## this optimization is done on the ORIGINAL
-                ##   theta scale (i.e. not the sigma/corr scale)
-                ## upper=Inf for all cases
-                ## lower = pmax(fitted@lower, -1.0),
-                ## upper = 1/(fitted@lower != 0))## = ifelse(fitted@lower==0, Inf, 1.0)
+                ##   `par` scale (i.e. not the sigma/corr scale)
                 fv <- ores$fval
                 sig <- sqrt((rr$wrss() + pp1$sqrL(1))/n)
                 ## FIXME: need to translate from ores$par (`par` scale) back to `profPar` scale
-                setProfPar(fitted, c(ores$par, sig), profscale = prof.scale, sc = sig)
-                ppars <- unlist(getProfPar(fitted, profscale = prof.scale, sc = sig))
+                ppars <- convParToProfPar(c(ores$par, sig), fitted,
+                                          profscale = prof.scale, sc = sig)
                 c(sign(fw - est) * sqrt(fv - base),
                   ## Cv_to_Sv(ores$par, lengths(fitted@cnms), s=sig),
                   ppars,
@@ -554,7 +553,8 @@ devfun2 <- function(fm,
     }
     attr(ans, "optimum") <- opt         # w/ names()
     attr(ans, "basedev") <- basedev
-    attr(ans, "thopt") <- pp$theta
+    ## FIXME: should make this GLMM-aware
+    attr(ans, "paropt") <- getPar(fm)
     attr(ans, "stderr") <- stdErr
     class(ans) <- "devfun"
     ans

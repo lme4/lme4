@@ -189,9 +189,10 @@ setGeneric("getProfPar",
            function(object, profscale, sc = NULL)
              standardGeneric("getProfPar"))
 
-setGeneric("setProfPar",
-           function(object, par, profscale, sc = NULL)
-             standardGeneric("setProfPar"))
+## there needs to be a setPar method for merMod objects
+convParToProfPar <- function(par, object, ...) {
+  getProfPar(object, setPar(object, par), ...)
+}
 
 ## .... METHODS ........................................................
 
@@ -945,6 +946,11 @@ setMethod("getVCNames",
 
 rm(.fn)
 
+## setProf -> setVC
+## setProf methods are generically { validity_check(); parameter_conversion(); setVC }
+## if there were a convProf method {validity_check(); parameter_conversion() }
+## then the setProf {confProf(); setVC() } would probably work for all classes
+
 setMethod("setVC",
           c(object = "Covariance.us", vcomp = "numeric", ccomp = "numeric"),
           function (object, vcomp, ccomp) {
@@ -1183,7 +1189,7 @@ setMethod("getVCNames",
                    ccomp = lapply(L, `[[`, 2L))
           })
 
-## get user/profiling pars from deviance pars
+## get profiling pars from a covariance object
 setMethod("getProfPar",
           c(object = "Covariance", profscale = "ANY", sc = "ANY"),
           function(object, profscale, sc = NULL) {
@@ -1231,57 +1237,5 @@ setMethod("getProfPar",
             res
           })
 
-setMethod("setProfPar",
-          c(object = "Covariance.us", par = "ANY", profscale = "ANY", sc = "ANY"),
-          function(object, par, profscale, sc = NULL) {
-            par_lens <- lengths(getVC(object))
-            split_p <- list(vcomp = par[seq(par_lens[1])],
-                            ccomp = par[par_lens[1] + seq(length.out = par_lens[2])])
-            if (!is.null(sc)) {
-              split_p$vcomp <- split_p$vcomp/sc
-            }
-            if (profscale == "vcov") {
-              ## FIXME: should be able to get cor values more directly?
-              cc <- diag(split_p$vcomp)
-              cc[lower.tri(cc)] <- split_p$ccomp
-              cc <- Matrix::forceSymmetric(cc, "L")
-              split_p$ccomp <- cov2cor(cc)[lower.tri(cc)]
-              split_p$vcomp <- sqrt(split_p$vcomp)
-            }
-            setVC(object, split_p$vcomp, split_p$ccomp)
-          })
-
-## DRY: same as Covariance.us but without vcov scale stuff
-setMethod("setProfPar",
-          c(object = "Covariance.diag", par = "ANY", profscale = "ANY", sc = "ANY"),
-          function(object, par, profscale, sc = NULL) {
-            par_lens <- lengths(getVC(object))
-            split_p <- list(vcomp = par[seq(par_lens[1])],
-                            ccomp = par[par_lens[1] + seq(length.out = par_lens[2])])
-            if (!is.null(sc)) {
-              split_p$vcomp <- split_p$vcomp/sc
-            }
-            setVC(object, split_p$vcomp, split_p$ccomp)
-          })
-
-
-## FIXME: refactor with separate methods for LMM/NLMM vs GLMM?
-setMethod("setProfPar",
-          c(object = "merMod", par = "ANY", profscale = "ANY", sc = "ANY"),
-          function(object, par, profscale, sc) {
-            reCovs <- getReCovs(object)
-            np <- vapply(reCovs, getParLength, 0L, USE.NAMES = FALSE)
-            usesSc <- isLMM(object) || isNLMM(object)
-            if (usesSc) {
-              np <- c(np, 1)
-            }
-            parlist <- split(par, rep(seq_along(np), np))
-            sc <- NULL
-            if (usesSc) {
-              sc <- parlist[[length(parlist)]]
-              parlist <- parlist[1:(length(parlist)-1)]
-            }
-            vclist <- .mapply(setProfPar, list(reCovs, parlist),
-                              MoreArgs = list(profscale = profscale, sc  = sc))
-            unlist(lapply(vclist, getElement, "par"))
-          })
+## RESTORE setProfPar
+## setProfPar should convert 
