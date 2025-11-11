@@ -1269,7 +1269,7 @@ setMethod("setProfPar",
 setMethod("setProfPar",
           c(object = "merMod", par = "ANY", profscale = "ANY", sc = "ANY"),
           function(object, par, profscale, sc) {
-            covs <- getReCovs(object)
+            reCovs <- getReCovs(object)
             np <- vapply(reCovs, getParLength, 0L, USE.NAMES = FALSE)
             usesSc <- isLMM(object) || isNLMM(object)
             if (usesSc) {
