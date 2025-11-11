@@ -185,13 +185,13 @@ setGeneric("getCormat",
            function (object)
                standardGeneric("getCormat"))
 
-setGeneric("getProfPars",
+setGeneric("getProfPar",
            function(object, profscale, sc = NULL)
-             standardGeneric("getProfPars"))
+             standardGeneric("getProfPar"))
 
-setGeneric("setProfPars",
+setGeneric("setProfPar",
            function(object, par, profscale, sc = NULL)
-             standardGeneric("setProfPars"))
+             standardGeneric("setProfPar"))
 
 ## .... METHODS ........................................................
 
@@ -1184,7 +1184,7 @@ setMethod("getVCNames",
           })
 
 ## get user/profiling pars from deviance pars
-setMethod("getProfPars",
+setMethod("getProfPar",
           c(object = "Covariance", profscale = "ANY", sc = "ANY"),
           function(object, profscale, sc = NULL) {
             pp <- getVC(object)
@@ -1194,7 +1194,7 @@ setMethod("getProfPars",
             }
           })
 
-setMethod("getProfPars",
+setMethod("getProfPar",
           c(object = "Covariance.us", profscale = "ANY", sc = "ANY"),
           function(object, profscale, sc = NULL) {
             ## can I use NextMethod() here to DRY?
@@ -1211,7 +1211,7 @@ setMethod("getProfPars",
           })
 
 ## DRY: same as Covariance.us but without vcov scale stuff
-setMethod("getProfPars",
+setMethod("getProfPar",
           c(object = "Covariance.diag", profscale = "ANY", sc = "ANY"),
           function(object, profscale, sc = NULL) {
             ## can I use NextMethod() here to DRY?
@@ -1222,16 +1222,16 @@ setMethod("getProfPars",
             unlist(pp)   
           })
 
-setMethod("getProfPars",
+setMethod("getProfPar",
           c(object = "merMod", profscale = "ANY", sc = "ANY"),
           function (object, profscale, sc) {
             reCovs <- getReCovs(object)
-            L <- .mapply(getProfPars, list(object = reCovs, profscale = profscale), MoreArgs = list(sc=sc))
+            L <- .mapply(getProfPar, list(object = reCovs, profscale = profscale), MoreArgs = list(sc=sc))
             res <- c(L, list(scale = sc))
             res
           })
 
-setMethod("setProfPars",
+setMethod("setProfPar",
           c(object = "Covariance.us", par = "ANY", profscale = "ANY", sc = "ANY"),
           function(object, par, profscale, sc = NULL) {
             par_lens <- lengths(getVC(object))
@@ -1252,7 +1252,7 @@ setMethod("setProfPars",
           })
 
 ## DRY: same as Covariance.us but without vcov scale stuff
-setMethod("setProfPars",
+setMethod("setProfPar",
           c(object = "Covariance.diag", par = "ANY", profscale = "ANY", sc = "ANY"),
           function(object, par, profscale, sc = NULL) {
             par_lens <- lengths(getVC(object))
@@ -1266,22 +1266,22 @@ setMethod("setProfPars",
 
 
 ## FIXME: refactor with separate methods for LMM/NLMM vs GLMM?
-setMethod("setProfPars",
+setMethod("setProfPar",
           c(object = "merMod", par = "ANY", profscale = "ANY", sc = "ANY"),
           function(object, par, profscale, sc) {
             covs <- getReCovs(object)
-            parlens <- vapply(covs, function(x) length(x@par), FUN.VALUE = 1L)
+            np <- vapply(reCovs, getParLength, 0L, USE.NAMES = FALSE)
             usesSc <- isLMM(object) || isNLMM(object)
             if (usesSc) {
-              parlens <- c(parlens, 1)
+              np <- c(np, 1)
             }
-            parlist <- split(par, rep(seq_along(parlens), parlens))
+            parlist <- split(par, rep(seq_along(np), np))
             sc <- NULL
             if (usesSc) {
               sc <- parlist[[length(parlist)]]
               parlist <- parlist[1:(length(parlist)-1)]
             }
-            vclist <- .mapply(setProfPars, list(covs, parlist),
+            vclist <- .mapply(setProfPar, list(covs, parlist),
                               MoreArgs = list(profscale = profscale, sc  = sc))
             unlist(lapply(vclist, getElement, "par"))
           })

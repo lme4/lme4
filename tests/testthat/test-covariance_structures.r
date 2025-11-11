@@ -292,7 +292,8 @@ test_that("unit tests for autoregressive covariances", {
   }
 })
 
-other_mod <- readRDS("../../inst/testdata/test-covariance_structures_data.rds")
+## read system file 
+other_mod <- readRDS(system.file("testdata", "test-covariance_structures_data.rds", package = "lme4"))
 
 ## Getting all equal as a number (in the all.equal examples documentation;
 ## don't know why they didn't make an argument instead!?)

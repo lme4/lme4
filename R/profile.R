@@ -515,7 +515,7 @@ devfun2 <- function(fm,
     pp <- fm@pp$copy()
     sig <- if (useSc) sigma(fm) else NULL
     ## get full list for later relist()
-    opt_list <- getProfPars(fm, profscale = scale, sc = sig)
+    opt_list <- getProfPar(fm, profscale = scale, sc = sig)
     opt <- unlist(opt_list)
     names(opt) <- profnames(fm, useSc=useSc, ...)
     opt <- c(opt, fixef(fm))
@@ -527,8 +527,8 @@ devfun2 <- function(fm,
     if (isLMM(fm)) { # ==> hasSc
         ans <- function(pars)
         {
-            ## convert 'profPars' -> 'pars'
-          thpars <- setProfPars(fm, pars, profscale = scale)
+            ## convert 'profPar' -> 'pars'
+          thpars <- setProfPar(fm, pars, profscale = scale)
           .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)
           sigsq <- tail(pars, 1)^2
           pp$ldL2() - ldW + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
