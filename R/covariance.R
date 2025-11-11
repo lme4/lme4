@@ -1281,7 +1281,7 @@ setMethod("setProfPar",
               sc <- parlist[[length(parlist)]]
               parlist <- parlist[1:(length(parlist)-1)]
             }
-            vclist <- .mapply(setProfPar, list(covs, parlist),
+            vclist <- .mapply(setProfPar, list(reCovs, parlist),
                               MoreArgs = list(profscale = profscale, sc  = sc))
             unlist(lapply(vclist, getElement, "par"))
           })
