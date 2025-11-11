@@ -380,8 +380,8 @@ profile.merMod <- function(fitted,
                 fv <- ores$fval
                 sig <- sqrt((rr$wrss() + pp1$sqrL(1))/n)
                 ## FIXME: need to translate from ores$par (`par` scale) back to `profPar` scale
-                setProfPars(fitted, c(ores$par, sig), profscale = prof.scale, sc = sig)
-                ppars <- unlist(getProfPars(fitted, profscale = prof.scale, sc = sig))
+                setProfPar(fitted, c(ores$par, sig), profscale = prof.scale, sc = sig)
+                ppars <- unlist(getProfPar(fitted, profscale = prof.scale, sc = sig))
                 c(sign(fw - est) * sqrt(fv - base),
                   ## Cv_to_Sv(ores$par, lengths(fitted@cnms), s=sig),
                   ppars,
