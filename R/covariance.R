@@ -110,7 +110,7 @@ setGeneric("getParNames",
            signature = c("object", "cnm", "gnm"))
 
 setGeneric("setPar",
-           function (object, value)
+           function (object, value, pos = 0L)
                standardGeneric("setPar"))
 
 setGeneric("getTheta",
@@ -172,22 +172,23 @@ setGeneric("setVC",
            function (object, vcomp, ccomp)
                standardGeneric("setVC"))
 
-setGeneric("getCormat",
-           function (object)
-               standardGeneric("getCormat"))
-
 setGeneric("getProfPar",
            function (object, profscale, sc = NULL)
                standardGeneric("getProfPar"),
            signature = "object")
 
+setGeneric("setProfPar",
+           function (object, profscale, sc = NULL, value, pos = 0L)
+               standardGeneric("getProfPar"),
+           signature = c("object", "value"))
+
 setGeneric("getProfLower",
-           function (object, profscale)
+           function (object, profscale, sc = NULL)
                standardGeneric("getProfLower"),
            signature = "object")
 
 setGeneric("getProfUpper",
-           function (object, profscale)
+           function (object, profscale, sc = NULL)
                standardGeneric("getProfUpper"),
            signature = "object")
 
@@ -338,16 +339,14 @@ rm(.fn)
 
 setMethod("setPar",
           c(object = "Covariance", value = "numeric"),
-          function (object, value) {
-              if (!is.double(value))
-                  stop(gettextf("type of '%s' is not \"%s\"",
-                                "value", "double"),
-                       domain = NA)
-              if (length(value) != length(object@par))
-                  stop(gettextf("length of '%s' is not equal to length of '%s'",
-                                "value", "par"),
-                       domain = NA)
-              object@par <- value
+          function (object, value, pos = 0L) {
+              np <- length(object@par)
+              validValuePos(np, value, pos)
+              object@par <-
+              if (nt == length(value))
+                  value
+              else
+                  value[seq.int(from = pos + 1L, length.out = np)]
               object
           })
 
@@ -504,10 +503,10 @@ setMethod("getThetaIndex",
           getThetaIndex.us <-
           function (object) {
               snc <- seq_len(nc <- object@nc)
-              rep(seq.int(from = 1L - nc, by = 1L, length.out = nc),
+              rep(seq.int(from = 1L - nc, length.out = nc),
                   snc) +
               cumsum(seq.int(from = nc, by = -1L, length.out = nc))[
-                  sequence.default(from = 1L, by = 1L, nvec = snc)]
+                  sequence.default(from = 1L, nvec = snc)]
           })
 
 setMethod("getThetaIndex",
@@ -574,14 +573,7 @@ setMethod("setTheta",
           .fn <-
           function (object, value, pos = 0L) {
               nt <- length(object@par)
-              if (!is.double(value))
-                  stop(gettextf("type of '%s' is not \"%s\"",
-                                "value", "double"),
-                       domain = NA)
-              if (nt > length(value) - pos)
-                  stop(gettextf("attempt to read past end of '%s'",
-                                "value"),
-                       domain = NA)
+              validValuePos(nt, value, pos)
               object@par <-
               if (nt == length(value))
                   value
@@ -602,14 +594,7 @@ setMethod("setTheta",
               nc <- object@nc
               hom <- object@hom
               nt <- if (hom) 2L * nc - (nc > 0L) else (nc * (nc - 1L)) %/% 2L + nc
-              if (!is.double(value))
-                  stop(gettextf("type of '%s' is not \"%s\"",
-                                "value", "double"),
-                       domain = NA)
-              if (nt > length(value) - pos)
-                  stop(gettextf("attempt to read past end of '%s'",
-                                "value"),
-                       domain = NA)
+              validValuePos(nt, value, pos)
               object@par <-
               if (nc <= 1L)
                   value[if (nc > 0L) 1L]
@@ -642,14 +627,7 @@ setMethod("setTheta",
               nc <- object@nc
               hom <- object@hom
               nt <- if (hom) 2L * nc - (nc > 0L) else (nc * (nc - 1L)) %/% 2L + nc
-              if (!is.double(value))
-                  stop(gettextf("type of '%s' is not \"%s\"",
-                                "value", "double"),
-                       domain = NA)
-              if (nt > length(value) - pos)
-                  stop(gettextf("attempt to read past end of '%s'",
-                                "value"),
-                       domain = NA)
+              validValuePos(nt, value, pos)
               object@par <-
               if (nc <= 1L)
                   value[if (nc > 0L) 1L]
@@ -825,10 +803,8 @@ setMethod("getVC",
               } else {
                   ii <- seq.int(from = 1L, by = nc + 1L, length.out = nc)
                   i0 <- sequence.default(from = seq.int(from = 2L, by = nc + 1L, length.out = nc - 1L),
-                                         by = 1L,
                                          nvec = (nc - 1L):1L)
                   i1 <- sequence.default(from = ii,
-                                         by = 1L,
                                          nvec = nc:1L)
                   L <- matrix(0, nc, nc)
                   L[i1] <- object@par
@@ -949,103 +925,115 @@ setMethod("setVC",
 
 rm(.fn)
 
-## setProf -> setVC
-## setProf methods are generically { validity_check(); parameter_conversion(); setVC }
-## if there were a convProf method {validity_check(); parameter_conversion() }
-## then the setProf {confProf(); setVC() } would probably work for all classes
-
-setMethod("getCormat",
-          c(object = "Covariance.us"),
-          function (object) {
-              nc <- object@nc
-              if (nc <= 1L)
-                  return(matrix(1))
-              L <- matrix(0, nc, nc)
-              L[lower.tri(L, diag = TRUE)] <- object@par
-              S <- tcrossprod(L)
-              cov2cor(S)
-          })
-
-## get profiling pars from a covariance object
-setMethod("getProfPar",
-          c(object = "Covariance"),
-          function (object, profscale, sc = NULL) {
-              pp <- getVC(object)
-              if (!is.null(sc)) {
-                  pp$vcomp <- pp$vcomp * sc
-                  pp <- c(pp, list(scale = sc))
-              }
-              unlist(pp)
-          })
-
 setMethod("getProfPar",
           c(object = "Covariance.us"),
           function (object, profscale, sc = NULL) {
-              ## Can I use NextMethod() here to DRY?
-              pp <- getVC(object)
+              vc <- getVC(object)
+              vcomp <- vc$vcomp
+              ccomp <- vc$ccomp
               if (!is.null(sc))
-                  pp$vcomp <- pp$vcomp * sc
-              if (profscale == "vcov") {
-                  vmat <- outer(pp$vcomp, pp$vcomp)
-                  vc <- getCormat(object) * vmat
-                  pp$comp <- vc[lower.tri(vc)]
+                  vcomp <- vcomp * sc
+              if (profscale == "varcov") {
+                  nc <- object@nc
+                  if (nc > 1L)
+                      ccomp <- ccomp *
+                          vcomp[sequence.default(from = 2L:nc, nvec = (nc - 1L):1L)] *
+                          vcomp[rep(1L:(nc - 1L), (nc - 1L):1L)]
+                  vcomp <- vcomp * vcomp
               }
-              unlist(pp)
+              c(vcomp, ccomp)
           })
 
-## DRY: same as Covariance.us but without vcov scale stuff
 setMethod("getProfPar",
           c(object = "Covariance.diag"),
           function (object, profscale, sc = NULL) {
-              ## Can I use NextMethod() here to DRY?
-              pp <- getVC(object)
+              vcomp <- getPar(object)
               if (!is.null(sc))
-                  pp$vcomp <- pp$vcomp * sc
-              unlist(pp)
+                  vcomp <- vcomp * sc
+              if (profscale == "varcov")
+                  vcomp <- vcomp * vcomp
+              vcomp
+          })
+
+setMethod("setProfPar",
+          c(object = "Covariance.us", value = "numeric"),
+          function (object, profscale, sc = NULL, value, pos = 0L) {
+              np <- length(object@par)
+              validValuePos(np, value, pos)
+              nc <- object@nc
+              vcomp <- value[seq.int(from = pos + 1L     , length.out =      nc)]
+              ccomp <- value[seq.int(from = pos + 1L + nc, length.out = np - nc)]
+              if (profscale == "varcov") {
+                  vcomp <- sqrt(vcomp)
+                  if (nc > 1L)
+                      ccomp <- ccomp/
+                          vcomp[sequence.default(from = 2L:nc, nvec = (nc - 1L):1L)]/
+                          vcomp[rep(1L:(nc - 1L), (nc - 1L):1L)]
+              }
+              if (!is.null(sc))
+                  vcomp <- vcomp/sc
+              setVC(object, vcomp, ccomp)
+          })
+
+setMethod("setProfPar",
+          c(object = "Covariance.diag", value = "numeric"),
+          function (object, profscale, sc = NULL, value, pos = 0L) {
+              np <- length(object@par)
+              validValuePos(np, value, pos)
+              vcomp <-
+              if (np == length(value))
+                  value
+              else
+                  value[seq.int(from = pos + 1L, length.out = np)]
+              if (profscale == "varcov")
+                  vcomp <- sqrt(vcomp)
+              if (!is.null(sc))
+                  vcomp <- vcomp/sc
+              setPar(object, vcomp)
           })
 
 setMethod("getProfLower",
           c(object = "Covariance.us"),
-          function (object, profscale) {
-              v_bound <- 0
-              c_bound <- -1
-              if (profscale == "varcov")
-                  c_bound <- c_bound * Inf
+          function (object, profscale, sc = NULL) {
               nc <- object@nc
-              c(rep(v_bound, nc), rep(c_bound, nc * (nc - 1)/2))
+              rep(c(0, if (profscale == "varcov") -Inf else -1),
+                  c(nc, (nc * (nc - 1L)) %/% 2L))
           })
 
 setMethod("getProfLower",
           c(object = "Covariance.diag"),
-          function (object, profscale) {
-              v_bound <- 0
-              nc <- object@nc
-              if (object@hom) 0 else rep(0, nc)
-          })
+          function (object, profscale, sc = NULL)
+              rep(0, if (object@hom) 1L else object@nc))
 
 setMethod("getProfUpper",
           c(object = "Covariance.us"),
-          function (object, profscale) {
-              v_bound <- Inf
-              c_bound <- 1
-              if (profscale == "varcov")
-                  c_bound <- c_bound * Inf
+          function (object, profscale, sc = NULL) {
               nc <- object@nc
-              c(rep(v_bound, nc), rep(c_bound, nc * (nc - 1)/2))
+              rep(c(0, if (profscale == "varcov") Inf else 1),
+                  c(nc, (nc * (nc - 1L)) %/% 2L))
           })
 
 setMethod("getProfUpper",
           c(object = "Covariance.diag"),
-          function (object, profscale) {
-              v_bound <- 0
-              nc <- object@nc
-              if (object@hom)
-                  Inf
-              else rep(Inf, nc)
-          })
+          function (object, profscale, sc = NULL)
+              rep(Inf, if (object@hom) 1L else object@nc))
 
 
 ## .... HELPERS ........................................................
+
+## used in methods for set* which have formal arguments 'value', 'pos'
+validValuePos <-
+function (n, value, pos) {
+    if (!is.double(value))
+        stop(gettextf("type of '%s' is not \"%s\"",
+                      "value", "double"),
+             domain = NA)
+    if (n > length(value) - pos)
+        stop(gettextf("attempt to read past end of '%s'",
+                      "value"),
+             domain = NA)
+    TRUE
+}
 
 ## return a function that maps
 ##     c(theta_1, ..., theta_k) -> c(par_1, ..., par_k)
@@ -1167,10 +1155,29 @@ function (object) {
              object@theta)
 }
 
-## there needs to be a setPar method for merMod objects
 convParToProfPar <-
-function(par, object, ...)
-    getProfPar(object, setPar(object, par), ...)
+function (value, object, profscale, sc = NULL) {
+    reCovs <- getReCovs(object)
+    np <- vapply(reCovs, getParLength, 0L, USE.NAMES = FALSE)
+    pos <- cumsum(c(0L, np))[seq_along(np)]
+    L <- .mapply(function (object, pos)
+                     getProfPar(setPar(object, value, pos), profscale, sc),
+                 list(object = reCovs, pos = pos),
+                 NULL)
+    c(L, sc, recursive = TRUE, use.names = FALSE)
+}
+
+convProfParToPar <-
+function (value, object, profscale, sc = NULL) {
+    reCovs <- getReCovs(object)
+    np <- vapply(reCovs, getParLength, 0L, USE.NAMES = FALSE)
+    pos <- cumsum(c(0L, np))[seq_along(np)]
+    L <- .mapply(function (object, pos)
+                     getPar(setProfPar(object, profscale, sc, value, pos)),
+                 list(object = reCovs, pos = pos),
+                 NULL)
+    c(L, recursive = TRUE, use.names = FALSE)
+}
 
 
 ## .... METHODS [for class "merMod"] ...................................
@@ -1236,6 +1243,25 @@ setMethod("getProfPar",
           c(object = "merMod"),
           function (object, profscale, sc = NULL) {
               reCovs <- getReCovs(object)
-              L <- .mapply(getProfPar, list(object = reCovs, profscale = profscale), list(sc = sc))
-              c(L, list(scale = sc))
+              L <- lapply(reCovs, getProfPar, profscale = profscale, sc = sc)
+              c(L, sc,
+                recursive = TRUE, use.names = FALSE)
+          })
+
+setMethod("getProfLower",
+          c(object = "merMod"),
+          function (object, profscale, sc = NULL) {
+              reCovs <- getReCovs(object)
+              L <- lapply(reCovs, getProfLower, profscale = profscale)
+              c(L, if (!is.null(sc)) 0,
+                recursive = TRUE, use.names = FALSE)
+          })
+
+setMethod("getProfUpper",
+          c(object = "merMod"),
+          function (object, profscale, sc = NULL) {
+              reCovs <- getReCovs(object)
+              L <- lapply(reCovs, getProfUpper, profscale = profscale)
+              c(L, if (!is.null(sc)) Inf,
+                recursive = TRUE, use.names = FALSE)
           })
