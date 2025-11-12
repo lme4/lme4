@@ -190,8 +190,8 @@ profile.merMod <- function(fitted,
     ## bounds on sd-corr:  [0,Inf) for diag, (-1.0,1.0) for off-diag
   ## bounds on var-corr: [0,Inf) for diag, (-Inf,Inf) for off-diag
     covs <- attr(fitted, "reCov")
-    lower <- unlist(lapply(covs, getLowerProf, prof.scale))
-    upper <- unlist(lapply(covs, getUpperProf, prof.scale))
+    lower <- unlist(lapply(covs, getProfLower, prof.scale))
+    upper <- unlist(lapply(covs, getProfUpper, prof.scale))
     if (useSc) { # bounds for sigma
         lower <- c(lower,0)
         upper <- c(upper,Inf)

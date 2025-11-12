@@ -147,15 +147,6 @@ setGeneric("getUpper",
            function (object)
                standardGeneric("getUpper"))
 
-setGeneric("getLowerProf",
-           function (object, profscale)
-               standardGeneric("getLowerProf"))
-
-setGeneric("getUpperProf",
-           function (object, profscale)
-               standardGeneric("getUpperProf"))
-
-
 setGeneric("getLambda",
            function (object)
                standardGeneric("getLambda"))
@@ -186,13 +177,22 @@ setGeneric("getCormat",
                standardGeneric("getCormat"))
 
 setGeneric("getProfPar",
-           function(object, profscale, sc = NULL)
-             standardGeneric("getProfPar"))
+           function (object, profscale, sc = NULL)
+               standardGeneric("getProfPar"))
+
+setGeneric("getProfLower",
+           function (object, profscale)
+               standardGeneric("getProfLower"))
+
+setGeneric("getProfUpper",
+           function (object, profscale)
+               standardGeneric("getProfUpper"))
 
 ## there needs to be a setPar method for merMod objects
 convParToProfPar <- function(par, object, ...) {
   getProfPar(object, setPar(object, par), ...)
 }
+
 
 ## .... METHODS ........................................................
 
@@ -855,7 +855,7 @@ setMethod("getCormat",
           })
 
 ## DRY?
-setMethod("getLowerProf",
+setMethod("getProfLower",
           c(object = "Covariance.us"),
           function (object, profscale) {
             v_bound <- 0
@@ -865,7 +865,7 @@ setMethod("getLowerProf",
             c(rep(v_bound, nc), rep(c_bound, nc*(nc-1)/2))
           })
 
-setMethod("getUpperProf",
+setMethod("getProfUpper",
           c(object = "Covariance.us"),
           function (object, profscale) {
             v_bound <- Inf
@@ -875,7 +875,7 @@ setMethod("getUpperProf",
             c(rep(v_bound, nc), rep(c_bound, nc*(nc-1)/2))
           })
 
-setMethod("getLowerProf",
+setMethod("getProfLower",
           c(object = "Covariance.diag"),
           function (object, profscale) {
               v_bound <- 0
@@ -883,7 +883,7 @@ setMethod("getLowerProf",
               if (object@hom) 0 else rep(0, nc)
           })
 
-setMethod("getUpperProf",
+setMethod("getProfUpper",
           c(object = "Covariance.diag"),
           function (object, profscale) {
               v_bound <- 0
