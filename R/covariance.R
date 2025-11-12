@@ -178,20 +178,18 @@ setGeneric("getCormat",
 
 setGeneric("getProfPar",
            function (object, profscale, sc = NULL)
-               standardGeneric("getProfPar"))
+               standardGeneric("getProfPar"),
+           signature = "object")
 
 setGeneric("getProfLower",
            function (object, profscale)
-               standardGeneric("getProfLower"))
+               standardGeneric("getProfLower"),
+           signature = "object")
 
 setGeneric("getProfUpper",
            function (object, profscale)
-               standardGeneric("getProfUpper"))
-
-## there needs to be a setPar method for merMod objects
-convParToProfPar <- function(par, object, ...) {
-  getProfPar(object, setPar(object, par), ...)
-}
+               standardGeneric("getProfUpper"),
+           signature = "object")
 
 
 ## .... METHODS ........................................................
@@ -841,56 +839,6 @@ setMethod("getVC",
               list(vcomp = vcomp, ccomp = ccomp)
           })
 
-setMethod("getCormat",
-          c(object = "Covariance.us"),
-          function (object) {
-            nc <- object@nc
-            if (nc <= 1L) {
-              return(matrix(1))
-            }
-            L <- matrix(0, nc, nc)
-            L[lower.tri(L, diag = TRUE)] <- object@par
-            S <- tcrossprod(L)
-            cov2cor(S)
-          })
-
-## DRY?
-setMethod("getProfLower",
-          c(object = "Covariance.us"),
-          function (object, profscale) {
-            v_bound <- 0
-            c_bound <- -1
-            if (profscale == "varcov") c_bound <- c_bound*Inf
-            nc <- object@nc
-            c(rep(v_bound, nc), rep(c_bound, nc*(nc-1)/2))
-          })
-
-setMethod("getProfUpper",
-          c(object = "Covariance.us"),
-          function (object, profscale) {
-            v_bound <- Inf
-            c_bound <- 1
-            if (profscale == "varcov") c_bound <- c_bound*Inf
-            nc <- object@nc
-            c(rep(v_bound, nc), rep(c_bound, nc*(nc-1)/2))
-          })
-
-setMethod("getProfLower",
-          c(object = "Covariance.diag"),
-          function (object, profscale) {
-              v_bound <- 0
-              nc <- object@nc
-              if (object@hom) 0 else rep(0, nc)
-          })
-
-setMethod("getProfUpper",
-          c(object = "Covariance.diag"),
-          function (object, profscale) {
-              v_bound <- 0
-              nc <- object@nc
-              if (object@hom) Inf else rep(Inf, nc)
-          })
-
 setMethod("getVC",
           c(object = "Covariance.diag"),
           function (object)
@@ -946,11 +894,6 @@ setMethod("getVCNames",
 
 rm(.fn)
 
-## setProf -> setVC
-## setProf methods are generically { validity_check(); parameter_conversion(); setVC }
-## if there were a convProf method {validity_check(); parameter_conversion() }
-## then the setProf {confProf(); setVC() } would probably work for all classes
-
 setMethod("setVC",
           c(object = "Covariance.us", vcomp = "numeric", ccomp = "numeric"),
           function (object, vcomp, ccomp) {
@@ -1005,6 +948,101 @@ setMethod("setVC",
           .fn)
 
 rm(.fn)
+
+## setProf -> setVC
+## setProf methods are generically { validity_check(); parameter_conversion(); setVC }
+## if there were a convProf method {validity_check(); parameter_conversion() }
+## then the setProf {confProf(); setVC() } would probably work for all classes
+
+setMethod("getCormat",
+          c(object = "Covariance.us"),
+          function (object) {
+              nc <- object@nc
+              if (nc <= 1L)
+                  return(matrix(1))
+              L <- matrix(0, nc, nc)
+              L[lower.tri(L, diag = TRUE)] <- object@par
+              S <- tcrossprod(L)
+              cov2cor(S)
+          })
+
+## get profiling pars from a covariance object
+setMethod("getProfPar",
+          c(object = "Covariance"),
+          function (object, profscale, sc = NULL) {
+              pp <- getVC(object)
+              if (!is.null(sc)) {
+                  pp$vcomp <- pp$vcomp * sc
+                  pp <- c(pp, list(scale = sc))
+              }
+              unlist(pp)
+          })
+
+setMethod("getProfPar",
+          c(object = "Covariance.us"),
+          function (object, profscale, sc = NULL) {
+              ## Can I use NextMethod() here to DRY?
+              pp <- getVC(object)
+              if (!is.null(sc))
+                  pp$vcomp <- pp$vcomp * sc
+              if (profscale == "vcov") {
+                  vmat <- outer(pp$vcomp, pp$vcomp)
+                  vc <- getCormat(object) * vmat
+                  pp$comp <- vc[lower.tri(vc)]
+              }
+              unlist(pp)
+          })
+
+## DRY: same as Covariance.us but without vcov scale stuff
+setMethod("getProfPar",
+          c(object = "Covariance.diag"),
+          function (object, profscale, sc = NULL) {
+              ## Can I use NextMethod() here to DRY?
+              pp <- getVC(object)
+              if (!is.null(sc))
+                  pp$vcomp <- pp$vcomp * sc
+              unlist(pp)
+          })
+
+setMethod("getProfLower",
+          c(object = "Covariance.us"),
+          function (object, profscale) {
+              v_bound <- 0
+              c_bound <- -1
+              if (profscale == "varcov")
+                  c_bound <- c_bound * Inf
+              nc <- object@nc
+              c(rep(v_bound, nc), rep(c_bound, nc * (nc - 1)/2))
+          })
+
+setMethod("getProfLower",
+          c(object = "Covariance.diag"),
+          function (object, profscale) {
+              v_bound <- 0
+              nc <- object@nc
+              if (object@hom) 0 else rep(0, nc)
+          })
+
+setMethod("getProfUpper",
+          c(object = "Covariance.us"),
+          function (object, profscale) {
+              v_bound <- Inf
+              c_bound <- 1
+              if (profscale == "varcov")
+                  c_bound <- c_bound * Inf
+              nc <- object@nc
+              c(rep(v_bound, nc), rep(c_bound, nc * (nc - 1)/2))
+          })
+
+setMethod("getProfUpper",
+          c(object = "Covariance.diag"),
+          function (object, profscale) {
+              v_bound <- 0
+              nc <- object@nc
+              if (object@hom)
+                  Inf
+              else rep(Inf, nc)
+          })
 
 
 ## .... HELPERS ........................................................
@@ -1129,6 +1167,11 @@ function (object) {
              object@theta)
 }
 
+## there needs to be a setPar method for merMod objects
+convParToProfPar <-
+function(par, object, ...)
+    getProfPar(object, setPar(object, par), ...)
+
 
 ## .... METHODS [for class "merMod"] ...................................
 
@@ -1189,53 +1232,10 @@ setMethod("getVCNames",
                    ccomp = lapply(L, `[[`, 2L))
           })
 
-## get profiling pars from a covariance object
 setMethod("getProfPar",
-          c(object = "Covariance", profscale = "ANY", sc = "ANY"),
-          function(object, profscale, sc = NULL) {
-            pp <- getVC(object)
-            if (!is.null(sc)) {
-              pp$vcomp <- pp$vcomp*sc
-              pp <- c(pp, list(scale = sc))
-            }
+          c(object = "merMod"),
+          function (object, profscale, sc = NULL) {
+              reCovs <- getReCovs(object)
+              L <- .mapply(getProfPar, list(object = reCovs, profscale = profscale), list(sc = sc))
+              c(L, list(scale = sc))
           })
-
-setMethod("getProfPar",
-          c(object = "Covariance.us", profscale = "ANY", sc = "ANY"),
-          function(object, profscale, sc = NULL) {
-            ## can I use NextMethod() here to DRY?
-            pp <- getVC(object)
-            if (!is.null(sc)) {
-              pp$vcomp <- pp$vcomp*sc
-            }
-            if (profscale == "vcov") {
-              vmat <- outer(pp$vcomp, pp$vcomp)
-              vc <- getCormat(object)*vmat
-              pp$comp <- vc[lower.tri(vc)]
-            }
-            unlist(pp)   
-          })
-
-## DRY: same as Covariance.us but without vcov scale stuff
-setMethod("getProfPar",
-          c(object = "Covariance.diag", profscale = "ANY", sc = "ANY"),
-          function(object, profscale, sc = NULL) {
-            ## can I use NextMethod() here to DRY?
-            pp <- getVC(object)
-            if (!is.null(sc)) {
-              pp$vcomp <- pp$vcomp*sc
-            }
-            unlist(pp)   
-          })
-
-setMethod("getProfPar",
-          c(object = "merMod", profscale = "ANY", sc = "ANY"),
-          function (object, profscale, sc) {
-            reCovs <- getReCovs(object)
-            L <- .mapply(getProfPar, list(object = reCovs, profscale = profscale), MoreArgs = list(sc=sc))
-            res <- c(L, list(scale = sc))
-            res
-          })
-
-## RESTORE setProfPar
-## setProfPar should convert 
