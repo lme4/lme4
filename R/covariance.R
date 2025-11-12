@@ -343,7 +343,7 @@ setMethod("setPar",
               np <- length(object@par)
               validValuePos(np, value, pos)
               object@par <-
-              if (nt == length(value))
+              if (np == length(value))
                   value
               else
                   value[seq.int(from = pos + 1L, length.out = np)]
