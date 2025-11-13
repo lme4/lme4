@@ -179,7 +179,7 @@ setGeneric("getProfPar",
 
 setGeneric("setProfPar",
            function (object, profscale, sc = NULL, value, pos = 0L)
-               standardGeneric("getProfPar"),
+               standardGeneric("setProfPar"),
            signature = c("object", "value"))
 
 setGeneric("getProfLower",
@@ -1265,3 +1265,9 @@ setMethod("getProfUpper",
               c(L, if (!is.null(sc)) Inf,
                 recursive = TRUE, use.names = FALSE)
           })
+
+anyStructuredCov <- function(object) {
+  re <- getReCovs(object)
+  !all(vapply(re, function(x) inherits(x, "Covariance.us"),
+              FUN.VALUE = logical(1)))
+}
