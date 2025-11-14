@@ -1176,6 +1176,9 @@ function (value, object, profscale, sc = NULL) {
     reCovs <- getReCovs(object)
     np <- vapply(reCovs, getParLength, 0L, USE.NAMES = FALSE)
     pos <- cumsum(c(0L, np))[seq_along(np)]
+    ## FIXME?  it could make sense to here do something like:
+    ## if (is.null(sc) && length(value) > (snp <- sum(np)))
+    ##     sc <- value[snp + 1L]
     L <- .mapply(function (object, pos)
                      getPar(setProfPar(object, profscale, sc, value, pos)),
                  list(object = reCovs, pos = pos),
