@@ -379,8 +379,7 @@ profile.merMod <- function(fitted,
                 fv <- ores$fval
                 sig <- sqrt((rr$wrss() + pp1$sqrL(1))/n)
                 ## FIXME: need to translate from ores$par (`par` scale) back to `profPar` scale
-                ppars <- convParToProfPar(c(ores$par, sig), fitted,
-                                          profscale = prof.scale, sc = sig)
+                ppars <- convParToProfPar(ores$par, fitted, profscale = prof.scale, sc = sig)
                 c(sign(fw - est) * sqrt(fv - base),
                   ## Cv_to_Sv(ores$par, lengths(fitted@cnms), s=sig),
                   ppars,
@@ -525,11 +524,12 @@ devfun2 <- function(fm,
     n <- nrow(pp$V) # use V, not X so it works with nlmer
     if (isLMM(fm)) { # ==> hasSc
         ans <- function(pars)
-        {
-            ## convert 'profPar' -> 'pars'
-          thpars <- setProfPar(fm, pars, profscale = scale)
+      {
+          ## convert 'profPar' -> 'pars'
+          sig <- sigma(fm)
+          thpars <- convProfParToPar(pars, fm, profscale = scale, sc = sig)
           .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)
-          sigsq <- tail(pars, 1)^2
+          sigsq <- sig^2
           pp$ldL2() - ldW + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
         }
         ldW <- sum(log(environment(ans)$resp$weights))
