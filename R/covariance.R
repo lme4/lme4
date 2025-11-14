@@ -1002,8 +1002,10 @@ setMethod("getProfLower",
 
 setMethod("getProfLower",
           c(object = "Covariance.diag"),
-          function (object, profscale, sc = NULL)
-              rep(0, if (object@hom) 1L else object@nc))
+          function (object, profscale, sc = NULL) {
+              nc <- object@nc
+              rep(0, if (object@hom) 1L * (nc > 0L) else nc))
+          })
 
 setMethod("getProfUpper",
           c(object = "Covariance.us"),
@@ -1015,8 +1017,10 @@ setMethod("getProfUpper",
 
 setMethod("getProfUpper",
           c(object = "Covariance.diag"),
-          function (object, profscale, sc = NULL)
-              rep(Inf, if (object@hom) 1L else object@nc))
+          function (object, profscale, sc = NULL) {
+              nc <- object@nc
+              rep(Inf, if (object@hom) 1L * (nc > 0L) else nc))
+          })
 
 
 ## .... HELPERS ........................................................
