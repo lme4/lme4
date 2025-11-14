@@ -524,11 +524,12 @@ devfun2 <- function(fm,
     n <- nrow(pp$V) # use V, not X so it works with nlmer
     if (isLMM(fm)) { # ==> hasSc
         ans <- function(pars)
-        {
-            ## convert 'profPar' -> 'pars'
-          thpars <- convProfParToPar(pars, fm, profscale = scale)
+      {
+          ## convert 'profPar' -> 'pars'
+          sig <- sigma(fm)
+          thpars <- convProfParToPar(pars, fm, profscale = scale, sc = sig)
           .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)
-          sigsq <- tail(pars, 1)^2
+          sigsq <- sig^2
           pp$ldL2() - ldW + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
         }
         ldW <- sum(log(environment(ans)$resp$weights))
