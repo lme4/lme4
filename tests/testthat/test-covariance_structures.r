@@ -300,10 +300,13 @@ Contraception <- readRDS(
   system.file("testdata", "Contraception.rds", package = "lme4")
 )
 
+
+all.equal.nocheck <- function(..., check.attributes = FALSE, check.class = FALSE)
+  all.equal(..., check.attributes = check.attributes, check.class = check.class)
 ## Getting all equal as a number (in the all.equal examples documentation;
 ## don't know why they didn't make an argument instead!?)
 ## TODO: May want to move this to utilities...?
-all.eqNum <- function(...) as.numeric(sub(".*:", '', all.equal(...)))
+all.eqNum <- function(...) as.numeric(sub(".*:", '', all.equal.nocheck(...)))
 
 fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)
 fm1.us <- lmer(Reaction ~ Days + us(Days | Subject), sleepstudy, REML = FALSE)
@@ -409,56 +412,30 @@ test_that("Log likelihood tests", {
   expect_equal(logLik(gm), logLik(gm.us))
   
   ## comparing against glmmTMB
-  expect_true(all.equal(as.numeric(logLik(fm1)), other_mod$fm1.glmmTMB_logLik, 
-                        check.class = FALSE,
-                        check.attributes = FALSE))
-  expect_true(all.equal(as.numeric(logLik(fm1.cs)), 
-                        other_mod$fm1.glmmTMB.cs_logLik, 
-                        check.class = FALSE,
-                        check.attributes = FALSE))
-  expect_true(all.equal(as.numeric(logLik(fm1.diag)), 
-                        other_mod$fm1.glmmTMB.diag_logLik, 
-                        check.class = FALSE,
-                        check.attributes = FALSE))
-  expect_true(all.equal(as.numeric(logLik(fm1.ar1)), 
-                        other_mod$fm1.glmmTMB.ar1_logLik, 
-                        check.class = FALSE,
-                        check.attributes = FALSE))
+  expect_true(all.equal.nocheck(as.numeric(logLik(fm1)), 
+                                other_mod$fm1.glmmTMB_logLik))
+  expect_true(all.equal.nocheck(as.numeric(logLik(fm1.cs)), 
+                                other_mod$fm1.glmmTMB.cs_logLik))
+  expect_true(all.equal.nocheck(as.numeric(logLik(fm1.diag)), 
+                                other_mod$fm1.glmmTMB.diag_logLik))
+  expect_true(all.equal.nocheck(as.numeric(logLik(fm1.ar1)), 
+                                other_mod$fm1.glmmTMB.ar1_logLik))
   
   ## comparing against nlme
-  expect_true(all.equal(logLik(fm1), 
-                        other_mod$fm1.nlme_logLik, 
-                        check.class = FALSE,
-                        check.attributes = FALSE))
-  expect_true(all.equal(logLik(fm1.cs), 
-                        other_mod$fm1.nlme.cs_logLik, 
-                        check.class = FALSE,
-                        check.attributes = FALSE))
-  expect_true(all.equal(logLik(fm1.REML), 
-                        other_mod$fm1.nlme.REML_logLik, 
-                        check.class = FALSE,
-                        check.attributes = FALSE))
-  expect_true(all.equal(logLik(fm1.cs.REML), 
-                        other_mod$fm1.nlme.cs.REML_logLik, 
-                        check.class = FALSE,
-                        check.attributes = FALSE))
+  expect_true(all.equal.nocheck(logLik(fm1), other_mod$fm1.nlme_logLik))
+  expect_true(all.equal.nocheck(logLik(fm1.cs), other_mod$fm1.nlme.cs_logLik))
+  expect_true(all.equal.nocheck(logLik(fm1.REML), 
+                                other_mod$fm1.nlme.REML_logLik))
+  expect_true(all.equal.nocheck(logLik(fm1.cs.REML), 
+                                other_mod$fm1.nlme.cs.REML_logLik))
   
   ## glmer
   expect_equal(all.eqNum(as.numeric(logLik(gm.us)), 
-                        other_mod$gm.glmmTMB_logLik, 
-                        check.class = FALSE,
-                        check.attributes = FALSE), 
-               0, tol = 5e-5)
+                         other_mod$gm.glmmTMB_logLik), 0, tol = 5e-5)
   expect_equal(all.eqNum(as.numeric(logLik(gm.cs)), 
-                         other_mod$gm.glmmTMB.cs_logLik, 
-                         check.class = FALSE,
-                         check.attributes = FALSE), 
-               0, tol = 5e-5)
+                         other_mod$gm.glmmTMB.cs_logLik), 0, tol = 5e-5)
   expect_equal(all.eqNum(as.numeric(logLik(gm.diag)), 
-                         other_mod$gm.glmmTMB.diag_logLik, 
-                         check.class = FALSE,
-                         check.attributes = FALSE), 
-               0, tol = 5e-5)
+                         other_mod$gm.glmmTMB.diag_logLik), 0, tol = 5e-5)
 })
 
 test_that("integration tests for vcov", {
@@ -470,40 +447,19 @@ test_that("integration tests for vcov", {
   
   ## Ensuring variance-covariance matrix are consistent for lme4 
   ## against other packages
-  expect_equal(all.eqNum(vcov(fm1), other_mod$fm1.glmmTMB_vcov,
-                         check.class = FALSE,
-                         check.attributes = FALSE),
-               0, tol = 5e-5)
+  expect_equal(all.eqNum(vcov(fm1), other_mod$fm1.glmmTMB_vcov), 0, tol = 5e-5)
   
-  expect_equal(all.eqNum(vcov(fm1.cs), 
-                         other_mod$fm1.glmmTMB.cs_vcov,
-                         check.class = FALSE,
-                         check.attributes = FALSE),
+  expect_equal(all.eqNum(vcov(fm1.cs), other_mod$fm1.glmmTMB.cs_vcov),
                0, tol = 5e-5)
-  expect_equal(all.eqNum(vcov(fm1.diag), 
-                         other_mod$fm1.glmmTMB.diag_vcov,
-                         check.class = FALSE,
-                         check.attributes = FALSE),
+  expect_equal(all.eqNum(vcov(fm1.diag), other_mod$fm1.glmmTMB.diag_vcov),
                0, tol = 5e-5)
-  expect_equal(all.eqNum(vcov(fm1.ar1), 
-                         other_mod$fm1.glmmTMB.ar1_vcov,
-                         check.class = FALSE,
-                         check.attributes = FALSE),
+  expect_equal(all.eqNum(vcov(fm1.ar1), other_mod$fm1.glmmTMB.ar1_vcov),
                0, tol = 5e-5)
-  expect_equal(all.eqNum(vcov(fm1), 
-                         other_mod$fm1.nlme_vcov,
-                         check.class = FALSE,
-                         check.attributes = FALSE),
+  expect_equal(all.eqNum(vcov(fm1), other_mod$fm1.nlme_vcov),
                0, tol = 5e-5)
-  expect_equal(all.eqNum(vcov(fm1.cs), 
-                         other_mod$fm1.nlme.cs_vcov,
-                         check.class = FALSE,
-                         check.attributes = FALSE),
+  expect_equal(all.eqNum(vcov(fm1.cs), other_mod$fm1.nlme.cs_vcov),
                0, tol = 5e-5)
-  expect_equal(all.eqNum(vcov(fm1.REML), 
-                         other_mod$fm1.nlme.REML_vcov,
-                         check.class = FALSE,
-                         check.attributes = FALSE),
+  expect_equal(all.eqNum(vcov(fm1.REML), other_mod$fm1.nlme.REML_vcov),
                0, tol = 5e-5)
   ## larger tolerance; likelihood matched fairly well
   expect_equal(all.eqNum(as.numeric(vcov(fm1.cs.REML)), 
@@ -513,20 +469,11 @@ test_that("integration tests for vcov", {
   ## Tests for glmer
   ## The differences are somewhat large, however, the log likelihoods are
   ## quite similar... Leaving these with a larger tolerance.
-  expect_equal(all.eqNum(vcov(gm.us), 
-                         other_mod$gm.glmmTMB_vcov,
-                         check.class = FALSE,
-                         check.attributes = FALSE),
+  expect_equal(all.eqNum(vcov(gm.us), other_mod$gm.glmmTMB_vcov),
                0, tol = 3e-3)
-  expect_equal(all.eqNum(vcov(gm.cs), 
-                         other_mod$gm.glmmTMB.cs_vcov,
-                         check.class = FALSE,
-                         check.attributes = FALSE),
+  expect_equal(all.eqNum(vcov(gm.cs), other_mod$gm.glmmTMB.cs_vcov),
                0, tol = 3e-3)
-  expect_equal(all.eqNum(vcov(gm.diag), 
-                         other_mod$gm.glmmTMB.diag_vcov,
-                         check.class = FALSE,
-                         check.attributes = FALSE),
+  expect_equal(all.eqNum(vcov(gm.diag), other_mod$gm.glmmTMB.diag_vcov),
                0, tol = 3e-3)
   
 })
@@ -553,10 +500,8 @@ test_that("integration tests for VarCorr", {
   
   ## Testing cs (compound symmetry)
   x3 <- c(as.matrix(VarCorr(fm1.cs)[[1]]))
-  expect_equal(all.eqNum(x3, c(other_mod$fm1.glmmTMB.cs_var)), 
-               0, tol = 5e-5)
-  expect_equal(all.eqNum(x3, c(other_mod$fm1.nlme.cs_var)), 
-               0, tol = 5e-5)
+  expect_equal(all.eqNum(x3, c(other_mod$fm1.glmmTMB.cs_var)), 0, tol = 5e-5)
+  expect_equal(all.eqNum(x3, c(other_mod$fm1.nlme.cs_var)), 0, tol = 5e-5)
   # TODO: WHY IS BELOW NOT MATCHING??? 
   #x3.REML <- c(as.matrix(VarCorr(fm1.cs.REML)[[1]]))
   #z3.REML <- c(other_mod$fm1.nlme.cs.REML_var)
@@ -589,49 +534,31 @@ test_that("integration tests for ranef", {
   
   ## Ensuring extracting random modes of the random effects 
   ## are consistent for lme4 against other packages
-  expect_true(all.equal(other_mod$fm1.glmmTMB_ranef$cond$Subject,
-                        ranef(fm1)$Subject,
-                        check.attributes = FALSE,
-                        check.class = FALSE))
-  expect_true(all.equal(other_mod$fm1.glmmTMB.cs_ranef$cond$Subject,
-                        ranef(fm1.cs)$Subject,
-                        check.attributes = FALSE,
-                        check.class = FALSE))
-  expect_true(all.equal(other_mod$fm1.glmmTMB.diag_ranef$cond$Subject,
-                        ranef(fm1.diag)$Subject,
-                        check.attributes = FALSE,
-                        check.class = FALSE))
-  expect_true(all.equal(other_mod$fm1.glmmTMB.ar1_ranef$cond$Subject,
-                        ranef(fm1.ar1)$Subject,
-                        check.attributes = FALSE,
-                        check.class = FALSE))
+  expect_true(all.equal.nocheck(other_mod$fm1.glmmTMB_ranef$cond$Subject,
+                        ranef(fm1)$Subject))
+  expect_true(all.equal.nocheck(other_mod$fm1.glmmTMB.cs_ranef$cond$Subject,
+                        ranef(fm1.cs)$Subject))
+  expect_true(all.equal.nocheck(other_mod$fm1.glmmTMB.diag_ranef$cond$Subject,
+                        ranef(fm1.diag)$Subject))
+  expect_true(all.equal.nocheck(other_mod$fm1.glmmTMB.ar1_ranef$cond$Subject,
+                        ranef(fm1.ar1)$Subject))
 
   expect_equal(all.eqNum(as.matrix(other_mod$fm1.nlme_ranef), 
-                         as.matrix(ranef(fm1)$Subject)),
-               0, tol = 5e-5)
+                         as.matrix(ranef(fm1)$Subject)), 0, tol = 5e-5)
   expect_equal(all.eqNum(as.matrix(other_mod$fm1.nlme.REML_ranef), 
-                         as.matrix(ranef(fm1.REML)$Subject)),
-               0, tol = 5e-5)
+                         as.matrix(ranef(fm1.REML)$Subject)), 0, tol = 5e-5)
   expect_equal(all.eqNum(as.matrix(other_mod$fm1.nlme.cs_ranef), 
-                         as.matrix(ranef(fm1.cs)$Subject)),
-               0, tol = 5e-5)
+                         as.matrix(ranef(fm1.cs)$Subject)), 0, tol = 5e-5)
   expect_equal(all.eqNum(as.matrix(other_mod$fm1.nlme.cs.REML_ranef), 
-                         as.matrix(ranef(fm1.cs.REML)$Subject)),
-               0, tol = 5e-5)
+                         as.matrix(ranef(fm1.cs.REML)$Subject)), 0, tol = 5e-5)
   
   ## glmer
-  expect_true(all.equal(other_mod$gm.glmmTMB_ranef$cond$district,
-                         ranef(gm.us)$district,
-                         check.attributes = FALSE,
-                         check.class = FALSE))
-  expect_true(all.equal(other_mod$gm.glmmTMB.cs_ranef$cond$district,
-                         ranef(gm.cs)$district,
-                         check.attributes = FALSE,
-                         check.class = FALSE))
-  expect_true(all.equal(other_mod$gm.glmmTMB.diag_ranef$cond$district,
-                         ranef(gm.diag)$district,
-                         check.attributes = FALSE,
-                         check.class = FALSE))
+  expect_true(all.equal.nocheck(other_mod$gm.glmmTMB_ranef$cond$district,
+                         ranef(gm.us)$district))
+  expect_true(all.equal.nocheck(other_mod$gm.glmmTMB.cs_ranef$cond$district,
+                         ranef(gm.cs)$district))
+  expect_true(all.equal.nocheck(other_mod$gm.glmmTMB.diag_ranef$cond$district,
+                         ranef(gm.diag)$district))
 })
 
 test_that("integration tests for predict", {
@@ -643,41 +570,30 @@ test_that("integration tests for predict", {
   ## Ensuring extracting predictions are consistent for 
   ## lme4 against other packages
   
-  expect_equal(all.eqNum(other_mod$fm1.glmmTMB_predict,
-                         predict(fm1), check.attributes = FALSE),
+  expect_equal(all.eqNum(other_mod$fm1.glmmTMB_predict, predict(fm1)), 
                0, tol = 5e-5)
-  expect_equal(all.eqNum(other_mod$fm1.glmmTMB.cs_predict,
-                         predict(fm1.cs), check.attributes = FALSE),
+  expect_equal(all.eqNum(other_mod$fm1.glmmTMB.cs_predict, predict(fm1.cs)),
                0, tol = 5e-5)
-  expect_equal(all.eqNum(other_mod$fm1.glmmTMB.diag_predict,
-                         predict(fm1.diag), check.attributes = FALSE),
+  expect_equal(all.eqNum(other_mod$fm1.glmmTMB.diag_predict, predict(fm1.diag)),
                0, tol = 5e-5)
-  expect_equal(all.eqNum(other_mod$fm1.glmmTMB.ar1_predict,
-                         predict(fm1.ar1), check.attributes = FALSE),
+  expect_equal(all.eqNum(other_mod$fm1.glmmTMB.ar1_predict, predict(fm1.ar1)),
                0, tol = 5e-5)
   
-  expect_equal(all.eqNum(other_mod$fm1.nlme_predict,
-                         predict(fm1), check.attributes = FALSE),
+  expect_equal(all.eqNum(other_mod$fm1.nlme_predict, predict(fm1)),
                0, tol = 5e-5)
-  expect_equal(all.eqNum(other_mod$fm1.nlme.REML_predict,
-                         predict(fm1.REML), check.attributes = FALSE),
+  expect_equal(all.eqNum(other_mod$fm1.nlme.REML_predict, predict(fm1.REML)),
                0, tol = 5e-5)
-  expect_equal(all.eqNum(other_mod$fm1.nlme.cs_predict,
-                         predict(fm1.cs), check.attributes = FALSE),
+  expect_equal(all.eqNum(other_mod$fm1.nlme.cs_predict, predict(fm1.cs)),
                0, tol = 5e-5)
-  expect_equal(all.eqNum(other_mod$fm1.nlme.cs.REML_predict,
-                         predict(fm1.cs.REML), check.attributes = FALSE),
+  expect_equal(all.eqNum(other_mod$fm1.nlme.cs.REML_predict, predict(fm1.cs.REML)),
                0, tol = 5e-5)
   
   ## glmer
-  expect_equal(all.eqNum(other_mod$gm.glmmTMB_predict,
-                         predict(gm.us), check.attributes = FALSE),
+  expect_equal(all.eqNum(other_mod$gm.glmmTMB_predict, predict(gm.us)),
                0, tol = 5e-5)
-  expect_equal(all.eqNum(other_mod$gm.glmmTMB.cs_predict,
-                         predict(gm.cs), check.attributes = FALSE),
+  expect_equal(all.eqNum(other_mod$gm.glmmTMB.cs_predict, predict(gm.cs)),
                0, tol = 5e-5)
-  expect_equal(all.eqNum(other_mod$gm.glmmTMB.diag_predict,
-                         predict(gm.diag), check.attributes = FALSE),
+  expect_equal(all.eqNum(other_mod$gm.glmmTMB.diag_predict, predict(gm.diag)),
                0, tol = 5e-5)
 })
 
