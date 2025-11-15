@@ -300,13 +300,14 @@ Contraception <- readRDS(
   system.file("testdata", "Contraception.rds", package = "lme4")
 )
 
-
 all.equal.nocheck <- function(..., check.attributes = FALSE, check.class = FALSE)
   all.equal(..., check.attributes = check.attributes, check.class = check.class)
 ## Getting all equal as a number (in the all.equal examples documentation;
 ## don't know why they didn't make an argument instead!?)
 ## TODO: May want to move this to utilities...?
 all.eqNum <- function(...) as.numeric(sub(".*:", '', all.equal.nocheck(...)))
+
+## lme4 linear mixed models
 
 fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)
 fm1.us <- lmer(Reaction ~ Days + us(Days | Subject), sleepstudy, REML = FALSE)
@@ -326,6 +327,7 @@ fm1.diag.REML <- lmer(Reaction ~ Days + diag(Days | Subject),
 fm1.ar1.REML <- lmer(Reaction ~ Daysf + ar1(0 + Daysf | Subject, hom = TRUE), 
                 sleepstudy, control = lmerControl(check.nobs.vs.nRE = "ignore"))
 
+## lme4 generalized linear mixed models
 gm <- glmer(use ~ age + urban + (1 + urban | district),
             data = Contraception,
             family = binomial)
@@ -342,16 +344,27 @@ gm.diag <- glmer(use ~ age + urban + diag(1 + urban | district),
                  data = Contraception,
                  family = binomial)
 
+## lme4 nonlinear mixed effects model
+startvec <- c(Asym = 200, xmid = 725, scal = 350)
+nm <-  nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~ Asym|Tree,
+              Orange, start = startvec)
+
+nm.us <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~ us(Asym|Tree),
+               Orange, start = startvec)
+
+nm.cs <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~ cs(Asym|Tree),
+               Orange, start = startvec)
+
 test_that("integration tests for coef and fixef", {
-  ## Ensuring fm1 gives the same result as fm1.us
+  ## Ensuring unstructured covariance results are the same as default
   expect_equal(coef(fm1), coef(fm1.us))
   expect_equal(coef(fm1.REML), coef(fm1.us.REML))
   expect_equal(fixef(fm1), fixef(fm1.us))
   expect_equal(fixef(fm1.REML), fixef(fm1.us.REML))
-  
-  ## Ensuring gm gives the same result as gm.us
   expect_equal(coef(gm), coef(gm.us))
   expect_equal(fixef(gm), fixef(gm.us))
+  expect_equal(coef(nm), coef(nm.us))
+  expect_equal(fixef(nm), fixef(nm.us))
   
   ## One of the expected summaries
   tmpf <- function(x) capture.output(print(summary(x),digits=1))
@@ -369,14 +382,15 @@ test_that("integration tests for coef and fixef", {
                         "Days -0.138")  
   expect_equal(tfun(tmpf(fm1)), expected_summary)
   
-  # TODO: print summary for glmer...
+  # TODO: print summary for glmer and nlmer.
 })
 
 test_that("integration tests for sigma", {
-  ## Ensuring fm1 gives the same result as fm1.us
+  ## Ensuring unstructured covariance results are the same as default
   expect_equal(sigma(fm1), sigma(fm1.us))
   expect_equal(sigma(fm1.REML), sigma(fm1.us.REML))
   expect_equal(sigma(gm), sigma(gm.us))
+  expect_equal(sigma(nm), sigma(nm.us))
   
   ## Ensuring computing sigma is consistent for lme4 
   ## against other packages
@@ -400,6 +414,12 @@ test_that("integration tests for sigma", {
   expect_true(all.equal(sigma(gm.us), other_mod$gm.glmmTMB_sigma))
   expect_true(all.equal(sigma(gm.cs), other_mod$gm.glmmTMB.cs_sigma))
   expect_true(all.equal(sigma(gm.diag), other_mod$gm.glmmTMB.diag_sigma))
+  ## Tests for nlmer
+  expect_equal(all.eqNum(sigma(nm), other_mod$nm.nlme_sigma),
+               0, tol = 5e-4)
+  # for compound symmetry - the result is quite different?
+  #expect_equal(all.eqNum(sigma(nm.cs), other_mod$nm.nlme.cs_sigma),
+  #             0, tol = 5e-5)
 })
 
 test_that("Log likelihood tests", {
@@ -410,6 +430,7 @@ test_that("Log likelihood tests", {
   expect_equal(logLik(fm1), logLik(fm1.us))
   expect_equal(logLik(fm1.REML), logLik(fm1.us.REML))
   expect_equal(logLik(gm), logLik(gm.us))
+  expect_equal(logLik(nm), logLik(nm.us))
   
   ## comparing against glmmTMB
   expect_true(all.equal.nocheck(as.numeric(logLik(fm1)), 
@@ -436,14 +457,21 @@ test_that("Log likelihood tests", {
                          other_mod$gm.glmmTMB.cs_logLik), 0, tol = 5e-5)
   expect_equal(all.eqNum(as.numeric(logLik(gm.diag)), 
                          other_mod$gm.glmmTMB.diag_logLik), 0, tol = 5e-5)
+  ## nlmer - also noticing a bigger difference here...
+  #expect_equal(all.eqNum(logLik(nm.us), 
+  #                       other_mod$nm.nlme_logLik), 0, tol = 5e-5)
+  #expect_equal(all.eqNum(logLik(nm.cs), 
+  #                       other_mod$nm.nlme.cs_logLik), 0, tol = 5e-5)
 })
 
 test_that("integration tests for vcov", {
-  
-  ## Ensuring fm1 gives the same result as fm1.us
+  ## Ensuring unstructured covariance results are the same as default
   expect_equal(vcov(fm1), vcov(fm1.us))
   expect_equal(vcov(fm1.REML), vcov(fm1.us.REML))
   expect_equal(vcov(gm), vcov(gm.us))
+  nm_vcov <- suppressWarnings(vcov(nm))
+  nm.us_vcov <- suppressWarnings(vcov(nm.us))
+  expect_equal(nm_vcov, nm.us_vcov)
   
   ## Ensuring variance-covariance matrix are consistent for lme4 
   ## against other packages
@@ -475,16 +503,22 @@ test_that("integration tests for vcov", {
                0, tol = 3e-3)
   expect_equal(all.eqNum(vcov(gm.diag), other_mod$gm.glmmTMB.diag_vcov),
                0, tol = 3e-3)
+  ## Test for nlmer - differences between the two models are also large
+  #expect_equal(all.eqNum(nm_vcov, other_mod$nm.nlme_vcov),
+  #             0, tol = 5e-5)
+  #nm.cs_vcov <- suppressWarnings(vcov(nm.cs))
+  #expect_equal(all.eqNum(nm.cs_vcov, other_mod$nm.nlme.cs_vcov),
+  #             0, tol = 5e-5)
   
 })
 
 test_that("integration tests for VarCorr", {
-  
-  ## Ensuring fm1 gives the same result as fm1.us
+  ## Ensuring unstructured covariance results are the same as default
   expect_equal(VarCorr(fm1), VarCorr(fm1.us))
   expect_equal(VarCorr(fm1.REML), VarCorr(fm1.us.REML))
   expect_equal(VarCorr(gm), VarCorr(gm.us))
-
+  expect_equal(VarCorr(nm), VarCorr(nm.us))
+  
   ## Ensuring variance components are consistent for lme4 
   ## against other packages
   x1 <- c(as.matrix(VarCorr(fm1)[[1]]))
@@ -526,11 +560,11 @@ test_that("integration tests for VarCorr", {
 })
 
 test_that("integration tests for ranef", {
-  
-  ## Ensuring fm1 gives the same result as fm1.us
+  ## Ensuring unstructured covariance results are the same as default
   expect_equal(ranef(fm1), ranef(fm1.us))
   expect_equal(ranef(fm1.REML), ranef(fm1.us.REML))
   expect_equal(ranef(gm), ranef(gm.us))
+  expect_equal(ranef(nm), ranef(nm.us))
   
   ## Ensuring extracting random modes of the random effects 
   ## are consistent for lme4 against other packages
@@ -559,14 +593,20 @@ test_that("integration tests for ranef", {
                          ranef(gm.cs)$district))
   expect_true(all.equal.nocheck(other_mod$gm.glmmTMB.diag_ranef$cond$district,
                          ranef(gm.diag)$district))
+  
+  ## nlmer - differences here are also large...
+  #expect_equal(all.eqNum(as.matrix(other_mod$nm.nlme_ranef), 
+  #                       as.matrix(ranef(nm)$Tree)), 0, tol = 5e-5)
+  #expect_equal(all.eqNum(as.matrix(other_mod$nm.nlme.cs_ranef), 
+  #                       as.matrix(ranef(nm.cs)$Tree)), 0, tol = 5e-5)
 })
 
 test_that("integration tests for predict", {
-  
-  ## Ensuring fm1 gives the same result as fm1.us
+  ## Ensuring unstructured covariance results are the same as default
   expect_equal(predict(fm1), predict(fm1.us))
   expect_equal(predict(fm1.REML), predict(fm1.us.REML))
   expect_equal(predict(gm), predict(gm.us))
+  expect_equal(predict(nm), predict(nm.us))
   ## Ensuring extracting predictions are consistent for 
   ## lme4 against other packages
   
@@ -595,5 +635,11 @@ test_that("integration tests for predict", {
                0, tol = 5e-5)
   expect_equal(all.eqNum(other_mod$gm.glmmTMB.diag_predict, predict(gm.diag)),
                0, tol = 5e-5)
+  
+  ## nlmer; again, differences are somewhat large
+  #expect_equal(all.eqNum(other_mod$nm.nlme_predict, predict(nm)),
+  #             0, tol = 5e-5)
+  #expect_equal(all.eqNum(other_mod$nm.nlme.cs_predict, predict(nm.cs)),
+  #             0, tol = 5e-5)
 })
 

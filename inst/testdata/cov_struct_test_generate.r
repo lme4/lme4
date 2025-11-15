@@ -45,7 +45,21 @@ gm.glmmTMB.diag <- glmmTMB(use ~ age + urban + diag(1 + urban | district),
                            data = Contraception,
                            family = binomial)
 
-# fm1.glmmTMB.diag._vcov -> fm1.glmmTMB.cs_vcov
+startvec <- c(Asym = 200, xmid = 725, scal = 350)
+nm.nlme <- nlme(
+  circumference ~ SSlogis(age, Asym, xmid, scal),
+  data = Orange,
+  fixed = Asym + xmid + scal ~ 1,   
+  random = Asym ~ 1 | Tree, 
+  start = startvec)
+
+nm.nlme.cs <- nlme(
+  circumference ~ SSlogis(age, Asym, xmid, scal),
+  data = Orange,
+  fixed = Asym + xmid + scal ~ 1,   
+  random = Asym ~ 1 | Tree, 
+  correlation = corCompSymm(form = Asym ~ 1 | Tree),
+  start = startvec)
 
 cov_lmer_test <- list(
   ## First: set of tests for lmer
@@ -128,14 +142,25 @@ cov_lmer_test <- list(
   ## predict
   gm.glmmTMB_predict = predict(gm.glmmTMB.us),
   gm.glmmTMB.cs_predict = predict(gm.glmmTMB.cs),
-  gm.glmmTMB.diag_predict = predict(gm.glmmTMB.diag)
+  gm.glmmTMB.diag_predict = predict(gm.glmmTMB.diag),
+  ## Third: tests for nlmer
+  ## sigma
+  nm.nlme_sigma = sigma(nm.nlme),
+  nm.nlme.cs_sigma = sigma(nm.nlme.cs),
+  ## log likelihoods
+  nm.nlme_logLik = logLik(nm.nlme),
+  nm.nlme.cs_logLik = logLik(nm.nlme.cs),
+  ## vcov
+  nm.nlme_vcov = vcov(nm.nlme),
+  nm.nlme.cs_vcov = vcov(nm.nlme.cs),
+  ## ranef
+  nm.nlme_ranef = ranef(nm.nlme),
+  nm.nlme.cs_ranef = ranef(nm.nlme.cs),
+  ## predict
+  nm.nlme_predict = predict(nm.nlme),
+  nm.nlme.cs_predict = predict(nm.nlme.cs)
 )
 
 saveRDS(cov_lmer_test, "inst/testdata/test-covariance_structures_data.rds")
 saveRDS(mlmRev::Contraception, "inst/testdata/Contraception.rds")
 
-# What is going on here???
-
-set.seed(1)
-
-all.equal(predict(fm1.glmmTMB), predict(fm1), check.attributes = FALSE)
