@@ -494,7 +494,7 @@ devfun2 <- function(fm,
 
     scale <- match.arg(scale)
     if (scale == "varcov" && 
-        !all(sapply(xx, inherits, "Covariance.us"))) {
+        !all(sapply(fm, inherits, "Covariance.us"))) {
         stop("haven't thought about varcov scale for structured cov matrices")
     }
     ## TODO: change to work with 'par' instead of 'theta'
@@ -526,7 +526,7 @@ devfun2 <- function(fm,
         ans <- function(pars)
       {
           ## convert 'profPar' -> 'pars'
-          sig <- tail(pars, 1)
+          sig <- pars[length(pars)]
           thpars <- convProfParToPar(pars, fm, profscale = scale, sc = sig)
           .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)
           sigsq <- sig^2

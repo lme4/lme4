@@ -6,6 +6,23 @@ m0 <- lmer(Reaction ~ Days + (1 | Subject), sleepstudy)
 m2 <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy)
 p0 <- profile(m0)
 debug(profile)
+
+
+master_ci <- structure(c(14.3814181607732, -0.481500758280773, 3.8011640532591, 
+22.8982668820808, 237.680695505234, 7.35865327511699, 37.7159953182866, 
+0.684986273295485, 8.75338075305527, 28.8579965114253, 265.129514680174, 
+13.5759187517082), dim = c(6L, 2L), dimnames = list(c(".sig01", 
+".sig02", ".sig03", ".sigma", "(Intercept)", "Days"), c("2.5 %", 
+                                                        "97.5 %")))
+
+mm <- master_ci[c(1,3,2,4:6),]
+abs((mm-ci1)/mm)  ## relative differences (why?)
+
+ci1 <- confint(m1)
+all.equal(ci1, ,
+          check.attributes = FALSE,
+          tolerance = 2e-6)
+
 profile(m0, ".sigma")
 lattice::xyplot(p0)
 reCovs <- getReCovs(m2)
