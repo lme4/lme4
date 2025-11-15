@@ -1009,7 +1009,7 @@ setMethod("getProfUpper",
           c(object = "Covariance.us"),
           function (object, profscale, sc = NULL) {
               nc <- object@nc
-              rep(c(0, if (profscale == "varcov") Inf else 1),
+              rep(c(Inf, if (profscale == "varcov") Inf else 1),
                   c(nc, (nc * (nc - 1L)) %/% 2L))
           })
 

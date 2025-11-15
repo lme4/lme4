@@ -526,7 +526,7 @@ devfun2 <- function(fm,
         ans <- function(pars)
       {
           ## convert 'profPar' -> 'pars'
-          sig <- sigma(fm)
+          sig <- tail(pars, 1)
           thpars <- convProfParToPar(pars, fm, profscale = scale, sc = sig)
           .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)
           sigsq <- sig^2
