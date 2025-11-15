@@ -22,6 +22,21 @@
         assign('...length', envir = Ons,
                function() eval(quote(length(list(...))), sys.frame(-1L))
                )
+        assign("sequence.default", envir = Ons,
+               function(nvec, from = 1L, by = 1L, ...) {
+                   if(length(nvec) == 0L)
+                       return(integer(0L))
+                   else if(length(from) == 0L || length(by) == 0L)
+                       stop(gettextf("'%s' has length 0 but '%s' does not",
+                                     if(length(from) == 0L) "from" else "by", "nvec"),
+                            domain = NA)
+                   unlist(.mapply(seq.int,
+                                  list(from = as.integer(from),
+                                       by = as.integer(by),
+                                       length.out = as.integer(nvec)),
+                                  NULL),
+                          recursive = FALSE, use.names = FALSE)
+               })
         if (Rv < "3.6.0") {
           assign('reformulate', envir = Ons,
                  function(..., env = parent.env) {

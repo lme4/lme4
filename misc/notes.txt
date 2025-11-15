@@ -1,0 +1,10 @@
+* how long is @lower?
+* is getPars going to do the right thing for GLMMs
+(i.e., should be the length of the actually optimized parameter set,
+which is length(theta) for LMMs or GLMMs with nAGQ==0, otherwise sum(lengths(theta,beta))
+
+all get/set methods, so far, always exclude beta (refactor? add an argument?)
+
+we need functions that *convert* from Pars to ProfPars and vice versa
+
+

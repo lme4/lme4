@@ -5,7 +5,7 @@ importFrom("graphics", par, plot)
 importFrom("grid", gpar, viewport)
 importFrom("splines", backSpline, interpSpline, periodicSpline)
 importFrom("methods", as, getDataPart, extends, is, new, cbind2, rbind2,
-           show, slot, slotNames, setRefClass, getClass)
+           show, slot, slotNames, setRefClass, getClass, callNextMethod)
 importFrom("stats",
            AIC, BIC, anova, approx, approxfun,
            as.formula, asOneSidedFormula, ave,
@@ -22,7 +22,7 @@ importFrom("stats",
            nobs, optim, optimize, pchisq, pnorm, poisson, ppoints,
            predict, printCoefmat, profile, pt, qchisq, qnorm,
            qqnorm, qt, quantile, rbinom, reformulate, reorder,
-           resid, residuals, rgamma, rnbinom, rnorm, rpois,
+           resid, residuals, rgamma, rlnorm, rnbinom, rnorm, rpois,
            rstudent,
            runif, sd, setNames, simulate, symnum, terms, terms.formula,
            update, update.formula, var, vcov, weights)
@@ -284,18 +284,10 @@ export(rePCA)
 
 importFrom(reformulas,"RHSForm<-")
 importFrom(reformulas,RHSForm)
-importFrom(reformulas,addForm)
-importFrom(reformulas,addForm0)
-importFrom(reformulas,drop.special)
-importFrom(reformulas,extractForm)
-importFrom(reformulas,inForm)
-importFrom(reformulas,isNested)
-importFrom(reformulas,makeOp)
+importFrom(reformulas,findbars_x)
 importFrom(reformulas,noSpecials)
-importFrom(reformulas,no_specials)
-importFrom(reformulas,nobars_)
 importFrom(reformulas,reOnly)
-importFrom(reformulas,splitForm)
+importFrom(reformulas,sub_specials)
 ##
 importFrom(reformulas,subbars)
 export(subbars)
