@@ -305,8 +305,15 @@ all.equal.nocheck <- function(..., check.attributes = FALSE, check.class = FALSE
 ## Getting all equal as a number (in the all.equal examples documentation;
 ## don't know why they didn't make an argument instead!?)
 ## TODO: May want to move this to utilities...?
-all.eqNum <- function(...) as.numeric(sub(".*:", '', all.equal.nocheck(...)))
+all.eqNum <- function(...) {
+  an <- all.equal.nocheck(...)
+  if (isTRUE(an)) return(0)
+  ## if check is less than tolerance all.equal returns TRUE, so sub() coerces to "TRUE"
+  ##  and as.numeric() returns NA ...
+  as.numeric(sub(".*:", '', ))
+}
 
+ae <- all.equal.nocheck(0,0)
 ## lme4 linear mixed models
 
 fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)
