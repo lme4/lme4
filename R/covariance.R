@@ -890,7 +890,7 @@ setMethod("setVC",
                                          nvec = nc:1L)
                   S <- diag(1, nc, nc)
                   S[i0] <- ccomp
-                  (chol(S) * rep(vcomp, each = nc))[i1]
+                  (safe_chol(S) * rep(vcomp, each = nc))[i1]
               }
               object
           })
