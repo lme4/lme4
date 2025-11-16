@@ -144,6 +144,10 @@ export(updateGlmerDevfun)
 export(VarCorr)
 export(getData)
 export(varianceProf)
+export(getTheta, getThetaLength, getThetaIndex, getThetaIndexLength,
+       getPar, getParLength,
+       getLambdat.dp, getLambdat.i, getLambda,
+       getUpper, getLower, getVC)
 
 ## print() and print.summary() utilities -- other [NG]LMM packages can import
 export(.prt.VC,		.prt.aictab,	.prt.call,	.prt.family,
@@ -156,11 +160,16 @@ export(.prt.VC,		.prt.aictab,	.prt.call,	.prt.family,
 ##------ Our S4 Classes ------------------------
 exportClasses(glmerMod, lmerMod, nlmerMod, merMod)
 exportClasses(lmList4)
+exportClasses(Covariance, Covariance.us, Covariance.diag, Covariance.cs, 
+              Covariance.ar1)
 
 ##------ Our S4 Generics / Methods --------------
 exportMethods(getL)
 exportMethods(show)
-
+exportMethods(getTheta, getThetaLength, getThetaIndex, getThetaIndexLength,
+              getPar, getParLength,
+              getLambdat.dp, getLambdat.i, getLambda,
+              getUpper, getLower, getVC)
 
 ##------ Our S3 Methods -------------------------
 S3method(anova,merMod)
