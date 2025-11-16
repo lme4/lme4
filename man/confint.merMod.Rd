@@ -91,16 +91,11 @@ fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
 fm1W <- confint(fm1, method="Wald")# very fast, but not useful for "sigmas" = var-cov pars
 fm1W
 (fm2 <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy))
-if (FALSE) {
-## FIXME:
-## R/profile.R still uses *_to_* functions from R/vcconv.R assuming
-## that all segments of 'theta' have length nc*(nc+1)/2
 (CI2 <- confint(fm2, maxpts = 8)) # method = "profile"; 8: to be much faster
 \dontshow{ stopifnot(all.equal(tolerance = 5e-6, signif(unname(CI2), 7),
                array(c(15.25847, 3.964157, 22.88062, 237.5732,  7.33431,
                        37.78184, 8.768238, 28.78768, 265.2383, 13.60057),
                      dim = c(5L, 2L))))
-}
 }
 if (lme4_testlevel() >= 3) {
   system.time(fm1P <- confint(fm1, method="profile", ## <- default
