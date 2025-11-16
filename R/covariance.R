@@ -1154,7 +1154,7 @@ function (object) {
     ## stopifnot(is(object, "merMod"))
     if (!is.null(ans <- attr(object, "reCovs")))
         return(ans)
-    nc <- lengths(object@cnms, use.names = FALSE)
+    nc <- getME(object, "p_i") ## get individual sizes (@cnms is not reliable for old ||)
     upReCovs(lapply(nc, function (nc) new("Covariance.us", nc = nc)),
              object@theta)
 }
