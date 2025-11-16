@@ -310,7 +310,7 @@ all.eqNum <- function(...) {
   if (isTRUE(an)) return(0)
   ## if check is less than tolerance all.equal returns TRUE, so sub() coerces to "TRUE"
   ##  and as.numeric() returns NA ...
-  as.numeric(sub(".*:", '', ))
+  as.numeric(sub(".*:", '', an))
 }
 
 ae <- all.equal.nocheck(0,0)
@@ -482,6 +482,10 @@ test_that("integration tests for vcov", {
   
   ## Ensuring variance-covariance matrix are consistent for lme4 
   ## against other packages
+  print(vcov(fm1))
+  print(other_mod$fm1.glmmTMB_vcov)
+  print(names(other_mod))
+  
   expect_equal(all.eqNum(vcov(fm1), other_mod$fm1.glmmTMB_vcov), 0, tol = 5e-5)
   
   expect_equal(all.eqNum(vcov(fm1.cs), other_mod$fm1.glmmTMB.cs_vcov),
