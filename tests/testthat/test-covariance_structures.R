@@ -1,3 +1,35 @@
+## read system file 
+other_mod <- readRDS(
+  system.file("testdata", "test-covariance_structures_data.rds", package = "lme4")
+)
+Contraception <- readRDS(
+  system.file("testdata", "Contraception.rds", package = "lme4")
+)
+
+all.equal.nocheck <- function(x, y, ..., check.attributes = FALSE, check.class = FALSE) {
+  require("Matrix", quietly = TRUE)
+  ## working around mode-matching headaches
+  if (is(x, "Matrix")) x <- matrix(x)
+  if (is(y, "Matrix")) y <- matrix(y)
+  all.equal(x, y, ..., check.attributes = check.attributes, check.class = check.class)
+}
+
+## set default tolerance to 5e-5 since we mostly use that
+## 'tolerance' must be written out in full since it comes after ...
+expect_equal_nocheck <- function(...,  tolerance = 5e-5) {
+  expect_true(isTRUE(all.equal.nocheck(..., tolerance = tolerance)))
+}
+
+## Getting all equal as a number (in the all.equal examples documentation;
+## don't know why they didn't make an argument instead!?)
+## TODO: May want to move this to utilities...?
+all.eqNum <- function(...) {
+  an <- all.equal.nocheck(...)
+  if (isTRUE(an)) return(0)
+  ## if check is less than tolerance all.equal returns TRUE, so sub() coerces to "TRUE"
+  ##  and as.numeric() returns NA ...
+  as.numeric(sub(".*:", '', an))
+}
 
 test_that("unit test for unstructured covariances", {
   
@@ -292,28 +324,6 @@ test_that("unit tests for autoregressive covariances", {
   }
 })
 
-## read system file 
-other_mod <- readRDS(
-  system.file("testdata", "test-covariance_structures_data.rds", package = "lme4")
-)
-Contraception <- readRDS(
-  system.file("testdata", "Contraception.rds", package = "lme4")
-)
-
-all.equal.nocheck <- function(..., check.attributes = FALSE, check.class = FALSE)
-  all.equal(..., check.attributes = check.attributes, check.class = check.class)
-## Getting all equal as a number (in the all.equal examples documentation;
-## don't know why they didn't make an argument instead!?)
-## TODO: May want to move this to utilities...?
-all.eqNum <- function(...) {
-  an <- all.equal.nocheck(...)
-  if (isTRUE(an)) return(0)
-  ## if check is less than tolerance all.equal returns TRUE, so sub() coerces to "TRUE"
-  ##  and as.numeric() returns NA ...
-  as.numeric(sub(".*:", '', an))
-}
-
-ae <- all.equal.nocheck(0,0)
 ## lme4 linear mixed models
 
 fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy, REML = FALSE)
@@ -401,32 +411,22 @@ test_that("integration tests for sigma", {
   
   ## Ensuring computing sigma is consistent for lme4 
   ## against other packages
-  expect_equal(all.eqNum(sigma(fm1), other_mod$fm1.glmmTMB_sigma),
-               0, tol = 5e-5)
-  expect_equal(all.eqNum(sigma(fm1.cs), other_mod$fm1.glmmTMB.cs_sigma),
-               0, tol = 5e-5)
-  expect_equal(all.eqNum(sigma(fm1.diag), other_mod$fm1.glmmTMB.diag_sigma),
-               0, tol = 5e-5)
-  expect_equal(all.eqNum(sigma(fm1.ar1), other_mod$fm1.glmmTMB.ar1_sigma),
-               0, tol = 5e-5)
-  expect_equal(all.eqNum(sigma(fm1), other_mod$fm1.nlme_sigma),
-               0, tol = 5e-5)
-  expect_equal(all.eqNum(sigma(fm1.cs), other_mod$fm1.nlme.cs_sigma),
-               0, tol = 5e-5)
-  expect_equal(all.eqNum(sigma(fm1.REML), other_mod$fm1.nlme.REML_sigma),
-               0, tol = 5e-5)
-  expect_equal(all.eqNum(sigma(fm1.cs.REML), other_mod$fm1.nlme.cs.REML_sigma),
-               0, tol = 5e-5)
+  expect_equal_nocheck(sigma(fm1), other_mod$fm1.glmmTMB_sigma)
+  expect_equal_nocheck(sigma(fm1.cs), other_mod$fm1.glmmTMB.cs_sigma)
+  expect_equal_nocheck(sigma(fm1.diag), other_mod$fm1.glmmTMB.diag_sigma)
+  expect_equal_nocheck(sigma(fm1.ar1), other_mod$fm1.glmmTMB.ar1_sigma)
+  expect_equal_nocheck(sigma(fm1), other_mod$fm1.nlme_sigma)
+  expect_equal_nocheck(sigma(fm1.cs), other_mod$fm1.nlme.cs_sigma)
+  expect_equal_nocheck(sigma(fm1.REML), other_mod$fm1.nlme.REML_sigma)
+  expect_equal_nocheck(sigma(fm1.cs.REML), other_mod$fm1.nlme.cs.REML_sigma)
   ## Tests for glmer
   expect_true(all.equal(sigma(gm.us), other_mod$gm.glmmTMB_sigma))
   expect_true(all.equal(sigma(gm.cs), other_mod$gm.glmmTMB.cs_sigma))
   expect_true(all.equal(sigma(gm.diag), other_mod$gm.glmmTMB.diag_sigma))
   ## Tests for nlmer
-  expect_equal(all.eqNum(sigma(nm), other_mod$nm.nlme_sigma),
-               0, tol = 5e-4)
+  expect_equal_nocheck(sigma(nm), other_mod$nm.nlme_sigma, tolerance = 5e-4)
   # for compound symmetry - the result is quite different?
-  #expect_equal(all.eqNum(sigma(nm.cs), other_mod$nm.nlme.cs_sigma),
-  #             0, tol = 5e-5)
+  #expect_equal_nocheck(sigma(nm.cs), other_mod$nm.nlme.cs_sigma)
 })
 
 test_that("Log likelihood tests", {
@@ -458,17 +458,13 @@ test_that("Log likelihood tests", {
                                 other_mod$fm1.nlme.cs.REML_logLik))
   
   ## glmer
-  expect_equal(all.eqNum(as.numeric(logLik(gm.us)), 
-                         other_mod$gm.glmmTMB_logLik), 0, tol = 5e-5)
-  expect_equal(all.eqNum(as.numeric(logLik(gm.cs)), 
-                         other_mod$gm.glmmTMB.cs_logLik), 0, tol = 5e-5)
-  expect_equal(all.eqNum(as.numeric(logLik(gm.diag)), 
-                         other_mod$gm.glmmTMB.diag_logLik), 0, tol = 5e-5)
+  expect_equal_nocheck(as.numeric(logLik(gm.us)), other_mod$gm.glmmTMB_logLik)
+  expect_equal_nocheck(as.numeric(logLik(gm.cs)), other_mod$gm.glmmTMB.cs_logLik)
+  expect_equal_nocheck(as.numeric(logLik(gm.diag)), other_mod$gm.glmmTMB.diag_logLik)
+  
   ## nlmer - also noticing a bigger difference here...
-  #expect_equal(all.eqNum(logLik(nm.us), 
-  #                       other_mod$nm.nlme_logLik), 0, tol = 5e-5)
-  #expect_equal(all.eqNum(logLik(nm.cs), 
-  #                       other_mod$nm.nlme.cs_logLik), 0, tol = 5e-5)
+  #expect_equal_nocheck(logLik(nm.us,  other_mod$nm.nlme_logLik)
+  #expect_equal_nocheck(logLik(nm.cs), other_mod$nm.nlme.cs_logLik)
 })
 
 test_that("integration tests for vcov", {
@@ -480,46 +476,31 @@ test_that("integration tests for vcov", {
   nm.us_vcov <- suppressWarnings(vcov(nm.us))
   expect_equal(nm_vcov, nm.us_vcov)
   
-  ## Ensuring variance-covariance matrix are consistent for lme4 
-  ## against other packages
-  print(vcov(fm1))
-  print(other_mod$fm1.glmmTMB_vcov)
-  print(names(other_mod))
+  ## Ensuring variance-covariance matrix are consistent between lme4 
+  ## and other packages
   
-  expect_equal(all.eqNum(vcov(fm1), other_mod$fm1.glmmTMB_vcov), 0, tol = 5e-5)
+  expect_equal_nocheck(vcov(fm1), other_mod$fm1.glmmTMB_vcov)
   
-  expect_equal(all.eqNum(vcov(fm1.cs), other_mod$fm1.glmmTMB.cs_vcov),
-               0, tol = 5e-5)
-  expect_equal(all.eqNum(vcov(fm1.diag), other_mod$fm1.glmmTMB.diag_vcov),
-               0, tol = 5e-5)
-  expect_equal(all.eqNum(vcov(fm1.ar1), other_mod$fm1.glmmTMB.ar1_vcov),
-               0, tol = 5e-5)
-  expect_equal(all.eqNum(vcov(fm1), other_mod$fm1.nlme_vcov),
-               0, tol = 5e-5)
-  expect_equal(all.eqNum(vcov(fm1.cs), other_mod$fm1.nlme.cs_vcov),
-               0, tol = 5e-5)
-  expect_equal(all.eqNum(vcov(fm1.REML), other_mod$fm1.nlme.REML_vcov),
-               0, tol = 5e-5)
+  expect_equal_nocheck(vcov(fm1.cs), other_mod$fm1.glmmTMB.cs_vcov)
+  expect_equal_nocheck(vcov(fm1.diag), other_mod$fm1.glmmTMB.diag_vcov)
+  expect_equal_nocheck(vcov(fm1.ar1), other_mod$fm1.glmmTMB.ar1_vcov)
+  expect_equal_nocheck(vcov(fm1), other_mod$fm1.nlme_vcov)
+  expect_equal_nocheck(vcov(fm1.cs), other_mod$fm1.nlme.cs_vcov)
+  expect_equal_nocheck(vcov(fm1.REML), other_mod$fm1.nlme.REML_vcov)
   ## larger tolerance; likelihood matched fairly well
-  expect_equal(all.eqNum(as.numeric(vcov(fm1.cs.REML)), 
-                         as.numeric(other_mod$fm1.nlme.cs.REML_vcov)),
-               0, tol = 2e-4)
+  expect_equal_nocheck(as.numeric(vcov(fm1.cs.REML)), 
+                         as.numeric(other_mod$fm1.nlme.cs.REML_vcov), tolerance = 2e-4)
   
   ## Tests for glmer
   ## The differences are somewhat large, however, the log likelihoods are
   ## quite similar... Leaving these with a larger tolerance.
-  expect_equal(all.eqNum(vcov(gm.us), other_mod$gm.glmmTMB_vcov),
-               0, tol = 3e-3)
-  expect_equal(all.eqNum(vcov(gm.cs), other_mod$gm.glmmTMB.cs_vcov),
-               0, tol = 3e-3)
-  expect_equal(all.eqNum(vcov(gm.diag), other_mod$gm.glmmTMB.diag_vcov),
-               0, tol = 3e-3)
+  expect_equal_nocheck(vcov(gm.us), other_mod$gm.glmmTMB_vcov, tolerance = 3e-3)
+  expect_equal_nocheck(vcov(gm.cs), other_mod$gm.glmmTMB.cs_vcov, tolerance = 3e-3)
+  expect_equal_nocheck(vcov(gm.diag), other_mod$gm.glmmTMB.diag_vcov, tolerance = 3e-3)
   ## Test for nlmer - differences between the two models are also large
-  #expect_equal(all.eqNum(nm_vcov, other_mod$nm.nlme_vcov),
-  #             0, tol = 5e-5)
+  #expect_equal_nocheck(nm_vcov, other_mod$nm.nlme_vcov)
   #nm.cs_vcov <- suppressWarnings(vcov(nm.cs))
-  #expect_equal(all.eqNum(nm.cs_vcov, other_mod$nm.nlme.cs_vcov),
-  #             0, tol = 5e-5)
+  #expect_equal_nocheck(nm.cs_vcov, other_mod$nm.nlme.cs_vcov)
   
 })
 
@@ -536,38 +517,38 @@ test_that("integration tests for VarCorr", {
   x2 <- c(as.matrix(VarCorr(fm1.us)[[1]]))
   
   ## Testing unstructured
-  expect_equal(all.eqNum(x1, c(other_mod$fm1.glmmTMB_var)), 0, tol = 5e-5)
-  expect_equal(all.eqNum(x2, c(other_mod$fm1.glmmTMB.us_var)), 0, tol = 5e-5)
-  expect_equal(all.eqNum(c(as.matrix(VarCorr(fm1.REML)[[1]])), 
-                         c(other_mod$fm1.nlme.REML_var)), 0, tol = 5e-5)
+  expect_equal_nocheck(x1, c(other_mod$fm1.glmmTMB_var))
+  expect_equal_nocheck(x2, c(other_mod$fm1.glmmTMB.us_var))
+  expect_equal_nocheck(c(as.matrix(VarCorr(fm1.REML)[[1]])), 
+                         c(other_mod$fm1.nlme.REML_var))
   ## TODO: below fails!
-  #expect_equal(all.eqNum(x2, c(other_mod$fm1.nlme_var)), 0, tol = 5e-5)
+  #expect_equal_nocheck(x2, c(other_mod$fm1.nlme_var), tolerance = 5e-5)
   
   ## Testing cs (compound symmetry)
   x3 <- c(as.matrix(VarCorr(fm1.cs)[[1]]))
-  expect_equal(all.eqNum(x3, c(other_mod$fm1.glmmTMB.cs_var)), 0, tol = 5e-5)
-  expect_equal(all.eqNum(x3, c(other_mod$fm1.nlme.cs_var)), 0, tol = 5e-5)
+  expect_equal_nocheck(x3, c(other_mod$fm1.glmmTMB.cs_var))
+  expect_equal_nocheck(x3, c(other_mod$fm1.nlme.cs_var))
   # TODO: WHY IS BELOW NOT MATCHING??? 
   #x3.REML <- c(as.matrix(VarCorr(fm1.cs.REML)[[1]]))
   #z3.REML <- c(other_mod$fm1.nlme.cs.REML_var)
-  #expect_equal(all.eqNum(x3.REML, z3.REML), 0, tol = 5e-5)
+  #expect_equal_nocheck(x3.REML, z3.REML)
   
   ## Testing diag
-  expect_equal(all.eqNum(c(as.matrix(VarCorr(fm1.diag)[[1]])), 
-                         c(other_mod$fm1.glmmTMB.diag_var)), 0, tol = 5e-5)
+  expect_equal_nocheck(c(as.matrix(VarCorr(fm1.diag)[[1]])), 
+                         c(other_mod$fm1.glmmTMB.diag_var))
   ## Testing ar1
-  expect_equal(all.eqNum(c(as.matrix(VarCorr(fm1.ar1)[[1]])), 
-                         c(other_mod$fm1.glmmTMB.ar1_var)), 0, tol = 5e-5)
+  expect_equal_nocheck(c(as.matrix(VarCorr(fm1.ar1)[[1]])), 
+                         c(other_mod$fm1.glmmTMB.ar1_var))
   
   ## glmer
   ## Similar to before; likelihoods are quite similar, so leaving these
   ## with a higher tolerance...
-  expect_equal(all.eqNum(c(as.matrix(VarCorr(gm.us)[[1]])), 
-                         c(other_mod$gm.glmmTMB_var)), 0, tol = 5e-4)
-  expect_equal(all.eqNum(c(as.matrix(VarCorr(gm.cs)[[1]])), 
-                         c(other_mod$gm.glmmTMB.cs_var)), 0, tol = 5e-4)
-  expect_equal(all.eqNum(c(as.matrix(VarCorr(gm.us)[[1]])), 
-                         c(other_mod$gm.glmmTMB_var)), 0, tol = 5e-4)
+  expect_equal_nocheck(c(as.matrix(VarCorr(gm.us)[[1]])), 
+                         c(other_mod$gm.glmmTMB_var), tolerance = 5e-4)
+  expect_equal_nocheck(c(as.matrix(VarCorr(gm.cs)[[1]])), 
+                         c(other_mod$gm.glmmTMB.cs_var), tolerance = 5e-4)
+  expect_equal_nocheck(c(as.matrix(VarCorr(gm.us)[[1]])), 
+                         c(other_mod$gm.glmmTMB_var), tolerance = 5e-4)
 })
 
 test_that("integration tests for ranef", {
@@ -588,14 +569,14 @@ test_that("integration tests for ranef", {
   expect_true(all.equal.nocheck(other_mod$fm1.glmmTMB.ar1_ranef$cond$Subject,
                         ranef(fm1.ar1)$Subject))
 
-  expect_equal(all.eqNum(as.matrix(other_mod$fm1.nlme_ranef), 
-                         as.matrix(ranef(fm1)$Subject)), 0, tol = 5e-5)
-  expect_equal(all.eqNum(as.matrix(other_mod$fm1.nlme.REML_ranef), 
-                         as.matrix(ranef(fm1.REML)$Subject)), 0, tol = 5e-5)
-  expect_equal(all.eqNum(as.matrix(other_mod$fm1.nlme.cs_ranef), 
-                         as.matrix(ranef(fm1.cs)$Subject)), 0, tol = 5e-5)
-  expect_equal(all.eqNum(as.matrix(other_mod$fm1.nlme.cs.REML_ranef), 
-                         as.matrix(ranef(fm1.cs.REML)$Subject)), 0, tol = 5e-5)
+  expect_equal_nocheck(as.matrix(other_mod$fm1.nlme_ranef), 
+                         as.matrix(ranef(fm1)$Subject))
+  expect_equal_nocheck(as.matrix(other_mod$fm1.nlme.REML_ranef), 
+                         as.matrix(ranef(fm1.REML)$Subject))
+  expect_equal_nocheck(as.matrix(other_mod$fm1.nlme.cs_ranef), 
+                         as.matrix(ranef(fm1.cs)$Subject))
+  expect_equal_nocheck(as.matrix(other_mod$fm1.nlme.cs.REML_ranef), 
+                         as.matrix(ranef(fm1.cs.REML)$Subject))
   
   ## glmer
   expect_true(all.equal.nocheck(other_mod$gm.glmmTMB_ranef$cond$district,
@@ -606,10 +587,10 @@ test_that("integration tests for ranef", {
                          ranef(gm.diag)$district))
   
   ## nlmer - differences here are also large...
-  #expect_equal(all.eqNum(as.matrix(other_mod$nm.nlme_ranef), 
-  #                       as.matrix(ranef(nm)$Tree)), 0, tol = 5e-5)
-  #expect_equal(all.eqNum(as.matrix(other_mod$nm.nlme.cs_ranef), 
-  #                       as.matrix(ranef(nm.cs)$Tree)), 0, tol = 5e-5)
+  #expect_equal_nocheck(as.matrix(other_mod$nm.nlme_ranef), 
+  #                       as.matrix(ranef(nm)$Tree))
+  #expect_equal_nocheck(as.matrix(other_mod$nm.nlme.cs_ranef), 
+  #                       as.matrix(ranef(nm.cs)$Tree))
 })
 
 test_that("integration tests for predict", {
@@ -621,36 +602,22 @@ test_that("integration tests for predict", {
   ## Ensuring extracting predictions are consistent for 
   ## lme4 against other packages
   
-  expect_equal(all.eqNum(other_mod$fm1.glmmTMB_predict, predict(fm1)), 
-               0, tol = 5e-5)
-  expect_equal(all.eqNum(other_mod$fm1.glmmTMB.cs_predict, predict(fm1.cs)),
-               0, tol = 5e-5)
-  expect_equal(all.eqNum(other_mod$fm1.glmmTMB.diag_predict, predict(fm1.diag)),
-               0, tol = 5e-5)
-  expect_equal(all.eqNum(other_mod$fm1.glmmTMB.ar1_predict, predict(fm1.ar1)),
-               0, tol = 5e-5)
-  
-  expect_equal(all.eqNum(other_mod$fm1.nlme_predict, predict(fm1)),
-               0, tol = 5e-5)
-  expect_equal(all.eqNum(other_mod$fm1.nlme.REML_predict, predict(fm1.REML)),
-               0, tol = 5e-5)
-  expect_equal(all.eqNum(other_mod$fm1.nlme.cs_predict, predict(fm1.cs)),
-               0, tol = 5e-5)
-  expect_equal(all.eqNum(other_mod$fm1.nlme.cs.REML_predict, predict(fm1.cs.REML)),
-               0, tol = 5e-5)
+  expect_equal_nocheck(other_mod$fm1.glmmTMB_predict, predict(fm1))
+  expect_equal_nocheck(other_mod$fm1.glmmTMB.cs_predict, predict(fm1.cs))
+  expect_equal_nocheck(other_mod$fm1.glmmTMB.diag_predict, predict(fm1.diag))
+  expect_equal_nocheck(other_mod$fm1.glmmTMB.ar1_predict, predict(fm1.ar1))
+  expect_equal_nocheck(other_mod$fm1.nlme_predict, predict(fm1))
+  expect_equal_nocheck(other_mod$fm1.nlme.REML_predict, predict(fm1.REML))
+  expect_equal_nocheck(other_mod$fm1.nlme.cs_predict, predict(fm1.cs))
+  expect_equal_nocheck(other_mod$fm1.nlme.cs.REML_predict, predict(fm1.cs.REML))
   
   ## glmer
-  expect_equal(all.eqNum(other_mod$gm.glmmTMB_predict, predict(gm.us)),
-               0, tol = 5e-5)
-  expect_equal(all.eqNum(other_mod$gm.glmmTMB.cs_predict, predict(gm.cs)),
-               0, tol = 5e-5)
-  expect_equal(all.eqNum(other_mod$gm.glmmTMB.diag_predict, predict(gm.diag)),
-               0, tol = 5e-5)
+  expect_equal_nocheck(other_mod$gm.glmmTMB_predict, predict(gm.us))
+  expect_equal_nocheck(other_mod$gm.glmmTMB.cs_predict, predict(gm.cs))
+  expect_equal_nocheck(other_mod$gm.glmmTMB.diag_predict, predict(gm.diag))
   
   ## nlmer; again, differences are somewhat large
-  #expect_equal(all.eqNum(other_mod$nm.nlme_predict, predict(nm)),
-  #             0, tol = 5e-5)
-  #expect_equal(all.eqNum(other_mod$nm.nlme.cs_predict, predict(nm.cs)),
-  #             0, tol = 5e-5)
+  #expect_equal_nocheck(other_mod$nm.nlme_predict, predict(nm))
+  #expect_equal_nocheck(other_mod$nm.nlme.cs_predict, predict(nm.cs))
 })
 
