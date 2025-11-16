@@ -156,7 +156,6 @@ export(.prt.VC,		.prt.aictab,	.prt.call,	.prt.family,
        llikAIC,	methTitle)
 ## export(tnames)
 
-
 ##------ Our S4 Classes ------------------------
 exportClasses(glmerMod, lmerMod, nlmerMod, merMod)
 exportClasses(lmList4)
