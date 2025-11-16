@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - master
+      - flexSigmaMinimum
   pull_request:
     branches:
       - main
