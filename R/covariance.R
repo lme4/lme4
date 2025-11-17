@@ -890,7 +890,11 @@ setMethod("setVC",
                                          nvec = nc:1L)
                   S <- diag(1, nc, nc)
                   S[i0] <- ccomp
-                  (safe_chol(S) * rep(vcomp, each = nc))[i1]
+                  (semichol(S) * rep(vcomp, each = nc))[i1]
+                  ## FIXME:
+                  ## If 'S' is positive semidefinite and not positive
+                  ## definite, then semichol(S) is not upper triangular
+                  ## and we are putting garbage into the 'par' slot.
               }
               object
           })
@@ -1093,7 +1097,7 @@ function (reCovs) {
 upReTrms <-
 function (reTrms, spCalls) {
     getHom <- function (spCall) {
-        ## FIXME? not evaluating 'hom' in environment of formula
+        ## FIXME?  not evaluating 'hom' in environment of formula
         hom <- spCall$hom
         if (is.null(hom))
             FALSE
@@ -1184,6 +1188,25 @@ function (value, object, profscale, sc = NULL) {
                  list(object = reCovs, pos = pos),
                  NULL)
     c(L, recursive = TRUE, use.names = FALSE)
+}
+
+semichol <-
+function (x, tol = -1, etol = 256 * .Machine$double.eps, type = "O") {
+    R <- tryCatch(chol(x),
+                  error = function (e) chol(x, pivot = TRUE, tol = tol))
+    r <- attr(R, "rank")
+    if (is.null(r))
+        return(R)
+    p <- order(attr(R, "pivot"))
+    n <- nrow(x)
+    if (r < n)
+        R[, (r + 1L):n] <- 0
+    RP <- R[, p, drop = FALSE]
+    e <- norm(x - crossprod(RP), type = type)/norm(x, type = type)
+    if (e >= etol)
+        stop(gettextf("'%s' is not positive semidefinite", "x"),
+             domain = NA)
+    RP
 }
 
 
