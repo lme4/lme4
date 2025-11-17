@@ -1190,6 +1190,10 @@ function (value, object, profscale, sc = NULL) {
     c(L, recursive = TRUE, use.names = FALSE)
 }
 
+anyStructured <-
+function (reCovs = getReCovs(object), object)
+    !all(vapply(reCovs, is, FALSE, "Covariance.us"))
+
 semichol <-
 function (x, tol = -1, etol = 256 * .Machine$double.eps, type = "O") {
     R <- tryCatch(chol(x),
@@ -1297,9 +1301,3 @@ setMethod("getProfUpper",
               c(L, if (!is.null(sc)) Inf,
                 recursive = TRUE, use.names = FALSE)
           })
-
-anyStructuredCov <- function(object) {
-  re <- getReCovs(object)
-  !all(vapply(re, function(x) inherits(x, "Covariance.us"),
-              FUN.VALUE = logical(1)))
-}
