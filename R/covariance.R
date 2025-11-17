@@ -1199,8 +1199,10 @@ function (x, tol = -1, etol = 256 * .Machine$double.eps, type = "O") {
         return(R)
     p <- order(attr(R, "pivot"))
     n <- nrow(x)
-    if (r < n)
-        R[, (r + 1L):n] <- 0
+    if (r < n) {
+        j <- (r + 1L):n
+        R[j, j] <- 0
+    }
     RP <- R[, p, drop = FALSE]
     e <- norm(x - crossprod(RP), type = type)/norm(x, type = type)
     if (e >= etol)
