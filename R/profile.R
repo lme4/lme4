@@ -189,7 +189,7 @@ profile.merMod <- function(fitted,
     ## bounds on Cholesky (== fitted@lower): [0,Inf) for diag, (-Inf,Inf) for off-diag
     ## bounds on sd-corr:  [0,Inf) for diag, (-1.0,1.0) for off-diag
   ## bounds on var-corr: [0,Inf) for diag, (-Inf,Inf) for off-diag
-    covs <- attr(fitted, "reCov")
+    covs <- getReCovs(fitted)
     lower <- unlist(lapply(covs, getProfLower, prof.scale))
     upper <- unlist(lapply(covs, getProfUpper, prof.scale))
     if (useSc) { # bounds for sigma
