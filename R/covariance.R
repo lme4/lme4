@@ -1205,7 +1205,7 @@ function (x, tol = -1, etol = 256 * .Machine$double.eps, type = "O") {
     }
     RP <- R[, p, drop = FALSE]
     e <- norm(x - crossprod(RP), type = type)/norm(x, type = type)
-    if (e >= etol)
+    if (is.na(e) || e >= etol)
         stop(gettextf("'%s' is not positive semidefinite", "x"),
              domain = NA)
     RP
