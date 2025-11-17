@@ -1196,8 +1196,9 @@ function (reCovs = getReCovs(object), object)
 
 semichol <-
 function (x, tol = -1, etol = 256 * .Machine$double.eps, type = "O") {
-    R <- tryCatch(chol(x),
-                  error = function (e) chol(x, pivot = TRUE, tol = tol))
+    R <- tryCatch(
+        chol(x),
+        error = function (e) suppressWarnings(chol(x, pivot = TRUE, tol = tol)))
     r <- attr(R, "rank")
     if (is.null(r))
         return(R)

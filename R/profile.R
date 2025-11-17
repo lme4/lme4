@@ -527,7 +527,10 @@ devfun2 <- function(fm,
       {
           ## convert 'profPar' -> 'pars'
           sig <- pars[length(pars)]
-          thpars <- convProfParToPar(pars, fm, profscale = scale, sc = sig)
+          thpars <- try(
+              convProfParToPar(pars, fm, profscale = scale, sc = sig),
+              silent = TRUE)
+          if (inherits(thpars, "try-error")) return(NA)
           .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)
           sigsq <- sig^2
           pp$ldL2() - ldW + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
@@ -966,6 +969,7 @@ splom.thpr <- function (x, data,
                         conf = c(50, 80, 90, 95, 99)/100, which = 1:nptot,
                         draw.lower = TRUE, draw.upper = TRUE, ...)
 {
+    x <- na.omit(x)
     stopifnot(1 <= (nptot <- length(nms <- names(attr(x, "forward")))))
     singfit <- FALSE
     for (i in grep("^(\\.sig[0-9]+|sd_)", names(x)))
