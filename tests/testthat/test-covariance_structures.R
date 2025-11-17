@@ -333,8 +333,7 @@ fm1.diag <- lmer(Reaction ~ Days + diag(Days | Subject),
                  sleepstudy, REML = FALSE)
 sleepstudy$Daysf <- factor(sleepstudy$Days, ordered = TRUE)
 fm1.ar1 <- lmer(Reaction ~ Daysf + ar1(0 + Daysf | Subject, hom = TRUE), 
-                sleepstudy, REML = FALSE, 
-                control = lmerControl(check.nobs.vs.nRE = "ignore"))
+                sleepstudy, REML = FALSE)
 
 fm1.REML <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 fm1.us.REML <- lmer(Reaction ~ Days + us(Days | Subject), sleepstudy)
@@ -342,7 +341,7 @@ fm1.cs.REML <- lmer(Reaction ~ Days + cs(Days | Subject), sleepstudy)
 fm1.diag.REML <- lmer(Reaction ~ Days + diag(Days | Subject), 
                       sleepstudy)
 fm1.ar1.REML <- lmer(Reaction ~ Daysf + ar1(0 + Daysf | Subject, hom = TRUE), 
-                sleepstudy, control = lmerControl(check.nobs.vs.nRE = "ignore"))
+                sleepstudy)
 
 ## lme4 generalized linear mixed models
 gm <- glmer(use ~ age + urban + (1 + urban | district),

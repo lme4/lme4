@@ -400,6 +400,10 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     bb0 <- lapply(bb1, `[[`, 2L)
     reTrms <- reformulas::mkReTrms(bb0, fr, calc.lambdat = FALSE)
     reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
+    ## Checking for covariance structures; ignore the check
+    if(!inherits(reTrms$reCovs[[1]], "Covariance.us")){
+      control$check.nobs.vs.nRE <- "ignore"
+    }
     wmsgNlev <- checkNlevels(reTrms$flist, n=n, control)
     wmsgZdims <- checkZdims(reTrms$Ztlist, n=n, control, allow.n=FALSE)
     if (anyNA(reTrms$Zt)) {
