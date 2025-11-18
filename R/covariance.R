@@ -973,10 +973,10 @@ setMethod("setProfPar",
                       ccomp <- ccomp/
                           vcomp[sequence.default(from = 2L:nc, nvec = (nc - 1L):1L)]/
                           vcomp[rep(1L:(nc - 1L), (nc - 1L):1L)]
-                  sc <- sqrt(sc)
               }
               if (!is.null(sc))
-                  vcomp <- vcomp/sc
+                  vcomp <- vcomp/
+                      (if (profscale == "varcov") sqrt(sc) else sc)
               setVC(object, vcomp, ccomp)
           })
 
@@ -993,7 +993,8 @@ setMethod("setProfPar",
               if (profscale == "varcov")
                   vcomp <- sqrt(vcomp)
               if (!is.null(sc))
-                  vcomp <- vcomp/sc
+                  vcomp <- vcomp/
+                      (if (profscale == "varcov") sqrt(sc) else sc)
               setPar(object, vcomp)
           })
 
@@ -1159,7 +1160,10 @@ function (object) {
     ## stopifnot(is(object, "merMod"))
     if (!is.null(ans <- attr(object, "reCovs")))
         return(ans)
-    nc <- getME(object, "p_i") ## get individual sizes (@cnms is not reliable for old ||)
+    ## object@cnms is not reliable when formula(object) has '||'
+    ## terms and 'object' was obtained using older 'lme4', hence:
+ ## nc <- lengths(object@cnms, use.names = FALSE)
+    nc <- getME(object, "p_i") # get individual sizes
     upReCovs(lapply(nc, function (nc) new("Covariance.us", nc = nc)),
              object@theta)
 }
@@ -1173,8 +1177,8 @@ function (value, object, profscale, sc = NULL) {
                      getProfPar(setPar(object, value, pos), profscale, sc),
                  list(object = reCovs, pos = pos),
                  NULL)
-    if (profscale == "varcov") sc <- sc^2
-    c(L, sc, recursive = TRUE, use.names = FALSE)
+    c(L, if (!is.null(sc) && profscale == "varcov") sc^2 else sc,
+      recursive = TRUE, use.names = FALSE)
 }
 
 convProfParToPar <-
@@ -1283,8 +1287,7 @@ setMethod("getProfPar",
           function (object, profscale, sc = NULL) {
               reCovs <- getReCovs(object)
               L <- lapply(reCovs, getProfPar, profscale = profscale, sc = sc)
-              if (profscale == "varcov") sc <- sc^2
-              c(L, sc,
+              c(L, if (!is.null(sc) && profscale == "varcov") sc^2 else sc,
                 recursive = TRUE, use.names = FALSE)
           })
 
