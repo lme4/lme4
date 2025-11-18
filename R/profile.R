@@ -74,7 +74,7 @@ profile.merMod <- function(fitted,
                },
                stop("internal error, prof.scale=", prof.scale))
     dd <- devfun2(fitted, useSc=useSc, signames=signames,
-                  transfuns=transfuns, prefix=prof.prefix, ...)
+                  transfuns=transfuns, prefix=prof.prefix, scale = prof.scale, ...)
     ## FIXME: figure out to what do here ...
     if (isGLMM(fitted) && fitted@devcomp$dims[["useSc"]])
         stop("can't (yet) profile GLMMs with non-fixed scale parameters")
@@ -494,7 +494,7 @@ devfun2 <- function(fm,
 
     scale <- match.arg(scale)
     if (scale == "varcov" && 
-        !all(sapply(fm, inherits, "Covariance.us"))) {
+        !all(sapply(getReCovs(fm), function(x) inherits(x, "Covariance.us")))) {
         stop("haven't thought about varcov scale for structured cov matrices")
     }
     ## TODO: change to work with 'par' instead of 'theta'
@@ -532,7 +532,7 @@ devfun2 <- function(fm,
               silent = TRUE)
           if (inherits(thpars, "try-error")) return(NA)
           .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)
-          sigsq <- sig^2
+          sigsq <- if (scale=="varcov") sig else sig^2
           pp$ldL2() - ldW + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
         }
         ldW <- sum(log(environment(ans)$resp$weights))

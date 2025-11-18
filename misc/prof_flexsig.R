@@ -5,8 +5,19 @@ m1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 m0 <- lmer(Reaction ~ Days + (1 | Subject), sleepstudy)
 m2 <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy)
 p0 <- profile(m0)
+p1 <- profile(m1)
+
+dd <- devfun2(m1)
+par1 <- c(16.066, 4.744, 0.955, 27.525)
+mkpar <- function(rho) { par1[3] <- rho; par1 }
+dd(par1)
+dd(mkpar(0.999))
+dd(mkpar(1.0)) ## NA
+
+xyplot(p1)
 debug(profile)
 
+p2 <- profile(m2)
 
 master_ci <- structure(c(14.3814181607732, -0.481500758280773, 3.8011640532591, 
 22.8982668820808, 237.680695505234, 7.35865327511699, 37.7159953182866, 

@@ -973,6 +973,7 @@ setMethod("setProfPar",
                       ccomp <- ccomp/
                           vcomp[sequence.default(from = 2L:nc, nvec = (nc - 1L):1L)]/
                           vcomp[rep(1L:(nc - 1L), (nc - 1L):1L)]
+                  sc <- sqrt(sc)
               }
               if (!is.null(sc))
                   vcomp <- vcomp/sc
@@ -1172,6 +1173,7 @@ function (value, object, profscale, sc = NULL) {
                      getProfPar(setPar(object, value, pos), profscale, sc),
                  list(object = reCovs, pos = pos),
                  NULL)
+    if (profscale == "varcov") sc <- sc^2
     c(L, sc, recursive = TRUE, use.names = FALSE)
 }
 
@@ -1281,6 +1283,7 @@ setMethod("getProfPar",
           function (object, profscale, sc = NULL) {
               reCovs <- getReCovs(object)
               L <- lapply(reCovs, getProfPar, profscale = profscale, sc = sc)
+              if (profscale == "varcov") sc <- sc^2
               c(L, sc,
                 recursive = TRUE, use.names = FALSE)
           })
