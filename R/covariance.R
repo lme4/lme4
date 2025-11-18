@@ -1215,6 +1215,11 @@ function (x, tol = -1, etol = 256 * .Machine$double.eps, type = "O") {
         R[j, j] <- 0
     }
     RP <- R[, p, drop = FALSE]
+    if (n > 1L) { # symmetrize 'x' (put upper part into lower part)
+        j <- 1L:(n - 1L)
+        x[sequence.default(from = 2L:n, by = n, nvec = j)] <-
+            x[sequence.default(from = j * n + 1L, nvec = j)]
+    }
     e <- norm(x - crossprod(RP), type = type)/norm(x, type = type)
     if (is.na(e) || e >= etol)
         stop(gettextf("'%s' is not positive semidefinite", "x"),
