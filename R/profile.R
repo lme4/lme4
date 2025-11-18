@@ -493,8 +493,7 @@ devfun2 <- function(fm,
 {
 
     scale <- match.arg(scale)
-    if (scale == "varcov" && 
-        !all(sapply(getReCovs(fm), function(x) inherits(x, "Covariance.us")))) {
+    if (scale == "varcov" && anyStructured(object = fm)) {
         stop("haven't thought about varcov scale for structured cov matrices")
     }
     ## TODO: change to work with 'par' instead of 'theta'
