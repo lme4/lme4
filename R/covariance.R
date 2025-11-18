@@ -930,6 +930,20 @@ setMethod("setVC",
 rm(.fn)
 
 setMethod("getProfPar",
+          c(object = "Covariance"),
+          function (object, profscale, sc = NULL) {
+              vc <- getVC(object)
+              vcomp <- vc$vcomp
+              ccomp <- vc$ccomp
+              if (!is.null(sc))
+                  vcomp <- vcomp * sc
+              if (profscale == "varcov") {
+                stop("varcov scale undefined for this covariance class")
+              }
+              c(vcomp, ccomp)
+          })
+
+setMethod("getProfPar",
           c(object = "Covariance.us"),
           function (object, profscale, sc = NULL) {
               vc <- getVC(object)
@@ -1013,6 +1027,22 @@ setMethod("getProfLower",
               rep(0, if (object@hom) 1L * (nc > 0L) else nc)
           })
 
+setMethod("getProfLower",
+          c(object = "Covariance.cs"),
+          function (object, profscale, sc = NULL) {
+            nc <- object@nc
+            sdbounds <- rep(0, if (object@hom) 1L * (nc > 0L) else nc)
+            c(sdbounds, -1/(nc-1))
+          })
+
+setMethod("getProfLower",
+          c(object = "Covariance.ar1"),
+          function (object, profscale, sc = NULL) {
+            nc <- object@nc
+            sdbounds <- rep(0, if (object@hom) 1L * (nc > 0L) else nc)
+            c(sdbounds, -1)
+          })
+
 setMethod("getProfUpper",
           c(object = "Covariance.us"),
           function (object, profscale, sc = NULL) {
@@ -1028,6 +1058,20 @@ setMethod("getProfUpper",
               rep(Inf, if (object@hom) 1L * (nc > 0L) else nc)
           })
 
+## function for a covariance class with a single correlation parameter
+.fn <- function (object, profscale, sc = NULL) {
+  nc <- object@nc
+  sdbounds <- rep(Inf, if (object@hom) 1L * (nc > 0L) else nc)
+  c(sdbounds, 1)
+}
+
+setMethod("getProfUpper",
+          c(object = "Covariance.cs"), .fn)
+
+setMethod("getProfUpper",
+          c(object = "Covariance.ar1"), .fn)
+
+rm(.fn)
 
 ## .... HELPERS ........................................................
 

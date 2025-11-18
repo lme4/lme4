@@ -1,11 +1,15 @@
 devtools::load_all()
 
 data("sleepstudy", package = "lme4")
-m1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 m0 <- lmer(Reaction ~ Days + (1 | Subject), sleepstudy)
-m2 <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy)
 p0 <- profile(m0)
+m1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 p1 <- profile(m1)
+m2 <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy)
+p2 <- profile(m2)
+m3 <- lmer(Reaction ~ Days + cs(Days | Subject), sleepstudy)
+p3 <- profile(m3)
+
 
 dd <- devfun2(m1)
 par1 <- c(16.066, 4.744, 0.955, 27.525)
