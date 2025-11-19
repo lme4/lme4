@@ -26,11 +26,11 @@ Authors@R: c(
     "shared copyright on simulate.formula")),
     person("Emi", "Tanaka", role = "ctb",
       comment = c(ORCID="0000-0002-1455-259X")),
-      person("Mikael", "Jagan", role = "ctb",
+      person("Mikael", "Jagan", role = "aut",
       comment = c(ORCID="0000-0002-3542-2938")),
     person("Ross D.", "Boylan", email="ross.boylan@ucsf.edu", role=("ctb"),
         comment = c(ORCID="0009-0003-4123-8090")),
-    person("Anna", "Ly", role = "ctb",
+    person("Anna", "Ly", role = "aut",
        comment = c(ORCID = "0000-0002-0210-0342"))
       )
 Description: Fit linear and generalized linear mixed-effects models.
