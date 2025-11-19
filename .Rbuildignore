@@ -41,3 +41,4 @@ R/scaleX.R
 .vscode
 docs/
 Sweave.sty
+^reverse$
