@@ -16,6 +16,10 @@
 ##
 checkReverse <-
 function (args) {
+    ## Wishlist for KH/tools::check_packages_in_dir:
+    ## * support no-check/only-install mode
+    ## * support building library tree on top of package being checked
+
     stopifnot(is.character(args))
     args.prefix <- sub("^(--.*?=)(.*)$", "\\1", args)
     args.suffix <- sub("^(--.*?=)(.*)$", "\\2", args)
@@ -26,6 +30,7 @@ function (args) {
     libclean <- FALSE
     preclean <- TRUE
        clean <- FALSE
+       check <- TRUE
     libpaths <- character(0L)
        Ncpus <- 1L
 
@@ -43,6 +48,10 @@ function (args) {
                    clean <- TRUE,
             "--no-clean" =
                    clean <- FALSE,
+            "--check" =
+                   check <- TRUE,
+            "--no-check" =
+                   check <- FALSE,
             "--library=" =
                 libpaths <- strsplit(args.suffix[[i]], ":")[[1L]],
             "--jobs=" =
@@ -53,7 +62,7 @@ function (args) {
                  domain = NA))
 
     .lp <- .libPaths()
-    on.exit(.libPaths(.lp))
+    on.exit(.libPaths(.lp), add = TRUE)
     .libPaths(libpaths)
 
     dirname <- paste0(filename, ".reverse")
@@ -85,14 +94,33 @@ function (args) {
     .op <- options(repos = repos)
     on.exit(options(.op), add = TRUE)
 
-    reverse <- list(repos = repos,
-                    which = c("Depends", "Imports", "LinkingTo"),
-                    recursive = FALSE)
-
+    if (!check) {
+        ## Insert an early return after call to utils::install.packages;
+        ## the return value is a character vector storing the names of
+        ## packages whose installation failed.
+        stopifnot(getRversion() >= "4.3", getRversion() < "4.7")
+        tracer <- quote({
+            outfiles <- Sys.glob(file.path(outdir, "install_*.out"))
+            outnames <- sub("^install_(.*)[.]out$", "\\1", basename(outfiles))
+            grrl <- function (out) grep("^[*] removing", readLines(out))
+            outfails <- lengths(lapply(outfiles, grrl)) > 0L
+            return(outnames[outfails])
+        })
+        trace(tools::check_packages_in_dir,
+              tracer = tracer, at = 43L, print = FALSE)
+        on.exit(untrace(tools::check_packages_in_dir), add = TRUE)
+    }
     ans <- tools::check_packages_in_dir(dirname,
-                                        reverse = reverse,
+                                        reverse = list(),
                                         Ncpus = Ncpus,
                                         clean = clean)
+    if (!check) {
+        if (length(ans) > 0L)
+            message(gettextf("%d packages were not installed:\n\t%s",
+                             length(ans), toString(dQuote(ans, FALSE))),
+                    domain = NA)
+        return(invisible(ans))
+    }
     ans
 }
 
