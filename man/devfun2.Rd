@@ -11,18 +11,12 @@
 }
 \usage{
 devfun2(fm, useSc = if(isLMM(fm)) TRUE else NA,
-        transfuns = list(from.chol = Cv_to_Sv,
-                           to.chol = Sv_to_Cv,
-                             to.sd = identity),
         scale = c("sdcor", "varcov"), ...)
 }
 \arguments{
   \item{fm}{a fitted model inheriting from  class \code{"\linkS4class{merMod}"}.}
   \item{useSc}{(\code{\link{logical}}) indicating whether a scale parameter
     has been in the model or should be used.}% FIXME, see also ../R/profile.R
-  \item{transfuns}{a \code{\link{list}} of \code{\link{function}}s
-    for converting parameters to and from the Cholesky-factor scale
-  }
   \item{scale}{a character string indicating the scale of the argument
     of the deviance function.}
   \item{\dots}{
@@ -57,9 +51,9 @@ devfun2(fm, useSc = if(isLMM(fm)) TRUE else NA,
 \examples{
 m1 <- lmer(Reaction~Days+(Days|Subject),sleepstudy)
 dd <- devfun2(m1, useSc=TRUE)
-pp <- attr(dd,"optimum")
+pp <- attr(dd, "optimum")
 ## extract variance-covariance and residual std dev parameters
-sigpars <- pp[grepl("^\\\\.sig",names(pp))]
+sigpars <- pp[grepl("^\\\\.sig", names(pp))]
 all.equal(unname(dd(sigpars)),deviance(refitML(m1)))
 }
 \keyword{utilities}

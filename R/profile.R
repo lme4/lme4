@@ -74,7 +74,7 @@ profile.merMod <- function(fitted,
                },
                stop("internal error, prof.scale=", prof.scale))
     dd <- devfun2(fitted, useSc=useSc, signames=signames,
-                  transfuns=transfuns, prefix=prof.prefix, scale = prof.scale, ...)
+                  prefix=prof.prefix, scale = prof.scale, ...)
     ## FIXME: figure out to what do here ...
     if (isGLMM(fitted) && fitted@devcomp$dims[["useSc"]])
         stop("can't (yet) profile GLMMs with non-fixed scale parameters")
@@ -486,8 +486,6 @@ get.which <- function(which, nvp, nptot, parnames, verbose=FALSE) {
 ##     variance-covariance parameters (fixed-effects done separately).
 devfun2 <- function(fm,
                     useSc = if(isLMM(fm)) TRUE else NA,
-                    transfuns = list(from.chol = Cv_to_Sv,
-                                     to.chol = Sv_to_Cv, to.sd = identity),
                     scale = c("sdcor", "varcov"),
                     ...)
 {
@@ -545,10 +543,10 @@ devfun2 <- function(fm,
         ans <- function(pars)
         {
             stopifnot(is.numeric(pars), length(pars) == np+nf)
-            thpars <- if(!useSc)
-                          transfuns$to.chol(pars[seq(np)], n=vlist)
-                      else
-                          transfuns$to.chol(pars[seq(np)], n=vlist, s=pars[np])
+            thpars <- try(
+                convProfParToPar(pars, fm, profscale = scale, sc = NULL),
+                silent = TRUE)
+            if (inherits(thpars, "try-error")) return(NA)
             fixpars <- pars[-seq(np)]
             d0(c(thpars,fixpars))
         }

@@ -7,6 +7,12 @@ m1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 p1 <- profile(m1)
 m2 <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy)
 p2 <- profile(m2)
+
+g0 <- glmer(incidence/size ~ period + (1|herd), cbpp,
+            family = binomial, weights = size)
+pg0 <- profile(g0)
+xyplot(pg0)
+
 m3 <- lmer(Reaction ~ Days + cs(Days | Subject), sleepstudy)
 p3 <- profile(m3)
 
