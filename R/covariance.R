@@ -930,20 +930,6 @@ setMethod("setVC",
 rm(.fn)
 
 setMethod("getProfPar",
-          c(object = "Covariance"),
-          function (object, profscale, sc = NULL) {
-              vc <- getVC(object)
-              vcomp <- vc$vcomp
-              ccomp <- vc$ccomp
-              if (!is.null(sc))
-                  vcomp <- vcomp * sc
-              if (profscale == "varcov") {
-                stop("varcov scale undefined for this covariance class")
-              }
-              c(vcomp, ccomp)
-          })
-
-setMethod("getProfPar",
           c(object = "Covariance.us"),
           function (object, profscale, sc = NULL) {
               vc <- getVC(object)
@@ -965,13 +951,35 @@ setMethod("getProfPar",
 setMethod("getProfPar",
           c(object = "Covariance.diag"),
           function (object, profscale, sc = NULL) {
-              vcomp <- getPar(object)
+              vcomp <- object@par
               if (!is.null(sc))
                   vcomp <- vcomp * sc
               if (profscale == "varcov")
                   vcomp <- vcomp * vcomp
               vcomp
           })
+
+setMethod("getProfPar",
+          c(object = "Covariance.cs"),
+          .fn <-
+          function (object, profscale, sc = NULL) {
+              if (profscale == "varcov")
+                  stop(gettextf("%s=\"%s\" not implemented for class \"%s\"",
+                                "profscale", "varcov", class(object)),
+                       domain = NA)
+              vc <- getVC(object)
+              vcomp <- vc$vcomp
+              ccomp <- vc$ccomp
+              if (!is.null(sc))
+                  vcomp <- vcomp * sc
+              c(vcomp, ccomp)
+          })
+
+setMethod("getProfPar",
+          c(object = "Covariance.ar1"),
+          .fn)
+
+rm(.fn)
 
 setMethod("setProfPar",
           c(object = "Covariance.us", value = "numeric"),
@@ -1012,6 +1020,31 @@ setMethod("setProfPar",
               setPar(object, vcomp)
           })
 
+setMethod("setProfPar",
+          c(object = "Covariance.cs", value = "numeric"),
+          .fn <-
+          function (object, profscale, sc = NULL, value, pos = 0L) {
+              if (profscale == "varcov")
+                  stop(gettextf("%s=\"%s\" not implemented for class \"%s\"",
+                                "profscale", "varcov", class(object)),
+                       domain = NA)
+              np <- length(object@par)
+              validValuePos(np, value, pos)
+              nc <- object@nc
+              nc. <- if (object@hom) 1L * (nc > 0L) else nc
+              vcomp <- value[seq.int(from = pos + 1L      , length.out =      nc.)]
+              ccomp <- value[seq.int(from = pos + 1L + nc., length.out = np - nc.)]
+              if (!is.null(sc))
+                  vcomp <- vcomp/sc
+              setVC(object, vcomp, ccomp)
+          })
+
+setMethod("setProfPar",
+          c(object = "Covariance.cs", value = "numeric"),
+          .fn)
+
+rm(.fn)
+
 setMethod("getProfLower",
           c(object = "Covariance.us"),
           function (object, profscale, sc = NULL) {
@@ -1022,26 +1055,25 @@ setMethod("getProfLower",
 
 setMethod("getProfLower",
           c(object = "Covariance.diag"),
-          function (object, profscale, sc = NULL) {
-              nc <- object@nc
-              rep(0, if (object@hom) 1L * (nc > 0L) else nc)
-          })
+          function (object, profscale, sc = NULL)
+              getLower(object))
 
 setMethod("getProfLower",
           c(object = "Covariance.cs"),
+          .fn <-
           function (object, profscale, sc = NULL) {
-            nc <- object@nc
-            sdbounds <- rep(0, if (object@hom) 1L * (nc > 0L) else nc)
-            c(sdbounds, -1/(nc-1))
+              if (profscale == "varcov")
+                  stop(gettextf("%s=\"%s\" not implemented for class \"%s\"",
+                                "profscale", "varcov", class(object)),
+                       domain = NA)
+              getLower(object)
           })
 
 setMethod("getProfLower",
           c(object = "Covariance.ar1"),
-          function (object, profscale, sc = NULL) {
-            nc <- object@nc
-            sdbounds <- rep(0, if (object@hom) 1L * (nc > 0L) else nc)
-            c(sdbounds, -1)
-          })
+          .fn)
+
+rm(.fn)
 
 setMethod("getProfUpper",
           c(object = "Covariance.us"),
@@ -1053,25 +1085,26 @@ setMethod("getProfUpper",
 
 setMethod("getProfUpper",
           c(object = "Covariance.diag"),
+          function (object, profscale, sc = NULL)
+              getUpper(object))
+
+setMethod("getProfUpper",
+          c(object = "Covariance.cs"),
+          .fn <-
           function (object, profscale, sc = NULL) {
-              nc <- object@nc
-              rep(Inf, if (object@hom) 1L * (nc > 0L) else nc)
+              if (profscale == "varcov")
+                  stop(gettextf("%s=\"%s\" not implemented for class \"%s\"",
+                                "profscale", "varcov", class(object)),
+                       domain = NA)
+              getUpper(object)
           })
 
-## function for a covariance class with a single correlation parameter
-.fn <- function (object, profscale, sc = NULL) {
-  nc <- object@nc
-  sdbounds <- rep(Inf, if (object@hom) 1L * (nc > 0L) else nc)
-  c(sdbounds, 1)
-}
-
 setMethod("getProfUpper",
-          c(object = "Covariance.cs"), .fn)
-
-setMethod("getProfUpper",
-          c(object = "Covariance.ar1"), .fn)
+          c(object = "Covariance.ar1"),
+          .fn)
 
 rm(.fn)
+
 
 ## .... HELPERS ........................................................
 
