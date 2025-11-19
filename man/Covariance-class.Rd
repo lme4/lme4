@@ -29,8 +29,7 @@
   variance-covariance matrix as specified as \eqn{Var(\mathbf{b})}. Typically, 
   we denote the variance-covariance matrix as \eqn{\Sigma}.
   
-  Proper details can be found in the 
-  \href{https://cran.r-project.org/web/packages/lme4/vignettes/lmer.pdf}{lmer vignette.} 
+  Proper details can be found in \code{vignette("lmer")}.
   Our main focus is the restriction on \eqn{\Sigma}. Let \eqn{q} represent 
   the number of columns of the random-effects model matrix \eqn{Z}. 
   \eqn{\Sigma} can be expressed in terms of a relative cofactor 
