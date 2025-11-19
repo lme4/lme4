@@ -1,6 +1,22 @@
+## Usage in a shell:
+##
+## $ R -f reverse.R --args [option1] ... [optionN] /path/to/tarball
+##
+## Usage in R:
+##
+## > checkReverse(c("[option1]", ..., "[optionN]", "/path/to/tarball"))
+##
+## Example:
+##
+## $ LME4_OLD=lme4_1.1-37.tar.gz
+## $ LME4_NEW=lme4_1.1-38.tar.gz
+## $ R --vanilla -f reverse.R --args --jobs=4 ${LME4_OLD}
+## $ R --vanilla -f reverse.R --args --jobs=4 ${LME4_NEW}
+## $ R -e "tools::check_packages_in_dir_changes(\"${LME4_NEW}.reverse\", \"${LME4_OLD}.reverse\", TRUE, TRUE)[\"<\", ]" # changes to worse
+##
 checkReverse <-
 function (args) {
-
+    stopifnot(is.character(args))
     args.prefix <- sub("^(--.*?=)(.*)$", "\\1", args)
     args.suffix <- sub("^(--.*?=)(.*)$", "\\2", args)
 
@@ -10,7 +26,7 @@ function (args) {
     libclean <- FALSE
     preclean <- TRUE
        clean <- FALSE
-    libpaths <- .Library
+    libpaths <- character(0L)
        Ncpus <- 1L
 
     for (i in seq_along(args))
@@ -28,8 +44,7 @@ function (args) {
             "--no-clean" =
                    clean <- FALSE,
             "--library=" =
-                libpaths <- c(strsplit(args.suffix[[i]], ":")[[1L]],
-                              libpaths),
+                libpaths <- strsplit(args.suffix[[i]], ":")[[1L]],
             "--jobs=" =
                    Ncpus <- as.integer(args.suffix[[i]]),
             if (i != i.filename)
@@ -83,6 +98,3 @@ function (args) {
 
 args <- commandArgs(trailingOnly = TRUE)
 ch <- checkReverse(args)
-
-
-## 'tkrplot', 'arrow'
