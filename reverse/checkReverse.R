@@ -16,6 +16,9 @@
 ##     $ R --vanilla -f checkReverse.R --args --jobs=4 --no-check ${LME4_ARCHIVE}
 ##     $ R --vanilla -f checkReverse.R --args --jobs=4            ${LME4_ARCHIVE}
 ##
+##     If you want to make use of an existing library tree for a given
+##     run, then use --library=, giving a colon-delimited search path.
+##
 checkReverse <-
 function (args) {
     ## Wishlist for KH/tools::check_packages_in_dir:
