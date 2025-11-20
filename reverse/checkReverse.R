@@ -1,18 +1,20 @@
-## Usage in a shell:
+## USAGE IN A SHELL
 ##
-## $ R -f reverse.R --args [option1] ... [optionN] /path/to/tarball
+##     $ R -f checkReverse.R --args [option1] ... [optionN] <archive>
 ##
-## Usage in R:
+## USAGE IN R
 ##
-## > checkReverse(c("[option1]", ..., "[optionN]", "/path/to/tarball"))
+##     > checkReverse(c("[option1]", ..., "[optionN]", "<archive>"))
 ##
-## Example:
+## EXAMPLE
 ##
-## $ LME4_OLD=lme4_1.1-37.tar.gz
-## $ LME4_NEW=lme4_1.1-38.tar.gz
-## $ R --vanilla -f reverse.R --args --jobs=4 ${LME4_OLD}
-## $ R --vanilla -f reverse.R --args --jobs=4 ${LME4_NEW}
-## $ R -e "tools::check_packages_in_dir_changes(\"${LME4_NEW}.reverse\", \"${LME4_OLD}.reverse\", TRUE, TRUE)[\"<\", ]" # changes to worse
+##     Run without the check until you no longer encounter spurious
+##     install failures.  Packages may require manual intervention.
+##     Once you are satisfied, run with the check.
+##
+##     $ LME4_ARCHIVE=lme4_1.1-37.tar.gz
+##     $ R --vanilla -f checkReverse.R --args --jobs=4 --no-check ${LME4_ARCHIVE}
+##     $ R --vanilla -f checkReverse.R --args --jobs=4            ${LME4_ARCHIVE}
 ##
 checkReverse <-
 function (args) {
@@ -24,13 +26,14 @@ function (args) {
     args.prefix <- sub("^(--.*?=)(.*)$", "\\1", args)
     args.suffix <- sub("^(--.*?=)(.*)$", "\\2", args)
 
-    filename <- args[i.filename <- grep("^[^-].*[.]tar[.]gz$", args)]
-    stopifnot(length(filename) == 1L, file.exists(filename))
+    tarfile <- args[i.tarfile <- grep("^[^-].*[.]tar[.]gz$", args)]
+    stopifnot(length(tarfile) == 1L)
 
     libclean <- FALSE
     preclean <- TRUE
        clean <- FALSE
        check <- TRUE
+      outdir <- NULL
     libpaths <- character(0L)
        Ncpus <- 1L
 
@@ -52,33 +55,36 @@ function (args) {
                    check <- TRUE,
             "--no-check" =
                    check <- FALSE,
+            "--output=" =
+                  outdir <- args.suffix[[i]],
             "--library=" =
                 libpaths <- strsplit(args.suffix[[i]], ":")[[1L]],
             "--jobs=" =
                    Ncpus <- as.integer(args.suffix[[i]]),
-            if (i != i.filename)
-            stop(gettextf("invalid command line argument '%s'",
+            if (i != i.tarfile)
+            stop(gettextf("invalid command line option '%s'",
                           args[[i]]),
                  domain = NA))
 
-    dirname <- paste0(filename, ".reverse")
-    if (!dir.exists(dirname))
-        dir.create(dirname)
+    if (is.null(outdir))
+        outdir <- sprintf("%s.reverse", tarfile)
+    if (!dir.exists(outdir))
+        dir.create(outdir)
     else {
         if (libclean)
-            unlink(file.path(dirname, "Library"),
+            unlink(file.path(outdir, "Library"),
                    recursive = TRUE)
         if (preclean)
-            unlink(file.path(dirname, c("Outputs",
-                                        "*.Rcheck",
-                                        "*.tar.gz",
-                                        "PACKAGES",
-                                        "PACKAGES.gz",
-                                        "PACKAGES.rds",
-                                        "timings.tab")),
+            unlink(file.path(outdir, c("Outputs",
+                                       "*.Rcheck",
+                                       "*.tar.gz",
+                                       "PACKAGES",
+                                       "PACKAGES.gz",
+                                       "PACKAGES.rds",
+                                       "timings.tab")),
                    recursive = TRUE)
     }
-    file.copy(filename, dirname, overwrite = TRUE)
+    stopifnot(file.copy(tarfile, outdir, overwrite = TRUE))
 
     .lp <- .libPaths()
     on.exit(.libPaths(.lp), add = TRUE)
@@ -110,8 +116,9 @@ function (args) {
             .__ORIG__.
         })
     }
-    cpid(dirname, reverse = list(), Ncpus = Ncpus, clean = clean)
+    cpid(outdir, reverse = list(), Ncpus = Ncpus, clean = clean)
 }
 
 args <- commandArgs(trailingOnly = TRUE)
 ch <- checkReverse(args)
+
