@@ -61,10 +61,6 @@ function (args) {
                           args[[i]]),
                  domain = NA))
 
-    .lp <- .libPaths()
-    on.exit(.libPaths(.lp), add = TRUE)
-    .libPaths(libpaths)
-
     dirname <- paste0(filename, ".reverse")
     if (!dir.exists(dirname))
         dir.create(dirname)
@@ -84,6 +80,10 @@ function (args) {
     }
     file.copy(filename, dirname, overwrite = TRUE)
 
+    .lp <- .libPaths()
+    on.exit(.libPaths(.lp), add = TRUE)
+    .libPaths(libpaths)
+
     repos <- utils:::.expand_BioC_repository_URLs(
         c("CRAN"     = "https://cloud.r-project.org",
           "BioCsoft" = "%bm/packages/%v/bioc",
@@ -91,37 +91,26 @@ function (args) {
           "BioCexp"  = "%bm/packages/%v/data/experiment",
           "INLA"     = "https://inla.r-inla-download.org/R/stable",
           "CmdStan"  = "https://stan-dev.r-universe.dev"))
-    .op <- options(repos = repos)
+    .op <- options(repos = repos, useFancyQuotes = FALSE)
     on.exit(options(.op), add = TRUE)
 
+    cpid <- tools::check_packages_in_dir
     if (!check) {
-        ## Insert an early return after call to utils::install.packages;
+        ## Insert early return after call to utils::install.packages;
         ## the return value is a character vector storing the names of
         ## packages whose installation failed.
         stopifnot(getRversion() >= "4.3", getRversion() < "4.7")
-        tracer <- quote({
+        body(cpid)[[43L]] <-
+        substitute(env = list(.__ORIG__. = body(cpid)[[43L]]), {
             outfiles <- Sys.glob(file.path(outdir, "install_*.out"))
             outnames <- sub("^install_(.*)[.]out$", "\\1", basename(outfiles))
             grrl <- function (out) grep("^[*] removing", readLines(out))
             outfails <- lengths(lapply(outfiles, grrl)) > 0L
             return(outnames[outfails])
+            .__ORIG__.
         })
-        trace(tools::check_packages_in_dir,
-              tracer = tracer, at = 43L, print = FALSE)
-        on.exit(untrace(tools::check_packages_in_dir), add = TRUE)
     }
-    ans <- tools::check_packages_in_dir(dirname,
-                                        reverse = list(),
-                                        Ncpus = Ncpus,
-                                        clean = clean)
-    if (!check) {
-        if (length(ans) > 0L)
-            message(gettextf("%d packages were not installed:\n\t%s",
-                             length(ans), toString(dQuote(ans, FALSE))),
-                    domain = NA)
-        return(invisible(ans))
-    }
-    ans
+    cpid(dirname, reverse = list(), Ncpus = Ncpus, clean = clean)
 }
 
 args <- commandArgs(trailingOnly = TRUE)
