@@ -502,6 +502,7 @@ devfun2 <- function(fm,
     ## hasSc := GLMMuseSc <- fm@devcomp$dims["useSc"]
     stopifnot(is(fm, "merMod"))
     fm <- refitML(fm)
+    mkTheta <- mkMkTheta(getReCovs(fm))
     basedev <- -2*c(logLik(fm))  ## no longer deviance()
     vlist <- lengths(fm@cnms)
     ## "has scale" := isLMM  or  GLMM with scale parameter
@@ -509,9 +510,7 @@ devfun2 <- function(fm,
     stdErr <- unname(coef(summary(fm))[,2])
     pp <- fm@pp$copy()
     sig <- if (useSc) sigma(fm) else NULL
-    ## get full list for later relist()
-    opt_list <- getProfPar(fm, profscale = scale, sc = sig)
-    opt <- unlist(opt_list)
+    opt <- getProfPar(fm, profscale = scale, sc = sig)
     names(opt) <- profnames(fm, useSc=useSc, ...)
     opt <- c(opt, fixef(fm))
     resp <- fm@resp$copy()
@@ -528,7 +527,7 @@ devfun2 <- function(fm,
               convProfParToPar(pars, fm, profscale = scale, sc = sig),
               silent = TRUE)
           if (inherits(thpars, "try-error")) return(NA)
-          .Call(lmer_Deviance, pp$ptr(), resp$ptr(), thpars)
+          .Call(lmer_Deviance, pp$ptr(), resp$ptr(), mkTheta(thpars))
           sigsq <- if (scale=="varcov") sig else sig^2
           pp$ldL2() - ldW + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
         }
