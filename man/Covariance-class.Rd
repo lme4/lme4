@@ -19,6 +19,31 @@
   and \code{Covariane.ar1} (autoregressive order 1).
 }
 
+\usage{
+\S4method{getPar}{Covariance}(object)
+\S4method{getParLength}{Covariance}(object)
+\S4method{getParNames}{Covariance}(object, cnm, gnm)
+\S4method{setPar}{Covariance}(object, value)
+\S4method{getTheta}{Covariance}(object)
+\S4method{getThetaLength}{Covariance}(object)
+\S4method{getThetaNames}{Covariance}(object, cnm, gnm)
+\S4method{getThetaIndex}{Covariance}(object)
+\S4method{getThetaIndexLength}{Covariance}(object)
+\S4method{setTheta}{Covariance}(object, value)
+\S4method{getLower}{Covariance}(object)
+\S4method{getUpper}{Covariance}(object)
+\S4method{getLambda}{Covariance}(object)
+\S4method{getLambdat.dp}{Covariance}(object)
+\S4method{getLambdat.i}{Covariance}(object)
+\S4method{getVC}{Covariance}(object)
+\S4method{getVCNames}{Covariance}(object, cnm, gnm)
+\S4method{setVC}{Covariance}(object, vcomp, ccomp)
+\S4method{getProfPar}{Covariance}(object)
+\S4method{setProfPar}{Covariance}(object, value)
+\S4method{getProfLower}{Covariance}(object)
+\S4method{getProfUpper}{Covariance}(object)
+}
+
 \details{
   In matrix notation, a linear mixed model can be represented as:
   \deqn{
@@ -82,39 +107,45 @@ parameters of the correlation component of the covariance matrix. That is,
   \item \code{diag}: should be empty; we only care about the standard deviations.
   \item \code{cs}: \eqn{\rho}
   \item \code{ar1}: \eqn{\rho}
-}
-  \describe{
-    \item{\code{getPar}}{The vector of parameters that the optimizer cares 
-    about; contains \code{c(vcomp, ccomp)}.}
-    \item{\code{getParLength}}{Obtains the length of par.}
-    \item{\code{getParNames}}{TODO.}
-    \item{\code{setPar}}{Sets the value of par.}
-    \item{\code{getTheta}}{Obtains the variance-component parameter. These are 
-    also the column-wise elements of \code{Lambda}, or the row-wise elements of
-    \code{t(Lambda)}.}
-    \item{\code{getThetaLength}}{Obtains the length of the variance-component 
-    parameter.}
-    \item{\code{getThetaNames}}{TODO.}
-    \item{\code{getThetaIndex}}{TODO.}
-    \item{\code{getThetaIndexLength}}{TODO.}
-    \item{\code{setTheta}}{Sets the value of the variance-component parameter.}
-    \item{\code{getLower}}{Retrieves the lower bound for \code{vcomp} and 
-    \code{ccomp}, in that order.}
-    \item{\code{getUpper}}{Retrieves the upper bound for \code{vcomp} and 
-    \code{ccomp}, in that order.}
-    \item{\code{getLambda}}{The relative covariance factor.}
-    \item{\code{getLambdat.dp}}{TODO.}
-    \item{\code{getLambda.i}}{TODO.}
-    \item{\code{getVC}}{Retrieves both \code{vcomp} and \code{ccomp}.}
-    \item{\code{getVCNames}}{TODO.}
-    \item{\code{setVC}}{Sets the values for VC, which is composed of \code{vcomp}
-    and \code{ccomp}.}
-    \item{\code{getProfPar}}{TODO.}
-    \item{\code{setProfPar}}{TODO.}
-    \item{\code{getProfLower}}{TODO.}
-    \item{\code{getProfUpper}}{TODO.}
   }
 }
+
+
+
+\section{S4 Methods}{
+\describe{
+    \item{\code{getPar}:}{The vector of parameters that the optimizer cares 
+    about; contains \code{c(vcomp, ccomp)}.}
+    \item{\code{getParLength}:}{Obtains the length of par.}
+    \item{\code{getParNames}:}{TODO.}
+    \item{\code{setPar}:}{Sets the value of par.}
+    \item{\code{getTheta}:}{Obtains the variance-component parameter. These are 
+    also the column-wise elements of \code{Lambda}, or the row-wise elements of
+    \code{t(Lambda)}.}
+    \item{\code{getThetaLength}:}{Obtains the length of the variance-component 
+    parameter.}
+    \item{\code{getThetaNames}:}{TODO.}
+    \item{\code{getThetaIndex}:}{TODO.}
+    \item{\code{getThetaIndexLength}:}{TODO.}
+    \item{\code{setTheta}:}{Sets the value of the variance-component parameter.}
+    \item{\code{getLower}:}{Retrieves the lower bound for \code{vcomp} and 
+    \code{ccomp}, in that order.}
+    \item{\code{getUpper}:}{Retrieves the upper bound for \code{vcomp} and 
+    \code{ccomp}, in that order.}
+    \item{\code{getLambda}:}{The relative covariance factor.}
+    \item{\code{getLambdat.dp}:}{TODO.}
+    \item{\code{getLambda.i}:}{TODO.}
+    \item{\code{getVC}:}{Retrieves both \code{vcomp} and \code{ccomp}.}
+    \item{\code{getVCNames}:}{TODO.}
+    \item{\code{setVC}:}{Sets the values for VC, which is composed of \code{vcomp}
+    and \code{ccomp}.}
+    \item{\code{getProfPar}:}{TODO.}
+    \item{\code{setProfPar}:}{TODO.}
+    \item{\code{getProfLower}:}{TODO.}
+    \item{\code{getProfUpper}:}{TODO.}
+  }
+}
+
 
 \examples{
 ## Unstructured
