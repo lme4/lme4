@@ -13,11 +13,25 @@ g0 <- glmer(incidence/size ~ period + (1|herd), cbpp,
 pg0 <- profile(g0)
 xyplot(pg0)
 
-m3 <- lmer(Reaction ~ Days + cs(Days | Subject), sleepstudy)
-p3 <- profile(m3)
+library(lme4)
+m3 <- lmer(Reaction ~ Days + cs(Days | Subject), sleepstudy,
+           verbose = 100)
+m3M <- refitML(m3)
+d0 <- getME(m3M, "devfun")
+p0 <- getPar(m3M)
+dd <- devfun2(m3)
+## devfun2 attribute same as m3M parameters?
+stopifnot(identical(attr(dd, "paropt"), p0))
+## -2logL equal to refitML model applied to params?
+stopifnot(all.equal(-2*c(logLik(m3M)), d0(p0)))
+## basedev attribute correctly stored?
+stopifnot(all.equal(-2*c(logLik(m3M)), attr(dd, "basedev")))
+(newdev <- dd(attr(dd, "optimum")[1:4]))  ## 1763.361
+(base <- attr(dd, "basedev")) ## [1] 1751.939
+abs(newdev/base - 1)  ## 0.0065
 
 
-dd <- devfun2(m1)
+
 par1 <- c(16.066, 4.744, 0.955, 27.525)
 mkpar <- function(rho) { par1[3] <- rho; par1 }
 dd(par1)
