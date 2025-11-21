@@ -891,10 +891,6 @@ setMethod("setVC",
                   S <- diag(1, nc, nc)
                   S[i0] <- ccomp
                   (semichol(S) * rep(vcomp, each = nc))[i1]
-                  ## FIXME:
-                  ## If 'S' is positive semidefinite and not positive
-                  ## definite, then semichol(S) is not upper triangular
-                  ## and we are putting garbage into the 'par' slot.
               }
               object
           })
@@ -1278,15 +1274,15 @@ function (reCovs = getReCovs(object), object)
     !all(vapply(reCovs, is, FALSE, "Covariance.us"))
 
 semichol <-
-function (x, tol = -1, etol = 256 * .Machine$double.eps, type = "O") {
-    R <- tryCatch(
-        chol(x),
-        error = function (e) suppressWarnings(chol(x, pivot = TRUE, tol = tol)))
-    r <- attr(R, "rank")
-    if (is.null(r))
+if (FALSE) {
+function (x, tol = -1, etol = 256 * .Machine$double.neg.eps, type = "O") {
+    R <- tryCatch(chol(x), error = function (e) NULL)
+    if (!is.null(R))
         return(R)
+    R <- suppressWarnings(chol(x, pivot = TRUE, tol = tol))
+    r <- attr(R, "rank")
     p <- order(attr(R, "pivot"))
-    n <- nrow(x)
+    n <- ncol(x)
     if (r < n) {
         j <- (r + 1L):n
         R[j, j] <- 0
@@ -1297,11 +1293,26 @@ function (x, tol = -1, etol = 256 * .Machine$double.eps, type = "O") {
         x[sequence.default(from = 2L:n, by = n, nvec = j)] <-
             x[sequence.default(from = j * n + 1L, nvec = j)]
     }
-    e <- norm(x - crossprod(RP), type = type)/norm(x, type = type)
-    if (is.na(e) || e >= etol)
+    e <- norm(x - crossprod(RP), type = type)
+    if (is.na(e) || e > etol * norm(x, type = type))
         stop(gettextf("'%s' is not positive semidefinite", "x"),
              domain = NA)
-    RP
+    RP # upper triangular if and only if is.unsorted(p) is TRUE
+}
+} else {
+function (x, tol = 256 * .Machine$double.neg.eps) {
+    R <- tryCatch(chol(x), error = function (e) NULL)
+    if (!is.null(R))
+        return(R)
+    e <- eigen(t(x), symmetric = TRUE)
+    r <- range(e$values)
+    if (r[2L] < 0 || r[1L] < -tol * r[2L])
+        stop(gettextf("'%s' is not positive semidefinite", "x"),
+             domain = NA)
+    if (r[1L] < 0)
+        e$values[e$values < 0] <- 0
+    qr.R(qr(sqrt(e$values) * t(e$vectors))) # upper triangular
+}
 }
 
 
