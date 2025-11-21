@@ -44,6 +44,11 @@
 	\code{vignette("autoscale", package = "lme4")}
 	for details (wish of GH #227, although at present only predictor
 	variables can be scaled)
+	\item \code{isSingular()} is now an S3 generic. The method 
+    \code{isSingular.merMod()} supports both the original Cholesky-based check 
+    and a new determinant-based check via the \code{method = c("cholesky", 
+    "det")} argument. The default remains \code{"cholesky"} for backward 
+    compatibility.
       } % itemize
   } % new features
   \subsection{USER-VISIBLE CHANGES}{
