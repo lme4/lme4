@@ -44,7 +44,7 @@ nlmer(formula, data = NULL, control = nlmerControl(),
       \item{nlpars}{required numeric vector of starting values for the
 	nonlinear model parameters}
       \item{theta}{optional numeric vector of starting values for the
-	covariance parameters}
+	covariance parameters} % FIXME: currently it is not used
     }
   }
   \item{verbose}{integer scalar.  If \code{> 0} verbose output is

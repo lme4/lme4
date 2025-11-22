@@ -354,13 +354,9 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     checkCtrlLevels(cstr,control[[cstr]])
     denv <- checkFormulaData(formula, data,
                              checkLHS = control$check.formula.LHS == "stop")
-    #mc$formula <- formula <- as.formula(formula,env=denv) ## substitute evaluated call
     formula <- as.formula(formula, env=denv)
     ## as.formula ONLY sets environment if not already explicitly set.
     ## ?? environment(formula) <- denv
-    # get rid of || terms so update() works as expected
-    RHSForm(formula) <- reformulas::expandDoubleVerts(RHSForm(formula))
-    mc$formula <- formula
 
     ## (DRY! copied from glFormula)
     m <- match(c("data", "subset", "weights", "na.action", "offset"),
@@ -368,8 +364,15 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     mf <- mf[c(1L, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- quote(stats::model.frame)
-    fr.form <- reformulas::subbars(formula) # substitute "|" by "+"
-    environment(fr.form) <- environment(formula)
+
+    specials <- c("us", "diag", "cs", "ar1")
+    ## substitute  special(x | f)  with  (x | f)
+    fr.form. <- noSpecials(formula, specials = specials, delete = FALSE)
+    ## substitute  (x | f)  and  (x || f)  with  (x + f)
+    fr.form <- sub_specials(fr.form., specials = c("|", "||"),
+                            keep_args = c(2L, 2L))
+    environment(fr.form.) <- environment(fr.form) <-
+        environment(formula)
     ## model.frame.default looks for these objects in the environment
     ## of the *formula* (see 'extras', which is anything passed in '...'),
     ## so they have to be put there:
@@ -387,7 +390,20 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     attr(fr,"offset") <- mf$offset
     n <- nrow(fr)
     ## random effects and terms modules
-    reTrms <- reformulas::mkReTrms(reformulas::findbars(RHSForm(formula)), fr)
+    ## get list of calls whose first argument is a call to '|'
+    ##                x | f  ->      us(x | f)
+    ##     nonspecial(x | f) ->      us(x | f)
+    ##        special(x | f) -> special(x | f)
+    bb1 <- findbars_x(formula, specials = specials,
+                      default.special = "us", target = "|",
+                      expand_doublevert_method = "diag_special")
+    bb0 <- lapply(bb1, `[[`, 2L)
+    reTrms <- reformulas::mkReTrms(bb0, fr, calc.lambdat = FALSE)
+    reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
+    ## If there is a covariance structure; ignore the check nobs.vs.nRE
+    if(anyStructured(reTrms$reCovs)){
+      control$check.nobs.vs.nRE <- "ignore"
+    }
     wmsgNlev <- checkNlevels(reTrms$flist, n=n, control)
     wmsgZdims <- checkZdims(reTrms$Ztlist, n=n, control, allow.n=FALSE)
     if (anyNA(reTrms$Zt)) {
@@ -400,7 +416,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     wmsgZrank <- checkZrank(reTrms$Zt, n=n, control, nonSmall = 1e6)
 
     ## fixed-effects model matrix X - remove random effect parts from formula:
-    fixedform <- formula
+    fixedform <- fr.form.
     RHSForm(fixedform) <- reformulas::nobars(RHSForm(fixedform))
     mf$formula <- fixedform
     ## re-evaluate model frame to extract predvars component
@@ -413,8 +429,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 
     ## ran-effects model frame (for predvars)
     ## important to COPY formula (and its environment)?
-    ranform <- formula
-    RHSForm(ranform) <- reformulas::subbars(RHSForm(reOnly(formula)))
+    ranform <- fr.form.
+    RHSForm(ranform) <- reformulas::subbars(RHSForm(reOnly(ranform)))
     mf$formula <- ranform
     ranfr <- eval(mf, parent.frame())
     attr(attr(fr,"terms"), "predvars.random") <-
@@ -449,64 +465,84 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 }
 
 ## utility f'n for checking starting values
-getStart <- function(start, pred, returnVal = c("theta","all")) {
-    returnVal <- match.arg(returnVal)
-    doFixef <- returnVal == "all"
+getStart <- function(start, rho, nAGQ) {
     ## default values
-    theta <- pred$theta
-    fixef <- pred$delb
-    if (is.numeric(start)) {
-        theta <- start
-    } else if (is.list(start)) {
-        if (!all(vapply(start, is.numeric, NA)))
-            stop("all elements of start must be numeric")
-        if (length((badComp <- setdiff(names(start), c("theta","fixef")))) > 0)
-            stop("incorrect components in start list: ", badComp)
-        if (!is.null(start$theta)) theta <- start$theta
-        if (doFixef) {
-            noBeta <- is.null(start$beta)
-            if(!is.null(sFE <- start$fixef) || !noBeta) {
-                fixef <-
-                    if(!is.null(sFE)) {
-                        if(!noBeta)
-                            message("Starting values for fixed effects coefficients",
-                                    "specified through both 'fixef' and 'beta',",
-                                    "only 'fixef' used")
-                        ## FIXME? accumulating heuristic evidence for drop1()-like case
-                        if((p <- length(fixef)) < length(sFE) && p == ncol(pred$X) &&
-                           is.character(ns <- names(sFE)) &&
-                           all((cnX <- dimnames(pred$X)[[2L]]) %in% ns))
-                            ## take "matching" fixef[] only
-                            sFE[cnX]
-                        else
-                            sFE
-                    }
-                    else if(!noBeta)
-                        start$beta
-            }
-            if (length(fixef)!=length(pred$delb))
-                stop("incorrect number of fixef components (!=",length(pred$delb),")")
+    par <- par0 <- rho$mkPar(rho$pp$theta)
+    fixef <- fixef0 <- rho$pp$delb
+    if (is.null(start))
+        NULL # do nothing
+    else if (is.numeric(start))
+        par <- start
+    else if (is.list(start)) {
+        if (length(start) > 0L && is.null(names(start)))
+            stop(gettextf("'%s' does not have names",
+                          "start"),
+                 domain = NA)
+        valid <- c(c("par", "theta"), if (nAGQ > 0L) c("fixef", "beta"))
+        invalid <- setdiff(names(start), valid)
+        if (length(invalid) > 0L)
+            stop(gettextf("'%s' has invalid names %s",
+                          "start", deparse(invalid)),
+                 domain = NA)
+        if (!all(vapply(start, is.numeric, FALSE)))
+            stop(gettextf("'%s' has non-numeric components",
+                          "start"),
+                 domain = NA)
+        npar <- is.null(start$par)
+        ntheta <- is.null(start$theta)
+        nfixef <- is.null(start$fixef)
+        nbeta <- is.null(start$beta)
+        if (!(npar && ntheta)) {
+            if (!(npar || ntheta))
+                message(gettextf("ignoring %s", "start$theta"),
+                        domain = NA)
+            par <- if (npar) start$theta else start$par
+        }
+        if (!(nfixef && nbeta)) {
+            if (!(nfixef || nbeta))
+                message(gettextf("ignoring %s", "start$beta"),
+                        domain = NA)
+            fixef <-
+            if (nfixef)
+                start$beta
+            else if (length(start$fixef) > length(fixef) &&
+                     !is.null(nms <- names(start$fixef)) &&
+                     ncol(rho$pp$X) == length(fixef) && # ever FALSE?
+                     !is.null(nms. <- colnames(rho$pp$X)) && # ever FALSE?
+                     all(m <- match(nms., nms, 0L)))
+                start$fixef[m]
+            else start$fixef
         }
     }
-    else if (!is.null(start))
-        stop("'start' must be NULL, a numeric vector or named list of such vectors")
-    if (!is.null(start) && length(theta) != length(pred$theta))
-        stop("incorrect number of theta components (!=",length(pred$theta),")")
-
-    if(doFixef) c(theta, fixef) else theta
+    else stop(gettextf("'%s' is not NULL, a numeric vector, or a list",
+                       "start"),
+              domain = NA)
+    if (length(par) != length(par0))
+        stop(gettextf("starting value of '%s' has length not equal to %.0f",
+                      "par", length(par0)),
+             domain = NA)
+    if (length(fixef) != length(fixef0))
+        stop(gettextf("starting value of '%s' has length not equal to %.0f",
+                      "fixef", length(fixef0)),
+             domain = NA)
+    if (nAGQ > 0L) c(par, fixef) else par
 }
 
-## update start
-## should refactor this to
-##  turn numeric start into start=list(theta=start) immediately ??
-updateStart <- function(start, theta) {
-    if (is.numeric(start)) {
-        theta
-    } else {
+updateStart <- function(start, par) {
+    if (is.null(start))
+        start
+    else if (is.numeric(start))
+        par
+    else if (is.list(start)) {
+        if (!is.null(start$par))
+            start$par <- par
         if (!is.null(start$theta))
-            start$theta <- theta
+            start$theta <- par
         start
     }
+    else stop(gettextf("'%s' is not NULL, a numeric vector, or a list",
+                       "start"),
+              domain = NA)
 }
 
 ##' @rdname modular
@@ -555,10 +591,12 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL,
     ## devfun <- mkdevfun(rho, 0L, verbose=verbose, control=control)
 
     ## prevent R CMD check false pos. warnings (in this function only):
-    pp <- resp <- NULL
+    pp <- resp <- mkTheta <- NULL
     rho$lmer_Deviance <- lmer_Deviance
-    devfun <- function(theta)
-        .Call(lmer_Deviance, pp$ptr(), resp$ptr(), as.double(theta))
+    rho$mkPar <- mkMkPar(reTrms$reCovs)
+    rho$mkTheta <- mkMkTheta(reTrms$reCovs)
+    devfun <- function(par)
+        .Call(lmer_Deviance, pp$ptr(), resp$ptr(), mkTheta(as.double(par)))
     environment(devfun) <- rho
 
     # if all random effects are of the form 1|f and starting values not
@@ -580,8 +618,9 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL,
     ## ^^^^^ unused / obfuscation? should the above be rho$pp$setTheta(.) ?
     ## MM: commenting it did not break any of our checks
     if (length(rho$resp$y) > 0)  ## only if non-trivial y
-        devfun(rho$pp$theta) # one evaluation to ensure all values are set
+        devfun(rho$mkPar(rho$pp$theta)) # one evaluation to ensure all values are set
     rho$lower <- reTrms$lower # to be more consistent with mkGlmerDevfun
+    rho$upper <- reTrms$upper
     devfun # this should pass the rho environment implicitly
 }
 
@@ -598,10 +637,14 @@ optimizeLmer <- function(devfun,
                          ...) {
     verbose <- as.integer(verbose)
     rho <- environment(devfun)
+    start <- getStart(start, rho, 0L)
+    lower <- rho$lower
+    upper <- rho$upper
     opt <- optwrap(optimizer,
                    devfun,
-                   getStart(start, rho$pp),
-                   lower=rho$lower,
+                   start,
+                   lower=lower,
+                   upper=upper,
                    control=control,
                    adj=FALSE, verbose=verbose,
                    ...)
@@ -611,21 +654,32 @@ optimizeLmer <- function(devfun,
         ## FIXME: should we be looking at rho$pp$theta or opt$par
         ##  at this point???  in koller example (for getData(13)) we have
         ##   rho$pp$theta=0, opt$par=0.08
-        if (length(bvals <- which(rho$pp$theta==rho$lower)) > 0) {
+        par0 <- rho$mkPar(rho$pp$theta)
+        if (length(wl <- which(par0 == lower)) > 0L |
+            length(wu <- which(par0 == upper)) > 0L) {
             ## *don't* use numDeriv -- cruder but fewer dependencies, no worries
             ##  about keeping to the interior of the allowed space
-            theta0 <- new("numeric",rho$pp$theta) ## 'deep' copy:
-            d0 <- devfun(theta0)
+
+            ## <MJ>
+            ## Removing the following line (hence *not* replacing 'par0'
+            ## with a copy) breaks several tests in ../tests/boundary.R
+            ## and ../tests/lmer-1.R.  OMG ...
+            par0 <- par0 + 0
+            ## [ same is seen in 'check.boundary' ]
+            ## </MJ>
+
+            d0 <- devfun(par0)
             btol <- 1e-5  ## FIXME: make user-settable?
-            bgrad <- sapply(bvals,
-                            function(i) {
-                                bndval <- rho$lower[i]
-                                theta <- theta0
-                                theta[i] <- bndval+btol
-                                (devfun(theta)-d0)/btol
-                            })
+            bgrad <- mapply(function(i, bval, btol) {
+                                par <- par0
+                                par[i] <- bval + btol
+                                (devfun(par) - d0)/btol
+                            },
+                            i = c(wl, wu),
+                            bval = c(lower[wl], upper[wu]),
+                            btol = rep(c(btol, -btol), c(length(wl), length(wu))))
             ## what do I need to do to reset rho$pp$theta to original value???
-            devfun(theta0) ## reset rho$pp$theta after tests
+            devfun(par0) ## reset rho$pp$theta after tests
             ## FIXME: allow user to specify ALWAYS restart if on boundary?
             if (any(is.na(bgrad))) {
                 warning("some gradient components are NA near boundaries, skipping boundary check")
@@ -636,7 +690,9 @@ optimizeLmer <- function(devfun,
                     opt <- optwrap(optimizer,
                                    devfun,
                                    opt$par,
-                                   lower=rho$lower, control=control,
+                                   lower=lower,
+                                   upper=upper,
+                                   control=control,
                                    adj=FALSE, verbose=verbose,
                                    ...)
                 }
@@ -683,7 +739,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
 
     denv <- checkFormulaData(formula, data,
                              checkLHS = control$check.formula.LHS == "stop")
-    mc$formula <- formula <- as.formula(formula, env = denv)    ## substitute evaluated version
+    formula <- as.formula(formula, env = denv) # substitute evaluated version
 
     ## DRY ...
     m <- match(c("data", "subset", "weights", "na.action", "offset",
@@ -691,8 +747,15 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     mf <- mf[c(1L, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- quote(stats::model.frame)
-    fr.form <- reformulas::subbars(formula) # substitute "|" by "+"
-    environment(fr.form) <- environment(formula)
+
+    specials <- c("us", "diag", "cs", "ar1")
+    ## substitute  special(x | f)  with  (x | f)
+    fr.form. <- noSpecials(formula, specials = specials, delete = FALSE)
+    ## substitute  (x | f)  and  (x || f)  with  (x + f)
+    fr.form <- sub_specials(fr.form., specials = c("|", "||"),
+                            keep_args = c(2L, 2L))
+    environment(fr.form.) <- environment(fr.form) <-
+        environment(formula)
     ## model.frame.default looks for these objects in the environment
     ## of the *formula* (see 'extras', which is anything passed in '...'),
     ## so they have to be put there:
@@ -715,7 +778,20 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     }
     n <- nrow(fr)
     ## random effects and terms modules
-    reTrms <- reformulas::mkReTrms(reformulas::findbars(RHSForm(formula)), fr)
+    ## get list of calls whose first argument is a call to '|'
+    ##                x | f  ->      us(x | f)
+    ##     nonspecial(x | f) ->      us(x | f)
+    ##        special(x | f) -> special(x | f)
+    bb1 <- findbars_x(formula, specials = specials,
+                      default.special = "us", target = "|",
+                      expand_doublevert_method = "diag_special")
+    bb0 <- lapply(bb1, `[[`, 2L)
+    reTrms <- reformulas::mkReTrms(bb0, fr, calc.lambdat = FALSE)
+    reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
+    ## If there is a covariance structure; ignore the check nobs.vs.nRE
+    if(anyStructured(reTrms$reCovs)){
+      control$check.nobs.vs.nRE <- "ignore"
+    }
     ## TODO: allow.n = !useSc {see FIXME below}
     wmsgNlev <- checkNlevels(reTrms$ flist, n = n, control, allow.n = TRUE)
     wmsgZdims <- checkZdims(reTrms$Ztlist, n = n, control, allow.n = TRUE)
@@ -728,7 +804,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     ##                "greater than number of obs")
 
     ## fixed-effects model matrix X - remove random effect parts from formula:
-    fixedform <- formula
+    fixedform <- fr.form.
     RHSForm(fixedform) <- reformulas::nobars(RHSForm(fixedform))
     mf$formula <- fixedform
     ## re-evaluate model frame to extract predvars component
@@ -738,8 +814,8 @@ glFormula <- function(formula, data=NULL, family = gaussian,
 
     ## ran-effects model frame (for predvars)
     ## important to COPY formula (and its environment)?
-    ranform <- formula
-    RHSForm(ranform) <- reformulas::subbars(RHSForm(reOnly(formula)))
+    ranform <- fr.form.
+    RHSForm(ranform) <- reformulas::subbars(RHSForm(reOnly(ranform)))
     mf$formula <- ranform
     ranfr <- eval(mf, parent.frame())
     attr(attr(fr,"terms"), "predvars.random") <-
@@ -774,7 +850,9 @@ glFormula <- function(formula, data=NULL, family = gaussian,
 
 ##' @rdname modular
 ##' @export
-mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L,
+mkGlmerDevfun <- function(fr, X, reTrms, family,
+                          nAGQ = if (control$nAGQ0initStep) 0L else 1L,
+                          verbose = 0L,
                           maxit = 100L, control = glmerControl(), ...) {
     stopifnot(length(nAGQ <- as.integer(nAGQ)) == 1L,
               0L <= nAGQ, nAGQ <= 25L)
@@ -791,21 +869,29 @@ mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L,
         mkRespMod(family=family, ...)
     else
         mkRespMod(fr, family=family)
-    nAGQinit <- if(control$nAGQ0initStep) 0L else 1L
+    rho$mkPar <- mkMkPar(reTrms$reCovs)
+    rho$mkTheta <- mkMkTheta(reTrms$reCovs)
     ## allow trivial y
     if (length(y <- rho$resp$y) > 0) {
         checkResponse(y, control$checkControl)
         rho$verbose <- as.integer(verbose)
 
         ## initialize (from mustart)
-        .Call(glmerLaplace, rho$pp$ptr(), rho$resp$ptr(), nAGQinit,
+        .Call(glmerLaplace, rho$pp$ptr(), rho$resp$ptr(), nAGQ > 0L,
               control$tolPwrss, maxit, verbose)
         rho$lp0         <- rho$pp$linPred(1) # each pwrss opt begins at this eta
         rho$pwrssUpdate <- glmerPwrssUpdate
     }
-    rho$lower <- reTrms$lower     # not needed in rho?
-    mkdevfun(rho, nAGQinit, maxit=maxit, verbose=verbose, control=control)
-    ## this should pass the rho environment implicitly
+    devfun <-
+    mkdevfun(rho, 0L, maxit=maxit, verbose=verbose, control=control)
+    if (nAGQ > 0L)
+        updateGlmerDevfun(devfun, reTrms, nAGQ = nAGQ)
+    else {
+        rho$nAGQ  <- 0L
+        rho$lower <- reTrms$lower
+        rho$upper <- reTrms$upper
+        devfun
+    }
 }
 
 
@@ -815,57 +901,63 @@ mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L,
 ##' @param stage optimization stage (1: nAGQ=0, optimize over theta only; 2: nAGQ possibly >0, optimize over theta and beta)
 ##' @export
 optimizeGlmer <- function(devfun,
-                          optimizer = if(stage == 1) "bobyqa" else "Nelder_Mead",
+                          optimizer = if (nAGQ > 0L) "Nelder_Mead" else "bobyqa",
                           restart_edge=FALSE,
                           boundary.tol = formals(glmerControl)$boundary.tol,
                           verbose = 0L,
                           control = list(),
-                          nAGQ = 1L,
-                          stage = 1,
+                          nAGQ = if (missing(stage) || stage == 1L) 0L else 1L,
+                          stage,
                           start = NULL,
                           ...) {
-    ## FIXME: do we need nAGQ here?? or can we clean up?
+    ## FIXME: deprecate 'stage' ... ?
+    if (!missing(stage) && (nAGQ > 0L) != (stage != 1L))
+        stop(gettextf("incompatible '%s' and '%s'", "nAGQ", "stage"),
+             domain = NA)
     verbose <- as.integer(verbose)
     rho <- environment(devfun)
-    if (stage == 1) {
-        start <- getStart(start, rho$pp, "theta")
-        adj <- FALSE
-    } else { ## stage == 2
-        start <- getStart(start, rho$pp, "all")
-        adj <- TRUE
-    }
-    opt <- optwrap(optimizer, devfun, start, rho$lower,
-                   control=control, adj=adj, verbose=verbose,
+    start <- getStart(start, rho, nAGQ)
+    opt <- optwrap(optimizer, devfun, start, lower=rho$lower, upper=rho$upper,
+                   control=control, adj=nAGQ > 0L, verbose=verbose,
                    ...)
-    if (stage == 1) {
-        rho$control <- attr(opt,"control")
-        rho$nAGQ <- nAGQ
-    } else {  ## stage == 2
+    if (nAGQ > 0L)
         rho$resp$setOffset(rho$baseOffset)
-    }
     if (restart_edge) ## FIXME: implement this ...
         stop("restart_edge not implemented for optimizeGlmer yet")
-
     if (boundary.tol > 0) {
         opt <- check.boundary(rho, opt, devfun, boundary.tol)
-        if(stage != 1) rho$resp$setOffset(rho$baseOffset)
+        if (nAGQ > 0L)
+            rho$resp$setOffset(rho$baseOffset)
     }
     opt
 }
 
 check.boundary <- function(rho,opt,devfun,boundary.tol) {
-    bdiff <- rho$pp$theta - rho$lower[seq_along(rho$pp$theta)]
-    if (any(edgevals <- 0 < bdiff & bdiff < boundary.tol)) {
+    par0 <- opt$par
+    lower <- rho$lower
+    upper <- rho$upper
+    dl <- par0 - lower
+    du <- upper - par0
+    if (!is.null(rho$dpars)) {
+        dl <- dl[rho$dpars]
+        du <- du[rho$dpars]
+    }
+    if (length(wl <- which(0 < dl & dl < boundary.tol)) > 0L |
+        length(wu <- which(0 < du & du < boundary.tol)) > 0L) {
         ## try sucessive "close-to-edge parameters" to see
         ## if we can improve by setting them equal to the boundary
-        pp <- opt$par
-        for (i in which(edgevals)) {
-            tmppar <- pp
-            tmppar[i] <- rho$lower[i]
-            if (devfun(tmppar) < opt$fval) pp[i] <- tmppar[i]
+        for (i in wl) {
+            par <- par0
+            par[i] <- lower[i]
+            if (devfun(par) < opt$fval) par0[i] <- par[i]
         }
-        opt$par <- pp
-        opt$fval <- devfun(opt$par)
+        for (i in wu) {
+            par <- par0
+            par[i] <- upper[i]
+            if (devfun(par) < opt$fval) par0[i] <- par[i]
+        }
+        opt$par <- par0
+        opt$fval <- devfun(par0)
         ## re-run to reset (whether successful or not)
         ## FIXME: derivatives, Hessian etc. (and any other
         ## opt messages) *not* recomputed
@@ -883,9 +975,10 @@ updateGlmerDevfun <- function(devfun, reTrms, nAGQ = 1L){
     }
     rho <- environment(devfun)
     rho$nAGQ       <- nAGQ
-    rho$lower      <- c(rho$lower, rep.int(-Inf, length(rho$pp$beta0)))
+    rho$lower      <- c(reTrms$lower, rep.int(-Inf, length(rho$pp$beta0)))
+    rho$upper      <- c(reTrms$upper, rep.int( Inf, length(rho$pp$beta0)))
     rho$lp0        <- rho$pp$linPred(1)
-    rho$dpars      <- seq_along(rho$pp$theta)
+    rho$dpars      <- seq_along(reTrms$lower)
     rho$baseOffset <- forceCopy(rho$resp$offset) # forcing a copy (!)
     rho$GQmat      <- GHrule(nAGQ)
     rho$fac        <- reTrms$flist[[1]]

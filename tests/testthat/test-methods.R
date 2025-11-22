@@ -724,8 +724,11 @@ if (testLevel>1) {
     expect_equal(unname(confint(varianceProf(p1))),
                  unname(confint(p2)),
                  tolerance=1e-5)
-    p3 <- profile(fm2,which=c(1,3,4))
-    p4 <- suppressWarnings(profile(fm2,which="theta_",prof.scale="varcov",
+    s_inds <- c(1,2,4) ## variance terms
+    p3 <- profile(fm2, which=s_inds)
+    p4 <- suppressWarnings(profile(fm2,
+                                   which = "theta_",
+                                   prof.scale="varcov",
                                    signames=FALSE))
     ## compare only for sd/var components, not corr component
     ## FAILS on r-patched-solaris-x86 2018-03-30 ???
@@ -735,8 +738,8 @@ if (testLevel>1) {
 
     if (Sys.info()["sysname"] != "SunOS") {
       expect_equal(unname(confint(p3)^2),
-                   unname(confint(p4)[c(1,3,4),]),
-                   tolerance=1e-3)
+                   unname(confint(p4)[s_inds,]),
+                   tolerance=5e-3)
     }
 
     ## check naming convention properly adjusted

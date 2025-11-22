@@ -11,7 +11,7 @@ copysome <- function(mod, from) {
 ## is "Nelder_Mead" default optimizer?
 isNM <- formals(lmerControl)$optimizer == "Nelder_Mead"
 
-stMsg <- "'start' must be .* a numeric vector .* list"
+stMsg <- "NULL,.*numeric vector,.*list"
 test_that("lmer", {
     frm <- Reaction ~ Days + (Days|Subject)
     ctrl <- lmerControl(optCtrl = list(maxfun= if(isNM) 50 else 100))
@@ -26,7 +26,7 @@ test_that("lmer", {
     suppressWarnings(expect_error(update(x, start = "a"), stMsg))
     ## misspelled
     suppressWarnings(
-        expect_error(update(x,start=list(Theta=c(1,0,1))),"incorrect components")
+        expect_error(update(x,start=list(Theta=c(1,0,1))), "invalid names")
     )
     th0 <- getME(x,"theta")
     y <- suppressWarnings(update(x,start=th0))
@@ -57,7 +57,7 @@ test_that("glmer", {
     expect_equal(x,x2)
     expect_equal(x,x3)
     expect_error(update(x, start="a"), stMsg)
-    expect_error(update(x, start=list(Theta=1)), "bad name\\(s\\)")
+    expect_error(update(x, start=list(Theta=1)), "invalid names")
     ## test fixef/beta synonymy
     x3B <- suppressWarnings(update(x, start=list(beta = rep(1,4))))
     x3C <- suppressWarnings(update(x, start=list(fixef = rep(1,4))))
