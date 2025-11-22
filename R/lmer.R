@@ -46,16 +46,16 @@ lmer <- function(formula, data=NULL, REML = TRUE,
     if (devFunOnly) return(devfun)
     rho <- environment(devfun)
 
-    ## optimize deviance function over covariance parameters
-    if (identical(control$optimizer,"none"))
-      stop("deprecated use of optimizer=='none'; use NULL instead")
-    
     nobs <- nrow(lmod$fr)
     npar <- length(rho$lower)
     calc.derivs <- control$calc.derivs %||%
         (nobs < control$checkConv$check.conv.nobsmax &&
          npar < control$checkConv$check.conv.nparmax)
     
+    if (identical(control$optimizer, "none"))
+        stop("deprecated use of optimizer==\"none\"; use NULL instead")
+
+    ## optimize deviance function over covariance parameters
     opt <- if (length(control$optimizer)==0) {
                s <- getStart(start, rho, 0L)
                list(par=s,fval=devfun(s),
@@ -144,21 +144,19 @@ glmer <- function(formula, data=NULL
     }
 
     ## create deviance function for covariance parameters
-    nAGQinit <- if(control$nAGQ0initStep) 0L else 1L
+    nAGQinit <- if (control$nAGQ0initStep) 0L else nAGQ
     glmod.. <- list(nAGQ=nAGQinit, verbose=verbose, control=control)
     devfun <- do.call(mkGlmerDevfun, c(glmod, glmod..))
-    if (nAGQ==0 && devFunOnly) return(devfun)
+    if (devFunOnly && nAGQ == 0L) return(devfun)
     rho <- environment(devfun)
-    calc.derivs <- FALSE
 
-    ## optimize deviance function over covariance parameters
-
-    ## FIX ME: allow calc.derivs, use.last.params etc. if nAGQ=0
-    if(control$nAGQ0initStep) {
+    if (nAGQinit == 0L) {
         start0 <-
-        if (is.list(start) && !is.null(names(start)))
+        if (nAGQ > 0L && is.list(start) && !is.null(names(start)))
             start[!names(start) %in% c("fixef", "beta")]
         else start
+        ## optimize deviance function over covariance parameters
+        ## FIXME: allow calc.derivs, use.last.params, etc. if nAGQ=0
         opt <- optimizeGlmer(devfun,
                              optimizer = control$optimizer[[1]],
                              ## DON'T try fancy edge tricks unless nAGQ=0 explicitly set
@@ -169,31 +167,24 @@ glmer <- function(formula, data=NULL
                              nAGQ = 0,
                              verbose=verbose,
                              calc.derivs=FALSE)
-    }
-    
-    ## Note to self: length(opt) works for the theta parameters...
-    
-    if(nAGQ > 0L) {
 
-
-        ## update deviance function to include fixed effects as inputs
+        if (nAGQ > 0L) {
+        ## update deviance function to include fixed effects
         devfun <- updateGlmerDevfun(devfun, glmod$reTrms, nAGQ = nAGQ)
         if (devFunOnly) return(devfun)
-
-        if (control$nAGQ0initStep) {
-            start <- updateStart(start, par = opt$par)
+        start <- updateStart(start, par = opt$par)
         }
-        ## if nAGQ0 was skipped
-        ## we don't actually need to do anything here, it seems --
-        ## getStart gets called again in optimizeGlmer
+    }
 
-        nobs <- nrow(glmod$fr)
-        npar <- length(rho$lower)
-        calc.derivs <- control$calc.derivs %||%
-            (nobs < control$checkConv$check.conv.nobsmax &&
-             npar < control$checkConv$check.conv.nparmax)
+    nobs <- nrow(glmod$fr)
+    npar <- length(rho$lower)
+    calc.derivs <- control$calc.derivs %||%
+        (nobs < control$checkConv$check.conv.nobsmax &&
+         npar < control$checkConv$check.conv.nparmax)
 
-        ## reoptimize deviance function over covariance parameters and fixed effects
+    if (nAGQ > 0L)
+        ## optimize deviance function over covariance parameters and
+        ## fixed effects
         opt <- optimizeGlmer(devfun,
                              optimizer = control$optimizer[[2]],
                              restart_edge=control$restart_edge,
@@ -204,7 +195,7 @@ glmer <- function(formula, data=NULL
                              verbose = verbose,
                              calc.derivs=calc.derivs,
                              use.last.params=control$use.last.params)
-    }
+
     cc <- if (!calc.derivs) NULL else {
         if (verbose > 10) cat("checking convergence\n")
         checkConv(attr(opt,"derivs"),opt$par,
