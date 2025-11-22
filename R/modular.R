@@ -900,7 +900,6 @@ optimizeGlmer <- function(devfun,
                    control=control, adj=adj, verbose=verbose,
                    ...)
     if (stage == 1) {
-        rho$control <- attr(opt,"control")
         rho$nAGQ <- nAGQ
     } else {  ## stage == 2
         rho$resp$setOffset(rho$baseOffset)
@@ -958,10 +957,10 @@ updateGlmerDevfun <- function(devfun, reTrms, nAGQ = 1L){
     }
     rho <- environment(devfun)
     rho$nAGQ       <- nAGQ
-    rho$lower      <- c(rho$lower, rep.int(-Inf, length(rho$pp$beta0)))
-    rho$upper      <- c(rho$upper, rep.int( Inf, length(rho$pp$beta0)))
+    rho$lower      <- c(reTrms$lower, rep.int(-Inf, length(rho$pp$beta0)))
+    rho$upper      <- c(reTrms$upper, rep.int( Inf, length(rho$pp$beta0)))
     rho$lp0        <- rho$pp$linPred(1)
-    rho$dpars      <- seq_len(length(rho$lower) - length(rho$pp$beta0))
+    rho$dpars      <- seq_along(reTrms$lower)
     rho$baseOffset <- forceCopy(rho$resp$offset) # forcing a copy (!)
     rho$GQmat      <- GHrule(nAGQ)
     rho$fac        <- reTrms$flist[[1]]
