@@ -45,16 +45,20 @@ lmer <- function(formula, data=NULL, REML = TRUE,
                       c(lmod,
                         list(start=start, verbose=verbose, control=control)))
     if (devFunOnly) return(devfun)
+    rho <- environment(devfun)
+
     ## optimize deviance function over covariance parameters
-    s <- getStart(start, environment(devfun), 0L)
     if (identical(control$optimizer,"none"))
       stop("deprecated use of optimizer=='none'; use NULL instead")
     
-    calc.derivs <- control$calc.derivs %||% 
-      (nrow(lmod$fr) < control$checkConv$check.conv.nobsmax &
-       length(s)    < control$checkConv$check.conv.nparmax)
+    nobs <- nrow(lmod$fr)
+    npar <- length(rho$lower)
+    calc.derivs <- control$calc.derivs %||%
+        (nobs < control$checkConv$check.conv.nobsmax &&
+         npar < control$checkConv$check.conv.nparmax)
     
     opt <- if (length(control$optimizer)==0) {
+               s <- getStart(start, rho, 0L)
                list(par=s,fval=devfun(s),
                     conv=1000,message="no optimization")
            }  else {
@@ -69,11 +73,11 @@ lmer <- function(formula, data=NULL, REML = TRUE,
            }
     cc <- checkConv(attr(opt,"derivs"), opt$par,
                     ctrl = control$checkConv,
-                    lbound = environment(devfun)$lower,
-                    ubound = environment(devfun)$upper,
-                    nobs = nrow(lmod$fr),
-                    ndim = length(s))
-    mkMerMod(environment(devfun), opt, lmod$reTrms, fr = lmod$fr,
+                    lbound = rho$lower,
+                    ubound = rho$upper,
+                    nobs = nobs,
+                    ndim = npar)
+    mkMerMod(rho, opt, lmod$reTrms, fr = lmod$fr,
              mc = mcout, lme4conv=cc) ## prepare output
 }## { lmer }
 
@@ -140,7 +144,6 @@ glmer <- function(formula, data=NULL
         stop("can't handle matrix-valued responses: consider using refit()")
     }
 
-    calc.derivs <- control$calc.derivs %||% (nrow(glmod$fr) < control$checkConv$check.conv.nobsmax)
     ## create deviance function for covariance parameters (theta)
 
     nAGQinit <- if(control$nAGQ0initStep) 0L else 1L
@@ -148,9 +151,9 @@ glmer <- function(formula, data=NULL
                                                    control = control,
                                                    nAGQ = nAGQinit)))
     if (nAGQ==0 && devFunOnly) return(devfun)
-    
-    pp <- environment(devfun)$pp
-    ppdim <- length(pp$theta) + length(pp$delb)
+    rho <- environment(devfun)
+    calc.derivs <- FALSE
+
     ## optimize deviance function over covariance parameters
 
     ## FIX ME: allow calc.derivs, use.last.params etc. if nAGQ=0
@@ -187,6 +190,12 @@ glmer <- function(formula, data=NULL
         ## we don't actually need to do anything here, it seems --
         ## getStart gets called again in optimizeGlmer
 
+        nobs <- nrow(glmod$fr)
+        npar <- length(rho$lower)
+        calc.derivs <- control$calc.derivs %||%
+            (nobs < control$checkConv$check.conv.nobsmax &&
+             npar < control$checkConv$check.conv.nparmax)
+
         ## reoptimize deviance function over covariance parameters and fixed effects
         opt <- optimizeGlmer(devfun,
                              optimizer = control$optimizer[[2]],
@@ -203,14 +212,14 @@ glmer <- function(formula, data=NULL
         if (verbose > 10) cat("checking convergence\n")
         checkConv(attr(opt,"derivs"),opt$par,
                   ctrl = control$checkConv,
-                  lbound=environment(devfun)$lower,
-                  ubound=environment(devfun)$upper,
-                  nobs = nrow(glmod$fr),
-                  ndim = ppdim)
+                  lbound = rho$lower,
+                  ubound = rho$upper,
+                  nobs = nobs,
+                  ndim = npar)
     }
 
     ## prepare output
-    mkMerMod(environment(devfun), opt, glmod$reTrms, fr = glmod$fr,
+    mkMerMod(rho, opt, glmod$reTrms, fr = glmod$fr,
              mc = mcout, lme4conv=cc)
 
 }## {glmer}
