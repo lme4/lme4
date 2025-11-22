@@ -31,11 +31,12 @@ mkGlmerDevfun(fr, X, reTrms, family, nAGQ = 1L,
               verbose = 0L, maxit = 100L, control = glmerControl(), ...)
 
 optimizeGlmer(devfun,
-    optimizer = if(stage == 1) "bobyqa" else "Nelder_Mead",
+    optimizer = if (nAGQ > 0L) "Nelder_Mead" else "bobyqa",
     restart_edge = FALSE,
     boundary.tol = formals(glmerControl)$boundary.tol,
     verbose = 0L, control = list(),
-    nAGQ = 1L, stage = 1, start = NULL, ...)
+    nAGQ = if (missing(stage) || stage == 1L) 0L else 1L, stage,
+    start = NULL, ...)
 
 updateGlmerDevfun(devfun, reTrms, nAGQ = 1L)
 }

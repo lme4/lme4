@@ -894,33 +894,35 @@ mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L,
 ##' @param stage optimization stage (1: nAGQ=0, optimize over theta only; 2: nAGQ possibly >0, optimize over theta and beta)
 ##' @export
 optimizeGlmer <- function(devfun,
-                          optimizer = if(stage == 1) "bobyqa" else "Nelder_Mead",
+                          optimizer = if (nAGQ > 0L) "Nelder_Mead" else "bobyqa",
                           restart_edge=FALSE,
                           boundary.tol = formals(glmerControl)$boundary.tol,
                           verbose = 0L,
                           control = list(),
-                          nAGQ = 1L,
-                          stage = 1,
+                          nAGQ = if (missing(stage) || stage == 1L) 0L else 1L,
+                          stage,
                           start = NULL,
                           ...) {
-    ## FIXME: do we need nAGQ here?? or can we clean up?
+    ## FIXME: deprecate 'stage' ... ?
+    if (!missing(stage) && (nAGQ > 0L) != (stage != 1L))
+        stop(gettextf("incompatible '%s' and '%s'", "nAGQ", "stage"),
+             domain = NA)
     verbose <- as.integer(verbose)
     rho <- environment(devfun)
-    start <- getStart(start, rho, if (stage == 1) 0L else 1L)
+    start <- getStart(start, rho, nAGQ)
     opt <- optwrap(optimizer, devfun, start, lower=rho$lower, upper=rho$upper,
-                   control=control, adj=stage != 1, verbose=verbose,
+                   control=control, adj=nAGQ > 0L, verbose=verbose,
                    ...)
-    if (stage == 1) {
-        rho$nAGQ <- nAGQ
-    } else {  ## stage == 2
+    if (nAGQ > 0L)
         rho$resp$setOffset(rho$baseOffset)
-    }
+    else rho$nAGQ <- nAGQ
     if (restart_edge) ## FIXME: implement this ...
         stop("restart_edge not implemented for optimizeGlmer yet")
 
     if (boundary.tol > 0) {
         opt <- check.boundary(rho, opt, devfun, boundary.tol)
-        if(stage != 1) rho$resp$setOffset(rho$baseOffset)
+        if (nAGQ > 0L)
+            rho$resp$setOffset(rho$baseOffset)
     }
     opt
 }

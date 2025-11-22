@@ -196,7 +196,6 @@ glmer <- function(formula, data=NULL
                              start=start,
                              nAGQ=nAGQ,
                              verbose = verbose,
-                             stage=2,
                              calc.derivs=calc.derivs,
                              use.last.params=control$use.last.params)
     }
