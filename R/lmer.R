@@ -40,10 +40,9 @@ lmer <- function(formula, data=NULL, REML = TRUE,
         stop("can't handle matrix-valued responses: consider using refit()")
     }
 
-    ## create deviance function for covariance parameters (theta)
-    devfun <- do.call(mkLmerDevfun,
-                      c(lmod,
-                        list(start=start, verbose=verbose, control=control)))
+    ## create deviance function for covariance parameters
+    lmod.. <- list(start=start, verbose=verbose, control=control)
+    devfun <- do.call(mkLmerDevfun, c(lmod, lmod..))
     if (devFunOnly) return(devfun)
     rho <- environment(devfun)
 
@@ -144,12 +143,10 @@ glmer <- function(formula, data=NULL
         stop("can't handle matrix-valued responses: consider using refit()")
     }
 
-    ## create deviance function for covariance parameters (theta)
-
+    ## create deviance function for covariance parameters
     nAGQinit <- if(control$nAGQ0initStep) 0L else 1L
-    devfun <- do.call(mkGlmerDevfun, c(glmod, list(verbose = verbose,
-                                                   control = control,
-                                                   nAGQ = nAGQinit)))
+    glmod.. <- list(nAGQ=nAGQinit, verbose=verbose, control=control)
+    devfun <- do.call(mkGlmerDevfun, c(glmod, glmod..))
     if (nAGQ==0 && devFunOnly) return(devfun)
     rho <- environment(devfun)
     calc.derivs <- FALSE
