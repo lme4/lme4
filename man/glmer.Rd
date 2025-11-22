@@ -43,18 +43,20 @@ glmer(formula, data = NULL, family = gaussian
     optimizer to be used and parameters to be passed through to the
     nonlinear optimizer, see the \code{*lmerControl} documentation for
     details.}
-  \item{start}{a named list of starting values for the parameters in the
-    model, or a numeric vector.  A numeric \code{start} argument will be
-    used as the starting value of \code{theta}.  If \code{start} is a
-    list, the \code{theta} element (a numeric vector) is used as the
-    starting value for the first optimization step (default=1 for
-    diagonal elements and 0 for off-diagonal elements of the lower
-    Cholesky factor); the fitted value of \code{theta} from the first
-    step, plus \code{start[["fixef"]]}, are used as starting values for
-    the second optimization step.  If \code{start} has both \code{fixef}
-    and \code{theta} elements, the first optimization step is skipped.
-    For more details or finer control of optimization, see
-    \code{\link{modular}}.}
+  \item{start}{a numeric vector or a named \link{list} with optional
+    components, one named \code{par} or \code{theta} and another named
+    \code{fixef} or \code{beta}, giving starting values for covariance
+    parameters and fixed effect coefficients, respectively.  Numeric
+    \code{start} is equivalent to \code{list(par = start)}.  Parameters
+    corresponding to unstructured covariance matrices are on the scale
+    of the Cholesky factor of the relative covariance matrix.  By
+    default, all relative covariance matrices are identity matrices and
+    all fixed effect coefficients are zero.  If two optimization steps
+    are performed, as by default, then the first step uses starting
+    values \code{par} and the second step uses starting values
+    \code{c(newpar, fixef)}, where \code{newpar} is the optimum obtained
+    in the first step.  See \code{\link{modular}} for details about
+    finer control of optimization.}
   \item{verbose}{integer scalar.  If \code{> 0} verbose output is
     generated during the optimization of the parameter estimates.  If
     \code{> 1} verbose output is generated during the individual

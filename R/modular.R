@@ -465,64 +465,84 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 }
 
 ## utility f'n for checking starting values
-getStart <- function(start, pred, returnVal = c("theta","all")) {
-    returnVal <- match.arg(returnVal)
-    doFixef <- returnVal == "all"
+getStart <- function(start, rho, nAGQ) {
     ## default values
-    theta <- pred$theta
-    fixef <- pred$delb
-    if (is.numeric(start)) {
-        theta <- start
-    } else if (is.list(start)) {
-        if (!all(vapply(start, is.numeric, NA)))
-            stop("all elements of start must be numeric")
-        if (length((badComp <- setdiff(names(start), c("theta","fixef")))) > 0)
-            stop("incorrect components in start list: ", badComp)
-        if (!is.null(start$theta)) theta <- start$theta
-        if (doFixef) {
-            noBeta <- is.null(start$beta)
-            if(!is.null(sFE <- start$fixef) || !noBeta) {
-                fixef <-
-                    if(!is.null(sFE)) {
-                        if(!noBeta)
-                            message("Starting values for fixed effects coefficients",
-                                    "specified through both 'fixef' and 'beta',",
-                                    "only 'fixef' used")
-                        ## FIXME? accumulating heuristic evidence for drop1()-like case
-                        if((p <- length(fixef)) < length(sFE) && p == ncol(pred$X) &&
-                           is.character(ns <- names(sFE)) &&
-                           all((cnX <- dimnames(pred$X)[[2L]]) %in% ns))
-                            ## take "matching" fixef[] only
-                            sFE[cnX]
-                        else
-                            sFE
-                    }
-                    else if(!noBeta)
-                        start$beta
-            }
-            if (length(fixef)!=length(pred$delb))
-                stop("incorrect number of fixef components (!=",length(pred$delb),")")
+    par <- par0 <- rho$mkPar(rho$pp$theta)
+    fixef <- fixef0 <- rho$pp$delb
+    if (is.null(start))
+        NULL # do nothing
+    else if (is.numeric(start))
+        par <- start
+    else if (is.list(start)) {
+        if (length(start) > 0L && is.null(names(start)))
+            stop(gettextf("'%s' does not have names",
+                          "start"),
+                 domain = NA)
+        valid <- c(c("par", "theta"), if (nAGQ > 0L) c("fixef", "beta"))
+        invalid <- setdiff(names(start), valid)
+        if (length(invalid) > 0L)
+            stop(gettextf("'%s' has invalid names %s",
+                          "start", deparse(invalid)),
+                 domain = NA)
+        if (!all(vapply(start, is.numeric, FALSE)))
+            stop(gettextf("'%s' has non-numeric components",
+                          "start"),
+                 domain = NA)
+        npar <- is.null(start$par)
+        ntheta <- is.null(start$theta)
+        nfixef <- is.null(start$fixef)
+        nbeta <- is.null(start$beta)
+        if (!(npar && ntheta)) {
+            if (!(npar || ntheta))
+                message(gettextf("ignoring %s", "start$theta"),
+                        domain = NA)
+            par <- if (npar) start$theta else start$par
+        }
+        if (!(nfixef && nbeta)) {
+            if (!(nfixef || nbeta))
+                message(gettextf("ignoring %s", "start$beta"),
+                        domain = NA)
+            fixef <-
+            if (nfixef)
+                start$beta
+            else if (length(start$fixef) > length(fixef) &&
+                     !is.null(nms <- names(start$fixef)) &&
+                     ncol(rho$pp$X) == length(fixef) && # ever FALSE?
+                     !is.null(nms. <- colnames(rho$pp$X)) && # ever FALSE?
+                     all(m <- match(nms., nms, 0L)))
+                start$fixef[m]
+            else start$fixef
         }
     }
-    else if (!is.null(start))
-        stop("'start' must be NULL, a numeric vector or named list of such vectors")
-    if (!is.null(start) && length(theta) != length(pred$theta))
-        stop("incorrect number of theta components (!=",length(pred$theta),")")
-
-    if(doFixef) c(theta, fixef) else theta
+    else stop(gettextf("'%s' is not NULL, a numeric vector, or a list",
+                       "start"),
+              domain = NA)
+    if (length(par) != length(par0))
+        stop(gettextf("starting value of '%s' has length not equal to %.0f",
+                      "par", length(par0)),
+             domain = NA)
+    if (length(fixef) != length(fixef0))
+        stop(gettextf("starting value of '%s' has length not equal to %.0f",
+                      "fixef", length(fixef0)),
+             domain = NA)
+    if (nAGQ > 0L) c(par, fixef) else par
 }
 
-## update start
-## should refactor this to
-##  turn numeric start into start=list(theta=start) immediately ??
-updateStart <- function(start, theta) {
-    if (is.numeric(start)) {
-        theta
-    } else {
+updateStart <- function(start, par) {
+    if (is.null(start))
+        start
+    else if (is.numeric(start))
+        par
+    else if (is.list(start)) {
+        if (!is.null(start$par))
+            start$par <- par
         if (!is.null(start$theta))
-            start$theta <- theta
+            start$theta <- par
         start
     }
+    else stop(gettextf("'%s' is not NULL, a numeric vector, or a list",
+                       "start"),
+              domain = NA)
 }
 
 ##' @rdname modular
@@ -617,11 +637,12 @@ optimizeLmer <- function(devfun,
                          ...) {
     verbose <- as.integer(verbose)
     rho <- environment(devfun)
+    start <- getStart(start, rho, 0L)
     lower <- rho$lower
     upper <- rho$upper
     opt <- optwrap(optimizer,
                    devfun,
-                   rho$mkPar(getStart(start, rho$pp)),
+                   start,
                    lower=lower,
                    upper=upper,
                    control=control,
@@ -885,19 +906,9 @@ optimizeGlmer <- function(devfun,
     ## FIXME: do we need nAGQ here?? or can we clean up?
     verbose <- as.integer(verbose)
     rho <- environment(devfun)
-    if (stage == 1) {
-        start <- getStart(start, rho$pp, "theta")
-        adj <- FALSE
-        par <- rho$mkPar(start)
-    } else { ## stage == 2
-        start <- getStart(start, rho$pp, "all")
-        adj <- TRUE
-        theta <- start[seq_along(rho$pp$theta)]
-        beta0 <- start[length(theta) + seq_along(rho$pp$beta0)]
-        par <- c(rho$mkPar(theta), beta0)
-    }
-    opt <- optwrap(optimizer, devfun, par, lower=rho$lower, upper=rho$upper,
-                   control=control, adj=adj, verbose=verbose,
+    start <- getStart(start, rho, if (stage == 1) 0L else 1L)
+    opt <- optwrap(optimizer, devfun, start, lower=rho$lower, upper=rho$upper,
+                   control=control, adj=stage != 1, verbose=verbose,
                    ...)
     if (stage == 1) {
         rho$nAGQ <- nAGQ

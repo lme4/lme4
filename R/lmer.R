@@ -46,7 +46,7 @@ lmer <- function(formula, data=NULL, REML = TRUE,
                         list(start=start, verbose=verbose, control=control)))
     if (devFunOnly) return(devfun)
     ## optimize deviance function over covariance parameters
-    s <- getStart(start, environment(devfun)$pp)
+    s <- getStart(start, environment(devfun), 0L)
     if (identical(control$optimizer,"none"))
       stop("deprecated use of optimizer=='none'; use NULL instead")
     
@@ -153,35 +153,19 @@ glmer <- function(formula, data=NULL
     ppdim <- length(pp$theta) + length(pp$delb)
     ## optimize deviance function over covariance parameters
 
-    ## FIXME: perhaps should be in glFormula instead??
-    if (is.list(start)) {
-      start.bad <- setdiff(names(start), c("theta","fixef", "beta"))
-      if (length(start.bad)>0) {
-        stop(sprintf("bad name(s) for start vector (%s); should be from {%s, %s, %s}",
-                     paste(start.bad,collapse=", "),
-                     shQuote("theta"),
-                     shQuote("fixef"),
-                     shQuote("beta")),
-             call.=FALSE)
-      }
-      ## rename beta -> fixef internally
-      if ("beta" %in% names(start)) {
-        names(start)[names(start) == "beta"] <- "fixef"
-      }
-      if (!is.null(start$fixef) && nAGQ==0) {
-        stop("should not specify both start$fixef (or $beta) and nAGQ==0")
-      }
-    }
-
     ## FIX ME: allow calc.derivs, use.last.params etc. if nAGQ=0
     if(control$nAGQ0initStep) {
+        start0 <-
+        if (is.list(start) && !is.null(names(start)))
+            start[!names(start) %in% c("fixef", "beta")]
+        else start
         opt <- optimizeGlmer(devfun,
                              optimizer = control$optimizer[[1]],
                              ## DON'T try fancy edge tricks unless nAGQ=0 explicitly set
                              restart_edge=if (nAGQ==0) control$restart_edge else FALSE,
                              boundary.tol=if (nAGQ==0) control$boundary.tol else 0,
                              control = control$optCtrl,
-                             start=start,
+                             start = start0,
                              nAGQ = 0,
                              verbose=verbose,
                              calc.derivs=FALSE)
@@ -197,8 +181,7 @@ glmer <- function(formula, data=NULL
         if (devFunOnly) return(devfun)
 
         if (control$nAGQ0initStep) {
-            theta <- environment(devfun)$mkTheta(opt$par)
-            start <- updateStart(start, theta = theta)
+            start <- updateStart(start, par = opt$par)
         }
         ## if nAGQ0 was skipped
         ## we don't actually need to do anything here, it seems --
