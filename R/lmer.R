@@ -2147,11 +2147,10 @@ getME.merMod <- function(object,
                    reTrms$lower <- getLower(object)
                    reTrms$upper <- getUpper(object)
                    reTrms$reCovs <- reCovs
-                   d1 <- mkGlmerDevfun(object@frame, getME(object,"X"),
-                                       reTrms=reTrms, family(object),
-                                       verbose=verbose)
-                   nAGQ <- object@devcomp$dims[["nAGQ"]]
-                   updateGlmerDevfun(d1, reTrms, nAGQ=nAGQ)
+                   mkGlmerDevfun(object@frame, X=getME(object, "X"),
+                                 reTrms=reTrms, family=family(object),
+                                 nAGQ=object@devcomp$dims[["nAGQ"]],
+                                 verbose=verbose)
                } else {
                    ## copied from refit ... DRY ...
                    devlist <- list(pp=PR, resp=rsp,

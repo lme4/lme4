@@ -27,7 +27,8 @@ glFormula(formula, data = NULL, family = gaussian,
     subset, weights, na.action, offset, contrasts = NULL,
     start, mustart, etastart, control = glmerControl(), ...)
 
-mkGlmerDevfun(fr, X, reTrms, family, nAGQ = 1L,
+mkGlmerDevfun(fr, X, reTrms, family,
+              nAGQ = if (control$nAGQ0initStep) 0L else 1L,
               verbose = 0L, maxit = 100L, control = glmerControl(), ...)
 
 optimizeGlmer(devfun,

@@ -850,7 +850,9 @@ glFormula <- function(formula, data=NULL, family = gaussian,
 
 ##' @rdname modular
 ##' @export
-mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L,
+mkGlmerDevfun <- function(fr, X, reTrms, family,
+                          nAGQ = if (control$nAGQ0initStep) 0L else 1L,
+                          verbose = 0L,
                           maxit = 100L, control = glmerControl(), ...) {
     stopifnot(length(nAGQ <- as.integer(nAGQ)) == 1L,
               0L <= nAGQ, nAGQ <= 25L)
@@ -869,22 +871,27 @@ mkGlmerDevfun <- function(fr, X, reTrms, family, nAGQ = 1L, verbose = 0L,
         mkRespMod(fr, family=family)
     rho$mkPar <- mkMkPar(reTrms$reCovs)
     rho$mkTheta <- mkMkTheta(reTrms$reCovs)
-    nAGQinit <- if(control$nAGQ0initStep) 0L else 1L
     ## allow trivial y
     if (length(y <- rho$resp$y) > 0) {
         checkResponse(y, control$checkControl)
         rho$verbose <- as.integer(verbose)
 
         ## initialize (from mustart)
-        .Call(glmerLaplace, rho$pp$ptr(), rho$resp$ptr(), nAGQinit,
+        .Call(glmerLaplace, rho$pp$ptr(), rho$resp$ptr(), nAGQ > 0L,
               control$tolPwrss, maxit, verbose)
         rho$lp0         <- rho$pp$linPred(1) # each pwrss opt begins at this eta
         rho$pwrssUpdate <- glmerPwrssUpdate
     }
-    rho$lower <- reTrms$lower     # not needed in rho?
-    rho$upper <- reTrms$upper
-    mkdevfun(rho, nAGQinit, maxit=maxit, verbose=verbose, control=control)
-    ## this should pass the rho environment implicitly
+    devfun <-
+    mkdevfun(rho, 0L, maxit=maxit, verbose=verbose, control=control)
+    if (nAGQ > 0L)
+        updateGlmerDevfun(devfun, reTrms, nAGQ = nAGQ)
+    else {
+        rho$nAGQ  <- 0L
+        rho$lower <- reTrms$lower
+        rho$upper <- reTrms$upper
+        devfun
+    }
 }
 
 
@@ -915,10 +922,8 @@ optimizeGlmer <- function(devfun,
                    ...)
     if (nAGQ > 0L)
         rho$resp$setOffset(rho$baseOffset)
-    else rho$nAGQ <- nAGQ
     if (restart_edge) ## FIXME: implement this ...
         stop("restart_edge not implemented for optimizeGlmer yet")
-
     if (boundary.tol > 0) {
         opt <- check.boundary(rho, opt, devfun, boundary.tol)
         if (nAGQ > 0L)
