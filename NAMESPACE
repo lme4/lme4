@@ -299,6 +299,8 @@ importFrom(reformulas,mkReTrms)
 export(mkReTrms)
 importFrom(reformulas,isNested)
 export(isNested)
+importFrom(reformulas, expandDoubleVerts)
+export(expandDoubleVerts)
 ## 
 export(namedList)
 importFrom(rlang, warn)

@@ -63,6 +63,9 @@ Suggests:
     semEff,
     tibble,
     merDeriv
+Enhances:
+    DHARMa,
+    performance
 VignetteBuilder: knitr
 LazyData: yes
 License: GPL (>=2)
