@@ -13,24 +13,32 @@ g0 <- glmer(incidence/size ~ period + (1|herd), cbpp,
 pg0 <- profile(g0)
 xyplot(pg0)
 
-library(lme4)
-m3 <- lmer(Reaction ~ Days + cs(Days | Subject), sleepstudy,
-           verbose = 100)
-m3M <- refitML(m3)
-d0 <- getME(m3M, "devfun")
-p0 <- getPar(m3M)
-dd <- devfun2(m3)
-## devfun2 attribute same as m3M parameters?
-stopifnot(identical(attr(dd, "paropt"), p0))
-## -2logL equal to refitML model applied to params?
-stopifnot(all.equal(-2*c(logLik(m3M)), d0(p0)))
-## basedev attribute correctly stored?
-stopifnot(all.equal(-2*c(logLik(m3M)), attr(dd, "basedev")))
-(newdev <- dd(attr(dd, "optimum")[1:4]))  ## 1763.361
-(base <- attr(dd, "basedev")) ## [1] 1751.939
-abs(newdev/base - 1)  ## 0.0065
+m3 <- lmer(Reaction ~ Days + cs(Days | Subject), sleepstudy)
+p3 <- profile(m3)
+## fits sig01, fixed effects, fails on others.
+with(p3, table(is.na(.zeta), .par))
+
+## appears to be an issue with behaving correctly when hitting cor = 1.0 on the lower branch?
+## on the last step that works we get
+##
+## [10,] -3.96331234  4.238963 5.894648 1.00000000 28.32257         NaN      NaN
+##
+## (cor = 1, we get .zeta OK, but fixed effects are NaN?)
+
+## then (I think) internals of @pp get corrupted, return NaN on next call ...
+
+## check
+## 5: In sqrt(1 - rho2 * a) : NaNs produced
+xyplot(as.data.frame(p3), .zeta ~ .focal | .par, scale = "free")
+
+## but this works ...
+## is something getting corrupted?
+p3_2 <- profile(m3, which = 2)
+p3_3 <- profile(m3, which = 3)
+p3_4 <- profile(m3, which = 4)
 
 
+profile(m3)
 
 par1 <- c(16.066, 4.744, 0.955, 27.525)
 mkpar <- function(rho) { par1[3] <- rho; par1 }

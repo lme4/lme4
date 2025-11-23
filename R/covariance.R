@@ -386,7 +386,9 @@ setMethod("getTheta",
                   a[j] <- a.
                   a. <- a. + (1 - rho * a.)^2/(1 - rho2 * a.)
               }
-              v. <- sqrt(1 - rho2 * a)
+              ## some optimizers (bobyqa?) will violate bounds, try abs(rho)>1
+              ## suppress warnings (NaN values will be handled downstream)
+              v. <- suppressWarnings(sqrt(1 - rho2 * a))
               v <- rbind(v., (rho - rho2 * a)/v.)
               if (object@hom)
                   par[1L] * v[1L:(2L * nc - 1L)]

@@ -165,24 +165,27 @@ profile.merMod <- function(fitted,
     ## FIXME:  add code to evaluate more rows near the minimum if that
     ##        constraint was active.
     fillmat <- function(mat, lowcut, upcut, zetafun, cc) {
+        browser()
         nr <- nrow(mat)
         i <- 2L
+        ## REF: is.na(curzeta) behaviour last modified in commit b1a28914e72be845e
         while (i < nr && mat[i, cc] > lowcut && mat[i,cc] < upcut &&
-               (is.na(curzeta <- abs(mat[i, ".zeta"])) || curzeta <= cutoff)) {
-                 np <- nextpar(mat, cc, i, delta, lowcut, upcut)
-                 ns <- nextstart(mat, pind = cc-1, r=i, method=startmethod)
-            mat[i + 1L, ] <- zetafun(np,ns)
-            if (verbose>0) {
-                cat(i,cc,mat[i+1L,],"\n")
+               (i > 1 && !is.na(curzeta <- abs(mat[i, ".zeta"]))) && curzeta <= cutoff) {
+                np <- nextpar(mat, cc, i, delta, lowcut, upcut)
+                ns <- nextstart(mat, pind = cc-1, r=i, method=startmethod)
+                mat[i + 1L, ] <- zetafun(np,ns)
+                if (verbose>0) {
+                    cat(i,cc,mat[i+1L,],"\n")
+                }
+                i <- i + 1L
             }
-            i <- i + 1L
-        }
         if (mat[i-1,cc]==lowcut) {
             ## fill in more values near the minimum
         }
         if (mat[i-1,cc]==upcut) {
             ## fill in more values near the maximum
         }
+        mat <- mat[!is.na(mat[,".zeta"]),]
         mat
     }
 
@@ -227,7 +230,7 @@ profile.merMod <- function(fitted,
     FUN <- local({
         function(w) {
         if (verbose) cat(if(isLMM(fitted)) "var-cov " else "",
-                             "parameter ",w,":\n",sep="")
+                         "parameter ",w,":\n",sep="")
         wp1 <- w + 1L
         pw <- opt[w]
         lowcut <- lower[w]
@@ -271,6 +274,7 @@ profile.merMod <- function(fitted,
             if (isLMM(fitted)) c(r, pp$beta(1)) else r
         }## {zeta}
 
+        browser()
         ## intermediate storage for pos. and neg. increments
         pres <- nres <- res
         ## assign one row, determined by inc. sign, from a small shift
