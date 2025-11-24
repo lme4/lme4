@@ -14,42 +14,10 @@ pg0 <- profile(g0)
 xyplot(pg0)
 
 m3 <- lmer(Reaction ~ Days + cs(Days | Subject), sleepstudy)
-p3 <- profile(m3)
-## fits sig01, fixed effects, fails on others.
-with(p3, table(is.na(.zeta), .par))
+p3 <- profile(m3, verbose = TRUE)
 
-## appears to be an issue with behaving correctly when hitting cor = 1.0 on the lower branch?
-## on the last step that works we get
-##
-## [10,] -3.96331234  4.238963 5.894648 1.00000000 28.32257         NaN      NaN
-##
-## (cor = 1, we get .zeta OK, but fixed effects are NaN?)
-
-## then (I think) internals of @pp get corrupted, return NaN on next call ...
-
-## check
-## 5: In sqrt(1 - rho2 * a) : NaNs produced
-xyplot(as.data.frame(p3), .zeta ~ .focal | .par, scale = "free")
-
-## but this works ...
-## is something getting corrupted?
-p3_2 <- profile(m3, which = 2)
-p3_3 <- profile(m3, which = 3)
-p3_4 <- profile(m3, which = 4)
-
-
-profile(m3)
-
-par1 <- c(16.066, 4.744, 0.955, 27.525)
-mkpar <- function(rho) { par1[3] <- rho; par1 }
-dd(par1)
-dd(mkpar(0.999))
-dd(mkpar(1.0)) ## NA
-
-xyplot(p1)
-debug(profile)
-
-p2 <- profile(m2)
+m4 <- lmer(Reaction ~ Days + ar1(Days | Subject), sleepstudy)
+p4 <- profile(m4, verbose = TRUE)
 
 master_ci <- structure(c(14.3814181607732, -0.481500758280773, 3.8011640532591, 
 22.8982668820808, 237.680695505234, 7.35865327511699, 37.7159953182866, 

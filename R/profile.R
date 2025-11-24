@@ -165,7 +165,6 @@ profile.merMod <- function(fitted,
     ## FIXME:  add code to evaluate more rows near the minimum if that
     ##        constraint was active.
     fillmat <- function(mat, lowcut, upcut, zetafun, cc) {
-        browser()
         nr <- nrow(mat)
         i <- 2L
         ## REF: is.na(curzeta) behaviour last modified in commit b1a28914e72be845e
@@ -274,7 +273,6 @@ profile.merMod <- function(fitted,
             if (isLMM(fitted)) c(r, pp$beta(1)) else r
         }## {zeta}
 
-        browser()
         ## intermediate storage for pos. and neg. increments
         pres <- nres <- res
         ## assign one row, determined by inc. sign, from a small shift
@@ -524,7 +522,8 @@ devfun2 <- function(fm,
     n <- nrow(pp$V) # use V, not X so it works with nlmer
     if (isLMM(fm)) { # ==> hasSc
         ans <- function(pars)
-      {
+        {
+          pp <- fm@pp$copy() ## fresh copy of predictor object
           ## convert 'profPar' -> 'pars'
           sig <- pars[length(pars)]
           thpars <- try(
