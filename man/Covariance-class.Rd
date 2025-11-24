@@ -5,28 +5,124 @@
 \alias{Covariance.diag-class}
 \alias{Covariance.cs-class}
 \alias{Covariance.ar1-class}
+\alias{initialize,Covariance.us-method}
+\alias{initialize,Covariance.diag-method}
+\alias{initialize,Covariance.cs-method}
+\alias{initialize,Covariance.ar1-method}
+\alias{getPar}
 \alias{getPar,Covariance-method}
+\alias{getPar,merMod-method}
+\alias{getParLength}
 \alias{getParLength,Covariance-method}
-\alias{getParNames,Covariance-method}
-\alias{setPar,Covariance-method}
-\alias{getTheta,Covariance-method}
-\alias{getThetaLength,Covariance-method}
-\alias{getThetaNames,Covariance-method}
-\alias{getThetaIndex,Covariance-method}
-\alias{getThetaIndexLength,Covariance-method}
-\alias{setTheta,Covariance-method}
-\alias{getLower,Covariance-method}
-\alias{getUpper,Covariance-method}
-\alias{getLambda,Covariance-method}
-\alias{getLambdat.dp,Covariance-method}
-\alias{getLambdat.i,Covariance-method}
-\alias{getVC,Covariance-method}
-\alias{getVCNames,Covariance-method}
-\alias{setVC,Covariance-method}
-\alias{getProfPar,Covariance-method}
-\alias{setProfPar,Covariance-method}
-\alias{getProfLower,Covariance-method}
-\alias{getProfUpper,Covariance-method}
+\alias{getParLength,merMod-method}
+\alias{getParNames}
+\alias{getParNames,Covariance.us,character,character-method}
+\alias{getParNames,Covariance.diag,character,character-method}
+\alias{getParNames,Covariance.cs,character,character-method}
+\alias{getParNames,Covariance.ar1,character,character-method}
+\alias{getParNames,merMod,missing,missing-method}
+\alias{setPar}
+\alias{setPar,Covariance,numeric-method}
+\alias{getTheta}
+\alias{getTheta,Covariance.us-method}
+\alias{getTheta,Covariance.diag-method}
+\alias{getTheta,Covariance.cs-method}
+\alias{getTheta,Covariance.ar1-method}
+\alias{getTheta,merMod-method}
+\alias{getThetaLength}
+\alias{getThetaLength,Covariance.us-method}
+\alias{getThetaLength,Covariance.diag-method}
+\alias{getThetaLength,Covariance.cs-method}
+\alias{getThetaLength,Covariance.ar1-method}
+\alias{getThetaLength,merMod-method}
+\alias{getThetaNames}
+\alias{getThetaNames,Covariance.us,character,character-method}
+\alias{getThetaNames,Covariance.diag,character,character-method}
+\alias{getThetaNames,Covariance.cs,character,character-method}
+\alias{getThetaNames,Covariance.ar1,character,character-method}
+\alias{getThetaNames,merMod,missing,missing-method}
+\alias{getThetaIndex}
+\alias{getThetaIndex,Covariance.us-method}
+\alias{getThetaIndex,Covariance.diag-method}
+\alias{getThetaIndex,Covariance.cs-method}
+\alias{getThetaIndex,Covariance.ar1-method}
+\alias{getThetaIndexLength}
+\alias{getThetaIndexLength,Covariance.us-method}
+\alias{getThetaIndexLength,Covariance.diag-method}
+\alias{getThetaIndexLength,Covariance.cs-method}
+\alias{getThetaIndexLength,Covariance.ar1-method}
+\alias{setTheta}
+\alias{setTheta,Covariance.us,numeric-method}
+\alias{setTheta,Covariance.diag,numeric-method}
+\alias{setTheta,Covariance.cs,numeric-method}
+\alias{setTheta,Covariance.ar1,numeric-method}
+\alias{getLower}
+\alias{getLower,Covariance.us-method}
+\alias{getLower,Covariance.diag-method}
+\alias{getLower,Covariance.cs-method}
+\alias{getLower,Covariance.ar1-method}
+\alias{getLower,merMod-method}
+\alias{getUpper}
+\alias{getUpper,Covariance.us-method}
+\alias{getUpper,Covariance.diag-method}
+\alias{getUpper,Covariance.cs-method}
+\alias{getUpper,Covariance.ar1-method}
+\alias{getUpper,merMod-method}
+\alias{getLambda}
+\alias{getLambda,Covariance.us-method}
+\alias{getLambda,Covariance.diag-method}
+\alias{getLambda,Covariance.cs-method}
+\alias{getLambda,Covariance.ar1-method}
+\alias{getLambda,merMod-method}
+\alias{getLambdat.dp}
+\alias{getLambdat.dp,Covariance.us-method}
+\alias{getLambdat.dp,Covariance.diag-method}
+\alias{getLambdat.dp,Covariance.cs-method}
+\alias{getLambdat.dp,Covariance.ar1-method}
+\alias{getLambdat.i}
+\alias{getLambdat.i,Covariance.us-method}
+\alias{getLambdat.i,Covariance.diag-method}
+\alias{getLambdat.i,Covariance.cs-method}
+\alias{getLambdat.i,Covariance.ar1-method}
+\alias{getVC}
+\alias{getVC,Covariance.us-method}
+\alias{getVC,Covariance.diag-method}
+\alias{getVC,Covariance.cs-method}
+\alias{getVC,Covariance.ar1-method}
+\alias{getVCNames}
+\alias{getVCNames,Covariance.us,character,character-method}
+\alias{getVCNames,Covariance.diag,character,character-method}
+\alias{getVCNames,Covariance.cs,character,character-method}
+\alias{getVCNames,Covariance.ar1,character,character-method}
+\alias{getVCNames,merMod,missing,missing-method}
+\alias{setVC}
+\alias{setVC,Covariance.us,numeric,numeric-method}
+\alias{setVC,Covariance.diag,numeric,numeric-method}
+\alias{setVC,Covariance.cs,numeric,numeric-method}
+\alias{setVC,Covariance.ar1,numeric,numeric-method}
+\alias{getProfPar}
+\alias{getProfPar,Covariance.us-method}
+\alias{getProfPar,Covariance.diag-method}
+\alias{getProfPar,Covariance.cs-method}
+\alias{getProfPar,Covariance.ar1-method}
+\alias{setProfPar}
+\alias{setProfPar,Covariance.us,numeric-method}
+\alias{setProfPar,Covariance.diag,numeric-method}
+\alias{setProfPar,Covariance.cs,numeric-method}
+\alias{setProfPar,Covariance.ar1,numeric-method}
+\alias{getProfPar,merMod-method}
+\alias{getProfLower}
+\alias{getProfLower,Covariance.us-method}
+\alias{getProfLower,Covariance.diag-method}
+\alias{getProfLower,Covariance.cs-method}
+\alias{getProfLower,Covariance.ar1-method}
+\alias{getProfLower,merMod-method}
+\alias{getProfUpper}
+\alias{getProfUpper,Covariance.us-method}
+\alias{getProfUpper,Covariance.diag-method}
+\alias{getProfUpper,Covariance.cs-method}
+\alias{getProfUpper,Covariance.ar1-method}
+\alias{getProfUpper,merMod-method}
 
 \title{Virtual Class \sQuote{Covariance} of Covariance Matrices}
 
@@ -42,28 +138,28 @@
 }
 
 \usage{
-\S4method{getPar}{Covariance}(object)
-\S4method{getParLength}{Covariance}(object)
-\S4method{getParNames}{Covariance}(object, cnm, gnm)
-\S4method{setPar}{Covariance}(object, value)
-\S4method{getTheta}{Covariance}(object)
-\S4method{getThetaLength}{Covariance}(object)
-\S4method{getThetaNames}{Covariance}(object, cnm, gnm)
-\S4method{getThetaIndex}{Covariance}(object)
-\S4method{getThetaIndexLength}{Covariance}(object)
-\S4method{setTheta}{Covariance}(object, value)
-\S4method{getLower}{Covariance}(object)
-\S4method{getUpper}{Covariance}(object)
-\S4method{getLambda}{Covariance}(object)
-\S4method{getLambdat.dp}{Covariance}(object)
-\S4method{getLambdat.i}{Covariance}(object)
-\S4method{getVC}{Covariance}(object)
-\S4method{getVCNames}{Covariance}(object, cnm, gnm)
-\S4method{setVC}{Covariance}(object, vcomp, ccomp)
-\S4method{getProfPar}{Covariance}(object)
-\S4method{setProfPar}{Covariance}(object, value)
-\S4method{getProfLower}{Covariance}(object)
-\S4method{getProfUpper}{Covariance}(object)
+getPar(object)
+getParLength(object)
+getParNames(object, cnm, gnm, prf = NULL, old = TRUE)
+setPar(object, value, pos = 0L)
+getTheta(object)
+getThetaLength(object)
+getThetaNames(object, cnm, gnm, prf = NULL, old = TRUE)
+getThetaIndex(object)
+getThetaIndexLength(object)
+setTheta(object, value, pos = 0L)
+getLower(object)
+getUpper(object)
+getLambda(object)
+getLambdat.dp(object)
+getLambdat.i(object)
+getVC(object)
+getVCNames(object, cnm, gnm, prf = NULL, old = TRUE)
+setVC(object, vcomp, ccomp)
+getProfPar(object, profscale, sc = NULL)
+setProfPar(object, profscale, sc = NULL, value, pos = 0L)
+getProfLower(object, profscale, sc = NULL)
+getProfUpper(object, profscale, sc = NULL)
 }
 
 \details{
