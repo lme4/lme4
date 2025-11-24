@@ -5,6 +5,28 @@
 \alias{Covariance.diag-class}
 \alias{Covariance.cs-class}
 \alias{Covariance.ar1-class}
+\alias{getPar,Covariance-method}
+\alias{getParLength,Covariance-method}
+\alias{getParNames,Covariance-method}
+\alias{setPar,Covariance-method}
+\alias{getTheta,Covariance-method}
+\alias{getThetaLength,Covariance-method}
+\alias{getThetaNames,Covariance-method}
+\alias{getThetaIndex,Covariance-method}
+\alias{getThetaIndexLength,Covariance-method}
+\alias{setTheta,Covariance-method}
+\alias{getLower,Covariance-method}
+\alias{getUpper,Covariance-method}
+\alias{getLambda,Covariance-method}
+\alias{getLambdat.dp,Covariance-method}
+\alias{getLambdat.i,Covariance-method}
+\alias{getVC,Covariance-method}
+\alias{getVCNames,Covariance-method}
+\alias{setVC,Covariance-method}
+\alias{getProfPar,Covariance-method}
+\alias{setProfPar,Covariance-method}
+\alias{getProfLower,Covariance-method}
+\alias{getProfUpper,Covariance-method}
 
 \title{Virtual Class \sQuote{Covariance} of Covariance Matrices}
 
