@@ -4,8 +4,9 @@ useDynLib(lme4, .registration=TRUE)
 importFrom("graphics", par, plot)
 importFrom("grid", gpar, viewport)
 importFrom("splines", backSpline, interpSpline, periodicSpline)
-importFrom("methods", as, getDataPart, extends, is, new, cbind2, rbind2,
-           show, slot, slotNames, setRefClass, getClass, callNextMethod)
+importFrom("methods", as, callNextMethod, cbind2, getClass, getDataPart,
+           extends, initialize, is, new, rbind2, setClass, setGeneric,
+           setMethod, setRefClass, show, slot, slotNames)
 importFrom("stats",
            AIC, BIC, anova, approx, approxfun,
            as.formula, asOneSidedFormula, ave,
