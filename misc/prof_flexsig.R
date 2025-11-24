@@ -17,6 +17,7 @@ m3 <- lmer(Reaction ~ Days + cs(Days | Subject), sleepstudy)
 p3 <- profile(m3, verbose = TRUE)
 
 m4 <- lmer(Reaction ~ Days + ar1(Days | Subject), sleepstudy)
+debug(profile.merMod)
 p4 <- profile(m4, verbose = TRUE)
 
 master_ci <- structure(c(14.3814181607732, -0.481500758280773, 3.8011640532591, 

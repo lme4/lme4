@@ -1038,7 +1038,7 @@ setMethod("setProfPar",
           })
 
 setMethod("setProfPar",
-          c(object = "Covariance.cs", value = "numeric"),
+          c(object = "Covariance.ar1", value = "numeric"),
           .fn)
 
 rm(.fn)
