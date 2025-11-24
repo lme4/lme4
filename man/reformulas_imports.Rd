@@ -8,6 +8,7 @@
 \alias{findbars}
 \alias{mkReTrms}
 \alias{isNested}
+\alias{expandDoubleVerts}
 \usage{
 subbars(...)
 
@@ -18,6 +19,8 @@ findbars(...)
 mkReTrms(...)
 
 isNested(...)
+
+expandDoubleVerts(...)
 
 }
 
