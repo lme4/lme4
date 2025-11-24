@@ -1367,6 +1367,32 @@ setMethod("getUpper",
           function (object)
               attr(object, "upper") %||% rep(Inf, length(object@lower)))
 
+setMethod("getLambda",
+          c(object = "merMod"),
+          function (object) {
+              reCovs <- getReCovs(object)
+              nc <- vapply(reCovs, slot, 0L, "nc")
+           ## theta <- lapply(reCovs, getTheta)
+           ## nt <- lengths(theta)
+              nt <- vapply(reCovs, getThetaLength, 0L)
+              thetaIndex <- lapply(reCovs, getThetaIndex)
+              nti <- lengths(thetaIndex)
+           ## nti <- vapply(reCovs, getThetaIndexLength, 0L)
+              nl <- vapply(object@flist[names(object@cnms)], nlevels, 0L)
+              ## <copy-paste from upReTrms>
+              nc.nl <- rep(nc, nl)
+              nti.nl <- rep(nti, nl)
+              R.dp <- unlist(rep(lapply(reCovs, getLambdat.dp), nl), FALSE, FALSE)
+              R.p <- cumsum(c(0L, R.dp))
+              R.i <- rep(cumsum(c(0L, nc.nl)[seq_along(nc.nl)]), nti.nl) +
+                  unlist(rep(lapply(reCovs, getLambdat.i), nl), FALSE, FALSE)
+              R.x <- rep(cumsum(c(0L, nt)[seq_along(nt)]), nti * nl) +
+                  unlist(rep(thetaIndex, nl), FALSE, FALSE)
+              ## </copy-paste from upReTrms>
+              t(new("dgCMatrix", Dim = rep(length(R.dp), 2L),
+                    p = R.p, i = R.i, x = object@theta[R.x]))
+          })
+
 setMethod("getVCNames",
           c(object = "merMod", cnm = "missing", gnm = "missing"),
           function (object, cnm, gnm, prf = NULL, old = TRUE) {
