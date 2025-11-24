@@ -16,18 +16,12 @@ current status: unstructured may be working; need to add methods for other Covar
 * check that existing examples work and existing tests pass
   - `git diff master tests` looks OK now: a few tests fail but those
     particular failures are expected; these tests are skipped or adapted
-  - `git diff master man` shows that `profile` is broken when `theta`
-    is not composed of segments of length `nc*(nc+1)/2`
-    * hence TODO: adapt usage of (or generalize) the `*_to_*` functions
-      in `vcconv.R`; see, e.g., `devfun2` in `R/profile.R`
-  - otherwise looking good ... !
 * check that reverse dependencies pass *their* checks
 * new tests
   - unit tests for stuff in `R/covariance.R`
   - integration tests for `lmer`, `glmer`, `nlmer`, and
     methods for class `"merMod"`
 * new documentation
-  - update `vignette("lmer")` (or is that static ... ?)
   - write a `vignette("covariance")` (or whatever)
 
 
