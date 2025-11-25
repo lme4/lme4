@@ -195,12 +195,9 @@ Available standard classes:
     \item{\code{Covariance.us}}{Unstructured (general positive definite). This is the 
     default version.}
     \item{\code{Covariance.diag}}{Diagonal; only the diagonal entries are 
-    nonzero, indicating no covariances between variables. If \code{hom = TRUE}, 
-    all diagonal entries (variances) are equal across groups.}
-    \item{\code{Covariance.cs}}{Compound symmetry. If \code{hom = TRUE}, 
-    all diagonal entries (variances) are equal across groups.}
-    \item{\code{Covariance.ar1}}{Autoregessive process of order 1. If 
-    \code{hom = TRUE}, then... TODO}
+    nonzero, indicating no covariances between variables.}
+    \item{\code{Covariance.cs}}{Compound symmetry.}
+    \item{\code{Covariance.ar1}}{Autoregessive process of order 1.}
   }
 Besides \code{Covariance.us}, the remaining classes contain a logical slot 
 called \code{hom}, described in the \emph{Slots} section.
@@ -211,11 +208,12 @@ called \code{hom}, described in the \emph{Slots} section.
     \item{\code{par}}{A double vector that stores values of \code{theta}, which 
     specifies the covariance parameters for the model.}
     \item{\code{hom}}{A logical which represents whether the variance-covariance 
-    matrix has a \emph{homogenous} structure.}
+    matrix has a \emph{homogenous} structure. That is, whether the variances 
+    are equal across groups.}
   }
 }
 
-\section{Methods}{
+\section{S4 Methods}{
 \code{vcomp} contains parameters of the variance component of the 
 covariance matrix (typically standard deviations). \code{ccomp} contains 
 parameters of the correlation component of the covariance matrix. That is,
@@ -223,38 +221,50 @@ parameters of the correlation component of the covariance matrix. That is,
   \item \code{Covariance.us}: the entries of the lower triangle of the 
   correlation matrix in column-major order.
   \item \code{diag}: should be empty; we only care about the standard deviations.
-  \item \code{cs}: \eqn{\rho}
-  \item \code{ar1}: \eqn{\rho}
+  \item \code{cs}, \code{ar1}: \eqn{\rho}
   }
-}
-
-
-
-\section{S4 Methods}{
+For the methods that obtain names (i.e., \code{getParNames}, 
+\code{getThetaNames}, and \code{getVCNames}), \code{cnm} represents the 
+column (of the model matrix) name, and \code{gnm} represents the group name.
 \describe{
     \item{\code{getPar}:}{The vector of parameters that the optimizer cares 
     about; contains \code{c(vcomp, ccomp)}.}
-    \item{\code{getParLength}:}{Obtains the length of par.}
-    \item{\code{getParNames}:}{TODO.}
+    \item{\code{getParLength}:}{Obtains the length of \code{par}.}
+    \item{\code{getParNames}:}{Obtains the names of \code{par} in terms of 
+    \code{cnm} and \code{gnm}.}
     \item{\code{setPar}:}{Sets the value of par.}
     \item{\code{getTheta}:}{Obtains the variance-component parameter. These are 
     also the column-wise elements of \code{Lambda}, or the row-wise elements of
     \code{t(Lambda)}.}
     \item{\code{getThetaLength}:}{Obtains the length of the variance-component 
-    parameter.}
-    \item{\code{getThetaNames}:}{TODO.}
-    \item{\code{getThetaIndex}:}{TODO.}
-    \item{\code{getThetaIndexLength}:}{TODO.}
+    parameter \code{theta}.}
+    \item{\code{getThetaNames}:}{Obtains the names of \code{theta} in terms of 
+    \code{cnm} and \code{gnm}.}
+    \item{\code{getThetaIndex}:}{A mapping of the elements of \code{theta} into 
+    \code{Lambda} in column-major order.}
+    \item{\code{getThetaIndexLength}:}{Obtains the length of \code{getThetaIndex};
+    which corresponds to the number of non-zero entries of \code{Lambda}.}
     \item{\code{setTheta}:}{Sets the value of the variance-component parameter.}
     \item{\code{getLower}:}{Retrieves the lower bound for \code{vcomp} and 
     \code{ccomp}, in that order.}
     \item{\code{getUpper}:}{Retrieves the upper bound for \code{vcomp} and 
     \code{ccomp}, in that order.}
     \item{\code{getLambda}:}{The relative covariance factor.}
-    \item{\code{getLambdat.dp}:}{TODO.}
-    \item{\code{getLambda.i}:}{TODO.}
+    \item{\code{getLambdat.dp}:}{
+    Returns a vector of length \code{nc} where each element contains the count 
+    of nonzero entries in the corresponding column. Together with 
+    \code{Lambdat.i}, defines the compressed sparse column representation 
+    of \code{t(Lambda)}.
+    }
+    \item{\code{getLambdat.i}:}{
+    Returns a vector of \code{0}-based row indices (\code{length <= nc*(n+1)/2}) 
+    for nonzero entries in \code{t(Lambda)}, stored in column-major order. 
+    Together with \code{Lambdat.dp}, defines the compressed sparse column 
+    representation of \code{t(Lambda)}.
+    }
     \item{\code{getVC}:}{Retrieves both \code{vcomp} and \code{ccomp}.}
-    \item{\code{getVCNames}:}{TODO.}
+    \item{\code{getVCNames}:}{Obtains the names of the values associated with
+    \code{vcomp} and \code{ccomp} in terms of \code{cnm} and \code{gnm}.}
     \item{\code{setVC}:}{Sets the values for VC, which is composed of \code{vcomp}
     and \code{ccomp}.}
     \item{\code{getProfPar}:}{TODO.}
@@ -267,12 +277,28 @@ parameters of the correlation component of the covariance matrix. That is,
 
 \examples{
 ## Unstructured
-fm1 <- lmer(Reaction ~ Days + us(Days | Subject), sleepstudy)
+fm1.us <- lmer(Reaction ~ Days + us(Days | Subject), sleepstudy)
 ## Diagional
-fm1 <- lmer(Reaction ~ Days + diag(Days | Subject), sleepstudy)
+fm1.diag <- lmer(Reaction ~ Days + diag(Days | Subject), sleepstudy)
+fm1.diag.hom <- lmer(Reaction ~ Days + diag(Days | Subject, hom = TRUE), 
+  sleepstudy)
 ## Compound symmetry
-fm1 <- lmer(Reaction ~ Days + cs(Days | Subject), sleepstudy)
-## TODO: EXAMPLE FOR AR1
+fm1.cs <- lmer(Reaction ~ Days + cs(Days | Subject), sleepstudy)
+fm1.cs.hom <- lmer(Reaction ~ Days + cs(Days | Subject, hom = TRUE), 
+  sleepstudy)
+## Auto-regressive order 1
+# TODO...
+
+## Applying some of the S4 methods for merMod
+getPar(fm1.us)
+getTheta(fm1.us)
+
+## The same could be applied to covariance
+fm1.cov <- getReCovs(fm1.us)[[1]]
+getPar(fm1.cov)
+getTheta(fm1.cov)
+getLambda(fm1.cov)
+getVC(fm1.cov)
 }
 \keyword{classes}
 \keyword{internal}

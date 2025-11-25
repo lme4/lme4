@@ -73,10 +73,10 @@ cov_lmer_test <- list(
   fm1.nlme.REML_sigma = sigma(fm1.nlme.REML),
   fm1.nlme.cs.REML_sigma = sigma(fm2.nlme.REML),
   ## log likelihoods
-  fm1.glmmTMB_logLik = -fm1.glmmTMB$fit$objective,
-  fm1.glmmTMB.cs_logLik = -fm3.glmmTMB$fit$objective,
-  fm1.glmmTMB.diag_logLik = -fm4.glmmTMB$fit$objective,
-  fm1.glmmTMB.ar1_logLik = -fm5.glmmTMB$fit$objective,
+  fm1.glmmTMB_logLik = logLik(fm1.glmmTMB),
+  fm1.glmmTMB.cs_logLik = logLik(fm3.glmmTMB),
+  fm1.glmmTMB.diag_logLik = logLik(fm4.glmmTMB),
+  fm1.glmmTMB.ar1_logLik = logLik(fm5.glmmTMB),
   fm1.nlme_logLik = logLik(fm1.nlme),
   fm1.nlme.cs_logLik = logLik(fm2.nlme),
   fm1.nlme.REML_logLik = logLik(fm1.nlme.REML),
@@ -124,9 +124,9 @@ cov_lmer_test <- list(
   gm.glmmTMB.cs_sigma = sigma(gm.glmmTMB.cs),
   gm.glmmTMB.diag_sigma = sigma(gm.glmmTMB.diag),
   ## log likelihoods
-  gm.glmmTMB_logLik = -gm.glmmTMB.us$fit$objective,
-  gm.glmmTMB.cs_logLik = -gm.glmmTMB.us$fit$objective,
-  gm.glmmTMB.diag_logLik = -gm.glmmTMB.diag$fit$objective,
+  gm.glmmTMB_logLik = logLik(gm.glmmTMB.us),
+  gm.glmmTMB.cs_logLik = logLik(gm.glmmTMB.cs),
+  gm.glmmTMB.diag_logLik = logLik(gm.glmmTMB.diag),
   ## vcov
   gm.glmmTMB_vcov = vcov(gm.glmmTMB.us)$cond,
   gm.glmmTMB.cs_vcov = vcov(gm.glmmTMB.cs)$cond,
