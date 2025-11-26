@@ -276,6 +276,11 @@ column (of the model matrix) name, and \code{gnm} represents the group name.
 
 
 \examples{
+\dontshow{
+.nms <- c("getPar", "getTheta", "getLambda", "getVC", "getReCovs")
+.fns <- mget(.nms, envir = getNamespace("lme4"), mode = "function")
+list2env(.fns, envir = environment())
+}
 ## Unstructured
 fm1.us <- lmer(Reaction ~ Days + us(Days | Subject), sleepstudy)
 ## Diagional
@@ -299,6 +304,9 @@ getPar(fm1.cov)
 getTheta(fm1.cov)
 getLambda(fm1.cov)
 getVC(fm1.cov)
+\dontshow{
+rm(list = c(.nms, ".nms", ".fns"))
+}
 }
 \keyword{classes}
 \keyword{internal}
