@@ -1,0 +1,339 @@
+---
+title: "Covariance Structures lme4 vs glmmTMB"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Autoscaling in lme4}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+TODO:
+- instead of a dataset, try to do it over simulated values instead for all comparisons...
+
+## Introduction
+
+`lme4` has four covariance classes/structures: `Covariance.us` (unstructured), `Covariance.diag` (diagonal), `Covariance.cs` (compound symmetry), and `Covarince.ar1` (autoregressive order 1). The syntax for use is somewhat similar to the `glmmTMB` package (see [covariance structures in glmmTMB](https://glmmtmb.github.io/glmmTMB/articles/covstruct.html)), although the results are slightly different.
+
+Throughout the exploration, we will discuss the syntax differences.
+
+## Reason for Computational Differences
+
+When constructing generalized linear mixed models, `lme4` uses the Cholesky decomposition to reduce the problem to a function of the covariance parameters. In particular, `lme4` parameterizes the random-effects variance–covariance matrix $$
+\Sigma_{\theta} = \sigma^{2} \Lambda_{\theta} \Lambda_{\theta}^{T},
+$$ where the relative covariance factor (the Cholesky factor) $\Sigma_{\theta}$ is lower-triangular with positive diagonal entries, and is dependent on some variance-component parameter $\theta$. (For exact details of this structure, refer to the `lmer` [vignette](https://cran.r-project.org/web/packages/lme4/vignettes/lmer.pdf).)
+
+This allows optimization to proceed over the unconstrained elements of $\Sigma_{\theta}$, ensuring a gradient-free nonlinear optimization of the covariance parameter $\theta$'s.
+
+Meanwhile, `glmmTMB` uses direct maximum likelihood estimation via Template Model Builder (TMB). Fixed effects ($\beta$'s), covariance parameters ($\theta$'s) and dispersion parameters are profiled out, and optimization proceeds on a likelihood parameterized by said fixed effects, covariance parameters, dispersion parameters, etc.
+
+Despite these differences, we will show examples where `lme4` and `glmmTMB` provide similar estimates when they both use maximum likelihood estimation. By default, `lme4` uses the restricted maximum likelihood; hence in the following examples, we use `lmer(..., REML = FALSE)` to compare against `glmmTMB`.
+
+## Comparison Setup
+
+```{r setup}
+library(lme4)
+library(glmmTMB)
+
+## Often want to ignore attributes and class.
+all.equal.nocheck <- function(x, y, ..., check.attributes = FALSE, check.class = FALSE) {
+  require("Matrix", quietly = TRUE)
+  ## working around mode-matching headaches
+  if (is(x, "Matrix")) x <- matrix(x)
+  if (is(y, "Matrix")) y <- matrix(y)
+  all.equal(x, y, ..., check.attributes = check.attributes, check.class = check.class)
+}
+```
+
+To fit the linear mixed model, we will be using the classical `sleepstudy` dataset. Meanwhile, for the generalized linear mixed model, we will use the `Contraception` dataset from the `mlmRev` package:
+
+```{r}
+data(Contraception, package = "mlmRev")
+```
+
+## Unstructured (General Positive Definite)
+
+This is the default setting for both `lme4` and `glmmTMB`. 
+### Linear Mixed Model
+
+```{r}
+lme4.us <- lmer(Reaction ~ Days + us(Days | Subject), sleepstudy)
+glmmTMB.us <- glmmTMB(Reaction ~ Days + us(Days | Subject), sleepstudy)
+
+## Fixed effects
+fixef(lme4.us); fixef(glmmTMB.us)$cond
+all.equal.nocheck(fixef(lme4.us), fixef(glmmTMB.us)$cond)
+
+## Sigma
+sigma(lme4.us); sigma(glmmTMB.us)
+all.equal.nocheck(sigma(lme4.us), sigma(glmmTMB.us))
+
+## Log likelihoods
+logLik(lme4.us); logLik(glmmTMB.us)
+all.equal.nocheck(logLik(lme4.us), logLik(glmmTMB.us))
+```
+
+As expected, from here-on out, calculations related to the random-effects term differ.
+
+```{r}
+## Variance-Covariance Matrix
+vcov(lme4.us); vcov(glmmTMB.us)$cond
+all.equal.nocheck(vcov(lme4.us), vcov(glmmTMB.us)$cond)
+
+## Variance and Covariance Components
+all.equal.nocheck(VarCorr(lme4.us)[[1]], 
+          VarCorr(glmmTMB.us)$cond$Subject)
+
+## Conditional Modes of the Random Effects
+all.equal.nocheck(ranef(lme4.us)$Subject, ranef(glmmTMB.us)$cond$Subject)
+```
+
+### Generalized Linear Mixed Model
+
+```{r}
+glme4.us <- glmer(use ~ age + urban + us(1 + urban | district), data = Contraception, 
+                  family = binomial)
+
+gglmmTMB.us <- glmmTMB(use ~ age + urban + us(1 + urban | district), data = Contraception, 
+                       family = binomial)
+
+## Fixed effects
+fixef(glme4.us); fixef(gglmmTMB.us)$cond
+all.equal.nocheck(fixef(glme4.us), fixef(gglmmTMB.us)$cond)
+
+## Sigma
+all.equal.nocheck(sigma(glme4.us), sigma(gglmmTMB.us))
+
+## Log likelihoods
+logLik(glme4.us); logLik(gglmmTMB.us)
+all.equal.nocheck(logLik(glme4.us), logLik(gglmmTMB.us))
+```
+
+As expected, from here-on out, calculations related to the random-effects term differ.
+
+```{r}
+## Variance-Covariance Matrix
+vcov(glme4.us); vcov(gglmmTMB.us)$cond
+all.equal.nocheck(vcov(glme4.us), vcov(gglmmTMB.us)$cond)
+
+## Variance and Covariance Components
+all.equal.nocheck(VarCorr(glme4.us)[[1]], 
+          VarCorr(gglmmTMB.us)$cond$Subject)
+
+## Conditional Modes of the Random Effects
+all.equal.nocheck(ranef(glme4.us)$district, ranef(gglmmTMB.us)$cond$district)
+```
+
+## Diagonal
+
+The syntax is the same for fitting a heterogeneous diagonal covariance structure for `lme4` and `glmmTMB`. It differs when we want to fit a *homogeneous* diagonal covariance structure.
+
+To demonstrate, if we wanted to fit a homogeneous diagonal covariance structure then we would write the following:
+
+```{r, eval = FALSE}
+lme4.us <- lmer(Reaction ~ Days + diag(Days | Subject, hom = TRUE), sleepstudy)
+glmmTMB.us <- glmmTMB(Reaction ~ Days + homdiag(Days | Subject), sleepstudy)
+```
+
+Our focus will be the comparisons when we have a *heterogeneous* diagonal covariance structure as those cases are more interesting.
+
+### Linear Mixed Model
+
+```{r}
+lme4.diag <- lmer(Reaction ~ Days + diag(Days | Subject), sleepstudy)
+glmmTMB.diag <- glmmTMB(Reaction ~ Days + diag(Days | Subject), sleepstudy)
+
+## Fixed effects
+fixef(lme4.diag); fixef(glmmTMB.diag)$cond
+all.equal.nocheck(fixef(lme4.diag), fixef(glmmTMB.diag)$cond)
+
+## Sigma
+sigma(lme4.diag); sigma(glmmTMB.diag)
+all.equal.nocheck(sigma(lme4.diag), sigma(glmmTMB.diag))
+
+## Log likelihoods
+logLik(lme4.diag); logLik(glmmTMB.diag)
+all.equal.nocheck(logLik(lme4.diag), logLik(glmmTMB.diag))
+
+## Variance-Covariance Matrix
+vcov(lme4.diag); vcov(glmmTMB.diag)$cond
+all.equal.nocheck(vcov(lme4.diag), vcov(glmmTMB.diag)$cond)
+
+## Variance and Covariance Components
+all.equal.nocheck(VarCorr(lme4.diag)[[1]], 
+          VarCorr(glmmTMB.diag)$cond$Subject)
+
+## Conditional Modes of the Random Effects
+all.equal.nocheck(ranef(lme4.diag)$Subject, ranef(glmmTMB.diag)$cond$Subject)
+```
+
+### Generalized Linear Mixed Model
+
+```{r}
+glme4.diag <- glmer(use ~ age + urban + diag(1 + urban | district), data = Contraception, 
+                  family = binomial)
+
+gglmmTMB.diag <- glmmTMB(use ~ age + urban + diag(1 + urban | district), data = Contraception, 
+                       family = binomial)
+
+## Fixed effects
+fixef(glme4.diag); fixef(gglmmTMB.diag)$cond
+all.equal.nocheck(fixef(glme4.diag), fixef(gglmmTMB.diag)$cond)
+
+## Sigma
+all.equal.nocheck(sigma(glme4.diag), sigma(gglmmTMB.diag))
+
+## Log likelihoods
+logLik(glme4.diag); logLik(gglmmTMB.diag)
+all.equal.nocheck(logLik(glme4.diag), logLik(gglmmTMB.diag))
+
+## Variance-Covariance Matrix
+vcov(glme4.diag); vcov(gglmmTMB.diag)$cond
+all.equal.nocheck(vcov(glme4.diag), vcov(gglmmTMB.diag)$cond)
+
+## Variance and Covariance Components
+all.equal.nocheck(VarCorr(glme4.diag)[[1]], 
+          VarCorr(gglmmTMB.diag)$cond$district)
+
+## Conditional Modes of the Random Effects
+all.equal.nocheck(ranef(glme4.diag)$district, ranef(gglmmTMB.diag)$cond$district)
+```
+
+## Compound Symmetry
+
+Similar to the diagonal case, the syntax is the same for fitting a heterogeneous compound symmetry covariance structure for `lme4` and `glmmTMB`. Again, it differs when we want to fit a *homogeneous* compound symmetry covariance structure.
+
+To demonstrate, if we wanted to fit a homogeneous compound symmetry covariance structure then we would write the following:
+
+```{r, eval = FALSE}
+lme4.us <- lmer(Reaction ~ Days + cs(Days | Subject, hom = TRUE), sleepstudy)
+glmmTMB.us <- glmmTMB(Reaction ~ Days + homcs(Days | Subject), sleepstudy)
+```
+
+Once more, we will make comparisons against a *heterogeneous* compound symmetric covariance structure.
+
+### Linear Mixed Model
+
+```{r}
+lme4.cs <- lmer(Reaction ~ Days + cs(Days | Subject), sleepstudy)
+glmmTMB.cs <- glmmTMB(Reaction ~ Days + cs(Days | Subject), sleepstudy)
+
+## Fixed effects
+fixef(lme4.cs); fixef(glmmTMB.cs)$cond
+all.equal.nocheck(fixef(lme4.cs), fixef(glmmTMB.cs)$cond)
+
+## Sigma
+sigma(lme4.cs); sigma(glmmTMB.cs)
+all.equal.nocheck(sigma(lme4.cs), sigma(glmmTMB.cs))
+
+## Log likelihoods
+logLik(lme4.cs); logLik(glmmTMB.cs)
+all.equal.nocheck(logLik(lme4.cs), logLik(glmmTMB.cs))
+
+## Variance-Covariance Matrix
+vcov(lme4.cs); vcov(glmmTMB.cs)$cond
+all.equal.nocheck(vcov(lme4.cs), vcov(glmmTMB.cs)$cond)
+
+## Variance and Covariance Components
+all.equal.nocheck(VarCorr(lme4.cs)[[1]], 
+          VarCorr(glmmTMB.cs)$cond$Subject)
+
+## Conditional Modes of the Random Effects
+all.equal.nocheck(ranef(lme4.cs)$Subject, ranef(glmmTMB.cs)$cond$Subject)
+```
+
+### Generalized Linear Mixed Model
+
+```{r}
+glme4.cs <- glmer(use ~ age + urban + cs(1 + urban | district), data = Contraception, 
+                  family = binomial)
+
+gglmmTMB.cs <- glmmTMB(use ~ age + urban + cs(1 + urban | district), data = Contraception, 
+                       family = binomial)
+
+## Fixed effects
+fixef(glme4.cs); fixef(gglmmTMB.cs)$cond
+all.equal.nocheck(fixef(glme4.cs), fixef(gglmmTMB.cs)$cond)
+
+## Sigma
+all.equal.nocheck(sigma(glme4.cs), sigma(gglmmTMB.cs))
+
+## Log likelihoods
+logLik(glme4.cs); logLik(gglmmTMB.cs)
+all.equal.nocheck(logLik(glme4.cs), logLik(gglmmTMB.cs))
+
+## Variance-Covariance Matrix
+vcov(glme4.cs); vcov(gglmmTMB.cs)$cond
+all.equal.nocheck(vcov(glme4.cs), vcov(gglmmTMB.cs)$cond)
+
+## Variance and Covariance Components
+all.equal.nocheck(VarCorr(glme4.cs)[[1]], 
+          VarCorr(gglmmTMB.cs)$cond$district)
+
+## Conditional Modes of the Random Effects
+all.equal.nocheck(ranef(glme4.cs)$district, ranef(gglmmTMB.cs)$cond$district)
+```
+
+## Autoregressive Order 1
+
+For this comparison, we will focus on a simulated data set where we explicitly denote $\rho = 0.7$ to better compare the results between the two models. 
+
+```{r}
+set.seed(1)
+simGroup <- function(g, n=6, phi=0.7) {
+  x <- MASS::mvrnorm(mu = rep(0,n),
+                     Sigma = phi^as.matrix(dist(1:n)) )  
+  y <- x + rnorm(n)                              
+  times <- factor(1:n)
+  group <- factor(rep(g,n))
+  data.frame(y, times, group)
+}
+dat1 <- do.call("rbind", lapply(1:5000, simGroup))
+```
+
+Unlike the diagonal and compound symmetry case, the syntax is different for fitting both a heterogeneous and homogeneous ar1 model for `lme4` and `glmmTMB`.
+
+For a *heterogeneous* ar1 covariance structure we would write the following:
+
+```{r, eval = FALSE}
+lme4.ar1 <- lmer(y ~ times + ar1(0 + times | group), data = dat1, REML = FALSE)
+glmmTMB.ar1 <- glmmTMB(y ~ times + ar1(0 + times | group), data = dat1)
+```
+
+We will instead focus on comparisons for a *homogeneous* ar1 covariance structure.
+
+```{r}
+lme4.ar1 <- lmer(y ~ times + ar1(0 + times | group, hom = TRUE), data = dat1, REML = FALSE)
+glmmTMB.ar1 <- glmmTMB(y ~ times + hetar1(0 + times | group), data = dat1)
+
+## Fixed effects
+fixef(lme4.ar1); fixef(glmmTMB.ar1)$cond
+all.equal.nocheck(fixef(lme4.ar1), fixef(glmmTMB.ar1)$cond)
+
+## Sigma
+sigma(lme4.ar1); sigma(glmmTMB.ar1)
+all.equal.nocheck(sigma(lme4.ar1), sigma(glmmTMB.ar1))
+
+## Log likelihoods
+logLik(lme4.ar1); logLik(glmmTMB.ar1)
+all.equal.nocheck(logLik(lme4.ar1), logLik(glmmTMB.ar1))
+
+## Variance-Covariance Matrix
+all.equal.nocheck(vcov(lme4.ar1), vcov(glmmTMB.ar1)$cond)
+
+## Variance and Covariance Components
+all.equal.nocheck(VarCorr(lme4.ar1)[[1]], 
+          VarCorr(glmmTMB.ar1)$cond$group)
+
+## Conditional Modes of the Random Effects
+all.equal.nocheck(ranef(lme4.ar1)$group, ranef(glmmTMB.ar1)$cond$group)
+```
+
+
+
