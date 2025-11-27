@@ -2,7 +2,7 @@
 title: "Covariance Structures lme4 vs glmmTMB"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Autoscaling in lme4}
+  %\VignetteIndexEntry{Covariance Structures lme4 vs glmmTMB}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -14,8 +14,6 @@ knitr::opts_chunk$set(
 )
 ```
 
-TODO:
-- instead of a dataset, try to do it over simulated values instead for all comparisons...
 
 ## Introduction
 
@@ -51,20 +49,49 @@ all.equal.nocheck <- function(x, y, ..., check.attributes = FALSE, check.class =
 }
 ```
 
-To fit the linear mixed model, we will be using the classical `sleepstudy` dataset. Meanwhile, for the generalized linear mixed model, we will use the `Contraception` dataset from the `mlmRev` package:
-
-```{r}
-data(Contraception, package = "mlmRev")
-```
-
 ## Unstructured (General Positive Definite)
 
-This is the default setting for both `lme4` and `glmmTMB`. 
+This is the default setting for both `lme4` and `glmmTMB`. Below we simulate a dataset with known `beta`, `theta` and `sigma` values.
+
+```{r}
+n_groups <- 20
+n_per_group <- 20
+n <- n_groups * n_per_group
+
+set.seed(1)
+dat.us <- data.frame(
+  group = rep(1:n_groups, each = n_per_group),
+  x1 = rnorm(n),
+  x2 = rnorm(n)
+)
+## Constructing a similar dataset for the other examples
+gdat.us <- dat.diag <- gdat.diag <- dat.us
+
+form <- y ~ 1 + x1 * x2 + us(1 + x1|group)
+dat.us$y <- simulate(form[-2], 
+                    newdata = dat.us,
+                    family = gaussian,
+                    newparams = list(beta = c(-7, 5, -100, 20),
+                                     theta = c(2.5, 1.4, 6.3),
+                                     sigma = 2))[[1]]
+
+form2 <- y ~ 1 + x1 + us(1 + x1|group)
+gdat.us$y <- simulate(
+  form2[-2],
+  newdata = gdat.us,
+  family = binomial,
+  newparams = list(
+    beta  = c(-1.5, 0.5),     
+    theta = c(0.3, 0.1, 0.3)
+  ))[[1]]
+```
+
+
 ### Linear Mixed Model
 
 ```{r}
-lme4.us <- lmer(Reaction ~ Days + us(Days | Subject), sleepstudy)
-glmmTMB.us <- glmmTMB(Reaction ~ Days + us(Days | Subject), sleepstudy)
+lme4.us <- lmer(form, data = dat.us, REML = "FALSE")
+glmmTMB.us <- glmmTMB(form, dat = dat.us)
 
 ## Fixed effects
 fixef(lme4.us); fixef(glmmTMB.us)$cond
@@ -88,20 +115,17 @@ all.equal.nocheck(vcov(lme4.us), vcov(glmmTMB.us)$cond)
 
 ## Variance and Covariance Components
 all.equal.nocheck(VarCorr(lme4.us)[[1]], 
-          VarCorr(glmmTMB.us)$cond$Subject)
+          VarCorr(glmmTMB.us)$cond$group)
 
 ## Conditional Modes of the Random Effects
-all.equal.nocheck(ranef(lme4.us)$Subject, ranef(glmmTMB.us)$cond$Subject)
+all.equal.nocheck(ranef(lme4.us)$group, ranef(glmmTMB.us)$cond$group)
 ```
 
 ### Generalized Linear Mixed Model
 
 ```{r}
-glme4.us <- glmer(use ~ age + urban + us(1 + urban | district), data = Contraception, 
-                  family = binomial)
-
-gglmmTMB.us <- glmmTMB(use ~ age + urban + us(1 + urban | district), data = Contraception, 
-                       family = binomial)
+glme4.us <- glmer(form2, data = gdat.us, family = binomial)
+gglmmTMB.us <- glmmTMB(form2, dat = gdat.us, family = binomial)
 
 ## Fixed effects
 fixef(glme4.us); fixef(gglmmTMB.us)$cond
@@ -124,10 +148,10 @@ all.equal.nocheck(vcov(glme4.us), vcov(gglmmTMB.us)$cond)
 
 ## Variance and Covariance Components
 all.equal.nocheck(VarCorr(glme4.us)[[1]], 
-          VarCorr(gglmmTMB.us)$cond$Subject)
+          VarCorr(gglmmTMB.us)$cond$group)
 
 ## Conditional Modes of the Random Effects
-all.equal.nocheck(ranef(glme4.us)$district, ranef(gglmmTMB.us)$cond$district)
+all.equal.nocheck(ranef(glme4.us)$group, ranef(gglmmTMB.us)$cond$group)
 ```
 
 ## Diagonal
@@ -143,11 +167,20 @@ glmmTMB.us <- glmmTMB(Reaction ~ Days + homdiag(Days | Subject), sleepstudy)
 
 Our focus will be the comparisons when we have a *heterogeneous* diagonal covariance structure as those cases are more interesting.
 
-### Linear Mixed Model
+```{r}
+form <- y ~ 1 + x1 * x2 + diag(1|group)
+dat.diag$y <- simulate(form[-2], 
+                       newdata = dat.diag,
+                       family = gaussian,
+                       newparams = list(beta = c(-7, 5, -100, 20),
+                                        theta = c(2.5),
+                                        sigma = 2))[[1]]
+```
+
 
 ```{r}
-lme4.diag <- lmer(Reaction ~ Days + diag(Days | Subject), sleepstudy)
-glmmTMB.diag <- glmmTMB(Reaction ~ Days + diag(Days | Subject), sleepstudy)
+lme4.diag <- lmer(form, data = dat.diag, REML = "FALSE")
+glmmTMB.diag <- glmmTMB(form, dat = dat.diag)
 
 ## Fixed effects
 fixef(lme4.diag); fixef(glmmTMB.diag)$cond
@@ -167,62 +200,40 @@ all.equal.nocheck(vcov(lme4.diag), vcov(glmmTMB.diag)$cond)
 
 ## Variance and Covariance Components
 all.equal.nocheck(VarCorr(lme4.diag)[[1]], 
-          VarCorr(glmmTMB.diag)$cond$Subject)
+          VarCorr(glmmTMB.diag)$cond$group)
 
 ## Conditional Modes of the Random Effects
-all.equal.nocheck(ranef(lme4.diag)$Subject, ranef(glmmTMB.diag)$cond$Subject)
-```
-
-### Generalized Linear Mixed Model
-
-```{r}
-glme4.diag <- glmer(use ~ age + urban + diag(1 + urban | district), data = Contraception, 
-                  family = binomial)
-
-gglmmTMB.diag <- glmmTMB(use ~ age + urban + diag(1 + urban | district), data = Contraception, 
-                       family = binomial)
-
-## Fixed effects
-fixef(glme4.diag); fixef(gglmmTMB.diag)$cond
-all.equal.nocheck(fixef(glme4.diag), fixef(gglmmTMB.diag)$cond)
-
-## Sigma
-all.equal.nocheck(sigma(glme4.diag), sigma(gglmmTMB.diag))
-
-## Log likelihoods
-logLik(glme4.diag); logLik(gglmmTMB.diag)
-all.equal.nocheck(logLik(glme4.diag), logLik(gglmmTMB.diag))
-
-## Variance-Covariance Matrix
-vcov(glme4.diag); vcov(gglmmTMB.diag)$cond
-all.equal.nocheck(vcov(glme4.diag), vcov(gglmmTMB.diag)$cond)
-
-## Variance and Covariance Components
-all.equal.nocheck(VarCorr(glme4.diag)[[1]], 
-          VarCorr(gglmmTMB.diag)$cond$district)
-
-## Conditional Modes of the Random Effects
-all.equal.nocheck(ranef(glme4.diag)$district, ranef(gglmmTMB.diag)$cond$district)
+all.equal.nocheck(ranef(lme4.diag)$group, ranef(glmmTMB.diag)$cond$group)
 ```
 
 ## Compound Symmetry
 
-Similar to the diagonal case, the syntax is the same for fitting a heterogeneous compound symmetry covariance structure for `lme4` and `glmmTMB`. Again, it differs when we want to fit a *homogeneous* compound symmetry covariance structure.
-
-To demonstrate, if we wanted to fit a homogeneous compound symmetry covariance structure then we would write the following:
+Similar to the diagonal case, the syntax is the same for fitting a heterogeneous compound symmetry covariance structure for `lme4` and `glmmTMB`: 
 
 ```{r, eval = FALSE}
 lme4.us <- lmer(Reaction ~ Days + cs(Days | Subject, hom = TRUE), sleepstudy)
-glmmTMB.us <- glmmTMB(Reaction ~ Days + homcs(Days | Subject), sleepstudy)
+glmmTMB.us <- glmmTMB(Reaction ~ Days + cs(Days | Subject), sleepstudy)
 ```
 
-Once more, we will make comparisons against a *heterogeneous* compound symmetric covariance structure.
-
-### Linear Mixed Model
+Again, it differs when we want to fit a *homogeneous* compound symmetry covariance structure, which we will use for our comparisons.
 
 ```{r}
-lme4.cs <- lmer(Reaction ~ Days + cs(Days | Subject), sleepstudy)
-glmmTMB.cs <- glmmTMB(Reaction ~ Days + cs(Days | Subject), sleepstudy)
+simGroup <- function(g, n=6, phi=0.6) {
+  x <- MASS::mvrnorm(mu = rep(0,n),
+                     Sigma = phi^as.matrix(dist(1:n)) )  
+  y <- x + rnorm(n)                              
+  times <- factor(1:n)
+  group <- factor(rep(g,n))
+  data.frame(y, times, group)
+}
+
+set.seed(1)
+dat.cs <- do.call("rbind", lapply(1:2000, simGroup))
+```
+
+```{r}
+lme4.cs <- lmer(y ~ times + cs(0 + times | group, hom = TRUE), data = dat.cs, REML = FALSE)
+glmmTMB.cs <- glmmTMB(y ~ times + homcs(0 + times | group), data = dat.cs)
 
 ## Fixed effects
 fixef(lme4.cs); fixef(glmmTMB.cs)$cond
@@ -237,47 +248,20 @@ logLik(lme4.cs); logLik(glmmTMB.cs)
 all.equal.nocheck(logLik(lme4.cs), logLik(glmmTMB.cs))
 
 ## Variance-Covariance Matrix
-vcov(lme4.cs); vcov(glmmTMB.cs)$cond
 all.equal.nocheck(vcov(lme4.cs), vcov(glmmTMB.cs)$cond)
 
 ## Variance and Covariance Components
 all.equal.nocheck(VarCorr(lme4.cs)[[1]], 
-          VarCorr(glmmTMB.cs)$cond$Subject)
+          VarCorr(glmmTMB.cs)$cond$group)
 
 ## Conditional Modes of the Random Effects
-all.equal.nocheck(ranef(lme4.cs)$Subject, ranef(glmmTMB.cs)$cond$Subject)
-```
+all.equal.nocheck(ranef(lme4.cs)$group, ranef(glmmTMB.cs)$cond$group)
 
-### Generalized Linear Mixed Model
-
-```{r}
-glme4.cs <- glmer(use ~ age + urban + cs(1 + urban | district), data = Contraception, 
-                  family = binomial)
-
-gglmmTMB.cs <- glmmTMB(use ~ age + urban + cs(1 + urban | district), data = Contraception, 
-                       family = binomial)
-
-## Fixed effects
-fixef(glme4.cs); fixef(gglmmTMB.cs)$cond
-all.equal.nocheck(fixef(glme4.cs), fixef(gglmmTMB.cs)$cond)
-
-## Sigma
-all.equal.nocheck(sigma(glme4.cs), sigma(gglmmTMB.cs))
-
-## Log likelihoods
-logLik(glme4.cs); logLik(gglmmTMB.cs)
-all.equal.nocheck(logLik(glme4.cs), logLik(gglmmTMB.cs))
-
-## Variance-Covariance Matrix
-vcov(glme4.cs); vcov(gglmmTMB.cs)$cond
-all.equal.nocheck(vcov(glme4.cs), vcov(gglmmTMB.cs)$cond)
-
-## Variance and Covariance Components
-all.equal.nocheck(VarCorr(glme4.cs)[[1]], 
-          VarCorr(gglmmTMB.cs)$cond$district)
-
-## Conditional Modes of the Random Effects
-all.equal.nocheck(ranef(glme4.cs)$district, ranef(gglmmTMB.cs)$cond$district)
+## Comparing against the predicted rho value
+lme4.rho <- sqrt(lme4:::getVC(lme4:::getReCovs(lme4.cs)[[1]])$ccomp)
+glmmTMB.rho <- sqrt(attr(summary(glmmTMB.cs)$varcor$cond$group, "correlation")[1, 2])
+lme4.rho; glmmTMB.rho
+all.equal.nocheck(lme4.rho, glmmTMB.rho)
 ```
 
 ## Autoregressive Order 1
@@ -286,15 +270,7 @@ For this comparison, we will focus on a simulated data set where we explicitly d
 
 ```{r}
 set.seed(1)
-simGroup <- function(g, n=6, phi=0.7) {
-  x <- MASS::mvrnorm(mu = rep(0,n),
-                     Sigma = phi^as.matrix(dist(1:n)) )  
-  y <- x + rnorm(n)                              
-  times <- factor(1:n)
-  group <- factor(rep(g,n))
-  data.frame(y, times, group)
-}
-dat1 <- do.call("rbind", lapply(1:5000, simGroup))
+dat.ar1 <- do.call("rbind", lapply(1:2000, function(g) simGroup(g, phi = 0.7)))
 ```
 
 Unlike the diagonal and compound symmetry case, the syntax is different for fitting both a heterogeneous and homogeneous ar1 model for `lme4` and `glmmTMB`.
@@ -302,15 +278,15 @@ Unlike the diagonal and compound symmetry case, the syntax is different for fitt
 For a *heterogeneous* ar1 covariance structure we would write the following:
 
 ```{r, eval = FALSE}
-lme4.ar1 <- lmer(y ~ times + ar1(0 + times | group), data = dat1, REML = FALSE)
-glmmTMB.ar1 <- glmmTMB(y ~ times + ar1(0 + times | group), data = dat1)
+lme4.ar1 <- lmer(y ~ times + ar1(0 + times | group), data = dat.ar1, REML = FALSE)
+glmmTMB.ar1 <- glmmTMB(y ~ times + hetar1(0 + times | group), data = dat.ar1)
 ```
 
 We will instead focus on comparisons for a *homogeneous* ar1 covariance structure.
 
 ```{r}
-lme4.ar1 <- lmer(y ~ times + ar1(0 + times | group, hom = TRUE), data = dat1, REML = FALSE)
-glmmTMB.ar1 <- glmmTMB(y ~ times + hetar1(0 + times | group), data = dat1)
+lme4.ar1 <- lmer(y ~ times + ar1(0 + times | group, hom = TRUE), data = dat.ar1, REML = FALSE)
+glmmTMB.ar1 <- glmmTMB(y ~ times + ar1(0 + times | group), data = dat.ar1)
 
 ## Fixed effects
 fixef(lme4.ar1); fixef(glmmTMB.ar1)$cond
@@ -333,7 +309,10 @@ all.equal.nocheck(VarCorr(lme4.ar1)[[1]],
 
 ## Conditional Modes of the Random Effects
 all.equal.nocheck(ranef(lme4.ar1)$group, ranef(glmmTMB.ar1)$cond$group)
+
+## Comparing against the predicted rho value
+lme4.ar1.rho <- lme4:::getVC(lme4:::getReCovs(lme4.ar1)[[1]])$ccomp
+glmmTMB.ar1.rho <- attr(summary(glmmTMB.ar1)$varcor$cond$group, "correlation")[1, 2]
+lme4.ar1.rho; glmmTMB.ar1.rho
+all.equal.nocheck(lme4.ar1.rho, glmmTMB.ar1.rho)
 ```
-
-
-
