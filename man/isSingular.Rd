@@ -1,6 +1,7 @@
 \name{isSingular}
 \title{Test Fitted Model for (Near) Singularity}
 \alias{isSingular}
+\alias{getSingTol}
 \concept{boundary}
 \description{
   Evaluates whether a fitted mixed model is (almost / near) singular, i.e.,
@@ -10,6 +11,7 @@
 }
 \usage{
 isSingular(x, tol = getSingTol())
+getSingTol()
 }
 \arguments{
   \item{x}{a fitted \code{merMod} object (result of \code{lmer} or \code{glmer}).}
@@ -78,6 +80,13 @@ isSingular(x, tol = getSingTol())
     (Gelman and Hill 2006, McElreath 2015;
     \CRANpkg{MCMCglmm}, \CRANpkg{rstanarm} and \CRANpkg{brms} packages)
   }
+
+  \code{getSingTol()} is a utility function that just returns the
+  default tolerance for testing singularity (1e-4, in the current
+  version); if the user has set
+  \code{options(lme4.singular.tolerance=...)},
+  it will retrieve this value instead.
+  
 }
 \value{
   a logical value

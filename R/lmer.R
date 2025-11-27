@@ -68,6 +68,7 @@ lmer <- function(formula, data=NULL, REML = TRUE,
                      verbose=verbose,
                      start=start,
                      calc.derivs=calc.derivs,
+                     force.calc.derivs=control$calc.derivs %||% FALSE,
                      use.last.params=control$use.last.params)
            }
     cc <- checkConv(attr(opt,"derivs"), opt$par,
@@ -2641,6 +2642,7 @@ getOptfun <- function(optimizer) {
 
 optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
                     control = list(), adj = FALSE, calc.derivs = TRUE,
+                    force.calc.derivs = FALSE,
                     use.last.params = FALSE,
                     verbose = 0L)
 {
@@ -2726,8 +2728,8 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
     ## pp_before <- environment(fn)$pp
     ## save(pp_before,file="pp_before.RData")
 
-    singular <- any(opt$par[lower==0] < getSingTol())
-    if (calc.derivs && !singular) {
+    singular <- min(opt$par - lower, upper - opt$par) < getSingTol()
+    if (force.calc.derivs || (calc.derivs && !singular)){
         if (use.last.params) {
             ## +0 tricks R into doing a deep copy ...
             ## otherwise element of ref class changes!

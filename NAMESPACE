@@ -305,3 +305,5 @@ export(expandDoubleVerts)
 ## 
 export(namedList)
 importFrom(rlang, warn)
+##
+export(getSingTol)
