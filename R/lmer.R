@@ -50,6 +50,9 @@ lmer <- function(formula, data=NULL, REML = TRUE,
     if (identical(control$optimizer,"none"))
       stop("deprecated use of optimizer=='none'; use NULL instead")
     
+    ## Checks if the user actually enabled calc.derivs
+    force.calc.derivs <- isTRUE(control$calc.derivs)
+    
     calc.derivs <- control$calc.derivs %||% 
       (nrow(lmod$fr) < control$checkConv$check.conv.nobsmax &
        length(s)    < control$checkConv$check.conv.nparmax)
@@ -65,6 +68,7 @@ lmer <- function(formula, data=NULL, REML = TRUE,
                      verbose=verbose,
                      start=start,
                      calc.derivs=calc.derivs,
+                     force.calc.derivs=force.calc.derivs,
                      use.last.params=control$use.last.params)
            }
     cc <- checkConv(attr(opt,"derivs"), opt$par,
@@ -2641,6 +2645,7 @@ getOptfun <- function(optimizer) {
 
 optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
                     control = list(), adj = FALSE, calc.derivs = TRUE,
+                    force.calc.derivs = FALSE,
                     use.last.params = FALSE,
                     verbose = 0L)
 {
@@ -2725,9 +2730,9 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
     }
     ## pp_before <- environment(fn)$pp
     ## save(pp_before,file="pp_before.RData")
-
+    
     singular <- any(opt$par[lower==0] < getSingTol())
-    if (calc.derivs && !singular) {
+    if (force.calc.derivs || (calc.derivs && !singular)){
         if (use.last.params) {
             ## +0 tricks R into doing a deep copy ...
             ## otherwise element of ref class changes!

@@ -477,4 +477,10 @@ test_that("gradient and Hessian checks are skipped when singular fit occurs",{
   expect_null(summary(fm2)$optinfo$derivs$Hessian)
   ## Switching back (in case needed)
   options(lme4.singular.tolerance = 1e-4)
+  
+  ## force calculating the derivatives even if the fit is singular
+  fm2 <- lmer(y ~ x + (1 | group), 
+              control = lmerControl(calc.derivs = TRUE), data = dat)
+  expect_false(is.null(summary(fm2)$optinfo$derivs))
 })
+
