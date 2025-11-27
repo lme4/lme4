@@ -6,23 +6,17 @@
    * profPar = profiling parameters
    * getVC() gets scaled SDs and correlation parameters
 * document clearly that scale = "varcor" is only allowed for us() matrices
-* getCormat might be unnecessary: in at least one place we go cov -> cor -> cov (!)
 * DOCUMENT that internal order of profiling parameters has changed; was previously in Lambda-matrix order
       (i.e. sd1, cor12, sd2 for a 2x2), now in [more sensible, glmmTMB-matching] (sd1, sd2, cor12) [this is going to be a "user-visible change"]
-    
-current status: unstructured may be working; need to add methods for other Covariance sub-types ...
-
-
-* check that existing examples work and existing tests pass
-  - `git diff master tests` looks OK now: a few tests fail but those
-    particular failures are expected; these tests are skipped or adapted
-* check that reverse dependencies pass *their* checks
+* check that reverse dependencies pass *their* checks (!!)
 * new tests
   - unit tests for stuff in `R/covariance.R`
   - integration tests for `lmer`, `glmer`, `nlmer`, and
     methods for class `"merMod"`
 * new documentation
   - write a `vignette("covariance")` (or whatever)
+* adapt `formatVC` to handle new covariance structures smoothly
+* make `VarCorr()` structure-aware: in particular, be careful *not* to generate full cov/cor matrix, unless explicitly requested, for structured cov matrices (to avoid huge and redundant structures)
 
 
 ## not `flexSigmaMinimum`
