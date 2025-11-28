@@ -605,11 +605,29 @@ setMethod("setTheta",
                   l21 <- value[pos + 1L + 1L]
                   ## L[2, 2] = sigma[2] * sqrt(1 - rho^2)
                   l22 <- value[pos + 1L + if (hom) 2L else nc]
-                  if (l21 == 0 && l22 == 0) # FIXME
-                      stop(gettextf("boundary case not yet supported by method for '%s' with signature (%s=\"%s\", %s=\"%s\")",
-                                    "setTheta", "object", "Covariance.cs", "value", "numeric"),
-                           domain = NA)
-                  rho <- sign(l21) * 1/sqrt(1 + (l22/l21)^2)
+                  rho <-
+                  if (l21 != 0 || l22 != 0)
+                      sign(l21) * 1/sqrt(1 + (l22/l21)^2)
+                  else {
+                      ## Fall back to computing the correlation matrix
+                      i <- sequence.default(from = seq.int(from = 1L, by = nc + 1L, length.out = nc),
+                                            nvec = nc:1L)
+                      j <-
+                      if (hom)
+                          rep((pos + 1L):(pos + 2L * nc - 1L),
+                              rbind(1L, (nc - 1L):0L))
+                      else (pos + 1L):(pos + (nc * (nc - 1L)) %/% 2L + nc)
+                      L <- matrix(0, nc, nc)
+                      L[i] <- value[j]
+                      d <- sqrt(diag(S <- tcrossprod(L)))
+                      h <- order(d, decreasing = TRUE)[1L:2L]
+                      d12 <- prod(d[h])
+                      if (d12 == 0)
+                          stop(gettextf("'%s' is not identifiable as there is no pair of nonzero standard deviations",
+                                        "rho"),
+                               domain = NA)
+                      S[h[1L], h[2L]]/d12
+                  }
                   sigma <-
                   if (hom)
                       value[pos + 1L]
@@ -638,11 +656,29 @@ setMethod("setTheta",
                   l21 <- value[pos + 1L + 1L]
                   ## L[2, 2] = sigma[2] * sqrt(1 - rho^2)
                   l22 <- value[pos + 1L + nc]
-                  if (l21 == 0 && l22 == 0) # FIXME
-                      stop(gettextf("boundary case not yet supported by method for '%s' with signature (%s=\"%s\", %s=\"%s\")",
-                                    "setTheta", "object", "Covariance.ar1", "value", "numeric"),
-                           domain = NA)
-                  rho <- sign(l21) * 1/sqrt(1 + (l22/l21)^2)
+                  rho <-
+                  if (l21 != 0 || l22 != 0)
+                      sign(l21) * 1/sqrt(1 + (l22/l21)^2)
+                  else {
+                      ## Fall back to computing the correlation matrix
+                      i <- sequence.default(from = seq.int(from = 1L, by = nc + 1L, length.out = nc),
+                                            nvec = nc:1L)
+                      j <-
+                      if (hom)
+                          sequence.default(from = rep(pos + 1L + c(0L, nc), c(1L, nc - 1L)),
+                                           nvec = nc:1L)
+                      else (pos + 1L):(pos + (nc * (nc - 1L)) %/% 2L + nc)
+                      L <- matrix(0, nc, nc)
+                      L[i] <- value[j]
+                      d <- sqrt(diag(S <- tcrossprod(L)))
+                      h <- order(d, decreasing = TRUE)[1L:2L]
+                      d12 <- prod(d[h])
+                      if (d12 == 0)
+                          stop(gettextf("'%s' is not identifiable as there is no pair of nonzero standard deviations",
+                                        "rho"),
+                               domain = NA)
+                      S[h[1L], h[2L]]/d12
+                  }
                   sigma <-
                   if (hom)
                       value[pos + 1L]
