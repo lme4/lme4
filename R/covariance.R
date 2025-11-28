@@ -609,7 +609,7 @@ setMethod("setTheta",
                   if (l21 != 0 || l22 != 0)
                       sign(l21) * 1/sqrt(1 + (l22/l21)^2)
                   else {
-                      ## Fall back to computing the correlation matrix
+                      ## Fall back to constructing the Cholesky factor
                       i <- sequence.default(from = seq.int(from = 1L, by = nc + 1L, length.out = nc),
                                             nvec = nc:1L)
                       j <-
@@ -619,14 +619,14 @@ setMethod("setTheta",
                       else (pos + 1L):(pos + (nc * (nc - 1L)) %/% 2L + nc)
                       L <- matrix(0, nc, nc)
                       L[i] <- value[j]
-                      d <- sqrt(diag(S <- tcrossprod(L)))
+                      d <- sqrt(rowSums(L * L))
                       h <- order(d, decreasing = TRUE)[1L:2L]
                       d12 <- prod(d[h])
                       if (d12 == 0)
                           stop(gettextf("'%s' is not identifiable as there is no pair of nonzero standard deviations",
                                         "rho"),
                                domain = NA)
-                      S[h[1L], h[2L]]/d12
+                      sum(L[h[1L], ] * L[h[2L], ])/d12
                   }
                   sigma <-
                   if (hom)
@@ -660,7 +660,7 @@ setMethod("setTheta",
                   if (l21 != 0 || l22 != 0)
                       sign(l21) * 1/sqrt(1 + (l22/l21)^2)
                   else {
-                      ## Fall back to computing the correlation matrix
+                      ## Fall back to constructing the Cholesky factor
                       i <- sequence.default(from = seq.int(from = 1L, by = nc + 1L, length.out = nc),
                                             nvec = nc:1L)
                       j <-
@@ -670,14 +670,14 @@ setMethod("setTheta",
                       else (pos + 1L):(pos + (nc * (nc - 1L)) %/% 2L + nc)
                       L <- matrix(0, nc, nc)
                       L[i] <- value[j]
-                      d <- sqrt(diag(S <- tcrossprod(L)))
+                      d <- sqrt(rowSums(L * L))
                       h <- order(d, decreasing = TRUE)[1L:2L]
                       d12 <- prod(d[h])
                       if (d12 == 0)
                           stop(gettextf("'%s' is not identifiable as there is no pair of nonzero standard deviations",
                                         "rho"),
                                domain = NA)
-                      (S[h[1L], h[2L]]/d12)^(1/abs(h[1L] - h[2L]))
+                      (sum(L[h[1L], ] * L[h[2L], ])/d12)^(1/abs(h[1L] - h[2L]))
                   }
                   sigma <-
                   if (hom)
