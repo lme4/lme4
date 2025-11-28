@@ -119,9 +119,10 @@ function (args) {
             .__ORIG__.
         })
     }
-    cpid(outdir, reverse = list(), Ncpus = Ncpus, clean = clean)
+    out <- cpid(outdir, reverse = list(), Ncpus = Ncpus, clean = clean)
+    saveRDS(out, file = file.path(outdir, "REVERSE.rds"))
+    out
 }
 
 args <- commandArgs(trailingOnly = TRUE)
 ch <- checkReverse(args)
-
