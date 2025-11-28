@@ -677,7 +677,7 @@ setMethod("setTheta",
                           stop(gettextf("'%s' is not identifiable as there is no pair of nonzero standard deviations",
                                         "rho"),
                                domain = NA)
-                      S[h[1L], h[2L]]/d12
+                      (S[h[1L], h[2L]]/d12)^(1/abs(h[1L] - h[2L]))
                   }
                   sigma <-
                   if (hom)
