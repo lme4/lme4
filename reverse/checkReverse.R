@@ -100,7 +100,9 @@ function (args) {
           "BioCexp"  = "%bm/packages/%v/data/experiment",
           "INLA"     = "https://inla.r-inla-download.org/R/stable",
           "CmdStan"  = "https://stan-dev.r-universe.dev"))
-    .op <- options(repos = repos, useFancyQuotes = FALSE)
+    .op <- options(repos = repos,
+                   install.packages.compile.from.source = TRUE,
+                   useFancyQuotes = FALSE)
     on.exit(options(.op), add = TRUE)
 
     cpid <- tools::check_packages_in_dir
