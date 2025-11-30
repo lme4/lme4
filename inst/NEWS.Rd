@@ -11,7 +11,7 @@
       \code{type = "response"} is now transformed from the link scale to
       the response scale (GH #847, @leorjorge)
       \item predictions with
-      \code{se.fit=TRUE}/\code{allow.new.levels=TRUE} work for a wider range       of cases (GH #691, GH #753)
+      \code{se.fit=TRUE}/\code{allow.new.levels=TRUE} work for a wider range of cases (GH #691, GH #753)
     } % itemize
   } % bug fixes
   \subsection{NEW FEATURES}{
@@ -61,7 +61,8 @@
       If desired, derivatives can be calculated (but not checked)
       by explicitly setting \code{calc.derivs} to TRUE.
       \item Derivative calculations are now skipped for models with
-      singular random effects components.
+      singular random effects components (unless \code{calc.derivs} is
+      explicitly set to TRUE in \code{[g]lmerControl}).
     } % itemize
   } % user-visible changes
 } % devel
