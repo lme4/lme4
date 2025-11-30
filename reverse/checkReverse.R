@@ -124,7 +124,10 @@ function (args) {
     configure.args <-
         list()
     configure.vars <-
-        list(arrow = c("LIBARROW_BINARY=FALSE", "ARROW_R_DEV=TRUE"))
+        list(arrow = c("LIBARROW_BINARY=FALSE", "ARROW_R_DEV=TRUE",
+                       if (Sys.info()[["user"]] == "mikael")
+                           "PKG_CONFIG=\"pkgconfig --static\"",
+                       NULL))
     out <- cpid(outdir, reverse = list(), Ncpus = Ncpus, clean = clean,
                 install_args = list(configure.args = configure.args,
                                     configure.vars = configure.vars))
