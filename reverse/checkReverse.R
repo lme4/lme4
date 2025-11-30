@@ -121,7 +121,13 @@ function (args) {
             .__ORIG__.
         })
     }
-    out <- cpid(outdir, reverse = list(), Ncpus = Ncpus, clean = clean)
+    configure.args <-
+        list()
+    configure.vars <-
+        list(arrow = c("LIBARROW_BINARY=FALSE", "ARROW_R_DEV=TRUE"))
+    out <- cpid(outdir, reverse = list(), Ncpus = Ncpus, clean = clean,
+                install_args = list(configure.args = configure.args,
+                                    configure.vars = configure.vars))
     saveRDS(out, file = file.path(outdir, "REVERSE.rds"))
     out
 }
