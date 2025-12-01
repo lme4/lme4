@@ -19,6 +19,35 @@
 ##     If you want to make use of an existing library tree for a given
 ##     run, then use --library=, giving a colon-delimited search path.
 ##
+## NOTE
+##
+##     If you use macOS and you use the CRAN distribution of R, then:
+##
+##         (1) Install libraries and tools under /opt/R/$(uname -m) as
+##             described at
+##
+##                 https://mac.r-project.org/bin/
+##
+##         (2) Arrange that your ${PATH} contains /opt/R/$(uname -m)/bin
+##             by adding a line like
+##
+##                 export PATH="/opt/R/$(uname -m)/bin:${PATH}"
+##
+##             to your shell startup file, e.g., ~/.zprofile if your
+##             ${SHELL} is /bin/zsh.  Another option is to create
+##             /etc/paths.d/R and list the expanded path there.
+##
+##         (3) Arrange that your ${PATH} *does not contain* any paths
+##             used by a macOS package manager like MacPorts, Homebrew,
+##             Fink, or Conda.  You may need to comment out lines in
+##             your shell startup file or delete lines in files under
+##             /etc/paths.d.
+##
+##         (4) Invoke R from a shell process inside of the native
+##             Terminal.app.  Applications like RStudio.app configure
+##             the shell process environment, including ${PATH}, in
+##             unpredictable ways.
+##
 checkReverse <-
 function (args) {
     ## Wishlist for KH/tools::check_packages_in_dir:
