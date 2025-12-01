@@ -37,7 +37,11 @@ Despite these differences, we will show examples where `lme4` and `glmmTMB` prov
 
 ```{r setup}
 library(lme4)
-library(glmmTMB)
+if (!requireNamespace("glmmTMB", quietly = TRUE)) {
+  knitr::opts_chunk$set(eval = FALSE)
+} else {
+  library(glmmTMB)
+}
 
 ## Often want to ignore attributes and class.
 all.equal.nocheck <- function(x, y, ..., check.attributes = FALSE, check.class = FALSE) {
