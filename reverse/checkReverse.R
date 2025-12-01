@@ -124,7 +124,9 @@ function (args) {
     configure.args <-
         list()
     configure.vars <-
-        list(arrow = c("LIBARROW_BINARY=false", "ARROW_R_DEV=true",
+        list(arrow = c("LIBARROW_BINARY=false",
+                       "ARROW_R_DEV=true",
+                       "ARROW_DEPENDENCY_SOURCE=BUNDLED",
                        if (Sys.info()[["user"]] == "mikael")
                            "PKG_CONFIG=\"pkg-config --static\"",
                        NULL))
