@@ -1,6 +1,6 @@
 ## USAGE IN A SHELL
 ##
-##     $ R -f checkChanges.R [option1] ... [optionN] --old=<directory> --new=<directory>
+##     $ R -f checkChanges.R --args [option1] ... [optionN] --old=<directory> --new=<directory>
 ##
 ## USAGE IN R
 ##
@@ -8,11 +8,21 @@
 ##
 ## EXAMPLE
 ##
-##     $ LME4_OLD=lme4_1.1-37.tar.gz
-##     $ LME4_NEW=lme4_1.1-38.tar.gz
-##     $ R --vanilla -f checkReverse.R --args --jobs=4 ${LME4_OLD}
-##     $ R --vanilla -f checkReverse.R --args --jobs=4 ${LME4_NEW}
-##     $ R --vanilla -f checkChanges.R --args --old=${LME4_OLD}.reverse --new=${LME4_NEW}.reverse
+##     $ ## Set up
+##     $ oldver=1.1-37
+##     $ newver=1.1-38
+##     $ oldsrc=lme4_${oldver}.tar.gz
+##     $ newsrc=lme4_${newver}.tar.gz
+##     $ chwdir=CHANGES_${oldver}_${newver}
+##     $
+##     $ ## Do reverse dependency checks
+##     $ ## [ in practice, you would start with --no-check runs ... ]
+##     $ R --vanilla -f checkReverse.R --args --jobs=4 ${oldsrc}
+##     $ R --vanilla -f checkReverse.R --args --jobs=4 ${newsrc}
+##     $
+##     $ ## Get changes to worse
+##     $ R --vanilla -f checkChanges.R --args --old=${oldsrc}.reverse --new=${newsrc}.reverse --output=${chwdir}
+##     $ tar -czvf ${chwdir}.tar.gz ${chwdir} # for distribution
 ##
 checkChanges <-
 function (args) {

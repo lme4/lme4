@@ -12,9 +12,10 @@
 ##     install failures.  Packages may require manual intervention.
 ##     Once you are satisfied, run with the check.
 ##
-##     $ LME4_ARCHIVE=lme4_1.1-37.tar.gz
-##     $ R --vanilla -f checkReverse.R --args --jobs=4 --no-check ${LME4_ARCHIVE}
-##     $ R --vanilla -f checkReverse.R --args --jobs=4            ${LME4_ARCHIVE}
+##     $ pkgver=1.1-37
+##     $ pkgsrc=lme4_${pkgver}.tar.gz
+##     $ R --vanilla -f checkReverse.R --args --jobs=4 --no-check ${pkgsrc}
+##     $ R --vanilla -f checkReverse.R --args --jobs=4            ${pkgsrc}
 ##
 ##     If you want to make use of an existing library tree for a given
 ##     run, then use --library=, giving a colon-delimited search path.
