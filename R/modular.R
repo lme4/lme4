@@ -620,7 +620,7 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL,
     if (length(rho$resp$y) > 0)  ## only if non-trivial y
         devfun(rho$mkPar(rho$pp$theta)) # one evaluation to ensure all values are set
     rho$lower <- reTrms$lower # to be more consistent with mkGlmerDevfun
-    rho$upper <- reTrms$upper
+    rho$upper <- reTrms$upper %||% rep(Inf, length(reTrms$lower))
     devfun # this should pass the rho environment implicitly
 }
 
@@ -639,7 +639,7 @@ optimizeLmer <- function(devfun,
     rho <- environment(devfun)
     start <- getStart(start, rho, 0L)
     lower <- rho$lower
-    upper <- rho$upper
+    upper <- rho$upper %||% rep(Inf, length(rho$lower))
     opt <- optwrap(optimizer,
                    devfun,
                    start,
@@ -889,7 +889,7 @@ mkGlmerDevfun <- function(fr, X, reTrms, family,
     else {
         rho$nAGQ  <- 0L
         rho$lower <- reTrms$lower
-        rho$upper <- reTrms$upper
+        rho$upper <- reTrms$upper %||% rep(Inf, length(reTrms$lower))
         devfun
     }
 }
@@ -917,7 +917,9 @@ optimizeGlmer <- function(devfun,
     verbose <- as.integer(verbose)
     rho <- environment(devfun)
     start <- getStart(start, rho, nAGQ)
-    opt <- optwrap(optimizer, devfun, start, lower=rho$lower, upper=rho$upper,
+    lower <- rho$lower
+    upper <- rho$upper %||% rep(Inf, length(rho$lower))
+    opt <- optwrap(optimizer, devfun, start, lower=lower, upper=upper,
                    control=control, adj=nAGQ > 0L, verbose=verbose,
                    ...)
     if (nAGQ > 0L)
@@ -935,7 +937,7 @@ optimizeGlmer <- function(devfun,
 check.boundary <- function(rho,opt,devfun,boundary.tol) {
     par0 <- opt$par
     lower <- rho$lower
-    upper <- rho$upper
+    upper <- rho$upper %||% rep(Inf, length(rho$lower))
     dl <- par0 - lower
     du <- upper - par0
     if (!is.null(rho$dpars)) {
@@ -975,8 +977,10 @@ updateGlmerDevfun <- function(devfun, reTrms, nAGQ = 1L){
     }
     rho <- environment(devfun)
     rho$nAGQ       <- nAGQ
-    rho$lower      <- c(reTrms$lower, rep.int(-Inf, length(rho$pp$beta0)))
-    rho$upper      <- c(reTrms$upper, rep.int( Inf, length(rho$pp$beta0)))
+    rho$lower      <- c(reTrms$lower,
+                        rep(-Inf, length(rho$pp$beta0)))
+    rho$upper      <- c(reTrms$upper %||% rep(Inf, length(reTrms$lower)),
+                        rep( Inf, length(rho$pp$beta0)))
     rho$lp0        <- rho$pp$linPred(1)
     rho$dpars      <- seq_along(reTrms$lower)
     rho$baseOffset <- forceCopy(rho$resp$offset) # forcing a copy (!)
