@@ -173,7 +173,7 @@ glmer <- function(formula, data=NULL
         ## update deviance function to include fixed effects
         devfun <- updateGlmerDevfun(devfun, glmod$reTrms, nAGQ = nAGQ)
         if (devFunOnly) return(devfun)
-        start <- updateStart(start, par = opt$par)
+        start <- updateStart(start, opt$par)
         }
     }
 
@@ -379,6 +379,13 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
     }
     else stop("code not yet written")
     environment(ff) <- rho
+    if ((.lme4.work.around.blme || .lme4.work.around.lmerTest) &&
+        identical(names(formals(ff)), "par")) {
+        ## pro tem: accommodate 'blme', 'lmerTest' which depend on
+        ## names(formals(.))
+        names(formals(ff)) <- "theta"
+        body(ff) <- do.call(substitute, list(body(ff), list(par = quote(theta))))
+    }
     ff
 }
 

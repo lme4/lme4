@@ -1,3 +1,11 @@
+## pro tem:
+## $ LME4_WORK_AROUND_BLME=true     R CMD INSTALL blme_1.0-6.tar.gz
+## $ LME4_WORK_AROUND_LMERTEST=true R CMD INSTALL lmerTest_3.1-3.tar.gz
+.lme4.work.around.blme <-
+    isTRUE(as.logical(Sys.getenv("LME4_WORK_AROUND_BLME"    , "false")))
+.lme4.work.around.lmerTest <-
+    isTRUE(as.logical(Sys.getenv("LME4_WORK_AROUND_LMERTEST", "false")))
+
 ### Class definitions for the package
 
 ##' Class "lmList4" of 'lm' Objects on Common Model

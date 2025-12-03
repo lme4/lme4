@@ -22,6 +22,8 @@ checkConv <- function(derivs, coefs, ctrl, lbound, ubound, debug = FALSE,
                       nobs = NULL, ndim = NULL)
 {
     res <- list()
+    if (.lme4.work.around.blme && is.null(ctrl)) # pro tem
+        return(res)
     ntheta <- length(lbound)
 
     if (missing(ubound))
