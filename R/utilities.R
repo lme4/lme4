@@ -475,7 +475,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
               is(resp <- rho$resp, "lmResp"),
               is.list(opt), "par" %in% names(opt),
               c("conv", "fval") %in% substr(names(opt),1,4), ## "conv[ergence]", "fval[ues]"
-              is.list(reTrms), c("flist", "cnms", "Gp", "lower", "upper", "reCovs") %in% names(reTrms),
+              is.list(reTrms), c("flist", "cnms", "Gp", "lower") %in% names(reTrms),
               length(rcl <- class(resp)) == 1)
     n    <- nrow(pp$V)
     p    <- ncol(pp$V)
@@ -531,7 +531,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
         pp=pp, resp=resp,
         optinfo = .optinfo(opt, lme4conv))
     attr(ans, "upper") <- reTrms$upper %||% rep(Inf, length(reTrms$lower))
-    attr(ans, "reCovs") <- upReCovs(reTrms$reCovs, rho$pp$theta)
+    attr(ans, "reCovs") <- upReCovs(reTrms$reCovs %||% getReCovs(ans), rho$pp$theta)
     ans
 }## {mkMerMod}
 
