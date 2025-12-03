@@ -1271,10 +1271,13 @@ function (object) {
     ## stopifnot(is(object, "merMod"))
     if (!is.null(ans <- attr(object, "reCovs")))
         return(ans)
+    ## 'object' was obtained using older 'lme4', hence:
+    if (TRUE)
+    nc <- lengths(object@cnms, use.names = FALSE)
+    else {
     ## object@cnms is not reliable when formula(object) has '||'
-    ## terms and 'object' was obtained using older 'lme4', hence:
- ## nc <- lengths(object@cnms, use.names = FALSE)
     nc <- getME(object, "p_i") # get individual sizes
+    }
     upReCovs(lapply(nc, function (nc) new("Covariance.us", nc = nc)),
              object@theta)
 }
