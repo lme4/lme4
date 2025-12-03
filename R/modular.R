@@ -467,7 +467,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
 ## utility f'n for checking starting values
 getStart <- function(start, rho, nAGQ) {
     ## default values
-    par <- par0 <- rho$mkPar(rho$pp$theta)
+    par <- par0 <- (rho$mkPar %||% identity)(rho$pp$theta)
     fixef <- fixef0 <- rho$pp$delb
     if (is.null(start))
         NULL # do nothing
