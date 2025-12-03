@@ -320,14 +320,9 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
     ff <-
     if (extends(rho.cld, "lmerResp")) {
         rho$lmer_Deviance <- lmer_Deviance
-        if (FALSE)
         function(par)
             .Call(lmer_Deviance, pp$ptr(), resp$ptr(),
                   mkTheta(as.double(par)))
-        else # lmerTest::as_lmerModLmerTest tests names(formals(.)) ...
-        function(theta)
-            .Call(lmer_Deviance, pp$ptr(), resp$ptr(),
-                  mkTheta(as.double(theta)))
     } else if (extends(rho.cld, "glmResp")) {
         ## control values will override rho values *if present*
         if (!is.null(tp <- control$tolPwrss)) rho$tolPwrss <- tp

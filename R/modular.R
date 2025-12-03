@@ -595,15 +595,8 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL,
     rho$lmer_Deviance <- lmer_Deviance
     rho$mkPar <- mkMkPar(reTrms$reCovs)
     rho$mkTheta <- mkMkTheta(reTrms$reCovs)
-    devfun <-
-    if (FALSE)
-    function(par)
-        .Call(lmer_Deviance, pp$ptr(), resp$ptr(),
-              mkTheta(as.double(par)))
-    else # lmerTest::as_lmerModLmerTest tests names(formals(.)) ...
-    function(theta)
-        .Call(lmer_Deviance, pp$ptr(), resp$ptr(),
-              mkTheta(as.double(theta)))
+    devfun <- function(par)
+        .Call(lmer_Deviance, pp$ptr(), resp$ptr(), mkTheta(as.double(par)))
     environment(devfun) <- rho
 
     # if all random effects are of the form 1|f and starting values not
