@@ -1271,15 +1271,24 @@ function (object) {
     ## stopifnot(is(object, "merMod"))
     if (!is.null(ans <- attr(object, "reCovs")))
         return(ans)
-    ## 'object' was obtained using older 'lme4', hence:
-    if (TRUE)
+    ## 'object' was obtained using older 'lme4' => all 'us' or 'diag'.
+    ## It seems that distinguishing these two cases requires some
+    ## gymnastics.  We nonetheless try to be fast in the all-'us' case.
     nc <- lengths(object@cnms, use.names = FALSE)
-    else {
-    ## object@cnms is not reliable when formula(object) has '||'
-    nc <- getME(object, "p_i") # get individual sizes
+    form <- formula(object)
+    doublebars <- reformulas::findbars_x(form, target = "||",
+                                         default.special = NULL)
+    reCovs <-
+    if (length(doublebars) > 0L) {
+        nc.. <- vapply(mmList(form, model.frame(object)), ncol, 0L,
+                       USE.NAMES = FALSE)
+        dptr <- diff(ptr <- c(0L, match(cumsum(nc), cumsum(nc..))))
+        Class <- rep("Covariance.us", length(nc))
+        Class[dptr > 1L] <- "Covariance.diag"
+        .mapply(new, list(Class = Class, nc = nc), NULL)
     }
-    upReCovs(lapply(nc, function (nc) new("Covariance.us", nc = nc)),
-             object@theta)
+    else .mapply(new, list(nc = nc), list(Class = "Covariance.us"))
+    upReCovs(reCovs, object@theta)
 }
 
 convParToProfPar <-
