@@ -309,18 +309,6 @@ fm1.cs.hom <- lmer(Reaction ~ Days + cs(Days | Subject, hom = TRUE),
 sleepstudy$Daysf <- factor(sleepstudy$Days, ordered = TRUE)
 fm1.ar1 <- lmer(Reaction ~ Daysf + ar1(0 + Daysf | Subject, hom = TRUE), 
                 sleepstudy, REML = FALSE)
-
-## Applying some of the S4 methods for merMod
-getPar(fm1.us)
-getTheta(fm1.us)
-
-
-## The same could be applied to covariance
-fm1.cov <- getReCovs(fm1.us)[[1]]
-getPar(fm1.cov)
-getTheta(fm1.cov)
-getLambda(fm1.cov)
-getVC(fm1.cov)
 \dontshow{
 rm(list = c(.nms, ".nms", ".fns"))
 }
