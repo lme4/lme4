@@ -2429,8 +2429,13 @@ formatVC <- function(varcor, digits = max(3, getOption("digits") - 2),
         stop("Must show variances and/or standard deviations")
     reStdDev <- c(lapply(varcor, attr, "stddev"),
                   if(useScale) list(Residual = unname(attr(varcor, "sc"))))
+    ## we assume here that the dimensions of the cov/corr matrices are equal
+    ##  to the numbers of std dev components for each term
     reLens <- lengths(reStdDev)
+    ## number of rows of the output: we should allow for ncorrs > nstddevs even
+    ##  if we don't have any yet
     nr <- sum(reLens)
+    ## setting up the part of the output array that's just variances and/or std devs
     reMat <- array('', c(nr, nc), list(rep.int('', nr), colnms))
     reMat[1+cumsum(reLens)-reLens, "Groups"] <- names(reLens)
     reMat[,"Name"] <- c(unlist(lapply(varcor, colnames)), if(useScale) "")
@@ -2439,20 +2444,23 @@ formatVC <- function(varcor, digits = max(3, getOption("digits") - 2),
     if(any("Std.Dev." == use.c))
         reMat[,"Std.Dev."] <- formatter(unlist(reStdDev),   digits = digits, ...)
     if (any(reLens > 1L)) { ## append lower triangular matrix of correlations / covariances
-        maxlen <- max(reLens)
+      maxlen <- max(reLens)
         Lcomat <- if(corr)
                       lapply(varcor, attr, "correlation")
                   else # just the matrix, i.e. {dim,dimnames}
                       lapply(varcor, identity)
 				## function(v) `attributes<-`(v, attributes(v)[c("dim","dimnames")])
         co <- # corr or cov
-            do.call(rbind,
-                    lapply(Lcomat,
+          do.call(rbind,
+                  ## formatting the corr/cov triangles and sticking them
+                  ## together
+                  lapply(Lcomat,
                            function(x) {
                                x <- as.matrix(x)
                                dig <- max(2, digits - 2) # use 'digits' !
                                ## not using formatter() for correlations
                                cc <- format(round(x, dig), nsmall = dig)
+                               ## blanking out the upper triangle
                                cc[!lower.tri(cc)] <- ""
                                nr <- nrow(cc)
                                if (nr >= maxlen) return(cc)
