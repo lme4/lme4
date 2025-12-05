@@ -173,23 +173,22 @@ setGeneric("setVC",
                standardGeneric("setVC"))
 
 setGeneric("getProfPar",
-           function (object, profscale = c("sdcov", "varcov"), sc = NULL)
+           function (object, profscale, sc = NULL)
                standardGeneric("getProfPar"),
            signature = "object")
 
 setGeneric("setProfPar",
-           function (object, profscale = c("sdcov", "varcov"), 
-                     sc = NULL, value, pos = 0L)
+           function (object, profscale, sc = NULL, value, pos = 0L)
                standardGeneric("setProfPar"),
            signature = c("object", "value"))
 
 setGeneric("getProfLower",
-           function (object, profscale = c("sdcov", "varcov"), sc = NULL)
+           function (object, profscale, sc = NULL)
                standardGeneric("getProfLower"),
            signature = "object")
 
 setGeneric("getProfUpper",
-           function (object, profscale = c("sdcov", "varcov"), sc = NULL)
+           function (object, profscale, sc = NULL)
                standardGeneric("getProfUpper"),
            signature = "object")
 
@@ -967,7 +966,6 @@ rm(.fn)
 setMethod("getProfPar",
           c(object = "Covariance.us"),
           function (object, profscale, sc = NULL) {
-              profscale <- match.arg(profscale, c("sdcov", "varcov"))
               vc <- getVC(object)
               vcomp <- vc$vcomp
               ccomp <- vc$ccomp
@@ -987,7 +985,6 @@ setMethod("getProfPar",
 setMethod("getProfPar",
           c(object = "Covariance.diag"),
           function (object, profscale, sc = NULL) {
-              profscale <- match.arg(profscale, c("sdcov", "varcov"))
               vcomp <- object@par
               if (!is.null(sc))
                   vcomp <- vcomp * sc
@@ -1000,7 +997,6 @@ setMethod("getProfPar",
           c(object = "Covariance.cs"),
           .fn <-
           function (object, profscale, sc = NULL) {
-              profscale <- match.arg(profscale, c("sdcov", "varcov"))
               if (profscale == "varcov")
                   stop(gettextf("%s=\"%s\" not implemented for class \"%s\"",
                                 "profscale", "varcov", class(object)),
@@ -1021,9 +1017,7 @@ rm(.fn)
 
 setMethod("setProfPar",
           c(object = "Covariance.us", value = "numeric"),
-          function (object, profscale, 
-                    sc = NULL, value, pos = 0L) {
-              profscale <- match.arg(profscale, c("sdcov", "varcov"))
+          function (object, profscale, sc = NULL, value, pos = 0L) {
               np <- length(object@par)
               validValuePos(np, value, pos)
               nc <- object@nc
@@ -1044,9 +1038,7 @@ setMethod("setProfPar",
 
 setMethod("setProfPar",
           c(object = "Covariance.diag", value = "numeric"),
-          function (object, profscale, sc = NULL, 
-                    value, pos = 0L) {
-              profscale <- match.arg(profscale, c("sdcov", "varcov"))
+          function (object, profscale, sc = NULL, value, pos = 0L) {
               np <- length(object@par)
               validValuePos(np, value, pos)
               vcomp <-
@@ -1065,9 +1057,7 @@ setMethod("setProfPar",
 setMethod("setProfPar",
           c(object = "Covariance.cs", value = "numeric"),
           .fn <-
-          function (object, profscale, 
-                    sc = NULL, value, pos = 0L) {
-              profscale <- match.arg(profscale, c("sdcov", "varcov"))
+          function (object, profscale, sc = NULL, value, pos = 0L) {
               if (profscale == "varcov")
                   stop(gettextf("%s=\"%s\" not implemented for class \"%s\"",
                                 "profscale", "varcov", class(object)),
@@ -1092,7 +1082,6 @@ rm(.fn)
 setMethod("getProfLower",
           c(object = "Covariance.us"),
           function (object, profscale, sc = NULL) {
-              profscale <- match.arg(profscale, c("sdcov", "varcov"))
               nc <- object@nc
               rep(c(0, if (profscale == "varcov") -Inf else -1),
                   c(nc, (nc * (nc - 1L)) %/% 2L))
@@ -1100,16 +1089,13 @@ setMethod("getProfLower",
 
 setMethod("getProfLower",
           c(object = "Covariance.diag"),
-          function (object, profscale, sc = NULL){
-            profscale <- match.arg(profscale, c("sdcov", "varcov"))
-            getLower(object)
-          })
+          function (object, profscale, sc = NULL)
+              getLower(object))
 
 setMethod("getProfLower",
           c(object = "Covariance.cs"),
           .fn <-
           function (object, profscale, sc = NULL) {
-              profscale <- match.arg(profscale, c("sdcov", "varcov"))
               if (profscale == "varcov")
                   stop(gettextf("%s=\"%s\" not implemented for class \"%s\"",
                                 "profscale", "varcov", class(object)),
@@ -1126,7 +1112,6 @@ rm(.fn)
 setMethod("getProfUpper",
           c(object = "Covariance.us"),
           function (object, profscale, sc = NULL) {
-              profscale <- match.arg(profscale, c("sdcov", "varcov"))
               nc <- object@nc
               rep(c(Inf, if (profscale == "varcov") Inf else 1),
                   c(nc, (nc * (nc - 1L)) %/% 2L))
@@ -1134,16 +1119,13 @@ setMethod("getProfUpper",
 
 setMethod("getProfUpper",
           c(object = "Covariance.diag"),
-          function (object, profscale, sc = NULL){
-            profscale <- match.arg(profscale, c("sdcov", "varcov"))
-            getUpper(object)
-          })
+          function (object, profscale, sc = NULL)
+              getUpper(object))
 
 setMethod("getProfUpper",
           c(object = "Covariance.cs"),
           .fn <-
           function (object, profscale, sc = NULL) {
-              profscale <- match.arg(profscale, c("sdcov", "varcov"))
               if (profscale == "varcov")
                   stop(gettextf("%s=\"%s\" not implemented for class \"%s\"",
                                 "profscale", "varcov", class(object)),
@@ -1311,7 +1293,6 @@ function (object) {
 
 convParToProfPar <-
 function (value, object, profscale, sc = NULL) {
-    profscale <- match.arg(profscale, c("sdcov", "varcov"))
     reCovs <- getReCovs(object)
     np <- vapply(reCovs, getParLength, 0L, USE.NAMES = FALSE)
     pos <- cumsum(c(0L, np))[seq_along(np)]
@@ -1325,7 +1306,6 @@ function (value, object, profscale, sc = NULL) {
 
 convProfParToPar <-
 function (value, object, profscale, sc = NULL) {
-    profscale <- match.arg(profscale, c("sdcov", "varcov"))
     reCovs <- getReCovs(object)
     np <- vapply(reCovs, getParLength, 0L, USE.NAMES = FALSE)
     pos <- cumsum(c(0L, np))[seq_along(np)]
@@ -1474,7 +1454,6 @@ setMethod("getVCNames",
 setMethod("getProfPar",
           c(object = "merMod"),
           function (object, profscale, sc = NULL) {
-              profscale <- match.arg(profscale, c("sdcov", "varcov"))
               reCovs <- getReCovs(object)
               L <- lapply(reCovs, getProfPar, profscale = profscale, sc = sc)
               c(L, if (!is.null(sc) && profscale == "varcov") sc^2 else sc,
@@ -1484,7 +1463,6 @@ setMethod("getProfPar",
 setMethod("getProfLower",
           c(object = "merMod"),
           function (object, profscale, sc = NULL) {
-              profscale <- match.arg(profscale, c("sdcov", "varcov"))
               reCovs <- getReCovs(object)
               L <- lapply(reCovs, getProfLower, profscale = profscale)
               c(L, if (!is.null(sc)) 0,
@@ -1494,7 +1472,6 @@ setMethod("getProfLower",
 setMethod("getProfUpper",
           c(object = "merMod"),
           function (object, profscale, sc = NULL) {
-              profscale <- match.arg(profscale, c("sdcov", "varcov"))
               reCovs <- getReCovs(object)
               L <- lapply(reCovs, getProfUpper, profscale = profscale)
               c(L, if (!is.null(sc)) Inf,
