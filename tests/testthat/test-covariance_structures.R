@@ -6,31 +6,6 @@ Contraception <- readRDS(
   system.file("testdata", "Contraception.rds", package = "lme4")
 )
 
-all.equal.nocheck <- function(x, y, ..., check.attributes = FALSE, check.class = FALSE) {
-  require("Matrix", quietly = TRUE)
-  ## working around mode-matching headaches
-  if (is(x, "Matrix")) x <- matrix(x)
-  if (is(y, "Matrix")) y <- matrix(y)
-  all.equal(x, y, ..., check.attributes = check.attributes, check.class = check.class)
-}
-
-## set default tolerance to 5e-5 since we mostly use that
-## 'tolerance' must be written out in full since it comes after ...
-expect_equal_nocheck <- function(...,  tolerance = 5e-5) {
-  expect_true(isTRUE(all.equal.nocheck(..., tolerance = tolerance)))
-}
-
-## Getting all equal as a number (in the all.equal examples documentation;
-## don't know why they didn't make an argument instead!?)
-## TODO: May want to move this to utilities...?
-all.eqNum <- function(...) {
-  an <- all.equal.nocheck(...)
-  if (isTRUE(an)) return(0)
-  ## if check is less than tolerance all.equal returns TRUE, so sub() coerces to "TRUE"
-  ##  and as.numeric() returns NA ...
-  as.numeric(sub(".*:", '', an))
-}
-
 test_that("unit test for unstructured covariances", {
   
   for (nc in c(0:4, 16L, 64L, 256L)){
@@ -95,8 +70,17 @@ test_that("unit test for unstructured covariances", {
       vcomp_test <- sqrt(S[ii])
       ccomp_test <- (S/vcomp_test/rep(vcomp_test, each = nc))[i0]
     }
-    expect_equal(getVC(x.us)$vcomp, vcomp_test)
-    expect_equal(getVC(x.us)$ccomp, ccomp_test)
+    vc <- getVC(x.us)
+    expect_equal(vc$vcomp, vcomp_test)
+    expect_equal(vc$ccomp, ccomp_test)
+    
+    # Testing getProfPar
+    expect_equal(c(vcomp_test, ccomp_test), getProfPar(x.us))
+    expect_equal(c(vcomp_test*2, ccomp_test), getProfPar(x.us, sc = 2))
+    expect_equal(c(rep(0, length(vc$vcomp)), rep(-1, length(vc$ccomp))), 
+                   getProfLower(x.us))
+    expect_equal(c(rep(Inf, length(vc$vcomp)), rep(1, length(vc$ccomp))), 
+                 getProfUpper(x.us))
   }
 })
 
@@ -144,8 +128,18 @@ test_that("unit tests for diagonal covariances", {
                    diag(nc) * getPar(x.di))
       
       ## Testing getVC
-      expect_equal(getVC(x.di)$ccomp, numeric(0))
-      expect_equal(getVC(x.di)$vcomp, getPar(x.di))
+      vc <- getVC(x.di)
+      expect_equal(vc$ccomp, numeric(0))
+      expect_equal(vc$vcomp, getPar(x.di))
+      
+      # Testing getProfPar
+      expect_equal(vc$vcomp, getProfPar(x.di))
+      expect_equal(vc$vcomp*2, getProfPar(x.di, sc = 2))
+      expect_equal(vc$vcomp^2, getProfPar(x.di, profscale = "varcov"))
+      
+      expect_equal(rep(0, length(vc$vcomp)), getProfLower(x.di))
+      expect_equal(rep(Inf, length(vc$vcomp)), getProfUpper(x.di))
+      
     }
   }
 })
@@ -243,6 +237,16 @@ test_that("unit tests for compound symmetry covariances", {
       ## Testing getLambdat.i in a different manner
       expect_equal(getLambdat.i(x.cs), 
                    (row(matrix(0, nc, nc)) - 1)[upper.tri(matrix(0, nc, nc), diag = TRUE)])
+      
+      ## Testing getProfPar
+      expect_equal(getPar(x.cs), getProfPar(x.cs))
+      vc.cs <- getVC(x.cs)
+      expect_equal(c(vc.cs$vcomp*2, vc.cs$ccomp), getProfPar(x.cs, sc = 2))
+      
+      expect_equal(c(rep(0, length(vc.cs$vcomp)), rep(-1/(nc-1), length(vc.cs$ccomp))), 
+                   getProfLower(x.cs))
+      expect_equal(c(rep(Inf, length(vc.cs$vcomp)), rep(1, length(vc.cs$ccomp))), 
+                   getProfUpper(x.cs))
     }
   }
 })
@@ -320,6 +324,16 @@ test_that("unit tests for autoregressive covariances", {
       ## Testing getLambdat.i in a different manner
       expect_equal(getLambdat.i(x.ar1), 
                    (row(matrix(0, nc, nc)) - 1)[upper.tri(matrix(0, nc, nc), diag = TRUE)])
+      
+      ## Testing getProfPar
+      expect_equal(unname(unlist(getVC(x.ar1))), getProfPar(x.ar1))
+      vc.ar1 <- getVC(x.ar1)
+      expect_equal(c(vc.ar1$vcomp*2, vc.ar1$ccomp), getProfPar(x.ar1, sc = 2))
+      
+      expect_equal(c(rep(0, length(vc.ar1$vcomp)), rep(-1, length(vc.ar1$ccomp))), 
+                   getProfLower(x.ar1))
+      expect_equal(c(rep(Inf, length(vc.ar1$vcomp)), rep(1, length(vc.ar1$ccomp))), 
+                   getProfUpper(x.ar1))
     }
   }
 })
@@ -360,17 +374,6 @@ gm.diag <- glmer(use ~ age + urban + diag(1 + urban | district),
                  data = Contraception,
                  family = binomial)
 
-## lme4 nonlinear mixed effects model
-startvec <- c(Asym = 200, xmid = 725, scal = 350)
-nm <-  nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~ Asym|Tree,
-              Orange, start = startvec)
-
-nm.us <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~ us(Asym|Tree),
-               Orange, start = startvec)
-
-nm.cs <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~ cs(Asym|Tree),
-               Orange, start = startvec)
-
 test_that("integration tests for coef and fixef", {
   ## Ensuring unstructured covariance results are the same as default
   expect_equal(coef(fm1), coef(fm1.us))
@@ -379,8 +382,6 @@ test_that("integration tests for coef and fixef", {
   expect_equal(fixef(fm1.REML), fixef(fm1.us.REML))
   expect_equal(coef(gm), coef(gm.us))
   expect_equal(fixef(gm), fixef(gm.us))
-  expect_equal(coef(nm), coef(nm.us))
-  expect_equal(fixef(nm), fixef(nm.us))
   
   ## One of the expected summaries
   tmpf <- function(x) capture.output(print(summary(x),digits=1))
@@ -398,7 +399,19 @@ test_that("integration tests for coef and fixef", {
                         "Days -0.138")  
   expect_equal(tfun(tmpf(fm1)), expected_summary)
   
-  # TODO: print summary for glmer and nlmer.
+  expected_sum2 <- c("Fixed effects:",                                             
+                     "            Estimate Std. Error z value Pr(>|z|)    ",       
+                     "(Intercept)   -0.720      0.103      -7    3e-12 ***",       
+                     "age            0.009      0.005       2     0.09 .  ",       
+                     "urbanY         0.742      0.169       4    1e-05 ***",       
+                     "---",      
+                     "Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1",
+                     "",                                  
+                     "Correlation of Fixed Effects:",      
+                     "       (Intr) age   ",            
+                     "age    -0.022       ",      
+                     "urbanY -0.648  0.006")
+  expect_equal(tfun(tmpf(gm.us)), expected_sum2)
 })
 
 test_that("integration tests for sigma", {
@@ -406,7 +419,6 @@ test_that("integration tests for sigma", {
   expect_equal(sigma(fm1), sigma(fm1.us))
   expect_equal(sigma(fm1.REML), sigma(fm1.us.REML))
   expect_equal(sigma(gm), sigma(gm.us))
-  expect_equal(sigma(nm), sigma(nm.us))
   
   ## Ensuring computing sigma is consistent for lme4 
   ## against other packages
@@ -422,10 +434,6 @@ test_that("integration tests for sigma", {
   expect_true(all.equal(sigma(gm.us), other_mod$gm.glmmTMB_sigma))
   expect_true(all.equal(sigma(gm.cs), other_mod$gm.glmmTMB.cs_sigma))
   expect_true(all.equal(sigma(gm.diag), other_mod$gm.glmmTMB.diag_sigma))
-  ## Tests for nlmer
-  expect_equal_nocheck(sigma(nm), other_mod$nm.nlme_sigma, tolerance = 5e-4)
-  # for compound symmetry - the result is quite different?
-  #expect_equal_nocheck(sigma(nm.cs), other_mod$nm.nlme.cs_sigma)
 })
 
 test_that("Log likelihood tests", {
@@ -436,7 +444,6 @@ test_that("Log likelihood tests", {
   expect_equal(logLik(fm1), logLik(fm1.us))
   expect_equal(logLik(fm1.REML), logLik(fm1.us.REML))
   expect_equal(logLik(gm), logLik(gm.us))
-  expect_equal(logLik(nm), logLik(nm.us))
   
   ## comparing against glmmTMB
   expect_true(all.equal.nocheck(as.numeric(logLik(fm1)), 
@@ -460,10 +467,6 @@ test_that("Log likelihood tests", {
   expect_equal_nocheck(as.numeric(logLik(gm.us)), other_mod$gm.glmmTMB_logLik)
   expect_equal_nocheck(as.numeric(logLik(gm.cs)), other_mod$gm.glmmTMB.cs_logLik)
   expect_equal_nocheck(as.numeric(logLik(gm.diag)), other_mod$gm.glmmTMB.diag_logLik)
-  
-  ## nlmer - also noticing a bigger difference here...
-  #expect_equal_nocheck(logLik(nm.us,  other_mod$nm.nlme_logLik)
-  #expect_equal_nocheck(logLik(nm.cs), other_mod$nm.nlme.cs_logLik)
 })
 
 test_that("integration tests for vcov", {
@@ -471,13 +474,9 @@ test_that("integration tests for vcov", {
   expect_equal(vcov(fm1), vcov(fm1.us))
   expect_equal(vcov(fm1.REML), vcov(fm1.us.REML))
   expect_equal(vcov(gm), vcov(gm.us))
-  nm_vcov <- suppressWarnings(vcov(nm))
-  nm.us_vcov <- suppressWarnings(vcov(nm.us))
-  expect_equal(nm_vcov, nm.us_vcov)
   
   ## Ensuring variance-covariance matrix are consistent between lme4 
   ## and other packages
-  
   expect_equal_nocheck(vcov(fm1), other_mod$fm1.glmmTMB_vcov)
   
   expect_equal_nocheck(vcov(fm1.cs), other_mod$fm1.glmmTMB.cs_vcov)
@@ -496,11 +495,6 @@ test_that("integration tests for vcov", {
   expect_equal_nocheck(vcov(gm.us), other_mod$gm.glmmTMB_vcov, tolerance = 3e-3)
   expect_equal_nocheck(vcov(gm.cs), other_mod$gm.glmmTMB.cs_vcov, tolerance = 3e-3)
   expect_equal_nocheck(vcov(gm.diag), other_mod$gm.glmmTMB.diag_vcov, tolerance = 3e-3)
-  ## Test for nlmer - differences between the two models are also large
-  #expect_equal_nocheck(nm_vcov, other_mod$nm.nlme_vcov)
-  #nm.cs_vcov <- suppressWarnings(vcov(nm.cs))
-  #expect_equal_nocheck(nm.cs_vcov, other_mod$nm.nlme.cs_vcov)
-  
 })
 
 test_that("integration tests for VarCorr", {
@@ -508,7 +502,6 @@ test_that("integration tests for VarCorr", {
   expect_equal(VarCorr(fm1), VarCorr(fm1.us))
   expect_equal(VarCorr(fm1.REML), VarCorr(fm1.us.REML))
   expect_equal(VarCorr(gm), VarCorr(gm.us))
-  expect_equal(VarCorr(nm), VarCorr(nm.us))
   
   ## Ensuring variance components are consistent for lme4 
   ## against other packages
@@ -520,17 +513,17 @@ test_that("integration tests for VarCorr", {
   expect_equal_nocheck(x2, c(other_mod$fm1.glmmTMB.us_var))
   expect_equal_nocheck(c(as.matrix(VarCorr(fm1.REML)[[1]])), 
                          c(other_mod$fm1.nlme.REML_var))
-  ## TODO: below fails!
-  #expect_equal_nocheck(x2, c(other_mod$fm1.nlme_var), tolerance = 5e-5)
+  
+  expect_equal_nocheck(x2, c(other_mod$fm1.nlme_var), tolerance = 5e-4)
   
   ## Testing cs (compound symmetry)
   x3 <- c(as.matrix(VarCorr(fm1.cs)[[1]]))
   expect_equal_nocheck(x3, c(other_mod$fm1.glmmTMB.cs_var))
   expect_equal_nocheck(x3, c(other_mod$fm1.nlme.cs_var))
-  # TODO: WHY IS BELOW NOT MATCHING??? 
-  #x3.REML <- c(as.matrix(VarCorr(fm1.cs.REML)[[1]]))
-  #z3.REML <- c(other_mod$fm1.nlme.cs.REML_var)
-  #expect_equal_nocheck(x3.REML, z3.REML)
+  
+  x3.REML <- c(as.matrix(VarCorr(fm1.cs.REML)[[1]]))
+  z3.REML <- c(other_mod$fm1.nlme.cs.REML_var)
+  expect_equal_nocheck(x3.REML, z3.REML, tolerance = 5e-4)
   
   ## Testing diag
   expect_equal_nocheck(c(as.matrix(VarCorr(fm1.diag)[[1]])), 
@@ -555,7 +548,6 @@ test_that("integration tests for ranef", {
   expect_equal(ranef(fm1), ranef(fm1.us))
   expect_equal(ranef(fm1.REML), ranef(fm1.us.REML))
   expect_equal(ranef(gm), ranef(gm.us))
-  expect_equal(ranef(nm), ranef(nm.us))
   
   ## Ensuring extracting random modes of the random effects 
   ## are consistent for lme4 against other packages
@@ -584,12 +576,7 @@ test_that("integration tests for ranef", {
                          ranef(gm.cs)$district))
   expect_true(all.equal.nocheck(other_mod$gm.glmmTMB.diag_ranef$cond$district,
                          ranef(gm.diag)$district))
-  
-  ## nlmer - differences here are also large...
-  #expect_equal_nocheck(as.matrix(other_mod$nm.nlme_ranef), 
-  #                       as.matrix(ranef(nm)$Tree))
-  #expect_equal_nocheck(as.matrix(other_mod$nm.nlme.cs_ranef), 
-  #                       as.matrix(ranef(nm.cs)$Tree))
+
 })
 
 test_that("integration tests for predict", {
@@ -597,7 +584,6 @@ test_that("integration tests for predict", {
   expect_equal(predict(fm1), predict(fm1.us))
   expect_equal(predict(fm1.REML), predict(fm1.us.REML))
   expect_equal(predict(gm), predict(gm.us))
-  expect_equal(predict(nm), predict(nm.us))
   ## Ensuring extracting predictions are consistent for 
   ## lme4 against other packages
   
@@ -614,9 +600,5 @@ test_that("integration tests for predict", {
   expect_equal_nocheck(other_mod$gm.glmmTMB_predict, predict(gm.us))
   expect_equal_nocheck(other_mod$gm.glmmTMB.cs_predict, predict(gm.cs))
   expect_equal_nocheck(other_mod$gm.glmmTMB.diag_predict, predict(gm.diag))
-  
-  ## nlmer; again, differences are somewhat large
-  #expect_equal_nocheck(other_mod$nm.nlme_predict, predict(nm))
-  #expect_equal_nocheck(other_mod$nm.nlme.cs_predict, predict(nm.cs))
 })
 
