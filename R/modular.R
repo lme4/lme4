@@ -396,7 +396,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     ##        special(x | f) -> special(x | f)
     bb1 <- findbars_x(formula, specials = specials,
                       default.special = "us", target = "|",
-                      expand_doublevert_method = "diag_special")
+                      expand_doublevert_method = getDoublevertDefault())
     bb0 <- lapply(bb1, `[[`, 2L)
     reTrms <- reformulas::mkReTrms(bb0, fr, calc.lambdat = FALSE)
     reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
@@ -795,7 +795,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     ##        special(x | f) -> special(x | f)
     bb1 <- findbars_x(formula, specials = specials,
                       default.special = "us", target = "|",
-                      expand_doublevert_method = "diag_special")
+                      expand_doublevert_method = getDoublevertDefault())
     bb0 <- lapply(bb1, `[[`, 2L)
     reTrms <- reformulas::mkReTrms(bb0, fr, calc.lambdat = FALSE)
     reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step

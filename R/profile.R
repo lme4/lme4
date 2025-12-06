@@ -860,7 +860,8 @@ confint.merMod <- function(object, parm, level = 0.95,
                ci.all[parm,,drop=FALSE]
            },
            "boot" = {
-               bootFun <- function(x) {
+             bootFun <- function(x) {
+               ## FIXME!
                    th <- x@theta
                    nvec <- lengths(x@cnms)
                    scaleTh <- (isLMM(x) || isNLMM(x))

@@ -307,3 +307,4 @@ export(namedList)
 importFrom(rlang, warn)
 ##
 export(getSingTol)
+export(getDoublevertDefault)
