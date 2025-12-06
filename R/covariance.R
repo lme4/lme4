@@ -1171,6 +1171,14 @@ function (profscale) {
         "sdcor"
     else match.arg(profscale, c("sdcor", "varcov"))
 }
+if (FALSE) {
+## This version is not equivalent due to lazy evaluation.  It assumes
+## that 'profscale' can be evaluated in the calling frame when nargs()
+## is 1, but that assumption can be false in current usage.
+validProfScale <-
+function (profscale = c("sdcor", "varcov"))
+    match.arg(profscale)
+}
 
 ## return a function that maps
 ##     c(theta_1, ..., theta_k) -> c(par_1, ..., par_k)
