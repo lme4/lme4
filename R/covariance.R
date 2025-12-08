@@ -1347,7 +1347,7 @@ function (x, tol = -1, etol = 256 * .Machine$double.neg.eps, type = "O") {
     if (is.na(e) || e > etol * norm(x, type = type))
         stop(gettextf("'%s' is not positive semidefinite", "x"),
              domain = NA)
-    RP # upper triangular if and only if is.unsorted(p) is TRUE
+    RP # upper triangular if is.unsorted(p) is FALSE
 }
 } else {
 function (x, tol = 256 * .Machine$double.neg.eps) {
