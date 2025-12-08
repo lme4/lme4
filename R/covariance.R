@@ -196,7 +196,7 @@ setGeneric("getProfLower",
 setGeneric("getProfUpper",
            function (object, profscale, sc = NULL) {
                profscale <- validProfScale(profscale)
-               standardGeneric("getProfUpper"),
+               standardGeneric("getProfUpper")
            },
            signature = "object")
 
