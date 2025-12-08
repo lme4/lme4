@@ -173,23 +173,31 @@ setGeneric("setVC",
                standardGeneric("setVC"))
 
 setGeneric("getProfPar",
-           function (object, profscale, sc = NULL)
-               standardGeneric("getProfPar"),
+           function (object, profscale, sc = NULL) {
+               profscale <- validProfScale(profscale)
+               standardGeneric("getProfPar")
+           },
            signature = "object")
 
 setGeneric("setProfPar",
-           function (object, profscale, sc = NULL, value, pos = 0L)
-               standardGeneric("setProfPar"),
+           function (object, profscale, sc = NULL, value, pos = 0L) {
+               profscale <- validProfScale(profscale)
+               standardGeneric("setProfPar")
+           },
            signature = c("object", "value"))
 
 setGeneric("getProfLower",
-           function (object, profscale, sc = NULL)
-               standardGeneric("getProfLower"),
+           function (object, profscale, sc = NULL) {
+               profscale <- validProfScale(profscale)
+               standardGeneric("getProfLower")
+           },
            signature = "object")
 
 setGeneric("getProfUpper",
-           function (object, profscale, sc = NULL)
+           function (object, profscale, sc = NULL) {
+               profscale <- validProfScale(profscale)
                standardGeneric("getProfUpper"),
+           },
            signature = "object")
 
 
@@ -1153,7 +1161,23 @@ function (n, value, pos) {
         stop(gettextf("attempt to read past end of '%s'",
                       "value"),
              domain = NA)
-    TRUE
+    NULL
+}
+
+## used in functions with formal argument 'profscale'
+validProfScale <-
+function (profscale) {
+    if (missing(profscale))
+        "sdcor"
+    else match.arg(profscale, c("sdcor", "varcov"))
+}
+if (FALSE) {
+## This version is not equivalent due to lazy evaluation.  It assumes
+## that 'profscale' can be evaluated in the calling frame when nargs()
+## is 1, but that assumption can be false in current usage.
+validProfScale <-
+function (profscale = c("sdcor", "varcov"))
+    match.arg(profscale)
 }
 
 ## return a function that maps
@@ -1293,6 +1317,7 @@ function (object) {
 
 convParToProfPar <-
 function (value, object, profscale, sc = NULL) {
+    profscale <- validProfScale(profscale)
     reCovs <- getReCovs(object)
     np <- vapply(reCovs, getParLength, 0L, USE.NAMES = FALSE)
     pos <- cumsum(c(0L, np))[seq_along(np)]
@@ -1306,6 +1331,7 @@ function (value, object, profscale, sc = NULL) {
 
 convProfParToPar <-
 function (value, object, profscale, sc = NULL) {
+    profscale <- validProfScale(profscale)
     reCovs <- getReCovs(object)
     np <- vapply(reCovs, getParLength, 0L, USE.NAMES = FALSE)
     pos <- cumsum(c(0L, np))[seq_along(np)]
