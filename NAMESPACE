@@ -259,7 +259,12 @@ export(vcov.merMod)
 S3method(vcov,summary.merMod)
 S3method(weights,merMod)
 S3method(xyplot,thpr)
-
+S3method(get_sd,default)
+S3method(get_sd,vcmat_ar1)
+S3method(format_corr,default)
+S3method(format_corr,vcmat_diag)
+S3method(format_corr,vcmat_ar1)
+S3method(format_corr,vcmat_cs)
 
 S3method(sigma,lmList4)
 S3method(dfbeta,influence.merMod)
