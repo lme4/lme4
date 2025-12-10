@@ -1821,10 +1821,9 @@ llikAIC <- function(object, devianceFUN = devCrit, chkREML = TRUE, devcomp = obj
 
 .prt.VC <- function(varcor, digits,
                     comp = "Std.Dev.",
-                    corr = any(comp == "Std.Dev."),
                     formatter = format, ...) { # '...' *only* passed to print()
     cat("Random effects:\n")
-    fVC <- formatVC(varcor, digits=digits, formatter=formatter, comp=comp, corr=corr)
+    fVC <- formatVC(varcor, digits=digits, formatter=formatter, comp=comp)
     print(fVC, quote = FALSE, digits = digits, ...)
 }
 

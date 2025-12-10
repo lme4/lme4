@@ -72,8 +72,8 @@ VarCorr.merMod <- function(x, sigma = 1, ...)
 
 ##' @S3method print VarCorr.merMod
 print.VarCorr.merMod <- function(x, digits = max(3, getOption("digits") - 2),
-                                 comp = "Std.Dev.", corr = any(comp == "Std.Dev."), formatter = format, ...) {
-  print(formatVC(x, digits=digits, comp=comp, corr=corr, formatter=formatter),
+                                 comp = "Std.Dev.", formatter = format, ...) {
+  print(formatVC(x, digits=digits, comp=comp, formatter=formatter),
         quote = FALSE)
   invisible(x)
 }
