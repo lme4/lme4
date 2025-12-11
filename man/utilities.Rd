@@ -46,12 +46,13 @@ methTitle(dims)
 .prt.grps   (ngrps, nobs)
 .prt.warn   (optinfo, summary = FALSE, \dots)
 
-.prt.VC (varcor, digits, comp = "Std.Dev.", corr = any(comp == "Std.Dev."),
-         formatter = format, \dots)
+.prt.VC (varcor, digits, comp = "Std.Dev.", formatter = format, \dots)
 formatVC(varcor, digits = max(3, getOption("digits") - 2),
-         comp = "Std.Dev.", corr = any(comp == "Std.Dev."),
-         formatter = format,
-         useScale = attr(varcor, "useSc"), \dots)
+         corr_digits = max(2, digits-2),
+         maxdim = 10,
+         comp = "Std.Dev.", formatter = format,
+         useScale = attr(varcor, "useSc"),
+         \dots)
 }
 \arguments{
   %% llikAIC() :
@@ -100,10 +101,10 @@ formatVC(varcor, digits = max(3, getOption("digits") - 2),
   \item{comp}{optional \code{\link{character}} vector of length 1 or 2,
     containing \code{"Std.Dev."} and/or \code{"Variance"}, indicating the
     columns to use.}
-  \item{corr}{\code{\link{logical}} indicating if correlations or
-    covariances should be used for vector random effects.}
   \item{formatter}{a \code{\link{function}} used for formatting the numbers.}
-
+  \item{corr_digits}{the number of significant digits for correlations.}
+  \item{maxdim}{maximum dimensions (numbers of standard deviations/variances 
+  and number of rows of correlation matrices) to report per random effects term.}
   %% .prt.grps   (ngrps, nobs)
   \item{ngrps}{integer (vector), typically the result of
     \code{\link{ngrps}(object)}.}
@@ -163,13 +164,14 @@ gmA <- update(gm1, nAGQ = 5)
 
 V1 <- VarCorr(fm1)
 m <- formatVC(V1)
-stopifnot(is.matrix(m), is.character(m), ncol(m) == 4)
+
+stopifnot(is.matrix(m), is.character(m), ncol(m) == 5)
 print(m, quote = FALSE) ## prints all but the first line of .prt.VC() below:
 .prt.VC( V1, digits = 4)
 ## Random effects:
 ##  Groups   Name        Std.Dev. Corr
 ##  Subject  (Intercept) 24.740
-##           Days         5.922   0.07
+##           Days         5.922   0.066
 ##  Residual             25.592
 p1 <- capture.output(V1)
 p2 <- capture.output( print(m, quote=FALSE) )

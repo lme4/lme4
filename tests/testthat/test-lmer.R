@@ -443,17 +443,17 @@ test_that("turn off conv checking for npara > check.conv.nparmax", {
                                      theta = c(2.5, 1.4, 6.3),
                                      sigma = 2))[[1]]
   
-  mod1 <- lmer(form, data = dat,
+  mod1 <- suppressWarnings(lmer(form, data = dat,
                control = lmerControl(
                  optimizer = "bobyqa",
                  optCtrl = list(maxfun = 10)
-               ))
+               )))
   
-  mod2 <- update(mod1, 
+  mod2 <- suppressWarnings(update(mod1, 
                  control = lmerControl(
                    optimizer = "bobyqa",
                    optCtrl = list(maxfun = 10),
-                   check.conv.nparmax = 3)
+                   check.conv.nparmax = 3))
   )
   
   ## First should give a warning
