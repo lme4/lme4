@@ -130,7 +130,8 @@ glmer(formula, data = NULL, family = gaussian
   a single scalar random effect.  The
   \code{nAGQ} argument controls the number of nodes in the quadrature
   formula.  A model with a single, scalar random-effects term could
-  reasonably use up to 25 quadrature points per scalar integral.
+  reasonably use up to 25 quadrature points per scalar integral (although
+  the code allows for up to 100 quadrature points).
 
 %  With vector-valued random effects the complexity of the Gauss-Hermite
 %  quadrature formulas increases dramatically with the dimension.  For a
