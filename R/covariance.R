@@ -275,6 +275,9 @@ setMethod("getParLength",
           function (object)
               length(object@par))
 
+## cnm: column names (i.e. effect names)
+## gnm: group name
+## prf: prefix
 setMethod("getParNames",
           c(object = "Covariance.us", cnm = "character", gnm = "character"),
           getParNames.us <-

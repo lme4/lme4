@@ -748,12 +748,32 @@ if (testLevel>1) {
                    "var_Days|Subject", "sigma"))
   })
 
+  test_that("profile name/value order consistency",
+             ## can use parallel comp since testLevel > 1, won't
+             ##  be tried on CRAN
+             ## use snow instead of multicore for Windows safety
+  {
+    skip("known not working yet")
+    pp <- profile(fm2, parallel = "snow", ncpus = 5,
+                  signames = FALSE)
+    ci_pp <- confint(pp)
+    expect_all_true(abs(ci_pp["cor_Days.(Intercept)|Subject",]) < 1)
+
+    ci_bb <- suppressWarnings(
+      suppressMessages(
+        confint(fm2, method = "boot", nsim = 10, signames = FALSE)
+      ))
+    expect_all_true(abs(ci_bb["cor_Days.(Intercept)|Subject",]) < 1)
+  })
+    
   test_that("densityplot is robust", {
     p <- readRDS(system.file("testdata","harmel_profile.rds",
                              package="lme4"))
     expect_warning(lattice::densityplot(p),
                    "unreliable profiles for some variables")
   })
+
+  
 
 } ## testLevel>1
 
