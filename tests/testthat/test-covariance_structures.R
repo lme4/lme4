@@ -405,7 +405,7 @@ test_that("integration tests for coef and fixef", {
                      "age            0.009      0.005       2     0.09 .  ",       
                      "urbanY         0.742      0.169       4    1e-05 ***",       
                      "---",      
-                     "Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1",
+                     "Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1",
                      "",                                  
                      "Correlation of Fixed Effects:",      
                      "       (Intr) age   ",            

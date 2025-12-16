@@ -2,6 +2,9 @@
 \alias{getDoublevertDefault}
 \title{Retrieve default double-vertical-bar-expansion method}
 \description{
+  Retrieve information about whether random effect terms specified with
+  double bars (\code{||}) should be split semantically into separate,
+  intercept-free terms, or encoded with a \code{diag()} special
 }
 \usage{
 getDoublevertDefault()

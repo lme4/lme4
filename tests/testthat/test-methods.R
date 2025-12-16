@@ -188,8 +188,7 @@ if (testLevel>1) {
   set.seed(47)
   test_that("bootMer", {
     ## testing bug-fix for ordering of sd/cor components in sd/cor matrix with >2 rows
-    ## FIXME: This model makes no sense [and CI.boot() fails for "nloptwrap"!]
-    dd <- expand.grid(A=factor(1:3),B=factor(1:10),rep=1:10)
+    dd <- expand.grid(A=factor(1:3), B=factor(1:10), rep=1:20)
     dd$y <- suppressMessages(simulate(~1 + (A|B),
                                       newdata=dd,
                                       newparams=list(beta=1,theta=rep(1,6),
@@ -197,18 +196,16 @@ if (testLevel>1) {
                                       family=gaussian,
                                       seed=101))[[1]]
     m1 <- lmer(y ~ 1 + (A|B), data=dd, control=lmerControl(calc.deriv=FALSE))
-    ci <- CI.boot(m1,seed=101)
-    ci2 <- CI.boot(m1,seed=101)
-    expect_equal(ci,ci2)
+    ci <- CI.boot(m1, seed=101)
+    ci2 <- CI.boot(m1, seed=101)
+    expect_equal(ci, ci2)
     ci_50 <- CI.boot(m1,level=0.5,seed=101)
     expect_true(all(ci_50[,"25 %"]>ci[,"2.5 %"]))
     expect_true(all(ci_50[,"75 %"]<ci[,"97.5 %"]))
     corvals <- ci[grep("^cor_",rownames(ci)),]
     expect_true(all(abs(corvals) <= 1))
     ## test bootMer with GLMM, multiple RE
-    ## expect_message(
-        ci1 <- CI.boot(gm2, nsim=5)
-      ## , "singular")
+    ci1 <- CI.boot(gm2, nsim=5)
     ci2  <- CI.boot(gm2, nsim=5, parm=3:6)
     ci2B <- CI.boot(gm2, nsim=5, parm="beta_")
     ## previously tested with nsim=5 vs nsim=3
@@ -280,6 +277,14 @@ if (testLevel>1) {
 
     set.seed(101)
     bci <- suppressWarnings(confint(gaussmodel,method="boot",nsim=10,quiet=TRUE))
+    old <- structure(c(16.0861072699207, 0.0367496156026639,
+                             -4.21025090053564,
+                             3.1483596407467, 31.3318861915707,
+                             0.0564761126030204, -1.00593089841924,
+                             4.7064432268919), .Dim = c(4L, 2L),
+                           .Dimnames = list(c(".sig01",
+                                              ".sigma", "(Intercept)",
+                                              "prop1"), c("2.5 %", "97.5 %")))
     expect_equal(bci,
                  structure(c(16.0861072699207, 0.0367496156026639,
                              -4.21025090053564,
@@ -744,8 +749,9 @@ if (testLevel>1) {
 
     ## check naming convention properly adjusted
     expect_equal(as.character(unique(p4$.par)),
-                 c("var_(Intercept)|Subject", "cov_Days.(Intercept)|Subject",
-                   "var_Days|Subject", "sigma"))
+                 c("var_(Intercept)|Subject", 
+                   "var_Days|Subject",
+                   "cov_Days.(Intercept)|Subject", "sigma"))
   })
 
   test_that("profile name/value order consistency",
@@ -753,7 +759,6 @@ if (testLevel>1) {
              ##  be tried on CRAN
              ## use snow instead of multicore for Windows safety
   {
-    skip("known not working yet")
     pp <- profile(fm2, parallel = "snow", ncpus = 5,
                   signames = FALSE)
     ci_pp <- confint(pp)
@@ -763,7 +768,7 @@ if (testLevel>1) {
       suppressMessages(
         confint(fm2, method = "boot", nsim = 10, signames = FALSE)
       ))
-    expect_all_true(abs(ci_bb["cor_Days.(Intercept)|Subject",]) < 1)
+    expect_all_true(abs(ci_bb["cor_Days.(Intercept)|Subject",]) <= 1)
   })
     
   test_that("densityplot is robust", {

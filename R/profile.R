@@ -6,7 +6,7 @@ profnames <- function(object, signames=TRUE,
     ntp <- length(object@theta)
     ## return
     c(if(signames) sprintf(".sig%02d", seq(ntp))
-      else getThetaNames(object, prf=prefix, old=FALSE),
+      else unlist(getVCNames(object, prf=prefix, old=FALSE)),
       if(useSc) if (signames) ".sigma" else "sigma")
 }
 
@@ -816,10 +816,10 @@ confint.merMod <- function(object, parm, level = 0.95,
         ## custom boot function, don't expand parameter names
     } else {
         ## "use scale" = GLMM with scale parameter *or* LMM ..
-        useSc <- as.logical(object@devcomp$dims[["useSc"]])
-        vn <- profnames(object, signames, useSc=useSc)
-        an <- c(vn,names(fixef(object)))
-        parm <- if(missing(parm)) seq_along(an)
+      useSc <- as.logical(object@devcomp$dims[["useSc"]])
+      vn <- profnames(object, signames, useSc=useSc)
+      an <- c(vn,names(fixef(object)))
+      parm <- if(missing(parm)) seq_along(an)
                 else
                     get.which(parm, nvp=length(vn), nptot=length(an), parnames=an)
         if (!quiet && method %in% c("profile","boot")) {
@@ -853,7 +853,9 @@ confint.merMod <- function(object, parm, level = 0.95,
            "boot" = {
              bootFun <- function(x) {
                ## need to get profile-scale pars from fitted model
-               ss <- convParToProfPar(x@optinfo$val, x, profscale = boot.scale, sc = sigma(x))
+               useSc <- !(isGLMM(x) && hasNoScale(family(x)))
+               sc <- if (useSc) sigma(x) else NULL
+               ss <- convParToProfPar(x@optinfo$val, x, profscale = boot.scale, sc = sc)
                c(setNames(ss, vn), fixef(x))
              }
              if (is.null(FUN)) FUN <- bootFun
