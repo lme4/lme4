@@ -866,7 +866,7 @@ mkGlmerDevfun <- function(fr, X, reTrms, family,
                           verbose = 0L,
                           maxit = 100L, control = glmerControl(), ...) {
     stopifnot(length(nAGQ <- as.integer(nAGQ)) == 1L,
-              0L <= nAGQ, nAGQ <= 25L)
+              0L <= nAGQ, nAGQ <= 100L)
     verbose <- as.integer(verbose)
     maxit   <- as.integer(maxit)
     rho <- list2env(list(verbose=verbose, maxit=maxit,
