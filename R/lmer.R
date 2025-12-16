@@ -1821,10 +1821,9 @@ llikAIC <- function(object, devianceFUN = devCrit, chkREML = TRUE, devcomp = obj
 
 .prt.VC <- function(varcor, digits,
                     comp = "Std.Dev.",
-                    corr = any(comp == "Std.Dev."),
                     formatter = format, ...) { # '...' *only* passed to print()
     cat("Random effects:\n")
-    fVC <- formatVC(varcor, digits=digits, formatter=formatter, comp=comp, corr=corr)
+    fVC <- formatVC(varcor, digits=digits, formatter=formatter, comp=comp)
     print(fVC, quote = FALSE, digits = digits, ...)
 }
 
@@ -2310,74 +2309,6 @@ vcov.summary.merMod <- function(object, ...) {
     object$vcov
 }
 
-##' Make variance and correlation matrices from \code{theta}
-##'
-##' @param sc scale factor (residual standard deviation)
-##' @param cnms component names
-##' @param nc numeric vector: number of terms in each RE component
-##' @param theta theta vector (lower-triangle of Cholesky factors)
-##' @param nms component names (FIXME: nms/cnms redundant: nms=names(cnms)?)
-##' @seealso \code{\link{VarCorr}}
-##' @return A matrix
-##' @export
-mkVarCorr <- function(sc, cnms, nc, theta, nms, reCovs = NULL) {
-    if (is.null(reCovs)) {
-    ncseq <- seq_along(nc)
-    thl <- split(theta, rep.int(ncseq, (nc * (nc + 1))/2))
-    }
-    else
-    ncseq <- seq_along(reCovs)
-    if(!all(nms == names(cnms))) ## the above FIXME
-        warning("nms != names(cnms)  -- whereas lme4-authors thought they were --\n",
-                "Please report!", immediate. = TRUE)
-    ans <- lapply(ncseq, function(i)
-              {
-                  ## Li := \Lambda_i, the i-th block diagonal of \Lambda(\theta)
-                  if (is.null(reCovs)) {
-                  Li <- diag(nrow = nc[i])
-                  Li[lower.tri(Li, diag = TRUE)] <- thl[[i]]
-                  }
-                  else
-                  Li <- getLambda(reCovs[[i]])
-                  rownames(Li) <- cnms[[i]]
-                  ## val := \Sigma_i = \sigma^2 \Lambda_i \Lambda_i', the
-                  val <- tcrossprod(sc * Li) # variance-covariance
-                  stddev <- sqrt(diag(val))
-                  corr <- t(val / stddev)/stddev
-                  diag(corr) <- 1
-                  structure(val, stddev = stddev, correlation = corr)
-              })
-    if(is.character(nms)) {
-        ## FIXME: do we want this?  Maybe not.
-        ## Potential problem: the names of the elements of the VarCorr() list
-        ##  are not necessarily unique (e.g. fm2 from example("lmer") has *two*
-        ##  Subject terms, so the names are "Subject", "Subject".  The print method
-        ##  for VarCorrs handles this just fine, but it's a little awkward if we
-        ##  want to dig out elements of the VarCorr list ... ???
-        if (anyDuplicated(nms))
-            nms <- make.names(nms, unique = TRUE)
-        names(ans) <- nms
-    }
-    structure(ans, sc = sc)
-}
-
-##' Extract variance and correlation components
-##'
-VarCorr.merMod <- function(x, sigma = 1, ...)
-{
-  ## TODO: now that we have '...', add  type=c("varcov","sdcorr","logs" ?
-    if (is.null(cnms <- x@cnms))
-        stop("VarCorr methods require reTrms, not just reModule")
-    if(missing(sigma))
-        sigma <- sigma(x)
-    nc <- lengths(cnms) # no. of columns per term
-    structure(mkVarCorr(sigma, cnms = cnms, nc = nc, theta = x@theta,
-                        nms = { fl <- x@flist; names(fl)[attr(fl, "assign")]},
-                        reCovs = getReCovs(x)),
-              useSc = as.logical(x@devcomp$dims[["useSc"]]),
-              class = "VarCorr.merMod")
-}
-
 if(FALSE)## *NOWHERE* used _FIXME_ ??
 ## Compute standard errors of fixed effects from an merMod object
 ##
@@ -2390,88 +2321,6 @@ unscaledVar <- function(object, ...) {
     sigma(object) * diag(object@pp$unsc())
 }
 
-##' @S3method print VarCorr.merMod
-print.VarCorr.merMod <- function(x, digits = max(3, getOption("digits") - 2),
-	comp = "Std.Dev.", corr = any(comp == "Std.Dev."), formatter = format, ...) {
-    print(formatVC(x, digits=digits, comp=comp, corr=corr, formatter=formatter),
-          quote = FALSE, ...)
-    invisible(x)
-}
-
-##' "format()" the 'VarCorr' matrix of the random effects -- for
-##' print()ing and show()ing
-##'
-##' @title Format the 'VarCorr' Matrix of Random Effects
-##' @param varc a \code{\link{VarCorr}} (-like) matrix with attributes.
-##' @param digits the number of significant digits.
-##' @param comp character vector of length one or two indicating which
-##' columns out of "Variance" and "Std.Dev." should be shown in the
-##' formatted output.
-##' @param formatter the \code{\link{function}} to be used for
-##' formatting the standard deviations and or variances (but
-##' \emph{not} the correlations which (currently) are always formatted
-##' as "0.nnn"
-##' @param ... optional arguments for \code{formatter(*)} in addition
-##' to the first (numeric vector) and \code{digits}.
-##' @return a character matrix of formatted VarCorr entries from \code{varc}.
-formatVC <- function(varcor, digits = max(3, getOption("digits") - 2),
-                     comp = "Std.Dev.", corr = any(comp == "Std.Dev."),
-                     formatter = format,
-                     useScale = attr(varcor, "useSc"),
-                     ...)
-{
-    c.nms <- c("Groups", "Name", "Variance", "Std.Dev.")
-    avail.c <- c.nms[-(1:2)]
-    if(anyNA(mcc <- pmatch(comp, avail.c)))
-        stop("Illegal 'comp': ", comp[is.na(mcc)])
-    nc <- length(colnms <- c(c.nms[1:2], (use.c <- avail.c[mcc])))
-    if(length(use.c) == 0)
-        stop("Must show variances and/or standard deviations")
-    reStdDev <- c(lapply(varcor, attr, "stddev"),
-                  if(useScale) list(Residual = unname(attr(varcor, "sc"))))
-    ## we assume here that the dimensions of the cov/corr matrices are equal
-    ##  to the numbers of std dev components for each term
-    reLens <- lengths(reStdDev)
-    ## number of rows of the output: we should allow for ncorrs > nstddevs even
-    ##  if we don't have any yet
-    nr <- sum(reLens)
-    ## setting up the part of the output array that's just variances and/or std devs
-    reMat <- array('', c(nr, nc), list(rep.int('', nr), colnms))
-    reMat[1+cumsum(reLens)-reLens, "Groups"] <- names(reLens)
-    reMat[,"Name"] <- c(unlist(lapply(varcor, colnames)), if(useScale) "")
-    if(any("Variance" == use.c))
-        reMat[,"Variance"] <- formatter(unlist(reStdDev)^2, digits = digits, ...)
-    if(any("Std.Dev." == use.c))
-        reMat[,"Std.Dev."] <- formatter(unlist(reStdDev),   digits = digits, ...)
-    if (any(reLens > 1L)) { ## append lower triangular matrix of correlations / covariances
-      maxlen <- max(reLens)
-        Lcomat <- if(corr)
-                      lapply(varcor, attr, "correlation")
-                  else # just the matrix, i.e. {dim,dimnames}
-                      lapply(varcor, identity)
-				## function(v) `attributes<-`(v, attributes(v)[c("dim","dimnames")])
-        co <- # corr or cov
-          do.call(rbind,
-                  ## formatting the corr/cov triangles and sticking them
-                  ## together
-                  lapply(Lcomat,
-                           function(x) {
-                               x <- as.matrix(x)
-                               dig <- max(2, digits - 2) # use 'digits' !
-                               ## not using formatter() for correlations
-                               cc <- format(round(x, dig), nsmall = dig)
-                               ## blanking out the upper triangle
-                               cc[!lower.tri(cc)] <- ""
-                               nr <- nrow(cc)
-                               if (nr >= maxlen) return(cc)
-                               cbind(cc, matrix("", nr, maxlen-nr))
-                           }))[, -maxlen, drop = FALSE]
-        if (nrow(co) < nrow(reMat))
-            co <- rbind(co, matrix("", nrow(reMat) - nrow(co), ncol(co)))
-        colnames(co) <- c(if(corr) "Corr" else "Cov", rep.int("", max(0L, ncol(co)-1L)))
-        cbind(reMat, co, deparse.level=0L)
-    } else reMat
-}
 
 ##' @S3method summary merMod
 summary.merMod <- function(object,
