@@ -986,6 +986,7 @@ updateGlmerDevfun <- function(devfun, reTrms, nAGQ = 1L){
         if (length(reTrms$flist) != 1L || length(reTrms$cnms[[1]]) != 1L)
             stop("nAGQ > 1 is only available for models with a single, scalar random-effects term")
     }
+    if (nAGQ > 100L) stop("nAGQ must be <= 100")
     rho <- environment(devfun)
     rho$nAGQ       <- nAGQ
     rho$lower      <- c(reTrms$lower,
