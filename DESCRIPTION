@@ -38,38 +38,53 @@ Description: Fit linear and generalized linear mixed-effects models.
     methods.  The core computational algorithms are implemented using the
     'Eigen' C++ library for numerical linear algebra and 'RcppEigen' "glue".
 Depends: R (>= 3.6.0), Matrix, methods, stats
-LinkingTo: Rcpp (>= 0.10.5), RcppEigen (>= 0.3.3.9.4), Matrix (>= 1.5-0)
-Imports: graphics, grid, splines, utils, parallel, MASS, lattice, boot,
-    nlme (>= 3.1-123), minqa (>= 1.1.15), nloptr (>= 1.0.4), reformulas (>= 0.4.3), rlang,
-    Rdpack
-RdMacros: Rdpack
+LinkingTo:
+    Matrix (>= 1.5-0),
+    Rcpp (>= 0.10.5),
+    RcppEigen (>= 0.3.3.9.4)
+Imports:
+    MASS,
+    Rdpack,
+    boot,
+    graphics,
+    grid,
+    lattice,
+    minqa (>= 1.1.15),
+    nlme (>= 3.1-123),
+    nloptr (>= 1.0.4),
+    parallel,
+    reformulas (>= 0.4.3),
+    rlang,
+    splines,
+    utils
 Suggests:
-    knitr,
-    rmarkdown,
-    MEMSS,
-    testthat (>= 0.8.1),
-    ggplot2,
-    mlmRev,
-    optimx (>= 2013.8.6),
-    gamm4,
-    pbkrtest,
     HSAUR3,
-    numDeriv,
+    MEMSS,
     car,
     dfoptim,
+    gamm4,
+    ggplot2,
+    glmmTMB,
+    knitr,
+    merDeriv,
     mgcv,
-    statmod,
+    mlmRev,
+    numDeriv,
+    optimx (>= 2013.8.6),
+    pbkrtest,
+    rmarkdown,
     rr2,
     semEff,
-    tibble,
-    merDeriv,
-    glmmTMB
+    statmod,
+    testthat (>= 0.8.1),
+    tibble
 Enhances:
     DHARMa,
     performance
+RdMacros: Rdpack
 VignetteBuilder: knitr
 LazyData: yes
-License: GPL (>=2)
+License: GPL (>= 2)
 URL: https://github.com/lme4/lme4/
 BugReports: https://github.com/lme4/lme4/issues
 Encoding: UTF-8
