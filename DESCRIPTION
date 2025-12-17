@@ -62,7 +62,8 @@ Suggests:
     rr2,
     semEff,
     tibble,
-    merDeriv
+    merDeriv,
+    glmmTMB
 Enhances:
     DHARMa,
     performance

@@ -5,6 +5,7 @@ vignette: >
   %\VignetteIndexEntry{Covariance Structures lme4 vs glmmTMB}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteDepends{glmmTMB}
 ---
 
 ```{r, include = FALSE}

@@ -6,7 +6,7 @@ profnames <- function(object, signames=TRUE,
     ntp <- length(object@theta)
     ## return
     c(if(signames) sprintf(".sig%02d", seq(ntp))
-      else getThetaNames(object, prf=prefix, old=FALSE),
+      else unlist(getVCNames(object, prf=prefix, old=FALSE)),
       if(useSc) if (signames) ".sigma" else "sigma")
 }
 
@@ -60,18 +60,8 @@ profile.merMod <- function(fitted,
     useSc <- isLMM(fitted) || isNLMM(fitted)
     prof.prefix <-
         switch(prof.scale,
-               "sdcor" = {
-                   transfuns <- list(from.chol= Cv_to_Sv,
-                                     to.chol  = Sv_to_Cv,
-                                     to.sd    = identity)
-                   c("sd", "cor")
-               },
-               "varcov" = {
-                   transfuns <- list(from.chol= Cv_to_Vv,
-                                     to.chol  = Vv_to_Cv,
-                                     to.sd    = sqrt)
-                   c("var", "cov")
-               },
+               "sdcor" = c("sd", "cor"),
+               "varcov" = c("var", "cov"),
                stop("internal error, prof.scale=", prof.scale))
     dd <- devfun2(fitted, useSc=useSc, signames=signames,
                   prefix=prof.prefix, scale = prof.scale, ...)
@@ -380,10 +370,9 @@ profile.merMod <- function(fitted,
                 ##   `par` scale (i.e. not the sigma/corr scale)
                 fv <- ores$fval
                 sig <- sqrt((rr$wrss() + pp1$sqrL(1))/n)
-                ## FIXME: need to translate from ores$par (`par` scale) back to `profPar` scale
+                ## translate from ores$par (`par` scale) back to `profPar` scale
                 ppars <- convParToProfPar(ores$par, fitted, profscale = prof.scale, sc = sig)
                 c(sign(fw - est) * sqrt(fv - base),
-                  ## Cv_to_Sv(ores$par, lengths(fitted@cnms), s=sig),
                   ppars,
                   mkpar(p, j, fw, pp1$beta(1)))
             }
@@ -810,12 +799,14 @@ confint.thpr <- function(object, parm, level = 0.95, zeta,
 ##' @param \dots additional parameters to be passed to  \code{\link{profile.merMod}} or \code{\link{bootMer}}
 ##' @return a numeric table of confidence intervals
 confint.merMod <- function(object, parm, level = 0.95,
-                           method = c("profile","Wald","boot"),
-                           zeta, nsim=500, boot.type = c("perc","basic","norm"),
-                           FUN = NULL, quiet=FALSE, oldNames, signames = TRUE, ...)
+                           method = c("profile", "Wald", "boot"),
+                           zeta, nsim=500, boot.type = c("perc", "basic", "norm"),
+                           FUN = NULL, quiet=FALSE, oldNames, signames = TRUE,
+                           boot.scale = c("sdcor", "vcov"), ...)
 {
-    method <- match.arg(method)
+    method <- tolower(match.arg(method))
     boot.type <- match.arg(boot.type)
+    boot.scale <- match.arg(boot.scale)
     if (!missing(oldNames)) {
       warning("'oldNames' is deprecated. Please use 'signames' instead.", call. = FALSE)
       signames <- oldNames
@@ -825,10 +816,10 @@ confint.merMod <- function(object, parm, level = 0.95,
         ## custom boot function, don't expand parameter names
     } else {
         ## "use scale" = GLMM with scale parameter *or* LMM ..
-        useSc <- as.logical(object@devcomp$dims[["useSc"]])
-        vn <- profnames(object, signames, useSc=useSc)
-        an <- c(vn,names(fixef(object)))
-        parm <- if(missing(parm)) seq_along(an)
+      useSc <- as.logical(object@devcomp$dims[["useSc"]])
+      vn <- profnames(object, signames, useSc=useSc)
+      an <- c(vn,names(fixef(object)))
+      parm <- if(missing(parm)) seq_along(an)
                 else
                     get.which(parm, nvp=length(vn), nptot=length(an), parnames=an)
         if (!quiet && method %in% c("profile","boot")) {
@@ -843,7 +834,7 @@ confint.merMod <- function(object, parm, level = 0.95,
                ## confint.thpr() with missing(parm) using all names:
                confint(pp, level=level, zeta=zeta)
            },
-           "Wald" = {
+           "wald" = {
                a <- (1 - level)/2
                a <- c(a, 1 - a)
                ci.vcov <- array(NA,dim = c(length(vn), 2L),
@@ -860,32 +851,25 @@ confint.merMod <- function(object, parm, level = 0.95,
                ci.all[parm,,drop=FALSE]
            },
            "boot" = {
-               bootFun <- function(x) {
-                   th <- x@theta
-                   nvec <- lengths(x@cnms)
-                   scaleTh <- (isLMM(x) || isNLMM(x))
-                   ## FIXME: still ugly.  Best cleanup via Cv_to_Sv ...
-                   ss <- if (scaleTh) {  ## scale variances by sigma and include it
-                       Cv_to_Sv(th, n=nvec, s=sigma(x))
-                   } else if (useSc) { ## don't scale variances but do include sigma
-                       c(Cv_to_Sv(th, n=nvec), sigma(x))
-                   } else {  ## no scaling, no sigma
-                       Cv_to_Sv(th, n=nvec)
-                   }
-                   c(setNames(ss, vn), fixef(x))
+             bootFun <- function(x) {
+               ## need to get profile-scale pars from fitted model
+               useSc <- !(isGLMM(x) && hasNoScale(family(x)))
+               sc <- if (useSc) sigma(x) else NULL
+               ss <- convParToProfPar(x@optinfo$val, x, profscale = boot.scale, sc = sc)
+               c(setNames(ss, vn), fixef(x))
+             }
+             if (is.null(FUN)) FUN <- bootFun
+             bb <- bootMer(object, FUN=FUN, nsim=nsim,...)
+             if (all(is.na(bb$t))) stop("*all* bootstrap runs failed!")
+             print.bootWarnings(bb, verbose=FALSE)
+             citab <- confint(bb,level=level,type=boot.type)
+             if (missing(parm)) {
+               ## only happens if we have custom boot method
+               if (is.null(parm <- rownames(citab))) {
+                 parm <- seq(nrow(citab))
                }
-               if (is.null(FUN)) FUN <- bootFun
-               bb <- bootMer(object, FUN=FUN, nsim=nsim,...)
-               if (all(is.na(bb$t))) stop("*all* bootstrap runs failed!")
-               print.bootWarnings(bb, verbose=FALSE)
-               citab <- confint(bb,level=level,type=boot.type)
-               if (missing(parm)) {
-                   ## only happens if we have custom boot method
-                   if (is.null(parm <- rownames(citab))) {
-                       parm <- seq(nrow(citab))
-                   }
-               }
-               citab[parm, , drop=FALSE]
+             }
+             citab[parm, , drop=FALSE]
            },
            ## should never get here ...
            stop("unknown confidence interval method"))
