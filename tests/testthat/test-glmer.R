@@ -275,7 +275,7 @@ if(FALSE) { ## Hadley broke this
 
     ## try higher-order AGQ
     expect_is   (update(gm1,nAGQ=90), "glmerMod")
-    expect_error(update(gm1,nAGQ=101),"ord < 101L")
+    expect_error(update(gm1,nAGQ=101),"nAGQ <= 100")
 
     ## non-numeric response variables
     ss <- transform(sleepstudy, Reaction = as.character(Reaction))
