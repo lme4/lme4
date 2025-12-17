@@ -1,43 +1,46 @@
 Package: lme4
 Version: 2.0.0
 Title: Linear Mixed-Effects Models using 'Eigen' and S4
-Authors@R: c(
-    person("Douglas","Bates", role="aut",
-	comment=c(ORCID="0000-0001-8316-9503")),
-    person("Martin","Maechler", role="aut",
-	comment=c(ORCID="0000-0002-8685-9910")),
-    person("Ben","Bolker",email="bbolker+lme4@gmail.com", role=c("aut","cre"),
-	comment=c(ORCID="0000-0002-2127-0443")),
-    person("Steven","Walker",role="aut",
-	comment=c(ORCID="0000-0002-4394-9078")),
-    person("Rune Haubo Bojesen","Christensen", role="ctb",
-	comment=c(ORCID="0000-0002-4494-3399")),
-    person("Henrik","Singmann", role="ctb",
-	comment=c(ORCID="0000-0002-4842-3657")),
-    person("Bin", "Dai", role="ctb"),
-    person("Fabian", "Scheipl", role="ctb",
-	comment=c(ORCID="0000-0001-8172-3603")),
-    person("Gabor", "Grothendieck", role="ctb"),
-    person("Peter", "Green", role="ctb",
-	comment=c(ORCID="0000-0002-0238-9852")),
-    person("John", "Fox", role="ctb"),
-    person("Alexander", "Bauer", role="ctb"),
-    person("Pavel N.", "Krivitsky", role=c("ctb","cph"), comment=c(ORCID="0000-0002-9101-3362",
-    "shared copyright on simulate.formula")),
-    person("Emi", "Tanaka", role = "ctb",
-      comment = c(ORCID="0000-0002-1455-259X")),
+Authors@R:
+    c(person("Douglas", "Bates", role = "aut",
+             comment = c(ORCID = "0000-0001-8316-9503")),
+      person("Martin", "Maechler", role = "aut",
+             comment = c(ORCID = "0000-0002-8685-9910")),
+      person("Ben", "Bolker", role = c("cre", "aut"),
+             email = "bbolker+lme4@gmail.com",
+             comment = c(ORCID = "0000-0002-2127-0443")),
+      person("Steven", "Walker", role = "aut",
+             comment = c(ORCID = "0000-0002-4394-9078")),
+      person("Rune Haubo Bojesen", "Christensen", role = "ctb",
+             comment = c(ORCID = "0000-0002-4494-3399")),
+      person("Henrik","Singmann", role="ctb",
+             comment = c(ORCID = "0000-0002-4842-3657")),
+      person("Bin", "Dai", role = "ctb"),
+      person("Fabian", "Scheipl", role = "ctb",
+             comment = c(ORCID = "0000-0001-8172-3603")),
+      person("Gabor", "Grothendieck", role = "ctb"),
+      person("Peter", "Green", role = "ctb",
+             comment = c(ORCID = "0000-0002-0238-9852")),
+      person("John", "Fox", role = "ctb"),
+      person("Alexander", "Bauer", role = "ctb"),
+      person("Pavel N.", "Krivitsky", role = c("ctb", "cph"),
+             comment = c(ORCID = "0000-0002-9101-3362",
+                         "shared copyright on simulate.formula")),
+      person("Emi", "Tanaka", role = "ctb",
+             comment = c(ORCID = "0000-0002-1455-259X")),
       person("Mikael", "Jagan", role = "aut",
-      comment = c(ORCID="0000-0002-3542-2938")),
-    person("Ross D.", "Boylan", email="ross.boylan@ucsf.edu", role=("ctb"),
-        comment = c(ORCID="0009-0003-4123-8090")),
-    person("Anna", "Ly", role = "aut",
-       comment = c(ORCID = "0000-0002-0210-0342"))
-      )
-Description: Fit linear and generalized linear mixed-effects models.
-    The models and their components are represented using S4 classes and
-    methods.  The core computational algorithms are implemented using the
-    'Eigen' C++ library for numerical linear algebra and 'RcppEigen' "glue".
-Depends: R (>= 3.6.0), Matrix, methods, stats
+             comment = c(ORCID = "0000-0002-3542-2938")),
+      person("Ross D.", "Boylan", role = "ctb",
+             comment = c(ORCID = "0009-0003-4123-8090")),
+      person("Anna", "Ly", role = "aut",
+             comment = c(ORCID = "0000-0002-0210-0342")))
+Description:
+    Fit linear and generalized linear mixed-effects models.  The
+    models and their components are represented using S4 classes and
+    methods.  The core computational algorithms are implemented using
+    the 'Eigen' C++ library for numerical linear algebra and
+    'RcppEigen' "glue".
+Depends: R (>= 3.6), Matrix, methods, stats
 LinkingTo:
     Matrix (>= 1.5-0),
     Rcpp (>= 0.10.5),
