@@ -38,13 +38,14 @@ mkVarCorr <- function(sc, cnms, nc, theta, nms, reCovs = NULL) {
   for(j in seq_along(ans)){
     reCov <- reCovs[[j]]
     cls <- sub("Covariance\\.", "", class(reCov))
-    ## There is a separate vcmat_hetar1, vcmat_homcs
-    ## Inconsistent names is due to that usually we assume homogenous ar1,
-    ## and hetereogenous compound symmetry
-    hom_status <-
-      if (!reCov@hom && inherits(reCov, "Covariance.ar1")) "het"
-      else if (reCov@hom && inherits(reCov, "Covariance.cs")) "hom"
-      else ""
+    ## There are separate vcmat_hetar1, vcmat_homcs classes
+    ## Inconsistent naming because AR1 default is typically homogenous,
+    ## CS default is heterogeneous (cf glmmTMB)
+    hom_status <- ""
+    if ("hom" %in% slotNames(reCov)) {
+      if (!reCov@hom && inherits(reCov, "Covariance.ar1")) hom_status <- "het"
+      if (reCov@hom && inherits(reCov, "Covariance.cs")) hom_status <- "hom"
+    }
     class(ans[[j]]) <- c(paste0("vcmat_", hom_status, cls), class(ans[[j]]))
   }
   if(is.character(nms)) {

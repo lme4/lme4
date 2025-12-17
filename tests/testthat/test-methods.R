@@ -358,12 +358,12 @@ test_that("monotonic profile but bad spline",
   }
   set.seed(102)
   dat <- simfun(10,5,1,.3,.3,.3,(1/18),0,(1/18))
-  fit <- lmer(Y~X+Z+X:Z+(X||group),data=dat)
-
-    expect_warning(pp <- profile(fit,"theta_"), "non-monotonic profile")
-    expect_warning(cc <- confint(pp),"falling back to linear interpolation")
-    ## very small/unstable problem, needs large tolerance
-    expect_equal(unname(cc[2,]), c(0, 0.509), tolerance=0.09) # "bobyqa" had 0.54276
+  fit <- lmer(Y~X+Z+X:Z+(X||group),data=dat,
+              control = lmerControl(check.conv.singular = "ignore"))
+  expect_warning(pp <- profile(fit,"theta_"), "non-monotonic profile")
+  expect_warning(cc <- confint(pp),"falling back to linear interpolation")
+  ## very small/unstable problem, needs large tolerance
+  expect_equal(unname(cc[2,]), c(0, 0.509), tolerance=0.09) # "bobyqa" had 0.54276
 })
 
 test_that("confint with bad profile", {

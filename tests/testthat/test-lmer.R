@@ -395,10 +395,8 @@ test_that("update works as expected", {
     m <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy)
     m1 <- lmer(Reaction ~ Days + (1 | Subject), sleepstudy)
     m2 <- update(m, . ~ . - (0 + Days | Subject))
-    if (FALSE) {
-    ## '||' is no longer expanded as two '|' ...
-    expect_equivalent(fitted(m1),
-                      fitted(m2))
+    if (getOption("lme4.doublevert.default", "split") == "split") {
+      expect_equivalent(fitted(m), fitted(m2))
     }
 })
 
