@@ -5,11 +5,11 @@
 ##' @param nc numeric vector: number of terms in each RE component
 ##' @param theta theta vector (lower-triangle of Cholesky factors)
 ##' @param nms component names (FIXME: nms/cnms redundant: nms=names(cnms)?)
-##' @param full_corr specifies whether the full correlation matrix should be produced
+##' @param full_cor specifies whether the full correlation matrix should be produced
 ##' @seealso \code{\link{VarCorr}}
 ##' @return A matrix
 ##' @export
-mkVarCorr <- function(sc, cnms, nc, theta, nms, reCovs = NULL, full_corr = NULL) {
+mkVarCorr <- function(sc, cnms, nc, theta, nms, reCovs = NULL, full_cor = NULL) {
   if (is.null(reCovs)) {
     ncseq <- seq_along(nc)
     thl <- split(theta, rep.int(ncseq, (nc * (nc + 1))/2))
@@ -35,9 +35,9 @@ mkVarCorr <- function(sc, cnms, nc, theta, nms, reCovs = NULL, full_corr = NULL)
     ## if null, then only print the covariance matrix if nc <= 20.
     ## 20 is an arbitrary threshold, but anything larger than that would likely
     ## be too tedious to work with.
-    if((is.null(full_corr) && nc[[i]] <= 20)
+    if((is.null(full_cor) && nc[[i]] <= 20)
         || inherits(reCovs[[i]], "Covariance.ar1") 
-        || full_corr == TRUE){
+        || full_cor == TRUE){
       corr <- t(val / stddev)/stddev
       diag(corr) <- 1
     } else {
@@ -74,7 +74,7 @@ mkVarCorr <- function(sc, cnms, nc, theta, nms, reCovs = NULL, full_corr = NULL)
 
 ##' Extract variance and correlation components
 ##'
-VarCorr.merMod <- function(x, sigma = 1, full_corr = NULL, ...)
+VarCorr.merMod <- function(x, sigma = 1, full_cor = NULL, ...)
 {
   ## TODO: now that we have '...', add  type=c("varcov","sdcorr","logs" ?
   if (is.null(cnms <- x@cnms))
@@ -85,7 +85,7 @@ VarCorr.merMod <- function(x, sigma = 1, full_corr = NULL, ...)
   structure(mkVarCorr(sigma, cnms = cnms, nc = nc, theta = x@theta,
                       nms = { fl <- x@flist; names(fl)[attr(fl, "assign")]},
                       reCovs = getReCovs(x),
-                      full_corr = full_corr),
+                      full_cor = full_cor),
             useSc = as.logical(x@devcomp$dims[["useSc"]]),
             class = "VarCorr.merMod")
 }

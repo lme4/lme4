@@ -5,7 +5,7 @@
 \alias{as.data.frame.VarCorr.merMod}
 \alias{print.VarCorr.merMod}
 \usage{
-\method{VarCorr}{merMod}(x, sigma=1, full_corr = NULL, \dots)
+\method{VarCorr}{merMod}(x, sigma=1, full_cor = NULL, \dots)
 
 %% documented because of "surprising arguments":
 \method{as.data.frame}{VarCorr.merMod}(x, row.names = NULL,
@@ -33,7 +33,7 @@
     to be printed; simply passed to \code{\link{formatVC}()}.}
   \item{formatter}{a \code{\link{function}} for formatting the numbers;
     simply passed to \code{\link{formatVC}()}.}
-  \item{full_corr}{Specifies whether the full correlation matrix should be 
+  \item{full_cor}{Specifies whether the full correlation matrix should be 
     produced.}
 }
 \description{
