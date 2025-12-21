@@ -753,7 +753,7 @@ if (testLevel>1) {
              ##  be tried on CRAN
              ## use snow instead of multicore for Windows safety
   {
-    ## GitHub actions complains about >2 cores
+    ## GitHub actions complains about >2 cores ...
     pp <- profile(fm2, parallel = "snow", ncpus = 2,
                   signames = FALSE)
     ci_pp <- confint(pp)
