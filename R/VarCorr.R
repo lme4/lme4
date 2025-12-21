@@ -65,7 +65,7 @@ mkVarCorr <- function(sc, cnms, nc, theta, nms, reCovs = NULL) {
 ## FIXME: automate this from list of known Covariance.* classes ... 
 for (varclass in c("us",
                    c(outer(c("hom", "het"), c("ar1", "cs", "diag"),
-                           paste(x, y, sep = "_"))))) {
+                           function(x, y) paste(x, y, sep = "_"))))) {
   setOldClass(c(paste0("vcmat_", varclass), "matrix", "array"))
 }
                              
