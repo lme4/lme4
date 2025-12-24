@@ -355,6 +355,9 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     denv <- checkFormulaData(formula, data,
                              checkLHS = control$check.formula.LHS == "stop")
     formula <- as.formula(formula, env=denv)
+    if (getDoublevertDefault() == "split") {
+      RHSForm(formula) <- reformulas::expandDoubleVerts(RHSForm(formula))
+    }
     ## as.formula ONLY sets environment if not already explicitly set.
     ## ?? environment(formula) <- denv
 
@@ -751,6 +754,9 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     denv <- checkFormulaData(formula, data,
                              checkLHS = control$check.formula.LHS == "stop")
     formula <- as.formula(formula, env = denv) # substitute evaluated version
+    if (getDoublevertDefault() == "split") {
+      RHSForm(formula) <- reformulas::expandDoubleVerts(RHSForm(formula))
+    }
 
     ## DRY ...
     m <- match(c("data", "subset", "weights", "na.action", "offset",
