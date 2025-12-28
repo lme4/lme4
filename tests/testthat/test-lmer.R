@@ -487,3 +487,8 @@ test_that("gradient and Hessian checks are skipped when singular fit occurs",{
   expect_false(is.null(summary(fm2)$optinfo$derivs))
 })
 
+test_that("doubleverts expanded in stored formula by default", {
+  lf <- lFormula(Reaction ~ Days + (Days || Subject), sleepstudy)
+  expect_equal(formula(lf),
+               Reaction ~ Days + ((1 | Subject) + (0 + Days | Subject)))
+})

@@ -753,7 +753,8 @@ if (testLevel>1) {
              ##  be tried on CRAN
              ## use snow instead of multicore for Windows safety
   {
-    pp <- profile(fm2, parallel = "snow", ncpus = 5,
+    ## GitHub actions complains about >2 cores ...
+    pp <- profile(fm2, parallel = "snow", ncpus = 2,
                   signames = FALSE)
     ci_pp <- confint(pp)
     expect_all_true(abs(ci_pp["cor_Days.(Intercept)|Subject",]) < 1)

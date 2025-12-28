@@ -72,6 +72,13 @@ mkVarCorr <- function(sc, cnms, nc, theta, nms, reCovs = NULL, full_cor = NULL) 
   structure(ans, sc = sc)
 }
 
+## FIXME: automate this from list of known Covariance.* classes ... 
+for (varclass in c("us",
+                   c(outer(c("hom", "het"), c("ar1", "cs", "diag"),
+                           function(x, y) paste(x, y, sep = "_"))))) {
+  setOldClass(c(paste0("vcmat_", varclass), "matrix", "array"))
+}
+                             
 ##' Extract variance and correlation components
 ##'
 VarCorr.merMod <- function(x, sigma = 1, full_cor = NULL, ...)
