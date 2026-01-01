@@ -404,9 +404,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     reTrms <- reformulas::mkReTrms(bb0, fr, calc.lambdat = FALSE)
     reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
     ## If there is a covariance structure; ignore the check nobs.vs.nRE
-    if(anyStructured(reTrms$reCovs)){
-      control$check.nobs.vs.nRE <- "ignore"
-    }
+    if (.anyStructured(reTrms$reCovs))
+        control$check.nobs.vs.nRE <- "ignore"
     wmsgNlev <- checkNlevels(reTrms$flist, n=n, control)
     wmsgZdims <- checkZdims(reTrms$Ztlist, n=n, control, allow.n=FALSE)
     if (anyNA(reTrms$Zt)) {
@@ -806,9 +805,8 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     reTrms <- reformulas::mkReTrms(bb0, fr, calc.lambdat = FALSE)
     reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
     ## If there is a covariance structure; ignore the check nobs.vs.nRE
-    if(anyStructured(reTrms$reCovs)){
-      control$check.nobs.vs.nRE <- "ignore"
-    }
+    if (.anyStructured(reTrms$reCovs))
+        control$check.nobs.vs.nRE <- "ignore"
     ## TODO: allow.n = !useSc {see FIXME below}
     wmsgNlev <- checkNlevels(reTrms$ flist, n = n, control, allow.n = TRUE)
     wmsgZdims <- checkZdims(reTrms$Ztlist, n = n, control, allow.n = TRUE)

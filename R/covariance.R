@@ -1348,9 +1348,26 @@ function (value, object, profscale, sc = NULL) {
     c(L, recursive = TRUE, use.names = FALSE)
 }
 
-anyStructured <-
-function (reCovs = getReCovs(object), object)
+isNewMerMod <-
+function (object)
+    !is.null(attr(object, "upper")) && !is.null(attr(object, "reCovs"))
+
+forceNewMerMod <-
+function (object) {
+    if (is.null(attr(object, "upper")))
+        attr(object, "upper") <- getUpper(object)
+    if (is.null(attr(object, "reCovs")))
+        attr(object, "reCovs") <- getReCovs(object)
+    object
+}
+
+.anyStructured <-
+function (reCovs)
     !all(vapply(reCovs, is, FALSE, "Covariance.us"))
+
+anyStructured <-
+function (object)
+    !is.null(reCovs <- attr(object, "reCovs")) && .anyStructured(reCovs)
 
 semichol <-
 if (FALSE) {

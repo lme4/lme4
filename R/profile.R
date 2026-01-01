@@ -482,9 +482,8 @@ devfun2 <- function(fm,
 {
 
     scale <- match.arg(scale)
-    if (scale == "varcov" && anyStructured(object = fm)) {
+    if (scale == "varcov" && anyStructured(fm))
         stop("haven't thought about varcov scale for structured cov matrices")
-    }
     ## TODO: change to work with 'par' instead of 'theta'
 
     ## FIXME: have to distinguish between

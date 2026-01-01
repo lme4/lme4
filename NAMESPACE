@@ -310,3 +310,4 @@ importFrom(rlang, warn)
 ##
 export(getSingTol)
 export(getDoublevertDefault)
+export(isNewMerMod, forceNewMerMod, anyStructured)
