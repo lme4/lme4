@@ -807,11 +807,11 @@ confint.thpr <- function(object, parm, level = 0.95, zeta,
 ##' @param \dots additional parameters to be passed to  \code{\link{profile.merMod}} or \code{\link{bootMer}}
 ##' @return a numeric table of confidence intervals
 confint.merMod <- function(object, parm, level = 0.95,
-                           method = c("profile","Wald","boot"),
+                           method = c("profile", "Wald", "boot"),
                            zeta, nsim=500, boot.type = c("perc","basic","norm"),
                            FUN = NULL, quiet=FALSE, oldNames, signames = TRUE, ...)
 {
-    method <- match.arg(method)
+    method <- tolower(match.arg(method))
     boot.type <- match.arg(boot.type)
     if (!missing(oldNames)) {
       warning("'oldNames' is deprecated. Please use 'signames' instead.", call. = FALSE)
@@ -840,7 +840,7 @@ confint.merMod <- function(object, parm, level = 0.95,
                ## confint.thpr() with missing(parm) using all names:
                confint(pp, level=level, zeta=zeta)
            },
-           "Wald" = {
+           "wald" = {
                a <- (1 - level)/2
                a <- c(a, 1 - a)
                ci.vcov <- array(NA,dim = c(length(vn), 2L),
