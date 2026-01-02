@@ -857,20 +857,15 @@ confint.merMod <- function(object, parm, level = 0.95,
                ci.all[parm,,drop=FALSE]
            },
            "boot" = {
-               bootFun <- function(x) {
-                   th <- x@theta
-                   nvec <- lengths(x@cnms)
-                   scaleTh <- (isLMM(x) || isNLMM(x))
-                   ## FIXME: still ugly.  Best cleanup via Cv_to_Sv ...
-                   ss <- if (scaleTh) {  ## scale variances by sigma and include it
-                       Cv_to_Sv(th, n=nvec, s=sigma(x))
-                   } else if (useSc) { ## don't scale variances but do include sigma
-                       c(Cv_to_Sv(th, n=nvec), sigma(x))
-                   } else {  ## no scaling, no sigma
-                       Cv_to_Sv(th, n=nvec)
-                   }
-                   c(setNames(ss, vn), fixef(x))
-               }
+             bootFun <- function(x) {
+                 pp <- getME(x, "par")
+                 sig <- sigma(x)
+                 ## hard-code profscale -- users can specify FUN if they want ...
+                 repars <- convParToProfPar(pp, x, profscale = "sdcor" , sc = sig)
+                 ## FIXME: names are (may be?) still in the wrong order ...
+                 names(repars) <- profnames(x, signames, useSc=useSc)
+                 c(repars, fixef(x))
+             }
                if (is.null(FUN)) FUN <- bootFun
                bb <- bootMer(object, FUN=FUN, nsim=nsim,...)
                if (all(is.na(bb$t))) stop("*all* bootstrap runs failed!")
