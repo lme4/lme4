@@ -2051,7 +2051,7 @@ getME.merMod <- function(object,
                   "p_i", "l_i", "q_i", "k", "m_i", "m",
                   "cnms",
                   "devcomp", "offset", "lower",
-                  "devfun",
+                  "devfun", "devarg",
                   "glmer.nb.theta"
                   ), ...)
 {
@@ -2119,7 +2119,7 @@ getME.merMod <- function(object,
            "fixef" = fixef(object),
            "beta"  = object@beta,
            "theta" = setNames(th, getThetaNames(object)),
-           "par" = object@optinfo$val,
+           "par" = object@optinfo$val[seq_len(getParLength(object))],
            ## FIXME flexSigmaMinimum
            "ST" = setNames(vec2STlist(object@theta, n = lengths(cnms)),
                            names(cnms)),
@@ -2168,6 +2168,7 @@ getME.merMod <- function(object,
                             verbose=verbose, control=object@optinfo$control)
                }
            },
+           "devarg" = object@optinfo$val,
            ## FIXME: current version gives lower bounds for theta parameters only:
            ## -- these must be extended for [GN]LMMs -- give extended value including -Inf values for beta values?
 
