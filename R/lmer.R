@@ -2045,7 +2045,7 @@ getME.merMod <- function(object,
                   "L", "Lambda", "Lambdat", "Lind", "Tlist", "A",
                   "RX", "RZX", "sigma",
                   "flist",
-                  "fixef", "beta", "theta", "ST",
+                  "fixef", "beta", "theta", "ST", "par",
                   "REML", "is_REML",
                   "n_rtrms", "n_rfacs",
                   "N", "n", "p", "q",
@@ -2120,6 +2120,8 @@ getME.merMod <- function(object,
            "fixef" = fixef(object),
            "beta"  = object@beta,
            "theta" = setNames(th, getThetaNames(object)),
+           "par" = object@optinfo$val,  ## FIXME: names? does getParNames() handle fixed effects for GLMMs?
+           ## (need getParNames() + names(fixef(.)) if necessary)
            ## FIXME flexSigmaMinimum
            "ST" = setNames(vec2STlist(object@theta, n = lengths(cnms)),
                            names(cnms)),
