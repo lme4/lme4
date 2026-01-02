@@ -69,18 +69,8 @@ profile.merMod <- function(fitted,
     useSc <- isLMM(fitted) || isNLMM(fitted)
     prof.prefix <-
         switch(prof.scale,
-               "sdcor" = {
-                   transfuns <- list(from.chol= Cv_to_Sv,
-                                     to.chol  = Sv_to_Cv,
-                                     to.sd    = identity)
-                   c("sd", "cor")
-               },
-               "varcov" = {
-                   transfuns <- list(from.chol= Cv_to_Vv,
-                                     to.chol  = Vv_to_Cv,
-                                     to.sd    = sqrt)
-                   c("var", "cov")
-               },
+               "sdcor" = c("sd", "cor"),
+               "varcov" = c("var", "cov"),
                stop("internal error, prof.scale=", prof.scale))
     dd <- devfun2(fitted, useSc=useSc, signames=signames,
                   prefix=prof.prefix, scale = prof.scale, ...)
@@ -389,10 +379,8 @@ profile.merMod <- function(fitted,
                 ##   `par` scale (i.e. not the sigma/corr scale)
                 fv <- ores$fval
                 sig <- sqrt((rr$wrss() + pp1$sqrL(1))/n)
-                ## FIXME: need to translate from ores$par (`par` scale) back to `profPar` scale
                 ppars <- convParToProfPar(ores$par, fitted, profscale = prof.scale, sc = sig)
                 c(sign(fw - est) * sqrt(fv - base),
-                  ## Cv_to_Sv(ores$par, lengths(fitted@cnms), s=sig),
                   ppars,
                   mkpar(p, j, fw, pp1$beta(1)))
             }
@@ -559,7 +547,7 @@ devfun2 <- function(fm,
                 silent = TRUE)
             if (inherits(thpars, "try-error")) return(NA)
             fixpars <- pars[-seq(np)]
-            d0(c(thpars,fixpars))
+            d0(c(thpars, fixpars))
         }
     }
     attr(ans, "optimum") <- opt         # w/ names()
