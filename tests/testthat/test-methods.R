@@ -197,20 +197,18 @@ if (testLevel>1) {
                                       family=gaussian,
                                       seed=101))[[1]]
     m1 <- lmer(y ~ 1 + (A|B), data=dd, control=lmerControl(calc.deriv=FALSE))
-    ci <- CI.boot(m1,seed=101)
-    ci2 <- CI.boot(m1,seed=101)
-    expect_equal(ci,ci2)
+    ci <- CI.boot(m1, seed=101, signames = FALSE)
+    ci2 <- CI.boot(m1,seed=101, signames = FALSE)
+    expect_equal(ci, ci2)
     ci_50 <- CI.boot(m1,level=0.5,seed=101)
     expect_true(all(ci_50[,"25 %"]>ci[,"2.5 %"]))
     expect_true(all(ci_50[,"75 %"]<ci[,"97.5 %"]))
-    corvals <- ci[grep("^cor_",rownames(ci)),]
+    corvals <- ci[grep("^cor_", rownames(ci)),]
     expect_true(all(abs(corvals) <= 1))
     ## test bootMer with GLMM, multiple RE
-    ## expect_message(
-        ci1 <- CI.boot(gm2, nsim=5)
-      ## , "singular")
-    ci2  <- CI.boot(gm2, nsim=5, parm=3:6)
-    ci2B <- CI.boot(gm2, nsim=5, parm="beta_")
+    ci1 <- CI.boot(gm2, nsim=5, seed = 101)
+    ci2  <- CI.boot(gm2, nsim=5, parm=3:6, seed = 101)
+    ci2B <- CI.boot(gm2, nsim=5, parm="beta_", seed = 101)
     ## previously tested with nsim=5 vs nsim=3
     expect_true(nrow(ci2) == 4)
     expect_equal(ci2, ci2B)
@@ -279,16 +277,30 @@ if (testLevel>1) {
                         data=df2, family=gaussian(link="logit"))
 
     set.seed(101)
-    bci <- suppressWarnings(confint(gaussmodel,method="boot",nsim=10,quiet=TRUE))
+    bci <- suppressMessages(
+      suppressWarnings(
+        confint(gaussmodel, method="boot", nsim=10, quiet=TRUE)
+      )
+    )
+    ## old_val <- structure(c(16.0861072699207, 0.0367496156026639,
+    ##                        -4.21025090053564,
+    ##                        3.1483596407467, 31.3318861915707,
+    ##                        0.0564761126030204, -1.00593089841924,
+    ##                        4.7064432268919), .Dim = c(4L, 2L),
+    ##                      .Dimnames = list(c(".sig01",
+    ##                                         ".sigma", "(Intercept)",
+    ##                                         "prop1"), c("2.5 %", "97.5 %")))
+    
+    new_val <- matrix(
+      c(
+        0.7876999074589053, 0.03674961560266387, -4.210250900535643,
+        3.1483596407466985, 1.7682636983854518, 0.05647611260302035,
+        -1.0059308984192392, 4.706443226891899
+      ), nrow = 4L, ncol = 2L,
+      dimnames = list(c(".sig01", ".sigma", "(Intercept)", "prop1"), c("2.5 %", "97.5 %"))
+    )
     expect_equal(bci,
-                 structure(c(16.0861072699207, 0.0367496156026639,
-                             -4.21025090053564,
-                             3.1483596407467, 31.3318861915707,
-                             0.0564761126030204, -1.00593089841924,
-                             4.7064432268919), .Dim = c(4L, 2L),
-                           .Dimnames = list(c(".sig01",
-                                              ".sigma", "(Intercept)",
-                                              "prop1"), c("2.5 %", "97.5 %"))),
+                 new_val,
                  tolerance=1e-5)
 
 

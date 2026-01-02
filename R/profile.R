@@ -12,13 +12,23 @@ reorder_covpars <- function(p) {
 ## FIXME: make structure-aware (via tnames())
 profnames <- function(object, signames=TRUE,
                       useSc=isLMM(object), prefix=c("sd","cor")) {
-    ntp <- length(object@theta)
-    ## return
-    c(if(signames) sprintf(".sig%02d", seq(ntp))
-      else getThetaNames(object, prf=prefix, old=FALSE),
-      if(useSc) if (signames) ".sigma" else "sigma")
+  ntp <- length(object@theta)
+  res <- if (signames) {
+           sprintf(".sig%02d", seq(ntp))
+         } else {
+           vv <- getVCNames(object, prf=prefix, old=FALSE)
+           ## result is stored as {vcomp, ccomp}; 'zip' it
+           unlist(
+             lapply(seq_along(vv$vcomp),
+                    function(i) c(vv$vcomp[[i]], vv$ccomp[[i]]))
+           )
+         }
+  if (useSc) {
+    sdname <- if (signames) ".sigma" else "sigma"
+    res <- c(res, sdname)
+  }
+  res
 }
-
 
 ##' @importFrom splines backSpline interpSpline periodicSpline
 ##' @importFrom stats profile
@@ -824,7 +834,7 @@ confint.merMod <- function(object, parm, level = 0.95,
         ## "use scale" = GLMM with scale parameter *or* LMM ..
         useSc <- as.logical(object@devcomp$dims[["useSc"]])
         vn <- profnames(object, signames, useSc=useSc)
-        an <- c(vn,names(fixef(object)))
+        an <- c(vn, names(fixef(object)))
         parm <- if(missing(parm)) seq_along(an)
                 else
                     get.which(parm, nvp=length(vn), nptot=length(an), parnames=an)
@@ -858,8 +868,10 @@ confint.merMod <- function(object, parm, level = 0.95,
            },
            "boot" = {
              bootFun <- function(x) {
+                 ## repeat useSc so this can be used upstream/outside if necessary
+                 useSc <- as.logical(x@devcomp$dims[["useSc"]])
                  pp <- getME(x, "par")
-                 sig <- sigma(x)
+                 sig <- if (!useSc) NULL else sigma(x)
                  ## hard-code profscale -- users can specify FUN if they want ...
                  repars <- convParToProfPar(pp, x, profscale = "sdcor" , sc = sig)
                  ## FIXME: names are (may be?) still in the wrong order ...

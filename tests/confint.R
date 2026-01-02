@@ -36,6 +36,7 @@ if (lme4:::testLevel() > 1 || .Platform$OS.type != "windows") withAutoprint({
         print(c2,digits=3)
     }
     if (testLevel > 10) {
+        set.seed(101)
         print(c1B <- confint(fm1, method="profile"))
         print(c2B <- confint(fm1, method="boot"))
         expect_equal(unname(c1B), unname(c2B), tolerance=2e-2)
