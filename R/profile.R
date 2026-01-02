@@ -1,5 +1,14 @@
 ## --> ../man/profile-methods.Rd
 
+##
+
+reorder_covpars <- function(p) {
+  n <- get_clen(p)  ## dimensions of matrix
+  m <- matrix(NA, n, n)
+  m[lower.tri(m, diag = TRUE)] <- seq_along(p)
+  c(diag(m), m[lower.tri(m, diag = FALSE)])
+}
+
 ## FIXME: make structure-aware (via tnames())
 profnames <- function(object, signames=TRUE,
                       useSc=isLMM(object), prefix=c("sd","cor")) {
