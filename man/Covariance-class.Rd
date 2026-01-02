@@ -223,9 +223,17 @@ parameters of the correlation component of the covariance matrix. That is,
   \item \code{diag}: should be empty; we only care about the standard deviations.
   \item \code{cs}, \code{ar1}: \eqn{\rho}
   }
-For the methods that obtain names (i.e., \code{getParNames}, 
-\code{getThetaNames}, and \code{getVCNames}), \code{cnm} represents the 
-column (of the model matrix) name, and \code{gnm} represents the group name.
+Methods that obtain names (i.e., \code{getParNames}, \code{getThetaNames}, 
+and \code{getVCNames}), \code{cnm} represents the column (of the model matrix) 
+name, and \code{gnm} represents the group name.
+
+For methods that involve \code{getProf} (i.e., \code{getProfPar}, 
+\code{setProfPar}, \code{getProfLower}, \code{getProfUpper}), the user may 
+set the argument \code{profscale = "varcor"}, which transforms the variance 
+components andcorrelation components into the corresponding variance-covariance 
+matrix. Furthermore, the user may scale the standard deviations by a factor
+of the \code{sc} argument.
+
 \describe{
     \item{\code{getPar}:}{The vector of parameters that the optimizer cares 
     about; contains \code{c(vcomp, ccomp)}.}
@@ -267,10 +275,16 @@ column (of the model matrix) name, and \code{gnm} represents the group name.
     \code{vcomp} and \code{ccomp} in terms of \code{cnm} and \code{gnm}.}
     \item{\code{setVC}:}{Sets the values for VC, which is composed of \code{vcomp}
     and \code{ccomp}.}
-    \item{\code{getProfPar}:}{TODO.}
-    \item{\code{setProfPar}:}{TODO.}
-    \item{\code{getProfLower}:}{TODO.}
-    \item{\code{getProfUpper}:}{TODO.}
+    \item{\code{getProfPar}:}{Converting the values from \code{vcomp}
+    and \code{ccomp} (or \code{getVC}) to extract parameters from the object 
+    and translates them to a different parameterization 
+    suitable for profiling. If \code{profscale = "varcor"} then the 
+    variance-covariance matrix is returned.}
+    \item{\code{setProfPar}:}{Sets the parameters to use for profiling.}
+    \item{\code{getProfLower}:}{Obtains the lower bounds of the values obtained
+    by \code{getProfPar} for profiling.}
+    \item{\code{getProfUpper}:}{Obtains the upper bounds of the values obtained
+    by \code{getProfPar} for profiling.}
   }
 }
 
@@ -292,18 +306,9 @@ fm1.cs <- lmer(Reaction ~ Days + cs(Days | Subject), sleepstudy)
 fm1.cs.hom <- lmer(Reaction ~ Days + cs(Days | Subject, hom = TRUE), 
   sleepstudy)
 ## Auto-regressive order 1
-# TODO...
-
-## Applying some of the S4 methods for merMod
-getPar(fm1.us)
-getTheta(fm1.us)
-
-## The same could be applied to covariance
-fm1.cov <- getReCovs(fm1.us)[[1]]
-getPar(fm1.cov)
-getTheta(fm1.cov)
-getLambda(fm1.cov)
-getVC(fm1.cov)
+sleepstudy$Daysf <- factor(sleepstudy$Days, ordered = TRUE)
+fm1.ar1 <- lmer(Reaction ~ Daysf + ar1(0 + Daysf | Subject, hom = TRUE), 
+                sleepstudy, REML = FALSE)
 \dontshow{
 rm(list = c(.nms, ".nms", ".fns"))
 }

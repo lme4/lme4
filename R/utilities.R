@@ -356,7 +356,7 @@ nlformula <- function(mc) {
     ##        special(x | f) -> special(x | f)
     bb1 <- findbars_x(formula, specials = specials,
                       default.special = "us", target = "|",
-                      expand_doublevert_method = "diag_special")
+                      expand_doublevert_method = getDoublevertDefault())
     bb0 <- lapply(bb1, function(call) {
         call <- call[[2L]]
         call[[2L]] <- substitute(0 + (foo), list(foo = call[[2L]]))
@@ -1120,3 +1120,9 @@ pad_Cmat <- function(Cmat, C_factors, Z_factors, Cmat_names, cnms){
   }
   list("Cmat" = Cmat, "C_factors" = C_factors, "Cmat_names" = Cmat_names)
 }
+
+
+getDoublevertDefault <- function() {
+  getOption("lme4.doublevert.default", "split")
+}
+

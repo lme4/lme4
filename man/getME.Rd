@@ -11,10 +11,11 @@ getME(object, name, ...)
       name = c("X", "Z", "Zt", "Ztlist", "mmList", "y", "mu", "u", "b",
                "Gp", "Tp", "L", "Lambda", "Lambdat", "Lind", "Tlist",
                "A", "RX", "RZX", "sigma", "flist",
-               "fixef", "beta", "theta", "ST", "REML", "is_REML",
+               "fixef", "beta", "theta", "par", "ST", "REML", "is_REML",
                "n_rtrms", "n_rfacs", "N", "n", "p", "q",
                "p_i", "l_i", "q_i", "k", "m_i", "m",
-               "cnms", "devcomp", "offset", "lower", "devfun", "glmer.nb.theta"),
+               "cnms", "devcomp", "offset", "lower", "devfun", "devarg",
+               "glmer.nb.theta"),
       \dots)
 }
 \arguments{
@@ -72,9 +73,11 @@ getME(object, name, ...)
       \item{\code{"fixef"}:}{fixed-effects parameter estimates}
       \item{\code{"beta"}:}{fixed-effects parameter estimates (identical
 	to the result of \code{\link{fixef}}, but without names)}
-      \item{\code{"theta"}:}{random-effects parameter estimates: these
-	are parameterized as the relative Cholesky factors of
-	each random effect term}
+      \item{\code{"theta"}:}{lower triangular entries of Cholesky
+	factors of relative random effect covariance matrices, stored in
+	column-major order.}
+      \item{\code{"par"}:}{relative random effect covariance parameter
+	estimates.}
       \item{\code{"ST"}:}{A list of S and T factors in the TSST' Cholesky
       factorization of the relative variance matrices of the random
       effects associated with each random-effects term.  The unit lower
@@ -147,7 +150,11 @@ getME(object, name, ...)
 	otherwise. (\code{getME(.,"lower")==0} can be used as a test to
 	identify diagonal elements, as in \code{isSingular}.)
       }
-      \item{\code{"devfun"}:}{deviance function (so far only available for LMMs)}
+      \item{\code{"devfun"}:}{deviance function.}
+      \item{\code{"devarg"}:}{deviance function argument, the
+	concatenation of \code{getME(object, "par")} and
+	(if \code{object} is a \code{\linkS4class{glmerMod}} object)
+	\code{getME(object, "beta")}.}
       \item{\code{"glmer.nb.theta"}:}{negative binomial \eqn{\theta} parameter,
 	only for \code{\link{glmer.nb}}.}
 

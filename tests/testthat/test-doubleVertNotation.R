@@ -6,15 +6,15 @@ m1 <- lmer(form1, sleepstudy)
 m2 <- lmer(form2, sleepstudy)
 
 test_that("basic intercept + slope '||' works", {
-    if (FALSE) {
-    ## '||' is no longer expanded as two '|'
-    expect_equivalent(lFormula(form1, sleepstudy)$reTrms,
-                      lFormula(form2, sleepstudy)$reTrms)
-    }
-    expect_equivalent(fitted(m1),
-                      fitted(m2))
+  if (!getOption("lme4.doublevert.default", "split") == "split") skip()
+  
+  expect_equivalent(lFormula(form1, sleepstudy)$reTrms,
+                    lFormula(form2, sleepstudy)$reTrms)
+  expect_equivalent(fitted(m1),
+                    fitted(m2))
 
-    if (FALSE) {
+
+  if (FALSE) {
     ## library(glmmTMB)
     m3 <- glmmTMB(form1, sleepstudy, REML = TRUE,
                   start = list(theta = log(c(25, 6))))

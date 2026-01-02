@@ -12,7 +12,9 @@
         nsim = 500,
         boot.type = c("perc", "basic", "norm"),
         FUN = NULL, quiet = FALSE,
-        oldNames, signames = TRUE, \dots)
+        oldNames, signames = TRUE,
+        boot.scale = c("sdcor", "vcov"),
+        \dots)
 \method{confint}{thpr}(object, parm, level = 0.95,
         zeta, non.mono.tol = 1e-2, \dots)
 }
@@ -48,6 +50,8 @@
     \code{\link{profile.merMod}}.}
   \item{non.mono.tol}{tolerance for detecting a non-monotonic profile
     and warning/falling back to linear interpolation}
+  \item{boot.scale}{scale for bootstrap CIs (see \code{prof.scale}
+  argument for \code{link{profile.merMod}})}
   \item{\dots}{additional parameters to be passed to
     \code{\link{profile.merMod}} or \code{\link{bootMer}}, respectively.}
 }

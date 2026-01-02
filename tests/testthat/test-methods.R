@@ -188,8 +188,7 @@ if (testLevel>1) {
   set.seed(47)
   test_that("bootMer", {
     ## testing bug-fix for ordering of sd/cor components in sd/cor matrix with >2 rows
-    ## FIXME: This model makes no sense [and CI.boot() fails for "nloptwrap"!]
-    dd <- expand.grid(A=factor(1:3),B=factor(1:10),rep=1:10)
+    dd <- expand.grid(A=factor(1:3), B=factor(1:10), rep=1:20)
     dd$y <- suppressMessages(simulate(~1 + (A|B),
                                       newdata=dd,
                                       newparams=list(beta=1,theta=rep(1,6),
@@ -276,33 +275,21 @@ if (testLevel>1) {
     gaussmodel <- glmer(prop2 ~ prop1 + (1|site),
                         data=df2, family=gaussian(link="logit"))
 
-    set.seed(101)
-    bci <- suppressMessages(
-      suppressWarnings(
-        confint(gaussmodel, method="boot", nsim=10, quiet=TRUE)
-      )
-    )
-    ## old_val <- structure(c(16.0861072699207, 0.0367496156026639,
-    ##                        -4.21025090053564,
-    ##                        3.1483596407467, 31.3318861915707,
-    ##                        0.0564761126030204, -1.00593089841924,
-    ##                        4.7064432268919), .Dim = c(4L, 2L),
-    ##                      .Dimnames = list(c(".sig01",
-    ##                                         ".sigma", "(Intercept)",
-    ##                                         "prop1"), c("2.5 %", "97.5 %")))
-    
-    new_val <- matrix(
+    ## parametric bootstrap:
+    ##  terrible, but not a computational bug I think?
+    boot_res <- matrix(
       c(
         0.7876999074589053, 0.03674961560266387, -4.210250900535643,
         3.1483596407466985, 1.7682636983854518, 0.05647611260302035,
         -1.0059308984192392, 4.706443226891899
       ), nrow = 4L, ncol = 2L,
-      dimnames = list(c(".sig01", ".sigma", "(Intercept)", "prop1"), c("2.5 %", "97.5 %"))
+      dimnames = list(c(".sig01", ".sigma", "(Intercept)", "prop1"),
+                      c("2.5 %", "97.5 %"))
     )
-    expect_equal(bci,
-                 new_val,
-                 tolerance=1e-5)
 
+    set.seed(101)
+    bci <- suppressMessages(suppressWarnings(confint(gaussmodel,method="boot",nsim=10,quiet=TRUE)))
+    expect_equal(bci, boot_res, tolerance=1e-5)
 
   })
 } ## testLevel>1
@@ -371,12 +358,12 @@ test_that("monotonic profile but bad spline",
   }
   set.seed(102)
   dat <- simfun(10,5,1,.3,.3,.3,(1/18),0,(1/18))
-  fit <- lmer(Y~X+Z+X:Z+(X||group),data=dat)
-
-    expect_warning(pp <- profile(fit,"theta_"), "non-monotonic profile")
-    expect_warning(cc <- confint(pp),"falling back to linear interpolation")
-    ## very small/unstable problem, needs large tolerance
-    expect_equal(unname(cc[2,]), c(0, 0.509), tolerance=0.09) # "bobyqa" had 0.54276
+  fit <- lmer(Y~X+Z+X:Z+(X||group),data=dat,
+              control = lmerControl(check.conv.singular = "ignore"))
+  expect_warning(pp <- profile(fit,"theta_"), "non-monotonic profile")
+  expect_warning(cc <- confint(pp),"falling back to linear interpolation")
+  ## very small/unstable problem, needs large tolerance
+  expect_equal(unname(cc[2,]), c(0, 0.509), tolerance=0.09) # "bobyqa" had 0.54276
 })
 
 test_that("confint with bad profile", {
@@ -756,16 +743,37 @@ if (testLevel>1) {
 
     ## check naming convention properly adjusted
     expect_equal(as.character(unique(p4$.par)),
-                 c("var_(Intercept)|Subject", "cov_Days.(Intercept)|Subject",
-                   "var_Days|Subject", "sigma"))
+                 c("var_(Intercept)|Subject", 
+                   "var_Days|Subject",
+                   "cov_Days.(Intercept)|Subject", "sigma"))
   })
 
+  test_that("profile name/value order consistency",
+             ## can use parallel comp since testLevel > 1, won't
+             ##  be tried on CRAN
+             ## use snow instead of multicore for Windows safety
+  {
+    ## GitHub actions complains about >2 cores ...
+    pp <- profile(fm2, parallel = "snow", ncpus = 2,
+                  signames = FALSE)
+    ci_pp <- confint(pp)
+    expect_all_true(abs(ci_pp["cor_Days.(Intercept)|Subject",]) < 1)
+
+    ci_bb <- suppressWarnings(
+      suppressMessages(
+        confint(fm2, method = "boot", nsim = 10, signames = FALSE)
+      ))
+    expect_all_true(abs(ci_bb["cor_Days.(Intercept)|Subject",]) <= 1)
+  })
+    
   test_that("densityplot is robust", {
     p <- readRDS(system.file("testdata","harmel_profile.rds",
                              package="lme4"))
     expect_warning(lattice::densityplot(p),
                    "unreliable profiles for some variables")
   })
+
+  
 
 } ## testLevel>1
 

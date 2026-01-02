@@ -395,10 +395,8 @@ test_that("update works as expected", {
     m <- lmer(Reaction ~ Days + (Days || Subject), sleepstudy)
     m1 <- lmer(Reaction ~ Days + (1 | Subject), sleepstudy)
     m2 <- update(m, . ~ . - (0 + Days | Subject))
-    if (FALSE) {
-    ## '||' is no longer expanded as two '|' ...
-    expect_equivalent(fitted(m1),
-                      fitted(m2))
+    if (getOption("lme4.doublevert.default", "split") == "split") {
+      expect_equivalent(fitted(m), fitted(m2))
     }
 })
 
@@ -443,17 +441,17 @@ test_that("turn off conv checking for npara > check.conv.nparmax", {
                                      theta = c(2.5, 1.4, 6.3),
                                      sigma = 2))[[1]]
   
-  mod1 <- lmer(form, data = dat,
+  mod1 <- suppressWarnings(lmer(form, data = dat,
                control = lmerControl(
                  optimizer = "bobyqa",
                  optCtrl = list(maxfun = 10)
-               ))
+               )))
   
-  mod2 <- update(mod1, 
+  mod2 <- suppressWarnings(update(mod1, 
                  control = lmerControl(
                    optimizer = "bobyqa",
                    optCtrl = list(maxfun = 10),
-                   check.conv.nparmax = 3)
+                   check.conv.nparmax = 3))
   )
   
   ## First should give a warning
@@ -489,3 +487,8 @@ test_that("gradient and Hessian checks are skipped when singular fit occurs",{
   expect_false(is.null(summary(fm2)$optinfo$derivs))
 })
 
+test_that("doubleverts expanded in stored formula by default", {
+  lf <- lFormula(Reaction ~ Days + (Days || Subject), sleepstudy)
+  expect_equal(formula(lf),
+               Reaction ~ Days + ((1 | Subject) + (0 + Days | Subject)))
+})

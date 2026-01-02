@@ -389,6 +389,7 @@ profile.merMod <- function(fitted,
                 ##   `par` scale (i.e. not the sigma/corr scale)
                 fv <- ores$fval
                 sig <- sqrt((rr$wrss() + pp1$sqrL(1))/n)
+                ## translate from ores$par (`par` scale) back to `profPar` scale
                 ppars <- convParToProfPar(ores$par, fitted, profscale = prof.scale, sc = sig)
                 c(sign(fw - est) * sqrt(fv - base),
                   ppars,
@@ -500,9 +501,8 @@ devfun2 <- function(fm,
 {
 
     scale <- match.arg(scale)
-    if (scale == "varcov" && anyStructured(object = fm)) {
+    if (scale == "varcov" && anyStructured(fm))
         stop("haven't thought about varcov scale for structured cov matrices")
-    }
     ## TODO: change to work with 'par' instead of 'theta'
 
     ## FIXME: have to distinguish between
@@ -818,11 +818,13 @@ confint.thpr <- function(object, parm, level = 0.95, zeta,
 ##' @return a numeric table of confidence intervals
 confint.merMod <- function(object, parm, level = 0.95,
                            method = c("profile", "Wald", "boot"),
-                           zeta, nsim=500, boot.type = c("perc","basic","norm"),
-                           FUN = NULL, quiet=FALSE, oldNames, signames = TRUE, ...)
+                           zeta, nsim=500, boot.type = c("perc", "basic", "norm"),
+                           FUN = NULL, quiet=FALSE, oldNames, signames = TRUE,
+                           boot.scale = c("sdcor", "vcov"), ...)
 {
     method <- tolower(match.arg(method))
     boot.type <- match.arg(boot.type)
+    boot.scale <- match.arg(boot.scale)
     if (!missing(oldNames)) {
       warning("'oldNames' is deprecated. Please use 'signames' instead.", call. = FALSE)
       signames <- oldNames
@@ -868,28 +870,24 @@ confint.merMod <- function(object, parm, level = 0.95,
            },
            "boot" = {
              bootFun <- function(x) {
-                 ## repeat useSc so this can be used upstream/outside if necessary
-                 useSc <- as.logical(x@devcomp$dims[["useSc"]])
-                 pp <- getME(x, "par")
-                 sig <- if (!useSc) NULL else sigma(x)
-                 ## hard-code profscale -- users can specify FUN if they want ...
-                 repars <- convParToProfPar(pp, x, profscale = "sdcor" , sc = sig)
-                 ## FIXME: names are (may be?) still in the wrong order ...
-                 names(repars) <- profnames(x, signames, useSc=useSc)
-                 c(repars, fixef(x))
+               ## need to get profile-scale pars from fitted model
+               useSc <- !(isGLMM(x) && hasNoScale(family(x)))
+               sc <- if (useSc) sigma(x) else NULL
+               ss <- convParToProfPar(x@optinfo$val, x, profscale = boot.scale, sc = sc)
+               c(setNames(ss, vn), fixef(x))
              }
-               if (is.null(FUN)) FUN <- bootFun
-               bb <- bootMer(object, FUN=FUN, nsim=nsim,...)
-               if (all(is.na(bb$t))) stop("*all* bootstrap runs failed!")
-               print.bootWarnings(bb, verbose=FALSE)
-               citab <- confint(bb,level=level,type=boot.type)
-               if (missing(parm)) {
-                   ## only happens if we have custom boot method
-                   if (is.null(parm <- rownames(citab))) {
-                       parm <- seq(nrow(citab))
-                   }
+             if (is.null(FUN)) FUN <- bootFun
+             bb <- bootMer(object, FUN=FUN, nsim=nsim,...)
+             if (all(is.na(bb$t))) stop("*all* bootstrap runs failed!")
+             print.bootWarnings(bb, verbose=FALSE)
+             citab <- confint(bb,level=level,type=boot.type)
+             if (missing(parm)) {
+               ## only happens if we have custom boot method
+               if (is.null(parm <- rownames(citab))) {
+                 parm <- seq(nrow(citab))
                }
-               citab[parm, , drop=FALSE]
+             }
+             citab[parm, , drop=FALSE]
            },
            ## should never get here ...
            stop("unknown confidence interval method"))

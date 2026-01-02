@@ -173,23 +173,31 @@ setGeneric("setVC",
                standardGeneric("setVC"))
 
 setGeneric("getProfPar",
-           function (object, profscale, sc = NULL)
-               standardGeneric("getProfPar"),
+           function (object, profscale, sc = NULL) {
+               profscale <- validProfScale(profscale)
+               standardGeneric("getProfPar")
+           },
            signature = "object")
 
 setGeneric("setProfPar",
-           function (object, profscale, sc = NULL, value, pos = 0L)
-               standardGeneric("setProfPar"),
+           function (object, profscale, sc = NULL, value, pos = 0L) {
+               profscale <- validProfScale(profscale)
+               standardGeneric("setProfPar")
+           },
            signature = c("object", "value"))
 
 setGeneric("getProfLower",
-           function (object, profscale, sc = NULL)
-               standardGeneric("getProfLower"),
+           function (object, profscale, sc = NULL) {
+               profscale <- validProfScale(profscale)
+               standardGeneric("getProfLower")
+           },
            signature = "object")
 
 setGeneric("getProfUpper",
-           function (object, profscale, sc = NULL)
-               standardGeneric("getProfUpper"),
+           function (object, profscale, sc = NULL) {
+               profscale <- validProfScale(profscale)
+               standardGeneric("getProfUpper")
+           },
            signature = "object")
 
 
@@ -275,6 +283,9 @@ setMethod("getParLength",
           function (object)
               length(object@par))
 
+## cnm: column names (i.e. effect names)
+## gnm: group name
+## prf: prefix
 setMethod("getParNames",
           c(object = "Covariance.us", cnm = "character", gnm = "character"),
           getParNames.us <-
@@ -1153,7 +1164,23 @@ function (n, value, pos) {
         stop(gettextf("attempt to read past end of '%s'",
                       "value"),
              domain = NA)
-    TRUE
+    NULL
+}
+
+## used in functions with formal argument 'profscale'
+validProfScale <-
+function (profscale) {
+    if (missing(profscale))
+        "sdcor"
+    else match.arg(profscale, c("sdcor", "varcov"))
+}
+if (FALSE) {
+## This version is not equivalent due to lazy evaluation.  It assumes
+## that 'profscale' can be evaluated in the calling frame when nargs()
+## is 1, but that assumption can be false in current usage.
+validProfScale <-
+function (profscale = c("sdcor", "varcov"))
+    match.arg(profscale)
 }
 
 ## return a function that maps
@@ -1293,6 +1320,7 @@ function (object) {
 
 convParToProfPar <-
 function (value, object, profscale, sc = NULL) {
+    profscale <- validProfScale(profscale)
     reCovs <- getReCovs(object)
     np <- vapply(reCovs, getParLength, 0L, USE.NAMES = FALSE)
     pos <- cumsum(c(0L, np))[seq_along(np)]
@@ -1306,6 +1334,7 @@ function (value, object, profscale, sc = NULL) {
 
 convProfParToPar <-
 function (value, object, profscale, sc = NULL) {
+    profscale <- validProfScale(profscale)
     reCovs <- getReCovs(object)
     np <- vapply(reCovs, getParLength, 0L, USE.NAMES = FALSE)
     pos <- cumsum(c(0L, np))[seq_along(np)]
@@ -1319,9 +1348,26 @@ function (value, object, profscale, sc = NULL) {
     c(L, recursive = TRUE, use.names = FALSE)
 }
 
-anyStructured <-
-function (reCovs = getReCovs(object), object)
+isNewMerMod <-
+function (object)
+    !is.null(attr(object, "upper")) && !is.null(attr(object, "reCovs"))
+
+forceNewMerMod <-
+function (object) {
+    if (is.null(attr(object, "upper")))
+        attr(object, "upper") <- getUpper(object)
+    if (is.null(attr(object, "reCovs")))
+        attr(object, "reCovs") <- getReCovs(object)
+    object
+}
+
+.anyStructured <-
+function (reCovs)
     !all(vapply(reCovs, is, FALSE, "Covariance.us"))
+
+anyStructured <-
+function (object)
+    !is.null(reCovs <- attr(object, "reCovs")) && .anyStructured(reCovs)
 
 semichol <-
 if (FALSE) {
@@ -1347,7 +1393,7 @@ function (x, tol = -1, etol = 256 * .Machine$double.neg.eps, type = "O") {
     if (is.na(e) || e > etol * norm(x, type = type))
         stop(gettextf("'%s' is not positive semidefinite", "x"),
              domain = NA)
-    RP # upper triangular if and only if is.unsorted(p) is TRUE
+    RP # upper triangular if is.unsorted(p) is FALSE
 }
 } else {
 function (x, tol = 256 * .Machine$double.neg.eps) {

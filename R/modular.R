@@ -355,6 +355,9 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     denv <- checkFormulaData(formula, data,
                              checkLHS = control$check.formula.LHS == "stop")
     formula <- as.formula(formula, env=denv)
+    if (getDoublevertDefault() == "split") {
+      RHSForm(formula) <- reformulas::expandDoubleVerts(RHSForm(formula))
+    }
     ## as.formula ONLY sets environment if not already explicitly set.
     ## ?? environment(formula) <- denv
 
@@ -396,14 +399,13 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     ##        special(x | f) -> special(x | f)
     bb1 <- findbars_x(formula, specials = specials,
                       default.special = "us", target = "|",
-                      expand_doublevert_method = "diag_special")
+                      expand_doublevert_method = getDoublevertDefault())
     bb0 <- lapply(bb1, `[[`, 2L)
     reTrms <- reformulas::mkReTrms(bb0, fr, calc.lambdat = FALSE)
     reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
     ## If there is a covariance structure; ignore the check nobs.vs.nRE
-    if(anyStructured(reTrms$reCovs)){
-      control$check.nobs.vs.nRE <- "ignore"
-    }
+    if (.anyStructured(reTrms$reCovs))
+        control$check.nobs.vs.nRE <- "ignore"
     wmsgNlev <- checkNlevels(reTrms$flist, n=n, control)
     wmsgZdims <- checkZdims(reTrms$Ztlist, n=n, control, allow.n=FALSE)
     if (anyNA(reTrms$Zt)) {
@@ -751,6 +753,9 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     denv <- checkFormulaData(formula, data,
                              checkLHS = control$check.formula.LHS == "stop")
     formula <- as.formula(formula, env = denv) # substitute evaluated version
+    if (getDoublevertDefault() == "split") {
+      RHSForm(formula) <- reformulas::expandDoubleVerts(RHSForm(formula))
+    }
 
     ## DRY ...
     m <- match(c("data", "subset", "weights", "na.action", "offset",
@@ -795,14 +800,13 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     ##        special(x | f) -> special(x | f)
     bb1 <- findbars_x(formula, specials = specials,
                       default.special = "us", target = "|",
-                      expand_doublevert_method = "diag_special")
+                      expand_doublevert_method = getDoublevertDefault())
     bb0 <- lapply(bb1, `[[`, 2L)
     reTrms <- reformulas::mkReTrms(bb0, fr, calc.lambdat = FALSE)
     reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
     ## If there is a covariance structure; ignore the check nobs.vs.nRE
-    if(anyStructured(reTrms$reCovs)){
-      control$check.nobs.vs.nRE <- "ignore"
-    }
+    if (.anyStructured(reTrms$reCovs))
+        control$check.nobs.vs.nRE <- "ignore"
     ## TODO: allow.n = !useSc {see FIXME below}
     wmsgNlev <- checkNlevels(reTrms$ flist, n = n, control, allow.n = TRUE)
     wmsgZdims <- checkZdims(reTrms$Ztlist, n = n, control, allow.n = TRUE)
@@ -866,7 +870,7 @@ mkGlmerDevfun <- function(fr, X, reTrms, family,
                           verbose = 0L,
                           maxit = 100L, control = glmerControl(), ...) {
     stopifnot(length(nAGQ <- as.integer(nAGQ)) == 1L,
-              0L <= nAGQ, nAGQ <= 25L)
+              0L <= nAGQ, nAGQ <= 100L)
     verbose <- as.integer(verbose)
     maxit   <- as.integer(maxit)
     rho <- list2env(list(verbose=verbose, maxit=maxit,
@@ -982,6 +986,8 @@ check.boundary <- function(rho,opt,devfun,boundary.tol) {
 ##' @rdname modular
 ##' @export
 updateGlmerDevfun <- function(devfun, reTrms, nAGQ = 1L){
+    stopifnot(length(nAGQ <- as.integer(nAGQ)) == 1L,
+              0L <= nAGQ, nAGQ <= 100L)
     if (nAGQ > 1L) {
         if (length(reTrms$flist) != 1L || length(reTrms$cnms[[1]]) != 1L)
             stop("nAGQ > 1 is only available for models with a single, scalar random-effects term")

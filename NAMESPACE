@@ -260,7 +260,6 @@ S3method(vcov,summary.merMod)
 S3method(weights,merMod)
 S3method(xyplot,thpr)
 
-
 S3method(sigma,lmList4)
 S3method(dfbeta,influence.merMod)
 S3method(dfbetas,influence.merMod)
@@ -302,8 +301,13 @@ importFrom(reformulas,isNested)
 export(isNested)
 importFrom(reformulas, expandDoubleVerts)
 export(expandDoubleVerts)
+importFrom(reformulas,formatVC,get_sd,format_corr)
+export(formatVC)
+
 ## 
 export(namedList)
 importFrom(rlang, warn)
 ##
 export(getSingTol)
+export(getDoublevertDefault)
+export(isNewMerMod, forceNewMerMod, anyStructured)
