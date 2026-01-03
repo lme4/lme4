@@ -200,7 +200,7 @@ if (testLevel>1) {
                                       seed=101))[[1]]
     m1 <- lmer(y ~ 1 + (A|B), data=dd, control=lmerControl(calc.deriv=FALSE))
     ci <- CI.boot(m1, seed=101, signames = FALSE)
-    ci2 <- CI.boot(m1,seed=101, signames = FALSE)
+    ci2 <- CI.boot(m1, seed = 101, signames = FALSE)
     expect_equal(ci, ci2)
     ci_50 <- CI.boot(m1,level=0.5,seed=101)
     expect_true(all(ci_50[,"25 %"]>ci[,"2.5 %"]))
