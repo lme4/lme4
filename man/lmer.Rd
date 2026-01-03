@@ -36,7 +36,7 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
       \itemize{
 	\item \code{us} (default: `us(f|g)` is equivalent to `(f|g)`):
 	unstructured, positive semi-definite
-	\item \code{diag}: diagonal (all correlations set to  zero).
+	\item \code{diag}: diagonal (all correlations set to zero).
 	Specify \code{diag(f|g, hom = TRUE)}
 	to fit a homogeneous diagonal covariance matrix
 	\item \code{cs}: compound symmetric (all pairwise correlations
