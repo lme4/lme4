@@ -16,19 +16,26 @@
       \item by longstanding request, \code{lme4} now allows users to
       specify structured covariance matrices, by tagging the covariance
       term (e.g. \code{cs(1 + f | g)} fits a compound symmetric covariance
-      matrix, \code{diag} fits a diagonal covariance matrix).
+      matrix, \code{diag} fits a diagonal covariance matrix). See
+      \code{vignette("covariance_structures", package = "lme4")} for
+      more detail.
       \item Using \code{diag()} (see previous item) now allows properly
       specified varying-factor terms with zero correlations (as in
       \code{afex::mixed()}). The default behaviour for double-bar notation
       is still to split the term semantically (e.g. `(1+f||g)` becomes
-      `(1|g) + (0 + f|g)`), but setting ... (FIXME: finish)
+      `(1|g) + (0 + f|g)`), but setting
+      \code{options(lme4.doublevert.default = "diag_special")} will tell
+      \code{lme4} to transform double-barred terms into \code{diag(.)}
+      terms, so the behaviour will match \code{afex::mixed} or
+      \code{glmmTMB} (see \code{\link{getDoublevertDefault}}).
     } % itemize
   } % new features
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
-      code for pretty-printing covariance matrices, especially
+      \item code for pretty-printing covariance matrices, especially
       structured covariance matrices, has moved to the \code{reformulas}
       package (so functionality can be shared with the \code{glmmTMB} package)
+      \item version number format changed from \code{x.y-z} to \code{x.y.z}
     }
   }
   \section{CHANGES IN VERSION 1.1-38 (2025-12-02)}{
