@@ -34,7 +34,7 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
       \item Tags preceding a random effect term specify covariance
       structure:
       \itemize{
-	\item \code{us} (default: `us(f|g)` is equivalent to `(f|g)`):
+	\item \code{us} (default: \code{us(f|g)} is equivalent to \code{(f|g)}):
 	unstructured, positive semi-definite
 	\item \code{diag}: diagonal (all correlations set to zero).
 	Specify \code{diag(f|g, hom = TRUE)}
