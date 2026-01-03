@@ -1,16 +1,12 @@
 profnames <- function(object, signames=TRUE,
                       useSc=isLMM(object), prefix=c("sd","cor")) {
-  ntp <- length(object@theta)
   res <- if (signames) {
-           sprintf(".sig%02d", seq(ntp))
-         } else {
-           vv <- getVCNames(object, prf=prefix, old=FALSE)
-           ## result is stored as {vcomp, ccomp}; 'zip' it
-           unlist(
-             lapply(seq_along(vv$vcomp),
-                    function(i) c(vv$vcomp[[i]], vv$ccomp[[i]]))
-           )
-         }
+    sprintf(".sig%02d", seq_len(getParLength(object)))
+  } else {
+    vv <- getVCNames(object, prf=prefix, old=FALSE)
+    ## result is stored as {vcomp, ccomp}; 'zip' it
+    unlist(Map(c, vv$vcomp, vv$ccomp))
+  }
   if (useSc) {
     sdname <- if (signames) ".sigma" else "sigma"
     res <- c(res, sdname)
