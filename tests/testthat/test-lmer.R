@@ -396,7 +396,7 @@ test_that("update works as expected", {
     m1 <- lmer(Reaction ~ Days + (1 | Subject), sleepstudy)
     m2 <- update(m, . ~ . - (0 + Days | Subject))
     if (getOption("lme4.doublevert.default", "split") == "split") {
-      expect_equivalent(fitted(m), fitted(m2))
+      expect_equivalent(fitted(m1), fitted(m2))
     }
 })
 
