@@ -415,7 +415,7 @@ test_that("integration tests for coef and fixef", {
   tmpf <- function(x) capture.output(print(summary(x),digits=1))
   tfun <- function(cc) {
     w <- grep("Fixed effects:", cc)
-    cc[w:length(cc)]
+    gsub("[‘’]", "'", cc[w:length(cc)])
   }
   expected_summary <- c("Fixed effects:",                         
                         "            Estimate Std. Error t value",

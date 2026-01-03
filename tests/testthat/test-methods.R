@@ -23,9 +23,12 @@ dNA <- data.frame(
     resp= rnorm(100))
 dNA[sample(1:100, 10), "xcov"] <- NA
 
-CI.boot <- function(fm, nsim=10, seed=101, ...)
-  suppressWarnings(confint(fm, method="boot", nsim=nsim,
-                           quiet=TRUE, seed=seed, ...))
+CI.boot <- function(fm, nsim=10, seed=101, ...) {
+  suppressMessages(
+    suppressWarnings(confint(fm, method="boot", nsim=nsim,
+                             quiet=TRUE, seed=seed, ...))
+  )
+}
 
 ##
 rSimple <- function(rep = 2, m.u = 2, kinds = c('fun', 'boring', 'meh')) {
@@ -216,7 +219,7 @@ if (testLevel>1) {
     ddNA <- dd
     ddNA$A[1:3] <- NA
     m2 <- update(m1, data=ddNA)
-    ci3 <- CI.boot(m2)
+    ci3 <- CI.boot(m2, signames = FALSE)
     expect_equal(ci, ci3, tolerance=0.2)
     sleepstudyNA <- sleepstudy
     sleepstudyNA$Days[1:3] <- NA
