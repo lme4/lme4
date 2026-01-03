@@ -378,7 +378,10 @@ fm1.ar1 <- lmer(Reaction ~ Daysf + ar1(0 + Daysf | Subject, hom = TRUE),
                 sleepstudy, REML = FALSE)
 fm1.ar1A <- lmer(Reaction ~ Daysf + ar1(0 + Daysf | Subject), 
                 sleepstudy, REML = FALSE)
-
+test_that("AR1 homogeneous by default", {
+  skip()
+  expect_equal(getME(fm1.ar1A, "par"), getME(fm1.ar1, "par"))
+})
 
 fm1.REML <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 fm1.us.REML <- lmer(Reaction ~ Days + us(Days | Subject), sleepstudy)

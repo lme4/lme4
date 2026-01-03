@@ -257,7 +257,7 @@ setMethod("initialize",
 
 setMethod("initialize",
           c(.Object = "Covariance.ar1"),
-          function (.Object, nc, par, hom = FALSE, simulate = FALSE, ...) {
+          function (.Object, nc, par, hom = TRUE, simulate = FALSE, ...) {
               if (missing(par) && !missing(nc) &&
                   is.integer(nc) && length(nc) == 1L && !is.na(nc) &&
                   nc >= 0L &&
