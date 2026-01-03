@@ -11,7 +11,7 @@ getME(object, name, ...)
       name = c("X", "Z", "Zt", "Ztlist", "mmList", "y", "mu", "u", "b",
                "Gp", "Tp", "L", "Lambda", "Lambdat", "Lind", "Tlist",
                "A", "RX", "RZX", "sigma", "flist",
-               "fixef", "beta", "theta", "par", "ST", "REML", "is_REML",
+               "fixef", "beta", "theta", "ST", "par", "REML", "is_REML",
                "n_rtrms", "n_rfacs", "N", "n", "p", "q",
                "p_i", "l_i", "q_i", "k", "m_i", "m",
                "cnms", "devcomp", "offset", "lower", "devfun", "devarg",
