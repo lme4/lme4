@@ -3,7 +3,8 @@
 \alias{lmer}
 \concept{ LMM }
 \description{
-  Fit a linear mixed-effects model (LMM) to data, via REML or maximum
+  Fit a linear mixed-effects model (LMM) to data, via restricted maximum
+  likelihood (REML) or maximum
   likelihood.
 }
 \usage{
@@ -17,14 +18,36 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
     response on the left of a \code{~} operator and the terms, separated
     by \code{+} operators, on the right.  Random-effects terms are
     distinguished by vertical bars (\code{|}) separating expressions
-    for design matrices from grouping factors.  Two vertical bars
-    (\code{||}) can be used to specify multiple uncorrelated random
-    effects for the same grouping variable. %----------
-    (Because of the way it is implemented, the \code{||}-syntax \emph{works
-       only for design matrices containing numeric (continuous) predictors};
-     to fit models with independent categorical effects, see \code{\link{dummy}}
-     or the \code{lmer_alt} function from the \CRANpkg{afex} package.)
-}
+    for design matrices from grouping factors. By default, non-scalar
+    random effects (where the design matrix has more than one column,
+    e.g. \code{(1+x|f)}) are fitted with \emph{unstructured} (general
+    positive semidefinite) covariance matrices.
+    \itemize{
+      \item Two vertical bars
+      (\code{||}) can be used to specify multiple uncorrelated random
+      effects for the same grouping variable. %----------
+      With default settings, the \code{||}-syntax \emph{works
+	only for design matrices containing numeric (continuous) predictors};
+      to fit models with independent categorical effects, use
+      \code{diag(f|g)} or set \code{options(lme4.doublevert.default = "diag_special")} (see
+      \code{\link{getDoublevertDefault}}).
+      \item Tags preceding a random effect term specify covariance
+      structure:
+      \itemize{
+	\item \code{us} (default: `us(f|g)` is equivalent to `(f|g)`):
+	unstructured, positive semi-definite
+	\item \code{diag}: diagonal (all correlations set to  zero).
+	Specify \code{diag(f|g, hom = TRUE)}
+	to fit a homogeneous diagonal covariance matrix
+	\item \code{cs}: compound symmetric (all pairwise correlations
+	set identical). Specify \code{cs(f|g, hom = TRUE)} for homogeneous
+	variances.
+	\item \code{ar1}: autoregressive order 1. Note that AR1 models
+	are homogeneous by default; specify \code{ar1(f|g, hom = FALSE)}
+	for heterogeneous variances.
+      } % itemize (cov struct types)
+    } % itemize (cov struct info)
+  } % formula
 
   \item{data}{an optional data frame containing the variables named in
     \code{formula}.  By default the variables are taken from the
@@ -114,42 +137,54 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
 }
 \details{
   \itemize{
-    \item{If the \code{formula} argument is specified as a character
+    \item If the \code{formula} argument is specified as a character
       vector, the function will attempt to coerce it to a formula.
       However, this is not recommended (users who want to construct
       formulas by pasting together components are advised to use
       \code{\link{as.formula}} or \code{\link{reformulate}}); model fits
       will work but subsequent methods such as \code{\link{drop1}},
-      \code{\link{update}} may fail.}
+      \code{\link{update}}, etc. may fail.
 
-    \item{When handling perfectly collinear predictor variables
-      (i.e. design matrices of less than full rank),
-      \code{[gn]lmer} is not quite as sophisticated
-      as some simpler modeling frameworks such as
+    \item When handling perfectly collinear predictor variables
+      (i.e. fixed-effect design matrices of less than full rank),
+      \code{[gn]lmer} is not as sophisticated
+      as modeling frameworks such as
       \code{\link{lm}} and \code{\link{glm}}. While it does
       automatically drop collinear variables (with a message
       rather than a warning), it does not automatically fill
       in \code{NA} values for the dropped coefficients;
-      these can be added via
-      \code{fixef(fitted.model,add.dropped=TRUE)}.
+      these can be added via \code{fixef(fitted.model, add.dropped=TRUE)}.
       This information can also be retrieved via
-      \code{attr(getME(fitted.model,"X"),"col.dropped")}.
-      }
-    \item{the deviance function returned when \code{devFunOnly} is
-      \code{TRUE} takes a single numeric vector argument, representing
-      the \code{theta} vector.  This vector defines the scaled
-      variance-covariance matrices of the random effects, in the
-      Cholesky parameterization.  For models with only simple
-      (intercept-only) random effects, \code{theta} is a vector of the
-      standard deviations of the random effects.  For more complex or
-      multiple random effects, running \code{getME(.,"theta")} to
-      retrieve the \code{theta} vector for a fitted model and examining
-      the names of the vector is probably the easiest way to determine
-      the correspondence between the elements of the \code{theta} vector
-      and elements of the lower triangles of the Cholesky factors of the
-      random effects.}
-  }
-}
+      \code{attr(getME(fitted.model, "X"), "col.dropped")}.
+    
+    \item the deviance function returned when \code{devFunOnly} is
+      \code{TRUE} takes a single numeric vector argument which defines
+      the scaled variance-covariance matrices of the random effects.
+      \itemize{
+	\item In the case of unstructured covariances, this vector
+	is directly mapped to the \code{theta} vector, which represents
+	the unique non-zero values in the Cholesky factor of the
+	(scaled) covariance matrix. For models with only simple
+	(intercept-only) random effects, \code{par} (and thus
+	\code{theta}) is a vector of the
+	standard deviations of the random effects.  For more complex or
+	multiple random effects, running \code{getME(.,"par")} or
+	(equivalently) \code{getME(., "theta")} to retrieve the
+	\code{theta} 
+	vector for a fitted model and examining
+	the names of the vector is probably the easiest way to determine
+	the correspondence between the elements of the \code{theta} vector
+	and elements of the lower triangles of the Cholesky factors of the
+	random effects.
+	\item For structured covariances, the \code{getTheta} method
+	translates the parameter vector to the \code{theta}
+	(Cholesky-factor element) scale for internal use. The parameter
+	vector is usually composed of a set of standard-deviation values
+	(one if \code{hom = TRUE} or many if \code{hom = FALSE}),
+	followed by one or more parameters that determine the correlation matrix.
+      } % itemize (covariance parameterizations)	
+    } % itemize (details)
+} % details
 \seealso{
   \code{\link[stats]{lm}} for linear models;
   \code{\link{glmer}} for generalized linear; and

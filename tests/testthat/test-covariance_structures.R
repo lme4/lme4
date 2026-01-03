@@ -376,6 +376,9 @@ fm1.diag <- lmer(Reaction ~ Days + diag(Days | Subject),
 sleepstudy$Daysf <- factor(sleepstudy$Days, ordered = TRUE)
 fm1.ar1 <- lmer(Reaction ~ Daysf + ar1(0 + Daysf | Subject, hom = TRUE), 
                 sleepstudy, REML = FALSE)
+fm1.ar1A <- lmer(Reaction ~ Daysf + ar1(0 + Daysf | Subject), 
+                sleepstudy, REML = FALSE)
+
 
 fm1.REML <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 fm1.us.REML <- lmer(Reaction ~ Days + us(Days | Subject), sleepstudy)
