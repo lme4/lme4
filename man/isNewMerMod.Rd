@@ -8,7 +8,7 @@
   the latest representation (in other words, if the object could have
   been generated using the current version of \pkg{lme4}).  The
   representation of a \code{merMod} object was last changed in
-  \pkg{lme4} version 2.0.0.
+  \pkg{lme4} version 2.0-0.
 
   \code{forceNewMerMod} updates a \code{\linkS4class{merMod}} object so
   that it has the latest representation.  It is useful in code that
