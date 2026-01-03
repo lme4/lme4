@@ -27,7 +27,11 @@
       \code{options(lme4.doublevert.default = "diag_special")} will tell
       \code{lme4} to transform double-barred terms into \code{diag(.)}
       terms, so the behaviour will match \code{afex::mixed} or
-      \code{glmmTMB} (see \code{\link{getDoublevertDefault}}).
+      \code{glmmTMB} (see \code{\link{getDoublevertDefault}}). We
+      recommend using \code{diag(.)} explicitly (rather than relying on \code{||}
+      expansion), since defaults may change in the future.
+
+
     } % itemize
   } % new features
   \subsection{USER-VISIBLE CHANGES}{
