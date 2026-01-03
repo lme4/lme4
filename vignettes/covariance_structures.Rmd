@@ -1,8 +1,8 @@
 ---
-title: "Covariance Structures lme4 vs glmmTMB"
+title: "Covariance Structures"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Covariance Structures lme4 vs glmmTMB}
+  %\VignetteIndexEntry{Covariance Structures}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
   %\VignetteDepends{glmmTMB}
@@ -18,15 +18,17 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-`lme4` has four covariance classes/structures: `Covariance.us` (unstructured), `Covariance.diag` (diagonal), `Covariance.cs` (compound symmetry), and `Covarince.ar1` (autoregressive order 1). The syntax for use is somewhat similar to the `glmmTMB` package (see [covariance structures in glmmTMB](https://glmmtmb.github.io/glmmTMB/articles/covstruct.html)), although the results are slightly different.
+The current version of `lme4` offers four covariance classes/structures: `Covariance.us` (unstructured), `Covariance.diag` (diagonal), `Covariance.cs` (compound symmetry), and `Covariance.ar1` (autoregressive order 1). The syntax for use is somewhat similar to the `glmmTMB` package (see [covariance structures in glmmTMB](https://glmmtmb.github.io/glmmTMB/articles/covstruct.html)), although the results are slightly different.
 
-Throughout the exploration, we will discuss the syntax differences.
+[More detail will be added here; second half of the vignette will compare `lme4` and `glmmTMB` implementations and results.]
 
-## Reason for Computational Differences
+## Comparisons with glmmTMB
+
+### Reason for Computational Differences
 
 When constructing generalized linear mixed models, `lme4` uses the Cholesky decomposition to reduce the problem to a function of the covariance parameters. In particular, `lme4` parameterizes the random-effects variance–covariance matrix $$
 \Sigma_{\theta} = \sigma^{2} \Lambda_{\theta} \Lambda_{\theta}^{T},
-$$ where the relative covariance factor (the Cholesky factor) $\Sigma_{\theta}$ is lower-triangular with positive diagonal entries, and is dependent on some variance-component parameter $\theta$. (For exact details of this structure, refer to the `lmer` [vignette](https://cran.r-project.org/web/packages/lme4/vignettes/lmer.pdf).)
+$$ where the relative covariance factor (the Cholesky factor) $\Sigma_{\theta}$ is lower-triangular with positive diagonal entries, and is dependent on some variance-component parameter $\theta$. (For exact details of this structure, refer to the `lmer` [vignette](https://cran.r-project.org/package=lme4/vignettes/lmer.pdf).)
 
 This allows optimization to proceed over the unconstrained elements of $\Sigma_{\theta}$, ensuring a gradient-free nonlinear optimization of the covariance parameter $\theta$'s.
 
@@ -34,7 +36,7 @@ Meanwhile, `glmmTMB` uses direct maximum likelihood estimation via Template Mode
 
 Despite these differences, we will show examples where `lme4` and `glmmTMB` provide similar estimates when they both use maximum likelihood estimation. By default, `lme4` uses the restricted maximum likelihood; hence in the following examples, we use `lmer(..., REML = FALSE)` to compare against `glmmTMB`.
 
-## Comparison Setup
+### Comparison Setup
 
 ```{r setup}
 library(lme4)
@@ -52,9 +54,15 @@ all.equal.nocheck <- function(x, y, ..., check.attributes = FALSE, check.class =
   if (is(y, "Matrix")) y <- matrix(y)
   all.equal(x, y, ..., check.attributes = check.attributes, check.class = check.class)
 }
+
+get.cor1 <- function(x) {
+  v <- VarCorr(x)
+  vv <- if (inherits(x, "merMod")) v$group else v$cond$group
+  attr(vv, "correlation")[1,2]
+}
 ```
 
-## Unstructured (General Positive Definite)
+### Unstructured (General Positive Definite)
 
 This is the default setting for both `lme4` and `glmmTMB`. Below we simulate a dataset with known `beta`, `theta` and `sigma` values.
 
@@ -119,7 +127,7 @@ vcov(lme4.us); vcov(glmmTMB.us)$cond
 all.equal.nocheck(vcov(lme4.us), vcov(glmmTMB.us)$cond)
 
 ## Variance and Covariance Components
-all.equal.nocheck(VarCorr(lme4.us)[[1]], 
+all.equal.nocheck(VarCorr(lme4.us)$group,
           VarCorr(glmmTMB.us)$cond$group)
 
 ## Conditional Modes of the Random Effects
@@ -152,14 +160,14 @@ vcov(glme4.us); vcov(gglmmTMB.us)$cond
 all.equal.nocheck(vcov(glme4.us), vcov(gglmmTMB.us)$cond)
 
 ## Variance and Covariance Components
-all.equal.nocheck(VarCorr(glme4.us)[[1]], 
+all.equal.nocheck(VarCorr(glme4.us)$group,
           VarCorr(gglmmTMB.us)$cond$group)
 
 ## Conditional Modes of the Random Effects
 all.equal.nocheck(ranef(glme4.us)$group, ranef(gglmmTMB.us)$cond$group)
 ```
 
-## Diagonal
+### Diagonal
 
 The syntax is the same for fitting a heterogeneous diagonal covariance structure for `lme4` and `glmmTMB`. It differs when we want to fit a *homogeneous* diagonal covariance structure.
 
@@ -211,7 +219,7 @@ all.equal.nocheck(VarCorr(lme4.diag)[[1]],
 all.equal.nocheck(ranef(lme4.diag)$group, ranef(glmmTMB.diag)$cond$group)
 ```
 
-## Compound Symmetry
+### Compound Symmetry
 
 Similar to the diagonal case, the syntax is the same for fitting a heterogeneous compound symmetry covariance structure for `lme4` and `glmmTMB`: 
 
@@ -263,13 +271,13 @@ all.equal.nocheck(VarCorr(lme4.cs)[[1]],
 all.equal.nocheck(ranef(lme4.cs)$group, ranef(glmmTMB.cs)$cond$group)
 
 ## Comparing against the predicted rho value
-lme4.rho <- sqrt(lme4:::getVC(lme4:::getReCovs(lme4.cs)[[1]])$ccomp)
-glmmTMB.rho <- sqrt(attr(summary(glmmTMB.cs)$varcor$cond$group, "correlation")[1, 2])
+lme4.rho <- get.cor1(lme4.cs)
+glmmTMB.rho <- get.cor1(glmmTMB.cs)
 lme4.rho; glmmTMB.rho
 all.equal.nocheck(lme4.rho, glmmTMB.rho)
 ```
 
-## Autoregressive Order 1
+### Autoregressive Order 1
 
 For this comparison, we will focus on a simulated data set where we explicitly denote $\rho = 0.7$ to better compare the results between the two models. 
 
@@ -309,15 +317,15 @@ all.equal.nocheck(logLik(lme4.ar1), logLik(glmmTMB.ar1))
 all.equal.nocheck(vcov(lme4.ar1), vcov(glmmTMB.ar1)$cond)
 
 ## Variance and Covariance Components
-all.equal.nocheck(VarCorr(lme4.ar1)[[1]], 
-          VarCorr(glmmTMB.ar1)$cond$group)
+all.equal.nocheck(VarCorr(lme4.ar1)$group, 
+                  VarCorr(glmmTMB.ar1)$cond$group)
 
 ## Conditional Modes of the Random Effects
 all.equal.nocheck(ranef(lme4.ar1)$group, ranef(glmmTMB.ar1)$cond$group)
 
 ## Comparing against the predicted rho value
-lme4.ar1.rho <- lme4:::getVC(lme4:::getReCovs(lme4.ar1)[[1]])$ccomp
-glmmTMB.ar1.rho <- attr(summary(glmmTMB.ar1)$varcor$cond$group, "correlation")[1, 2]
+lme4.ar1.rho <- get.cor1(lme4.ar1)
+glmmTMB.ar1.rho <- get.cor1(glmmTMB.ar1)
 lme4.ar1.rho; glmmTMB.ar1.rho
 all.equal.nocheck(lme4.ar1.rho, glmmTMB.ar1.rho)
 ```

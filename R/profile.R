@@ -1,15 +1,18 @@
-## --> ../man/profile-methods.Rd
-
-## FIXME: make structure-aware (via tnames())
 profnames <- function(object, signames=TRUE,
                       useSc=isLMM(object), prefix=c("sd","cor")) {
-    ntp <- length(object@theta)
-    ## return
-    c(if(signames) sprintf(".sig%02d", seq(ntp))
-      else unlist(getVCNames(object, prf=prefix, old=FALSE)),
-      if(useSc) if (signames) ".sigma" else "sigma")
+  res <- if (signames) {
+    sprintf(".sig%02d", seq_len(getParLength(object)))
+  } else {
+    vv <- getVCNames(object, prf=prefix, old=FALSE)
+    ## result is stored as {vcomp, ccomp}; 'zip' it
+    unlist(Map(c, vv$vcomp, vv$ccomp))
+  }
+  if (useSc) {
+    sdname <- if (signames) ".sigma" else "sigma"
+    res <- c(res, sdname)
+  }
+  res
 }
-
 
 ##' @importFrom splines backSpline interpSpline periodicSpline
 ##' @importFrom stats profile
@@ -538,7 +541,7 @@ devfun2 <- function(fm,
                 silent = TRUE)
             if (inherits(thpars, "try-error")) return(NA)
             fixpars <- pars[-seq(np)]
-            d0(c(thpars,fixpars))
+            d0(c(thpars, fixpars))
         }
     }
     attr(ans, "optimum") <- opt         # w/ names()
@@ -815,10 +818,10 @@ confint.merMod <- function(object, parm, level = 0.95,
         ## custom boot function, don't expand parameter names
     } else {
         ## "use scale" = GLMM with scale parameter *or* LMM ..
-      useSc <- as.logical(object@devcomp$dims[["useSc"]])
-      vn <- profnames(object, signames, useSc=useSc)
-      an <- c(vn,names(fixef(object)))
-      parm <- if(missing(parm)) seq_along(an)
+        useSc <- as.logical(object@devcomp$dims[["useSc"]])
+        vn <- profnames(object, signames, useSc=useSc)
+        an <- c(vn, names(fixef(object)))
+        parm <- if(missing(parm)) seq_along(an)
                 else
                     get.which(parm, nvp=length(vn), nptot=length(an), parnames=an)
         if (!quiet && method %in% c("profile","boot")) {

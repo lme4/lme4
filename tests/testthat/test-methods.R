@@ -23,9 +23,12 @@ dNA <- data.frame(
     resp= rnorm(100))
 dNA[sample(1:100, 10), "xcov"] <- NA
 
-CI.boot <- function(fm, nsim=10, seed=101, ...)
-  suppressWarnings(confint(fm, method="boot", nsim=nsim,
-                           quiet=TRUE, seed=seed, ...))
+CI.boot <- function(fm, nsim=10, seed=101, ...) {
+  suppressMessages(
+    suppressWarnings(confint(fm, method="boot", nsim=nsim,
+                             quiet=TRUE, seed=seed, ...))
+  )
+}
 
 ##
 rSimple <- function(rep = 2, m.u = 2, kinds = c('fun', 'boring', 'meh')) {
@@ -196,18 +199,18 @@ if (testLevel>1) {
                                       family=gaussian,
                                       seed=101))[[1]]
     m1 <- lmer(y ~ 1 + (A|B), data=dd, control=lmerControl(calc.deriv=FALSE))
-    ci <- CI.boot(m1, seed=101)
-    ci2 <- CI.boot(m1, seed=101)
+    ci <- CI.boot(m1, seed=101, signames = FALSE)
+    ci2 <- CI.boot(m1, seed = 101, signames = FALSE)
     expect_equal(ci, ci2)
     ci_50 <- CI.boot(m1,level=0.5,seed=101)
     expect_true(all(ci_50[,"25 %"]>ci[,"2.5 %"]))
     expect_true(all(ci_50[,"75 %"]<ci[,"97.5 %"]))
-    corvals <- ci[grep("^cor_",rownames(ci)),]
+    corvals <- ci[grep("^cor_", rownames(ci)),]
     expect_true(all(abs(corvals) <= 1))
     ## test bootMer with GLMM, multiple RE
-    ci1 <- CI.boot(gm2, nsim=5)
-    ci2  <- CI.boot(gm2, nsim=5, parm=3:6)
-    ci2B <- CI.boot(gm2, nsim=5, parm="beta_")
+    ci1 <- CI.boot(gm2, nsim=5, seed = 101)
+    ci2  <- CI.boot(gm2, nsim=5, parm=3:6, seed = 101)
+    ci2B <- CI.boot(gm2, nsim=5, parm="beta_", seed = 101)
     ## previously tested with nsim=5 vs nsim=3
     expect_true(nrow(ci2) == 4)
     expect_equal(ci2, ci2B)
@@ -216,7 +219,7 @@ if (testLevel>1) {
     ddNA <- dd
     ddNA$A[1:3] <- NA
     m2 <- update(m1, data=ddNA)
-    ci3 <- CI.boot(m2)
+    ci3 <- CI.boot(m2, signames = FALSE)
     expect_equal(ci, ci3, tolerance=0.2)
     sleepstudyNA <- sleepstudy
     sleepstudyNA$Days[1:3] <- NA
@@ -288,7 +291,7 @@ if (testLevel>1) {
     )
 
     set.seed(101)
-    bci <- suppressWarnings(confint(gaussmodel,method="boot",nsim=10,quiet=TRUE))
+    bci <- suppressMessages(suppressWarnings(confint(gaussmodel,method="boot",nsim=10,quiet=TRUE)))
     expect_equal(bci, boot_res, tolerance=1e-5)
 
   })

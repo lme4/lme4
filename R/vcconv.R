@@ -55,7 +55,7 @@ get_clen <- function(v,n=NULL) {
     if (is.null(n)) {
         if (is.null(n <- attr(v,"clen"))) {
             ## single component
-            n <- (sqrt(8*length(v)+1)-1)/2
+          n <- (sqrt(8*length(v)+1)-1)/2
         }
     }
     n

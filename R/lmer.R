@@ -2044,7 +2044,7 @@ getME.merMod <- function(object,
                   "L", "Lambda", "Lambdat", "Lind", "Tlist", "A",
                   "RX", "RZX", "sigma",
                   "flist",
-                  "fixef", "beta", "theta", "par", "ST",
+                  "fixef", "beta", "theta", "ST", "par",
                   "REML", "is_REML",
                   "n_rtrms", "n_rfacs",
                   "N", "n", "p", "q",
@@ -2119,10 +2119,10 @@ getME.merMod <- function(object,
            "fixef" = fixef(object),
            "beta"  = object@beta,
            "theta" = setNames(th, getThetaNames(object)),
-           "par" = object@optinfo$val[seq_len(getParLength(object))],
-           ## FIXME flexSigmaMinimum
+           "par" = setNames(object@optinfo$val[seq_len(getParLength(object))],
+                            getParNames(object)),
            "ST" = setNames(vec2STlist(object@theta, n = lengths(cnms)),
-                           names(cnms)),
+                           names(cnms)), ## FIXME: check for flexSigma?
            "Tlist" = setNames(lapply(getReCovs(object), getLambda), names(object@cnms)),
            "REML" = dims[["REML"]],
            "is_REML" = isREML(object),
@@ -2168,7 +2168,11 @@ getME.merMod <- function(object,
                             verbose=verbose, control=object@optinfo$control)
                }
            },
-           "devarg" = object@optinfo$val,
+           "devarg" = {
+             nm <- getParNames(object)
+             if (!isLMM(object)) nm <- c(nm, names(fixef(object)))
+             setNames(object@optinfo$val, nm)
+           },
            ## FIXME: current version gives lower bounds for theta parameters only:
            ## -- these must be extended for [GN]LMMs -- give extended value including -Inf values for beta values?
 

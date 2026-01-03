@@ -7,7 +7,7 @@ if (testLevel>1) {
   had_pars <- exists("pars", envir = globalenv(), inherits = FALSE)
   had_ctrl <- exists("ctrl", envir = globalenv(), inherits = FALSE)
   
-  gm_all <- allFit(fit_cbpp_1, verbose=TRUE)
+  gm_all <- allFit(fit_cbpp_1, verbose=FALSE)
   gm_all_nostart <- allFit(fit_cbpp_1, verbose=FALSE, start_from_mle = FALSE)
 
   test_that("pars and ctrl did not leak into the environment", {
