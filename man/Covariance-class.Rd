@@ -134,7 +134,7 @@
   
   There are four main covariance classes: \code{Covariance.us} (unstructured), 
   \code{Covariance.diag} (diagonal), \code{Covariance.cs} (compound symmetry),
-  and \code{Covariane.ar1} (autoregressive order 1).
+  and \code{Covariance.ar1} (autoregressive order 1).
 }
 
 \usage{
@@ -186,7 +186,7 @@ getProfUpper(object, profscale, sc = NULL)
   
   If the within-group variance-covariance structure is unspecified, the default 
   is unstructured (\code{Covariance.us}), meaning we only ensure that the 
-  variance-covariance matrix \eqn{\Sigma} to be \emph{positive definite}. 
+  variance-covariance matrix \eqn{\Sigma} is positive semidefinite. 
   
 }
 \section{Objects from the Class}{
@@ -197,7 +197,7 @@ Available standard classes:
     \item{\code{Covariance.diag}}{Diagonal; only the diagonal entries are 
     nonzero, indicating no covariances between variables.}
     \item{\code{Covariance.cs}}{Compound symmetry.}
-    \item{\code{Covariance.ar1}}{Autoregessive process of order 1.}
+    \item{\code{Covariance.ar1}}{Autoregressive process of order 1.}
   }
 Besides \code{Covariance.us}, the remaining classes contain a logical slot 
 called \code{hom}, described in the \emph{Slots} section.
@@ -205,13 +205,16 @@ called \code{hom}, described in the \emph{Slots} section.
 \section{Slots}{
   \describe{
     \item{\code{nc}}{An integer value giving the number of columns (or components).}
-    \item{\code{par}}{A double vector that stores values of \code{theta}, which 
-    specifies the covariance parameters for the model.}
-    \item{\code{hom}}{A logical which represents whether the variance-covariance 
-    matrix has a \emph{homogenous} structure. That is, whether the variances 
-    are equal across groups.}
-  }
-}
+    \item{\code{par}}{A double vector that stores the covariance
+      parameters for the model. (See \code{\link{lmer}} and
+      \code{vignette("covariance_structures", package = "lme4")} for
+      more details on parameterization.)
+    }
+    \item{\code{hom}}{A logical value which represents whether the variance-covariance 
+      matrix has a \emph{homogeneous} structure - that is, whether the variances 
+      are equal across groups.}
+  } % describe
+} % slots
 
 \section{S4 Methods}{
 \code{vcomp} contains parameters of the variance component of the 
@@ -230,7 +233,7 @@ name, and \code{gnm} represents the group name.
 For methods that involve \code{getProf} (i.e., \code{getProfPar}, 
 \code{setProfPar}, \code{getProfLower}, \code{getProfUpper}), the user may 
 set the argument \code{profscale = "varcor"}, which transforms the variance 
-components andcorrelation components into the corresponding variance-covariance 
+components and correlation components into the corresponding variance-covariance 
 matrix. Furthermore, the user may scale the standard deviations by a factor
 of the \code{sc} argument.
 
@@ -297,7 +300,7 @@ list2env(.fns, envir = environment())
 }
 ## Unstructured
 fm1.us <- lmer(Reaction ~ Days + us(Days | Subject), sleepstudy)
-## Diagional
+## Diagonal
 fm1.diag <- lmer(Reaction ~ Days + diag(Days | Subject), sleepstudy)
 fm1.diag.hom <- lmer(Reaction ~ Days + diag(Days | Subject, hom = TRUE), 
   sleepstudy)
