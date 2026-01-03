@@ -22,8 +22,8 @@
       \item Using \code{diag()} (see previous item) now allows properly
       specified varying-factor terms with zero correlations (as in
       \code{afex::mixed()}). The default behaviour for double-bar notation
-      is still to split the term semantically (e.g. `(1+f||g)` becomes
-      `(1|g) + (0 + f|g)`), but setting
+      is still to split the term semantically (e.g. \code{(1+f||g)} becomes
+      \code{(1|g) + (0 + f|g)}), but setting
       \code{options(lme4.doublevert.default = "diag_special")} will tell
       \code{lme4} to transform double-barred terms into \code{diag(.)}
       terms, so the behaviour will match \code{afex::mixed} or
