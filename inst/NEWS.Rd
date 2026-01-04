@@ -42,7 +42,7 @@
       \item version number format changed from \code{x.y-z} to \code{x.y.z}
     } % itemize
   } % user-visible changes
-} % 2.0.0
+} % 2.0-0
 
 \section{CHANGES IN VERSION 1.1-38 (2025-12-02)}{
   \subsection{BUG FIXES}{
