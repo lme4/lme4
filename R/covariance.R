@@ -88,7 +88,7 @@ setClass("Covariance.cs",
 setClass("Covariance.ar1",
          contains = "Covariance",
          slots = c(hom = "logical"),
-         prototype = list(hom = FALSE),
+         prototype = list(hom = TRUE),
          validity = .fn)
 
 rm(.fn)
