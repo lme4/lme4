@@ -205,8 +205,9 @@ setGeneric("getProfUpper",
 
 setMethod("initialize",
           c(.Object = "Covariance.us"),
-          function (.Object, nc, par, simulate = FALSE, ...) {
-              if (missing(par) && !missing(nc) &&
+          function (.Object, nc = .Object@nc,
+                    par, simulate = FALSE, ...) {
+              if (missing(par) &&
                   is.integer(nc) && length(nc) == 1L && !is.na(nc) &&
                   nc >= 0L) {
                   .Object@nc <- nc
@@ -222,8 +223,9 @@ setMethod("initialize",
 
 setMethod("initialize",
           c(.Object = "Covariance.diag"),
-          function (.Object, nc, par, hom = FALSE, simulate = FALSE, ...) {
-              if (missing(par) && !missing(nc) &&
+          function (.Object, nc = .Object@nc, hom = .Object@hom,
+                    par, simulate = FALSE, ...) {
+              if (missing(par) &&
                   is.integer(nc) && length(nc) == 1L && !is.na(nc) &&
                   nc >= 0L &&
                   is.logical(hom) && length(hom) == 1L && !is.na(hom)) {
@@ -239,8 +241,9 @@ setMethod("initialize",
 
 setMethod("initialize",
           c(.Object = "Covariance.cs"),
-          function (.Object, nc, par, hom = FALSE, simulate = FALSE, ...) {
-              if (missing(par) && !missing(nc) &&
+          function (.Object, nc = .Object@nc, hom = .Object@hom,
+                    par, simulate = FALSE, ...) {
+              if (missing(par) &&
                   is.integer(nc) && length(nc) == 1L && !is.na(nc) &&
                   nc >= 0L &&
                   is.logical(hom) && length(hom) == 1L && !is.na(hom)) {
@@ -257,8 +260,9 @@ setMethod("initialize",
 
 setMethod("initialize",
           c(.Object = "Covariance.ar1"),
-          function (.Object, nc, par, hom = FALSE, simulate = FALSE, ...) {
-              if (missing(par) && !missing(nc) &&
+          function (.Object, nc = .Object@nc, hom = .Object@hom,
+                    par, simulate = FALSE, ...) {
+              if (missing(par) &&
                   is.integer(nc) && length(nc) == 1L && !is.na(nc) &&
                   nc >= 0L &&
                   is.logical(hom) && length(hom) == 1L && !is.na(hom)) {
@@ -1239,9 +1243,8 @@ function (reTrms, spCalls) {
     getHom <- function (spCall) {
         ## FIXME?  not evaluating 'hom' in environment of formula
         hom <- spCall$hom
-        if (is.null(hom))
-            FALSE
-        else if (is.logical(hom) && length(hom) == 1L && !is.na(hom))
+        if (is.null(hom) ||
+            (is.logical(hom) && length(hom) == 1L && !is.na(hom)))
             hom
         else stop(gettextf("'%s' is not %s or %s in special call",
                            "hom", "TRUE", "FALSE"),
@@ -1249,8 +1252,12 @@ function (reTrms, spCalls) {
     }
     spNames <- as.character(lapply(spCalls, `[[`, 1L))
     nc <- lengths(reTrms$cnms, use.names = FALSE)
-    hom <- vapply(spCalls, getHom, FALSE, USE.NAMES = FALSE)
-    reCovs <- .mapply(new,
+    hom <- lapply(spCalls, getHom)
+    reCovs <- .mapply(function (Class, nc, hom) {
+                          if (is.null(hom))
+                              new(Class, nc = nc)
+                          else new(Class, nc = nc, hom = hom)
+                      },
                       list(Class = paste0("Covariance.", spNames),
                            nc = nc,
                            hom = hom),
