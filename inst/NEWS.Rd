@@ -16,7 +16,8 @@
       \item by longstanding request, \code{lme4} now allows users to
       specify structured covariance matrices, by tagging the covariance
       term (e.g. \code{cs(1 + f | g)} fits a compound symmetric covariance
-      matrix, \code{diag} fits a diagonal covariance matrix). See
+      matrix, \code{diag(...)} fits a diagonal covariance matrix). See
+      \code{?"Covariance-class"} or
       \code{vignette("covariance_structures", package = "lme4")} for
       more detail.
       \item Using \code{diag()} (see previous item) now allows properly
@@ -25,13 +26,11 @@
       is still to split the term semantically (e.g. \code{(1+f||g)} becomes
       \code{(1|g) + (0 + f|g)}), but setting
       \code{options(lme4.doublevert.default = "diag_special")} will tell
-      \code{lme4} to transform double-barred terms into \code{diag(.)}
+      \code{lme4} to transform double-barred terms into \code{diag(...)}
       terms, so the behaviour will match \code{afex::mixed} or
       \code{glmmTMB} (see \code{\link{getDoublevertDefault}}). We
       recommend using \code{diag(.)} explicitly (rather than relying on \code{||}
       expansion), since defaults may change in the future.
-
-
     } % itemize
   } % new features
   \subsection{USER-VISIBLE CHANGES}{
@@ -39,7 +38,6 @@
       \item code for pretty-printing covariance matrices, especially
       structured covariance matrices, has moved to the \code{reformulas}
       package (so functionality can be shared with the \code{glmmTMB} package)
-      \item version number format changed from \code{x.y-z} to \code{x.y.z}
     } % itemize
   } % user-visible changes
 } % 2.0-0
