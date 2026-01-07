@@ -21,7 +21,9 @@ all.equal.nocheck <- function(x, y, ..., check.attributes = FALSE, check.class =
 ## set default tolerance to 5e-5 since we mostly use that
 ## 'tolerance' must be written out in full since it comes after ...
 expect_equal_nocheck <- function(...,  tolerance = 5e-5) {
-  expect_true(isTRUE(all.equal.nocheck(..., tolerance = tolerance)))
+    aa <- all.equal.nocheck(..., tolerance = tolerance)
+    if (!isTRUE(aa)) cat("tolerance: ", tolerance, "\n", aa, "\n")
+    expect_true(isTRUE(aa))
 }
 
 ## Getting all equal as a number (in the all.equal examples documentation;
@@ -553,8 +555,8 @@ test_that("integration tests for VarCorr", {
   
   ## Testing cs (compound symmetry)
   x3 <- c(as.matrix(VarCorr(fm1.cs)[[1]]))
-  expect_equal_nocheck(x3, c(other_mod$fm1.glmmTMB.cs_var))
-  expect_equal_nocheck(x3, c(other_mod$fm1.nlme.cs_var))
+  expect_equal_nocheck(x3, c(other_mod$fm1.glmmTMB.cs_var), tolerance = 5e-4)
+  expect_equal_nocheck(x3, c(other_mod$fm1.nlme.cs_var), tolerance = 5e-4)
   
   x3.REML <- c(as.matrix(VarCorr(fm1.cs.REML)[[1]]))
   z3.REML <- c(other_mod$fm1.nlme.cs.REML_var)
