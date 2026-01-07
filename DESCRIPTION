@@ -56,7 +56,7 @@ Imports:
     nlme (>= 3.1-123),
     nloptr (>= 1.0.4),
     parallel,
-    reformulas (>= 0.4.3),
+    reformulas (>= 0.4.3.1),
     rlang,
     splines,
     utils
