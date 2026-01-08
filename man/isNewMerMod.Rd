@@ -19,11 +19,11 @@
 }
 \usage{
 isNewMerMod(object)
-forceNewMerMod(object)
+forceNewMerMod(object, reference = object)
 anyStructured(object)
 }
 \arguments{
-  \item{object}{a \code{\linkS4class{merMod}} object.}
+  \item{object, reference}{\code{\linkS4class{merMod}} objects.}
 }
 \value{
   \code{isNewMerMod} and \code{anyStructured} return \code{TRUE} or

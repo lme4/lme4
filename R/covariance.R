@@ -1360,11 +1360,11 @@ function (object)
     !is.null(attr(object, "upper")) && !is.null(attr(object, "reCovs"))
 
 forceNewMerMod <-
-function (object) {
+function (object, reference = object) {
     if (is.null(attr(object, "upper")))
-        attr(object, "upper") <- getUpper(object)
+        attr(object, "upper") <- getUpper(reference)
     if (is.null(attr(object, "reCovs")))
-        attr(object, "reCovs") <- getReCovs(object)
+        attr(object, "reCovs") <- getReCovs(reference)
     object
 }
 
