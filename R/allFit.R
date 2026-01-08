@@ -330,3 +330,247 @@ plot.allFit <- function(x, abbr=16, ...) {
          + ggplot2::theme(legend.position="none")
      )
 }
+
+
+# Plot the results from the fixed effects produced by different optimizers. This function
+# takes the output from lme4::allFit(), tidies it, selects fixed effects and plots them.
+plot.fixef.allFit <- function(allFit_output,
+                              # Select predictors
+                              select_predictors = NULL,
+                              # Number of rows
+                              nrow = NULL,
+                              # X axis title
+                              x_title = "Estimate",
+                              # Y axis title
+                              y_title = "Optimizer",
+                              # Show x-axis title
+                              show_x_title = TRUE,
+                              # Show y-axis title
+                              show_y_title = TRUE,
+                              # Show x-axis title on inner plots
+                              inner_x_title = FALSE,
+                              # Show y-axis title on inner plots
+                              inner_y_title = FALSE,
+                              # Show intercept
+                              show_intercept = TRUE,
+                              # Add point ranges (confidence intervals)
+                              point_ranges = TRUE,
+                              # Confidence level for point ranges
+                              conf.level = 0.95,
+                              # Decimal points for rounding
+                              decimal_points = NULL,
+                              # Shared x-axis limits across subplots
+                              shared_x_axis_limits = FALSE,
+                              # Additional arguments passed to tinyplot
+                              ...) {
+  
+    # Check for required packages
+    pkgs <- c("tinyplot")
+    missing_pkgs <- pkgs[!vapply(pkgs, requireNamespace, quietly = TRUE, FUN.VALUE = logical(1))]
+    if (length(missing_pkgs) > 0) {
+        stop("The following packages are required: ",
+             paste(missing_pkgs, collapse = ", "),
+             ". Please install them.", call. = FALSE)
+    }
+
+    # Extract fixed effects from successful fits
+    ss <- summary(allFit_output)
+    successful_fits <- allFit_output[ss$which.OK]
+    
+    if (length(successful_fits) == 0) {
+        stop("No successful fits found in allFit output", call. = FALSE)
+    }
+    
+    # Extract fixed effects and standard errors using approach similar to developer's draft
+    get_fe <- function(x, opt) {
+        cc <- coef(summary(x))
+        dd <- data.frame(
+            optimizer = opt, 
+            term = rownames(cc), 
+            estimate = cc[,"Estimate"], 
+            sd = cc[,"Std. Error"],
+            stringsAsFactors = FALSE
+        )
+        
+        # Add confidence intervals if requested
+        if (point_ranges && !is.null(conf.level) && !is.na(conf.level)) {
+            qq <- qnorm((1 + conf.level) / 2)
+            dd <- transform(dd,
+                           lwr = estimate - qq * sd,
+                           upr = estimate + qq * sd)
+            
+            # Filter out extreme confidence intervals that might be due to convergence issues
+            # If CI width is more than 100 times the estimate, treat as suspect
+            ci_width <- dd$upr - dd$lwr
+            estimate_abs <- abs(dd$estimate)
+            extreme_ci <- ci_width > 100 * pmax(estimate_abs, 0.01)  # Use minimum threshold
+            
+            if (any(extreme_ci)) {
+                dd$lwr[extreme_ci] <- NA
+                dd$upr[extreme_ci] <- NA
+            }
+        }
+        rownames(dd) <- NULL
+        dd
+    }
+    
+    # Get data for all successful fits
+    fe_list <- Map(get_fe, successful_fits, names(successful_fits))
+    allFit_fixef <- do.call(rbind, fe_list)
+    
+    # Apply rounding if specified
+    if (!is.null(decimal_points)) {
+        allFit_fixef$estimate <- round(allFit_fixef$estimate, decimal_points)
+        if ("lwr" %in% colnames(allFit_fixef)) {
+            allFit_fixef$lwr <- round(allFit_fixef$lwr, decimal_points)
+            allFit_fixef$upr <- round(allFit_fixef$upr, decimal_points)
+        }
+    }
+    
+    # Filter predictors if specified
+    if (!is.null(select_predictors)) {
+        allFit_fixef <- allFit_fixef[allFit_fixef$term %in% select_predictors, ]
+    }
+
+    # Remove intercept if requested
+    if (!show_intercept) {
+        allFit_fixef <- allFit_fixef[allFit_fixef$term != "(Intercept)", ]
+    }
+    
+    # Calculate layout
+    n_predictors <- length(unique(allFit_fixef$term))
+    if (n_predictors == 0) {
+        stop("No predictors left to plot. Check select_predictors or show_intercept.", call. = FALSE)
+    }
+    plot_nrow <- if (!is.null(nrow)) nrow else ceiling(sqrt(n_predictors))
+    plot_ncol <- ceiling(n_predictors / plot_nrow)
+    
+    # Calculate shared x-axis limits if requested
+    x_limits <- NULL
+    if (shared_x_axis_limits) {
+        if (point_ranges && "lwr" %in% colnames(allFit_fixef)) {
+            # Use finite values only for axis limits
+            finite_lwr <- allFit_fixef$lwr[is.finite(allFit_fixef$lwr)]
+            finite_upr <- allFit_fixef$upr[is.finite(allFit_fixef$upr)]
+            if (length(finite_lwr) > 0 && length(finite_upr) > 0) {
+                x_limits <- range(c(finite_lwr, finite_upr), na.rm = TRUE)
+            } else {
+                x_limits <- range(allFit_fixef$estimate, na.rm = TRUE)
+            }
+        } else {
+            x_limits <- range(allFit_fixef$estimate, na.rm = TRUE)
+        }
+        # Add some padding
+        x_range <- diff(x_limits)
+        x_limits <- x_limits + c(-0.05 * x_range, 0.05 * x_range)
+    }
+    
+    # Set up plotting layout with adjusted margins and spacing
+    old_par <- par(mfrow = c(plot_nrow, plot_ncol), 
+                 mar = c(3, 12, 2, 2),    # Increased right margin for better column spacing
+                 oma = c(0, 0, 0, 0),
+                 mgp = c(2, 0.7, 0))      # Adjust axis label positioning
+    on.exit(par(old_par))
+  
+    # Get additional arguments from ...
+    extra_args <- list(...)
+    
+    # Plot each fixed effect in a separate panel
+    unique_effects <- unique(allFit_fixef$term)
+    for (i in seq_along(unique_effects)) {
+        effect <- unique_effects[i]
+        effect_data <- allFit_fixef[allFit_fixef$term == effect, ]
+        
+        # Calculate position in grid
+        current_row <- ceiling(i / plot_ncol)
+        current_col <- ((i - 1) %% plot_ncol) + 1
+        
+        # Determine if this is the bottom-most plot in its column
+        plots_in_this_col <- seq(current_col, n_predictors, by = plot_ncol)
+        is_bottom_in_col <- i == max(plots_in_this_col)
+        
+        # Determine if this plot should show axis titles
+        show_x_for_this_plot <- show_x_title && (inner_x_title || is_bottom_in_col)
+        show_y_for_this_plot <- show_y_title && (inner_y_title || current_col == 1)
+        
+        # Create y-axis positions for optimizers
+        y_pos <- seq_len(nrow(effect_data))
+        
+        # Prepare default plotting arguments
+        default_args <- list(
+          x = effect_data$estimate,
+          y = y_pos,
+          pch = 16,
+          xlab = if (show_x_for_this_plot) x_title else "",
+          ylab = "",  # Remove ylab from tinyplot, handle separately with mtext
+          main = effect,
+          yaxt = "n"
+        )
+        
+        # Add x-axis limits if shared
+        if (!is.null(x_limits)) {
+            default_args$xlim <- x_limits
+        } else if (point_ranges && "lwr" %in% colnames(effect_data)) {
+            # Calculate individual plot limits based on confidence intervals
+            # Use a more robust approach that excludes extreme outliers
+            finite_lwr <- effect_data$lwr[is.finite(effect_data$lwr) & !is.na(effect_data$lwr)]
+            finite_upr <- effect_data$upr[is.finite(effect_data$upr) & !is.na(effect_data$upr)]
+            
+            if (length(finite_lwr) > 0 && length(finite_upr) > 0) {
+                # Use quantiles to exclude extreme outliers
+                all_values <- c(finite_lwr, finite_upr, effect_data$estimate)
+                all_values <- all_values[is.finite(all_values)]
+                
+                if (length(all_values) > 0) {
+                    q01 <- quantile(all_values, 0.01, na.rm = TRUE)
+                    q99 <- quantile(all_values, 0.99, na.rm = TRUE)
+                    plot_xlim <- c(q01, q99)
+                    plot_range <- diff(plot_xlim)
+                    plot_xlim <- plot_xlim + c(-0.1 * plot_range, 0.1 * plot_range)
+                    default_args$xlim <- plot_xlim
+                }
+            }
+        }
+        
+        # Merge with user arguments, giving precedence to user arguments
+        plot_args <- utils::modifyList(default_args, extra_args)
+        
+        # Create the plot
+        tinyplot_fun <- get("tinyplot", envir = asNamespace("tinyplot"))
+        do.call(tinyplot_fun, plot_args)
+        
+        # Add y-axis labels to all plots by default
+        axis(2, at = y_pos, labels = effect_data$optimizer, las = 1, cex.axis = 0.7, tick = FALSE)
+        
+        # Add y-axis title with proper positioning (only for appropriate plots)
+        if (show_y_for_this_plot && y_title != "") {
+            mtext(y_title, side = 2, line = 11, cex = 0.8)
+        }
+        
+        # Add point ranges if available and requested
+        if (point_ranges && "lwr" %in% colnames(effect_data)) {
+            for (j in seq_len(nrow(effect_data))) {
+                if (!is.na(effect_data$lwr[j]) && !is.na(effect_data$upr[j]) && 
+                    is.finite(effect_data$lwr[j]) && is.finite(effect_data$upr[j])) {
+                    # Add horizontal line for confidence interval
+                    segments(x0 = effect_data$lwr[j],
+                            x1 = effect_data$upr[j],
+                            y0 = y_pos[j], 
+                            y1 = y_pos[j],
+                            lwd = 1)
+                    # Add small vertical caps at the ends
+                    segments(x0 = effect_data$lwr[j], x1 = effect_data$lwr[j],
+                            y0 = y_pos[j] - 0.1, y1 = y_pos[j] + 0.1)
+                    segments(x0 = effect_data$upr[j], x1 = effect_data$upr[j],
+                            y0 = y_pos[j] - 0.1, y1 = y_pos[j] + 0.1)
+                }
+            }
+        }
+    }
+    
+    if (plot_nrow > 3) {
+        message("Many rows! Consider distributing predictors into several plots using argument `select_predictors`")
+    }
+    
+    invisible(allFit_fixef)
+}
