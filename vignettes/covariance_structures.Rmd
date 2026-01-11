@@ -20,7 +20,216 @@ knitr::opts_chunk$set(
 
 The current version of `lme4` offers four covariance classes/structures: `Covariance.us` (unstructured), `Covariance.diag` (diagonal), `Covariance.cs` (compound symmetry), and `Covariance.ar1` (autoregressive order 1). The syntax for use is somewhat similar to the `glmmTMB` package (see [covariance structures in glmmTMB](https://glmmtmb.github.io/glmmTMB/articles/covstruct.html)), although the results are slightly different.
 
-[More detail will be added here; second half of the vignette will compare `lme4` and `glmmTMB` implementations and results.]
+The first half of this vignette provide a more detailed exp1lanation of how the 
+new machinery works, and the second half of the vignette will compare `lme4` 
+and `glmmTMB` implementations and results.
+
+### Background
+
+For exact details of this structure, refer to the `lmer` [vignette](https://cran.r-project.org/package=lme4/vignettes/lmer.pdf). We provide
+a quick summary in this vignette.
+
+In matrix notation, a linear mixed model can be represented as:
+\[
+\mathbf{y} = X \beta + Z \mathbf{b} + \boldsymbol{\epsilon}
+\]
+Where $\mathbf{b}$ represents an unknown vector of random effects. The 
+\code{Covariance} class helps define the structure of the variance-covariance 
+matrix as specified as $Var(\mathbf{b}$. Typically, we denote the 
+variance-covariance matrix as $\Sigma$.
+
+First, we create the relative co-factor $\Lambda_{\theta}$ which is a 
+$q \times q$ block diagonal  matrix that depends on the variance-component 
+parameter $\theta$. Let $\sigma$ be the scale parameter of the variance of a 
+inear mixed model. In `lme4`, the variance-covariance matrix is constructed by
+the following equation:
+\[
+\mathbf{\Sigma}_{\mathbf{\theta}} = \sigma^{2} \Lambda_{\theta} 
+  \Lambda_{\theta}^{T},
+\]
+
+One of the **major differences** between the four covariance classes (`Covariance.us` (unstructured), `Covariance.diag` (diagonal), `Covariance.cs` (compound symmetry), and `Covariance.ar1` (autoregressive order 1)) **is the construction of the the relative co-factor** $\Lambda_{\theta}$.
+
+### Covariance Structures
+
+Suppose there are $p$ number of random effect terms for a particular
+grouping variable. The **unstructured covariance structure**, which is the default 
+in `lme4`, of size $p \times p$ has the following form:
+\[
+\mathbf{\Sigma}
+= \begin{bmatrix}
+\sigma^{2}_{1} & \sigma_{12} & \dots & \sigma_{1p} \\
+\sigma_{21} & \sigma^{2}_{2} & \dots & \sigma_{2p} \\
+\vdots & \vdots & \ddots & \vdots \\
+\sigma_{p1} & \sigma_{p2} & \dots & \sigma^{2}_{p} \\
+\end{bmatrix}	
+\]
+
+The next three covariance structures can either be heterogenous or homogenous.
+If we have a homogeneous covariance structure (`hom = TRUE`), then we assume 
+$\sigma_{1} = \sigma_{2} = \dots = \sigma_{p}$.
+
+The **diagonal covariance structure** has the following form:
+\[
+\mathbf{\Sigma}
+= \begin{bmatrix}
+\sigma^{2}_{1} & 0 & \dots & 0 \\
+0 & \sigma^{2}_{2} & \dots & 0 \\
+\vdots & \vdots & \ddots & \vdots \\
+0 & 0 & \dots & \sigma^{2}_{p} \\
+\end{bmatrix}	
+\]
+By default, we assume a heterogeneous diagonal covariance structure.
+
+The **compound symmetric covariance structure** has the following form:
+\[
+\mathbf{\Sigma}
+= \begin{bmatrix}
+\sigma^{2}_{1}              & \sigma_{1}\sigma_{2}\rho  & \sigma_{1}\sigma_{3}\rho  & \dots  & \sigma_{1}\sigma_{p}\rho \\
+\sigma_{2}\sigma_{1} \rho   & \sigma^{2}_{2}             & \sigma_{2}\sigma_{3}\rho  & \dots  & \sigma_{2}\sigma_{p}\rho \\
+\sigma_{3}\sigma_{1} \rho   & \sigma_{3}\sigma_{2}\rho   & \sigma^{2}_{3}            & \dots  & \sigma_{3}\sigma_{p}\rho \\
+\vdots                      & \vdots                     & \vdots                    & \ddots & \vdots \\
+\sigma_{p}\sigma_{1} \rho   & \sigma_{p}\sigma_{2}\rho   & \sigma_{p}\sigma_{3}\rho  & \dots  & \sigma^{2}_{p} 
+\end{bmatrix}	
+\]
+By default, we assume a heterogeneous compound symmetric covariance structure.
+
+The **AR1 (auto-regressive order 1) covariance structure** has the following form:
+\[
+\mathbf{\Sigma}
+= \begin{bmatrix}
+\sigma^{2}_{1}                  & \sigma_{1}\sigma_{2} \rho      & \sigma_{1}\sigma_{3}\rho^{2}   & \dots  & \sigma_{1}\sigma_{p}\rho^{p-1} \\
+\sigma_{2}\sigma_{1} \rho       & \sigma^{2}_{2}                 & \sigma_{2}\sigma_{3}\rho       & \dots  & \sigma_{2}\sigma_{p}\rho^{p-2} \\
+\sigma_{3}\sigma_{1} \rho^{2}   & \sigma_{3}\sigma_{2}\rho       & \sigma^{2}_{3}                 & \dots  & \sigma_{3}\sigma_{p}\rho^{p-3} \\
+\vdots                          & \vdots                         & \vdots                         & \ddots & \vdots \\
+\sigma_{p}\sigma_{1} \rho^{p-1} & \sigma_{p}\sigma_{2}\rho^{p-2} & \sigma_{p}\sigma_{3}\rho^{p-3} & \dots  & \sigma^{2}_{p} 
+\end{bmatrix}	
+\]
+Unlike the diagonal and compound symmetric structures, by default we assume a
+homogeneous ar1 covariance structure.
+
+### Construction of the Relative Co-factor
+
+For the **unstructured covariance matrix**, the following parameters `par`:
+$\boldsymbol{\theta} = (\theta_{1}, \theta_{2}, \dots, \theta_{p(p+1)/2})$ are 
+estimated by `lme4`'s compiled C++ code (using Eigen) to construct the relative
+co-factor $\Lambda_{\boldsymbol{\theta}}$:
+\[
+\Lambda_{\boldsymbol{\theta}} = \begin{bmatrix}
+\theta_1 & 0 & 0 & \dots & 0 \\
+\theta_2 & \theta_3 & 0 & \dots & 0 \\
+\theta_4 & \theta_5 & \theta_6 & \dots & 0 \\
+\vdots & \vdots & \vdots & \ddots & \vdots \\
+\theta_{...} & \theta_{...} & \theta_{...} & \dots & \theta_{p(p+1)/2}
+\end{bmatrix}
+\]
+
+It differs for the other covariance structures. In the **diagonal covariance matrix** 
+case, $\boldsymbol{\theta}$ (or `par`) only contains the standard deviations. 
+The relative co-factor $\Lambda_{\boldsymbol{\theta}}$ is:
+\[
+\Lambda_{\boldsymbol{\theta}} = \begin{bmatrix}
+\theta_1 & 0 & 0 & \dots & 0 \\
+0 & \theta_2 & 0 & \dots & 0 \\
+0 & 0 & \theta_3 & \dots & 0 \\
+\vdots & \vdots & \vdots & \ddots & \vdots \\
+0 & 0 & 0 & \dots & \theta_{p}
+\end{bmatrix}
+\]
+
+For the **compound symmetry covariance structure**, the parameter 
+vector `par` contains the $p$ standard deviations $(\sigma_1, \sigma_2, \ldots, \sigma_p)$ 
+and the common correlation $\rho$.
+
+The relative co-factor $\Lambda_{\boldsymbol{\theta}}$ is a lower triangular $p \times p$ matrix. Consider the form:
+\[
+\Lambda_{\boldsymbol{\theta}} = \begin{bmatrix}
+\theta_{11} & 0 & 0 & \cdots & 0 \\
+\theta_{21} & \theta_{22} & 0 & \cdots & 0 \\
+\theta_{31} & \theta_{32} & \theta_{33} & \cdots & 0 \\
+\vdots & \vdots & \vdots & \ddots & \vdots \\
+\theta_{p1} & \theta_{p2} & \theta_{p3} & \cdots & \theta_{pp}
+\end{bmatrix}
+\]
+
+Its elements $\theta_{ij}$ are constructed as follows. First, define the 
+sequence $\{a_j\}$ recursively:
+\[
+a_1 = 0, \quad a_{j+1} = a_j + \frac{(1 - \rho \cdot a_j)^2}{1 - \rho^2 \cdot a_j} \quad \text{for } j = 1, \ldots, p-1
+\]
+
+Then the elements of $\Lambda$ are given by:
+\[
+\theta_{ij} = \begin{cases}
+ \sqrt{1 - \rho^2 a_j} & \text{if } i = j \text{ (diagonal)} \\[0.5em]
+ \dfrac{\rho - \rho^2 a_j}{\sqrt{1 - \rho^2 a_j}} & \text{if } i > j \text{ (below diagonal)} \\[0.5em]
+0 & \text{if } i < j \text{ (above diagonal)}
+\end{cases}
+\]
+In the code, one can extract the values $\theta_{ij}$ via the `getTheta()` function 
+of the `Covariance.cs` object, in which `theta` will be a vector in the column-wise 
+elements of $\Lambda$.
+ 
+It is similar for the **autoregressive order 1 (AR1) covariance structure**. 
+Again, the parameter vector contains the $p$ standard deviations 
+$(\sigma_1, \sigma_2, \ldots, \sigma_p)$ and the autocorrelation parameter 
+$\rho$. The relative co-factor $\Lambda_{\boldsymbol{\theta}}$ is a lower 
+triangular $p \times p$ matrix whose form is similar to the compound symmetric case.
+
+The elements $\theta_{ij}$ are given by:
+\[
+\theta_{ij} = \begin{cases}
+ \rho^{i-1} & \text{if } j = 1 \text{ (first column)} \\[0.5em]
+ \rho^{i-j} \sqrt{1 - \rho^2} & \text{if } 1 < j \leq i \text{ (below diagonal)} \\[0.5em]
+0 & \text{if } i < j \text{ (above diagonal)}
+\end{cases}
+\]
+Again, these values can easily be extracted using `getTheta()` function 
+of the `Covariance.ar1` object, in which `theta` will be still be a vector in 
+the column-wise elements of $\Lambda$.
+
+### Example of Use
+
+In this section we will mostly discuss functions relating to extracting 
+`par`, `theta`, `Lambda`, as described in the previous section, as well as
+extracting the variance covariance matrix.
+
+The next section, where we compare the results from `lme4` against another popular `R`
+mixed modelling package, `glmmTMB`, is where there will be plenty of examples of use of
+how to use each of the different covariance structures, as well as their `glmmTMB` equivalents 
+(as different covariance structures have been implemented in `glmmTMB` earlier.)
+
+Consider the classical `sleepstudy` example, except we are going to impose a
+compound symmetric covariance structure to highlight the differences between
+`par` and `theta`:
+
+```{r setup}
+library(lme4)
+fm1.cs <- lmer(Reaction ~ Days + cs(Days | Subject), sleepstudy)
+```
+
+The information regarding the covariance structure is included within the `reCovs` slot:
+
+```{r}
+fm1.cs@reCovs
+```
+
+It only contains one item as we only have one grouping variable (`Subject`). To 
+see what `par`, `theta`, and `Lambda` of this object, we can call:
+
+```{r}
+lme4:::getPar(fm1.cs@reCovs[[1]])
+lme4:::getTheta(fm1.cs@reCovs[[1]])
+lme4:::getLambda(fm1.cs@reCovs[[1]])
+```
+
+To most users, the most crucial information is simply extracting the variance 
+covariance matrix. This can easily be extracted via `VarCorr.merMod()`:
+
+```{r}
+vc_mat <- VarCorr(fm1.cs)
+vc_mat$Subject
+```
 
 ## Comparisons with glmmTMB
 
@@ -38,8 +247,7 @@ Despite these differences, we will show examples where `lme4` and `glmmTMB` prov
 
 ### Comparison Setup
 
-```{r setup}
-library(lme4)
+```{r}
 if (!requireNamespace("glmmTMB", quietly = TRUE)) {
   knitr::opts_chunk$set(eval = FALSE)
 } else {

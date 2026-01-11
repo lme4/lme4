@@ -176,8 +176,8 @@ getProfUpper(object, profscale, sc = NULL)
   Our main focus is the restriction on \eqn{\Sigma}. Let \eqn{q} represent 
   the number of columns of the random-effects model matrix \eqn{Z}. 
   \eqn{\Sigma} can be expressed in terms of a relative cofactor 
-  \eqn{\Lambda_{\theta}} which is a \eqn{q \times q} that depends on the 
-  variance-component parameter \eqn{\theta}:
+  \eqn{\Lambda_{\theta}} which is a \eqn{q \times q} block diagonal matrix that 
+  depends on the variance-component parameter \eqn{\theta}:
   \deqn{
   \mathbf{\Sigma}_{\mathbf{\theta}} = \sigma^{2} \Lambda_{\theta} 
   \Lambda_{\theta}^{T}.
