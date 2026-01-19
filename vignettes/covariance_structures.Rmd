@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 
 The current version of `lme4` offers four covariance classes/structures: `Covariance.us` (unstructured), `Covariance.diag` (diagonal), `Covariance.cs` (compound symmetry), and `Covariance.ar1` (autoregressive order 1). The syntax for use is somewhat similar to the `glmmTMB` package (see [covariance structures in glmmTMB](https://glmmtmb.github.io/glmmTMB/articles/covstruct.html)), although the results are slightly different.
 
-The first half of this vignette provide a more detailed exp1lanation of how the 
+The first half of this vignette provide a more detailed explanation of how the 
 new machinery works, and the second half of the vignette will compare `lme4` 
 and `glmmTMB` implementations and results.
 
@@ -31,24 +31,24 @@ a quick summary in this vignette.
 
 In matrix notation, a linear mixed model can be represented as:
 \[
-\mathbf{y} = X \beta + Z \mathbf{b} + \boldsymbol{\epsilon}
+\mathbf{y} = \mathbf{X} \beta + Z \mathbf{b} + \boldsymbol{\epsilon}
 \]
 Where $\mathbf{b}$ represents an unknown vector of random effects. The 
 \code{Covariance} class helps define the structure of the variance-covariance 
-matrix as specified as $Var(\mathbf{b}$. Typically, we denote the 
+matrix as specified as $\textrm{Var}(\mathbf{b}$. Typically, we denote the 
 variance-covariance matrix as $\Sigma$.
 
 First, we create the relative co-factor $\Lambda_{\theta}$ which is a 
 $q \times q$ block diagonal  matrix that depends on the variance-component 
 parameter $\theta$. Let $\sigma$ be the scale parameter of the variance of a 
-inear mixed model. In `lme4`, the variance-covariance matrix is constructed by
+linear mixed model. In `lme4`, the variance-covariance matrix is constructed by
 the following equation:
 \[
 \mathbf{\Sigma}_{\mathbf{\theta}} = \sigma^{2} \Lambda_{\theta} 
   \Lambda_{\theta}^{T},
 \]
 
-One of the **major differences** between the four covariance classes (`Covariance.us` (unstructured), `Covariance.diag` (diagonal), `Covariance.cs` (compound symmetry), and `Covariance.ar1` (autoregressive order 1)) **is the construction of the the relative co-factor** $\Lambda_{\theta}$.
+The major difference between the four covariance classes (`Covariance.us` (unstructured), `Covariance.diag` (diagonal), `Covariance.cs` (compound symmetry), and `Covariance.ar1` (autoregressive order 1)) is the construction of the the relative Cholesky factor $\Lambda_{\theta}$.
 
 ### Covariance Structures
 
@@ -65,7 +65,7 @@ in `lme4`, of size $p \times p$ has the following form:
 \end{bmatrix}	
 \]
 
-The next three covariance structures can either be heterogenous or homogenous.
+The next three covariance structures can either be heterogeneous or homogeneous.
 If we have a homogeneous covariance structure (`hom = TRUE`), then we assume 
 $\sigma_{1} = \sigma_{2} = \dots = \sigma_{p}$.
 
@@ -211,16 +211,16 @@ fm1.cs <- lmer(Reaction ~ Days + cs(Days | Subject), sleepstudy)
 The information regarding the covariance structure is included within the `reCovs` slot:
 
 ```{r}
-fm1.cs@reCovs
+print(fm1.cs_cov <- lme4:::getReCovs(fm1.cs))
 ```
 
 It only contains one item as we only have one grouping variable (`Subject`). To 
 see what `par`, `theta`, and `Lambda` of this object, we can call:
 
 ```{r}
-lme4:::getPar(fm1.cs@reCovs[[1]])
-lme4:::getTheta(fm1.cs@reCovs[[1]])
-lme4:::getLambda(fm1.cs@reCovs[[1]])
+getME(fm1.cs, "par")
+getME(fm1.cs, "theta")
+getME(fm1.cs, "Lambda")
 ```
 
 To most users, the most crucial information is simply extracting the variance 
