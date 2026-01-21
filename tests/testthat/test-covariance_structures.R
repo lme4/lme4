@@ -639,3 +639,45 @@ test_that("integration tests for predict", {
   expect_equal_nocheck(other_mod$gm.glmmTMB.diag_predict, predict(gm.diag))
 })
 
+simfun_gamma <- function(ngrp = 50, nrep = 50, shape_gam = 2, intercept = 1, 
+                         theta_val = 2, seed = NULL) {
+  if (!is.null(seed)) set.seed(seed)
+  dd <- expand.grid(group = 1:ngrp, rep = 1:nrep)
+  dd$y <- simulate(~ 1 + (1 | group), newdata = dd, 
+                   family = Gamma(link = "log"), 
+                   newparams = list(
+                     theta = theta_val, beta = 1, 
+                     sigma = 1/sqrt(shape_gam)))[[1]]
+  dd
+}
+
+simfun_pois <- function(ngrp = 50, nrep = 50, intercept = 1,
+                        theta_val = 1, seed = NULL) {
+  if (!is.null(seed)) set.seed(seed)
+  
+  dd <- expand.grid(group = 1:ngrp, rep = 1:nrep)
+  
+  dd$y <- simulate(~ 1 + (1 | group), newdata = dd,
+                   family = poisson(link = "log"), 
+                   newparams = list(theta = theta_val, beta = intercept))[[1]]
+  dd
+}
+
+dd2 <- simfun_gamma(seed = 101)
+
+dd3 <- simfun_pois(seed = 101)
+
+glmer1 <- glmer(y ~ 1 + (1|group), family = Gamma(link = "log"), data = dd2)
+lme4_v1 <- VarCorr(glmer1)$group
+
+glmer2 <- glmer(y ~ 1 + (1|group), family = poisson(link = "log"), data = dd3)
+lme4_v2 <- VarCorr(glmer2)$group
+
+test_that("correct stdevs for glmm", {
+  # high tolerance, but the numbers are relatively similar.
+  expect_equal_nocheck(lme4_v1, other_mod$TMB_v1, tolerance = 1e-2)
+  expect_equal_nocheck(attr(lme4_v1, 'stddev'), 
+                       attr(other_mod$TMB_v1, 'stddev'), tolerance = 5e-3)
+  expect_equal_nocheck(attr(lme4_v1, 'correlation'), 
+                       attr(other_mod$TMB_v1, 'correlation'))
+})

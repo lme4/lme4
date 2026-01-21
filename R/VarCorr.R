@@ -6,10 +6,12 @@
 ##' @param theta theta vector (lower-triangle of Cholesky factors)
 ##' @param nms component names (FIXME: nms/cnms redundant: nms=names(cnms)?)
 ##' @param full_cor specifies whether the full correlation matrix should be produced
+##' @param is_lmm specifies whether the information came from a LMM
 ##' @seealso \code{\link{VarCorr}}
 ##' @return A matrix
 ##' @export
-mkVarCorr <- function(sc, cnms, nc, theta, nms, reCovs = NULL, full_cor = NULL) {
+mkVarCorr <- function(sc, cnms, nc, theta, nms, reCovs = NULL, 
+                      full_cor = NULL, is_lmm = NULL) {
   if (is.null(reCovs)) {
     ncseq <- seq_along(nc)
     thl <- split(theta, rep.int(ncseq, (nc * (nc + 1))/2))
@@ -29,8 +31,10 @@ mkVarCorr <- function(sc, cnms, nc, theta, nms, reCovs = NULL, full_cor = NULL) 
     else
       Li <- getLambda(reCovs[[i]])
     rownames(Li) <- cnms[[i]]
-    ## val := \Sigma_i = \sigma^2 \Lambda_i \Lambda_i', the
-    val <- tcrossprod(sc * Li) # variance-covariance
+    # the scalar only applies for LMMs
+    if(!is.null(is_lmm) && is_lmm == FALSE){sc = 1}
+    # val := \Sigma_i = \sigma^2 \Lambda_i \Lambda_i', the
+    val <- tcrossprod(sc * Li) # variance-covariance 
     stddev <- sqrt(diag(val))
     ## if null, then only print the covariance matrix if nc <= 20.
     ## 20 is an arbitrary threshold, but anything larger than that would likely
@@ -92,7 +96,8 @@ VarCorr.merMod <- function(x, sigma = 1, full_cor = NULL, ...)
   structure(mkVarCorr(sigma, cnms = cnms, nc = nc, theta = x@theta,
                       nms = { fl <- x@flist; names(fl)[attr(fl, "assign")]},
                       reCovs = getReCovs(x),
-                      full_cor = full_cor),
+                      full_cor = full_cor,
+                      is_lmm = isLMM(x)),
             useSc = as.logical(x@devcomp$dims[["useSc"]]),
             class = "VarCorr.merMod")
 }
