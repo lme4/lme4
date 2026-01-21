@@ -37,7 +37,13 @@
     \itemize{
       \item code for pretty-printing covariance matrices, especially
       structured covariance matrices, has moved to the \code{reformulas}
-      package (so functionality can be shared with the \code{glmmTMB} package)
+      package (so functionality can be shared with the \code{glmmTMB}
+      package)
+      \item results from \code{confint} are presented in a different
+      order, with all standard deviation/variance values first,
+      followed by correlation/covariance values (these were
+      previously presented in "lower-triangular columnwise" order, with
+      standard-deviation and correlation values interspersed)
     } % itemize
   } % user-visible changes
 } % 2.0-0
