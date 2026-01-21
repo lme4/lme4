@@ -1,3 +1,4 @@
+
 ---
 title: "Covariance Structures"
 output: rmarkdown::html_vignette
@@ -8,7 +9,7 @@ vignette: >
   %\VignetteDepends{glmmTMB}
 ---
 
-```{r, include = FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
@@ -20,7 +21,214 @@ knitr::opts_chunk$set(
 
 The current version of `lme4` offers four covariance classes/structures: `Covariance.us` (unstructured), `Covariance.diag` (diagonal), `Covariance.cs` (compound symmetry), and `Covariance.ar1` (autoregressive order 1). The syntax for use is somewhat similar to the `glmmTMB` package (see [covariance structures in glmmTMB](https://glmmtmb.github.io/glmmTMB/articles/covstruct.html)), although the results are slightly different.
 
-[More detail will be added here; second half of the vignette will compare `lme4` and `glmmTMB` implementations and results.]
+The first half of this vignette provide a more detailed explanation of how the 
+new machinery works, and the second half of the vignette will compare `lme4` 
+and `glmmTMB` implementations and results.
+
+### Background
+
+For exact details of this structure, refer to the `lmer` [vignette](https://cran.r-project.org/package=lme4/vignettes/lmer.pdf). We provide
+a quick summary in this vignette.
+
+In matrix notation, a linear mixed model can be represented as:
+\[
+\mathbf{y} = \mathbf{X} \boldsymbol \beta + \mathbf Z \mathbf{b} + \boldsymbol{\epsilon}
+\]
+Where $\mathbf{b}$ represents an unknown vector of random effects. The 
+\code{Covariance} class helps define the structure of the variance-covariance 
+matrix as specified as $\textrm{Var}(\mathbf{b}$. Typically, we denote the 
+variance-covariance matrix as $\Sigma$.
+
+First, we create the relative co-factor $\Lambda_{\theta}$ which is a 
+$q \times q$ block diagonal  matrix that depends on the variance-component 
+parameter $\theta$. Let $\sigma$ be the scale parameter of the variance of a 
+linear mixed model. In `lme4`, the variance-covariance matrix is constructed by
+the following equation:
+\[
+\mathbf{\Sigma}_{\mathbf{\theta}} = \sigma^{2} \Lambda_{\theta} 
+  \Lambda_{\theta}^{T},
+\]
+
+The major difference between the four covariance classes (`Covariance.us` (unstructured), `Covariance.diag` (diagonal), `Covariance.cs` (compound symmetry), and `Covariance.ar1` (autoregressive order 1)) is the construction of the the relative Cholesky factor $\Lambda_{\theta}$.
+
+### Covariance Structures
+
+Suppose there are $p$ number of random effect terms for a particular
+grouping variable. The *unstructured covariance*, which is the default 
+in `lme4`, of size $p \times p$ has the following form:
+\[
+\mathbf{\Sigma}
+= \begin{bmatrix}
+\sigma^{2}_{1} & \sigma_{12} & \dots & \sigma_{1p} \\
+\sigma_{21} & \sigma^{2}_{2} & \dots & \sigma_{2p} \\
+\vdots & \vdots & \ddots & \vdots \\
+\sigma_{p1} & \sigma_{p2} & \dots & \sigma^{2}_{p} \\
+\end{bmatrix}	
+\]
+
+The next three covariance structures can either be heterogeneous or homogeneous.
+If we have a homogeneous covariance structure (`hom = TRUE`), then we assume 
+$\sigma_{1} = \sigma_{2} = \dots = \sigma_{p}$.
+
+The *diagonal covariance* has the following form:
+\[
+\mathbf{\Sigma}
+= \begin{bmatrix}
+\sigma^{2}_{1} & 0 & \dots & 0 \\
+0 & \sigma^{2}_{2} & \dots & 0 \\
+\vdots & \vdots & \ddots & \vdots \\
+0 & 0 & \dots & \sigma^{2}_{p} \\
+\end{bmatrix}	
+\]
+By default, we assume a heterogeneous diagonal covariance structure.
+
+The *compound symmetric covariance* has the following form:
+\[
+\mathbf{\Sigma}
+= \begin{bmatrix}
+\sigma^{2}_{1}              & \sigma_{1}\sigma_{2}\rho  & \sigma_{1}\sigma_{3}\rho  & \dots  & \sigma_{1}\sigma_{p}\rho \\
+\sigma_{2}\sigma_{1} \rho   & \sigma^{2}_{2}             & \sigma_{2}\sigma_{3}\rho  & \dots  & \sigma_{2}\sigma_{p}\rho \\
+\sigma_{3}\sigma_{1} \rho   & \sigma_{3}\sigma_{2}\rho   & \sigma^{2}_{3}            & \dots  & \sigma_{3}\sigma_{p}\rho \\
+\vdots                      & \vdots                     & \vdots                    & \ddots & \vdots \\
+\sigma_{p}\sigma_{1} \rho   & \sigma_{p}\sigma_{2}\rho   & \sigma_{p}\sigma_{3}\rho  & \dots  & \sigma^{2}_{p} 
+\end{bmatrix}	
+\]
+By default, we assume a heterogeneous compound symmetric covariance structure.
+
+The *AR1 (auto-regressive order 1) covariance* has the following form:
+\[
+\mathbf{\Sigma}
+= \begin{bmatrix}
+\sigma^{2}_{1}                  & \sigma_{1}\sigma_{2} \rho      & \sigma_{1}\sigma_{3}\rho^{2}   & \dots  & \sigma_{1}\sigma_{p}\rho^{p-1} \\
+\sigma_{2}\sigma_{1} \rho       & \sigma^{2}_{2}                 & \sigma_{2}\sigma_{3}\rho       & \dots  & \sigma_{2}\sigma_{p}\rho^{p-2} \\
+\sigma_{3}\sigma_{1} \rho^{2}   & \sigma_{3}\sigma_{2}\rho       & \sigma^{2}_{3}                 & \dots  & \sigma_{3}\sigma_{p}\rho^{p-3} \\
+\vdots                          & \vdots                         & \vdots                         & \ddots & \vdots \\
+\sigma_{p}\sigma_{1} \rho^{p-1} & \sigma_{p}\sigma_{2}\rho^{p-2} & \sigma_{p}\sigma_{3}\rho^{p-3} & \dots  & \sigma^{2}_{p} 
+\end{bmatrix}	
+\]
+Unlike the diagonal and compound symmetric structures, by default we assume a
+homogeneous ar1 covariance structure.
+
+### Construction of the Relative Co-factor
+
+For the unstructured covariance matrix, `lme4` estimates the following parameters in `par`:
+$\boldsymbol{\theta} = (\theta_{1}, \theta_{2}, \dots, \theta_{p(p+1)/2})$ to construct the relative
+co-factor $\Lambda_{\boldsymbol{\theta}}$ (this is the same as in previous versions):
+\[
+\Lambda_{\boldsymbol{\theta}} = \begin{bmatrix}
+\theta_1 & 0 & 0 & \dots & 0 \\
+\theta_2 & \theta_3 & 0 & \dots & 0 \\
+\theta_4 & \theta_5 & \theta_6 & \dots & 0 \\
+\vdots & \vdots & \vdots & \ddots & \vdots \\
+\theta_{...} & \theta_{...} & \theta_{...} & \dots & \theta_{p(p+1)/2}
+\end{bmatrix}
+\]
+
+The definition of the parameter vectors differs for the other covariance structures. In the diagonal covariance matrix 
+case, $\boldsymbol{\theta}$ (or `par`) only contains the standard deviations. 
+The relative co-factor $\Lambda_{\boldsymbol{\theta}}$ is:
+\[
+\Lambda_{\boldsymbol{\theta}} = \begin{bmatrix}
+\theta_1 & 0 & 0 & \dots & 0 \\
+0 & \theta_2 & 0 & \dots & 0 \\
+0 & 0 & \theta_3 & \dots & 0 \\
+\vdots & \vdots & \vdots & \ddots & \vdots \\
+0 & 0 & 0 & \dots & \theta_{p}
+\end{bmatrix}
+\]
+
+For the compound symmetry covariance structure, the parameter 
+vector `par` contains the $p$ standard deviations $(\sigma_1, \sigma_2, \ldots, \sigma_p)$ 
+and the common correlation $\rho$. In contrast to `glmmTMB`, the correlation is estimated on its original scale (bounded between -1 and 1), rather than on an unconstrained, transformed scale.
+
+The relative co-factor $\Lambda_{\boldsymbol{\theta}}$ is a lower triangular $p \times p$ matrix. Consider the form:
+\[
+\Lambda_{\boldsymbol{\theta}} = \begin{bmatrix}
+\theta_{11} & 0 & 0 & \cdots & 0 \\
+\theta_{21} & \theta_{22} & 0 & \cdots & 0 \\
+\theta_{31} & \theta_{32} & \theta_{33} & \cdots & 0 \\
+\vdots & \vdots & \vdots & \ddots & \vdots \\
+\theta_{p1} & \theta_{p2} & \theta_{p3} & \cdots & \theta_{pp}
+\end{bmatrix}
+\]
+
+Its elements $\theta_{ij}$ are constructed as follows. First, define the 
+sequence $\{a_j\}$ recursively:
+\[
+a_1 = 0, \quad a_{j+1} = a_j + \frac{(1 - \rho \cdot a_j)^2}{1 - \rho^2 \cdot a_j} \quad \text{for } j = 1, \ldots, p-1
+\]
+
+Then the elements of $\Lambda$ are given by:
+\[
+\theta_{ij} = \begin{cases}
+ \sqrt{1 - \rho^2 a_j} & \text{if } i = j \text{ (diagonal)} \\[0.5em]
+ \dfrac{\rho - \rho^2 a_j}{\sqrt{1 - \rho^2 a_j}} & \text{if } i > j \text{ (below diagonal)} \\[0.5em]
+0 & \text{if } i < j \text{ (above diagonal)}
+\end{cases}
+\]
+In the code, one can extract the values $\theta_{ij}$ via the `getTheta()` function 
+of the `Covariance.cs` object, in which `theta` will be a vector in the column-wise 
+elements of $\Lambda$.
+ 
+The setup is similar for the autoregressive order 1 (AR1) covariance structure. 
+Again, the parameter vector contains the $p$ standard deviations 
+$(\sigma_1, \sigma_2, \ldots, \sigma_p)$ and the autocorrelation parameter 
+$\rho$. The relative co-factor $\Lambda_{\boldsymbol{\theta}}$ is a lower 
+triangular $p \times p$ matrix whose form is similar to the compound symmetric case.
+
+The elements $\theta_{ij}$ are given by:
+\[
+\theta_{ij} = \begin{cases}
+ \rho^{i-1} & \text{if } j = 1 \text{ (first column)} \\[0.5em]
+ \rho^{i-j} \sqrt{1 - \rho^2} & \text{if } 1 < j \leq i \text{ (below diagonal)} \\[0.5em]
+0 & \text{if } i < j \text{ (above diagonal)}
+\end{cases}
+\]
+Again, these values can be extracted using `getTheta()` function 
+of the `Covariance.ar1` object, in which `theta` will be still be a vector in 
+the column-wise elements of $\Lambda$.
+
+### Extracting model components
+
+This section illustrates how to extract
+`par`, `theta`, `Lambda`, as described in the previous section, as well as
+the variance covariance matrices of a model, from a `merMod` object.
+
+We'll fit the standard `sleepstudy` example, except that we will use a
+model with a compound symmetric covariance structure. Because this model has only two varying effects (intercept and slope with respect to day) per subject, and
+ hence the covariance matrix is $2 \times 2$, there is no difference in overall model fit between the compound-symmetric and the unstructured covariance matrices. Howevever, the models are parameterized differently, so this example will highlight the differences between `par` and `theta`.
+
+```{r cs-fit}
+library(lme4)
+fm1.cs <- lmer(Reaction ~ Days + cs(1 + Days | Subject), sleepstudy)
+```
+
+Extracting the covariance structure:
+
+```{r getReCovs}
+print(fm1.cs_cov <- getReCovs(fm1.cs))
+```
+
+The result is a list with only one element as we only have one random-effects term (`cs(1 + Days | Subject)`). To 
+see the values of `par` and `theta` for this object, we can call:
+
+```{r getInfo}
+getME(fm1.cs, "par")
+getME(fm1.cs, "theta")
+```
+
+The $\Lambda$ matrix is large, so we'll view it instead of printing:
+```{r lambda-mat}
+library(Matrix)
+image(getME(fm1.cs, "Lambda"))
+```
+
+To most users, the most crucial information is simply the variance-covariance matrices. Extracte these via `VarCorr.merMod()` (the list has one element per random-effect term in the model --- in this case, only one):
+
+```{r varcorr}
+vc_mat <- VarCorr(fm1.cs)
+vc_mat$Subject
+```
 
 ## Comparisons with glmmTMB
 
@@ -38,8 +246,7 @@ Despite these differences, we will show examples where `lme4` and `glmmTMB` prov
 
 ### Comparison Setup
 
-```{r setup}
-library(lme4)
+```{r comparison-setup}
 if (!requireNamespace("glmmTMB", quietly = TRUE)) {
   knitr::opts_chunk$set(eval = FALSE)
 } else {
@@ -47,12 +254,13 @@ if (!requireNamespace("glmmTMB", quietly = TRUE)) {
 }
 
 ## Often want to ignore attributes and class.
-all.equal.nocheck <- function(x, y, ..., check.attributes = FALSE, check.class = FALSE) {
+## Set a fairly large tolerance for convenience.
+all.equal.nocheck <- function(x, y, tolerance = 3e-5, ..., check.attributes = FALSE, check.class = FALSE) {
   require("Matrix", quietly = TRUE)
   ## working around mode-matching headaches
   if (is(x, "Matrix")) x <- matrix(x)
   if (is(y, "Matrix")) y <- matrix(y)
-  all.equal(x, y, ..., check.attributes = check.attributes, check.class = check.class)
+  all.equal(x, y, ..., tolerance = tolerance, check.attributes = check.attributes, check.class = check.class)
 }
 
 get.cor1 <- function(x) {
@@ -66,7 +274,7 @@ get.cor1 <- function(x) {
 
 This is the default setting for both `lme4` and `glmmTMB`. Below we simulate a dataset with known `beta`, `theta` and `sigma` values.
 
-```{r}
+```{r unstruc-sim}
 n_groups <- 20
 n_per_group <- 20
 n <- n_groups * n_per_group
@@ -102,7 +310,7 @@ gdat.us$y <- simulate(
 
 ### Linear Mixed Model
 
-```{r}
+```{r compare-lmm}
 lme4.us <- lmer(form, data = dat.us, REML = "FALSE")
 glmmTMB.us <- glmmTMB(form, dat = dat.us)
 
@@ -121,7 +329,7 @@ all.equal.nocheck(logLik(lme4.us), logLik(glmmTMB.us))
 
 As expected, from here-on out, calculations related to the random-effects term differ.
 
-```{r}
+```{r compare-cov}
 ## Variance-Covariance Matrix
 vcov(lme4.us); vcov(glmmTMB.us)$cond
 all.equal.nocheck(vcov(lme4.us), vcov(glmmTMB.us)$cond)
@@ -136,7 +344,7 @@ all.equal.nocheck(ranef(lme4.us)$group, ranef(glmmTMB.us)$cond$group)
 
 ### Generalized Linear Mixed Model
 
-```{r}
+```{r compare-glmm}
 glme4.us <- glmer(form2, data = gdat.us, family = binomial)
 gglmmTMB.us <- glmmTMB(form2, dat = gdat.us, family = binomial)
 
@@ -154,7 +362,7 @@ all.equal.nocheck(logLik(glme4.us), logLik(gglmmTMB.us))
 
 As expected, from here-on out, calculations related to the random-effects term differ.
 
-```{r}
+```{r compare-glmm-cov}
 ## Variance-Covariance Matrix
 vcov(glme4.us); vcov(gglmmTMB.us)$cond
 all.equal.nocheck(vcov(glme4.us), vcov(gglmmTMB.us)$cond)
@@ -173,14 +381,14 @@ The syntax is the same for fitting a heterogeneous diagonal covariance structure
 
 To demonstrate, if we wanted to fit a homogeneous diagonal covariance structure then we would write the following:
 
-```{r, eval = FALSE}
+```{r, fit-homog-diag, eval = FALSE}
 lme4.us <- lmer(Reaction ~ Days + diag(Days | Subject, hom = TRUE), sleepstudy)
 glmmTMB.us <- glmmTMB(Reaction ~ Days + homdiag(Days | Subject), sleepstudy)
 ```
 
 Our focus will be the comparisons when we have a *heterogeneous* diagonal covariance structure as those cases are more interesting.
 
-```{r}
+```{r sim-het-diag}
 form <- y ~ 1 + x1 * x2 + diag(1|group)
 dat.diag$y <- simulate(form[-2], 
                        newdata = dat.diag,
@@ -191,7 +399,7 @@ dat.diag$y <- simulate(form[-2],
 ```
 
 
-```{r}
+```{r fit-het-diag}
 lme4.diag <- lmer(form, data = dat.diag, REML = "FALSE")
 glmmTMB.diag <- glmmTMB(form, dat = dat.diag)
 
@@ -223,14 +431,14 @@ all.equal.nocheck(ranef(lme4.diag)$group, ranef(glmmTMB.diag)$cond$group)
 
 Similar to the diagonal case, the syntax is the same for fitting a heterogeneous compound symmetry covariance structure for `lme4` and `glmmTMB`: 
 
-```{r, eval = FALSE}
+```{r cs-fit-2, eval = FALSE}
 lme4.us <- lmer(Reaction ~ Days + cs(Days | Subject, hom = TRUE), sleepstudy)
 glmmTMB.us <- glmmTMB(Reaction ~ Days + cs(Days | Subject), sleepstudy)
 ```
 
 Again, it differs when we want to fit a *homogeneous* compound symmetry covariance structure, which we will use for our comparisons.
 
-```{r}
+```{r simgroup}
 simGroup <- function(g, n=6, phi=0.6) {
   x <- MASS::mvrnorm(mu = rep(0,n),
                      Sigma = phi^as.matrix(dist(1:n)) )  
@@ -244,7 +452,8 @@ set.seed(1)
 dat.cs <- do.call("rbind", lapply(1:2000, simGroup))
 ```
 
-```{r}
+<!-- this is the slow one ... cache? -->
+```{r more-comp}
 lme4.cs <- lmer(y ~ times + cs(0 + times | group, hom = TRUE), data = dat.cs, REML = FALSE)
 glmmTMB.cs <- glmmTMB(y ~ times + homcs(0 + times | group), data = dat.cs)
 
@@ -281,7 +490,7 @@ all.equal.nocheck(lme4.rho, glmmTMB.rho)
 
 For this comparison, we will focus on a simulated data set where we explicitly denote $\rho = 0.7$ to better compare the results between the two models. 
 
-```{r}
+```{r ar1-sim}
 set.seed(1)
 dat.ar1 <- do.call("rbind", lapply(1:2000, function(g) simGroup(g, phi = 0.7)))
 ```
@@ -290,14 +499,14 @@ Unlike the diagonal and compound symmetry case, the syntax is different for fitt
 
 For a *heterogeneous* ar1 covariance structure we would write the following:
 
-```{r, eval = FALSE}
+```{r het-ar1-fit, eval = FALSE}
 lme4.ar1 <- lmer(y ~ times + ar1(0 + times | group), data = dat.ar1, REML = FALSE)
 glmmTMB.ar1 <- glmmTMB(y ~ times + hetar1(0 + times | group), data = dat.ar1)
 ```
 
 We will instead focus on comparisons for a *homogeneous* ar1 covariance structure.
 
-```{r}
+```{r ar1-fit}
 lme4.ar1 <- lmer(y ~ times + ar1(0 + times | group, hom = TRUE), data = dat.ar1, REML = FALSE)
 glmmTMB.ar1 <- glmmTMB(y ~ times + ar1(0 + times | group), data = dat.ar1)
 
