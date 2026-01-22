@@ -5,7 +5,7 @@
 \alias{as.data.frame.VarCorr.merMod}
 \alias{print.VarCorr.merMod}
 \usage{
-\method{VarCorr}{merMod}(x, sigma=1, full_cor = NULL, \dots)
+\method{VarCorr}{merMod}(x, sigma=1, full_cor = NULL, is_lmm = NULL, \dots)
 
 %% documented because of "surprising arguments":
 \method{as.data.frame}{VarCorr.merMod}(x, row.names = NULL,
