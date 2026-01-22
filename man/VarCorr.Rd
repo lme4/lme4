@@ -5,7 +5,7 @@
 \alias{as.data.frame.VarCorr.merMod}
 \alias{print.VarCorr.merMod}
 \usage{
-\method{VarCorr}{merMod}(x, sigma=1, full_cor = NULL, is_lmm = NULL, \dots)
+\method{VarCorr}{merMod}(x, sigma=1, full_cor = NULL, \dots)
 
 %% documented because of "surprising arguments":
 \method{as.data.frame}{VarCorr.merMod}(x, row.names = NULL,
@@ -35,8 +35,6 @@
     simply passed to \code{\link{formatVC}()}.}
   \item{full_cor}{logical; specifies whether the full correlation matrix should be 
     produced.}
-  \item{is_lmm}{logical; indicating whether the model is an LMM as GLMMs do 
-    not include a residual scale parameter.}
 }
 \description{
   This function calculates the estimated variances,
