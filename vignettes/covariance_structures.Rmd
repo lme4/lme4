@@ -36,7 +36,7 @@ In matrix notation, a linear mixed model can be represented as:
 \]
 Where $\mathbf{b}$ represents an unknown vector of random effects. The 
 \code{Covariance} class helps define the structure of the variance-covariance 
-matrix as specified as $\textrm{Var}(\mathbf{b}$. Typically, we denote the 
+matrix as specified as $\textrm{Var}(\mathbf{b})$. Typically, we denote the 
 variance-covariance matrix as $\Sigma$.
 
 First, we create the relative co-factor $\Lambda_{\theta}$ which is a 

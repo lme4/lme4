@@ -33,7 +33,7 @@
     to be printed; simply passed to \code{\link{formatVC}()}.}
   \item{formatter}{a \code{\link{function}} for formatting the numbers;
     simply passed to \code{\link{formatVC}()}.}
-  \item{full_cor}{Specifies whether the full correlation matrix should be 
+  \item{full_cor}{logical; specifies whether the full correlation matrix should be 
     produced.}
 }
 \description{

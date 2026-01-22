@@ -2,7 +2,7 @@
 \title{Make Variance and Correlation Matrices from \code{theta}}
 \alias{mkVarCorr}
 \usage{
-mkVarCorr(sc, cnms, nc, theta, nms, reCovs = NULL, full_cor = NULL)
+mkVarCorr(sc, cnms, nc, theta, nms, reCovs = NULL, full_cor = NULL, is_lmm = NULL)
 }
 \description{
   Make variance and correlation matrices from \code{theta}
@@ -15,8 +15,11 @@ mkVarCorr(sc, cnms, nc, theta, nms, reCovs = NULL, full_cor = NULL)
   \item{nms}{component names (FIXME: nms/cnms redundant:
   nms=names(cnms)?)}
   \item{reCovs}{a list of \code{Covariance} objects.}
-  \item{full_cor}{Specifies whether the full correlation matrix should be 
-  produced.}
+  \item{full_cor}{logical; specifies whether the full correlation matrix should be 
+    produced.}
+  \item{is_lmm}{logical; indicating whether the model is an LMM as GLMMs do 
+    not include a residual scale parameter.}
+  
 }
 \value{
   A \code{\link{matrix}}

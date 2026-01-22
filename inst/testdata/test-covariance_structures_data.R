@@ -61,6 +61,42 @@ nm.nlme.cs <- nlme(
   correlation = corCompSymm(form = Asym ~ 1 | Tree),
   start = startvec)
 
+# tests regarding stdev and corr of glmms
+
+simfun_gamma <- function(ngrp = 50, nrep = 50, shape_gam = 2, intercept = 1, 
+                         theta_val = 2, seed = NULL) {
+  if (!is.null(seed)) set.seed(seed)
+  dd <- expand.grid(group = 1:ngrp, rep = 1:nrep)
+  dd$y <- simulate(~ 1 + (1 | group), newdata = dd, 
+                   family = Gamma(link = "log"), 
+                   newparams = list(
+                     theta = theta_val, beta = 1, 
+                     sigma = 1/sqrt(shape_gam)))[[1]]
+  dd
+}
+
+simfun_pois <- function(ngrp = 50, nrep = 50, intercept = 1,
+                        theta_val = 1, seed = NULL) {
+  if (!is.null(seed)) set.seed(seed)
+  
+  dd <- expand.grid(group = 1:ngrp, rep = 1:nrep)
+  
+  dd$y <- simulate(~ 1 + (1 | group), newdata = dd,
+                   family = poisson(link = "log"), 
+                   newparams = list(theta = theta_val, beta = intercept))[[1]]
+  dd
+}
+
+dd2 <- simfun_gamma(seed = 101)
+
+dd3 <- simfun_pois(seed = 101)
+
+TMB1 <- glmmTMB(y ~ 1 + (1|group), family = Gamma(link = "log"), data = dd2)
+TMB_v1 <- VarCorr(TMB1)$cond$group
+
+TMB2 <- glmmTMB(y ~ 1 + (1|group), family = poisson(link = "log"), data = dd3)
+TMB_v2 <- VarCorr(TMB2)$cond$group
+
 cov_lmer_test <- list(
   ## First: set of tests for lmer
   ## sigma
@@ -158,7 +194,10 @@ cov_lmer_test <- list(
   nm.nlme.cs_ranef = ranef(nm.nlme.cs),
   ## predict
   nm.nlme_predict = predict(nm.nlme),
-  nm.nlme.cs_predict = predict(nm.nlme.cs)
+  nm.nlme.cs_predict = predict(nm.nlme.cs),
+  ## glmm stdevs
+  TMB_v1 = TMB_v1,
+  TMB_v2 = TMB_v2
 )
 
 saveRDS(cov_lmer_test, "inst/testdata/test-covariance_structures_data.rds")
