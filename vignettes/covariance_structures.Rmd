@@ -51,6 +51,16 @@ the following equation:
 
 The major difference between the four covariance classes (`Covariance.us` (unstructured), `Covariance.diag` (diagonal), `Covariance.cs` (compound symmetry), and `Covariance.ar1` (autoregressive order 1)) is the construction of the the relative Cholesky factor $\Lambda_{\theta}$.
 
+For a generalized linear mixed model, the variance-covariance matrix is still
+constructed via a relative co-factor $\Lambda_{\theta}$, however, there is
+no scale parameter $\sigma$. That is, the variance-covariance matrix is
+constructed using
+\[
+\mathbf{\Sigma}_{\mathbf{\theta}} = \Lambda_{\theta} 
+  \Lambda_{\theta}^{T}
+\]
+instead.
+
 ### Covariance Structures
 
 Suppose there are $p$ number of random effect terms for a particular
