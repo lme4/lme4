@@ -3,7 +3,9 @@
 \title{Extract Fitted Covariance Structures}
 \usage{getReCovs(object)}
 \arguments{
-  \item{object}{a \code{merMod} object (fitted model)}
+  \item{object}{an \R object of class \code{\linkS4class{merMod}}, i.e.,
+    as resulting from \code{\link{lmer}()}, or \code{\link{glmer}()},
+    etc.}
 }
 \value{a list of covariance objects}
 \description{Returns a list with one covariance object for each
