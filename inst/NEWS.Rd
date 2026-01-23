@@ -7,6 +7,10 @@
 \section{CHANGES IN VERSION 2.0-0}{
   \subsection{BUG FIXES}{
     \itemize{
+      \item variances and standard deviations for GLMMs with estimated
+      scale parameters (Gamma etc.) are now printed correctly (the
+      internal estimates were previously, incorrectly, scaled
+      by the estimated dispersion parameters)
       \item parametric bootstrap confidence intervals for random-effect
       SDs of GLMMs with estimated scale parameters are now correctly scaled
     } % itemize
@@ -35,6 +39,11 @@
   } % new features
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
+      \item \code{isSingular()} is now an S3 generic and supports
+      fitted models (\code{isSingular.merMod}) as before as well as
+      all of the new covariance structures: \code{isSingular.Covariance.us},
+      \code{isSingular.Covariance.diag}, \code{isSingular.Covariance.cs}, 
+      \code{isSingular.Covariance.ar1}
       \item code for pretty-printing covariance matrices, especially
       structured covariance matrices, has moved to the \code{reformulas}
       package (so functionality can be shared with the \code{glmmTMB}
