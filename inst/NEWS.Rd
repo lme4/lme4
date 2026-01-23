@@ -35,6 +35,10 @@
   } % new features
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
+      \item \code{isSingular()} is now an S3 generic and supports all of the
+      new covariance structures: \code{isSingular.Covariance.us},
+      \code{isSingular.Covariance.diag}, \code{isSingular.Covariance.cs}, 
+      \code{isSingular.Covariance.ar1}, and \code{isSingular.merMod}.
       \item code for pretty-printing covariance matrices, especially
       structured covariance matrices, has moved to the \code{reformulas}
       package (so functionality can be shared with the \code{glmmTMB}

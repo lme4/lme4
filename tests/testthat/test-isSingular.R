@@ -77,5 +77,28 @@ test_that("checking singular fit for merMod", {
   expect_equal(isSingular(mod2), TRUE)
   
   ## also need to consider the glmer case
+  form <- y ~ 1 + (1 + x1 | group1) + (1 + x2 | group2)
   
+  dat$y <- simulate(form[-2], newdata = dat,
+                    family = poisson(link = "log"), 
+                    newparams = list(theta = c(0, 0, 0, 1.0, 0.5, 0.3),
+                                     beta = 2))[[1]]
+  
+  form2 <- y2 ~ 1 + (1 + x1 | group1) + (1 + x2 | group2)
+  
+  dat$y2 <- simulate(form2[-2], newdata = dat,
+                     family = Gamma(link = "log"), 
+                     newparams = list(theta = c(0, 0, 0, 1.0, 0.5, 0.3),
+                                      beta = 2,
+                                      sigma = 2))[[1]]
+  
+  
+  mod_pois <- suppressWarnings(
+    glmer(form, family = poisson(link = "log"), data = dat))
+  
+  mod_gam <- suppressWarnings(
+    glmer(form2, family = Gamma(link = "log"), data = dat))
+  
+  expect_equal(isSingular(mod_pois), TRUE)
+  expect_equal(isSingular(mod_gam), TRUE)
 })
