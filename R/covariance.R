@@ -1159,35 +1159,35 @@ isSingular <- function(object, tol = getSingTol()){
 }
 
 # add documentation for a recov, a singular covariance object
-isSingular.Covariance.us <- function(reCov, tol = getSingTol()){
-  theta <- getTheta(reCov)
-  lwr <- getLower(reCov)
+isSingular.Covariance.us <- function(object, tol = getSingTol()){
+  theta <- getTheta(object)
+  lwr <- getLower(object)
   any(theta[lwr == 0] < tol)
 }
 
-isSingular.Covariance.diag <- function(reCov, tol = getSingTol()){
-  theta <- getTheta(reCov)
+isSingular.Covariance.diag <- function(object, tol = getSingTol()){
+  theta <- getTheta(object)
   any(theta < tol)
 }
 
-isSingular.Covariance.cs <- function(reCov, tol = getSingTol()){
-  nc <- reCov@nc
+isSingular.Covariance.cs <- function(object, tol = getSingTol()){
+  nc <- object@nc
   ## if nc <= 0L then we should have "singular fit" issues
   if(nc <= 0L)return(TRUE)
   ## if rho, found in ccomp, is on the boundary then there's an issue
-  rho <- abs(getVC(reCov)$ccomp)
+  rho <- abs(getVC(object)$ccomp)
   if((rho > (1 - tol)) || (rho < -1 + tol))return(TRUE)
   ## standard any(theta[lower ==0] ==0)
-  if(reCov@hom){
+  if(object@hom){
     ## temp_lwr doesn't actually represent getLower() but this emulates
     ## the original isSingular
     temp_lwr <- rep(c(1, 0), length.out  = nc*2-1)
-    theta <- getTheta(reCov)
+    theta <- getTheta(object)
   } else {
     temp_lwr <- rep(1, length.out = nc * (nc + 1) / 2)
     diag_positions <- c(1, cumsum(nc:2) + 1)
     temp_lwr[diag_positions] <- 0
-    theta <- getTheta(reCov)
+    theta <- getTheta(object)
   }
   return(any(abs(theta[temp_lwr == 0]) < tol))
 }

@@ -16,11 +16,11 @@
   are (close to) zero.
 }
 \usage{
-isSingular(x, tol = getSingTol())
+isSingular(object, tol = getSingTol())
 getSingTol()
 }
 \arguments{
-  \item{x}{a fitted \code{merMod} object (result of \code{lmer} or \code{glmer}) 
+  \item{object}{a fitted \code{merMod} object (result of \code{lmer} or \code{glmer}) 
   or a \code{Covariance} object.}
   \item{tol}{numerical tolerance for detecting singularity.}
 }
