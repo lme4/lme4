@@ -7,6 +7,10 @@
 \section{CHANGES IN VERSION 2.0-0}{
   \subsection{BUG FIXES}{
     \itemize{
+      \item variances and standard deviations for GLMMs with estimated
+      scale parameters (Gamma etc.) are now printed correctly (the
+      internal estimates were previously, incorrectly, scaled
+      by the estimated dispersion parameters)
       \item parametric bootstrap confidence intervals for random-effect
       SDs of GLMMs with estimated scale parameters are now correctly scaled
     } % itemize
