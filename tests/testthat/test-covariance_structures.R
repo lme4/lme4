@@ -681,3 +681,14 @@ test_that("correct stdevs for glmm", {
   expect_equal_nocheck(attr(lme4_v1, 'correlation'), 
                        attr(other_mod$TMB_v1, 'correlation'))
 })
+
+## GH#908
+test_that("'xst' length matches objective function argument length", {
+    m <- glmer(incidence/size ~ 1 + ar1(0 + period | herd),
+               weights = size,
+               data = cbpp,
+               family = binomial,
+               control = glmerControl(check.nobs.vs.nRE = "ignore"))
+    ## Error ....: length(xst <- as.numeric(xst)) == n is not TRUE
+    expect_s4_class(m, "glmerMod")
+})
