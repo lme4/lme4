@@ -682,6 +682,16 @@ test_that("correct stdevs for glmm", {
                        attr(other_mod$TMB_v1, 'correlation'))
 })
 
+test_that("'xst' length matches objective function argument length", {
+    m <- glmer(incidence/size ~ 1 + ar1(0 + period | herd),
+               weights = size,
+               data = cbpp,
+               family = binomial,
+               control = glmerControl(check.nobs.vs.nRE = "ignore"))
+    ## Error ....: length(xst <- as.numeric(xst)) == n is not TRUE
+    expect_s4_class(m, "glmerMod")
+})
+
 test_that("varcorr has relevant attributes", {
   vc.us <- VarCorr(fm1.us)
   vc.cs <- VarCorr(fm1.cs)
@@ -701,4 +711,3 @@ test_that("varcorr has relevant attributes", {
   expect_false("rho" %in% names(attributes(vc.us$Subject)))
   expect_false("rho" %in% names(attributes(vc.diag$Subject)))
 })
-

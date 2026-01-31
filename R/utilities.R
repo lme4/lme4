@@ -946,11 +946,18 @@ getSingTol <- function() {
   getOption("lme4.singular.tolerance", 1e-4)
 }
 
-isSingular <- function(x, tol = getSingTol()) {
-    lwr <- getME(x, "lower")
-    theta <- getME(x, "theta")
-    any(theta[lwr==0] < tol)
+#isSingular <- function(x, tol = getSingTol()) {
+#    lwr <- getME(x, "lower")
+#    theta <- getME(x, "theta")
+#    any(theta[lwr==0] < tol)
+#}
+
+# turned into s3 method, will re-write later
+isSingular.merMod <- function(object, tol = getSingTol()) {
+  reCovs <- getReCovs(object)
+  any(sapply(reCovs, isSingular, tol = tol))
 }
+
 
 lme4_testlevel <- function() if (nzchar(s <- Sys.getenv("LME4_TEST_LEVEL"))) as.numeric(s) else 1
 
