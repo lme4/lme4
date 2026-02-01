@@ -317,3 +317,5 @@ export(getSingTol)
 export(getDoublevertDefault)
 export(isNewMerMod, forceNewMerMod, anyStructured)
 export(getReCovs)
+##
+S3method(na.action,merMod)

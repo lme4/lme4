@@ -35,6 +35,8 @@
       \code{glmmTMB} (see \code{\link{getDoublevertDefault}}). We
       recommend using \code{diag(.)} explicitly (rather than relying on \code{||}
       expansion), since defaults may change in the future.
+      \item the \code{merMod} class gains a \code{na.action} method
+      (for compatibility with recent changes in \code{stats::weighted.residuals})
     } % itemize
   } % new features
   \subsection{USER-VISIBLE CHANGES}{
