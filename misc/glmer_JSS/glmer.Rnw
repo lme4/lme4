@@ -13,6 +13,7 @@
 \DeclareMathOperator{\VEC}{vec}
 \newcommand{\bmb}[1]{{\color{red} \emph{#1}}}
 \newcommand{\scw}[1]{{\color{blue} \emph{#1}}}
+\newcommand{\al}[1]{{\color{violet}#1}} % anna's new comments
 
 \shortcites{lesnoff_within-herd_2004}
 %% BMB: what does JSS assume?
@@ -321,11 +322,16 @@ extend it to a \emph{penalized iteratively reweighted least squares}
   the variance.  We write these weights in the form of a diagonal
   weight matrix, $\bm W$, although they are stored and manipulated as
   a vector.
-\item Solve the penalized, weighted, nonlinear least squares problem
+\item \al{Let 
+  \begin{equation}
+  Q(\bm u) = \left\|\bm W^{1/2}\left(\yobs-\bm\mu_{\mc
+            Y|\mc U=\bm u}\right)\right\|^2+\|\bm u\|^2.
+  \end{equation}
+  }
+  Solve the penalized, weighted, nonlinear least squares problem
   \begin{equation}
     \label{eq:weightedNLS}
-    \arg\min_{\bm u}\left(\left\|\bm W^{1/2}\left(\yobs-\bm\mu_{\mc
-            Y|\mc U=\bm u}\right)\right\|^2+\|\bm u\|^2\right)
+    \arg\min_{\bm u}\left( Q(\bm u) \right).
   \end{equation}
 \item Update the weights, $\bm W$, and check for convergence.  If not
   converged, go to step 2.
@@ -360,6 +366,27 @@ which will be a diagonal matrix so, as for the weights, we store and
 manipulate the Jacobian as a vector.
 
 \bmb{Need to describe step-halving here!}
+
+\al{When solving for the minimum of $Q(\bm u)$, there is a possibility for 
+the proposed update for $\bm u$ has instead increased the value of the objective 
+function $Q(\bm u)$. Let $Q(\bm u_i)$ represents the value of the objective 
+function $Q(\bm u)$ at the current iterate $\bm u_{i}$, and similarly, let 
+$Q(\bm u_{i-1})$ represent the the value of the objective function of the 
+previous iteration. 
+
+If $Q(\bm u_i) > Q(\bm u_{i-1})$, we proceed with the step-halving 
+procedure. That is, we successively consider scaled updates of the form
+\begin{equation}
+  \bm u_i^{(j)} = \bm u_{i-1} + \frac{\bm \delta_i}{2^j}, \quad j = 1, 2, \ldots
+\end{equation}
+and then compute $Q(\bm u_i^{(j)})$ at each step. The step-halving procedure 
+continues until a value of $j$ is found such that 
+$Q(\bm u_i^{(j)}) < Q(\bm u_{i-1})$,
+which the iterate is then updated by setting $\bm u_{i} = \bm u_{i}^{(j)}$.
+
+If no such $j$ is found after a predetermined amount of halvings, then the 
+step-halving procedure has failed and the algorithm terminates. 
+}
 
 The minimizer, $\bm\delta_i$, of (\ref{eq:incr}) satisfies
 \begin{equation}
