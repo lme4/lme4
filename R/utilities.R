@@ -1133,3 +1133,6 @@ getDoublevertDefault <- function() {
   getOption("lme4.doublevert.default", "split")
 }
 
+na.action.merMod <- function(object, ...) {
+  na.action(model.frame(object))
+}
