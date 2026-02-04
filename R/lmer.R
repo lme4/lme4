@@ -2417,10 +2417,9 @@ summary.summary.merMod <- function(object, varcov = TRUE, ...) {
 ##' @S3method weights merMod
 weights.merMod <- function(object, type = c("prior","working"), ...) {
     type <- match.arg(type)
-    isPrior <- type == "prior"
-    if(!isGLMM(object) && !isPrior)
-        stop("working weights only available for GLMMs")
-    res <- if(isPrior) object@resp$weights else object@pp$Xwts^2
+    res <- if (type == "prior") object@resp$weights else object@pp$Xwts^2
+    napredict(na.action(object), res)
+
     ## the working weights available through pp$Xwts should be
     ## equivalent to:
     ##     object@resp$weights*(object@resp$muEta()^2)/object@resp$variance()
@@ -2430,7 +2429,6 @@ weights.merMod <- function(object, type = c("prior","working"), ...) {
     ## reference class fields not being updated at the optimum, then this
     ## could cause real problems.  see for example:
     ## https://github.com/lme4/lme4/issues/166
-
 
     ## FIXME:  what to do about missing values (see stats:::weights.glm)?
     ## FIXME:  add unit tests
