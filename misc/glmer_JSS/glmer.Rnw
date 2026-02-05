@@ -119,7 +119,7 @@ opts_chunk$set(engine='R',dev='pdf',fig.width=10,
                ## strip.white=all,
                error=FALSE, ## stop on error
                cache=TRUE,tidy=FALSE,comment=NA)
-@ % $ <- for emacs ESS
+@
 % \setkeys{Gin}{width=\textwidth} % obsolete?
 \begin{document}
 \section{Introduction}
@@ -853,10 +853,7 @@ the random effects with confidence bars); in the case of
 the Q-Q plot (\code{qqmath}) the $y$-axis shows corresponding 
 values of the standard normal quantiles (Figure~\ref{fig:glmerRanefplot}).
 
-<<glmerRanefplot,
-fig.cap="Graphical display of random effects. \\emph{Left}: conditional modes $\\pm 1.96 \\times \\text{conditional mode}$, ordered by magnitude. \\emph{Right}: quantile-quantile plot, with linear regression line overlaid.",
-dependson="cbppModelII",
-echo=FALSE>>=
+<<glmerRanefplot,fig.cap="Graphical display of random effects. \\emph{Left}: conditional modes $\\pm 1.96 \\times \\text{conditional mode}$, ordered by magnitude. \\emph{Right}: quantile-quantile plot, with linear regression line overlaid.",dependson="cbppModelII",echo=FALSE>>=
 rr <- ranef(gm1,condVar=TRUE)
 dd <- dotplot(rr)
 qq <- qqmath(rr,type=c("p","r"))
