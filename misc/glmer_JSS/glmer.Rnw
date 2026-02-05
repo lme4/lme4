@@ -115,6 +115,8 @@ zmargin <- theme(panel.margin=unit(0,"lines"))
 library(lattice)
 library(reshape2)
 library(plyr)
+library(DHARMa)
+library(performance)
 opts_chunk$set(engine='R',dev='pdf',fig.width=10,
                fig.height=6.5,prompt=TRUE,
                ## strip.white=all,
@@ -837,15 +839,16 @@ for \code{merMod} objects, although not quite as wide as for
 simpler (non-mixed) models. The plot methods in the \code{lme4}
 package are inspired by those in the \code{nlme} package, using
 \code{lattice} plots to provide a reasonable blend
-of convenience and flexibility.
+of convenience and flexibility. 
+
+\al{
+Fortunately, \code{merMod} objects are also compatible with the 
+\code{performance} package and the \code{DHARMa} package, both are commonly 
+used for model checking.
+}
 
 The following code produces a standard range
-of plots (Figure~\ref{fig:glmerDiag}).
-At present, \code{lme4} does not offer other standard
-diagnostic tools such as influence measures or
-standardized residuals, due to technical difficulties
-in computing the hat matrix. \bmb{no longer true -- update
-(after checking that the \code{hatvalues} results actually make sense!)}
+of \al{basic} plots (Figure~\ref{fig:glmerDiag}).
 <<glmerDiagFake,eval=FALSE>>=
 ## basic residual plot
 plot(gm1)
@@ -886,6 +889,18 @@ rr <- ranef(gm1,condVar=TRUE)
 dd <- dotplot(rr)
 qq <- qqmath(rr,type=c("p","r"))
 grid.arrange(dd$herd,qq$herd,ncol=2)
+@
+
+\al{
+Additionally, \code{performance::check_model()} checks for classical assumptions 
+used for most linear models: normality of residuals, linear relationship, 
+homogeneity of variance, and outliers. For mixed-effect models, it also checks 
+for normality of random effects. The uncommonly used posterior predictive checks 
+is meant to see whether the distributional family used fits well to the data.
+}
+
+<<perf_chk_mod_cbpp,fig.cap="TO WRITE...",fig.width=5,fig.height=5,echo=FALSE>>=
+check_model(gm1)
 @
 
 Having checked the diagnostics, we would now like to compare
