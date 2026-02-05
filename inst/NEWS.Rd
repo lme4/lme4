@@ -12,7 +12,12 @@
       internal estimates were previously, incorrectly, scaled
       by the estimated dispersion parameters)
       \item parametric bootstrap confidence intervals for random-effect
-      SDs of GLMMs with estimated scale parameters are now correctly scaled
+      SDs of GLMMs with estimated scale parameters are now correctly
+      scaled
+      \item \code{weights.merMod} now allows \code{type = "working"} for
+      LMMs (for compatibility with the updated
+      \code{stats::weighted.residuals()} in R-devel), and properly
+      accounts for \code{na.action} choices
     } % itemize
   } % bug fixes
   \subsection{NEW FEATURES}{

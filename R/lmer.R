@@ -2430,8 +2430,12 @@ weights.merMod <- function(object, type = c("prior","working"), ...) {
     ## could cause real problems.  see for example:
     ## https://github.com/lme4/lme4/issues/166
 
-    ## FIXME:  what to do about missing values (see stats:::weights.glm)?
     ## FIXME:  add unit tests
+    ##   specifically:
+    ##   * expected behaviour when na.action is na.exclude vs na.omit and
+    ##    there are NAs in data
+    ##   * that type = "working" returns all 1s for LMMs
+    
     return(res)
 }
 
