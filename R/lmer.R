@@ -2416,6 +2416,7 @@ summary.summary.merMod <- function(object, varcov = TRUE, ...) {
 ##' @importFrom stats weights
 ##' @S3method weights merMod
 weights.merMod <- function(object, type = c("prior","working"), ...) {
+  #browser()
     type <- match.arg(type)
     res <- if (type == "prior") object@resp$weights else object@pp$Xwts^2
     napredict(na.action(object), res)
@@ -2429,12 +2430,6 @@ weights.merMod <- function(object, type = c("prior","working"), ...) {
     ## reference class fields not being updated at the optimum, then this
     ## could cause real problems.  see for example:
     ## https://github.com/lme4/lme4/issues/166
-
-    ## FIXME:  add unit tests
-    ##   specifically:
-    ##   * expected behaviour when na.action is na.exclude vs na.omit and
-    ##    there are NAs in data
-    ##   * that type = "working" returns all 1s for LMMs
     
     return(res)
 }
