@@ -122,7 +122,7 @@ opts_chunk$set(engine='R',dev='pdf',fig.width=10,
                ## strip.white=all,
                error=FALSE, ## stop on error
                cache=TRUE,tidy=FALSE,comment=NA)
-@
+@ 
 \begin{document}
 \section{Introduction}
 \label{sec:intro}
@@ -543,7 +543,6 @@ xyplot(as.vector(dmat) ~ rep.int(zm$zvals, ncol(dmat))|gl(ncol(dmat), nrow(dmat)
   \caption{Comparison of univariate integrands (solid line) and standard normal density function (dashed line)}
   \label{fig:densities}
 \end{figure}
- \bmb{consider Q-Q plots to emphasize deviations from normality?}
 As we can see from this figure, the univariate integrands are very
 close to the standard normal density, indicating that the Laplace
 approximation to the deviance is a good approximation in this case.
@@ -742,17 +741,12 @@ Here we illustrate that, as in \code{glm}, we can specify
 a binomial response by a proportion and use the \code{weights}
 argument to specify the sample size, instead of the slightly
 more typical \code{cbind(successes,failures)} format.
-We use the \code{bobyqa} optimizer instead of the default Nelder-Mead
-optimizer because \code{glmer} warns us that the gradients of the
-converged model are worryingly large. \bmb{We can get rid of this
-if we change the default to bobyqa before we submit the paper \ldots
-should we comment on how to check the gradient elements?}
+\al{Note that the \code{bobyqa} optimizer is the default for \code{glmer}.}
 
 <<cbppModelI,dependson="newcbpp">>=
 gm1 <- glmer(incidence/size ~ period + treatment + avg_size + (1 | herd),
              family = binomial,
-             data = cbpp2, weights = size,
-             control=glmerControl(optimizer="bobyqa"))
+             data = cbpp2, weights = size)
 @
 
 <<cbpp_diag,eval=FALSE,echo=FALSE>>=
@@ -892,14 +886,14 @@ grid.arrange(dd$herd,qq$herd,ncol=2)
 @
 
 \al{
-Additionally, \code{performance::check_model()} checks for classical assumptions 
+Additionally, \code{performance::check\_model()} checks for classical assumptions 
 used for most linear models: normality of residuals, linear relationship, 
 homogeneity of variance, and outliers. For mixed-effect models, it also checks 
 for normality of random effects. The uncommonly used posterior predictive checks 
 is meant to see whether the distributional family used fits well to the data.
 }
 
-<<perf_chk_mod_cbpp,fig.cap="TO WRITE...",fig.width=5,fig.height=5,echo=FALSE>>=
+<<perf_chk_mod_cbpp,fig.cap="TO WRITE...",fig.height=10,echo=FALSE>>=
 check_model(gm1)
 @
 
