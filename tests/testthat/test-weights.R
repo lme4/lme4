@@ -11,6 +11,10 @@ test_that("weights for lmer is always 1", {
   expect_equal(length(wgt_default), nrow(sleepstudy))
   expect_equal(length(wgt_prior), nrow(sleepstudy))
   expect_equal(length(wgt_working), nrow(sleepstudy))
+  ## checking it is indeed always a vector of 1
+  expect_equal(wgt_default, rep(1, nrow(sleepstudy)))
+  expect_equal(wgt_prior, rep(1, nrow(sleepstudy)))
+  expect_equal(wgt_working, rep(1, nrow(sleepstudy)))
 })
 
 test_that("testing na.action", {
