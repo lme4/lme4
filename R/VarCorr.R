@@ -12,6 +12,7 @@
 ##' @export
 mkVarCorr <- function(sc, cnms, nc, theta, nms, reCovs = NULL, 
                       full_cor = NULL, is_lmm = NULL) {
+  #browser()
   if (is.null(reCovs)) {
     ncseq <- seq_along(nc)
     thl <- split(theta, rep.int(ncseq, (nc * (nc + 1))/2))
@@ -47,7 +48,16 @@ mkVarCorr <- function(sc, cnms, nc, theta, nms, reCovs = NULL,
     } else {
       corr <- matrix(NaN)
     }
-    structure(val, stddev = stddev, correlation = corr)
+    ## adding more information depending on the covariance type
+    if(inherits(reCovs[[i]], "Covariance.ar1") 
+       || inherits(reCovs[[i]], "Covariance.cs")){
+      structure(val, stddev = stddev, correlation = corr,
+                theta = getTheta(reCovs[[i]]), profpar = getProfPar(reCovs[[i]]),
+                rho = getVC(reCovs[[i]])$ccomp)
+    } else {
+      structure(val, stddev = stddev, correlation = corr,
+                theta = getTheta(reCovs[[i]]), profpar = getProfPar(reCovs[[i]]))
+    }
   })
   for(j in seq_along(ans)){
     reCov <- reCovs[[j]]

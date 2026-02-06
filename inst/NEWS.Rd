@@ -60,6 +60,8 @@
       followed by correlation/covariance values (these were
       previously presented in "lower-triangular columnwise" order, with
       standard-deviation and correlation values interspersed)
+      \item added \code{theta}, \code{profpar} and if applicable, \code{rho} 
+      attributes to the output of \code{VarCorr()}.
     } % itemize
   } % user-visible changes
 } % 2.0-0
