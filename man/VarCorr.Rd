@@ -55,6 +55,13 @@
   residual standard deviation is stored as attribute
   \code{"sc"} (for \code{glmer} fits, this attribute stores
   the scale parameter of the model).
+  
+  Users may also access the attributes \code{"theta"} and 
+  \code{"rho"} (if applicable) which is explained in greater 
+  detail within the covariance structures vignette, and 
+  \code{"profpar"}, which is a different parameterization 
+  of \code{"theta"} but suitable for profiling.
+
 
 The \code{as.data.frame} method produces a combined data frame with one
 row for each variance or covariance parameter (and a row for the
