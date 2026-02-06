@@ -2416,7 +2416,6 @@ summary.summary.merMod <- function(object, varcov = TRUE, ...) {
 ##' @importFrom stats weights
 ##' @S3method weights merMod
 weights.merMod <- function(object, type = c("prior","working"), ...) {
-  #browser()
     type <- match.arg(type)
     res <- if (type == "prior") object@resp$weights else object@pp$Xwts^2
     napredict(na.action(object), res)
