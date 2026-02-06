@@ -66,3 +66,19 @@ test_that("floating-point issues -> NaN dev resids", {
     r <- residuals(res, type="deviance")
     expect_equal(unname(r[3]), 0)
 })
+
+test_that("weighted residuals", {
+    ss <- sleepstudy
+    ## make sure napredict() is exercised
+    ss$Reaction[1] <- NA_real_
+    fm1 <- lmer(Reaction ~ 1 + (1|Subject), ss, na.action = na.exclude)
+    expect_equal(head(weighted.residuals(fm1), 3),
+                 structure(c(NA, -86.4020327538219, -94.3061327538219), names = c(NA, "2", "3")))
+
+    gm1 <- glmer(round(Reaction) ~ 1 + (1|Subject), ss, na.action = na.exclude,
+                 family = poisson)
+    expect_equal(head(weighted.residuals(gm1), 3),
+                 structure(c(NA, -4.9271857060919, -5.35397661950064), names = c(NA, "2", "3")))
+
+
+})
