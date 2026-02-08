@@ -27,7 +27,7 @@ test_that("testing na.action", {
                       na.action = na.omit)
 
   expect_equal(length(weights(fm1)), nrow(sleepstudy) - 1)
-  expect_equal(length(weights(fm1.exclude)), nrow(sleepstudy) - 1)
+  expect_equal(length(weights(fm1.exclude)), nrow(sleepstudy))
   expect_equal(length(weights(fm1.omit)), nrow(sleepstudy) - 1)
   ## this is not necessarily for weights, but to ensure na.exclude and na.omit
   ## are acting as expected/
@@ -45,6 +45,6 @@ test_that("testing na.action", {
   gm1.omit <- glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
                     data = cbpp3, family = binomial, na.action = na.omit)
   expect_equal(length(weights(gm1)), nrow(cbpp) - 1)
-  expect_equal(length(weights(gm1.exclude)), nrow(cbpp) - 1)
+  expect_equal(length(weights(gm1.exclude)), nrow(cbpp))
   expect_equal(length(weights(gm1.omit)), nrow(cbpp) - 1)
 })
