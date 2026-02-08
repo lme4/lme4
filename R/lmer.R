@@ -1681,7 +1681,9 @@ hatvalues.merMod <- function(model, fullHatMatrix = FALSE, ...) {
     ## FIXME:  add restriction for NLMMs?
 
     ## prior weights, W ^ {1/2} :
-    sqrtW <- Diagonal(x = sqrt(weights(model, type = "prior")))
+    ## weights() will restore NA values if na.action = na.exclude,
+    ##  need to drop them for now and restore at the end
+    sqrtW <- Diagonal(x = na.omit(sqrt(weights(model, type = "prior"))))
     vList <- getME(model, c("L", "Lambdat", "Zt", "RX", "X", "RZX"))
     ## CL:= right factor of the random-effects component of the hat matrix  (64)
     CL <- with(vList,
