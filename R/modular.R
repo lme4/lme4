@@ -546,11 +546,6 @@ updateStart <- function(start, par) {
                        "start"),
               domain = NA)
 }
-if (.lme4.work.around.blme) {
-    ## pro tem: accommodate 'blme' which depends on names(formals(.))
-    names(formals(updateStart)) <- c("start", "theta")
-    body(updateStart) <- do.call(substitute, list(body(updateStart), list(par = quote(theta))))
-}
 
 ##' @rdname modular
 ##' @param fr A model frame containing the variables needed to create an
@@ -605,12 +600,6 @@ mkLmerDevfun <- function(fr, X, reTrms, REML = TRUE, start = NULL,
     devfun <- function(par)
         .Call(lmer_Deviance, pp$ptr(), resp$ptr(), mkTheta(as.double(par)))
     environment(devfun) <- rho
-    if (.lme4.work.around.blme || .lme4.work.around.lmerTest) {
-        ## pro tem: accommodate 'blme', 'lmerTest' which depend on
-        ## names(formals(.))
-        names(formals(devfun)) <- "theta"
-        body(devfun) <- do.call(substitute, list(body(devfun), list(par = quote(theta))))
-    }
 
     # if all random effects are of the form 1|f and starting values not
     # otherwise provided (and response variable is present, i.e. not doing
