@@ -2418,7 +2418,7 @@ summary.summary.merMod <- function(object, varcov = TRUE, ...) {
 weights.merMod <- function(object, type = c("prior","working"), ...) {
     type <- match.arg(type)
     res <- if (type == "prior") object@resp$weights else object@pp$Xwts^2
-    napredict(na.action(object), res)
+    res <- napredict(na.action(object), res)
 
     ## the working weights available through pp$Xwts should be
     ## equivalent to:
