@@ -1,14 +1,3 @@
-## pro tem:
-## e.g., for 'blme':
-## $ LME4_WORK_AROUND_BLME=false R CMD INSTALL lme4_2.0-0.tar.gz
-## $ R CMD check blme_1.0-6.tar.gz # broken
-## $ LME4_WORK_AROUND_BLME=true  R CMD INSTALL lme4_2.0-0.tar.gz
-## $ R CMD check blme_1.0-6.tar.gz # ok
-.lme4.work.around.blme <-
-    isTRUE(as.logical(Sys.getenv("LME4_WORK_AROUND_BLME"    , "false")))
-.lme4.work.around.lmerTest <-
-    isTRUE(as.logical(Sys.getenv("LME4_WORK_AROUND_LMERTEST", "false")))
-
 ### Class definitions for the package
 
 ##' Class "lmList4" of 'lm' Objects on Common Model
