@@ -68,6 +68,7 @@ test_that("floating-point issues -> NaN dev resids", {
 })
 
 test_that("weighted residuals", {
+    if (as.package_version(R.Version()) <= "4.5.2") skip()
     ss <- sleepstudy
     ## make sure napredict() is exercised
     ss$Reaction[1] <- NA_real_
