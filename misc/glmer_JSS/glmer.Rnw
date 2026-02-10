@@ -1110,7 +1110,7 @@ vc_mat$herd
   \end{itemize}
 }
 
-\citet{steele_et_al_1996} use multilevel models to analyze data from a
+\citet{huq1990bangladesh} use multilevel models to analyze data from a
 fertility survey of women in Bangladesh. These data are available as
 the \code{Contraception} object in the \pkg{mlmRev} package. The
 response variable is binary and indicates whether or not each woman
