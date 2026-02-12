@@ -240,9 +240,35 @@ $\Var(\mc Y|\mc U=\bm u)$, as a function of the conditional mean and,
 possibly, a separate scale factor. (In the most common cases the conditional
 variance is completely determined by the conditional mean.) 
 
-\bmb{Discuss prior weights more thoroughly; mention offsets}
-Prior
-weights can also be incorporated in the sense \ldots
+\al{
+Assuming that the form of the conditional distribution is from an exponential 
+dispersion model (exponential, gamma, Poisson, binomial, and negative binomial),
+we can weight observations differently by scaling the dispersion parameter, 
+$\phi$. These \textbf{prior weights},  $\bm w$, a vector of size $n$, are known 
+positive constants.
+
+By scaling the dispersion parameters, we also modify the conditional variance. 
+Consider the form, where $i = 1, 2, \dots, n$:
+\begin{equation}
+  \text{Var}(\mc Y_i|\mc U=\bm u) = \frac{\phi}{w_i} \Var(\mu_i)
+\end{equation}
+where $\Var(\mu_i)$ is the family-specific variance function. 
+Higher weights indicate a smaller variance.
+
+If prior weights are not specified, by default $\bm w$ is just a vector of 1.
+
+Another common implementation when dealing with generalized linear mixed models
+is an \textbf{offset}, which are an efficient way to include known scaling 
+factors (like population or area) without introducing additional parameters to 
+the model.
+
+In particular, the inclusion of an offset would modify the linear predictor 
+as follows:
+\begin{equation}
+  \label{eq:GLMMoffset}
+  \bm\eta=\bm Z\bm b+\bm X\bm\beta + \text{offset}.
+\end{equation}
+}
 
 \bmb{Scale factor??? We know that they're inconsistently
 incorporated in the code, but are there theoretical issues
@@ -633,14 +659,9 @@ used specifically to describe analyses of Bernoulli responses, but
 in this case there are multiple trials per observation [cows that
 could become seropositive], and so a dispersion or scale parameter
 can be estimated); (2) a GLMM implemented in \code{lme4}; and a
-(3) Markov chain Monte Carlo algorithm \bmb{[CITE Zeger and Karim 1991] as L+2004 do?}, which as they state allows
-for a non-parametric rather than a Normal model for the random effects.
-\bmb{I can't find any evidence of what they \emph{actually} did in 
-the paper: there is no code or description of the MCMC algorithm.
-Z\&K point out that you can use a Normal distribution for the
-random effects, or use rejection sampling to allow a non-Normal
-distribution, but we don't know what L+2004 actually used \ldots is
-it worth asking them?}
+(3) Markov chain Monte Carlo algorithm \citet{zeger1991generalized}, 
+which as they state allows for a non-parametric rather than a Normal model 
+for the random effects.
 The authors did not find any significant effects of treatment,
 ascribing the null results to 
 ``a lack of power in the statistical analyses or to a quality problem for the medications used (and more generally, for health-care delivery in the Boji district).''
@@ -674,23 +695,19 @@ cbpp2 <- transform(cbpp2,period=factor(period),
                    treatment=factor(treatment,
                    levels=c("Partial/null","Complete","Unknown")))
 @
-\bmb{There appears to be a typo in Table 1; herd 6
-in the table has \{N,INC\} pairs (i.e. initial size
-and percentage incidence of
-P1=\{14,14\}; P2=\{[blank],12\}; P3=\{25,[blank]\};
-P4=\{9,44\}).                                  
-Herd 1 in the \code{cbpp} data set, which seems
-to be the corresponding one, has
-\{size, incidence\} pairs:
-P1=\{2,14\}; P2=\{3,12\}; P3=\{4,9\};
-P4=\{0,5\}. This corresponds to incidences of
-14, 25, 44, 0  which would match the values in the
-table if we assume that there are a couple of spurious
-blanks in the table, \emph{and} that there was zero
-incidence in P4 for this herd.  We should check
-with (1) DMB (where did he originally get these data?)
-and (2) the authors (we want to ask them about their
-MCMC algorithm anyway  \ldots)
+
+\al{
+Note that Table 1 of \cite{lesnoff_within-herd_2004} contains a known
+typographical error for herd 6. Consequently, results obtained using
+the \code{cbpp} data set may not exactly reproduce some of the findings
+reported in that paper.
+
+Furthermore, \code{lme4} includes two variants of the \code{cbpp}
+data set. The second variant, \code{cbpp2}, contains corrected values
+corresponding to Table~1 of \cite{lesnoff_within-herd_2004}. Although
+the precise provenance of these data sets is unclear, the \code{cbpp}
+data set matches the version held by the corresponding author of
+\cite{lesnoff_within-herd_2004}.
 }
 
 \bmb{This is the simple example.
