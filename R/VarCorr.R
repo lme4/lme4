@@ -43,7 +43,7 @@ function(sc, cnms, nc, theta, nms, reCovs = NULL,
         else
             Si.cor <- matrix(NaN)
         typ0 <- typ1 <- sub("^Covariance[.]", "", class(object))
-        switch(typ0,
+        switch(typ0, # respecting the conventions of, e.g., glmmTMB:
                "cs"  = if ( object@hom) typ1 <- "homcs",
                "ar1" = if (!object@hom) typ1 <- "hetar1")
         class(Si) <- c(paste0("vcmat_", typ1), "matrix", "array")
