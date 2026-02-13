@@ -200,6 +200,12 @@ setGeneric("getProfUpper",
            },
            signature = "object")
 
+setGeneric("isSingular",
+           ## S4 default method dispatching S3 methods:
+           function (object, tol = getSingTol())
+               UseMethod("isSingular"),
+           signature = "object")
+
 
 ## .... METHODS ........................................................
 
@@ -287,7 +293,7 @@ setMethod("getParLength",
           function (object)
               length(object@par))
 
-## cnm: column names (i.e. effect names)
+## cnm: column names (i.e., effect names)
 ## gnm: group name
 ## prf: prefix
 setMethod("getParNames",
@@ -1154,45 +1160,51 @@ setMethod("getProfUpper",
 
 rm(.fn)
 
-isSingular <- function(object, tol = getSingTol()){
-  UseMethod("isSingular")
-}
+setMethod("isSingular",
+          c(object = "Covariance.us"),
+          function (object, tol = getSingTol()) {
+              nc <- object@nc
+              if (nc > 0L) {
+                  ii <- cumsum(c(1L, if (nc > 1L) nc:2L))
+                  min(object@par[ii]) < tol
+              }
+              else FALSE
+          })
 
-# add documentation for a recov, a singular covariance object
-isSingular.Covariance.us <- function(object, tol = getSingTol()){
-  theta <- getTheta(object)
-  lwr <- getLower(object)
-  any(theta[lwr == 0] < tol)
-}
+setMethod("isSingular",
+          c(object = "Covariance.diag"),
+          function (object, tol = getSingTol()) {
+              nc <- object@nc
+              if (nc > 0L)
+                  min(object@par) < tol
+              else FALSE
+          })
 
-isSingular.Covariance.diag <- function(object, tol = getSingTol()){
-  theta <- getTheta(object)
-  any(theta < tol)
-}
+setMethod("isSingular",
+          c(object = "Covariance.cs"),
+          function (object, tol = getSingTol()) {
+              nc <- object@nc
+              if (nc > 0L) {
+                  vc <- getVC(object)
+                  vcomp <- vc$vcomp
+                  ccomp <- vc$ccomp # rho
+                  min(vcomp) < tol || (nc > 1L && min(ccomp - -1/(nc - 1L), 1 - ccomp) < tol)
+              }
+              else FALSE
+          })
 
-isSingular.Covariance.cs <- function(object, tol = getSingTol()){
-  nc <- object@nc
-  ## if nc <= 0L then we should have "singular fit" issues
-  if(nc <= 0L)return(TRUE)
-  ## if rho, found in ccomp, is on the boundary then there's an issue
-  rho <- abs(getVC(object)$ccomp)
-  if((rho > (1 - tol)) || (rho < -1 + tol))return(TRUE)
-  ## standard any(theta[lower ==0] ==0)
-  if(object@hom){
-    ## temp_lwr doesn't actually represent getLower() but this emulates
-    ## the original isSingular
-    temp_lwr <- rep(c(1, 0), length.out  = nc*2-1)
-    theta <- getTheta(object)
-  } else {
-    temp_lwr <- rep(1, length.out = nc * (nc + 1) / 2)
-    diag_positions <- c(1, cumsum(nc:2) + 1)
-    temp_lwr[diag_positions] <- 0
-    theta <- getTheta(object)
-  }
-  return(any(abs(theta[temp_lwr == 0]) < tol))
-}
-
-isSingular.Covariance.ar1 <- isSingular.Covariance.cs
+setMethod("isSingular",
+          c(object = "Covariance.ar1"),
+          function (object, tol = getSingTol()) {
+              nc <- object@nc
+              if (nc > 0L) {
+                  vc <- getVC(object)
+                  vcomp <- vc$vcomp
+                  ccomp <- vc$ccomp # rho
+                  min(vcomp) < tol || (nc > 1L && 1 - abs(ccomp) < tol)
+              }
+              else FALSE
+          })
 
 
 ## .... HELPERS ........................................................
@@ -1569,4 +1581,14 @@ setMethod("getProfUpper",
               L <- lapply(reCovs, getProfUpper, profscale = profscale)
               c(L, if (!is.null(sc)) Inf,
                 recursive = TRUE, use.names = FALSE)
+          })
+
+setMethod("isSingular",
+          c(object = "merMod"),
+          function (object, tol = getSingTol()) {
+              reCovs <- getReCovs(object)
+              for (object in reCovs)
+                  if (isSingular(object, tol = tol))
+                      return(TRUE)
+              FALSE
           })
