@@ -998,6 +998,16 @@ the computational cost of profiling, it makes sense to compute
 and save the profile as an intermediate step if one plans to
 do anything other than computing confidence intervals.)
 
+\al{
+Other two methods that are commonly employed to compute confidence intervals 
+is the classical Wald method (\code{method = "Wald"}) and parametric 
+bootstrapping method (\code{method = "boot"}), although the Wald method is used
+for fixed effects parameters only.
+
+All three of these confidence intervals are compared against each other
+in Figure~\ref{fig:confPlot}. (Should comments be made about the comparison?)
+}
+
 <<cbppConfidenceCalc,eval=FALSE,echo=FALSE>>=
 profile.gm2 <- profile(gm2,signames=FALSE)
 profile.gm3 <- profile(gm3,signames=FALSE)
@@ -1149,7 +1159,8 @@ xyplot(ifelse(use == "Y", 1, 0) ~ age|urban, Contraception,
        auto.key = list(space = "top", points = FALSE,
        lines = TRUE, columns = 4),
        ylab = "Proportion", xlab = "Centered age")
-Contraception <- within(Contraception, facet_urban<- ifelse(urban=="Y","Urban","Rural"))
+Contraception <- within(Contraception, 
+                        facet_urban<- ifelse(urban=="Y","Urban","Rural"))
 ggplot(Contraception) + 
     geom_smooth(aes(age, ifelse(use == "Y",1,0), linetype = livch),
                 method = "gam", se = FALSE,
@@ -1205,15 +1216,20 @@ anova(cm1,cm2,cm3,cm4,cm5,cm6)
 
 \section{Future directions}
 
+\al{
+
+\code{lme4} does support fitting negative binomial GLMMs, however, instead
+of using \code{glmer}, the user must use the \code{glmer.nb} function 
+instead. That being said, there are some parts in \code{glmer.nb} that
+are still experimental and under development, whereas fitting negative binomial 
+GLMMs are better implemented in \code{glmmTMB}.
+
+}
+
 \bmb{Cute stuff at the end to make ourselves feel better/future plans:
 \begin{itemize}
-\item anything inherited from lmer framework: Julia, pureR? improved 
-  linear algebra? special-case optimizations?
 \item holes: AGQ for vector-valued (?) RE, condVar for vector-valued RE
-\item reinstating mcmcsamp?
 \item flexLambda
-\item NB, by nesting or by augmented parameter vector
-\item zero-inflation by E-M
 \end{itemize}}
 
 \bibliography{glmer}
