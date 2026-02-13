@@ -1087,44 +1087,36 @@ homogeneous and heterogeneous forms are available for diagonal, compound
 symmetric, and AR1 structures; by default, AR1 is assumed homogeneous, while 
 the others are heterogeneous.
 
-Although the following analysis is not necessarily optimal for this data set, 
-it serves to illustrate usage. The AR1 examples use a different grouping factor
-to emphasize that AR1 structures are typically applied when time is the grouping 
-factor.
-
-TODO: write a better example since the variane covariance matrix below is just
-of size 1
+The unstructured covariance structure is the default for mixed models. 
+Here we illustrate fitting an AR1 model. Diagonal and compound symmetric
+models are shown in the next example.
 }
 
-<<covar_cbpp>>=
-gm1.diag <- glmer(incidence/size ~ period + treatment + avg_size 
-                  + diag(1 | herd),
-                  family = binomial, data = cbpp2, weights = size)
-gm1.cs <- glmer(incidence/size ~ period + treatment + avg_size 
-                + cs(1 | herd),
-                family = binomial, data = cbpp2, weights = size)
-gm1.homcs <- glmer(incidence/size ~ period + treatment + avg_size 
-                   + cs(1 | herd, hom = TRUE),
-                  family = binomial, data = cbpp2, weights = size)
-gm1.ar1 <- glmer(incidence/size ~ treatment + avg_size + ar1(1 | period),
-                family = binomial, data = cbpp2, weights = size)
-gm1.hetar1 <- glmer(incidence/size ~ treatment + avg_size 
-                 + ar1(1 | period, hom = FALSE),
-                family = binomial, data = cbpp2, weights = size)
+<<load_cm_varcorr,echo=FALSE>>=
+varcorr_vals <- load("glmer_cm_vc.RData")
+@
 
+<<covar_cbpp>>=
+gm.ar1 <- glmer(incidence/size ~ ar1(1 + herd | period),
+                family = binomial,
+                data = cbpp, weights = size)
 @
 
 \al{
+To fit a heterogeneous structure, use \code{ar1(..., hom = FALSE)}. 
+This isn't demonstrated here because it would cause a singular fit with 
+the \code{cbpp} data set.
+
 Exact details of the implementation can be found in the \code{lme4} covariance 
 structure vignette. For now, we elaborate on how one can extract the 
-variance-covariance matrix for each grouping term using \code{VarCorr()}.
+variance-covariance matrix for the specific grouping term \code{period} using 
+\code{VarCorr}.
 }
 
 <<getReCovs_cbpp>>=
-vc_mat <- VarCorr(gm1)
-vc_mat$herd
+vc_mat <- VarCorr(gm.ar1)
+vc_mat$period
 @
-
 
 \subsection{Contraception}
 \bmb{This is the complex example. DB has used this example a lot,
@@ -1145,7 +1137,6 @@ was using contraception at the time of the survey. Covariates included
 the woman's age, the number of live children she had, whether she
 lived in an urban or rural setting, and the district in which she
 lived.
-
 
 
 <<loadContraception, echo=FALSE>>=
@@ -1214,6 +1205,74 @@ print(summary(cm6 <- glmer(use ~ age*ch + I(age^2) + urban + (1|urban:district),
 anova(cm1,cm2,cm3,cm4,cm5,cm6)
 @ 
 
+\al{
+Similar to the CBPP data set, we will provide a demonstration of computing 
+profile, Wald, and bootstrapping confidence intervals for one of the models to
+understand the effect of each variable.}
+
+<<ContraceptionBatch,eval=FALSE,echo=FALSE>>=
+load(file="glmer_bootbatch2.RData")
+load(file="glmer_profbatch2.RData")
+@
+
+<<ContraceptionConfidenceCalc,eval=FALSE,echo=FALSE>>=
+## see the file glmer_contraception_batch.R...
+confint.boot.cm3 <- confint(cm3,method="boot",seed=101,nsim=501)
+profile.cm3 <- profile(cm3,signames=FALSE)
+confint.prof.cm3 <- confint(profile.cm3)
+rownames(confint.boot.cm3)[1] <- rownames(confint.prof.cm3)[1]
+@
+
+<<ContraceptionConfidenceSetup,echo=FALSE>>=
+contCI0 <- do.call(rbind,
+                   mapply(mfun,list(confint.prof.cm3,confint.boot.cm3,
+                                    confint.wald.cm3),
+                          c("profile","boot","Wald"),SIMPLIFY=FALSE))
+v <- as.data.frame(VarCorr(cm3))
+vnames <- paste0("sd_",v$var1,"|",v$grp)
+contEst <- c(fixef(cm3),setNames(v$sdcor,vnames))
+contEst2 <- data.frame(var=names(contEst),est=contEst,row.names=NULL)
+contCI <- merge(dcast(contCI0,var+type~variable),contEst2,all.x=TRUE)
+contCI <- transform(contCI,var=factor(var,levels=as.character(contEst2$var)))
+contCI <- subset(contCI,var!="(Intercept)")
+@
+
+<<confPlot2,fig.cap="Contraception example: comparison of point and confidence interval estimation for different methods",fig.scap="Contraception comparison",echo=FALSE,fig.width=7,fig.height=3.5>>=
+ggplot(contCI,aes(var,est,colour=type))+
+  geom_pointrange(aes(ymin=lwr,ymax=upr),
+                  position=position_dodge(width=0.2))+
+  labs(x="",y="Estimate")+
+  geom_hline(yintercept=0,lty=2)+
+  coord_flip()+
+  scale_colour_brewer(palette="Dark2")
+@
+
+\al{
+We may also impose a different underlying variance-covariance structure. 
+Consider the following models, where \code{diag} enforces a diagonal 
+variance-covariance structure, and \code{cs} enforces a compound symmetric model:
+}
+
+<<cm_varcorr,eval=FALSE,echo=FALSE>>=
+cm.diag <- glmer(use ~ diag(1 + age|district), Contraception, binomial)
+cm.hetdiag <- glmer(use ~ diag(1 + age|district, hom = FALSE), 
+                 Contraception, binomial)
+cm.cs <- glmer(use ~ cs(1 + age|district), Contraception, binomial)
+cm.hetcs <- glmer(use ~ cs(1 + age|district, hom = FALSE), Contraception, binomial)
+@
+
+<<cm_varcorr_view>>=
+vc.diag <- VarCorr(cm.diag)
+vc.hetdiag <- VarCorr(cm.hetdiag)
+vc.cs <- VarCorr(cm.cs)
+vc.hetcs <- VarCorr(cm.hetcs)
+
+vc.diag$district
+vc.hetdiag$district
+vc.cs$district
+vc.hetcs$district
+@
+
 \section{Future directions}
 
 \al{
@@ -1229,8 +1288,11 @@ GLMMs are better implemented in \code{glmmTMB}.
 \bmb{Cute stuff at the end to make ourselves feel better/future plans:
 \begin{itemize}
 \item holes: AGQ for vector-valued (?) RE, condVar for vector-valued RE
-\item flexLambda
 \end{itemize}}
+
+\al{
+Need to ask the above for more details....
+}
 
 \bibliography{glmer}
 

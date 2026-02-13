@@ -62,6 +62,19 @@ confint.wald.cm6 <- confint(cm6,method="Wald",seed=101,nsim=501)
 
 # verify the list pattern before running
 #save(list=c(ls(pattern="confint.wald.*"),
-#            ls(pattern="profile.*")),
+#            ls(pattern="profile.*"),
+#            ls(pattern="confint.prof.*")),
 #     file="glmer_profbatch2.RData")
 
+gm.ar1 <- glmer(incidence/size ~ ar1(1 + herd | period),
+                family = binomial,
+                data = cbpp, weights = size)
+cm.diag <- glmer(use ~ diag(1 + age|district), Contraception, binomial)
+cm.hetdiag <- glmer(use ~ diag(1 + age|district, hom = FALSE), 
+                    Contraception, binomial)
+cm.cs <- glmer(use ~ cs(1 + age|district), Contraception, binomial)
+cm.hetcs <- glmer(use ~ cs(1 + age|district, hom = FALSE), Contraception, binomial)
+
+# verify the list pattern before running
+save("gm.ar1", "cm.diag", "cm.hetdiag", "cm.cs", "cm.hetcs",
+     file="glmer_cm_vc.RData")
