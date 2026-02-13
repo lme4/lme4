@@ -10,80 +10,65 @@
 ##' @seealso \code{\link{VarCorr}}
 ##' @return A matrix
 ##' @export
-mkVarCorr <- function(sc, cnms, nc, theta, nms, reCovs = NULL, 
-                      full_cor = NULL, is_lmm = NULL) {
-  #browser()
-  if (is.null(reCovs)) {
-    ncseq <- seq_along(nc)
-    thl <- split(theta, rep.int(ncseq, (nc * (nc + 1))/2))
-  }
-  else
-    ncseq <- seq_along(reCovs)
-  if(!all(nms == names(cnms))) ## the above FIXME
-    warning("nms != names(cnms)  -- whereas lme4-authors thought they were --\n",
-            "Please report!", immediate. = TRUE)
-  ans <- lapply(ncseq, function(i)
-  {
-    ## Li := \Lambda_i, the i-th block diagonal of \Lambda(\theta)
-    if (is.null(reCovs)) {
-      Li <- diag(nrow = nc[i])
-      Li[lower.tri(Li, diag = TRUE)] <- thl[[i]]
+mkVarCorr <-
+function(sc, cnms, nc, theta, nms, reCovs = NULL,
+         full_cor = NULL, is_lmm = NULL) {
+    if (!identical(nms, names(cnms)))
+        warning("names(cnms) and 'nms' are not identical; please report",
+                immediate. = TRUE)
+    if (is.null(reCovs))
+        reCovs <- .mapply(new,
+                          list(nc = nc,
+                               par = split(theta, rep(seq_along(nc), (nc * (nc + 1L)) %/% 2L))),
+                          list(Class = "Covariance.us"))
+    ans <- lapply(seq_along(reCovs), function(i) {
+        ## Li := \Lambda_i, the i-th diagonal block of \Lambda(\theta)
+        ## Si := \sigma^2 \Lambda_i \Lambda_i'
+        object <- reCovs[[i]]
+        nci <- nc[i]
+        Li <- getLambda(object)
+        rownames(Li) <- cnms[[i]]
+        if (!(is.null(is_lmm) || is_lmm))
+            sc <- 1 # nonunit only for LMMs
+        jj <- seq.int(from = 1L, by = nci + 1L, length.out = nci)
+        Si <- sc * sc * tcrossprod(Li)
+        Si.sd <- sqrt(Si[jj])
+        if ((is.null(full_cor) && nci <= 20L) ||
+            is(object, "Covariance.ar1") ||
+            full_cor) {
+            ## FIXME: above condition is not quite right ...
+            Si.cor <- Si/Si.sd/rep(Si.sd, each = nci)
+            Si.cor[jj] <- 1
+        }
+        else
+            Si.cor <- matrix(NaN)
+        typ0 <- typ1 <- sub("^Covariance[.]", "", class(object))
+        switch(typ0,
+               "cs"  = if ( object@hom) typ1 <- "homcs",
+               "ar1" = if (!object@hom) typ1 <- "hetar1")
+        class(Si) <- c(paste0("vcmat_", typ1), "matrix", "array")
+        attr(Si, "stddev") <- Si.sd
+        attr(Si, "correlation") <- Si.cor
+        attr(Si, "theta") <- getTheta(object)
+        attr(Si, "profpar") <- getProfPar(object)
+        if (typ0 %in% c("cs", "ar1"))
+        attr(Si, "rho") <- if (nci > 1L) getVC(object)$ccomp else NaN
+        Si
+    })
+    if (is.character(nms)) {
+        ## FIXME:
+        ## Do we want this?  Maybe not.  'nms' are not necessarily
+        ## unique, e.g., 'fm2' from example("lmer") has *two* Subject
+        ## terms, so the names are "Subject", "Subject".  The 'print'
+        ## method for 'VarCorr.merMod' handles this just fine, but
+        ## it's a little awkward if we want to dig out components of
+        ## the list ...
+        if (anyDuplicated(nms))
+            nms <- make.names(nms, unique = TRUE)
+        names(ans) <- nms
     }
-    else
-      Li <- getLambda(reCovs[[i]])
-    rownames(Li) <- cnms[[i]]
-    # the scalar only applies for LMMs
-    if(!is.null(is_lmm) && is_lmm == FALSE){sc = 1}
-    # val := \Sigma_i = \sigma^2 \Lambda_i \Lambda_i', the
-    val <- tcrossprod(sc * Li) # variance-covariance 
-    stddev <- sqrt(diag(val))
-    ## if null, then only print the covariance matrix if nc <= 20.
-    ## 20 is an arbitrary threshold, but anything larger than that would likely
-    ## be too tedious to work with.
-    if((is.null(full_cor) && nc[[i]] <= 20)
-        || inherits(reCovs[[i]], "Covariance.ar1") 
-        || full_cor == TRUE){
-      corr <- t(val / stddev)/stddev
-      diag(corr) <- 1
-    } else {
-      corr <- matrix(NaN)
-    }
-    ## adding more information depending on the covariance type
-    if(inherits(reCovs[[i]], "Covariance.ar1") 
-       || inherits(reCovs[[i]], "Covariance.cs")){
-      structure(val, stddev = stddev, correlation = corr,
-                theta = getTheta(reCovs[[i]]), profpar = getProfPar(reCovs[[i]]),
-                rho = getVC(reCovs[[i]])$ccomp)
-    } else {
-      structure(val, stddev = stddev, correlation = corr,
-                theta = getTheta(reCovs[[i]]), profpar = getProfPar(reCovs[[i]]))
-    }
-  })
-  for(j in seq_along(ans)){
-    reCov <- reCovs[[j]]
-    cls <- sub("Covariance\\.", "", class(reCov))
-    ## There are separate vcmat_hetar1, vcmat_homcs classes
-    ## Inconsistent naming because AR1 default is typically homogenous,
-    ## CS default is heterogeneous (cf glmmTMB)
-    hom_status <- ""
-    if ("hom" %in% slotNames(reCov)) {
-      if (!reCov@hom && inherits(reCov, "Covariance.ar1")) hom_status <- "het"
-      if (reCov@hom && inherits(reCov, "Covariance.cs")) hom_status <- "hom"
-    }
-    class(ans[[j]]) <- c(paste0("vcmat_", hom_status, cls), class(ans[[j]]))
-  }
-  if(is.character(nms)) {
-    ## FIXME: do we want this?  Maybe not.
-    ## Potential problem: the names of the elements of the VarCorr() list
-    ##  are not necessarily unique (e.g. fm2 from example("lmer") has *two*
-    ##  Subject terms, so the names are "Subject", "Subject".  The print method
-    ##  for VarCorrs handles this just fine, but it's a little awkward if we
-    ##  want to dig out elements of the VarCorr list ... ???
-    if (anyDuplicated(nms))
-      nms <- make.names(nms, unique = TRUE)
-    names(ans) <- nms
-  }
-  structure(ans, sc = sc)
+    attr(ans, "sc") <- sc
+    ans
 }
 
 ## FIXME: automate this from list of known Covariance.* classes ... 
