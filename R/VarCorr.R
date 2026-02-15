@@ -13,9 +13,10 @@
 mkVarCorr <-
 function(sc, cnms, nc, theta, nms, reCovs = NULL,
          full_cor = NULL, is_lmm = NULL) {
-    if (!identical(nms, names(cnms)))
+    if (!identical(names(cnms), nms)) # FIXME? deprecate 'nms'
         warning("names(cnms) and 'nms' are not identical; please report",
                 immediate. = TRUE)
+    nc <- as.integer(nc)
     if (is.null(reCovs))
         reCovs <- .mapply(new,
                           list(nc = nc,
