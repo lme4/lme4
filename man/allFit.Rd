@@ -1,5 +1,6 @@
 \name{allFit}
 \alias{allFit}
+\alias{plot.fixef.allFit}
 \title{Refit a fitted model with all available optimizers to check convergence}
 \usage{
 allFit(object, meth.tab = NULL, data = NULL,
@@ -10,6 +11,14 @@ allFit(object, meth.tab = NULL, data = NULL,
        ncpus = getOption("allFit.ncpus", 1L), cl = NULL,
        catch.errs = TRUE,
        start_from_mle = TRUE)
+
+plot.fixef.allFit(allFit_output, select_predictors = NULL, nrow = NULL,
+                  x_title = "Estimate", y_title = "Optimizer", 
+                  show_x_title = TRUE, show_y_title = TRUE,
+                  inner_x_title = FALSE, inner_y_title = FALSE,
+                  show_intercept = TRUE, point_ranges = TRUE,
+                  conf.level = 0.95, decimal_points = NULL, 
+                  shared_x_axis_limits = FALSE, ...)
 }
 \arguments{
   \item{object}{a fitted model.}
@@ -43,6 +52,21 @@ allFit(object, meth.tab = NULL, data = NULL,
     useful for debugging).}
   \item{start_from_mle}{(logical) if \code{TRUE}, initialize the 
     refitting process using starting values from the model’s MLE.}
+  \item{allFit_output}{An object of class \code{allFit}, typically produced by \code{allFit()}}
+  \item{select_predictors}{character vector: names of specific predictors to plot (in addition to intercept)}
+  \item{nrow}{integer: number of rows for arranging predictor panels}
+  \item{x_title}{character: title for the x-axis (parameter values)}
+  \item{y_title}{character: title for the y-axis (optimizer names)}
+  \item{show_x_title}{logical: should the x-axis title be displayed? (default: TRUE)}
+  \item{show_y_title}{logical: should the y-axis title be displayed? (default: TRUE)}
+  \item{inner_x_title}{logical: should x-axis titles be shown on all plots? If FALSE (default), only bottom-most plots in each column show x-axis titles}
+  \item{inner_y_title}{logical: should y-axis titles be shown on all plots? If FALSE (default), only leftmost plots show y-axis titles}
+  \item{show_intercept}{logical: should the intercept term be included in the plot? (default: TRUE)}
+  \item{point_ranges}{logical: should confidence intervals be displayed as point ranges?}
+  \item{conf.level}{numeric: confidence level for point ranges (default: 0.95)}
+  \item{decimal_points}{integer: number of decimal points for rounding estimates (default: NULL, no rounding)}
+  \item{shared_x_axis_limits}{logical: should all subplots share the same x-axis limits? (default: FALSE)}
+  \item{...}{additional arguments passed to \code{tinyplot()}}
 }
 \value{
   an object of type \code{allFit}, which is a list of fitted \code{merMod} objects (unless \code{show.meth.tab} is
@@ -93,6 +117,16 @@ library(lme4)
   ss$fixef               ## table of fixed effects
   ss$sdcor               ## table of random effect SDs and correlations
   ss$theta               ## table of random effects parameters, Cholesky scale
+
+  ## Plot fixed effects from all optimizers
+  plot.fixef.allFit(gm_all)
+  
+  ## Plot with shared x-axis limits for easier comparison
+  plot.fixef.allFit(gm_all, shared_x_axis_limits = TRUE)
+  
+  ## Plot without intercept and with custom styling
+  plot.fixef.allFit(gm_all, show_intercept = FALSE, 
+                    point_ranges = TRUE, conf.level = 0.99)
 } %% interactive()
 \dontrun{
   ## Parallel examples for Windows
