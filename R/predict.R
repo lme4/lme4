@@ -66,22 +66,36 @@ get.orig.levs <- function(object, FUN=levels, newdata=NULL, sparse = FALSE, ...)
 ##' ## check that @resp and @pp are the only reference class slots ...
 ##' sapply(slotNames(fm1),function(x) class(slot(fm1,x)))
 setParams <- function(object, params, inplace=FALSE, subset=FALSE) {
-    pNames <- c("beta","theta")
-    if (object@devcomp$dims["useSc"]) pNames <- c(pNames, "sigma")
-    if (!is.list(params) || length(setdiff(names(params),pNames)) > 0)
+    pNames <- c("beta", "theta", "par")
+    if (object@devcomp$dims["useSc"]) {
+      pNames <- c(pNames, "sigma")
+    }
+    if (!is.list(params) || length(setdiff(names(params), pNames)) > 0)
         stop("params should be specifed as a list with elements from ",
              "{",paste(shQuote(pNames),collapse=", "),"}")
-    if (!subset && length(setdiff(pNames,names(params))) > 0) {
+    if (!subset && (is.null(params$beta) || (is.null(params$theta) && is.null(params$par)))) {
         warning("some parameters not specified in setParams()")
     }
     nbeta <- length(object@pp$beta(1))
     ntheta <- length(object@pp$theta)
-    if (!is.null(beta <- params$beta) && length(beta)!=nbeta)
-        stop("length mismatch in beta (",length(beta),
-             "!=",nbeta,")")
-    if (!is.null(theta <- params$theta) && length(theta)!=ntheta)
-        stop("length mismatch in theta (",length(theta),
-             "!=",ntheta,")")
+    npar <- getParLength(object)
+    
+    lengthTestFun <- function(nm, expected_len) {
+      x <- params[[nm]]
+      if (!is.null(x) && length(x) != expected_len) {
+        stop(sprintf("length mismatch in %s (%d != %d)",
+                     nm, length(x), expected_len))
+      }
+      return(x)
+    }
+
+    beta <- lengthTestFun("beta", nbeta)
+    if (!is.null(params$theta) && !is.null(params$par)) {
+      stop("should specify exactly one of 'theta' and 'par'")
+    }
+    theta <- lengthTestFun("theta", ntheta)
+    par <- lengthTestFun("par", npar)
+
     matchNames <- function(x,tn,vecname="theta") {
         if (!is.null(pn <- names(x))) {
             if (!setequal(pn,tn)) {
@@ -110,6 +124,9 @@ setParams <- function(object, params, inplace=FALSE, subset=FALSE) {
         if (!is.null(beta)) {
             newObj@pp$setBeta0(beta)
             newObj@beta <- beta
+        }
+        if (!is.null(par)) {
+          object <- setProfPars(object, par)
         }
         if (!is.null(theta)) {
             ## where does theta live and how do I set it?
@@ -699,7 +716,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     stopifnot((nsim <- as.integer(nsim[1])) > 0,
               is(object, "merMod"))
     if (!is.null(newparams)) {
-        object <- setParams(object,newparams)
+        object <- setParams(object, newparams)
     }
 
     if (!missing(use.u)) {
