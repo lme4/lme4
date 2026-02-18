@@ -5,13 +5,13 @@
 \alias{as.data.frame.VarCorr.merMod}
 \alias{print.VarCorr.merMod}
 \usage{
-\method{VarCorr}{merMod}(x, sigma=1, full_cor = NULL, \dots)
+\method{VarCorr}{merMod}(x, sigma = 1, full_cor = NULL, \dots)
 
 %% documented because of "surprising arguments":
-\method{as.data.frame}{VarCorr.merMod}(x, row.names = NULL,
-    optional = FALSE, order = c("cov.last", "lower.tri"), \dots)
+\method{as.data.frame}{VarCorr.merMod}(x, row.names = NULL, optional = FALSE,
+              order = c("cov.last", "lower.tri"), \dots)
 \method{print}{VarCorr.merMod}(x, digits = max(3, getOption("digits") - 2),
-    comp = "Std.Dev.", formatter = format, \dots)
+      comp = "Std.Dev.", formatter = format, \dots)
 }
 \arguments{
   \item{x}{for \code{VarCorr}: a fitted model object, usually an object inheriting from

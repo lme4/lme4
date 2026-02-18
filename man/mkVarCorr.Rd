@@ -1,30 +1,32 @@
 \name{mkVarCorr}
-\title{Make Variance and Correlation Matrices from \code{theta}}
+\title{Make Variance and Correlation Components of Covariance}
 \alias{mkVarCorr}
 \usage{
-mkVarCorr(sc, cnms, nc, theta, nms, reCovs = NULL, full_cor = NULL, is_lmm = NULL)
+mkVarCorr(sc, cnms, nc, theta, nms, reCovs = NULL,
+          full_cor = NULL, is_lmm = NULL)
 }
 \description{
-  Make variance and correlation matrices from \code{theta}
+  Computes from \code{reCovs} the variance and correlation components of
+  random effect covariance matrices.
 }
 \arguments{
-  \item{sc}{scale factor (residual standard deviation).}
-  \item{cnms}{component names.}
-  \item{nc}{numeric vector: number of terms in each RE component.}
-  \item{theta}{theta vector (lower-triangle of Cholesky factors).}
-  \item{nms}{component names (FIXME: nms/cnms redundant:
-  nms=names(cnms)?)}
-  \item{reCovs}{a list of \code{Covariance} objects.}
-  \item{full_cor}{logical; specifies whether the full correlation matrix should be 
-    produced.}
-  \item{is_lmm}{logical; indicating whether the model is an LMM as GLMMs do 
-    not include a residual scale parameter.}
-  
+  \item{sc}{a numeric vector of length 1 giving the residual standard
+    deviation for LMMs.}
+  \item{cnms}{a list of character vectors giving component dimnames.}
+  \item{nc}{an integer vector giving component dimensions (number of
+    columns).}
+  \item{theta}{a numeric vector giving covariance parameters
+    (lower triangular entries of relative Cholesky factors in
+    column-major order), used only to determine \code{reCovs} when
+    that is missing.}
+  \item{nms}{a character vector giving component names.}
+  \item{reCovs}{a list of \code{\linkS4class{Covariance}} objects.}
+  \item{full_cor}{a logical indicating if correlation matrices are
+    computed.}
+  \item{is_lmm}{a logical indicating if the model is an LMM as opposed
+    to a GLMM, determining if \code{sc} is used.}
 }
 \value{
-  A \code{\link{matrix}}
+  A list of matrices.
 }
-\seealso{
-  \code{\link{VarCorr}}
-}
-
+\seealso{\code{\link{VarCorr}}.}

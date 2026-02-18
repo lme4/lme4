@@ -1,15 +1,3 @@
-##' Make variance and correlation matrices from \code{theta}
-##'
-##' @param sc scale factor (residual standard deviation)
-##' @param cnms component names
-##' @param nc numeric vector: number of terms in each RE component
-##' @param theta theta vector (lower-triangle of Cholesky factors)
-##' @param nms component names (FIXME: nms/cnms redundant: nms=names(cnms)?)
-##' @param full_cor specifies whether the full correlation matrix should be produced
-##' @param is_lmm specifies whether the information came from a LMM
-##' @seealso \code{\link{VarCorr}}
-##' @return A matrix
-##' @export
 mkVarCorr <-
 function(sc, cnms, nc, theta, nms, reCovs = NULL,
          full_cor = NULL, is_lmm = NULL) {
@@ -76,8 +64,6 @@ for (varclass in c("us",
   setOldClass(c(paste0("vcmat_", varclass), "matrix", "array"))
 }
                              
-##' Extract variance and correlation components
-##'
 VarCorr.merMod <- function(x, sigma = 1, full_cor = NULL, ...)
 {
   ## TODO: now that we have '...', add  type=c("varcov","sdcorr","logs" ?
@@ -135,7 +121,6 @@ as.data.frame.VarCorr.merMod <- function(x,row.names = NULL,
     r
 }
 
-##' @S3method print VarCorr.merMod
 print.VarCorr.merMod <- function(x, digits = max(3, getOption("digits") - 2),
                                  comp = "Std.Dev.", formatter = format, ...) {
   print(formatVC(x, digits=digits, comp=comp, formatter=formatter),
