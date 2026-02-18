@@ -64,8 +64,8 @@ for (varclass in c("us",
   setOldClass(c(paste0("vcmat_", varclass), "matrix", "array"))
 }
                              
-VarCorr.merMod <- function(x, sigma = 1, full_cor = NULL, ...)
-{
+VarCorr.merMod <-
+function(x, sigma = 1, full_cor = NULL, ...) {
   ## TODO: now that we have '...', add  type=c("varcov","sdcorr","logs" ?
   if (is.null(cnms <- x@cnms))
     stop("VarCorr methods require reTrms, not just reModule")
@@ -81,10 +81,9 @@ VarCorr.merMod <- function(x, sigma = 1, full_cor = NULL, ...)
             class = "VarCorr.merMod")
 }
 
-as.data.frame.VarCorr.merMod <- function(x,row.names = NULL,
-                                         optional = FALSE,
-                                         order = c("cov.last", "lower.tri"),
-                                         ...)  {
+as.data.frame.VarCorr.merMod <-
+function(x, row.names = NULL, optional = FALSE,
+         order = c("cov.last", "lower.tri"), ...) {
     order <- match.arg(order)
     tmpf <- function(v,grp) {
         vcov <- c(diag(v), v[lt.v <- lower.tri(v, diag = FALSE)])
@@ -121,10 +120,10 @@ as.data.frame.VarCorr.merMod <- function(x,row.names = NULL,
     r
 }
 
-print.VarCorr.merMod <- function(x, digits = max(3, getOption("digits") - 2),
-                                 comp = "Std.Dev.", formatter = format, ...) {
+print.VarCorr.merMod <-
+function(x, digits = max(3, getOption("digits") - 2),
+         comp = "Std.Dev.", formatter = format, ...) {
   print(formatVC(x, digits=digits, comp=comp, formatter=formatter),
         quote = FALSE)
   invisible(x)
 }
-
