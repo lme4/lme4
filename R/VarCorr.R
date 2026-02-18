@@ -34,10 +34,7 @@ function(sc, cnms, nc, theta, nms, reCovs = NULL,
         jj <- seq.int(from = 1L, by = nci + 1L, length.out = nci)
         Si <- sc * sc * tcrossprod(Li)
         Si.sd <- sqrt(Si[jj])
-        if ((is.null(full_cor) && nci <= 20L) ||
-            is(object, "Covariance.ar1") ||
-            full_cor) {
-            ## FIXME: above condition is not quite right ...
+        if (full_cor %||% nci <= 20L) { # FIXME? condition on structure
             Si.cor <- Si/Si.sd/rep(Si.sd, each = nci)
             Si.cor[jj] <- 1
         }
