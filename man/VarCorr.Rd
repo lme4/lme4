@@ -10,7 +10,7 @@
 %% documented because of "surprising arguments":
 \method{as.data.frame}{VarCorr.merMod}(x, row.names = NULL, optional = FALSE,
               order = c("cov.last", "lower.tri"), \dots)
-\method{print}{VarCorr.merMod}(x, digits = max(3, getOption("digits") - 2),
+\method{print}{VarCorr.merMod}(x, digits = max(3L, getOption("digits") - 2L),
       comp = "Std.Dev.", formatter = format, \dots)
 }
 \arguments{

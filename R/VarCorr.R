@@ -121,7 +121,7 @@ function(x, row.names = NULL, optional = FALSE,
 }
 
 print.VarCorr.merMod <-
-function(x, digits = max(3, getOption("digits") - 2),
+function(x, digits = max(3L, getOption("digits") - 2L),
          comp = "Std.Dev.", formatter = format, ...) {
   print(formatVC(x, digits=digits, comp=comp, formatter=formatter),
         quote = FALSE)
