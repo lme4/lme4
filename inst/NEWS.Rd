@@ -4,7 +4,7 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 2.0-0}{
+\section{CHANGES IN VERSION 2.0-1}{
   \subsection{BUG FIXES}{
     \itemize{
       \item variances and standard deviations for GLMMs with estimated
