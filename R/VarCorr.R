@@ -47,7 +47,7 @@ function(sc, cnms, nc = lengths(cnms, use.names = FALSE),
         attr(Si, "rho") <- if (nci > 1L) getVC(object)$ccomp else NaN
         Si
     })
-    if (is.character(nms)) {
+    if (!is.null(nms)) {
         ## FIXME:
         ## Do we want this?  Maybe not.  'nms' are not necessarily
         ## unique, e.g., 'fm2' from example("lmer") has *two* Subject
@@ -72,19 +72,20 @@ for (varclass in c("us",
                              
 VarCorr.merMod <-
 function(x, sigma = 1, full_cor = NULL, ...) {
-  ## TODO: now that we have '...', add  type=c("varcov","sdcorr","logs" ?
-  if (is.null(cnms <- x@cnms))
-    stop("VarCorr methods require reTrms, not just reModule")
-  if(missing(sigma))
-    sigma <- sigma(x)
-  nc <- lengths(cnms) # no. of columns per term
-  structure(mkVarCorr(sigma, cnms = cnms, nc = nc, theta = x@theta,
-                      nms = { fl <- x@flist; names(fl)[attr(fl, "assign")]},
-                      reCovs = getReCovs(x),
-                      full_cor = full_cor,
-                      is_lmm = isLMM(x)),
-            useSc = as.logical(x@devcomp$dims[["useSc"]]),
-            class = "VarCorr.merMod")
+    ## TODO:
+    ## Now that we have '...', add type=c("varcov", "sdcor", "logs")?
+    sc <- if (missing(sigma)) sigma(x) else sigma
+    cnms <- x@cnms
+    nc <- lengths(cnms, use.names = FALSE)
+    theta <- x@theta
+    nms <- names(x@flist)[attr(x@flist, "assign")]
+    reCovs <- getReCovs(x)
+    ans <- mkVarCorr(sc = sc, cnms = cnms, nc = nc,
+                     theta = theta, nms = nms, reCovs = reCovs,
+                     full_cor = full_cor, is_lmm = isLMM(x))
+    class(ans) <- "VarCorr.merMod"
+    attr(ans, "useSc") <- as.logical(x@devcomp$dims[["useSc"]])
+    ans
 }
 
 as.data.frame.VarCorr.merMod <-
@@ -129,7 +130,7 @@ function(x, row.names = NULL, optional = FALSE,
 print.VarCorr.merMod <-
 function(x, digits = max(3L, getOption("digits") - 2L),
          comp = "Std.Dev.", formatter = format, ...) {
-  print(formatVC(x, digits=digits, comp=comp, formatter=formatter),
-        quote = FALSE)
-  invisible(x)
+    y <- formatVC(x, digits = digits, comp = comp, formatter = formatter)
+    print(y, quote = FALSE)
+    invisible(x)
 }
