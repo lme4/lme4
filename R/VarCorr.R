@@ -1,10 +1,16 @@
 mkVarCorr <-
-function(sc, cnms, nc, theta, nms, reCovs = NULL,
+function(sc, cnms, nc = lengths(cnms, use.names = FALSE),
+         theta, nms = names(cnms), reCovs = NULL,
          full_cor = NULL, is_lmm = NULL) {
-    if (!identical(names(cnms), nms)) # FIXME? deprecate 'nms'
-        warning("names(cnms) and 'nms' are not identical; please report",
-                immediate. = TRUE)
-    nc <- as.integer(nc)
+    if (!missing(nc)) {
+        nc <- as.integer(nc)
+        if (!missing(cnms) && !identical(nc, lengths(cnms, use.names = FALSE)))
+            stop("'nc' and lengths(cnms) are inconsistent")
+    }
+    if (!missing(nms)) {
+        if (!missing(cnms) && !identical(nms, names(cnms)))
+            stop("'nms' and names(cnms) are inconsistent")
+    }
     if (is.null(reCovs))
         reCovs <- .mapply(new,
                           list(nc = nc,

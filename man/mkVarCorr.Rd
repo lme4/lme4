@@ -2,7 +2,8 @@
 \title{Make Variance and Correlation Components of Covariance}
 \alias{mkVarCorr}
 \usage{
-mkVarCorr(sc, cnms, nc, theta, nms, reCovs = NULL,
+mkVarCorr(sc, cnms, nc = lengths(cnms, use.names = FALSE),
+          theta, nms = names(cnms), reCovs = NULL,
           full_cor = NULL, is_lmm = NULL)
 }
 \description{
@@ -12,7 +13,9 @@ mkVarCorr(sc, cnms, nc, theta, nms, reCovs = NULL,
 \arguments{
   \item{sc}{a numeric vector of length 1 giving the residual standard
     deviation for LMMs.}
-  \item{cnms}{a list of character vectors giving component dimnames.}
+  \item{cnms}{a list of character vectors giving component dimnames,
+    used only to determine \code{nc} and \code{nms} if those are
+    missing.}
   \item{nc}{an integer vector giving component dimensions (number of
     columns).}
   \item{theta}{a numeric vector giving covariance parameters
