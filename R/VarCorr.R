@@ -63,12 +63,11 @@ function(sc, cnms, nc = lengths(cnms, use.names = FALSE),
     ans
 }
 
-## FIXME: automate this from list of known Covariance.* classes ... 
-for (varclass in c("us",
-                   c(outer(c("hom", "het"), c("ar1", "cs", "diag"),
-                           function(x, y) paste(x, y, sep = "_"))))) {
-  setOldClass(c(paste0("vcmat_", varclass), "matrix", "array"))
-}
+## MJ:
+## Maintain this list manually as prefixing convention is inconsistent.
+for (.nm in c("us", "diag", "cs", "homcs", "ar1", "hetar1"))
+    setOldClass(c(paste0("vcmat_", .nm), "matrix", "array"))
+rm(.nm)
                              
 VarCorr.merMod <-
 function(x, sigma = 1, full_cor = NULL, ...) {
