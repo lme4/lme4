@@ -1,7 +1,7 @@
 mkVarCorr <-
 function(sc, cnms, nc = lengths(cnms, use.names = FALSE),
          theta, nms = names(cnms), reCovs = NULL,
-         full_cor = NULL, is_lmm = NULL) {
+         is_lmm = NULL) {
     if (!missing(nc)) {
         nc <- as.integer(nc)
         if (!missing(cnms) && !identical(nc, lengths(cnms, use.names = FALSE)))
@@ -28,12 +28,8 @@ function(sc, cnms, nc = lengths(cnms, use.names = FALSE),
         jj <- seq.int(from = 1L, by = nci + 1L, length.out = nci)
         Si <- sc * sc * tcrossprod(Li)
         Si.sd <- sqrt(Si[jj])
-        if (full_cor %||% nci <= 20L) { # FIXME? condition on structure
-            Si.cor <- Si/Si.sd/rep(Si.sd, each = nci)
-            Si.cor[jj] <- 1
-        }
-        else
-            Si.cor <- matrix(NaN)
+        Si.cor <- Si/Si.sd/rep(Si.sd, each = nci)
+        Si.cor[jj] <- 1
         typ0 <- typ1 <- sub("^Covariance[.]", "", class(object))
         switch(typ0, # respecting the conventions of, e.g., glmmTMB:
                "cs"  = if ( object@hom) typ1 <- "homcs",
@@ -70,7 +66,7 @@ for (.nm in c("us", "diag", "cs", "homcs", "ar1", "hetar1"))
 rm(.nm)
                              
 VarCorr.merMod <-
-function(x, sigma = 1, full_cor = NULL, ...) {
+function(x, sigma = 1, ...) {
     ## TODO:
     ## Now that we have '...', add type=c("varcov", "sdcor", "logs")?
     sc <- if (missing(sigma)) sigma(x) else sigma
@@ -81,7 +77,7 @@ function(x, sigma = 1, full_cor = NULL, ...) {
     reCovs <- getReCovs(x)
     ans <- mkVarCorr(sc = sc, cnms = cnms, nc = nc,
                      theta = theta, nms = nms, reCovs = reCovs,
-                     full_cor = full_cor, is_lmm = isLMM(x))
+                     is_lmm = isLMM(x))
     class(ans) <- "VarCorr.merMod"
     attr(ans, "useSc") <- as.logical(x@devcomp$dims[["useSc"]])
     ans

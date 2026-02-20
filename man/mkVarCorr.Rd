@@ -4,7 +4,7 @@
 \usage{
 mkVarCorr(sc, cnms, nc = lengths(cnms, use.names = FALSE),
           theta, nms = names(cnms), reCovs = NULL,
-          full_cor = NULL, is_lmm = NULL)
+          is_lmm = NULL)
 }
 \description{
   Computes from \code{reCovs} the variance and correlation components of
@@ -24,8 +24,6 @@ mkVarCorr(sc, cnms, nc = lengths(cnms, use.names = FALSE),
     that is missing.}
   \item{nms}{a character vector giving component names.}
   \item{reCovs}{a list of \code{\linkS4class{Covariance}} objects.}
-  \item{full_cor}{a logical indicating if correlation matrices are
-    computed.}
   \item{is_lmm}{a logical indicating if the model is an LMM as opposed
     to a GLMM, determining if \code{sc} is used.}
 }
