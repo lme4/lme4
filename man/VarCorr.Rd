@@ -1,9 +1,16 @@
 \name{VarCorr}
-\title{Extract Variance and Correlation Components}
+\title{Extract Variance and Correlation Components of Covariance}
 \alias{VarCorr}
 \alias{VarCorr.merMod}
 \alias{as.data.frame.VarCorr.merMod}
 \alias{print.VarCorr.merMod}
+\description{
+  This function calculates the estimated variances, standard deviations,
+  and correlations between the random-effects terms in a mixed-effects
+  model, of class \code{\linkS4class{merMod}} (linear, generalized or
+  nonlinear).  The within-group error variance and standard deviation
+  are also calculated.
+}
 \usage{
 \method{VarCorr}{merMod}(x, sigma = 1, \dots)
 
@@ -33,14 +40,6 @@
     to be printed; simply passed to \code{\link{formatVC}()}.}
   \item{formatter}{a \code{\link{function}} for formatting the numbers;
     simply passed to \code{\link{formatVC}()}.}
-}
-\description{
-  This function calculates the estimated variances,
-  standard deviations, and correlations between the
-  random-effects terms in a mixed-effects model, of class
-  \code{\linkS4class{merMod}} (linear, generalized or
-  nonlinear).  The within-group error variance and standard
-  deviation are also calculated. 
 }
 \value{
   An object of class \code{VarCorr.merMod}. The internal
