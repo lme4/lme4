@@ -896,7 +896,7 @@ vcRep <-
                          sig     <<- sigma(mer)
                          nms     <<- names(Flist)[asgn]
                          covar   <<- mkVarCorr(sig, cnms, ncols, theta, nms)
-                         useSc   <<- as.logical(getME(mer, "devcomp")$dims['useSc'])
+                         useSc   <<- as.logical(getME(mer, "devcomp")$dims[["useSc"]])
                      },
                      asCovar     = function() {
                          ans <- lapply(covar,

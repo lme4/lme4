@@ -492,7 +492,7 @@ devfun2 <- function(fm,
     ## FIXME: have to distinguish between
     ## 'useSc' (GLMM: report profiled scale parameter) and
     ## 'useSc' (NLMM/LMM: scale theta by sigma)
-    ## hasSc := GLMMuseSc <- fm@devcomp$dims["useSc"]
+    ## hasSc := GLMMuseSc <- fm@devcomp$dims[["useSc"]]
     stopifnot(is(fm, "merMod"))
     fm <- refitML(fm)
     mkTheta <- mkMkTheta(getReCovs(fm))

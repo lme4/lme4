@@ -67,7 +67,7 @@ get.orig.levs <- function(object, FUN=levels, newdata=NULL, sparse = FALSE, ...)
 ##' sapply(slotNames(fm1),function(x) class(slot(fm1,x)))
 setParams <- function(object, params, inplace=FALSE, subset=FALSE) {
     pNames <- c("beta", "theta", "par")
-    if (object@devcomp$dims["useSc"]) {
+    if (object@devcomp$dims[["useSc"]]) {
       pNames <- c(pNames, "sigma")
     }
     if (!is.list(params) || length(setdiff(names(params), pNames)) > 0)
@@ -804,7 +804,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         etasim <- etapred+sim.reff
         family <- normalizeFamilyName(object@resp$family)
         musim <- family$linkinv(etasim) #-> family$family == "negative.binomial" if(NB)
-        ## ntot <- length(musim) ## FIXME: or could be dims["n"]?
+        ## ntot <- length(musim) ## FIXME: or could be dims[["n"]]?
         ##
 
         if (family$family=="binomial" && is.matrix(r <- model.response(object@frame))) {

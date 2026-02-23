@@ -547,7 +547,7 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
             stop("model names vector and model list have different lengths")
         names(mods) <- sub("@env$", '', mNms) # <- hack
         models.reml <- vapply(mods, function(x) is(x,"merMod") && isREML(x), NA)
-        models.GHQ <- vapply(mods, function(x) is(x,"glmerMod") && getME(x,"devcomp")$dims["nAGQ"]>1 , NA)
+        models.GHQ <- vapply(mods, function(x) is(x,"glmerMod") && getME(x,"devcomp")$dims[["nAGQ"]]>1 , NA)
         if (any(models.GHQ) && any(vapply(mods, function(x) is(x,"glm"), NA)))
             stop("GLMMs with nAGQ>1 have log-likelihoods incommensurate with glm() objects")
         if (refit) {
@@ -720,7 +720,7 @@ deviance.merMod <- function(object, REML = NULL, ...) {
         ##                   if (relative) {
         ##                       object@resp$resDev() + sqrL
         ##                   } else {
-        ##                       useSc <- unname(getME(gm1, "devcomp")$dims["useSc"])
+        ##                       useSc <- unname(getME(gm1, "devcomp")$dims[["useSc"]])
         ##                       qLog2Pi <- unname(getME(object, "q")) * log(2 * pi)
         ##                       object@resp$aic() - (2 * useSc) + sqrL + qLog2Pi
         ##                   }
@@ -729,7 +729,7 @@ deviance.merMod <- function(object, REML = NULL, ...) {
         ##                   if (relative) {
         ##                       object@resp$resDev()
         ##                   } else {
-        ##                       useSc <- unname(getME(gm1, "devcomp")$dims["useSc"])
+        ##                       useSc <- unname(getME(gm1, "devcomp")$dims[["useSc"]])
         ##                       object@resp$aic() - (2 * useSc)
         ##                   }
         ##               })
@@ -1407,7 +1407,7 @@ refit.merMod <- function(object,
     ## we need this stuff defined before we call .glmerLaplace below ...
     pp      <- object@pp$copy()
     dc      <- object@devcomp
-    nAGQ    <- dc$dims["nAGQ"] # possibly NA
+    nAGQ    <- dc$dims[["nAGQ"]] # possibly NA
     nth     <- dc$dims[["nth"]]
     verbose <- l...$verbose; if (is.null(verbose)) verbose <- 0L
     if (!is.null(newresp)) {

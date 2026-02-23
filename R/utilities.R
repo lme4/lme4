@@ -405,7 +405,7 @@ nlformula <- function(mc) {
 ##     if(missing(wrss)) wrss <- resp$wrss()
 ##     if(missing(sqrLenU)) sqrLenU <- pp$sqrL(fac)
 ##     if(missing(pwrss)) pwrss <- wrss + sqrLenU
-##     if(missing(sigmaML)) sigmaML <- pwrss/dims['n']
+##     if(missing(sigmaML)) sigmaML <- pwrss/dims[["n"]]
 ##     c(ldL2=pp$ldL2(), ldRX2=pp$ldRX2(), wrss=wrss,
 ##       ussq=sqrLenU, pwrss=pwrss,
 ##       drsum=if (rcl=="glmResp" && !trivial.y) resp$resDev() else NA,
@@ -413,8 +413,8 @@ nlformula <- function(mc) {
 ##       opt$fval else NA,
 ##       ## FIXME: construct 'REML deviance' here?
 ##       dev=if (rcl=="lmerResp" && resp$REML != 0L || trivial.y) NA else opt$fval,
-##       sigmaML=sqrt(unname(if (!dims["useSc"] || trivial.y) NA else sigmaML)),
-##       sigmaREML=sqrt(unname(if (rcl!="lmerResp" || trivial.y) NA else sigmaML*(dims['n']/dims['nmp']))),
+##       sigmaML=sqrt(unname(if (!dims[["useSc"]] || trivial.y) NA else sigmaML)),
+##       sigmaREML=sqrt(unname(if (rcl!="lmerResp" || trivial.y) NA else sigmaML*(dims[["n"]]/dims[["nmp"]]))),
 ##       tolPwrss=rho$tolPwrss)
 ## }
 ################################################################################
@@ -516,9 +516,9 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
                   opt$fval else NA,
              ## FIXME: construct 'REML deviance' here?
              dev=if (rcl=="lmerResp" && resp$REML != 0L || trivial.y) NA else opt$fval,
-             sigmaML=sqrt(unname(if (!dims["useSc"] || trivial.y) NA else sigmaML)),
+             sigmaML=sqrt(unname(if (!dims[["useSc"]] || trivial.y) NA else sigmaML)),
              sigmaREML=sqrt(unname(if (rcl!="lmerResp" || trivial.y) NA else
-                                   sigmaML*(dims['n']/dims['nmp']))),
+                                   sigmaML*(dims[["n"]]/dims[["nmp"]]))),
              tolPwrss=rho$tolPwrss)
     ## TODO:  improve this hack to get something in frame slot (maybe need weights, etc...)
     if(missing(fr)) fr <- data.frame(resp$y)
