@@ -126,7 +126,7 @@ setParams <- function(object, params, inplace=FALSE, subset=FALSE) {
             newObj@beta <- beta
         }
         if (!is.null(par)) {
-          object <- setProfPars(object, par)
+          object <- setProfPar(object, par)
         }
         if (!is.null(theta)) {
             ## where does theta live and how do I set it?
