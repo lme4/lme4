@@ -1353,6 +1353,11 @@ refit.merMod <- function(object,
                          maxit = 100L, ...)
 {
 
+    if (isNLMM(object))
+        stop(gettextf("'%s' does not yet support nonlinear mixed models; try '%s' instead",
+                      "refit.merMod", "update.merMod"),
+             domain = NA)
+    haveGLMM <- isGLMM(object)
     l... <- list(...)
 
     ctrl.arg <- NULL
@@ -1397,7 +1402,7 @@ refit.merMod <- function(object,
             }
             ctrl.arg
         }
-        else if (isGLMM(object))
+        else if (haveGLMM)
             glmerControl()
         else
             lmerControl()
@@ -1407,8 +1412,8 @@ refit.merMod <- function(object,
     ## we need this stuff defined before we call .glmerLaplace below ...
     pp      <- object@pp$copy()
     dc      <- object@devcomp
-    nAGQ    <- dc$dims[["nAGQ"]] # possibly NA
-    nth     <- dc$dims[["nth"]]
+    nAGQ    <- if (haveGLMM) dc$dims[["nAGQ"]]
+ ## nth     <- dc$dims[["nth"]]
     verbose <- l...$verbose; if (is.null(verbose)) verbose <- 0L
     if (!is.null(newresp)) {
         ## update call and model frame with new response
@@ -1448,13 +1453,11 @@ refit.merMod <- function(object,
                environment(formula(object)))
     }
 
-    rr <- if(isLMM(object))
+    rr <-
+    if (!haveGLMM)
         mkRespMod(model.frame(object), REML = object@resp$REML)
-    else if(isGLMM(object)) {
+    else
         mkRespMod(model.frame(object), family = family(object))
-    } else
-        stop("refit.merMod not working for nonlinear mixed models.\n",
-             "try update.merMod instead.")
 
     if(!is.null(newresp)) {
         if(family(object)$family == "binomial") {
@@ -1472,7 +1475,7 @@ refit.merMod <- function(object,
                 newresp <- as.numeric(newresp)-1
             }
         }
-        ## if (isGLMM(object) && rr$family$family=="binomial") {
+        ## if (haveGLMM && rr$family$family=="binomial") {
 
         ## }
         stopifnot(length(newresp <- as.numeric(as.vector(newresp))) ==
@@ -1480,7 +1483,7 @@ refit.merMod <- function(object,
 
     }
 
-    if (isGLMM(object)) {
+    if (haveGLMM) {
         GQmat <- GHrule(nAGQ)
 
         if (nAGQ <= 1) {
@@ -1497,12 +1500,12 @@ refit.merMod <- function(object,
                resp = rr,
                mkPar = mkMkPar(reCovs),
                mkTheta = mkMkTheta(reCovs)),
-        if (isGLMM(object)) {
+        if (haveGLMM) {
             baseOffset <- forceCopy(object@resp$offset)
 
             list(tolPwrss= dc$cmp [["tolPwrss"]],
                  compDev = dc$dims[["compDev"]],
-                 nAGQ = unname(nAGQ),
+                 nAGQ = nAGQ,
                  lp0 = pp$linPred(1), ## object@resp$eta - baseOffset,
                  baseOffset = baseOffset,
                  pwrssUpdate = glmerPwrssUpdate,
@@ -1519,7 +1522,7 @@ refit.merMod <- function(object,
     x0        <- rho$mkPar(rho$pp$theta)
     lower     <- getLower(object)
     upper     <- getUpper(object)
-    if (!is.na(nAGQ) && nAGQ > 0L) {
+    if (haveGLMM && nAGQ > 0L) {
      ## xst   <- c(xst, sqrt(diag(pp$unsc())))
         x0    <- c(x0, unname(fixef(object)))
         lower <- c(lower, rep(-Inf,length(x0)-length(lower)))
@@ -1528,7 +1531,7 @@ refit.merMod <- function(object,
     ## control <- c(control,list(xst=0.2*xst, xt=xst*0.0001))
     ## FIX ME: allow use.last.params to be passed through
     calc.derivs <- !is.null(object@optinfo$derivs)
-    ## if(isGLMM(object)) {
+    ## if (haveGLMM) {
     ##     rho$resp$updateWts()
     ##     rho$pp$updateDecomp()
     ##     rho$lp0 <- rho$pp$linPred(1)
@@ -1550,7 +1553,7 @@ refit.merMod <- function(object,
                     # ctrl = eval(object@call$control)$checkConv,
                     ctrl = control$checkConv,
                     lbound=lower, ubound=upper)
-    if (isGLMM(object)) rr$setOffset(baseOffset)
+    if (haveGLMM) rr$setOffset(baseOffset)
     mkMerMod(environment(ff), opt,
              list(flist=object@flist, cnms=object@cnms,
                   Gp=object@Gp,
