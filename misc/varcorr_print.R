@@ -23,3 +23,9 @@ system.time(
 object.size(VarCorr(m))
 str(VarCorr(m))
 
+m <- lmer(y ~ 1 + ar1(0 + f | g), data = dd)
+VarCorr(m)
+VarCorr(m, full = TRUE)
+VarCorr(m, full_cor = FALSE)
+undebug(lme4:::VarCorr.merMod)
+debug(mkVarCorr)

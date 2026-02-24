@@ -126,7 +126,8 @@ setParams <- function(object, params, inplace=FALSE, subset=FALSE) {
             newObj@beta <- beta
         }
         if (!is.null(par)) {
-          object <- setProfPar(object, par)
+          ## replace NULL theta with computed values
+          theta <- mkMkTheta(getReCovs(object))(par)
         }
         if (!is.null(theta)) {
             ## where does theta live and how do I set it?
