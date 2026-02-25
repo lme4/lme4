@@ -51,6 +51,13 @@ jobs:
       - name: Setup r2u (Linux)
         if: runner.os == 'Linux'
         uses: eddelbuettel/github-actions/r2u-setup@master
+      
+      - name: Verify r2u/bspm is enabled
+        if: runner.os == 'Linux'
+        run: |
+          R -q -e 'sessionInfo()'
+          R -q -e 'getOption("repos")'
+          R -q -e 'if (requireNamespace("bspm", quietly=TRUE)) bspm::synthesise() else message("bspm not installed?")'
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
@@ -60,7 +67,7 @@ jobs:
       - name: Install LaTeX etc.
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get install -y texlive texlive-latex-base texlive-latex-extra
+          sudo apt-get install texlive texlive-latex-base texlive-latex-extra
 
       # LaTeX setup for MacOS. Will need to replace if we ever want to
       #   run Actions on MacOS again ...
