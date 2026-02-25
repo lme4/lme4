@@ -47,7 +47,7 @@ jobs:
         with:
           r-version: ${{ matrix.config.r }}
 
-      # Enable r2u (Ubuntu binaries via bspm) to speed up dependency installation on Linux
+      # Enable r2u (Ubuntu binaries via bspm) to speed up dependency installation on Linux.
       - name: Setup r2u (Linux)
         if: runner.os == 'Linux'
         uses: eddelbuettel/github-actions/r2u-setup@master
