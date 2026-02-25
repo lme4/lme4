@@ -28,7 +28,7 @@
       matrix, \code{diag(...)} fits a diagonal covariance matrix). See
       \code{?"Covariance-class"} or
       \code{vignette("covariance_structures", package = "lme4")} for
-      more detail.
+      more detail
       \item Using \code{diag()} (see previous item) now allows properly
       specified varying-factor terms with zero correlations (as in
       \code{afex::mixed()}). The default behaviour for double-bar notation
@@ -60,8 +60,14 @@
       followed by correlation/covariance values (these were
       previously presented in "lower-triangular columnwise" order, with
       standard-deviation and correlation values interspersed)
-      \item added \code{theta}, \code{profpar} and if applicable, \code{rho} 
-      attributes to the output of \code{VarCorr()}.
+      \item added \code{theta}, \code{profpar} and, if applicable, \code{rho} 
+      attributes to the output of \code{VarCorr()}
+      \item \code{simulate} can now take a \code{par} vector (i.e.,
+      parameters for structured covariance matrices
+      expressed at the level of standard deviations and covariances)
+      instead of a \code{theta} vector (i.e. elements of the
+      Cholesky factor of the covariance matrix); these are
+      equivalent for unstructured covariance matrices (the default)
     } % itemize
   } % user-visible changes
 } % 2.0-0
@@ -95,7 +101,7 @@
         \item \code{schizophrenia} (National Institute of Mental Health 
         schizophrenia collaborative study),
         \item \code{toenail} (toenail onychomycosis data from dermatophyte 
-        infections).
+        infections)
 	    } % data sets
 	    \item \code{allFit(..., start_from_mle = TRUE)} now specifies that models should be refitted
 	    using starting parameter values from the original model fit,
@@ -124,7 +130,7 @@
       by explicitly setting \code{calc.derivs} to TRUE.
       \item Derivative calculations are now skipped for models with
       singular random effects components (unless \code{calc.derivs} is
-      explicitly set to TRUE in \code{[g]lmerControl}).
+      explicitly set to TRUE in \code{[g]lmerControl})
     } % itemize
   } % user-visible changes
 } % devel
