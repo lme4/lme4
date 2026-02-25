@@ -64,8 +64,7 @@ rm(.nm)
                              
 VarCorr.merMod <-
 function(x, sigma = 1, ...) {
-    ## TODO:
-    ## Now that we have '...', add type=c("varcov", "sdcor", "logs")?
+    ## TODO? add argument type=c("varcov", "sdcor", "logs")
     useSc <- isLMM(x)
     sc <- if (useSc) { if (missing(sigma)) sigma(x) else sigma }
     cnms <- x@cnms
@@ -76,7 +75,7 @@ function(x, sigma = 1, ...) {
     ans <- mkVarCorr(sc = sc, cnms = cnms, nc = nc,
                      theta = theta, nms = nms, reCovs = reCovs)
     class(ans) <- "VarCorr.merMod"
-    attr(ans, "useSc") <- useSc
+    attr(ans, "useSc") <- useSc # for reformulas::formatVC
     ans
 }
 
@@ -84,39 +83,48 @@ as.data.frame.VarCorr.merMod <-
 function(x, row.names = NULL, optional = FALSE,
          order = c("cov.last", "lower.tri"), ...) {
     order <- match.arg(order)
-    tmpf <- function(v,grp) {
-        vcov <- c(diag(v), v[lt.v <- lower.tri(v, diag = FALSE)])
-        sdcor <- c(attr(v,"stddev"),
-                   attr(v,"correlation")[lt.v])
-        nm <- rownames(v)
-        n <- nrow(v)
-        dd <- data.frame(grp = grp,
-                         var1 = nm[c(seq(n), col(v)[lt.v])],
-                         var2 = c(rep(NA,n), nm[row(v)[lt.v]]),
-                         vcov,
-                         sdcor,
-                         stringsAsFactors = FALSE)
-        if (order=="lower.tri") {
-            ## reorder *back* to lower.tri order
-            m <- matrix(NA,n,n)
-            diag(m) <- seq(n)
-            m[lower.tri(m)] <- (n+1):(n*(n+1)/2)
-            dd <- dd[m[lower.tri(m, diag=TRUE)],]
+    dlist <- lapply(seq_along(x), function(i) {
+        Si <- x[[i]]
+        Si.sd <- attr(Si, "stddev")
+        Si.cor <- attr(Si, "correlation")
+        nci <- ncol(Si)
+        cnmsi <- colnames(Si)
+        jj <- seq.int(from = 1L, by = nci + 1L, length.out = nci)
+        ij1 <- sequence.default(from = jj, nvec = nci:1L)
+        ij0 <- sequence.default(from = jj + 1L, nvec = (nci - 1L):0L)
+        if (order == "cov.last")
+            data.frame(grp = names(x)[i],
+                       var1 = cnmsi[c(1L:nci,
+                                      1L + (ij0 - 1L) %/% nci)],
+                       var2 = cnmsi[c(rep(NA_integer_, nci),
+                                      1L + (ij0 - 1L) %% nci)],
+                       vcov = Si[c(jj, ij0)],
+                       sdcor = c(Si.sd, Si.cor[ij0]),
+                       row.names = NULL,
+                       stringsAsFactors = FALSE)
+        else {
+            jj. <- cumsum(c(1L, if (nci > 1L) nci:2L))
+            data.frame(grp = names(x)[i],
+                       var1 = cnmsi[1L + (ij1 - 1L) %/% nci],
+                       var2 = `[<-`(cnmsi[1L + (ij1 - 1L) %% nci],
+                                    jj., NA_character_),
+                       vcov = Si[ij1],
+                       sdcor = `[<-`(Si.cor[ij1], jj., Si.sd),
+                       row.names = NULL,
+                       stringsAsFactors = FALSE)
         }
-        dd
+    })
+    if (!is.null(sc <- attr(x, "sc")) && (attr(x, "useSc") %||% TRUE)) {
+        r <- data.frame(grp = "Residual",
+                        var1 = NA_character_,
+                        var2 = NA_character_,
+                        vcov = sc * sc,
+                        sdcor = sc,
+                        row.names = NULL,
+                        stringsAsFactors = FALSE)
+        dlist <- c(dlist, list(r))
     }
-    r <- do.call(rbind,
-                 c(mapply(tmpf, x,names(x), SIMPLIFY = FALSE),
-                   deparse.level = 0))
-    if (attr(x,"useSc")) {
-        ss <- attr(x,"sc")
-        r <- rbind(r,data.frame(grp = "Residual",var1 = NA,var2 = NA,
-                                vcov = ss^2,
-                                sdcor = ss),
-                   deparse.level = 0)
-    }
-    rownames(r) <- NULL
-    r
+    do.call(rbind, dlist)
 }
 
 print.VarCorr.merMod <-
