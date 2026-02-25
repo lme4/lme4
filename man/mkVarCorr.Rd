@@ -3,8 +3,7 @@
 \alias{mkVarCorr}
 \usage{
 mkVarCorr(sc, cnms, nc = lengths(cnms, use.names = FALSE),
-          theta, nms = names(cnms), reCovs = NULL,
-          is_lmm = NULL)
+          theta, nms = names(cnms), reCovs = NULL)
 }
 \description{
   Computes from \code{reCovs} the variance and correlation components of
@@ -12,7 +11,7 @@ mkVarCorr(sc, cnms, nc = lengths(cnms, use.names = FALSE),
 }
 \arguments{
   \item{sc}{a numeric vector of length 1 giving the residual standard
-    deviation for LMMs.}
+    deviation for LMMs.  Set to \code{NULL} for GLMMs.}
   \item{cnms}{a list of character vectors giving component dimnames,
     used only to determine \code{nc} and \code{nms} if those are
     missing.}
@@ -24,8 +23,6 @@ mkVarCorr(sc, cnms, nc = lengths(cnms, use.names = FALSE),
     that is missing.}
   \item{nms}{a character vector giving component names.}
   \item{reCovs}{a list of \code{\linkS4class{Covariance}} objects.}
-  \item{is_lmm}{a logical indicating if the model is an LMM as opposed
-    to a GLMM, determining if \code{sc} is used.}
 }
 \value{
   A list of matrices.

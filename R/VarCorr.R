@@ -1,7 +1,6 @@
 mkVarCorr <-
 function(sc, cnms, nc = lengths(cnms, use.names = FALSE),
-         theta, nms = names(cnms), reCovs = NULL,
-         is_lmm = NULL) {
+         theta, nms = names(cnms), reCovs = NULL) {
     if (!missing(nc)) {
         nc <- as.integer(nc)
         if (!missing(cnms) && !identical(nc, lengths(cnms, use.names = FALSE)))
@@ -23,10 +22,8 @@ function(sc, cnms, nc = lengths(cnms, use.names = FALSE),
         nci <- nc[i]
         Li <- getLambda(object)
         rownames(Li) <- cnms[[i]]
-        if (!(is.null(is_lmm) || is_lmm))
-            sc <- 1 # nonunit only for LMMs
         jj <- seq.int(from = 1L, by = nci + 1L, length.out = nci)
-        Si <- sc * sc * tcrossprod(Li)
+        Si <- if (is.null(sc)) tcrossprod(Li) else sc * sc * tcrossprod(Li)
         Si.sd <- sqrt(Si[jj])
         Si.cor <- Si/Si.sd/rep(Si.sd, each = nci)
         Si.cor[jj] <- 1
@@ -69,17 +66,17 @@ VarCorr.merMod <-
 function(x, sigma = 1, ...) {
     ## TODO:
     ## Now that we have '...', add type=c("varcov", "sdcor", "logs")?
-    sc <- if (missing(sigma)) sigma(x) else sigma
+    useSc <- isLMM(x)
+    sc <- if (useSc) { if (missing(sigma)) sigma(x) else sigma }
     cnms <- x@cnms
     nc <- lengths(cnms, use.names = FALSE)
     theta <- x@theta
     nms <- names(x@flist)[attr(x@flist, "assign")]
     reCovs <- getReCovs(x)
     ans <- mkVarCorr(sc = sc, cnms = cnms, nc = nc,
-                     theta = theta, nms = nms, reCovs = reCovs,
-                     is_lmm = isLMM(x))
+                     theta = theta, nms = nms, reCovs = reCovs)
     class(ans) <- "VarCorr.merMod"
-    attr(ans, "useSc") <- as.logical(x@devcomp$dims[["useSc"]])
+    attr(ans, "useSc") <- useSc
     ans
 }
 

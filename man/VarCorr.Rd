@@ -49,9 +49,8 @@
   correlation matrices for each grouping term are stored as
   attributes \code{"stddev"} and \code{"correlation"},
   respectively, of the variance-covariance matrix, and the
-  residual standard deviation is stored as attribute
-  \code{"sc"} (for \code{glmer} fits, this attribute stores
-  the scale parameter of the model).
+  residual standard deviation of LMMs is stored as attribute
+  \code{"sc"}.
   
   Users may also access the attributes \code{"theta"} and 
   \code{"rho"} (if applicable) which is explained in greater 
