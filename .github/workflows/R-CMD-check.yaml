@@ -47,6 +47,11 @@ jobs:
         with:
           r-version: ${{ matrix.config.r }}
 
+      # Enable r2u (Ubuntu binaries via bspm) to speed up dependency installation on Linux
+      - name: Setup r2u (Linux)
+        if: runner.os == 'Linux'
+        uses: eddelbuettel/github-actions/r2u-setup@master
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck
@@ -55,7 +60,7 @@ jobs:
       - name: Install LaTeX etc.
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get install texlive texlive-latex-base texlive-latex-extra
+          sudo apt-get install -y texlive texlive-latex-base texlive-latex-extra
 
       # LaTeX setup for MacOS. Will need to replace if we ever want to
       #   run Actions on MacOS again ...
