@@ -4,7 +4,6 @@
 \alias{anova.merMod}
 \alias{as.function.merMod}
 \alias{coef.merMod}
-\alias{deviance.merMod}
 \alias{df.residual.merMod}
 \alias{extractAIC.merMod}
 \alias{family.merMod}
@@ -41,7 +40,6 @@
 \S3method{anova}{merMod}(object, \dots, refit = TRUE, model.names=NULL)
 \S3method{as.function}{merMod}(x, \dots)
 \S3method{coef}{merMod}(object, \dots)
-\S3method{deviance}{merMod}(object, REML = NULL, \dots)
 REMLcrit(object)
 \S3method{extractAIC}{merMod}(fit, scale = 0, k = 2, \dots)
 \S3method{family}{merMod}(object, \dots)
