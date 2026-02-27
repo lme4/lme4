@@ -67,7 +67,7 @@
       expressed at the level of standard deviations and covariances)
       instead of a \code{theta} vector (i.e. elements of the
       Cholesky factor of the covariance matrix); these are
-      equivalent for unstructured covariance matrices (the default)
+      equivalent for (default) unstructured covariance matrices
     } % itemize
   } % user-visible changes
 } % 2.0-0
