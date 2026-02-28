@@ -14,11 +14,35 @@ isRE(NULL) ##  "
 isRE(~0+x) ##  "
 }
 
+## for now, need to copy this: 'specials' needs to be passed through, can't be easily hacked
+safe_length <- function(x) length(unclass(x))
+
+my_reOnly <- function(f, response=FALSE, bracket=TRUE, doublevert_split = TRUE, specials=character(0)) {
+    ee <- environment(f)
+    flen <- safe_length(f)
+    f2 <- f[[2]]
+    if (bracket) {
+        xdv <- if (doublevert_split) "split" else "diag_special"
+        fb <- findbars_x(f, expand_doublevert_method = xdv, specials = specials)
+        f <- lapply(fb, reformulas::makeOp, quote(`(`)) ## bracket-protect terms
+    }
+    f <- reformulas::sumTerms(f)
+    if (response && flen==3) {
+        form <- reformulas::makeOp(f2, f, quote(`~`))
+    } else {
+        form <- reformulas::makeOp(f, quote(`~`))
+    }
+    ## form may be a 'language' object by now ...
+    form <- as.formula(form)
+    environment(form) <- ee
+    return(form)
+}
+  
 ##' Random Effects formula only
-reOnly <- function(f, response=FALSE) {
-    reformulate(paste0("(", vapply(reformulas::findbars(f), deparse1, ""), ")"),
-                response = if(response && length(f)==3L) f[[2]],
-                env = environment(f))
+##' wrapper for reformulas (next version should handle environment protection properly ...
+##'
+lme4_reOnly <- function(form, ...) {
+  my_reOnly(form, ..., specials = lme4_specials, doublevert_split = (getDoublevertDefault()=="split"))
 }
 
 ## '...' may contain fixed.only=TRUE, random.only=TRUE, ..
@@ -170,7 +194,7 @@ mkNewReTrms <- function(object, newdata,
     ##        mfnew is *only* used for its na.action attribute (!) [fixed only]
     ##        using model.frame would mess up matrix-valued predictors (GH #201)
     fixed.na.action <- NULL
-    re.form <- re.form %||% reOnly(formula(object))
+    re.form <- re.form %||% lme4_reOnly(formula(object))
     if (is.null(newdata)) {
         rfd <- mfnew <- model.frame(object)
         fixed.na.action <- attr(mfnew,"na.action")
@@ -191,7 +215,7 @@ mkNewReTrms <- function(object, newdata,
         if (!is.null(fixed.na.action)) {
             newdata.NA <- newdata.NA[-fixed.na.action,]
         }
-        tt <- delete.response(terms(object,random.only=TRUE))
+        tt <- delete.response(terms(object, random.only=TRUE))
         orig.random.levs <- get.orig.levs(object, random.only=TRUE, newdata=newdata.NA)
         orig.random.cntr <- get.orig.levs(object, random.only=TRUE,
                                           FUN=contrasts, sparse=sparse)
@@ -250,17 +274,24 @@ mkNewReTrms <- function(object, newdata,
             newdata <- newdata[-fixed.na.action,]
         }
         ## note: mkReTrms automatically *drops* unused levels
-        ReTrms <- reformulas::mkReTrms(reformulas::findbars(re.form[[2]]), rfd)
+        bb1 <- findbars_x(re.form, specials = lme4_specials,
+                      default.special = "us", target = "|",
+                      expand_doublevert_method = getDoublevertDefault())
+        bb0 <- lapply(bb1, `[[`, 2L)
+        reTrms <- reformulas::mkReTrms(bb0, rfd, calc.lambdat = FALSE)
+        reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
+
+        ## ReTrms <- reformulas::mkReTrms(reformulas::findbars(re.form[[2]]), rfd)
         ## update Lambdat (ugh, better way to do this?)
-        ReTrms <- within(ReTrms,Lambdat@x <- unname(getME(object,"theta")[Lind]))
-        if (!allow.new.levels && any(vapply(ReTrms$flist, anyNA, NA)))
+        reTrms <- within(reTrms,Lambdat@x <- unname(getME(object,"theta")[Lind]))
+        if (!allow.new.levels && any(vapply(reTrms$flist, anyNA, NA)))
             stop("NAs are not allowed in prediction data",
                  " for grouping variables unless allow.new.levels is TRUE")
         ns.re <- names(re <- ranef(object, condVar = FALSE))
-        nRnms <- names(Rcnms <- ReTrms$cnms)
+        nRnms <- names(Rcnms <- reTrms$cnms)
         if (!all(nRnms %in% ns.re))
             stop("grouping factors specified in re.form that were not present in original model")
-        new_levels <- lapply(ReTrms$flist, function(x) levels(factor(x)))
+        new_levels <- lapply(reTrms$flist, function(x) levels(factor(x)))
         ## fill in/delete levels as appropriate
         re_x <- Map(function(r,n) levelfun(r,n,
                                            allow.new.levels=allow.new.levels),
@@ -288,9 +319,9 @@ mkNewReTrms <- function(object, newdata,
         ## only issue warning once per prediction ...
         if (hacked_names) warning("modified RE names for gamm4 prediction")
     }
-    Zt <- ReTrms$Zt
+    Zt <- reTrms$Zt
     attr(Zt, "na.action") <- attr(re_new, "na.action") <- fixed.na.action
-    list(Zt=Zt, b=re_new, Lambdat = ReTrms$Lambdat, flist = ReTrms$flist)
+    list(Zt=Zt, b=re_new, Lambdat = reTrms$Lambdat, flist = reTrms$flist)
 }
 
 ##' @param x a random effect (i.e., data frame with rows equal to levels, columns equal to terms
@@ -491,7 +522,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
 
         if (isRE(re.form)) {
             if (is.null(re.form))
-                re.form <- reOnly(formula(object)) # RE formula only
+                re.form <- lme4_reOnly(formula(object)) # RE formula only
             rfd <- if (is.null(newdata)) {
                        ## try to retrieve original data ... fall back to model frame if necessary
                        ## FIXME: this doesn't solve the problem if columns of model frame and data
@@ -729,7 +760,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     }
 
     if (is.null(re.form)) { # formula w/o response
-        re.form <- reOnly(formula(object))
+        re.form <- lme4_reOnly(formula(object))
     }
 
     if(!is.null(seed)) set.seed(seed)
@@ -766,9 +797,9 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         } else substitute(OP(X,Y), list(X=x,OP=op,Y=y))
     }
 
-    compReForm <- reOnly(formula(object))
+    compReForm <- lme4_reOnly(formula(object))
     if (isRE(re.form)) {
-        rr <- reOnly(re.form)[[2]] ## expand RE and strip ~
+        rr <- lme4_reOnly(re.form)[[2]] ## expand RE and strip ~
         ftemplate <- substitute(.~.-XX, list(XX=rr))
         compReForm <- update.formula(compReForm,ftemplate)[-2]
         ## update, then delete LHS

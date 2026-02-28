@@ -240,7 +240,7 @@ test_that("only look for columns that exist in re.form", {
     expect_equal(unname(predict(m1,re.form= ~poly(x,2) | g, newdata=dd[1,])),
                  0.1533, tolerance=.001)
     ## *last* RE not included (off-by-one error)
-    m1B <- lmer(y~1 + f + (1|g) + (1|h), data=dd, control=lmerControl(calc.derivs=FALSE))
+    m1B <- lmer(y~1 + f + (1|g) + (1|h), data=dd, control=lmerControl(calc.derivs=FALSE, check.conv.singular = "ignore"))
     expect_equal(unname(predict(m1B,re.form=~(1|g),newdata=data.frame(f="1",g="2"))),0.1512895,tolerance=1e-5)
     set.seed(101)
     n <- 100
@@ -684,3 +684,40 @@ test_that("predictions work with se.fit and subset of grouping variable levels",
   expect_true(all(gp1$fit == expected_gp1))
 })
 
+
+test_that("simulation works with AR1", {
+  skip_if(testLevel < 2)
+  form <- Reaction ~ Days + ar1(0+factor(Days)|Subject)
+  dd <- expand.grid(Subject = 1:100, Days = 1:20)
+  s2 <- simulate(form[-2],
+                 newdata = dd,
+                 newparams = list(beta = c(0, 1),
+                                  par = c(30, 0.5),
+                                  sigma = 0.1),
+                 seed = 101)
+  dd$Reaction <- s2[[1]]
+  m1 <- lmer(form, data = dd)
+  expect_equal(getME(m1, "par"),
+               c(`Subject.*` = 41.51375093795063, Subject.rho = 0.47173954902469345),
+               tolerance = 1e-5)
+})
+
+test_that("simulation works with 'par'", {
+  form <- Reaction ~ Days + ar1(0+factor(Days)|Subject)
+  m1 <- lmer(form, data = sleepstudy)
+
+  s1 <- simulate( form[-2],
+                 newdata = sleepstudy,
+                 newparams = list(beta = c(0, 1),
+                                  theta = getME(m1, "theta"),
+                                  sigma = 1),
+                 seed = 101)[[1]]
+  s2 <- simulate(form[-2],
+                 newdata = sleepstudy,
+                 newparams = list(beta = c(0, 1),
+                                  par = getME(m1, "par"),
+                                  sigma = 1),
+                 seed = 101)[[1]]
+  expect_equal(s1, s2)
+
+})
