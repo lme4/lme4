@@ -7,6 +7,8 @@ if ("sample.kind" %in% names(formals(RNGkind)))
 L <- load(system.file("testdata", "lme-tst-fits.rda",
                       package="lme4", mustWork=TRUE))
 
+nosingcheck_lmer <- lmerControl(check.conv.singular = "ignore")
+nosingcheck_glmer <- glmerControl(check.conv.singular = "ignore")
 ## FIXME: should test for old R versions, skip reloading test data in that
 ## case?
 fm0 <- fit_sleepstudy_0
@@ -99,8 +101,7 @@ test_that("lmer anova", {
                                      model.names=c("a","b"))),
                c("b","a"))
   ff <- function(form) {
-    lmer(form, dat=dat, REML=FALSE,
-         control=lmerControl(check.conv.singular="ignore"))
+    lmer(form, dat=dat, REML=FALSE, control=nosingcheck_lmer)
   }
   expect_error(rownames(stats::anova(ff(y ~ u + (1 | t)),
                                      ff(y ~ 1 + (1 | t)),
@@ -894,15 +895,21 @@ zerodat$y2 <- simulate(~x+(1|f),
 
 test_that("rstudent matches for zero-var cases",
 {
-  lmer_zero <- lmer(y1~x+(1|f), data=zerodat)
-  glmer_zero <- glmer(y2~x+(1|f),family=poisson, data=zerodat)
+
+  skip_if(getRversion() < "4.6.0") ## methods have changed to match r-devel
+  lmer_zero <- lmer(y1~x+(1|f), data=zerodat, control = nosingcheck_lmer)
+  glmer_zero <- glmer(y2~x+(1|f),family=poisson, data=zerodat, control = nosingcheck_glmer)
   lm_zero <- lm(y1~x, data=zerodat)
   glm_zero <- glm(y2~x,family=poisson, data=zerodat)
+  ## suppressWarnings() for "hatvalues may not be well defined" warning
   expect_equal(suppressWarnings(rstudent(glmer_zero)),
                rstudent(glm_zero),
                tolerance=0.01)
   expect_equal(suppressWarnings(rstudent(lmer_zero)),
                rstudent(lm_zero),tolerance=0.01)
+  expect_equal(suppressWarnings(rstandard(glmer_zero)), rstandard(glm_zero),
+          tolerance = 0.01)
+
 })
 
 if (testLevel>1) {

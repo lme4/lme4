@@ -193,6 +193,25 @@ rstudent.merMod <- function (model, ...) {
     r/sigma(model)
 }
 
+rstandard.glmerMod <- function (model,
+                              infl = influence(model, do.coef = FALSE),
+                              type = c("pearson", "deviance"), ...)
+{
+    type <- match.arg(type)
+    res <- residuals(model, type = type)
+    res <- res/(sigma(model) * sqrt(1 - hatvalues(model)))
+    res[is.infinite(res)] <- NaN
+    res
+}
+
+rstudent.glmerMod <- function(model, infl = influence(model, do.coef=FALSE), ...) {
+  useSc <- model@devcomp$dims[["useSc"]]
+  if (useSc) return(rstandard(model, infl, type="pearson"))
+  residuals(model, type = "pearson")/
+    (sigma(model)*sqrt(1 - hatvalues(model)))
+}
+
+
 ##' @S3method sigma merMod
 sigma.merMod <- function(object, ...) {
     dc <- object@devcomp

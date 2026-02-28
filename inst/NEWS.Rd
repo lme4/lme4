@@ -14,10 +14,7 @@
       \item parametric bootstrap confidence intervals for random-effect
       SDs of GLMMs with estimated scale parameters are now correctly
       scaled
-      \item \code{weights.merMod} now allows \code{type = "working"} for
-      LMMs (for compatibility with the updated
-      \code{stats::weighted.residuals()} in R-devel), and properly
-      accounts for \code{na.action} choices
+      \item \code{weights.merMod} now properly accounts for \code{na.action} choices
     } % itemize
   } % bug fixes
   \subsection{NEW FEATURES}{
@@ -42,6 +39,8 @@
       expansion), since defaults may change in the future.
       \item the \code{merMod} class gains a \code{na.action} method
       (for compatibility with recent changes in \code{stats::weighted.residuals})
+      \item \code{weights.merMod} now allows \code{type = "working"} for
+      LMMs (for compatibility with the updated \code{stats::weighted.residuals()} in R-devel)
     } % itemize
   } % new features
   \subsection{USER-VISIBLE CHANGES}{
@@ -68,6 +67,8 @@
       instead of a \code{theta} vector (i.e. elements of the
       Cholesky factor of the covariance matrix); these are
       equivalent for (default) unstructured covariance matrices
+      \item results from \code{rstudent()} methods have changed to match
+      upstream changes/corrections in base R
     } % itemize
   } % user-visible changes
 } % 2.0-0
