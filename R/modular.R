@@ -431,7 +431,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     ## ran-effects model frame (for predvars)
     ## important to COPY formula (and its environment)?
     ranform <- fr.form.
-    RHSForm(ranform) <- reformulas::subbars(RHSForm(noSpecials(reOnly(ranform))))
+    RHSForm(ranform) <- reformulas::subbars(RHSForm(noSpecials(reOnly(ranform), delete = FALSE)))
     mf$formula <- ranform
     ranfr <- eval(mf, parent.frame())
     attr(attr(fr,"terms"), "predvars.random") <-
@@ -817,7 +817,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     ## ran-effects model frame (for predvars)
     ## important to COPY formula (and its environment)?
     ranform <- fr.form.
-    RHSForm(ranform) <- reformulas::subbars(RHSForm(reOnly(ranform)))
+    RHSForm(ranform) <- reformulas::subbars(RHSForm(noSpecials(reOnly(ranform), delete = FALSE)))
     mf$formula <- ranform
     ranfr <- eval(mf, parent.frame())
     attr(attr(fr,"terms"), "predvars.random") <-

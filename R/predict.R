@@ -209,7 +209,7 @@ mkNewReTrms <- function(object, newdata,
         if (!is.null(fixed.na.action)) {
             newdata.NA <- newdata.NA[-fixed.na.action,]
         }
-        tt <- delete.response(terms(object,random.only=TRUE))
+        tt <- delete.response(terms(object, random.only=TRUE))
         orig.random.levs <- get.orig.levs(object, random.only=TRUE, newdata=newdata.NA)
         orig.random.cntr <- get.orig.levs(object, random.only=TRUE,
                                           FUN=contrasts, sparse=sparse)
@@ -268,17 +268,24 @@ mkNewReTrms <- function(object, newdata,
             newdata <- newdata[-fixed.na.action,]
         }
         ## note: mkReTrms automatically *drops* unused levels
-        ReTrms <- reformulas::mkReTrms(reformulas::findbars(re.form[[2]]), rfd)
+        bb1 <- findbars_x(re.form, specials = lme4_specials,
+                      default.special = "us", target = "|",
+                      expand_doublevert_method = getDoublevertDefault())
+        bb0 <- lapply(bb1, `[[`, 2L)
+        reTrms <- reformulas::mkReTrms(bb0, rfd, calc.lambdat = FALSE)
+        reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
+
+        ## ReTrms <- reformulas::mkReTrms(reformulas::findbars(re.form[[2]]), rfd)
         ## update Lambdat (ugh, better way to do this?)
-        ReTrms <- within(ReTrms,Lambdat@x <- unname(getME(object,"theta")[Lind]))
-        if (!allow.new.levels && any(vapply(ReTrms$flist, anyNA, NA)))
+        reTrms <- within(reTrms,Lambdat@x <- unname(getME(object,"theta")[Lind]))
+        if (!allow.new.levels && any(vapply(reTrms$flist, anyNA, NA)))
             stop("NAs are not allowed in prediction data",
                  " for grouping variables unless allow.new.levels is TRUE")
         ns.re <- names(re <- ranef(object, condVar = FALSE))
-        nRnms <- names(Rcnms <- ReTrms$cnms)
+        nRnms <- names(Rcnms <- reTrms$cnms)
         if (!all(nRnms %in% ns.re))
             stop("grouping factors specified in re.form that were not present in original model")
-        new_levels <- lapply(ReTrms$flist, function(x) levels(factor(x)))
+        new_levels <- lapply(reTrms$flist, function(x) levels(factor(x)))
         ## fill in/delete levels as appropriate
         re_x <- Map(function(r,n) levelfun(r,n,
                                            allow.new.levels=allow.new.levels),
@@ -306,9 +313,9 @@ mkNewReTrms <- function(object, newdata,
         ## only issue warning once per prediction ...
         if (hacked_names) warning("modified RE names for gamm4 prediction")
     }
-    Zt <- ReTrms$Zt
+    Zt <- reTrms$Zt
     attr(Zt, "na.action") <- attr(re_new, "na.action") <- fixed.na.action
-    list(Zt=Zt, b=re_new, Lambdat = ReTrms$Lambdat, flist = ReTrms$flist)
+    list(Zt=Zt, b=re_new, Lambdat = reTrms$Lambdat, flist = reTrms$flist)
 }
 
 ##' @param x a random effect (i.e., data frame with rows equal to levels, columns equal to terms

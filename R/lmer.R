@@ -1020,7 +1020,9 @@ formula.merMod <- function(x, fixed.only=FALSE, random.only=FALSE, ...) {
     }
     if (random.only) {
         ## from predict.R
+        ee <- environment(form)
         form <- reOnly(form, response=TRUE)
+        environment(form) <- ee
     }
     form
 }

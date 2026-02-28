@@ -232,8 +232,9 @@ terms.merMod <- function(x, fixed.only=TRUE, random.only=FALSE, ...) {
         attr(tt,"predvars") <- attr(terms(x@frame),"predvars.fixed")
     }
     if (random.only) {
-        tt <- terms.formula(reformulas::subbars(formula(x,random.only=TRUE)))
-        ## FIXME: predvars should be random-only
+        ff <- reformulas::subbars(formula(x, random.only=TRUE))
+        ff <- noSpecials(ff, delete = FALSE)
+        tt <- terms.formula(ff)
         attr(tt,"predvars") <- attr(terms(x@frame),"predvars.random")
     }
     tt
