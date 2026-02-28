@@ -431,7 +431,9 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     ## ran-effects model frame (for predvars)
     ## important to COPY formula (and its environment)?
     ranform <- fr.form.
-    RHSForm(ranform) <- reformulas::subbars(RHSForm(noSpecials(reOnly(ranform), delete = FALSE)))
+    RHSForm(ranform) <- reformulas::subbars(
+        RHSForm(noSpecials(reOnly(ranform), delete = FALSE, specials = lme4_specials))
+    )
     mf$formula <- ranform
     ranfr <- eval(mf, parent.frame())
     attr(attr(fr,"terms"), "predvars.random") <-
