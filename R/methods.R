@@ -233,7 +233,7 @@ terms.merMod <- function(x, fixed.only=TRUE, random.only=FALSE, ...) {
     }
     if (random.only) {
         ff <- reformulas::subbars(formula(x, random.only=TRUE))
-        ff <- noSpecials(ff, delete = FALSE)
+        ff <- noSpecials(ff, specials = lme4_specials, delete = FALSE)
         tt <- terms.formula(ff)
         attr(tt,"predvars") <- attr(terms(x@frame),"predvars.random")
     }
