@@ -432,7 +432,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     ## important to COPY formula (and its environment)?
     ranform <- fr.form.
     RHSForm(ranform) <- reformulas::subbars(
-        RHSForm(noSpecials(reOnly(ranform), delete = FALSE, specials = lme4_specials))
+        RHSForm(noSpecials(lme4_reOnly(ranform), delete = FALSE, specials = lme4_specials))
     )
     mf$formula <- ranform
     ranfr <- eval(mf, parent.frame())
@@ -820,7 +820,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     ## important to COPY formula (and its environment)?
     ranform <- fr.form.
     RHSForm(ranform) <- reformulas::subbars(
-        RHSForm(noSpecials(reOnly(ranform), specials = lme4_specials, delete = FALSE))
+        RHSForm(noSpecials(lme4_reOnly(ranform), specials = lme4_specials, delete = FALSE))
     )
     mf$formula <- ranform
     ranfr <- eval(mf, parent.frame())

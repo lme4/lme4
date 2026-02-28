@@ -14,18 +14,16 @@ isRE(NULL) ##  "
 isRE(~0+x) ##  "
 }
 
-##' Random Effects formula only
-##' COPIED from reformulas (to avoid needing to update to reformulas devel version)
-##' FIXME: delete and import from reformulas once reformulas is updated on CRAN
-##' (except will need wrap to insert specials=lme4_specials)
+## for now, need to copy this: 'specials' needs to be passed through, can't be easily hacked
 safe_length <- function(x) length(unclass(x))
-reOnly <- function(f, response=FALSE, bracket=TRUE, doublevert_split = TRUE, specials=lme4_specials) {
+
+my_reOnly <- function(f, response=FALSE, bracket=TRUE, doublevert_split = TRUE, specials=character(0)) {
     ee <- environment(f)
     flen <- safe_length(f)
     f2 <- f[[2]]
     if (bracket) {
         xdv <- if (doublevert_split) "split" else "diag_special"
-        fb <- reformulas::findbars_x(f, expand_doublevert_method = xdv, specials = specials)
+        fb <- findbars_x(f, expand_doublevert_method = xdv, specials = specials)
         f <- lapply(fb, reformulas::makeOp, quote(`(`)) ## bracket-protect terms
     }
     f <- reformulas::sumTerms(f)
@@ -38,6 +36,13 @@ reOnly <- function(f, response=FALSE, bracket=TRUE, doublevert_split = TRUE, spe
     form <- as.formula(form)
     environment(form) <- ee
     return(form)
+}
+  
+##' Random Effects formula only
+##' wrapper for reformulas (next version should handle environment protection properly ...
+##'
+lme4_reOnly <- function(form, ...) {
+  my_reOnly(form, ..., specials = lme4_specials, doublevert_split = (getDoublevertDefault()=="split"))
 }
 
 ## '...' may contain fixed.only=TRUE, random.only=TRUE, ..
@@ -189,7 +194,7 @@ mkNewReTrms <- function(object, newdata,
     ##        mfnew is *only* used for its na.action attribute (!) [fixed only]
     ##        using model.frame would mess up matrix-valued predictors (GH #201)
     fixed.na.action <- NULL
-    re.form <- re.form %||% reOnly(formula(object))
+    re.form <- re.form %||% lme4_reOnly(formula(object))
     if (is.null(newdata)) {
         rfd <- mfnew <- model.frame(object)
         fixed.na.action <- attr(mfnew,"na.action")
@@ -517,7 +522,7 @@ predict.merMod <- function(object, newdata=NULL, newparams=NULL,
 
         if (isRE(re.form)) {
             if (is.null(re.form))
-                re.form <- reOnly(formula(object)) # RE formula only
+                re.form <- lme4_reOnly(formula(object)) # RE formula only
             rfd <- if (is.null(newdata)) {
                        ## try to retrieve original data ... fall back to model frame if necessary
                        ## FIXME: this doesn't solve the problem if columns of model frame and data
@@ -755,7 +760,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     }
 
     if (is.null(re.form)) { # formula w/o response
-        re.form <- reOnly(formula(object))
+        re.form <- lme4_reOnly(formula(object))
     }
 
     if(!is.null(seed)) set.seed(seed)
@@ -792,9 +797,9 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
         } else substitute(OP(X,Y), list(X=x,OP=op,Y=y))
     }
 
-    compReForm <- reOnly(formula(object))
+    compReForm <- lme4_reOnly(formula(object))
     if (isRE(re.form)) {
-        rr <- reOnly(re.form)[[2]] ## expand RE and strip ~
+        rr <- lme4_reOnly(re.form)[[2]] ## expand RE and strip ~
         ftemplate <- substitute(.~.-XX, list(XX=rr))
         compReForm <- update.formula(compReForm,ftemplate)[-2]
         ## update, then delete LHS

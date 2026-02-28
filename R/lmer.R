@@ -1020,7 +1020,7 @@ formula.merMod <- function(x, fixed.only=FALSE, random.only=FALSE, ...) {
     }
     if (random.only) {
         ## from predict.R
-        form <- reOnly(form, response=TRUE)
+        form <- lme4_reOnly(form, response=TRUE)
     }
     form
 }
