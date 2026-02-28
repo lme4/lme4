@@ -24,7 +24,7 @@ importFrom("stats",
            predict, printCoefmat, profile, pt, qchisq, qnorm,
            qqnorm, qt, quantile, rbinom, reformulate, reorder,
            resid, residuals, rgamma, rlnorm, rnbinom, rnorm, rpois,
-           rstudent,
+           rstandard, rstudent,
            runif, sd, setNames, simulate, symnum, terms, terms.formula,
            update, update.formula, var, vcov, weights, na.action)
 importFrom("utils", flush.console, packageVersion, sessionInfo, stack, str, capture.output)
