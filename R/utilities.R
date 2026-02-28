@@ -929,7 +929,7 @@ arrange.condVar <- function(object,cv) {
 }
 
 ## generic machinery for setting parallel options
-## uses eval() (as in family()$initialize) to avoid too much list
+## uses eval() (as in family()$initialize) to avoid too many lists
 initialize.parallel <- expression({
     have_mc <- have_snow <- FALSE
     if (length(parallel)>1) parallel <- match.arg(parallel)

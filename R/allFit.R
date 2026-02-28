@@ -228,10 +228,11 @@ allFit <- function(object, meth.tab = NULL,
                        ## parallel::clusterEvalQ(cl,library("lme4"))
                        ## try to get data and export it?
                        ## parallel::clusterExport(cl,??)
-                       res <- parallel::parLapply(cl, seq_fit, ffun)
-                       parallel::stopCluster(cl)
-                       res
-                   } else parallel::parLapply(cl, seq_fit, ffun)
+                       on.exit(parallel::stopCluster(cl))
+                       parallel::parLapply(cl, seq_fit, ffun)
+                   } else {
+                     parallel::parLapply(cl, seq_fit, ffun)
+                   }
                } else {
                    warning("'do_parallel' is true, but 'have_mc' and 'have_snow' are not.  Should not happen!")
                    ## or stop()  or  we could silently use lapply(..)

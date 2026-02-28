@@ -1,5 +1,7 @@
 influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
-                             ncores=getOption("mc.cores",1),
+                             parallel = c("no", "multicore", "snow"),
+                             ncpus = getOption("influence.ncpus", 1L),
+                             cl = NULL,
                              start=NULL,
                              ...) {
 
@@ -95,15 +97,29 @@ influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
         vcov.1 <<- .vcov(mod.1)
         namedList(fixed.1, vc.1, vcov.1, converged, feval)
     }
-    result <- if(ncores >= 2) {
-        message("Note: using a cluster of ", ncores, " cores")
-        cl <- parallel::makeCluster(ncores)
-        on.exit(parallel::stopCluster(cl))
-        parallel::clusterEvalQ(cl, require("lme4"))
-        parallel::clusterApply(cl, unique.del, deleteGroup)
-    } else {
-        lapply(unique.del, deleteGroup)
-    }
+  
+    parallel <- match.arg(parallel)
+    do_parallel <- have_mc <- have_snow <- NULL # "-Wall"
+    eval(initialize.parallel) # (parallel, ncpus)   --> ./utilities.R
+
+    result <- if (do_parallel) {
+                if (have_mc) {
+                  parallel::mclapply(unique.del, deleteGroup, mc.cores = ncpus)
+                } else if (have_snow) {
+                  if (is.null(cl)) {
+                    cl <- parallel::makePSOCKcluster(rep("localhost", ncpus))
+                    on.exit(parallel::stopCluster(cl))
+                    parallel::clusterApply(cl, unique.del, deleteGroup)
+                  } else {
+                    parallel::parLapply(cl, unique.del, deleteGroup)
+                  }
+                } else {
+                  stop("do_parallel is TRUE but we don't have access to multicore or snow clusters?")
+                }
+              } else {
+                lapply(unique.del, deleteGroup)
+              }
+
     result <- combineLists(result)
     fixed.1 <- result$fixed.1
     rownames(fixed.1) <- unique.del

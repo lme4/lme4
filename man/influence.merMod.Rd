@@ -17,7 +17,12 @@
 
 \usage{
 \method{influence}{merMod}(model, groups, data, maxfun = 1000,
-          do.coef = TRUE, ncores = getOption("mc.cores",1), start, ...)
+  do.coef = TRUE,
+  parallel = c("no", "multicore", "snow"),
+  ncpus = getOption("influence.ncpus", 1L),
+  cl = NULL,
+  start = NULL,
+  ...)
 \method{cooks.distance}{influence.merMod}(model, ...)
 \method{dfbeta}{influence.merMod}(model, which = c("fixed", "var.cov"), ...)
 \method{dfbetas}{influence.merMod}(model, ...)
@@ -42,9 +47,17 @@
     variance-covariance components.}
   \item{do.coef}{if \code{FALSE}, skip potentially time-consuming
     computations, returning just a list containing hat values.}
-  \item{ncores}{number of computational cores to use if run in parallel;
-    directly passed to \code{\link[parallel]{makeCluster}()} from \R's
-    \pkg{parallel} package.}
+  \item{parallel}{The type of parallel operation to be used (if any).
+    If missing, the
+    default is taken from the option \code{"influence.ncpus"} (and if that
+    is not set, \code{1L}).}
+  \item{ncpus}{integer: number of processes to be used in parallel operation:
+    typically one would choose this to be the number of available CPUs.
+    Use \code{options(influence.ncpus=X)} to set the default value to \code{X}
+    for the duration of an R session.}
+  \item{cl}{An optional \pkg{parallel} or \pkg{snow} cluster for use if
+    \code{parallel = "snow"}.  If not supplied, a cluster on the
+    local machine is created for the duration of the \code{boot} call.}
   \item{start}{starting value for new fits (set to optimal values from
     original fit by default)}
   \item{\dots}{ignored.}

@@ -29,15 +29,15 @@ allFit(object, meth.tab = NULL, data = NULL,
     \code{maxfeval}, \code{maxit}, etc.) for each optimizer.}
   \item{parallel}{The type of parallel operation to be used (if any).
     If missing, the
-    default is taken from the option \code{"boot.parallel"} (and if that
-    is not set, \code{"no"}).}
+    default is taken from the option \code{"allFit.ncpus"} (and if that
+    is not set, \code{1L}).}
   \item{ncpus}{integer: number of processes to be used in parallel operation:
   typically one would choose this to be the number of available CPUs.
   Use \code{options(allFit.ncpus=X)} to set the default value to \code{X}
   for the duration of an R session.}
   \item{cl}{An optional \pkg{parallel} or \pkg{snow} cluster for use if
     \code{parallel = "snow"}.  If not supplied, a cluster on the
-    local machine is created for the duration of the \code{boot} call.}
+    local machine is created for the duration of the \code{allFit} call.}
   \item{catch.errs}{(logical) wrap model fits in \code{tryCatch} clause
     to skip over errors? (\code{catch.errs=FALSE} is probably only
     useful for debugging).}
