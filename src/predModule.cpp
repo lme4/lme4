@@ -294,7 +294,7 @@ namespace lme4 {
             }
             if (debug) Rcpp::Rcout << "updateDecomp 5" << std::endl;
             if (d_RX.info() != Eigen::Success)
-                ::Rf_error("Downdated VtV is not positive definite");
+                Rcpp::stop("Downdated VtV is not positive definite");
             d_ldRX2         = 2. * d_RX.matrixLLT().diagonal().array().abs().log().sum();
             if (debug) Rcpp::Rcout << "updateDecomp 6" << std::endl;
         }
