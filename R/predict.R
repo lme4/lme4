@@ -20,6 +20,7 @@ isRE(~0+x) ##  "
 ##' (except will need wrap to insert specials=lme4_specials)
 safe_length <- function(x) length(unclass(x))
 reOnly <- function(f, response=FALSE, bracket=TRUE, doublevert_split = TRUE, specials=lme4_specials) {
+    ee <- environment(f)
     flen <- safe_length(f)
     f2 <- f[[2]]
     if (bracket) {
@@ -35,7 +36,7 @@ reOnly <- function(f, response=FALSE, bracket=TRUE, doublevert_split = TRUE, spe
     }
     ## form may be a 'language' object by now ...
     form <- as.formula(form)
-    environment(form) <- environment(f)
+    environment(form) <- ee
     return(form)
 }
 
