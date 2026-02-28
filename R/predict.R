@@ -15,10 +15,28 @@ isRE(~0+x) ##  "
 }
 
 ##' Random Effects formula only
-reOnly <- function(f, response=FALSE) {
-    reformulate(paste0("(", vapply(reformulas::findbars(f), deparse1, ""), ")"),
-                response = if(response && length(f)==3L) f[[2]],
-                env = environment(f))
+##' COPIED from reformulas (to avoid needing to update to reformulas devel version)
+##' FIXME: delete and import from reformulas once reformulas is updated on CRAN
+##' (except will need wrap to insert specials=lme4_specials)
+safe_length <- function(x) length(unclass(x))
+reOnly <- function(f, response=FALSE, bracket=TRUE, doublevert_split = TRUE, specials=lme4_specials) {
+    flen <- safe_length(f)
+    f2 <- f[[2]]
+    if (bracket) {
+        xdv <- if (doublevert_split) "split" else "diag_special"
+        fb <- reformulas::findbars_x(f, expand_doublevert_method = xdv, specials = specials)
+        f <- lapply(fb, reformulas::makeOp, quote(`(`)) ## bracket-protect terms
+    }
+    f <- reformulas::sumTerms(f)
+    if (response && flen==3) {
+        form <- reformulas::makeOp(f2, f, quote(`~`))
+    } else {
+        form <- reformulas::makeOp(f, quote(`~`))
+    }
+    ## form may be a 'language' object by now ...
+    form <- as.formula(form)
+    environment(form) <- environment(f)
+    return(form)
 }
 
 ## '...' may contain fixed.only=TRUE, random.only=TRUE, ..

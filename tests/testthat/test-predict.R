@@ -684,3 +684,24 @@ test_that("predictions work with se.fit and subset of grouping variable levels",
   expect_true(all(gp1$fit == expected_gp1))
 })
 
+
+
+
+test_that("simulation works with 'par'", {
+  form <- Reaction ~ Days + ar1(0+factor(Days)|Subject)
+  m1 <- lmer(form, data = sleepstudy)
+  s1 <- simulate( form[-2],
+                 newdata = sleepstudy,
+                 newparams = list(beta = c(0, 1),
+                                  theta = getME(m1, "theta"),
+                                  sigma = 1),
+                 seed = 101)[[1]]
+  s2 <- simulate(form[-2],
+                 newdata = sleepstudy,
+                 newparams = list(beta = c(0, 1),
+                                  par = getME(m1, "par"),
+                                  sigma = 1),
+                 seed = 101)[[1]]
+  expect_equal(s1, s2)
+
+})

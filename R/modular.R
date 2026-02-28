@@ -368,9 +368,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- quote(stats::model.frame)
 
-    specials <- c("us", "diag", "cs", "ar1")
     ## substitute  special(x | f)  with  (x | f)
-    fr.form. <- noSpecials(formula, specials = specials, delete = FALSE)
+    fr.form. <- noSpecials(formula, specials = lme4_specials, delete = FALSE)
     ## substitute  (x | f)  and  (x || f)  with  (x + f)
     fr.form <- sub_specials(fr.form., specials = c("|", "||"),
                             keep_args = c(2L, 2L))
@@ -397,7 +396,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     ##                x | f  ->      us(x | f)
     ##     nonspecial(x | f) ->      us(x | f)
     ##        special(x | f) -> special(x | f)
-    bb1 <- findbars_x(formula, specials = specials,
+    bb1 <- findbars_x(formula, specials = lme4_specials,
                       default.special = "us", target = "|",
                       expand_doublevert_method = getDoublevertDefault())
     bb0 <- lapply(bb1, `[[`, 2L)
@@ -432,7 +431,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     ## ran-effects model frame (for predvars)
     ## important to COPY formula (and its environment)?
     ranform <- fr.form.
-    RHSForm(ranform) <- reformulas::subbars(RHSForm(reOnly(ranform)))
+    RHSForm(ranform) <- reformulas::subbars(RHSForm(noSpecials(reOnly(ranform))))
     mf$formula <- ranform
     ranfr <- eval(mf, parent.frame())
     attr(attr(fr,"terms"), "predvars.random") <-
@@ -753,9 +752,8 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- quote(stats::model.frame)
 
-    specials <- c("us", "diag", "cs", "ar1")
     ## substitute  special(x | f)  with  (x | f)
-    fr.form. <- noSpecials(formula, specials = specials, delete = FALSE)
+    fr.form. <- noSpecials(formula, specials = lme4_specials, delete = FALSE)
     ## substitute  (x | f)  and  (x || f)  with  (x + f)
     fr.form <- sub_specials(fr.form., specials = c("|", "||"),
                             keep_args = c(2L, 2L))
@@ -787,7 +785,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     ##                x | f  ->      us(x | f)
     ##     nonspecial(x | f) ->      us(x | f)
     ##        special(x | f) -> special(x | f)
-    bb1 <- findbars_x(formula, specials = specials,
+    bb1 <- findbars_x(formula, specials = lme4_specials,
                       default.special = "us", target = "|",
                       expand_doublevert_method = getDoublevertDefault())
     bb0 <- lapply(bb1, `[[`, 2L)
