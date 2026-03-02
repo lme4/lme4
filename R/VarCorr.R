@@ -50,7 +50,7 @@ function(sc, cnms, nc = lengths(cnms, use.names = FALSE),
             nms <- make.names(nms, unique = TRUE)
         names(ans) <- nms
     }
-    if (relReCovs)
+ ## if (relReCovs) # rev. dep. (e.g., 'gamm4') use it unconditionally
         attr(ans, "sc") <- sc
     ans
 }
@@ -65,7 +65,7 @@ VarCorr.merMod <-
 function(x, sigma = 1, ...) {
     ## TODO? add argument type=c("varcov", "sdcor", "logs")
     useSc <- !isGLMM(x)
-    sc <- if (useSc) { if (missing(sigma)) sigma(x) else sigma }
+    sc <- if (missing(sigma)) sigma(x) else sigma
     cnms <- x@cnms
     nc <- lengths(cnms, use.names = FALSE)
     theta <- x@theta
