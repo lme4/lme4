@@ -3,7 +3,7 @@
 \alias{mkVarCorr}
 \usage{
 mkVarCorr(sc, cnms, nc = lengths(cnms, use.names = FALSE),
-          theta, nms = names(cnms), reCovs = NULL)
+          theta, nms = names(cnms), reCovs = NULL, relReCovs = TRUE)
 }
 \description{
   Computes from \code{reCovs} the variance and correlation components of
@@ -23,6 +23,9 @@ mkVarCorr(sc, cnms, nc = lengths(cnms, use.names = FALSE),
     that is missing.}
   \item{nms}{a character vector giving component names.}
   \item{reCovs}{a list of \code{\linkS4class{Covariance}} objects.}
+  \item{relReCovs}{a logical indicating if the components of
+    \code{reCovs} represent relative covariance matrices (in which case
+    they are scaled by \code{sc^2}).}
 }
 \value{
   A list of matrices.

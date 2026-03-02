@@ -1,6 +1,6 @@
 mkVarCorr <-
 function(sc, cnms, nc = lengths(cnms, use.names = FALSE),
-         theta, nms = names(cnms), reCovs = NULL) {
+         theta, nms = names(cnms), reCovs = NULL, relReCovs = TRUE) {
     if (!missing(nc)) {
         nc <- as.integer(nc)
         if (!missing(cnms) && !identical(nc, lengths(cnms, use.names = FALSE)))
@@ -23,7 +23,7 @@ function(sc, cnms, nc = lengths(cnms, use.names = FALSE),
         cnmsi <- cnms[[i]]
         Li <- getLambda(object)
         jj <- seq.int(from = 1L, by = nci + 1L, length.out = nci)
-        Si <- if (is.null(sc)) tcrossprod(Li) else sc * sc * tcrossprod(Li)
+        Si <- if (relReCovs) sc * sc * tcrossprod(Li) else tcrossprod(Li)
         Si.sd <- sqrt(Si[jj])
         Si.cor <- Si/Si.sd/rep(Si.sd, each = nci)
         Si.cor[jj] <- 1
@@ -50,7 +50,8 @@ function(sc, cnms, nc = lengths(cnms, use.names = FALSE),
             nms <- make.names(nms, unique = TRUE)
         names(ans) <- nms
     }
-    attr(ans, "sc") <- sc
+    if (relReCovs)
+        attr(ans, "sc") <- sc
     ans
 }
 
@@ -63,7 +64,7 @@ rm(.nm)
 VarCorr.merMod <-
 function(x, sigma = 1, ...) {
     ## TODO? add argument type=c("varcov", "sdcor", "logs")
-    useSc <- isLMM(x)
+    useSc <- !isGLMM(x)
     sc <- if (useSc) { if (missing(sigma)) sigma(x) else sigma }
     cnms <- x@cnms
     nc <- lengths(cnms, use.names = FALSE)
@@ -71,9 +72,16 @@ function(x, sigma = 1, ...) {
     nms <- names(x@flist)[attr(x@flist, "assign")]
     reCovs <- getReCovs(x)
     ans <- mkVarCorr(sc = sc, cnms = cnms, nc = nc,
-                     theta = theta, nms = nms, reCovs = reCovs)
+                     theta = theta, nms = nms,
+                     reCovs = reCovs, relReCovs = useSc)
     class(ans) <- "VarCorr.merMod"
-    attr(ans, "useSc") <- useSc # for reformulas::formatVC
+    ## FIXME:
+    ## Here we have
+    ##     'useSc' is TRUE  <=>  'sc' is a residual standard deviation
+    ## but that does *not* match the interpretation of
+    ##     as.logical(x@devcomp$dims[["useSc"]])
+    ## ...
+    attr(ans, "useSc") <- useSc # used by reformulas::formatVC
     ans
 }
 
@@ -112,7 +120,8 @@ function(x, row.names = NULL, optional = FALSE,
                        stringsAsFactors = FALSE)
         }
     })
-    if (!is.null(sc <- attr(x, "sc")) && (attr(x, "useSc") %||% TRUE)) {
+    if (attr(x, "useSc")) {
+        sc <- attr(x, "sc")
         r <- data.frame(grp = "Residual",
                         var1 = NA_character_,
                         var2 = NA_character_,
