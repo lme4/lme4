@@ -96,7 +96,7 @@ library(lme4)
 \dontrun{
   ## Parallel examples for Windows
   nc <- max(detectCores() - 1L, 1L, na.rm = TRUE)
-  optCls <- makeCluster(nc, type = "SOCK")
+  optCls <- makeCluster(nc)
   clusterEvalQ(optCls,library("lme4"))
   ### not necessary here because using a built-in
   ## data set, but in general you should clusterExport() your data
