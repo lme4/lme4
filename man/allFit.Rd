@@ -95,7 +95,7 @@ library(lme4)
 } %% interactive()
 \dontrun{
   ## Parallel examples for Windows
-  nc <- detectCores()-1
+  nc <- max(detectCores() - 1L, 1L, na.rm = TRUE)
   optCls <- makeCluster(nc, type = "SOCK")
   clusterEvalQ(optCls,library("lme4"))
   ### not necessary here because using a built-in
