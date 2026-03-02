@@ -44,7 +44,7 @@ if (.Platform$OS.type != "windows") {
 
 
     library(parallel)
-    if (detectCores()>1) {
+    if (max(detectCores(), 1L, na.rm = TRUE) > 1) {
         ## http://stackoverflow.com/questions/12983137/how-do-detect-if-travis-ci-or-not
         travis <- nchar(Sys.getenv("TRAVIS"))>0
         if(.Platform$OS.type != "windows" && !travis) {

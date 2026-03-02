@@ -133,7 +133,7 @@ if (testLevel > 3) {
 }  ## testLevel > 3
 
 library("parallel")
-if (detectCores()>1) {
+if (max(detectCores(), 1L, na.rm = TRUE) > 1) {
 
     p0 <- profile(fm1, which="theta_")
     ## http://stackoverflow.com/questions/12983137/how-do-detect-if-travis-ci-or-not
