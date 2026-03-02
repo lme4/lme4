@@ -64,12 +64,7 @@ jobs:
         run: |
           Rscript -e 'install.packages(c("rcmdcheck", "remotes", "Matrix", "minqa", "nloptr", "RcppEigen", "reformulas", "Rdpack", "broom.mixed", "testthat", "knitr", "rmarkdown"))'
           Rscript -e 'remotes::install_deps(dependencies = TRUE)'
-
-      # - uses: r-lib/actions/setup-r-dependencies@v2
-      #   with:
-      #     extra-packages: any::rcmdcheck
-      #     needs: check
-
+          
       - name: Install LaTeX etc.
         if: runner.os == 'Linux'
         run: |
