@@ -36,9 +36,11 @@ plot.allFit <- function(object, which = "fixed",
   do.call(tinyplot, tinyplot_args)
 }
 
-plot(gm_all)
-par(las=1); tpar(fmar = c(1,12,1,1))
-plot(gm_all, flip = TRUE)
-plot(gm_all, conf.level = NA)
-## not working yet ...
-## plot(gm_all, conf.level = NA, by = "optimizer")
+if (FALSE) {
+  plot(gm_all)
+  par(las=1); tpar(fmar = c(1,12,1,1))
+  plot(gm_all, flip = TRUE)
+  plot(gm_all, conf.level = NA)
+  ## not working yet ...
+  ## plot(gm_all, conf.level = NA, by = "optimizer")
+}
