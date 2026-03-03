@@ -50,7 +50,12 @@
     If \code{"multicore"} (and \R is running on a Unix-alike), then
     \code{mclapply} is used; if \code{"snow"}, then \code{parLapply} is
     used.}
-  \item{ncpus}{number of processes to be used in parallel operation.}
+  \item{ncpus}{number of processes to be used in parallel operation when
+    \code{parallel} is either \code{"multicore"} or \code{"snow"}.
+    If \code{ncpus == 1}, \code{parallel = "multicore"} and
+    \code{parallel = "snow"} are ignored and the same as
+    \code{parallel = "no"}. The default value can be controlled by an
+    \R option.}
   \item{cl}{An optional \pkg{parallel} or \pkg{snow} cluster for use if
     \code{parallel = "snow"}.  If not supplied, a cluster on the
     local machine is created for the duration of the call.}
