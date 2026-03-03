@@ -10,7 +10,7 @@ mkWarnFun <- function(FUN) {
   assign(FUN, fn, envir = parent.frame())
 }
 
-for (f in c("findbars","subbars", "nobars",
+for (f in c("findbars","subbars", "nobars", "reOnly",
             "mkReTrms", "expandDoubleVerts", "isNested")) {
   mkWarnFun(f)
 }
