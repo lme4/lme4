@@ -924,7 +924,7 @@ if (testLevel>1) {
   cd <- cooks.distance(i1)
   expect_equal(unname(head(cd,2)),
                c(0.016503344184025, 0.0106634053477361))
-  if (parallel::detectCores() > 1) {
+  if (max(parallel::detectCores(), 1L, na.rm = TRUE) > 1) {
     test_that("parallel influence", {
         # ncores = 2 (deprecated)
         expect_warning(
