@@ -44,9 +44,11 @@ profile.merMod <- function(fitted,
     ## FIXME: allow for failure of bounds (non-pos-definite correlation matrices) when >1 cor parameter
 
     prof.scale <- match.arg(prof.scale)
-    parallel   <- match.arg(parallel)
-    do_parallel <- have_mc <- have_snow <- NULL # "-Wall" are set here:
-    eval(initialize.parallel)# (parallel, ncpus)
+
+    parallel <- match.arg(parallel)
+
+    # (parallel, ncpus, cl) -> (parallel)
+    eval(initialize.parallel)
 
     if (is.null(optimizer)) optimizer <- fitted@optinfo$optimizer
     ## hack: doesn't work to set bobyqa parameters to *ending* values stored
@@ -310,22 +312,19 @@ profile.merMod <- function(fitted,
     }}) ## FUN()
 
     ## copied from bootMer: DRY!
-    L <- if (do_parallel) {
-        if (have_mc) {
-            parallel::mclapply(seqnvp, FUN, mc.cores = ncpus)
-        } else if (have_snow) {
-            if (is.null(cl)) {
-                cl <- parallel::makePSOCKcluster(rep("localhost", ncpus))
-                ## explicit export of the lme4 namespace since most FUNs will probably
-                ## use some of them
-                parallel::clusterExport(cl, varlist=getNamespaceExports("lme4"))
-                if(RNGkind()[1L] == "L'Ecuyer-CMRG")
-                    parallel::clusterSetRNGStream(cl)
-                pres <- parallel::parLapply(cl, seqnvp, FUN)
-                parallel::stopCluster(cl)
-                pres
-            } else parallel::parLapply(cl, seqnvp, FUN)
+    L <- if (parallel == "multicore") {
+        parallel::mclapply(seqnvp, FUN, mc.cores = ncpus)
+    } else if (parallel == "snow") {
+        if (is.null(cl)) {
+            cl <- parallel::makeCluster(ncpus)
+            on.exit(parallel::stopCluster(cl))
+            ## explicit export of the lme4 namespace since most FUNs will probably
+            ## use some of them
+            parallel::clusterExport(cl, varlist=getNamespaceExports("lme4"))
+            if(RNGkind()[1L] == "L'Ecuyer-CMRG")
+                parallel::clusterSetRNGStream(cl)
         }
+        parallel::parLapply(cl, seqnvp, FUN)
     } else lapply(seqnvp, FUN)
     nn <- names(opt[seqnvp])
     ans <-    setNames(lapply(L, `[[`,  "bres"), nn)

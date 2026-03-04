@@ -1,7 +1,21 @@
 influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
-                             ncores=getOption("mc.cores",1),
                              start=NULL,
+                             parallel = c("no", "multicore", "snow"),
+                             ncpus = getOption("influence.ncpus", 1L),
+                             cl = NULL,
+                             ncores,
                              ...) {
+
+    if (!missing(ncores)) {
+        .Deprecated(msg = "argument 'ncores' is deprecated; please use 'parallel', 'ncpus', and 'cl' instead")
+        ncpus <- ncores
+        parallel <- "snow"
+    }
+
+    parallel <- match.arg(parallel)
+
+    # (parallel, ncpus, cl) -> (parallel)
+    eval(initialize.parallel)
 
     .groups <- NULL  ## avoid false-positive code checks
     .vcov <- function(x) Matrix::as.matrix(vcov(x))
@@ -95,12 +109,15 @@ influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
         vcov.1 <<- .vcov(mod.1)
         namedList(fixed.1, vc.1, vcov.1, converged, feval)
     }
-    result <- if(ncores >= 2) {
-        message("Note: using a cluster of ", ncores, " cores")
-        cl <- parallel::makeCluster(ncores)
-        on.exit(parallel::stopCluster(cl))
-        parallel::clusterEvalQ(cl, require("lme4"))
-        parallel::clusterApply(cl, unique.del, deleteGroup)
+    result <- if (parallel == "multicore") {
+        parallel::mclapply(unique.del, deleteGroup, mc.cores = ncpus)
+    } else if (parallel == "snow") {
+        if (is.null(cl)) {
+            cl <- parallel::makeCluster(ncpus)
+            on.exit(parallel::stopCluster(cl))
+            parallel::clusterEvalQ(cl, require("lme4"))
+        }
+        parallel::parLapply(cl, unique.del, deleteGroup)
     } else {
         lapply(unique.del, deleteGroup)
     }
@@ -193,6 +210,25 @@ rstudent.merMod <- function (model, ...) {
     r/sigma(model)
 }
 
+rstandard.glmerMod <- function (model,
+                              infl = influence(model, do.coef = FALSE),
+                              type = c("pearson", "deviance"), ...)
+{
+    type <- match.arg(type)
+    res <- residuals(model, type = type)
+    res <- res/(sigma(model) * sqrt(1 - hatvalues(model)))
+    res[is.infinite(res)] <- NaN
+    res
+}
+
+rstudent.glmerMod <- function(model, infl = influence(model, do.coef=FALSE), ...) {
+  useSc <- model@devcomp$dims[["useSc"]]
+  if (useSc) return(rstandard(model, infl, type="pearson"))
+  residuals(model, type = "pearson")/
+    (sigma(model)*sqrt(1 - hatvalues(model)))
+}
+
+
 ##' @S3method sigma merMod
 sigma.merMod <- function(object, ...) {
     dc <- object@devcomp
@@ -213,8 +249,9 @@ terms.merMod <- function(x, fixed.only=TRUE, random.only=FALSE, ...) {
         attr(tt,"predvars") <- attr(terms(x@frame),"predvars.fixed")
     }
     if (random.only) {
-        tt <- terms.formula(reformulas::subbars(formula(x,random.only=TRUE)))
-        ## FIXME: predvars should be random-only
+        ff <- reformulas::subbars(formula(x, random.only=TRUE))
+        ff <- noSpecials(ff, specials = lme4_specials, delete = FALSE)
+        tt <- terms.formula(ff)
         attr(tt,"predvars") <- attr(terms(x@frame),"predvars.random")
     }
     tt

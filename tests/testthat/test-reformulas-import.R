@@ -7,3 +7,8 @@ test_that("deprecation warnings from lme4 formula processing", {
   expect_warning(mkReTrms(findbars(f), fr = data.frame(f = factor(1:10))), "has moved")
   expect_warning(expandDoubleVerts(f), "has moved")
 })
+
+test_that("reOnly shims", {
+  reo <- reOnly(Reaction ~ 1 + (1|Subject))
+  expect_equal(reo, ~(1 | Subject))
+})

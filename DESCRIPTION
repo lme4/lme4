@@ -91,3 +91,4 @@ License: GPL (>= 2)
 URL: https://github.com/lme4/lme4/
 BugReports: https://github.com/lme4/lme4/issues
 Encoding: UTF-8
+RoxygenNote: 7.3.3

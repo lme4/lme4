@@ -17,7 +17,9 @@
 
 \usage{
 \method{influence}{merMod}(model, groups, data, maxfun = 1000,
-          do.coef = TRUE, ncores = getOption("mc.cores",1), start, ...)
+          do.coef = TRUE, start = NULL,
+          parallel = c("no", "multicore", "snow"),
+          ncpus = getOption("influence.ncpus", 1L), cl = NULL, ncores, ...)
 \method{cooks.distance}{influence.merMod}(model, ...)
 \method{dfbeta}{influence.merMod}(model, which = c("fixed", "var.cov"), ...)
 \method{dfbetas}{influence.merMod}(model, ...)
@@ -42,11 +44,19 @@
     variance-covariance components.}
   \item{do.coef}{if \code{FALSE}, skip potentially time-consuming
     computations, returning just a list containing hat values.}
-  \item{ncores}{number of computational cores to use if run in parallel;
-    directly passed to \code{\link[parallel]{makeCluster}()} from \R's
-    \pkg{parallel} package.}
   \item{start}{starting value for new fits (set to optimal values from
     original fit by default)}
+  \item{parallel}{The type of parallel operation to be used (if any).
+    If \code{"multicore"} (and \R is running on a Unix-alike), then
+    \code{mclapply} is used; if \code{"snow"}, then \code{parLapply} is
+    used.}
+  \item{ncpus}{number of processes to be used in parallel operation.}
+  \item{cl}{An optional \pkg{parallel} or \pkg{snow} cluster for use if
+    \code{parallel = "snow"}.  If not supplied, a cluster on the
+    local machine is created for the duration of the call.}
+  \item{ncores}{deprecated: equivalent to \code{parallel = "snow"} and
+    \code{ncpus = ncores}; please use \code{parallel}, \code{ncpus}, and
+    \code{cl} instead.}
   \item{\dots}{ignored.}
 }
 
@@ -82,7 +92,7 @@ For plotting \code{"influence.merMod"} objects, see \code{\link[car]{infIndexPlo
 }
 
 \author{
-J. Fox \email{jfox@mcmaster.ca}
+J. Fox; parallel extensions by H. Bengtsson
 }
 
 \seealso{

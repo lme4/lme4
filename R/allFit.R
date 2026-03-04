@@ -113,9 +113,9 @@ allFit <- function(object, meth.tab = NULL,
 	      is.character(method    <- meth.tab[,"method"]))
 
     parallel <- match.arg(parallel)
-    do_parallel <- have_mc <- have_snow <- NULL # "-Wall"
-    eval(initialize.parallel) # (parallel, ncpus)   --> ./utilities.R
-    ## |--> (do_parallel, have_mc, have_snow)
+
+    # (parallel, ncpus, cl) -> (parallel)
+    eval(initialize.parallel)
 
     fit.names <- gsub("\\.$", "", paste(optimizer, method, sep="."))
     ffun <- local({
@@ -217,28 +217,20 @@ allFit <- function(object, meth.tab = NULL,
     })
 
     seq_fit <- seq_along(fit.names)
-    res <- if (do_parallel) {
-               if (have_mc) {
-                   parallel::mclapply(seq_fit,
-                                      ffun, mc.cores = ncpus)
-               } else if(have_snow) {
-                   if(is.null(cl)) {
-                       cl <- parallel::makePSOCKcluster(rep("localhost", ncpus))
-                       ## consider exporting data/package ?
-                       ## parallel::clusterEvalQ(cl,library("lme4"))
-                       ## try to get data and export it?
-                       ## parallel::clusterExport(cl,??)
-                       res <- parallel::parLapply(cl, seq_fit, ffun)
-                       parallel::stopCluster(cl)
-                       res
-                   } else parallel::parLapply(cl, seq_fit, ffun)
-               } else {
-                   warning("'do_parallel' is true, but 'have_mc' and 'have_snow' are not.  Should not happen!")
-                   ## or stop()  or  we could silently use lapply(..)
-                   setNames(as.list(fit.names), fit.names)
-               }
-           } else
-               lapply(seq_fit, ffun)
+    res <- if (parallel == "multicore") {
+         parallel::mclapply(seq_fit, ffun, mc.cores = ncpus)
+    } else if(parallel == "snow") {
+        if (is.null(cl)) {
+            cl <- parallel::makeCluster(ncpus)
+            on.exit(parallel::stopCluster(cl))
+            ## consider exporting data/package ?
+            ## parallel::clusterEvalQ(cl,library("lme4"))
+            ## try to get data and export it?
+            ## parallel::clusterExport(cl,??)
+        }
+        parallel::parLapply(cl, seq_fit, ffun)
+    } else
+        lapply(seq_fit, ffun)
 
     names(res) <- fit.names
     structure(res, class = "allFit", fit = object, sessionInfo =  sessionInfo(),

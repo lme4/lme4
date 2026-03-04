@@ -15,3 +15,8 @@ for (f in c("findbars","subbars", "nobars",
   mkWarnFun(f)
 }
 
+## handle reOnly separately, it needs to be wrapped to return a formula properly
+## reformulas 0.4.5 will fix this (can then move back to the deprecation block above)
+reOnly <- function(...) {
+  res <- lme4_reOnly(...)
+}

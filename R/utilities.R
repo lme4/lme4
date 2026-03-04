@@ -1,3 +1,4 @@
+lme4_specials <- c("us", "diag", "cs", "ar1")
 
 ## From Matrix package  isDiagonal(.) :
 all0 <- function(x) !anyNA(x) && all(!x)
@@ -333,9 +334,8 @@ nlformula <- function(mc) {
     formula <- as.formula(substitute(~0 + (pnameexpr) + (meform)),
                           env = environment(form))
 
-    specials <- c("us", "diag", "cs", "ar1")
     ## substitute  special(x | f)  with  (x | f)
-    fr.form. <- noSpecials(formula, specials = specials, delete = FALSE)
+    fr.form. <- noSpecials(formula, specials = lme4_specials, delete = FALSE)
     ## substitute  (x | f)  and  (x || f)  with  (x + f)
     fr.form <- sub_specials(fr.form., specials = c("|", "||"),
                             keep_args = c(2L, 2L))
@@ -354,7 +354,7 @@ nlformula <- function(mc) {
     ##                x | f  ->      us(x | f)
     ##     nonspecial(x | f) ->      us(x | f)
     ##        special(x | f) -> special(x | f)
-    bb1 <- findbars_x(formula, specials = specials,
+    bb1 <- findbars_x(formula, specials = lme4_specials,
                       default.special = "us", target = "|",
                       expand_doublevert_method = getDoublevertDefault())
     bb0 <- lapply(bb1, function(call) {
@@ -931,14 +931,21 @@ arrange.condVar <- function(object,cv) {
 ## generic machinery for setting parallel options
 ## uses eval() (as in family()$initialize) to avoid too much list
 initialize.parallel <- expression({
-    have_mc <- have_snow <- FALSE
-    if (length(parallel)>1) parallel <- match.arg(parallel)
-    do_parallel <- (parallel != "no" && ncpus > 1L)
-    if (do_parallel) {
-        if (parallel == "multicore") have_mc <- .Platform$OS.type != "windows"
-        else if (parallel == "snow") have_snow <- TRUE
-        if (!(have_mc || have_snow))
-            do_parallel <- FALSE # (only for "windows")
+    if (length(parallel) > 1) parallel <- match.arg(parallel)
+    if (!is.null(cl)) {
+        stopifnot(inherits(cl, "cluster"))
+        parallel <- "snow"
+    }
+    if (parallel == "multicore") {
+        stopifnot(is.numeric(ncpus), length(ncpus) == 1L, is.finite(ncpus), ncpus >= 1L)
+        if (.Platform$OS.type == "windows" || ncpus == 1L)
+            parallel <- "no"
+    } else if (parallel == "snow") {
+        if (is.null(cl)) {
+            stopifnot(is.numeric(ncpus), length(ncpus) == 1L, is.finite(ncpus), ncpus >= 1L)
+            if (ncpus == 1L)
+                parallel <- "no"
+        }
     }
 })
 

@@ -39,18 +39,18 @@ jobs:
       LME4_TEST_LEVEL: 2
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: r-lib/actions/setup-pandoc@v2
-
-      - uses: r-lib/actions/setup-r@v2
-        with:
-          r-version: ${{ matrix.config.r }}
 
       # Enable r2u (Ubuntu binaries via bspm) to speed up dependency installation on Linux
       - name: Setup r2u (Linux)
         if: runner.os == 'Linux'
         uses: eddelbuettel/github-actions/r2u-setup@master
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:

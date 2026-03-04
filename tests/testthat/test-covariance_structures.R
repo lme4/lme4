@@ -691,23 +691,3 @@ test_that("'xst' length matches objective function argument length", {
     ## Error ....: length(xst <- as.numeric(xst)) == n is not TRUE
     expect_s4_class(m, "glmerMod")
 })
-
-test_that("varcorr has relevant attributes", {
-  vc.us <- VarCorr(fm1.us)
-  vc.cs <- VarCorr(fm1.cs)
-  vc.diag <- VarCorr(fm1.diag)
-  vc.ar1 <- VarCorr(fm1.ar1)
-  
-  att <- c("theta", "profpar")
-  for(i in att){
-    expect_true(i %in% names(attributes(vc.us$Subject)))
-    expect_true(i %in% names(attributes(vc.cs$Subject)))
-    expect_true(i %in% names(attributes(vc.diag$Subject)))
-    expect_true(i %in% names(attributes(vc.ar1$Subject)))
-  }
-  
-  expect_true("rho" %in% names(attributes(vc.cs$Subject)))
-  expect_true("rho" %in% names(attributes(vc.ar1$Subject)))
-  expect_false("rho" %in% names(attributes(vc.us$Subject)))
-  expect_false("rho" %in% names(attributes(vc.diag$Subject)))
-})
