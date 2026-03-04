@@ -14,16 +14,19 @@ isRE(NULL) ##  "
 isRE(~0+x) ##  "
 }
 
-## for now, need to copy this: 'specials' needs to be passed through, can't be easily hacked
+## for now, copied from reformulas:
+##  'specials'/'default.special' need to be passed through,
+##  can't be easily hacked
 safe_length <- function(x) length(unclass(x))
 
-my_reOnly <- function(f, response=FALSE, bracket=TRUE, doublevert_split = TRUE, specials=character(0)) {
+my_reOnly <- function(f, response=FALSE, bracket=TRUE, doublevert_split = TRUE, specials=character(0), default.special = NULL) {
     ee <- environment(f)
     flen <- safe_length(f)
     f2 <- f[[2]]
     if (bracket) {
         xdv <- if (doublevert_split) "split" else "diag_special"
-        fb <- findbars_x(f, expand_doublevert_method = xdv, specials = specials)
+        fb <- findbars_x(f, expand_doublevert_method = xdv,
+                         specials = specials, default.special = default.special)
         f <- lapply(fb, reformulas::makeOp, quote(`(`)) ## bracket-protect terms
     }
     f <- reformulas::sumTerms(f)

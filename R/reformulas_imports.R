@@ -18,8 +18,5 @@ for (f in c("findbars","subbars", "nobars",
 ## handle reOnly separately, it needs to be wrapped to return a formula properly
 ## reformulas 0.4.5 will fix this (can then move back to the deprecation block above)
 reOnly <- function(...) {
-  rlang::warn(paste("the", sQuote("reOnly"), "function has moved to the reformulas package. Please update your imports (once version 0.4.5 is on CRAN), or ask an upstream package maintainer to do so"),
-              .frequency = "once", .frequency_id = "reOnly")
-  res <- reformulas::reOnly(...)
-  as.formula(res)
+  res <- lme4_reOnly(...)
 }
