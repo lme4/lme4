@@ -9,6 +9,7 @@
 \alias{mkReTrms}
 \alias{isNested}
 \alias{expandDoubleVerts}
+\alias{reOnly}
 \usage{
 subbars(...)
 
@@ -22,6 +23,7 @@ isNested(...)
 
 expandDoubleVerts(...)
 
+reOnly(...)
 }
 
 \arguments{
@@ -31,5 +33,6 @@ expandDoubleVerts(...)
 \details{
   All of these functions are now located in the \code{reformulas}
   package. The versions here are 'shims' that throw a warning and
-  call the \code{reformulas} version.
+  call the \code{reformulas} version. (\code{reOnly} will not be
+  fully fixed in \code{reformulas} until version 0.4.5 is on CRAN.)
 }
