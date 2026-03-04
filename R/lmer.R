@@ -379,13 +379,6 @@ mkdevfun <- function(rho, nAGQ=1L, maxit = if(extends(rho.cld, "nlsResp")) 300L 
     }
     else stop("code not yet written")
     environment(ff) <- rho
-    if ((.lme4.work.around.blme || .lme4.work.around.lmerTest) &&
-        identical(names(formals(ff)), "par")) {
-        ## pro tem: accommodate 'blme', 'lmerTest' which depend on
-        ## names(formals(.))
-        names(formals(ff)) <- "theta"
-        body(ff) <- do.call(substitute, list(body(ff), list(par = quote(theta))))
-    }
     ff
 }
 
@@ -554,7 +547,7 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
             stop("model names vector and model list have different lengths")
         names(mods) <- sub("@env$", '', mNms) # <- hack
         models.reml <- vapply(mods, function(x) is(x,"merMod") && isREML(x), NA)
-        models.GHQ <- vapply(mods, function(x) is(x,"glmerMod") && getME(x,"devcomp")$dims["nAGQ"]>1 , NA)
+        models.GHQ <- vapply(mods, function(x) is(x,"glmerMod") && getME(x,"devcomp")$dims[["nAGQ"]]>1 , NA)
         if (any(models.GHQ) && any(vapply(mods, function(x) is(x,"glm"), NA)))
             stop("GLMMs with nAGQ>1 have log-likelihoods incommensurate with glm() objects")
         if (refit) {
@@ -727,7 +720,7 @@ deviance.merMod <- function(object, REML = NULL, ...) {
         ##                   if (relative) {
         ##                       object@resp$resDev() + sqrL
         ##                   } else {
-        ##                       useSc <- unname(getME(gm1, "devcomp")$dims["useSc"])
+        ##                       useSc <- unname(getME(gm1, "devcomp")$dims[["useSc"]])
         ##                       qLog2Pi <- unname(getME(object, "q")) * log(2 * pi)
         ##                       object@resp$aic() - (2 * useSc) + sqrL + qLog2Pi
         ##                   }
@@ -736,7 +729,7 @@ deviance.merMod <- function(object, REML = NULL, ...) {
         ##                   if (relative) {
         ##                       object@resp$resDev()
         ##                   } else {
-        ##                       useSc <- unname(getME(gm1, "devcomp")$dims["useSc"])
+        ##                       useSc <- unname(getME(gm1, "devcomp")$dims[["useSc"]])
         ##                       object@resp$aic() - (2 * useSc)
         ##                   }
         ##               })
@@ -1360,6 +1353,11 @@ refit.merMod <- function(object,
                          maxit = 100L, ...)
 {
 
+    if (isNLMM(object))
+        stop(gettextf("'%s' does not yet support nonlinear mixed models; try '%s' instead",
+                      "refit.merMod", "update.merMod"),
+             domain = NA)
+    haveGLMM <- isGLMM(object)
     l... <- list(...)
 
     ctrl.arg <- NULL
@@ -1404,7 +1402,7 @@ refit.merMod <- function(object,
             }
             ctrl.arg
         }
-        else if (isGLMM(object))
+        else if (haveGLMM)
             glmerControl()
         else
             lmerControl()
@@ -1414,8 +1412,8 @@ refit.merMod <- function(object,
     ## we need this stuff defined before we call .glmerLaplace below ...
     pp      <- object@pp$copy()
     dc      <- object@devcomp
-    nAGQ    <- dc$dims["nAGQ"] # possibly NA
-    nth     <- dc$dims[["nth"]]
+    nAGQ    <- if (haveGLMM) dc$dims[["nAGQ"]]
+ ## nth     <- dc$dims[["nth"]]
     verbose <- l...$verbose; if (is.null(verbose)) verbose <- 0L
     if (!is.null(newresp)) {
         ## update call and model frame with new response
@@ -1455,13 +1453,11 @@ refit.merMod <- function(object,
                environment(formula(object)))
     }
 
-    rr <- if(isLMM(object))
+    rr <-
+    if (!haveGLMM)
         mkRespMod(model.frame(object), REML = object@resp$REML)
-    else if(isGLMM(object)) {
+    else
         mkRespMod(model.frame(object), family = family(object))
-    } else
-        stop("refit.merMod not working for nonlinear mixed models.\n",
-             "try update.merMod instead.")
 
     if(!is.null(newresp)) {
         if(family(object)$family == "binomial") {
@@ -1479,7 +1475,7 @@ refit.merMod <- function(object,
                 newresp <- as.numeric(newresp)-1
             }
         }
-        ## if (isGLMM(object) && rr$family$family=="binomial") {
+        ## if (haveGLMM && rr$family$family=="binomial") {
 
         ## }
         stopifnot(length(newresp <- as.numeric(as.vector(newresp))) ==
@@ -1487,7 +1483,7 @@ refit.merMod <- function(object,
 
     }
 
-    if (isGLMM(object)) {
+    if (haveGLMM) {
         GQmat <- GHrule(nAGQ)
 
         if (nAGQ <= 1) {
@@ -1504,12 +1500,12 @@ refit.merMod <- function(object,
                resp = rr,
                mkPar = mkMkPar(reCovs),
                mkTheta = mkMkTheta(reCovs)),
-        if (isGLMM(object)) {
+        if (haveGLMM) {
             baseOffset <- forceCopy(object@resp$offset)
 
             list(tolPwrss= dc$cmp [["tolPwrss"]],
                  compDev = dc$dims[["compDev"]],
-                 nAGQ = unname(nAGQ),
+                 nAGQ = nAGQ,
                  lp0 = pp$linPred(1), ## object@resp$eta - baseOffset,
                  baseOffset = baseOffset,
                  pwrssUpdate = glmerPwrssUpdate,
@@ -1526,7 +1522,7 @@ refit.merMod <- function(object,
     x0        <- rho$mkPar(rho$pp$theta)
     lower     <- getLower(object)
     upper     <- getUpper(object)
-    if (!is.na(nAGQ) && nAGQ > 0L) {
+    if (haveGLMM && nAGQ > 0L) {
      ## xst   <- c(xst, sqrt(diag(pp$unsc())))
         x0    <- c(x0, unname(fixef(object)))
         lower <- c(lower, rep(-Inf,length(x0)-length(lower)))
@@ -1535,7 +1531,7 @@ refit.merMod <- function(object,
     ## control <- c(control,list(xst=0.2*xst, xt=xst*0.0001))
     ## FIX ME: allow use.last.params to be passed through
     calc.derivs <- !is.null(object@optinfo$derivs)
-    ## if(isGLMM(object)) {
+    ## if (haveGLMM) {
     ##     rho$resp$updateWts()
     ##     rho$pp$updateDecomp()
     ##     rho$lp0 <- rho$pp$linPred(1)
@@ -1557,7 +1553,7 @@ refit.merMod <- function(object,
                     # ctrl = eval(object@call$control)$checkConv,
                     ctrl = control$checkConv,
                     lbound=lower, ubound=upper)
-    if (isGLMM(object)) rr$setOffset(baseOffset)
+    if (haveGLMM) rr$setOffset(baseOffset)
     mkMerMod(environment(ff), opt,
              list(flist=object@flist, cnms=object@cnms,
                   Gp=object@Gp,
@@ -1681,7 +1677,9 @@ hatvalues.merMod <- function(model, fullHatMatrix = FALSE, ...) {
     ## FIXME:  add restriction for NLMMs?
 
     ## prior weights, W ^ {1/2} :
-    sqrtW <- Diagonal(x = sqrt(weights(model, type = "prior")))
+    ## weights() will restore NA values if na.action = na.exclude,
+    ##  need to drop them for now and restore at the end
+    sqrtW <- Diagonal(x = na.omit(sqrt(weights(model, type = "prior"))))
     vList <- getME(model, c("L", "Lambdat", "Zt", "RX", "X", "RZX"))
     ## CL:= right factor of the random-effects component of the hat matrix  (64)
     CL <- with(vList,
@@ -2417,10 +2415,9 @@ summary.summary.merMod <- function(object, varcov = TRUE, ...) {
 ##' @S3method weights merMod
 weights.merMod <- function(object, type = c("prior","working"), ...) {
     type <- match.arg(type)
-    isPrior <- type == "prior"
-    if(!isGLMM(object) && !isPrior)
-        stop("working weights only available for GLMMs")
-    res <- if(isPrior) object@resp$weights else object@pp$Xwts^2
+    res <- if (type == "prior") object@resp$weights else object@pp$Xwts^2
+    res <- napredict(na.action(object), res)
+
     ## the working weights available through pp$Xwts should be
     ## equivalent to:
     ##     object@resp$weights*(object@resp$muEta()^2)/object@resp$variance()
@@ -2430,10 +2427,7 @@ weights.merMod <- function(object, type = c("prior","working"), ...) {
     ## reference class fields not being updated at the optimum, then this
     ## could cause real problems.  see for example:
     ## https://github.com/lme4/lme4/issues/166
-
-
-    ## FIXME:  what to do about missing values (see stats:::weights.glm)?
-    ## FIXME:  add unit tests
+    
     return(res)
 }
 
@@ -2626,44 +2620,4 @@ optwrap <- function(optimizer, fn, par, lower = -Inf, upper = Inf,
               control   = control,
               warnings  = curWarnings,
               derivs    = derivs)
-}
-
-as.data.frame.VarCorr.merMod <- function(x,row.names = NULL,
-                                         optional = FALSE,
-                                         order = c("cov.last", "lower.tri"),
-                                         ...)  {
-    order <- match.arg(order)
-    tmpf <- function(v,grp) {
-        vcov <- c(diag(v), v[lt.v <- lower.tri(v, diag = FALSE)])
-        sdcor <- c(attr(v,"stddev"),
-                   attr(v,"correlation")[lt.v])
-        nm <- rownames(v)
-        n <- nrow(v)
-        dd <- data.frame(grp = grp,
-                         var1 = nm[c(seq(n), col(v)[lt.v])],
-                         var2 = c(rep(NA,n), nm[row(v)[lt.v]]),
-                         vcov,
-                         sdcor,
-                         stringsAsFactors = FALSE)
-        if (order=="lower.tri") {
-            ## reorder *back* to lower.tri order
-            m <- matrix(NA,n,n)
-            diag(m) <- seq(n)
-            m[lower.tri(m)] <- (n+1):(n*(n+1)/2)
-            dd <- dd[m[lower.tri(m, diag=TRUE)],]
-        }
-        dd
-    }
-    r <- do.call(rbind,
-                 c(mapply(tmpf, x,names(x), SIMPLIFY = FALSE),
-                   deparse.level = 0))
-    if (attr(x,"useSc")) {
-        ss <- attr(x,"sc")
-        r <- rbind(r,data.frame(grp = "Residual",var1 = NA,var2 = NA,
-                                vcov = ss^2,
-                                sdcor = ss),
-                   deparse.level = 0)
-    }
-    rownames(r) <- NULL
-    r
 }

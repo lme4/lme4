@@ -1,112 +1,131 @@
-##' Make variance and correlation matrices from \code{theta}
-##'
-##' @param sc scale factor (residual standard deviation)
-##' @param cnms component names
-##' @param nc numeric vector: number of terms in each RE component
-##' @param theta theta vector (lower-triangle of Cholesky factors)
-##' @param nms component names (FIXME: nms/cnms redundant: nms=names(cnms)?)
-##' @param full_cor specifies whether the full correlation matrix should be produced
-##' @param is_lmm specifies whether the information came from a LMM
-##' @seealso \code{\link{VarCorr}}
-##' @return A matrix
-##' @export
-mkVarCorr <- function(sc, cnms, nc, theta, nms, reCovs = NULL, 
-                      full_cor = NULL, is_lmm = NULL) {
-  if (is.null(reCovs)) {
-    ncseq <- seq_along(nc)
-    thl <- split(theta, rep.int(ncseq, (nc * (nc + 1))/2))
-  }
-  else
-    ncseq <- seq_along(reCovs)
-  if(!all(nms == names(cnms))) ## the above FIXME
-    warning("nms != names(cnms)  -- whereas lme4-authors thought they were --\n",
-            "Please report!", immediate. = TRUE)
-  ans <- lapply(ncseq, function(i)
-  {
-    ## Li := \Lambda_i, the i-th block diagonal of \Lambda(\theta)
-    if (is.null(reCovs)) {
-      Li <- diag(nrow = nc[i])
-      Li[lower.tri(Li, diag = TRUE)] <- thl[[i]]
+mkVarCorr <-
+function(sc, cnms, nc = lengths(cnms, use.names = FALSE),
+         theta, nms = names(cnms), reCovs = NULL,
+         is_lmm = NULL) {
+    if (!missing(nc)) {
+        nc <- as.integer(nc)
+        if (!missing(cnms) && !identical(nc, lengths(cnms, use.names = FALSE)))
+            stop("'nc' and lengths(cnms) are inconsistent")
     }
-    else
-      Li <- getLambda(reCovs[[i]])
-    rownames(Li) <- cnms[[i]]
-    # the scalar only applies for LMMs
-    if(!is.null(is_lmm) && is_lmm == FALSE){sc = 1}
-    # val := \Sigma_i = \sigma^2 \Lambda_i \Lambda_i', the
-    val <- tcrossprod(sc * Li) # variance-covariance 
-    stddev <- sqrt(diag(val))
-    ## if null, then only print the covariance matrix if nc <= 20.
-    ## 20 is an arbitrary threshold, but anything larger than that would likely
-    ## be too tedious to work with.
-    if((is.null(full_cor) && nc[[i]] <= 20)
-        || inherits(reCovs[[i]], "Covariance.ar1") 
-        || full_cor == TRUE){
-      corr <- t(val / stddev)/stddev
-      diag(corr) <- 1
-    } else {
-      corr <- matrix(NaN)
+    if (!missing(nms)) {
+        if (!missing(cnms) && !identical(nms, names(cnms)))
+            stop("'nms' and names(cnms) are inconsistent")
     }
-    structure(val, stddev = stddev, correlation = corr)
-  })
-  for(j in seq_along(ans)){
-    reCov <- reCovs[[j]]
-    cls <- sub("Covariance\\.", "", class(reCov))
-    ## There are separate vcmat_hetar1, vcmat_homcs classes
-    ## Inconsistent naming because AR1 default is typically homogenous,
-    ## CS default is heterogeneous (cf glmmTMB)
-    hom_status <- ""
-    if ("hom" %in% slotNames(reCov)) {
-      if (!reCov@hom && inherits(reCov, "Covariance.ar1")) hom_status <- "het"
-      if (reCov@hom && inherits(reCov, "Covariance.cs")) hom_status <- "hom"
+    if (is.null(reCovs))
+        reCovs <- .mapply(new,
+                          list(nc = nc,
+                               par = split(theta, rep(seq_along(nc), (nc * (nc + 1L)) %/% 2L))),
+                          list(Class = "Covariance.us"))
+    ans <- lapply(seq_along(reCovs), function(i) {
+        ## Li := \Lambda_i, the i-th diagonal block of \Lambda(\theta)
+        ## Si := \sigma^2 \Lambda_i \Lambda_i'
+        object <- reCovs[[i]]
+        nci <- nc[i]
+        Li <- getLambda(object)
+        rownames(Li) <- cnms[[i]]
+        if (!(is.null(is_lmm) || is_lmm))
+            sc <- 1 # nonunit only for LMMs
+        jj <- seq.int(from = 1L, by = nci + 1L, length.out = nci)
+        Si <- sc * sc * tcrossprod(Li)
+        Si.sd <- sqrt(Si[jj])
+        Si.cor <- Si/Si.sd/rep(Si.sd, each = nci)
+        Si.cor[jj] <- 1
+        typ0 <- typ1 <- sub("^Covariance[.]", "", class(object))
+        switch(typ0, # respecting the conventions of, e.g., glmmTMB:
+               "cs"  = if ( object@hom) typ1 <- "homcs",
+               "ar1" = if (!object@hom) typ1 <- "hetar1")
+        class(Si) <- c(paste0("vcmat_", typ1), "matrix", "array")
+        attr(Si, "stddev") <- Si.sd
+        attr(Si, "correlation") <- Si.cor
+        attr(Si, "theta") <- getTheta(object)
+        attr(Si, "profpar") <- getProfPar(object)
+        if (typ0 %in% c("cs", "ar1"))
+        attr(Si, "rho") <- if (nci > 1L) getVC(object)$ccomp else NaN
+        Si
+    })
+    if (!is.null(nms)) {
+        ## FIXME:
+        ## Do we want this?  Maybe not.  'nms' are not necessarily
+        ## unique, e.g., 'fm2' from example("lmer") has *two* Subject
+        ## terms, so the names are "Subject", "Subject".  The 'print'
+        ## method for 'VarCorr.merMod' handles this just fine, but
+        ## it's a little awkward if we want to dig out components of
+        ## the list ...
+        if (anyDuplicated(nms))
+            nms <- make.names(nms, unique = TRUE)
+        names(ans) <- nms
     }
-    class(ans[[j]]) <- c(paste0("vcmat_", hom_status, cls), class(ans[[j]]))
-  }
-  if(is.character(nms)) {
-    ## FIXME: do we want this?  Maybe not.
-    ## Potential problem: the names of the elements of the VarCorr() list
-    ##  are not necessarily unique (e.g. fm2 from example("lmer") has *two*
-    ##  Subject terms, so the names are "Subject", "Subject".  The print method
-    ##  for VarCorrs handles this just fine, but it's a little awkward if we
-    ##  want to dig out elements of the VarCorr list ... ???
-    if (anyDuplicated(nms))
-      nms <- make.names(nms, unique = TRUE)
-    names(ans) <- nms
-  }
-  structure(ans, sc = sc)
+    attr(ans, "sc") <- sc
+    ans
 }
 
-## FIXME: automate this from list of known Covariance.* classes ... 
-for (varclass in c("us",
-                   c(outer(c("hom", "het"), c("ar1", "cs", "diag"),
-                           function(x, y) paste(x, y, sep = "_"))))) {
-  setOldClass(c(paste0("vcmat_", varclass), "matrix", "array"))
-}
+## MJ:
+## Maintain this list manually as prefixing convention is inconsistent.
+for (.nm in c("us", "diag", "cs", "homcs", "ar1", "hetar1"))
+    setOldClass(c(paste0("vcmat_", .nm), "matrix", "array"))
+rm(.nm)
                              
-##' Extract variance and correlation components
-##'
-VarCorr.merMod <- function(x, sigma = 1, full_cor = NULL, ...)
-{
-  ## TODO: now that we have '...', add  type=c("varcov","sdcorr","logs" ?
-  if (is.null(cnms <- x@cnms))
-    stop("VarCorr methods require reTrms, not just reModule")
-  if(missing(sigma))
-    sigma <- sigma(x)
-  nc <- lengths(cnms) # no. of columns per term
-  structure(mkVarCorr(sigma, cnms = cnms, nc = nc, theta = x@theta,
-                      nms = { fl <- x@flist; names(fl)[attr(fl, "assign")]},
-                      reCovs = getReCovs(x),
-                      full_cor = full_cor,
-                      is_lmm = isLMM(x)),
-            useSc = as.logical(x@devcomp$dims[["useSc"]]),
-            class = "VarCorr.merMod")
+VarCorr.merMod <-
+function(x, sigma = 1, ...) {
+    ## TODO:
+    ## Now that we have '...', add type=c("varcov", "sdcor", "logs")?
+    sc <- if (missing(sigma)) sigma(x) else sigma
+    cnms <- x@cnms
+    nc <- lengths(cnms, use.names = FALSE)
+    theta <- x@theta
+    nms <- names(x@flist)[attr(x@flist, "assign")]
+    reCovs <- getReCovs(x)
+    ans <- mkVarCorr(sc = sc, cnms = cnms, nc = nc,
+                     theta = theta, nms = nms, reCovs = reCovs,
+                     is_lmm = isLMM(x))
+    class(ans) <- "VarCorr.merMod"
+    attr(ans, "useSc") <- as.logical(x@devcomp$dims[["useSc"]])
+    ans
 }
 
-##' @S3method print VarCorr.merMod
-print.VarCorr.merMod <- function(x, digits = max(3, getOption("digits") - 2),
-                                 comp = "Std.Dev.", formatter = format, ...) {
-  print(formatVC(x, digits=digits, comp=comp, formatter=formatter),
-        quote = FALSE)
-  invisible(x)
+as.data.frame.VarCorr.merMod <-
+function(x, row.names = NULL, optional = FALSE,
+         order = c("cov.last", "lower.tri"), ...) {
+    order <- match.arg(order)
+    tmpf <- function(v,grp) {
+        vcov <- c(diag(v), v[lt.v <- lower.tri(v, diag = FALSE)])
+        sdcor <- c(attr(v,"stddev"),
+                   attr(v,"correlation")[lt.v])
+        nm <- rownames(v)
+        n <- nrow(v)
+        dd <- data.frame(grp = grp,
+                         var1 = nm[c(seq(n), col(v)[lt.v])],
+                         var2 = c(rep(NA,n), nm[row(v)[lt.v]]),
+                         vcov,
+                         sdcor,
+                         stringsAsFactors = FALSE)
+        if (order=="lower.tri") {
+            ## reorder *back* to lower.tri order
+            m <- matrix(NA,n,n)
+            diag(m) <- seq(n)
+            m[lower.tri(m)] <- (n+1):(n*(n+1)/2)
+            dd <- dd[m[lower.tri(m, diag=TRUE)],]
+        }
+        dd
+    }
+    r <- do.call(rbind,
+                 c(mapply(tmpf, x,names(x), SIMPLIFY = FALSE),
+                   deparse.level = 0))
+    if (attr(x,"useSc")) {
+        ss <- attr(x,"sc")
+        r <- rbind(r,data.frame(grp = "Residual",var1 = NA,var2 = NA,
+                                vcov = ss^2,
+                                sdcor = ss),
+                   deparse.level = 0)
+    }
+    rownames(r) <- NULL
+    r
 }
 
+print.VarCorr.merMod <-
+function(x, digits = max(3L, getOption("digits") - 2L),
+         comp = "Std.Dev.", formatter = format, ...) {
+    y <- formatVC(x, digits = digits, comp = comp, formatter = formatter)
+    print(y, quote = FALSE)
+    invisible(x)
+}

@@ -1,12 +1,12 @@
 \name{isSingular}
 \title{Test Fitted Model for (Near) Singularity}
 \alias{isSingular}
-\alias{isSingular.merMod}
-\alias{isSingular.Covariance.us}
-\alias{isSingular.Covariance.diag}
-\alias{isSingular.Covariance.cs}
-\alias{isSingular.Covariance.ar1}
-
+\alias{isSingular-methods}
+\alias{isSingular,merMod-method}
+\alias{isSingular,Covariance.us-method}
+\alias{isSingular,Covariance.diag-method}
+\alias{isSingular,Covariance.cs-method}
+\alias{isSingular,Covariance.ar1-method}
 \alias{getSingTol}
 \concept{boundary}
 \description{
@@ -109,4 +109,6 @@ getSingTol()
     \item \insertRef{mcelreath2015statistical}{lme4}
   }
 }
+\docType{methods}
+\keyword{methods}
 \keyword{utilities}

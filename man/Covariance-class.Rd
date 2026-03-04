@@ -281,7 +281,7 @@ of the \code{sc} argument.
     \item{\code{getProfPar}:}{Converting the values from \code{vcomp}
     and \code{ccomp} (or \code{getVC}) to extract parameters from the object 
     and translates them to a different parameterization 
-    suitable for profiling. If \code{profscale = "varcor"} then the 
+    suitable for profiling. If \code{profscale = "varcov"} then the 
     variance-covariance matrix is returned.}
     \item{\code{setProfPar}:}{Sets the parameters to use for profiling.}
     \item{\code{getProfLower}:}{Obtains the lower bounds of the values obtained

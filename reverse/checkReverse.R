@@ -154,6 +154,9 @@ function (args) {
     reverse <-
         list(which = c("Depends", "Imports", "LinkingTo",
                        "Suggests", "Enhances"))
+    check.vars <-
+        c("_R_CHECK_FORCE_SUGGESTS_=false",
+          NULL)
     configure.args <-
         list()
     configure.vars <-
@@ -164,6 +167,7 @@ function (args) {
                            "PKG_CONFIG=\"pkg-config --static\"",
                        NULL))
     out <- cpid(outdir, reverse = reverse, Ncpus = Ncpus, clean = clean,
+                check_env = check.vars,
                 install_args = list(configure.args = configure.args,
                                     configure.vars = configure.vars))
     saveRDS(out, file = file.path(outdir, "REVERSE.rds"))

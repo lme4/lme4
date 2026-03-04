@@ -4,7 +4,7 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 2.0-0}{
+\section{CHANGES IN VERSION 2.0-1}{
   \subsection{BUG FIXES}{
     \itemize{
       \item variances and standard deviations for GLMMs with estimated
@@ -12,7 +12,12 @@
       internal estimates were previously, incorrectly, scaled
       by the estimated dispersion parameters)
       \item parametric bootstrap confidence intervals for random-effect
-      SDs of GLMMs with estimated scale parameters are now correctly scaled
+      SDs of GLMMs with estimated scale parameters are now correctly
+      scaled
+      \item \code{weights.merMod} now allows \code{type = "working"} for
+      LMMs (for compatibility with the updated
+      \code{stats::weighted.residuals()} in R-devel), and properly
+      accounts for \code{na.action} choices
     } % itemize
   } % bug fixes
   \subsection{NEW FEATURES}{
@@ -55,6 +60,8 @@
       followed by correlation/covariance values (these were
       previously presented in "lower-triangular columnwise" order, with
       standard-deviation and correlation values interspersed)
+      \item added \code{theta}, \code{profpar} and if applicable, \code{rho} 
+      attributes to the output of \code{VarCorr()}.
     } % itemize
   } % user-visible changes
 } % 2.0-0
