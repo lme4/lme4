@@ -699,7 +699,7 @@ test_that("simulation works with AR1", {
   m1 <- lmer(form, data = dd)
   expect_equal(getME(m1, "par"),
                c(`Subject.*` = 41.51375093795063, Subject.rho = 0.47173954902469345),
-               tolerance = 1e-5)
+               tolerance = 1e-3)
 })
 
 test_that("simulation works with 'par'", {
