@@ -38,6 +38,8 @@ or adaptive Gauss-Hermite quadrature; GLMMs allow user-defined families and link
 
 ### On current R (>= 3.6.0)
 
+(*note: we haven't tested installation of lme4 on now-ancient versions of R recently. There may be recursive package dependencies that impede installation on old versions; if you experience such problems please post an issue and we'll do our best to resolve the problem*)
+
 * From CRAN (stable release 1.+)
 * Development version from Github:
 ```r
