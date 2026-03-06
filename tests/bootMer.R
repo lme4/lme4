@@ -55,6 +55,15 @@ if (.Platform$OS.type != "windows") {
         ##   via R CMD BATCH
         if (Sys.info()["sysname"] != "SunOS")
             boo01P.snow <- bootMer(fm1, mySumm, nsim = 10, parallel="snow", ncpus=2)
+
+        if (require("future.apply", quietly = TRUE)) {
+            plan(sequential)
+            boo01P.future.seq <- bootMer(fm1, mySumm, nsim = 10, seed = 101, parallel = "future")
+            plan(multisession)
+            boo01P.future.multi <- bootMer(fm1, mySumm, nsim = 10, seed = 101, parallel = "future")
+            stopifnot(all.equal(boo01P.future.seq$t, boo01P.future.multi$t))
+            plan(sequential)
+        }
     }
 
     set.seed(101)

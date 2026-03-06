@@ -33,7 +33,7 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
                     type = c("parametric","semiparametric"),
                     verbose = FALSE,
                     .progress = "none", PBargs=list(),
-                    parallel = c("no", "multicore", "snow"),
+                    parallel = c("no", "multicore", "snow", "future"),
                     ncpus = getOption("boot.ncpus", 1L), cl = NULL)
 {
     stopifnot((nsim <- as.integer(nsim[1])) > 0)
@@ -130,6 +130,8 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
                 parallel::clusterSetRNGStream(cl)
         }
         parallel::parLapply(cl, simvec, ffun)
+    } else if(parallel == "future") {
+        future.apply::future_lapply(simvec, ffun, future.seed = TRUE)
     } else lapply(simvec, ffun)
 
     t.star <- do.call(cbind,res)

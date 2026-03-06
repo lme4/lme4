@@ -4,6 +4,16 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
+\section{CHANGES IN VERSION 2.0-2}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item add support for parallelization via the future framework by setting
+      argument \code{parallel} to \code{"future"}.
+    } % itemize
+  } % new features
+} % 2.0-2
+
+
 \section{CHANGES IN VERSION 2.0-1}{
   \subsection{BUG FIXES}{
     \itemize{
@@ -79,7 +89,7 @@
       upstream changes/corrections in base R
     } % itemize
   } % user-visible changes
-} % 2.0-0
+} % 2.0-1
 
 \section{CHANGES IN VERSION 1.1-38 (2025-12-02)}{
   \subsection{BUG FIXES}{

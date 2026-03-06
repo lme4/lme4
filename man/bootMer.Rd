@@ -5,7 +5,7 @@
 bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE, re.form=NA,
 	type = c("parametric", "semiparametric"),
 	verbose = FALSE, .progress = "none", PBargs = list(),
-	parallel = c("no", "multicore", "snow"),
+	parallel = c("no", "multicore", "snow", "future"),
 	ncpus = getOption("boot.ncpus", 1L), cl = NULL)
 }
 \arguments{
@@ -47,7 +47,8 @@ bootMer(x, FUN, nsim = 1, seed = NULL, use.u = FALSE, re.form=NA,
   \item{parallel}{the type of parallel operation to be used, if any.
     If \code{"no"}, sequential processing is used. If \code{"multicore"}
     and \R is running on a Unix-alike operating system, \code{mclapply}
-    is used; if \code{"snow"}, \code{parLapply} is used.}
+    is used; if \code{"snow"}, \code{parLapply} is used; if \code{"future"},
+    \code{future.apply::future_lapply} is used.}
   \item{ncpus}{number of processes to be used in parallel operation when
     \code{parallel} is either \code{"multicore"} or \code{"snow"}.
     If \code{ncpus == 1}, \code{parallel = "multicore"} and
