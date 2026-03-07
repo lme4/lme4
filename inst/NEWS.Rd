@@ -4,7 +4,17 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 2.0-1}{
+\section{CHANGES IN VERSION 2.0-2}{
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item exported covariance methods documented in
+      \code{help("Covariance-class")} (\code{getPar}, \code{getTheta},
+      etc.)
+    } % itemize
+  } % user-visible changes
+} % 2.0-2
+
+\section{CHANGES IN VERSION 2.0-1 (2026-03-05)}{
   \subsection{BUG FIXES}{
     \itemize{
       \item variances and standard deviations for GLMMs with estimated
