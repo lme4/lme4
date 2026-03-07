@@ -1020,14 +1020,19 @@ All three of these confidence intervals, as well as the three different models,
 are compared against each other in Figure~\ref{fig:confPlot}.
 }
 
-<<cbppConfidenceCalc,eval=FALSE,echo=FALSE>>=
+<<cbppConfidenceCalc, eval=FALSE, echo=FALSE>>=
 profile.gm2 <- profile(gm2,signames=FALSE)
 profile.gm3 <- profile(gm3,signames=FALSE)
 confint.prof <- confint(profile.gm2)
 confint3.prof <- confint(profile.gm3)
+confint.boot <- confint(gm2,method="boot",nsim=20,seed=101)
+@
+
+<<cbppWaldConfint, echo = FALSE>>=
+## fast enough
+confint0.wald <- confint(gm1,method="Wald")
 confint.wald <- confint(gm2,method="Wald")
 confint3.wald <- confint(gm3,method="Wald")
-confint.boot <- confint(gm2,method="boot",nsim=20,seed=101)
 @
 
 <<cbppConfidence,echo=FALSE>>=
@@ -1244,7 +1249,7 @@ Similar to the CBPP data set, another relevant demonstration is computing
 profile, Wald, and bootstrapping confidence intervals for one of the models to
 understand the effect of each variable.}
 
-<<ContraceptionBatch,eval=FALSE,echo=FALSE>>=
+<<ContraceptionBatch,echo=FALSE>>=
 load(file="glmer_bootbatch2.RData")
 load(file="glmer_profbatch2.RData")
 @
@@ -1256,6 +1261,7 @@ profile.cm3 <- profile(cm3,signames=FALSE)
 confint.prof.cm3 <- confint(profile.cm3)
 rownames(confint.boot.cm3)[1] <- rownames(confint.prof.cm3)[1]
 @
+
 
 <<ContraceptionConfidenceSetup,echo=FALSE>>=
 combCI0 <- do.call(rbind, c(

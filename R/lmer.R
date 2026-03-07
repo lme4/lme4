@@ -2387,7 +2387,7 @@ summary.merMod <- function(object,
                    coefficients = coefs,
                    sigma = sig,
                    ## explicitly call method to avoid getting m
-                   ## essed up by merDeriv's vcov method
+                   ## messed up by merDeriv's vcov method
                    ##  (which doesn't assign a VC attribute)
                    vcov = vcov.merMod(object, correlation = correlation, sigm = sig),
                    varcor = varcor, # and use formatVC(.) for printing.
