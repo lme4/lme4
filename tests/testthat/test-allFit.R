@@ -119,4 +119,20 @@ if (testLevel>1) {
         expect_true(all(is.na(v) | v < 12))
     })
 
+    test_that("parallel = 'future' works", {
+        if (require("future.apply", quietly = TRUE)) {
+            plan(sequential)
+            gm_all_future_seq <- allFit(fit_cbpp_1, verbose = FALSE, parallel = "future")
+            expect_is(gm_all_future_seq, "allFit")
+            expect_equal(names(gm_all_future_seq), names(gm_all))
+            plan(multisession)
+            gm_all_future_multi <- allFit(fit_cbpp_1, verbose = FALSE, parallel = "future")
+            expect_is(gm_all_future_multi, "allFit")
+            ## Comparing results is tricky due to timing/environment differences
+            ## but the set of optimizers that worked should be the same
+            expect_equal(names(gm_all_future_multi), names(gm_all))
+            plan(sequential)
+        }
+    })
+
 }  ## testLevel
