@@ -177,13 +177,13 @@ exportMethods(getUpper)
 exportMethods(getLambda)
 exportMethods(getLambdat.dp)
 exportMethods(getLambdat.i)
-exportMethods(getVC}
-exportMethods(setVC}
-exportMethods(getVCNames}
-exportMethods{getProfPar}
-exportMethods{setProfPar}
-exportMethods{getProfLower}
-exportMethods{getProfUpper}
+exportMethods(getVC)
+exportMethods(setVC)
+exportMethods(getVCNames)
+exportMethods(getProfPar)
+exportMethods(setProfPar)
+exportMethods(getProfLower)
+exportMethods(getProfUpper)
 
 
 
