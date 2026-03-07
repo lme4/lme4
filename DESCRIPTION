@@ -35,8 +35,7 @@ Authors@R:
       person("Ross D.", "Boylan", role = "ctb",
              comment = c(ORCID = "0009-0003-4123-8090")),
       person("Henrik", "Bengtsson", role = "ctb",
-             comment = c(ORCID = "0000-0002-9280-4430"))
-)
+             comment = c(ORCID = "0000-0002-9280-4430")))
 Description:
     Fit linear and generalized linear mixed-effects models.  The
     models and their components are represented using S4 classes and
