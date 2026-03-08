@@ -1047,8 +1047,8 @@ isLMM.merMod <- function(x,...) {
 }
 
 npar.merMod <- function(object) {
-    n <- length(object@beta) + length(object@theta) +
-        object@devcomp[["dims"]][["useSc"]]
+    n <- length(object@beta) + getParLength(object) +
+      object@devcomp[["dims"]][["useSc"]]
     ## FIXME: this is a bit of a hack: a user *might* have specified
     ## negative binomial family with a known theta, in which case we
     ## shouldn't count it as extra.  Either glmer.nb needs to set a

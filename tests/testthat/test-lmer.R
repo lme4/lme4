@@ -492,3 +492,10 @@ test_that("doubleverts expanded in stored formula by default", {
   expect_equal(formula(lf),
                Reaction ~ Days + ((1 | Subject) + (0 + Days | Subject)))
 })
+          
+test_that("parameter counting", {
+  m1 <- lmer(incidence ~ cs(0 + herd | period), data = cbpp)
+  m2 <- lmer(incidence ~ cs(0 + herd | period, hom = TRUE), data = cbpp)
+  expect_equal(attr(logLik(m1), "df"), 18L)
+  expect_equal(attr(logLik(m2), "df"), 4L)
+})

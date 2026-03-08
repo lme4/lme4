@@ -5,6 +5,13 @@
 \encoding{UTF-8}
 
 \section{CHANGES IN VERSION 2.0-2}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item fixed parameter-counting bug for structured covariance
+      matrices (internal \code{npar.merMod} function, results exposed in
+      \code{logLik}, \code{anova}, \code{df.residual} ...) (GH #943)
+    } % itemize
+  } % bug fixes
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item exported covariance methods documented in
