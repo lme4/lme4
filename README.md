@@ -19,6 +19,8 @@ lme4: Mixed-effects models in R.
 - The [lme4 tag on StackOverflow](https://stackoverflow.com/questions/tagged/lme4) for programming-related or the [lme4-nlme tag on CrossValidated](https://stats.stackexchange.com/questions/tagged/lme4-nlme) for statistics-related questions
 - maintainer e-mail only for urgent/private communications
 
+Please do **not** cross-post, i.e. ask the same question in more than one forum, unless it's suggested that you have posted in the wrong place, or unless you receive total silence in one forum. In the latter case it may be better to send a reminder/"bump" message to the original forum; in any case you should mention in your new message where/when you've previously asked the question.
+
 ## Support
 
 If you choose to support `lme4` development financially, you can contribute to a fund at McMaster University (home institution of one of the developers) [here](https://secureca.imodules.com/s/1439/17/giving/form.aspx?sid=1439&gid=1&pgid=770&cid=1618&dids=2413&bledit=1&appealcode=18C9). The form will say that you are donating to the "Global Coding Fund"; this fund is available for use by the developers, under McMaster's research spending rules. We plan to use the funds, as available, to pay students to do maintenance and development work. There is no way to earmark funds or set up a bounty to direct funding toward particular features, but you can e-mail the maintainers and suggest priorities for your donation.
