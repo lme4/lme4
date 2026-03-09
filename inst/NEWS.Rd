@@ -5,16 +5,29 @@
 \encoding{UTF-8}
 
 \section{CHANGES IN VERSION 2.0-2}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item fixed parameter-counting bug for structured covariance
+      matrices (internal \code{npar.merMod} function, results exposed in
+      \code{logLik}, \code{anova}, \code{df.residual} ...) (GH #943)
+    } % itemize
+  } % bug fixes
   \subsection{NEW FEATURES}{
     \itemize{
-      \item add support for parallelization via the future framework by setting
+      \item add support for parallelization via the \code{future} framework by setting
       argument \code{parallel} to \code{"future"}.
     } % itemize
   } % new features
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item exported covariance methods documented in
+      \code{help("Covariance-class")} (\code{getPar}, \code{getTheta},
+      etc.)
+    } % itemize
+  } % user-visible changes
 } % 2.0-2
 
-
-\section{CHANGES IN VERSION 2.0-1}{
+\section{CHANGES IN VERSION 2.0-1 (2026-03-05)}{
   \subsection{BUG FIXES}{
     \itemize{
       \item variances and standard deviations for GLMMs with estimated
