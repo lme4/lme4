@@ -9,7 +9,12 @@
     \itemize{
       \item fixed parameter-counting bug for structured covariance
       matrices (internal \code{npar.merMod} function, results exposed in
-      \code{logLik}, \code{anova}, \code{df.residual} ...) (GH #943)
+      \code{logLik}, \code{anova}, \code{df.residual} ...) (GH #943,
+      Henrik Singmann)
+      \item fixed ordering bug for models with multiple structured
+      covariances of different types (\code{mkReTrms} sorts random effects
+      in decreasing order of number of grouping variable levels, this
+      ordering was not applied consistently) (GH #945, Henrik Singmann)
     } % itemize
   } % bug fixes
   \subsection{USER-VISIBLE CHANGES}{

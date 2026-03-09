@@ -95,7 +95,10 @@ get.orig.levs <- function(object, FUN=levels, newdata=NULL, sparse = FALSE, ...)
 setParams <- function(object, params, inplace=FALSE, subset=FALSE) {
     pNames <- c("beta", "theta", "par")
     if (object@devcomp$dims[["useSc"]]) {
-      pNames <- c(pNames, "sigma")
+        pNames <- c(pNames, "sigma")
+        if (is.null(params$sigma)) {
+            stop("must specify sigma when using a family with an estimated scale/dispersion parameter")
+        }
     }
     if (!is.list(params) || length(setdiff(names(params), pNames)) > 0)
         stop("params should be specifed as a list with elements from ",
@@ -282,6 +285,7 @@ mkNewReTrms <- function(object, newdata,
                       expand_doublevert_method = getDoublevertDefault())
         bb0 <- lapply(bb1, `[[`, 2L)
         reTrms <- reformulas::mkReTrms(bb0, rfd, calc.lambdat = FALSE)
+        bb1 <- bb1[reTrms$ord] # reorder to match mkReTrms internal ordering
         reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
 
         ## ReTrms <- reformulas::mkReTrms(reformulas::findbars(re.form[[2]]), rfd)

@@ -363,6 +363,7 @@ nlformula <- function(mc) {
         call
     })
     reTrms <- reformulas::mkReTrms(bb0, frE, calc.lambdat = FALSE)
+    bb1 <- bb1[reTrms$ord] # reorder to match mkReTrms internal ordering
     reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
     list(respMod=respMod, frame=fr, X=X, reTrms=reTrms, pnames=pnames)
 } ## {nlformula}
