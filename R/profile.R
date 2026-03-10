@@ -32,7 +32,7 @@ profile.merMod <- function(fitted,
                            optimizer = NULL,
                            control = NULL,
                            signames = TRUE,
-                           parallel = c("no", "multicore", "snow"),
+                           parallel = c("no", "multicore", "snow", "future"),
                            ncpus = getOption("profile.ncpus", 1L),
                            cl = NULL,
                            prof.scale = c("sdcor","varcov"),
@@ -325,6 +325,9 @@ profile.merMod <- function(fitted,
                 parallel::clusterSetRNGStream(cl)
         }
         parallel::parLapply(cl, seqnvp, FUN)
+    } else if(parallel == "future") {
+        future.apply::future_lapply(seqnvp, FUN,
+            future.seed = TRUE, future.packages = "lme4")
     } else lapply(seqnvp, FUN)
     nn <- names(opt[seqnvp])
     ans <-    setNames(lapply(L, `[[`,  "bres"), nn)

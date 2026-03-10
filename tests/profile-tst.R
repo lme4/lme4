@@ -150,6 +150,16 @@ if (max(detectCores(), 1L, na.rm = TRUE) > 1) {
         prof01P.snow <- profile(fm1, which="theta_", parallel="snow", ncpus=2)
         stopifnot(all.equal(p0,prof01P.snow))
     }
+
+    if (require("future.apply", quietly = TRUE)) {
+        plan(sequential)
+        prof01P.future.seq <- profile(fm1, which = "theta_", parallel = "future")
+        stopifnot(all.equal(p0, prof01P.future.seq))
+        plan(multisession)
+        prof01P.future.multi <- profile(fm1, which = "theta_", parallel = "future")
+        stopifnot(all.equal(p0, prof01P.future.multi))
+        plan(sequential)
+    }
 }
 
 ## test profile/update from within functions

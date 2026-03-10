@@ -17,6 +17,12 @@
       ordering was not applied consistently) (GH #945, Henrik Singmann)
     } % itemize
   } % bug fixes
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item add support for parallelization via the \code{future} framework by setting
+      argument \code{parallel} to \code{"future"}.
+    } % itemize
+  } % new features
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
       \item exported covariance methods documented in
@@ -101,7 +107,7 @@
       upstream changes/corrections in base R
     } % itemize
   } % user-visible changes
-} % 2.0-0
+} % 2.0-1
 
 \section{CHANGES IN VERSION 1.1-38 (2025-12-02)}{
   \subsection{BUG FIXES}{

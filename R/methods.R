@@ -1,6 +1,6 @@
 influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
                              start=NULL,
-                             parallel = c("no", "multicore", "snow"),
+                             parallel = c("no", "multicore", "snow", "future"),
                              ncpus = getOption("influence.ncpus", 1L),
                              cl = NULL,
                              ncores,
@@ -118,6 +118,9 @@ influence.merMod <- function(model, groups, data, maxfun=1000, do.coef = TRUE,
             parallel::clusterEvalQ(cl, require("lme4"))
         }
         parallel::parLapply(cl, unique.del, deleteGroup)
+    } else if(parallel == "future") {
+        future.apply::future_lapply(unique.del, deleteGroup,
+            future.packages = "lme4")
     } else {
         lapply(unique.del, deleteGroup)
     }

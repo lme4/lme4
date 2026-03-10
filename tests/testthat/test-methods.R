@@ -946,6 +946,16 @@ if (testLevel>1) {
         parallel::clusterEvalQ(cl, library(lme4))
         i5 <- influence(fm1, parallel = "snow", ncpus = length(cl), cl = cl)
         expect_equal(i1, i5)
+
+        if (require("future.apply", quietly = TRUE)) {
+            plan(sequential)
+            i6 <- influence(fm1, parallel = "future")
+            expect_equal(i1, i6)
+            plan(multisession)
+            i7 <- influence(fm1, parallel = "future")
+            expect_equal(i1, i7)
+            plan(sequential)
+        }
     })
   }
 }
