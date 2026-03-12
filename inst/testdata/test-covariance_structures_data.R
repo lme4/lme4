@@ -53,12 +53,15 @@ nm.nlme <- nlme(
   random = Asym ~ 1 | Tree, 
   start = startvec)
 
+## cs(Asym|Tree) in nlmer with a single random effect (nc=1) is equivalent
+## to the default model, because compound symmetry with 1 dimension is just a
+## scalar variance. The correct nlme equivalent is therefore the simple
+## random-intercept model without any within-group correlation structure.
 nm.nlme.cs <- nlme(
   circumference ~ SSlogis(age, Asym, xmid, scal),
   data = Orange,
   fixed = Asym + xmid + scal ~ 1,   
   random = Asym ~ 1 | Tree, 
-  correlation = corCompSymm(form = Asym ~ 1 | Tree),
   start = startvec)
 
 # tests regarding stdev and corr of glmms
