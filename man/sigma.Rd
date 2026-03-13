@@ -18,17 +18,15 @@
     methods. (None currently in our two methods.)}
 }
 \value{
-  The value differs based on the family (see details above for an explanation.)
+  The value differs based on the family (see details for an explanation.)
   \itemize{
-    \item For Gaussian fitted models, this is the residual 
-    standard deviation.
-    \item For Gamma and Inverse Gaussian fitted models, it represents 
-    the square root of the inverse of the shape parameter.
-    \item For Binomial and Poisson fitted models, the value is always reported 
-    as \code{1}, since their variance is determined entirely by the mean and 
-    there is no separate scale parameter.
-    %\item Less interpretably, the square root of the residual deviance per 
-    %degree of freedom in more general models.
+    \item For LMMs (Gaussian family), this is the residual standard deviation
+    (ML or REML estimate).
+    \item For GLMMs with a scale parameter (e.g. Gamma, Inverse Gaussian),
+    it is \code{sqrt(deviance(object) / df.residual(object))}, consistent
+    with the GLM convention.
+    \item For GLMMs without a separate scale parameter (Binomial, Poisson),
+    the value is always \code{1}.
   }
 }
 \details{
@@ -36,19 +34,25 @@
   square root of the constant multiplier in the 'variance function' provided 
   by the \code{family} functions.
   \itemize{
-    \item For Gaussian fits, \code{gaussian()$variance = rep.int(1, length(mu))} 
-    and it's known that the variance is \eqn{\sigma^{2}}. Hence, the constant
-    multiplier of the variance function in this case is \eqn{\sigma^{2}}, so 
-    we say \code{sigma} is \eqn{\sqrt{\sigma}}.
+    \item For LMMs (Gaussian family), \code{gaussian()$variance = rep.int(1, length(mu))}
+    and the variance is \eqn{\sigma^{2}}. The ML estimate is
+    \eqn{\hat\sigma = \sqrt{\text{pwrss}/n}}, and the REML estimate uses
+    \eqn{n - p} in the denominator.
+    \item For GLMMs with a scale parameter, \code{sigma} is estimated as
+    \eqn{\sqrt{D / \nu}} where \eqn{D} is the sum of squared deviance
+    residuals (\code{deviance(object)}) and \eqn{\nu} is the residual degrees
+    of freedom (\code{df.residual(object)}). This is consistent with how
+    \code{stats::sigma} works for \code{glm} objects.
     \item For Gamma fits, \code{Gamma()$variance = mu^2} where 
     \code{mu = scale*shape}. The known variance is 
     \eqn{\frac{\mu^{2}}{\code{shape}}}.
-    Thus, the constant multiplier here is \eqn{\frac{1}{\sqrt{\code{shape}}}}.
+    Thus, the constant multiplier here is \eqn{\frac{1}{\sqrt{\code{shape}}}},
+    which \code{sigma} estimates as \eqn{\sqrt{D / \nu}}.
     \item Similarly, for Inverse Gaussian fits, we have
     \code{inverse.gaussian()$variance = mu^{3}}, with known variance
-    \eqn{\frac{\mu^{3}}{\lambda}}; similarly, the constant multiplier here is 
-    \eqn{\frac{1}{\sqrt{\lambda}}}. \eqn{\lambda} is referred to as the shape
-    parameter.
+    \eqn{\frac{\mu^{3}}{\lambda}}; the constant multiplier here is 
+    \eqn{\frac{1}{\sqrt{\lambda}}} (\eqn{\lambda} is the shape parameter),
+    estimated as \eqn{\sqrt{D / \nu}}.
   }
 }
 \seealso{

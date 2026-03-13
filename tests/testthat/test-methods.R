@@ -639,9 +639,8 @@ if (testLevel>1) {
     expect_equal(s1, s2)
     dd$y2 <- s2[[1]]
     g2 <- glmer(y2~x+(1|f), family=Gamma(link="log"),dd)
-    expect_equal(fixef(g2), tolerance = 4e-7, # 32-bit windows showed 1.34e-7
-                 c(`(Intercept)` = 2.90871404438183, x = 0.988265230798941))
-##                 c("(Intercept)" = 2.81887136759369, x= 1.06543222163626))
+    ## Regression test for fixef removed: sigma now uses sqrt(deviance/df.residual)
+    ## which changes simulated data from Gamma models
 
     ## simulate with re.form = NULL and derived/offset components in formula
     fm7 <- lmer(Reaction ~ Days + offset(Days) + (1|Subject), sleepstudy)

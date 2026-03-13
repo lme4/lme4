@@ -232,12 +232,21 @@ rstudent.glmerMod <- function(model, infl = influence(model, do.coef=FALSE), ...
 }
 
 
+##' @importFrom stats df.residual
 ##' @S3method sigma merMod
 sigma.merMod <- function(object, ...) {
     dc <- object@devcomp
     dd <- dc$dims
-    if(dd[["useSc"]])
-        dc$cmp[[if(dd[["REML"]]) "sigmaREML" else "sigmaML"]] else 1.
+    if(dd[["useSc"]]) {
+        if(dd[["GLMM"]]) {
+            ## For GLMMs with a scale parameter (e.g. Gamma, inverse Gaussian),
+            ## estimate sigma consistently with the GLM convention:
+            ## sigma = sqrt(residual deviance / df.residual)
+            sqrt(dc$cmp[["drsum"]] / df.residual(object))
+        } else {
+            dc$cmp[[if(dd[["REML"]]) "sigmaREML" else "sigmaML"]]
+        }
+    } else 1.
 }
 
 ##' @importFrom stats terms

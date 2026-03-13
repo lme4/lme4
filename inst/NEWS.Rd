@@ -7,6 +7,13 @@
 \section{CHANGES IN VERSION 2.0-2}{
   \subsection{BUG FIXES}{
     \itemize{
+      \item \code{sigma()} for GLMMs with an estimated scale/dispersion
+      parameter (Gamma, inverse Gaussian) now returns
+      \code{sqrt(deviance(object)/df.residual(object))}, consistent with
+      the GLM convention used by \code{stats::sigma.glm}.
+      Previously it used \code{sqrt(pwrss/n)}, the square root of the
+      penalized working residual sum of squares divided by the number of
+      observations (GH #734)
       \item fixed parameter-counting bug for structured covariance
       matrices (internal \code{npar.merMod} function, results exposed in
       \code{logLik}, \code{anova}, \code{df.residual} ...) (GH #943,

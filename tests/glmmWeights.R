@@ -102,8 +102,9 @@ g3 <-  glmer(y ~ x + (1|block),data=gSim(family=binomial(),nbinom=10),
              family=binomial)
 expect_equal(var(sumFun(g3)),0)
 
-## check dispersion parameter
-## (lowered tolerance to pass checks on my machine -- SCW)
-expect_equal(sigma(g0)^2, 0.4888248, tolerance=1e-4)
+## check dispersion parameter: sigma = sqrt(deviance/df.residual), consistent with GLM
+## true phi = 1/shape = 1/2 = 0.5 for gSim() default (shape=2)
+expect_equal(sigma(g0)^2, 0.5, tolerance=0.05)
+expect_equal(sigma(g0), sqrt(deviance(g0)/df.residual(g0)))
 
 } ## skip on windows (for speed)

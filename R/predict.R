@@ -169,6 +169,11 @@ setParams <- function(object, params, inplace=FALSE, subset=FALSE) {
         if (!is.null(sigma)) {
             snm <- if (object@devcomp$dims[["REML"]]) "sigmaREML" else "sigmaML"
             newObj@devcomp[["cmp"]][snm] <- sigma
+            ## For GLMMs, also update drsum so that sigma() returns the
+            ## user-specified value (sigma = sqrt(drsum / df.residual))
+            if (object@devcomp$dims[["GLMM"]]) {
+                newObj@devcomp[["cmp"]]["drsum"] <- sigma^2 * df.residual(object)
+            }
         }
         return(newObj)
     }

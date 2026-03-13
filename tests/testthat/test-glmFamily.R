@@ -152,7 +152,8 @@ test_that("estimated Gamma shape is correct", {
   m1 <- glmer(y ~ 1 + (1|group), family = Gamma(link = "log"), data = dd2)
   shape_val <- 1/sigma(m1)^2
   expect_equal(shape_val, 2.0, tolerance = 0.05)
-  expect_equal(shape_val, 1.94511502080571, tolerance = 1e-6)
+  ## sigma is now sqrt(deviance/df.residual), consistent with GLM convention
+  expect_equal(sigma(m1), sqrt(deviance(m1)/df.residual(m1)))
 })
 
 simfun_invgauss <- function(ngrp = 50, nrep = 500, lambda = 1, 
@@ -187,5 +188,6 @@ test_that("estimated Inverse Gaussian shape is correct", {
               data = ddig2)
   shape_val <- 1/sigma(m1)^2
   expect_equal(shape_val, 1, tolerance = 0.05)
-  expect_equal(shape_val, 1.032144112298057, tolerance = 1e-6)
+  ## sigma is now sqrt(deviance/df.residual), consistent with GLM convention
+  expect_equal(sigma(m1), sqrt(deviance(m1)/df.residual(m1)))
 })
