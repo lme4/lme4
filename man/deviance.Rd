@@ -4,9 +4,24 @@
 
 \title{Deviance of Fitted Mixed-Effect Models}
 
+\description{
+  Calculates the deviance of a model of class merMod. Some important details
+  regarding the calculation of the deviance is found below.
+}
+
 \usage{
 \S3method{deviance}{merMod}(object, REML = NULL, \dots)
 }
+
+\arguments{
+  \item{object}{an \R object of class \code{\linkS4class{merMod}}, i.e.,
+    as resulting from \code{\link{lmer}()}, or \code{\link{glmer}()},
+    etc.}
+   \item{REML}{Logical. If \code{TRUE}, return the restricted log-likelihood
+    rather than the log-likelihood.  If \code{NULL} (the default),
+    set \code{REML} to \code{isREML(object)} (see \code{\link{isREML}}).}
+}
+
 
 \section{Deviance and log-likelihood of GLMMs}{
 
