@@ -76,5 +76,71 @@ cm.cs <- glmer(use ~ cs(1 + age|district), Contraception, binomial)
 cm.hetcs <- glmer(use ~ cs(1 + age|district, hom = FALSE), Contraception, binomial)
 
 # verify the list pattern before running
-save("gm.ar1", "cm.diag", "cm.hetdiag", "cm.cs", "cm.hetcs",
-     file="glmer_cm_vc.RData")
+#save("gm.ar1", "cm.diag", "cm.hetdiag", "cm.cs", "cm.hetcs",
+#     file="glmer_cm_vc.RData")
+
+##### SECOND BATCH
+# issue with the plot: need to actually have the real-scaled values for comparisons.
+
+data(Contraception)
+
+# change the data to be 01 instead
+Contraception$ch <- ifelse(Contraception$livch != 0, 1, 0)
+Contraception$urban <- ifelse(Contraception$urban == "Y", 1, 0)
+
+gelman_scale <- function(dataset, response) {
+  new_dataset <- dataset
+  for(var in setdiff(names(dataset), response)){
+    x <- dataset[[var]]
+    if (is.numeric(x) && length(unique(x)) > 2) {
+      new_dataset[[var]] <- (x - mean(x, na.rm = TRUE)) / (2 * sd(x, na.rm = TRUE))
+    } else if(all(sort(unique(x)) == c(0, 1))){
+      new_dataset[[var]] <- x - mean(x, na.rm = TRUE)
+    } else {
+      new_dataset[[var]] <- x
+    }
+  }
+  return(new_dataset)
+}
+
+Contraception2 <- gelman_scale(Contraception, "use")
+
+#######
+
+cm1_2 <- glmer(use ~ age + I(age^2) + urban + livch + (1|district), 
+             data = Contraception2, binomial, nAGQ=0L)
+
+cm2_2 <- glmer(use ~ age + I(age^2) + urban + ch + (1|district),
+             data = Contraception2, binomial, nAGQ=0L)
+
+cm3_2 <- glmer(use ~ age*ch + I(age^2) + urban + (1|district),
+             data = Contraception2, binomial)
+
+cm4_2 <- glmer(use ~ age*ch + I(age^2) + urban + (urban|district),
+             data = Contraception2, binomial)
+
+cm5_2 <- glmer(use ~ age*ch + I(age^2) + urban + (1|urban:district) + 
+               (1|district), data = Contraception2, binomial)
+
+cm6_2 <- glmer(use ~ age*ch + I(age^2) + urban + (1|urban:district),
+             data = Contraception2, binomial)
+
+confint.boot.cm1_2 <- confint(cm1_2,method="boot",seed=101,nsim=501)
+confint.boot.cm2_2 <- confint(cm2_2,method="boot",seed=101,nsim=501)
+confint.boot.cm3_2 <- confint(cm3_2,method="boot",seed=101,nsim=501)
+#5 warning(s): Model failed to converge with max|grad| = 0.00492516 (tol = 0.002, component 1)
+confint.boot.cm4_2 <- confint(cm4_2,method="boot",seed=101,nsim=501)
+#433 warning(s): Model failed to converge with max|grad| = 0.00204504 (tol = 0.002, component 1)
+#See ?lme4::convergence and ?lme4::troubleshooting. (and others)
+confint.boot.cm5_2 <- confint(cm5_2,method="boot",seed=101,nsim=501)
+#156 message(s): boundary (singular) fit: see help('isSingular')
+#107 warning(s): Model failed to converge with max|grad| = 0.00205994 (tol = 0.002, component 1)
+confint.boot.cm6_2 <- confint(cm6_2,method="boot",seed=101,nsim=501)
+#7 warning(s): Model failed to converge with max|grad| = 0.0272862 (tol = 0.002, component 1)
+#See ?lme4::convergence and ?lme4::troubleshooting. (and others)
+
+#save(list=c(ls(pattern="confint.boot.*")),
+#     file="glmer_profbatch3.RData")
+
+# currently, 1-5 are here...
+load("glmer_profbatch3.RData")
