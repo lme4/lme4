@@ -363,6 +363,7 @@ nlformula <- function(mc) {
         call
     })
     reTrms <- reformulas::mkReTrms(bb0, frE, calc.lambdat = FALSE)
+    bb1 <- bb1[reTrms$ord] # reorder to match mkReTrms internal ordering
     reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
     list(respMod=respMod, frame=fr, X=X, reTrms=reTrms, pnames=pnames)
 } ## {nlformula}
@@ -935,8 +936,7 @@ initialize.parallel <- expression({
     if (!is.null(cl)) {
         stopifnot(inherits(cl, "cluster"))
         parallel <- "snow"
-    }
-    if (parallel == "multicore") {
+    } else if (parallel == "multicore") {
         stopifnot(is.numeric(ncpus), length(ncpus) == 1L, is.finite(ncpus), ncpus >= 1L)
         if (.Platform$OS.type == "windows" || ncpus == 1L)
             parallel <- "no"
@@ -945,6 +945,10 @@ initialize.parallel <- expression({
             stopifnot(is.numeric(ncpus), length(ncpus) == 1L, is.finite(ncpus), ncpus >= 1L)
             if (ncpus == 1L)
                 parallel <- "no"
+        }
+    } else if (parallel == "future") {
+        if (!requireNamespace("future.apply", quietly = TRUE)) {
+            stop("parallel = \"future\" requires the 'future.apply' package - please install it")
         }
     }
 })

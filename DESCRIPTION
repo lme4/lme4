@@ -1,5 +1,5 @@
 Package: lme4
-Version: 2.0-1
+Version: 2.0-2
 Title: Linear Mixed-Effects Models using 'Eigen' and S4
 Authors@R:
     c(person("Douglas", "Bates", role = "aut",
@@ -11,6 +11,10 @@ Authors@R:
              comment = c(ORCID = "0000-0002-2127-0443")),
       person("Steven", "Walker", role = "aut",
              comment = c(ORCID = "0000-0002-4394-9078")),
+      person("Anna", "Ly", role = "aut",
+             comment = c(ORCID = "0000-0002-0210-0342")),
+      person("Mikael", "Jagan", role = "aut",
+             comment = c(ORCID = "0000-0002-3542-2938")),
       person("Rune Haubo Bojesen", "Christensen", role = "ctb",
              comment = c(ORCID = "0000-0002-4494-3399")),
       person("Henrik", "Singmann", role = "ctb",
@@ -28,12 +32,10 @@ Authors@R:
                          "shared copyright on simulate.formula")),
       person("Emi", "Tanaka", role = "ctb",
              comment = c(ORCID = "0000-0002-1455-259X")),
-      person("Mikael", "Jagan", role = "aut",
-             comment = c(ORCID = "0000-0002-3542-2938")),
       person("Ross D.", "Boylan", role = "ctb",
              comment = c(ORCID = "0009-0003-4123-8090")),
-      person("Anna", "Ly", role = "aut",
-             comment = c(ORCID = "0000-0002-0210-0342")))
+      person("Henrik", "Bengtsson", role = "ctb",
+             comment = c(ORCID = "0000-0002-9280-4430")))
 Description:
     Fit linear and generalized linear mixed-effects models.  The
     models and their components are represented using S4 classes and
@@ -65,6 +67,7 @@ Suggests:
     MEMSS,
     car,
     dfoptim,
+    future.apply,
     gamm4,
     ggplot2,
     glmmTMB,
@@ -91,4 +94,3 @@ License: GPL (>= 2)
 URL: https://github.com/lme4/lme4/
 BugReports: https://github.com/lme4/lme4/issues
 Encoding: UTF-8
-RoxygenNote: 7.3.3

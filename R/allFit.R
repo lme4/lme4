@@ -87,7 +87,7 @@ allFit <- function(object, meth.tab = NULL,
                    verbose=TRUE,
                    show.meth.tab = FALSE,
                    maxfun = 1e5,
-                   parallel = c("no", "multicore", "snow"),
+                   parallel = c("no", "multicore", "snow", "future"),
                    ncpus = getOption("allFit.ncpus", 1L),
                    cl = NULL,
                    catch.errs = TRUE,
@@ -229,6 +229,8 @@ allFit <- function(object, meth.tab = NULL,
             ## parallel::clusterExport(cl,??)
         }
         parallel::parLapply(cl, seq_fit, ffun)
+    } else if(parallel == "future") {
+        future.apply::future_lapply(seq_fit, ffun)
     } else
         lapply(seq_fit, ffun)
 

@@ -4,7 +4,35 @@
 \title{lme4 News}
 \encoding{UTF-8}
 
-\section{CHANGES IN VERSION 2.0-1}{
+\section{CHANGES IN VERSION 2.0-2}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item fixed parameter-counting bug for structured covariance
+      matrices (internal \code{npar.merMod} function, results exposed in
+      \code{logLik}, \code{anova}, \code{df.residual} ...) (GH #943,
+      Henrik Singmann)
+      \item fixed ordering bug for models with multiple structured
+      covariances of different types (\code{mkReTrms} sorts random effects
+      in decreasing order of number of grouping variable levels, this
+      ordering was not applied consistently) (GH #945, Henrik Singmann)
+    } % itemize
+  } % bug fixes
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item add support for parallelization via the \code{future} framework by setting
+      argument \code{parallel} to \code{"future"}.
+    } % itemize
+  } % new features
+  \subsection{USER-VISIBLE CHANGES}{
+    \itemize{
+      \item exported covariance methods documented in
+      \code{help("Covariance-class")} (\code{getPar}, \code{getTheta},
+      etc.)
+    } % itemize
+  } % user-visible changes
+} % 2.0-2
+
+\section{CHANGES IN VERSION 2.0-1 (2026-03-05)}{
   \subsection{BUG FIXES}{
     \itemize{
       \item variances and standard deviations for GLMMs with estimated
@@ -79,7 +107,7 @@
       upstream changes/corrections in base R
     } % itemize
   } % user-visible changes
-} % 2.0-0
+} % 2.0-1
 
 \section{CHANGES IN VERSION 1.1-38 (2025-12-02)}{
   \subsection{BUG FIXES}{

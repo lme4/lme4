@@ -18,7 +18,7 @@
 \usage{
 \method{influence}{merMod}(model, groups, data, maxfun = 1000,
           do.coef = TRUE, start = NULL,
-          parallel = c("no", "multicore", "snow"),
+          parallel = c("no", "multicore", "snow", "future"),
           ncpus = getOption("influence.ncpus", 1L), cl = NULL, ncores, ...)
 \method{cooks.distance}{influence.merMod}(model, ...)
 \method{dfbeta}{influence.merMod}(model, which = c("fixed", "var.cov"), ...)
@@ -46,14 +46,21 @@
     computations, returning just a list containing hat values.}
   \item{start}{starting value for new fits (set to optimal values from
     original fit by default)}
-  \item{parallel}{The type of parallel operation to be used (if any).
-    If \code{"multicore"} (and \R is running on a Unix-alike), then
-    \code{mclapply} is used; if \code{"snow"}, then \code{parLapply} is
-    used.}
-  \item{ncpus}{number of processes to be used in parallel operation.}
-  \item{cl}{An optional \pkg{parallel} or \pkg{snow} cluster for use if
-    \code{parallel = "snow"}.  If not supplied, a cluster on the
-    local machine is created for the duration of the call.}
+  \item{parallel}{the type of parallel operation to be used, if any.
+    If \code{"no"}, sequential processing is used. If \code{"multicore"}
+    and \R is running on a Unix-alike operating system, \code{mclapply}
+    is used; if \code{"snow"}, \code{parLapply} is used; if \code{"future"},
+    \code{future.apply::future_lapply} is used.}
+  \item{ncpus}{number of processes to be used in parallel operation when
+    \code{parallel} is either \code{"multicore"} or \code{"snow"}.
+    If \code{ncpus == 1}, \code{parallel = "multicore"} and
+    \code{parallel = "snow"} are ignored and the same as
+    \code{parallel = "no"}. The default value can be controlled by an
+    \R option.}
+  \item{cl}{An optional \pkg{parallel} or \pkg{snow} cluster; if specified,
+    arguments \code{parallel} and \code{ncpus} are ignored.
+    If not supplied and \code{parallel = "snow"}, a temporary cluster with
+    \code{ncpus} nodes is created for the duration of the call.}
   \item{ncores}{deprecated: equivalent to \code{parallel = "snow"} and
     \code{ncpus = ncores}; please use \code{parallel}, \code{ncpus}, and
     \code{cl} instead.}

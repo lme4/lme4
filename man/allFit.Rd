@@ -6,7 +6,7 @@ allFit(object, meth.tab = NULL, data = NULL,
        verbose = TRUE,
        show.meth.tab = FALSE,
        maxfun = 1e5,
-       parallel = c("no", "multicore", "snow"),
+       parallel = c("no", "multicore", "snow", "future"),
        ncpus = getOption("allFit.ncpus", 1L), cl = NULL,
        catch.errs = TRUE,
        start_from_mle = TRUE)
@@ -27,16 +27,21 @@ allFit(object, meth.tab = NULL, data = NULL,
     number of function evaluations: this is \emph{automatically}
     converted to the correct specification (e.g. \code{maxfun},
     \code{maxfeval}, \code{maxit}, etc.) for each optimizer.}
-  \item{parallel}{The type of parallel operation to be used (if any).
-    If missing, the
-    default is taken from the option \code{"allFit.ncpus"} (and if that
-    is not set, \code{"no"}).}
-  \item{ncpus}{integer: number of processes to be used in parallel operation.
-    Use \code{options(allFit.ncpus=X)} to set the default value to \code{X}
-    for the duration of an R session.}
-  \item{cl}{An optional \pkg{parallel} or \pkg{snow} cluster for use if
-    \code{parallel = "snow"}.  If not supplied, a cluster on the
-    local machine is created for the duration of the \code{allFit} call.}
+  \item{parallel}{the type of parallel operation to be used, if any.
+    If \code{"no"}, sequential processing is used. If \code{"multicore"}
+    and \R is running on a Unix-alike operating system, \code{mclapply}
+    is used; if \code{"snow"}, \code{parLapply} is used; if \code{"future"},
+    \code{future.apply::future_lapply} is used.}
+  \item{ncpus}{number of processes to be used in parallel operation when
+    \code{parallel} is either \code{"multicore"} or \code{"snow"}.
+    If \code{ncpus == 1}, \code{parallel = "multicore"} and
+    \code{parallel = "snow"} are ignored and the same as
+    \code{parallel = "no"}. The default value can be controlled by an
+    \R option.}
+  \item{cl}{An optional \pkg{parallel} or \pkg{snow} cluster; if specified,
+    arguments \code{parallel} and \code{ncpus} are ignored.
+    If not supplied and \code{parallel = "snow"}, a temporary cluster with
+    \code{ncpus} nodes is created for the duration of the call.}
   \item{catch.errs}{(logical) wrap model fits in \code{tryCatch} clause
     to skip over errors? (\code{catch.errs=FALSE} is probably only
     useful for debugging).}

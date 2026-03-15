@@ -691,3 +691,25 @@ test_that("'xst' length matches objective function argument length", {
     ## Error ....: length(xst <- as.numeric(xst)) == n is not TRUE
     expect_s4_class(m, "glmerMod")
 })
+
+test_that("stop on unspecified sigma", {
+    expect_error(simulate( ~ 1 + (1 | Subject),
+             newdata = sleepstudy,
+             newparams = list(beta = 0, theta = 1)),
+             "must specify sigma")
+})
+test_that("correct ordering of cov strucs", {
+    set.seed(101)
+    dd <- expand.grid(f1 = 1:10, f2 = 1:20, rep = 1:10)
+    dd$f <- factor(sample(1:4, size = nrow(dd), replace = TRUE))
+    form <- y ~ 1 + cs(f | f1, hom = TRUE) + diag(f | f2)
+    dd$y <- simulate( form[-2],
+                     newdata = dd,
+                     newparams = list(beta = 0,
+                                      theta = rep(0.5, 11),
+                                      sigma = 1))[[1]]
+    fit <- lmer(form, data = dd)
+    vv <- VarCorr(fit)
+    expect_equal(class(vv[["f1"]]), c("vcmat_homcs", "matrix", "array"))
+    expect_equal(class(vv[["f2"]]), c("vcmat_diag", "matrix", "array"))
+})

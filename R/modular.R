@@ -401,6 +401,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
                       expand_doublevert_method = getDoublevertDefault())
     bb0 <- lapply(bb1, `[[`, 2L)
     reTrms <- reformulas::mkReTrms(bb0, fr, calc.lambdat = FALSE)
+    bb1 <- bb1[reTrms$ord] # reorder to match mkReTrms internal ordering
     reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
     ## If there is a covariance structure; ignore the check nobs.vs.nRE
     if (.anyStructured(reTrms$reCovs))
@@ -792,6 +793,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
                       expand_doublevert_method = getDoublevertDefault())
     bb0 <- lapply(bb1, `[[`, 2L)
     reTrms <- reformulas::mkReTrms(bb0, fr, calc.lambdat = FALSE)
+    bb1 <- bb1[reTrms$ord] # reorder to match mkReTrms internal ordering
     reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
     ## If there is a covariance structure; ignore the check nobs.vs.nRE
     if (.anyStructured(reTrms$reCovs))

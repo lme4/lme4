@@ -501,7 +501,8 @@ Unlike the diagonal and compound symmetry case, the syntax differs for fitting e
 For a *heterogeneous* AR1 covariance structure we would write the following:
 
 ```{r het-ar1-fit, eval = FALSE}
-lme4.ar1 <- lmer(y ~ times + ar1(0 + times | group), data = dat.ar1, REML = FALSE)
+lme4.ar1 <- lmer(y ~ times + ar1(0 + times | group, hom = FALSE),
+                 data = dat.ar1, REML = FALSE)
 glmmTMB.ar1 <- glmmTMB(y ~ times + hetar1(0 + times | group), data = dat.ar1)
 ```
 

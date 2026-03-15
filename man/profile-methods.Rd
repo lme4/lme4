@@ -23,7 +23,7 @@
         devmatchtol = 1e-5,
         maxmult = 10, startmethod = "prev", optimizer = NULL,
         control = NULL, signames = TRUE,
-        parallel = c("no", "multicore", "snow"),
+        parallel = c("no", "multicore", "snow", "future"),
         ncpus = getOption("profile.ncpus", 1L), cl = NULL,
         prof.scale = c("sdcor","varcov"),
         \dots)
@@ -101,16 +101,21 @@ varianceProf(x, ranef = TRUE)
     \eqn{\sigma} (standard deviation of errors) is transformed.}
   \item{sigIni}{character string specifying the initial part of the
     sigma parameters to be log transformed.}
-  \item{parallel}{The type of parallel operation to be used (if any).
-    If missing, the
-    default is taken from the option \code{"profile.parallel"} (and if that
-    is not set, \code{"no"}).}
-  \item{ncpus}{integer: number of processes to be used in parallel operation:
-    typically one would choose this to be the number of available CPUs.}
-  \item{cl}{An optional \pkg{parallel} or \pkg{snow} cluster for use if
-    \code{parallel = "snow"}.  If not supplied, a cluster on the
-    local machine is created for the duration of the \code{profile}
-    call.}
+  \item{parallel}{the type of parallel operation to be used, if any.
+    If \code{"no"}, sequential processing is used. If \code{"multicore"}
+    and \R is running on a Unix-alike operating system, \code{mclapply}
+    is used; if \code{"snow"}, \code{parLapply} is used; if \code{"future"},
+    \code{future.apply::future_lapply} is used.}
+  \item{ncpus}{number of processes to be used in parallel operation when
+    \code{parallel} is either \code{"multicore"} or \code{"snow"}.
+    If \code{ncpus == 1}, \code{parallel = "multicore"} and
+    \code{parallel = "snow"} are ignored and the same as
+    \code{parallel = "no"}. The default value can be controlled by an
+    \R option.}
+  \item{cl}{An optional \pkg{parallel} or \pkg{snow} cluster; if specified,
+    arguments \code{parallel} and \code{ncpus} are ignored.
+    If not supplied and \code{parallel = "snow"}, a temporary cluster with
+    \code{ncpus} nodes is created for the duration of the call.}
   \item{prof.scale}{whether to profile on the standard
     deviation-correlation scale (\code{"sdcor"}) or on
     the variance-covariance scale (\code{"varcov"})

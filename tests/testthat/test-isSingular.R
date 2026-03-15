@@ -21,7 +21,7 @@ test_that("checking singular fit for covariance", {
   
   test.reCovs <- c(test.us, test.diag, test.cs, test.homcs, test.ar1, test.hetar1)
   
-  ## tests should fail once one of the diagional entries is 0
+  ## tests should fail once one of the diagonal entries is 0
   sapply(test.reCovs, function(i){
     new_theta <- getTheta(i)
     new_theta[1] <- 0
@@ -74,7 +74,7 @@ test_that("checking singular fit for merMod", {
                                      sigma = 2))[[1]]
   mod2 <- suppressWarnings(lmer(form2, data = dat))
   ## second one, should be an issue with group 1 as we set thetas = 0
-  expect_equal(isSingular(mod2), TRUE)
+  expect_equal(isSingular(mod2, tol = 5e-4), TRUE)
   
   ## also need to consider the glmer case
   form <- y ~ 1 + (1 + x1 | group1) + (1 + x2 | group2)
