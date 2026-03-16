@@ -80,7 +80,7 @@ all.equal(gaussian()$aic(yy, 1, mu, 1, ss),
 ```
 Note also the added two at the end of the definition of `Gamma()$aic`,
 which is
-```{r GammaAIC, eval=TRUE}
+```{r GammaAIC, eval=FALSE}
 -2 * sum(dgamma(y, 1/disp, scale = mu * disp, log = TRUE) * wt) + 2
 ```
 
@@ -127,7 +127,7 @@ to the marginal log-likelihood is $\log (p_{\theta, \beta}(y | u)) -
 approximate Laplace approximation in the non-canonical link case).
 Here are several ways to compute this approximate marginal
 log-likelihood:
-```{r}
+```{r, eval = FALSE}
 logLik(gm1) # which calls ...
 -0.5 * lme4:::devCrit(gm1)    # which calls ...
 -0.5 * gm1@devcomp$cmp["dev"] # which is computed from something like ...
@@ -154,14 +154,14 @@ In summary, on the deviance scale, we have:
 
 Considering this table helps to identify several inconsistencies with terminology.  For example, the deviance reported in the `print.merMod` method is actually reporting `-2 * logLik(object)` as opposed to `deviance(object)`:
 
-```{r}
+```{r, eval=FALSE}
 lme4:::getLlikAIC(gm1)$AICtab["deviance"]
 deviance(gm1)
 ```
 
 On one hand it makes sense to give a marginal deviance in the `print` method because marginal `AIC` is used there too:
 
-```{r}
+```{r, eval=FALSE}
 lme4:::getLlikAIC(gm1)$AICtab["AIC"]
 AIC(gm1)
 lme4:::getLlikAIC(gm1)$AICtab["deviance"] + 2 * length(gm1@optinfo$val)
