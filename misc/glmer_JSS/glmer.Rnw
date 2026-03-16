@@ -64,7 +64,7 @@
   McMaster University \\
   1280 Main Street W \\
   Hamilton, ON L8S 4K1, Canada \\
-  E-mail: \email{scwalker@math.mcmaster.ca}
+  (current address: ????)
   \par\bigskip
   Rune Haubo Bojesen Christensen \\
   Technical University of Denmark \\
@@ -406,7 +406,7 @@ manipulate the Jacobian as a vector.
 
 \al{When solving for the minimum of $Q(\bm u)$, there is a possibility for 
 the proposed update for $\bm u$ has instead increased the value of the objective 
-function $Q(\bm u)$. Let $Q(\bm u_i)$ represents the value of the objective 
+function $Q(\bm u)$. Let $Q(\bm u_i)$ represent the value of the objective 
 function $Q(\bm u)$ at the current iterate $\bm u_{i}$, and similarly, let 
 $Q(\bm u_{i-1})$ represent the the value of the objective function of the 
 previous iteration. 
@@ -421,7 +421,7 @@ continues until a value of $j$ is found such that
 $Q(\bm u_i^{(j)}) < Q(\bm u_{i-1})$,
 which the iterate is then updated by setting $\bm u_{i} = \bm u_{i}^{(j)}$.
 
-If no such $j$ is found after a predetermined amount of halvings, then the 
+If no such $j$ is found after a predetermined number of halvings, then the 
 step-halving procedure has failed and the algorithm terminates. 
 }
 
