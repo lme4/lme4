@@ -329,7 +329,9 @@ checkResponse <- function(y, ctrl) {
 ##
 ## @param formula   model formula (already processed via as.formula, env set)
 ## @param fr.form.  formula with specials replaced by (x | f)
-## @param fr.form   formula with re terms replaced by (x + f)
+##                  (named with trailing dot following existing lme4 convention)
+## @param fr.form   formula with re terms replaced by sums (x + f)
+##                  for model.frame() evaluation
 ## @param mf        partially-constructed call to stats::model.frame
 ##                  (formula slot will be filled in by this function)
 ## @param contrasts optional contrasts argument
@@ -340,7 +342,8 @@ checkResponse <- function(y, ctrl) {
 ## @param check_na_Zt      if TRUE, stop on NA in Z matrix (lmer mode)
 ## @param set_varnames_fixed  if TRUE, set varnames.fixed attribute (lmer mode)
 ## @param parent_env  parent.frame() captured by the calling function
-## @return list(fr, X, reTrms, formula, wmsgs)
+## @return list(fr, X, reTrms, formula, wmsgs) -- callers (lFormula/glFormula)
+##   append their own specific elements (REML or family) to this result
 mkFormula <- function(formula, fr.form., fr.form, mf, contrasts, control,
                       allow.n = FALSE,
                       check_zero_rows = FALSE,
