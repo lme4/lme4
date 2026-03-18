@@ -271,17 +271,20 @@ as follows:
 }
 
 \al{
-For GLMMs, the scale parameter is estimated outside of the optimization 
-of the likelihood over the $\beta$ and the $\theta$ parameters. It is estimated 
-by the deviance divided by the residual degrees of freedom.
+
+For GLMMs, the scale parameter is estimated outside the optimization of the 
+likelihood over the $\beta$ and $\theta$ parameters. Specifically, it is 
+estimated as the deviance divided by the residual degrees of freedom. 
+
+The deviance itself is estimated using the method of moments estimator, which 
+is the Pearson residual sum of squares. This approach is preferred by \citet{McCullaghNelder1989} as it is less sensitive to small errors or model 
+misspecification than the maximum likelihood estimator. 
+
+We therefore estimate the deviance using the penalized weighted Pearson 
+residual sum of squares, as described in Section 3.2 of the \code{lmer} paper \citep{bates2015fitting}.
 
 Note that for Binomial and Poisson families, by default the scale is fixed at 1 
 by assumption.
-
-
-
-
-
 
 }
 
@@ -863,7 +866,9 @@ of convenience and flexibility.
 \al{
 Fortunately, \code{merMod} objects are also compatible with the 
 \code{performance} package and the \code{DHARMa} package, both are commonly 
-used for model checking.
+used for model checking. The "n.s." in Figure~\ref{fig:dharma_mod_cbpp} means
+"not significant."
+
 }
 
 The following code produces a standard range
@@ -919,7 +924,8 @@ in Figure~\ref{fig:perf_chk_mod_cbpp}.
 }
 
 <<perf_chk_mod_cbpp,fig.cap="Model assumption checks using the performance package.",fig.height=10,echo=FALSE>>=
-check_model(gm1)
+check_model(gm1, check = c("reqq", "binned_residuals", 
+                                        "vif", "qq"))
 @
 
 \al{Another external package that is compatible with \code{merMod} objects is
@@ -989,7 +995,7 @@ The \code{profile} method computes profile likelihoods.
 The computation can be slow, since complete profiling for
 a model with $p$ random- and fixed-effect parameters requires fitting $p$
 profiles, each of which requires many $p-1$-dimensional optimizations. \al{The machinery regarding profiling for GLMMs is similar as LMMs. They are 
-described in Chapter 5.1 of the \code{lmer} paper \citep{bates2015fitting}.}
+described in Section 5.1 of the \code{lmer} paper \citep{bates2015fitting}.}
 
 The \code{profile} method returns an
 object of class \code{thpr} --- a data frame
