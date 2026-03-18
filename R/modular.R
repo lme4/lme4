@@ -1,7 +1,7 @@
 #### --> ../man/modular.Rd
 ####     ==================
 
-### Small utilities to be used in lFormula() and glFormula()
+### Small utilities to be used in lFormula(), glFormula(), and mkFormula()
 
 doCheck <- function(x) {
     is.character(x) && !any(x == "ignore")
@@ -323,6 +323,119 @@ checkResponse <- function(y, ctrl) {
 ##     res <- napredict(x)
 ## }
 
+## Internal workhorse shared by lFormula() and glFormula().
+## Handles model-frame construction, random-effects setup, and fixed-effects
+## matrix building -- all of which is identical between the two public functions.
+##
+## @param formula   model formula (already processed via as.formula, env set)
+## @param fr.form.  formula with specials replaced by (x | f)
+## @param fr.form   formula with re terms replaced by (x + f)
+## @param mf        partially-constructed call to stats::model.frame
+##                  (formula slot will be filled in by this function)
+## @param contrasts optional contrasts argument
+## @param control   the checkControl sub-list
+## @param allow.n   passed to checkNlevels, checkZdims, checkZrank;
+##                  FALSE for lmer (default), TRUE for glmer
+## @param check_zero_rows  if TRUE, stop on empty model frame (lmer mode)
+## @param check_na_Zt      if TRUE, stop on NA in Z matrix (lmer mode)
+## @param set_varnames_fixed  if TRUE, set varnames.fixed attribute (lmer mode)
+## @param parent_env  parent.frame() captured by the calling function
+## @return list(fr, X, reTrms, formula, wmsgs)
+mkFormula <- function(formula, fr.form., fr.form, mf, contrasts, control,
+                      allow.n = FALSE,
+                      check_zero_rows = FALSE,
+                      check_na_Zt = FALSE,
+                      set_varnames_fixed = FALSE,
+                      parent_env = parent.frame()) {
+    mf$formula <- fr.form
+    fr <- eval(mf, parent_env)
+    if (check_zero_rows && nrow(fr) == 0L) stop("0 (non-NA) cases")
+    ## convert character vectors to factor (defensive)
+    fr <- factorize(fr.form, fr, char.only = TRUE)
+    ## store full, original formula & offset
+    attr(fr, "formula") <- formula
+    attr(fr, "offset") <- mf$offset
+    n <- nrow(fr)
+    ## random effects and terms modules
+    ## get list of calls whose first argument is a call to '|'
+    ##                x | f  ->      us(x | f)
+    ##     nonspecial(x | f) ->      us(x | f)
+    ##        special(x | f) -> special(x | f)
+    bb1 <- findbars_x(formula, specials = lme4_specials,
+                      default.special = "us", target = "|",
+                      expand_doublevert_method = getDoublevertDefault())
+    bb0 <- lapply(bb1, `[[`, 2L)
+    reTrms <- reformulas::mkReTrms(bb0, fr, calc.lambdat = FALSE)
+    bb1 <- bb1[reTrms$ord] # reorder to match mkReTrms internal ordering
+    reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
+    ## If there is a covariance structure; ignore the check nobs.vs.nRE
+    if (.anyStructured(reTrms$reCovs))
+        control$check.nobs.vs.nRE <- "ignore"
+    wmsgNlev <- checkNlevels(reTrms$flist, n = n, control, allow.n = allow.n)
+    wmsgZdims <- checkZdims(reTrms$Ztlist, n = n, control, allow.n = allow.n)
+    if (check_na_Zt && anyNA(reTrms$Zt)) {
+        stop("NA in Z (random-effects model matrix): ",
+             "please use ",
+             shQuote("na.action='na.omit'"),
+             " or ",
+             shQuote("na.action='na.exclude'"))
+    }
+    wmsgZrank <- checkZrank(reTrms$Zt, n = n, control, nonSmall = 1e6,
+                            allow.n = allow.n)
+
+    ## fixed-effects model matrix X - remove random effect parts from formula:
+    fixedform <- fr.form.
+    RHSForm(fixedform) <- reformulas::nobars(RHSForm(fixedform))
+    mf$formula <- fixedform
+    ## re-evaluate model frame to extract predvars component
+    fixedfr <- eval(mf, parent_env)
+    attr(attr(fr, "terms"), "predvars.fixed") <-
+        attr(attr(fixedfr, "terms"), "predvars")
+    ## so we don't have to fart around retrieving which vars we need
+    ##  in model.frame(.,fixed.only=TRUE)
+    if (set_varnames_fixed)
+        attr(attr(fr, "terms"), "varnames.fixed") <- names(fixedfr)
+
+    ## ran-effects model frame (for predvars)
+    ## important to COPY formula (and its environment)?
+    ranform <- fr.form.
+    RHSForm(ranform) <- reformulas::subbars(
+        RHSForm(noSpecials(lme4_reOnly(ranform), delete = FALSE,
+                           specials = lme4_specials))
+    )
+    mf$formula <- ranform
+    ranfr <- eval(mf, parent_env)
+    attr(attr(fr, "terms"), "predvars.random") <-
+        attr(terms(ranfr), "predvars")
+
+    ## FIXME: shouldn't we have this already in the full-frame predvars?
+    X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
+
+    ## Scaling (if autoscale is on...)
+    if (!is.null(control$autoscale) && control$autoscale) {
+        if ("(Intercept)" %in% colnames(X)) {
+            X_scaled <- scale(X[, -1])
+            X[, -1] <- X_scaled
+        } else {
+            X_scaled <- scale(X)
+            X <- X_scaled
+        }
+        attr(X, "scaled:center") <- attr(X_scaled, "scaled:center")
+        attr(X, "scaled:scale") <- attr(X_scaled, "scaled:scale")
+    }
+
+    ## backward compatibility (keep no longer than ~2015):
+    if (is.null(rankX.chk <- control[["check.rankX"]]))
+        rankX.chk <- eval(formals(lmerControl)[["check.rankX"]])[[1]]
+    X <- chkRank.drop.cols(X, kind = rankX.chk, tol = 1e-7)
+    if (is.null(scaleX.chk <- control[["check.scaleX"]]))
+        scaleX.chk <- eval(formals(lmerControl)[["check.scaleX"]])[[1]]
+    X <- checkScaleX(X, kind = scaleX.chk)
+
+    list(fr = fr, X = X, reTrms = reTrms, formula = formula,
+         wmsgs = c(Nlev = wmsgNlev, Zdims = wmsgZdims, Zrank = wmsgZrank))
+}
+
 ##' @rdname modular
 ##' @param control a list giving (for \code{[g]lFormula}) all options (see \code{\link{lmerControl}} for running the model;
 ##' (for \code{mkLmerDevfun,mkGlmerDevfun}) options for inner optimization step;
@@ -351,17 +464,13 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     }
 
     cstr <- "check.formula.LHS"
-    checkCtrlLevels(cstr,control[[cstr]])
+    checkCtrlLevels(cstr, control[[cstr]])
     denv <- checkFormulaData(formula, data,
                              checkLHS = control$check.formula.LHS == "stop")
-    formula <- as.formula(formula, env=denv)
-    if (getDoublevertDefault() == "split") {
-      RHSForm(formula) <- reformulas::expandDoubleVerts(RHSForm(formula))
-    }
-    ## as.formula ONLY sets environment if not already explicitly set.
-    ## ?? environment(formula) <- denv
+    formula <- as.formula(formula, env = denv)
+    if (getDoublevertDefault() == "split")
+        RHSForm(formula) <- reformulas::expandDoubleVerts(RHSForm(formula))
 
-    ## (DRY! copied from glFormula)
     m <- match(c("data", "subset", "weights", "na.action", "offset"),
                names(mf), 0L)
     mf <- mf[c(1L, m)]
@@ -373,99 +482,22 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     ## substitute  (x | f)  and  (x || f)  with  (x + f)
     fr.form <- sub_specials(fr.form., specials = c("|", "||"),
                             keep_args = c(2L, 2L))
-    environment(fr.form.) <- environment(fr.form) <-
-        environment(formula)
+    environment(fr.form.) <- environment(fr.form) <- environment(formula)
     ## model.frame.default looks for these objects in the environment
     ## of the *formula* (see 'extras', which is anything passed in '...'),
     ## so they have to be put there:
     for (i in c("weights", "offset")) {
         if (!eval(bquote(missing(x=.(i)))))
-            assign(i,get(i,parent.frame()),environment(fr.form))
+            assign(i, get(i, parent.frame()), environment(fr.form))
     }
-    mf$formula <- fr.form
-    fr <- eval(mf, parent.frame())
-    if (nrow(fr) == 0L) stop("0 (non-NA) cases")
-    ## convert character vectors to factor (defensive)
-    fr <- factorize(fr.form, fr, char.only=TRUE)
-    ## store full, original formula & offset
-    attr(fr,"formula") <- formula
-    attr(fr,"offset") <- mf$offset
-    n <- nrow(fr)
-    ## random effects and terms modules
-    ## get list of calls whose first argument is a call to '|'
-    ##                x | f  ->      us(x | f)
-    ##     nonspecial(x | f) ->      us(x | f)
-    ##        special(x | f) -> special(x | f)
-    bb1 <- findbars_x(formula, specials = lme4_specials,
-                      default.special = "us", target = "|",
-                      expand_doublevert_method = getDoublevertDefault())
-    bb0 <- lapply(bb1, `[[`, 2L)
-    reTrms <- reformulas::mkReTrms(bb0, fr, calc.lambdat = FALSE)
-    bb1 <- bb1[reTrms$ord] # reorder to match mkReTrms internal ordering
-    reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
-    ## If there is a covariance structure; ignore the check nobs.vs.nRE
-    if (.anyStructured(reTrms$reCovs))
-        control$check.nobs.vs.nRE <- "ignore"
-    wmsgNlev <- checkNlevels(reTrms$flist, n=n, control)
-    wmsgZdims <- checkZdims(reTrms$Ztlist, n=n, control, allow.n=FALSE)
-    if (anyNA(reTrms$Zt)) {
-        stop("NA in Z (random-effects model matrix): ",
-             "please use ",
-             shQuote("na.action='na.omit'"),
-             " or ",
-             shQuote("na.action='na.exclude'"))
-    }
-    wmsgZrank <- checkZrank(reTrms$Zt, n=n, control, nonSmall = 1e6)
 
-    ## fixed-effects model matrix X - remove random effect parts from formula:
-    fixedform <- fr.form.
-    RHSForm(fixedform) <- reformulas::nobars(RHSForm(fixedform))
-    mf$formula <- fixedform
-    ## re-evaluate model frame to extract predvars component
-    fixedfr <- eval(mf, parent.frame())
-    attr(attr(fr,"terms"), "predvars.fixed") <-
-        attr(attr(fixedfr,"terms"), "predvars")
-    ## so we don't have to fart around retrieving which vars we need
-    ##  in model.frame(.,fixed.only=TRUE)
-    attr(attr(fr,"terms"), "varnames.fixed") <- names(fixedfr)
-
-    ## ran-effects model frame (for predvars)
-    ## important to COPY formula (and its environment)?
-    ranform <- fr.form.
-    RHSForm(ranform) <- reformulas::subbars(
-        RHSForm(noSpecials(lme4_reOnly(ranform), delete = FALSE, specials = lme4_specials))
-    )
-    mf$formula <- ranform
-    ranfr <- eval(mf, parent.frame())
-    attr(attr(fr,"terms"), "predvars.random") <-
-        attr(terms(ranfr), "predvars")
-
-    ## FIXME: shouldn't we have this already in the full-frame predvars?
-    X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
-    
-    ## Scaling (if autoscale is on...)
-    if (!is.null(control$autoscale) && control$autoscale) {
-      if("(Intercept)" %in% colnames(X)){
-        X_scaled <- scale(X[, -1])
-        X[,-1] <- X_scaled
-      } else {
-        X_scaled <- scale(X)
-        X <- X_scaled
-      }
-      attr(X, "scaled:center") <- attr(X_scaled, "scaled:center")
-      attr(X, "scaled:scale") <- attr(X_scaled, "scaled:scale")
-    }
-    
-    ## backward compatibility (keep no longer than ~2015):
-    if(is.null(rankX.chk <- control[["check.rankX"]]))
-        rankX.chk <- eval(formals(lmerControl)[["check.rankX"]])[[1]]
-    X <- chkRank.drop.cols(X, kind=rankX.chk, tol = 1e-7)
-    if(is.null(scaleX.chk <- control[["check.scaleX"]]))
-        scaleX.chk <- eval(formals(lmerControl)[["check.scaleX"]])[[1]]
-    X <- checkScaleX(X, kind=scaleX.chk)
-
-    list(fr = fr, X = X, reTrms = reTrms, REML = REML, formula = formula,
-         wmsgs = c(Nlev = wmsgNlev, Zdims = wmsgZdims, Zrank = wmsgZrank))
+    res <- mkFormula(formula, fr.form., fr.form, mf, contrasts, control,
+                     allow.n = FALSE,
+                     check_zero_rows = TRUE,
+                     check_na_Zt = TRUE,
+                     set_varnames_fixed = TRUE,
+                     parent_env = parent.frame())
+    c(res, list(REML = REML))
 }
 
 ## utility f'n for checking starting values
@@ -709,8 +741,6 @@ optimizeLmer <- function(devfun,
         opt
 }
 
-## TODO: remove any arguments that aren't actually used by glFormula (same for lFormula)
-## TODO(?): lFormula() and glFormula()  are very similar: merge or use common baseFun()
 ##' @rdname modular
 ##' @inheritParams glmer
 ##' @export
@@ -718,14 +748,12 @@ glFormula <- function(formula, data=NULL, family = gaussian,
                       subset, weights, na.action, offset,
                       contrasts = NULL, start, mustart, etastart,
                       control = glmerControl(), ...) {
-    ## FIXME: does start= do anything? test & fix
-
     control <- control$checkControl ## this is all we really need
     mf <- mc <- match.call()
     ## extract family, call lmer for gaussian
     if (is.character(family))
         family <- get(family, mode = "function", envir = parent.frame(2))
-    if( is.function(family)) family <- family()
+    if (is.function(family)) family <- family()
     if (isTRUE(all.equal(family, gaussian()))) {
         mc[[1]] <- quote(lme4::lFormula)
         mc["family"] <- NULL            # to avoid an infinite loop
@@ -744,11 +772,10 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     denv <- checkFormulaData(formula, data,
                              checkLHS = control$check.formula.LHS == "stop")
     formula <- as.formula(formula, env = denv) # substitute evaluated version
-    if (getDoublevertDefault() == "split") {
-      RHSForm(formula) <- reformulas::expandDoubleVerts(RHSForm(formula))
-    }
+    if (getDoublevertDefault() == "split")
+        RHSForm(formula) <- reformulas::expandDoubleVerts(RHSForm(formula))
 
-    ## DRY ...
+    ## include mustart/etastart in the model frame call (glmer-specific)
     m <- match(c("data", "subset", "weights", "na.action", "offset",
                  "mustart", "etastart"), names(mf), 0L)
     mf <- mf[c(1L, m)]
@@ -769,91 +796,27 @@ glFormula <- function(formula, data=NULL, family = gaussian,
         if (!eval(bquote(missing(x=.(i)))))
             assign(i, get(i, parent.frame()), environment(fr.form))
     }
-    mf$formula <- fr.form
-    fr <- eval(mf, parent.frame())
-    ## convert character vectors to factor (defensive)
-    fr <- factorize(fr.form, fr, char.only = TRUE)
-    ## store full, original formula & offset
-    attr(fr,"formula") <- formula
-    attr(fr,"offset") <- mf$offset
-    ## attach starting coefficients to model frame so we can
-    ##  pass them through to mkRespMod -> family()$initialize ...
-    if (!missing(start) && is.list(start)) {
-        fixef <- start$fixef %||% start$beta
-        attr(fr,"start") <- fixef
-    }
-    n <- nrow(fr)
-    ## random effects and terms modules
-    ## get list of calls whose first argument is a call to '|'
-    ##                x | f  ->      us(x | f)
-    ##     nonspecial(x | f) ->      us(x | f)
-    ##        special(x | f) -> special(x | f)
-    bb1 <- findbars_x(formula, specials = lme4_specials,
-                      default.special = "us", target = "|",
-                      expand_doublevert_method = getDoublevertDefault())
-    bb0 <- lapply(bb1, `[[`, 2L)
-    reTrms <- reformulas::mkReTrms(bb0, fr, calc.lambdat = FALSE)
-    bb1 <- bb1[reTrms$ord] # reorder to match mkReTrms internal ordering
-    reTrms <- upReTrms(reTrms, bb1) # local calc.lambdat=TRUE step
-    ## If there is a covariance structure; ignore the check nobs.vs.nRE
-    if (.anyStructured(reTrms$reCovs))
-        control$check.nobs.vs.nRE <- "ignore"
-    ## TODO: allow.n = !useSc {see FIXME below}
-    wmsgNlev <- checkNlevels(reTrms$ flist, n = n, control, allow.n = TRUE)
-    wmsgZdims <- checkZdims(reTrms$Ztlist, n = n, control, allow.n = TRUE)
-    wmsgZrank <- checkZrank(reTrms$ Zt, n = n, control, nonSmall = 1e6, allow.n = TRUE)
 
     ## FIXME: adjust test for families with estimated scale parameter:
     ##   useSc is not defined yet/not defined properly?
     ##  if (useSc && maxlevels == n)
     ##          stop("number of levels of each grouping factor must be",
     ##                "greater than number of obs")
+    ## TODO: allow.n = !useSc
+    res <- mkFormula(formula, fr.form., fr.form, mf, contrasts, control,
+                     allow.n = TRUE,
+                     check_zero_rows = FALSE,
+                     check_na_Zt = FALSE,
+                     set_varnames_fixed = FALSE,
+                     parent_env = parent.frame())
 
-    ## fixed-effects model matrix X - remove random effect parts from formula:
-    fixedform <- fr.form.
-    RHSForm(fixedform) <- reformulas::nobars(RHSForm(fixedform))
-    mf$formula <- fixedform
-    ## re-evaluate model frame to extract predvars component
-    fixedfr <- eval(mf, parent.frame())
-    attr(attr(fr,"terms"),"predvars.fixed") <-
-        attr(attr(fixedfr,"terms"),"predvars")
-
-    ## ran-effects model frame (for predvars)
-    ## important to COPY formula (and its environment)?
-    ranform <- fr.form.
-    RHSForm(ranform) <- reformulas::subbars(
-        RHSForm(noSpecials(lme4_reOnly(ranform), specials = lme4_specials, delete = FALSE))
-    )
-    mf$formula <- ranform
-    ranfr <- eval(mf, parent.frame())
-    attr(attr(fr,"terms"), "predvars.random") <-
-        attr(terms(ranfr), "predvars")
-
-    X <- model.matrix(fixedform, fr, contrasts)#, sparse = FALSE, row.names = FALSE) ## sparseX not yet
-    
-    ## Scaling (if autoscale is on...)
-    if (!is.null(control$autoscale) && control$autoscale) {
-      if("(Intercept)" %in% colnames(X)){
-        X_scaled <- scale(X[, -1])
-        X[,-1] <- X_scaled
-      } else {
-        X_scaled <- scale(X)
-        X <- X_scaled
-      }
-      attr(X, "scaled:center") <- attr(X_scaled, "scaled:center")
-      attr(X, "scaled:scale") <- attr(X_scaled, "scaled:scale")
+    ## attach starting coefficients to model frame so we can
+    ##  pass them through to mkRespMod -> family()$initialize ...
+    if (!missing(start) && is.list(start)) {
+        fixef <- start$fixef %||% start$beta
+        attr(res$fr, "start") <- fixef
     }
-    
-    ## backward compatibility (keep no longer than ~2015):
-    if(is.null(rankX.chk <- control[["check.rankX"]]))
-        rankX.chk <- eval(formals(lmerControl)[["check.rankX"]])[[1]]
-    X <- chkRank.drop.cols(X, kind=rankX.chk, tol = 1e-7)
-    if(is.null(scaleX.chk <- control[["check.scaleX"]]))
-        scaleX.chk <- eval(formals(lmerControl)[["check.scaleX"]])[[1]]
-    X <- checkScaleX(X, kind=scaleX.chk)
-
-    list(fr = fr, X = X, reTrms = reTrms, family = family, formula = formula,
-         wmsgs = c(Nlev = wmsgNlev, Zdims = wmsgZdims, Zrank = wmsgZrank))
+    c(res, list(family = family))
 }
 
 ##' @rdname modular
