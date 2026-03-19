@@ -243,6 +243,13 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
         ## see ll 180-182 of src/library/stats/R/glm.R
         ## https://github.com/wch/r-source/search?utf8=%E2%9C%93&q=mukeep
         if (!is.null(mustart_update)) rho$mustart <- mustart_update
+        ## For Gamma family, replace mustart (= y) with mean(y) to improve PIRLS stability.
+        ## Using mustart = y causes PIRLS divergence for small shape parameters (e.g. shape < 0.2)
+        ## because E[log(y)] << log(E[y]) (Jensen's inequality): the OLS fit of log(y) ~ X gives
+        ## coefficients implying exp(fitted) << y, leading to explosive working responses.
+        else if (family$family == "Gamma" && is.null(etastart_update) && length(y) > 0) {
+            rho$mustart[] <- mean(rho$mustart)
+        }
         ## family$initialize <- NULL     # remove clutter from str output
         ll <- as.list(rho)
         ans <- do.call(new, c(list(Class="glmResp", family=family),
