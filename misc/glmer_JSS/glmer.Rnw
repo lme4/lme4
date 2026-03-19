@@ -271,17 +271,20 @@ as follows:
 }
 
 \al{
-For GLMMs, the scale parameter is estimated outside of the optimization 
-of the likelihood over the $\beta$ and the $\theta$ parameters. It is estimated 
-by the deviance divided by the residual degrees of freedom.
+
+For GLMMs, the scale parameter is estimated outside the optimization of the 
+likelihood over the $\beta$ and $\theta$ parameters. Specifically, it is 
+estimated as the deviance divided by the residual degrees of freedom. 
+
+The deviance itself is estimated using the method of moments estimator, which 
+is the Pearson residual sum of squares. This approach is preferred by \citet{McCullaghNelder1989} as it is less sensitive to small errors or model 
+misspecification than the maximum likelihood estimator. 
+
+We therefore estimate the deviance using the penalized weighted Pearson 
+residual sum of squares, as described in Section 3.2 of the \code{lmer} paper \citep{bates2015fitting}.
 
 Note that for Binomial and Poisson families, by default the scale is fixed at 1 
 by assumption.
-
-
-
-
-
 
 }
 
@@ -798,7 +801,7 @@ It turns out that it will also be worthwhile to consider
 adding an observation-level random effect to the model,
 which we can do by creating a new factor based on observation
 number and using \code{update()} on the previous model:
-<<cbppModelII,cache=TRUE,dependson="newcbpp">>=
+<<cbppModelII,cache=TRUE,dependson="newcbpp", warning=FALSE>>=
 cbpp2 <- transform(cbpp2,obs=factor(seq(nrow(cbpp2))))    
 gm2 <- update(gm1,.~.+(1|obs))  ## herd and observation-level REs
 gm3 <- update(gm1,.~.-(1|herd)+(1|obs))  ## observation-level REs only
@@ -863,7 +866,9 @@ of convenience and flexibility.
 \al{
 Fortunately, \code{merMod} objects are also compatible with the 
 \code{performance} package and the \code{DHARMa} package, both are commonly 
-used for model checking.
+used for model checking. The "n.s." in Figure~\ref{fig:dharma_mod_cbpp} means
+"not significant."
+
 }
 
 The following code produces a standard range
@@ -919,7 +924,8 @@ in Figure~\ref{fig:perf_chk_mod_cbpp}.
 }
 
 <<perf_chk_mod_cbpp,fig.cap="Model assumption checks using the performance package.",fig.height=10,echo=FALSE>>=
-check_model(gm1)
+check_model(gm1, check = c("reqq", "binned_residuals", 
+                                        "vif", "qq"))
 @
 
 \al{Another external package that is compatible with \code{merMod} objects is
@@ -971,7 +977,6 @@ mList <- setNames(list(gm1,gm2,gm3),mnames)
 a1 <- bbmle::AICtab(gm1,gm2,gm3,mnames=mnames)
 @
 
-
 %% lme4 buglet: confint() has oldNames, profile has signames
 %% lme4 wishlist: allow [Ww]ald in confint.merMod?
 
@@ -989,7 +994,7 @@ The \code{profile} method computes profile likelihoods.
 The computation can be slow, since complete profiling for
 a model with $p$ random- and fixed-effect parameters requires fitting $p$
 profiles, each of which requires many $p-1$-dimensional optimizations. \al{The machinery regarding profiling for GLMMs is similar as LMMs. They are 
-described in Chapter 5.1 of the \code{lmer} paper \citep{bates2015fitting}.}
+described in Section 5.1 of the \code{lmer} paper \citep{bates2015fitting}.}
 
 The \code{profile} method returns an
 object of class \code{thpr} --- a data frame
@@ -1092,7 +1097,7 @@ results are obtained from \code{summary(allFit())}:
 We will show an example of \code{allFit()\$which.OK} The rest are similar.
 }
 
-<<allfit_cbpp1,message=FALSE>>=
+<<allfit_cbpp1,message=FALSE,warning=FALSE>>=
 gm_all <- allFit(gm1)
 @
 
@@ -1195,41 +1200,67 @@ range(daply(Contraception, .(district), nrow))
 Contraception$ch <- factor(Contraception$livch != 0, labels = c("N","Y"))
 @  
 
-\al{We construct six different \code{glmer} models with varying choices of explanatory variables and grouping terms, and compare them using \code{anova}.}
+<<contraception_scale, echo=FALSE>>=
+# Anna: scaled and centered the variables here to improve interpretability
+# regarding interactions.
+Contraception$ch <- ifelse(Contraception$livch != 0, 1, 0)
+Contraception$urban <- ifelse(Contraception$urban == "Y", 1, 0)
 
-<<cm1,echo=FALSE,message=FALSE,size='scriptsize'>>=
+gelman_scale <- function(dataset, response) {
+  new_dataset <- dataset
+  for(var in setdiff(names(dataset), response)){
+    x <- dataset[[var]]
+    if (is.numeric(x) && length(unique(x)) > 2) {
+      new_dataset[[var]] <- (x - mean(x, na.rm = TRUE)) / (2 * sd(x, na.rm = TRUE))
+    } else if(all(sort(unique(x)) == c(0, 1))){
+      new_dataset[[var]] <- x - mean(x, na.rm = TRUE)
+    } else {
+      new_dataset[[var]] <- x
+    }
+  }
+  return(new_dataset)
+}
+
+Contraception_scale <- gelman_scale(Contraception, "use")
+@
+
+\al{We construct six different \code{glmer} models with varying choices of explanatory variables and grouping terms, and compare them using \code{anova}. 
+
+Across the six models, we vary the specification of explanatory variables, 
+such as treating child count as a factor (0, 1, 2, 3+) or binary (no living children vs having living children), and explore different grouping structures like district or urban rural.
+
+To reduce convergence warnings and facilitate interpretability, all 
+explanatory variables were standardized by centering and scaling to two 
+standard deviations, following the approach recommended by \citet{gelman2008scaling}.}
+
+<<cm1,message=FALSE,size='scriptsize'>>=
 cm1 <- glmer(use ~ age + I(age^2) + urban + livch + (1|district), 
-                           Contraception, binomial, nAGQ=0L,
-                           control = glmerControl(autoscale=TRUE))
+                           Contraception_scale, binomial, nAGQ=0L)
 @
 
 <<cm2,echo=FALSE,message=FALSE,size='scriptsize'>>=
 cm2 <- glmer(use ~ age + I(age^2) + urban + ch + (1|district),
-                           Contraception, binomial, nAGQ=0L, 
-                           control = glmerControl(autoscale=TRUE))
+                           Contraception_scale, binomial, nAGQ=0L)
 @
 
 <<cm3,echo=FALSE,message=FALSE,size='scriptsize'>>=
 cm3 <- glmer(use ~ age*ch + I(age^2) + urban + (1|district),
-                           Contraception, binomial, 
-                           control = glmerControl(autoscale=TRUE))
+                           Contraception_scale, binomial)
 @
 
 <<cm4,echo=FALSE,message=FALSE,size='scriptsize'>>=
 cm4 <- glmer(use ~ age*ch + I(age^2) + urban + (urban|district),
-              Contraception, binomial, 
-              control = glmerControl(autoscale=TRUE))
+              Contraception_scale, binomial)
 @
 
 <<cm5,echo=FALSE,message=FALSE,size='scriptsize'>>=
-cm5 <- glmer(use ~ age*ch + I(age^2) + urban + (1|urban:district) + (1|district), control = glmerControl(autoscale=TRUE),
-                           Contraception, binomial)
+cm5 <- glmer(use ~ age*ch + I(age^2) + urban + (1|urban:district) + (1|district),
+                           Contraception_scale, binomial)
 @
 
 <<cm6,echo=FALSE,message=FALSE,size='scriptsize'>>=
 cm6 <- glmer(use ~ age*ch + I(age^2) + urban + (1|urban:district),
-                   Contraception, binomial, 
-                   control = glmerControl(autoscale=TRUE))
+                   Contraception_scale, binomial)
 @
 
 <<anovaContraception>>=
@@ -1237,30 +1268,32 @@ anova(cm1,cm2,cm3,cm4,cm5,cm6)
 @ 
 
 \al{
+Between these six models, the AIC, BIC, and negative log likelihood 
+are all similar to one another. 
+
 Similar to the CBPP data set, another relevant demonstration is computing 
 profile, Wald, and bootstrapping confidence intervals for one of the models to
 understand the effect of each variable.}
 
 <<ContraceptionBatch,echo=FALSE>>=
 ## see the file glmer_contraception_batch.R...
-
-load(file="glmer_bootbatch2.RData")
-load(file="glmer_profbatch2.RData")
+load(file="glmer_profbatch3.RData")
+load(file="glmer_profbatch4.RData")
 @
 
 <<ContraceptionConfidenceSetup,echo=FALSE>>=
 combCI0 <- do.call(rbind, c(
-  mapply(mfun, list(confint.boot.cm1, confint.wald.cm1),
+  mapply(mfun, list(confint.boot.cm1_2, confint.wald.cm1_2),
          c("boot","Wald"), "cm1", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.boot.cm2, confint.wald.cm2),
+  mapply(mfun, list(confint.boot.cm2_2, confint.wald.cm2_2),
          c("boot","Wald"), "cm2", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.prof.cm3, confint.boot.cm3, confint.wald.cm3),
+  mapply(mfun, list(confint.prof.cm3_2, confint.boot.cm3_2, confint.wald.cm3_2),
          c("profile", "boot","Wald"), "cm3", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.prof.cm4, confint.boot.cm4, confint.wald.cm4),
+  mapply(mfun, list(confint.prof.cm4_2, confint.boot.cm4_2, confint.wald.cm4_2),
          c("profile", "boot","Wald"), "cm4", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.prof.cm5, confint.boot.cm5, confint.wald.cm5),
+  mapply(mfun, list(confint.prof.cm5_2, confint.boot.cm5_2, confint.wald.cm5_2),
          c("profile", "boot","Wald"), "cm5", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.prof.cm6, confint.boot.cm6, confint.wald.cm6),
+  mapply(mfun, list(confint.prof.cm6_2, confint.boot.cm6_2, confint.wald.cm6_2),
          c("profile", "boot","Wald"), "cm6", SIMPLIFY=FALSE)
 ))
 
@@ -1290,6 +1323,8 @@ ggplot(combCI, aes(var, est, colour=type, shape=model)) +
 
 \al{
 In general, the point and confidence interval estimation of the explanatory variables are similar across the six models, and similarly across different methods for confidence interval construction, with a couple of exceptions.
+
+The strongest predictors of contraceptive use among women in Bangladesh were urban residence and the presence of living children. Other factors, such as age, did not appear to have a meaningful effect.
 
 We may also impose a different underlying variance-covariance structure. 
 Consider the following models, where \code{diag} enforces a diagonal 
