@@ -323,27 +323,28 @@ checkResponse <- function(y, ctrl) {
 ##     res <- napredict(x)
 ## }
 
-## Internal workhorse shared by lFormula() and glFormula().
-## Handles model-frame construction, random-effects setup, and fixed-effects
-## matrix building -- all of which is identical between the two public functions.
-##
-## @param formula   model formula (already processed via as.formula, env set)
-## @param fr.form.  formula with specials replaced by (x | f)
-##                  (named with trailing dot following existing lme4 convention)
-## @param fr.form   formula with re terms replaced by sums (x + f)
-##                  for model.frame() evaluation
-## @param mf        partially-constructed call to stats::model.frame
-##                  (formula slot will be filled in by this function)
-## @param contrasts optional contrasts argument
-## @param control   the checkControl sub-list
-## @param allow.n   passed to checkNlevels, checkZdims, checkZrank;
-##                  FALSE for lmer (default), TRUE for glmer
-## @param check_zero_rows  if TRUE, stop on empty model frame (lmer mode)
-## @param check_na_Zt      if TRUE, stop on NA in Z matrix (lmer mode)
-## @param set_varnames_fixed  if TRUE, set varnames.fixed attribute (lmer mode)
-## @param parent_env  parent.frame() captured by the calling function
-## @return list(fr, X, reTrms, formula, wmsgs) -- callers (lFormula/glFormula)
-##   append their own specific elements (REML or family) to this result
+##' @rdname modular
+##' Internal workhorse shared by lFormula() and glFormula().
+##' Handles model-frame construction, random-effects setup, and fixed-effects
+##' matrix building -- all of which is identical between the two public functions.
+##'
+##' @param formula   model formula (already processed via as.formula, env set)
+##' @param fr.form.  formula with specials replaced by (x | f)
+##'                  (named with trailing dot following existing lme4 convention)
+##' @param fr.form   formula with re terms replaced by sums (x + f)
+##'                  for model.frame() evaluation
+##' @param mf        partially-constructed call to stats::model.frame
+##'                  (formula slot will be filled in by this function)
+##' @param contrasts optional contrasts argument
+##' @param control   the checkControl sub-list
+##' @param allow.n   passed to checkNlevels, checkZdims, checkZrank;
+##'                  FALSE for lmer (default), TRUE for glmer
+##' @param check_zero_rows  if TRUE, stop on empty model frame (lmer mode)
+##' @param check_na_Zt      if TRUE, stop on NA in Z matrix (lmer mode)
+##' @param set_varnames_fixed  if TRUE, set varnames.fixed attribute (lmer mode)
+##' @param parent_env  parent.frame() captured by the calling function
+##' @return list(fr, X, reTrms, formula, wmsgs) -- callers (lFormula/glFormula)
+##'   append their own specific elements (REML or family) to this result
 mkFormula <- function(formula, fr.form., fr.form, mf, contrasts, control,
                       allow.n = FALSE,
                       check_zero_rows = FALSE,
