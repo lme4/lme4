@@ -155,22 +155,28 @@ test_that("estimated Gamma shape is correct", {
   expect_equal(shape_val, 1.94511502080571, tolerance = 1e-6)
 })
 
-test_that("glmer works for Gamma with small shape parameter (issue #701)", {
-  ## shape=0.1 previously caused PIRLS divergence due to E[log(y)] << log(E[y])
-  shape_param <- 0.1
-  set.seed(1001)
-  d <- expand.grid(block = LETTERS[1:26], rep = 1:100, KEEP.OUT.ATTRS = FALSE)
-  d$x <- runif(nrow(d))
-  reff_f <- rnorm(length(levels(d$block)), sd = 1)
-  d$eta <- 4 + 3 * d$x + reff_f[d$block]
-  d$y <- rgamma(nrow(d), scale = exp(d$eta) / shape_param, shape = shape_param)
-  ## glmer should succeed (previously failed with PIRLS convergence error)
-  fit <- suppressWarnings(
-    glmer(y ~ x + (1|block), data = d, family = Gamma(link = "log"))
-  )
-  expect_s4_class(fit, "merMod")
-  ## fixed effects should be close to true values (intercept=4, slope=3)
-  expect_equal(unname(fixef(fit)), c(4, 3), tolerance = 0.5)
+test_that("glmer works for Gamma with small shape parameter", {
+  ## shape=0.1 previously caused PIRLS divergence
+  ## we are also testing for different values of Gamma to be safe
+  shape_vec <- c(0.1,0.5,1,2,5)
+  set.seed(123)
+  for(shape_param in shape_vec){
+    d <- expand.grid(block = LETTERS[1:26], rep = 1:100, KEEP.OUT.ATTRS = FALSE)
+    d$x <- runif(nrow(d))
+    reff_f <- rnorm(length(levels(d$block)), sd = 1)
+    d$eta <- 4 + 3 * d$x + reff_f[d$block]
+    d$y <- rgamma(nrow(d), scale = exp(d$eta) / shape_param, shape = shape_param)
+
+    fit <- suppressWarnings(
+      glmer(y ~ x + (1|block), data = d, family = Gamma(link = "log"))
+    )
+    expect_s4_class(fit, "merMod")
+    ## testing for the shape parameter.
+    expect_equal(1/sigma(fit)^2, shape_param, tolerance = 0.1)
+    ## fixed effects should be close to true values (intercept=4, slope=3)
+    expect_equal(unname(fixef(fit)), c(4, 3), tolerance = 0.5)
+    print(unname(fixef(fit)))
+  }
 })
 
 simfun_invgauss <- function(ngrp = 50, nrep = 500, lambda = 1, 
