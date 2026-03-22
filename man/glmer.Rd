@@ -47,15 +47,20 @@ glmer(formula, data = NULL, family = gaussian
     components, one named \code{par} or \code{theta} and another named
     \code{fixef} or \code{beta}, giving starting values for covariance
     parameters and fixed effect coefficients, respectively.  Numeric
-    \code{start} is equivalent to \code{list(par = start)}.  For
-    unstructured covariance matrices, \code{theta} stores the unique
-    non-zero elements of the lower triangle of the Cholesky factor of
-    the \emph{relative} covariance matrix (see also
-    \code{\link{simulate.merMod}}, argument \code{newparams}).  By
-    default, all relative covariance matrices are identity matrices and
-    all fixed effect coefficients are zero.  If two optimization steps
-    are performed, as by default, then the first step uses starting
-    values \code{par} and the second step uses starting values
+    \code{start} is equivalent to \code{list(par = start)}.  The
+    covariance-parameter vector (\code{par}/\code{theta}) is interpreted
+    according to each random-effect covariance structure. For
+    unstructured terms, it is the unique non-zero elements of the lower
+    triangle of the Cholesky factor of the \emph{relative} covariance
+    matrix. For structured terms (\code{diag}, \code{cs}, \code{ar1}),
+    it is the parameter vector for that structure (typically one or more
+    standard deviations, plus correlation parameter(s) where
+    applicable), which is mapped internally to the Cholesky scale. See
+    also \code{\link{simulate.merMod}} (\code{newparams}). By default,
+    all relative covariance matrices are identity matrices and all fixed
+    effect coefficients are zero.  If two optimization steps are
+    performed, as by default, then the first step uses starting values
+    \code{par} and the second step uses starting values
     \code{c(newpar, fixef)}, where \code{newpar} is the optimum obtained
     in the first step.  See \code{\link{modular}} for details about
     finer control of optimization.}

@@ -73,12 +73,17 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
   \item{start}{a numeric vector or a named \link{list} with one optional
     component named \code{par} or \code{theta}, giving starting values
     for covariance parameters.  Numeric \code{start} is equivalent to
-    \code{list(par = start)}.  For unstructured covariance matrices,
-    \code{theta} stores the unique non-zero elements of the lower
-    triangle of the Cholesky factor of the \emph{relative} covariance
-    matrix (see also \code{\link{simulate.merMod}}, argument
-    \code{newparams}).  By default, all relative covariance matrices are
-    identity matrices.}
+    \code{list(par = start)}.  The covariance-parameter vector
+    (\code{par}/\code{theta}) is interpreted according to each
+    random-effect covariance structure. For unstructured terms, it is
+    the unique non-zero elements of the lower triangle of the Cholesky
+    factor of the \emph{relative} covariance matrix. For structured
+    terms (\code{diag}, \code{cs}, \code{ar1}), it is the parameter
+    vector for that structure (typically one or more standard
+    deviations, plus correlation parameter(s) where applicable), which
+    is mapped internally to the Cholesky scale. See also
+    \code{\link{simulate.merMod}} (\code{newparams}). By default, all
+    relative covariance matrices are identity matrices.}
 
   \item{verbose}{integer scalar.  If \code{> 0} verbose output is
     generated during the optimization of the parameter estimates.  If
