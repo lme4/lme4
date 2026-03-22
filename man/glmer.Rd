@@ -47,9 +47,11 @@ glmer(formula, data = NULL, family = gaussian
     components, one named \code{par} or \code{theta} and another named
     \code{fixef} or \code{beta}, giving starting values for covariance
     parameters and fixed effect coefficients, respectively.  Numeric
-    \code{start} is equivalent to \code{list(par = start)}.  Parameters
-    corresponding to unstructured covariance matrices are on the scale
-    of the Cholesky factor of the relative covariance matrix.  By
+    \code{start} is equivalent to \code{list(par = start)}.  For
+    unstructured covariance matrices, \code{theta} stores the unique
+    non-zero elements of the lower triangle of the Cholesky factor of
+    the \emph{relative} covariance matrix (see also
+    \code{\link{simulate.merMod}}, argument \code{newparams}).  By
     default, all relative covariance matrices are identity matrices and
     all fixed effect coefficients are zero.  If two optimization steps
     are performed, as by default, then the first step uses starting
@@ -196,4 +198,3 @@ if (require("HSAUR3")) {
 }
 }
 \keyword{models}
-
