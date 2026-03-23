@@ -134,7 +134,7 @@ range of mixed-effects models.  One major advantage of
 fit generalized linear mixed
 models (GLMMs), which combine the flexibility of
 linear mixed models (LMMs) and generalized
-linear models (GLMs). In a companion paper, we have described the
+linear models (GLMs). In a companion paper \cite{lmerJSS}, we have described the
 facilities in \pkg{lme4} for fitting linear mixed models (LMMs). Here
 we describe the facilities for fitting GLMMs.
 
@@ -144,7 +144,7 @@ we describe the facilities for fitting GLMMs.
 Generalized linear mixed models extend the class of
 generalized linear models by allowing for both fixed and random
 effects. In a GLM, the length-$n$ vector-valued response variable,
-$\mc Y$, has a conditional distribution in the exponential family (e.g. Normal,
+$\mc Y$, has a conditional distribution in the exponential dispersion family (e.g. Normal,
 binomial, Poisson). The mean, $\bm\mu_{\mc Y }$, of $\mc Y$ depends on
 a linear predictor,
 \begin{equation}
@@ -241,8 +241,10 @@ possibly, a separate scale factor. (In the most common cases the conditional
 variance is completely determined by the conditional mean.) 
 
 \al{
-Assuming that the form of the conditional distribution is from an exponential 
-dispersion model (exponential, gamma, Poisson, binomial, and negative binomial),
+Assuming that the conditional distribution is in the exponential 
+dispersion family (e.g. binomial, Poisson, Gamma)
+%% BMB: neg binom is not in the exponentional dispersion unless the
+%% shape parameter is known; inverse-Gaussian is also ED)
 we can weight observations differently by scaling the dispersion parameter, 
 $\phi$. These \textbf{prior weights},  $\bm w$, a vector of size $n$, are known 
 positive constants.
@@ -255,14 +257,14 @@ Consider the form, where $i = 1, 2, \dots, n$:
 where $\Var(\mu_i)$ is the family-specific variance function. 
 Higher weights indicate a smaller variance.
 
-If prior weights are not specified, by default $\bm w$ is just a vector of 1.
+If prior weights are not specified, by default $\bm w$ is just a vector of ones.
 
-Another common implementation when dealing with generalized linear mixed models
-is an \textbf{offset}, which are an efficient way to include known scaling 
-factors (like population or area) without introducing additional parameters to 
-the model.
+Another common feature of generalized linear mixed models is the use
+of an \textbf{offset}, a practical way to include known scaling 
+factors (e.g., population or area over which a Poisson sample is collected)
+without introducing additional parameters to the model.
 
-In particular, the inclusion of an offset would modify the linear predictor 
+In particular, the inclusion of an offset modifies the linear predictor 
 as follows:
 \begin{equation}
   \label{eq:GLMMoffset}
@@ -275,13 +277,10 @@ For GLMMs, the scale parameter is estimated outside of the optimization
 of the likelihood over the $\beta$ and the $\theta$ parameters. It is estimated 
 by the deviance divided by the residual degrees of freedom.
 
+FIXME.
+
 Note that for Binomial and Poisson families, by default the scale is fixed at 1 
 by assumption.
-
-
-
-
-
 
 }
 
