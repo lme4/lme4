@@ -72,8 +72,11 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
 
   \item{start}{a numeric vector or a named \link{list} with one optional
     component named \code{par} or \code{theta}, giving starting values
-    for covariance parameters.  Numeric \code{start} is equivalent to
-    \code{list(par = start)}.  The covariance-parameter vector
+    for covariance parameters.  Numeric \code{start} initializes only the
+    covariance parameters (i.e., it is equivalent to
+    \code{list(par = start)}). The elements of this numeric vector are
+    interpreted in the same order as \code{par}/\code{theta}.  The
+    covariance-parameter vector
     (\code{par}/\code{theta}) is interpreted according to each
     random-effect covariance structure. For unstructured terms, it is
     the unique non-zero elements of the lower triangle of the Cholesky

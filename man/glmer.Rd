@@ -47,7 +47,11 @@ glmer(formula, data = NULL, family = gaussian
     components, one named \code{par} or \code{theta} and another named
     \code{fixef} or \code{beta}, giving starting values for covariance
     parameters and fixed effect coefficients, respectively.  Numeric
-    \code{start} is equivalent to \code{list(par = start)}.  The
+    \code{start} initializes only the covariance parameters (i.e., it is
+    equivalent to \code{list(par = start)} and leaves fixed effects at
+    their default start unless \code{fixef}/\code{beta} is supplied in a
+    list). The elements of this numeric vector are interpreted in the
+    same order as \code{par}/\code{theta}.  The
     covariance-parameter vector (\code{par}/\code{theta}) is interpreted
     according to each random-effect covariance structure. For
     unstructured terms, it is the unique non-zero elements of the lower
