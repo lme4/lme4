@@ -50,17 +50,21 @@ glmer(formula, data = NULL, family = gaussian
     \code{start} initializes only the covariance parameters (i.e., it is
     equivalent to \code{list(par = start)} and leaves fixed effects at
     their default start unless \code{fixef}/\code{beta} is supplied in a
-    list). The elements of this numeric vector are interpreted in the
-    same order as \code{par}/\code{theta}.  The
-    covariance-parameter vector (\code{par}/\code{theta}) is interpreted
-    according to each random-effect covariance structure. For
-    unstructured terms, it is the unique non-zero elements of the lower
-    triangle of the Cholesky factor of the \emph{relative} covariance
-    matrix. For structured terms (\code{diag}, \code{cs}, \code{ar1}),
-    it is the parameter vector for that structure (typically one or more
-    standard deviations, plus correlation parameter(s) where
-    applicable), which is mapped internally to the Cholesky scale. See
-    also \code{\link{simulate.merMod}} (\code{newparams}). By default,
+    list).  The elements of this numeric vector are interpreted in the
+    same order as \code{par}/\code{theta} (concatenated across random-
+    effect terms).
+    For each term, \code{par}/\code{theta} specifies the \emph{relative}
+    covariance as follows: for unstructured (\code{us}) terms, entries
+    are the lower-triangular elements of the relative Cholesky factor
+    \eqn{\Lambda_\theta}; for diagonal (\code{diag}) terms, entries are
+    the standard deviation parameter(s); for compound-symmetry
+    (\code{cs}) and AR(1) (\code{ar1}) terms, entries are the standard
+    deviation parameter(s) followed by the correlation parameter
+    \eqn{\rho} (on its natural bounded scale).  For structured terms, the
+    supplied \code{par} values are internally mapped by \code{getTheta()}
+    to the corresponding lower-triangular \eqn{\Lambda_\theta} entries
+    used by the optimizer.
+    See also \code{\link{simulate.merMod}} (\code{newparams}). By default,
     all relative covariance matrices are identity matrices and all fixed
     effect coefficients are zero.  If two optimization steps are
     performed, as by default, then the first step uses starting values
