@@ -64,9 +64,7 @@ glmer(formula, data = NULL, family = gaussian
     supplied \code{par} values are internally mapped by \code{getTheta()}
     to the corresponding lower-triangular \eqn{\Lambda_\theta} entries
     used by the optimizer.
-    See also \code{\link{simulate.merMod}} (\code{newparams}). By default,
-    all relative covariance matrices are identity matrices and all fixed
-    effect coefficients are zero.  If two optimization steps are
+    If two optimization steps are
     performed, as by default, then the first step uses starting values
     \code{par} and the second step uses starting values
     \code{c(newpar, fixef)}, where \code{newpar} is the optimum obtained

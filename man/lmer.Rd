@@ -87,10 +87,7 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
     \eqn{\rho} (on its natural bounded scale).  For structured terms, the
     supplied \code{par} values are internally mapped by \code{getTheta()}
     to the corresponding lower-triangular \eqn{\Lambda_\theta} entries
-    used by the optimizer.
-    See also
-    \code{\link{simulate.merMod}} (\code{newparams}). By default, all
-    relative covariance matrices are identity matrices.}
+    used by the optimizer.}
 
   \item{verbose}{integer scalar.  If \code{> 0} verbose output is
     generated during the optimization of the parameter estimates.  If
