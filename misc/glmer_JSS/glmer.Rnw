@@ -14,18 +14,20 @@
 \newcommand{\bmb}[1]{{\color{red} \emph{#1}}}
 \newcommand{\scw}[1]{{\color{blue} \emph{#1}}}
 \newcommand{\al}[1]{{\color{violet}#1}} % anna's new comments
+\newcommand{\fixme}[1]{{\color{blue} \textbf{#1}}}
 
 \shortcites{lesnoff_within-herd_2004}
 %% BMB: what does JSS assume?
 %\bibliographystyle{chicago}
 \author{
-  Steven C. Walker\\McMaster University \And
+  Douglas Bates\\University of Wisconsin - Madison \AND
+  Anna Ly\\?? \AND
+  Steven C. Walker\\McMaster University \AND
   Rune Haubo Bojesen Christensen\\Technical University of Denmark\AND
-  Douglas Bates\\University of Wisconsin - Madison \And
-  Benjamin M. Bolker\\McMaster University \AND
-  Martin M\"achler\\ETH Zurich
+  Martin M\"achler\\ETH Zurich\AND
+  Benjamin M. Bolker\\McMaster University
 }
-\Plainauthor{Steve Walker, Rune Haubo Bojesen Christensen, Douglas Bates, Martin M\"achler, Ben Bolker}
+\Plainauthor{Douglas Bates, Anna Ly, Steve Walker, Rune Haubo Bojesen Christensen, Douglas Bates, Martin M\"achler, Benjamin M. Bolker}
 \title{Fitting generalized linear mixed-effects models using \pkg{lme4}}
 \Plaintitle{Fitting generalized linear mixed models using lme4}
 \Shorttitle{GLMMs with lme4}
@@ -50,7 +52,7 @@
   all the standard features available for GLMs in base \proglang{R},
   including the the standard set of accessor functions as
   well as the possibility of user-specified distributions 
-  (within the exponential family) and link
+  (within the exponential dispersion family) and link
   functions.}
 
 \Keywords{%
@@ -128,6 +130,8 @@ opts_chunk$set(engine='R',dev='pdf',fig.width=10,
 \label{sec:intro}
 %\bmb{equations are all defined in part~I \ldots}
 
+\fixme{add A Ly, get Walker current address, re-order Address section}
+
 The \pkg{lme4} package for \proglang{R} can be used to fit a broad
 range of mixed-effects models.  One major advantage of
 \pkg{lme4} over its predecessor, \pkg{nlme}, is that it can be used to
@@ -144,7 +148,7 @@ we describe the facilities for fitting GLMMs.
 Generalized linear mixed models extend the class of
 generalized linear models by allowing for both fixed and random
 effects. In a GLM, the length-$n$ vector-valued response variable,
-$\mc Y$, has a conditional distribution in the exponential family (e.g. Normal,
+$\mc Y$, has a conditional distribution in the exponential dispersion family (e.g. Normal,
 binomial, Poisson). The mean, $\bm\mu_{\mc Y }$, of $\mc Y$ depends on
 a linear predictor,
 \begin{equation}
@@ -172,7 +176,7 @@ $\bm\eta$.
 % the scalar inverse link, $g^{-1}$, applied component-wise to
 % $\bm\eta$.  % commented out the repetition - DMB
 
-In the GLMM case, the vector of means of the exponential family distribution of
+In the GLMM case, the vector of means of the exponential dispersion family distribution of
 $\mc Y$ depends on an unobserved random vector, $\mc B$, of length
 $q$, called the random-effects coefficient vector. In particular, the
 conditional mean of $\mc Y$ given that $\mc B = \bm b$, written
@@ -226,7 +230,7 @@ responses, binomial for binary responses that are recorded as the
 number of trials and the number of successes, and Poisson, for count
 data.  The combination of a distributional form and a link function is
 called a \emph{family}.  For distributional forms in the exponential
-family there is a \emph{canonical link}.  For Bernoulli or binomial
+dispersion family there is a \emph{canonical link}.  For Bernoulli or binomial
 forms the canonical link is the \emph{logit} link function
 \begin{equation}
   \label{eq:logitLink}
@@ -240,12 +244,10 @@ $\Var(\mc Y|\mc U=\bm u)$, as a function of the conditional mean and,
 possibly, a separate scale factor. (In the most common cases the conditional
 variance is completely determined by the conditional mean.) 
 
-\al{
-Assuming that the form of the conditional distribution is from an exponential 
-dispersion model (exponential, gamma, Poisson, binomial, and negative binomial),
-we can weight observations differently by scaling the dispersion parameter, 
+Assuming that the conditional distribution belongs to the exponential 
+dispersion family, we can weight observations differently by scaling the dispersion parameter, 
 $\phi$. These \textbf{prior weights},  $\bm w$, a vector of size $n$, are known 
-positive constants.
+positive constants (equal to the number of observations per trial in the particular case of a binomial GLMM).
 
 By scaling the dispersion parameters, we also modify the conditional variance. 
 Consider the form, where $i = 1, 2, \dots, n$:
@@ -268,13 +270,14 @@ as follows:
   \label{eq:GLMMoffset}
   \bm\eta=\bm Z\bm b+\bm X\bm\beta + \text{offset}.
 \end{equation}
-}
 
-\al{
 
-For GLMMs, the scale parameter is estimated outside the optimization of the 
-likelihood over the $\beta$ and $\theta$ parameters. Specifically, it is 
-estimated as the deviance divided by the residual degrees of freedom. 
+For GLMMs, the scale parameter is not estimated as part of the nonlinear minimization of the negative likelihood over the $\beta$ and $\theta$ parameters.
+As is common in generalized linear model contexts, it is 
+set equal to the (residual) deviance
+divided by the residual degrees of freedom. 
+(Except for the Binomial and Poisson families,
+where the scale parameter is fixed at 1.)
 
 The deviance itself is estimated using the method of moments estimator, which 
 is the Pearson residual sum of squares. This approach is preferred by \citet{McCullaghNelder1989} as it is less sensitive to small errors or model 
@@ -282,11 +285,6 @@ misspecification than the maximum likelihood estimator.
 
 We therefore estimate the deviance using the penalized weighted Pearson 
 residual sum of squares, as described in Section 3.2 of the \code{lmer} paper \citep{bates2015fitting}.
-
-Note that for Binomial and Poisson families, by default the scale is fixed at 1 
-by assumption.
-
-}
 
 The likelihood of the parameters, given the observed data, is now
 \begin{equation}
@@ -407,26 +405,26 @@ $\bm\mu_i$.  That is
 which will be a diagonal matrix so, as for the weights, we store and
 manipulate the Jacobian as a vector.
 
-\al{When solving for the minimum of $Q(\bm u)$, there is a possibility for 
-the proposed update for $\bm u$ has instead increased the value of the objective 
-function $Q(\bm u)$. Let $Q(\bm u_i)$ represent the value of the objective 
-function $Q(\bm u)$ at the current iterate $\bm u_{i}$, and similarly, let 
-$Q(\bm u_{i-1})$ represent the the value of the objective function of the 
-previous iteration. 
+When solving for the minimum of $Q(\bm u)$, the proposed update
+  for $\bm u$ may increase rather than decrease the value of the objective 
+  function $Q(\bm u)$, if the step size estimated by the Gauss-Newton step
+  is too large. Let $Q(\bm u_i)$ represent the value of the objective 
+  function $Q(\bm u)$ at the current iterate $\bm u_{i}$; similarly, let 
+  $Q(\bm u_{i-1})$ represent the the value of the objective function of the 
+  previous iteration. 
 
-If $Q(\bm u_i) > Q(\bm u_{i-1})$, we proceed with the step-halving 
-procedure. That is, we successively consider scaled updates of the form
-\begin{equation}
-  \bm u_i^{(j)} = \bm u_{i-1} + \frac{\bm \delta_i}{2^j}, \quad j = 1, 2, \ldots
+  If $Q(\bm u_i) > Q(\bm u_{i-1})$, we proceed with a \emph{step-halving}
+  procedure. That is, we successively consider scaled updates of the form
+  \begin{equation}
+  \bm u_i^{(j)} = \bm u_{i-1} + \frac{\bm \delta_i}{2^j}, \quad j = 1, 2, \ldots,
 \end{equation}
-and then compute $Q(\bm u_i^{(j)})$ at each step. The step-halving procedure 
+computing $Q(\bm u_i^{(j)})$ at each step. The step-halving procedure 
 continues until a value of $j$ is found such that 
 $Q(\bm u_i^{(j)}) < Q(\bm u_{i-1})$,
 which the iterate is then updated by setting $\bm u_{i} = \bm u_{i}^{(j)}$.
 
 If no such $j$ is found after a predetermined number of halvings, then the 
 step-halving procedure has failed and the algorithm terminates. 
-}
 
 The minimizer, $\bm\delta_i$, of (\ref{eq:incr}) satisfies
 \begin{equation}
@@ -532,6 +530,8 @@ incidence according to season and herd, available in the \pkg{lme4} package
 <<strcbpp,echo=FALSE,eval=FALSE>>=
 str(cbpp)
 @
+
+\fixme{is this left over?}
 and the model
 <<m1>>=
 print(m1 <- glmer(cbind(incidence, size-incidence) ~ period + (1|herd),
@@ -646,15 +646,17 @@ xyplot(as.vector(dmat/dnorm(zm$zvals)) ~ rep.int(zm$zvals, ncol(dmat))|gl(ncol(d
 shows $t(z)$ for each of the unidimensional integrals in the
 likelihood for the model \code{m1} at the parameter estimates.
 
-\al{
+The \code{lme4} package support fitting negative binomial GLMMs, which represent an extension of GLMMs; the negative binomial family is within the
+exponential dispersion family only if
 
-\code{lme4} does support fitting negative binomial GLMMs, however, instead
+\fixme{finish}
+
+however, instead
 of using \code{glmer}, the user must use the \code{glmer.nb} function 
 instead. That being said, there are some parts in \code{glmer.nb} that
 are still experimental and under development, whereas fitting negative binomial 
 GLMMs are better implemented in \code{glmmTMB}.
 
-}
 
 \section{Examples}
 
@@ -1385,9 +1387,8 @@ $\bm\phi$, depend on a linear predictor,
 \end{equation}
 where $\bm o$ is an $n$-by-$1$ vector of \emph{a priori} offsets. The
 specific form of this dependency is specified by the choice of the
-exponential family (e.g. binomial). Furthermore, the mean, $\bm\mu$,
-of this distribution is a function of $\bm\eta$, where this function
-is generally referred to as the inverse link function.
+exponential family. The mean of this distribution, $\bm\mu$,
+is the \emph{inverse link function} $g^{-1}$ applied to $\bm\eta$.
 
 Our goal is to find the values of $\bm u$ that maximize the unscaled
 conditional density, for given $\bm\theta$ and $\bm\beta$
