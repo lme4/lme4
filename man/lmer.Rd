@@ -70,24 +70,44 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
     nonlinear optimizer, see the \code{*lmerControl} documentation for
     details.}
 
-  \item{start}{a numeric vector or a named \link{list} with one optional
-    component named \code{par} or \code{theta}, giving starting values
-    for covariance parameters.  Numeric \code{start} initializes only the
-    covariance parameters (i.e., it is equivalent to
-    \code{list(par = start)}).  The elements of this numeric vector are
-    interpreted in the same order as \code{par}/\code{theta}
-    (concatenated across random-effect terms).
+  \item{start}{a numeric vector or a named list with optional
+    components, one named \code{par} or \code{theta} and another named
+    \code{fixef} or \code{beta}, giving starting values for covariance
+    parameters and fixed effect coefficients, respectively.
+    Specifying \code{start} as a numeric vector initializes only
+    the covariance parameters (i.e., it is equivalent to \code{list(par
+      = start)},
+    leaving fixed effect parameters at their default starting values
+    (i.e., all zero)).
     For each term, \code{par}/\code{theta} specifies the \emph{relative}
-    covariance as follows: for unstructured (\code{us}) terms, entries
+    covariances of random effects terms,  as follows:
+    \itemize{
+      \item for unstructured (\code{us}) terms, entries
     are the lower-triangular elements of the relative Cholesky factor
-    \eqn{\Lambda_\theta}; for diagonal (\code{diag}) terms, entries are
-    the standard deviation parameter(s); for compound-symmetry
+    \eqn{\Lambda_\theta};
+    \item for diagonal (\code{diag}) terms, entries are
+    the standard deviation parameter(s);
+    \item for compound-symmetry
     (\code{cs}) and AR(1) (\code{ar1}) terms, entries are the standard
     deviation parameter(s) followed by the correlation parameter
-    \eqn{\rho} (on its natural bounded scale).  For structured terms, the
-    supplied \code{par} values are internally mapped by \code{getTheta()}
-    to the corresponding lower-triangular \eqn{\Lambda_\theta} entries
-    used by the optimizer.}
+    \eqn{\rho} (specified on the [0,1] scale).
+  }
+  See the \href{../doc/covariance_structures.html}{covariance structures
+    vignette} for more detail on covariance matrix parameterizations.
+  
+  The parameters for all random-effect terms are concatenated in the
+  starting parameter vector,
+  in the order specified by the \emph{internal} ordering of the terms.
+  This matches the order in which the terms are returned in \code{VarCorr()},
+  but may not match the order in which the terms are specified in the
+  formula; as noted in the \href{../doc/lmer.pdf}{lmer vignette},
+  random effect terms are
+  stored in decreasing order of the number of levels of the grouping variable.
+  
+  For structured terms, the
+  supplied \code{par} values are internally mapped by \code{getTheta()}
+  to the corresponding lower-triangular \eqn{\Lambda_\theta}{Lambda[theta]} entries
+  used by the optimizer.}
 
   \item{verbose}{integer scalar.  If \code{> 0} verbose output is
     generated during the optimization of the parameter estimates.  If

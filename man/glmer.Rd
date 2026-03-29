@@ -43,29 +43,10 @@ glmer(formula, data = NULL, family = gaussian
     optimizer to be used and parameters to be passed through to the
     nonlinear optimizer, see the \code{*lmerControl} documentation for
     details.}
-  \item{start}{a numeric vector or a named \link{list} with optional
-    components, one named \code{par} or \code{theta} and another named
-    \code{fixef} or \code{beta}, giving starting values for covariance
-    parameters and fixed effect coefficients, respectively.  Numeric
-    \code{start} initializes only the covariance parameters (i.e., it is
-    equivalent to \code{list(par = start)} and leaves fixed effects at
-    their default start unless \code{fixef}/\code{beta} is supplied in a
-    list).  The elements of this numeric vector are interpreted in the
-    same order as \code{par}/\code{theta} (concatenated across random-
-    effect terms).
-    For each term, \code{par}/\code{theta} specifies the \emph{relative}
-    covariance as follows: for unstructured (\code{us}) terms, entries
-    are the lower-triangular elements of the relative Cholesky factor
-    \eqn{\Lambda_\theta}; for diagonal (\code{diag}) terms, entries are
-    the standard deviation parameter(s); for compound-symmetry
-    (\code{cs}) and AR(1) (\code{ar1}) terms, entries are the standard
-    deviation parameter(s) followed by the correlation parameter
-    \eqn{\rho} (on its natural bounded scale).  For structured terms, the
-    supplied \code{par} values are internally mapped by \code{getTheta()}
-    to the corresponding lower-triangular \eqn{\Lambda_\theta} entries
-    used by the optimizer.
-    If two optimization steps are
-    performed, as by default, then the first step uses starting values
+  \item{start}{See the "start" argument of \code{\link{lmer}} for
+    details. If two optimization steps are
+    performed for a GLMM, as by default (i.e. one with \code{nAGQ=0} and
+    a second with \code{nAGQ} > 0), then the first step uses starting values
     \code{par} and the second step uses starting values
     \code{c(newpar, fixef)}, where \code{newpar} is the optimum obtained
     in the first step.  See \code{\link{modular}} for details about
