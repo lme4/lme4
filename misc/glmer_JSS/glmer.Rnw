@@ -15,12 +15,12 @@
 \newcommand{\scw}[1]{{\color{blue} \emph{#1}}}
 \newcommand{\al}[1]{{\color{violet}#1}} % anna's new comments
 \newcommand{\fixme}[1]{{\color{blue} \textbf{#1}}}
-
+%
 \shortcites{lesnoff_within-herd_2004}
 %% BMB: what does JSS assume?
 %\bibliographystyle{chicago}
 \author{
-  Douglas Bates\\University of Wisconsin - Madison \AND
+  Douglas Bates\\University of Wisconsin - Madison \And
   Anna Ly\\?? \AND
   Steven C. Walker\\McMaster University \AND
   Rune Haubo Bojesen Christensen\\Technical University of Denmark\AND
@@ -54,7 +54,7 @@
   well as the possibility of user-specified distributions 
   (within the exponential dispersion family) and link
   functions.}
-
+%
 \Keywords{%
   sparse matrix methods,
   generalized linear mixed models,
@@ -103,7 +103,6 @@
 \newcommand{\yobs}{\ensuremath{\bm y_{\mathrm{obs}}}}
 \newcommand*{\eq}[1]{eqn.~\ref{#1}}% or just {(\ref{#1})}
 %
-
 <<preliminaries,include=FALSE,cache=FALSE,message=FALSE,echo=FALSE>>=
 options(width=69, show.signif.stars=FALSE, str=strOptions(strict.width="cut"))
 library(knitr)
@@ -128,10 +127,7 @@ opts_chunk$set(engine='R',dev='pdf',fig.width=10,
 \begin{document}
 \section{Introduction}
 \label{sec:intro}
-%\bmb{equations are all defined in part~I \ldots}
-
-\fixme{add A Ly, get Walker current address, re-order Address section}
-
+\fixme{what's causing the empty first page?}
 The \pkg{lme4} package for \proglang{R} can be used to fit a broad
 range of mixed-effects models.  One major advantage of
 \pkg{lme4} over its predecessor, \pkg{nlme}, is that it can be used to
@@ -217,7 +213,7 @@ allows us to write the linear predictor as
   \bm\eta=\bm Z\bm\Lambda_\theta\bm u+\bm X\bm\beta ,
 \end{equation}
 where the spherical random effects vector, $\bm u$
-(see \cite{lmerJSS}) is a realization
+(see \cite{bates2015fitting}) is a realization
 of the random vector, $\mc U$,
 \begin{equation}
   \label{eq:UdistGLMM}
@@ -365,12 +361,12 @@ extend it to a \emph{penalized iteratively reweighted least squares}
   the variance.  We write these weights in the form of a diagonal
   weight matrix, $\bm W$, although they are stored and manipulated as
   a vector.
-\item \al{Let 
+\item Let 
   \begin{equation}
   Q(\bm u) = \left\|\bm W^{1/2}\left(\yobs-\bm\mu_{\mc
             Y|\mc U=\bm u}\right)\right\|^2+\|\bm u\|^2.
   \end{equation}
-  }
+
   Solve the penalized, weighted, nonlinear least squares problem
   \begin{equation}
     \label{eq:weightedNLS}
@@ -870,10 +866,8 @@ of convenience and flexibility.
 
 \al{
 Fortunately, \code{merMod} objects are also compatible with the 
-\code{performance} package and the \code{DHARMa} package, both are commonly 
-used for model checking. The "n.s." in Figure~\ref{fig:dharma_mod_cbpp} means
-"not significant."
-
+\code{performance} package and the \code{DHARMa} package, both commonly 
+used for model checking.
 }
 
 The following code produces a standard range
@@ -941,7 +935,7 @@ outlier tests. For more details see
 \code{??DHARMa::testDispersion} and \code{DHARMa::testOutliers}.
 }
 
-<<dharma_mod_cbpp,fig.cap="Model assumption checks using the DHARMa package.",echo=FALSE>>=
+<<dharma_mod_cbpp,fig.cap="Model assumption checks using the DHARMa package. \\code{n.s.} denotes ``not significant.''",echo=FALSE>>=
 simulationOutput <- simulateResiduals(fittedModel = gm1)
 plot(simulationOutput)
 @
@@ -998,8 +992,7 @@ profVars <- load("glmer_profbatch.RData")
 The \code{profile} method computes profile likelihoods.
 The computation can be slow, since complete profiling for
 a model with $p$ random- and fixed-effect parameters requires fitting $p$
-profiles, each of which requires many $p-1$-dimensional optimizations. \al{The machinery regarding profiling for GLMMs is similar as LMMs. They are 
-described in Section 5.1 of the \code{lmer} paper \citep{bates2015fitting}.}
+profiles, each of which requires many $p-1$-dimensional optimizations.  The machinery for generating likelihood profiles for GLMMs is similar to that for LMMs (see \citep{bates2015fitting}, \S\ 5.1).
 
 The \code{profile} method returns an
 object of class \code{thpr} --- a data frame

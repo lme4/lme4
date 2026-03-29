@@ -28,6 +28,8 @@ TTM = ttm -E2 -e2
 default: glmer.pdf ## glmerAppendix.pdf
 ## in other dir:  lmer.pdf
 
+glmer.pdf: glmer.Rnw glmer.bib
+
 .PHONY:
 
 %.tex: %.Rnw
