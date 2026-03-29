@@ -309,7 +309,8 @@ provides the deviance of a generalized linear model as
 \begin{displaymath}
   \sum_{i=1}^n d_i(\yobs,\bm u) .
 \end{displaymath}
-(We note that there is
+
+There is
 some confusion in \proglang{R} (and in its predecessor,
 \proglang{S}) about the exact definition of the deviance residuals
 of a family.  As indicated above, we will use this name for the
@@ -318,12 +319,14 @@ square root of this vector, using the signs of $\yobs-\mu$, is returned
 when the \code{residuals} method is applied to a fitted model
 of class \code{"glm"} when \code{type="deviance"}, the
 default, is specified.  Both are called ``deviance residuals''
-at different points in the documentation.)
+at different points in the documentation.
+
 One advantage of using the pre-existing GLM family structure is
-that models with any family and link function can be
-fitted (although common families and link functions are
+that the software can thus fit
+models with user-specified families and link functions 
+(although common families and link functions are
 hard-coded in C++ for computational speed),
-in contrast to previous versions of \code{lme4} and other 
+in contrast to previous versions of \code{lme4} and other
 \proglang{R} packages for GLMM fitting.
 
 The likelihood can now be expressed as
@@ -478,7 +481,8 @@ or, on the deviance scale,
 \subsubsection{Decomposing the deviance for simple models}
 \label{sec:simplescalar}
 
-A special, but not uncommon, case is that of scalar random effects
+A common special case of mixed models is those where scalar (typically
+intercept) random effects are
 associated with levels of a single grouping factor, $\bm h$.  In this
 case the dimension, $q$, of the random effects is the number of levels
 of $\bm h$ --- i.e.{} there is exactly one random effect associated
@@ -487,8 +491,8 @@ variance-covariance parameters, which is one-dimensional, as a scalar,
 $\theta$.  The matrix $\bm\Lambda_{\bm\theta}$ is a multiple of the
 identity, $\theta\bm I_q$, and $\bm Z$ is the $n\times q$ matrix of
 indicators of the levels of $\bm f$.  The permutation matrix, $\bm
-P$, can be set to the identity and $\bm L$ is diagonal, but not
-necessarily a multiple of the identity.
+P$, can be set to the identity and $\bm L$ is diagonal, although not
+necessarily homogeneous (i.e., a scalar multiple of the identity matrix).
 
 Because each element of $\bm\mu$ depends on only one element of $\bm
 u$ and the elements of $\mc Y$ are conditionally independent, given
@@ -646,17 +650,15 @@ xyplot(as.vector(dmat/dnorm(zm$zvals)) ~ rep.int(zm$zvals, ncol(dmat))|gl(ncol(d
 shows $t(z)$ for each of the unidimensional integrals in the
 likelihood for the model \code{m1} at the parameter estimates.
 
-The \code{lme4} package support fitting negative binomial GLMMs, which represent an extension of GLMMs; the negative binomial family is within the
-exponential dispersion family only if
-
-\fixme{finish}
-
-however, instead
-of using \code{glmer}, the user must use the \code{glmer.nb} function 
-instead. That being said, there are some parts in \code{glmer.nb} that
-are still experimental and under development, whereas fitting negative binomial 
-GLMMs are better implemented in \code{glmmTMB}.
-
+The \code{lme4} packages support fitting negative binomial GLMMs,
+which are an extension of GLMMs; the negative binomial family is within the
+exponential dispersion family only if the dispersion parameter is fixed.
+The \code{glmer.nb} function implements a one-dimensional optimization
+procedure to estimate the dispersion parameter, fitting a negative binomial GLMM with
+a fixed dispersion parameter at each trial value. While correct, this
+approach is slower than other available negative binomial GLMM
+implementations (e.g., as offered in the \code{glmmTMB} package),
+which is recommended for large problems.
 
 \section{Examples}
 
@@ -799,7 +801,7 @@ grad(dd1,tmpf(gm1)[-1])
 grad(dd1B,tmpf(gm1B)[-1])
 @
 
-It turns out that it will also be worthwhile to consider
+It is also worth considering
 adding an observation-level random effect to the model,
 which we can do by creating a new factor based on observation
 number and using \code{update()} on the previous model:
@@ -808,9 +810,10 @@ cbpp2 <- transform(cbpp2,obs=factor(seq(nrow(cbpp2))))
 gm2 <- update(gm1,.~.+(1|obs))  ## herd and observation-level REs
 gm3 <- update(gm1,.~.-(1|herd)+(1|obs))  ## observation-level REs only
 @
+
 \subsubsection{Model summary}
 
-The first part of the summary just reiterates
+The first part of the summary reiterates
 the family and link function used,
 the model formula, and gives various summary statistics
 (log-likelihood etc.), as well as quantiles of the
@@ -821,7 +824,7 @@ cc <- capture.output(print(summary(gm1)))
 reRow <- grep("^Random effects",cc)
 cat(cc[1:(reRow-2)],sep="\n")
 @
-Outside of \code{summary()}, these quantities are also
+These quantities are also
 accessible via standard accessors
 (\code{AIC()}, \code{BIC()}, \code{logLik()}, \code{deviance()}).
 
