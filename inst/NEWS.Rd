@@ -7,6 +7,9 @@
 \section{CHANGES IN VERSION 2.0-2}{
   \subsection{BUG FIXES}{
     \itemize{
+      \item fixed the case where a Gamma GLMM doesn't perform well for 
+      a small shape parameter by changing the initial starting 
+      point of the optimizer for Gamma families (GH #290)
       \item fixed parameter-counting bug for structured covariance
       matrices (internal \code{npar.merMod} function, results exposed in
       \code{logLik}, \code{anova}, \code{df.residual} ...) (GH #943,
