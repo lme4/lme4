@@ -581,7 +581,7 @@ xyplot(as.vector(dmat) ~ rep.int(zm$zvals, ncol(dmat))|gl(ncol(dmat), nrow(dmat)
   \caption{Comparison of univariate integrands (solid line) and standard normal density function (dashed line)}
   \label{fig:densities}
 \end{figure}
-As we can see from this figure, the univariate integrands are very
+As Figure~\ref{fig:densities} shows, the univariate integrands are very
 close to the standard normal density, indicating that the Laplace
 approximation to the deviance is a good approximation in this case.
 
@@ -646,7 +646,7 @@ xyplot(as.vector(dmat/dnorm(zm$zvals)) ~ rep.int(zm$zvals, ncol(dmat))|gl(ncol(d
 shows $t(z)$ for each of the unidimensional integrals in the
 likelihood for the model \code{m1} at the parameter estimates.
 
-The \code{lme4} packages support fitting negative binomial GLMMs,
+The \code{lme4} package supports fitting negative binomial GLMMs,
 which are an extension of GLMMs; the negative binomial family is within the
 exponential dispersion family only if the dispersion parameter is fixed.
 The \code{glmer.nb} function implements a one-dimensional optimization
@@ -1319,7 +1319,7 @@ ggplot(combCI, aes(var, est, colour=type, shape=model)) +
   scale_colour_brewer(palette="Dark2")
 @
 
-\al{
+
 In general, the point and confidence interval estimation of the explanatory variables are similar across the six models, and similarly across different methods for confidence interval construction, with a couple of exceptions.
 
 The strongest predictors of contraceptive use among women in Bangladesh were urban residence and the presence of living children. Other factors, such as age, did not appear to have a meaningful effect.
@@ -1327,7 +1327,7 @@ The strongest predictors of contraceptive use among women in Bangladesh were urb
 We may also impose a different underlying variance-covariance structure. 
 Consider the following models, where \code{diag} enforces a diagonal 
 variance-covariance structure, and \code{cs} enforces a compound symmetric model:
-}
+
 
 <<cm_varcorr,eval=FALSE,echo=FALSE>>=
 cm.diag <- glmer(use ~ diag(1 + age|district), Contraception, binomial)
@@ -1337,12 +1337,10 @@ cm.cs <- glmer(use ~ cs(1 + age|district), Contraception, binomial)
 cm.hetcs <- glmer(use ~ cs(1 + age|district, hom = FALSE), Contraception, binomial)
 @
 
-\al{For demonstration purposes, we will show the results of one of the VarCorr objects. It is relatively similar for the other generalized linear mixed models.}
+We can use \code{VarCorr} (and other accessor methods) as we would for models with default, unstructured covariance matrices.
 
 <<cm_varcorr_view>>=
-vc.diag <- VarCorr(cm.diag)
-
-vc.diag$district
+print(vc.diag <- VarCorr(cm.diag))
 @
 
 \bibliography{glmer}
