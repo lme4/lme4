@@ -762,13 +762,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
                             keep_args = c(2L, 2L))
     environment(fr.form.) <- environment(fr.form) <-
         environment(formula)
-    ## model.frame.default looks for these objects in the environment
-    ## of the *formula* (see 'extras', which is anything passed in '...'),
-    ## so they have to be put there:
-    for (i in c("weights", "offset")) {
-        if (!eval(bquote(missing(x=.(i)))))
-            assign(i, get(i, parent.frame()), environment(fr.form))
-    }
+
     mf$formula <- fr.form
     fr <- eval(mf, parent.frame())
     ## convert character vectors to factor (defensive)

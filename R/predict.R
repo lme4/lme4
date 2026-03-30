@@ -703,13 +703,21 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
              sQuote("newparams"))
     }
 
+    ## watch out for https://github.com/lme4/lme4/issues/481
+    ## don't modify 'weights' in formula environment permanently
     nullWts <- FALSE
+    oldweights <- get("weights", environment(formula))
+    on.exit(assign("weights", oldweights, environment(formula)))
+            
     if (is.null(weights)) {
         if (is.null(newdata)) {
-            weights <- weights(object)
+            assign("weights", weights(object),
+                   environment(formula))
         } else {
             nullWts <- TRUE # this flags that 'weights' wasn't supplied by the user
-            weights <- rep(1,nrow(newdata))
+            assign("weights",
+                   rep(1,nrow(newdata)),
+                   environment(formula))
         }
     }
 
