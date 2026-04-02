@@ -165,11 +165,16 @@ lmList <- function(formula, data, family, subset, weights,
         } else
             warning(wMsg, domain=NA)
     }
-    new("lmList4", setNames(val, nms),
+    val <- new("lmList4", 
+        setNames(val, nms),
         call = mCall, pool = pool,
         groups = ordered(groups),
         origOrder = match(unique(as.character(groups)), nms)
         )
+    gf <- as.formula(paste("~", deparse(mform$groups)))
+    environment(gf) <- globalenv()
+    attr(val, "groupsForm") <- gf
+    val
 }
 
 ## (currently hidden) auxiliaries
@@ -459,4 +464,3 @@ for(fn in c("fitted", "fixef", "logLik", "pairs", "plot", "predict",
     assign(paste(fn, "lmList4", sep="."), meth)
 }
 rm(fn)
-

@@ -35,6 +35,12 @@ test_that("basic lmList", {
 
 })
 
+test_that("lmList call preserves grouping variable in summary", {
+  fm1_lmList <- lme4::lmList(Reaction ~ Days | Subject, sleepstudy)
+  expect_equal(typeof(attr(fm1_lmList, "groupsForm")), "language")
+  expect_equal(attr(fm1_lmList, "groupsForm"), as.formula("~Subject"))
+})
+
 test_that("orthodont", {
     data(Orthodont, package="nlme")
     fm2 <- lmList(distance ~ age | Subject, Orthodont)
