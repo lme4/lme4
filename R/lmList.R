@@ -98,8 +98,7 @@ lmList <- function(formula, data, family, subset, weights,
     ## model.frame(groupedData) was problematic ... but not as we
     ## are currently using it.
 
-    mCall <- match.call()
-    mf <- mCall
+    mCall <- mf <- match.call()
     ## MM: I had this (instead of below  (inherited from nlme?)):
     ## if(!missing(subset))
     ##     data <- data[eval(asOneSidedFormula(mf[["subset"]])[[2]], data),, drop = FALSE]
@@ -166,11 +165,16 @@ lmList <- function(formula, data, family, subset, weights,
         } else
             warning(wMsg, domain=NA)
     }
-    new("lmList4", setNames(val, nms),
+    val <- new("lmList4", 
+        setNames(val, nms),
         call = mCall, pool = pool,
         groups = ordered(groups),
         origOrder = match(unique(as.character(groups)), nms)
         )
+    gf <- as.formula(paste("~", deparse(mform$groups)))
+    environment(gf) <- globalenv()
+    attr(val, "groupsForm") <- gf
+    val
 }
 
 ## (currently hidden) auxiliaries
