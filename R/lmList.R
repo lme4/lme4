@@ -98,7 +98,8 @@ lmList <- function(formula, data, family, subset, weights,
     ## model.frame(groupedData) was problematic ... but not as we
     ## are currently using it.
 
-    mCall <- mf <- match.call()
+    mCall <- match.call()
+    mf <- mCall
     ## MM: I had this (instead of below  (inherited from nlme?)):
     ## if(!missing(subset))
     ##     data <- data[eval(asOneSidedFormula(mf[["subset"]])[[2]], data),, drop = FALSE]
@@ -459,4 +460,3 @@ for(fn in c("fitted", "fixef", "logLik", "pairs", "plot", "predict",
     assign(paste(fn, "lmList4", sep="."), meth)
 }
 rm(fn)
-

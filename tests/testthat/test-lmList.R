@@ -35,6 +35,14 @@ test_that("basic lmList", {
 
 })
 
+test_that("lmList call preserves grouping variable in summary", {
+    fm <- lmList(Reaction ~ Days | Subject, sleepstudy)
+    sm <- summary(fm)
+    call_txt <- paste(deparse(sm$call), collapse = " ")
+    expect_match(call_txt, "\\| Subject")
+    expect_false(grepl("\\| NULL", call_txt))
+})
+
 test_that("orthodont", {
     data(Orthodont, package="nlme")
     fm2 <- lmList(distance ~ age | Subject, Orthodont)
