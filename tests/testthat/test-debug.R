@@ -33,8 +33,7 @@ test_that("no active debugging calls in R source files", {
         lines <- readLines(f, warn = FALSE)
         ## Flag browser() calls that are not commented out.
         ## Catches:  browser()   browser(expr = ...)
-        ## Ignores:  # browser()   (commented out)
-        idx <- grep("^[^#]*\\bbrowser\\s*\\(", lines)
+        idx <- grep("\\bbrowser\\s*\\(", lines)
         if (length(idx) > 0L) {
             bad_lines <- c(bad_lines,
                            sprintf("%s:%d: %s",
