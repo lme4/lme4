@@ -711,14 +711,28 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
             
     if (is.null(weights)) {
         if (is.null(newdata)) {
-            assign("weights", weights(object),
-                   environment(formula))
+            assign("weights", weights(object), environment(formula))
         } else {
             nullWts <- TRUE # this flags that 'weights' wasn't supplied by the user
-            assign("weights",
-                   rep(1,nrow(newdata)),
-                   environment(formula))
+            assign("weights", rep(1,nrow(newdata)), environment(formula))
         }
+    } else {
+      ## need to add another constraint (helps with the test involving tmpf2)
+      assign("weights", weights, environment(formula))
+    }
+    
+    ## using a similar trick for offsets 
+    oldoffset <- get("offset", environment(formula))
+    on.exit(assign("offset", oldoffset, environment(formula)))
+    
+    if (is.null(offset)) {
+      if (is.null(newdata)) {
+        assign("offset", offset(object), environment(formula))
+      } else {
+        assign("offset", rep(0,nrow(newdata)), environment(formula))
+      }
+    } else {
+      assign("offset", offset, environment(formula))
     }
 
     if (missing(object)) {
@@ -861,6 +875,10 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
             if(nullWts) weights <- rowSums(r)
         }
 
+        ## fallback -- need weights to not be null. this is to ensure that the 
+        ## lme4 simulate example doesn't fail.
+        if (is.null(weights)) weights <- rep(1, n)
+        
         if (is.null(sfun <- simfunList[[family$family]])) {
             ## family$simulate just won't work ...
             ## sim funs must be hard-coded, see below
