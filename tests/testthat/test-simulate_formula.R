@@ -65,3 +65,27 @@ test_that("two-sided formula warning", {
 ## rmx("simulate.formula_lhs_numeric")
 
 suppressWarnings(try(rm(list = c("simulate.formula_lhs_", "simulate.formula_lhs_numeric")),silent=TRUE))
+
+## in general, we shouldn't have it such that weights and offsets leak into the
+## global environment.
+
+test_that("ensuring weights and offsets don't leak into global environment", {
+  # weights have not yet been assigned
+  form <- ~x + (1|f)
+  # First simulate - with weights of 10
+  d1 <- data.frame(x=rnorm(60), f=factor(rep(1:6,each=10)), w=rep(10,60))
+  d1$y1 <- simulate(form, family=binomial, weights=d1$w, newdata=d1,
+                   newparams=list(theta=0.01, beta=c(1,1)))[[1]]
+  # ensures it was not leaked in the local environment!
+  expect_false(exists("weights", envir = environment(form), 
+                      inherits = FALSE))
+  expect_false(exists("offset", envir = environment(form), 
+                      inherits = FALSE))
+  # weights and offsets have been assigned
+  weights <- offset <- 1:10  
+  offset <- 1:10
+  d1$y2 <- simulate(form, family=binomial, weights=d1$w, newdata=d1,
+                   newparams=list(theta=0.01, beta=c(1,1)))[[1]]
+  expect_equal(weights, 1:10)
+  expect_equal(offset, 1:10)
+})

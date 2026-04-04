@@ -706,9 +706,25 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     ## watch out for https://github.com/lme4/lme4/issues/481
     ## don't modify 'weights' in formula environment permanently
     nullWts <- FALSE
-    oldweights <- get("weights", environment(formula))
-    on.exit(assign("weights", oldweights, environment(formula)))
-            
+    ## below is the previous code; unfortunately it fails a test
+    ## 'ensuring weights and offsets don't leak into global environment'
+    ## added in testthat/test-simulate_formula.R
+    #oldweights <- get("weights", environment(formula))
+    #on.exit(assign("weights", oldweights, environment(formula)))
+    oldweights <- if (exists("weights", environment(formula), inherits = FALSE)) {
+      get("weights", environment(formula), inherits = FALSE)
+    } else {
+      NULL
+    }
+    on.exit(
+      if (is.null(oldweights)) {
+        rm("weights", envir = environment(formula))
+      } else {
+        assign("weights", oldweights, environment(formula))
+      },
+      add = TRUE
+    )
+           
     if (is.null(weights)) {
         if (is.null(newdata)) {
             assign("weights", weights(object), environment(formula))
@@ -722,8 +738,19 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     }
     
     ## using a similar trick for offsets 
-    oldoffset <- get("offset", environment(formula))
-    on.exit(assign("offset", oldoffset, environment(formula)))
+    oldoffset <- if (exists("offset", environment(formula), inherits = FALSE)) {
+      get("offset", environment(formula), inherits = FALSE)
+    } else {
+      NULL
+    }
+    on.exit(
+      if (is.null(oldoffset)) {
+        rm("offset", envir = environment(formula))
+      } else {
+        assign("offset", oldoffset, environment(formula))
+      },
+      add = TRUE
+    )
     
     if (is.null(offset)) {
       if (is.null(newdata)) {
