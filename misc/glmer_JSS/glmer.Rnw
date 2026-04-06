@@ -15,6 +15,7 @@
 \newcommand{\scw}[1]{{\color{blue} \emph{#1}}}
 \newcommand{\al}[1]{{\color{violet}#1}} % anna's new comments
 \newcommand{\fixme}[1]{{\color{blue} \textbf{#1}}}
+\DeclareUnicodeCharacter{0394}{$\Delta$}
 %
 \shortcites{lesnoff_within-herd_2004}
 %% BMB: what does JSS assume?
@@ -127,7 +128,11 @@ opts_chunk$set(engine='R',dev='pdf',fig.width=10,
 \begin{document}
 \section{Introduction}
 \label{sec:intro}
+
 \fixme{what's causing the empty first page?}
+
+\fixme{Discuss two-stage fitting (nAGQ=0, then nAGQ $>0$) ?}
+  
 The \pkg{lme4} package for \proglang{R} can be used to fit a broad
 range of mixed-effects models.  One major advantage of
 \pkg{lme4} over its predecessor, \pkg{nlme}, is that it can be used to
@@ -720,21 +725,19 @@ cbpp2 <- transform(cbpp2,period=factor(period),
                    levels=c("Partial/null","Complete","Unknown")))
 @
 
-\al{
-Note that Table 1 of \cite{lesnoff_within-herd_2004} contains a known
+(Note that Table 1 of \cite{lesnoff_within-herd_2004} contains a known
 typographical error for herd 6. Consequently, results obtained using
 the \code{cbpp} data set may not exactly reproduce some of the findings
-reported in that paper.
+reported in that paper.)
 
-Furthermore, \code{lme4} includes two variants of the \code{cbpp}
+The \code{lme4} package includes two variants of the \code{cbpp}
 data set. The second variant, \code{cbpp2}, contains corrected values
 corresponding to Table~1 of \cite{lesnoff_within-herd_2004}. Although
 the precise provenance of these data sets is unclear, the \code{cbpp}
 data set matches the version held by the corresponding author of
 \cite{lesnoff_within-herd_2004}.
-}
 
-<<cbppPlot,echo=FALSE,dependson="newcbpp",fig.cap="Incidence (proportion of cows becoming seropositive per observation period) vs. period. Colours show treatment category for each herd; point sizes reflect the number of seronegative cows at the start of each period.",fig.scap="Incidence">>=
+<<cbppPlot,echo=FALSE,fig.cap="Incidence (proportion of cows becoming seropositive per observation period) vs. period. Colours show treatment category for each herd; point sizes reflect the number of seronegative cows at the start of each period.",fig.scap="Incidence">>=
 g0 <- ggplot(cbpp2,aes(period, incidence/size, colour=treatment)) +
     ## scale_y_continuous(limits = c(0, 1))+
     labs(x="Period",y="Proportional incidence")+
@@ -771,9 +774,8 @@ Here we illustrate that, as in \code{glm}, we can specify
 a binomial response by a proportion and use the \code{weights}
 argument to specify the sample size, instead of the slightly
 more typical \code{cbind(successes,failures)} format.
-\al{Note that the \code{bobyqa} optimizer is the default for \code{glmer}.}
 
-<<cbppModelI,dependson="newcbpp">>=
+<<cbppModelI>>=
 gm1 <- glmer(incidence/size ~ period + treatment + avg_size + (1 | herd),
              family = binomial,
              data = cbpp2, weights = size)
@@ -801,7 +803,7 @@ It is also worth considering
 adding an observation-level random effect to the model,
 which we can do by creating a new factor based on observation
 number and using \code{update()} on the previous model:
-<<cbppModelII,cache=TRUE,dependson="newcbpp", warning=FALSE>>=
+<<cbppModelII, warning=FALSE>>=
 cbpp2 <- transform(cbpp2,obs=factor(seq(nrow(cbpp2))))    
 gm2 <- update(gm1,.~.+(1|obs))  ## herd and observation-level REs
 gm3 <- update(gm1,.~.-(1|herd)+(1|obs))  ## observation-level REs only
@@ -864,14 +866,12 @@ package are inspired by those in the \code{nlme} package, using
 \code{lattice} plots to provide a reasonable blend
 of convenience and flexibility. 
 
-\al{
 Fortunately, \code{merMod} objects are also compatible with the 
 \code{performance} package and the \code{DHARMa} package, both commonly 
 used for model checking.
-}
 
 The following code produces a standard range
-of \al{basic} plots (Figure~\ref{fig:glmerDiag}).
+of basic plots (Figure~\ref{fig:glmerDiag}).
 <<glmerDiagFake,eval=FALSE>>=
 ## basic residual plot
 plot(gm1)
@@ -905,41 +905,32 @@ the random effects with confidence bars); in the case of
 the Q-Q plot (\code{qqmath}) the $y$-axis shows corresponding 
 values of the standard normal quantiles (Figure~\ref{fig:glmerRanefplot}).
 
-<<glmerRanefplot,fig.cap="Graphical display of random effects. \\emph{Left}: conditional modes $\\pm 1.96 \\times \\text{conditional mode}$, ordered by magnitude. \\emph{Right}: quantile-quantile plot, with linear regression line overlaid.",dependson="cbppModelII",echo=FALSE>>=
+<<glmerRanefplot,fig.cap="Graphical display of random effects. \\emph{Left}: conditional modes $\\pm 1.96 \\times \\text{conditional mode}$, ordered by magnitude. \\emph{Right}: quantile-quantile plot, with linear regression line overlaid.",echo=FALSE>>=
 rr <- ranef(gm1,condVar=TRUE)
 dd <- dotplot(rr)
 qq <- qqmath(rr,type=c("p","r"))
 grid.arrange(dd$herd,qq$herd,ncol=2)
 @
 
-\al{
-Additionally, \code{performance::check\_model()} checks for classical assumptions 
-used for most linear models: normality of residuals, linear relationship, 
-homogeneity of variance, and outliers. For mixed-effect models, it also checks 
-for normality of random effects. The uncommonly used posterior predictive checks 
-is meant to see whether the distributional family used fits well to the data. 
-An example of a plot generated by \code{performance::check\_model()} can be found 
-in Figure~\ref{fig:perf_chk_mod_cbpp}.
-}
+\code{performance::check\_model()} checks a variety of classical assumptions 
+of GLMs. For mixed-effect models, it also assesses
+the normality of the distribution of conditional modes.
+Figure~\ref{fig:perf_chk_mod_cbpp} shows an example.
 
-<<perf_chk_mod_cbpp,fig.cap="Model assumption checks using the performance package.",fig.height=10,echo=FALSE>>=
+<<perf_chk_mod_cbpp,fig.cap="Model diagnostics using \\code{performance::check\\_model}",fig.height=10,echo=FALSE>>=
 check_model(gm1, check = c("reqq", "binned_residuals", 
                                         "vif", "qq"))
 @
 
-\al{Another external package that is compatible with \code{merMod} objects is
-\code{DHARMa}, which uses a simulation-based method for residual checks for 
-generalized linear (mixed) models. Figure~\ref{fig:dharma_mod_cbpp} 
-features some plots of the cbpp model. The left plot performs three tests, the Kolmogorov–Smirnov test, simulation-based dispersion tests, and simulation-based 
-outlier tests. For more details see
-\code{??DHARMa::testDispersion} and \code{DHARMa::testOutliers}.
-}
+The \code{DHARMa} package is also compatible with \code{merMod} objects.
+\code{DHARMa} generates simulation-based residuals for
+generalized linear (mixed) models and uses them for graphical
+and statistical tests of model assumptions (Figure~\ref{fig:dharma_mod_cbpp}).
 
 <<dharma_mod_cbpp,fig.cap="Model assumption checks using the DHARMa package. \\code{n.s.} denotes ``not significant.''",echo=FALSE>>=
 simulationOutput <- simulateResiduals(fittedModel = gm1)
 plot(simulationOutput)
 @
-
 
 Having checked the diagnostics, we would now like to compare
 the three models we have fitted.  Inspecting the \code{VarCorr}
@@ -1013,15 +1004,19 @@ the computational cost of profiling, it makes sense to compute
 and save the profile as an intermediate step if one plans to
 do anything other than computing confidence intervals.)
 
-\al{
-Other two methods that are commonly employed to compute confidence intervals 
-is the classical Wald method (\code{method = "Wald"}) and parametric 
-bootstrapping method (\code{method = "boot"}), although the Wald method is used
-for fixed effects parameters only.
+Two other common methods for comuputing confidence intervals
+are the classical Wald approximation (\code{method = "Wald"}) and parametric 
+bootstrapping (\code{method = "boot"}).
+The Wald approximation is faster and less accurate than profile
+confidence intervals (and only returns estimates for the fixed-effects
+parameters, as the assumptions of the Wald approximation are often
+violated badly for random-effects (co)variances and correlations).
+Parametric bootstrapping is much slower, but more accurate
+(and, via the \code{FUN} argument, can generate confidence intervals
+for any quantity that can be derived from a fitted model).
 
-All three of these confidence intervals, as well as the three different models, 
-are compared against each other in Figure~\ref{fig:confPlot}.
-}
+Figure~\ref{fig:confPlot} compares all three of these confidence intervals
+across all three of the models fitted.
 
 <<cbppConfidence,echo=FALSE>>=
 mfun <- function(x, type, model) {
@@ -1075,7 +1070,7 @@ ggplot(combCI, aes(var, est, colour=type, shape=model)) +
   scale_colour_brewer(palette="Dark2")
 @    
 
-\al{Another thing to consider is if the default optimizer, \code{bobyqa}, does not
+If the default optimizers (Nelder-Mead followed by BOBYQA) do not
 perform well, one could attempt to re-fit a [g]lmer model with a variety of 
 different optimizers using \code{allFit()}. To see which optimizers \code{lme4}
 currently supports, one can use the command \code{allFit(show.meth.tab=TRUE)} 
@@ -1093,7 +1088,6 @@ results are obtained from \code{summary(allFit())}:
 \end{itemize}
 
 We will show an example of \code{allFit()\$which.OK} The rest are similar.
-}
 
 <<allfit_cbpp1,message=FALSE,warning=FALSE>>=
 gm_all <- allFit(gm1)
@@ -1104,19 +1098,18 @@ ss <- summary(gm_all)
 ss$which.OK 
 @
 
-\al{
-Another feature of \code{lme4} is the ability to specify variance–covariance 
-structures for (generalized) linear mixed models. As of version 2.0, 
-\code{lme4} supports unstructured (general positive definite), diagonal, 
+
+As of version 2.0, \code{lme4} can also specify structured variance–covariance 
+matrices for (generalized) linear mixed models.
+\code{lme4} now supports unstructured (general positive definite), diagonal, 
 compound symmetry, and first-order autoregressive (AR1) structures. Both 
 homogeneous and heterogeneous forms are available for diagonal, compound 
 symmetric, and AR1 structures; by default, AR1 is assumed homogeneous, while 
 the others are heterogeneous.
 
 The unstructured covariance structure is the default for mixed models. 
-Here we illustrate fitting an AR1 model. Diagonal and compound symmetric
-models are shown in the next example.
-}
+Here we illustrate fitting an AR1 model; the next example will show diagonal and compound symmetric
+models.
 
 <<load_cm_varcorr,echo=FALSE>>=
 varcorr_vals <- load("glmer_cm_vc.RData")
@@ -1126,19 +1119,15 @@ varcorr_vals <- load("glmer_cm_vc.RData")
 gm.ar1 <- glmer(incidence/size ~ ar1(1 + herd | period),
                 family = binomial,
                 data = cbpp, weights = size)
-vc_mat <- VarCorr(gm.ar1)
+print(VarCorr(gm.ar1))
 @
 
-\al{
-To fit a heterogeneous structure, use \code{ar1(..., hom = FALSE)}. 
-This isn't demonstrated here because it would cause a singular fit with 
-the \code{cbpp} data set.
+To fit a heterogeneous structure, use \code{ar1(..., hom = FALSE)}.
+For this particular model, a heterogeneous AR1 model results in a singular fit.
 
-Exact details of the implementation can be found in the \code{lme4} covariance 
-structure vignette. For now, we elaborate on how one can extract the 
-variance-covariance matrix for the specific grouping term \code{period} using 
-\code{VarCorr}.
-}
+See the \href{https://cran.r-project.org/web/packages/lme4/vignettes/covariance_structures.html}{lme4 covariance structures vignette}
+for more detail.
+
 
 <<varcorr_plot_gm1.ar1,fig.cap="CBPP example: variance-covariance matrix of the grouping term period.",fig.scap="CBPP VarCorr",echo=FALSE,eval=FALSE,fig.width=7>>=
 # Removed since may not be that important or illustrative.
@@ -1166,32 +1155,17 @@ library(mlmRev)
 data(Contraception)
 @ 
 
-<<graphContraception_loess, eval=FALSE>>=
-xyplot(ifelse(use == "Y", 1, 0) ~ age|urban, Contraception,
-       groups = livch, type = c("g", "smooth"), # smooth fits a loess curve.
-       auto.key = list(space = "top", points = FALSE,
-       lines = TRUE, columns = 4),
-       ylab = "Proportion", xlab = "Centered age")
-@
-
-<<defUrban>>=       
+<<graphContraception,echo=FALSE,fig.cap="Contraception example: proportion of contraceptive use by centered age, number of living children (line type), and urban/rural residence (facet). Curves fitted using generalized additive models with cubic spline smoothing.">>=
 Contraception <- within(Contraception, 
                         facet_urban <- ifelse(urban=="Y","Urban","Rural"))
-@
-
-<<graphContraception,echo=FALSE,fig.cap="Contraception example: proportion of contraceptive use by centered age, number of living children (line type), and urban/rural residence (facet). Curves fitted using GAM with cubic spline smoothing.">>=
 ggplot(Contraception) + 
     geom_smooth(aes(age, ifelse(use == "Y",1,0), colour = livch),
                 method = "gam", alpha = 0.1,
                 formula = y ~ s(x, bs = "cs")) +
     facet_wrap(~facet_urban) +
     scale_x_continuous("Centered age") + 
-    scale_y_continuous("Proportion", limits = c(0, 1)) + 
-    scale_colour_discrete("Number\nof living\nchildren") 
-@ 
-
-<<range_contraception,eval=FALSE>>=
-range(daply(Contraception, .(district), nrow))
+    scale_y_continuous("Proportion", limits = c(0, 1)) +
+    scale_colour_brewer("Number\nof living\nchildren", palette="Dark2")
 @ 
 
 <<ch,echo=FALSE>>=
@@ -1222,16 +1196,18 @@ gelman_scale <- function(dataset, response) {
 Contraception_scale <- gelman_scale(Contraception, "use")
 @
 
-\al{We construct six different \code{glmer} models with varying choices of explanatory variables and grouping terms, and compare them using \code{anova}. 
+We construct six different \code{glmer} models with varying choices of explanatory variables and grouping terms, and compare them using \code{anova}. 
 
+  \fixme{describe the different cases (whether we dichotomize children to ``any living children'', interaction of children with age, random effects structure)}
+  
 Across the six models, we vary the specification of explanatory variables, 
 such as treating child count as a factor (0, 1, 2, 3+) or binary (no living children vs having living children), and explore different grouping structures like district or urban rural.
 
 To reduce convergence warnings and facilitate interpretability, all 
 explanatory variables were standardized by centering and scaling to two 
-standard deviations, following the approach recommended by \citet{gelman2008scaling}.}
+standard deviations, following the approach recommended by \citet{gelman2008scaling}.
 
-<<cm1,message=FALSE,size='scriptsize'>>=
+<<cm1,message=FALSE>>=
 cm1 <- glmer(use ~ age + I(age^2) + urban + livch + (1|district), 
                            Contraception_scale, binomial, nAGQ=0L)
 @
@@ -1261,22 +1237,43 @@ cm6 <- glmer(use ~ age*ch + I(age^2) + urban + (1|urban:district),
                    Contraception_scale, binomial)
 @
 
-<<anovaContraception>>=
-anova(cm1,cm2,cm3,cm4,cm5,cm6)
-@ 
+<<anovaContraception, echo = FALSE>>=
+AICtab <- function(..., mnames) {
+  aic_df <- do.call(AIC, list(...))
+  LLvec <- sapply(list(...), function(x) c(logLik(x)))
+  rownames(aic_df) <- mnames
+  aic_df <- transform(aic_df,
+                        Δnegloglik = -LLvec - min(-LLvec),
+                        ΔAIC = AIC - min(AIC))
+  aic_df <- subset(aic_df, select = -AIC)
+  aic_df <- aic_df[order(aic_df$ΔAIC),]
+  aic_df
+}
 
-\al{
+op <- options(digits = 2)
+mnamevec <- c("int_child    + age  + (1 | district)",
+              "binary_child + age  + (1 | district)",
+                "binary_child × age + (1 | district)",
+                "binary_child × age + (urban | district)",
+                "binary_child × age + (1 | district/urban)",
+                "binary_child × age + (1 | district:urban")  
+AICtab(cm1,cm2,cm3,cm4,cm5,cm6,
+                mnames = mnamevec)
+options(op)  
+@
+
+\fixme{better description}
 Between these six models, the AIC, BIC, and negative log likelihood 
 are all similar to one another. 
 
 Similar to the CBPP data set, another relevant demonstration is computing 
 profile, Wald, and bootstrapping confidence intervals for one of the models to
-understand the effect of each variable.}
+understand the effect of each variable.
 
 <<ContraceptionBatch,echo=FALSE>>=
 ## see the file glmer_contraception_batch.R...
-load(file="glmer_profbatch3.RData")
-load(file="glmer_profbatch4.RData")
+L3 <- load(file="glmer_profbatch3.RData")
+L4 <- load(file="glmer_profbatch4.RData")
 @
 
 <<ContraceptionConfidenceSetup,echo=FALSE>>=
@@ -1309,6 +1306,8 @@ combCI <- merge(dcast(combCI0, var + type + model ~ variable), combEst2,
 combCI <- transform(combCI, model_type = interaction(model, type, sep="\n"))
 @
 
+\fixme{why does Fig 10 have only fixed effect values? It would help if combCI were renamed instead of reused between cbpp and Contraception examples}
+
 <<confPlot2,fig.cap="Contraception example: comparison of point and confidence interval estimation for different methods.",fig.scap="Contraception comparison",echo=FALSE,fig.width=8,fig.height=10,warning=FALSE>>=
 ggplot(combCI, aes(var, est, colour=type, shape=model)) +
   geom_pointrange(aes(ymin=lwr, ymax=upr),
@@ -1316,7 +1315,8 @@ ggplot(combCI, aes(var, est, colour=type, shape=model)) +
   labs(x="", y="Estimate (log-odds of seropositivity)") +
   geom_hline(yintercept=0, lty=2) +
   coord_flip() +
-  scale_colour_brewer(palette="Dark2")
+  scale_colour_brewer(palette="Dark2") +
+  scale_shape(labels = mnamevec, guide = guide_legend(reverse = TRUE))
 @
 
 
