@@ -28,7 +28,7 @@ TTM = ttm -E2 -e2
 default: glmer.pdf ## glmerAppendix.pdf
 ## in other dir:  lmer.pdf
 
-glmer.pdf: glmer.Rnw glmer.bib
+glmer.pdf: glmer.Rnw glmer.bib glmer_bootbatch.RData glmer_profbatch.RData glmer_cm_vc.RData glmer_profbatch3.RData glmer_profbatch4.RData
 
 .PHONY:
 
