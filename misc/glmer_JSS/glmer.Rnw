@@ -122,7 +122,7 @@ opts_chunk$set(engine='R',dev='pdf',fig.width=10,
                fig.height=6.5,prompt=TRUE,
                ## strip.white=all,
                error=FALSE, ## stop on error
-               cache=TRUE,tidy=FALSE,comment=NA)
+               tidy=FALSE,comment=NA)
 @ 
 \begin{document}
 \section{Introduction}
@@ -1181,13 +1181,13 @@ Contraception <- within(Contraception,
 
 <<graphContraception,echo=FALSE,fig.cap="Contraception example: proportion of contraceptive use by centered age, number of living children (line type), and urban/rural residence (facet). Curves fitted using GAM with cubic spline smoothing.">>=
 ggplot(Contraception) + 
-    geom_smooth(aes(age, ifelse(use == "Y",1,0), linetype = livch),
-                method = "gam", se = FALSE,
+    geom_smooth(aes(age, ifelse(use == "Y",1,0), colour = livch),
+                method = "gam", alpha = 0.1,
                 formula = y ~ s(x, bs = "cs")) +
     facet_wrap(~facet_urban) +
     scale_x_continuous("Centered age") + 
     scale_y_continuous("Proportion", limits = c(0, 1)) + 
-    scale_linetype("Number\nof living\nchildren") 
+    scale_colour_discrete("Number\nof living\nchildren") 
 @ 
 
 <<range_contraception,eval=FALSE>>=
