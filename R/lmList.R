@@ -176,7 +176,8 @@ lmList <- function(formula, data, family, subset, weights,
         groups = ordered(groups),
         origOrder = match(unique(as.character(groups)), nms)
         )
-    attr(val, "groupsForm") <- reformulate(deparse(mform$groups))
+    # TODO: import reformulas::get_grpvars once reformulas has updated
+    attr(val, "groupsForm") <- reformulate(get_grpvars(formula))
     val
 }
 
