@@ -111,10 +111,11 @@ lmList <- function(formula, data, family, subset, weights,
     ## NA values in unused columns.  All we need the model frame for
     ## is evaluating the groups.
 
-    ff <- reformulas::findbars_x(formula)
+    # TODO: import reformulas::get_grpvars once reformulas has updated
+    ff <- get_grpvars(formula)
     if (length(ff) > 1) 
       stop("lme4::lmList only works with simple grouping formulas (not involving * or /); 
-           use interaction(...) to construct an appropriate grouping variable first.")
+            use interaction(...) to construct an appropriate grouping variable first.")
     
     ## keep weights and offsets in case we have NAs there??
     m <- match(c("formula", "data", "subset", "na.action",
@@ -176,8 +177,7 @@ lmList <- function(formula, data, family, subset, weights,
         groups = ordered(groups),
         origOrder = match(unique(as.character(groups)), nms)
         )
-    # TODO: import reformulas::get_grpvars once reformulas has updated
-    attr(val, "groupsForm") <- reformulate(get_grpvars(formula))
+    attr(val, "groupsForm") <- reformulate(ff)
     val
 }
 

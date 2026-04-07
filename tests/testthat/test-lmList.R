@@ -210,3 +210,30 @@ if (requireNamespace("tibble")) {
     options(op)
   })
 }
+
+test_that("Ensure name of grouping variable matches", {
+  lme4_lmList <- lme4::lmList(Reaction ~ Days | Subject, sleepstudy)
+  nlme_lmList <- nlme::lmList(Reaction ~ Days | Subject, sleepstudy)
+  
+  lme4_sum <- summary(lme4_lmList)
+  nlme_sum <- summary(nlme_lmList)
+  
+  expect_equal( 
+    attr(lme4_sum, "groupsForm"), ~Subject, ignore_formula_env = TRUE
+  )
+  expect_equal(
+    attr(lme4_sum, "groupsForm"), attr(nlme_sum, "groupsForm"), 
+    ignore_formula_env = TRUE
+  )
+  
+})
+
+test_that("Warning provided if user adds various grouping terms", {
+  data(Pixel, package="nlme")
+  expect_error(
+    lme4::lmList(pixel ~ day + I(day^2) | Side/Dog, data = Pixel)
+  )
+  expect_error(
+    lme4::lmList(pixel ~ day + I(day^2) + (1| Side) + (1|Dog), data = Pixel)
+  )
+})
