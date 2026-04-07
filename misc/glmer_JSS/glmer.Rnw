@@ -22,7 +22,7 @@
 %\bibliographystyle{chicago}
 \author{
   Douglas Bates\\University of Wisconsin - Madison \And
-  Anna Ly\\?? \AND
+  Anna Ly\\University of Toronto \AND
   Steven C. Walker\\McMaster University \AND
   Rune Haubo Bojesen Christensen\\Technical University of Denmark\AND
   Martin M\"achler\\ETH Zurich\AND
