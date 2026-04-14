@@ -82,8 +82,7 @@ test_that("ensuring weights and offsets don't leak into global environment", {
   expect_false(exists("offset", envir = environment(form), 
                       inherits = FALSE))
   # weights and offsets have been assigned
-  weights <- offset <- 1:10  
-  offset <- 1:10
+  weights <- offset <- 1:10
   d1$y2 <- simulate(form, family=binomial, weights=d1$w, newdata=d1,
                    newparams=list(theta=0.01, beta=c(1,1)))[[1]]
   expect_equal(weights, 1:10)
