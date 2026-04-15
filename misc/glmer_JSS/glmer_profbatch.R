@@ -1,4 +1,4 @@
-load("glmer_basebatch.RData")
+load("glmer_basebatch.rda")
 require("lme4")
 #profile.gm1 <- profile(gm1,signames=FALSE) # does not run
 profile.gm2 <- profile(gm2,signames=FALSE)
@@ -11,5 +11,5 @@ confint.wald <- confint(gm2,method="Wald")
 confint3.wald <- confint(gm3,method="Wald")
 save(list=c(ls(pattern="confint.*"),
             ls(pattern="profile.*")),
-     file="glmer_profbatch.RData")
+     file="glmer_profbatch.rda")
 sessionInfo()

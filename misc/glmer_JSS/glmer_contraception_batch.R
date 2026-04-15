@@ -172,5 +172,4 @@ save(list=c(ls(pattern="confint.prof.*"),
 #     file="glmer_profbatch3.RData")
 
 load("glmer_profbatch3.RData")
-
 load("glmer_profbatch4.RData")
