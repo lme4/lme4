@@ -88,3 +88,65 @@ test_that("ensuring weights and offsets don't leak into global environment", {
   expect_equal(weights, 1:10)
   expect_equal(offset, 1:10)
 })
+
+## Test simulate.merMod path (formula=NULL), verifying:
+## (1) it works without error
+## (2) weights/offset in the calling environment are not contaminated
+## See https://github.com/lme4/lme4/pull/961
+
+test_that("simulate.merMod works and does not contaminate calling environment", {
+  ## basic LMM
+  fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+  ## plain simulate.merMod (formula=NULL path)
+  set.seed(1)
+  s1 <- simulate(fm1, nsim=2, seed=1)
+  expect_equal(nrow(s1), nrow(sleepstudy))
+  expect_equal(ncol(s1), 2L)
+
+  ## verify that weights/offset in the calling env are not overwritten
+  weights <- 99L
+  offset  <- 88L
+  s2 <- simulate(fm1, nsim=1, seed=1)
+  expect_equal(weights, 99L)
+  expect_equal(offset,  88L)
+
+  ## simulate.merMod with newdata
+  set.seed(42)
+  s3 <- simulate(fm1, nsim=1, seed=42, newdata=sleepstudy)
+  expect_equal(nrow(s3), nrow(sleepstudy))
+})
+
+test_that("simulate.merMod with weights does not contaminate calling environment", {
+  ## GLMM with weights
+  gm1 <- suppressMessages(
+    glmer(cbind(incidence, size - incidence) ~ period + (1 | herd),
+          data = cbpp, family = binomial)
+  )
+
+  ## plain simulate (no extra weights argument) - should use model weights
+  weights <- 42L
+  offset  <- 7L
+  s1 <- simulate(gm1, nsim=1, seed=1)
+  expect_equal(nrow(s1), nrow(cbpp))
+  ## calling-environment vars must be untouched
+  expect_equal(weights, 42L)
+  expect_equal(offset,  7L)
+})
+
+test_that("simulate via formula with explicit weights/offset values work correctly", {
+  ## simulate via formula path with weights and offsets
+  form <- ~x + (1|f)
+  d1 <- data.frame(x=rnorm(60), f=factor(rep(1:6,each=10)), w=rep(10,60))
+  off_val <- rep(0.1, 60)
+
+  set.seed(1)
+  s_wts <- simulate(form, family=binomial, weights=d1$w, newdata=d1,
+                    newparams=list(theta=0.01, beta=c(1,1)), seed=1)[[1]]
+  expect_equal(length(s_wts), nrow(d1))
+
+  set.seed(1)
+  s_off <- simulate(form, family=binomial, weights=d1$w, offset=off_val,
+                    newdata=d1,
+                    newparams=list(theta=0.01, beta=c(1,1)), seed=1)[[1]]
+  expect_equal(length(s_off), nrow(d1))
+})
