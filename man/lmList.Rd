@@ -75,6 +75,10 @@ lmList(formula, data, family, subset, weights, na.action,
 
     In previous \pkg{lme4} versions, a general (different) warning had
     been signalled in this case.
+    
+    \item To construct for cases in which there are nested grouping terms,
+    use \code{interaction()} to create a new grouping variable first. See the
+    example section.
   }
 }
 \examples{
@@ -86,6 +90,14 @@ stopifnot( all.equal(coef(fm.2), coef(fm.plm)) )
 
 (ci <- confint(fm.plm)) # print and rather *see* :
 plot(ci)                # how widely they vary for the individuals
+
+# Version with nested grouping below
+data(Pixel, package="nlme")
+# use interaction to deal with multi-level splitting
+Pixel$side_dog <- interaction(Pixel$Side, Pixel$Dog) 
+#side_dog is a substitution for Side/Dog
+form.pixel <- pixel ~ day + I(day^2) | side_dog
+(lmList(form.pixel, data = Pixel))
 }
 \seealso{\code{\linkS4class{lmList4}}}
 \keyword{models}
