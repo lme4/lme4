@@ -178,7 +178,6 @@ confint.wald.cm6_2 <- confint(cm6_2,method="Wald",seed=101,nsim=501,signames=FAL
 #     file="glmer_profbatch5.RData")
 
 load("glmer_profbatch3.RData")
-
 load("glmer_profbatch4.RData")
 
 load("glmer_profbatch5.RData")

@@ -25,10 +25,19 @@ EPSTOPDF = epstopdf
 TTH = htlatex # tth -E2 -e2
 TTM = ttm -E2 -e2
 
-default: glmer.pdf ## glmerAppendix.pdf
+## default: glmer.pdf ## glmerAppendix.pdf
 ## in other dir:  lmer.pdf
 
-glmer.pdf: glmer.Rnw glmer.bib glmer_bootbatch.RData glmer_profbatch.RData glmer_cm_vc.RData glmer_profbatch3.RData glmer_profbatch4.RData
+glmer_profbatch3.rda: glmer_contraception_batch.R
+	$(REXE) <$<
+
+glmer_profbatch4.rda: glmer_contraception_batch.R
+	$(REXE) <$<
+
+%.rda: %.R
+	$(REXE) <$<
+
+glmer.pdf: glmer.Rnw glmer.bib glmer_bootbatch.rda glmer_profbatch.rda glmer_cm_vc.RData glmer_profbatch3.rda glmer_profbatch4.rda
 
 .PHONY:
 
