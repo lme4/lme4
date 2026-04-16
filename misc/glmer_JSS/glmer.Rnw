@@ -1271,24 +1271,26 @@ profile, Wald, and bootstrapping confidence intervals for one of the models to
 understand the effect of each variable.
 
 <<ContraceptionBatch,echo=FALSE>>=
-## see the file glmer_contraception_batch.R...
-L3 <- load(file="glmer_profbatch3.RData")
-L4 <- load(file="glmer_profbatch4.RData")
+## see the file glmer_contraception_batch.R and
+## contraception_rename.R
+ContraBoot <- load(file="Contra_boot_sigFALSE.RData")
+ContraProf <- load(file="Contra_prof_sigFALSE.RData")
+ContraWald <- load(file="Contra_wald_sigFALSE.RData")
 @
 
 <<ContraceptionConfidenceSetup,echo=FALSE>>=
 combCI0 <- do.call(rbind, c(
-  mapply(mfun, list(confint.boot.cm1_2, confint.wald.cm1_2),
+  mapply(mfun, list(confint.boot.cm1, confint.wald.cm1),
          c("boot","Wald"), "cm1", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.boot.cm2_2, confint.wald.cm2_2),
+  mapply(mfun, list(confint.boot.cm2, confint.wald.cm2),
          c("boot","Wald"), "cm2", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.prof.cm3_2, confint.boot.cm3_2, confint.wald.cm3_2),
+  mapply(mfun, list(confint.prof.cm3, confint.boot.cm3, confint.wald.cm3),
          c("profile", "boot","Wald"), "cm3", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.prof.cm4_2, confint.boot.cm4_2, confint.wald.cm4_2),
+  mapply(mfun, list(confint.prof.cm4, confint.boot.cm4, confint.wald.cm4),
          c("profile", "boot","Wald"), "cm4", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.prof.cm5_2, confint.boot.cm5_2, confint.wald.cm5_2),
+  mapply(mfun, list(confint.prof.cm5, confint.boot.cm5, confint.wald.cm5),
          c("profile", "boot","Wald"), "cm5", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.prof.cm6_2, confint.boot.cm6_2, confint.wald.cm6_2),
+  mapply(mfun, list(confint.prof.cm6, confint.boot.cm6, confint.wald.cm6),
          c("profile", "boot","Wald"), "cm6", SIMPLIFY=FALSE)
 ))
 
