@@ -703,14 +703,48 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
              sQuote("newparams"))
     }
 
+    ## watch out for https://github.com/lme4/lme4/issues/481
+    ## don't modify 'weights' in formula environment permanently
     nullWts <- FALSE
-    if (is.null(weights)) {
-        if (is.null(newdata)) {
-            weights <- weights(object)
+    ## below is needed to ensure weights and offsets don't leak into
+    ## the formula environment (only when formula is non-NULL, i.e. the
+    ## simulate.formula path; when formula is NULL, e.g. simulate.merMod,
+    ## weights/offset are already available as local variables)
+    if (!is.null(formula)) {
+      old <- list()
+      for (var in c("weights", "offset")) {
+        old[[var]] <- if (exists(var, environment(formula), inherits = FALSE)) {
+          get(var, environment(formula), inherits = FALSE)
         } else {
-            nullWts <- TRUE # this flags that 'weights' wasn't supplied by the user
-            weights <- rep(1,nrow(newdata))
+          list(NULL)  ## note https://cran.r-project.org/doc/FAQ/R-FAQ.html#How-can-I-set-components-of-a-list-to-NULL_003f
         }
+      }
+      on.exit(
+        lapply(names(old),
+               function(name) {
+                 value <- old[[name]]
+                 ## if we have that weights/offsets did not exist,
+                 ## need to add an extra [[1]] to value to access the NULL value
+                 if (is.null(value[[1]])) {
+                   rm(list = name, envir = environment(formula))
+                 } else {
+                   assign(name, value, envir = environment(formula))
+                 }
+               }),
+        add = TRUE
+      )
+
+      assign("weights",
+             if (!is.null(weights)) weights
+             else if (is.null(newdata)) weights(object)
+             else { nullWts <- TRUE; rep(1, nrow(newdata)) },
+             environment(formula))
+
+      assign("offset",
+             if (!is.null(offset)) offset
+             else if (is.null(newdata)) offset(object)
+             else rep(0, nrow(newdata)),
+             environment(formula))
     }
 
     if (missing(object)) {
@@ -853,6 +887,10 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
             if(nullWts) weights <- rowSums(r)
         }
 
+        ## fallback -- need weights to not be null. this is to ensure that the 
+        ## lme4 simulate example doesn't fail.
+        if (is.null(weights)) weights <- rep(1, n)
+        
         if (is.null(sfun <- simfunList[[family$family]])) {
             ## family$simulate just won't work ...
             ## sim funs must be hard-coded, see below
