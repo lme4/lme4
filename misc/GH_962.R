@@ -1,3 +1,10 @@
+## TO DO:
+
+## (1) clean up/minimize (use modular framework to construct a glmer devfun
+##  with nAGQ = 1, to get to the problem as quickly as possible
+## (2) explore gm.ar1_0 problem (beta/ncol(X) mismatch)
+## (3) enable C++-level debugging
+
 form <- out_bin_1 ~ ftime + trt + ar1(ftime + 0 | id_cluster) +
   (1 | id_individual)
 
@@ -11,6 +18,7 @@ form4 <- update(form, . ~ . - (1 | id_individual))
 
 library(glmmTMB)
 library(lme4)
+data("Contraception", package = "mlmRev") 
 stopifnot(packageVersion("lme4") >= "2.0.2")
 set.seed(101)
 sfun <- function(n) factor(sample(1:n, replace=TRUE, size = 1465))
