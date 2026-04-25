@@ -18,6 +18,8 @@
       covariances of different types (\code{mkReTrms} sorts random effects
       in decreasing order of number of grouping variable levels, this
       ordering was not applied consistently) (GH #945, Henrik Singmann)
+      \item fixed the case where \code{lme4::lmList} prints grouping variable 
+      as \code{NULL} (see GH #958)
     } % itemize
   } % bug fixes
   \subsection{NEW FEATURES}{
