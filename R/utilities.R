@@ -512,14 +512,12 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
     }
     ## weights <- resp$weights
     beta    <- pp$beta(fac)
-    ## For GLMMs, GaussianDist::aic() profiles sigma from conditional RSS (wrss/n),
-    ## ignoring that ldL2 also depends on sigma.  For Gaussian GLMMs we correct
-    ## this by finding the true Laplace profile MLE via 1D optimization:
-    ##   D(sigma) = ldL2(sigma) + sqrL + n*log(2*pi*sigma^2) + RSS/sigma^2
-    ## where ldL2(sigma) is recomputed using working weights scaled by 1/sigma.
-    ## For other families with scale parameters at least use wrss/n (not pwrss/n)
-    ## so that sigma() is consistent with what logLik() uses.
-    sigmaML <- if (isGLMM) wrss/n else pwrss/n
+    ## For Gaussian GLMMs with non-identity link, GaussianDist::aic() profiles
+    ## sigma from the conditional RSS only, ignoring that ldL2 also depends on
+    ## sigma.  The correction block below finds the true Laplace profile MLE via
+    ## 1D optimization: D(sigma) = ldL2(sigma) + sqrL + n*log(2pi*sigma^2) + RSS/sigma^2
+    ## Other families with scale parameters continue to use pwrss/n as before.
+    sigmaML <- pwrss/n
 
     dev_corrected <- NULL
     if (isGLMM && !trivial.y && dims[["useSc"]] &&
