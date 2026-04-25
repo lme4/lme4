@@ -157,7 +157,6 @@ confint.prof.cm4_2 <- confint(profile.cm4_2)
 confint.prof.cm5_2 <- confint(profile.cm5_2)
 confint.prof.cm6_2 <- confint(profile.cm6_2)
 
-# haven't run below yet.
 confint.wald.cm1_2 <- confint(cm1_2,method="Wald",seed=101,nsim=501,signames=FALSE)
 confint.wald.cm2_2 <- confint(cm2_2,method="Wald",seed=101,nsim=501,signames=FALSE)
 confint.wald.cm3_2 <- confint(cm3_2,method="Wald",seed=101,nsim=501,signames=FALSE)
