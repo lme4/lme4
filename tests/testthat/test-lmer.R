@@ -495,7 +495,8 @@ test_that("doubleverts expanded in stored formula by default", {
           
 test_that("parameter counting", {
   m1 <- lmer(incidence ~ cs(0 + herd | period), data = cbpp)
-  m2 <- lmer(incidence ~ cs(0 + herd | period, hom = TRUE), data = cbpp)
+  m2 <- suppressWarnings(
+    lmer(incidence ~ cs(0 + herd | period, hom = TRUE), data = cbpp))
   expect_equal(attr(logLik(m1), "df"), 18L)
   expect_equal(attr(logLik(m2), "df"), 4L)
 })
