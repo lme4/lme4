@@ -456,7 +456,6 @@ glmerPwrssUpdate <- function(pp, resp, tol, GQmat, compDev=TRUE, grpFac=NULL, ma
             break
         ## if (pdev > oldpdev) {
         ##     ## try step-halving
-        ##     ## browser()
         ##     k <- 0
         ##     while (k < 10 && pdev > oldpdev) {
         ##         pp$setDelu((oldu + pp$delu)/2.)
