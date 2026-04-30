@@ -10,7 +10,7 @@ lme4_find_src_dir <- function() {
 lme4_find_r_dir <- function() {
   pkg_dir <- find.package("lme4", quiet = TRUE)
   r_dir <- file.path(pkg_dir, "R")
-  if (dir.exists(r_dir)) r_dir else NULL
+  if (length(list.files(r_dir, pattern = "\\.R$")) > 0L) r_dir else NULL
 }
 
 test_that("no active debug flags in C++ source files", {
