@@ -22,9 +22,9 @@
 %\bibliographystyle{chicago}
 \author{
   Douglas Bates\\University of Wisconsin - Madison \And
-  Anna Ly\\University of Toronto \AND
+  Anna Ly\\University of Toronto \And
   Steven C. Walker\\McMaster University \AND
-  Rune Haubo Bojesen Christensen\\Technical University of Denmark\AND
+  Rune Haubo Bojesen Christensen\\Technical University of Denmark\And
   Martin M\"achler\\ETH Zurich\AND
   Benjamin M. Bolker\\McMaster University
 }
@@ -129,9 +129,16 @@ opts_chunk$set(engine='R',dev='pdf',fig.width=10,
 \section{Introduction}
 \label{sec:intro}
 
+
+
 \fixme{what's causing the empty first page?}
 
-\fixme{Discuss nAGQ=0, and two-stage fitting (nAGQ=0, then nAGQ $>0$) ?
+\fixme{Discuss nAGQ=0, and two-stage fitting (nAGQ=0, then nAGQ $>0$) ?}
+
+\al{I added a few paragraphs to talk about nAGQ=1 and nAGQ>1, but unsure where to
+put nAGQ=0..}
+
+\fixme{
   (1) See \url{https://kaskr.github.io/adcomp/_book/Appendix.html} for
   details of when nAGQ=0 is appropriate; (2) ask Doug Bates and/or
   Kasper K. where the idea comes from? (3) discuss when nAGQ=0
@@ -462,6 +469,11 @@ estimates of $\theta$ and $\beta$.
 \subsection{Evaluating the likelihood for GLMMs using the Laplace approximation}
 \label{sec:Laplace}
 
+\al{Fitting generalized linear mixed models requires approximating an intractable 
+integral over the random effects distribution. The \code{glmer} function offers 
+several approximations, controlled by the \code{nAGQ}. 
+At the default \code{nAGQ=1}, the Laplace approximation is used.}
+
 A second-order Taylor series approximation to $-2\log[f_{\mc Y,\mc
   U}(\yobs,\bm u)]$ based at $\tilde{\bm u}$ provides an approximation
 of the unscaled conditional density as a multiple of the density for
@@ -545,6 +557,8 @@ str(cbpp)
 @
 
 \fixme{is this left over?}
+\al{This was here to begin with... So I'm good with removing it.}
+
 and the model
 <<m1>>=
 print(m1 <- glmer(cbind(incidence, size-incidence) ~ period + (1|herd),
@@ -658,6 +672,15 @@ xyplot(as.vector(dmat/dnorm(zm$zvals)) ~ rep.int(zm$zvals, ncol(dmat))|gl(ncol(d
 \end{figure}
 shows $t(z)$ for each of the unidimensional integrals in the
 likelihood for the model \code{m1} at the parameter estimates.
+
+\al{To use the adaptive Gauss-Hermite quadrature approach for model fitting 
+in \code{glmer} models, ensure that the argument \code{nAGQ}, which is the 
+number of knots $k$, is greater than 1.
+
+Increasing the number of nodes improves the accuracy of the likelihood 
+approximation at the expense of computation time. However, AGQ is only available 
+for models with a single scalar random effect.
+}
 
 The \code{lme4} package supports fitting negative binomial GLMMs,
 which are an extension of GLMMs; the negative binomial family is within the
@@ -984,8 +1007,8 @@ a1 <- bbmle::AICtab(gm1,gm2,gm3,mnames=mnames)
 %% for the paper we will add fake unevaluated chunks to display the
 %% stuff we need ...     
 <<loadbatch,echo=FALSE>>=
-bootVars <- load("glmer_bootbatch.RData")
-profVars <- load("glmer_profbatch.RData")
+bootVars <- load("CBPP_bootbatch.rda")
+profVars <- load("CBPP_profbatch.rda")
 @
 
 The \code{profile} method computes profile likelihoods.
@@ -1034,11 +1057,11 @@ mfun <- function(x, type, model) {
 }
 
 combCI0 <- do.call(rbind, c(
-  mapply(mfun, list(confint0.boot, confint0.wald),
+  mapply(mfun, list(confint0.boot2, confint0.wald),
          c("boot","Wald"), "gm1", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.prof, confint.boot, confint.wald),
-         c("profile","boot","Wald"), "gm2", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint3.prof, confint3.boot, confint3.wald),
+  mapply(mfun, list(confint.boot2, confint.wald),
+         c("boot","Wald"), "gm2", SIMPLIFY=FALSE),
+  mapply(mfun, list(confint3.prof, confint3.boot2, confint3.wald),
          c("profile","boot","Wald"), "gm3", SIMPLIFY=FALSE)
 ))
 
@@ -1120,7 +1143,7 @@ Here we illustrate fitting an AR1 model; the next example will show diagonal and
 models.
 
 <<load_cm_varcorr,echo=FALSE>>=
-varcorr_vals <- load("glmer_cm_vc.RData")
+varcorr_vals <- load("glmer_cm_vc.rda")
 @
 
 <<covar_cbpp>>=
@@ -1204,12 +1227,28 @@ gelman_scale <- function(dataset, response) {
 Contraception_scale <- gelman_scale(Contraception, "use")
 @
 
-We construct six different \code{glmer} models with varying choices of explanatory variables and grouping terms, and compare them using \code{anova}. 
+\al{
+We construct six \code{glmer} models with varying choices of explanatory 
+variables and random effects structure, comparing them via \code{anova}. The 
+models considered different variables.
 
-  \fixme{describe the different cases (whether we dichotomize children to ``any living children'', interaction of children with age, random effects structure)}
-  
-Across the six models, we vary the specification of explanatory variables, 
-such as treating child count as a factor (0, 1, 2, 3+) or binary (no living children vs having living children), and explore different grouping structures like district or urban rural.
+For instance, there are two different ways to encode the number of living 
+children: \code{livch}, a four-level factor distinguishing \code{0}, \code{1}, 
+\code{2}, or \code{3+} children, while other models use \code{ch} instead (later 
+we label as \code{binary\_child}), which is a binary indicator for whether the 
+woman has any living children. 
+
+Second, we vary whether child status interacts with the woman's age: two models
+include \code{ch} (or \code{livch}) and \code{age} as additive terms, while the 
+other four include a \code{ch} and \code{age} interaction. 
+
+Third, we explore different random effects structures at the district level.
+Three of them use a single random intercept per district \code{(1 \textbar{} district)}.
+One of them extends this with a random slope for urban status 
+\code{(urban \textbar{} district)}, allowing the urban/rural gap to vary by district. 
+Another one uses two nested random intercepts \code{(1 \textbar{} district)} and 
+\code{(1 \textbar{} urban:district)}, separating district-level from urban-within-district variation. The remaining model uses only the \code{urban:district} grouping. 
+}
 
 To reduce convergence warnings and facilitate interpretability, all 
 explanatory variables were standardized by centering and scaling to two 
@@ -1270,53 +1309,80 @@ AICtab(cm1,cm2,cm3,cm4,cm5,cm6,
 options(op)  
 @
 
-\fixme{better description}
-Between these six models, the AIC, BIC, and negative log likelihood 
-are all similar to one another. 
+\al{Between these six models, the AIC, BIC, and negative log likelihood 
+are all similar to one another. The top model by AIC is \code{binary\_child} $\times$ \code{age + (1 \textbar{} district:urban)}, \code{(binary\_child} $\times$ \code{age + (1 \textbar{} district:urban))}, though model \code{(binary\_child} $\times$ \code{age + (1 \textbar{} district/urban))} has an equivalent negative log likelihood score but higher AIC ($\Delta$AIC = 2.0, $\Delta$negloglik = 0.00).
+
+The model with a random slope for urban across districts (model \code{binary\_child} $\times$ \code{age + (urban \textbar{} district)}) fits the data well in terms of log likelihood ($\Delta$negloglik = 0.00) but is penalized for its extra parameter ($\Delta$AIC = 3.1).
+
+Models that drop the interaction between child status and age or replace the binary child indicator with an integer count perform substantially worse, with $\Delta$AIC values of 10.7, 16.8, and 20.3 respectively.
+
+Overall, the results suggest that accounting for urban/rural variation at the district level and including the age and child interaction are both important, but the precise random effects structure for urban (crossed vs.\ nested vs.\ slope) has relatively little impact on fit.}
 
 Similar to the CBPP data set, another relevant demonstration is computing 
 profile, Wald, and bootstrapping confidence intervals for one of the models to
 understand the effect of each variable.
 
 <<ContraceptionBatch,echo=FALSE>>=
-## see the file glmer_contraception_batch.R...
-L3 <- load(file="glmer_profbatch3.RData")
-L4 <- load(file="glmer_profbatch4.RData")
+## see the file glmer_contraception_batch.R and
+## contraception_rename.R
+ContraBoot <- load(file="Contra_boot_sigFALSE.rda")
+ContraProf <- load(file="Contra_prof_sigFALSE.rda")
+ContraWald <- load(file="Contra_wald_sigFALSE.rda")
 @
 
 <<ContraceptionConfidenceSetup,echo=FALSE>>=
 combCI0 <- do.call(rbind, c(
-  mapply(mfun, list(confint.boot.cm1_2, confint.wald.cm1_2),
+  mapply(mfun, list(confint.boot.cm1, confint.wald.cm1),
          c("boot","Wald"), "cm1", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.boot.cm2_2, confint.wald.cm2_2),
+  mapply(mfun, list(confint.boot.cm2, confint.wald.cm2),
          c("boot","Wald"), "cm2", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.prof.cm3_2, confint.boot.cm3_2, confint.wald.cm3_2),
+  mapply(mfun, list(confint.prof.cm3, confint.boot.cm3, confint.wald.cm3),
          c("profile", "boot","Wald"), "cm3", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.prof.cm4_2, confint.boot.cm4_2, confint.wald.cm4_2),
+  mapply(mfun, list(confint.prof.cm4, confint.boot.cm4, confint.wald.cm4),
          c("profile", "boot","Wald"), "cm4", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.prof.cm5_2, confint.boot.cm5_2, confint.wald.cm5_2),
+  mapply(mfun, list(confint.prof.cm5, confint.boot.cm5, confint.wald.cm5),
          c("profile", "boot","Wald"), "cm5", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.prof.cm6_2, confint.boot.cm6_2, confint.wald.cm6_2),
+  mapply(mfun, list(confint.prof.cm6, confint.boot.cm6, confint.wald.cm6),
          c("profile", "boot","Wald"), "cm6", SIMPLIFY=FALSE)
 ))
 
-combCI0 <- combCI0[combCI0$var %in% c("urbanY", "I(age^2)", "chY", 
-                                      "age:chY", "age"), ]
+contra_variables <- unique(combCI0$var)
+
+exclude <- c("livch1", "livch2", "livch3+")
+combCI0 <- combCI0[combCI0$var %in% setdiff(contra_variables, exclude), ]
+
+get_est2 <- function(mod, model_name) {
+  v <- as.data.frame(VarCorr(mod))
+  sd_rows <- v[is.na(v$var2), ]
+  cor_rows <- v[!is.na(v$var2), ]
+  vnames_sd <- paste0("sd_", sd_rows$var1, "|", sd_rows$grp)
+  vnames_cor <- paste0("cor_", cor_rows$var2, ".", cor_rows$var1, "|", cor_rows$grp)
+  est <- c(fixef(mod), setNames(sd_rows$sdcor, vnames_sd))
+  if( length(cor_rows$sdcor) > 0 ){
+    est <- c(est, setNames(cor_rows$sdcor, vnames_cor))
+  }
+  data.frame(model=model_name, var=names(est), est=est, row.names=NULL)
+}
 
 combEst2 <- do.call(rbind, list(
-  get_est(cm1, "cm1"), get_est(cm2, "cm2"), get_est(cm3, "cm3"), 
-  get_est(cm4, "cm4"), get_est(cm5, "cm5"), get_est(cm6, "cm6")
+  get_est2(cm1, "cm1"), get_est2(cm2, "cm2"), get_est2(cm3, "cm3"), 
+  get_est2(cm4, "cm4"), get_est2(cm5, "cm5"), get_est2(cm6, "cm6")
 ))
 
 combCI <- merge(dcast(combCI0, var + type + model ~ variable), combEst2, 
                 by=c("var","model"), all.x=TRUE)
 
 combCI <- transform(combCI, model_type = interaction(model, type, sep="\n"))
+
+mnamevec <- c("int_child    + age  + (1 | district)",
+              "binary_child + age  + (1 | district)",
+              "binary_child × age + (1 | district)",
+              "binary_child × age + (urban | district)",
+              "binary_child × age + (1 | district/urban)",
+              "binary_child × age + (1 | district:urban")  
 @
 
-\fixme{why does Fig 10 have only fixed effect values? It would help if combCI were renamed instead of reused between cbpp and Contraception examples}
-
-<<confPlot2,fig.cap="Contraception example: comparison of point and confidence interval estimation for different methods.",fig.scap="Contraception comparison",echo=FALSE,fig.width=8,fig.height=10,warning=FALSE>>=
+<<confPlot2,fig.cap="Contraception example: comparison of point and confidence interval estimation for different methods.",fig.scap="Contraception comparison",echo=FALSE,fig.width=10,fig.height=10,warning=FALSE>>=
 ggplot(combCI, aes(var, est, colour=type, shape=model)) +
   geom_pointrange(aes(ymin=lwr, ymax=upr),
                   position=position_dodge(width=0.6)) +
@@ -1324,9 +1390,13 @@ ggplot(combCI, aes(var, est, colour=type, shape=model)) +
   geom_hline(yintercept=0, lty=2) +
   coord_flip() +
   scale_colour_brewer(palette="Dark2") +
-  scale_shape(labels = mnamevec, guide = guide_legend(reverse = TRUE))
+  scale_shape(labels = mnamevec, guide = guide_legend(reverse = TRUE)) +
+  theme(legend.position = "inside",
+      legend.justification = c("left", "top"),
+      legend.background = element_rect(fill = "white", colour = "grey50"),
+      #legend.margin = margin(t = 5, r = 5, b = 5, l = 5, unit = "pt"),
+      legend.box.margin = margin(t = 10, l = 10, unit = "pt"))
 @
-
 
 In general, the point and confidence interval estimation of the explanatory variables are similar across the six models, and similarly across different methods for confidence interval construction, with a couple of exceptions.
 

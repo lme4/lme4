@@ -16,6 +16,7 @@ cm5 <- glmer(use ~ age*ch + I(age^2) + urban + (1|urban:district) + (1|district)
 cm6 <- glmer(use ~ age*ch + I(age^2) + urban + (1|urban:district),
              Contraception, binomial)
 # getting the bootstrap CI
+# didn't use signames = FALSE; since we didn't seem to use this version.
 confint.boot.cm1 <- confint(cm1,method="boot",seed=101,nsim=501)
 confint.boot.cm2 <- confint(cm2,method="boot",seed=101,nsim=501)
 # convergence failed, see if I can increase the tolerance later?
@@ -53,7 +54,7 @@ confint.prof.cm5 <- confint(profile.cm5)
 confint.prof.cm6 <- confint(profile.cm6)
 
 # this runs quickly...
-confint.wald.cm1 <- confint(cm1,method="Wald",seed=101,nsim=501)
+confint.wald.cm1 <- confint(cm1,method="Wald",seed=101,nsim=501, signames = FALSE)
 confint.wald.cm2 <- confint(cm2,method="Wald",seed=101,nsim=501)
 confint.wald.cm3 <- confint(cm3,method="Wald",seed=101,nsim=501)
 confint.wald.cm4 <- confint(cm4,method="Wald",seed=101,nsim=501)
@@ -125,17 +126,17 @@ cm5_2 <- glmer(use ~ age*ch + I(age^2) + urban + (1|urban:district) +
 cm6_2 <- glmer(use ~ age*ch + I(age^2) + urban + (1|urban:district),
              data = Contraception2, binomial)
 
-confint.boot.cm1_2 <- confint(cm1_2,method="boot",seed=101,nsim=501)
-confint.boot.cm2_2 <- confint(cm2_2,method="boot",seed=101,nsim=501)
-confint.boot.cm3_2 <- confint(cm3_2,method="boot",seed=101,nsim=501)
+confint.boot.cm1_2 <- confint(cm1_2,method="boot",seed=101,nsim=501,signames=FALSE)
+confint.boot.cm2_2 <- confint(cm2_2,method="boot",seed=101,nsim=501,signames=FALSE)
+confint.boot.cm3_2 <- confint(cm3_2,method="boot",seed=101,nsim=501,signames=FALSE)
 #5 warning(s): Model failed to converge with max|grad| = 0.00492516 (tol = 0.002, component 1)
-confint.boot.cm4_2 <- confint(cm4_2,method="boot",seed=101,nsim=501)
+confint.boot.cm4_2 <- confint(cm4_2,method="boot",seed=101,nsim=501,signames=FALSE)
 #433 warning(s): Model failed to converge with max|grad| = 0.00204504 (tol = 0.002, component 1)
 #See ?lme4::convergence and ?lme4::troubleshooting. (and others)
-confint.boot.cm5_2 <- confint(cm5_2,method="boot",seed=101,nsim=501)
+confint.boot.cm5_2 <- confint(cm5_2,method="boot",seed=101,nsim=501,signames=FALSE)
 #156 message(s): boundary (singular) fit: see help('isSingular')
 #107 warning(s): Model failed to converge with max|grad| = 0.00205994 (tol = 0.002, component 1)
-confint.boot.cm6_2 <- confint(cm6_2,method="boot",seed=101,nsim=501)
+confint.boot.cm6_2 <- confint(cm6_2,method="boot",seed=101,nsim=501,signames=FALSE)
 #7 warning(s): Model failed to converge with max|grad| = 0.0272862 (tol = 0.002, component 1)
 #See ?lme4::convergence and ?lme4::troubleshooting. (and others)
 
@@ -156,20 +157,26 @@ confint.prof.cm4_2 <- confint(profile.cm4_2)
 confint.prof.cm5_2 <- confint(profile.cm5_2)
 confint.prof.cm6_2 <- confint(profile.cm6_2)
 
-# haven't run below yet.
-confint.wald.cm1_2 <- confint(cm1_2,method="Wald",seed=101,nsim=501)
-confint.wald.cm2_2 <- confint(cm2_2,method="Wald",seed=101,nsim=501)
-confint.wald.cm3_2 <- confint(cm3_2,method="Wald",seed=101,nsim=501)
-confint.wald.cm4_2 <- confint(cm4_2,method="Wald",seed=101,nsim=501)
-confint.wald.cm5_2 <- confint(cm5_2,method="Wald",seed=101,nsim=501)
-confint.wald.cm6_2 <- confint(cm6_2,method="Wald",seed=101,nsim=501)
-
-save(list=c(ls(pattern="confint.prof.*"), 
-            ls(pattern="confint.wald.*")),
-     file="glmer_profbatch4.RData")
+confint.wald.cm1_2 <- confint(cm1_2,method="Wald",seed=101,nsim=501,signames=FALSE)
+confint.wald.cm2_2 <- confint(cm2_2,method="Wald",seed=101,nsim=501,signames=FALSE)
+confint.wald.cm3_2 <- confint(cm3_2,method="Wald",seed=101,nsim=501,signames=FALSE)
+confint.wald.cm4_2 <- confint(cm4_2,method="Wald",seed=101,nsim=501,signames=FALSE)
+confint.wald.cm5_2 <- confint(cm5_2,method="Wald",seed=101,nsim=501,signames=FALSE)
+confint.wald.cm6_2 <- confint(cm6_2,method="Wald",seed=101,nsim=501,signames=FALSE)
 
 #save(list=c(ls(pattern="confint.boot.*")),
 #     file="glmer_profbatch3.RData")
 
+#save(list=c(ls(pattern="confint.prof.*"), 
+#            ls(pattern="confint.wald.*")),
+#     file="glmer_profbatch4.RData")
+
+# todo: make the names more descriptive later.
+#save(list=c(ls(pattern="confint.boot.*"), 
+#            ls(pattern="confint.wald.*")),
+#     file="glmer_profbatch5.RData")
+
 load("glmer_profbatch3.RData")
 load("glmer_profbatch4.RData")
+
+load("glmer_profbatch5.RData")
