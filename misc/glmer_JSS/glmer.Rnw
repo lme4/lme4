@@ -469,10 +469,12 @@ estimates of $\theta$ and $\beta$.
 \subsection{Evaluating the likelihood for GLMMs using the Laplace approximation}
 \label{sec:Laplace}
 
-\al{Fitting generalized linear mixed models requires approximating an intractable 
+Evaluating the likelihood for generalized linear mixed models
+requires approximating an intractable 
 integral over the random effects distribution. The \code{glmer} function offers 
-several approximations, controlled by the \code{nAGQ}. 
-At the default \code{nAGQ=1}, the Laplace approximation is used.}
+several approximations, controlled by the \code{nAGQ} argument. 
+The default value of \code{nAGQ=1} specifies the
+\emph{Laplace approximation} \citep{madsen2011}.
 
 A second-order Taylor series approximation to $-2\log[f_{\mc Y,\mc
   U}(\yobs,\bm u)]$ based at $\tilde{\bm u}$ provides an approximation
@@ -551,15 +553,7 @@ to its approximation.
 Consider the \code{cbpp} data on contagious bovine pleuropneumonia
 (CBPP)
 incidence according to season and herd, available in the \pkg{lme4} package
-(see \ref{sec:cbpp} for more details).
-<<strcbpp,echo=FALSE,eval=FALSE>>=
-str(cbpp)
-@
-
-\fixme{is this left over?}
-\al{This was here to begin with... So I'm good with removing it.}
-
-and the model
+(see \ref{sec:cbpp} for more details), and the model
 <<m1>>=
 print(m1 <- glmer(cbind(incidence, size-incidence) ~ period + (1|herd),
       cbpp, binomial), corr=FALSE)
@@ -673,14 +667,12 @@ xyplot(as.vector(dmat/dnorm(zm$zvals)) ~ rep.int(zm$zvals, ncol(dmat))|gl(ncol(d
 shows $t(z)$ for each of the unidimensional integrals in the
 likelihood for the model \code{m1} at the parameter estimates.
 
-\al{To use the adaptive Gauss-Hermite quadrature approach for model fitting 
-in \code{glmer} models, ensure that the argument \code{nAGQ}, which is the 
-number of knots $k$, is greater than 1.
-
+To use adaptive Gauss-Hermite quadrature for model fitting 
+in \code{glmer} models, set the argument \code{nAGQ}, the 
+number of quadrature points, to a value greater than 1.
 Increasing the number of nodes improves the accuracy of the likelihood 
 approximation at the expense of computation time. However, AGQ is only available 
 for models with a single scalar random effect.
-}
 
 The \code{lme4} package supports fitting negative binomial GLMMs,
 which are an extension of GLMMs; the negative binomial family is within the
@@ -1227,7 +1219,6 @@ gelman_scale <- function(dataset, response) {
 Contraception_scale <- gelman_scale(Contraception, "use")
 @
 
-\al{
 We construct six \code{glmer} models with varying choices of explanatory 
 variables and random effects structure, comparing them via \code{anova}. The 
 models considered different variables.
@@ -1248,7 +1239,6 @@ One of them extends this with a random slope for urban status
 \code{(urban \textbar{} district)}, allowing the urban/rural gap to vary by district. 
 Another one uses two nested random intercepts \code{(1 \textbar{} district)} and 
 \code{(1 \textbar{} urban:district)}, separating district-level from urban-within-district variation. The remaining model uses only the \code{urban:district} grouping. 
-}
 
 To reduce convergence warnings and facilitate interpretability, all 
 explanatory variables were standardized by centering and scaling to two 
