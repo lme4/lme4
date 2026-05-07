@@ -515,7 +515,11 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
     sigmaML <- pwrss/n
     if (rcl != "lmerResp") {
         pars <- opt$par
-        if (length(pars) > length(pp$theta)) beta <- pars[-(seq_along(pp$theta))]
+        ## For structured covariance models (e.g., ar1), the optimizer works in a
+        ## lower-dimensional par-space (length(reTrms$lower)) while pp$theta lives
+        ## in the larger theta-space, so use reTrms$lower to count theta params.
+        npar <- length(reTrms$lower)
+        if (length(pars) > npar) beta <- pars[-seq_len(npar)]
     }
     cmp <- c(ldL2=pp$ldL2(), ldRX2=pp$ldRX2(), wrss=wrss,
              ussq=sqrLenU, pwrss=pwrss,
