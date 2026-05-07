@@ -987,17 +987,10 @@ mList <- setNames(list(gm1,gm2,gm3),mnames)
 ## library(plyr)
 ## print(ldply(mList,function(x) {
 ##    as.data.frame(VarCorr(x))[,c("grp","sdcor")]}),digits=2)
-a1 <- bbmle::AICtab(gm1,gm2,gm3,mnames=mnames)
+## a1 <- bbmle::AICtab(gm1,gm2,gm3,mnames=mnames)
 @
 
-%% lme4 buglet: confint() has oldNames, profile has signames
 %% lme4 wishlist: allow [Ww]ald in confint.merMod?
-
-%% these two chunks are slow and should not be messed with unnecessarily
-%% (might be better to run them as batch files rather than relying on
-%% knitr caching ...)
-%% for the paper we will add fake unevaluated chunks to display the
-%% stuff we need ...     
 <<loadbatch,echo=FALSE>>=
 bootVars <- load("CBPP_bootbatch.rda")
 profVars <- load("CBPP_profbatch.rda")
@@ -1260,7 +1253,7 @@ cm3 <- glmer(use ~ age*ch + I(age^2) + urban + (1|district),
 @
 
 <<cm4,echo=FALSE,message=FALSE,size='scriptsize'>>=
-cm4 <- glmer(use ~ age*ch + I(age^2) + urban + (urban|district),
+cm4 <- glmer(use ~ age*ch + I(age^2) + urban + (1+urban|district),
               Contraception_scale, binomial)
 @
 
@@ -1275,6 +1268,7 @@ cm6 <- glmer(use ~ age*ch + I(age^2) + urban + (1|urban:district),
 @
 
 <<anovaContraception, echo = FALSE>>=
+## copy of bbmle::AICtab
 AICtab <- function(..., mnames) {
   aic_df <- do.call(AIC, list(...))
   LLvec <- sapply(list(...), function(x) c(logLik(x)))
@@ -1287,29 +1281,26 @@ AICtab <- function(..., mnames) {
   aic_df
 }
 
-op <- options(digits = 2)
+op <- options(digits = 3)
 mnamevec <- c("int_child    + age  + (1 | district)",
               "binary_child + age  + (1 | district)",
                 "binary_child × age + (1 | district)",
-                "binary_child × age + (urban | district)",
+                "binary_child × age + (1 + urban | district)",
                 "binary_child × age + (1 | district/urban)",
                 "binary_child × age + (1 | district:urban")  
-AICtab(cm1,cm2,cm3,cm4,cm5,cm6,
-                mnames = mnamevec)
+print(AICtab(cm1, cm2, cm3, cm4, cm5, cm6,
+                mnames = mnamevec))
 options(op)  
 @
 
-\al{Between these six models, the AIC, BIC, and negative log likelihood 
-are all similar to one another. The top model by AIC is \code{binary\_child} $\times$ \code{age + (1 \textbar{} district:urban)}, \code{(binary\_child} $\times$ \code{age + (1 \textbar{} district:urban))}, though model \code{(binary\_child} $\times$ \code{age + (1 \textbar{} district/urban))} has an equivalent negative log likelihood score but higher AIC ($\Delta$AIC = 2.0, $\Delta$negloglik = 0.00).
+The top three models, all of which include a child-by-age interaction and some effect of urbanization, fit approximately equally well ($\Delta$ negative log-likelihood $<0.5$). The \code{(1|district/urban)} model barely improves on the fit of \code{(1|district:urban)} (0.005 log-likelihood units), at the cost of an extra variance parameter, so it is almost 2 AIC units worse. \code{(1 + urban | district)} is a bit better ($\approx$ 0.5 log-likelihood units), but includes a covariance parameter.
+Models that drop the interaction between child status and age or replace the binary child indicator with an integer count perform substantially worse ($\Delta \textrm{AIC} > 10$).
 
-The model with a random slope for urban across districts (model \code{binary\_child} $\times$ \code{age + (urban \textbar{} district)}) fits the data well in terms of log likelihood ($\Delta$negloglik = 0.00) but is penalized for its extra parameter ($\Delta$AIC = 3.1).
+Overall, the results suggest that accounting for urban/rural variation at the district level and including the age and child interaction are both important, but the precise random effects structure for urban/rural variation is relatively
+unimportant.
 
-Models that drop the interaction between child status and age or replace the binary child indicator with an integer count perform substantially worse, with $\Delta$AIC values of 10.7, 16.8, and 20.3 respectively.
-
-Overall, the results suggest that accounting for urban/rural variation at the district level and including the age and child interaction are both important, but the precise random effects structure for urban (crossed vs.\ nested vs.\ slope) has relatively little impact on fit.}
-
-Similar to the CBPP data set, another relevant demonstration is computing 
-profile, Wald, and bootstrapping confidence intervals for one of the models to
+As with the CBPP data set, we can also compute
+profile, Wald, and parametric bootstrap confidence intervals for one of the models to
 understand the effect of each variable.
 
 <<ContraceptionBatch,echo=FALSE>>=
@@ -1373,14 +1364,15 @@ mnamevec <- c("int_child    + age  + (1 | district)",
 @
 
 <<confPlot2,fig.cap="Contraception example: comparison of point and confidence interval estimation for different methods.",fig.scap="Contraception comparison",echo=FALSE,fig.width=10,fig.height=10,warning=FALSE>>=
+revguide <- guide_legend(reverse = TRUE)
 ggplot(combCI, aes(var, est, colour=type, shape=model)) +
   geom_pointrange(aes(ymin=lwr, ymax=upr),
                   position=position_dodge(width=0.6)) +
   labs(x="", y="Estimate (log-odds of seropositivity)") +
   geom_hline(yintercept=0, lty=2) +
   coord_flip() +
-  scale_colour_brewer(palette="Dark2") +
-  scale_shape(labels = mnamevec, guide = guide_legend(reverse = TRUE)) +
+  scale_colour_brewer(palette="Dark2", guide = revguide) +
+  scale_shape(labels = mnamevec, guide = revguide) +
   theme(legend.position = "inside",
       legend.justification = c("left", "top"),
       legend.background = element_rect(fill = "white", colour = "grey50"),
@@ -1388,27 +1380,35 @@ ggplot(combCI, aes(var, est, colour=type, shape=model)) +
       legend.box.margin = margin(t = 10, l = 10, unit = "pt"))
 @
 
-In general, the point and confidence interval estimation of the explanatory variables are similar across the six models, and similarly across different methods for confidence interval construction, with a couple of exceptions.
+The point estimates and confidence intervals of the explanatory variables are similar across the six models, and across different methods for confidence interval construction, with a couple of exceptions.
 
 The strongest predictors of contraceptive use among women in Bangladesh were urban residence and the presence of living children. Other factors, such as age, did not appear to have a meaningful effect.
 
-We may also impose a different underlying variance-covariance structure. 
-Consider the following models, where \code{diag} enforces a diagonal 
-variance-covariance structure, and \code{cs} enforces a compound symmetric model:
+With \code{lme4} versions greater than 2.0, we can
+also set up models with structured random effects
+covariance matrices.
+In the models below \code{diag} specifies a diagonal 
+variance-covariance structure, while \code{cs} specifies a compound symmetric model. The \code{hom} argument specifies
+whether the model should allow different variances for
+each varying effect (e.g. for intercepts and slopes in
+the models below, which allow the effects of the
+continuous covariate of age to vary across districts).
 
 
-<<cm_varcorr,eval=FALSE,echo=FALSE>>=
+<<cm_varcorr>>=
 cm.diag <- glmer(use ~ diag(1 + age|district), Contraception, binomial)
 cm.hetdiag <- glmer(use ~ diag(1 + age|district, hom = FALSE), 
-                 Contraception, binomial)
-cm.cs <- glmer(use ~ cs(1 + age|district), Contraception, binomial)
-cm.hetcs <- glmer(use ~ cs(1 + age|district, hom = FALSE), Contraception, binomial)
+                   Contraception, binomial)
+## FIXME: what's up with these?
+## cm.cs <- glmer(use ~ cs(1 + age|district), Contraception, binomial, nAGQ=0,
+##                  verbose = 1)
+## cm.hetcs <- glmer(use ~ cs(1 + age|district, hom = FALSE), Contraception, binomial)
 @
 
 We can use \code{VarCorr} (and other accessor methods) as we would for models with default, unstructured covariance matrices.
 
 <<cm_varcorr_view>>=
-print(vc.diag <- VarCorr(cm.diag))
+print(VarCorr(cm.diag))
 @
 
 \bibliography{glmer}
