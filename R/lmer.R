@@ -244,7 +244,8 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
     rho$u0 <- rho$pp$u0
     rho$beta0 <- rho$pp$beta0
     rho$tolPwrss <- control$tolPwrss # Reset control parameter (the initial optimization is coarse)
-
+    rho$nAGQ <- nAGQ
+    
     ## set lower and upper bounds: if user-specified, select
     ##  only the ones corresponding to random effects
     lower <- vals$reTrms$lower
@@ -2131,7 +2132,7 @@ getME.merMod <- function(object,
            "n" = dims[["n"]],
            "p" = dims[["p"]],
            "q" = dims[["q"]],
-           "npar" = dims[["npar"]],
+           "npar" = if ("npar" %in% names(dims)) dims[["npar"]] else length(getLower(object)),
            "p_i" = p_i,
            "l_i" = l_i,
            "q_i" = p_i * l_i,

@@ -516,9 +516,9 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
     sigmaML <- pwrss/n
     if (rcl != "lmerResp") {
         pars <- opt$par
-        ## making the assertion that length(npars) > npar iff nAGQ > 0,
-        ## error code below is for the case that it fails
-        if ((length(pars) == dims[["npar"]]) != (dims[["nAGQ"]]==0L))
+        ## making the assertion that length(pars) > npar iff nAGQ > 0;
+        ## skip when pars=NA (simulate path uses a placeholder opt)
+        if (!anyNA(pars) && (length(pars) == dims[["npar"]]) != (dims[["nAGQ"]]==0L))
             stop(sprintf("unexpected parameter vector length: length(pars)=%d, npar=%d, nAGQ=%d; ",
                          length(pars), dims[["npar"]], dims[["nAGQ"]]),
                  "expected length(pars)==npar iff nAGQ==0")
