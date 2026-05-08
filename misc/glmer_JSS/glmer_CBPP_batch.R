@@ -20,10 +20,11 @@ confint3.boot2 <- confint(gm3,method="boot",seed=101,nsim=501,signames=FALSE)
 save("confint0.boot2", "confint.boot2","confint3.boot2",
      file="CBPP_bootbatch.rda")
 
-#profile.gm1 <- profile(gm1,signames=FALSE) # does not run
-#profile.gm2 <- profile(gm2,signames=FALSE) # doesn't run either
+profile.gm1 <- profile(gm1,signames=FALSE, devtol = 1e-2,
+                       verbose = TRUE)
+profile.gm2 <- profile(gm2,signames=FALSE, devtol = 1e-2)
 profile.gm3 <- profile(gm3,signames=FALSE)
-#confint0.prof <- confint(profile.gm1)
+confint1.prof <- confint(profile.gm1)
 #confint.prof <- confint(profile.gm2)
 confint3.prof <- confint(profile.gm3)
 
