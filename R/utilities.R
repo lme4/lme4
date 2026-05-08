@@ -499,7 +499,8 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
               spFe= 0L,
               REML = if (rcl=="lmerResp") resp$REML else 0L,
               GLMM= isGLMM,
-              NLMM= (rcl=="nlsResp"))
+              NLMM= (rcl=="nlsResp"),
+              npar= length(reTrms$lower))
     storage.mode(dims) <- "integer"
     fac     <- as.numeric(rcl != "nlsResp")
     if (trivial.y <- (length(resp$y)==0)) {
@@ -515,11 +516,15 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
     sigmaML <- pwrss/n
     if (rcl != "lmerResp") {
         pars <- opt$par
-        ## For structured covariance models (e.g., ar1), the optimizer works in a
-        ## lower-dimensional par-space (length(reTrms$lower)) while pp$theta lives
-        ## in the larger theta-space, so use reTrms$lower to count theta params.
-        npar <- length(reTrms$lower)
-        if (length(pars) > npar) beta <- pars[-seq_len(npar)]
+        ## making the assertion that length(npars) > npar iff nAGQ > 0,
+        ## error code below is for the case that it fails
+        if ((length(pars) == dims[["npar"]]) != (dims[["nAGQ"]]==0L))
+            stop(sprintf("unexpected parameter vector length: length(pars)=%d, npar=%d, nAGQ=%d; ",
+                         length(pars), dims[["npar"]], dims[["nAGQ"]]),
+                 "expected length(pars)==npar iff nAGQ==0")
+        ## For structured covariance models (e.g., ar1), npar = length(reTrms$lower)
+        ## may be less than length(pp$theta), so we use dims[["npar"]] to index correctly.
+        if (dims[["nAGQ"]] > 0L) beta <- pars[-seq_len(dims[["npar"]])]
     }
     cmp <- c(ldL2=pp$ldL2(), ldRX2=pp$ldRX2(), wrss=wrss,
              ussq=sqrLenU, pwrss=pwrss,

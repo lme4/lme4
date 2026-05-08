@@ -1004,3 +1004,9 @@ test_that("oldNames warning in confint", {
   fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
   expect_warning(confint(fm1, oldNames = TRUE))
 })
+
+test_that("getME now has npar", {
+  fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
+  expect_equal(getME(fm1, "devcomp")$dims[["npar"]], 
+               length(getReCovs(fm1)[[1]]@par))
+})

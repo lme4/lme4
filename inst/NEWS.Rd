@@ -7,6 +7,9 @@
 \section{CHANGES IN VERSION 2.0-2}{
   \subsection{BUG FIXES}{
     \itemize{
+      \item fixed the bug where glmer + ar1 returns zero values for fixed 
+      effect coefficients (GH #962). There were also related issues where 
+      the length of `colnames(getME())` was unequal to `getME()`.
       \item fixed the case where a Gamma GLMM doesn't perform well for 
       a small shape parameter by changing the initial starting 
       point of the optimizer for Gamma families (GH #290)

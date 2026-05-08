@@ -12,7 +12,7 @@ getME(object, name, ...)
                "Gp", "Tp", "L", "Lambda", "Lambdat", "Lind", "Tlist",
                "A", "RX", "RZX", "sigma", "flist",
                "fixef", "beta", "theta", "ST", "par", "REML", "is_REML",
-               "n_rtrms", "n_rfacs", "N", "n", "p", "q",
+               "n_rtrms", "n_rfacs", "N", "n", "p", "q", "npar",
                "p_i", "l_i", "q_i", "k", "m_i", "m",
                "cnms", "devcomp", "offset", "lower", "devfun", "devarg",
                "glmer.nb.theta"),
@@ -90,6 +90,10 @@ getME(object, name, ...)
       \item{\code{"n"}:}{length of the response vector, \code{y}}
       \item{\code{"p"}:}{number of columns of the fixed effects model matrix, \code{X}}
       \item{\code{"q"}:}{number of columns of the random effects model matrix, \code{Z}}
+      \item{\code{"npar"}:}{number of parameters in the optimizer's parameter space.  
+        For standard (unstructured) covariance models
+        this equals \code{m} (= \code{nth}); for structured covariance models (e.g.,
+        \code{ar1}) the optimizer works in a lower-dimensional space so \code{npar < m}.}
       \item{\code{"p_i"}:}{numbers of columns of the raw model matrices, \code{mmList}}
       \item{\code{"l_i"}:}{numbers of levels of the grouping factors}
       \item{\code{"q_i"}:}{numbers of columns of the term-wise model matrices, \code{ZtList}}
@@ -138,6 +142,9 @@ getME(object, name, ...)
 	    restricted maximum likelihood}
           \item{GLMM}{\code{TRUE} if a GLMM}
 	  \item{NLMM}{\code{TRUE} if an NLMM}
+          \item{npar}{number of parameters in the optimizer's parameter space
+            ; equals \code{nth} for standard models, less than \code{nth} 
+            for structured covariance models (e.g., \code{ar1})}
 	}
       }
       \item{\code{"offset"}:}{model offset}
