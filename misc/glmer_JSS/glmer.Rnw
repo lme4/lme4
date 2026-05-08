@@ -12,6 +12,8 @@
 \DeclareMathOperator{\tr}{tr}
 \DeclareMathOperator{\VEC}{vec}
 \newcommand{\bmb}[1]{{\color{red} \emph{#1}}}
+\newcommand{\bbeta}{\ensurement{\bm \beta}}
+\newcommand{\btheta}{\ensurement{\bm \btheta}}
 \newcommand{\scw}[1]{{\color{blue} \emph{#1}}}
 \newcommand{\al}[1]{{\color{violet}#1}} % anna's new comments
 \newcommand{\fixme}[1]{{\color{blue} \textbf{#1}}}
@@ -130,17 +132,6 @@ opts_chunk$set(engine='R',dev='pdf',fig.width=10,
 \section{Introduction}
 \label{sec:intro}
 
-
-\fixme{Discuss nAGQ=0, and two-stage fitting (nAGQ=0, then nAGQ $>0$) ?
-  (1) See \url{https://kaskr.github.io/adcomp/_book/Appendix.html} for
-  details of when nAGQ=0 is appropriate; (2) ask Doug Bates and/or
-  Kasper K. where the idea comes from? (3) discuss when nAGQ=0
-  is likely to work [conditional mean = conditional mode when
-  effective sample size per group is large, e.g. CLT - similar to
-  conditions for adequacy of Laplace approx.;
-  linearity of $\partial(\log{\cal L})/\partial \beta$ with respect
-  to $u$ works for LMMs, when else? When link function is not too nonlinear?]}
-
 \fixme{add 'toenail' example for bad Laplace?}
   
 The \pkg{lme4} package for \proglang{R} can be used to fit a broad
@@ -216,7 +207,7 @@ depends on a vector of covariance parameters, $\bm\theta$.
 
 The optimization routines of \pkg{lme4} never actually compute
 $\Sigma_\theta$ directly, and instead use the elements of the covariance factor,
-$\bm\Lambda_\theta$, which is a matrix square root of $\Sigma_\theta$,
+$\bm\Lambda_\theta$, which is a matrix square root of $\Sigma_\theta$ (in practice a Cholesky factor),
 \begin{equation}
   \label{eq:GLMMSigma}
   \bm\Sigma_\theta=\bm\Lambda_\theta\bm\Lambda_\theta\trans .
@@ -283,7 +274,7 @@ as follows:
 \end{equation}
 
 
-For GLMMs, the scale parameter is not estimated as part of the nonlinear minimization of the negative likelihood over the $\beta$ and $\theta$ parameters.
+For GLMMs, the scale parameter is not typically estimated as part of the nonlinear minimization of the negative likelihood over the $\beta$ and $\theta$ parameters.
 As is common in generalized linear model contexts, it is 
 set equal to the (residual) deviance
 divided by the residual degrees of freedom. 
@@ -295,7 +286,7 @@ is the Pearson residual sum of squares. This approach is preferred by \citet{McC
 misspecification than the maximum likelihood estimator. 
 
 We therefore estimate the deviance using the penalized weighted Pearson 
-residual sum of squares, as described in Section 3.2 of the \code{lmer} paper \citep{bates2015fitting}.
+residual sum of squares, as described in Section 3.2 of \cite{bates2015fitting}.
 
 The likelihood of the parameters, given the observed data, is now
 \begin{equation}
@@ -337,7 +328,7 @@ that the software can thus fit
 models with user-specified families and link functions 
 (although common families and link functions are
 hard-coded in C++ for computational speed),
-in contrast to previous versions of \code{lme4} and other
+in contrast to previous versions of \code{lme4} and some other
 \proglang{R} packages for GLMM fitting.
 
 The likelihood can now be expressed as
@@ -379,7 +370,7 @@ extend it to a \emph{penalized iteratively reweighted least squares}
 \item Let 
   \begin{equation}
   Q(\bm u) = \left\|\bm W^{1/2}\left(\yobs-\bm\mu_{\mc
-            Y|\mc U=\bm u}\right)\right\|^2+\|\bm u\|^2.
+    Y|\mc U=\bm u}\right)\right\|^2+\|\bm u\|^2.
   \end{equation}
 
   Solve the penalized, weighted, nonlinear least squares problem
@@ -495,6 +486,10 @@ or, on the deviance scale,
   -2\ell(\bm\beta,\bm\theta|\yobs)\approx\sum_{i=1}^nd_i(\yobs,\tilde{\bm u}) +
     \|\tilde{\bm u}\|^2 + \log(|\bm L|^2)+\frac{q}{2}\log(2\pi)
 \end{equation}
+
+The Laplace approximation normally conditions on both the fixed effects $\beta$ and the variance-covariance parameters $\theta$. A further approximation, which is denoted in \code{glmer} by \code{nAGQ=0}, profiles out the fixed effects by minimizing $\beta$ and the conditional modes $\bm u$ simultaneously in eq.~\ref{eq:weightedNLS}. This approximation is exact when (1) $\partial(\log L)/\partial \beta$ is a linear function of the conditional modes $\bm u$ and (2) when the conditional mode is equal to the conditional mean (typically, although not necessarily, implying a symmetric conditional distribution). Both assumptions hold for linear mixed models (although a Laplace approximation is not necessary there), consistent with \cite{bates2015fitting} showing that the fixed effects can be profiled out of the log-likelihood for LMMs. The Julia \code{MixedModels.jl} package offers the same approximation as the \code{fast} argument to the \code{pirls!} function (\url{https://juliastats.org/MixedModels.jl/stable/optimization/}); Template Model Builder \cite{kristensenTMB2016}, and downstream packages such \code{glmmTMB}, provide this function via a \code{profile} argument.
+
+By default, \code{glmer} uses a two-stage optimization procedure (described below) with \code{nAGQ=0} in the first stage; users can also specify \code{nAGQ=0} for faster, approximate solutions to models that would otherwise be infeasibly slow.
 
 \subsubsection{Decomposing the deviance for simple models}
 \label{sec:simplescalar}
@@ -669,6 +664,7 @@ Increasing the number of nodes improves the accuracy of the likelihood
 approximation at the expense of computation time. However, AGQ is only available 
 for models with a single scalar random effect.
 
+\fixme{move this?}
 The \code{lme4} package supports fitting negative binomial GLMMs,
 which are an extension of GLMMs; the negative binomial family is within the
 exponential dispersion family only if the dispersion parameter is fixed.
@@ -678,6 +674,10 @@ a fixed dispersion parameter at each trial value. While correct, this
 approach is slower than other available negative binomial GLMM
 implementations (e.g., as offered in the \code{glmmTMB} package),
 which is recommended for large problems.
+
+\section{Model fitting}
+
+Once we can calculate the deviance by PIRLS for specified values of $\btheta$ and $\bbeta$ (or only $\btheta$ if profiling out the fixed effects via \code{nAGQ=0}), we then estimate the parameters by nonlinear optimization. This procedure largely follows the description in \cite{bates2015fitting}, using derivative-free optimizers with box constraints to prevent non-positive-(semi)definite covariance matrices. The only difference is that by default \code{glmer} uses a two-step fitting procedure, using \code{nAGQ=0} at the first stage to get preliminary estimates which are then used as starting points for a second optimization with Laplace approximation or Gauss-Hermite quadrature as specified by the user. Different nonlinear optimizers can be used at each stage: the current default (as specified in \code{glmerControl} is to use Powell's BOBYQA followed by a box-constrained variant of the Nelder-Mead simplex algorithm. For faster, approximate fitting, the second stage can be omitted; in the rare cases where the initial \code{nAGQ=0} fit gives poor results, the first stage can be skipped via \code{glmerControl(nAGQ0initStep = FALSE)}.
 
 \section{Examples}
 
