@@ -12,8 +12,8 @@
 \DeclareMathOperator{\tr}{tr}
 \DeclareMathOperator{\VEC}{vec}
 \newcommand{\bmb}[1]{{\color{red} \emph{#1}}}
-\newcommand{\bbeta}{\ensurement{\bm \beta}}
-\newcommand{\btheta}{\ensurement{\bm \btheta}}
+\newcommand{\bbeta}{{\bm \beta}}
+\newcommand{\btheta}{{\bm \theta}}
 \newcommand{\scw}[1]{{\color{blue} \emph{#1}}}
 \newcommand{\al}[1]{{\color{violet}#1}} % anna's new comments
 \newcommand{\fixme}[1]{{\color{blue} \textbf{#1}}}
@@ -133,7 +133,8 @@ opts_chunk$set(engine='R',dev='pdf',fig.width=10,
 \label{sec:intro}
 
 \fixme{add 'toenail' example for bad Laplace?}
-  
+\fixme{avoid needing plyr, reshape2 packages (melt/rename)}
+
 The \pkg{lme4} package for \proglang{R} can be used to fit a broad
 range of mixed-effects models.  One major advantage of
 \pkg{lme4} over its predecessor, \pkg{nlme}, is that it can be used to
@@ -640,6 +641,9 @@ second order approximation to the logarithm of the unscaled
 conditional density.
 
 Figure~\ref{fig:tfunc}
+shows $t(z)$ for each of the unidimensional integrals in the
+likelihood for the model \code{m1} at the parameter estimates.
+
 \begin{figure}[tbp]
   \centering
 <<tfunc,echo=FALSE>>=
@@ -654,8 +658,6 @@ xyplot(as.vector(dmat/dnorm(zm$zvals)) ~ rep.int(zm$zvals, ncol(dmat))|gl(ncol(d
     polynomials.}
   \label{fig:tfunc}
 \end{figure}
-shows $t(z)$ for each of the unidimensional integrals in the
-likelihood for the model \code{m1} at the parameter estimates.
 
 To use adaptive Gauss-Hermite quadrature for model fitting 
 in \code{glmer} models, set the argument \code{nAGQ}, the 
@@ -1067,14 +1069,26 @@ combCI <- transform(combCI, model_type = interaction(model, type, sep="\n"))
 des_ord <- c("sd_(Intercept)|herd", "sd_(Intercept)|obs",
              "avg_size", "treatmentUnknown", "treatmentComplete")
 combCI <- subset(combCI,var!="(Intercept)" & !grepl("^period",var))
-combCI <- transform(combCI, 
-                    var = factor(var, levels = rev(des_ord)))
+combCI <- transform(combCI,  var = factor(var, levels = rev(des_ord)))
+avg_size_2sd <- 2*sd(cbpp2$avg_size)
+scfun <- function(v) {
+  combCI[combCI$var == "avg_size", v] <-
+    combCI[combCI$var == "avg_size", v]*avg_size_2sd
+  assign("combCI", combCI, parent.frame())
+}
+scfun("lwr")
+scfun("upr")
+scfun("est")
+combCI <- transform(combCI,
+            vartype = factor(ifelse(grepl("^sd", var), "random effects", "fixed effects"))
+)                    
 @
 
-\fixme{Figure 8: scale avg size, separate sd into separate facet}
+\fixme{Figure 8: why are some profile results missing?}
 
 <<confPlot,fig.cap="CBPP example: comparison of point and confidence interval estimation for different methods.",fig.scap="CBPP comparison",echo=FALSE,fig.width=7,fig.height=5,warning=FALSE>>=
 mnames <- c("herd","herd+obs","obs")
+## save("combCI", "mnames", file = "pix_tmp.rda")
 ggplot(combCI, aes(var, est, colour=type, shape=model)) +
   geom_pointrange(aes(ymin=lwr, ymax=upr),
                   position=position_dodge(width=0.6)) +
@@ -1082,7 +1096,8 @@ ggplot(combCI, aes(var, est, colour=type, shape=model)) +
   geom_hline(yintercept=0, lty=2) +
   coord_flip() +
   scale_colour_brewer(palette="Dark2", guide = revguide) +
-  scale_shape(guide=revguide, labels = mnames)
+  scale_shape(guide=revguide, labels = mnames) +
+  facet_wrap(~ vartype, ncol = 1, scale = "free")
 @    
 
 If the default optimizers (Nelder-Mead followed by BOBYQA) do not
@@ -1102,15 +1117,15 @@ results are obtained from \code{summary(allFit())}:
   \item \code{\$theta} random-effect parameters on the Cholesky scale
 \end{itemize}
 
-We will show an example of \code{allFit()\$which.OK} The rest are similar.
+We will show the summary results for \code{\$sdcor}; the other components are similar.
 
 <<allfit_cbpp1,message=FALSE,warning=FALSE>>=
 gm_all <- allFit(gm1)
 @
 
-<<allfit_cbpp2,eval=FALSE>>=
+<<allfit_cbpp2>>=
 ss <- summary(gm_all)
-ss$which.OK 
+ss$sdcor
 @
 
 
@@ -1308,7 +1323,7 @@ ContraWald <- load(file="Contra_wald_sigFALSE.rda")
 @
 
 <<ContraceptionConfidenceSetup,echo=FALSE>>=
-combCI0 <- do.call(rbind, c(
+contr_combCI0 <- do.call(rbind, c(
   mapply(mfun, list(confint.boot.cm1, confint.wald.cm1),
          c("boot","Wald"), "cm1", SIMPLIFY=FALSE),
   mapply(mfun, list(confint.boot.cm2, confint.wald.cm2),
@@ -1323,10 +1338,10 @@ combCI0 <- do.call(rbind, c(
          c("profile", "boot","Wald"), "cm6", SIMPLIFY=FALSE)
 ))
 
-contra_variables <- unique(combCI0$var)
+contra_variables <- unique(contr_combCI0$var)
 
 exclude <- c("livch1", "livch2", "livch3+")
-combCI0 <- combCI0[combCI0$var %in% setdiff(contra_variables, exclude), ]
+contr_combCI0 <- contr_combCI0[contr_combCI0$var %in% setdiff(contra_variables, exclude), ]
 
 get_est2 <- function(mod, model_name) {
   v <- as.data.frame(VarCorr(mod))
@@ -1346,10 +1361,10 @@ combEst2 <- do.call(rbind, list(
   get_est2(cm4, "cm4"), get_est2(cm5, "cm5"), get_est2(cm6, "cm6")
 ))
 
-combCI <- merge(dcast(combCI0, var + type + model ~ variable), combEst2, 
+contr_combCI <- merge(dcast(contr_combCI0, var + type + model ~ variable), combEst2, 
                 by=c("var","model"), all.x=TRUE)
 
-combCI <- transform(combCI, model_type = interaction(model, type, sep="\n"))
+contr_combCI <- transform(contr_combCI, model_type = interaction(model, type, sep="\n"))
 
 mnamevec <- c("int_child    + age  + (1 | district)",
               "binary_child + age  + (1 | district)",
@@ -1360,7 +1375,7 @@ mnamevec <- c("int_child    + age  + (1 | district)",
 @
 
 <<confPlot2,fig.cap="Contraception example: comparison of point and confidence interval estimation for different methods.",fig.scap="Contraception comparison",echo=FALSE,fig.width=10,fig.height=10,warning=FALSE>>=
-ggplot(combCI, aes(var, est, colour=type, shape=model)) +
+ggplot(contr_combCI, aes(var, est, colour=type, shape=model)) +
   geom_pointrange(aes(ymin=lwr, ymax=upr),
                   position=position_dodge(width=0.6)) +
   labs(x="", y="Estimate (log-odds of seropositivity)") +
