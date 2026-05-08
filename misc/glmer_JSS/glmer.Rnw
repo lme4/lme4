@@ -110,6 +110,7 @@ library(knitr)
 library(lme4)
 library(ggplot2)
 theme_set(theme_bw())
+revguide <- guide_legend(reverse = TRUE)
 library(RColorBrewer)
 library(grid)
 library(gridExtra)
@@ -1076,14 +1077,18 @@ combCI <- transform(combCI,
                     var = factor(var, levels = rev(des_ord)))
 @
 
-<<confPlot,fig.cap="CBPP example: comparison of point and confidence interval estimation for different methods.",fig.scap="CBPP comparison",echo=FALSE,fig.width=7,fig.height=5>>=
+\fixme{Figure 8: scale avg size, separate sd into separate facet}
+
+<<confPlot,fig.cap="CBPP example: comparison of point and confidence interval estimation for different methods.",fig.scap="CBPP comparison",echo=FALSE,fig.width=7,fig.height=5,warning=FALSE>>=
+mnames <- c("herd","herd+obs","obs")
 ggplot(combCI, aes(var, est, colour=type, shape=model)) +
   geom_pointrange(aes(ymin=lwr, ymax=upr),
                   position=position_dodge(width=0.6)) +
   labs(x="", y="Estimate (log-odds of seropositivity)") +
   geom_hline(yintercept=0, lty=2) +
   coord_flip() +
-  scale_colour_brewer(palette="Dark2")
+  scale_colour_brewer(palette="Dark2", guide = revguide) +
+  scale_shape(guide=revguide, labels = mnames)
 @    
 
 If the default optimizers (Nelder-Mead followed by BOBYQA) do not
@@ -1118,10 +1123,8 @@ ss$which.OK
 As of version 2.0, \code{lme4} can also specify structured variance–covariance 
 matrices for (generalized) linear mixed models.
 \code{lme4} now supports unstructured (general positive definite), diagonal, 
-compound symmetry, and first-order autoregressive (AR1) structures. Both 
-homogeneous and heterogeneous forms are available for diagonal, compound 
-symmetric, and AR1 structures; by default, AR1 is assumed homogeneous, while 
-the others are heterogeneous.
+compound symmetry, and first-order autoregressive (AR1) structures.
+By default, AR1 models assume a homogeneous-variance model (the variance is the same for all time steps), while the other models assume heterogeneous-variance models (variances differ for every level of the varying term); users can adjust this with the \code{hom} argument (e.g. \code{ar1(..., hom = FALSE)}).
 
 The unstructured covariance structure is the default for mixed models. 
 Here we illustrate fitting an AR1 model; the next example will show diagonal and compound symmetric
@@ -1138,8 +1141,7 @@ gm.ar1 <- glmer(incidence/size ~ ar1(1 + herd | period),
 print(VarCorr(gm.ar1))
 @
 
-To fit a heterogeneous structure, use \code{ar1(..., hom = FALSE)}.
-For this particular model, a heterogeneous AR1 model results in a singular fit.
+For this particular model, a heterogeneous AR1 model (\code{ar1(..., hom = FALSE)}) results in a singular fit.
 
 See the \href{https://cran.r-project.org/web/packages/lme4/vignettes/covariance_structures.html}{lme4 covariance structures vignette}
 for more detail.
@@ -1364,7 +1366,6 @@ mnamevec <- c("int_child    + age  + (1 | district)",
 @
 
 <<confPlot2,fig.cap="Contraception example: comparison of point and confidence interval estimation for different methods.",fig.scap="Contraception comparison",echo=FALSE,fig.width=10,fig.height=10,warning=FALSE>>=
-revguide <- guide_legend(reverse = TRUE)
 ggplot(combCI, aes(var, est, colour=type, shape=model)) +
   geom_pointrange(aes(ymin=lwr, ymax=upr),
                   position=position_dodge(width=0.6)) +
