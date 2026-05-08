@@ -131,15 +131,7 @@ opts_chunk$set(engine='R',dev='pdf',fig.width=10,
 \label{sec:intro}
 
 
-
-\fixme{what's causing the empty first page?}
-
-\fixme{Discuss nAGQ=0, and two-stage fitting (nAGQ=0, then nAGQ $>0$) ?}
-
-\al{I added a few paragraphs to talk about nAGQ=1 and nAGQ>1, but unsure where to
-put nAGQ=0..}
-
-\fixme{
+\fixme{Discuss nAGQ=0, and two-stage fitting (nAGQ=0, then nAGQ $>0$) ?
   (1) See \url{https://kaskr.github.io/adcomp/_book/Appendix.html} for
   details of when nAGQ=0 is appropriate; (2) ask Doug Bates and/or
   Kasper K. where the idea comes from? (3) discuss when nAGQ=0
@@ -148,6 +140,8 @@ put nAGQ=0..}
   conditions for adequacy of Laplace approx.;
   linearity of $\partial(\log{\cal L})/\partial \beta$ with respect
   to $u$ works for LMMs, when else? When link function is not too nonlinear?]}
+
+\fixme{add 'toenail' example for bad Laplace?}
   
 The \pkg{lme4} package for \proglang{R} can be used to fit a broad
 range of mixed-effects models.  One major advantage of
