@@ -92,7 +92,7 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
     deviation parameter(s) followed by the correlation parameter
     \eqn{\rho} (specified on the [0,1] scale).
   }
-  See the covariance structures vignette for more detail on covariance matrix 
+  See the \href{../doc/covariance_structures.html}{covariance structures vignette} for more detail on covariance matrix 
   parameterizations.
   
   The parameters for all random-effect terms are concatenated in the
@@ -105,8 +105,7 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
   
   For structured terms, the
   supplied \code{par} values are internally mapped by \code{getTheta()}
-  to the corresponding lower-triangular \eqn{\Lambda_\theta}{Lambda[theta]} entries
-  used by the optimizer.}
+  to the corresponding lower-triangular \eqn{\Lambda_\theta}{Lambda[theta]} entries used by the optimizer.}
 
   \item{verbose}{integer scalar.  If \code{> 0} verbose output is
     generated during the optimization of the parameter estimates.  If

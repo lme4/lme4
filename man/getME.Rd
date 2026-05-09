@@ -27,86 +27,85 @@ getME(object, name, ...)
     the \dQuote{component}.  If \code{length(name) > 1} or if \code{name
     = "ALL"}, a named \code{\link{list}} of components will be returned.  Possible values are:\cr
     \describe{
-      \item{\code{"X"}:}{fixed-effects model matrix}
-      \item{\code{"Z"}:}{random-effects model matrix}
-      \item{\code{"Zt"}:}{transpose
+      \item{\code{"X"}}{fixed-effects model matrix}
+      \item{\code{"Z"}}{random-effects model matrix}
+      \item{\code{"Zt"}}{transpose
 	of random-effects model matrix.  Note that the structure
 	of \code{Zt} has changed since \code{lme4.0}; to get a
 	backward-compatible structure, use
 	\code{do.call(Matrix::rBind,getME(.,"Ztlist"))}}
-      \item{\code{"Ztlist"}:}{list of components of the transpose of the
+      \item{\code{"Ztlist"}}{list of components of the transpose of the
 	random-effects model matrix, separated by individual
 	variance component}
-      \item{\code{"mmList"}:}{list of raw model matrices associated with random
+      \item{\code{"mmList"}}{list of raw model matrices associated with random
 	effects terms}
-      \item{\code{"y"}:}{response vector}
-      \item{\code{"mu"}:}{conditional mean of the response}
-      \item{\code{"u"}:}{conditional mode of the \dQuote{spherical}
+      \item{\code{"y"}}{response vector}
+      \item{\code{"mu"}}{conditional mean of the response}
+      \item{\code{"u"}}{conditional mode of the \dQuote{spherical}
 	random effects variable}
-      \item{\code{"b"}:}{conditional mode of the
+      \item{\code{"b"}}{conditional mode of the
 	random effects variable}
-      \item{\code{"Gp"}:}{groups pointer vector.
+      \item{\code{"Gp"}}{groups pointer vector.
 	A pointer to the beginning of each group of random
 	effects corresponding to the random-effects terms,
 	beginning with 0 and including a final element giving the
 	total number of random effects}
-      \item{\code{"Tp"}:}{theta pointer vector.  A pointer to the beginning of the theta
+      \item{\code{"Tp"}}{theta pointer vector.  A pointer to the beginning of the theta
 	sub-vectors corresponding to the random-effects terms,
 	beginning with 0 and including a final element giving the
 	number of thetas.}
-      \item{\code{"L"}:}{sparse Cholesky factor of the penalized random-effects model.}
-      \item{\code{"Lambda"}:}{relative covariance factor \eqn{\Lambda}{Lambda} of the random effects.}
-      \item{\code{"Lambdat"}:}{transpose \eqn{\Lambda'}{Lambda'} of \eqn{\Lambda}{Lambda} above.}
-      \item{\code{"Lind"}:}{index vector for inserting elements of
+      \item{\code{"L"}}{sparse Cholesky factor of the penalized random-effects model.}
+      \item{\code{"Lambda"}}{relative covariance factor \eqn{\Lambda}{Lambda} of the random effects.}
+      \item{\code{"Lambdat"}}{transpose \eqn{\Lambda'}{Lambda'} of \eqn{\Lambda}{Lambda} above.}
+      \item{\code{"Lind"}}{index vector for inserting elements of
 	\eqn{\theta}{theta} into the nonzeros of \eqn{\Lambda}{Lambda}.}
-      \item{\code{"Tlist"}:}{vector of template matrices from which the blocks of
+      \item{\code{"Tlist"}}{vector of template matrices from which the blocks of
 	\eqn{\Lambda}{Lambda} are generated.}
-      \item{\code{"A"}:}{Scaled sparse model matrix (class
+      \item{\code{"A"}}{Scaled sparse model matrix (class
 	\code{"\link[Matrix:dgCMatrix-class]{dgCMatrix}"}) for
 	the unit, orthogonal random effects, \eqn{U}, equal to
 	\code{getME(.,"Zt") \%*\% getME(.,"Lambdat")}}
-      \item{\code{"RX"}:}{Cholesky factor for the fixed-effects parameters}
-      \item{\code{"RZX"}:}{cross-term in the full Cholesky factor}
-      \item{\code{"sigma"}:}{residual standard error; note that \code{sigma(object)} is preferred.}
-      \item{\code{"flist"}:}{a list of the grouping variables (factors)
+      \item{\code{"RX"}}{Cholesky factor for the fixed-effects parameters}
+      \item{\code{"RZX"}}{cross-term in the full Cholesky factor}
+      \item{\code{"sigma"}}{residual standard error; note that \code{sigma(object)} is preferred.}
+      \item{\code{"flist"}}{a list of the grouping variables (factors)
 	involved in the random effect terms}
-      \item{\code{"fixef"}:}{fixed-effects parameter estimates}
-      \item{\code{"beta"}:}{fixed-effects parameter estimates (identical
+      \item{\code{"fixef"}}{fixed-effects parameter estimates}
+      \item{\code{"beta"}}{fixed-effects parameter estimates (identical
 	to the result of \code{\link{fixef}}, but without names)}
-      \item{\code{"theta"}:}{lower triangular entries of Cholesky
+      \item{\code{"theta"}}{lower triangular entries of Cholesky
 	factors of relative random effect covariance matrices, stored in
 	column-major order.}
-      \item{\code{"par"}:}{relative random effect covariance parameter
+      \item{\code{"par"}}{relative random effect covariance parameter
 	estimates.}
-      \item{\code{"ST"}:}{A list of S and T factors in the TSST' Cholesky
+      \item{\code{"ST"}}{A list of S and T factors in the TSST' Cholesky
       factorization of the relative variance matrices of the random
       effects associated with each random-effects term.  The unit lower
       triangular matrix, \eqn{T}, and the diagonal matrix, \eqn{S}, for
       each term are stored as a single matrix with diagonal elements
       from \eqn{S} and off-diagonal elements from \eqn{T}.}
-      \item{\code{"n_rtrms"}:}{number of random-effects terms}
-      \item{\code{"n_rfacs"}:}{number of distinct random-effects grouping factors}
-      \item{\code{"N"}:}{number of rows of \code{X}}
-      \item{\code{"n"}:}{length of the response vector, \code{y}}
-      \item{\code{"p"}:}{number of columns of the fixed effects model matrix, \code{X}}
-      \item{\code{"q"}:}{number of columns of the random effects model matrix, \code{Z}}
-      \item{\code{"npar"}:}{number of parameters in the optimizer's parameter space.  
-        For standard (unstructured) covariance models
-        this equals \code{m} (= \code{nth}); for structured covariance models (e.g.,
-        \code{ar1}) the optimizer works in a lower-dimensional space so \code{npar < m}.}
-      \item{\code{"p_i"}:}{numbers of columns of the raw model matrices, \code{mmList}}
-      \item{\code{"l_i"}:}{numbers of levels of the grouping factors}
-      \item{\code{"q_i"}:}{numbers of columns of the term-wise model matrices, \code{ZtList}}
-      \item{\code{"k"}:}{number of random effects terms}
-      \item{\code{"m_i"}:}{numbers of covariance parameters in each term}
-      \item{\code{"m"}:}{total number of covariance parameters, i.e., the
+      \item{\code{"n_rtrms"}}{number of random-effects terms}
+      \item{\code{"n_rfacs"}}{number of distinct random-effects grouping factors}
+      \item{\code{"N"}}{number of rows of \code{X}}
+      \item{\code{"n"}}{length of the response vector, \code{y}}
+      \item{\code{"p"}}{number of columns of the fixed effects model matrix, \code{X}}
+      \item{\code{"q"}}{number of columns of the random effects model matrix, \code{Z}}
+      \item{\code{"npar"}}{number of optimization parameters for
+        random effects covariance matrices (see \code{npar} under
+        the \code{name} argument above)}
+      \item{\code{"p_i"}}{numbers of columns of the raw model matrices, \code{mmList}}
+      \item{\code{"l_i"}}{numbers of levels of the grouping factors}
+      \item{\code{"q_i"}}{numbers of columns of the term-wise model matrices, \code{ZtList}}
+      \item{\code{"k"}}{number of random effects terms}
+      \item{\code{"m_i"}}{numbers of covariance parameters in each term}
+      \item{\code{"m"}}{total number of covariance parameters, i.e., the
 	same as \code{dims@nth} below.}
-      \item{\code{"cnms"}:}{the \dQuote{component names}, a \code{\link{list}}.}
-      \item{\code{"REML"}:}{\code{0} indicates the model was fitted by maximum
+      \item{\code{"cnms"}}{the \dQuote{component names}, a \code{\link{list}}.}
+      \item{\code{"REML"}}{\code{0} indicates the model was fitted by maximum
 	likelihood, any other positive integer indicates fitting by
 	restricted maximum likelihood}
-      \item{\code{"is_REML"}:}{same as the result of \code{\link{isREML}(.)}}
-      \item{\code{"devcomp"}:}{a list consisting of a named numeric vector,
+      \item{\code{"is_REML"}}{same as the result of \code{\link{isREML}(.)}}
+      \item{\code{"devcomp"}}{a list consisting of a named numeric vector,
         \code{cmp}, and a named integer vector, \code{dims}, describing
         the fitted model.  The elements of \code{cmp} are:\cr
 	\describe{
@@ -125,7 +124,7 @@ getME(object, name, ...)
 	  \item{sigmaREML}{REML estimate of residual standard deviation}
 	  \item{tolPwrss}{tolerance for declaring convergence in the
 	  penalized iteratively weighted residual sum-of-squares (GLMMs only)}
-	} The elements of \code{dims} are:\cr
+	} The elements of \code{dims} are:
 	\describe{
 	  \item{N}{number of rows of \code{X}}
           \item{n}{length of \code{y}}
@@ -142,13 +141,15 @@ getME(object, name, ...)
 	    restricted maximum likelihood}
           \item{GLMM}{\code{TRUE} if a GLMM}
 	  \item{NLMM}{\code{TRUE} if an NLMM}
-          \item{npar}{number of parameters in the optimizer's parameter space
-            ; equals \code{nth} for standard models, less than \code{nth} 
-            for structured covariance models (e.g., \code{ar1})}
+    \item{npar}{number of optimization parameters for random effects
+      covariance matrices;
+      equals \code{nth} for models with only unstructured
+      covariances, less than \code{nth} for models including any
+      structured covariance models (e.g., \code{ar1})}
 	}
-      }
-      \item{\code{"offset"}:}{model offset}
-      \item{\code{"lower"}:}{lower bounds on random-effects model
+}
+      \item{\code{"offset"}}{model offset}
+      \item{\code{"lower"}}{lower bounds on random-effects model
 	parameters (i.e, "theta" parameters). In order to constrain
 	random effects covariance matrices to be semi-positive-definite,
 	this vector is equal to 0 for elements of
@@ -157,16 +158,16 @@ getME(object, name, ...)
 	otherwise. (\code{getME(.,"lower")==0} can be used as a test to
 	identify diagonal elements, as in \code{isSingular}.)
       }
-      \item{\code{"devfun"}:}{deviance function.}
-      \item{\code{"devarg"}:}{deviance function argument, the
+      \item{\code{"devfun"}}{deviance function.}
+      \item{\code{"devarg"}}{deviance function argument, the
 	concatenation of \code{getME(object, "par")} and
 	(if \code{object} is a \code{\linkS4class{glmerMod}} object)
 	\code{getME(object, "beta")}.}
-      \item{\code{"glmer.nb.theta"}:}{negative binomial \eqn{\theta} parameter,
+      \item{\code{"glmer.nb.theta"}}{negative binomial \eqn{\theta} parameter,
 	only for \code{\link{glmer.nb}}.}
 
       %% -- keep at the very end:
-      \item{\code{"ALL"}:}{get all of the above as a \code{\link{list}}.}
+      \item{\code{"ALL"}}{get all of the above as a \code{\link{list}}.}
     }
   }
   \item{\dots}{currently unused in \pkg{lme4}, potentially further
