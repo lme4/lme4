@@ -1,38 +1,80 @@
 library("lme4")
 
 cbpp2 <- read.csv("cbpp2.csv")
-cbpp2 <- transform(cbpp2,period=factor(period),
-                   treatment=factor(treatment,
-                                    levels=c("Partial/null","Complete","Unknown")))
+cbpp2 <- transform(
+  cbpp2,
+  period = factor(period),
+  treatment = factor(
+    treatment,
+    levels = c("Partial/null", "Complete", "Unknown")
+  ),
+  obs = factor(seq(nrow(cbpp2))),
+  avg_size = avg_size / sd(avg_size, na.rm = TRUE)
+)
 
-gm1 <- glmer(incidence/size ~ period + treatment + avg_size + (1 | herd),
-             family = binomial,
-             data = cbpp2, weights = size)
-cbpp2 <- transform(cbpp2,obs=factor(seq(nrow(cbpp2))))    
-gm2 <- update(gm1,.~.+(1|obs))  ## herd and observation-level REs
-gm3 <- update(gm1,.~.-(1|herd)+(1|obs))  ## observation-level REs only
+gm_herd <- glmer(
+  incidence / size ~ period + treatment + avg_size + (1 | herd),
+  family = binomial,
+  data = cbpp2,
+  weights = size,
+  control = glmerControl(optimizer = "bobyqa")
+)
 
-confint0.boot2 <- confint(gm1,method="boot",seed=101,nsim=501,signames=FALSE)
-confint.boot2 <- confint(gm2,method="boot",seed=101,nsim=501,signames=FALSE)
-confint3.boot2 <- confint(gm3,method="boot",seed=101,nsim=501,signames=FALSE)
+gm_herdobs <- update(gm_herd, . ~ . + (1 | obs)) ## herd and observation-level REs
+gm_obs <- update(gm_herd, . ~ . - (1 | herd) + (1 | obs)) ## observation-level REs only
 
-# Already saved below.
-save("confint0.boot2", "confint.boot2","confint3.boot2",
-     file="CBPP_bootbatch.rda")
+b_cifun <- function(x) {
+  cat(deparse(getCall(x)$formula), "\n")
+  confint(x, method = "boot", seed = 101, nsim = 501, signames = FALSE,
+          parallel = "multicore", ncpus = 10)
+}
 
-profile.gm1 <- profile(gm1,signames=FALSE, devtol = 1e-2,
-                       verbose = TRUE)
-profile.gm2 <- profile(gm2,signames=FALSE, devtol = 1e-2)
-profile.gm3 <- profile(gm3,signames=FALSE)
-confint1.prof <- confint(profile.gm1)
-#confint.prof <- confint(profile.gm2)
-confint3.prof <- confint(profile.gm3)
+p_fun <- function(x) {
+  cat(deparse(getCall(x)$formula), "\n")
+  profile(x, signames = FALSE,
+          devtol = 1e-2,
+          maxpts = 250,
+          parallel = "multicore", ncpus = 10)
+}
 
-confint0.wald <-confint(gm1,method="Wald",signames=FALSE)
-confint.wald <- confint(gm2,method="Wald",signames=FALSE)
-confint3.wald <- confint(gm3,method="Wald",signames=FALSE)
-save(list=c(ls(pattern="confint.*"),
-            ls(pattern="profile.*")),
-     file="CBPP_profbatch.rda")
+mnames <- c("herd", "obs", "herdobs")
+mod_list <- mget(sprintf("gm_%s", mnames))
+cbpp_confint_boot <- lapply(mod_list, b_cifun)
+names(cbpp_confint_boot) <- mnames
+
+cbpp_prof <- lapply(mod_list, p_fun)
+
+if (FALSE) {
+  ## experimenting/exploring
+  profile.gm1 <- cbpp_confint_prof$herd
+  lattice::xyplot(profile.gm1)
+
+  library(ggplot2)
+  p2 <- as.data.frame(profile.gm1)
+  ggplot(p2, aes(.focal, .zeta)) +
+    geom_point() +
+    geom_line() +
+    facet_wrap(~.par, scale = "free")
+}
+
+cbpp_confint_prof <- lapply(cbpp_prof, confint)
+
+cbpp_confint_wald <- lapply(mod_list, function(x) confint(x, method = "Wald", signames = FALSE))
+
+get_est <- function(mod, model_name) {
+  v <- as.data.frame(VarCorr(mod))
+  vnames <- paste0("sd_", v$var1, "|", v$grp)
+  est <- c(fixef(mod), setNames(v$sdcor, vnames))
+  data.frame(model=model_name, var=names(est), est=est, row.names=NULL)
+}
+
+cbpp_est <- do.call("rbind",
+                     Map(get_est, mod_list, mnames))
+rownames(cbpp_est) <- NULL
+
+combfun <- function(
+save(
+  list = c("cbpp_confint_prof", "cbpp_confint_boot", "cbpp_confint_wald", "cbpp_prof", "cbpp_est"),
+  file = "CBPP_batch.rda"
+)
 sessionInfo()
-

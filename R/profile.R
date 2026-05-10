@@ -262,7 +262,7 @@ profile.merMod <- function(fitted,
                     warning(gettextf("slightly lower deviances (diff=%g) detected",
                                      devdiff), domain=NA)
             }
-            devdiff <- max(0,devdiff)
+            devdiff <- max(devtol, devdiff)
             zz <- sign(xx - pw) * sqrt(devdiff)
             r <- c(zz, mkpar(npar1, w, xx, pars))
             if (isLMM(fitted)) c(r, pp$beta(1)) else r

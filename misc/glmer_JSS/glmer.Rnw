@@ -982,8 +982,8 @@ mList <- setNames(list(gm1,gm2,gm3),mnames)
 
 %% lme4 wishlist: allow [Ww]ald in confint.merMod?
 <<loadbatch,echo=FALSE>>=
-bootVars <- load("CBPP_bootbatch.rda")
-profVars <- load("CBPP_profbatch.rda")
+load("CBPP_batch.rda")
+CBPP_batch_vars <- load("CBPP_profbatch.rda")
 @
 
 The \code{profile} method computes profile likelihoods.
