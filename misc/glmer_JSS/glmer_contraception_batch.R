@@ -58,8 +58,6 @@ contr_prof <- lapply(mod_list, p_fun)
 contr_confint_prof <- lapply(contr_prof, confint)
 contr_confint_boot <- lapply(mod_list, b_cifun)
 
-save(list = c(ls(pattern = "contr_.*"), "df_name"),
-     file = "Contraception_batch.rda")
 
 stop()
 
@@ -71,4 +69,5 @@ contr.hetdiag <- glmer(use ~ diag(1 + age|district, hom = FALSE),
 contr.cs <- glmer(use ~ cs(1 + age|district), Contraception, binomial)
 contr.hetcs <- glmer(use ~ cs(1 + age|district, hom = FALSE), Contraception, binomial)
 
-
+vars <- c(ls(pattern = "contr.*"), "df_name")
+save(vars, file = "Contraception_batch.rda", version = 2)
