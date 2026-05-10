@@ -971,19 +971,10 @@ as the reduced model, confidence intervals that incorporate
 non-local information (i.e. profile- or parametric bootstrap-based)
 will give different, more conservative results for the full model.
 
-<<AICtab,echo=FALSE,eval=FALSE>>=
-mnames <- c("herd","herd+obs","obs")
-mList <- setNames(list(gm1,gm2,gm3),mnames)
-## library(plyr)
-## print(ldply(mList,function(x) {
-##    as.data.frame(VarCorr(x))[,c("grp","sdcor")]}),digits=2)
-## a1 <- bbmle::AICtab(gm1,gm2,gm3,mnames=mnames)
-@
-
 %% lme4 wishlist: allow [Ww]ald in confint.merMod?
 <<loadbatch,echo=FALSE>>=
-load("CBPP_batch.rda")
-CBPP_batch_vars <- load("CBPP_profbatch.rda")
+cbpp_batch_vars <- load("CBPP_batch.rda")
+contr_batch_vars <- load("Contraception_batch.rda")
 @
 
 The \code{profile} method computes profile likelihoods.
@@ -1025,77 +1016,32 @@ Figure~\ref{fig:confPlot} compares all three of these confidence intervals
 across all three of the models fitted.
 
 <<cbppConfidence,echo=FALSE>>=
-mfun <- function(x, type, model) {
-
+mfun1 <- function(x, model, model_id) {
    df <- data.frame(var = rownames(x), x, check.names = FALSE)
    names(df)[names(df) == "2.5 %"]  <- "lwr"
    names(df)[names(df) == "97.5 %"] <- "upr"
-   value_cols <- setdiff(names(df), "var")
-   m <- reshape(
-          df,
-          varying = value_cols,
-          v.names = "value",
-          timevar = "variable",
-          times = value_cols,
-          idvar = "var",
-          direction = "long"
-       )
-   rownames(m) <- NULL
-   data.frame(model = model, type = type, m)
+   rownames(df) <- NULL
+   df$model <- model
+   df$model_id <- model_id
+   df
 }
-
-combCI0 <- do.call(rbind, c(
-  mapply(mfun, list(confint0.boot2, confint0.wald),
-         c("boot","Wald"), "gm1", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.boot2, confint.wald),
-         c("boot","Wald"), "gm2", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint3.prof, confint3.boot2, confint3.wald),
-         c("profile","boot","Wald"), "gm3", SIMPLIFY=FALSE)
-))
-
-combCI0 <- combCI0[combCI0$var != ".sig01", ]
-combCI0 <- combCI0[combCI0$var != "treatmentPartial/null", ]
-
-get_est <- function(mod, model_name) {
-  v <- as.data.frame(VarCorr(mod))
-  vnames <- paste0("sd_", v$var1, "|", v$grp)
-  est <- c(fixef(mod), setNames(v$sdcor, vnames))
-  data.frame(model=model_name, var=names(est), est=est, row.names=NULL)
+mfun2 <- function(x, type) {
+  df <- do.call("rbind", Map(mfun1, x, df_name$mdesc, df_name$mnames))
+  df <- merge(df, contr_est, by.x = c("model_id", "var"), by.y = c("model", "var"))
+  df$type <- type
+  df
 }
-
-combEst2 <- do.call(rbind, list(
-  get_est(gm1, "gm1"),
-  get_est(gm2, "gm2"),
-  get_est(gm3, "gm3")
-))
-
-  
-my_dcast <- function(x) {
-  x_wide <- reshape(x,
-     idvar = c("var", "type", "model"),
-     timevar = "variable",
-     direction = "wide"
-   )
-   names(x_wide) <- sub("^value\\.", "", names(x_wide))
-   x_wide
-}
-
-combCI <- merge(my_dcast(combCI0), combEst2, 
-                by=c("var","model"), all.x=TRUE)
+## mfun1(contr_confint_wald[[1]], "hello", "h")
+## do.call("rbind", Map(mfun1, contr_confint_wald, df_name$mdesc, df_name$mnames))
+## mfun2(contr_confint_wald, "wald")
+combCI <- do.call("rbind", Map(mfun2,
+              list(contr_confint_wald, contr_confint_boot, contr_confint_prof),
+               c("Wald", "boot", "profile")))
 combCI <- transform(combCI, model_type = interaction(model, type, sep="\n"))
 des_ord <- c("sd_(Intercept)|herd", "sd_(Intercept)|obs",
              "avg_size", "treatmentUnknown", "treatmentComplete")
 combCI <- subset(combCI,var!="(Intercept)" & !grepl("^period",var))
 combCI <- transform(combCI,  var = factor(var, levels = rev(des_ord)))
-avg_size_2sd <- 2*sd(cbpp2$avg_size)
-scfun <- function(v) {
-  combCI[combCI$var == "avg_size", v] <-
-    combCI[combCI$var == "avg_size", v]*avg_size_2sd
-  assign("combCI", combCI, parent.frame())
-}
-scfun("lwr")
-scfun("upr")
-scfun("est")
 combCI <- transform(combCI,
             vartype = factor(ifelse(grepl("^sd", var), "random effects", "fixed effects"))
 )                    

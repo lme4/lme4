@@ -70,4 +70,4 @@ contr.cs <- glmer(use ~ cs(1 + age|district), Contraception, binomial)
 contr.hetcs <- glmer(use ~ cs(1 + age|district, hom = FALSE), Contraception, binomial)
 
 vars <- c(ls(pattern = "contr.*"), "df_name")
-save(vars, file = "Contraception_batch.rda", version = 2)
+save(list = vars, file = "Contraception_batch.rda", version = 2)
