@@ -8,8 +8,8 @@
   \subsection{BUG FIXES}{
     \itemize{
       \item fixed the bug where \code{glmer} with structured covariance models
-      would return incorrect fixed effect coefficients (zero values, or too few
-      values) (GH #962).
+      would return incorrect fixed effect coefficients (zero values, or wrong
+      number of values) (GH #962).
       \item fixed the case where a Gamma GLMM doesn't perform well for 
       data with small shape parameters by changing the starting 
       optimization values for Gamma families (GH #290)
