@@ -7,12 +7,12 @@
 \section{CHANGES IN VERSION 2.0-2}{
   \subsection{BUG FIXES}{
     \itemize{
-      \item fixed the bug where \code{glmer} with structured covariance models
+      \item fixed bug where \code{glmer} with structured covariance models
       would return incorrect fixed effect coefficients (zero values, or wrong
       number of values) (GH #962).
-      \item fixed the case where a Gamma GLMM doesn't perform well for 
+      \item fixed the case where a Gamma GLMM performs poorly for 
       data with small shape parameters by changing the starting 
-      optimization values for Gamma families (GH #290)
+      parameter values for Gamma families (GH #290)
       \item fixed parameter-counting bug for structured covariance
       matrices (internal \code{npar.merMod} function, results exposed in
       \code{logLik}, \code{anova}, \code{df.residual} ...) (GH #943,
