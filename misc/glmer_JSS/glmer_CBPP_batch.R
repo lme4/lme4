@@ -1,4 +1,4 @@
-require("lme4")
+library("lme4")
 
 cbpp2 <- read.csv("cbpp2.csv")
 cbpp2 <- transform(cbpp2,period=factor(period),

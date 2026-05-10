@@ -118,8 +118,6 @@ library(grid)
 library(gridExtra)
 zmargin <- theme(panel.margin=unit(0,"lines"))
 library(lattice)
-library(reshape2)
-library(plyr)
 library(DHARMa)
 library(performance)
 opts_chunk$set(engine='R',dev='pdf',fig.width=10,
@@ -133,7 +131,6 @@ opts_chunk$set(engine='R',dev='pdf',fig.width=10,
 \label{sec:intro}
 
 \fixme{add 'toenail' example for bad Laplace?}
-\fixme{avoid needing plyr, reshape2 packages (melt/rename)}
 
 The \pkg{lme4} package for \proglang{R} can be used to fit a broad
 range of mixed-effects models.  One major advantage of
@@ -717,26 +714,22 @@ ascribing the null results to
 
 <<newcbpp,echo=FALSE,warning=FALSE,message=FALSE,eval=FALSE>>=
 c2 <- read.csv("cbpp.csv",comment="#")
-m2 <- melt(c2,id.var=1:3)
-## now colsplit and get into appropriate format: *OR*
-## merge treatment info with existing cbpp data
-m3 <- data.frame(subset(m2,select=-variable),
-                 colsplit(m2$variable,"_",names=c("var","period")))
-m4 <- dcast(m3,herd+treatment+avg_size+period~var)
-tfun <- function(x) {
-    OK <- !is.na(x)
-    y <- numeric(length(x))
-    y[!OK] <- NA
-    y[OK] <- as.numeric(as.character(x[OK]))
-    y
-}
-m5 <- transform(rename(m4,c(N="size")),percent=prop/100)
-m6 <- transform(m5,incidence=round(percent*size))
-cbpp2 <- na.omit(subset(m6,select=c(herd,treatment,avg_size,
-                           period,size,incidence)))
-## write.csv(cbpp2,"cbpp2.csv",row.names=FALSE)
-cbpp2$herd <- with(cbpp2,reorder(factor(herd),incidence/size))
-## CHECK vs cbpp data set??
+mm <- reshape(
+  c2,
+  varying = list(
+    N = paste0("N_", 1:4),
+    prop = paste0("prop_", 1:4)
+  ),
+  v.names = c("size", "prop"),
+  timevar = "group",
+  times = 1:4,
+  direction = "long"
+  )
+mm <- transform(mm, percent=prop/100)
+mm <- transform(mm,incidence=round(percent*size))
+cbpp2 <- na.omit(subset(mm,select=c(herd,treatment,avg_size,
+                         period,size,incidence)))
+cbpp2$herd <- with(cbpp2, reorder(factor(herd),incidence/size))
 @
 <<newcbpp2,echo=FALSE>>=
 cbpp2 <- read.csv("cbpp2.csv")
@@ -1033,9 +1026,22 @@ across all three of the models fitted.
 
 <<cbppConfidence,echo=FALSE>>=
 mfun <- function(x, type, model) {
-  m <- melt(rename(data.frame(var=rownames(x), x, check.names=FALSE),
-                   c("2.5 %"="lwr", "97.5 %"="upr")), id="var")
-  data.frame(model=model, type=type, m)
+
+   df <- data.frame(var = rownames(x), x, check.names = FALSE)
+   names(df)[names(df) == "2.5 %"]  <- "lwr"
+   names(df)[names(df) == "97.5 %"] <- "upr"
+   value_cols <- setdiff(names(df), "var")
+   m <- reshape(
+          df,
+          varying = value_cols,
+          v.names = "value",
+          timevar = "variable",
+          times = value_cols,
+          idvar = "var",
+          direction = "long"
+       )
+   rownames(m) <- NULL
+   data.frame(model = model, type = type, m)
 }
 
 combCI0 <- do.call(rbind, c(
@@ -1063,7 +1069,18 @@ combEst2 <- do.call(rbind, list(
   get_est(gm3, "gm3")
 ))
 
-combCI <- merge(dcast(combCI0, var + type + model ~ variable), combEst2, 
+  
+my_dcast <- function(x) {
+  x_wide <- reshape(x,
+     idvar = c("var", "type", "model"),
+     timevar = "variable",
+     direction = "wide"
+   )
+   names(x_wide) <- sub("^value\\.", "", names(x_wide))
+   x_wide
+}
+
+combCI <- merge(my_dcast(combCI0), combEst2, 
                 by=c("var","model"), all.x=TRUE)
 combCI <- transform(combCI, model_type = interaction(model, type, sep="\n"))
 des_ord <- c("sd_(Intercept)|herd", "sd_(Intercept)|obs",
@@ -1154,17 +1171,6 @@ For this particular model, a heterogeneous AR1 model (\code{ar1(..., hom = FALSE
 
 See the \href{https://cran.r-project.org/web/packages/lme4/vignettes/covariance_structures.html}{lme4 covariance structures vignette}
 for more detail.
-
-
-<<varcorr_plot_gm1.ar1,fig.cap="CBPP example: variance-covariance matrix of the grouping term period.",fig.scap="CBPP VarCorr",echo=FALSE,eval=FALSE,fig.width=7>>=
-# Removed since may not be that important or illustrative.
-vc_mat2 <- melt(vc_mat$period)
-ggplot(vc_mat2, aes(Var1, Var2, fill = value)) + 
-  geom_tile() + 
-  geom_text(aes(label = round(value, 2)), color = "white", size = 4) +
-  coord_fixed() + ylab("") + xlab("") + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-@
 
 \subsection{Contraception}
 
@@ -1361,7 +1367,7 @@ combEst2 <- do.call(rbind, list(
   get_est2(cm4, "cm4"), get_est2(cm5, "cm5"), get_est2(cm6, "cm6")
 ))
 
-contr_combCI <- merge(dcast(contr_combCI0, var + type + model ~ variable), combEst2, 
+contr_combCI <- merge(my_dcast(contr_combCI0), combEst2, 
                 by=c("var","model"), all.x=TRUE)
 
 contr_combCI <- transform(contr_combCI, model_type = interaction(model, type, sep="\n"))
