@@ -7,12 +7,12 @@
 \section{CHANGES IN VERSION 2.0-2}{
   \subsection{BUG FIXES}{
     \itemize{
-      \item fixed the bug where glmer + ar1 returns zero values for fixed 
-      effect coefficients (GH #962). There were also related issues where 
-      the length of `colnames(getME())` was unequal to `getME()`.
+      \item fixed the bug where \code{glmer} with structured covariance models
+      would return incorrect fixed effect coefficients (zero values, or too few
+      values) (GH #962).
       \item fixed the case where a Gamma GLMM doesn't perform well for 
-      a small shape parameter by changing the initial starting 
-      point of the optimizer for Gamma families (GH #290)
+      data with small shape parameters by changing the starting 
+      optimization values for Gamma families (GH #290)
       \item fixed parameter-counting bug for structured covariance
       matrices (internal \code{npar.merMod} function, results exposed in
       \code{logLik}, \code{anova}, \code{df.residual} ...) (GH #943,
@@ -22,7 +22,7 @@
       in decreasing order of number of grouping variable levels, this
       ordering was not applied consistently) (GH #945, Henrik Singmann)
       \item fixed the case where \code{lme4::lmList} prints grouping variable 
-      as \code{NULL} (see GH #958)
+      as \code{NULL} (GH #958)
     } % itemize
   } % bug fixes
   \subsection{NEW FEATURES}{

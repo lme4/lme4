@@ -518,10 +518,13 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
         pars <- opt$par
         ## making the assertion that length(pars) > npar iff nAGQ > 0;
         ## skip when pars=NA (simulate path uses a placeholder opt)
-        if (!anyNA(pars) && (length(pars) == dims[["npar"]]) != (dims[["nAGQ"]]==0L))
-            stop(sprintf("unexpected parameter vector length: length(pars)=%d, npar=%d, nAGQ=%d; ",
-                         length(pars), dims[["npar"]], dims[["nAGQ"]]),
-                 "expected length(pars)==npar iff nAGQ==0")
+        ## expected pars: add # fixed pars to # opt pars if nAGQ>0
+        expected_par_length <- dims[["npar"]] + as.numeric(dims[["nAGQ"]]>0L)*dims[["p"]]
+        if (!anyNA(pars) && (length(pars) != expected_par_length)) {
+          stop(sprintf("unexpected parameter vector length: length(pars)=%d, npar=%d, nAGQ=%d; ",
+                       length(pars), dims[["npar"]], dims[["nAGQ"]]),
+               "(expected length(pars)==npar iff nAGQ==0)")
+        }
         ## For structured covariance models (e.g., ar1), npar = length(reTrms$lower)
         ## may be less than length(pp$theta), so we use dims[["npar"]] to index correctly.
         if (dims[["nAGQ"]] > 0L) beta <- pars[-seq_len(dims[["npar"]])]

@@ -19,9 +19,20 @@ dd$out_gauss <- simulate_new(form[-2], newdata = dd,
 
 glmmTMB_1 <- glmmTMB(form, data = dd, family = binomial)
 
-glmmTMB_glmer_ar1_comparison <- list(
-  glmer_ar1_dd = dd,
-  glmmTMB_ar1_binomial = glmmTMB_1
+## store just results
+glmmTMB_1_ref <- list(
+  fixef_cond = unname(fixef(glmmTMB_1)$cond),
+  sigma = unname(sigma(glmmTMB_1)),
+  logLik = unname(c(logLik(glmmTMB_1))),
+  AIC = unname(AIC(glmmTMB_1)),
+  BIC = unname(BIC(glmmTMB_1)),
+  nobs = nobs(glmmTMB_1),
+  glmmTMB_version = packageVersion("glmmTMB")
 )
 
-saveRDS(glmmTMB_glmer_ar1_comparison, "inst/testdata/glmmTMB_glmer_ar1_comparison.rds")
+glmmTMB_glmer_ar1_comparison <- list(
+  glmer_ar1_dd = dd,
+  glmmTMB_ar1_binomial = glmmTMB_1_ref
+)
+
+saveRDS(glmmTMB_glmer_ar1_comparison, "inst/testdata/glmmTMB_glmer_ar1_comparison.rds", version = 2)
