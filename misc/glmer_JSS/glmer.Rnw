@@ -1476,6 +1476,9 @@ the Hessian via $\bm R$, we have that,
 
 \subsection{Gauss-Markov}
 
+\subsection{toenails}
+
+<<toenail>>=
 \end{document}
 
 %%% Local Variables:
