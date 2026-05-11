@@ -986,6 +986,8 @@ The \code{DHARMa} package is also compatible with \code{merMod} objects.
 generalized linear (mixed) models and uses them for graphical
 and statistical tests of model assumptions (Figure~\ref{fig:dharma_mod_cbpp}).
 
+\fixme{explain/justify significant quantile test in DHARMa model}
+
 <<dharma_mod_cbpp,fig.cap="Model assumption checks using the DHARMa package. \\code{n.s.} denotes ``not significant.''",echo=FALSE>>=
 simulationOutput <- simulateResiduals(fittedModel = gm1)
 plot(simulationOutput)
@@ -1019,7 +1021,7 @@ will give different, more conservative results for the full model.
 
 %% lme4 wishlist: allow [Ww]ald in confint.merMod?
 <<loadbatch,echo=FALSE>>=
-cbpp_batch_vars <- load("CBPP_batch.rda")
+cbpp_batch_vars <- load("cbpp_batch.rda")
 contr_batch_vars <- load("Contraception_batch.rda")
 @
 
@@ -1058,7 +1060,7 @@ Parametric bootstrapping is much slower, but more accurate
 (and, via the \code{FUN} argument, can generate confidence intervals
 for any quantity that can be derived from a fitted model).
 
-Figure~\ref{fig:confPlot} compares all three of these confidence intervals
+Figure~\ref{fig:cbppcompplot} compares all three of these confidence intervals
 across all three of the models fitted.
 
 <<cbppConfidence,echo=FALSE>>=
@@ -1071,9 +1073,9 @@ combCI <- transform(combCI,
 )                    
 @
 
-\fixme{Figure 8: why are some profile results still wonky?}
+\fixme{Figure~\ref{fig:cbppcompplot}: why are some profile results still wonky?}
 
-<<confPlot,fig.cap="CBPP example: comparison of point and confidence interval estimation for different methods.",fig.scap="CBPP comparison",echo=FALSE,fig.width=7,fig.height=5,warning=FALSE>>=
+<<cbppcompplot,fig.cap="CBPP example: comparison of point and confidence interval estimation for different methods.",fig.scap="CBPP comparison",echo=FALSE,fig.width=7,fig.height=5,warning=FALSE>>=
 mnames <- cbpp_df_name$mnames
 pd <- position_dodge(width=0.6)
 ggplot(combCI, aes(var, est, colour=type, shape=model)) +
@@ -1290,7 +1292,7 @@ As with the CBPP data set, we can also compute
 profile, Wald, and parametric bootstrap confidence intervals for all of the models to
 understand the effects of each variable and visualize the among-model variation.
 
-\fixme{Figure 10: why are age estimates different for additive models even though I've set sum-to-zero contrasts ? Where did cor parameter go for the one model that has it?}
+\fixme{Figure~\ref{fig:contracompplot}: why are age estimates different for additive models even though I've set sum-to-zero contrasts ? Where did cor parameter go for the one model that has it?}
 <<ContraceptionBatch,echo=FALSE>>=
 contr_combCI <- subset(contr_combCI, var != "(Intercept)")
 combCI <- transform(contr_combCI,
@@ -1299,7 +1301,7 @@ combCI <- transform(contr_combCI,
     )
 @
 
-<<confPlot2,fig.cap="Contraception example: comparison of point and confidence interval estimation for different methods.",fig.scap="Contraception comparison",echo=FALSE,fig.width=10,fig.height=10,warning=FALSE>>=
+<<contracompplot,fig.cap="Contraception example: comparison of point and confidence interval estimation for different methods.",fig.scap="Contraception comparison",echo=FALSE,fig.width=10,fig.height=10,warning=FALSE,fig.lab="fig:contracomp">>=
 ggplot(combCI, aes(var, est, colour=type, shape=model)) +
   geom_pointrange(aes(ymin=lwr, ymax=upr),
                   position=position_dodge(width=0.6)) +
