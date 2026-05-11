@@ -1,6 +1,7 @@
 library("lme4")
-
 cbpp2 <- read.csv("cbpp2.csv")
+source("glmer_batch_funs.R")
+
 cbpp2 <- transform(
   cbpp2,
   period = factor(period),
@@ -12,37 +13,32 @@ cbpp2 <- transform(
   avg_size = avg_size / sd(avg_size, na.rm = TRUE)
 )
 
-gm_herd <- glmer(
-  incidence / size ~ period + treatment + avg_size + (1 | herd),
-  family = binomial,
-  data = cbpp2,
-  weights = size,
-  control = glmerControl(optimizer = "bobyqa")
-)
+cbpp_df_name <- data.frame(
+  mnames = c("herd", "herdobs", "obs"),
+  mdesc = c("herd", "herdobs", "obs"))
 
-gm_herdobs <- update(gm_herd, . ~ . + (1 | obs)) ## herd and observation-level REs
-gm_obs <- update(gm_herd, . ~ . - (1 | herd) + (1 | obs)) ## observation-level REs only
+mforms <- list()
+mforms$herd <- incidence / size ~ period + treatment + avg_size + (1 | herd)
+mforms$herdobs <- update(mforms$herd, . ~ . + (1 | obs))
+mforms$obs <- update(mforms$herd, . ~ . - (1|herd) + (1 | obs))
 
-b_cifun <- function(x) {
-  cat(deparse(getCall(x)$formula), "\n")
-  confint(x, method = "boot", seed = 101, nsim = 501, signames = FALSE,
-          parallel = "multicore", ncpus = 10)
+## don't use lapply because of parent.frame() eval nonsense -- check back once GH#961 is merged?
+## this fails:
+##   mod_list <- lapply(mforms, glmer, data = cbpp2, family = binomial, weights = size)
+## when evaluating 'weights'
+
+cbpp_mod_list <- list()
+for (i in names(mforms)) {
+  cbpp_mod_list[[i]] <- glmer(mforms[[i]],
+                              data = cbpp2,
+                              family = binomial,
+                              weights = size,
+                              control = glmerControl(optimizer = "bobyqa",
+                                                     optCtrl = list(maxfun = 1000)))
 }
 
-p_fun <- function(x) {
-  cat(deparse(getCall(x)$formula), "\n")
-  profile(x, signames = FALSE,
-          devtol = 1e-2,
-          maxpts = 250,
-          parallel = "multicore", ncpus = 10)
-}
-
-mnames <- c("herd", "obs", "herdobs")
-mod_list <- mget(sprintf("gm_%s", mnames))
-cbpp_confint_boot <- lapply(mod_list, b_cifun)
-names(cbpp_confint_boot) <- mnames
-
-cbpp_prof <- lapply(mod_list, p_fun)
+cbpp_confint_boot <- lapply(cbpp_mod_list, b_cifun)
+cbpp_prof <- lapply(cbpp_mod_list, p_fun)
 
 if (FALSE) {
   ## experimenting/exploring
@@ -58,21 +54,17 @@ if (FALSE) {
 }
 
 cbpp_confint_prof <- lapply(cbpp_prof, confint)
-
-cbpp_confint_wald <- lapply(mod_list, function(x) confint(x, method = "Wald", signames = FALSE))
-
-get_est <- function(mod, model_name) {
-  v <- as.data.frame(VarCorr(mod))
-  vnames <- paste0("sd_", v$var1, "|", v$grp)
-  est <- c(fixef(mod), setNames(v$sdcor, vnames))
-  data.frame(model=model_name, var=names(est), est=est, row.names=NULL)
-}
-
-cbpp_est <- do.call("rbind",
-                     Map(get_est, mod_list, mnames))
+cbpp_confint_wald <- lapply(cbpp_mod_list, function(x) confint(x, method = "Wald", signames = FALSE))
+cbpp_est <- do.call("rbind", Map(get_est, cbpp_mod_list, cbpp_df_name$mnames))
 rownames(cbpp_est) <- NULL
 
-combfun <- function(
+cbpp_combCI <- Map(combfun2,
+                   list(cbpp_confint_wald, cbpp_confint_boot, cbpp_confint_prof),
+                   c("Wald", "boot", "profile"),
+                   df_est = cbpp_est, df_name = df_name) |>
+  do.call(what = "rbind")
+
+
 save(
   list = c("cbpp_confint_prof", "cbpp_confint_boot", "cbpp_confint_wald", "cbpp_prof", "cbpp_est"),
   file = "CBPP_batch.rda"

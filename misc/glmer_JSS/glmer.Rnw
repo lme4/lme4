@@ -1025,7 +1025,7 @@ mfun1 <- function(x, model, model_id) {
    df$model_id <- model_id
    df
 }
-mfun2 <- function(x, type) {
+mfun2 <- function(x, type, est) {
   df <- do.call("rbind", Map(mfun1, x, df_name$mdesc, df_name$mnames))
   df <- merge(df, contr_est, by.x = c("model_id", "var"), by.y = c("model", "var"))
   df$type <- type
