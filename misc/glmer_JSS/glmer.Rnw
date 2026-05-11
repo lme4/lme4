@@ -1047,7 +1047,7 @@ the computational cost of profiling, it makes sense to compute
 and save the profile as an intermediate step if one plans to
 do anything other than computing confidence intervals.)
 
-Two other common methods for comuputing confidence intervals
+Two other common methods for computing confidence intervals
 are the classical Wald approximation (\code{method = "Wald"}) and parametric 
 bootstrapping (\code{method = "boot"}).
 The Wald approximation is faster and less accurate than profile
