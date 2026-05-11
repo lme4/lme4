@@ -37,7 +37,7 @@ glmer_profbatch4.rda: glmer_contraception_batch.R
 %.rda: %.R
 	$(REXE) <$<
 
-glmer.pdf: glmer.Rnw glmer.bib CBPP_batch.rda glmer_cm_vc.rda Contra_boot_sigFALSE.rda Contra_prof_sigFALSE.rda Contra_wald_sigFALSE.rda
+glmer.pdf: glmer.Rnw glmer.bib CBPP_batch.rda glmer_cm_vc.rda Contraception_batch.rda
 
 .PHONY:
 

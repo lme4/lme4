@@ -61,12 +61,15 @@ rownames(cbpp_est) <- NULL
 cbpp_combCI <- Map(combfun2,
                    list(cbpp_confint_wald, cbpp_confint_boot, cbpp_confint_prof),
                    c("Wald", "boot", "profile"),
-                   df_est = cbpp_est, df_name = df_name) |>
+                   MoreArgs = list(df_est = cbpp_est, df_name = cbpp_df_name)) |>
   do.call(what = "rbind")
+
+## ggplot(combCI, aes(est, var, colour = type)) + geom_point(position = position_dodge(0.5)) + facet_wrap(~model)
 
 
 save(
-  list = c("cbpp_confint_prof", "cbpp_confint_boot", "cbpp_confint_wald", "cbpp_prof", "cbpp_est"),
-  file = "CBPP_batch.rda"
+  list = c("cbpp_confint_prof", "cbpp_confint_boot", "cbpp_confint_wald", "cbpp_prof", "cbpp_est", "cbpp_combCI", "cbpp_df_name"),
+  file = "CBPP_batch.rda",
+  version = 2
 )
 sessionInfo()

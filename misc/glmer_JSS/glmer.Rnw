@@ -1016,45 +1016,23 @@ Figure~\ref{fig:confPlot} compares all three of these confidence intervals
 across all three of the models fitted.
 
 <<cbppConfidence,echo=FALSE>>=
-mfun1 <- function(x, model, model_id) {
-   df <- data.frame(var = rownames(x), x, check.names = FALSE)
-   names(df)[names(df) == "2.5 %"]  <- "lwr"
-   names(df)[names(df) == "97.5 %"] <- "upr"
-   rownames(df) <- NULL
-   df$model <- model
-   df$model_id <- model_id
-   df
-}
-mfun2 <- function(x, type, est) {
-  df <- do.call("rbind", Map(mfun1, x, df_name$mdesc, df_name$mnames))
-  df <- merge(df, contr_est, by.x = c("model_id", "var"), by.y = c("model", "var"))
-  df$type <- type
-  df
-}
-## mfun1(contr_confint_wald[[1]], "hello", "h")
-## do.call("rbind", Map(mfun1, contr_confint_wald, df_name$mdesc, df_name$mnames))
-## mfun2(contr_confint_wald, "wald")
-combCI <- do.call("rbind", Map(mfun2,
-              list(contr_confint_wald, contr_confint_boot, contr_confint_prof),
-               c("Wald", "boot", "profile")))
-combCI <- transform(combCI, model_type = interaction(model, type, sep="\n"))
 des_ord <- c("sd_(Intercept)|herd", "sd_(Intercept)|obs",
              "avg_size", "treatmentUnknown", "treatmentComplete")
-combCI <- subset(combCI,var!="(Intercept)" & !grepl("^period",var))
+combCI <- subset(cbpp_combCI,var!="(Intercept)" & !grepl("^period",var))
 combCI <- transform(combCI,  var = factor(var, levels = rev(des_ord)))
 combCI <- transform(combCI,
             vartype = factor(ifelse(grepl("^sd", var), "random effects", "fixed effects"))
 )                    
 @
 
-\fixme{Figure 8: why are some profile results missing?}
+\fixme{Figure 8: why are some profile results still wonky?}
 
 <<confPlot,fig.cap="CBPP example: comparison of point and confidence interval estimation for different methods.",fig.scap="CBPP comparison",echo=FALSE,fig.width=7,fig.height=5,warning=FALSE>>=
-mnames <- c("herd","herd+obs","obs")
-## save("combCI", "mnames", file = "pix_tmp.rda")
+mnames <- cbpp_df_name$mnames
+pd <- position_dodge(width=0.6)
 ggplot(combCI, aes(var, est, colour=type, shape=model)) +
   geom_pointrange(aes(ymin=lwr, ymax=upr),
-                  position=position_dodge(width=0.6)) +
+                  position=pd) +
   labs(x="", y="Estimate (log-odds of seropositivity)") +
   geom_hline(yintercept=0, lty=2) +
   coord_flip() +
@@ -1266,77 +1244,28 @@ As with the CBPP data set, we can also compute
 profile, Wald, and parametric bootstrap confidence intervals for one of the models to
 understand the effect of each variable.
 
+\fixme{Figure 10: why are age estimates different for additive models even though I've set sum-to-zero contrasts ? Where did cor parameter go for the one model that has it?}
 <<ContraceptionBatch,echo=FALSE>>=
-## see the file glmer_contraception_batch.R and
-## contraception_rename.R
-ContraBoot <- load(file="Contra_boot_sigFALSE.rda")
-ContraProf <- load(file="Contra_prof_sigFALSE.rda")
-ContraWald <- load(file="Contra_wald_sigFALSE.rda")
-@
-
-<<ContraceptionConfidenceSetup,echo=FALSE>>=
-contr_combCI0 <- do.call(rbind, c(
-  mapply(mfun, list(confint.boot.cm1, confint.wald.cm1),
-         c("boot","Wald"), "cm1", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.boot.cm2, confint.wald.cm2),
-         c("boot","Wald"), "cm2", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.prof.cm3, confint.boot.cm3, confint.wald.cm3),
-         c("profile", "boot","Wald"), "cm3", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.prof.cm4, confint.boot.cm4, confint.wald.cm4),
-         c("profile", "boot","Wald"), "cm4", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.prof.cm5, confint.boot.cm5, confint.wald.cm5),
-         c("profile", "boot","Wald"), "cm5", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.prof.cm6, confint.boot.cm6, confint.wald.cm6),
-         c("profile", "boot","Wald"), "cm6", SIMPLIFY=FALSE)
-))
-
-contra_variables <- unique(contr_combCI0$var)
-
-exclude <- c("livch1", "livch2", "livch3+")
-contr_combCI0 <- contr_combCI0[contr_combCI0$var %in% setdiff(contra_variables, exclude), ]
-
-get_est2 <- function(mod, model_name) {
-  v <- as.data.frame(VarCorr(mod))
-  sd_rows <- v[is.na(v$var2), ]
-  cor_rows <- v[!is.na(v$var2), ]
-  vnames_sd <- paste0("sd_", sd_rows$var1, "|", sd_rows$grp)
-  vnames_cor <- paste0("cor_", cor_rows$var2, ".", cor_rows$var1, "|", cor_rows$grp)
-  est <- c(fixef(mod), setNames(sd_rows$sdcor, vnames_sd))
-  if( length(cor_rows$sdcor) > 0 ){
-    est <- c(est, setNames(cor_rows$sdcor, vnames_cor))
-  }
-  data.frame(model=model_name, var=names(est), est=est, row.names=NULL)
-}
-
-combEst2 <- do.call(rbind, list(
-  get_est2(cm1, "cm1"), get_est2(cm2, "cm2"), get_est2(cm3, "cm3"), 
-  get_est2(cm4, "cm4"), get_est2(cm5, "cm5"), get_est2(cm6, "cm6")
-))
-
-contr_combCI <- merge(my_dcast(contr_combCI0), combEst2, 
-                by=c("var","model"), all.x=TRUE)
-
-contr_combCI <- transform(contr_combCI, model_type = interaction(model, type, sep="\n"))
-
-mnamevec <- c("int_child    + age  + (1 | district)",
-              "binary_child + age  + (1 | district)",
-              "binary_child × age + (1 | district)",
-              "binary_child × age + (urban | district)",
-              "binary_child × age + (1 | district/urban)",
-              "binary_child × age + (1 | district:urban")  
+contr_combCI <- subset(contr_combCI, var != "(Intercept)")
+combCI <- transform(contr_combCI,
+    vartype = factor(ifelse(grepl("^(sd|cor)", var), "random effects", "fixed effects")),
+    model = factor(model, levels = rev(levels(model)))  ## flip AND flip order of guide below
+    )
 @
 
 <<confPlot2,fig.cap="Contraception example: comparison of point and confidence interval estimation for different methods.",fig.scap="Contraception comparison",echo=FALSE,fig.width=10,fig.height=10,warning=FALSE>>=
-ggplot(contr_combCI, aes(var, est, colour=type, shape=model)) +
+ggplot(combCI, aes(var, est, colour=type, shape=model)) +
   geom_pointrange(aes(ymin=lwr, ymax=upr),
                   position=position_dodge(width=0.6)) +
   labs(x="", y="Estimate (log-odds of seropositivity)") +
   geom_hline(yintercept=0, lty=2) +
   coord_flip() +
   scale_colour_brewer(palette="Dark2", guide = revguide) +
-  scale_shape(labels = mnamevec, guide = revguide) +
+  scale_shape(guide=revguide) +
+  facet_wrap(~vartype, ncol = 1, scale = "free", space = "free_y") +
   theme(legend.position = "inside",
-      legend.justification = c("left", "top"),
+  legend.justification = c("left", "top"),
+  legend.box = "horizontal",
       legend.background = element_rect(fill = "white", colour = "grey50"),
       #legend.margin = margin(t = 5, r = 5, b = 5, l = 5, unit = "pt"),
       legend.box.margin = margin(t = 10, l = 10, unit = "pt"))
@@ -1361,10 +1290,9 @@ continuous covariate of age to vary across districts).
 cm.diag <- glmer(use ~ diag(1 + age|district), Contraception, binomial)
 cm.hetdiag <- glmer(use ~ diag(1 + age|district, hom = FALSE), 
                    Contraception, binomial)
-## FIXME: what's up with these?
-## cm.cs <- glmer(use ~ cs(1 + age|district), Contraception, binomial, nAGQ=0,
-##                  verbose = 1)
-## cm.hetcs <- glmer(use ~ cs(1 + age|district, hom = FALSE), Contraception, binomial)
+cm.cs <- glmer(use ~ cs(1 + age|district), Contraception, binomial, nAGQ=0,
+                  verbose = 1)
+cm.hetcs <- glmer(use ~ cs(1 + age|district, hom = FALSE), Contraception, binomial)
 @
 
 We can use \code{VarCorr} (and other accessor methods) as we would for models with default, unstructured covariance matrices.

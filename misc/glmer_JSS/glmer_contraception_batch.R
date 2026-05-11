@@ -6,6 +6,8 @@ Contraception <- transform(Contraception,
                            ch = factor(Contraception$livch != 0, labels = c("N","Y")),
                            age = age/(2*sd(age)))
 
+options(contrasts = c("contr.sum", "contr.poly"))
+
 contr_df_name <- data.frame(
   mnames = c("ic", "bc", "bc_int", "bc_int_dist_urb_var", "bc_int_dist_urb_nest", "bc_int_dist_urb_cross"),
   mdesc =
@@ -24,19 +26,21 @@ mforms$bc_int_dist_urb_var <- update(mforms$bc_int_urb, . ~ . - (1|district) + (
 mforms$bc_int_dist_urb_nest <- update(mforms$bc_int_urb, . ~ . - (1|district) + (1 | district/urban))
 mforms$bc_int_dist_urb_cross <- update(mforms$bc_int_urb, . ~ . - (1|district) + (1 | urban:district))
 
-mod_list <- lapply(mforms, glmer, data = Contraception, family = binomial)
-names(mod_list) <- df_name$mnames
+contr_mod_list <- lapply(mforms, glmer, data = Contraception, family = binomial)
 
-contr_est <- do.call("rbind", Map(get_est, mod_list, df_name$mnames))
+contr_est <- do.call("rbind", Map(get_est, contr_mod_list, contr_df_name$mnames))
 rownames(contr_est) <- NULL
 
-contr_confint_wald <- lapply(mod_list, function(x) confint(x, method = "Wald", signames = FALSE))
-contr_prof <- lapply(mod_list, p_fun)
+contr_confint_wald <- lapply(contr_mod_list, function(x) confint(x, method = "Wald", signames = FALSE))
+contr_prof <- lapply(contr_mod_list, p_fun)
 contr_confint_prof <- lapply(contr_prof, confint)
-contr_confint_boot <- lapply(mod_list, b_cifun)
+contr_confint_boot <- lapply(contr_mod_list, b_cifun)
 
-
-stop()
+contr_combCI <- Map(combfun2,
+                   list(contr_confint_wald, contr_confint_boot, contr_confint_prof),
+                   c("Wald", "boot", "profile"),
+                   MoreArgs = list(df_est = contr_est, df_name = contr_df_name)) |>
+  do.call(what = "rbind")
 
 ## structured covariances: fit/store separately?
 ## (much faster than profile/boot/etc, if they work ...)

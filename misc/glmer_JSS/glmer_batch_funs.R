@@ -23,7 +23,7 @@ p_fun <- function(x) {
 }
 
 
-comb1fun1 <- function(x, model, model_id) {
+combfun1 <- function(x, model, model_id) {
    df <- data.frame(var = rownames(x), x, check.names = FALSE)
    names(df)[names(df) == "2.5 %"]  <- "lwr"
    names(df)[names(df) == "97.5 %"] <- "upr"
@@ -36,6 +36,8 @@ comb1fun1 <- function(x, model, model_id) {
 combfun2 <- function(x, type, df_name, df_est) {
   df <- do.call("rbind", Map(combfun1, x, df_name$mdesc, df_name$mnames))
   df <- merge(df, df_est, by.x = c("model_id", "var"), by.y = c("model", "var"))
+  df$model <- factor(df$model, levels = df_name$mdesc)
   df$type <- type
+  df <- df[order(df$model),]
   df
 }
