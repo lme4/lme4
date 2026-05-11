@@ -1286,16 +1286,16 @@ the models below, which allow the effects of the
 continuous covariate of age to vary across districts).
 
 
+\fixme{skip CS fits for now. Will work with theta starting at (0.1, 0, 0.1).  Better error messages?  Are these just silly/ill-posed models?}
 <<cm_varcorr>>=
 cm.diag <- glmer(use ~ diag(1 + age|district), Contraception, binomial)
 cm.hetdiag <- glmer(use ~ diag(1 + age|district, hom = FALSE), 
-                   Contraception, binomial)
-cm.cs <- glmer(use ~ cs(1 + age|district), Contraception, binomial, nAGQ=0,
-                  verbose = 1)
-cm.hetcs <- glmer(use ~ cs(1 + age|district, hom = FALSE), Contraception, binomial)
+                    Contraception, binomial)
+## cm.cs <- glmer(use ~ cs(1 + age|district), Contraception, binomial)
+## cm.hetcs <- glmer(use ~ cs(1 + age|district, hom = FALSE), Contraception, binomial)
 @
 
-We can use \code{VarCorr} (and other accessor methods) as we would for models with default, unstructured covariance matrices.
+We can use \code{VarCorr} (and other accessor methods) as we would for models with default, unstructured covariance matrices, e.g.:
 
 <<cm_varcorr_view>>=
 print(VarCorr(cm.diag))
