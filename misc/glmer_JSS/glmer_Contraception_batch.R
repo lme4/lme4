@@ -50,5 +50,8 @@ contr.hetdiag <- glmer(use ~ diag(1 + age|district, hom = FALSE),
 contr.cs <- glmer(use ~ cs(1 + age|district), Contraception, binomial)
 contr.hetcs <- glmer(use ~ cs(1 + age|district, hom = FALSE), Contraception, binomial)
 
-vars <- c(ls(pattern = "contr.*"), "df_name")
-save(list = vars, file = "Contraception_batch.rda", version = 2)
+save(
+  list = c("contr_confint_prof", "contr_confint_boot", "contr_confint_wald", "contr_prof", "contr_est", "contr_combCI", "contr_df_name"),
+  file = "Contraception_batch.rda",
+  version = 2
+)

@@ -69,7 +69,7 @@ cbpp_combCI <- Map(combfun2,
 
 save(
   list = c("cbpp_confint_prof", "cbpp_confint_boot", "cbpp_confint_wald", "cbpp_prof", "cbpp_est", "cbpp_combCI", "cbpp_df_name"),
-  file = "CBPP_batch.rda",
+  file = "cbpp_batch.rda",
   version = 2
 )
 sessionInfo()

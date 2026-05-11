@@ -1,5 +1,8 @@
 %\VignetteEngine{knitr::knitr}
 %\VignetteDepends{ggplot2}
+%\VignetteDepends{gridExtra}
+%\VignetteDepends{performance}
+%\VignetteDepends{DHARMa}
 %\VignetteIndexEntry{Fitting Generalized Linear Mixed-Effects Models using lme4}
 \documentclass{jss}
 %% need no \usepackage{Sweave.sty}
@@ -129,8 +132,6 @@ opts_chunk$set(engine='R',dev='pdf',fig.width=10,
 \begin{document}
 \section{Introduction}
 \label{sec:intro}
-
-\fixme{add 'toenail' example for bad Laplace?}
 
 The \pkg{lme4} package for \proglang{R} can be used to fit a broad
 range of mixed-effects models.  One major advantage of
@@ -555,7 +556,7 @@ density, $\phi(z)=e^{-z^2/2}/\sqrt{2\pi}$, as shown in Figure~\ref{fig:densities
 \begin{figure}[tbp]
   \centering
 <<densities,echo=FALSE,fig.height=5>>=
-zeta <- function(m, zmin=-3, zmax=3, npts=301L) {
+zeta <- function(m, zmin=-3, zmax=3, npts=301L, rank = FALSE) {
     stopifnot (is(m, "glmerMod"),
                length(m@flist) == 1L,    # single grouping factor
               length(m@cnms[[1]]) == 1L) # single column for that grouping factor
@@ -573,19 +574,37 @@ zeta <- function(m, zmin=-3, zmax=3, npts=301L) {
     }
     zvals <- seq(zmin, zmax, length.out = npts)
     d0 <- dc(0) # because this is the last evaluation, the model is restored to its incoming state
+    # signed square root
+    sqrtmat <- t(sqrt(vapply(zvals, dc, d0, USE.NAMES=FALSE) - d0)) *
+      array(ifelse(zvals < 0, -1, 1), c(npts, length(u0)))
+    if (rank) {
+      ## order by 'badness' (variance of normalized profile)
+      nvals <- exp(-0.5*sqrtmat^2)/sqrt(2*pi)/dnorm(zvals)
+      colnames(sqrtmat) <- seq(ncol(sqrtmat))
+      sqrtmat <- sqrtmat[,order(apply(sqrtmat, 2, var), decreasing = TRUE)]
+    }
     list(zvals=zvals,
-         sqrtmat=t(sqrt(vapply(zvals, dc, d0, USE.NAMES=FALSE) - d0)) * # signed square root
-         array(ifelse(zvals < 0, -1, 1), c(npts, length(u0))))
+         sqrtmat= sqrtmat 
+         )
+}
+plot_zeta <- function(z, norm = FALSE,
+                      ylab = if (!norm) "density" else "t(z)",
+                      which = NULL, layout = c(5,3)) {
+  dmat <- exp(-0.5*z$sqrtmat^2)/sqrt(2*pi)
+  if (!is.null(which)) {
+    dmat <- dmat[, which]
+  }
+  if (norm) dmat <- dmat/dnorm(z$zvals)
+  xyplot(as.vector(dmat) ~ rep.int(z$zvals, ncol(dmat))|gl(ncol(dmat), nrow(dmat)),
+         type=c("g","l"), aspect=0.6, layout=layout,
+         xlab="z", ylab=ylab,
+         panel=function(...){
+           if (!norm) panel.lines(zm$zvals, dnorm(zm$zvals), lty=2)
+           panel.xyplot(...)}
+         )
 }
 zm <- zeta(m1, -3.750440, 3.750440)
-dmat <- exp(-0.5*zm$sqrtmat^2)/sqrt(2*pi)
-xyplot(as.vector(dmat) ~ rep.int(zm$zvals, ncol(dmat))|gl(ncol(dmat), nrow(dmat)),
-       type=c("g","l"), aspect=0.6, layout=c(5,3),
-       xlab="z", ylab="density",
-       panel=function(...){
-           panel.lines(zm$zvals, dnorm(zm$zvals), lty=2)
-           panel.xyplot(...)}
-       )
+plot_zeta(zm)                      
 @
   \caption{Comparison of univariate integrands (solid line) and standard normal density function (dashed line)}
   \label{fig:densities}
@@ -644,9 +663,7 @@ likelihood for the model \code{m1} at the parameter estimates.
 \begin{figure}[tbp]
   \centering
 <<tfunc,echo=FALSE>>=
-xyplot(as.vector(dmat/dnorm(zm$zvals)) ~ rep.int(zm$zvals, ncol(dmat))|gl(ncol(dmat), nrow(dmat)),
-       type=c("g","l"), aspect=0.6, layout=c(5,3),
-       xlab="z", ylab="t(z)")
+plot_zeta(zm, norm = TRUE)
 @
   \caption{The function $t(z)$, which is the ratio of the normalized
     unscaled conditional density to the standard normal density, for
@@ -654,6 +671,35 @@ xyplot(as.vector(dmat/dnorm(zm$zvals)) ~ rep.int(zm$zvals, ncol(dmat))|gl(ncol(d
     for model \code{m1}.  These functions should behave like low-order
     polynomials.}
   \label{fig:tfunc}
+\end{figure}
+
+<<toenail, echo = FALSE>>=
+data("toenail", package = "lme4")
+ttab <- with(toenail, table(table(patientID)))
+sum(as.numeric(names(ttab))*ttab/sum(ttab))
+@
+
+The CBPP data set is a relatively well-behaved data set, where Laplace approximation works well. In contrast,
+a widely used data set on toenail onychomycosis \citep{debacker+1998}, which has a very low effective sample size per cluster --- an
+average of about 6.5 binary observations (``moderate or severe'' vs ``none or mild'' disease) per patient --- represents
+an example where Gauss-Hermite quadrature is necessary for reliable results. In this case the
+conditional densities depart much more clearly from the standard normal (Figure~\ref{fig:toenailplot}; note the scale of the
+density ratios goes from 0 to 10, in contrast the maximum of 4 in Figure~\ref{fig:tfunc}).
+
+\begin{figure}[tbp]
+  \centering
+<<toenailplot,echo=FALSE>>=
+data("toenail", package = "lme4")
+toemod <- glmer(outcome ~ time*treatment + (1 | patientID), 
+                     data = toenail, family = binomial(link = "logit"))
+zm <- zeta(toemod)
+set.seed(101); s <- sample(ncol(zm$sqrtmat), size = 9)
+gridExtra::grid.arrange(plot_zeta(zm, which = s, layout = c(3,3)),
+             plot_zeta(zm, which = s, norm = TRUE, layout = c(3,3)), nrow = 1)
+@
+\caption{Normalized unscaled conditional density (left) and ratio of density to the standard normal density (right)
+for a random sample of 9 patients from the toenail onychomycosis data set.}
+\label{fig:toenailplot}
 \end{figure}
 
 To use adaptive Gauss-Hermite quadrature for model fitting 
@@ -1476,9 +1522,6 @@ the Hessian via $\bm R$, we have that,
 
 \subsection{Gauss-Markov}
 
-\subsection{toenails}
-
-<<toenail>>=
 \end{document}
 
 %%% Local Variables:
