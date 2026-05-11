@@ -1287,8 +1287,8 @@ Overall, the results suggest that accounting for urban/rural variation at the di
 unimportant.
 
 As with the CBPP data set, we can also compute
-profile, Wald, and parametric bootstrap confidence intervals for one of the models to
-understand the effect of each variable.
+profile, Wald, and parametric bootstrap confidence intervals for all of the models to
+understand the effects of each variable and visualize the among-model variation.
 
 \fixme{Figure 10: why are age estimates different for additive models even though I've set sum-to-zero contrasts ? Where did cor parameter go for the one model that has it?}
 <<ContraceptionBatch,echo=FALSE>>=
