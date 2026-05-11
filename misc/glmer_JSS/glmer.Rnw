@@ -1220,9 +1220,9 @@ One of them extends this with a random slope for urban status
 Another one uses two nested random intercepts \code{(1 \textbar{} district)} and 
 \code{(1 \textbar{} urban:district)}, separating district-level from urban-within-district variation. The remaining model uses only the \code{urban:district} grouping. 
 
-To reduce convergence warnings and facilitate interpretability, all 
-explanatory variables were standardized by centering and scaling to two 
-standard deviations, following the approach recommended by \citet{gelman2008scaling}.
+To reduce convergence warnings and facilitate interpretability, age (already approximately centered
+in the data set) was standardized by scaling by two 
+standard deviations \citet{gelman2008scaling}.
 
 <<cm1,message=FALSE>>=
 cm1 <- glmer(use ~ age + I(age^2) + urban + livch + (1|district), 
