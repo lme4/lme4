@@ -30,10 +30,14 @@ TTM = ttm -E2 -e2
 
 glmer.pdf: glmer.Rnw glmer.bib cbpp_batch.rda glmer_cm_vc.rda Contraception_batch.rda
 
+
 pkgs: get_pkgs.R
 	$(REXE) <$<
 
 Contraception_batch.rda: glmer_Contraception_batch.R
+	$(REXE) <$<
+
+cbpp_batch.rda: glmer_cbpp_batch.R
 	$(REXE) <$<
 
 %.rda: %.R

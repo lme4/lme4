@@ -92,22 +92,20 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
     deviation parameter(s) followed by the correlation parameter
     \eqn{\rho} (specified on the [0,1] scale).
   }
-  See the \href{../doc/covariance_structures.html}{covariance structures
-    vignette} for more detail on covariance matrix parameterizations.
+  See the \href{../doc/covariance_structures.html}{covariance structures vignette} for more detail on covariance matrix 
+  parameterizations.
   
   The parameters for all random-effect terms are concatenated in the
   starting parameter vector,
   in the order specified by the \emph{internal} ordering of the terms.
   This matches the order in which the terms are returned in \code{VarCorr()},
   but may not match the order in which the terms are specified in the
-  formula; as noted in the \href{../doc/lmer.pdf}{lmer vignette},
-  random effect terms are
+  formula; as noted in the lmer vignette, random effect terms are
   stored in decreasing order of the number of levels of the grouping variable.
   
   For structured terms, the
   supplied \code{par} values are internally mapped by \code{getTheta()}
-  to the corresponding lower-triangular \eqn{\Lambda_\theta}{Lambda[theta]} entries
-  used by the optimizer.}
+  to the corresponding lower-triangular \eqn{\Lambda_\theta}{Lambda[theta]} entries used by the optimizer.}
 
   \item{verbose}{integer scalar.  If \code{> 0} verbose output is
     generated during the optimization of the parameter estimates.  If
