@@ -27,7 +27,7 @@
 %\bibliographystyle{chicago}
 \author{
   Douglas Bates\\University of Wisconsin - Madison \And
-  Anna Ly\\University of Toronto \And
+  Anna Ly\\McMaster University \And
   Steven C. Walker\\McMaster University \AND
   Rune Haubo Bojesen Christensen\\Technical University of Denmark\And
   Martin M\"achler\\ETH Zurich\AND
@@ -67,6 +67,12 @@
   penalized least squares,
   Cholesky decomposition}
 \Address{
+  Anna Ly\\
+  Department of Mathematics \& Statistics \\
+  McMaster University \\
+  1280 Main Street W \\
+  Hamilton, ON L8S 4K1, Canada \\
+  \par\bigskip
   Steven C. Walker\\
   Department of Mathematics \& Statistics \\
   McMaster University \\
@@ -82,8 +88,8 @@
   E-mail: \email{rhbc@dtu.dk}
   \par\bigskip
   Douglas Bates\\
-  Department of Statistics, University of Wisconsin\\
-  1300 University Ave.\\
+  Department of Statistics, University of Wisconsin - Madison\\
+  1205 University Ave. \\
   Madison, WI 53706, U.S.A.\\
   E-mail: \email{bates@stat.wisc.edu}
   \par\bigskip
@@ -476,7 +482,7 @@ provides
   \begin{aligned}
     L(\bm\beta,\bm\theta|\yobs)&=\int_{\mathbb{R}^q}f_{\mc Y,\mc U}(\yobs,\bm u)\,d\bm u\\
     &\approx \tilde{f}\,|\bm L|\, \int_{\mathbb{R}^q}e^{-\|\bm z\|^2/2}\,(2\pi)^{-q/2}\,d\bm z\\
-    =\tilde{f}\, |\bm L|
+    &=\tilde{f}\, |\bm L|
   \end{aligned}
 \end{equation}
 or, on the deviance scale,
@@ -722,7 +728,7 @@ which is recommended for large problems.
 
 \section{Model fitting}
 
-Once we can calculate the deviance by PIRLS for specified values of $\btheta$ and $\bbeta$ (or only $\btheta$ if profiling out the fixed effects via \code{nAGQ=0}), we then estimate the parameters by nonlinear optimization. This procedure largely follows the description in \cite{bates2015fitting}, using derivative-free optimizers with box constraints to prevent non-positive-(semi)definite covariance matrices. The only difference is that by default \code{glmer} uses a two-step fitting procedure, using \code{nAGQ=0} at the first stage to get preliminary estimates which are then used as starting points for a second optimization with Laplace approximation or Gauss-Hermite quadrature as specified by the user. Different nonlinear optimizers can be used at each stage: the current default (as specified in \code{glmerControl} is to use Powell's BOBYQA followed by a box-constrained variant of the Nelder-Mead simplex algorithm. For faster, approximate fitting, the second stage can be omitted; in the rare cases where the initial \code{nAGQ=0} fit gives poor results, the first stage can be skipped via \code{glmerControl(nAGQ0initStep = FALSE)}.
+Once we can calculate the deviance by PIRLS for specified values of $\btheta$ and $\bbeta$ (or only $\btheta$ if profiling out the fixed effects via \code{nAGQ=0}), we then estimate the parameters by nonlinear optimization. This procedure largely follows the description in \cite{bates2015fitting}, using derivative-free optimizers with box constraints to prevent non-positive-(semi)definite covariance matrices. The only difference is that by default \code{glmer} uses a two-step fitting procedure, using \code{nAGQ=0} at the first stage to get preliminary estimates which are then used as starting points for a second optimization with Laplace approximation or Gauss-Hermite quadrature as specified by the user. Different nonlinear optimizers can be used at each stage: the current default, as specified in \code{glmerControl}, is to use Powell's BOBYQA followed by a box-constrained variant of the Nelder-Mead simplex algorithm. For faster, approximate fitting, the second stage can be omitted; in the rare cases where the initial \code{nAGQ=0} fit gives poor results, the first stage can be skipped via \code{glmerControl(nAGQ0initStep = FALSE)}.
 
 \section{Examples}
 
@@ -964,7 +970,7 @@ the random effects with confidence bars); in the case of
 the Q-Q plot (\code{qqmath}) the $y$-axis shows corresponding 
 values of the standard normal quantiles (Figure~\ref{fig:glmerRanefplot}).
 
-<<glmerRanefplot,fig.cap="Graphical display of random effects. \\emph{Left}: conditional modes $\\pm 1.96 \\times \\text{conditional mode}$, ordered by magnitude. \\emph{Right}: quantile-quantile plot, with linear regression line overlaid.",echo=FALSE>>=
+<<glmerRanefplot,fig.cap="Graphical display of random effects. \\emph{Left}: conditional modes $\\pm 1.96 \\times \\text{conditional standard deviation}$, ordered by magnitude. \\emph{Right}: quantile-quantile plot, with linear regression line overlaid.",echo=FALSE>>=
 rr <- ranef(gm1,condVar=TRUE)
 dd <- dotplot(rr)
 qq <- qqmath(rr,type=c("p","r"))
@@ -976,7 +982,7 @@ of GLMs. For mixed-effect models, it also assesses
 the normality of the distribution of conditional modes.
 Figure~\ref{fig:perf_chk_mod_cbpp} shows an example.
 
-<<perf_chk_mod_cbpp,fig.cap="Model diagnostics using \\code{performance::check\\_model}",fig.height=10,echo=FALSE>>=
+<<perf_chk_mod_cbpp,fig.cap="Model diagnostics using \\code{performance::check\\_model}. The plot showcasing the normality of random effects (lower right panel) is the transpose of the right panel in Figure 6.",fig.height=10,echo=FALSE>>=
 check_model(gm1, check = c("reqq", "binned_residuals", 
                                         "vif", "qq"))
 @
@@ -1213,7 +1219,9 @@ woman has any living children.
 
 Second, we vary whether child status interacts with the woman's age: two models
 include \code{ch} (or \code{livch}) and \code{age} as additive terms, while the 
-other four include a \code{ch} and \code{age} interaction. 
+other four include a \code{ch} and \code{age} interaction. \al{The effect of 
+age on contraceptive use is not linear, which is why \code{I(age\^{}2)}
+is included.}
 
 Third, we explore different random effects structures at the district level.
 Three of them use a single random intercept per district \code{(1 \textbar{} district)}.
@@ -1276,7 +1284,7 @@ mnamevec <- c("int_child    + age  + (1 | district)",
                 "binary_child × age + (1 | district)",
                 "binary_child × age + (1 + urban | district)",
                 "binary_child × age + (1 | district/urban)",
-                "binary_child × age + (1 | district:urban")  
+                "binary_child × age + (1 | district:urban)")  
 print(AICtab(cm1, cm2, cm3, cm4, cm5, cm6,
                 mnames = mnamevec))
 options(op)  
