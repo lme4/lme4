@@ -28,16 +28,16 @@ TTM = ttm -E2 -e2
 ## default: glmer.pdf ## glmerAppendix.pdf
 ## in other dir:  lmer.pdf
 
-glmer_profbatch3.rda: glmer_contraception_batch.R
+glmer.pdf: glmer.Rnw glmer.bib cbpp_batch.rda glmer_cm_vc.rda Contraception_batch.rda
+
+pkgs: get_pkgs.R
 	$(REXE) <$<
 
-glmer_profbatch4.rda: glmer_contraception_batch.R
+Contraception_batch.rda: glmer_Contraception_batch.R
 	$(REXE) <$<
 
 %.rda: %.R
 	$(REXE) <$<
-
-glmer.pdf: glmer.Rnw glmer.bib glmer_bootbatch.rda glmer_profbatch.rda glmer_cm_vc.RData glmer_profbatch3.rda glmer_profbatch4.rda
 
 .PHONY:
 
