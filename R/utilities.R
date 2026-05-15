@@ -513,7 +513,55 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
     }
     ## weights <- resp$weights
     beta    <- pp$beta(fac)
+    ## For Gaussian GLMMs with non-identity link, GaussianDist::aic() profiles
+    ## sigma from the conditional RSS only, ignoring that ldL2 also depends on
+    ## sigma.  The correction block below finds the true Laplace profile MLE via
+    ## 1D optimization: D(sigma) = ldL2(sigma) + sqrL + n*log(2pi*sigma^2) + RSS/sigma^2
+    ## Other families with scale parameters continue to use pwrss/n as before.
     sigmaML <- pwrss/n
+
+    dev_corrected <- NULL
+    if (isGLMM && !trivial.y && dims[["useSc"]] &&
+        identical(resp$family$family, "gaussian")) {
+        RSS_fixed  <- unname(wrss)
+        sqrL_fixed <- unname(sqrLenU)
+        n_obs      <- n
+
+        ## Evaluate the full Laplace deviance at a given log(sigma).
+        ## Temporarily scales prior weights by 1/sigma^2 so that the
+        ## Cholesky factors Lambda'Z'diag(mu^2/sigma^2)Lambda + I,
+        ## giving the sigma-dependent ldL2.  The deviance is computed
+        ## manually (not via aic()) to avoid re-profiling sigma.
+        laplace_dev_at_sigma <- function(log_sigma) {
+            sigma <- exp(log_sigma)
+            resp$setWeights(rep(1 / sigma^2, n_obs))
+            resp$updateWts()
+            pp$updateXwts(resp$sqrtWrkWt())
+            pp$updateDecomp()
+            pp$ldL2() + sqrL_fixed +
+                n_obs * (log(2 * pi) + 2 * log_sigma) +
+                RSS_fixed / sigma^2
+        }
+
+        opt_sig <- tryCatch(
+            optimize(laplace_dev_at_sigma,
+                     interval = log(sqrt(sigmaML)) + c(-3, 3),
+                     tol = 1e-8),
+            error = function(e) NULL
+        )
+
+        if (!is.null(opt_sig)) {
+            sigmaML       <- exp(opt_sig$minimum)^2
+            dev_corrected <- opt_sig$objective
+        }
+
+        ## Restore unit weights and decomposition to original state
+        resp$setWeights(rep(1, n_obs))
+        resp$updateWts()
+        pp$updateXwts(resp$sqrtWrkWt())
+        pp$updateDecomp()
+    }
+
     if (rcl != "lmerResp") {
         pars <- opt$par
         ## making the assertion that length(pars) > npar iff nAGQ > 0;
@@ -535,7 +583,9 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
              REML=if (rcl=="lmerResp" && resp$REML != 0L && !trivial.y)
                   opt$fval else NA,
              ## FIXME: construct 'REML deviance' here?
-             dev=if (rcl=="lmerResp" && resp$REML != 0L || trivial.y) NA else opt$fval,
+             dev=if (rcl=="lmerResp" && resp$REML != 0L || trivial.y) NA
+                 else if (!is.null(dev_corrected)) dev_corrected
+                 else opt$fval,
              sigmaML=sqrt(unname(if (!dims[["useSc"]] || trivial.y) NA else sigmaML)),
              sigmaREML=sqrt(unname(if (rcl!="lmerResp" || trivial.y) NA else
                                    sigmaML*(dims[["n"]]/dims[["nmp"]]))),
