@@ -1,5 +1,8 @@
 %\VignetteEngine{knitr::knitr}
 %\VignetteDepends{ggplot2}
+%\VignetteDepends{gridExtra}
+%\VignetteDepends{performance}
+%\VignetteDepends{DHARMa}
 %\VignetteIndexEntry{Fitting Generalized Linear Mixed-Effects Models using lme4}
 \documentclass{jss}
 %% need no \usepackage{Sweave.sty}
@@ -12,6 +15,8 @@
 \DeclareMathOperator{\tr}{tr}
 \DeclareMathOperator{\VEC}{vec}
 \newcommand{\bmb}[1]{{\color{red} \emph{#1}}}
+\newcommand{\bbeta}{{\bm \beta}}
+\newcommand{\btheta}{{\bm \theta}}
 \newcommand{\scw}[1]{{\color{blue} \emph{#1}}}
 \newcommand{\al}[1]{{\color{violet}#1}} % anna's new comments
 \newcommand{\fixme}[1]{{\color{blue} \textbf{#1}}}
@@ -22,9 +27,9 @@
 %\bibliographystyle{chicago}
 \author{
   Douglas Bates\\University of Wisconsin - Madison \And
-  Anna Ly\\University of Toronto \AND
+  Anna Ly\\University of Toronto \And
   Steven C. Walker\\McMaster University \AND
-  Rune Haubo Bojesen Christensen\\Technical University of Denmark\AND
+  Rune Haubo Bojesen Christensen\\Technical University of Denmark\And
   Martin M\"achler\\ETH Zurich\AND
   Benjamin M. Bolker\\McMaster University
 }
@@ -110,13 +115,12 @@ library(knitr)
 library(lme4)
 library(ggplot2)
 theme_set(theme_bw())
+revguide <- guide_legend(reverse = TRUE)
 library(RColorBrewer)
 library(grid)
 library(gridExtra)
 zmargin <- theme(panel.margin=unit(0,"lines"))
 library(lattice)
-library(reshape2)
-library(plyr)
 library(DHARMa)
 library(performance)
 opts_chunk$set(engine='R',dev='pdf',fig.width=10,
@@ -129,10 +133,6 @@ opts_chunk$set(engine='R',dev='pdf',fig.width=10,
 \section{Introduction}
 \label{sec:intro}
 
-\fixme{what's causing the empty first page?}
-
-\fixme{Discuss two-stage fitting (nAGQ=0, then nAGQ $>0$) ?}
-  
 The \pkg{lme4} package for \proglang{R} can be used to fit a broad
 range of mixed-effects models.  One major advantage of
 \pkg{lme4} over its predecessor, \pkg{nlme}, is that it can be used to
@@ -206,7 +206,7 @@ depends on a vector of covariance parameters, $\bm\theta$.
 
 The optimization routines of \pkg{lme4} never actually compute
 $\Sigma_\theta$ directly, and instead use the elements of the covariance factor,
-$\bm\Lambda_\theta$, which is a matrix square root of $\Sigma_\theta$,
+$\bm\Lambda_\theta$, which is a matrix square root of $\Sigma_\theta$ (in practice a Cholesky factor),
 \begin{equation}
   \label{eq:GLMMSigma}
   \bm\Sigma_\theta=\bm\Lambda_\theta\bm\Lambda_\theta\trans .
@@ -273,7 +273,7 @@ as follows:
 \end{equation}
 
 
-For GLMMs, the scale parameter is not estimated as part of the nonlinear minimization of the negative likelihood over the $\beta$ and $\theta$ parameters.
+For GLMMs, the scale parameter is not typically estimated as part of the nonlinear minimization of the negative likelihood over the $\beta$ and $\theta$ parameters.
 As is common in generalized linear model contexts, it is 
 set equal to the (residual) deviance
 divided by the residual degrees of freedom. 
@@ -285,7 +285,7 @@ is the Pearson residual sum of squares. This approach is preferred by \citet{McC
 misspecification than the maximum likelihood estimator. 
 
 We therefore estimate the deviance using the penalized weighted Pearson 
-residual sum of squares, as described in Section 3.2 of the \code{lmer} paper \citep{bates2015fitting}.
+residual sum of squares, as described in Section 3.2 of \cite{bates2015fitting}.
 
 The likelihood of the parameters, given the observed data, is now
 \begin{equation}
@@ -327,7 +327,7 @@ that the software can thus fit
 models with user-specified families and link functions 
 (although common families and link functions are
 hard-coded in C++ for computational speed),
-in contrast to previous versions of \code{lme4} and other
+in contrast to previous versions of \code{lme4} and some other
 \proglang{R} packages for GLMM fitting.
 
 The likelihood can now be expressed as
@@ -369,7 +369,7 @@ extend it to a \emph{penalized iteratively reweighted least squares}
 \item Let 
   \begin{equation}
   Q(\bm u) = \left\|\bm W^{1/2}\left(\yobs-\bm\mu_{\mc
-            Y|\mc U=\bm u}\right)\right\|^2+\|\bm u\|^2.
+    Y|\mc U=\bm u}\right)\right\|^2+\|\bm u\|^2.
   \end{equation}
 
   Solve the penalized, weighted, nonlinear least squares problem
@@ -454,6 +454,13 @@ estimates of $\theta$ and $\beta$.
 \subsection{Evaluating the likelihood for GLMMs using the Laplace approximation}
 \label{sec:Laplace}
 
+Evaluating the likelihood for generalized linear mixed models
+requires approximating an intractable 
+integral over the random effects distribution. The \code{glmer} function offers 
+several approximations, controlled by the \code{nAGQ} argument. 
+The default value of \code{nAGQ=1} specifies the
+\emph{Laplace approximation} \citep{madsen2011}.
+
 A second-order Taylor series approximation to $-2\log[f_{\mc Y,\mc
   U}(\yobs,\bm u)]$ based at $\tilde{\bm u}$ provides an approximation
 of the unscaled conditional density as a multiple of the density for
@@ -478,6 +485,10 @@ or, on the deviance scale,
   -2\ell(\bm\beta,\bm\theta|\yobs)\approx\sum_{i=1}^nd_i(\yobs,\tilde{\bm u}) +
     \|\tilde{\bm u}\|^2 + \log(|\bm L|^2)+\frac{q}{2}\log(2\pi)
 \end{equation}
+
+The Laplace approximation normally conditions on both the fixed effects $\beta$ and the variance-covariance parameters $\theta$. A further approximation, which is denoted in \code{glmer} by \code{nAGQ=0}, profiles out the fixed effects by minimizing $\beta$ and the conditional modes $\bm u$ simultaneously in eq.~\ref{eq:weightedNLS}. This approximation is exact when (1) $\partial(\log L)/\partial \beta$ is a linear function of the conditional modes $\bm u$ and (2) when the conditional mode is equal to the conditional mean (typically, although not necessarily, implying a symmetric conditional distribution). Both assumptions hold for linear mixed models (although a Laplace approximation is not necessary there), consistent with \cite{bates2015fitting} showing that the fixed effects can be profiled out of the log-likelihood for LMMs. The Julia \code{MixedModels.jl} package offers the same approximation as the \code{fast} argument to the \code{pirls!} function (\url{https://juliastats.org/MixedModels.jl/stable/optimization/}); Template Model Builder \cite{kristensenTMB2016}, and downstream packages such \code{glmmTMB}, provide this function via a \code{profile} argument.
+
+By default, \code{glmer} uses a two-stage optimization procedure (described below) with \code{nAGQ=0} in the first stage; users can also specify \code{nAGQ=0} for faster, approximate solutions to models that would otherwise be infeasibly slow.
 
 \subsubsection{Decomposing the deviance for simple models}
 \label{sec:simplescalar}
@@ -531,13 +542,7 @@ to its approximation.
 Consider the \code{cbpp} data on contagious bovine pleuropneumonia
 (CBPP)
 incidence according to season and herd, available in the \pkg{lme4} package
-(see \ref{sec:cbpp} for more details).
-<<strcbpp,echo=FALSE,eval=FALSE>>=
-str(cbpp)
-@
-
-\fixme{is this left over?}
-and the model
+(see \ref{sec:cbpp} for more details), and the model
 <<m1>>=
 print(m1 <- glmer(cbind(incidence, size-incidence) ~ period + (1|herd),
       cbpp, binomial), corr=FALSE)
@@ -551,7 +556,7 @@ density, $\phi(z)=e^{-z^2/2}/\sqrt{2\pi}$, as shown in Figure~\ref{fig:densities
 \begin{figure}[tbp]
   \centering
 <<densities,echo=FALSE,fig.height=5>>=
-zeta <- function(m, zmin=-3, zmax=3, npts=301L) {
+zeta <- function(m, zmin=-3, zmax=3, npts=301L, rank = FALSE) {
     stopifnot (is(m, "glmerMod"),
                length(m@flist) == 1L,    # single grouping factor
               length(m@cnms[[1]]) == 1L) # single column for that grouping factor
@@ -569,19 +574,37 @@ zeta <- function(m, zmin=-3, zmax=3, npts=301L) {
     }
     zvals <- seq(zmin, zmax, length.out = npts)
     d0 <- dc(0) # because this is the last evaluation, the model is restored to its incoming state
+    # signed square root
+    sqrtmat <- t(sqrt(vapply(zvals, dc, d0, USE.NAMES=FALSE) - d0)) *
+      array(ifelse(zvals < 0, -1, 1), c(npts, length(u0)))
+    if (rank) {
+      ## order by 'badness' (variance of normalized profile)
+      nvals <- exp(-0.5*sqrtmat^2)/sqrt(2*pi)/dnorm(zvals)
+      colnames(sqrtmat) <- seq(ncol(sqrtmat))
+      sqrtmat <- sqrtmat[,order(apply(sqrtmat, 2, var), decreasing = TRUE)]
+    }
     list(zvals=zvals,
-         sqrtmat=t(sqrt(vapply(zvals, dc, d0, USE.NAMES=FALSE) - d0)) * # signed square root
-         array(ifelse(zvals < 0, -1, 1), c(npts, length(u0))))
+         sqrtmat= sqrtmat 
+         )
+}
+plot_zeta <- function(z, norm = FALSE,
+                      ylab = if (!norm) "density" else "t(z)",
+                      which = NULL, layout = c(5,3)) {
+  dmat <- exp(-0.5*z$sqrtmat^2)/sqrt(2*pi)
+  if (!is.null(which)) {
+    dmat <- dmat[, which]
+  }
+  if (norm) dmat <- dmat/dnorm(z$zvals)
+  xyplot(as.vector(dmat) ~ rep.int(z$zvals, ncol(dmat))|gl(ncol(dmat), nrow(dmat)),
+         type=c("g","l"), aspect=0.6, layout=layout,
+         xlab="z", ylab=ylab,
+         panel=function(...){
+           if (!norm) panel.lines(zm$zvals, dnorm(zm$zvals), lty=2)
+           panel.xyplot(...)}
+         )
 }
 zm <- zeta(m1, -3.750440, 3.750440)
-dmat <- exp(-0.5*zm$sqrtmat^2)/sqrt(2*pi)
-xyplot(as.vector(dmat) ~ rep.int(zm$zvals, ncol(dmat))|gl(ncol(dmat), nrow(dmat)),
-       type=c("g","l"), aspect=0.6, layout=c(5,3),
-       xlab="z", ylab="density",
-       panel=function(...){
-           panel.lines(zm$zvals, dnorm(zm$zvals), lty=2)
-           panel.xyplot(...)}
-       )
+plot_zeta(zm)                      
 @
   \caption{Comparison of univariate integrands (solid line) and standard normal density function (dashed line)}
   \label{fig:densities}
@@ -634,12 +657,13 @@ second order approximation to the logarithm of the unscaled
 conditional density.
 
 Figure~\ref{fig:tfunc}
+shows $t(z)$ for each of the unidimensional integrals in the
+likelihood for the model \code{m1} at the parameter estimates.
+
 \begin{figure}[tbp]
   \centering
 <<tfunc,echo=FALSE>>=
-xyplot(as.vector(dmat/dnorm(zm$zvals)) ~ rep.int(zm$zvals, ncol(dmat))|gl(ncol(dmat), nrow(dmat)),
-       type=c("g","l"), aspect=0.6, layout=c(5,3),
-       xlab="z", ylab="t(z)")
+plot_zeta(zm, norm = TRUE)
 @
   \caption{The function $t(z)$, which is the ratio of the normalized
     unscaled conditional density to the standard normal density, for
@@ -648,9 +672,44 @@ xyplot(as.vector(dmat/dnorm(zm$zvals)) ~ rep.int(zm$zvals, ncol(dmat))|gl(ncol(d
     polynomials.}
   \label{fig:tfunc}
 \end{figure}
-shows $t(z)$ for each of the unidimensional integrals in the
-likelihood for the model \code{m1} at the parameter estimates.
 
+<<toenail, echo = FALSE>>=
+data("toenail", package = "lme4")
+ttab <- with(toenail, table(table(patientID)))
+sum(as.numeric(names(ttab))*ttab/sum(ttab))
+@
+
+The CBPP data set is a relatively well-behaved data set, where Laplace approximation works well. In contrast,
+a widely used data set on toenail onychomycosis \citep{debacker+1998}, which has a very low effective sample size per cluster --- an
+average of about 6.5 binary observations (``moderate or severe'' vs ``none or mild'' disease) per patient --- represents
+an example where Gauss-Hermite quadrature is necessary for reliable results. In this case the
+conditional densities depart much more clearly from the standard normal (Figure~\ref{fig:toenailplot}; note the scale of the
+density ratios goes from 0 to 10, in contrast the maximum of 4 in Figure~\ref{fig:tfunc}).
+
+\begin{figure}[tbp]
+  \centering
+<<toenailplot,echo=FALSE>>=
+data("toenail", package = "lme4")
+toemod <- glmer(outcome ~ time*treatment + (1 | patientID), 
+                     data = toenail, family = binomial(link = "logit"))
+zm <- zeta(toemod)
+set.seed(101); s <- sample(ncol(zm$sqrtmat), size = 9)
+gridExtra::grid.arrange(plot_zeta(zm, which = s, layout = c(3,3)),
+             plot_zeta(zm, which = s, norm = TRUE, layout = c(3,3)), nrow = 1)
+@
+\caption{Normalized unscaled conditional density (left) and ratio of density to the standard normal density (right)
+for a random sample of 9 patients from the toenail onychomycosis data set.}
+\label{fig:toenailplot}
+\end{figure}
+
+To use adaptive Gauss-Hermite quadrature for model fitting 
+in \code{glmer} models, set the argument \code{nAGQ}, the 
+number of quadrature points, to a value greater than 1.
+Increasing the number of nodes improves the accuracy of the likelihood 
+approximation at the expense of computation time. However, AGQ is only available 
+for models with a single scalar random effect.
+
+\fixme{move this?}
 The \code{lme4} package supports fitting negative binomial GLMMs,
 which are an extension of GLMMs; the negative binomial family is within the
 exponential dispersion family only if the dispersion parameter is fixed.
@@ -660,6 +719,10 @@ a fixed dispersion parameter at each trial value. While correct, this
 approach is slower than other available negative binomial GLMM
 implementations (e.g., as offered in the \code{glmmTMB} package),
 which is recommended for large problems.
+
+\section{Model fitting}
+
+Once we can calculate the deviance by PIRLS for specified values of $\btheta$ and $\bbeta$ (or only $\btheta$ if profiling out the fixed effects via \code{nAGQ=0}), we then estimate the parameters by nonlinear optimization. This procedure largely follows the description in \cite{bates2015fitting}, using derivative-free optimizers with box constraints to prevent non-positive-(semi)definite covariance matrices. The only difference is that by default \code{glmer} uses a two-step fitting procedure, using \code{nAGQ=0} at the first stage to get preliminary estimates which are then used as starting points for a second optimization with Laplace approximation or Gauss-Hermite quadrature as specified by the user. Different nonlinear optimizers can be used at each stage: the current default (as specified in \code{glmerControl} is to use Powell's BOBYQA followed by a box-constrained variant of the Nelder-Mead simplex algorithm. For faster, approximate fitting, the second stage can be omitted; in the rare cases where the initial \code{nAGQ=0} fit gives poor results, the first stage can be skipped via \code{glmerControl(nAGQ0initStep = FALSE)}.
 
 \section{Examples}
 
@@ -697,26 +760,22 @@ ascribing the null results to
 
 <<newcbpp,echo=FALSE,warning=FALSE,message=FALSE,eval=FALSE>>=
 c2 <- read.csv("cbpp.csv",comment="#")
-m2 <- melt(c2,id.var=1:3)
-## now colsplit and get into appropriate format: *OR*
-## merge treatment info with existing cbpp data
-m3 <- data.frame(subset(m2,select=-variable),
-                 colsplit(m2$variable,"_",names=c("var","period")))
-m4 <- dcast(m3,herd+treatment+avg_size+period~var)
-tfun <- function(x) {
-    OK <- !is.na(x)
-    y <- numeric(length(x))
-    y[!OK] <- NA
-    y[OK] <- as.numeric(as.character(x[OK]))
-    y
-}
-m5 <- transform(rename(m4,c(N="size")),percent=prop/100)
-m6 <- transform(m5,incidence=round(percent*size))
-cbpp2 <- na.omit(subset(m6,select=c(herd,treatment,avg_size,
-                           period,size,incidence)))
-## write.csv(cbpp2,"cbpp2.csv",row.names=FALSE)
-cbpp2$herd <- with(cbpp2,reorder(factor(herd),incidence/size))
-## CHECK vs cbpp data set??
+mm <- reshape(
+  c2,
+  varying = list(
+    N = paste0("N_", 1:4),
+    prop = paste0("prop_", 1:4)
+  ),
+  v.names = c("size", "prop"),
+  timevar = "group",
+  times = 1:4,
+  direction = "long"
+  )
+mm <- transform(mm, percent=prop/100)
+mm <- transform(mm,incidence=round(percent*size))
+cbpp2 <- na.omit(subset(mm,select=c(herd,treatment,avg_size,
+                         period,size,incidence)))
+cbpp2$herd <- with(cbpp2, reorder(factor(herd),incidence/size))
 @
 <<newcbpp2,echo=FALSE>>=
 cbpp2 <- read.csv("cbpp2.csv")
@@ -927,6 +986,8 @@ The \code{DHARMa} package is also compatible with \code{merMod} objects.
 generalized linear (mixed) models and uses them for graphical
 and statistical tests of model assumptions (Figure~\ref{fig:dharma_mod_cbpp}).
 
+\fixme{explain/justify significant quantile test in DHARMa model}
+
 <<dharma_mod_cbpp,fig.cap="Model assumption checks using the DHARMa package. \\code{n.s.} denotes ``not significant.''",echo=FALSE>>=
 simulationOutput <- simulateResiduals(fittedModel = gm1)
 plot(simulationOutput)
@@ -958,26 +1019,10 @@ as the reduced model, confidence intervals that incorporate
 non-local information (i.e. profile- or parametric bootstrap-based)
 will give different, more conservative results for the full model.
 
-<<AICtab,echo=FALSE,eval=FALSE>>=
-mnames <- c("herd","herd+obs","obs")
-mList <- setNames(list(gm1,gm2,gm3),mnames)
-## library(plyr)
-## print(ldply(mList,function(x) {
-##    as.data.frame(VarCorr(x))[,c("grp","sdcor")]}),digits=2)
-a1 <- bbmle::AICtab(gm1,gm2,gm3,mnames=mnames)
-@
-
-%% lme4 buglet: confint() has oldNames, profile has signames
 %% lme4 wishlist: allow [Ww]ald in confint.merMod?
-
-%% these two chunks are slow and should not be messed with unnecessarily
-%% (might be better to run them as batch files rather than relying on
-%% knitr caching ...)
-%% for the paper we will add fake unevaluated chunks to display the
-%% stuff we need ...     
 <<loadbatch,echo=FALSE>>=
-bootVars <- load("glmer_bootbatch.RData")
-profVars <- load("glmer_profbatch.RData")
+cbpp_batch_vars <- load("cbpp_batch.rda")
+contr_batch_vars <- load("Contraception_batch.rda")
 @
 
 The \code{profile} method computes profile likelihoods.
@@ -1004,7 +1049,7 @@ the computational cost of profiling, it makes sense to compute
 and save the profile as an intermediate step if one plans to
 do anything other than computing confidence intervals.)
 
-Two other common methods for comuputing confidence intervals
+Two other common methods for computing confidence intervals
 are the classical Wald approximation (\code{method = "Wald"}) and parametric 
 bootstrapping (\code{method = "boot"}).
 The Wald approximation is faster and less accurate than profile
@@ -1015,59 +1060,33 @@ Parametric bootstrapping is much slower, but more accurate
 (and, via the \code{FUN} argument, can generate confidence intervals
 for any quantity that can be derived from a fitted model).
 
-Figure~\ref{fig:confPlot} compares all three of these confidence intervals
+Figure~\ref{fig:cbppcompplot} compares all three of these confidence intervals
 across all three of the models fitted.
 
 <<cbppConfidence,echo=FALSE>>=
-mfun <- function(x, type, model) {
-  m <- melt(rename(data.frame(var=rownames(x), x, check.names=FALSE),
-                   c("2.5 %"="lwr", "97.5 %"="upr")), id="var")
-  data.frame(model=model, type=type, m)
-}
-
-combCI0 <- do.call(rbind, c(
-  mapply(mfun, list(confint0.boot, confint0.wald),
-         c("boot","Wald"), "gm1", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.prof, confint.boot, confint.wald),
-         c("profile","boot","Wald"), "gm2", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint3.prof, confint3.boot, confint3.wald),
-         c("profile","boot","Wald"), "gm3", SIMPLIFY=FALSE)
-))
-
-combCI0 <- combCI0[combCI0$var != ".sig01", ]
-combCI0 <- combCI0[combCI0$var != "treatmentPartial/null", ]
-
-get_est <- function(mod, model_name) {
-  v <- as.data.frame(VarCorr(mod))
-  vnames <- paste0("sd_", v$var1, "|", v$grp)
-  est <- c(fixef(mod), setNames(v$sdcor, vnames))
-  data.frame(model=model_name, var=names(est), est=est, row.names=NULL)
-}
-
-combEst2 <- do.call(rbind, list(
-  get_est(gm1, "gm1"),
-  get_est(gm2, "gm2"),
-  get_est(gm3, "gm3")
-))
-
-combCI <- merge(dcast(combCI0, var + type + model ~ variable), combEst2, 
-                by=c("var","model"), all.x=TRUE)
-combCI <- transform(combCI, model_type = interaction(model, type, sep="\n"))
 des_ord <- c("sd_(Intercept)|herd", "sd_(Intercept)|obs",
              "avg_size", "treatmentUnknown", "treatmentComplete")
-combCI <- subset(combCI,var!="(Intercept)" & !grepl("^period",var))
-combCI <- transform(combCI, 
-                    var = factor(var, levels = rev(des_ord)))
+combCI <- subset(cbpp_combCI,var!="(Intercept)" & !grepl("^period",var))
+combCI <- transform(combCI,  var = factor(var, levels = rev(des_ord)))
+combCI <- transform(combCI,
+            vartype = factor(ifelse(grepl("^sd", var), "random effects", "fixed effects"))
+)                    
 @
 
-<<confPlot,fig.cap="CBPP example: comparison of point and confidence interval estimation for different methods.",fig.scap="CBPP comparison",echo=FALSE,fig.width=7,fig.height=5>>=
+\fixme{Figure~\ref{fig:cbppcompplot}: why are some profile results still wonky?}
+
+<<cbppcompplot,fig.cap="CBPP example: comparison of point and confidence interval estimation for different methods.",fig.scap="CBPP comparison",echo=FALSE,fig.width=7,fig.height=5,warning=FALSE>>=
+mnames <- cbpp_df_name$mnames
+pd <- position_dodge(width=0.6)
 ggplot(combCI, aes(var, est, colour=type, shape=model)) +
   geom_pointrange(aes(ymin=lwr, ymax=upr),
-                  position=position_dodge(width=0.6)) +
+                  position=pd) +
   labs(x="", y="Estimate (log-odds of seropositivity)") +
   geom_hline(yintercept=0, lty=2) +
   coord_flip() +
-  scale_colour_brewer(palette="Dark2")
+  scale_colour_brewer(palette="Dark2", guide = revguide) +
+  scale_shape(guide=revguide, labels = mnames) +
+  facet_wrap(~ vartype, ncol = 1, scale = "free")
 @    
 
 If the default optimizers (Nelder-Mead followed by BOBYQA) do not
@@ -1087,32 +1106,30 @@ results are obtained from \code{summary(allFit())}:
   \item \code{\$theta} random-effect parameters on the Cholesky scale
 \end{itemize}
 
-We will show an example of \code{allFit()\$which.OK} The rest are similar.
+We will show the summary results for \code{\$sdcor}; the other components are similar.
 
 <<allfit_cbpp1,message=FALSE,warning=FALSE>>=
 gm_all <- allFit(gm1)
 @
 
-<<allfit_cbpp2,eval=FALSE>>=
+<<allfit_cbpp2>>=
 ss <- summary(gm_all)
-ss$which.OK 
+ss$sdcor
 @
 
 
 As of version 2.0, \code{lme4} can also specify structured variance–covariance 
 matrices for (generalized) linear mixed models.
 \code{lme4} now supports unstructured (general positive definite), diagonal, 
-compound symmetry, and first-order autoregressive (AR1) structures. Both 
-homogeneous and heterogeneous forms are available for diagonal, compound 
-symmetric, and AR1 structures; by default, AR1 is assumed homogeneous, while 
-the others are heterogeneous.
+compound symmetry, and first-order autoregressive (AR1) structures.
+By default, AR1 models assume a homogeneous-variance model (the variance is the same for all time steps), while the other models assume heterogeneous-variance models (variances differ for every level of the varying term); users can adjust this with the \code{hom} argument (e.g. \code{ar1(..., hom = FALSE)}).
 
 The unstructured covariance structure is the default for mixed models. 
 Here we illustrate fitting an AR1 model; the next example will show diagonal and compound symmetric
 models.
 
 <<load_cm_varcorr,echo=FALSE>>=
-varcorr_vals <- load("glmer_cm_vc.RData")
+varcorr_vals <- load("glmer_cm_vc.rda")
 @
 
 <<covar_cbpp>>=
@@ -1122,22 +1139,10 @@ gm.ar1 <- glmer(incidence/size ~ ar1(1 + herd | period),
 print(VarCorr(gm.ar1))
 @
 
-To fit a heterogeneous structure, use \code{ar1(..., hom = FALSE)}.
-For this particular model, a heterogeneous AR1 model results in a singular fit.
+For this particular model, a heterogeneous AR1 model (\code{ar1(..., hom = FALSE)}) results in a singular fit.
 
 See the \href{https://cran.r-project.org/web/packages/lme4/vignettes/covariance_structures.html}{lme4 covariance structures vignette}
 for more detail.
-
-
-<<varcorr_plot_gm1.ar1,fig.cap="CBPP example: variance-covariance matrix of the grouping term period.",fig.scap="CBPP VarCorr",echo=FALSE,eval=FALSE,fig.width=7>>=
-# Removed since may not be that important or illustrative.
-vc_mat2 <- melt(vc_mat$period)
-ggplot(vc_mat2, aes(Var1, Var2, fill = value)) + 
-  geom_tile() + 
-  geom_text(aes(label = round(value, 2)), color = "white", size = 4) +
-  coord_fixed() + ylab("") + xlab("") + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-@
 
 \subsection{Contraception}
 
@@ -1196,16 +1201,30 @@ gelman_scale <- function(dataset, response) {
 Contraception_scale <- gelman_scale(Contraception, "use")
 @
 
-We construct six different \code{glmer} models with varying choices of explanatory variables and grouping terms, and compare them using \code{anova}. 
+We construct six \code{glmer} models with varying choices of explanatory 
+variables and random effects structure, comparing them via \code{anova}. The 
+models considered different variables.
 
-  \fixme{describe the different cases (whether we dichotomize children to ``any living children'', interaction of children with age, random effects structure)}
-  
-Across the six models, we vary the specification of explanatory variables, 
-such as treating child count as a factor (0, 1, 2, 3+) or binary (no living children vs having living children), and explore different grouping structures like district or urban rural.
+For instance, there are two different ways to encode the number of living 
+children: \code{livch}, a four-level factor distinguishing \code{0}, \code{1}, 
+\code{2}, or \code{3+} children, while other models use \code{ch} instead (later 
+we label as \code{binary\_child}), which is a binary indicator for whether the 
+woman has any living children. 
 
-To reduce convergence warnings and facilitate interpretability, all 
-explanatory variables were standardized by centering and scaling to two 
-standard deviations, following the approach recommended by \citet{gelman2008scaling}.
+Second, we vary whether child status interacts with the woman's age: two models
+include \code{ch} (or \code{livch}) and \code{age} as additive terms, while the 
+other four include a \code{ch} and \code{age} interaction. 
+
+Third, we explore different random effects structures at the district level.
+Three of them use a single random intercept per district \code{(1 \textbar{} district)}.
+One of them extends this with a random slope for urban status 
+\code{(urban \textbar{} district)}, allowing the urban/rural gap to vary by district. 
+Another one uses two nested random intercepts \code{(1 \textbar{} district)} and 
+\code{(1 \textbar{} urban:district)}, separating district-level from urban-within-district variation. The remaining model uses only the \code{urban:district} grouping. 
+
+To reduce convergence warnings and facilitate interpretability, age (already approximately centered
+in the data set) was standardized by scaling by two 
+standard deviations \citet{gelman2008scaling}.
 
 <<cm1,message=FALSE>>=
 cm1 <- glmer(use ~ age + I(age^2) + urban + livch + (1|district), 
@@ -1223,7 +1242,7 @@ cm3 <- glmer(use ~ age*ch + I(age^2) + urban + (1|district),
 @
 
 <<cm4,echo=FALSE,message=FALSE,size='scriptsize'>>=
-cm4 <- glmer(use ~ age*ch + I(age^2) + urban + (urban|district),
+cm4 <- glmer(use ~ age*ch + I(age^2) + urban + (1+urban|district),
               Contraception_scale, binomial)
 @
 
@@ -1238,6 +1257,7 @@ cm6 <- glmer(use ~ age*ch + I(age^2) + urban + (1|urban:district),
 @
 
 <<anovaContraception, echo = FALSE>>=
+## copy of bbmle::AICtab
 AICtab <- function(..., mnames) {
   aic_df <- do.call(AIC, list(...))
   LLvec <- sapply(list(...), function(x) c(logLik(x)))
@@ -1250,97 +1270,83 @@ AICtab <- function(..., mnames) {
   aic_df
 }
 
-op <- options(digits = 2)
+op <- options(digits = 3)
 mnamevec <- c("int_child    + age  + (1 | district)",
               "binary_child + age  + (1 | district)",
                 "binary_child × age + (1 | district)",
-                "binary_child × age + (urban | district)",
+                "binary_child × age + (1 + urban | district)",
                 "binary_child × age + (1 | district/urban)",
                 "binary_child × age + (1 | district:urban")  
-AICtab(cm1,cm2,cm3,cm4,cm5,cm6,
-                mnames = mnamevec)
+print(AICtab(cm1, cm2, cm3, cm4, cm5, cm6,
+                mnames = mnamevec))
 options(op)  
 @
 
-\fixme{better description}
-Between these six models, the AIC, BIC, and negative log likelihood 
-are all similar to one another. 
+The top three models, all of which include a child-by-age interaction and some effect of urbanization, fit approximately equally well ($\Delta$ negative log-likelihood $<0.5$). The \code{(1|district/urban)} model barely improves on the fit of \code{(1|district:urban)} (0.005 log-likelihood units), at the cost of an extra variance parameter, so it is almost 2 AIC units worse. \code{(1 + urban | district)} is a bit better ($\approx$ 0.5 log-likelihood units), but includes a covariance parameter.
+Models that drop the interaction between child status and age or replace the binary child indicator with an integer count perform substantially worse ($\Delta \textrm{AIC} > 10$).
 
-Similar to the CBPP data set, another relevant demonstration is computing 
-profile, Wald, and bootstrapping confidence intervals for one of the models to
-understand the effect of each variable.
+Overall, the results suggest that accounting for urban/rural variation at the district level and including the age and child interaction are both important, but the precise random effects structure for urban/rural variation is relatively
+unimportant.
 
+As with the CBPP data set, we can also compute
+profile, Wald, and parametric bootstrap confidence intervals for all of the models to
+understand the effects of each variable and visualize the among-model variation.
+
+\fixme{Figure~\ref{fig:contracompplot}: why are age estimates different for additive models even though I've set sum-to-zero contrasts ? Where did cor parameter go for the one model that has it?}
 <<ContraceptionBatch,echo=FALSE>>=
-## see the file glmer_contraception_batch.R...
-L3 <- load(file="glmer_profbatch3.RData")
-L4 <- load(file="glmer_profbatch4.RData")
+contr_combCI <- subset(contr_combCI, var != "(Intercept)")
+combCI <- transform(contr_combCI,
+    vartype = factor(ifelse(grepl("^(sd|cor)", var), "random effects", "fixed effects")),
+    model = factor(model, levels = rev(levels(model)))  ## flip AND flip order of guide below
+    )
 @
 
-<<ContraceptionConfidenceSetup,echo=FALSE>>=
-combCI0 <- do.call(rbind, c(
-  mapply(mfun, list(confint.boot.cm1_2, confint.wald.cm1_2),
-         c("boot","Wald"), "cm1", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.boot.cm2_2, confint.wald.cm2_2),
-         c("boot","Wald"), "cm2", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.prof.cm3_2, confint.boot.cm3_2, confint.wald.cm3_2),
-         c("profile", "boot","Wald"), "cm3", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.prof.cm4_2, confint.boot.cm4_2, confint.wald.cm4_2),
-         c("profile", "boot","Wald"), "cm4", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.prof.cm5_2, confint.boot.cm5_2, confint.wald.cm5_2),
-         c("profile", "boot","Wald"), "cm5", SIMPLIFY=FALSE),
-  mapply(mfun, list(confint.prof.cm6_2, confint.boot.cm6_2, confint.wald.cm6_2),
-         c("profile", "boot","Wald"), "cm6", SIMPLIFY=FALSE)
-))
-
-combCI0 <- combCI0[combCI0$var %in% c("urbanY", "I(age^2)", "chY", 
-                                      "age:chY", "age"), ]
-
-combEst2 <- do.call(rbind, list(
-  get_est(cm1, "cm1"), get_est(cm2, "cm2"), get_est(cm3, "cm3"), 
-  get_est(cm4, "cm4"), get_est(cm5, "cm5"), get_est(cm6, "cm6")
-))
-
-combCI <- merge(dcast(combCI0, var + type + model ~ variable), combEst2, 
-                by=c("var","model"), all.x=TRUE)
-
-combCI <- transform(combCI, model_type = interaction(model, type, sep="\n"))
-@
-
-\fixme{why does Fig 10 have only fixed effect values? It would help if combCI were renamed instead of reused between cbpp and Contraception examples}
-
-<<confPlot2,fig.cap="Contraception example: comparison of point and confidence interval estimation for different methods.",fig.scap="Contraception comparison",echo=FALSE,fig.width=8,fig.height=10,warning=FALSE>>=
+<<contracompplot,fig.cap="Contraception example: comparison of point and confidence interval estimation for different methods.",fig.scap="Contraception comparison",echo=FALSE,fig.width=10,fig.height=10,warning=FALSE,fig.lab="fig:contracomp">>=
 ggplot(combCI, aes(var, est, colour=type, shape=model)) +
   geom_pointrange(aes(ymin=lwr, ymax=upr),
                   position=position_dodge(width=0.6)) +
   labs(x="", y="Estimate (log-odds of seropositivity)") +
   geom_hline(yintercept=0, lty=2) +
   coord_flip() +
-  scale_colour_brewer(palette="Dark2") +
-  scale_shape(labels = mnamevec, guide = guide_legend(reverse = TRUE))
+  scale_colour_brewer(palette="Dark2", guide = revguide) +
+  scale_shape(guide=revguide) +
+  facet_wrap(~vartype, ncol = 1, scale = "free", space = "free_y") +
+  theme(legend.position = "inside",
+  legend.justification = c("left", "top"),
+  legend.box = "horizontal",
+      legend.background = element_rect(fill = "white", colour = "grey50"),
+      #legend.margin = margin(t = 5, r = 5, b = 5, l = 5, unit = "pt"),
+      legend.box.margin = margin(t = 10, l = 10, unit = "pt"))
 @
 
-
-In general, the point and confidence interval estimation of the explanatory variables are similar across the six models, and similarly across different methods for confidence interval construction, with a couple of exceptions.
+The point estimates and confidence intervals of the explanatory variables are similar across the six models, and across different methods for confidence interval construction, with a couple of exceptions.
 
 The strongest predictors of contraceptive use among women in Bangladesh were urban residence and the presence of living children. Other factors, such as age, did not appear to have a meaningful effect.
 
-We may also impose a different underlying variance-covariance structure. 
-Consider the following models, where \code{diag} enforces a diagonal 
-variance-covariance structure, and \code{cs} enforces a compound symmetric model:
+With \code{lme4} versions greater than 2.0, we can
+also set up models with structured random effects
+covariance matrices.
+In the models below \code{diag} specifies a diagonal 
+variance-covariance structure, while \code{cs} specifies a compound symmetric model. The \code{hom} argument specifies
+whether the model should allow different variances for
+each varying effect (e.g. for intercepts and slopes in
+the models below, which allow the effects of the
+continuous covariate of age to vary across districts).
 
 
-<<cm_varcorr,eval=FALSE,echo=FALSE>>=
+\fixme{skip CS fits for now. Will work with theta starting at (0.1, 0, 0.1).  Better error messages?  Are these just silly/ill-posed models?}
+<<cm_varcorr>>=
 cm.diag <- glmer(use ~ diag(1 + age|district), Contraception, binomial)
 cm.hetdiag <- glmer(use ~ diag(1 + age|district, hom = FALSE), 
-                 Contraception, binomial)
-cm.cs <- glmer(use ~ cs(1 + age|district), Contraception, binomial)
-cm.hetcs <- glmer(use ~ cs(1 + age|district, hom = FALSE), Contraception, binomial)
+                    Contraception, binomial)
+## cm.cs <- glmer(use ~ cs(1 + age|district), Contraception, binomial)
+## cm.hetcs <- glmer(use ~ cs(1 + age|district, hom = FALSE), Contraception, binomial)
 @
 
-We can use \code{VarCorr} (and other accessor methods) as we would for models with default, unstructured covariance matrices.
+We can use \code{VarCorr} (and other accessor methods) as we would for models with default, unstructured covariance matrices, e.g.:
 
 <<cm_varcorr_view>>=
-print(vc.diag <- VarCorr(cm.diag))
+print(VarCorr(cm.diag))
 @
 
 \bibliography{glmer}
