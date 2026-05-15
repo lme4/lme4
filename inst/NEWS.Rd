@@ -7,6 +7,8 @@
 \section{CHANGES IN VERSION 2.0-2}{
   \subsection{BUG FIXES}{
     \itemize{
+      \item fixed the case where `lmList` fails when groups has similar fits;
+      in particular, it used to report the incorrect degrees of freedom (GH #377)
       \item fixed the case where a Gamma GLMM doesn't perform well for 
       a small shape parameter by changing the initial starting 
       point of the optimizer for Gamma families (GH #290)
