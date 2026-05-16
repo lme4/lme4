@@ -725,7 +725,9 @@ for models with a single scalar random effect.
 
 \section{Model fitting}
 
+\al{
 Once we can calculate the deviance by PIRLS for specified values of $\btheta$ and $\bbeta$ (or only $\btheta$ if profiling out the fixed effects via \code{nAGQ=0}), we then estimate the parameters by nonlinear optimization. This procedure largely follows the description in \cite{bates2015fitting}, using derivative-free optimizers with box constraints to prevent non-positive-(semi)definite covariance matrices. Specifically, the elements of $\btheta$ corresponding to the diagonal of $\bm\Lambda_\theta$ are currently constrained to be non-negative. We note, however, that the profiled log-likelihood is an even function of these diagonal parameters: since $\bm\Sigma_\theta=\bm\Lambda_\theta\bm\Lambda_\theta\trans$ depends on them only through their squares, positive and negative values yield identical likelihoods. This symmetry means that constrained optimization is not strictly necessary — an unconstrained optimizer will converge to the correct solution, approaching zero from either side in the boundary case of a singular random-effects covariance matrix. Removing this constraint would permit the use of a broader class of unconstrained optimizers, though this has not yet been incorporated into the implementation. The only difference is that by default \code{glmer} uses a two-step fitting procedure, using \code{nAGQ=0} at the first stage to get preliminary estimates which are then used as starting points for a second optimization with Laplace approximation or Gauss-Hermite quadrature as specified by the user. Different nonlinear optimizers can be used at each stage: the current default, as specified in \code{glmerControl}, is to use Powell's BOBYQA followed by a box-constrained variant of the Nelder-Mead simplex algorithm. For faster, approximate fitting, the second stage can be omitted; in the rare cases where the initial \code{nAGQ=0} fit gives poor results, the first stage can be skipped via \code{glmerControl(nAGQ0initStep = FALSE)}.
+}
 
 \section{Examples}
 
@@ -1204,8 +1206,10 @@ gelman_scale <- function(dataset, response) {
 Contraception_scale <- gelman_scale(Contraception, "use")
 @
 
-We construct six \code{glmer} models with varying choices of explanatory 
-variables and random effects structure, comparing them via \code{anova}. The 
+\al{Figure~\ref{fig:graphContraception} shows exploratory smoothed curves of contraceptive use as a function of centered age, stratified by number of living children and urban/rural residence. In rural areas, women with two living children show the highest rates of contraceptive use, peaking near 50\% at the average age, while women in urban areas with three or more living children show the highest rates near the average age but with a more pronounced decline at older ages. In both settings, women with no living children consistently show the lowest rates of contraceptive use. The nonlinear relationship with age and the apparent dependence of this age trend on child status motivate the model specifications explored below.}
+
+We construct six \code{glmer} models with varying choices of explanatory
+variables and random effects structure, comparing them via \code{anova}. The
 models considered different variables.
 
 For instance, there are two different ways to encode the number of living 
@@ -1339,13 +1343,15 @@ the models below, which allow the effects of the
 continuous covariate of age to vary across districts).
 
 
-\fixme{skip CS fits for now. Will work with theta starting at (0.1, 0, 0.1).  Better error messages?  Are these just silly/ill-posed models?}
+\al{we have a cs model below; may need to write interpretations...}
 <<cm_varcorr>>=
 cm.diag <- glmer(use ~ diag(1 + age|district), Contraception, binomial)
 cm.hetdiag <- glmer(use ~ diag(1 + age|district, hom = FALSE), 
                     Contraception, binomial)
-## cm.cs <- glmer(use ~ cs(1 + age|district), Contraception, binomial)
-## cm.hetcs <- glmer(use ~ cs(1 + age|district, hom = FALSE), Contraception, binomial)
+cm.cs <- glmer(use ~ age*ch + I(age^2) + urban + cs(1 + urban|district),
+              Contraception_scale, binomial)
+cm.hetcs <- glmer(use ~ age*ch + I(age^2) + urban + cs(1 + urban|district, hom=FALSE),
+                   Contraception_scale, binomial)
 @
 
 We can use \code{VarCorr} (and other accessor methods) as we would for models with default, unstructured covariance matrices, e.g.:
