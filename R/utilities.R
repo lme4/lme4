@@ -450,7 +450,7 @@ getMsg <- function(x) {
          control   = attr(opt, "control"),
          derivs    = attr(opt, "derivs"),
          conv      = list(opt = getConv(opt), lme4 = lme4conv),
-         feval     = if (is.null(opt$feval)) NA else opt$feval,
+         feval     = if (is.null(opt$feval)) NA_real_ else opt$feval,
          message   = getMsg(opt),
          warnings  = attr(opt, "warnings"),
          val       = opt$par)
@@ -505,7 +505,7 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
     fac     <- as.numeric(rcl != "nlsResp")
     if (trivial.y <- (length(resp$y)==0)) {
         ## trivial model
-        sqrLenU <- wrss <- pwrss <- NA
+        sqrLenU <- wrss <- pwrss <- NA_real_
     } else {
         sqrLenU <- pp$sqrL(fac)
         wrss    <- resp$wrss()
@@ -531,13 +531,13 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
     }
     cmp <- c(ldL2=pp$ldL2(), ldRX2=pp$ldRX2(), wrss=wrss,
              ussq=sqrLenU, pwrss=pwrss,
-             drsum=if (rcl=="glmResp" && !trivial.y) resp$resDev() else NA,
+             drsum=if (rcl=="glmResp" && !trivial.y) resp$resDev() else NA_real_,
              REML=if (rcl=="lmerResp" && resp$REML != 0L && !trivial.y)
-                  opt$fval else NA,
+                  opt$fval else NA_real_,
              ## FIXME: construct 'REML deviance' here?
-             dev=if (rcl=="lmerResp" && resp$REML != 0L || trivial.y) NA else opt$fval,
-             sigmaML=sqrt(unname(if (!dims[["useSc"]] || trivial.y) NA else sigmaML)),
-             sigmaREML=sqrt(unname(if (rcl!="lmerResp" || trivial.y) NA else
+             dev=if (rcl=="lmerResp" && resp$REML != 0L || trivial.y) NA_real_ else opt$fval,
+             sigmaML=sqrt(unname(if (!dims[["useSc"]] || trivial.y) NA_real_ else sigmaML)),
+             sigmaREML=sqrt(unname(if (rcl!="lmerResp" || trivial.y) NA_real_ else
                                    sigmaML*(dims[["n"]]/dims[["nmp"]]))),
              tolPwrss=rho$tolPwrss)
     ## TODO:  improve this hack to get something in frame slot (maybe need weights, etc...)

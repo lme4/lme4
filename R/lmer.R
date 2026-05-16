@@ -791,7 +791,7 @@ devCrit <- function(object, REML = NULL) {
 
 ## copied from stats:::safe_pchisq
 safe_pchisq <- function (q, df, ...) {
-    df[df <= 0] <- NA
+    df[df <= 0] <- NA_real_
     pchisq(q = q, df = df, ...)
 }
 
@@ -869,12 +869,12 @@ drop1.merMod <- function(object, scope, scale = 0, test = c("none", "Chisq", "us
         aod <- as.data.frame(ans)
     } else {
         dfs <- ans[1L, 1L] - ans[, 1L]
-        dfs[1L] <- NA
+        dfs[1L] <- NA_real_
         aod <- data.frame(npar = dfs, AIC = ans[,2])
         if(test == "Chisq") {
             ## reconstruct deviance from AIC (ugh)
             dev <- ans[, 2L] - k*ans[, 1L]
-            dev <- dev - dev[1L] ; dev[1L] <- NA
+            dev <- dev - dev[1L] ; dev[1L] <- NA_real_
             nas <- !is.na(dev)
             P <- dev
             P[nas] <- safe_pchisq(dev[nas], dfs[nas], lower.tail = FALSE)
@@ -991,7 +991,7 @@ fixef.merMod <- function(object, add.dropped = FALSE, noScale = NULL, ...) {
             kept.pos <- all.pos[-dd]
             vv[kept.pos] <- ff
             names(vv)[kept.pos] <- names(ff)
-            vv[dd] <- NA
+            vv[dd] <- NA_real_
             names(vv)[dd] <- names(dd)
             ff <- vv
         }
