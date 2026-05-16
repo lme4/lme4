@@ -238,7 +238,7 @@ mkNewReTrms <- function(object, newdata,
             for (i in 2:(length(pv))) {
                 missvars <- setdiff(all.vars(pv[[i]]), all.vars(re.form))
                 for (mv in missvars) {
-                    newdata.NA[[mv]] <- NA
+                    newdata.NA[[mv]] <- NA_real_
                 }
             }
         }
@@ -732,7 +732,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
             devfun <- do.call(mkLmerDevfun, lmod)
             object <- mkMerMod(environment(devfun),
                                ## (real parameters will be filled in later)
-                               opt = list(par=NA,fval=NA,conv=NA),
+                               opt = list(par=NA_real_,fval=NA_real_,conv=NA_real_),
                                lmod$reTrms, fr = lmod$fr)
         } else {
 
@@ -743,7 +743,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
             devfun <- do.call(mkGlmerDevfun, glmod)
             object <- mkMerMod(environment(devfun),
                                ## (real parameters will be filled in later)
-                               opt = list(par=NA,fval=NA,conv=NA),
+                               opt = list(par=NA_real_,fval=NA_real_,conv=NA_real_),
                                glmod$reTrms, fr = glmod$fr)
         }
         ## would like to do this:
