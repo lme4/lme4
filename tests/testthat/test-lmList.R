@@ -119,6 +119,38 @@ if(FALSE) {
     }
 })
 
+test_that("pooledSD uses correct df when groups have aliased coefficients (GH #377)", {
+    data(Pixel, package = "nlme")
+    p2 <- subset(Pixel, Dog %in% c(7, 8, 9))
+    ## Dog 9 has I(day^2) aliased (4 obs, 3 params -> 1 free param after alias)
+    ## df.residual(Dog9) = 2, but length(coef(Dog9)) = 3 overcounts by 1
+    L2 <- lmList(pixel ~ day + I(day^2) | Dog, p2)
+    ps <- lme4:::pooledSD(L2)
+    ## correct df: 5 (Dog7) + 5 (Dog8) + 2 (Dog9) = 12
+    expect_equal(attr(ps, "df"), 12)
+    ## correct RSE
+    rss <- sum(sapply(L2, function(m) sum(resid(m)^2)))
+    expect_equal(as.numeric(ps), sqrt(rss / 12), tolerance = 1e-6)
+    ## summary should use correct df and RSE
+    s2 <- summary(L2)
+    expect_equal(s2$df.residual, 12)
+    expect_equal(s2$RSE, as.numeric(ps), tolerance = 1e-6)
+    
+    ## making sure things work as intended (in the non broken case)
+    p3 <- subset(Pixel, Dog %in% c(7, 8))
+    L3 <- lmList(pixel ~ day + I(day^2) | Dog, p3)
+    ps <- lme4:::pooledSD(L3)
+    ## correct df: 5 (Dog7) + 5 (Dog8) = 10
+    expect_equal(attr(ps, "df"), 10)
+    rss <- sum(sapply(L3, function(m) sum(resid(m)^2)))
+    expect_equal(as.numeric(ps), sqrt(rss / 10), tolerance = 1e-6)
+    s3 <- summary(L3)
+    expect_equal(s3$df.residual, 10)
+    expect_equal(s3$RSE, as.numeric(ps), tolerance = 1e-6)
+    ## no NAs in coefficients: all params estimable for both groups
+    expect_false(any(is.na(s3$coefficients)))
+})
+
 test_that("NA,weights,offsets", {
 
     ## from GH #320
