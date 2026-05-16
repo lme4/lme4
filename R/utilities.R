@@ -612,7 +612,7 @@ checkFormulaData <- function(formula, data, checkLHS=TRUE,
     if (bad.data || debug) {
         varex <- function(v, env) exists(v, envir=env, inherits=FALSE)
         allvars <- all.vars(as.formula(formula))
-        allvarex <- function(env, vvec=allvars) all(vapply(vvec, varex, NA, env))
+        allvarex <- function(env, vvec=allvars) all(vapply(vvec, varex, NA_real_, env))
     }
     if (bad.data) { ## Choose helpful error message:
         if (allvarex(environment(formula))) {

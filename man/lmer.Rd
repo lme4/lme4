@@ -92,7 +92,7 @@ lmer(formula, data = NULL, REML = TRUE, control = lmerControl(),
     deviation parameter(s) followed by the correlation parameter
     \eqn{\rho} (specified on the [0,1] scale).
   }
-  See the \href{../doc/covariance_structures.html}{covariance structures vignette} for more detail on covariance matrix 
+  See the covariance structures vignette for more detail on covariance matrix 
   parameterizations.
   
   The parameters for all random-effect terms are concatenated in the

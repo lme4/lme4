@@ -47,7 +47,7 @@ if(getRversion() < "3.5.0") {
 ##' Utility for lmList(), ...: Collect errors from a list \code{x},
 ##' produce a "summary warning" and keep that message as "warningMsg" attribute
 warnErrList <- function(x, warn = TRUE) {
-  errs <- vapply(x, inherits, NA, what = "error")
+  errs <- vapply(x, inherits, NA_real_, what = "error")
   if (any(errs)) {
     v.err <- x[errs]
     e.call <- paste(deparse(conditionCall(v.err[[1]])), collapse = "\n")
@@ -216,7 +216,7 @@ coef.lmList4 <- function(object,
         ## different parameter sets may be estimated for different subsets of data ...
         allnames <- Reduce(union, lapply(coefs[non.null], names))
         if (is.numeric(template)) {
-            co <- matrix(NA,
+            co <- matrix(NA_real_,
                          ncol = length(allnames),
                          nrow = length(coefs),
                          dimnames = list(names(object), allnames))

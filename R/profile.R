@@ -481,7 +481,7 @@ get.which <- function(which, nvp, nptot, parnames, verbose=FALSE) {
 ##     parameterization.  This is profiled with respect to the
 ##     variance-covariance parameters (fixed-effects done separately).
 devfun2 <- function(fm,
-                    useSc = if(isLMM(fm)) TRUE else NA,
+                    useSc = if(isLMM(fm)) TRUE else NA_real_,
                     scale = c("sdcor", "varcov"),
                     ...)
 {
@@ -663,7 +663,7 @@ xyplot.thpr <-
         else if(is.numeric(x <- bs$x) && is.numeric(y <- bs$y) && length(x) == length(y))
             approx(x, y, xout = zeta)$y
         else
-            rep_len(NA, length(zeta))
+            rep_len(NA_real_, length(zeta))
     }
     fr <- data.frame(zeta = rep.int(zeta, length(spl)),
                      pval = unlist(lapply(bspl, mypred, zeta)),
@@ -726,9 +726,9 @@ confint.thpr <- function(object, parm, level = 0.95, zeta,
     ## fallback strategy for old profiles that don't have a lower/upper
     ##  attribute saved ...
     if (is.null(lower <- attr(object,"lower")))
-        lower <- rep(NA,length(parm))
+        lower <- rep(NA_real_,length(parm))
     if (is.null(upper <- attr(object,"upper")))
-        upper <- rep(NA,length(parm))
+        upper <- rep(NA_real_,length(parm))
     ## FIXME: work a little harder to add -Inf/Inf for fixed effect
     ##  parameters?  (Should only matter for really messed-up profiles)
     bnms <- names(bak)
@@ -760,7 +760,7 @@ confint.thpr <- function(object, parm, level = 0.95, zeta,
         ## tell in general whether an NA indicates a lower or an
         ## upper bound ...
         badprof <- FALSE
-        p <- rep(NA,2)
+        p <- rep(NA_real_,2)
         if (!inherits(b <- bak[[parm[i]]], "error")) {
             p <- predy(b, zeta)
         } else {
@@ -841,7 +841,7 @@ confint.merMod <- function(object, parm, level = 0.95,
            "wald" = {
                a <- (1 - level)/2
                a <- c(a, 1 - a)
-               ci.vcov <- array(NA,dim = c(length(vn), 2L),
+               ci.vcov <- array(NA_real_,dim = c(length(vn), 2L),
                                 dimnames = list(vn, format.perc(a,3)))
                ## copied with small changes from confint.default
                cf <- fixef(object)   ## coef() -> fixef()
@@ -1181,7 +1181,7 @@ dens <- function(pr, npts=201, upper=0.999) {
     dd <- rng # empty named list to be filled
     for (i in seq_along(bspl)) {
         if (inherits(bspl[[i]], "error")) {
-            rng[[i]] <- rep(NA,npts)
+            rng[[i]] <- rep(NA_real_,npts)
             bad_vars <- c(bad_vars, vNms[i])
             next
         }

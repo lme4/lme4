@@ -238,7 +238,7 @@ mkNewReTrms <- function(object, newdata,
             for (i in 2:(length(pv))) {
                 missvars <- setdiff(all.vars(pv[[i]]), all.vars(re.form))
                 for (mv in missvars) {
-                    newdata.NA[[mv]] <- NA
+                    newdata.NA[[mv]] <- NA_real_
                 }
             }
         }
@@ -291,7 +291,7 @@ mkNewReTrms <- function(object, newdata,
         ## ReTrms <- reformulas::mkReTrms(reformulas::findbars(re.form[[2]]), rfd)
         ## update Lambdat (ugh, better way to do this?)
         reTrms <- within(reTrms,Lambdat@x <- unname(getME(object,"theta")[Lind]))
-        if (!allow.new.levels && any(vapply(reTrms$flist, anyNA, NA)))
+        if (!allow.new.levels && any(vapply(reTrms$flist, anyNA, NA_real_)))
             stop("NAs are not allowed in prediction data",
                  " for grouping variables unless allow.new.levels is TRUE")
         ns.re <- names(re <- ranef(object, condVar = FALSE))
@@ -671,7 +671,7 @@ simulate.formula_lhs_matrix <- simulate.formula_lhs_numeric <-
         }
 
 simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
-                            re.form=NA,
+                            re.form=NA_real_,
                             newdata=NULL, newparams=NULL,
                             family=NULL,
                             cluster.rand=rnorm,
@@ -684,7 +684,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 }
 
 .simulateFun <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
-                         re.form=NA,
+                         re.form=NA_real_,
                          newdata=NULL, newparams=NULL,
                          formula=NULL,family=NULL,
                          cluster.rand=rnorm,
@@ -732,7 +732,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
             devfun <- do.call(mkLmerDevfun, lmod)
             object <- mkMerMod(environment(devfun),
                                ## (real parameters will be filled in later)
-                               opt = list(par=NA,fval=NA,conv=NA),
+                               opt = list(par=NA_real_,fval=NA_real_,conv=NA_real_),
                                lmod$reTrms, fr = lmod$fr)
         } else {
 
@@ -743,7 +743,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
             devfun <- do.call(mkGlmerDevfun, glmod)
             object <- mkMerMod(environment(devfun),
                                ## (real parameters will be filled in later)
-                               opt = list(par=NA,fval=NA,conv=NA),
+                               opt = list(par=NA_real_,fval=NA_real_,conv=NA_real_),
                                glmod$reTrms, fr = glmod$fr)
         }
         ## would like to do this:
