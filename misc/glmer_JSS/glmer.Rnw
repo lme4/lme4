@@ -26,14 +26,14 @@
 %% BMB: what does JSS assume?
 %\bibliographystyle{chicago}
 \author{
-  Douglas Bates\\University of Wisconsin - Madison \And
-  Anna Ly\\University of Toronto \And
+  Anna Ly\\McMaster University \And
   Steven C. Walker\\McMaster University \AND
   Rune Haubo Bojesen Christensen\\Technical University of Denmark\And
-  Martin M\"achler\\ETH Zurich\AND
+  Douglas Bates\\University of Wisconsin - Madison \AND
+  Martin M\"achler\\ETH Zurich\And
   Benjamin M. Bolker\\McMaster University
 }
-\Plainauthor{Douglas Bates, Anna Ly, Steve Walker, Rune Haubo Bojesen Christensen, Douglas Bates, Martin M\"achler, Benjamin M. Bolker}
+\Plainauthor{Anna Ly, Steven C. Walker, Rune Haubo Bojesen Christensen, Douglas Bates, Martin M\"achler, Benjamin M. Bolker}
 \title{Fitting generalized linear mixed-effects models using \pkg{lme4}}
 \Plaintitle{Fitting generalized linear mixed models using lme4}
 \Shorttitle{GLMMs with lme4}
@@ -67,6 +67,12 @@
   penalized least squares,
   Cholesky decomposition}
 \Address{
+  Anna Ly\\
+  Department of Mathematics \& Statistics \\
+  McMaster University \\
+  1280 Main Street W \\
+  Hamilton, ON L8S 4K1, Canada \\
+  \par\bigskip
   Steven C. Walker\\
   Department of Mathematics \& Statistics \\
   McMaster University \\
@@ -82,8 +88,8 @@
   E-mail: \email{rhbc@dtu.dk}
   \par\bigskip
   Douglas Bates\\
-  Department of Statistics, University of Wisconsin\\
-  1300 University Ave.\\
+  Department of Statistics, University of Wisconsin - Madison\\
+  1205 University Ave. \\
   Madison, WI 53706, U.S.A.\\
   E-mail: \email{bates@stat.wisc.edu}
   \par\bigskip
@@ -150,7 +156,15 @@ Generalized linear mixed models extend the class of
 generalized linear models by allowing for both fixed and random
 effects. In a GLM, the length-$n$ vector-valued response variable,
 $\mc Y$, has a conditional distribution in the exponential dispersion family (e.g. Normal,
-binomial, Poisson). The mean, $\bm\mu_{\mc Y }$, of $\mc Y$ depends on
+binomial, Poisson).\footnote{The \code{lme4} package supports fitting negative binomial GLMMs,
+which are an extension of GLMMs; the negative binomial family is within the
+exponential dispersion family only if the dispersion parameter is fixed.
+The \code{glmer.nb} function implements a one-dimensional optimization
+procedure to estimate the dispersion parameter, fitting a negative binomial GLMM with
+a fixed dispersion parameter at each trial value. While correct, this
+approach is slower than other available negative binomial GLMM
+implementations (e.g., as offered in the \code{glmmTMB} package),
+which is recommended for large problems.} The mean, $\bm\mu_{\mc Y }$, of $\mc Y$ depends on
 a linear predictor,
 \begin{equation}
   \label{eq:GLMlinpred}
@@ -476,7 +490,7 @@ provides
   \begin{aligned}
     L(\bm\beta,\bm\theta|\yobs)&=\int_{\mathbb{R}^q}f_{\mc Y,\mc U}(\yobs,\bm u)\,d\bm u\\
     &\approx \tilde{f}\,|\bm L|\, \int_{\mathbb{R}^q}e^{-\|\bm z\|^2/2}\,(2\pi)^{-q/2}\,d\bm z\\
-    =\tilde{f}\, |\bm L|
+    &=\tilde{f}\, |\bm L|
   \end{aligned}
 \end{equation}
 or, on the deviance scale,
@@ -709,20 +723,11 @@ Increasing the number of nodes improves the accuracy of the likelihood
 approximation at the expense of computation time. However, AGQ is only available 
 for models with a single scalar random effect.
 
-\fixme{move this?}
-The \code{lme4} package supports fitting negative binomial GLMMs,
-which are an extension of GLMMs; the negative binomial family is within the
-exponential dispersion family only if the dispersion parameter is fixed.
-The \code{glmer.nb} function implements a one-dimensional optimization
-procedure to estimate the dispersion parameter, fitting a negative binomial GLMM with
-a fixed dispersion parameter at each trial value. While correct, this
-approach is slower than other available negative binomial GLMM
-implementations (e.g., as offered in the \code{glmmTMB} package),
-which is recommended for large problems.
-
 \section{Model fitting}
 
-Once we can calculate the deviance by PIRLS for specified values of $\btheta$ and $\bbeta$ (or only $\btheta$ if profiling out the fixed effects via \code{nAGQ=0}), we then estimate the parameters by nonlinear optimization. This procedure largely follows the description in \cite{bates2015fitting}, using derivative-free optimizers with box constraints to prevent non-positive-(semi)definite covariance matrices. The only difference is that by default \code{glmer} uses a two-step fitting procedure, using \code{nAGQ=0} at the first stage to get preliminary estimates which are then used as starting points for a second optimization with Laplace approximation or Gauss-Hermite quadrature as specified by the user. Different nonlinear optimizers can be used at each stage: the current default (as specified in \code{glmerControl} is to use Powell's BOBYQA followed by a box-constrained variant of the Nelder-Mead simplex algorithm. For faster, approximate fitting, the second stage can be omitted; in the rare cases where the initial \code{nAGQ=0} fit gives poor results, the first stage can be skipped via \code{glmerControl(nAGQ0initStep = FALSE)}.
+\al{
+Once we can calculate the deviance by PIRLS for specified values of $\btheta$ and $\bbeta$ (or only $\btheta$ if profiling out the fixed effects via \code{nAGQ=0}), we then estimate the parameters by nonlinear optimization. This procedure largely follows the description in \cite{bates2015fitting}, using derivative-free optimizers with box constraints to prevent non-positive-(semi)definite covariance matrices. Specifically, the elements of $\btheta$ corresponding to the diagonal of $\bm\Lambda_\theta$ are currently constrained to be non-negative. We note, however, that the profiled log-likelihood is an even function of these diagonal parameters: since $\bm\Sigma_\theta=\bm\Lambda_\theta\bm\Lambda_\theta\trans$ depends on them only through their squares, positive and negative values yield identical likelihoods. This symmetry means that constrained optimization is not strictly necessary — an unconstrained optimizer will converge to the correct solution, approaching zero from either side in the boundary case of a singular random-effects covariance matrix. Removing this constraint would permit the use of a broader class of unconstrained optimizers, though this has not yet been incorporated into the implementation. The only difference is that by default \code{glmer} uses a two-step fitting procedure, using \code{nAGQ=0} at the first stage to get preliminary estimates which are then used as starting points for a second optimization with Laplace approximation or Gauss-Hermite quadrature as specified by the user. Different nonlinear optimizers can be used at each stage: the current default, as specified in \code{glmerControl}, is to use Powell's BOBYQA followed by a box-constrained variant of the Nelder-Mead simplex algorithm. For faster, approximate fitting, the second stage can be omitted; in the rare cases where the initial \code{nAGQ=0} fit gives poor results, the first stage can be skipped via \code{glmerControl(nAGQ0initStep = FALSE)}.
+}
 
 \section{Examples}
 
@@ -964,7 +969,7 @@ the random effects with confidence bars); in the case of
 the Q-Q plot (\code{qqmath}) the $y$-axis shows corresponding 
 values of the standard normal quantiles (Figure~\ref{fig:glmerRanefplot}).
 
-<<glmerRanefplot,fig.cap="Graphical display of random effects. \\emph{Left}: conditional modes $\\pm 1.96 \\times \\text{conditional mode}$, ordered by magnitude. \\emph{Right}: quantile-quantile plot, with linear regression line overlaid.",echo=FALSE>>=
+<<glmerRanefplot,fig.cap="Graphical display of random effects. \\emph{Left}: conditional modes $\\pm 1.96 \\times \\text{conditional standard deviation}$, ordered by magnitude. \\emph{Right}: quantile-quantile plot, with linear regression line overlaid.",echo=FALSE>>=
 rr <- ranef(gm1,condVar=TRUE)
 dd <- dotplot(rr)
 qq <- qqmath(rr,type=c("p","r"))
@@ -976,7 +981,7 @@ of GLMs. For mixed-effect models, it also assesses
 the normality of the distribution of conditional modes.
 Figure~\ref{fig:perf_chk_mod_cbpp} shows an example.
 
-<<perf_chk_mod_cbpp,fig.cap="Model diagnostics using \\code{performance::check\\_model}",fig.height=10,echo=FALSE>>=
+<<perf_chk_mod_cbpp,fig.cap="Model diagnostics using \\code{performance::check\\_model}. The plot showcasing the normality of random effects (lower right panel) is the transpose of the right panel in Figure 6.",fig.height=10,echo=FALSE>>=
 check_model(gm1, check = c("reqq", "binned_residuals", 
                                         "vif", "qq"))
 @
@@ -1201,8 +1206,10 @@ gelman_scale <- function(dataset, response) {
 Contraception_scale <- gelman_scale(Contraception, "use")
 @
 
-We construct six \code{glmer} models with varying choices of explanatory 
-variables and random effects structure, comparing them via \code{anova}. The 
+\al{Figure~\ref{fig:graphContraception} shows exploratory smoothed curves of contraceptive use as a function of centered age, stratified by number of living children and urban/rural residence. In rural areas, women with two living children show the highest rates of contraceptive use, peaking near 50\% at the average age, while women in urban areas with three or more living children show the highest rates near the average age but with a more pronounced decline at older ages. In both settings, women with no living children consistently show the lowest rates of contraceptive use. The nonlinear relationship with age and the apparent dependence of this age trend on child status motivate the model specifications explored below.}
+
+We construct six \code{glmer} models with varying choices of explanatory
+variables and random effects structure, comparing them via \code{anova}. The
 models considered different variables.
 
 For instance, there are two different ways to encode the number of living 
@@ -1213,7 +1220,9 @@ woman has any living children.
 
 Second, we vary whether child status interacts with the woman's age: two models
 include \code{ch} (or \code{livch}) and \code{age} as additive terms, while the 
-other four include a \code{ch} and \code{age} interaction. 
+other four include a \code{ch} and \code{age} interaction. \al{The effect of 
+age on contraceptive use is not linear, which is why \code{I(age\^{}2)}
+is included.}
 
 Third, we explore different random effects structures at the district level.
 Three of them use a single random intercept per district \code{(1 \textbar{} district)}.
@@ -1276,7 +1285,7 @@ mnamevec <- c("int_child    + age  + (1 | district)",
                 "binary_child × age + (1 | district)",
                 "binary_child × age + (1 + urban | district)",
                 "binary_child × age + (1 | district/urban)",
-                "binary_child × age + (1 | district:urban")  
+                "binary_child × age + (1 | district:urban)")  
 print(AICtab(cm1, cm2, cm3, cm4, cm5, cm6,
                 mnames = mnamevec))
 options(op)  
@@ -1334,13 +1343,15 @@ the models below, which allow the effects of the
 continuous covariate of age to vary across districts).
 
 
-\fixme{skip CS fits for now. Will work with theta starting at (0.1, 0, 0.1).  Better error messages?  Are these just silly/ill-posed models?}
+\al{we have a cs model below; may need to write interpretations...}
 <<cm_varcorr>>=
 cm.diag <- glmer(use ~ diag(1 + age|district), Contraception, binomial)
 cm.hetdiag <- glmer(use ~ diag(1 + age|district, hom = FALSE), 
                     Contraception, binomial)
-## cm.cs <- glmer(use ~ cs(1 + age|district), Contraception, binomial)
-## cm.hetcs <- glmer(use ~ cs(1 + age|district, hom = FALSE), Contraception, binomial)
+cm.cs <- glmer(use ~ age*ch + I(age^2) + urban + cs(1 + urban|district),
+              Contraception_scale, binomial)
+cm.hetcs <- glmer(use ~ age*ch + I(age^2) + urban + cs(1 + urban|district, hom=FALSE),
+                   Contraception_scale, binomial)
 @
 
 We can use \code{VarCorr} (and other accessor methods) as we would for models with default, unstructured covariance matrices, e.g.:
