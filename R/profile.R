@@ -237,8 +237,8 @@ profile.merMod <- function(fitted,
                                      control = control),
                              error=function(e) NULL)
             if (is.null(ores)) {
-                devdiff <- NA_real_
-                pars <- NA_real_
+                devdiff <- NA
+                pars <- NA
             } else {
                 devdiff <- ores$fval - base
                 pars <- ores$par
@@ -522,7 +522,7 @@ devfun2 <- function(fm,
           thpars <- try(
               convProfParToPar(pars, fm, profscale = scale, sc = sig),
               silent = TRUE)
-          if (inherits(thpars, "try-error")) return(NA_real_)
+          if (inherits(thpars, "try-error")) return(NA)
           .Call(lmer_Deviance, pp$ptr(), resp$ptr(), mkTheta(thpars))
           sigsq <- if (scale=="varcov") sig else sig^2
           pp$ldL2() - ldW + (resp$wrss() + pp$sqrL(1))/sigsq + n * log(2 * pi * sigsq)
@@ -541,7 +541,7 @@ devfun2 <- function(fm,
             thpars <- try(
                 convProfParToPar(pars, fm, profscale = scale, sc = NULL),
                 silent = TRUE)
-            if (inherits(thpars, "try-error")) return(NA_real_)
+            if (inherits(thpars, "try-error")) return(NA)
             fixpars <- pars[-seq(np)]
             d0(c(thpars, fixpars))
         }
@@ -596,7 +596,7 @@ panel.thpr <- function(x, y, spl, absVal, ...)
     myspl <- spl[[panel.number()]]
     lsegments(x, y, x, 0, ...)
     if (absVal) {
-        y[y == 0] <- NA_real_
+        y[y == 0] <- NA
         lsegments(x, y, rev(x), y)
     } else {
         panel.abline(h = 0, ...)
