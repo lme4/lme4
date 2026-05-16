@@ -27,6 +27,12 @@ GHrule <- function (ord, asMatrix=TRUE) {
     fr <- as.data.frame(fgq_rules[[ord]])
 
     rownames(fr) <- NULL
+    ## Repositioning them similar to how it's done in MixedModels.jl,
+    ## by averaging the weights in forward and reverse order and the locations 
+    ## in forward order and negative locations in reverse order.
+    ## See: https://github.com/lme4/lme4/issues/968#issuecomment-4467149014
+    fr$z <- (fr$z - rev(fr$z)) / 2
+    fr$w <- (fr$w + rev(fr$w)) / 2
     fr$ldnorm <- dnorm(fr$z, log=TRUE)
     if (asMatrix) as.matrix(fr) else fr
 }
