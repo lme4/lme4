@@ -291,7 +291,7 @@ mkNewReTrms <- function(object, newdata,
         ## ReTrms <- reformulas::mkReTrms(reformulas::findbars(re.form[[2]]), rfd)
         ## update Lambdat (ugh, better way to do this?)
         reTrms <- within(reTrms,Lambdat@x <- unname(getME(object,"theta")[Lind]))
-        if (!allow.new.levels && any(vapply(reTrms$flist, anyNA, NA_real_)))
+        if (!allow.new.levels && any(vapply(reTrms$flist, anyNA, NA)))
             stop("NAs are not allowed in prediction data",
                  " for grouping variables unless allow.new.levels is TRUE")
         ns.re <- names(re <- ranef(object, condVar = FALSE))
@@ -671,7 +671,7 @@ simulate.formula_lhs_matrix <- simulate.formula_lhs_numeric <-
         }
 
 simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
-                            re.form=NA_real_,
+                            re.form=NA,
                             newdata=NULL, newparams=NULL,
                             family=NULL,
                             cluster.rand=rnorm,
@@ -684,7 +684,7 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
 }
 
 .simulateFun <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
-                         re.form=NA_real_,
+                         re.form=NA,
                          newdata=NULL, newparams=NULL,
                          formula=NULL,family=NULL,
                          cluster.rand=rnorm,

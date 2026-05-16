@@ -29,7 +29,7 @@
 ##' The semi-parametric variant is not yet implemented, and we only
 ##' provide a method for \code{\link{lmer}}  and \code{\link{glmer}} results.
 bootMer <- function(x, FUN, nsim = 1, seed = NULL,
-                    use.u = FALSE, re.form = NA_real_,
+                    use.u = FALSE, re.form = NA,
                     type = c("parametric","semiparametric"),
                     verbose = FALSE,
                     .progress = "none", PBargs=list(),
@@ -108,7 +108,7 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
       control
       length.t0 <- length(t0)
       f1 <- factory(function(i) FUN(refit(x, ss[[i]],
-                                          control = control)), errval = rep(NA_real_, length.t0))
+                                          control = control)), errval = rep(NA_character_, length.t0))
       function(i) {
           ret <- f1(i)
           if (verbose) { cat(sprintf("%5d :",i)); str(ret) }

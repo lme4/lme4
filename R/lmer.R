@@ -511,8 +511,8 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
     mCall <- match.call(expand.dots = TRUE)
     dots <- list(...)
     .sapply <- function(L, FUN, ...) unlist(lapply(L, FUN, ...))
-    modp <- (as.logical(vapply(dots, is, NA_real_, "merMod")) |
-             as.logical(vapply(dots, is, NA_real_, "lm")))
+    modp <- (as.logical(vapply(dots, is, NA, "merMod")) |
+             as.logical(vapply(dots, is, NA, "lm")))
     if (any(modp)) {   ## multiple models - form table
         ## opts <- dots[!modp]
         mods <- c(list(object), dots[modp])
@@ -1593,7 +1593,7 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
     ussq <- pp$sqrL(1)
     pwrss <- wrss + ussq
     cmp <- c(ldL2=pp$ldL2(), ldRX2=pp$ldRX2(), wrss=wrss, ussq=ussq,
-             pwrss=pwrss, drsum=NA_real_, dev=opt$fval, REML=NA_real_,
+             pwrss=pwrss, drsum=NA_real_, dev=opt$fval, REML=NA,
              sigmaML=sqrt(pwrss/n), sigmaREML=sqrt(pwrss/(n-p)))
     ## modify the call  to have REML=FALSE. (without evaluating the call!)
     cl <- x@call
