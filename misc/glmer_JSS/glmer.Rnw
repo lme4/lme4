@@ -26,14 +26,14 @@
 %% BMB: what does JSS assume?
 %\bibliographystyle{chicago}
 \author{
-  Douglas Bates\\University of Wisconsin - Madison \And
   Anna Ly\\McMaster University \And
   Steven C. Walker\\McMaster University \AND
   Rune Haubo Bojesen Christensen\\Technical University of Denmark\And
-  Martin M\"achler\\ETH Zurich\AND
+  Douglas Bates\\University of Wisconsin - Madison \AND
+  Martin M\"achler\\ETH Zurich\And
   Benjamin M. Bolker\\McMaster University
 }
-\Plainauthor{Douglas Bates, Anna Ly, Steve Walker, Rune Haubo Bojesen Christensen, Douglas Bates, Martin M\"achler, Benjamin M. Bolker}
+\Plainauthor{Anna Ly, Steven C. Walker, Rune Haubo Bojesen Christensen, Douglas Bates, Martin M\"achler, Benjamin M. Bolker}
 \title{Fitting generalized linear mixed-effects models using \pkg{lme4}}
 \Plaintitle{Fitting generalized linear mixed models using lme4}
 \Shorttitle{GLMMs with lme4}
@@ -156,7 +156,15 @@ Generalized linear mixed models extend the class of
 generalized linear models by allowing for both fixed and random
 effects. In a GLM, the length-$n$ vector-valued response variable,
 $\mc Y$, has a conditional distribution in the exponential dispersion family (e.g. Normal,
-binomial, Poisson). The mean, $\bm\mu_{\mc Y }$, of $\mc Y$ depends on
+binomial, Poisson).\footnote{The \code{lme4} package supports fitting negative binomial GLMMs,
+which are an extension of GLMMs; the negative binomial family is within the
+exponential dispersion family only if the dispersion parameter is fixed.
+The \code{glmer.nb} function implements a one-dimensional optimization
+procedure to estimate the dispersion parameter, fitting a negative binomial GLMM with
+a fixed dispersion parameter at each trial value. While correct, this
+approach is slower than other available negative binomial GLMM
+implementations (e.g., as offered in the \code{glmmTMB} package),
+which is recommended for large problems.} The mean, $\bm\mu_{\mc Y }$, of $\mc Y$ depends on
 a linear predictor,
 \begin{equation}
   \label{eq:GLMlinpred}
@@ -715,20 +723,9 @@ Increasing the number of nodes improves the accuracy of the likelihood
 approximation at the expense of computation time. However, AGQ is only available 
 for models with a single scalar random effect.
 
-\fixme{move this?}
-The \code{lme4} package supports fitting negative binomial GLMMs,
-which are an extension of GLMMs; the negative binomial family is within the
-exponential dispersion family only if the dispersion parameter is fixed.
-The \code{glmer.nb} function implements a one-dimensional optimization
-procedure to estimate the dispersion parameter, fitting a negative binomial GLMM with
-a fixed dispersion parameter at each trial value. While correct, this
-approach is slower than other available negative binomial GLMM
-implementations (e.g., as offered in the \code{glmmTMB} package),
-which is recommended for large problems.
-
 \section{Model fitting}
 
-Once we can calculate the deviance by PIRLS for specified values of $\btheta$ and $\bbeta$ (or only $\btheta$ if profiling out the fixed effects via \code{nAGQ=0}), we then estimate the parameters by nonlinear optimization. This procedure largely follows the description in \cite{bates2015fitting}, using derivative-free optimizers with box constraints to prevent non-positive-(semi)definite covariance matrices. The only difference is that by default \code{glmer} uses a two-step fitting procedure, using \code{nAGQ=0} at the first stage to get preliminary estimates which are then used as starting points for a second optimization with Laplace approximation or Gauss-Hermite quadrature as specified by the user. Different nonlinear optimizers can be used at each stage: the current default, as specified in \code{glmerControl}, is to use Powell's BOBYQA followed by a box-constrained variant of the Nelder-Mead simplex algorithm. For faster, approximate fitting, the second stage can be omitted; in the rare cases where the initial \code{nAGQ=0} fit gives poor results, the first stage can be skipped via \code{glmerControl(nAGQ0initStep = FALSE)}.
+Once we can calculate the deviance by PIRLS for specified values of $\btheta$ and $\bbeta$ (or only $\btheta$ if profiling out the fixed effects via \code{nAGQ=0}), we then estimate the parameters by nonlinear optimization. This procedure largely follows the description in \cite{bates2015fitting}, using derivative-free optimizers with box constraints to prevent non-positive-(semi)definite covariance matrices. Specifically, the elements of $\btheta$ corresponding to the diagonal of $\bm\Lambda_\theta$ are currently constrained to be non-negative. We note, however, that the profiled log-likelihood is an even function of these diagonal parameters: since $\bm\Sigma_\theta=\bm\Lambda_\theta\bm\Lambda_\theta\trans$ depends on them only through their squares, positive and negative values yield identical likelihoods. This symmetry means that constrained optimization is not strictly necessary — an unconstrained optimizer will converge to the correct solution, approaching zero from either side in the boundary case of a singular random-effects covariance matrix. Removing this constraint would permit the use of a broader class of unconstrained optimizers, though this has not yet been incorporated into the implementation. The only difference is that by default \code{glmer} uses a two-step fitting procedure, using \code{nAGQ=0} at the first stage to get preliminary estimates which are then used as starting points for a second optimization with Laplace approximation or Gauss-Hermite quadrature as specified by the user. Different nonlinear optimizers can be used at each stage: the current default, as specified in \code{glmerControl}, is to use Powell's BOBYQA followed by a box-constrained variant of the Nelder-Mead simplex algorithm. For faster, approximate fitting, the second stage can be omitted; in the rare cases where the initial \code{nAGQ=0} fit gives poor results, the first stage can be skipped via \code{glmerControl(nAGQ0initStep = FALSE)}.
 
 \section{Examples}
 
