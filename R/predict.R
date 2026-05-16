@@ -238,7 +238,7 @@ mkNewReTrms <- function(object, newdata,
             for (i in 2:(length(pv))) {
                 missvars <- setdiff(all.vars(pv[[i]]), all.vars(re.form))
                 for (mv in missvars) {
-                    newdata.NA[[mv]] <- NA_real_
+                    newdata.NA[[mv]] <- NA
                 }
             }
         }
