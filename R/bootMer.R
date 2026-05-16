@@ -108,7 +108,7 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
       control
       length.t0 <- length(t0)
       f1 <- factory(function(i) FUN(refit(x, ss[[i]],
-                                          control = control)), errval = rep(NA, length.t0))
+                                          control = control)), errval = rep(NA_character_, length.t0))
       function(i) {
           ret <- f1(i)
           if (verbose) { cat(sprintf("%5d :",i)); str(ret) }
