@@ -577,7 +577,7 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
             header <- c(header, paste("Subset:", abbrDeparse(subset[[1]])))
         llk <- unlist(llks)
         chisq <- 2 * pmax(0, c(NA_real_, diff(llk)))
-        dfChisq <- c(NA_real_, diff(npar))
+        dfChisq <- c(NA_integer_, diff(npar))
         val <- data.frame(npar = npar,
                           ## afraid to swap in vapply here; wondering
                           ##   why .sapply was needed in the first place ...
@@ -587,7 +587,7 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
                           "-2*log(L)" = -2*llk,
                           Chisq = chisq,
                           Df = dfChisq,
-                          "Pr(>Chisq)" = ifelse(dfChisq==0,NA_real_,pchisq(chisq, dfChisq, lower.tail = FALSE)),
+                          "Pr(>Chisq)" = ifelse(dfChisq==0,NA_integer_,pchisq(chisq, dfChisq, lower.tail = FALSE)),
                           row.names = names(mods), check.names = FALSE)
         class(val) <- c("anova", class(val))
         forms <- lapply(lapply(calls, `[[`, "formula"), deparse1)
