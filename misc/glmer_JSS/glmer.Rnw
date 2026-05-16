@@ -1493,8 +1493,6 @@ random-effects design matrix, $\bm U = \bm A^{1/2}\bm V^{-1/2}\bm M
 
 \subsection{Fisher-like scoring}
 
-
-
 There are two ways to further simplify this expression for $\bm U^\top
 \bm U$. The first is to use the canonical link function for the family
 being used. Canonical links have the property that $\bm V = \bm M$,
@@ -1523,6 +1521,8 @@ the Hessian via $\bm R$, we have that,
 \end{equation}
 
 \subsection{Gauss-Markov}
+
+\fixme{Doug: do we (i.e. you) want to add this?}
 
 \end{document}
 
