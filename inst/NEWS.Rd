@@ -40,9 +40,7 @@
       \href{https://github.com/JuliaStats/MixedModels.jl}{MixedModels.jl}
       (GH #968).
       This will produce small changes to numerical results for any
-      \code{glmer()} fit with \code{nAGQ > 1}. Users may observe that a 
-      previously converging fit now produces a convergence warning 
-      (or vice versa).
+      \code{glmer()} fit with \code{nAGQ > 1}.
       \item exported covariance methods documented in
       \code{help("Covariance-class")} (\code{getPar}, \code{getTheta},
       etc.)
