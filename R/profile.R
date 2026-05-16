@@ -481,7 +481,7 @@ get.which <- function(which, nvp, nptot, parnames, verbose=FALSE) {
 ##     parameterization.  This is profiled with respect to the
 ##     variance-covariance parameters (fixed-effects done separately).
 devfun2 <- function(fm,
-                    useSc = if(isLMM(fm)) TRUE else NA_real_,
+                    useSc = if(isLMM(fm)) TRUE else NA,
                     scale = c("sdcor", "varcov"),
                     ...)
 {

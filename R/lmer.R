@@ -938,7 +938,7 @@ fitted.merMod <- function(object, ...) {
         ## handle 'fake' objects created by simulate()
         xx <- rep(NA_real_,nrow(model.frame(object)))
     }
-    if (is.null(nm <- rownames(model.frame(object)))) nm <- seq_along(xx)
+    nm <- rownames(model.frame(object)) %||% seq_along(xx)
     names(xx) <- nm
     if (!is.null(fit.na.action <- attr(model.frame(object),"na.action")))
         napredict(fit.na.action, xx)
