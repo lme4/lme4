@@ -19,7 +19,7 @@
 \newcommand{\btheta}{{\bm \theta}}
 \newcommand{\scw}[1]{{\color{blue} \emph{#1}}}
 \newcommand{\al}[1]{{\color{violet}#1}} % anna's new comments
-\newcommand{\fixme}[1]{{\color{blue} \textbf{#1}}}
+\newcommand{\fixme}[1]{{\color{blue} FIXME: \textbf{#1}}}
 \DeclareUnicodeCharacter{0394}{$\Delta$}
 %
 \shortcites{lesnoff_within-herd_2004}
@@ -27,13 +27,12 @@
 %\bibliographystyle{chicago}
 \author{
   Anna Ly\\McMaster University \And
-  Steven C. Walker\\McMaster University \AND
   Rune Haubo Bojesen Christensen\\Technical University of Denmark\And
   Douglas Bates\\University of Wisconsin - Madison \AND
   Martin M\"achler\\ETH Zurich\And
   Benjamin M. Bolker\\McMaster University
 }
-\Plainauthor{Anna Ly, Steven C. Walker, Rune Haubo Bojesen Christensen, Douglas Bates, Martin M\"achler, Benjamin M. Bolker}
+\Plainauthor{Anna Ly, Rune Haubo Bojesen Christensen, Douglas Bates, Martin M\"achler, Benjamin M. Bolker}
 \title{Fitting generalized linear mixed-effects models using \pkg{lme4}}
 \Plaintitle{Fitting generalized linear mixed models using lme4}
 \Shorttitle{GLMMs with lme4}
@@ -72,13 +71,6 @@
   McMaster University \\
   1280 Main Street W \\
   Hamilton, ON L8S 4K1, Canada \\
-  \par\bigskip
-  Steven C. Walker\\
-  Department of Mathematics \& Statistics \\
-  McMaster University \\
-  1280 Main Street W \\
-  Hamilton, ON L8S 4K1, Canada \\
-  (current address: ????)
   \par\bigskip
   Rune Haubo Bojesen Christensen \\
   Technical University of Denmark \\
@@ -725,9 +717,13 @@ for models with a single scalar random effect.
 
 \section{Model fitting}
 
-\al{
-Once we can calculate the deviance by PIRLS for specified values of $\btheta$ and $\bbeta$ (or only $\btheta$ if profiling out the fixed effects via \code{nAGQ=0}), we then estimate the parameters by nonlinear optimization. This procedure largely follows the description in \cite{bates2015fitting}, using derivative-free optimizers with box constraints to prevent non-positive-(semi)definite covariance matrices. Specifically, the elements of $\btheta$ corresponding to the diagonal of $\bm\Lambda_\theta$ are currently constrained to be non-negative. We note, however, that the profiled log-likelihood is an even function of these diagonal parameters: since $\bm\Sigma_\theta=\bm\Lambda_\theta\bm\Lambda_\theta\trans$ depends on them only through their squares, positive and negative values yield identical likelihoods. This symmetry means that constrained optimization is not strictly necessary — an unconstrained optimizer will converge to the correct solution, approaching zero from either side in the boundary case of a singular random-effects covariance matrix. Removing this constraint would permit the use of a broader class of unconstrained optimizers, though this has not yet been incorporated into the implementation. The only difference is that by default \code{glmer} uses a two-step fitting procedure, using \code{nAGQ=0} at the first stage to get preliminary estimates which are then used as starting points for a second optimization with Laplace approximation or Gauss-Hermite quadrature as specified by the user. Different nonlinear optimizers can be used at each stage: the current default, as specified in \code{glmerControl}, is to use Powell's BOBYQA followed by a box-constrained variant of the Nelder-Mead simplex algorithm. For faster, approximate fitting, the second stage can be omitted; in the rare cases where the initial \code{nAGQ=0} fit gives poor results, the first stage can be skipped via \code{glmerControl(nAGQ0initStep = FALSE)}.
-}
+  Once we can calculate the deviance by PIRLS for specified values of $\btheta$ and $\bbeta$ (or only $\btheta$ if profiling out the fixed effects via \code{nAGQ=0}), we then estimate the parameters by nonlinear optimization. This procedure largely follows the description in \cite{bates2015fitting}, using derivative-free optimizers with box constraints to prevent non-positive-(semi)definite covariance matrices. Specifically, the elements of $\btheta$ corresponding to the diagonal of $\bm\Lambda_\theta$ are currently constrained to be non-negative.
+The only difference is that by default \code{glmer} uses a two-step fitting procedure, using \code{nAGQ=0} at the first stage to get preliminary estimates which are then used as starting points for a second optimization with Laplace approximation or Gauss-Hermite quadrature as specified by the user. Different nonlinear optimizers can be used at each stage: the current default, as specified in \code{glmerControl}, is to use Powell's BOBYQA followed by a box-constrained variant of the Nelder-Mead simplex algorithm. For faster, approximate fitting, the second stage can be omitted; in the rare cases where the initial \code{nAGQ=0} fit gives poor results, the first stage can be skipped via \code{glmerControl(nAGQ0initStep = FALSE)}.
+  
+However, because the profiled log-likelihood is an even function of the diagonal elements of $\btheta$
+and $\bm\Sigma_\theta=\bm\Lambda_\theta\bm\Lambda_\theta\trans$ depends on them only through their squares, positive and negative values yield identical likelihoods. This symmetry means that constrained optimization is not strictly necessary --- an unconstrained optimizer will converge to a correct solution, approaching zero from either side in the boundary case of a singular random-effects covariance matrix. (Once a solution is found, we can map it to a unique solution where the diagonal elements are all non-negative.)
+A similar approach to removing constraints could work for structured covariance matrices where correlation parameters are constrained to $(-1,1)$, e.g. by parameterizing the model in terms of a phase parameter $p$ where $\rho = \sin(p)$ (and then mapping $p$ to $(0, 2\pi)$).
+Removing these constraint would permit the use of a broader class of unconstrained optimizers, though this feature has not yet been incorporated into \code{lme4}.
 
 \section{Examples}
 
@@ -1179,34 +1175,24 @@ ggplot(Contraception) +
 @ 
 
 <<ch,echo=FALSE>>=
-Contraception$ch <- factor(Contraception$livch != 0, labels = c("N","Y"))
+Contraception <- transform(Contraception,
+   ch = factor(livch != 0, labels = c("N","Y")),
+   age = age/sd(age))
 @  
 
-<<contraception_scale, echo=FALSE>>=
-# Anna: scaled and centered the variables here to improve interpretability
-# regarding interactions.
-Contraception$ch <- ifelse(Contraception$livch != 0, 1, 0)
-Contraception$urban <- ifelse(Contraception$urban == "Y", 1, 0)
-
-gelman_scale <- function(dataset, response) {
-  new_dataset <- dataset
-  for(var in setdiff(names(dataset), response)){
-    x <- dataset[[var]]
-    if (is.numeric(x) && length(unique(x)) > 2) {
-      new_dataset[[var]] <- (x - mean(x, na.rm = TRUE)) / (2 * sd(x, na.rm = TRUE))
-    } else if(all(sort(unique(x)) == c(0, 1))){
-      new_dataset[[var]] <- x - mean(x, na.rm = TRUE)
-    } else {
-      new_dataset[[var]] <- x
-    }
-  }
-  return(new_dataset)
-}
-
-Contraception_scale <- gelman_scale(Contraception, "use")
-@
-
-\al{Figure~\ref{fig:graphContraception} shows exploratory smoothed curves of contraceptive use as a function of centered age, stratified by number of living children and urban/rural residence. In rural areas, women with two living children show the highest rates of contraceptive use, peaking near 50\% at the average age, while women in urban areas with three or more living children show the highest rates near the average age but with a more pronounced decline at older ages. In both settings, women with no living children consistently show the lowest rates of contraceptive use. The nonlinear relationship with age and the apparent dependence of this age trend on child status motivate the model specifications explored below.}
+Figure~\ref{fig:graphContraception} shows exploratory smooth curves of
+contraceptive use as a function of centered age, stratified by number
+of living children and urban/rural residence. In rural areas, women
+with two living children show the highest rates of contraceptive use,
+peaking near 50\% at the average age, while women in urban areas with
+three or more living children show the highest rates near the average
+age but with a more pronounced decline at older ages. In both
+settings, women with no living children consistently show the lowest
+rates of contraceptive use. The nonmonotonic effect of age on contraceptive use
+and the apparent dependence of this age trend on child status motivate the
+model specifications explored below. (These nonmonotonic trends were not
+noticed in the original analysis of the data, which concluded that there
+was no significant effect of age.)
 
 We construct six \code{glmer} models with varying choices of explanatory
 variables and random effects structure, comparing them via \code{anova}. The
@@ -1220,49 +1206,31 @@ woman has any living children.
 
 Second, we vary whether child status interacts with the woman's age: two models
 include \code{ch} (or \code{livch}) and \code{age} as additive terms, while the 
-other four include a \code{ch} and \code{age} interaction. \al{The effect of 
-age on contraceptive use is not linear, which is why \code{I(age\^{}2)}
-is included.}
+other four include a \code{ch} and \code{age} interaction. A quadratic effect of
+age (\code{I(age\^{}2)}) was added to account for the nonlinearity effect of age.
 
 Third, we explore different random effects structures at the district level.
-Three of them use a single random intercept per district \code{(1 \textbar{} district)}.
+Three of them use a single random intercept per district \code{(1 | district)}.
 One of them extends this with a random slope for urban status 
-\code{(urban \textbar{} district)}, allowing the urban/rural gap to vary by district. 
-Another one uses two nested random intercepts \code{(1 \textbar{} district)} and 
-\code{(1 \textbar{} urban:district)}, separating district-level from urban-within-district variation. The remaining model uses only the \code{urban:district} grouping. 
-
+\code{(urban | district)}, allowing the urban/rural difference to vary by district. 
+The next uses nested random intercepts for district and site within district (\code{1 | district/urban})
+separating district-level from urban-within-district variation. The remaining model uses only the \code{urban:district} grouping. 
 To reduce convergence warnings and facilitate interpretability, age (already approximately centered
-in the data set) was standardized by scaling by two 
-standard deviations \citet{gelman2008scaling}.
+in the data set) was standardized by scaling by the standard deviation.
 
 <<cm1,message=FALSE>>=
 cm1 <- glmer(use ~ age + I(age^2) + urban + livch + (1|district), 
-                           Contraception_scale, binomial, nAGQ=0L)
-@
-
-<<cm2,echo=FALSE,message=FALSE,size='scriptsize'>>=
-cm2 <- glmer(use ~ age + I(age^2) + urban + ch + (1|district),
-                           Contraception_scale, binomial, nAGQ=0L)
-@
-
-<<cm3,echo=FALSE,message=FALSE,size='scriptsize'>>=
-cm3 <- glmer(use ~ age*ch + I(age^2) + urban + (1|district),
-                           Contraception_scale, binomial)
-@
-
-<<cm4,echo=FALSE,message=FALSE,size='scriptsize'>>=
-cm4 <- glmer(use ~ age*ch + I(age^2) + urban + (1+urban|district),
-              Contraception_scale, binomial)
-@
-
-<<cm5,echo=FALSE,message=FALSE,size='scriptsize'>>=
-cm5 <- glmer(use ~ age*ch + I(age^2) + urban + (1|urban:district) + (1|district),
-                           Contraception_scale, binomial)
-@
-
-<<cm6,echo=FALSE,message=FALSE,size='scriptsize'>>=
-cm6 <- glmer(use ~ age*ch + I(age^2) + urban + (1|urban:district),
-                   Contraception_scale, binomial)
+                           Contraception, binomial)
+## switch from livch (ordinal) to ch (binary)
+cm2 <- update(cm1, . ~ . - livch + ch)
+## add age by children interaction
+cm3 <- update(cm2, . ~ . + age:ch)
+## allow urban effect to vary across districts (correlated)
+cm4 <- update(cm3, . ~ . - (1|district) + (1+urban|district))
+## compound symmetric/nested formulation
+cm5 <- update(cm3, . ~ . - (1|district) + (1 | district/urban))
+## as above but drop district effect
+cm6 <- update(cm3, . ~ . - (1|district) + (1 | district:urban))
 @
 
 <<anovaContraception, echo = FALSE>>=
@@ -1291,17 +1259,19 @@ print(AICtab(cm1, cm2, cm3, cm4, cm5, cm6,
 options(op)  
 @
 
+\fixme{make this into a proper table?}
 The top three models, all of which include a child-by-age interaction and some effect of urbanization, fit approximately equally well ($\Delta$ negative log-likelihood $<0.5$). The \code{(1|district/urban)} model barely improves on the fit of \code{(1|district:urban)} (0.005 log-likelihood units), at the cost of an extra variance parameter, so it is almost 2 AIC units worse. \code{(1 + urban | district)} is a bit better ($\approx$ 0.5 log-likelihood units), but includes a covariance parameter.
 Models that drop the interaction between child status and age or replace the binary child indicator with an integer count perform substantially worse ($\Delta \textrm{AIC} > 10$).
 
 Overall, the results suggest that accounting for urban/rural variation at the district level and including the age and child interaction are both important, but the precise random effects structure for urban/rural variation is relatively
 unimportant.
 
+\fixme{plot of predicted effects? (parallel Fig 10)}
+
 As with the CBPP data set, we can also compute
 profile, Wald, and parametric bootstrap confidence intervals for all of the models to
 understand the effects of each variable and visualize the among-model variation.
 
-\fixme{Figure~\ref{fig:contracompplot}: why are age estimates different for additive models even though I've set sum-to-zero contrasts ? Where did cor parameter go for the one model that has it?}
 <<ContraceptionBatch,echo=FALSE>>=
 contr_combCI <- subset(contr_combCI, var != "(Intercept)")
 combCI <- transform(contr_combCI,
@@ -1342,22 +1312,25 @@ each varying effect (e.g. for intercepts and slopes in
 the models below, which allow the effects of the
 continuous covariate of age to vary across districts).
 
+Thus instead of (e.g.) \code{(1+urban|district)}, we can specify the random effect as
+\code{diag(1+urban|district)} (diagonal, heterogeneous variances);
+\code{diag(1+urban|district, hom = TRUE)} (diagonal, homogeneous variances);
+\code{cs(1+urban|district)} (compound symmetric, heterogeneous variances); or
+\code{cs(1+urban|district, hom = TRUE)} (compound symmetric, homogeneous variances).
 
-\al{we have a cs model below; may need to write interpretations...}
-<<cm_varcorr>>=
-cm.diag <- glmer(use ~ diag(1 + age|district), Contraception, binomial)
-cm.hetdiag <- glmer(use ~ diag(1 + age|district, hom = FALSE), 
-                    Contraception, binomial)
-cm.cs <- glmer(use ~ age*ch + I(age^2) + urban + cs(1 + urban|district),
-              Contraception_scale, binomial)
-cm.hetcs <- glmer(use ~ age*ch + I(age^2) + urban + cs(1 + urban|district, hom=FALSE),
-                   Contraception_scale, binomial)
+<<cm_varcorr, echo = FALSE>>=
+cc <- glmerControl(check.conv.grad = .makeCC("warning", tol = 1e-2), check.conv.hess = "ignore")
+base_form <- use ~ age*ch + I(age^2) + urban
+cm.diag <- glmer(update(base_form, . ~ . + diag(1 + urban|district)), Contraception, binomial, control = cc )
+cm.homdiag <- glmer(update(base_form, . ~ . + diag(1 + urban|district, hom = TRUE)), Contraception, binomial, control = cc)
+cm.cs <- glmer(update(base_form, . ~ . + cs(1 + urban|district)), Contraception, binomial, control = cc)
+cm.homcs <- glmer(update(base_form, . ~ . + cs(1 + urban|district, hom = TRUE)), Contraception, binomial, control = cc)
 @
 
-We can use \code{VarCorr} (and other accessor methods) as we would for models with default, unstructured covariance matrices, e.g.:
+We can use \code{VarCorr} and other accessor methods as we would for models with default, unstructured covariance matrices, e.g.:
 
 <<cm_varcorr_view>>=
-print(VarCorr(cm.diag))
+print(VarCorr(cm.cs))
 @
 
 \bibliography{glmer}
