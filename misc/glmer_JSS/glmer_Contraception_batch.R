@@ -50,42 +50,28 @@ contr.hetdiag <- glmer(use ~ diag(1 + age|district, hom = FALSE),
 contr.cs <- glmer(use ~ cs(1 + age|district), Contraception, binomial)
 contr.hetcs <- glmer(use ~ cs(1 + age|district, hom = FALSE), Contraception, binomial)
 
-debug(drop_form_env)
-## contr_prof_squash <- lapply(contr_prof, drop_form_env)
+## leave contr_prof out of save_list until we have better idea how to 'butcher' (reduce size/exclude environments when serializing)
+## (we can get by without it
 
-obj_list <- c("contr_confint_prof", "contr_confint_boot", "contr_confint_wald", "contr_prof", "contr_est", "contr_combCI", "contr_df_name")
+## inspired by butcher:::axe_env()
+
+## axe_env.thpr <- function(x, verbose = FALSE, ...) {
+##   a <- attributes(x)
+##   for (d in c("forward", "backward")) {
+##     for (i in seq_along(a[[d]])) {
+##       cat(i, "\n")
+##       attr(attr(a[[d]][[i]], "formula"), ".Environment") <- baseenv()
+##     }
+##   }
+##   attributes(x) <- a
+##   x
+## }
+## x_clean <- axe_env.thpr(x)
+
+
 save(
-  list = obj_list,
+  list = c("contr_confint_prof", "contr_confint_boot", "contr_confint_wald", "contr_est", "contr_combCI", "contr_df_name"),
   file = "Contraception_batch.rda",
   version = 2
 )
-
-if (FALSE) {
-  ## experimenting with size reduction (drop formula envs) for profile
-  ## (alternately could clean out that environment??)
-  invisible(sapply(obj_list, \(i) cat(i, format(lobstr::obj_size(get(i)), "Mb"), "\n")))
-  cc <- contr_prof[[4]]
-  lobstr::obj_size(cc)
-  do.call(lobstr::obj_sizes, cc)
-
-  drop_form_env <- function(x, debug = TRUE) {
-    dir <- c("forward", "backward")
-    for (d in dir) {
-      splinelist <- attr(x, d)
-      for (i in seq(length(attr(x, d)))) {
-        if (debug) {
-          print(names(attr(x,d)))
-          cat(d, i, "\n")
-        }
-        environment(attr(attr(x, d)[[i]], "formula")) <- NULL
-      }
-    }
-    x
-  }
-
-  lobstr::obj_size(cc)
-  lobstr::obj_size(cc0)
-  cc0 <- drop_form_env(cc)
-}
-
 

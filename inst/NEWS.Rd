@@ -7,6 +7,11 @@
 \section{CHANGES IN VERSION 2.0-2}{
   \subsection{BUG FIXES}{
     \itemize{
+      \item `lmList` would fail when some groups have rank-deficient model matrices;
+      in particular, it used to report the incorrect degrees of freedom (GH #377)
+      \item likelihood profiling no longer gets stuck when a deviance value less
+      than the original fitted deviance (but greater than
+      \code{mindev-devtol}) is encountered
       \item fixed bug where \code{glmer} with structured covariance models
       would return incorrect fixed effect coefficients (zero values, or wrong
       number of values) (GH #962).
