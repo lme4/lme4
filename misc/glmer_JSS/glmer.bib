@@ -546,3 +546,35 @@ Approximation},
   urldate = {2024-12-24},
   abstract = {The use of linear mixed models (LMMs) is increasing in psychology and neuroscience research In this article, we focus on the implementation of LMMs in fully crossed experimental designs. A key aspect of LMMs is choosing a random-effects structure according to the experimental needs. To date, opposite suggestions are present in the literature, spanning from keeping all random effects (maximal models), which produces several singularity and convergence issues, to removing random effects until the best fit is found, with the risk of inflating Type I error (reduced models). However, defining the random structure to fit a nonsingular and convergent model is not straightforward. Moreover, the lack of a standard approach may lead the researcher to make decisions that potentially inflate Type I errors. After reviewing LMMs, we introduce a step-by-step approach to avoid convergence and singularity issues and control for Type I error inflation during model reduction of fully crossed experimental designs. Specifically, we propose the use of complex random intercepts (CRIs) when maximal models are overparametrized. CRIs are multiple random intercepts that represent the residual variance of categorical fixed effects within a given grouping factor. We validated CRIs and the proposed procedure by extensive simulations and a real-case application. We demonstrate that CRIs can produce reliable results and require less computational resources. Moreover, we outline a few criteria and recommendations on how and when scholars should reduce overparametrized models. Overall, the proposed procedure provides clear solutions to avoid overinflated results using LMMs in psychology and neuroscience.}
 }
+
+@article{matuschekBalancingTypeError2017,
+  title = {Balancing {{Type I}} Error and Power in Linear Mixed Models},
+  author = {Matuschek, Hannes and Kliegl, Reinhold and Vasishth, Shravan and Baayen, Harald and Bates, Douglas},
+  year = 2017,
+  month = jun,
+  journal = {Journal of Memory and Language},
+  volume = {94},
+  pages = {305--315},
+  issn = {0749-596X},
+  doi = {10.1016/j.jml.2017.01.001},
+  urldate = {2021-05-08},
+  abstract = {Linear mixed-effects models have increasingly replaced mixed-model analyses of variance for statistical inference in factorial psycholinguistic experiments. Although LMMs have many advantages over ANOVA, like ANOVAs, setting them up for data analysis also requires some care. One simple option, when numerically possible, is to fit the full variance-covariance structure of random effects (the maximal model; Barr, Levy, Scheepers \& Tily, 2013), presumably to keep Type I error down to the nominal {$\alpha$} in the presence of random effects. Although it is true that fitting a model with only random intercepts may lead to higher Type I error, fitting a maximal model also has a cost: it can lead to a significant loss of power. We demonstrate this with simulations and suggest that for typical psychological and psycholinguistic data, higher power is achieved without inflating Type I error rate if a model selection criterion is used to select a random effect structure that is supported by the data.},
+  langid = {english},
+  keywords = {Hypothesis testing,Linear mixed effect model,Power}
+}
+
+@article{barrRandomEffectsStructure2013,
+  title = {Random Effects Structure for Confirmatory Hypothesis Testing: {{Keep}} It Maximal},
+  shorttitle = {Random Effects Structure for Confirmatory Hypothesis Testing},
+  author = {Barr, Dale J. and Levy, Roger and Scheepers, Christoph and Tily, Harry J.},
+  year = 2013,
+  month = apr,
+  journal = {Journal of Memory and Language},
+  volume = {68},
+  number = {3},
+  pages = {255--278},
+  issn = {0749596X},
+  doi = {10.1016/j.jml.2012.11.001},
+  urldate = {2016-02-20},
+  langid = {english}
+}

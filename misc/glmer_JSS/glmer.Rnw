@@ -922,9 +922,8 @@ cat(cc[corRow:length(cc)],sep="\n")
 
 \subsubsection{Diagnostics}
 
-A reasonable range of graphical diagnostic tools is available
-for \code{merMod} objects, although not quite as wide as for
-simpler (non-mixed) models. The plot methods in the \code{lme4}
+A range of graphical diagnostic tools is available
+for \code{merMod} objects. The plot methods in the \code{lme4}
 package are inspired by those in the \code{nlme} package, using
 \code{lattice} plots to provide a reasonable blend
 of convenience and flexibility. 
@@ -934,7 +933,13 @@ of convenience and flexibility.
 used for model checking.
 
 The following code produces a standard range
-of basic plots (Figure~\ref{fig:glmerDiag}).
+of diagnostic plots (Figure~\ref{fig:glmerDiag}), similar to the ones
+in base R's \code{plot.lm} method. These diagnostics will generally be
+useful for models where the conditional density is approximately normal
+(but heteroscedastic) --- e.g., Poisson responses with large mean or
+binomial responses with large numbers of successes --- and less so otherwise,
+e.g. for binary responses.
+
 <<glmerDiagFake,eval=FALSE>>=
 ## basic residual plot
 plot(gm1)
@@ -1003,7 +1008,7 @@ at this point (e.g. whether one
 drops non-significant terms, or those with small scaled magnitudes,
 or those that worsen the AIC or BIC of the model)
 depends on the goals of the analysis and one's
-philosophy of model-building.
+philosophy of model-building \citep{barrRandomEffectsStructure2013,matuschekBalancingTypeError2017,scandola2024}.
 
 One might either stick with the full model, or continue
 with the reduced model with observation-level random effects
@@ -1078,8 +1083,6 @@ combCI <- transform(combCI,
             vartype = factor(ifelse(grepl("^sd", var), "random effects", "fixed effects"))
 )                    
 @
-
-\fixme{Figure~\ref{fig:cbppcompplot}: why are some profile results still wonky?}
 
 <<cbppcompplot,fig.cap="CBPP example: comparison of point and confidence interval estimation for different methods. Wald CIs are missing for random-effects parameters when the fitted model is singular.",fig.scap="CBPP comparison",echo=FALSE,fig.width=7,fig.height=5,warning=FALSE>>=
 mnames <- cbpp_df_name$mnames
