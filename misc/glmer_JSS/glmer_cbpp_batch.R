@@ -54,7 +54,7 @@ if (FALSE) {
 }
 
 cbpp_confint_prof <- lapply(cbpp_prof, confint)
-cbpp_confint_wald <- lapply(cbpp_mod_list, function(x) confint(x, method = "Wald", signames = FALSE))
+cbpp_confint_wald <- lapply(cbpp_mod_list, wald_cifun)
 cbpp_est <- do.call("rbind", Map(get_est, cbpp_mod_list, cbpp_df_name$mnames))
 rownames(cbpp_est) <- NULL
 
