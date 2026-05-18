@@ -1324,7 +1324,7 @@ combCI <- transform(contr_combCI,
     )
 @
 
-<<contracompplot,fig.cap="Contraception example: comparison of point and confidence interval estimation for different methods.",fig.scap="Contraception comparison",echo=FALSE,fig.width=10,fig.height=10,warning=FALSE,fig.lab="fig:contracomp">>=
+<<contracompplot,fig.cap="Contraception example: comparison of point and confidence interval estimation for different methods. (Note that the Wald CIs for variation in the intercept across districts, in the \\code{(1|district/urban)} model, include negative values.)",fig.scap="Contraception comparison",echo=FALSE,fig.width=10,fig.height=10,warning=FALSE,fig.lab="fig:contracomp">>=
 ggplot(combCI, aes(var, est, colour=type, shape=model)) +
   geom_pointrange(aes(ymin=lwr, ymax=upr),
                   position=position_dodge(width=0.6)) +
