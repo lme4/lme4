@@ -46,7 +46,7 @@
   function. The conditional mode of the random effects given the
   observed data, the variance-covariance matrix of the random 
   effects, and the fixed effect parameters
-  is determined through penalized iteratively reweighted
+  are determined using penalized iteratively reweighted
   least squares (PIRLS). We compute an approximation of the integral
   over the distributions of the conditional modes to compute
   the MLE for a for given set of parameters (by default we use
