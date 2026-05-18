@@ -25,9 +25,9 @@
 %\bibliographystyle{chicago}
 \author{
   Anna Ly\\McMaster University \And
-  Rune Haubo Bojesen Christensen\\Technical University of Denmark\And
-  Douglas Bates\\University of Wisconsin - Madison \AND
-  Martin M\"achler\\ETH Zurich\And
+  Rune Haubo Bojesen Christensen\\Technical University of Denmark\AND
+  Douglas Bates\\University of Wisconsin - Madison \And
+  Martin M\"achler\\ETH Zurich\AND
   Benjamin M. Bolker\\McMaster University
 }
 \Plainauthor{Anna Ly, Rune Haubo Bojesen Christensen, Douglas Bates, Martin M\"achler, Benjamin M. Bolker}
