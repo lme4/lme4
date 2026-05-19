@@ -1151,19 +1151,37 @@ library(mlmRev)
 data(Contraception)
 @ 
 
-<<graphContraception,echo=FALSE,fig.cap="Contraception example: proportion of contraceptive use by centered age, number of living children (line type), and urban/rural residence (facet). Curves fitted using generalized additive models with cubic spline smoothing.">>=
+<<graphContraception,echo=FALSE,fig.cap="Contraception example: proportion of contraceptive use by centered age, number of living children (line type), and urban/rural residence (facet). Curves fitted using generalized additive models with cubic spline smoothing. Density plots along bottom and top margins show the age distributions of women not using contraception (bottom) and using contraception (top).">>=
 Contraception <- transform(Contraception, 
                         facet_urban = ifelse(urban=="Y","Urban","Rural"))
-ggplot(Contraception) +
+gg0 <- ggplot(Contraception) +
     geom_smooth(aes(age, ifelse(use == "Y",1,0), colour = livch, fill = livch),
                 method = "gam", alpha = 0.1,
                 method.args = list(gamma = 0.6),
                 formula = y ~ s(x, bs = "cs")) +
     facet_wrap(~facet_urban) +
     scale_x_continuous("Centered age") + 
-    scale_y_continuous("Proportion", limits = c(0, 1)) +
+    scale_y_continuous("Proportion", limits = c(0, 1), expand = c(0,0)) +
     scale_colour_brewer("Number\nof living\nchildren", palette="Dark2") +
-    scale_fill_brewer("Number\nof living\nchildren", palette="Dark2")
+  scale_fill_brewer("Number\nof living\nchildren", palette="Dark2")
+
+## add marginal density ribbons
+gg0 + geom_density(
+        data = subset(Contraception, use == "N"),
+        aes(x = age, y = after_stat(density), fill = livch),
+        alpha = 0.3, colour = NA) +
+  geom_ribbon(
+    data = subset(Contraception, use == "Y"),
+    stat = "density",
+    aes(
+      x = age,  
+      ymin = 1 - after_stat(density) * 0.5,
+      ymax = 1,
+      fill = livch
+    ),
+    alpha = 0.3, colour = NA
+  )
+
 @ 
 
 <<ch,echo=FALSE>>=
@@ -1199,7 +1217,7 @@ woman has any living children.
 Second, we vary whether child status interacts with the woman's age: two models
 include \code{ch} (or \code{livch}) and \code{age} as additive terms, while the 
 other four include a \code{ch} and \code{age} interaction. A quadratic effect of
-age (\code{I(age\^{}2)}) was added to account for the nonlinearity effect of age.
+age (\code{I(age\^{}2)}) was added to account for the nonlinear effect of age.
 
 Third, we explore different random effects structures at the district level.
 Three of them use a single random intercept per district \code{(1 | district)}.
@@ -1291,7 +1309,7 @@ ggplot(pframe, aes(age)) +
     geom_ribbon(aes(ymin = lwr, ymax = upr, fill = ch), color = NA, alpha = 0.3) +
     facet_wrap(~facet_urban) +
     scale_x_continuous("Centered age") + 
-    scale_y_continuous("Proportion", limits = c(0, 1)) +
+    scale_y_continuous("Proportion", limits = c(0, 1), expand = c(0,0)) +
     scale_colour_brewer("Living\nchildren", palette="Dark2") +
     scale_fill_brewer("Living\nchildren", palette="Dark2") +
     geom_line(data = pframe2, aes(group = interaction(dist_urb, ch), colour = ch, y = use), alpha = 0.2)
