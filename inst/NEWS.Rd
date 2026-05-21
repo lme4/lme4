@@ -38,6 +38,14 @@
   } % new features
   \subsection{USER-VISIBLE CHANGES}{
     \itemize{
+      \item the Gauss-Hermite quadrature (GH) nodes and weights used when
+      \code{nAGQ > 1} are now symmetrized (nodes averaged with their
+      negatives in reverse order; weights averaged in forward and reverse
+      order), matching the convention in
+      \href{https://github.com/JuliaStats/MixedModels.jl}{MixedModels.jl}
+      (GH #968).
+      This will produce small changes to numerical results for any
+      \code{glmer()} fit with \code{nAGQ > 1}.
       \item exported covariance methods documented in
       \code{help("Covariance-class")} (\code{getPar}, \code{getTheta},
       etc.)

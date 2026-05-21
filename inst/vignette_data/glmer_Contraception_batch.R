@@ -1,10 +1,11 @@
 library(lme4)
+library(merDeriv)
 data("Contraception", package = "mlmRev")
 source("glmer_batch_funs.R")
 
 Contraception <- transform(Contraception,
                            ch = factor(Contraception$livch != 0, labels = c("N","Y")),
-                           age = age/(2*sd(age)))
+                           age_s = age/(2*sd(age)))
 
 options(contrasts = c("contr.sum", "contr.poly"))
 
@@ -19,9 +20,9 @@ contr_df_name <- data.frame(
     "binary_child × age + (1 | district:urban"))
 
 mforms <- list()
-mforms$ic <- use ~ age + I(age^2) + urban + livch + (1|district)
+mforms$ic <- use ~ age_s + I(age_s^2) + urban + livch + (1|district)
 mforms$bc <- update(mforms$ic, . ~ . - livch + ch)
-mforms$bc_int_urb <- update(mforms$bc, . ~ . + age:ch)
+mforms$bc_int_urb <- update(mforms$bc, . ~ . + age_s:ch)
 mforms$bc_int_dist_urb_var <- update(mforms$bc_int_urb, . ~ . - (1|district) + (1 + urban | district))
 mforms$bc_int_dist_urb_nest <- update(mforms$bc_int_urb, . ~ . - (1|district) + (1 | district/urban))
 mforms$bc_int_dist_urb_cross <- update(mforms$bc_int_urb, . ~ . - (1|district) + (1 | urban:district))
@@ -30,11 +31,16 @@ contr_mod_list <- lapply(mforms, glmer, data = Contraception, family = binomial)
 
 contr_est <- do.call("rbind", Map(get_est, contr_mod_list, contr_df_name$mnames))
 rownames(contr_est) <- NULL
+  
+contr_confint_wald <- lapply(contr_mod_list, wald_cifun)
 
-contr_confint_wald <- lapply(contr_mod_list, function(x) confint(x, method = "Wald", signames = FALSE))
 contr_prof <- lapply(contr_mod_list, p_fun)
 contr_confint_prof <- lapply(contr_prof, confint)
 contr_confint_boot <- lapply(contr_mod_list, b_cifun)
+
+## has_cor <- function(x) any(grepl("cor", x$var))
+## combfun2(contr_confint_prof, "profile", df_est = contr_est, contr_df_name) |> has_cor()
+## combfun1(contr_confint_prof[[4]], "hello", "hello") |> has_cor()
 
 contr_combCI <- Map(combfun2,
                    list(contr_confint_wald, contr_confint_boot, contr_confint_prof),
@@ -44,11 +50,11 @@ contr_combCI <- Map(combfun2,
 
 ## structured covariances: fit/store separately?
 ## (much faster than profile/boot/etc, if they work ...)
-contr.diag <- glmer(use ~ diag(1 + age|district), Contraception, binomial)
-contr.hetdiag <- glmer(use ~ diag(1 + age|district, hom = FALSE), 
+contr.diag <- glmer(use ~ diag(1 + age_s|district), Contraception, binomial)
+contr.hetdiag <- glmer(use ~ diag(1 + age_s|district, hom = FALSE), 
                        data = Contraception, family = binomial)
-contr.cs <- glmer(use ~ cs(1 + age|district), Contraception, binomial)
-contr.hetcs <- glmer(use ~ cs(1 + age|district, hom = FALSE), Contraception, binomial)
+contr.cs <- glmer(use ~ cs(1 + age_s|district), Contraception, binomial)
+contr.hetcs <- glmer(use ~ cs(1 + age_s|district, hom = FALSE), Contraception, binomial)
 
 ## leave contr_prof out of save_list until we have better idea how to 'butcher' (reduce size/exclude environments when serializing)
 ## (we can get by without it
