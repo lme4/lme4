@@ -229,7 +229,7 @@ profile.merMod <- function(fitted,
         pw <- opt[w]
         lowcut <- lower[w]
         upcut <- upper[w]
-        zeta <- function(xx,start) {
+         zeta <- function(xx,start) {
             ores <- tryCatch(optwrap(optimizer, par=start,
                                      fn=function(x) dd(mkpar(npar1, w, xx, x)),
                                      lower = lowvp[-w],
@@ -262,7 +262,7 @@ profile.merMod <- function(fitted,
                     warning(gettextf("slightly lower deviances (diff=%g) detected",
                                      devdiff), domain=NA)
             }
-            devdiff <- max(devtol, devdiff)
+            if (devdiff <= 0) devdiff <- devtol
             zz <- sign(xx - pw) * sqrt(devdiff)
             r <- c(zz, mkpar(npar1, w, xx, pars))
             if (isLMM(fitted)) c(r, pp$beta(1)) else r
