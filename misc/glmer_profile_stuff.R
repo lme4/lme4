@@ -22,6 +22,15 @@ p_fun <- function(x, devtol = 1e-2, ...) {
           parallel = "multicore", ncpus = 10, ...)
 }
 
+aa <- allFit(m1) ## can we get close enough to sval?
+## no, all values are ending up at 181.8087
+with(summary(aa), sort(-2*llik))
+
+## all we need is this?
+m3 <- update(m1, control = glmerControl(nAGQ0initStep = FALSE))
+p4 <- p_fun(m3)
+confint(p4)
+
 p0 <- p_fun(m1, verbose = TRUE)
 p1 <- p_fun(m1, verbose = TRUE, devtol = 1e-3)
 
