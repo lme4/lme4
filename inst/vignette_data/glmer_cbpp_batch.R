@@ -34,7 +34,10 @@ for (i in names(mforms)) {
                               family = binomial,
                               weights = size,
                               control = glmerControl(optimizer = "bobyqa",
-                                                     optCtrl = list(maxfun = 1000)))
+   ## avoid instability/problems with nAGQ=0 step ...                                                     
+                                 nAGQ0initStep = FALSE,
+                                 optCtrl = list(maxfun = 1e5),
+                                 calc.derivs = FALSE))
 }
 
 cbpp_confint_boot <- lapply(cbpp_mod_list, b_cifun)
@@ -58,6 +61,11 @@ cbpp_confint_wald <- lapply(cbpp_mod_list, wald_cifun)
 cbpp_est <- do.call("rbind", Map(get_est, cbpp_mod_list, cbpp_df_name$mnames))
 rownames(cbpp_est) <- NULL
 
+objs <- c("cbpp_confint_prof", "cbpp_confint_boot", "cbpp_confint_wald", "cbpp_prof", "cbpp_est", "cbpp_combCI", "cbpp_df_name")
+
+## save for debugging combfun2 /cor naming issues
+save(list = setdiff(objs, "cbpp_combCI"), file = "cbpp_batch_debug.rda", version = 2)
+
 cbpp_combCI <- Map(combfun2,
                    list(cbpp_confint_wald, cbpp_confint_boot, cbpp_confint_prof),
                    c("Wald", "boot", "profile"),
@@ -66,9 +74,8 @@ cbpp_combCI <- Map(combfun2,
 
 ## ggplot(combCI, aes(est, var, colour = type)) + geom_point(position = position_dodge(0.5)) + facet_wrap(~model)
 
-
 save(
-  list = c("cbpp_confint_prof", "cbpp_confint_boot", "cbpp_confint_wald", "cbpp_prof", "cbpp_est", "cbpp_combCI", "cbpp_df_name"),
+  list = objs,
   file = "cbpp_batch.rda",
   version = 2
 )

@@ -8,10 +8,12 @@ get_est <- function(mod, model_name) {
   data.frame(model=model_name, var=names(est), est=est, row.names=NULL)
 }
 
+ncores <- min(10, parallel::detectCores() - 1)
+
 b_cifun <- function(x) {
   cat(deparse(getCall(x)$formula), "\n")
   confint(x, method = "boot", seed = 101, nsim = 501, signames = FALSE,
-          parallel = "multicore", ncpus = 10)
+          parallel = "multicore", ncpus = ncores)
 }
 
 p_fun <- function(x) {
@@ -19,7 +21,7 @@ p_fun <- function(x) {
   profile(x, signames = FALSE,
           devtol = 1e-2,
           maxpts = 250,
-          parallel = "multicore", ncpus = 10)
+          parallel = "multicore", ncpus = ncores)
 }
 
 
