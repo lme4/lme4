@@ -513,53 +513,85 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
     }
     ## weights <- resp$weights
     beta    <- pp$beta(fac)
-    ## For Gaussian GLMMs with non-identity link, GaussianDist::aic() profiles
-    ## sigma from the conditional RSS only, ignoring that ldL2 also depends on
-    ## sigma.  The correction block below finds the true Laplace profile MLE via
-    ## 1D optimization: D(sigma) = ldL2(sigma) + sqrL + n*log(2pi*sigma^2) + RSS/sigma^2
-    ## Other families with scale parameters continue to use pwrss/n as before.
+    ## For GLMMs with a scale/dispersion parameter, the C++ aic() profiles the
+    ## scale from the conditional deviance alone (e.g., sigma^2 = RSS/n for
+    ## Gaussian), ignoring that ldL2 also depends on the scale through the
+    ## working weights.  The correction block below finds the true Laplace
+    ## profile MLE via a 1D optimization over log(sigma):
+    ##   D(sigma) = ldL2(sigma) + sqrL + (-2 logL(y | mu_fixed, sigma^2))
+    ## where mu is held at the outer PIRLS solution.  Setting prior weights to
+    ## 1/sigma^2 makes the Cholesky decomposition (and hence ldL2) correctly
+    ## sigma-dependent; the family-specific -2*logL is computed analytically.
     sigmaML <- pwrss/n
 
     dev_corrected <- NULL
-    if (isGLMM && !trivial.y && dims[["useSc"]] &&
-        identical(resp$family$family, "gaussian")) {
-        RSS_fixed  <- unname(wrss)
+    if (isGLMM && !trivial.y && dims[["useSc"]]) {
         sqrL_fixed <- unname(sqrLenU)
         n_obs      <- n
+        y_obs      <- resp$y   # response, fixed at outer PIRLS solution
+        mu_obs     <- resp$mu  # conditional mode, fixed at outer PIRLS solution
+        fam_name   <- resp$family$family
 
-        ## Evaluate the full Laplace deviance at a given log(sigma).
-        ## Temporarily scales prior weights by 1/sigma^2 so that the
-        ## Cholesky factors Lambda'Z'diag(mu^2/sigma^2)Lambda + I,
-        ## giving the sigma-dependent ldL2.  The deviance is computed
-        ## manually (not via aic()) to avoid re-profiling sigma.
-        laplace_dev_at_sigma <- function(log_sigma) {
-            sigma <- exp(log_sigma)
-            resp$setWeights(rep(1 / sigma^2, n_obs))
+        ## Build a closure that evaluates -2*logL(y | mu_obs, phi=sigma^2) for
+        ## the current family at fixed (mu_obs, phi).  Returns NULL for families
+        ## where the correction is not yet implemented (falls back to pwrss/n).
+        cond_neg2loglik <-
+            if (identical(fam_name, "gaussian")) {
+                RSS_fixed <- unname(wrss)  # = sum((y - mu)^2) for Gaussian
+                function(sigma) {
+                    n_obs * (log(2 * pi) + 2 * log(sigma)) + RSS_fixed / sigma^2
+                }
+            } else if (identical(fam_name, "Gamma")) {
+                function(sigma) {
+                    phi <- sigma^2
+                    -2 * sum(dgamma(y_obs, shape = 1 / phi,
+                                    scale = mu_obs * phi, log = TRUE))
+                }
+            } else if (identical(fam_name, "inverse.gaussian")) {
+                function(sigma) {
+                    phi <- sigma^2
+                    ## -2 log f(y; mu, phi) for inverse Gaussian:
+                    ## f = sqrt(1/(2*pi*phi*y^3)) * exp(-(y-mu)^2/(2*phi*mu^2*y))
+                    n_obs * log(2 * pi * phi) + 3 * sum(log(y_obs)) +
+                        sum((y_obs - mu_obs)^2 / (phi * mu_obs^2 * y_obs))
+                }
+            } else {
+                NULL  # no correction for other families (e.g. neg-binomial)
+            }
+
+        if (!is.null(cond_neg2loglik)) {
+            ## Evaluate the full Laplace deviance at a given log(sigma).
+            ## Temporarily scales prior weights by 1/sigma^2 so that the
+            ## working weights (and hence ldL2) are sigma-dependent.
+            ## The deviance is computed manually to avoid re-profiling sigma
+            ## inside the C++ aic().
+            laplace_dev_at_sigma <- function(log_sigma) {
+                sigma <- exp(log_sigma)
+                resp$setWeights(rep(1 / sigma^2, n_obs))
+                resp$updateWts()
+                pp$updateXwts(resp$sqrtWrkWt())
+                pp$updateDecomp()
+                pp$ldL2() + sqrL_fixed + cond_neg2loglik(sigma)
+            }
+
+            opt_sig <- tryCatch(
+                optimize(laplace_dev_at_sigma,
+                         interval = log(sqrt(sigmaML)) + c(-3, 3),
+                         tol = 1e-8),
+                error = function(e) NULL
+            )
+
+            if (!is.null(opt_sig)) {
+                sigmaML       <- exp(opt_sig$minimum)^2
+                dev_corrected <- opt_sig$objective
+            }
+
+            ## Restore unit weights and decomposition to original state
+            resp$setWeights(rep(1, n_obs))
             resp$updateWts()
             pp$updateXwts(resp$sqrtWrkWt())
             pp$updateDecomp()
-            pp$ldL2() + sqrL_fixed +
-                n_obs * (log(2 * pi) + 2 * log_sigma) +
-                RSS_fixed / sigma^2
         }
-
-        opt_sig <- tryCatch(
-            optimize(laplace_dev_at_sigma,
-                     interval = log(sqrt(sigmaML)) + c(-3, 3),
-                     tol = 1e-8),
-            error = function(e) NULL
-        )
-
-        if (!is.null(opt_sig)) {
-            sigmaML       <- exp(opt_sig$minimum)^2
-            dev_corrected <- opt_sig$objective
-        }
-
-        ## Restore unit weights and decomposition to original state
-        resp$setWeights(rep(1, n_obs))
-        resp$updateWts()
-        pp$updateXwts(resp$sqrtWrkWt())
-        pp$updateDecomp()
     }
 
     if (rcl != "lmerResp") {

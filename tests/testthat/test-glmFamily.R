@@ -152,7 +152,7 @@ test_that("estimated Gamma shape is correct", {
   m1 <- glmer(y ~ 1 + (1|group), family = Gamma(link = "log"), data = dd2)
   shape_val <- 1/sigma(m1)^2
   expect_equal(shape_val, 2.0, tolerance = 0.05)
-  expect_equal(shape_val, 1.94511502080571, tolerance = 1e-6)
+  expect_equal(shape_val, 1.96593813436247, tolerance = 1e-6)
 })
 
 test_that("glmer works for Gamma with small shape parameter", {
@@ -211,5 +211,5 @@ test_that("estimated Inverse Gaussian shape is correct", {
               data = ddig2)
   shape_val <- 1/sigma(m1)^2
   expect_equal(shape_val, 1, tolerance = 0.05)
-  expect_equal(shape_val, 1.032144112298057, tolerance = 1e-6)
+  expect_equal(shape_val, 1.01199184729191, tolerance = 1e-6)
 })
