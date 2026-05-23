@@ -63,6 +63,7 @@ Imports:
     splines,
     utils
 Suggests:
+    DHARMa,
     HSAUR3,
     MEMSS,
     car,
@@ -72,7 +73,6 @@ Suggests:
     ggplot2,
     glmmTMB,
     gridExtra,
-    RColorBrewer,
     knitr,
     merDeriv,
     mgcv,
@@ -80,16 +80,14 @@ Suggests:
     numDeriv,
     optimx (>= 2013.8.6),
     pbkrtest,
+    performance,
     rmarkdown,
     rr2,
+    see,
     semEff,
     statmod,
     testthat (>= 0.8.1),
-    tibble,
-    DHARMa,
-    gridExtra,
-    performance,
-    see
+    tibble
 RdMacros: Rdpack
 VignetteBuilder: knitr
 LazyData: yes
