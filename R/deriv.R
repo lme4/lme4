@@ -28,7 +28,7 @@
 ##' @author Rune Haubo Bojesen Christensen
 ##' 
 deriv12 <- function(fun, x, delta=1e-4, fx=NULL,
-                    lower=rep(NA,length(x)), upper=rep(NA,length(x)), ...) {
+                    lower=rep(NA_real_,length(x)), upper=rep(NA_real_,length(x)), ...) {
 ### Compute gradient and Hessian simultaneously (to save computing time)
     nx <- length(x)
     if(is.null(fx)) fx <- fun(x, ...)

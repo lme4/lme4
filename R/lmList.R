@@ -216,7 +216,7 @@ coef.lmList4 <- function(object,
         ## different parameter sets may be estimated for different subsets of data ...
         allnames <- Reduce(union, lapply(coefs[non.null], names))
         if (is.numeric(template)) {
-            co <- matrix(NA,
+            co <- matrix(NA_real_,
                          ncol = length(allnames),
                          nrow = length(coefs),
                          dimnames = list(names(object), allnames))
@@ -273,7 +273,7 @@ pooledSD <- function(x, allow.0.df = TRUE)
                                      c(0,0)
                                  } else {
                                      res <- resid(el)
-                                     c(sum(res^2), length(res) - length(coef(el)))
+                                     c(sum(res^2), df.residual(el))
                                  }
                              }))
     if (sumsqr[2] == 0) { ## FIXME? rather return NA with a warning ??

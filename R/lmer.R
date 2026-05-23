@@ -244,7 +244,8 @@ nlmer <- function(formula, data=NULL, control = nlmerControl(), start = NULL, ve
     rho$u0 <- rho$pp$u0
     rho$beta0 <- rho$pp$beta0
     rho$tolPwrss <- control$tolPwrss # Reset control parameter (the initial optimization is coarse)
-
+    rho$nAGQ <- nAGQ
+    
     ## set lower and upper bounds: if user-specified, select
     ##  only the ones corresponding to random effects
     lower <- vals$reTrms$lower
@@ -575,8 +576,8 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
         if (!is.null(subset[[1]]))
             header <- c(header, paste("Subset:", abbrDeparse(subset[[1]])))
         llk <- unlist(llks)
-        chisq <- 2 * pmax(0, c(NA, diff(llk)))
-        dfChisq <- c(NA, diff(npar))
+        chisq <- 2 * pmax(0, c(NA_real_, diff(llk)))
+        dfChisq <- c(NA_integer_, diff(npar))
         val <- data.frame(npar = npar,
                           ## afraid to swap in vapply here; wondering
                           ##   why .sapply was needed in the first place ...
@@ -586,7 +587,7 @@ anovaLmer <- function(object, ..., refit = TRUE, model.names=NULL) {
                           "-2*log(L)" = -2*llk,
                           Chisq = chisq,
                           Df = dfChisq,
-                          "Pr(>Chisq)" = ifelse(dfChisq==0,NA,pchisq(chisq, dfChisq, lower.tail = FALSE)),
+                          "Pr(>Chisq)" = ifelse(dfChisq==0,NA_integer_,pchisq(chisq, dfChisq, lower.tail = FALSE)),
                           row.names = names(mods), check.names = FALSE)
         class(val) <- c("anova", class(val))
         forms <- lapply(lapply(calls, `[[`, "formula"), deparse1)
@@ -935,9 +936,9 @@ fitted.merMod <- function(object, ...) {
     xx <- object@resp$mu
     if (length(xx)==0) {
         ## handle 'fake' objects created by simulate()
-        xx <- rep(NA,nrow(model.frame(object)))
+        xx <- rep(NA_real_,nrow(model.frame(object)))
     }
-    if (is.null(nm <- rownames(model.frame(object)))) nm <- seq_along(xx)
+    nm <- rownames(model.frame(object)) %||% seq_along(xx)
     names(xx) <- nm
     if (!is.null(fit.na.action <- attr(model.frame(object),"na.action")))
         napredict(fit.na.action, xx)
@@ -1523,9 +1524,10 @@ refit.merMod <- function(object,
     upper     <- getUpper(object)
     if (haveGLMM && nAGQ > 0L) {
      ## xst   <- c(xst, sqrt(diag(pp$unsc())))
+        n_beta <- length(fixef(object))
         x0    <- c(x0, unname(fixef(object)))
-        lower <- c(lower, rep(-Inf,length(x0)-length(lower)))
-        upper <- c(upper, rep( Inf,length(x0)-length(lower)))
+        lower <- c(lower, rep(-Inf, n_beta))
+        upper <- c(upper, rep( Inf, n_beta))
     }
     ## control <- c(control,list(xst=0.2*xst, xt=xst*0.0001))
     ## FIX ME: allow use.last.params to be passed through
@@ -1592,7 +1594,7 @@ refitML.merMod <- function (x, optimizer="bobyqa", ...) {
     ussq <- pp$sqrL(1)
     pwrss <- wrss + ussq
     cmp <- c(ldL2=pp$ldL2(), ldRX2=pp$ldRX2(), wrss=wrss, ussq=ussq,
-             pwrss=pwrss, drsum=NA, dev=opt$fval, REML=NA,
+             pwrss=pwrss, drsum=NA_real_, dev=opt$fval, REML=NA,
              sigmaML=sqrt(pwrss/n), sigmaREML=sqrt(pwrss/(n-p)))
     ## modify the call  to have REML=FALSE. (without evaluating the call!)
     cl <- x@call
@@ -2044,7 +2046,7 @@ getME.merMod <- function(object,
                   "fixef", "beta", "theta", "ST", "par",
                   "REML", "is_REML",
                   "n_rtrms", "n_rfacs",
-                  "N", "n", "p", "q",
+                  "N", "n", "p", "q", "npar",
                   "p_i", "l_i", "q_i", "k", "m_i", "m",
                   "cnms",
                   "devcomp", "offset", "lower",
@@ -2131,6 +2133,7 @@ getME.merMod <- function(object,
            "n" = dims[["n"]],
            "p" = dims[["p"]],
            "q" = dims[["q"]],
+           "npar" = as.list(dims)[["npar"]] %||% length(getLower(object)),
            "p_i" = p_i,
            "l_i" = l_i,
            "q_i" = p_i * l_i,
@@ -2174,7 +2177,7 @@ getME.merMod <- function(object,
            ## -- these must be extended for [GN]LMMs -- give extended value including -Inf values for beta values?
 
            "glmer.nb.theta" = if(isGLMM(object) && isNBfamily(rsp$family$family))
-               getNBdisp(object) else NA,
+               getNBdisp(object) else NA_real_,
 
            "..foo.." = # placeholder!
            stop(gettextf("'%s' is not implemented yet",
@@ -2210,7 +2213,7 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
         ## invert 2*Hessian, catching errors and forcing symmetric result
         ## ~= forceSymmetric(solve(h/2)[i,i]) : solve(h/2) = 2*solve(h)
         h <- tryCatch(solve(h),
-                      error=function(e) matrix(NA,nrow=nrow(h),ncol=ncol(h)))
+                      error=function(e) matrix(NA_real_,nrow=nrow(h),ncol=ncol(h)))
         i <- -seq_len(ntheta)  ## drop var-cov parameters
         h <- h[i,i]
         forceSymmetric(h + t(h))
@@ -2255,7 +2258,7 @@ vcov.merMod <- function(object, correlation = TRUE, sigm = sigma(object),
     if (inherits(rr, "error")) {
         warning(gettextf("Computed variance-covariance matrix problem: %s;\nreturning NA matrix",
                          rr$message), domain = NA)
-        rr <- matrix(NA,nrow(V),ncol(V))
+        rr <- matrix(NA_real_,nrow(V),ncol(V))
     }
 
     nmsX <- colnames(object@pp$X)

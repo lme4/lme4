@@ -64,6 +64,7 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
         stop("bootMer currently only handles functions that return numeric vectors")
 
     ## FIXME: make parameters match profiling output!
+    ## should getME(x, "theta") be getME(x, "par")?  Test bootMer with structured cov matrices ...
     mle <- list(beta = getME(x,"beta"), theta = getME(x,"theta"))
     if (isLMM(x)) mle <- c(mle,list(sigma = sigma(x)))
     ## FIXME: what about GLMMs with scale parameters??
@@ -108,7 +109,7 @@ bootMer <- function(x, FUN, nsim = 1, seed = NULL,
       control
       length.t0 <- length(t0)
       f1 <- factory(function(i) FUN(refit(x, ss[[i]],
-                                          control = control)), errval = rep(NA, length.t0))
+                                          control = control)), errval = rep(NA_real_, length.t0))
       function(i) {
           ret <- f1(i)
           if (verbose) { cat(sprintf("%5d :",i)); str(ret) }

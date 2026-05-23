@@ -53,12 +53,30 @@ gm.cs <- glmer(use ~ age + urban + cs(1 + urban | district),
                data = Contraception,
                family = binomial)
 fixef(gm.cs)  ## OK
+gm.cs2 <- glmmTMB(use ~ age + urban + cs(1 + urban | district),
+               data = Contraception,
+               family = binomial)
+
+stopifnot(all.equal(fixef(gm.cs), fixef(gm.cs2)$cond, tolerance = 1e-4))
 
 gm.ar1_0 <- glmer(use ~ age + urban + ar1(0 + urban | district),
                data = Contraception,
                family = binomial)
 colnames(getME(gm.ar1_0, "X"))
 getME(gm.ar1_0, "beta")  ## only two values ???
+
+## het is OK.
+gm.ar1_0.het <- glmer(use ~ age + urban + ar1(0 + urban | district, hom = FALSE),
+               data = Contraception,
+               family = binomial)
+colnames(getME(gm.ar1_0.het, "X"))
+fixef(gm.ar1_0.het)
+
+gm.ar1_nAGQ0 <- glmer(use ~ age + urban + ar1(0 + urban | district),
+               data = Contraception,
+               family = binomial,
+               nAGQ=0)
+fixef(gm.ar1_nAGQ0)
 
 try(fixef(gm.ar1_0))
 ## Error in attributes(.Data) <- c(attributes(.Data), attrib) (from lmer.R#971) : 
@@ -72,6 +90,12 @@ gm.ar1 <- glmer(use ~ urban + ar1(0 + factor(age) | district),
                family = binomial)
 ## uh-oh
 fixef(gm.ar1)
+
+## gm.ar1.het <- update(gm.ar1, use ~ urban + ar1(0 + factor(age) | district, hom = FALSE))
+## fixef(gm.ar1.het)
+
+gm.ar1.nAGQ0 <- update(gm.ar1, nAGQ=0)
+fixef(gm.ar1.nAGQ0)
 
 ## still not sure what's going on ...
 ## cross-check with other forms?
@@ -98,6 +122,7 @@ lme4_1@optinfo$val
 
 lme4_1B <- update(lme4_1, nAGQ=0)
 fixef(lme4_1B)
+lme4_1B@optinfo$val
 
 lme4_2 <- update(lme4_1, form = form2)
 
