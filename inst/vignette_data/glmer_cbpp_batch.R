@@ -27,20 +27,34 @@ mforms$obs <- update(mforms$herd, . ~ . - (1|herd) + (1 | obs))
 ##   mod_list <- lapply(mforms, glmer, data = cbpp2, family = binomial, weights = size)
 ## when evaluating 'weights'
 
-cbpp_mod_list <- list()
+cc0 <- glmerControl(optimizer = "bobyqa",
+                    ## avoid instability/problems with nAGQ=0 step ...
+                    nAGQ0initStep = FALSE,
+                    optCtrl = list(maxfun = 1e3),
+                    calc.derivs = FALSE)
+cc1 <- cc0
+cc1$nAGQ0initStep <- TRUE
+
+## sapply(cbpp_mod_list, \(x) -c(logLik(x)))
+## sapply(cbpp_mod_list2, \(x) -c(logLik(x)))
+
+cbpp_mod_list <- cbpp_mod_list2 <- list()
 for (i in names(mforms)) {
   cbpp_mod_list[[i]] <- glmer(mforms[[i]],
                               data = cbpp2,
                               family = binomial,
                               weights = size,
-                              control = glmerControl(optimizer = "bobyqa",
-   ## avoid instability/problems with nAGQ=0 step ...                                                     
-                                 nAGQ0initStep = FALSE,
-                                 optCtrl = list(maxfun = 1e5),
-                                 calc.derivs = FALSE))
+                              control = cc0),
+  cbpp_mod_list2[[i]] <- glmer(mforms[[i]],
+                              data = cbpp2,
+                              family = binomial,
+                              weights = size,
+                              control = cc1)
+
 }
 
-cbpp_confint_boot <- lapply(cbpp_mod_list, b_cifun)
+## b_cifun(cbpp_mod_list2[[2]], nsim = 5)
+cbpp_confint_boot <- lapply(cbpp_mod_list2, b_cifun, nsim = 501)
 cbpp_prof <- lapply(cbpp_mod_list, p_fun)
 
 if (FALSE) {
@@ -63,16 +77,36 @@ rownames(cbpp_est) <- NULL
 
 objs <- c("cbpp_confint_prof", "cbpp_confint_boot", "cbpp_confint_wald", "cbpp_prof", "cbpp_est", "cbpp_combCI", "cbpp_df_name")
 
-## save for debugging combfun2 /cor naming issues
-save(list = setdiff(objs, "cbpp_combCI"), file = "cbpp_batch_debug.rda", version = 2)
-
 cbpp_combCI <- Map(combfun2,
                    list(cbpp_confint_wald, cbpp_confint_boot, cbpp_confint_prof),
                    c("Wald", "boot", "profile"),
                    MoreArgs = list(df_est = cbpp_est, df_name = cbpp_df_name)) |>
   do.call(what = "rbind")
 
-## ggplot(combCI, aes(est, var, colour = type)) + geom_point(position = position_dodge(0.5)) + facet_wrap(~model)
+cbpp_combCI |> dplyr::filter(grepl("^sd", var), type == "boot")
+                             
+if (FALSE) {
+  library(ggplot2); theme_set(theme_bw())
+  revguide <- guide_legend(reverse = TRUE)
+  des_ord <- c("sd_(Intercept)|herd", "sd_(Intercept)|obs",
+               "avg_size", "treatmentUnknown", "treatmentComplete")
+  combCI <- subset(cbpp_combCI,var!="(Intercept)" & !grepl("^period",var))
+  combCI <- transform(combCI,  var = factor(var, levels = rev(des_ord)))
+  combCI <- transform(combCI,
+                      vartype = factor(ifelse(grepl("^sd", var), "random effects", "fixed effects")))
+  mnames <- cbpp_df_name$mnames
+  pd <- position_dodge(width=0.6)
+  ggplot(combCI, aes(var, est, colour=type, shape=model)) +
+    geom_pointrange(aes(ymin=lwr, ymax=upr),
+                    position=pd) +
+    labs(x="", y="Estimate (log-odds of seropositivity)") +
+    geom_hline(yintercept=0, lty=2) +
+    coord_flip() +
+    scale_colour_brewer(palette="Dark2", guide = revguide) +
+    scale_shape(guide=revguide, labels = mnames) +
+    facet_wrap(~ vartype, ncol = 1, scale = "free")
+  
+}
 
 save(
   list = objs,
