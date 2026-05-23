@@ -71,6 +71,8 @@ Suggests:
     gamm4,
     ggplot2,
     glmmTMB,
+    gridExtra,
+    RColorBrewer,
     knitr,
     merDeriv,
     mgcv,

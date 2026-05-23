@@ -163,7 +163,7 @@ profile.merMod <- function(fitted,
         nr <- nrow(mat)
         i <- 2L
         ## REF: is.na(curzeta) behaviour last modified in commit b1a28914e72be845e
-        while (i < nr && mat[i, cc] > lowcut && mat[i,cc] < upcut &&
+        while (i < nr && !is.na(mat[i, cc]) && mat[i, cc] > lowcut && mat[i, cc] < upcut &&
                (i > 1 && !is.na(curzeta <- abs(mat[i, ".zeta"]))) && curzeta <= cutoff) {
                 np <- nextpar(mat, cc, i, delta, lowcut, upcut)
                 ns <- nextstart(mat, pind = cc-1, r=i, method=startmethod)
@@ -245,6 +245,8 @@ profile.merMod <- function(fitted,
             }
             if (is.na(devdiff)) {
                 warning("NAs detected in profiling")
+                ## optimizer failed; return an all-NA row so fillmat can skip it
+                return(rep(NA_real_, ncol(res)))
             } else {
                 if(verbose && devdiff < 0)
                     cat("old deviance ",base,",\n",

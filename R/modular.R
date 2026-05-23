@@ -325,14 +325,19 @@ checkResponse <- function(y, ctrl) {
 
 ##' @rdname modular
 ##' Internal workhorse shared by lFormula() and glFormula().
-##' Handles model-frame construction, random-effects setup, and fixed-effects
-##' matrix building -- all of which is identical between the two public functions.
+##' Handles formula checking, model-frame construction, random-effects setup,
+##' and fixed-effects matrix building -- all of which is identical between the
+##' two public functions.
 ##'
-##' @param formula   model formula (already processed via as.formula, env set)
-##' @param mf        partially-constructed call to stats::model.frame
-##'                  (formula slot will be filled in by this function)
+##' @param formula   raw model formula from the caller (processed internally
+##'                  via \code{checkFormulaData} and \code{as.formula})
+##' @param mc        raw \code{match.call()} result from the caller,
+##'                  used to construct the \code{stats::model.frame} call
+##' @param data      the \code{data} argument from the caller
 ##' @param contrasts optional contrasts argument
 ##' @param control   the checkControl sub-list
+##' @param isGLMM    logical: if \code{TRUE}, include \code{mustart} and
+##'                  \code{etastart} in the model.frame call (glmer-specific)
 ##' @param allow.n   passed to checkNlevels, checkZdims, checkZrank;
 ##'                  FALSE for lmer (default), TRUE for glmer
 ##' @param check_zero_rows  if TRUE, stop on empty model frame (lmer mode)
@@ -341,12 +346,29 @@ checkResponse <- function(y, ctrl) {
 ##' @param parent_env  parent.frame() captured by the calling function
 ##' @return list(fr, X, reTrms, formula, wmsgs) -- callers (lFormula/glFormula)
 ##'   append their own specific elements (REML or family) to this result
-mkFormula <- function(formula, mf, contrasts, control,
+mkFormula <- function(formula, mc, data, contrasts, control,
+                      isGLMM = FALSE,
                       allow.n = FALSE,
                       check_zero_rows = FALSE,
                       check_na_Zt = FALSE,
                       set_varnames_fixed = FALSE,
                       parent_env = parent.frame()) {
+    ## --- common setup: formula checking and mf construction ---
+    cstr <- "check.formula.LHS"
+    checkCtrlLevels(cstr, control[[cstr]])
+    denv <- checkFormulaData(formula, data,
+                             checkLHS = control$check.formula.LHS == "stop",
+                             calling_env = parent_env)
+    formula <- as.formula(formula, env = denv)
+    if (getDoublevertDefault() == "split")
+        RHSForm(formula) <- reformulas::expandDoubleVerts(RHSForm(formula))
+    match_vars <- c("data", "subset", "weights", "na.action", "offset")
+    if (isGLMM) match_vars <- c(match_vars, "mustart", "etastart")
+    m <- match(match_vars, names(mc), 0L)
+    mf <- mc[c(1L, m)]
+    mf$drop.unused.levels <- TRUE
+    mf[[1L]] <- quote(stats::model.frame)
+    ## --- end common setup ---
     ## substitute  special(x | f)  with  (x | f)
     fr.form. <- noSpecials(formula, specials = lme4_specials, delete = FALSE)
     ## substitute  (x | f)  and  (x || f)  with  (x + f)
@@ -457,7 +479,7 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
                      control=lmerControl(), ...)
 {
     control <- control$checkControl ## this is all we really need
-    mf <- mc <- match.call()
+    mc <- match.call()
 
     dontChk <- c("start", "verbose", "devFunOnly")
     dots <- list(...)
@@ -469,21 +491,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
         return(eval(mc, parent.frame()))
     }
 
-    cstr <- "check.formula.LHS"
-    checkCtrlLevels(cstr, control[[cstr]])
-    denv <- checkFormulaData(formula, data,
-                             checkLHS = control$check.formula.LHS == "stop")
-    formula <- as.formula(formula, env = denv)
-    if (getDoublevertDefault() == "split")
-        RHSForm(formula) <- reformulas::expandDoubleVerts(RHSForm(formula))
-
-    m <- match(c("data", "subset", "weights", "na.action", "offset"),
-               names(mf), 0L)
-    mf <- mf[c(1L, m)]
-    mf$drop.unused.levels <- TRUE
-    mf[[1L]] <- quote(stats::model.frame)
-
-    res <- mkFormula(formula, mf, contrasts, control,
+    res <- mkFormula(formula, mc, data, contrasts, control,
+                     isGLMM = FALSE,
                      allow.n = FALSE,
                      check_zero_rows = TRUE,
                      check_na_Zt = TRUE,
@@ -741,7 +750,7 @@ glFormula <- function(formula, data=NULL, family = gaussian,
                       contrasts = NULL, start, mustart, etastart,
                       control = glmerControl(), ...) {
     control <- control$checkControl ## this is all we really need
-    mf <- mc <- match.call()
+    mc <- match.call()
     ## extract family, call lmer for gaussian
     if (is.character(family))
         family <- get(family, mode = "function", envir = parent.frame(2))
@@ -758,29 +767,14 @@ glFormula <- function(formula, data=NULL, family = gaussian,
     dots <- list(...)
     do.call(checkArgs, c(list("glmer"), dots[!names(dots) %in% dontChk]))
 
-    cstr <- "check.formula.LHS"
-    checkCtrlLevels(cstr, control[[cstr]])
-
-    denv <- checkFormulaData(formula, data,
-                             checkLHS = control$check.formula.LHS == "stop")
-    formula <- as.formula(formula, env = denv) # substitute evaluated version
-    if (getDoublevertDefault() == "split")
-        RHSForm(formula) <- reformulas::expandDoubleVerts(RHSForm(formula))
-
-    ## include mustart/etastart in the model frame call (glmer-specific)
-    m <- match(c("data", "subset", "weights", "na.action", "offset",
-                 "mustart", "etastart"), names(mf), 0L)
-    mf <- mf[c(1L, m)]
-    mf$drop.unused.levels <- TRUE
-    mf[[1L]] <- quote(stats::model.frame)
-
     ## FIXME: adjust test for families with estimated scale parameter:
     ##   useSc is not defined yet/not defined properly?
     ##  if (useSc && maxlevels == n)
     ##          stop("number of levels of each grouping factor must be",
     ##                "greater than number of obs")
     ## TODO: allow.n = !useSc
-    res <- mkFormula(formula, mf, contrasts, control,
+    res <- mkFormula(formula, mc, data, contrasts, control,
+                     isGLMM = TRUE,
                      allow.n = TRUE,
                      check_zero_rows = FALSE,
                      check_na_Zt = FALSE,
