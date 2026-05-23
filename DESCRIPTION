@@ -85,10 +85,11 @@ Suggests:
     semEff,
     statmod,
     testthat (>= 0.8.1),
-    tibble
-Enhances:
+    tibble,
     DHARMa,
-    performance
+    gridExtra,
+    performance,
+    see
 RdMacros: Rdpack
 VignetteBuilder: knitr
 LazyData: yes
