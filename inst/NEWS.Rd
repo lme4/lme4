@@ -15,8 +15,11 @@
       \item fixed bug where \code{glmer} with structured covariance models
       would return incorrect fixed effect coefficients (zero values, or wrong
       number of values) (GH #962).
-      \item fixed the case where a Gamma GLMM performs poorly for 
-      data with small shape parameters by changing the starting 
+      \item \code{refit()} on a GLMM with multiple random effects no longer
+      gives a spurious \dQuote{longer object length is not a multiple of
+      shorter object length} warning (GH #975)
+      \item fixed the case where a Gamma GLMM performs poorly for
+      data with small shape parameters by changing the starting
       parameter values for Gamma families (GH #290)
       \item fixed parameter-counting bug for structured covariance
       matrices (internal \code{npar.merMod} function, results exposed in

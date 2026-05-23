@@ -8,10 +8,12 @@ get_est <- function(mod, model_name) {
   data.frame(model=model_name, var=names(est), est=est, row.names=NULL)
 }
 
-b_cifun <- function(x) {
+ncores <- min(10, parallel::detectCores() - 1)
+
+b_cifun <- function(x, nsim = 501) {
   cat(deparse(getCall(x)$formula), "\n")
-  confint(x, method = "boot", seed = 101, nsim = 501, signames = FALSE,
-          parallel = "multicore", ncpus = 10)
+  confint(x, method = "boot", seed = 101, nsim = nsim, signames = FALSE,
+          parallel = "multicore", ncpus = ncores)
 }
 
 p_fun <- function(x) {
@@ -19,7 +21,7 @@ p_fun <- function(x) {
   profile(x, signames = FALSE,
           devtol = 1e-2,
           maxpts = 250,
-          parallel = "multicore", ncpus = 10)
+          parallel = "multicore", ncpus = ncores)
 }
 
 
@@ -39,7 +41,7 @@ combfun2 <- function(x, type, df_name, df_est) {
   ## put the term names in a different order
   ## this assumes that this is the **ONLY** model we are considering with a correlation ...
   corvals <- grep("cor", df$var)
-  if (!any(grepl("urban", df$var[corvals]))) stop("unexpected cor name pattern in combfun2")
+  if (length(corvals) > 0 && !any(grepl("urban", df$var[corvals]))) stop("unexpected cor name pattern in combfun2")
   if (length(corvals) > 0) {
     df$var[corvals] <- "cor_(Intercept).urban1|district"
   }

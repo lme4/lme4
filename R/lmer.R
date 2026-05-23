@@ -1524,9 +1524,10 @@ refit.merMod <- function(object,
     upper     <- getUpper(object)
     if (haveGLMM && nAGQ > 0L) {
      ## xst   <- c(xst, sqrt(diag(pp$unsc())))
+        n_beta <- length(fixef(object))
         x0    <- c(x0, unname(fixef(object)))
-        lower <- c(lower, rep(-Inf,length(x0)-length(lower)))
-        upper <- c(upper, rep( Inf,length(x0)-length(lower)))
+        lower <- c(lower, rep(-Inf, n_beta))
+        upper <- c(upper, rep( Inf, n_beta))
     }
     ## control <- c(control,list(xst=0.2*xst, xt=xst*0.0001))
     ## FIX ME: allow use.last.params to be passed through

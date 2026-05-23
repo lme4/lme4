@@ -406,6 +406,17 @@ test_that("refit", {
   expect_equal(logLik(m5),logLik(m5R))
 })
 
+test_that("refit GLMM with multiple RE no length-mismatch warning (GH #975)", {
+  ## upper bound vector was not extended for fixed effects when n_RE > 1,
+  ## causing recycling warning in checkConv when n_beta %% n_theta != 0
+  cbpp2 <- transform(cbpp, prop = incidence/size, obs = factor(seq(nrow(cbpp))))
+  m <- glmer(prop ~ herd + (1|period) + (1|obs), weights = size,
+             family = binomial, data = cbpp2,
+             control = glmerControl(calc.derivs = FALSE))
+  expect_no_warning(refit(m, newresp = cbpp2$prop),
+                    message = "not a multiple")
+})
+
 if (testLevel>1) {
   #context("predict method")
   test_that("predict", {
