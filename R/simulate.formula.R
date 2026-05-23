@@ -119,8 +119,24 @@ simulate.formula <- function(object, nsim=1, seed=NULL, ..., basis, newdata, dat
   eval(cl, parent.frame())
 }
 
+#' @describeIn simulate.formula A method for one-sided formulas (no LHS) that
+#'   routes to [.simulateFun()] when \code{family} or \code{newparams} are
+#'   provided, enabling \code{simulate(~re_formula, family=..., newdata=...,
+#'   newparams=...)} usage.
+#'
+#' @export
+simulate.formula_lhs_ <- function(object, nsim=1, seed=NULL, ...) {
+  extra <- list(...)
+  if (!is.null(extra[["newparams"]]) || !is.null(extra[["family"]])) {
+    class(object) <- setdiff(class(object), c("formula_lhs_", "formula_lhs"))
+    .simulateFun(formula=object, nsim=nsim, seed=seed, ...)
+  } else {
+    NextMethod()
+  }
+}
+
 #' @describeIn simulate.formula A function to catch the situation when there is no method implemented for the class to which the LHS evaluates.
-#' 
+#'
 #' @export
 simulate.formula_lhs <- function(object, nsim=1, seed=NULL, ...){
   stop("No applicable method for LHS of type ", paste0(sQuote(class(attr(object, ".Basis"))), collapse=", "), ".")
