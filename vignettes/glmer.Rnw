@@ -1132,7 +1132,7 @@ print(VarCorr(gm.ar1))
 
 For this particular model, a heterogeneous AR1 model (\code{ar1(..., hom = FALSE)}) results in a singular fit.
 
-See the \href{https://cran.r-project.org/web/packages/lme4/vignettes/covariance_structures.html}{lme4 covariance structures vignette}
+See the \href{https://CRAN.R-project.org/package=lme4/vignettes/covariance_structures.html}{lme4 covariance structures vignette}
 for more detail.
 
 \subsection{Contraception}
