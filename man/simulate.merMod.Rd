@@ -39,10 +39,12 @@
     \code{NULL}, condition on all random effects; if \code{NA} or \code{~0},
     condition on no random effects.  See Details.}
   \item{newdata}{data frame for which to evaluate predictions.}
-  \item{newparams}{new parameters to use in evaluating predictions,
-    specified as in the \code{start} parameter for \code{\link{lmer}} or
-    \code{\link{glmer}} -- a list with components \code{theta} and
-    \code{beta} and (for LMMs or GLMMs that estimate a scale parameter)
+  \item{newparams}{new parameters to use in simulating or
+    evaluating predictions,
+    specified as described for the \code{start} parameter
+    for \code{\link{lmer}} -- a list with components \code{beta},
+    \code{par} or \code{theta}, and
+    (for LMMs or GLMMs that estimate a scale parameter)
     \code{sigma}}
   \item{formula}{a (one-sided) mixed model formula, as described for
     \code{\link{lmer}}.}

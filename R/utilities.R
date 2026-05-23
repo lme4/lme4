@@ -243,6 +243,13 @@ mkRespMod <- function(fr, REML=NULL, family = NULL, nlenv = NULL, nlmod = NULL, 
         ## see ll 180-182 of src/library/stats/R/glm.R
         ## https://github.com/wch/r-source/search?utf8=%E2%9C%93&q=mukeep
         if (!is.null(mustart_update)) rho$mustart <- mustart_update
+        ## For Gamma family, replace mustart (= y) with mean(y) to improve PIRLS stability.
+        ## Using mustart = y causes PIRLS divergence for small shape parameters (e.g. shape < 0.2)
+        ## because E[log(y)] <= log(E[y]) (Jensen's inequality): the OLS fit of log(y) ~ X gives
+        ## coefficients implying exp(fitted) <= y (optimizes on wrong target)
+        else if (family$family == "Gamma" && is.null(etastart_update) && length(y) > 0) {
+            rho$mustart[] <- mean(rho$mustart)
+        }
         ## family$initialize <- NULL     # remove clutter from str output
         ll <- as.list(rho)
         ans <- do.call(new, c(list(Class="glmResp", family=family),
@@ -492,7 +499,8 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
               spFe= 0L,
               REML = if (rcl=="lmerResp") resp$REML else 0L,
               GLMM= isGLMM,
-              NLMM= (rcl=="nlsResp"))
+              NLMM= (rcl=="nlsResp"),
+              npar= length(reTrms$lower))
     storage.mode(dims) <- "integer"
     fac     <- as.numeric(rcl != "nlsResp")
     if (trivial.y <- (length(resp$y)==0)) {
@@ -508,7 +516,18 @@ mkMerMod <- function(rho, opt, reTrms, fr, mc, lme4conv=NULL) {
     sigmaML <- pwrss/n
     if (rcl != "lmerResp") {
         pars <- opt$par
-        if (length(pars) > length(pp$theta)) beta <- pars[-(seq_along(pp$theta))]
+        ## making the assertion that length(pars) > npar iff nAGQ > 0;
+        ## skip when pars=NA (simulate path uses a placeholder opt)
+        ## expected pars: add # fixed pars to # opt pars if nAGQ>0
+        expected_par_length <- dims[["npar"]] + as.numeric(dims[["nAGQ"]]>0L)*dims[["p"]]
+        if (!anyNA(pars) && (length(pars) != expected_par_length)) {
+          stop(sprintf("unexpected parameter vector length: length(pars)=%d, npar=%d, nAGQ=%d; ",
+                       length(pars), dims[["npar"]], dims[["nAGQ"]]),
+               "(expected length(pars)==npar iff nAGQ==0)")
+        }
+        ## For structured covariance models (e.g., ar1), npar = length(reTrms$lower)
+        ## may be less than length(pp$theta), so we use dims[["npar"]] to index correctly.
+        if (dims[["nAGQ"]] > 0L) beta <- pars[-seq_len(dims[["npar"]])]
     }
     cmp <- c(ldL2=pp$ldL2(), ldRX2=pp$ldRX2(), wrss=wrss,
              ussq=sqrLenU, pwrss=pwrss,
@@ -1131,4 +1150,21 @@ getDoublevertDefault <- function() {
 
 na.action.merMod <- function(object, ...) {
   na.action(model.frame(object))
+}
+
+# Temporarily putting this here; should be removed once reformulas is updated.
+#' get grouping variable symbols/names
+#' @param formula a formula
+#' @param return_val return character string or raw symbol?
+#' @examples
+#' form <- Reaction ~ Days + (Days | group / Subject)
+#' get_grpvars(form)
+#' get_grpvars(form, return_val = "symbol")
+get_grpvars <- function(formula, return_val = c("char", "symbol")) {
+  return_val <- match.arg(return_val)
+  ff <- reformulas::findbars_x(formula)
+  ff2 <- lapply(ff, "[[", 2) ## strip parens/special names
+  ff3 <- lapply(ff2, "[[", 3) ## get argument after |
+  if (return_val == "symbol") return(ff3)
+  vapply(ff3, deparse1, FUN.VALUE = "")
 }

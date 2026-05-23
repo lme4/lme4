@@ -978,6 +978,14 @@ test_that("influence with nAGQ=0", {
   expect_is(influence(gm1Q0), "influence.merMod")
 })
 
+test_that("getME now has npar", {
+  fm1 <- fit_sleepstudy_2
+  expect_equal(getME(fm1, "npar"),
+               length(getReCovs(fm1)[[1]]@par))
+  expect_equal(getME(fm1, "npar"),
+               length(getLower(fm1)))
+})
+
 if (testLevel > 1) withAutoprint({
   test_that("cook's distance comparison", {
   ## generate data with zero variance
@@ -998,9 +1006,12 @@ if (testLevel > 1) withAutoprint({
   expect_equal(cooks.distance(i2), cooks.distance(fm2L))
   expect_equal(cooks.distance(fm2), cooks.distance(fm2L), tolerance = 1e-2)
   })
+
+  test_that("oldNames warning in confint", {
+    fm1 <- fit_sleepstudy_2
+    expect_warning(confint(fm1, parm = 1, oldNames = TRUE, quiet = TRUE))
+  })
+
 }) ## testLevel > 1
 
-test_that("oldNames warning in confint", {
-  fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
-  expect_warning(confint(fm1, oldNames = TRUE))
-})
+

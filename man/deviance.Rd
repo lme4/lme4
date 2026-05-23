@@ -20,6 +20,7 @@
    \item{REML}{Logical. If \code{TRUE}, return the restricted log-likelihood
     rather than the log-likelihood.  If \code{NULL} (the default),
     set \code{REML} to \code{isREML(object)} (see \code{\link{isREML}}).}
+   \item{\dots}{Optional additional arguments.}
 }
 
 

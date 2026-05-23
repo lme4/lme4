@@ -487,13 +487,8 @@ lFormula <- function(formula, data=NULL, REML = TRUE,
     fr.form <- sub_specials(fr.form., specials = c("|", "||"),
                             keep_args = c(2L, 2L))
     environment(fr.form.) <- environment(fr.form) <- environment(formula)
-    ## model.frame.default looks for these objects in the environment
-    ## of the *formula* (see 'extras', which is anything passed in '...'),
-    ## so they have to be put there:
-    for (i in c("weights", "offset")) {
-        if (!eval(bquote(missing(x=.(i)))))
-            assign(i, get(i, parent.frame()), environment(fr.form))
-    }
+    ## weights/offset are found via eval(mf, parent_env) without needing to be
+    ## assigned into the formula environment (see PR #961).
 
     res <- mkFormula(formula, fr.form., fr.form, mf, contrasts, control,
                      allow.n = FALSE,
@@ -793,13 +788,8 @@ glFormula <- function(formula, data=NULL, family = gaussian,
                             keep_args = c(2L, 2L))
     environment(fr.form.) <- environment(fr.form) <-
         environment(formula)
-    ## model.frame.default looks for these objects in the environment
-    ## of the *formula* (see 'extras', which is anything passed in '...'),
-    ## so they have to be put there:
-    for (i in c("weights", "offset")) {
-        if (!eval(bquote(missing(x=.(i)))))
-            assign(i, get(i, parent.frame()), environment(fr.form))
-    }
+    ## weights/offset are found via eval(mf, parent_env) without needing to be
+    ## assigned into the formula environment (see PR #961).
 
     ## FIXME: adjust test for families with estimated scale parameter:
     ##   useSc is not defined yet/not defined properly?

@@ -36,14 +36,14 @@
   }
 }
 \details{
-  In this example, every variable is either binary or a factor.  However, 
+  Every variable in this data set is either binary or a factor.  However, 
   most of the variables in this data set are treated like a numerical variable
   (i.e., \code{Experiment, Male, Female, Mate}), so we suggest turning them
   into factor variables before use. As outlined in McCullagh and Nelder (1989): 
   This experiment, conducted by S. Arnold and P. Verrell at the University of 
   Chicago, investigated whether geographically isolated populations of mountain 
   dusky salamanders would interbreed. The goal was to see the difference in 
-  mating frquencies between the \code{RW} crosses compared to the \code{WR}
+  mating frequencies between the \code{RW} crosses compared to the \code{WR}
   crosses. Because each salamander was involved in multiple mating trials with 
   different partners, the observations are not independent. Therefore, we use a 
   model (see the \emph{examples} section) that conditions on the specific male 
@@ -56,7 +56,7 @@
   \insertRef{mccullagh1989generalized}{lme4}
 }
 \examples{
-## Making sure Male, Female, and CRoss are treated as factors
+## Making sure Male, Female, and Cross are treated as factors
 salamander$Male <- factor(salamander$Male)
 salamander$Female <- factor(salamander$Female)
 salamander$Cross <- factor(salamander$Cross)

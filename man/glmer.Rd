@@ -43,17 +43,11 @@ glmer(formula, data = NULL, family = gaussian
     optimizer to be used and parameters to be passed through to the
     nonlinear optimizer, see the \code{*lmerControl} documentation for
     details.}
-  \item{start}{a numeric vector or a named \link{list} with optional
-    components, one named \code{par} or \code{theta} and another named
-    \code{fixef} or \code{beta}, giving starting values for covariance
-    parameters and fixed effect coefficients, respectively.  Numeric
-    \code{start} is equivalent to \code{list(par = start)}.  Parameters
-    corresponding to unstructured covariance matrices are on the scale
-    of the Cholesky factor of the relative covariance matrix.  By
-    default, all relative covariance matrices are identity matrices and
-    all fixed effect coefficients are zero.  If two optimization steps
-    are performed, as by default, then the first step uses starting
-    values \code{par} and the second step uses starting values
+  \item{start}{See the "start" argument of \code{\link{lmer}} for
+    details. If two optimization steps are
+    performed for a GLMM, as by default (i.e. one with \code{nAGQ=0} and
+    a second with \code{nAGQ} > 0), then the first step uses starting values
+    \code{par} and the second step uses starting values
     \code{c(newpar, fixef)}, where \code{newpar} is the optimum obtained
     in the first step.  See \code{\link{modular}} for details about
     finer control of optimization.}
@@ -196,4 +190,3 @@ if (require("HSAUR3")) {
 }
 }
 \keyword{models}
-

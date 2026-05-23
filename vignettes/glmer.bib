@@ -100,7 +100,6 @@
 	Abstract = {The model generally considered in analysis of covariance has all levels of classification factors and interactions fixed, and also covariate regression coefficients fixed. Mixed models are more appropriate in most applications. A summary of estimation and hypothesis testing for analysis of covariance in the mixed model, including the case of random regression coefficients, is presented. Higher-level covariate regressions (i.e., regressions in which, for all levels of a factor or interaction, all observations on the same level have a common covariate value) are discussed. Nonestimability problems that result from defining such covariates at the levels of fixed effects are illustrated. The case of nonhomogeneous covariate regressions in the mixed model is considered in the context of interpreting predicted future differences among levels of a given factor or interaction. Nonhomogeneous regressions complicate interpretations only when they are associated with the contrast(s) of interest among fixed effects in the model. The question of whether the regressions are homogeneous is itself often of substantive interest. Different random regression coefficients associated with the levels of a random effect are also examined.},
 	Author = {Henderson, Jr., Charles R.},
 	Copyright = {Copyright {\copyright} 1982 International Biometric Society},
-	Issn = {0006341X},
 	Journal = {Biometrics},
 	Jstor_Articletype = {research-article},
 	Jstor_Formatteddate = {Sep., 1982},
@@ -119,7 +118,6 @@
 	Abstract = {For given data (ti, yi), i = 1, ⋯, m, we consider the least squares fit of nonlinear models of the form $\eta(\mathbf{a, \alpha};t) = \sum^n_{j = 1} a_j \varphi_j(\mathbf{\alpha};t),\quad \mathbf{a} \in \mathscr{R}^n, \mathbf{\alpha} \in \mathscr{R}^k.$ For this purpose we study the minimization of the nonlinear functional r(a, α) = ∑m i = 1 (yi - η(a, α, ti))2. It is shown that by defining the matrix {Φ(α)}i,j = φj(α; ti), and the modified functional r2(α) = |y - Φ(α)Φ+ (α)y|2 2, it is possible to optimize first with respect to the parameters α, and then to obtain, a posteriori, the optimal parameters $\hat{\mathbf{a}}$ . The matrix Φ+(α) is the Moore-Penrose generalized inverse of Φ(α). We develop formulas for the Frechet derivative of orthogonal projectors associated with Φ(α) and also for Φ+(α), under the hypothesis that Φ(α) is of constant (though not necessarily full) rank. Detailed algorithms are presented which make extensive use of well-known reliable linear least squares techniques, and numerical results and comparisons are given. These results are generalizations of those of H. D. Scolnik [20] and Guttman, Pereyra and Scolnik [9].},
 	Author = {Golub, G. H. and Pereyra, V.},
 	Copyright = {Copyright {\copyright} 1973 Society for Industrial and Applied Mathematics},
-	Issn = {00361429},
 	Journal = {SIAM Journal on Numerical Analysis},
 	Jstor_Articletype = {research-article},
 	Jstor_Formatteddate = {Apr., 1973},
@@ -151,7 +149,6 @@
  number = {3},
  month = oct,
  year = {2008},
- issn = {0098-3500},
  pages = {22:1--22:14},
  articleno = {22},
  numpages = {14},
@@ -241,7 +238,6 @@
 @article{bolker_strategies_2013,
 	title = {Strategies for Fitting Nonlinear Ecological Models in \proglang{R}, {AD} {Model} {Builder}, and \proglang{BUGS}},
 	volume = {4},
-	issn = {{2041210X}},
 	url = {http://doi.wiley.com/10.1111/2041-210X.12044},
 	doi = {10.1111/2041-210X.12044},
 	number = {6},
@@ -422,8 +418,6 @@ Approximation},
 @article{lesnoff_within-herd_2004,
 	title = {Within-herd spread of contagious bovine pleuropneumonia in Ethiopian highlands},
 	volume = {64},
-	issn = {0167-5877},
-	url = {http://www.sciencedirect.com/science/article/pii/S0167587704000856},
 	doi = {10.1016/j.prevetmed.2004.03.005},
 	abstract = {Contagious bovine pleuropneumonia ({CBPP)} is a major threat for cattle health and production in Africa. This disease is caused by the small-colony type of Mycoplasma mycoides subspecies mycoides ({MmmSC).} Transmission occurs from direct and repeated contacts between sick and healthy animals. Veterinary services recently reported a resurgence of {CBPP} in the province of West Wellega, in the Ethiopian highlands. A research program was set up to estimate the epidemiological parameters of the within-herd infection spread. A follow-up survey was implemented in 71 sampled herds of the Boji district (West Wellega province). Fifteen herds were classified as newly infected and used in a serological- and clinical-incidence study. The overall 16-month cumulative sero-incidence risk was 34\%. Clinical cases were recorded for 39\% of the seropositive cattle; case-fatality risk was 13\%. There was no evidence of benefit on infection spread of {CBPP-control} measures used locally by farmers (isolation or antibiotic treatments of sick animals). This might be related to a lack of power in the statistical analyses or to a quality problem for the medications used (and more generally, for health-care delivery in the Boji district).},
 	number = {1},
@@ -453,19 +447,12 @@ Approximation},
   volume = 	 159,
   pages = 	 {289--299}}
 
-@Article{huq1990bangladesh,
+@book{huq1990bangladesh,
   title={Bangladesh fertility survey 1989},
   author={Huq, Najmul and Cleland, John},
   publisher={National Institute of Population Research and Training},
+  address = {Dhaka},
   year={1990}
-}
-
-@Misc{lmerJSS,
-  title = {{lme4}: Linear mixed-effects models using {Eigen} and {S4}},
-  year = {2014},
-  author = {Douglas Bates and Martin Maechler and Benjamin M. Bolker and Steven Walker},
-  note = {ArXiv e-print; submitted to \emph{Journal of Statistical Software}},
-  url = {http://arxiv.org/abs/1406.5823},
 }
 
 @BOOK{McCullaghNelder1989,
@@ -477,9 +464,9 @@ Approximation},
 }
 
 @article{zeger1991generalized,
-  title={Generalized linear models with random effects; a Gibbs sampling approach},
+  title={Generalized linear models with random effects: a Gibbs sampling approach},
   author={Zeger, Scott L and Karim, M Rezaul},
-  journal={Journal of the American statistical association},
+  journal={Journal of the American Statistical Association},
   volume={86},
   number={413},
   pages={79--86},
@@ -490,8 +477,102 @@ Approximation},
 @article{bates2015fitting,
   title={Fitting linear mixed-effects models using lme4},
   author={Bates, Douglas and M{\"a}chler, Martin and Bolker, Ben and Walker, Steve},
-  journal={Journal of statistical software},
+  journal={Journal of Statistical Software},
   volume={67},
   pages={1--48},
   year={2015}
+}
+
+
+@article{gelman2008scaling,
+  title={Scaling regression inputs by dividing by two standard deviations},
+  author={Gelman, Andrew},
+  journal={Statistics in medicine},
+  volume={27},
+  number={15},
+  pages={2865--2873},
+  year={2008},
+  publisher={Wiley Online Library}
+}
+
+@book{madsen2011,
+  title = {Introduction to General and Generalized Linear Models},
+  author = {Madsen, Henrik and Thyregod, Poul},
+  year = 2011,
+  publisher = {CRC Press},
+  abstract = {Bridging the gap between theory and practice for modern statistical model building, Introduction to General and Generalized Linear Models presents likelihood-based techniques for statistical modelling using various types of data. Implementations using R are provided throughout the text, although other software packages are also discussed. Numerous examples show how the problems are solved with R.After describing the necessary likelihood theory, the book covers both general and generalized linear models using the same likelihood-based methods. It presents the corresponding/parallel results for the general linear models first, since they are easier to understand and often more well known. The authors then explore random effects and mixed effects in a Gaussian context. They also introduce non-Gaussian hierarchical models that are members of the exponential family of distributions. Each chapter contains examples and guidelines for solving the problems via R. Providing a flexible framework for data analysis and model building, this text focuses on the statistical methods and models that can help predict the expected value of an outcome, dependent, or response variable. It offers a sound introduction to general and generalized linear models using the popular and powerful likelihood techniques. Ancillary materials are available at www.imm.dtu.dk/\textasciitilde hm/GLM},
+  isbn = {978-1-4200-9155-7},
+  langid = {english},
+  keywords = {Business & Economics / Statistics,Mathematics / Probability & Statistics / General}
+}
+
+@article{kristensenTMB2016,
+  title = {{TMB} : Automatic Differentiation and {Laplace} Approximation},
+  author = {Kristensen, Kasper and Nielsen, Anders and Berg, Casper W. and Skaug, Hans and Bell, Bradley M.},
+  year = 2016,
+  journal = {Journal of Statistical Software},
+  volume = {70},
+  number = {5},
+  doi = {10.18637/jss.v070.i05},
+  urldate = {2017-05-23},
+  langid = {english}
+}
+
+  @article{debacker+1998,
+  title = {Twelve weeks of continuous oral therapy for toenail onychomycosis caused by dermatophytes: a double-blind comparative trial of terbinafine 250 mg/day versus itraconazole 200 mg/day},
+  author = {De Backer, M. and De Vroey, C. and Lesaffre, E. and Scheys, I. and De Keyser, P.},
+  year = 1998,
+  month = may,
+  journal = {Journal of the American Academy of Dermatology},
+  volume = {38},
+  number = {5, Supplement 2},
+  pages = {S57-S63},
+  doi = {10.1016/S0190-9622(98)70486-4},
+  urldate = {2015-03-28},
+  abstract = {Background: Dermatophyte infections of the toenail have been difficult to treat, requiring long courses of therapy and having high recurrence rates. New oral antifungal agents with better outcomes and minimal adverse events are needed. Objective: The purpose of this study was to compare two newer antifungal compounds, terbinafine and itraconazole, for efficacy and safety in toenail onychomycosis caused by dermatophytes. Methods: The study was randomized and double-blind. It compared 12 weeks of continuous oral treatment with terbinafine 250 mg/day or itraconazole 200 mg/day for confirmed toenail dermatophyte onychomycosis. Clinical symptoms and mycologic outcome were assessed at weeks 4, 8, 12, 24, 36, and 48. A total of 372 patients (186 in each group) with dermatophyte infection confirmed by microscopy and culture were included in the intent-to-treat analysis. Results: At week 48, a statistically significantly greater percentage of the terbinafine group than itraconazole group showed negative mycology (73\% [119 of 163] vs 45.8\% [77 of 168]; p \&lt; 0.0001) (difference = 27.2\%; 95\% CI = [17.0\%, 37.3\%]). The difference was also confirmed clinically (p = 0.001) in the patients who were clinically cured or had only minimal symptoms at the end of the study (76.2\% [125 of 164] vs 58.1\% [100 of 172]) (difference = 18.1\%; 95\% CI = [8.24\%, 27.9\%]). The geometric mean length of healthy nail of the big toe was significantly greater in the terbinafine than itraconazole group (8.1 vs 6.4 mm; p = 0.026). Tolerability was good to very good in almost 90\% of patients in both groups, and all reported adverse events were known for these compounds. Conclusion: Terbinafine produced higher rates of clinical and mycologic cure at follow-up than did itraconazole. (J Am Acad Dermatol 1998;38:S57-63.)}
+}
+
+  @article{scandola2024,
+  title = {Reliability and Feasibility of Linear Mixed Models in Fully Crossed Experimental Designs},
+  author = {Scandola, Michele and Tidoni, Emmanuele},
+  year = 2024,
+  month = jan,
+  journal = {Advances in Methods and Practices in Psychological Science},
+  volume = {7},
+  number = {1},
+  pages = {25152459231214454},
+  publisher = {SAGE Publications Inc},
+  doi = {10.1177/25152459231214454},
+  urldate = {2024-12-24},
+  abstract = {The use of linear mixed models (LMMs) is increasing in psychology and neuroscience research In this article, we focus on the implementation of LMMs in fully crossed experimental designs. A key aspect of LMMs is choosing a random-effects structure according to the experimental needs. To date, opposite suggestions are present in the literature, spanning from keeping all random effects (maximal models), which produces several singularity and convergence issues, to removing random effects until the best fit is found, with the risk of inflating Type I error (reduced models). However, defining the random structure to fit a nonsingular and convergent model is not straightforward. Moreover, the lack of a standard approach may lead the researcher to make decisions that potentially inflate Type I errors. After reviewing LMMs, we introduce a step-by-step approach to avoid convergence and singularity issues and control for Type I error inflation during model reduction of fully crossed experimental designs. Specifically, we propose the use of complex random intercepts (CRIs) when maximal models are overparametrized. CRIs are multiple random intercepts that represent the residual variance of categorical fixed effects within a given grouping factor. We validated CRIs and the proposed procedure by extensive simulations and a real-case application. We demonstrate that CRIs can produce reliable results and require less computational resources. Moreover, we outline a few criteria and recommendations on how and when scholars should reduce overparametrized models. Overall, the proposed procedure provides clear solutions to avoid overinflated results using LMMs in psychology and neuroscience.}
+}
+
+@article{matuschekBalancingTypeError2017,
+  title = {Balancing {{Type I}} Error and Power in Linear Mixed Models},
+  author = {Matuschek, Hannes and Kliegl, Reinhold and Vasishth, Shravan and Baayen, Harald and Bates, Douglas},
+  year = 2017,
+  month = jun,
+  journal = {Journal of Memory and Language},
+  volume = {94},
+  pages = {305--315},
+  doi = {10.1016/j.jml.2017.01.001},
+  urldate = {2021-05-08},
+  abstract = {Linear mixed-effects models have increasingly replaced mixed-model analyses of variance for statistical inference in factorial psycholinguistic experiments. Although LMMs have many advantages over ANOVA, like ANOVAs, setting them up for data analysis also requires some care. One simple option, when numerically possible, is to fit the full variance-covariance structure of random effects (the maximal model; Barr, Levy, Scheepers \& Tily, 2013), presumably to keep Type I error down to the nominal {$\alpha$} in the presence of random effects. Although it is true that fitting a model with only random intercepts may lead to higher Type I error, fitting a maximal model also has a cost: it can lead to a significant loss of power. We demonstrate this with simulations and suggest that for typical psychological and psycholinguistic data, higher power is achieved without inflating Type I error rate if a model selection criterion is used to select a random effect structure that is supported by the data.},
+  langid = {english},
+  keywords = {Hypothesis testing,Linear mixed effect model,Power}
+}
+
+@article{barrRandomEffectsStructure2013,
+  title = {Random Effects Structure for Confirmatory Hypothesis Testing: {{Keep}} It Maximal},
+  shorttitle = {Random Effects Structure for Confirmatory Hypothesis Testing},
+  author = {Barr, Dale J. and Levy, Roger and Scheepers, Christoph and Tily, Harry J.},
+  year = 2013,
+  month = apr,
+  journal = {Journal of Memory and Language},
+  volume = {68},
+  number = {3},
+  pages = {255--278},
+  doi = {10.1016/j.jml.2012.11.001},
+  urldate = {2016-02-20},
+  langid = {english}
 }
