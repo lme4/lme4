@@ -708,8 +708,8 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
     nullWts <- FALSE
     ## below is needed to ensure weights and offsets don't leak into
     ## the formula environment (only when formula is non-NULL, i.e. the
-    ## simulate.formula path; when formula is NULL, e.g. simulate.merMod,
-    ## weights/offset are already available as local variables)
+    ## simulate.formula path); for the simulate.merMod path (formula=NULL),
+    ## initialize the local weights/offset variables directly
     if (!is.null(formula)) {
       old <- list()
       for (var in c("weights", "offset")) {
@@ -745,6 +745,20 @@ simulate.merMod <- function(object, nsim = 1, seed = NULL, use.u = FALSE,
              else if (is.null(newdata)) offset(object)
              else rep(0, nrow(newdata)),
              environment(formula))
+    } else {
+      ## simulate.merMod path: initialize local weights/offset variables
+      ## (these were not set by the user, so derive from the fitted object)
+      if (is.null(weights)) {
+        if (is.null(newdata)) {
+          weights <- weights(object)
+        } else {
+          nullWts <- TRUE
+          weights <- rep(1, nrow(newdata))
+        }
+      }
+      if (is.null(offset)) {
+        offset <- if (is.null(newdata)) offset(object) else rep(0, nrow(newdata))
+      }
     }
 
     if (missing(object)) {
