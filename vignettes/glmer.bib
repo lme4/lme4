@@ -576,3 +576,35 @@ Approximation},
   urldate = {2016-02-20},
   langid = {english}
 }
+
+@misc{stringerAsymptoticsNumericalIntegration2022,
+  title = {Asymptotics of Numerical Integration for Two-Level Mixed Models},
+  author = {Stringer, Alex and Bilodeau, Blair and Tang, Yanbo},
+  year = 2022,
+  month = feb,
+  publisher = {arXiv},
+  doi = {10.48550/arXiv.2202.07864},
+  urldate = {2026-05-26},
+  abstract = {We study mixed models with a single grouping factor, where inference about unknown parameters requires optimizing a marginal likelihood defined by an intractable integral. Low-dimensional numerical integration techniques are regularly used to approximate these integrals, with inferences about parameters based on the resulting approximate marginal likelihood. For a generic class of mixed models that satisfy explicit regularity conditions, we derive the stochastic relative error rate incurred for both the likelihood and maximum likelihood estimator when adaptive numerical integration is used to approximate the marginal likelihood. We then specialize the analysis to well-specified generalized linear mixed models having exponential family response and multivariate Gaussian random effects, verifying that the regularity conditions hold, and hence that the convergence rates apply. We also prove that for models with likelihoods satisfying very weak concentration conditions that the maximum likelihood estimators from non-adaptive numerical integration approximations of the marginal likelihood are not consistent, further motivating adaptive numerical integration as the preferred tool for inference in mixed models. Code to reproduce the simulations in this paper is provided at https://github.com/awstringer1/aq-theory-paper-code.},
+  keywords = {Statistics - Applications,Statistics - Methodology},
+  annotation = {ADS Bibcode: 2022arXiv220207864S},
+  file = {/home/bolker/Documents/zotero_new/storage/4DSMQGKX/Stringer et al. - 2022 - Asymptotics of numerical integration for two-level mixed models.pdf}
+}
+
+@article{stringerExactGradientEvaluation2024,
+  title = {Exact Gradient Evaluation for Adaptive Quadrature Approximate Marginal Likelihood in Mixed Models for Grouped Data},
+  author = {Stringer, Alex},
+  year = 2024,
+  month = nov,
+  journal = {Statistics and Computing},
+  volume = {35},
+  number = {1},
+  pages = {4},
+  issn = {1573-1375},
+  doi = {10.1007/s11222-024-10536-z},
+  urldate = {2025-08-24},
+  abstract = {A method is introduced for approximate marginal likelihood inference via adaptive Gaussian quadrature in mixed models with a single grouping factor. The core technical contribution is an algorithm for computing the exact gradient of the approximate log-marginal likelihood. This leads to efficient maximum likelihood via quasi-Newton optimization that is demonstrated to be faster than existing approaches based on finite-differenced gradients or derivative-free optimization. The method is specialized to Bernoulli mixed models with multivariate, correlated Gaussian random effects; here computations are performed using an inverse log-Cholesky parameterization of the Gaussian density that involves no matrix decomposition during model fitting, while Wald confidence intervals are provided for variance parameters on the original scale. Simulations give evidence of these intervals attaining nominal coverage if enough quadrature points are used, for data comprised of a large number of very small groups exhibiting large between-group heterogeneity. The Laplace approximation is well-known to give especially poor coverage and high bias for data comprised of a large number of small groups. Adaptive quadrature mitigates this, and the methods in this paper improve the computational feasibility of this more accurate method. All results may be reproduced using code available at https://github.com/awstringer1/aghmm-paper-code.},
+  langid = {english},
+  keywords = {Adaptive quadrature,Approximate inference,Grouped data,Longitudinal data,Mixed models},
+  file = {/home/bolker/Documents/zotero_new/storage/ZMVMUHFS/Stringer - 2024 - Exact gradient evaluation for adaptive quadrature approximate marginal likelihood in mixed models fo.pdf}
+}

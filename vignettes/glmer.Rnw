@@ -690,6 +690,7 @@ average of about 6.5 binary observations (``moderate or severe'' vs ``none or mi
 an example where Gauss-Hermite quadrature is necessary for reliable results. In this case the
 conditional densities depart much more clearly from the standard normal (Figure~\ref{fig:toenailplot}; note the scale of the
 density ratios goes from 0 to 10, in contrast the maximum of 4 in Figure~\ref{fig:tfunc}).
+\cite{stringerAsymptoticsNumericalIntegration2022} and \cite{stringerExactGradientEvaluation2024} further explore the limitations of Laplace approximation.
 
 \begin{figure}[tbp]
   \centering
@@ -780,8 +781,8 @@ the precise provenance of these data sets is unclear, the \code{cbpp}
 data set matches the version held by the corresponding author of
 \cite{lesnoff_within-herd_2004}.
 
-<<cbppPlot,echo=FALSE,fig.cap="Incidence (proportion of cows becoming seropositive per observation period) vs. period. Colours show treatment category for each herd; point sizes reflect the number of seronegative cows at the start of each period.",fig.scap="Incidence">>=
-g0 <- ggplot(cbpp2,aes(period, incidence/size, colour=treatment)) +
+<<cbppPlot,echo=FALSE,fig.cap="Incidence (proportion of cows becoming seropositive per observation period) vs. period. Colours show treatment category for each herd; point sizes reflect the number of seronegative cows at the start of each period. Lines connect the sets of observations from each herd.",fig.scap="Incidence">>=
+g0 <- ggplot(cbpp2,aes(period, incidence/size, colour=treatment, shape = treatment)) +
     ## scale_y_continuous(limits = c(0, 1))+
     labs(x="Period",y="Proportional incidence")+
     scale_colour_brewer(palette="Dark2")
@@ -1380,6 +1381,17 @@ VarCorr(cm.cs)
 @
 
 \bibliography{glmer}
+
+\section{Package versions used}
+
+<<pkgs, echo=FALSE>>=
+pkglist <- c("lme4", "performance", "DHARMa", "see")
+pp <- sapply(pkglist, function(x)
+  sprintf("%s: %s", x, format(packageVersion(x))))
+ppp <- paste(pp, collapse  = "; ")
+@ 
+
+Compiled with \Sexpr{R.version.string} and package versions \Sexpr{pp}.
 
 \section{Appendix: derivation of PIRLS}
 
