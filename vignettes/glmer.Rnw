@@ -967,8 +967,8 @@ of GLMs. For mixed-effect models, it also assesses
 the normality of the distribution of conditional modes (Figure~\ref{fig:perf_chk_mod_cbpp}).
 
 <<perf_chk_mod_cbpp,fig.cap="Model diagnostics using \\code{performance::check\\_model}. The plot showcasing the normality of random effects (lower right panel) is the transpose of the right panel in Figure 6.",fig.height=10,echo=FALSE>>=
-check_model(gm1, check = c("reqq", "binned_residuals", 
-                                        "vif", "qq"))
+check_model(gm1, check = c("pp_check", "binned_residuals",
+                           "qq", "reqq"))
 @
 
 The \code{DHARMa} package is also compatible with \code{merMod} objects.
