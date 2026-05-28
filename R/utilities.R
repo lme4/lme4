@@ -600,7 +600,8 @@ checkArgs <- function(type,...) {
 
 ## try to diagnose missing/bad data
 checkFormulaData <- function(formula, data, checkLHS=TRUE,
-                             checkData=TRUE, debug=FALSE) {
+                             checkData=TRUE, debug=FALSE,
+                             calling_env = parent.frame(2L)) {
     wd <- tryCatch(force(data), error = identity)
     if (bad.data <- inherits(wd,"error")) {
         bad.data.msg <- wd$message
@@ -629,14 +630,12 @@ checkFormulaData <- function(formula, data, checkLHS=TRUE,
                     ee ## use environment of formula
             } else {
                 ## e.g. no environment, e.g. because formula is a character vector
-                ## parent.frame(2L) works because [g]lFormula (our calling environment)
-                ## has been called within [g]lmer with env=parent.frame(1L)
-                ## If you call checkFormulaData in some other bizarre way such that
-                ## parent.frame(2L) is *not* OK, you deserve what you get
-                ## calling checkFormulaData directly from the global
-                ## environment should be OK, since trying to go up beyond the global
-                ## environment keeps bringing you back to the global environment ...
-                parent.frame(2L)
+                ## calling_env defaults to parent.frame(2L), which works when
+                ## [g]lFormula (our old calling environment) was called within
+                ## [g]lmer with env=parent.frame(1L).  When called from inside
+                ## mkFormula, the caller should pass parent_env explicitly so
+                ## that the correct user-level frame is used.
+                calling_env
             }
         } else ## data specified
             list2env(data)

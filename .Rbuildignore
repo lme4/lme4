@@ -34,6 +34,8 @@ R/TAGS
 src/mcmcsamp\.h$
 src/mcmcsamp\.cpp$
 ^\.github$
+^\.claude$
+^CLAUDE\.md$
 revdep/
 Rplots.pdf
 R/scaleX.R
