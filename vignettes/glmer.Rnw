@@ -711,8 +711,9 @@ for a random sample of 9 patients from the toenail onychomycosis data set.}
 To use adaptive Gauss-Hermite quadrature for model fitting 
 in \code{glmer} models, set the argument \code{nAGQ}, the 
 number of quadrature points, to a value greater than 1.
-Increasing the number of nodes improves the accuracy of the likelihood 
-approximation at the expense of computation time. However, at present AGQ is only available 
+Increasing the number of nodes generally improves the accuracy of the likelihood 
+approximation at the expense of computation time --- although rounding errors
+may accumulate when using large numbers of quadrature points. At present, AGQ is only available 
 for models with a single scalar random effect. (The \code{GLMMadaptive} package implements
 AGQ for vector-valued random effect models, although it is still restricted to models with
 a single random effect.)
