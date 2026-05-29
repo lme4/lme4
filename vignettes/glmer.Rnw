@@ -939,7 +939,7 @@ p1 <- plot(gm1,type=c("p","smooth"),
     main="Default (Pearson resid vs. fitted)")
 p2 <- plot(gm1,sqrt(abs(resid(.)))~fitted(.),type=c("p","smooth"),
      main="Scale-location")
-p3 <- plot(gm1,period~resid(.),"Grouped residuals")
+p3 <- plot(gm1,period~resid(.), main = "Grouped residuals")
 p4 <- qqmath(gm1,main="Quantile-quantile plot",type=c("p","r"))
 grid.arrange(p1,p2,p3,p4,nrow=2)
 @    
