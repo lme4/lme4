@@ -263,7 +263,7 @@ profile.merMod <- function(fitted,
                 if(devdiff < 0)
                     warning(gettextf("slightly lower deviances (diff=%g) detected",
                                      devdiff), domain=NA)
-                if (devdiff <= 0) devdiff <- devtol
+                if (is.na(devdiff) && devdiff <= 0) devdiff <- devtol
             }
             zz <- sign(xx - pw) * sqrt(devdiff)
             r <- c(zz, mkpar(npar1, w, xx, pars))
