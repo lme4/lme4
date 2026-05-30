@@ -450,7 +450,7 @@ factor, $\bm L_{\beta,\theta}$, satisfies
 \end{equation}
 As we show in the next section, the matrix $(\bm L_{\beta,\theta}\bm
 L_{\beta,\theta}\trans)^{-1}$ is a Laplace approximation of the
-covariance matrix for the spherized random effects, conditional on the  % I tend to refer to them as the "spherical" random effects but I can live with this.  DMB
+covariance matrix for the spherical random effects, conditional on the
 observed data. This fact is useful for constructing a nonlinear
 objective function for finding the approximate maximum likelihood
 estimates of $\theta$ and $\beta$.
@@ -1550,7 +1550,7 @@ which means that for canonical links,
 \end{equation}
 The second way to simplify the Hessian is to take its expectation with
 respect to the distribution of the response, conditional on the
-current values of the spherized random effects coefficients, $\bm
+current values of the spherical random effects coefficients, $\bm
 u$. The diagonal residual matrix, $\bm R$, has expectation
 0. Therefore, because the response only enters into the expression for
 the Hessian via $\bm R$, we have that,
