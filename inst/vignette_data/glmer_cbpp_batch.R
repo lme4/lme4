@@ -58,8 +58,6 @@ cbpp_confint_wald <- lapply(cbpp_mod_list, wald_cifun)
 cbpp_est <- do.call("rbind", Map(get_est, cbpp_mod_list, cbpp_df_name$mnames))
 rownames(cbpp_est) <- NULL
 
-objs <- c("cbpp_confint_prof", "cbpp_confint_boot", "cbpp_confint_wald", "cbpp_prof", "cbpp_est", "cbpp_combCI", "cbpp_df_name")
-
 cbpp_combCI <- Map(combfun2,
                    list(cbpp_confint_wald, cbpp_confint_boot, cbpp_confint_prof),
                    c("Wald", "boot", "profile"),
@@ -90,6 +88,11 @@ if (FALSE) {
 
   ggsave("tmp.png")
 }
+
+objs <- c("cbpp_confint_prof", "cbpp_confint_boot", "cbpp_confint_wald",
+          ## "cbpp_prof",
+          "cbpp_est", "cbpp_combCI", "cbpp_df_name")
+
 
 save(
   list = objs,
