@@ -30,7 +30,7 @@
   Martin M\"achler\\ETH Zurich\AND
   Benjamin M. Bolker\\McMaster University
 }
-\Plainauthor{Anna Ly, Rune Haubo Bojesen Christensen, Douglas Bates, Martin M\"achler, Benjamin M. Bolker}
+\Plainauthor{A. Ly, R. H. B. Christensen, D. M. Bates, M. M\"achler, B. M. Bolker}
 \title{Fitting generalized linear mixed-effects models using \pkg{lme4}}
 \Plaintitle{Fitting generalized linear mixed models using lme4}
 \Shorttitle{GLMMs with lme4}
@@ -124,7 +124,7 @@ opts_chunk$set(engine='R',dev='pdf',fig.width=10,
                error=FALSE, ## stop on error
                tidy=FALSE,comment=NA)
 ## https://tex.stackexchange.com/questions/148188/knitr-xcolor-incompatible-color-definition               
-knit_hooks$set(document = function(x) {sub('\\usepackage[]{xcolor}', '\\usepackage[dvipsnames]{xcolor}', x, fixed = TRUE)})
+## knit_hooks$set(document = function(x) {sub('\\usepackage[]{xcolor}', '\\usepackage[dvipsnames]{xcolor}', x, fixed = TRUE)})
 
 @ 
 \begin{document}
