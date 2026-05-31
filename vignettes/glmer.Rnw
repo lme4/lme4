@@ -25,7 +25,7 @@
 %\bibliographystyle{chicago}
 \author{
   Anna Ly\\McMaster University \And
-  Rune Haubo Bojesen Christensen\\Technical University of Denmark\AND
+  Rune Haubo Bojesen Christensen\\Copenhagen Research Centre for Biological and Precision Psychiatry\AND
   Douglas Bates\\University of Wisconsin - Madison \And
   Martin M\"achler\\ETH Zurich\AND
   Benjamin M. Bolker\\McMaster University
@@ -71,11 +71,10 @@
   Hamilton, ON L8S 4K1, Canada \\
   \par\bigskip
   Rune Haubo Bojesen Christensen \\
-  Technical University of Denmark \\
-  Matematiktorvet \\
-  Building 324, room 220 \\
-  2800 Kgs. Lyngby \\
-  E-mail: \email{rhbc@dtu.dk}
+  Copenhagen Research Centre for Biological and Precision Psychiatry \\
+  Mental Health Centre Copenhagen, Copenhagen University Hospital - Bispebjerg and Frederiksberg \\
+  Copenhagen, Denmark \\
+  Email: \email{Rune.Haubo@pm.me}
   \par\bigskip
   Douglas Bates\\
   Department of Statistics, University of Wisconsin - Madison\\
@@ -123,6 +122,9 @@ opts_chunk$set(engine='R',dev='pdf',fig.width=10,
                ## strip.white=all,
                error=FALSE, ## stop on error
                tidy=FALSE,comment=NA)
+## using knitr::knit2pdf() may lead to xcolor 'incompatible color definition'
+## warnings. The code below resolves that, but simultaneously breaks
+## vignette compilation in other contexts ...
 ## https://tex.stackexchange.com/questions/148188/knitr-xcolor-incompatible-color-definition               
 ## knit_hooks$set(document = function(x) {sub('\\usepackage[]{xcolor}', '\\usepackage[dvipsnames]{xcolor}', x, fixed = TRUE)})
 
@@ -210,8 +212,8 @@ where $\bm\Sigma_\theta$ is the covariance matrix of $\mc B$, which
 depends on a vector of covariance parameters, $\bm\theta$.
 
 The optimization routines of \pkg{lme4} never actually compute
-$\Sigma_\theta$ directly, and instead use the elements of the covariance factor,
-$\bm\Lambda_\theta$, which is a matrix square root of $\Sigma_\theta$ (in practice a Cholesky factor),
+$\bm\Sigma_\theta$ directly, and instead use the elements of the covariance factor,
+$\bm\Lambda_\theta$, which is a matrix square root of $\bm\Sigma_\theta$ (in practice a Cholesky factor),
 \begin{equation}
   \label{eq:GLMMSigma}
   \bm\Sigma_\theta=\bm\Lambda_\theta\bm\Lambda_\theta\trans .
@@ -1121,10 +1123,6 @@ The unstructured covariance structure is the default for mixed models.
 Here we illustrate fitting an AR1 model; the next example will show diagonal and compound symmetric
 models.
 
-<<load_cm_varcorr,echo=FALSE>>=
-varcorr_vals <- load(system.file("vignette_data", "glmer_cm_vc.rda",  package = "lme4"))
-@
-
 <<covar_cbpp>>=
 gm.ar1 <- glmer(incidence/size ~ ar1(1 + herd | period),
                 family = binomial,
@@ -1276,7 +1274,10 @@ aictab <- do.call(AICtab, c(mod_list, list(mnames = mnamevec)))
 <<aictab, echo  = FALSE, results = "asis">>=
 knitr::kable(aictab, digits = 3)
 @
-\caption{Model comparison for Contraception fits.}
+\caption{Model comparison for Contraception fits. Note that for likelihood ratio tests, or for AIC comparisons restricted to nested models \citep{ripleySelectingAmongstLarge2004a}, the nesting sequence for the random-effects models is \code{(1+urban|district)} $>$ \code{(1|district/urban)} $>$ \{%
+\code{(1|district)}, \code{(1|district:urban)}%
+\}.
+}
 \label{tab:contraictab}
 \end{table}
 
