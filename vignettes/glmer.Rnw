@@ -831,8 +831,6 @@ p * (1 - p) * with(cbpp, sum(size))  # 87.35986
 
 This gives a rule-of-thumb upper bound of 8-9 parameters, which I think provides a more informed guide.
 
-\hline
-
 Here we illustrate that, as in \code{glm}, we can specify 
 a binomial response by a proportion and use the \code{weights}
 argument to specify the sample size, instead of the slightly
