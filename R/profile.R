@@ -559,8 +559,8 @@ devfun2 <- function(fm,
 
 ## extract only the y component from a prediction
 predy <- function(sp, vv) {
-    if(inherits(sp,"error")) rep(NA_real_, length(vv))
-    else predict(sp, vv)$y
+    if (inherits(sp, "error") || is.null(sp)) return(rep(NA_real_, length(vv)))
+    predict(sp, vv)$y
 }
 
 stripExpr <- function(ll, nms) {
@@ -967,8 +967,19 @@ splom.thpr <- function (x, data,
 
     nvp <- length(grep("^(\\.sig[0-9]+|.sigma|sd_|cor_)", nms))
     which <- get.which(which, nvp, nptot, nms)
-    if (length(which) == 1)
-        stop("can't draw a scatterplot matrix for a single variable")
+    ok_params <- sapply(nms[which], function(nm) {
+      !is.null(attr(x, "forward")[[nm]]) &&
+        !is.null(attr(x, "backward")[[nm]]) &&
+         !inherits(attr(x, "backward")[[nm]], "error")
+    })
+    if (!all(ok_params)) {
+      warning("Dropping parameters from splom due to failed spline interpolation: ",
+              paste(nms[which][!ok_params], collapse=", "))
+      which <- which[ok_params]
+    }
+    if (length(which) == 1) {
+      stop("can't draw a scatterplot matrix for a single variable")
+    }
 
     mlev <- max(levels)
     spl <- attr(x, "forward")[which]
