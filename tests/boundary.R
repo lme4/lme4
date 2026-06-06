@@ -201,4 +201,10 @@ if (.Platform$OS.type != "windows") {
     xyplot(p1)
     expect_warning(splom(p1),"splom is unreliable")
 
+  ## from Michael Chirico, GH #979
+  m16 <- tmpf(16)
+  p16 <- profile(m16)
+  expect_warning(lattice::splom(p16), "Dropping parameters")
+
 } ## skip on windows (for speed)
+

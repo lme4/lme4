@@ -7,7 +7,7 @@
 \section{CHANGES IN VERSION 2.0-2}{
   \subsection{BUG FIXES}{
     \itemize{
-      \item `lmList` would fail when some groups have rank-deficient model matrices;
+      \item \code{lmList} would fail when some groups have rank-deficient model matrices;
       in particular, it used to report the incorrect degrees of freedom (GH #377)
       \item likelihood profiling no longer gets stuck when a deviance value less
       than the original fitted deviance (but greater than
@@ -31,6 +31,9 @@
       ordering was not applied consistently) (GH #945, Henrik Singmann)
       \item fixed the case where \code{lme4::lmList} prints grouping variable 
       as \code{NULL} (GH #958)
+      \item fixed some edge cases where \code{splom} would fail due to
+      bad spline fits in profiles: these cases are now dropped, with
+      a warning (Michael Chirico, GH #979)
     } % itemize
   } % bug fixes
   \subsection{NEW FEATURES}{
