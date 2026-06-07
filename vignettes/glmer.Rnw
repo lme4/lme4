@@ -7,7 +7,6 @@
 %\VignetteIndexEntry{Fitting Generalized Linear Mixed-Effects Models using lme4}
 \documentclass[nojss]{jss}
 %% need no \usepackage{Sweave.sty}
-%\usepackage{lineno}
 \usepackage[T1]{fontenc}% for correct hyphenation and T1 encoding
 \usepackage[utf8]{inputenc}
 \usepackage{lmodern}% latin modern font
@@ -25,7 +24,7 @@
 %\bibliographystyle{chicago}
 \author{
   Anna Ly\\McMaster University \And
-  Rune Haubo Bojesen Christensen\\Copenhagen Research Centre for Biological and Precision Psychiatry\AND
+  Rune Haubo Bojesen Christensen\\Copenhagen Research Centre \\for Biological and Precision Psychiatry\AND
   Douglas Bates\\University of Wisconsin - Madison \And
   Martin M\"achler\\ETH Zurich\AND
   Benjamin M. Bolker\\McMaster University
@@ -104,6 +103,19 @@
 \newcommand{\yobs}{\ensuremath{\bm y_{\mathrm{obs}}}}
 \newcommand*{\eq}[1]{eqn.~\ref{#1}}% or just {(\ref{#1})}
 %
+\usepackage{etoolbox}
+\usepackage{lineno}
+%% line numbering hack from Claude
+\makeatletter
+\let\@@par@orig\@@par
+\renewcommand{\@@par}{%
+  \@@par@orig
+  \ifnum\currentgrouplevel=0
+    \linenumbers
+  \fi
+}
+\makeatother
+%
 <<preliminaries,include=FALSE,cache=FALSE,message=FALSE,echo=FALSE>>=
 options(width=69, show.signif.stars=FALSE, str=strOptions(strict.width="cut"))
 library(knitr)
@@ -130,6 +142,7 @@ opts_chunk$set(engine='R',dev='pdf',fig.width=10,
 
 @ 
 \begin{document}
+\linenumbers
 \section{Introduction}
 \label{sec:intro}
 
@@ -146,9 +159,9 @@ we describe the facilities for fitting GLMMs.
 \section{Generalized Linear Mixed Models}
 \label{sec:GLMMdef}
 
-Generalized linear mixed models extend the class of
-generalized linear models by allowing for both fixed and random
-effects. In a GLM, the length-$n$ vector-valued response variable,
+Generalized linear mixed models (GLMMs) extend the class of
+generalized linear models (GLMs) by allowing for both fixed and random
+effects. In a GL(M)M, the length-$n$ vector-valued response variable,
 $\mc Y$, has a conditional distribution in the exponential dispersion family (e.g. Normal,
 binomial, Poisson).\footnote{The \code{lme4} package supports fitting negative binomial GLMMs,
 which are an extension of GLMMs; the negative binomial family is within the
@@ -647,7 +660,7 @@ of weights, and \code{dlnorm} is the log-density of the standard
 normal distribution at $z$.
 
 The choice of the value of $k$ depends on the behavior of the function
-$t(z)$.  If $t(z)$ is a polynomial of degree $k-1$ then the
+$t(z)$.  If $t(z)$ is a polynomial of degree $2k-1$ then the
 Gauss-Hermite formula for orders $k$ or greater provides an exact
 answer.  The fact that we want $t(z)$ to behave like a low-order
 polynomial is often neglected in the formulation of a Gauss-Hermite
