@@ -101,6 +101,7 @@
 \newcommand{\mc}[1]{\ensuremath{\mathcal{#1}}}
 \newcommand{\trans}{\ensuremath{^\prime}}
 \newcommand{\yobs}{\ensuremath{\bm y_{\mathrm{obs}}}}
+\newcommand{\Lsat}{\ensuremath{L_{\mathrm{sat}}}}
 \newcommand*{\eq}[1]{eqn.~\ref{#1}}% or just {(\ref{#1})}
 %
 \usepackage{etoolbox}
@@ -322,18 +323,11 @@ value $\mc Y=\yobs$, the resulting function is continuous with respect
 to $\bm u$ so the unscaled conditional density is indeed well-defined
 as a density, up to a scale factor.
 
-FIXME: clarify according to RH comments; see what's worth incorporating from \url{https://embraceuncertaintybook.com/aGHQ.html} (in particular, define as likelihood-first, then switch to deviance). RH: ``it would be enough that an expression for deviance contributions, $d_i(y, u)$ are written out so that the reader can see the relation between the joint distribution under the integral sign in eq. 12 $f(y, u) = f(y | u) f(u)$ and the expression under the integral sign in eq. 13., ie., the link between $f(y | u)$ and $d_i(y, u)$.''
-
-To evaluate the integrand in (\ref{eq:GLMMlike})
-we use the value of
-the \code{dev.resids} function in the GLM family.  This vector,
-$\bm d(\yobs,\bm u)$, with elements, $d_i(\yobs,\bm u), i=1,\dots,n$,
-provides the deviance of a generalized linear model as
-\begin{displaymath}
-  \sum_{i=1}^n d_i(\yobs,\bm u) .
-\end{displaymath}
-
-There is
+To evaluate the integrand in (\ref{eq:GLMMlike}) we need the unscaled conditional density $f_{\mc Y,\mc U}$, which depends on the likelihood of $\yobs$ conditional on $\bm u$: $f(\yobs, \bm u) = f(\yobs|\bm u) f(\bm u)$.
+As usual in likelihood estimation we will eventually be working, for convenience, with negative log likelihoods rather than likelihoods.
+However, base R's machinery for defining GLM models, or ``families'', does not provide a convenient expression for the negative log-likelihood: instead, objects of class \code{family} include a \code{dev.resids} function that returns a vector of observation-specific deviances, i.e. $-2(\log L(\yobs|\bm u) - \log \Lsat)$ where $\Lsat$ is the likelihood corresponding to a saturated model with as many parameters as observations.
+%
+\footnote{There is
 some confusion in \proglang{R} (and in its predecessor,
 \proglang{S}) about the exact definition of the deviance residuals
 of a family.  As indicated above, we will use this name for the
@@ -342,7 +336,14 @@ square root of this vector, using the signs of $\yobs-\mu$, is returned
 when the \code{residuals} method is applied to a fitted model
 of class \code{"glm"} when \code{type="deviance"}, the
 default, is specified.  Both are called ``deviance residuals''
-at different points in the documentation.
+at different points in the documentation.}
+%
+For example, the log-likelihood for a Poisson observation $y$ with mean $\lambda$ is (omitting the normalization constant) $\log L(y, \lambda) = y \log \lambda - \lambda$; the deviance is
+$$
+-2(\log L(y, \lambda) - \log L(y, y)) = -2(y(\log \lambda - \log y) - (\lambda-y))
+$$
+(with appropriate adjustments if $y=0$).
+Because deviances differ from (negative) log likelihoods only by a parameter-independent constant (the log-likelihood of the saturated model) and a change of scale (multiplication by 2), this change does not affect our optimization procedure.
 
 One advantage of using the pre-existing GLM family structure is
 that the software can thus fit
@@ -352,11 +353,17 @@ hard-coded in C++ for computational speed),
 in contrast to previous versions of \code{lme4} and some other
 \proglang{R} packages for GLMM fitting.
 
+If \code{dev.resids} returns 
+$\bm d(\yobs|\bm u)$, with elements $d_i(\yobs|\bm u), i=1,\dots,n$,
+the full deviance of a generalized linear model is
+\begin{displaymath}
+f(\yobs, \bm u) = \sum_{i=1}^n d_i(\yobs|\bm u) + \|\bm u\|^{2}.
+\end{displaymath}
 The likelihood can now be expressed as
 \begin{equation}
   \label{eq:GLMMlike1}
   L(\bm\beta,\bm\theta|\yobs)=
-  \int_{\mathbb{R}^q}\exp\left(-\frac{\sum_{i=1}^nd_i(\yobs,\bm u)+\|\bm u\|^2}{2}\right)\,(2\pi)^{-q/2}\,d\bm u
+  \int_{\mathbb{R}^q}\exp\left(-\frac{\sum_{i=1}^nd_i(\yobs|\bm u)+\|\bm u\|^2}{2}\right)\,(2\pi)^{-q/2}\,d\bm u
 \end{equation}
 
 As for linear mixed models, we simplify evaluation of the integral
@@ -821,34 +828,15 @@ g0 +  geom_point(aes(size = size),alpha=0.4) +
 @
 
 We model proportional incidence as a binomial response depending
-on the fixed effects of period, treatment and average herd size;
+on the additive fixed effects of period, treatment and average herd size;
 to account for repeated measures we fit a model with a random effect
-of herd. In principle we might be curious about a treatment by period
-interaction, but a model incorporating
-such a treatment would clearly be overfitting the data set. With 
-56 observations, we should be fitting at most 5--6 parameters
-\citep{harrell_regression_2001};
-the model with period, treatment, and average herd size
-already has
-7 parameters, and adding a treatment $\times$ period interaction
-would bring the total to 13.
+of herd. In practice we might also be interested in a period by treatment
+interaction, but we neglect that term here.
 
-FIXME (RH):
-
-``At the bottom of page 13, the description of the CBPP data states: "With 56 observations, we should be fitting at most 5-6 parameters..." However, these are binomial observations, which carry different information content than continuous (normally distributed) observations. The diagonals of the Fisher Information weight matrix have elements $p(1 - p)n$ (for each row), so the effective sample size (in information units) can be approximated as:
-
-\begin{verbatim}
-p <- with(cbpp, sum(incidence) / sum(size))
-p * (1 - p) * with(cbpp, sum(size))  # 87.35986
-\end{verbatim}
-
-This gives a rule-of-thumb upper bound of 8-9 parameters, which I think provides a more informed guide.
-
-Here we illustrate that, as in \code{glm}, we can specify 
-a binomial response by a proportion and use the \code{weights}
-argument to specify the sample size, instead of the slightly
-more typical \code{cbind(successes,failures)} format.
-
+As in \code{glm}, we can specify 
+a binomial response as a proportion and use the \code{weights}
+argument to specify the sample size, instead of the
+more typical two-column \code{cbind(successes,failures)} format:
 <<cbppModelI>>=
 gm1 <- glmer(incidence/size ~ period + treatment + avg_size + (1 | herd),
              family = binomial,
