@@ -147,6 +147,8 @@ opts_chunk$set(engine='R',dev='pdf',fig.width=10,
 \section{Introduction}
 \label{sec:intro}
 
+FIXME: check digits of output?
+
 The \pkg{lme4} package for \proglang{R} can be used to fit a broad
 range of mixed-effects models.  One major advantage of
 \pkg{lme4} over its predecessor, \pkg{nlme}, is that it can be used to
@@ -160,8 +162,8 @@ we describe the facilities for fitting GLMMs.
 \section{Generalized Linear Mixed Models}
 \label{sec:GLMMdef}
 
-Generalized linear mixed models (GLMMs) extend the class of
-generalized linear models (GLMs) by allowing for both fixed and random
+Generalized linear mixed models extend the class of
+generalized linear models by allowing for both fixed and random
 effects. In a GL(M)M, the length-$n$ vector-valued response variable,
 $\mc Y$, has a conditional distribution in the exponential dispersion family (e.g. Normal,
 binomial, Poisson).\footnote{The \code{lme4} package supports fitting negative binomial GLMMs,
