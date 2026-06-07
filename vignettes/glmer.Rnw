@@ -352,7 +352,7 @@ that the software can thus fit
 models with user-specified families and link functions 
 (although common families and link functions are
 hard-coded in C++ for computational speed),
-in contrast to previous versions of \code{lme4} and some other
+in contrast to early versions of \code{lme4} and some other
 \proglang{R} packages for GLMM fitting.
 
 If \code{dev.resids} returns 
